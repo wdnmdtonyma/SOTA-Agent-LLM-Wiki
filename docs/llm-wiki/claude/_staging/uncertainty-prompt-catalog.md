@@ -1,0 +1,1 @@
+- **auto-mode/yolo 权限分类器 prompt 原文缺失** — `utils/permissions/yoloClassifier.ts` 在 `feature('TRANSCRIPT_CLASSIFIER')` 下用 `require()` 从 `yolo-classifier-prompts/auto_mode_system_prompt.txt` / `permissions_external.txt` / `permissions_anthropic.txt` 加载分类器 system prompt [E: utils/permissions/yoloClassifier.ts:54]。该目录不在本 dump 内,`.txt` 实际文本无法核验。来源:ref.prompt-catalog §H。

@@ -1,0 +1,4 @@
+- [ref.data-model] `types/message.ts` 在当前 `Best/claude/types/` dump 中缺失，但大量文件导入 `types/message.js`; chat message TypeScript 权威定义无法核实，只能用 `utils/messages.ts` 构造函数说明运行时形状。
+- [ref.glossary] `tengu`、`Kairos`、`amber`、`pear`、`slate/prism`、`hive/evidence`、`hawthorn/window`、`onyx/plover` 等 codename 的业务全称未在当前 dump 中定义；只能从 gate/event/path 的使用点推断功能范围。
+- [ref.glossary] `tools/TungstenTool/` 实现文件在当前 dump 中缺失；只能核到 `tools.ts` ant-only 注册和 tmux 相关调用/注释。
+- [ref.glossary] `CCR`、`BYOC`、`CSE` 缩写在当前 dump 中没有展开全称；只能核到 remote-control/code-session/bridge 相关用法。

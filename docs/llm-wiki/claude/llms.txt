@@ -1,0 +1,224 @@
+# Claude Code 源码 LLM Wiki — 入口索引
+
+> 逆向 Claude Code 源码(`Best/claude/`, ~513K LOC)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`。机读清单见 `index.json`,规范见 `conventions.md`。
+
+## 怎么用
+- **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
+- **人**:先读 `spine/overview`,再按需深入 T1/T2。
+
+## T0 — Spine(端到端脊柱,图先行)
+- [系统总览与架构](spine/overview.md): Claude Code 是什么 + 分层架构图 — main.tsx · query.ts · Tool.ts
+- [进程生命周期](spine/lifecycle.md): 启动 → REPL/headless 就绪 — entrypoints/cli.tsx · main.tsx · setup.ts
+- [Agent 主循环](spine/agent-loop.md): 一轮 LLM 调用 + 工具执行的生成器循环 — query.ts · QueryEngine.ts · query/(config/deps/stopHooks/tokenBudget)
+- [一次 turn 全过程](spine/turn-end-to-end.md): 用户输入 → 模型 → 工具 → 结果 → 续跑
+- [工具调用解剖](spine/tool-call-anatomy.md): 派发 → 权限 → 执行 → 渲染 — services/tools/ · Tool.ts
+- [上下文与压缩](spine/context-and-compaction.md): 上下文装配 + micro/auto/reactive/snip/collapse — context.ts · services/compact/
+
+### 端到端 worked traces(具体范例)
+- [trace:Edit + 权限](spine/trace-edit-permission.md): 一次 Edit 从 dispatch → 权限 8 级阶梯 → read-modify-write 写盘 → diff 渲染 — services/tools/ · utils/permissions/ · tools/FileEditTool/
+- [trace:spawn 子 agent](spine/trace-subagent-spawn.md): Agent 工具 → coordinator/swarm 创建子 agent → 子循环 → sync 返回 / async `<task-notification>` 回流 — tools/AgentTool/ · tools/shared/ · tasks/
+- [trace:MCP 工具调用](spine/trace-mcp-call.md): MCPTool 路由 → transport `callTool`/timeout race → 结果映射回 tool_result — tools/MCPTool/ · services/mcp/
+
+## T1 — Surface / Tools(每工具一节点,57)
+
+### 文件 I/O
+- [Read](surface/tools/read.md): 读文件,offset/limit,PDF/图片 — tools/FileReadTool/FileReadTool.ts
+- [Write](surface/tools/write.md): 整文件写入/覆盖 — tools/FileWriteTool/FileWriteTool.ts
+- [Edit](surface/tools/edit.md): 精确字符串替换 + diff — tools/FileEditTool/FileEditTool.ts
+- [NotebookEdit](surface/tools/notebook-edit.md): 改 notebook cell — tools/NotebookEditTool/NotebookEditTool.ts
+
+### 搜索
+- [Glob](surface/tools/glob.md): glob 找文件 — tools/GlobTool/GlobTool.ts
+- [Grep](surface/tools/grep.md): 正则搜内容 — tools/GrepTool/GrepTool.ts
+- [ToolSearch](surface/tools/tool-search.md): 按关键词找 deferred 工具 — tools/ToolSearchTool/ToolSearchTool.ts
+
+### Shell 执行
+- [Bash](surface/tools/bash.md): 执行 shell(持久化/沙箱/只读校验)— tools/BashTool/BashTool.tsx
+- [PowerShell](surface/tools/powershell.md): Windows PowerShell — tools/PowerShellTool/PowerShellTool.tsx
+- [REPLTool](surface/tools/repl.md): 透明 wrapper,VM 隔离 REPL(ant)— tools/REPLTool/
+
+### 子 agent / 任务
+- [Agent](surface/tools/agent.md): spawn 子 agent / teammate — tools/AgentTool/AgentTool.tsx
+- [Skill](surface/tools/skill.md): 以 fork 子 agent 跑 skill — tools/SkillTool/SkillTool.ts
+- [TaskCreate](surface/tools/task-create.md) — tools/TaskCreateTool/TaskCreateTool.ts
+- [TaskGet](surface/tools/task-get.md) — tools/TaskGetTool/TaskGetTool.ts
+- [TaskList](surface/tools/task-list.md) — tools/TaskListTool/TaskListTool.ts
+- [TaskUpdate](surface/tools/task-update.md) — tools/TaskUpdateTool/TaskUpdateTool.ts
+- [TaskStop](surface/tools/task-stop.md) — tools/TaskStopTool/TaskStopTool.ts
+- [TaskOutput](surface/tools/task-output.md) — tools/TaskOutputTool/TaskOutputTool.tsx
+- [SendMessage](surface/tools/send-message.md): 给其它 agent/teammate 发消息 — tools/SendMessageTool/SendMessageTool.ts
+- [TeamCreate](surface/tools/team-create.md) — tools/TeamCreateTool/TeamCreateTool.ts
+- [TeamDelete](surface/tools/team-delete.md) — tools/TeamDeleteTool/TeamDeleteTool.ts
+
+### Web
+- [WebFetch](surface/tools/web-fetch.md): 取 URL — tools/WebFetchTool/WebFetchTool.ts
+- [WebSearch](surface/tools/web-search.md): 联网搜索(server-managed)— tools/WebSearchTool/WebSearchTool.ts
+- [WebBrowser](surface/tools/web-browser.md): Playwright 浏览器自动化 — tools/WebBrowserTool/
+
+### MCP / LSP
+- [MCPTool](surface/tools/mcp.md): 路由到 MCP server 工具(meta)— tools/MCPTool/MCPTool.ts
+- [ListMcpResources](surface/tools/list-mcp-resources.md) — tools/ListMcpResourcesTool/ListMcpResourcesTool.ts
+- [ReadMcpResource](surface/tools/read-mcp-resource.md) — tools/ReadMcpResourceTool/ReadMcpResourceTool.ts
+- [McpAuth](surface/tools/mcp-auth.md): MCP OAuth — tools/McpAuthTool/McpAuthTool.ts
+- [LSP](surface/tools/lsp.md): LSP 符号查询 — tools/LSPTool/LSPTool.ts
+
+### 用户交互
+- [AskUserQuestion](surface/tools/ask-user-question.md): 向用户提问 — tools/AskUserQuestionTool/AskUserQuestionTool.tsx
+- [TodoWrite](surface/tools/todo-write.md): 维护 todo 列表 — tools/TodoWriteTool/TodoWriteTool.ts
+- [Brief](surface/tools/brief.md): 生成工作 brief — tools/BriefTool/BriefTool.ts
+
+### 模式 / 工作区
+- [EnterPlanMode](surface/tools/enter-plan-mode.md) — tools/EnterPlanModeTool/EnterPlanModeTool.ts
+- [ExitPlanMode (V2)](surface/tools/exit-plan-mode.md) — tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts
+- [EnterWorktree](surface/tools/enter-worktree.md) — tools/EnterWorktreeTool/EnterWorktreeTool.ts
+- [ExitWorktree](surface/tools/exit-worktree.md) — tools/ExitWorktreeTool/ExitWorktreeTool.ts
+- [Config](surface/tools/config.md): 读改配置(ant)— tools/ConfigTool/ConfigTool.ts
+
+### 调度 / 后台 / 通知
+- [CronCreate](surface/tools/cron-create.md) — tools/ScheduleCronTool/CronCreateTool.ts
+- [CronDelete](surface/tools/cron-delete.md) — tools/ScheduleCronTool/CronDeleteTool.ts
+- [CronList](surface/tools/cron-list.md) — tools/ScheduleCronTool/CronListTool.ts
+- [RemoteTrigger](surface/tools/remote-trigger.md): 远端 CCR 触发 agent — tools/RemoteTriggerTool/RemoteTriggerTool.ts
+- [Monitor](surface/tools/monitor.md): 流式看后台任务 — tools/MonitorTool/MonitorTool.ts
+- [PushNotification](surface/tools/push-notification.md) — tools/PushNotificationTool/
+- [Sleep](surface/tools/sleep.md) — tools/SleepTool/
+- [SendUserFile](surface/tools/send-user-file.md) — tools/SendUserFileTool/
+- [SubscribePR](surface/tools/subscribe-pr.md) — tools/SubscribePRTool/
+- [SuggestBackgroundPR](surface/tools/suggest-background-pr.md) — tools/SuggestBackgroundPRTool/
+- [TerminalCapture](surface/tools/terminal-capture.md) — tools/TerminalCaptureTool/
+- [ListPeers](surface/tools/list-peers.md) — tools/ListPeersTool/
+- [Snip](surface/tools/snip.md): 取历史片段 — tools/SnipTool/
+
+### Workflow
+- [WorkflowTool](surface/tools/workflow.md): 跑 workflow 脚本 — tools/WorkflowTool/
+
+### 内部 / 测试 / feature-flagged
+- [Tungsten](surface/tools/tungsten.md): 系统自省(ant)— tools/TungstenTool/
+- [CtxInspect](surface/tools/ctx-inspect.md) — tools/CtxInspectTool/
+- [SyntheticOutput](surface/tools/synthetic-output.md) — tools/SyntheticOutputTool/SyntheticOutputTool.ts
+- [VerifyPlanExecution](surface/tools/verify-plan-execution.md) — tools/VerifyPlanExecutionTool/
+- [OverflowTest](surface/tools/overflow-test.md) — tools/OverflowTestTool/
+- [TestingPermission](surface/tools/testing-permission.md) — tools/testing/TestingPermissionTool.js
+
+## T1 — Surface / Slash 命令(按类目 catalog,12 节点,覆盖 commands.ts ~109 命令模块)
+- [会话导航命令](surface/commands/session-nav.md) — commands.ts
+- [模型与配置命令](surface/commands/model-config.md) — commands.ts
+- [成本与用量命令](surface/commands/cost-usage.md) — commands.ts
+- [Git 与代码评审命令](surface/commands/git-code.md) — commands.ts
+- [工具与集成命令](surface/commands/tools-integrations.md) — commands.ts
+- [帮助与信息命令](surface/commands/help-info.md) — commands.ts
+- [账户与认证命令](surface/commands/account-auth.md) — commands.ts
+- [UI 与输出命令](surface/commands/ui-output.md) — commands.ts
+- [任务与计划命令](surface/commands/tasks-planning.md) — commands.ts
+- [杂项与实验性命令](surface/commands/misc-experimental.md) — commands.ts
+- [feature 门控命令](surface/commands/feature-flagged.md) — commands.ts
+- [内部专用命令](surface/commands/internal-only.md) — commands.ts(INTERNAL_ONLY_COMMANDS)
+
+## T1 — Surface / Settings 键(按区 catalog,6 节点,覆盖 SettingsSchema 74 顶层键)
+- [permissions 设置](surface/settings/permissions.md) — utils/settings/types.ts
+- [model / inference 设置](surface/settings/model-inference.md) — utils/settings/types.ts
+- [hooks 设置](surface/settings/hooks.md) — utils/settings/types.ts
+- [MCP 与环境设置](surface/settings/mcp-and-env.md) — utils/settings/types.ts
+- [UI / output 设置](surface/settings/ui-output.md) — utils/settings/types.ts
+- [tools 与杂项设置](surface/settings/tools-and-misc.md) — utils/settings/types.ts
+
+## T1 — Surface / Hook 事件
+- [Hook 事件总览](surface/hooks/): 27 个生命周期事件每个一节点 — types/hooks.ts · utils/hooks.ts(明细见 index.json group.hook-events)
+
+## T2 — Subsystems(内部子系统)
+- [工具系统机制](subsystems/tool-system.md): Tool 接口/buildTool/ToolUseContext/registry/deferral — Tool.ts · tools.ts
+- [System Prompt 组装与 reminder](subsystems/system-prompt.md): getSystemPrompt 静态/动态分层 + `SYSTEM_PROMPT_DYNAMIC_BOUNDARY` 缓存边界 + buildEffectiveSystemPrompt 优先级 + `<system-reminder>` 注入 — constants/prompts.ts · utils/systemPrompt.ts
+- [Shell 与命令解析](subsystems/shell-parsing.md): tree-sitter parser + 只读校验 + provider — utils/bash/ · utils/shell/
+- [权限系统](subsystems/permissions.md): 模式/规则/分类器/denial — utils/permissions/
+- [压缩家族](subsystems/compaction.md): micro/auto/reactive/snip/collapse — services/compact/
+- [MCP](subsystems/mcp.md): transport/auth/resource/elicitation — services/mcp/
+- [模型与 API 层](subsystems/model-api.md): provider/streaming/retry/cache/token — services/api/ · utils/model/
+- [多 agent 与 Swarm](subsystems/swarm.md): subagent/task/coordinator/backends — coordinator/ · utils/swarm/ · tasks/
+- [记忆与 CLAUDE.md](subsystems/memory.md): claudemd/session-memory/dream/memdir/team — utils/memory/ · services/SessionMemory/
+- [会话持久化与状态](subsystems/session-state.md): AppState + sessionStorage + 恢复 — state/ · utils/sessionStorage.ts
+- [Hooks feature](subsystems/hooks-feature.md): 27 事件执行/matcher/IO 契约/信任 — utils/hooks.ts · types/hooks.ts
+- [Skills](subsystems/skills.md) — skills/
+- [Plugins](subsystems/plugins.md) — utils/plugins/ · plugins/
+- [命令系统机制](subsystems/command-system.md): Command 抽象/加载/来源 — commands.ts
+- [Ink 运行时](subsystems/ink-runtime.md): forked 渲染器/Yoga/termio/选区 — ink/
+- [文本输入与 Vim](subsystems/input-vim.md) — hooks/useTextInput.ts · vim/
+- [Keybindings](subsystems/keybindings.md) — keybindings/
+- [UI 组件族总览](subsystems/ui-components.md): 组件族地图 + 巨型组件 — components/ · screens/(39 个族明细见下方 ### UI 组件族)
+- [遥测与 feature flag](subsystems/telemetry-flags.md): events/sink/GrowthBook — services/analytics/ · utils/telemetry/
+- [配置与设置](subsystems/config-settings.md): scope/校验/MDM/远程托管 — utils/settings/ · utils/config.ts
+- [认证与安全存储](subsystems/auth.md) — services/oauth/ · utils/secureStorage/
+- [成本与用量](subsystems/cost-usage.md) — cost-tracker.ts · bootstrap/state.ts
+- [CLI 与运行模式](subsystems/cli-modes.md): 子命令/flag/headless — main.tsx · cli/ · entrypoints/
+- [迁移系统](subsystems/migrations.md) — migrations/
+- [LSP 集成](subsystems/lsp.md) — services/lsp/
+- [IDE bridge / remote / CCR](subsystems/bridge-remote.md) — bridge/ · remote/ · upstreamproxy/ · server/
+- [Buddy companion 子系统](subsystems/buddy.md): `feature('BUDDY')` 门控的 companion 动画伙伴(bones 由 hash(userId) 派生、不存盘)— buddy/
+
+### UI 组件族(subsystems/ui/,39 个族,覆盖 components/ 顶层 + 各子目录)
+- [Messages 组件族](subsystems/ui/messages.md) — components/Messages.tsx
+- [PromptInput 组件族](subsystems/ui/prompt-input.md) — components/PromptInput/PromptInput.tsx
+- [Diff 组件族](subsystems/ui/diff.md) — components/diff/DiffDialog.tsx
+- [StructuredDiff 组件族](subsystems/ui/structured-diff.md) — components/StructuredDiff.tsx
+- [HighlightedCode 组件族](subsystems/ui/highlighted-code.md) — components/HighlightedCode.tsx
+- [Shell 输出组件族](subsystems/ui/shell.md) — components/shell/ExpandShellOutputContext.tsx
+- [components/ui 基础组件族](subsystems/ui/ui.md) — components/ui/
+- [permissions 组件族](subsystems/ui/permissions.md) — components/permissions/
+- [Settings 组件族](subsystems/ui/settings.md) — components/Settings/
+- [wizard 组件族](subsystems/ui/wizard.md) — components/wizard/
+- [TrustDialog 组件族](subsystems/ui/trust-dialog.md) — components/TrustDialog/
+- [ManagedSettingsSecurityDialog 组件族](subsystems/ui/managed-settings-security-dialog.md) — components/ManagedSettingsSecurityDialog/
+- [mcp 组件族](subsystems/ui/mcp.md) — components/mcp/
+- [sandbox 组件族](subsystems/ui/sandbox.md) — components/sandbox/
+- [memory 组件族](subsystems/ui/memory.md) — components/memory/
+- [ClaudeCodeHint 组件族](subsystems/ui/claude-code-hint.md) — components/ClaudeCodeHint/
+- [LspRecommendation 组件族](subsystems/ui/lsp-recommendation.md) — components/LspRecommendation/
+- [agents 组件族](subsystems/ui/agents.md) — components/agents/
+- [tasks 组件族](subsystems/ui/tasks.md) — components/tasks/
+- [teams 组件族](subsystems/ui/teams.md) — components/teams/
+- [Spinner 组件族](subsystems/ui/spinner.md) — components/Spinner.tsx
+- [LogoV2 组件族](subsystems/ui/logo-v2.md) — components/LogoV2/
+- [CustomSelect 组件族](subsystems/ui/custom-select.md) — components/CustomSelect/
+- [design-system 组件族](subsystems/ui/design-system.md) — components/design-system/
+- [grove 组件族](subsystems/ui/grove.md) — components/grove/
+- [skills 组件族](subsystems/ui/skills.md) — components/skills/
+- [HelpV2 组件族](subsystems/ui/help-v2.md) — components/HelpV2/
+- [Passes 组件族](subsystems/ui/passes.md) — components/Passes/
+- [DesktopUpsell 组件族](subsystems/ui/desktop-upsell.md) — components/DesktopUpsell/
+- [FeedbackSurvey 组件族](subsystems/ui/feedback-survey.md) — components/FeedbackSurvey/
+- [hooks 配置组件族](subsystems/ui/hooks.md) — components/hooks/
+- [status-indicators 综合族](subsystems/ui/status-indicators.md) — components/ContextVisualization.tsx 等
+- [autoupdater 综合族](subsystems/ui/autoupdater.md) — components/AutoUpdaterWrapper.tsx 等
+- [teleport 综合族](subsystems/ui/teleport.md) — components/TeleportResumeWrapper.tsx 等
+- [onboarding 综合族](subsystems/ui/onboarding.md) — components/Onboarding.tsx 等
+- [ide-remote 综合族](subsystems/ui/ide-remote.md) — components/BridgeDialog.tsx 等
+- [auth-config 综合族](subsystems/ui/auth-config.md) — components/ApproveApiKey.tsx 等
+- [session-workflows 综合族](subsystems/ui/session-workflows.md) — components/IdleReturnDialog.tsx 等
+- [input-navigation 综合族](subsystems/ui/input-navigation.md) — components/App.tsx 等
+
+## T3 — Reference
+- [数据模型](reference/data-model.md): message/permission/hook 全类型 — types/
+- [Tool 接口字段 catalog](reference/tool-interface.md): Tool 的 ~50 字段/方法 — Tool.ts
+- [后台与 subagent Prompt 目录](reference/prompt-catalog.md): 压缩/记忆/标题/建议/洞察 + 6 个内置 subagent system prompt 逐条编目(贴压缩与 subagent 原文)— services/*/prompt*.ts · tools/AgentTool/built-in/
+- [Feature flag 目录](reference/feature-flags.md)
+- [环境变量目录](reference/env-vars.md)
+- [术语表与 codename](reference/glossary.md)
+- [不确定项日志](reference/uncertainty.md): `[U]` 汇总
+- [React Context providers 目录](reference/react-contexts.md): `context/` 的 9 个 Context provider(modal/overlay/mailbox/notifications/voice…)— context/
+- [native-ts 移植算法模块](reference/native-ts.md): Yoga 布局 / color-diff / file-index 的 TS 移植,服务 ink — native-ts/
+
+### React hooks catalog(reference/react-hooks/,12 类,覆盖 hooks/ 全部 96 个 use* 文件)
+- [input-keyboard](reference/react-hooks/input-keyboard.md) — hooks/useTextInput.ts 等
+- [terminal-layout](reference/react-hooks/terminal-layout.md) — hooks/useTerminalSize.ts 等
+- [history-navigation](reference/react-hooks/history-navigation.md) — hooks/useArrowKeyHistory.tsx 等
+- [config-state](reference/react-hooks/config-state.md) — hooks/useSettings.ts 等
+- [async-queue-tasks](reference/react-hooks/async-queue-tasks.md) — hooks/useCommandQueue.ts 等
+- [ide-integration](reference/react-hooks/ide-integration.md) — hooks/useIDEIntegration.tsx 等
+- [voice](reference/react-hooks/voice.md) — hooks/useVoice.ts 等
+- [plugins-recommendations](reference/react-hooks/plugins-recommendations.md) — hooks/usePluginRecommendationBase.tsx 等
+- [permissions-tools](reference/react-hooks/permissions-tools.md) — hooks/useCanUseTool.tsx 等
+- [notifications](reference/react-hooks/notifications.md) — hooks/notifs/ 等
+- [state-lifecycle](reference/react-hooks/state-lifecycle.md) — hooks/useAfterFirstRender.ts 等
+- [keybinding-routing](reference/react-hooks/keybinding-routing.md) — hooks/useGlobalKeybindings.tsx 等
+
+## 工具
+- [lint 工具](tools/lint.mjs): L1 机械校验 · [reconcile](tools/reconcile.mjs): 登记新节点 + 合并 `_staging` 的 [U]
