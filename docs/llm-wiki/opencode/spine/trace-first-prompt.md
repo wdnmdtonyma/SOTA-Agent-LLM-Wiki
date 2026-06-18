@@ -9,7 +9,7 @@ symbols: [SessionV2.create, SessionV2.prompt, SessionInput.admit, SessionExecuti
 related: [spine.v2-admission, spine.v2-provider-turn]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 这条 trace 走读 V2 新 session 的第一次 prompt:session 已创建后,用户 prompt 先进入 durable inbox,execution wake 触发 runner,runner 初始化 Context Epoch,再执行第一轮 provider turn。

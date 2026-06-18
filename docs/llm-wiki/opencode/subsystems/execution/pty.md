@@ -7,99 +7,133 @@ v: v2
 source:
   - packages/core/src/pty/
   - packages/core/src/pty.ts
+  - packages/core/src/pty/protocol.ts
+  - packages/core/src/shell.ts
+  - packages/server/src/groups/pty.ts
+  - packages/server/src/handlers/pty.ts
+  - packages/server/src/pty-environment.ts
   - packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts
   - packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts
-  - packages/opencode/src/pty-preparation.ts
+  - packages/opencode/src/plugin/pty-environment.ts
   - packages/opencode/src/server/shared/pty-ticket.ts
 symbols:
   - Pty.Service
+  - PtyProtocol.decodeInput
+  - PtyProtocol.metaFrame
   - PtyTicket.Service
   - Pty.Info
-  - handlePtyInput
+  - PtyGroup
+  - PtyHandler
+  - PtyEnvironment.Service
   - PtyApi
   - PtyConnectApi
 related:
+  - server-api.v2-routes
   - server-api.v1-routes
   - tui.run-scrollback
+  - execution.core-shell-v2
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
-> PTY 子系统是 V2 Location-scoped pseudo-terminal service：core 用 `#pty` 适配 bun-pty/node-pty，维护进程内 session/buffer/subscribers；V1 Effect HttpApi instance routes 暴露 `/pty/*` JSON endpoint 和 `/pty/:ptyID/connect` WebSocket，并用短期 connect ticket 保护 browser WS 连接。
+> PTY 子系统是 V2 Location-scoped pseudo-terminal service：core 用 `#pty` 适配 bun-pty/node-pty，维护进程内 session/buffer/subscribers；canonical server package 暴露 `/api/pty/*` JSON endpoint 和 `/api/pty/:ptyID/connect` WebSocket，legacy instance server tree 仍暴露 `/pty/*` compatibility surface。两条 surface 都使用短期 connect ticket 保护 browser WS 连接。
 
 ## 能回答的问题
 
-- PTY 为什么标 V2，但 HTTP route 在 `packages/opencode/src/server`？
-- bun 与 node runtime 分别用哪个 pty backend？
+- PTY 为什么同时有 `packages/server/src` `/api/pty` surface 和 legacy `packages/opencode/src/server` `/pty` surface？
+- WebSocket protocol 的 replay chunk 和 cursor metadata frame 如何编码？
+- PTY create 的 shell/env/cwd 在哪里准备？
+- legacy instance PTY API 为什么隐藏 exited sessions，而 server-package `/api/pty` 会暴露 retained exited sessions？
 - connect ticket 的 TTL、scope、consume 语义是什么？
-- WebSocket cursor、buffer、metadata frame 如何工作？
-- PTY create 的 shell/env/cwd 是在哪里准备的？
 
 ## 职责边界
 
-`Pty.Service` 的 service tag 是 `@opencode/v2/Pty`，并作为 `locationLayer` 提供 [E: packages/core/src/pty.ts:117] [E: packages/core/src/pty.ts:309]。它的内存状态是 `sessions = new Map<PtyID, Active>()`，Active 包含 `process`、`buffer`、`cursor`、`subscribers`、`listeners` [E: packages/core/src/pty.ts:25] [E: packages/core/src/pty.ts:26] [E: packages/core/src/pty.ts:28] [E: packages/core/src/pty.ts:29] [E: packages/core/src/pty.ts:30] [E: packages/core/src/pty.ts:126]。`LocationServiceMap` 会把 `Pty.locationLayer` 放入 Location-scoped layer set [E: packages/core/src/location-layer.ts:68]。
+`Pty.Service` 的 service tag 是 `@opencode/v2/Pty`，并作为 `locationLayer` 提供；`LocationServiceMap` 把 `Pty.locationLayer` 放进每个 location 的 base layer。[E: packages/core/src/pty.ts:120][E: packages/core/src/pty.ts:346][E: packages/core/src/location-layer.ts:72]
 
-HTTP API 在 V1 server tree 下，但仍是 Effect HttpApi，不是 Hono。`PtyApi` 与 `PtyConnectApi` 都由 `HttpApi.make(...)` 创建，并挂上 `HttpApiGroup` [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:40] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:42] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:139] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:140]。
+core PTY state 是进程内 `sessions = new Map<PtyID, Active>()`；`Active` 包含 `info/process/buffer/bufferCursor/cursor/subscribers/listeners`。[E: packages/core/src/pty.ts:28][E: packages/core/src/pty.ts:29][E: packages/core/src/pty.ts:30][E: packages/core/src/pty.ts:31][E: packages/core/src/pty.ts:32][E: packages/core/src/pty.ts:33][E: packages/core/src/pty.ts:34][E: packages/core/src/pty.ts:35][E: packages/core/src/pty.ts:130]
+
+Canonical HTTP API 在 server package 下：`PtyGroup` 使用 group name `server.pty`，被加入 V2 `Api`，`PtyHandler` 也按同一 group name 注册 handler。legacy instance tree 仍保留 `PtyApi` 与 `PtyConnectApi` 两个 Effect HttpApi compatibility surface。[E: packages/server/src/groups/pty.ts:22][E: packages/server/src/api.ts:14][E: packages/server/src/api.ts:38][E: packages/server/src/handlers/pty.ts:21][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:40][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:42][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:139][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:140]
 
 ## 数据模型
 
 | 实体 | 字段 | 说明 | 证据 |
 |---|---|---|---|
-| `Pty.Info` | `id`, `title`, `command`, `args`, `cwd`, `status`, `pid` | 对外 PTY session snapshot | [E: packages/core/src/pty.ts:46] [E: packages/core/src/pty.ts:47] [E: packages/core/src/pty.ts:48] [E: packages/core/src/pty.ts:49] [E: packages/core/src/pty.ts:50] [E: packages/core/src/pty.ts:51] [E: packages/core/src/pty.ts:53] |
-| `Pty.CreateInput` | `command?`, `args?`, `cwd?`, `title?`, `env?` | HTTP create payload；handler 会 prepare 成 `PreparedCreate` | [E: packages/core/src/pty.ts:59] [E: packages/core/src/pty.ts:60] [E: packages/core/src/pty.ts:61] [E: packages/core/src/pty.ts:62] [E: packages/core/src/pty.ts:63] |
-| `Pty.UpdateInput` | `title?`, `size?{rows,cols}` | 更新 title 或 resize | [E: packages/core/src/pty.ts:77] [E: packages/core/src/pty.ts:78] [E: packages/core/src/pty.ts:80] [E: packages/core/src/pty.ts:81] |
-| `PtyTicket.ConnectToken` | `ticket`, `expires_in` | WebSocket connect token payload | [E: packages/core/src/pty/ticket.ts:13] [E: packages/core/src/pty/ticket.ts:14] |
-| `PtyID` | startsWith `"pty"` | PTY id brand，`ascending()` 生成 | [E: packages/core/src/pty/schema.ts:5] |
+| `Pty.Info` | `id`, `title`, `command`, `args`, `cwd`, `status`, `pid`, `exitCode?` | 对外 PTY session snapshot | [E: packages/core/src/pty.ts:38][E: packages/core/src/pty.ts:40][E: packages/core/src/pty.ts:41][E: packages/core/src/pty.ts:42][E: packages/core/src/pty.ts:43][E: packages/core/src/pty.ts:44][E: packages/core/src/pty.ts:46][E: packages/core/src/pty.ts:48] |
+| `Pty.CreateInput` | `command?`, `args?`, `cwd?`, `title?`, `env?` | HTTP create payload；core now handles default shell/env normalization | [E: packages/core/src/pty.ts:53][E: packages/core/src/pty.ts:54][E: packages/core/src/pty.ts:55][E: packages/core/src/pty.ts:56][E: packages/core/src/pty.ts:57][E: packages/core/src/pty.ts:58] |
+| `Pty.UpdateInput` | `title?`, `size?{rows,cols}` | 更新 title 或 resize | [E: packages/core/src/pty.ts:63][E: packages/core/src/pty.ts:64][E: packages/core/src/pty.ts:65][E: packages/core/src/pty.ts:67][E: packages/core/src/pty.ts:68] |
+| `Pty.AttachInput` | `cursor?`, `onData`, `onEnd` | transport-free attach API，server route adapts it to WebSocket | [E: packages/core/src/pty.ts:75][E: packages/core/src/pty.ts:77][E: packages/core/src/pty.ts:79][E: packages/core/src/pty.ts:81] |
+| `PtyTicket.ConnectToken` | `ticket`, `expires_in` | WebSocket connect token payload | [E: packages/core/src/pty/ticket.ts:13][E: packages/core/src/pty/ticket.ts:14] |
 
-## Runtime adapter
+## Runtime Adapter
 
-`packages/core/src/pty/pty.ts` 定义统一 `Proc` 接口：`pid`、`onData`、`onExit`、`write`、`resize`、`kill` [E: packages/core/src/pty/pty.ts:19] [E: packages/core/src/pty/pty.ts:20] [E: packages/core/src/pty/pty.ts:21] [E: packages/core/src/pty/pty.ts:22] [E: packages/core/src/pty/pty.ts:23] [E: packages/core/src/pty/pty.ts:24]。Bun runtime adapter 从 `bun-pty` import `spawn`，Node adapter 从 `@lydell/node-pty` import `spawn`，两者都包装成同一个 `Proc` 形状 [E: packages/core/src/pty/pty.bun.ts:1] [E: packages/core/src/pty/pty.bun.ts:6] [E: packages/core/src/pty/pty.bun.ts:9] [E: packages/core/src/pty/pty.bun.ts:10] [E: packages/core/src/pty/pty.bun.ts:13] [E: packages/core/src/pty/pty.bun.ts:16] [E: packages/core/src/pty/pty.bun.ts:19] [E: packages/core/src/pty/pty.bun.ts:22] [E: packages/core/src/pty/pty.node.ts:1] [E: packages/core/src/pty/pty.node.ts:6] [E: packages/core/src/pty/pty.node.ts:9] [E: packages/core/src/pty/pty.node.ts:10] [E: packages/core/src/pty/pty.node.ts:13] [E: packages/core/src/pty/pty.node.ts:16] [E: packages/core/src/pty/pty.node.ts:19] [E: packages/core/src/pty/pty.node.ts:22]。
+`packages/core/src/pty/pty.ts` 定义统一 `Proc` 接口：`pid`、`onData`、`onExit`、`write`、`resize`、`kill`。[E: packages/core/src/pty/pty.ts:19][E: packages/core/src/pty/pty.ts:20][E: packages/core/src/pty/pty.ts:21][E: packages/core/src/pty/pty.ts:22][E: packages/core/src/pty/pty.ts:23][E: packages/core/src/pty/pty.ts:24]
+
+Bun runtime adapter 从 `bun-pty` import `spawn`，Node adapter 从 `@lydell/node-pty` import `spawn`，两者都包装成同一个 `Proc` 形状。[E: packages/core/src/pty/pty.bun.ts:1][E: packages/core/src/pty/pty.bun.ts:6][E: packages/core/src/pty/pty.bun.ts:9][E: packages/core/src/pty/pty.node.ts:1][E: packages/core/src/pty/pty.node.ts:6][E: packages/core/src/pty/pty.node.ts:9]
 
 ## Core 控制流
 
-1. `create(input)` 生成 `PtyID.ascending()`，动态 import `#pty` adapter，并调用 `spawn(input.command, input.args, { name: "xterm-256color", cwd, env })` [E: packages/core/src/pty.ts:179] [E: packages/core/src/pty.ts:181] [E: packages/core/src/pty.ts:183] [E: packages/core/src/pty.ts:184] [E: packages/core/src/pty.ts:185] [E: packages/core/src/pty.ts:186]。
-2. session info 初始 status 是 `"running"`，pid 来自 proc.pid；Windows ConPTY 可能在 spawn 时 pid 为 0，schema 允许 NonNegativeInt [E: packages/core/src/pty.ts:53] [E: packages/core/src/pty.ts:195] [E: packages/core/src/pty.ts:196]。
-3. `proc.onData` 对每个 chunk 增加 cursor，发送给所有 readyState 1 的 subscriber，并追加到 buffer；buffer 超过 2MiB 时从头裁掉 excess 并增加 `bufferCursor` [E: packages/core/src/pty.ts:210] [E: packages/core/src/pty.ts:217] [E: packages/core/src/pty.ts:222] [E: packages/core/src/pty.ts:223] [E: packages/core/src/pty.ts:224] [E: packages/core/src/pty.ts:225] [E: packages/core/src/pty.ts:226]。
-4. `proc.onExit` 把 status 设为 `"exited"`，publish `pty.exited`，然后 `removeSession(id)`，后者会 teardown、kill、close subscribers、publish `pty.deleted` [E: packages/core/src/pty.ts:228] [E: packages/core/src/pty.ts:233] [E: packages/core/src/pty.ts:234] [E: packages/core/src/pty.ts:235] [E: packages/core/src/pty.ts:132] [E: packages/core/src/pty.ts:134] [E: packages/core/src/pty.ts:136] [E: packages/core/src/pty.ts:139] [E: packages/core/src/pty.ts:160] [E: packages/core/src/pty.ts:161]。
-5. `update` 可修改 title 和 resize；`resize` 和 `write` 只在 session running 时作用于 process [E: packages/core/src/pty.ts:244] [E: packages/core/src/pty.ts:246] [E: packages/core/src/pty.ts:247] [E: packages/core/src/pty.ts:254] [E: packages/core/src/pty.ts:259]。
-6. `connect(id, ws, cursor?)` 注册 subscriber，按 cursor 回放 buffer 片段，再发送一个 control frame `0x00 + JSON.stringify({ cursor: end })` [E: packages/core/src/pty.ts:267] [E: packages/core/src/pty.ts:271] [E: packages/core/src/pty.ts:272] [E: packages/core/src/pty.ts:281] [E: packages/core/src/pty.ts:289]。
+1. `create(input)` 生成 `PtyID.ascending()`，选择 command：payload command 优先，否则 `Shell.preferred(Config.latest(config.entries(), "shell"))`；login shell 会追加 `-l`，cwd 默认当前 location directory。[E: packages/core/src/pty.ts:195][E: packages/core/src/pty.ts:196][E: packages/core/src/pty.ts:197][E: packages/core/src/pty.ts:198][E: packages/core/src/pty.ts:199]
+2. core env overlay order 是 `process.env`、`input.env`、`TERM=xterm-256color`、`OPENCODE_TERMINAL=1`；Windows 还设置 `LC_ALL/LC_CTYPE/LANG=C.UTF-8`。[E: packages/core/src/pty.ts:200][E: packages/core/src/pty.ts:201][E: packages/core/src/pty.ts:202][E: packages/core/src/pty.ts:203][E: packages/core/src/pty.ts:204][E: packages/core/src/pty.ts:206][E: packages/core/src/pty.ts:207][E: packages/core/src/pty.ts:208][E: packages/core/src/pty.ts:209]
+3. core 动态 import `#pty` adapter，调用 `spawn(command, args, { name: "xterm-256color", cwd, env })`，并把 initial info status 设为 `"running"`。[E: packages/core/src/pty.ts:212][E: packages/core/src/pty.ts:213][E: packages/core/src/pty.ts:214][E: packages/core/src/pty.ts:220]
+4. `proc.onData` 增加 absolute cursor，给 active subscribers 发送 chunk；inactive subscribers 先积累 pending；retained buffer 超过 2MiB 时从头裁掉并推进 `bufferCursor`。[E: packages/core/src/pty.ts:234][E: packages/core/src/pty.ts:235][E: packages/core/src/pty.ts:237][E: packages/core/src/pty.ts:242][E: packages/core/src/pty.ts:247][E: packages/core/src/pty.ts:248][E: packages/core/src/pty.ts:249][E: packages/core/src/pty.ts:250][E: packages/core/src/pty.ts:251]
+5. `proc.onExit` 把 session 设为 `"exited"`、保存 exitCode、通知 subscribers、发布 `pty.exited`，并用 `EXITED_LIMIT=25` 限制 retained exited sessions。[E: packages/core/src/pty.ts:13][E: packages/core/src/pty.ts:253][E: packages/core/src/pty.ts:255][E: packages/core/src/pty.ts:256][E: packages/core/src/pty.ts:257][E: packages/core/src/pty.ts:262][E: packages/core/src/pty.ts:263]
+6. `attach(id, { cursor })` 在 running session 上注册 subscriber；`cursor=-1` 从当前 end tail，safe integer cursor 从 absolute cursor 回放，未传 cursor 回放 retained buffer 起点；返回 replay、cursor、write、activate、detach。[E: packages/core/src/pty.ts:289][E: packages/core/src/pty.ts:291][E: packages/core/src/pty.ts:301][E: packages/core/src/pty.ts:302][E: packages/core/src/pty.ts:305][E: packages/core/src/pty.ts:307][E: packages/core/src/pty.ts:310][E: packages/core/src/pty.ts:317][E: packages/core/src/pty.ts:318][E: packages/core/src/pty.ts:319][E: packages/core/src/pty.ts:322][E: packages/core/src/pty.ts:333]
 
-## HTTP API 与 WebSocket
+## WebSocket Protocol
 
-`PtyApi` 暴露 `GET /pty/shells`、`GET /pty`、`POST /pty`、`GET /pty/:ptyID`、`PUT /pty/:ptyID`、`DELETE /pty/:ptyID`、`POST /pty/:ptyID/connect-token` [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:44] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:54] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:64] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:76] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:88] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:101] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:113]。这些 endpoint 使用 `InstanceContextMiddleware`、`WorkspaceRoutingMiddleware`、`Authorization` [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:127] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:128] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:129]。
+`PtyProtocol` 是 PTY WebSocket wire protocol helper。Replay chunk 上限是 64 KiB；`chunks(data)` 按上限切 string；`metaFrame(cursor)` 发送首字节 `0` 加 JSON `{"cursor": <absolute cursor>}` 的 Uint8Array。[E: packages/core/src/pty/protocol.ts:13][E: packages/core/src/pty/protocol.ts:15][E: packages/core/src/pty/protocol.ts:16][E: packages/core/src/pty/protocol.ts:18][E: packages/core/src/pty/protocol.ts:19][E: packages/core/src/pty/protocol.ts:23][E: packages/core/src/pty/protocol.ts:25]
 
-`PtyConnectApi` 暴露 raw `GET /pty/:ptyID/connect` WebSocket route，并使用 `PtyConnectAuthorization` [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:144] [E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:171]。handler 先检查 PTY session 存在，不存在返回空 404；再 decode cursor query，schema decode 失败才返回 400，非法 numeric cursor 会被转成 `undefined` 后按默认回放处理 [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:182] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:186] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:188] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:189] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:197] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:201]。如果 query 带 `ticket`，handler 还校验 origin 并 `tickets.consume(...)`，无效返回 403 [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:190] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:193] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:195]。
+Inbound `decodeInput(message)` 对 string 原样返回，对 ArrayBuffer/Uint8Array 用 fatal UTF-8 decoder；decode 失败返回 undefined，server-package 和 legacy handlers 都只把 defined input 写入 attachment。[E: packages/core/src/pty/protocol.ts:30][E: packages/core/src/pty/protocol.ts:31][E: packages/core/src/pty/protocol.ts:33][E: packages/core/src/pty/protocol.ts:35][E: packages/server/src/handlers/pty.ts:206][E: packages/server/src/handlers/pty.ts:207][E: packages/server/src/handlers/pty.ts:208][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:260][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:261][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:262]
 
-connect 成功后，handler `ctx.request.upgrade`，注册 `WebSocketTracker`，构造 adapter，把 core `Pty.connect` 返回的 handler 交给 `socket.runRaw((message) => handlePtyInput(handler, message))` [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:202] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:212] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:236] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:247]。`handlePtyInput` 对 string 直接转发，对 binary 用 fatal UTF-8 decoder，decode 失败静默忽略 [E: packages/core/src/pty/input.ts:9] [E: packages/core/src/pty/input.ts:10] [E: packages/core/src/pty/input.ts:13] [E: packages/core/src/pty/input.ts:17] [E: packages/core/src/pty/input.ts:20]。
+connect handler 升级 WebSocket 后，用一个 queue 顺序发送 replay chunks、meta frame、live output 和 close frame；`attachment.activate()` 在 replay/meta 入队后才启动 live delivery。server-package handler 和 legacy handler 都遵循这条 ordering。[E: packages/server/src/handlers/pty.ts:175][E: packages/server/src/handlers/pty.ts:192][E: packages/server/src/handlers/pty.ts:193][E: packages/server/src/handlers/pty.ts:194][E: packages/server/src/handlers/pty.ts:204][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:225][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:226][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:244][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:245][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:248]
 
-## Connect ticket
+## HTTP API 与 Plugin Env
 
-`PtyTicket` 默认 TTL 是 60 秒，capacity 是 10,000 [E: packages/core/src/pty/ticket.ts:9] [E: packages/core/src/pty/ticket.ts:10]。ticket scope 包含 `ptyID`、可选 `directory`、可选 `workspaceID`，`matches` 要求三者都相等 [E: packages/core/src/pty/ticket.ts:17] [E: packages/core/src/pty/ticket.ts:18] [E: packages/core/src/pty/ticket.ts:19] [E: packages/core/src/pty/ticket.ts:20] [E: packages/core/src/pty/ticket.ts:30] [E: packages/core/src/pty/ticket.ts:32]。`issue` 用 `crypto.randomUUID()` 生成 ticket并 `Cache.set`；`consume` 用 `Cache.invalidateWhen` 原子匹配并删除 ticket [E: packages/core/src/pty/ticket.ts:47] [E: packages/core/src/pty/ticket.ts:48] [E: packages/core/src/pty/ticket.ts:52]。
+`PtyGroup` 暴露 canonical `GET /api/pty`、`POST /api/pty`、`GET/PUT/DELETE /api/pty/:ptyID`、`POST /api/pty/:ptyID/connect-token` 和 `GET /api/pty/:ptyID/connect`。[E: packages/server/src/groups/pty.ts:24][E: packages/server/src/groups/pty.ts:38][E: packages/server/src/groups/pty.ts:53][E: packages/server/src/groups/pty.ts:69][E: packages/server/src/groups/pty.ts:86][E: packages/server/src/groups/pty.ts:102][E: packages/server/src/groups/pty.ts:120]
 
-token endpoint 还要求请求 header `x-opencode-ticket: 1` 且 origin 合法，否则返回 `PtyForbiddenError` [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:132] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:133]。共享常量定义了 query name `"ticket"` 和 header name/value [E: packages/opencode/src/server/shared/pty-ticket.ts:1] [E: packages/opencode/src/server/shared/pty-ticket.ts:2] [E: packages/opencode/src/server/shared/pty-ticket.ts:3]。
+server-package list/get 直接返回 `Pty.Service.list()` / `Pty.Service.get()`,所以它包含 retained exited sessions 和 exit code；这和 group OpenAPI description 一致。[E: packages/server/src/groups/pty.ts:31][E: packages/server/src/groups/pty.ts:33][E: packages/server/src/groups/pty.ts:62][E: packages/server/src/groups/pty.ts:64][E: packages/server/src/handlers/pty.ts:29][E: packages/server/src/handlers/pty.ts:31][E: packages/server/src/handlers/pty.ts:54][E: packages/server/src/handlers/pty.ts:58]
 
-## Create preparation
+legacy `PtyApi` 暴露 `GET /pty/shells`、`GET /pty`、`POST /pty`、`GET /pty/:ptyID`、`PUT /pty/:ptyID`、`DELETE /pty/:ptyID`、`POST /pty/:ptyID/connect-token`。[E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:44][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:54][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:64][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:76][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:88][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:101][E: packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts:113]
 
-HTTP create handler 不直接把 `Pty.CreateInput` 传给 core；它先调用 `PtyPreparation.prepareCreate`，该 helper 选择 config shell 或 preferred shell，login shell 会追加 `-l`，cwd 默认 instance directory，并触发 plugin `"shell.env"` 后合并 env，最后设置 `TERM=xterm-256color` 与 `OPENCODE_TERMINAL=1` [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:69] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:74] [E: packages/opencode/src/pty-preparation.ts:13] [E: packages/opencode/src/pty-preparation.ts:14] [E: packages/opencode/src/pty-preparation.ts:15] [E: packages/opencode/src/pty-preparation.ts:16] [E: packages/opencode/src/pty-preparation.ts:18] [E: packages/opencode/src/pty-preparation.ts:19] [E: packages/opencode/src/pty-preparation.ts:20] [E: packages/opencode/src/pty-preparation.ts:21] [E: packages/opencode/src/pty-preparation.ts:22]。
+legacy instance API intentionally hides exited sessions: list filters status `"running"` and get maps non-running status to `PtyNotFoundError`, while core still retains exited sessions up to `EXITED_LIMIT`。[E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:64][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:66][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:94][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:95][E: packages/core/src/pty.ts:13]
+
+server-package create handler calculates cwd from payload or location directory, merges payload env with `PtyEnvironment.Service.get({ directory, cwd })`, then calls core `Pty.create()`；core then overlays process env and terminal vars。[E: packages/server/src/handlers/pty.ts:35][E: packages/server/src/handlers/pty.ts:39][E: packages/server/src/handlers/pty.ts:45][E: packages/server/src/handlers/pty.ts:47][E: packages/server/src/pty-environment.ts:5][E: packages/server/src/pty-environment.ts:6][E: packages/core/src/pty.ts:200]
+
+legacy HTTP create handler calculates cwd from payload or instance directory, triggers V1 plugin hook `"shell.env"` with `{ cwd }`, then passes payload env plus plugin env into core `Pty.create()`。[E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:69][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:70][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:71][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:74][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:78]
+
+`PluginPtyEnvironment.layer` also implements server package `PtyEnvironment.Service.get` by entering the instance for `input.directory` and triggering `"shell.env"` with `{ cwd: input.cwd }`。[E: packages/opencode/src/plugin/pty-environment.ts:8][E: packages/opencode/src/plugin/pty-environment.ts:9][E: packages/opencode/src/plugin/pty-environment.ts:14][E: packages/opencode/src/plugin/pty-environment.ts:15][E: packages/opencode/src/plugin/pty-environment.ts:18][E: packages/opencode/src/plugin/pty-environment.ts:19]
+
+## Connect Ticket
+
+`PtyTicket` 默认 TTL 是 60 秒，capacity 是 10,000。ticket scope 包含 `ptyID`、可选 `directory`、可选 `workspaceID`，consume 时要求三者匹配。[E: packages/core/src/pty/ticket.ts:9][E: packages/core/src/pty/ticket.ts:10][E: packages/core/src/pty/ticket.ts:17][E: packages/core/src/pty/ticket.ts:18][E: packages/core/src/pty/ticket.ts:19][E: packages/core/src/pty/ticket.ts:30][E: packages/core/src/pty/ticket.ts:32]
+
+token endpoint 要求请求 header `x-opencode-ticket: 1` 且 origin 合法；shared constants 定义 query name `"ticket"` 和 header name/value。[E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:144][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:146][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:149][E: packages/opencode/src/server/shared/pty-ticket.ts:1][E: packages/opencode/src/server/shared/pty-ticket.ts:2][E: packages/opencode/src/server/shared/pty-ticket.ts:3]
 
 ## Gotcha
 
-- PTY session state 是进程内 Map，不是 durable session/event-sourced history。
-- `/pty/:ptyID/connect` 的 Basic Auth skip 条件来自 `hasPtyConnectTicketURL(url)`，raw handler 再取 query ticket 并调用 `tickets.consume` 校验 [E: packages/opencode/src/server/routes/instance/httpapi/middleware/authorization.ts:143] [E: packages/opencode/src/server/shared/pty-ticket.ts:14] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:190] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:193]。
-- `cursor=-1` 表示从当前 end 开始，不回放 buffer；其它 safe integer cursor 会尝试从 buffer 中回放 [E: packages/core/src/pty.ts:272]。
-- 这个 HTTP surface 位于 V1 server tree，但它接入的是 core V2 `Pty.Service`。
+- PTY session state 是进程内 Map，不是 durable session/event-sourced history。[E: packages/core/src/pty.ts:130]
+- `/api/pty/:ptyID/connect` 的 auth skip 条件来自 server-package `hasPtyConnectTicketURL(url)`；legacy `/pty/:ptyID/connect` 也有独立的 ticket URL helper。两条 raw handler 都会取 query ticket 并调用 `tickets.consume` 校验。[E: packages/server/src/groups/pty.ts:14][E: packages/server/src/groups/pty.ts:18][E: packages/server/src/groups/pty.ts:19][E: packages/server/src/handlers/pty.ts:147][E: packages/server/src/handlers/pty.ts:150][E: packages/opencode/src/server/shared/pty-ticket.ts:13][E: packages/opencode/src/server/shared/pty-ticket.ts:14][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:195][E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:198]
+- `cursor=-1` 表示从当前 end 开始，不回放 buffer；其它 safe integer cursor 会尝试从 retained buffer 中回放。[E: packages/core/src/pty.ts:305][E: packages/core/src/pty.ts:307]
+- canonical HTTP surface 位于 `packages/server/src` `/api/pty`；legacy `/pty` surface 位于 V1 instance server tree。两者接入的都是 core V2 `Pty.Service`。
 
 ## Sources
 
 - packages/core/src/pty/
 - packages/core/src/pty.ts
+- packages/core/src/pty/protocol.ts
+- packages/core/src/shell.ts
+- packages/server/src/groups/pty.ts
+- packages/server/src/handlers/pty.ts
+- packages/server/src/pty-environment.ts
 - packages/opencode/src/server/routes/instance/httpapi/groups/pty.ts
 - packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts
-- packages/opencode/src/pty-preparation.ts
+- packages/opencode/src/plugin/pty-environment.ts
 - packages/opencode/src/server/shared/pty-ticket.ts
 
 ## 相关
 
+- [V2 路由 catalog](../../surface/server-api/v2-routes.md)
 - [V1 路由 catalog](../../surface/server-api/v1-routes.md)
 - [opencode run scrollback runtime](../tui/run-scrollback.md)
+- [V2 Core Shell Helper](core-shell-v2.md)

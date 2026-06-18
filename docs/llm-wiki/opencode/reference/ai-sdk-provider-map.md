@@ -7,7 +7,7 @@ v: v1
 source:
   - packages/opencode/src/provider/provider.ts
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 symbols:
   - BUNDLED_PROVIDERS
@@ -20,15 +20,15 @@ related:
 
 # AI SDK Provider Map
 
-本节点只描述 V1 provider registry 的 AI SDK map。V1 当前活跑 provider path 在 `packages/opencode/src/provider/provider.ts`：它从 `models.dev` catalog、config、env、auth 和 plugins 合成 provider/model 数据，再用 `BUNDLED_PROVIDERS` 或 npm dynamic import 创建 AI SDK provider instance。[E: packages/opencode/src/provider/provider.ts:1272] [E: packages/opencode/src/provider/provider.ts:1287] [E: packages/opencode/src/provider/provider.ts:1706]
+本节点只描述 V1 provider registry 的 AI SDK map。V1 当前活跑 provider path 在 `packages/opencode/src/provider/provider.ts`：它从 `models.dev` catalog、config、env、auth 和 plugins 合成 provider/model 数据，再用 `BUNDLED_PROVIDERS` 或 npm dynamic import 创建 AI SDK provider instance。[E: packages/opencode/src/provider/provider.ts:1285] [E: packages/opencode/src/provider/provider.ts:1300] [E: packages/opencode/src/provider/provider.ts:1719]
 
 ## Provider Model Schema
 
-V1 `Model` 记录含 `id/providerID/api/name/family/capabilities/cost/limit/status/options/headers/release_date/variants`。[E: packages/opencode/src/provider/provider.ts:1005] [E: packages/opencode/src/provider/provider.ts:1018] `Info` 记录含 `id/name/source/env/key/options/models`，source 只能是 `env/config/custom/api`。[E: packages/opencode/src/provider/provider.ts:1022] [E: packages/opencode/src/provider/provider.ts:1030]
+V1 `Model` 记录含 `id/providerID/api/name/family/capabilities/cost/limit/status/options/headers/release_date/variants`。[E: packages/opencode/src/provider/provider.ts:1018] [E: packages/opencode/src/provider/provider.ts:1031] `Info` 记录含 `id/name/source/env/key/options/models`，source 只能是 `env/config/custom/api`。[E: packages/opencode/src/provider/provider.ts:1035] [E: packages/opencode/src/provider/provider.ts:1043]
 
 ## Bundled Providers
 
-本 HEAD 的 `BUNDLED_PROVIDERS` 明确列出 24 个 npm specifier。命中 bundled loader 时，`resolveSDK` 直接 dynamic import bundled factory 并缓存 SDK；未命中时才调用 `Npm.add(model.api.npm)` 安装/解析外部 package。[E: packages/opencode/src/provider/provider.ts:107] [E: packages/opencode/src/provider/provider.ts:133] [E: packages/opencode/src/provider/provider.ts:1706] [E: packages/opencode/src/provider/provider.ts:1717]
+本 HEAD 的 `BUNDLED_PROVIDERS` 明确列出 24 个 npm specifier。命中 bundled loader 时，`resolveSDK` 直接 dynamic import bundled factory 并缓存 SDK；未命中时才调用 `Npm.add(model.api.npm)` 安装/解析外部 package。[E: packages/opencode/src/provider/provider.ts:107] [E: packages/opencode/src/provider/provider.ts:133] [E: packages/opencode/src/provider/provider.ts:1719] [E: packages/opencode/src/provider/provider.ts:1730]
 
 | NPM specifier | Factory | 特殊说明 |
 | --- | --- | --- |
@@ -40,7 +40,7 @@ V1 `Model` 记录含 `id/providerID/api/name/family/capabilities/cost/limit/stat
 | `@ai-sdk/google-vertex` | `createVertex` | Vertex loader；custom loader injects ADC fetch/token。[E: packages/opencode/src/provider/provider.ts:113] [E: packages/opencode/src/provider/provider.ts:519] |
 | `@ai-sdk/google-vertex/anthropic` | `createVertexAnthropic` | Vertex Anthropic loader。[E: packages/opencode/src/provider/provider.ts:114] |
 | `@ai-sdk/openai` | `createOpenAI` | OpenAI custom loader uses responses model and default header timeout。[E: packages/opencode/src/provider/provider.ts:116] [E: packages/opencode/src/provider/provider.ts:205] |
-| `@ai-sdk/openai-compatible` | `createOpenAICompatible` | compatible providers default `includeUsage=true` unless disabled。[E: packages/opencode/src/provider/provider.ts:117] [E: packages/opencode/src/provider/provider.ts:1630] |
+| `@ai-sdk/openai-compatible` | `createOpenAICompatible` | compatible providers default `includeUsage=true` unless disabled。[E: packages/opencode/src/provider/provider.ts:117] [E: packages/opencode/src/provider/provider.ts:1643] |
 | `@openrouter/ai-sdk-provider` | `createOpenRouter` | custom loader adds `HTTP-Referer` and `X-Title` headers。[E: packages/opencode/src/provider/provider.ts:118] [E: packages/opencode/src/provider/provider.ts:454] |
 | `@ai-sdk/xai` | `createXai` | xAI custom loader uses responses model。[E: packages/opencode/src/provider/provider.ts:119] [E: packages/opencode/src/provider/provider.ts:213] |
 | `@ai-sdk/mistral` | `createMistral` | bundled only, no custom entry in this file。[E: packages/opencode/src/provider/provider.ts:120] |
@@ -84,18 +84,18 @@ V1 `Model` 记录含 `id/providerID/api/name/family/capabilities/cost/limit/stat
 | `cloudflare-ai-gateway` | Requires account ID and gateway ID unless baseURL configured; token from `CLOUDFLARE_API_TOKEN`/`CF_AIG_TOKEN`/auth; uses official `ai-gateway-provider` unified API。[E: packages/opencode/src/provider/provider.ts:754] [E: packages/opencode/src/provider/provider.ts:780] [E: packages/opencode/src/provider/provider.ts:813] |
 | `cerebras` | Adds `X-Cerebras-3rd-Party-Integration: opencode`。[E: packages/opencode/src/provider/provider.ts:830] [E: packages/opencode/src/provider/provider.ts:835] |
 | `kilo` | Adds referer/title headers。[E: packages/opencode/src/provider/provider.ts:839] [E: packages/opencode/src/provider/provider.ts:844] |
-| `snowflake-cortex` | Requires account and PAT from env/auth/options; baseURL is Snowflake Cortex URL; fetch rewrites `max_tokens` to `max_completion_tokens` and normalizes streaming empty role。[E: packages/opencode/src/provider/provider.ts:849] [E: packages/opencode/src/provider/provider.ts:872] [E: packages/opencode/src/provider/provider.ts:879] |
+| `snowflake-cortex` | Requires account and PAT from env/auth/options; baseURL is Snowflake Cortex URL; fetch rewrites `max_tokens` to `max_completion_tokens` and normalizes streaming empty role。[E: packages/opencode/src/provider/provider.ts:849] [E: packages/opencode/src/provider/provider.ts:878] [E: packages/opencode/src/provider/provider.ts:880] [E: packages/opencode/src/provider/provider.ts:890] |
 
 ## Provider Assembly Control Flow
 
-1. State initialization reads config, models.dev catalog, plugins, auth and env services。[E: packages/opencode/src/provider/provider.ts:1275] [E: packages/opencode/src/provider/provider.ts:1287]
-2. Plugin provider model hooks run before config provider extension so plugin config hooks can affect `cfg.provider` interpretation。[E: packages/opencode/src/provider/provider.ts:1324] [E: packages/opencode/src/provider/provider.ts:1337]
-3. Config providers extend or create database entries; custom model fields merge with existing catalog model and recompute variants through `ProviderTransform.variants`。[E: packages/opencode/src/provider/provider.ts:1365] [E: packages/opencode/src/provider/provider.ts:1448]
-4. Env keys create `source:"env"` provider entries and API auth storage creates `source:"api"` entries。[E: packages/opencode/src/provider/provider.ts:1459] [E: packages/opencode/src/provider/provider.ts:1472]
-5. Custom loaders run; if `autoload` or provider already exists, registry records `getModel/vars/discoverModels/options` and merges provider patch。[E: packages/opencode/src/provider/provider.ts:1505] [E: packages/opencode/src/provider/provider.ts:1513]
-6. Disabled/enabled provider filters and model blacklist/whitelist/deprecated/alpha filtering are applied before final state returns。[E: packages/opencode/src/provider/provider.ts:1328] [E: packages/opencode/src/provider/provider.ts:1547] [E: packages/opencode/src/provider/provider.ts:1568]
-7. `resolveSDK` applies baseURL variable substitution, provider key as apiKey, model headers, fetch timeout wrapping, SDK cache key, bundled loader or dynamic npm import。[E: packages/opencode/src/provider/provider.ts:1634] [E: packages/opencode/src/provider/provider.ts:1656] [E: packages/opencode/src/provider/provider.ts:1679] [E: packages/opencode/src/provider/provider.ts:1721]
-8. `getLanguage` caches model language objects by `${providerID}/${model.id}` and uses custom `modelLoaders[providerID]` if present, otherwise `sdk.languageModel(model.api.id)`。[E: packages/opencode/src/provider/provider.ts:1771] [E: packages/opencode/src/provider/provider.ts:1781] [E: packages/opencode/src/provider/provider.ts:1791]
+1. State initialization reads config, models.dev catalog, plugins, auth and env services。[E: packages/opencode/src/provider/provider.ts:1288] [E: packages/opencode/src/provider/provider.ts:1300]
+2. Plugin provider model hooks run before config provider extension so plugin config hooks can affect `cfg.provider` interpretation。[E: packages/opencode/src/provider/provider.ts:1337] [E: packages/opencode/src/provider/provider.ts:1350]
+3. Config providers extend or create database entries; custom model fields merge with existing catalog model and recompute variants through `ProviderTransform.variants`。[E: packages/opencode/src/provider/provider.ts:1378] [E: packages/opencode/src/provider/provider.ts:1461]
+4. Env keys create `source:"env"` provider entries and API auth storage creates `source:"api"` entries。[E: packages/opencode/src/provider/provider.ts:1472] [E: packages/opencode/src/provider/provider.ts:1485]
+5. Custom loaders run; if `autoload` or provider already exists, registry records `getModel/vars/discoverModels/options` and merges provider patch。[E: packages/opencode/src/provider/provider.ts:1518] [E: packages/opencode/src/provider/provider.ts:1526]
+6. Disabled/enabled provider filters and model blacklist/whitelist/deprecated/alpha filtering are applied before final state returns。[E: packages/opencode/src/provider/provider.ts:1341] [E: packages/opencode/src/provider/provider.ts:1560] [E: packages/opencode/src/provider/provider.ts:1581]
+7. `resolveSDK` applies baseURL variable substitution, provider key as apiKey, model headers, fetch timeout wrapping, SDK cache key, bundled loader or dynamic npm import。[E: packages/opencode/src/provider/provider.ts:1647] [E: packages/opencode/src/provider/provider.ts:1669] [E: packages/opencode/src/provider/provider.ts:1692] [E: packages/opencode/src/provider/provider.ts:1734]
+8. `getLanguage` caches model language objects by `${providerID}/${model.id}` and uses custom `modelLoaders[providerID]` if present, otherwise `sdk.languageModel(model.api.id)`。[E: packages/opencode/src/provider/provider.ts:1784] [E: packages/opencode/src/provider/provider.ts:1794] [E: packages/opencode/src/provider/provider.ts:1804]
 
 ## Sources
 

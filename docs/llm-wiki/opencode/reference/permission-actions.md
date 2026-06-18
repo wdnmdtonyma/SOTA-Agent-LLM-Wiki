@@ -20,7 +20,7 @@ symbols:
   - Permission.Reply
   - PermissionSaved.Info
 evidence: explicit
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 这份节点是给检索 agent 用的权限 action 逐实例总账：V1 写的是 config key 与 runtime `permission` 名称，V2 写的是 `action/resources/save/effect/reply` 词汇。
@@ -112,7 +112,7 @@ V2 builtins layer 当前装配 `apply_patch`、`bash`、`edit`、`glob`、`grep`
 ## 设计动机与坑位
 
 - V2 把 permission 名称改成 action/resource/effect，是为了让一个请求可以携带多个 resource 并在 `evaluateInput` 中统一折叠为单个 effect；`write`、`edit`、`apply_patch` 都复用 `edit` action 是工具层的事实。[E: packages/core/src/permission.ts:38][E: packages/core/src/permission.ts:185][E: packages/core/src/permission.ts:186][E: packages/core/src/tool/edit.ts:152][E: packages/core/src/tool/write.ts:78][E: packages/core/src/tool/apply-patch.ts:104][I]
-- `packages/core/src/connector.ts` 是 V2 本地凭据注册表，不是云连接器；权限保存表的 `psv_` ID 和 connector/credential 的 ID 不应混淆。[I]
+- V2 Integration/Credential 是本地凭据注册表，不是云连接器；权限保存表的 `psv_` ID 和 integration/credential 的 ID 不应混淆。[I]
 - `packages/opencode/src/session/message-v2.ts` 属于 V1 与 AI SDK 消息转换层，不是本节点所说的 V2 permission/event-sourced session core；该文件直接 import V1 `Session` 与 AI SDK `convertToModelMessages`。[E: packages/opencode/src/session/message-v2.ts:3][E: packages/opencode/src/session/message-v2.ts:23]
 
 ## Sources

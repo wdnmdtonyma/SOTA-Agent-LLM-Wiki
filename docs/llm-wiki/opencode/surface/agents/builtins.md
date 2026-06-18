@@ -10,7 +10,7 @@ schema: node
 source:
   - packages/opencode/src/agent/agent.ts
   - packages/opencode/src/agent/prompt/
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 ---
 

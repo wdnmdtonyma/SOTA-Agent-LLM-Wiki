@@ -21,7 +21,7 @@ related:
   - peripheral.effect-sqlite
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V2 数据库是 `packages/core/src/database/` 中的 Effect-native Drizzle/SQLite service：`@opencode/v2/storage/Database` 提供 Effect Drizzle client，启动时设置 SQLite PRAGMAs 并应用 TypeScript migrations。
@@ -58,7 +58,7 @@ updated: 92c70c9c3
 | `DatabaseShape` | `DatabaseShape` 是 `EffectDrizzleSqlite.makeWithDefaults()` 的 success type。 | [E: packages/core/src/database/database.ts:13][E: packages/core/src/database/database.ts:14] |
 | `Sqlite.Native` | native SQLite handle context tag。 | [E: packages/core/src/database/sqlite.ts:7] |
 | `Sqlite.Drizzle` | Drizzle client context tag，type 为 `ReturnType<typeof drizzle>`。 | [E: packages/core/src/database/sqlite.ts:4][E: packages/core/src/database/sqlite.ts:6][E: packages/core/src/database/sqlite.ts:8] |
-| `DatabaseMigration.Migration` | migration record 是 `{ id: string; up(tx): Effect<void> }`。 | [E: packages/core/src/database/migration.ts:12][E: packages/core/src/database/migration.ts:13][E: packages/core/src/database/migration.ts:14] |
+| `DatabaseMigration.Migration` | migration record 是 `{ id: string; up(tx): Effect<void> }`。 | [E: packages/core/src/database/migration.ts:13][E: packages/core/src/database/migration.ts:14][E: packages/core/src/database/migration.ts:15] |
 | `Timestamps` | shared SQL fragment 定义 `time_created` default `Date.now()` 与 `time_updated` on-update `Date.now()`。 | [E: packages/core/src/database/schema.sql.ts:4][E: packages/core/src/database/schema.sql.ts:6][E: packages/core/src/database/schema.sql.ts:7][E: packages/core/src/database/schema.sql.ts:9] |
 
 ## Runtime 控制流
@@ -92,13 +92,13 @@ updated: 92c70c9c3
 
 ## Migration engine
 
-1. `DatabaseMigration.apply(db)` 用 module-level semaphore lock 包住 `applyOnly(db, migrations)`，避免同进程并发 apply。[E: packages/core/src/database/migration.ts:10][E: packages/core/src/database/migration.ts:17][E: packages/core/src/database/migration.ts:18]
-2. `applyOnly` 先创建 `migration(id TEXT PRIMARY KEY, time_completed INTEGER NOT NULL)` journal 表。[E: packages/core/src/database/migration.ts:21][E: packages/core/src/database/migration.ts:23][E: packages/core/src/database/migration.ts:24]
-3. 已完成 migration IDs 从 `migration` 表读取成 Set。[E: packages/core/src/database/migration.ts:26][E: packages/core/src/database/migration.ts:27]
-4. 如果新 journal 为空，但存在旧 Drizzle `__drizzle_migrations` 表，migration engine 会把旧 journal 的 `name` seed 到新 `migration` 表；这样做避免 replay old SQL migrations 是由 source comment 和 seed 行为推断出的兼容动机。[E: packages/core/src/database/migration.ts:29][E: packages/core/src/database/migration.ts:33][E: packages/core/src/database/migration.ts:36][E: packages/core/src/database/migration.ts:37][E: packages/core/src/database/migration.ts:38][I]
-5. 对每个 input migration，如果 ID 已完成则 skip；否则在 transaction 中执行 `migration.up(tx)`，除非 `OPENCODE_SKIP_MIGRATIONS` 已设置。[E: packages/core/src/database/migration.ts:47][E: packages/core/src/database/migration.ts:48][E: packages/core/src/database/migration.ts:49][E: packages/core/src/database/migration.ts:51]
-6. 每个 migration transaction 最后插入 journal row，记录 `id` 和 `Date.now()`。[E: packages/core/src/database/migration.ts:52][E: packages/core/src/database/migration.ts:53]
-7. `migration.gen.ts` 用 generated `Promise.all([...imports])` 聚合 migration modules；当前 import list 从 `20260127222353_familiar_lady_ursula` 到 `20260611035744_credential`，按文件逐项计数为 33 个 migration modules。[E: packages/core/src/database/migration.gen.ts:4][E: packages/core/src/database/migration.gen.ts:5][E: packages/core/src/database/migration.gen.ts:37][I]
+1. `DatabaseMigration.apply(db)` 用 module-level semaphore lock 包住 `applyOnly(db, migrations)`，避免同进程并发 apply。[E: packages/core/src/database/migration.ts:11][E: packages/core/src/database/migration.ts:18][E: packages/core/src/database/migration.ts:18]
+2. `applyOnly` 先创建 `migration(id TEXT PRIMARY KEY, time_completed INTEGER NOT NULL)` journal 表。[E: packages/core/src/database/migration.ts:43][E: packages/core/src/database/migration.ts:45][E: packages/core/src/database/migration.ts:46]
+3. 已完成 migration IDs 从 `migration` 表读取成 Set。[E: packages/core/src/database/migration.ts:48][E: packages/core/src/database/migration.ts:49]
+4. 如果新 journal 为空，但存在旧 Drizzle `__drizzle_migrations` 表，migration engine 会把旧 journal 的 `name` seed 到新 `migration` 表；这样做避免 replay old SQL migrations 是由 source comment 和 seed 行为推断出的兼容动机。[E: packages/core/src/database/migration.ts:51][E: packages/core/src/database/migration.ts:55][E: packages/core/src/database/migration.ts:58][E: packages/core/src/database/migration.ts:59][E: packages/core/src/database/migration.ts:60][I]
+5. 对每个 input migration，如果 ID 已完成则 skip；否则在 transaction 中执行 `migration.up(tx)`，除非 `OPENCODE_SKIP_MIGRATIONS` 已设置。[E: packages/core/src/database/migration.ts:69][E: packages/core/src/database/migration.ts:70][E: packages/core/src/database/migration.ts:71][E: packages/core/src/database/migration.ts:51]
+6. 每个 migration transaction 最后插入 journal row，记录 `id` 和 `Date.now()`。[E: packages/core/src/database/migration.ts:74][E: packages/core/src/database/migration.ts:75]
+7. `migration.gen.ts` 用 generated `Promise.all([...imports])` 聚合 migration modules；当前 import list 从 `20260127222353_familiar_lady_ursula` 到 `20260611035744_credential`，按文件逐项计数为 33 个 migration modules。[E: packages/core/src/database/migration.gen.ts:4][E: packages/core/src/database/migration.gen.ts:5][E: packages/core/src/database/migration.gen.ts:39][I]
 
 ## Table families
 

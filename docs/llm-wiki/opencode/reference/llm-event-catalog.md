@@ -8,7 +8,7 @@ source:
   - packages/llm/src/schema/events.ts
   - packages/llm/src/schema/errors.ts
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 symbols:
   - LLMEvent

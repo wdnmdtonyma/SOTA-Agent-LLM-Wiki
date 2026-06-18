@@ -14,7 +14,7 @@ symbols: [EffectDrizzleSqlite, EffectSQLiteDatabase, EffectSQLiteSession, NodeSq
 related: [persistence.database]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > `@opencode-ai/effect-drizzle-sqlite` 和 `@opencode-ai/effect-sqlite-node` 是两个 vendored generic adapter 包：前者把 Drizzle SQLite query builder 变成 Effect-yieldable，后者用 Node `node:sqlite` 实现 Effect `SqlClient`。
@@ -83,7 +83,7 @@ Node client 用一个 semaphore 串行 connection access，并把 `transactionAc
 
 `packages/core/src/database/database.ts` 用 `EffectDrizzleSqlite.makeWithDefaults()` 构造 database，并在 layer 初始化时设置 WAL、synchronous NORMAL、busy_timeout 5000、cache_size -64000、foreign_keys ON、wal_checkpoint(PASSIVE)，然后执行 `DatabaseMigration.apply(db)` [E: packages/core/src/database/database.ts:13] [E: packages/core/src/database/database.ts:25] [E: packages/core/src/database/database.ts:27] [E: packages/core/src/database/database.ts:28] [E: packages/core/src/database/database.ts:29] [E: packages/core/src/database/database.ts:30] [E: packages/core/src/database/database.ts:31] [E: packages/core/src/database/database.ts:32] [E: packages/core/src/database/database.ts:33]。`layerFromPath(filename)` 通过 `#sqlite` adapter provide sqlite layer；`path()` 用 `OPENCODE_DB`、installation channel 和 `OPENCODE_DISABLE_CHANNEL_DB` 决定 database file path [E: packages/core/src/database/database.ts:4] [E: packages/core/src/database/database.ts:39] [E: packages/core/src/database/database.ts:40] [E: packages/core/src/database/database.ts:44] [E: packages/core/src/database/database.ts:50] [E: packages/core/src/database/database.ts:54]。
 
-V2 migration layer 在 `packages/core/src/database/migration.ts` 定义 TypeScript `Migration`，创建自己的 `migration` table；它不直接用 Drizzle SQL folder migrator是从当前文件的实现形态得出的结论 [E: packages/core/src/database/migration.ts:12] [E: packages/core/src/database/migration.ts:23] [I]。发现旧 `__drizzle_migrations` 时，migration layer 会 seed 新 migration journal，避免老 SQL migrations 被重放 [E: packages/core/src/database/migration.ts:32] [E: packages/core/src/database/migration.ts:33] [E: packages/core/src/database/migration.ts:36] [E: packages/core/src/database/migration.ts:40]。每个 migration 在 `db.transaction` 中执行，且 `OPENCODE_SKIP_MIGRATIONS` 会跳过 `migration.up(tx)` 但仍写完成记录 [E: packages/core/src/database/migration.ts:47] [E: packages/core/src/database/migration.ts:49] [E: packages/core/src/database/migration.ts:51] [E: packages/core/src/database/migration.ts:53]。
+V2 migration layer 在 `packages/core/src/database/migration.ts` 定义 TypeScript `Migration`，创建自己的 `migration` table；它不直接用 Drizzle SQL folder migrator是从当前文件的实现形态得出的结论 [E: packages/core/src/database/migration.ts:13] [E: packages/core/src/database/migration.ts:45] [I]。发现旧 `__drizzle_migrations` 时，migration layer 会 seed 新 migration journal，避免老 SQL migrations 被重放 [E: packages/core/src/database/migration.ts:54] [E: packages/core/src/database/migration.ts:55] [E: packages/core/src/database/migration.ts:58] [E: packages/core/src/database/migration.ts:62]。每个 migration 在 `db.transaction` 中执行，且 `OPENCODE_SKIP_MIGRATIONS` 会跳过 `migration.up(tx)` 但仍写完成记录 [E: packages/core/src/database/migration.ts:69] [E: packages/core/src/database/migration.ts:71] [E: packages/core/src/database/migration.ts:51] [E: packages/core/src/database/migration.ts:75]。
 
 ## 设计动机与权衡
 

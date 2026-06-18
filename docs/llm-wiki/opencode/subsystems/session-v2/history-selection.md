@@ -9,7 +9,7 @@ symbols: [SessionHistory.load, SessionHistory.loadForRunner, SessionHistory.entr
 related: [session-v2.projector, session-v2.compaction]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V2 history selection 是从 `session_message` read model 中选出当前有效 chronological Session History 的查询层:它同时应用最新 compaction boundary 与 Context Epoch baseline cutoff。
@@ -68,7 +68,7 @@ V2 session spec 明确 compaction 保留 full transcript durable,但 active mode
 
 ## Context Epoch cutoff
 
-Baseline System Context 与 chronological system messages 是两个通道。`CONTEXT.md` 说明 active Baseline System Context remains separate provider-request state,Mid-Conversation System Messages 进入 Session History。[E: CONTEXT.md:58] 因此 `baselineSeq` 之前的 `system` messages 会被过滤;“避免 current epoch baseline 已经涵盖的 context update 再次作为 chronological system message replay”是该过滤与 Context Epoch 关系的设计推断。[E: packages/core/src/session/history.ts:46][I]
+Baseline System Context 与 chronological system messages 是两个通道。`CONTEXT.md` 说明 active Baseline System Context remains separate provider-request state,Mid-Conversation System Messages 进入 Session History。[E: CONTEXT.md:61] 因此 `baselineSeq` 之前的 `system` messages 会被过滤;“避免 current epoch baseline 已经涵盖的 context update 再次作为 chronological system message replay”是该过滤与 Context Epoch 关系的设计推断。[E: packages/core/src/session/history.ts:46][I]
 
 `SessionContextEpochTable.baseline_seq` 由 context epoch insert/replace 写入;history selection 只读取该值,不决定 epoch lifecycle。[E: packages/core/src/session/sql.ts:175][E: packages/core/src/session/context-epoch.ts:224][E: packages/core/src/session/context-epoch.ts:260][E: packages/core/src/session/history.ts:70][I]
 

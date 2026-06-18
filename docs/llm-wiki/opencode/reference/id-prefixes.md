@@ -10,14 +10,16 @@ source:
   - packages/core/src/util/hash.ts
   - packages/core/src/session/schema.ts
   - packages/core/src/session/message-id.ts
+  - packages/core/src/integration.ts
 status: verified
 symbols:
   - Identifier
   - Project.ID
   - Session.ID
   - SessionMessageID
+  - Integration.AttemptID
 evidence: explicit
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 这份节点是 ID wire format 的小总账：哪些前缀是 core `Identifier` 管理的，哪些是 domain-specific 本地 ID，以及 project ID 如何由 Git root/remote 派生。
@@ -58,24 +60,24 @@ core `Identifier` 的 canonical prefix 表包含 10 个条目：`job`、`evt`、
 
 | ID | Prefix | Source | 备注 |
 |---|---|---|---|
-| Credential ID | `cred_` | [E: packages/core/src/credential.ts:18] | credential table primary key uses local helper, not `id/id.ts` prefix table。 |
+| Credential ID | `cred_` | [E: packages/core/src/credential.ts:13] | credential table primary key uses local helper, not `id/id.ts` prefix table。 |
 | Saved permission ID | `psv_` | [E: packages/core/src/permission/saved.ts:13] | saved allow rule ID differs from interactive `per_` permission request ID。 |
-| Connector attempt ID | `con_` | [E: packages/core/src/connector.ts:21] | 命名陷阱：`packages/core/src/connector.ts` 是本地凭据注册表的 connector/attempt helper，不是云连接器。[I] |
+| Integration attempt ID | `con_` | [E: packages/core/src/integration.ts:21] | 命名陷阱：attempt prefix 仍是 `con_`，但 current service 是 `packages/core/src/integration.ts` 的 local OAuth attempt helper，不是云连接器。[I] |
 
 ## Project ID hashing and fallback
 
-`Project.ID` 是 branded string，唯一内置常量是 `"global"`。[E: packages/core/src/project.ts:15][E: packages/core/src/project.ts:18] 这意味着 project ID 不必是 `xxx_` prefixed ID；git project 的 ID 可能来自 remote hash、repo-local cache，或直接来自 git root path。[E: packages/core/src/project.ts:141][I]
+`Project.ID` 是 branded string，唯一内置常量是 `"global"`。[E: packages/core/src/project.ts:15][E: packages/core/src/project.ts:18] 这意味着 project ID 不必是 `xxx_` prefixed ID；git project 的 ID 可能来自 remote hash、repo-local cache，或直接来自 git root path。[E: packages/core/src/project.ts:115][I]
 
 Project resolve 流程：
 
-1. 如果不是 git repository，`resolve` 返回 `Project.ID.global` 并把 directory 设为 filesystem root。[E: packages/core/src/project.ts:136][E: packages/core/src/project.ts:138]
-2. 如果是 git repository，先读取 repo-local cache 到 `previous`，然后按 `remote(repo) ?? previous ?? root(repo)` 选择 ID。[E: packages/core/src/project.ts:140][E: packages/core/src/project.ts:141]
-3. `remote(repo)` 读取 git remote URL，normalize 后返回 `Hash.fast("git-remote:" + normalized)`。[E: packages/core/src/project.ts:100][E: packages/core/src/project.ts:102][E: packages/core/src/project.ts:104]
-4. URL normalize 会拒绝 `file:` URL、处理 SCP-style URL、lowercase host、去掉结尾 `.git` 或 slash。[E: packages/core/src/project.ts:113][E: packages/core/src/project.ts:116][E: packages/core/src/project.ts:117][E: packages/core/src/project.ts:125][E: packages/core/src/project.ts:128]
-5. `root(repo)` 使用第一个 git root 路径本身作为 fallback project ID，不再额外 hash。[E: packages/core/src/project.ts:132][E: packages/core/src/project.ts:133]
+1. 如果不是 git repository，`resolve` 返回 `Project.ID.global` 并把 directory 设为 filesystem root。[E: packages/core/src/project.ts:110][E: packages/core/src/project.ts:112]
+2. 如果是 git repository，先读取 repo-local cache 到 `previous`，然后按 `remote(repo) ?? previous ?? root(repo)` 选择 ID。[E: packages/core/src/project.ts:114][E: packages/core/src/project.ts:115]
+3. `remote(repo)` 读取 git remote URL，normalize 后返回 `Hash.fast("git-remote:" + normalized)`。[E: packages/core/src/project.ts:74][E: packages/core/src/project.ts:76][E: packages/core/src/project.ts:78]
+4. URL normalize 会拒绝 `file:` URL、处理 SCP-style URL、lowercase host、去掉结尾 `.git` 或 slash。[E: packages/core/src/project.ts:87][E: packages/core/src/project.ts:90][E: packages/core/src/project.ts:91][E: packages/core/src/project.ts:99][E: packages/core/src/project.ts:102]
+5. `root(repo)` 使用第一个 git root 路径本身作为 fallback project ID，不再额外 hash。[E: packages/core/src/project.ts:106][E: packages/core/src/project.ts:107]
 6. `Hash.fast` 当前实现是 sha1 hex digest。[E: packages/core/src/util/hash.ts:4][E: packages/core/src/util/hash.ts:5]
 
-`commit` 会把 project ID 写入 repo-local cache 文件名 `opencode`，后续 resolve 可用该缓存维持稳定 ID。[E: packages/core/src/project.ts:151]
+`commit` 会把 project ID 写入 repo-local cache 文件名 `opencode`，后续 resolve 可用该缓存维持稳定 ID。[E: packages/core/src/project.ts:125]
 
 ## V1
 
@@ -94,8 +96,8 @@ V1 live code 仍有自己历史上的 `Identifier.create("evt","ascending")` 用
 - `packages/core/src/question.ts`
 - `packages/core/src/workspace.ts`
 - `packages/core/src/credential.ts`
+- `packages/core/src/integration.ts`
 - `packages/core/src/permission/saved.ts`
-- `packages/core/src/connector.ts`
 - `packages/opencode/src/bus/global.ts`
 
 ## 相关

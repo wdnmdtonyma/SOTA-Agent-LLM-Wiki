@@ -2,14 +2,14 @@
 id: model-layer.provider-transforms
 title: Provider Transforms
 kind: subsystem
-tier: T1
+tier: T2
 v: v1
 source: [packages/opencode/src/provider/transform.ts]
 symbols: [ProviderTransform.message, ProviderTransform.variants, ProviderTransform.options, ProviderTransform.temperature, ProviderTransform.topP, ProviderTransform.topK]
 related: [ref.reasoning-variant-tables]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 provider transforms 是 AI SDK request 的 provider-specific normalization 层:它修 message content、cache hints、providerOptions key、Responses item metadata、reasoning variants、default generation/provider options,让同一条 V1 session loop 能喂给不同 AI SDK provider。
@@ -58,7 +58,7 @@ OpenRouter branch 用 `reasoning.effort`;AI Gateway branch 返回 OpenAI-compati
 
 ## 设计动机
 
-V1 provider transforms 存在是因为 AI SDK abstraction 不完全屏蔽 provider wire 差异:不同 provider 对空 content、tool id charset、reasoning control、cache control、store/itemId 的要求不同。[I] registry 在把 models.dev/config model 合成 V1 model 时调用 `ProviderTransform.variants`,说明 variants 是 model catalog 的一部分,不是 runtime 临时开关。[E: packages/opencode/src/provider/provider.ts:1448][E: packages/opencode/src/provider/provider.ts:1449]
+V1 provider transforms 存在是因为 AI SDK abstraction 不完全屏蔽 provider wire 差异:不同 provider 对空 content、tool id charset、reasoning control、cache control、store/itemId 的要求不同。[I] registry 在把 models.dev/config model 合成 V1 model 时调用 `ProviderTransform.variants`,说明 variants 是 model catalog 的一部分,不是 runtime 临时开关。[E: packages/opencode/src/provider/provider.ts:1461][E: packages/opencode/src/provider/provider.ts:1462]
 
 ## 易错点
 

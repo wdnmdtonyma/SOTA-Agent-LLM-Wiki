@@ -2,14 +2,14 @@
 id: model-layer.llm-protocol-engine
 title: LLM Protocol Engine
 kind: subsystem
-tier: T1
+tier: T2
 v: shared
 source: [packages/llm/src/route/]
 symbols: [Route.make, Route.compile, RequestExecutor, Protocol, Endpoint, Auth, Framing, Transport]
 related: [model-layer.llm-protocols, model-layer.llm-schema]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > LLM protocol engine 是 `packages/llm` 里的 provider-native 执行层:一个 route 把 `Protocol + Endpoint + Auth + Framing/Transport` 四个轴组合成可执行模型,再由 `Route.compile` 验证 request body、准备 transport,最后交给 `RequestExecutor` 做 HTTP 执行、重试、错误归因和密钥脱敏。

@@ -17,7 +17,7 @@ related:
   - server.control-plane
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 Worktree 管理把 agent sandbox 映射为 git worktree：目录位于 `Global.Path.data/worktree/<project-id>/<slug>`，默认 branch 是 `opencode/<name>`，创建后异步 checkout/bootstrap，移除和 reset 会清理 worktree、branch、submodule 与 start scripts。

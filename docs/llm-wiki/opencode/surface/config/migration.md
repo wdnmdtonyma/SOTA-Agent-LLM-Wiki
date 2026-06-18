@@ -10,7 +10,7 @@ schema: node
 source:
   - packages/core/src/v1/config/migrate.ts
   - packages/core/src/config.ts
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 ---
 
@@ -101,13 +101,13 @@ V1 `tools` boolean map is converted first into rules where `enabled` true means 
 
 V1 `mcp` entries without `type` are skipped, so legacy `{ enabled: boolean }` stubs do not become V2 servers。[E: packages/core/src/v1/config/migrate.ts:129] V1 `experimental.mcp_timeout` becomes `mcp.timeout`。[E: packages/core/src/v1/config/migrate.ts:134] V1 `enabled` is inverted into V2 `disabled` only when `enabled` is present。[E: packages/core/src/v1/config/migrate.ts:140]
 
-Remote OAuth fields are snake_cased: `clientId` to `client_id`、`clientSecret` to `client_secret`、`callbackPort` to `callback_port`、`redirectUri` to `redirect_uri`。[E: packages/core/src/v1/config/migrate.ts:147]
+Remote OAuth fields are snake_cased: `clientId` to `client_id`、`clientSecret` to `client_secret`、`callbackPort` to `callback_port`、`redirectUri` to `redirect_uri`。[E: packages/core/src/v1/config/migrate.ts:154]
 
 ## Provider 和 Model Migration
 
-Provider migration uses `ConfigProviderOptionsV1.get(info.npm)` to lower legacy provider options into V2 request/settings shapes。[E: packages/core/src/v1/config/migrate.ts:165] If V1 provider has `npm`, migration emits an AISDK `api` object with package, URL and settings。[E: packages/core/src/v1/config/migrate.ts:170] V1 `models` record becomes a V2 `models` record by calling `migrateModel` on each entry。[E: packages/core/src/v1/config/migrate.ts:179]
+Provider migration uses `ConfigProviderOptionsV1.get(info.npm)` to lower legacy provider options into V2 request/settings shapes。[E: packages/core/src/v1/config/migrate.ts:172] If V1 provider has `npm`, migration emits an AISDK `api` object with package, URL and settings。[E: packages/core/src/v1/config/migrate.ts:177] V1 `models` record becomes a V2 `models` record by calling `migrateModel` on each entry。[E: packages/core/src/v1/config/migrate.ts:186]
 
-Model migration builds tiered cost array from V1 `cost` and optional `context_over_200k`。[E: packages/core/src/v1/config/migrate.ts:193] V1 `tool_call` and `modalities` become `capabilities.tools/input/output`。[E: packages/core/src/v1/config/migrate.ts:210] V1 `headers` and lowered request options become V2 `request.headers/body`。[E: packages/core/src/v1/config/migrate.ts:229] V1 variants record becomes a V2 variants array with `id` and `body`。[E: packages/core/src/v1/config/migrate.ts:233] V1 `status: "deprecated"` becomes V2 `disabled: true`。[E: packages/core/src/v1/config/migrate.ts:240]
+Model migration builds tiered cost array from V1 `cost` and optional `context_over_200k`。[E: packages/core/src/v1/config/migrate.ts:200] V1 `tool_call` and `modalities` become `capabilities.tools/input/output`。[E: packages/core/src/v1/config/migrate.ts:217] V1 `headers` and lowered request options become V2 `request.headers/body`。[E: packages/core/src/v1/config/migrate.ts:236] V1 variants record becomes a V2 variants array with `id` and `body`。[E: packages/core/src/v1/config/migrate.ts:240] V1 `status: "deprecated"` becomes V2 `disabled: true`。[E: packages/core/src/v1/config/migrate.ts:247]
 
 ## Dropped or Compatibility-only Fields
 

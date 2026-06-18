@@ -9,7 +9,7 @@ symbols: [LLM, LLM.stream, LLM.run, LLMRequestPrep.prepare, LLMAISDK.toLLMEvents
 related: [model-layer.llm-protocol-engine, spine.v1-v2-relationship]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 `LLM.Service` 是每次 provider request 的 runtime seam:默认调用 Vercel AI SDK `streamText`,仅当 `OPENCODE_EXPERIMENTAL_NATIVE_LLM` 打开且当前 provider/model 支持时改走 `@opencode-ai/llm` native runtime。

@@ -9,7 +9,7 @@ symbols: [SessionExecutionLocal.layer, SessionRunCoordinator.make, SessionRunCoo
 related: [spine.v2-provider-turn, session-v2.location-wiring]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V2 coordinator 是 process-local 的 session drain lane:它把 advisory wake、explicit run 和 interrupt 合并成每个 session 最多一个 active drain 和一个 coalesced follow-up。

@@ -19,7 +19,7 @@ related:
   - session-v1.store
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 snapshots 是一个 shadow git 子系统：每个 worktree 对应 `Global.Path.data/snapshot/<project-id>/<hash(worktree)>` 下的独立 git dir，通过 `--git-dir`/`--work-tree` 和 `objects/info/alternates` 记录、diff、restore、revert 用户会话修改。

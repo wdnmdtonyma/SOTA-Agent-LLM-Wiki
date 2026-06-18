@@ -2,14 +2,14 @@
 id: model-layer.copilot
 title: GitHub Copilot Provider
 kind: subsystem
-tier: T1
+tier: T2
 v: shared
 source: [packages/core/src/github-copilot/, packages/llm/src/providers/github-copilot.ts]
 symbols: [createOpenaiCompatible, OpenAICompatibleChatLanguageModel, OpenAIResponsesLanguageModel, GithubCopilotPlugin, GithubCopilotNativeProvider]
 related: [ref.copilot-tool-catalog]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > GitHub Copilot 在 opencode 里有双适配:core 目录提供 AI SDK `LanguageModelV3` compatible provider,同时 `packages/llm/src/providers/github-copilot.ts` 提供 native route configure helper。GPT-5 class model 默认走 Responses,但 `gpt-5-mini` 仍走 Chat。

@@ -10,7 +10,7 @@ schema: grouped-catalog
 source:
   - packages/opencode/src/index.ts
   - packages/opencode/src/cli/cmd/
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 ---
 
@@ -35,7 +35,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | --- | --- | --- | --- |
 | `completion` | `packages/opencode/src/index.ts` | yargs completion command。[E: packages/opencode/src/index.ts:80] | none |
 | `acp` | `packages/opencode/src/cli/cmd/acp.ts` | starts an ACP server。[E: packages/opencode/src/cli/cmd/acp.ts:10] | none |
-| `mcp` | `packages/opencode/src/cli/cmd/mcp.ts` | MCP server management root。[E: packages/opencode/src/cli/cmd/mcp.ts:97] | `list`、`auth`、`logout`、`add`、`debug` |
+| `mcp` | `packages/opencode/src/cli/cmd/mcp.ts` | MCP server management root。[E: packages/opencode/src/cli/cmd/mcp.ts:98] | `list`、`auth`、`logout`、`add`、`debug` |
 | `$0 [project]` | `packages/opencode/src/cli/cmd/tui.ts` | default TUI command。[E: packages/opencode/src/cli/cmd/tui.ts:72] | none |
 | `attach <url>` | `packages/opencode/src/cli/cmd/attach.ts` | attach to an existing server URL。[E: packages/opencode/src/cli/cmd/attach.ts:8] | none |
 | `run [message..]` | `packages/opencode/src/cli/cmd/run.ts` | run prompt in terminal modes。[E: packages/opencode/src/cli/cmd/run.ts:123] | none; modes are flags |
@@ -62,12 +62,12 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 
 | group | command | source | note |
 | --- | --- | --- | --- |
-| `mcp` | `list` | [E: packages/opencode/src/cli/cmd/mcp.ts:111] | list configured MCP servers. |
-| `mcp` | `auth [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:172] | start MCP OAuth/auth flow. |
-| `mcp auth` | `list` | [E: packages/opencode/src/cli/cmd/mcp.ts:317] | list MCP auth state. |
-| `mcp` | `logout [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:347] | remove MCP auth. |
-| `mcp` | `add [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:440] | add MCP config. |
-| `mcp` | `debug <name>` | [E: packages/opencode/src/cli/cmd/mcp.ts:670] | debug one MCP server. |
+| `mcp` | `list` | [E: packages/opencode/src/cli/cmd/mcp.ts:112] | list configured MCP servers. |
+| `mcp` | `auth [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:173] | start MCP OAuth/auth flow. |
+| `mcp auth` | `list` | [E: packages/opencode/src/cli/cmd/mcp.ts:318] | list MCP auth state. |
+| `mcp` | `logout [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:348] | remove MCP auth. |
+| `mcp` | `add [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:441] | add MCP config. |
+| `mcp` | `debug <name>` | [E: packages/opencode/src/cli/cmd/mcp.ts:671] | debug one MCP server. |
 | `debug` | `config` | [E: packages/opencode/src/cli/cmd/debug/config.ts:6] | print resolved config/debug data. |
 | `debug` | `lsp` | [E: packages/opencode/src/cli/cmd/debug/lsp.ts:8] | LSP root. |
 | `debug lsp` | `diagnostics <file>` | [E: packages/opencode/src/cli/cmd/debug/lsp.ts:16] | diagnostics for file. |
@@ -76,10 +76,10 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `debug` | `rg` | [E: packages/opencode/src/cli/cmd/debug/ripgrep.ts:9] | ripgrep root. |
 | `debug rg` | `files` | [E: packages/opencode/src/cli/cmd/debug/ripgrep.ts:16] | list ripgrep files. |
 | `debug rg` | `search <pattern>` | [E: packages/opencode/src/cli/cmd/debug/ripgrep.ts:48] | search pattern. |
-| `debug` | `file` | [E: packages/opencode/src/cli/cmd/debug/file.ts:62] | file helper root. |
+| `debug` | `file` | [E: packages/opencode/src/cli/cmd/debug/file.ts:68] | file helper root. |
 | `debug file` | `search <query>` | [E: packages/opencode/src/cli/cmd/debug/file.ts:17] | file search. |
 | `debug file` | `read <path>` | [E: packages/opencode/src/cli/cmd/debug/file.ts:32] | read file. |
-| `debug file` | `list <path>` | [E: packages/opencode/src/cli/cmd/debug/file.ts:47] | list path. |
+| `debug file` | `list <path>` | [E: packages/opencode/src/cli/cmd/debug/file.ts:53] | list path. |
 | `debug` | `scrap` | [E: packages/opencode/src/cli/cmd/debug/scrap.ts:5] | scratch debug command. |
 | `debug` | `skill` | [E: packages/opencode/src/cli/cmd/debug/skill.ts:7] | skill debug command. |
 | `debug` | `snapshot` | [E: packages/opencode/src/cli/cmd/debug/snapshot.ts:7] | snapshot root. |
@@ -99,7 +99,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `console` | `open` | [E: packages/opencode/src/cli/cmd/account.ts:228] | open Console. |
 | `providers` | `list` | [E: packages/opencode/src/cli/cmd/providers.ts:249] | list provider auth/config. |
 | `providers` | `login [url]` | [E: packages/opencode/src/cli/cmd/providers.ts:300] | provider login. |
-| `providers` | `logout [provider]` | [E: packages/opencode/src/cli/cmd/providers.ts:511] | provider logout. |
+| `providers` | `logout [provider]` | [E: packages/opencode/src/cli/cmd/providers.ts:492] | provider logout. |
 | `agent` | `create` | [E: packages/opencode/src/cli/cmd/agent.ts:34] | create agent via generation flow. |
 | `agent` | `list` | [E: packages/opencode/src/cli/cmd/agent.ts:235] | list agents. |
 | `github` | `install` | [E: packages/opencode/src/cli/cmd/github.ts:8] | install GitHub integration. |

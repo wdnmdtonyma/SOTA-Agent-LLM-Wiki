@@ -10,7 +10,7 @@ schema: grouped-catalog
 source:
   - packages/core/src/config.ts
   - packages/core/src/config/
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 ---
 
@@ -103,19 +103,19 @@ V2 policy effect 只有 `allow` 和 `deny`。[E: packages/core/src/policy.ts:7] 
 | `attachments.image.max_base64_bytes` | optional positive int | base64 payload limit。[E: packages/core/src/config/attachments.ts:10] | V1 `attachment.image.max_base64_bytes`。 |
 | `tool_output.max_lines` | optional positive int | max lines before truncation。[E: packages/core/src/config/tool-output.ts:7] | V1 same field。 |
 | `tool_output.max_bytes` | optional positive int | max bytes before truncation。[E: packages/core/src/config/tool-output.ts:8] | V1 same field。 |
-| `mcp.timeout` | optional positive int | protocol-wide MCP timeout。[E: packages/core/src/config/mcp.ts:34] | V1 `experimental.mcp_timeout`。 |
-| `mcp.servers.<name>.type` | `local`/`remote` | explicit MCP server type。[E: packages/core/src/config/mcp.ts:31] | V1 `mcp.<name>.type`。 |
+| `mcp.timeout` | optional positive int | protocol-wide MCP timeout。[E: packages/core/src/config/mcp.ts:37] | V1 `experimental.mcp_timeout`。 |
+| `mcp.servers.<name>.type` | `local`/`remote` | explicit MCP server type。[E: packages/core/src/config/mcp.ts:34] | V1 `mcp.<name>.type`。 |
 | `mcp.servers.<name>.command` | string array | local MCP command。[E: packages/core/src/config/mcp.ts:8] | V1 same field。 |
-| `mcp.servers.<name>.environment` | optional record string | local MCP env vars。[E: packages/core/src/config/mcp.ts:9] | V1 same field。 |
-| `mcp.servers.<name>.disabled` | optional boolean | inactive MCP server。[E: packages/core/src/config/mcp.ts:10] | typed V1 MCP server `enabled` is inverted when present；enabled-only stubs are filtered out before migration。[E: packages/core/src/v1/config/migrate.ts:130] [E: packages/core/src/v1/config/migrate.ts:140] |
-| `mcp.servers.<name>.timeout` | optional positive int | server-specific timeout。[E: packages/core/src/config/mcp.ts:11] | V1 same field。 |
-| `mcp.servers.<name>.url` | string | remote MCP URL。[E: packages/core/src/config/mcp.ts:24] | V1 same field。 |
-| `mcp.servers.<name>.headers` | optional record string | remote headers。[E: packages/core/src/config/mcp.ts:25] | V1 same field。 |
-| `mcp.servers.<name>.oauth.client_id` | optional string | OAuth client id。[E: packages/core/src/config/mcp.ts:15] | V1 `clientId`。 |
-| `mcp.servers.<name>.oauth.client_secret` | optional string | OAuth secret。[E: packages/core/src/config/mcp.ts:16] | V1 `clientSecret`。 |
-| `mcp.servers.<name>.oauth.scope` | optional string | OAuth scopes。[E: packages/core/src/config/mcp.ts:17] | V1 same field。 |
-| `mcp.servers.<name>.oauth.callback_port` | optional int 1-65535 | OAuth callback port。[E: packages/core/src/config/mcp.ts:18] | V1 `callbackPort`。 |
-| `mcp.servers.<name>.oauth.redirect_uri` | optional string | OAuth redirect URI。[E: packages/core/src/config/mcp.ts:19] | V1 `redirectUri`。 |
+| `mcp.servers.<name>.environment` | optional record string | local MCP env vars。[E: packages/core/src/config/mcp.ts:12] | V1 same field。 |
+| `mcp.servers.<name>.disabled` | optional boolean | inactive MCP server。[E: packages/core/src/config/mcp.ts:13] | typed V1 MCP server `enabled` is inverted when present；enabled-only stubs are filtered out before migration。[E: packages/core/src/v1/config/migrate.ts:130] [E: packages/core/src/v1/config/migrate.ts:140] |
+| `mcp.servers.<name>.timeout` | optional positive int | server-specific timeout。[E: packages/core/src/config/mcp.ts:14] | V1 same field。 |
+| `mcp.servers.<name>.url` | string | remote MCP URL。[E: packages/core/src/config/mcp.ts:27] | V1 same field。 |
+| `mcp.servers.<name>.headers` | optional record string | remote headers。[E: packages/core/src/config/mcp.ts:28] | V1 same field。 |
+| `mcp.servers.<name>.oauth.client_id` | optional string | OAuth client id。[E: packages/core/src/config/mcp.ts:18] | V1 `clientId`。 |
+| `mcp.servers.<name>.oauth.client_secret` | optional string | OAuth secret。[E: packages/core/src/config/mcp.ts:19] | V1 `clientSecret`。 |
+| `mcp.servers.<name>.oauth.scope` | optional string | OAuth scopes。[E: packages/core/src/config/mcp.ts:20] | V1 same field。 |
+| `mcp.servers.<name>.oauth.callback_port` | optional int 1-65535 | OAuth callback port。[E: packages/core/src/config/mcp.ts:21] | V1 `callbackPort`。 |
+| `mcp.servers.<name>.oauth.redirect_uri` | optional string | OAuth redirect URI。[E: packages/core/src/config/mcp.ts:22] | V1 `redirectUri`。 |
 | `compaction.auto` | optional boolean | automatic compaction。[E: packages/core/src/config/compaction.ts:11] | V1 same field。 |
 | `compaction.prune` | optional boolean | prune old tool outputs。[E: packages/core/src/config/compaction.ts:12] | V1 same field。 |
 | `compaction.keep.tokens` | optional non-negative int | recent-history token budget。[E: packages/core/src/config/compaction.ts:6] | V1 `preserve_recent_tokens`。 |
@@ -144,7 +144,7 @@ V2 policy effect 只有 `allow` 和 `deny`。[E: packages/core/src/policy.ts:7] 
 | `providers.<name>.models.<id>.name` | optional string | model display name。[E: packages/core/src/config/provider.ts:49] | V1 model `name`。 |
 | `providers.<name>.models.<id>.api` | optional model API | upstream model/provider API override。[E: packages/core/src/config/provider.ts:50] | V1 model `id`/`provider`。 |
 | `providers.<name>.models.<id>.capabilities` | optional capabilities | tools/input/output capability metadata。[E: packages/core/src/config/provider.ts:51] | V1 `tool_call` and `modalities`。 |
-| `providers.<name>.models.<id>.request.variant` | optional string | request variant selector。[E: packages/core/src/config/provider.ts:54] | V2 schema field only; V1 `variants` record migrates to `variants[]`。[E: packages/core/src/v1/config/migrate.ts:233] |
+| `providers.<name>.models.<id>.request.variant` | optional string | request variant selector。[E: packages/core/src/config/provider.ts:54] | V2 schema field only; V1 `variants` record migrates to `variants[]`。[E: packages/core/src/v1/config/migrate.ts:240] |
 | `providers.<name>.models.<id>.variants[]` | optional array with `id` and request fields | model variants。[E: packages/core/src/config/provider.ts:56] | V1 variants record migrated to array。 |
 | `providers.<name>.models.<id>.cost` | cost object or array | model pricing。[E: packages/core/src/config/provider.ts:60] | V1 cost object plus context tier。 |
 | `providers.<name>.models.<id>.disabled` | optional boolean | model disabled marker。[E: packages/core/src/config/provider.ts:61] | V1 status deprecated maps to disabled。 |

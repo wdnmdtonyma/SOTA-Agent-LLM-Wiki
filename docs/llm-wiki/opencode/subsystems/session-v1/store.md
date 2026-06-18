@@ -9,7 +9,7 @@ symbols: [Session, Session.create, Session.messages, Session.updateMessage, Sess
 related: [persistence.database, execution.snapshots]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 store 层是 event-fronted SQLite read model: `Session` service 提供 session/message/part API,写操作发布 V1/EventV2 events,读操作从 core SQLite `SessionTable`/`MessageTable`/`PartTable` hydrate;`message-v2.ts` 负责 V1 history 到 AI SDK `ModelMessage` 的转换。

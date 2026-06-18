@@ -11,7 +11,7 @@ source:
   - packages/opencode/src/agent/agent.ts
   - packages/core/src/v1/config/agent.ts
   - packages/core/src/config/agent.ts
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 ---
 

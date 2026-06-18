@@ -20,7 +20,7 @@ related:
   - ref.patch-format
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V2 apply_patch 是 core built-in mutation tool：parser 仍识别 add/delete/update/move syntax，但 tool 明确拒绝 move；它先 resolve 所有 target、审批 external directory 与 edit batch、预读 update/delete 文件，再按顺序提交，update 通过 `writeIfUnchanged` 做 optimistic concurrency。

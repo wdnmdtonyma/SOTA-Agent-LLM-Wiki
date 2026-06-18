@@ -8,7 +8,7 @@ source:
   - packages/llm/src/route/auth.ts
   - packages/opencode/src/auth/index.ts
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 symbols:
   - Auth
@@ -21,11 +21,11 @@ related:
 
 # Auth Combinators Reference
 
-本节点拆开两个同名但层级不同的 Auth：`packages/llm/src/route/auth.ts` 是 provider request headers 的组合子；`packages/opencode/src/auth/index.ts` 是 V1 本地凭据注册表和持久化 storage。`packages/core/src/connector.ts` 是本地凭据注册表相关代码，不是云连接器。[I]
+本节点拆开两个同名但层级不同的 Auth：`packages/llm/src/route/auth.ts` 是 provider request headers 的组合子；`packages/opencode/src/auth/index.ts` 是 V1 本地凭据注册表和持久化 storage。V2 current path 是 Integration/Credential 本地凭据注册表，不是云连接器。[I]
 
 ## V1
 
-V1 provider registry 从 `Auth.Service` 读取本地凭据并把 provider key 合入 AI SDK options；API auth storage 条目会把 provider source 标成 `api` 并携带 `key`。[E: packages/opencode/src/provider/provider.ts:1472] [E: packages/opencode/src/provider/provider.ts:1479] 本地 auth 文件路径是 `Global.Path.data/auth.json`，并且 `OPENCODE_AUTH_CONTENT` 可覆盖读取来源。[E: packages/opencode/src/auth/index.ts:10] [E: packages/opencode/src/auth/index.ts:59]
+V1 provider registry 从 `Auth.Service` 读取本地凭据并把 provider key 合入 AI SDK options；API auth storage 条目会把 provider source 标成 `api` 并携带 `key`。[E: packages/opencode/src/provider/provider.ts:1485] [E: packages/opencode/src/provider/provider.ts:1492] 本地 auth 文件路径是 `Global.Path.data/auth.json`，并且 `OPENCODE_AUTH_CONTENT` 可覆盖读取来源。[E: packages/opencode/src/auth/index.ts:10] [E: packages/opencode/src/auth/index.ts:59]
 
 ### V1 Credential Variants
 

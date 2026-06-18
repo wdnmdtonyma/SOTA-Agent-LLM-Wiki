@@ -13,7 +13,7 @@ symbols: [syncStats, Ingest, Routes, getStatsHomeData, getStatsModelData, getSta
 related: [infra.sst]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > `packages/stats` 是 opencode 的用量、成本、market share 数据产品：`core` 做 Athena/Drizzle/Effect domain，`server` 做 ingest 与 sync daemon，`app` 做 SolidStart 数据站点。
@@ -51,7 +51,7 @@ updated: 92c70c9c3
 
 `provider_stat` 和 `geo_stat` 额外包含 market share columns，字段是 token/request/session share [E: packages/stats/core/src/database/schema.ts:38] [E: packages/stats/core/src/database/schema.ts:83] [E: packages/stats/core/src/database/schema.ts:147] [E: packages/stats/core/src/database/schema.ts:151]。`model_stat` 有 `provider_model` 和按 tokens/requests/cost 的 rank [E: packages/stats/core/src/database/schema.ts:9] [E: packages/stats/core/src/database/schema.ts:11] [E: packages/stats/core/src/database/schema.ts:13]。
 
-`domain/home.ts` 定义 app-facing DTO：`StatsHomeData` 包含 usage、leaderboard、market、tokenCost、cacheRatio、sessionCost、country；`StatsModelData` 包含 model profile、rank、totals、usage、token mix、product mix、country、peers；`StatsLabData` 包含 provider/lab aggregate、usage 和 model list [E: packages/stats/core/src/domain/home.ts:44] [E: packages/stats/core/src/domain/home.ts:70] [E: packages/stats/core/src/domain/home.ts:84] [E: packages/stats/core/src/domain/home.ts:92]。
+`domain/home.ts` 定义 app-facing DTO：`StatsHomeData` 包含 usage、leaderboard、market、tokenCost、cacheRatio、sessionCost、country；`StatsModelData` 包含 model profile、rank、totals、usage、token mix、product mix、country、peers；`StatsLabData` 包含 provider/lab aggregate、usage 和 model list [E: packages/stats/core/src/domain/home.ts:43] [E: packages/stats/core/src/domain/home.ts:68] [E: packages/stats/core/src/domain/home.ts:82] [E: packages/stats/core/src/domain/home.ts:90]。
 
 ## Ingest 与聚合控制流
 
@@ -74,9 +74,9 @@ SQL 聚合列计算 distinct sessions、requests、tokens、microcent costs、du
 
 ## App 展示面
 
-Stats home route 用 SolidStart server query 调 `runtime.runPromise(getStatsHomeData())`，并设置 public/stale cache headers [E: packages/stats/app/src/routes/index.tsx:107] [E: packages/stats/app/src/routes/index.tsx:109] [E: packages/stats/app/src/routes/index.tsx:114]。页面先渲染 `Hero`，随后渲染 `TopModelsSection`、`SessionCostSection`、`TokenCostSection`、`CacheRatioSection`、`MarketShareSection`、`GeoBreakdownSection` [E: packages/stats/app/src/routes/index.tsx:168] [E: packages/stats/app/src/routes/index.tsx:169] [E: packages/stats/app/src/routes/index.tsx:170] [E: packages/stats/app/src/routes/index.tsx:171] [E: packages/stats/app/src/routes/index.tsx:172] [E: packages/stats/app/src/routes/index.tsx:173] [E: packages/stats/app/src/routes/index.tsx:174]。
+Stats home route 用 SolidStart server query 调 `runtime.runPromise(getStatsHomeData())`，并设置 public/stale cache headers [E: packages/stats/app/src/routes/index.tsx:109] [E: packages/stats/app/src/routes/index.tsx:111] [E: packages/stats/app/src/routes/index.tsx:116]。页面先渲染 `Hero`，随后渲染 `TopModelsSection`、`SessionCostSection`、`TokenCostSection`、`CacheRatioSection`、`MarketShareSection`、`GeoBreakdownSection` [E: packages/stats/app/src/routes/index.tsx:171] [E: packages/stats/app/src/routes/index.tsx:172] [E: packages/stats/app/src/routes/index.tsx:173] [E: packages/stats/app/src/routes/index.tsx:171] [E: packages/stats/app/src/routes/index.tsx:175] [E: packages/stats/app/src/routes/index.tsx:176] [E: packages/stats/app/src/routes/index.tsx:177]。
 
-Lab 和 model dynamic routes 也通过 `domain/home` 读取 `getStatsLabData` 与 `getStatsModelData`，但这些文件名包含 SolidStart bracket route，当前正文证据用 home route 和 domain/service 层为主 [I]。`getStatsHomeData` 从 `ModelStatRepo`、`ProviderStatRepo`、`GeoStatRepo` 并发读取 daily rows，再构建 usage、leaderboard、market、cost、cache、country records [E: packages/stats/core/src/domain/home.ts:131] [E: packages/stats/core/src/domain/home.ts:139] [E: packages/stats/core/src/domain/home.ts:143] [E: packages/stats/core/src/domain/home.ts:190] [E: packages/stats/core/src/domain/home.ts:208]。
+Lab 和 model dynamic routes 也通过 `domain/home` 读取 `getStatsLabData` 与 `getStatsModelData`，但这些文件名包含 SolidStart bracket route，当前正文证据用 home route 和 domain/service 层为主 [I]。`getStatsHomeData` 从 `ModelStatRepo`、`ProviderStatRepo`、`GeoStatRepo` 并发读取 daily rows，再构建 usage、leaderboard、market、cost、cache、country records [E: packages/stats/core/src/domain/home.ts:131] [E: packages/stats/core/src/domain/home.ts:139] [E: packages/stats/core/src/domain/home.ts:143] [E: packages/stats/core/src/domain/home.ts:190] [E: packages/stats/core/src/domain/home.ts:216]。
 
 ## 部署关系
 

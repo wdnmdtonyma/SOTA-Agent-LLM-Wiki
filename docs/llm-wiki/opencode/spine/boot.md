@@ -9,7 +9,7 @@ symbols: [AppLayer, AppRuntime, Server.Default]
 related: [spine.cli-to-session, persistence.project-instance-location]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 boot 节点描述 `opencode` 可执行文件怎样找到平台二进制、进入 yargs CLI、再把 Effect service graph 装配成 V1 runtime。
@@ -51,7 +51,7 @@ flowchart TD
 
 8. `AppRuntime@packages/opencode/src/effect/app-runtime.ts:108` 由 `ManagedRuntime.make(AppLayer)` 创建,并导出 `runSync`、`runPromise`、`runPromiseExit`、`runFork`、`runCallback`、`dispose` wrapper。[E: packages/opencode/src/effect/app-runtime.ts:108][E: packages/opencode/src/effect/app-runtime.ts:115][E: packages/opencode/src/effect/app-runtime.ts:116][E: packages/opencode/src/effect/app-runtime.ts:119][E: packages/opencode/src/effect/app-runtime.ts:122]
 
-9. `Server.Default@packages/opencode/src/server/server.ts:55` 构造 process-local fetch handler 时使用 `HttpApiApp.webHandler().handler`;server listen 路径使用 `HttpRouter.serve(HttpApiApp.createRoutes(opts), ...)`,所以 V1 server 是 Effect HttpApi/HttpRouter 实现。[E: packages/opencode/src/server/server.ts:55][E: packages/opencode/src/server/server.ts:56][E: packages/opencode/src/server/server.ts:100][E: packages/opencode/src/server/server.ts:101]
+9. `Server.Default@packages/opencode/src/server/server.ts:55` 构造 process-local fetch handler 时使用 `HttpApiApp.webHandler().handler`;server listen 路径使用 `HttpRouter.serve(HttpApiApp.createRoutes(opts), ...)`,所以 V1 server 是 Effect HttpApi/HttpRouter 实现。[E: packages/opencode/src/server/server.ts:55][E: packages/opencode/src/server/server.ts:56][E: packages/opencode/src/server/server.ts:99][E: packages/opencode/src/server/server.ts:100]
 
 ## 关键决策点
 

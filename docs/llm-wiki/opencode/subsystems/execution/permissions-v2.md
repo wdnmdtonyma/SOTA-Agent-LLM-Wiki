@@ -26,7 +26,7 @@ related:
   - ref.permission-actions
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V2 权限模型是 Location-scoped core service：工具自己构造 `PermissionV2.assert({ action, resources, save, source, agent })`，服务先查 agent ruleset，再叠加 SQLite saved approvals，并把用户 `always` 持久化为 project 级 allow rule。
@@ -82,14 +82,14 @@ V2 `Tool.withPermission(tool, permission)` 只给 tool runtime 附加一个 perm
 
 V2 tools spec 要求 trusted tools 自己构造 permission request，registry 不注入 `assertPermission` helper；spec 示例也把 `permission.assert` 放在 tool executor 内部 [E: specs/v2/tools.md:111] [E: specs/v2/tools.md:131]。这样做让每个工具能把 action、resources、save、metadata 与 durable source 绑定到具体业务语义，而不是让 registry 猜测资源边界 [I]。
 
-V2 session spec 还要求 local tool authorization 保留发起 tool call 时的 effective agent，即使之后 agent switch，也不能改变该 call 的 policy [E: CONTEXT.md:89]。`AssertInput.agent` 与 pending item 存储 `agent?: AgentV2.ID` 支持这一点：pending item 在自动 remembered approval 时仍用原 agent 重新 configured [E: packages/core/src/permission.ts:129] [E: packages/core/src/permission.ts:289]。
+V2 session spec 还要求 local tool authorization 保留发起 tool call 时的 effective agent，即使之后 agent switch，也不能改变该 call 的 policy [E: CONTEXT.md:92]。`AssertInput.agent` 与 pending item 存储 `agent?: AgentV2.ID` 支持这一点：pending item 在自动 remembered approval 时仍用原 agent 重新 configured [E: packages/core/src/permission.ts:129] [E: packages/core/src/permission.ts:289]。
 
 ## Gotcha
 
 - `ask` 与 `assert` 都会求值，但 `ask` 不等待用户回复；`assert` 会阻塞到 deferred 被 reply。
 - saved approval 只追加 allow rules，不能覆盖 configured agent deny，因为 configured deny 在合并 saved rules 之前就短路。
 - `write` 与 `apply_patch` 的 `withPermission` tag 是 `"edit"`，实际 `assert.action` 也是 `"edit"`；不要把 wire name `"write"` 或 `"apply_patch"` 当作 mutation policy action。
-- `packages/core/src/connector.ts` 是本地凭据注册表，不是云连接器；V2 permission persistence 在 `permission/saved.ts` 与 `permission/sql.ts`。
+- V2 Integration/Credential 是本地凭据注册表，不是云连接器；V2 permission persistence 在 `permission/saved.ts` 与 `permission/sql.ts`。
 
 ## Sources
 

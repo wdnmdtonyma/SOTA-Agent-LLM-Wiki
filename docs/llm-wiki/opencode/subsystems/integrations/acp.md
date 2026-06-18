@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 source:
   - packages/opencode/src/acp/service.ts
   - packages/opencode/src/acp/agent.ts
@@ -111,10 +111,10 @@ ACP service 的初始化响应声明 protocol version 1、loadSession/MCP/prompt
 ### Event 与 tool update
 
 1. `ACPEvent.Subscription` 跟踪 abort controller、shell output snapshots、tool start set、permission handler。[E: packages/opencode/src/acp/event.ts:39]
-2. subscription 读取 `sdk.global.event`，过滤目标 session event 并转换为 ACP session update。[E: packages/opencode/src/acp/event.ts:115]
-3. `message.part.updated` 中 tool part 被交给 `ACPTool`；pending state 生成 `ToolCall`，running/completed/error state 生成 `ToolCallUpdate`。[E: packages/opencode/src/acp/event.ts:130] [E: packages/opencode/src/acp/tool.ts:121] [E: packages/opencode/src/acp/tool.ts:136]
-4. shell tool running 时，event bridge 会发送 shell output snapshot，并用本地 map 去重。[E: packages/opencode/src/acp/event.ts:278]
-5. `ACPTool.toToolKind` 把 bash/shell 归为 execute，把 webfetch 归为 fetch，把 edit/apply_patch/patch/write 归为 edit，把 grep/glob/context 等归为 search。[E: packages/opencode/src/acp/tool.ts:37] [E: packages/opencode/src/acp/tool.ts:45] [E: packages/opencode/src/acp/tool.ts:48] [E: packages/opencode/src/acp/tool.ts:54]
+2. subscription 读取 `sdk.global.event`，过滤目标 session event 并转换为 ACP session update。[E: packages/opencode/src/acp/event.ts:116]
+3. `message.part.updated` 中 tool part 被交给 `ACPTool`；pending state 生成 `ToolCall`，running/completed/error state 生成 `ToolCallUpdate`。[E: packages/opencode/src/acp/event.ts:131] [E: packages/opencode/src/acp/tool.ts:124] [E: packages/opencode/src/acp/tool.ts:140]
+4. shell tool running 时，event bridge 会发送 shell output snapshot，并用本地 map 去重。[E: packages/opencode/src/acp/event.ts:284][E: packages/opencode/src/acp/event.ts:286][E: packages/opencode/src/acp/event.ts:301][E: packages/opencode/src/acp/event.ts:304]
+5. `ACPTool.toToolKind` 把 bash/shell 归为 execute，把 webfetch 归为 fetch，把 edit/apply_patch/patch/write 归为 edit，把 grep/glob/context 等归为 search。[E: packages/opencode/src/acp/tool.ts:38] [E: packages/opencode/src/acp/tool.ts:46] [E: packages/opencode/src/acp/tool.ts:49] [E: packages/opencode/src/acp/tool.ts:55]
 
 ## 设计动机与权衡
 

@@ -9,7 +9,7 @@ symbols: [createOpencodeClient, createOpencodeServer, createOpencode, OpencodeCl
 related: [sdk.surface, server-api.overview]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > TypeScript SDK 有两个入口：`@opencode-ai/sdk` 是旧/小 legacy SDK；`@opencode-ai/sdk/v2` 是当前全量 SDK，包含 legacy namespaces 与 `.v2.*` `/api/*` namespace。
@@ -34,11 +34,11 @@ Legacy generated `OpencodeClient` 暴露 old V1 namespaces，例如 `global`、`
 
 `package.json` export `./v2` 指向 `./src/v2/index.ts`，`./v2/client` 指向 `./src/v2/client.ts`，`./v2/server` 指向 `./src/v2/server.ts`。[E: packages/sdk/js/package.json:15][E: packages/sdk/js/package.json:16][E: packages/sdk/js/package.json:18] `src/v2/index.ts` 与 legacy root 一样 export client/server 并提供 `createOpencode(options)`；它还 `export * as data from "./data.js"`。[E: packages/sdk/js/src/v2/index.ts:1][E: packages/sdk/js/src/v2/index.ts:8][E: packages/sdk/js/src/v2/index.ts:10][E: packages/sdk/js/src/v2/index.ts:15]
 
-`src/v2/client.ts` 使用 `./gen/*` 的 current generated SDK。它导出 V2 types，并把 `FileSystemContent` 与 `FileSystemEntry` 重新命名为 `LocationFileSystemContent` / `LocationFileSystemEntry` 供 callers 使用。[E: packages/sdk/js/src/v2/client.ts:1][E: packages/sdk/js/src/v2/client.ts:2][E: packages/sdk/js/src/v2/client.ts:5] V2 wrapper 接受 `directory` 与 `experimental_workspaceID`，分别写入 `x-opencode-directory` 与 `x-opencode-workspace` headers。[E: packages/sdk/js/src/v2/client.ts:53][E: packages/sdk/js/src/v2/client.ts:66][E: packages/sdk/js/src/v2/client.ts:69][E: packages/sdk/js/src/v2/client.ts:73][E: packages/sdk/js/src/v2/client.ts:76]
+`src/v2/client.ts` 使用 `./gen/*` 的 current generated SDK。它导出 V2 types，并把 `FileSystemContent` 与 `FileSystemEntry` 重新命名为 `LocationFileSystemContent` / `LocationFileSystemEntry` 供 callers 使用。[E: packages/sdk/js/src/v2/client.ts:1][E: packages/sdk/js/src/v2/client.ts:2][E: packages/sdk/js/src/v2/client.ts:5] V2 wrapper 接受 `directory` 与 `experimental_workspaceID`，分别写入 `x-opencode-directory` 与 `x-opencode-workspace` headers。[E: packages/sdk/js/src/v2/client.ts:50][E: packages/sdk/js/src/v2/client.ts:63][E: packages/sdk/js/src/v2/client.ts:66][E: packages/sdk/js/src/v2/client.ts:70][E: packages/sdk/js/src/v2/client.ts:73]
 
-V2 request interceptor 对 GET/HEAD request 做 context rewrite。普通 legacy path 只补 `directory`/`workspace` query；`/api/*` path 会同时尝试补 `directory`/`workspace` 和 nested `location[directory]`/`location[workspace]` query，以适配 V2 location object 参数。[E: packages/sdk/js/src/v2/client.ts:21][E: packages/sdk/js/src/v2/client.ts:22][E: packages/sdk/js/src/v2/client.ts:27][E: packages/sdk/js/src/v2/client.ts:37][E: packages/sdk/js/src/v2/client.ts:39] V2 wrapper 额外拦截 `content-type: text/html` response，抛出 “server version unsupported” 类错误，避免 SDK consumer 把 UI fallback HTML 当 API response。[E: packages/sdk/js/src/v2/client.ts:87][E: packages/sdk/js/src/v2/client.ts:88][E: packages/sdk/js/src/v2/client.ts:90]
+V2 request interceptor 对 GET/HEAD request 做 context rewrite。普通 legacy path 只补 `directory`/`workspace` query；`/api/*` path 会同时尝试补 `directory`/`workspace` 和 nested `location[directory]`/`location[workspace]` query，以适配 V2 location object 参数。[E: packages/sdk/js/src/v2/client.ts:18][E: packages/sdk/js/src/v2/client.ts:19][E: packages/sdk/js/src/v2/client.ts:24][E: packages/sdk/js/src/v2/client.ts:34][E: packages/sdk/js/src/v2/client.ts:36] V2 wrapper 额外拦截 `content-type: text/html` response，抛出 “server version unsupported” 类错误，避免 SDK consumer 把 UI fallback HTML 当 API response。[E: packages/sdk/js/src/v2/client.ts:84][E: packages/sdk/js/src/v2/client.ts:85][E: packages/sdk/js/src/v2/client.ts:87]
 
-V2 generated `OpencodeClient` 有 legacy namespaces，也有 `v2` getter；`V2` class 下面挂 `health/location/agent/session/model/provider/connector/permission/fs/command/skill/event/question/reference` namespaces，对应 `/api/*` routes。[E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6199][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6200][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6215][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6230][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6240][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6265][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6409]
+V2 generated `OpencodeClient` 有 legacy namespaces，也有 `v2` getter；`V2` class 下面挂 `health/location/agent/session/model/provider/integration/credential/permission/fs/command/skill/event/pty/question/reference/projectCopy` namespaces，对应 `/api/*` 与 experimental project-copy routes。[E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6607][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6638][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6643][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6673][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6683][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6688][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6832]
 
 ## Generation
 
@@ -55,9 +55,9 @@ Both legacy and V2 server wrappers spawn the `opencode` binary with `serve --hos
 | 维度 | `@opencode-ai/sdk` | `@opencode-ai/sdk/v2` |
 |---|---|---|
 | export path | `"." -> ./src/index.ts`。[E: packages/sdk/js/package.json:12] | `"./v2" -> ./src/v2/index.ts`。[E: packages/sdk/js/package.json:15] |
-| generated dir | `src/gen` legacy generated SDK imported by `src/client.ts`。[E: packages/sdk/js/src/client.ts:3][E: packages/sdk/js/src/client.ts:5] | `src/v2/gen` current generated SDK imported by `src/v2/client.ts`。[E: packages/sdk/js/src/v2/client.ts:7][E: packages/sdk/js/src/v2/client.ts:9] |
-| context rewrite | GET/HEAD `x-opencode-directory` -> `directory`。[E: packages/sdk/js/src/client.ts:17][E: packages/sdk/js/src/client.ts:24] | GET/HEAD `x-opencode-directory`/`x-opencode-workspace` -> top-level query and `/api/*` location query。[E: packages/sdk/js/src/v2/client.ts:27][E: packages/sdk/js/src/v2/client.ts:37] |
-| surface | Legacy V1 namespaces only plus one direct permission method。[E: packages/sdk/js/src/gen/sdk.gen.ts:1157][E: packages/sdk/js/src/gen/sdk.gen.ts:1177] | Legacy compatibility namespaces plus `.v2.*` native `/api/*` namespaces。[E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6271][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6409] |
+| generated dir | `src/gen` legacy generated SDK imported by `src/client.ts`。[E: packages/sdk/js/src/client.ts:3][E: packages/sdk/js/src/client.ts:5] | `src/v2/gen` current generated SDK imported by `src/v2/client.ts`。[E: packages/sdk/js/src/v2/client.ts:4][E: packages/sdk/js/src/v2/client.ts:6] |
+| context rewrite | GET/HEAD `x-opencode-directory` -> `directory`。[E: packages/sdk/js/src/client.ts:17][E: packages/sdk/js/src/client.ts:24] | GET/HEAD `x-opencode-directory`/`x-opencode-workspace` -> top-level query and `/api/*` location query。[E: packages/sdk/js/src/v2/client.ts:24][E: packages/sdk/js/src/v2/client.ts:34] |
+| surface | Legacy V1 namespaces only plus one direct permission method。[E: packages/sdk/js/src/gen/sdk.gen.ts:1157][E: packages/sdk/js/src/gen/sdk.gen.ts:1177] | Legacy compatibility namespaces plus `.v2.*` native `/api/*` namespaces。[E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6694][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6832] |
 | regeneration | Not regenerated by current `script/build.ts`; only prettier touches `src/gen`。[E: packages/sdk/js/script/build.ts:61][I] | Regenerated from `bun dev generate` into `src/v2/gen` with clean output。[E: packages/sdk/js/script/build.ts:14][E: packages/sdk/js/script/build.ts:19][E: packages/sdk/js/script/build.ts:21] |
 
 ## Sources

@@ -9,7 +9,7 @@ symbols: [RunCommand, Server.Default, SessionPrompt.prompt, SessionPrompt.loop]
 related: [spine.v1-turn-loop, server.http-server, sdk.overview]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 CLI-to-session 节点描述 `opencode run` 如何解析 directory/session/mode,创建 SDK client,再经 process-local Effect HttpApi server 调到 `SessionPrompt.prompt`。
@@ -40,7 +40,7 @@ flowchart TD
 
 3. `handler@packages/opencode/src/cli/cmd/run.ts:305` 在 `args.dir` 存在时解析目标 root,并在非 attach 路径执行 `process.chdir(root)`;没有 `args.dir` 时使用当前工作目录作为 root。[E: packages/opencode/src/cli/cmd/run.ts:305][E: packages/opencode/src/cli/cmd/run.ts:307][E: packages/opencode/src/cli/cmd/run.ts:310][E: packages/opencode/src/cli/cmd/run.ts:311]
 
-4. attach 模式通过 `attachSDK` 调 `createOpencodeClient({ baseUrl: args.attach!, directory, headers })` 连接已有 server;本地非 attach 模式会构造 `fetchFn` 调 `Server.Default().app.fetch(request)`。[E: packages/opencode/src/cli/cmd/run.ts:321][E: packages/opencode/src/cli/cmd/run.ts:322][E: packages/opencode/src/cli/cmd/run.ts:323][E: packages/opencode/src/cli/cmd/run.ts:840][E: packages/opencode/src/cli/cmd/run.ts:875]
+4. attach 模式通过 `attachSDK` 调 `createOpencodeClient({ baseUrl: args.attach!, directory, headers })` 连接已有 server;本地非 attach 模式会构造 `fetchFn` 调 `Server.Default().app.fetch(request)`。[E: packages/opencode/src/cli/cmd/run.ts:321][E: packages/opencode/src/cli/cmd/run.ts:322][E: packages/opencode/src/cli/cmd/run.ts:323][E: packages/opencode/src/cli/cmd/run.ts:840][E: packages/opencode/src/cli/cmd/run.ts:878]
 
 5. `Server.Default@packages/opencode/src/server/server.ts:55` 返回的 `app.fetch` 调用 `HttpApiApp.webHandler().handler`,因此 CLI 的本地 fetch wrapper 进入同一个 V1 Effect HttpApi handler。[E: packages/opencode/src/server/server.ts:55][E: packages/opencode/src/server/server.ts:56][E: packages/opencode/src/server/server.ts:58]
 

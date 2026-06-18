@@ -11,7 +11,7 @@ source:
   - packages/core/src/v1/config/config.ts
   - packages/core/src/v1/config/agent.ts
   - packages/core/src/v1/config/permission.ts
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 ---
 

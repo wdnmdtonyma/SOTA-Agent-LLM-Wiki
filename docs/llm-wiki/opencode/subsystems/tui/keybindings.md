@@ -9,7 +9,7 @@ symbols: [registerOpencodeKeymap, createOpencodeModeStack, TuiKeybind.Definition
 related: [ref.keybinds, tui.dialog-kit, tui.prompt]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > TUI keybinding 层把 opencode command ids 映射到 `@opentui/keymap`：默认 leader 是 `ctrl+x`，mode stack 用 keymap data field 控制 layer 可见性，完整绑定细表在 `ref.keybinds`。
@@ -54,7 +54,7 @@ TUI config `Info` 包含 `keybinds?: TuiKeybind.KeybindOverrides`、`leader_time
 
 `useCommandSlashes()` 从 keymap 中读取 reachable 且 namespace 为 `palette` 的 command entries，过滤 hidden 和 command palette 本身；有 `slashName` 的 command 会映射成 `/name` entry，aliases 映射成 `/alias`，onSelect dispatch 原 command。[E: packages/tui/src/keymap.tsx:260] [E: packages/tui/src/keymap.tsx:264] [E: packages/tui/src/keymap.tsx:265] [E: packages/tui/src/keymap.tsx:266] [E: packages/tui/src/keymap.tsx:49] [E: packages/tui/src/keymap.tsx:50] [E: packages/tui/src/keymap.tsx:276] [E: packages/tui/src/keymap.tsx:283] [E: packages/tui/src/keymap.tsx:284] [E: packages/tui/src/keymap.tsx:286]
 
-Session screen 和 Prompt 都把自己的 commands 注册到 namespace `palette`；slash autocomplete 调 `useCommandSlashes()`，因此可以混合全局/session/prompt commands。[E: packages/tui/src/routes/session/index.tsx:1085] [E: packages/tui/src/routes/session/index.tsx:1094] [E: packages/tui/src/routes/session/index.tsx:1095] [E: packages/tui/src/component/prompt/index.tsx:552] [E: packages/tui/src/component/prompt/index.tsx:557] [E: packages/tui/src/component/prompt/index.tsx:558] [E: packages/tui/src/component/prompt/autocomplete.tsx:437] [I]
+Session screen 和 Prompt 都把自己的 commands 注册到 namespace `palette`；slash autocomplete 调 `useCommandSlashes()`，因此可以混合全局/session/prompt commands。[E: packages/tui/src/routes/session/index.tsx:1087] [E: packages/tui/src/routes/session/index.tsx:1096] [E: packages/tui/src/routes/session/index.tsx:1097] [E: packages/tui/src/component/prompt/index.tsx:552] [E: packages/tui/src/component/prompt/index.tsx:557] [E: packages/tui/src/component/prompt/index.tsx:558] [E: packages/tui/src/component/prompt/autocomplete.tsx:437] [I]
 
 ## 设计动机与权衡
 

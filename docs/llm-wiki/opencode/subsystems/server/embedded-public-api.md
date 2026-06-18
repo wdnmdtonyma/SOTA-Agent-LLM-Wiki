@@ -16,7 +16,7 @@ related:
   - spine.v2-overview
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 `server.embedded-public-api` 描述 V2 core 的 native embedded facade。公开出口是 `packages/core/src/public/index.ts`，该文件导出 `OpenCode`、`Session`、`Tool`、`Location` 等 public-facing modules。[E: packages/core/src/public/index.ts:2][E: packages/core/src/public/index.ts:9] 它不是 HTTP server，而是 native API facade。[I]
@@ -49,7 +49,7 @@ updated: 92c70c9c3
 
 `SessionExecutionLocal.layer` 是本进程 execution layer: 它从 `LocationServiceMap` 取 locations，并在 drain 中用 `locations.get(session.location)` 提供给 `SessionRunner.Service.use(...runner.run...)`。[E: packages/core/src/session/execution/local.ts:15][E: packages/core/src/session/execution/local.ts:20][E: packages/core/src/session/execution/local.ts:21][I]
 
-`LocationServiceMap.lookup` 会把 location、policy、config、reference、PluginV2、Catalog、Connector、CommandV2、AgentV2、PluginBoot、FileSystem、Watcher、Pty、SkillV2 等 location-scoped layers merge 到 base layer。[E: packages/core/src/location-layer.ts:55][E: packages/core/src/location-layer.ts:72] 它还构造 tool output resources、permission/tool registry、image、file mutation、skill/reference guidance、todos、questions、built-in tools、model 和 runner layers。[E: packages/core/src/location-layer.ts:73][E: packages/core/src/location-layer.ts:113]
+`LocationServiceMap.lookup` 会把 location、policy、config、reference、PluginV2、Catalog、Integration、CommandV2、AgentV2、PluginBoot、ProjectCopy、FileSystem、Watcher、Pty、SkillV2 等 location-scoped layers merge 到 base layer。[E: packages/core/src/location-layer.ts:58][E: packages/core/src/location-layer.ts:64][E: packages/core/src/location-layer.ts:65][E: packages/core/src/location-layer.ts:68][E: packages/core/src/location-layer.ts:69][E: packages/core/src/location-layer.ts:72][E: packages/core/src/location-layer.ts:76] 它还构造 tool output resources、permission/tool registry、image、file mutation、skill/reference guidance、todos、questions、built-in tools、model、runner 和 project-copy refresh layers。[E: packages/core/src/location-layer.ts:77][E: packages/core/src/location-layer.ts:98][E: packages/core/src/location-layer.ts:108][E: packages/core/src/location-layer.ts:123]
 
 ## Design notes
 

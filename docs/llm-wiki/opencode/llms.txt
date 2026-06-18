@@ -1,8 +1,8 @@
 # opencode 源码 LLM Wiki — 入口索引
 
-> SST **opencode**(`Best/opencode/`,27-package Bun/TypeScript Effect monorepo,AI 编码 agent)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 opencode git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
+> SST **opencode**(`Best/opencode/`,29-package Bun/TypeScript Effect monorepo,AI 编码 agent)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 opencode git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
 >
-> **状态:大纲已 review 定稿(180 节点 + 14 grouped-catalog,9 路 source 测绘),护栏(lint/reconcile)就位,待并发填充(批次计划见 `_fill-prompts.md`,2 轮)。**
+> **状态:wiki 已增量更新到 `355a0bcf5`(184 节点 + grouped-catalog,9 路 source 测绘),护栏(lint/reconcile)就位。**
 >
 > **核心组织主线 —— V1/V2 迁移**:opencode 一套进程跑两代。**V1**(活跑)= `packages/opencode/src`,Vercel-AI-SDK,`SessionPrompt→SessionProcessor→LLM.stream`。**V2**(新内核,多数已建未设默认)= `packages/core/src`,命名空间 `@opencode/v2`,Effect-native durable/event-sourced。`packages/llm` = 原生协议引擎。每节点标 `v: v1|v2|shared|na`;hybrid 组织 —— 一概念一节点、内分 V1/V2,只有真正分叉(session 内核/tools/permissions/shell/patch/compaction)才拆 `-v1`/`-v2`。
 
@@ -11,7 +11,7 @@
 - **人**:先读 `spine/overview` 与 `spine/v1-v2-relationship`,再按需深入 T1/T2。
 
 ## T0 — Spine(端到端脊柱,mermaid 先行)
-- [opencode 总览与架构](spine/overview.md): 是什么 + 27-package monorepo 架构 + V1/V2 全景 — packages/opencode/src/index.ts · AGENTS.md
+- [opencode 总览与架构](spine/overview.md): 是什么 + 29-package monorepo 架构 + V1/V2 全景 — packages/opencode/src/index.ts · AGENTS.md
 - [进程启动与运行时装配](spine/boot.md) `[v1]`: bin shim → yargs/cli → AppRuntime/InstanceStore — bin/opencode · src/index.ts · effect/app-runtime.ts
 - [从 CLI 调用到运行中的 session](spine/cli-to-session.md) `[v1]`: CLI → 进程内 Hono-less Effect server → SDK → session — cli/cmd/run.ts · server/server.ts
 - [V1 回合循环(活跑)](spine/v1-turn-loop.md) `[v1]`: runLoop → processor → LLM.stream → 工具循环 → compaction — session/prompt.ts · processor.ts · llm.ts
@@ -73,11 +73,12 @@
 - [Provider/model 解析](surface/providers/resolution.md) `[v1]`: models.dev → AI-SDK LanguageModelV3 — provider/provider.ts · core/src/models-dev.ts
 - [Provider auth flows 与 accounts](surface/providers/auth-accounts.md): api/oauth/device-code + account 登录 — auth/index.ts · account/account.ts
 - [Provider catalog](surface/providers/catalog.md): 内建 provider 总表 — packages/llm/src/providers/ · provider/provider.ts
+- [Snowflake Cortex Provider](surface/providers/snowflake-cortex.md) `[v1]`: PAT/OAuth/env/options · Cortex URL/fetch shim — provider/provider.ts · plugin/snowflake-cortex.ts
 
 ### Server API / SDK / Plugin API
 - [Server API 总览](surface/server-api/overview.md): 两 server · 三层路由 · middleware · SSE/WS — server/routes/instance/httpapi/api.ts · server/src/api.ts · specs/v2/api.html
 - [V1 路由 catalog(~128)](surface/server-api/v1-routes.md) `[v1]` — server/routes/instance/httpapi/groups/
-- [V2 路由 catalog(/api/*,~30)](surface/server-api/v2-routes.md) `[v2]` — packages/server/src/groups/
+- [V2 路由 catalog(/api/* + experimental project-copy,47)](surface/server-api/v2-routes.md) `[v2]` — packages/server/src/groups/
 - [SDK 架构](surface/sdk/overview.md): 生成(hey-api)· client · server spawn — sdk/js/src/client.ts · script/build.ts
 - [SDK 面 catalog(v1 + v2)](surface/sdk/surface.md): resource group→method — sdk/js/src/{gen,v2/gen}/sdk.gen.ts
 - [V1 插件 API(Hooks)](surface/plugin-api/v1-hooks.md) `[v1]`: ~20 callback hooks + tool factory — packages/plugin/src/index.ts
@@ -119,13 +120,14 @@
 - [凭据存储与 auth/account 流程](subsystems/model-layer/auth.md): credential union · provider auth · device-code — auth/index.ts · provider/auth.ts · account/
 - [GitHub Copilot 特化](subsystems/model-layer/copilot.md): chat + responses 适配 · hosted tools — core/src/github-copilot/
 - [V2 catalog](subsystems/model-layer/model-catalog-v2.md) `[v2]`: ProviderV2/ModelV2 · plugin-ordered · policy-gated — core/src/{catalog,provider}.ts · plugin/provider/
-- [V2 SQLite 凭据 + Connector](subsystems/model-layer/credential-v2.md) `[v2]` — core/src/credential/sql.ts · connector.ts
+- [V2 SQLite 凭据 + Integration](subsystems/model-layer/credential-v2.md) `[v2]` — core/src/credential/sql.ts · integration.ts
 
-## T2 — Subsystems / Execution(11)
+## T2 — Subsystems / Execution(12)
 - [V1 权限模型](subsystems/execution/permissions-v1.md) `[v1]`: ask/allow/deny · 内存 ruleset · last-match-wins — permission/index.ts
 - [V2 权限模型](subsystems/execution/permissions-v2.md) `[v2]`: assert/action/resources/save · 持久化 — core/src/permission.ts · permission/saved.ts
-- [V1 shell 执行](subsystems/execution/shell-v1.md) `[v1]`: tree-sitter 审批 · arity prefix · 流式 spill — tool/shell.ts · shell/shell.ts · permission/arity.ts
+- [V1 shell 执行](subsystems/execution/shell-v1.md) `[v1]`: tree-sitter 审批 · arity prefix · 流式 spill — tool/shell.ts · core/src/shell.ts · permission/arity.ts
 - [V2 bash 工具](subsystems/execution/shell-v2.md) `[v2]`: 精简移植 + 欠债 TODO — core/src/tool/bash.ts
+- [V2 Core Shell Helper](subsystems/execution/core-shell-v2.md) `[v2]`: preferred/acceptable/list/args · PTY/Bash 共用 shell 选择 — core/src/shell.ts
 - [V1 apply_patch 引擎+工具](subsystems/execution/patch-v1.md) `[v1]`: 4-pass fuzzy · add/update/delete/move — patch/index.ts · tool/apply_patch.ts
 - [V2 apply_patch 引擎+工具](subsystems/execution/patch-v2.md) `[v2]`: 拒 move · 顺序 + 乐观并发 — core/src/patch.ts · tool/apply-patch.ts
 - [Snapshots & Revert](subsystems/execution/snapshots.md) `[v1]`: shadow git · track/restore/revert — snapshot/index.ts · session/revert.ts
@@ -134,7 +136,8 @@
 - [后台 jobs](subsystems/execution/background.md): ephemeral 进程内 — background/job.ts
 - [PTY 子系统](subsystems/execution/pty.md) `[v2]`: bun/node-pty · WS · connect ticket — core/src/pty/
 
-## T2 — Subsystems / Integrations(9)
+## T2 — Subsystems / Integrations(10)
+- [V2 Integration 子系统](subsystems/integrations/integration-v2.md) `[v2]`: key/OAuth/env methods · connections · attempts · routes — core/src/integration.ts · server/groups/integration.ts
 - [MCP 客户端](subsystems/integrations/mcp-client.md) `[v1]`: stdio/http/sse + OAuth · tool/resource 发现 — mcp/
 - [LSP 集成](subsystems/integrations/lsp.md) `[v1]`: per-(server,root) 池 · diagnostics — lsp/{lsp,client,server}.ts
 - [IDE 集成](subsystems/integrations/ide.md) `[v1]`: VS Code 系探测 + 装扩展 — ide/index.ts
@@ -145,11 +148,12 @@
 - [Ask-user / Question](subsystems/integrations/question.md): Deferred 阻塞提问 — question/ · core/src/question.ts
 - [图片处理](subsystems/integrations/image.md): Photon WASM normalize/resize — image/ · core/src/image.ts
 
-## T2 — Subsystems / Persistence(7)
+## T2 — Subsystems / Persistence(8)
 - [配置加载](subsystems/persistence/config-loading.md): 发现/分层/合并/变量替换/managed — config/config.ts · core/src/config.ts
 - [V1 JSON 键值存储](subsystems/persistence/storage-v1.md) `[v1]` — storage/storage.ts
 - [V2 数据库](subsystems/persistence/database.md) `[v2]`: Drizzle/SQLite · Bun/Node driver · 迁移 — core/src/database/
 - [Project/Instance/Location/Worktree 模型](subsystems/persistence/project-instance-location.md): 身份/解析 — core/src/{project,location}.ts · project/instance-store.ts
+- [Project Directories 与 Copies](subsystems/persistence/project-directories.md) `[v2]`: project_directory table · copy registry · git_worktree refresh — core/src/project/{directories,copy}.ts
 - [事件系统](subsystems/persistence/eventing.md): GlobalBus + EventV2 bridge — bus/global.ts · event-v2-bridge.ts · core/src/event.ts
 - [安装与升级](subsystems/persistence/installation.md): version/channel/method — installation/index.ts
 - [文件系统/ripgrep/fff](subsystems/persistence/filesystem-search.md) `[v2]` — core/src/filesystem/ · ripgrep/binary.ts
@@ -232,7 +236,7 @@
 - [事件 catalog](reference/events.md): V1 bus + V2 session.next.* + ApiEvent — core/src/session/event.ts
 - [术语表与 codename](reference/glossary.md) — CONTEXT.md · AGENTS.md
 - [不确定项日志](reference/uncertainty.md): `[U]` 汇总
-- [Package 索引(27 包一句话)](reference/package-index.md) — package.json · packages/
+- [Package 索引(29 包一句话)](reference/package-index.md) — package.json · packages/
 - [核心共享数据模型](reference/data-model.md) — core/src/session/{message,schema}.ts
 
 ## 工具

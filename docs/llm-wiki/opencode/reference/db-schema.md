@@ -25,7 +25,7 @@ symbols:
   - SessionInputTable
   - Migrations
 evidence: explicit
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 这份节点是 V2 core SQLite/Drizzle schema 的逐表逐迁移总账；V1 当前仍有自己的 legacy 存储路径，本节点只描述 `packages/core/src` 的 V2 durable storage。[I]
@@ -49,13 +49,13 @@ V2 core schema 分散在各 domain 的 `*.sql.ts` 文件中，当前直接定义
 | 2 | `account_state` | `id`, `active_account_id`, `active_org_id` | `active_account_id` references `account.id` with `onDelete: set null` | [E: packages/core/src/account/sql.ts:16][E: packages/core/src/account/sql.ts:21] |
 | 3 | `control_account` | `email`, `url`, `access_token`, `refresh_token`, `token_expiry`, `active`, `time_created`, `time_updated` | composite primary key `email,url` | [E: packages/core/src/account/sql.ts:25][E: packages/core/src/account/sql.ts:38] |
 | 4 | `workspace` | `id`, `type`, `name`, `branch`, `directory`, `extra`, `project_id`, `time_used` | `project_id` references `project.id` cascade | [E: packages/core/src/control-plane/workspace.sql.ts:6][E: packages/core/src/control-plane/workspace.sql.ts:19] |
-| 5 | `credential` | `id`, `connector_id`, `method_id`, `label`, `value`, `active`, `time_created`, `time_updated` | unique active credential per connector via partial index | [E: packages/core/src/credential/sql.ts:7][E: packages/core/src/credential/sql.ts:20][E: packages/core/src/credential/sql.ts:21] |
+| 5 | `credential` | `id`, `integration_id`, `label`, `value`, legacy nullable `connector_id`, `method_id`, `active`, `time_created`, `time_updated` | `id` primary key; current service keys active credential replacement by `integration_id` in code rather than schema index | [E: packages/core/src/credential/sql.ts:6][E: packages/core/src/credential/sql.ts:7][E: packages/core/src/credential/sql.ts:8][E: packages/core/src/credential/sql.ts:11][E: packages/core/src/credential.ts:118][E: packages/core/src/credential.ts:123] |
 | 6 | `data_migration` | `name`, `time_completed` | `name` primary key | [E: packages/core/src/data-migration.sql.ts:3][E: packages/core/src/data-migration.sql.ts:5] |
 | 7 | `event_sequence` | `aggregate_id`, `seq`, `owner_id` | `aggregate_id` primary key | [E: packages/core/src/event/sql.ts:4][E: packages/core/src/event/sql.ts:7] |
 | 8 | `event` | `id`, `aggregate_id`, `seq`, `type`, `data` | `aggregate_id` references `event_sequence`; unique `(aggregate_id,seq)`; index on `(aggregate_id,type,seq)` | [E: packages/core/src/event/sql.ts:10][E: packages/core/src/event/sql.ts:23] |
 | 9 | `permission` | `id`, `project_id`, `action`, `resource`, `time_created`, `time_updated` | `project_id` references `project.id` cascade; unique `(project_id,action,resource)` | [E: packages/core/src/permission/sql.ts:7][E: packages/core/src/permission/sql.ts:19] |
 | 10 | `project` | `id`, `worktree`, `vcs`, `name`, `icon_url`, `icon_url_override`, `icon_color`, `time_created`, `time_updated`, `time_initialized`, `sandboxes`, `commands` | `id` primary key | [E: packages/core/src/project/sql.ts:6][E: packages/core/src/project/sql.ts:17] |
-| 11 | `project_directory` | `project_id`, `directory`, `type`, `time_created` | composite primary key `(project_id,directory)`; `project_id` references project cascade | [E: packages/core/src/project/sql.ts:20][E: packages/core/src/project/sql.ts:33] |
+| 11 | `project_directory` | `project_id`, `directory`, `type`, `time_created` | composite primary key `(project_id,directory)`; `project_id` references project cascade | [E: packages/core/src/project/sql.ts:20][E: packages/core/src/project/sql.ts:34] |
 | 12 | `session` | `id`, `project_id`, `workspace_id`, `parent_id`, `slug`, `directory`, `path`, `title`, `version`, `share_url`, `summary_additions`, `summary_deletions`, `summary_files`, `summary_diffs`, `metadata`, `cost`, `tokens_*`, `revert`, `permission`, `agent`, `model`, `time_created`, `time_updated`, `time_compacting`, `time_archived` | indexes on project/workspace/parent | [E: packages/core/src/session/sql.ts:21][E: packages/core/src/session/sql.ts:61][E: packages/core/src/session/sql.ts:62][E: packages/core/src/session/sql.ts:63] |
 | 13 | `message` | `id`, `session_id`, `time_created`, `time_updated`, `data` | `session_id` references session cascade; index on session/time | [E: packages/core/src/session/sql.ts:67][E: packages/core/src/session/sql.ts:78] |
 | 14 | `part` | `id`, `message_id`, `session_id`, `time_created`, `time_updated`, `data` | `message_id` references message cascade; indexes on message/session | [E: packages/core/src/session/sql.ts:81][E: packages/core/src/session/sql.ts:95] |
@@ -71,7 +71,7 @@ V2 core schema 分散在各 domain 的 `*.sql.ts` 文件中，当前直接定义
 
 ## Migration runner
 
-`migration.gen.ts` imports migrations in a fixed array order from `20260127222353_familiar_lady_ursula` through `20260611035744_credential`.[E: packages/core/src/database/migration.gen.ts:5][E: packages/core/src/database/migration.gen.ts:37] The runner creates the current `migration` journal table, seeds it from legacy `__drizzle_migrations` when that legacy table exists, and only calls `migration.up(tx)` when `OPENCODE_SKIP_MIGRATIONS` is not set.[E: packages/core/src/database/migration.ts:23][E: packages/core/src/database/migration.ts:33][E: packages/core/src/database/migration.ts:51]
+`migration.gen.ts` imports migrations in a fixed array order from `20260127222353_familiar_lady_ursula` through `20260611035744_credential`.[E: packages/core/src/database/migration.gen.ts:5][E: packages/core/src/database/migration.gen.ts:39] The runner creates the current `migration` journal table, seeds it from legacy `__drizzle_migrations` when that legacy table exists, and only calls `migration.up(tx)` when `OPENCODE_SKIP_MIGRATIONS` is not set.[E: packages/core/src/database/migration.ts:45][E: packages/core/src/database/migration.ts:55][E: packages/core/src/database/migration.ts:51]
 
 ## Migration catalog
 

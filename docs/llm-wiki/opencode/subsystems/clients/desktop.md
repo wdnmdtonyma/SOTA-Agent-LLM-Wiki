@@ -22,7 +22,7 @@ related:
   - server.http-server
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > Desktop 应用是 `@opencode-ai/desktop` Electron host: main process 启动本地 opencode server sidecar, renderer 复用 `@opencode-ai/app` 的 SolidJS shell, 再通过 preload IPC 提供文件选择、通知、更新、WSL server 等桌面能力。
@@ -56,14 +56,14 @@ V1/V2 关系: Desktop 不直接选择 V1 或 V2 run loop。Desktop sidecar impor
 | `packages/desktop/src/main/index.ts` | 主进程生命周期。设置 app id/userData、注册 IPC、选端口、spawn sidecar、创建窗口 [E: packages/desktop/src/main/index.ts:113] [E: packages/desktop/src/main/index.ts:131] [E: packages/desktop/src/main/index.ts:244] [E: packages/desktop/src/main/index.ts:283] [E: packages/desktop/src/main/index.ts:350]。 |
 | `packages/desktop/src/main/server.ts` | sidecar process manager。负责 fork、ready/error handshake、`/global/health` 轮询、stop timeout [E: packages/desktop/src/main/server.ts:62] [E: packages/desktop/src/main/server.ts:107] [E: packages/desktop/src/main/server.ts:114] [E: packages/desktop/src/main/server.ts:187] [E: packages/desktop/src/main/server.ts:171]。 |
 | `packages/desktop/src/main/sidecar.ts` | sidecar bootstrap。接收 `start/stop` 消息, 设置 server username/password 和 XDG state, 调用 `Server.listen` [E: packages/desktop/src/main/sidecar.ts:41] [E: packages/desktop/src/main/sidecar.ts:44] [E: packages/desktop/src/main/sidecar.ts:48] [E: packages/desktop/src/main/sidecar.ts:85] [E: packages/desktop/src/main/sidecar.ts:86] [E: packages/desktop/src/main/sidecar.ts:87] [E: packages/desktop/src/main/sidecar.ts:59]。 |
-| `packages/desktop/src/preload/types.ts` | preload API contract。renderer 可调用 sidecar lifecycle、WSL、updater、store、file picker、zoom、debug log 等方法 [E: packages/desktop/src/preload/types.ts:43] [E: packages/desktop/src/preload/types.ts:44] [E: packages/desktop/src/preload/types.ts:46] [E: packages/desktop/src/preload/types.ts:47] [E: packages/desktop/src/preload/types.ts:48] [E: packages/desktop/src/preload/types.ts:57] [E: packages/desktop/src/preload/types.ts:68] [E: packages/desktop/src/preload/types.ts:73] [E: packages/desktop/src/preload/types.ts:90] [E: packages/desktop/src/preload/types.ts:99]。 |
-| `packages/desktop/src/renderer/index.tsx` | Desktop renderer adapter。构造 desktop `Platform`, 等 sidecar credentials, 然后把 `AppInterface` 挂到 `MemoryRouter` [E: packages/desktop/src/renderer/index.tsx:80] [E: packages/desktop/src/renderer/index.tsx:295] [E: packages/desktop/src/renderer/index.tsx:363]。 |
+| `packages/desktop/src/preload/types.ts` | preload API contract。renderer 可调用 sidecar lifecycle、WSL、updater、store、file picker、zoom、debug log 等方法 [E: packages/desktop/src/preload/types.ts:43] [E: packages/desktop/src/preload/types.ts:44] [E: packages/desktop/src/preload/types.ts:46] [E: packages/desktop/src/preload/types.ts:47] [E: packages/desktop/src/preload/types.ts:48] [E: packages/desktop/src/preload/types.ts:57] [E: packages/desktop/src/preload/types.ts:68] [E: packages/desktop/src/preload/types.ts:73] [E: packages/desktop/src/preload/types.ts:91] [E: packages/desktop/src/preload/types.ts:100]。 |
+| `packages/desktop/src/renderer/index.tsx` | Desktop renderer adapter。构造 desktop `Platform`, 等 sidecar credentials, 然后把 `AppInterface` 挂到 `MemoryRouter` [E: packages/desktop/src/renderer/index.tsx:81] [E: packages/desktop/src/renderer/index.tsx:302] [E: packages/desktop/src/renderer/index.tsx:370]。 |
 
 ## 数据模型
 
 Desktop 自己最重要的跨进程数据结构是 `ServerReadyData`, 它包含 sidecar URL、username、password, 由 main process 的 `Deferred` 交给 renderer [E: packages/desktop/src/preload/types.ts:18] [E: packages/desktop/src/main/index.ts:235] [E: packages/desktop/src/main/index.ts:326]。`SidecarCommand` 在 sidecar 侧区分 `start` 和 `stop`, `start` 需要 hostname、port、password、userDataPath [E: packages/desktop/src/main/sidecar.ts:13] [E: packages/desktop/src/main/sidecar.ts:22]。
 
-`Platform` adapter 是 renderer 的主抽象。Desktop renderer 返回 `platform: "desktop"`, 从 user agent 推断 `os`, 并把 native picker、store、updater、debug log、clipboard image、WSL servers 等能力映射到 `window.api` [E: packages/desktop/src/renderer/index.tsx:80] [E: packages/desktop/src/renderer/index.tsx:81] [E: packages/desktop/src/renderer/index.tsx:135] [E: packages/desktop/src/renderer/index.tsx:139] [E: packages/desktop/src/renderer/index.tsx:189] [E: packages/desktop/src/renderer/index.tsx:237]。
+`Platform` adapter 是 renderer 的主抽象。Desktop renderer 返回 `platform: "desktop"`, 从 user agent 推断 `os`, 并把 native picker、store、updater、debug log、clipboard image、WSL servers 等能力映射到 `window.api` [E: packages/desktop/src/renderer/index.tsx:81] [E: packages/desktop/src/renderer/index.tsx:82] [E: packages/desktop/src/renderer/index.tsx:136] [E: packages/desktop/src/renderer/index.tsx:140] [E: packages/desktop/src/renderer/index.tsx:196] [E: packages/desktop/src/renderer/index.tsx:244]。
 
 ## 控制流
 
@@ -73,8 +73,8 @@ Desktop 自己最重要的跨进程数据结构是 `ServerReadyData`, 它包含 
 4. main 生成随机 password, 调用 `spawnLocalServer(hostname, port, password, ...)` 启动 utility process [E: packages/desktop/src/main/index.ts:308] [E: packages/desktop/src/main/index.ts:318]。
 5. `spawnLocalServer` fork `sidecar.js`, 向 child post `{ type: "start", hostname, port, password, userDataPath }`, 等待 sidecar 发 `ready` [E: packages/desktop/src/main/server.ts:62] [E: packages/desktop/src/main/server.ts:130] [E: packages/desktop/src/main/server.ts:107]。
 6. sidecar 收到 `start`, 设置 `OPENCODE_SERVER_USERNAME`, `OPENCODE_SERVER_PASSWORD`, `XDG_STATE_HOME`, import server bundle, 调用 `Server.listen` 并限定 CORS 为 `oc://renderer` [E: packages/desktop/src/main/sidecar.ts:51] [E: packages/desktop/src/main/sidecar.ts:85] [E: packages/desktop/src/main/sidecar.ts:86] [E: packages/desktop/src/main/sidecar.ts:87] [E: packages/desktop/src/main/sidecar.ts:57] [E: packages/desktop/src/main/sidecar.ts:59] [E: packages/desktop/src/main/sidecar.ts:64]。
-7. main 把 `url`, `username: "opencode"`, `password` resolve 到 `serverReady`, renderer 的 `awaitInitialization()` 得到这些凭据 [E: packages/desktop/src/main/index.ts:326] [E: packages/desktop/src/renderer/index.tsx:295]。
-8. renderer 把 sidecar credentials 变成 `ServerConnection.Sidecar` 列表项, 再用 `availableStartupServer(defaultServer.latest, wslServers.data)` 计算 default server key 并传给 `AppInterface` [E: packages/desktop/src/renderer/index.tsx:337] [E: packages/desktop/src/renderer/index.tsx:341] [E: packages/desktop/src/renderer/index.tsx:355] [E: packages/desktop/src/renderer/index.tsx:356] [E: packages/desktop/src/renderer/index.tsx:363]。
+7. main 把 `url`, `username: "opencode"`, `password` resolve 到 `serverReady`, renderer 的 `awaitInitialization()` 得到这些凭据 [E: packages/desktop/src/main/index.ts:326] [E: packages/desktop/src/renderer/index.tsx:302]。
+8. renderer 把 sidecar credentials 变成 `ServerConnection.Sidecar` 列表项, 再用 `availableStartupServer(defaultServer.latest, wslServers.data)` 计算 default server key 并传给 `AppInterface` [E: packages/desktop/src/renderer/index.tsx:344] [E: packages/desktop/src/renderer/index.tsx:348] [E: packages/desktop/src/renderer/index.tsx:362] [E: packages/desktop/src/renderer/index.tsx:363] [E: packages/desktop/src/renderer/index.tsx:370]。
 
 ## 设计动机与权衡
 

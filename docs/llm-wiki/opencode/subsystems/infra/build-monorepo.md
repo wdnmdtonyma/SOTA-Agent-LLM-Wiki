@@ -19,7 +19,7 @@ related:
   - infra.native-binary-release
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 构建与 monorepo 节点描述 opencode 仓库的 root-level 包管理、脚本入口、Turbo task graph 和 Bun install 策略；它是终端 AI agent、Web/Desktop/Console 客户端与发布脚本共用的工程地基。
@@ -42,13 +42,13 @@ V1/V2 关系: monorepo build 是 `v: na`。V1 当前活跑代码在 `packages/op
 
 - Bun workspaces: root `packageManager` 固定 Bun 版本, package scripts 直接用 `bun run --cwd ...` 进入各包 [E: package.json:7] [E: package.json:9] [E: package.json:10] [E: package.json:11]。
 - Turbo: root `typecheck` 运行 `bun turbo typecheck`, `turbo.json` 定义 `typecheck`, `build`, `opencode#test`, `@opencode-ai/app#test`, `@opencode-ai/ui#test` 任务 [E: package.json:16] [E: turbo.json:6] [E: turbo.json:7] [E: turbo.json:11] [E: turbo.json:16] [E: turbo.json:20]。
-- Bun catalog: root `workspaces.catalog` 固定 Effect、AI SDK、Solid、SST、Vite、Tailwind、OpenTUI 等版本, package 内用 `catalog:` 消费这些版本 [E: package.json:32] [E: package.json:62] [E: package.json:63] [E: package.json:78] [E: packages/opencode/package.json:79] [E: packages/opencode/package.json:110]。
+- Bun catalog: root `workspaces.catalog` 固定 Effect、AI SDK、Solid、SST、Vite、Tailwind、OpenTUI 等版本, package 内用 `catalog:` 消费这些版本 [E: package.json:32] [E: package.json:64] [E: package.json:65] [E: package.json:80] [E: packages/opencode/package.json:79] [E: packages/opencode/package.json:110]。
 
 ## 关键文件
 
 | 文件 | 角色 |
 | --- | --- |
-| `package.json` | root workspace manifest。定义 dev/typecheck/test 脚本、workspace globs、catalog、trusted dependencies、overrides、patched dependencies [E: package.json:8] [E: package.json:24] [E: package.json:32] [E: package.json:125] [E: package.json:135] [E: package.json:142]。 |
+| `package.json` | root workspace manifest。定义 dev/typecheck/test 脚本、workspace globs、catalog、trusted dependencies、overrides、patched dependencies [E: package.json:8] [E: package.json:24] [E: package.json:32] [E: package.json:126] [E: package.json:136] [E: package.json:143]。 |
 | `turbo.json` | task graph。`build` 输出 `dist/**`, `opencode#test` 依赖上游 build, app/ui test 也依赖上游 build [E: turbo.json:7] [E: turbo.json:9] [E: turbo.json:11] [E: turbo.json:12] [E: turbo.json:16] [E: turbo.json:17] [E: turbo.json:20] [E: turbo.json:21]。 |
 | `bunfig.toml` | Bun install/test guard。开启 exact install, 新解析版本默认要求发布至少 259200 秒, root test 指向 `./do-not-run-tests-from-root` [E: bunfig.toml:2] [E: bunfig.toml:4] [E: bunfig.toml:8]。 |
 | `packages/opencode/package.json` | V1 CLI package manifest。`build` 调 `script/build.ts`, `bin.opencode` 指向 `./bin/opencode`, dependency 列表同时包含 Vercel AI SDK provider 和 `@opencode-ai/llm` native provider 引擎 [E: packages/opencode/package.json:14] [E: packages/opencode/package.json:18] [E: packages/opencode/package.json:75] [E: packages/opencode/package.json:87]。 |
@@ -70,12 +70,12 @@ V1/V2 关系: monorepo build 是 `v: na`。V1 当前活跑代码在 `packages/op
 
 ## 设计动机与权衡
 
-root `bunfig.toml` 用 `exact = true` 和 minimum release age 限制新解析依赖, 但把 AI provider、OpenTUI、Electron builder 等发布节奏敏感的包列入 exclude, 这是稳定性与上游快速发布之间的折中 [E: bunfig.toml:2] [E: bunfig.toml:4] [E: bunfig.toml:5]。root `trustedDependencies` 明确允许会执行 install scripts 或 native setup 的依赖, 包括 esbuild、node-pty、tree-sitter、web-tree-sitter、electron [E: package.json:125] [E: package.json:127] [E: package.json:129] [E: package.json:132] [E: package.json:133]。
+root `bunfig.toml` 用 `exact = true` 和 minimum release age 限制新解析依赖, 但把 AI provider、OpenTUI、Electron builder 等发布节奏敏感的包列入 exclude, 这是稳定性与上游快速发布之间的折中 [E: bunfig.toml:2] [E: bunfig.toml:4] [E: bunfig.toml:5]。root `trustedDependencies` 明确允许会执行 install scripts 或 native setup 的依赖, 包括 esbuild、node-pty、tree-sitter、web-tree-sitter、electron [E: package.json:126] [E: package.json:128] [E: package.json:130] [E: package.json:133] [E: package.json:134]。
 
 ## Gotcha
 
 - root `bun test` 不是总测试入口, 它是 guard。局部测试应从受影响 package 内运行, 这与 repo-local `AGENTS.md` 的测试约束一致 [E: package.json:22] [E: AGENTS.md:142]。
-- root `package.json` 的 `dependencies` 不等于 CLI runtime 全部依赖。CLI runtime 主要在 `packages/opencode/package.json` 内声明, root dependencies 只放 workspace-level 脚本和 SDK/plugin/script 共享依赖 [E: package.json:108] [E: packages/opencode/package.json:54]。
+- root `package.json` 的 `dependencies` 不等于 CLI runtime 全部依赖。CLI runtime 主要在 `packages/opencode/package.json` 内声明, root dependencies 只放 workspace-level 脚本和 SDK/plugin/script 共享依赖 [E: package.json:109] [E: packages/opencode/package.json:54]。
 - `catalog:` 是 Bun workspace 版本引用, 不是 npm 包名的一部分 [I]。
 
 ## Sources

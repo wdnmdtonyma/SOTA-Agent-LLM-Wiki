@@ -9,7 +9,7 @@ symbols: [WebFetchTool]
 related: [ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > WebFetch 工具把 HTTP/HTTPS URL 取回为 `markdown`、`text` 或 `html`；V1 当前活跑路径允许图片以 attachment 返回，V2 core 工具只接受 textual content。

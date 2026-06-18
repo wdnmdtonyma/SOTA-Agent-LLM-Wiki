@@ -5,11 +5,11 @@ kind: catalog
 tier: T1
 v: v2
 source: [packages/server/src/groups/, packages/server/src/handlers/]
-symbols: [Api, HealthGroup, LocationGroup, SessionGroup, MessageGroup, ProviderGroup, ConnectorGroup]
-related: [server-api.overview, sdk.surface]
+symbols: [Api, HealthGroup, LocationGroup, SessionGroup, MessageGroup, ProviderGroup, IntegrationGroup, CredentialGroup, PtyGroup, ProjectCopyGroup]
+related: [server-api.overview, sdk.surface, integrations.integration-v2, persistence.project-directories, execution.pty]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V2 route catalog 覆盖 `packages/server/src/groups` 下当前实现的 `/api/*` Effect HttpApi routes；这些 routes 是 V2 native server API，不包含 V1 legacy compatibility routes。
@@ -19,11 +19,11 @@ updated: 92c70c9c3
 - V2 `/api/*` 当前实际实现了哪些 method/path？
 - 每个 V2 route 对应哪个 group、operation identifier 和 handler？
 - 哪些 V2 routes 使用 request location context，哪些使用 session-pinned context？
-- V2 connector、permission、question、fs、event route 如何映射到 SDK `.v2.*` namespace？
+- V2 integration、credential、permission、question、fs、event route 如何映射到 SDK `.v2.*` namespace？
 
 ## 路由来源与装配
 
-V2 `Api` 在 `packages/server/src/api.ts` 里声明，使用 `HttpApi.make("server")` 并 add Health、Location、Agent、Session、Message、Model、Provider、Connector、Permission、FileSystem、Command、Skill、Event、Question 和 Reference groups。[E: packages/server/src/api.ts:20][E: packages/server/src/api.ts:21][E: packages/server/src/api.ts:35] `createRoutes()` 用 `HttpApiBuilder.layer(Api, { openapiPath: "/openapi.json" })` 暴露 V2 routes；V1 server 也通过 `HttpApiBuilder.layer(Api)` 把同一 V2 API 挂到 legacy server process。[E: packages/server/src/routes.ts:13][E: packages/server/src/routes.ts:14][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:162]
+V2 `Api` 在 `packages/server/src/api.ts` 里声明，使用 `HttpApi.make("server")` 并 add Health、Location、Agent、Session、Message、Model、Provider、Integration、Credential、Permission、FileSystem、Command、Skill、Event、Pty、Question、Reference 和 ProjectCopy groups。[E: packages/server/src/api.ts:23][E: packages/server/src/api.ts:24][E: packages/server/src/api.ts:31][E: packages/server/src/api.ts:32][E: packages/server/src/api.ts:38][E: packages/server/src/api.ts:41] `createRoutes()` 用 `HttpApiBuilder.layer(Api, { openapiPath: "/openapi.json" })` 暴露 V2 routes；V1 server 也通过 `HttpApiBuilder.layer(Api)` 把同一 V2 API 挂到 legacy server process。[E: packages/server/src/routes.ts:14][E: packages/server/src/routes.ts:15][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:168]
 
 ## V2 route table
 
@@ -31,17 +31,19 @@ V2 `Api` 在 `packages/server/src/api.ts` 里声明，使用 `HttpApi.make("serv
 |---:|---|---|---|---|---|---|
 | 1 | agent | GET | `/api/agent` | `v2.agent.list` | List agents | `AgentHandler` [E: packages/server/src/groups/agent.ts:9][E: packages/server/src/handlers/agent.ts:9] |
 | 2 | command | GET | `/api/command` | `v2.command.list` | List commands | `CommandHandler` [E: packages/server/src/groups/command.ts:9][E: packages/server/src/handlers/command.ts:8] |
-| 3 | connector | GET | `/api/connector` | `v2.connector.list` | List connectors | `ConnectorHandler` [E: packages/server/src/groups/connector.ts:12][E: packages/server/src/handlers/connector.ts:22] |
-| 4 | connector | GET | `/api/connector/:connectorID` | `v2.connector.get` | Get connector | `ConnectorHandler` [E: packages/server/src/groups/connector.ts:26][E: packages/server/src/handlers/connector.ts:29] |
-| 5 | connector | POST | `/api/connector/:connectorID/connect/key` | `v2.connector.connect.key` | Connect with key | `ConnectorHandler` [E: packages/server/src/groups/connector.ts:41][E: packages/server/src/handlers/connector.ts:36] |
-| 6 | connector | POST | `/api/connector/:connectorID/connect/oauth` | `v2.connector.connect.oauth.begin` | Begin OAuth connection | `ConnectorHandler` [E: packages/server/src/groups/connector.ts:63][E: packages/server/src/handlers/connector.ts:52] |
-| 7 | connector | GET | `/api/connector/oauth/:attemptID` | `v2.connector.connect.oauth.status` | Get OAuth attempt status | `ConnectorHandler` [E: packages/server/src/groups/connector.ts:84][E: packages/server/src/handlers/connector.ts:68] |
-| 8 | connector | POST | `/api/connector/oauth/:attemptID/complete` | `v2.connector.connect.oauth.complete` | Complete OAuth connection | `ConnectorHandler` [E: packages/server/src/groups/connector.ts:99][E: packages/server/src/handlers/connector.ts:75] |
-| 9 | connector | DELETE | `/api/connector/oauth/:attemptID` | `v2.connector.connect.oauth.cancel` | Cancel OAuth connection | `ConnectorHandler` [E: packages/server/src/groups/connector.ts:116][E: packages/server/src/handlers/connector.ts:94] |
+| 3 | integration | GET | `/api/integration` | `v2.integration.list` | List integrations | `IntegrationHandler` [E: packages/server/src/groups/integration.ts:12][E: packages/server/src/handlers/integration.ts:23] |
+| 4 | integration | GET | `/api/integration/:integrationID` | `v2.integration.get` | Get integration | `IntegrationHandler` [E: packages/server/src/groups/integration.ts:26][E: packages/server/src/handlers/integration.ts:30] |
+| 5 | integration | POST | `/api/integration/:integrationID/connect/key` | `v2.integration.connect.key` | Connect with key | `IntegrationHandler` [E: packages/server/src/groups/integration.ts:41][E: packages/server/src/handlers/integration.ts:37] |
+| 6 | integration | POST | `/api/integration/:integrationID/connect/oauth` | `v2.integration.connect.oauth` | Begin OAuth connection | `IntegrationHandler` [E: packages/server/src/groups/integration.ts:61][E: packages/server/src/handlers/integration.ts:51] |
+| 7 | integration | GET | `/api/integration/attempt/:attemptID` | `v2.integration.attempt.status` | Get OAuth attempt status | `IntegrationHandler` [E: packages/server/src/groups/integration.ts:82][E: packages/server/src/handlers/integration.ts:67] |
+| 8 | integration | POST | `/api/integration/attempt/:attemptID/complete` | `v2.integration.attempt.complete` | Complete OAuth connection | `IntegrationHandler` [E: packages/server/src/groups/integration.ts:97][E: packages/server/src/handlers/integration.ts:74] |
+| 9 | integration | DELETE | `/api/integration/attempt/:attemptID` | `v2.integration.attempt.cancel` | Cancel OAuth connection | `IntegrationHandler` [E: packages/server/src/groups/integration.ts:114][E: packages/server/src/handlers/integration.ts:96] |
+| 9.1 | credential | PATCH | `/api/credential/:credentialID` | `v2.credential.update` | Update credential label | `CredentialHandler` [E: packages/server/src/groups/credential.ts:8][E: packages/server/src/handlers/credential.ts:9] |
+| 9.2 | credential | DELETE | `/api/credential/:credentialID` | `v2.credential.remove` | Remove credential | `CredentialHandler` [E: packages/server/src/groups/credential.ts:24][E: packages/server/src/handlers/credential.ts:16] |
 | 10 | event | GET | `/api/event` | `v2.event.subscribe` | Subscribe to events | `EventHandler` [E: packages/server/src/groups/event.ts:18][E: packages/server/src/handlers/event.ts:21] |
 | 11 | fs | GET | `/api/fs/read` | `v2.fs.read` | Read file | `FileSystemHandler` [E: packages/server/src/groups/fs.ts:27][E: packages/server/src/handlers/fs.ts:10] |
-| 12 | fs | GET | `/api/fs/list` | `v2.fs.list` | List directory | `FileSystemHandler` [E: packages/server/src/groups/fs.ts:41][E: packages/server/src/handlers/fs.ts:18] |
-| 13 | fs | GET | `/api/fs/find` | `v2.fs.find` | Find files | `FileSystemHandler` [E: packages/server/src/groups/fs.ts:55][E: packages/server/src/handlers/fs.ts:26] |
+| 12 | fs | GET | `/api/fs/list` | `v2.fs.list` | List directory | `FileSystemHandler` [E: packages/server/src/groups/fs.ts:36][E: packages/server/src/handlers/fs.ts:22] |
+| 13 | fs | GET | `/api/fs/find` | `v2.fs.find` | Find files | `FileSystemHandler` [E: packages/server/src/groups/fs.ts:50][E: packages/server/src/handlers/fs.ts:30] |
 | 14 | health | GET | `/api/health` | `v2.health.get` | Check server health | `HealthHandler` [E: packages/server/src/groups/health.ts:5][E: packages/server/src/handlers/health.ts:6] |
 | 15 | location | GET | `/api/location` | `v2.location.get` | Get location | `LocationHandler` [E: packages/server/src/groups/location.ts:59][E: packages/server/src/handlers/location.ts:7] |
 | 16 | message | GET | `/api/session/:sessionID/message` | `v2.session.messages` | Get session messages | `MessageHandler` [E: packages/server/src/groups/message.ts:27][E: packages/server/src/handlers/message.ts:31] |
@@ -66,10 +68,20 @@ V2 `Api` 在 `packages/server/src/api.ts` 里声明，使用 `HttpApi.make("serv
 | 35 | session | POST | `/api/session/:sessionID/wait` | `v2.session.wait` | Wait for session | `SessionHandler` [E: packages/server/src/groups/session.ts:180][E: packages/server/src/handlers/session.ts:152] |
 | 36 | session | GET | `/api/session/:sessionID/context` | `v2.session.context` | Get session context | `SessionHandler` [E: packages/server/src/groups/session.ts:195][E: packages/server/src/handlers/session.ts:176] |
 | 37 | skill | GET | `/api/skill` | `v2.skill.list` | List skills | `SkillHandler` [E: packages/server/src/groups/skill.ts:9][E: packages/server/src/handlers/skill.ts:7] |
+| 38 | pty | GET | `/api/pty` | `v2.pty.list` | List PTY sessions | `PtyHandler` [E: packages/server/src/groups/pty.ts:22][E: packages/server/src/groups/pty.ts:24][E: packages/server/src/handlers/pty.ts:21][E: packages/server/src/handlers/pty.ts:29] |
+| 39 | pty | POST | `/api/pty` | `v2.pty.create` | Create PTY session | `PtyHandler` [E: packages/server/src/groups/pty.ts:38][E: packages/server/src/handlers/pty.ts:35] |
+| 40 | pty | GET | `/api/pty/:ptyID` | `v2.pty.get` | Get PTY session | `PtyHandler` [E: packages/server/src/groups/pty.ts:53][E: packages/server/src/handlers/pty.ts:54] |
+| 41 | pty | PUT | `/api/pty/:ptyID` | `v2.pty.update` | Update PTY title/size | `PtyHandler` [E: packages/server/src/groups/pty.ts:69][E: packages/server/src/handlers/pty.ts:72] |
+| 42 | pty | DELETE | `/api/pty/:ptyID` | `v2.pty.remove` | Remove PTY session | `PtyHandler` [E: packages/server/src/groups/pty.ts:86][E: packages/server/src/handlers/pty.ts:95] |
+| 43 | pty | POST | `/api/pty/:ptyID/connect-token` | `v2.pty.connectToken` | Create PTY WebSocket token | `PtyHandler` [E: packages/server/src/groups/pty.ts:102][E: packages/server/src/handlers/pty.ts:112] |
+| 44 | pty | GET | `/api/pty/:ptyID/connect` | `v2.pty.connect` | Connect WebSocket to PTY | `PtyHandler` [E: packages/server/src/groups/pty.ts:120][E: packages/server/src/handlers/pty.ts:136][E: packages/server/src/handlers/pty.ts:138] |
+| 45 | projectCopy | POST | `/experimental/project/:projectID/copy` | `v2.projectCopy.create` | Create project copy | `ProjectCopyHandler` [E: packages/server/src/groups/project-copy.ts:25][E: packages/server/src/handlers/project-copy.ts:12] |
+| 46 | projectCopy | DELETE | `/experimental/project/:projectID/copy` | `v2.projectCopy.remove` | Remove project copy | `ProjectCopyHandler` [E: packages/server/src/groups/project-copy.ts:36][E: packages/server/src/handlers/project-copy.ts:25] |
+| 47 | projectCopy | POST | `/experimental/project/:projectID/copy/refresh` | `v2.projectCopy.refresh` | Refresh project copy records | `ProjectCopyHandler` [E: packages/server/src/groups/project-copy.ts:47][E: packages/server/src/handlers/project-copy.ts:32] |
 
 ## Context 分类
 
-V2 design spec says non-session routes resolve runtime context from query/default runtime, while session item routes use the pinned context stored on the session row。[E: specs/v2/api.html:459][E: specs/v2/api.html:472][E: specs/v2/api.html:496] In the implemented table, routes beginning with `/api/session/:sessionID/...` are session-pinned by path shape; `/api/fs/*`, `/api/provider`, `/api/model`, `/api/agent`, `/api/command`, `/api/skill`, `/api/reference`, `/api/permission/request`, `/api/question/request`, `/api/location` and `/api/event` are request/default location routes by V2 API design intent [I].
+V2 design spec says non-session routes resolve runtime context from query/default runtime, while session item routes use the pinned context stored on the session row。[E: specs/v2/api.html:459][E: specs/v2/api.html:472][E: specs/v2/api.html:496] In the implemented table, routes beginning with `/api/session/:sessionID/...` are session-pinned by path shape; `/api/fs/*`, `/api/provider`, `/api/model`, `/api/agent`, `/api/command`, `/api/skill`, `/api/reference`, `/api/permission/request`, `/api/question/request`, `/api/location`, `/api/integration`, `/api/credential`, `/api/pty` and `/api/event` are request/default location routes by V2 API design intent [I].
 
 ## Sources
 
@@ -83,3 +95,6 @@ V2 design spec says non-session routes resolve runtime context from query/defaul
 
 - [Server API overview](overview.md)
 - [SDK surface](../sdk/surface.md)
+- [V2 integration subsystem](../../subsystems/integrations/integration-v2.md)
+- [Project directories](../../subsystems/persistence/project-directories.md)
+- [PTY 子系统](../../subsystems/execution/pty.md)

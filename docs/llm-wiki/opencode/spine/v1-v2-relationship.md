@@ -9,7 +9,7 @@ symbols: [RuntimeFlags.experimentalEventSystem, EventV2Bridge, SessionV2, Sessio
 related: [spine.v1-turn-loop, spine.v2-overview]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1/V2 迁移边界是:默认 CLI 活跑路径仍是 V1,但 V1 可在 `experimentalEventSystem` 下 dual-write V2 events;V2 core 通过 `packages/core/src/public/opencode.ts` 的嵌入式 API 接通执行,许多 `SessionV2` facade 操作仍是 stub。
@@ -38,7 +38,7 @@ flowchart TD
 
 ## V1
 
-默认 V1 CLI 非 attach 路径创建带 process-local fetch 的 SDK client,非交互 prompt 调 `client.session.prompt`,server session handler 取 `SessionPrompt.Service` 并在 prompt handler 中调用 `promptSvc.prompt`;V1 prompt 随后进入 `state.ensureRunning(... runLoop(...))`,processor 的 `process` 方法在 `llm.stream(streamInput)` 处打开模型流。[E: packages/opencode/src/cli/cmd/run.ts:875][E: packages/opencode/src/cli/cmd/run.ts:793][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:51][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:298][E: packages/opencode/src/session/prompt.ts:1392][E: packages/opencode/src/session/processor.ts:974]
+默认 V1 CLI 非 attach 路径创建带 process-local fetch 的 SDK client,非交互 prompt 调 `client.session.prompt`,server session handler 取 `SessionPrompt.Service` 并在 prompt handler 中调用 `promptSvc.prompt`;V1 prompt 随后进入 `state.ensureRunning(... runLoop(...))`,processor 的 `process` 方法在 `llm.stream(streamInput)` 处打开模型流。[E: packages/opencode/src/cli/cmd/run.ts:878][E: packages/opencode/src/cli/cmd/run.ts:793][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:51][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:298][E: packages/opencode/src/session/prompt.ts:1404][E: packages/opencode/src/session/processor.ts:974]
 
 V1 dual-write 的入口受 `RuntimeFlags.experimentalEventSystem` 控制,该 flag 由 `OPENCODE_EXPERIMENTAL_EVENT_SYSTEM` 单独设置,也可通过伞形 `OPENCODE_EXPERIMENTAL=true` 启用(二者均经由 `enabledByExperimental`)。[E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/effect/runtime-flags.ts:11] 在 V1 prompt admission 处,打开该 flag 会发布 `SessionEvent.Prompted`;在 synthetic prompt 处会发布 `SessionEvent.Synthetic`。[E: packages/opencode/src/session/prompt.ts:1077][E: packages/opencode/src/session/prompt.ts:1090]
 

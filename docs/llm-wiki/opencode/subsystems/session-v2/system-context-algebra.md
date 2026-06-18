@@ -25,7 +25,7 @@ related:
   - session-v2.system-context-registry
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > System Context 代数把 privileged runtime context 建模成可独立观测、可比较、可渲染的 typed `Source<A>` 集合; runner 在 safe provider-turn boundary 用 `initialize/reconcile/replace` 把它准入为 baseline 或 chronological system message。
@@ -54,8 +54,8 @@ updated: 92c70c9c3
 | `Source<A>.baseline` | first generation baseline rendering。 | [E: packages/core/src/system-context/index.ts:36] |
 | `Source<A>.update` | previous/current value 变化时的 chronological update rendering。 | [E: packages/core/src/system-context/index.ts:37] |
 | `Source<A>.removed` | source 被移除时的 optional removal text。 | [E: packages/core/src/system-context/index.ts:38] |
-| `SourceSnapshot.value` | codec-encoded JSON value。 | [E: packages/core/src/system-context/index.ts:50][E: CONTEXT.md:63] |
-| `SourceSnapshot.removed` | model-visible removal text cached with snapshot。 | [E: packages/core/src/system-context/index.ts:51][E: CONTEXT.md:63] |
+| `SourceSnapshot.value` | codec-encoded JSON value。 | [E: packages/core/src/system-context/index.ts:50][E: CONTEXT.md:66] |
+| `SourceSnapshot.removed` | model-visible removal text cached with snapshot。 | [E: packages/core/src/system-context/index.ts:51][E: CONTEXT.md:66] |
 | `Snapshot` | record from source key to source snapshot。 | [E: packages/core/src/system-context/index.ts:56] |
 | `Generation` | `{ baseline, snapshot }`,用于一个完整 baseline epoch。 | [E: packages/core/src/system-context/index.ts:60][E: packages/core/src/system-context/index.ts:61] |
 | `Updated` | `{ text, snapshot }`,用于 chronological update plus snapshot advance。 | [E: packages/core/src/system-context/index.ts:66][E: packages/core/src/system-context/index.ts:67] |
@@ -78,10 +78,10 @@ updated: 92c70c9c3
 
 ## 设计动机与权衡
 
-- `CONTEXT.md` says Context Source loaders return one coherent typed value; `SystemContext.make(...)` hides that value type so differently typed sources compose uniformly, and codec stores/compares that value。[E: CONTEXT.md:72]
-- `CONTEXT.md` says context changes are sampled lazily at safe provider-turn boundaries, never pushed asynchronously when a source changes; in the current runner path, `systemContext.load()` is called through `loadSystemContext(agent)` during `runTurnAttempt` and passed to Context Epoch initialize/prepare。[E: CONTEXT.md:65][E: packages/core/src/session/runner/llm.ts:171][E: packages/core/src/session/runner/llm.ts:184][E: packages/core/src/session/runner/llm.ts:203] The absence of an async subscription in this path is an implementation inference rather than a global codebase proof。[I]
-- `unavailable` implements stale-while-revalidate semantics: ordinary reconcile retains prior admitted snapshot while replacement waits for a complete admitted context。[E: CONTEXT.md:77][E: packages/core/src/system-context/index.ts:248][E: packages/core/src/system-context/index.ts:284][E: packages/core/src/system-context/index.ts:285]
-- Replacement is stricter than update because it creates a new baseline for a baseline-replacing transition such as compaction or model/provider switch; applying that same completeness rule to agent switch is inferred from `SessionContextEpoch.prepare` using `SystemContext.replace` when the stored agent differs。[E: CONTEXT.md:75][E: packages/core/src/session/context-epoch.ts:85][E: packages/core/src/session/context-epoch.ts:89][I]
+- `CONTEXT.md` says Context Source loaders return one coherent typed value; `SystemContext.make(...)` hides that value type so differently typed sources compose uniformly, and codec stores/compares that value。[E: CONTEXT.md:75]
+- `CONTEXT.md` says context changes are sampled lazily at safe provider-turn boundaries, never pushed asynchronously when a source changes; in the current runner path, `systemContext.load()` is called through `loadSystemContext(agent)` during `runTurnAttempt` and passed to Context Epoch initialize/prepare。[E: CONTEXT.md:68][E: packages/core/src/session/runner/llm.ts:171][E: packages/core/src/session/runner/llm.ts:184][E: packages/core/src/session/runner/llm.ts:203] The absence of an async subscription in this path is an implementation inference rather than a global codebase proof。[I]
+- `unavailable` implements stale-while-revalidate semantics: ordinary reconcile retains prior admitted snapshot while replacement waits for a complete admitted context。[E: CONTEXT.md:80][E: packages/core/src/system-context/index.ts:248][E: packages/core/src/system-context/index.ts:284][E: packages/core/src/system-context/index.ts:285]
+- Replacement is stricter than update because it creates a new baseline for a baseline-replacing transition such as compaction or model/provider switch; applying that same completeness rule to agent switch is inferred from `SessionContextEpoch.prepare` using `SystemContext.replace` when the stored agent differs。[E: CONTEXT.md:78][E: packages/core/src/session/context-epoch.ts:85][E: packages/core/src/session/context-epoch.ts:89][I]
 
 ## Gotcha
 

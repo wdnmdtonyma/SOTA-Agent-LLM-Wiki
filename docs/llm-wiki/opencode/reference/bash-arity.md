@@ -11,7 +11,7 @@ symbols:
   - prefix
   - ARITY
 evidence: explicit
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 这份节点是 V1 shell permission 的命令前缀归一化表：给一串 shell tokens，`prefix()` 决定审批时保留几个 token。

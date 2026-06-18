@@ -9,7 +9,7 @@ symbols: [ThemeJson, DEFAULT_THEMES, resolveTheme, generateSystem, ThemeProvider
 related: [ref.themes, tui.runtime-hosting, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > TUI theming 是 ThemeJson 解析 + 默认/插件/自定义/system 主题合成 + OpenTUI terminal palette 监听；完整主题字段表归档在 `ref.themes`，本页解释当前源码里的解析与运行时控制流。

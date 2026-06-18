@@ -9,7 +9,7 @@ symbols: [createLLMEventPublisher, publish, flush, failUnsettledTools, settledOu
 related: [spine.v2-provider-turn, session-v2.projector]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > `createLLMEventPublisher` 是 V2 runner 的 event translation layer:它把 `@opencode-ai/llm` stream events 转成 `SessionEvent.Step/Text/Reasoning/Tool` events,其中包含 durable boundaries 和 ephemeral deltas;它不执行工具、不启动 continuation turn 是从 publisher 状态机范围推出的职责边界。[E: packages/core/src/session/runner/publish-llm-event.ts:303][E: packages/core/src/session/runner/publish-llm-event.ts:344][E: packages/core/src/session/event.ts:486][E: packages/core/src/session/event.ts:487][E: packages/core/src/session/event.ts:500][I]

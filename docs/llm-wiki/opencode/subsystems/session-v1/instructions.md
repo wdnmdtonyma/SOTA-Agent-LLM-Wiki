@@ -9,7 +9,7 @@ symbols: [Instruction, Instruction.systemPaths, Instruction.system, Instruction.
 related: [prompt.system-prompts]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 `Instruction` service 负责把 global/project/config/nearby instruction files 转成 provider-turn system context 或 read-tool 后续 system-reminder;它发现 `AGENTS.md`、可选 `CLAUDE.md` 和 deprecated `CONTEXT.md`。
@@ -59,13 +59,13 @@ updated: 92c70c9c3
 
 9. read tool 调 `instruction.resolve(ctx.messages, filepath, ctx.messageID)`;如果 loaded instructions 非空,文本文件 output 末尾追加 `<system-reminder>` 包裹的 instruction content,同时 metadata.loaded 记录这些 filepath。[E: packages/opencode/src/tool/read.ts:300][E: packages/opencode/src/tool/read.ts:355][E: packages/opencode/src/tool/read.ts:356][E: packages/opencode/src/tool/read.ts:362][E: packages/opencode/src/tool/read.ts:365]
 
-10. `Instruction.clear(messageID)` 删除 per-message claims;`SessionPrompt.createUserMessage` 和 processor outcome 都注册/执行 clear,避免跨 message 泄漏 nearby instruction claims。[E: packages/opencode/src/session/instruction.ts:105][E: packages/opencode/src/session/instruction.ts:107][E: packages/opencode/src/session/prompt.ts:704][E: packages/opencode/src/session/prompt.ts:1380]
+10. `Instruction.clear(messageID)` 删除 per-message claims;`SessionPrompt.createUserMessage` 和 processor outcome 都注册/执行 clear,避免跨 message 泄漏 nearby instruction claims。[E: packages/opencode/src/session/instruction.ts:105][E: packages/opencode/src/session/instruction.ts:107][E: packages/opencode/src/session/prompt.ts:704][E: packages/opencode/src/session/prompt.ts:1392]
 
 ## V1 与 V2 迁移边界
 
 V1 instruction 注入是 immediate string assembly:`Instruction.system()` 返回 string array,`SessionPrompt.runLoop` 每次 provider turn 都把它拼进 system prompt。[E: packages/opencode/src/session/instruction.ts:155][E: packages/opencode/src/session/instruction.ts:165][E: packages/opencode/src/session/prompt.ts:1327][E: packages/opencode/src/session/prompt.ts:1333]
 
-V2 的 System Context 目标模型把 instruction discovery、source identity、persistence 和 file loading 归 instruction service,而 System Context 只组合 producers 并渲染 loaded values;CONTEXT.md 还说明 first instruction-service slice 在每个 Safe Provider-Turn Boundary 观察 global 和 upward project `AGENTS.md` 作为一个 ordered aggregate Context Source。[E: CONTEXT.md:83][E: CONTEXT.md:84] 这不是 V1 `Instruction.system()` 的存储模型,V1 不持久化 Context Epoch 或 Mid-Conversation System Message。[I]
+V2 的 System Context 目标模型把 instruction discovery、source identity、persistence 和 file loading 归 instruction service,而 System Context 只组合 producers 并渲染 loaded values;CONTEXT.md 还说明 first instruction-service slice 在每个 Safe Provider-Turn Boundary 观察 global 和 upward project `AGENTS.md` 作为一个 ordered aggregate Context Source。[E: CONTEXT.md:86][E: CONTEXT.md:87] 这不是 V1 `Instruction.system()` 的存储模型,V1 不持久化 Context Epoch 或 Mid-Conversation System Message。[I]
 
 ## gotcha
 

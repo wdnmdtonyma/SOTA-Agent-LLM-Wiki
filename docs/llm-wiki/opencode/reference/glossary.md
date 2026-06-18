@@ -7,16 +7,21 @@ v: shared
 source:
   - CONTEXT.md
   - AGENTS.md
+  - packages/core/src/integration.ts
+  - packages/core/src/credential.ts
 symbols:
   - System Context
   - Context Epoch
   - SessionRunner
   - EventV2
+  - Integration
+  - Credential
 related:
   - spine.overview
+  - integrations.integration-v2
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > opencode glossary 把 V1 当前活跑路径、V2 新内核、shared package 和容易误读的 codename 分开定义，避免把迁移期同名概念混讲。
@@ -25,20 +30,20 @@ updated: 92c70c9c3
 
 - `SessionPrompt`、`SessionProcessor`、`SessionRunner` 分别属于哪一代？
 - `Context Epoch`、`Baseline System Context`、`Context Snapshot` 在 V2 中是什么意思？
-- `message-v2.ts`、`connector.ts`、`packages/cli`、`EventV2Bridge` 等名字为什么容易误导？
+- `message-v2.ts`、`integration.ts`、`packages/cli`、`EventV2Bridge` 等名字为什么容易误导？
 
 ## V1
 
 | Term | 定义 |
 | --- | --- |
 | V1 current runtime | 当前活跑路径主要在 `packages/opencode/src`。`SessionPrompt.run` 定义 `runLoop`，循环中读取 V1/V2 shadow message stream 并继续 provider/tool turn [E: packages/opencode/src/session/prompt.ts:1134] [E: packages/opencode/src/session/prompt.ts:1149]。 |
-| `SessionPrompt.loop(...)` | V1 对外 loop 入口，使用 `state.ensureRunning(..., runLoop(sessionID))` 保证同一 session 的 loop 运行被协调 [E: packages/opencode/src/session/prompt.ts:1392] [E: packages/opencode/src/session/prompt.ts:1395]。 |
+| `SessionPrompt.loop(...)` | V1 对外 loop 入口，使用 `state.ensureRunning(..., runLoop(sessionID))` 保证同一 session 的 loop 运行被协调 [E: packages/opencode/src/session/prompt.ts:1404] [E: packages/opencode/src/session/prompt.ts:1407]。 |
 | `SessionProcessor` | V1 stream event processor。`SessionProcessor.process` 在开始处理前把 session status 设为 busy，并调用 `llm.stream(streamInput)` 消费 LLM stream [E: packages/opencode/src/session/processor.ts:960] [E: packages/opencode/src/session/processor.ts:979]。 |
 | Vercel AI SDK path | V1 `LLM` seam 中仍包含 AI SDK 兼容路径；native LLM adapter 是 `experimentalNativeLlm` 打开时的 opt-in branch，未选中 native 时会返回 `type: "ai-sdk"` 并调用 `streamText(...)` [E: packages/opencode/src/session/llm.ts:226] [E: packages/opencode/src/session/llm.ts:243] [E: packages/opencode/src/session/llm.ts:271] [E: packages/opencode/src/session/llm.ts:279] [E: packages/opencode/src/session/llm.ts:280]。 |
 | `packages/opencode/src/session/message-v2.ts` | 名字带 `v2`，但该文件导入 `ai` 的 `convertToModelMessages`/`UIMessage`，同时桥接 `SessionV1` 和 `EventV2`，因此它是 V1 与 AI-SDK/V2 event shadow 的消息转换层，不是 V2 core runner [E: packages/opencode/src/session/message-v2.ts:1] [E: packages/opencode/src/session/message-v2.ts:23]。 |
 | `GlobalBus` | V1 side 的 global event emitter 位于 `packages/opencode/src/bus/global.ts`，只定义 `event` channel，并给缺少 id 的 payload 补事件 id [E: packages/opencode/src/bus/global.ts:11] [E: packages/opencode/src/bus/global.ts:22]。 |
 | `EventV2Bridge` | V1 opencode publish boundary，把 core EventV2 注入 instance/workspace location，并把 EventV2 payload/sync payload emit 到 `GlobalBus` [E: packages/opencode/src/event-v2-bridge.ts:22] [E: packages/opencode/src/event-v2-bridge.ts:30] [E: packages/opencode/src/event-v2-bridge.ts:42] [E: packages/opencode/src/event-v2-bridge.ts:46] [E: packages/opencode/src/event-v2-bridge.ts:52] [E: packages/opencode/src/event-v2-bridge.ts:60] [E: packages/opencode/src/event-v2-bridge.ts:63]。 |
-| V1 HTTP server | V1 server 的 public API 是 Effect HttpApi：`OpenCodeHttpApi` 由 `RootHttpApi`、`EventApi`、`InstanceHttpApi`、server `Api` 和 `PtyConnectApi` 合成 [E: packages/opencode/src/server/routes/instance/httpapi/api.ts:69] [E: packages/opencode/src/server/routes/instance/httpapi/api.ts:75]。`packages/opencode/src/server/server.ts` 用 Effect `HttpRouter.serve(HttpApiApp.createRoutes(...))` 建 listener layer [E: packages/opencode/src/server/server.ts:100] [E: packages/opencode/src/server/server.ts:101] [E: packages/opencode/src/server/server.ts:107]。 |
+| V1 HTTP server | V1 server 的 public API 是 Effect HttpApi：`OpenCodeHttpApi` 由 `RootHttpApi`、`EventApi`、`InstanceHttpApi`、server `Api` 和 `PtyConnectApi` 合成 [E: packages/opencode/src/server/routes/instance/httpapi/api.ts:69] [E: packages/opencode/src/server/routes/instance/httpapi/api.ts:75]。`packages/opencode/src/server/server.ts` 用 Effect `HttpRouter.serve(HttpApiApp.createRoutes(...))` 建 listener layer [E: packages/opencode/src/server/server.ts:99] [E: packages/opencode/src/server/server.ts:100] [E: packages/opencode/src/server/server.ts:106]。 |
 
 ## V2
 
@@ -50,15 +55,15 @@ updated: 92c70c9c3
 | `SessionRunner` | V2 Location-scoped runner；catalog、model resolver、tool registry、permission state 和 filesystem 都按 Location cache [E: specs/v2/session.md:41]。AGENTS.md 要求不要 bridge through legacy `SessionPrompt.loop(...)`，并保持每个 provider turn 一个显式 `llm.stream(request)` [E: AGENTS.md:153] [E: AGENTS.md:154]。 |
 | V2 `llm.stream` | `packages/core/src/session/runner/llm.ts` 在 provider turn 中调用 `llm.stream(request)`，随后在同一 runner 流程里处理 tool-call settlement 和 continuation 判断 [E: packages/core/src/session/runner/llm.ts:245] [E: packages/core/src/session/runner/llm.ts:256] [E: packages/core/src/session/runner/llm.ts:261] [E: packages/core/src/session/runner/llm.ts:336]。 |
 | `Context Epoch` | 一个 effective agent 的初始 `System Context` 保持不可变的 span，到 compaction 或其他 baseline replacement 结束 [E: CONTEXT.md:27]。V2 spec 进一步说 Context Epoch 拥有一个 effective agent、一个 immutable baseline 和一个 model-hidden structured snapshot [E: specs/v2/session.md:47] [E: specs/v2/session.md:49]。 |
-| `Baseline System Context` | Context Epoch 开始时渲染出的完整 System Context [E: CONTEXT.md:30]。Baseline 会在 epoch 内 durably preserved 并跨进程重启复用 [E: CONTEXT.md:94] [E: CONTEXT.md:97]。 |
-| `Context Snapshot` | Model-hidden JSON state，用于比较每个 Context Source 与上次已 admission 的值 [E: CONTEXT.md:34]。Snapshot 会与 durable Mid-Conversation System Message 原子推进 [E: CONTEXT.md:62]。 |
+| `Baseline System Context` | Context Epoch 开始时渲染出的完整 System Context [E: CONTEXT.md:30]。Baseline 会在 epoch 内 durably preserved 并跨进程重启复用 [E: CONTEXT.md:97] [E: CONTEXT.md:100]。 |
+| `Context Snapshot` | Model-hidden JSON state，用于比较每个 Context Source 与上次已 admission 的值 [E: CONTEXT.md:34]。Snapshot 会与 durable Mid-Conversation System Message 原子推进 [E: CONTEXT.md:65]。 |
 | `System Context Registry` | Location-scoped ordered/scoped producer registry，贡献当前 System Context [E: CONTEXT.md:20]。 |
 | `Safe Provider-Turn Boundary` | provider call 前、durable input promotion 和必要 tool settlement 之后，context changes 可以被 chronological admission 的点 [E: CONTEXT.md:40]。 |
-| `Managed Tool Output File` | 过大的 Core tool output 完整内容会进入 shared tool-output directory 的临时文件；Session history 保留 bounded projection [E: CONTEXT.md:46] [E: CONTEXT.md:105]。 |
+| `Managed Tool Output File` | 过大的 Core tool output 完整内容会进入 shared tool-output directory 的临时文件；Session history 保留 bounded projection [E: CONTEXT.md:46] [E: CONTEXT.md:110]。 |
 | `EventV2` | Core event system。`EventV2.define` 注册 event definition，payload 可带 durable `seq`、`version`、`location` 和 metadata [E: packages/core/src/event.ts:40] [E: packages/core/src/event.ts:45] [E: packages/core/src/event.ts:46] [E: packages/core/src/event.ts:47] [E: packages/core/src/event.ts:48] [E: packages/core/src/event.ts:96]。同步 event 会登记到 `syncRegistry` 的 versioned type 下 [E: packages/core/src/event.ts:123] [E: packages/core/src/event.ts:125]。 |
 | `session.next.*` | V2 synchronized session event family；durable replay 使用 aggregate sequence cursor，live-only text/reasoning/tool-input fragments 只通过 EventV2 subscriptions 给 connected renderer [E: specs/v2/session.md:169] [E: specs/v2/session.md:171]。 |
-| `Connector` | `packages/core/src/connector.ts` 是 `@opencode/v2/Connector` service，管理 connector registry、key/OAuth connect、attempt status 和 credential creation [E: packages/core/src/connector.ts:180] [E: packages/core/src/connector.ts:191] [E: packages/core/src/connector.ts:205] [E: packages/core/src/connector.ts:232] [E: packages/core/src/connector.ts:332]。它不是云连接器客户端；`connect.key` 会把用户输入 secret 转成 credential 存储，OAuth begin/status/complete/cancel 管理本地 attempt lifecycle [E: packages/core/src/connector.ts:191] [E: packages/core/src/connector.ts:199] [E: packages/core/src/connector.ts:205] [E: packages/core/src/connector.ts:218] [E: packages/core/src/connector.ts:220] [E: packages/core/src/connector.ts:227]。 |
-| V2 HTTP server | `packages/server/src/api.ts` 使用 `HttpApi.make("server")` 组装 Health、Location、Session、Connector、Permission 等 group，并附加 Authorization/SchemaError middleware [E: packages/server/src/api.ts:20] [E: packages/server/src/api.ts:44]。这也是 Effect HttpApi，不是 Hono [I]。 |
+| `Integration` | `packages/core/src/integration.ts` 是 `@opencode/v2/Integration` service，管理 integration registry、key/OAuth/env methods、connections、OAuth attempt status 和 credential creation [E: packages/core/src/integration.ts:82] [E: packages/core/src/integration.ts:196] [E: packages/core/src/integration.ts:205] [E: packages/core/src/integration.ts:238] [E: packages/core/src/integration.ts:253]。它不是 workspace/cloud connector 客户端；`connection.key` 会把用户输入 secret 转成 credential 存储，OAuth begin/status/complete/cancel 管理本地 attempt lifecycle [E: packages/core/src/integration.ts:464] [E: packages/core/src/integration.ts:470] [E: packages/core/src/integration.ts:477] [E: packages/core/src/integration.ts:527] [E: packages/core/src/integration.ts:535] [E: packages/core/src/integration.ts:556]。 |
+| V2 HTTP server | `packages/server/src/api.ts` 使用 `HttpApi.make("server")` 组装 Health、Location、Session、Integration、Credential、Pty、ProjectCopy 等 group，并附加 Authorization/SchemaError middleware [E: packages/server/src/api.ts:23] [E: packages/server/src/api.ts:31] [E: packages/server/src/api.ts:32] [E: packages/server/src/api.ts:38] [E: packages/server/src/api.ts:41] [E: packages/server/src/api.ts:49]。这也是 Effect HttpApi，不是 Hono [I]。 |
 
 ## Shared / NA
 
@@ -86,7 +91,8 @@ updated: 92c70c9c3
 - `packages/core/src/session/runner/llm.ts`
 - `packages/core/src/public/opencode.ts`
 - `packages/core/src/event.ts`
-- `packages/core/src/connector.ts`
+- `packages/core/src/integration.ts`
+- `packages/core/src/credential.ts`
 - `packages/server/src/api.ts`
 - `packages/opencode/src/server/routes/instance/httpapi/api.ts`
 - `packages/opencode/src/event-v2-bridge.ts`

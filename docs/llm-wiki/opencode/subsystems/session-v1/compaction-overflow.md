@@ -9,7 +9,7 @@ symbols: [SessionCompaction, SessionCompaction.create, SessionCompaction.process
 related: [session-v2.compaction]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 compaction 是 `SessionPrompt.runLoop` 内的历史缩短机制:overflow 或 queued compaction 会写一个 V1 compaction user part,再用 compaction agent 生成 assistant summary,最后由 `MessageV2.filterCompacted` 选择下一次 provider request 的 active history。
@@ -46,7 +46,7 @@ V1 overflow 判断的数学规则在 `overflow.ts`:如果 `compaction.auto === f
 
 2. provider 或 adapter 抛出 context overflow 时,`SessionProcessor.halt` 通过 local `parse(e)` 调 `MessageV2.fromError(...)`。如果 `compaction.auto === false` 且 assistant 不是 summary,它把 assistant 置为 terminal error 并设 idle;其它 context-overflow 情况设置 `ctx.needsCompaction = true` 并发布 session error。[E: packages/opencode/src/session/processor.ts:132][E: packages/opencode/src/session/processor.ts:133][E: packages/opencode/src/session/processor.ts:924][E: packages/opencode/src/session/processor.ts:926][E: packages/opencode/src/session/processor.ts:927][E: packages/opencode/src/session/processor.ts:928][E: packages/opencode/src/session/processor.ts:929][E: packages/opencode/src/session/processor.ts:931][E: packages/opencode/src/session/processor.ts:934][E: packages/opencode/src/session/processor.ts:935]
 
-3. `SessionProcessor.process` 因 `ctx.needsCompaction` 返回 `"compact"`;`SessionPrompt.runLoop` 收到 `"compact"` 后调用 `compaction.create({ auto: true, overflow: !handle.message.finish })`。[E: packages/opencode/src/session/processor.ts:1030][E: packages/opencode/src/session/prompt.ts:1368][E: packages/opencode/src/session/prompt.ts:1369][E: packages/opencode/src/session/prompt.ts:1370][E: packages/opencode/src/session/prompt.ts:1375]
+3. `SessionProcessor.process` 因 `ctx.needsCompaction` 返回 `"compact"`;`SessionPrompt.runLoop` 收到 `"compact"` 后调用 `compaction.create({ auto: true, overflow: !handle.message.finish })`。[E: packages/opencode/src/session/processor.ts:1030][E: packages/opencode/src/session/prompt.ts:1380][E: packages/opencode/src/session/prompt.ts:1381][E: packages/opencode/src/session/prompt.ts:1382][E: packages/opencode/src/session/prompt.ts:1387]
 
 4. `SessionPrompt.runLoop` 在新 step 开始时也会检查上一个 finished assistant 的 tokens;如果不是 summary 且 `compaction.isOverflow(...)` 命中,它创建 auto compaction task 并继续下一轮。[E: packages/opencode/src/session/prompt.ts:1214][E: packages/opencode/src/session/prompt.ts:1215][E: packages/opencode/src/session/prompt.ts:1216][E: packages/opencode/src/session/prompt.ts:1217][E: packages/opencode/src/session/prompt.ts:1219]
 

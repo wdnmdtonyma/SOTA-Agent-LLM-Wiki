@@ -9,7 +9,7 @@ symbols: [runInteractiveRuntime, runInteractiveLocalMode, runInteractiveMode, cr
 related: [tui.runtime-hosting, tui.prompt, tui.keybindings]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > `opencode run --interactive` 有一套独立于 full TUI 的第二运行时：OpenTUI split-footer renderer 把 transcript 写入 immutable scrollback，把 prompt/status/permission/question 留在 mutable footer。
@@ -78,11 +78,11 @@ Transport state 保存 session data、subagent data、wait deferred、tick、foo
 
 ## Scrollback streaming
 
-`RunScrollbackStream` 用 retained `ScrollbackSurface` 处理可 streaming 的 text/code/markdown entry；非 streaming 或 structured body 走 `renderer.writeToScrollback(entryWriter(...))`，因此 static entries 不使用 retained active entry。[E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:87] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:151] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:152] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:157] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:168] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:180] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:378] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:382] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:398] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:399]
+`RunScrollbackStream` 用 retained `ScrollbackSurface` 处理可 streaming 的 text/code/markdown entry；非 streaming 或 structured body 走 `renderer.writeToScrollback(entryWriter(...))`，因此 static entries 不使用 retained active entry。[E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:85] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:149] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:150] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:154] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:164] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:175] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:372] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:376] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:392] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:393]
 
-`flushActive()` 对 text/code 只提交稳定 rows，对 markdown 使用 `_stableBlockCount` 提交稳定 block；done 时提交全部并可带 trailingNewline。[E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:237] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:246] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:260] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:270] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:288] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:293] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:304]
+`flushActive()` 对 text/code 只提交稳定 rows，对 markdown 使用 `_stableBlockCount` 提交稳定 block；done 时提交全部并可带 trailingNewline。[E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:231] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:240] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:254] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:264] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:282] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:287] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:298]
 
-`append(commit)` 会按 sameEntryGroup 决定是否结束 active entry；summary 写 turn summary writer；可 streaming 的 text/code/markdown 走 retained active entry，非 streaming 或 structured body 直接 `renderer.writeToScrollback(entryWriter(...))`。[E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:354] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:360] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:378] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:382] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:398]
+`append(commit)` 会按 sameEntryGroup 决定是否结束 active entry；summary 写 turn summary writer；可 streaming 的 text/code/markdown 走 retained active entry，非 streaming 或 structured body 直接 `renderer.writeToScrollback(entryWriter(...))`。[E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:348] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:354] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:372] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:376] [E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:392]
 
 ## Entry points
 
@@ -95,7 +95,7 @@ Transport state 保存 session data、subagent data、wait deferred、tick、foo
 ## Gotcha
 
 - `run --interactive` 会复用 `@opencode-ai/tui` 的 keymap、editor、config types 等组件；它不是 `packages/tui/src/app.tsx` 的 full-screen app 这一点来自本节点 source 的独立 runtime/lifecycle/footer 实现。[E: packages/opencode/src/cli/cmd/run/runtime.lifecycle.ts:15] [E: packages/opencode/src/cli/cmd/run/runtime.lifecycle.ts:16] [E: packages/opencode/src/cli/cmd/run/types.ts:15] [E: packages/opencode/src/cli/cmd/run/footer.ts:32] [I]
-- OpenTUI retained scrollback/MarkdownRenderable internal fields such as `_stableBlockCount` 来自 external dependency；opencode 源码只能证明它们被读取并作为稳定 block 提交依据。[E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:293] [U]
+- OpenTUI retained scrollback/MarkdownRenderable internal fields such as `_stableBlockCount` 来自 external dependency；opencode 源码只能证明它们被读取并作为稳定 block 提交依据。[E: packages/opencode/src/cli/cmd/run/scrollback.surface.ts:287] [U]
 
 ## Sources
 

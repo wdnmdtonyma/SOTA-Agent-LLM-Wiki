@@ -26,7 +26,7 @@ related:
   - peripheral.function
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > SST 云基础设施节点描述 opencode 的 hosted surfaces: Cloudflare Workers/R2/KV/SolidStart/Astro, PlanetScale/Stripe/Honeycomb providers, 以及只在指定 stage 部署的 AWS data lake 与 stats services。
@@ -47,7 +47,7 @@ V1/V2 关系: SST 资源为 Web docs、Web app、Console、share/backend functio
 
 ## 技术栈
 
-- SST v4 config: root catalog pin `sst` 版本, `sst.config.ts` 使用 `$config({ app, run })` [E: package.json:78] [E: sst.config.ts:3]。
+- SST v4 config: root catalog pin `sst` 版本, `sst.config.ts` 使用 `$config({ app, run })` [E: package.json:80] [E: sst.config.ts:3]。
 - Cloudflare-first surfaces: `Api` Worker、R2 Bucket、Astro docs、StaticSite app、AuthApi Worker、Console SolidStart、Stat Worker、Enterprise SolidStart 都是 `sst.cloudflare.*` 资源 [E: infra/app.ts:11] [E: infra/app.ts:13] [E: infra/app.ts:52] [E: infra/app.ts:62] [E: infra/console.ts:63] [E: infra/console.ts:248] [E: infra/console.ts:302] [E: infra/enterprise.ts:6]。
 - AWS data lake: lake module 使用 S3 Tables, Glue catalog, S3 buckets, Athena workgroup, IAM, Firehose, SST AWS VPC/Cluster/Service [E: infra/lake.ts:16] [E: infra/lake.ts:21] [E: infra/lake.ts:54] [E: infra/lake.ts:64] [E: infra/lake.ts:76] [E: infra/lake.ts:156] [E: infra/lake.ts:194] [E: infra/lake.ts:214]。
 

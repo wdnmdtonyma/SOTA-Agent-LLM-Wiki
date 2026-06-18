@@ -9,7 +9,7 @@ symbols: [TaskTool, TaskPromptOps, deriveSubagentSessionPermission, BackgroundJo
 related: [agent.builtins, execution.background]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > Task 工具是 V1 活跑路径里的子 agent dispatcher：模型调用 wire id `task` 后，V1 在同一 opencode 进程内创建或续接 child session，并用 `SessionPrompt` 继续驱动该 child session。

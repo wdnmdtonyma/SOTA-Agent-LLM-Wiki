@@ -2,14 +2,14 @@
 id: model-layer.llm-schema
 title: LLM Schema
 kind: subsystem
-tier: T1
+tier: T2
 v: shared
 source: [packages/llm/src/schema/]
 symbols: [LLMRequest, Message, ContentPart, ToolDefinition, LLMEvent, Usage, LLMError, LLMResponse]
 related: [ref.llm-event-catalog]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > `packages/llm/src/schema` 是 native LLM engine 的公共 wire model:它定义 provider-agnostic `LLMRequest`、message content parts、tool definition/output、16 类 streaming `LLMEvent`、加性 `Usage` 契约,以及 10 类 `LLMErrorReason`。

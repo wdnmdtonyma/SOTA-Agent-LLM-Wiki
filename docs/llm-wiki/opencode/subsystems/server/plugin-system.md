@@ -20,30 +20,30 @@ related:
   - plugin-api.tui
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
-`server.plugin-system` 分成三条线: V1 server callback plugins、V1 TUI plugin host、V2 Effect-native `PluginV2`。V1 server service tag 是 `@opencode/Plugin`，V2 service tag 是 `@opencode/v2/Plugin`。[E: packages/opencode/src/plugin/index.ts:57][E: packages/core/src/plugin.ts:90]
+`server.plugin-system` 分成三条线: V1 server callback plugins、V1 TUI plugin host、V2 Effect-native `PluginV2`。V1 server service tag 是 `@opencode/Plugin`，V2 service tag 是 `@opencode/v2/Plugin`。[E: packages/opencode/src/plugin/index.ts:58][E: packages/core/src/plugin.ts:90]
 
 ## V1
 
 ### Server service and built-ins
 
-V1 `Plugin.Interface.trigger` 必须传 `name`、`input`、`output`，返回 `Effect<Output>`；`list()` 返回 hooks，`init()` 初始化 plugin state。[E: packages/opencode/src/plugin/index.ts:44][E: packages/opencode/src/plugin/index.ts:54] `experimentalWebSocketsEnabled` 在显式 enabled 或 channel 为 local/dev/beta 时返回 true。[E: packages/opencode/src/plugin/index.ts:59][E: packages/opencode/src/plugin/index.ts:60]
+V1 `Plugin.Interface.trigger` 必须传 `name`、`input`、`output`，返回 `Effect<Output>`；`list()` 返回 hooks，`init()` 初始化 plugin state。[E: packages/opencode/src/plugin/index.ts:45][E: packages/opencode/src/plugin/index.ts:55] `experimentalWebSocketsEnabled` 在显式 enabled 或 channel 为 local/dev/beta 时返回 true。[E: packages/opencode/src/plugin/index.ts:60][E: packages/opencode/src/plugin/index.ts:61]
 
-内建 server plugins 在 `internalPlugins(flags)` 中直接组装；列表包括 Codex、Copilot、Gitlab、Poe、Cloudflare Workers、Cloudflare AI Gateway、Azure、DigitalOcean、Xai。[E: packages/opencode/src/plugin/index.ts:64][E: packages/opencode/src/plugin/index.ts:68][E: packages/opencode/src/plugin/index.ts:78] Codex built-in 会收到 `experimentalWebSockets` option。[E: packages/opencode/src/plugin/index.ts:67][E: packages/opencode/src/plugin/index.ts:69]
+内建 server plugins 在 `internalPlugins(flags)` 中直接组装；列表包括 Codex、Copilot、Gitlab、Poe、Cloudflare Workers、Cloudflare AI Gateway、Azure、DigitalOcean、Xai。[E: packages/opencode/src/plugin/index.ts:65][E: packages/opencode/src/plugin/index.ts:69][E: packages/opencode/src/plugin/index.ts:80] Codex built-in 会收到 `experimentalWebSockets` option。[E: packages/opencode/src/plugin/index.ts:68][E: packages/opencode/src/plugin/index.ts:70]
 
-Plugin input 里的 `client` 用 `createOpencodeClient`，base URL 是 `http://localhost:4096`，但 fetch 是 `Server.Default().app.fetch`，也就是进程内调用 V1 server handler。[E: packages/opencode/src/plugin/index.ts:139][E: packages/opencode/src/plugin/index.ts:143] input 还包含 project、worktree、directory、experimental workspace adapter registration、serverUrl getter 和 Bun `$`。[E: packages/opencode/src/plugin/index.ts:146][E: packages/opencode/src/plugin/index.ts:160]
+Plugin input 里的 `client` 用 `createOpencodeClient`，base URL 是 `http://localhost:4096`，但 fetch 是 `Server.Default().app.fetch`，也就是进程内调用 V1 server handler。[E: packages/opencode/src/plugin/index.ts:142][E: packages/opencode/src/plugin/index.ts:143] input 还包含 project、worktree、directory、experimental workspace adapter registration、serverUrl getter 和 Bun `$`。[E: packages/opencode/src/plugin/index.ts:149][E: packages/opencode/src/plugin/index.ts:163]
 
 ### Loading and lifecycle
 
-Internal plugins 的加载方式是直接调用 `plugin(input)`，成功后 push 到 `hooks`；这一步受 `flags.disableDefaultPlugins` 控制。[E: packages/opencode/src/plugin/index.ts:163][E: packages/opencode/src/plugin/index.ts:171] External plugin origins 来自 `cfg.plugin_origins`，但 `flags.pure` 时为空；如果存在 external plugins，会先 `config.waitForDependencies()`。[E: packages/opencode/src/plugin/index.ts:174][E: packages/opencode/src/plugin/index.ts:177]
+Internal plugins 的加载方式是直接调用 `plugin(input)`，成功后 push 到 `hooks`；这一步受 `flags.disableDefaultPlugins` 控制。[E: packages/opencode/src/plugin/index.ts:166][E: packages/opencode/src/plugin/index.ts:174] External plugin origins 来自 `cfg.plugin_origins`，但 `flags.pure` 时为空；如果存在 external plugins，会先 `config.waitForDependencies()`。[E: packages/opencode/src/plugin/index.ts:177][E: packages/opencode/src/plugin/index.ts:180]
 
-External plugin apply 是顺序执行的: `for (const load of loaded)` 逐项调用 `applyPlugin(load, input, hooks)`；deterministic hook registration/execution order 是从这个循环形态得出的结论。[E: packages/opencode/src/plugin/index.ts:212][E: packages/opencode/src/plugin/index.ts:218][I] `PluginLoader.loadExternal` 内部把 attempt push 到 promise list 后 `Promise.all(list)`，最后只把有 value 的 item 按 out 顺序 push 到 `ready`。[E: packages/opencode/src/plugin/loader.ts:209][E: packages/opencode/src/plugin/loader.ts:212][E: packages/opencode/src/plugin/loader.ts:214][E: packages/opencode/src/plugin/loader.ts:233][E: packages/opencode/src/plugin/loader.ts:234]
+External plugin apply 是顺序执行的: `for (const load of loaded)` 逐项调用 `applyPlugin(load, input, hooks)`；deterministic hook registration/execution order 是从这个循环形态得出的结论。[E: packages/opencode/src/plugin/index.ts:215][E: packages/opencode/src/plugin/index.ts:221][I] `PluginLoader.loadExternal` 内部把 attempt push 到 promise list 后 `Promise.all(list)`，最后只把有 value 的 item 按 out 顺序 push 到 `ready`。[E: packages/opencode/src/plugin/loader.ts:209][E: packages/opencode/src/plugin/loader.ts:212][E: packages/opencode/src/plugin/loader.ts:214][E: packages/opencode/src/plugin/loader.ts:233][E: packages/opencode/src/plugin/loader.ts:234]
 
-Config hook 初始化是直接遍历 hooks 并调用 `hook.config?.(cfg)`。[E: packages/opencode/src/plugin/index.ts:238][E: packages/opencode/src/plugin/index.ts:240] Event hook 使用 `events.listen`，只处理 `event.location?.directory === ctx.directory` 的事件，并向 hook 传 `{ id, type, properties }`。[E: packages/opencode/src/plugin/index.ts:248][E: packages/opencode/src/plugin/index.ts:249][E: packages/opencode/src/plugin/index.ts:252] finalizer 会先 unsubscribe，再遍历 hooks 调 `hook.dispose?.()`。[E: packages/opencode/src/plugin/index.ts:256][E: packages/opencode/src/plugin/index.ts:263]
+Config hook 初始化是直接遍历 hooks 并调用 `hook.config?.(cfg)`。[E: packages/opencode/src/plugin/index.ts:241][E: packages/opencode/src/plugin/index.ts:243] Event hook 使用 `events.listen`，只处理 `event.location?.directory === ctx.directory` 的事件，并向 hook 传 `{ id, type, properties }`。[E: packages/opencode/src/plugin/index.ts:251][E: packages/opencode/src/plugin/index.ts:252][E: packages/opencode/src/plugin/index.ts:255] finalizer 会先 unsubscribe，再遍历 hooks 调 `hook.dispose?.()`。[E: packages/opencode/src/plugin/index.ts:259][E: packages/opencode/src/plugin/index.ts:266]
 
-`trigger(name, input, output)` 按当前 state 的 hooks 顺序执行；hook 上没有该 name 就跳过，最终返回同一个 output object。[E: packages/opencode/src/plugin/index.ts:283][E: packages/opencode/src/plugin/index.ts:284][E: packages/opencode/src/plugin/index.ts:286][E: packages/opencode/src/plugin/index.ts:289]
+`trigger(name, input, output)` 按当前 state 的 hooks 顺序执行；hook 上没有该 name 就跳过，最终返回同一个 output object。[E: packages/opencode/src/plugin/index.ts:286][E: packages/opencode/src/plugin/index.ts:287][E: packages/opencode/src/plugin/index.ts:289][E: packages/opencode/src/plugin/index.ts:292]
 
 ### Loader behavior
 
@@ -71,7 +71,7 @@ V2 `HookSpec` 当前只有 `catalog.transform`、`aisdk.language`、`aisdk.sdk` 
 
 ### Boot and providers
 
-`PluginBoot` 的 plugin effect 可依赖 Catalog、Command、Credential、Connector、Agent、Npm、EventV2、FSUtil、Global、Location、PluginV2、Config、ModelsDev、Skill、Reference 等服务。[E: packages/core/src/plugin/boot.ts:34][E: packages/core/src/plugin/boot.ts:48] Boot 顺序 add EnvPlugin、AgentPlugin、CommandPlugin、SkillPlugin、ProviderPlugins、ModelsDevPlugin、config provider/agent/command/skill/reference plugins。[E: packages/core/src/plugin/boot.ts:102][E: packages/core/src/plugin/boot.ts:114] `PluginBoot.wait()` 返回 boot completion deferred。[E: packages/core/src/plugin/boot.ts:123][E: packages/core/src/plugin/boot.ts:124]
+`PluginBoot` 的 plugin effect 可依赖 Catalog、Command、Credential、Integration、Agent、Npm、EventV2、FSUtil、Global、Location、PluginV2、Config、ModelsDev、Skill、Reference 等服务。[E: packages/core/src/plugin/boot.ts:33][E: packages/core/src/plugin/boot.ts:36][E: packages/core/src/plugin/boot.ts:47] Boot 顺序 add AgentPlugin、CommandPlugin、SkillPlugin、ProviderPlugins、ModelsDevPlugin、config provider/agent/command/skill/reference plugins。[E: packages/core/src/plugin/boot.ts:101][E: packages/core/src/plugin/boot.ts:112] `PluginBoot.wait()` 返回 boot completion deferred。[E: packages/core/src/plugin/boot.ts:121][E: packages/core/src/plugin/boot.ts:122]
 
 `ProviderPlugins` 列表包含 Azure、Cloudflare AI Gateway、Cloudflare Workers AI、GitHub Copilot、OpenAI、OpenRouter、XAI、DynamicProviderPlugin 等多个 provider plugin；当前 provider list 没有 `DigitalOcean` entry，因此 DigitalOcean 在本节点读取范围内是 V1 内建 plugin。[E: packages/core/src/plugin/provider.ts:39][E: packages/core/src/plugin/provider.ts:41][E: packages/core/src/plugin/provider.ts:42][E: packages/core/src/plugin/provider.ts:46][E: packages/core/src/plugin/provider.ts:59][E: packages/core/src/plugin/provider.ts:66][E: packages/core/src/plugin/provider.ts:68][I] 例如 GitHub Copilot plugin 定义 `aisdk.sdk`、`aisdk.language` 和 `catalog.transform` hooks。[E: packages/core/src/plugin/provider/github-copilot.ts:18][E: packages/core/src/plugin/provider/github-copilot.ts:23][E: packages/core/src/plugin/provider/github-copilot.ts:33] Azure plugin 定义 catalog transform、SDK creation 和 language selection hooks。[E: packages/core/src/plugin/provider/azure.ts:17][E: packages/core/src/plugin/provider/azure.ts:44][E: packages/core/src/plugin/provider/azure.ts:46]
 
@@ -84,8 +84,8 @@ V2 catalog/plugin lifecycle spec 的 status 声明当前 core 选择了 replayab
 | 维度 | V1 server/TUI plugins | V2 PluginV2 |
 | --- | --- | --- |
 | Hook surface | V1 server callback hook surface 覆盖 config、auth/provider、chat、permission、command、tools、shell 等。[E: packages/plugin/src/index.ts:222][E: packages/plugin/src/index.ts:334] TUI 另有独立 host API/slot surface。[E: packages/plugin/src/tui.ts:581][E: packages/plugin/src/tui.ts:625] | V2 当前 HookSpec 只有 catalog/AISDK 三个 hook。[E: packages/core/src/plugin.ts:23][E: packages/core/src/plugin.ts:28][E: packages/core/src/plugin.ts:38] |
-| Loading | Internal server plugins 直接 `plugin(input)`；external plugins resolve/load 可并行，但 apply 顺序执行。[E: packages/opencode/src/plugin/index.ts:163][E: packages/opencode/src/plugin/loader.ts:214][E: packages/opencode/src/plugin/index.ts:212][E: packages/opencode/src/plugin/index.ts:218] | `PluginBoot` 用 Effect service dependencies add built-ins/providers/config plugins。[E: packages/core/src/plugin/boot.ts:78][E: packages/core/src/plugin/boot.ts:114] |
-| Lifecycle | V1 server finalizer unsubscribe event listener 并调用 dispose hooks；TUI dispose reverse deactivate。[E: packages/opencode/src/plugin/index.ts:256][E: packages/opencode/src/plugin/index.ts:263][E: packages/opencode/src/plugin/tui/runtime.ts:1036] | V2 add/remove 通过 child scope 管 plugin lifetime。[E: packages/core/src/plugin.ts:110][E: packages/core/src/plugin.ts:174] |
+| Loading | Internal server plugins 直接 `plugin(input)`；external plugins resolve/load 可并行，但 apply 顺序执行。[E: packages/opencode/src/plugin/index.ts:166][E: packages/opencode/src/plugin/loader.ts:214][E: packages/opencode/src/plugin/index.ts:215][E: packages/opencode/src/plugin/index.ts:221] | `PluginBoot` 用 Effect service dependencies add built-ins/providers/config plugins。[E: packages/core/src/plugin/boot.ts:77][E: packages/core/src/plugin/boot.ts:112] |
+| Lifecycle | V1 server finalizer unsubscribe event listener 并调用 dispose hooks；TUI dispose reverse deactivate。[E: packages/opencode/src/plugin/index.ts:259][E: packages/opencode/src/plugin/index.ts:266][E: packages/opencode/src/plugin/tui/runtime.ts:1036] | V2 add/remove 通过 child scope 管 plugin lifetime。[E: packages/core/src/plugin.ts:110][E: packages/core/src/plugin.ts:174] |
 
 ## Design notes
 

@@ -7,7 +7,7 @@ v: v1
 source:
   - packages/opencode/src/provider/transform.ts
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 symbols:
   - ProviderTransform.variants
@@ -21,7 +21,7 @@ related:
 
 # Reasoning Variant Tables
 
-本节点只描述 V1 `packages/opencode/src/provider/transform.ts` 的 reasoning variants。Provider registry 在从 models.dev/config 构建 model 时会调用 `ProviderTransform.variants(base)` 填充 `model.variants`。[E: packages/opencode/src/provider/provider.ts:1203] [E: packages/opencode/src/provider/provider.ts:1205] config model variants 可以 merge 并通过 `disabled` 删除具体 variant。[E: packages/opencode/src/provider/provider.ts:1448] [E: packages/opencode/src/provider/provider.ts:1451]
+本节点只描述 V1 `packages/opencode/src/provider/transform.ts` 的 reasoning variants。Provider registry 在从 models.dev/config 构建 model 时会调用 `ProviderTransform.variants(base)` 填充 `model.variants`。[E: packages/opencode/src/provider/provider.ts:1216] [E: packages/opencode/src/provider/provider.ts:1218] config model variants 可以 merge 并通过 `disabled` 删除具体 variant。[E: packages/opencode/src/provider/provider.ts:1461] [E: packages/opencode/src/provider/provider.ts:1464]
 
 ## Base Effort Sets
 

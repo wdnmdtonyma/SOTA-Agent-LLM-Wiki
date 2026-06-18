@@ -18,7 +18,7 @@ related:
   - clients.storybook
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 共享 UI 组件库是 `@opencode-ai/ui`: 它为 App、Desktop、Console、Storybook 提供 SolidJS components、v2 components、theme engine、i18n dictionaries、icons、fonts、audio 和 shared contexts。
@@ -33,7 +33,7 @@ updated: 92c70c9c3
 
 ## 职责边界
 
-`@opencode-ai/ui` 是 presentation library, 不是 App shell。package exports 将 `./*` 映射到 `src/components/*.tsx`, 将 `./v2/*` 映射到 `src/v2/components/*.tsx`, 还暴露 `theme`, `theme/context`, `context`, `i18n`, icons、fonts、audio 等资源 [E: packages/ui/package.json:6] [E: packages/ui/package.json:8] [E: packages/ui/package.json:10] [E: packages/ui/package.json:14] [E: packages/ui/package.json:18] [E: packages/ui/package.json:20] [E: packages/ui/package.json:21] [E: packages/ui/package.json:22] [E: packages/ui/package.json:23] [E: packages/ui/package.json:24] [E: packages/ui/package.json:25] [E: packages/ui/package.json:27]。它的 dependencies 包含 Kobalte、SolidJS、Marked/Shiki、DOMPurify、Motion、Virtua、`@opencode-ai/core` 和 `@opencode-ai/sdk` [E: packages/ui/package.json:51] [E: packages/ui/package.json:52] [E: packages/ui/package.json:53] [E: packages/ui/package.json:63] [E: packages/ui/package.json:67] [E: packages/ui/package.json:76] [E: packages/ui/package.json:77] [E: packages/ui/package.json:80]。
+`@opencode-ai/ui` 是 presentation library, 不是 App shell。package exports 将 `./*` 映射到 `src/components/*.tsx`, 将 `./v2/*` 映射到 `src/v2/components/*.tsx`, 还暴露 `theme`, `theme/context`, `context`, `i18n`, icons、fonts、audio 等资源 [E: packages/ui/package.json:6] [E: packages/ui/package.json:8] [E: packages/ui/package.json:10] [E: packages/ui/package.json:14] [E: packages/ui/package.json:18] [E: packages/ui/package.json:20] [E: packages/ui/package.json:21] [E: packages/ui/package.json:22] [E: packages/ui/package.json:23] [E: packages/ui/package.json:24] [E: packages/ui/package.json:25] [E: packages/ui/package.json:27]。它的 dependencies 包含 Kobalte、SolidJS、Marked/Shiki、DOMPurify、Motion、Virtua、`@opencode-ai/core` 和 `@opencode-ai/sdk` [E: packages/ui/package.json:51] [E: packages/ui/package.json:52] [E: packages/ui/package.json:53] [E: packages/ui/package.json:64] [E: packages/ui/package.json:68] [E: packages/ui/package.json:77] [E: packages/ui/package.json:78] [E: packages/ui/package.json:80]。
 
 V1/V2 关系: UI 包自身是 `v: na`, 但它暴露两个 design-system generation。`./*` 是旧组件入口, `./v2/*` 是 v2 组件入口 [E: packages/ui/package.json:8] [E: packages/ui/package.json:27]。
 

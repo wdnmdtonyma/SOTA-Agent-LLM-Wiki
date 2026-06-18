@@ -13,7 +13,7 @@ related:
   - spine.overview
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > opencode monorepo 是 Bun workspace；当前 HEAD 的 workspace globs 展开为 29 个 package，而不是固定 27 个 package。

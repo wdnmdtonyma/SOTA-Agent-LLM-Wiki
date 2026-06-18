@@ -9,7 +9,7 @@ symbols: [SessionPrompt.prompt, SessionPrompt.loop, runLoop, SessionProcessor.cr
 related: [session-v1.prompt, session-v1.processor, session-v1.llm-runtime]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 turn loop 是 `packages/opencode/src/session/prompt.ts` 内部的 assistant loop:它从 V1 user message 组装模型输入,调用 `SessionProcessor`,再由 `LLM.stream` 把 AI SDK/native seam event 转成 V1 message part 与可选 V2 event。
@@ -47,7 +47,7 @@ flowchart TD
 
 4. `prompt@packages/opencode/src/session/prompt.ts:1122` 在 `noReply` 为 true 时只返回 user message;正常 assistant 回复路径调用 `loop({ sessionID: input.sessionID })`。[E: packages/opencode/src/session/prompt.ts:1122][E: packages/opencode/src/session/prompt.ts:1123]
 
-5. `loop@packages/opencode/src/session/prompt.ts:1392` 使用 `state.ensureRunning(input.sessionID, lastAssistant(...), runLoop(...))` 保证同一 V1 session 的 run loop 受 runner state 管理。[E: packages/opencode/src/session/prompt.ts:1392]
+5. `loop@packages/opencode/src/session/prompt.ts:1392` 使用 `state.ensureRunning(input.sessionID, lastAssistant(...), runLoop(...))` 保证同一 V1 session 的 run loop 受 runner state 管理。[E: packages/opencode/src/session/prompt.ts:1404]
 
 6. `runLoop@packages/opencode/src/session/prompt.ts:1134` 进入 `while (true)` 后先把 session status 置为 busy,再读取 compacted-filtered messages 与最新 message。[E: packages/opencode/src/session/prompt.ts:1141][E: packages/opencode/src/session/prompt.ts:1142][E: packages/opencode/src/session/prompt.ts:1145]
 
@@ -71,7 +71,7 @@ flowchart TD
 
 ## 关键决策点
 
-- V1 loop 的 compaction 有两条入口:step-finish overflow 会在 processor 中设置 `ctx.needsCompaction`,而 `handle.process()` 返回 `"compact"` 后由 `SessionPrompt.runLoop` 调 `compaction.create({ auto: true, overflow: !handle.message.finish })`。[E: packages/opencode/src/session/processor.ts:750][E: packages/opencode/src/session/prompt.ts:1369][E: packages/opencode/src/session/prompt.ts:1370][E: packages/opencode/src/session/prompt.ts:1375]
+- V1 loop 的 compaction 有两条入口:step-finish overflow 会在 processor 中设置 `ctx.needsCompaction`,而 `handle.process()` 返回 `"compact"` 后由 `SessionPrompt.runLoop` 调 `compaction.create({ auto: true, overflow: !handle.message.finish })`。[E: packages/opencode/src/session/processor.ts:750][E: packages/opencode/src/session/prompt.ts:1381][E: packages/opencode/src/session/prompt.ts:1382][E: packages/opencode/src/session/prompt.ts:1387]
 - V1 dual-write 不是无条件开启:processor 在创建 context 时计算 `mirrorAssistant = flags.experimentalEventSystem && !input.assistantMessage.summary`。[E: packages/opencode/src/session/processor.ts:110][E: packages/opencode/src/session/processor.ts:129]
 - V1 默认模型 runtime 仍是 AI SDK;native provider engine 是 `experimentalNativeLlm` flag 下的可选 seam。[E: packages/opencode/src/effect/runtime-flags.ts:53][E: packages/opencode/src/session/llm.ts:278]
 

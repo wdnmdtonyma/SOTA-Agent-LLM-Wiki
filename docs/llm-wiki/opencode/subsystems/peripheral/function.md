@@ -12,7 +12,7 @@ symbols: [SyncServer]
 related: [server.sharing]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > `@opencode-ai/function` 是公共 Cloudflare Worker 后端：它承载 legacy share sync、WebSocket poll、GitHub App token exchange，以及 Feishu 到 Discord 的桥接。

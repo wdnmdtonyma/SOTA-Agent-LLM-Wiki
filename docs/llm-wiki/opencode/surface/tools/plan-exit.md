@@ -9,7 +9,7 @@ symbols: [PlanExitTool]
 related: [agent.builtins, prompt.system-prompts]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > Plan-Exit 工具是 V1 plan mode 的实验性退出工具；它询问用户是否从 plan agent 切到 build agent，并在用户同意后写入一条 build-agent user message，再写入 `synthetic: true` 的 text part。

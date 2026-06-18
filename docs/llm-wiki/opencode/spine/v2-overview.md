@@ -9,7 +9,7 @@ symbols: [SessionV2, SessionExecution, SessionExecutionLocal, SessionRunCoordina
 related: [spine.v2-admission, spine.v2-provider-turn, spine.v1-v2-relationship]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V2 Session Core 是 `packages/core` 中的 Effect-native session engine:它把 durable prompt admission、process-global execution coordination、location-scoped runner/provider/tool 服务和 event sourcing 分开。

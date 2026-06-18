@@ -10,7 +10,7 @@ schema: node
 source:
   - packages/opencode/src/cli/cmd/run.ts
   - packages/opencode/src/cli/cmd/run/
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 ---
 
@@ -59,7 +59,7 @@ evidence: explicit
 
 2. Interactive local：fresh local interactive 分支使用 `Server.Default().app.fetch` 创建 in-process client transport，然后调用 `runInteractiveLocalMode`。[E: packages/opencode/src/cli/cmd/run.ts:837]
 
-3. Interactive attach：attach 分支先创建 attach SDK，再调用共享 `execute()`；在 interactive 分支内由 `runInteractiveMode` 接管远端 session。[E: packages/opencode/src/cli/cmd/run.ts:870] [E: packages/opencode/src/cli/cmd/run.ts:810]
+3. Interactive attach：attach 分支先创建 attach SDK，再调用共享 `execute()`；在 interactive 分支内由 `runInteractiveMode` 接管远端 session。[E: packages/opencode/src/cli/cmd/run.ts:873] [E: packages/opencode/src/cli/cmd/run.ts:810]
 
 ## Session 与 Permission Flow
 

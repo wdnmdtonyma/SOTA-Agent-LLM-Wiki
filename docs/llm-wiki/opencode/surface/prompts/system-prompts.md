@@ -12,7 +12,7 @@ source:
   - packages/opencode/src/session/llm/request.ts
   - packages/opencode/src/session/reminders.ts
   - packages/opencode/src/session/prompt/
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 ---
 

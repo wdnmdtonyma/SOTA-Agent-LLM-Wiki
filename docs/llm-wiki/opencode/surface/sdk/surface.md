@@ -9,7 +9,7 @@ symbols: [OpencodeClient]
 related: [sdk.overview, server-api.v1-routes, server-api.v2-routes]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > SDK method surface 是 generated client 的逐方法目录：`src/gen` 是旧 legacy SDK；`src/v2/gen` 是当前全量 SDK，包含 legacy compatibility namespaces 和 `client.v2.*` native `/api/*` namespaces。
@@ -113,182 +113,192 @@ Legacy `src/gen/sdk.gen.ts` 的 generated `OpencodeClient` 暴露 83 个 callabl
 
 ## V2
 
-`src/v2/gen/sdk.gen.ts` 的 generated `OpencodeClient` 暴露 165 个 callable methods。前 128 个是 legacy compatibility surface；后 37 个挂在 `client.v2.*` 下，对应 V2 `/api/*` route surface。[E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6271][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6409][I]
+`src/v2/gen/sdk.gen.ts` 的 generated `OpencodeClient` 暴露 176 个 callable methods。前 127 个是 legacy compatibility surface；后 49 个挂在 `client.v2.*` 下，对应 V2 native route surface。[E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6694][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6832][I]
 
 ### V2 legacy compatibility methods
 
 | SDK method | HTTP | generated URL | evidence |
 |---|---|---|---|
-| `client.auth.remove` | DELETE | `/auth/{providerID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:410] |
-| `client.auth.set` | PUT | `/auth/{providerID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:429] |
-| `client.app.log` | POST | `/log` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:466] |
-| `client.app.agents` | GET | `/agent` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:511] |
-| `client.app.skills` | GET | `/skill` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:541] |
-| `client.experimental.controlPlane.moveSession` | POST | `/experimental/control-plane/move-session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:573] |
-| `client.experimental.console.get` | GET | `/experimental/console` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:616] |
-| `client.experimental.console.listOrgs` | GET | `/experimental/console/orgs` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:650] |
-| `client.experimental.console.switchOrg` | POST | `/experimental/console/switch` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:684] |
-| `client.experimental.session.list` | GET | `/experimental/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:725] |
-| `client.experimental.session.background` | POST | `/experimental/session/{sessionID}/background` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:771] |
-| `client.experimental.resource.list` | GET | `/experimental/resource` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:809] |
-| `client.experimental.projectCopy.remove` | DELETE | `/experimental/project/{projectID}/copy` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:845] |
-| `client.experimental.projectCopy.create` | POST | `/experimental/project/{projectID}/copy` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:888] |
-| `client.experimental.projectCopy.refresh` | POST | `/experimental/project/{projectID}/copy/refresh` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:935] |
-| `client.experimental.workspace.adapter.list` | GET | `/experimental/workspace/adapter` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:973] |
-| `client.experimental.workspace.list` | GET | `/experimental/workspace` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1009] |
-| `client.experimental.workspace.create` | POST | `/experimental/workspace` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1043] |
-| `client.experimental.workspace.syncList` | POST | `/experimental/workspace/sync-list` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1090] |
-| `client.experimental.workspace.status` | GET | `/experimental/workspace/status` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1124] |
-| `client.experimental.workspace.remove` | DELETE | `/experimental/workspace/{id}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1158] |
-| `client.experimental.workspace.warp` | POST | `/experimental/workspace/warp` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1194] |
-| `client.global.config.get` | GET | `/global/config` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1278] |
-| `client.global.config.update` | PATCH | `/global/config` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1290] |
-| `client.global.health` | GET | `/global/health` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1316] |
-| `client.global.event` | GET SSE | `/global/event` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1328] |
-| `client.global.dispose` | POST | `/global/dispose` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1340] |
-| `client.global.upgrade` | POST | `/global/upgrade` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1352] |
-| `client.event.subscribe` | GET SSE | `/event` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1383] |
-| `client.config.get` | GET | `/config` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1415] |
-| `client.config.update` | PATCH | `/config` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1445] |
-| `client.config.providers` | GET | `/config/providers` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1482] |
-| `client.tool.list` | GET | `/experimental/tool` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1514] |
-| `client.tool.ids` | GET | `/experimental/tool/ids` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1548] |
-| `client.worktree.remove` | DELETE | `/experimental/worktree` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1580] |
-| `client.worktree.list` | GET | `/experimental/worktree` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1617] |
-| `client.worktree.create` | POST | `/experimental/worktree` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1647] |
-| `client.worktree.reset` | POST | `/experimental/worktree/reset` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1684] |
-| `client.find.text` | GET | `/find` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1723] |
-| `client.find.files` | GET | `/find/file` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1755] |
-| `client.find.symbols` | GET | `/find/symbol` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1793] |
-| `client.file.list` | GET | `/file` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1827] |
-| `client.file.read` | GET | `/file/content` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1859] |
-| `client.file.status` | GET | `/file/status` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1891] |
-| `client.instance.dispose` | POST | `/instance/dispose` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1923] |
-| `client.path.get` | GET | `/path` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1955] |
-| `client.vcs.diff2.raw` | GET | `/vcs/diff/raw` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1987][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2146] |
-| `client.vcs.get` | GET | `/vcs` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2019] |
-| `client.vcs.status` | GET | `/vcs/status` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2049] |
-| `client.vcs.diff` | GET | `/vcs/diff` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2079] |
-| `client.vcs.apply` | POST | `/vcs/apply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2113] |
-| `client.command.list` | GET | `/command` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2157] |
-| `client.lsp.status` | GET | `/lsp` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2189] |
-| `client.formatter.status` | GET | `/formatter` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2221] |
-| `client.mcp.auth.remove` | DELETE | `/mcp/{name}/auth` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2253] |
-| `client.mcp.auth.start` | POST | `/mcp/{name}/auth` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2285] |
-| `client.mcp.auth.callback` | POST | `/mcp/{name}/auth/callback` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2317] |
-| `client.mcp.auth.authenticate` | POST | `/mcp/{name}/auth/authenticate` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2356] |
-| `client.mcp.status` | GET | `/mcp` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2392] |
-| `client.mcp.add` | POST | `/mcp` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2422] |
-| `client.mcp.connect` | POST | `/mcp/{name}/connect` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2459] |
-| `client.mcp.disconnect` | POST | `/mcp/{name}/disconnect` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2489] |
-| `client.project.list` | GET | `/project` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2528] |
-| `client.project.current` | GET | `/project/current` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2558] |
-| `client.project.initGit` | POST | `/project/git/init` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2588] |
-| `client.project.update` | PATCH | `/project/{projectID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2618] |
-| `client.project.directories` | GET | `/project/{projectID}/directories` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2670] |
-| `client.pty.shells` | GET | `/pty/shells` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2704] |
-| `client.pty.list` | GET | `/pty` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2734] |
-| `client.pty.create` | POST | `/pty` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2764] |
-| `client.pty.remove` | DELETE | `/pty/{ptyID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2811] |
-| `client.pty.get` | GET | `/pty/{ptyID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2843] |
-| `client.pty.update` | PUT | `/pty/{ptyID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2875] |
-| `client.pty.connectToken` | POST | `/pty/{ptyID}/connect-token` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2919] |
-| `client.pty.connect` | GET | `/pty/{ptyID}/connect` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2951] |
-| `client.question.list` | GET | `/question` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2989] |
-| `client.question.reply` | POST | `/question/{requestID}/reply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3019] |
-| `client.question.reject` | POST | `/question/{requestID}/reject` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3058] |
-| `client.permission.list` | GET | `/permission` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3092] |
-| `client.permission.reply` | POST | `/permission/{requestID}/reply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3122] |
-| `client.permission.respond` | POST | `/session/{sessionID}/permissions/{permissionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3165] |
-| `client.provider.oauth.authorize` | POST | `/provider/{providerID}/oauth/authorize` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3208] |
-| `client.provider.oauth.callback` | POST | `/provider/{providerID}/oauth/callback` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3255] |
-| `client.provider.list` | GET | `/provider` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3302] |
-| `client.provider.auth` | GET | `/provider/auth` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3332] |
-| `client.session.list` | GET | `/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3369] |
-| `client.session.create` | POST | `/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3411] |
-| `client.session.status` | GET | `/session/status` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3466] |
-| `client.session.delete` | DELETE | `/session/{sessionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3496] |
-| `client.session.get` | GET | `/session/{sessionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3528] |
-| `client.session.update` | PATCH | `/session/{sessionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3560] |
-| `client.session.children` | GET | `/session/{sessionID}/children` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3609] |
-| `client.session.todo` | GET | `/session/{sessionID}/todo` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3641] |
-| `client.session.diff` | GET | `/session/{sessionID}/diff` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3673] |
-| `client.session.messages` | GET | `/session/{sessionID}/message` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3707] |
-| `client.session.prompt` | POST | `/session/{sessionID}/message` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3743] |
-| `client.session.deleteMessage` | DELETE | `/session/{sessionID}/message/{messageID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3803] |
-| `client.session.message` | GET | `/session/{sessionID}/message/{messageID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3841] |
-| `client.session.fork` | POST | `/session/{sessionID}/fork` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3875] |
-| `client.session.abort` | POST | `/session/{sessionID}/abort` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3914] |
-| `client.session.init` | POST | `/session/{sessionID}/init` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3946] |
-| `client.session.unshare` | DELETE | `/session/{sessionID}/share` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3989] |
-| `client.session.share` | POST | `/session/{sessionID}/share` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4021] |
-| `client.session.summarize` | POST | `/session/{sessionID}/summarize` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4053] |
-| `client.session.promptAsync` | POST | `/session/{sessionID}/prompt_async` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4096] |
-| `client.session.command` | POST | `/session/{sessionID}/command` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4156] |
-| `client.session.shell` | POST | `/session/{sessionID}/shell` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4214] |
-| `client.session.revert` | POST | `/session/{sessionID}/revert` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4262] |
-| `client.session.unrevert` | POST | `/session/{sessionID}/unrevert` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4303] |
-| `client.part.delete` | DELETE | `/session/{sessionID}/message/{messageID}/part/{partID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4335] |
-| `client.part.update` | PATCH | `/session/{sessionID}/message/{messageID}/part/{partID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4369] |
-| `client.sync.history.list` | POST | `/sync/history` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4414] |
-| `client.sync.start` | POST | `/sync/start` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4455] |
-| `client.sync.replay` | POST | `/sync/replay` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4485] |
-| `client.sync.steal` | POST | `/sync/steal` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4540] |
-| `client.tui.control.next` | GET | `/tui/control/next` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4584] |
-| `client.tui.control.response` | POST | `/tui/control/response` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4614] |
-| `client.tui.appendPrompt` | POST | `/tui/append-prompt` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4653] |
-| `client.tui.openHelp` | POST | `/tui/open-help` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4690] |
-| `client.tui.openSessions` | POST | `/tui/open-sessions` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4720] |
-| `client.tui.openThemes` | POST | `/tui/open-themes` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4750] |
-| `client.tui.openModels` | POST | `/tui/open-models` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4780] |
-| `client.tui.submitPrompt` | POST | `/tui/submit-prompt` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4810] |
-| `client.tui.clearPrompt` | POST | `/tui/clear-prompt` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4840] |
-| `client.tui.executeCommand` | POST | `/tui/execute-command` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4870] |
-| `client.tui.showToast` | POST | `/tui/show-toast` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4907] |
-| `client.tui.publish` | POST | `/tui/publish` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4950] |
-| `client.tui.selectSession` | POST | `/tui/select-session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4987] |
+| `client.auth.remove` | DELETE | `/auth/{providerID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:432] |
+| `client.auth.set` | PUT | `/auth/{providerID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:451] |
+| `client.app.log` | POST | `/log` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:488] |
+| `client.app.agents` | GET | `/agent` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:533] |
+| `client.app.skills` | GET | `/skill` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:563] |
+| `client.experimental.controlPlane.moveSession` | POST | `/experimental/control-plane/move-session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:595] |
+| `client.experimental.console.get` | GET | `/experimental/console` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:674] |
+| `client.experimental.console.listOrgs` | GET | `/experimental/console/orgs` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:708] |
+| `client.experimental.console.switchOrg` | POST | `/experimental/console/switch` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:742] |
+| `client.experimental.session.list` | GET | `/experimental/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:783] |
+| `client.experimental.session.background` | POST | `/experimental/session/{sessionID}/background` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:829] |
+| `client.experimental.resource.list` | GET | `/experimental/resource` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:867] |
+| `client.experimental.projectCopy.generateName` | POST | `/experimental/project/{projectID}/copy/generate-name` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:903][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:930] |
+| `client.experimental.workspace.adapter.list` | GET | `/experimental/workspace/adapter` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:948] |
+| `client.experimental.workspace.list` | GET | `/experimental/workspace` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:984] |
+| `client.experimental.workspace.create` | POST | `/experimental/workspace` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1018] |
+| `client.experimental.workspace.syncList` | POST | `/experimental/workspace/sync-list` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1065] |
+| `client.experimental.workspace.status` | GET | `/experimental/workspace/status` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1099] |
+| `client.experimental.workspace.remove` | DELETE | `/experimental/workspace/{id}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1133] |
+| `client.experimental.workspace.warp` | POST | `/experimental/workspace/warp` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1169] |
+| `client.global.config.get` | GET | `/global/config` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1258] |
+| `client.global.config.update` | PATCH | `/global/config` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1270] |
+| `client.global.health` | GET | `/global/health` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1296] |
+| `client.global.event` | GET SSE | `/global/event` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1308] |
+| `client.global.dispose` | POST | `/global/dispose` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1320] |
+| `client.global.upgrade` | POST | `/global/upgrade` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1332] |
+| `client.event.subscribe` | GET SSE | `/event` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1363] |
+| `client.config.get` | GET | `/config` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1395] |
+| `client.config.update` | PATCH | `/config` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1425] |
+| `client.config.providers` | GET | `/config/providers` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1462] |
+| `client.tool.list` | GET | `/experimental/tool` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1494] |
+| `client.tool.ids` | GET | `/experimental/tool/ids` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1528] |
+| `client.worktree.remove` | DELETE | `/experimental/worktree` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1560] |
+| `client.worktree.list` | GET | `/experimental/worktree` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1597] |
+| `client.worktree.create` | POST | `/experimental/worktree` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1627] |
+| `client.worktree.reset` | POST | `/experimental/worktree/reset` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1664] |
+| `client.find.text` | GET | `/find` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1703] |
+| `client.find.files` | GET | `/find/file` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1735] |
+| `client.find.symbols` | GET | `/find/symbol` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1773] |
+| `client.file.list` | GET | `/file` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1807] |
+| `client.file.read` | GET | `/file/content` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1839] |
+| `client.file.status` | GET | `/file/status` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1871] |
+| `client.instance.dispose` | POST | `/instance/dispose` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1903] |
+| `client.path.get` | GET | `/path` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1935] |
+| `client.vcs.diff2.raw` | GET | `/vcs/diff/raw` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1967][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2126] |
+| `client.vcs.get` | GET | `/vcs` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:1999] |
+| `client.vcs.status` | GET | `/vcs/status` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2029] |
+| `client.vcs.diff` | GET | `/vcs/diff` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2059] |
+| `client.vcs.apply` | POST | `/vcs/apply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2093] |
+| `client.command.list` | GET | `/command` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2137] |
+| `client.lsp.status` | GET | `/lsp` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2169] |
+| `client.formatter.status` | GET | `/formatter` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2201] |
+| `client.mcp.auth.remove` | DELETE | `/mcp/{name}/auth` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2233] |
+| `client.mcp.auth.start` | POST | `/mcp/{name}/auth` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2265] |
+| `client.mcp.auth.callback` | POST | `/mcp/{name}/auth/callback` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2297] |
+| `client.mcp.auth.authenticate` | POST | `/mcp/{name}/auth/authenticate` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2336] |
+| `client.mcp.status` | GET | `/mcp` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2372] |
+| `client.mcp.add` | POST | `/mcp` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2402] |
+| `client.mcp.connect` | POST | `/mcp/{name}/connect` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2439] |
+| `client.mcp.disconnect` | POST | `/mcp/{name}/disconnect` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2469] |
+| `client.project.list` | GET | `/project` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2508] |
+| `client.project.current` | GET | `/project/current` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2538] |
+| `client.project.initGit` | POST | `/project/git/init` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2568] |
+| `client.project.update` | PATCH | `/project/{projectID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2598] |
+| `client.project.directories` | GET | `/project/{projectID}/directories` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2650] |
+| `client.pty.shells` | GET | `/pty/shells` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2684] |
+| `client.pty.list` | GET | `/pty` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2714] |
+| `client.pty.create` | POST | `/pty` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2744] |
+| `client.pty.remove` | DELETE | `/pty/{ptyID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2791] |
+| `client.pty.get` | GET | `/pty/{ptyID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2823] |
+| `client.pty.update` | PUT | `/pty/{ptyID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2855] |
+| `client.pty.connectToken` | POST | `/pty/{ptyID}/connect-token` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2899] |
+| `client.pty.connect` | GET | `/pty/{ptyID}/connect` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2931] |
+| `client.question.list` | GET | `/question` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2969] |
+| `client.question.reply` | POST | `/question/{requestID}/reply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:2999] |
+| `client.question.reject` | POST | `/question/{requestID}/reject` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3038] |
+| `client.permission.list` | GET | `/permission` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3072] |
+| `client.permission.reply` | POST | `/permission/{requestID}/reply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3102] |
+| `client.permission.respond` | POST | `/session/{sessionID}/permissions/{permissionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3145] |
+| `client.provider.oauth.authorize` | POST | `/provider/{providerID}/oauth/authorize` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3188] |
+| `client.provider.oauth.callback` | POST | `/provider/{providerID}/oauth/callback` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3235] |
+| `client.provider.list` | GET | `/provider` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3282] |
+| `client.provider.auth` | GET | `/provider/auth` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3312] |
+| `client.session.list` | GET | `/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3349] |
+| `client.session.create` | POST | `/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3391] |
+| `client.session.status` | GET | `/session/status` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3446] |
+| `client.session.delete` | DELETE | `/session/{sessionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3476] |
+| `client.session.get` | GET | `/session/{sessionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3508] |
+| `client.session.update` | PATCH | `/session/{sessionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3540] |
+| `client.session.children` | GET | `/session/{sessionID}/children` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3589] |
+| `client.session.todo` | GET | `/session/{sessionID}/todo` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3621] |
+| `client.session.diff` | GET | `/session/{sessionID}/diff` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3653] |
+| `client.session.messages` | GET | `/session/{sessionID}/message` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3687] |
+| `client.session.prompt` | POST | `/session/{sessionID}/message` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3723] |
+| `client.session.deleteMessage` | DELETE | `/session/{sessionID}/message/{messageID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3783] |
+| `client.session.message` | GET | `/session/{sessionID}/message/{messageID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3821] |
+| `client.session.fork` | POST | `/session/{sessionID}/fork` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3855] |
+| `client.session.abort` | POST | `/session/{sessionID}/abort` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3894] |
+| `client.session.init` | POST | `/session/{sessionID}/init` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3926] |
+| `client.session.unshare` | DELETE | `/session/{sessionID}/share` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:3969] |
+| `client.session.share` | POST | `/session/{sessionID}/share` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4001] |
+| `client.session.summarize` | POST | `/session/{sessionID}/summarize` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4033] |
+| `client.session.promptAsync` | POST | `/session/{sessionID}/prompt_async` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4076] |
+| `client.session.command` | POST | `/session/{sessionID}/command` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4136] |
+| `client.session.shell` | POST | `/session/{sessionID}/shell` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4194] |
+| `client.session.revert` | POST | `/session/{sessionID}/revert` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4242] |
+| `client.session.unrevert` | POST | `/session/{sessionID}/unrevert` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4283] |
+| `client.part.delete` | DELETE | `/session/{sessionID}/message/{messageID}/part/{partID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4315] |
+| `client.part.update` | PATCH | `/session/{sessionID}/message/{messageID}/part/{partID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4349] |
+| `client.sync.history.list` | POST | `/sync/history` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4394] |
+| `client.sync.start` | POST | `/sync/start` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4435] |
+| `client.sync.replay` | POST | `/sync/replay` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4465] |
+| `client.sync.steal` | POST | `/sync/steal` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4520] |
+| `client.tui.control.next` | GET | `/tui/control/next` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4564] |
+| `client.tui.control.response` | POST | `/tui/control/response` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4594] |
+| `client.tui.appendPrompt` | POST | `/tui/append-prompt` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4633] |
+| `client.tui.openHelp` | POST | `/tui/open-help` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4670] |
+| `client.tui.openSessions` | POST | `/tui/open-sessions` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4700] |
+| `client.tui.openThemes` | POST | `/tui/open-themes` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4730] |
+| `client.tui.openModels` | POST | `/tui/open-models` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4760] |
+| `client.tui.submitPrompt` | POST | `/tui/submit-prompt` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4790] |
+| `client.tui.clearPrompt` | POST | `/tui/clear-prompt` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4820] |
+| `client.tui.executeCommand` | POST | `/tui/execute-command` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4850] |
+| `client.tui.showToast` | POST | `/tui/show-toast` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4887] |
+| `client.tui.publish` | POST | `/tui/publish` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4930] |
+| `client.tui.selectSession` | POST | `/tui/select-session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:4967] |
 
-### V2 native `/api/*` methods
+### V2 native route methods
 
 | SDK method | HTTP | generated URL | evidence |
 |---|---|---|---|
-| `client.v2.health.get` | GET | `/api/health` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5031] |
-| `client.v2.location.get` | GET | `/api/location` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5045] |
-| `client.v2.agent.list` | GET | `/api/agent` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5069] |
-| `client.v2.session.permission.list` | GET | `/api/session/{sessionID}/permission` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5093] |
-| `client.v2.session.permission.reply` | POST | `/api/session/{sessionID}/permission/{requestID}/reply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5116] |
-| `client.v2.session.question.list` | GET | `/api/session/{sessionID}/question` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5161] |
-| `client.v2.session.question.reply` | POST | `/api/session/{sessionID}/question/{requestID}/reply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5184] |
-| `client.v2.session.question.reject` | POST | `/api/session/{sessionID}/question/{requestID}/reject` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5225] |
-| `client.v2.session.list` | GET | `/api/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5261] |
-| `client.v2.session.create` | POST | `/api/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5303] |
-| `client.v2.session.get` | GET | `/api/session/{sessionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5346] |
-| `client.v2.session.prompt` | POST | `/api/session/{sessionID}/prompt` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5365] |
-| `client.v2.session.compact` | POST | `/api/session/{sessionID}/compact` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5406] |
-| `client.v2.session.wait` | POST | `/api/session/{sessionID}/wait` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5425] |
-| `client.v2.session.context` | GET | `/api/session/{sessionID}/context` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5444] |
-| `client.v2.session.messages` | GET | `/api/session/{sessionID}/message` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5463] |
-| `client.v2.model.list` | GET | `/api/model` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5509] |
-| `client.v2.provider.list` | GET | `/api/provider` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5533] |
-| `client.v2.provider.get` | GET | `/api/provider/{providerID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5555] |
-| `client.v2.connector.connect.oauth.begin` | POST | `/api/connector/{connectorID}/connect/oauth` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5590][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5808][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5870] |
-| `client.v2.connector.connect.oauth.cancel` | DELETE | `/api/connector/oauth/{attemptID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5640][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5808][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5870] |
-| `client.v2.connector.connect.oauth.status` | GET | `/api/connector/oauth/{attemptID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5677][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5808][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5870] |
-| `client.v2.connector.connect.oauth.complete` | POST | `/api/connector/oauth/{attemptID}/complete` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5714][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5808][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5870] |
-| `client.v2.connector.connect.key` | POST | `/api/connector/{connectorID}/connect/key` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5760] |
-| `client.v2.connector.list` | GET | `/api/connector` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5819] |
-| `client.v2.connector.get` | GET | `/api/connector/{connectorID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5841] |
-| `client.v2.permission.request.list` | GET | `/api/permission/request` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5881] |
-| `client.v2.permission.saved.list` | GET | `/api/permission/saved` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5909] |
-| `client.v2.permission.saved.remove` | DELETE | `/api/permission/saved/{id}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5932] |
-| `client.v2.fs.read` | GET | `/api/fs/read` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5969] |
-| `client.v2.fs.list` | GET | `/api/fs/list` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6002] |
-| `client.v2.fs.find` | GET | `/api/fs/find` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6035] |
-| `client.v2.command.list` | GET | `/api/command` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6074] |
-| `client.v2.skill.list` | GET | `/api/skill` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6098] |
-| `client.v2.event.subscribe` | GET SSE | `/api/event` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6122] |
-| `client.v2.question.request.list` | GET | `/api/question/request` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6146] |
-| `client.v2.reference.list` | GET | `/api/reference` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6181] |
+| `client.v2.health.get` | GET | `/api/health` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5011] |
+| `client.v2.location.get` | GET | `/api/location` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5025] |
+| `client.v2.agent.list` | GET | `/api/agent` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5049] |
+| `client.v2.session.permission.list` | GET | `/api/session/{sessionID}/permission` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5073] |
+| `client.v2.session.permission.reply` | POST | `/api/session/{sessionID}/permission/{requestID}/reply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5096] |
+| `client.v2.session.question.list` | GET | `/api/session/{sessionID}/question` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5141] |
+| `client.v2.session.question.reply` | POST | `/api/session/{sessionID}/question/{requestID}/reply` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5164] |
+| `client.v2.session.question.reject` | POST | `/api/session/{sessionID}/question/{requestID}/reject` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5205] |
+| `client.v2.session.list` | GET | `/api/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5241] |
+| `client.v2.session.create` | POST | `/api/session` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5283] |
+| `client.v2.session.get` | GET | `/api/session/{sessionID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5326] |
+| `client.v2.session.prompt` | POST | `/api/session/{sessionID}/prompt` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5345] |
+| `client.v2.session.compact` | POST | `/api/session/{sessionID}/compact` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5386] |
+| `client.v2.session.wait` | POST | `/api/session/{sessionID}/wait` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5405] |
+| `client.v2.session.context` | GET | `/api/session/{sessionID}/context` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5424] |
+| `client.v2.session.messages` | GET | `/api/session/{sessionID}/message` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5443] |
+| `client.v2.model.list` | GET | `/api/model` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5489] |
+| `client.v2.provider.list` | GET | `/api/provider` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5513] |
+| `client.v2.provider.get` | GET | `/api/provider/{providerID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5535] |
+| `client.v2.integration.connect.key` | POST | `/api/integration/{integrationID}/connect/key` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5570][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5600] |
+| `client.v2.integration.connect.oauth` | POST | `/api/integration/{integrationID}/connect/oauth` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5616][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5650] |
+| `client.v2.integration.attempt.cancel` | DELETE | `/api/integration/attempt/{attemptID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5668][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5694] |
+| `client.v2.integration.attempt.status` | GET | `/api/integration/attempt/{attemptID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5705][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5731] |
+| `client.v2.integration.attempt.complete` | POST | `/api/integration/attempt/{attemptID}/complete` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5742][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5770] |
+| `client.v2.integration.list` | GET | `/api/integration` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5788][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5799] |
+| `client.v2.integration.get` | GET | `/api/integration/{integrationID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5810][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5832] |
+| `client.v2.credential.remove` | DELETE | `/api/credential/{credentialID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5855][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5878] |
+| `client.v2.credential.update` | PATCH | `/api/credential/{credentialID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5890][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5913] |
+| `client.v2.permission.request.list` | GET | `/api/permission/request` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5932] |
+| `client.v2.permission.saved.list` | GET | `/api/permission/saved` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5960] |
+| `client.v2.permission.saved.remove` | DELETE | `/api/permission/saved/{id}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:5983] |
+| `client.v2.fs.read` | GET | `/api/fs/read` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6020] |
+| `client.v2.fs.list` | GET | `/api/fs/list` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6042] |
+| `client.v2.fs.find` | GET | `/api/fs/find` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6075] |
+| `client.v2.command.list` | GET | `/api/command` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6114] |
+| `client.v2.skill.list` | GET | `/api/skill` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6138] |
+| `client.v2.event.subscribe` | GET SSE | `/api/event` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6162] |
+| `client.v2.pty.list` | GET | `/api/pty` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6186][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6197] |
+| `client.v2.pty.create` | POST | `/api/pty` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6208][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6240] |
+| `client.v2.pty.remove` | DELETE | `/api/pty/{ptyID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6256][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6278] |
+| `client.v2.pty.get` | GET | `/api/pty/{ptyID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6289][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6311] |
+| `client.v2.pty.update` | PUT | `/api/pty/{ptyID}` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6322][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6351] |
+| `client.v2.pty.connectToken` | POST | `/api/pty/{ptyID}/connect-token` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6367][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6389] |
+| `client.v2.pty.connect` | GET | `/api/pty/{ptyID}/connect` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6400][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6425] |
+| `client.v2.question.request.list` | GET | `/api/question/request` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6438][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6453] |
+| `client.v2.reference.list` | GET | `/api/reference` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6473] |
+| `client.v2.projectCopy.remove` | DELETE | `/experimental/project/{projectID}/copy` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6492][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6522] |
+| `client.v2.projectCopy.create` | POST | `/experimental/project/{projectID}/copy` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6533][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6562] |
+| `client.v2.projectCopy.refresh` | POST | `/experimental/project/{projectID}/copy/refresh` | [E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6574][E: packages/sdk/js/src/v2/gen/sdk.gen.ts:6600] |
 
 ## Sources
 

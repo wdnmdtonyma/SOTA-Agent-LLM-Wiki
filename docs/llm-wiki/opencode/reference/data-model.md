@@ -17,7 +17,7 @@ symbols:
   - SessionSchema.Info
   - MessageV2.toModelMessagesEffect
 evidence: explicit
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 这份节点记录 session/message 的核心共享数据模型；V2 是 `packages/core/src/session/*` 的 typed schema，V1 是 `packages/opencode/src/session/message-v2.ts` 的 AI SDK 转换层。

@@ -9,7 +9,7 @@ symbols: [SkillTool, Skill, SkillV2]
 related: [integrations.skills, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > Skill 工具按 skill name 加载 `SKILL.md` 指令正文和同目录资源索引；V1 从 `Skill.Service.require()` 读取，V2 从 `SkillV2.Service.list()` 当前结果中查找。
@@ -64,7 +64,7 @@ V2 `SkillTool` name 是 `"skill"`，通过 `[name]: Tool.make(...)` 注册；`Bu
 
 ### 2 用途定位
 
-V2 description 与 V1 语义一致：当任务匹配 available skills 时加载 specialized skill，把 instructions 和 scripts/files references 注入当前 conversation。[E: packages/core/src/tool/skill.ts:28][E: packages/core/src/tool/skill.ts:30][E: packages/core/src/tool/skill.ts:32] V2 design note 说明 selected-agent available-skill guidance 只列 permitted skill 的 names/descriptions；skill bodies 和 locations 只通过 permission-checked `skill` tool 暴露。[E: CONTEXT.md:86]
+V2 description 与 V1 语义一致：当任务匹配 available skills 时加载 specialized skill，把 instructions 和 scripts/files references 注入当前 conversation。[E: packages/core/src/tool/skill.ts:28][E: packages/core/src/tool/skill.ts:30][E: packages/core/src/tool/skill.ts:32] V2 design note 说明 selected-agent available-skill guidance 只列 permitted skill 的 names/descriptions；skill bodies 和 locations 只通过 permission-checked `skill` tool 暴露。[E: CONTEXT.md:89]
 
 ### 3 输入 schema 表
 
@@ -82,7 +82,7 @@ V2 在找到 skill 后调用 `PermissionV2.assert`，`action: "skill"`，`resour
 
 ### 6 execute() 走读
 
-1. V2 `SkillTool.layer` 先 `yield* boot.wait()`，确保 core plugins 已经注册 skill sources 后再暴露 tool。[E: packages/core/src/tool/skill.ts:61][E: packages/core/src/tool/skill.ts:64][E: packages/core/src/plugin/boot.ts:105][E: packages/core/src/plugin/boot.ts:113][E: packages/core/src/plugin/boot.ts:124][I]
+1. V2 `SkillTool.layer` 先 `yield* boot.wait()`，确保 core plugins 已经注册 skill sources 后再暴露 tool。[E: packages/core/src/tool/skill.ts:61][E: packages/core/src/tool/skill.ts:64][E: packages/core/src/plugin/boot.ts:103][E: packages/core/src/plugin/boot.ts:111][E: packages/core/src/plugin/boot.ts:122][I]
 2. execute 调 `skills.list()`，再按 exact `skill.name === input.name` 查找；找不到时返回 `ToolFailure({ message: "Unable to load skill <name>" })`。[E: packages/core/src/tool/skill.ts:74][E: packages/core/src/tool/skill.ts:75][E: packages/core/src/tool/skill.ts:76][E: packages/core/src/tool/skill.ts:55]
 3. 只有 `skill.location` basename 是 `SKILL.md` 时，V2 才 glob 同目录文件；glob pattern 是 `**/*`，absolute true，include file，dot true，然后排除 `SKILL.md`、排序、取前 10 个。[E: packages/core/src/tool/skill.ts:86][E: packages/core/src/tool/skill.ts:88][E: packages/core/src/tool/skill.ts:89][E: packages/core/src/tool/skill.ts:90][E: packages/core/src/tool/skill.ts:91][E: packages/core/src/tool/skill.ts:92]
 4. V2 `SkillV2` source model 支持 directory/url/embedded 三类 source；`list()` 遍历当前 state sources，把每个 source 加载出的 skills 按 name 放进 Map，后者会覆盖前者同名项。[E: packages/core/src/skill.ts:14][E: packages/core/src/skill.ts:19][E: packages/core/src/skill.ts:24][E: packages/core/src/skill.ts:140][E: packages/core/src/skill.ts:142][E: packages/core/src/skill.ts:146][I]
@@ -92,14 +92,14 @@ V2 在找到 skill 后调用 `PermissionV2.assert`，`action: "skill"`，`resour
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 发现入口 | V1 服务自己扫描 `.claude`/`.agents`、config dirs、paths、urls。[E: packages/opencode/src/skill/index.ts:187][E: packages/opencode/src/skill/index.ts:188][E: packages/opencode/src/skill/index.ts:205][E: packages/opencode/src/skill/index.ts:211][E: packages/opencode/src/skill/index.ts:222][E: packages/opencode/src/skill/index.ts:225] | V2 通过 `SkillV2.Source` 管理 directory/url/embedded sources，插件和 config source 的注册入口由 `PluginBoot` 加载。[E: packages/core/src/skill.ts:14][E: packages/core/src/skill.ts:19][E: packages/core/src/skill.ts:24][E: packages/core/src/plugin/boot.ts:105][E: packages/core/src/plugin/boot.ts:113][I] |
+| 发现入口 | V1 服务自己扫描 `.claude`/`.agents`、config dirs、paths、urls。[E: packages/opencode/src/skill/index.ts:187][E: packages/opencode/src/skill/index.ts:188][E: packages/opencode/src/skill/index.ts:205][E: packages/opencode/src/skill/index.ts:211][E: packages/opencode/src/skill/index.ts:222][E: packages/opencode/src/skill/index.ts:225] | V2 通过 `SkillV2.Source` 管理 directory/url/embedded sources，插件和 config source 的注册入口由 `PluginBoot` 加载。[E: packages/core/src/skill.ts:14][E: packages/core/src/skill.ts:19][E: packages/core/src/skill.ts:24][E: packages/core/src/plugin/boot.ts:103][E: packages/core/src/plugin/boot.ts:111][I] |
 | 工具注册前置 | V1 直接使用 `Skill.Service` 当前状态。[E: packages/opencode/src/tool/skill.ts:16][E: packages/opencode/src/tool/skill.ts:25] | V2 等 `PluginBoot.wait()` 后注册，避免插件来源尚未加载。[E: packages/core/src/tool/skill.ts:64][I] |
 | 文件列表 | V1 用 Ripgrep `find` sample 10 个 non-SKILL 文件。[E: packages/opencode/src/tool/skill.ts:37][E: packages/opencode/src/tool/skill.ts:39][E: packages/opencode/src/tool/skill.ts:43] | V2 用 FSUtil glob、排序、slice 前 10 个。[E: packages/core/src/tool/skill.ts:89][E: packages/core/src/tool/skill.ts:91][E: packages/core/src/tool/skill.ts:92] |
 | 错误 | V1 NotFound 被转成 defect error。[E: packages/opencode/src/tool/skill.ts:26] | V2 NotFound/permission/glob 等 expected path 映射为 `ToolFailure`。[E: packages/core/src/tool/skill.ts:55][E: packages/core/src/tool/skill.ts:76][E: packages/core/src/tool/skill.ts:99] |
 
 ## 设计动机·edge·历史
 
-V2 的 system-context 设计有意只在 baseline 中暴露 skill name/description，而不暴露 body/location；实际 body 必须经 permission-checked `skill` tool 才可见，这把“知道有某 skill”与“读取 skill 内容和资源路径”分成两层权限边界。[E: CONTEXT.md:86][I]
+V2 的 system-context 设计有意只在 baseline 中暴露 skill name/description，而不暴露 body/location；实际 body 必须经 permission-checked `skill` tool 才可见，这把“知道有某 skill”与“读取 skill 内容和资源路径”分成两层权限边界。[E: CONTEXT.md:89][I]
 
 ## Sources
 

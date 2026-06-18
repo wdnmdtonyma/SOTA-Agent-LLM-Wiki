@@ -14,7 +14,7 @@ symbols:
   - Config.Info
   - ConfigMigrateV1.migrate
 evidence: explicit
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 这份节点是机器可读的 config key 总账：V1 是当前 V1 CLI/agent surface 的配置 schema，V2 是 `@opencode/v2` core 的 `Config.Info` schema。
@@ -90,7 +90,7 @@ V1 schema 的主入口是 `ConfigV1.Info`，顶层还定义了 well-known `confi
 | `command.<name>` | command text/template/description/agent/model fields | [E: packages/core/src/v1/config/command.ts:5][E: packages/core/src/v1/config/command.ts:11] |
 | `formatter` | formatter `disabled`, `command`, `environment`, `extensions` fields | [E: packages/core/src/v1/config/formatter.ts:5][E: packages/core/src/v1/config/formatter.ts:8][E: packages/core/src/v1/config/formatter.ts:12] |
 | `lsp` | language-server command/env/extensions/initialization fields plus built-in server IDs | [E: packages/core/src/v1/config/lsp.ts:5][E: packages/core/src/v1/config/lsp.ts:22] |
-| `mcp` | local, OAuth, and remote server shapes | [E: packages/core/src/v1/config/mcp.ts:6][E: packages/core/src/v1/config/mcp.ts:41] |
+| `mcp` | local, OAuth, and remote server shapes | [E: packages/core/src/v1/config/mcp.ts:6][E: packages/core/src/v1/config/mcp.ts:44] |
 | `permission` | `read/edit/glob/grep/list/bash/task/external_directory/todowrite/question/webfetch/websearch/lsp/doom_loop/skill` plus unknown string keys | [E: packages/core/src/v1/config/permission.ts:17][E: packages/core/src/v1/config/permission.ts:35] |
 | `plugin` | string package or tuple with options | [E: packages/core/src/v1/config/plugin.ts:5][E: packages/core/src/v1/config/plugin.ts:8] |
 | `provider.<id>` | `api`, `name`, `env`, `id`, `npm`, `whitelist`, `blacklist`, `options`, `models` | [E: packages/core/src/v1/config/provider.ts:76][E: packages/core/src/v1/config/provider.ts:77][E: packages/core/src/v1/config/provider.ts:79][E: packages/core/src/v1/config/provider.ts:81][E: packages/core/src/v1/config/provider.ts:84][E: packages/core/src/v1/config/provider.ts:119] |
@@ -143,7 +143,7 @@ V2 schema 的主入口是 `Config.Info` class，而不是 V1 `Schema.Struct` exp
 | `experimental` | public config field is `policies`; each policy embeds a domain `action` validated by `PolicyAction` | [E: packages/core/src/config/experimental.ts:9][E: packages/core/src/config/experimental.ts:13][E: packages/core/src/config/experimental.ts:17] |
 | `formatter` | formatter `disabled`, `command`, `environment`, `extensions` fields | [E: packages/core/src/config/formatter.ts:5][E: packages/core/src/config/formatter.ts:8][E: packages/core/src/config/formatter.ts:12] |
 | `lsp` | LSP server command/env/extensions/initialization fields | [E: packages/core/src/config/lsp.ts:5][E: packages/core/src/config/lsp.ts:18] |
-| `mcp` | local/remote/OAuth server shapes | [E: packages/core/src/config/mcp.ts:6][E: packages/core/src/config/mcp.ts:36] |
+| `mcp` | local/remote/OAuth server shapes | [E: packages/core/src/config/mcp.ts:6][E: packages/core/src/config/mcp.ts:39] |
 | `plugins` | string package or object spec with options | [E: packages/core/src/config/plugin.ts:5][E: packages/core/src/config/plugin.ts:13] |
 | `providers.<id>` | `name`, `env`, `api`, `request`, `models` | [E: packages/core/src/config/provider.ts:65][E: packages/core/src/config/provider.ts:66][E: packages/core/src/config/provider.ts:67][E: packages/core/src/config/provider.ts:68][E: packages/core/src/config/provider.ts:69][E: packages/core/src/config/provider.ts:70] |
 | `providers.<id>.models.<model>` | `family`, `name`, `api`, `capabilities`, `request`, `variants`, `cost`, `disabled`, `limit` | [E: packages/core/src/config/provider.ts:47][E: packages/core/src/config/provider.ts:48][E: packages/core/src/config/provider.ts:50][E: packages/core/src/config/provider.ts:51][E: packages/core/src/config/provider.ts:52][E: packages/core/src/config/provider.ts:56][E: packages/core/src/config/provider.ts:60][E: packages/core/src/config/provider.ts:61][E: packages/core/src/config/provider.ts:62] |

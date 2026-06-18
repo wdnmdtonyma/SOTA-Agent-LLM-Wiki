@@ -17,7 +17,7 @@ related:
   - execution.snapshots
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 Git CLI wrapper 是 `packages/opencode/src/git/index.ts` 的 Effect service：它把 git 命令统一加上 hardened flags，使用 `AppProcess.run` 捕获 stdout/stderr/truncation，并提供 branch/status/diff/patch/applyPatch 等 typed helper。

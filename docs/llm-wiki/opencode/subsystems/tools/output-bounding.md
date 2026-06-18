@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 source:
   - packages/opencode/src/tool/truncate.ts
   - packages/core/src/tool-output-store.ts
@@ -86,22 +86,22 @@ V2 `ToolOutputStore.Service` 是 core registry settlement 的 model-output bound
 | preview 策略 | head 或 tail，默认 head；shell 用 local `tail(...)` 生成结尾 preview。[E: packages/opencode/src/tool/truncate.ts:89][E: packages/opencode/src/tool/shell.ts:579] | beginning + end，行数/字节大致对半分配。[E: packages/core/src/tool-output-store.ts:70][E: packages/core/src/tool-output-store.ts:87] |
 | 完整输出文件 | `Truncate.write` 写 `TRUNCATION_DIR/ToolID.ascending()`。[E: packages/opencode/src/tool/truncate.ts:68] | `ToolOutputStore.write` 写 global data 下 `tool-output/tool_<Identifier>`。[E: packages/core/src/tool-output-store.ts:123] |
 | path 暴露 | `Truncate.output` result 含 `outputPath`，V1 wrapper/MCP bridge/shell 可把它复制到 metadata；preview 文本也直接提示 full output path。[E: packages/opencode/src/tool/truncate.ts:129][E: packages/opencode/src/tool/truncate.ts:139][E: packages/opencode/src/tool/tool.ts:141][E: packages/opencode/src/tool/tool.ts:142][E: packages/opencode/src/session/tools.ts:177][E: packages/opencode/src/session/tools.ts:180][E: packages/opencode/src/tool/shell.ts:588][E: packages/opencode/src/tool/shell.ts:602] | V2 settlement 有 typed `outputPaths`，bounded preview marker 也包含 path。[E: packages/core/src/tool/registry.ts:77][E: packages/core/src/tool-output-store.ts:153] |
-| structured output | V1 主要处理 string output。[E: packages/opencode/src/tool/truncate.ts:40] | V2 保留 structured unchanged，model replay 用 bounded textual JSON preview。[E: packages/core/src/tool-output-store.ts:139][E: packages/core/src/tool-output-store.ts:157][E: CONTEXT.md:112] |
+| structured output | V1 主要处理 string output。[E: packages/opencode/src/tool/truncate.ts:40] | V2 保留 structured unchanged，model replay 用 bounded textual JSON preview。[E: packages/core/src/tool-output-store.ts:139][E: packages/core/src/tool-output-store.ts:157][E: CONTEXT.md:117] |
 
 ## 6 设计动机与 tradeoff
 
 - V2 glossary 将 Model Tool Output 定义为 bounded projection，Tool Registry enforce final size limit；Managed Tool Output File 是共享目录下临时文件。[E: CONTEXT.md:43][E: CONTEXT.md:46]
 - V2 spec 要求 tools 返回完整 validated domain output，generic settlement boundary 再 bounding provider-facing channel；managed paths 不出现在 `Tool.make` schema 或 projection callback 里。[E: specs/v2/tools.md:155][E: specs/v2/tools.md:157]
-- V2 CONTEXT 规定一个 tool settlement 用一个 aggregate textual limit，超过 lines 或 UTF-8 bytes 任一上限即 bound；generic truncation 保留 beginning and end。[E: CONTEXT.md:106][E: CONTEXT.md:107]
+- V2 CONTEXT 规定一个 tool settlement 用一个 aggregate textual limit，超过 lines 或 UTF-8 bytes 任一上限即 bound；generic truncation 保留 beginning and end。[E: CONTEXT.md:111][E: CONTEXT.md:112]
 - V1 的 truncation 更靠近调用方，因此 shell 可以用 tail preview 并先做进程输出 capture/spooling 限制；这类 producer boundary limit 在 V2 spec 中被明确区分为 producer memory management，而不是 model-output truncation。[E: packages/opencode/src/tool/shell.ts:446][E: packages/opencode/src/tool/shell.ts:499][E: packages/opencode/src/tool/shell.ts:512][E: packages/opencode/src/tool/shell.ts:582][E: specs/v2/tools.md:159]
-- V2 的一个潜在代价是 retained file 写入失败会让 settlement 产生 storage error；spec 明确 complete retention fails 时 settlement fails operationally，而不是发布 lossy success。[E: specs/v2/tools.md:157][I] CONTEXT 同时写有“retention failure publishes lossy bounded output without a path”的旧约束；当前 store `write` failure 会走 `StorageError`，所以本节点以当前源码和 spec 为准，并把 CONTEXT 这句视为待后续 reconcile 的文档冲突。[E: CONTEXT.md:110][E: packages/core/src/tool-output-store.ts:123][E: packages/core/src/tool-output-store.ts:152][I]
+- V2 的一个潜在代价是 retained file 写入失败会让 settlement 产生 storage error；spec 明确 complete retention fails 时 settlement fails operationally，而不是发布 lossy success。[E: specs/v2/tools.md:157][I] CONTEXT 同时写有“retention failure publishes lossy bounded output without a path”的旧约束；当前 store `write` failure 会走 `StorageError`，所以本节点以当前源码和 spec 为准，并把 CONTEXT 这句视为待后续 reconcile 的文档冲突。[E: CONTEXT.md:115][E: packages/core/src/tool-output-store.ts:123][E: packages/core/src/tool-output-store.ts:152][I]
 
 ## 7 Gotchas
 
 - `read` 工具的 2000 行/50KB 文本分页不是本节点的 generic tool output bounding；`read` 自己在文件读取层分页。[E: packages/opencode/src/tool/read.ts:13][E: packages/opencode/src/tool/read.ts:16][E: packages/opencode/src/tool/read.ts:164][E: packages/core/src/tool/read-filesystem.ts:10][E: packages/core/src/tool/read-filesystem.ts:11][E: packages/core/src/tool/read-filesystem.ts:202][E: packages/core/src/tool/read-filesystem.ts:210]
 - V1 shell 大输出完整文件是 shell/truncate 合作产生的，不能推断所有 V1 工具都一定有 `outputPath` metadata。[E: packages/opencode/src/tool/shell.ts:512][E: packages/opencode/src/tool/shell.ts:519][E: packages/opencode/src/tool/shell.ts:582][E: packages/opencode/src/tool/shell.ts:602][E: packages/opencode/src/tool/tool.ts:131][E: packages/opencode/src/tool/tool.ts:141][E: packages/opencode/src/tool/tool.ts:142]
-- V2 managed output file 是 temporary，bounded Model Tool Output 才是 durable replayable record。[E: CONTEXT.md:109]
-- Provider-executed tool results 不走 generic Tool Registry bounding；CONTEXT 明确它们保持 provider-native transcript facts。[E: CONTEXT.md:115]
+- V2 managed output file 是 temporary，bounded Model Tool Output 才是 durable replayable record。[E: CONTEXT.md:114]
+- Provider-executed tool results 不走 generic Tool Registry bounding；CONTEXT 明确它们保持 provider-native transcript facts。[E: CONTEXT.md:120]
 
 ## Sources
 

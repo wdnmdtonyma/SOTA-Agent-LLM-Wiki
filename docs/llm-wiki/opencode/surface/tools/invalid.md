@@ -9,7 +9,7 @@ symbols: [InvalidTool]
 related: [subsys.tools.v1]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > Invalid 工具是 V1 AI SDK repair path 的占位工具：模型不应主动使用它；AI SDK tool-call repair 会把无法修复的 malformed call 改写成 `invalid` 调用，把错误作为普通 tool result 反馈给模型。

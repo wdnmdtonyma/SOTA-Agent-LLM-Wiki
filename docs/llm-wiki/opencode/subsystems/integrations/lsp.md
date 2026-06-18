@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 source:
   - packages/opencode/src/lsp/lsp.ts
   - packages/opencode/src/lsp/client.ts

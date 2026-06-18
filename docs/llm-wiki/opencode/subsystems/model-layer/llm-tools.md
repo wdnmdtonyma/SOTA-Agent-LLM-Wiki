@@ -2,14 +2,14 @@
 id: model-layer.llm-tools
 title: LLM Tools
 kind: subsystem
-tier: T1
+tier: T2
 v: shared
 source: [packages/llm/src/tool.ts, packages/llm/src/tool-runtime.ts]
 symbols: [Tool.make, ToolDefinition, ToolRuntime.dispatch, ToolFailure, ToolOutput]
 related: [ref.tool-wire-protocol, subsys.tools.v2]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > `packages/llm/src/tool.ts` 定义 native LLM engine 的 tool schema 与 projection,`tool-runtime.ts` 定义本地 tool call 的 decode/execute/encode/settle 流程。它把 provider-facing `ToolDefinition`、runtime `execute`、model-visible `ToolOutput` 分成三层。

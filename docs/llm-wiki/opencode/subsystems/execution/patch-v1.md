@@ -20,7 +20,7 @@ related:
   - ref.patch-format
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 apply_patch 是活跑路径里的多文件 patch engine + tool：parser 支持 add/delete/update/move，update 匹配使用 exact/rstrip/trim/Unicode-normalized 四轮 fuzzy seek，工具层先生成 diff 和 permission metadata，再写文件、format、publish watcher/LSP 事件并返回 diagnostics。

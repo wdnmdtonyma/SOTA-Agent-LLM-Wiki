@@ -13,7 +13,7 @@ related:
   - integrations.lsp
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V1 LSP client 声明了一张扩展名到 Language Server Protocol `languageId` 的映射表；runtime 实际只用 `path.extname(file)` 的结果查表，没有命中时会把文件作为 `plaintext` 打开。

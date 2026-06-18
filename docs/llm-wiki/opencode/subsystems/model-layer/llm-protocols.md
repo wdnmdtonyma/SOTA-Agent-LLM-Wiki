@@ -2,14 +2,14 @@
 id: model-layer.llm-protocols
 title: LLM Protocols
 kind: subsystem
-tier: T1
+tier: T2
 v: shared
 source: [packages/llm/src/protocols/]
 symbols: [AnthropicMessages, OpenAIResponses, OpenAIChat, OpenAICompatibleChat, Gemini, BedrockConverse]
 related: [ref.llm-protocol-catalog, model-layer.copilot]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > `packages/llm/src/protocols` 当前导出 6 个 provider-native protocol adapter:Anthropic Messages、OpenAI Responses、OpenAI Chat、OpenAI-compatible Chat、Gemini、Bedrock Converse。每个 adapter 把同一个 `LLMRequest` 降成 provider-native body,再把 provider streaming frames 升成统一 `LLMEvent`。

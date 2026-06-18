@@ -11,13 +11,15 @@ source:
   - packages/core/src/database/migration.ts
   - packages/core/src/plugin/provider/
   - packages/opencode/src/provider/provider.ts
+  - packages/core/src/pty.ts
+  - packages/core/src/shell.ts
 status: verified
 symbols:
   - Flag
   - RuntimeFlags
   - OPENCODE_EXPERIMENTAL
 evidence: explicit
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -128,12 +130,12 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `OPENCODE_DISABLE_SHARE` | disables share-next when `true` or `1`。 | [E: packages/opencode/src/share/share-next.ts:23] |
 | `OPENCODE_REPO_CLONE_GITHUB_BASE_URL` | V2 core repository clone URL base override；V1 util repository 也读取同名 override。 | [E: packages/core/src/repository.ts:169][E: packages/opencode/src/util/repository.ts:100] |
 | `OPENCODE_ACP_PROFILE` | ACP profiling flag。 | [E: packages/opencode/src/acp/profile.ts:1] |
-| `OPENCODE_TERMINAL` | spawned terminal marker。 | [E: packages/opencode/src/pty-preparation.ts:22] |
+| `OPENCODE_TERMINAL` | spawned terminal marker。 | [E: packages/core/src/pty.ts:204] |
 | `OPENCODE_CALLER` | VS Code caller detection。 | [E: packages/opencode/src/ide/index.ts:40] |
 | `OPENCODE_WEBSEARCH_PROVIDER` | V2 WebSearch tool 与 V1 websearch tool 都读取同名 provider override。 | [E: packages/core/src/tool/websearch.ts:72][E: packages/opencode/src/tool/websearch.ts:31] |
 | `OPENCODE_LIBC` | watcher native library selection。 | [E: packages/core/src/filesystem/watcher.ts:18][E: packages/core/src/filesystem/watcher.ts:34] |
-| `COMSPEC` | V2 Bash tool 与 V1 shell service 的 Windows shell fallback。 | [E: packages/core/src/tool/bash.ts:51][E: packages/opencode/src/shell/shell.ts:94] |
-| `SHELL` | preferred shell on non-Windows path. | [E: packages/opencode/src/shell/shell.ts:195] |
+| `COMSPEC` | V2 Bash tool 与 core shell helper 的 Windows shell fallback。 | [E: packages/core/src/tool/bash.ts:51][E: packages/core/src/shell.ts:101] |
+| `SHELL` | preferred shell on non-Windows path. | [E: packages/core/src/shell.ts:207] |
 | `PATH` / `Path` | executable lookup path. | [E: packages/core/src/util/which.ts:6] |
 | `PATHEXT` / `PathExt` | Windows executable extension lookup. | [E: packages/core/src/util/which.ts:11] |
 | `TERM`, `TERM_PROGRAM`, `TERM_PROGRAM_VERSION` | V1 yargs debug command terminal metadata。 | [E: packages/opencode/src/cli/cmd/debug/index.ts:56][E: packages/opencode/src/cli/cmd/debug/index.ts:57][E: packages/opencode/src/cli/cmd/debug/index.ts:59] |
@@ -208,6 +210,8 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 - `packages/core/src/models-dev.ts`
 - `packages/core/src/plugin/provider/`
 - `packages/opencode/src/provider/provider.ts`
+- `packages/core/src/pty.ts`
+- `packages/core/src/shell.ts`
 - `packages/opencode/src/cli/cmd/github.handler.ts`
 
 ## 相关

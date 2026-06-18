@@ -13,7 +13,7 @@ related:
   - tui.feature-plugins
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > TUI slot 是插件把 Solid/OpenTUI UI 挂进 host 界面的 named extension point；host 暴露 slot 名、props 和渲染模式，插件 runtime 负责注册、渲染、清理。
@@ -41,8 +41,8 @@ updated: 92c70c9c3
 | `home_prompt_right` | `{}` [E: packages/plugin/src/tui.ts:462] | home prompt right prop [E: packages/tui/src/routes/home.tsx:83] | default | home prompt 右侧附加 UI。 |
 | `home_bottom` | `{}` [E: packages/plugin/src/tui.ts:473] | home route [E: packages/tui/src/routes/home.tsx:86] | default | home 页面主体底部扩展点。 |
 | `home_footer` | `{}` [E: packages/plugin/src/tui.ts:474] | home route [E: packages/tui/src/routes/home.tsx:91] | `single_winner` | 替换或竞争 home footer。 |
-| `session_prompt` | `{ session_id, visible?, disabled?, on_submit?, ref? }` [E: packages/plugin/src/tui.ts:464] [E: packages/plugin/src/tui.ts:468] | session route [E: packages/tui/src/routes/session/index.tsx:1301] | `replace` [E: packages/tui/src/routes/session/index.tsx:1302] | 替换 session prompt，并继承可见性、禁用态和提交回调。 |
-| `session_prompt_right` | `{ session_id }` [E: packages/plugin/src/tui.ts:471] | session prompt right prop [E: packages/tui/src/routes/session/index.tsx:1317] | default | session prompt 右侧附加 UI。 |
+| `session_prompt` | `{ session_id, visible?, disabled?, on_submit?, ref? }` [E: packages/plugin/src/tui.ts:464] [E: packages/plugin/src/tui.ts:468] | session route [E: packages/tui/src/routes/session/index.tsx:1303] | `replace` [E: packages/tui/src/routes/session/index.tsx:1304] | 替换 session prompt，并继承可见性、禁用态和提交回调。 |
+| `session_prompt_right` | `{ session_id }` [E: packages/plugin/src/tui.ts:471] | session prompt right prop [E: packages/tui/src/routes/session/index.tsx:1319] | default | session prompt 右侧附加 UI。 |
 | `sidebar_title` | `{ session_id, title, share_url? }` [E: packages/plugin/src/tui.ts:476] [E: packages/plugin/src/tui.ts:478] | sidebar route [E: packages/tui/src/routes/session/sidebar.tsx:50] | `single_winner` [E: packages/tui/src/routes/session/sidebar.tsx:51] | 替换或竞争 session sidebar 标题区。 |
 | `sidebar_content` | `{ session_id }` [E: packages/plugin/src/tui.ts:481] | sidebar route [E: packages/tui/src/routes/session/sidebar.tsx:85] | default | sidebar 中段内容扩展点。 |
 | `sidebar_footer` | `{ session_id }` [E: packages/plugin/src/tui.ts:484] | sidebar route [E: packages/tui/src/routes/session/sidebar.tsx:90] | `single_winner` | 替换或竞争 sidebar footer。 |

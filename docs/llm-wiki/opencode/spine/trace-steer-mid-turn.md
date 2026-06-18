@@ -9,7 +9,7 @@ symbols: [SessionV2.prompt, SessionInput.admit, SessionRunCoordinator.wake, Sess
 related: [spine.v2-coordinator, session-v2.inbox]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > V2 mid-turn steer 是把新的 user prompt 作为 durable steer input 入列,再通过 coordinator wake/coalesce 让当前或下一次 safe boundary promote;它不会直接改写已经打开的 provider stream。[I]

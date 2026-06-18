@@ -9,7 +9,7 @@ symbols: [ReadTool, ReadToolFileSystem]
 related: [subsys.tools.v1, subsys.tools.v2, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 > Read 工具是 opencode 面向模型暴露的文件/目录读取入口；V1 活跑实现位于 `packages/opencode/src/tool/read.ts`，V2 新内核实现位于 `packages/core/src/tool/read.ts` 与 `packages/core/src/tool/read-filesystem.ts`。

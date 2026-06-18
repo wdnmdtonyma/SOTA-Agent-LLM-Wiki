@@ -15,7 +15,7 @@ source:
   - packages/cli/src/commands/handlers/
   - packages/cli/src/index.ts
   - packages/cli/src/tui.ts
-updated: 92c70c9c3
+updated: 355a0bcf5
 evidence: explicit
 ---
 
@@ -62,7 +62,7 @@ daemon client 通过 `createOpencodeClient` 创建，header 使用 `ServerAuth.h
 
 ## Serve 与 TUI Host
 
-`serve` handler 调用 `listen`，如果带 `--register` 就执行 daemon registration，然后记录 listening URL 并 `Effect.never` 保持进程。[E: packages/cli/src/commands/handlers/serve.ts:18] [E: packages/cli/src/commands/handlers/serve.ts:19] [E: packages/cli/src/commands/handlers/serve.ts:21] `listen` 默认先尝试端口 `4096`，失败后用端口 `0` 自动分配。[E: packages/cli/src/commands/handlers/serve.ts:27] HTTP app 使用 Effect `HttpRouter.serve(createRoutes(password))` 加 Node HTTP server layer，不是 Hono。[E: packages/cli/src/commands/handlers/serve.ts:34]
+`serve` handler 调用 `listen`，如果带 `--register` 就执行 daemon registration，然后记录 listening URL 并 `Effect.never` 保持进程。[E: packages/cli/src/commands/handlers/serve.ts:19] [E: packages/cli/src/commands/handlers/serve.ts:20] [E: packages/cli/src/commands/handlers/serve.ts:22] `listen` 默认先尝试端口 `4096`，失败后用端口 `0` 自动分配。[E: packages/cli/src/commands/handlers/serve.ts:28] HTTP app 使用 Effect `HttpRouter.serve(createRoutes(password))` 加 Node HTTP server layer，不是 Hono。[E: packages/cli/src/commands/handlers/serve.ts:35]
 
 default handler 获取 daemon transport 后动态导入 `../../tui` 并调用 `runTui(transport)`。[E: packages/cli/src/commands/handlers/default.ts:9] [E: packages/cli/src/commands/handlers/default.ts:10] [E: packages/cli/src/commands/handlers/default.ts:11] `runTui` 使用 `@opencode-ai/tui` 的 `run`，传入 `gracefulFetch`、empty plugin host 和 `Global.defaultLayer`。[E: packages/cli/src/tui.ts:8] [E: packages/cli/src/tui.ts:12] [E: packages/cli/src/tui.ts:13] [E: packages/cli/src/tui.ts:17]
 

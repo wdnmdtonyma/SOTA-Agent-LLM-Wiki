@@ -35,7 +35,7 @@
 - **V1/V2 标对**:每个节点 `v:` 必须填准。`shared` 节点不许把 V1/V2 混讲——读者要能一眼看出某行为属哪一代、哪个是当前活跑路径。拿不准某代码是否 live-wired 就 `[I]` 并说明。
 - **工具 ground truth + gating**:每个工具节点写清它的 wire name、在哪个 registry 装配、被哪个 agent permission / runtime flag / 模型族门控(如 `apply_patch` 仅 GPT-patch 模型、`lsp`/`plan_exit` 仅对应 experimental flag、`task` 背景模式需 `OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS`)。
 - **两个 server 都是 Effect HttpApi**(不是 Hono):别把 "V1 server" 写成 Hono。V1 = `packages/opencode/src/server`(挂全部,含 `/api/*`),V2 = `@opencode-ai/server`(`/api/*`)。
-- **命名陷阱**(写时点明,避免读者混淆):`session/message-v2.ts` 其实是 V1↔AI-SDK 消息转换层;`core/src/connector.ts` 是本地凭据注册表(不是云连接器);`storage/schema.ts` re-export 的是 V2 Drizzle 表。
+- **命名陷阱**(写时点明,避免读者混淆):`session/message-v2.ts` 其实是 V1↔AI-SDK 消息转换层;`core/src/integration.ts` + `core/src/credential.ts` 是本地 provider authentication/credential registry(不是云连接器);`storage/schema.ts` re-export 的是 V2 Drizzle 表。
 
 ## 5. 纪律
 - **歧义自己定**:记成 `[I]/[U]`,继续;不卡单点(查不动 → 标 `[U]` 跳过,先推进其它)。

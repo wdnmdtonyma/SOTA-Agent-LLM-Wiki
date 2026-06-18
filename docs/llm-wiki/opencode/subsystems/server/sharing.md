@@ -17,7 +17,7 @@ related:
   - peripheral.enterprise
 evidence: explicit
 status: verified
-updated: 92c70c9c3
+updated: 355a0bcf5
 ---
 
 `server.sharing` 描述 session share 的配置、`packages/opencode` runtime services、ShareNext 后端协议和 shared SQL 表。当前源码里实际发起 share HTTP create/sync/remove 的服务在 `packages/opencode/src/share/share-next.ts`: create POST 在 `ShareNext.create`，sync POST 在 `ShareNext.flush`，remove DELETE 在 `ShareNext.remove`；service tag 是 `@opencode/ShareNext`。[E: packages/opencode/src/share/share-next.ts:314][E: packages/opencode/src/share/share-next.ts:259][E: packages/opencode/src/share/share-next.ts:350][E: packages/opencode/src/share/share-next.ts:81]
