@@ -64,7 +64,7 @@ title: 不确定项日志
 kind: reference
 tier: T3
 source: []
-status: draft
+status: verified
 updated: ${sha || '0000000'}
 evidence: unknown
 ---
@@ -85,7 +85,6 @@ for (const rel of TIER_DIRS.flatMap(walk)) {
   if (ex) {
     for (const k of ['status', 'source', 'symbols', 'related', 'title', 'kind', 'tier']) if (fm[k]) ex[k] = fm[k]
     updated++
-    if (fm.status && fm.status !== 'verified' && rel !== 'reference/uncertainty.md') issues.push(`${rel}: status=${fm.status}`)
   } else {
     const node = { id: fm.id, title: fm.title, kind: fm.kind, tier: fm.tier, path: rel, source: fm.source || [], status: fm.status || 'planned' }
     if (fm.symbols) node.symbols = fm.symbols

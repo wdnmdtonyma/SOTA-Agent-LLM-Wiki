@@ -3,111 +3,95 @@ id: subsys.core.thread-store
 title: ThreadStore 抽象层
 kind: subsystem
 tier: T2
-source: [codex-rs/thread-store/src/store.rs, codex-rs/thread-store/src/recorder.rs, codex-rs/thread-store/src/types.rs, codex-rs/thread-store/src/error.rs, codex-rs/thread-store/src/lib.rs, codex-rs/thread-store/src/local/mod.rs, codex-rs/thread-store/src/local/helpers.rs, codex-rs/thread-store/src/local/read_thread.rs, codex-rs/thread-store/src/local/list_threads.rs, codex-rs/thread-store/src/local/update_thread_metadata.rs, codex-rs/thread-store/src/local/archive_thread.rs, codex-rs/thread-store/src/local/unarchive_thread.rs, codex-rs/thread-store/src/remote/mod.rs, codex-rs/thread-store/src/remote/list_threads.rs, codex-rs/thread-store/src/remote/helpers.rs, codex-rs/thread-store/src/remote/proto/codex.thread_store.v1.proto]
-symbols: [ThreadStore, ThreadRecorder, LocalThreadStore, RemoteThreadStore, StoredThread, StoredThreadHistory, CreateThreadParams, ListThreadsParams, UpdateThreadMetadataParams, ArchiveThreadParams]
+source: [codex-rs/thread-store/src/lib.rs, codex-rs/thread-store/src/store.rs, codex-rs/thread-store/src/live_thread.rs, codex-rs/thread-store/src/types.rs, codex-rs/thread-store/src/local/mod.rs, codex-rs/thread-store/src/local/create_thread.rs, codex-rs/thread-store/src/local/live_writer.rs, codex-rs/thread-store/src/local/read_thread.rs, codex-rs/thread-store/src/local/list_threads.rs, codex-rs/thread-store/src/local/search_threads.rs, codex-rs/thread-store/src/local/update_thread_metadata.rs]
+symbols: [ThreadStore, LiveThread, LiveThreadInitGuard, LocalThreadStore, LocalThreadStoreConfig, StoredThread, StoredThreadHistory, ThreadMetadataPatch, CreateThreadParams, ResumeThreadParams, AppendThreadItemsParams, SearchThreadsParams]
 related: [subsys.core.rollout-persistence, subsys.core.state-db, subsys.core.realtime-conversation]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> ThreadStore 是 Codex 的 storage-neutral thread persistence boundary：上层只持有 `ThreadId` 和 trait API，本地实现把 read/list/update/archive/unarchive 请求映射到 rollout JSONL/SQLite，远端实现目前只把 `list_threads` 转成 gRPC 调用。[E: codex-rs/thread-store/src/store.rs:19][E: codex-rs/thread-store/src/store.rs:47][E: codex-rs/thread-store/src/store.rs:50][E: codex-rs/thread-store/src/local/read_thread.rs:25][E: codex-rs/thread-store/src/local/list_threads.rs:14][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:56][E: codex-rs/thread-store/src/local/archive_thread.rs:51][E: codex-rs/thread-store/src/local/unarchive_thread.rs:74][E: codex-rs/thread-store/src/remote/mod.rs:84][E: codex-rs/thread-store/src/remote/list_threads.rs:40][I]
+> `codex-rs/thread-store` is the storage-neutral boundary around thread persistence. Application code treats `ThreadId` as the durable handle; the current local implementation resolves it to rollout JSONL plus SQLite metadata, while `LiveThread` keeps active-session lifecycle calls off direct rollout paths.[E: codex-rs/thread-store/src/lib.rs:1][E: codex-rs/thread-store/src/lib.rs:3][E: codex-rs/thread-store/src/live_thread.rs:25][E: codex-rs/thread-store/src/local/mod.rs:44]
 
 ## 能回答的问题
 
-- `ThreadStore` trait 规定了哪些 thread 操作？
-- `ThreadRecorder` 和 `RolloutRecorder` 的关系是什么？
-- `StoredThread` 是哪些字段的统一返回模型？
-- `LocalThreadStore` 当前实现了哪些方法，哪些方法在这个 slice 中未实现？
-- `RemoteThreadStore` 当前 gRPC 支持哪些操作？
+- `ThreadStore` trait 当前要求实现哪些 thread lifecycle/read/list/update 方法？
+- `LiveThread` 如何封装 create/resume/append/persist/flush/shutdown/discard？
+- `LocalThreadStore` 如何把 live writer 操作映射到 `RolloutRecorder`？
+- list/read/search/update metadata 在本地如何走 rollout 与 SQLite？
+- 哪些 trait 方法仍是默认 unsupported？
 
 ## 职责边界
 
-- `ThreadStore` trait 是存储中立边界；实现负责把 `ThreadId` 解析为 local rollout、RPC request 或其他 backing store。[E: codex-rs/thread-store/src/lib.rs:1][E: codex-rs/thread-store/src/lib.rs:3]
-- `ThreadRecorder` trait 是 live append handle；注释说明 local implementation 应 wrap `codex_rollout::RolloutRecorder` 并保留 lazy materialization/filtering/flush/shutdown 行为。[E: codex-rs/thread-store/src/recorder.rs:7][E: codex-rs/thread-store/src/recorder.rs:9]
-- `LocalThreadStore` 是 filesystem/SQLite-backed implementation，但这个 slice 中 create/resume/append/load_history 均返回 unsupported。[E: codex-rs/thread-store/src/local/mod.rs:30][E: codex-rs/thread-store/src/local/mod.rs:69][E: codex-rs/thread-store/src/local/mod.rs:76][E: codex-rs/thread-store/src/local/mod.rs:80][E: codex-rs/thread-store/src/local/mod.rs:87]
-- `RemoteThreadStore` 是 gRPC-backed implementation；当前 trait impl 只有 `list_threads` 调用远端，其他操作返回 not implemented。[E: codex-rs/thread-store/src/remote/mod.rs:26][E: codex-rs/thread-store/src/remote/mod.rs:84][E: codex-rs/thread-store/src/remote/mod.rs:85][E: codex-rs/thread-store/src/remote/mod.rs:59][E: codex-rs/thread-store/src/remote/mod.rs:66][E: codex-rs/thread-store/src/remote/mod.rs:70]
+- `ThreadStore` is a trait boundary, not a persistence format; implementations resolve `ThreadId` to backing storage.[E: codex-rs/thread-store/src/store.rs:31][E: codex-rs/thread-store/src/store.rs:32]
+- `LiveThread` is the active thread handle for session code; it delegates storage to `ThreadStore` and owns metadata-sync bookkeeping.[E: codex-rs/thread-store/src/live_thread.rs:25][E: codex-rs/thread-store/src/live_thread.rs:31][E: codex-rs/thread-store/src/live_thread.rs:33][E: codex-rs/thread-store/src/live_thread.rs:34]
+- `LocalThreadStore` is filesystem/SQLite-backed: rollout JSONL remains durable replay, SQLite is a fast metadata index, and live appends still write canonical JSONL history.[E: codex-rs/thread-store/src/local/mod.rs:44][E: codex-rs/thread-store/src/local/mod.rs:46][E: codex-rs/thread-store/src/local/mod.rs:49][E: codex-rs/thread-store/src/local/mod.rs:52]
+- The current public crate surface exports `InMemoryThreadStore`, `LiveThread`, `LocalThreadStore`, and the trait/types; this node's implementation evidence is scoped to that public surface and the local implementation.[E: codex-rs/thread-store/src/lib.rs:17][E: codex-rs/thread-store/src/lib.rs:19][E: codex-rs/thread-store/src/lib.rs:21][E: codex-rs/thread-store/src/lib.rs:23]
 
-## 关键 crate/文件
+## 关键文件
 
 | 文件 | 角色 |
 |---|---|
-| `codex-rs/thread-store/src/store.rs` | `ThreadStore` trait 的 API 边界。[E: codex-rs/thread-store/src/store.rs:21][E: codex-rs/thread-store/src/store.rs:26] |
-| `codex-rs/thread-store/src/recorder.rs` | `ThreadRecorder` live append trait。[E: codex-rs/thread-store/src/recorder.rs:13][E: codex-rs/thread-store/src/recorder.rs:17] |
-| `codex-rs/thread-store/src/types.rs` | params、page、stored thread、metadata patch、archive params。[E: codex-rs/thread-store/src/types.rs:29][E: codex-rs/thread-store/src/types.rs:115][E: codex-rs/thread-store/src/types.rs:137][E: codex-rs/thread-store/src/types.rs:146][E: codex-rs/thread-store/src/types.rs:211][E: codex-rs/thread-store/src/types.rs:233] |
-| `codex-rs/thread-store/src/local/*` | 本地 read/list/update/archive/unarchive 对 rollout/state DB 的适配。[E: codex-rs/thread-store/src/local/read_thread.rs:25][E: codex-rs/thread-store/src/local/list_threads.rs:14][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:56][E: codex-rs/thread-store/src/local/archive_thread.rs:11][E: codex-rs/thread-store/src/local/archive_thread.rs:51][E: codex-rs/thread-store/src/local/unarchive_thread.rs:15][E: codex-rs/thread-store/src/local/unarchive_thread.rs:74] |
-| `codex-rs/thread-store/src/remote/*` | gRPC list request/response mapping。[E: codex-rs/thread-store/src/remote/list_threads.rs:12][E: codex-rs/thread-store/src/remote/helpers.rs:96] |
+| `codex-rs/thread-store/src/store.rs` | Trait API for create/resume/append/read/list/update/archive/delete.[E: codex-rs/thread-store/src/store.rs:36][E: codex-rs/thread-store/src/store.rs:39][E: codex-rs/thread-store/src/store.rs:42][E: codex-rs/thread-store/src/store.rs:70][E: codex-rs/thread-store/src/store.rs:81][E: codex-rs/thread-store/src/store.rs:114][E: codex-rs/thread-store/src/store.rs:123][E: codex-rs/thread-store/src/store.rs:129] |
+| `codex-rs/thread-store/src/live_thread.rs` | Active-thread lifecycle wrapper and metadata sync bridge.[E: codex-rs/thread-store/src/live_thread.rs:86][E: codex-rs/thread-store/src/live_thread.rs:101][E: codex-rs/thread-store/src/live_thread.rs:136][E: codex-rs/thread-store/src/live_thread.rs:171] |
+| `codex-rs/thread-store/src/types.rs` | Create/resume/append params, persistence metadata, stored thread model, metadata patch schema.[E: codex-rs/thread-store/src/types.rs:46][E: codex-rs/thread-store/src/types.rs:63][E: codex-rs/thread-store/src/types.rs:88][E: codex-rs/thread-store/src/types.rs:103][E: codex-rs/thread-store/src/types.rs:375][E: codex-rs/thread-store/src/types.rs:481] |
+| `codex-rs/thread-store/src/local/*` | Local rollout/state DB adapters for live writing, read/list/search/update/archive/delete.[E: codex-rs/thread-store/src/local/mod.rs:1][E: codex-rs/thread-store/src/local/mod.rs:227] |
 
 ## 数据模型
 
 | 实体 | 字段/状态 | 说明 |
 |---|---|---|
-| `ThreadStoreError` | `ThreadNotFound`、`InvalidRequest`、`Conflict`、`Internal` | store 实现共享错误分类；remote status helper 当前只把 `InvalidArgument` 映射到 `InvalidRequest`、把 `AlreadyExists`/`FailedPrecondition`/`Aborted` 映射到 `Conflict`、其他 status 映射到 `Internal`。[E: codex-rs/thread-store/src/error.rs:7][E: codex-rs/thread-store/src/error.rs:9][E: codex-rs/thread-store/src/error.rs:16][E: codex-rs/thread-store/src/error.rs:23][E: codex-rs/thread-store/src/error.rs:30][E: codex-rs/thread-store/src/remote/helpers.rs:22][E: codex-rs/thread-store/src/remote/helpers.rs:24][E: codex-rs/thread-store/src/remote/helpers.rs:27][E: codex-rs/thread-store/src/remote/helpers.rs:32] |
-| `CreateThreadParams` | thread_id、forked_from_id、source、base_instructions、dynamic_tools、event_persistence_mode | 创建线程所需 metadata 与 recorder persistence mode。[E: codex-rs/thread-store/src/types.rs:31][E: codex-rs/thread-store/src/types.rs:33][E: codex-rs/thread-store/src/types.rs:35][E: codex-rs/thread-store/src/types.rs:37][E: codex-rs/thread-store/src/types.rs:39][E: codex-rs/thread-store/src/types.rs:41][E: codex-rs/thread-store/src/types.rs:43] |
-| `ResumeThreadRecorderParams` | thread_id、include_archived、event_persistence_mode | 重开 live recorder 的参数。[E: codex-rs/thread-store/src/types.rs:48][E: codex-rs/thread-store/src/types.rs:50][E: codex-rs/thread-store/src/types.rs:52][E: codex-rs/thread-store/src/types.rs:54] |
-| `ListThreadsParams` | page_size、cursor、sort_key、sort_direction、allowed_sources、model_providers、archived、search_term | list API 的通用过滤与分页结构。[E: codex-rs/thread-store/src/types.rs:117][E: codex-rs/thread-store/src/types.rs:119][E: codex-rs/thread-store/src/types.rs:121][E: codex-rs/thread-store/src/types.rs:123][E: codex-rs/thread-store/src/types.rs:125][E: codex-rs/thread-store/src/types.rs:127][E: codex-rs/thread-store/src/types.rs:130][E: codex-rs/thread-store/src/types.rs:132][E: codex-rs/thread-store/src/types.rs:134] |
-| `StoredThread` | thread_id、rollout_path、forked_from_id、preview/name、model/provider/effort、timestamps、archive/cwd/source/git/approval/sandbox/token/history | local/remote 返回统一 thread summary，remote 的 `rollout_path` 会为 None。[E: codex-rs/thread-store/src/types.rs:148][E: codex-rs/thread-store/src/types.rs:150][E: codex-rs/thread-store/src/types.rs:152][E: codex-rs/thread-store/src/types.rs:156][E: codex-rs/thread-store/src/types.rs:160][E: codex-rs/thread-store/src/types.rs:164][E: codex-rs/thread-store/src/types.rs:166][E: codex-rs/thread-store/src/types.rs:170][E: codex-rs/thread-store/src/types.rs:172][E: codex-rs/thread-store/src/types.rs:184][E: codex-rs/thread-store/src/types.rs:186][E: codex-rs/thread-store/src/types.rs:188][E: codex-rs/thread-store/src/types.rs:190][E: codex-rs/thread-store/src/types.rs:194][E: codex-rs/thread-store/src/remote/helpers.rs:122][E: codex-rs/thread-store/src/remote/helpers.rs:124] |
-| `ThreadMetadataPatch` | `name`、`memory_mode`、`git_info` | 本地 patch 当前只支持 name 或 memory_mode 中一个，git_info 在这个 slice 中未实现。[E: codex-rs/thread-store/src/types.rs:213][E: codex-rs/thread-store/src/types.rs:215][E: codex-rs/thread-store/src/types.rs:217][E: codex-rs/thread-store/src/types.rs:219][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:32][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:38] |
+| `ThreadPersistenceMetadata` | cwd, model provider, memory mode | Metadata required when opening live persistence.[E: codex-rs/thread-store/src/types.rs:46][E: codex-rs/thread-store/src/types.rs:52][E: codex-rs/thread-store/src/types.rs:54][E: codex-rs/thread-store/src/types.rs:56] |
+| `CreateThreadParams` | thread id, fork/parent ids, source, thread source, base instructions, dynamic tools, multi-agent version, metadata | New-thread persistence input passed to `LocalThreadStore` and `RolloutRecorderParams::new`.[E: codex-rs/thread-store/src/types.rs:63][E: codex-rs/thread-store/src/types.rs:65][E: codex-rs/thread-store/src/types.rs:70][E: codex-rs/thread-store/src/types.rs:74][E: codex-rs/thread-store/src/types.rs:78][E: codex-rs/thread-store/src/types.rs:80][E: codex-rs/thread-store/src/types.rs:82] |
+| `ResumeThreadParams` | thread id, optional rollout path, optional history, include_archived, metadata | Resume input can avoid rereading history/path if the caller already knows them.[E: codex-rs/thread-store/src/types.rs:88][E: codex-rs/thread-store/src/types.rs:91][E: codex-rs/thread-store/src/types.rs:93][E: codex-rs/thread-store/src/types.rs:95][E: codex-rs/thread-store/src/types.rs:97] |
+| `StoredThread` | rollout path, parent/fork ids, preview/name, model/provider/effort, timestamps, cwd/source/agent/git/approval/profile/tokens/history | Unified read/list response model for stored threads.[E: codex-rs/thread-store/src/types.rs:375][E: codex-rs/thread-store/src/types.rs:382][E: codex-rs/thread-store/src/types.rs:384][E: codex-rs/thread-store/src/types.rs:388][E: codex-rs/thread-store/src/types.rs:392][E: codex-rs/thread-store/src/types.rs:398][E: codex-rs/thread-store/src/types.rs:406][E: codex-rs/thread-store/src/types.rs:420][E: codex-rs/thread-store/src/types.rs:430] |
+| `ThreadMetadataPatch` | name, rollout path, preview/title/model/source/agent/git/permission/token fields | Literal metadata patch; omitted fields leave values unchanged.[E: codex-rs/thread-store/src/types.rs:481][E: codex-rs/thread-store/src/types.rs:483][E: codex-rs/thread-store/src/types.rs:488][E: codex-rs/thread-store/src/types.rs:495][E: codex-rs/thread-store/src/types.rs:497][E: codex-rs/thread-store/src/types.rs:499][E: codex-rs/thread-store/src/types.rs:501][E: codex-rs/thread-store/src/types.rs:513][E: codex-rs/thread-store/src/types.rs:528][E: codex-rs/thread-store/src/types.rs:548][E: codex-rs/thread-store/src/types.rs:550][E: codex-rs/thread-store/src/types.rs:552][E: codex-rs/thread-store/src/types.rs:556] |
 
 ## Trait API
 
-1. `ThreadStore::create_thread` 创建新 thread 并返回 live recorder。[E: codex-rs/thread-store/src/store.rs:26][E: codex-rs/thread-store/src/store.rs:27]
-2. `resume_thread_recorder` 为已有 thread 重新打开 live recorder。[E: codex-rs/thread-store/src/store.rs:32][E: codex-rs/thread-store/src/store.rs:33]
-3. `append_items` 在 live-recorder path 之外追加 items。[E: codex-rs/thread-store/src/store.rs:38][E: codex-rs/thread-store/src/store.rs:39]
-4. `load_history` 用于 resume、fork、rollback、memory jobs。[E: codex-rs/thread-store/src/store.rs:41][E: codex-rs/thread-store/src/store.rs:42]
-5. `read_thread`、`list_threads` 读取 summary/history 和列表页。[E: codex-rs/thread-store/src/store.rs:47][E: codex-rs/thread-store/src/store.rs:50]
-6. `update_thread_metadata`、`archive_thread`、`unarchive_thread` 是可变 metadata/归档操作。[E: codex-rs/thread-store/src/store.rs:53][E: codex-rs/thread-store/src/store.rs:59][E: codex-rs/thread-store/src/store.rs:62]
-7. `ThreadRecorder` 提供 `record_items`、`persist`、`flush`、`shutdown`，注释要求 local implementation preserve rollout recorder 的 lazy materialization、filtering、flush 和 shutdown 行为。[E: codex-rs/thread-store/src/recorder.rs:9][E: codex-rs/thread-store/src/recorder.rs:10][E: codex-rs/thread-store/src/recorder.rs:11][E: codex-rs/thread-store/src/recorder.rs:17][E: codex-rs/thread-store/src/recorder.rs:20][E: codex-rs/thread-store/src/recorder.rs:23][E: codex-rs/thread-store/src/recorder.rs:26]
+1. The required lifecycle methods are create, resume, append, persist, flush, shutdown, and discard.[E: codex-rs/thread-store/src/store.rs:36][E: codex-rs/thread-store/src/store.rs:39][E: codex-rs/thread-store/src/store.rs:42][E: codex-rs/thread-store/src/store.rs:48][E: codex-rs/thread-store/src/store.rs:51][E: codex-rs/thread-store/src/store.rs:54][E: codex-rs/thread-store/src/store.rs:57]
+2. Read/list methods cover history load, read by id, deprecated read by rollout path, list, and search.[E: codex-rs/thread-store/src/store.rs:64][E: codex-rs/thread-store/src/store.rs:70][E: codex-rs/thread-store/src/store.rs:73][E: codex-rs/thread-store/src/store.rs:81][E: codex-rs/thread-store/src/store.rs:84]
+3. `search_threads`, `list_turns`, and `list_items` have default unsupported bodies at the trait layer; `LocalThreadStore` overrides search while leaving turn/item listing on the default path.[E: codex-rs/thread-store/src/store.rs:84][E: codex-rs/thread-store/src/store.rs:89][E: codex-rs/thread-store/src/store.rs:96][E: codex-rs/thread-store/src/store.rs:97][E: codex-rs/thread-store/src/store.rs:105][E: codex-rs/thread-store/src/store.rs:106][E: codex-rs/thread-store/src/local/mod.rs:284]
+4. Metadata/archive/delete methods are part of the trait surface.[E: codex-rs/thread-store/src/store.rs:114][E: codex-rs/thread-store/src/store.rs:123][E: codex-rs/thread-store/src/store.rs:126][E: codex-rs/thread-store/src/store.rs:129]
 
-## LocalThreadStore 控制流
+## 控制流：LiveThread
 
-1. `LocalThreadStore::new` 保存 rollout config；`read_thread_by_rollout_path` 可按 path 读本地 rollout-backed thread。[E: codex-rs/thread-store/src/local/mod.rs:36][E: codex-rs/thread-store/src/local/mod.rs:42]
-2. local trait impl 中 `create_thread`、`resume_thread_recorder`、`append_items`、`load_history` 全部调用 `unsupported`。[E: codex-rs/thread-store/src/local/mod.rs:69][E: codex-rs/thread-store/src/local/mod.rs:76][E: codex-rs/thread-store/src/local/mod.rs:80][E: codex-rs/thread-store/src/local/mod.rs:87]
-3. `read_thread` 优先尝试读取 SQLite metadata；metadata 存在且 archive 条件允许时构造 `StoredThread` 并按需 attach history。[E: codex-rs/thread-store/src/local/read_thread.rs:25][E: codex-rs/thread-store/src/local/read_thread.rs:30][E: codex-rs/thread-store/src/local/read_thread.rs:33]
-4. SQLite 不可用或不满足 archive 条件时，`read_thread` 解析 active/archived rollout path，读取 rollout item 或 session meta，按需 `RolloutRecorder::load_rollout_items` attach history。[E: codex-rs/thread-store/src/local/read_thread.rs:38][E: codex-rs/thread-store/src/local/read_thread.rs:103][E: codex-rs/thread-store/src/local/read_thread.rs:110][E: codex-rs/thread-store/src/local/read_thread.rs:120][E: codex-rs/thread-store/src/local/read_thread.rs:132][E: codex-rs/thread-store/src/local/read_thread.rs:133][E: codex-rs/thread-store/src/local/read_thread.rs:161]
-5. `list_threads` 把 ThreadStore sort/cursor 参数转换为 rollout list 参数，调用 active 或 archived `RolloutRecorder::list_*`，再把 rollout `ThreadItem` 转成 `StoredThread`。[E: codex-rs/thread-store/src/local/list_threads.rs:18][E: codex-rs/thread-store/src/local/list_threads.rs:27][E: codex-rs/thread-store/src/local/list_threads.rs:31][E: codex-rs/thread-store/src/local/list_threads.rs:52][E: codex-rs/thread-store/src/local/list_threads.rs:53][E: codex-rs/thread-store/src/local/list_threads.rs:71][E: codex-rs/thread-store/src/local/list_threads.rs:85]
-6. `update_thread_metadata` 拒绝 git_info patch，拒绝同时 patch name 和 memory_mode；name 会追加 `EventMsg::ThreadNameUpdated` 并更新 sidecar name index，memory_mode 会追加新的 `SessionMeta` line。[E: codex-rs/thread-store/src/local/update_thread_metadata.rs:32][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:38][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:85][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:95][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:122]
-7. metadata update 后调用 `codex_rollout::state_db::reconcile_rollout` 修复 SQLite mirror，再重新 read thread 返回。[E: codex-rs/thread-store/src/local/update_thread_metadata.rs:56][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:57][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:68]
-8. `archive_thread` 要求 active rollout path 在 sessions dir 且 filename 匹配 thread id，然后 rename 到 archived sessions dir，并 best-effort 更新 SQLite `mark_archived`。[E: codex-rs/thread-store/src/local/archive_thread.rs:16][E: codex-rs/thread-store/src/local/archive_thread.rs:26][E: codex-rs/thread-store/src/local/archive_thread.rs:31][E: codex-rs/thread-store/src/local/archive_thread.rs:45][E: codex-rs/thread-store/src/local/archive_thread.rs:51]
-9. `unarchive_thread` 从 archived dir 找 path，解析 filename timestamp 恢复到 `sessions/YYYY/MM/DD`，touch modified time，并 best-effort 更新 SQLite `mark_unarchived`。[E: codex-rs/thread-store/src/local/unarchive_thread.rs:20][E: codex-rs/thread-store/src/local/unarchive_thread.rs:45][E: codex-rs/thread-store/src/local/unarchive_thread.rs:54][E: codex-rs/thread-store/src/local/unarchive_thread.rs:70][E: codex-rs/thread-store/src/local/unarchive_thread.rs:74]
+1. `LiveThread::create` captures the thread id, builds create metadata sync, calls `thread_store.create_thread`, then returns the live handle.[E: codex-rs/thread-store/src/live_thread.rs:86][E: codex-rs/thread-store/src/live_thread.rs:91][E: codex-rs/thread-store/src/live_thread.rs:92][E: codex-rs/thread-store/src/live_thread.rs:93]
+2. `LiveThread::resume` calls `resume_thread`; if history was not supplied, it loads history and discards the live writer on load failure.[E: codex-rs/thread-store/src/live_thread.rs:101][E: codex-rs/thread-store/src/live_thread.rs:106][E: codex-rs/thread-store/src/live_thread.rs:108][E: codex-rs/thread-store/src/live_thread.rs:110][E: codex-rs/thread-store/src/live_thread.rs:119]
+3. `append_items` computes canonical persisted items for metadata observation, delegates the raw append to the store, and applies a metadata patch only when canonical items produce one.[E: codex-rs/thread-store/src/live_thread.rs:136][E: codex-rs/thread-store/src/live_thread.rs:137][E: codex-rs/thread-store/src/live_thread.rs:141][E: codex-rs/thread-store/src/live_thread.rs:150][E: codex-rs/thread-store/src/live_thread.rs:156]
+4. `persist`, `flush`, `shutdown`, and `discard` are thin lifecycle calls, with pending metadata flushes around durable operations.[E: codex-rs/thread-store/src/live_thread.rs:171][E: codex-rs/thread-store/src/live_thread.rs:176][E: codex-rs/thread-store/src/live_thread.rs:182][E: codex-rs/thread-store/src/live_thread.rs:188]
 
-## RemoteThreadStore 控制流
+## 控制流：LocalThreadStore
 
-1. proto 目前只定义 `rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse)`。[E: codex-rs/thread-store/src/remote/proto/codex.thread_store.v1.proto:5][E: codex-rs/thread-store/src/remote/proto/codex.thread_store.v1.proto:6]
-2. `RemoteThreadStore::client` 用 endpoint 建立 tonic channel，失败映射为 `ThreadStoreError::Internal`。[E: codex-rs/thread-store/src/remote/mod.rs:33][E: codex-rs/thread-store/src/remote/mod.rs:40][E: codex-rs/thread-store/src/remote/mod.rs:43]
-3. remote list 把 page_size、cursor、sort_key、allowed_sources、model_provider_filter、archived、search_term 映射到 proto request，再调用 `client.list_threads`。[E: codex-rs/thread-store/src/remote/list_threads.rs:16][E: codex-rs/thread-store/src/remote/list_threads.rs:24][E: codex-rs/thread-store/src/remote/list_threads.rs:30][E: codex-rs/thread-store/src/remote/list_threads.rs:37]
-4. proto thread 映射回 `StoredThread` 时，remote 不提供 local rollout path，并把 approval/sandbox 固定为 `OnRequest` 和 read-only default。[E: codex-rs/thread-store/src/remote/helpers.rs:122][E: codex-rs/thread-store/src/remote/helpers.rs:124][E: codex-rs/thread-store/src/remote/helpers.rs:145][E: codex-rs/thread-store/src/remote/helpers.rs:146]
-
-## 设计动机与权衡
-
-- ThreadStore 把 stable `ThreadId` 作为唯一 durable handle，避免上层依赖 rollout path 或 remote storage 细节。[E: codex-rs/thread-store/src/lib.rs:1][E: codex-rs/thread-store/src/lib.rs:3][I]
-- local implementation 仍大量委托 `codex_rollout::RolloutRecorder` 和 state DB mirror，说明 ThreadStore 是迁移/抽象层，而不是已经完全替换 rollout persistence。[E: codex-rs/thread-store/src/local/list_threads.rs:2][E: codex-rs/thread-store/src/local/read_thread.rs:7][E: codex-rs/thread-store/src/local/read_thread.rs:13][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:56][E: codex-rs/thread-store/src/local/archive_thread.rs:51][I]
-- archive/unarchive 使用 scoped canonical path 和 filename suffix 校验，避免把任意 path 移入/移出 archive collection。[E: codex-rs/thread-store/src/local/helpers.rs:22][E: codex-rs/thread-store/src/local/helpers.rs:53][I]
+1. `LocalThreadStore` stores config, live `RolloutRecorder`s keyed by `ThreadId`, and an optional state DB handle.[E: codex-rs/thread-store/src/local/mod.rs:58][E: codex-rs/thread-store/src/local/mod.rs:59][E: codex-rs/thread-store/src/local/mod.rs:60][E: codex-rs/thread-store/src/local/mod.rs:61]
+2. Local trait implementation now delegates create/resume/append/persist/flush/shutdown/discard/read/list/search/update/archive/unarchive/delete to local modules.[E: codex-rs/thread-store/src/local/mod.rs:227][E: codex-rs/thread-store/src/local/mod.rs:232][E: codex-rs/thread-store/src/local/mod.rs:236][E: codex-rs/thread-store/src/local/mod.rs:240][E: codex-rs/thread-store/src/local/mod.rs:244][E: codex-rs/thread-store/src/local/mod.rs:267][E: codex-rs/thread-store/src/local/mod.rs:280][E: codex-rs/thread-store/src/local/mod.rs:284][E: codex-rs/thread-store/src/local/mod.rs:291][E: codex-rs/thread-store/src/local/mod.rs:306]
+3. Local create requires a cwd, builds `RolloutConfig`, and creates a `RolloutRecorder` with base instructions, dynamic tools, and multi-agent version.[E: codex-rs/thread-store/src/local/create_thread.rs:10][E: codex-rs/thread-store/src/local/create_thread.rs:14][E: codex-rs/thread-store/src/local/create_thread.rs:21][E: codex-rs/thread-store/src/local/create_thread.rs:28][E: codex-rs/thread-store/src/local/create_thread.rs:39]
+4. Local resume can take an explicit rollout path or resolve it via `read_thread`; it also requires a cwd before opening `RolloutRecorderParams::resume`.[E: codex-rs/thread-store/src/local/live_writer.rs:30][E: codex-rs/thread-store/src/local/live_writer.rs:35][E: codex-rs/thread-store/src/local/live_writer.rs:38][E: codex-rs/thread-store/src/local/live_writer.rs:55][E: codex-rs/thread-store/src/local/live_writer.rs:69]
+5. Local append filters raw items with `persisted_rollout_items`, writes canonical items with `record_canonical_items`, then flushes so SQLite metadata cannot get ahead of JSONL.[E: codex-rs/thread-store/src/local/live_writer.rs:77][E: codex-rs/thread-store/src/local/live_writer.rs:81][E: codex-rs/thread-store/src/local/live_writer.rs:86][E: codex-rs/thread-store/src/local/live_writer.rs:90]
+6. `read_thread` prefers SQLite metadata when it can safely satisfy archive/history requirements, otherwise resolves and reads the rollout path.[E: codex-rs/thread-store/src/local/read_thread.rs:29][E: codex-rs/thread-store/src/local/read_thread.rs:34][E: codex-rs/thread-store/src/local/read_thread.rs:41][E: codex-rs/thread-store/src/local/read_thread.rs:73][E: codex-rs/thread-store/src/local/read_thread.rs:79]
+7. `list_threads` converts ThreadStore sort/cursor params, calls rollout listing, converts items to `StoredThread`, then merges titles from state DB and legacy name index.[E: codex-rs/thread-store/src/local/list_threads.rs:21][E: codex-rs/thread-store/src/local/list_threads.rs:25][E: codex-rs/thread-store/src/local/list_threads.rs:51][E: codex-rs/thread-store/src/local/list_threads.rs:67][E: codex-rs/thread-store/src/local/list_threads.rs:83][E: codex-rs/thread-store/src/local/list_threads.rs:94]
+8. `search_threads` requires a non-empty term, uses the configured `rg` binary to find rollout matches, and then scans rollout pages to produce search results.[E: codex-rs/thread-store/src/local/search_threads.rs:35][E: codex-rs/thread-store/src/local/search_threads.rs:39][E: codex-rs/thread-store/src/local/search_threads.rs:71][E: codex-rs/thread-store/src/local/search_threads.rs:88][E: codex-rs/thread-store/src/local/search_threads.rs:106]
+9. Metadata update applies SQLite first, persists live rollout compatibility when needed, reconciles the rollout, and currently supports git patch application through rollout and SQLite updates.[E: codex-rs/thread-store/src/local/update_thread_metadata.rs:37][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:55][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:69][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:82][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:98][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:137][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:148]
 
 ## Gotcha
 
-- `LocalThreadStore::load_history` 当前 unsupported，即使 `read_thread(include_history=true)` 能 attach history；不要把 trait 方法实现状态和 read helper 能力混为一谈。[E: codex-rs/thread-store/src/local/mod.rs:87][E: codex-rs/thread-store/src/local/read_thread.rs:80]
-- remote `StoredThread` 当前没有 approval/sandbox/token/history 的真实远端映射，helper 使用默认值。[E: codex-rs/thread-store/src/remote/helpers.rs:145][E: codex-rs/thread-store/src/remote/helpers.rs:147]
-- local update metadata 一次 patch 只能修改一个字段，并且 git metadata update 未实现。[E: codex-rs/thread-store/src/local/update_thread_metadata.rs:32][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:38]
+- Do not describe local create/resume/append/load-history as unsupported; current `LocalThreadStore` implements them through `live_writer` and `load_history`.[E: codex-rs/thread-store/src/local/mod.rs:232][E: codex-rs/thread-store/src/local/mod.rs:236][E: codex-rs/thread-store/src/local/mod.rs:240][E: codex-rs/thread-store/src/local/mod.rs:260]
+- `LiveThread::append_items` passes raw items to the store but observes only canonical persisted items for metadata sync.[E: codex-rs/thread-store/src/live_thread.rs:136][E: codex-rs/thread-store/src/live_thread.rs:137][E: codex-rs/thread-store/src/live_thread.rs:141][E: codex-rs/thread-store/src/live_thread.rs:150]
+- Git metadata patch is no longer an unimplemented local case; the update path reads existing DB metadata, resolves the git patch, writes rollout compatibility, and applies SQLite git info.[E: codex-rs/thread-store/src/local/update_thread_metadata.rs:98][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:125][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:137][E: codex-rs/thread-store/src/local/update_thread_metadata.rs:148]
 
 ## Sources
 
-- `codex-rs/thread-store/src/store.rs`
-- `codex-rs/thread-store/src/recorder.rs`
-- `codex-rs/thread-store/src/types.rs`
-- `codex-rs/thread-store/src/error.rs`
 - `codex-rs/thread-store/src/lib.rs`
+- `codex-rs/thread-store/src/store.rs`
+- `codex-rs/thread-store/src/live_thread.rs`
+- `codex-rs/thread-store/src/types.rs`
 - `codex-rs/thread-store/src/local/mod.rs`
-- `codex-rs/thread-store/src/local/helpers.rs`
+- `codex-rs/thread-store/src/local/create_thread.rs`
+- `codex-rs/thread-store/src/local/live_writer.rs`
 - `codex-rs/thread-store/src/local/read_thread.rs`
 - `codex-rs/thread-store/src/local/list_threads.rs`
+- `codex-rs/thread-store/src/local/search_threads.rs`
 - `codex-rs/thread-store/src/local/update_thread_metadata.rs`
-- `codex-rs/thread-store/src/local/archive_thread.rs`
-- `codex-rs/thread-store/src/local/unarchive_thread.rs`
-- `codex-rs/thread-store/src/remote/mod.rs`
-- `codex-rs/thread-store/src/remote/list_threads.rs`
-- `codex-rs/thread-store/src/remote/helpers.rs`
-- `codex-rs/thread-store/src/remote/proto/codex.thread_store.v1.proto`
 
 ## 相关
 

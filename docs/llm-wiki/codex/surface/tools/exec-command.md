@@ -3,119 +3,111 @@ id: tool.exec-command
 title: exec_command 工具
 kind: tool
 tier: T1
-source: [codex-rs/tools/src/local_tool.rs, codex-rs/tools/src/tool_registry_plan.rs, codex-rs/tools/src/tool_registry_plan_types.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/tools/src/tool_config.rs, codex-rs/tools/src/responses_api.rs, codex-rs/protocol/src/models.rs, codex-rs/core/src/tools/spec.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/registry.rs, codex-rs/core/src/tools/handlers/unified_exec.rs, codex-rs/core/src/tools/context.rs]
-symbols: [create_exec_command_tool, CommandToolOptions, ToolHandlerKind::UnifiedExec, UnifiedExecHandler, ExecCommandArgs]
-related: [tool.write-stdin, tool.shell, tool.shell-command, subsys.core.unified-exec, subsys.core.tool-system, subsys.core.tool-router]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/shell_spec.rs, codex-rs/core/src/tools/handlers/unified_exec.rs, codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs, codex-rs/core/src/tools/context.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/unified_exec/mod.rs, codex-rs/tools/src/tool_config.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/protocol/src/openai_models.rs]
+symbols: [build_tool_router, add_tool_sources, add_shell_tools, ExecCommandHandler, ExecCommandHandlerOptions, ExecCommandArgs, create_exec_command_tool_with_environment_id, unified_exec_output_schema, resolve_max_tokens, ToolSpec::Function, ConfigShellToolType::UnifiedExec]
+related: [tool.write-stdin, tool.shell-command, subsys.core.unified-exec, subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> `exec_command` 工具是 Codex 的 unified-exec 单命令 function surface:模型传一段 shell command 字符串，runtime 可以返回终止输出，也可以返回可继续交互的 `session_id` 给 `write_stdin`。[E: codex-rs/tools/src/local_tool.rs:22][E: codex-rs/tools/src/tool_registry_plan.rs:164][E: codex-rs/core/src/tools/context.rs:456]
+> `exec_command` 是当前 unified-exec shell surface 的启动工具：模型提交 `cmd`，handler 解析环境、工作目录、shell/login/TTY/权限字段，分配 process id 后交给 `UnifiedExecProcessManager::exec_command`；命令未结束时输出可携带 `session_id`，供后续 `write_stdin` 调用使用。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:88][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:198][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:322][E: codex-rs/core/src/tools/context.rs:424]
 
 ## 能回答的问题
 
-- `exec_command` 的 wire name、`ToolHandlerKind` 和 handler 是什么?
-- `exec_command` 的输入字段、默认值、审批字段如何定义?
-- `exec_command` 的 output schema 与实际输出文本/CodeMode JSON 之间是什么关系?
-- `exec_command` 什么时候注册，如何受 `ConfigShellToolType::UnifiedExec` 门控?
-- `exec_command` 是否支持 parallel tool calls，为什么 `write_stdin` 不支持?
-- `UnifiedExecHandler` 如何处理 `exec_command`，如何分配 process id、执行、截断、回传?
+- `exec_command` 的 wire name、ToolSpec 类型、具体 handler 是什么?
+- `exec_command` 的 schema 字段和 runtime 默认值在哪里定义?
+- 它何时由 `spec_plan.rs` 暴露，何时和 legacy `shell_command` 共存?
+- 它怎样解析 environment/workdir/shell/login/权限，并交给 unified-exec manager?
+- 它的输出 schema、文本输出和 code-mode JSON 如何对应?
+- 它是否支持 parallel tool calls?
 
 ## 1 Identity
 
 | 项 | 值 |
 |---|---|
-| wire name | `exec_command`; `create_exec_command_tool` 把 `ResponsesApiTool.name` 固定为 `"exec_command"`。[E: codex-rs/tools/src/local_tool.rs:71] |
-| aliases | registry plan 直接给 `"exec_command"` 注册 `ToolHandlerKind::UnifiedExec`。[E: codex-rs/tools/src/tool_registry_plan.rs:169] |
-| ToolHandlerKind | `ToolHandlerKind::UnifiedExec` 是 registry plan 的 handler kind。[E: codex-rs/tools/src/tool_registry_plan_types.rs:40] |
-| concrete handler | `core/src/tools/spec.rs` 创建共享 `UnifiedExecHandler`，并把 `ToolHandlerKind::UnifiedExec` 注册到该 handler。[E: codex-rs/core/src/tools/spec.rs:149][E: codex-rs/core/src/tools/spec.rs:282] |
-| 所属 crate | schema 在 `codex_tools::local_tool`; runtime handler 在 `codex_core::tools::handlers::unified_exec`。[E: codex-rs/tools/src/local_tool.rs:19][E: codex-rs/core/src/tools/handlers/unified_exec.rs:41] |
+| wire name | `ExecCommandHandler::tool_name()` 返回 plain `"exec_command"`；schema constructor 也把 `ResponsesApiTool.name` 设为 `"exec_command"`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:78][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:80][E: codex-rs/core/src/tools/handlers/shell_spec.rs:88][E: codex-rs/core/src/tools/handlers/shell_spec.rs:89] |
+| concrete handler | `ExecCommandHandler` 保存 `ExecCommandHandlerOptions`，`spec_plan.rs` 的 unified-exec 分支构造并注册它。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:48][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:56][E: codex-rs/core/src/tools/spec_plan.rs:647] |
+| ToolSpec | `create_exec_command_tool_with_environment_id` 返回 `ToolSpec::Function(ResponsesApiTool { ... })`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:21][E: codex-rs/core/src/tools/handlers/shell_spec.rs:88][E: codex-rs/tools/src/tool_spec.rs:17][E: codex-rs/tools/src/tool_spec.rs:19] |
+| handler contract | handler 实现 `ToolExecutor<ToolInvocation>`，`spec()` 调用当前 schema constructor，`supports_parallel_tool_calls()` 返回 `true`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:78][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:84][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:95] |
 
 ## 2 用途定位
 
-`exec_command` 是 `ConfigShellToolType::UnifiedExec` 分支暴露的主执行工具，和 `write_stdin` 配套:前者启动/轮询命令，后者向仍在运行的 process session 写 stdin。[E: codex-rs/tools/src/tool_registry_plan.rs:155][E: codex-rs/tools/src/tool_registry_plan.rs:165][E: codex-rs/tools/src/tool_registry_plan.rs:170] `UnifiedExecHandler` 通过 `UnifiedExecProcessManager` 分配 process id，并在 command 未结束时把该 id 暴露为输出中的 `session_id`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:196][E: codex-rs/core/src/tools/handlers/unified_exec.rs:211][E: codex-rs/core/src/tools/context.rs:456]
+`exec_command` 负责启动或等待一条 shell 命令；schema 上它与 `write_stdin` 通过 `session_id` 衔接：`exec_command` 的 required 只有 `cmd`，`write_stdin` 的 required 是 `session_id`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:101][E: codex-rs/core/src/tools/handlers/shell_spec.rs:103][E: codex-rs/core/src/tools/handlers/shell_spec.rs:145][E: codex-rs/core/src/tools/handlers/shell_spec.rs:147]
+
+运行时会先按 turn environment 解析 `environment_id` 与 `workdir`，然后分配 process id，再根据环境和 `UnifiedExecShellMode` 派生命令 argv。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:128][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:130][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:141][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:143][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:198][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:200][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:208]
 
 ## 3 输入 schema 表
 
 | 字段 | 类型 | 必填 | 默认 | 说明 | 校验/运行时 |
 |---|---|---:|---|---|---|
-| `cmd` | `string` | 是 | 无 | schema 描述为要执行的 shell command。[E: codex-rs/tools/src/local_tool.rs:22] | `ExecCommandArgs.cmd` 是 string，handler 用它派生命令 argv。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:45][E: codex-rs/core/src/tools/handlers/unified_exec.rs:212] |
-| `workdir` | `string` | 否 | turn cwd | schema 描述为可选工作目录，默认 turn cwd。[E: codex-rs/tools/src/local_tool.rs:26] | handler 用 `resolve_workdir_base_path` 和 `turn.resolve_path` 解析相对路径。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:201][E: codex-rs/core/src/tools/handlers/unified_exec.rs:203] |
-| `shell` | `string` | 否 | session user shell | schema 描述为 shell binary，默认用户默认 shell。[E: codex-rs/tools/src/local_tool.rs:33] | `get_command` 在 `UnifiedExecShellMode::Direct` 时可用模型提供的 shell path 覆盖 session shell。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:431][E: codex-rs/core/src/tools/handlers/unified_exec.rs:437] |
-| `tty` | `boolean` | 否 | false | schema 说明是否分配 TTY，默认 false。[E: codex-rs/tools/src/local_tool.rs:39] | `ExecCommandArgs.tty` 的 serde default 是 `default_tty()`，该函数返回 false。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:52][E: codex-rs/core/src/tools/handlers/unified_exec.rs:88] |
-| `yield_time_ms` | `number` | 否 | 10000 | schema 描述为等待输出的毫秒数。[E: codex-rs/tools/src/local_tool.rs:46] | runtime default 是 `default_exec_yield_time_ms()` 返回 `10_000`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:54][E: codex-rs/core/src/tools/handlers/unified_exec.rs:80] |
-| `max_output_tokens` | `number` | 否 | runtime resolve | schema 描述为最大返回 token 数，超出截断。[E: codex-rs/tools/src/local_tool.rs:52] | `ExecCommandToolOutput::truncated_output` 通过 `resolve_max_tokens` 和 token truncation policy 截断 raw output。[E: codex-rs/core/src/tools/context.rs:435][E: codex-rs/core/src/tools/context.rs:438] |
-| `login` | `boolean` | 否 | `allow_login_shell` | 只有 `CommandToolOptions.allow_login_shell` 为 true 时 schema 才插入 `login`。[E: codex-rs/tools/src/local_tool.rs:58] | `get_command` 在 `login=true` 但 config 禁止 login shell 时返回错误，否则默认 `allow_login_shell`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:420][E: codex-rs/core/src/tools/handlers/unified_exec.rs:427] |
-| `sandbox_permissions` | `string` | 否 | `SandboxPermissions` serde default | shell-like approval helper 注入该字段。[E: codex-rs/tools/src/local_tool.rs:338] | `ExecCommandArgs.sandbox_permissions` 有 serde default，类型是 `SandboxPermissions`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:58] |
-| `additional_permissions` | `object` | 否 | 无 | 只有 exec permission approvals feature 允许时 schema 才加入该字段。[E: codex-rs/tools/src/local_tool.rs:369] | handler 将 sticky grants 与 inline permissions 合并，并校验是否允许请求 additional permissions。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:236][E: codex-rs/core/src/tools/handlers/unified_exec.rs:276] |
-| `justification` | `string` | 否 | 无 | 用于 explain escalated execution request。[E: codex-rs/tools/src/local_tool.rs:349] | handler 把 `justification` 放入 `ExecCommandRequest`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:338] |
-| `prefix_rule` | `array<string>` | 否 | 无 | 用于建议可复用审批前缀。[E: codex-rs/tools/src/local_tool.rs:360] | handler 把 `prefix_rule` 放入 `ExecCommandRequest`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:339] |
+| `cmd` | `string` | 是 | 无 | schema properties 固定包含 `cmd`，required 列表只要求 `cmd`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:26][E: codex-rs/core/src/tools/handlers/shell_spec.rs:28][E: codex-rs/core/src/tools/handlers/shell_spec.rs:101][E: codex-rs/core/src/tools/handlers/shell_spec.rs:103] | `ExecCommandArgs.cmd` 是 string；handler 将其作为 hook command，并由 `get_command` 派生 argv。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:28][E: codex-rs/core/src/tools/handlers/unified_exec.rs:29][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:187][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:208] |
+| `workdir` | `string` | 否 | selected environment cwd | schema 描述 `workdir` 默认 turn cwd。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:31][E: codex-rs/core/src/tools/handlers/shell_spec.rs:34] | handler 先按 `environment_id` 选环境，再把相对 `workdir` join 到该环境 cwd。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:51][E: codex-rs/core/src/tools/handlers/unified_exec.rs:57][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:130][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:141][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:143] |
+| `shell` | `string` | 否 | session/environment shell | 只有 `include_shell_parameter` 为 true 时 schema 插入 `shell`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:58][E: codex-rs/core/src/tools/handlers/shell_spec.rs:60] | local zsh-fork 模式拒绝显式 `shell`，Direct 模式可用模型提供 shell path 覆盖 session shell。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:113][E: codex-rs/core/src/tools/handlers/unified_exec.rs:115][E: codex-rs/core/src/tools/handlers/unified_exec.rs:125][E: codex-rs/core/src/tools/handlers/unified_exec.rs:126] |
+| `login` | `boolean` | 否 | `allow_login_shell` | 只有 `allow_login_shell` 为 true 时 schema 插入 `login`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:66][E: codex-rs/core/src/tools/handlers/shell_spec.rs:68] | `get_command` 在 config 禁止 login shell 但模型传 `true` 时返回错误，否则默认使用 `allow_login_shell`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:103][E: codex-rs/core/src/tools/handlers/unified_exec.rs:104][E: codex-rs/core/src/tools/handlers/unified_exec.rs:109][E: codex-rs/core/src/tools/handlers/unified_exec.rs:110] |
+| `environment_id` | `string` | 否 | primary environment | 只有 multiple-environment 模式传入 `include_environment_id` 时 schema 插入。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:75][E: codex-rs/core/src/tools/handlers/shell_spec.rs:77] | handler 先解析 `ExecCommandEnvironmentArgs.environment_id`，再 `resolve_tool_environment(...)`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:51][E: codex-rs/core/src/tools/handlers/unified_exec.rs:53][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:128][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:130] |
+| `tty` | `boolean` | 否 | `false` | schema 描述是否分配 PTY。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:39][E: codex-rs/core/src/tools/handlers/shell_spec.rs:41] | serde default `default_tty()` 返回 false；handler 把 `tty` 放进 `ExecCommandRequest`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:34][E: codex-rs/core/src/tools/handlers/unified_exec.rs:69][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:220][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:335] |
+| `yield_time_ms` | `number` | 否 | `10000` | schema 描述等待输出时间，默认 10000ms。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:46][E: codex-rs/core/src/tools/handlers/shell_spec.rs:48] | runtime default `default_exec_yield_time_ms()` 返回 `10_000`，请求传给 manager。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:36][E: codex-rs/core/src/tools/handlers/unified_exec.rs:61][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:221][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:328] |
+| `max_output_tokens` | `number` | 否 | `10000 tokens` | schema 描述输出 token 预算默认 10000 tokens。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:52][E: codex-rs/core/src/tools/handlers/shell_spec.rs:54] | runtime 默认常量是 `10_000`，输出再受 truncation policy cap，并按 token policy 截断 raw bytes 的 lossy UTF-8 文本。[E: codex-rs/core/src/unified_exec/mod.rs:70][E: codex-rs/core/src/unified_exec/mod.rs:177][E: codex-rs/core/src/unified_exec/mod.rs:178][E: codex-rs/core/src/tools/context.rs:401][E: codex-rs/core/src/tools/context.rs:404][E: codex-rs/core/src/tools/context.rs:405][E: codex-rs/core/src/tools/context.rs:406] |
+| `sandbox_permissions` | enum string | 否 | `use_default` | approval helper 总是插入 `sandbox_permissions`，可选值至少含 `use_default` 与 `require_escalated`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:295][E: codex-rs/core/src/tools/handlers/shell_spec.rs:298][E: codex-rs/core/src/tools/handlers/shell_spec.rs:302][E: codex-rs/core/src/tools/handlers/shell_spec.rs:311] | `ExecCommandArgs.sandbox_permissions` 有 serde default；handler 合并 turn grants 后校验 sandbox override 与 approval policy。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:40][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:235][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:249][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:253] |
+| `additional_permissions` | object | 否 | 无 | 只有 ExecPermissionApprovals 开启时 approval helper 才插入。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:331][E: codex-rs/core/src/tools/handlers/shell_spec.rs:337] | handler 只在相关 feature 或预批准权限存在时允许 additional permissions。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:230][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:243][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:244] |
+| `justification` | `string` | 否 | 无 | approval helper 插入用户可见说明字段。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:317][E: codex-rs/core/src/tools/handlers/shell_spec.rs:320] | handler 把 `justification` 放进 `ExecCommandRequest`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:225][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:340] |
+| `prefix_rule` | `array<string>` | 否 | 无 | approval helper 插入可复用 approval prefix 字段。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:323][E: codex-rs/core/src/tools/handlers/shell_spec.rs:326] | handler 把 `prefix_rule` 放进 `ExecCommandRequest`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:226][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:341] |
 
-`create_exec_command_tool` 的 required 列表只包含 `cmd`，`additionalProperties` 为 false。[E: codex-rs/tools/src/local_tool.rs:85][E: codex-rs/tools/src/local_tool.rs:86]
+`parameters` 使用 `JsonSchema::object(..., Some(vec!["cmd"]), Some(false))`，所以 schema 层 required 只有 `cmd`，并关闭 additional properties。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:101][E: codex-rs/core/src/tools/handlers/shell_spec.rs:103][E: codex-rs/core/src/tools/handlers/shell_spec.rs:104]
 
 ## 4 输出 schema & 截断
 
-`exec_command` 声明了 `unified_exec_output_schema()` 作为 `output_schema`。[E: codex-rs/tools/src/local_tool.rs:88] 该 schema 的 object properties 包括 `chunk_id`、`wall_time_seconds`、`exit_code`、`session_id`、`original_token_count` 和 `output`，required 是 `wall_time_seconds` 与 `output`。[E: codex-rs/tools/src/local_tool.rs:302][E: codex-rs/tools/src/local_tool.rs:328]
+`exec_command` 声明 `output_schema: Some(unified_exec_output_schema())`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:106] 该 schema 是 object，properties 包含 `chunk_id`、`wall_time_seconds`、`exit_code`、`session_id`、`original_token_count`、`output`，required 是 `wall_time_seconds` 和 `output`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:261][E: codex-rs/core/src/tools/handlers/shell_spec.rs:264][E: codex-rs/core/src/tools/handlers/shell_spec.rs:265][E: codex-rs/core/src/tools/handlers/shell_spec.rs:269][E: codex-rs/core/src/tools/handlers/shell_spec.rs:273][E: codex-rs/core/src/tools/handlers/shell_spec.rs:277][E: codex-rs/core/src/tools/handlers/shell_spec.rs:281][E: codex-rs/core/src/tools/handlers/shell_spec.rs:285][E: codex-rs/core/src/tools/handlers/shell_spec.rs:290]
 
-直接 function-call response 仍是 text content: `ExecCommandToolOutput::to_response_item` 调用 `response_text()` 生成文本，而 `response_text()` 会逐段输出 chunk id、wall time、exit code、running session id、original token count 和 `Output:`。[E: codex-rs/core/src/tools/context.rs:390][E: codex-rs/core/src/tools/context.rs:444][E: codex-rs/core/src/tools/context.rs:464] code-mode nested call 则使用 `ExecCommandToolOutput::code_mode_result` 生成 JSON object，字段与 `unified_exec_output_schema` 基本对齐。[E: codex-rs/core/src/tools/context.rs:406][E: codex-rs/core/src/tools/context.rs:425][I]
+普通 function-call 输出仍由 `ExecCommandToolOutput::response_text()` 生成文本：它可包含 chunk id、wall time、exit code、running session id、original token count 和截断后的 `Output:`。[E: codex-rs/core/src/tools/context.rs:409][E: codex-rs/core/src/tools/context.rs:413][E: codex-rs/core/src/tools/context.rs:417][E: codex-rs/core/src/tools/context.rs:420][E: codex-rs/core/src/tools/context.rs:424][E: codex-rs/core/src/tools/context.rs:428][E: codex-rs/core/src/tools/context.rs:431][E: codex-rs/core/src/tools/context.rs:432]
 
-截断发生在 `ExecCommandToolOutput::truncated_output`:它先用 `String::from_utf8_lossy` 把 raw bytes 转成 UTF-8 lossy string，再按 token policy 截断。[E: codex-rs/core/src/tools/context.rs:436][E: codex-rs/core/src/tools/context.rs:438]
+code-mode nested result 是结构化 JSON，对齐 `chunk_id`、`wall_time_seconds`、`exit_code`、`session_id`、`original_token_count` 和 `output` 字段。[E: codex-rs/core/src/tools/context.rs:366][E: codex-rs/core/src/tools/context.rs:370][E: codex-rs/core/src/tools/context.rs:371][E: codex-rs/core/src/tools/context.rs:373][E: codex-rs/core/src/tools/context.rs:375][E: codex-rs/core/src/tools/context.rs:377][E: codex-rs/core/src/tools/context.rs:378][E: codex-rs/core/src/tools/context.rs:382]
 
-## 5 ToolSpec 类型
+## 5 注册与门控
 
-`exec_command` 是 `ToolSpec::Function`，因为它通过 `ResponsesApiTool` 暴露 JSON schema 参数和 `output_schema`。[E: codex-rs/tools/src/local_tool.rs:70][E: codex-rs/tools/src/responses_api.rs:26] Function 形态让 unified-exec 可以精确声明 `cmd`、TTY、polling 和权限字段，而不会把控制参数混入 raw shell script body。[I]
+`build_tool_router` 调用 `build_tool_specs_and_registry`，后者通过 `add_tool_sources` 进入 `add_shell_tools`。[E: codex-rs/core/src/tools/spec_plan.rs:157][E: codex-rs/core/src/tools/spec_plan.rs:162][E: codex-rs/core/src/tools/spec_plan.rs:604][E: codex-rs/core/src/tools/spec_plan.rs:605] `add_shell_tools` 先取 `tool_environment_mode()`，没有 environment 时直接返回。[E: codex-rs/core/src/tools/spec_plan.rs:628][E: codex-rs/core/src/tools/spec_plan.rs:631][E: codex-rs/core/src/tools/spec_plan.rs:632]
 
-## 6 注册与门控
+shell 类型选择来自 `shell_type_for_model_and_features`：ShellTool 或 UnifiedExec feature 关闭会禁用 unified-exec；ShellZshFork 只有和 UnifiedExecZshFork 同开才进入 unified-exec zsh-fork 组合；最后还要求 ConPTY 支持，否则回落到 `ShellCommand`。[E: codex-rs/tools/src/tool_config.rs:67][E: codex-rs/tools/src/tool_config.rs:68][E: codex-rs/tools/src/tool_config.rs:70][E: codex-rs/tools/src/tool_config.rs:71][E: codex-rs/tools/src/tool_config.rs:81][E: codex-rs/tools/src/tool_config.rs:102][E: codex-rs/tools/src/tool_config.rs:107][E: codex-rs/tools/src/tool_config.rs:108][E: codex-rs/tools/src/tool_config.rs:111]
 
-`exec_command` 只在 `config.has_environment` 为 true 且 `config.shell_type == ConfigShellToolType::UnifiedExec` 时被推入 spec。[E: codex-rs/tools/src/tool_registry_plan.rs:137][E: codex-rs/tools/src/tool_registry_plan.rs:155] `ToolsConfig::new` 在 `Feature::UnifiedExec` 开启且当前环境允许 unified exec 时选择 `ConfigShellToolType::UnifiedExec`，但如果 ConPTY 不可用会回退到 `ShellCommand`。[E: codex-rs/tools/src/tool_config.rs:179][E: codex-rs/tools/src/tool_config.rs:180][E: codex-rs/tools/src/tool_config.rs:183]
+当结果是 `ConfigShellToolType::UnifiedExec` 时，`spec_plan.rs` 通过普通 `add` 注册 `ExecCommandHandler` 与 `WriteStdinHandler`，并把 `ShellCommandHandler` 通过 `add_dispatch_only` 包成 hidden legacy tool；visible-spec 构建只收集 direct exposure 的 runtime specs。[E: codex-rs/protocol/src/openai_models.rs:265][E: codex-rs/protocol/src/openai_models.rs:268][E: codex-rs/core/src/tools/spec_plan.rs:127][E: codex-rs/core/src/tools/spec_plan.rs:131][E: codex-rs/core/src/tools/spec_plan.rs:241][E: codex-rs/core/src/tools/spec_plan.rs:246][E: codex-rs/core/src/tools/spec_plan.rs:247][E: codex-rs/core/src/tools/spec_plan.rs:249][E: codex-rs/core/src/tools/spec_plan.rs:645][E: codex-rs/core/src/tools/spec_plan.rs:646][E: codex-rs/core/src/tools/spec_plan.rs:647][E: codex-rs/core/src/tools/spec_plan.rs:653][E: codex-rs/core/src/tools/spec_plan.rs:655][E: codex-rs/core/src/tools/spec_plan.rs:657]
 
-同一分支会同时注册 `exec_command` 和 `write_stdin` 到 `ToolHandlerKind::UnifiedExec`，所以两者共享 `UnifiedExecHandler`。[E: codex-rs/tools/src/tool_registry_plan.rs:169][E: codex-rs/tools/src/tool_registry_plan.rs:170]
+## 6 parallel support
 
-## 7 parallel-safe
+`ExecCommandHandler::supports_parallel_tool_calls()` 返回 `true`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:94][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:95] router 查询 registry 的支持位，找不到时才回退 false。[E: codex-rs/core/src/tools/router.rs:100][E: codex-rs/core/src/tools/router.rs:102][E: codex-rs/core/src/tools/router.rs:103]
 
-`exec_command` 的 plan-level `supports_parallel_tool_calls` 是 true。[E: codex-rs/tools/src/tool_registry_plan.rs:156][E: codex-rs/tools/src/tool_registry_plan.rs:161] `ToolRouter::configured_tool_supports_parallel` 会对带 true 的 function spec 返回 true。[E: codex-rs/core/src/tools/router.rs:148][E: codex-rs/core/src/tools/router.rs:152]
+## 7 handler 走读
 
-parallel-safe 仍受 mutability 判定约束。`UnifiedExecHandler::is_mutating` 会解析 `ExecCommandArgs`，派生命令 argv，并对非 known-safe command 返回 true。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:103][E: codex-rs/core/src/tools/handlers/unified_exec.rs:115][E: codex-rs/core/src/tools/handlers/unified_exec.rs:124]
+1. handler 只接受 `ToolPayload::Function { arguments }`，否则返回 unsupported payload。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:117][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:118][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:120]
+2. 它从 session services 取 `UnifiedExecProcessManager`，建立 `UnifiedExecContext`，并选择 turn environment。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:126][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:127][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:129]
+3. 它解析 `workdir`、检查 native path convention 与 sandbox 要求，再按 base path 解析完整参数。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:141][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:143][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:152][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:162][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:178]
+4. 它可触发 implicit skill invocation，随后分配 process id 并选择 local/remote shell mode。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:190][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:196][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:198][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:200][E: codex-rs/core/src/tools/handlers/unified_exec.rs:144][E: codex-rs/core/src/tools/handlers/unified_exec.rs:148]
+5. 它合并 turn grants、校验 additional permissions 与 non-OnRequest escalation，再规范化权限请求。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:235][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:243][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:249][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:265][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:272]
+6. 如果命令是 `apply_patch`，handler 会调用 `intercept_apply_patch`，命中时释放 process id 并包装成 `ExecCommandToolOutput`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:291][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:292][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:305][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:306]
+7. 普通命令进入 `manager.exec_command(ExecCommandRequest { ... })`；请求携带 command、shell type、process id、yield/max tokens、cwd、environment、network、TTY、权限和 approval hints。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:321][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:323][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:324][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:325][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:327][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:328][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:329][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:330][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:332][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:334][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:335][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:336][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:337][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:340][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:341]
+8. sandbox denial 被转成 terminal `ExecCommandToolOutput`，明确 `process_id: None`，因此不会再由 `write_stdin` 续写。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:348][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:351][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:358][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:360]
 
-## 8 handler 走读
+## 8 hooks / edge
 
-1. `ToolRouter::build_tool_call` 把普通 function call 转成 `ToolPayload::Function { arguments }`。[E: codex-rs/core/src/tools/router.rs:178][E: codex-rs/core/src/tools/router.rs:200]
-2. `ToolRegistry` 通过 `"exec_command"` 找到 `UnifiedExecHandler`，检查 payload kind 后进入 `handle_any`。[E: codex-rs/core/src/tools/spec.rs:282][E: codex-rs/core/src/tools/registry.rs:307]
-3. `UnifiedExecHandler::handle` 只接受 `ToolPayload::Function`，否则返回 unsupported payload。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:180]
-4. handler 确认 turn environment 存在，取得 `UnifiedExecProcessManager` 和 `UnifiedExecContext`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:189][E: codex-rs/core/src/tools/handlers/unified_exec.rs:196][E: codex-rs/core/src/tools/handlers/unified_exec.rs:197]
-5. 对 `"exec_command"` 分支，handler 解析 cwd 和 args，触发 implicit skill invocation 检测，分配 process id，调用 `get_command` 派生 argv。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:199][E: codex-rs/core/src/tools/handlers/unified_exec.rs:202][E: codex-rs/core/src/tools/handlers/unified_exec.rs:204][E: codex-rs/core/src/tools/handlers/unified_exec.rs:211]
-6. handler 校验 additional permissions、approval policy 和 sandbox override 请求。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:233][E: codex-rs/core/src/tools/handlers/unified_exec.rs:249][E: codex-rs/core/src/tools/handlers/unified_exec.rs:276]
-7. handler 调用 `intercept_apply_patch`;如果命令实际是 apply_patch，handler 释放 process id 并把 apply_patch 输出包装成 `ExecCommandToolOutput`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:294][E: codex-rs/core/src/tools/handlers/unified_exec.rs:306][E: codex-rs/core/src/tools/handlers/unified_exec.rs:317]
-8. 普通命令进入 `manager.exec_command(ExecCommandRequest { ... })`；请求中包含 command、process_id、yield time、max tokens、workdir、network、TTY、sandbox permissions 和 approval hints。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:322][E: codex-rs/core/src/tools/handlers/unified_exec.rs:325][E: codex-rs/core/src/tools/handlers/unified_exec.rs:339]
-9. sandbox denial 会被转换成 terminal `ExecCommandToolOutput`，没有 live process，因此 `process_id: None`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:346][E: codex-rs/core/src/tools/handlers/unified_exec.rs:357]
+pre hook 以 Bash hook name 暴露原始 `cmd`，hook rewrite 会把更新后的 command 写回 `cmd` 字段。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:378][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:383][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:386][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:387][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:391][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:402][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:405][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:406]
 
-## 9 设计动机·edge·历史
-
-unified-exec 把 command 启动和 stdin 续写拆成 `exec_command`/`write_stdin`，使长时间运行的命令可以 yield 早期输出并由 `session_id` 继续交互。[E: codex-rs/tools/src/local_tool.rs:74][E: codex-rs/tools/src/local_tool.rs:92][I]
-
-`get_command` 支持两种 shell mode: `Direct` 使用模型指定 shell 或 session shell，`ZshFork` 固定通过配置的 zsh path 和 `-lc`/`-c` 执行；这个分支让 unified-exec 可以在不同 shell backend 下保留相同 wire schema。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:430][E: codex-rs/core/src/tools/handlers/unified_exec.rs:440][I]
-
-`post_tool_use_payload` 对 TTY 命令返回 None，避免把交互式 TTY session 的中间状态当成普通 completed command 输出交给 PostToolUse hook。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:157][E: codex-rs/core/src/tools/handlers/unified_exec.rs:158][I]
+post hook 复用 unified-exec helper，使用 Bash hook name，并从 tool output 取 hook input / response。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:412][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:417][E: codex-rs/core/src/tools/handlers/unified_exec.rs:78][E: codex-rs/core/src/tools/handlers/unified_exec.rs:86][E: codex-rs/core/src/tools/handlers/unified_exec.rs:88][E: codex-rs/core/src/tools/handlers/unified_exec.rs:90]
 
 ## Sources
 
-- `codex-rs/tools/src/local_tool.rs`
-- `codex-rs/tools/src/tool_registry_plan.rs`
-- `codex-rs/tools/src/tool_registry_plan_types.rs`
-- `codex-rs/tools/src/tool_spec.rs`
-- `codex-rs/tools/src/tool_config.rs`
-- `codex-rs/tools/src/responses_api.rs`
-- `codex-rs/protocol/src/models.rs`
-- `codex-rs/core/src/tools/spec.rs`
-- `codex-rs/core/src/tools/router.rs`
-- `codex-rs/core/src/tools/registry.rs`
+- `codex-rs/core/src/tools/spec_plan.rs`
+- `codex-rs/core/src/tools/handlers/shell_spec.rs`
 - `codex-rs/core/src/tools/handlers/unified_exec.rs`
+- `codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs`
 - `codex-rs/core/src/tools/context.rs`
+- `codex-rs/core/src/tools/router.rs`
+- `codex-rs/core/src/unified_exec/mod.rs`
+- `codex-rs/tools/src/tool_config.rs`
+- `codex-rs/tools/src/tool_spec.rs`
+- `codex-rs/protocol/src/openai_models.rs`
 
 ## 相关
 
-- [write_stdin 工具](write-stdin.md) — 向 `exec_command` 返回的 session 写 stdin。
-- [shell 工具](shell.md) — argv-array shell surface。
-- [shell_command 工具](shell-command.md) — 字符串脚本 shell surface。
-- [Unified-exec 运行时](../../subsystems/core/unified-exec.md) — unified-exec process manager 的系统节点。
+- [write_stdin 工具](write-stdin.md) — 对 `exec_command` 返回的 live session 写 stdin 或轮询输出。
+- [shell_command 工具](shell-command.md) — legacy/非 unified shell surface；在 unified-exec 可见时仍 hidden dispatch-only。
+- [Unified-exec 运行时](../../subsystems/core/unified-exec.md) — process manager、PTY、output chunk 与 stdin 续写机制。

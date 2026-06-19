@@ -8,138 +8,155 @@ symbols: [workspace.members, workspace.package, workspace.dependencies]
 related: [spine.overview, ref.key-types, ref.feature-flags, ref.env-vars]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> `codex-rs/Cargo.toml` 定义 Rust workspace：`members` 数组从 line 2 开始并在 line 100 闭合，当前表格计数为 97 个 workspace crate[I]；resolver 是 `"2"`，workspace package edition 是 Rust 2024，license 是 Apache-2.0。[E: codex-rs/Cargo.toml:1][E: codex-rs/Cargo.toml:2][E: codex-rs/Cargo.toml:100][E: codex-rs/Cargo.toml:101][E: codex-rs/Cargo.toml:109][E: codex-rs/Cargo.toml:110]
+> `codex-rs/Cargo.toml` defines the Rust workspace: the current `members` array contains 121 workspace member paths, closes at line 124, uses Cargo resolver `"2"`, and centralizes workspace package version, edition, license, and dependency declarations.[E: codex-rs/Cargo.toml:1][E: codex-rs/Cargo.toml:2][E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:123][E: codex-rs/Cargo.toml:124][E: codex-rs/Cargo.toml:125][E: codex-rs/Cargo.toml:127][E: codex-rs/Cargo.toml:128][E: codex-rs/Cargo.toml:133][E: codex-rs/Cargo.toml:134][E: codex-rs/Cargo.toml:136]
 
 ## 能回答的问题
 
-- codex-rs workspace 中有哪些 crate?
-- 某个 crate 在 workspace `members` 的哪一行登记?
-- `utils/*` 子 crate 有哪些?
-- workspace package 的 edition/license 是什么?
-- workspace dependencies 从哪里开始定义?
+- 当前 `codex-rs` workspace 中有哪些 member paths?
+- 某个 workspace member 在 `codex-rs/Cargo.toml` 的哪一行登记?
+- workspace member count 当前是多少?
+- workspace resolver、package version、edition、license 在哪里定义?
+- `[workspace.dependencies]` 从哪里开始?
 
 ## Workspace 元数据
 
-| Symbol | 值 | 含义 | 定义处 |
+| Symbol | 当前值 | 说明 | 定义处 |
 |---|---|---|---|
-| `[workspace].members` | 97 entries [I] | Cargo workspace member list；`members` 从 line 2 开始，成员行覆盖 line 3 到 line 99，line 100 闭合。[E: codex-rs/Cargo.toml:1][E: codex-rs/Cargo.toml:2][E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:99][E: codex-rs/Cargo.toml:100] | `codex-rs/Cargo.toml` |
-| `[workspace].resolver` | `"2"` | 使用 Cargo resolver 2。[E: codex-rs/Cargo.toml:101] | `codex-rs/Cargo.toml` |
-| `[workspace.package].edition` | `"2024"` | 注释说明 `cargo new -w ...` 创建的新 crate 会自动继承 Rust 2024 edition。[E: codex-rs/Cargo.toml:103][E: codex-rs/Cargo.toml:107][E: codex-rs/Cargo.toml:108][E: codex-rs/Cargo.toml:109] | `codex-rs/Cargo.toml` |
-| `[workspace.package].license` | `"Apache-2.0"` | workspace package license。[E: codex-rs/Cargo.toml:110] | `codex-rs/Cargo.toml` |
-| `[workspace.dependencies]` | starts at line 112 | workspace dependency table；内部 path dependency 从 internal section 开始，external version dependency 从 external section 开始。[E: codex-rs/Cargo.toml:112][E: codex-rs/Cargo.toml:113][E: codex-rs/Cargo.toml:114][E: codex-rs/Cargo.toml:212][E: codex-rs/Cargo.toml:213] | `codex-rs/Cargo.toml` |
+| `[workspace].members` | 121 entries | `members` starts at line 2, member entries cover line 3 through line 123, and the array closes at line 124. | [E: codex-rs/Cargo.toml:1][E: codex-rs/Cargo.toml:2][E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:123][E: codex-rs/Cargo.toml:124] |
+| `[workspace].resolver` | `"2"` | Cargo resolver setting for the workspace. | [E: codex-rs/Cargo.toml:125] |
+| `[workspace.package].version` | `"0.0.0"` | Shared workspace package version. | [E: codex-rs/Cargo.toml:127][E: codex-rs/Cargo.toml:128] |
+| `[workspace.package].edition` | `"2024"` | The workspace package edition; surrounding comments explain new workspace crates inherit this edition by default. | [E: codex-rs/Cargo.toml:129][E: codex-rs/Cargo.toml:131][E: codex-rs/Cargo.toml:133] |
+| `[workspace.package].license` | `"Apache-2.0"` | Shared workspace package license. | [E: codex-rs/Cargo.toml:134] |
+| `[workspace.dependencies]` | starts at line 136 | Workspace dependency table; the first following section is the internal dependency list. | [E: codex-rs/Cargo.toml:136][E: codex-rs/Cargo.toml:137][E: codex-rs/Cargo.toml:138] |
 
 ## Workspace members 全量表
 
-| # | Member path | 领域速记 | 定义处 |
+| # | Member path | Entry type | 定义处 |
 |---:|---|---|---|
-| 1 | `aws-auth` | AWS auth helper crate。[I] | [E: codex-rs/Cargo.toml:3] |
-| 2 | `analytics` | analytics event/fact support。[I] | [E: codex-rs/Cargo.toml:4] |
-| 3 | `agent-identity` | agent identity support。[I] | [E: codex-rs/Cargo.toml:5] |
-| 4 | `backend-client` | backend client layer。[I] | [E: codex-rs/Cargo.toml:6] |
-| 5 | `ansi-escape` | ANSI escape utility crate。[I] | [E: codex-rs/Cargo.toml:7] |
-| 6 | `async-utils` | async helper utilities。[I] | [E: codex-rs/Cargo.toml:8] |
-| 7 | `app-server` | Codex app-server binary/runtime。[I] | [E: codex-rs/Cargo.toml:9] |
-| 8 | `app-server-client` | app-server client crate。[I] | [E: codex-rs/Cargo.toml:10] |
-| 9 | `app-server-protocol` | app-server protocol types。[I] | [E: codex-rs/Cargo.toml:11] |
-| 10 | `app-server-test-client` | app-server integration test client。[I] | [E: codex-rs/Cargo.toml:12] |
-| 11 | `debug-client` | debug client tooling。[I] | [E: codex-rs/Cargo.toml:13] |
-| 12 | `apply-patch` | patch parsing/application engine。[I] | [E: codex-rs/Cargo.toml:14] |
-| 13 | `arg0` | argv0 dispatch/bootstrap support。[I] | [E: codex-rs/Cargo.toml:15] |
-| 14 | `feedback` | feedback support crate。[I] | [E: codex-rs/Cargo.toml:16] |
-| 15 | `features` | feature flag registry and resolver。[I] | [E: codex-rs/Cargo.toml:17] |
-| 16 | `install-context` | install manager/source detection。[I] | [E: codex-rs/Cargo.toml:18] |
-| 17 | `codex-backend-openapi-models` | generated/openapi backend models。[I] | [E: codex-rs/Cargo.toml:19] |
-| 18 | `code-mode` | code mode runtime support。[I] | [E: codex-rs/Cargo.toml:20] |
-| 19 | `cloud-requirements` | cloud task requirements support。[I] | [E: codex-rs/Cargo.toml:21] |
-| 20 | `cloud-tasks` | cloud task UI/runtime。[I] | [E: codex-rs/Cargo.toml:22] |
-| 21 | `cloud-tasks-client` | cloud task backend client。[I] | [E: codex-rs/Cargo.toml:23] |
-| 22 | `cloud-tasks-mock-client` | mock cloud tasks client。[I] | [E: codex-rs/Cargo.toml:24] |
-| 23 | `cli` | Codex CLI entrypoint。[I] | [E: codex-rs/Cargo.toml:25] |
-| 24 | `collaboration-mode-templates` | collaboration mode prompt templates。[I] | [E: codex-rs/Cargo.toml:26] |
-| 25 | `connectors` | connector/app integration support。[I] | [E: codex-rs/Cargo.toml:27] |
-| 26 | `config` | shared config primitives。[I] | [E: codex-rs/Cargo.toml:28] |
-| 27 | `device-key` | device key support。[I] | [E: codex-rs/Cargo.toml:29] |
-| 28 | `shell-command` | shell command parsing/execution helpers。[I] | [E: codex-rs/Cargo.toml:30] |
-| 29 | `shell-escalation` | shell exec escalation protocol。[I] | [E: codex-rs/Cargo.toml:31] |
-| 30 | `skills` | Codex skill loading/runtime。[I] | [E: codex-rs/Cargo.toml:32] |
-| 31 | `core` | Codex core session/turn/tool engine。[I] | [E: codex-rs/Cargo.toml:33] |
-| 32 | `core-plugins` | core plugin integration。[I] | [E: codex-rs/Cargo.toml:34] |
-| 33 | `core-skills` | core skill integration。[I] | [E: codex-rs/Cargo.toml:35] |
-| 34 | `hooks` | lifecycle hook support。[I] | [E: codex-rs/Cargo.toml:36] |
-| 35 | `secrets` | secrets management support。[I] | [E: codex-rs/Cargo.toml:37] |
-| 36 | `exec` | exec tool implementation support。[I] | [E: codex-rs/Cargo.toml:38] |
-| 37 | `exec-server` | remote/local execution environment server。[I] | [E: codex-rs/Cargo.toml:39] |
-| 38 | `execpolicy` | exec policy DSL/runtime。[I] | [E: codex-rs/Cargo.toml:40] |
-| 39 | `execpolicy-legacy` | legacy execpolicy support。[I] | [E: codex-rs/Cargo.toml:41] |
-| 40 | `keyring-store` | credential keyring storage。[I] | [E: codex-rs/Cargo.toml:42] |
-| 41 | `file-search` | file search subsystem。[I] | [E: codex-rs/Cargo.toml:43] |
-| 42 | `linux-sandbox` | Linux sandbox runner/support。[I] | [E: codex-rs/Cargo.toml:44] |
-| 43 | `lmstudio` | LM Studio provider integration。[I] | [E: codex-rs/Cargo.toml:45] |
-| 44 | `login` | auth/login flows and auth manager。[I] | [E: codex-rs/Cargo.toml:46] |
-| 45 | `codex-mcp` | MCP client/connector integration。[I] | [E: codex-rs/Cargo.toml:47] |
-| 46 | `mcp-server` | MCP server implementation。[I] | [E: codex-rs/Cargo.toml:48] |
-| 47 | `model-provider-info` | provider metadata/catalog。[I] | [E: codex-rs/Cargo.toml:49] |
-| 48 | `models-manager` | model catalog/selection manager。[I] | [E: codex-rs/Cargo.toml:50] |
-| 49 | `network-proxy` | managed network proxy/audit support。[I] | [E: codex-rs/Cargo.toml:51] |
-| 50 | `ollama` | Ollama provider integration。[I] | [E: codex-rs/Cargo.toml:52] |
-| 51 | `process-hardening` | process hardening utilities。[I] | [E: codex-rs/Cargo.toml:53] |
-| 52 | `protocol` | shared wire protocol/data model。[I] | [E: codex-rs/Cargo.toml:54] |
-| 53 | `realtime-webrtc` | realtime WebRTC support。[I] | [E: codex-rs/Cargo.toml:55] |
-| 54 | `rollout` | rollout transcript persistence。[I] | [E: codex-rs/Cargo.toml:56] |
-| 55 | `rollout-trace` | rollout trace support。[I] | [E: codex-rs/Cargo.toml:57] |
-| 56 | `rmcp-client` | RMCP client wrapper。[I] | [E: codex-rs/Cargo.toml:58] |
-| 57 | `responses-api-proxy` | Responses API proxy support。[I] | [E: codex-rs/Cargo.toml:59] |
-| 58 | `response-debug-context` | response debug context support。[I] | [E: codex-rs/Cargo.toml:60] |
-| 59 | `sandboxing` | cross-platform sandbox abstraction。[I] | [E: codex-rs/Cargo.toml:61] |
-| 60 | `stdio-to-uds` | stdio-to-Unix-domain-socket bridge。[I] | [E: codex-rs/Cargo.toml:62] |
-| 61 | `otel` | OpenTelemetry tracing/metrics support。[I] | [E: codex-rs/Cargo.toml:63] |
-| 62 | `tui` | terminal UI app。[I] | [E: codex-rs/Cargo.toml:64] |
-| 63 | `tools` | model-visible tool specs/config/registry plan。[I] | [E: codex-rs/Cargo.toml:65] |
-| 64 | `v8-poc` | V8 proof-of-concept crate。[I] | [E: codex-rs/Cargo.toml:66] |
-| 65 | `utils/absolute-path` | absolute path utility crate。[I] | [E: codex-rs/Cargo.toml:67] |
-| 66 | `utils/cargo-bin` | locate cargo/bazel runfiles and binaries。[I] | [E: codex-rs/Cargo.toml:68] |
-| 67 | `git-utils` | git utilities。[I] | [E: codex-rs/Cargo.toml:69] |
-| 68 | `utils/cache` | cache utility crate。[I] | [E: codex-rs/Cargo.toml:70] |
-| 69 | `utils/image` | image utility crate。[I] | [E: codex-rs/Cargo.toml:71] |
-| 70 | `utils/json-to-toml` | JSON to TOML utility crate。[I] | [E: codex-rs/Cargo.toml:72] |
-| 71 | `utils/home-dir` | `CODEX_HOME` / home-dir resolution utility。[I] | [E: codex-rs/Cargo.toml:73] |
-| 72 | `utils/pty` | PTY utility crate。[I] | [E: codex-rs/Cargo.toml:74] |
-| 73 | `utils/readiness` | readiness flag/token utilities。[I] | [E: codex-rs/Cargo.toml:75] |
-| 74 | `utils/rustls-provider` | rustls provider utility。[I] | [E: codex-rs/Cargo.toml:76] |
-| 75 | `utils/string` | string utilities。[I] | [E: codex-rs/Cargo.toml:77] |
-| 76 | `utils/cli` | CLI utility helpers。[I] | [E: codex-rs/Cargo.toml:78] |
-| 77 | `utils/elapsed` | elapsed-time utility crate。[I] | [E: codex-rs/Cargo.toml:79] |
-| 78 | `utils/sandbox-summary` | sandbox summary utility。[I] | [E: codex-rs/Cargo.toml:80] |
-| 79 | `utils/sleep-inhibitor` | prevent-idle-sleep utility。[I] | [E: codex-rs/Cargo.toml:81] |
-| 80 | `utils/approval-presets` | approval preset helpers。[I] | [E: codex-rs/Cargo.toml:82] |
-| 81 | `utils/oss` | OSS provider/runtime utility。[I] | [E: codex-rs/Cargo.toml:83] |
-| 82 | `utils/output-truncation` | output truncation utility。[I] | [E: codex-rs/Cargo.toml:84] |
-| 83 | `utils/path-utils` | path utility crate。[I] | [E: codex-rs/Cargo.toml:85] |
-| 84 | `utils/plugins` | plugin utility crate。[I] | [E: codex-rs/Cargo.toml:86] |
-| 85 | `utils/fuzzy-match` | fuzzy match utility。[I] | [E: codex-rs/Cargo.toml:87] |
-| 86 | `utils/stream-parser` | streaming parser utility。[I] | [E: codex-rs/Cargo.toml:88] |
-| 87 | `utils/template` | template rendering/parsing utility。[I] | [E: codex-rs/Cargo.toml:89] |
-| 88 | `codex-client` | Codex HTTP/TLS client support。[I] | [E: codex-rs/Cargo.toml:90] |
-| 89 | `codex-api` | Codex API crate。[I] | [E: codex-rs/Cargo.toml:91] |
-| 90 | `state` | SQLite state/logs database support。[I] | [E: codex-rs/Cargo.toml:92] |
-| 91 | `terminal-detection` | terminal environment detection。[I] | [E: codex-rs/Cargo.toml:93] |
-| 92 | `test-binary-support` | test binary helper crate。[I] | [E: codex-rs/Cargo.toml:94] |
-| 93 | `thread-store` | persisted thread storage。[I] | [E: codex-rs/Cargo.toml:95] |
-| 94 | `uds` | Unix-domain-socket support。[I] | [E: codex-rs/Cargo.toml:96] |
-| 95 | `codex-experimental-api-macros` | experimental API macros。[I] | [E: codex-rs/Cargo.toml:97] |
-| 96 | `plugin` | plugin runtime/manifest support。[I] | [E: codex-rs/Cargo.toml:98] |
-| 97 | `model-provider` | model provider trait/implementations。[I] | [E: codex-rs/Cargo.toml:99] |
-
-## Crate group速查
-
-- core runtime group: `core`, `protocol`, `tools`, `features`, `config`, `login`, `models-manager`, `model-provider`, `model-provider-info`。[I]
-- execution/sandbox group: `exec`, `exec-server`, `execpolicy`, `execpolicy-legacy`, `sandboxing`, `linux-sandbox`, `shell-command`, `shell-escalation`, `process-hardening`。[I]
-- UI/app/cloud group: `tui`, `app-server`, `app-server-client`, `app-server-protocol`, `cloud-tasks`, `cloud-tasks-client`, `cloud-requirements`。[I]
-- integration group: `codex-mcp`, `mcp-server`, `connectors`, `skills`, `core-skills`, `plugin`, `core-plugins`, `hooks`。[I]
-- utils group: every member under `utils/*` plus root utility crates like `git-utils`, `terminal-detection`, `state`, `thread-store`。[I]
+| 1 | `aws-auth` | Workspace member entry | [E: codex-rs/Cargo.toml:3] |
+| 2 | `analytics` | Workspace member entry | [E: codex-rs/Cargo.toml:4] |
+| 3 | `agent-graph-store` | Workspace member entry | [E: codex-rs/Cargo.toml:5] |
+| 4 | `agent-identity` | Workspace member entry | [E: codex-rs/Cargo.toml:6] |
+| 5 | `backend-client` | Workspace member entry | [E: codex-rs/Cargo.toml:7] |
+| 6 | `bwrap` | Workspace member entry | [E: codex-rs/Cargo.toml:8] |
+| 7 | `ansi-escape` | Workspace member entry | [E: codex-rs/Cargo.toml:9] |
+| 8 | `async-utils` | Workspace member entry | [E: codex-rs/Cargo.toml:10] |
+| 9 | `app-server` | Workspace member entry | [E: codex-rs/Cargo.toml:11] |
+| 10 | `app-server-transport` | Workspace member entry | [E: codex-rs/Cargo.toml:12] |
+| 11 | `app-server-daemon` | Workspace member entry | [E: codex-rs/Cargo.toml:13] |
+| 12 | `app-server-client` | Workspace member entry | [E: codex-rs/Cargo.toml:14] |
+| 13 | `app-server-protocol` | Workspace member entry | [E: codex-rs/Cargo.toml:15] |
+| 14 | `app-server-test-client` | Workspace member entry | [E: codex-rs/Cargo.toml:16] |
+| 15 | `apply-patch` | Workspace member entry | [E: codex-rs/Cargo.toml:17] |
+| 16 | `arg0` | Workspace member entry | [E: codex-rs/Cargo.toml:18] |
+| 17 | `feedback` | Workspace member entry | [E: codex-rs/Cargo.toml:19] |
+| 18 | `features` | Workspace member entry | [E: codex-rs/Cargo.toml:20] |
+| 19 | `install-context` | Workspace member entry | [E: codex-rs/Cargo.toml:21] |
+| 20 | `codex-backend-openapi-models` | Workspace member entry | [E: codex-rs/Cargo.toml:22] |
+| 21 | `code-mode` | Workspace member entry | [E: codex-rs/Cargo.toml:23] |
+| 22 | `code-mode-host` | Workspace member entry | [E: codex-rs/Cargo.toml:24] |
+| 23 | `code-mode-protocol` | Workspace member entry | [E: codex-rs/Cargo.toml:25] |
+| 24 | `codex-home` | Workspace member entry | [E: codex-rs/Cargo.toml:26] |
+| 25 | `cloud-config` | Workspace member entry | [E: codex-rs/Cargo.toml:27] |
+| 26 | `cloud-tasks` | Workspace member entry | [E: codex-rs/Cargo.toml:28] |
+| 27 | `cloud-tasks-client` | Workspace member entry | [E: codex-rs/Cargo.toml:29] |
+| 28 | `cloud-tasks-mock-client` | Workspace member entry | [E: codex-rs/Cargo.toml:30] |
+| 29 | `cli` | Workspace member entry | [E: codex-rs/Cargo.toml:31] |
+| 30 | `collaboration-mode-templates` | Workspace member entry | [E: codex-rs/Cargo.toml:32] |
+| 31 | `connectors` | Workspace member entry | [E: codex-rs/Cargo.toml:33] |
+| 32 | `config` | Workspace member entry | [E: codex-rs/Cargo.toml:34] |
+| 33 | `context-fragments` | Workspace member entry | [E: codex-rs/Cargo.toml:35] |
+| 34 | `shell-command` | Workspace member entry | [E: codex-rs/Cargo.toml:36] |
+| 35 | `shell-escalation` | Workspace member entry | [E: codex-rs/Cargo.toml:37] |
+| 36 | `skills` | Workspace member entry | [E: codex-rs/Cargo.toml:38] |
+| 37 | `core` | Workspace member entry | [E: codex-rs/Cargo.toml:39] |
+| 38 | `core-api` | Workspace member entry | [E: codex-rs/Cargo.toml:40] |
+| 39 | `core-plugins` | Workspace member entry | [E: codex-rs/Cargo.toml:41] |
+| 40 | `core-skills` | Workspace member entry | [E: codex-rs/Cargo.toml:42] |
+| 41 | `hooks` | Workspace member entry | [E: codex-rs/Cargo.toml:43] |
+| 42 | `secrets` | Workspace member entry | [E: codex-rs/Cargo.toml:44] |
+| 43 | `exec` | Workspace member entry | [E: codex-rs/Cargo.toml:45] |
+| 44 | `file-system` | Workspace member entry | [E: codex-rs/Cargo.toml:46] |
+| 45 | `exec-server` | Workspace member entry | [E: codex-rs/Cargo.toml:47] |
+| 46 | `execpolicy` | Workspace member entry | [E: codex-rs/Cargo.toml:48] |
+| 47 | `execpolicy-legacy` | Workspace member entry | [E: codex-rs/Cargo.toml:49] |
+| 48 | `ext/extension-api` | Workspace member entry | [E: codex-rs/Cargo.toml:50] |
+| 49 | `ext/goal` | Workspace member entry | [E: codex-rs/Cargo.toml:51] |
+| 50 | `ext/guardian` | Workspace member entry | [E: codex-rs/Cargo.toml:52] |
+| 51 | `ext/image-generation` | Workspace member entry | [E: codex-rs/Cargo.toml:53] |
+| 52 | `ext/memories` | Workspace member entry | [E: codex-rs/Cargo.toml:54] |
+| 53 | `ext/mcp` | Workspace member entry | [E: codex-rs/Cargo.toml:55] |
+| 54 | `ext/skills` | Workspace member entry | [E: codex-rs/Cargo.toml:56] |
+| 55 | `ext/web-search` | Workspace member entry | [E: codex-rs/Cargo.toml:57] |
+| 56 | `external-agent-migration` | Workspace member entry | [E: codex-rs/Cargo.toml:58] |
+| 57 | `external-agent-sessions` | Workspace member entry | [E: codex-rs/Cargo.toml:59] |
+| 58 | `keyring-store` | Workspace member entry | [E: codex-rs/Cargo.toml:60] |
+| 59 | `file-search` | Workspace member entry | [E: codex-rs/Cargo.toml:61] |
+| 60 | `file-watcher` | Workspace member entry | [E: codex-rs/Cargo.toml:62] |
+| 61 | `linux-sandbox` | Workspace member entry | [E: codex-rs/Cargo.toml:63] |
+| 62 | `lmstudio` | Workspace member entry | [E: codex-rs/Cargo.toml:64] |
+| 63 | `login` | Workspace member entry | [E: codex-rs/Cargo.toml:65] |
+| 64 | `codex-mcp` | Workspace member entry | [E: codex-rs/Cargo.toml:66] |
+| 65 | `mcp-server` | Workspace member entry | [E: codex-rs/Cargo.toml:67] |
+| 66 | `memories/read` | Workspace member entry | [E: codex-rs/Cargo.toml:68] |
+| 67 | `memories/write` | Workspace member entry | [E: codex-rs/Cargo.toml:69] |
+| 68 | `model-provider-info` | Workspace member entry | [E: codex-rs/Cargo.toml:70] |
+| 69 | `models-manager` | Workspace member entry | [E: codex-rs/Cargo.toml:71] |
+| 70 | `network-proxy` | Workspace member entry | [E: codex-rs/Cargo.toml:72] |
+| 71 | `ollama` | Workspace member entry | [E: codex-rs/Cargo.toml:73] |
+| 72 | `process-hardening` | Workspace member entry | [E: codex-rs/Cargo.toml:74] |
+| 73 | `protocol` | Workspace member entry | [E: codex-rs/Cargo.toml:75] |
+| 74 | `realtime-webrtc` | Workspace member entry | [E: codex-rs/Cargo.toml:76] |
+| 75 | `prompts` | Workspace member entry | [E: codex-rs/Cargo.toml:77] |
+| 76 | `rollout` | Workspace member entry | [E: codex-rs/Cargo.toml:78] |
+| 77 | `rollout-trace` | Workspace member entry | [E: codex-rs/Cargo.toml:79] |
+| 78 | `rmcp-client` | Workspace member entry | [E: codex-rs/Cargo.toml:80] |
+| 79 | `responses-api-proxy` | Workspace member entry | [E: codex-rs/Cargo.toml:81] |
+| 80 | `response-debug-context` | Workspace member entry | [E: codex-rs/Cargo.toml:82] |
+| 81 | `sandboxing` | Workspace member entry | [E: codex-rs/Cargo.toml:83] |
+| 82 | `stdio-to-uds` | Workspace member entry | [E: codex-rs/Cargo.toml:84] |
+| 83 | `otel` | Workspace member entry | [E: codex-rs/Cargo.toml:85] |
+| 84 | `tui` | Workspace member entry | [E: codex-rs/Cargo.toml:86] |
+| 85 | `tools` | Workspace member entry | [E: codex-rs/Cargo.toml:87] |
+| 86 | `v8-poc` | Workspace member entry | [E: codex-rs/Cargo.toml:88] |
+| 87 | `utils/absolute-path` | Workspace member entry | [E: codex-rs/Cargo.toml:89] |
+| 88 | `utils/path-uri` | Workspace member entry | [E: codex-rs/Cargo.toml:90] |
+| 89 | `utils/cargo-bin` | Workspace member entry | [E: codex-rs/Cargo.toml:91] |
+| 90 | `git-utils` | Workspace member entry | [E: codex-rs/Cargo.toml:92] |
+| 91 | `utils/cache` | Workspace member entry | [E: codex-rs/Cargo.toml:93] |
+| 92 | `utils/image` | Workspace member entry | [E: codex-rs/Cargo.toml:94] |
+| 93 | `utils/json-to-toml` | Workspace member entry | [E: codex-rs/Cargo.toml:95] |
+| 94 | `utils/home-dir` | Workspace member entry | [E: codex-rs/Cargo.toml:96] |
+| 95 | `utils/pty` | Workspace member entry | [E: codex-rs/Cargo.toml:97] |
+| 96 | `utils/readiness` | Workspace member entry | [E: codex-rs/Cargo.toml:98] |
+| 97 | `utils/rustls-provider` | Workspace member entry | [E: codex-rs/Cargo.toml:99] |
+| 98 | `utils/string` | Workspace member entry | [E: codex-rs/Cargo.toml:100] |
+| 99 | `utils/cli` | Workspace member entry | [E: codex-rs/Cargo.toml:101] |
+| 100 | `utils/elapsed` | Workspace member entry | [E: codex-rs/Cargo.toml:102] |
+| 101 | `utils/sandbox-summary` | Workspace member entry | [E: codex-rs/Cargo.toml:103] |
+| 102 | `utils/sleep-inhibitor` | Workspace member entry | [E: codex-rs/Cargo.toml:104] |
+| 103 | `utils/approval-presets` | Workspace member entry | [E: codex-rs/Cargo.toml:105] |
+| 104 | `utils/oss` | Workspace member entry | [E: codex-rs/Cargo.toml:106] |
+| 105 | `utils/output-truncation` | Workspace member entry | [E: codex-rs/Cargo.toml:107] |
+| 106 | `utils/path-utils` | Workspace member entry | [E: codex-rs/Cargo.toml:108] |
+| 107 | `utils/plugins` | Workspace member entry | [E: codex-rs/Cargo.toml:109] |
+| 108 | `utils/fuzzy-match` | Workspace member entry | [E: codex-rs/Cargo.toml:110] |
+| 109 | `utils/stream-parser` | Workspace member entry | [E: codex-rs/Cargo.toml:111] |
+| 110 | `utils/template` | Workspace member entry | [E: codex-rs/Cargo.toml:112] |
+| 111 | `codex-client` | Workspace member entry | [E: codex-rs/Cargo.toml:113] |
+| 112 | `codex-api` | Workspace member entry | [E: codex-rs/Cargo.toml:114] |
+| 113 | `state` | Workspace member entry | [E: codex-rs/Cargo.toml:115] |
+| 114 | `terminal-detection` | Workspace member entry | [E: codex-rs/Cargo.toml:116] |
+| 115 | `test-binary-support` | Workspace member entry | [E: codex-rs/Cargo.toml:117] |
+| 116 | `thread-manager-sample` | Workspace member entry | [E: codex-rs/Cargo.toml:118] |
+| 117 | `thread-store` | Workspace member entry | [E: codex-rs/Cargo.toml:119] |
+| 118 | `uds` | Workspace member entry | [E: codex-rs/Cargo.toml:120] |
+| 119 | `codex-experimental-api-macros` | Workspace member entry | [E: codex-rs/Cargo.toml:121] |
+| 120 | `plugin` | Workspace member entry | [E: codex-rs/Cargo.toml:122] |
+| 121 | `model-provider` | Workspace member entry | [E: codex-rs/Cargo.toml:123] |
 
 ## Sources
 

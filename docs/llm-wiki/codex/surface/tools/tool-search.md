@@ -3,112 +3,109 @@ id: tool.tool-search
 title: tool_search 工具
 kind: tool
 tier: T1
-source: [codex-rs/tools/src/tool_discovery.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/tools/src/tool_registry_plan.rs, codex-rs/tools/src/tool_config.rs, codex-rs/features/src/lib.rs, codex-rs/tools/src/responses_api.rs, codex-rs/core/src/tools/spec.rs, codex-rs/core/src/tools/handlers/tool_search.rs, codex-rs/core/src/tools/tool_search_entry.rs, codex-rs/core/src/tools/context.rs, codex-rs/protocol/src/models.rs]
-symbols: [create_tool_search_tool, ToolSpec::ToolSearch, ToolHandlerKind::ToolSearch, ToolSearchHandler, build_tool_search_entries, ToolSearchOutput]
-related: [tool.tool-suggest, tool.mcp-namespace-tools, tool.dynamic-tools, subsys.core.tool-system, subsys.mcp.connectors]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/tool_search_spec.rs, codex-rs/core/src/tools/handlers/tool_search.rs, codex-rs/core/src/tools/handlers/dynamic.rs, codex-rs/core/src/tools/handlers/extension_tools.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/core/src/tools/handlers/multi_agents.rs, codex-rs/core/src/tools/handlers/multi_agents/spawn.rs, codex-rs/core/src/tools/context.rs, codex-rs/core/src/tools/router.rs, codex-rs/tools/src/tool_discovery.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/tools/src/tool_payload.rs, codex-rs/tools/src/tool_search.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/tools/src/responses_api.rs, codex-rs/protocol/src/models.rs]
+symbols: [append_tool_search_executor, create_tool_search_tool, ToolSearchHandler, ToolSearchHandlerCache, ToolSearchInfo, ToolSearchEntry, ToolSearchOutput, ToolPayload::ToolSearch, ToolSpec::ToolSearch]
+related: [tool.list-available-plugins-to-install, tool.request-plugin-install, tool.mcp-namespace-tools, tool.dynamic-tools, subsys.core.tool-system, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> `tool_search` 是 Codex 的 deferred tool discovery 工具；它用 BM25 搜索未预先暴露的 MCP/dynamic tool metadata，并把匹配到的 `LoadableToolSpec` 暴露给下一次模型调用。[E: codex-rs/tools/src/tool_discovery.rs:192][E: codex-rs/core/src/tools/handlers/tool_search.rs:85]
+> `tool_search` 是 Codex 的 deferred tool discovery runtime。当前 planner 从 exposure 为 `Deferred` 的 tool runtime 收集 `search_info()`，当模型支持 search tool 且 provider 支持 namespace tools 时，追加一个 BM25-backed `ToolSearchHandler`，让模型按查询把匹配的 deferred tools 暴露到下一次调用。[E: codex-rs/core/src/tools/spec_plan.rs:936][E: codex-rs/core/src/tools/spec_plan.rs:941][E: codex-rs/core/src/tools/spec_plan.rs:945][E: codex-rs/core/src/tools/spec_plan.rs:948][E: codex-rs/core/src/tools/spec_plan.rs:949][E: codex-rs/core/src/tools/handlers/tool_search.rs:80][E: codex-rs/core/src/tools/handlers/tool_search.rs:86]
 
 ## 能回答的问题
 
-- `tool_search` 为什么是 `ToolSpec::ToolSearch` 而不是普通 Function？
-- `tool_search` 的参数、默认 limit 和 BM25 搜索逻辑是什么？
-- 哪些 deferred MCP/dynamic tools 会进入 `tool_search`？
-- `tool_search` 如何把多个 namespace tool 合并成一个 namespace spec？
-- `tool_search` 的 registry gate、handler kind 和 parallel-safe 值是什么？
+- `tool_search` 为什么是 `ToolSpec::ToolSearch` 而不是普通 function？
+- `query`、`limit` 的 schema、默认值和 runtime 校验是什么？
+- 哪些 deferred runtime 会进入搜索索引？
+- 搜索结果如何转换成 `LoadableToolSpec`，namespace 结果如何合并？
+- 它何时出现在 model-visible tools 中，是否支持 parallel？
 
 ## 1 Identity
 
-| 项 | 值 | 证据 |
-|---|---|---|
-| wire name | `tool_search` | 常量 `TOOL_SEARCH_TOOL_NAME` 为 `tool_search`，`ToolSpec::name()` 对 `ToolSearch` 也返回 `tool_search`。[E: codex-rs/tools/src/tool_discovery.rs:16][E: codex-rs/tools/src/tool_spec.rs:65] |
-| aliases | 未看到独立 alias；deferred MCP tool names 会额外注册到 `ToolHandlerKind::Mcp`。 | `build_tool_registry_plan` 注册 `TOOL_SEARCH_TOOL_NAME`，再为 deferred MCP tools 注册 handler。[E: codex-rs/tools/src/tool_registry_plan.rs:291][E: codex-rs/tools/src/tool_registry_plan.rs:295][I] |
-| ToolSpec 类型 | `ToolSpec::ToolSearch { execution, description, parameters }` | `create_tool_search_tool` 返回 `ToolSpec::ToolSearch`，execution 固定为 `client`，并携带 description 与 parameters。[E: codex-rs/tools/src/tool_discovery.rs:195][E: codex-rs/tools/src/tool_discovery.rs:196][E: codex-rs/tools/src/tool_discovery.rs:197][E: codex-rs/tools/src/tool_discovery.rs:198] |
-| ToolHandlerKind | `ToolHandlerKind::ToolSearch` | registry 注册 `ToolHandlerKind::ToolSearch`。[E: codex-rs/tools/src/tool_registry_plan.rs:291] |
-| core handler | `ToolSearchHandler` | `core/src/tools/spec.rs` 在 `ToolHandlerKind::ToolSearch` 分支 lazy 构建并注册 `ToolSearchHandler`。[E: codex-rs/core/src/tools/spec.rs:266][E: codex-rs/core/src/tools/spec.rs:272][E: codex-rs/core/src/tools/spec.rs:275] |
-| 所属 crate | spec/转换在 `codex-tools`，搜索执行在 `codex-core`，参数类型在 `codex-protocol`。 | `SearchToolCallParams` 定义 `query` 和 `limit`。[E: codex-rs/tools/src/tool_discovery.rs:149][E: codex-rs/core/src/tools/handlers/tool_search.rs:21][E: codex-rs/protocol/src/models.rs:948][E: codex-rs/protocol/src/models.rs:951] |
+| 项 | 值 |
+|---|---|
+| wire name | `TOOL_SEARCH_TOOL_NAME` 是 `tool_search`；`ToolSpec::name()` 对 `ToolSearch` 也返回 `tool_search`。[E: codex-rs/tools/src/tool_discovery.rs:6][E: codex-rs/tools/src/tool_spec.rs:53][E: codex-rs/tools/src/tool_spec.rs:58] |
+| concrete handler | `ToolSearchHandler` 持有 `search_infos`、已构造的 `spec` 和 BM25 `search_engine`。[E: codex-rs/core/src/tools/handlers/tool_search.rs:25][E: codex-rs/core/src/tools/handlers/tool_search.rs:26][E: codex-rs/core/src/tools/handlers/tool_search.rs:27][E: codex-rs/core/src/tools/handlers/tool_search.rs:28] |
+| ToolSpec | `create_tool_search_tool` 返回 `ToolSpec::ToolSearch { execution: "client", description, parameters }`。[E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:7][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:53][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:54][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:55][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:56] |
+| payload shape | router 只把 `execution == "client"` 且有 `call_id` 的 `ResponseItem::ToolSearchCall` 转成 `ToolPayload::ToolSearch`。[E: codex-rs/core/src/tools/router.rs:129][E: codex-rs/core/src/tools/router.rs:134][E: codex-rs/core/src/tools/router.rs:141][E: codex-rs/core/src/tools/router.rs:142][E: codex-rs/core/src/tools/router.rs:144] |
 
 ## 2 用途定位
 
-工具描述写明 `tool_search` 搜索 deferred tool metadata，并把匹配工具暴露给下一次模型调用。[E: codex-rs/tools/src/tool_discovery.rs:192]  
-description 会列出当前可搜索 sources；如果没有 sources，会显示 `None currently enabled.`；非空 sources 会被格式化成逐行列表。[E: codex-rs/tools/src/tool_discovery.rs:178][E: codex-rs/tools/src/tool_discovery.rs:181][E: codex-rs/tools/src/tool_discovery.rs:188]  
-description 特别要求 MCP tool discovery 使用 `tool_search`，而不是 `list_mcp_resources` 或 `list_mcp_resource_templates`。[E: codex-rs/tools/src/tool_discovery.rs:192]
+工具描述写明它搜索 deferred tool metadata，并把匹配工具暴露给下一次模型调用；描述还会列出当前可搜索的 sources，空列表时显示 `None currently enabled.`。[E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:36][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:37][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:49][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:50]
+
+MCP、dynamic、extension adapter、multi-agent v1 handler 等 runtime 通过 `ToolExecutor::search_info()` 进入 search index；默认实现从 function/namespace spec 派生 metadata，具体 handler 也可以覆盖 source info 或 search text。[E: codex-rs/tools/src/tool_executor.rs:26][E: codex-rs/tools/src/tool_executor.rs:23][E: codex-rs/tools/src/tool_executor.rs:59][E: codex-rs/tools/src/tool_executor.rs:61][E: codex-rs/core/src/tools/handlers/dynamic.rs:99][E: codex-rs/core/src/tools/handlers/dynamic.rs:103][E: codex-rs/core/src/tools/handlers/dynamic.rs:104][E: codex-rs/core/src/tools/handlers/extension_tools.rs:51][E: codex-rs/core/src/tools/handlers/extension_tools.rs:52][E: codex-rs/core/src/tools/handlers/mcp.rs:89][E: codex-rs/core/src/tools/handlers/mcp.rs:108][E: codex-rs/core/src/tools/handlers/mcp.rs:109][E: codex-rs/core/src/tools/handlers/multi_agents.rs:68][E: codex-rs/core/src/tools/handlers/multi_agents.rs:72][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:34][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:35]
 
 ## 3 输入 schema 表
 
 | 字段 | 类型 | 必填 | 默认 | 说明 | 校验/约束 |
 |---|---|---:|---|---|---|
-| `query` | string | 是 | 无 | deferred tools 的搜索查询。 | ToolSearch schema required 包含 `query`；handler trim 后拒绝空 query。[E: codex-rs/tools/src/tool_discovery.rs:156][E: codex-rs/tools/src/tool_discovery.rs:200][E: codex-rs/core/src/tools/handlers/tool_search.rs:67][E: codex-rs/core/src/tools/handlers/tool_search.rs:70] |
-| `limit` | number / usize | 否 | `8` | 最大返回工具数。 | 常量 `TOOL_SEARCH_DEFAULT_LIMIT` 为 8；handler `unwrap_or` 到默认值，并拒绝 0。[E: codex-rs/tools/src/tool_discovery.rs:17][E: codex-rs/core/src/tools/handlers/tool_search.rs:73][E: codex-rs/core/src/tools/handlers/tool_search.rs:75] |
+| `query` | string | 是 | 无 | deferred tools 的搜索查询。 | schema required 包含 `query`；handler trim 后拒绝空 query。[E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:13][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:14][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:58][E: codex-rs/core/src/tools/handlers/tool_search.rs:131][E: codex-rs/core/src/tools/handlers/tool_search.rs:132][E: codex-rs/core/src/tools/handlers/tool_search.rs:134] |
+| `limit` | number / usize | 否 | `8` | 最大返回工具数。 | 默认常量为 8；handler `unwrap_or` 到默认值，并拒绝 0。[E: codex-rs/tools/src/tool_discovery.rs:7][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:17][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:19][E: codex-rs/core/src/tools/handlers/tool_search.rs:137][E: codex-rs/core/src/tools/handlers/tool_search.rs:139][E: codex-rs/core/src/tools/handlers/tool_search.rs:141] |
 
-`tool_search` 的 runtime payload 不是普通 JSON string arguments，而是 `ToolPayload::ToolSearch { arguments: SearchToolCallParams }`。[E: codex-rs/core/src/tools/context.rs:57][E: codex-rs/protocol/src/models.rs:947]  
-`ToolSearchHandler` 只接受 `ToolPayload::ToolSearch`，收到其他 payload 会产生 fatal unsupported payload 错误。[E: codex-rs/core/src/tools/handlers/tool_search.rs:57][E: codex-rs/core/src/tools/handlers/tool_search.rs:60]
+协议 `SearchToolCallParams` 对应 `query: String` 和 optional `limit: Option<usize>`；tool payload enum 中 `ToolSearch` 也直接保存该类型。[E: codex-rs/protocol/src/models.rs:1686][E: codex-rs/protocol/src/models.rs:1687][E: codex-rs/protocol/src/models.rs:1690][E: codex-rs/tools/src/tool_payload.rs:3][E: codex-rs/tools/src/tool_payload.rs:7][E: codex-rs/tools/src/tool_payload.rs:9]
 
-## 4 输出 schema & 截断
+## 4 输出
 
-`ToolSearchOutput` 持有 `tools: Vec<LoadableToolSpec>`，输出 response item 是 `ResponseInputItem::ToolSearchOutput { status: "completed", execution: "client", tools }`。[E: codex-rs/core/src/tools/context.rs:196][E: codex-rs/core/src/tools/context.rs:218][E: codex-rs/core/src/tools/context.rs:220][E: codex-rs/core/src/tools/context.rs:222]  
-每个 `LoadableToolSpec` 只能是 `Function(ResponsesApiTool)` 或 `Namespace(ResponsesApiNamespace)`。[E: codex-rs/tools/src/responses_api.rs:46][E: codex-rs/tools/src/responses_api.rs:48]  
-handler 输出前调用 `coalesce_loadable_tool_specs`，把同名 namespace 的多个 tool 合并到一个 namespace spec。[E: codex-rs/core/src/tools/handlers/tool_search.rs:140][E: codex-rs/tools/src/responses_api.rs:105][E: codex-rs/tools/src/responses_api.rs:112]  
-输出 telemetry preview 会把 tool specs 序列化成 JSON array 后再走 preview truncation，而模型-facing `ToolSearchOutput.tools` 本身由 response item 承载。[E: codex-rs/core/src/tools/context.rs:201][E: codex-rs/core/src/tools/context.rs:209][E: codex-rs/core/src/tools/context.rs:218][E: codex-rs/core/src/tools/context.rs:222]
+成功输出是 `ToolSearchOutput { tools: Vec<LoadableToolSpec> }`；response item 是 `ResponseInputItem::ToolSearchOutput { status: "completed", execution: "client", tools }`。[E: codex-rs/core/src/tools/context.rs:143][E: codex-rs/core/src/tools/context.rs:144][E: codex-rs/core/src/tools/context.rs:145][E: codex-rs/core/src/tools/context.rs:166][E: codex-rs/core/src/tools/context.rs:167][E: codex-rs/core/src/tools/context.rs:169][E: codex-rs/core/src/tools/context.rs:170]
 
-## 5 ToolSpec 类型
+`LoadableToolSpec` 只包含 `Function(ResponsesApiTool)` 和 `Namespace(ResponsesApiNamespace)` 两种；handler 输出前调用 `coalesce_loadable_tool_specs` 合并同名 namespace。[E: codex-rs/tools/src/responses_api.rs:40][E: codex-rs/tools/src/responses_api.rs:43][E: codex-rs/tools/src/responses_api.rs:46][E: codex-rs/tools/src/responses_api.rs:48][E: codex-rs/core/src/tools/handlers/tool_search.rs:177][E: codex-rs/core/src/tools/handlers/tool_search.rs:178][E: codex-rs/tools/src/responses_api.rs:77][E: codex-rs/tools/src/responses_api.rs:86][E: codex-rs/tools/src/responses_api.rs:97]
 
-`tool_search` 使用专门的 `ToolSpec::ToolSearch` 变体，`ToolSpec` enum 中该变体序列化 tag 为 `tool_search` 并包含 `execution/description/parameters` 字段。[E: codex-rs/tools/src/tool_spec.rs:27][E: codex-rs/tools/src/tool_spec.rs:31]  
-选择这个变体的原因是 Responses API 对 tool search 输出有专门的 `ToolSearchOutput` response item；Codex core 也用 `ToolPayload::ToolSearch` 和 `ResponseInputItem::ToolSearchOutput` 区分它与普通 Function 工具。[E: codex-rs/core/src/tools/context.rs:56][E: codex-rs/core/src/tools/context.rs:218][I]
+如果调用被中止并走 `AbortedToolOutput`，它会对 `ToolPayload::ToolSearch` 生成一个 completed、client、空 `tools` 的 `ToolSearchOutput`，而不是普通 function output。[E: codex-rs/core/src/tools/context.rs:274][E: codex-rs/core/src/tools/context.rs:278][E: codex-rs/core/src/tools/context.rs:287][E: codex-rs/core/src/tools/context.rs:289][E: codex-rs/core/src/tools/context.rs:290][E: codex-rs/core/src/tools/context.rs:293]
 
-## 6 注册与门控
+## 5 注册与门控
 
-`ToolsConfig::new` 只有在 `model_info.supports_search_tool` 与 `Feature::ToolSearch` 都为 true 时把 `search_tool` 设为 true。[E: codex-rs/tools/src/tool_config.rs:152][E: codex-rs/tools/src/tool_config.rs:217]  
-`Feature::ToolSearch` 的 feature key 是 `tool_search`，stage 是 Stable，默认开启。[E: codex-rs/features/src/lib.rs:822][E: codex-rs/features/src/lib.rs:823][E: codex-rs/features/src/lib.rs:824][E: codex-rs/features/src/lib.rs:825]  
-`build_tool_registry_plan` 只有在 `config.search_tool` 且存在 `deferred_mcp_tools` 或 deferred dynamic tools 时 push `tool_search` spec。[E: codex-rs/tools/src/tool_registry_plan.rs:263][E: codex-rs/tools/src/tool_registry_plan.rs:264][E: codex-rs/tools/src/tool_registry_plan.rs:286][E: codex-rs/tools/src/tool_registry_plan.rs:288]  
-deferred dynamic tools 是 `params.dynamic_tools` 中 `defer_loading == true` 的子集。[E: codex-rs/tools/src/tool_registry_plan.rs:257][E: codex-rs/tools/src/tool_registry_plan.rs:260]  
-如果存在 deferred MCP tools，registry 还会为这些 tool names 注册 `ToolHandlerKind::Mcp`；这使搜索后 load 出来的 MCP 工具有本地 handler。[E: codex-rs/tools/src/tool_registry_plan.rs:293][E: codex-rs/tools/src/tool_registry_plan.rs:295][I]
+`append_tool_search_executor` 只有在 `search_tool_enabled(turn_context)` 和 `namespace_tools_enabled(turn_context)` 同时为 true 时继续；当前 `search_tool_enabled` 直接读 `turn_context.model_info.supports_search_tool`，`namespace_tools_enabled` 读 provider capability。[E: codex-rs/core/src/tools/spec_plan.rs:936][E: codex-rs/core/src/tools/spec_plan.rs:941][E: codex-rs/core/src/tools/spec_plan.rs:327][E: codex-rs/core/src/tools/spec_plan.rs:328][E: codex-rs/core/src/tools/spec_plan.rs:338][E: codex-rs/core/src/tools/spec_plan.rs:339]
 
-## 7 parallel-safe
+它只收集 exposure 为 `Deferred` 的 runtimes，并且只有 `search_infos` 非空才通过 `ToolSearchHandlerCache::get_or_build(search_infos)` 加入 planned tools。[E: codex-rs/core/src/tools/spec_plan.rs:945][E: codex-rs/core/src/tools/spec_plan.rs:946][E: codex-rs/core/src/tools/spec_plan.rs:948][E: codex-rs/core/src/tools/spec_plan.rs:949][E: codex-rs/core/src/tools/spec_plan.rs:951][E: codex-rs/core/src/tools/spec_plan.rs:955][E: codex-rs/core/src/tools/spec_plan.rs:956]
 
-`tool_search` 的 `supports_parallel_tool_calls` 实际值是 `true`。[E: codex-rs/tools/src/tool_registry_plan.rs:288]  
-handler 构造 BM25 search engine 后在 handle 中复用它，parallel-safe 与只读 discovery 定位一致。[E: codex-rs/core/src/tools/handlers/tool_search.rs:28][E: codex-rs/core/src/tools/handlers/tool_search.rs:33][E: codex-rs/core/src/tools/handlers/tool_search.rs:110][I]  
-`ToolSearchHandler::new` 在构造时把 entries 转成 BM25 documents。[E: codex-rs/core/src/tools/handlers/tool_search.rs:28][E: codex-rs/core/src/tools/handlers/tool_search.rs:33]
+同一 planner 会把所有 runtime 放进 registry，但只有 `exposure.is_direct()` 的 runtime 才进入初始 model-visible specs；model-visible namespace specs 还要求 provider 支持 namespace tools。[E: codex-rs/core/src/tools/spec_plan.rs:246][E: codex-rs/core/src/tools/spec_plan.rs:247][E: codex-rs/core/src/tools/spec_plan.rs:249][E: codex-rs/core/src/tools/spec_plan.rs:260][E: codex-rs/core/src/tools/spec_plan.rs:261][E: codex-rs/core/src/tools/spec_plan.rs:263][E: codex-rs/core/src/tools/spec_plan.rs:264][E: codex-rs/core/src/tools/spec_plan.rs:268][E: codex-rs/tools/src/tool_executor.rs:38][E: codex-rs/tools/src/tool_executor.rs:40]
+
+当 search + namespace gates 开启且已有 deferred runtime 时，planner 还会提前保留 `tool_search` 这个名字，避免后续 extension tool 与发现工具冲突。[E: codex-rs/core/src/tools/spec_plan.rs:987][E: codex-rs/core/src/tools/spec_plan.rs:988][E: codex-rs/core/src/tools/spec_plan.rs:992][E: codex-rs/core/src/tools/spec_plan.rs:994]
+
+## 6 搜索索引与结果
+
+`ToolSearchHandler::new` 用每个 `search_info.entry.search_text` 构造 BM25 documents，并把 source info 传给 `create_tool_search_tool` 生成描述。[E: codex-rs/core/src/tools/handlers/tool_search.rs:74][E: codex-rs/core/src/tools/handlers/tool_search.rs:75][E: codex-rs/core/src/tools/handlers/tool_search.rs:79][E: codex-rs/core/src/tools/handlers/tool_search.rs:80][E: codex-rs/core/src/tools/handlers/tool_search.rs:82][E: codex-rs/core/src/tools/handlers/tool_search.rs:84][E: codex-rs/core/src/tools/handlers/tool_search.rs:87]
+
+`ToolSearchInfo::from_tool_spec` / `from_spec` 会把 Function 和 Namespace 转成 loadable outputs，并为 deferred 结果设置 `defer_loading: Some(true)`、清空 `output_schema`；ToolSearch、ImageGeneration、WebSearch、Freeform 不会生成 search info。[E: codex-rs/tools/src/tool_search.rs:21][E: codex-rs/tools/src/tool_search.rs:22][E: codex-rs/tools/src/tool_search.rs:35][E: codex-rs/tools/src/tool_search.rs:37][E: codex-rs/tools/src/tool_search.rs:38][E: codex-rs/tools/src/tool_search.rs:47][E: codex-rs/tools/src/tool_search.rs:48][E: codex-rs/tools/src/tool_search.rs:52][E: codex-rs/tools/src/tool_search.rs:55]
+
+handle 时，handler 搜索 BM25 `search_engine.search(query, limit)`，按 result document id 回取 `search_infos`，再把 entry output coalesce 成返回工具列表。[E: codex-rs/core/src/tools/handlers/tool_search.rs:149][E: codex-rs/core/src/tools/handlers/tool_search.rs:163][E: codex-rs/core/src/tools/handlers/tool_search.rs:165][E: codex-rs/core/src/tools/handlers/tool_search.rs:167][E: codex-rs/core/src/tools/handlers/tool_search.rs:168][E: codex-rs/core/src/tools/handlers/tool_search.rs:170][E: codex-rs/core/src/tools/handlers/tool_search.rs:177][E: codex-rs/core/src/tools/handlers/tool_search.rs:178]
+
+## 7 parallel support
+
+`ToolSearchHandler::supports_parallel_tool_calls()` 显式返回 true。[E: codex-rs/core/src/tools/handlers/tool_search.rs:106][E: codex-rs/core/src/tools/handlers/tool_search.rs:107]
 
 ## 8 handler 走读
 
-1. `core/src/tools/spec.rs` 收集 `deferred_dynamic_tools`，只保留 `defer_loading` 为 true 的 dynamic tools。[E: codex-rs/core/src/tools/spec.rs:161][E: codex-rs/core/src/tools/spec.rs:163]
-2. `ToolHandlerKind::ToolSearch` 首次出现时，core 调用 `build_tool_search_entries(deferred_mcp_tools, &deferred_dynamic_tools)`。[E: codex-rs/core/src/tools/spec.rs:266][E: codex-rs/core/src/tools/spec.rs:268]
-3. `build_tool_search_entries` 先按 canonical tool name 排序 deferred MCP tools，再追加 dynamic tools。[E: codex-rs/core/src/tools/tool_search_entry.rs:25][E: codex-rs/core/src/tools/tool_search_entry.rs:40][E: codex-rs/core/src/tools/tool_search_entry.rs:42]
-4. MCP search entry 的 search text 包含 canonical name、callable name、server name、description、connector info、plugin display names 和 input schema property names。[E: codex-rs/core/src/tools/tool_search_entry.rs:79][E: codex-rs/core/src/tools/tool_search_entry.rs:83][E: codex-rs/core/src/tools/tool_search_entry.rs:92][E: codex-rs/core/src/tools/tool_search_entry.rs:126]
-5. dynamic search entry 的 search text 包含 name、name 的 underscore 替换版本、description、namespace 和 input schema property names。[E: codex-rs/core/src/tools/tool_search_entry.rs:132][E: codex-rs/core/src/tools/tool_search_entry.rs:147]
-6. handler trim query、应用默认 limit、拒绝空 query 或 limit 0。[E: codex-rs/core/src/tools/handlers/tool_search.rs:66][E: codex-rs/core/src/tools/handlers/tool_search.rs:70][E: codex-rs/core/src/tools/handlers/tool_search.rs:73][E: codex-rs/core/src/tools/handlers/tool_search.rs:75]
-7. handler 用 BM25 `search_engine.search(query, limit)` 找 entries，并把结果转成 `LoadableToolSpec`。[E: codex-rs/core/src/tools/handlers/tool_search.rs:110][E: codex-rs/core/src/tools/handlers/tool_search.rs:141]
-8. 如果默认 limit 命中 `computer-use` bucket，handler 会扩大搜索到 20 并按 bucket 限流。[E: codex-rs/core/src/tools/handlers/tool_search.rs:19][E: codex-rs/core/src/tools/handlers/tool_search.rs:119][E: codex-rs/core/src/tools/handlers/tool_search.rs:123][E: codex-rs/core/src/tools/handlers/tool_search.rs:133]
-
-## 9 设计动机·edge·历史
-
-`tool_search` 把低频或大量工具延迟暴露，减少初始 tool list 的上下文占用，同时仍允许模型按需求加载工具。[E: codex-rs/tools/src/tool_discovery.rs:192][I]  
-MCP search result 通过 `mcp_tool_to_deferred_responses_api_tool` 设置 `defer_loading: true`，让返回的 namespace tool 仍带 deferred 标记。[E: codex-rs/tools/src/responses_api.rs:131][E: codex-rs/tools/src/responses_api.rs:138]  
-dynamic tool search result 复用 `dynamic_tool_to_loadable_tool_spec`，如果 dynamic tool 有 namespace 就返回 namespace spec，否则返回 function spec。[E: codex-rs/tools/src/responses_api.rs:77][E: codex-rs/tools/src/responses_api.rs:82][E: codex-rs/tools/src/responses_api.rs:88]  
-`tool_search` 与 `tool_suggest` 分工不同：`tool_search` 查找当前 thread/连接中已经可 deferred loading 的 tools，`tool_suggest` 请求用户安装或启用缺失 connector/plugin。[E: codex-rs/tools/src/tool_discovery.rs:192][E: codex-rs/tools/src/tool_discovery.rs:311]
+1. router 解析 Responses `ToolSearchCall`，将 JSON arguments 反序列化为 `SearchToolCallParams`。[E: codex-rs/core/src/tools/router.rs:129][E: codex-rs/core/src/tools/router.rs:135][E: codex-rs/core/src/tools/router.rs:136]
+2. handler 只接受 `ToolPayload::ToolSearch`，收到其它 payload 是 fatal unsupported payload。[E: codex-rs/core/src/tools/handlers/tool_search.rs:122][E: codex-rs/core/src/tools/handlers/tool_search.rs:123][E: codex-rs/core/src/tools/handlers/tool_search.rs:125][E: codex-rs/core/src/tools/handlers/tool_search.rs:126]
+3. 空 query 和 `limit == 0` 会返回给模型的错误；空 search index 会成功返回空 tools。[E: codex-rs/core/src/tools/handlers/tool_search.rs:131][E: codex-rs/core/src/tools/handlers/tool_search.rs:132][E: codex-rs/core/src/tools/handlers/tool_search.rs:139][E: codex-rs/core/src/tools/handlers/tool_search.rs:145][E: codex-rs/core/src/tools/handlers/tool_search.rs:146]
+4. 非空索引则执行 BM25 search 并返回 `ToolSearchOutput { tools }`。[E: codex-rs/core/src/tools/handlers/tool_search.rs:149][E: codex-rs/core/src/tools/handlers/tool_search.rs:151][E: codex-rs/core/src/tools/handlers/tool_search.rs:163][E: codex-rs/core/src/tools/handlers/tool_search.rs:165]
 
 ## Sources
 
-- `codex-rs/tools/src/tool_discovery.rs`
-- `codex-rs/tools/src/tool_spec.rs`
-- `codex-rs/tools/src/tool_registry_plan.rs`
-- `codex-rs/tools/src/tool_config.rs`
-- `codex-rs/features/src/lib.rs`
-- `codex-rs/tools/src/responses_api.rs`
-- `codex-rs/core/src/tools/spec.rs`
+- `codex-rs/core/src/tools/spec_plan.rs`
+- `codex-rs/core/src/tools/handlers/tool_search_spec.rs`
 - `codex-rs/core/src/tools/handlers/tool_search.rs`
-- `codex-rs/core/src/tools/tool_search_entry.rs`
+- `codex-rs/core/src/tools/handlers/dynamic.rs`
+- `codex-rs/core/src/tools/handlers/extension_tools.rs`
+- `codex-rs/core/src/tools/handlers/mcp.rs`
+- `codex-rs/core/src/tools/handlers/multi_agents.rs`
+- `codex-rs/core/src/tools/handlers/multi_agents/spawn.rs`
 - `codex-rs/core/src/tools/context.rs`
+- `codex-rs/core/src/tools/router.rs`
+- `codex-rs/tools/src/tool_discovery.rs`
+- `codex-rs/tools/src/tool_executor.rs`
+- `codex-rs/tools/src/tool_payload.rs`
+- `codex-rs/tools/src/tool_search.rs`
+- `codex-rs/tools/src/tool_spec.rs`
+- `codex-rs/tools/src/responses_api.rs`
 - `codex-rs/protocol/src/models.rs`
 
 ## 相关
 
-- [tool_suggest 工具](tool-suggest.md)
+- [list_available_plugins_to_install 工具](list-available-plugins-to-install.md)
+- [request_plugin_install 工具](request-plugin-install.md)
 - [MCP namespace 工具](mcp-namespace-tools.md)
 - [dynamic 工具](dynamic-tools.md)
 - [工具系统机制](../../subsystems/core/tool-system.md)

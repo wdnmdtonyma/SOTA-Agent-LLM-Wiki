@@ -46,7 +46,7 @@ tools/            lint.mjs(L1 机械校验)· reconcile.mjs(登记新节点)
 
 - **语言**:中文讲解;代码 / 字段 / 类型 / crate 名 / 文件路径 / 协议方法名一律保留英文。
 - **源路径基准**:一律相对 `Best/codex/`(如 `codex-rs/core/src/...`、`sdk/typescript/src/...`、`docs/config.md`)。
-- **工具 ground truth**:工具集以 `codex-rs/tools/src/tool_registry_plan.rs`(`build_tool_registry_plan`)的装配为准,不以 survey 清单为准。
+- **工具 ground truth**:工具集以 `codex-rs/core/src/tools/spec_plan.rs`(`build_tool_router` → `add_tool_sources`)的装配为准,handler 通常位于 `codex-rs/core/src/tools/handlers/`,不以 survey 清单为准。
 - **写作/机读/lint 规范**:见 `conventions.md`。
 
 ## 方法 & 状态
@@ -56,7 +56,7 @@ tools/            lint.mjs(L1 机械校验)· reconcile.mjs(登记新节点)
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱(7)+ worked traces(3) | 10 | ⬜ 规划 |
-| T1 surface | tools(38)+ slash(6)+ cli(3)+ config(8)+ app-server(9)+ sdk(6) | 70 | ⬜ 规划 |
+| T1 surface | tools(37)+ slash(6)+ cli(3)+ config(8)+ app-server(9)+ sdk(6) | 69 | ⬜ 重核中 |
 | T2 subsystems | core(19)/exec-sandbox(11)/mcp(6)/providers(10)/tui(9)/app-server(4)/config-auth(8)/cloud(3)/platform(8) | 78 | ⬜ 规划 |
 | T3 reference | 协议 Op/Event catalog + session-tasks + 数据模型 + crate 索引(97)+ glossary 等 | 12 | ⬜ 规划 |
 

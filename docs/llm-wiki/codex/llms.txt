@@ -14,75 +14,75 @@
 - [进程与 CLI 生命周期](spine/process-lifecycle.md): arg0 dispatch → clap → 子命令分派 → TUI/exec/app-server/mcp-server — cli/src/main.rs · arg0/
 - [一次 turn 全过程](spine/turn-end-to-end.md): UserInput → context 装配 → 模型流 → 工具 → event → 续跑 — core/src/session/turn.rs
 - [工具调用解剖](spine/tool-call-anatomy.md): router → ToolHandlerKind dispatch → 执行 → event — core/src/tools/router.rs · tools/
+- [Ext 扩展插件系统](spine/extension-system.md): ExtensionRegistry + contributor traits + extension tools 装配链 — ext/extension-api/ · core/src/tools/spec_plan.rs · app-server/src/extensions.rs
 - [上下文与 compaction](spine/context-and-compaction.md): 上下文装配 + auto/manual compaction + memory 注入 — core/src/context_manager/
 - [Shell 执行流](spine/shell-exec-flow.md): tool call → execpolicy → sandbox transform → spawn → 流式输出 — exec-server/ · sandboxing/
 
 ### 端到端 worked traces(具体范例)
 - [trace:apply_patch 落盘](spine/trace-apply-patch.md): apply_patch 从 dispatch → 解析 hunk → 沙箱写盘 → diff event — tools/src/apply_patch_tool.rs · apply-patch/
 - [trace:MCP 工具调用](spine/trace-mcp-call.md): 外部 MCP server 工具 发现 → 注册 → 调用路由 → 结果回流 — codex-mcp/ · rmcp-client/
-- [trace:spawn 子 agent](spine/trace-subagent.md): spawn_agent → 子 agent 循环 → mailbox/wait_agent → 结果回流 — tools/src/agent_tool.rs · core/
+- [trace:spawn 子 agent](spine/trace-subagent.md): spawn_agent → 子 agent 循环 → mailbox/wait_agent → 结果回流 — core/src/tools/handlers/multi_agents*/ · core/
 
-## T1 — Surface / Tools(每工具一节点,38 — 已过 audit-A 对照 tool_registry_plan.rs)
+## T1 — Surface / Tools(每工具一节点,37 — 目标 HEAD 对照 spec_plan.rs 重核中)
 
 ### Shell 执行
-- [shell](surface/tools/shell.md): 默认 shell 执行(command 数组)— tools/src/local_tool.rs(create_shell_tool)
-- [exec_command](surface/tools/exec-command.md): unified-exec 单命令执行(TTY/管道)— tools/src/local_tool.rs(create_exec_command_tool)
-- [write_stdin](surface/tools/write-stdin.md): 向运行中的 exec 会话写 stdin 并轮询 — tools/src/local_tool.rs(create_write_stdin_tool)
-- [shell_command](surface/tools/shell-command.md): shell-command 模式执行(含审批字段)— tools/src/local_tool.rs(create_shell_command_tool)
-- [local_shell](surface/tools/local-shell.md): OpenAI 内建 local_shell 工具(server 语义)— tools/src/tool_spec.rs(create_local_shell_tool)
+- [exec_command](surface/tools/exec-command.md): unified-exec 单命令执行(TTY/管道)— core/src/tools/handlers/unified_exec/exec_command.rs
+- [write_stdin](surface/tools/write-stdin.md): 向运行中的 exec 会话写 stdin 并轮询 — core/src/tools/handlers/unified_exec/write_stdin.rs
+- [shell_command](surface/tools/shell-command.md): shell-command 模式执行(含审批字段)— core/src/tools/handlers/shell/shell_command.rs
 
 ### 文件 / 编辑
-- [apply_patch](surface/tools/apply-patch.md): 补丁编辑(freeform Lark + json 两态)— tools/src/apply_patch_tool.rs · apply-patch/
-- [view_image](surface/tools/view-image.md): 把本地图片喂给模型(detail 档位)— tools/src/view_image.rs
-- [list_dir](surface/tools/list-dir.md): 目录列举(offset/limit/depth)— tools/src/utility_tool.rs(create_list_dir_tool)
+- [apply_patch](surface/tools/apply-patch.md): 补丁编辑(freeform Lark)— core/src/tools/handlers/apply_patch.rs · apply-patch/
+- [view_image](surface/tools/view-image.md): 把本地图片喂给模型(detail 档位)— core/src/tools/handlers/view_image.rs
 
-### JS / Code-mode
-- [js_repl](surface/tools/js-repl.md): 持久 Node.js kernel(freeform,top-level await)— tools/src/js_repl_tool.rs
-- [js_repl_reset](surface/tools/js-repl-reset.md): 重置 js_repl kernel — tools/src/js_repl_tool.rs(create_js_repl_reset_tool)
-- [exec (code-mode)](surface/tools/code-mode-exec.md): code-mode 沙箱里跑代码,封装嵌套工具 — tools/src/code_mode.rs · code-mode/
-- [wait (code-mode)](surface/tools/code-mode-wait.md): 轮询/终止 code-mode 异步 cell — tools/src/code_mode.rs(create_wait_tool)
+### Code-mode
+- [exec (code-mode)](surface/tools/code-mode-exec.md): code-mode 沙箱里跑代码,封装嵌套工具 — core/src/tools/code_mode/execute_handler.rs
+- [wait (code-mode)](surface/tools/code-mode-wait.md): 轮询/终止 code-mode 异步 cell — core/src/tools/code_mode/wait_handler.rs
 
 ### 计划 / 用户交互
-- [update_plan](surface/tools/update-plan.md): 维护计划步骤(pending/in_progress/completed)— tools/src/plan_tool.rs
-- [request_user_input](surface/tools/request-user-input.md): 向用户提问(多选 + 自由文本)— tools/src/request_user_input_tool.rs
-- [request_permissions](surface/tools/request-permissions.md): 请求提权/权限的审批门 — tools/src/local_tool.rs(create_request_permissions_tool)
+- [update_plan](surface/tools/update-plan.md): 维护计划步骤(pending/in_progress/completed)— core/src/tools/handlers/plan.rs
+- [request_user_input](surface/tools/request-user-input.md): 向用户提问(多选 + 自由文本)— core/src/tools/handlers/request_user_input.rs
+- [request_permissions](surface/tools/request-permissions.md): 请求提权/权限的审批门 — core/src/tools/handlers/request_permissions.rs
+- [sleep](surface/tools/sleep.md): 模型可请求等待一段时间的工具 — core/src/tools/handlers/sleep.rs
+- [new_context](surface/tools/new-context.md): 打开新上下文窗口/预算相关工具 — core/src/tools/handlers/new_context_window.rs
+- [get_context_remaining](surface/tools/get-context-remaining.md): 查询剩余上下文预算 — core/src/tools/handlers/get_context_remaining.rs
 
 ### 多 agent(V2)
-- [spawn_agent (V2)](surface/tools/spawn-agent-v2.md): 任务式 spawn 子 agent(model 继承)— tools/src/agent_tool.rs(create_spawn_agent_tool_v2)
-- [send_message](surface/tools/send-message.md): 给子 agent 投消息(不触发 turn)— tools/src/agent_tool.rs(create_send_message_tool)
-- [followup_task](surface/tools/followup-task.md): 投消息并触发子 agent turn(可 interrupt)— tools/src/agent_tool.rs(create_followup_task_tool)
-- [wait_agent (V2)](surface/tools/wait-agent-v2.md): 等子 agent mailbox 更新/超时 — tools/src/agent_tool.rs(create_wait_agent_tool_v2)
-- [close_agent (V2)](surface/tools/close-agent-v2.md): 关闭子 agent — tools/src/agent_tool.rs(create_close_agent_tool_v2)
-- [list_agents](surface/tools/list-agents.md): 列子 agent 及状态 — tools/src/agent_tool.rs(create_list_agents_tool)
+- [spawn_agent (V2)](surface/tools/spawn-agent-v2.md): 任务式 spawn 子 agent(model 继承)— core/src/tools/handlers/multi_agents_v2/spawn.rs
+- [send_message](surface/tools/send-message.md): 给子 agent 投消息(不触发 turn)— core/src/tools/handlers/multi_agents_v2/send_message.rs
+- [followup_task](surface/tools/followup-task.md): 投消息并触发子 agent turn(可 interrupt)— core/src/tools/handlers/multi_agents_v2/followup_task.rs
+- [wait_agent (V2)](surface/tools/wait-agent-v2.md): 等子 agent mailbox 更新/超时 — core/src/tools/handlers/multi_agents_v2/wait.rs
+- [interrupt_agent (V2)](surface/tools/interrupt-agent-v2.md): 中断子 agent 当前 turn — core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs
+- [list_agents](surface/tools/list-agents.md): 列子 agent 及状态 — core/src/tools/handlers/multi_agents_v2/list_agents.rs
 
 ### 多 agent(V1,legacy)
-- [spawn_agent (V1)](surface/tools/spawn-agent-v1.md): V1 spawn(agent id)— tools/src/agent_tool.rs(create_spawn_agent_tool_v1)
-- [send_input (V1)](surface/tools/send-input-v1.md): V1 给子 agent 发输入 — tools/src/agent_tool.rs(create_send_input_tool_v1)
-- [wait_agent (V1)](surface/tools/wait-agent-v1.md): V1 等子 agent — tools/src/agent_tool.rs(create_wait_agent_tool_v1)
-- [close_agent (V1)](surface/tools/close-agent-v1.md): V1 关闭子 agent — tools/src/agent_tool.rs(create_close_agent_tool_v1)
-- [resume_agent (V1)](surface/tools/resume-agent-v1.md): V1 恢复子 agent — tools/src/agent_tool.rs(create_resume_agent_tool)
+- [spawn_agent (V1)](surface/tools/spawn-agent-v1.md): V1 spawn(agent id)— core/src/tools/handlers/multi_agents/spawn.rs
+- [send_input (V1)](surface/tools/send-input-v1.md): V1 给子 agent 发输入 — core/src/tools/handlers/multi_agents/send_input.rs
+- [wait_agent (V1)](surface/tools/wait-agent-v1.md): V1 等子 agent — core/src/tools/handlers/multi_agents/wait.rs
+- [close_agent (V1)](surface/tools/close-agent-v1.md): V1 关闭子 agent — core/src/tools/handlers/multi_agents/close_agent.rs
+- [resume_agent (V1)](surface/tools/resume-agent-v1.md): V1 恢复子 agent — core/src/tools/handlers/multi_agents/resume_agent.rs
 
 ### Agent 批处理 jobs
-- [spawn_agents_on_csv](surface/tools/spawn-agents-on-csv.md): 按 CSV 行并行 spawn N 子 agent — tools/src/agent_job_tool.rs(create_spawn_agents_on_csv_tool)
-- [report_agent_job_result](surface/tools/report-agent-job-result.md): worker 回报 job 结果 — tools/src/agent_job_tool.rs(create_report_agent_job_result_tool)
+- [spawn_agents_on_csv](surface/tools/spawn-agents-on-csv.md): 按 CSV 行并行 spawn N 子 agent — core/src/tools/handlers/agent_jobs/spawn_agents_on_csv.rs
+- [report_agent_job_result](surface/tools/report-agent-job-result.md): worker 回报 job 结果 — core/src/tools/handlers/agent_jobs/report_agent_job_result.rs
 
 ### MCP 资源
-- [list_mcp_resources](surface/tools/list-mcp-resources.md): 列 MCP server 资源 — tools/src/mcp_resource_tool.rs
-- [list_mcp_resource_templates](surface/tools/list-mcp-resource-templates.md): 列 MCP 资源模板 — tools/src/mcp_resource_tool.rs
-- [read_mcp_resource](surface/tools/read-mcp-resource.md): 读 MCP 资源(server+uri)— tools/src/mcp_resource_tool.rs
+- [list_mcp_resources](surface/tools/list-mcp-resources.md): 列 MCP server 资源 — core/src/tools/handlers/mcp_resource/list_mcp_resources.rs
+- [list_mcp_resource_templates](surface/tools/list-mcp-resource-templates.md): 列 MCP 资源模板 — core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs
+- [read_mcp_resource](surface/tools/read-mcp-resource.md): 读 MCP 资源(server+uri)— core/src/tools/handlers/mcp_resource/read_mcp_resource.rs
 
 ### 发现 / API 内建
-- [tool_search](surface/tools/tool-search.md): 关键词发现并懒加载 deferred MCP/dynamic 工具 — tools/src/tool_discovery.rs
-- [tool_suggest](surface/tools/tool-suggest.md): 提示用户安装/启用 connector/plugin — tools/src/tool_discovery.rs
-- [web_search](surface/tools/web-search.md): 联网/缓存搜索(OpenAI 内建)— tools/src/tool_spec.rs(create_web_search_tool)
-- [image_generation](surface/tools/image-generation.md): 图片生成(OpenAI 内建)— tools/src/tool_spec.rs(create_image_generation_tool)
+- [tool_search](surface/tools/tool-search.md): 关键词发现并懒加载 deferred MCP/dynamic 工具 — core/src/tools/handlers/tool_search.rs
+- [list_available_plugins_to_install](surface/tools/list-available-plugins-to-install.md): 列出可安装 plugin/connector 候选 — core/src/tools/handlers/list_available_plugins_to_install.rs
+- [request_plugin_install](surface/tools/request-plugin-install.md): 请求用户安装 plugin/connector — core/src/tools/handlers/request_plugin_install.rs
+- [web_search](surface/tools/web-search.md): 联网/缓存搜索(hosted 或 extension-backed)— core/src/tools/hosted_spec.rs · ext/web-search/src/tool.rs
+- [image_generation](surface/tools/image-generation.md): 图片生成(hosted 或 extension-backed)— core/src/tools/hosted_spec.rs · ext/image-generation/src/tool.rs
 
 ### 测试 / 元
-- [test_sync_tool](surface/tools/test-sync-tool.md): 集成测试同步/barrier 工具 — tools/src/utility_tool.rs(create_test_sync_tool)
-- [MCP namespace 工具](surface/tools/mcp-namespace-tools.md): 外部 MCP server 工具按 namespace 合并(动态)— tools/src/mcp_tool.rs · tool_registry_plan.rs
-- [dynamic 工具](surface/tools/dynamic-tools.md): 协议传入的 per-session 自定义工具 — tools/src/dynamic_tool.rs · tool_registry_plan.rs
+- [test_sync_tool](surface/tools/test-sync-tool.md): 集成测试同步/barrier 工具 — core/src/tools/handlers/test_sync.rs
+- [MCP namespace 工具](surface/tools/mcp-namespace-tools.md): 外部 MCP server 工具按 namespace 合并(动态)— core/src/tools/handlers/mcp.rs · core/src/tools/spec_plan.rs
+- [dynamic 工具](surface/tools/dynamic-tools.md): 协议传入的 per-session 自定义工具 — core/src/tools/handlers/dynamic.rs · core/src/tools/spec_plan.rs
 
-> 工具系统机制(ToolSpec/ToolHandlerKind/registry/discovery/code-mode)见 `subsystems/core/tool-system.md`。
+> 工具系统机制(ToolSpec/CoreToolRuntime/registry/discovery/code-mode)见 `subsystems/core/tool-system.md`。
 
 ## T1 — Surface / Slash 命令(按类目 catalog,6 节点,覆盖 42 命令)
 - [会话与线程命令](surface/slash-commands/session-thread.md): /new /clear /resume /fork /compact /rename /rollout /quit … — tui/src/slash_command.rs
@@ -92,8 +92,9 @@
 - [配置与系统命令](surface/slash-commands/config-system.md): /status /debug-config /settings /memories /title /statusline /sandbox-* /logout /feedback /ps /stop — tui/src/slash_command.rs · feedback/
 - [实时与调试命令](surface/slash-commands/realtime-debug.md): /realtime /side /agent /debug-* /test-* — tui/src/slash_command.rs
 
-## T1 — Surface / CLI(3 节点,覆盖 22 子命令 + ~18 全局 flag)
+## T1 — Surface / CLI(4 节点,覆盖 22 子命令 + ~18 全局 flag + external-agent import)
 - [子命令 catalog](surface/cli/subcommands.md): exec/login/logout/mcp/plugin/mcp-server/app-server/app/completion/sandbox/debug/execpolicy/apply/resume/fork/cloud/responses*/exec-server/features … — cli/src/main.rs
+- [从外部 agent 导入](surface/cli/external-agent-import.md): /import + externalAgentConfig/* + .claude/.mcp.json/hooks/commands/subagents/sessions migration — external-agent-migration/ · external-agent-sessions/ · app-server/src/config/external_agent_config.rs
 - [全局 flag](surface/cli/global-flags.md): --model --profile -c/--config --full-auto --sandbox-mode --approval-policy --add-dir --oss --remote … — cli/src/main.rs · utils/cli/src/shared_options.rs
 - [exec 非交互模式](surface/cli/exec-mode.md): `codex exec` 标志 + --json + event processors — exec/src/cli.rs · exec/src/lib.rs · docs/exec.md
 
@@ -101,7 +102,7 @@
 - [模型与 provider 设置](surface/config/model-provider.md): model · model_provider · model_providers · context_window · reasoning_effort/summary/verbosity · personality · service_tier · *_base_url — config/src/config_toml.rs
 - [审批与沙箱设置](surface/config/approval-sandbox.md): approval_policy · sandbox_mode · sandbox_workspace_write · permissions · shell_environment_policy · allow_login_shell — config/src/config_toml.rs · docs/sandbox.md
 - [认证与账户设置](surface/config/auth-account.md): forced_chatgpt_workspace_id · forced_login_method · cli_auth_credentials_store · mcp_oauth_* — config/src/config_toml.rs
-- [MCP 与工具设置](surface/config/mcp-tools.md): mcp_servers · tools · tool_suggest · web_search · tool_output_token_limit · js_repl_* — config/src/config_toml.rs · docs/config.md
+- [MCP 与工具设置](surface/config/mcp-tools.md): mcp_servers · tools · tool_search/request_plugin_install · web_search · tool_output_token_limit — config/src/config_toml.rs · docs/config.md
 - [agents 与 memory 设置](surface/config/agents-memory.md): agents · memories · compact_prompt · project_doc_* — config/src/config_toml.rs
 - [UI / TUI / 实时设置](surface/config/ui-tui.md): tui · hide_agent_reasoning · file_opener · audio · realtime* — config/src/config_toml.rs
 - [skills/plugins/features 设置](surface/config/skills-plugins-features.md): skills · plugins · marketplaces · features · suppress_unstable_features_warning — config/src/config_toml.rs
@@ -122,12 +123,12 @@
 - [TS SDK 总览](surface/sdk/ts-overview.md): Codex · Thread · run/runStreamed · CodexOptions/ThreadOptions/TurnOptions — sdk/typescript/src/
 - [TS 事件与 item](surface/sdk/ts-events-items.md): ThreadEvent / ThreadItem union — sdk/typescript/src/events.ts · items.ts
 - [TS 结构化输出](surface/sdk/ts-structured-output.md): outputSchema · Zod 集成 — sdk/typescript/src/
-- [Python SDK 总览](surface/sdk/py-overview.md): Codex(sync/async)· Thread · TurnHandle · AppServerClient — sdk/python/src/codex_app_server/api.py
-- [Python 输入与错误](surface/sdk/py-inputs-errors.md): Input 变体 · 错误层级 · retry_on_overload — sdk/python/src/codex_app_server/
-- [SDK 架构](surface/sdk/sdk-architecture.md): 两 SDK 都 spawn codex 二进制走 app-server 协议;python-runtime 打包 — sdk/
+- [Python SDK 总览](surface/sdk/py-overview.md): openai_codex · Codex/AsyncCodex · Thread/TurnHandle · CodexClient — sdk/python/src/openai_codex/api.py
+- [Python 输入与错误](surface/sdk/py-inputs-errors.md): Input 变体 · 错误层级 · retry_on_overload · MessageRouter — sdk/python/src/openai_codex/
+- [SDK 架构](surface/sdk/sdk-architecture.md): TS 走 codex exec JSONL; Python 走 app-server stdio JSON-RPC — sdk/
 
 ## T2 — Subsystems / Core(19)
-- [工具系统机制](subsystems/core/tool-system.md): ToolSpec/ToolDefinition/JsonSchema/ToolHandlerKind(33)/registry/discovery/dynamic/code-mode — tools/src/
+- [工具系统机制](subsystems/core/tool-system.md): ToolSpec/JsonSchema/CoreToolRuntime/registry/discovery/dynamic/code-mode — core/src/tools/
 - [Turn 引擎](subsystems/core/turn-engine.md): run_turn 生成器循环 — core/src/session/turn.rs
 - [Session 生命周期](subsystems/core/session-lifecycle.md): Session · active_turn · handlers 分派 — core/src/session/
 - [Context manager](subsystems/core/context-manager.md): 对话上下文装配 + 注入机制 — core/src/context_manager/
@@ -147,13 +148,14 @@
 - [Thread store](subsystems/core/thread-store.md): local/remote 存储抽象 — thread-store/
 - [Trace bundle](subsystems/core/trace-bundle.md): 确定性 replay + reducer — rollout-trace/
 
-## T2 — Subsystems / Exec & Sandbox(11)
+## T2 — Subsystems / Exec & Sandbox(12)
 - [执行与沙箱总览](subsystems/exec-sandbox/overview.md): SandboxType(4)+ exec 管线 — sandboxing/src/manager.rs
 - [exec-server](subsystems/exec-sandbox/exec-server.md): RPC server · process/fs handler · session registry · PTY — exec-server/ · utils/pty/
+- [Executor file system](subsystems/exec-sandbox/file-system.md): local/remote filesystem trait + sandbox context — file-system/
 - [execpolicy DSL](subsystems/exec-sandbox/execpolicy-dsl.md): 策略语言 · 规则 · Decision(Allow/Prompt/Forbidden)· legacy — execpolicy/ · execpolicy-legacy/
 - [apply-patch 引擎](subsystems/exec-sandbox/apply-patch-engine.md): parser · Hunk(Add/Update/Delete/Move)· 应用 — apply-patch/src/parser.rs · lib.rs
 - [Seatbelt 沙箱(macOS)](subsystems/exec-sandbox/sandbox-seatbelt.md): sandbox-exec + .sbpl — sandboxing/src/seatbelt.rs
-- [Linux 沙箱](subsystems/exec-sandbox/sandbox-linux.md): Landlock + seccomp + bubblewrap — linux-sandbox/
+- [Linux 沙箱](subsystems/exec-sandbox/sandbox-linux.md): Landlock + seccomp + system/bundled bubblewrap — linux-sandbox/ · bwrap/
 - [Windows 沙箱](subsystems/exec-sandbox/sandbox-windows.md): restricted token · ACL · ConPTY — windows-sandbox-rs/
 - [Shell 解析与安全](subsystems/exec-sandbox/shell-parsing.md): bash/PowerShell 解析 + danger 检测 — shell-command/
 - [Shell 提权](subsystems/exec-sandbox/shell-escalation.md): unix execve 拦截 + 提权协议 — shell-escalation/
@@ -192,16 +194,16 @@
 - [渲染与主题](subsystems/tui/rendering-theming.md): markdown_render · highlight · ansi-escape · wrapping — tui/src/render/ · ansi-escape/
 
 ## T2 — Subsystems / App-Server(4)
-- [Message processor](subsystems/app-server/message-processor.md): 请求分派 — app-server/src/codex_message_processor.rs
-- [会话管理](subsystems/app-server/session-management.md): thread/turn 服务端生命周期 — app-server/src/
-- [传输层](subsystems/app-server/transport.md): stdio vs websocket · stdio-to-uds — app-server/src/transport/ · stdio-to-uds/ · uds/
-- [App-server 客户端库](subsystems/app-server/client-libs.md): Rust 客户端(tui/exec 消费)+ 测试/调试 client — app-server-client/ · app-server-test-client/ · debug-client/
+- [Message processor](subsystems/app-server/message-processor.md): 请求分派 — app-server/src/message_processor.rs · request_processors/
+- [会话管理](subsystems/app-server/session-management.md): connection/thread lifecycle — app-server/src/lib.rs · thread_state.rs · thread_status.rs
+- [传输层](subsystems/app-server/transport.md): stdio/unix/websocket transport — app-server-transport/src/transport/ · app-server/src/transport.rs
+- [App-server 客户端库](subsystems/app-server/client-libs.md): Rust in-process/remote facade + 测试 harness — app-server-client/ · app-server-test-client/
 
 ## T2 — Subsystems / Config & Auth(8)
 - [配置加载](subsystems/config-auth/config-loading.md): 优先级 · layer stack · 深合并 — config/src/state.rs · merge.rs
 - [Profiles 与项目信任](subsystems/config-auth/profiles.md): profiles · project trust — config/src/profile_toml.rs
 - [认证流程](subsystems/config-auth/auth-flows.md): ChatGPT OAuth · device code · api key — login/src/auth/manager.rs · docs/authentication.md
-- [凭据存储](subsystems/config-auth/credential-storage.md): file/keyring/auto/ephemeral · device-key · secrets — login/ · keyring-store/ · secrets/ · device-key/
+- [凭据存储](subsystems/config-auth/credential-storage.md): file/direct-keyring/secrets-keyring/auto/ephemeral · secrets — login/ · keyring-store/ · secrets/
 - [Hooks 系统](subsystems/config-auth/hooks.md): AfterAgent / AfterToolUse 生命周期钩子 + 触发点 — hooks/
 - [Skills 系统](subsystems/config-auth/skills.md): 加载/渲染/注入 — skills/ · core-skills/ · docs/skills.md
 - [Plugins 系统](subsystems/config-auth/plugins.md): manifest · marketplace · 安装 — plugin/ · core-plugins/
@@ -210,10 +212,10 @@
 ## T2 — Subsystems / Cloud(3)
 - [Cloud tasks](subsystems/cloud/cloud-tasks.md): 远端任务 list/apply/review — cloud-tasks/
 - [Cloud task API](subsystems/cloud/cloud-task-api.md): CloudBackend trait · TaskSummary/Status/ApplyOutcome — cloud-tasks-client/
-- [Cloud requirements](subsystems/cloud/cloud-requirements.md): 企业托管 config(签名缓存)— cloud-requirements/
+- [Cloud config](subsystems/cloud/cloud-config.md): 企业托管 config bundle · 签名缓存 · refresh — cloud-config/
 
 ## T2 — Subsystems / Platform(8)
-- [Git utils](subsystems/platform/git-utils.md): ghost commit · branch · apply · baseline — git-utils/
+- [Git utils](subsystems/platform/git-utils.md): apply · branch · baseline · fsmonitor — git-utils/
 - [File search](subsystems/platform/file-search.md): 模糊文件搜索 — file-search/
 - [遥测 / OTEL](subsystems/platform/telemetry-otel.md): 导出器(Statsig/OTLP)· 指标 — otel/
 - [Analytics](subsystems/platform/analytics.md): events · facts · reducer — analytics/

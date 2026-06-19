@@ -5,72 +5,76 @@ kind: subsystem
 tier: T2
 source: [codex-rs/login/src/auth/manager.rs, codex-rs/login/src/device_code_auth.rs, codex-rs/login/src/server.rs, codex-rs/login/src/lib.rs, docs/authentication.md]
 symbols: [CodexAuth, AuthManager, login_with_api_key, run_login_server, run_device_code_login, complete_device_code_login, enforce_login_restrictions]
-related: [subsys.config-auth.credential-storage, config.auth-account, subsys.providers.provider-openai, subsys.cloud.cloud-requirements]
+related: [subsys.config-auth.credential-storage, config.auth-account, subsys.providers.provider-openai, subsys.cloud.cloud-config]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> Codex 认证流程支持三条主路径：ChatGPT OAuth browser callback、ChatGPT device code、API key；三者最终都被 `CodexAuth`/`AuthManager` 统一成 runtime auth snapshot，并受 forced login method 与 workspace restrictions 约束。[E: codex-rs/login/src/auth/manager.rs:46][E: codex-rs/login/src/server.rs:132][E: codex-rs/login/src/device_code_auth.rs:224][E: codex-rs/login/src/auth/manager.rs:511]
+> Codex 认证流程把 API key、ChatGPT OAuth/device code、external ChatGPT tokens、agent identity、personal access token 和 Bedrock API key 都统一为 `CodexAuth` snapshots；`AuthManager` 负责缓存、env/external auth precedence、forced login/workspace restrictions 和 token refresh。[E: codex-rs/login/src/auth/manager.rs:57][E: codex-rs/login/src/auth/manager.rs:59][E: codex-rs/login/src/auth/manager.rs:790][E: codex-rs/login/src/auth/manager.rs:800][E: codex-rs/login/src/auth/manager.rs:1518][E: codex-rs/login/src/auth/manager.rs:1724]
 
 ## 能回答的问题
 
-- ChatGPT OAuth browser flow 怎样生成 authorize URL、校验 state、exchange code 并保存 token？
-- device code flow 怎样请求 user code、轮询 token、再复用 token exchange/persist 逻辑？
-- API key login 写入 `auth.json` 的字段是什么？
-- `AuthManager::auth()` 怎样处理外部 API key、cached auth 和 ChatGPT token refresh？
-- forced login method 与 forced ChatGPT workspace id 怎样限制已登录账号？
+- `CodexAuth` 现在有哪些 runtime auth variants？
+- ChatGPT browser OAuth flow 怎样生成 authorize URL、校验 callback state、exchange code 并持久化 token？
+- device code flow 怎样轮询 token 并复用 token exchange/persist 流程？
+- API key/env/external auth 与 cached auth 的 precedence 如何体现？
+- forced login method 和 workspace restriction 会怎样拒绝/登出不匹配 auth？
+- ChatGPT token refresh 怎样避免并发刷新和覆盖新登录账号？
 
 ## 职责边界
 
-auth-flows 节点覆盖登录/刷新/限制的控制流，不覆盖凭据落盘 backend 的细节；`subsys.config-auth.credential-storage` 解释 `auth.json`、keyring、ephemeral storage、secret store 和 device key storage。`CodexAuth` 是 runtime auth enum，包含 `ApiKey`、`Chatgpt`、`ChatgptAuthTokens` 和 `AgentIdentity` 四种形态。[E: codex-rs/login/src/auth/manager.rs:46][E: codex-rs/login/src/auth/manager.rs:49][E: codex-rs/login/src/auth/manager.rs:51][E: codex-rs/login/src/auth/manager.rs:52]
+auth-flows 节点覆盖登录、限制、refresh 和 runtime auth snapshot，不覆盖凭据落盘 backend 的细节；`subsys.config-auth.credential-storage` 解释 `auth.json`、keyring/direct-vs-secrets backend、ephemeral storage 和 secret store。[E: codex-rs/login/src/auth/manager.rs:790][E: codex-rs/login/src/auth/manager.rs:1518]
 
-`docs/authentication.md` 当前只把用户导向 OpenAI developer docs，而不是定义本地 auth wire protocol。[E: docs/authentication.md:1][E: docs/authentication.md:3] 因此本节点的行为事实以 `codex-rs/login` 源码为准。
+`docs/authentication.md` 当前只是把用户导向 OpenAI developer docs，不定义本地 auth wire protocol；源码事实以 `codex-rs/login` 为准。[E: docs/authentication.md:1][E: docs/authentication.md:3]
 
 ## 数据模型
 
-`ApiKeyAuth` 保存 `api_key`；`ChatgptAuth` 保存 shared `ChatgptAuthState` 与 auth storage；`ChatgptAuthTokens` 保存同一个 state 形态，`login_with_chatgpt_auth_tokens` 会把外部 token 保存到 ephemeral store。[E: codex-rs/login/src/auth/manager.rs:61][E: codex-rs/login/src/auth/manager.rs:66][E: codex-rs/login/src/auth/manager.rs:72][E: codex-rs/login/src/auth/manager.rs:77][E: codex-rs/login/src/auth/manager.rs:527][E: codex-rs/login/src/auth/manager.rs:539][E: codex-rs/login/src/auth/manager.rs:542] `AuthConfig` 聚合 `codex_home`、`auth_credentials_store_mode`、`forced_login_method` 和 `forced_chatgpt_workspace_id`。[E: codex-rs/login/src/auth/manager.rs:569][E: codex-rs/login/src/auth/manager.rs:571][E: codex-rs/login/src/auth/manager.rs:574]
+`CodexAuth` 当前 variants 是 `ApiKey`、`Chatgpt`、`ChatgptAuthTokens`、`AgentIdentity`、`PersonalAccessToken` 和 `BedrockApiKey`；`ApiKeyAuth` 只持有 API key 字符串，`ChatgptAuth` 持有 shared state 和 storage，`ChatgptAuthTokens` 只持有 shared state。[E: codex-rs/login/src/auth/manager.rs:59][E: codex-rs/login/src/auth/manager.rs:60][E: codex-rs/login/src/auth/manager.rs:61][E: codex-rs/login/src/auth/manager.rs:62][E: codex-rs/login/src/auth/manager.rs:63][E: codex-rs/login/src/auth/manager.rs:64][E: codex-rs/login/src/auth/manager.rs:65][E: codex-rs/login/src/auth/manager.rs:79][E: codex-rs/login/src/auth/manager.rs:84][E: codex-rs/login/src/auth/manager.rs:90]
 
-`AuthManager` 的源码注释把它定义为 auth.json-derived authentication data 的 single source of truth，并说明它加载一次后向程序其他部分发放 cloned `CodexAuth` snapshot。[E: codex-rs/login/src/auth/manager.rs:1179][E: codex-rs/login/src/auth/manager.rs:1181] `AuthManager` 字段包含 codex_home、cached inner auth、是否启用 API key env、credential store mode、workspace restriction、ChatGPT base URL、refresh semaphore 和 external auth provider。[E: codex-rs/login/src/auth/manager.rs:1187][E: codex-rs/login/src/auth/manager.rs:1195]
+`AuthConfig` 聚合 codex_home、credential store mode、keyring backend、forced login method、ChatGPT base URL、agent identity authapi base URL 和 forced workspace ids。[E: codex-rs/login/src/auth/manager.rs:790][E: codex-rs/login/src/auth/manager.rs:791][E: codex-rs/login/src/auth/manager.rs:792][E: codex-rs/login/src/auth/manager.rs:793][E: codex-rs/login/src/auth/manager.rs:794][E: codex-rs/login/src/auth/manager.rs:795][E: codex-rs/login/src/auth/manager.rs:796][E: codex-rs/login/src/auth/manager.rs:797]
 
-## ChatGPT OAuth browser flow
+`AuthManager` 是 runtime cache owner；`auth()` 先尝试 external API key auth，再读取 cached auth，并只在 cached auth 需要 proactive refresh 时进入 guarded refresh path。[E: codex-rs/login/src/auth/manager.rs:1518][E: codex-rs/login/src/auth/manager.rs:1720][E: codex-rs/login/src/auth/manager.rs:1724][E: codex-rs/login/src/auth/manager.rs:1725][E: codex-rs/login/src/auth/manager.rs:1729][E: codex-rs/login/src/auth/manager.rs:1730]
 
-1. `run_login_server` 创建 PKCE verifier/challenge 与 CSRF state，绑定本地 callback listener，构造 authorize URL，然后尝试打开浏览器。[E: codex-rs/login/src/server.rs:132][E: codex-rs/login/src/server.rs:141][E: codex-rs/login/src/server.rs:148][E: codex-rs/login/src/server.rs:160]
-2. `build_authorize_url` 写入 response_type、client_id、redirect_uri、scope、code_challenge、state，并附带 originator 信息。[E: codex-rs/login/src/server.rs:468][E: codex-rs/login/src/server.rs:477][E: codex-rs/login/src/server.rs:492]
-3. callback handler 校验 `state`，处理 OAuth error，再用 auth code 调 `exchange_code_for_tokens`。[E: codex-rs/login/src/server.rs:275][E: codex-rs/login/src/server.rs:303][E: codex-rs/login/src/server.rs:331]
-4. token exchange 使用 POST form 发送 grant_type、code、redirect_uri、client_id、code_verifier，并解析 JSON response。[E: codex-rs/login/src/server.rs:684][E: codex-rs/login/src/server.rs:697][E: codex-rs/login/src/server.rs:746]
-5. server flow 会检查 workspace restriction，并通过 `persist_tokens_async` 保存 tokens；如果 authorization server 同时返回 API key，persist 逻辑也能保存该 key。[E: codex-rs/login/src/server.rs:335][E: codex-rs/login/src/server.rs:347][E: codex-rs/login/src/server.rs:755]
+## Browser OAuth flow
 
-## ChatGPT device code flow
+1. `run_login_server` 生成 PKCE、state，绑定本地 callback server，并构造 `http://localhost:<port>/auth/callback` redirect URI 和 authorize URL。[E: codex-rs/login/src/server.rs:141][E: codex-rs/login/src/server.rs:142][E: codex-rs/login/src/server.rs:143][E: codex-rs/login/src/server.rs:145][E: codex-rs/login/src/server.rs:157][E: codex-rs/login/src/server.rs:158]
+2. `build_authorize_url` 写入 response_type、client_id、redirect_uri、scope、code_challenge、state、originator；有 forced workspace ids 时追加 `allowed_workspace_id`。[E: codex-rs/login/src/server.rs:485][E: codex-rs/login/src/server.rs:493][E: codex-rs/login/src/server.rs:494][E: codex-rs/login/src/server.rs:498][E: codex-rs/login/src/server.rs:503][E: codex-rs/login/src/server.rs:509][E: codex-rs/login/src/server.rs:512]
+3. Callback handler 校验 state，处理 OAuth error，要求 authorization code 存在，再调用 `exchange_code_for_tokens`。[E: codex-rs/login/src/server.rs:283][E: codex-rs/login/src/server.rs:287][E: codex-rs/login/src/server.rs:290][E: codex-rs/login/src/server.rs:299][E: codex-rs/login/src/server.rs:311][E: codex-rs/login/src/server.rs:327][E: codex-rs/login/src/server.rs:339]
+4. Token exchange 对 `/oauth/token` 发 form body，包含 grant_type、code、redirect_uri、client_id、code_verifier；非 success status 会解析 error detail 并返回错误。[E: codex-rs/login/src/server.rs:716][E: codex-rs/login/src/server.rs:731][E: codex-rs/login/src/server.rs:738][E: codex-rs/login/src/server.rs:741][E: codex-rs/login/src/server.rs:766][E: codex-rs/login/src/server.rs:780]
+5. OAuth 成功后会检查 workspace restriction，尝试用 id token obtain API key，并通过 `persist_tokens_async` 写入 configured auth store。[E: codex-rs/login/src/server.rs:342][E: codex-rs/login/src/server.rs:343][E: codex-rs/login/src/server.rs:356][E: codex-rs/login/src/server.rs:359][E: codex-rs/login/src/server.rs:790]
 
-1. `run_device_code_login` 先用 `ServerOptions` 请求 `DeviceCode`，打印 verification URL/user code，再把 `ServerOptions` 和 `DeviceCode` 交给 `complete_device_code_login`。[E: codex-rs/login/src/device_code_auth.rs:224][E: codex-rs/login/src/device_code_auth.rs:225][E: codex-rs/login/src/device_code_auth.rs:227]
-2. `request_device_code` 请求 backend device code endpoint，request body 只发送 `client_id`。[E: codex-rs/login/src/device_code_auth.rs:35][E: codex-rs/login/src/device_code_auth.rs:67][E: codex-rs/login/src/device_code_auth.rs:69]
-3. `poll_for_token` 最多等待 15 分钟，并按 device code response 的 interval 轮询；HTTP 403/404 被视为仍在等待授权直到 timeout，其他非成功状态会返回失败。[E: codex-rs/login/src/device_code_auth.rs:98][E: codex-rs/login/src/device_code_auth.rs:107][E: codex-rs/login/src/device_code_auth.rs:130][E: codex-rs/login/src/device_code_auth.rs:141]
-4. `complete_device_code_login` 在拿到 authorization code 后，复用 PKCE token exchange、workspace restriction 和 `persist_tokens_async` 保存流程。[E: codex-rs/login/src/device_code_auth.rs:181][E: codex-rs/login/src/device_code_auth.rs:203][E: codex-rs/login/src/device_code_auth.rs:215]
+## Device code flow
 
-## API key flow
+`run_device_code_login` 先 request device code，打印 verification URL 和 user code，再调用 `complete_device_code_login`。[E: codex-rs/login/src/device_code_auth.rs:225][E: codex-rs/login/src/device_code_auth.rs:226][E: codex-rs/login/src/device_code_auth.rs:227][E: codex-rs/login/src/device_code_auth.rs:228]
 
-`login_with_api_key` 把 `AuthDotJson` 写成 `mode: ApiKey`、`openai_api_key: Some(api_key)`、`tokens: None`、`last_refresh: None`、`agent_identity: None`。[E: codex-rs/login/src/auth/manager.rs:511][E: codex-rs/login/src/auth/manager.rs:516][E: codex-rs/login/src/auth/manager.rs:523] `CodexAuth::from_auth_dot_json` 在 `AuthMode::ApiKey` 下要求 `openai_api_key` 存在，否则返回缺 key 错误。[E: codex-rs/login/src/auth/manager.rs:195][E: codex-rs/login/src/auth/manager.rs:201]
+`request_device_code` 以 issuer 派生 `/api/accounts` base URL，请求 user code 后返回 verification URL、user code、device_auth_id 和 interval。[E: codex-rs/login/src/device_code_auth.rs:159][E: codex-rs/login/src/device_code_auth.rs:160][E: codex-rs/login/src/device_code_auth.rs:162][E: codex-rs/login/src/device_code_auth.rs:163][E: codex-rs/login/src/device_code_auth.rs:165]
 
-源码定义了 `OPENAI_API_KEY` 与 `CODEX_API_KEY` 两个 env helper，helper 都会丢弃空字符串；`load_auth(..., true, ...)` 的 env-precedence 分支当前调用的是 `CODEX_API_KEY` helper。[E: codex-rs/login/src/auth/manager.rs:470][E: codex-rs/login/src/auth/manager.rs:473][E: codex-rs/login/src/auth/manager.rs:481][E: codex-rs/login/src/auth/manager.rs:691][E: codex-rs/login/src/auth/manager.rs:692] `AuthManager::auth()` 先尝试 external API key auth，再尝试 cached auth，并且只在 ChatGPT auth stale 时触发 proactive refresh。[E: codex-rs/login/src/auth/manager.rs:1341][E: codex-rs/login/src/auth/manager.rs:1345][E: codex-rs/login/src/auth/manager.rs:1351]
+`poll_for_token` 最多等待 15 分钟；HTTP 403/404 表示继续等待授权，其他 non-success status 立即失败。[E: codex-rs/login/src/device_code_auth.rs:99][E: codex-rs/login/src/device_code_auth.rs:106][E: codex-rs/login/src/device_code_auth.rs:107][E: codex-rs/login/src/device_code_auth.rs:126][E: codex-rs/login/src/device_code_auth.rs:130][E: codex-rs/login/src/device_code_auth.rs:141]
 
-## Refresh 与限制
+`complete_device_code_login` 拿到 authorization code 后复用 PKCE token exchange 与 token persist 流程，所以 device code 和 browser OAuth 在持久化后的 auth 形态相同。[E: codex-rs/login/src/device_code_auth.rs:173][E: codex-rs/login/src/device_code_auth.rs:181][E: codex-rs/login/src/device_code_auth.rs:190][E: codex-rs/login/src/device_code_auth.rs:220]
 
-ChatGPT proactive refresh cadence 使用 8 天 refresh interval；`is_stale_for_proactive_refresh` 在 access token 过期或 `last_refresh` 超过该 interval 时返回 true。[E: codex-rs/login/src/auth/manager.rs:83][E: codex-rs/login/src/auth/manager.rs:1712][E: codex-rs/login/src/auth/manager.rs:1725][E: codex-rs/login/src/auth/manager.rs:1731] `refresh_token` 用 semaphore 限制并发 refresh，跳过 API key auth，并在 refresh 前后检查 account 是否仍匹配，避免覆盖新登录账号。[E: codex-rs/login/src/auth/manager.rs:1588][E: codex-rs/login/src/auth/manager.rs:1595][E: codex-rs/login/src/auth/manager.rs:1614]
+## API key、env 与 restrictions
 
-`enforce_login_restrictions` 调用 `load_auth(..., true, ...)`，而 `load_auth` 在启用 env auth 时让 `CODEX_API_KEY` 优先于其他 auth method。[E: codex-rs/login/src/auth/manager.rs:577][E: codex-rs/login/src/auth/manager.rs:580][E: codex-rs/login/src/auth/manager.rs:691][E: codex-rs/login/src/auth/manager.rs:692] forced method 可要求 ChatGPT 或 API key，mismatch 时会 logout 并返回错误。[E: codex-rs/login/src/auth/manager.rs:587][E: codex-rs/login/src/auth/manager.rs:605] workspace restriction 检查 `forced_chatgpt_workspace_id`，并要求 ChatGPT auth 的 account id 或 workspace id 与配置匹配。[E: codex-rs/login/src/auth/manager.rs:614][E: codex-rs/login/src/auth/manager.rs:635][E: codex-rs/login/src/auth/manager.rs:650]
+`OPENAI_API_KEY` 和 `CODEX_API_KEY` 都有 non-empty env helper；当前 load path 的 env-precedence 分支使用 `CODEX_API_KEY` helper。[E: codex-rs/login/src/auth/manager.rs:559][E: codex-rs/login/src/auth/manager.rs:560][E: codex-rs/login/src/auth/manager.rs:564][E: codex-rs/login/src/auth/manager.rs:571][E: codex-rs/login/src/auth/manager.rs:944]
 
-## 设计动机与权衡
+`enforce_login_restrictions` 会先 `load_auth(..., enable_codex_api_key_env=true, forced_chatgpt_workspace_id=None, ...)`，再检查 forced login method；ChatGPT-required mode 允许 ChatGPT、ChatgptAuthTokens、AgentIdentity 和 PersonalAccessToken，API-required mode 允许 ApiKey 和 BedrockApiKey。[E: codex-rs/login/src/auth/manager.rs:800][E: codex-rs/login/src/auth/manager.rs:801][E: codex-rs/login/src/auth/manager.rs:803][E: codex-rs/login/src/auth/manager.rs:815][E: codex-rs/login/src/auth/manager.rs:817][E: codex-rs/login/src/auth/manager.rs:819][E: codex-rs/login/src/auth/manager.rs:822]
 
-`AuthManager` 把 file/keyring/ephemeral storage 与 token refresh 统一到一个 cached snapshot，是为了让 provider/client 侧只询问当前 auth，而不用知道登录来源。[I] 该设计由 `AuthManager::new` 启动时加载一次 storage、`auth()` 再复用 cached auth 与 refresh logic 共同体现。[E: codex-rs/login/src/auth/manager.rs:1238][E: codex-rs/login/src/auth/manager.rs:1341]
+Forced workspace restriction 使用 configured workspace ids 比对当前 auth 的 account/workspace；如果没有匹配到 expected workspace，`enforce_login_restrictions` 会构造 workspace mismatch message 并走 `logout_with_message`。[E: codex-rs/login/src/auth/manager.rs:847][E: codex-rs/login/src/auth/manager.rs:853][E: codex-rs/login/src/auth/manager.rs:873][E: codex-rs/login/src/auth/manager.rs:874][E: codex-rs/login/src/auth/manager.rs:878][E: codex-rs/login/src/auth/manager.rs:879][E: codex-rs/login/src/auth/manager.rs:887]
 
-`ChatgptAuthTokens` 的 refresh 路径会调用 `refresh_external_auth`，然后把外部刷新得到的 ChatGPT metadata/tokens 保存到 ephemeral storage 并 reload cache。[E: codex-rs/login/src/auth/manager.rs:1653][E: codex-rs/login/src/auth/manager.rs:1734][E: codex-rs/login/src/auth/manager.rs:1775][E: codex-rs/login/src/auth/manager.rs:1783]
+## Refresh
+
+`refresh_token` 通过 refresh semaphore 串行化刷新；API key 与 personal access token auth 不刷新。刷新前会 guarded reload，如果 storage 中 account 已变则跳过，避免覆盖另一个实例的新登录状态。[E: codex-rs/login/src/auth/manager.rs:1985][E: codex-rs/login/src/auth/manager.rs:1990][E: codex-rs/login/src/auth/manager.rs:1991][E: codex-rs/login/src/auth/manager.rs:1997][E: codex-rs/login/src/auth/manager.rs:2000][E: codex-rs/login/src/auth/manager.rs:2008][E: codex-rs/login/src/auth/manager.rs:2012]
+
+`refresh_token_from_authority_impl` 对 `ChatgptAuthTokens` 调 `refresh_external_auth`，对 `Chatgpt` 调 refresh-and-persist path；ApiKey、AgentIdentity、PersonalAccessToken 和 BedrockApiKey 不刷新。[E: codex-rs/login/src/auth/manager.rs:2040][E: codex-rs/login/src/auth/manager.rs:2052][E: codex-rs/login/src/auth/manager.rs:2053][E: codex-rs/login/src/auth/manager.rs:2057][E: codex-rs/login/src/auth/manager.rs:2066]
+
+`refresh_external_auth` 要求 external auth 已配置，refresh 后如果返回 API key auth 就直接成功；若返回 ChatGPT metadata，会套 forced workspace restriction。[E: codex-rs/login/src/auth/manager.rs:2152][E: codex-rs/login/src/auth/manager.rs:2156][E: codex-rs/login/src/auth/manager.rs:2171][E: codex-rs/login/src/auth/manager.rs:2175][E: codex-rs/login/src/auth/manager.rs:2178][E: codex-rs/login/src/auth/manager.rs:2183]
 
 ## Gotchas
 
-- API key auth 和 AgentIdentity auth 没有 token refresh；`refresh_token_from_authority_impl` 对 `ApiKey` 和 `AgentIdentity` 直接返回 `Ok(())`。[E: codex-rs/login/src/auth/manager.rs:1666]
-- `refresh_external_auth` 要求 external auth 已启用；当 external auth 返回 ChatGPT metadata 时仍会套 workspace restriction。[E: codex-rs/login/src/auth/manager.rs:1734][E: codex-rs/login/src/auth/manager.rs:1758][E: codex-rs/login/src/auth/manager.rs:1772]
-- OAuth server 的 URL redaction 会把常见敏感 query key 的值替换成 `<redacted>`，这些 key 包含 access_token、api_key、code、code_verifier、id_token、refresh_token、state 和 token 等。[E: codex-rs/login/src/server.rs:594][E: codex-rs/login/src/server.rs:595][E: codex-rs/login/src/server.rs:608][E: codex-rs/login/src/server.rs:621]
+- `CodexAuth` 不再只有旧版四种形态；PersonalAccessToken 和 BedrockApiKey 都是 current runtime variants。[E: codex-rs/login/src/auth/manager.rs:63][E: codex-rs/login/src/auth/manager.rs:64][E: codex-rs/login/src/auth/manager.rs:65]
+- URL redaction 的 sensitive query keys 包含 access_token、api_key、client_secret、code、code_verifier、id_token、refresh_token、state、token 等；日志事实不要引用未 redacted URL。[E: codex-rs/login/src/server.rs:626][E: codex-rs/login/src/server.rs:627][E: codex-rs/login/src/server.rs:628][E: codex-rs/login/src/server.rs:631][E: codex-rs/login/src/server.rs:633][E: codex-rs/login/src/server.rs:635][E: codex-rs/login/src/server.rs:637]
+- device code flow 的 user code prompt 明确提示 code 15 分钟过期且不要分享；不要把 user code 当作长期 credential。[E: codex-rs/login/src/device_code_auth.rs:148][E: codex-rs/login/src/device_code_auth.rs:153][E: codex-rs/login/src/device_code_auth.rs:155]
 
 ## Sources
 
@@ -82,6 +86,6 @@ ChatGPT proactive refresh cadence 使用 8 天 refresh interval；`is_stale_for_
 
 ## 相关
 
-- `subsys.config-auth.credential-storage`: login flow 写入的 auth material 如何保存。
-- `config.auth-account`: forced login method 与 workspace restriction 的配置入口。
-- `subsys.providers.provider-openai`: provider 发请求时如何消费 auth。
+- `subsys.config-auth.credential-storage`: auth store backend 与 `auth.json` schema。
+- `config.auth-account`: 用户可见 auth config keys。
+- `subsys.cloud.cloud-config`: managed requirements 与 forced login/workspace policy 来源。

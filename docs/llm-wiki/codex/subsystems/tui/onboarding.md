@@ -1,82 +1,61 @@
 ---
 id: subsys.tui.onboarding
-title: Onboarding
+title: TUI Onboarding
 kind: subsystem
 tier: T2
-source:
-  - codex-rs/tui/src/onboarding
-symbols:
-  - OnboardingScreen
-  - OnboardingScreenArgs
-  - OnboardingResult
-  - AuthModeWidget
-  - TrustDirectorySelection
-related:
-  - subsys.tui.architecture
-  - subsys.app-server.session-management
-  - subsys.tui.bottom-pane
+source: [codex-rs/tui/src/onboarding/onboarding_screen.rs, codex-rs/tui/src/onboarding/auth.rs, codex-rs/tui/src/onboarding/trust_directory.rs]
+symbols: [OnboardingScreen, OnboardingScreenArgs, OnboardingResult, run_onboarding_app, AuthModeWidget, TrustDirectoryWidget]
+related: [subsys.config-auth.auth-flows, subsys.config-auth.config-loading, subsys.tui.architecture]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-Onboarding 是 TUI 的 welcome/auth/trust wizard；`OnboardingScreen` 保存 frame requester、step list、`is_done` 和 `should_exit`，`run_onboarding_app` 在 `tokio::select!` 中同时消费 terminal event stream 与可选 app-server event stream [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:61][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:62][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:63][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:64][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:65][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:473][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:474][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:523]。
+> Onboarding 是 TUI 启动前/启动中的一个独立 screen loop：它接收 `OnboardingScreenArgs`、可选 app-server session、和现有 `Tui`，返回是否持久化 trust 以及用户是否选择退出。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:83][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:91][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:474][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:476][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:477][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:571]
 
 ## 能回答的问题
 
-- onboarding 什么时候显示 auth step、trust directory step 和 welcome step。
-- ChatGPT browser login、device code login、API key login 如何进入同一 UI。
-- trust directory 为什么使用 git root，而不是总是 cwd。
-- onboarding 如何在 auth 成功时清屏并恢复 terminal SGR。
+- onboarding loop 如何读取 TUI events 并重绘？
+- trust directory 的选择何时写回 app-server/config？
+- auth widget 如何处理 browser/device-code/API-key 路径？
+- ChatGPT login success 为什么会做一次 terminal clear？
 
-## 职责边界
+## Screen Loop
 
-- onboarding 只把 directory trust decision 与 should-exit decision 作为 `OnboardingResult` 返回；主会话 turn、streaming、bottom pane 不属于 onboarding 返回面 [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:76][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:77][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:78][I]。
-- auth step 通过 app-server account login request 进行登录；`AuthModeWidget` 保存 `app_server_request_handle`，并在 browser/device/API key flow 中发送不同 `LoginAccountParams` [E: codex-rs/tui/src/onboarding/auth.rs:237][E: codex-rs/tui/src/onboarding/auth.rs:826][E: codex-rs/tui/src/onboarding/auth/headless_chatgpt_login.rs:36][E: codex-rs/tui/src/onboarding/auth.rs:763]。
-- trust step 写入 project trust level；`TrustDirectoryWidget::handle_trust` 调用 `set_project_trust_level(... Trusted)`，随后记录 `TrustDirectorySelection::Trust` [E: codex-rs/tui/src/onboarding/trust_directory.rs:168][E: codex-rs/tui/src/onboarding/trust_directory.rs:173]。
+`OnboardingScreen` 保存 frame requester、steps、done/exit 状态；args 决定是否显示 trust/login screen、登录状态、app-server request handle 和 config。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:76][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:77][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:78][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:79][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:80][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:83][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:84][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:85][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:86][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:87]
 
-## 关键 crate/文件
+`run_onboarding_app` 创建 screen 后先 draw，再 pin `tui.event_stream()`；select loop 处理 key、paste、draw/resize，key 分支后尝试持久化 trust，draw/resize 分支重绘 screen。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:481][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:482][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:487][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:491][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:494][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:495][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:499][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:500][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:501][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:509][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:512][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:543]
 
-- `codex-rs/tui/src/onboarding/onboarding_screen.rs`: step orchestration and event loop。
-- `codex-rs/tui/src/onboarding/auth.rs`: browser/device/API key auth UI。
-- `codex-rs/tui/src/onboarding/auth/headless_chatgpt_login.rs`: device code login request/response handling。
-- `codex-rs/tui/src/onboarding/trust_directory.rs`: trust prompt。
-- `codex-rs/tui/src/onboarding/welcome.rs`: welcome animation。
+ChatGPT success message 后有一次 guard：检测 auth step 的 `SignInState::ChatGptSuccessMessage`，重置 SGR attributes/colors 并 clear terminal，避免成功消息残留样式污染后续 screen。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:513][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:516][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:517][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:524][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:525][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:533][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:540][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:541]
 
-## 数据模型
+## Trust Directory
 
-- `Step` 包含 `Welcome`, `Auth`, `TrustDirectory` 三种 onboarding step [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:38][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:40][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:41][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:42]。
-- `StepState` 用 `InProgress`, `Complete`, `Hidden` 表示 step 生命周期 [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:50][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:52][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:53][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:54]。
-- `OnboardingScreenArgs` 包含 `show_trust_screen`、`show_login_screen`、`login_status`、可选 `app_server_request_handle` 和 `config`；cwd、forced login method、frame requester 是 `OnboardingScreen::new` 从 `config` 或 `tui` 派生的运行时值 [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:68][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:69][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:70][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:71][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:72][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:73][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:90][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:92][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:96][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:106][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:143]。
-- `SignInState` 区分 pick mode、browser flow、device code flow、success message、success、API key entry 和 API key configured [E: codex-rs/tui/src/onboarding/auth.rs:86][E: codex-rs/tui/src/onboarding/auth.rs:87][E: codex-rs/tui/src/onboarding/auth.rs:89][E: codex-rs/tui/src/onboarding/auth.rs:90][E: codex-rs/tui/src/onboarding/auth.rs:91][E: codex-rs/tui/src/onboarding/auth.rs:92][E: codex-rs/tui/src/onboarding/auth.rs:93]。
+`TrustDirectoryWidget` 保存 cwd、trust target、Windows sandbox hint、quit flag、selection、highlighted option 和 error；selection 只有 `Trust`/`Quit`。[E: codex-rs/tui/src/onboarding/trust_directory.rs:25][E: codex-rs/tui/src/onboarding/trust_directory.rs:26][E: codex-rs/tui/src/onboarding/trust_directory.rs:27][E: codex-rs/tui/src/onboarding/trust_directory.rs:28][E: codex-rs/tui/src/onboarding/trust_directory.rs:29][E: codex-rs/tui/src/onboarding/trust_directory.rs:30][E: codex-rs/tui/src/onboarding/trust_directory.rs:31][E: codex-rs/tui/src/onboarding/trust_directory.rs:35]
 
-## 控制流
+confirm key 调用 `handle_trust` 或 `handle_quit`；trust 会写 selection 并清 error，quit 会设置 `should_quit`。StepState 在 selection 或 quit 后变 complete。[E: codex-rs/tui/src/onboarding/trust_directory.rs:145][E: codex-rs/tui/src/onboarding/trust_directory.rs:147][E: codex-rs/tui/src/onboarding/trust_directory.rs:148][E: codex-rs/tui/src/onboarding/trust_directory.rs:154][E: codex-rs/tui/src/onboarding/trust_directory.rs:156][E: codex-rs/tui/src/onboarding/trust_directory.rs:164][E: codex-rs/tui/src/onboarding/trust_directory.rs:168][E: codex-rs/tui/src/onboarding/trust_directory.rs:171][E: codex-rs/tui/src/onboarding/trust_directory.rs:173]
 
-1. `OnboardingScreen::new` 总是加入 welcome step，然后按 `show_login_screen` 和 `show_trust_screen` 条件加入 auth/trust step；auth step 还要求 `app_server_request_handle` 存在 [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:94][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:99][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:104][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:126]。
-2. trust target 优先使用 `resolve_root_git_project_for_trust`，失败时 fallback 到 cwd [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:127][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:130]。
-3. key handling 对 Ctrl-D/Ctrl-C/q 计算 `should_quit`；当 `should_quit` 为 true 时，auth in progress 会触发 cancel 并设置 `should_exit`，随后无论是否 auth in progress 都把 `is_done` 置 true [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:270][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:291][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:292][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:295][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:297]。
-4. active step 处理完 key 后，如果 trust step 要求 quit，就把 `should_exit` 置 true 并标记 done [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:306][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:309][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:316][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:317]。
-5. `run_onboarding_app` event loop 同时消费 `tui_events.next()` 与 `app_server.next_event()`；auth 成功 message 出现后会 reset SGR、clear terminal，并继续根据 app-server notification 更新 screen [E: codex-rs/tui/src/onboarding/onboarding_screen.rs:473][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:474][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:523][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:495][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:511][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:529][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:530]。
-6. auth browser flow 调用 `LoginAccountParams::Chatgpt` 并尝试打开 browser；device code flow 发送 `LoginAccountParams::ChatgptDeviceCode`；API key flow 发送 `LoginAccountParams::ApiKey` [E: codex-rs/tui/src/onboarding/auth.rs:826][E: codex-rs/tui/src/onboarding/auth.rs:831][E: codex-rs/tui/src/onboarding/auth.rs:944][E: codex-rs/tui/src/onboarding/auth.rs:945][E: codex-rs/tui/src/onboarding/auth.rs:949][E: codex-rs/tui/src/onboarding/auth/headless_chatgpt_login.rs:36][E: codex-rs/tui/src/onboarding/auth.rs:763]。
+持久化 trust 不是 widget 自己写文件；`persist_selected_trust` 在 screen steps 里找到 `TrustDirectorySelection::Trust`，再通过 app-server request handle 调用 `write_trusted_project`，失败时写入 widget error 并 log。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:577][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:581][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:586][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:587][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:597][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:598][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:604][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:607]
 
-## 设计动机与权衡
+## Auth Widget
 
-- welcome animation 会在 terminal 太小、animations disabled 或 auth copyable state 时隐藏/抑制，避免动效干扰复制 auth URL/device code [E: codex-rs/tui/src/onboarding/welcome.rs:82][E: codex-rs/tui/src/onboarding/welcome.rs:84][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:180][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:183][I]。
-- forced login method 会禁用不允许的 sign-in option；forced ChatGPT 时 API key 被禁用，forced API key 时 ChatGPT 被禁用 [E: codex-rs/tui/src/onboarding/auth.rs:289][E: codex-rs/tui/src/onboarding/auth.rs:290][E: codex-rs/tui/src/onboarding/auth.rs:293][E: codex-rs/tui/src/onboarding/auth.rs:294]。
-- trust directory prompt 明确提示 trust 会启用 project-local config、hooks 和 exec policies；因此 trust 是权限/配置边界，不只是 UI 记忆 [E: codex-rs/tui/src/onboarding/trust_directory.rs:73][E: codex-rs/tui/src/onboarding/trust_directory.rs:75][I]。
+`AuthModeWidget` 保存 frame requester、highlighted sign-in option、error、sign-in state、login status、app-server request handle、forced login method 和 animation flags。[E: codex-rs/tui/src/onboarding/auth.rs:225][E: codex-rs/tui/src/onboarding/auth.rs:227][E: codex-rs/tui/src/onboarding/auth.rs:228][E: codex-rs/tui/src/onboarding/auth.rs:229][E: codex-rs/tui/src/onboarding/auth.rs:230][E: codex-rs/tui/src/onboarding/auth.rs:231][E: codex-rs/tui/src/onboarding/auth.rs:232][E: codex-rs/tui/src/onboarding/auth.rs:233][E: codex-rs/tui/src/onboarding/auth.rs:234][E: codex-rs/tui/src/onboarding/auth.rs:235]
 
-## gotcha
+browser/device-code state 会 suppress animations；取消 active browser login 会通过 app-server handle 异步 `cancel_login_attempt`。[E: codex-rs/tui/src/onboarding/auth.rs:244][E: codex-rs/tui/src/onboarding/auth.rs:245][E: codex-rs/tui/src/onboarding/auth.rs:247][E: codex-rs/tui/src/onboarding/auth.rs:251][E: codex-rs/tui/src/onboarding/auth.rs:254][E: codex-rs/tui/src/onboarding/auth.rs:255][E: codex-rs/tui/src/onboarding/auth.rs:257][E: codex-rs/tui/src/onboarding/auth.rs:258]
 
-- `AuthModeWidget::cancel_active_attempt` 对 browser/device code 会发送 cancel request，并把状态重置到 pick mode；Esc handler 调用同一个 cancel path [E: codex-rs/tui/src/onboarding/auth.rs:216][E: codex-rs/tui/src/onboarding/auth.rs:218][E: codex-rs/tui/src/onboarding/auth.rs:255][E: codex-rs/tui/src/onboarding/auth.rs:261][E: codex-rs/tui/src/onboarding/auth.rs:268][E: codex-rs/tui/src/onboarding/auth.rs:275]。
-- `mark_url_hyperlink` 会去掉 ESC/BEL 后再标 hyperlink，避免 terminal escape 注入到 auth URL display [E: codex-rs/tui/src/onboarding/auth.rs:52][E: codex-rs/tui/src/onboarding/auth.rs:56][E: codex-rs/tui/src/onboarding/auth.rs:58][E: codex-rs/tui/src/onboarding/auth.rs:75]。
-- API key entry 会预填 `read_openai_api_key_from_env()` 返回的值；排查“输入框已有内容”时看 `start_api_key_entry` [E: codex-rs/tui/src/onboarding/auth.rs:725][E: codex-rs/tui/src/onboarding/auth.rs:731][E: codex-rs/tui/src/onboarding/auth.rs:739][E: codex-rs/tui/src/onboarding/auth.rs:740]。
+API key path 有三段：paste/edit 会填充或追加 `ApiKeyEntry` state，start entry 会从 env 预填，save 会发送 `ClientRequest::LoginAccount { LoginAccountParams::ApiKey }` 并在成功后把 state 设为 configured。[E: codex-rs/tui/src/onboarding/auth.rs:748][E: codex-rs/tui/src/onboarding/auth.rs:752][E: codex-rs/tui/src/onboarding/auth.rs:753][E: codex-rs/tui/src/onboarding/auth.rs:755][E: codex-rs/tui/src/onboarding/auth.rs:770][E: codex-rs/tui/src/onboarding/auth.rs:776][E: codex-rs/tui/src/onboarding/auth.rs:790][E: codex-rs/tui/src/onboarding/auth.rs:800][E: codex-rs/tui/src/onboarding/auth.rs:812][E: codex-rs/tui/src/onboarding/auth.rs:814][E: codex-rs/tui/src/onboarding/auth.rs:822]
+
+## Gotchas
+
+- onboarding loop 复用同一个 `Tui` 和 `TuiEventStream`，不是 main app loop 的一个 `AppEvent` 分支。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:474][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:491]
+- trust 写入依赖 app-server request handle；没有 handle 时会返回 app server unavailable 错误并留在 widget error path。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:597][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:601][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:607]
 
 ## Sources
 
-- `codex-rs/tui/src/onboarding`
+- `codex-rs/tui/src/onboarding/onboarding_screen.rs`
+- `codex-rs/tui/src/onboarding/auth.rs`
+- `codex-rs/tui/src/onboarding/trust_directory.rs`
 
 ## 相关
 
-- `subsys.tui.architecture`
-- `subsys.app-server.session-management`
-- `subsys.tui.bottom-pane`
+- `subsys.config-auth.auth-flows`: app-server/account auth 的非 TUI 侧。
+- `subsys.config-auth.config-loading`: trusted project/config 持久化背景。

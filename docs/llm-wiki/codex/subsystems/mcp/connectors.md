@@ -3,75 +3,65 @@ id: subsys.mcp.connectors
 title: MCP connectors
 kind: subsystem
 tier: T2
-source: [codex-rs/connectors/src/lib.rs, codex-rs/connectors/src/accessible.rs, codex-rs/connectors/src/metadata.rs, codex-rs/codex-mcp/src/mcp_connection_manager.rs, codex-rs/rmcp-client/src/rmcp_client.rs]
-symbols: [list_all_connectors_with_options, AllConnectorsCacheKey, DirectoryApp, collect_accessible_connectors, connector_install_url, connector_display_label, connector_mention_slug, sort_connectors_by_accessibility_and_name]
+source: [codex-rs/connectors/src/lib.rs, codex-rs/connectors/src/accessible.rs, codex-rs/connectors/src/merge.rs, codex-rs/connectors/src/filter.rs, codex-rs/connectors/src/metadata.rs, codex-rs/codex-mcp/src/rmcp_client.rs, codex-rs/rmcp-client/src/rmcp_client.rs]
+symbols: [list_all_connectors_with_options, ConnectorDirectoryCacheKey, DirectoryApp, collect_accessible_connectors, merge_connectors, filter_tool_suggest_discoverable_connectors, list_tools_with_connector_ids]
 related: [subsys.mcp.client, subsys.mcp.name-qualification, tool.mcp-namespace-tools]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> Connectors 子系统有两条源码路径：directory/workspace directory 生成默认不可访问的 `AppInfo` catalog，accessible connectors 由 Codex Apps MCP tool metadata 单独聚合；MCP client 会把 connector id/name/description 和 plugin provenance 附着到 `ToolInfo` 与 model-visible descriptions。[E: codex-rs/connectors/src/lib.rs:97][E: codex-rs/connectors/src/lib.rs:116][E: codex-rs/connectors/src/lib.rs:365][E: codex-rs/connectors/src/accessible.rs:15][E: codex-rs/rmcp-client/src/rmcp_client.rs:651][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1772][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:599]
+> Connectors now split across a small `connectors` crate and MCP tool metadata plumbing: directory/workspace listing builds a catalog of discoverable `AppInfo`s, accessible connectors are inferred from Codex Apps tool metadata, and only the reserved Codex Apps MCP server is trusted to provide connector metadata for model-visible tool grouping.[E: codex-rs/connectors/src/lib.rs:135][E: codex-rs/connectors/src/accessible.rs:15][E: codex-rs/codex-mcp/src/rmcp_client.rs:410]
 
 ## 能回答的问题
 
-- connectors directory 与 workspace connectors 怎样合并？
-- accessible connectors 怎样从已列出的 Codex Apps tools 反推？
-- install URL 和 slug 怎样生成？
-- plugin display names 怎样进入 tool description？
-- connectors catalog cache 的 key 和 TTL 是什么？
+- connector directory 与 workspace connectors 怎样列出、缓存、合并？
+- accessible connectors 怎样从 Codex Apps tools 反推？
+- plugin connector placeholders 怎样与 accessible connector metadata 合并？
+- tool-suggest discoverable connectors 怎样过滤不可见/已可访问/被禁 connector？
+- 为什么普通 MCP server 的 connector `_meta` 不可信？
 
 ## 职责边界
 
-`codex-rs/connectors` 负责 directory/workspace connector catalog 和 accessible connector aggregation；`rmcp-client` 从 Codex Apps MCP tool `_meta` 提取 connector metadata，`codex-mcp` 负责过滤 connector id、把 plugin provenance 写入 `ToolInfo.plugin_display_names` 并追加到 model-visible description。[E: codex-rs/connectors/src/lib.rs:97][E: codex-rs/connectors/src/accessible.rs:15][E: codex-rs/rmcp-client/src/rmcp_client.rs:651][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:585][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:599][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1712]
+`codex-rs/connectors` 管 catalog、accessible aggregation、merge、filter、display metadata；`rmcp-client` 只从 raw tool `_meta` 提取 connector id/name/description；`codex-mcp` 决定是否信任这些 metadata 并把它们装入 `ToolInfo`。[E: codex-rs/connectors/src/lib.rs:14][E: codex-rs/connectors/src/lib.rs:17][E: codex-rs/connectors/src/lib.rs:18][E: codex-rs/connectors/src/lib.rs:19][E: codex-rs/rmcp-client/src/rmcp_client.rs:487][E: codex-rs/codex-mcp/src/rmcp_client.rs:410]
 
-## 关键 crate/文件
+## 关键文件
 
-- `codex-rs/connectors/src/lib.rs`: directory/workspace list、cache、merge、normalization、install URL。[E: codex-rs/connectors/src/lib.rs:18][E: codex-rs/connectors/src/lib.rs:79][E: codex-rs/connectors/src/lib.rs:150][E: codex-rs/connectors/src/lib.rs:183][E: codex-rs/connectors/src/lib.rs:200][E: codex-rs/connectors/src/lib.rs:374][E: codex-rs/connectors/src/lib.rs:396][E: codex-rs/connectors/src/lib.rs:405]
-- `codex-rs/connectors/src/accessible.rs`: 从 accessible tool metadata 聚合 `AppInfo`。[E: codex-rs/connectors/src/accessible.rs:8][E: codex-rs/connectors/src/accessible.rs:15][E: codex-rs/connectors/src/accessible.rs:34]
-- `codex-rs/connectors/src/metadata.rs`: display label、mention slug、install URL reexport、sorting 规则。[E: codex-rs/connectors/src/metadata.rs:3][E: codex-rs/connectors/src/metadata.rs:7][E: codex-rs/connectors/src/metadata.rs:11][E: codex-rs/connectors/src/metadata.rs:19]
-- `codex-rs/codex-mcp/src/mcp_connection_manager.rs`: Codex Apps tool metadata 读取、description 注入、connector id allow-list。[E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:585][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:599][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1712]
+- `codex-rs/connectors/src/lib.rs`: directory cache key/TTL, directory listing, workspace listing, app normalization, cache writes.[E: codex-rs/connectors/src/lib.rs:28][E: codex-rs/connectors/src/lib.rs:31][E: codex-rs/connectors/src/lib.rs:65][E: codex-rs/connectors/src/lib.rs:135][E: codex-rs/connectors/src/lib.rs:157][E: codex-rs/connectors/src/lib.rs:180]
+- `codex-rs/connectors/src/accessible.rs`: `AccessibleConnectorTool` input and `collect_accessible_connectors` aggregation into `AppInfo`.[E: codex-rs/connectors/src/accessible.rs:8][E: codex-rs/connectors/src/accessible.rs:15][E: codex-rs/connectors/src/accessible.rs:38][E: codex-rs/connectors/src/accessible.rs:60]
+- `codex-rs/connectors/src/merge.rs`: merge directory/plugin placeholders with accessible connector metadata and plugin display names.[E: codex-rs/connectors/src/merge.rs:8][E: codex-rs/connectors/src/merge.rs:20][E: codex-rs/connectors/src/merge.rs:48][E: codex-rs/connectors/src/merge.rs:60][E: codex-rs/connectors/src/merge.rs:80][E: codex-rs/connectors/src/merge.rs:99]
+- `codex-rs/connectors/src/filter.rs`: tool-suggest discoverable filtering and hard disallow lists.[E: codex-rs/connectors/src/filter.rs:5][E: codex-rs/connectors/src/filter.rs:17][E: codex-rs/connectors/src/filter.rs:30][E: codex-rs/connectors/src/filter.rs:41]
+- `codex-rs/connectors/src/metadata.rs`: display label, mention slug, install URL, sanitized name, and accessibility-first sorting.[E: codex-rs/connectors/src/metadata.rs:3][E: codex-rs/connectors/src/metadata.rs:7][E: codex-rs/connectors/src/metadata.rs:15][E: codex-rs/connectors/src/metadata.rs:19][E: codex-rs/connectors/src/metadata.rs:23]
 
-## 数据模型
+## Catalog flow
 
-- `AllConnectorsCacheKey` 包含 base_url、account_id、user_id、is_workspace；cache static 使用该 key 存储 connectors 与 expires_at。[E: codex-rs/connectors/src/lib.rs:20][E: codex-rs/connectors/src/lib.rs:22][E: codex-rs/connectors/src/lib.rs:23][E: codex-rs/connectors/src/lib.rs:25][E: codex-rs/connectors/src/lib.rs:44]
-- cache TTL 是 3600 秒；`cached_all_connectors` 在 key 匹配且未过期时命中，过期时清空 cache，key 不匹配时 miss 但保留现有 cache。[E: codex-rs/connectors/src/lib.rs:18][E: codex-rs/connectors/src/lib.rs:79][E: codex-rs/connectors/src/lib.rs:84][E: codex-rs/connectors/src/lib.rs:85][E: codex-rs/connectors/src/lib.rs:90]
-- `DirectoryApp` 映射 directory API 的 id、name、description、appMetadata、branding、labels、logo URL、distributionChannel、visibility。[E: codex-rs/connectors/src/lib.rs:61][E: codex-rs/connectors/src/lib.rs:63][E: codex-rs/connectors/src/lib.rs:64][E: codex-rs/connectors/src/lib.rs:65][E: codex-rs/connectors/src/lib.rs:69][E: codex-rs/connectors/src/lib.rs:75]
-- `AccessibleConnectorTool` 包含 connector_id/name/description/plugin_display_name，是从 Codex Apps MCP tools 中提取 accessibility 的输入模型。[E: codex-rs/connectors/src/accessible.rs:8][E: codex-rs/connectors/src/accessible.rs:10][E: codex-rs/connectors/src/accessible.rs:11][E: codex-rs/connectors/src/accessible.rs:12]
+1. `list_all_connectors_with_options` returns unexpired in-memory cache unless `force_refetch` is true, then lists directory connectors and conditionally workspace connectors for workspace accounts.[E: codex-rs/connectors/src/lib.rs:135][E: codex-rs/connectors/src/lib.rs:145][E: codex-rs/connectors/src/lib.rs:152][E: codex-rs/connectors/src/lib.rs:153]
+2. Directory/workspace apps are merged, converted to `AppInfo`, assigned install URLs, normalized names/descriptions, marked inaccessible by default, sorted by name/id, and written to cache.[E: codex-rs/connectors/src/lib.rs:157][E: codex-rs/connectors/src/lib.rs:161][E: codex-rs/connectors/src/lib.rs:166][E: codex-rs/connectors/src/lib.rs:167][E: codex-rs/connectors/src/lib.rs:169][E: codex-rs/connectors/src/lib.rs:171][E: codex-rs/connectors/src/lib.rs:176]
+3. Cache has both memory and disk paths: memory uses `ConnectorDirectoryCacheKey` plus TTL, while disk load/write is delegated to `directory_cache`.[E: codex-rs/connectors/src/lib.rs:31][E: codex-rs/connectors/src/lib.rs:55][E: codex-rs/connectors/src/lib.rs:89][E: codex-rs/connectors/src/lib.rs:180]
 
-## 控制流
+## Accessible connector flow
 
-1. `list_all_connectors_with_options` 在 `force_refetch == false` 时先查 cache；cache miss 后拉 directory apps，workspace account 额外拉 workspace connectors。[E: codex-rs/connectors/src/lib.rs:97][E: codex-rs/connectors/src/lib.rs:103][E: codex-rs/connectors/src/lib.rs:107][E: codex-rs/connectors/src/lib.rs:111][E: codex-rs/connectors/src/lib.rs:112]
-2. directory list 调用 `/connectors/directory/list?external_logos=true`，按 `next_token` 继续分页，并过滤 hidden apps。[E: codex-rs/connectors/src/lib.rs:150][E: codex-rs/connectors/src/lib.rs:159][E: codex-rs/connectors/src/lib.rs:170][E: codex-rs/connectors/src/lib.rs:174]
-3. workspace list 调用 `/connectors/directory/list_workspace?external_logos=true`；请求失败时返回 empty vector，而不是让整个 connectors catalog 失败。[E: codex-rs/connectors/src/lib.rs:183][E: codex-rs/connectors/src/lib.rs:189][E: codex-rs/connectors/src/lib.rs:194][E: codex-rs/connectors/src/lib.rs:196]
-4. directory apps 与 workspace apps 先通过 `merge_directory_apps` 合并，再转换成 `AppInfo`；directory-derived `AppInfo` 默认 `is_accessible = false`，然后按 name/id 排序并写 cache。[E: codex-rs/connectors/src/lib.rs:116][E: codex-rs/connectors/src/lib.rs:119][E: codex-rs/connectors/src/lib.rs:128][E: codex-rs/connectors/src/lib.rs:130][E: codex-rs/connectors/src/lib.rs:135]
-5. `collect_accessible_connectors` 按 connector_id 聚合 tools，name 缺失或空白时 fallback 到 connector_id，description 只保留非空 metadata，并用 `BTreeSet` 去重 plugin display names。[E: codex-rs/connectors/src/accessible.rs:15][E: codex-rs/connectors/src/accessible.rs:21][E: codex-rs/connectors/src/accessible.rs:23][E: codex-rs/connectors/src/accessible.rs:24][E: codex-rs/connectors/src/accessible.rs:60]
-6. `connector_install_url` 输出 `https://chatgpt.com/apps/{slug}/{connector_id}`，slug 由 connector name 转小写并把非 alphanumeric 字符归一化为 `-`。[E: codex-rs/connectors/src/lib.rs:374][E: codex-rs/connectors/src/lib.rs:376][E: codex-rs/connectors/src/lib.rs:379][E: codex-rs/connectors/src/lib.rs:385]
-7. `RmcpClient::list_tools_with_connector_ids` 从 tool `_meta` 读取 `connector_id`、`connector_name` 或 `connector_display_name`、`connector_description` 或 `connectorDescription`。[E: codex-rs/rmcp-client/src/rmcp_client.rs:635][E: codex-rs/rmcp-client/src/rmcp_client.rs:651][E: codex-rs/rmcp-client/src/rmcp_client.rs:652][E: codex-rs/rmcp-client/src/rmcp_client.rs:653][E: codex-rs/rmcp-client/src/rmcp_client.rs:655]
-8. `AsyncManagedClient::listed_tools` 对 Codex Apps tools 追加 plugin provenance note；`list_tools_for_client_uncached` 把 connector metadata 映射到 `ToolInfo`，并把 `plugin_display_names` 初始化为空，等待 `listed_tools` 按当前 session provenance 填充。[E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:585][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:593][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:599][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:624][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1772][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1780][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1781]
+- `collect_accessible_connectors` groups tools by connector id, prefers real connector names over id placeholders, fills missing descriptions, unions plugin display names, sets `is_accessible`/`is_enabled`, creates install URLs, and sorts accessibility-first.[E: codex-rs/connectors/src/accessible.rs:15][E: codex-rs/connectors/src/accessible.rs:19][E: codex-rs/connectors/src/accessible.rs:26][E: codex-rs/connectors/src/accessible.rs:38][E: codex-rs/connectors/src/accessible.rs:49][E: codex-rs/connectors/src/accessible.rs:63][E: codex-rs/connectors/src/accessible.rs:64][E: codex-rs/connectors/src/accessible.rs:68]
+- `merge_connectors` overlays accessible metadata onto catalog entries, preserving accessible name/description/logo/distribution values when the catalog has placeholders or gaps, then deduplicates plugin display names.[E: codex-rs/connectors/src/merge.rs:8][E: codex-rs/connectors/src/merge.rs:20][E: codex-rs/connectors/src/merge.rs:23][E: codex-rs/connectors/src/merge.rs:25][E: codex-rs/connectors/src/merge.rs:28][E: codex-rs/connectors/src/merge.rs:31][E: codex-rs/connectors/src/merge.rs:37][E: codex-rs/connectors/src/merge.rs:53]
+- Plugin connector placeholders intentionally use connector id as name so later directory or accessible metadata can replace it.[E: codex-rs/connectors/src/merge.rs:100][E: codex-rs/connectors/src/merge.rs:103]
 
-## 设计动机与权衡
+## MCP metadata trust boundary
 
-- `directory_app_to_app_info` 默认 `is_accessible = false`、`is_enabled = true`、plugin_display_names empty；这表示 directory-derived catalog 默认不声明当前用户可访问性。[E: codex-rs/connectors/src/lib.rs:356][E: codex-rs/connectors/src/lib.rs:368][E: codex-rs/connectors/src/lib.rs:369][E: codex-rs/connectors/src/lib.rs:370][I]
-- `sort_connectors_by_accessibility_and_name` 把 accessible connectors 排在前面，再按当前 `name` 和 `id` 字符串排序。[E: codex-rs/connectors/src/metadata.rs:19][E: codex-rs/connectors/src/metadata.rs:21][E: codex-rs/connectors/src/metadata.rs:24][E: codex-rs/connectors/src/metadata.rs:25]
-- Codex Apps tool cache 和 uncached list 都会经过 `filter_disallowed_codex_apps_tools`，该函数用 `is_connector_id_allowed` 过滤带 connector id 的 tools。[E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1692][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1702][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1712][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1717][E: codex-rs/codex-mcp/src/mcp_connection_manager.rs:1785]
+- `RmcpClient::list_tools_with_connector_ids` extracts connector metadata from raw MCP tool `_meta` keys `connector_id`, `connector_name`/`connector_display_name`, and `connector_description`/`connectorDescription`.[E: codex-rs/rmcp-client/src/rmcp_client.rs:487][E: codex-rs/rmcp-client/src/rmcp_client.rs:503][E: codex-rs/rmcp-client/src/rmcp_client.rs:504][E: codex-rs/rmcp-client/src/rmcp_client.rs:505][E: codex-rs/rmcp-client/src/rmcp_client.rs:507]
+- `codex-mcp` accepts that connector metadata only when `server_name == CODEX_APPS_MCP_SERVER_NAME`; other servers have untrusted connector meta stripped and connector id/name/description cleared.[E: codex-rs/codex-mcp/src/rmcp_client.rs:410][E: codex-rs/codex-mcp/src/rmcp_client.rs:417][E: codex-rs/codex-mcp/src/rmcp_client.rs:421]
+- `list_tools_for_client_uncached` uses trusted connector metadata to choose namespace descriptions; without connector metadata it falls back to server instructions.[E: codex-rs/codex-mcp/src/rmcp_client.rs:359][E: codex-rs/codex-mcp/src/rmcp_client.rs:382][E: codex-rs/codex-mcp/src/rmcp_client.rs:385][E: codex-rs/codex-mcp/src/rmcp_client.rs:388]
 
-## gotcha
+## Discoverability filters
 
-- hidden directory apps 被过滤，但 workspace list 请求失败只变成 empty list；catalog 缺少 workspace connector 不一定代表 workspace 没有 connector。[E: codex-rs/connectors/src/lib.rs:170][E: codex-rs/connectors/src/lib.rs:194]
-- `connector_display_label` 使用 app name；`connector_mention_slug` 使用 connector name slug；两者不是同一个文本形态。[E: codex-rs/connectors/src/metadata.rs:3][E: codex-rs/connectors/src/metadata.rs:7]
-- connector description 会经过 trim/empty normalization；空白 description 会变成 `None`，而不是空字符串。[E: codex-rs/connectors/src/lib.rs:405][E: codex-rs/connectors/src/lib.rs:407][E: codex-rs/connectors/src/lib.rs:409]
+- `filter_tool_suggest_discoverable_connectors` removes already-accessible connectors, removes hard-disallowed connectors for the originator, intersects with the supplied discoverable id set, and sorts by name/id.[E: codex-rs/connectors/src/filter.rs:5][E: codex-rs/connectors/src/filter.rs:11][E: codex-rs/connectors/src/filter.rs:17][E: codex-rs/connectors/src/filter.rs:19][E: codex-rs/connectors/src/filter.rs:20][E: codex-rs/connectors/src/filter.rs:22]
+- First-party chat originators use a separate disallow list; other origins use the general disallow list.[E: codex-rs/connectors/src/filter.rs:30][E: codex-rs/connectors/src/filter.rs:38][E: codex-rs/connectors/src/filter.rs:41][E: codex-rs/connectors/src/filter.rs:54][E: codex-rs/connectors/src/filter.rs:58]
 
 ## Sources
 
 - codex-rs/connectors/src/lib.rs
 - codex-rs/connectors/src/accessible.rs
+- codex-rs/connectors/src/merge.rs
+- codex-rs/connectors/src/filter.rs
 - codex-rs/connectors/src/metadata.rs
-- codex-rs/codex-mcp/src/mcp_connection_manager.rs
+- codex-rs/codex-mcp/src/rmcp_client.rs
 - codex-rs/rmcp-client/src/rmcp_client.rs
-
-## 相关
-
-- `subsys.mcp.client`
-- `subsys.mcp.name-qualification`
-- `tool.mcp-namespace-tools`

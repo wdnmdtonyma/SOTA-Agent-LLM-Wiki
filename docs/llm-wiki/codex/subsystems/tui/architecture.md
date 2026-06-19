@@ -3,86 +3,65 @@ id: subsys.tui.architecture
 title: TUI 架构
 kind: subsystem
 tier: T2
-source:
-  - codex-rs/tui/src/app.rs
-  - docs/tui-alternate-screen.md
-symbols:
-  - App
-  - App::run
-  - App::handle_tui_event
-  - TuiEvent
-  - Overlay
-related:
-  - subsys.tui.event-system
-  - subsys.tui.chatwidget
-  - subsys.tui.bottom-pane
-  - subsys.app-server.session-management
+source: [codex-rs/tui/src/app.rs, codex-rs/tui/src/app/event_dispatch.rs, codex-rs/tui/src/app/app_server_events.rs, codex-rs/tui/src/tui.rs, codex-rs/tui/src/tui/event_stream.rs, codex-rs/tui/src/lib.rs, codex-rs/tui/src/chatwidget.rs, codex-rs/tui/src/bottom_pane/mod.rs]
+symbols: [App, App::run, App::handle_event, Tui, TuiEvent, TuiEventStream, ChatWidget, BottomPane]
+related: [subsys.tui.event-system, subsys.tui.chatwidget, subsys.tui.bottom-pane, subsys.app-server.session-management]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-TUI 架构是 `App` 作为异步 orchestrator、`ChatWidget` 作为主交互组件、`AppServerSession` 作为会话后端、`TuiEvent` 作为终端输入/绘制节拍的组合系统；`App` 本体保存 app event channel、chat widget、file search、overlay、thread event channels、active thread id 和 pending app-server requests 等跨层状态 [E: codex-rs/tui/src/app.rs:493][E: codex-rs/tui/src/app.rs:494][E: codex-rs/tui/src/app.rs:503][E: codex-rs/tui/src/app.rs:508][E: codex-rs/tui/src/app.rs:548][E: codex-rs/tui/src/app.rs:552][E: codex-rs/tui/src/app.rs:558]；`App::run` 接收 `mut app_server: AppServerSession`，而不是在函数内部创建该 session [E: codex-rs/tui/src/app.rs:638]。
+> 当前 TUI 是 `App` 会话编排层、`ChatWidget` 主聊天状态机、`BottomPane` 输入/弹层容器、`Tui` 终端包装层和 app-server event stream 的组合；大量逻辑已经从旧版单文件 `app.rs` 拆到 `app/*`、`chatwidget/*`、`bottom_pane/*` 模块。[E: codex-rs/tui/src/app.rs:503][E: codex-rs/tui/src/app.rs:507][E: codex-rs/tui/src/chatwidget.rs:514][E: codex-rs/tui/src/bottom_pane/mod.rs:206][E: codex-rs/tui/src/tui.rs:525][I]
 
 ## 能回答的问题
 
-- TUI 启动时如何选择 fresh、resume、fork 三种 thread 路径，并把 `ChatWidget` 绑定到对应 app-server thread。
-- 终端事件、内部 UI event、active thread event、app-server event 如何在一个 `tokio::select!` loop 中合流。
-- 为什么 alternate screen 默认是 `auto`，以及 Zellij 中为什么默认不进入 alternate screen。
-- `App` 和 `ChatWidget` 的分工：`App` 管事件源、线程切换、overlay、shutdown；`ChatWidget` 管输入、消息渲染、streaming 和 bottom pane。
+- `App::run` 如何把外部传入的 `AppServerSession`、bootstrap、thread selection 和 main loop 接起来？
+- terminal events、app events、active thread events、app-server events 在哪里合流？
+- `Tui` 和 `App` 的职责边界是什么？
+- alternate screen 当前由什么配置真正控制？
 
 ## 职责边界
 
-- `App::run` 负责把外部传入的 app-server session 纳入 startup path、file search 和 event loop；源码中 `App::run` 的第二个参数是 `mut app_server: AppServerSession`，bootstrap 后 fresh thread 调用 `app_server.start_thread(&config)`，resume 调用 `app_server.resume_thread(...)`，fork 调用 `app_server.fork_thread(...)`，file search 初始化使用 app-server client，main loop 也把 `app_server.next_event()` 作为事件源 [E: codex-rs/tui/src/app.rs:638][E: codex-rs/tui/src/app.rs:698][E: codex-rs/tui/src/app.rs:764][E: codex-rs/tui/src/app.rs:795][E: codex-rs/tui/src/app.rs:834][E: codex-rs/tui/src/app.rs:875][E: codex-rs/tui/src/app.rs:1029]。
-- `ChatWidget` 在三种入口里都通过 `ChatWidget::new_with_app_event(init)` 构造，因此主 UI 的消息/输入状态被绑定到同一类初始化结构，而不是由 fresh/resume/fork 各写一套 widget 初始化 [E: codex-rs/tui/src/app.rs:792][E: codex-rs/tui/src/app.rs:826][E: codex-rs/tui/src/app.rs:865]。
-- `App` 不直接解析 crossterm 原始事件；它消费 `TuiEvent`，并在 `handle_tui_event` 中把 `Key` 转给 `handle_key_event`、把 `Paste` 归一化 CR-to-LF 后交给 `ChatWidget::handle_paste`、把 `Draw` 交给 pre-draw 与 render path [E: codex-rs/tui/src/app.rs:1086][E: codex-rs/tui/src/app.rs:1100][E: codex-rs/tui/src/app.rs:1102][E: codex-rs/tui/src/app.rs:1107][E: codex-rs/tui/src/app.rs:1108][E: codex-rs/tui/src/app.rs:1110][E: codex-rs/tui/src/app.rs:1123][E: codex-rs/tui/src/app.rs:1124]。
-- `App` 层定义 baseline commit animation cadence；markdown 分段算法和 controller-level streaming 细节属于 `ChatWidget`/streaming 模块的职责边界 [E: codex-rs/tui/src/app.rs:320][E: codex-rs/tui/src/app.rs:324][I]。
-- alternate screen 策略属于 TUI shell，而不是 `App` 的 business state [I]；设计文档规定 `tui.alternate_screen = "auto"` 是默认模式，在 Zellij 里禁用 alternate screen、其他环境启用 alternate screen [E: docs/tui-alternate-screen.md:33][E: docs/tui-alternate-screen.md:35][E: docs/tui-alternate-screen.md:38][E: docs/tui-alternate-screen.md:39]。
+`App` 是 session-level container：它保存 `SessionTelemetry`、`AppEventSender`、`ChatWidget`、config、file search、transcript cells、pager overlay、keymap、commit animation state、thread event channels、side threads、active/primary thread id 和 pending app-server requests。[E: codex-rs/tui/src/app.rs:503][E: codex-rs/tui/src/app.rs:505][E: codex-rs/tui/src/app.rs:506][E: codex-rs/tui/src/app.rs:507][E: codex-rs/tui/src/app.rs:510][E: codex-rs/tui/src/app.rs:519][E: codex-rs/tui/src/app.rs:521][E: codex-rs/tui/src/app.rs:524][E: codex-rs/tui/src/app.rs:531][E: codex-rs/tui/src/app.rs:534][E: codex-rs/tui/src/app.rs:568][E: codex-rs/tui/src/app.rs:572][E: codex-rs/tui/src/app.rs:574][E: codex-rs/tui/src/app.rs:578]
 
-## 关键 crate/文件
+`Tui` 是 terminal wrapper：它持有 `FrameRequester`、draw channel、shared `EventBroker`、terminal backend、alt-screen state、focus state、notification backend 和 `alt_screen_enabled` flag。[E: codex-rs/tui/src/tui.rs:525][E: codex-rs/tui/src/tui.rs:526][E: codex-rs/tui/src/tui.rs:527][E: codex-rs/tui/src/tui.rs:528][E: codex-rs/tui/src/tui.rs:529][E: codex-rs/tui/src/tui.rs:533][E: codex-rs/tui/src/tui.rs:537][E: codex-rs/tui/src/tui.rs:539][E: codex-rs/tui/src/tui.rs:541][E: codex-rs/tui/src/tui.rs:546]
 
-- `codex-rs/tui/src/app.rs`: `App` 的字段、startup path、main event loop、TUI event handling 和 shutdown。
-- `codex-rs/tui/src/chatwidget.rs`: 主交互 widget，承接消息、输入、streaming、bottom pane 和 app-server notifications。
-- `codex-rs/tui/src/tui.rs`: terminal raw mode、alternate screen、draw scheduling 与 `TuiEvent` stream。
-- `codex-rs/app-server-client/src`: TUI 依赖的 in-process/remote app-server facade；`App::run` 中的 `app_server.next_event()` 是 main loop 的一个事件源 [E: codex-rs/tui/src/app.rs:1029]。
-- `docs/tui-alternate-screen.md`: alternate screen 与 Zellij 冲突的设计背景，说明默认 `auto` 的动机。
+`TuiEvent` 当前只有四类：terminal key、paste payload、resize 和 scheduled draw；raw crossterm event fan-out 被 `TuiEventStream`/`EventBroker` 封装。[E: codex-rs/tui/src/tui.rs:510][E: codex-rs/tui/src/tui.rs:511][E: codex-rs/tui/src/tui.rs:513][E: codex-rs/tui/src/tui.rs:515][E: codex-rs/tui/src/tui.rs:520][E: codex-rs/tui/src/tui.rs:522][E: codex-rs/tui/src/tui/event_stream.rs:47][E: codex-rs/tui/src/tui/event_stream.rs:51][E: codex-rs/tui/src/tui/event_stream.rs:132][E: codex-rs/tui/src/tui/event_stream.rs:139]
 
-## 数据模型
+## Startup 与 main loop
 
-- `App` 是 session-level state container。它保存 `session_telemetry`、`app_event_tx`、`chat_widget`、`config`、`file_search`、`transcript_cells`、`overlay`、commit animation flag、remote app-server URL/auth、thread event channel map、side threads、active/primary thread id 和 `pending_app_server_requests` wrapper [E: codex-rs/tui/src/app.rs:492][E: codex-rs/tui/src/app.rs:493][E: codex-rs/tui/src/app.rs:494][E: codex-rs/tui/src/app.rs:496][E: codex-rs/tui/src/app.rs:503][E: codex-rs/tui/src/app.rs:505][E: codex-rs/tui/src/app.rs:508][E: codex-rs/tui/src/app.rs:515][E: codex-rs/tui/src/app.rs:531][E: codex-rs/tui/src/app.rs:532][E: codex-rs/tui/src/app.rs:548][E: codex-rs/tui/src/app.rs:551][E: codex-rs/tui/src/app.rs:552][E: codex-rs/tui/src/app.rs:554][E: codex-rs/tui/src/app.rs:558]。
-- `AppExitInfo` 是 TUI 退出结果，包含 `token_usage`、`thread_id`、`thread_name`、`update_action` 和 `exit_reason` [E: codex-rs/tui/src/app.rs:327][E: codex-rs/tui/src/app.rs:328][E: codex-rs/tui/src/app.rs:329][E: codex-rs/tui/src/app.rs:330][E: codex-rs/tui/src/app.rs:331][E: codex-rs/tui/src/app.rs:332]。
-- `thread_event_channels`、`active_thread_rx` 和 `active_thread_id` 是 `App` 保存 per-thread event routing state 的字段；这些字段如何把 app-server event stream 分派到当前 thread 是 TUI thread routing 层的行为 [E: codex-rs/tui/src/app.rs:548][E: codex-rs/tui/src/app.rs:552][E: codex-rs/tui/src/app.rs:553][I]。
-- `overlay` 是 `App` 中的可选 overlay 入口；`handle_tui_event` 在 `overlay.is_some()` 时先调用 `handle_backtrack_overlay_event(...)`，因此 overlay path 优先于普通 key/paste/draw match [E: codex-rs/tui/src/app.rs:508][E: codex-rs/tui/src/app.rs:1095][E: codex-rs/tui/src/app.rs:1096]。
+`App::run` 的第二个参数是 `mut app_server: AppServerSession`；函数内部建立 `AppEventSender`、应用 TUI notification settings，优先使用传入的 startup bootstrap，否则调用 `app_server.bootstrap(&config)`。[E: codex-rs/tui/src/app.rs:759][E: codex-rs/tui/src/app.rs:761][E: codex-rs/tui/src/app.rs:782][E: codex-rs/tui/src/app.rs:783][E: codex-rs/tui/src/app.rs:786][E: codex-rs/tui/src/app.rs:793][E: codex-rs/tui/src/app.rs:795]
 
-## 控制流
+fresh/resume/fork 三种入口都构造 `ChatWidgetInit` 并调用 `ChatWidget::new_with_app_event`；fresh path 先异步 `spawn_startup_thread_start`，resume/fork path 则直接调用 app-server `resume_thread`/`fork_thread` 并把 started thread 作为 `initial_started_thread` 交给 app。[E: codex-rs/tui/src/app.rs:878][E: codex-rs/tui/src/app.rs:879][E: codex-rs/tui/src/app.rs:880][E: codex-rs/tui/src/app.rs:912][E: codex-rs/tui/src/app.rs:917][E: codex-rs/tui/src/app.rs:918][E: codex-rs/tui/src/app.rs:948][E: codex-rs/tui/src/app.rs:956][E: codex-rs/tui/src/app.rs:957][E: codex-rs/tui/src/app.rs:987]
 
-1. `App::run` 建立 `app_event_rx` 和 `AppEventSender`，并把发送端传给 fresh/resume/fork 的 `ChatWidgetInit` [E: codex-rs/tui/src/app.rs:655][E: codex-rs/tui/src/app.rs:656][E: codex-rs/tui/src/app.rs:771][E: codex-rs/tui/src/app.rs:805][E: codex-rs/tui/src/app.rs:844]。
-2. `App::run` 启动或连接 app-server 后，按 `SessionSelection` 路径创建 fresh/resume/fork thread，并为每条路径构造 `ChatWidget` [E: codex-rs/tui/src/app.rs:645][E: codex-rs/tui/src/app.rs:763][E: codex-rs/tui/src/app.rs:792][E: codex-rs/tui/src/app.rs:794][E: codex-rs/tui/src/app.rs:826][E: codex-rs/tui/src/app.rs:828][E: codex-rs/tui/src/app.rs:865]。
-3. `App` 构造完成后调用 `enqueue_primary_thread_session(...)` 交付 initial thread session，并创建 `tui.event_stream()` 作为 terminal event source [E: codex-rs/tui/src/app.rs:923][E: codex-rs/tui/src/app.rs:952]。
-4. main loop 用 `tokio::select!` 同时处理 `app_event_rx.recv()`、`active_thread_rx.recv()`、`tui_events.next()` 和 `app_server.next_event()` [E: codex-rs/tui/src/app.rs:993][E: codex-rs/tui/src/app.rs:1001][E: codex-rs/tui/src/app.rs:1018][E: codex-rs/tui/src/app.rs:1029]。
-5. terminal `Draw` 分支在 render 前检查当前 terminal size、必要时 refresh status line、运行 paste burst tick、`chat_widget.pre_draw_tick()`，再调用 `tui.draw(...)` [E: codex-rs/tui/src/app.rs:1088][E: codex-rs/tui/src/app.rs:1089][E: codex-rs/tui/src/app.rs:1091][E: codex-rs/tui/src/app.rs:1118][E: codex-rs/tui/src/app.rs:1123][E: codex-rs/tui/src/app.rs:1124]。
-6. loop 结束后，`App::run` 请求 app-server shutdown，并在退出前清空 terminal 视图 [E: codex-rs/tui/src/app.rs:1052][E: codex-rs/tui/src/app.rs:1055]。
+主循环是一个 `tokio::select!`：app event 进入 `App::handle_event`，active thread channel 进入 `handle_active_thread_event`，terminal event 进入 `handle_tui_event`，app-server event stream 进入 `handle_app_server_event`；退出后统一尝试 `app_server.shutdown()` 并清理 terminal。[E: codex-rs/tui/src/app.rs:1157][E: codex-rs/tui/src/app.rs:1158][E: codex-rs/tui/src/app.rs:1159][E: codex-rs/tui/src/app.rs:1160][E: codex-rs/tui/src/app.rs:1165][E: codex-rs/tui/src/app.rs:1176][E: codex-rs/tui/src/app.rs:1184][E: codex-rs/tui/src/app.rs:1186][E: codex-rs/tui/src/app.rs:1195][E: codex-rs/tui/src/app.rs:1197][E: codex-rs/tui/src/app.rs:1218][E: codex-rs/tui/src/app.rs:1221]
 
-## 设计动机与权衡
+## Terminal 与 alternate screen
 
-- alternate screen 的动机不是单纯“全屏更好看”，而是避免历史 transcript 与 shell scrollback 的冲突；但是 Zellij 对 alternate screen 的行为会隐藏输出，所以设计文档把 `auto` 设为默认并在 Zellij 禁用 alternate screen [E: docs/tui-alternate-screen.md:13][E: docs/tui-alternate-screen.md:19][E: docs/tui-alternate-screen.md:29][E: docs/tui-alternate-screen.md:35][E: docs/tui-alternate-screen.md:38]。
-- `tokio::select!` 把 terminal、UI intent、thread notification、app-server protocol event 收到一个 owner loop；这种 owner-loop 形态减少跨组件共享可变状态是基于控制流与 state ownership 的架构推断 [E: codex-rs/tui/src/app.rs:993][E: codex-rs/tui/src/app.rs:1001][E: codex-rs/tui/src/app.rs:1018][E: codex-rs/tui/src/app.rs:1029][I]。
-- `App` 在 draw 分支中集中调用 status refresh、paste burst tick 和 pre-draw ticks；动画、paste burst、status surface 被 frame cadence 约束，而不是每个组件自行写 terminal，是基于这些集中调用点得出的架构推断 [E: codex-rs/tui/src/app.rs:1091][E: codex-rs/tui/src/app.rs:1118][E: codex-rs/tui/src/app.rs:1123][E: codex-rs/tui/src/app.rs:1124][I]。
+`Tui::event_stream` 创建 `TuiEventStream`，共享 `EventBroker` 以避免多个 crossterm readers 争抢 stdin；`pause_events`/`resume_events` 通过 drop/recreate underlying event stream 让外部交互程序临时接管终端输入。[E: codex-rs/tui/src/tui.rs:630][E: codex-rs/tui/src/tui.rs:631][E: codex-rs/tui/src/tui.rs:637][E: codex-rs/tui/src/tui.rs:714][E: codex-rs/tui/src/tui/event_stream.rs:10][E: codex-rs/tui/src/tui/event_stream.rs:11][E: codex-rs/tui/src/tui/event_stream.rs:51]
 
-## gotcha
+当前 alternate-screen 控制是代码事实：CLI 计算 `determine_alt_screen_mode(no_alt_screen, config.tui_alternate_screen)` 后调用 `tui.set_alt_screen_enabled`；`--no-alt-screen` 直接禁用，除此之外只有 `AltScreenMode::Never` 禁用。不要沿用旧文档里“auto 在 Zellij 禁用”的说法。[E: codex-rs/tui/src/lib.rs:1707][E: codex-rs/tui/src/lib.rs:1708][E: codex-rs/tui/src/lib.rs:1842][E: codex-rs/tui/src/lib.rs:1849][E: codex-rs/tui/src/lib.rs:1850][E: codex-rs/tui/src/lib.rs:1854]
 
-- `--no-alt-screen` 不是简单等价于永久禁用 alternate screen 配置项；设计文档把它定义为 runtime/per-launch override，配置仍有 `auto`、`always`、`never` 三种模式 [E: docs/tui-alternate-screen.md:35][E: docs/tui-alternate-screen.md:42][E: docs/tui-alternate-screen.md:47][E: docs/tui-alternate-screen.md:55][E: docs/tui-alternate-screen.md:61]。
-- `Paste` 分支会把 `\r` 归一化为 `\n` 再交给 `ChatWidget`，所以排查 Windows/terminal paste 行尾问题时应该从 `App::handle_tui_event` 与 composer paste burst 两处一起看 [E: codex-rs/tui/src/app.rs:1102][E: codex-rs/tui/src/app.rs:1107][E: codex-rs/tui/src/app.rs:1108][I]。
-- overlay 存在时按键不会直接到 `ChatWidget`；`handle_tui_event` 先检查 overlay 并调用 overlay handler [E: codex-rs/tui/src/app.rs:1095][E: codex-rs/tui/src/app.rs:1096]。
+`enter_alt_screen` 会在 enabled 时发送 `EnterAlternateScreen` 和 `EnableAlternateScroll`，保存 inline viewport 并把 viewport 扩到 terminal size；`leave_alt_screen` 反向禁用 alternate scroll、离开 alternate screen 并恢复 saved viewport。[E: codex-rs/tui/src/tui.rs:732][E: codex-rs/tui/src/tui.rs:734][E: codex-rs/tui/src/tui.rs:735][E: codex-rs/tui/src/tui.rs:738][E: codex-rs/tui/src/tui.rs:740][E: codex-rs/tui/src/tui.rs:742][E: codex-rs/tui/src/tui.rs:751][E: codex-rs/tui/src/tui.rs:756][E: codex-rs/tui/src/tui.rs:760][E: codex-rs/tui/src/tui.rs:762][E: codex-rs/tui/src/tui.rs:763][E: codex-rs/tui/src/tui.rs:766]
+
+## Gotchas
+
+- `App::run` 不再自己“创建 session 后端”；它接收 `AppServerSession` 并在 startup path 上 bootstrap/resume/fork/start thread。[E: codex-rs/tui/src/app.rs:759][E: codex-rs/tui/src/app.rs:761][E: codex-rs/tui/src/app.rs:795]
+- `app.rs` 仍是 orchestration hub，但 app event dispatch、server events、thread routing、input handling 等都已拆分到 `app/*` 子模块；行号不要从旧单文件 mental model 迁移。[E: codex-rs/tui/src/app/event_dispatch.rs:1][E: codex-rs/tui/src/app/event_dispatch.rs:3][E: codex-rs/tui/src/app/app_server_events.rs:1]
 
 ## Sources
 
 - `codex-rs/tui/src/app.rs`
-- `docs/tui-alternate-screen.md`
+- `codex-rs/tui/src/app/event_dispatch.rs`
+- `codex-rs/tui/src/app/app_server_events.rs`
+- `codex-rs/tui/src/tui.rs`
+- `codex-rs/tui/src/tui/event_stream.rs`
+- `codex-rs/tui/src/lib.rs`
+- `codex-rs/tui/src/chatwidget.rs`
+- `codex-rs/tui/src/bottom_pane/mod.rs`
 
 ## 相关
 
-- `subsys.tui.event-system`
-- `subsys.tui.chatwidget`
-- `subsys.tui.bottom-pane`
-- `subsys.app-server.session-management`
+- `subsys.tui.event-system`: `AppEvent` 与 app-server events 的路由。
+- `subsys.tui.chatwidget`: 主聊天 widget 的输入、协议通知和 rendering state。
+- `subsys.tui.bottom-pane`: bottom pane/composer/modal stack。

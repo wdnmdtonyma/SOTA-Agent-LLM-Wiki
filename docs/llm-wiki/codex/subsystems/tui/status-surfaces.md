@@ -1,80 +1,67 @@
 ---
 id: subsys.tui.status-surfaces
-title: Status surfaces
+title: Status Surfaces
 kind: subsystem
 tier: T2
-source:
-  - codex-rs/tui/src/status
-symbols:
-  - StatusHistoryCell
-  - StatusRateLimitData
-  - StatusRateLimitState
-  - StatusContextWindowData
-  - StatusTokenUsageData
-related:
-  - subsys.tui.chatwidget
-  - subsys.tui.bottom-pane
-  - subsys.tui.rendering-theming
+source: [codex-rs/tui/src/status/card.rs, codex-rs/tui/src/status/rate_limits.rs, codex-rs/tui/src/chatwidget/status_surfaces.rs, codex-rs/tui/src/bottom_pane/mod.rs, codex-rs/tui/src/chatwidget.rs]
+symbols: [StatusHistoryCell, StatusHistoryHandle, StatusRateLimitData, RateLimitSnapshotDisplay, ChatWidget::status_surface_selections, BottomPane::set_task_running]
+related: [subsys.tui.chatwidget, subsys.tui.bottom-pane, subsys.config-auth.features-system]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-Status surfaces 是 TUI 中呈现 account、model/provider、workdir、permissions、thread/session、token usage、context window、rate limits 和 agent summary 的状态视图集合；`status/card.rs` 中的 `StatusHistoryCell` 保存 derived permissions string、agents summary、account/thread/session、token usage 和 rate-limit state，并通过 `HistoryCell::display_lines` 实现 history cell 渲染 [E: codex-rs/tui/src/status/card.rs:94][E: codex-rs/tui/src/status/card.rs:99][E: codex-rs/tui/src/status/card.rs:100][E: codex-rs/tui/src/status/card.rs:103][E: codex-rs/tui/src/status/card.rs:104][E: codex-rs/tui/src/status/card.rs:105][E: codex-rs/tui/src/status/card.rs:107][E: codex-rs/tui/src/status/card.rs:108][E: codex-rs/tui/src/status/card.rs:550][E: codex-rs/tui/src/status/card.rs:696]。
+> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/status/rate_limits.rs:1][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:81][E: codex-rs/tui/src/bottom_pane/mod.rs:1001][E: codex-rs/tui/src/chatwidget.rs:622]
 
 ## 能回答的问题
 
-- `/status` 或 status history cell 从哪些 config/runtime 数据构造。
-- token usage、context window、rate limit 的展示规则是什么。
-- rate limit stale、available、unavailable、missing 如何区分。
-- account plan/API key/ChatGPT account 如何被格式化。
+- `/status` card 保存哪些 display state？
+- rate-limit snapshot 如何被转换成 display-friendly rows？
+- status line 和 terminal title 的 invalid items 如何 warning？
+- running-task status indicator 属于 bottom pane 还是 ChatWidget？
 
-## 职责边界
+## Status Card
 
-- `codex-rs/tui/src/status` 负责 status history card 与辅助格式化；`new_status_output_with_rate_limits_handle` 构造 `/status` command cell、`StatusHistoryCell` 和可更新 rate-limit state 的 handle [E: codex-rs/tui/src/status/card.rs:186][E: codex-rs/tui/src/status/card.rs:203][E: codex-rs/tui/src/status/card.rs:204][E: codex-rs/tui/src/status/card.rs:223][E: codex-rs/tui/src/status/card.rs:224]。
-- `StatusHistoryCell` 是 history cell；它的 `display_lines` 生成 OpenAI Codex title、labels、field rows、token/context/rate-limit rows 并加 border [E: codex-rs/tui/src/status/card.rs:550][E: codex-rs/tui/src/status/card.rs:553][E: codex-rs/tui/src/status/card.rs:578][E: codex-rs/tui/src/status/card.rs:596][E: codex-rs/tui/src/status/card.rs:619][E: codex-rs/tui/src/status/card.rs:621][E: codex-rs/tui/src/status/card.rs:650][E: codex-rs/tui/src/status/card.rs:680][E: codex-rs/tui/src/status/card.rs:683][E: codex-rs/tui/src/status/card.rs:687][E: codex-rs/tui/src/status/card.rs:696]。
-- rate limit snapshot 转显示数据由 `status/rate_limits.rs` 处理，history card 只消费 `StatusRateLimitData` 并渲染 lines [E: codex-rs/tui/src/status/rate_limits.rs:160][E: codex-rs/tui/src/status/card.rs:394][E: codex-rs/tui/src/status/card.rs:400]。
+`StatusHistoryHandle` 只暴露 rate-limit refresh completion：根据返回条数选择 single/many compose path，写入 shared rate-limit state 并清 refreshing flag。[E: codex-rs/tui/src/status/card.rs:80][E: codex-rs/tui/src/status/card.rs:85][E: codex-rs/tui/src/status/card.rs:90][E: codex-rs/tui/src/status/card.rs:93][E: codex-rs/tui/src/status/card.rs:96][E: codex-rs/tui/src/status/card.rs:100][E: codex-rs/tui/src/status/card.rs:101]
 
-## 关键 crate/文件
+`StatusHistoryCell` 保存 model details、directory、permissions、agent summary、collaboration mode、provider、remote connection、account、thread/session/fork data、token usage 和 rate-limit state。[E: codex-rs/tui/src/status/card.rs:106][E: codex-rs/tui/src/status/card.rs:107][E: codex-rs/tui/src/status/card.rs:108][E: codex-rs/tui/src/status/card.rs:109][E: codex-rs/tui/src/status/card.rs:110][E: codex-rs/tui/src/status/card.rs:111][E: codex-rs/tui/src/status/card.rs:112][E: codex-rs/tui/src/status/card.rs:113][E: codex-rs/tui/src/status/card.rs:114][E: codex-rs/tui/src/status/card.rs:116][E: codex-rs/tui/src/status/card.rs:117][E: codex-rs/tui/src/status/card.rs:118][E: codex-rs/tui/src/status/card.rs:119][E: codex-rs/tui/src/status/card.rs:120][E: codex-rs/tui/src/status/card.rs:121]
 
-- `codex-rs/tui/src/status/card.rs`: status history cell 的数据结构、构造和渲染。
-- `codex-rs/tui/src/status/helpers.rs`: model display、agent summary、account plan、token/directory formatting。
-- `codex-rs/tui/src/status/rate_limits.rs`: rate limit snapshot 到 display rows 的转换。
-- `codex-rs/tui/src/status/account.rs`: account display enum。
+`new_status_output_with_rate_limits_handle` 构造一个 `/status` command cell 和 `StatusHistoryCell`，并返回 `CompositeHistoryCell` 与 handle；调用者可在异步 rate-limit refresh 完成后更新同一个 card。[E: codex-rs/tui/src/status/card.rs:200][E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/status/card.rs:211][E: codex-rs/tui/src/status/card.rs:218][E: codex-rs/tui/src/status/card.rs:220][E: codex-rs/tui/src/status/card.rs:221][E: codex-rs/tui/src/status/card.rs:238]
 
-## 数据模型
+permissions label 会把 built-in profile、sandbox、approval policy 和 workspace root suffix 压成用户可读短标签；auto-review reviewer 在 `OnRequest` 下显示为 `Approve for me`。[E: codex-rs/tui/src/status/card.rs:579][E: codex-rs/tui/src/status/card.rs:584][E: codex-rs/tui/src/status/card.rs:619][E: codex-rs/tui/src/status/card.rs:627][E: codex-rs/tui/src/status/card.rs:629][E: codex-rs/tui/src/status/card.rs:637][E: codex-rs/tui/src/status/card.rs:652][E: codex-rs/tui/src/status/card.rs:668][E: codex-rs/tui/src/status/card.rs:677][E: codex-rs/tui/src/status/card.rs:693][E: codex-rs/tui/src/status/card.rs:698][E: codex-rs/tui/src/status/card.rs:700]
 
-- `StatusAccountDisplay` 区分 ChatGPT email/plan 与 API key 模式 [E: codex-rs/tui/src/status/account.rs:2][E: codex-rs/tui/src/status/account.rs:3][E: codex-rs/tui/src/status/account.rs:4][E: codex-rs/tui/src/status/account.rs:5][E: codex-rs/tui/src/status/account.rs:7]。
-- `StatusContextWindowData` 保存 `percent_remaining`、`tokens_in_context` 和 `window`；`StatusTokenUsageData` 保存 `total`、`input`、`output` 和 nested `context_window` [E: codex-rs/tui/src/status/card.rs:48][E: codex-rs/tui/src/status/card.rs:49][E: codex-rs/tui/src/status/card.rs:50][E: codex-rs/tui/src/status/card.rs:51][E: codex-rs/tui/src/status/card.rs:55][E: codex-rs/tui/src/status/card.rs:56][E: codex-rs/tui/src/status/card.rs:57][E: codex-rs/tui/src/status/card.rs:58][E: codex-rs/tui/src/status/card.rs:59]。
-- `StatusRateLimitState` 是 plain struct，保存 `rate_limits: StatusRateLimitData` 和 `refreshing_rate_limits: bool`；`StatusHistoryHandle` 与 `StatusHistoryCell` 用 `Arc<RwLock<StatusRateLimitState>>` 包住该 state [E: codex-rs/tui/src/status/card.rs:62][E: codex-rs/tui/src/status/card.rs:64][E: codex-rs/tui/src/status/card.rs:65][E: codex-rs/tui/src/status/card.rs:69][E: codex-rs/tui/src/status/card.rs:70][E: codex-rs/tui/src/status/card.rs:108]。
-- `StatusRateLimitData` 有 `Available`、`Stale`、`Unavailable`、`Missing` 四种状态 [E: codex-rs/tui/src/status/rate_limits.rs:48][E: codex-rs/tui/src/status/rate_limits.rs:50][E: codex-rs/tui/src/status/rate_limits.rs:52][E: codex-rs/tui/src/status/rate_limits.rs:54][E: codex-rs/tui/src/status/rate_limits.rs:56]。
+## Rate-Limit Display
 
-## 控制流
+`status/rate_limits.rs` 将 protocol `RateLimitSnapshot` 映射为 TUI display rows；模块 contract 明确要求 time-sensitive values 以 caller-provided capture timestamp 解释，确保 stale/reset labels 在同一次 draw 内一致。[E: codex-rs/tui/src/status/rate_limits.rs:1][E: codex-rs/tui/src/status/rate_limits.rs:3][E: codex-rs/tui/src/status/rate_limits.rs:6]
 
-1. `new_status_output_with_rate_limits_handle` 创建 `StatusHistoryCell`，同时返回可后续更新 rate limit state 的 `StatusHistoryHandle` [E: codex-rs/tui/src/status/card.rs:186][E: codex-rs/tui/src/status/card.rs:204][E: codex-rs/tui/src/status/card.rs:223][E: codex-rs/tui/src/status/card.rs:224]。
-2. `StatusHistoryCell::new` 从 config 读取 workdir、model、provider、approval、sandbox，再派生 reasoning、permissions、account、session、fork、token/context/rate 信息 [E: codex-rs/tui/src/status/card.rs:247][E: codex-rs/tui/src/status/card.rs:248][E: codex-rs/tui/src/status/card.rs:249][E: codex-rs/tui/src/status/card.rs:250][E: codex-rs/tui/src/status/card.rs:251][E: codex-rs/tui/src/status/card.rs:258][E: codex-rs/tui/src/status/card.rs:260][E: codex-rs/tui/src/status/card.rs:274][E: codex-rs/tui/src/status/card.rs:280][E: codex-rs/tui/src/status/card.rs:294][E: codex-rs/tui/src/status/card.rs:296][E: codex-rs/tui/src/status/card.rs:306][E: codex-rs/tui/src/status/card.rs:309][E: codex-rs/tui/src/status/card.rs:310][E: codex-rs/tui/src/status/card.rs:311][E: codex-rs/tui/src/status/card.rs:317][E: codex-rs/tui/src/status/card.rs:323][E: codex-rs/tui/src/status/card.rs:329]。
-3. `finish_rate_limit_refresh` 根据传入 rate-limit snapshots 和当前时间重新 compose rate limit data，并把 `refreshing_rate_limits` 设为 false [E: codex-rs/tui/src/status/card.rs:74][E: codex-rs/tui/src/status/card.rs:76][E: codex-rs/tui/src/status/card.rs:77][E: codex-rs/tui/src/status/card.rs:80][E: codex-rs/tui/src/status/card.rs:82][E: codex-rs/tui/src/status/card.rs:89][E: codex-rs/tui/src/status/card.rs:90]。
-4. `display_lines` 渲染 title、labels、agent summary、usage link note、model/provider/dir/permissions/session/fork、token usage、context window 和 rate limits [E: codex-rs/tui/src/status/card.rs:550][E: codex-rs/tui/src/status/card.rs:553][E: codex-rs/tui/src/status/card.rs:614][E: codex-rs/tui/src/status/card.rs:624][E: codex-rs/tui/src/status/card.rs:650][E: codex-rs/tui/src/status/card.rs:651][E: codex-rs/tui/src/status/card.rs:655][E: codex-rs/tui/src/status/card.rs:656][E: codex-rs/tui/src/status/card.rs:668][E: codex-rs/tui/src/status/card.rs:675][E: codex-rs/tui/src/status/card.rs:679][E: codex-rs/tui/src/status/card.rs:680][E: codex-rs/tui/src/status/card.rs:683][E: codex-rs/tui/src/status/card.rs:687]。
-5. `compose_rate_limit_data_many` 遇到 empty snapshots 返回 `Missing`，captured_at 超过 15 分钟标记 stale，rows 为空返回 `Unavailable`，否则返回 `Stale(rows)` 或 `Available(rows)` [E: codex-rs/tui/src/status/rate_limits.rs:174][E: codex-rs/tui/src/status/rate_limits.rs:175][E: codex-rs/tui/src/status/rate_limits.rs:182][E: codex-rs/tui/src/status/rate_limits.rs:183][E: codex-rs/tui/src/status/rate_limits.rs:273][E: codex-rs/tui/src/status/rate_limits.rs:274][E: codex-rs/tui/src/status/rate_limits.rs:276][E: codex-rs/tui/src/status/rate_limits.rs:278]。
+display model 包括 `StatusRateLimitRow`、`StatusRateLimitValue::{Window, Text}`、`StatusRateLimitData::{Available, Stale, Unavailable, Missing}`，stale threshold 是 15 分钟。[E: codex-rs/tui/src/status/rate_limits.rs:28][E: codex-rs/tui/src/status/rate_limits.rs:35][E: codex-rs/tui/src/status/rate_limits.rs:39][E: codex-rs/tui/src/status/rate_limits.rs:48][E: codex-rs/tui/src/status/rate_limits.rs:51][E: codex-rs/tui/src/status/rate_limits.rs:55][E: codex-rs/tui/src/status/rate_limits.rs:57][E: codex-rs/tui/src/status/rate_limits.rs:59][E: codex-rs/tui/src/status/rate_limits.rs:61][E: codex-rs/tui/src/status/rate_limits.rs:65]
 
-## 设计动机与权衡
+`RateLimitSnapshotDisplay` 保存 canonical limit name、capture time、primary/secondary windows、credits 和 individual monthly spend control limit；conversion 从 snapshot fields 映射并把 core credits/spend-control 类型转成 display 类型。[E: codex-rs/tui/src/status/rate_limits.rs:95][E: codex-rs/tui/src/status/rate_limits.rs:96][E: codex-rs/tui/src/status/rate_limits.rs:99][E: codex-rs/tui/src/status/rate_limits.rs:101][E: codex-rs/tui/src/status/rate_limits.rs:103][E: codex-rs/tui/src/status/rate_limits.rs:105][E: codex-rs/tui/src/status/rate_limits.rs:107][E: codex-rs/tui/src/status/rate_limits.rs:144][E: codex-rs/tui/src/status/rate_limits.rs:149][E: codex-rs/tui/src/status/rate_limits.rs:152][E: codex-rs/tui/src/status/rate_limits.rs:160][E: codex-rs/tui/src/status/rate_limits.rs:161][E: codex-rs/tui/src/status/rate_limits.rs:168][E: codex-rs/tui/src/status/rate_limits.rs:178]
 
-- status card 对 ChatGPT auth 隐藏 token usage，因为 `display_lines` 在 account 是 `ChatGpt` 时跳过 token usage lines [E: codex-rs/tui/src/status/card.rs:678][E: codex-rs/tui/src/status/card.rs:679][E: codex-rs/tui/src/status/card.rs:680]。
-- base URL 展示会 sanitize username、password、query、fragment 并去掉 trailing slash；“避免 status surface 泄漏敏感连接细节”是从这些清理步骤得出的安全推断 [E: codex-rs/tui/src/status/card.rs:720][E: codex-rs/tui/src/status/card.rs:729][E: codex-rs/tui/src/status/card.rs:730][E: codex-rs/tui/src/status/card.rs:731][E: codex-rs/tui/src/status/card.rs:732][E: codex-rs/tui/src/status/card.rs:733][I]。
-- rate limit stale threshold 是 15 分钟，说明旧 snapshot 不被当成实时数据展示 [E: codex-rs/tui/src/status/rate_limits.rs:60][E: codex-rs/tui/src/status/rate_limits.rs:182][E: codex-rs/tui/src/status/rate_limits.rs:183][I]。
+## Status Line 与 Terminal Title
 
-## gotcha
+`CachedProjectRootName` 用 cwd 缓存 project-root display name，注释说明 terminal-title refresh 很频繁，避免重复向上查找同一 root。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:70][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:72][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:76][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:77][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:78]
 
-- `StatusRateLimitData::Missing` 和 `Unavailable` 语义不同：前者是没有 snapshot，后者是 snapshots 存在但没有可展示 rows [E: codex-rs/tui/src/status/rate_limits.rs:54][E: codex-rs/tui/src/status/rate_limits.rs:56][E: codex-rs/tui/src/status/rate_limits.rs:166][E: codex-rs/tui/src/status/rate_limits.rs:175][E: codex-rs/tui/src/status/rate_limits.rs:273][E: codex-rs/tui/src/status/rate_limits.rs:274]。
-- `compose_agents_summary` 会把 agent paths 做压缩展示；如果 Agents 信息看起来丢失，先检查传入 paths 是否为空是基于 `<none>` empty-path fallback 的排查推断 [E: codex-rs/tui/src/status/helpers.rs:36][E: codex-rs/tui/src/status/helpers.rs:61][E: codex-rs/tui/src/status/helpers.rs:62][E: codex-rs/tui/src/status/helpers.rs:63][E: codex-rs/tui/src/status/helpers.rs:64][E: codex-rs/tui/src/status/helpers.rs:66][E: codex-rs/tui/src/status/helpers.rs:75][E: codex-rs/tui/src/status/helpers.rs:76][I]。
-- `StatusHistoryHandle` 只更新 rate limit state；其他 status card 字段是创建 cell 时的 snapshot [E: codex-rs/tui/src/status/card.rs:69][E: codex-rs/tui/src/status/card.rs:70][E: codex-rs/tui/src/status/card.rs:89][E: codex-rs/tui/src/status/card.rs:90][I]。
+`status_surface_selections` 同时收集 status-line items/invalids 和 terminal-title items/invalids；invalid warnings 只在 thread id 已存在、invalid list 非空、对应 atomic flag 首次 compare_exchange 成功时发出一次。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:81][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:83][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:84][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:86][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:94][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:95][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:96][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:98][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:107][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:111][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:115][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:119][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:128][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:132]
+
+## Running Status
+
+running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1001][E: codex-rs/tui/src/bottom_pane/mod.rs:1003][E: codex-rs/tui/src/bottom_pane/mod.rs:1004][E: codex-rs/tui/src/bottom_pane/mod.rs:1008][E: codex-rs/tui/src/bottom_pane/mod.rs:1009][E: codex-rs/tui/src/bottom_pane/mod.rs:1016][E: codex-rs/tui/src/bottom_pane/mod.rs:1019][E: codex-rs/tui/src/bottom_pane/mod.rs:1023]
+
+## Gotchas
+
+- `/status` card 的 rate-limit refresh 是 handle 更新 shared state，不是重新插入一张卡。[E: codex-rs/tui/src/status/card.rs:80][E: codex-rs/tui/src/status/card.rs:85][E: codex-rs/tui/src/status/card.rs:100]
+- invalid status-line/title warnings 有 once-only guard；测试或排障时重复配置错误可能不会重复弹 warning。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:98][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:119]
 
 ## Sources
 
-- `codex-rs/tui/src/status`
+- `codex-rs/tui/src/status/card.rs`
+- `codex-rs/tui/src/status/rate_limits.rs`
+- `codex-rs/tui/src/chatwidget/status_surfaces.rs`
+- `codex-rs/tui/src/bottom_pane/mod.rs`
+- `codex-rs/tui/src/chatwidget.rs`
 
 ## 相关
 
-- `subsys.tui.chatwidget`
-- `subsys.tui.bottom-pane`
-- `subsys.tui.rendering-theming`
+- `subsys.tui.chatwidget`: status state 所属的主 UI 状态机。
+- `subsys.tui.bottom-pane`: running status indicator 的 footer 位置。

@@ -16,7 +16,7 @@
 
 ## 2. 顺序(价值优先)
 1. **T0 `spine/`**(~10,mermaid 图先行)—— 先立脊柱(SQ/EQ 架构、一次 turn、工具调用解剖、沙箱执行流 + worked traces),后续节点引用它。
-2. **T1 `surface/tools/`**(38)—— 用户核心诉求;`shell`/`apply_patch`/`exec_command`/`spawn_agent`/`js_repl` 等大件优先。
+2. **T1 `surface/tools/`**(37)—— 用户核心诉求;`shell_command`/`apply_patch`/`exec_command`/`spawn_agent`/`sleep`/`new_context` 等大件优先。
 3. **T2 `subsystems/`**:`core/` → `exec-sandbox/` → `mcp/` → `providers/` → `tui/` → `app-server/` → `config-auth/` → `cloud/` → `platform/`。
 4. 展开 **groups**(slash-commands / cli / config / app-server-rpc / features / 协议 catalog)。
 5. **T3 `reference/`**(协议 Op/Event catalog、数据模型、crate 索引、glossary、env、uncertainty)。
@@ -32,8 +32,8 @@
 > ⚠️ **lint 过 ≠ 完成**。lint 只是结构下限(防漂移),真正把关是 L2 独立证伪。**不要写能骗过 lint 的模板化空话**。
 
 ## 4. 工具节点的硬约定
-- **`tool_registry_plan.rs` 是工具集的 ground truth**。开 `surface/tools/` 前先核对 `codex-rs/tools/src/tool_registry_plan.rs` 的 `build_tool_registry_plan` 装配段(各 `if config.* { ... }` 门控、最终 specs/handlers),**多退少补**(漏的补节点、错的修、真不存在的删并在 `reference/uncertainty.md` 记一笔)。
-- **门控要写准**:每个工具节点必须写清它在哪个 `ToolsConfig` 字段 / `Feature` flag 下启用(如 `js_repl_enabled`、`code_mode_enabled`、`collab_tools && multi_agent_v2`)。门控是 codex 工具系统的核心。
+- **`codex-rs/core/src/tools/spec_plan.rs` 是工具集的 ground truth**。开 `surface/tools/` 前先核对 `build_tool_router` → `build_tool_specs_and_registry` → `add_tool_sources` 的装配段,以及 `add_shell_tools` / `add_mcp_resource_tools` / `add_core_utility_tools` / `add_collaboration_tools` / `add_mcp_runtime_tools` / `add_extension_tools` / `add_dynamic_tools` 的门控、specs、handler 注册,**多退少补**(漏的补节点、错的修、真不存在的删并在 `reference/uncertainty.md` 记一笔)。
+- **门控要写准**:每个工具节点必须写清它在哪个 `ToolEnvironmentMode` / `Feature` flag / config 字段 / provider capability / model capability 下启用(如 `Feature::TokenBudget`、`Feature::SleepTool`、`Feature::RequestPermissionsTool`、`MultiAgentVersion::V2`、namespace tools capability)。门控是 codex 工具系统的核心。
 - **V1/V2 并存**:multi-agent 工具有 V1/V2 两套(`spawn_agent` 等),各自独立节点或在节点内明确区分;别混。
 
 ## 5. 纪律

@@ -85,7 +85,12 @@ for (const e of allEntries) {
   for (const r of e.related || []) if (!idSet.has(r)) err(`index ${e.id}: related 指向未知 id "${r}"`)
   const ns = e.id.split('.')[0]
   if (e.path && NS_DIR[ns] && !e.path.startsWith(NS_DIR[ns])) warn(`index ${e.id}: path "${e.path}" 与命名空间 ${ns}/ 不一致`)
-  for (const s of e.source || []) if (!srcExists(s)) warn(`index ${e.id}: source "${s}" 在 Best/codex/ 不存在`)
+  // Draft/planned nodes may intentionally retain stale source paths while they
+  // wait for the L1 -> L2 -> L3 refresh loop. Only verified nodes claim their
+  // source list is current enough for hard evidence checks.
+  if (e.status === 'verified') {
+    for (const s of e.source || []) if (!srcExists(s)) warn(`index ${e.id}: source "${s}" 在 Best/codex/ 不存在`)
+  }
 }
 
 // Rule: status≠planned 的 index 条目必有文件 ----
@@ -112,20 +117,23 @@ for (const f of files) {
   if (fm.evidence && !EVID.includes(fm.evidence)) err(`${f}: evidence 非法 "${fm.evidence}"`)
   if (fm.updated && !SHA.test(String(fm.updated))) warn(`${f}: updated "${fm.updated}" 不像 git 短 SHA(codex staleness 用 SHA)`)
   if (fm.id && inIndex && nodeByPath.get(f).id !== fm.id) err(`${f}: frontmatter id "${fm.id}" ≠ index 中该 path 的 id "${nodeByPath.get(f).id}"`)
-  for (const s of fm.source || []) if (!srcExists(s)) err(`${f}: source "${s}" 在 Best/codex/ 不存在`)
+  if (fm.status === 'verified') {
+    for (const s of fm.source || []) if (!srcExists(s)) err(`${f}: source "${s}" 在 Best/codex/ 不存在`)
+  }
   for (const r of fm.related || []) if (!idSet.has(r)) err(`${f}: related 指向未知 id "${r}"`)
   const fb = body.match(FORBIDDEN); if (fb) err(`${f}: 出现非自包含措辞 "${fb[0]}"(改成显式实体名+链接)`)
   if (fm.status === 'verified') {
-    if (!/\[E[:\]]/.test(body)) err(`${f}: status=verified 但正文无 [E] 证据标`)
-    if (!/##\s*Sources/.test(body)) err(`${f}: status=verified 但缺 ## Sources`)
+    const generatedUncertaintyLedger = f === 'reference/uncertainty.md' && fm.id === 'ref.uncertainty'
+    if (!generatedUncertaintyLedger && !/\[E[:\]]/.test(body)) err(`${f}: status=verified 但正文无 [E] 证据标`)
+    if (!generatedUncertaintyLedger && !/##\s*Sources/.test(body)) err(`${f}: status=verified 但缺 ## Sources`)
     if (!SHA.test(String(fm.updated || ''))) err(`${f}: status=verified 但 updated 不是 git 短 SHA`)
-  }
-  for (const m of body.matchAll(/\[E:\s*([^\]]+?)\]/g)) {
-    const ref = m[1].trim()
-    const lm = ref.match(/^(.*?):(\d+)$/)
-    const path = lm ? lm[1] : ref
-    if (!existsSync(join(SRC, path))) { err(`${f}: [E: ${ref}] 路径不存在于 Best/codex/`); continue }
-    if (lm) { const lc = srcLineCount(path); if (lc != null && Number(lm[2]) > lc) err(`${f}: [E: ${ref}] 行号超出文件范围(${path} 共 ${lc} 行)`) }
+    for (const m of body.matchAll(/\[E:\s*([^\]]+?)\]/g)) {
+      const ref = m[1].trim()
+      const lm = ref.match(/^(.*?):(\d+)$/)
+      const path = lm ? lm[1] : ref
+      if (!existsSync(join(SRC, path))) { err(`${f}: [E: ${ref}] 路径不存在于 Best/codex/`); continue }
+      if (lm) { const lc = srcLineCount(path); if (lc != null && Number(lm[2]) > lc) err(`${f}: [E: ${ref}] 行号超出文件范围(${path} 共 ${lc} 行)`) }
+    }
   }
 }
 

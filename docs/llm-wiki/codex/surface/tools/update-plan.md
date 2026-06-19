@@ -3,101 +3,84 @@ id: tool.update-plan
 title: update_plan 工具
 kind: tool
 tier: T1
-source: [codex-rs/tools/src/plan_tool.rs, codex-rs/tools/src/tool_registry_plan.rs, codex-rs/tools/src/tool_registry_plan_types.rs, codex-rs/core/src/tools/spec.rs, codex-rs/core/src/tools/handlers/plan.rs, codex-rs/core/src/tools/context.rs, codex-rs/protocol/src/plan_tool.rs, codex-rs/protocol/src/protocol.rs]
-symbols: [create_update_plan_tool, ToolHandlerKind::Plan, PlanHandler, handle_update_plan, UpdatePlanArgs, EventMsg::PlanUpdate]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/plan_spec.rs, codex-rs/core/src/tools/handlers/plan.rs, codex-rs/protocol/src/plan_tool.rs, codex-rs/protocol/src/protocol.rs, codex-rs/tools/src/tool_executor.rs]
+symbols: [add_core_utility_tools, create_update_plan_tool, PlanHandler, PlanToolOutput, parse_update_plan_arguments, UpdatePlanArgs, EventMsg::PlanUpdate]
 related: [spine.tool-call-anatomy, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> `update_plan` 是 Codex 暴露给模型的 TODO/checklist 状态更新工具；handler 把结构化 plan 参数发送成 `EventMsg::PlanUpdate(args)`，并且 handler 注释说明该工具有用的部分是输入本身，因为客户端可以读取输入并渲染结构化 plan。[E: codex-rs/core/src/tools/handlers/plan.rs:93][E: codex-rs/core/src/tools/handlers/plan.rs:78]
+> `update_plan` 是 Codex 的本地 checklist/TODO 状态更新 function tool。它让模型提交结构化 plan，handler 把参数转成 `EventMsg::PlanUpdate(args)` 发给客户端，并向模型返回固定的 `Plan updated` 成功文本。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan_spec.rs:43][E: codex-rs/core/src/tools/handlers/plan.rs:22][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92]
 
 ## 能回答的问题
 
-- `update_plan` 的 wire name、`ToolHandlerKind` 和 handler 是什么？
-- `update_plan` 的输入 schema 里哪些字段必填，`status` 有哪些枚举值？
-- `update_plan` 为什么没有真实业务输出，客户端如何拿到 plan？
-- `update_plan` 什么时候注册，是否支持 parallel tool calls？
-- `update_plan` 为什么在 Plan mode 里反而不可用？
+- `update_plan` 的 wire name、ToolSpec 类型和 handler 是什么？
+- 输入 schema 里哪些字段必填，`status` 有哪些枚举值？
+- 成功输出为什么只有固定文本，真实 plan 如何到达客户端？
+- 它何时注册，是否支持 parallel tool calls？
+- 为什么它在 Plan mode 中不可用？
 
 ## 1 Identity
 
-| 项 | 值 | 证据 |
-|---|---|---|
-| wire name | `update_plan` | `ResponsesApiTool.name` 固定为 `update_plan`。[E: codex-rs/tools/src/plan_tool.rs:34] |
-| aliases | 未看到独立 alias；registry 注册的 handler name 是 `update_plan`。 | `build_tool_registry_plan` 调用 `plan.register_handler("update_plan", ToolHandlerKind::Plan)`。[E: codex-rs/tools/src/tool_registry_plan.rs:219][I] |
-| ToolSpec 类型 | `ToolSpec::Function(ResponsesApiTool)` | `create_update_plan_tool` 返回 `ToolSpec::Function`。[E: codex-rs/tools/src/plan_tool.rs:33] |
-| ToolHandlerKind | `ToolHandlerKind::Plan` | `ToolHandlerKind` enum 定义 `Plan` 变体。[E: codex-rs/tools/src/tool_registry_plan_types.rs:27] |
-| core handler | `PlanHandler` | `core/src/tools/spec.rs` 为 `ToolHandlerKind::Plan` 注册 `plan_handler`。[E: codex-rs/core/src/tools/spec.rs:234] |
-| 所属 crate | spec 在 `codex-tools`，执行在 `codex-core`，协议类型在 `codex-protocol`。 | `codex-tools` 暴露 `create_update_plan_tool`，`codex-core` 中 `PlanHandler` 实现 `ToolHandler`，`codex-protocol` 定义 `UpdatePlanArgs`。[E: codex-rs/tools/src/plan_tool.rs:6][E: codex-rs/core/src/tools/handlers/plan.rs:52][E: codex-rs/protocol/src/plan_tool.rs:25] |
+| 项 | 值 |
+|---|---|
+| wire name | `PlanHandler::tool_name()` 返回 plain `update_plan`；spec 的 `ResponsesApiTool.name` 也是 `update_plan`。[E: codex-rs/core/src/tools/handlers/plan.rs:49][E: codex-rs/core/src/tools/handlers/plan.rs:50][E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan_spec.rs:43] |
+| concrete handler | `PlanHandler` 实现 `ToolExecutor<ToolInvocation>`，`spec()` 调用 `create_update_plan_tool()`。[E: codex-rs/core/src/tools/handlers/plan.rs:18][E: codex-rs/core/src/tools/handlers/plan.rs:48][E: codex-rs/core/src/tools/handlers/plan.rs:53][E: codex-rs/core/src/tools/handlers/plan.rs:54] |
+| ToolSpec | `create_update_plan_tool` 返回 `ToolSpec::Function(ResponsesApiTool { ... })`，`strict: false`，`output_schema` 为 `None`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:7][E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan_spec.rs:49][E: codex-rs/core/src/tools/handlers/plan_spec.rs:56] |
+| handler exposure | `ToolExecutor` 的默认 `exposure()` 返回 Direct；`PlanHandler` 未见覆盖该方法，因此实际走默认 Direct。[E: codex-rs/tools/src/tool_executor.rs:55][E: codex-rs/tools/src/tool_executor.rs:56][I] |
 
 ## 2 用途定位
 
-`update_plan` 的工具描述明确说它用于更新 task plan、可带 optional explanation、并要求最多一个 step 处于 `in_progress` 状态。[E: codex-rs/tools/src/plan_tool.rs:35][E: codex-rs/tools/src/plan_tool.rs:36][E: codex-rs/tools/src/plan_tool.rs:37]  
-`PlanHandler` 的注释说明该工具“有用”的部分是输入本身，因为客户端可以读取并渲染结构化 plan；工具输出本身对模型没有额外语义价值。[E: codex-rs/core/src/tools/handlers/plan.rs:78][E: codex-rs/core/src/tools/handlers/plan.rs:79]  
-`handle_update_plan` 把解析出的 `UpdatePlanArgs` 发送为 `EventMsg::PlanUpdate(args)`，因此 plan 可见性来自 Codex event surface。[E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:93][I]
+工具描述说明它用于更新 task plan，可带可选 explanation，并要求最多一个 step 处于 `in_progress`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:44][E: codex-rs/core/src/tools/handlers/plan_spec.rs:45][E: codex-rs/core/src/tools/handlers/plan_spec.rs:46]
+
+执行层不会把 plan 内容拼进工具输出；`PlanHandler` 解析 arguments 后调用 `session.send_event(turn.as_ref(), EventMsg::PlanUpdate(args)).await`，通过 `EventMsg::PlanUpdate` 暴露给 event surface。[E: codex-rs/core/src/tools/handlers/plan.rs:90][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92][E: codex-rs/protocol/src/protocol.rs:1367]
+
+当前源码中，“最多一个 `in_progress`”只出现在工具描述；handler 路径显示它做 JSON 反序列化并发送 event，未见额外 runtime 校验该约束。[E: codex-rs/core/src/tools/handlers/plan.rs:90][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92][I]
 
 ## 3 输入 schema 表
 
 | 字段 | 类型 | 必填 | 默认 | 说明 | 校验/约束 |
 |---|---|---:|---|---|---|
-| `explanation` | string | 否 | 无 | 可选说明文本。 | schema 只声明 string，没有把 `explanation` 放进顶层 required。[E: codex-rs/tools/src/plan_tool.rs:18][E: codex-rs/tools/src/plan_tool.rs:44] |
-| `plan` | array<object> | 是 | 无 | plan step 列表。 | 顶层 schema 把 `plan` 设为 required。[E: codex-rs/tools/src/plan_tool.rs:42][E: codex-rs/tools/src/plan_tool.rs:44] |
-| `plan[].step` | string | 是 | 无 | 单个步骤文本。 | item schema required 包含 `step`。[E: codex-rs/tools/src/plan_tool.rs:8][E: codex-rs/tools/src/plan_tool.rs:25] |
-| `plan[].status` | string / `StepStatus` | 是 | 无 | 状态值为 `pending`、`in_progress`、`completed`。 | tool description 写明状态枚举；协议 enum 用 `serde(rename_all = "snake_case")` 序列化 `Pending/InProgress/Completed`。[E: codex-rs/tools/src/plan_tool.rs:11][E: codex-rs/protocol/src/plan_tool.rs:8][E: codex-rs/protocol/src/plan_tool.rs:10] |
+| `explanation` | string | 否 | 无 | 可选说明文本。 | schema 将其放入 properties，但顶层 required 只含 `plan`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:22][E: codex-rs/core/src/tools/handlers/plan_spec.rs:24][E: codex-rs/core/src/tools/handlers/plan_spec.rs:51][E: codex-rs/core/src/tools/handlers/plan_spec.rs:53] |
+| `plan` | array<object> | 是 | 无 | plan step 列表。 | 顶层 required 包含 `plan`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:30][E: codex-rs/core/src/tools/handlers/plan_spec.rs:31][E: codex-rs/core/src/tools/handlers/plan_spec.rs:53] |
+| `plan[].step` | string | 是 | 无 | 单个步骤文本。 | item required 包含 `step`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:10][E: codex-rs/core/src/tools/handlers/plan_spec.rs:11][E: codex-rs/core/src/tools/handlers/plan_spec.rs:34] |
+| `plan[].status` | enum string | 是 | 无 | `pending`、`in_progress`、`completed`。 | schema enum 列出三值，item required 包含 `status`；协议 enum 使用 `#[serde(rename_all = "snake_case")]`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:14][E: codex-rs/core/src/tools/handlers/plan_spec.rs:15][E: codex-rs/core/src/tools/handlers/plan_spec.rs:16][E: codex-rs/core/src/tools/handlers/plan_spec.rs:34][E: codex-rs/protocol/src/plan_tool.rs:9][E: codex-rs/protocol/src/plan_tool.rs:8] |
 
-`UpdatePlanArgs` 的协议结构是 `explanation: Option<String>` 加 `plan: Vec<PlanItemArg>`，`PlanItemArg` 使用 `#[serde(deny_unknown_fields)]` 拒绝未知字段。[E: codex-rs/protocol/src/plan_tool.rs:27][E: codex-rs/protocol/src/plan_tool.rs:28][E: codex-rs/protocol/src/plan_tool.rs:16]  
-工具 schema 顶层和 plan item 都设置 `additionalProperties: false`，通过 `JsonSchema::object(..., Some(false.into()))` 表达。[E: codex-rs/tools/src/plan_tool.rs:26][E: codex-rs/tools/src/plan_tool.rs:45]
+协议结构是 `UpdatePlanArgs { explanation: Option<String>, plan: Vec<PlanItemArg> }`；`PlanItemArg` 和 `UpdatePlanArgs` 都用 `#[serde(deny_unknown_fields)]` 拒绝未知字段。[E: codex-rs/protocol/src/plan_tool.rs:16][E: codex-rs/protocol/src/plan_tool.rs:17][E: codex-rs/protocol/src/plan_tool.rs:23][E: codex-rs/protocol/src/plan_tool.rs:24][E: codex-rs/protocol/src/plan_tool.rs:27][E: codex-rs/protocol/src/plan_tool.rs:28]
 
-## 4 输出 schema & 截断
+tool schema 的 plan item object 和顶层 parameters object 都关闭 additional properties。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:35][E: codex-rs/core/src/tools/handlers/plan_spec.rs:54]
 
-`ResponsesApiTool.output_schema` 为 `None`，所以 `update_plan` 不向 Responses API 声明结构化 output schema。[E: codex-rs/tools/src/plan_tool.rs:47]  
-执行成功时 `PlanToolOutput` 给模型返回文本 `Plan updated`，并把 `FunctionCallOutputPayload.success` 设为 `Some(true)`。[E: codex-rs/core/src/tools/handlers/plan.rs:20][E: codex-rs/core/src/tools/handlers/plan.rs:32][E: codex-rs/core/src/tools/handlers/plan.rs:33]  
-`PlanToolOutput.code_mode_result` 返回空 JSON object，因此 code-mode 嵌套调用不会得到 plan 内容本身。[E: codex-rs/core/src/tools/handlers/plan.rs:41][E: codex-rs/core/src/tools/handlers/plan.rs:42]
+## 4 输出
 
-## 5 ToolSpec 类型
+`PlanToolOutput` 的 log preview 是 `Plan updated`，success 为 true；response item 是 `FunctionCallOutput`，正文同样是 `Plan updated`，`success` 设为 `Some(true)`。[E: codex-rs/core/src/tools/handlers/plan.rs:22][E: codex-rs/core/src/tools/handlers/plan.rs:24][E: codex-rs/core/src/tools/handlers/plan.rs:26][E: codex-rs/core/src/tools/handlers/plan.rs:30][E: codex-rs/core/src/tools/handlers/plan.rs:34][E: codex-rs/core/src/tools/handlers/plan.rs:35][E: codex-rs/core/src/tools/handlers/plan.rs:37]
 
-`update_plan` 选择普通 `Function` ToolSpec；模型提交 JSON arguments，core 本地 handler 再解析 `ToolPayload::Function { arguments }` 并发送 plan event。[E: codex-rs/tools/src/plan_tool.rs:33][E: codex-rs/core/src/tools/handlers/plan.rs:63][E: codex-rs/core/src/tools/handlers/plan.rs:93][I]  
-`PlanHandler.kind()` 返回 `ToolKind::Function`。[E: codex-rs/core/src/tools/handlers/plan.rs:49]
+code-mode nested result 返回空 JSON object。[E: codex-rs/core/src/tools/handlers/plan.rs:43][E: codex-rs/core/src/tools/handlers/plan.rs:44]
 
-## 6 注册与门控
+## 5 注册与门控
 
-`build_tool_registry_plan` 在不包裹额外 `if` gate 的代码路径上 `push_spec(create_update_plan_tool(), false, config.code_mode_enabled)`，随后注册 `ToolHandlerKind::Plan` handler。[E: codex-rs/tools/src/tool_registry_plan.rs:215][E: codex-rs/tools/src/tool_registry_plan.rs:216][E: codex-rs/tools/src/tool_registry_plan.rs:217][E: codex-rs/tools/src/tool_registry_plan.rs:219][I]  
-第三个参数 `config.code_mode_enabled` 传入 code-mode augmentation 逻辑；`ToolRegistryPlan::push_spec` 在 `code_mode_enabled` 为 true 时调用 `augment_tool_spec_for_code_mode`，否则原样 push spec。[E: codex-rs/tools/src/tool_registry_plan_types.rs:100][E: codex-rs/tools/src/tool_registry_plan_types.rs:107]  
-`update_plan` 的运行时限制来自 handler：当当前 collaboration mode 是 `ModeKind::Plan` 时，`handle_update_plan` 返回给模型错误 `update_plan is a TODO/checklist tool and is not allowed in Plan mode`。[E: codex-rs/core/src/tools/handlers/plan.rs:86][E: codex-rs/core/src/tools/handlers/plan.rs:88]
+`build_tool_router` 委托 `build_tool_specs_and_registry`；后者构造 `CoreToolPlanContext` 后调用 `add_tool_sources`，而 `add_tool_sources` 调用 `add_core_utility_tools`；该函数无额外 feature gate 地 `planned_tools.add(PlanHandler)`。[E: codex-rs/core/src/tools/spec_plan.rs:157][E: codex-rs/core/src/tools/spec_plan.rs:162][E: codex-rs/core/src/tools/spec_plan.rs:193][E: codex-rs/core/src/tools/spec_plan.rs:194][E: codex-rs/core/src/tools/spec_plan.rs:604][E: codex-rs/core/src/tools/spec_plan.rs:607][E: codex-rs/core/src/tools/spec_plan.rs:689][E: codex-rs/core/src/tools/spec_plan.rs:694]
 
-## 7 parallel-safe
+runtime gate 在 handler 内：当当前 turn 的 collaboration mode 是 `ModeKind::Plan` 时，handler 返回错误 `update_plan is a TODO/checklist tool and is not allowed in Plan mode`。[E: codex-rs/core/src/tools/handlers/plan.rs:84][E: codex-rs/core/src/tools/handlers/plan.rs:85][E: codex-rs/core/src/tools/handlers/plan.rs:86]
 
-`update_plan` 的 `supports_parallel_tool_calls` 实际值是 `false`，因为 registry plan 在 push spec 时传入 `/*supports_parallel_tool_calls*/ false`。[E: codex-rs/tools/src/tool_registry_plan.rs:216]  
-`core/src/tools/spec.rs` 只有在 `ConfiguredToolSpec.supports_parallel_tool_calls` 为 true 时才调用 `push_spec_with_parallel_support(..., true)`；否则调用普通 `builder.push_spec`。[E: codex-rs/core/src/tools/spec.rs:180][E: codex-rs/core/src/tools/spec.rs:185]  
-设计动机是 plan 是一个全局可视状态快照，多个 plan 更新并发会制造 UI 状态竞争。[I]
+## 6 parallel support
 
-## 8 handler 走读
+`ToolExecutor` 的默认 `supports_parallel_tool_calls()` 返回 `false`；`PlanHandler` 未见覆盖该方法，因此实际走默认 false。[E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65][I]
 
-1. `ToolRegistryPlan` 产出 `ToolHandlerSpec { name: "update_plan", kind: Plan }`。[E: codex-rs/tools/src/tool_registry_plan.rs:219]
-2. `build_specs_with_discoverable_tools` 创建共享 `Arc<PlanHandler>`。[E: codex-rs/core/src/tools/spec.rs:150]
-3. `core/src/tools/spec.rs` 在匹配 `ToolHandlerKind::Plan` 时把 `PlanHandler` 注册到 `ToolRegistryBuilder`。[E: codex-rs/core/src/tools/spec.rs:233][E: codex-rs/core/src/tools/spec.rs:234]
-4. `PlanHandler.handle` 只接受 `ToolPayload::Function { arguments }`，其他 payload 返回 `update_plan handler received unsupported payload`。[E: codex-rs/core/src/tools/handlers/plan.rs:63][E: codex-rs/core/src/tools/handlers/plan.rs:66]
-5. `handle_update_plan` 解析 JSON 为 `UpdatePlanArgs`，通过 `session.send_event(turn_context, EventMsg::PlanUpdate(args)).await` 发给客户端。[E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:93]
-6. `EventMsg` enum 明确包含 `PlanUpdate(UpdatePlanArgs)` 变体。[E: codex-rs/protocol/src/protocol.rs:1594]
+## 7 handler 走读
 
-## 9 设计动机·edge·历史
-
-`update_plan` 是“输入驱动 UI”的工具：handler 注释说明输出本身并不重要，重要的是强制模型形成结构化 plan，并让客户端能读输入渲染 TODO/checklist。[E: codex-rs/core/src/tools/handlers/plan.rs:78][E: codex-rs/core/src/tools/handlers/plan.rs:79]  
-Plan mode 禁用 `update_plan` 的 edge case 与工具描述中的 TODO/checklist 定位一致：Plan mode 本身是协作模式，`update_plan` 是 Default mode 下的 checklist surface。[I]  
-`status` 约束在工具 schema 里用 string description 表达，而协议反序列化使用 `StepStatus` enum 的 serde snake_case 规则。[E: codex-rs/tools/src/plan_tool.rs:11][E: codex-rs/protocol/src/plan_tool.rs:8][E: codex-rs/protocol/src/plan_tool.rs:10][I]
+1. handler 只接受 `ToolPayload::Function { arguments }`；其它 payload 返回 `update_plan handler received unsupported payload`。[E: codex-rs/core/src/tools/handlers/plan.rs:75][E: codex-rs/core/src/tools/handlers/plan.rs:76][E: codex-rs/core/src/tools/handlers/plan.rs:77][E: codex-rs/core/src/tools/handlers/plan.rs:78][E: codex-rs/core/src/tools/handlers/plan.rs:79]
+2. Plan mode 被拒绝后，handler 通过 `parse_update_plan_arguments` 反序列化 `UpdatePlanArgs`。[E: codex-rs/core/src/tools/handlers/plan.rs:84][E: codex-rs/core/src/tools/handlers/plan.rs:90][E: codex-rs/core/src/tools/handlers/plan.rs:101][E: codex-rs/core/src/tools/handlers/plan.rs:102]
+3. 成功解析后发送 `EventMsg::PlanUpdate(args)`，再返回 `PlanToolOutput`。[E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92][E: codex-rs/core/src/tools/handlers/plan.rs:95]
 
 ## Sources
 
-- `codex-rs/tools/src/plan_tool.rs`
-- `codex-rs/tools/src/tool_registry_plan.rs`
-- `codex-rs/tools/src/tool_registry_plan_types.rs`
-- `codex-rs/core/src/tools/spec.rs`
+- `codex-rs/core/src/tools/spec_plan.rs`
+- `codex-rs/core/src/tools/handlers/plan_spec.rs`
 - `codex-rs/core/src/tools/handlers/plan.rs`
-- `codex-rs/core/src/tools/context.rs`
 - `codex-rs/protocol/src/plan_tool.rs`
 - `codex-rs/protocol/src/protocol.rs`
+- `codex-rs/tools/src/tool_executor.rs`
 
 ## 相关
 

@@ -3,51 +3,52 @@ id: command.config-system
 title: 配置与系统命令
 kind: command
 tier: T1
-source: [codex-rs/tui/src/slash_command.rs, codex-rs/feedback/src/lib.rs]
-symbols: [SlashCommand, SlashCommand::description, SlashCommand::supports_inline_args, SlashCommand::available_during_task, SlashCommand::available_in_side_conversation, SlashCommand::is_visible, CodexFeedback]
+source: [codex-rs/tui/src/slash_command.rs]
+symbols: [SlashCommand, SlashCommand::description, SlashCommand::supports_inline_args, SlashCommand::available_during_task, SlashCommand::available_in_side_conversation, SlashCommand::is_visible, built_in_slash_commands]
 related: [config.approval-sandbox, config.ui-tui, config.storage-telemetry-misc, subsys.platform.telemetry-otel, subsys.core.unified-exec]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> 配置与系统 slash commands 是 `SlashCommand` enum 中打开状态、debug config、settings、memory、title/statusline/theme-adjacent controls、sandbox setup、logout、feedback 和后台终端控制的 TUI built-in command 子集。
+> 配置与系统 slash commands 是 `SlashCommand` enum 中负责 sandbox setup、memory settings、status/usage/debug views、title/statusline controls、logout、feedback 和 background terminal management 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:7][E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:81]
 
 ## 能回答的问题
 
-- `/status`、`/debug-config`、`/settings`、`/memories` 等系统命令分别是什么?
-- `/setup-default-sandbox` 和 `/sandbox-add-read-dir` 的真实 command string 来自哪里?
-- `/ps` 与 `/stop` 是否能在任务运行中使用?
-- `/feedback` 的日志 ring buffer 支撑代码在哪里?
+- `/setup-default-sandbox` 和 `/sandbox-add-read-dir` 的 command string 从哪里来?
+- `/status`、`/usage`、`/debug-config`、`/title`、`/statusline` 当前是否可在 task 中使用?
+- `/ps` 与 `/stop` 是否仍是 background terminal controls?
+- `/sandbox-add-read-dir` 的平台门控是什么?
 
 ## Catalog
 
-| 命令名 | enum variant | 类型 | inline args | during task | side conversation | 默认/门控 | 含义与为什么 | 源 |
-|---|---|---|---:|---:|---:|---|---|---|
-| `/setup-default-sandbox` | `ElevateSandbox` | built-in slash command | 否 | 否 | 否 | 默认可见 | 设置 elevated agent sandbox；variant 使用 `strum(serialize = "setup-default-sandbox")` 覆盖默认 kebab-case 名称。[E: codex-rs/tui/src/slash_command.rs:19][E: codex-rs/tui/src/slash_command.rs:112][E: codex-rs/tui/src/slash_command.rs:170] | `codex-rs/tui/src/slash_command.rs:20` |
-| `/sandbox-add-read-dir` | `SandboxReadRoot` | built-in slash command | 是 | 否 | 否 | 只在 Windows 可见 | 让 sandbox 读取指定 absolute path；`is_visible()` 把它限制为 `cfg!(target_os = "windows")`，`available_during_task()` 对它返回 false，并且 `supports_inline_args()` 允许路径参数。[E: codex-rs/tui/src/slash_command.rs:21][E: codex-rs/tui/src/slash_command.rs:114][E: codex-rs/tui/src/slash_command.rs:171][E: codex-rs/tui/src/slash_command.rs:144][E: codex-rs/tui/src/slash_command.rs:210] | `codex-rs/tui/src/slash_command.rs:22` |
-| `/memories` | `Memories` | built-in slash command | 否 | 否 | 否 | 默认可见 | 配置 memory use and generation；memory config 影响上下文/记忆生成，所以任务运行中不可触发。[E: codex-rs/tui/src/slash_command.rs:117][E: codex-rs/tui/src/slash_command.rs:173] | `codex-rs/tui/src/slash_command.rs:24` |
-| `/status` | `Status` | built-in slash command | 否 | 是 | 是 | 默认可见 | 显示当前 session configuration 和 token usage；它是只读状态面，所以任务运行中和 side conversation 中可用。[E: codex-rs/tui/src/slash_command.rs:90][E: codex-rs/tui/src/slash_command.rs:185][E: codex-rs/tui/src/slash_command.rs:152] | `codex-rs/tui/src/slash_command.rs:41` |
-| `/debug-config` | `DebugConfig` | built-in slash command | 否 | 是 | 否 | 默认可见 | 显示 config layers 和 requirement sources；它是 debug inspection surface，任务运行中可用。[E: codex-rs/tui/src/slash_command.rs:91][E: codex-rs/tui/src/slash_command.rs:186] | `codex-rs/tui/src/slash_command.rs:42` |
-| `/title` | `Title` | built-in slash command | 否 | 否 | 否 | 默认可见 | 配置 terminal title 中显示的 items；它打开配置 UI，任务运行中不可触发。[E: codex-rs/tui/src/slash_command.rs:92][E: codex-rs/tui/src/slash_command.rs:204] | `codex-rs/tui/src/slash_command.rs:43` |
-| `/statusline` | `Statusline` | built-in slash command | 否 | 否 | 否 | 默认可见 | 配置 status line 中显示的 items；它打开配置 UI，任务运行中不可触发。[E: codex-rs/tui/src/slash_command.rs:93][E: codex-rs/tui/src/slash_command.rs:202] | `codex-rs/tui/src/slash_command.rs:44` |
-| `/logout` | `Logout` | built-in slash command | 否 | 否 | 否 | 默认可见 | 登出 Codex；auth 状态切换会影响后续请求，所以任务运行中不可触发。[E: codex-rs/tui/src/slash_command.rs:121][E: codex-rs/tui/src/slash_command.rs:177] | `codex-rs/tui/src/slash_command.rs:49` |
-| `/feedback` | `Feedback` | built-in slash command | 否 | 是 | 否 | 默认可见 | 发送 logs to maintainers；feedback writer 把 bytes 推入 ring buffer，snapshot 复制 ring buffer bytes，upload 时可把 logs 作为 Sentry attachment 加入 envelope。[E: codex-rs/tui/src/slash_command.rs:75][E: codex-rs/tui/src/slash_command.rs:192][E: codex-rs/feedback/src/lib.rs:278][E: codex-rs/feedback/src/lib.rs:330][E: codex-rs/feedback/src/lib.rs:444][E: codex-rs/feedback/src/lib.rs:512][E: codex-rs/feedback/src/lib.rs:514] | `codex-rs/tui/src/slash_command.rs:52` |
-| `/ps` | `Ps` | built-in slash command | 否 | 是 | 否 | 默认可见 | 列出 background terminals；它是后台终端状态查询，任务运行中可用。[E: codex-rs/tui/src/slash_command.rs:95][E: codex-rs/tui/src/slash_command.rs:187] | `codex-rs/tui/src/slash_command.rs:54` |
-| `/stop` | `Stop` | built-in slash command | 否 | 是 | 否 | 默认可见；`/clean` 是 parse alias | 停止所有 background terminals；`strum(to_string = "stop", serialize = "clean")` 让 canonical command 是 `stop`，同时 `clean` 可解析为 `Stop`。[E: codex-rs/tui/src/slash_command.rs:55][E: codex-rs/tui/src/slash_command.rs:96][E: codex-rs/tui/src/slash_command.rs:188][E: codex-rs/tui/src/slash_command.rs:235][E: codex-rs/tui/src/slash_command.rs:240] | `codex-rs/tui/src/slash_command.rs:56` |
-| `/settings` | `Settings` | built-in slash command | 否 | 是 | 否 | 默认可见 | 配置 realtime microphone/speaker；源码 description 把它定义为 audio settings 入口，任务运行中可用。[E: codex-rs/tui/src/slash_command.rs:105][E: codex-rs/tui/src/slash_command.rs:199] | `codex-rs/tui/src/slash_command.rs:60` |
+`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:146][E: codex-rs/tui/src/slash_command.rs:148][E: codex-rs/tui/src/slash_command.rs:149][E: codex-rs/tui/src/slash_command.rs:257][E: codex-rs/tui/src/slash_command.rs:258][E: codex-rs/tui/src/slash_command.rs:259][E: codex-rs/tui/src/slash_command.rs:260][E: codex-rs/tui/src/slash_command.rs:261][E: codex-rs/tui/src/slash_command.rs:262]
 
-## 共性机制
+`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations.[E: codex-rs/tui/src/slash_command.rs:152][E: codex-rs/tui/src/slash_command.rs:153][E: codex-rs/tui/src/slash_command.rs:154][E: codex-rs/tui/src/slash_command.rs:156][E: codex-rs/tui/src/slash_command.rs:169][E: codex-rs/tui/src/slash_command.rs:173][E: codex-rs/tui/src/slash_command.rs:174][E: codex-rs/tui/src/slash_command.rs:175][E: codex-rs/tui/src/slash_command.rs:177][E: codex-rs/tui/src/slash_command.rs:184]
 
-`Status` 是本节点唯一 side-conversation-safe command，因为 side conversation 白名单只列 `Copy`、`Diff`、`Mention` 和 `Status`。[E: codex-rs/tui/src/slash_command.rs:152] `supports_inline_args()` 的白名单列出 `Review`、`Rename`、`Plan`、`Fast`、`Mcp`、`Side`、`Resume` 和 `SandboxReadRoot`；本节点只有 `SandboxReadRoot` 出现在该白名单中。[E: codex-rs/tui/src/slash_command.rs:137][E: codex-rs/tui/src/slash_command.rs:138][E: codex-rs/tui/src/slash_command.rs:139][E: codex-rs/tui/src/slash_command.rs:140][E: codex-rs/tui/src/slash_command.rs:141][E: codex-rs/tui/src/slash_command.rs:142][E: codex-rs/tui/src/slash_command.rs:143][E: codex-rs/tui/src/slash_command.rs:144]
+| 命令名 | enum variant | description | inline args | during task | side conversation | visible gate | 定义证据 |
+|---|---|---|---|---|---|---|---|
+| `/setup-default-sandbox` | `ElevateSandbox` | set up elevated agent sandbox | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:202] | 否 | default visible [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:20][E: codex-rs/tui/src/slash_command.rs:21][E: codex-rs/tui/src/slash_command.rs:130] |
+| `/sandbox-add-read-dir` | `SandboxReadRoot` | let sandbox read a directory: /sandbox-add-read-dir <absolute_path> | 是 [E: codex-rs/tui/src/slash_command.rs:169] | 否 [E: codex-rs/tui/src/slash_command.rs:203] | 否 | Windows only [E: codex-rs/tui/src/slash_command.rs:248] | [E: codex-rs/tui/src/slash_command.rs:22][E: codex-rs/tui/src/slash_command.rs:23][E: codex-rs/tui/src/slash_command.rs:131][E: codex-rs/tui/src/slash_command.rs:132] |
+| `/memories` | `Memories` | configure memory use and generation | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:205] | 否 | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:27][E: codex-rs/tui/src/slash_command.rs:136] |
+| `/status` | `Status` | show current session configuration and token usage | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:220] | 是 [E: codex-rs/tui/src/slash_command.rs:181] | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:50][E: codex-rs/tui/src/slash_command.rs:105] |
+| `/usage` | `Usage` | view account usage or use a rate-limit reset | 是 [E: codex-rs/tui/src/slash_command.rs:164] | 是 [E: codex-rs/tui/src/slash_command.rs:221] | 是 [E: codex-rs/tui/src/slash_command.rs:182] | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:51][E: codex-rs/tui/src/slash_command.rs:106] |
+| `/debug-config` | `DebugConfig` | show config layers and requirement sources for debugging | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:222] | 否 | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:52][E: codex-rs/tui/src/slash_command.rs:107] |
+| `/title` | `Title` | configure which items appear in the terminal title | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:230] | 否 | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:53][E: codex-rs/tui/src/slash_command.rs:108] |
+| `/statusline` | `Statusline` | configure which items appear in the status line | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:231] | 否 | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:54][E: codex-rs/tui/src/slash_command.rs:109] |
+| `/logout` | `Logout` | log out of Codex | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:210] | 否 | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:61][E: codex-rs/tui/src/slash_command.rs:140] |
+| `/feedback` | `Feedback` | send logs to maintainers | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:233] | 否 | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:64][E: codex-rs/tui/src/slash_command.rs:85] |
+| `/ps` | `Ps` | list background terminals | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:223] | 否 | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:66][E: codex-rs/tui/src/slash_command.rs:112] |
+| `/stop` | `Stop` | stop all background terminals | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:224] | 否 | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:67][E: codex-rs/tui/src/slash_command.rs:68][E: codex-rs/tui/src/slash_command.rs:113] |
 
 ## Sources
 
 - `codex-rs/tui/src/slash_command.rs`
-- `codex-rs/feedback/src/lib.rs`
 
 ## 相关
 
-- [审批与沙箱设置](../config/approval-sandbox.md) — 覆盖 `/setup-default-sandbox` 和 `/sandbox-add-read-dir` 的配置域。
-- [UI / TUI / 实时设置](../config/ui-tui.md) — 覆盖 `/title`、`/statusline`、`/settings` 的配置键。
-- [存储/遥测/杂项设置](../config/storage-telemetry-misc.md) — 覆盖 feedback、history、log、telemetry 相关配置。
+- [config.approval-sandbox](../config/approval-sandbox.md)
+- [config.ui-tui](../config/ui-tui.md)
+- [config.storage-telemetry-misc](../config/storage-telemetry-misc.md)
+- [subsys.platform.telemetry-otel](../../subsystems/platform/telemetry-otel.md)
+- [subsys.core.unified-exec](../../subsystems/core/unified-exec.md)

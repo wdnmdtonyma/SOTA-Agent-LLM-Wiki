@@ -3,75 +3,89 @@ id: rpc.notifications-thread
 title: server notifications: thread/turn/item
 kind: rpc
 tier: T1
-source: [codex-rs/app-server-protocol/src/protocol/common.rs, codex-rs/app-server-protocol/src/protocol/v2.rs]
-symbols: [ServerNotification, ThreadStartedNotification, TurnStartedNotification, TurnCompletedNotification, ItemStartedNotification, ItemCompletedNotification, AgentMessageDeltaNotification]
+source: [codex-rs/app-server-protocol/src/protocol/common.rs, codex-rs/app-server-protocol/src/protocol/v2/thread.rs, codex-rs/app-server-protocol/src/protocol/v2/turn.rs, codex-rs/app-server-protocol/src/protocol/v2/item.rs, codex-rs/app-server-protocol/src/protocol/v2/hook.rs, codex-rs/app-server-protocol/src/protocol/v2/realtime.rs, codex-rs/app-server-protocol/src/protocol/v2/mcp.rs, codex-rs/app-server-protocol/src/protocol/v2/model.rs]
+symbols: [ServerNotification, ThreadStartedNotification, TurnStartedNotification, ItemStartedNotification, AgentMessageDeltaNotification, ThreadRealtimeStartedNotification]
 related: [rpc.overview, rpc.thread-methods, rpc.turn-methods, rpc.notifications-system, rpc.server-requests]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> thread/turn/item notifications 是 app-server 从服务器推给客户端的 conversation event stream：thread 生命周期、turn 生命周期、item 增量与完成、approval review、reasoning/plan/message delta、file/command output 和 server request resolution 都在这个节点列出。
+> thread/turn/item server notifications 是 app-server 从服务器推给客户端的 thread lifecycle、turn lifecycle、hook、item streaming、reasoning 和 realtime 事件 catalog。
 
 ## 能回答的问题
 
-- thread/turn/item 相关 server notification 的 wire name、payload type 是什么？
-- `turn/plan/updated`、`item/agentMessage/delta`、`item/completed` 分别承载什么层级的信息？
-- server request 完成后客户端如何知道 request id 已 resolved？
-- token usage、context compaction、model reroute 这类 turn-adjacent 事件在哪个 notification 上？
+- thread/turn/item notification 当前有哪些 wire method？
+- 哪些 notification 是 experimental？
+- item streaming、reasoning delta、realtime delta 分别落在哪些 payload type？
+- thread notification 与 system notification 的边界是什么？
 
-## Notification envelope
+## 共性机制
 
-`server_notification_definitions!` 生成 `ServerNotification`，serde 使用 `method` tag 和 `params` content；带显式 `=> "..."` 的 row 会把该 wire literal 写进 notification envelope 的 `method` 字段。[E: codex-rs/app-server-protocol/src/protocol/common.rs:779][E: codex-rs/app-server-protocol/src/protocol/common.rs:783][E: codex-rs/app-server-protocol/src/protocol/common.rs:798][E: codex-rs/app-server-protocol/src/protocol/common.rs:800][E: codex-rs/app-server-protocol/src/protocol/common.rs:803]
+`ServerNotification` 是 serde tag `method`、content `params` 的 tagged enum；默认命名是 camelCase，显式 wire method 在宏实例行给出。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1329][E: codex-rs/app-server-protocol/src/protocol/common.rs:1350][E: codex-rs/app-server-protocol/src/protocol/common.rs:1352][E: codex-rs/app-server-protocol/src/protocol/common.rs:1355]
 
-thread lifecycle payloads 返回 `thread_id` 或 `Thread`/status 信息；`ThreadTokenUsageUpdatedNotification` 返回 `thread_id`、`turn_id` 和 `token_usage`，`ThreadTokenUsage` 拆成 total/last/context window。[E: codex-rs/app-server-protocol/src/protocol/v2.rs:5922][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5929][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5930][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5937][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5944][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5951][E: codex-rs/app-server-protocol/src/protocol/v2.rs:4375][E: codex-rs/app-server-protocol/src/protocol/v2.rs:4376][E: codex-rs/app-server-protocol/src/protocol/v2.rs:4377][E: codex-rs/app-server-protocol/src/protocol/v2.rs:4384][E: codex-rs/app-server-protocol/src/protocol/v2.rs:4385][E: codex-rs/app-server-protocol/src/protocol/v2.rs:4388]
-
-turn/item payloads 用 `thread_id`、`turn_id`、`item_id` 或 `turn` 绑定到运行中的 turn；`ItemCompletedNotification` 携带完整 `item`，`AgentMessageDeltaNotification` 携带 `delta`，`ServerRequestResolvedNotification` 携带 resolved 的 server request id。[E: codex-rs/app-server-protocol/src/protocol/v2.rs:5977][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5978][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6003][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6004][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6139][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6140][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6141][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6158][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6159][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6160][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6161][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6277][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6278]
+本节点列出 wire 前缀为 `thread/`、`turn/`、`hook/`、`item/` 以及 `rawResponseItem/completed` 的 42 个 notification；其余 26 个 notification 在 system catalog。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1570]
 
 ## Notification catalog
 
-| Variant | Wire method | Payload type | 说明 | Evidence |
+| Variant | Wire method | Payload type | Gate | Evidence |
 |---|---|---|---|---|
-| `ThreadStarted` | `thread/started` | `v2::ThreadStartedNotification` | thread 已启动，payload 含 thread object。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1015][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5922] |
-| `ThreadStatusChanged` | `thread/status/changed` | `v2::ThreadStatusChangedNotification` | thread runtime status changed，payload 含 `thread_id` 和 `status`。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1016][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5929][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5930] |
-| `ThreadArchived` | `thread/archived` | `v2::ThreadArchivedNotification` | thread 被归档。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1017][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5936] |
-| `ThreadUnarchived` | `thread/unarchived` | `v2::ThreadUnarchivedNotification` | thread 取消归档。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1018][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5943] |
-| `ThreadClosed` | `thread/closed` | `v2::ThreadClosedNotification` | loaded/subscribed thread closed。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1019][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5950] |
-| `ThreadNameUpdated` | `thread/name/updated` | `v2::ThreadNameUpdatedNotification` | thread name updated，payload 带 `thread_id` 和新的 optional `thread_name`。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1021][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5967][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5970] |
-| `ThreadTokenUsageUpdated` | `thread/tokenUsage/updated` | `v2::ThreadTokenUsageUpdatedNotification` | turn token usage updated。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1022][E: codex-rs/app-server-protocol/src/protocol/v2.rs:4374] |
-| `TurnStarted` | `turn/started` | `v2::TurnStartedNotification` | turn created/started。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1023][E: codex-rs/app-server-protocol/src/protocol/v2.rs:5976] |
-| `TurnCompleted` | `turn/completed` | `v2::TurnCompletedNotification` | turn terminal event；payload 带 `thread_id` 和 `turn`。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1025][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6003][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6004] |
-| `TurnDiffUpdated` | `turn/diff/updated` | `v2::TurnDiffUpdatedNotification` | turn diff summary updated。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1027][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6021] |
-| `TurnPlanUpdated` | `turn/plan/updated` | `v2::TurnPlanUpdatedNotification` | plan explanation 和 steps/status updated。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1028][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6031][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6032][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6033][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6034][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6041][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6042] |
-| `ItemStarted` | `item/started` | `v2::ItemStartedNotification` | thread item created/in progress。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1029][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6076] |
-| `ItemGuardianApprovalReviewStarted` | `item/autoApprovalReview/started` | `v2::ItemGuardianApprovalReviewStartedNotification` | guardian approval review item started。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1030][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6087] |
-| `ItemGuardianApprovalReviewCompleted` | `item/autoApprovalReview/completed` | `v2::ItemGuardianApprovalReviewCompletedNotification` | guardian approval review item completed。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1031][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6113] |
-| `ItemCompleted` | `item/completed` | `v2::ItemCompletedNotification` | item terminal event；payload 带 completed `item`。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1032][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6139] |
-| `RawResponseItemCompleted` | `rawResponseItem/completed` | `v2::RawResponseItemCompletedNotification` | raw Responses API item completed。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1034][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6148][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6149][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6150] |
-| `AgentMessageDelta` | `item/agentMessage/delta` | `v2::AgentMessageDeltaNotification` | assistant message text delta。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1035][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6161] |
-| `PlanDelta` | `item/plan/delta` | `v2::PlanDeltaNotification` | plan item delta。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1037][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6169][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6173] |
-| `CommandExecutionOutputDelta` | `item/commandExecution/outputDelta` | `v2::CommandExecutionOutputDeltaNotification` | thread command execution output delta。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1040][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6226] |
-| `TerminalInteraction` | `item/commandExecution/terminalInteraction` | `v2::TerminalInteractionNotification` | terminal interaction event。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1041][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6218][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6219] |
-| `FileChangeOutputDelta` | `item/fileChange/outputDelta` | `v2::FileChangeOutputDeltaNotification` | file change output delta。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1042][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6256] |
-| `FileChangePatchUpdated` | `item/fileChange/patchUpdated` | `v2::FileChangePatchUpdatedNotification` | file patch updated。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1043][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6266] |
-| `ServerRequestResolved` | `serverRequest/resolved` | `v2::ServerRequestResolvedNotification` | server request 已有 client response。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1044][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6278] |
-| `ReasoningSummaryTextDelta` | `item/reasoning/summaryTextDelta` | `v2::ReasoningSummaryTextDeltaNotification` | reasoning summary text delta。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1053][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6183][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6185] |
-| `ReasoningSummaryPartAdded` | `item/reasoning/summaryPartAdded` | `v2::ReasoningSummaryPartAddedNotification` | reasoning summary part added。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1054][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6196] |
-| `ReasoningTextDelta` | `item/reasoning/textDelta` | `v2::ReasoningTextDeltaNotification` | raw reasoning text delta。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1055][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6202] |
-| `ContextCompacted` | `thread/compacted` | `v2::ContextCompactedNotification` | context compaction completed。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1057][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6368][E: codex-rs/app-server-protocol/src/protocol/v2.rs:6369] |
-| `ModelRerouted` | `model/rerouted` | `v2::ModelReroutedNotification` | turn model rerouted，payload 带 from/to model 和 reason。 | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1058][E: codex-rs/app-server-protocol/src/protocol/v2.rs:7200][E: codex-rs/app-server-protocol/src/protocol/v2.rs:7201][E: codex-rs/app-server-protocol/src/protocol/v2.rs:7202][E: codex-rs/app-server-protocol/src/protocol/v2.rs:7203][E: codex-rs/app-server-protocol/src/protocol/v2.rs:7204] |
-
-## 控制流与设计动机
-
-thread/turn/item notifications 把长期 conversation state 拆成 lifecycle、streaming delta、terminal item、terminal turn 四层，客户端可以用同一 notification stream 更新 thread list、live transcript、plan UI、tool output UI 和 final response。[I] `ServerRequestResolved` 把 server->client request 的结束事件也投到 notification stream，使客户端即使不拥有原始 request handler，也能把 pending approval/input UI 从 active 状态移除。[I]
+| `ThreadStarted` | `thread/started` | `v2::ThreadStartedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1573] |
+| `ThreadStatusChanged` | `thread/status/changed` | `v2::ThreadStatusChangedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1574] |
+| `ThreadArchived` | `thread/archived` | `v2::ThreadArchivedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1575] |
+| `ThreadDeleted` | `thread/deleted` | `v2::ThreadDeletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1576] |
+| `ThreadUnarchived` | `thread/unarchived` | `v2::ThreadUnarchivedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1577] |
+| `ThreadClosed` | `thread/closed` | `v2::ThreadClosedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1578] |
+| `ThreadNameUpdated` | `thread/name/updated` | `v2::ThreadNameUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1580] |
+| `ThreadGoalUpdated` | `thread/goal/updated` | `v2::ThreadGoalUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1581] |
+| `ThreadGoalCleared` | `thread/goal/cleared` | `v2::ThreadGoalClearedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1582] |
+| `ThreadSettingsUpdated` | `thread/settings/updated` | `v2::ThreadSettingsUpdatedNotification` | experimental: thread/settings/updated | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1583][E: codex-rs/app-server-protocol/src/protocol/common.rs:1584] |
+| `ThreadTokenUsageUpdated` | `thread/tokenUsage/updated` | `v2::ThreadTokenUsageUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1585] |
+| `TurnStarted` | `turn/started` | `v2::TurnStartedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1586] |
+| `HookStarted` | `hook/started` | `v2::HookStartedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1587] |
+| `TurnCompleted` | `turn/completed` | `v2::TurnCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1588] |
+| `HookCompleted` | `hook/completed` | `v2::HookCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1589] |
+| `TurnDiffUpdated` | `turn/diff/updated` | `v2::TurnDiffUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1590] |
+| `TurnPlanUpdated` | `turn/plan/updated` | `v2::TurnPlanUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1591] |
+| `ItemStarted` | `item/started` | `v2::ItemStartedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1592] |
+| `ItemGuardianApprovalReviewStarted` | `item/autoApprovalReview/started` | `v2::ItemGuardianApprovalReviewStartedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1593] |
+| `ItemGuardianApprovalReviewCompleted` | `item/autoApprovalReview/completed` | `v2::ItemGuardianApprovalReviewCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1594] |
+| `ItemCompleted` | `item/completed` | `v2::ItemCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1595] |
+| `RawResponseItemCompleted` | `rawResponseItem/completed` | `v2::RawResponseItemCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1597] |
+| `AgentMessageDelta` | `item/agentMessage/delta` | `v2::AgentMessageDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1598] |
+| `PlanDelta` | `item/plan/delta` | `v2::PlanDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1600] |
+| `CommandExecutionOutputDelta` | `item/commandExecution/outputDelta` | `v2::CommandExecutionOutputDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1609] |
+| `TerminalInteraction` | `item/commandExecution/terminalInteraction` | `v2::TerminalInteractionNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1610] |
+| `FileChangeOutputDelta` | `item/fileChange/outputDelta` | `v2::FileChangeOutputDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1612] |
+| `FileChangePatchUpdated` | `item/fileChange/patchUpdated` | `v2::FileChangePatchUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1613] |
+| `McpToolCallProgress` | `item/mcpToolCall/progress` | `v2::McpToolCallProgressNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1615] |
+| `ReasoningSummaryTextDelta` | `item/reasoning/summaryTextDelta` | `v2::ReasoningSummaryTextDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1625] |
+| `ReasoningSummaryPartAdded` | `item/reasoning/summaryPartAdded` | `v2::ReasoningSummaryPartAddedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1626] |
+| `ReasoningTextDelta` | `item/reasoning/textDelta` | `v2::ReasoningTextDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1627] |
+| `ContextCompacted` | `thread/compacted` | `v2::ContextCompactedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1629] |
+| `TurnModerationMetadata` | `turn/moderationMetadata` | `v2::TurnModerationMetadataNotification` | experimental: turn/moderationMetadata | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1632][E: codex-rs/app-server-protocol/src/protocol/common.rs:1633] |
+| `ThreadRealtimeStarted` | `thread/realtime/started` | `v2::ThreadRealtimeStartedNotification` | experimental: thread/realtime/started | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1640][E: codex-rs/app-server-protocol/src/protocol/common.rs:1641] |
+| `ThreadRealtimeItemAdded` | `thread/realtime/itemAdded` | `v2::ThreadRealtimeItemAddedNotification` | experimental: thread/realtime/itemAdded | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1642][E: codex-rs/app-server-protocol/src/protocol/common.rs:1643] |
+| `ThreadRealtimeTranscriptDelta` | `thread/realtime/transcript/delta` | `v2::ThreadRealtimeTranscriptDeltaNotification` | experimental: thread/realtime/transcript/delta | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1644][E: codex-rs/app-server-protocol/src/protocol/common.rs:1645] |
+| `ThreadRealtimeTranscriptDone` | `thread/realtime/transcript/done` | `v2::ThreadRealtimeTranscriptDoneNotification` | experimental: thread/realtime/transcript/done | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1646][E: codex-rs/app-server-protocol/src/protocol/common.rs:1647] |
+| `ThreadRealtimeOutputAudioDelta` | `thread/realtime/outputAudio/delta` | `v2::ThreadRealtimeOutputAudioDeltaNotification` | experimental: thread/realtime/outputAudio/delta | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1648][E: codex-rs/app-server-protocol/src/protocol/common.rs:1649] |
+| `ThreadRealtimeSdp` | `thread/realtime/sdp` | `v2::ThreadRealtimeSdpNotification` | experimental: thread/realtime/sdp | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1650][E: codex-rs/app-server-protocol/src/protocol/common.rs:1651] |
+| `ThreadRealtimeError` | `thread/realtime/error` | `v2::ThreadRealtimeErrorNotification` | experimental: thread/realtime/error | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1652][E: codex-rs/app-server-protocol/src/protocol/common.rs:1653] |
+| `ThreadRealtimeClosed` | `thread/realtime/closed` | `v2::ThreadRealtimeClosedNotification` | experimental: thread/realtime/closed | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1654][E: codex-rs/app-server-protocol/src/protocol/common.rs:1655] |
 
 ## Sources
 
 - `codex-rs/app-server-protocol/src/protocol/common.rs`
-- `codex-rs/app-server-protocol/src/protocol/v2.rs`
+- `codex-rs/app-server-protocol/src/protocol/v2/thread.rs`
+- `codex-rs/app-server-protocol/src/protocol/v2/turn.rs`
+- `codex-rs/app-server-protocol/src/protocol/v2/item.rs`
+- `codex-rs/app-server-protocol/src/protocol/v2/hook.rs`
+- `codex-rs/app-server-protocol/src/protocol/v2/realtime.rs`
+- `codex-rs/app-server-protocol/src/protocol/v2/mcp.rs`
+- `codex-rs/app-server-protocol/src/protocol/v2/model.rs`
 
 ## 相关
 
-- `rpc.thread-methods` -> [thread 方法](thread-methods.md)
-- `rpc.turn-methods` -> [turn 方法](turn-methods.md)
+- `rpc.overview` -> [App-Server 协议总览](overview.md)
+- `rpc.notifications-system` -> [server notifications: system](notifications-system.md)
 - `rpc.server-requests` -> [server->client requests](server-requests.md)

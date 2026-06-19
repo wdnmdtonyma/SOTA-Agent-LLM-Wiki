@@ -8,10 +8,10 @@ symbols: [ThreadEvent, ThreadStartedEvent, TurnCompletedEvent, ItemCompletedEven
 related: [sdk.ts-overview, sdk.ts-structured-output]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> TypeScript SDK events/items 是 codex exec JSONL 的 public TypeScript surface：events 描述 stream 顶层 envelope，items 描述 agent/thread 中的具体 artifact。[E: sdk/typescript/src/events.ts:71][E: sdk/typescript/src/items.ts:118]
+> TypeScript SDK events/items 是 codex exec JSONL 的 public TypeScript surface：events 描述 stream 顶层 envelope，items 描述 agent/thread 中的具体 artifact。[E: sdk/typescript/src/events.ts:74][E: sdk/typescript/src/items.ts:120]
 
 ## 能回答的问题
 
@@ -22,33 +22,33 @@ updated: 37aadeaa13
 
 ## Event union
 
-`events.ts` 明确说明 event types 基于 `codex-rs/exec/src/exec_events.rs`；`ThreadEvent` union 包含 thread started、turn started/completed/failed、item started/updated/completed 和 stream-level error。[E: sdk/typescript/src/events.ts:1][E: sdk/typescript/src/events.ts:72][E: sdk/typescript/src/events.ts:73][E: sdk/typescript/src/events.ts:74][E: sdk/typescript/src/events.ts:75][E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/events.ts:77][E: sdk/typescript/src/events.ts:78][E: sdk/typescript/src/events.ts:79][E: sdk/typescript/src/events.ts:80]
+`events.ts` 明确说明 event types 基于 `codex-rs/exec/src/exec_events.rs`；`ThreadEvent` union 包含 thread started、turn started/completed/failed、item started/updated/completed 和 stream-level error。[E: sdk/typescript/src/events.ts:1][E: sdk/typescript/src/events.ts:73][E: sdk/typescript/src/events.ts:74][E: sdk/typescript/src/events.ts:75][E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/events.ts:77][E: sdk/typescript/src/events.ts:78][E: sdk/typescript/src/events.ts:79][E: sdk/typescript/src/events.ts:80][E: sdk/typescript/src/events.ts:81]
 
 | Event type | Payload | 说明 | Evidence |
 |---|---|---|---|
-| `thread.started` | `thread_id` | 新 thread 首个事件；SDK 用它填充 `Thread.id`。 | [E: sdk/typescript/src/events.ts:5][E: sdk/typescript/src/events.ts:7][E: sdk/typescript/src/events.ts:9][E: sdk/typescript/src/thread.ts:105] |
-| `turn.started` | none | 新 prompt 对应 turn 开始。 | [E: sdk/typescript/src/events.ts:13][E: sdk/typescript/src/events.ts:17] |
-| `turn.completed` | `usage` | turn completed，usage 是 input/cached/output tokens。 | [E: sdk/typescript/src/events.ts:30][E: sdk/typescript/src/events.ts:32][E: sdk/typescript/src/events.ts:33][E: sdk/typescript/src/events.ts:23][E: sdk/typescript/src/events.ts:25][E: sdk/typescript/src/events.ts:27] |
-| `turn.failed` | `error` | turn failed，error 有 message。 | [E: sdk/typescript/src/events.ts:38][E: sdk/typescript/src/events.ts:39][E: sdk/typescript/src/events.ts:62] |
-| `item.started` | `item` | item 被加入 thread，通常处于 in progress。 | [E: sdk/typescript/src/events.ts:42][E: sdk/typescript/src/events.ts:44][E: sdk/typescript/src/events.ts:45] |
+| `thread.started` | `thread_id` | 新 thread 首个事件；SDK 用它填充 `Thread.id`。 | [E: sdk/typescript/src/events.ts:6][E: sdk/typescript/src/events.ts:7][E: sdk/typescript/src/events.ts:9][E: sdk/typescript/src/thread.ts:105] |
+| `turn.started` | none | 新 prompt 对应 turn 开始。 | [E: sdk/typescript/src/events.ts:16][E: sdk/typescript/src/events.ts:17] |
+| `turn.completed` | `usage` | turn completed，usage 是 input/cached/output/reasoning-output tokens。 | [E: sdk/typescript/src/events.ts:21][E: sdk/typescript/src/events.ts:23][E: sdk/typescript/src/events.ts:25][E: sdk/typescript/src/events.ts:27][E: sdk/typescript/src/events.ts:28][E: sdk/typescript/src/events.ts:29][E: sdk/typescript/src/events.ts:33][E: sdk/typescript/src/events.ts:34][E: sdk/typescript/src/events.ts:35] |
+| `turn.failed` | `error` | turn failed，error 有 message。 | [E: sdk/typescript/src/events.ts:38][E: sdk/typescript/src/events.ts:39][E: sdk/typescript/src/events.ts:41][E: sdk/typescript/src/events.ts:63][E: sdk/typescript/src/events.ts:64] |
+| `item.started` | `item` | item 被加入 thread，通常处于 in progress。 | [E: sdk/typescript/src/events.ts:45][E: sdk/typescript/src/events.ts:46][E: sdk/typescript/src/events.ts:47] |
 | `item.updated` | `item` | item update。 | [E: sdk/typescript/src/events.ts:50][E: sdk/typescript/src/events.ts:51] |
-| `item.completed` | `item` | item terminal state。 | [E: sdk/typescript/src/events.ts:54][E: sdk/typescript/src/events.ts:56][E: sdk/typescript/src/events.ts:57] |
-| `error` | `message` | stream-level unrecoverable error。 | [E: sdk/typescript/src/events.ts:65][E: sdk/typescript/src/events.ts:67][E: sdk/typescript/src/events.ts:68] |
+| `item.completed` | `item` | item terminal state。 | [E: sdk/typescript/src/events.ts:57][E: sdk/typescript/src/events.ts:58][E: sdk/typescript/src/events.ts:59] |
+| `error` | `message` | stream-level unrecoverable error。 | [E: sdk/typescript/src/events.ts:63][E: sdk/typescript/src/events.ts:64][E: sdk/typescript/src/events.ts:68][E: sdk/typescript/src/events.ts:69][E: sdk/typescript/src/events.ts:70] |
 
 ## Item union
 
-`items.ts` 明确说明 item types 基于 `codex-rs/exec/src/exec_events.rs`；`ThreadItem` union 包含 agent message、reasoning、command execution、file change、MCP tool call、web search、todo list 和 error。[E: sdk/typescript/src/items.ts:1][E: sdk/typescript/src/items.ts:119][E: sdk/typescript/src/items.ts:120][E: sdk/typescript/src/items.ts:121][E: sdk/typescript/src/items.ts:122][E: sdk/typescript/src/items.ts:123][E: sdk/typescript/src/items.ts:124][E: sdk/typescript/src/items.ts:125][E: sdk/typescript/src/items.ts:126][E: sdk/typescript/src/items.ts:127]
+`items.ts` 明确说明 item types 基于 `codex-rs/exec/src/exec_events.rs`；`ThreadItem` union 包含 agent message、reasoning、command execution、file change、MCP tool call、web search、todo list 和 error。[E: sdk/typescript/src/items.ts:1][E: sdk/typescript/src/items.ts:96][E: sdk/typescript/src/items.ts:97][E: sdk/typescript/src/items.ts:99][E: sdk/typescript/src/items.ts:119][E: sdk/typescript/src/items.ts:120][E: sdk/typescript/src/items.ts:121][E: sdk/typescript/src/items.ts:122][E: sdk/typescript/src/items.ts:123][E: sdk/typescript/src/items.ts:124][E: sdk/typescript/src/items.ts:125][E: sdk/typescript/src/items.ts:126][E: sdk/typescript/src/items.ts:127][E: sdk/typescript/src/items.ts:128]
 
 | Item type | TypeScript type | 核心字段 | Evidence |
 |---|---|---|---|
-| `agent_message` | `AgentMessageItem` | `id`、`text`；structured output 请求时 text 可为 JSON string。 | [E: sdk/typescript/src/items.ts:74][E: sdk/typescript/src/items.ts:76][E: sdk/typescript/src/items.ts:77][E: sdk/typescript/src/items.ts:78] |
+| `agent_message` | `AgentMessageItem` | `id`、`text`；structured output 请求时 text 可为 JSON string。 | [E: sdk/typescript/src/items.ts:75][E: sdk/typescript/src/items.ts:76][E: sdk/typescript/src/items.ts:77][E: sdk/typescript/src/items.ts:79] |
 | `reasoning` | `ReasoningItem` | `id`、`text`。 | [E: sdk/typescript/src/items.ts:82][E: sdk/typescript/src/items.ts:83][E: sdk/typescript/src/items.ts:84][E: sdk/typescript/src/items.ts:85] |
 | `command_execution` | `CommandExecutionItem` | command、aggregated output、optional exit code、status。 | [E: sdk/typescript/src/items.ts:9][E: sdk/typescript/src/items.ts:11][E: sdk/typescript/src/items.ts:13][E: sdk/typescript/src/items.ts:15][E: sdk/typescript/src/items.ts:17][E: sdk/typescript/src/items.ts:19] |
 | `file_change` | `FileChangeItem` | changes list 和 completed/failed status。 | [E: sdk/typescript/src/items.ts:32][E: sdk/typescript/src/items.ts:35][E: sdk/typescript/src/items.ts:37][E: sdk/typescript/src/items.ts:39][E: sdk/typescript/src/items.ts:41] |
-| `mcp_tool_call` | `McpToolCallItem` | server、tool、arguments、optional result/error、status。 | [E: sdk/typescript/src/items.ts:51][E: sdk/typescript/src/items.ts:53][E: sdk/typescript/src/items.ts:55][E: sdk/typescript/src/items.ts:57][E: sdk/typescript/src/items.ts:59][E: sdk/typescript/src/items.ts:61][E: sdk/typescript/src/items.ts:66][E: sdk/typescript/src/items.ts:70] |
-| `web_search` | `WebSearchItem` | query。 | [E: sdk/typescript/src/items.ts:89][E: sdk/typescript/src/items.ts:91][E: sdk/typescript/src/items.ts:92] |
-| `todo_list` | `TodoListItem` | items，每个 item 有 text/completed。 | [E: sdk/typescript/src/items.ts:103][E: sdk/typescript/src/items.ts:104][E: sdk/typescript/src/items.ts:105][E: sdk/typescript/src/items.ts:112][E: sdk/typescript/src/items.ts:114][E: sdk/typescript/src/items.ts:115] |
-| `error` | `ErrorItem` | message。 | [E: sdk/typescript/src/items.ts:96][E: sdk/typescript/src/items.ts:98][E: sdk/typescript/src/items.ts:99] |
+| `mcp_tool_call` | `McpToolCallItem` | server、tool、arguments、optional result/error、status。 | [E: sdk/typescript/src/items.ts:51][E: sdk/typescript/src/items.ts:53][E: sdk/typescript/src/items.ts:55][E: sdk/typescript/src/items.ts:57][E: sdk/typescript/src/items.ts:59][E: sdk/typescript/src/items.ts:61][E: sdk/typescript/src/items.ts:67][E: sdk/typescript/src/items.ts:71] |
+| `web_search` | `WebSearchItem` | query。 | [E: sdk/typescript/src/items.ts:90][E: sdk/typescript/src/items.ts:91][E: sdk/typescript/src/items.ts:92] |
+| `todo_list` | `TodoListItem` | items，每个 item 有 text/completed。 | [E: sdk/typescript/src/items.ts:103][E: sdk/typescript/src/items.ts:104][E: sdk/typescript/src/items.ts:105][E: sdk/typescript/src/items.ts:113][E: sdk/typescript/src/items.ts:114][E: sdk/typescript/src/items.ts:115] |
+| `error` | `ErrorItem` | message。 | [E: sdk/typescript/src/items.ts:97][E: sdk/typescript/src/items.ts:98][E: sdk/typescript/src/items.ts:99] |
 
 ## Run extraction
 

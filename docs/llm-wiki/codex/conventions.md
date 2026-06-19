@@ -16,7 +16,7 @@ kind: tool                    # tool | command | cli | config | rpc | sdk | subs
 tier: T1                      # T0 | T1 | T2 | T3
 source: [codex-rs/tools/src/apply_patch_tool.rs, codex-rs/apply-patch/src/lib.rs]  # 相对 Best/codex/;纯导览节点可空
 symbols: [create_apply_patch_freeform_tool, ApplyPatchToolType]  # 本节点权威覆盖的 Rust 符号(crate 内导出项/方法)
-related: [tool.shell, subsys.exec-sandbox.apply-patch-engine, subsys.core.tool-system]  # 其它节点 id,构成图
+related: [tool.shell-command, subsys.exec-sandbox.apply-patch-engine, subsys.core.tool-system]  # 其它节点 id,构成图
 evidence: explicit            # 页级主导级:explicit | inferred | unknown(未写完可省略)
 status: planned               # planned | draft | verified
 updated: 0000000              # 末次核对的 git 短 SHA(codex 是 git 仓,staleness 用 SHA)
@@ -87,7 +87,7 @@ updated: 0000000              # 末次核对的 git 短 SHA(codex 是 git 仓,st
 
 ### 工具节点 `surface/tools/<slug>.md`(codex 适配)
 frontmatter + 一句话 + `## 能回答的问题` +
-`1 Identity`(wire name 给模型看的名 / aliases / `ToolHandlerKind` / 所属 crate)· `2 用途定位` · `3 输入 schema 表`(字段·类型·必填·默认·说明·校验,源自 `JsonSchema`/struct)· `4 输出 schema & 截断` · `5 ToolSpec 类型`(`Function`/`Freeform`/`Namespace`/`LocalShell`/`WebSearch`/`ImageGeneration`——及为何选它)· `6 注册与门控`(在 `tool_registry_plan.rs` 的装配条件:`ToolsConfig` 字段 / feature flag / 始终开)· `7 parallel-safe`(`supports_parallel_tool_calls` 实际值 + 为什么)· `8 handler 走读`(该 `ToolHandlerKind` 在 core 的 dispatch/执行路径)· `9 设计动机·edge·历史`(V1/V2、freeform vs json 等)· `## Sources` · `## 相关`
+`1 Identity`(wire name 给模型看的名 / aliases / `CoreToolRuntime` handler / 所属 crate)· `2 用途定位` · `3 输入 schema 表`(字段·类型·必填·默认·说明·校验,源自 `JsonSchema`/struct)· `4 输出 schema & 截断` · `5 ToolSpec 类型`(`Function`/`Freeform`/`Namespace`/`ToolSearch`/`WebSearch`/`ImageGeneration`——及为何选它;`LocalShell` 已不存在)· `6 注册与门控`(在 `codex-rs/core/src/tools/spec_plan.rs` 的 `add_tool_sources` 装配条件:`ToolEnvironmentMode` / config 字段 / feature flag / provider capability / model capability / 始终开)· `7 parallel-safe`(`supports_parallel_tool_calls` 实际值 + 为什么)· `8 handler 走读`(该 `CoreToolRuntime` 在 core 的 dispatch/执行路径,handler 通常位于 `codex-rs/core/src/tools/handlers/`)· `9 设计动机·edge·历史`(V1/V2、freeform vs json、hosted vs extension 等)· `## Sources` · `## 相关`
 
 ### 子系统节点 `subsystems/**/<slug>.md`
 frontmatter + 一句话 + 能回答的问题 + 职责边界 · 关键 crate/文件(证据)· 数据模型(关键 struct/enum/trait)· 控制流(编号步骤,带函数名)· 设计动机与权衡 · gotcha · Sources · 相关

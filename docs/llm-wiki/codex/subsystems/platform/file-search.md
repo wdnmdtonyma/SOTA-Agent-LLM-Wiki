@@ -5,10 +5,10 @@ kind: subsystem
 tier: T2
 source: [codex-rs/file-search/src/lib.rs, codex-rs/file-search/src/cli.rs, codex-rs/file-search/src/main.rs, codex-rs/file-search/README.md]
 symbols: [FileMatch, MatchType, FileSearchOptions, FileSearchSession, create_session, run, run_main]
-related: [tool.list-dir, subsys.platform.terminal-detection]
+related: [subsys.platform.terminal-detection]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
 > `codex_file_search` 是基于 `ignore::WalkBuilder` 与 Nucleo matcher 的 fuzzy file search crate：它同时提供 persistent session API、one-shot `run()` API 和 CLI reporter 输出层。[E: codex-rs/file-search/src/lib.rs:7][E: codex-rs/file-search/src/lib.rs:12][E: codex-rs/file-search/src/lib.rs:158][E: codex-rs/file-search/src/lib.rs:291][E: codex-rs/file-search/src/lib.rs:219]
@@ -23,9 +23,9 @@ updated: 37aadeaa13
 
 ## 数据模型与 public API
 
-`FileMatch` 包含 score、relative path、match type、root 和 optional indices；`full_path()` 用 `root.join(path)` 还原完整路径。[E: codex-rs/file-search/src/lib.rs:53][E: codex-rs/file-search/src/lib.rs:55][E: codex-rs/file-search/src/lib.rs:56][E: codex-rs/file-search/src/lib.rs:57][E: codex-rs/file-search/src/lib.rs:58][E: codex-rs/file-search/src/lib.rs:60][E: codex-rs/file-search/src/lib.rs:72] `MatchType` 只有 `File` 与 `Directory` 两种，并以 lowercase 序列化。[E: codex-rs/file-search/src/lib.rs:64][E: codex-rs/file-search/src/lib.rs:66][E: codex-rs/file-search/src/lib.rs:67]
+`FileMatch` 包含 score、relative path、match type、root 和 optional indices；`full_path()` 用 `root.join(path)` 还原完整路径。[E: codex-rs/file-search/src/lib.rs:54][E: codex-rs/file-search/src/lib.rs:55][E: codex-rs/file-search/src/lib.rs:56][E: codex-rs/file-search/src/lib.rs:57][E: codex-rs/file-search/src/lib.rs:58][E: codex-rs/file-search/src/lib.rs:60][E: codex-rs/file-search/src/lib.rs:72] `MatchType` 只有 `File` 与 `Directory` 两种，并以 lowercase 序列化。[E: codex-rs/file-search/src/lib.rs:65][E: codex-rs/file-search/src/lib.rs:66][E: codex-rs/file-search/src/lib.rs:67]
 
-`FileSearchOptions` 字段是 `limit`、`exclude`、`threads`、`compute_indices` 和 `respect_gitignore`；默认值是 limit 20、exclude empty、threads 2、compute_indices false、respect_gitignore true。[E: codex-rs/file-search/src/lib.rs:99][E: codex-rs/file-search/src/lib.rs:101][E: codex-rs/file-search/src/lib.rs:102][E: codex-rs/file-search/src/lib.rs:103][E: codex-rs/file-search/src/lib.rs:104][E: codex-rs/file-search/src/lib.rs:112][E: codex-rs/file-search/src/lib.rs:119][E: codex-rs/file-search/src/lib.rs:120][E: codex-rs/file-search/src/lib.rs:122][E: codex-rs/file-search/src/lib.rs:123][E: codex-rs/file-search/src/lib.rs:124]
+`FileSearchOptions` 字段是 `limit`、`exclude`、`threads`、`compute_indices` 和 `respect_gitignore`；默认值是 limit 20、exclude empty、threads 2、compute_indices false、respect_gitignore true。[E: codex-rs/file-search/src/lib.rs:100][E: codex-rs/file-search/src/lib.rs:101][E: codex-rs/file-search/src/lib.rs:102][E: codex-rs/file-search/src/lib.rs:103][E: codex-rs/file-search/src/lib.rs:104][E: codex-rs/file-search/src/lib.rs:112][E: codex-rs/file-search/src/lib.rs:119][E: codex-rs/file-search/src/lib.rs:120][E: codex-rs/file-search/src/lib.rs:122][E: codex-rs/file-search/src/lib.rs:123][E: codex-rs/file-search/src/lib.rs:124]
 
 `FileSearchSession::update_query` 发送 `WorkSignal::QueryUpdated`，`Drop` 设置 shutdown flag 并发送 `WorkSignal::Shutdown`。[E: codex-rs/file-search/src/lib.rs:141][E: codex-rs/file-search/src/lib.rs:147][E: codex-rs/file-search/src/lib.rs:151][E: codex-rs/file-search/src/lib.rs:153][E: codex-rs/file-search/src/lib.rs:154] `SessionReporter` 用于 session snapshot progress/complete；CLI 的 `Reporter` trait 只负责最终 match/warning 输出。[E: codex-rs/file-search/src/lib.rs:129][E: codex-rs/file-search/src/lib.rs:131][E: codex-rs/file-search/src/lib.rs:134][E: codex-rs/file-search/src/lib.rs:213][E: codex-rs/file-search/src/lib.rs:214][E: codex-rs/file-search/src/lib.rs:216]
 
@@ -46,9 +46,9 @@ updated: 37aadeaa13
 
 ## CLI 与输出
 
-CLI args 支持 `--json`、`--limit/-l`、`--cwd/-C`、`--compute-indices`、`--threads`、repeatable `--exclude/-e` 和 optional pattern。[E: codex-rs/file-search/src/cli.rs:10][E: codex-rs/file-search/src/cli.rs:13][E: codex-rs/file-search/src/cli.rs:17][E: codex-rs/file-search/src/cli.rs:21][E: codex-rs/file-search/src/cli.rs:25][E: codex-rs/file-search/src/cli.rs:34][E: codex-rs/file-search/src/cli.rs:38][E: codex-rs/file-search/src/cli.rs:41] CLI default limit 是 64，threads 默认是 2；代码注释说明 2 threads 是经验默认值。[E: codex-rs/file-search/src/cli.rs:16][E: codex-rs/file-search/src/cli.rs:27][E: codex-rs/file-search/src/cli.rs:30][E: codex-rs/file-search/src/cli.rs:33]
+CLI args 支持 `--json`、`--limit/-l`、`--cwd/-C`、`--compute-indices`、`--threads`、repeatable `--exclude/-e` 和 optional pattern。[E: codex-rs/file-search/src/cli.rs:10][E: codex-rs/file-search/src/cli.rs:13][E: codex-rs/file-search/src/cli.rs:17][E: codex-rs/file-search/src/cli.rs:21][E: codex-rs/file-search/src/cli.rs:25][E: codex-rs/file-search/src/cli.rs:34][E: codex-rs/file-search/src/cli.rs:38][E: codex-rs/file-search/src/cli.rs:41] CLI default limit 是 64，threads 默认是 2；代码注释说明 2 threads 是经验默认值。[E: codex-rs/file-search/src/cli.rs:17][E: codex-rs/file-search/src/cli.rs:27][E: codex-rs/file-search/src/cli.rs:30][E: codex-rs/file-search/src/cli.rs:34]
 
-`run_main` 没有 pattern 时不是 fuzzy search：Unix fallback 执行 `ls -al`，Windows fallback 执行 `cmd /c <search_directory>`，然后返回。[E: codex-rs/file-search/src/lib.rs:235][E: codex-rs/file-search/src/lib.rs:238][E: codex-rs/file-search/src/lib.rs:240][E: codex-rs/file-search/src/lib.rs:241][E: codex-rs/file-search/src/lib.rs:246][E: codex-rs/file-search/src/lib.rs:247][E: codex-rs/file-search/src/lib.rs:249][E: codex-rs/file-search/src/lib.rs:250][E: codex-rs/file-search/src/lib.rs:251][E: codex-rs/file-search/src/lib.rs:255][E: codex-rs/file-search/src/lib.rs:257] 有 pattern 时，CLI 构造 `FileSearchOptions` 并把 `respect_gitignore` 固定为 true。[E: codex-rs/file-search/src/lib.rs:261][E: codex-rs/file-search/src/lib.rs:264][E: codex-rs/file-search/src/lib.rs:267][E: codex-rs/file-search/src/lib.rs:272][E: codex-rs/file-search/src/lib.rs:275]
+`run_main` 没有 pattern 时不是 fuzzy search：Unix fallback 执行 `ls -al`，Windows fallback 执行 `cmd /c <search_directory>`，然后返回。[E: codex-rs/file-search/src/lib.rs:235][E: codex-rs/file-search/src/lib.rs:238][E: codex-rs/file-search/src/lib.rs:240][E: codex-rs/file-search/src/lib.rs:241][E: codex-rs/file-search/src/lib.rs:246][E: codex-rs/file-search/src/lib.rs:249][E: codex-rs/file-search/src/lib.rs:249][E: codex-rs/file-search/src/lib.rs:250][E: codex-rs/file-search/src/lib.rs:251][E: codex-rs/file-search/src/lib.rs:255][E: codex-rs/file-search/src/lib.rs:257] 有 pattern 时，CLI 构造 `FileSearchOptions` 并把 `respect_gitignore` 固定为 true。[E: codex-rs/file-search/src/lib.rs:261][E: codex-rs/file-search/src/lib.rs:264][E: codex-rs/file-search/src/lib.rs:267][E: codex-rs/file-search/src/lib.rs:272][E: codex-rs/file-search/src/lib.rs:275]
 
 `StdioReporter` 在 JSON 模式逐行序列化 `FileMatch`；plain 模式下，如果 `--compute-indices` 且 stdout 是 terminal，会用 indices 对匹配字符加粗；否则只打印 relative path。[E: codex-rs/file-search/src/main.rs:14][E: codex-rs/file-search/src/main.rs:16][E: codex-rs/file-search/src/main.rs:29][E: codex-rs/file-search/src/main.rs:31][E: codex-rs/file-search/src/main.rs:33][E: codex-rs/file-search/src/main.rs:45][E: codex-rs/file-search/src/main.rs:49][E: codex-rs/file-search/src/main.rs:59][E: codex-rs/file-search/src/main.rs:60]
 
@@ -73,5 +73,4 @@ walker 使用 `require_git(true)` 并让 `respect_gitignore` 控制是否关闭 
 
 ## 相关
 
-- `tool.list-dir`: 目录列举工具与 file search CLI fallback 的职责边界。
 - `subsys.platform.terminal-detection`: CLI plain output 是否高亮依赖 terminal 能力判断。

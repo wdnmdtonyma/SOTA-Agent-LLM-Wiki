@@ -3,60 +3,63 @@ id: config.agents-memory
 title: agents 与 memory 设置
 kind: config
 tier: T1
-source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/config/src/profile_toml.rs, codex-rs/core/src/config/mod.rs]
-symbols: [ConfigToml, ConfigProfile, AgentsToml, AgentRoleToml, MemoriesToml, MemoriesConfig, ProjectConfig]
-related: [command.session-thread, command.realtime-debug, config.skills-plugins-features, config.storage-telemetry-misc]
+source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/profile_toml.rs, codex-rs/config/src/types.rs]
+symbols: [ConfigToml, ConfigProfile, AgentsToml, AgentRoleToml, MemoriesToml, MemoriesConfig, ProjectConfig, ThreadStoreToml]
+related: [command.session-thread, command.realtime-debug, config.skills-plugins-features, subsys.core.memory, subsys.core.thread-store]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> agents 与 memory 设置 catalog 覆盖 `ConfigToml` 中系统/开发者指令、instruction include flags、compaction prompt、project doc budgets、profiles、agent concurrency、memory behavior 和 project trust 的顶层键。
+> agents 与 memory 设置 catalog 覆盖 ConfigToml 中 instructions/developer blocks、profile selection、project docs、agent concurrency, memory behavior, project trust and experimental thread config/store keys。
 
 ## 能回答的问题
 
-- `profile` 与 `[profiles]` 如何选择 effective config profile?
-- `agents.max_threads`、`agents.max_depth`、`agents.job_max_runtime_seconds` 的默认值和校验是什么?
-- `memories` nested config 有哪些字段，默认值如何 clamp?
-- `project_doc_max_bytes` 与 fallback filenames 如何影响 AGENTS.md project docs?
-- 哪些 include flags 控制 permissions/apps/environment context developer/user blocks?
+- instructions、developer_instructions 和 include_* instruction flags 当前有哪些？
+- profile/profiles、project docs、projects 的 top-level fields 是什么？
+- agents 和 memories nested sections 在 ConfigToml 中如何声明？
+- thread config/store 相关 experimental/removed keys 当前是什么状态？
 
-## Catalog
+## Catalog 边界
 
-| key | TOML 类型 | TOML 默认 | 有效配置默认 | 含义与为什么 | 源 |
-|---|---|---|---|---|---|
-| `instructions` | `Option<String>` | unset | `ConfigToml` schema 接受该字段；本节点只证明 schema 定义。[E: codex-rs/config/src/config_toml.rs:125] | 表示 system instructions 文本；当前 catalog 不把该字段扩展成 prompt lifecycle 事实，因为 inspected `core/src/config/mod.rs` 中未出现 `cfg.instructions` direct assignment。[I] | `codex-rs/config/src/config_toml.rs:125` |
-| `developer_instructions` | `Option<String>` | unset | CLI/config override 优先，global `developer_instructions` 作为 fallback。[E: codex-rs/core/src/config/mod.rs:2010] | 作为 `developer` role message 注入的 developer instructions。[E: codex-rs/config/src/config_toml.rs:127] | `codex-rs/config/src/config_toml.rs:129` |
-| `include_permissions_instructions` | `Option<bool>` | unset | profile 覆盖 global；默认 `true`。[E: codex-rs/core/src/config/mod.rs:2012][E: codex-rs/core/src/config/mod.rs:2013][E: codex-rs/core/src/config/mod.rs:2014] | 控制是否注入 `<permissions instructions>` developer block。[E: codex-rs/config/src/config_toml.rs:131] | `codex-rs/config/src/config_toml.rs:132` |
-| `include_apps_instructions` | `Option<bool>` | unset | profile 覆盖 global；默认 `true`。[E: codex-rs/core/src/config/mod.rs:2016][E: codex-rs/core/src/config/mod.rs:2017][E: codex-rs/core/src/config/mod.rs:2018] | 控制是否注入 `<apps_instructions>` developer block。[E: codex-rs/config/src/config_toml.rs:134] | `codex-rs/config/src/config_toml.rs:135` |
-| `include_environment_context` | `Option<bool>` | unset | profile 覆盖 global；默认 `true`。[E: codex-rs/core/src/config/mod.rs:2025][E: codex-rs/core/src/config/mod.rs:2026][E: codex-rs/core/src/config/mod.rs:2027] | 控制是否注入 `<environment_context>` user block。[E: codex-rs/config/src/config_toml.rs:137] | `codex-rs/config/src/config_toml.rs:138` |
-| `model_instructions_file` | `Option<AbsolutePathBuf>` | unset | profile 覆盖 global；读取文件后会 trim，空文件报错，非空内容作为 base instructions override。[E: codex-rs/core/src/config/mod.rs:2000][E: codex-rs/core/src/config/mod.rs:2002][E: codex-rs/core/src/config/mod.rs:2009][E: codex-rs/core/src/config/mod.rs:2430][E: codex-rs/core/src/config/mod.rs:2432][E: codex-rs/core/src/config/mod.rs:2434][E: codex-rs/core/src/config/mod.rs:2437] | 从文件加载 model instructions override；源码注释强烈不建议偏离 Codex sanctioned instructions。[E: codex-rs/config/src/config_toml.rs:140][E: codex-rs/config/src/config_toml.rs:143] | `codex-rs/config/src/config_toml.rs:144` |
-| `compact_prompt` | `Option<String>` | unset | CLI/config override 优先，然后 global；trim 后空字符串变成 `None`。[E: codex-rs/core/src/config/mod.rs:1985][E: codex-rs/core/src/config/mod.rs:1987][E: codex-rs/core/src/config/mod.rs:1988][E: codex-rs/core/src/config/mod.rs:1990] | 设置 history compaction prompt。[E: codex-rs/config/src/config_toml.rs:146] | `codex-rs/config/src/config_toml.rs:147` |
-| `project_doc_max_bytes` | `Option<usize>` | unset | 默认 `32 * 1024` bytes。[E: codex-rs/core/src/config/mod.rs:127][E: codex-rs/core/src/config/mod.rs:2256] | 限制 AGENTS.md project doc 进入上下文的最大字节数；超过该值会 silently truncated。[E: codex-rs/core/src/config/mod.rs:124][E: codex-rs/core/src/config/mod.rs:125] | `codex-rs/config/src/config_toml.rs:199` |
-| `project_doc_fallback_filenames` | `Option<Vec<String>>` | unset | 默认 empty vec；加载时 trim 每个 filename 并丢弃空字符串。[E: codex-rs/core/src/config/mod.rs:2259][E: codex-rs/core/src/config/mod.rs:2262][E: codex-rs/core/src/config/mod.rs:2264] | 当 `AGENTS.md` 缺失时，按顺序查找 fallback filenames。[E: codex-rs/config/src/config_toml.rs:201] | `codex-rs/config/src/config_toml.rs:202` |
-| `profile` | `Option<String>` | unset | CLI override 优先于 global `profile`；如果 profile key 不存在则 config load 报 `NotFound`。[E: codex-rs/core/src/config/mod.rs:1619][E: codex-rs/core/src/config/mod.rs:1621][E: codex-rs/core/src/config/mod.rs:1629] | 从 `[profiles]` map 选择 active profile。[E: codex-rs/config/src/config_toml.rs:220] | `codex-rs/config/src/config_toml.rs:221` |
-| `profiles` | `HashMap<String, ConfigProfile>` | `{}` | 未选择 profile 时使用 `ConfigProfile::default()`。[E: codex-rs/core/src/config/mod.rs:1633][E: codex-rs/core/src/config/mod.rs:1634] | 定义可切换的 named configuration units；`ConfigProfile` 包含 model、provider、approval、sandbox、reasoning、tools、web_search、features 等字段。[E: codex-rs/config/src/profile_toml.rs:25][E: codex-rs/config/src/profile_toml.rs:29][E: codex-rs/config/src/profile_toml.rs:30][E: codex-rs/config/src/profile_toml.rs:32][E: codex-rs/config/src/profile_toml.rs:33][E: codex-rs/config/src/profile_toml.rs:59][E: codex-rs/config/src/profile_toml.rs:60][E: codex-rs/config/src/profile_toml.rs:68] | `codex-rs/config/src/config_toml.rs:225` |
-| `agents` | `Option<AgentsToml>` | unset | `max_threads=Some(6)`、`max_depth=1`、`job_max_runtime_seconds=None`。[E: codex-rs/core/src/config/mod.rs:128][E: codex-rs/core/src/config/mod.rs:129][E: codex-rs/core/src/config/mod.rs:130][E: codex-rs/core/src/config/mod.rs:1888][E: codex-rs/core/src/config/mod.rs:1903][E: codex-rs/core/src/config/mod.rs:1914] | 配置 agent thread 并发、嵌套深度、job runtime 和 user-defined roles。[E: codex-rs/config/src/config_toml.rs:539][E: codex-rs/config/src/config_toml.rs:543][E: codex-rs/config/src/config_toml.rs:547][E: codex-rs/config/src/config_toml.rs:550][E: codex-rs/config/src/config_toml.rs:562] | `codex-rs/config/src/config_toml.rs:323` |
-| `memories` | `Option<MemoriesToml>` | unset | `MemoriesConfig::default()`：disable external context false、generate/use true、raw consolidation 256、unused days 30、rollout age 30、rollouts 16、idle hours 6。[E: codex-rs/config/src/types.rs:229][E: codex-rs/config/src/types.rs:230][E: codex-rs/config/src/types.rs:231][E: codex-rs/config/src/types.rs:232][E: codex-rs/config/src/types.rs:233][E: codex-rs/config/src/types.rs:234][E: codex-rs/config/src/types.rs:235][E: codex-rs/config/src/types.rs:236] | 配置 memories subsystem；nested fields 包括 external context disable、generate/use toggles、retention/rollout limits 和 extraction/consolidation models。[E: codex-rs/config/src/types.rs:185][E: codex-rs/config/src/types.rs:188][E: codex-rs/config/src/types.rs:190][E: codex-rs/config/src/types.rs:192][E: codex-rs/config/src/types.rs:195][E: codex-rs/config/src/types.rs:197][E: codex-rs/config/src/types.rs:199][E: codex-rs/config/src/types.rs:202][E: codex-rs/config/src/types.rs:204][E: codex-rs/config/src/types.rs:206][E: codex-rs/config/src/types.rs:208] | `codex-rs/config/src/config_toml.rs:326` |
-| `projects` | `Option<HashMap<String, ProjectConfig>>` | unset | `get_active_project` 对 cwd/repo root lookup，未命中时 fallback 到 `trust_level: None`。[E: codex-rs/core/src/config/mod.rs:1686][E: codex-rs/core/src/config/mod.rs:1691][E: codex-rs/config/src/config_toml.rs:685][E: codex-rs/config/src/config_toml.rs:695][E: codex-rs/config/src/config_toml.rs:701] | 按 project path 配置 trust decision；`ProjectConfig` 目前包含 `trust_level`，并提供 trusted/untrusted 判定 helper。[E: codex-rs/config/src/config_toml.rs:431][E: codex-rs/config/src/config_toml.rs:437][E: codex-rs/config/src/config_toml.rs:441] | `codex-rs/config/src/config_toml.rs:311` |
+当前 `ConfigToml` 有 96 个顶层 `pub` 字段；本节点覆盖其中 19 个。8 个 surface/config catalog 节点合计覆盖全部 96 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:136][E: codex-rs/config/src/config_toml.rs:139]
 
-## 嵌套结构与边界
+`MemoriesToml` includes generation/use toggles, dedicated tools, retention limits, rate-limit threshold, and model overrides; `MemoriesConfig::default()` now defaults max_rollouts_per_startup to 2 and max_rollout_age_days to 10.[E: codex-rs/config/src/types.rs:282][E: codex-rs/config/src/types.rs:291][E: codex-rs/config/src/types.rs:330][E: codex-rs/config/src/types.rs:339][E: codex-rs/config/src/types.rs:340]
 
-`AgentRoleToml` 的 nested role declaration 包含 `description`、`config_file` 和 `nickname_candidates`；`agents.roles` 使用 flatten map，因此 role names 是 `[agents.<role>]` 级别的 dynamic keys。[E: codex-rs/config/src/config_toml.rs:561][E: codex-rs/config/src/config_toml.rs:562][E: codex-rs/config/src/config_toml.rs:567][E: codex-rs/config/src/config_toml.rs:570][E: codex-rs/config/src/config_toml.rs:574][E: codex-rs/config/src/config_toml.rs:577]
+## 字段 catalog
 
-`MemoriesToml` 进入 effective config 时会 clamp limits：raw memories clamp 到 1..4096，unused days clamp 到 0..365，rollout age clamp 到 0..90，rollouts per startup clamp 到 1..128，idle hours clamp 到 1..48。[E: codex-rs/config/src/types.rs:35][E: codex-rs/config/src/types.rs:36][E: codex-rs/config/src/types.rs:37][E: codex-rs/config/src/types.rs:38][E: codex-rs/config/src/types.rs:255][E: codex-rs/config/src/types.rs:256][E: codex-rs/config/src/types.rs:257][E: codex-rs/config/src/types.rs:262][E: codex-rs/config/src/types.rs:266][E: codex-rs/config/src/types.rs:270][E: codex-rs/config/src/types.rs:271][E: codex-rs/config/src/types.rs:272][E: codex-rs/config/src/types.rs:277]
-
-`skills.include_instructions` 是 `[skills]` nested key，而不是本 catalog 统计的 `ConfigToml` 顶层 key。[I] Effective `include_skill_instructions` 从 `cfg.skills.include_instructions` 读取，默认 `true`。[E: codex-rs/core/src/config/mod.rs:2019][E: codex-rs/core/src/config/mod.rs:2022][E: codex-rs/core/src/config/mod.rs:2023]
+| key | Rust type | serde/schema attrs | 源码注释摘要 | Evidence |
+|---|---|---|---|---|
+| `instructions` | `Option<String>` | none | System instructions. | [E: codex-rs/config/src/config_toml.rs:203][E: codex-rs/config/src/config_toml.rs:204] |
+| `developer_instructions` | `Option<String>` | `#[serde(default)]` | Developer instructions inserted as a `developer` role message. | [E: codex-rs/config/src/config_toml.rs:206][E: codex-rs/config/src/config_toml.rs:207][E: codex-rs/config/src/config_toml.rs:208] |
+| `include_permissions_instructions` | `Option<bool>` | none | Whether to inject the `<permissions instructions>` developer block. | [E: codex-rs/config/src/config_toml.rs:210][E: codex-rs/config/src/config_toml.rs:211] |
+| `include_apps_instructions` | `Option<bool>` | none | Whether to inject the `<apps_instructions>` developer block. | [E: codex-rs/config/src/config_toml.rs:213][E: codex-rs/config/src/config_toml.rs:214] |
+| `include_collaboration_mode_instructions` | `Option<bool>` | none | Whether to inject the `<collaboration_mode>` developer block. | [E: codex-rs/config/src/config_toml.rs:216][E: codex-rs/config/src/config_toml.rs:217] |
+| `include_environment_context` | `Option<bool>` | none | Whether to inject the `<environment_context>` user block. | [E: codex-rs/config/src/config_toml.rs:219][E: codex-rs/config/src/config_toml.rs:220] |
+| `model_instructions_file` | `Option<AbsolutePathBuf>` | none | Optional path to a file containing model instructions that will override the built-in instructions for the selected model. Users are STRONGLY DISCOURAGED from using this field, ... | [E: codex-rs/config/src/config_toml.rs:222][E: codex-rs/config/src/config_toml.rs:226] |
+| `compact_prompt` | `Option<String>` | none | Compact prompt used for history compaction. | [E: codex-rs/config/src/config_toml.rs:228][E: codex-rs/config/src/config_toml.rs:229] |
+| `project_doc_max_bytes` | `Option<usize>` | `#[serde(default = "default_project_doc_max_bytes")]` | Maximum number of bytes to include from an AGENTS.md project doc file. | [E: codex-rs/config/src/config_toml.rs:275][E: codex-rs/config/src/config_toml.rs:276][E: codex-rs/config/src/config_toml.rs:277] |
+| `project_doc_fallback_filenames` | `Option<Vec<String>>` | `#[serde(default = "default_project_doc_fallback_filenames")]` | Ordered list of fallback filenames to look for when AGENTS.md is missing. | [E: codex-rs/config/src/config_toml.rs:279][E: codex-rs/config/src/config_toml.rs:280][E: codex-rs/config/src/config_toml.rs:281] |
+| `profile` | `Option<String>` | none | Profile to use from the `profiles` map. | [E: codex-rs/config/src/config_toml.rs:298][E: codex-rs/config/src/config_toml.rs:299] |
+| `profiles` | `HashMap<String, ConfigProfile>` | `#[serde(default)]` | Named profiles to facilitate switching between different configurations. | [E: codex-rs/config/src/config_toml.rs:301][E: codex-rs/config/src/config_toml.rs:302][E: codex-rs/config/src/config_toml.rs:303] |
+| `agents` | `Option<AgentsToml>` | none | Agent-related settings (thread limits, etc.). | [E: codex-rs/config/src/config_toml.rs:421][E: codex-rs/config/src/config_toml.rs:422] |
+| `memories` | `Option<MemoriesToml>` | none | Memories subsystem settings. | [E: codex-rs/config/src/config_toml.rs:424][E: codex-rs/config/src/config_toml.rs:425] |
+| `projects` | `Option<HashMap<String, ProjectConfig>>` | none | ConfigToml schema field. | [E: codex-rs/config/src/config_toml.rs:410] |
+| `experimental_thread_config_endpoint` | `Option<String>` | none | Experimental / do not use. When set, app-server fetches thread-scoped config from a remote service at this endpoint. | [E: codex-rs/config/src/config_toml.rs:399][E: codex-rs/config/src/config_toml.rs:401] |
+| `experimental_thread_store_endpoint` | `Option<String>` | `#[schemars(skip)]` | Removed. Former remote thread-store endpoint setting kept only so we can fail fast instead of silently falling back to local persistence. | [E: codex-rs/config/src/config_toml.rs:403][E: codex-rs/config/src/config_toml.rs:405][E: codex-rs/config/src/config_toml.rs:406] |
+| `experimental_thread_store` | `Option<ThreadStoreToml>` | none | Experimental / do not use. Selects the thread store implementation. | [E: codex-rs/config/src/config_toml.rs:408][E: codex-rs/config/src/config_toml.rs:409] |
+| `experimental_compact_prompt_file` | `Option<AbsolutePathBuf>` | none | ConfigToml schema field. | [E: codex-rs/config/src/config_toml.rs:497] |
 
 ## Sources
 
 - `codex-rs/config/src/config_toml.rs`
-- `codex-rs/config/src/types.rs`
 - `codex-rs/config/src/profile_toml.rs`
-- `codex-rs/core/src/config/mod.rs`
+- `codex-rs/config/src/types.rs`
 
 ## 相关
 
-- [会话与线程 slash command](../slash-commands/session-thread.md) — 覆盖 `/new`、`/resume`、`/fork`、`/compact` 等 session/thread commands。
-- [实时与调试 slash command](../slash-commands/realtime-debug.md) — 覆盖 `/debug-m-drop`、`/debug-m-update` 和 memory debug commands。
-- [skills/plugins/features 设置](skills-plugins-features.md) — 覆盖 `skills.include_instructions` nested config 与 feature gate。
+- `command.session-thread`
+- `command.realtime-debug`
+- `config.skills-plugins-features`
+- `subsys.core.memory`
+- `subsys.core.thread-store`

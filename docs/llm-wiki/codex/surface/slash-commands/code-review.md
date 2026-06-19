@@ -4,36 +4,34 @@ title: 代码与评审命令
 kind: command
 tier: T1
 source: [codex-rs/tui/src/slash_command.rs]
-symbols: [SlashCommand, SlashCommand::description, SlashCommand::supports_inline_args, SlashCommand::available_during_task, SlashCommand::available_in_side_conversation, SlashCommand::is_visible]
+symbols: [SlashCommand, SlashCommand::description, SlashCommand::supports_inline_args, SlashCommand::available_during_task, SlashCommand::available_in_side_conversation, SlashCommand::is_visible, built_in_slash_commands]
 related: [subsys.core.review-mode, cli.exec-mode, cli.subcommands, subsys.config-auth.config-loading]
 evidence: explicit
 status: verified
-updated: 37aadeaa13
+updated: 5670360009
 ---
 
-> 代码与评审 slash commands 是 `SlashCommand` enum 中负责 review、diff、copy 和初始化 AGENTS.md 的 TUI built-in command 子集。
+> 代码与评审 slash commands 是 `SlashCommand` enum 中负责 review、diff、copy 和 raw scrollback 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:7][E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:81]
 
 ## 能回答的问题
 
 - `/review` 是否支持 inline args?
-- `/diff` 和 `/copy` 为什么能在任务运行中使用?
-- `/init` 是否能在任务运行中使用?
-- 代码与评审命令在 side conversation 中哪些仍可用?
+- `/diff`、`/copy`、`/raw` 是否可在 task 运行中使用?
+- 哪些代码与评审命令可在 active side conversation 中使用?
+- `/copy` 的平台可见性门控是什么?
 
 ## Catalog
 
-| 命令名 | enum variant | 类型 | inline args | during task | side conversation | 默认/门控 | 含义与为什么 | 源 |
-|---|---|---|---:|---:|---:|---|---|---|
-| `/review` | `Review` | built-in slash command | 是 | 否 | 否 | 默认可见 | 审查当前 changes 并发现 issues；`supports_inline_args()` 把 `Review` 列入可带参数命令，`available_during_task()` 对 `Review` 返回 false。[E: codex-rs/tui/src/slash_command.rs:79][E: codex-rs/tui/src/slash_command.rs:137][E: codex-rs/tui/src/slash_command.rs:174] | `codex-rs/tui/src/slash_command.rs:26` |
-| `/diff` | `Diff` | built-in slash command | 否 | 是 | 是 | 默认可见 | 显示 git diff，包括 untracked files；`available_during_task()` 和 `available_in_side_conversation()` 都允许 `Diff`。[E: codex-rs/tui/src/slash_command.rs:87][E: codex-rs/tui/src/slash_command.rs:180][E: codex-rs/tui/src/slash_command.rs:152] | `codex-rs/tui/src/slash_command.rs:39` |
-| `/copy` | `Copy` | built-in slash command | 否 | 是 | 是 | Android 不可见 | 复制 last response as markdown；`is_visible()` 在 Android 隐藏 `Copy`，其余平台默认可见。[E: codex-rs/tui/src/slash_command.rs:86][E: codex-rs/tui/src/slash_command.rs:181][E: codex-rs/tui/src/slash_command.rs:211] | `codex-rs/tui/src/slash_command.rs:38` |
-| `/init` | `Init` | built-in slash command | 否 | 否 | 否 | 默认可见 | 创建 AGENTS.md instructions 文件；`available_during_task()` 对 `Init` 返回 false。[E: codex-rs/tui/src/slash_command.rs:77][E: codex-rs/tui/src/slash_command.rs:162] | `codex-rs/tui/src/slash_command.rs:31` |
+`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:146][E: codex-rs/tui/src/slash_command.rs:148][E: codex-rs/tui/src/slash_command.rs:149][E: codex-rs/tui/src/slash_command.rs:257][E: codex-rs/tui/src/slash_command.rs:258][E: codex-rs/tui/src/slash_command.rs:259][E: codex-rs/tui/src/slash_command.rs:260][E: codex-rs/tui/src/slash_command.rs:261][E: codex-rs/tui/src/slash_command.rs:262]
 
-## 共性机制
+`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations.[E: codex-rs/tui/src/slash_command.rs:152][E: codex-rs/tui/src/slash_command.rs:153][E: codex-rs/tui/src/slash_command.rs:154][E: codex-rs/tui/src/slash_command.rs:156][E: codex-rs/tui/src/slash_command.rs:169][E: codex-rs/tui/src/slash_command.rs:173][E: codex-rs/tui/src/slash_command.rs:174][E: codex-rs/tui/src/slash_command.rs:175][E: codex-rs/tui/src/slash_command.rs:177][E: codex-rs/tui/src/slash_command.rs:184]
 
-代码与评审命令使用同一个 `SlashCommand` popup 机制；`built_in_slash_commands()` 只返回 `is_visible()` 为 true 的 command。[E: codex-rs/tui/src/slash_command.rs:221] `Copy`、`Diff` 是 `available_in_side_conversation()` 白名单中的 command，因此 active side conversation 仍能使用这两个 command。[E: codex-rs/tui/src/slash_command.rs:152]
-
-`supports_inline_args()` 的白名单列出 `Review`、`Rename`、`Plan`、`Fast`、`Mcp`、`Side`、`Resume` 和 `SandboxReadRoot`；本组只有 `Review` 出现在该白名单中。[E: codex-rs/tui/src/slash_command.rs:137][E: codex-rs/tui/src/slash_command.rs:138][E: codex-rs/tui/src/slash_command.rs:139][E: codex-rs/tui/src/slash_command.rs:140][E: codex-rs/tui/src/slash_command.rs:141][E: codex-rs/tui/src/slash_command.rs:142][E: codex-rs/tui/src/slash_command.rs:143][E: codex-rs/tui/src/slash_command.rs:144]
+| 命令名 | enum variant | description | inline args | during task | side conversation | visible gate | 定义证据 |
+|---|---|---|---|---|---|---|---|
+| `/review` | `Review` | review my current changes and find issues | 是 [E: codex-rs/tui/src/slash_command.rs:156] | 否 [E: codex-rs/tui/src/slash_command.rs:207] | 否 | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:31][E: codex-rs/tui/src/slash_command.rs:89] |
+| `/diff` | `Diff` | show git diff (including untracked files) | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:213] | 是 [E: codex-rs/tui/src/slash_command.rs:179] | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:48][E: codex-rs/tui/src/slash_command.rs:100] |
+| `/copy` | `Copy` | copy last response as markdown | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:214] | 是 [E: codex-rs/tui/src/slash_command.rs:177] | hidden on Android [E: codex-rs/tui/src/slash_command.rs:249] | [E: codex-rs/tui/src/slash_command.rs:46][E: codex-rs/tui/src/slash_command.rs:98] |
+| `/raw` | `Raw` | toggle raw scrollback mode for copy-friendly terminal selection | 是 [E: codex-rs/tui/src/slash_command.rs:163] | 是 [E: codex-rs/tui/src/slash_command.rs:215] | 是 [E: codex-rs/tui/src/slash_command.rs:178] | 默认可见 [E: codex-rs/tui/src/slash_command.rs:252] | [E: codex-rs/tui/src/slash_command.rs:47][E: codex-rs/tui/src/slash_command.rs:99] |
 
 ## Sources
 
@@ -41,6 +39,7 @@ updated: 37aadeaa13
 
 ## 相关
 
-- [Review mode](../../subsystems/core/review-mode.md) — 解释 `/review` 背后的 review task 生命周期。
-- [exec 非交互模式](../cli/exec-mode.md) — 覆盖 `codex exec review` 和 `codex review` 的非交互入口。
-- [配置加载](../../subsystems/config-auth/config-loading.md) — 解释 `/init` 创建的 AGENTS.md 如何成为 instruction 输入。
+- [subsys.core.review-mode](../../subsystems/core/review-mode.md)
+- [cli.exec-mode](../cli/exec-mode.md)
+- [cli.subcommands](../cli/subcommands.md)
+- [subsys.config-auth.config-loading](../../subsystems/config-auth/config-loading.md)
