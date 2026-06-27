@@ -142,6 +142,7 @@
       "args": [
         "--login"
       ],
+      "environment": [],
       "executable": "/bin/bash",
       "followTheme": true,
       "name": "",

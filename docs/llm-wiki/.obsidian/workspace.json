@@ -8,69 +8,17 @@
         "type": "tabs",
         "children": [
           {
-            "id": "d99e05a1c493dc53",
+            "id": "11602babe0b007fe",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "claude/spine/agent-loop.md",
-                "mode": "source",
+                "file": "course/lesson-01-agent-loop.md",
+                "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "agent-loop"
-            }
-          }
-        ]
-      },
-      {
-        "id": "6f1dfb9800cf67b4",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "947a4a44cd301de2",
-            "type": "leaf",
-            "pinned": true,
-            "state": {
-              "type": "terminal:terminal",
-              "state": {
-                "terminal:terminal": {
-                  "cwd": "/Users/bytedance/Mine/Agent/Best/docs/llm-wiki",
-                  "focus": false,
-                  "profile": {
-                    "args": [
-                      "--login"
-                    ],
-                    "environment": [],
-                    "executable": "/bin/bash",
-                    "followTheme": true,
-                    "name": "",
-                    "platforms": {
-                      "darwin": true,
-                      "linux": true
-                    },
-                    "pythonExecutable": "python3",
-                    "restoreHistory": false,
-                    "rightClickAction": "copyPaste",
-                    "successExitCodes": [
-                      "0",
-                      "SIGINT",
-                      "SIGTERM"
-                    ],
-                    "terminalOptions": {
-                      "documentOverride": null
-                    },
-                    "type": "integrated",
-                    "useWin32Conhost": true
-                  },
-                  "profileSourceId": "c8d72334-e7c5-4988-807b-b8872548f2d3",
-                  "serial": null,
-                  "userTitle": ""
-                }
-              },
-              "pinned": true,
-              "icon": "terminal",
-              "title": "终端：llm-wiki"
+              "title": "lesson-01-agent-loop"
             }
           }
         ]
@@ -146,7 +94,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "claude/spine/agent-loop.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -156,7 +103,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "agent-loop 的反向链接列表"
+              "title": "反向链接"
             }
           },
           {
@@ -165,12 +112,11 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "claude/spine/agent-loop.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "agent-loop 的出链列表"
+              "title": "出链"
             }
           },
           {
@@ -208,13 +154,12 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "claude/spine/agent-loop.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "agent-loop 的大纲"
+              "title": "大纲"
             }
           }
         ]
@@ -236,19 +181,38 @@
       "terminal:Open terminal": false
     }
   },
-  "active": "81cc45aa5e87182d",
+  "active": "11602babe0b007fe",
   "lastOpenFiles": [
-    "claude/surface/tools/remote-trigger.md",
-    "claude/surface/tools/list-mcp-resources.md",
-    "claude/surface/tools/glob.md",
-    "claude/surface/tools/ctx-inspect.md",
-    "claude/surface/tools/cron-delete.md",
-    "claude/surface/tools/brief.md",
-    "claude/surface/tools/ask-user-question.md",
-    "claude/conventions.md",
-    "opencode/opencode_codex_full_prompts.md",
-    "codex/_fill-prompts.md",
-    "opencode/_fill-prompts.md",
-    "opencode/_refill-prompts.md"
+    "course/exercises/lesson-01-agent-loop.md",
+    "course/lesson-01-agent-loop.md",
+    "course/exercises/lesson-12-capstone.md",
+    "course/exercises/lesson-11-optimization-methodology.md",
+    "course/exercises/lesson-10-extensibility.md",
+    "course/exercises/lesson-09-model-api-layer.md",
+    "course/exercises/lesson-08-prompt-instruction-architecture.md",
+    "course/README.md",
+    "course/lesson-11-optimization-methodology.md",
+    "course/lesson-03-context-compaction.md",
+    "course/lesson-02-tool-system.md",
+    "course/lesson-12-capstone.md",
+    "course/lesson-09-model-api-layer.md",
+    "course/lesson-08-prompt-instruction-architecture.md",
+    "course/lesson-07-multi-agent-orchestration.md",
+    "course/lesson-05-persistence-replay-rollback.md",
+    "course/lesson-04-memory-system.md",
+    "course/lesson-10-extensibility.md",
+    "course/lesson-06-permissions-approval-sandbox.md",
+    "course/lesson-10-extensibility.md.tmp.48798.dea826db4da7",
+    "course/exercises/lesson-06-permissions-approval-sandbox.md",
+    "course/exercises/lesson-06-permissions-approval-sandbox.md.tmp.11310.b4036620682a",
+    "course/exercises/lesson-07-multi-agent-orchestration.md",
+    "course/exercises/lesson-05-persistence-replay-rollback.md",
+    "course/exercises/lesson-04-memory-system.md",
+    "course/exercises/lesson-02-tool-system.md",
+    "course/exercises/lesson-03-context-compaction.md",
+    "course/exercises/README.md",
+    "course/exercises",
+    "course/lesson-03-context-compaction.md.tmp.19887.76025f52f197",
+    "未命名.base"
   ]
 }
