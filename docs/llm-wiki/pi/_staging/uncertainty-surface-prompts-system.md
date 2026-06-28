@@ -1,0 +1,5 @@
+# uncertainty: surface.prompt-templates.system
+
+- 本轮按 `docs/llm-wiki/pi/index.json` 的 source 收回主节点范围:只保留 `packages/coding-agent/src/core/prompt-templates.ts`、`packages/agent/src/harness/prompt-templates.ts`、`packages/coding-agent/docs/prompt-templates.md` 和 `.pi/prompts/wr.md` 作为可标 `[E]` 的来源。原节点中来自 `resource-loader.ts`、`package-manager.ts`、`agent-session.ts`、interactive/RPC、CLI parser、settings/usage/system prompt 文件的断言已移出 `[E]` 范围或降级为 `[I]` 边界。
+- `packages/coding-agent/docs/prompt-templates.md` 只写 `--no-prompt-templates` disable discovery;本轮 index source 不含 `args.ts` / `resource-loader.ts`,不能核定该 flag 对显式 CLI `--prompt-template <path>` 的 runtime 精确语义。需要后续用更宽 source 判定文档措辞、实现行为或 CLI override 是否一致。
+- `packages/coding-agent/src/core/prompt-templates.ts` 与 `packages/agent/src/harness/prompt-templates.ts` 都导出同名 prompt-template primitives,且源码可见能力差异包括 product `PromptTemplate` 的 `argumentHint/sourceInfo/filePath` 与 `${N:-default}` 支持。当前 index source 不能单独证明 product runtime 的最终装配路径是否只使用 coding-agent 版本;该长期边界需要维护者或 wider-source 节点确认。

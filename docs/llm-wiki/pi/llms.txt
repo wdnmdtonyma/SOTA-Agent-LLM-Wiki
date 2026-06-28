@@ -1,0 +1,62 @@
+# pi 源码 LLM Wiki — 入口索引
+
+> **pi**(`pi/`,5-package TypeScript monorepo,自扩展编码 agent harness)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 pi git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
+>
+> **状态:已完成 —— 全部 177 节点已填充并经独立 subagent 对照源码逐条证伪校验,`lint` 0 error / 0 warning。**
+>
+> **核心组织主线 —— 分层栈 + 复用边界 + 自扩展**:pi 是一条 `pi-ai`(provider 引擎)→ `pi-agent-core`(可复用运行时 harness:agent-loop·工具分派·会话树·压缩)→ `pi-coding-agent`(产品:7 内置工具·扩展·skills·3 模式)+ `pi-tui`(差分渲染)+ `pi-orchestrator`(实验性多实例)的栈。每个节点 frontmatter 标 `pkg: ai|agent|coding-agent|tui|orchestrator|cross`,使分层可 grep。`agent`(可复用)与 `coding-agent`(产品)的边界、以及扩展系统是 pi 的画像主线。
+
+## 怎么用
+- **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
+- **人**:先读 `spine/overview` 与 `spine/layered-architecture`,再按需深入 T1/T2。
+
+## T0 — Spine(端到端脊柱,mermaid 先行)
+- [pi 源码总览](spine/overview.md) `[cross]`: 是什么 + 5-package 分层栈全景 — README.md · main.ts · agent-loop.ts · models.ts
+- [分层架构与包边界](spine/layered-architecture.md) `[cross]`: agent(可复用)vs coding-agent(产品)边界 + 包依赖 — agent/index.ts · core/agent-session.ts
+- [进程生命周期](spine/process-lifecycle.md) `[coding-agent]`: argv → mode dispatch → services/session(Node vs Bun)— main.ts · cli/args.ts · bun/cli.ts
+- [agent 回合循环](spine/agent-loop.md) `[agent]`: runAgentLoop → provider stream → 工具调用 → state append → 续跑 — agent-loop.ts · agent.ts
+- [工具调用解剖](spine/tool-call-anatomy.md) `[agent]`: assistant toolcall → prepare/validate → execute(seq/parallel)→ toolResult — agent-loop.ts · tools/index.ts
+- [provider 流式调用](spine/provider-stream.md) `[ai]`: 统一请求 → wire 协议 → 归一事件流 — models.ts · api/lazy.ts · event-stream.ts
+- [会话状态与会话树](spine/session-state-model.md) `[agent]`: 消息状态 + 树存储 + 持久化 — session/session.ts · session-manager.ts
+- [上下文压缩与分支总结](spine/compaction-flow.md) `[agent]`: token 预算 → 摘要 → 替换 — compaction.ts · branch-summarization.ts
+- [扩展生命周期(自扩展主线)](spine/extension-lifecycle.md) `[coding-agent]`: load → bindCore → 事件/贡献 — extensions/loader.ts · runner.ts · types.ts
+
+### 端到端 worked traces
+- [trace:一次交互式 turn](spine/trace-interactive-turn.md) `[cross]`: TUI → AgentSession.prompt → agent loop → 渲染
+- [trace:一次 RPC prompt](spine/trace-rpc-prompt.md) `[coding-agent]`: stdin JSON → runRpcMode → AgentSession → 事件流
+- [trace:扩展贡献一个工具](spine/trace-extension-tool.md) `[coding-agent]`: registerTool → wrapToolDefinition → 进入 turn
+
+## T1 — Surface / Tools(每工具一节点,7;ground truth = core/tools/index.ts)
+- [bash](surface/tools/bash.md) `[coding-agent]`: 执行 shell(流式/超时/取消)— core/tools/bash.ts · bash-executor.ts
+- [read](surface/tools/read.md) `[coding-agent]`: 读文件/图片(行范围/截断/路径变体)— core/tools/read.ts
+- [edit](surface/tools/edit.md) `[coding-agent]`: 模糊匹配字符串替换 + diff — core/tools/edit.ts · edit-diff.ts
+- [write](surface/tools/write.md) `[coding-agent]`: 整文件写 — core/tools/write.ts
+- [grep](surface/tools/grep.md) `[coding-agent]`: ripgrep 内容搜索 — core/tools/grep.ts
+- [find](surface/tools/find.md) `[coding-agent]`: glob 找文件 — core/tools/find.ts
+- [ls](surface/tools/ls.md) `[coding-agent]`: 列目录 — core/tools/ls.ts
+
+> 工具基础设施(截断/file-mutation-queue/edit 引擎/注册装配)见 `subsystems/coding-agent/` 与 `reference/tools-catalog`。
+
+## T1 — Surface / 其它可见面
+- CLI:[CLI 调用与模式选择](surface/cli/overview.md)
+- 模式:[交互式](surface/modes/interactive.md) · [RPC](surface/modes/rpc.md) · [RPC 协议](surface/modes/rpc-protocol.md) · [print](surface/modes/print.md)
+- 配置:[settings](surface/config/settings.md) · [配置值解析](surface/config/resolution.md) · [键位](surface/config/keybindings.md)
+- provider:[选择与配置](surface/providers/overview.md) · [认证/登录](surface/providers/auth.md) · [自定义 provider](surface/providers/custom-provider.md)
+- 扩展(marquee):[扩展 API](surface/extensions/api.md) · [贡献点](surface/extensions/contribution-points.md) · [UI 上下文](surface/extensions/context-ui.md) · [事件](surface/extensions/events.md)
+- 其它:[skills](surface/skills/system.md) · [prompt 模板](surface/prompts/system.md) · [slash 命令](surface/commands/overview.md) · [SDK](surface/sdk/embedding.md) · [会话管理](surface/sessions/management.md) · [项目信任](surface/trust/model.md)
+- 杂项:[图像](surface/misc/images.md) · [容器化](surface/misc/containerization.md) · [安全](surface/misc/security.md) · [资源包](surface/misc/packages.md)
+
+## T2 — Subsystems(内部机制,逐子系统)
+- **pi-ai**(`subsystems/ai/`,23 节点):provider-registry · wire-protocol-dispatch · 9 wire 协议(anthropic-messages / openai-responses / openai-completions / openai-codex-responses / azure-openai-responses / bedrock-converse / google-generative-ai / google-vertex / mistral-conversations)· message-transform · event-stream · auth-resolution · credential-store · oauth-flow · env-api-keys · model-discovery · prompt-caching · lazy-loading · image-generation · session-resources · compat-legacy
+- **pi-agent-core**(`subsystems/agent-core/`,18 节点):turn-control · message-queue · tool-invocation · hooks · message-model · message-conversion · session-storage · jsonl-storage · memory-storage · session-tree · tree-navigation · compaction · branch-summary · system-prompt · skills-loading · prompt-templates · transport-proxy · exec-env
+- **pi-coding-agent**(`subsystems/coding-agent/`,31 节点):agent-session · session-runtime · session-services · system-prompt · model-registry · model-resolver · bash-executor · output-truncation · file-mutation-queue · edit-engine · path-resolution · tool-wrapper · extension-loader · extension-runner · extension-wrapper · settings-manager · config-resolution · resource-loader · session-manager · auth-storage · trust-manager · keybindings · event-bus · footer-data-provider · html-export · migrations · http-dispatcher · package-manager · telemetry · theme-controller · interactive-orchestration
+- **pi-tui**(`subsystems/tui/`,18 节点):runtime · diff-engine · component-model · overlay · cursor-positioning · key-pipeline · key-parsing · keybinding-matching · editor-component · editor-mechanics · stdin-buffer · terminal-capabilities · native-modifiers · autocomplete · fuzzy-match · text-utilities · terminal-colors · terminal-image
+- **pi-orchestrator**(`subsystems/orchestrator/`,8 节点,experimental):supervisor · rpc-spawner · ipc-transport · message-protocol · request-handler · storage · radius · config
+
+## T3 — Reference / Catalogs(逐实例覆盖)
+- pi-ai:[provider 目录](reference/provider-catalog.md) · [模型目录](reference/model-catalog.md) · [wire 协议目录](reference/wire-protocol-catalog.md) · [认证类型](reference/auth-types.md) · [核心类型](reference/core-types.md) · [图像模型](reference/image-models.md)
+- pi-agent-core:[消息类型](reference/message-types.md) · [会话条目类型](reference/session-entry-types.md) · [Agent 事件](reference/agent-events.md) · [错误代码](reference/error-codes.md) · [推理级别](reference/thinking-levels.md) · [队列模式](reference/queue-modes.md) · [工具执行模式](reference/tool-execution-modes.md) · [压缩配置](reference/compaction-config.md)
+- pi-coding-agent:[配置键](reference/config-keys.md) · [slash 命令](reference/slash-commands.md) · [默认键位](reference/default-keybindings.md) · [扩展事件](reference/extension-events.md) · [贡献点](reference/contribution-points.md) · [环境变量](reference/env-vars.md) · [会话格式](reference/session-format.md) · [RPC 命令](reference/rpc-methods.md) · [CLI 旗标](reference/cli-flags.md) · [会话事件](reference/session-events.md) · [JSON 事件](reference/json-events.md) · [内置工具目录](reference/tools-catalog.md) · [交互组件目录](reference/components.md)
+- pi-tui:[按键代码](reference/key-codes.md) · [键位动作](reference/keybinding-actions.md) · [组件类型](reference/component-types.md)
+- pi-orchestrator:[IPC 消息](reference/ipc-messages.md) · [实例状态](reference/instance-status.md)
+- 跨包:[包索引](reference/package-index.md) · [术语表](reference/glossary.md) · [不确定项](reference/uncertainty.md)
