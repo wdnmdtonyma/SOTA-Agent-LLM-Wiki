@@ -7,8 +7,9 @@ v: shared
 source:
   - packages/llm/src/schema/events.ts
   - packages/llm/src/schema/errors.ts
+  - packages/llm/src/route/protocol.ts
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 evidence: explicit
 symbols:
   - LLMEvent
@@ -29,7 +30,7 @@ V1 默认 Vercel AI SDK path 不直接以 `LLMEvent` 为唯一事件源；启用
 
 ## V2
 
-V2 使用 `LLMEvent` 作为 provider stream 的统一语义输出：protocol state machine 只产出这些事件，不把 provider-specific raw chunks 直接泄漏给 runner。[E: packages/llm/src/route/protocol.ts:58] [E: packages/llm/src/route/protocol.ts:58]
+V2 使用 `LLMEvent` 作为 provider stream 的统一语义输出：protocol state machine 的 `step` contract 返回 `ReadonlyArray<LLMEvent>`，不把 provider-specific raw chunks 直接泄漏给 runner。[E: packages/llm/src/route/protocol.ts:58]
 
 ## Usage
 
@@ -70,7 +71,7 @@ V2 使用 `LLMEvent` 作为 provider stream 的统一语义输出：protocol sta
 
 ## Response Helpers
 
-`LLMResponse.text` 串联所有 `text-delta`，`LLMResponse.reasoning` 串联所有 `reasoning-delta`，`LLMResponse.toolCalls` 过滤 `tool-call`。[E: packages/llm/src/schema/events.ts:320] [E: packages/llm/src/schema/events.ts:326] [E: packages/llm/src/schema/events.ts:353] namespace helper 也提供 `text/usage/toolCalls/reasoning` 静态函数。[E: packages/llm/src/schema/events.ts:358] [E: packages/llm/src/schema/events.ts:371]
+`LLMResponse.text` 串联所有 `text-delta`，`LLMResponse.reasoning` 串联所有 `reasoning-delta`，`LLMResponse.toolCalls` 过滤 `tool-call`。[E: packages/llm/src/schema/events.ts:320] [E: packages/llm/src/schema/events.ts:326] [E: packages/llm/src/schema/events.ts:353] namespace helper 也提供 `text/usage/toolCalls/reasoning` 静态函数。[E: packages/llm/src/schema/events.ts:608] [E: packages/llm/src/schema/events.ts:617]
 
 ## Error Reasons
 
@@ -97,6 +98,7 @@ V2 使用 `LLMEvent` 作为 provider stream 的统一语义输出：protocol sta
 
 - packages/llm/src/schema/events.ts
 - packages/llm/src/schema/errors.ts
+- packages/llm/src/route/protocol.ts
 
 ## Related
 

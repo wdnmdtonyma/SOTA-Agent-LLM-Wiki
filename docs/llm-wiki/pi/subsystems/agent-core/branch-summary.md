@@ -9,7 +9,7 @@ symbols: [collectEntriesForBranchSummary, generateBranchSummary]
 related: [spine.compaction-flow, subsys.agent-core.compaction]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.branch-summary` 覆盖 pi-agent-core 在切换会话树分支时的 abandoned branch summary: `collectEntriesForBranchSummary()` 收集旧 leaf 到 common ancestor 之间的 entry,`generateBranchSummary()` 准备这些 entry、构造 LLM prompt,并在成功路径返回 summary、read files、modified files [E: packages/agent/src/harness/compaction/branch-summarization.ts:67] [E: packages/agent/src/harness/compaction/branch-summarization.ts:95] [E: packages/agent/src/harness/compaction/branch-summarization.ts:199] [E: packages/agent/src/harness/compaction/branch-summarization.ts:207] [E: packages/agent/src/harness/compaction/branch-summarization.ts:222] [E: packages/agent/src/harness/compaction/branch-summarization.ts:256] [E: packages/agent/src/harness/compaction/branch-summarization.ts:259]。

@@ -13,7 +13,7 @@ related:
   - subsys.agent-core.turn-control
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `ref.agent.thinking-levels` 是 agent-core `ThinkingLevel` literal union 的逐实例目录:覆盖 `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"` 六个值,以及这些值在 `packages/agent/src/types.ts` 内暴露到 turn update 和 public state 的字段边界;`AgentLoopConfig` 在本文件中只证明继承 `SimpleStreamOptions` 的 options shape。

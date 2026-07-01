@@ -8,7 +8,7 @@ symbols: [MarkdownStreamCollector, StreamState, AdaptiveChunkingPolicy, Chunking
 related: [subsys.tui.chatwidget, subsys.tui.rendering-theming, subsys.tui.event-system]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/markdown_stream.rs:1][E: codex-rs/tui/src/streaming/mod.rs:1][E: codex-rs/tui/src/streaming/chunking.rs:1][E: codex-rs/tui/src/streaming/chunking.rs:73][E: codex-rs/tui/src/streaming/commit_tick.rs:1][E: codex-rs/tui/src/streaming/controller.rs:459][E: codex-rs/tui/src/chatwidget/streaming.rs:111][I]

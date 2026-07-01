@@ -18,7 +18,7 @@ related:
   - ref.agent.compaction-config
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `spine.compaction-flow` 说明 `pi-agent-core` 的 context compaction 如何从 token threshold 判定,准备 cut point,生成 checkpoint summary,以及 branch navigation 时如何生成 abandoned branch summary。

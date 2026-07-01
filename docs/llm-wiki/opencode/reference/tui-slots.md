@@ -13,7 +13,7 @@ related:
   - tui.feature-plugins
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > TUI slot 是插件把 Solid/OpenTUI UI 挂进 host 界面的 named extension point；host 暴露 slot 名、props 和渲染模式，插件 runtime 负责注册、渲染、清理。

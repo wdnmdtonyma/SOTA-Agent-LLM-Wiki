@@ -8,7 +8,7 @@ symbols: [OnboardingScreen, OnboardingScreenArgs, OnboardingResult, run_onboardi
 related: [subsys.config-auth.auth-flows, subsys.config-auth.config-loading, subsys.tui.architecture]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > Onboarding 是 TUI 启动前/启动中的一个独立 screen loop：它接收 `OnboardingScreenArgs`、可选 app-server session、和现有 `Tui`，返回是否持久化 trust 以及用户是否选择退出。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:83][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:91][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:474][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:476][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:477][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:571]

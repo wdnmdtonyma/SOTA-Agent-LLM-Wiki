@@ -19,7 +19,7 @@ related:
   - surface.modes.rpc
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.orchestrator.rpc-spawner` 是 `pi-orchestrator` 的 child process adapter: 它把一个工作目录 `cwd` 包装成独立 RPC mode 子进程,用 stdin/stdout JSONL 发送 `RpcCommand`、接收 `RpcResponse`、agent events 和 extension UI requests。

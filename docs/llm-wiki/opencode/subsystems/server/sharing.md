@@ -17,7 +17,7 @@ related:
   - peripheral.enterprise
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 `server.sharing` 描述 session share 的配置、`packages/opencode` runtime services、ShareNext 后端协议和 shared SQL 表。当前源码里实际发起 share HTTP create/sync/remove 的服务在 `packages/opencode/src/share/share-next.ts`: create POST 在 `ShareNext.create`，sync POST 在 `ShareNext.flush`，remove DELETE 在 `ShareNext.remove`；service tag 是 `@opencode/ShareNext`。[E: packages/opencode/src/share/share-next.ts:314][E: packages/opencode/src/share/share-next.ts:259][E: packages/opencode/src/share/share-next.ts:350][E: packages/opencode/src/share/share-next.ts:81]
@@ -62,7 +62,7 @@ Share data union 包含五种类型: `session`、`message`、`part`、`session_d
 
 ## V2
 
-V2 config schema 也保留 `share` 的 `"manual" | "auto" | "disabled"` union，description 是控制 session 是否可手动、自动或完全不可分享。[E: packages/core/src/config.ts:46][E: packages/core/src/config.ts:47] V2 config schema 还保留 `enterprise.url`，description 是 enterprise sharing service configuration。[E: packages/core/src/config.ts:49][E: packages/core/src/config.ts:54]
+V2 config schema 也保留 `share` 的 `"manual" | "auto" | "disabled"` union，description 是控制 session 是否可手动、自动或完全不可分享。[E: packages/core/src/config.ts:47][E: packages/core/src/config.ts:48] V2 config schema 还保留 `enterprise.url`，description 是 enterprise sharing service configuration。[E: packages/core/src/config.ts:50][E: packages/core/src/config.ts:55]
 
 V2 config spec 要求保留 `share`，移除 `autoshare` alias，并说明 `enterprise` 在没有 organization account active 时选择 legacy sharing service endpoint。[E: specs/v2/config.md:150][E: specs/v2/config.md:152][E: specs/v2/config.md:155]
 
@@ -72,7 +72,7 @@ Shared storage 是 `SessionShareTable`。表名是 `session_share`；`session_id
 
 | 维度 | V1 runtime | V2 / shared core |
 | --- | --- | --- |
-| Service | `packages/opencode` runtime 中，`SessionShare` 包装 session create/share/unshare，`ShareNext` 执行 remote create/sync/remove。[E: packages/opencode/src/share/session.ts:48][E: packages/opencode/src/share/share-next.ts:77] | 已读 source 中 V2 明确部分是 config schema 与 SQL table。[E: packages/core/src/config.ts:46][E: packages/core/src/share/sql.ts:5][I] |
+| Service | `packages/opencode` runtime 中，`SessionShare` 包装 session create/share/unshare，`ShareNext` 执行 remote create/sync/remove。[E: packages/opencode/src/share/session.ts:48][E: packages/opencode/src/share/share-next.ts:77] | 已读 source 中 V2 明确部分是 config schema 与 SQL table。[E: packages/core/src/config.ts:47][E: packages/core/src/share/sql.ts:5][I] |
 | Config | V1 `share` 三态，`autoshare` deprecated。[E: packages/core/src/v1/config/config.ts:57][E: packages/core/src/v1/config/config.ts:61] | V2 spec 保留 `share`，不 port `autoshare`。[E: specs/v2/config.md:150][E: specs/v2/config.md:151] |
 | Backend | `api("share")` 生成 legacy `/api/share/*`，`api("shares")` 生成 console `/api/shares/*`；request 分支在无 org/有 org 时选择对应 API。[E: packages/opencode/src/share/share-next.ts:85][E: packages/opencode/src/share/share-next.ts:94][E: packages/opencode/src/share/share-next.ts:95][E: packages/opencode/src/share/share-next.ts:209][E: packages/opencode/src/share/share-next.ts:221] | `enterprise.url` 作为 legacy sharing service selection 保留。[E: specs/v2/config.md:152] |
 

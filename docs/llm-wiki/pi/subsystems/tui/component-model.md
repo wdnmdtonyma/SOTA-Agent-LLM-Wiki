@@ -16,7 +16,7 @@ related:
   - ref.tui.component-types
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `Component` 是 pi TUI 的最小渲染单元: 它把当前 viewport width 转成多行 terminal string, 可选接收 keyboard input, 并通过 `invalidate()` 暴露缓存失效入口。

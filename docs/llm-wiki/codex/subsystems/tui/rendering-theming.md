@@ -8,7 +8,7 @@ symbols: [Renderable, RenderableItem, ColumnRenderable, set_theme_override, adap
 related: [subsys.tui.chatwidget, subsys.tui.streaming-pipeline, subsys.tui.overlays-dialogs]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > TUI rendering 以 small `Renderable` trait 为公共拼装接口，以 syntect/two_face 主题解析代码处理 syntax highlight，以 `ansi-escape` crate 把 ANSI output 转成 ratatui text；ChatWidget/pager/bottom pane 再组合这些 renderables。[E: codex-rs/tui/src/render/renderable.rs:14][E: codex-rs/tui/src/render/highlight.rs:48][E: codex-rs/ansi-escape/src/lib.rs:26][E: codex-rs/tui/src/chatwidget/rendering.rs:5][E: codex-rs/tui/src/pager_overlay.rs:120]

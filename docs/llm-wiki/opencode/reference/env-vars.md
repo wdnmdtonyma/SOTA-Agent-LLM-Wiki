@@ -8,7 +8,6 @@ source:
   - packages/core/src/flag/flag.ts
   - packages/opencode/src/effect/runtime-flags.ts
   - packages/core/src/database/database.ts
-  - packages/core/src/database/migration.ts
   - packages/core/src/plugin/provider/
   - packages/opencode/src/provider/provider.ts
   - packages/core/src/pty.ts
@@ -19,7 +18,7 @@ symbols:
   - RuntimeFlags
   - OPENCODE_EXPERIMENTAL
 evidence: explicit
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -72,7 +71,7 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `OPENCODE_PURE` | truthy | pure mode。 | [E: packages/core/src/flag/flag.ts:67] |
 | `OPENCODE_PERMISSION` | string | permission behavior override。 | [E: packages/core/src/flag/flag.ts:70] |
 | `OPENCODE_PLUGIN_META_FILE` | string | plugin metadata file override。 | [E: packages/core/src/flag/flag.ts:73] |
-| `OPENCODE_CLIENT` | string default `cli` | client identity/user-agent。 | [E: packages/core/src/flag/flag.ts:76][E: packages/core/src/models-dev.ts:17] |
+| `OPENCODE_CLIENT` | string default `cli` | client identity/user-agent。 | [E: packages/core/src/flag/flag.ts:76][E: packages/core/src/models-dev.ts:18] |
 
 ## V1 runtime flags
 
@@ -119,8 +118,7 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 |---|---|---|
 | `OPENCODE_TEST_HOME` | core global home override。 | [E: packages/core/src/global.ts:19] |
 | `OPENCODE_DISABLE_CHANNEL_DB` | 禁用 channel DB 条件之一。 | [E: packages/core/src/database/database.ts:50] |
-| `OPENCODE_SKIP_MIGRATIONS` | 跳过 migration `up()`。 | [E: packages/core/src/database/migration.ts:51] |
-| `OPENCODE_MODELS_DEV` | bundler/global models.dev injection。 | [E: packages/core/src/models-dev.ts:118][E: packages/core/src/models-dev.ts:181] |
+| `OPENCODE_MODELS_DEV` | bundler/global models.dev injection。 | [E: packages/core/src/models-dev.ts:114][E: packages/core/src/models-dev.ts:177] |
 | `OPENCODE_LOG_LEVEL` | logging level。 | [E: packages/core/src/observability/logging.ts:57] |
 | `OPENCODE_PRINT_LOGS` | 打印 stderr logs。 | [E: packages/core/src/observability/logging.ts:68] |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint flag。 | [E: packages/core/src/flag/flag.ts:16] |
@@ -132,7 +130,7 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `OPENCODE_ACP_PROFILE` | ACP profiling flag。 | [E: packages/opencode/src/acp/profile.ts:1] |
 | `OPENCODE_TERMINAL` | spawned terminal marker。 | [E: packages/core/src/pty.ts:204] |
 | `OPENCODE_CALLER` | VS Code caller detection。 | [E: packages/opencode/src/ide/index.ts:40] |
-| `OPENCODE_WEBSEARCH_PROVIDER` | V2 WebSearch tool 与 V1 websearch tool 都读取同名 provider override。 | [E: packages/core/src/tool/websearch.ts:72][E: packages/opencode/src/tool/websearch.ts:31] |
+| `OPENCODE_WEBSEARCH_PROVIDER` | V2 WebSearch tool 与 V1 websearch tool 都读取同名 provider override。 | [E: packages/core/src/tool/websearch.ts:76][E: packages/opencode/src/tool/websearch.ts:31] |
 | `OPENCODE_LIBC` | watcher native library selection。 | [E: packages/core/src/filesystem/watcher.ts:18][E: packages/core/src/filesystem/watcher.ts:34] |
 | `COMSPEC` | V2 Bash tool 与 core shell helper 的 Windows shell fallback。 | [E: packages/core/src/tool/bash.ts:51][E: packages/core/src/shell.ts:101] |
 | `SHELL` | preferred shell on non-Windows path. | [E: packages/core/src/shell.ts:207] |
@@ -149,22 +147,22 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 
 | Env | Provider/integration | Evidence |
 |---|---|---|
-| `AWS_PROFILE` | Bedrock profile. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:83] |
-| `AWS_REGION` | Bedrock region fallback. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:84] |
-| `AWS_BEARER_TOKEN_BEDROCK` | Bedrock bearer token. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:86] |
-| `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:90] |
-| `AWS_CONTAINER_CREDENTIALS_FULL_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:90] |
+| `AWS_PROFILE` | Bedrock profile. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:85] |
+| `AWS_REGION` | Bedrock region fallback. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:86] |
+| `AWS_BEARER_TOKEN_BEDROCK` | Bedrock bearer token. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:88] |
+| `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:92] |
+| `AWS_CONTAINER_CREDENTIALS_FULL_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:92] |
 | `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path. | [E: packages/opencode/src/provider/provider.ts:296] |
 | `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path. | [E: packages/opencode/src/provider/provider.ts:311] |
 | `AZURE_RESOURCE_NAME` | Azure resource name. | [E: packages/core/src/plugin/provider/azure.ts:23] |
-| `AZURE_COGNITIVE_SERVICES_RESOURCE_NAME` | Azure Cognitive Services resource. | [E: packages/core/src/plugin/provider/azure.ts:59] |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:47][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:46] |
+| `AZURE_COGNITIVE_SERVICES_RESOURCE_NAME` | Azure Cognitive Services resource. | [E: packages/core/src/plugin/provider/azure.ts:63] |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:47][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:50] |
 | `CLOUDFLARE_GATEWAY_ID` | Cloudflare AI Gateway id. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:51] |
 | `CLOUDFLARE_API_TOKEN` | Cloudflare AI Gateway token. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:52] |
 | `CF_AIG_TOKEN` | Cloudflare AI Gateway token alias. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:52] |
-| `CLOUDFLARE_API_KEY` | Cloudflare Workers AI key. | [E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:61] |
-| `EXA_API_KEY` | V2 WebSearch Exa key；V1 MCP websearch Exa key。 | [E: packages/core/src/tool/websearch.ts:77][E: packages/opencode/src/tool/mcp-websearch.ts:4] |
-| `PARALLEL_API_KEY` | V2 WebSearch Parallel key；V1 websearch Parallel key。 | [E: packages/core/src/tool/websearch.ts:78][E: packages/opencode/src/tool/websearch.ts:56] |
+| `CLOUDFLARE_API_KEY` | Cloudflare Workers AI key. | [E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:65] |
+| `EXA_API_KEY` | V2 WebSearch Exa key；V1 MCP websearch Exa key。 | [E: packages/core/src/tool/websearch.ts:81][E: packages/opencode/src/tool/mcp-websearch.ts:4] |
+| `PARALLEL_API_KEY` | V2 WebSearch Parallel key；V1 websearch Parallel key。 | [E: packages/core/src/tool/websearch.ts:82][E: packages/opencode/src/tool/websearch.ts:56] |
 | `GITLAB_INSTANCE_URL` | GitLab provider instance URL. | [E: packages/core/src/plugin/provider/gitlab.ts:19] |
 | `GITLAB_TOKEN` | GitLab provider token. | [E: packages/core/src/plugin/provider/gitlab.ts:20] |
 | `GOOGLE_VERTEX_PROJECT` | Vertex project. | [E: packages/core/src/plugin/provider/google-vertex.ts:10] |
@@ -174,11 +172,12 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | `GOOGLE_VERTEX_LOCATION` | Vertex location. | [E: packages/core/src/plugin/provider/google-vertex.ts:20] |
 | `GOOGLE_CLOUD_LOCATION` | Vertex location fallback. | [E: packages/core/src/plugin/provider/google-vertex.ts:21] |
 | `VERTEX_LOCATION` | Vertex location fallback. | [E: packages/core/src/plugin/provider/google-vertex.ts:22] |
-| `OPENCODE_API_KEY` | opencode provider API key. | [E: packages/core/src/plugin/provider/opencode.ts:14] |
+| `OPENCODE_API_KEY` | opencode provider API key. | [E: packages/core/src/plugin/provider/opencode.ts:167] |
 | `AICORE_SERVICE_KEY` | SAP AI Core service key. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:15] |
 | `AICORE_DEPLOYMENT_ID` | SAP AI Core deployment id. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
 | `AICORE_RESOURCE_GROUP` | SAP AI Core resource group. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
-| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74] |
+| `SNOWFLAKE_CORTEX_TOKEN` | Snowflake Cortex token. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/opencode/src/provider/provider.ts:859] |
+| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT alias. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/opencode/src/provider/provider.ts:859] |
 | `SNOWFLAKE_ACCOUNT` | V1 Snowflake account. | [E: packages/opencode/src/provider/provider.ts:854] |
 
 ## GitHub automation env
@@ -206,7 +205,6 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 - `packages/core/src/flag/flag.ts`
 - `packages/opencode/src/effect/runtime-flags.ts`
 - `packages/core/src/database/database.ts`
-- `packages/core/src/database/migration.ts`
 - `packages/core/src/models-dev.ts`
 - `packages/core/src/plugin/provider/`
 - `packages/opencode/src/provider/provider.ts`

@@ -14,7 +14,7 @@ related:
   - subsys.coding-agent.auth-storage
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `migrations.ts` 是 pi-coding-agent 的 startup migration hub: 它在一次入口调用里执行 credential、session file、managed binary、keybinding config 和 extension directory 的兼容迁移, 并把需要用户处理的 deprecated extension warnings 返回给 caller。

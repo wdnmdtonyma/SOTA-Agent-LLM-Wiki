@@ -9,7 +9,7 @@ symbols: [SessionTreeEntry, MessageEntry, LeafEntry, uuidv7]
 related: [spine.session-state-model, subsys.agent-core.tree-navigation, ref.agent.session-entry-types]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.session-tree` 定义 pi-agent-core 的 append-only session tree entry 形状: 所有 entry 都有 `id`、`parentId`、`timestamp`, 具体变体用 `type` 区分; `uuidv7()` 提供默认 entry id 形态。

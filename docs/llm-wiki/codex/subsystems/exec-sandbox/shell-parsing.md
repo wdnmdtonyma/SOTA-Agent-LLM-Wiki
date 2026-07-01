@@ -8,7 +8,7 @@ symbols: [parse_command, extract_shell_command, try_parse_word_only_commands_seq
 related: [tool.shell-command, subsys.exec-sandbox.execpolicy-dsl, subsys.exec-sandbox.shell-escalation]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > shell parsing subsystem 是 Codex 对 model-produced argv 的 conservative metadata/safety parser:它能归类 read/search/list-files 的常见命令，也能在复杂或危险形态出现时退回 `Unknown` 或要求 approval。[E: codex-rs/shell-command/src/parse_command.rs:30][E: codex-rs/shell-command/src/parse_command.rs:42][E: codex-rs/shell-command/src/parse_command.rs:44]

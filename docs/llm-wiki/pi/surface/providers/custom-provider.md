@@ -18,7 +18,7 @@ related:
   - ref.ai.wire-protocol-catalog
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `surface.providers.custom-provider` 说明 pi 暴露给使用者的两条自定义 provider 路径:简单兼容端点写 `~/.pi/agent/models.json`,需要扩展生命周期、OAuth/SSO 或自定义 streaming 时用扩展 API `pi.registerProvider()`。
@@ -52,9 +52,9 @@ model config 的文档字段包括必填 `id`,以及可选 `name`、`api`、`rea
 
 ## 3 扩展 API: `ProviderConfig`
 
-`ExtensionAPI.registerProvider(name, config)` 是扩展侧注册入口,`ExtensionAPI.unregisterProvider(name)` 是对应注销入口 [E: packages/coding-agent/src/core/extensions/types.ts:1337] [E: packages/coding-agent/src/core/extensions/types.ts:1352]。`ProviderConfig` 的字段包括 display `name`、`baseUrl`、`apiKey`、provider-level `api`、`streamSimple`、`headers`、`authHeader`、`models` 和 `oauth` [E: packages/coding-agent/src/core/extensions/types.ts:1363] [E: packages/coding-agent/src/core/extensions/types.ts:1365] [E: packages/coding-agent/src/core/extensions/types.ts:1367] [E: packages/coding-agent/src/core/extensions/types.ts:1369] [E: packages/coding-agent/src/core/extensions/types.ts:1371] [E: packages/coding-agent/src/core/extensions/types.ts:1373] [E: packages/coding-agent/src/core/extensions/types.ts:1375] [E: packages/coding-agent/src/core/extensions/types.ts:1377] [E: packages/coding-agent/src/core/extensions/types.ts:1379] [E: packages/coding-agent/src/core/extensions/types.ts:1381]。
+`ExtensionAPI.registerProvider(name, config)` 是扩展侧注册入口,`ExtensionAPI.unregisterProvider(name)` 是对应注销入口 [E: packages/coding-agent/src/core/extensions/types.ts:1346] [E: packages/coding-agent/src/core/extensions/types.ts:1361]。`ProviderConfig` 的字段包括 display `name`、`baseUrl`、`apiKey`、provider-level `api`、`streamSimple`、`headers`、`authHeader`、`models` 和 `oauth` [E: packages/coding-agent/src/core/extensions/types.ts:1372] [E: packages/coding-agent/src/core/extensions/types.ts:1374] [E: packages/coding-agent/src/core/extensions/types.ts:1376] [E: packages/coding-agent/src/core/extensions/types.ts:1378] [E: packages/coding-agent/src/core/extensions/types.ts:1380] [E: packages/coding-agent/src/core/extensions/types.ts:1382] [E: packages/coding-agent/src/core/extensions/types.ts:1384] [E: packages/coding-agent/src/core/extensions/types.ts:1386] [E: packages/coding-agent/src/core/extensions/types.ts:1388] [E: packages/coding-agent/src/core/extensions/types.ts:1390]。
 
-`ProviderModelConfig` 要求 `id`、`name`、`reasoning`、`input`、`cost`、`contextWindow` 和 `maxTokens`,并允许 model-level `api`、`baseUrl`、`thinkingLevelMap`、`headers` 和 `compat` [E: packages/coding-agent/src/core/extensions/types.ts:1396] [E: packages/coding-agent/src/core/extensions/types.ts:1398] [E: packages/coding-agent/src/core/extensions/types.ts:1400] [E: packages/coding-agent/src/core/extensions/types.ts:1402] [E: packages/coding-agent/src/core/extensions/types.ts:1404] [E: packages/coding-agent/src/core/extensions/types.ts:1406] [E: packages/coding-agent/src/core/extensions/types.ts:1408] [E: packages/coding-agent/src/core/extensions/types.ts:1410] [E: packages/coding-agent/src/core/extensions/types.ts:1412] [E: packages/coding-agent/src/core/extensions/types.ts:1414] [E: packages/coding-agent/src/core/extensions/types.ts:1416] [E: packages/coding-agent/src/core/extensions/types.ts:1418] [E: packages/coding-agent/src/core/extensions/types.ts:1420]。
+`ProviderModelConfig` 要求 `id`、`name`、`reasoning`、`input`、`cost`、`contextWindow` 和 `maxTokens`,并允许 model-level `api`、`baseUrl`、`thinkingLevelMap`、`headers` 和 `compat` [E: packages/coding-agent/src/core/extensions/types.ts:1405] [E: packages/coding-agent/src/core/extensions/types.ts:1407] [E: packages/coding-agent/src/core/extensions/types.ts:1409] [E: packages/coding-agent/src/core/extensions/types.ts:1411] [E: packages/coding-agent/src/core/extensions/types.ts:1413] [E: packages/coding-agent/src/core/extensions/types.ts:1415] [E: packages/coding-agent/src/core/extensions/types.ts:1417] [E: packages/coding-agent/src/core/extensions/types.ts:1419] [E: packages/coding-agent/src/core/extensions/types.ts:1421] [E: packages/coding-agent/src/core/extensions/types.ts:1423] [E: packages/coding-agent/src/core/extensions/types.ts:1425] [E: packages/coding-agent/src/core/extensions/types.ts:1427] [E: packages/coding-agent/src/core/extensions/types.ts:1429]。
 
 扩展 factory 可以是 async;动态模型发现应在 factory 中 fetch 后注册,而不是延迟到 `session_start`,因为 pi 会等待 factory,使 provider 在 interactive startup 与 `pi --list-models` 时已可见 [E: packages/coding-agent/docs/custom-provider.md:63] [E: packages/coding-agent/docs/custom-provider.md:97] [E: packages/coding-agent/docs/custom-provider.md:130]。
 
@@ -66,11 +66,11 @@ model config 的文档字段包括必填 `id`,以及可选 `name`、`api`、`rea
 
 `pi.unregisterProvider(name)` 用于移除之前通过 `pi.registerProvider(name, ...)` 注册的 provider;注销会移除该 provider 的 dynamic models、API key fallback、OAuth provider registration 和 custom stream handler registrations,并恢复被覆盖的 built-in models 或 provider behavior [E: packages/coding-agent/docs/custom-provider.md:160] [E: packages/coding-agent/docs/custom-provider.md:162] [E: packages/coding-agent/docs/custom-provider.md:187]。
 
-`ExtensionRuntimeState` 持有 `pendingProviderRegistrations`,并暴露 runtime-level `registerProvider`/`unregisterProvider` 函数 [E: packages/coding-agent/src/core/extensions/types.ts:1495] [E: packages/coding-agent/src/core/extensions/types.ts:1498] [E: packages/coding-agent/src/core/extensions/types.ts:1509] [E: packages/coding-agent/src/core/extensions/types.ts:1510]。类型注释描述了 bind 前排队、bind 后调用 `ModelRegistry` 的语义,但本轮不把注释行作为 `[E]` 锚点 [I]。index source 不能确认 AgentSession 是否在注册/注销后刷新当前已选模型视图 [U]。
+`ExtensionRuntimeState` 持有 `pendingProviderRegistrations`,并暴露 runtime-level `registerProvider`/`unregisterProvider` 函数 [E: packages/coding-agent/src/core/extensions/types.ts:1504] [E: packages/coding-agent/src/core/extensions/types.ts:1507] [E: packages/coding-agent/src/core/extensions/types.ts:1518] [E: packages/coding-agent/src/core/extensions/types.ts:1519]。类型注释描述了 bind 前排队、bind 后调用 `ModelRegistry` 的语义,但本轮不把注释行作为 `[E]` 锚点 [I]。index source 不能确认 AgentSession 是否在注册/注销后刷新当前已选模型视图 [U]。
 
 ## 5 OAuth、auth header 与自定义 streaming
 
-`oauth` 用于把 provider 接入 `/login`;docs 的 OAuth 示例注册 `corporate-ai` 后明确用户可通过 `/login corporate-ai` 认证 [E: packages/coding-agent/docs/custom-provider.md:255] [E: packages/coding-agent/docs/custom-provider.md:257] [E: packages/coding-agent/docs/custom-provider.md:328]。`ProviderConfig.oauth` 的 type 要求 `name`、`login()`、`refreshToken()`、`getApiKey()`,并允许可选 `modifyModels()` [E: packages/coding-agent/src/core/extensions/types.ts:1381] [E: packages/coding-agent/src/core/extensions/types.ts:1383] [E: packages/coding-agent/src/core/extensions/types.ts:1385] [E: packages/coding-agent/src/core/extensions/types.ts:1387] [E: packages/coding-agent/src/core/extensions/types.ts:1389] [E: packages/coding-agent/src/core/extensions/types.ts:1391]。
+`oauth` 用于把 provider 接入 `/login`;docs 的 OAuth 示例注册 `corporate-ai` 后明确用户可通过 `/login corporate-ai` 认证 [E: packages/coding-agent/docs/custom-provider.md:255] [E: packages/coding-agent/docs/custom-provider.md:257] [E: packages/coding-agent/docs/custom-provider.md:328]。`ProviderConfig.oauth` 的 type 要求 `name`、`login()`、`refreshToken()`、`getApiKey()`,并允许可选 `modifyModels()` [E: packages/coding-agent/src/core/extensions/types.ts:1390] [E: packages/coding-agent/src/core/extensions/types.ts:1392] [E: packages/coding-agent/src/core/extensions/types.ts:1394] [E: packages/coding-agent/src/core/extensions/types.ts:1396] [E: packages/coding-agent/src/core/extensions/types.ts:1398] [E: packages/coding-agent/src/core/extensions/types.ts:1400]。
 
 `authHeader: true` 面向需要 `Authorization: Bearer <key>` 但不使用 standard API 的 provider;示例显示它会添加 bearer header [E: packages/coding-agent/docs/custom-provider.md:241] [E: packages/coding-agent/docs/custom-provider.md:243] [E: packages/coding-agent/docs/custom-provider.md:249]。
 
@@ -80,13 +80,13 @@ model config 的文档字段包括必填 `id`,以及可选 `name`、`api`、`rea
 
 ## Gotcha
 
-- `models.json` provider 的 `apiKey` 可以省略以便从 `/login`/`auth.json`、CLI `--api-key` 或 provider `apiKey` 取得可用状态;扩展 `ProviderConfig` 同时暴露 `apiKey` 和 `oauth` 字段,具体 validation 约束需到 model registry 实现节点核 [E: packages/coding-agent/docs/models.md:144] [E: packages/coding-agent/src/core/extensions/types.ts:1369] [E: packages/coding-agent/src/core/extensions/types.ts:1381] [I]。
+- `models.json` provider 的 `apiKey` 可以省略以便从 `/login`/`auth.json`、CLI `--api-key` 或 provider `apiKey` 取得可用状态;扩展 `ProviderConfig` 同时暴露 `apiKey` 和 `oauth` 字段,具体 validation 约束需到 model registry 实现节点核 [E: packages/coding-agent/docs/models.md:144] [E: packages/coding-agent/src/core/extensions/types.ts:1378] [E: packages/coding-agent/src/core/extensions/types.ts:1390] [I]。
 - `models.json` 的 shell command secret 在 request time 解析,pi 不提供内置 TTL、stale reuse 或恢复逻辑;慢命令或易失败命令应自行包装缓存策略 [E: packages/coding-agent/docs/models.md:171] [E: packages/coding-agent/docs/models.md:173]。
 - 逐 key 的源码目录和 lazy wrapper 属于 [ref.ai.wire-protocol-catalog](../../reference/wire-protocol-catalog.md);本节点只解释 custom provider 如何选择已有 `api` 或新增 `streamSimple` [I]。
 
 ## 跨包关系
 
-[surface.extensions.contribution-points](../extensions/contribution-points.md) 应覆盖扩展能注册的工具、命令、provider、UI 与事件等贡献点;本节点只覆盖 provider 相关的 `registerProvider()`/`unregisterProvider()` [E: packages/coding-agent/src/core/extensions/types.ts:1337] [E: packages/coding-agent/src/core/extensions/types.ts:1352] [I]。
+[surface.extensions.contribution-points](../extensions/contribution-points.md) 应覆盖扩展能注册的工具、命令、provider、UI 与事件等贡献点;本节点只覆盖 provider 相关的 `registerProvider()`/`unregisterProvider()` [E: packages/coding-agent/src/core/extensions/types.ts:1346] [E: packages/coding-agent/src/core/extensions/types.ts:1361] [I]。
 
 [subsys.coding-agent.model-registry](../../subsystems/coding-agent/model-registry.md) 是 `models.json`、dynamic provider、auth/header resolution 和 model availability 的产品层装配节点;本节点只记录 index source 能确认的外部配置面和 Extension API 类型边界 [I]。
 

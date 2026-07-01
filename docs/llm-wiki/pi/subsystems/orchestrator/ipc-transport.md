@@ -19,7 +19,7 @@ related:
   - subsys.orchestrator.request-handler
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.orchestrator.ipc-transport` 是 pi orchestrator 的本机 IPC transport: `startIpcServer()` 用 `getSocketPath()` 得到的 `orchestrator.sock` path 调用 `server.listen(socketPath)`, 并按 newline-delimited JSON 读取请求; `sendIpcRequest()` 连接同一路径, 写入一次 encoded request, 等待第一行响应; orchestrator 包整体仍标为 experimental, CLI/API/行为尚不稳定 [E: packages/orchestrator/src/ipc/server.ts:47] [E: packages/orchestrator/src/ipc/server.ts:55] [E: packages/orchestrator/src/ipc/server.ts:60] [E: packages/orchestrator/src/ipc/server.ts:153] [E: packages/orchestrator/src/config.ts:68] [E: packages/orchestrator/src/ipc/client.ts:6] [E: packages/orchestrator/src/ipc/client.ts:9] [E: packages/orchestrator/src/ipc/client.ts:19] [E: packages/orchestrator/src/ipc/client.ts:24] [E: packages/orchestrator/README.md:3] [I]。

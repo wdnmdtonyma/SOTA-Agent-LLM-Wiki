@@ -20,7 +20,7 @@ related:
   - ref.patch-format
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > V2 apply_patch 是 core built-in mutation tool：parser 仍识别 add/delete/update/move syntax，但 tool 明确拒绝 move；它先 resolve 所有 target、审批 external directory 与 edit batch、预读 update/delete 文件，再按顺序提交，update 通过 `writeIfUnchanged` 做 optimistic concurrency。
@@ -35,7 +35,7 @@ updated: 355a0bcf5
 
 ## 职责边界
 
-`packages/core/src/patch.ts` 是 V2 parser/derive helper，`packages/core/src/tool/apply-patch.ts` 是 registered built-in tool。tool wire name 是 `"apply_patch"`，input 只有 `patchText`，output 是 `{ applied: Applied[] }` [E: packages/core/src/tool/apply-patch.ts:13] [E: packages/core/src/tool/apply-patch.ts:16] [E: packages/core/src/tool/apply-patch.ts:27]。tool 用 `Tool.withPermission(..., "edit")` 装饰，并在 executor 内 assert `action: "edit"`，所以实际 mutation policy action 是 `edit` [E: packages/core/src/tool/apply-patch.ts:172] [E: packages/core/src/tool/apply-patch.ts:104]。
+`packages/core/src/patch.ts` 是 V2 parser/derive helper，`packages/core/src/tool/apply-patch.ts` 是 registered built-in tool。tool wire name 是 `"apply_patch"`，input 只有 `patchText`，output 是 `{ applied: Applied[], files: FileDiff.Info[] }` [E: packages/core/src/tool/apply-patch.ts:17] [E: packages/core/src/tool/apply-patch.ts:20] [E: packages/core/src/tool/apply-patch.ts:31] [E: packages/core/src/tool/apply-patch.ts:33]。tool 用 `Tool.withPermission(..., "edit")` 装饰，并在 executor 内 assert `action: "edit"`，所以实际 mutation policy action 是 `edit` [E: packages/core/src/tool/apply-patch.ts:69] [E: packages/core/src/tool/apply-patch.ts:116] [E: packages/core/src/tool/apply-patch.ts:117] [E: packages/core/src/tool/apply-patch.ts:192]。
 
 ## Parser 与 derive
 
@@ -45,26 +45,26 @@ V2 `Patch.derive` 保留 BOM、移除 split 后尾部空行、调用 `computeRep
 
 ## 工具控制流
 
-1. `execute` 初始化 `applied` 数组，并定义 `fail(path)`：若已有 applied 项，错误 message 会写 `Patch partially applied before failing at ... Applied: ...` [E: packages/core/src/tool/apply-patch.ts:64] [E: packages/core/src/tool/apply-patch.ts:65] [E: packages/core/src/tool/apply-patch.ts:69]。
-2. 空白 `patchText` 返回 `ToolFailure("patchText is required")`，parse 失败返回 `apply_patch verification failed` [E: packages/core/src/tool/apply-patch.ts:78] [E: packages/core/src/tool/apply-patch.ts:80] [E: packages/core/src/tool/apply-patch.ts:81]。
-3. parse 后若无 hunks，返回 `patch rejected: empty patch` [E: packages/core/src/tool/apply-patch.ts:83]。
-4. 任一 update hunk 带 `movePath` 时，tool 直接返回 `ToolFailure("apply_patch moves are not supported yet")` [E: packages/core/src/tool/apply-patch.ts:84] [E: packages/core/src/tool/apply-patch.ts:85]。
-5. tool 先把每个 hunk 的 `hunk.path` 通过 `LocationMutation.resolve({ kind: "file" })` 转成 target [E: packages/core/src/tool/apply-patch.ts:88] [E: packages/core/src/tool/apply-patch.ts:89]。
-6. 所有 external directories 被 dedupe 到 map 后逐个 assert `external_directory` [E: packages/core/src/tool/apply-patch.ts:93] [E: packages/core/src/tool/apply-patch.ts:95] [E: packages/core/src/tool/apply-patch.ts:96] [E: packages/core/src/tool/apply-patch.ts:97]。
-7. tool 对所有 target resources 发一次 batch `permission.assert({ action: "edit", resources: unique resources, save: ["*"] })` [E: packages/core/src/tool/apply-patch.ts:104] [E: packages/core/src/tool/apply-patch.ts:105] [E: packages/core/src/tool/apply-patch.ts:106]。
-8. preflight 阶段：add 直接 prepared；delete/update 必须 stat 为 File；update 读取原始 bytes，并通过 `Patch.derive` 计算新内容 [E: packages/core/src/tool/apply-patch.ts:115] [E: packages/core/src/tool/apply-patch.ts:116] [E: packages/core/src/tool/apply-patch.ts:119] [E: packages/core/src/tool/apply-patch.ts:120] [E: packages/core/src/tool/apply-patch.ts:124] [E: packages/core/src/tool/apply-patch.ts:125]。
-9. commit 阶段遍历 `prepared`；tool description 也声明 operations sequentially。add 用 `files.create`，delete 用 `files.remove`，update 用 `files.writeIfUnchanged({ expected: source })` [E: packages/core/src/tool/apply-patch.ts:59] [E: packages/core/src/tool/apply-patch.ts:139] [E: packages/core/src/tool/apply-patch.ts:144] [E: packages/core/src/tool/apply-patch.ts:155] [E: packages/core/src/tool/apply-patch.ts:159] [E: packages/core/src/tool/apply-patch.ts:161]。
-10. 每个成功操作 push 一条 `{ type, resource, target }` 到 `applied`，最终 output 返回所有 applied 项 [E: packages/core/src/tool/apply-patch.ts:151] [E: packages/core/src/tool/apply-patch.ts:156] [E: packages/core/src/tool/apply-patch.ts:164] [E: packages/core/src/tool/apply-patch.ts:168]。
+1. `execute` 初始化 `applied` 数组，并定义 `fail(path)`：若已有 applied 项，错误 message 会写 `Patch partially applied before failing at ... Applied: ...` [E: packages/core/src/tool/apply-patch.ts:77] [E: packages/core/src/tool/apply-patch.ts:78] [E: packages/core/src/tool/apply-patch.ts:82]。
+2. 空白 `patchText` 返回 `ToolFailure("patchText is required")`，parse 失败返回 `apply_patch verification failed` [E: packages/core/src/tool/apply-patch.ts:91] [E: packages/core/src/tool/apply-patch.ts:92] [E: packages/core/src/tool/apply-patch.ts:94]。
+3. parse 后若无 hunks，返回 `patch rejected: empty patch` [E: packages/core/src/tool/apply-patch.ts:96]。
+4. 任一 update hunk 带 `movePath` 时，tool 直接返回 `ToolFailure("apply_patch moves are not supported yet")` [E: packages/core/src/tool/apply-patch.ts:97] [E: packages/core/src/tool/apply-patch.ts:98]。
+5. tool 先把每个 hunk 的 `hunk.path` 通过 `LocationMutation.resolve({ kind: "file" })` 转成 target [E: packages/core/src/tool/apply-patch.ts:100] [E: packages/core/src/tool/apply-patch.ts:102]。
+6. 所有 external directories 被 dedupe 到 map 后逐个 assert `external_directory` [E: packages/core/src/tool/apply-patch.ts:103] [E: packages/core/src/tool/apply-patch.ts:106] [E: packages/core/src/tool/apply-patch.ts:108] [E: packages/core/src/tool/apply-patch.ts:110]。
+7. tool 对所有 target resources 发一次 batch `permission.assert({ action: "edit", resources: unique resources, save: ["*"] })` [E: packages/core/src/tool/apply-patch.ts:116] [E: packages/core/src/tool/apply-patch.ts:117] [E: packages/core/src/tool/apply-patch.ts:118] [E: packages/core/src/tool/apply-patch.ts:119]。
+8. preflight 阶段：add 直接 prepared；delete/update 必须 stat 为 File；update 读取原始 bytes，并通过 `Patch.derive` 计算新内容 [E: packages/core/src/tool/apply-patch.ts:128] [E: packages/core/src/tool/apply-patch.ts:138] [E: packages/core/src/tool/apply-patch.ts:139] [E: packages/core/src/tool/apply-patch.ts:146]。
+9. commit 阶段遍历 `prepared`；tool description 也声明 operations sequentially。add 用 `files.create`，delete 用 `files.remove`，update 用 `files.writeIfUnchanged({ expected: source })` [E: packages/core/src/tool/apply-patch.ts:72] [E: packages/core/src/tool/apply-patch.ts:159] [E: packages/core/src/tool/apply-patch.ts:164] [E: packages/core/src/tool/apply-patch.ts:175] [E: packages/core/src/tool/apply-patch.ts:179] [E: packages/core/src/tool/apply-patch.ts:181]。
+10. 每个成功操作 push 一条 `{ type, resource, target }` 到 `applied`，最终 output 返回所有 applied 项和 per-file diff metadata [E: packages/core/src/tool/apply-patch.ts:171] [E: packages/core/src/tool/apply-patch.ts:176] [E: packages/core/src/tool/apply-patch.ts:184] [E: packages/core/src/tool/apply-patch.ts:188] [E: packages/core/src/tool/apply-patch.ts:205] [E: packages/core/src/tool/apply-patch.ts:215]。
 
 ## 乐观并发与 partial application
 
-`FileMutation.writeIfUnchanged` 在 canonical target lock 下读取当前 bytes，与 `expected` bytes 逐字节比较；不一致时抛 `FileMutation.StaleContentError`，一致才写入 [E: packages/core/src/file-mutation.ts:144] [E: packages/core/src/file-mutation.ts:146] [E: packages/core/src/file-mutation.ts:147] [E: packages/core/src/file-mutation.ts:150] [E: packages/core/src/file-mutation.ts:151] [E: packages/core/src/file-mutation.ts:152]。这个保护只覆盖 update 的单文件 stale content；add 和 delete 仍按顺序提交。canonical target 串行化来自 `KeyedMutex` 的 `locks.withLock(target.canonical)(Effect.uninterruptible(effect))` [E: packages/core/src/file-mutation.ts:77] [E: packages/core/src/file-mutation.ts:81]。
+`FileMutation.writeIfUnchanged` 在 canonical target lock 下读取当前 bytes，与 `expected` bytes 逐字节比较；不一致时抛 `FileMutation.StaleContentError`，一致才写入 [E: packages/core/src/file-mutation.ts:144] [E: packages/core/src/file-mutation.ts:145] [E: packages/core/src/file-mutation.ts:147] [E: packages/core/src/file-mutation.ts:148] [E: packages/core/src/file-mutation.ts:149] [E: packages/core/src/file-mutation.ts:151]。这个保护只覆盖 update 的单文件 stale content；add 和 delete 仍按顺序提交。canonical target 串行化来自 `KeyedMutex` 的 `locks.withLock(target.canonical)(Effect.uninterruptible(effect))` [E: packages/core/src/file-mutation.ts:78] [E: packages/core/src/file-mutation.ts:82]。
 
-V2 session spec 记录了当前 slice 的行为：V2 apply_patch 支持 add/update/delete，解析每个 hunk，resolve 每个 mutation target，批准 external dirs 和 edit batch，preflight update/delete targets，再顺序提交；后续 commit failure 会留下前面已应用操作并返回 explicit partial-application report，moves 与 atomic rollback 是 follow-up [E: specs/v2/session.md:196]。
+V2 session spec 记录了当前 slice 的行为：V2 apply_patch 支持 add/update/delete，解析每个 hunk，resolve 每个 mutation target，批准 external dirs 和 edit batch，preflight update/delete targets，再顺序提交；后续 commit failure 会留下前面已应用操作并返回 explicit partial-application report，moves 与 atomic rollback 是 follow-up [E: specs/v2/session.md:206]。
 
 ## 与 V1 patch 的差异
 
-V2 helper 保留四轮 fuzzy matching，`FileMutation.Service` 当前只暴露 create/write/writeTextPreservingBom/writeIfUnchanged/remove 这组 mutation primitives [E: packages/core/src/patch.ts:162] [E: packages/core/src/file-mutation.ts:170]。工具层不再做 V1 的 rich diff metadata、formatter、watcher event、LSP diagnostics 或 move application [I]。因此 V2 当前更像 minimal durable tool leaf，而不是 V1 那种 UI/IDE-integrated patch workflow [I]。
+V2 helper 保留四轮 fuzzy matching，`FileMutation.Service` 当前只暴露 create/write/writeTextPreservingBom/writeIfUnchanged/remove 这组 mutation primitives [E: packages/core/src/patch.ts:162] [E: packages/core/src/file-mutation.ts:171]。工具层现在返回 per-file `FileDiff.Info` metadata，但仍不做 V1 的 formatter、watcher event、LSP diagnostics 或 move application [E: packages/core/src/tool/apply-patch.ts:33] [E: packages/core/src/tool/apply-patch.ts:205] [I]。因此 V2 当前更像 minimal durable tool leaf，而不是 V1 那种 UI/IDE-integrated patch workflow [I]。
 
 ## Gotcha
 

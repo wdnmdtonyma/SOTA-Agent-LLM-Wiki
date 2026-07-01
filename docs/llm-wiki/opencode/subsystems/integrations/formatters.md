@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 source:
   - packages/opencode/src/format/formatter.ts
   - packages/opencode/src/format/index.ts

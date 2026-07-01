@@ -15,7 +15,7 @@ related:
   - ref.coding-agent.session-events
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `ref.agent.agent-events` 是 agent-core 事件 union 的字段级目录:覆盖 `AgentEvent` 的 10 个 core runtime variant、`AgentHarnessEvent` 叠加的 harness-owned event interfaces、hook result map,以及这些 event payload/result 直接引用的 exported 支撑类型。

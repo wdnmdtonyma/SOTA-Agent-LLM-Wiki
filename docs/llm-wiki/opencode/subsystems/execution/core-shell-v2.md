@@ -9,7 +9,7 @@ symbols: [Shell.preferred, Shell.acceptable, Shell.args, Shell.list, Shell.killT
 related: [execution.shell-v1, execution.shell-v2, execution.pty, tool.bash]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > `packages/core/src/shell.ts` 是 V2 core 的 shell utility module：它负责 shell path/name/metadata、preferred/acceptable 选择、login shell 检测、shell args 生成和 process-tree cleanup；它不是 V2 bash tool 本身，也不是 Effect service。
@@ -27,7 +27,7 @@ updated: 355a0bcf5
 
 `name(file)` 在 Windows 用 `path.win32.parse(FSUtil.windowsPath(file)).name.toLowerCase()`，其它平台用 `path.basename(file).toLowerCase()`；`login/posix/ps` 都从 `META[name(file)]` 派生。[E: packages/core/src/shell.ts:139][E: packages/core/src/shell.ts:140][E: packages/core/src/shell.ts:141][E: packages/core/src/shell.ts:144][E: packages/core/src/shell.ts:148][E: packages/core/src/shell.ts:152]
 
-`acceptable(configShell?)` 使用 `select(..., { acceptable: true })`，因此会跳过 `deny: true` shell；`preferred(configShell?)` 不要求 acceptable，用于 PTY 等更接近用户 interactive shell 的场景。[E: packages/core/src/shell.ts:205][E: packages/core/src/shell.ts:206][E: packages/core/src/shell.ts:207][E: packages/core/src/shell.ts:214][E: packages/core/src/shell.ts:215][E: packages/core/src/shell.ts:216]
+`acceptable(configShell?)` 使用 `select(..., { acceptable: true })`，因此会跳过 `deny: true` shell；`preferred(configShell?)` 不要求 acceptable，用于 PTY 等更接近用户 interactive shell 的场景。[E: packages/core/src/shell.ts:214][E: packages/core/src/shell.ts:215][E: packages/core/src/shell.ts:216][E: packages/core/src/shell.ts:205][E: packages/core/src/shell.ts:206][E: packages/core/src/shell.ts:207]
 
 ## Resolution 与 Fallback
 
@@ -47,11 +47,11 @@ updated: 355a0bcf5
 
 ## Call Sites
 
-V2 PTY `create` uses `Shell.preferred(Config.latest(config.entries(), "shell"))` to select command when no command is supplied; login shells get `-l`, cwd defaults to current Location directory, and env overlays `TERM=xterm-256color` plus `OPENCODE_TERMINAL=1`.[E: packages/core/src/pty.ts:195][E: packages/core/src/pty.ts:197][E: packages/core/src/pty.ts:198][E: packages/core/src/pty.ts:199][E: packages/core/src/pty.ts:200][E: packages/core/src/pty.ts:203][E: packages/core/src/pty.ts:204]
+V2 PTY `create` uses `Shell.preferred(Config.latest(config.entries(), "shell"))` to select command when no command is supplied; login shells get `-l`, cwd defaults to current Location directory, and env overlays `TERM=xterm-256color` plus `OPENCODE_TERMINAL=1`.[E: packages/core/src/pty.ts:165][E: packages/core/src/pty.ts:167][E: packages/core/src/pty.ts:168][E: packages/core/src/pty.ts:169][E: packages/core/src/pty.ts:173][E: packages/core/src/pty.ts:174]
 
-V2 bash tool does not use `Shell.args`; it reads config entries, picks configured `.shell` or its own `defaultShell()`, and passes the model command to `ChildProcess.make(input.command, [], { shell })`。[E: packages/core/src/tool/bash.ts:155][E: packages/core/src/tool/bash.ts:156][E: packages/core/src/tool/bash.ts:158][E: packages/core/src/tool/bash.ts:159][E: packages/core/src/tool/bash.ts:161]
+V2 bash tool does not use `Shell.args`; it reads config entries, picks configured `.shell` or its own `defaultShell()`, and passes the model command to `ChildProcess.make(input.command, [], { shell })`。[E: packages/core/src/tool/bash.ts:150][E: packages/core/src/tool/bash.ts:151][E: packages/core/src/tool/bash.ts:153][E: packages/core/src/tool/bash.ts:154][E: packages/core/src/tool/bash.ts:156]
 
-V1 `ShellTool` now imports `Shell` from `@opencode-ai/core/shell` and uses `Shell.acceptable(cfg.shell)`, `Shell.name(shell)`, and `Shell.ps(shell)` in its legacy tree-sitter/permission flow。[E: packages/opencode/src/tool/shell.ts:15][E: packages/opencode/src/tool/shell.ts:610][E: packages/opencode/src/tool/shell.ts:611][E: packages/opencode/src/tool/shell.ts:612][E: packages/opencode/src/tool/shell.ts:630]
+V1 `ShellTool` now imports `Shell` from `@opencode-ai/core/shell` and uses `Shell.acceptable(cfg.shell)`, `Shell.name(shell)`, and `Shell.ps(shell)` in its legacy tree-sitter/permission flow。[E: packages/opencode/src/tool/shell.ts:15][E: packages/opencode/src/tool/shell.ts:600][E: packages/opencode/src/tool/shell.ts:601][E: packages/opencode/src/tool/shell.ts:619]
 
 ## Gotcha
 

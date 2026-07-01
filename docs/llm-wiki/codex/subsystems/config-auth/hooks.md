@@ -8,10 +8,10 @@ symbols: [HooksFile, HookEventsToml, HookHandlerConfig, ClaudeHooksEngine, disco
 related: [subsys.config-auth.config-loading, subsys.core.tool-system, subsys.core.tool-router, subsys.platform.analytics]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
-> Codex hooks 系统现在把 hook schema 放在 `codex_config::hook_config`，由 `codex_hooks::engine` 从 config layers、managed requirements 和 plugin hook sources 发现 handlers，再由 core session/tool runtime 发起 preview/start/completed flow。[E: codex-rs/config/src/hook_config.rs:12][E: codex-rs/config/src/hook_config.rs:34][E: codex-rs/hooks/src/engine/discovery.rs:63][E: codex-rs/hooks/src/engine/mod.rs:107][E: codex-rs/core/src/hook_runtime.rs:163][E: codex-rs/core/src/tools/registry.rs:495]
+> Codex hooks 系统现在把 hook schema 放在 `codex_config::hook_config`，由 `codex_hooks::engine` 从 config layers、managed requirements 和 plugin hook sources 发现 handlers，再由 core session/tool runtime 发起 preview/start/completed flow。[E: codex-rs/config/src/hook_config.rs:12][E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/hooks/src/engine/discovery.rs:63][E: codex-rs/hooks/src/engine/mod.rs:107][E: codex-rs/core/src/hook_runtime.rs:163][E: codex-rs/core/src/tools/registry.rs:495]
 
 ## 能回答的问题
 
@@ -23,17 +23,17 @@ updated: 5670360009
 
 ## 职责边界
 
-本节点覆盖 hooks config/discovery/dispatch/runtime integration。`codex-rs/hooks/src/types.rs` 中的 `Hook`/`HookPayload`/`HookEvent::AfterAgent` 是 legacy after-agent hook contract；Claude-style lifecycle hooks 的 schema 来自 `codex-rs/config/src/hook_config.rs`。[E: codex-rs/hooks/src/types.rs:39][E: codex-rs/hooks/src/types.rs:64][E: codex-rs/hooks/src/types.rs:92][E: codex-rs/config/src/hook_config.rs:34]
+本节点覆盖 hooks config/discovery/dispatch/runtime integration。`codex-rs/hooks/src/types.rs` 中的 `Hook`/`HookPayload`/`HookEvent::AfterAgent` 是 legacy after-agent hook contract；Claude-style lifecycle hooks 的 schema 来自 `codex-rs/config/src/hook_config.rs`。[E: codex-rs/hooks/src/types.rs:39][E: codex-rs/hooks/src/types.rs:64][E: codex-rs/hooks/src/types.rs:92][E: codex-rs/config/src/hook_config.rs:36]
 
 工具 plan/spec 门控不在本节点展开；当前工具 ground truth 是 `codex-rs/core/src/tools/spec_plan.rs`，handler dispatch 在 `codex-rs/core/src/tools/registry.rs`。[E: codex-rs/core/src/tools/registry.rs:322][E: codex-rs/core/src/tools/registry.rs:405]
 
 ## 数据模型
 
-`HooksFile` 顶层字段为 `hooks: HookEventsToml`；`HooksToml` 则把 hook events flatten 到 TOML 并额外保存 `state` map，用于 per-hook enable/trust state。[E: codex-rs/config/src/hook_config.rs:10][E: codex-rs/config/src/hook_config.rs:12][E: codex-rs/config/src/hook_config.rs:18][E: codex-rs/config/src/hook_config.rs:20][E: codex-rs/config/src/hook_config.rs:22]
+`HooksFile` 顶层字段为 `hooks: HookEventsToml`；`HooksToml` 则把 hook events flatten 到 TOML 并额外保存 `state` map，用于 per-hook enable/trust state。[E: codex-rs/config/src/hook_config.rs:10][E: codex-rs/config/src/hook_config.rs:12][E: codex-rs/config/src/hook_config.rs:20][E: codex-rs/config/src/hook_config.rs:22][E: codex-rs/config/src/hook_config.rs:24]
 
-`HookEventsToml` 当前支持 10 个 event keys：`PreToolUse`、`PermissionRequest`、`PostToolUse`、`PreCompact`、`PostCompact`、`SessionStart`、`UserPromptSubmit`、`SubagentStart`、`SubagentStop` 和 `Stop`。[E: codex-rs/config/src/hook_config.rs:34][E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/config/src/hook_config.rs:38][E: codex-rs/config/src/hook_config.rs:40][E: codex-rs/config/src/hook_config.rs:42][E: codex-rs/config/src/hook_config.rs:46][E: codex-rs/config/src/hook_config.rs:48][E: codex-rs/config/src/hook_config.rs:50][E: codex-rs/config/src/hook_config.rs:52][E: codex-rs/config/src/hook_config.rs:54]
+`HookEventsToml` 当前支持 10 个 event keys：`PreToolUse`、`PermissionRequest`、`PostToolUse`、`PreCompact`、`PostCompact`、`SessionStart`、`UserPromptSubmit`、`SubagentStart`、`SubagentStop` 和 `Stop`。[E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/config/src/hook_config.rs:38][E: codex-rs/config/src/hook_config.rs:40][E: codex-rs/config/src/hook_config.rs:42][E: codex-rs/config/src/hook_config.rs:44][E: codex-rs/config/src/hook_config.rs:48][E: codex-rs/config/src/hook_config.rs:50][E: codex-rs/config/src/hook_config.rs:52][E: codex-rs/config/src/hook_config.rs:54][E: codex-rs/config/src/hook_config.rs:56]
 
-每个 `MatcherGroup` 有 optional matcher 和 handler list；`HookHandlerConfig` 当前可反序列化 `command`、`prompt`、`agent` 三类，但 discovery 只把 command handler 加入 runnable handler set，prompt/agent handler 会产生 unsupported warning。[E: codex-rs/config/src/hook_config.rs:130][E: codex-rs/config/src/hook_config.rs:131][E: codex-rs/config/src/hook_config.rs:135][E: codex-rs/config/src/hook_config.rs:140][E: codex-rs/config/src/hook_config.rs:142][E: codex-rs/config/src/hook_config.rs:154][E: codex-rs/config/src/hook_config.rs:156][E: codex-rs/hooks/src/engine/discovery.rs:548]
+每个 `MatcherGroup` 有 optional matcher 和 handler list；`HookHandlerConfig` 当前可反序列化 `command`、`prompt`、`agent` 三类，但 discovery 只把 command handler 加入 runnable handler set，prompt/agent handler 会产生 unsupported warning。[E: codex-rs/config/src/hook_config.rs:133][E: codex-rs/config/src/hook_config.rs:133][E: codex-rs/config/src/hook_config.rs:137][E: codex-rs/config/src/hook_config.rs:142][E: codex-rs/config/src/hook_config.rs:144][E: codex-rs/config/src/hook_config.rs:156][E: codex-rs/config/src/hook_config.rs:158][E: codex-rs/hooks/src/engine/discovery.rs:548]
 
 ## Discovery
 
@@ -74,7 +74,7 @@ Command runner 使用 configured shell 或默认 shell，设置 cwd、stdin、st
 ## Gotchas
 
 - `include_disabled=false` 意味着 disabled project layers 不会贡献 layer-local hooks；managed requirements 和 plugin sources 走单独路径。[E: codex-rs/hooks/src/engine/discovery.rs:97][E: codex-rs/hooks/src/engine/discovery.rs:99][E: codex-rs/hooks/src/engine/discovery.rs:86][E: codex-rs/hooks/src/engine/discovery.rs:159]
-- `HookHandlerConfig::Prompt` 和 `HookHandlerConfig::Agent` 是 schema 可读类型，但当前 discovery 会跳过并 warning；不能把它们当作 runnable handlers。[E: codex-rs/config/src/hook_config.rs:154][E: codex-rs/config/src/hook_config.rs:156][E: codex-rs/hooks/src/engine/discovery.rs:548][E: codex-rs/hooks/src/engine/discovery.rs:552]
+- `HookHandlerConfig::Prompt` 和 `HookHandlerConfig::Agent` 是 schema 可读类型，但当前 discovery 会跳过并 warning；不能把它们当作 runnable handlers。[E: codex-rs/config/src/hook_config.rs:156][E: codex-rs/config/src/hook_config.rs:158][E: codex-rs/hooks/src/engine/discovery.rs:548][E: codex-rs/hooks/src/engine/discovery.rs:552]
 - legacy `AfterAgent` hook contract 仍在 `types.rs` 和 `run_legacy_after_agent_hook` 中存在，和 Claude-style lifecycle hook engine 是两条不同路径。[E: codex-rs/hooks/src/types.rs:92][E: codex-rs/hooks/src/types.rs:93][E: codex-rs/core/src/hook_runtime.rs:433][E: codex-rs/core/src/hook_runtime.rs:449]
 
 ## Sources

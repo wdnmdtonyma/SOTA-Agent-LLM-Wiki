@@ -11,7 +11,7 @@ symbols:
   - prefix
   - ARITY
 evidence: explicit
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > 这份节点是 V1 shell permission 的命令前缀归一化表：给一串 shell tokens，`prefix()` 决定审批时保留几个 token。
@@ -25,15 +25,15 @@ updated: 355a0bcf5
 
 ## V1 行为
 
-`prefix(tokens)` 会从最长 token prefix 往 1 个 token 倒序尝试，把命中的 prefix 对应 arity 作为返回长度；如果输入为空返回空数组，未命中任何 `ARITY` 时返回第一个 token。[E: packages/opencode/src/permission/arity.ts:2][E: packages/opencode/src/permission/arity.ts:5][E: packages/opencode/src/permission/arity.ts:7][E: packages/opencode/src/permission/arity.ts:8]
+`prefix(tokens)` 会从最长 token prefix 往 1 个 token 倒序尝试，把命中的 prefix 对应 arity 作为返回长度；如果输入为空返回空数组，未命中任何 `ARITY` 时返回第一个 token。[E: packages/opencode/src/permission/arity.ts:2][E: packages/opencode/src/permission/arity.ts:3][E: packages/opencode/src/permission/arity.ts:4][E: packages/opencode/src/permission/arity.ts:5][E: packages/opencode/src/permission/arity.ts:7][E: packages/opencode/src/permission/arity.ts:8]
 
-源码注释要求生成规则满足三条约束：flag 不计入 arity、最长匹配优先、只有当更长 prefix 的 arity 不同才加入表；注释里的例子包括 `git checkout main`、`npm install`、`npm run dev`、`python script.py`。[E: packages/opencode/src/permission/arity.ts:14][E: packages/opencode/src/permission/arity.ts:15][E: packages/opencode/src/permission/arity.ts:16][E: packages/opencode/src/permission/arity.ts:24]
+源码注释要求生成规则满足三条约束：flag 不计入 arity、最长匹配优先、只有当更长 prefix 的 arity 不同才加入表；注释里的例子包括 `git checkout main`、`npm install`、`npm run dev`、`python script.py`。[I]
 
-本表源码当前有 136 个 `ARITY` entry；“约 150 条”与源码实际条目存在小偏差，本节点以源码实际条目为准。[E: packages/opencode/src/permission/arity.ts:24][E: packages/opencode/src/permission/arity.ts:160][I]
+本表源码当前有 136 个 `ARITY` entry；“约 150 条”与源码实际条目存在小偏差，本节点以源码实际条目为准。[E: packages/opencode/src/permission/arity.ts:25][E: packages/opencode/src/permission/arity.ts:160][I]
 
 ## V2
 
-V2 Bash tool 在 `packages/core/src/tool/bash.ts` 中直接以完整 command 字符串做 permission `resources` 与 `save`；源码 TODO 还写着要移植 BashArity reusable command-prefix logic，因此当前没有复用 V1 前缀表。[E: packages/core/src/tool/bash.ts:93][E: packages/core/src/tool/bash.ts:145][E: packages/core/src/tool/bash.ts:146][I] 因此这个节点的 `v` 是 `v1`，不是 shared。
+V2 Bash tool 的 wire name 仍是 `bash`，但 V2 实现直接以完整 command 字符串做 permission `resources` 与 `save`。[E: packages/core/src/tool/bash.ts:18][E: packages/core/src/tool/bash.ts:138][E: packages/core/src/tool/bash.ts:140][E: packages/core/src/tool/bash.ts:141] 源码 TODO 还写着要移植 BashArity reusable command-prefix approvals，因此当前没有复用 V1 前缀表。[I] 因此这个节点的 `v` 是 `v1`，不是 shared。
 
 ## ARITY catalog
 

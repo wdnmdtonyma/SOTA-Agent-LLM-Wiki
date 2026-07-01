@@ -16,7 +16,7 @@ related:
   - ref.agent.message-types
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.message-model` 描述 `pi-agent-core` 在 agent loop 与 harness conversion 之间使用的消息 union、tool call/result envelope,以及标准 LLM 消息与 custom harness 消息的转换边界。

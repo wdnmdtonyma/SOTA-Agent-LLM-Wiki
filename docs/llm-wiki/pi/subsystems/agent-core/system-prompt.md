@@ -13,7 +13,7 @@ related:
   - subsys.coding-agent.system-prompt
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.system-prompt` 描述 `pi-agent-core` harness 在当前 source 中可见的 system prompt helper: `formatSkillsForSystemPrompt(skills)` 把可由模型调用的 skill 列表格式化成 XML-like `<available_skills>` block,供更上层 system prompt builder 拼接。

@@ -17,7 +17,7 @@ related:
   - subsys.orchestrator.supervisor
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > Radius 云端集成是 `pi-orchestrator` 的 experimental presence layer: 本地 orchestrator 在凭据存在时向 Radius 注册 machine 和 Pi instance, 并用 heartbeat 维持云端可见性。

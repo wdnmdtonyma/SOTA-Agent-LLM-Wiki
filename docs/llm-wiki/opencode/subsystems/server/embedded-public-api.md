@@ -5,66 +5,79 @@ kind: subsystem
 tier: T2
 v: v2
 source:
-  - packages/core/src/public/
+  - packages/core/package.json
+  - packages/core/src/session.ts
+  - packages/core/src/tool/application-tools.ts
+  - packages/core/src/session/execution/local.ts
+  - packages/core/src/location-services.ts
+  - packages/core/src/location-service-map.ts
+  - packages/server/src/routes.ts
 symbols:
-  - OpenCode
-  - OpenCode.Service
-  - Session.Interface
-  - Tool.Interface
+  - SessionV2
+  - ApplicationTools
+  - SessionExecutionLocal
+  - LocationServiceMap
 related:
   - session-v2.location-wiring
   - spine.v2-overview
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
-`server.embedded-public-api` 描述 V2 core 的 native embedded facade。公开出口是 `packages/core/src/public/index.ts`，该文件导出 `OpenCode`、`Session`、`Tool`、`Location` 等 public-facing modules。[E: packages/core/src/public/index.ts:2][E: packages/core/src/public/index.ts:9] 它不是 HTTP server，而是 native API facade。[I]
+`server.embedded-public-api` 记录 8b68dc0d7 下 V2 core 的 same-process embedding surface。旧 `packages/core/src/public/*` facade 在当前源码树中没有等价文件；本节点把可核证部分收敛到 core Effect services: `SessionV2`、`ApplicationTools`、`SessionExecutionLocal` 和 `LocationServiceMap`。[U]
 
-## Public surface
+## 能回答的问题
+- 8b68dc0d7 还有没有 `packages/core/src/public` embedded facade?
+- same-process 调用 V2 session 的核心 service 是哪个?
+- 本进程 session execution 如何拿到 location-scoped services?
+- application-defined tools 现在落在哪个 registry service?
 
-`public/index.ts` 导出 `Agent`、`Model`、`OpenCode`、`Session`、`Tool`、`Location`、`Prompt`、`AbsolutePath`。[E: packages/core/src/public/index.ts:2][E: packages/core/src/public/index.ts:9] `OpenCode.Interface` 只有两个字段: `sessions: Session.Interface` 和 `tools: Tool.Interface`。[E: packages/core/src/public/opencode.ts:18][E: packages/core/src/public/opencode.ts:20] service tag 是 `@opencode/public/OpenCode`。[E: packages/core/src/public/opencode.ts:24]
+## 当前边界
 
-`Session.Interface` 的方法包括 create、get、list、prompt、switchModel、interrupt、messages、message、context、events。[E: packages/core/src/public/session.ts:105][E: packages/core/src/public/session.ts:118] `CreateInput.location` 是必填 `Location.Ref`，而 `id`、`agent`、`model` 是可选字段。[E: packages/core/src/public/session.ts:66][E: packages/core/src/public/session.ts:70] `MessagesInput` 使用 `cursor` 分页，`EventsInput` 使用 `after` 游标。[E: packages/core/src/public/session.ts:85][E: packages/core/src/public/session.ts:102]
+`@opencode-ai/core` package exports 采用 wildcard `./*` 指到 `./src/*.ts`，没有单独导出 `./public/*` facade。[E: packages/core/package.json:18][E: packages/core/package.json:23] 当前源码树中未找到 `packages/core/src/public/index.ts`、`packages/core/src/public/opencode.ts`、`packages/core/src/public/session.ts`、`packages/core/src/public/tool.ts` 的 replacement；“旧 public facade 已删除但 replacement 名称未确认”按存疑处理。[U]
 
-`Tool.Interface.register` 的签名要求 `Scope.Scope`，因此 public tool registration 是 scope-bound API；接口 doc-comment 还把它描述为 current Scope 上的 same-process tools，并说明 location tools 同名时优先、scope close 会移除工具。[E: packages/core/src/public/tool.ts:16][I] 已读实现侧的 `ApplicationTools.register` 展示了 tool name 校验、registration 构造和 entry 写入 state；cleanup path 不在该实现片段中出现。[E: packages/core/src/tool/application-tools.ts:45][E: packages/core/src/tool/application-tools.ts:52][I]
+这意味着旧节点里 `OpenCode.Interface`、`OpenCode.layer`、`Session.Interface`、`Tool.Interface`、`OpenCode.create(...)` 等 public-facing 断言不能继续标 `[E]`。当前可证的 embedded path 是 host 直接组合 Effect services，而不是通过 `OpenCode.Service` facade。[I]
 
-## Layer wiring
+## Session service
 
-`OpenCode.layer` 先定义 `ApplicationToolsLayer = ApplicationTools.layer`，再把 `LocationServiceMap.layer` pipe 到 `ApplicationToolsLayer`。[E: packages/core/src/public/opencode.ts:35][E: packages/core/src/public/opencode.ts:36] `SessionsLayer` 合并 `SessionV2.layer`，并提供 `SessionProjector.layer`、`SessionExecutionLocal.layer`、`SessionStore.layer`、`EventV2.layer`、`Database.defaultLayer`、`ProjectV2.defaultLayer`，随后再与 `SessionModelValidationLayer` merge。[E: packages/core/src/public/opencode.ts:70][E: packages/core/src/public/opencode.ts:80] 这就是 embedded facade 真接通 V2 session store/execution/event pipeline 的核心证据。[I]
+`SessionV2.Service` 的 tag 是 `@opencode/v2/Session`，接口包含 `create`、`get`、`list`、`messages`、`message`、`context`、`events`、`history`、`switchAgent`、`switchModel`、`prompt`、`shell`、`skill`、`compact`、`wait`、`active`、`resume`、`interrupt` 和 `revert`。[E: packages/core/src/session.ts:120][E: packages/core/src/session.ts:182]
 
-`OpenCode.layer` 目前只提供 Effect layer form；Promise facade `OpenCode.create(...)` 仍未在 public exports 中出现。[E: packages/core/src/public/index.ts:4][E: packages/core/src/public/opencode.ts:83][I]
+`SessionV2.create` 接受或生成 `sessionID`，解析 `input.location.directory` 对应 project，写入 `ProjectTable`，构造 `SessionV1.SessionInfo`，并把 `SessionV1.Event.Created` 作为 event publish，`input.location` 是 publish options。[E: packages/core/src/session.ts:208][E: packages/core/src/session.ts:212][E: packages/core/src/session.ts:213][E: packages/core/src/session.ts:220][E: packages/core/src/session.ts:242]
 
-## Sessions
+`SessionV2.prompt` 先 `result.get(input.sessionID)`，再 `SessionInput.admit(db, events, ...)` durable admit prompt；如果 `input.resume !== false`，它调用 `execution.wake(admitted.sessionID)`。[E: packages/core/src/session.ts:360][E: packages/core/src/session.ts:363][E: packages/core/src/session.ts:368][E: packages/core/src/session.ts:382]
 
-`sessions.create` 在 facade 层把 public input 的 `id`、`agent`、`model`、`location` 传给 `SessionV2.create`。[E: packages/core/src/public/opencode.ts:92][E: packages/core/src/public/opencode.ts:97] `SessionV2.create` 会生成或接受 session id，解析 project，插入 `ProjectTable`，构造 `SessionV1.SessionInfo`，并 publish `SessionV1.Event.Created`；`location` 是 publish options，不是 event data 字段。[E: packages/core/src/session.ts:201][E: packages/core/src/session.ts:204][E: packages/core/src/session.ts:206][E: packages/core/src/session.ts:212][E: packages/core/src/session.ts:234]
+`SessionV2.switchModel` 读取 session，若 provider/model/variant 没变化就返回；否则 publish `SessionEvent.ModelSwitched`，payload 带 `sessionID`、新 `messageID`、timestamp 和 model ref。[E: packages/core/src/session.ts:402][E: packages/core/src/session.ts:410][E: packages/core/src/session.ts:414]
 
-`sessions.prompt` 在 facade 层只转发 `id`、`sessionID`、`prompt`、`delivery`，没有转发 `resume`。[E: packages/core/src/public/opencode.ts:107][E: packages/core/src/public/opencode.ts:112] `SessionV2.prompt` 调用 `SessionInput.admit(db, events, ...)`，如果 `resume !== false`，会对 admitted input 调 `enqueueWake`。[E: packages/core/src/session.ts:353][E: packages/core/src/session.ts:359] `enqueueWake` 调 `execution.wake(admitted.sessionID, admitted.admittedSeq)` 并 fork 到 scope。[E: packages/core/src/session.ts:177][E: packages/core/src/session.ts:184] 因为 public facade 不传 `resume`，public prompt path 的可见行为是 admit input 后唤醒本进程 execution。[I]
+## Application tools
 
-`sessions.switchModel` 先读取 session，再用 session location 做 model validation，最后调用 `sessions.switchModel(input)`。[E: packages/core/src/public/opencode.ts:101][E: packages/core/src/public/opencode.ts:104] validation 会等待 `PluginBoot.Service.wait()`，再从 catalog 找 model；未找到 model 抛 `ModelUnavailableError`，variant 不存在抛 `VariantUnavailableError`。[E: packages/core/src/public/opencode.ts:44][E: packages/core/src/public/opencode.ts:46][E: packages/core/src/public/opencode.ts:50][E: packages/core/src/public/opencode.ts:59]
+`ApplicationTools.Interface.register` 接受 `Readonly<Record<string, Tool.AnyTool>>`，effect type 仍带 `Scope.Scope` requirement；注册失败类型是 `RegistrationError`。[E: packages/core/src/tool/application-tools.ts:23][E: packages/core/src/tool/application-tools.ts:24] 当前实现校验 tool name、构造 registrations、把 registration 写入 state，并通过 `entries()` 暴露当前 map；旧节点里“scope close 会移除工具”的 cleanup path 在 8b68dc0d7 的 `application-tools.ts` 中没有出现。[E: packages/core/src/tool/application-tools.ts:43][E: packages/core/src/tool/application-tools.ts:46][E: packages/core/src/tool/application-tools.ts:47][E: packages/core/src/tool/application-tools.ts:49][E: packages/core/src/tool/application-tools.ts:52][I]
 
-`sessions.messages` 映射 `cursor`，`sessions.events` 映射 `after`。[E: packages/core/src/public/opencode.ts:114][E: packages/core/src/public/opencode.ts:119][E: packages/core/src/public/opencode.ts:123]
+`ApplicationTools` 的 public-facing 位置现在不是 `packages/core/src/public/tool.ts`，而是 location service graph 里的 `ToolRegistry`/application tools 能力。[I]
 
 ## Execution context
 
-`SessionExecutionLocal.layer` 是本进程 execution layer: 它从 `LocationServiceMap` 取 locations，并在 drain 中用 `locations.get(session.location)` 提供给 `SessionRunner.Service.use(...runner.run...)`。[E: packages/core/src/session/execution/local.ts:15][E: packages/core/src/session/execution/local.ts:20][E: packages/core/src/session/execution/local.ts:21][I]
+`SessionExecutionLocal` 是当前进程 execution layer。它从 `SessionStore.Service` 读取 session，从 `LocationServiceMap.Service` 取 location map，再在 drain 中用 `locations.get(session.location)` provide 给 `SessionRunner.Service.use(...runner.run...)`。[E: packages/core/src/session/execution/local.ts:14][E: packages/core/src/session/execution/local.ts:15][E: packages/core/src/session/execution/local.ts:20][E: packages/core/src/session/execution/local.ts:21]
 
-`LocationServiceMap.lookup` 会把 location、policy、config、reference、PluginV2、Catalog、Integration、CommandV2、AgentV2、PluginBoot、ProjectCopy、FileSystem、Watcher、Pty、SkillV2 等 location-scoped layers merge 到 base layer。[E: packages/core/src/location-layer.ts:58][E: packages/core/src/location-layer.ts:64][E: packages/core/src/location-layer.ts:65][E: packages/core/src/location-layer.ts:68][E: packages/core/src/location-layer.ts:69][E: packages/core/src/location-layer.ts:72][E: packages/core/src/location-layer.ts:76] 它还构造 tool output resources、permission/tool registry、image、file mutation、skill/reference guidance、todos、questions、built-in tools、model、runner 和 project-copy refresh layers。[E: packages/core/src/location-layer.ts:77][E: packages/core/src/location-layer.ts:98][E: packages/core/src/location-layer.ts:108][E: packages/core/src/location-layer.ts:123]
+`locationServices` 现在集中声明 location-scoped graph，包含 `Location`、`Policy`、`Config`、`AgentV2`、`CommandV2`、`Reference`、`Integration`、`Catalog`、`AISDK`、`PluginV2`、`PluginInternal`、`ProjectCopy`、filesystem、watcher、pty、skill、system context、permission、tool registry、built-in tools、runner model、snapshot 和 LLM runner nodes。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:78]
+
+`buildLocationServiceMap()` 用 `LayerMap.make` 按 `Location.Ref` 构造 layer，给每个 ref 追加 `Location.boundNode(ref)` replacement，compile 后用 `Layer.fresh` 和全局 hoisted layer provide。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:94][E: packages/core/src/location-services.ts:102]
+
+`LocationServiceMap.Service.get(ref)` 只是把 `locations.get(ref)` unwrap 成 `Layer`，service tag 是 `@opencode/example/LocationServiceMap`。[E: packages/core/src/location-service-map.ts:7][E: packages/core/src/location-service-map.ts:12]
 
 ## Design notes
 
-Embedded public API 把 opencode 作为 Effect service 暴露: host 可以拿 `OpenCode.Service`，注册 same-process tools，并通过 V2 session API 创建、提示、切模型、读取消息和事件。[E: packages/core/src/public/opencode.ts:89][E: packages/core/src/public/opencode.ts:123] 它和 V2 HTTP `/api/*` 不是同一层；HTTP server 属于 `packages/server`，此节点只描述 `packages/core/src/public` 的 native facade。[I]
+8b68dc0d7 的 embedded story 更像“直接组合 Effect nodes/services”，而不是“导入一个 public `OpenCode` facade”。`packages/server/src/routes.ts` 也体现同一模式: server route layer 用 `AppNodeBuilder.build(applicationServices, [[SessionExecution.node, SessionExecutionLocal.node]])` 组合 core services。[E: packages/server/src/routes.ts:26][E: packages/server/src/routes.ts:52][I]
 
 ## Sources
 
-- `packages/core/src/public/index.ts`
-- `packages/core/src/public/opencode.ts`
-- `packages/core/src/public/session.ts`
-- `packages/core/src/public/tool.ts`
-- `packages/core/src/tool/application-tools.ts`
+- `packages/core/package.json`
 - `packages/core/src/session.ts`
+- `packages/core/src/tool/application-tools.ts`
 - `packages/core/src/session/execution/local.ts`
-- `packages/core/src/location-layer.ts`
+- `packages/core/src/location-services.ts`
+- `packages/core/src/location-service-map.ts`
+- `packages/server/src/routes.ts`
 
 ## Related
 

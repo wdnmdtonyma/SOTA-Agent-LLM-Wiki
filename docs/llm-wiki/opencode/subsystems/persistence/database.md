@@ -21,7 +21,7 @@ related:
   - peripheral.effect-sqlite
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > V2 数据库是 `packages/core/src/database/` 中的 Effect-native Drizzle/SQLite service：`@opencode/v2/storage/Database` 提供 Effect Drizzle client，启动时设置 SQLite PRAGMAs 并应用 TypeScript migrations。
@@ -47,7 +47,7 @@ updated: 355a0bcf5
 | `packages/core/src/database/sqlite.bun.ts` | Bun `bun:sqlite` driver layer。 |
 | `packages/core/src/database/sqlite.node.ts` | Node `node:sqlite` driver layer。 |
 | `packages/core/src/database/migration.ts` | TypeScript migration journal 和 apply loop。 |
-| `packages/core/src/database/migration.gen.ts` | 33 个 migration module 的 generated import list。 |
+| `packages/core/src/database/migration.gen.ts` | 38 个 migration module 的 generated import list。 |
 | `packages/core/src/**/*.sql.ts` | Drizzle table definitions。 |
 
 ## 数据模型
@@ -67,7 +67,7 @@ updated: 355a0bcf5
 2. startup 设置 SQLite PRAGMAs：WAL、NORMAL synchronous、busy_timeout 5000、cache_size -64000、foreign_keys ON、wal_checkpoint(PASSIVE)。[E: packages/core/src/database/database.ts:27][E: packages/core/src/database/database.ts:28][E: packages/core/src/database/database.ts:29][E: packages/core/src/database/database.ts:30][E: packages/core/src/database/database.ts:31][E: packages/core/src/database/database.ts:32]
 3. PRAGMA 后调用 `DatabaseMigration.apply(db)`，再返回 `{ db }`。[E: packages/core/src/database/database.ts:33][E: packages/core/src/database/database.ts:35]
 4. `layerFromPath(filename)` 把 core database layer 和 `#sqlite` resolved sqlite layer 组合起来。[E: packages/core/src/database/database.ts:39][E: packages/core/src/database/database.ts:40]
-5. `defaultLayer` 动态调用 `path()` 后提供 `Global.defaultLayer`。[E: packages/core/src/database/database.ts:57][E: packages/core/src/database/database.ts:59][E: packages/core/src/database/database.ts:61]
+5. `Database.node` 在 `makeGlobalNode` 中调用 `path()`，再用 `layerFromPath(path())` 装配全局 database layer。[E: packages/core/src/database/database.ts:57]
 
 ## Path selection
 
@@ -80,7 +80,7 @@ updated: 355a0bcf5
 
 ## Driver split
 
-`packages/core/package.json` 的 `imports` 把 `#sqlite` 映射到 Bun/Node 两个 runtime-specific files：`bun` 和 `default` 指向 `sqlite.bun.ts`，`node` 指向 `sqlite.node.ts`。[E: packages/core/package.json:24][E: packages/core/package.json:25][E: packages/core/package.json:26][E: packages/core/package.json:27][E: packages/core/package.json:28]
+`packages/core/package.json` 的 `imports` 把 `#sqlite` 映射到 Bun/Node 两个 runtime-specific files：`bun` 和 `default` 指向 `sqlite.bun.ts`，`node` 指向 `sqlite.node.ts`。[E: packages/core/package.json:25][E: packages/core/package.json:26][E: packages/core/package.json:27][E: packages/core/package.json:28][E: packages/core/package.json:29]
 
 ### Bun driver
 
@@ -92,13 +92,13 @@ updated: 355a0bcf5
 
 ## Migration engine
 
-1. `DatabaseMigration.apply(db)` 用 module-level semaphore lock 包住 `applyOnly(db, migrations)`，避免同进程并发 apply。[E: packages/core/src/database/migration.ts:11][E: packages/core/src/database/migration.ts:18][E: packages/core/src/database/migration.ts:18]
-2. `applyOnly` 先创建 `migration(id TEXT PRIMARY KEY, time_completed INTEGER NOT NULL)` journal 表。[E: packages/core/src/database/migration.ts:43][E: packages/core/src/database/migration.ts:45][E: packages/core/src/database/migration.ts:46]
-3. 已完成 migration IDs 从 `migration` 表读取成 Set。[E: packages/core/src/database/migration.ts:48][E: packages/core/src/database/migration.ts:49]
-4. 如果新 journal 为空，但存在旧 Drizzle `__drizzle_migrations` 表，migration engine 会把旧 journal 的 `name` seed 到新 `migration` 表；这样做避免 replay old SQL migrations 是由 source comment 和 seed 行为推断出的兼容动机。[E: packages/core/src/database/migration.ts:51][E: packages/core/src/database/migration.ts:55][E: packages/core/src/database/migration.ts:58][E: packages/core/src/database/migration.ts:59][E: packages/core/src/database/migration.ts:60][I]
-5. 对每个 input migration，如果 ID 已完成则 skip；否则在 transaction 中执行 `migration.up(tx)`，除非 `OPENCODE_SKIP_MIGRATIONS` 已设置。[E: packages/core/src/database/migration.ts:69][E: packages/core/src/database/migration.ts:70][E: packages/core/src/database/migration.ts:71][E: packages/core/src/database/migration.ts:51]
-6. 每个 migration transaction 最后插入 journal row，记录 `id` 和 `Date.now()`。[E: packages/core/src/database/migration.ts:74][E: packages/core/src/database/migration.ts:75]
-7. `migration.gen.ts` 用 generated `Promise.all([...imports])` 聚合 migration modules；当前 import list 从 `20260127222353_familiar_lady_ursula` 到 `20260611035744_credential`，按文件逐项计数为 33 个 migration modules。[E: packages/core/src/database/migration.gen.ts:4][E: packages/core/src/database/migration.gen.ts:5][E: packages/core/src/database/migration.gen.ts:39][I]
+1. `DatabaseMigration.apply(db)` 用 module-level semaphore lock 包住 migration startup，避免同进程并发 apply。[E: packages/core/src/database/migration.ts:11][E: packages/core/src/database/migration.ts:18][E: packages/core/src/database/migration.ts:19]
+2. startup 先枚举非 SQLite internal tables；已有 `session` 表时走 `applyOnly(db, migrations)`，有其它表但没有 `session` 时直接 die。[E: packages/core/src/database/migration.ts:21][E: packages/core/src/database/migration.ts:24][E: packages/core/src/database/migration.ts:25]
+3. 空库路径在 transaction 里执行 generated `schema.up(tx)`，创建 `migration(id TEXT PRIMARY KEY, time_completed INTEGER NOT NULL)` journal 表，并把当前所有 migration id 写入 journal。[E: packages/core/src/database/migration.ts:26][E: packages/core/src/database/migration.ts:28][E: packages/core/src/database/migration.ts:30][E: packages/core/src/database/migration.ts:32][E: packages/core/src/database/migration.ts:34]
+4. `applyOnly` 先创建 journal 表，已完成 migration IDs 从 `migration` 表读取成 Set。[E: packages/core/src/database/migration.ts:43][E: packages/core/src/database/migration.ts:45][E: packages/core/src/database/migration.ts:46][E: packages/core/src/database/migration.ts:48][E: packages/core/src/database/migration.ts:49]
+5. 如果新 journal 为空，但存在旧 Drizzle `__drizzle_migrations` 表，migration engine 会把旧 journal 的 `name` seed 到新 `migration` 表；这样做避免 replay old SQL migrations 是由 source comment 和 seed 行为推断出的兼容动机。[E: packages/core/src/database/migration.ts:51][E: packages/core/src/database/migration.ts:55][E: packages/core/src/database/migration.ts:58][E: packages/core/src/database/migration.ts:59][E: packages/core/src/database/migration.ts:60][I]
+6. 对每个 input migration，如果 ID 已完成则 skip；否则在 transaction 中执行 `migration.up(tx)` 并插入 journal row。[E: packages/core/src/database/migration.ts:69][E: packages/core/src/database/migration.ts:70][E: packages/core/src/database/migration.ts:71][E: packages/core/src/database/migration.ts:73][E: packages/core/src/database/migration.ts:75]
+7. `migration.gen.ts` 用 generated `Promise.all([...imports])` 聚合 migration modules；当前 import list 从 `20260127222353_familiar_lady_ursula` 到 `20260622202450_simplify_session_input`，按文件逐项计数为 38 个 migration modules。[E: packages/core/src/database/migration.gen.ts:4][E: packages/core/src/database/migration.gen.ts:5][E: packages/core/src/database/migration.gen.ts:42][I]
 
 ## Table families
 
@@ -108,7 +108,7 @@ updated: 355a0bcf5
 | --- | --- | --- |
 | Account | `account`, `account_state`, legacy `control_account`。 | [E: packages/core/src/account/sql.ts:6][E: packages/core/src/account/sql.ts:16][E: packages/core/src/account/sql.ts:26] |
 | Project | `project`, `project_directory`。 | [E: packages/core/src/project/sql.ts:6][E: packages/core/src/project/sql.ts:21] |
-| Session V1/V2 projection | `session`, `message`, `part`, `todo`, `session_message`, `session_input`, `session_context_epoch`。 | [E: packages/core/src/session/sql.ts:22][E: packages/core/src/session/sql.ts:68][E: packages/core/src/session/sql.ts:82][E: packages/core/src/session/sql.ts:100][E: packages/core/src/session/sql.ts:119][E: packages/core/src/session/sql.ts:140][E: packages/core/src/session/sql.ts:167] |
+| Session V1/V2 projection | `session`, `message`, `part`, `todo`, `session_message`, `session_input`, `session_context_epoch`。 | [E: packages/core/src/session/sql.ts:22][E: packages/core/src/session/sql.ts:68][E: packages/core/src/session/sql.ts:82][E: packages/core/src/session/sql.ts:100][E: packages/core/src/session/sql.ts:119][E: packages/core/src/session/sql.ts:140][E: packages/core/src/session/sql.ts:168] |
 | EventV2 | `event_sequence`, `event`。 | [E: packages/core/src/event/sql.ts:4][E: packages/core/src/event/sql.ts:11] |
 | Permission | `permission`。 | [E: packages/core/src/permission/sql.ts:8] |
 | Share | `session_share`。 | [E: packages/core/src/share/sql.ts:5] |
@@ -120,14 +120,14 @@ updated: 355a0bcf5
 
 - storage spec 把 `@opencode-ai/effect-drizzle-sqlite` 定位成 vendored Drizzle Effect SQLite adapter，而不是 opencode domain storage abstraction。[E: specs/storage/effect-sqlite-package.md:5][E: specs/storage/effect-sqlite-package.md:7]
 - storage spec 要求 public surface 尽量 mirror Drizzle Effect adapters，query builders 是 Effect-yieldable，transactions 是 Effect values。[E: specs/storage/effect-sqlite-package.md:53][E: specs/storage/effect-sqlite-package.md:54][E: specs/storage/effect-sqlite-package.md:60]
-- root `AGENTS.md` 要求 Drizzle schema field names 用 snake_case，避免 column names 再写 string；当前 table files 如 `project_id`、`time_created`、`workspace_id` 遵循这个约束。[E: AGENTS.md:118][E: AGENTS.md:120][E: packages/core/src/project/sql.ts:23][E: packages/core/src/session/sql.ts:29][E: packages/core/src/database/schema.sql.ts:4]
+- root `AGENTS.md` 要求 Drizzle schema field names 用 snake_case，避免 column names 再写 string；当前 table files 如 `project_id`、`time_created`、`workspace_id` 遵循这个约束。[E: AGENTS.md:123][E: packages/core/src/project/sql.ts:23][E: packages/core/src/session/sql.ts:29][E: packages/core/src/database/schema.sql.ts:4]
 - `specs/storage/remove-opencode-db.md` 说明 legacy `packages/opencode/src/storage/db.ts` 已删除，schema ownership 保留在 `packages/core/src/**/*.sql.ts`；V1 package 的 `storage/schema.ts` 当前 re-export core table definitions，属于兼容入口而非独立 V1 JSON schema。[E: specs/storage/remove-opencode-db.md:49][E: specs/storage/remove-opencode-db.md:220][E: specs/storage/remove-opencode-db.md:233][E: packages/opencode/src/storage/schema.ts:1][E: packages/opencode/src/storage/schema.ts:2][E: packages/opencode/src/storage/schema.ts:3][E: packages/opencode/src/storage/schema.ts:4][E: packages/opencode/src/storage/schema.ts:5][I]
 
 ## Gotchas
 
 - migration directory 名字是单数 `packages/core/src/database/migration/`，不是 `migrations/`；`migration.gen.ts` import paths 也使用 `./migration/...`。[E: packages/core/src/database/migration.gen.ts:5]
 - `Database.path()` 对 non-latest channel 默认隔离 DB file；设置 `OPENCODE_DISABLE_CHANNEL_DB` 会把 non-latest channel 也压回 `opencode.db`。[E: packages/core/src/database/database.ts:49][E: packages/core/src/database/database.ts:50][E: packages/core/src/database/database.ts:51][E: packages/core/src/database/database.ts:53]
-- Bun 和 Node driver 都在 client 层用 semaphore 限制 connection acquisition；这不是 application-level transaction serialization，EventV2 另行用 immediate transaction、projectors、`EventSequenceTable` upsert 和 `EventTable` insert 做 durable event ordering。[E: packages/core/src/database/sqlite.bun.ts:121][E: packages/core/src/database/sqlite.node.ts:115][E: packages/core/src/event.ts:257][E: packages/core/src/event.ts:333][E: packages/core/src/event.ts:336][E: packages/core/src/event.ts:340][E: packages/core/src/event.ts:353][E: packages/core/src/event.ts:367][I]
+- Bun 和 Node driver 都在 client 层用 semaphore 限制 connection acquisition；这不是 application-level transaction serialization，EventV2 另行用 immediate transaction、projectors、`EventSequenceTable` upsert 和 `EventTable` insert 做 durable event ordering。[E: packages/core/src/database/sqlite.bun.ts:121][E: packages/core/src/database/sqlite.node.ts:115][E: packages/core/src/event.ts:240][E: packages/core/src/event.ts:320][E: packages/core/src/event.ts:324][E: packages/core/src/event.ts:336][E: packages/core/src/event.ts:351][I]
 
 ## Sources
 

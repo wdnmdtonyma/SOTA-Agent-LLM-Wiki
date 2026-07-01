@@ -17,7 +17,7 @@ related:
   - subsys.coding-agent.keybindings
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > 键位匹配(keybinding matching)把 terminal raw input data 与 typed `KeyId` chord、再与 namespaced action id 连接起来: `matchesKey(data, keyId)` 判断一个具体 key 是否命中, `KeybindingsManager.matches(data, action)` 判断一个动作的 resolved keys 是否任一命中。

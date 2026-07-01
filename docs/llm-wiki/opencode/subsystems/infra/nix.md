@@ -23,7 +23,7 @@ related:
   - infra.build-monorepo
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > Nix flake 节点描述 opencode 如何用 `flake.nix`、fixed-output `node_modules` derivation、CLI derivation、Desktop derivation 与 CI hash refresh 流水线提供可复现的 Linux/Darwin 构建入口。
@@ -40,7 +40,7 @@ updated: 355a0bcf5
 
 Nix 层是 reproducible build packaging, 不实现 terminal agent runtime。`flake.nix` 描述为 `OpenCode development flake`, 输入 nixpkgs unstable, systems 包含 `aarch64-linux`, `x86_64-linux`, `aarch64-darwin`, `x86_64-darwin` [E: flake.nix:2] [E: flake.nix:5] [E: flake.nix:11] [E: flake.nix:12] [E: flake.nix:13] [E: flake.nix:14] [E: flake.nix:15]。
 
-V1/V2 关系: Nix package `opencode` 构建的是 `packages/opencode` CLI binary, 因此承载当前 V1 package 入口; 如果 `packages/opencode` import V2 code, Nix 会随源码一起构建, 但 Nix derivation 不改变默认 session execution [E: nix/opencode.nix:48] [E: nix/opencode.nix:49] [I]。
+V1/V2 关系: Nix package `opencode` 构建的是 `packages/opencode` CLI binary, 因此承载当前 V1 package 入口; 如果 `packages/opencode` import V2 code, Nix 会随源码一起构建, 但 Nix derivation 不改变默认 session execution [E: nix/opencode.nix:55] [E: nix/opencode.nix:56] [I]。
 
 ## 技术栈
 
@@ -54,7 +54,7 @@ V1/V2 关系: Nix package `opencode` 构建的是 `packages/opencode` CLI binary
 | --- | --- |
 | `flake.nix` | Flake entry。定义 four-system map, devShell packages, overlay outputs, package outputs, fakeHash updater derivation [E: flake.nix:11] [E: flake.nix:12] [E: flake.nix:13] [E: flake.nix:14] [E: flake.nix:15] [E: flake.nix:17] [E: flake.nix:21] [E: flake.nix:33] [E: flake.nix:51] [E: flake.nix:67]。 |
 | `nix/node_modules.nix` | Fixed-output dependency closure。读取 per-system hash, 从 repo fileset 构建 source, 用 Bun install filtered packages, 输出所有 node_modules directories [E: nix/node_modules.nix:6] [E: nix/node_modules.nix:25] [E: nix/node_modules.nix:51] [E: nix/node_modules.nix:54] [E: nix/node_modules.nix:69] [E: nix/node_modules.nix:75]。 |
-| `nix/opencode.nix` | CLI derivation。复制 fixed node_modules, patch shebangs, 设置 model/version/channel env, 运行 `script/build.ts --single --skip-install`, 安装 binary/schema/completions [E: nix/opencode.nix:30] [E: nix/opencode.nix:40] [E: nix/opencode.nix:49] [E: nix/opencode.nix:50] [E: nix/opencode.nix:58] [E: nix/opencode.nix:77]。 |
+| `nix/opencode.nix` | CLI derivation。复制 fixed node_modules, patch shebangs, 设置 model/version/channel env, 运行 `script/build.ts --single --skip-install`, 安装 binary/schema/completions [E: nix/opencode.nix:30] [E: nix/opencode.nix:40] [E: nix/opencode.nix:49] [E: nix/opencode.nix:50] [E: nix/opencode.nix:56] [E: nix/opencode.nix:65] [E: nix/opencode.nix:66] [E: nix/opencode.nix:84]。 |
 | `nix/desktop.nix` | Desktop derivation。复用 opencode source/node_modules/env, 使用 Electron 41, Linux 走 autoPatchelf, Darwin 走 ad-hoc signing hook, build `packages/desktop` 并用 electron-builder `--dir` package [E: nix/desktop.nix:14] [E: nix/desktop.nix:18] [E: nix/desktop.nix:30] [E: nix/desktop.nix:32] [E: nix/desktop.nix:65] [E: nix/desktop.nix:71]。 |
 | `nix/hashes.json` | per-system fixed-output hashes。四个 supported systems 都有 `nodeModules` hash [E: nix/hashes.json:2] [E: nix/hashes.json:3] [E: nix/hashes.json:4] [E: nix/hashes.json:5] [E: nix/hashes.json:6]。 |
 | `nix/scripts/canonicalize-node-modules.ts` | Bun symlink canonicalization。扫描 `node_modules/.bun`, 选每个 package 的 highest semver entry, 重建 `.bun/node_modules` symlinks [E: nix/scripts/canonicalize-node-modules.ts:21] [E: nix/scripts/canonicalize-node-modules.ts:25] [E: nix/scripts/canonicalize-node-modules.ts:43] [E: nix/scripts/canonicalize-node-modules.ts:45] [E: nix/scripts/canonicalize-node-modules.ts:46] [E: nix/scripts/canonicalize-node-modules.ts:47] [E: nix/scripts/canonicalize-node-modules.ts:56] [E: nix/scripts/canonicalize-node-modules.ts:77]。 |
@@ -64,7 +64,7 @@ V1/V2 关系: Nix package `opencode` 构建的是 `packages/opencode` CLI binary
 
 `node_modules` derivation 的 version 由 `packages/opencode/package.json` 版本加 git rev 构成, source fileset 只包含 `packages`, `bun.lock`, root `package.json`, `patches`, `install`, `.github/TEAM_MEMBERS` [E: nix/node_modules.nix:13] [E: nix/node_modules.nix:23] [E: nix/node_modules.nix:25] [E: nix/node_modules.nix:29] [E: nix/node_modules.nix:30] [E: nix/node_modules.nix:31] [E: nix/node_modules.nix:32] [E: nix/node_modules.nix:33] [E: nix/node_modules.nix:34]。这个 subset 说明 Nix dependency closure 不把整个 repo 任意文件放入 fixed-output source [I]。
 
-`nix/opencode.nix` 的 runtime wrapper 把 `ripgrep` 加到 PATH, Darwin 还附带 `sysctl`, 因为 Bun 会用 sysctl 检测 Rosetta 2 [E: nix/opencode.nix:61] [E: nix/opencode.nix:65] [E: nix/opencode.nix:67] [E: nix/opencode.nix:68]。`passthru` 暴露 jsonschema path 和 env, 让下游 Nix consumers 读取 package metadata [E: nix/opencode.nix:90] [E: nix/opencode.nix:91] [E: nix/opencode.nix:92]。
+`nix/opencode.nix` 的 runtime wrapper 把 `ripgrep` 加到 PATH, Darwin 还附带 `sysctl`, 因为 Bun 会用 sysctl 检测 Rosetta 2 [E: nix/opencode.nix:68] [E: nix/opencode.nix:72] [E: nix/opencode.nix:75]。`passthru` 暴露 jsonschema path 和 env, 让下游 Nix consumers 读取 package metadata [E: nix/opencode.nix:97] [E: nix/opencode.nix:98] [E: nix/opencode.nix:99]。
 
 Desktop derivation 在 Linux install phase 把 resources/LICENSE 复制到 `$out/opt/opencode-desktop`, 再用 Electron binary wrapper 启动 `resources/app.asar`; Darwin install phase 把 `.app` 放进 `$out/Applications` 并生成 `opencode-desktop` wrapper [E: nix/desktop.nix:83] [E: nix/desktop.nix:85] [E: nix/desktop.nix:86] [E: nix/desktop.nix:88] [E: nix/desktop.nix:90] [E: nix/desktop.nix:91] [E: nix/desktop.nix:94]。
 
@@ -72,7 +72,7 @@ Desktop derivation 在 Linux install phase 把 resources/LICENSE 复制到 `$out
 
 1. `flake.nix` 为每个 supported system 创建 devShell, 默认包含 Bun、Node.js 20、pkg-config、OpenSSL、git [E: flake.nix:21] [E: flake.nix:24] [E: flake.nix:25] [E: flake.nix:26] [E: flake.nix:27] [E: flake.nix:28]。
 2. `packages.opencode` 调 `nix/opencode.nix`, 并传入同一个 `node_modules` derivation [E: flake.nix:60] [E: flake.nix:61]。
-3. `nix/opencode.nix` build phase 进入 `packages/opencode`, 运行 `bun --bun ./script/build.ts --single --skip-install`, 再生成 `schema.json` [E: nix/opencode.nix:48] [E: nix/opencode.nix:49] [E: nix/opencode.nix:50]。
+3. `nix/opencode.nix` build phase 进入 `packages/opencode`, 运行 `bun --bun ./script/build.ts --single --skip-install`, 再生成 `schema.json` [E: nix/opencode.nix:55] [E: nix/opencode.nix:56] [E: nix/opencode.nix:57]。
 4. `packages.opencode-desktop` 调 `nix/desktop.nix`, build phase 进入 `packages/desktop`, `bun run build`, 然后 `npx electron-builder --dir` [E: flake.nix:63] [E: nix/desktop.nix:68] [E: nix/desktop.nix:70] [E: nix/desktop.nix:71]。
 5. `node_modules_updater` 使用 `node_modules.override { hash = pkgs.lib.fakeHash; }`; CI 通过 fakeHash build 诱发 hash mismatch, 从 build log 提取 `got: sha256-...` [E: flake.nix:67] [E: flake.nix:68] [E: .github/workflows/nix-hashes.yml:63] [E: .github/workflows/nix-hashes.yml:65]。
 6. `nix-hashes.yml` 收集四个 hash artifacts 后, 用 `jq` 写入 `nix/hashes.json`, 有变更时提交 `chore: update nix node_modules hashes` [E: .github/workflows/nix-hashes.yml:120] [E: .github/workflows/nix-hashes.yml:128] [E: .github/workflows/nix-hashes.yml:133] [E: .github/workflows/nix-hashes.yml:155] [E: .github/workflows/nix-hashes.yml:156]。
@@ -84,7 +84,7 @@ Nix `node_modules` derivation 选择 fixed-output hash, 代价是 Bun dependency
 ## Gotcha
 
 - `nix/opencode.nix` 默认参数里写的是 `./node-modules.nix`, 但 flake 调用时显式传入 `node_modules`; 当前 flake path 的权威依赖闭包来自 `./nix/node_modules.nix` [E: nix/opencode.nix:14] [E: flake.nix:54] [I]。
-- `nix-eval.yml` 把 desktop 放在 optional packages, 注释说明暂不把 `desktop` 放入 PACKAGES [E: .github/workflows/nix-eval.yml:41] [E: .github/workflows/nix-eval.yml:42] [E: .github/workflows/nix-eval.yml:43]。
+- `nix-eval.yml` 把 `PACKAGES` 限定为 `opencode`, 同时把 `desktop` 放在 `OPTIONAL_PACKAGES` [E: .github/workflows/nix-eval.yml:41] [E: .github/workflows/nix-eval.yml:43]。
 - Nix Desktop package 是 `opencode-desktop`, main program 也是 `opencode-desktop`, 不等同于 CLI `opencode` [E: nix/desktop.nix:17] [E: nix/desktop.nix:107]。
 
 ## Sources

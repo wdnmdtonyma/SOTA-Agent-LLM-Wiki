@@ -8,10 +8,10 @@ symbols: [StatusHistoryCell, StatusHistoryHandle, StatusRateLimitData, RateLimit
 related: [subsys.tui.chatwidget, subsys.tui.bottom-pane, subsys.config-auth.features-system]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
-> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/status/rate_limits.rs:1][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:81][E: codex-rs/tui/src/bottom_pane/mod.rs:1001][E: codex-rs/tui/src/chatwidget.rs:622]
+> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/status/rate_limits.rs:1][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/bottom_pane/mod.rs:992][E: codex-rs/tui/src/chatwidget.rs:626]
 
 ## 能回答的问题
 
@@ -40,18 +40,18 @@ display model 包括 `StatusRateLimitRow`、`StatusRateLimitValue::{Window, Text
 
 ## Status Line 与 Terminal Title
 
-`CachedProjectRootName` 用 cwd 缓存 project-root display name，注释说明 terminal-title refresh 很频繁，避免重复向上查找同一 root。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:70][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:72][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:76][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:77][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:78]
+`CachedProjectRootName` 用 cwd 缓存 project-root display name，注释说明 terminal-title refresh 很频繁，避免重复向上查找同一 root。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:76][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:78][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:82][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:83][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:84]
 
-`status_surface_selections` 同时收集 status-line items/invalids 和 terminal-title items/invalids；invalid warnings 只在 thread id 已存在、invalid list 非空、对应 atomic flag 首次 compare_exchange 成功时发出一次。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:81][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:83][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:84][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:86][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:94][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:95][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:96][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:98][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:107][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:111][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:115][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:119][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:128][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:132]
+`status_surface_selections` 同时收集 status-line items/invalids 和 terminal-title items/invalids；invalid warnings 只在 thread id 已存在、invalid list 非空、对应 atomic flag 首次 compare_exchange 成功时发出一次。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:89][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:90][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:92][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:100][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:101][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:102][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:104][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:113][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:117][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:121][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:125][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:134][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:138]
 
 ## Running Status
 
-running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1001][E: codex-rs/tui/src/bottom_pane/mod.rs:1003][E: codex-rs/tui/src/bottom_pane/mod.rs:1004][E: codex-rs/tui/src/bottom_pane/mod.rs:1008][E: codex-rs/tui/src/bottom_pane/mod.rs:1009][E: codex-rs/tui/src/bottom_pane/mod.rs:1016][E: codex-rs/tui/src/bottom_pane/mod.rs:1019][E: codex-rs/tui/src/bottom_pane/mod.rs:1023]
+running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:992][E: codex-rs/tui/src/bottom_pane/mod.rs:994][E: codex-rs/tui/src/bottom_pane/mod.rs:995][E: codex-rs/tui/src/bottom_pane/mod.rs:999][E: codex-rs/tui/src/bottom_pane/mod.rs:1000][E: codex-rs/tui/src/bottom_pane/mod.rs:1007][E: codex-rs/tui/src/bottom_pane/mod.rs:1010][E: codex-rs/tui/src/bottom_pane/mod.rs:1014]
 
 ## Gotchas
 
 - `/status` card 的 rate-limit refresh 是 handle 更新 shared state，不是重新插入一张卡。[E: codex-rs/tui/src/status/card.rs:80][E: codex-rs/tui/src/status/card.rs:85][E: codex-rs/tui/src/status/card.rs:100]
-- invalid status-line/title warnings 有 once-only guard；测试或排障时重复配置错误可能不会重复弹 warning。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:98][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:119]
+- invalid status-line/title warnings 有 once-only guard；测试或排障时重复配置错误可能不会重复弹 warning。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:104][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:125]
 
 ## Sources
 

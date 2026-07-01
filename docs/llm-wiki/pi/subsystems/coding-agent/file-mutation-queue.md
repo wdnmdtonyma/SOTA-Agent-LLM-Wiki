@@ -21,7 +21,7 @@ related:
   - surface.tools.write
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > 文件变更串行化子系统是 `withFileMutationQueue(filePath, fn)`: 它把同一目标文件的 mutation callback 排成 FIFO 链, 让内置 `edit`、`write` 和扩展工具在默认并行 tool call 环境里避免 read-modify-write 互相覆盖。

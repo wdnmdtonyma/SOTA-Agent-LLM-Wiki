@@ -12,7 +12,7 @@ related:
   - subsys.agent-core.tool-invocation
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `ref.agent.tool-execution-modes` 是 `ToolExecutionMode` 的逐实例目录:覆盖 `"sequential"` 与 `"parallel"` 两个 literal 值、全局 `AgentLoopConfig.toolExecution` 配置位、单个 `AgentTool.executionMode` override 位,以及这些值在 agent-core tool-call batch 中的调度含义边界。

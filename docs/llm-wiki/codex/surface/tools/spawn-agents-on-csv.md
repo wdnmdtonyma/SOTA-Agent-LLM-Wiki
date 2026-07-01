@@ -8,7 +8,7 @@ symbols: [create_spawn_agents_on_csv_tool, SpawnAgentsOnCsvHandler, SpawnAgentsO
 related: [tool.report-agent-job-result, tool.spawn-agent-v1, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > `spawn_agents_on_csv` 是 agent jobs 的 CSV fanout 工具：读取一个本地 CSV，把每行变成 job item，并为 pending items spawn worker sub-agent；worker 用 `report_agent_job_result` 写回结果。
@@ -18,12 +18,12 @@ updated: 5670360009
 | 项 | 当前源码事实 |
 |---|---|
 | wire name | handler 返回 plain `spawn_agents_on_csv`，spec builder 也设置同名 function tool。[E: codex-rs/core/src/tools/handlers/agent_jobs/spawn_agents_on_csv.rs:17][E: codex-rs/core/src/tools/handlers/agent_jobs/spawn_agents_on_csv.rs:19][E: codex-rs/core/src/tools/handlers/agent_jobs_spec.rs:63][E: codex-rs/core/src/tools/handlers/agent_jobs_spec.rs:64] |
-| handler | `agent_jobs.rs` re-export `spawn_agents_on_csv::SpawnAgentsOnCsvHandler`；handler 只匹配 function payload。[E: codex-rs/core/src/tools/handlers/agent_jobs.rs:35][E: codex-rs/core/src/tools/handlers/agent_jobs/spawn_agents_on_csv.rs:58][E: codex-rs/core/src/tools/handlers/agent_jobs/spawn_agents_on_csv.rs:60] |
+| handler | `agent_jobs.rs` re-export `spawn_agents_on_csv::SpawnAgentsOnCsvHandler`；handler 只匹配 function payload。[E: codex-rs/core/src/tools/handlers/agent_jobs.rs:36][E: codex-rs/core/src/tools/handlers/agent_jobs/spawn_agents_on_csv.rs:58][E: codex-rs/core/src/tools/handlers/agent_jobs/spawn_agents_on_csv.rs:60] |
 | spec | `create_spawn_agents_on_csv_tool` 返回 `ToolSpec::Function`，`strict: false`、`defer_loading: None`、`output_schema: None`。[E: codex-rs/core/src/tools/handlers/agent_jobs_spec.rs:6][E: codex-rs/core/src/tools/handlers/agent_jobs_spec.rs:63][E: codex-rs/core/src/tools/handlers/agent_jobs_spec.rs:67][E: codex-rs/core/src/tools/handlers/agent_jobs_spec.rs:68][E: codex-rs/core/src/tools/handlers/agent_jobs_spec.rs:70] |
 
 ## 注册与门控
 
-`agent_jobs_tools_enabled` 要求 `Feature::SpawnCsv` 已启用且 collaboration tools 已启用；满足时 `spec_plan.rs` 加入 `SpawnAgentsOnCsvHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:357][E: codex-rs/core/src/tools/spec_plan.rs:362][E: codex-rs/core/src/tools/spec_plan.rs:363][E: codex-rs/core/src/tools/spec_plan.rs:841][E: codex-rs/core/src/tools/spec_plan.rs:842]
+`agent_jobs_tools_enabled` 要求 `Feature::SpawnCsv` 已启用且 collaboration tools 已启用；满足时 `spec_plan.rs` 加入 `SpawnAgentsOnCsvHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:361][E: codex-rs/core/src/tools/spec_plan.rs:366][E: codex-rs/core/src/tools/spec_plan.rs:367][E: codex-rs/core/src/tools/spec_plan.rs:869][E: codex-rs/core/src/tools/spec_plan.rs:870]
 
 handler 没有覆写 `supports_parallel_tool_calls`，所以按 `ToolExecutor` 默认不是 parallel-safe。[E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
 

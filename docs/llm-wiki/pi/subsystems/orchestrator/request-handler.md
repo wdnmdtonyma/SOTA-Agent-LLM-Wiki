@@ -19,7 +19,7 @@ related:
   - subsys.orchestrator.ipc-transport
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.orchestrator.request-handler` 是 experimental orchestrator 的 IPC request facade: `serve()` 启动本地 IPC server, `handleIpcRequest()` 把一次性命令转给 `supervisor`, `openRpcStream()` 把长连接 RPC stream 桥接到 live coding-agent RPC process。

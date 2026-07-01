@@ -8,7 +8,7 @@ symbols: [ConfigToml, AutoReviewToml, ShellEnvironmentPolicyToml, SandboxWorkspa
 related: [cli.global-flags, cli.exec-mode, command.config-system, subsys.core.approval-policy, subsys.exec-sandbox.overview]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > 审批与沙箱设置 catalog 覆盖 ConfigToml 中 command approval、approval reviewer、Guardian auto-review、shell environment、login shell、legacy sandbox 和 named permission profile 的顶层键。
@@ -22,23 +22,23 @@ updated: 5670360009
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 96 个顶层 `pub` 字段；本节点覆盖其中 9 个。8 个 surface/config catalog 节点合计覆盖全部 96 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:136][E: codex-rs/config/src/config_toml.rs:139]
+当前 `ConfigToml` 有 97 个顶层 `pub` 字段；本节点覆盖其中 9 个字段。[E: codex-rs/config/src/config_toml.rs:154][E: codex-rs/config/src/config_toml.rs:518]
 
-`PermissionsToml` stores a flattened map of named permission profiles, and `PermissionProfileToml` has description, extends, workspace_roots, filesystem, and network sections.[E: codex-rs/config/src/permissions_toml.rs:23][E: codex-rs/config/src/permissions_toml.rs:25][E: codex-rs/config/src/permissions_toml.rs:113][E: codex-rs/config/src/permissions_toml.rs:114][E: codex-rs/config/src/permissions_toml.rs:118]
+`PermissionsToml` stores a flattened map of named permission profiles, and `PermissionProfileToml` has description, extends, workspace_roots, filesystem, and network sections.[E: codex-rs/config/src/permissions_toml.rs:24][E: codex-rs/config/src/permissions_toml.rs:25][E: codex-rs/config/src/permissions_toml.rs:113][E: codex-rs/config/src/permissions_toml.rs:114][E: codex-rs/config/src/permissions_toml.rs:115][E: codex-rs/config/src/permissions_toml.rs:116][E: codex-rs/config/src/permissions_toml.rs:117][E: codex-rs/config/src/permissions_toml.rs:118]
 
 ## 字段 catalog
 
-| key | Rust type | serde/schema attrs | 源码注释摘要 | Evidence |
+| key | Rust type | serde/schema attrs | 字段说明 | Evidence |
 |---|---|---|---|---|
-| `approval_policy` | `Option<AskForApproval>` | none | Default approval policy for executing commands. | [E: codex-rs/config/src/config_toml.rs:158][E: codex-rs/config/src/config_toml.rs:159] |
-| `approvals_reviewer` | `Option<ApprovalsReviewer>` | none | Configures who approval requests are routed to for review once they have been escalated. This does not disable separate safety checks such as ARC. | [E: codex-rs/config/src/config_toml.rs:161][E: codex-rs/config/src/config_toml.rs:164] |
-| `auto_review` | `Option<AutoReviewToml>` | `#[serde(default)]` | Optional policy instructions for the guardian auto-reviewer. | [E: codex-rs/config/src/config_toml.rs:166][E: codex-rs/config/src/config_toml.rs:167][E: codex-rs/config/src/config_toml.rs:168] |
-| `shell_environment_policy` | `ShellEnvironmentPolicyToml` | `#[serde(default)]` | ConfigToml schema field. | [E: codex-rs/config/src/config_toml.rs:170][E: codex-rs/config/src/config_toml.rs:171] |
-| `allow_login_shell` | `Option<bool>` | `#[serde(default = "default_allow_login_shell")]` | Whether the model may request a login shell for shell-based tools. Default to `true` If `true`, the model may request a login shell (`login = true`), and omitting `login` defaul... | [E: codex-rs/config/src/config_toml.rs:173][E: codex-rs/config/src/config_toml.rs:181][E: codex-rs/config/src/config_toml.rs:182] |
-| `sandbox_mode` | `Option<SandboxMode>` | none | Sandbox mode to use. | [E: codex-rs/config/src/config_toml.rs:184][E: codex-rs/config/src/config_toml.rs:185] |
-| `sandbox_workspace_write` | `Option<SandboxWorkspaceWrite>` | none | Sandbox configuration to apply if `sandbox` is `WorkspaceWrite`. | [E: codex-rs/config/src/config_toml.rs:187][E: codex-rs/config/src/config_toml.rs:188] |
-| `default_permissions` | `Option<String>` | none | Default permissions profile to apply. Names starting with `:` refer to built-in profiles; other names are resolved from the `[permissions]` table. | [E: codex-rs/config/src/config_toml.rs:190][E: codex-rs/config/src/config_toml.rs:193] |
-| `permissions` | `Option<PermissionsToml>` | `#[serde(default)]` | Named permissions profiles. | [E: codex-rs/config/src/config_toml.rs:195][E: codex-rs/config/src/config_toml.rs:196][E: codex-rs/config/src/config_toml.rs:197] |
+| `approval_policy` | `Option<AskForApproval>` | none | Command approval policy field. | [E: codex-rs/config/src/config_toml.rs:174] |
+| `approvals_reviewer` | `Option<ApprovalsReviewer>` | none | Escalated approval reviewer field. | [E: codex-rs/config/src/config_toml.rs:179] |
+| `auto_review` | `Option<AutoReviewToml>` | `#[serde(default)]` | Guardian auto-review configuration field. | [E: codex-rs/config/src/config_toml.rs:182][E: codex-rs/config/src/config_toml.rs:183] |
+| `shell_environment_policy` | `ShellEnvironmentPolicyToml` | `#[serde(default)]` | Shell environment policy field. | [E: codex-rs/config/src/config_toml.rs:185][E: codex-rs/config/src/config_toml.rs:186] |
+| `allow_login_shell` | `Option<bool>` | `#[serde(default = "default_allow_login_shell")]` | Login-shell permission toggle for shell-based tools. | [E: codex-rs/config/src/config_toml.rs:196][E: codex-rs/config/src/config_toml.rs:197] |
+| `sandbox_mode` | `Option<SandboxMode>` | none | Sandbox mode selector. | [E: codex-rs/config/src/config_toml.rs:200] |
+| `sandbox_workspace_write` | `Option<SandboxWorkspaceWrite>` | none | Workspace-write sandbox configuration. | [E: codex-rs/config/src/config_toml.rs:203] |
+| `default_permissions` | `Option<String>` | none | Default named permissions profile. | [E: codex-rs/config/src/config_toml.rs:208] |
+| `permissions` | `Option<PermissionsToml>` | `#[serde(default)]` | Named permissions profile map. | [E: codex-rs/config/src/config_toml.rs:211][E: codex-rs/config/src/config_toml.rs:212] |
 
 ## Sources
 

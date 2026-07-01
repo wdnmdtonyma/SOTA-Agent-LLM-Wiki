@@ -8,7 +8,7 @@ symbols: [ConfigToml, ConfigProfile, ModelProviderInfo, AutoCompactTokenLimitSco
 related: [command.model-mode, config.auth-account, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > 模型与 provider 设置 catalog 覆盖 ConfigToml 中选择模型、provider、context/compaction limits、reasoning/verbosity、model catalog、service tier、OpenAI/ChatGPT endpoint 和 OSS provider 的顶层键。
@@ -22,32 +22,32 @@ updated: 5670360009
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 96 个顶层 `pub` 字段；本节点覆盖其中 18 个。8 个 surface/config catalog 节点合计覆盖全部 96 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:136][E: codex-rs/config/src/config_toml.rs:139]
+当前 `ConfigToml` 有 97 个顶层 `pub` 字段；本节点覆盖其中 18 个字段。[E: codex-rs/config/src/config_toml.rs:154][E: codex-rs/config/src/config_toml.rs:518]
 
-`ConfigProfile` repeats the model/provider/reasoning subset that can be scoped to named profiles, while `ConfigToml` is the top-level schema loaded from config.toml.[E: codex-rs/config/src/profile_toml.rs:24][E: codex-rs/config/src/config_toml.rs:136]
+`ConfigProfile` repeats model/provider/reasoning fields that can be scoped to named profiles, while `ConfigToml` is the top-level schema loaded from config.toml.[E: codex-rs/config/src/profile_toml.rs:24][E: codex-rs/config/src/profile_toml.rs:25][E: codex-rs/config/src/profile_toml.rs:31][E: codex-rs/config/src/profile_toml.rs:35][E: codex-rs/config/src/profile_toml.rs:38][E: codex-rs/config/src/config_toml.rs:154]
 
 ## 字段 catalog
 
-| key | Rust type | serde/schema attrs | 源码注释摘要 | Evidence |
+| key | Rust type | serde/schema attrs | 字段说明 | Evidence |
 |---|---|---|---|---|
-| `model` | `Option<String>` | none | Optional override of model selection. | [E: codex-rs/config/src/config_toml.rs:140][E: codex-rs/config/src/config_toml.rs:141] |
-| `review_model` | `Option<String>` | none | Review model override used by the `/review` feature. | [E: codex-rs/config/src/config_toml.rs:142][E: codex-rs/config/src/config_toml.rs:143] |
-| `model_provider` | `Option<String>` | none | Provider to use from the model_providers map. | [E: codex-rs/config/src/config_toml.rs:145][E: codex-rs/config/src/config_toml.rs:146] |
-| `model_context_window` | `Option<i64>` | none | Size of the context window for the model, in tokens. | [E: codex-rs/config/src/config_toml.rs:148][E: codex-rs/config/src/config_toml.rs:149] |
-| `model_auto_compact_token_limit` | `Option<i64>` | none | Token usage threshold triggering auto-compaction of conversation history. | [E: codex-rs/config/src/config_toml.rs:151][E: codex-rs/config/src/config_toml.rs:152] |
-| `model_auto_compact_token_limit_scope` | `Option<AutoCompactTokenLimitScope>` | none | Controls whether the auto-compaction limit applies to the full context or only to tokens after the carried prefix in the current compaction window. | [E: codex-rs/config/src/config_toml.rs:154][E: codex-rs/config/src/config_toml.rs:156] |
-| `model_providers` | `HashMap<String, ModelProviderInfo>` | `#[serde(default, deserialize_with = "deserialize_model_providers")]` | User-defined provider entries that extend the built-in list. Built-in IDs cannot be overridden. | [E: codex-rs/config/src/config_toml.rs:270][E: codex-rs/config/src/config_toml.rs:272][E: codex-rs/config/src/config_toml.rs:273] |
-| `model_reasoning_effort` | `Option<ReasoningEffort>` | none | ConfigToml schema field. | [E: codex-rs/config/src/config_toml.rs:337] |
-| `plan_mode_reasoning_effort` | `Option<ReasoningEffort>` | none | ConfigToml schema field. | [E: codex-rs/config/src/config_toml.rs:338] |
-| `model_reasoning_summary` | `Option<ReasoningSummary>` | none | ConfigToml schema field. | [E: codex-rs/config/src/config_toml.rs:339] |
-| `model_verbosity` | `Option<Verbosity>` | none | Optional verbosity control for GPT-5 models (Responses API `text.verbosity`). | [E: codex-rs/config/src/config_toml.rs:340][E: codex-rs/config/src/config_toml.rs:341] |
-| `model_supports_reasoning_summaries` | `Option<bool>` | none | Override to force-enable reasoning summaries for the configured model. | [E: codex-rs/config/src/config_toml.rs:343][E: codex-rs/config/src/config_toml.rs:344] |
-| `model_catalog_json` | `Option<AbsolutePathBuf>` | none | Optional path to a JSON model catalog (applied on startup only). Per-thread `config` overrides are accepted but do not reapply this (no-ops). | [E: codex-rs/config/src/config_toml.rs:346][E: codex-rs/config/src/config_toml.rs:348] |
-| `personality` | `Option<Personality>` | none | Optionally specify a personality for the model | [E: codex-rs/config/src/config_toml.rs:350][E: codex-rs/config/src/config_toml.rs:351] |
-| `service_tier` | `Option<String>` | none | Optional explicit service tier request id for new turns (for example `default`, `priority`, or `flex`; legacy `fast` also works). | [E: codex-rs/config/src/config_toml.rs:353][E: codex-rs/config/src/config_toml.rs:355] |
-| `chatgpt_base_url` | `Option<String>` | none | Base URL for requests to ChatGPT (as opposed to the OpenAI API). | [E: codex-rs/config/src/config_toml.rs:357][E: codex-rs/config/src/config_toml.rs:358] |
-| `openai_base_url` | `Option<String>` | none | Base URL override for the built-in `openai` model provider. | [E: codex-rs/config/src/config_toml.rs:363][E: codex-rs/config/src/config_toml.rs:364] |
-| `oss_provider` | `Option<String>` | none | Preferred OSS provider for local models, e.g. "lmstudio" or "ollama". | [E: codex-rs/config/src/config_toml.rs:499][E: codex-rs/config/src/config_toml.rs:500] |
+| `model` | `Option<String>` | none | Model selection override. | [E: codex-rs/config/src/config_toml.rs:156] |
+| `review_model` | `Option<String>` | none | Review model override used by `/review`. | [E: codex-rs/config/src/config_toml.rs:158] |
+| `model_provider` | `Option<String>` | none | Provider id selected from `model_providers`. | [E: codex-rs/config/src/config_toml.rs:161] |
+| `model_context_window` | `Option<i64>` | none | Model context-window size. | [E: codex-rs/config/src/config_toml.rs:164] |
+| `model_auto_compact_token_limit` | `Option<i64>` | none | Auto-compaction token threshold. | [E: codex-rs/config/src/config_toml.rs:167] |
+| `model_auto_compact_token_limit_scope` | `Option<AutoCompactTokenLimitScope>` | none | Auto-compaction limit scope. | [E: codex-rs/config/src/config_toml.rs:171] |
+| `model_providers` | `HashMap<String, ModelProviderInfo>` | `#[serde(default, deserialize_with = "deserialize_model_providers")]` | User-defined provider entries map. | [E: codex-rs/config/src/config_toml.rs:287][E: codex-rs/config/src/config_toml.rs:288] |
+| `model_reasoning_effort` | `Option<ReasoningEffort>` | none | Reasoning effort override. | [E: codex-rs/config/src/config_toml.rs:352] |
+| `plan_mode_reasoning_effort` | `Option<ReasoningEffort>` | none | Plan-mode reasoning effort override. | [E: codex-rs/config/src/config_toml.rs:353] |
+| `model_reasoning_summary` | `Option<ReasoningSummary>` | none | Reasoning summary mode override. | [E: codex-rs/config/src/config_toml.rs:354] |
+| `model_verbosity` | `Option<Verbosity>` | none | GPT-5 Responses API text verbosity override. | [E: codex-rs/config/src/config_toml.rs:356] |
+| `model_supports_reasoning_summaries` | `Option<bool>` | none | Forced reasoning-summary support override. | [E: codex-rs/config/src/config_toml.rs:359] |
+| `model_catalog_json` | `Option<AbsolutePathBuf>` | none | Model catalog JSON path. | [E: codex-rs/config/src/config_toml.rs:363] |
+| `personality` | `Option<Personality>` | none | Model personality selector. | [E: codex-rs/config/src/config_toml.rs:366] |
+| `service_tier` | `Option<String>` | none | Explicit service tier request id. | [E: codex-rs/config/src/config_toml.rs:370] |
+| `chatgpt_base_url` | `Option<String>` | none | ChatGPT request base URL. | [E: codex-rs/config/src/config_toml.rs:373] |
+| `openai_base_url` | `Option<String>` | none | Built-in OpenAI provider base URL override. | [E: codex-rs/config/src/config_toml.rs:382] |
+| `oss_provider` | `Option<String>` | none | Preferred OSS provider for local models. | [E: codex-rs/config/src/config_toml.rs:518] |
 
 ## Sources
 

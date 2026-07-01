@@ -8,7 +8,7 @@ symbols: [TextInput, ImageInput, LocalImageInput, SkillInput, MentionInput, RunI
 related: [sdk.py-overview, sdk.sdk-architecture, rpc.server-requests]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > Python inputs/errors describes the `openai_codex` public input dataclasses, their conversion into app-server v2 `UserInput`-style JSON items, the SDK's typed JSON-RPC exception hierarchy, overload retry helper, and the `MessageRouter` that maps raw responses/errors/notifications from the single stdout reader thread.[E: sdk/python/src/openai_codex/_inputs.py:8][E: sdk/python/src/openai_codex/_inputs.py:45][E: sdk/python/src/openai_codex/errors.py:6][E: sdk/python/src/openai_codex/errors.py:86][E: sdk/python/src/openai_codex/retry.py:12][E: sdk/python/src/openai_codex/_message_router.py:17][E: sdk/python/src/openai_codex/client.py:803]

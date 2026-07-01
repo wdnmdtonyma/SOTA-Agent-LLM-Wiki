@@ -17,7 +17,7 @@ symbols:
   - deriveNewContentsFromChunks
   - ApplyPatch.execute
 evidence: explicit
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > 这份节点描述 opencode apply_patch 的 wire grammar、chunk 语义与四段 fuzzy match 顺序；V1/V2 parser 很像，但工具行为有关键差异。
@@ -72,19 +72,19 @@ V1 工具结束时会发布文件变更事件，并对变更文件尝试拉取 L
 
 ## V2
 
-V2 `ApplyPatch` tool wire name 是 `apply_patch`，input 字段是 `patchText`。[E: packages/core/src/tool/apply-patch.ts:13][E: packages/core/src/tool/apply-patch.ts:15] V2 工具描述明确写出“moves unsupported”和“atomic rollback unsupported”，并在执行时如果 hunk 有 `movePath` 就失败。[E: packages/core/src/tool/apply-patch.ts:58][E: packages/core/src/tool/apply-patch.ts:59][E: packages/core/src/tool/apply-patch.ts:84][E: packages/core/src/tool/apply-patch.ts:85]
+V2 `ApplyPatch` tool wire name 是 `apply_patch`，input 字段是 `patchText`。[E: packages/core/src/tool/apply-patch.ts:17][E: packages/core/src/tool/apply-patch.ts:20] V2 工具描述明确写出 moves unsupported 和 atomic rollback unsupported，并在执行时如果 hunk 有 `movePath` 就失败。[E: packages/core/src/tool/apply-patch.ts:72][E: packages/core/src/tool/apply-patch.ts:97][E: packages/core/src/tool/apply-patch.ts:98]
 
-V2 先解析 patch，收集所有目标路径，解析外部目录 permission，再对 `action: "edit"` 进行 assert。[E: packages/core/src/tool/apply-patch.ts:79][E: packages/core/src/tool/apply-patch.ts:87][E: packages/core/src/tool/apply-patch.ts:96][E: packages/core/src/tool/apply-patch.ts:103][E: packages/core/src/tool/apply-patch.ts:104] add/delete/update 会先准备成 `prepared` 变更列表，update 使用 `Patch.derive` 生成新内容；之后逐项 `create/remove/writeIfUnchanged`，工具描述说明没有 atomic rollback。[E: packages/core/src/tool/apply-patch.ts:112][E: packages/core/src/tool/apply-patch.ts:125][E: packages/core/src/tool/apply-patch.ts:144][E: packages/core/src/tool/apply-patch.ts:155][E: packages/core/src/tool/apply-patch.ts:159][E: packages/core/src/tool/apply-patch.ts:59]
+V2 先解析 patch，收集所有目标路径，解析外部目录 permission，再对 `action: "edit"` 进行 assert。[E: packages/core/src/tool/apply-patch.ts:92][E: packages/core/src/tool/apply-patch.ts:100][E: packages/core/src/tool/apply-patch.ts:102][E: packages/core/src/tool/apply-patch.ts:109][E: packages/core/src/tool/apply-patch.ts:117] add/delete/update 会先准备成 `prepared` 变更列表，update 使用 `Patch.derive` 生成新内容；之后逐项 `create/remove/writeIfUnchanged`，工具描述说明没有 atomic rollback。[E: packages/core/src/tool/apply-patch.ts:125][E: packages/core/src/tool/apply-patch.ts:146][E: packages/core/src/tool/apply-patch.ts:163][E: packages/core/src/tool/apply-patch.ts:175][E: packages/core/src/tool/apply-patch.ts:179][E: packages/core/src/tool/apply-patch.ts:72]
 
 ## V1/V2 差异速查
 
 | 维度 | V1 | V2 |
 |---|---|---|
 | parser 文件 | `packages/opencode/src/patch/index.ts`。 | `packages/core/src/patch.ts`。 |
-| move directive | parser 与工具都支持 move；工具写目标再删除旧路径。[E: packages/opencode/src/patch/index.ts:92][E: packages/opencode/src/tool/apply_patch.ts:235][E: packages/opencode/src/tool/apply_patch.ts:239][E: packages/opencode/src/tool/apply_patch.ts:240] | parser 可读 `movePath`，tool 明确拒绝 move。[E: packages/core/src/patch.ts:55][E: packages/core/src/tool/apply-patch.ts:84][E: packages/core/src/tool/apply-patch.ts:85] |
-| permission action | `permission: "edit"`。[E: packages/opencode/src/tool/apply_patch.ts:207] | `action: "edit"`。[E: packages/core/src/tool/apply-patch.ts:104] |
+| move directive | parser 与工具都支持 move；工具写目标再删除旧路径。[E: packages/opencode/src/patch/index.ts:92][E: packages/opencode/src/tool/apply_patch.ts:235][E: packages/opencode/src/tool/apply_patch.ts:239][E: packages/opencode/src/tool/apply_patch.ts:240] | parser 可读 `movePath`，tool 明确拒绝 move。[E: packages/core/src/patch.ts:55][E: packages/core/src/tool/apply-patch.ts:97][E: packages/core/src/tool/apply-patch.ts:98] |
+| permission action | `permission: "edit"`。[E: packages/opencode/src/tool/apply_patch.ts:207] | `action: "edit"`。[E: packages/core/src/tool/apply-patch.ts:117] |
 | fuzzy pass | exact -> rstrip -> trim -> normalized。[E: packages/opencode/src/patch/index.ts:464][E: packages/opencode/src/patch/index.ts:468][E: packages/opencode/src/patch/index.ts:472][E: packages/opencode/src/patch/index.ts:476] | exact -> rstrip -> trim -> normalized。[E: packages/core/src/patch.ts:162] |
-| rollback | move 由写目标再删旧路径完成。[E: packages/opencode/src/tool/apply_patch.ts:239][E: packages/opencode/src/tool/apply_patch.ts:240] | 描述说明没有 atomic rollback，执行按 `prepared` 顺序逐项应用。[E: packages/core/src/tool/apply-patch.ts:59][E: packages/core/src/tool/apply-patch.ts:139] |
+| rollback | move 由写目标再删旧路径完成。[E: packages/opencode/src/tool/apply_patch.ts:239][E: packages/opencode/src/tool/apply_patch.ts:240] | 描述说明没有 atomic rollback，执行按 `prepared` 顺序逐项应用。[E: packages/core/src/tool/apply-patch.ts:72][E: packages/core/src/tool/apply-patch.ts:159] |
 
 ## Sources
 

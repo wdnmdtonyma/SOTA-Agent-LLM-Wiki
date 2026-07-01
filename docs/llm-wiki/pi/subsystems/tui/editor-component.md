@@ -9,7 +9,7 @@ symbols: [EditorComponent, Editor, onSubmit]
 related: [subsys.tui.editor-mechanics, subsys.tui.autocomplete]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > 多行编辑器组件是 `packages/tui` 里的 terminal text editor 子系统: `EditorComponent` 定义可替换 editor 的最小 contract, `Editor` 是本文件导出的多行实现; raw input、rendered layout、autocomplete、paste marker、history、undo/kill-ring 与 `onSubmit` 回调的连接点在下文逐项展开。[E: packages/tui/src/editor-component.ts:11][E: packages/tui/src/components/editor.ts:252]

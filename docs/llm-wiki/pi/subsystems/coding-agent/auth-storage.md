@@ -16,7 +16,7 @@ related:
   - subsys.coding-agent.model-registry
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `AuthStorage` 是 pi-coding-agent 的 credential store: 它把 provider-scoped API key、OAuth credentials、runtime `--api-key` override、environment fallback 和无泄密的 auth status 汇合成本地鉴权接口。

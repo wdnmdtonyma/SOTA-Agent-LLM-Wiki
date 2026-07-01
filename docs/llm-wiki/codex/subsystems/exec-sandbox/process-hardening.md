@@ -8,7 +8,7 @@ symbols: [pre_main_hardening]
 related: [spine.process-lifecycle, subsys.exec-sandbox.overview, subsys.exec-sandbox.arg0-dispatch]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > process hardening 是 Codex 进程 main 之前的 best-effort defense layer:Linux 关闭 dumpability、禁 core dump、移除 `LD_` env；FreeBSD/OpenBSD 禁 core dump 并移除 `LD_` env；macOS deny attach、禁 core dump、移除 `DYLD_` env；Windows 当前是 no-op。[E: codex-rs/process-hardening/src/lib.rs:12][E: codex-rs/process-hardening/src/lib.rs:14][E: codex-rs/process-hardening/src/lib.rs:44][E: codex-rs/process-hardening/src/lib.rs:56][E: codex-rs/process-hardening/src/lib.rs:60][E: codex-rs/process-hardening/src/lib.rs:75][E: codex-rs/process-hardening/src/lib.rs:77][E: codex-rs/process-hardening/src/lib.rs:83][E: codex-rs/process-hardening/src/lib.rs:85][E: codex-rs/process-hardening/src/lib.rs:95][E: codex-rs/process-hardening/src/lib.rs:99][E: codex-rs/process-hardening/src/lib.rs:120][E: codex-rs/process-hardening/src/lib.rs:121]

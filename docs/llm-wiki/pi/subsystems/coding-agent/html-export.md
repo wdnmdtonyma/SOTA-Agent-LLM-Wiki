@@ -16,7 +16,7 @@ related:
   - subsys.coding-agent.theme-controller
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > 会话 HTML 导出是 pi-coding-agent 把 `SessionManager` 的 JSONL 会话、可选 `AgentState` 元数据、主题色和扩展工具渲染结果打包成单个 standalone HTML 文件的子系统。

@@ -15,7 +15,7 @@ related:
   - ref.coding-agent.env-vars
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `surface.config.resolution` 描述 pi-coding-agent 用户配置中的 string value 解析语法:普通字面量、`$ENV` / `${ENV}` 环境变量模板、`!cmd` 命令输出,最终由 `resolveConfigValue()` 返回字符串或 `undefined`。

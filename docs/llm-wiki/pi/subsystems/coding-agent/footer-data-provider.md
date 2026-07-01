@@ -13,7 +13,7 @@ related:
   - subsys.coding-agent.interactive-orchestration
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.coding-agent.footer-data-provider` 描述 pi-coding-agent 的 footer data cache: `FooterDataProvider` 把当前 git branch、extension status 文本、可用 provider 数量和 branch-change subscription 收敛成 TUI footer 与 extension footer component 可读取的 read-only surface。

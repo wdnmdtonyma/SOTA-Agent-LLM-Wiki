@@ -20,7 +20,7 @@ related:
   - ref.coding-agent.rpc-methods
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.orchestrator.config` 描述 experimental `pi-orchestrator` 的本地路径 contract:配置根目录如何由 env 解析,auth/machine/instances/socket 文件如何派生,CLI 如何使用 socket,以及公开类型如何约束 instance metadata。

@@ -1,0 +1,2 @@
+- `surface/misc/images.md`: this node verifies the `ImageContent` input path and image model catalog boundaries, but it does not enumerate which chat/text models support image input; that remains owned by `ref.ai.model-catalog` and is kept as `[U]`.
+- `surface/misc/security.md`: this node verifies CLI/RPC HTTP dispatcher setup, but it does not prove every provider/network call path uses that dispatcher; the network-isolation claim is kept narrower and the unresolved provider coverage remains `[U]`.

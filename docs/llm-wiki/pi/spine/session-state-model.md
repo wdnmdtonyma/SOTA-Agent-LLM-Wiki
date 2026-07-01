@@ -9,7 +9,7 @@ symbols: [Session, SessionTreeEntry, buildSessionContext, SessionManager]
 related: [subsys.agent-core.session-tree, subsys.agent-core.tree-navigation, subsys.coding-agent.session-manager, ref.coding-agent.session-format]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `spine.session-state-model` 说明 pi 如何把 append-only session tree 解析成当前分支的 LLM context，并把 `pi-agent-core` 的通用 `Session` 与 `pi-coding-agent` 的产品级 `SessionManager` 分开看。

@@ -18,7 +18,7 @@ related:
   - subsys.ai.message-transform
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `ref.ai.core-types` 是 `packages/ai/src/types.ts` exported 类型的字段级目录:覆盖模型元数据、请求上下文、消息 union、assistant 流事件、usage/cost 与 image/compat 辅助类型。

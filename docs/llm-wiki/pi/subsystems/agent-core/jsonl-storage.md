@@ -16,7 +16,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.jsonl-storage` 描述 `pi-agent` harness 的 durable JSONL session backend: `JsonlSessionStorage` 管一个 append-only session 文件,`JsonlSessionRepo` 管按 cwd 分目录的 session 文件集合。

@@ -9,7 +9,7 @@ symbols: [isNativeModifierPressed, loadNativeModifiersHelper]
 related: [subsys.tui.key-pipeline]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `native-modifiers.ts` 是 TUI 的 macOS native modifier bridge: 它按需加载 Darwin 预编译 `.node` helper, 并给上层提供一个失败即返回 `false` 的 `isNativeModifierPressed()` 查询入口。

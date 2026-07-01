@@ -13,7 +13,7 @@ symbols: [Script]
 related: [infra.native-binary-release]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > `packages/script` 提供发布脚本共享的 channel/version/team identity，`packages/identity` 保存 opencode mark 的 SVG/PNG 品牌资源。

@@ -13,7 +13,7 @@ related:
   - subsys.tui.autocomplete
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > TUI fuzzy match 是一个 lightweight search utility: `fuzzyMatch(query, text)` 判断 query 字符是否按顺序出现在 text 中并给出 score, `fuzzyFilter(items, query, getText)` 用这些 score 过滤和排序任意 item 列表。

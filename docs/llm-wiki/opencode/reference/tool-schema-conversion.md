@@ -5,10 +5,11 @@ kind: reference
 tier: T3
 v: v1
 source:
+  - packages/core/src/tool/tool.ts
   - packages/opencode/src/tool/json-schema.ts
   - packages/opencode/src/tool/registry.ts
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 evidence: explicit
 symbols:
   - fromSchema
@@ -22,7 +23,7 @@ related:
 
 # Tool Schema Conversion Reference
 
-本节点只描述 V1 schema conversion。V2 的 canonical tool schema conversion 在 `packages/core/src/tool/tool.ts` 由 `Tool.toJsonSchema` 私有使用，不走 `packages/opencode/src/tool/json-schema.ts` 的 V1 normalization path。[E: packages/core/src/tool/tool.ts:140] [I]
+本节点只描述 V1 schema conversion。V2 的 canonical tool schema conversion 在 `packages/core/src/tool/tool.ts` 由 `toJsonSchema` 私有使用，不走 `packages/opencode/src/tool/json-schema.ts` 的 V1 normalization path。[E: packages/core/src/tool/tool.ts:158] [I]
 
 ## V1 Pipeline
 
@@ -41,28 +42,29 @@ related:
 | 单元素 `anyOf` | `anyOf` normalize 后只剩一个 item。[E: packages/opencode/src/tool/json-schema.ts:72] | 用唯一 item 代替 wrapper。 | 压平无意义 union。[I] |
 | safe `allOf` flatten | `canFlattenAllOf(schema.allOf, schema)` 允许合并。[E: packages/opencode/src/tool/json-schema.ts:78] [E: packages/opencode/src/tool/json-schema.ts:110] | merge allOf object branches。 | 降低 provider 对 `allOf` 支持差异。[I] |
 | integer safe range | type 为 integer 且 `maximum === undefined`。[E: packages/opencode/src/tool/json-schema.ts:83] | 返回对象会保留已有字段、补 `minimum: Number.MIN_SAFE_INTEGER`，并设置 `maximum: Number.MAX_SAFE_INTEGER`。[E: packages/opencode/src/tool/json-schema.ts:84] | 避免 unbounded integer 在 provider 侧表现不稳定。[I] |
-| local ref inline | `$ref` 以 `#/$defs/` 或 `#/definitions/` 开头且定义存在。[E: packages/opencode/src/tool/json-schema.ts:125] [E: packages/opencode/src/tool/json-schema.ts:127] | 用 referenced definition 内容替换 `$ref`。[E: packages/opencode/src/tool/json-schema.ts:132] | 减少 provider 不支持 local refs 的风险。[I] |
+| local ref inline | `$ref` 以 `#/$defs/` 或 `#/definitions/` 开头且定义存在。[E: packages/opencode/src/tool/json-schema.ts:125] [E: packages/opencode/src/tool/json-schema.ts:127] | 用 referenced definition 内容替换 `$ref`。[E: packages/opencode/src/tool/json-schema.ts:133] | 减少 provider 不支持 local refs 的风险。[I] |
 | unused definitions drop | `hasLocalReference` 返回 false。[E: packages/opencode/src/tool/json-schema.ts:146] [E: packages/opencode/src/tool/json-schema.ts:147] | 删除 root 上的 `$defs` 和 `definitions`。[E: packages/opencode/src/tool/json-schema.ts:148] | inline 之后避免悬空 defs。 |
 
 ## Plugin Tool Conversion
 
-V1 registry 的 plugin tool conversion 是 schema conversion 的第二入口。`fromPlugin(id, input)` 先把缺失 args 归一为 `{}`，然后判断 args 是否全是 Zod schema。[E: packages/opencode/src/tool/registry.ts:114] [E: packages/opencode/src/tool/registry.ts:119] [E: packages/opencode/src/tool/registry.ts:121]
+V1 registry 的 plugin tool conversion 是 schema conversion 的第二入口。`fromPlugin(id, input)` 先把缺失 args 归一为 `{}`，然后判断 args 是否全是 Zod schema。[E: packages/opencode/src/tool/registry.ts:113] [E: packages/opencode/src/tool/registry.ts:118] [E: packages/opencode/src/tool/registry.ts:120]
 
 | plugin args 类型 | `parameters` | `jsonSchema` | 证据 |
 | --- | --- | --- | --- |
-| 全部 Zod | `zodParams(zodArgs)`，也就是 `Schema.Any` 占位 | `zodJsonSchema(z.object(zodArgs))` | [E: packages/opencode/src/tool/registry.ts:122] [E: packages/opencode/src/tool/registry.ts:123] [E: packages/opencode/src/tool/registry.ts:125] |
-| legacy JSON shape | `Schema.Struct(...)`，每个 key 都是 `Schema.Any` | `legacyJsonSchema(args)` | [E: packages/opencode/src/tool/registry.ts:124] [E: packages/opencode/src/tool/registry.ts:126] |
+| 全部 Zod | `Schema.declare<unknown>((u) => zodParams.safeParse(u).success)` | `zodJsonSchema(zodParams)` | [E: packages/opencode/src/tool/registry.ts:121] [E: packages/opencode/src/tool/registry.ts:122] [E: packages/opencode/src/tool/registry.ts:123] [E: packages/opencode/src/tool/registry.ts:124] |
+| legacy JSON shape | `Schema.Unknown` | `legacyJsonSchema(entries)` | [E: packages/opencode/src/tool/registry.ts:122] [E: packages/opencode/src/tool/registry.ts:125] |
 
-`legacyJsonSchema` 只接受 `input.type === "object"` 的 legacy shape；它把 properties 的每个 key 都列入 `required`。[E: packages/opencode/src/tool/registry.ts:354] [E: packages/opencode/src/tool/registry.ts:359] `zodJsonSchema` 使用 `z.toJSONSchema` 和 metadata registry，再把 `$defs` 改成 `definitions`。[E: packages/opencode/src/tool/registry.ts:365] [E: packages/opencode/src/tool/registry.ts:369]
+`legacyJsonSchema` 从 plugin args entries 中筛出 JSON schema definition 作为 properties，并把 properties 的每个 key 都列入 `required`。[E: packages/opencode/src/tool/registry.ts:329] [E: packages/opencode/src/tool/registry.ts:331] [E: packages/opencode/src/tool/registry.ts:336] `zodJsonSchema` 使用 `z.toJSONSchema` 和 metadata registry，再把 `$defs` 改成 `definitions`。[E: packages/opencode/src/tool/registry.ts:340] [E: packages/opencode/src/tool/registry.ts:341] [E: packages/opencode/src/tool/registry.ts:345]
 
 ## Provider-Facing Mutation During Tool Materialization
 
-V1 registry 在 `tools(input)` 里把每个 initialized tool 映射为 model-facing definition。plugin hook `tool.definition` 可以改 description、parameters 和 jsonSchema；当 `parameters` 未变化或 hook 显式改了 `jsonSchema` 时，registry 保留或更新 `jsonSchema` 字段。[E: packages/opencode/src/tool/registry.ts:284] [E: packages/opencode/src/tool/registry.ts:290] task tool 还会在 materialization 时按 agent 生成动态 description。[E: packages/opencode/src/tool/registry.ts:295]
+V1 registry 在 `tools(input)` 里把每个 initialized tool 映射为 model-facing definition。plugin hook `tool.definition` 可以改 description、parameters 和 jsonSchema；当 `parameters` 未变化或 hook 显式改了 `jsonSchema` 时，registry 保留或更新 `jsonSchema` 字段。[E: packages/opencode/src/tool/registry.ts:288] [E: packages/opencode/src/tool/registry.ts:290] [E: packages/opencode/src/tool/registry.ts:293] [E: packages/opencode/src/tool/registry.ts:294] [E: packages/opencode/src/tool/registry.ts:298] [E: packages/opencode/src/tool/registry.ts:299] task tool 还会在 materialization 时按 agent 生成动态 description。[E: packages/opencode/src/tool/registry.ts:295]
 
 ## Sources
 
 - packages/opencode/src/tool/json-schema.ts
 - packages/opencode/src/tool/registry.ts
+- packages/core/src/tool/tool.ts
 
 ## Related
 

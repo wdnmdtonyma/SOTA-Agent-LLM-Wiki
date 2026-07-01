@@ -25,7 +25,7 @@ related:
   - subsys.app-server.message-processor
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 app-server transport implementation moved to `codex-app-server-transport`; `codex-rs/app-server/src/transport.rs` now re-exports transport types/functions and keeps only app-server-local connection/outbound filtering glue. The transport surface feeds processor-facing `TransportEvent` values and writer channels for stdio, Unix socket, WebSocket, and remote-control origins [E: codex-rs/app-server/src/transport.rs:15][E: codex-rs/app-server/src/transport.rs:27][E: codex-rs/app-server/src/transport.rs:31][E: codex-rs/app-server/src/transport.rs:35][E: codex-rs/app-server/src/transport.rs:36][E: codex-rs/app-server-transport/src/transport/mod.rs:73][E: codex-rs/app-server-transport/src/transport/mod.rs:170][E: codex-rs/app-server-transport/src/transport/mod.rs:187]。

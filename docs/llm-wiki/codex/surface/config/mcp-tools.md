@@ -8,7 +8,7 @@ symbols: [ConfigToml, McpServerConfig, OAuthCredentialsStoreMode, ToolsToml, Too
 related: [tool.mcp-namespace-tools, tool.web-search, config.skills-plugins-features, subsys.mcp.client]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > MCP 与工具设置 catalog 覆盖 ConfigToml 中 MCP server definitions、MCP OAuth callback/storage、Apps MCP product SKU、tool output/background terminal limits、web search mode、nested tools config、tool suggestions 和 unified exec compatibility flag。
@@ -22,25 +22,25 @@ updated: 5670360009
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 96 个顶层 `pub` 字段；本节点覆盖其中 11 个。8 个 surface/config catalog 节点合计覆盖全部 96 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:136][E: codex-rs/config/src/config_toml.rs:139]
+当前 `ConfigToml` 有 97 个顶层 `pub` 字段；本节点覆盖其中 11 个字段。[E: codex-rs/config/src/config_toml.rs:154][E: codex-rs/config/src/config_toml.rs:518]
 
-`ToolsToml` is the nested `[tools]` section and currently contains `web_search` plus `experimental_request_user_input`.[E: codex-rs/config/src/config_toml.rs:625][E: codex-rs/config/src/config_toml.rs:630][E: codex-rs/config/src/config_toml.rs:631]
+`ToolsToml` is the nested `[tools]` section and currently contains `web_search` plus `experimental_request_user_input`.[E: codex-rs/config/src/config_toml.rs:640][E: codex-rs/config/src/config_toml.rs:645][E: codex-rs/config/src/config_toml.rs:646]
 
 ## 字段 catalog
 
-| key | Rust type | serde/schema attrs | 源码注释摘要 | Evidence |
+| key | Rust type | serde/schema attrs | 字段说明 | Evidence |
 |---|---|---|---|---|
-| `mcp_servers` | `HashMap<String, McpServerConfig>` | `#[serde(default)]`<br>`#[schemars(schema_with = "crate::schema::mcp_servers_schema")]` | Definition for MCP servers that Codex can reach out to for tool calls. | [E: codex-rs/config/src/config_toml.rs:246][E: codex-rs/config/src/config_toml.rs:247][E: codex-rs/config/src/config_toml.rs:250] |
-| `mcp_oauth_credentials_store` | `Option<OAuthCredentialsStoreMode>` | `#[serde(default)]` | Preferred backend for storing MCP OAuth credentials. keyring: Use an OS-specific keyring service. https://github.com/openai/codex/blob/main/codex-rs/rmcp-client/src/oauth.rs#L2 ... | [E: codex-rs/config/src/config_toml.rs:252][E: codex-rs/config/src/config_toml.rs:257][E: codex-rs/config/src/config_toml.rs:258] |
-| `mcp_oauth_callback_port` | `Option<u16>` | none | Optional fixed port for the local HTTP callback server used during MCP OAuth login. When unset, Codex will bind to an ephemeral port chosen by the OS. | [E: codex-rs/config/src/config_toml.rs:260][E: codex-rs/config/src/config_toml.rs:262] |
-| `mcp_oauth_callback_url` | `Option<String>` | none | Optional redirect URI to use during MCP OAuth login. When set, this URI is used in the OAuth authorization request instead of the local listener address. The local callback list... | [E: codex-rs/config/src/config_toml.rs:264][E: codex-rs/config/src/config_toml.rs:268] |
-| `apps_mcp_product_sku` | `Option<String>` | none | Optional product SKU forwarded on host-owned Codex Apps MCP requests. | [E: codex-rs/config/src/config_toml.rs:360][E: codex-rs/config/src/config_toml.rs:361] |
-| `tool_output_token_limit` | `Option<usize>` | none | Token budget applied when storing tool/function outputs in the context manager. | [E: codex-rs/config/src/config_toml.rs:283][E: codex-rs/config/src/config_toml.rs:284] |
-| `background_terminal_max_timeout` | `Option<u64>` | none | Maximum poll window for background terminal output (`write_stdin`), in milliseconds. Default: `300000` (5 minutes). | [E: codex-rs/config/src/config_toml.rs:286][E: codex-rs/config/src/config_toml.rs:288] |
-| `web_search` | `Option<WebSearchMode>` | none | Controls the web search tool mode: disabled, cached, or live. | [E: codex-rs/config/src/config_toml.rs:412][E: codex-rs/config/src/config_toml.rs:413] |
-| `tools` | `Option<ToolsToml>` | none | Nested tools section for feature toggles | [E: codex-rs/config/src/config_toml.rs:415][E: codex-rs/config/src/config_toml.rs:416] |
-| `tool_suggest` | `Option<ToolSuggestConfig>` | none | Additional discoverable tools that can be suggested for installation. | [E: codex-rs/config/src/config_toml.rs:418][E: codex-rs/config/src/config_toml.rs:419] |
-| `experimental_use_unified_exec_tool` | `Option<bool>` | none | ConfigToml schema field. | [E: codex-rs/config/src/config_toml.rs:498] |
+| `mcp_servers` | `HashMap<String, McpServerConfig>` | `#[serde(default)]`<br>`#[schemars(schema_with = "crate::schema::mcp_servers_schema")]` | MCP server definition map for tool calls. | [E: codex-rs/config/src/config_toml.rs:262][E: codex-rs/config/src/config_toml.rs:264][E: codex-rs/config/src/config_toml.rs:265] |
+| `mcp_oauth_credentials_store` | `Option<OAuthCredentialsStoreMode>` | `#[serde(default)]` | MCP OAuth credentials storage backend. | [E: codex-rs/config/src/config_toml.rs:272][E: codex-rs/config/src/config_toml.rs:273] |
+| `mcp_oauth_callback_port` | `Option<u16>` | none | Optional fixed local OAuth callback port. | [E: codex-rs/config/src/config_toml.rs:277] |
+| `mcp_oauth_callback_url` | `Option<String>` | none | Optional OAuth redirect URI override. | [E: codex-rs/config/src/config_toml.rs:283] |
+| `apps_mcp_product_sku` | `Option<String>` | none | Product SKU forwarded on host-owned Codex Apps MCP requests. | [E: codex-rs/config/src/config_toml.rs:376] |
+| `tool_output_token_limit` | `Option<usize>` | none | Tool/function output token budget. | [E: codex-rs/config/src/config_toml.rs:299] |
+| `background_terminal_max_timeout` | `Option<u64>` | none | Background terminal output poll timeout. | [E: codex-rs/config/src/config_toml.rs:303] |
+| `web_search` | `Option<WebSearchMode>` | none | Controls the web search tool mode: disabled, cached, indexed, or live. | [E: codex-rs/config/src/config_toml.rs:431] |
+| `tools` | `Option<ToolsToml>` | none | Nested tools section for feature toggles. | [E: codex-rs/config/src/config_toml.rs:434] |
+| `tool_suggest` | `Option<ToolSuggestConfig>` | none | Discoverable tool suggestion config. | [E: codex-rs/config/src/config_toml.rs:437] |
+| `experimental_use_unified_exec_tool` | `Option<bool>` | none | Unified exec compatibility flag. | [E: codex-rs/config/src/config_toml.rs:516] |
 
 ## Sources
 

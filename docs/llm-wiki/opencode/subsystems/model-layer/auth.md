@@ -4,12 +4,12 @@ title: Model Auth
 kind: subsystem
 tier: T2
 v: shared
-source: [packages/opencode/src/auth/index.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/account/account.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts]
+source: [packages/opencode/src/auth/index.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/account/account.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts, packages/schema/src/credential.ts, packages/schema/src/integration.ts]
 symbols: [Auth.Service, ProviderAuth.Service, Account.Service, Credential.Service, Integration.Service]
 related: [provider.auth-accounts, model-layer.credential-v2, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > Model auth 横跨两代:V1 用 `auth.json` + provider auth hooks + account device flow 给 AI SDK provider registry 提供 key/OAuth token;V2 把 credentials 放进 SQLite `Credential` 表,并用 `Integration` 管 key/OAuth/env connection 与 OAuth attempt。
@@ -49,21 +49,21 @@ refresh token flow 调 `/auth/device/token` 的 refresh_token grant,解析 token
 
 ## V2
 
-V2 credential service 是 `@opencode/v2/Credential`,value 类型只有 `oauth` 与 `key` 两类:OAuth 含 methodID/refresh/access/expires/metadata,Key 含 key/metadata。[E: packages/core/src/credential.ts:17][E: packages/core/src/credential.ts:19][E: packages/core/src/credential.ts:20][E: packages/core/src/credential.ts:21][E: packages/core/src/credential.ts:22][E: packages/core/src/credential.ts:23][E: packages/core/src/credential.ts:26][E: packages/core/src/credential.ts:28][E: packages/core/src/credential.ts:29][E: packages/core/src/credential.ts:63]
+V2 credential service 是 `@opencode/v2/Credential`,value 类型只有 `oauth` 与 `key` 两类:OAuth 含 methodID/refresh/access/expires/metadata,Key 含 key/metadata。[E: packages/core/src/credential.ts:49][E: packages/schema/src/credential.ts:16][E: packages/schema/src/credential.ts:18][E: packages/schema/src/credential.ts:19][E: packages/schema/src/credential.ts:20][E: packages/schema/src/credential.ts:21][E: packages/schema/src/credential.ts:22][E: packages/schema/src/credential.ts:26][E: packages/schema/src/credential.ts:28][E: packages/schema/src/credential.ts:29][E: packages/schema/src/credential.ts:32]
 
-`Credential.Stored` 是 persisted row projection，字段是 id、integrationID、label、value；`Credential.create()` 会删除同 integration 的旧 rows 后插入新 credential。[E: packages/core/src/credential.ts:37][E: packages/core/src/credential.ts:38][E: packages/core/src/credential.ts:39][E: packages/core/src/credential.ts:40][E: packages/core/src/credential.ts:41][E: packages/core/src/credential.ts:108][E: packages/core/src/credential.ts:119][E: packages/core/src/credential.ts:123]
+`Credential.Info` 是 persisted row projection，字段是 id、integrationID、label、value；`Credential.create()` 会删除同 integration 的旧 rows 后插入新 credential。[E: packages/core/src/credential.ts:23][E: packages/core/src/credential.ts:24][E: packages/core/src/credential.ts:25][E: packages/core/src/credential.ts:26][E: packages/core/src/credential.ts:27][E: packages/core/src/credential.ts:94][E: packages/core/src/credential.ts:105][E: packages/core/src/credential.ts:109]
 
-`Integration.Service` 是本地 authentication/integration registry。它定义 OAuth/key/env methods、connection list、OAuth attempt lifecycle，并将成功授权写入 `Credential.Service`。[E: packages/core/src/integration.ts:59][E: packages/core/src/integration.ts:67][E: packages/core/src/integration.ts:73][E: packages/core/src/integration.ts:82][E: packages/core/src/integration.ts:205][E: packages/core/src/integration.ts:238][E: packages/core/src/integration.ts:402][E: packages/core/src/integration.ts:470] 这里的 integration 不是 workspace adapter。[I]
+`Integration.Service` 是本地 authentication/integration registry。它定义 OAuth/key/env methods、connection list、OAuth attempt lifecycle，并将成功授权写入 `Credential.Service`。[E: packages/schema/src/integration.ts:52][E: packages/schema/src/integration.ts:60][E: packages/schema/src/integration.ts:66][E: packages/core/src/integration.ts:146][E: packages/core/src/integration.ts:181][E: packages/core/src/integration.ts:335][E: packages/core/src/integration.ts:410] 这里的 integration 不是 workspace adapter。[I]
 
 ## 设计动机
 
-V1 auth 是文件与 plugin hook 的组合;V2 credential/integration 把 provider credential 变成 SQLite row 与 location-scoped connection service。[E: packages/opencode/src/auth/index.ts:10][E: packages/opencode/src/provider/auth.ts:118][E: packages/core/src/credential/sql.ts:6][E: packages/core/src/credential.ts:63][E: packages/core/src/integration.ts:253][E: packages/core/src/integration.ts:451] 这种形态服务于 durable/event-sourced core 和 provider availability 投影。[I]
+V1 auth 是文件与 plugin hook 的组合;V2 credential/integration 把 provider credential 变成 SQLite row 与 location-scoped connection service。[E: packages/opencode/src/auth/index.ts:10][E: packages/opencode/src/provider/auth.ts:118][E: packages/core/src/credential/sql.ts:5][E: packages/core/src/credential.ts:49][E: packages/core/src/integration.ts:146][E: packages/core/src/integration.ts:221][E: packages/core/src/integration.ts:520] 这种形态服务于 durable/event-sourced core 和 provider availability 投影。[I]
 
 ## 易错点
 
-- V1 `ProviderAuth` 的 method type 名叫 `api`;V2 `Integration.KeyMethod` 的 method type 是 `key`,V2 credential value type 也是 `key`。[E: packages/opencode/src/provider/auth.ts:42][E: packages/core/src/integration.ts:67][E: packages/core/src/integration.ts:68][E: packages/core/src/credential.ts:26][E: packages/core/src/credential.ts:27]
+- V1 `ProviderAuth` 的 method type 名叫 `api`;V2 `Integration.KeyMethod` 的 method type 是 `key`,V2 credential value type 也是 `key`。[E: packages/opencode/src/provider/auth.ts:42][E: packages/schema/src/integration.ts:60][E: packages/schema/src/integration.ts:61][E: packages/schema/src/credential.ts:26][E: packages/schema/src/credential.ts:27]
 - V1 account login 是 opencode server account device flow。[E: packages/opencode/src/account/account.ts:378][E: packages/opencode/src/account/account.ts:399] 它不是 provider API key login。[I]
-- V2 Integration 的 OAuth attempt 有 oauth/status/complete/cancel 生命周期。[E: packages/core/src/integration.ts:220][E: packages/core/src/integration.ts:240][E: packages/core/src/integration.ts:242][E: packages/core/src/integration.ts:249] 它不是 external SaaS connector abstraction。[I]
+- V2 Integration 的 OAuth attempt 有 oauth/status/complete/cancel 生命周期。[E: packages/core/src/integration.ts:163][E: packages/core/src/integration.ts:183][E: packages/core/src/integration.ts:185][E: packages/core/src/integration.ts:192] 它不是 external SaaS connector abstraction。[I]
 
 ## Sources
 - packages/opencode/src/auth/index.ts
@@ -73,6 +73,8 @@ V1 auth 是文件与 plugin hook 的组合;V2 credential/integration 把 provide
 - packages/core/src/credential/sql.ts
 - packages/core/src/integration.ts
 - packages/core/src/integration/connection.ts
+- packages/schema/src/credential.ts
+- packages/schema/src/integration.ts
 
 ## Related
 - provider.auth-accounts

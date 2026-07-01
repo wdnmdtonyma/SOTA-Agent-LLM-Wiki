@@ -9,7 +9,7 @@ symbols: [Instruction, Instruction.systemPaths, Instruction.system, Instruction.
 related: [prompt.system-prompts]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > V1 `Instruction` service 负责把 global/project/config/nearby instruction files 转成 provider-turn system context 或 read-tool 后续 system-reminder;它发现 `AGENTS.md`、可选 `CLAUDE.md` 和 deprecated `CONTEXT.md`。
@@ -23,9 +23,9 @@ updated: 355a0bcf5
 
 ## 职责边界
 
-`Instruction.Interface` 暴露 `clear`、`systemPaths`、`system`、`find`、`resolve` 五个操作。[E: packages/opencode/src/session/instruction.ts:34][E: packages/opencode/src/session/instruction.ts:35][E: packages/opencode/src/session/instruction.ts:36][E: packages/opencode/src/session/instruction.ts:37][E: packages/opencode/src/session/instruction.ts:38][E: packages/opencode/src/session/instruction.ts:39] `system()` 是 provider turn 前的全局/project/config instruction 注入,`resolve(messages, filepath, messageID)` 是读取具体文件后的 nearby instruction 增量注入。[E: packages/opencode/src/session/instruction.ts:110][E: packages/opencode/src/session/instruction.ts:155][E: packages/opencode/src/session/instruction.ts:166][E: packages/opencode/src/session/instruction.ts:167][E: packages/opencode/src/session/instruction.ts:179][E: packages/opencode/src/session/instruction.ts:184][E: packages/opencode/src/session/instruction.ts:195][E: packages/opencode/src/session/instruction.ts:214][E: packages/opencode/src/session/prompt.ts:1327][E: packages/opencode/src/session/prompt.ts:1333][E: packages/opencode/src/tool/read.ts:300]
+`Instruction.Interface` 暴露 `clear`、`systemPaths`、`system`、`find`、`resolve` 五个操作。[E: packages/opencode/src/session/instruction.ts:34][E: packages/opencode/src/session/instruction.ts:35][E: packages/opencode/src/session/instruction.ts:36][E: packages/opencode/src/session/instruction.ts:37][E: packages/opencode/src/session/instruction.ts:38][E: packages/opencode/src/session/instruction.ts:39] `system()` 是 provider turn 前的全局/project/config instruction 注入,`resolve(messages, filepath, messageID)` 是读取具体文件后的 nearby instruction 增量注入。[E: packages/opencode/src/session/instruction.ts:110][E: packages/opencode/src/session/instruction.ts:155][E: packages/opencode/src/session/instruction.ts:166][E: packages/opencode/src/session/instruction.ts:167][E: packages/opencode/src/session/instruction.ts:179][E: packages/opencode/src/session/instruction.ts:184][E: packages/opencode/src/session/instruction.ts:195][E: packages/opencode/src/session/instruction.ts:214][E: packages/opencode/src/session/prompt.ts:1259][E: packages/opencode/src/session/prompt.ts:1263][E: packages/opencode/src/tool/read.ts:300]
 
-`SessionPrompt.runLoop` 在组装 provider request 时调用 `instruction.system()` 并把结果拼到 system array 中;`handle.process` 随后接收该 system array。[E: packages/opencode/src/session/prompt.ts:1327][E: packages/opencode/src/session/prompt.ts:1330][E: packages/opencode/src/session/prompt.ts:1333][E: packages/opencode/src/session/prompt.ts:1336][E: packages/opencode/src/session/prompt.ts:1342]
+`SessionPrompt.runLoop` 在组装 provider request 时调用 `instruction.system()` 并把结果拼到 system array 中;`handle.process` 随后接收该 system array。[E: packages/opencode/src/session/prompt.ts:1256][E: packages/opencode/src/session/prompt.ts:1259][E: packages/opencode/src/session/prompt.ts:1263][E: packages/opencode/src/session/prompt.ts:1265][E: packages/opencode/src/session/prompt.ts:1271]
 
 `Instruction` 使用 `InstanceState.context` 决定当前 directory/worktree,使用 `Global.Service` 读取全局 config/home,并读取 `RuntimeFlags.disableClaudeCodePrompt` 决定是否包含 Claude Code prompt 文件。[E: packages/opencode/src/session/instruction.ts:55][E: packages/opencode/src/session/instruction.ts:57][E: packages/opencode/src/session/instruction.ts:58][E: packages/opencode/src/session/instruction.ts:60][E: packages/opencode/src/session/instruction.ts:61][E: packages/opencode/src/session/instruction.ts:62][E: packages/opencode/src/session/instruction.ts:80][E: packages/opencode/src/session/instruction.ts:83][E: packages/opencode/src/session/instruction.ts:112][E: packages/opencode/src/session/instruction.ts:126][E: packages/opencode/src/effect/runtime-flags.ts:23][E: packages/opencode/src/effect/runtime-flags.ts:26]
 
@@ -63,9 +63,9 @@ updated: 355a0bcf5
 
 ## V1 与 V2 迁移边界
 
-V1 instruction 注入是 immediate string assembly:`Instruction.system()` 返回 string array,`SessionPrompt.runLoop` 每次 provider turn 都把它拼进 system prompt。[E: packages/opencode/src/session/instruction.ts:155][E: packages/opencode/src/session/instruction.ts:165][E: packages/opencode/src/session/prompt.ts:1327][E: packages/opencode/src/session/prompt.ts:1333]
+V1 instruction 注入是 immediate string assembly:`Instruction.system()` 返回 string array,`SessionPrompt.runLoop` 每次 provider turn 都把它拼进 system prompt。[E: packages/opencode/src/session/instruction.ts:155][E: packages/opencode/src/session/instruction.ts:165][E: packages/opencode/src/session/prompt.ts:1259][E: packages/opencode/src/session/prompt.ts:1265]
 
-V2 的 System Context 目标模型把 instruction discovery、source identity、persistence 和 file loading 归 instruction service,而 System Context 只组合 producers 并渲染 loaded values;CONTEXT.md 还说明 first instruction-service slice 在每个 Safe Provider-Turn Boundary 观察 global 和 upward project `AGENTS.md` 作为一个 ordered aggregate Context Source。[E: CONTEXT.md:86][E: CONTEXT.md:87] 这不是 V1 `Instruction.system()` 的存储模型,V1 不持久化 Context Epoch 或 Mid-Conversation System Message。[I]
+V2 的 System Context 目标模型把 instruction discovery、source identity、persistence 和 file loading 归 instruction service,而 System Context 只组合 producers 并渲染 loaded values;CONTEXT.md 还说明 first instruction-service slice 在每个 Safe Provider-Turn Boundary 观察 global 和 upward project `AGENTS.md` 作为一个 ordered aggregate Context Source。[E: CONTEXT.md:119][E: CONTEXT.md:120] 这不是 V1 `Instruction.system()` 的存储模型,V1 不持久化 Context Epoch 或 Mid-Conversation System Message。[I]
 
 ## gotcha
 

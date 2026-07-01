@@ -17,7 +17,7 @@ related:
   - execution.snapshots
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > V1 Git CLI wrapper 是 `packages/opencode/src/git/index.ts` 的 Effect service：它把 git 命令统一加上 hardened flags，使用 `AppProcess.run` 捕获 stdout/stderr/truncation，并提供 branch/status/diff/patch/applyPatch 等 typed helper。
@@ -32,7 +32,7 @@ updated: 355a0bcf5
 
 ## 职责边界
 
-`Git.Service` 暴露 `run`、`branch`、`prefix`、`defaultBranch`、`hasHead`、`mergeBase`、`show`、`status`、`diff`、`stats`、`patch`、`patchAll`、`patchUntracked`、`statUntracked`、`applyPatch` [E: packages/opencode/src/git/index.ts:76] [E: packages/opencode/src/git/index.ts:77] [E: packages/opencode/src/git/index.ts:78] [E: packages/opencode/src/git/index.ts:79] [E: packages/opencode/src/git/index.ts:80] [E: packages/opencode/src/git/index.ts:81] [E: packages/opencode/src/git/index.ts:82] [E: packages/opencode/src/git/index.ts:83] [E: packages/opencode/src/git/index.ts:84] [E: packages/opencode/src/git/index.ts:85] [E: packages/opencode/src/git/index.ts:86] [E: packages/opencode/src/git/index.ts:87] [E: packages/opencode/src/git/index.ts:88] [E: packages/opencode/src/git/index.ts:89] [E: packages/opencode/src/git/index.ts:90]。它是 V1 package service tag `@opencode/Git`，默认 layer 只依赖 `AppProcess.defaultLayer` [E: packages/opencode/src/git/index.ts:101] [E: packages/opencode/src/git/index.ts:346]。
+`Git.Service` 暴露 `run`、`branch`、`prefix`、`defaultBranch`、`hasHead`、`mergeBase`、`show`、`status`、`diff`、`stats`、`patch`、`patchAll`、`patchUntracked`、`statUntracked`、`applyPatch` [E: packages/opencode/src/git/index.ts:76] [E: packages/opencode/src/git/index.ts:90]。它是 V1 package service tag `@opencode/Git`，LayerNode 依赖 `AppProcess.node` [E: packages/opencode/src/git/index.ts:101] [E: packages/opencode/src/git/index.ts:346]。
 
 ## Hardened flags
 
@@ -53,7 +53,7 @@ updated: 355a0bcf5
 
 ## status kind 归类
 
-`kind(code)` 把 `??` 和纯 add 归为 `"added"`，包含 `U` 归为 `"modified"`，包含 `D` 且不含 `A` 归为 `"deleted"`，其它都归为 `"modified"` [E: packages/opencode/src/git/index.ts:94] [E: packages/opencode/src/git/index.ts:95] [E: packages/opencode/src/git/index.ts:96] [E: packages/opencode/src/git/index.ts:97] [E: packages/opencode/src/git/index.ts:98]。因此 rename 因为 wrapper 禁用 `--no-renames`，会表现成 delete/add 或 modified，而不是单独 rename kind [I]。
+`kind(code)` 把 `??` 和纯 add 归为 `"added"`，包含 `U` 归为 `"modified"`，包含 `D` 且不含 `A` 归为 `"deleted"`，其它都归为 `"modified"` [E: packages/opencode/src/git/index.ts:94] [E: packages/opencode/src/git/index.ts:95] [E: packages/opencode/src/git/index.ts:96] [E: packages/opencode/src/git/index.ts:97] [E: packages/opencode/src/git/index.ts:98]。因此 rename 因为 wrapper 使用 `--no-renames` 禁用 rename detection，会表现成 delete/add 或 modified，而不是单独 rename kind [I]。
 
 ## 设计动机与权衡
 

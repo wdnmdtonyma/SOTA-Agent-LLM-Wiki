@@ -1,0 +1,3 @@
+- `ref.ai.model-catalog`: `packages/ai/src/models.generated.ts` at pi HEAD `8c943640` enumerates 1034 text model instances, while `index.json` still records `group.models.instance_count: 1019`. `index.json` is outside this batch's allowed write scope.
+- `ref.coding-agent.rpc-methods`: `RpcCommand` and `handleCommand()` at pi HEAD `8c943640` cover 31 ordinary RPC commands, while `index.json` still records `group.rpc-methods.instance_count: 29`. `extension_ui_response` remains excluded from the command catalog.
+- `ref.coding-agent.rpc-methods`: `packages/coding-agent/docs/rpc.md` still documents `get_commands` response examples/fields with top-level `location` and `path`, but `RpcSlashCommand` and `rpc-mode.ts` emit `sourceInfo` instead.

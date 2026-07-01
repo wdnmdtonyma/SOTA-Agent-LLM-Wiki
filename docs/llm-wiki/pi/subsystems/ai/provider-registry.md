@@ -17,7 +17,7 @@ related:
   - ref.ai.model-catalog
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `provider-registry` 是 `pi-ai` 的内置 provider 装配点: `builtinProviders()` 构造 provider 实例, `builtinModels()` 把这些 provider 注册进运行时 `Models` collection, `getBuiltinModel()`/`getBuiltinModels()` 提供对 generated model catalog 的 typed static read。

@@ -17,7 +17,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `SessionManager` 是 pi-coding-agent 的产品层 session store: 它把一个 JSONL 文件读成 `SessionHeader + SessionEntry[]`, 在内存里维护 `id/parentId` tree、current leaf、label cache, 并把 append / branch / context projection 提供给 `AgentSession`、CLI resume/fork/tree 和 extension context。

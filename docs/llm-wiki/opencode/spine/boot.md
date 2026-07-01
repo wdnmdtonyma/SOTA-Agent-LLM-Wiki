@@ -4,12 +4,12 @@ title: V1 进程启动与运行时装配
 kind: flow
 tier: T0
 v: v1
-source: [packages/opencode/bin/opencode, packages/opencode/src/index.ts, packages/opencode/src/effect/app-runtime.ts, packages/opencode/src/server/server.ts]
+source: [packages/opencode/bin/opencode, packages/opencode/src/index.ts, packages/opencode/src/effect/app-runtime.ts, packages/opencode/src/effect/app-node-builder-v1.ts, packages/opencode/src/server/server.ts]
 symbols: [AppLayer, AppRuntime, Server.Default]
 related: [spine.cli-to-session, persistence.project-instance-location]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > V1 boot 节点描述 `opencode` 可执行文件怎样找到平台二进制、进入 yargs CLI、再把 Effect service graph 装配成 V1 runtime。
@@ -47,17 +47,17 @@ flowchart TD
 
 6. `index@packages/opencode/src/index.ts:85` 注册 `RunCommand`,并在同一个 yargs chain 中注册 `ServeCommand`。[E: packages/opencode/src/index.ts:85][E: packages/opencode/src/index.ts:93]
 
-7. `AppLayer@packages/opencode/src/effect/app-runtime.ts:55` 通过 `Layer.mergeAll` 汇集 V1 服务:Agent、Session、SessionPrompt、SessionProcessor、RuntimeFlags、EventV2Bridge、LLM、ToolRegistry 等都在这个默认 layer 里装配。[E: packages/opencode/src/effect/app-runtime.ts:55][E: packages/opencode/src/effect/app-runtime.ts:69][E: packages/opencode/src/effect/app-runtime.ts:75][E: packages/opencode/src/effect/app-runtime.ts:78][E: packages/opencode/src/effect/app-runtime.ts:79][E: packages/opencode/src/effect/app-runtime.ts:81][E: packages/opencode/src/effect/app-runtime.ts:85][E: packages/opencode/src/effect/app-runtime.ts:87][E: packages/opencode/src/effect/app-runtime.ts:93]
+7. `AppLayer@packages/opencode/src/effect/app-runtime.ts:58` 通过 `AppNodeBuilderV1.build(LayerNode.group(...))` 汇集 V1 服务:Agent、Session、SessionPrompt、SessionProcessor、RuntimeFlags、EventV2Bridge、LLM、ToolRegistry 等都在这个默认 layer 里装配。[E: packages/opencode/src/effect/app-runtime.ts:58][E: packages/opencode/src/effect/app-runtime.ts:59][E: packages/opencode/src/effect/app-runtime.ts:73][E: packages/opencode/src/effect/app-runtime.ts:79][E: packages/opencode/src/effect/app-runtime.ts:83][E: packages/opencode/src/effect/app-runtime.ts:84][E: packages/opencode/src/effect/app-runtime.ts:86][E: packages/opencode/src/effect/app-runtime.ts:90][E: packages/opencode/src/effect/app-runtime.ts:92][E: packages/opencode/src/effect/app-runtime.ts:98]
 
-8. `AppRuntime@packages/opencode/src/effect/app-runtime.ts:108` 由 `ManagedRuntime.make(AppLayer)` 创建,并导出 `runSync`、`runPromise`、`runPromiseExit`、`runFork`、`runCallback`、`dispose` wrapper。[E: packages/opencode/src/effect/app-runtime.ts:108][E: packages/opencode/src/effect/app-runtime.ts:115][E: packages/opencode/src/effect/app-runtime.ts:116][E: packages/opencode/src/effect/app-runtime.ts:119][E: packages/opencode/src/effect/app-runtime.ts:122]
+8. `AppRuntime@packages/opencode/src/effect/app-runtime.ts:111` 由 `ManagedRuntime.make(AppLayer, { memoMap })` 创建,并导出 `runSync`、`runPromise`、`runPromiseExit`、`runFork`、`runCallback`、`dispose` wrapper。[E: packages/opencode/src/effect/app-runtime.ts:111][E: packages/opencode/src/effect/app-runtime.ts:118][E: packages/opencode/src/effect/app-runtime.ts:119][E: packages/opencode/src/effect/app-runtime.ts:122][E: packages/opencode/src/effect/app-runtime.ts:125][E: packages/opencode/src/effect/app-runtime.ts:128][E: packages/opencode/src/effect/app-runtime.ts:131][E: packages/opencode/src/effect/app-runtime.ts:134]
 
-9. `Server.Default@packages/opencode/src/server/server.ts:55` 构造 process-local fetch handler 时使用 `HttpApiApp.webHandler().handler`;server listen 路径使用 `HttpRouter.serve(HttpApiApp.createRoutes(opts), ...)`,所以 V1 server 是 Effect HttpApi/HttpRouter 实现。[E: packages/opencode/src/server/server.ts:55][E: packages/opencode/src/server/server.ts:56][E: packages/opencode/src/server/server.ts:99][E: packages/opencode/src/server/server.ts:100]
+9. `Server.Default@packages/opencode/src/server/server.ts:56` 构造 process-local fetch handler 时使用 `HttpApiApp.webHandler().handler`;server listen 路径使用 `HttpRouter.serve(HttpApiApp.createRoutes(opts), ...)`,所以 V1 server 是 Effect HttpApi/HttpRouter 实现。[E: packages/opencode/src/server/server.ts:56][E: packages/opencode/src/server/server.ts:57][E: packages/opencode/src/server/server.ts:100][E: packages/opencode/src/server/server.ts:101]
 
 ## 关键决策点
 
-- `AppLayer` 同时包含 `RuntimeFlags.defaultLayer` 与 `EventV2Bridge.defaultLayer`,因此 V1 runtime 图里已经装配 runtime flags 和 EventV2 bridge 这两个服务。[E: packages/opencode/src/effect/app-runtime.ts:78][E: packages/opencode/src/effect/app-runtime.ts:79]
-- `AppLayer` 通过 `Layer.provideMerge(InstanceLayer.layer)` 补入 instance/workspace 相关上下文,这解释了 V1 runtime 中许多服务可以读取当前 instance scope。[E: packages/opencode/src/effect/app-runtime.ts:104]
-- `Server.Default` 返回的 `app.fetch` 直接调用 `handler(request, HttpApiApp.context)`,这是 process-local server 能被 CLI 内部 fetch wrapper 复用的代码基础。[E: packages/opencode/src/server/server.ts:58]
+- `AppLayer` 同时包含 `RuntimeFlags.node` 与 `EventV2Bridge.node`,因此 V1 runtime 图里已经装配 runtime flags 和 EventV2 bridge 这两个服务。[E: packages/opencode/src/effect/app-runtime.ts:83][E: packages/opencode/src/effect/app-runtime.ts:84]
+- `AppNodeBuilderV1.build` 会给底层 `AppNodeBuilder.build` 附加 `InstanceStore.bootstrapNode` / `InstanceBootstrap.node` replacement,这是 V1 runtime 保持项目 instance bootstrap 语义的装配点。[E: packages/opencode/src/effect/app-node-builder-v1.ts:6][E: packages/opencode/src/effect/app-node-builder-v1.ts:9]
+- `Server.Default` 返回的 `app.fetch` 直接调用 `handler(request, HttpApiApp.context)`,这是 process-local server 能被 CLI 内部 fetch wrapper 复用的代码基础。[E: packages/opencode/src/server/server.ts:59]
 
 ## 深挖入口
 - CLI 如何把 run 命令转成 session prompt: `spine.cli-to-session`
@@ -68,6 +68,7 @@ flowchart TD
 - packages/opencode/bin/opencode
 - packages/opencode/src/index.ts
 - packages/opencode/src/effect/app-runtime.ts
+- packages/opencode/src/effect/app-node-builder-v1.ts
 - packages/opencode/src/server/server.ts
 
 ## 相关

@@ -8,7 +8,7 @@ source:
   - packages/opencode/src/tool/
   - packages/opencode/src/tool/shell/prompt.ts
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 evidence: explicit
 symbols:
   - ShellPrompt.render
@@ -36,7 +36,7 @@ related:
 | `question.txt` | `question` | 说明 tool 用于执行期间向用户提问；custom enabled 时自动有 free-form answer，不要包含 Other/catch-all。[E: packages/opencode/src/tool/question.txt:1] [E: packages/opencode/src/tool/question.txt:8] | `question.ts` 导入该 DESCRIPTION。[E: packages/opencode/src/tool/question.ts:4] |
 | `read.txt` | `read` | 要求 `filePath` 绝对路径；默认返回开头最多 2000 行；offset 是 1-indexed；目录输出不带 line numbers。[E: packages/opencode/src/tool/read.txt:3] [E: packages/opencode/src/tool/read.txt:5] [E: packages/opencode/src/tool/read.txt:10] | `read.ts` 导入该 DESCRIPTION。[E: packages/opencode/src/tool/read.ts:7] |
 | `shell/shell.txt` | `bash` | 模板中包含 `${intro}`、`${os}`、`${shell}`、`${workdirSection}`、`${tmp}`、`${commandSection}`、Git/GitHub 操作规则。[E: packages/opencode/src/tool/shell/shell.txt:1] [E: packages/opencode/src/tool/shell/shell.txt:3] [E: packages/opencode/src/tool/shell/shell.txt:13] | `shell/prompt.ts` 导入该 DESCRIPTION。[E: packages/opencode/src/tool/shell/prompt.ts:2] |
-| `skill.txt` | `skill` | 要求按 system prompt skill list 加载专门 skill，并把 skill instructions/resources 注入当前 conversation。[E: packages/opencode/src/tool/skill.txt:1] [E: packages/opencode/src/tool/skill.txt:3] | `skill.ts` 导入该 DESCRIPTION。[E: packages/opencode/src/tool/skill.ts:7] |
+| `skill.txt` | `skill` | 要求按 system prompt skill list 加载专门 skill，并把 skill instructions/resources 注入当前 conversation。[E: packages/opencode/src/tool/skill.txt:1] [E: packages/opencode/src/tool/skill.txt:3] | `skill.ts` 导入该 DESCRIPTION。[E: packages/opencode/src/tool/skill.ts:6] |
 | `task.txt` | `task` | 要求指定 `subagent_type`；不适合单文件读取或具体 class/search；建议并发启动多个 agents。[E: packages/opencode/src/tool/task.txt:1] [E: packages/opencode/src/tool/task.txt:5] [E: packages/opencode/src/tool/task.txt:13] | `task.ts` 导入该 DESCRIPTION。[E: packages/opencode/src/tool/task.ts:2] |
 | `todowrite.txt` | `todowrite` | 说明用于维护结构化任务列表；列出 `pending/in_progress/completed/cancelled` 状态和实时更新规则。[E: packages/opencode/src/tool/todowrite.txt:1] [E: packages/opencode/src/tool/todowrite.txt:18] [E: packages/opencode/src/tool/todowrite.txt:24] | `todo.ts` 导入 `DESCRIPTION_WRITE`。[E: packages/opencode/src/tool/todo.ts:3] |
 | `webfetch.txt` | `webfetch` | 定位为 URL fetch；format 支持 markdown/text/html，默认 markdown；HTTP 自动升级 HTTPS。[E: packages/opencode/src/tool/webfetch.txt:1] [E: packages/opencode/src/tool/webfetch.txt:10] [E: packages/opencode/src/tool/webfetch.txt:11] | `webfetch.ts` 导入该 DESCRIPTION。[E: packages/opencode/src/tool/webfetch.ts:6] |
@@ -45,25 +45,25 @@ related:
 
 ## Shell Prompt Template
 
-`shell/prompt.ts` 是 V1 `bash` prompt 的模板渲染器。`parameterSchema` 定义 `command`、`timeout`、`workdir`、`description` 四个参数，其中 `timeout` 和 `workdir` 是 optional，`description` 是 prompt 要求提供的简短用途说明。[E: packages/opencode/src/tool/shell/prompt.ts:22] [E: packages/opencode/src/tool/shell/prompt.ts:29]
+`shell/prompt.ts` 是 V1 `bash` prompt 的模板渲染器。`parameterSchema` 定义 `command`、`timeout`、`workdir` 三个参数，其中 `timeout` 和 `workdir` 是 optional；旧版 `description` 参数在当前源码的 `parameterSchema` 中已不存在。[E: packages/opencode/src/tool/shell/prompt.ts:16] [E: packages/opencode/src/tool/shell/prompt.ts:17] [E: packages/opencode/src/tool/shell/prompt.ts:18] [E: packages/opencode/src/tool/shell/prompt.ts:19]
 
 ### Shell Template Placeholders
 
 | Placeholder | 填充值来源 | 语义 |
 | --- | --- | --- |
-| `${intro}` | `profile(...)` 返回的 shell-specific intro。[E: packages/opencode/src/tool/shell/prompt.ts:232] | 为 bash/powershell/cmd 生成不同说明。[E: packages/opencode/src/tool/shell/prompt.ts:287] |
-| `${os}` | `render(name, platform, limits, defaultTimeout)` 的 `platform` 参数。[E: packages/opencode/src/tool/shell/prompt.ts:287] | 告知模型 OS。 |
-| `${shell}` | `name` 参数。[E: packages/opencode/src/tool/shell/prompt.ts:287] | 告知模型当前 shell。 |
-| `${tmp}` | `Global.Path.tmp`。[E: packages/opencode/src/tool/shell/prompt.ts:294] | 临时工作目录，prompt 文本说已预先批准 external directory access。[E: packages/opencode/src/tool/shell/shell.txt:7] |
-| `${workdirSection}` | `profile.workdirSection`。[E: packages/opencode/src/tool/shell/prompt.ts:296] | 说明默认 workdir 与 `workdir` 参数使用方式。 |
-| `${commandSection}` | `profile.commandSection`。[E: packages/opencode/src/tool/shell/prompt.ts:297] | 注入 shell-specific command usage rules。 |
-| `${gitCommands}` | `profile.gitCommands`。[E: packages/opencode/src/tool/shell/prompt.ts:298] | 注入 git command 限制文本。 |
-| `${toolName}` | `ShellID.ToolID`，实际是 `bash`。[E: packages/opencode/src/tool/shell/id.ts:16] [E: packages/opencode/src/tool/shell/prompt.ts:299] | 保持工具名兼容。 |
-| `${gitCommandRestriction}` | `profile.gitCommandRestriction`。[E: packages/opencode/src/tool/shell/prompt.ts:300] | shell-specific GitHub/commit 限制。 |
-| `${createPrInstruction}` | `profile.createPrInstruction`。[E: packages/opencode/src/tool/shell/prompt.ts:301] | PR body 创建方式的 shell-specific 指令。 |
-| `${createPrExample}` | `profile.createPrExample`。[E: packages/opencode/src/tool/shell/prompt.ts:301] | PR 创建示例。 |
+| `${intro}` | `profile(...)` 返回的 shell-specific intro。[E: packages/opencode/src/tool/shell/prompt.ts:274] | 为 bash/powershell/cmd 生成不同说明。[E: packages/opencode/src/tool/shell/prompt.ts:221] |
+| `${os}` | `render(name, platform, limits, defaultTimeoutMs)` 的 `platform` 参数。[E: packages/opencode/src/tool/shell/prompt.ts:273] | 告知模型 OS。 |
+| `${shell}` | `name` 参数。[E: packages/opencode/src/tool/shell/prompt.ts:273] | 告知模型当前 shell。 |
+| `${tmp}` | `Global.Path.tmp`。[E: packages/opencode/src/tool/shell/prompt.ts:280] | 临时工作目录，prompt 文本说已预先批准 external directory access。[E: packages/opencode/src/tool/shell/shell.txt:7] |
+| `${workdirSection}` | `selected.workdirSection`。[E: packages/opencode/src/tool/shell/prompt.ts:281] | 说明默认 workdir 与 `workdir` 参数使用方式。 |
+| `${commandSection}` | `selected.commandSection`。[E: packages/opencode/src/tool/shell/prompt.ts:282] | 注入 shell-specific command usage rules。 |
+| `${gitCommands}` | `selected.gitCommands`。[E: packages/opencode/src/tool/shell/prompt.ts:283] | 注入 git command 限制文本。 |
+| `${toolName}` | `ShellID.ToolID`，实际是 `bash`。[E: packages/opencode/src/tool/shell/id.ts:16] [E: packages/opencode/src/tool/shell/prompt.ts:284] | 保持工具名兼容。 |
+| `${gitCommandRestriction}` | `selected.gitCommandRestriction`。[E: packages/opencode/src/tool/shell/prompt.ts:285] | shell-specific GitHub/commit 限制。 |
+| `${createPrInstruction}` | `selected.createPrInstruction`。[E: packages/opencode/src/tool/shell/prompt.ts:286] | PR body 创建方式的 shell-specific 指令。 |
+| `${createPrExample}` | `selected.createPrExample`。[E: packages/opencode/src/tool/shell/prompt.ts:287] | PR 创建示例。 |
 
-`renderPrompt` 会对 `${...}` 做统一替换，遇到缺失 key 直接抛 `Missing shell prompt value: ${key}`。[E: packages/opencode/src/tool/shell/prompt.ts:36] [E: packages/opencode/src/tool/shell/prompt.ts:39] 渲染完成后返回 `{ description, parameters }`，其中 parameters 来自 `parameterSchema(...)`。[E: packages/opencode/src/tool/shell/prompt.ts:303]
+`renderPrompt` 会对 `${...}` 做统一替换，遇到缺失 key 直接抛 `Missing shell prompt value: ${key}`。[E: packages/opencode/src/tool/shell/prompt.ts:29] [E: packages/opencode/src/tool/shell/prompt.ts:31] 渲染完成后返回 `{ description, parameters }`，其中 parameters 来自 `parameterSchema(...)`。[E: packages/opencode/src/tool/shell/prompt.ts:289]
 
 ## Shell Prompt Policy Nuggets
 

@@ -8,7 +8,7 @@ symbols: [ConfigToml, ForcedChatgptWorkspaceIds, ForcedLoginMethod, AuthCredenti
 related: [config.model-provider, config.mcp-tools, subsys.config-auth.auth-flows, subsys.config-auth.credential-storage]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > 认证与账户设置 catalog 覆盖 ConfigToml 中限制 ChatGPT workspace、限制 login method 和选择 CLI auth credential storage backend 的顶层键。
@@ -22,17 +22,17 @@ updated: 5670360009
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 96 个顶层 `pub` 字段；本节点覆盖其中 3 个。8 个 surface/config catalog 节点合计覆盖全部 96 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:136][E: codex-rs/config/src/config_toml.rs:139]
+当前 `ConfigToml` 有 97 个顶层 `pub` 字段；本节点覆盖其中 3 个字段。[E: codex-rs/config/src/config_toml.rs:154][E: codex-rs/config/src/config_toml.rs:518]
 
-MCP OAuth credential storage is a separate top-level field under the MCP/tools catalog because the field name and comments are scoped to MCP OAuth, not CLI account login.[E: codex-rs/config/src/config_toml.rs:252][E: codex-rs/config/src/config_toml.rs:258]
+MCP OAuth credential storage remains a separate top-level field named `mcp_oauth_credentials_store`, so this CLI account catalog keeps it under the MCP/tools catalog boundary.[E: codex-rs/config/src/config_toml.rs:273]
 
 ## 字段 catalog
 
-| key | Rust type | serde/schema attrs | 源码注释摘要 | Evidence |
+| key | Rust type | serde/schema attrs | 字段说明 | Evidence |
 |---|---|---|---|---|
-| `forced_chatgpt_workspace_id` | `Option<ForcedChatgptWorkspaceIds>` | `#[serde(default)]` | When set, restricts ChatGPT login to one or more workspace identifiers. | [E: codex-rs/config/src/config_toml.rs:231][E: codex-rs/config/src/config_toml.rs:232][E: codex-rs/config/src/config_toml.rs:233] |
-| `forced_login_method` | `Option<ForcedLoginMethod>` | `#[serde(default)]` | When set, restricts the login mechanism users may use. | [E: codex-rs/config/src/config_toml.rs:235][E: codex-rs/config/src/config_toml.rs:236][E: codex-rs/config/src/config_toml.rs:237] |
-| `cli_auth_credentials_store` | `Option<AuthCredentialsStoreMode>` | `#[serde(default)]` | Preferred backend for storing CLI auth credentials. file (default): Use a file in the Codex home directory. keyring: Use an OS-specific keyring service. auto: Use the keyring if... | [E: codex-rs/config/src/config_toml.rs:239][E: codex-rs/config/src/config_toml.rs:243][E: codex-rs/config/src/config_toml.rs:244] |
+| `forced_chatgpt_workspace_id` | `Option<ForcedChatgptWorkspaceIds>` | `#[serde(default)]` | Restricts ChatGPT login to configured workspace identifiers. | [E: codex-rs/config/src/config_toml.rs:247][E: codex-rs/config/src/config_toml.rs:248] |
+| `forced_login_method` | `Option<ForcedLoginMethod>` | `#[serde(default)]` | Restricts the allowed login mechanism. | [E: codex-rs/config/src/config_toml.rs:251][E: codex-rs/config/src/config_toml.rs:252] |
+| `cli_auth_credentials_store` | `Option<AuthCredentialsStoreMode>` | `#[serde(default)]` | Selects the CLI auth credentials storage backend. | [E: codex-rs/config/src/config_toml.rs:258][E: codex-rs/config/src/config_toml.rs:259] |
 
 ## Sources
 

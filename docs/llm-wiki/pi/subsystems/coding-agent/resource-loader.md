@@ -18,7 +18,7 @@ related:
   - subsys.coding-agent.package-manager
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.coding-agent.resource-loader` 描述 pi-coding-agent 的 resource discovery 层: `DefaultResourceLoader.reload()` 把 package manager 解析出的 extensions、skills、prompt templates、themes、project context files 和 system prompt 汇总成会话可读取的缓存结果。

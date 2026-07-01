@@ -6,11 +6,17 @@ kind: reference
 tier: T3
 source: []
 status: verified
-updated: 5670360009
+updated: db887d03e1
 evidence: unknown
 ---
 
 > 全仓 `[U]`(待查/待证实)汇总,由各填充任务的 _staging/uncertainty-*.md 合并而来;每次 reconcile 重新生成。
+
+## uncertainty-batch-ak
+
+## subsys.mcp.connectors
+
+- [U] `subsystems/mcp/connectors.md`: prior node text asserted originator-specific hard-disallow lists inside `codex-rs/connectors/src/filter.rs`. At `db887d03e1`, `filter_tool_suggest_discoverable_connectors` only removes already-accessible connectors, intersects configured discoverable ids, and sorts results; no equivalent originator/hard-disallow branch was found in `codex-rs/connectors/src/filter.rs`.
 
 ## uncertainty-config-cloud-platform
 

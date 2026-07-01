@@ -13,7 +13,7 @@ related:
   - subsys.coding-agent.theme-controller
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.tui.terminal-colors` 描述 pi-tui 的 terminal color protocol parser: 它把 terminal 返回的 OSC 11 background color response 和 CSI color-scheme report 解析成 `RgbColor` 或 `TerminalColorScheme`。

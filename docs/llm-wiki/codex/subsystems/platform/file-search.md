@@ -8,7 +8,7 @@ symbols: [FileMatch, MatchType, FileSearchOptions, FileSearchSession, create_ses
 related: [subsys.platform.terminal-detection]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > `codex_file_search` 是基于 `ignore::WalkBuilder` 与 Nucleo matcher 的 fuzzy file search crate：它同时提供 persistent session API、one-shot `run()` API 和 CLI reporter 输出层。[E: codex-rs/file-search/src/lib.rs:7][E: codex-rs/file-search/src/lib.rs:12][E: codex-rs/file-search/src/lib.rs:158][E: codex-rs/file-search/src/lib.rs:291][E: codex-rs/file-search/src/lib.rs:219]

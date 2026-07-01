@@ -9,7 +9,7 @@ symbols: [ThemeJson, DEFAULT_THEMES, resolveTheme, generateSystem, ThemeProvider
 related: [ref.themes, tui.runtime-hosting, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > TUI theming 是 ThemeJson 解析 + 默认/插件/自定义/system 主题合成 + OpenTUI terminal palette 监听；完整主题字段表归档在 `ref.themes`，本页解释当前源码里的解析与运行时控制流。
@@ -58,7 +58,7 @@ updated: 355a0bcf5
 
 ## Plugin 与 theme install
 
-TUI-side adapter 暴露 `theme.current`、`theme.selected`、`theme.has`、`theme.set`、`theme.mode`、`theme.ready`，但 base adapter 的 `theme.install` 会抛错，提示只在 plugin context 可用。[E: packages/tui/src/plugin/adapters.tsx:331] [E: packages/tui/src/plugin/adapters.tsx:334] [E: packages/tui/src/plugin/adapters.tsx:337] [E: packages/tui/src/plugin/adapters.tsx:340] [E: packages/tui/src/plugin/adapters.tsx:343] [E: packages/tui/src/plugin/adapters.tsx:346] [E: packages/tui/src/plugin/adapters.tsx:349] V1 legacy plugin runtime 会在 plugin-scoped API 上覆盖 `theme.install`，实际调用 `createThemeInstaller()` 将 theme 文件复制到 local/global themes 目录并 `upsertTheme(name, data)`。[E: packages/opencode/src/plugin/tui/runtime.ts:588] [E: packages/opencode/src/plugin/tui/runtime.ts:589] [E: packages/opencode/src/plugin/tui/runtime.ts:250] [E: packages/opencode/src/plugin/tui/runtime.ts:258] [E: packages/opencode/src/plugin/tui/runtime.ts:301] [E: packages/opencode/src/plugin/tui/runtime.ts:302] [E: packages/opencode/src/plugin/tui/runtime.ts:305]
+TUI-side adapter 暴露 `theme.current`、`theme.selected`、`theme.has`、`theme.set`、`theme.mode`、`theme.ready`，但 base adapter 的 `theme.install` 会抛错，提示只在 plugin context 可用。[E: packages/tui/src/plugin/adapters.tsx:332] [E: packages/tui/src/plugin/adapters.tsx:335] [E: packages/tui/src/plugin/adapters.tsx:338] [E: packages/tui/src/plugin/adapters.tsx:341] [E: packages/tui/src/plugin/adapters.tsx:344] [E: packages/tui/src/plugin/adapters.tsx:347] [E: packages/tui/src/plugin/adapters.tsx:350] V1 legacy plugin runtime 会在 plugin-scoped API 上覆盖 `theme.install`，实际调用 `createThemeInstaller()` 将 theme 文件复制到 local/global themes 目录并 `upsertTheme(name, data)`。[E: packages/opencode/src/plugin/tui/runtime.ts:589] [E: packages/opencode/src/plugin/tui/runtime.ts:590] [E: packages/opencode/src/plugin/tui/runtime.ts:251] [E: packages/opencode/src/plugin/tui/runtime.ts:259] [E: packages/opencode/src/plugin/tui/runtime.ts:302] [E: packages/opencode/src/plugin/tui/runtime.ts:303] [E: packages/opencode/src/plugin/tui/runtime.ts:306]
 
 ## 设计动机与权衡
 

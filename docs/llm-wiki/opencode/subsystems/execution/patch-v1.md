@@ -20,7 +20,7 @@ related:
   - ref.patch-format
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > V1 apply_patch 是活跑路径里的多文件 patch engine + tool：parser 支持 add/delete/update/move，update 匹配使用 exact/rstrip/trim/Unicode-normalized 四轮 fuzzy seek，工具层先生成 diff 和 permission metadata，再写文件、format、publish watcher/LSP 事件并返回 diagnostics。
@@ -35,7 +35,7 @@ updated: 355a0bcf5
 
 ## 职责边界
 
-`packages/opencode/src/patch/index.ts` 是纯 patch parsing/derive/apply helper，`packages/opencode/src/tool/apply_patch.ts` 是 V1 model-facing tool。tool id 是 `"apply_patch"`，参数只有 `patchText` [E: packages/opencode/src/tool/apply_patch.ts:19] [E: packages/opencode/src/tool/apply_patch.ts:23]。V1 registry 只在 GPT non-OSS 且非 GPT-4 model 上启用 apply_patch；启用 apply_patch 时禁用 edit/write，未启用时保留 edit/write [E: packages/opencode/src/tool/registry.ts:274] [E: packages/opencode/src/tool/registry.ts:275] [E: packages/opencode/src/tool/registry.ts:276]。
+`packages/opencode/src/patch/index.ts` 是纯 patch parsing/derive/apply helper，`packages/opencode/src/tool/apply_patch.ts` 是 V1 model-facing tool。tool id 是 `"apply_patch"`，参数只有 `patchText` [E: packages/opencode/src/tool/apply_patch.ts:19] [E: packages/opencode/src/tool/apply_patch.ts:23]。V1 registry 只在 GPT non-OSS 且非 GPT-4 model 上启用 apply_patch；启用 apply_patch 时禁用 edit/write，未启用时保留 edit/write [E: packages/opencode/src/tool/registry.ts:272] [E: packages/opencode/src/tool/registry.ts:273] [E: packages/opencode/src/tool/registry.ts:274] [E: packages/opencode/src/tool/registry.ts:275]。
 
 ## Patch 数据模型
 

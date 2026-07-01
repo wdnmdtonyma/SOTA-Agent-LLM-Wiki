@@ -17,7 +17,7 @@ related:
   - subsys.ai.auth-resolution
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.ai.oauth-flow` covers the `pi-ai` legacy OAuth provider registry plus two provider-neutral helpers: device-code polling and PKCE verifier/challenge generation.

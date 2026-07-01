@@ -15,7 +15,7 @@ source:
   - packages/cli/src/commands/handlers/
   - packages/cli/src/index.ts
   - packages/cli/src/tui.ts
-updated: 355a0bcf5
+updated: 8b68dc0d7
 evidence: explicit
 ---
 
@@ -32,25 +32,26 @@ evidence: explicit
 
 `Spec.make(name, options)` 把 command name、description、args、options、children 包装成 Effect `Command`，并把 children array 转成 `commands` map。[E: packages/cli/src/framework/spec.ts:27] [E: packages/cli/src/framework/spec.ts:32] 这意味着 lildax 的 command tree 是声明式数据，不是 yargs 的链式 `.command(...)` 注册。[I]
 
-`packages/cli/src/commands/commands.ts` 把 root command name 设为 `OPENCODE_CLI_NAME` 或默认 `opencode`，description 是 `OpenCode 2.0 preview command line interface`。[E: packages/cli/src/commands/commands.ts:6]
+`packages/cli/src/commands/commands.ts` 把 root command name 设为 `OPENCODE_CLI_NAME` 或默认 `opencode`，description 是 `OpenCode 2.0 preview command line interface`。[E: packages/cli/src/commands/commands.ts:6] [E: packages/cli/src/commands/commands.ts:7]
 
 | V2 preview command | 声明位置 | handler |
 | --- | --- | --- |
-| default root `$` | root command | `commands/handlers/default.ts` 运行 TUI。[E: packages/cli/src/index.ts:10] |
-| `debug agents` | `Commands.debug` child | `commands/handlers/debug/agents.ts`。[E: packages/cli/src/index.ts:13] |
-| `migrate` | root child | `commands/handlers/migrate.ts`。[E: packages/cli/src/index.ts:15] |
-| `service start` | `service` child | `commands/handlers/service/start.ts`。[E: packages/cli/src/index.ts:17] |
-| `service restart` | `service` child | `commands/handlers/service/restart.ts`。[E: packages/cli/src/index.ts:18] |
-| `service status` | `service` child | `commands/handlers/service/status.ts`。[E: packages/cli/src/index.ts:19] |
-| `service stop` | `service` child | `commands/handlers/service/stop.ts`。[E: packages/cli/src/index.ts:20] |
-| `service password [password]` | `service` child | `commands/handlers/service/password.ts`。[E: packages/cli/src/index.ts:21] |
-| `serve` | root child | `commands/handlers/serve.ts`。[E: packages/cli/src/index.ts:23] |
+| default root `$` | root command | `commands/handlers/default.ts` 运行 TUI。[E: packages/cli/src/index.ts:11] |
+| `api` | root child | `commands/handlers/api.ts` 对运行中的 server 发 OpenAPI operation 或 raw HTTP request。[E: packages/cli/src/commands/commands.ts:9] [E: packages/cli/src/index.ts:12] [E: packages/cli/src/commands/handlers/api.ts:17] |
+| `debug agents` | `Commands.debug` child | `commands/handlers/debug/agents.ts`。[E: packages/cli/src/index.ts:14] |
+| `migrate` | root child | `commands/handlers/migrate.ts`。[E: packages/cli/src/index.ts:16] |
+| `service start` | `service` child | `commands/handlers/service/start.ts`。[E: packages/cli/src/index.ts:18] |
+| `service restart` | `service` child | `commands/handlers/service/restart.ts`。[E: packages/cli/src/index.ts:19] |
+| `service status` | `service` child | `commands/handlers/service/status.ts`。[E: packages/cli/src/index.ts:20] |
+| `service stop` | `service` child | `commands/handlers/service/stop.ts`。[E: packages/cli/src/index.ts:21] |
+| `service password [password]` | `service` child | `commands/handlers/service/password.ts`。[E: packages/cli/src/index.ts:22] |
+| `serve` | root child | `commands/handlers/serve.ts`。[E: packages/cli/src/index.ts:24] |
 
 ## Runtime
 
 `Runtime.handlers(spec)` 返回一个递归 typed handlers object，节点可以有 `$` handler，也可以有 child handler。[E: packages/cli/src/framework/runtime.ts:42] `Runtime.provide` 会对每个 command 调用 `Command.withHandler`，执行时 lazy-import 对应 module，然后调用 module default export。[E: packages/cli/src/framework/runtime.ts:62] `Runtime.run` 用 Effect CLI 的 `Command.run` 加 version 运行整个 command graph。[E: packages/cli/src/framework/runtime.ts:58]
 
-`packages/cli/src/index.ts` 把 `Commands.default` 和 handlers 传给 `Runtime.run`，并提供 `Daemon.Default` 与 `NodeRuntime.NodeServices` layer 后 `runMain`。[E: packages/cli/src/index.ts:26]
+`packages/cli/src/index.ts` 把 `Commands.default` 和 handlers 传给 `Runtime.run`，并提供 `Daemon.layer` 与 `NodeServices.layer` 后 `runMain`。[E: packages/cli/src/index.ts:27] [E: packages/cli/src/index.ts:28] [E: packages/cli/src/index.ts:29] [E: packages/cli/src/index.ts:31]
 
 ## Daemon Service
 
@@ -62,9 +63,9 @@ daemon client 通过 `createOpencodeClient` 创建，header 使用 `ServerAuth.h
 
 ## Serve 与 TUI Host
 
-`serve` handler 调用 `listen`，如果带 `--register` 就执行 daemon registration，然后记录 listening URL 并 `Effect.never` 保持进程。[E: packages/cli/src/commands/handlers/serve.ts:19] [E: packages/cli/src/commands/handlers/serve.ts:20] [E: packages/cli/src/commands/handlers/serve.ts:22] `listen` 默认先尝试端口 `4096`，失败后用端口 `0` 自动分配。[E: packages/cli/src/commands/handlers/serve.ts:28] HTTP app 使用 Effect `HttpRouter.serve(createRoutes(password))` 加 Node HTTP server layer，不是 Hono。[E: packages/cli/src/commands/handlers/serve.ts:35]
+`serve` handler 调用 `listen`，如果带 `--register` 就执行 daemon registration，然后记录 listening URL 并 `Effect.never` 保持进程。[E: packages/cli/src/commands/handlers/serve.ts:19] [E: packages/cli/src/commands/handlers/serve.ts:20] [E: packages/cli/src/commands/handlers/serve.ts:22] `listen` 有显式 port 时直接 bind；没有 port 时从 `4096` 开始，bind 失败就递增端口直到 `65535`。[E: packages/cli/src/commands/handlers/serve.ts:30] [E: packages/cli/src/commands/handlers/serve.ts:34] [E: packages/cli/src/commands/handlers/serve.ts:36] HTTP app 使用 Effect `HttpRouter.serve(createRoutes(password))` 加 Node HTTP server layer，不是 Hono。[E: packages/cli/src/commands/handlers/serve.ts:41]
 
-default handler 获取 daemon transport 后动态导入 `../../tui` 并调用 `runTui(transport)`。[E: packages/cli/src/commands/handlers/default.ts:9] [E: packages/cli/src/commands/handlers/default.ts:10] [E: packages/cli/src/commands/handlers/default.ts:11] `runTui` 使用 `@opencode-ai/tui` 的 `run`，传入 `gracefulFetch`、empty plugin host 和 `Global.defaultLayer`。[E: packages/cli/src/tui.ts:8] [E: packages/cli/src/tui.ts:12] [E: packages/cli/src/tui.ts:13] [E: packages/cli/src/tui.ts:17]
+default handler 获取 daemon transport 后动态导入 `../../tui` 并调用 `runTui(transport)`。[E: packages/cli/src/commands/handlers/default.ts:9] [E: packages/cli/src/commands/handlers/default.ts:10] [E: packages/cli/src/commands/handlers/default.ts:11] `runTui` 使用 `@opencode-ai/tui` 的 `run`，传入 `gracefulFetch`、empty plugin host，并通过 `AppNodeBuilder.build(Global.node)` 提供 host layer。[E: packages/cli/src/tui.ts:8] [E: packages/cli/src/tui.ts:9] [E: packages/cli/src/tui.ts:13] [E: packages/cli/src/tui.ts:14] [E: packages/cli/src/tui.ts:18]
 
 ## V1 关系
 
@@ -77,6 +78,7 @@ default handler 获取 daemon transport 后动态导入 `../../tui` 并调用 `r
 - `packages/cli/src/commands/commands.ts`
 - `packages/cli/src/index.ts`
 - `packages/cli/src/services/daemon.ts`
+- `packages/cli/src/commands/handlers/api.ts`
 - `packages/cli/src/commands/handlers/default.ts`
 - `packages/cli/src/commands/handlers/serve.ts`
 - `packages/cli/src/tui.ts`

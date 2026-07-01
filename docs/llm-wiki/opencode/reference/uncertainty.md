@@ -9,12 +9,32 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 # 不确定项日志([U] 汇总)
 
 > 本文件由 tools/reconcile.mjs 从 _staging/uncertainty-*.md 自动合并生成,请勿手改。
+
+## batch-ai
+
+# uncertainty-batch-ai
+
+- `plugin-api.v1-hooks`: `permission.ask` is declared in `packages/plugin/src/index.ts`, but this batch did not find a V1 call site matching `plugin.trigger("permission.ask", ...)`. Verify whether the hook is intentionally vestigial, invoked through another mechanism, or awaiting implementation. [U]
+
+## batch-ar
+
+# Uncertainty Batch AR
+
+- `server.embedded-public-api`: `packages/core/src/public/*` 已从 8b68dc0d7 源码树移除；当前可证 same-process embedding surface 是 `SessionV2` / `ApplicationTools` / `SessionExecutionLocal` / `LocationServiceMap` 等 Effect services，但旧 `OpenCode` public facade 是否有命名等价 replacement 未在本轮源码阅读中确认。
+- `server.plugin-system`: `packages/core/src/plugin/boot.ts` 已从 8b68dc0d7 源码树移除；当前可证 boot path 是 `packages/core/src/plugin/internal.ts` 的 `PluginInternal`，但旧 `PluginBoot` 名称没有直接 replacement。
+- `tool.grep`: V2 `grep` 的 `path` schema 字段使用 `RelativePath`，但 `packages/schema/src/schema.ts` 中 `RelativePath` 当前只是 string brand；`packages/core/src/tool/grep.ts` 使用 `path.resolve(location.directory, input.path ?? ".")`，所以 relative input 可证以 Location 为根，但 absolute input 是否会被上游 codec/schema 拒绝、或是否对应 description 中的 absolute managed tool-output file，本轮未完全确认。
+
+## batch-aw
+
+# Uncertainty Batch AW
+
+- `tui.theming`: OpenTUI palette detection 的内部算法不在 opencode 源码内；当前只能核到 TUI 调用 `renderer.getPalette()`、监听 `THEME_MODE`/terminal color-scheme notification 并合成 `ThemeJson` 的行为。[U]
 
 ## execution
 

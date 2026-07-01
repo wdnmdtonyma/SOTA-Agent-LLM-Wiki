@@ -4,11 +4,11 @@ title: thread 方法
 kind: rpc
 tier: T1
 source: [codex-rs/app-server-protocol/src/protocol/common.rs, codex-rs/app-server-protocol/src/protocol/v2/thread.rs]
-symbols: [ThreadStartParams, ThreadStartResponse, ThreadResumeParams, ThreadForkParams, ThreadArchiveParams, ThreadDeleteParams, ThreadListParams, ThreadReadParams, ThreadTurnsListParams, ThreadInjectItemsParams, MemoryResetResponse]
+symbols: [ThreadStartParams, ThreadStartResponse, ThreadResumeParams, ThreadForkParams, ThreadArchiveParams, ThreadDeleteParams, ThreadListParams, ThreadReadParams, ThreadTurnsListParams, ThreadItemsListParams, ThreadInjectItemsParams, MemoryResetResponse]
 related: [rpc.overview, rpc.turn-methods, rpc.notifications-thread, subsys.app-server.message-processor, subsys.core.session-lifecycle]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > thread 方法是 app-server v2 管理 Codex thread 生命周期、订阅、目标、设置、历史读取和 thread-local 操作的 client request catalog。
@@ -17,14 +17,14 @@ updated: 5670360009
 
 - thread/memory client request 当前有哪些 wire method？
 - 哪些 thread 方法是 experimental 或按 params 字段检查 experimental gate？
-- thread lifecycle、goal、metadata、background terminals、history/read 方法分别用哪些 params/response 类型？
+- thread lifecycle、goal、metadata、background terminals、history/read/items 方法分别用哪些 params/response 类型？
 - `memory/reset` 为什么归到 thread catalog？
 
 ## 字段模型
 
-`ThreadStartParams` 定义在 v2 thread 模块，`ThreadStartResponse` 同模块返回 thread runtime 侧信息；`ThreadResumeParams`、`ThreadListParams`、`ThreadReadParams` 和 turns/items 分页 params 也都在 `thread.rs` 中维护。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:52][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:153][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:288][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:987][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1187][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1218][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1252]
+`ThreadStartParams` 定义在 v2 thread 模块，`ThreadStartResponse` 同模块返回 thread runtime 侧信息；`ThreadResumeParams`、`ThreadListParams`、`ThreadReadParams` 和 turns/items 分页 params 也都在 `thread.rs` 中维护。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:56][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:170][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:324][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1070][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1275][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1306][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1340]
 
-`thread/increment_elicitation`、`thread/decrement_elicitation`、`thread/settings/update`、`thread/memoryMode/set`、background terminals、`thread/search`、turns list 和 turns items list 在宏调用中带 experimental 标记或字段检查。[E: codex-rs/app-server-protocol/src/protocol/common.rs:509][E: codex-rs/app-server-protocol/src/protocol/common.rs:519][E: codex-rs/app-server-protocol/src/protocol/common.rs:553][E: codex-rs/app-server-protocol/src/protocol/common.rs:560][E: codex-rs/app-server-protocol/src/protocol/common.rs:592][E: codex-rs/app-server-protocol/src/protocol/common.rs:621][E: codex-rs/app-server-protocol/src/protocol/common.rs:637][E: codex-rs/app-server-protocol/src/protocol/common.rs:644]
+`thread/increment_elicitation`、`thread/decrement_elicitation`、`thread/settings/update`、`thread/memoryMode/set`、background terminals、`thread/search`、turns list 和 thread items list 在宏调用中带 experimental 标记或字段检查。[E: codex-rs/app-server-protocol/src/protocol/common.rs:509][E: codex-rs/app-server-protocol/src/protocol/common.rs:519][E: codex-rs/app-server-protocol/src/protocol/common.rs:553][E: codex-rs/app-server-protocol/src/protocol/common.rs:560][E: codex-rs/app-server-protocol/src/protocol/common.rs:592][E: codex-rs/app-server-protocol/src/protocol/common.rs:621][E: codex-rs/app-server-protocol/src/protocol/common.rs:637][E: codex-rs/app-server-protocol/src/protocol/common.rs:644]
 
 ## 方法 catalog
 
@@ -59,7 +59,7 @@ updated: 5670360009
 | `ThreadLoadedList` | `thread/loaded/list` | `v2::ThreadLoadedListParams` | `v2::ThreadLoadedListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:627][E: codex-rs/app-server-protocol/src/protocol/common.rs:628][E: codex-rs/app-server-protocol/src/protocol/common.rs:630] |
 | `ThreadRead` | `thread/read` | `v2::ThreadReadParams` | `v2::ThreadReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:632][E: codex-rs/app-server-protocol/src/protocol/common.rs:633][E: codex-rs/app-server-protocol/src/protocol/common.rs:635] |
 | `ThreadTurnsList` | `thread/turns/list` | `v2::ThreadTurnsListParams` | `v2::ThreadTurnsListResponse` | experimental: thread/turns/list | [E: codex-rs/app-server-protocol/src/protocol/common.rs:637][E: codex-rs/app-server-protocol/src/protocol/common.rs:638][E: codex-rs/app-server-protocol/src/protocol/common.rs:639][E: codex-rs/app-server-protocol/src/protocol/common.rs:642] |
-| `ThreadTurnsItemsList` | `thread/turns/items/list` | `v2::ThreadTurnsItemsListParams` | `v2::ThreadTurnsItemsListResponse` | experimental: thread/turns/items/list | [E: codex-rs/app-server-protocol/src/protocol/common.rs:644][E: codex-rs/app-server-protocol/src/protocol/common.rs:645][E: codex-rs/app-server-protocol/src/protocol/common.rs:646][E: codex-rs/app-server-protocol/src/protocol/common.rs:649] |
+| `ThreadItemsList` | `thread/items/list` | `v2::ThreadItemsListParams` | `v2::ThreadItemsListResponse` | experimental: thread/items/list | [E: codex-rs/app-server-protocol/src/protocol/common.rs:644][E: codex-rs/app-server-protocol/src/protocol/common.rs:645][E: codex-rs/app-server-protocol/src/protocol/common.rs:646][E: codex-rs/app-server-protocol/src/protocol/common.rs:649] |
 | `ThreadInjectItems` | `thread/inject_items` | `v2::ThreadInjectItemsParams` | `v2::ThreadInjectItemsResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:652][E: codex-rs/app-server-protocol/src/protocol/common.rs:653][E: codex-rs/app-server-protocol/src/protocol/common.rs:655] |
 
 ## Sources

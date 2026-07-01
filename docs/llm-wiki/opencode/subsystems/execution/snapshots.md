@@ -7,6 +7,7 @@ v: v1
 source:
   - packages/opencode/src/snapshot/index.ts
   - packages/opencode/src/session/revert.ts
+  - packages/core/src/file-mutation.ts
 symbols:
   - Snapshot.Service
   - Snapshot.track
@@ -19,7 +20,7 @@ related:
   - session-v1.store
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > V1 snapshots 是一个 shadow git 子系统：每个 worktree 对应 `Global.Path.data/snapshot/<project-id>/<hash(worktree)>` 下的独立 git dir，通过 `--git-dir`/`--work-tree` 和 `objects/info/alternates` 记录、diff、restore、revert 用户会话修改。
@@ -34,24 +35,24 @@ updated: 355a0bcf5
 
 ## 职责边界
 
-`Snapshot.Service` 暴露 `init`、`cleanup`、`track`、`patch`、`restore`、`revert`、`diff`、`diffFull` [E: packages/opencode/src/snapshot/index.ts:45] [E: packages/opencode/src/snapshot/index.ts:46] [E: packages/opencode/src/snapshot/index.ts:47] [E: packages/opencode/src/snapshot/index.ts:48] [E: packages/opencode/src/snapshot/index.ts:49] [E: packages/opencode/src/snapshot/index.ts:50] [E: packages/opencode/src/snapshot/index.ts:51] [E: packages/opencode/src/snapshot/index.ts:52]。状态按 instance 生成：`directory` 是当前 directory，`worktree` 是 project worktree，`gitdir` 是 `Global.Path.data/snapshot/<project-id>/<Hash.fast(worktree)>`，`vcs` 来自 project [E: packages/opencode/src/snapshot/index.ts:77] [E: packages/opencode/src/snapshot/index.ts:78] [E: packages/opencode/src/snapshot/index.ts:79] [E: packages/opencode/src/snapshot/index.ts:80]。服务只在 `state.vcs === "git"` 且 config `snapshot !== false` 时启用 [E: packages/opencode/src/snapshot/index.ts:167] [E: packages/opencode/src/snapshot/index.ts:168]。
+`Snapshot.Service` 暴露 `init`、`cleanup`、`track`、`patch`、`restore`、`revert`、`diff`、`diffFull` [E: packages/opencode/src/snapshot/index.ts:36] [E: packages/opencode/src/snapshot/index.ts:37] [E: packages/opencode/src/snapshot/index.ts:38] [E: packages/opencode/src/snapshot/index.ts:39] [E: packages/opencode/src/snapshot/index.ts:40] [E: packages/opencode/src/snapshot/index.ts:41] [E: packages/opencode/src/snapshot/index.ts:42] [E: packages/opencode/src/snapshot/index.ts:44]。状态按 instance 生成：`directory` 是当前 directory，`worktree` 是 project worktree，`gitdir` 是 `Global.Path.data/snapshot/<project-id>/<Hash.fast(worktree)>`，`vcs` 来自 project [E: packages/opencode/src/snapshot/index.ts:66] [E: packages/opencode/src/snapshot/index.ts:69] [E: packages/opencode/src/snapshot/index.ts:70] [E: packages/opencode/src/snapshot/index.ts:71] [E: packages/opencode/src/snapshot/index.ts:72]。服务只在 `state.vcs === "git"` 且 config `snapshot !== false` 时启用 [E: packages/opencode/src/snapshot/index.ts:167] [E: packages/opencode/src/snapshot/index.ts:168] [E: packages/opencode/src/snapshot/index.ts:169]。
 
 ## Shadow git 结构
 
-所有 snapshot git 命令通过 `args(cmd)` 注入 `--git-dir state.gitdir --work-tree state.worktree` [E: packages/opencode/src/snapshot/index.ts:83]。这让 snapshot 使用独立 index/tree，但工作区指向真实 worktree。初始化时，`track` 若发现 `state.gitdir` 不存在，会 `git init` 并设置 `core.autocrlf=false`、`core.longpaths=true`、`core.symlinks=true`、`core.fsmonitor=false`、`feature.manyFiles=true`、index v4、untrackedCache 等 [E: packages/opencode/src/snapshot/index.ts:321] [E: packages/opencode/src/snapshot/index.ts:324] [E: packages/opencode/src/snapshot/index.ts:327] [E: packages/opencode/src/snapshot/index.ts:328] [E: packages/opencode/src/snapshot/index.ts:329] [E: packages/opencode/src/snapshot/index.ts:330] [E: packages/opencode/src/snapshot/index.ts:332] [E: packages/opencode/src/snapshot/index.ts:333] [E: packages/opencode/src/snapshot/index.ts:335]。
+操作 shadow index/worktree 的主要 snapshot git 命令通过 `args(cmd)` 注入 `--git-dir state.gitdir --work-tree state.worktree` [E: packages/opencode/src/snapshot/index.ts:75]。初始化和源仓探测是例外：`git init`/config 写入直接指定 `state.gitdir`，`git-common-dir` 和 `check-ignore` 会针对源 worktree 运行 [E: packages/opencode/src/snapshot/index.ts:106] [E: packages/opencode/src/snapshot/index.ts:110] [E: packages/opencode/src/snapshot/index.ts:112] [E: packages/opencode/src/snapshot/index.ts:113] [E: packages/opencode/src/snapshot/index.ts:201] [E: packages/opencode/src/snapshot/index.ts:202] [E: packages/opencode/src/snapshot/index.ts:325] [E: packages/opencode/src/snapshot/index.ts:326] [E: packages/opencode/src/snapshot/index.ts:328]。这让 snapshot 使用独立 index/tree，但工作区指向真实 worktree。初始化时，`track` 若发现 `state.gitdir` 不存在，会 `git init` 并设置 `core.autocrlf=false`、`core.longpaths=true`、`core.symlinks=true`、`core.fsmonitor=false`、`feature.manyFiles=true`、index v4、untrackedCache 等 [E: packages/opencode/src/snapshot/index.ts:318] [E: packages/opencode/src/snapshot/index.ts:324] [E: packages/opencode/src/snapshot/index.ts:325] [E: packages/opencode/src/snapshot/index.ts:328] [E: packages/opencode/src/snapshot/index.ts:329] [E: packages/opencode/src/snapshot/index.ts:330] [E: packages/opencode/src/snapshot/index.ts:331] [E: packages/opencode/src/snapshot/index.ts:333] [E: packages/opencode/src/snapshot/index.ts:334] [E: packages/opencode/src/snapshot/index.ts:336]。
 
-`seed` 会查源仓 `git-common-dir`，把源仓 `objects` 和源仓已有 alternates 中仍存在的路径写入 snapshot gitdir 的 `objects/info/alternates` [E: packages/opencode/src/snapshot/index.ts:200] [E: packages/opencode/src/snapshot/index.ts:210] [E: packages/opencode/src/snapshot/index.ts:211] [E: packages/opencode/src/snapshot/index.ts:217] [E: packages/opencode/src/snapshot/index.ts:223]。这可以被理解为复用源仓 object database，降低 shadow git 初次追踪大仓库时的对象重算成本 [I]。如果源仓 index 存在，`seed` 还 best-effort copy 到 shadow git index [E: packages/opencode/src/snapshot/index.ts:228] [E: packages/opencode/src/snapshot/index.ts:230]。
+`seed` 会查源仓 `git-common-dir`，把源仓 `objects` 和源仓已有 alternates 中仍存在的路径写入 snapshot gitdir 的 `objects/info/alternates` [E: packages/opencode/src/snapshot/index.ts:198] [E: packages/opencode/src/snapshot/index.ts:201] [E: packages/opencode/src/snapshot/index.ts:211] [E: packages/opencode/src/snapshot/index.ts:217] [E: packages/opencode/src/snapshot/index.ts:223]。这可以被理解为复用源仓 object database，降低 shadow git 初次追踪大仓库时的对象重算成本 [I]。如果源仓 index 存在，`seed` 还 best-effort copy 到 shadow git index [E: packages/opencode/src/snapshot/index.ts:229] [E: packages/opencode/src/snapshot/index.ts:230] [E: packages/opencode/src/snapshot/index.ts:231]。
 
 ## 控制流
 
-1. `track` 在 lock 内确认 enabled，创建 gitdir，初始化 shadow git 后调用 `add()`，再 `write-tree` 返回 tree hash [E: packages/opencode/src/snapshot/index.ts:318] [E: packages/opencode/src/snapshot/index.ts:320] [E: packages/opencode/src/snapshot/index.ts:322] [E: packages/opencode/src/snapshot/index.ts:324] [E: packages/opencode/src/snapshot/index.ts:339] [E: packages/opencode/src/snapshot/index.ts:340]।
-2. `add` 同步 exclude 文件，分别运行 `diff-files --name-only -z` 与 `ls-files --others --exclude-standard -z` 找 tracked/untracked candidates [E: packages/opencode/src/snapshot/index.ts:235] [E: packages/opencode/src/snapshot/index.ts:238] [E: packages/opencode/src/snapshot/index.ts:241]。
-3. `add` 用源仓 ignore rules 检查 candidates；新变成 ignored 的文件会从 snapshot index drop，避免 re-add [E: packages/opencode/src/snapshot/index.ts:264] [E: packages/opencode/src/snapshot/index.ts:267] [E: packages/opencode/src/snapshot/index.ts:270]。
-4. `add` 把大于 2MiB 的 untracked files 加入 exclude block，避免 snapshot 初次追踪过大 untracked 文件 [E: packages/opencode/src/snapshot/index.ts:32] [E: packages/opencode/src/snapshot/index.ts:276] [E: packages/opencode/src/snapshot/index.ts:286]。
-5. `patch(hash)` 先 `add()` 刷新 index，再 diff cached names against hash，过滤 ignored removals，返回 absolute normalized files [E: packages/opencode/src/snapshot/index.ts:351] [E: packages/opencode/src/snapshot/index.ts:353] [E: packages/opencode/src/snapshot/index.ts:369] [E: packages/opencode/src/snapshot/index.ts:373] [E: packages/opencode/src/snapshot/index.ts:375]。
-6. `restore(snapshot)` 用 `read-tree snapshot` 加载 shadow tree，再 `checkout-index -a -f` 写回 worktree [E: packages/opencode/src/snapshot/index.ts:385] [E: packages/opencode/src/snapshot/index.ts:387]。
-7. `revert(patches)` 对每个 patch file 去重，按 hash/file 还原；如果文件在 snapshot tree 不存在，则删除当前文件 [E: packages/opencode/src/snapshot/index.ts:410] [E: packages/opencode/src/snapshot/index.ts:412] [E: packages/opencode/src/snapshot/index.ts:413] [E: packages/opencode/src/snapshot/index.ts:416] [E: packages/opencode/src/snapshot/index.ts:418] [E: packages/opencode/src/snapshot/index.ts:419] [E: packages/opencode/src/snapshot/index.ts:426] [E: packages/opencode/src/snapshot/index.ts:430] [E: packages/opencode/src/snapshot/index.ts:433] [E: packages/opencode/src/snapshot/index.ts:441]。
-8. `diff(hash)` 与 `diffFull(from, to)` 都在 lock 内先刷新或读取 shadow git，`diffFull` 使用 `git diff --name-status`、`--numstat` 和 `cat-file --batch` 批量生成 per-file full patch [E: packages/opencode/src/snapshot/index.ts:526] [E: packages/opencode/src/snapshot/index.ts:528] [E: packages/opencode/src/snapshot/index.ts:546] [E: packages/opencode/src/snapshot/index.ts:603] [E: packages/opencode/src/snapshot/index.ts:687] [E: packages/opencode/src/snapshot/index.ts:699]。
+1. `track` 在 lock 内确认 enabled，创建 gitdir，初始化 shadow git 后调用 `add()`，再 `write-tree` 返回 tree hash [E: packages/opencode/src/snapshot/index.ts:318] [E: packages/opencode/src/snapshot/index.ts:319] [E: packages/opencode/src/snapshot/index.ts:321] [E: packages/opencode/src/snapshot/index.ts:323] [E: packages/opencode/src/snapshot/index.ts:340] [E: packages/opencode/src/snapshot/index.ts:341]。
+2. `add` 同步 exclude 文件，分别运行 `diff-files --name-only -z` 与 `ls-files --others --exclude-standard -z` 找 tracked/untracked candidates [E: packages/opencode/src/snapshot/index.ts:235] [E: packages/opencode/src/snapshot/index.ts:236] [E: packages/opencode/src/snapshot/index.ts:239] [E: packages/opencode/src/snapshot/index.ts:242]。
+3. `add` 用源仓 ignore rules 检查 candidates；新变成 ignored 的文件会从 snapshot index drop，避免 re-add [E: packages/opencode/src/snapshot/index.ts:265] [E: packages/opencode/src/snapshot/index.ts:268] [E: packages/opencode/src/snapshot/index.ts:271]。
+4. `add` 把大于 2MiB 的 untracked files 加入 exclude block，避免 snapshot 初次追踪过大 untracked 文件 [E: packages/opencode/src/snapshot/index.ts:24] [E: packages/opencode/src/snapshot/index.ts:277] [E: packages/opencode/src/snapshot/index.ts:287] [E: packages/opencode/src/snapshot/index.ts:294] [E: packages/opencode/src/snapshot/index.ts:295]。
+5. `patch(hash)` 先 `add()` 刷新 index，再 diff cached names against hash，过滤 ignored removals，返回 absolute normalized files [E: packages/opencode/src/snapshot/index.ts:349] [E: packages/opencode/src/snapshot/index.ts:352] [E: packages/opencode/src/snapshot/index.ts:353] [E: packages/opencode/src/snapshot/index.ts:370] [E: packages/opencode/src/snapshot/index.ts:376]。
+6. `restore(snapshot)` 用 `read-tree snapshot` 加载 shadow tree，再 `checkout-index -a -f` 写回 worktree [E: packages/opencode/src/snapshot/index.ts:382] [E: packages/opencode/src/snapshot/index.ts:386] [E: packages/opencode/src/snapshot/index.ts:388]。
+7. `revert(patches)` 对每个 patch file 去重，按 hash/file 还原；如果文件在 snapshot tree 不存在，则删除当前文件 [E: packages/opencode/src/snapshot/index.ts:408] [E: packages/opencode/src/snapshot/index.ts:411] [E: packages/opencode/src/snapshot/index.ts:412] [E: packages/opencode/src/snapshot/index.ts:416] [E: packages/opencode/src/snapshot/index.ts:418] [E: packages/opencode/src/snapshot/index.ts:427] [E: packages/opencode/src/snapshot/index.ts:430] [E: packages/opencode/src/snapshot/index.ts:441] [E: packages/opencode/src/snapshot/index.ts:442]。
+8. `diff(hash)` 与 `diffFull(from, to)` 都在 lock 内先刷新或读取 shadow git，`diffFull` 使用 `git diff --name-status`、`--numstat` 和 `cat-file --batch` 批量生成 per-file full patch [E: packages/opencode/src/snapshot/index.ts:526] [E: packages/opencode/src/snapshot/index.ts:529] [E: packages/opencode/src/snapshot/index.ts:546] [E: packages/opencode/src/snapshot/index.ts:604] [E: packages/opencode/src/snapshot/index.ts:687] [E: packages/opencode/src/snapshot/index.ts:699]。
 
 ## SessionRevert 集成
 
@@ -61,14 +62,14 @@ updated: 355a0bcf5
 
 ## 设计动机与权衡
 
-shadow git 的设计目标是复用 git tree/index/diff 能力，又不污染用户源仓 `.git`。`--git-dir`/`--work-tree` 提供隔离，`alternates` 复用对象库降低大仓库成本 [I]。权衡是它仍依赖 git CLI 和文件系统当前状态，因此所有核心操作都用 per-gitdir semaphore lock 包起来 [E: packages/opencode/src/snapshot/index.ts:63] [E: packages/opencode/src/snapshot/index.ts:164]。
+shadow git 的设计目标是复用 git tree/index/diff 能力，又不污染用户源仓 `.git`。`--git-dir`/`--work-tree` 提供隔离，`alternates` 复用对象库降低大仓库成本 [I]。权衡是它仍依赖 git CLI 和文件系统当前状态，因此所有核心操作都用 per-gitdir semaphore lock 包起来 [E: packages/opencode/src/snapshot/index.ts:57] [E: packages/opencode/src/snapshot/index.ts:61] [E: packages/opencode/src/snapshot/index.ts:165]。
 
 ## Gotcha
 
 - snapshot `hash` 是 shadow git tree hash，不是 commit hash。
 - ignored file removals 会从 user-facing patch/diff 里隐藏。
 - untracked 大文件可能被 exclude，不保证 snapshot 捕捉所有大文件内容。
-- V2 `FileMutation` 暴露的是 create/write/writeTextPreservingBom/writeIfUnchanged/remove primitives，没有 snapshot/undo primitive；不要把 V1 snapshot 视为 V2 core 已接通 [E: packages/core/src/file-mutation.ts:170] [I]。
+- V2 `FileMutation` 暴露的是 create/write/writeTextPreservingBom/writeIfUnchanged/remove primitives，没有 snapshot/undo primitive；不要把 V1 snapshot 视为 V2 core 已接通 [E: packages/core/src/file-mutation.ts:54] [E: packages/core/src/file-mutation.ts:56] [E: packages/core/src/file-mutation.ts:57] [E: packages/core/src/file-mutation.ts:59] [E: packages/core/src/file-mutation.ts:61] [E: packages/core/src/file-mutation.ts:64] [I]。
 
 ## Sources
 

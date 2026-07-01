@@ -13,7 +13,7 @@ related:
   - surface.extensions.api
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `surface.misc.containerization` 描述 pi-coding-agent 文档中公开的隔离运行形态:Pi 默认以 full permissions 运行;需要更强边界时,要把整个 `pi` 进程放进隔离环境,或让宿主机上的 `pi` 把工具执行路由到隔离环境。

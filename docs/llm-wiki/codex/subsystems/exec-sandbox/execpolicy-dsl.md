@@ -8,7 +8,7 @@ symbols: [PolicyParser, Policy, PrefixRule, NetworkRule, Decision, Evaluation, M
 related: [subsys.core.approval-policy, subsys.exec-sandbox.shell-parsing, subsys.exec-sandbox.shell-escalation]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > execpolicy DSL 是 Codex 用 Starlark-like 文件描述 command prefix rules、network rules 和 host executable allowlists 的 policy layer；evaluation 结果是 `Allow`、`Prompt`、`Forbidden` 中优先级最高的 `Decision`。[E: codex-rs/execpolicy/src/parser.rs:57][E: codex-rs/execpolicy/src/decision.rs:9][E: codex-rs/execpolicy/src/policy.rs:365]

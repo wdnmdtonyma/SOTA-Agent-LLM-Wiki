@@ -20,7 +20,7 @@ related:
   - ref.ai.model-catalog
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `model-discovery` 是 `pi-ai` 的文字模型目录边界: generated `MODELS` 提供静态 `Model` metadata, `getBuiltinModel()`/`getBuiltinModels()` 读取该目录, `builtinModels()` 把 provider factories 注册成可 refresh、可 stream 的 runtime `Models` collection。
@@ -36,7 +36,7 @@ updated: 5a073885
 
 ## 职责边界
 
-`packages/ai/src/models.generated.ts` 是文字模型静态目录的 aggregator: 它 import 每个 `providers/<id>.models.ts` 里的 provider-specific catalog, 再把这些 catalog 挂到 `MODELS` object 的 provider id key 下 [E: packages/ai/src/models.generated.ts:4] [E: packages/ai/src/models.generated.ts:40] [E: packages/ai/src/models.generated.ts:41] [E: packages/ai/src/models.generated.ts:75]。本节点只把 generated file 当作当前事实快照; 目录生成规则与编辑入口来自 `scripts/generate-models.ts` 和 `package.json` 的 `generate-models` script [E: packages/ai/scripts/generate-models.ts:2324] [E: packages/ai/scripts/generate-models.ts:2329] [E: packages/ai/package.json:48]。
+`packages/ai/src/models.generated.ts` 是文字模型静态目录的 aggregator: 它 import 每个 `providers/<id>.models.ts` 里的 provider-specific catalog, 再把这些 catalog 挂到 `MODELS` object 的 provider id key 下 [E: packages/ai/src/models.generated.ts:4] [E: packages/ai/src/models.generated.ts:40] [E: packages/ai/src/models.generated.ts:41] [E: packages/ai/src/models.generated.ts:75]。本节点只把 generated file 当作当前事实快照; 目录生成规则与编辑入口来自 `scripts/generate-models.ts` 和 `package.json` 的 `generate-models` script [E: packages/ai/scripts/generate-models.ts:2093] [E: packages/ai/scripts/generate-models.ts:2098] [E: packages/ai/package.json:48]。
 
 `packages/ai/src/providers/all.ts` 是 built-in catalog helper 与 runtime provider assembly 的交叉点: `getBuiltinModel()` / `getBuiltinModels()` 直接读取 generated `MODELS`, 而 `builtinModels()` 先 `createModels()` 再注册 `builtinProviders()` 返回的 provider instances [E: packages/ai/src/providers/all.ts:2] [E: packages/ai/src/providers/all.ts:48] [E: packages/ai/src/providers/all.ts:52] [E: packages/ai/src/providers/all.ts:60] [E: packages/ai/src/providers/all.ts:63] [E: packages/ai/src/providers/all.ts:111] [E: packages/ai/src/providers/all.ts:112] [E: packages/ai/src/providers/all.ts:113] [E: packages/ai/src/providers/all.ts:114]。
 
@@ -59,7 +59,7 @@ updated: 5a073885
 
 ## 控制流
 
-1. Catalog generation: `generate-models.ts` creates provider catalog files and an aggregator; the aggregator output string starts with `export const MODELS = {`, appends each sorted provider id as a property, and writes `src/models.generated.ts` [E: packages/ai/scripts/generate-models.ts:2294] [E: packages/ai/scripts/generate-models.ts:2305] [E: packages/ai/scripts/generate-models.ts:2315] [E: packages/ai/scripts/generate-models.ts:2320] [E: packages/ai/scripts/generate-models.ts:2324] [E: packages/ai/scripts/generate-models.ts:2325] [E: packages/ai/scripts/generate-models.ts:2326] [E: packages/ai/scripts/generate-models.ts:2329]。
+1. Catalog generation: `generate-models.ts` creates provider catalog files and an aggregator; the aggregator output string starts with `export const MODELS = {`, appends each sorted provider id as a property, and writes `src/models.generated.ts` [E: packages/ai/scripts/generate-models.ts:2063] [E: packages/ai/scripts/generate-models.ts:2094] [E: packages/ai/scripts/generate-models.ts:2084] [E: packages/ai/scripts/generate-models.ts:2089] [E: packages/ai/scripts/generate-models.ts:2093] [E: packages/ai/scripts/generate-models.ts:2094] [E: packages/ai/scripts/generate-models.ts:2095] [E: packages/ai/scripts/generate-models.ts:2098]。
 2. Static read: `getBuiltinModel(provider, modelId)` indexes `MODELS[provider]` and returns `models?.[modelId]` typed as `Model<BuiltinModelApi<...>>`; it does not query runtime `ModelsImpl` or provider instances [E: packages/ai/src/providers/all.ts:48] [E: packages/ai/src/providers/all.ts:52] [E: packages/ai/src/providers/all.ts:53] [I]。
 3. Static enumeration: `getBuiltinModels(provider)` reads `MODELS[provider]`, returns `Object.values(models)` when present, and returns `[]` when the provider key is absent [E: packages/ai/src/providers/all.ts:60] [E: packages/ai/src/providers/all.ts:63] [E: packages/ai/src/providers/all.ts:64] [E: packages/ai/src/providers/all.ts:65] [E: packages/ai/src/providers/all.ts:66]。
 4. Runtime assembly: `builtinModels(options)` constructs a `MutableModels` collection with `createModels(options)`, loops over `builtinProviders()`, registers each provider via `models.setProvider(provider)`, and returns the collection [E: packages/ai/src/providers/all.ts:111] [E: packages/ai/src/providers/all.ts:112] [E: packages/ai/src/providers/all.ts:113] [E: packages/ai/src/providers/all.ts:114] [E: packages/ai/src/providers/all.ts:116]。
@@ -77,7 +77,7 @@ Static catalog read 与 runtime model collection 是两条路径: `getBuiltinMod
 
 ## Gotcha
 
-- `models.generated.ts` and provider `.models.ts` files are generator outputs written by `generate-models.ts`; update model metadata through `npm run generate-models` / `scripts/generate-models.ts`, not by treating the generated files as hand-written design sources [E: packages/ai/package.json:48] [E: packages/ai/scripts/generate-models.ts:2305] [E: packages/ai/scripts/generate-models.ts:2315] [E: packages/ai/scripts/generate-models.ts:2329] [I]。
+- `models.generated.ts` and provider `.models.ts` files are generator outputs written by `generate-models.ts`; update model metadata through `npm run generate-models` / `scripts/generate-models.ts`, not by treating the generated files as hand-written design sources [E: packages/ai/package.json:48] [E: packages/ai/scripts/generate-models.ts:2094] [E: packages/ai/scripts/generate-models.ts:2084] [E: packages/ai/scripts/generate-models.ts:2098] [I]。
 - `getBuiltinModel()` can return `undefined` at runtime even though its TypeScript signature is `Model<...>`: the implementation returns `models?.[modelId as string]` and casts the result, with no runtime throw or fallback [E: packages/ai/src/providers/all.ts:48] [E: packages/ai/src/providers/all.ts:51] [E: packages/ai/src/providers/all.ts:52] [E: packages/ai/src/providers/all.ts:53] [I]。
 - `getBuiltinProviders()` reads generated `MODELS` keys, while `builtinProviders()` constructs provider instances from explicit provider factory calls; current source makes these adjacent but not a single shared data structure [E: packages/ai/src/providers/all.ts:56] [E: packages/ai/src/providers/all.ts:57] [E: packages/ai/src/providers/all.ts:70] [E: packages/ai/src/providers/all.ts:71] [I]。
 - `ModelsImpl.getModels()` is best-effort and swallow-fail: unknown provider id and throwing provider `getModels()` both yield empty model lists rather than errors [E: packages/ai/src/models.ts:174] [E: packages/ai/src/models.ts:175] [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:179]。

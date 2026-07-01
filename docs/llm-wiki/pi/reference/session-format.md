@@ -18,7 +18,7 @@ related:
   - ref.agent.session-entry-types
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `ref.coding-agent.session-format` 是 pi-coding-agent 会话 JSONL 文件的字段级目录:第一行是 `SessionHeader`,后续每行是带 `id` / `parentId` / `timestamp` 的 append-only tree entry,当前产品格式版本是 v3。

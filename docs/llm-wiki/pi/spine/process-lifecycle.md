@@ -9,7 +9,7 @@ symbols: [main, parseArgs, resolveAppMode]
 related: [spine.overview, surface.cli.overview, surface.modes.interactive, surface.modes.rpc]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `spine.process-lifecycle` 描述 `pi-coding-agent` 从 shell `argv` 进入进程、解析 CLI、选择 app mode、绑定 session/runtime，最后进入 interactive/RPC/print 的真实生命周期。

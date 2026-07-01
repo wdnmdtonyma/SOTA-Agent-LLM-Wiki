@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 source:
   - packages/opencode/src/image/image.ts
   - packages/opencode/src/session/prompt.ts
@@ -42,7 +42,7 @@ evidence: explicit
 
 V1 `Image.Service` 定义在 `packages/opencode/src/image/image.ts`，提供单个 `normalize(input: SessionV1.FilePart)` 方法。[E: packages/opencode/src/image/image.ts:53] 它读取 V1 config 的 `attachment.image` 设置，默认约束是 `maxBase64Bytes=5 MiB`、`maxWidth=2000`、`maxHeight=2000`、`autoResize=true`。[E: packages/opencode/src/image/image.ts:10] [E: packages/opencode/src/image/image.ts:11] [E: packages/opencode/src/image/image.ts:12] [E: packages/opencode/src/image/image.ts:13]
 
-V1 read tool 本身会把支持的 image/pdf mime 读成 data URL attachment，但它不在 `read.ts` 内调用 image normalizer。[E: packages/opencode/src/tool/read.ts:303] [E: packages/opencode/src/tool/read.ts:317] [E: packages/opencode/src/tool/read.ts:321] V1 normalize 接入点在 session prompt 输入和 session processor 的 tool-result attachment 处理。[E: packages/opencode/src/session/prompt.ts:994] [E: packages/opencode/src/session/prompt.ts:996] [E: packages/opencode/src/session/processor.ts:573] [E: packages/opencode/src/session/processor.ts:575]
+V1 read tool 本身会把支持的 image/pdf mime 读成 data URL attachment，但它不在 `read.ts` 内调用 image normalizer。[E: packages/opencode/src/tool/read.ts:303] [E: packages/opencode/src/tool/read.ts:317] [E: packages/opencode/src/tool/read.ts:321] V1 normalize 接入点在 session prompt 输入和 session processor 的 tool-result attachment 处理。[E: packages/opencode/src/session/prompt.ts:1011] [E: packages/opencode/src/session/prompt.ts:1013] [E: packages/opencode/src/session/processor.ts:389] [E: packages/opencode/src/session/processor.ts:391]
 
 ### 数据模型与错误
 
@@ -65,23 +65,23 @@ V1 config schema 中 `auto_resize` 默认 true，`max_width` 默认 2000，`max_
 
 ### V1 接入点
 
-1. `session/prompt.ts` 在处理 user image file part 时调用 `Image.normalize`；如果 Photon resizer unavailable，会保留原 image part。[E: packages/opencode/src/session/prompt.ts:994] [E: packages/opencode/src/session/prompt.ts:996] [E: packages/opencode/src/session/prompt.ts:998] [E: packages/opencode/src/session/prompt.ts:999]
-2. `session/processor.ts` 在 tool result attachment 是 image 时调用 `Image.normalize`，失败时会把 attachment omit 并统计 omitted count。[E: packages/opencode/src/session/processor.ts:573] [E: packages/opencode/src/session/processor.ts:575] [E: packages/opencode/src/session/processor.ts:584] [E: packages/opencode/src/session/processor.ts:591]
+1. `session/prompt.ts` 在处理 user image file part 时调用 `Image.normalize`；如果 Photon resizer unavailable，会保留原 image part。[E: packages/opencode/src/session/prompt.ts:1011] [E: packages/opencode/src/session/prompt.ts:1013] [E: packages/opencode/src/session/prompt.ts:1015] [E: packages/opencode/src/session/prompt.ts:1016]
+2. `session/processor.ts` 在 tool result attachment 是 image 时调用 `Image.normalize`；`ResizerUnavailableError` 会保留原 attachment，其他失败会被计入 omitted count 并从 attachments 中移除。[E: packages/opencode/src/session/processor.ts:389] [E: packages/opencode/src/session/processor.ts:391] [E: packages/opencode/src/session/processor.ts:393] [E: packages/opencode/src/session/processor.ts:400] [E: packages/opencode/src/session/processor.ts:401]
 3. V1 read tool 支持 image mime 集合，读取后返回 data URL attachment。[E: packages/opencode/src/tool/read.ts:19] [E: packages/opencode/src/tool/read.ts:317] [E: packages/opencode/src/tool/read.ts:321]
 
 ## V2
 
 ### 职责
 
-V2 `Image.Service` 定义在 `packages/core/src/image.ts`，接口是 `normalize(resource, content)`，其中 resource 是 string，content 是 `FileSystem.Content` 且 encoding 为 base64。[E: packages/core/src/image.ts:35] [E: packages/core/src/image.ts:37] service tag 是 `@opencode/Image`。[E: packages/core/src/image.ts:44]
+V2 `Image.Service` 定义在 `packages/core/src/image.ts`，接口是 `normalize(resource, content)`，其中 resource 是 string，content 是 `FileSystem.Content` 且 encoding 为 base64。[E: packages/core/src/image.ts:35] [E: packages/core/src/image.ts:37] service tag 是 `@opencode/Image`。[E: packages/core/src/image.ts:45]
 
-V2 service 懒加载 adapter `./image/photon`，把 config entries 中的 `attachments.image` 合并成运行时参数，并调用 adapter normalize。[E: packages/core/src/image.ts:50] [E: packages/core/src/image.ts:60] [E: packages/core/src/image.ts:66]
+V2 service 懒加载 adapter `./image/photon`，把 config entries 中的 `attachments.image` 合并成运行时参数，并调用 adapter normalize。[E: packages/core/src/image.ts:51] [E: packages/core/src/image.ts:61] [E: packages/core/src/image.ts:68]
 
 ### 数据模型与 config
 
-V2 error 也包含 `ResizerUnavailable`、`DecodeError`、`SizeError`。[E: packages/core/src/image.ts:7] [E: packages/core/src/image.ts:12] [E: packages/core/src/image.ts:20] V2 config `attachments.image` 支持 `auto_resize`、`max_width`、`max_height`、`max_base64_bytes`。[E: packages/core/src/config/attachments.ts:6] [E: packages/core/src/config/attachments.ts:10] [E: packages/core/src/config/attachments.ts:13]
+V2 error 也包含 `ResizerUnavailable`、`DecodeError`、`SizeError`。[E: packages/core/src/image.ts:8] [E: packages/core/src/image.ts:13] [E: packages/core/src/image.ts:21] V2 config `attachments.image` 支持 `auto_resize`、`max_width`、`max_height`、`max_base64_bytes`。[E: packages/core/src/config/attachments.ts:6] [E: packages/core/src/config/attachments.ts:10] [E: packages/core/src/config/attachments.ts:13]
 
-V2 service 默认参数和 V1 一致：auto true、width 2000、height 2000、max 5 MiB。[E: packages/core/src/image.ts:68] [E: packages/core/src/image.ts:71]
+V2 service 默认参数和 V1 一致：auto true、width 2000、height 2000、max 5 MiB。[E: packages/core/src/image.ts:69] [E: packages/core/src/image.ts:72]
 
 ### Photon adapter 流程
 
@@ -96,7 +96,7 @@ V2 service 默认参数和 V1 一致：auto true、width 2000、height 2000、ma
 
 ### V2 接入点
 
-V2 `core/src/tool/read.ts` 支持 image mime，read file 后如果输出是 base64 image，会调用 `image.normalize(resource, content)`；如果 resizer unavailable，会返回原 content。[E: packages/core/src/tool/read.ts:17] [E: packages/core/src/tool/read.ts:80] [E: packages/core/src/tool/read.ts:83] 非 image binary 会返回 BinaryFileError。[E: packages/core/src/tool/read.ts:85]
+V2 `core/src/tool/read.ts` 支持 image mime，read file 后如果输出是 base64 image，会调用 `image.normalize(resource, content)`；如果 resizer unavailable，会返回原 content。[E: packages/core/src/tool/read.ts:17] [E: packages/core/src/tool/read.ts:86] [E: packages/core/src/tool/read.ts:89] 非 image binary 会返回 BinaryFileError。[E: packages/core/src/tool/read.ts:92]
 
 ## V1 / V2 差异表
 
@@ -105,22 +105,22 @@ V2 `core/src/tool/read.ts` 支持 image mime，read file 后如果输出是 base
 | service input | `SessionV1.FilePart`，包含 data URL。 | file resource + base64 content。 |
 | Photon loading | dynamic import `@silvia-odwyer/photon-node` with wasm path. | adapter file static wasm import + cached dynamic import。 |
 | main call site | prompt image parts and tool-result image attachments。 | core read tool image output。 |
-| unavailable fallback | prompt input keeps original; processor may omit tool-result attachment。 | read tool keeps original image output。 |
+| unavailable fallback | prompt input keeps original; processor keeps original only for `ResizerUnavailableError` and may omit other failed image normalizations。 | read tool keeps original image output。 |
 | config path | V1 `attachment.image` schema。 | V2 `attachments.image` config entries。 |
 
 ## 设计动机与权衡
 
-两代都把 image normalization 放在 attachment/read boundary，而不是让每个 provider adapter 自行 resize。[I] successful normalize 会降低超限图片的尺寸或体积；但 `ResizerUnavailable` fallback 可能保留原图，不能等同于尺寸检查通过。[I] [E: packages/opencode/src/session/prompt.ts:996] [E: packages/opencode/src/session/prompt.ts:999] [E: packages/core/src/tool/read.ts:80] [E: packages/core/src/tool/read.ts:83]
+两代都把 image normalization 放在 attachment/read boundary，而不是让每个 provider adapter 自行 resize。[I] successful normalize 会降低超限图片的尺寸或体积；但 `ResizerUnavailable` fallback 可能保留原图，不能等同于尺寸检查通过。[I] [E: packages/opencode/src/session/prompt.ts:1013] [E: packages/opencode/src/session/prompt.ts:1016] [E: packages/core/src/tool/read.ts:86] [E: packages/core/src/tool/read.ts:89]
 
 PNG + 多档 JPEG candidate 是质量/体积折中：先尝试无损 PNG，再尝试多档 JPEG，找到第一个小于等于 max base64 bytes 的候选。[I] 两代源码都有相同 candidate pattern 和 `<=` 上限判断。[E: packages/opencode/src/image/image.ts:131] [E: packages/opencode/src/image/image.ts:135] [E: packages/core/src/image/photon.ts:67] [E: packages/core/src/image/photon.ts:74]
 
 ## 易踩坑
 
-- V1 read tool 返回 image data URL attachment，不代表 read tool 已经完成 resize；normalize 在 prompt/processor 层发生。[E: packages/opencode/src/tool/read.ts:317] [E: packages/opencode/src/tool/read.ts:321] [E: packages/opencode/src/session/prompt.ts:994]
-- V2 read tool 才直接调用 core image normalizer。[E: packages/core/src/tool/read.ts:80]
+- V1 read tool 返回 image data URL attachment，不代表 read tool 已经完成 resize；normalize 在 prompt/processor 层发生。[E: packages/opencode/src/tool/read.ts:317] [E: packages/opencode/src/tool/read.ts:321] [E: packages/opencode/src/session/prompt.ts:1011]
+- V2 read tool 才直接调用 core image normalizer。[E: packages/core/src/tool/read.ts:86]
 - `max_base64_bytes` 限制的是 base64 字符串的 UTF-8 byte length，不是 decoded binary byte length；两代都用 `Buffer.byteLength(..., "utf8"/"utf-8")` 计算。[E: packages/opencode/src/image/image.ts:87] [E: packages/core/src/image/photon.ts:38]
 - auto resize 关闭时超限会抛 SizeError，不会尝试压缩。[E: packages/opencode/src/image/image.ts:101] [E: packages/core/src/image/photon.ts:40]
-- ResizerUnavailable 在用户输入 image 场景会保留原图，这是一种可用性 fallback，不是尺寸检查通过。[E: packages/opencode/src/session/prompt.ts:996] [E: packages/opencode/src/session/prompt.ts:999]
+- ResizerUnavailable 在用户输入 image 场景会保留原图，这是一种可用性 fallback，不是尺寸检查通过。[E: packages/opencode/src/session/prompt.ts:1013] [E: packages/opencode/src/session/prompt.ts:1016]
 
 ## Sources
 

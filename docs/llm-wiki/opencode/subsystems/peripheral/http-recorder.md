@@ -13,7 +13,7 @@ symbols: [HttpRecorder, http, socket, recordingLayer, Service]
 related: [model-layer.llm-protocol-engine]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > `@opencode-ai/http-recorder` 是给 Effect HTTP/WebSocket client 测试用的 cassette recorder：本地缺 cassette 时录制，已有 cassette 或 CI 中 replay，以确定性 JSON fixtures 测 provider 协议。
@@ -31,7 +31,7 @@ updated: 355a0bcf5
 
 Public API 只有 `HttpRecorder.http` 和 `HttpRecorder.socket`：root `src/index.ts` 从 `effect.ts` 和 `socket.ts` 导入两个函数，并导出 `HttpRecorder = { http, socket }` [E: packages/http-recorder/src/index.ts:1] [E: packages/http-recorder/src/index.ts:2] [E: packages/http-recorder/src/index.ts:5]。README 也把这两个函数列为 complete public API，并说明 `http` 提供 fetch-backed recorded `HttpClient`，`socket` 装饰下层标准 Effect `Socket.Socket` [E: packages/http-recorder/README.md:84] [E: packages/http-recorder/README.md:85] [E: packages/http-recorder/README.md:88]。
 
-该包是 Node.js/Bun 测试工具，不面向 browser、workers、Deno；README 明确写 Node.js 22+ and Bun，并说不 intended for browsers/workers/Deno [E: packages/http-recorder/README.md:16]。`package.json` 的 peer dependency 固定 `effect: 4.0.0-beta.74`，dependency 包含 `@effect/platform-node` 和 `@effect/platform-node-shared` [E: packages/http-recorder/package.json:54] [E: packages/http-recorder/package.json:55] [E: packages/http-recorder/package.json:58]。
+该包是 Node.js/Bun 测试工具，不面向 browser、workers、Deno；README 明确写 Node.js 22+ and Bun，并说不 intended for browsers/workers/Deno [E: packages/http-recorder/README.md:16]。`package.json` 的 peer dependency 固定 `effect: 4.0.0-beta.83`，dependency 包含 `@effect/platform-node` 和 `@effect/platform-node-shared` [E: packages/http-recorder/package.json:54] [E: packages/http-recorder/package.json:55] [E: packages/http-recorder/package.json:58]。
 
 ## 关键文件
 

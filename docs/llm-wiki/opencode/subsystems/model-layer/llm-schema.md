@@ -9,7 +9,7 @@ symbols: [LLMRequest, Message, ContentPart, ToolDefinition, LLMEvent, Usage, LLM
 related: [ref.llm-event-catalog]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > `packages/llm/src/schema` 是 native LLM engine 的公共 wire model:它定义 provider-agnostic `LLMRequest`、message content parts、tool definition/output、16 类 streaming `LLMEvent`、加性 `Usage` 契约,以及 10 类 `LLMErrorReason`。
@@ -31,47 +31,47 @@ V2 runner 组装 provider request 时面向 `LLM.request` / `llm.stream(request)
 
 ## 核心输入模型
 
-`LLMRequest` 字段是 `id/model/system/messages/tools/toolChoice/generation/providerOptions/http/responseFormat/cache/metadata`。[E: packages/llm/src/schema/messages.ts:286][E: packages/llm/src/schema/messages.ts:298] `LLMRequest.input` helper 会把这些字段投影成 plain input object。[E: packages/llm/src/schema/messages.ts:304][E: packages/llm/src/schema/messages.ts:316]
+`LLMRequest` 字段是 `id/model/system/messages/tools/toolChoice/generation/providerOptions/http/responseFormat/cache/metadata`。[E: packages/llm/src/schema/messages.ts:272][E: packages/llm/src/schema/messages.ts:273][E: packages/llm/src/schema/messages.ts:274][E: packages/llm/src/schema/messages.ts:275][E: packages/llm/src/schema/messages.ts:276][E: packages/llm/src/schema/messages.ts:277][E: packages/llm/src/schema/messages.ts:278][E: packages/llm/src/schema/messages.ts:279][E: packages/llm/src/schema/messages.ts:280][E: packages/llm/src/schema/messages.ts:281][E: packages/llm/src/schema/messages.ts:282][E: packages/llm/src/schema/messages.ts:283] `LLMRequest.input` helper 会把这些字段投影成 plain input object。[E: packages/llm/src/schema/messages.ts:289][E: packages/llm/src/schema/messages.ts:301]
 
-`Message` 的字段是 `id/role/content/metadata/native`,其中 role 使用 schema ids 里的 `MessageRole`。[E: packages/llm/src/schema/messages.ts:198][E: packages/llm/src/schema/messages.ts:203][E: packages/llm/src/schema/ids.ts:33] `Message.system` 是 role 为 `system` 的 chronological message helper;request-level `system` 仍是 `LLMRequest.system` 字段。[E: packages/llm/src/schema/messages.ts:233][E: packages/llm/src/schema/messages.ts:289]
+`Message` 的字段是 `id/role/content/metadata/native`,其中 role 使用 schema ids 里的 `MessageRole`。[E: packages/llm/src/schema/messages.ts:184][E: packages/llm/src/schema/messages.ts:185][E: packages/llm/src/schema/messages.ts:186][E: packages/llm/src/schema/messages.ts:187][E: packages/llm/src/schema/messages.ts:188][E: packages/llm/src/schema/ids.ts:36] `Message.system` 是 role 为 `system` 的 chronological message helper;request-level `system` 仍是 `LLMRequest.system` 字段。[E: packages/llm/src/schema/messages.ts:218][E: packages/llm/src/schema/messages.ts:274]
 
-`ContentPart` 是 text、media、tool-call、tool-result、reasoning 的 union。[E: packages/llm/src/schema/messages.ts:193][E: packages/llm/src/schema/messages.ts:196] `MediaPart` 承载 `mediaType/data/filename/metadata`,tool result value 可表达 JSON、text、error 或 structured content。[E: packages/llm/src/schema/messages.ts:33][E: packages/llm/src/schema/messages.ts:38][E: packages/llm/src/schema/messages.ts:68][E: packages/llm/src/schema/messages.ts:80]
+`ContentPart` 是 text、media、tool-call、tool-result、reasoning 的 union。[E: packages/llm/src/schema/messages.ts:178][E: packages/llm/src/schema/messages.ts:181] `MediaPart` 承载 `mediaType/data/filename/metadata`,tool result value 可表达 JSON、text、error 或 structured content。[E: packages/llm/src/schema/messages.ts:34][E: packages/llm/src/schema/messages.ts:36][E: packages/llm/src/schema/messages.ts:37][E: packages/llm/src/schema/messages.ts:38][E: packages/llm/src/schema/messages.ts:39][E: packages/llm/src/schema/messages.ts:51][E: packages/llm/src/schema/messages.ts:68][E: packages/llm/src/schema/messages.ts:80]
 
-`ToolDefinition` 的 wire fields 是 `name/description/inputSchema/outputSchema/cache/metadata/native`,并由 `ToolDefinition.make` 构造。[E: packages/llm/src/schema/messages.ts:239][E: packages/llm/src/schema/messages.ts:246][E: packages/llm/src/schema/messages.ts:253]
+`ToolDefinition` 的 wire fields 是 `name/description/inputSchema/outputSchema/cache/metadata/native`,并由 `ToolDefinition.make` 构造。[E: packages/llm/src/schema/messages.ts:225][E: packages/llm/src/schema/messages.ts:226][E: packages/llm/src/schema/messages.ts:227][E: packages/llm/src/schema/messages.ts:228][E: packages/llm/src/schema/messages.ts:229][E: packages/llm/src/schema/messages.ts:230][E: packages/llm/src/schema/messages.ts:231][E: packages/llm/src/schema/messages.ts:238]
 
 ## 16 个 LLMEvent
 
-`llmEventTagged` 的 union 包含且只包含 16 类 event:step-start、text-start、text-delta、text-end、reasoning-start、reasoning-delta、reasoning-end、tool-input-start、tool-input-delta、tool-input-end、tool-call、tool-result、tool-error、step-finish、finish、provider-error。[E: packages/llm/src/schema/events.ts:209][E: packages/llm/src/schema/events.ts:226]
+`llmEventTagged` 的 union 包含且只包含 16 类 event:step-start、text-start、text-delta、text-end、reasoning-start、reasoning-delta、reasoning-end、tool-input-start、tool-input-delta、tool-input-end、tool-call、tool-result、tool-error、step-finish、finish、provider-error。[E: packages/llm/src/schema/events.ts:210][E: packages/llm/src/schema/events.ts:211][E: packages/llm/src/schema/events.ts:212][E: packages/llm/src/schema/events.ts:213][E: packages/llm/src/schema/events.ts:214][E: packages/llm/src/schema/events.ts:215][E: packages/llm/src/schema/events.ts:216][E: packages/llm/src/schema/events.ts:217][E: packages/llm/src/schema/events.ts:218][E: packages/llm/src/schema/events.ts:219][E: packages/llm/src/schema/events.ts:220][E: packages/llm/src/schema/events.ts:221][E: packages/llm/src/schema/events.ts:222][E: packages/llm/src/schema/events.ts:223][E: packages/llm/src/schema/events.ts:224][E: packages/llm/src/schema/events.ts:225]
 
 字段设计按 lifecycle 分层:
 
 - step events: `StepStart` 只有 `index`, `StepFinish` 带 `index/reason/usage/providerMetadata`。[E: packages/llm/src/schema/events.ts:78][E: packages/llm/src/schema/events.ts:80][E: packages/llm/src/schema/events.ts:183][E: packages/llm/src/schema/events.ts:188]
 - text/reasoning events: start 与 end 以 `id` 标识 block,delta 携带 `text`;reasoning end 可携带 `providerMetadata`。[E: packages/llm/src/schema/events.ts:84][E: packages/llm/src/schema/events.ts:94][E: packages/llm/src/schema/events.ts:121][E: packages/llm/src/schema/events.ts:124]
 - tool input events: start/delta/end 用 `id/name` 标识 tool input stream,delta 用 `text` 承载增量 JSON 文本。[E: packages/llm/src/schema/events.ts:128][E: packages/llm/src/schema/events.ts:140][E: packages/llm/src/schema/events.ts:144][E: packages/llm/src/schema/events.ts:148]
-- tool terminal events: `ToolCall` 有 `id/name/input/providerExecuted/providerMetadata`, `ToolResult` 有 `output/providerMetadata`, `ToolError` 有 `message`。[E: packages/llm/src/schema/events.ts:152][E: packages/llm/src/schema/events.ts:159][E: packages/llm/src/schema/events.ts:162][E: packages/llm/src/schema/events.ts:180]
+- tool terminal events: `ToolCall` 有 `id/name/input/providerExecuted/providerMetadata`, `ToolResult` 有 `result/output/providerExecuted/providerMetadata`, `ToolError` 有 `message/error/providerMetadata`。[E: packages/llm/src/schema/events.ts:152][E: packages/llm/src/schema/events.ts:159][E: packages/llm/src/schema/events.ts:162][E: packages/llm/src/schema/events.ts:167][E: packages/llm/src/schema/events.ts:169][E: packages/llm/src/schema/events.ts:173][E: packages/llm/src/schema/events.ts:177][E: packages/llm/src/schema/events.ts:179]
 - finish events: `Finish` 带 reason、usage、providerMetadata,provider-error event 带 message/classification/retryable/providerMetadata。[E: packages/llm/src/schema/events.ts:192][E: packages/llm/src/schema/events.ts:197][E: packages/llm/src/schema/events.ts:200][E: packages/llm/src/schema/events.ts:205]
 
-`LLMResponse` 是 non-streaming fold 的结果,字段包括 events 与 optional usage,并暴露 text/reasoning/toolCalls getter 从 events 派生内容。[E: packages/llm/src/schema/events.ts:338][E: packages/llm/src/schema/events.ts:354]
+`LLMResponse` 是 non-streaming fold 的结果,字段包括 message、events、optional usage 和 finishReason,并暴露 text/reasoning/toolCalls getter 从 events 派生内容。[E: packages/llm/src/schema/events.ts:561][E: packages/llm/src/schema/events.ts:565][E: packages/llm/src/schema/events.ts:568][E: packages/llm/src/schema/events.ts:573][E: packages/llm/src/schema/events.ts:578]
 
 ## Usage 加性契约
 
-`Usage` 把 input/output/cache/reasoning 拆成字段:inputTokens、outputTokens、nonCachedInputTokens、cacheReadInputTokens、cacheWriteInputTokens、reasoningTokens、totalTokens、providerMetadata 都是独立 schema field。[E: packages/llm/src/schema/events.ts:51][E: packages/llm/src/schema/events.ts:59] `visibleOutputTokens` 用 `outputTokens - reasoningTokens` 计算可见输出,且不会低于 0。[E: packages/llm/src/schema/events.ts:67][E: packages/llm/src/schema/events.ts:68]
+`Usage` 把 input/output/cache/reasoning 拆成字段:inputTokens、outputTokens、nonCachedInputTokens、cacheReadInputTokens、cacheWriteInputTokens、reasoningTokens、totalTokens、providerMetadata 都是独立 schema field。[E: packages/llm/src/schema/events.ts:52][E: packages/llm/src/schema/events.ts:53][E: packages/llm/src/schema/events.ts:54][E: packages/llm/src/schema/events.ts:55][E: packages/llm/src/schema/events.ts:56][E: packages/llm/src/schema/events.ts:57][E: packages/llm/src/schema/events.ts:58][E: packages/llm/src/schema/events.ts:59] `visibleOutputTokens` 用 `outputTokens - reasoningTokens` 计算可见输出,且不会低于 0。[E: packages/llm/src/schema/events.ts:67][E: packages/llm/src/schema/events.ts:68]
 
-协议共享 helper 也执行同一契约:provider supplied total 优先;没有 total 且 input/output 至少有一个存在时才用 input+output fallback。[E: packages/llm/src/protocols/shared.ts:83][E: packages/llm/src/protocols/shared.ts:90]
+协议共享 helper 也执行同一契约:provider supplied total 优先;没有 total 且 input/output 至少有一个存在时才用 input+output fallback。[E: packages/llm/src/protocols/shared.ts:51][E: packages/llm/src/protocols/shared.ts:56][E: packages/llm/src/protocols/shared.ts:57][E: packages/llm/src/protocols/shared.ts:58]
 
 ## LLMError 10 reason
 
-`LLMErrorReason` union 包含 10 类 reason:invalid-request、no-route、authentication、rate-limit、quota-exceeded、content-policy、provider-internal、transport、invalid-provider-output、unknown-provider。[E: packages/llm/src/schema/errors.ts:160][E: packages/llm/src/schema/errors.ts:171]
+`LLMErrorReason` union 包含 10 类 reason:invalid-request、no-route、authentication、rate-limit、quota-exceeded、content-policy、provider-internal、transport、invalid-provider-output、unknown-provider。[E: packages/llm/src/schema/errors.ts:161][E: packages/llm/src/schema/errors.ts:162][E: packages/llm/src/schema/errors.ts:163][E: packages/llm/src/schema/errors.ts:164][E: packages/llm/src/schema/errors.ts:165][E: packages/llm/src/schema/errors.ts:166][E: packages/llm/src/schema/errors.ts:167][E: packages/llm/src/schema/errors.ts:168][E: packages/llm/src/schema/errors.ts:169][E: packages/llm/src/schema/errors.ts:170]
 
-retryable 是 reason 自己的属性:rate-limit 与 provider-internal 默认 retryable,invalid-request/no-route/authentication/quota/content-policy/transport/invalid-provider-output/unknown-provider 默认非 retryable。[E: packages/llm/src/schema/errors.ts:34][E: packages/llm/src/schema/errors.ts:74][E: packages/llm/src/schema/errors.ts:109][E: packages/llm/src/schema/errors.ts:129][E: packages/llm/src/schema/errors.ts:181]
+retryable 是 reason 自己的属性:rate-limit 与 provider-internal 默认 retryable,invalid-request/no-route/authentication/quota/content-policy/transport/invalid-provider-output/unknown-provider 默认非 retryable。[E: packages/llm/src/schema/errors.ts:42][E: packages/llm/src/schema/errors.ts:53][E: packages/llm/src/schema/errors.ts:69][E: packages/llm/src/schema/errors.ts:82][E: packages/llm/src/schema/errors.ts:93][E: packages/llm/src/schema/errors.ts:104][E: packages/llm/src/schema/errors.ts:117][E: packages/llm/src/schema/errors.ts:129][E: packages/llm/src/schema/errors.ts:143][E: packages/llm/src/schema/errors.ts:155][E: packages/llm/src/schema/errors.ts:181]
 
 `LLMError` 记录 `module/method/reason`,并从 reason 读取 `retryable` 与 `retryAfterMs`。[E: packages/llm/src/schema/errors.ts:174][E: packages/llm/src/schema/errors.ts:186]
 
 ## 易错点
 
 - `providerMetadata` 与 `native` 不是同一个字段:events/parts 上的 providerMetadata 是 provider-specific metadata,Message/ToolDefinition 上的 native 是 provider-native escape hatch。[I]
-- `ToolResultValue.error` 是 tool result value 的一种 literal,而 `ToolFailure` 是 runtime failure type。[E: packages/llm/src/schema/messages.ts:76][E: packages/llm/src/schema/errors.ts:203]
-- `Message.system(...)` 是 chronological system message helper,不是 request-level `system` 字段本身。[E: packages/llm/src/schema/messages.ts:233][E: packages/llm/src/schema/messages.ts:289]
+- `ToolResultValue.error` 是 tool result value 的一种 literal,而 `ToolFailure` 是 runtime failure type。[E: packages/llm/src/schema/messages.ts:61][E: packages/llm/src/schema/errors.ts:203]
+- `Message.system(...)` 是 chronological system message helper,不是 request-level `system` 字段本身。[E: packages/llm/src/schema/messages.ts:218][E: packages/llm/src/schema/messages.ts:274]
 
 ## Sources
 - packages/llm/src/schema/

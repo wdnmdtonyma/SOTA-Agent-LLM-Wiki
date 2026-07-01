@@ -16,7 +16,7 @@ related:
   - subsys.agent-core.turn-control
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.transport-proxy` 是 `pi-agent-core` 的 stream transport adapter: `StreamFn` 定义 agent loop 可消费的 assistant stream 边界, `streamProxy()` 把远端 proxy 的瘦事件流重建成同一类 assistant message events。

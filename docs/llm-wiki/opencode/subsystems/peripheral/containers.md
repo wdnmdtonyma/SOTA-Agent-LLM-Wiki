@@ -12,7 +12,7 @@ symbols: [build]
 related: [infra.ci-workflows]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > `packages/containers` 定义 CI 预构建 Docker images，用来把 Linux GitHub Actions 中安装慢的大型依赖烘进 `job.container` 可复用镜像。

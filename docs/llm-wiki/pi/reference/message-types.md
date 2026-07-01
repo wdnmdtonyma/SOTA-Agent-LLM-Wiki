@@ -27,7 +27,7 @@ related:
   - subsys.agent-core.message-model
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `ref.agent.message-types` 是 `AgentMessage` 相关类型与 variant 的目录:覆盖 agent-core 的 `AgentMessage` union、可扩展 `CustomAgentMessages` 接口、harness 默认注入的 4 个 custom message role,以及这些 role 进入 LLM `Message[]` 的默认转换边界。

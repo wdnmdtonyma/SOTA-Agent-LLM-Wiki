@@ -9,61 +9,57 @@ symbols: [SessionExecutionLocal.layer, SessionRunCoordinator.make, SessionRunCoo
 related: [spine.v2-provider-turn, session-v2.location-wiring]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
-> V2 coordinator 是 process-local 的 session drain lane:它把 advisory wake、explicit run 和 interrupt 合并成每个 session 最多一个 active drain 和一个 coalesced follow-up。
+> V2 coordinator 是 process-local 的 session drain lane:它让每个 session key 同时最多一个 owner fiber,把 prompt wake 合并成一个 follow-up,并让 explicit resume 等待当前 drain 完成。
 
 ## 能回答的问题
-- `wake` 与 `run` 在 coordinator 中有什么区别?
+- `wake` 与 `resume/run` 在 coordinator 中有什么区别?
 - 同一个 session 同时进来多个 prompt 时怎样合并?
-- interrupt 如何抑制旧 wake?
+- interrupt 如何停止当前 owner 并清掉 follow-up wake?
 - runner 为什么能按 location-scoped services 执行?
 
 ```mermaid
 flowchart TD
-  Caller["SessionExecution wake/resume/interrupt"] --> Execution["SessionExecutionLocal"]
-  Execution --> Coordinator["SessionRunCoordinator"]
+  Caller["SessionExecution resume/wake/interrupt"] --> Execution["SessionExecutionLocal"]
+  Execution --> Coordinator["SessionRunCoordinator.make"]
   Coordinator --> Active["active Map sessionID -> Entry"]
-  Active --> Drain["drain(sessionID, mode)"]
+  Active --> Drain["drain(sessionID, force)"]
   Drain --> Store["SessionStore.get"]
-  Store --> Location["LocationServiceMap.get"]
-  Location --> Runner["SessionRunner.run force=(mode==run)"]
-  Coordinator --> Pending["pending demand"]
-  Coordinator --> Interrupt["interruptSeq / suppressPending"]
+  Store --> Location["LocationServiceMap.get(session.location)"]
+  Location --> Runner["SessionRunner.run({ sessionID, force })"]
+  Coordinator --> Pending["pendingWake boolean"]
+  Coordinator --> Interrupt["owner Fiber.interrupt"]
 ```
 
 ## 端到端步骤
 
-1. `SessionExecution.Interface@packages/core/src/session/execution.ts:7` 只定义 `resume`、`wake`、`interrupt`;execution 与 coordinator 之间没有携带 full session object,只携带 session id 与可选 seq。[E: packages/core/src/session/execution.ts:7]
+1. `SessionExecution.Interface` 只定义 `active/resume/wake/interrupt`;execution 与 coordinator 之间只携带 session id,没有携带 full session object。[E: packages/core/src/session/execution.ts:9][E: packages/core/src/session/execution.ts:13][E: packages/core/src/session/execution.ts:15][E: packages/core/src/session/execution.ts:17]
 
-2. `SessionExecutionLocal.layer@packages/core/src/session/execution/local.ts:11` 从 `SessionStore`、`LocationServiceMap`、`SessionRunCoordinator` 取依赖,并定义本地 `drain(sessionID, mode)`。[E: packages/core/src/session/execution/local.ts:11][E: packages/core/src/session/execution/local.ts:13]
+2. `SessionExecutionLocal.layer` 从 `SessionStore`、`LocationServiceMap` 与 `SessionRunCoordinator.make` 取依赖,并把 coordinator drain 定义为读取 session 后进入该 session 的 location-scoped layer。[E: packages/core/src/session/execution/local.ts:11][E: packages/core/src/session/execution/local.ts:14][E: packages/core/src/session/execution/local.ts:16][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:21]
 
-3. `drain@packages/core/src/session/execution/local.ts:16` 读取 session,根据 `session.location` 获取 location-scoped layer,再在该 layer 内调用 `SessionRunner.run({ sessionID, force: mode === "run" })`。[E: packages/core/src/session/execution/local.ts:16][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:21]
+3. `drain` 在 location layer 内调用 `SessionRunner.Service.use(runner => runner.run({ sessionID, force }))`,因此 runner 看到的是 location-scoped service graph,不是全局 service graph。[E: packages/core/src/session/execution/local.ts:20][E: packages/core/src/session/execution/local.ts:21]
 
-4. `SessionExecutionLocal` 把 `resume` 映射为 `coordinator.run`,把 `wake` 映射为 `coordinator.wake`,把 `interrupt` 映射为 `coordinator.interrupt`。[E: packages/core/src/session/execution/local.ts:27][E: packages/core/src/session/execution/local.ts:28][E: packages/core/src/session/execution/local.ts:30]
+4. `SessionExecutionLocal` 把 `resume` 映射为 `coordinator.run`,把 `wake` 映射为 `coordinator.wake`,把 `interrupt` 映射为 `coordinator.interrupt`。[E: packages/core/src/session/execution/local.ts:31][E: packages/core/src/session/execution/local.ts:33][E: packages/core/src/session/execution/local.ts:34][E: packages/core/src/session/execution/local.ts:35]
 
-5. `SessionRunCoordinator.make@packages/core/src/session/run-coordinator.ts:65` 创建 scoped coordinator,内部 `active` 是 `Map<Key, Entry>`;一个 Entry 保存 `current` demand、可选 `pending` demand、owner fiber、interrupt seq 与 deferred waiters。[E: packages/core/src/session/run-coordinator.ts:65][E: packages/core/src/session/run-coordinator.ts:70][E: packages/core/src/session/run-coordinator.ts:41]
+5. `SessionRunCoordinator.make` 创建 scoped coordinator,内部 `active` 是 `Map<Key, Entry>`;一个 Entry 保存 `done` deferred、可选 owner fiber、`pendingWake` 与 `stopping`。[E: packages/core/src/session/run-coordinator.ts:24][E: packages/core/src/session/run-coordinator.ts:28][E: packages/core/src/session/run-coordinator.ts:17][E: packages/core/src/session/run-coordinator.ts:20][E: packages/core/src/session/run-coordinator.ts:21]
 
-6. `coalesce@packages/core/src/session/run-coordinator.ts:53` 的规则是 run demand 覆盖 wake demand,两个 wake 合并时保留最大 seq。[E: packages/core/src/session/run-coordinator.ts:53][E: packages/core/src/session/run-coordinator.ts:54][E: packages/core/src/session/run-coordinator.ts:55]
+6. `start` fork owner fiber 执行 `options.drain(key, force)`,并在 exit 时调用 `settle`。[E: packages/core/src/session/run-coordinator.ts:37][E: packages/core/src/session/run-coordinator.ts:39][E: packages/core/src/session/run-coordinator.ts:41][E: packages/core/src/session/run-coordinator.ts:42]
 
-7. `wake@packages/core/src/session/run-coordinator.ts:161` 如果 session 已 active,会检查 interrupt 边界与 wake 接受条件,然后把 follow-up demand 合并到 `entry.pending`;如果 idle,会创建 wake entry 并 start owner fiber。[E: packages/core/src/session/run-coordinator.ts:161][E: packages/core/src/session/run-coordinator.ts:164][E: packages/core/src/session/run-coordinator.ts:166][E: packages/core/src/session/run-coordinator.ts:172]
+7. `run` 是 explicit drain:如果 key 已 active,调用方等待当前 `done`;如果 idle,它创建 entry、用 `force=true` 启动 owner,并等待该 entry 完成。[E: packages/core/src/session/run-coordinator.ts:67][E: packages/core/src/session/run-coordinator.ts:70][E: packages/core/src/session/run-coordinator.ts:72][E: packages/core/src/session/run-coordinator.ts:75][E: packages/core/src/session/run-coordinator.ts:77]
 
-8. `run@packages/core/src/session/run-coordinator.ts:221` 是 explicit drain:如果当前 active demand 是 wake,它会把 pending 升级成 run 并让调用方等待 explicit waiter;如果当前已经是 run,调用方等待同一个 done deferred。[E: packages/core/src/session/run-coordinator.ts:221][E: packages/core/src/session/run-coordinator.ts:229][E: packages/core/src/session/run-coordinator.ts:230][E: packages/core/src/session/run-coordinator.ts:234]
+8. `wake` 是 advisory signal:如果 key 已 active,只设置 `entry.pendingWake = true`;如果 idle,它创建 entry 并用 `force=false` 启动 owner。[E: packages/core/src/session/run-coordinator.ts:81][E: packages/core/src/session/run-coordinator.ts:83][E: packages/core/src/session/run-coordinator.ts:85][E: packages/core/src/session/run-coordinator.ts:89][E: packages/core/src/session/run-coordinator.ts:91]
 
-9. `start@packages/core/src/session/run-coordinator.ts:93` fork owner fiber 执行 `options.drain(key, demand._tag)`,并在 exit 时调用 `settle`。[E: packages/core/src/session/run-coordinator.ts:93][E: packages/core/src/session/run-coordinator.ts:95][E: packages/core/src/session/run-coordinator.ts:103]
+9. `settle` 在成功且未 stopping 且有 `pendingWake` 时复用同一个 entry 启动 successor;否则根据是否仍有 pending wake 建新 entry 或删除 active key,最后完成当前 `done`。[E: packages/core/src/session/run-coordinator.ts:51][E: packages/core/src/session/run-coordinator.ts:52][E: packages/core/src/session/run-coordinator.ts:54][E: packages/core/src/session/run-coordinator.ts:58][E: packages/core/src/session/run-coordinator.ts:59][E: packages/core/src/session/run-coordinator.ts:64]
 
-10. `settle@packages/core/src/session/run-coordinator.ts:112` 在成功且不 stopping 时,若有 pending demand 就把 pending 升为 current 并启动 successor;否则从 active map 删除 entry 并完成 waiters。[E: packages/core/src/session/run-coordinator.ts:112][E: packages/core/src/session/run-coordinator.ts:131][E: packages/core/src/session/run-coordinator.ts:132][E: packages/core/src/session/run-coordinator.ts:139]
-
-11. `interrupt@packages/core/src/session/run-coordinator.ts:193` 记录最新 interrupt seq,中断 owner fiber,并调用 `suppressPendingAtOrBefore`;该 helper 仅保留 seq 晚于 interrupt seq 的 pending wake,否则清空 pending demand。[E: packages/core/src/session/run-coordinator.ts:193][E: packages/core/src/session/run-coordinator.ts:199][E: packages/core/src/session/run-coordinator.ts:215][E: packages/core/src/session/run-coordinator.ts:257][E: packages/core/src/session/run-coordinator.ts:262][E: packages/core/src/session/run-coordinator.ts:265]
-
-12. `SessionRunCoordinator.layer@packages/core/src/session/run-coordinator.ts:273` 把 generic coordinator 固化成 session runner coordinator,其 drain 函数就是 `runner.run({ sessionID, force: mode === "run" })`。[E: packages/core/src/session/run-coordinator.ts:273][E: packages/core/src/session/run-coordinator.ts:278]
+10. `interrupt` 若存在 owner fiber,会设置 `stopping=true`、清空 `pendingWake=false`,再中断 owner fiber;idle interruption 是 no-op。[E: packages/core/src/session/run-coordinator.ts:94][E: packages/core/src/session/run-coordinator.ts:97][E: packages/core/src/session/run-coordinator.ts:98][E: packages/core/src/session/run-coordinator.ts:99][E: packages/core/src/session/run-coordinator.ts:100]
 
 ## 关键决策点
 
-- `wake` 是 durable work 到达后的 advisory signal;`run` 是 explicit drain request,会等待当前或后续 drain 的完成结果。[E: packages/core/src/session/run-coordinator.ts:31][E: packages/core/src/session/run-coordinator.ts:33][E: packages/core/src/session/run-coordinator.ts:221]
-- coordinator 是 process-local 结构,因为 `active` 与 `interruptSeq` 都是内存 `Map`;跨进程 ownership 不是这个文件已经完成的能力。[E: packages/core/src/session/run-coordinator.ts:70][E: packages/core/src/session/run-coordinator.ts:71]
-- location wiring 在 execution local 层完成,runner 本身拿到的是 location-scoped service graph,不是全局 service graph。[E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:21]
+- `wake` 只合并为一个 follow-up boolean,当前源码不再携带 admitted seq 或 run/wake demand object。[E: packages/core/src/session/run-coordinator.ts:20][E: packages/core/src/session/run-coordinator.ts:85]
+- coordinator 是 process-local 结构,因为 `active`、owner fiber 与 pending wake 都是内存状态。[E: packages/core/src/session/run-coordinator.ts:28][E: packages/core/src/session/run-coordinator.ts:19][E: packages/core/src/session/run-coordinator.ts:20]
+- location wiring 在 execution local 层完成,runner 本身拿到的是 location-scoped service graph。[E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:21]
 
 ## 深挖入口
 - Provider turn 的 runner 逻辑: `spine.v2-provider-turn`

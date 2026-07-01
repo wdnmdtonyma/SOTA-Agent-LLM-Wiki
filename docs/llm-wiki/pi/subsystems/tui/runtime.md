@@ -18,7 +18,7 @@ related:
   - surface.modes.interactive
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.tui.runtime` 描述 `pi-tui` 的 runtime: `Container` 把组件树渲染为 lines, `TUI` 继承 `Container` 并接管 terminal input、focus、overlay stack、render scheduling 和 differential terminal writes。

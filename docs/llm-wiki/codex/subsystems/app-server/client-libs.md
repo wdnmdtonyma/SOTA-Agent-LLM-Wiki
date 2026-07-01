@@ -18,7 +18,7 @@ related:
   - subsys.tui.architecture
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 app-server client libraries 提供两层客户端：`codex-app-server-client` facade 同时支持 in-process 与 remote endpoints，remote endpoint 可以是 WebSocket URL 或 Unix socket；`app-server-test-client` 既可以 spawn stdio app-server，也可以连接现有 WebSocket server [E: codex-rs/app-server-client/src/lib.rs:469][E: codex-rs/app-server-client/src/lib.rs:470][E: codex-rs/app-server-client/src/lib.rs:471][E: codex-rs/app-server-client/src/remote.rs:73][E: codex-rs/app-server-client/src/remote.rs:74][E: codex-rs/app-server-client/src/remote.rs:78][E: codex-rs/app-server-test-client/src/lib.rs:118][E: codex-rs/app-server-test-client/src/lib.rs:125][E: codex-rs/app-server-test-client/src/lib.rs:1525][E: codex-rs/app-server-test-client/src/lib.rs:1527][E: codex-rs/app-server-test-client/src/lib.rs:1528]。旧独立调试客户端 crate 不在当前 source tree 中 [I]。

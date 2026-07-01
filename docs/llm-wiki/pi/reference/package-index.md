@@ -37,7 +37,7 @@ related:
   - spine.overview
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `ref.package-index` 是 Pi monorepo 的 package catalog：它列出五个源码包、各自的 public package name / entrypoint / build-test scripts，并把根工具链(toolchain)与分层节点 `spine.layered-architecture`、`spine.overview` 对齐。

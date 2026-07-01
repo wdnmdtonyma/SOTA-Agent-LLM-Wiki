@@ -14,7 +14,7 @@ related:
   - subsys.agent-core.compaction
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.message-conversion` 描述 `pi-agent-core` 如何把 harness 层的 `AgentMessage[]` 转成 `@earendil-works/pi-ai` 的 `Message[]`, 并把 bash execution、custom message、branch summary 与 compaction summary 包装成模型可读的 user message。

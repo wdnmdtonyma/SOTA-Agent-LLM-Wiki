@@ -8,7 +8,7 @@ symbols: [GetContextRemainingHandler, create_get_context_remaining_tool, GET_CON
 related: [tool.new-context, subsys.core.tool-system, subsys.core.context-manager]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > `get_context_remaining` 查询当前 context window 剩余 token 数,在 token-budget feature 下与 `new_context` 同时注册。
@@ -24,7 +24,7 @@ updated: 5670360009
 
 `GET_CONTEXT_REMAINING_TOOL_NAME` 的值是 `get_context_remaining`,handler 是 `GetContextRemainingHandler`。[E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:8] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:59]
 
-`GetContextRemainingHandler::tool_name` 返回 plain `get_context_remaining`,`spec()` 返回 `create_get_context_remaining_tool()`。[E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:61] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:63] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:66] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:67]
+`GetContextRemainingHandler::tool_name` 返回 plain `get_context_remaining`,`spec()` 返回 `create_get_context_remaining_tool()`。[E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:62] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:63] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:66] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:67]
 
 ## 2 用途定位
 
@@ -40,7 +40,7 @@ updated: 5670360009
 
 `get_context_remaining` 的 output schema 是 object,包含必填 `tokens_left`;该字段可以是 integer 或 null。[E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:17] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:23] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:25] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:27] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:28] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:33]
 
-handler 在没有 `model_context_window` 时输出 `tokens_left: null`;否则用 `model_context_window.saturating_sub(active_context_tokens).max(0)` 计算剩余值。[E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:78] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:80] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:83] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:84] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:85] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:86]
+handler 调用 `context_window_token_status(session, turn)` 取得当前 context-window 状态,并把 `tokens_until_compaction` 作为 `tokens_left` 输出；该值不可得时保持为 `null`。[E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:78] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:79] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:80] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:84] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:85]
 
 ## 5 ToolSpec 类型
 
@@ -48,7 +48,7 @@ handler 在没有 `model_context_window` 时输出 `tokens_left: null`;否则用
 
 ## 6 注册与门控
 
-`add_core_utility_tools` 在 `Feature::TokenBudget` 开启时注册 `NewContextWindowHandler` 和 `GetContextRemainingHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:709] [E: codex-rs/core/src/tools/spec_plan.rs:710] [E: codex-rs/core/src/tools/spec_plan.rs:711]
+`add_core_utility_tools` 在 `Feature::TokenBudget` 开启时注册 `NewContextWindowHandler` 和 `GetContextRemainingHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:732] [E: codex-rs/core/src/tools/spec_plan.rs:733] [E: codex-rs/core/src/tools/spec_plan.rs:734]
 
 ## 7 parallel-safe
 
@@ -56,7 +56,7 @@ handler 在没有 `model_context_window` 时输出 `tokens_left: null`;否则用
 
 ## 8 handler 走读
 
-handler 只接受 function payload,先读取 turn 的 `model_context_window`,再读取 session 总 token usage,最后返回 `GetContextRemainingOutput`。[E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:72] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:78] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:83] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:88]
+handler 只接受 function payload,随后读取 session 与 turn 的 context-window token 状态,最后返回 `GetContextRemainingOutput`。[E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:72] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:78] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:79] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:84]
 
 `GetContextRemainingOutput` 会把普通 tool output 渲染成上下文片段文本,但 code-mode result 是 JSON `{ "tokens_left": ... }`。[E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:28] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:47] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:48] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:53] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:54]
 

@@ -16,7 +16,7 @@ related:
   - subsys.agent-core.session-tree
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.session-storage` 是 `pi-agent-core` 的会话持久化抽象层: `SessionStorage` 定义单个会话树如何读写,`SessionRepo` 定义会话集合如何 create/open/list/delete/fork。

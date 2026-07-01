@@ -8,10 +8,10 @@ symbols: [ThreadId, UserInput, TextElement, ByteRange, ResponseInputItem, Conten
 related: [ref.protocol-op, ref.protocol-items, ref.key-types, sdk.ts-events-items, sdk.py-inputs-errors]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
-> 这些 `codex-rs/protocol/src` 文件定义用户输入、Responses input/output item、dynamic tool payload、request tool payload、plan tool payload、session metadata 与 rollout persistence item。[E: codex-rs/protocol/src/user_input.rs:15][E: codex-rs/protocol/src/models.rs:806][E: codex-rs/protocol/src/models.rs:919][E: codex-rs/protocol/src/dynamic_tools.rs:13][E: codex-rs/protocol/src/request_permissions.rs:50][E: codex-rs/protocol/src/request_user_input.rs:32][E: codex-rs/protocol/src/plan_tool.rs:24][E: codex-rs/protocol/src/protocol.rs:2877][E: codex-rs/protocol/src/protocol.rs:2952]
+> 这些 `codex-rs/protocol/src` 文件定义用户输入、Responses input/output item、dynamic tool payload、request tool payload、plan tool payload、session metadata 与 rollout persistence item。[E: codex-rs/protocol/src/user_input.rs:15][E: codex-rs/protocol/src/models.rs:806][E: codex-rs/protocol/src/models.rs:934][E: codex-rs/protocol/src/dynamic_tools.rs:13][E: codex-rs/protocol/src/request_permissions.rs:50][E: codex-rs/protocol/src/request_user_input.rs:32][E: codex-rs/protocol/src/plan_tool.rs:24][E: codex-rs/protocol/src/protocol.rs:3039][E: codex-rs/protocol/src/protocol.rs:3156]
 
 ## 能回答的问题
 
@@ -25,7 +25,7 @@ updated: 5670360009
 
 | Symbol | Shape | 字段/变体 | 定义锚 |
 |---|---|---|---|
-| `ThreadId` | wrapper struct | wraps `Uuid`; `new()` 使用 `Uuid::now_v7()`,serialize 通过 `serializer.collect_str(&self.uuid)` 输出 string。[E: codex-rs/protocol/src/thread_id.rs:13][E: codex-rs/protocol/src/thread_id.rs:20][E: codex-rs/protocol/src/thread_id.rs:65][E: codex-rs/protocol/src/thread_id.rs:70] | `thread_id.rs:13` |
+| `ThreadId` | wrapper struct | wraps `Uuid`; `new()` 使用 `Uuid::now_v7()`,serialize 通过 `serializer.collect_str(&self.uuid)` 输出 string。[E: codex-rs/protocol/src/thread_id.rs:17][E: codex-rs/protocol/src/thread_id.rs:24][E: codex-rs/protocol/src/thread_id.rs:69][E: codex-rs/protocol/src/thread_id.rs:74] | `thread_id.rs:13` |
 | `UserInput` | non-exhaustive tagged enum | `Text { text, text_elements }`, `Image { image_url, detail? }`, `LocalImage { path, detail? }`, `Skill { name, path }`, `Mention { name, path }`。[E: codex-rs/protocol/src/user_input.rs:12][E: codex-rs/protocol/src/user_input.rs:15][E: codex-rs/protocol/src/user_input.rs:51] | `user_input.rs:15` |
 | `MAX_USER_INPUT_TEXT_CHARS` | const | conservative cap: `1 << 20` chars per user message text。[E: codex-rs/protocol/src/user_input.rs:8][E: codex-rs/protocol/src/user_input.rs:9] | `user_input.rs:9` |
 | `TextElement` | struct | `byte_range: ByteRange`, private optional `placeholder`; `placeholder(text)` falls back to source text slice for that byte range。[E: codex-rs/protocol/src/user_input.rs:55][E: codex-rs/protocol/src/user_input.rs:59][E: codex-rs/protocol/src/user_input.rs:99][E: codex-rs/protocol/src/user_input.rs:102] | `user_input.rs:55` |
@@ -40,8 +40,8 @@ updated: 5670360009
 | `AgentMessageInputContent` | tagged enum | `InputText` or `EncryptedContent`; helper returns plaintext only when all parts are `InputText`。[E: codex-rs/protocol/src/models.rs:861][E: codex-rs/protocol/src/models.rs:864][E: codex-rs/protocol/src/models.rs:867][E: codex-rs/protocol/src/models.rs:877] | `models.rs:861` |
 | `ImageDetail` | enum | `Auto`, `Low`, `High`, `Original`; default constant is `High`。[E: codex-rs/protocol/src/models.rs:882][E: codex-rs/protocol/src/models.rs:887][E: codex-rs/protocol/src/models.rs:889] | `models.rs:882` |
 | `MessagePhase` | enum | `Commentary`, `FinalAnswer`; comment says providers do not emit it consistently, so `None` means phase unknown。[E: codex-rs/protocol/src/models.rs:891][E: codex-rs/protocol/src/models.rs:897][E: codex-rs/protocol/src/models.rs:904] | `models.rs:897` |
-| `ResponseItem` | tagged enum | 16 variants: `Message`, `AgentMessage`, `Reasoning`, `LocalShellCall`, `FunctionCall`, `ToolSearchCall`, `FunctionCallOutput`, `CustomToolCall`, `CustomToolCallOutput`, `ToolSearchOutput`, `WebSearchCall`, `ImageGenerationCall`, `Compaction`, `CompactionTrigger`, `ContextCompaction`, `Other`。[E: codex-rs/protocol/src/models.rs:919][E: codex-rs/protocol/src/models.rs:920][E: codex-rs/protocol/src/models.rs:1157] | `models.rs:919` |
-| `BaseInstructions` | struct | `text: String`; default text comes from `prompts/base_instructions/default.md` include。[E: codex-rs/protocol/src/models.rs:1280][E: codex-rs/protocol/src/models.rs:1285][E: codex-rs/protocol/src/models.rs:1292] | `models.rs:1285` |
+| `ResponseItem` | tagged enum | 17 variants: `AdditionalTools`, `Message`, `AgentMessage`, `Reasoning`, `LocalShellCall`, `FunctionCall`, `ToolSearchCall`, `FunctionCallOutput`, `CustomToolCall`, `CustomToolCallOutput`, `ToolSearchOutput`, `WebSearchCall`, `ImageGenerationCall`, `Compaction`, `CompactionTrigger`, `ContextCompaction`, `Other`。[E: codex-rs/protocol/src/models.rs:934][E: codex-rs/protocol/src/models.rs:937][E: codex-rs/protocol/src/models.rs:943][E: codex-rs/protocol/src/models.rs:1162] | `models.rs:934` |
+| `BaseInstructions` | struct | `text: String`; default text comes from `prompts/base_instructions/default.md` include。[E: codex-rs/protocol/src/models.rs:1367][E: codex-rs/protocol/src/models.rs:1372][E: codex-rs/protocol/src/models.rs:1379] | `models.rs:1372` |
 
 ## Dynamic tools / request tools
 
@@ -62,18 +62,18 @@ updated: 5670360009
 
 | Symbol | Shape | 字段/变体 | 定义锚 |
 |---|---|---|---|
-| `SessionMeta` | struct | thread ids, timestamp/cwd/originator/version/source, optional thread source, sub-agent nickname/role/path, model provider, base instructions, dynamic tools, memory mode, multi-agent version。[E: codex-rs/protocol/src/protocol.rs:2871][E: codex-rs/protocol/src/protocol.rs:2877][E: codex-rs/protocol/src/protocol.rs:2916] | `protocol.rs:2877` |
-| `SessionMetaLine` | struct | flattened `SessionMeta` plus optional `GitInfo`。[E: codex-rs/protocol/src/protocol.rs:2943][E: codex-rs/protocol/src/protocol.rs:2947] | `protocol.rs:2943` |
-| `RolloutItem` | tagged enum | 6 variants: `SessionMeta`, `ResponseItem`, `InterAgentCommunication`, `Compacted`, `TurnContext`, `EventMsg`。[E: codex-rs/protocol/src/protocol.rs:2952][E: codex-rs/protocol/src/protocol.rs:2960] | `protocol.rs:2952` |
-| `CompactedItem` | struct | `message`, optional `replacement_history`, optional `window_id`; converts into assistant `ResponseItem::Message`。[E: codex-rs/protocol/src/protocol.rs:2963][E: codex-rs/protocol/src/protocol.rs:2969][E: codex-rs/protocol/src/protocol.rs:2971][E: codex-rs/protocol/src/protocol.rs:2982] | `protocol.rs:2963` |
-| `TurnContextItem` | struct | optional `turn_id`, `cwd`, workspace roots, date/timezone, approval/sandbox/permission/network/fs policy, model, comp hash, personality, collaboration mode, multi-agent version, realtime flag, effort, compatibility `summary`。[E: codex-rs/protocol/src/protocol.rs:2991][E: codex-rs/protocol/src/protocol.rs:2996][E: codex-rs/protocol/src/protocol.rs:3034] | `protocol.rs:2996` |
-| `TurnContextItem::permission_profile` | method | falls back from legacy sandbox/file-system/network policy fields when explicit `permission_profile` is absent。[E: codex-rs/protocol/src/protocol.rs:3036][E: codex-rs/protocol/src/protocol.rs:3051] | `protocol.rs:3037` |
+| `SessionMeta` | struct | thread ids, timestamp/cwd/originator/version/source, optional thread source, sub-agent nickname/role/path, model provider, base instructions, dynamic tools, memory mode, multi-agent version。[E: codex-rs/protocol/src/protocol.rs:3032][E: codex-rs/protocol/src/protocol.rs:3039][E: codex-rs/protocol/src/protocol.rs:3086] | `protocol.rs:3037` |
+| `SessionMetaLine` | struct | flattened `SessionMeta` plus optional `GitInfo`。[E: codex-rs/protocol/src/protocol.rs:3117][E: codex-rs/protocol/src/protocol.rs:3121] | `protocol.rs:3117` |
+| `RolloutItem` | tagged enum | 8 variants: `SessionMeta`, `ResponseItem`, `InterAgentCommunication`, `InterAgentCommunicationMetadata`, `Compacted`, `TurnContext`, `WorldState`, `EventMsg`。[E: codex-rs/protocol/src/protocol.rs:3155][E: codex-rs/protocol/src/protocol.rs:3156][E: codex-rs/protocol/src/protocol.rs:3168] | `protocol.rs:3155` |
+| `CompactedItem` | struct | `message`, optional `replacement_history`, optional `window_number`, optional `first_window_id`, optional `previous_window_id`, optional `window_id`; converts into assistant `ResponseItem::Message`。[E: codex-rs/protocol/src/protocol.rs:3189][E: codex-rs/protocol/src/protocol.rs:3190][E: codex-rs/protocol/src/protocol.rs:3192][E: codex-rs/protocol/src/protocol.rs:3195][E: codex-rs/protocol/src/protocol.rs:3198][E: codex-rs/protocol/src/protocol.rs:3201][E: codex-rs/protocol/src/protocol.rs:3204][E: codex-rs/protocol/src/protocol.rs:3207][E: codex-rs/protocol/src/protocol.rs:3218] | `protocol.rs:3189` |
+| `TurnContextItem` | struct | optional `turn_id`, `cwd`, workspace roots, date/timezone, approval/sandbox/permission/network/fs policy, model, comp hash, personality, collaboration mode, multi-agent version, realtime flag, effort, compatibility `summary`。[E: codex-rs/protocol/src/protocol.rs:3227][E: codex-rs/protocol/src/protocol.rs:3232][E: codex-rs/protocol/src/protocol.rs:3274] | `protocol.rs:3232` |
+| `TurnContextItem::permission_profile` | method | falls back from legacy sandbox/file-system/network policy fields when explicit `permission_profile` is absent。[E: codex-rs/protocol/src/protocol.rs:3276][E: codex-rs/protocol/src/protocol.rs:3291] | `protocol.rs:3276` |
 
 ## 设计动机速记
 
 - `UserInput` is `#[non_exhaustive]`,so consumers should treat future input variants as protocol evolution instead of a closed set。[E: codex-rs/protocol/src/user_input.rs:12][I]
-- `ResponseItem` now includes agent-to-agent message and compaction lifecycle variants alongside model/tool output variants。[E: codex-rs/protocol/src/models.rs:937][E: codex-rs/protocol/src/models.rs:1125][E: codex-rs/protocol/src/models.rs:1135][E: codex-rs/protocol/src/models.rs:1144][I]
-- `RolloutItem` persists both model/provider items and protocol events; replay/resume can therefore reconstruct state from `SessionMeta`, `TurnContext`, `ResponseItem`, `InterAgentCommunication`, compaction records, and `EventMsg` lines。[E: codex-rs/protocol/src/protocol.rs:2952][E: codex-rs/protocol/src/protocol.rs:2960][I]
+- `ResponseItem` now includes agent-to-agent messages, additional tool declarations, and compaction lifecycle variants alongside model/tool output variants。[E: codex-rs/protocol/src/models.rs:937][E: codex-rs/protocol/src/models.rs:959][E: codex-rs/protocol/src/models.rs:1139][E: codex-rs/protocol/src/models.rs:1149][E: codex-rs/protocol/src/models.rs:1150][I]
+- `RolloutItem` persists model/provider items, protocol events, inter-agent communication metadata, and world-state snapshots; replay/resume can therefore reconstruct state from `SessionMeta`, `TurnContext`, `ResponseItem`, `InterAgentCommunication`, compaction records, `WorldState`, and `EventMsg` lines。[E: codex-rs/protocol/src/protocol.rs:3156][E: codex-rs/protocol/src/protocol.rs:3157][E: codex-rs/protocol/src/protocol.rs:3159][E: codex-rs/protocol/src/protocol.rs:3161][E: codex-rs/protocol/src/protocol.rs:3164][E: codex-rs/protocol/src/protocol.rs:3165][E: codex-rs/protocol/src/protocol.rs:3166][E: codex-rs/protocol/src/protocol.rs:3167][I]
 
 ## Sources
 

@@ -8,7 +8,7 @@ symbols: [create_report_agent_job_result_tool, ReportAgentJobResultHandler, Repo
 related: [tool.spawn-agents-on-csv, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > `report_agent_job_result` 是 agent job worker-only 工具：CSV fanout worker 用它把当前 job item 的 JSON object result 写回 state DB；`stop=true` 且结果被 accepted 时会把 job 标记为 cancelled，从而停止继续拉起 pending work。
@@ -23,7 +23,7 @@ updated: 5670360009
 
 ## 注册与门控
 
-`report_agent_job_result` 只有在 `agent_jobs_worker_tools_enabled` 为 true 时注册；该 helper 还要求 session source 是 `SubAgentSource::Other(label)` 且 label 以 `agent_job:` 开头。[E: codex-rs/core/src/tools/spec_plan.rs:366][E: codex-rs/core/src/tools/spec_plan.rs:367][E: codex-rs/core/src/tools/spec_plan.rs:369][E: codex-rs/core/src/tools/spec_plan.rs:371][E: codex-rs/core/src/tools/spec_plan.rs:843][E: codex-rs/core/src/tools/spec_plan.rs:844]
+`report_agent_job_result` 只有在 `agent_jobs_worker_tools_enabled` 为 true 时注册；该 helper 还要求 session source 是 `SubAgentSource::Other(label)` 且 label 以 `agent_job:` 开头。[E: codex-rs/core/src/tools/spec_plan.rs:370][E: codex-rs/core/src/tools/spec_plan.rs:371][E: codex-rs/core/src/tools/spec_plan.rs:373][E: codex-rs/core/src/tools/spec_plan.rs:375][E: codex-rs/core/src/tools/spec_plan.rs:871][E: codex-rs/core/src/tools/spec_plan.rs:872]
 
 该 label 由 `spawn_agents_on_csv` worker spawn path 设置为 `agent_job:{job_id}`。[E: codex-rs/core/src/tools/handlers/agent_jobs.rs:204][E: codex-rs/core/src/tools/handlers/agent_jobs.rs:207][E: codex-rs/core/src/tools/handlers/agent_jobs.rs:208]
 

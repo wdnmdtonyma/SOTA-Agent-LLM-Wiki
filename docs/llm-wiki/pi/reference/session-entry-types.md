@@ -14,7 +14,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `ref.agent.session-entry-types` 是 `packages/agent/src/harness/types.ts` 中 session tree entry exported types 的字段级目录:覆盖 `SessionTreeEntryBase`、所有 `SessionTreeEntry` variant、union 本身与 `PendingSessionWrite` 派生写入形态。

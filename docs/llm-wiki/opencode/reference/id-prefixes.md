@@ -6,11 +6,14 @@ tier: T3
 v: shared
 source:
   - packages/core/src/id/id.ts
+  - packages/schema/src/identifier.ts
   - packages/core/src/project.ts
+  - packages/schema/src/project-id.ts
   - packages/core/src/util/hash.ts
   - packages/core/src/session/schema.ts
-  - packages/core/src/session/message-id.ts
+  - packages/schema/src/session-message.ts
   - packages/core/src/integration.ts
+  - packages/schema/src/integration.ts
 status: verified
 symbols:
   - Identifier
@@ -19,7 +22,7 @@ symbols:
   - SessionMessageID
   - Integration.AttemptID
 evidence: explicit
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > 这份节点是 ID wire format 的小总账：哪些前缀是 core `Identifier` 管理的，哪些是 domain-specific 本地 ID，以及 project ID 如何由 Git root/remote 派生。
@@ -35,38 +38,38 @@ updated: 355a0bcf5
 
 ### ID format
 
-core `Identifier` 的 canonical prefix 表包含 10 个条目：`job`、`evt`、`ses`、`msg`、`per`、`que`、`prt`、`pty`、`tool`、`wrk`。[E: packages/core/src/id/id.ts:4][E: packages/core/src/id/id.ts:5][E: packages/core/src/id/id.ts:6][E: packages/core/src/id/id.ts:7][E: packages/core/src/id/id.ts:8][E: packages/core/src/id/id.ts:9][E: packages/core/src/id/id.ts:10][E: packages/core/src/id/id.ts:11][E: packages/core/src/id/id.ts:12][E: packages/core/src/id/id.ts:13] ID body 长度常量是 26；`create` 组合 timestamp/counter，descending ID 会先做 bitwise inversion，随后把 6 bytes 序列化成 12 hex 字符，再追加 `randomBase62(LENGTH - 12)`。[E: packages/core/src/id/id.ts:16][E: packages/core/src/id/id.ts:60][E: packages/core/src/id/id.ts:62][E: packages/core/src/id/id.ts:64][E: packages/core/src/id/id.ts:69] 因此 prefixed ID 的可见长度是 prefix 长度、一个 `_`、再加 26 个 body 字符。[I]
+core `Identifier` 的 canonical prefix 表包含 10 个条目：`job`、`evt`、`ses`、`msg`、`per`、`que`、`prt`、`pty`、`tool`、`wrk`。[E: packages/core/src/id/id.ts:4][E: packages/core/src/id/id.ts:5][E: packages/core/src/id/id.ts:6][E: packages/core/src/id/id.ts:7][E: packages/core/src/id/id.ts:8][E: packages/core/src/id/id.ts:9][E: packages/core/src/id/id.ts:10][E: packages/core/src/id/id.ts:11][E: packages/core/src/id/id.ts:12][E: packages/core/src/id/id.ts:13] ID body 长度常量是 26；schema `identifier.create` 组合 timestamp/counter，descending ID 会先做 bitwise inversion，随后把 6 bytes 序列化成 12 hex 字符，再追加 `length - 12` 个随机 base62 字符。[E: packages/schema/src/identifier.ts:1][E: packages/schema/src/identifier.ts:14][E: packages/schema/src/identifier.ts:21][E: packages/schema/src/identifier.ts:22][E: packages/schema/src/identifier.ts:23][E: packages/schema/src/identifier.ts:28][E: packages/schema/src/identifier.ts:29] 因此 prefixed ID 的可见长度是 prefix 长度、一个 `_`、再加 26 个 body 字符。[I]
 
-当 `given` 传给 `Identifier.ascending(prefix, given?)` 或 `Identifier.descending(prefix, given?)` 时，私有 `generateID` 会要求 value 以该 type 的 prefix 开头；实现检查的是 `startsWith(prefix)` 本身，而不是完整 `prefix_` 分隔符。[E: packages/core/src/id/id.ts:22][E: packages/core/src/id/id.ts:26][E: packages/core/src/id/id.ts:30][E: packages/core/src/id/id.ts:35][E: packages/core/src/id/id.ts:36]
+当 `given` 传给 `Identifier.ascending(prefix, given?)` 或 `Identifier.descending(prefix, given?)` 时，私有 `generateID` 会要求 value 以该 type 的 prefix 开头；实现检查的是 `startsWith(prefix)` 本身，而不是完整 `prefix_` 分隔符。[E: packages/core/src/id/id.ts:16][E: packages/core/src/id/id.ts:20][E: packages/core/src/id/id.ts:24][E: packages/core/src/id/id.ts:29][E: packages/core/src/id/id.ts:30]
 
-`timestamp(id)` 从下划线前读 prefix，再取 body 前 12 个 hex 字符并除以 `0x1000`。[E: packages/core/src/id/id.ts:73][E: packages/core/src/id/id.ts:74][E: packages/core/src/id/id.ts:75][E: packages/core/src/id/id.ts:76][E: packages/core/src/id/id.ts:77]
+`timestamp(id)` 从下划线前读 prefix，再取 body 前 12 个 hex 字符并除以 `0x1000`。[E: packages/core/src/id/id.ts:40][E: packages/core/src/id/id.ts:41][E: packages/core/src/id/id.ts:42][E: packages/core/src/id/id.ts:43][E: packages/core/src/id/id.ts:44]
 
 ### Canonical prefix catalog
 
 | Type | Prefix | 常见 domain | Evidence |
 |---|---|---|---|
 | `job` | `job_` | background job | [E: packages/core/src/id/id.ts:4] |
-| `event` | `evt_` | EventV2 event ID | [E: packages/core/src/id/id.ts:5][E: packages/core/src/event.ts:13] |
-| `session` | `ses_` | session ID | [E: packages/core/src/id/id.ts:6][E: packages/core/src/session/schema.ts:12][E: packages/core/src/session/schema.ts:15] |
-| `message` | `msg_` | message ID | [E: packages/core/src/id/id.ts:7][E: packages/core/src/session/message-id.ts:7] |
-| `permission` | `per_` | V2 permission request ID | [E: packages/core/src/id/id.ts:8][E: packages/core/src/permission.ts:21][E: packages/core/src/permission.ts:23] |
-| `question` | `que_` | question request ID | [E: packages/core/src/id/id.ts:9][E: packages/core/src/question.ts:9][E: packages/core/src/question.ts:11] |
+| `event` | `evt_` | EventV2 event ID | [E: packages/core/src/id/id.ts:5][E: packages/core/src/event.ts:14][E: packages/schema/src/event.ts:9][E: packages/schema/src/event.ts:11] |
+| `session` | `ses_` | session ID | [E: packages/core/src/id/id.ts:6][E: packages/core/src/session/schema.ts:5][E: packages/schema/src/session.ts:13] |
+| `message` | `msg_` | message ID | [E: packages/core/src/id/id.ts:7][E: packages/schema/src/session-message.ts:12][E: packages/schema/src/session-message.ts:14] |
+| `permission` | `per_` | V2 permission request ID | [E: packages/core/src/id/id.ts:8][E: packages/core/src/permission.ts:17][E: packages/schema/src/permission.ts:10][E: packages/schema/src/permission.ts:12] |
+| `question` | `que_` | question request ID | [E: packages/core/src/id/id.ts:9][E: packages/core/src/question.ts:9][E: packages/schema/src/question.ts:10][E: packages/schema/src/question.ts:13] |
 | `part` | `prt_` | message part ID | [E: packages/core/src/id/id.ts:10] |
 | `pty` | `pty_` | PTY connection/session | [E: packages/core/src/id/id.ts:11] |
 | `tool` | `tool_` | tool call identity | [E: packages/core/src/id/id.ts:12] |
-| `workspace` | `wrk_` | control-plane workspace | [E: packages/core/src/id/id.ts:13][E: packages/core/src/workspace.ts:7][E: packages/core/src/workspace.ts:11][E: packages/core/src/workspace.ts:15] |
+| `workspace` | `wrk_` | control-plane workspace | [E: packages/core/src/id/id.ts:13][E: packages/core/src/workspace.ts:5][E: packages/schema/src/workspace.ts:6] |
 
 ### Domain-specific IDs outside canonical table
 
 | ID | Prefix | Source | 备注 |
 |---|---|---|---|
-| Credential ID | `cred_` | [E: packages/core/src/credential.ts:13] | credential table primary key uses local helper, not `id/id.ts` prefix table。 |
-| Saved permission ID | `psv_` | [E: packages/core/src/permission/saved.ts:13] | saved allow rule ID differs from interactive `per_` permission request ID。 |
-| Integration attempt ID | `con_` | [E: packages/core/src/integration.ts:21] | 命名陷阱：attempt prefix 仍是 `con_`，但 current service 是 `packages/core/src/integration.ts` 的 local OAuth attempt helper，不是云连接器。[I] |
+| Credential ID | `cred_` | [E: packages/schema/src/credential.ts:11] | credential table primary key uses local helper, not `id/id.ts` prefix table。 |
+| Saved permission ID | `psv_` | [E: packages/schema/src/permission-saved.ts:10] | saved allow rule ID differs from interactive `per_` permission request ID。 |
+| Integration attempt ID | `con_` | [E: packages/core/src/integration.ts:30][E: packages/schema/src/integration.ts:102][E: packages/schema/src/integration.ts:104] | 命名陷阱：attempt prefix 仍是 `con_`，但 current service is `packages/core/src/integration.ts` 的 local OAuth attempt helper，不是云连接器。[I] |
 
 ## Project ID hashing and fallback
 
-`Project.ID` 是 branded string，唯一内置常量是 `"global"`。[E: packages/core/src/project.ts:15][E: packages/core/src/project.ts:18] 这意味着 project ID 不必是 `xxx_` prefixed ID；git project 的 ID 可能来自 remote hash、repo-local cache，或直接来自 git root path。[E: packages/core/src/project.ts:115][I]
+`Project.ID` 是 branded string，唯一内置常量是 `"global"`。[E: packages/core/src/project.ts:14][E: packages/schema/src/project-id.ts:4][E: packages/schema/src/project-id.ts:6] 这意味着 project ID 不必是 `xxx_` prefixed ID；git project 的 ID 可能来自 remote hash、repo-local cache，或直接来自 git root commit。[E: packages/core/src/project.ts:115][I]
 
 Project resolve 流程：
 
@@ -74,7 +77,7 @@ Project resolve 流程：
 2. 如果是 git repository，先读取 repo-local cache 到 `previous`，然后按 `remote(repo) ?? previous ?? root(repo)` 选择 ID。[E: packages/core/src/project.ts:114][E: packages/core/src/project.ts:115]
 3. `remote(repo)` 读取 git remote URL，normalize 后返回 `Hash.fast("git-remote:" + normalized)`。[E: packages/core/src/project.ts:74][E: packages/core/src/project.ts:76][E: packages/core/src/project.ts:78]
 4. URL normalize 会拒绝 `file:` URL、处理 SCP-style URL、lowercase host、去掉结尾 `.git` 或 slash。[E: packages/core/src/project.ts:87][E: packages/core/src/project.ts:90][E: packages/core/src/project.ts:91][E: packages/core/src/project.ts:99][E: packages/core/src/project.ts:102]
-5. `root(repo)` 使用第一个 git root 路径本身作为 fallback project ID，不再额外 hash。[E: packages/core/src/project.ts:106][E: packages/core/src/project.ts:107]
+5. `root(repo)` 使用第一个 git root commit hash 作为 fallback project ID，不再额外 hash。[E: packages/core/src/project.ts:106][E: packages/core/src/project.ts:107]
 6. `Hash.fast` 当前实现是 sha1 hex digest。[E: packages/core/src/util/hash.ts:4][E: packages/core/src/util/hash.ts:5]
 
 `commit` 会把 project ID 写入 repo-local cache 文件名 `opencode`，后续 resolve 可用该缓存维持稳定 ID。[E: packages/core/src/project.ts:125]
@@ -86,18 +89,28 @@ V1 live code 仍有自己历史上的 `Identifier.create("evt","ascending")` 用
 ## Sources
 
 - `packages/core/src/id/id.ts`
+- `packages/schema/src/identifier.ts`
 - `packages/core/src/util/identifier.ts`
 - `packages/core/src/session/schema.ts`
-- `packages/core/src/session/message-id.ts`
+- `packages/schema/src/session.ts`
+- `packages/schema/src/session-message.ts`
 - `packages/core/src/event.ts`
+- `packages/schema/src/event.ts`
 - `packages/core/src/project.ts`
+- `packages/schema/src/project-id.ts`
 - `packages/core/src/util/hash.ts`
 - `packages/core/src/permission.ts`
+- `packages/schema/src/permission.ts`
 - `packages/core/src/question.ts`
+- `packages/schema/src/question.ts`
 - `packages/core/src/workspace.ts`
+- `packages/schema/src/workspace.ts`
 - `packages/core/src/credential.ts`
+- `packages/schema/src/credential.ts`
 - `packages/core/src/integration.ts`
+- `packages/schema/src/integration.ts`
 - `packages/core/src/permission/saved.ts`
+- `packages/schema/src/permission-saved.ts`
 - `packages/opencode/src/bus/global.ts`
 
 ## 相关

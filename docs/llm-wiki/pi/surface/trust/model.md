@@ -18,7 +18,7 @@ related:
   - surface.misc.security
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > 项目信任模型是 pi-coding-agent 在启动或重载资源时使用的输入加载门禁: 它决定当前 cwd 的 project-local settings、resources、packages 和 extensions 是否能进入本次 runtime,但它不是 sandbox,也不限制会话开始后模型可以请求工具做什么。

@@ -14,7 +14,7 @@ related:
   - ref.ai.core-types
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.ai.event-stream` 描述 `EventStream` 如何把 producer push 的事件变成 `AsyncIterable`,以及 `AssistantMessageEventStream` 如何把 assistant `done` / `error` 终端事件收敛成最终 `AssistantMessage`。[E: packages/ai/src/utils/event-stream.ts:4][E: packages/ai/src/utils/event-stream.ts:21][E: packages/ai/src/utils/event-stream.ts:30][E: packages/ai/src/utils/event-stream.ts:50][E: packages/ai/src/utils/event-stream.ts:69][E: packages/ai/src/utils/event-stream.ts:72][E: packages/ai/src/utils/event-stream.ts:74][E: packages/ai/src/utils/event-stream.ts:76]

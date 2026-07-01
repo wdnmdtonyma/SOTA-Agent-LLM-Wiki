@@ -15,7 +15,7 @@ related:
   - ref.ai.auth-types
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.ai.credential-store` 描述 `pi-ai` 的 provider credential storage contract: `CredentialStore` 规定按 `providerId` 读、串行改、删除一个 `Credential`, `InMemoryCredentialStore` 提供基于 `Map` 和 per-provider promise chain 的默认内存实现。[E: packages/ai/src/auth/types.ts:47][E: packages/ai/src/auth/types.ts:52][E: packages/ai/src/auth/types.ts:62][E: packages/ai/src/auth/types.ts:64][E: packages/ai/src/auth/types.ts:68][E: packages/ai/src/auth/credential-store.ts:8][E: packages/ai/src/auth/credential-store.ts:9][E: packages/ai/src/auth/credential-store.ts:10][E: packages/ai/src/auth/credential-store.ts:13][E: packages/ai/src/auth/credential-store.ts:14]

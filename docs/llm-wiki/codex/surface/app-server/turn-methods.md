@@ -8,7 +8,7 @@ symbols: [TurnStartParams, TurnStartResponse, TurnSteerParams, TurnInterruptPara
 related: [rpc.overview, rpc.thread-methods, rpc.notifications-thread, rpc.notifications-system, subsys.core.turn-engine, subsys.core.review-mode, subsys.core.realtime-conversation]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > turn/review/realtime 方法是 app-server 把用户输入送入已有 thread、追加 steering input、中断 active turn、启动 review，以及操作 experimental thread realtime session 的 client request catalog。
@@ -22,7 +22,7 @@ updated: 5670360009
 
 ## 字段模型
 
-`TurnStartParams`、`TurnStartResponse`、`TurnSteerParams` 和 `TurnInterruptParams` 定义在 `v2/turn.rs`；`ReviewStartParams` 和 `ReviewTarget` 定义在 `v2/review.rs`。[E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:67][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:157][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:166][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:200][E: codex-rs/app-server-protocol/src/protocol/v2/review.rs:17][E: codex-rs/app-server-protocol/src/protocol/v2/review.rs:43]
+`TurnStartParams`、`TurnStartResponse`、`TurnSteerParams` 和 `TurnInterruptParams` 定义在 `v2/turn.rs`；`ReviewStartParams` 和 `ReviewTarget` 定义在 `v2/review.rs`。[E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:68][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:163][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:172][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:206][E: codex-rs/app-server-protocol/src/protocol/v2/review.rs:17][E: codex-rs/app-server-protocol/src/protocol/v2/review.rs:43]
 
 `turn/start` 和 `turn/steer` 在宏调用中使用 `inspect_params: true`；realtime family 在宏调用中全部带 `#[experimental(...)]`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:801][E: codex-rs/app-server-protocol/src/protocol/common.rs:807][E: codex-rs/app-server-protocol/src/protocol/common.rs:816][E: codex-rs/app-server-protocol/src/protocol/common.rs:822][E: codex-rs/app-server-protocol/src/protocol/common.rs:828][E: codex-rs/app-server-protocol/src/protocol/common.rs:834][E: codex-rs/app-server-protocol/src/protocol/common.rs:840][E: codex-rs/app-server-protocol/src/protocol/common.rs:846]
 

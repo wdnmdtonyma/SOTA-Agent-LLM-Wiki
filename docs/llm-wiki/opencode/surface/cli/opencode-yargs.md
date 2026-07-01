@@ -10,7 +10,7 @@ schema: grouped-catalog
 source:
   - packages/opencode/src/index.ts
   - packages/opencode/src/cli/cmd/
-updated: 355a0bcf5
+updated: 8b68dc0d7
 evidence: explicit
 ---
 
@@ -35,10 +35,10 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | --- | --- | --- | --- |
 | `completion` | `packages/opencode/src/index.ts` | yargs completion command。[E: packages/opencode/src/index.ts:80] | none |
 | `acp` | `packages/opencode/src/cli/cmd/acp.ts` | starts an ACP server。[E: packages/opencode/src/cli/cmd/acp.ts:10] | none |
-| `mcp` | `packages/opencode/src/cli/cmd/mcp.ts` | MCP server management root。[E: packages/opencode/src/cli/cmd/mcp.ts:98] | `list`、`auth`、`logout`、`add`、`debug` |
-| `$0 [project]` | `packages/opencode/src/cli/cmd/tui.ts` | default TUI command。[E: packages/opencode/src/cli/cmd/tui.ts:72] | none |
+| `mcp` | `packages/opencode/src/cli/cmd/mcp.ts` | MCP server management root。[E: packages/opencode/src/cli/cmd/mcp.ts:96] | `list`、`auth`、`logout`、`add`、`debug` |
+| `$0 [project]` | `packages/opencode/src/cli/cmd/tui.ts` | default TUI command。[E: packages/opencode/src/cli/cmd/tui.ts:73] | none |
 | `attach <url>` | `packages/opencode/src/cli/cmd/attach.ts` | attach to an existing server URL。[E: packages/opencode/src/cli/cmd/attach.ts:8] | none |
-| `run [message..]` | `packages/opencode/src/cli/cmd/run.ts` | run prompt in terminal modes。[E: packages/opencode/src/cli/cmd/run.ts:123] | none; modes are flags |
+| `run [message..]` | `packages/opencode/src/cli/cmd/run.ts` | run prompt in terminal modes。[E: packages/opencode/src/cli/cmd/run.ts:127] | none; modes are flags |
 | `generate` | `packages/opencode/src/cli/cmd/generate.ts` | generation helpers command。[E: packages/opencode/src/cli/cmd/generate.ts:6] | none |
 | `debug` | `packages/opencode/src/cli/cmd/debug/index.ts` | debug utilities root。[E: packages/opencode/src/cli/cmd/debug/index.ts:20] | `config`、`lsp`、`rg`、`file`、`scrap`、`skill`、`snapshot`、`startup`、`agent`、`v2`、`info`、`paths`、`wait` |
 | `console` | `packages/opencode/src/cli/cmd/account.ts` | opencode Console account root。[E: packages/opencode/src/cli/cmd/account.ts:238] | `login`、`logout`、`switch`、`orgs`、`open` |
@@ -62,12 +62,12 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 
 | group | command | source | note |
 | --- | --- | --- | --- |
-| `mcp` | `list` | [E: packages/opencode/src/cli/cmd/mcp.ts:112] | list configured MCP servers. |
-| `mcp` | `auth [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:173] | start MCP OAuth/auth flow. |
-| `mcp auth` | `list` | [E: packages/opencode/src/cli/cmd/mcp.ts:318] | list MCP auth state. |
-| `mcp` | `logout [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:348] | remove MCP auth. |
-| `mcp` | `add [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:441] | add MCP config. |
-| `mcp` | `debug <name>` | [E: packages/opencode/src/cli/cmd/mcp.ts:671] | debug one MCP server. |
+| `mcp` | `list` | [E: packages/opencode/src/cli/cmd/mcp.ts:110] | list configured MCP servers. |
+| `mcp` | `auth [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:171] | start MCP OAuth/auth flow. |
+| `mcp auth` | `list` | [E: packages/opencode/src/cli/cmd/mcp.ts:307] | list MCP auth state. |
+| `mcp` | `logout [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:337] | remove MCP auth. |
+| `mcp` | `add [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:430] | add MCP config. |
+| `mcp` | `debug <name>` | [E: packages/opencode/src/cli/cmd/mcp.ts:660] | debug one MCP server. |
 | `debug` | `config` | [E: packages/opencode/src/cli/cmd/debug/config.ts:6] | print resolved config/debug data. |
 | `debug` | `lsp` | [E: packages/opencode/src/cli/cmd/debug/lsp.ts:8] | LSP root. |
 | `debug lsp` | `diagnostics <file>` | [E: packages/opencode/src/cli/cmd/debug/lsp.ts:16] | diagnostics for file. |
@@ -88,7 +88,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `debug snapshot` | `diff <hash>` | [E: packages/opencode/src/cli/cmd/debug/snapshot.ts:38] | diff by hash. |
 | `debug` | `startup` | [E: packages/opencode/src/cli/cmd/debug/startup.ts:5] | startup debug. |
 | `debug` | `agent <name>` | [E: packages/opencode/src/cli/cmd/debug/agent.ts:5] | agent debug. |
-| `debug` | `v2` | [E: packages/opencode/src/cli/cmd/debug/v2.ts:11] | V2 debug command from V1 CLI host. |
+| `debug` | `v2` | [E: packages/opencode/src/cli/cmd/debug/v2.ts:10] | V2 debug command from V1 CLI host. |
 | `debug` | `wait` | [E: packages/opencode/src/cli/cmd/debug/index.ts:42] | wait helper. |
 | `debug` | `info` | [E: packages/opencode/src/cli/cmd/debug/index.ts:50] | info helper. |
 | `debug` | `paths` | [E: packages/opencode/src/cli/cmd/debug/index.ts:80] | path helper. |

@@ -8,7 +8,7 @@ symbols: [SkillsListParams, SkillsListResponse, SkillsExtraRootsSetParams, Marke
 related: [rpc.overview, rpc.notifications-system, subsys.mcp.client, subsys.config-auth.plugins, subsys.config-auth.skills]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > mcp/skills/plugin/app 方法是 app-server 对 MCP server、skills roots/config、marketplace、plugin install/share/read 和 app connector catalog 的 client request catalog。
@@ -22,7 +22,7 @@ updated: 5670360009
 
 ## 字段模型
 
-skills、marketplace 和 plugin 类型集中在 `v2/plugin.rs`；app connector list params 在 `v2/apps.rs`；MCP status/resource/tool/OAuth/reload 类型在 `v2/mcp.rs`。[E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:21][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:34][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:69][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:129][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:771][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:12][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:29][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:77][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:94][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:182][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:187]
+skills、marketplace 和 plugin 类型集中在 `v2/plugin.rs`；app connector list params 在 `v2/apps.rs`；MCP status/resource/tool/OAuth/reload 类型在 `v2/mcp.rs`。[E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:21][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:34][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:69][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:129][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:764][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:12][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:35][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:83][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:100][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:183][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:193]
 
 `skills/list` uses a shared-read config serialization scope, while skills config write, marketplace mutation and plugin install/uninstall use global config serialization in the macro invocation.[E: codex-rs/app-server-protocol/src/protocol/common.rs:659][E: codex-rs/app-server-protocol/src/protocol/common.rs:664][E: codex-rs/app-server-protocol/src/protocol/common.rs:674][E: codex-rs/app-server-protocol/src/protocol/common.rs:786][E: codex-rs/app-server-protocol/src/protocol/common.rs:791][E: codex-rs/app-server-protocol/src/protocol/common.rs:796]
 
@@ -48,11 +48,11 @@ skills、marketplace 和 plugin 类型集中在 `v2/plugin.rs`；app connector l
 | `SkillsConfigWrite` | `skills/config/write` | `v2::SkillsConfigWriteParams` | `v2::SkillsConfigWriteResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:784][E: codex-rs/app-server-protocol/src/protocol/common.rs:785][E: codex-rs/app-server-protocol/src/protocol/common.rs:787] |
 | `PluginInstall` | `plugin/install` | `v2::PluginInstallParams` | `v2::PluginInstallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:789][E: codex-rs/app-server-protocol/src/protocol/common.rs:790][E: codex-rs/app-server-protocol/src/protocol/common.rs:792] |
 | `PluginUninstall` | `plugin/uninstall` | `v2::PluginUninstallParams` | `v2::PluginUninstallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:794][E: codex-rs/app-server-protocol/src/protocol/common.rs:795][E: codex-rs/app-server-protocol/src/protocol/common.rs:797] |
-| `McpServerOauthLogin` | `mcpServer/oauth/login` | `v2::McpServerOauthLoginParams` | `v2::McpServerOauthLoginResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:947][E: codex-rs/app-server-protocol/src/protocol/common.rs:948][E: codex-rs/app-server-protocol/src/protocol/common.rs:950] |
-| `McpServerRefresh` | `config/mcpServer/reload` | `Option<()>` | `v2::McpServerRefreshResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:953][E: codex-rs/app-server-protocol/src/protocol/common.rs:954][E: codex-rs/app-server-protocol/src/protocol/common.rs:956] |
-| `McpServerStatusList` | `mcpServerStatus/list` | `v2::ListMcpServerStatusParams` | `v2::ListMcpServerStatusResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:959][E: codex-rs/app-server-protocol/src/protocol/common.rs:960][E: codex-rs/app-server-protocol/src/protocol/common.rs:962] |
-| `McpResourceRead` | `mcpServer/resource/read` | `v2::McpResourceReadParams` | `v2::McpResourceReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:965][E: codex-rs/app-server-protocol/src/protocol/common.rs:966][E: codex-rs/app-server-protocol/src/protocol/common.rs:968] |
-| `McpServerToolCall` | `mcpServer/tool/call` | `v2::McpServerToolCallParams` | `v2::McpServerToolCallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:971][E: codex-rs/app-server-protocol/src/protocol/common.rs:972][E: codex-rs/app-server-protocol/src/protocol/common.rs:974] |
+| `McpServerOauthLogin` | `mcpServer/oauth/login` | `v2::McpServerOauthLoginParams` | `v2::McpServerOauthLoginResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:954][E: codex-rs/app-server-protocol/src/protocol/common.rs:955][E: codex-rs/app-server-protocol/src/protocol/common.rs:957] |
+| `McpServerRefresh` | `config/mcpServer/reload` | `Option<()>` | `v2::McpServerRefreshResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:960][E: codex-rs/app-server-protocol/src/protocol/common.rs:961][E: codex-rs/app-server-protocol/src/protocol/common.rs:963] |
+| `McpServerStatusList` | `mcpServerStatus/list` | `v2::ListMcpServerStatusParams` | `v2::ListMcpServerStatusResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:966][E: codex-rs/app-server-protocol/src/protocol/common.rs:967][E: codex-rs/app-server-protocol/src/protocol/common.rs:969] |
+| `McpResourceRead` | `mcpServer/resource/read` | `v2::McpResourceReadParams` | `v2::McpResourceReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:972][E: codex-rs/app-server-protocol/src/protocol/common.rs:973][E: codex-rs/app-server-protocol/src/protocol/common.rs:975] |
+| `McpServerToolCall` | `mcpServer/tool/call` | `v2::McpServerToolCallParams` | `v2::McpServerToolCallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:978][E: codex-rs/app-server-protocol/src/protocol/common.rs:979][E: codex-rs/app-server-protocol/src/protocol/common.rs:981] |
 
 ## Sources
 

@@ -15,7 +15,7 @@ related:
   - subsys.orchestrator.storage
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.orchestrator.supervisor` 是 `@earendil-works/pi-orchestrator` 的实验性多实例 supervisor:它把每个 live Pi instance 绑定到一个 coding-agent RPC 子进程、一个持久化 `InstanceRecord`、一组 event subscribers 和可选 Radius presence。[E: packages/orchestrator/package.json:4][E: packages/orchestrator/src/supervisor.ts:16][E: packages/orchestrator/src/supervisor.ts:17][E: packages/orchestrator/src/supervisor.ts:22][E: packages/orchestrator/src/supervisor.ts:24][E: packages/orchestrator/src/supervisor.ts:63][E: packages/orchestrator/src/supervisor.ts:64][E: packages/orchestrator/src/supervisor.ts:288][E: packages/orchestrator/src/supervisor.ts:289]

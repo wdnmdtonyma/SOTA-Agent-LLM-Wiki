@@ -8,7 +8,7 @@ symbols: [ThreadEvent, ThreadStartedEvent, TurnCompletedEvent, ItemCompletedEven
 related: [sdk.ts-overview, sdk.ts-structured-output]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > TypeScript SDK events/items 是 codex exec JSONL 的 public TypeScript surface：events 描述 stream 顶层 envelope，items 描述 agent/thread 中的具体 artifact。[E: sdk/typescript/src/events.ts:74][E: sdk/typescript/src/items.ts:120]

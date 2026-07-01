@@ -10,7 +10,7 @@ schema: node
 source:
   - packages/opencode/src/agent/agent.ts
   - packages/opencode/src/agent/prompt/
-updated: 355a0bcf5
+updated: 8b68dc0d7
 evidence: explicit
 ---
 
@@ -27,25 +27,25 @@ evidence: explicit
 
 V1 agent service 的公开接口是 `get`、`list`、`defaultInfo`、`defaultAgent` 和 `generate`，接口定义直接返回 `Info` 或生成 agent JSON 所需的结构。[E: packages/opencode/src/agent/agent.ts:64] `Info` schema 把 runtime agent 统一成 `name`、`description`、`mode`、`native`、`hidden`、`topP`、`temperature`、`color`、`permission`、`model`、`variant`、`prompt`、`options` 和 `steps`。[E: packages/opencode/src/agent/agent.ts:35]
 
-agent state 初始化时会先计算 `whitelistedDirs`，包括 truncation glob、临时目录、skill 目录和 reference 目录。[E: packages/opencode/src/agent/agent.ts:106] 默认 permission 允许所有工具，但把 `doom_loop` 设为 `ask`，把 `question`、`plan_enter`、`plan_exit` 设为 `deny`，并把 `.env` 读取改成 `ask`。[E: packages/opencode/src/agent/agent.ts:117] 用户级 `cfg.permission` 会作为 `user` ruleset 合并进内建 agent。[E: packages/opencode/src/agent/agent.ts:136]
+agent state 初始化时会先计算 `whitelistedDirs`，包括 truncation glob、临时目录、skill 目录和 reference 目录。[E: packages/opencode/src/agent/agent.ts:108] 默认 permission 允许所有工具，但把 `doom_loop` 设为 `ask`，把 `question`、`plan_enter`、`plan_exit` 设为 `deny`，并把 `.env` 读取改成 `ask`。[E: packages/opencode/src/agent/agent.ts:119] 用户级 `cfg.permission` 会作为 `user` ruleset 合并进内建 agent。[E: packages/opencode/src/agent/agent.ts:138]
 
 ## 内建 Agent Catalog
 
 | agent | mode | hidden | native | prompt | permission shape | 设计动机 |
 | --- | --- | --- | --- | --- | --- | --- |
-| `build` | `primary` [E: packages/opencode/src/agent/agent.ts:151] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:152] | 无内置 prompt override | `question` 和 `plan_enter` 在默认 deny 上改为 allow。[E: packages/opencode/src/agent/agent.ts:145] | 默认执行 agent；描述说它按配置权限执行工具。[E: packages/opencode/src/agent/agent.ts:141] |
-| `plan` | `primary` [E: packages/opencode/src/agent/agent.ts:177] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:178] | 无内置 prompt override；plan reminder 在 session 层注入 | `question`、`plan_exit` allow，`task.general` deny，普通 edit deny，但 `.opencode/plans/*.md` 和 data plans markdown allow。[E: packages/opencode/src/agent/agent.ts:160] | 计划模式；源码描述明确说 disallows all edit tools。[E: packages/opencode/src/agent/agent.ts:156] |
-| `general` | `subagent` [E: packages/opencode/src/agent/agent.ts:191] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:192] | 无内置 prompt override | 继承 defaults/user，但把 `todowrite` 设为 `deny`。[E: packages/opencode/src/agent/agent.ts:185] | 供复杂研究和多步任务使用，描述建议并行执行多个 work units。[E: packages/opencode/src/agent/agent.ts:182] |
-| `explore` | `subagent` [E: packages/opencode/src/agent/agent.ts:214] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:215] | `PROMPT_EXPLORE` [E: packages/opencode/src/agent/agent.ts:212] | 先 `* deny`，再 allow `grep`、`glob`、`list`、`bash`、`webfetch`、`websearch`、`read`，外部目录按 readonly whitelist 处理。[E: packages/opencode/src/agent/agent.ts:198] | 快速探索 codebase；描述要求调用方给出 thoroughness level。[E: packages/opencode/src/agent/agent.ts:211] |
-| `compaction` | `primary` [E: packages/opencode/src/agent/agent.ts:219] | `true` [E: packages/opencode/src/agent/agent.ts:221] | `true` [E: packages/opencode/src/agent/agent.ts:220] | `PROMPT_COMPACTION` [E: packages/opencode/src/agent/agent.ts:222] | `* deny` 后再合并用户权限。[E: packages/opencode/src/agent/agent.ts:225] | hidden compaction worker；prompt 文本要求生成 anchored conversation summary。[E: packages/opencode/src/agent/prompt/compaction.txt:1] |
-| `title` | `primary` [E: packages/opencode/src/agent/agent.ts:234] | `true` [E: packages/opencode/src/agent/agent.ts:237] | `true` [E: packages/opencode/src/agent/agent.ts:236] | `PROMPT_TITLE` [E: packages/opencode/src/agent/agent.ts:246] | `* deny` 后再合并用户权限，且 temperature 固定为 `0.5`。[E: packages/opencode/src/agent/agent.ts:238] | hidden title worker；prompt 限制 title 不超过 50 个字符。[E: packages/opencode/src/agent/prompt/title.txt:4] |
-| `summary` | `primary` [E: packages/opencode/src/agent/agent.ts:250] | `true` [E: packages/opencode/src/agent/agent.ts:253] | `true` [E: packages/opencode/src/agent/agent.ts:252] | `PROMPT_SUMMARY` [E: packages/opencode/src/agent/agent.ts:261] | `* deny` 后再合并用户权限。[E: packages/opencode/src/agent/agent.ts:256] | hidden summary worker；prompt 要求写 2-3 句 PR-description 风格摘要。[E: packages/opencode/src/agent/prompt/summary.txt:1] |
+| `build` | `primary` [E: packages/opencode/src/agent/agent.ts:153] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:154] | 无内置 prompt override | `question` 和 `plan_enter` 在默认 deny 上改为 allow。[E: packages/opencode/src/agent/agent.ts:147] | 默认执行 agent；描述说它按配置权限执行工具。[E: packages/opencode/src/agent/agent.ts:143] |
+| `plan` | `primary` [E: packages/opencode/src/agent/agent.ts:179] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:180] | 无内置 prompt override；plan reminder 在 session 层注入 | `question`、`plan_exit` allow，`task.general` deny，普通 edit deny，但 `.opencode/plans/*.md` 和 data plans markdown allow。[E: packages/opencode/src/agent/agent.ts:162] | 计划模式；源码描述明确说 disallows all edit tools。[E: packages/opencode/src/agent/agent.ts:158] |
+| `general` | `subagent` [E: packages/opencode/src/agent/agent.ts:193] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:194] | 无内置 prompt override | 继承 defaults/user，但把 `todowrite` 设为 `deny`。[E: packages/opencode/src/agent/agent.ts:187] | 供复杂研究和多步任务使用，描述建议并行执行多个 work units。[E: packages/opencode/src/agent/agent.ts:184] |
+| `explore` | `subagent` [E: packages/opencode/src/agent/agent.ts:216] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:217] | `PROMPT_EXPLORE` [E: packages/opencode/src/agent/agent.ts:214] | 先 `* deny`，再 allow `grep`、`glob`、`list`、`bash`、`webfetch`、`websearch`、`read`，外部目录按 readonly whitelist 处理。[E: packages/opencode/src/agent/agent.ts:200] | 快速探索 codebase；描述要求调用方给出 thoroughness level。[E: packages/opencode/src/agent/agent.ts:213] |
+| `compaction` | `primary` [E: packages/opencode/src/agent/agent.ts:221] | `true` [E: packages/opencode/src/agent/agent.ts:223] | `true` [E: packages/opencode/src/agent/agent.ts:222] | `PROMPT_COMPACTION` [E: packages/opencode/src/agent/agent.ts:224] | `* deny` 后再合并用户权限。[E: packages/opencode/src/agent/agent.ts:227] | hidden compaction worker；prompt 文本要求生成 anchored conversation summary。[E: packages/opencode/src/agent/prompt/compaction.txt:1] |
+| `title` | `primary` [E: packages/opencode/src/agent/agent.ts:236] | `true` [E: packages/opencode/src/agent/agent.ts:239] | `true` [E: packages/opencode/src/agent/agent.ts:238] | `PROMPT_TITLE` [E: packages/opencode/src/agent/agent.ts:248] | `* deny` 后再合并用户权限，且 temperature 固定为 `0.5`。[E: packages/opencode/src/agent/agent.ts:240] | hidden title worker；prompt 限制 title 不超过 50 个字符。[E: packages/opencode/src/agent/prompt/title.txt:4] |
+| `summary` | `primary` [E: packages/opencode/src/agent/agent.ts:252] | `true` [E: packages/opencode/src/agent/agent.ts:255] | `true` [E: packages/opencode/src/agent/agent.ts:254] | `PROMPT_SUMMARY` [E: packages/opencode/src/agent/agent.ts:263] | `* deny` 后再合并用户权限。[E: packages/opencode/src/agent/agent.ts:258] | hidden summary worker；prompt 要求写 2-3 句 PR-description 风格摘要。[E: packages/opencode/src/agent/prompt/summary.txt:1] |
 
 ## 权限与排序规则
 
-每个 agent 会检查是否已经显式 deny `Truncate.GLOB`。[E: packages/opencode/src/agent/agent.ts:297] 如果没有显式 deny，agent permission 会再 merge 一条 `external_directory` allow 规则给 `Truncate.GLOB`。[E: packages/opencode/src/agent/agent.ts:304] 这条规则解释了为什么工具输出被截断到磁盘后仍可被 agent 读取：它不是单个 tool 的例外，而是 agent permission ruleset 的尾部补丁。[I]
+每个 agent 会检查是否已经显式 deny `Truncate.GLOB`。[E: packages/opencode/src/agent/agent.ts:299] 如果没有显式 deny，agent permission 会再 merge 一条 `external_directory` allow 规则给 `Truncate.GLOB`。[E: packages/opencode/src/agent/agent.ts:306] 这条规则解释了为什么工具输出被截断到磁盘后仍可被 agent 读取：它不是单个 tool 的例外，而是 agent permission ruleset 的尾部补丁。[I]
 
-`list()` 会把配置的 `default_agent` 放到第一位；没有 `default_agent` 时把 `build` 放到第一位，然后按 name 升序排序。[E: packages/opencode/src/agent/agent.ts:314] `defaultInfo()` 要求配置的默认 agent 必须存在、不能是 `subagent`、不能 hidden，否则抛错；未配置时选择第一个非 subagent 且非 hidden 的 agent。[E: packages/opencode/src/agent/agent.ts:326]
+`list()` 会把配置的 `default_agent` 放到第一位；没有 `default_agent` 时把 `build` 放到第一位，然后按 name 升序排序。[E: packages/opencode/src/agent/agent.ts:316] `defaultInfo()` 要求配置的默认 agent 必须存在、不能是 `subagent`、不能 hidden，否则抛错；未配置时选择第一个非 subagent 且非 hidden 的 agent。[E: packages/opencode/src/agent/agent.ts:328]
 
 ## Prompt 文件
 

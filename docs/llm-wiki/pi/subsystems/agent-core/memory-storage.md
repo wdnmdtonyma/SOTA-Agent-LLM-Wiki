@@ -14,7 +14,7 @@ related:
   - subsys.agent-core.session-storage
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.memory-storage` 描述 agent-core 的 in-process session storage/repo: `InMemorySessionStorage` 用 entry array、id map、label map 和 leaf pointer 保存一棵会话树, `InMemorySessionRepo` 用 session id 到 live `Session` object 的 map 管理多个内存会话。[E: packages/agent/src/harness/session/memory-storage.ts:40][E: packages/agent/src/harness/session/memory-storage.ts:44][E: packages/agent/src/harness/session/memory-storage.ts:45][E: packages/agent/src/harness/session/memory-storage.ts:46][E: packages/agent/src/harness/session/memory-storage.ts:47][E: packages/agent/src/harness/session/memory-repo.ts:5][E: packages/agent/src/harness/session/memory-repo.ts:6]

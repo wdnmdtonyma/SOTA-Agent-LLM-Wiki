@@ -4,87 +4,98 @@ title: Location-scoped runner 装配
 kind: subsystem
 tier: T2
 v: v2
-source: [packages/core/src/location-layer.ts, packages/core/src/public/opencode.ts, packages/core/src/session.ts, packages/core/src/session/execution.ts, packages/core/src/session/execution/local.ts, packages/core/src/integration.ts, packages/core/src/project/copy.ts, specs/v2/session.md, AGENTS.md]
-symbols: [LocationServiceMap, OpenCode.layer, SessionExecution.noopLayer, SessionExecutionLocal.layer, SessionsLayer, LocationServicesLayer, Integration.locationLayer, ProjectCopy.locationLayer]
+source:
+  - packages/core/src/location-service-map.ts
+  - packages/core/src/location-services.ts
+  - packages/core/src/effect/app-node-builder.ts
+  - packages/core/src/session.ts
+  - packages/core/src/session/execution.ts
+  - packages/core/src/session/execution/local.ts
+  - packages/server/src/routes.ts
+  - packages/sdk-next/src/opencode.ts
+  - packages/core/src/integration.ts
+  - packages/core/src/project/copy.ts
+  - specs/v2/session.md
+symbols: [LocationServiceMap.Service, buildLocationServiceMap, locationServices, AppNodeBuilder.build, SessionExecution.noopLayer, SessionExecutionLocal.node, createEmbeddedRoutes, OpenCode.create]
 related: [spine.v2-coordinator, persistence.project-instance-location, integrations.integration-v2, persistence.project-directories]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
-> Location wiring 是 V2 真正能跑起来的 layer graph: `LocationServiceMap` 为每个 Location 构建 runner/model/tools/context 等服务,`OpenCode.layer` 再把 `SessionV2.layer` 接到 `SessionExecutionLocal.layer`。
+> Location wiring 是 V2 runner 的 layer graph: `LocationServiceMap.Service` 为每个 `Location.Ref` 构建 runner/model/tools/context 等 Location-scoped services,server routes 用 `SessionExecutionLocal.node` 接入本进程 runner,embedded SDK 通过 in-memory HTTP routes 暴露同一 session API。
 
 ## 能回答的问题
+
 - 哪个 layer 创建 Location-scoped `SessionRunner`、model resolver 和 tools?
-- `OpenCode.layer` 与 `SessionV2.defaultLayer` 的执行能力有什么差异?
-- 为什么 V2 默认可能只 admit prompt 而不跑 runner?
-- LocationServiceMap 的 process-global dependencies 有哪些?
-- public embedded API 的 `sessions.prompt` 如何进入 V2 session service?
+- `SessionV2.node` 默认依赖的 execution 能力和 server replacement 有什么差异?
+- 为什么单独使用 noop execution 只会 durable record,不会 drain runner?
+- LocationServiceMap 的 process-global dependencies 怎样被 hoist?
+- embedded API 的 `sessions.prompt` 如何进入 V2 session service?
 
 ## 职责边界
 
-`LocationServiceMap` 是按 `Location.Ref` 配置 `lookup(ref)` 的 `LayerMap.Service`;消费侧通过 LayerMap 的 `get(ref)` 进入 Location layer,它不是 public session API。[E: packages/core/src/location-layer.ts:51][E: packages/core/src/location-layer.ts:56][E: packages/core/src/session/execution/local.ts:21][I] `OpenCode.layer` 是 public API 组合点,它导出 `sessions` 和 `tools` 两个接口。[E: packages/core/src/public/opencode.ts:19][E: packages/core/src/public/opencode.ts:20][I]
+`LocationServiceMap.Service` 是 `LayerMap<Location.Ref, LocationServices, LocationError>` 的 service tag;消费侧通过 `Service.get(ref)` 或 map 的 `get(ref)` 进入 Location layer,它不是 public session API。[E: packages/core/src/location-service-map.ts:7][E: packages/core/src/location-service-map.ts:9][E: packages/core/src/location-service-map.ts:11][E: packages/core/src/session/execution/local.ts:15][E: packages/core/src/session/execution/local.ts:21][I]
 
-V2 设计要求 `SessionExecution` process-global 且从 Session ID route 到 owning Location runner;`SessionRunner`、model resolver、tool registry、permission 和 filesystem 是 Location-scoped。[E: AGENTS.md:152][E: AGENTS.md:153]
+`locationServices` 是 Location-scoped node group,包含 policy/config/catalog/integration/plugin/project copy/filesystem/watcher/pty/skill/system context/permission/tool registry/built-in tools/model resolver/snapshot/LLM runner 等 services。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:49][E: packages/core/src/location-services.ts:52][E: packages/core/src/location-services.ts:54][E: packages/core/src/location-services.ts:57][E: packages/core/src/location-services.ts:65][E: packages/core/src/location-services.ts:67][E: packages/core/src/location-services.ts:75][E: packages/core/src/location-services.ts:76][E: packages/core/src/location-services.ts:78]
+
+V2 design says execution routing starts from Session ID,then loads the session,enters the session's LocationServiceMap entry,and runs `SessionRunner.run({ sessionID, force? })`。[E: specs/v2/session.md:39][E: specs/v2/session.md:42][E: specs/v2/session.md:43][E: specs/v2/session.md:44][E: specs/v2/session.md:45]
 
 ## LocationServiceMap 控制流
 
-1. `LocationServiceMap@packages/core/src/location-layer.ts:48` 是 `LayerMap.Service`,`lookup(ref)` 为一个 `Location.Ref` 构建 layer,并设置 idle TTL 为 60 minutes。[E: packages/core/src/location-layer.ts:51][E: packages/core/src/location-layer.ts:56][E: packages/core/src/location-layer.ts:125]
+1. `LocationServiceMap.Service@packages/core/src/location-service-map.ts:7` is the global unbound service;`Service.get(ref)` unwraps the layer stored for a `Location.Ref`。[E: packages/core/src/location-service-map.ts:7][E: packages/core/src/location-service-map.ts:11][E: packages/core/src/location-service-map.ts:16]
 
-2. `lookup` 先建立 `Location.layer(ref)` 和 `SystemContextBuiltIns.locationLayer`,随后 `Layer.mergeAll(...)` 组合 location、policy、config、reference、plugin、catalog、integration、command、agent、plugin boot、project copy、filesystem、watcher、pty、skill、system context、location mutation。[E: packages/core/src/location-layer.ts:56][E: packages/core/src/location-layer.ts:57][E: packages/core/src/location-layer.ts:58][E: packages/core/src/location-layer.ts:59][E: packages/core/src/location-layer.ts:60][E: packages/core/src/location-layer.ts:61][E: packages/core/src/location-layer.ts:62][E: packages/core/src/location-layer.ts:63][E: packages/core/src/location-layer.ts:64][E: packages/core/src/location-layer.ts:65][E: packages/core/src/location-layer.ts:66][E: packages/core/src/location-layer.ts:67][E: packages/core/src/location-layer.ts:68][E: packages/core/src/location-layer.ts:69][E: packages/core/src/location-layer.ts:70][E: packages/core/src/location-layer.ts:71][E: packages/core/src/location-layer.ts:72][E: packages/core/src/location-layer.ts:73][E: packages/core/src/location-layer.ts:74][E: packages/core/src/location-layer.ts:75]
+2. `buildLocationServiceMap@packages/core/src/location-services.ts:84` returns a `Layer.Layer<LocationServiceMap.Service>` built with `LayerMap.make(...)`;each lookup adds a `Location.boundNode(ref)` replacement,hoists global dependencies,compiles the Location node fresh,and sets idle TTL to 60 minutes。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:87][E: packages/core/src/location-services.ts:89][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:92][E: packages/core/src/location-services.ts:94][E: packages/core/src/location-services.ts:95][E: packages/core/src/location-services.ts:102][E: packages/core/src/location-services.ts:105]
 
-3. `resources` 是 `ToolOutputStore.layer` provided by base;`permissionsAndTools` 是 `ToolRegistry.layer` provided by `PermissionV2.locationLayer`、resources 和 base。[E: packages/core/src/location-layer.ts:77][E: packages/core/src/location-layer.ts:78][E: packages/core/src/location-layer.ts:79][E: packages/core/src/location-layer.ts:80][E: packages/core/src/location-layer.ts:81]
+3. `locationServices` names the concrete Location-scoped services. The old monolithic `packages/core/src/location-layer.ts` has been deleted; this node's source of truth is now `location-services.ts` plus `location-service-map.ts`。[E: packages/core/src/location-services.ts:42][I]
 
-4. `services = Layer.mergeAll(base, resources, permissionsAndTools)` 成为 image、file mutation、skill guidance、reference guidance、todo、question 等下游 Location services 的 provider。[E: packages/core/src/location-layer.ts:83][E: packages/core/src/location-layer.ts:84][E: packages/core/src/location-layer.ts:85][E: packages/core/src/location-layer.ts:86][E: packages/core/src/location-layer.ts:87][E: packages/core/src/location-layer.ts:88][E: packages/core/src/location-layer.ts:89]
-
-5. `BuiltInTools.locationLayer` 在同一 Location graph 中获得 services、mutation、resources、todos、questions 和 image,形成 `builtInTools` layer 供最终 merge 使用。[E: packages/core/src/location-layer.ts:90][E: packages/core/src/location-layer.ts:91][E: packages/core/src/location-layer.ts:92][E: packages/core/src/location-layer.ts:93][E: packages/core/src/location-layer.ts:94][E: packages/core/src/location-layer.ts:95][E: packages/core/src/location-layer.ts:96][E: packages/core/src/location-layer.ts:120]
-
-6. `SessionRunnerModel.locationLayer` 由 `services` 提供,`SessionRunnerLLM.defaultLayer` 再由 services、model、skillGuidance、referenceGuidance 提供,形成 per-Location runner。[E: packages/core/src/location-layer.ts:98][E: packages/core/src/location-layer.ts:99][E: packages/core/src/location-layer.ts:100][E: packages/core/src/location-layer.ts:101][E: packages/core/src/location-layer.ts:102][E: packages/core/src/location-layer.ts:103]
-
-7. `lookup` 最终 merge boot、services、image、mutation、resources、todos、questions、model、runner、builtInTools、referenceGuidance,并 `Layer.fresh`。[E: packages/core/src/location-layer.ts:110][E: packages/core/src/location-layer.ts:111][E: packages/core/src/location-layer.ts:112][E: packages/core/src/location-layer.ts:113][E: packages/core/src/location-layer.ts:114][E: packages/core/src/location-layer.ts:115][E: packages/core/src/location-layer.ts:116][E: packages/core/src/location-layer.ts:117][E: packages/core/src/location-layer.ts:118][E: packages/core/src/location-layer.ts:119][E: packages/core/src/location-layer.ts:120][E: packages/core/src/location-layer.ts:122][E: packages/core/src/location-layer.ts:123]
-
-8. `LocationServiceMap.dependencies` 是 process-global/shared dependencies,包括 Project、EventV2、Credential、Npm、ModelsDev、FSUtil、Git、AppProcess、Global、Ripgrep、Database、ProjectDirectories、SessionStore、PermissionSaved、RepositoryCache、LLMClient、FetchHttpClient、ToolOutputStore cleanup 和 ApplicationTools。[E: packages/core/src/location-layer.ts:126][E: packages/core/src/location-layer.ts:127][E: packages/core/src/location-layer.ts:128][E: packages/core/src/location-layer.ts:129][E: packages/core/src/location-layer.ts:130][E: packages/core/src/location-layer.ts:131][E: packages/core/src/location-layer.ts:132][E: packages/core/src/location-layer.ts:133][E: packages/core/src/location-layer.ts:134][E: packages/core/src/location-layer.ts:135][E: packages/core/src/location-layer.ts:136][E: packages/core/src/location-layer.ts:137][E: packages/core/src/location-layer.ts:138][E: packages/core/src/location-layer.ts:139][E: packages/core/src/location-layer.ts:140][E: packages/core/src/location-layer.ts:141][E: packages/core/src/location-layer.ts:142][E: packages/core/src/location-layer.ts:143][E: packages/core/src/location-layer.ts:144][E: packages/core/src/location-layer.ts:145][I]
+4. `AppNodeBuilder.build` auto-injects a `LocationServiceMap.node` replacement if the root graph needs it and caller did not provide one;it constructs the map with `buildLocationServiceMap(replacements)` and compiles the final root with all replacements。[E: packages/core/src/effect/app-node-builder.ts:6][E: packages/core/src/effect/app-node-builder.ts:10][E: packages/core/src/effect/app-node-builder.ts:11][E: packages/core/src/effect/app-node-builder.ts:12][E: packages/core/src/effect/app-node-builder.ts:13][E: packages/core/src/effect/app-node-builder.ts:16]
 
 ## Execution wiring
 
-`SessionExecution.noopLayer` 提供的 `resume`、`wake`、`interrupt` 都是 `Effect.void`;把它定位为 durable Session recording compatibility layer 是由 noop implementation 与默认装配关系推出的解释。[E: packages/core/src/session/execution.ts:20][E: packages/core/src/session/execution.ts:22][I] `SessionV2.defaultLayer` 使用的正是 `SessionExecution.noopLayer`;在这个默认 layer 下,`prompt` 仍会走 `SessionInput.admit`,wake path 的 concrete effect 是 `execution.wake(admitted.sessionID, admitted.admittedSeq)`,而 noop wake resolves `Effect.void`;“不会真正 drain runner”是这些事实的组合推断。[E: packages/core/src/session.ts:177][E: packages/core/src/session.ts:359][E: packages/core/src/session.ts:429][E: packages/core/src/session/execution.ts:22][I]
+`SessionExecution.noopLayer` provides `active` as an empty set and `resume`/`wake`/`interrupt` as no-op effects;this makes it a durable-recording-only execution layer by implementation。[E: packages/core/src/session/execution.ts:26][E: packages/core/src/session/execution.ts:29][E: packages/core/src/session/execution.ts:30][E: packages/core/src/session/execution.ts:31][E: packages/core/src/session/execution.ts:32][I]
 
-`SessionExecutionLocal.layer` 是 runner routing implementation:它通过 `SessionStore.get(sessionID)` 取 session,然后 `locations.get(session.location)` 进入 Location layer,在其中调用 `SessionRunner.Service.use((runner) => runner.run({ sessionID, force: mode === "run" }))`。current process-local 的定位来自 layer 命名和 drain implementation。[E: packages/core/src/session/execution/local.ts:16][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:20][E: packages/core/src/session/execution/local.ts:21][I]
+`SessionV2.node` is a global node that depends on `SessionExecution.node`;the concrete execution implementation is supplied by graph replacement. If callers provide noop execution,`SessionV2.prompt` still admits prompt rows and calls `execution.wake(admitted.sessionID)`,but noop wake resolves without draining runner。[E: packages/core/src/session.ts:382][E: packages/core/src/session.ts:474][E: packages/core/src/session.ts:481][E: packages/core/src/session/execution.ts:31][I]
 
-V2 session spec 也把 routing 写成 `SessionExecution.resume(sessionID) -> SessionStore.get(sessionID) -> LocationServiceMap.get(session.location) -> SessionRunner.run({ sessionID, force? })`。[E: specs/v2/session.md:35][E: specs/v2/session.md:36][E: specs/v2/session.md:37][E: specs/v2/session.md:38]
+`SessionExecutionLocal.node` is the current-process runner routing implementation:it loads the session from `SessionStore`,enters `locations.get(session.location)`,and calls `SessionRunner.Service.use((runner) => runner.run({ sessionID, force }))` inside that Location layer。[E: packages/core/src/session/execution/local.ts:11][E: packages/core/src/session/execution/local.ts:14][E: packages/core/src/session/execution/local.ts:15][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:20][E: packages/core/src/session/execution/local.ts:21][E: packages/core/src/session/execution/local.ts:40]
 
-## OpenCode.layer
+## Server and embedded API wiring
 
-`OpenCode.layer` 先定义 `ApplicationToolsLayer = ApplicationTools.layer`,再用 `LocationServiceMap.layer.pipe(Layer.provide(ApplicationToolsLayer))` 构造 `LocationServicesLayer`。[E: packages/core/src/public/opencode.ts:35][E: packages/core/src/public/opencode.ts:36]
+`packages/server/src/routes.ts` builds application services with `AppNodeBuilder.build(applicationServices, [[SessionExecution.node, SessionExecutionLocal.node]])`,so network and embedded server routes use local execution rather than noop execution。[E: packages/server/src/routes.ts:26][E: packages/server/src/routes.ts:31][E: packages/server/src/routes.ts:36][E: packages/server/src/routes.ts:52][E: packages/server/src/routes.ts:61]
 
-`SessionsLayer` 把 `SessionV2.layer` 与 `SessionModelValidationLayer` merge,并给 `SessionV2.layer` 显式 provide `SessionProjector.layer`、`SessionExecutionLocal.layer`、`SessionStore.layer`、`EventV2.layer`、`Database.defaultLayer`、`ProjectV2.defaultLayer`。[E: packages/core/src/public/opencode.ts:70][E: packages/core/src/public/opencode.ts:71][E: packages/core/src/public/opencode.ts:72][E: packages/core/src/public/opencode.ts:73][E: packages/core/src/public/opencode.ts:74][E: packages/core/src/public/opencode.ts:75][E: packages/core/src/public/opencode.ts:76][E: packages/core/src/public/opencode.ts:77][E: packages/core/src/public/opencode.ts:80] 这就是 `OpenCode.layer` 与 `SessionV2.defaultLayer` 的关键差异:前者接入 local execution,后者使用 noop execution。[E: packages/core/src/public/opencode.ts:73][E: packages/core/src/session.ts:429]
+`createEmbeddedRoutes()` calls the same route builder with passwordless auth config;`packages/sdk-next/src/opencode.ts` creates an in-memory web handler from those routes,wraps it as a fetch implementation,and constructs the generated Effect client against `http://opencode.local`。[E: packages/server/src/routes.ts:47][E: packages/server/src/routes.ts:48][E: packages/sdk-next/src/opencode.ts:20][E: packages/sdk-next/src/opencode.ts:22][E: packages/sdk-next/src/opencode.ts:23][E: packages/sdk-next/src/opencode.ts:32][E: packages/sdk-next/src/opencode.ts:35]
 
-public service body 在 `OpenCode.layer` 中从 `SessionV2.Service` 和 `ApplicationTools.Service` 取 handles,返回 `tools.register` 和 session methods。[E: packages/core/src/public/opencode.ts:83][E: packages/core/src/public/opencode.ts:86][E: packages/core/src/public/opencode.ts:87][E: packages/core/src/public/opencode.ts:90][E: packages/core/src/public/opencode.ts:92] public `sessions.prompt` 转发 `id/sessionID/prompt/delivery`;它未传 `resume`,所以会进入 `SessionV2.prompt` 的 ordinary advisory wake path。[E: packages/core/src/public/opencode.ts:108][E: packages/core/src/public/opencode.ts:109][E: packages/core/src/public/opencode.ts:110][E: packages/core/src/public/opencode.ts:111][E: packages/core/src/public/opencode.ts:112][E: packages/core/src/session.ts:177][I]
+`OpenCode.create` also builds same-process `ApplicationTools.Service` and returns `tools.register` alongside the generated client;there is no current `packages/core/src/public/opencode.ts` source file in this HEAD。[E: packages/sdk-next/src/opencode.ts:13][E: packages/sdk-next/src/opencode.ts:18][E: packages/sdk-next/src/opencode.ts:39][E: packages/sdk-next/src/opencode.ts:41][I]
 
 ## 设计动机与权衡
 
-- Location-scoped runner 让同一个 process 中不同 project/location 拥有各自 catalog、integration、permissions、tools、filesystem watcher 和 system context,但共享 database/event/LLM client 等 process-global services。[E: packages/core/src/location-layer.ts:64][E: packages/core/src/location-layer.ts:65][E: packages/core/src/location-layer.ts:70][E: packages/core/src/location-layer.ts:71][E: packages/core/src/location-layer.ts:74][E: packages/core/src/location-layer.ts:78][E: packages/core/src/location-layer.ts:79][E: packages/core/src/location-layer.ts:98][E: packages/core/src/location-layer.ts:99][E: packages/core/src/location-layer.ts:128][E: packages/core/src/location-layer.ts:137][E: packages/core/src/location-layer.ts:142][I]
-- `SessionExecutionLocal.layer` 在 drain start 时通过 session current location 进入 Location layer;这匹配 V2 spec 对 execution routing starts from only Session ID 的要求。[E: specs/v2/session.md:32][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:21][I]
-- `SessionV2.defaultLayer` 使用 noop execution 是 durable Session recording compatibility layer;真正接通 execution 的是 `OpenCode.layer` 这种显式组合。[E: packages/core/src/session/execution.ts:20][E: packages/core/src/session/execution.ts:22][E: packages/core/src/session.ts:429][E: packages/core/src/public/opencode.ts:71][E: packages/core/src/public/opencode.ts:73][I]
+- Location-scoped runner lets one process run different projects/workspaces with distinct catalog,integrations,permissions,tools,filesystem watcher,system context,model resolver and runner,while `AppNodeBuilder` hoists process-global dependencies outside each Location instance。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:49][E: packages/core/src/location-services.ts:65][E: packages/core/src/location-services.ts:67][E: packages/core/src/location-services.ts:76][E: packages/core/src/location-services.ts:78][E: packages/core/src/location-services.ts:92][E: packages/core/src/location-services.ts:102][I]
+- `SessionExecutionLocal.layer` starts from only `sessionID` and resolves the current session location at drain time;this matches V2 spec and makes moved sessions route to the destination Location on the next run。[E: specs/v2/session.md:39][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:21][I]
+- Server routes explicitly replace `SessionExecution.node` with `SessionExecutionLocal.node`;plain `SessionV2.node` remains reusable in tests or embedding graphs that want durable recording without local drains。[E: packages/server/src/routes.ts:52][E: packages/core/src/session/execution.ts:26][I]
 
 ## gotcha
 
-- `LocationServiceMap` 的 service tag 字符串目前是 `"@opencode/example/LocationServiceMap"`;不要把这个 tag 当成 public package name 或云 integration 是基于 tag 命名与该文件职责边界的阅读提示。[E: packages/core/src/location-layer.ts:51][I]
-- `packages/core/src/integration.ts` 在 V2 是 integration registry 与 credential authorization/storage 相关服务,不是云连接器;location layer 中的 `Integration.locationLayer` 只是 Location service graph 的一部分。[E: packages/core/src/integration.ts:196][E: packages/core/src/integration.ts:205][E: packages/core/src/integration.ts:238][E: packages/core/src/integration.ts:253][E: packages/core/src/integration.ts:451][E: packages/core/src/integration.ts:477][E: packages/core/src/location-layer.ts:65][I]
-- 只调用 `SessionV2.defaultLayer` 下的 `prompt` 会 admission,但 `wake` 是 no-op;provide `SessionExecutionLocal.layer` 或等价 execution layer 后才会 route through `LocationServiceMap` and drain runner。[E: packages/core/src/session.ts:177][E: packages/core/src/session.ts:359][E: packages/core/src/session.ts:429][E: packages/core/src/session/execution.ts:22][E: packages/core/src/public/opencode.ts:73][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:20][E: packages/core/src/session/execution/local.ts:21][I]
+- `LocationServiceMap` 的 service tag 字符串目前是 `"@opencode/example/LocationServiceMap"`;不要把这个 tag 当成 public package name 或云 integration。[E: packages/core/src/location-service-map.ts:10][I]
+- `packages/core/src/integration.ts` 在 V2 是 integration registry 与 credential authorization/storage 相关服务,不是云连接器;`Integration.locationLayer` 只是 Location service graph 的一部分。[E: packages/core/src/integration.ts:196][E: packages/core/src/integration.ts:221][E: packages/core/src/integration.ts:380][E: packages/core/src/location-services.ts:49][I]
+- `ProjectCopy.locationLayer` 仍是 Location services 的一部分,但 it is not the LocationServiceMap implementation itself。[E: packages/core/src/location-services.ts:54][E: packages/core/src/project/copy.ts:281][I]
+- 只提供 noop `SessionExecution` 时,`prompt` 会 admission,但 `wake` 不会 route through `LocationServiceMap`;server routes 或等价 graph replacement 才接通 local runner。[E: packages/core/src/session.ts:382][E: packages/core/src/session/execution.ts:31][E: packages/server/src/routes.ts:52]
 
 ## Sources
-- packages/core/src/location-layer.ts
-- packages/core/src/public/opencode.ts
+
+- packages/core/src/location-service-map.ts
+- packages/core/src/location-services.ts
+- packages/core/src/effect/app-node-builder.ts
 - packages/core/src/session.ts
 - packages/core/src/session/execution.ts
 - packages/core/src/session/execution/local.ts
+- packages/server/src/routes.ts
+- packages/sdk-next/src/opencode.ts
 - packages/core/src/integration.ts
 - packages/core/src/project/copy.ts
 - specs/v2/session.md
-- AGENTS.md
 
 ## 相关
+
 - [spine.v2-coordinator](../../spine/v2-coordinator.md)
 - [persistence.project-instance-location](../persistence/project-instance-location.md)
 - [integrations.integration-v2](../integrations/integration-v2.md)

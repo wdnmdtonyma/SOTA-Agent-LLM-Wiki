@@ -16,7 +16,7 @@ related:
   - integrations.lsp
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > V1 LSP server catalog 是 `packages/opencode/src/lsp/server.ts` 中导出的 `Info` 集合；当前 HEAD 有 38 个内建 server [I]。
@@ -31,9 +31,9 @@ updated: 355a0bcf5
 
 LSP `Info` 由 `id`、`extensions`、可选 `global`、`root(file, ctx)` 和 `spawn(root, ctx, flags)` 组成 [E: packages/opencode/src/lsp/server.ts:80] [E: packages/opencode/src/lsp/server.ts:85]。`NearestRoot()` 会向上查找目标文件，找不到 include pattern 时回退到 instance directory；`StrictNearestRoot()` 找不到 include pattern 时返回 `undefined` [E: packages/opencode/src/lsp/server.ts:51] [E: packages/opencode/src/lsp/server.ts:75]。
 
-V1 LSP service 在 `cfg.lsp` 为 false 时直接禁用全部 LSP；否则把 `Object.values(LSPServer)` 装入 server map [E: packages/opencode/src/lsp/lsp.ts:153] [E: packages/opencode/src/lsp/lsp.ts:156] [E: packages/opencode/src/lsp/lsp.ts:157]。`experimentalLspTy` 打开时会移除 `pyright`，关闭时会移除 `ty`，所以 Python 默认路径和 experimental 路径互斥 [E: packages/opencode/src/lsp/lsp.ts:103] [E: packages/opencode/src/lsp/lsp.ts:107]。
+V1 LSP service 在 `cfg.lsp` 为 false 时直接禁用全部 LSP；否则把 `Object.values(LSPServer)` 装入 server map [E: packages/opencode/src/lsp/lsp.ts:151] [E: packages/opencode/src/lsp/lsp.ts:154] [E: packages/opencode/src/lsp/lsp.ts:155]。`experimentalLspTy` 打开时会移除 `pyright`，关闭时会移除 `ty`，所以 Python 默认路径和 experimental 路径互斥 [E: packages/opencode/src/lsp/lsp.ts:99] [E: packages/opencode/src/lsp/lsp.ts:104]。
 
-`Npm.which(pkg, bin?)` 不是普通 PATH lookup：它把 package cache 放在 `global.cache/packages/<pkg>`，先查该 cache 的 `node_modules/.bin`，找不到时会调用 `Npm.add(pkg)` 安装 package，再重新 pick bin [E: packages/core/src/npm.ts:79] [E: packages/core/src/npm.ts:193] [E: packages/core/src/npm.ts:194] [E: packages/core/src/npm.ts:230] [E: packages/core/src/npm.ts:232]。因此表里的 “Npm.which fallback” 表示 opencode 可在 cache 中安装 npm package，但仍受各 server 自己的 `flags.disableLspDownload` gating 影响 [I]。
+`Npm.which(pkg, bin?)` 不是普通 PATH lookup：它把 package cache 放在 `global.cache/packages/<pkg>`，先查该 cache 的 `node_modules/.bin`，找不到时会调用 `Npm.add(pkg)` 安装 package，再重新 pick bin [E: packages/core/src/npm.ts:79] [E: packages/core/src/npm.ts:192] [E: packages/core/src/npm.ts:194] [E: packages/core/src/npm.ts:231] [E: packages/core/src/npm.ts:233]。因此表里的 “Npm.which fallback” 表示 opencode 可在 cache 中安装 npm package，但仍受各 server 自己的 `flags.disableLspDownload` gating 影响 [I]。
 
 ## Servers
 
@@ -80,7 +80,7 @@ V1 LSP service 在 `cfg.lsp` 为 false 时直接禁用全部 LSP；否则把 `Ob
 
 ## 命名陷阱
 
-`packages/opencode/src/lsp/server.ts` 属于 V1 当前活跑代码路径；它导入 `@opencode-ai/core` 的 helper，例如 `Npm` 和 `Global` [E: packages/opencode/src/lsp/server.ts:4] [E: packages/opencode/src/lsp/server.ts:14]。LSP catalog 本身由 V1 `packages/opencode/src/lsp/lsp.ts` 导入并通过 `Object.values(LSPServer)` 加载 [E: packages/opencode/src/lsp/lsp.ts:8] [E: packages/opencode/src/lsp/lsp.ts:156]。V2 core 的 tool registry 不在这个文件中定义 LSP server catalog [I]。
+`packages/opencode/src/lsp/server.ts` 属于 V1 当前活跑代码路径；它导入 `@opencode-ai/core` 的 helper，例如 `Npm` 和 `Global` [E: packages/opencode/src/lsp/server.ts:4] [E: packages/opencode/src/lsp/server.ts:14]。LSP catalog 本身由 V1 `packages/opencode/src/lsp/lsp.ts` 导入并通过 `Object.values(LSPServer)` 加载 [E: packages/opencode/src/lsp/lsp.ts:8] [E: packages/opencode/src/lsp/lsp.ts:155]。V2 core 的 tool registry 不在这个文件中定义 LSP server catalog [I]。
 
 ## Sources
 

@@ -24,7 +24,7 @@ related:
   - subsys.coding-agent.file-mutation-queue
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `edit-engine` 是 pi-coding-agent 的 targeted replacement 子系统: 它把 `oldText -> newText` 编辑转换成一次性匹配、可预览的 diff/patch, 并在必要时用受限 fuzzy normalization 容忍模型容易写错的 Unicode 和行尾差异。

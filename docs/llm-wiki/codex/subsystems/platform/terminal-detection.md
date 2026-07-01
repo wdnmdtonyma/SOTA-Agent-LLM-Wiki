@@ -8,7 +8,7 @@ symbols: [TerminalInfo, TerminalName, Multiplexer, terminal_info, user_agent, de
 related: [cli.global-flags, subsys.tui.architecture]
 evidence: explicit
 status: verified
-updated: 5670360009
+updated: db887d03e1
 ---
 
 > `codex_terminal_detection` 从 process environment 和 tmux client term metadata 推导 terminal name/version/TERM/multiplexer，并把结果格式化为 sanitized User-Agent token；源码注释说明该 metadata 同时服务 OpenTelemetry user-agent logging 与 TUI terminal-specific configuration choices。[E: codex-rs/terminal-detection/src/lib.rs:3][E: codex-rs/terminal-detection/src/lib.rs:4][E: codex-rs/terminal-detection/src/lib.rs:10][E: codex-rs/terminal-detection/src/lib.rs:301][E: codex-rs/terminal-detection/src/lib.rs:304][E: codex-rs/terminal-detection/src/lib.rs:315][E: codex-rs/terminal-detection/src/lib.rs:413][E: codex-rs/terminal-detection/src/lib.rs:420][E: codex-rs/terminal-detection/src/lib.rs:423][E: codex-rs/terminal-detection/src/lib.rs:453][E: codex-rs/terminal-detection/src/lib.rs:454][E: codex-rs/terminal-detection/src/lib.rs:455][E: codex-rs/terminal-detection/src/lib.rs:500][E: codex-rs/terminal-detection/src/lib.rs:503][E: codex-rs/terminal-detection/src/lib.rs:504][E: codex-rs/terminal-detection/src/lib.rs:509]

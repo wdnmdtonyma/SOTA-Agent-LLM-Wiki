@@ -19,7 +19,7 @@ related:
   - ref.orchestrator.instance-status
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > Orchestrator storage 是 experimental orchestrator 的同步 JSON 文件持久化层: 它把 machine record 与 instance records 写到 orchestrator 配置目录下, 其中 instance persistence 的权威文件是 `instances.json`。

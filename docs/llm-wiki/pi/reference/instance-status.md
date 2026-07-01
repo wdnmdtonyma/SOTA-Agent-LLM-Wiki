@@ -14,7 +14,7 @@ related:
   - subsys.orchestrator.storage
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `ref.orchestrator.instance-status` 是 orchestrator instance metadata 的窄口径引用节点:只枚举 `InstanceStatus`、`InstanceRecord` 以及 `config.ts` 中可直接核验的本地路径 helper。

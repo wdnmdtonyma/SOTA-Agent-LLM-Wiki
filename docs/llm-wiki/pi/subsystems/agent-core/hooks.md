@@ -16,7 +16,7 @@ related:
   - subsys.agent-core.turn-control
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.hooks` 是 `pi-agent-core` 暴露给上层 runtime 的 hook contract: 它允许调用方在 provider request 前改写 `AgentMessage[]`, 在工具执行前阻断调用, 在工具执行后覆盖结果, 并在一个 turn 结束后替换下一轮 runtime state。

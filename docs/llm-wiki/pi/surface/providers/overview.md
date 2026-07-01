@@ -18,7 +18,7 @@ related:
   - ref.ai.provider-catalog
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `surface.providers.overview` 是 pi 的 provider 选择与配置入口说明: 它把用户可见的 `/login`、API key、`--provider`/`--model`、custom provider 与 `pi-ai` 的 runtime `Provider`/`Models` 集合连接起来。

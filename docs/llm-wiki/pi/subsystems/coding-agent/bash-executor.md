@@ -17,7 +17,7 @@ related:
   - subsys.agent-core.exec-env
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `bash-executor` 是 pi-coding-agent 的命令执行子系统: `executeBashWithOperations()` 负责 bash 风格命令的流式输出、取消和 tail 截断, `execCommand()` 负责扩展/custom tool runtime 里的 argv 进程执行。
@@ -43,7 +43,7 @@ updated: 5a073885
 
 - `packages/coding-agent/src/core/bash-executor.ts`: `BashExecutorOptions`、`BashResult` 和 `executeBashWithOperations()` 的权威实现 [E: packages/coding-agent/src/core/bash-executor.ts:22] [E: packages/coding-agent/src/core/bash-executor.ts:29] [E: packages/coding-agent/src/core/bash-executor.ts:50]。
 - `packages/coding-agent/src/core/exec.ts`: `ExecOptions`、`ExecResult` 和 `execCommand()` 的权威实现 [E: packages/coding-agent/src/core/exec.ts:11] [E: packages/coding-agent/src/core/exec.ts:23] [E: packages/coding-agent/src/core/exec.ts:34]。
-- `packages/coding-agent/src/core/agent-session.ts`: 调用点背景, `AgentSession.executeBash()` 把 settings prefix/shellPath 转成 `executeBashWithOperations()` 调用, 并把结果写成 bash execution history [E: packages/coding-agent/src/core/agent-session.ts:2596] [E: packages/coding-agent/src/core/agent-session.ts:2597] [E: packages/coding-agent/src/core/agent-session.ts:2601] [E: packages/coding-agent/src/core/agent-session.ts:2611]。
+- `packages/coding-agent/src/core/agent-session.ts`: 调用点背景, `AgentSession.executeBash()` 把 settings prefix/shellPath 转成 `executeBashWithOperations()` 调用, 并把结果写成 bash execution history [E: packages/coding-agent/src/core/agent-session.ts:2619] [E: packages/coding-agent/src/core/agent-session.ts:2620] [E: packages/coding-agent/src/core/agent-session.ts:2624] [E: packages/coding-agent/src/core/agent-session.ts:2634]。
 - `packages/coding-agent/src/modes/rpc/rpc-mode.ts`: 调用点背景, RPC `"bash"` command 调 `session.executeBash()` 并把 `BashResult` 放进 success response [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:551] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:554]。
 - `packages/coding-agent/src/core/extensions/loader.ts`: 调用点背景, extension runtime 的 `exec()` 包装 `execCommand()` [E: packages/coding-agent/src/core/extensions/loader.ts:310] [E: packages/coding-agent/src/core/extensions/loader.ts:312]。
 

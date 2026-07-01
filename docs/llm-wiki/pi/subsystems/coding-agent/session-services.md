@@ -16,7 +16,7 @@ related:
   - subsys.coding-agent.resource-loader
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.coding-agent.session-services` 描述 pi-coding-agent 的 cwd-bound runtime services: `createAgentSessionServices()` 先把 cwd、agentDir、auth、settings、model registry、resource loader 和 setup diagnostics 绑定成一个 coherent bundle, `createAgentSessionFromServices()` 再用这个 bundle 构造 `AgentSession`。

@@ -15,7 +15,7 @@ related:
   - persistence.database
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > V1 JSON 键值存储是 `packages/opencode/src/storage/storage.ts` 中的 file-backed `@opencode/Storage` service：key 是 string array，落盘路径是 `Global.Path.data/storage/<key...>.json`。

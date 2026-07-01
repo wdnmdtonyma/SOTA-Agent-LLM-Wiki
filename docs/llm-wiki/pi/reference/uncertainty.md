@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 # 不确定项日志([U] 汇总)
@@ -565,6 +565,45 @@ L2 核验后未新增 `[U]`。核心 dispatch 结论可落到 `models.ts`、`api
 - dispatch 层“不构造 payload / 不做 event normalization”属于由 `ProviderStreams` contract 推出的职责边界,已拆成 contract `[E]` + 边界判断 `[I]`。
 - `lazyStream` 对 caller 失败形态的影响、README/provider 名称不是 ground truth、下游 agent/coding-agent 不绕过 `Models` 的边界判断,均按推断标为 `[I]`。
 - `StreamFunction` 函数形状改用 type alias 与事件协议代码行支撑;`ProviderStreams` module 注释不再作为 `[E]` 行号使用;message transform 调用点补充了更精确行号。
+
+## batch-aa
+
+# Batch AA uncertainties
+
+- `ref.ai.image-models`: `openrouter/auto` still uses `-1000000` for both image-model `cost.input` and `cost.output`; the catalog records the source values but does not infer product semantics for negative cost.
+- `ref.coding-agent.extension-events`: `index.json` still lists `group.extension-events.instance_count` as 29, while current `ExtensionEvent` / `ExtensionAPI.on(...)` source exposes 31 event names including `session_info_changed`.
+- `ref.coding-agent.env-vars`: this catalog remains scoped to coding-agent plus directly consumed `pi-ai` provider env channels; `packages/orchestrator` `PI_ORCHESTRATOR_*` / Radius env and TUI-only debug env are intentionally outside this node's authority.
+- `ref.coding-agent.config-keys`: `index.json` still lists `group.config-keys.instance_count` as 50, while current `Settings` + nested leaves + `PackageSource` object keys produce 72 catalog rows after adding `outputPad`.
+- `ref.coding-agent.config-keys`: `terminal.showTerminalProgress` is present in `SettingsManager` but still absent from `packages/coding-agent/docs/settings.md`.
+- `ref.interactive.components`: the catalog counts directory files, so whether `components/index.ts` should count as an instance or only barrel metadata remains a catalog-definition question.
+- `ref.interactive.components`: `ConfigSelectorComponent`, `CountdownTimer`, `EarendilAnnouncementComponent`, and `session-selector-search.ts` have real callers but are not exported by `components/index.ts`; this looks internal-only but needs maintainer/API-policy confirmation.
+- `ref.interactive.components`: `ShowImagesSelectorComponent`, `ThemeSelectorComponent`, and `ThinkingSelectorComponent` remain public exports, but current main interactive mode does not directly import them; they may be compatibility surface or residual UI.
+
+## batch-ab
+
+- `ref.ai.model-catalog`: `packages/ai/src/models.generated.ts` at pi HEAD `8c943640` enumerates 1034 text model instances, while `index.json` still records `group.models.instance_count: 1019`. `index.json` is outside this batch's allowed write scope.
+- `ref.coding-agent.rpc-methods`: `RpcCommand` and `handleCommand()` at pi HEAD `8c943640` cover 31 ordinary RPC commands, while `index.json` still records `group.rpc-methods.instance_count: 29`. `extension_ui_response` remains excluded from the command catalog.
+- `ref.coding-agent.rpc-methods`: `packages/coding-agent/docs/rpc.md` still documents `get_commands` response examples/fields with top-level `location` and `path`, but `RpcSlashCommand` and `rpc-mode.ts` emit `sourceInfo` instead.
+
+## batch-ae
+
+# Uncertainty staging - batch ae
+
+- `subsystems/ai/google-vertex.md`: `subsys.ai.env-api-keys` credential discovery details require that node's own source; the Vertex node only verifies how `google-vertex.ts` consumes already-resolved values, so this remains `[U]`.
+- `subsystems/ai/model-discovery.md`: the current index entry mismatch noted in the node remains unresolved in this batch because the requested scope forbids editing `index.json`; the node keeps the reconciliation note as `[U]`.
+
+## batch-ah
+
+# Uncertainty batch ah
+
+- `subsystems/coding-agent/settings-manager.md`: `CONFIG_DIR_NAME` 的字面值来自 `packages/coding-agent/src/config.ts`, 本节点只把 `settings-manager.ts` 作为证据范围, 因此不在该断言里展开 `.pi` 字面值。
+- `subsystems/coding-agent/settings-manager.md`: index.json 为本节点列出 `loadSettings`, 但当前 `packages/coding-agent/src/core/settings-manager.ts` 没有 `loadSettings` 函数或 export; 实际读取路径是 private static `loadFromStorage()` 与 `tryLoadFromStorage()`。
+- `subsystems/coding-agent/settings-manager.md`: index.json 为本节点列出 `deepMergeSettings`, 当前源码确有 `function deepMergeSettings(...)`, 但它不是 `export function`; 如果 symbols 语义要求 exported symbol, 这里与源码不一致。
+
+## batch-aj
+
+- `surface/misc/images.md`: this node verifies the `ImageContent` input path and image model catalog boundaries, but it does not enumerate which chat/text models support image input; that remains owned by `ref.ai.model-catalog` and is kept as `[U]`.
+- `surface/misc/security.md`: this node verifies CLI/RPC HTTP dispatcher setup, but it does not prove every provider/network call path uses that dispatcher; the network-isolation claim is kept narrower and the unresolved provider coverage remains `[U]`.
 
 ## coding-agent-agent-session
 

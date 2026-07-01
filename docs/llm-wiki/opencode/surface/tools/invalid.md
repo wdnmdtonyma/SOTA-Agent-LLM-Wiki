@@ -9,7 +9,7 @@ symbols: [InvalidTool]
 related: [subsys.tools.v1]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > Invalid 工具是 V1 AI SDK repair path 的占位工具：模型不应主动使用它；AI SDK tool-call repair 会把无法修复的 malformed call 改写成 `invalid` 调用，把错误作为普通 tool result 反馈给模型。
@@ -24,9 +24,9 @@ updated: 355a0bcf5
 
 ## 1 Identity
 
-V1 `InvalidTool` 通过 `Tool.define("invalid", ...)` 注册，description 是 `"Do not use"`。[E: packages/opencode/src/tool/invalid.ts:9][E: packages/opencode/src/tool/invalid.ts:10][E: packages/opencode/src/tool/invalid.ts:12] V1 registry 初始化 invalid，并把 `tool.invalid` 放在 builtin 列表第一项。[E: packages/opencode/src/tool/registry.ts:92][E: packages/opencode/src/tool/registry.ts:199][E: packages/opencode/src/tool/registry.ts:220]
+V1 `InvalidTool` 通过 `Tool.define("invalid", ...)` 注册，description 是 `"Do not use"`。[E: packages/opencode/src/tool/invalid.ts:9][E: packages/opencode/src/tool/invalid.ts:10][E: packages/opencode/src/tool/invalid.ts:12] V1 registry 初始化 invalid，并把 `tool.invalid` 放在 builtin 列表第一项。[E: packages/opencode/src/tool/registry.ts:91][E: packages/opencode/src/tool/registry.ts:198][E: packages/opencode/src/tool/registry.ts:219]
 
-V2 builtins 列表没有 `invalid` entry[I]；V2 registry 对 unknown tool name 直接返回 error result，如 `Unknown tool: <name>` 或 `Stale tool call: <name>`。[E: packages/core/src/tool/builtins.ts:32][E: packages/core/src/tool/builtins.ts:43][E: packages/core/src/tool/registry.ts:52][E: packages/core/src/tool/registry.ts:56][E: packages/core/src/tool/registry.ts:60][E: packages/core/src/tool/registry.ts:118]
+V2 builtins 列表没有 `invalid` entry[I]；V2 registry 对 unknown tool name 直接返回 error result，如 `Unknown tool: <name>` 或 `Stale tool call: <name>`。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:46][E: packages/core/src/tool/registry.ts:53][E: packages/core/src/tool/registry.ts:57][E: packages/core/src/tool/registry.ts:61][E: packages/core/src/tool/registry.ts:119]
 
 ## 2 用途定位
 
@@ -49,7 +49,7 @@ InvalidTool 不调用 `ctx.ask`，execute 也不接收 Tool.Context；它只把 
 
 ## 6 execute() 走读
 
-1. V1 registry 初始化 invalid 并把它放进 builtin 列表，V1 LLM request 会把 `prepared.tools` 传给 AI SDK；repair fallback 可把失败 call 改写成 `"invalid"` 工具名。[E: packages/opencode/src/tool/registry.ts:199][E: packages/opencode/src/tool/registry.ts:220][E: packages/opencode/src/session/llm.ts:318][E: packages/opencode/src/session/llm.ts:310][I]
+1. V1 registry 初始化 invalid 并把它放进 builtin 列表，V1 LLM request 会把 `prepared.tools` 传给 AI SDK；repair fallback 可把失败 call 改写成 `"invalid"` 工具名。[E: packages/opencode/src/tool/registry.ts:198][E: packages/opencode/src/tool/registry.ts:219][E: packages/opencode/src/session/llm.ts:318][E: packages/opencode/src/session/llm.ts:310][I]
 2. `experimental_repairToolCall` 如果发现 lower-case tool name 已存在，返回 lower-case repaired call。[E: packages/opencode/src/session/llm.ts:297][E: packages/opencode/src/session/llm.ts:298][E: packages/opencode/src/session/llm.ts:301]
 3. lower-case repair 不适用时，repair 返回 `toolName: "invalid"`，input JSON 包含原 tool name 和 failed.error.message。[E: packages/opencode/src/session/llm.ts:304][E: packages/opencode/src/session/llm.ts:306][E: packages/opencode/src/session/llm.ts:307][E: packages/opencode/src/session/llm.ts:308][E: packages/opencode/src/session/llm.ts:310]
 4. InvalidTool execute 把 error message 包成普通 tool result，让模型有机会重写下一次 tool input。[E: packages/opencode/src/tool/invalid.ts:17][I]
@@ -58,13 +58,13 @@ InvalidTool 不调用 `ctx.ask`，execute 也不接收 Tool.Context；它只把 
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 占位工具 | 有 `InvalidTool`，且放入 builtin 列表但从 activeTools 排除。[E: packages/opencode/src/tool/registry.ts:199][E: packages/opencode/src/tool/registry.ts:220][E: packages/opencode/src/session/llm.ts:317] | 没有 invalid built-in；registry settlement 自己返回 Unknown/Stale error。[E: packages/core/src/tool/builtins.ts:32][E: packages/core/src/tool/builtins.ts:43][E: packages/core/src/tool/registry.ts:56][E: packages/core/src/tool/registry.ts:60][I] |
-| 输入错误 | V1 `Tool.define` wrapper 对 schema decode 失败会构造 tag 为 `"ToolInvalidArgumentsError"` 的 `InvalidArgumentsError`，repair fallback 可转到 invalid。[E: packages/opencode/src/tool/tool.ts:24][E: packages/opencode/src/tool/tool.ts:25][E: packages/opencode/src/tool/tool.ts:121][E: packages/opencode/src/tool/tool.ts:124][E: packages/opencode/src/session/llm.ts:310] | V2 `Tool.make` settle 时 schema decode 失败直接产生 `ToolFailure({ message: "Invalid tool input: ..." })`。[E: packages/core/src/tool/tool.ts:81][E: packages/core/src/tool/tool.ts:82] |
-| 模型主动调用 | description 是 `Do not use`，activeTools 排除 invalid。[E: packages/opencode/src/tool/invalid.ts:12][E: packages/opencode/src/session/llm.ts:317] | 无 V2 equivalent。[E: packages/core/src/tool/builtins.ts:32][E: packages/core/src/tool/builtins.ts:43][I] |
+| 占位工具 | 有 `InvalidTool`，且放入 builtin 列表但从 activeTools 排除。[E: packages/opencode/src/tool/registry.ts:198][E: packages/opencode/src/tool/registry.ts:219][E: packages/opencode/src/session/llm.ts:317] | 没有 invalid built-in；registry settlement 自己返回 Unknown/Stale error。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:46][E: packages/core/src/tool/registry.ts:57][E: packages/core/src/tool/registry.ts:61][I] |
+| 输入错误 | V1 `Tool.define` wrapper 对 schema decode 失败会构造 tag 为 `"ToolInvalidArgumentsError"` 的 `InvalidArgumentsError`，repair fallback 可转到 invalid。[E: packages/opencode/src/tool/tool.ts:24][E: packages/opencode/src/tool/tool.ts:25][E: packages/opencode/src/tool/tool.ts:121][E: packages/opencode/src/tool/tool.ts:124][E: packages/opencode/src/session/llm.ts:310] | V2 `Tool.make` settle 时 schema decode 失败直接产生 `ToolFailure({ message: "Invalid tool input: ..." })`。[E: packages/core/src/tool/tool.ts:92][E: packages/core/src/tool/tool.ts:93] |
+| 模型主动调用 | description 是 `Do not use`，activeTools 排除 invalid。[E: packages/opencode/src/tool/invalid.ts:12][E: packages/opencode/src/session/llm.ts:317] | 无 V2 equivalent。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:46][I] |
 
 ## 8 设计动机·edge·历史
 
-InvalidTool 是 V1/AI-SDK 适配层的 repair shim，不是业务工具。这个设计避免 malformed call 直接让 provider turn 失败，而是把错误作为 tool result 送回模型，让模型在后续步骤重写参数；V2 registry 已把 unknown/stale/invalid input 作为 settlement error 处理，所以不需要同名占位工具。[E: packages/opencode/src/session/llm.ts:296][E: packages/opencode/src/session/llm.ts:310][E: packages/core/src/tool/registry.ts:52][E: packages/core/src/tool/tool.ts:82][I]
+InvalidTool 是 V1/AI-SDK 适配层的 repair shim，不是业务工具。这个设计避免 malformed call 直接让 provider turn 失败，而是把错误作为 tool result 送回模型，让模型在后续步骤重写参数；V2 registry 已把 unknown/stale/invalid input 作为 settlement error 处理，所以不需要同名占位工具。[E: packages/opencode/src/session/llm.ts:296][E: packages/opencode/src/session/llm.ts:310][E: packages/core/src/tool/registry.ts:57][E: packages/core/src/tool/tool.ts:93][I]
 
 ## Sources
 

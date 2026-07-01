@@ -9,7 +9,7 @@ symbols: [assertExternalDirectoryEffect, assertExternalDirectory, LocationMutati
 related: [execution.permissions-v1, ref.permission-actions]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > External-directory 不是一个普通 model-facing tool；它是文件/搜索/shell 工具在访问当前 project/worktree 或 Location 外部路径前触发的额外 approval guard。
@@ -66,46 +66,46 @@ V1 `read` 在 read permission 前调用 external-directory guard，并允许 `ct
 
 ### 1 Identity
 
-V2 的 external directory guard 由 `LocationMutation` resolve 结果中的 `externalDirectory` 与 `LocationMutation.externalDirectoryPermission(...)` 表示。[E: packages/core/src/location-mutation.ts:28][E: packages/core/src/location-mutation.ts:37][E: packages/core/src/location-mutation.ts:48]
+V2 的 external directory guard 由 `LocationMutation` resolve 结果中的 `externalDirectory` 与 `LocationMutation.externalDirectoryPermission(...)` 表示。[E: packages/core/src/location-mutation.ts:29][E: packages/core/src/location-mutation.ts:38][E: packages/core/src/location-mutation.ts:49]
 
 ### 2 用途定位
 
-`LocationMutation.resolve` 的注释（location-mutation.ts 行 11–14）说明：mutation paths 不接受 project references；relative path 必须留在 active Location 内；absolute path 在 Location 外部时需要单独 `external_directory` approval；`ResolveInput` 从第 16 行定义。[E: packages/core/src/location-mutation.ts:16][E: packages/core/src/location-mutation.ts:17]
+`LocationMutation.resolve` 用 `ResolveInput` 接收 path/kind，并在 resolve 过程中拒绝逃出 Location 的 relative path、给外部 absolute path 生成 `externalDirectory` authorization。[E: packages/core/src/location-mutation.ts:17][E: packages/core/src/location-mutation.ts:18][E: packages/core/src/location-mutation.ts:20][E: packages/core/src/location-mutation.ts:120][E: packages/core/src/location-mutation.ts:124][E: packages/core/src/location-mutation.ts:141]
 
 ### 3 输入/输出表
 
-V2 guard 的输入是 `LocationMutation.resolve({ path, kind })`，调用方传入该 helper 而不是把它作为独立模型 tool input [I]。[E: packages/core/src/location-mutation.ts:16][E: packages/core/src/location-mutation.ts:19][E: packages/core/src/location-mutation.ts:57][E: packages/core/src/location-mutation.ts:119] resolve 输出 `Target`，包含 canonical path、permission resource、optional `externalDirectory`。[E: packages/core/src/location-mutation.ts:43][E: packages/core/src/location-mutation.ts:45][E: packages/core/src/location-mutation.ts:47][E: packages/core/src/location-mutation.ts:48]
+V2 guard 的输入是 `LocationMutation.resolve({ path, kind })`，调用方传入该 helper 而不是把它作为独立模型 tool input [I]。[E: packages/core/src/location-mutation.ts:17][E: packages/core/src/location-mutation.ts:20][E: packages/core/src/location-mutation.ts:58][E: packages/core/src/location-mutation.ts:120] resolve 输出 `Target`，包含 canonical path、permission resource、optional `externalDirectory`。[E: packages/core/src/location-mutation.ts:44][E: packages/core/src/location-mutation.ts:46][E: packages/core/src/location-mutation.ts:48][E: packages/core/src/location-mutation.ts:49]
 
 | 结构 | 字段 | 类型 | 说明 |
 |---|---|---|---|
-| `ResolveInput` | `path` | `string` | 待解析路径。[E: packages/core/src/location-mutation.ts:17] |
-| `ResolveInput` | `kind` | optional `"file" | "directory"` | 只选择 external approval boundary，不验证 target type（注释见 location-mutation.ts 行 18）。[E: packages/core/src/location-mutation.ts:19] |
-| `ExternalDirectoryAuthorization` | `action` | `"external_directory"` | V2 external permission action。[E: packages/core/src/location-mutation.ts:28][E: packages/core/src/location-mutation.ts:29] |
-| `ExternalDirectoryAuthorization` | `resource` / `save` | `string` | parent directory glob resource 与 save pattern。[E: packages/core/src/location-mutation.ts:33][E: packages/core/src/location-mutation.ts:34] |
+| `ResolveInput` | `path` | `string` | 待解析路径。[E: packages/core/src/location-mutation.ts:18] |
+| `ResolveInput` | `kind` | optional `"file" | "directory"` | 只选择 external approval boundary，不验证 target type。[E: packages/core/src/location-mutation.ts:20] |
+| `ExternalDirectoryAuthorization` | `action` | `"external_directory"` | V2 external permission action。[E: packages/core/src/location-mutation.ts:29][E: packages/core/src/location-mutation.ts:30] |
+| `ExternalDirectoryAuthorization` | `resource` / `save` | `string` | parent directory glob resource 与 save pattern。[E: packages/core/src/location-mutation.ts:34][E: packages/core/src/location-mutation.ts:35] |
 
 ### 4 权限
 
-V2 `externalDirectoryPermission` 返回 `{ action, resources: [resource], save: [save] }`。[E: packages/core/src/location-mutation.ts:37][E: packages/core/src/location-mutation.ts:38][E: packages/core/src/location-mutation.ts:39][E: packages/core/src/location-mutation.ts:40] V2 `write`、`edit`、`bash`、`apply_patch` 在看到 `externalDirectory` 后都会先调用 `permission.assert`，再请求各自的 edit/bash permission。[E: packages/core/src/tool/write.ts:70][E: packages/core/src/tool/write.ts:71][E: packages/core/src/tool/write.ts:77][E: packages/core/src/tool/write.ts:80][E: packages/core/src/tool/edit.ts:138][E: packages/core/src/tool/edit.ts:140][E: packages/core/src/tool/edit.ts:150][E: packages/core/src/tool/edit.ts:154][E: packages/core/src/tool/bash.ts:131][E: packages/core/src/tool/bash.ts:133][E: packages/core/src/tool/bash.ts:143][E: packages/core/src/tool/bash.ts:146][E: packages/core/src/tool/apply-patch.ts:95][E: packages/core/src/tool/apply-patch.ts:96][E: packages/core/src/tool/apply-patch.ts:103][E: packages/core/src/tool/apply-patch.ts:106]
+V2 `externalDirectoryPermission` 返回 `{ action, resources: [resource], save: [save] }`。[E: packages/core/src/location-mutation.ts:38][E: packages/core/src/location-mutation.ts:39][E: packages/core/src/location-mutation.ts:40][E: packages/core/src/location-mutation.ts:41] V2 `read`、`write`、`edit`、`bash`、`apply_patch` 在看到 `externalDirectory` 后都会先调用 `permission.assert`，再请求各自的 read/edit/bash permission。[E: packages/core/src/tool/read.ts:60][E: packages/core/src/tool/read.ts:63][E: packages/core/src/tool/read.ts:72][E: packages/core/src/tool/write.ts:70][E: packages/core/src/tool/write.ts:73][E: packages/core/src/tool/write.ts:79][E: packages/core/src/tool/edit.ts:138][E: packages/core/src/tool/edit.ts:140][E: packages/core/src/tool/edit.ts:151][E: packages/core/src/tool/bash.ts:125][E: packages/core/src/tool/bash.ts:127][E: packages/core/src/tool/bash.ts:138][E: packages/core/src/tool/apply-patch.ts:102][E: packages/core/src/tool/apply-patch.ts:108][E: packages/core/src/tool/apply-patch.ts:116]
 
 ### 5 resolve() 走读
 
-1. V2 resolve 计算 input 是否 relative、absolute path、lexical containment；relative path 如果逃出 Location，返回 `relative_escape`。[E: packages/core/src/location-mutation.ts:119][E: packages/core/src/location-mutation.ts:120][E: packages/core/src/location-mutation.ts:121][E: packages/core/src/location-mutation.ts:122][E: packages/core/src/location-mutation.ts:123]
-2. V2 resolve 对 existing path 用 realpath/stat；对 missing path 向上找到 existing ancestor directory。[E: packages/core/src/location-mutation.ts:89][E: packages/core/src/location-mutation.ts:90][E: packages/core/src/location-mutation.ts:92][E: packages/core/src/location-mutation.ts:100][E: packages/core/src/location-mutation.ts:103][E: packages/core/src/location-mutation.ts:104][E: packages/core/src/location-mutation.ts:113][E: packages/core/src/location-mutation.ts:114]
-3. 如果 lexical internal 但 realpath canonical 不在 location root 内，返回 `location_escape`。[E: packages/core/src/location-mutation.ts:125][E: packages/core/src/location-mutation.ts:126][E: packages/core/src/location-mutation.ts:127]
-4. external 时，resource 是 canonical slash path；internal 时，resource 是 location-root relative path；external directory glob 是 `path.join(externalDirectory, "*")`。[E: packages/core/src/location-mutation.ts:130][E: packages/core/src/location-mutation.ts:132][E: packages/core/src/location-mutation.ts:133][E: packages/core/src/location-mutation.ts:136]
+1. V2 resolve 计算 input 是否 relative、absolute path、lexical containment；relative path 如果逃出 Location，返回 `relative_escape`。[E: packages/core/src/location-mutation.ts:120][E: packages/core/src/location-mutation.ts:121][E: packages/core/src/location-mutation.ts:122][E: packages/core/src/location-mutation.ts:123][E: packages/core/src/location-mutation.ts:124]
+2. V2 resolve 对 existing path 用 realpath/stat；对 missing path 向上找到 existing ancestor directory。[E: packages/core/src/location-mutation.ts:90][E: packages/core/src/location-mutation.ts:91][E: packages/core/src/location-mutation.ts:93][E: packages/core/src/location-mutation.ts:101][E: packages/core/src/location-mutation.ts:103][E: packages/core/src/location-mutation.ts:105][E: packages/core/src/location-mutation.ts:110][E: packages/core/src/location-mutation.ts:114]
+3. 如果 lexical internal 但 realpath canonical 不在 location root 内，返回 `location_escape`。[E: packages/core/src/location-mutation.ts:127][E: packages/core/src/location-mutation.ts:128]
+4. external 时，resource 是 canonical slash path；internal 时，resource 是 location-root relative path；external directory glob 是 `path.join(externalDirectory, "*")`。[E: packages/core/src/location-mutation.ts:131][E: packages/core/src/location-mutation.ts:132][E: packages/core/src/location-mutation.ts:134][E: packages/core/src/location-mutation.ts:137]
 
 ## V1 vs V2 差异
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 形态 | standalone helper `assertExternalDirectoryEffect(ctx, target, options)`。[E: packages/opencode/src/tool/external-directory.ts:15] | `LocationMutation.resolve` 产出 optional authorization，调用方 assert。[E: packages/core/src/location-mutation.ts:48][E: packages/core/src/tool/edit.ts:140][E: packages/core/src/tool/edit.ts:142] |
-| resource | parent directory glob，同一 glob 放在 patterns/always。[E: packages/opencode/src/tool/external-directory.ts:30][E: packages/opencode/src/tool/external-directory.ts:37][E: packages/opencode/src/tool/external-directory.ts:38] | `externalDirectoryPermission` 生成 resources/save arrays。[E: packages/core/src/location-mutation.ts:38][E: packages/core/src/location-mutation.ts:39][E: packages/core/src/location-mutation.ts:40] |
-| containment | `containsPath(full, ins)` 判定是否在 V1 instance 内。[E: packages/opencode/src/tool/external-directory.ts:26] | lexical + realpath 双重检查 active Location。[E: packages/core/src/location-mutation.ts:122][E: packages/core/src/location-mutation.ts:126] |
-| read/search | V1 read/glob/grep 都显式调用 helper。[E: packages/opencode/src/tool/read.ts:250][E: packages/opencode/src/tool/glob.ts:44][E: packages/opencode/src/tool/grep.ts:55] | V2 write/edit/bash/apply_patch 使用 `LocationMutation`；V2 read/grep/glob 使用各自 Location/root 逻辑。[E: packages/core/src/tool/write.ts:68][E: packages/core/src/tool/edit.ts:137][E: packages/core/src/tool/bash.ts:130][E: packages/core/src/tool/apply-patch.ts:89][E: packages/core/src/tool/read.ts:56][E: packages/core/src/tool/grep.ts:93][E: packages/core/src/tool/glob.ts:73][I] |
+| 形态 | standalone helper `assertExternalDirectoryEffect(ctx, target, options)`。[E: packages/opencode/src/tool/external-directory.ts:15] | `LocationMutation.resolve` 产出 optional authorization，调用方 assert。[E: packages/core/src/location-mutation.ts:49][E: packages/core/src/tool/edit.ts:140][E: packages/core/src/tool/edit.ts:142] |
+| resource | parent directory glob，同一 glob 放在 patterns/always。[E: packages/opencode/src/tool/external-directory.ts:30][E: packages/opencode/src/tool/external-directory.ts:37][E: packages/opencode/src/tool/external-directory.ts:38] | `externalDirectoryPermission` 生成 resources/save arrays。[E: packages/core/src/location-mutation.ts:39][E: packages/core/src/location-mutation.ts:40][E: packages/core/src/location-mutation.ts:41] |
+| containment | `containsPath(full, ins)` 判定是否在 V1 instance 内。[E: packages/opencode/src/tool/external-directory.ts:26] | lexical + realpath 双重检查 active Location。[E: packages/core/src/location-mutation.ts:123][E: packages/core/src/location-mutation.ts:127] |
+| read/search | V1 read/glob/grep 都显式调用 helper。[E: packages/opencode/src/tool/read.ts:250][E: packages/opencode/src/tool/glob.ts:44][E: packages/opencode/src/tool/grep.ts:55] | V2 read/write/edit/bash/apply_patch 使用 `LocationMutation`；V2 grep/glob 使用各自 Location/root 逻辑。[E: packages/core/src/tool/read.ts:60][E: packages/core/src/tool/write.ts:70][E: packages/core/src/tool/edit.ts:138][E: packages/core/src/tool/bash.ts:125][E: packages/core/src/tool/apply-patch.ts:102][E: packages/core/src/tool/grep.ts:95][E: packages/core/src/tool/glob.ts:75] |
 
 ## 设计动机·edge·历史
 
-External-directory 是权限系统的边界保护，不是普通功能工具。V2 把这个边界并入 `LocationMutation`，使 mutation tool 先统一解析 canonical target/resource，再由每个 trusted tool 自己 formulate permission request；这与 V2 tools spec 中”trusted tools formulate and sequence permission requests，registry does not inject assertPermission helper”的设计一致。[E: specs/v2/tools.md:131][E: packages/core/src/location-mutation.ts:57][E: packages/core/src/location-mutation.ts:119][I]
+External-directory 是权限系统的边界保护，不是普通功能工具。V2 把这个边界并入 `LocationMutation`，使 mutation tool 先统一解析 canonical target/resource，再由每个 trusted tool 自己 formulate permission request；这与 V2 tools spec 中”trusted tools formulate and sequence permission requests，registry does not inject assertPermission helper”的设计一致。[E: specs/v2/tools.md:131][E: packages/core/src/location-mutation.ts:58][E: packages/core/src/location-mutation.ts:120][I]
 
 ## Sources
 

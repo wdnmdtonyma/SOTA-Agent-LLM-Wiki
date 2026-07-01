@@ -14,7 +14,7 @@ related:
   - subsys.tui.diff-engine
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.tui.cursor-positioning` 描述 TUI 如何让可聚焦组件在 render output 里放入 `CURSOR_MARKER`,再由 `extractCursorPosition` 计算可见列并剥离 marker,最后由 `positionHardwareCursor` 移动 terminal hardware cursor 以服务 IME candidate window 定位。

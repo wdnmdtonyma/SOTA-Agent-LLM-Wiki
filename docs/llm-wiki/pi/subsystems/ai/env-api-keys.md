@@ -15,7 +15,7 @@ related:
   - ref.coding-agent.env-vars
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.ai.env-api-keys` 描述 `pi-ai` 的环境凭证探测层:它把 provider id 映射到可用的 API key 环境变量,按统一规则读取 provider-scoped env / `process.env` / Bun sandbox fallback,并为 Vertex ADC 与 Bedrock ambient credentials 返回“已认证”哨兵值。

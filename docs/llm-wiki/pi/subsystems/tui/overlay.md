@@ -9,7 +9,7 @@ symbols: [showOverlay, OverlayHandle, compositeOverlays]
 related: [subsys.tui.runtime, subsys.tui.diff-engine]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > TUI overlay 是 `TUI` 内部的 floating layer stack: 调用方用 `showOverlay()` 挂载一个 `Component`，TUI 负责 focus capture、临时隐藏、布局定位，并在 differential rendering 前把 overlay lines 合成到底层内容上。

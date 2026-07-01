@@ -9,7 +9,7 @@ symbols: [doRender, compositeLineAt, normalizeTerminalOutput]
 related: [subsys.tui.runtime, subsys.tui.cursor-positioning]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.tui.diff-engine` 描述 `pi-tui` 怎样把 component render output 转成 terminal buffer，并只重画变化区间。

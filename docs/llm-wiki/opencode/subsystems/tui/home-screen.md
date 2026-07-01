@@ -9,7 +9,7 @@ symbols: [Home, HomeSessionDestinationProvider]
 related: [tui.prompt, tui.routing, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: 355a0bcf5
+updated: 8b68dc0d7
 ---
 
 > Home screen 是 TUI 的起始 route：它只负责 logo、首页 prompt、toast 和 home slots；真正创建 session、发送 prompt、切 session 的行为在 `Prompt` 与 route/sync contexts 中完成。
@@ -56,7 +56,7 @@ Home 暴露 5 个 host slots：`home_logo`、`home_prompt`、`home_prompt_right`
 
 ## 设计动机与权衡
 
-`specs/tui-package.md` 要求 TUI routes、prompt/session views 和 local UI state 移入 `packages/tui`，而 command parsing/server startup 留在 host。[E: specs/tui-package.md:352] [E: specs/tui-package.md:353] [E: specs/tui-package.md:361] [E: specs/tui-package.md:363] Home 的源码遵循这个边界：它接收 host args，但实际 session create/prompt send 留给 `Prompt` 调 SDK；它暴露 slots，让首页 logo/footer/prompt 周边 UI 可被 feature plugins 替换或追加。[E: packages/tui/src/routes/home.tsx:28] [E: packages/tui/src/routes/home.tsx:82] [E: packages/tui/src/component/prompt/index.tsx:994] [E: packages/tui/src/component/prompt/index.tsx:1089] [I]
+`specs/tui-package.md` 要求 TUI routes、prompt/session views 和 local UI state 移入 `packages/tui`，而 command parsing/server startup 留在 host。[E: specs/tui-package.md:352] [E: specs/tui-package.md:353] [E: specs/tui-package.md:361] [E: specs/tui-package.md:363] Home 的源码遵循这个边界：它接收 host args，但实际 session create/prompt send 留给 `Prompt` 调 SDK；它暴露 slots，让首页 logo/footer/prompt 周边 UI 可被 feature plugins 替换或追加。[E: packages/tui/src/routes/home.tsx:28] [E: packages/tui/src/routes/home.tsx:82] [E: packages/tui/src/component/prompt/index.tsx:997] [E: packages/tui/src/component/prompt/index.tsx:1090] [I]
 
 ## Gotcha
 

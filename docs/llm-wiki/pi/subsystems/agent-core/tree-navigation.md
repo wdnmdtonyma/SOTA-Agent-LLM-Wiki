@@ -9,7 +9,7 @@ symbols: [Session, buildSessionContext, getPathToRoot]
 related: [subsys.agent-core.session-tree, spine.session-state-model]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > `subsys.agent-core.tree-navigation` 说明 `Session` 如何把当前 leaf 或指定 entry 映射为 branch path,再由 `buildSessionContext()` 把 path 投影成 LLM 可用的 `SessionContext`。

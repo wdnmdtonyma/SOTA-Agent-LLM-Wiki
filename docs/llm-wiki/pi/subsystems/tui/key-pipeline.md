@@ -9,7 +9,7 @@ symbols: [ProcessTerminal, handleInput, forwardInputSequence]
 related: [subsys.tui.key-parsing, subsys.tui.stdin-buffer]
 evidence: explicit
 status: verified
-updated: 5a073885
+updated: 8c943640
 ---
 
 > 键盘事件管道把真实终端的 raw stdin 字节流整理成一个个 input sequence，并交给 TUI 的 `handleInput` 做全局过滤、监听器改写、焦点组件分发。
