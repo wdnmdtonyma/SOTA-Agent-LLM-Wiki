@@ -8,7 +8,7 @@ symbols: [GetContextRemainingHandler, create_get_context_remaining_tool, GET_CON
 related: [tool.new-context, subsys.core.tool-system, subsys.core.context-manager]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > `get_context_remaining` 查询当前 context window 剩余 token 数,在 token-budget feature 下与 `new_context` 同时注册。
@@ -40,7 +40,7 @@ updated: db887d03e1
 
 `get_context_remaining` 的 output schema 是 object,包含必填 `tokens_left`;该字段可以是 integer 或 null。[E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:17] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:23] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:25] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:27] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:28] [E: codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs:33]
 
-handler 调用 `context_window_token_status(session, turn)` 取得当前 context-window 状态,并把 `tokens_until_compaction` 作为 `tokens_left` 输出；该值不可得时保持为 `null`。[E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:78] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:79] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:80] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:84] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:85]
+handler 调用 `context_window_token_status(session, turn)` 取得当前 context-window 状态,并把 `base_window_tokens_remaining` 作为 `tokens_left` 输出；该值不可得时保持为 `null`。它现在表示基础 context window 剩余量，不再直接输出距 compaction 的 token 数。[E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:78] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:79] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:80] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:84] [E: codex-rs/core/src/tools/handlers/get_context_remaining.rs:85]
 
 ## 5 ToolSpec 类型
 
@@ -48,7 +48,7 @@ handler 调用 `context_window_token_status(session, turn)` 取得当前 context
 
 ## 6 注册与门控
 
-`add_core_utility_tools` 在 `Feature::TokenBudget` 开启时注册 `NewContextWindowHandler` 和 `GetContextRemainingHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:732] [E: codex-rs/core/src/tools/spec_plan.rs:733] [E: codex-rs/core/src/tools/spec_plan.rs:734]
+`add_core_utility_tools` 在 `Feature::TokenBudget` 开启时注册 `NewContextWindowHandler` 和 `GetContextRemainingHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:726] [E: codex-rs/core/src/tools/spec_plan.rs:727] [E: codex-rs/core/src/tools/spec_plan.rs:728]
 
 ## 7 parallel-safe
 

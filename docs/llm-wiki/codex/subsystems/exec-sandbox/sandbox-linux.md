@@ -8,7 +8,7 @@ symbols: [LandlockCommand, run_main, apply_permission_profile_to_current_thread,
 related: [subsys.exec-sandbox.overview, subsys.exec-sandbox.arg0-dispatch, subsys.exec-sandbox.file-system, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > Linux sandbox backend accepts a serialized `PermissionProfile`, resolves it to runtime filesystem/network policies, then normally uses a two-stage bubblewrap helper: the outer stage builds mount/user/pid/network namespaces, and the inner stage applies seccomp/no_new_privs before exec. Legacy Landlock filesystem enforcement is an explicit fallback path.[E: codex-rs/linux-sandbox/src/linux_run_main.rs:80][E: codex-rs/linux-sandbox/src/linux_run_main.rs:147][E: codex-rs/linux-sandbox/src/linux_run_main.rs:168][E: codex-rs/linux-sandbox/src/linux_run_main.rs:178][E: codex-rs/linux-sandbox/src/linux_run_main.rs:188][E: codex-rs/linux-sandbox/src/linux_run_main.rs:213][E: codex-rs/linux-sandbox/src/linux_run_main.rs:233][E: codex-rs/linux-sandbox/src/linux_run_main.rs:245]

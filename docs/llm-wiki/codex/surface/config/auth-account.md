@@ -8,7 +8,7 @@ symbols: [ConfigToml, ForcedChatgptWorkspaceIds, ForcedLoginMethod, AuthCredenti
 related: [config.model-provider, config.mcp-tools, subsys.config-auth.auth-flows, subsys.config-auth.credential-storage]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > 认证与账户设置 catalog 覆盖 ConfigToml 中限制 ChatGPT workspace、限制 login method 和选择 CLI auth credential storage backend 的顶层键。
@@ -22,7 +22,7 @@ updated: db887d03e1
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 97 个顶层 `pub` 字段；本节点覆盖其中 3 个字段。[E: codex-rs/config/src/config_toml.rs:154][E: codex-rs/config/src/config_toml.rs:518]
+当前 `ConfigToml` 有 96 个顶层 `pub` 字段；本节点覆盖其中 3 个字段。[E: codex-rs/config/src/config_toml.rs:154][E: codex-rs/config/src/config_toml.rs:515]
 
 MCP OAuth credential storage remains a separate top-level field named `mcp_oauth_credentials_store`, so this CLI account catalog keeps it under the MCP/tools catalog boundary.[E: codex-rs/config/src/config_toml.rs:273]
 

@@ -8,7 +8,7 @@ symbols: [parse_patch, parse_patch_text, StreamingPatchParser, Hunk, UpdateFileC
 related: [tool.apply-patch, spine.trace-apply-patch, subsys.exec-sandbox.arg0-dispatch]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > apply_patch engine 把 custom tool 或 shell-heredoc 里的 patch 文本解析成 add/delete/update hunks，再用 filesystem abstraction 计算替换、写文件、移动文件或删除文件。[E: codex-rs/apply-patch/src/parser.rs:130][E: codex-rs/apply-patch/src/lib.rs:276][E: codex-rs/apply-patch/src/lib.rs:361]

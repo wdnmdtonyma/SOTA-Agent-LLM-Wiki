@@ -3,15 +3,15 @@ id: subsys.tui.streaming-pipeline
 title: Streaming Pipeline
 kind: subsystem
 tier: T2
-source: [codex-rs/tui/src/markdown_stream.rs, codex-rs/tui/src/streaming/mod.rs, codex-rs/tui/src/streaming/chunking.rs, codex-rs/tui/src/streaming/commit_tick.rs, codex-rs/tui/src/streaming/controller.rs, codex-rs/tui/src/chatwidget/streaming.rs]
-symbols: [MarkdownStreamCollector, StreamState, AdaptiveChunkingPolicy, ChunkingMode, DrainPlan, run_commit_tick, StreamController, PlanStreamController]
+source: [codex-rs/tui/src/markdown_stream.rs, codex-rs/tui/src/markdown_render/streaming.rs, codex-rs/tui/src/streaming/mod.rs, codex-rs/tui/src/streaming/render.rs, codex-rs/tui/src/streaming/chunking.rs, codex-rs/tui/src/streaming/commit_tick.rs, codex-rs/tui/src/streaming/controller.rs, codex-rs/tui/src/chatwidget/streaming.rs]
+symbols: [MarkdownStreamCollector, StreamingMarkdownRender, StreamingRender, StreamState, AdaptiveChunkingPolicy, ChunkingMode, DrainPlan, run_commit_tick, StreamController, PlanStreamController]
 related: [subsys.tui.chatwidget, subsys.tui.rendering-theming, subsys.tui.event-system]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
-> TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/markdown_stream.rs:1][E: codex-rs/tui/src/streaming/mod.rs:1][E: codex-rs/tui/src/streaming/chunking.rs:1][E: codex-rs/tui/src/streaming/chunking.rs:73][E: codex-rs/tui/src/streaming/commit_tick.rs:1][E: codex-rs/tui/src/streaming/controller.rs:459][E: codex-rs/tui/src/chatwidget/streaming.rs:111][I]
+> TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/markdown_stream.rs:1][E: codex-rs/tui/src/streaming/mod.rs:1][E: codex-rs/tui/src/streaming/chunking.rs:1][E: codex-rs/tui/src/streaming/chunking.rs:73][E: codex-rs/tui/src/streaming/commit_tick.rs:1][E: codex-rs/tui/src/streaming/controller.rs:472][E: codex-rs/tui/src/chatwidget/streaming.rs:126][I]
 
 ## 能回答的问题
 
@@ -22,15 +22,17 @@ updated: db887d03e1
 
 ## Markdown 边界
 
-`MarkdownStreamCollector` 缓冲 token deltas，并只在 newline boundary 暴露 completed prefix；`commit_complete_source` 找最后一个 `\n`，返回上次 commit 后的新 source，没有 newline 或没有新内容时返回 none。[E: codex-rs/tui/src/markdown_stream.rs:3][E: codex-rs/tui/src/markdown_stream.rs:4][E: codex-rs/tui/src/markdown_stream.rs:20][E: codex-rs/tui/src/markdown_stream.rs:23][E: codex-rs/tui/src/markdown_stream.rs:30][E: codex-rs/tui/src/markdown_stream.rs:77][E: codex-rs/tui/src/markdown_stream.rs:87][E: codex-rs/tui/src/markdown_stream.rs:87][E: codex-rs/tui/src/markdown_stream.rs:88][E: codex-rs/tui/src/markdown_stream.rs:93]
+`MarkdownStreamCollector` 缓冲 token deltas，并只在 newline boundary 暴露 completed prefix；`commit_complete_source` 找最后一个 `\n`，返回新 committed source 的 byte range，而 `committed_source()` 借用完整 newline-safe prefix，避免每个 delta 复制 String。[E: codex-rs/tui/src/markdown_stream.rs:76][E: codex-rs/tui/src/markdown_stream.rs:82][E: codex-rs/tui/src/markdown_stream.rs:87][E: codex-rs/tui/src/markdown_stream.rs:94][E: codex-rs/tui/src/markdown_stream.rs:98]
 
-finalize path 会 flush remaining source，必要时补 newline，然后 clear collector；这只应在 stream 真正完成或 intentionally consolidated interrupted output 时调用。[E: codex-rs/tui/src/markdown_stream.rs:98][E: codex-rs/tui/src/markdown_stream.rs:100][E: codex-rs/tui/src/markdown_stream.rs:102][E: codex-rs/tui/src/markdown_stream.rs:104][E: codex-rs/tui/src/markdown_stream.rs:110][E: codex-rs/tui/src/markdown_stream.rs:111][E: codex-rs/tui/src/markdown_stream.rs:114]
+finalize path 的 `finalize_and_take_source` 转移完整 buffer ownership，必要时补 newline 后 clear collector；这只应在 stream 真正完成或 intentionally consolidated interrupted output 时调用。[E: codex-rs/tui/src/markdown_stream.rs:103][E: codex-rs/tui/src/markdown_stream.rs:105][E: codex-rs/tui/src/markdown_stream.rs:109][E: codex-rs/tui/src/markdown_stream.rs:114]
+
+`render_streaming_markdown_lines_with_width_and_cwd` 在同一次 pulldown-cmark parse 中同时产出 styled lines、最后一个 top-level block 的 source offset、reference-link-definition flag 和首 block 是否 raw HTML；offset 永远针对传入的原字符串。[E: codex-rs/tui/src/markdown_render/streaming.rs:17][E: codex-rs/tui/src/markdown_render/streaming.rs:29][E: codex-rs/tui/src/markdown_render/streaming.rs:41][E: codex-rs/tui/src/markdown_render/streaming.rs:50][E: codex-rs/tui/src/markdown_render/streaming.rs:52]
 
 ## Queue State
 
-`StreamState` 持有 collector、FIFO queued lines 和 `has_seen_delta`；module contract 明确 queue ordering 是关键 invariant，drain 只从 front pop，enqueue 记录 arrival timestamp 以便 policy 计算 oldest queued age。[E: codex-rs/tui/src/streaming/mod.rs:3][E: codex-rs/tui/src/streaming/mod.rs:9][E: codex-rs/tui/src/streaming/mod.rs:29][E: codex-rs/tui/src/streaming/mod.rs:31][E: codex-rs/tui/src/streaming/mod.rs:32][E: codex-rs/tui/src/streaming/mod.rs:33]
+`StreamState` 持有 collector、FIFO queued lines 和 `has_seen_delta`；module contract 明确 queue ordering 是关键 invariant，drain 只从 front pop，enqueue 记录 arrival timestamp 以便 policy 计算 oldest queued age。[E: codex-rs/tui/src/streaming/mod.rs:3][E: codex-rs/tui/src/streaming/mod.rs:9][E: codex-rs/tui/src/streaming/mod.rs:30][E: codex-rs/tui/src/streaming/mod.rs:32][E: codex-rs/tui/src/streaming/mod.rs:33][E: codex-rs/tui/src/streaming/mod.rs:34]
 
-state API 包括 `step` drain one、`drain_n` bounded multi-line drain、`clear_queue`、`is_idle`、`queued_len`、`oldest_queued_age` 和 `enqueue`；`enqueue` 给同一批 lines 共享 `Instant::now()`。[E: codex-rs/tui/src/streaming/mod.rs:55][E: codex-rs/tui/src/streaming/mod.rs:56][E: codex-rs/tui/src/streaming/mod.rs:62][E: codex-rs/tui/src/streaming/mod.rs:66][E: codex-rs/tui/src/streaming/mod.rs:74][E: codex-rs/tui/src/streaming/mod.rs:78][E: codex-rs/tui/src/streaming/mod.rs:82][E: codex-rs/tui/src/streaming/mod.rs:86][E: codex-rs/tui/src/streaming/mod.rs:92][E: codex-rs/tui/src/streaming/mod.rs:93]
+state API 包括 `step` drain one、`drain_n` bounded multi-line drain、`clear_queue`、`is_idle`、`queued_len`、`oldest_queued_age` 和 `enqueue`；`enqueue` 给同一批 lines 共享 `Instant::now()`。[E: codex-rs/tui/src/streaming/mod.rs:56][E: codex-rs/tui/src/streaming/mod.rs:57][E: codex-rs/tui/src/streaming/mod.rs:63][E: codex-rs/tui/src/streaming/mod.rs:67][E: codex-rs/tui/src/streaming/mod.rs:75][E: codex-rs/tui/src/streaming/mod.rs:79][E: codex-rs/tui/src/streaming/mod.rs:83][E: codex-rs/tui/src/streaming/mod.rs:87][E: codex-rs/tui/src/streaming/mod.rs:93][E: codex-rs/tui/src/streaming/mod.rs:94]
 
 ## Adaptive Chunking
 
@@ -48,19 +50,24 @@ snapshot 会 sum controller queue depth，并取最大 oldest age；plan applica
 
 ## Controllers 与 ChatWidget Glue
 
-`StreamController` 包装 `StreamCore` 并产出 `AgentMessageCell`；`PlanStreamController` 包装同一 core 但带 plan-specific header、indentation 和 background styling。两者都有 new/push/finalize/on_commit_tick/on_commit_tick_batch/queued_lines/oldest_queued_age 等接口。[E: codex-rs/tui/src/streaming/controller.rs:459][E: codex-rs/tui/src/streaming/controller.rs:462][E: codex-rs/tui/src/streaming/controller.rs:473][E: codex-rs/tui/src/streaming/controller.rs:480][E: codex-rs/tui/src/streaming/controller.rs:486][E: codex-rs/tui/src/streaming/controller.rs:500][E: codex-rs/tui/src/streaming/controller.rs:505][E: codex-rs/tui/src/streaming/controller.rs:517][E: codex-rs/tui/src/streaming/controller.rs:521][E: codex-rs/tui/src/streaming/controller.rs:553][E: codex-rs/tui/src/streaming/controller.rs:570][E: codex-rs/tui/src/streaming/controller.rs:574][E: codex-rs/tui/src/streaming/controller.rs:586][E: codex-rs/tui/src/streaming/controller.rs:594][E: codex-rs/tui/src/streaming/controller.rs:600][E: codex-rs/tui/src/streaming/controller.rs:614][E: codex-rs/tui/src/streaming/controller.rs:622]
+`StreamingRender` 保存 source 与 rendered-line 两个 stable prefix boundary，只重新渲染最后一个 top-level Markdown block；width/render-mode change、reference-style link definition 或 inline-visualization rewrite 会退化为 full recompute，因为它们可能影响已稳定的前缀。[E: codex-rs/tui/src/streaming/render.rs:17][E: codex-rs/tui/src/streaming/render.rs:48][E: codex-rs/tui/src/streaming/render.rs:82][E: codex-rs/tui/src/streaming/render.rs:105][E: codex-rs/tui/src/streaming/render.rs:116][E: codex-rs/tui/src/streaming/render.rs:142]
 
-`ChatWidget` glue 中，agent delta 调用 `on_agent_message_delta`，plan delta 会创建 `PlanStreamController` 并触发 commit animation/catch-up tick；finalize paths 把 remaining cells/source consolidation 写回 history。[E: codex-rs/tui/src/chatwidget/streaming.rs:19][E: codex-rs/tui/src/chatwidget/streaming.rs:35][E: codex-rs/tui/src/chatwidget/streaming.rs:52][E: codex-rs/tui/src/chatwidget/streaming.rs:111][E: codex-rs/tui/src/chatwidget/streaming.rs:115][E: codex-rs/tui/src/chatwidget/streaming.rs:131][E: codex-rs/tui/src/chatwidget/streaming.rs:137][E: codex-rs/tui/src/chatwidget/streaming.rs:142]
+`StreamController` 包装 `StreamCore` 并产出 `AgentMessageCell`；`PlanStreamController` 包装同一 core 但带 plan-specific header、indentation 和 background styling。两者都有 new/push/finalize/on_commit_tick/on_commit_tick_batch/queued_lines/oldest_queued_age 等接口。[E: codex-rs/tui/src/streaming/controller.rs:472][E: codex-rs/tui/src/streaming/controller.rs:475][E: codex-rs/tui/src/streaming/controller.rs:487][E: codex-rs/tui/src/streaming/controller.rs:508][E: codex-rs/tui/src/streaming/controller.rs:514][E: codex-rs/tui/src/streaming/controller.rs:526][E: codex-rs/tui/src/streaming/controller.rs:531][E: codex-rs/tui/src/streaming/controller.rs:543][E: codex-rs/tui/src/streaming/controller.rs:547][E: codex-rs/tui/src/streaming/controller.rs:579][E: codex-rs/tui/src/streaming/controller.rs:596][E: codex-rs/tui/src/streaming/controller.rs:600][E: codex-rs/tui/src/streaming/controller.rs:612][E: codex-rs/tui/src/streaming/controller.rs:625][E: codex-rs/tui/src/streaming/controller.rs:631][E: codex-rs/tui/src/streaming/controller.rs:643][E: codex-rs/tui/src/streaming/controller.rs:651]
+
+`ChatWidget` glue 中，answer stream 用带 thread-scoped inline-visualization context 的 controller，plan stream 仍使用普通 controller；delta 没有 newline 时不重建可见 tail，tail 内容未变化时也不 bump active-cell revision/redraw。[E: codex-rs/tui/src/chatwidget/streaming.rs:130][E: codex-rs/tui/src/chatwidget/streaming.rs:143][E: codex-rs/tui/src/chatwidget/streaming.rs:155][E: codex-rs/tui/src/chatwidget/streaming.rs:425][E: codex-rs/tui/src/chatwidget/streaming.rs:444][E: codex-rs/tui/src/chatwidget/streaming.rs:450][E: codex-rs/tui/src/chatwidget/streaming.rs:463][E: codex-rs/tui/src/chatwidget/streaming.rs:481][E: codex-rs/tui/src/chatwidget/streaming.rs:502]
 
 ## Gotchas
 
 - chunking policy 的 non-responsibilities 明确包括 tick scheduling、line reordering 和 transport-specific semantics；调参时不要把 source 类型塞进 policy。[E: codex-rs/tui/src/streaming/chunking.rs:67][E: codex-rs/tui/src/streaming/chunking.rs:69][E: codex-rs/tui/src/streaming/chunking.rs:70][E: codex-rs/tui/src/streaming/chunking.rs:71]
 - `commit_tick.rs` 不直接 mutate UI state；调用者负责 animation events 和 history insertion side effects。[E: codex-rs/tui/src/streaming/commit_tick.rs:7][E: codex-rs/tui/src/streaming/commit_tick.rs:8]
+- incremental stable-prefix optimization 对 reference definitions 与 inline visualization 主动 fail open 到 full render；不能假设所有 Markdown 都只重绘 tail。[E: codex-rs/tui/src/streaming/render.rs:84][E: codex-rs/tui/src/streaming/render.rs:105][E: codex-rs/tui/src/streaming/render.rs:116]
 
 ## Sources
 
 - `codex-rs/tui/src/markdown_stream.rs`
+- `codex-rs/tui/src/markdown_render/streaming.rs`
 - `codex-rs/tui/src/streaming/mod.rs`
+- `codex-rs/tui/src/streaming/render.rs`
 - `codex-rs/tui/src/streaming/chunking.rs`
 - `codex-rs/tui/src/streaming/commit_tick.rs`
 - `codex-rs/tui/src/streaming/controller.rs`

@@ -8,10 +8,10 @@ symbols: [ConfigToml, ConfigProfile, AgentsToml, AgentRoleToml, MemoriesToml, Me
 related: [command.session-thread, command.realtime-debug, config.skills-plugins-features, subsys.core.memory, subsys.core.thread-store]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
-> agents 与 memory 设置 catalog 覆盖 ConfigToml 中 instructions/developer blocks、profile selection、project docs、agent concurrency, memory behavior, project trust and experimental thread config/store keys。
+> agents 与 memory 设置 catalog 覆盖 ConfigToml 中 instructions/developer blocks、profile selection、project docs、agent enablement/concurrency/default model, memory behavior, project trust and experimental thread config/store keys。
 
 ## 能回答的问题
 
@@ -22,9 +22,11 @@ updated: db887d03e1
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 97 个顶层 `pub` 字段；本节点覆盖其中 19 个字段。[E: codex-rs/config/src/config_toml.rs:154][E: codex-rs/config/src/config_toml.rs:518]
+当前 `ConfigToml` 有 96 个顶层 `pub` 字段；本节点覆盖其中 19 个字段。[E: codex-rs/config/src/config_toml.rs:154][E: codex-rs/config/src/config_toml.rs:515]
 
-`MemoriesToml` includes generation/use toggles, dedicated tools, retention limits, rate-limit threshold, and model overrides; memory defaults set `max_rollouts_per_startup` to 2 and `max_rollout_age_days` to 10.[E: codex-rs/config/src/types.rs:283][E: codex-rs/config/src/types.rs:288][E: codex-rs/config/src/types.rs:290][E: codex-rs/config/src/types.rs:292][E: codex-rs/config/src/types.rs:302][E: codex-rs/config/src/types.rs:307][E: codex-rs/config/src/types.rs:309][E: codex-rs/config/src/types.rs:311][E: codex-rs/config/src/types.rs:48][E: codex-rs/config/src/types.rs:49][E: codex-rs/config/src/types.rs:340][E: codex-rs/config/src/types.rs:341]
+`AgentsToml` now exposes `enabled`, per-session `max_concurrent_threads_per_session` (with `max_threads` as a serde alias), V1-only `max_depth`, default subagent model/reasoning effort, job runtime, interrupt-message policy, and flattened role declarations。[E: codex-rs/config/src/config_toml.rs:679][E: codex-rs/config/src/config_toml.rs:683][E: codex-rs/config/src/config_toml.rs:686][E: codex-rs/config/src/config_toml.rs:688][E: codex-rs/config/src/config_toml.rs:690][E: codex-rs/config/src/config_toml.rs:692][E: codex-rs/config/src/config_toml.rs:694][E: codex-rs/config/src/config_toml.rs:697][E: codex-rs/config/src/config_toml.rs:700][E: codex-rs/config/src/config_toml.rs:711][E: codex-rs/config/src/config_toml.rs:712]
+
+`MemoriesToml` includes generation/use toggles, dedicated tools, retention limits, rate-limit threshold, and model overrides; memory defaults set `max_rollouts_per_startup` to 2 and `max_rollout_age_days` to 10.[E: codex-rs/config/src/types.rs:304][E: codex-rs/config/src/types.rs:309][E: codex-rs/config/src/types.rs:311][E: codex-rs/config/src/types.rs:313][E: codex-rs/config/src/types.rs:323][E: codex-rs/config/src/types.rs:328][E: codex-rs/config/src/types.rs:330][E: codex-rs/config/src/types.rs:332][E: codex-rs/config/src/types.rs:48][E: codex-rs/config/src/types.rs:49][E: codex-rs/config/src/types.rs:361][E: codex-rs/config/src/types.rs:362]
 
 ## 字段 catalog
 
@@ -42,13 +44,13 @@ updated: db887d03e1
 | `project_doc_fallback_filenames` | `Option<Vec<String>>` | `#[serde(default = "default_project_doc_fallback_filenames")]` | Project-doc fallback filename list. | [E: codex-rs/config/src/config_toml.rs:295][E: codex-rs/config/src/config_toml.rs:296] |
 | `profile` | `Option<String>` | none | Selected profile name. | [E: codex-rs/config/src/config_toml.rs:314] |
 | `profiles` | `HashMap<String, ConfigProfile>` | `#[serde(default)]` | Named profile map. | [E: codex-rs/config/src/config_toml.rs:317][E: codex-rs/config/src/config_toml.rs:318] |
-| `agents` | `Option<AgentsToml>` | none | Agent-related settings section. | [E: codex-rs/config/src/config_toml.rs:440] |
-| `memories` | `Option<MemoriesToml>` | none | Memories subsystem settings section. | [E: codex-rs/config/src/config_toml.rs:443] |
-| `projects` | `Option<HashMap<String, ProjectConfig>>` | none | Project trust/settings map. | [E: codex-rs/config/src/config_toml.rs:428] |
-| `experimental_thread_config_endpoint` | `Option<String>` | none | Experimental thread-scoped config endpoint. | [E: codex-rs/config/src/config_toml.rs:419] |
-| `experimental_thread_store_endpoint` | `Option<String>` | `#[schemars(skip)]` | Removed thread-store endpoint compatibility field. | [E: codex-rs/config/src/config_toml.rs:423][E: codex-rs/config/src/config_toml.rs:424] |
-| `experimental_thread_store` | `Option<ThreadStoreToml>` | none | Experimental thread-store implementation selector. | [E: codex-rs/config/src/config_toml.rs:427] |
-| `experimental_compact_prompt_file` | `Option<AbsolutePathBuf>` | none | Experimental compact-prompt file path. | [E: codex-rs/config/src/config_toml.rs:515] |
+| `agents` | `Option<AgentsToml>` | none | Agent-related settings section. | [E: codex-rs/config/src/config_toml.rs:437] |
+| `memories` | `Option<MemoriesToml>` | none | Memories subsystem settings section. | [E: codex-rs/config/src/config_toml.rs:440] |
+| `projects` | `Option<HashMap<String, ProjectConfig>>` | none | Project trust/settings map. | [E: codex-rs/config/src/config_toml.rs:425] |
+| `experimental_thread_config_endpoint` | `Option<String>` | none | Experimental thread-scoped config endpoint. | [E: codex-rs/config/src/config_toml.rs:416] |
+| `experimental_thread_store_endpoint` | `Option<String>` | `#[schemars(skip)]` | Removed thread-store endpoint compatibility field. | [E: codex-rs/config/src/config_toml.rs:420][E: codex-rs/config/src/config_toml.rs:421] |
+| `experimental_thread_store` | `Option<ThreadStoreToml>` | none | Experimental thread-store implementation selector. | [E: codex-rs/config/src/config_toml.rs:424] |
+| `experimental_compact_prompt_file` | `Option<AbsolutePathBuf>` | none | Experimental compact-prompt file path. | [E: codex-rs/config/src/config_toml.rs:512] |
 
 ## Sources
 

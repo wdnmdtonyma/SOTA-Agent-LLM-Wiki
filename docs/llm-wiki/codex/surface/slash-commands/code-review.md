@@ -8,7 +8,7 @@ symbols: [SlashCommand, SlashCommand::description, SlashCommand::supports_inline
 related: [subsys.core.review-mode, cli.exec-mode, cli.subcommands, subsys.config-auth.config-loading]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > 代码与评审 slash commands 是 `SlashCommand` enum 中负责 review、diff、copy 和 raw scrollback 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:31][E: codex-rs/tui/src/slash_command.rs:46][E: codex-rs/tui/src/slash_command.rs:47][E: codex-rs/tui/src/slash_command.rs:48][E: codex-rs/tui/src/slash_command.rs:81]

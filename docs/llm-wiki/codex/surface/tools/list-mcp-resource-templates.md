@@ -8,7 +8,7 @@ symbols: [add_mcp_resource_tools, create_list_mcp_resource_templates_tool, ListM
 related: [tool.list-mcp-resources, tool.read-mcp-resource, subsys.mcp.server]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > `list_mcp_resource_templates` 是本地 Function 工具，用于列出 MCP server 暴露的 parameterized resource templates；可指定单个 server 与 cursor，也可省略 server 汇总所有 configured servers。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:33][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:52][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:53][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:89][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:113]
@@ -39,15 +39,15 @@ schema 没有 required 字段，并关闭 additional properties。[E: codex-rs/c
 
 ## 3 注册与执行
 
-`add_mcp_resource_tools` 只在 `context.mcp_tools.is_some()` 时注册三件套，其中包括 `ListMcpResourceTemplatesHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:699][E: codex-rs/core/src/tools/spec_plan.rs:700][E: codex-rs/core/src/tools/spec_plan.rs:701][E: codex-rs/core/src/tools/spec_plan.rs:702][E: codex-rs/core/src/tools/spec_plan.rs:703]
+`add_mcp_resource_tools` 在当前 step MCP runtime 的 manager 报告 `has_servers()` 时注册三件套，其中包括 `ListMcpResourceTemplatesHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:689][E: codex-rs/core/src/tools/spec_plan.rs:690][E: codex-rs/core/src/tools/spec_plan.rs:692][E: codex-rs/core/src/tools/spec_plan.rs:693]
 
-handler 只接受 Function payload；参数 parse 和 optional string normalization 与 `list_mcp_resources` 共用 helper，空字符串会被 trim 后转成 `None`。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:64][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:65][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:73][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:77][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:283][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:285][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:286][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:289]
+handler 只接受 Function payload；参数 parse 和 optional string normalization 与 `list_mcp_resources` 共用 helper，空字符串会被 trim 后转成 `None`。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:64][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:65][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:73][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:77][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:281][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:283][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:284][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:287]
 
 ## 4 输出与事件
 
 单 server 输出包含 `server`、camelCase `resourceTemplates` 和 `nextCursor`；all-server 输出按 server 名排序并展开为带 `server` 字段的 templates，`nextCursor` 为 none。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:148][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:151][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:152][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:154][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:157][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:158][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:165][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:167][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:171][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:174][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:176][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:179][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:186]
 
-执行前后分别发 MCP tool-call begin/end turn item；返回内容经 JSON 序列化和 truncation 后作为 successful text output 返回。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:85][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:125][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:136][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:139][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:219][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:236][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:263]
+执行前后分别发 MCP tool-call begin/end turn item；返回内容经 JSON 序列化和 truncation 后作为 successful text output 返回。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:85][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:125][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:136][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:139][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:219][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:235][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:262]
 
 ## 5 parallel support
 

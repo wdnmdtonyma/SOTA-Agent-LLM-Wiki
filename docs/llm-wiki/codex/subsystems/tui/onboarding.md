@@ -8,7 +8,7 @@ symbols: [OnboardingScreen, OnboardingScreenArgs, OnboardingResult, run_onboardi
 related: [subsys.config-auth.auth-flows, subsys.config-auth.config-loading, subsys.tui.architecture]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > Onboarding 是 TUI 启动前/启动中的一个独立 screen loop：它接收 `OnboardingScreenArgs`、可选 app-server session、和现有 `Tui`，返回是否持久化 trust 以及用户是否选择退出。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:83][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:91][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:474][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:476][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:477][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:571]
@@ -43,6 +43,8 @@ confirm key 调用 `handle_trust` 或 `handle_quit`；trust 会写 selection 并
 browser/device-code state 会 suppress animations；取消 active browser login 会通过 app-server handle 异步 `cancel_login_attempt`。[E: codex-rs/tui/src/onboarding/auth.rs:244][E: codex-rs/tui/src/onboarding/auth.rs:245][E: codex-rs/tui/src/onboarding/auth.rs:247][E: codex-rs/tui/src/onboarding/auth.rs:251][E: codex-rs/tui/src/onboarding/auth.rs:254][E: codex-rs/tui/src/onboarding/auth.rs:255][E: codex-rs/tui/src/onboarding/auth.rs:257][E: codex-rs/tui/src/onboarding/auth.rs:258]
 
 API key path 有三段：paste/edit 会填充或追加 `ApiKeyEntry` state，start entry 会从 env 预填，save 会发送 `ClientRequest::LoginAccount { LoginAccountParams::ApiKey }` 并在成功后把 state 设为 configured。[E: codex-rs/tui/src/onboarding/auth.rs:748][E: codex-rs/tui/src/onboarding/auth.rs:752][E: codex-rs/tui/src/onboarding/auth.rs:753][E: codex-rs/tui/src/onboarding/auth.rs:755][E: codex-rs/tui/src/onboarding/auth.rs:770][E: codex-rs/tui/src/onboarding/auth.rs:776][E: codex-rs/tui/src/onboarding/auth.rs:790][E: codex-rs/tui/src/onboarding/auth.rs:800][E: codex-rs/tui/src/onboarding/auth.rs:812][E: codex-rs/tui/src/onboarding/auth.rs:814][E: codex-rs/tui/src/onboarding/auth.rs:822]
+
+browser login 现在显式请求非 streamlined 的本地完成页：`app_brand=None`、`codex_streamlined_login=false`、`use_hosted_login_success_page=false`。account 更新也会把 protocol 的 `ApiAuthMode::Headers` 映射为 TUI `AuthMode::Headers`，因此已有的外部 header auth 可以被 onboarding 正确认出；它不是新增的可选登录按钮。[E: codex-rs/tui/src/onboarding/auth.rs:873][E: codex-rs/tui/src/onboarding/auth.rs:876][E: codex-rs/tui/src/onboarding/auth.rs:877][E: codex-rs/tui/src/onboarding/auth.rs:878][E: codex-rs/tui/src/onboarding/auth.rs:879][E: codex-rs/tui/src/onboarding/auth.rs:947][E: codex-rs/tui/src/onboarding/auth.rs:951][E: codex-rs/tui/src/onboarding/auth.rs:955]
 
 ## Gotchas
 

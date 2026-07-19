@@ -51,13 +51,13 @@ tools/            lint.mjs(L1 机械校验)· reconcile.mjs(登记新节点)
 
 ## 方法 & 状态
 
-逐节点循环:**大纲 → 人 review → 逐节点读源码填 → 独立 subagent 对照源码校验 → 修 → 直到整仓覆盖完**。当前处于**大纲已出、过 4 路独立 subagent 源码校验(170 节点)、待人 review**阶段。
+逐节点循环:**大纲 → 人 review → 逐节点读源码填 → 独立 subagent 对照源码校验 → 修 → 直到整仓覆盖完**。当前 **172 个节点均已对照 `4d7a5c7c73` 复核并标记 verified**。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
-| T0 spine | 端到端脊柱(7)+ worked traces(3) | 10 | ⬜ 规划 |
-| T1 surface | tools(37)+ slash(6)+ cli(3)+ config(8)+ app-server(9)+ sdk(6) | 69 | ⬜ 重核中 |
-| T2 subsystems | core(19)/exec-sandbox(11)/mcp(6)/providers(10)/tui(9)/app-server(4)/config-auth(8)/cloud(3)/platform(8) | 78 | ⬜ 规划 |
-| T3 reference | 协议 Op/Event catalog + session-tasks + 数据模型 + crate 索引(97)+ glossary 等 | 12 | ⬜ 规划 |
+| T0 spine | 端到端脊柱(8)+ worked traces(3) | 11 | ✅ verified |
+| T1 surface | tools(37)+ slash(6)+ cli(4)+ config(8)+ app-server(9)+ sdk(6) | 70 | ✅ verified |
+| T2 subsystems | core(19)/exec-sandbox(12)/mcp(6)/providers(10)/tui(9)/app-server(4)/config-auth(8)/cloud(3)/platform(8) | 79 | ✅ verified |
+| T3 reference | 协议 Op/Event catalog + session-tasks + 数据模型 + crate 索引(124)+ glossary 等 | 12 | ✅ verified |
 
-下一步(review 通过后):从 T0 脊柱 + T1 `surface/tools/`(用户核心诉求)起填,同时落地 `tools/lint.mjs`(L1 机械校验)。
+后续增量更新继续以 `tools/lint.mjs` 做 L1 机械校验，并按 `RUN.md` 对高 churn 节点执行源码重读与独立 L2 复核。

@@ -8,7 +8,7 @@ symbols: [Codex, Thread, Turn, RunResult, StreamedTurn, UserInput, Input, CodexO
 related: [sdk.ts-events-items, sdk.ts-structured-output, sdk.sdk-architecture]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > TypeScript SDK 是围绕 `Codex`、`Thread` 和 `CodexExec` 的 thin wrapper：它启动或恢复 conversation thread，把 input 转成 prompt/images，再通过 Codex CLI `exec --experimental-json` 流式读取 JSONL events。[E: sdk/typescript/src/codex.ts:11][E: sdk/typescript/src/codex.ts:25][E: sdk/typescript/src/codex.ts:36][E: sdk/typescript/src/thread.ts:76][E: sdk/typescript/src/thread.ts:77][E: sdk/typescript/src/exec.ts:86][E: sdk/typescript/src/exec.ts:87][E: sdk/typescript/src/exec.ts:222]
@@ -43,11 +43,11 @@ updated: db887d03e1
 
 `CodexExec.run()` spawn CLI process 后把 prompt 写入 stdin，按 stdout line 逐行 yield JSONL string；如果进程 exit code 非 0 或被 signal 终止，SDK 把 stderr 拼进 thrown `Error`。[E: sdk/typescript/src/exec.ts:181][E: sdk/typescript/src/exec.ts:193][E: sdk/typescript/src/exec.ts:194][E: sdk/typescript/src/exec.ts:200][E: sdk/typescript/src/exec.ts:204][E: sdk/typescript/src/exec.ts:222][E: sdk/typescript/src/exec.ts:229][E: sdk/typescript/src/exec.ts:230][E: sdk/typescript/src/exec.ts:232]
 
-`Thread.run()` 消费同一个 internal stream：遇到 `item.completed` 时收集 item，并把 agent_message item text 作为 final response；遇到 `turn.completed` 时记录 usage；遇到 `turn.failed` 时抛出 error。[E: sdk/typescript/src/thread.ts:116][E: sdk/typescript/src/thread.ts:122][E: sdk/typescript/src/thread.ts:123][E: sdk/typescript/src/thread.ts:124][E: sdk/typescript/src/thread.ts:126][E: sdk/typescript/src/thread.ts:127][E: sdk/typescript/src/thread.ts:128][E: sdk/typescript/src/thread.ts:129][E: sdk/typescript/src/thread.ts:130][E: sdk/typescript/src/thread.ts:135]
+`Thread.run()` 消费同一个 internal stream：遇到 `item.completed` 时收集 item，并把 agent_message item text 作为 final response；遇到 `turn.completed` 时记录 usage；遇到 `turn.failed` 时抛出 error。[E: sdk/typescript/src/thread.ts:118][E: sdk/typescript/src/thread.ts:124][E: sdk/typescript/src/thread.ts:125][E: sdk/typescript/src/thread.ts:126][E: sdk/typescript/src/thread.ts:128][E: sdk/typescript/src/thread.ts:129][E: sdk/typescript/src/thread.ts:130][E: sdk/typescript/src/thread.ts:131][E: sdk/typescript/src/thread.ts:132][E: sdk/typescript/src/thread.ts:137]
 
 ## Input model
 
-TS SDK 的 `UserInput` 目前支持 `text` 和 `local_image` 两种 item；`Input` 可以是 string 或 `UserInput[]`。[E: sdk/typescript/src/thread.ts:30][E: sdk/typescript/src/thread.ts:31][E: sdk/typescript/src/thread.ts:34][E: sdk/typescript/src/thread.ts:35][E: sdk/typescript/src/thread.ts:38] `normalizeInput()` 把 string 直接当 prompt，把 text items 用两个换行拼接成 prompt，把 local images 收集为 `images` 数组交给 CLI `--image`。[E: sdk/typescript/src/thread.ts:82][E: sdk/typescript/src/thread.ts:141][E: sdk/typescript/src/thread.ts:143][E: sdk/typescript/src/thread.ts:149][E: sdk/typescript/src/thread.ts:151][E: sdk/typescript/src/thread.ts:154][E: sdk/typescript/src/exec.ts:155][E: sdk/typescript/src/exec.ts:157]
+TS SDK 的 `UserInput` 目前支持 `text` 和 `local_image` 两种 item；`Input` 可以是 string 或 `UserInput[]`。[E: sdk/typescript/src/thread.ts:30][E: sdk/typescript/src/thread.ts:31][E: sdk/typescript/src/thread.ts:34][E: sdk/typescript/src/thread.ts:35][E: sdk/typescript/src/thread.ts:38] `normalizeInput()` 把 string 直接当 prompt，把 text items 用两个换行拼接成 prompt，把 local images 收集为 `images` 数组交给 CLI `--image`。[E: sdk/typescript/src/thread.ts:82][E: sdk/typescript/src/thread.ts:143][E: sdk/typescript/src/thread.ts:145][E: sdk/typescript/src/thread.ts:151][E: sdk/typescript/src/thread.ts:153][E: sdk/typescript/src/thread.ts:156][E: sdk/typescript/src/exec.ts:155][E: sdk/typescript/src/exec.ts:157]
 
 ## 设计动机
 

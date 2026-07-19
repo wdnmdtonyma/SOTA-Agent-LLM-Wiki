@@ -8,7 +8,7 @@ symbols: [ConfigLayerEntry, ConfigLayerStack, ConfigLayerSource, compose_require
 related: [subsys.config-auth.profiles, subsys.config-auth.features-system, config.approval-sandbox, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > Codex 配置加载现在由 `codex_config::loader::load_config_layers_state` 负责：它收集 managed/system/cloud/user/profile/project/session/legacy layers，生成 `ConfigLayerStack`，再由 `ConfigLayerStack::effective_config()` 用 `merge_toml_values` 得出 effective TOML。[E: codex-rs/config/src/loader/mod.rs:116][E: codex-rs/config/src/loader/mod.rs:177][E: codex-rs/config/src/loader/mod.rs:411][E: codex-rs/config/src/state.rs:483][E: codex-rs/config/src/merge.rs:7]

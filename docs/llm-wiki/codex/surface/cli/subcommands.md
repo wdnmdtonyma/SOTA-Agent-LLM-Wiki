@@ -8,7 +8,7 @@ symbols: [MultitoolCli, Subcommand, cli_main, AppServerCommand, DebugCommand, Ex
 related: [spine.process-lifecycle, cli.global-flags, cli.exec-mode, surface.cli.external-agent-import, command.session-thread, config.skills-plugins-features]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > CLI 子命令 catalog 覆盖当前 `codex` 根命令的 `Subcommand` enum:没有 subcommand 时进入 interactive TUI，有 subcommand 时由 `cli_main()` 分派到 exec、auth、MCP、plugin、app-server、session 管理、sandbox、debug、cloud、features 等入口。[E: codex-rs/cli/src/main.rs:120][E: codex-rs/cli/src/main.rs:124][E: codex-rs/cli/src/main.rs:987]
@@ -59,9 +59,9 @@ updated: db887d03e1
 
 `--enable`/`--disable` 在 dispatch 前被转换成 `features.<name>=true/false` 并追加到 root config overrides，因此会随 root overrides 继续流入消费 config 的 subcommand。[E: codex-rs/cli/src/main.rs:879][E: codex-rs/cli/src/main.rs:883][E: codex-rs/cli/src/main.rs:906][E: codex-rs/cli/src/main.rs:910][E: codex-rs/cli/src/main.rs:977][E: codex-rs/cli/src/main.rs:978]
 
-多数非交互命令在 dispatch 开头调用 `reject_remote_mode_for_subcommand()`；该函数明确拒绝 root `--remote` 与 `--remote-auth-token-env`，错误文案说这些只支持 interactive TUI commands。[E: codex-rs/cli/src/main.rs:2056][E: codex-rs/cli/src/main.rs:2061][E: codex-rs/cli/src/main.rs:2063][E: codex-rs/cli/src/main.rs:2066][E: codex-rs/cli/src/main.rs:2068] `resume`、`fork` 和 session archive/delete/unarchive wrappers 不走这个拒绝函数，而是把 root/subcommand remote options 合并后进入 TUI/session command path。[E: codex-rs/cli/src/main.rs:1243][E: codex-rs/cli/src/main.rs:1263][E: codex-rs/cli/src/main.rs:1265][E: codex-rs/cli/src/main.rs:1272][E: codex-rs/cli/src/main.rs:1312][E: codex-rs/cli/src/main.rs:1330]
+多数非交互命令在 dispatch 开头调用 `reject_remote_mode_for_subcommand()`；该函数明确拒绝 root `--remote` 与 `--remote-auth-token-env`，错误文案说这些只支持 interactive TUI commands。[E: codex-rs/cli/src/main.rs:2059][E: codex-rs/cli/src/main.rs:2064][E: codex-rs/cli/src/main.rs:2066][E: codex-rs/cli/src/main.rs:2069][E: codex-rs/cli/src/main.rs:2071] `resume`、`fork` 和 session archive/delete/unarchive wrappers 不走这个拒绝函数，而是把 root/subcommand remote options 合并后进入 TUI/session command path。[E: codex-rs/cli/src/main.rs:1243][E: codex-rs/cli/src/main.rs:1263][E: codex-rs/cli/src/main.rs:1265][E: codex-rs/cli/src/main.rs:1272][E: codex-rs/cli/src/main.rs:1312][E: codex-rs/cli/src/main.rs:1330]
 
-root `--strict-config` 只有部分 subcommand 可继承；源码 allow-list 包含 interactive、exec、review、mcp-server、exec-server、resume/archive/delete/unarchive/fork、doctor 和 root app-server，其他命令会走 post-parse reject。[E: codex-rs/cli/src/main.rs:981][E: codex-rs/cli/src/main.rs:982][E: codex-rs/cli/src/main.rs:2074][E: codex-rs/cli/src/main.rs:2082][E: codex-rs/cli/src/main.rs:2105][E: codex-rs/cli/src/main.rs:2117]
+root `--strict-config` 只有部分 subcommand 可继承；源码 allow-list 包含 interactive、exec、review、mcp-server、exec-server、resume/archive/delete/unarchive/fork、doctor 和 root app-server，其他命令会走 post-parse reject。[E: codex-rs/cli/src/main.rs:981][E: codex-rs/cli/src/main.rs:982][E: codex-rs/cli/src/main.rs:2077][E: codex-rs/cli/src/main.rs:2085][E: codex-rs/cli/src/main.rs:2108][E: codex-rs/cli/src/main.rs:2120]
 
 ## Sources
 

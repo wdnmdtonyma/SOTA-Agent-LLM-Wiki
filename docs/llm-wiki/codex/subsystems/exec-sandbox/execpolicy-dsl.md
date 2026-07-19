@@ -3,12 +3,12 @@ id: subsys.exec-sandbox.execpolicy-dsl
 title: execpolicy DSL
 kind: subsystem
 tier: T2
-source: [codex-rs/execpolicy/src/policy.rs, codex-rs/execpolicy/src/parser.rs, codex-rs/execpolicy/src/decision.rs, codex-rs/execpolicy/src/rule.rs, codex-rs/execpolicy-legacy/src, docs/execpolicy.md]
-symbols: [PolicyParser, Policy, PrefixRule, NetworkRule, Decision, Evaluation, MatchOptions, get_default_policy]
+source: [codex-rs/execpolicy/src/policy.rs, codex-rs/execpolicy/src/parser.rs, codex-rs/execpolicy/src/decision.rs, codex-rs/execpolicy/src/rule.rs, docs/execpolicy.md]
+symbols: [PolicyParser, Policy, PrefixRule, NetworkRule, Decision, Evaluation, MatchOptions]
 related: [subsys.core.approval-policy, subsys.exec-sandbox.shell-parsing, subsys.exec-sandbox.shell-escalation]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > execpolicy DSL 是 Codex 用 Starlark-like 文件描述 command prefix rules、network rules 和 host executable allowlists 的 policy layer；evaluation 结果是 `Allow`、`Prompt`、`Forbidden` 中优先级最高的 `Decision`。[E: codex-rs/execpolicy/src/parser.rs:57][E: codex-rs/execpolicy/src/decision.rs:9][E: codex-rs/execpolicy/src/policy.rs:365]
@@ -19,11 +19,10 @@ updated: db887d03e1
 - `Decision::Allow`、`Decision::Prompt`、`Decision::Forbidden` 怎样解析和排序？
 - rule matching 如何处理 command prefix、alternatives、host executable resolution？
 - unmatched command fallback 与 heuristics match 在 `Evaluation` 中怎样体现？
-- legacy execpolicy 与当前 execpolicy crate 的结构差异是什么？
 
 ## 职责边界
 
-execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator 和 `codex-rs/execpolicy-legacy` default policy parser。它不覆盖 approval prompt UI，也不覆盖 shell escalation 的 socket protocol；approval prompt 和 execve interception 只消费 `Decision` 与 `Evaluation` 的结果。[I]
+execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator。已删除的 legacy engine 不再属于当前实现；本节点也不覆盖 approval prompt UI 或 shell escalation 的 socket protocol，后两者只消费 `Decision` 与 `Evaluation` 的结果。[I]
 
 `Decision` 只有三个值：`Allow`、`Prompt`、`Forbidden`。字符串解析接受 `"allow"`、`"prompt"`、`"forbidden"`；network rule 的 parser 还把 `"deny"` 作为 `Forbidden` 的别名。[E: codex-rs/execpolicy/src/decision.rs:9][E: codex-rs/execpolicy/src/decision.rs:13][E: codex-rs/execpolicy/src/decision.rs:15][E: codex-rs/execpolicy/src/decision.rs:19][E: codex-rs/execpolicy/src/decision.rs:22][E: codex-rs/execpolicy/src/decision.rs:25][E: codex-rs/execpolicy/src/parser.rs:253]
 
@@ -32,7 +31,6 @@ execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator 和 `codex-rs
 - `codex-rs/execpolicy/src/parser.rs`: Starlark Extended dialect parser、builtins、example validation 和 policy builder。[E: codex-rs/execpolicy/src/parser.rs:57][E: codex-rs/execpolicy/src/parser.rs:75][E: codex-rs/execpolicy/src/parser.rs:133]
 - `codex-rs/execpolicy/src/policy.rs`: rule storage、overlay merge、network domain compilation、command evaluation。[E: codex-rs/execpolicy/src/policy.rs:28][E: codex-rs/execpolicy/src/policy.rs:141][E: codex-rs/execpolicy/src/policy.rs:167][E: codex-rs/execpolicy/src/policy.rs:188]
 - `codex-rs/execpolicy/src/rule.rs`: prefix pattern、network protocol/host normalization、rule match shape 和 examples validation。[E: codex-rs/execpolicy/src/rule.rs:40][E: codex-rs/execpolicy/src/rule.rs:118][E: codex-rs/execpolicy/src/rule.rs:156][E: codex-rs/execpolicy/src/rule.rs:246]
-- `codex-rs/execpolicy-legacy/src`: legacy default policy loader 和旧 `define_program` DSL。[E: codex-rs/execpolicy-legacy/src/lib.rs:40][E: codex-rs/execpolicy-legacy/src/policy_parser.rs:123]
 
 ## DSL 语法
 
@@ -63,12 +61,6 @@ execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator 和 `codex-rs
 7. `Evaluation::from_matches` 取所有 matched rules 中最大的 `Decision` 作为最终 decision；由于 enum 派生 `Ord` 且顺序为 Allow、Prompt、Forbidden，Forbidden 优先级最高。[E: codex-rs/execpolicy/src/policy.rs:365][E: codex-rs/execpolicy/src/policy.rs:371][E: codex-rs/execpolicy/src/decision.rs:9][E: codex-rs/execpolicy/src/decision.rs:15]
 8. `compiled_network_domains` 对 network rules 做 allow/deny 域集合编译；`Allow` 会移除 denied 并插入 allowed，`Forbidden` 会移除 allowed 并插入 denied，`Prompt` 被忽略。[E: codex-rs/execpolicy/src/policy.rs:167][E: codex-rs/execpolicy/src/policy.rs:172][E: codex-rs/execpolicy/src/policy.rs:177][E: codex-rs/execpolicy/src/policy.rs:182]
 
-## legacy execpolicy
-
-legacy crate 通过 `include_str!("default.policy")` 嵌入 default policy，并由 `get_default_policy` 调用 legacy parser。[E: codex-rs/execpolicy-legacy/src/lib.rs:40][E: codex-rs/execpolicy-legacy/src/lib.rs:43] legacy parser 的 builtins 包括 `define_program`、`forbid_substrings`、`forbid_program_regex`、`opt`、`flag`。[E: codex-rs/execpolicy-legacy/src/policy_parser.rs:123][E: codex-rs/execpolicy-legacy/src/policy_parser.rs:184][E: codex-rs/execpolicy-legacy/src/policy_parser.rs:198][E: codex-rs/execpolicy-legacy/src/policy_parser.rs:215][E: codex-rs/execpolicy-legacy/src/policy_parser.rs:221]
-
-legacy `Policy::check` 先检查 forbidden program regex，再检查 forbidden substrings，最后尝试 program specs；命中 negative/positive examples 由 legacy policy 的 example checkers 验证。[E: codex-rs/execpolicy-legacy/src/policy.rs:44][E: codex-rs/execpolicy-legacy/src/policy.rs:58][E: codex-rs/execpolicy-legacy/src/policy.rs:72][E: codex-rs/execpolicy-legacy/src/policy.rs:88][E: codex-rs/execpolicy-legacy/src/policy.rs:96]
-
 ## 设计动机与权衡
 
 - 当前 execpolicy 使用 prefix rules 而不是完整 shell AST，这让 policy evaluation 可以在 direct argv、host executable 和 intercepted exec 场景复用同一套 `Vec<String>` command matching。[I]
@@ -87,7 +79,6 @@ legacy `Policy::check` 先检查 forbidden program regex，再检查 forbidden s
 - `codex-rs/execpolicy/src/policy.rs`
 - `codex-rs/execpolicy/src/decision.rs`
 - `codex-rs/execpolicy/src/rule.rs`
-- `codex-rs/execpolicy-legacy/src`
 - `docs/execpolicy.md`
 
 ## 相关

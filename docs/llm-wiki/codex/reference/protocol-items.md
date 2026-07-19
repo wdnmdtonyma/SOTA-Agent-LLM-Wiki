@@ -3,53 +3,56 @@ id: ref.protocol-items
 title: Protocol items 与审批 payload 索引
 kind: reference
 tier: T3
-source: [codex-rs/protocol/src/items.rs, codex-rs/protocol/src/approvals.rs, codex-rs/protocol/src/protocol.rs]
-symbols: [TurnItem, UserMessageItem, AgentMessageItem, ImageViewItem, SleepItem, FileChangeItem, McpToolCallItem, ContextCompactionItem, ExecApprovalRequestEvent, GuardianAssessmentEvent, ElicitationRequest, ApplyPatchApprovalRequestEvent]
+source: [codex-rs/protocol/src/items.rs, codex-rs/protocol/src/legacy_events.rs, codex-rs/protocol/src/approvals.rs, codex-rs/protocol/src/protocol.rs, codex-rs/ext/items/src/lib.rs]
+symbols: [TurnItem, UserMessageItem, AgentMessageItem, ImageViewItem, ExtensionItem, EnteredReviewModeItem, ExitedReviewModeItem, FileChangeItem, McpToolCallItem, ContextCompactionItem, HasLegacyEvent, ExecApprovalRequestEvent, GuardianAssessmentEvent, ElicitationRequest, ApplyPatchApprovalRequestEvent]
 related: [ref.protocol-event-streaming, ref.protocol-op, subsys.core.approval-guardian]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
-> `items.rs` 定义 turn-item stream 的 `TurnItem` tagged union；`approvals.rs` 定义 approval、guardian assessment、network policy amendment、MCP elicitation 和 apply-patch approval 的交互 payload。[E: codex-rs/protocol/src/items.rs:52][E: codex-rs/protocol/src/approvals.rs:218][E: codex-rs/protocol/src/approvals.rs:179][E: codex-rs/protocol/src/approvals.rs:173][E: codex-rs/protocol/src/approvals.rs:337][E: codex-rs/protocol/src/approvals.rs:395]
+> `items.rs` 定义 turn-item stream 的 `TurnItem` tagged union；`approvals.rs` 定义 approval、guardian assessment、network policy amendment、MCP elicitation 和 apply-patch approval 的交互 payload。[E: codex-rs/protocol/src/items.rs:44][E: codex-rs/protocol/src/approvals.rs:218][E: codex-rs/protocol/src/approvals.rs:179][E: codex-rs/protocol/src/approvals.rs:173][E: codex-rs/protocol/src/approvals.rs:337][E: codex-rs/protocol/src/approvals.rs:395]
 
 ## 能回答的问题
 
 - `TurnItem` 当前有哪些 variant,各自 payload 字段是什么?
 - user/assistant/reasoning item 如何映射到 legacy `EventMsg`?
-- MCP tool、file change、image view、sleep item 在 turn stream 中如何表达?
+- MCP tool、file change、image view、extension-owned item 在 turn stream 中如何表达?
 - exec approval、guardian assessment、MCP elicitation、apply-patch approval 的 payload 字段在哪里定义?
 - network approval 可展示哪些默认 decision?
 
 ## TurnItem stream 表
 
-`TurnItem` 使用 `serde(tag = "type")` 和 TS tag 生成 tagged union；当前有 16 个变体。[E: codex-rs/protocol/src/items.rs:50][E: codex-rs/protocol/src/items.rs:51][E: codex-rs/protocol/src/items.rs:52][E: codex-rs/protocol/src/items.rs:53][E: codex-rs/protocol/src/items.rs:68]
+`TurnItem` 使用 `serde(tag = "type")` 和 TS tag 生成 tagged union；当前有 18 个变体。[E: codex-rs/protocol/src/items.rs:42][E: codex-rs/protocol/src/items.rs:43][E: codex-rs/protocol/src/items.rs:44][E: codex-rs/protocol/src/items.rs:45][E: codex-rs/protocol/src/items.rs:74]
 
 | # | Variant | Payload | 字段/含义 | 定义锚 |
 |---:|---|---|---|---|
-| 1 | `UserMessage` | `UserMessageItem` | `id`, optional `client_id`, `content: Vec<UserInput>`。[E: codex-rs/protocol/src/items.rs:53][E: codex-rs/protocol/src/items.rs:72][E: codex-rs/protocol/src/items.rs:77] | `items.rs:53` |
-| 2 | `HookPrompt` | `HookPromptItem` | `id`, `fragments`; fragment 包含 `text` 与 `hook_run_id`。[E: codex-rs/protocol/src/items.rs:54][E: codex-rs/protocol/src/items.rs:81][E: codex-rs/protocol/src/items.rs:83][E: codex-rs/protocol/src/items.rs:90][E: codex-rs/protocol/src/items.rs:91] | `items.rs:54` |
-| 3 | `AgentMessage` | `AgentMessageItem` | `id`, `content`, optional `phase`, optional `memory_citation`。[E: codex-rs/protocol/src/items.rs:55][E: codex-rs/protocol/src/items.rs:116][E: codex-rs/protocol/src/items.rs:118][E: codex-rs/protocol/src/items.rs:125][E: codex-rs/protocol/src/items.rs:128] | `items.rs:55` |
-| 4 | `Plan` | `PlanItem` | `id`, `text`。[E: codex-rs/protocol/src/items.rs:56][E: codex-rs/protocol/src/items.rs:132][E: codex-rs/protocol/src/items.rs:134] | `items.rs:56` |
-| 5 | `Reasoning` | `ReasoningItem` | `id`, `summary_text`, defaulted `raw_content`。[E: codex-rs/protocol/src/items.rs:57][E: codex-rs/protocol/src/items.rs:138][E: codex-rs/protocol/src/items.rs:142] | `items.rs:57` |
-| 6 | `CommandExecution` | `CommandExecutionItem` | `id`, optional `process_id`, command/cwd/parsed command/source/interaction input, execution status, optional output/duration/formatted output。[E: codex-rs/protocol/src/items.rs:58][E: codex-rs/protocol/src/items.rs:155][E: codex-rs/protocol/src/items.rs:160][E: codex-rs/protocol/src/items.rs:185] | `items.rs:58` |
-| 7 | `DynamicToolCall` | `DynamicToolCallItem` | dynamic tool item,带 optional namespace、tool、arguments、status、content items、success/error/duration。[E: codex-rs/protocol/src/items.rs:59][E: codex-rs/protocol/src/items.rs:197][E: codex-rs/protocol/src/items.rs:201][E: codex-rs/protocol/src/items.rs:216] | `items.rs:59` |
-| 8 | `CollabAgentToolCall` | `CollabAgentToolCallItem` | collab agent tool item,带 tool/status/sender/receivers/prompt/model/reasoning effort/agent states。[E: codex-rs/protocol/src/items.rs:60][E: codex-rs/protocol/src/items.rs:238][E: codex-rs/protocol/src/items.rs:240][E: codex-rs/protocol/src/items.rs:257] | `items.rs:60` |
-| 9 | `SubAgentActivity` | `SubAgentActivityItem` | sub-agent activity item,带 kind、agent thread id 和 agent path。[E: codex-rs/protocol/src/items.rs:61][E: codex-rs/protocol/src/items.rs:261][E: codex-rs/protocol/src/items.rs:263][E: codex-rs/protocol/src/items.rs:265] | `items.rs:61` |
-| 10 | `WebSearch` | `WebSearchItem` | `id`, `query`, `action: WebSearchAction`。[E: codex-rs/protocol/src/items.rs:62][E: codex-rs/protocol/src/items.rs:269][E: codex-rs/protocol/src/items.rs:272] | `items.rs:62` |
-| 11 | `ImageView` | `ImageViewItem` | `id`, environment-resolved `path: PathUri`。[E: codex-rs/protocol/src/items.rs:63][E: codex-rs/protocol/src/items.rs:276][E: codex-rs/protocol/src/items.rs:282] | `items.rs:63` |
-| 12 | `Sleep` | `SleepItem` | `id`, `duration_ms`。[E: codex-rs/protocol/src/items.rs:64][E: codex-rs/protocol/src/items.rs:286][E: codex-rs/protocol/src/items.rs:288] | `items.rs:64` |
-| 13 | `ImageGeneration` | `ImageGenerationItem` | `id`, `status`, optional `revised_prompt`, `result`, optional `saved_path`。[E: codex-rs/protocol/src/items.rs:65][E: codex-rs/protocol/src/items.rs:292][E: codex-rs/protocol/src/items.rs:301] | `items.rs:65` |
-| 14 | `FileChange` | `FileChangeItem` | `id`, `changes`, optional `status`, `auto_approved`, `stdout`, `stderr`。[E: codex-rs/protocol/src/items.rs:66][E: codex-rs/protocol/src/items.rs:305][E: codex-rs/protocol/src/items.rs:319] | `items.rs:66` |
-| 15 | `McpToolCall` | `McpToolCallItem` | `id`, `server`, `tool`, `arguments`, optional app/plugin metadata, `status`, optional `result`, `error`, `duration`。[E: codex-rs/protocol/src/items.rs:67][E: codex-rs/protocol/src/items.rs:325][E: codex-rs/protocol/src/items.rs:329][E: codex-rs/protocol/src/items.rs:360] | `items.rs:67` |
-| 16 | `ContextCompaction` | `ContextCompactionItem` | `id`; `new()` 生成 UUID string,legacy event 是 `ContextCompacted`。[E: codex-rs/protocol/src/items.rs:68][E: codex-rs/protocol/src/items.rs:380][E: codex-rs/protocol/src/items.rs:387][E: codex-rs/protocol/src/items.rs:392] | `items.rs:68` |
+| 1 | `UserMessage` | `UserMessageItem` | `id`, optional `client_id`, `content: Vec<UserInput>`。[E: codex-rs/protocol/src/items.rs:45][E: codex-rs/protocol/src/items.rs:78][E: codex-rs/protocol/src/items.rs:83] | `items.rs:53` |
+| 2 | `HookPrompt` | `HookPromptItem` | `id`, `fragments`; fragment 包含 `text` 与 `hook_run_id`。[E: codex-rs/protocol/src/items.rs:46][E: codex-rs/protocol/src/items.rs:87][E: codex-rs/protocol/src/items.rs:89][E: codex-rs/protocol/src/items.rs:96][E: codex-rs/protocol/src/items.rs:97] | `items.rs:54` |
+| 3 | `AgentMessage` | `AgentMessageItem` | `id`, `content`, optional `phase`, optional `memory_citation`。[E: codex-rs/protocol/src/items.rs:47][E: codex-rs/protocol/src/items.rs:122][E: codex-rs/protocol/src/items.rs:124][E: codex-rs/protocol/src/items.rs:131][E: codex-rs/protocol/src/items.rs:134] | `items.rs:55` |
+| 4 | `Plan` | `PlanItem` | `id`, `text`。[E: codex-rs/protocol/src/items.rs:48][E: codex-rs/protocol/src/items.rs:151][E: codex-rs/protocol/src/items.rs:153] | `items.rs:56` |
+| 5 | `Reasoning` | `ReasoningItem` | `id`, `summary_text`, defaulted `raw_content`。[E: codex-rs/protocol/src/items.rs:49][E: codex-rs/protocol/src/items.rs:157][E: codex-rs/protocol/src/items.rs:161] | `items.rs:57` |
+| 6 | `CommandExecution` | `CommandExecutionItem` | `id`, optional `process_id`, command/cwd/parsed command/source/interaction input, execution status, optional output/duration/formatted output。[E: codex-rs/protocol/src/items.rs:50][E: codex-rs/protocol/src/items.rs:184][E: codex-rs/protocol/src/items.rs:189][E: codex-rs/protocol/src/items.rs:214] | `items.rs:58` |
+| 7 | `DynamicToolCall` | `DynamicToolCallItem` | dynamic tool item,带 optional namespace、tool、arguments、status、content items、success/error/duration。[E: codex-rs/protocol/src/items.rs:51][E: codex-rs/protocol/src/items.rs:226][E: codex-rs/protocol/src/items.rs:230][E: codex-rs/protocol/src/items.rs:245] | `items.rs:59` |
+| 8 | `CollabAgentToolCall` | `CollabAgentToolCallItem` | collab agent tool item,带 tool/status/sender/receivers/prompt/model/reasoning effort/agent states。[E: codex-rs/protocol/src/items.rs:52][E: codex-rs/protocol/src/items.rs:267][E: codex-rs/protocol/src/items.rs:269][E: codex-rs/protocol/src/items.rs:286] | `items.rs:60` |
+| 9 | `SubAgentActivity` | `SubAgentActivityItem` | sub-agent activity item,带 kind、agent thread id 和 agent path。[E: codex-rs/protocol/src/items.rs:53][E: codex-rs/protocol/src/items.rs:290][E: codex-rs/protocol/src/items.rs:292][E: codex-rs/protocol/src/items.rs:294] | `items.rs:61` |
+| 10 | `WebSearch` | `WebSearchItem` | `id`, `query`, `action: WebSearchAction`。[E: codex-rs/protocol/src/items.rs:58][E: codex-rs/protocol/src/items.rs:298][E: codex-rs/protocol/src/items.rs:301] | `items.rs:62` |
+| 11 | `ImageView` | `ImageViewItem` | `id`, environment-resolved `path: PathUri`。[E: codex-rs/protocol/src/items.rs:59][E: codex-rs/protocol/src/items.rs:313][E: codex-rs/protocol/src/items.rs:319] | `items.rs:63` |
+| 12 | `Extension` | `ExtensionItem` | extension-owned flattened envelope；当前 `kind` 是 `image_gen.generation`、`clock.sleep` 或 `web.search`,core 只依赖统一 `id()`。[E: codex-rs/protocol/src/items.rs:60][E: codex-rs/protocol/src/items.rs:64][E: codex-rs/ext/items/src/lib.rs:30][E: codex-rs/ext/items/src/lib.rs:35][E: codex-rs/ext/items/src/lib.rs:47] | `items.rs:64` |
+| 13 | `ImageGeneration` | `ImageGenerationItem` | hosted Responses API image generation；由 core 负责 persistence 与 legacy fanout,区别于 standalone extension item。[E: codex-rs/protocol/src/items.rs:65][E: codex-rs/protocol/src/items.rs:69] | `items.rs:69` |
+| 14 | `EnteredReviewMode` | `EnteredReviewModeItem` | `id`, `target`, `user_facing_hint`; canonical review-entry item。[E: codex-rs/protocol/src/items.rs:70][E: codex-rs/protocol/src/items.rs:137][E: codex-rs/protocol/src/items.rs:142] | `items.rs:70` |
+| 15 | `ExitedReviewMode` | `ExitedReviewModeItem` | `id` 与 optional `review_output`; canonical review-exit item。[E: codex-rs/protocol/src/items.rs:71][E: codex-rs/protocol/src/items.rs:144][E: codex-rs/protocol/src/items.rs:148] | `items.rs:71` |
+| 16 | `FileChange` | `FileChangeItem` | `id`, `changes`, optional `status`, `auto_approved`, `stdout`, `stderr`。[E: codex-rs/protocol/src/items.rs:72] | `items.rs:72` |
+| 17 | `McpToolCall` | `McpToolCallItem` | `id`, `server`, `tool`, `arguments`, optional app/plugin metadata, `status`, optional `result`, `error`, `duration`。[E: codex-rs/protocol/src/items.rs:73] | `items.rs:73` |
+| 18 | `ContextCompaction` | `ContextCompactionItem` | `id`; legacy conversion 生成 `ContextCompacted`。[E: codex-rs/protocol/src/items.rs:74][E: codex-rs/protocol/src/legacy_events.rs:71][E: codex-rs/protocol/src/legacy_events.rs:74] | `items.rs:74` |
 
 ## TurnItem 兼容转换要点
 
-- `AgentMessageContent` 当前只有 `Text { text }`,所以 `AgentMessageItem.content` 是 text content vector。[E: codex-rs/protocol/src/items.rs:106][E: codex-rs/protocol/src/items.rs:107][E: codex-rs/protocol/src/items.rs:118]
-- `AgentMessageItem.phase` 是 optional field；`AgentMessageItem` 同时保存 `content` 和 optional `memory_citation`。[E: codex-rs/protocol/src/items.rs:118][E: codex-rs/protocol/src/items.rs:125][E: codex-rs/protocol/src/items.rs:128]
-- `UserMessageItem::as_legacy_event()` flatten text inputs 到 `UserMessageEvent.message`,并保留 remote/local image 列表、detail hints 与 text elements。[E: codex-rs/protocol/src/items.rs:411][E: codex-rs/protocol/src/items.rs:414][E: codex-rs/protocol/src/items.rs:421]
-- `ItemStartedEvent` 会把 `WebSearch`、`ImageGeneration`、`FileChange`、`McpToolCall` 映射成对应 legacy begin event；`ImageView` 在 start 阶段不产出 legacy event。[E: codex-rs/protocol/src/protocol.rs:1797][E: codex-rs/protocol/src/protocol.rs:1803][E: codex-rs/protocol/src/protocol.rs:1810]
+- `AgentMessageContent` 当前只有 `Text { text }`,所以 `AgentMessageItem.content` 是 text content vector。[E: codex-rs/protocol/src/items.rs:112][E: codex-rs/protocol/src/items.rs:113][E: codex-rs/protocol/src/items.rs:124]
+- `AgentMessageItem.phase` 是 optional field；`AgentMessageItem` 同时保存 `content` 和 optional `memory_citation`。[E: codex-rs/protocol/src/items.rs:124][E: codex-rs/protocol/src/items.rs:131][E: codex-rs/protocol/src/items.rs:134]
+- `UserMessageItem::as_legacy_event()` flatten text inputs 到 `UserMessageEvent.message`,并保留 remote/local image 列表、detail hints 与 text elements；audio 仍保留在 canonical `UserMessageItem.content`，不进入 legacy user-message payload。兼容实现已从 `protocol.rs` 搬到 `legacy_events.rs`。[E: codex-rs/protocol/src/items.rs:520][E: codex-rs/protocol/src/items.rs:530][E: codex-rs/protocol/src/legacy_events.rs:77][E: codex-rs/protocol/src/legacy_events.rs:81][E: codex-rs/protocol/src/legacy_events.rs:92]
+- review enter/exit 首先是 canonical `TurnItem`；item completion 再借助 `legacy_events.rs` fan out `EnteredReviewMode` / `ExitedReviewMode`，并补上 turn/item correlation。[E: codex-rs/protocol/src/legacy_events.rs:112][E: codex-rs/protocol/src/legacy_events.rs:118][E: codex-rs/protocol/src/legacy_events.rs:123][E: codex-rs/protocol/src/legacy_events.rs:129]
+- standalone image generation、sleep 与 web search 走 `TurnItem::Extension`; hosted Responses API 的 web/image item 仍保留 core-owned variant。[E: codex-rs/protocol/src/items.rs:54][E: codex-rs/protocol/src/items.rs:56][E: codex-rs/protocol/src/items.rs:60][E: codex-rs/protocol/src/items.rs:69]
 
 ## Approval / guardian / elicitation payload 表
 
@@ -73,14 +76,16 @@ updated: db887d03e1
 
 ## 设计动机速记
 
-- turn-item stream 与 legacy `EventMsg` 并存：`ItemStartedEvent`/`ItemCompletedEvent` 仍能生成 legacy begin/end events,但 canonical payload 是 `TurnItem`。[E: codex-rs/protocol/src/protocol.rs:1790][E: codex-rs/protocol/src/protocol.rs:1817][E: codex-rs/protocol/src/protocol.rs:1832][I]
-- approval payload 把”prompt 内容”和”可展示 decision 列表”放在事件侧；对应 response 则由 `Op::ExecApproval`、`Op::PatchApproval`、`Op::ResolveElicitation` 等回传。[E: codex-rs/protocol/src/approvals.rs:273][E: codex-rs/protocol/src/protocol.rs:573][E: codex-rs/protocol/src/protocol.rs:583][E: codex-rs/protocol/src/protocol.rs:591][I]
+- turn-item stream 与 legacy `EventMsg` 并存：`ItemStartedEvent`/`ItemCompletedEvent` 仍能通过 `HasLegacyEvent` 生成兼容事件,但 canonical payload 是 `TurnItem`。[E: codex-rs/protocol/src/protocol.rs:1836][E: codex-rs/protocol/src/protocol.rs:1844][E: codex-rs/protocol/src/legacy_events.rs:65][I]
+- approval payload 把”prompt 内容”和”可展示 decision 列表”放在事件侧；对应 response 则由 `Op::ExecApproval`、`Op::PatchApproval`、`Op::ResolveElicitation` 等回传。[E: codex-rs/protocol/src/approvals.rs:273][E: codex-rs/protocol/src/protocol.rs:586][E: codex-rs/protocol/src/protocol.rs:596][E: codex-rs/protocol/src/protocol.rs:604][I]
 
 ## Sources
 
 - `codex-rs/protocol/src/items.rs`
+- `codex-rs/protocol/src/legacy_events.rs`
 - `codex-rs/protocol/src/approvals.rs`
 - `codex-rs/protocol/src/protocol.rs`
+- `codex-rs/ext/items/src/lib.rs`
 
 ## 相关
 

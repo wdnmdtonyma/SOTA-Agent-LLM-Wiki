@@ -3,15 +3,15 @@ id: subsys.tui.status-surfaces
 title: Status Surfaces
 kind: subsystem
 tier: T2
-source: [codex-rs/tui/src/status/card.rs, codex-rs/tui/src/status/rate_limits.rs, codex-rs/tui/src/chatwidget/status_surfaces.rs, codex-rs/tui/src/bottom_pane/mod.rs, codex-rs/tui/src/chatwidget.rs]
-symbols: [StatusHistoryCell, StatusHistoryHandle, StatusRateLimitData, RateLimitSnapshotDisplay, ChatWidget::status_surface_selections, BottomPane::set_task_running]
+source: [codex-rs/tui/src/status/card.rs, codex-rs/tui/src/status/rate_limits.rs, codex-rs/tui/src/chatwidget/status_surfaces.rs, codex-rs/tui/src/chatwidget/usage.rs, codex-rs/tui/src/chatwidget/reset_credits.rs, codex-rs/tui/src/bottom_pane/mod.rs, codex-rs/tui/src/chatwidget.rs]
+symbols: [StatusHistoryCell, StatusHistoryHandle, StatusRateLimitData, RateLimitSnapshotDisplay, ChatWidget::status_surface_selections, ChatWidget::open_usage_menu, ResetCreditOption, reset_credit_options, BottomPane::set_task_running]
 related: [subsys.tui.chatwidget, subsys.tui.bottom-pane, subsys.config-auth.features-system]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
-> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/status/rate_limits.rs:1][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/bottom_pane/mod.rs:992][E: codex-rs/tui/src/chatwidget.rs:626]
+> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/status/rate_limits.rs:1][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/bottom_pane/mod.rs:1005][E: codex-rs/tui/src/chatwidget.rs:637]
 
 ## 能回答的问题
 
@@ -38,6 +38,16 @@ display model 包括 `StatusRateLimitRow`、`StatusRateLimitValue::{Window, Text
 
 `RateLimitSnapshotDisplay` 保存 canonical limit name、capture time、primary/secondary windows、credits 和 individual monthly spend control limit；conversion 从 snapshot fields 映射并把 core credits/spend-control 类型转成 display 类型。[E: codex-rs/tui/src/status/rate_limits.rs:95][E: codex-rs/tui/src/status/rate_limits.rs:96][E: codex-rs/tui/src/status/rate_limits.rs:99][E: codex-rs/tui/src/status/rate_limits.rs:101][E: codex-rs/tui/src/status/rate_limits.rs:103][E: codex-rs/tui/src/status/rate_limits.rs:105][E: codex-rs/tui/src/status/rate_limits.rs:107][E: codex-rs/tui/src/status/rate_limits.rs:144][E: codex-rs/tui/src/status/rate_limits.rs:149][E: codex-rs/tui/src/status/rate_limits.rs:152][E: codex-rs/tui/src/status/rate_limits.rs:160][E: codex-rs/tui/src/status/rate_limits.rs:161][E: codex-rs/tui/src/status/rate_limits.rs:168][E: codex-rs/tui/src/status/rate_limits.rs:178]
 
+credits row 会优先显示 `Unlimited`，即使 `has_credits=false`；有限 credits 只有 `has_credits=true` 才出现，balance 缺失、为空、不可解析或非 finite 时显示 `Available`，正的有限数值才四舍五入为 credits 数量。[E: codex-rs/tui/src/status/rate_limits.rs:360][E: codex-rs/tui/src/status/rate_limits.rs:363][E: codex-rs/tui/src/status/rate_limits.rs:364][E: codex-rs/tui/src/status/rate_limits.rs:370][E: codex-rs/tui/src/status/rate_limits.rs:373][E: codex-rs/tui/src/status/rate_limits.rs:376][E: codex-rs/tui/src/status/rate_limits.rs:378][E: codex-rs/tui/src/status/rate_limits.rs:387]
+
+## Usage Limit Resets
+
+usage menu 总是提供 usage 查看入口；只有 ChatGPT account 且可用 reset 数量大于零时才启用兑换，未知数量允许用户发起 availability check，已知为零则打开菜单时带 request id 刷新。回包只有 request id 仍匹配才更新菜单，避免旧异步结果覆盖新 view。[E: codex-rs/tui/src/chatwidget/usage.rs:17][E: codex-rs/tui/src/chatwidget/usage.rs:19][E: codex-rs/tui/src/chatwidget/usage.rs:23][E: codex-rs/tui/src/chatwidget/usage.rs:32][E: codex-rs/tui/src/chatwidget/usage.rs:33][E: codex-rs/tui/src/chatwidget/usage.rs:35][E: codex-rs/tui/src/chatwidget/usage.rs:43][E: codex-rs/tui/src/chatwidget/usage.rs:44][E: codex-rs/tui/src/chatwidget/usage.rs:78][E: codex-rs/tui/src/chatwidget/usage.rs:84][E: codex-rs/tui/src/chatwidget/usage.rs:94]
+
+reset picker 将 `available_count` clamp 到非负数，只取 `Available` credits，按到期时间由近到远排序并限制到该数量；服务端只给 count 没给明细时仍提供一个无 `credit_id` 的 generic full-reset option。[E: codex-rs/tui/src/chatwidget/reset_credits.rs:15][E: codex-rs/tui/src/chatwidget/reset_credits.rs:18][E: codex-rs/tui/src/chatwidget/reset_credits.rs:20][E: codex-rs/tui/src/chatwidget/reset_credits.rs:25][E: codex-rs/tui/src/chatwidget/reset_credits.rs:27][E: codex-rs/tui/src/chatwidget/reset_credits.rs:29][E: codex-rs/tui/src/chatwidget/reset_credits.rs:31][E: codex-rs/tui/src/chatwidget/reset_credits.rs:67][E: codex-rs/tui/src/chatwidget/reset_credits.rs:69]
+
+选择 credit 后先经过单次 confirmation gate，并为消费请求创建 UUID idempotency key。`Reset`/`AlreadyRedeemed` 都进入成功后刷新；有明确 `credit_id` 的 `NoCredit` 被视为 stale picker 并要求刷新，网络错误则保留同一个 idempotency key 供 retry。[E: codex-rs/tui/src/chatwidget/usage.rs:167][E: codex-rs/tui/src/chatwidget/usage.rs:172][E: codex-rs/tui/src/chatwidget/usage.rs:188][E: codex-rs/tui/src/chatwidget/usage.rs:223][E: codex-rs/tui/src/chatwidget/usage.rs:232][E: codex-rs/tui/src/chatwidget/usage.rs:241][E: codex-rs/tui/src/chatwidget/usage.rs:242][E: codex-rs/tui/src/chatwidget/usage.rs:359][E: codex-rs/tui/src/chatwidget/usage.rs:370][E: codex-rs/tui/src/chatwidget/usage.rs:375][E: codex-rs/tui/src/chatwidget/usage.rs:388][E: codex-rs/tui/src/chatwidget/usage.rs:405][E: codex-rs/tui/src/chatwidget/usage.rs:407]
+
 ## Status Line 与 Terminal Title
 
 `CachedProjectRootName` 用 cwd 缓存 project-root display name，注释说明 terminal-title refresh 很频繁，避免重复向上查找同一 root。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:76][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:78][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:82][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:83][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:84]
@@ -46,7 +56,7 @@ display model 包括 `StatusRateLimitRow`、`StatusRateLimitValue::{Window, Text
 
 ## Running Status
 
-running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:992][E: codex-rs/tui/src/bottom_pane/mod.rs:994][E: codex-rs/tui/src/bottom_pane/mod.rs:995][E: codex-rs/tui/src/bottom_pane/mod.rs:999][E: codex-rs/tui/src/bottom_pane/mod.rs:1000][E: codex-rs/tui/src/bottom_pane/mod.rs:1007][E: codex-rs/tui/src/bottom_pane/mod.rs:1010][E: codex-rs/tui/src/bottom_pane/mod.rs:1014]
+running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1005][E: codex-rs/tui/src/bottom_pane/mod.rs:1007][E: codex-rs/tui/src/bottom_pane/mod.rs:1008][E: codex-rs/tui/src/bottom_pane/mod.rs:1012][E: codex-rs/tui/src/bottom_pane/mod.rs:1013][E: codex-rs/tui/src/bottom_pane/mod.rs:1020][E: codex-rs/tui/src/bottom_pane/mod.rs:1023][E: codex-rs/tui/src/bottom_pane/mod.rs:1027]
 
 ## Gotchas
 
@@ -58,6 +68,8 @@ running-task inline status 属于 bottom pane：`set_task_running` 更新 compos
 - `codex-rs/tui/src/status/card.rs`
 - `codex-rs/tui/src/status/rate_limits.rs`
 - `codex-rs/tui/src/chatwidget/status_surfaces.rs`
+- `codex-rs/tui/src/chatwidget/usage.rs`
+- `codex-rs/tui/src/chatwidget/reset_credits.rs`
 - `codex-rs/tui/src/bottom_pane/mod.rs`
 - `codex-rs/tui/src/chatwidget.rs`
 

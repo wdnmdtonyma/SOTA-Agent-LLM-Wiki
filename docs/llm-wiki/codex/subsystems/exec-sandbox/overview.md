@@ -8,7 +8,7 @@ symbols: [SandboxManager, SandboxType, SandboxCommand, SandboxExecRequest, Sandb
 related: [spine.shell-exec-flow, tool.exec-command, tool.write-stdin]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > exec sandbox 是 Codex 在真正 spawn 进程前，把 permission model、per-OS sandbox backend、managed network、environment id 和 argv wrapper 统一收敛成 `SandboxExecRequest` 的转换层。[E: codex-rs/sandboxing/src/manager.rs:97][E: codex-rs/sandboxing/src/manager.rs:112][E: codex-rs/sandboxing/src/manager.rs:131][E: codex-rs/sandboxing/src/manager.rs:321]

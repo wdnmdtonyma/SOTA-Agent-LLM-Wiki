@@ -8,7 +8,7 @@ symbols: [Codex, AsyncCodex, Thread, AsyncThread, TurnHandle, AsyncTurnHandle, C
 related: [sdk.py-inputs-errors, sdk.sdk-architecture, rpc.overview, rpc.thread-methods, rpc.turn-methods]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > Python SDK package is now `openai_codex`: the high-level `Codex` / `AsyncCodex` APIs wrap a typed app-server JSON-RPC client (`CodexClient` / `AsyncCodexClient`) that starts `codex app-server --listen stdio://`, initializes metadata, exposes account/thread/turn helpers, and collects turn notifications into `TurnResult`.[E: sdk/python/pyproject.toml:6][E: sdk/python/src/openai_codex/api.py:75][E: sdk/python/src/openai_codex/api.py:82][E: sdk/python/src/openai_codex/client.py:212][E: sdk/python/src/openai_codex/client.py:238][E: sdk/python/src/openai_codex/client.py:252][E: sdk/python/src/openai_codex/async_client.py:52][E: sdk/python/src/openai_codex/_run.py:21]
@@ -23,7 +23,7 @@ updated: db887d03e1
 
 ## Package 与 exports
 
-`pyproject.toml` 声明 package name 是 `openai-codex`，版本是 `0.0.0-dev`，runtime dependency 包含 `pydantic>=2.12` 和 pinned `openai-codex-cli-bin==0.137.0a4`。[E: sdk/python/pyproject.toml:5][E: sdk/python/pyproject.toml:6][E: sdk/python/pyproject.toml:7][E: sdk/python/pyproject.toml:19]
+`pyproject.toml` 声明 package name 是 `openai-codex`，版本是 `0.0.0-dev`，classifier 已标记 Production/Stable，runtime dependency 包含 `pydantic>=2.12` 和 pinned `openai-codex-cli-bin==0.144.4`。[E: sdk/python/pyproject.toml:5][E: sdk/python/pyproject.toml:6][E: sdk/python/pyproject.toml:15][E: sdk/python/pyproject.toml:19]
 
 `openai_codex.__init__` 的 public surface re-export `Codex`、`AsyncCodex`、thread/turn handle、`TurnResult`、input types、`CodexConfig`、approval/sandbox enums、login handles、retry helper 和 typed error classes；it does not re-export generated app-server v2 aliases as public names.[E: sdk/python/src/openai_codex/__init__.py:15][E: sdk/python/src/openai_codex/__init__.py:16][E: sdk/python/src/openai_codex/__init__.py:19][E: sdk/python/src/openai_codex/__init__.py:24][E: sdk/python/src/openai_codex/__init__.py:32][E: sdk/python/src/openai_codex/__init__.py:37][E: sdk/python/src/openai_codex/__init__.py:39][E: sdk/python/src/openai_codex/__init__.py:40][E: sdk/python/src/openai_codex/__init__.py:54][E: sdk/python/src/openai_codex/__init__.py:56][E: sdk/python/src/openai_codex/__init__.py:59][E: sdk/python/src/openai_codex/__init__.py:80][E: sdk/python/src/openai_codex/__init__.py:91]
 

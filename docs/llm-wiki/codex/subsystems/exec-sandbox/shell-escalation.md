@@ -8,7 +8,7 @@ symbols: [EscalateServer, EscalationSession, EscalationPolicy, EscalationDecisio
 related: [subsys.exec-sandbox.shell-parsing, subsys.exec-sandbox.execpolicy-dsl, subsys.exec-sandbox.arg0-dispatch, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > Unix shell escalation 用 patched shell 的 `EXEC_WRAPPER` 拦截 execve，wrapper 通过 `CODEX_ESCALATE_SOCKET` 向 server 请求决策，server 返回 `Run`、`Escalate` 或 `Deny` 并在需要时 server-side spawn 被拦截命令。[E: codex-rs/shell-escalation/src/unix/escalate_protocol.rs:11][E: codex-rs/shell-escalation/src/unix/escalate_protocol.rs:14][E: codex-rs/shell-escalation/src/unix/escalate_protocol.rs:37][E: codex-rs/shell-escalation/src/unix/escalate_server.rs:292]
@@ -23,7 +23,7 @@ updated: db887d03e1
 
 ## 职责边界
 
-`codex-rs/shell-escalation/src/unix` 只实现 Unix interception protocol、socket framing、policy trait 和 server/client helper。具体 approval、Guardian、execpolicy fallback、sandbox transform 由 core 的 `unix_escalation.rs` 实现并作为 `EscalationPolicy`/`ShellCommandExecutor` 注入。[E: codex-rs/shell-escalation/src/unix/escalation_policy.rs:9][E: codex-rs/shell-escalation/src/unix/escalate_server.rs:36][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:354][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:837]
+`codex-rs/shell-escalation/src/unix` 只实现 Unix interception protocol、socket framing、policy trait 和 server/client helper。具体 approval、Guardian、execpolicy fallback、sandbox transform 由 core 的 `unix_escalation.rs` 实现并作为 `EscalationPolicy`/`ShellCommandExecutor` 注入。[E: codex-rs/shell-escalation/src/unix/escalation_policy.rs:9][E: codex-rs/shell-escalation/src/unix/escalate_server.rs:36][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:355][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:838]
 
 ## 关键 crate/文件
 
@@ -31,7 +31,7 @@ updated: db887d03e1
 - `codex-rs/shell-escalation/src/unix/socket.rs`: stream/datagram Unix socket framing、SCM_RIGHTS FD passing、async wrappers。[E: codex-rs/shell-escalation/src/unix/socket.rs:19][E: codex-rs/shell-escalation/src/unix/socket.rs:49][E: codex-rs/shell-escalation/src/unix/socket.rs:279][E: codex-rs/shell-escalation/src/unix/socket.rs:366]
 - `codex-rs/shell-escalation/src/unix/escalate_client.rs`: execve wrapper client path，发送 handshake/request，处理 `Run/Escalate/Deny`。[E: codex-rs/shell-escalation/src/unix/escalate_client.rs:36][E: codex-rs/shell-escalation/src/unix/escalate_client.rs:40][E: codex-rs/shell-escalation/src/unix/escalate_client.rs:63]
 - `codex-rs/shell-escalation/src/unix/escalate_server.rs`: session env overlay、datagram accept loop、per-request handler、server-side spawn。[E: codex-rs/shell-escalation/src/unix/escalate_server.rs:107][E: codex-rs/shell-escalation/src/unix/escalate_server.rs:189][E: codex-rs/shell-escalation/src/unix/escalate_server.rs:226][E: codex-rs/shell-escalation/src/unix/escalate_server.rs:264]
-- `codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs`: Codex core 的 policy provider 和 command executor，把 approval/sandbox/execpolicy 接到 protocol 上。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:354][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:635][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:837]
+- `codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs`: Codex core 的 policy provider 和 command executor，把 approval/sandbox/execpolicy 接到 protocol 上。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:355][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:636][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:838]
 
 ## 数据模型
 
@@ -56,22 +56,22 @@ updated: db887d03e1
 ## core policy 控制流
 
 1. `try_run_zsh_fork` 只在配置了 zsh path、feature enabled、用户 shell 是 Zsh 时继续。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:106][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:112][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:116][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:120]
-2. core 构造 `CoreShellActionProvider`，注入 execpolicy、approval policy、sandbox policies、prompt permissions 和 stopwatch。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:235][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:242][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:244][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:247][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:248]
-3. `determine_action` 调用 `evaluate_intercepted_exec_policy`，再判断 decision 是否由 real policy rule 驱动；`UseDefault` 和 `RequireEscalated` 只有在 `unsandboxed_allowed` 允许时才会触发 escalation，`WithAdditionalPermissions` 总是触发 escalation。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:645][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:663][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:665][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:666][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:669]
-4. `process_decision` 把 `Decision::Forbidden` 转为 deny；`Decision::Prompt` 会先检查 approval policy 是否允许 prompt，再走 hooks/Guardian/user prompt；`Decision::Allow` 在需要 escalation 时返回 `Escalate`，否则返回 `Run`。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:542][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:553][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:557][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:563][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:613]
-5. `prepare_escalated_exec` 对 `Unsandboxed` 返回原 command/cwd/arg0，并用 `exec_env_for_sandbox_permissions(..., RequireEscalated)` 派生 env；对 `TurnDefault` 或 explicit permissions 走 `prepare_sandboxed_exec`，后者再次调用 `SandboxManager::transform`。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:923][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:938][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:942][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:945][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:954][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:966][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:1022]
+2. core 构造 `CoreShellActionProvider`，注入 execpolicy、approval policy、sandbox policies、prompt permissions 和 stopwatch。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:236][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:243][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:245][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:248][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:249]
+3. `determine_action` 调用 `evaluate_intercepted_exec_policy`，再判断 decision 是否由 real policy rule 驱动；`UseDefault` 和 `RequireEscalated` 只有在 `unsandboxed_allowed` 允许时才会触发 escalation，`WithAdditionalPermissions` 总是触发 escalation。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:646][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:664][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:666][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:667][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:670]
+4. `process_decision` 把 `Decision::Forbidden` 转为 deny；`Decision::Prompt` 会先检查 approval policy 是否允许 prompt，再走 hooks/Guardian/user prompt；`Decision::Allow` 在需要 escalation 时返回 `Escalate`，否则返回 `Run`。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:543][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:554][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:558][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:564][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:614]
+5. `prepare_escalated_exec` 对 `Unsandboxed` 返回原 command/cwd/arg0，并用 `exec_env_for_sandbox_permissions(..., RequireEscalated)` 派生 env；对 `TurnDefault` 或 explicit permissions 走 `prepare_sandboxed_exec`，后者再次调用 `SandboxManager::transform`。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:925][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:940][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:944][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:947][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:956][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:968][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:1024]
 
 ## 设计动机与权衡
 
 - datagram socket 只用于传 per-request stream fd；response 在单独 stream socket 上完成，使同一个 inherited fd 可以处理多个并发 exec escalation requests。[E: codex-rs/shell-escalation/src/unix/escalate_server.rs:229][E: codex-rs/shell-escalation/src/unix/escalate_server.rs:244][I]
 - wrapper 的 `Run` path 使用 `libc::execv` 而不是 `std::process::Command`，代码说明这是为了尽量透明，避免 `CommandExt::exec()` 的 signal mask 和 fd 操作副作用。[E: codex-rs/shell-escalation/src/unix/escalate_client.rs:94][E: codex-rs/shell-escalation/src/unix/escalate_client.rs:109]
-- shell-wrapper parsing 默认关闭，core 注释说明 shell wrapper 只能看到 script text，不能看到最终 resolved executable path，所以 path-sensitive rules 依赖后续 authoritative execve interception。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:628][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:632]
+- shell-wrapper parsing 默认关闭，core 注释说明 shell wrapper 只能看到 script text，不能看到最终 resolved executable path，所以 path-sensitive rules 依赖后续 authoritative execve interception。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:629][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:633]
 
 ## gotcha
 
-- `EscalationSession::env()` 只返回 wrapper/socket overlay，不是完整 child environment；core executor 只合并 `CODEX_ESCALATE_SOCKET` 和 `EXEC_WRAPPER` 两个变量。[E: codex-rs/shell-escalation/src/unix/escalate_server.rs:112][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:876][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:878]
+- `EscalationSession::env()` 只返回 wrapper/socket overlay，不是完整 child environment；core executor 只合并 `CODEX_ESCALATE_SOCKET` 和 `EXEC_WRAPPER` 两个变量。[E: codex-rs/shell-escalation/src/unix/escalate_server.rs:112][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:877][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:879]
 - wrapper 转发 `EscalateRequest.env` 时会过滤掉 escalation env vars，避免 server-side escalated child 继承旧 wrapper/socket control vars。[E: codex-rs/shell-escalation/src/unix/escalate_client.rs:47][E: codex-rs/shell-escalation/src/unix/escalate_client.rs:48]
-- `Stopwatch::pause_for` 会在 approval prompt 期间暂停 timeout，避免用户/Guardian 等待时间直接耗尽命令执行 timeout。[E: codex-rs/shell-escalation/src/unix/stopwatch.rs:97][E: codex-rs/shell-escalation/src/unix/stopwatch.rs:101][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:459]
+- `Stopwatch::pause_for` 会在 approval prompt 期间暂停 timeout，避免用户/Guardian 等待时间直接耗尽命令执行 timeout。[E: codex-rs/shell-escalation/src/unix/stopwatch.rs:97][E: codex-rs/shell-escalation/src/unix/stopwatch.rs:101][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:460]
 
 ## Sources
 

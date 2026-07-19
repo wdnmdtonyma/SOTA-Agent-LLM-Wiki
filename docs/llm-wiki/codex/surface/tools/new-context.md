@@ -8,7 +8,7 @@ symbols: [NewContextWindowHandler, create_new_context_window_tool, NEW_CONTEXT_W
 related: [tool.get-context-remaining, subsys.core.tool-system, subsys.core.context-manager]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > `new_context` 是 token-budget 工具族的一员,用于请求开启新的 context window;当前 tool description 声明不会清除、重置或影响 environment state,handler 的成功文本声明不会总结会话历史。[E: codex-rs/core/src/tools/handlers/new_context_window_spec.rs:11][E: codex-rs/core/src/tools/handlers/new_context_window.rs:13][E: codex-rs/core/src/tools/handlers/new_context_window.rs:14]
@@ -46,7 +46,7 @@ updated: db887d03e1
 
 ## 6 注册与门控
 
-`add_core_utility_tools` 在 `Feature::TokenBudget` 开启时注册 `NewContextWindowHandler`,并把 exposure 设置为 `ToolExposure::DirectModelOnly`;同一个 gate 也注册 `GetContextRemainingHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:732] [E: codex-rs/core/src/tools/spec_plan.rs:733] [E: codex-rs/core/src/tools/spec_plan.rs:734]
+`add_core_utility_tools` 在 `Feature::TokenBudget` 开启时注册 `NewContextWindowHandler`,并把 exposure 设置为 `ToolExposure::DirectModelOnly`;同一个 gate 也注册 `GetContextRemainingHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:726] [E: codex-rs/core/src/tools/spec_plan.rs:727] [E: codex-rs/core/src/tools/spec_plan.rs:728]
 
 ## 7 parallel-safe
 
@@ -58,7 +58,7 @@ handler 只接受 function payload;收到其他 payload 会返回 `new_context h
 
 ## 9 设计动机·edge·历史
 
-`new_context` 通过 `DirectModelOnly` 暴露,表示它在初始模型工具面可见,但不会作为 code-mode nested tool 暴露。[E: codex-rs/tools/src/tool_executor.rs:32] [E: codex-rs/core/src/tools/spec_plan.rs:733]
+`new_context` 通过 `DirectModelOnly` 暴露,表示它在初始模型工具面可见,但不会作为 code-mode nested tool 暴露。[E: codex-rs/tools/src/tool_executor.rs:32] [E: codex-rs/core/src/tools/spec_plan.rs:727]
 
 ## Sources
 

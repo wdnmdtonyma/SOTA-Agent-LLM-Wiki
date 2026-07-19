@@ -8,7 +8,7 @@ symbols: [cloud_config_bundle_loader, cloud_config_bundle_loader_for_storage, Cl
 related: [subsys.config-auth.config-loading, subsys.config-auth.auth-flows, subsys.cloud.cloud-tasks]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > `cloud-config` 是当前 enterprise cloud-delivered config bundle 的 transport/cache/refresh 层：它从 backend 拉取 config + requirements fragments，验证后写入签名 cache，并把共享 loader 交给 `codex-config` 插入 config layer stack。[E: codex-rs/cloud-config/src/lib.rs:6][E: codex-rs/cloud-config/src/lib.rs:7][E: codex-rs/cloud-config/src/lib.rs:8][E: codex-rs/cloud-config/src/lib.rs:10][E: codex-rs/cloud-config/src/lib.rs:13][E: codex-rs/cloud-config/src/lib.rs:14][E: codex-rs/cloud-config/src/backend.rs:90][E: codex-rs/cloud-config/src/service.rs:300][E: codex-rs/cloud-config/src/cache.rs:151][E: codex-rs/cloud-config/src/cache.rs:152][E: codex-rs/cloud-config/src/cache.rs:220][E: codex-rs/config/src/loader/mod.rs:140][E: codex-rs/config/src/loader/mod.rs:239]

@@ -8,10 +8,10 @@ symbols: [ThreadEvent, ThreadStartedEvent, TurnCompletedEvent, ItemCompletedEven
 related: [sdk.ts-overview, sdk.ts-structured-output]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
-> TypeScript SDK events/items 是 codex exec JSONL 的 public TypeScript surface：events 描述 stream 顶层 envelope，items 描述 agent/thread 中的具体 artifact。[E: sdk/typescript/src/events.ts:74][E: sdk/typescript/src/items.ts:120]
+> TypeScript SDK events/items 是 codex exec JSONL 的 public TypeScript surface：events 描述 stream 顶层 envelope，items 描述 agent/thread 中的具体 artifact。[E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/items.ts:120]
 
 ## 能回答的问题
 
@@ -22,18 +22,18 @@ updated: db887d03e1
 
 ## Event union
 
-`events.ts` 明确说明 event types 基于 `codex-rs/exec/src/exec_events.rs`；`ThreadEvent` union 包含 thread started、turn started/completed/failed、item started/updated/completed 和 stream-level error。[E: sdk/typescript/src/events.ts:1][E: sdk/typescript/src/events.ts:73][E: sdk/typescript/src/events.ts:74][E: sdk/typescript/src/events.ts:75][E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/events.ts:77][E: sdk/typescript/src/events.ts:78][E: sdk/typescript/src/events.ts:79][E: sdk/typescript/src/events.ts:80][E: sdk/typescript/src/events.ts:81]
+`events.ts` 明确说明 event types 基于 `codex-rs/exec/src/exec_events.rs`；`ThreadEvent` union 包含 thread started、turn started/completed/failed、item started/updated/completed 和 stream-level error。[E: sdk/typescript/src/events.ts:1][E: sdk/typescript/src/events.ts:75][E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/events.ts:77][E: sdk/typescript/src/events.ts:78][E: sdk/typescript/src/events.ts:79][E: sdk/typescript/src/events.ts:80][E: sdk/typescript/src/events.ts:81][E: sdk/typescript/src/events.ts:82][E: sdk/typescript/src/events.ts:83]
 
 | Event type | Payload | 说明 | Evidence |
 |---|---|---|---|
 | `thread.started` | `thread_id` | 新 thread 首个事件；SDK 用它填充 `Thread.id`。 | [E: sdk/typescript/src/events.ts:6][E: sdk/typescript/src/events.ts:7][E: sdk/typescript/src/events.ts:9][E: sdk/typescript/src/thread.ts:105] |
 | `turn.started` | none | 新 prompt 对应 turn 开始。 | [E: sdk/typescript/src/events.ts:16][E: sdk/typescript/src/events.ts:17] |
-| `turn.completed` | `usage` | turn completed，usage 是 input/cached/output/reasoning-output tokens。 | [E: sdk/typescript/src/events.ts:21][E: sdk/typescript/src/events.ts:23][E: sdk/typescript/src/events.ts:25][E: sdk/typescript/src/events.ts:27][E: sdk/typescript/src/events.ts:28][E: sdk/typescript/src/events.ts:29][E: sdk/typescript/src/events.ts:33][E: sdk/typescript/src/events.ts:34][E: sdk/typescript/src/events.ts:35] |
-| `turn.failed` | `error` | turn failed，error 有 message。 | [E: sdk/typescript/src/events.ts:38][E: sdk/typescript/src/events.ts:39][E: sdk/typescript/src/events.ts:41][E: sdk/typescript/src/events.ts:63][E: sdk/typescript/src/events.ts:64] |
-| `item.started` | `item` | item 被加入 thread，通常处于 in progress。 | [E: sdk/typescript/src/events.ts:45][E: sdk/typescript/src/events.ts:46][E: sdk/typescript/src/events.ts:47] |
-| `item.updated` | `item` | item update。 | [E: sdk/typescript/src/events.ts:50][E: sdk/typescript/src/events.ts:51] |
-| `item.completed` | `item` | item terminal state。 | [E: sdk/typescript/src/events.ts:57][E: sdk/typescript/src/events.ts:58][E: sdk/typescript/src/events.ts:59] |
-| `error` | `message` | stream-level unrecoverable error。 | [E: sdk/typescript/src/events.ts:63][E: sdk/typescript/src/events.ts:64][E: sdk/typescript/src/events.ts:68][E: sdk/typescript/src/events.ts:69][E: sdk/typescript/src/events.ts:70] |
+| `turn.completed` | `usage` | turn completed；usage 是 input、cached-input、cache-write-input、output 和 reasoning-output tokens。 | [E: sdk/typescript/src/events.ts:21][E: sdk/typescript/src/events.ts:23][E: sdk/typescript/src/events.ts:25][E: sdk/typescript/src/events.ts:26][E: sdk/typescript/src/events.ts:27][E: sdk/typescript/src/events.ts:29][E: sdk/typescript/src/events.ts:31][E: sdk/typescript/src/events.ts:35][E: sdk/typescript/src/events.ts:37] |
+| `turn.failed` | `error` | turn failed，error 有 message。 | [E: sdk/typescript/src/events.ts:40][E: sdk/typescript/src/events.ts:41][E: sdk/typescript/src/events.ts:43][E: sdk/typescript/src/events.ts:65][E: sdk/typescript/src/events.ts:66] |
+| `item.started` | `item` | item 被加入 thread，通常处于 in progress。 | [E: sdk/typescript/src/events.ts:47][E: sdk/typescript/src/events.ts:48][E: sdk/typescript/src/events.ts:49] |
+| `item.updated` | `item` | item update。 | [E: sdk/typescript/src/events.ts:52][E: sdk/typescript/src/events.ts:53] |
+| `item.completed` | `item` | item terminal state。 | [E: sdk/typescript/src/events.ts:59][E: sdk/typescript/src/events.ts:60][E: sdk/typescript/src/events.ts:61] |
+| `error` | `message` | stream-level unrecoverable error。 | [E: sdk/typescript/src/events.ts:65][E: sdk/typescript/src/events.ts:66][E: sdk/typescript/src/events.ts:70][E: sdk/typescript/src/events.ts:71][E: sdk/typescript/src/events.ts:72] |
 
 ## Item union
 
@@ -52,9 +52,9 @@ updated: db887d03e1
 
 ## Run extraction
 
-`Thread.run()` 只把 `item.completed` 推入 returned `items`；如果 completed item 是 `agent_message`，则用该 item 的 `text` 更新 `finalResponse`，所以最后一个 completed agent message 会成为 final response。[E: sdk/typescript/src/thread.ts:121][E: sdk/typescript/src/thread.ts:122][E: sdk/typescript/src/thread.ts:123][E: sdk/typescript/src/thread.ts:124][E: sdk/typescript/src/thread.ts:126][E: sdk/typescript/src/thread.ts:137]
+`Thread.run()` 只把 `item.completed` 推入 returned `items`；如果 completed item 是 `agent_message`，则用该 item 的 `text` 更新 `finalResponse`，所以最后一个 completed agent message 会成为 final response。[E: sdk/typescript/src/thread.ts:123][E: sdk/typescript/src/thread.ts:124][E: sdk/typescript/src/thread.ts:125][E: sdk/typescript/src/thread.ts:126][E: sdk/typescript/src/thread.ts:128][E: sdk/typescript/src/thread.ts:139]
 
-`Thread.run()` 在 `turn.completed` 时记录 usage，在 `turn.failed` 时保存 error 并在循环后 throw；streamed API 则直接把每个 parsed event yield 给调用者。[E: sdk/typescript/src/thread.ts:127][E: sdk/typescript/src/thread.ts:128][E: sdk/typescript/src/thread.ts:129][E: sdk/typescript/src/thread.ts:130][E: sdk/typescript/src/thread.ts:135][E: sdk/typescript/src/thread.ts:97][E: sdk/typescript/src/thread.ts:100][E: sdk/typescript/src/thread.ts:107]
+`Thread.run()` 在 `turn.completed` 时记录 usage，在 `turn.failed` 时保存 error 并在循环后 throw；streamed parser 会把旧 CLI 省略的 `cache_write_input_tokens` 补成 `0`，再把 event yield 给调用者。[E: sdk/typescript/src/thread.ts:106][E: sdk/typescript/src/thread.ts:107][E: sdk/typescript/src/thread.ts:109][E: sdk/typescript/src/thread.ts:129][E: sdk/typescript/src/thread.ts:130][E: sdk/typescript/src/thread.ts:131][E: sdk/typescript/src/thread.ts:132][E: sdk/typescript/src/thread.ts:137]
 
 ## 设计动机
 

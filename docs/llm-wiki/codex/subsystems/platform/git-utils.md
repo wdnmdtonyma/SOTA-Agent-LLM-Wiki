@@ -8,7 +8,7 @@ symbols: [GitInfo, collect_git_info, ApplyGitRequest, ApplyGitResult, apply_git_
 related: [subsys.cloud.cloud-tasks, subsys.cloud.cloud-task-api, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > `codex_git_utils` is Codex's local Git support crate: `lib.rs` re-exports patch apply, baseline diff/reset, merge-base, metadata, fsmonitor policy, and symlink helpers, while `operations.rs` remains a crate-private system-git execution layer。[E: codex-rs/git-utils/src/lib.rs:1][E: codex-rs/git-utils/src/lib.rs:10][E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:22][E: codex-rs/git-utils/src/lib.rs:25][E: codex-rs/git-utils/src/lib.rs:28][E: codex-rs/git-utils/src/lib.rs:45][E: codex-rs/git-utils/src/operations.rs:11]
@@ -43,6 +43,8 @@ info exports include `GitInfo`、`collect_git_info`、branch/default branch help
 `collect_git_info` first checks `git rev-parse --git-dir`; after a successful repo check it runs `git rev-parse HEAD`、`git rev-parse --abbrev-ref HEAD` and `git remote get-url origin` with `tokio::join!`, then fills the three optional fields independently。[E: codex-rs/git-utils/src/info.rs:95][E: codex-rs/git-utils/src/info.rs:97][E: codex-rs/git-utils/src/info.rs:102][E: codex-rs/git-utils/src/info.rs:107][E: codex-rs/git-utils/src/info.rs:108][E: codex-rs/git-utils/src/info.rs:109][E: codex-rs/git-utils/src/info.rs:113][E: codex-rs/git-utils/src/info.rs:124][E: codex-rs/git-utils/src/info.rs:134][E: codex-rs/git-utils/src/info.rs:143]
 
 `get_git_repo_root` is a filesystem walk: it starts at the base path or its parent and looks for a `.git` entry, without requiring the git binary。[E: codex-rs/git-utils/src/info.rs:35][E: codex-rs/git-utils/src/info.rs:36][E: codex-rs/git-utils/src/info.rs:39][E: codex-rs/git-utils/src/info.rs:41]
+
+`local_git_branches` 通过 `git for-each-ref --format=%(refname:short) refs/heads` 只读本地 branch refs，因此 detached `HEAD` 不会被当作分支项；结果先排序，再在 default branch 存在时把它移到首位。[E: codex-rs/git-utils/src/info.rs:864][E: codex-rs/git-utils/src/info.rs:866][E: codex-rs/git-utils/src/info.rs:867][E: codex-rs/git-utils/src/info.rs:868][E: codex-rs/git-utils/src/info.rs:874][E: codex-rs/git-utils/src/info.rs:883][E: codex-rs/git-utils/src/info.rs:885][E: codex-rs/git-utils/src/info.rs:889]
 
 ## Patch apply
 

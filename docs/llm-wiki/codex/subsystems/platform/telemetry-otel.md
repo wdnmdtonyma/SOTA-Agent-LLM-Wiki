@@ -8,7 +8,7 @@ symbols: [OtelSettings, OtelExporter, OtelProvider, TelemetryAuthMode, resolve_e
 related: [subsys.platform.analytics, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 > `codex_otel` 是 Codex 的 OpenTelemetry provider crate：它导出 OTEL settings/exporter types、trace-context validators 和 `OtelProvider`，把 Statsig exporter 解析成 OTLP HTTP JSON 或在 debug build 中禁用，并按 settings 构造 logs/traces/metrics exporters。[E: codex-rs/otel/src/lib.rs:15][E: codex-rs/otel/src/lib.rs:17][E: codex-rs/otel/src/lib.rs:28][E: codex-rs/otel/src/lib.rs:37][E: codex-rs/otel/src/config.rs:13][E: codex-rs/otel/src/config.rs:20][E: codex-rs/otel/src/config.rs:24][E: codex-rs/otel/src/provider.rs:77][E: codex-rs/otel/src/provider.rs:100][E: codex-rs/otel/src/provider.rs:117][E: codex-rs/otel/src/provider.rs:121]
@@ -27,7 +27,7 @@ updated: db887d03e1
 
 `OtelExporter` variants 是 `None`、`Statsig`、`OtlpGrpc` 和 `OtlpHttp`；`OtelHttpProtocol` variants 是 `Binary` 和 `Json`；`OtelTlsConfig` 支持 CA certificate、client certificate 和 client private key paths。[E: codex-rs/otel/src/config.rs:73][E: codex-rs/otel/src/config.rs:75][E: codex-rs/otel/src/config.rs:77][E: codex-rs/otel/src/config.rs:81][E: codex-rs/otel/src/config.rs:82][E: codex-rs/otel/src/config.rs:83][E: codex-rs/otel/src/config.rs:84][E: codex-rs/otel/src/config.rs:88][E: codex-rs/otel/src/config.rs:89][E: codex-rs/otel/src/config.rs:93][E: codex-rs/otel/src/config.rs:94][E: codex-rs/otel/src/config.rs:99]
 
-`TelemetryAuthMode` 只有 `ApiKey` 与 `Chatgpt`；`AuthMode::ApiKey` 和 `BedrockApiKey` 映射成 `TelemetryAuthMode::ApiKey`，`Chatgpt`、`ChatgptAuthTokens`、`AgentIdentity` 和 `PersonalAccessToken` 映射成 `TelemetryAuthMode::Chatgpt`。[E: codex-rs/otel/src/lib.rs:51][E: codex-rs/otel/src/lib.rs:52][E: codex-rs/otel/src/lib.rs:53][E: codex-rs/otel/src/lib.rs:56][E: codex-rs/otel/src/lib.rs:59][E: codex-rs/otel/src/lib.rs:60][E: codex-rs/otel/src/lib.rs:61][E: codex-rs/otel/src/lib.rs:62][E: codex-rs/otel/src/lib.rs:63]
+`TelemetryAuthMode` 只有 `ApiKey` 与 `Chatgpt`；`AuthMode::ApiKey` 和 `BedrockApiKey` 映射成 `TelemetryAuthMode::ApiKey`，`Chatgpt`、`ChatgptAuthTokens`、`Headers`、`AgentIdentity` 和 `PersonalAccessToken` 映射成 `TelemetryAuthMode::Chatgpt`。[E: codex-rs/otel/src/lib.rs:51][E: codex-rs/otel/src/lib.rs:52][E: codex-rs/otel/src/lib.rs:53][E: codex-rs/otel/src/lib.rs:56][E: codex-rs/otel/src/lib.rs:59][E: codex-rs/otel/src/lib.rs:60][E: codex-rs/otel/src/lib.rs:61][E: codex-rs/otel/src/lib.rs:62][E: codex-rs/otel/src/lib.rs:63][E: codex-rs/otel/src/lib.rs:64]
 
 ## Exporter resolution
 
@@ -59,7 +59,7 @@ Statsig 被解析成 OTLP HTTP JSON，而不是独立 transport，说明 Codex �
 
 - debug build 默认禁用 Statsig exporter；本地开发看到 no exporter 不代表 release 行为一致。[E: codex-rs/otel/src/config.rs:15][E: codex-rs/otel/src/config.rs:20][E: codex-rs/otel/src/config.rs:21][E: codex-rs/otel/src/config.rs:24]
 - header parse 不会返回 config error；invalid header 会被 `build_header_map` 跳过。[E: codex-rs/otel/src/otlp.rs:25][E: codex-rs/otel/src/otlp.rs:26][E: codex-rs/otel/src/otlp.rs:28]
-- `start_global_timer` 依赖已经安装的 global metrics client；没有 global metrics 时返回 `MetricsError::ExporterDisabled`。[E: codex-rs/otel/src/lib.rs:69][E: codex-rs/otel/src/lib.rs:70][E: codex-rs/otel/src/lib.rs:71][E: codex-rs/otel/src/lib.rs:73]
+- `start_global_timer` 依赖已经安装的 global metrics client；没有 global metrics 时返回 `MetricsError::ExporterDisabled`。[E: codex-rs/otel/src/lib.rs:70][E: codex-rs/otel/src/lib.rs:71][E: codex-rs/otel/src/lib.rs:72][E: codex-rs/otel/src/lib.rs:74]
 
 ## Sources
 

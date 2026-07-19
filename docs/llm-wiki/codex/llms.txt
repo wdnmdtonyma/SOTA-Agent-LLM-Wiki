@@ -1,8 +1,8 @@
 # Codex 源码 LLM Wiki — 入口索引
 
-> OpenAI Codex 真实源码(`Best/codex/`,97-crate Rust workspace + TS/Py SDK)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
+> OpenAI Codex 真实源码(`Best/codex/`,124-crate Rust workspace + TS/Py SDK)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
 >
-> **状态:大纲待 review(已过 4 路独立 subagent 源码校验,170 节点)。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
+> **状态:172 个节点均已对照 `4d7a5c7c73` 复核并标记 verified。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
 
 ## 怎么用
 - **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
@@ -23,7 +23,7 @@
 - [trace:MCP 工具调用](spine/trace-mcp-call.md): 外部 MCP server 工具 发现 → 注册 → 调用路由 → 结果回流 — codex-mcp/ · rmcp-client/
 - [trace:spawn 子 agent](spine/trace-subagent.md): spawn_agent → 子 agent 循环 → mailbox/wait_agent → 结果回流 — core/src/tools/handlers/multi_agents*/ · core/
 
-## T1 — Surface / Tools(每工具一节点,37 — 目标 HEAD 对照 spec_plan.rs 重核中)
+## T1 — Surface / Tools(每工具一节点,37)
 
 ### Shell 执行
 - [exec_command](surface/tools/exec-command.md): unified-exec 单命令执行(TTY/管道)— core/src/tools/handlers/unified_exec/exec_command.rs
@@ -94,7 +94,7 @@
 
 ## T1 — Surface / CLI(4 节点,覆盖 22 子命令 + ~18 全局 flag + external-agent import)
 - [子命令 catalog](surface/cli/subcommands.md): exec/login/logout/mcp/plugin/mcp-server/app-server/app/completion/sandbox/debug/execpolicy/apply/resume/fork/cloud/responses*/exec-server/features … — cli/src/main.rs
-- [从外部 agent 导入](surface/cli/external-agent-import.md): /import + externalAgentConfig/* + .claude/.mcp.json/hooks/commands/subagents/sessions migration — external-agent-migration/ · external-agent-sessions/ · app-server/src/config/external_agent_config.rs
+- [从外部 agent 导入](surface/cli/external-agent-import.md): /import + externalAgentConfig/* + Claude/Cursor config、memory、sessions migration — external-agent-migration/ · app-server/src/external_agent_migration/
 - [全局 flag](surface/cli/global-flags.md): --model --profile -c/--config --full-auto --sandbox-mode --approval-policy --add-dir --oss --remote … — cli/src/main.rs · utils/cli/src/shared_options.rs
 - [exec 非交互模式](surface/cli/exec-mode.md): `codex exec` 标志 + --json + event processors — exec/src/cli.rs · exec/src/lib.rs · docs/exec.md
 
@@ -141,7 +141,7 @@
 - [审批/沙箱策略解析](subsystems/core/approval-policy.md): AskForApproval + SandboxPolicy → Decision 自动批准/提示/禁止 — utils/approval-presets/ · protocol/approvals.rs · guardian/policy_template.md
 - [Review mode](subsystems/core/review-mode.md): ReviewTask 生命周期 · review session · ReviewRequest/Output — core/src/tasks/review.rs · guardian/review_session.rs
 - [Realtime 对话状态机](subsystems/core/realtime-conversation.md): realtime 会话 start→active→end · async vs sync turn — core/src/realtime_conversation.rs
-- [Collaboration modes](subsystems/core/collaboration-modes.md): 协作模式切换 · 指令注入 · 工具行为变化 — collaboration-mode-templates/ · core/src/context/collaboration_mode_instructions.rs
+- [Collaboration modes](subsystems/core/collaboration-modes.md): mode settings · typed world-state 指令注入 · 工具 availability — collaboration-mode-templates/ · core/src/context/world_state/collaboration_mode.rs
 - [Ghost commit 与 undo](subsystems/core/ghost-undo.md): baseline 快照 · 冲突检测 · undo task · 状态回退 — core/src/tasks/ghost_snapshot.rs · undo.rs · git-utils/
 - [Rollout 持久化](subsystems/core/rollout-persistence.md): JSONL recorder + thread 索引 — rollout/
 - [State DB(SQLite)](subsystems/core/state-db.md): 元数据镜像 — state/
@@ -152,7 +152,7 @@
 - [执行与沙箱总览](subsystems/exec-sandbox/overview.md): SandboxType(4)+ exec 管线 — sandboxing/src/manager.rs
 - [exec-server](subsystems/exec-sandbox/exec-server.md): RPC server · process/fs handler · session registry · PTY — exec-server/ · utils/pty/
 - [Executor file system](subsystems/exec-sandbox/file-system.md): local/remote filesystem trait + sandbox context — file-system/
-- [execpolicy DSL](subsystems/exec-sandbox/execpolicy-dsl.md): 策略语言 · 规则 · Decision(Allow/Prompt/Forbidden)· legacy — execpolicy/ · execpolicy-legacy/
+- [execpolicy DSL](subsystems/exec-sandbox/execpolicy-dsl.md): Starlark-like 策略语言 · prefix/network/host executable 规则 · Decision(Allow/Prompt/Forbidden)— execpolicy/
 - [apply-patch 引擎](subsystems/exec-sandbox/apply-patch-engine.md): parser · Hunk(Add/Update/Delete/Move)· 应用 — apply-patch/src/parser.rs · lib.rs
 - [Seatbelt 沙箱(macOS)](subsystems/exec-sandbox/sandbox-seatbelt.md): sandbox-exec + .sbpl — sandboxing/src/seatbelt.rs
 - [Linux 沙箱](subsystems/exec-sandbox/sandbox-linux.md): Landlock + seccomp + system/bundled bubblewrap — linux-sandbox/ · bwrap/
@@ -172,7 +172,7 @@
 
 ## T2 — Subsystems / Providers & API(10)
 - [Provider 抽象总览](subsystems/providers/overview.md): ModelProvider trait · 内建 provider 注册 — model-provider/ · model-provider-info/
-- [HTTP client 层](subsystems/providers/http-client.md): 共享 HTTP 传输/重试 · backend API model 类型 — codex-client/ · backend-client/ · codex-backend-openapi-models/
+- [HTTP client 层](subsystems/providers/http-client.md): 共享 HTTP transport/body preparation · Codex retry · backend API model 类型 — http-client/ · codex-client/retry.rs · backend-client/
 - [OpenAI / ChatGPT provider](subsystems/providers/provider-openai.md): base url · auth · headers — model-provider-info/src/lib.rs
 - [Amazon Bedrock provider](subsystems/providers/provider-bedrock.md): Mantle endpoint + SigV4 — model-provider/src/amazon_bedrock/ · aws-auth/
 - [OSS provider(Ollama/LMStudio)](subsystems/providers/provider-oss.md): 本地模型 · 拉取/加载 — ollama/ · lmstudio/
@@ -221,7 +221,7 @@
 - [Analytics](subsystems/platform/analytics.md): events · facts · reducer — analytics/
 - [Network proxy](subsystems/platform/network-proxy.md): MITM 代理 · 网络策略 — network-proxy/
 - [终端探测](subsystems/platform/terminal-detection.md): 终端能力探测 — terminal-detection/
-- [Realtime 传输(WebRTC/WS)](subsystems/platform/realtime.md): realtime-webrtc + realtime websocket 传输层 — realtime-webrtc/ · codex-api/endpoint/
+- [Realtime 传输(WebRTC call + WebSocket sideband)](subsystems/platform/realtime.md): SDP signaling、standalone/sideband WebSocket 与 V1/Frameless/V2 wire adapter — codex-api/endpoint/realtime_*
 - [Agent identity](subsystems/platform/agent-identity.md): agent 身份 + install-context — agent-identity/ · install-context/
 
 ## T3 — Reference
@@ -232,7 +232,7 @@
 - [SessionTask 变体目录](reference/session-tasks.md): SessionTask trait + 变体(Review/Compact/Undo/GhostSnapshot/Regular/UserShell)— core/src/tasks/mod.rs
 - [数据模型](reference/data-model.md): 核心共享类型 — protocol/ · core/
 - [关键类型索引](reference/key-types.md): 各子系统 load-bearing struct/trait 索引 — codex-rs/
-- [Crate 索引](reference/crate-index.md): 97 crate(含 utils/* ~25)一句话目录 — codex-rs/Cargo.toml
+- [Crate 索引](reference/crate-index.md): 124 个 workspace crate 一句话目录 — codex-rs/Cargo.toml
 - [Feature flag 目录](reference/feature-flags.md): 62 个 flag 按 stage 全 catalog — features/src/lib.rs
 - [环境变量目录](reference/env-vars.md): CODEX_* 等 — codex-rs/
 - [术语表与 codename](reference/glossary.md): SQ/EQ · rollout · ghost commit · seatbelt · landlock · guardian · code-mode …

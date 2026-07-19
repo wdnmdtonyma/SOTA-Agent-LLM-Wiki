@@ -4,11 +4,13 @@ title: 传输层
 kind: subsystem
 tier: T2
 source:
+  - codex-rs/app-server-transport/src/outgoing_message.rs
   - codex-rs/app-server-transport/src/transport/mod.rs
   - codex-rs/app-server-transport/src/transport/stdio.rs
   - codex-rs/app-server-transport/src/transport/websocket.rs
   - codex-rs/app-server-transport/src/transport/auth.rs
   - codex-rs/app-server/src/transport.rs
+  - codex-rs/app-server-protocol/src/protocol/common.rs
   - codex-rs/stdio-to-uds/src/lib.rs
   - codex-rs/uds/src/lib.rs
 symbols:
@@ -25,7 +27,7 @@ related:
   - subsys.app-server.message-processor
 evidence: explicit
 status: verified
-updated: db887d03e1
+updated: 4d7a5c7c73
 ---
 
 app-server transport implementation moved to `codex-app-server-transport`; `codex-rs/app-server/src/transport.rs` now re-exports transport types/functions and keeps only app-server-local connection/outbound filtering glue. The transport surface feeds processor-facing `TransportEvent` values and writer channels for stdio, Unix socket, WebSocket, and remote-control origins [E: codex-rs/app-server/src/transport.rs:15][E: codex-rs/app-server/src/transport.rs:27][E: codex-rs/app-server/src/transport.rs:31][E: codex-rs/app-server/src/transport.rs:35][E: codex-rs/app-server/src/transport.rs:36][E: codex-rs/app-server-transport/src/transport/mod.rs:73][E: codex-rs/app-server-transport/src/transport/mod.rs:170][E: codex-rs/app-server-transport/src/transport/mod.rs:187]。
@@ -48,6 +50,7 @@ app-server transport implementation moved to `codex-app-server-transport`; `code
 ## 关键 crate/文件
 
 - `codex-rs/app-server-transport/src/transport/mod.rs`: transport enum/parser, connection ids, event type, inbound enqueue/backpressure。
+- `codex-rs/app-server-transport/src/outgoing_message.rs`: transport-facing outgoing request/response/error 与 server-notification envelope。
 - `codex-rs/app-server-transport/src/transport/stdio.rs`: JSONL stdin/stdout transport。
 - `codex-rs/app-server-transport/src/transport/websocket.rs`: axum WebSocket listener, health endpoints, websocket inbound/outbound loops。
 - `codex-rs/app-server-transport/src/transport/auth.rs`: WebSocket auth policy and bearer/JWT validation。
@@ -58,6 +61,7 @@ app-server transport implementation moved to `codex-app-server-transport`; `code
 
 - Transport channels use bounded capacity `CHANNEL_CAPACITY = 128`; inbound JSON payloads parse to `JSONRPCMessage` and are wrapped as `TransportEvent::IncomingMessage` [E: codex-rs/app-server-transport/src/transport/mod.rs:21][E: codex-rs/app-server-transport/src/transport/mod.rs:24][E: codex-rs/app-server-transport/src/transport/mod.rs:200][E: codex-rs/app-server-transport/src/transport/mod.rs:206][E: codex-rs/app-server-transport/src/transport/mod.rs:208][E: codex-rs/app-server-transport/src/transport/mod.rs:217][E: codex-rs/app-server-transport/src/transport/mod.rs:223]。
 - `OutboundConnectionState` lives in app-server local glue and stores initialized/experimental flags, opted-out notification methods, writer channel, and optional disconnect token [E: codex-rs/app-server/src/transport.rs:62][E: codex-rs/app-server/src/transport.rs:63][E: codex-rs/app-server/src/transport.rs:64][E: codex-rs/app-server/src/transport.rs:65][E: codex-rs/app-server/src/transport.rs:66][E: codex-rs/app-server/src/transport.rs:67]。
+- `OutgoingMessage::AppServerNotification` 现在承载扁平化的 `ServerNotificationEnvelope`；envelope 除具体 notification 外还带 optional `emitted_at_ms`，当前 server 在 fan-out 前写入该 Unix 毫秒时间，而 optional 形态让客户端仍可解码旧 server 消息。[E: codex-rs/app-server-transport/src/outgoing_message.rs:21][E: codex-rs/app-server-transport/src/outgoing_message.rs:24][E: codex-rs/app-server-transport/src/outgoing_message.rs:28][E: codex-rs/app-server-protocol/src/protocol/common.rs:1742][E: codex-rs/app-server-protocol/src/protocol/common.rs:1748][E: codex-rs/app-server-protocol/src/protocol/common.rs:1749][E: codex-rs/app-server-protocol/src/protocol/common.rs:1751][E: codex-rs/app-server-protocol/src/protocol/common.rs:1758]
 - WebSocket auth settings support capability-token sources (`TokenFile` or `TokenSha256`) and signed bearer-token settings (`shared_secret_file`, optional issuer/audience, max clock skew) [E: codex-rs/app-server-transport/src/transport/auth.rs:65][E: codex-rs/app-server-transport/src/transport/auth.rs:70][E: codex-rs/app-server-transport/src/transport/auth.rs:71][E: codex-rs/app-server-transport/src/transport/auth.rs:74][E: codex-rs/app-server-transport/src/transport/auth.rs:75][E: codex-rs/app-server-transport/src/transport/auth.rs:76][E: codex-rs/app-server-transport/src/transport/auth.rs:77][E: codex-rs/app-server-transport/src/transport/auth.rs:78][E: codex-rs/app-server-transport/src/transport/auth.rs:82][E: codex-rs/app-server-transport/src/transport/auth.rs:83][E: codex-rs/app-server-transport/src/transport/auth.rs:84][E: codex-rs/app-server-transport/src/transport/auth.rs:85]。
 
 ## 控制流
@@ -85,10 +89,12 @@ app-server transport implementation moved to `codex-app-server-transport`; `code
 ## Sources
 
 - `codex-rs/app-server-transport/src/transport/mod.rs`
+- `codex-rs/app-server-transport/src/outgoing_message.rs`
 - `codex-rs/app-server-transport/src/transport/stdio.rs`
 - `codex-rs/app-server-transport/src/transport/websocket.rs`
 - `codex-rs/app-server-transport/src/transport/auth.rs`
 - `codex-rs/app-server/src/transport.rs`
+- `codex-rs/app-server-protocol/src/protocol/common.rs`
 - `codex-rs/stdio-to-uds/src/lib.rs`
 - `codex-rs/uds/src/lib.rs`
 
