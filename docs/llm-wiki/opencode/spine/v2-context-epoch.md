@@ -9,7 +9,7 @@ symbols: [SessionContextEpoch.initialize, SessionContextEpoch.prepare, SessionCo
 related: [session-v2.system-context-algebra, session-v2.compaction]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 Context Epoch 是一代已准入的 privileged System Context:它保存 baseline 文本、结构化 snapshot 与 baseline seq;首次 baseline admission 在 prompt promotion 前完成,后续 reconcile/replace 在 safe provider-turn boundary 完成。
@@ -43,9 +43,9 @@ flowchart TD
 
 4. `SessionContextEpochTable` 现在只保存 `session_id/baseline/snapshot/baseline_seq`,当前表结构不再保存 selected agent 或 replacement marker。[E: packages/core/src/session/sql.ts:168][E: packages/core/src/session/sql.ts:173][E: packages/core/src/session/sql.ts:174][E: packages/core/src/session/sql.ts:175]
 
-5. `SessionRunner.loadSystemContext` 把 location-wide system context、skill guidance、reference guidance 合并成 turn context input。[E: packages/core/src/session/runner/llm.ts:163][E: packages/core/src/session/runner/llm.ts:164][E: packages/core/src/session/runner/llm.ts:166]
+5. `SessionRunner.loadSystemContext` 把 location-wide system context、skill guidance、reference guidance 合并成 turn context input。[E: packages/core/src/session/runner/llm.ts:168][E: packages/core/src/session/runner/llm.ts:169][E: packages/core/src/session/runner/llm.ts:171]
 
-6. `runTurnAttempt` 在 promote pending input 前调用 `SessionContextEpoch.initialize`;这保证首次完整 baseline 在 pending prompt 变成 model-visible history 前准备好。[E: packages/core/src/session/runner/llm.ts:168][E: packages/core/src/session/runner/llm.ts:177][E: packages/core/src/session/runner/llm.ts:178][E: packages/core/src/session/runner/llm.ts:182]
+6. `runTurnAttempt` 在 promote pending input 前调用 `SessionContextEpoch.initialize`;这保证首次完整 baseline 在 pending prompt 变成 model-visible history 前准备好。[E: packages/core/src/session/runner/llm.ts:173][E: packages/core/src/session/runner/llm.ts:182][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:187]
 
 7. `SessionContextEpoch.initialize` 调 `initializeOnce`;若 epoch 不存在,`initializeOnce` 观察 context 并调用 `SystemContext.initialize`,随后 insert baseline/snapshot。[E: packages/core/src/session/context-epoch.ts:23][E: packages/core/src/session/context-epoch.ts:28][E: packages/core/src/session/context-epoch.ts:80][E: packages/core/src/session/context-epoch.ts:85][E: packages/core/src/session/context-epoch.ts:86][E: packages/core/src/session/context-epoch.ts:87]
 
@@ -53,7 +53,7 @@ flowchart TD
 
 9. `insert` 读取 `EventV2.latestSequence` 作为 baseline seq,再插入 `SessionContextEpochTable` 的 baseline、snapshot 与 baseline_seq。[E: packages/core/src/session/context-epoch.ts:122][E: packages/core/src/session/context-epoch.ts:127][E: packages/core/src/session/context-epoch.ts:129][E: packages/core/src/session/context-epoch.ts:132][E: packages/core/src/session/context-epoch.ts:133][E: packages/core/src/session/context-epoch.ts:134]
 
-10. prompt promotion 后,runner 使用 initialized result 或调用 `SessionContextEpoch.prepare`;prepare 会并发读取当前 context、stored epoch 与 latest compaction。[E: packages/core/src/session/runner/llm.ts:192][E: packages/core/src/session/runner/llm.ts:193][E: packages/core/src/session/context-epoch.ts:31][E: packages/core/src/session/context-epoch.ts:37][E: packages/core/src/session/context-epoch.ts:46][E: packages/core/src/session/context-epoch.ts:47]
+10. prompt promotion 后,runner 使用 initialized result 或调用 `SessionContextEpoch.prepare`;prepare 会并发读取当前 context、stored epoch 与 latest compaction。[E: packages/core/src/session/runner/llm.ts:197][E: packages/core/src/session/runner/llm.ts:198][E: packages/core/src/session/context-epoch.ts:31][E: packages/core/src/session/context-epoch.ts:37][E: packages/core/src/session/context-epoch.ts:46][E: packages/core/src/session/context-epoch.ts:47]
 
 11. `prepareOnce` 用 latest compaction seq 决定 replacement boundary:compaction seq 大于 stored baseline_seq 时走 `SystemContext.replace`,否则走 `SystemContext.reconcile`。[E: packages/core/src/session/context-epoch.ts:56][E: packages/core/src/session/context-epoch.ts:59][E: packages/core/src/session/context-epoch.ts:60][E: packages/core/src/session/context-epoch.ts:61][E: packages/core/src/session/context-epoch.ts:62]
 
@@ -69,7 +69,7 @@ flowchart TD
 
 ## 关键决策点
 
-- Safe provider-turn boundary 是 Context Epoch 的核心约束:runner promote input 后才 reconcile,变更作为 chronological System message 进入 history,并让 snapshot advance 与事件提交绑定。[E: packages/core/src/session/runner/llm.ts:182][E: packages/core/src/session/runner/llm.ts:192][E: packages/core/src/session/context-epoch.ts:72][E: packages/core/src/session/context-epoch.ts:75]
+- Safe provider-turn boundary 是 Context Epoch 的核心约束:runner promote input 后才 reconcile,变更作为 chronological System message 进入 history,并让 snapshot advance 与事件提交绑定。[E: packages/core/src/session/runner/llm.ts:187][E: packages/core/src/session/runner/llm.ts:197][E: packages/core/src/session/context-epoch.ts:72][E: packages/core/src/session/context-epoch.ts:75]
 - Replacement 与 reconcile 不同:replacement 要构造完整新 baseline,如果已准入 source unavailable 则返回 `ReplacementBlocked`,不会构造不完整 baseline。[E: packages/core/src/system-context/index.ts:283][E: packages/core/src/system-context/index.ts:283][E: packages/core/src/system-context/index.ts:287][E: packages/core/src/system-context/index.ts:289]
 - `SystemContext.Key` 是 context source 的 namespaced identity,`SystemContext.combine` 会立即拒绝重复 key。[E: packages/core/src/system-context/index.ts:22][E: packages/core/src/system-context/index.ts:176][E: packages/core/src/system-context/index.ts:178][E: packages/core/src/system-context/index.ts:314][E: packages/core/src/system-context/index.ts:317]
 

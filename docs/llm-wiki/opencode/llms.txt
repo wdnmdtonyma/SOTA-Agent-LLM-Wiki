@@ -1,8 +1,8 @@
 # opencode 源码 LLM Wiki — 入口索引
 
-> SST **opencode**(`Best/opencode/`,29-package Bun/TypeScript Effect monorepo,AI 编码 agent)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 opencode git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
+> SST **opencode**(`Best/opencode/`,36-workspace-package Bun/TypeScript Effect monorepo,AI 编码 agent)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 opencode git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
 >
-> **状态:wiki 已增量更新到 `355a0bcf5`(184 节点 + grouped-catalog,9 路 source 测绘),护栏(lint/reconcile)就位。**
+> **状态:wiki 已增量更新到 `67caf894e`(186 节点 + grouped-catalog),护栏(lint/reconcile)就位。**
 >
 > **核心组织主线 —— V1/V2 迁移**:opencode 一套进程跑两代。**V1**(活跑)= `packages/opencode/src`,Vercel-AI-SDK,`SessionPrompt→SessionProcessor→LLM.stream`。**V2**(新内核,多数已建未设默认)= `packages/core/src`,命名空间 `@opencode/v2`,Effect-native durable/event-sourced。`packages/llm` = 原生协议引擎。每节点标 `v: v1|v2|shared|na`;hybrid 组织 —— 一概念一节点、内分 V1/V2,只有真正分叉(session 内核/tools/permissions/shell/patch/compaction)才拆 `-v1`/`-v2`。
 
@@ -11,7 +11,7 @@
 - **人**:先读 `spine/overview` 与 `spine/v1-v2-relationship`,再按需深入 T1/T2。
 
 ## T0 — Spine(端到端脊柱,mermaid 先行)
-- [opencode 总览与架构](spine/overview.md): 是什么 + 29-package monorepo 架构 + V1/V2 全景 — packages/opencode/src/index.ts · AGENTS.md
+- [opencode 总览与架构](spine/overview.md): 是什么 + 36-workspace-package monorepo 架构 + V1/V2 全景 — packages/opencode/src/index.ts · AGENTS.md
 - [进程启动与运行时装配](spine/boot.md) `[v1]`: bin shim → yargs/cli → AppRuntime/InstanceStore — bin/opencode · src/index.ts · effect/app-runtime.ts
 - [从 CLI 调用到运行中的 session](spine/cli-to-session.md) `[v1]`: CLI → 进程内 Hono-less Effect server → SDK → session — cli/cmd/run.ts · server/server.ts
 - [V1 回合循环(活跑)](spine/v1-turn-loop.md) `[v1]`: runLoop → processor → LLM.stream → 工具循环 → compaction — session/prompt.ts · processor.ts · llm.ts
@@ -29,7 +29,7 @@
 - [trace:回合中 steering(V2)](spine/trace-steer-mid-turn.md) `[v2]`: admit steer → coalesced wake → 下个安全边界 promote
 - [trace:上下文溢出与压缩](spine/trace-compaction-overflow.md): compactIfNeeded vs provider-overflow recovery
 
-## T1 — Surface / Tools(每工具一节点,17,hybrid V1/V2;ground truth = registry.ts / tools.ts)
+## T1 — Surface / Tools(每工具一节点,18,hybrid V1/V2;ground truth = registry.ts / tools.ts)
 - [Read](surface/tools/read.md) `[shared]`: 读文件/目录/图片/PDF,分页+行/字节上限 — opencode tool/read.ts · core tool/read.ts
 - [Edit](surface/tools/edit.md) `[shared]`: 精确字符串替换(V1 含 9 路 fuzzy;V2 仅精确)— opencode tool/edit.ts · core tool/edit.ts
 - [Write](surface/tools/write.md) `[shared]`: 整文件写 — opencode tool/write.ts · core tool/write.ts
@@ -47,6 +47,7 @@
 - [Plan-Exit](surface/tools/plan-exit.md) `[v1]`: 退出 plan 模式(experimental)— opencode tool/plan.ts
 - [Invalid](surface/tools/invalid.md) `[v1]`: malformed-call 占位 — opencode tool/invalid.ts
 - [External-directory 守卫](surface/tools/external-directory.md) `[shared]`: 越界路径审批 helper — opencode tool/external-directory.ts
+- [Execute / Code Mode](surface/tools/execute.md) `[v1]`: experimental confined JavaScript 编排 permission-visible MCP tools — opencode tool/code-mode.ts · packages/codemode/
 
 > 工具机制(registry 装配/gating/MCP·plugin 注入/output 截断)见 `subsystems/server/plugin-system.md` 与 `reference/tool-interface.md`。
 
@@ -85,10 +86,11 @@
 - [V2 插件 API](surface/plugin-api/v2-hooks.md) `[v2]`: catalog.transform/aisdk.language/aisdk.sdk — core/src/plugin.ts
 - [TUI 插件 API](surface/plugin-api/tui.md) `[na]`: TuiPluginApi — packages/plugin/src/tui.ts
 
-## T2 — Subsystems / Tool system(3,用户头号诉求的机制层)
+## T2 — Subsystems / Tool system(4,用户头号诉求的机制层)
 - [V1 工具系统](subsystems/tools/v1.md) `[v1]`: registry 装配 · 文件系统/plugin 工具发现 · gating · MCP 注入 · AI-SDK bridge — tool/registry.ts · session/tools.ts
 - [V2 工具系统](subsystems/tools/v2.md) `[v2]`: opaque carrier · scoped registry · materialize/settle · ApplicationTools — core/src/tool/{tool,registry,tools,builtins}.ts
 - [工具输出截断与保留](subsystems/tools/output-bounding.md) `[shared]`: V1 truncate(2000 行/50KB)/ V2 output-store — tool/truncate.ts · core/src/tool-output-store.ts
+- [Code Mode confined orchestration](subsystems/tools/codemode.md) `[v1]`: explicit tool tree · interpreter · discovery/search · limits · OpenAPI adapter — packages/codemode/
 
 ## T2 — Subsystems / Session V2(10)
 - [Session inbox](subsystems/session-v2/inbox.md) `[v2]`: admit/promote/hasPending · legacy bridge — core/src/session/input.ts
@@ -236,7 +238,7 @@
 - [事件 catalog](reference/events.md): V1 bus + V2 session.next.* + ApiEvent — core/src/session/event.ts
 - [术语表与 codename](reference/glossary.md) — CONTEXT.md · AGENTS.md
 - [不确定项日志](reference/uncertainty.md): `[U]` 汇总
-- [Package 索引(29 包一句话)](reference/package-index.md) — package.json · packages/
+- [Package 索引(36 包一句话)](reference/package-index.md) — package.json · packages/
 - [核心共享数据模型](reference/data-model.md) — core/src/session/{message,schema}.ts
 
 ## 工具

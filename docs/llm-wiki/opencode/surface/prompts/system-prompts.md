@@ -13,7 +13,7 @@ source:
   - packages/opencode/src/session/reminders.ts
   - packages/opencode/src/session/prompt/
   - packages/core/src/session/runner/max-steps.ts
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 ---
 
@@ -28,20 +28,20 @@ evidence: explicit
 
 ## Model Family 选择
 
-`SystemPrompt.provider(model)` 根据 `model.api.id` 选择 prompt family，而不是根据 provider name 选择。[E: packages/opencode/src/session/system.ts:26]
+`SystemPrompt.provider(model)` 根据 `model.api.id` 选择 prompt family，而不是根据 provider name 选择。[E: packages/opencode/src/session/system.ts:27]
 
 | match 条件 | prompt family | source line |
 | --- | --- | --- |
-| `model.api.id` 包含 `gpt-4`、`o1` 或 `o3` | `beast.txt` | [E: packages/opencode/src/session/system.ts:27] |
-| `model.api.id` 包含 `gpt` 且包含 `codex` | `codex.txt` | [E: packages/opencode/src/session/system.ts:31] |
-| `model.api.id` 包含 `gpt` 但不包含 `codex` | `gpt.txt` | [E: packages/opencode/src/session/system.ts:33] |
-| `model.api.id` 包含 `gemini-` | `gemini.txt` | [E: packages/opencode/src/session/system.ts:35] |
-| `model.api.id` 包含 `claude` | `anthropic.txt` | [E: packages/opencode/src/session/system.ts:36] |
-| lower-case `model.api.id` 包含 `trinity` | `trinity.txt` | [E: packages/opencode/src/session/system.ts:37] |
-| lower-case `model.api.id` 包含 `kimi` | `kimi.txt` | [E: packages/opencode/src/session/system.ts:38] |
-| 以上条件都不满足 | `default.txt` | [E: packages/opencode/src/session/system.ts:39] |
+| `model.api.id` 包含 `gpt-4`、`o1` 或 `o3` | `beast.txt` | [E: packages/opencode/src/session/system.ts:29] |
+| `model.api.id` 包含 `gpt` 且包含 `codex` | `codex.txt` | [E: packages/opencode/src/session/system.ts:33] |
+| `model.api.id` 包含 `gpt` 但不包含 `codex` | `gpt.txt` | [E: packages/opencode/src/session/system.ts:35] |
+| `model.api.id` 包含 `gemini-` | `gemini.txt` | [E: packages/opencode/src/session/system.ts:37] |
+| `model.api.id` 包含 `claude` | `anthropic.txt` | [E: packages/opencode/src/session/system.ts:38] |
+| lower-case `model.api.id` 包含 `trinity` | `trinity.txt` | [E: packages/opencode/src/session/system.ts:39] |
+| lower-case `model.api.id` 包含 `kimi` | `kimi.txt` | [E: packages/opencode/src/session/system.ts:40] |
+| 以上条件都不满足 | `default.txt` | [E: packages/opencode/src/session/system.ts:41] |
 
-导入表显示这些 family prompt 的真实 `.txt` 文件：`anthropic.txt`、`default.txt`、`beast.txt`、`gemini.txt`、`gpt.txt`、`kimi.txt`、`codex.txt` 和 `trinity.txt`。[E: packages/opencode/src/session/system.ts:6][E: packages/opencode/src/session/system.ts:14]
+导入表显示这些 family prompt 的真实 `.txt` 文件：`anthropic.txt`、`default.txt`、`beast.txt`、`gemini.txt`、`gpt.txt`、`kimi.txt`、`codex.txt` 和 `trinity.txt`。[E: packages/opencode/src/session/system.ts:6][E: packages/opencode/src/session/system.ts:15]
 
 ## LLM Request 拼装
 
@@ -53,9 +53,9 @@ OpenAI OAuth 或 workflow 请求不会把 system prompt 放进 AI SDK `messages`
 
 ## Environment 与 Skills
 
-environment prompt 会写入精确 model id、working directory、workspace root、git repo 状态、platform 和当天日期。[E: packages/opencode/src/session/system.ts:65][E: packages/opencode/src/session/system.ts:68][E: packages/opencode/src/session/system.ts:72] 如果 reference service 返回带 description 的 references，environment prompt 会附加 `<available_references>`，每条 reference 带 name、path 和可选 description。[E: packages/opencode/src/session/system.ts:75][E: packages/opencode/src/session/system.ts:79][E: packages/opencode/src/session/system.ts:84][E: packages/opencode/src/session/system.ts:88]
+environment prompt 会写入精确 model id、working directory、workspace root、git repo 状态、platform 和当天日期。[E: packages/opencode/src/session/system.ts:67][E: packages/opencode/src/session/system.ts:70][E: packages/opencode/src/session/system.ts:74] 如果 reference service 返回带 description 的 references，environment prompt 会附加 `<available_references>`，每条 reference 带 name、path 和可选 description。[E: packages/opencode/src/session/system.ts:77][E: packages/opencode/src/session/system.ts:81][E: packages/opencode/src/session/system.ts:86][E: packages/opencode/src/session/system.ts:90]
 
-skills prompt 先检查 agent permission：如果 `skill` permission disabled，就直接不注入 skills 文字。[E: packages/opencode/src/session/system.ts:97] 未禁用时，源码调用 `skill.available(agent)`，并以 verbose 格式加入 skills 列表。[E: packages/opencode/src/session/system.ts:99][E: packages/opencode/src/session/system.ts:106]
+skills prompt 先检查 agent permission：如果 `skill` permission disabled，就直接不注入 skills 文字。[E: packages/opencode/src/session/system.ts:99] 未禁用时，源码调用 `skill.available(agent)`，并以 verbose 格式加入 skills 列表。[E: packages/opencode/src/session/system.ts:101][E: packages/opencode/src/session/system.ts:108]
 
 ## Reminder 注入
 
@@ -68,7 +68,7 @@ skills prompt 先检查 agent permission：如果 `skill` permission disabled，
 | 开启 experimental plan mode，从 `plan` 切到非 plan | `build-switch.txt`，若存在 plan file 还附加 plan path | [E: packages/opencode/src/session/reminders.ts:52][E: packages/opencode/src/session/reminders.ts:61] |
 | 开启 experimental plan mode，进入 `plan` 且上一条 assistant 不是 `plan` | `plan-mode.txt`，替换 `${planInfo}` | [E: packages/opencode/src/session/reminders.ts:70][E: packages/opencode/src/session/reminders.ts:81] |
 
-session loop 在构造 model request 前调用 `SessionReminders.apply()`；当 `isLastStep` 为真时，model messages 尾部追加来自 `MAX_STEPS_PROMPT` 的 assistant message。[E: packages/opencode/src/session/prompt.ts:1180][E: packages/opencode/src/session/prompt.ts:1280] `MAX_STEPS_PROMPT` 现在来自 core runner 常量，而不是 `session/prompt/max-steps.txt` 文件。[E: packages/opencode/src/session/prompt.ts:19][E: packages/core/src/session/runner/max-steps.ts:1]
+session loop 在构造 model request 前调用 `SessionReminders.apply()`；当 `isLastStep` 为真时，model messages 尾部追加来自 `MAX_STEPS_PROMPT` 的 assistant message。[E: packages/opencode/src/session/prompt.ts:1180][E: packages/opencode/src/session/prompt.ts:1281] `MAX_STEPS_PROMPT` 现在来自 core runner 常量，而不是 `session/prompt/max-steps.txt` 文件。[E: packages/opencode/src/session/prompt.ts:19][E: packages/core/src/session/runner/max-steps.ts:1]
 
 ## Prompt File Catalog
 
@@ -76,12 +76,12 @@ session loop 在构造 model request 前调用 `SessionReminders.apply()`；当 
 | --- | --- | --- |
 | `anthropic.txt` | imported by `system.ts` | Claude-family base system prompt。[E: packages/opencode/src/session/system.ts:6] |
 | `beast.txt` | imported by `system.ts` | `gpt-4`/`o1`/`o3` prompt family。[E: packages/opencode/src/session/system.ts:8] |
-| `codex.txt` | imported by `system.ts` | `gpt` model id containing `codex` 的 prompt family。[E: packages/opencode/src/session/system.ts:13] |
+| `codex.txt` | imported by `system.ts` | `gpt` model id containing `codex` 的 prompt family。[E: packages/opencode/src/session/system.ts:14] |
 | `default.txt` | imported by `system.ts` | fallback prompt family。[E: packages/opencode/src/session/system.ts:7] |
 | `gemini.txt` | imported by `system.ts` | Gemini prompt family。[E: packages/opencode/src/session/system.ts:9] |
 | `gpt.txt` | imported by `system.ts` | non-codex GPT prompt family。[E: packages/opencode/src/session/system.ts:10] |
 | `kimi.txt` | imported by `system.ts` | Kimi prompt family。[E: packages/opencode/src/session/system.ts:11] |
-| `trinity.txt` | imported by `system.ts` | Trinity prompt family。[E: packages/opencode/src/session/system.ts:14] |
+| `trinity.txt` | imported by `system.ts` | Trinity prompt family。[E: packages/opencode/src/session/system.ts:15] |
 | `build-switch.txt` | imported by `reminders.ts` | 从 plan 切回 build 时提醒执行 plan。[E: packages/opencode/src/session/reminders.ts:12] |
 | `plan-mode.txt` | imported by `reminders.ts` | experimental plan mode 进入 plan 时的长 reminder。[E: packages/opencode/src/session/reminders.ts:13] |
 | `plan.txt` | imported by `reminders.ts` | 非 experimental plan mode 的 plan reminder。[E: packages/opencode/src/session/reminders.ts:11] |

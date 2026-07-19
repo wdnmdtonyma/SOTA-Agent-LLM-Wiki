@@ -1,6 +1,6 @@
 # opencode 源码 LLM Wiki
 
-一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 SST **opencode**(`Best/opencode/`)的真实源码——一个 **27-package 的 Bun/TypeScript monorepo**,建立在 **Effect** 框架上,是一个终端 AI 编码 agent。细到每个工具的字段与设计动机。
+一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 SST **opencode**(`Best/opencode/`)的真实源码——一个 **36-workspace-package 的 Bun/TypeScript monorepo**,建立在 **Effect** 框架上,是一个终端 AI 编码 agent。细到每个工具的字段与设计动机。
 
 ## 这是 LLM wiki,不是书
 
@@ -16,11 +16,12 @@
 ## opencode 的形态(决定本 wiki 的画像)
 
 - **真源码**:opencode 是公开真实工程,**git 仓 + 完整 specs/ + 各包测试**。证据以 `[E]` 为主;**staleness 用 opencode git SHA**,节点 `updated:` 记 fill 时的 opencode HEAD 短 SHA。
-- **TypeScript / Effect monorepo**:核心是 `packages/`(27 包),全栈基于 Effect(Layer/Service/Context/Schema)。Bun 运行时,Turborepo + catalog 版本管理。
+- **TypeScript / Effect monorepo**:workspace globs 当前展开为 36 个 package,核心集中在 `packages/`,全栈基于 Effect(Layer/Service/Context/Schema)。Bun 运行时,Turborepo + catalog 版本管理。
 - **★ V1→V2 迁移 = 全 wiki 的组织主线**:opencode **一套进程跑两代代码**。
   - **V1(当前活跑路径)** = `packages/opencode/src`,基于 Vercel **AI SDK**;链路 `SessionPrompt.runLoop → SessionProcessor → LLM.stream`;CLI → 进程内 Effect HttpApi server → SDK → session。
   - **V2(新内核,多数已建但未设为默认)** = `packages/core/src`,命名空间 `@opencode/v2`,Effect-native,durable + 事件溯源(`SessionV2`/`SessionExecution`/`SessionRunner`、System Context 代数、`EventV2`);目前仅经 `core/src/public/opencode.ts` 的嵌入式 API 真正接通执行。
   - **`packages/llm`** = 原生 provider 协议引擎(Route/Protocol/Transport/Auth);V1 里是可选 seam(`OPENCODE_EXPERIMENTAL_NATIVE_LLM`),V2 里是执行引擎。
+  - **`packages/codemode`** = confined orchestration interpreter;V1 通过 experimental wire tool `execute` 把 permission 可见的 MCP tools 映射进显式 tool tree。
   - 每个节点 frontmatter 带 `v: v1 | v2 | shared | na`;**hybrid 组织**:一概念一节点、内部分 V1/V2 小节;只有实现真正分叉到值得各自成页时(session 内核、tool 系统、permissions、shell、patch、compaction)才拆 `-v1`/`-v2`。
 - **范围**:**全 monorepo 同深度**——含 TUI(OpenTUI+SolidJS)、clients(desktop/web/console)、SST infra、外围包(slack/function/enterprise/stats…),均逐子系统覆盖。
 
@@ -57,13 +58,13 @@ _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
 
 ## 方法 & 状态
 
-逐节点循环:**大纲 → 人 review → 逐节点读源码填 → 独立 subagent 对照源码校验 → 修 → 直到整仓覆盖完**。当前处于**大纲已 review 定稿(9 路 source 测绘得到 180 节点 + 14 grouped-catalog 组;hybrid V1/V2 组织、全 monorepo 同深度)、护栏(`tools/lint.mjs`+`reconcile.mjs`)就位、待并发填充**阶段(批次计划见 `_fill-prompts.md`,2 轮)。
+逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `67caf894e`，共 186 个 verified 节点 + 14 个 grouped-catalog 组；本轮为新增 Code Mode 建立 T1 `execute` 与 T2 package subsystem 两个节点。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
-| T0 spine | 端到端脊柱(11)+ worked traces(4) | 15 | ⬜ 规划 |
-| T1 surface | tools(17)+ agents/prompts(3)+ cli(3)+ config(6)+ providers(3)+ server-api(3)+ sdk(2)+ plugin-api(3) | 40 | ⬜ 规划 |
-| T2 subsystems | tools(3)+ session-v2(10)+ session-v1(6)+ model-layer(10)+ execution(11)+ integrations(9)+ persistence(7)+ tui(12)+ server(6)+ clients(6)+ infra(5)+ peripheral(8) | 93 | ⬜ 规划 |
-| T3 reference | tool/llm/exec/config/db/lsp/formatter/tui catalog + glossary + package 索引 + uncertainty | 33 | ⬜ 规划 |
+| T0 spine | 端到端脊柱 + worked traces | 15 | verified |
+| T1 surface | tools(18)+ agents/prompts/cli/config/providers/server-api/sdk/plugin-api | 42 | verified |
+| T2 subsystems | tools(含 Code Mode)+ session/model/execution/integrations/persistence/TUI/server/clients/infra/peripheral | 97 | verified |
+| T3 reference | tool/llm/exec/config/db/lsp/formatter/tui catalog + glossary + package 索引 + uncertainty | 32 | verified |
 
-下一步(review 通过后):从 T0 脊柱(尤其 `v1-v2-relationship`、`v2-overview`)+ T1 `surface/tools/`(用户核心诉求)起填。`tools/lint.mjs` + `tools/reconcile.mjs` 已就位(自测 0 error);并发批次计划见 `_fill-prompts.md`。
+更新入口以 `index.json.updated` 与各节点 `updated` 为准；`tools/reconcile.mjs` 负责 frontmatter→index 同步，`tools/lint.mjs` 负责结构与证据锚点机械校验。

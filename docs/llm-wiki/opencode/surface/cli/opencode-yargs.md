@@ -10,7 +10,7 @@ schema: grouped-catalog
 source:
   - packages/opencode/src/index.ts
   - packages/opencode/src/cli/cmd/
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 ---
 

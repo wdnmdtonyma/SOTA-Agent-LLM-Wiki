@@ -9,7 +9,7 @@ symbols: [Catalog.Service, ProviderV2.Info, ModelV2.Info, ProviderPlugins, Model
 related: [plugin-api.v2-hooks, provider.catalog, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 model catalog 是 plugin-ordered provider/model registry:provider plugins、models.dev、config provider plugin、integration connection availability 和 provider policy 一起构造 `ProviderV2.Info` / `ModelV2.Info`,再由 catalog API 提供 provider/model get/all/available/default/small 查询。`packages/core/src/provider.ts` 与 `packages/core/src/model.ts` 现在 re-export `@opencode-ai/schema` 的 provider/model schema。
@@ -29,7 +29,7 @@ updated: 8b68dc0d7
 
 `ModelV2.Info` 字段覆盖 id/providerID/family/name/api/capabilities/request/variants/time/cost/status/enabled/limit。[E: packages/schema/src/model.ts:60][E: packages/schema/src/model.ts:63][E: packages/schema/src/model.ts:79][E: packages/schema/src/model.ts:80][E: packages/schema/src/model.ts:81][E: packages/schema/src/model.ts:82][E: packages/schema/src/model.ts:84] `ModelV2.Api` 也分 aisdk/native,并带 model-level api id。[E: packages/schema/src/model.ts:45][E: packages/schema/src/model.ts:47][E: packages/schema/src/model.ts:50][E: packages/schema/src/model.ts:55]
 
-命名陷阱:V2 `ProviderV2.Info` / `ModelV2.Info`、V1 `Provider.Info` / `Provider.Model`、`packages/llm` 的 `ProviderID` 是三套 schema/type 命名。[E: packages/schema/src/provider.ts:53][E: packages/schema/src/model.ts:60][E: packages/opencode/src/provider/provider.ts:1018][E: packages/opencode/src/provider/provider.ts:1035][E: packages/llm/src/schema/ids.ts:17] 它们不能混用。[I]
+命名陷阱:V2 `ProviderV2.Info` / `ModelV2.Info`、V1 `Provider.Info` / `Provider.Model`、`packages/llm` 的 `ProviderID` 是三套 schema/type 命名。[E: packages/schema/src/provider.ts:53][E: packages/schema/src/model.ts:60][E: packages/opencode/src/provider/provider.ts:1031][E: packages/opencode/src/provider/provider.ts:1048][E: packages/llm/src/schema/ids.ts:17] 它们不能混用。[I]
 
 ## Plugin Order
 

@@ -9,7 +9,7 @@ source:
   - packages/opencode/src/tool/json-schema.ts
   - packages/opencode/src/tool/registry.ts
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 symbols:
   - fromSchema
@@ -47,18 +47,20 @@ related:
 
 ## Plugin Tool Conversion
 
-V1 registry 的 plugin tool conversion 是 schema conversion 的第二入口。`fromPlugin(id, input)` 先把缺失 args 归一为 `{}`，然后判断 args 是否全是 Zod schema。[E: packages/opencode/src/tool/registry.ts:113] [E: packages/opencode/src/tool/registry.ts:118] [E: packages/opencode/src/tool/registry.ts:120]
+V1 registry 的 plugin tool conversion 是 schema conversion 的第二入口。`fromPlugin(id, input)` 先把缺失 args 归一为 `{}`，然后判断 args 是否全是 Zod schema。[E: packages/opencode/src/tool/registry.ts:120] [E: packages/opencode/src/tool/registry.ts:125] [E: packages/opencode/src/tool/registry.ts:127]
 
 | plugin args 类型 | `parameters` | `jsonSchema` | 证据 |
 | --- | --- | --- | --- |
-| 全部 Zod | `Schema.declare<unknown>((u) => zodParams.safeParse(u).success)` | `zodJsonSchema(zodParams)` | [E: packages/opencode/src/tool/registry.ts:121] [E: packages/opencode/src/tool/registry.ts:122] [E: packages/opencode/src/tool/registry.ts:123] [E: packages/opencode/src/tool/registry.ts:124] |
-| legacy JSON shape | `Schema.Unknown` | `legacyJsonSchema(entries)` | [E: packages/opencode/src/tool/registry.ts:122] [E: packages/opencode/src/tool/registry.ts:125] |
+| 全部 Zod | `Schema.declare<unknown>((u) => zodParams.safeParse(u).success)` | `zodJsonSchema(zodParams)` | [E: packages/opencode/src/tool/registry.ts:128] [E: packages/opencode/src/tool/registry.ts:129] [E: packages/opencode/src/tool/registry.ts:130] [E: packages/opencode/src/tool/registry.ts:131] |
+| legacy JSON shape | `Schema.Unknown` | `legacyJsonSchema(entries)` | [E: packages/opencode/src/tool/registry.ts:129] [E: packages/opencode/src/tool/registry.ts:132] |
 
-`legacyJsonSchema` 从 plugin args entries 中筛出 JSON schema definition 作为 properties，并把 properties 的每个 key 都列入 `required`。[E: packages/opencode/src/tool/registry.ts:329] [E: packages/opencode/src/tool/registry.ts:331] [E: packages/opencode/src/tool/registry.ts:336] `zodJsonSchema` 使用 `z.toJSONSchema` 和 metadata registry，再把 `$defs` 改成 `definitions`。[E: packages/opencode/src/tool/registry.ts:340] [E: packages/opencode/src/tool/registry.ts:341] [E: packages/opencode/src/tool/registry.ts:345]
+`legacyJsonSchema` 从 plugin args entries 中筛出 JSON schema definition 作为 properties，并把 properties 的每个 key 都列入 `required`。[E: packages/opencode/src/tool/registry.ts:358] [E: packages/opencode/src/tool/registry.ts:360] [E: packages/opencode/src/tool/registry.ts:365] `zodJsonSchema` 使用 `z.toJSONSchema` 和 metadata registry，再把 `$defs` 改成 `definitions`。[E: packages/opencode/src/tool/registry.ts:369] [E: packages/opencode/src/tool/registry.ts:370] [E: packages/opencode/src/tool/registry.ts:374]
 
 ## Provider-Facing Mutation During Tool Materialization
 
-V1 registry 在 `tools(input)` 里把每个 initialized tool 映射为 model-facing definition。plugin hook `tool.definition` 可以改 description、parameters 和 jsonSchema；当 `parameters` 未变化或 hook 显式改了 `jsonSchema` 时，registry 保留或更新 `jsonSchema` 字段。[E: packages/opencode/src/tool/registry.ts:288] [E: packages/opencode/src/tool/registry.ts:290] [E: packages/opencode/src/tool/registry.ts:293] [E: packages/opencode/src/tool/registry.ts:294] [E: packages/opencode/src/tool/registry.ts:298] [E: packages/opencode/src/tool/registry.ts:299] task tool 还会在 materialization 时按 agent 生成动态 description。[E: packages/opencode/src/tool/registry.ts:295]
+V1 registry 在 `tools(input)` 里把每个 initialized tool 映射为 model-facing definition。plugin hook `tool.definition` 可以改 description、parameters 和 jsonSchema；当 `parameters` 未变化或 hook 显式改了 `jsonSchema` 时，registry 保留或更新 `jsonSchema` 字段。[E: packages/opencode/src/tool/registry.ts:313] [E: packages/opencode/src/tool/registry.ts:315] [E: packages/opencode/src/tool/registry.ts:318] [E: packages/opencode/src/tool/registry.ts:319] [E: packages/opencode/src/tool/registry.ts:327] [E: packages/opencode/src/tool/registry.ts:328]
+
+materialization 还给两类工具拼动态 description：`task` 追加按 agent permission 过滤的 subagent catalog；`execute` 追加按 agent 与 session ruleset 过滤的 MCP/CodeMode catalog。[E: packages/opencode/src/tool/registry.ts:260] [E: packages/opencode/src/tool/registry.ts:262] [E: packages/opencode/src/tool/registry.ts:275] [E: packages/opencode/src/tool/registry.ts:280] [E: packages/opencode/src/tool/registry.ts:281] [E: packages/opencode/src/tool/registry.ts:283] [E: packages/opencode/src/tool/registry.ts:320] [E: packages/opencode/src/tool/registry.ts:322] [E: packages/opencode/src/tool/registry.ts:323]。若没有 permission-visible MCP tool，`codeModeDescription` 为空，registry 会把 `execute` 从 model-facing tools 中移除；这一步改变可见性与 description，不改 `execute` 的 input schema [E: packages/opencode/src/tool/registry.ts:300] [E: packages/opencode/src/tool/registry.ts:301] [E: packages/opencode/src/tool/registry.ts:303]。
 
 ## Sources
 

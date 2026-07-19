@@ -10,7 +10,7 @@ schema: node
 source:
   - packages/core/src/v1/config/migrate.ts
   - packages/core/src/config.ts
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 ---
 

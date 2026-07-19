@@ -18,7 +18,7 @@ symbols:
   - RuntimeFlags
   - OPENCODE_EXPERIMENTAL
 evidence: explicit
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -99,14 +99,15 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `experimentalLspTool` | `OPENCODE_EXPERIMENTAL_LSP_TOOL` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:45] |
 | `experimentalOxfmt` | `OPENCODE_EXPERIMENTAL_OXFMT` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:46] |
 | `experimentalPlanMode` | `OPENCODE_EXPERIMENTAL_PLAN_MODE` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:47] |
-| `experimentalEventSystem` | `OPENCODE_EXPERIMENTAL_EVENT_SYSTEM` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:48] |
-| `experimentalWorkspaces` | `OPENCODE_EXPERIMENTAL_WORKSPACES` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:49] |
-| `experimentalIconDiscovery` | `OPENCODE_EXPERIMENTAL_ICON_DISCOVERY` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:50] |
-| `outputTokenMax` | `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` | positive integer | [E: packages/opencode/src/effect/runtime-flags.ts:51] |
-| `bashDefaultTimeoutMs` | `OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS` | positive integer | [E: packages/opencode/src/effect/runtime-flags.ts:52] |
-| `experimentalNativeLlm` | `OPENCODE_EXPERIMENTAL_NATIVE_LLM` | bool | [E: packages/opencode/src/effect/runtime-flags.ts:53] |
-| `experimentalWebSockets` | `OPENCODE_EXPERIMENTAL_WEBSOCKETS` | bool | [E: packages/opencode/src/effect/runtime-flags.ts:54] |
-| `client` | `OPENCODE_CLIENT` | string default `cli` | [E: packages/opencode/src/effect/runtime-flags.ts:55] |
+| `experimentalCodeMode` | `OPENCODE_EXPERIMENTAL_CODE_MODE` | experimental truthy；启用 V1 `execute`/Code Mode 工具 | [E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:113] |
+| `experimentalEventSystem` | `OPENCODE_EXPERIMENTAL_EVENT_SYSTEM` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:49] |
+| `experimentalWorkspaces` | `OPENCODE_EXPERIMENTAL_WORKSPACES` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:50] |
+| `experimentalIconDiscovery` | `OPENCODE_EXPERIMENTAL_ICON_DISCOVERY` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:51] |
+| `outputTokenMax` | `OPENCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX` | positive integer | [E: packages/opencode/src/effect/runtime-flags.ts:52] |
+| `bashDefaultTimeoutMs` | `OPENCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS` | positive integer | [E: packages/opencode/src/effect/runtime-flags.ts:53] |
+| `experimentalNativeLlm` | `OPENCODE_EXPERIMENTAL_NATIVE_LLM` | bool | [E: packages/opencode/src/effect/runtime-flags.ts:54] |
+| `experimentalWebSockets` | `OPENCODE_EXPERIMENTAL_WEBSOCKETS` | bool | [E: packages/opencode/src/effect/runtime-flags.ts:55] |
+| `client` | `OPENCODE_CLIENT` | string default `cli` | [E: packages/opencode/src/effect/runtime-flags.ts:56] |
 
 `OPENCODE_EXPERIMENTAL_NATIVE_LLM` 是 V1 可选 native LLM seam 的开关；V2 则把 `packages/llm` 作为原生 provider 协议引擎使用。[I]
 
@@ -118,7 +119,7 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 |---|---|---|
 | `OPENCODE_TEST_HOME` | core global home override。 | [E: packages/core/src/global.ts:19] |
 | `OPENCODE_DISABLE_CHANNEL_DB` | 禁用 channel DB 条件之一。 | [E: packages/core/src/database/database.ts:50] |
-| `OPENCODE_MODELS_DEV` | bundler/global models.dev injection。 | [E: packages/core/src/models-dev.ts:114][E: packages/core/src/models-dev.ts:177] |
+| `OPENCODE_MODELS_DEV` | bundler/global models.dev injection。 | [E: packages/core/src/models-dev.ts:130][E: packages/core/src/models-dev.ts:193] |
 | `OPENCODE_LOG_LEVEL` | logging level。 | [E: packages/core/src/observability/logging.ts:57] |
 | `OPENCODE_PRINT_LOGS` | 打印 stderr logs。 | [E: packages/core/src/observability/logging.ts:68] |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint flag。 | [E: packages/core/src/flag/flag.ts:16] |
@@ -152,8 +153,8 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | `AWS_BEARER_TOKEN_BEDROCK` | Bedrock bearer token. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:88] |
 | `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:92] |
 | `AWS_CONTAINER_CREDENTIALS_FULL_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:92] |
-| `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path. | [E: packages/opencode/src/provider/provider.ts:296] |
-| `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path. | [E: packages/opencode/src/provider/provider.ts:311] |
+| `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path. | [E: packages/opencode/src/provider/provider.ts:309] |
+| `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path. | [E: packages/opencode/src/provider/provider.ts:324] |
 | `AZURE_RESOURCE_NAME` | Azure resource name. | [E: packages/core/src/plugin/provider/azure.ts:23] |
 | `AZURE_COGNITIVE_SERVICES_RESOURCE_NAME` | Azure Cognitive Services resource. | [E: packages/core/src/plugin/provider/azure.ts:63] |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:47][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:50] |
@@ -176,9 +177,9 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | `AICORE_SERVICE_KEY` | SAP AI Core service key. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:15] |
 | `AICORE_DEPLOYMENT_ID` | SAP AI Core deployment id. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
 | `AICORE_RESOURCE_GROUP` | SAP AI Core resource group. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
-| `SNOWFLAKE_CORTEX_TOKEN` | Snowflake Cortex token. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/opencode/src/provider/provider.ts:859] |
-| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT alias. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/opencode/src/provider/provider.ts:859] |
-| `SNOWFLAKE_ACCOUNT` | V1 Snowflake account. | [E: packages/opencode/src/provider/provider.ts:854] |
+| `SNOWFLAKE_CORTEX_TOKEN` | Snowflake Cortex token. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/opencode/src/provider/provider.ts:872] |
+| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT alias. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/opencode/src/provider/provider.ts:872] |
+| `SNOWFLAKE_ACCOUNT` | V1 Snowflake account. | [E: packages/opencode/src/provider/provider.ts:867] |
 
 ## GitHub automation env
 
@@ -197,8 +198,9 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 ## 设计动机与坑位
 
 - `OPENCODE_EXPERIMENTAL` 是 umbrella only when a specific experimental flag is absent；设置了具体 env 后，具体 env 的 true/false 优先级更高。[E: packages/core/src/flag/flag.ts:12][E: packages/opencode/src/effect/runtime-flags.ts:13]
-- 同名 env 可能被 V1 与 V2 双读，例如 `OPENCODE_CLIENT` 同时出现在 core `Flag` 与 V1 `RuntimeFlags`，因此排查 client identity 时要看当前执行路径属于 V1 CLI 还是 V2 embedded core。[E: packages/core/src/flag/flag.ts:75][E: packages/opencode/src/effect/runtime-flags.ts:55]
-- provider env 同时存在 `packages/core/src/plugin/provider/*` 与 `packages/opencode/src/provider/provider.ts` 两套 adapter；这反映 V1/V2 迁移期间 provider 入口并存。[E: packages/core/src/plugin/provider/google-vertex.ts:10][E: packages/opencode/src/provider/provider.ts:491][I]
+- `OPENCODE_EXPERIMENTAL_CODE_MODE` 开启后，V1 registry 动态加载 wire tool `execute`；若专用 flag 未设置，umbrella `OPENCODE_EXPERIMENTAL` 可使其生效。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:113][E: packages/opencode/src/tool/code-mode.ts:12]
+- 同名 env 可能被 V1 与 V2 双读，例如 `OPENCODE_CLIENT` 同时出现在 core `Flag` 与 V1 `RuntimeFlags`，因此排查 client identity 时要看当前执行路径属于 V1 CLI 还是 V2 embedded core。[E: packages/core/src/flag/flag.ts:75][E: packages/opencode/src/effect/runtime-flags.ts:56]
+- provider env 同时存在 `packages/core/src/plugin/provider/*` 与 `packages/opencode/src/provider/provider.ts` 两套 adapter；这反映 V1/V2 迁移期间 provider 入口并存。[E: packages/core/src/plugin/provider/google-vertex.ts:10][E: packages/opencode/src/provider/provider.ts:504][I]
 
 ## Sources
 

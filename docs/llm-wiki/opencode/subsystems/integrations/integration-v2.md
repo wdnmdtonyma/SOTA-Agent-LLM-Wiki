@@ -34,7 +34,7 @@ related:
   - sdk.surface
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 Integration 子系统是 provider authentication/discovery 的 location-scoped registry：core service 管 integration method registry、credential/env connection projection、OAuth attempt lifecycle；protocol/server route 把这些能力暴露为 `/api/integration/*` 与 `/api/credential/*`。

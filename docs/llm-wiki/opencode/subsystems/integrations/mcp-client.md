@@ -5,9 +5,10 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 source:
   - packages/opencode/src/mcp/index.ts
+  - packages/opencode/src/mcp/browser.ts
   - packages/opencode/src/mcp/catalog.ts
   - packages/opencode/src/mcp/oauth-provider.ts
   - packages/opencode/src/mcp/auth.ts
@@ -21,6 +22,8 @@ symbols:
   - MCP.Service
   - MCP.Status
   - MCP.Resource
+  - MCP.McpTool
+  - McpBrowser.Service
   - McpCatalog.convertTool
   - McpOAuthProvider.createMcpOAuthProvider
   - McpAuth.Service
@@ -43,7 +46,7 @@ evidence: explicit
 
 ## 职责
 
-`packages/opencode/src/mcp/index.ts` 定义 `MCP.Service`，接口暴露 status、tools、prompts、resources、prompt/resource lookup、OAuth auth/removeAuth、动态 add/remove 等方法。[E: packages/opencode/src/mcp/index.ts:157] service state 从 `cfg.mcp ?? {}` 初始化并连接 server；tool-list-change notification 会重新拉取 defs 并发布 `mcp.tools.changed`。[E: packages/opencode/src/mcp/index.ts:486] [E: packages/opencode/src/mcp/index.ts:488] [E: packages/opencode/src/mcp/index.ts:497] [E: packages/opencode/src/mcp/index.ts:454] [E: packages/opencode/src/mcp/index.ts:457] [E: packages/opencode/src/mcp/index.ts:462] 服务状态枚举区分 `connected`、`disabled`、`failed`、`needs_auth`、`needs_client_registration`，因此调用方可以把连接失败、显式禁用、OAuth 待处理分开呈现。[E: packages/opencode/src/mcp/index.ts:84]
+`packages/opencode/src/mcp/index.ts` 定义 `MCP.Service`，接口暴露 status、tools、prompts、resources、prompt/resource lookup、OAuth auth/removeAuth、动态 add/remove 等方法。[E: packages/opencode/src/mcp/index.ts:164] `MCP.tools()` 现在返回保留 native definition/client/timeout 的 `McpTool`，并明确由 consumer 复制、适配成自己的 tool format [E: packages/opencode/src/mcp/index.ts:157] [E: packages/opencode/src/mcp/index.ts:159] [E: packages/opencode/src/mcp/index.ts:160] [E: packages/opencode/src/mcp/index.ts:161] [E: packages/opencode/src/mcp/index.ts:168]。service state 从 `cfg.mcp ?? {}` 初始化并连接 server；tool-list-change notification 会重新拉取 defs 并发布 `mcp.tools.changed`。[E: packages/opencode/src/mcp/index.ts:494] [E: packages/opencode/src/mcp/index.ts:496] [E: packages/opencode/src/mcp/index.ts:505] [E: packages/opencode/src/mcp/index.ts:462] [E: packages/opencode/src/mcp/index.ts:465] [E: packages/opencode/src/mcp/index.ts:470] 服务状态枚举区分 `connected`、`disabled`、`failed`、`needs_auth`、`needs_client_registration`，因此调用方可以把连接失败、显式禁用、OAuth 待处理分开呈现。[E: packages/opencode/src/mcp/index.ts:83]
 
 `packages/opencode/src/mcp/catalog.ts` 是 MCP catalog adapter：`defs` 读取 tools，`prompts/resources` 读取对应 capability，`fetch` 会把 server name 和 item name sanitize/qualify。[E: packages/opencode/src/mcp/catalog.ts:38] [E: packages/opencode/src/mcp/catalog.ts:121] [E: packages/opencode/src/mcp/catalog.ts:129] [E: packages/opencode/src/mcp/catalog.ts:102] `packages/opencode/src/mcp/oauth-provider.ts` 是 MCP SDK `OAuthClientProvider` 的本地实现，负责 redirect URI、client metadata、动态注册信息、token、PKCE code verifier、CSRF state。[E: packages/opencode/src/mcp/oauth-provider.ts:35] [E: packages/opencode/src/mcp/oauth-provider.ts:43] [E: packages/opencode/src/mcp/oauth-provider.ts:81] [E: packages/opencode/src/mcp/oauth-provider.ts:112] [E: packages/opencode/src/mcp/oauth-provider.ts:131] [E: packages/opencode/src/mcp/oauth-provider.ts:143]
 
@@ -54,6 +57,7 @@ MCP 管理 API 是 Effect `HttpApi`，不是 Hono：route group 文件直接 `im
 | 文件 | 角色 |
 | --- | --- |
 | `packages/opencode/src/mcp/index.ts` | V1 MCP service、transport lifecycle、status、auth flow、HTTP handler 后端依赖。 |
+| `packages/opencode/src/mcp/browser.ts` | OAuth browser side-effect adapter。`McpBrowser.Service.open` 调用 `open(url)`，在 500ms 后认为启动成功，非零 exit/error 作为 Effect error [E: packages/opencode/src/mcp/browser.ts:9] [E: packages/opencode/src/mcp/browser.ts:14] [E: packages/opencode/src/mcp/browser.ts:16] [E: packages/opencode/src/mcp/browser.ts:20] [E: packages/opencode/src/mcp/browser.ts:21] [E: packages/opencode/src/mcp/browser.ts:25] [E: packages/opencode/src/mcp/browser.ts:28]。 |
 | `packages/opencode/src/mcp/catalog.ts` | MCP tool/prompt/resource listing 和 AI SDK dynamic tool conversion。 |
 | `packages/opencode/src/mcp/oauth-provider.ts` | MCP SDK OAuth provider，本地 token/client info/state/verifier 接口。 |
 | `packages/opencode/src/mcp/auth.ts` | `mcp-auth.json` 读写、文件锁、token expiry 判断。 |
@@ -64,9 +68,9 @@ MCP 管理 API 是 Effect `HttpApi`，不是 Hono：route group 文件直接 `im
 
 ## 数据模型
 
-`MCP.Status` 是以 `status` 为 discriminator 的 union：`connected`、`disabled`、`failed`、`needs_auth`、`needs_client_registration`；只有 `failed` 与 `needs_client_registration` 在 schema 上带 `error` 字段。[E: packages/opencode/src/mcp/index.ts:84] [E: packages/opencode/src/mcp/index.ts:90] [E: packages/opencode/src/mcp/index.ts:96] [E: packages/opencode/src/mcp/index.ts:107]
+`MCP.Status` 是以 `status` 为 discriminator 的 union：`connected`、`disabled`、`failed`、`needs_auth`、`needs_client_registration`；只有 `failed` 与 `needs_client_registration` 在 schema 上带 `error` 字段。[E: packages/opencode/src/mcp/index.ts:83] [E: packages/opencode/src/mcp/index.ts:89] [E: packages/opencode/src/mcp/index.ts:95] [E: packages/opencode/src/mcp/index.ts:106]
 
-`MCP.Resource` 包含 `client`、`name`、`uri`、`mimeType`、`description`，用于把 MCP resource 暴露给 prompt materialization 和 API 层。[E: packages/opencode/src/mcp/index.ts:53] [E: packages/opencode/src/mcp/index.ts:58]
+`MCP.Resource` 包含 `client`、`name`、`uri`、`mimeType`、`description`，用于把 MCP resource 暴露给 prompt materialization 和 API 层。[E: packages/opencode/src/mcp/index.ts:52] [E: packages/opencode/src/mcp/index.ts:57]
 
 本地 auth 存储在 `Global.Path.data/mcp-auth.json`，flock key 是 `mcp-auth:${filepath}`。[E: packages/opencode/src/mcp/auth.ts:37] [E: packages/opencode/src/mcp/auth.ts:38] 每个 auth entry 可以存 `tokens`、`clientInfo`、`codeVerifier`、`oauthState`、`serverUrl`。[E: packages/opencode/src/mcp/auth.ts:25] 写入 JSON 文件时 mode 是 `0o600`，这是凭据文件的最小权限约束。[E: packages/opencode/src/mcp/auth.ts:80]
 
@@ -76,14 +80,14 @@ V1 config schema 中 local MCP server 有 `type: "local"`、`command`、`environ
 
 ### 启动与连接
 
-1. `MCP.Service` 启动时读取 `cfg.mcp ?? {}` 并遍历静态配置项，初始化 `status`、`clients`、`defs`；state 里的 `config` 初始为空，后续动态 `add()` 路径会写入 `s.config[name]`，静态配置通过 `cfg` fallback 读取。[E: packages/opencode/src/mcp/index.ts:486] [E: packages/opencode/src/mcp/index.ts:488] [E: packages/opencode/src/mcp/index.ts:489] [E: packages/opencode/src/mcp/index.ts:497] [E: packages/opencode/src/mcp/index.ts:635] [E: packages/opencode/src/mcp/index.ts:654]
-2. disabled server 直接进入 `disabled` 状态，不创建 transport。[E: packages/opencode/src/mcp/index.ts:506]
-3. local server 把 config 中的 `command` 数组解构成 `cmd` 和 `args`，再创建 `StdioClientTransport`。[E: packages/opencode/src/mcp/index.ts:336] [E: packages/opencode/src/mcp/index.ts:339]
-4. local stdio transport 会继承并扩展环境变量；当命令本体是 `opencode` 时，额外设置 `BUN_BE_BUN=1`。[E: packages/opencode/src/mcp/index.ts:346]
-5. remote server 先 parse URL，再构造 `StreamableHTTPClientTransport` 和 `SSEClientTransport` 两个候选 transport，尝试顺序是 StreamableHTTP 再 SSE。[E: packages/opencode/src/mcp/index.ts:234] [E: packages/opencode/src/mcp/index.ts:261] [E: packages/opencode/src/mcp/index.ts:270]
-6. 所有 transport 都通过 `connectTransport` 创建 MCP SDK `Client`，client name 是 `opencode`，version 来自 `Installation.VERSION`，并用 `withTimeout(client.connect(...), timeout)` 包住连接。[E: packages/opencode/src/mcp/index.ts:76] [E: packages/opencode/src/mcp/index.ts:77] [E: packages/opencode/src/mcp/index.ts:210] [E: packages/opencode/src/mcp/index.ts:218]
-7. server 连接成功后，如果 server capability 包含 tools，service 只拉取 `McpCatalog.defs` 作为 cached tool defs；prompts/resources 由 `MCP.prompts()` 和 `MCP.resources()` 后续按 connected clients 懒收集。[E: packages/opencode/src/mcp/index.ts:383] [E: packages/opencode/src/mcp/index.ts:513] [E: packages/opencode/src/mcp/index.ts:709] [E: packages/opencode/src/mcp/index.ts:713]
-8. finalizer 关闭所有 MCP clients；如果 transport 是 stdio，还会杀掉 stdio 进程的 descendant processes。[E: packages/opencode/src/mcp/index.ts:523] [E: packages/opencode/src/mcp/index.ts:533] [E: packages/opencode/src/mcp/index.ts:542]
+1. `MCP.Service` 启动时读取 `cfg.mcp ?? {}` 并遍历静态配置项，初始化 `status`、`clients`、`defs`；state 里的 `config` 初始为空，后续动态 `add()` 路径会写入 `s.config[name]`，静态配置通过 `cfg` fallback 读取。[E: packages/opencode/src/mcp/index.ts:494] [E: packages/opencode/src/mcp/index.ts:496] [E: packages/opencode/src/mcp/index.ts:497] [E: packages/opencode/src/mcp/index.ts:505] [E: packages/opencode/src/mcp/index.ts:643] [E: packages/opencode/src/mcp/index.ts:662]
+2. disabled server 直接进入 `disabled` 状态，不创建 transport。[E: packages/opencode/src/mcp/index.ts:514]
+3. local server 把 config 中的 `command` 数组解构成 `cmd` 和 `args`，再创建 `StdioClientTransport`。[E: packages/opencode/src/mcp/index.ts:344] [E: packages/opencode/src/mcp/index.ts:347]
+4. local stdio transport 会继承并扩展环境变量；当命令本体是 `opencode` 时，额外设置 `BUN_BE_BUN=1`。[E: packages/opencode/src/mcp/index.ts:354]
+5. remote server 先 parse URL，再构造 `StreamableHTTPClientTransport` 和 `SSEClientTransport` 两个候选 transport，尝试顺序是 StreamableHTTP 再 SSE。[E: packages/opencode/src/mcp/index.ts:242] [E: packages/opencode/src/mcp/index.ts:269] [E: packages/opencode/src/mcp/index.ts:278]
+6. 所有 transport 都通过 `connectTransport` 创建 MCP SDK `Client`，client name 是 `opencode`，version 来自 `Installation.VERSION`，并用 `withTimeout(client.connect(...), timeout)` 包住连接。[E: packages/opencode/src/mcp/index.ts:75] [E: packages/opencode/src/mcp/index.ts:76] [E: packages/opencode/src/mcp/index.ts:218] [E: packages/opencode/src/mcp/index.ts:226]
+7. server 连接成功后，如果 server capability 包含 tools，service 只拉取 `McpCatalog.defs` 作为 cached tool defs；prompts/resources 由 `MCP.prompts()` 和 `MCP.resources()` 后续按 connected clients 懒收集。[E: packages/opencode/src/mcp/index.ts:391] [E: packages/opencode/src/mcp/index.ts:521] [E: packages/opencode/src/mcp/index.ts:716] [E: packages/opencode/src/mcp/index.ts:720]
+8. finalizer 关闭所有 MCP clients；如果 transport 是 stdio，还会杀掉 stdio 进程的 descendant processes。[E: packages/opencode/src/mcp/index.ts:531] [E: packages/opencode/src/mcp/index.ts:541] [E: packages/opencode/src/mcp/index.ts:550]
 
 ### Tool listing 与执行
 
@@ -91,11 +95,11 @@ V1 config schema 中 local MCP server 有 `type: "local"`、`command`、`environ
 2. `McpCatalog.convertTool` 复制 MCP `inputSchema`，覆盖 `type: "object"`、`properties` 和 `additionalProperties: false`，然后交给 `ai.dynamicTool`。[E: packages/opencode/src/mcp/catalog.ts:42] [E: packages/opencode/src/mcp/catalog.ts:45] [E: packages/opencode/src/mcp/catalog.ts:47] [E: packages/opencode/src/mcp/catalog.ts:50]
 3. dynamic tool 执行时调用 `client.callTool`，开启 `resetTimeoutOnProgress: true`，并传入 abort signal 和 timeout。[E: packages/opencode/src/mcp/catalog.ts:54] [E: packages/opencode/src/mcp/catalog.ts:61]
 4. catalog `fetch` helper 对 prompts/resources 这类 named items 使用 `${sanitize(client)}:${sanitize(item.name)}` key，并在返回对象上保留原始 `client` 字段；resource URI key 会 escape `:` 以避免歧义。[E: packages/opencode/src/mcp/catalog.ts:103] [E: packages/opencode/src/mcp/catalog.ts:105] [E: packages/opencode/src/mcp/catalog.ts:108] [E: packages/opencode/src/mcp/catalog.ts:109]
-5. `MCP.Service.tools()` 注入到 session 时使用 `${sanitize(clientName)}_${sanitize(toolName)}` 作为最终 MCP tool key。[E: packages/opencode/src/mcp/index.ts:676] [E: packages/opencode/src/mcp/catalog.ts:119]
+5. `MCP.Service.tools()` 使用 `${sanitize(clientName)}_${sanitize(toolName)}` 作为最终 MCP tool key，但 value 只是 `{ def, client, timeout }` native entry，不再在 MCP service 内构造 AI SDK tool。[E: packages/opencode/src/mcp/index.ts:666] [E: packages/opencode/src/mcp/index.ts:667] [E: packages/opencode/src/mcp/index.ts:682] [E: packages/opencode/src/mcp/index.ts:684] [E: packages/opencode/src/mcp/catalog.ts:119]
 6. `sanitize` 只保留 `a-zA-Z0-9_-`，其它字符都替换成 `_`。[E: packages/opencode/src/mcp/catalog.ts:117]
-7. `SessionTools` 先载入 registry built-in tools，再合并 `mcp.tools()` 返回的 MCP tools。[E: packages/opencode/src/session/tools.ts:384]
-8. MCP tool 的 permission key 是最终 tool key，permission pattern 固定是 `*`。[E: packages/opencode/src/session/tools.ts:401]
-9. MCP result content 中 text 进入 output，`image` 与带 `blob` 的 `resource` 转成 file attachments；text output 的截断结果写入 metadata 的 `truncated` 和可选 `outputPath`。[E: packages/opencode/src/session/tools.ts:422] [E: packages/opencode/src/session/tools.ts:423] [E: packages/opencode/src/session/tools.ts:429] [E: packages/opencode/src/session/tools.ts:457] [E: packages/opencode/src/session/tools.ts:460] [E: packages/opencode/src/session/tools.ts:461]
+7. `SessionTools` 在普通模式遍历 native entries，调用 `McpCatalog.convertTool(entry.def, entry.client, entry.timeout)` 才转成 AI SDK dynamic tool；experimental code mode 会在这个直接 MCP 注入点之前返回。[E: packages/opencode/src/session/tools.ts:388] [E: packages/opencode/src/session/tools.ts:390] [E: packages/opencode/src/session/tools.ts:391]
+8. MCP tool 的 permission key 是最终 tool key，permission pattern 固定是 `*`。[E: packages/opencode/src/session/tools.ts:408]
+9. MCP result content 中 text 进入 output，`image` 与带 `blob` 的 `resource` 转成 file attachments；text output 的截断结果写入 metadata 的 `truncated` 和可选 `outputPath`。[E: packages/opencode/src/session/tools.ts:429] [E: packages/opencode/src/session/tools.ts:430] [E: packages/opencode/src/session/tools.ts:436] [E: packages/opencode/src/session/tools.ts:464] [E: packages/opencode/src/session/tools.ts:467] [E: packages/opencode/src/session/tools.ts:468]
 
 ### OAuth
 
@@ -103,31 +107,34 @@ V1 config schema 中 local MCP server 有 `type: "local"`、`command`、`environ
 2. provider 的 redirect URL 优先使用 config 中的 `redirectUri`，否则根据 callback port/path 生成本地 URL。[E: packages/opencode/src/mcp/oauth-provider.ts:35]
 3. OAuth client metadata 声明 redirect URIs、client name、grant types、response type、token endpoint auth method 和 scope。[E: packages/opencode/src/mcp/oauth-provider.ts:43]
 4. 如果配置里有 static `clientId`，provider 直接返回 static client info；否则会读取本地保存的 dynamic client info；过期 client info 会被忽略，让 MCP SDK 重新注册。[E: packages/opencode/src/mcp/oauth-provider.ts:55] [E: packages/opencode/src/mcp/oauth-provider.ts:66] [E: packages/opencode/src/mcp/oauth-provider.ts:68]
-5. `startAuth` 只对 remote MCP server 有效；local server 或显式 `oauth: false` 的 remote server 会报错；未提供 object OAuth config 时，`oauthConfig` 为 undefined 且流程继续构造 auth provider。[E: packages/opencode/src/mcp/index.ts:799] [E: packages/opencode/src/mcp/index.ts:801] [E: packages/opencode/src/mcp/index.ts:802] [E: packages/opencode/src/mcp/index.ts:807] [E: packages/opencode/src/mcp/index.ts:822]
-6. `startAuth` 启动 callback server、生成 state，并仅用 `StreamableHTTPClientTransport` 发起 auth discovery。[E: packages/opencode/src/mcp/index.ts:815] [E: packages/opencode/src/mcp/index.ts:817] [E: packages/opencode/src/mcp/index.ts:839]
-7. 如果 unauthorized error 携带 captured authorization URL，service 保存 pending transport 并返回 auth URL 给调用端。[E: packages/opencode/src/mcp/index.ts:856] [E: packages/opencode/src/mcp/index.ts:857] [E: packages/opencode/src/mcp/index.ts:858]
-8. `authenticate` 在无 auth URL 时会直接尝试保存 client；有 auth URL 时会打开浏览器、等待 callback、校验 state、再进入 `finishAuth`。[E: packages/opencode/src/mcp/index.ts:870] [E: packages/opencode/src/mcp/index.ts:888] [E: packages/opencode/src/mcp/index.ts:891] [E: packages/opencode/src/mcp/index.ts:917] [E: packages/opencode/src/mcp/index.ts:923]
-9. `finishAuth` 从 pending transport 取回 transport，调用 MCP SDK `finishAuth(code)`，随后清理 verifier 和 pending transport，再重建 server client。[E: packages/opencode/src/mcp/index.ts:928] [E: packages/opencode/src/mcp/index.ts:932] [E: packages/opencode/src/mcp/index.ts:944] [E: packages/opencode/src/mcp/index.ts:945] [E: packages/opencode/src/mcp/index.ts:949]
+5. `startAuth` 只对 remote MCP server 有效；local server 或显式 `oauth: false` 的 remote server 会报错；未提供 object OAuth config 时，`oauthConfig` 为 undefined 且流程继续构造 auth provider。[E: packages/opencode/src/mcp/index.ts:806] [E: packages/opencode/src/mcp/index.ts:808] [E: packages/opencode/src/mcp/index.ts:809] [E: packages/opencode/src/mcp/index.ts:814] [E: packages/opencode/src/mcp/index.ts:829]
+6. `startAuth` 启动 callback server、生成 state，并仅用 `StreamableHTTPClientTransport` 发起 auth discovery。[E: packages/opencode/src/mcp/index.ts:822] [E: packages/opencode/src/mcp/index.ts:824] [E: packages/opencode/src/mcp/index.ts:846]
+7. 如果 unauthorized error 携带 captured authorization URL，service 保存 pending transport 并返回 auth URL 给调用端。[E: packages/opencode/src/mcp/index.ts:863] [E: packages/opencode/src/mcp/index.ts:864] [E: packages/opencode/src/mcp/index.ts:865]
+8. `authenticate` 在无 auth URL 时会直接尝试保存 client；有 auth URL 时先调用 `McpBrowser.Service.open`，打开失败只发布 `BrowserOpenFailed` 而不取消 callback 等待，然后校验 state 并进入 `finishAuth`。[E: packages/opencode/src/mcp/index.ts:898] [E: packages/opencode/src/mcp/index.ts:901] [E: packages/opencode/src/mcp/index.ts:903] [E: packages/opencode/src/mcp/index.ts:907] [E: packages/opencode/src/mcp/index.ts:909] [E: packages/opencode/src/mcp/index.ts:915]
+9. `finishAuth` 从 pending transport 取回 transport，调用 MCP SDK `finishAuth(code)`，随后清理 verifier 和 pending transport，再重建 server client。[E: packages/opencode/src/mcp/index.ts:920] [E: packages/opencode/src/mcp/index.ts:924] [E: packages/opencode/src/mcp/index.ts:936] [E: packages/opencode/src/mcp/index.ts:937] [E: packages/opencode/src/mcp/index.ts:941]
 
 ## 设计动机与权衡
 
-V1 MCP client 明确偏向“尽量接上”：remote 传输同时支持 StreamableHTTP 和 SSE fallback，这是为了兼容不同 MCP server 的传输实现。[E: packages/opencode/src/mcp/index.ts:261] [I] OAuth client 信息支持 dynamic registration，本地 auth 读写也通过 `flock.withLock(lockKey)` 包裹，这让用户能长期复用 MCP server 登录状态。[E: packages/opencode/src/mcp/oauth-provider.ts:81] [E: packages/opencode/src/mcp/auth.ts:73] [E: packages/opencode/src/mcp/auth.ts:81] [I]
+V1 MCP client 明确偏向“尽量接上”：remote 传输同时支持 StreamableHTTP 和 SSE fallback，这是为了兼容不同 MCP server 的传输实现。[E: packages/opencode/src/mcp/index.ts:269] [I] OAuth client 信息支持 dynamic registration，本地 auth 读写也通过 `flock.withLock(lockKey)` 包裹，这让用户能长期复用 MCP server 登录状态。[E: packages/opencode/src/mcp/oauth-provider.ts:81] [E: packages/opencode/src/mcp/auth.ts:73] [E: packages/opencode/src/mcp/auth.ts:81] [I]
 
 工具 catalog 使用 tolerant schema 是兼容性取舍：一些 MCP server 返回的 `outputSchema` 不满足 SDK validator，opencode 会先走标准 SDK，失败后用更宽松 schema 再列 tools。[E: packages/opencode/src/mcp/catalog.ts:152] [E: packages/opencode/src/mcp/catalog.ts:155] 这让工具可见性优先于严格 schema 校验[I]，但执行阶段仍通过 MCP SDK `callTool`。[E: packages/opencode/src/mcp/catalog.ts:54]
+
+新的 `McpBrowser` 是一个可替换的 Effect service，`MCP.node` 将它列为显式 dependency [E: packages/opencode/src/mcp/index.ts:210] [E: packages/opencode/src/mcp/index.ts:1001]。这把 OAuth 的外部浏览器 side effect 从 transport/auth state machine 分离，同时保留 browser-open failure event [I]。
 
 MCP 工具名同时携带 client name 和 tool name，是为了避免多个 server 暴露同名工具时发生冲突。[I] prompts/resources catalog 用冒号，最终 session tool key 用下划线，说明“内部资源标识”和“模型可见工具名”是两个命名层。[E: packages/opencode/src/mcp/catalog.ts:103] [E: packages/opencode/src/mcp/index.ts:676] [E: packages/opencode/src/mcp/catalog.ts:119]
 
 ## 易踩坑
 
-- timeout 实现默认值是 `30_000` 毫秒。[E: packages/opencode/src/mcp/index.ts:51] V1 config schema 对 local/remote timeout 的描述仍写 default `5000`。[E: packages/core/src/v1/config/mcp.ts:21] [E: packages/core/src/v1/config/mcp.ts:57] 以当前源码运行行为为准，schema 文案是陈旧说明。[I]
-- remote 连接顺序是 StreamableHTTP 然后 SSE fallback，不是只支持 SSE。[E: packages/opencode/src/mcp/index.ts:261] [E: packages/opencode/src/mcp/index.ts:270]
+- timeout 实现默认值是 `30_000` 毫秒。[E: packages/opencode/src/mcp/index.ts:50] V1 config schema 对 local/remote timeout 的描述仍写 default `5000`。[E: packages/core/src/v1/config/mcp.ts:21] [E: packages/core/src/v1/config/mcp.ts:57] 以当前源码运行行为为准，schema 文案是陈旧说明。[I]
+- remote 连接顺序是 StreamableHTTP 然后 SSE fallback，不是只支持 SSE。[E: packages/opencode/src/mcp/index.ts:269] [E: packages/opencode/src/mcp/index.ts:278]
 - `packages/opencode/src/mcp/index.ts` 的 HTTP 管理接口通过 Effect HttpApi route group 暴露，不是 Hono。[E: packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts:4]
-- MCP server notification `ToolListChanged` 会触发重新 fetch defs 并发布 `mcp.tools.changed`，所以工具集合可能在 session 运行期间变化。[E: packages/opencode/src/mcp/index.ts:454] [E: packages/opencode/src/mcp/index.ts:457] [E: packages/opencode/src/mcp/index.ts:462]
+- MCP server notification `ToolListChanged` 会触发重新 fetch defs 并发布 `mcp.tools.changed`，所以工具集合可能在 session 运行期间变化。[E: packages/opencode/src/mcp/index.ts:462] [E: packages/opencode/src/mcp/index.ts:465] [E: packages/opencode/src/mcp/index.ts:470]
 - prompt resource materialization 在 `session/prompt.ts`，它把 `source.type === "resource"` 的 file part 通过 `mcp.readResource(clientName, uri)` 读成 prompt text/binary notes；这不是 MCP tool execution 路径。[E: packages/opencode/src/session/prompt.ts:703] [E: packages/opencode/src/session/prompt.ts:715] [I]
 
 ## Sources
 
 - packages/opencode/src/mcp/index.ts
+- packages/opencode/src/mcp/browser.ts
 - packages/opencode/src/mcp/catalog.ts
 - packages/opencode/src/mcp/oauth-provider.ts
 - packages/opencode/src/mcp/auth.ts

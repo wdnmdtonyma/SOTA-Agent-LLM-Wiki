@@ -9,7 +9,7 @@ symbols: [SDKProvider, EventSource, SyncProvider, useSync, DataProvider, useData
 related: [tui.architecture, sdk.overview]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > TUI Sync store 是 server state 的 reactive mirror：`SDKProvider` 把 HTTP/SSE 或 host event source 合成 `sdk.event`，`SyncProvider` 维护 V1 SDK-shaped state，`DataProvider` 维护 V2 `session.next.*`/location state。
@@ -80,7 +80,7 @@ V2 location data refreshers 走 generated SDK 的 `v2.*` namespaces：`v2.agent.
 
 ## Gotcha
 
-- `SyncProvider` 与 `DataProvider` 不是互斥两代内核；当前 root 同时挂载二者，Session route 主要读 `SyncProvider`，autocomplete/V2 surfaces 可读 `DataProvider`。[E: packages/tui/src/app.tsx:302] [E: packages/tui/src/app.tsx:303] [E: packages/tui/src/routes/session/index.tsx:188] [E: packages/tui/src/component/prompt/autocomplete.tsx:90]
+- `SyncProvider` 与 `DataProvider` 不是互斥两代内核；当前 root 同时挂载二者，Session route 主要读 `SyncProvider`，autocomplete/V2 surfaces 可读 `DataProvider`。[E: packages/tui/src/app.tsx:307] [E: packages/tui/src/app.tsx:308] [E: packages/tui/src/routes/session/index.tsx:188] [E: packages/tui/src/component/prompt/autocomplete.tsx:90]
 - `SDKProvider` 的 retry loop 自己做 exponential backoff，上限 30000ms；`sdk.global.event` 传 `sseMaxRetryAttempts: 0` 表示 provider-level retry 关闭，由 TUI loop 接管。[E: packages/tui/src/context/sdk.tsx:52] [E: packages/tui/src/context/sdk.tsx:93] [E: packages/tui/src/context/sdk.tsx:113]
 
 ## Sources

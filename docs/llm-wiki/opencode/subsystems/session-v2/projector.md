@@ -9,7 +9,7 @@ symbols: [SessionProjector, SessionProjector.layer, SessionMessageUpdater, inser
 related: [spine.v2-event-sourcing, ref.events]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Session projector 是 EventV2 到 Session read model 的集中投影接缝:它注册 V1/V2 session event projectors,把事件投影到 `session`、legacy `message/part`、V2 `session_input` 和 V2 `session_message`。[E: packages/core/src/session/projector.ts:215][E: packages/core/src/session/projector.ts:269][E: packages/core/src/session/projector.ts:320][E: packages/core/src/session/projector.ts:367][E: packages/core/src/session/projector.ts:353][E: packages/core/src/session/projector.ts:361]

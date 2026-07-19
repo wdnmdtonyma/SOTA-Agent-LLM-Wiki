@@ -9,7 +9,7 @@ symbols: [ShellTool, ShellPrompt, BashTool]
 related: [execution.shell-v1, execution.shell-v2, ref.bash-arity]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Bash/Shell 工具执行 shell command；V1 文件名是 `shell.ts` 但对外 wire id 与 permission key 都保持 `"bash"`，V2 文件名和 tool name 都是 `bash`。
@@ -62,7 +62,7 @@ V1 Bash 的 `ask()` 有两类请求：外部目录请求用 `permission: "extern
 
 ### 1 Identity
 
-V2 `BashTool` 的 name 常量是 `"bash"`，以 `[name]: Tool.make(...)` 注册到 `Tools.Service`。[E: packages/core/src/tool/bash.ts:18][E: packages/core/src/tool/bash.ts:102][E: packages/core/src/tool/bash.ts:104] V2 permission assert 也用 `action: name`，所以 action 是 `"bash"`。[E: packages/core/src/tool/bash.ts:138][E: packages/core/src/tool/bash.ts:139]
+V2 `BashTool` 的 name 常量是 `"bash"`，以 `[name]: Tool.make(...)` 注册到 `Tools.Service`。[E: packages/core/src/tool/bash.ts:18][E: packages/core/src/tool/bash.ts:106][E: packages/core/src/tool/bash.ts:108] V2 permission assert 也用 `action: name`，所以 action 是 `"bash"`。[E: packages/core/src/tool/bash.ts:142][E: packages/core/src/tool/bash.ts:143]
 
 ### 2 用途定位
 
@@ -73,34 +73,34 @@ V2 Bash 是 minimal core shell boundary。源码 TODO 块显示 V1 的 tree-sitt
 | 字段 | 类型 | 必填 | 默认 | 约束 | 说明 |
 |---|---|---:|---|---|---|
 | `command` | `string` | 是 | 无 | 一条 shell command string | 实际执行内容。[E: packages/core/src/tool/bash.ts:23][E: packages/core/src/tool/bash.ts:24] |
-| `workdir` | optional `string` | 否 | active Location | relative path 从 Location resolve | working directory。[E: packages/core/src/tool/bash.ts:25][E: packages/core/src/tool/bash.ts:26][E: packages/core/src/tool/bash.ts:125] |
-| `timeout` | optional `PositiveInt <= 600000` | 否 | `120000` | 最大 10 分钟 | timeout milliseconds。[E: packages/core/src/tool/bash.ts:19][E: packages/core/src/tool/bash.ts:20][E: packages/core/src/tool/bash.ts:28][E: packages/core/src/tool/bash.ts:31][E: packages/core/src/tool/bash.ts:161] |
+| `workdir` | optional `string` | 否 | active Location | relative path 从 Location resolve | working directory。[E: packages/core/src/tool/bash.ts:25][E: packages/core/src/tool/bash.ts:26][E: packages/core/src/tool/bash.ts:129] |
+| `timeout` | optional `PositiveInt <= 600000` | 否 | `120000` | 最大 10 分钟 | timeout milliseconds。[E: packages/core/src/tool/bash.ts:19][E: packages/core/src/tool/bash.ts:20][E: packages/core/src/tool/bash.ts:28][E: packages/core/src/tool/bash.ts:31][E: packages/core/src/tool/bash.ts:165] |
 
 ### 4 输出 & 大小/截断限制
 
-V2 Bash 的 `Output` 包含 `output`、`truncated`、optional `exit`、optional `timeout` 和 optional `warnings`；`toStructuredOutput` 只暴露 `truncated` 以及存在时的 `exit`/`timeout`。[E: packages/core/src/tool/bash.ts:35][E: packages/core/src/tool/bash.ts:36][E: packages/core/src/tool/bash.ts:37][E: packages/core/src/tool/bash.ts:38][E: packages/core/src/tool/bash.ts:41][E: packages/core/src/tool/bash.ts:43][E: packages/core/src/tool/bash.ts:44][E: packages/core/src/tool/bash.ts:109][E: packages/core/src/tool/bash.ts:110][E: packages/core/src/tool/bash.ts:111][E: packages/core/src/tool/bash.ts:112] `AppProcess.run` 设置 combined output capture 为 `MAX_CAPTURE_BYTES = 1024 * 1024`，这是一层 producer boundary，不是 V2 registry 的 model-output 50KB 边界。[E: packages/core/src/tool/bash.ts:21][E: packages/core/src/tool/bash.ts:162][E: packages/core/src/tool/bash.ts:164][E: packages/core/src/tool/bash.ts:166][I] 最终 output 仍会经 V2 registry 的 `ToolOutputStore.bound` 做通用 model-facing bounding。[E: packages/core/src/tool/registry.ts:75][E: packages/core/src/tool/registry.ts:76]
+V2 Bash 的 `Output` 包含 `output`、`truncated`、optional `exit`、optional `timeout` 和 optional `warnings`；`toStructuredOutput` 只暴露 `truncated` 以及存在时的 `exit`/`timeout`。[E: packages/core/src/tool/bash.ts:35][E: packages/core/src/tool/bash.ts:36][E: packages/core/src/tool/bash.ts:37][E: packages/core/src/tool/bash.ts:38][E: packages/core/src/tool/bash.ts:41][E: packages/core/src/tool/bash.ts:43][E: packages/core/src/tool/bash.ts:44][E: packages/core/src/tool/bash.ts:113][E: packages/core/src/tool/bash.ts:114][E: packages/core/src/tool/bash.ts:115][E: packages/core/src/tool/bash.ts:116] `AppProcess.run` 设置 combined output capture 为 `MAX_CAPTURE_BYTES = 1024 * 1024`，这是一层 producer boundary，不是 V2 registry 的 model-output 50KB 边界。[E: packages/core/src/tool/bash.ts:21][E: packages/core/src/tool/bash.ts:166][E: packages/core/src/tool/bash.ts:168][E: packages/core/src/tool/bash.ts:170][I] 最终 output 仍会经 V2 registry 的 `ToolOutputStore.bound` 做通用 model-facing bounding。[E: packages/core/src/tool/registry.ts:75][E: packages/core/src/tool/registry.ts:76]
 
 ### 5 权限
 
-V2 Bash 先 resolve workdir；如果 resolved target 暴露 `externalDirectory`，先 assert `external_directory`；随后 assert `action: "bash"`，resources/save 都是 command string。[E: packages/core/src/tool/bash.ts:125][E: packages/core/src/tool/bash.ts:126][E: packages/core/src/tool/bash.ts:128][E: packages/core/src/tool/bash.ts:129][E: packages/core/src/tool/bash.ts:138][E: packages/core/src/tool/bash.ts:139][E: packages/core/src/tool/bash.ts:140][E: packages/core/src/tool/bash.ts:141] V2 还扫描 command tokens 里的 absolute external path，生成 warnings，但 description 说明这些 command-argument path warnings 是 advisory only，不是 parser-grade approval reduction。[E: packages/core/src/tool/bash.ts:81][E: packages/core/src/tool/bash.ts:85][E: packages/core/src/tool/bash.ts:88][E: packages/core/src/tool/bash.ts:105][E: packages/core/src/tool/bash.ts:134][E: packages/core/src/tool/bash.ts:136]
+V2 Bash 先 resolve workdir；如果 resolved target 暴露 `externalDirectory`，先 assert `external_directory`；随后 assert `action: "bash"`，resources/save 都是 command string。[E: packages/core/src/tool/bash.ts:129][E: packages/core/src/tool/bash.ts:130][E: packages/core/src/tool/bash.ts:132][E: packages/core/src/tool/bash.ts:133][E: packages/core/src/tool/bash.ts:142][E: packages/core/src/tool/bash.ts:143][E: packages/core/src/tool/bash.ts:144][E: packages/core/src/tool/bash.ts:145] V2 还扫描 command tokens 里的 absolute path，通过 `FSUtil.Service.resolve` 规范化 path 及 parent directory 后才判定是否在 cwd 外，然后生成 advisory-only warnings；这仍不是 parser-grade approval reduction。[E: packages/core/src/tool/bash.ts:81][E: packages/core/src/tool/bash.ts:82][E: packages/core/src/tool/bash.ts:87][E: packages/core/src/tool/bash.ts:89][E: packages/core/src/tool/bash.ts:90][E: packages/core/src/tool/bash.ts:91][E: packages/core/src/tool/bash.ts:92][E: packages/core/src/tool/bash.ts:109][E: packages/core/src/tool/bash.ts:138][E: packages/core/src/tool/bash.ts:140]
 
 ### 6 execute() 走读
 
-1. V2 Bash 构造 permission source，resolve workdir target，并做 external directory approval。[E: packages/core/src/tool/bash.ts:120][E: packages/core/src/tool/bash.ts:125][E: packages/core/src/tool/bash.ts:126][E: packages/core/src/tool/bash.ts:128]
-2. V2 Bash assert `bash` command permission 后，检查 canonical workdir 是 directory。[E: packages/core/src/tool/bash.ts:138][E: packages/core/src/tool/bash.ts:147]
-3. V2 Bash 从 config entries 合并 document info，取 `shell` 配置；未配置时 POSIX 用 `/bin/sh`，Windows 用 `COMSPEC ?? "cmd.exe"`。[E: packages/core/src/tool/bash.ts:49][E: packages/core/src/tool/bash.ts:150][E: packages/core/src/tool/bash.ts:151][E: packages/core/src/tool/bash.ts:153]
-4. V2 Bash 用 `ChildProcess.make(input.command, [], { shell, cwd, stdin: "ignore", detached, forceKillAfter })` 构造命令并交给 `AppProcess.run`。[E: packages/core/src/tool/bash.ts:154][E: packages/core/src/tool/bash.ts:155][E: packages/core/src/tool/bash.ts:156][E: packages/core/src/tool/bash.ts:157][E: packages/core/src/tool/bash.ts:159][E: packages/core/src/tool/bash.ts:162]
-5. timeout 映射为 successful structured output with `timeout: true`；其它 AppProcessError 映射为 ToolFailure。[E: packages/core/src/tool/bash.ts:169][E: packages/core/src/tool/bash.ts:173][E: packages/core/src/tool/bash.ts:175][E: packages/core/src/tool/bash.ts:177][E: packages/core/src/tool/bash.ts:192]
+1. V2 Bash 构造 permission source，resolve workdir target，对 external workdir 做 approval，再使用 injected `FSUtil.Service` 规范化 command 参数里的绝对路径以生成 warning。[E: packages/core/src/tool/bash.ts:101][E: packages/core/src/tool/bash.ts:124][E: packages/core/src/tool/bash.ts:129][E: packages/core/src/tool/bash.ts:130][E: packages/core/src/tool/bash.ts:132][E: packages/core/src/tool/bash.ts:138]
+2. V2 Bash assert `bash` command permission 后，检查 canonical workdir 是 directory。[E: packages/core/src/tool/bash.ts:142][E: packages/core/src/tool/bash.ts:151]
+3. V2 Bash 从 config entries 合并 document info，取 `shell` 配置；未配置时 POSIX 用 `/bin/sh`，Windows 用 `COMSPEC ?? "cmd.exe"`。[E: packages/core/src/tool/bash.ts:49][E: packages/core/src/tool/bash.ts:154][E: packages/core/src/tool/bash.ts:155][E: packages/core/src/tool/bash.ts:157]
+4. V2 Bash 用 `ChildProcess.make(input.command, [], { shell, cwd, stdin: "ignore", detached, forceKillAfter })` 构造命令并交给 `AppProcess.run`。[E: packages/core/src/tool/bash.ts:158][E: packages/core/src/tool/bash.ts:159][E: packages/core/src/tool/bash.ts:160][E: packages/core/src/tool/bash.ts:161][E: packages/core/src/tool/bash.ts:163][E: packages/core/src/tool/bash.ts:166]
+5. timeout 映射为 successful structured output with `timeout: true`；其它 AppProcessError 映射为 ToolFailure。[E: packages/core/src/tool/bash.ts:173][E: packages/core/src/tool/bash.ts:177][E: packages/core/src/tool/bash.ts:179][E: packages/core/src/tool/bash.ts:181][E: packages/core/src/tool/bash.ts:196]
 
 ## V1 vs V2 差异
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 文件名与 wire id | 文件是 `shell.ts`，tool/permission id 是 `"bash"`。[E: packages/opencode/src/tool/shell.ts:338][E: packages/opencode/src/tool/shell/id.ts:16] | 文件是 `bash.ts`，name/action 都是 `"bash"`。[E: packages/core/src/tool/bash.ts:18][E: packages/core/src/tool/bash.ts:139] |
+| 文件名与 wire id | 文件是 `shell.ts`，tool/permission id 是 `"bash"`。[E: packages/opencode/src/tool/shell.ts:338][E: packages/opencode/src/tool/shell/id.ts:16] | 文件是 `bash.ts`，name/action 都是 `"bash"`。[E: packages/core/src/tool/bash.ts:18][E: packages/core/src/tool/bash.ts:143] |
 | 输入字段 | V1 schema 暴露 `command`、`timeout`、`workdir`。[E: packages/opencode/src/tool/shell/prompt.ts:15][E: packages/opencode/src/tool/shell/prompt.ts:17][E: packages/opencode/src/tool/shell/prompt.ts:18][E: packages/opencode/src/tool/shell/prompt.ts:19] | V2 schema 暴露 `command`、`workdir`、`timeout`，且也没有独立 `description` 输入字段。[E: packages/core/src/tool/bash.ts:23][E: packages/core/src/tool/bash.ts:24][E: packages/core/src/tool/bash.ts:25][E: packages/core/src/tool/bash.ts:28] |
-| approval reduction | tree-sitter + command/path scan + `BashArity.prefix`。[E: packages/opencode/src/tool/shell.ts:257][E: packages/opencode/src/tool/shell.ts:398][E: packages/opencode/src/tool/shell.ts:409] | command permission 是整条 command；absolute path token 只生成 warnings。[E: packages/core/src/tool/bash.ts:138][E: packages/core/src/tool/bash.ts:134] |
-| plugin env | 触发 `shell.env` hook。[E: packages/opencode/src/tool/shell.ts:418][E: packages/opencode/src/tool/shell.ts:424] | `shell.env` 是 TODO；execute 只用 `config.entries()` 合并 shell 配置。[E: packages/core/src/tool/bash.ts:150][E: packages/core/src/tool/bash.ts:153][I] |
-| full output retention | V1 shell 自己在超过 byte cap 时写 truncation file，并在 output 里暴露路径。[E: packages/opencode/src/tool/shell.ts:505][E: packages/opencode/src/tool/shell.ts:591] | V2 Bash 目前只做 1MB combined in-memory capture；stream-to-managed-storage 是 TODO。[E: packages/core/src/tool/bash.ts:21][E: packages/core/src/tool/bash.ts:166][I] |
+| approval reduction | tree-sitter + command/path scan + `BashArity.prefix`。[E: packages/opencode/src/tool/shell.ts:257][E: packages/opencode/src/tool/shell.ts:398][E: packages/opencode/src/tool/shell.ts:409] | command permission 是整条 command；absolute path token 只生成 warnings。[E: packages/core/src/tool/bash.ts:142][E: packages/core/src/tool/bash.ts:134] |
+| plugin env | 触发 `shell.env` hook。[E: packages/opencode/src/tool/shell.ts:418][E: packages/opencode/src/tool/shell.ts:424] | `shell.env` 是 TODO；execute 只用 `config.entries()` 合并 shell 配置。[E: packages/core/src/tool/bash.ts:154][E: packages/core/src/tool/bash.ts:157][I] |
+| full output retention | V1 shell 自己在超过 byte cap 时写 truncation file，并在 output 里暴露路径。[E: packages/opencode/src/tool/shell.ts:505][E: packages/opencode/src/tool/shell.ts:591] | V2 Bash 目前只做 1MB combined in-memory capture；stream-to-managed-storage 是 TODO。[E: packages/core/src/tool/bash.ts:21][E: packages/core/src/tool/bash.ts:170][I] |
 
 ## 设计动机·edge·历史
 

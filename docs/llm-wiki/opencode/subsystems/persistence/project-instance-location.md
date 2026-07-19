@@ -30,7 +30,7 @@ related:
   - session-v2.location-wiring
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Project/Instance/Location 是 opencode 持久化与运行时作用域的三层边界：V2 `ProjectV2` 解析稳定 project identity，V2 `Location` 给 core services 一个 directory/workspace/project scope，V1 `InstanceStore` 为每个 cwd 缓存 legacy service bundle。
@@ -63,7 +63,7 @@ updated: 8b68dc0d7
 
 `locationServices` 直接纳入 Location、Policy、Config、Agent、Command、Reference、Integration、Catalog、Plugin、ProjectCopy、FileSystem/Search、Watcher、Pty、Skill、System Context、LocationMutation、Permission、ToolRegistry、BuiltInTools、SessionRunner、Snapshot 等 per-location nodes。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:43][E: packages/core/src/location-services.ts:44][E: packages/core/src/location-services.ts:45][E: packages/core/src/location-services.ts:46][E: packages/core/src/location-services.ts:47][E: packages/core/src/location-services.ts:48][E: packages/core/src/location-services.ts:49][E: packages/core/src/location-services.ts:50][E: packages/core/src/location-services.ts:52][E: packages/core/src/location-services.ts:54][E: packages/core/src/location-services.ts:56][E: packages/core/src/location-services.ts:57][E: packages/core/src/location-services.ts:58][E: packages/core/src/location-services.ts:59][E: packages/core/src/location-services.ts:60][E: packages/core/src/location-services.ts:61][E: packages/core/src/location-services.ts:63][E: packages/core/src/location-services.ts:65][E: packages/core/src/location-services.ts:67][E: packages/core/src/location-services.ts:68][E: packages/core/src/location-services.ts:75][E: packages/core/src/location-services.ts:78]
 
-`buildLocationServiceMap()` binds each lookup ref by replacing `Location.node` with `Location.boundNode(ref)`, compiles the location graph with `Layer.fresh`, provides hoisted global deps, and configures LayerMap idle TTL as 60 minutes。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:90][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:92][E: packages/core/src/location-services.ts:94][E: packages/core/src/location-services.ts:95][E: packages/core/src/location-services.ts:102][E: packages/core/src/location-services.ts:105]
+`buildLocationServiceMap()` binds each lookup ref by replacing `Location.node` with `Location.boundNode(ref)`, compiles the location graph with `Layer.fresh`, provides hoisted global deps, and configures LayerMap idle TTL as 60 minutes。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:90][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:96][E: packages/core/src/location-services.ts:98][E: packages/core/src/location-services.ts:99][E: packages/core/src/location-services.ts:106][E: packages/core/src/location-services.ts:109]
 
 ## V1 InstanceContext 和权限边界
 
@@ -97,7 +97,7 @@ layer 依赖 legacy `Project.Service` 和 `InstanceBootstrap.Service`，内部 c
 | --- | --- | --- |
 | Project identity owner | Legacy `Project.fromDirectory` owns SQL upsert, sandbox list cleanup, optional icon discovery, and GlobalBus `project.updated` emission。[E: packages/opencode/src/project/project.ts:233][E: packages/opencode/src/project/project.ts:247][E: packages/opencode/src/project/project.ts:257][E: packages/opencode/src/project/project.ts:288][E: packages/opencode/src/project/project.ts:305] | `ProjectV2.resolve` owns stable ID resolution and cache commit bridge。[E: packages/core/src/project.ts:110][E: packages/core/src/project.ts:124] |
 | Runtime scope | `InstanceContext` is per cwd and includes `directory/worktree/project`。[E: packages/opencode/src/project/instance-context.ts:5] | `Location.Service` is core location scope and includes `directory/workspaceID/project` plus optional `vcs`。[E: packages/core/src/location.ts:11][E: packages/core/src/location.ts:25][E: packages/core/src/location.ts:29] |
-| Service cache | `InstanceStore` caches by resolved directory, entry is Deferred boot result。[E: packages/opencode/src/project/instance-store.ts:109][E: packages/opencode/src/project/instance-store.ts:115] | `LocationServiceMap` caches Location layer lookup by `Location.Ref` with 60 minute idle TTL。[E: packages/core/src/location-service-map.ts:9][E: packages/core/src/location-services.ts:105] |
+| Service cache | `InstanceStore` caches by resolved directory, entry is Deferred boot result。[E: packages/opencode/src/project/instance-store.ts:109][E: packages/opencode/src/project/instance-store.ts:115] | `LocationServiceMap` caches Location layer lookup by `Location.Ref` with 60 minute idle TTL。[E: packages/core/src/location-service-map.ts:9][E: packages/core/src/location-services.ts:109] |
 | External path boundary | `containsPath` checks opened directory or git worktree, excluding `/` worktree fallback。[E: packages/opencode/src/project/instance-context.ts:19][E: packages/opencode/src/project/instance-context.ts:22] | V2 `FileSystem` resolves paths against `Location.directory` and dies when resolved paths escape it。[E: packages/core/src/filesystem.ts:67][E: packages/core/src/filesystem.ts:68][E: packages/core/src/filesystem.ts:69] |
 
 ## 设计动机与 gotchas

@@ -26,7 +26,7 @@ related:
   - spine.v2-admission
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 Session inbox 是 `session_input` durable admission 表和 `PromptAdmitted` / `Prompted` event pair:`SessionV2.prompt(...)` 先 admit prompt,runner 只在 safe provider-turn boundary promote,projector 再把 promoted input 变成 `session_message` user row。
@@ -81,9 +81,9 @@ Session inbox 不执行 provider turn,也不拥有 process-local drain coordinat
 
 5. Projector registers `events.project(SessionEvent.PromptAdmitted, ...)` and calls `SessionInput.projectAdmitted`, which refuses to reserve an id already present in `SessionMessageTable` and inserts into `SessionInputTable` with `onConflictDoNothing`。[E: packages/core/src/session/projector.ts:364][E: packages/core/src/session/input.ts:94][E: packages/core/src/session/input.ts:100][E: packages/core/src/session/input.ts:101][E: packages/core/src/session/input.ts:111]
 
-6. In runner, when `promotion === "steer"`, a cutoff is captured from `EventV2.latestSequence`, then `promoteSteers` promotes all pending steers admitted at or before that cutoff in admitted order。[E: packages/core/src/session/runner/llm.ts:182][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:185][E: packages/core/src/session/input.ts:245][E: packages/core/src/session/input.ts:259][E: packages/core/src/session/input.ts:262]
+6. In runner, when `promotion === "steer"`, a cutoff is captured from `EventV2.latestSequence`, then `promoteSteers` promotes all pending steers admitted at or before that cutoff in admitted order。[E: packages/core/src/session/runner/llm.ts:187][E: packages/core/src/session/runner/llm.ts:188][E: packages/core/src/session/runner/llm.ts:190][E: packages/core/src/session/input.ts:245][E: packages/core/src/session/input.ts:259][E: packages/core/src/session/input.ts:262]
 
-7. When `promotion === "queue"`, runner promotes exactly one oldest queued row first, then promotes eligible steers up to the same cutoff;the V2 spec describes queued inputs as FIFO future activities and steer inputs as next-boundary work。[E: packages/core/src/session/runner/llm.ts:186][E: packages/core/src/session/runner/llm.ts:187][E: packages/core/src/session/runner/llm.ts:188][E: packages/core/src/session/input.ts:268][E: packages/core/src/session/input.ts:280][E: packages/core/src/session/input.ts:283][E: specs/v2/session.md:155][E: specs/v2/session.md:157][E: specs/v2/session.md:158]
+7. When `promotion === "queue"`, runner promotes exactly one oldest queued row first, then promotes eligible steers up to the same cutoff;the V2 spec describes queued inputs as FIFO future activities and steer inputs as next-boundary work。[E: packages/core/src/session/runner/llm.ts:191][E: packages/core/src/session/runner/llm.ts:192][E: packages/core/src/session/runner/llm.ts:193][E: packages/core/src/session/input.ts:268][E: packages/core/src/session/input.ts:280][E: packages/core/src/session/input.ts:283][E: specs/v2/session.md:155][E: specs/v2/session.md:157][E: specs/v2/session.md:158]
 
 8. `SessionInput.publish` emits `SessionEvent.Prompted` for each selected row; duplicate lifecycle conflicts are tolerated only when the stored row is already promoted。[E: packages/core/src/session/input.ts:216][E: packages/core/src/session/input.ts:224][E: packages/core/src/session/input.ts:225][E: packages/core/src/session/input.ts:233][E: packages/core/src/session/input.ts:236]
 

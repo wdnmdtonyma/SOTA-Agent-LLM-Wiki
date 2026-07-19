@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 source:
   - packages/opencode/src/lsp/lsp.ts
   - packages/opencode/src/lsp/client.ts
@@ -96,7 +96,7 @@ V1 `lsp` tool 在执行具体 LSP operation 前会调用 `lsp.touchFile(file, "d
 2. 支持的 operation 包括 `goToDefinition`、`findReferences`、`hover`、`documentSymbol`、`workspaceSymbol`、`goToImplementation`、`prepareCallHierarchy`、`incomingCalls`、`outgoingCalls`。[E: packages/opencode/src/tool/lsp.ts:11]
 3. 运行前会询问 permission，permission id 是 `lsp`，pattern 固定是 `*`。[E: packages/opencode/src/tool/lsp.ts:56] [E: packages/opencode/src/tool/lsp.ts:57] [E: packages/opencode/src/tool/lsp.ts:58]
 4. tool 会先检查目标文件是否存在以及是否有可用 LSP client；失败时抛 `File not found` 或 `No LSP server available for this file type.`。[E: packages/opencode/src/tool/lsp.ts:74] [E: packages/opencode/src/tool/lsp.ts:77]
-5. registry 中 `lsp` tool 只在 `flags.experimentalLspTool` 开启时加入模型工具集合。[E: packages/opencode/src/tool/registry.ts:233]
+5. registry 中 `lsp` tool 只在 `flags.experimentalLspTool` 开启时加入模型工具集合。[E: packages/opencode/src/tool/registry.ts:242]
 
 ## 设计动机与权衡
 
@@ -104,7 +104,7 @@ LSP pool 使用 `(serverID, root)` 作为复用边界，这是语言服务常见
 
 diagnostics 同时支持 push 和 pull，是为了适配不同 LSP server 能力；初始化后会读取 server capability 决定 `syncKind` 和 static diagnostics 支持。[E: packages/opencode/src/lsp/client.ts:257] [E: packages/opencode/src/lsp/client.ts:258] push/pull 结果在 `diagnostics` getter 中合并输出。[E: packages/opencode/src/lsp/client.ts:623]
 
-`experimentalLspTool` gating 说明暴露给模型的 `lsp` tool 仍是实验功能；LSP service 作为 V1 runtime layer 初始化，但模型不一定能主动调用 `lsp` tool。[E: packages/opencode/src/tool/registry.ts:212] [E: packages/opencode/src/tool/registry.ts:233] [I]
+`experimentalLspTool` gating 说明暴露给模型的 `lsp` tool 仍是实验功能；LSP service 作为 V1 runtime layer 初始化，但模型不一定能主动调用 `lsp` tool。[E: packages/opencode/src/tool/registry.ts:219] [E: packages/opencode/src/tool/registry.ts:242] [I]
 
 ## 易踩坑
 

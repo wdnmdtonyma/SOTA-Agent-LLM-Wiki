@@ -14,7 +14,7 @@ symbols:
   - Config.Info
   - ConfigMigrateV1.migrate
 evidence: explicit
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > 这份节点是机器可读的 config key 总账：V1 是当前 V1 CLI/agent surface 的配置 schema，V2 是 `@opencode/v2` core 的 `Config.Info` schema。
@@ -53,33 +53,33 @@ V1 schema 的主入口是 `ConfigV1.Info`，顶层还定义了 well-known `confi
 | `model` | `provider/model` string | active | [E: packages/core/src/v1/config/config.ts:74] |
 | `small_model` | `provider/model` string | V1-only / migration detector | [E: packages/core/src/v1/config/config.ts:77][E: packages/core/src/v1/config/migrate.ts:20] |
 | `default_agent` | agent name | active | [E: packages/core/src/v1/config/config.ts:80] |
-| `username` | string | active | [E: packages/core/src/v1/config/config.ts:84] |
-| `mode` | record of agent config | deprecated alias for `agent`; migrates as primary agents | [E: packages/core/src/v1/config/config.ts:87][E: packages/core/src/v1/config/config.ts:92][E: packages/core/src/v1/config/migrate.ts:100] |
-| `agent` | built-in/custom agent map | active | [E: packages/core/src/v1/config/config.ts:93] |
-| `provider` | provider config map | renamed to V2 `providers` | [E: packages/core/src/v1/config/config.ts:107][E: packages/core/src/v1/config/migrate.ts:70] |
-| `mcp` | MCP server map | active, migrated with field renames | [E: packages/core/src/v1/config/config.ts:110][E: packages/core/src/v1/config/migrate.ts:127] |
-| `formatter` | formatter config | active | [E: packages/core/src/v1/config/config.ts:113] |
-| `lsp` | LSP config | active | [E: packages/core/src/v1/config/config.ts:117] |
-| `instructions` | string array | active | [E: packages/core/src/v1/config/config.ts:121] |
-| `layout` | layout enum | deprecated | [E: packages/core/src/v1/config/config.ts:124] |
-| `permission` | V1 permission config | migrated to V2 `permissions` | [E: packages/core/src/v1/config/config.ts:125][E: packages/core/src/v1/config/migrate.ts:45] |
-| `tools` | record of boolean | migrated to V2 permission rules | [E: packages/core/src/v1/config/config.ts:126][E: packages/core/src/v1/config/migrate.ts:74] |
-| `attachment` | attachment processing config | renamed to V2 `attachments` | [E: packages/core/src/v1/config/config.ts:127][E: packages/core/src/v1/config/migrate.ts:51] |
-| `enterprise.url` | string | active | [E: packages/core/src/v1/config/config.ts:131] |
-| `tool_output.max_lines` | positive int | active | [E: packages/core/src/v1/config/config.ts:135] |
-| `tool_output.max_bytes` | positive int | active | [E: packages/core/src/v1/config/config.ts:138] |
-| `compaction.auto` | boolean | active | [E: packages/core/src/v1/config/config.ts:148] |
-| `compaction.prune` | boolean | active | [E: packages/core/src/v1/config/config.ts:151] |
-| `compaction.tail_turns` | non-negative int | V1 shape | [E: packages/core/src/v1/config/config.ts:154] |
-| `compaction.preserve_recent_tokens` | non-negative int | migrates to V2 `compaction.keep.tokens` | [E: packages/core/src/v1/config/config.ts:158][E: packages/core/src/v1/config/migrate.ts:58] |
-| `compaction.reserved` | non-negative int | migrates to V2 `compaction.buffer` | [E: packages/core/src/v1/config/config.ts:161][E: packages/core/src/v1/config/migrate.ts:60] |
-| `experimental.disable_paste_summary` | boolean | V1 experimental | [E: packages/core/src/v1/config/config.ts:168] |
-| `experimental.batch_tool` | boolean | V1 experimental | [E: packages/core/src/v1/config/config.ts:169] |
-| `experimental.openTelemetry` | boolean | V1 experimental | [E: packages/core/src/v1/config/config.ts:170] |
-| `experimental.primary_tools` | string array | V1 experimental | [E: packages/core/src/v1/config/config.ts:173] |
-| `experimental.continue_loop_on_deny` | boolean | V1 experimental | [E: packages/core/src/v1/config/config.ts:176] |
-| `experimental.mcp_timeout` | positive int | migrates into V2 MCP timeout when present | [E: packages/core/src/v1/config/config.ts:179][E: packages/core/src/v1/config/migrate.ts:133] |
-| `experimental.policies` | policy array | migrated to V2 experimental policies | [E: packages/core/src/v1/config/config.ts:182][E: packages/core/src/v1/config/migrate.ts:69] |
+| `username` | string | active | [E: packages/core/src/v1/config/config.ts:87] |
+| `mode` | record of agent config | deprecated alias for `agent`; migrates as primary agents | [E: packages/core/src/v1/config/config.ts:90][E: packages/core/src/v1/config/config.ts:95][E: packages/core/src/v1/config/migrate.ts:100] |
+| `agent` | built-in/custom agent map | active | [E: packages/core/src/v1/config/config.ts:96] |
+| `provider` | provider config map | renamed to V2 `providers` | [E: packages/core/src/v1/config/config.ts:110][E: packages/core/src/v1/config/migrate.ts:70] |
+| `mcp` | MCP server map | active, migrated with field renames | [E: packages/core/src/v1/config/config.ts:113][E: packages/core/src/v1/config/migrate.ts:127] |
+| `formatter` | formatter config | active | [E: packages/core/src/v1/config/config.ts:116] |
+| `lsp` | LSP config | active | [E: packages/core/src/v1/config/config.ts:120] |
+| `instructions` | string array | active | [E: packages/core/src/v1/config/config.ts:124] |
+| `layout` | layout enum | deprecated | [E: packages/core/src/v1/config/config.ts:127] |
+| `permission` | V1 permission config | migrated to V2 `permissions` | [E: packages/core/src/v1/config/config.ts:128][E: packages/core/src/v1/config/migrate.ts:45] |
+| `tools` | record of boolean | migrated to V2 permission rules | [E: packages/core/src/v1/config/config.ts:129][E: packages/core/src/v1/config/migrate.ts:74] |
+| `attachment` | attachment processing config | renamed to V2 `attachments` | [E: packages/core/src/v1/config/config.ts:130][E: packages/core/src/v1/config/migrate.ts:51] |
+| `enterprise.url` | string | active | [E: packages/core/src/v1/config/config.ts:134] |
+| `tool_output.max_lines` | positive int | active | [E: packages/core/src/v1/config/config.ts:138] |
+| `tool_output.max_bytes` | positive int | active | [E: packages/core/src/v1/config/config.ts:141] |
+| `compaction.auto` | boolean | active | [E: packages/core/src/v1/config/config.ts:151] |
+| `compaction.prune` | boolean | active | [E: packages/core/src/v1/config/config.ts:154] |
+| `compaction.tail_turns` | non-negative int | V1 shape | [E: packages/core/src/v1/config/config.ts:157] |
+| `compaction.preserve_recent_tokens` | non-negative int | migrates to V2 `compaction.keep.tokens` | [E: packages/core/src/v1/config/config.ts:161][E: packages/core/src/v1/config/migrate.ts:58] |
+| `compaction.reserved` | non-negative int | migrates to V2 `compaction.buffer` | [E: packages/core/src/v1/config/config.ts:164][E: packages/core/src/v1/config/migrate.ts:60] |
+| `experimental.disable_paste_summary` | boolean | V1 experimental | [E: packages/core/src/v1/config/config.ts:171] |
+| `experimental.batch_tool` | boolean | V1 experimental | [E: packages/core/src/v1/config/config.ts:172] |
+| `experimental.openTelemetry` | boolean | V1 experimental | [E: packages/core/src/v1/config/config.ts:173] |
+| `experimental.primary_tools` | string array | V1 experimental | [E: packages/core/src/v1/config/config.ts:176] |
+| `experimental.continue_loop_on_deny` | boolean | V1 experimental | [E: packages/core/src/v1/config/config.ts:179] |
+| `experimental.mcp_timeout` | positive int | migrates into V2 MCP timeout when present | [E: packages/core/src/v1/config/config.ts:182][E: packages/core/src/v1/config/migrate.ts:133] |
+| `experimental.policies` | policy array | migrated to V2 experimental policies | [E: packages/core/src/v1/config/config.ts:185][E: packages/core/src/v1/config/migrate.ts:69] |
 
 ### V1 nested catalog
 
@@ -171,7 +171,7 @@ V2 schema 的主入口是 `Config.Info` class，而不是 V1 `Schema.Struct` exp
 
 - V2 config key names are mostly pluralized for collections: `agents`、`attachments`、`commands`、`plugins`、`providers`、`snapshots`。[E: packages/core/src/config.ts:63][E: packages/core/src/config.ts:78][E: packages/core/src/config.ts:93][E: packages/core/src/config.ts:102][E: packages/core/src/config.ts:106][E: packages/core/src/config.ts:66][I]
 - `command` 在 V1 是 singular top-level key，但 V2 schema 当前使用 `commands`；任何只按 `command` 写入 V2 config 的 agent 都会丢失 V2 schema 对齐。[E: packages/core/src/v1/config/config.ts:41][E: packages/core/src/config.ts:93]
-- `permission` 是 V1 key，`permissions` 是 V2 key；不要把 V1 `tools` boolean gating 当成 V2 tool registry，迁移代码只把它转成 permission rule。[E: packages/core/src/v1/config/config.ts:126][E: packages/core/src/v1/config/migrate.ts:77][E: packages/core/src/v1/config/migrate.ts:78][E: packages/core/src/v1/config/migrate.ts:80][E: packages/core/src/v1/config/migrate.ts:94]
+- `permission` 是 V1 key，`permissions` 是 V2 key；不要把 V1 `tools` boolean gating 当成 V2 tool registry，迁移代码只把它转成 permission rule。[E: packages/core/src/v1/config/config.ts:129][E: packages/core/src/v1/config/migrate.ts:77][E: packages/core/src/v1/config/migrate.ts:78][E: packages/core/src/v1/config/migrate.ts:80][E: packages/core/src/v1/config/migrate.ts:94]
 
 ## Sources
 

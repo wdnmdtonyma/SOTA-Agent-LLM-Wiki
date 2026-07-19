@@ -25,7 +25,7 @@ related:
   - spine.cli-to-session
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 `server.http-server` 覆盖两个 Effect HTTP server surface: V1 `packages/opencode/src/server` host listener，以及 V2 `@opencode-ai/server` package mounted under the same process. 两者都 use Effect `HttpRouter`/`HttpServer`/`HttpApiBuilder`;本节点读取的 server code 中没有 Hono app construction。[E: packages/opencode/src/server/server.ts:6][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:141][E: packages/server/src/routes.ts:14][E: packages/server/src/routes.ts:15][I]
@@ -54,7 +54,7 @@ V1 route tree 明确拆成 root、event、pty connect、instance、V2 server、d
 
 V2 `serverRoutes` 在 V1 tree 中通过 `HttpApiBuilder.layer(Api)` 建出来，并 provide `handlers`、`PluginPtyEnvironment.layer`、server auth layer 和 V2 schema-error layer。[E: packages/opencode/src/server/routes/instance/httpapi/server.ts:177][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:178][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:179][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:180]
 
-`createRoutes()` merge root/event/pty/instance/server/doc/UI 七个 route layer，并在外层提供 error/compression/cors/fence、MoveSession、HttpServer services、Observability、session location、location layer、PtyEnvironment、SessionV2 local execution、locationServiceMapV2 和 V1 app services。[E: packages/opencode/src/server/routes/instance/httpapi/server.ts:271][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:276][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:291][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:295][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:301][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:306][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:308]
+`createRoutes()` merge root/event/pty/instance/server/doc/UI 七个 route layer，并在外层提供 error/compression/cors/fence、MoveSession、HttpServer services、Observability、session location、location layer、PtyEnvironment、SessionV2 local execution、locationServiceMapV2 和 V1 app services。[E: packages/opencode/src/server/routes/instance/httpapi/server.ts:271][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:276][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:291][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:311][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:299][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:304][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:306]
 
 `/doc` route 返回 cached `HttpServerResponse.jsonUnsafe(OpenApi.fromApi(PublicApi))`，不是 Swagger UI。[E: packages/opencode/src/server/routes/instance/httpapi/server.ts:188][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:190]
 

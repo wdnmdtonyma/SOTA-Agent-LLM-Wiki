@@ -4,12 +4,12 @@ title: opencode 源码总览
 kind: flow
 tier: T0
 v: shared
-source: [packages/opencode/src/index.ts, packages/opencode/src/cli/cmd/run.ts, packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/processor.ts, AGENTS.md, package.json, packages/opencode/package.json, packages/core/package.json, packages/cli/package.json, packages/core/src/session.ts, packages/core/src/effect/app-node-builder.ts, packages/core/src/location-services.ts, packages/core/src/session/runner/llm.ts, packages/llm/AGENTS.md, packages/opencode/src/session/llm.ts, packages/opencode/src/server/server.ts, packages/protocol/src/api.ts, packages/server/src/api.ts, packages/server/src/routes.ts, packages/opencode/src/session/message-v2.ts, packages/core/src/integration.ts, packages/core/src/credential.ts]
-symbols: [RunCommand, SessionPrompt, SessionProcessor, LLM, SessionV2, SessionExecution, SessionRunner, LLMClient, Integration, Credential]
-related: [spine.v1-v2-relationship, ref.package-index, integrations.integration-v2]
+source: [packages/opencode/src/index.ts, packages/opencode/src/cli/cmd/run.ts, packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/processor.ts, AGENTS.md, package.json, packages/opencode/package.json, packages/opencode/src/tool/code-mode.ts, packages/codemode/package.json, packages/codemode/src/index.ts, packages/core/package.json, packages/cli/package.json, packages/core/src/session.ts, packages/core/src/effect/app-node-builder.ts, packages/core/src/location-services.ts, packages/core/src/session/runner/llm.ts, packages/llm/AGENTS.md, packages/opencode/src/session/llm.ts, packages/opencode/src/server/server.ts, packages/protocol/src/api.ts, packages/server/src/api.ts, packages/server/src/routes.ts, packages/opencode/src/session/message-v2.ts, packages/core/src/integration.ts, packages/core/src/credential.ts]
+symbols: [RunCommand, SessionPrompt, SessionProcessor, LLM, CodeModeTool, SessionV2, SessionExecution, SessionRunner, LLMClient, Integration, Credential]
+related: [spine.v1-v2-relationship, ref.package-index, integrations.integration-v2, tool.execute, subsys.tools.codemode]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > opencode 是一个 Bun/TypeScript/Effect 多包 monorepo,当前默认用户路径仍由 `packages/opencode` 的 V1 CLI 与 V1 session loop 承担,V2 `packages/core` 是 Effect-native durable/event-sourced 新内核。
@@ -30,6 +30,8 @@ flowchart TD
   V1Session --> V1Processor["SessionProcessor"]
   V1Processor --> V1LLM["LLM.stream default ai-sdk"]
   V1LLM --> NativeOpt["packages/llm optional native seam"]
+  V1Session -. "experimental execute tool" .-> CodeMode["packages/codemode confined interpreter"]
+  CodeMode --> MCPTools["permission-visible MCP tools"]
   V1Processor -. "EventV2Bridge error/events" .-> EventV2["core EventV2"]
   V2Routes["packages/server/src/routes.ts v2 API routes"] --> V2Session["SessionV2"]
   V2Routes --> V2Execution["SessionExecutionLocal"]
@@ -43,11 +45,13 @@ flowchart TD
 
 ## V1
 
-`packages/opencode` 的 package 名称是 `opencode`,当前 package manifest 标记为 `private: true`,其 `bin` 字段声明 `opencode` 指向 `./bin/opencode`。[E: packages/opencode/package.json:4][E: packages/opencode/package.json:7][E: packages/opencode/package.json:18] 这个包依赖 `@opencode-ai/llm`、`@opencode-ai/sdk`、`@opencode-ai/server`、`@opencode-ai/tui`,并且仍直接依赖 Vercel AI SDK 的 `ai` 包。[E: packages/opencode/package.json:87][E: packages/opencode/package.json:92][E: packages/opencode/package.json:93][E: packages/opencode/package.json:94][E: packages/opencode/package.json:112]
+`packages/opencode` 的 package 名称是 `opencode`,当前 package manifest 标记为 `private: true`,其 `bin` 字段声明 `opencode` 指向 `./bin/opencode`。[E: packages/opencode/package.json:4][E: packages/opencode/package.json:7][E: packages/opencode/package.json:18] 这个包依赖 `@opencode-ai/codemode`、`@opencode-ai/llm`、`@opencode-ai/sdk`、`@opencode-ai/server`、`@opencode-ai/tui`,并且仍直接依赖 Vercel AI SDK 的 `ai` 包。[E: packages/opencode/package.json:87][E: packages/opencode/package.json:88][E: packages/opencode/package.json:93][E: packages/opencode/package.json:94][E: packages/opencode/package.json:95][E: packages/opencode/package.json:113]
 
-V1 CLI 入口是 `packages/opencode/src/index.ts`:它创建 yargs 实例,注册 `RunCommand`、`ServeCommand`、`AgentCommand` 等命令,最后调用 `cli.parse(...)` 或 `cli.parse()`。[E: packages/opencode/src/index.ts:45][E: packages/opencode/src/index.ts:85][E: packages/opencode/src/index.ts:90][E: packages/opencode/src/index.ts:93][E: packages/opencode/src/index.ts:120][E: packages/opencode/src/index.ts:126] V1 非 attach prompt 链可核为 `RunCommand -> process-local fetch SDK client -> session handler -> SessionPrompt.prompt -> SessionProcessor.process -> LLM.stream`:RunCommand 本地路径创建带 fetch wrapper 的 SDK client,非交互 prompt 调 `client.session.prompt`,session handler 调 `promptSvc.prompt`,SessionPrompt 再进入 `state.ensureRunning(... runLoop(...))`,processor 在 `llm.stream(streamInput)` 打开模型流。[E: packages/opencode/src/cli/cmd/run.ts:878][E: packages/opencode/src/cli/cmd/run.ts:859][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:298][E: packages/opencode/src/session/prompt.ts:1345][E: packages/opencode/src/session/processor.ts:638]
+V1 CLI 入口是 `packages/opencode/src/index.ts`:它创建 yargs 实例,注册 `RunCommand`、`ServeCommand`、`AgentCommand` 等命令,最后调用 `cli.parse(...)` 或 `cli.parse()`。[E: packages/opencode/src/index.ts:45][E: packages/opencode/src/index.ts:85][E: packages/opencode/src/index.ts:90][E: packages/opencode/src/index.ts:93][E: packages/opencode/src/index.ts:120][E: packages/opencode/src/index.ts:126] V1 非 attach prompt 链可核为 `RunCommand -> process-local fetch SDK client -> session handler -> SessionPrompt.prompt -> SessionProcessor.process -> LLM.stream`:RunCommand 本地路径创建带 fetch wrapper 的 SDK client,非交互 prompt 调 `client.session.prompt`,session handler 调 `promptSvc.prompt`,SessionPrompt 再进入 `state.ensureRunning(... runLoop(...))`,processor 在 `llm.stream(streamInput)` 打开模型流。[E: packages/opencode/src/cli/cmd/run.ts:878][E: packages/opencode/src/cli/cmd/run.ts:859][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:300][E: packages/opencode/src/session/prompt.ts:1346][E: packages/opencode/src/session/processor.ts:640]
 
 V1 的 LLM runtime 默认走 AI SDK: `packages/opencode/src/session/llm.ts` 导入 `streamText` 与 `wrapLanguageModel`,并在默认分支调用 `streamText`。[E: packages/opencode/src/session/llm.ts:9][E: packages/opencode/src/session/llm.ts:280] `OPENCODE_EXPERIMENTAL_NATIVE_LLM` 对应的 native seam 会先尝试 `LLMNativeRuntime.stream`,不支持时回落到默认 runtime。[E: packages/opencode/src/session/llm.ts:226][E: packages/opencode/src/session/llm.ts:278]
+
+V1 还新增了独立 `packages/codemode` package 与 wire tool `execute`。该 package 的 public API 是 confined Effect runtime；V1 adapter 只在 `OPENCODE_EXPERIMENTAL_CODE_MODE` 生效时注册，并把 permission 可见的 MCP tools 映射成程序里的 explicit tool tree。[E: packages/codemode/package.json:2][E: packages/codemode/src/index.ts:1][E: packages/opencode/src/tool/code-mode.ts:12][E: packages/opencode/src/tool/code-mode.ts:209][E: packages/opencode/src/tool/code-mode.ts:239]
 
 ## V2
 
@@ -74,6 +78,7 @@ V2 的设计约束来自根 `AGENTS.md`:prompt admission 必须 durable 且与 e
 - V1/V2 dual-write 与嵌入式 V2 API: `spine.v1-v2-relationship`
 - V2 admission/coordinator/provider turn: `spine.v2-admission`, `spine.v2-coordinator`, `spine.v2-provider-turn`
 - 具体 trace: `spine.trace-first-prompt`, `spine.trace-tool-call`, `spine.trace-steer-mid-turn`, `spine.trace-compaction-overflow`
+- Code Mode 工具与运行时: `tool.execute`, `subsys.tools.codemode`
 
 ## Sources
 - packages/opencode/src/index.ts
@@ -84,6 +89,9 @@ V2 的设计约束来自根 `AGENTS.md`:prompt admission 必须 durable 且与 e
 - AGENTS.md
 - package.json
 - packages/opencode/package.json
+- packages/opencode/src/tool/code-mode.ts
+- packages/codemode/package.json
+- packages/codemode/src/index.ts
 - packages/core/package.json
 - packages/cli/package.json
 - packages/core/src/session.ts
@@ -104,3 +112,5 @@ V2 的设计约束来自根 `AGENTS.md`:prompt admission 必须 durable 且与 e
 - [spine.v1-v2-relationship](v1-v2-relationship.md)
 - [ref.package-index](../reference/package-index.md)
 - [integrations.integration-v2](../subsystems/integrations/integration-v2.md)
+- [tool.execute](../surface/tools/execute.md)
+- [subsys.tools.codemode](../subsystems/tools/codemode.md)

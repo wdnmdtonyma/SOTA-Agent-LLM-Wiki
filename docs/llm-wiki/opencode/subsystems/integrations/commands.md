@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 source:
   - packages/opencode/src/command/index.ts
   - packages/opencode/src/config/command.ts
@@ -42,7 +42,7 @@ evidence: explicit
 
 ### 职责
 
-V1 `Command.Service` 聚合四类 command：内建 init/review、config command markdown、MCP prompt、可用 skill。[E: packages/opencode/src/command/index.ts:70] [E: packages/opencode/src/command/index.ts:90] [E: packages/opencode/src/command/index.ts:105] [E: packages/opencode/src/command/index.ts:134] 它只提供 `get` 和 `list`，真正执行在 `packages/opencode/src/session/prompt.ts` 的 `command(input)` 流程里。[E: packages/opencode/src/command/index.ts:51] [E: packages/opencode/src/session/prompt.ts:1355]
+V1 `Command.Service` 聚合四类 command：内建 init/review、config command markdown、MCP prompt、可用 skill。[E: packages/opencode/src/command/index.ts:70] [E: packages/opencode/src/command/index.ts:90] [E: packages/opencode/src/command/index.ts:105] [E: packages/opencode/src/command/index.ts:134] 它只提供 `get` 和 `list`，真正执行在 `packages/opencode/src/session/prompt.ts` 的 `command(input)` 流程里。[E: packages/opencode/src/command/index.ts:51] [E: packages/opencode/src/session/prompt.ts:1356]
 
 `Command.Event.Executed` 记录 `name`、`sessionID`、`arguments`、`messageID`，用于 V1 event stream 订阅方了解 slash command 何时执行。[E: packages/opencode/src/command/index.ts:18]
 
@@ -66,16 +66,16 @@ config command markdown 由 `packages/opencode/src/config/command.ts` 扫描 `{c
 
 ### 执行流程
 
-1. `SessionPrompt.command` 先用 `Command.get(input.command)` 查找 command；找不到时列出 available command hints 并抛错。[E: packages/opencode/src/session/prompt.ts:1361] [E: packages/opencode/src/session/prompt.ts:1363]
-2. arguments 通过 shell word parser 解析；`cmd.template` 可以是 string 或 Promise-like value，执行层用 `Effect.promise(async () => cmd.template)` 取出 template text。[E: packages/opencode/src/session/prompt.ts:1371] [E: packages/opencode/src/session/prompt.ts:1373]
-3. positional placeholder `$1`、`$2` 等会替换成对应参数；最后一个 placeholder 会消费剩余参数。[E: packages/opencode/src/session/prompt.ts:1375] [E: packages/opencode/src/session/prompt.ts:1386]
-4. `$ARGUMENTS` 被替换成完整 argument string。[E: packages/opencode/src/session/prompt.ts:1389] [E: packages/opencode/src/session/prompt.ts:1390]
-5. 如果 template 没有 placeholder 且用户传了参数，参数会追加到 message 尾部。[E: packages/opencode/src/session/prompt.ts:1392]
-6. fenced shell block 会按当前 shell 执行，并把 `Process.text(...).text` 结果拼回 message。[E: packages/opencode/src/session/prompt.ts:1396] [E: packages/opencode/src/session/prompt.ts:1400] [E: packages/opencode/src/session/prompt.ts:1406]
-7. task model precedence 是 command model、command agent model、input model、当前 session model。[E: packages/opencode/src/session/prompt.ts:1410]
-8. command agent 会按 command.agent 找 agent，否则使用当前 agent；找不到 hidden agent 时会抛出带提示的错误。[E: packages/opencode/src/session/prompt.ts:1369] [E: packages/opencode/src/session/prompt.ts:1422]
-9. 如果 agent mode 是 `subagent` 且 command 没有显式 `subtask: false`，或者 command 本身 `subtask === true`，会生成 subtask part；否则会把 command 结果作为普通 prompt 输入继续 run loop。[E: packages/opencode/src/session/prompt.ts:1438] [E: packages/opencode/src/session/prompt.ts:1439] [E: packages/opencode/src/session/prompt.ts:1465]
-10. 执行后发布 `Command.Event.Executed`。[E: packages/opencode/src/session/prompt.ts:1473]
+1. `SessionPrompt.command` 先用 `Command.get(input.command)` 查找 command；找不到时列出 available command hints 并抛错。[E: packages/opencode/src/session/prompt.ts:1362] [E: packages/opencode/src/session/prompt.ts:1364]
+2. arguments 通过 shell word parser 解析；`cmd.template` 可以是 string 或 Promise-like value，执行层用 `Effect.promise(async () => cmd.template)` 取出 template text。[E: packages/opencode/src/session/prompt.ts:1372] [E: packages/opencode/src/session/prompt.ts:1374]
+3. positional placeholder `$1`、`$2` 等会替换成对应参数；最后一个 placeholder 会消费剩余参数。[E: packages/opencode/src/session/prompt.ts:1376] [E: packages/opencode/src/session/prompt.ts:1387]
+4. `$ARGUMENTS` 被替换成完整 argument string。[E: packages/opencode/src/session/prompt.ts:1390] [E: packages/opencode/src/session/prompt.ts:1391]
+5. 如果 template 没有 placeholder 且用户传了参数，参数会追加到 message 尾部。[E: packages/opencode/src/session/prompt.ts:1393]
+6. fenced shell block 会按当前 shell 执行，并把 `Process.text(...).text` 结果拼回 message。[E: packages/opencode/src/session/prompt.ts:1397] [E: packages/opencode/src/session/prompt.ts:1401] [E: packages/opencode/src/session/prompt.ts:1407]
+7. task model precedence 是 command model、command agent model、input model、当前 session model。[E: packages/opencode/src/session/prompt.ts:1411]
+8. command agent 会按 command.agent 找 agent，否则使用当前 agent；找不到 hidden agent 时会抛出带提示的错误。[E: packages/opencode/src/session/prompt.ts:1370] [E: packages/opencode/src/session/prompt.ts:1423]
+9. 如果 agent mode 是 `subagent` 且 command 没有显式 `subtask: false`，或者 command 本身 `subtask === true`，会生成 subtask part；否则会把 command 结果作为普通 prompt 输入继续 run loop。[E: packages/opencode/src/session/prompt.ts:1439] [E: packages/opencode/src/session/prompt.ts:1440] [E: packages/opencode/src/session/prompt.ts:1466]
+10. 执行后发布 `Command.Event.Executed`。[E: packages/opencode/src/session/prompt.ts:1474]
 
 ## V2
 
@@ -122,7 +122,7 @@ V2 command 则向 plugin transform 迁移：core service 管 registry，plugin �
 - `packages/opencode/src/session/message-v2.ts` 虽然带 v2 名称，但 command execution 仍在 V1 `session/prompt.ts`；不要把它当 V2 command runtime。[I]
 - V1 MCP prompt command name 来自 `mcp.prompts()` map key；MCP prompt/resource catalog 使用冒号 key，而 MCP tool final key 使用下划线。[E: packages/opencode/src/command/index.ts:105] [I]
 - V1 skill command 只在没有同名 command 时加入，因此 config command 可以遮蔽同名 skill command。[E: packages/opencode/src/command/index.ts:135]
-- shell fenced block 会真实执行本地 shell command，属于 command template 的执行副作用。[E: packages/opencode/src/session/prompt.ts:1396]
+- shell fenced block 会真实执行本地 shell command，属于 command template 的执行副作用。[E: packages/opencode/src/session/prompt.ts:1397]
 - V2 protocol API 当前在 `CommandGroup` 中只显示 list endpoint；不要从这个文件推断 V2 已经提供完整 slash command execution HTTP endpoint。[E: packages/protocol/src/groups/command.ts:9] [I]
 
 ## Sources

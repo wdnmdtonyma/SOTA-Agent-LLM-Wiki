@@ -26,7 +26,7 @@ related:
   - server-api.v2-routes
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 project directories 子系统把 project identity resolution 与 project copy/worktree 目录列表拆开：`Project` 负责 resolve/commit project id，`ProjectDirectories` 负责持久化目录记录，`ProjectCopy` 负责创建、删除、刷新 copy/worktree 目录。
@@ -67,7 +67,7 @@ updated: 8b68dc0d7
 
 ## Location Services 与 API
 
-旧 `packages/core/src/location-layer.ts` 已被新结构替代；`locationServices` 这个 `LayerNode.group` 现在直接纳入 `ProjectCopy.node`、`ProjectCopy.refreshNode`、`FileSystemSearch.node` 和 `FileSystem.node`。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:54][E: packages/core/src/location-services.ts:55][E: packages/core/src/location-services.ts:56][E: packages/core/src/location-services.ts:57] `buildLocationServiceMap()` 用 `Location.boundNode(ref)` 作为 replacement，compile location graph 后包一层 `Layer.fresh`，LayerMap idle TTL 是 60 minutes。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:90][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:94][E: packages/core/src/location-services.ts:95][E: packages/core/src/location-services.ts:105]
+旧 `packages/core/src/location-layer.ts` 已被新结构替代；`locationServices` 这个 `LayerNode.group` 现在直接纳入 `ProjectCopy.node`、`ProjectCopy.refreshNode`、`FileSystemSearch.node` 和 `FileSystem.node`。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:54][E: packages/core/src/location-services.ts:55][E: packages/core/src/location-services.ts:56][E: packages/core/src/location-services.ts:57] `buildLocationServiceMap()` 用 `Location.boundNode(ref)` 作为 replacement，compile location graph 后包一层 `Layer.fresh`，LayerMap idle TTL 是 60 minutes。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:90][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:98][E: packages/core/src/location-services.ts:99][E: packages/core/src/location-services.ts:109]
 
 `ProjectCopyGroup` 现在在 protocol package 中声明，root 是 `/experimental/project/:projectID/copy`；routes 是 `POST root` 创建 copy、`DELETE root` 删除 copy、`POST root/refresh` 刷新目录记录。[E: packages/protocol/src/groups/project-copy.ts:7][E: packages/protocol/src/groups/project-copy.ts:23][E: packages/protocol/src/groups/project-copy.ts:25][E: packages/protocol/src/groups/project-copy.ts:36][E: packages/protocol/src/groups/project-copy.ts:47] handler create 使用 current `Location.Service.project.directory` 作为 sourceDirectory；remove/refresh 直接调用 `ProjectCopy.Service`，并把 domain errors 映射成 400 `ProjectCopyError`。[E: packages/server/src/handlers/project-copy.ts:14][E: packages/server/src/handlers/project-copy.ts:15][E: packages/server/src/handlers/project-copy.ts:17][E: packages/server/src/handlers/project-copy.ts:20][E: packages/server/src/handlers/project-copy.ts:26][E: packages/server/src/handlers/project-copy.ts:27][E: packages/server/src/handlers/project-copy.ts:32][E: packages/server/src/handlers/project-copy.ts:34][E: packages/server/src/handlers/project-copy.ts:42][E: packages/server/src/handlers/project-copy.ts:46]
 

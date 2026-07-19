@@ -1,6 +1,6 @@
 ---
 id: clients.ui
-title: 共享 UI 组件库(SolidJS)
+title: 共享 UI 与 Session UI 组件库(SolidJS)
 kind: subsystem
 tier: T2
 v: na
@@ -13,15 +13,27 @@ source:
   - packages/ui/src/theme/v2/resolve.ts
   - packages/ui/src/context/index.ts
   - packages/ui/src/i18n/en.ts
+  - packages/session-ui/package.json
+  - packages/session-ui/src/v2/components/attachment-card-v2.tsx
+  - packages/session-ui/src/v2/components/prompt-input/attachments.ts
+  - packages/session-ui/src/v2/components/prompt-input/index.tsx
+  - packages/session-ui/src/v2/components/prompt-input/types.ts
+  - packages/session-ui/src/v2/components/session-review-v2.tsx
+symbols:
+  - ButtonV2
+  - ThemeProvider
+  - PromptInputV2
+  - AttachmentCardV2
+  - SessionReviewV2
 related:
   - clients.app
   - clients.storybook
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
-> 共享 UI 组件库是 `@opencode-ai/ui`: 它为 App、Desktop、Console、Storybook 提供 SolidJS components、v2 components、theme engine、i18n dictionaries、icons、fonts、audio 和 shared contexts。
+> 共享 UI 层由 `@opencode-ai/ui` 的 design-system primitives 与 `@opencode-ai/session-ui` 的 session-facing components 组成；前者提供 theme/i18n/icons 和 v1/v2 primitives，后者组装 prompt input、attachments、message timeline 与 review surfaces。
 
 ## 能回答的问题
 
@@ -30,10 +42,14 @@ updated: 8b68dc0d7
 - 组件库怎样使用 Kobalte primitive?
 - theme provider 如何把 theme JSON 转成 CSS variables?
 - UI i18n dictionary 覆盖哪些通用文案?
+- 新的 `@opencode-ai/session-ui/v2/prompt-input` 如何表示 prompt parts、attachments 与 comments?
+- V2 session review 为什么不应并入 `packages/app` 节点?
 
 ## 职责边界
 
-`@opencode-ai/ui` 是 presentation library, 不是 App shell。package exports 将 `./*` 映射到 `src/components/*.tsx`, 将 `./v2/*` 映射到 `src/v2/components/*.tsx`, 还暴露 i18n、hooks、context、storybook fixtures/scaffold、styles、theme、icons、fonts、audio 等资源 [E: packages/ui/package.json:35] [E: packages/ui/package.json:37] [E: packages/ui/package.json:38] [E: packages/ui/package.json:39] [E: packages/ui/package.json:40] [E: packages/ui/package.json:42] [E: packages/ui/package.json:44] [E: packages/ui/package.json:46] [E: packages/ui/package.json:48] [E: packages/ui/package.json:49] [E: packages/ui/package.json:50] [E: packages/ui/package.json:51] [E: packages/ui/package.json:52] [E: packages/ui/package.json:53] [E: packages/ui/package.json:54] [E: packages/ui/package.json:55] [E: packages/ui/package.json:56]。它的 dependencies 包含 Kobalte、Marked/Shiki、DOMPurify、Motion、Solid primitives 和 render/diff helpers; SolidJS 和 `@solidjs/meta` 是 peer/dev dependency [E: packages/ui/package.json:67] [E: packages/ui/package.json:74] [E: packages/ui/package.json:83] [E: packages/ui/package.json:84] [E: packages/ui/package.json:86] [E: packages/ui/package.json:87] [E: packages/ui/package.json:88] [E: packages/ui/package.json:89] [E: packages/ui/package.json:91] [E: packages/ui/package.json:92] [E: packages/ui/package.json:96] [E: packages/ui/package.json:98] [E: packages/ui/package.json:99] [E: packages/ui/package.json:100] [E: packages/ui/package.json:106] [E: packages/ui/package.json:110] [E: packages/ui/package.json:111]。
+`@opencode-ai/ui` 是 presentation primitive library, 不是 App shell。package exports 将 `./*` 映射到 `src/components/*.tsx`, 将 `./v2/*` 映射到 `src/v2/components/*.tsx`, 还暴露 i18n、hooks、context、storybook fixtures/scaffold、styles、theme、icons、fonts、audio 等资源 [E: packages/ui/package.json:35] [E: packages/ui/package.json:37] [E: packages/ui/package.json:38] [E: packages/ui/package.json:39] [E: packages/ui/package.json:40] [E: packages/ui/package.json:42] [E: packages/ui/package.json:44] [E: packages/ui/package.json:46] [E: packages/ui/package.json:48] [E: packages/ui/package.json:49] [E: packages/ui/package.json:50] [E: packages/ui/package.json:51] [E: packages/ui/package.json:52] [E: packages/ui/package.json:53] [E: packages/ui/package.json:54] [E: packages/ui/package.json:55] [E: packages/ui/package.json:56]。
+
+`@opencode-ai/session-ui` 是同一 presentation boundary 中的 session-specific 层，它依赖 `@opencode-ai/ui` 并分别暴露 legacy components、`./v2/*` 以及 prompt-input 的 component/interaction/store/types 入口 [E: packages/session-ui/package.json:2] [E: packages/session-ui/package.json:8] [E: packages/session-ui/package.json:20] [E: packages/session-ui/package.json:22] [E: packages/session-ui/package.json:23] [E: packages/session-ui/package.json:24] [E: packages/session-ui/package.json:25] [E: packages/session-ui/package.json:44]。因此本轮新增的 V2 prompt-input/review/attachment 组件归入本 `clients.ui` 节点，而不是 `clients.app` 的 routing/state shell [I]。
 
 V1/V2 关系: UI 包自身是 `v: na`, 但它暴露两个 design-system generation。`./*` 是旧组件入口, `./v2/*` 是 v2 组件入口 [E: packages/ui/package.json:37] [E: packages/ui/package.json:55]。
 
@@ -42,7 +58,7 @@ V1/V2 关系: UI 包自身是 `v: na`, 但它暴露两个 design-system generati
 - SolidJS component library, Vite dev server 和 typecheck scripts [E: packages/ui/package.json:60] [E: packages/ui/package.json:62] [E: packages/ui/package.json:74] [E: packages/ui/package.json:80] [E: packages/ui/package.json:111]。
 - Kobalte primitive wrapper: v1 `Button` 和 v2 `ButtonV2` 都 import `Button as Kobalte` [E: packages/ui/src/components/button.tsx:1] [E: packages/ui/src/v2/components/button-v2.tsx:1]。
 - Theme engine: `theme/index.ts` export color conversion、v1 resolver、v2 resolver、loader、context 和 default themes [E: packages/ui/src/theme/index.ts:15] [E: packages/ui/src/theme/index.ts:34] [E: packages/ui/src/theme/index.ts:35] [E: packages/ui/src/theme/index.ts:36] [E: packages/ui/src/theme/index.ts:37] [E: packages/ui/src/theme/index.ts:39]。
-- i18n dictionary: English dict 包含 session review、file media、line comments、session turn statuses、dialog text 和 tool labels 等 shared UI strings [E: packages/ui/src/i18n/en.ts:1] [E: packages/ui/src/i18n/en.ts:2] [E: packages/ui/src/i18n/en.ts:22] [E: packages/ui/src/i18n/en.ts:32] [E: packages/ui/src/i18n/en.ts:39] [E: packages/ui/src/i18n/en.ts:56] [E: packages/ui/src/i18n/en.ts:112]。
+- i18n dictionary: English dict 包含 session review、file media、line comments、session turn statuses、dialog text 和 tool labels 等 shared UI strings [E: packages/ui/src/i18n/en.ts:1] [E: packages/ui/src/i18n/en.ts:2] [E: packages/ui/src/i18n/en.ts:39] [E: packages/ui/src/i18n/en.ts:49] [E: packages/ui/src/i18n/en.ts:57] [E: packages/ui/src/i18n/en.ts:75] [E: packages/ui/src/i18n/en.ts:131]。
 
 ## 关键文件
 
@@ -50,24 +66,28 @@ V1/V2 关系: UI 包自身是 `v: na`, 但它暴露两个 design-system generati
 | --- | --- |
 | `packages/ui/package.json` | Public API map。组件、context、theme、styles、icons、fonts/audio、v2 components 都从这里暴露 [E: packages/ui/package.json:37] [E: packages/ui/package.json:40] [E: packages/ui/package.json:44] [E: packages/ui/package.json:46] [E: packages/ui/package.json:49] [E: packages/ui/package.json:50] [E: packages/ui/package.json:51] [E: packages/ui/package.json:52] [E: packages/ui/package.json:53] [E: packages/ui/package.json:55]。 |
 | `packages/ui/src/components/button.tsx` | v1 component pattern。props 包含 `size`, `variant`, `icon`, render 时写 `data-component="button"` 和 `data-variant` [E: packages/ui/src/components/button.tsx:5] [E: packages/ui/src/components/button.tsx:8] [E: packages/ui/src/components/button.tsx:9] [E: packages/ui/src/components/button.tsx:10] [E: packages/ui/src/components/button.tsx:18] [E: packages/ui/src/components/button.tsx:20]。 |
-| `packages/ui/src/v2/components/button-v2.tsx` | v2 component pattern。导入自己的 CSS, variant set 包含 `neutral/danger/outline/contrast/ghost/ghost-muted/loading`, render 时写 `data-component="button-v2"` [E: packages/ui/src/v2/components/button-v2.tsx:4] [E: packages/ui/src/v2/components/button-v2.tsx:6] [E: packages/ui/src/v2/components/button-v2.tsx:10] [E: packages/ui/src/v2/components/button-v2.tsx:20]。 |
-| `packages/ui/src/theme/context.tsx` | ThemeProvider。动态 glob `./themes/*.json`, 本地存储 theme/color scheme, 注入 `#oc-theme` style element, 暴露 preview/commit/cancel/register APIs [E: packages/ui/src/theme/context.tsx:28] [E: packages/ui/src/theme/context.tsx:14] [E: packages/ui/src/theme/context.tsx:16] [E: packages/ui/src/theme/context.tsx:119] [E: packages/ui/src/theme/context.tsx:123] [E: packages/ui/src/theme/context.tsx:323] [E: packages/ui/src/theme/context.tsx:324] [E: packages/ui/src/theme/context.tsx:350] [E: packages/ui/src/theme/context.tsx:360]。 |
+| `packages/ui/src/v2/components/button-v2.tsx` | v2 component pattern。导入自己的 CSS, variant set 包含 `neutral/danger/warning/outline/contrast/ghost/ghost-muted/loading`, render 时写 `data-component="button-v2"` [E: packages/ui/src/v2/components/button-v2.tsx:4] [E: packages/ui/src/v2/components/button-v2.tsx:6] [E: packages/ui/src/v2/components/button-v2.tsx:10] [E: packages/ui/src/v2/components/button-v2.tsx:20]。 |
+| `packages/ui/src/theme/context.tsx` | ThemeProvider。动态 glob `./themes/*.json`, 本地存储 theme/color scheme, 注入 `#oc-theme` style element, 暴露 preview/commit/cancel/register APIs [E: packages/ui/src/theme/context.tsx:28] [E: packages/ui/src/theme/context.tsx:14] [E: packages/ui/src/theme/context.tsx:16] [E: packages/ui/src/theme/context.tsx:119] [E: packages/ui/src/theme/context.tsx:123] [E: packages/ui/src/theme/context.tsx:326] [E: packages/ui/src/theme/context.tsx:327] [E: packages/ui/src/theme/context.tsx:353] [E: packages/ui/src/theme/context.tsx:363]。 |
 | `packages/ui/src/theme/v2/resolve.ts` | v2 token resolver。生成 primitive ramps, semantic tokens, foreground tokens, 输出 CSS variables [E: packages/ui/src/theme/v2/resolve.ts:9] [E: packages/ui/src/theme/v2/resolve.ts:109] [E: packages/ui/src/theme/v2/resolve.ts:121] [E: packages/ui/src/theme/v2/resolve.ts:135] [E: packages/ui/src/theme/v2/resolve.ts:137] [E: packages/ui/src/theme/v2/resolve.ts:138] [E: packages/ui/src/theme/v2/resolve.ts:149]。 |
+| `packages/session-ui/src/v2/components/prompt-input/index.tsx` | `PromptInputV2` view 边界：文件选择、drag/drop、attachments/comments cards、contenteditable editor、command/context/agent/model controls 和 submit/stop [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:44] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:73] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:105] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:127] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:147] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:197] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:241]。 |
+| `packages/session-ui/src/v2/components/session-review-v2.tsx` | V2 review surface 接收 files/active file/diff style/expand mode，提供可缩放 sidebar、filter 和前后文件导航 [E: packages/session-ui/src/v2/components/session-review-v2.tsx:23] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:30] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:61] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:88] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:150] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:181]。 |
 
 ## 数据模型
 
-v1 `ButtonProps` 允许 `size: "small" | "normal" | "large"`, `variant: "primary" | "secondary" | "ghost"`, `icon` 来自 `IconProps["name"]` [E: packages/ui/src/components/button.tsx:5] [E: packages/ui/src/components/button.tsx:8] [E: packages/ui/src/components/button.tsx:9] [E: packages/ui/src/components/button.tsx:10]。v2 `ButtonV2Props` 同样保留 size/icon, 但 variant 集合换成 `neutral`, `danger`, `outline`, `contrast`, `ghost`, `ghost-muted`, `loading` [E: packages/ui/src/v2/components/button-v2.tsx:6] [E: packages/ui/src/v2/components/button-v2.tsx:9] [E: packages/ui/src/v2/components/button-v2.tsx:10]。
+v1 `ButtonProps` 允许 `size: "small" | "normal" | "large"`, `variant: "primary" | "secondary" | "ghost"`, `icon` 来自 `IconProps["name"]` [E: packages/ui/src/components/button.tsx:5] [E: packages/ui/src/components/button.tsx:8] [E: packages/ui/src/components/button.tsx:9] [E: packages/ui/src/components/button.tsx:10]。v2 `ButtonV2Props` 同样保留 size/icon, 但 variant 集合换成 `neutral`, `danger`, `warning`, `outline`, `contrast`, `ghost`, `ghost-muted`, `loading` [E: packages/ui/src/v2/components/button-v2.tsx:6] [E: packages/ui/src/v2/components/button-v2.tsx:9] [E: packages/ui/src/v2/components/button-v2.tsx:10]。
 
-Theme context 的 store 包含 `themes`, `themeId`, `colorScheme`, `mode`, `previewThemeId`, `previewScheme` [E: packages/ui/src/theme/context.tsx:180] [E: packages/ui/src/theme/context.tsx:181] [E: packages/ui/src/theme/context.tsx:184] [E: packages/ui/src/theme/context.tsx:185] [E: packages/ui/src/theme/context.tsx:186] [E: packages/ui/src/theme/context.tsx:187] [E: packages/ui/src/theme/context.tsx:188]。默认 theme id 是 `oc-2`, 并且 `oc-1` 会 normalize 到 `oc-2` [E: packages/ui/src/theme/context.tsx:87] [E: packages/ui/src/theme/context.tsx:177]。
+`PromptInputV2Prompt` 是 text/file/agent/image attachment 的 union；persisted state 另带 cursor、model 和 comment context items [E: packages/session-ui/src/v2/components/prompt-input/types.ts:9] [E: packages/session-ui/src/v2/components/prompt-input/types.ts:28] [E: packages/session-ui/src/v2/components/prompt-input/types.ts:37] [E: packages/session-ui/src/v2/components/prompt-input/types.ts:68] [E: packages/session-ui/src/v2/components/prompt-input/types.ts:72]。attachment helper 对 picker/paste/drop 走同一添加路径，将 image/PDF/text-like 文件转为 data URL，并拒绝明显 binary payload [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:82] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:97] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:104] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:125] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:160] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:235] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:246]。
+
+Theme context 的 store 包含 `themes`, `themeId`, `colorScheme`, `mode`, `previewThemeId`, `previewScheme` [E: packages/ui/src/theme/context.tsx:183] [E: packages/ui/src/theme/context.tsx:184] [E: packages/ui/src/theme/context.tsx:187] [E: packages/ui/src/theme/context.tsx:188] [E: packages/ui/src/theme/context.tsx:189] [E: packages/ui/src/theme/context.tsx:190] [E: packages/ui/src/theme/context.tsx:191]。默认 theme id 是 `oc-2`, 并且 `oc-1` 会 normalize 到 `oc-2` [E: packages/ui/src/theme/context.tsx:87] [E: packages/ui/src/theme/context.tsx:180]。
 
 v2 theme primitive steps 是 100 到 1200, `generateV2Primitives` 从 neutral/ink/primary/accent/success/warning/error/info/interactive/diff palette inputs 生成 grey/blue/green/yellow/red/purple/pink/orange/cyan ramps [E: packages/ui/src/theme/v2/resolve.ts:9] [E: packages/ui/src/theme/v2/resolve.ts:11] [E: packages/ui/src/theme/v2/resolve.ts:12] [E: packages/ui/src/theme/v2/resolve.ts:13] [E: packages/ui/src/theme/v2/resolve.ts:14] [E: packages/ui/src/theme/v2/resolve.ts:15] [E: packages/ui/src/theme/v2/resolve.ts:16] [E: packages/ui/src/theme/v2/resolve.ts:17] [E: packages/ui/src/theme/v2/resolve.ts:18] [E: packages/ui/src/theme/v2/resolve.ts:19] [E: packages/ui/src/theme/v2/resolve.ts:20] [E: packages/ui/src/theme/v2/resolve.ts:21] [E: packages/ui/src/theme/v2/resolve.ts:22] [E: packages/ui/src/theme/v2/resolve.ts:109] [E: packages/ui/src/theme/v2/resolve.ts:121] [E: packages/ui/src/theme/v2/resolve.ts:131]。
 
 ## 控制流
 
-1. `ThemeProvider` 初始化时读取 localStorage 的 theme id 和 color scheme, 根据 system mode 计算当前 mode [E: packages/ui/src/theme/context.tsx:174] [E: packages/ui/src/theme/context.tsx:176] [E: packages/ui/src/theme/context.tsx:177] [E: packages/ui/src/theme/context.tsx:178] [E: packages/ui/src/theme/context.tsx:179]。
+1. `ThemeProvider` 初始化时读取 localStorage 的 theme id 和 color scheme, 根据 system mode 计算当前 mode [E: packages/ui/src/theme/context.tsx:174] [E: packages/ui/src/theme/context.tsx:176] [E: packages/ui/src/theme/context.tsx:180] [E: packages/ui/src/theme/context.tsx:181] [E: packages/ui/src/theme/context.tsx:182]。
 2. ThemeProvider 用 `import.meta.glob("./themes/*.json")` lazy-load theme JSON, 并按 sorted ids 暴露 available themes [E: packages/ui/src/theme/context.tsx:26] [E: packages/ui/src/theme/context.tsx:28] [E: packages/ui/src/theme/context.tsx:32] [E: packages/ui/src/theme/context.tsx:36]。
 3. `applyThemeCss` 同时调用 v1 `themeToCss` 和 v2 `themeV2ToCss`, 合并写入 `:root` CSS variables [E: packages/ui/src/theme/context.tsx:133] [E: packages/ui/src/theme/context.tsx:136] [E: packages/ui/src/theme/context.tsx:137] [E: packages/ui/src/theme/context.tsx:138] [E: packages/ui/src/theme/context.tsx:144] [E: packages/ui/src/theme/context.tsx:147] [E: packages/ui/src/theme/context.tsx:148]。
-4. `createEffect` 监听当前 theme/mode, 有 theme 时调用 `applyTheme(theme, store.themeId, store.mode)` [E: packages/ui/src/theme/context.tsx:278] [E: packages/ui/src/theme/context.tsx:279] [E: packages/ui/src/theme/context.tsx:281]。
+4. `createEffect` 监听当前 theme/mode/color scheme, 有 theme 时调用 `applyTheme(theme, store.themeId, store.mode, store.colorScheme)`；`onThemeApplied` 因此能同时获得 resolved mode 和用户选择的 scheme [E: packages/ui/src/theme/context.tsx:176] [E: packages/ui/src/theme/context.tsx:178] [E: packages/ui/src/theme/context.tsx:281] [E: packages/ui/src/theme/context.tsx:284]。
 5. Components 通过 Kobalte primitive + data attributes 表达状态, 例如 `Button` 和 `ButtonV2` 都把 size/variant/icon 写成 data attributes 给 CSS 消费 [E: packages/ui/src/components/button.tsx:16] [E: packages/ui/src/components/button.tsx:18] [E: packages/ui/src/components/button.tsx:19] [E: packages/ui/src/components/button.tsx:20] [E: packages/ui/src/components/button.tsx:21] [E: packages/ui/src/v2/components/button-v2.tsx:18] [E: packages/ui/src/v2/components/button-v2.tsx:20] [E: packages/ui/src/v2/components/button-v2.tsx:21] [E: packages/ui/src/v2/components/button-v2.tsx:22] [E: packages/ui/src/v2/components/button-v2.tsx:23]。
 
 ## 设计动机与权衡
@@ -78,6 +98,7 @@ UI 包把 low-level components、theme、i18n、icons 和 render helpers 收进�
 
 - v2 组件入口映射到 `src/v2/components/*.tsx` [E: packages/ui/package.json:55]; 它不是 `packages/core` V2 session kernel, 而是 UI design-system generation [I]。
 - Theme provider 同时生成旧 token 和 `--v2-*` token [E: packages/ui/src/theme/context.tsx:137] [E: packages/ui/src/theme/context.tsx:138] [E: packages/ui/src/theme/context.tsx:148] [E: packages/ui/src/theme/v2/resolve.ts:149], 所以某个页面使用 v2 component 不一定需要另起 theme provider [I]。
+- `@opencode-ai/session-ui` 的 `v2` 同样是 UI generation，不是 V2 session kernel；它从 `@opencode-ai/ui/v2/*` 复用 primitives [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:6] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:11]。
 
 ## Sources
 
@@ -89,6 +110,12 @@ UI 包把 low-level components、theme、i18n、icons 和 render helpers 收进�
 - `packages/ui/src/theme/v2/resolve.ts`
 - `packages/ui/src/context/index.ts`
 - `packages/ui/src/i18n/en.ts`
+- `packages/session-ui/package.json`
+- `packages/session-ui/src/v2/components/attachment-card-v2.tsx`
+- `packages/session-ui/src/v2/components/prompt-input/attachments.ts`
+- `packages/session-ui/src/v2/components/prompt-input/index.tsx`
+- `packages/session-ui/src/v2/components/prompt-input/types.ts`
+- `packages/session-ui/src/v2/components/session-review-v2.tsx`
 
 ## 相关
 

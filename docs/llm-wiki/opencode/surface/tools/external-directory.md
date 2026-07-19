@@ -9,7 +9,7 @@ symbols: [assertExternalDirectoryEffect, assertExternalDirectory, LocationMutati
 related: [execution.permissions-v1, ref.permission-actions]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > External-directory 不是一个普通 model-facing tool；它是文件/搜索/shell 工具在访问当前 project/worktree 或 Location 外部路径前触发的额外 approval guard。
@@ -85,7 +85,7 @@ V2 guard 的输入是 `LocationMutation.resolve({ path, kind })`，调用方传�
 
 ### 4 权限
 
-V2 `externalDirectoryPermission` 返回 `{ action, resources: [resource], save: [save] }`。[E: packages/core/src/location-mutation.ts:38][E: packages/core/src/location-mutation.ts:39][E: packages/core/src/location-mutation.ts:40][E: packages/core/src/location-mutation.ts:41] V2 `read`、`write`、`edit`、`bash`、`apply_patch` 在看到 `externalDirectory` 后都会先调用 `permission.assert`，再请求各自的 read/edit/bash permission。[E: packages/core/src/tool/read.ts:60][E: packages/core/src/tool/read.ts:63][E: packages/core/src/tool/read.ts:72][E: packages/core/src/tool/write.ts:70][E: packages/core/src/tool/write.ts:73][E: packages/core/src/tool/write.ts:79][E: packages/core/src/tool/edit.ts:138][E: packages/core/src/tool/edit.ts:140][E: packages/core/src/tool/edit.ts:151][E: packages/core/src/tool/bash.ts:125][E: packages/core/src/tool/bash.ts:127][E: packages/core/src/tool/bash.ts:138][E: packages/core/src/tool/apply-patch.ts:102][E: packages/core/src/tool/apply-patch.ts:108][E: packages/core/src/tool/apply-patch.ts:116]
+V2 `externalDirectoryPermission` 返回 `{ action, resources: [resource], save: [save] }`。[E: packages/core/src/location-mutation.ts:38][E: packages/core/src/location-mutation.ts:39][E: packages/core/src/location-mutation.ts:40][E: packages/core/src/location-mutation.ts:41] V2 `read`、`write`、`edit`、`bash`、`apply_patch` 在看到 `externalDirectory` 后都会先调用 `permission.assert`，再请求各自的 read/edit/bash permission。[E: packages/core/src/tool/read.ts:60][E: packages/core/src/tool/read.ts:63][E: packages/core/src/tool/read.ts:72][E: packages/core/src/tool/write.ts:70][E: packages/core/src/tool/write.ts:73][E: packages/core/src/tool/write.ts:79][E: packages/core/src/tool/edit.ts:138][E: packages/core/src/tool/edit.ts:140][E: packages/core/src/tool/edit.ts:151][E: packages/core/src/tool/bash.ts:129][E: packages/core/src/tool/bash.ts:131][E: packages/core/src/tool/bash.ts:142][E: packages/core/src/tool/apply-patch.ts:102][E: packages/core/src/tool/apply-patch.ts:108][E: packages/core/src/tool/apply-patch.ts:116]
 
 ### 5 resolve() 走读
 
@@ -101,7 +101,7 @@ V2 `externalDirectoryPermission` 返回 `{ action, resources: [resource], save: 
 | 形态 | standalone helper `assertExternalDirectoryEffect(ctx, target, options)`。[E: packages/opencode/src/tool/external-directory.ts:15] | `LocationMutation.resolve` 产出 optional authorization，调用方 assert。[E: packages/core/src/location-mutation.ts:49][E: packages/core/src/tool/edit.ts:140][E: packages/core/src/tool/edit.ts:142] |
 | resource | parent directory glob，同一 glob 放在 patterns/always。[E: packages/opencode/src/tool/external-directory.ts:30][E: packages/opencode/src/tool/external-directory.ts:37][E: packages/opencode/src/tool/external-directory.ts:38] | `externalDirectoryPermission` 生成 resources/save arrays。[E: packages/core/src/location-mutation.ts:39][E: packages/core/src/location-mutation.ts:40][E: packages/core/src/location-mutation.ts:41] |
 | containment | `containsPath(full, ins)` 判定是否在 V1 instance 内。[E: packages/opencode/src/tool/external-directory.ts:26] | lexical + realpath 双重检查 active Location。[E: packages/core/src/location-mutation.ts:123][E: packages/core/src/location-mutation.ts:127] |
-| read/search | V1 read/glob/grep 都显式调用 helper。[E: packages/opencode/src/tool/read.ts:250][E: packages/opencode/src/tool/glob.ts:44][E: packages/opencode/src/tool/grep.ts:55] | V2 read/write/edit/bash/apply_patch 使用 `LocationMutation`；V2 grep/glob 使用各自 Location/root 逻辑。[E: packages/core/src/tool/read.ts:60][E: packages/core/src/tool/write.ts:70][E: packages/core/src/tool/edit.ts:138][E: packages/core/src/tool/bash.ts:125][E: packages/core/src/tool/apply-patch.ts:102][E: packages/core/src/tool/grep.ts:95][E: packages/core/src/tool/glob.ts:75] |
+| read/search | V1 read/glob/grep 都显式调用 helper。[E: packages/opencode/src/tool/read.ts:250][E: packages/opencode/src/tool/glob.ts:44][E: packages/opencode/src/tool/grep.ts:55] | V2 read/write/edit/bash/apply_patch 使用 `LocationMutation`；V2 grep/glob 使用各自 Location/root 逻辑。[E: packages/core/src/tool/read.ts:60][E: packages/core/src/tool/write.ts:70][E: packages/core/src/tool/edit.ts:138][E: packages/core/src/tool/bash.ts:129][E: packages/core/src/tool/apply-patch.ts:102][E: packages/core/src/tool/grep.ts:95][E: packages/core/src/tool/glob.ts:75] |
 
 ## 设计动机·edge·历史
 

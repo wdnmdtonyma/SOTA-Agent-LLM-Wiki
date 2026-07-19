@@ -9,7 +9,7 @@ symbols: [Api, makeDefaultApi, HealthGroup, LocationGroup, SessionGroup, Message
 related: [server-api.overview, sdk.surface, integrations.integration-v2, persistence.project-directories, execution.pty]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 route catalog 覆盖 `packages/protocol/src/groups` 声明、`packages/server/src/handlers` 实现的 V2 Effect HttpApi routes；这些 routes 是 V2 native server API，不包含 V1 legacy compatibility routes。

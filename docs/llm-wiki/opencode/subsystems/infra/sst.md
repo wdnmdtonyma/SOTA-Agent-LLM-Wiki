@@ -26,7 +26,7 @@ related:
   - peripheral.function
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > SST 云基础设施节点描述 opencode 的 hosted surfaces: Cloudflare Workers/R2/KV/SolidStart/Astro, PlanetScale/Stripe/Honeycomb providers, 以及只在指定 stage 部署的 AWS data lake 与 stats services。
@@ -47,9 +47,9 @@ V1/V2 关系: SST 资源为 Web docs、Web app、Console、share/backend functio
 
 ## 技术栈
 
-- SST v4 config: root catalog pin `sst` 版本, `sst.config.ts` 使用 `$config({ app, run })` [E: package.json:80] [E: sst.config.ts:3]。
+- SST v4 config: root catalog pin `sst` 版本, `sst.config.ts` 使用 `$config({ app, run })` [E: package.json:82] [E: sst.config.ts:3]。
 - Cloudflare-first surfaces: `Api` Worker、R2 Bucket、Astro docs、StaticSite app、AuthApi Worker、Console SolidStart、Stat Worker、Enterprise SolidStart 都是 `sst.cloudflare.*` 资源 [E: infra/app.ts:11] [E: infra/app.ts:13] [E: infra/app.ts:52] [E: infra/app.ts:62] [E: infra/console.ts:63] [E: infra/console.ts:248] [E: infra/console.ts:303] [E: infra/enterprise.ts:6]。
-- AWS data lake: lake module 使用 S3 Tables, Glue catalog, S3 buckets, Athena workgroup, IAM, Firehose, SST AWS VPC/Cluster/Service [E: infra/lake.ts:16] [E: infra/lake.ts:21] [E: infra/lake.ts:54] [E: infra/lake.ts:64] [E: infra/lake.ts:76] [E: infra/lake.ts:156] [E: infra/lake.ts:194] [E: infra/lake.ts:214]。
+- AWS data lake: lake module 使用 S3 Tables, Glue catalog, S3 buckets, Athena workgroup, IAM, Firehose, SST AWS VPC/Cluster/Service [E: infra/lake.ts:16] [E: infra/lake.ts:21] [E: infra/lake.ts:54] [E: infra/lake.ts:64] [E: infra/lake.ts:80] [E: infra/lake.ts:160] [E: infra/lake.ts:198] [E: infra/lake.ts:218]。
 
 ## 关键文件
 
@@ -59,15 +59,15 @@ V1/V2 关系: SST 资源为 Web docs、Web app、Console、share/backend functio
 | `infra/stage.ts` | stage-derived domain。production 用 `opencode.ai`, dev 用 `dev.opencode.ai`, 其它 stage 用 `<stage>.dev.opencode.ai`; `deployAws` 只在 `$app.stage === awsStage` 时为 true [E: infra/stage.ts:1] [E: infra/stage.ts:2] [E: infra/stage.ts:3] [E: infra/stage.ts:4] [E: infra/stage.ts:8] [E: infra/stage.ts:9]。 |
 | `infra/app.ts` | public Cloudflare app front door。创建 API Worker、Durable Object namespace binding、docs Astro、WebApp StaticSite [E: infra/app.ts:13] [E: infra/app.ts:37] [E: infra/app.ts:42] [E: infra/app.ts:52] [E: infra/app.ts:62]。 |
 | `infra/console.ts` | Console infra。创建 PlanetScale branch/password Linkable, Auth Worker, Stripe webhook/products/prices, LogProcessor Worker, Console SolidStart, Stat Worker [E: infra/console.ts:11] [E: infra/console.ts:29] [E: infra/console.ts:36] [E: infra/console.ts:63] [E: infra/console.ts:74] [E: infra/console.ts:142] [E: infra/console.ts:243] [E: infra/console.ts:248] [E: infra/console.ts:303]。 |
-| `infra/lake.ts` | AWS lake foundation。创建 S3 Tables bucket, Glue federated catalog, Athena results bucket/workgroup, Firehose Iceberg delivery, ingest ECS service, lake Linkables and query permissions [E: infra/lake.ts:16] [E: infra/lake.ts:21] [E: infra/lake.ts:64] [E: infra/lake.ts:156] [E: infra/lake.ts:214] [E: infra/lake.ts:270] [E: infra/lake.ts:277]。 |
+| `infra/lake.ts` | AWS lake foundation。创建 S3 Tables bucket, Glue federated catalog, Athena results bucket/workgroup, Firehose Iceberg delivery, ingest ECS service, lake Linkables and query permissions [E: infra/lake.ts:16] [E: infra/lake.ts:21] [E: infra/lake.ts:64] [E: infra/lake.ts:160] [E: infra/lake.ts:218] [E: infra/lake.ts:274] [E: infra/lake.ts:281]。 |
 | `infra/stats.ts` | stats app and sync. 定义 `inference.event` Iceberg table, Stats PlanetScale database, Stats SolidStart app, `StatsSyncService` ECS service [E: infra/stats.ts:9] [E: infra/stats.ts:14] [E: infra/stats.ts:107] [E: infra/stats.ts:137] [E: infra/stats.ts:164] [E: infra/stats.ts:184]。 |
 | `infra/monitoring.ts` | Honeycomb alerts. 只由 config 在 production 或 `vimtor` stage 导入, 内部用 Discord webhook recipient 和 triggers 监控 model/provider HTTP errors、TPS、free tier request spike [E: sst.config.ts:37] [E: infra/monitoring.ts:7] [E: infra/monitoring.ts:160] [E: infra/monitoring.ts:200] [E: infra/monitoring.ts:240] [E: infra/monitoring.ts:260]。 |
 
 ## 数据模型
 
-Stage model 由 `infra/stage.ts` 集中计算。`domain` 和 `shortDomain` 分别服务主站域名和 Enterprise Teams 域名, `awsStage` 把非 production stage 映射到 `dev`, `deployAws` 限制 AWS-heavy module 只在匹配 stage 部署 [E: infra/stage.ts:1] [E: infra/stage.ts:8] [E: infra/stage.ts:9] [E: infra/stage.ts:17]。
+Stage model 由 `infra/stage.ts` 集中计算。`domain` 和 `shortDomain` 分别服务主站域名和 Enterprise Teams 域名, `awsStage` 把非 production stage 映射到 `dev`, `deployAws` 限制 AWS-heavy module 只在匹配 stage 部署 [E: infra/stage.ts:1] [E: infra/stage.ts:8] [E: infra/stage.ts:9] [E: infra/stage.ts:36]。
 
-Linkable 是跨资源配置模型。Console database Linkable 暴露 host/database/username/password/port [E: infra/console.ts:36] [E: infra/console.ts:38] [E: infra/console.ts:39] [E: infra/console.ts:40] [E: infra/console.ts:41] [E: infra/console.ts:42]。Lake ingest Linkable 暴露 ingest service URL 和 secret [E: infra/lake.ts:270] [E: infra/lake.ts:272] [E: infra/lake.ts:273]。Secret 模块还把 random password 包装成 Linkable property, 并集中声明 R2、Honeycomb、Upstash secrets [E: infra/secret.ts:1] [E: infra/secret.ts:7] [E: infra/secret.ts:8] [E: infra/secret.ts:9] [E: infra/secret.ts:10] [E: infra/secret.ts:13] [E: infra/secret.ts:14]。
+Linkable 是跨资源配置模型。Console database Linkable 暴露 host/database/username/password/port [E: infra/console.ts:36] [E: infra/console.ts:38] [E: infra/console.ts:39] [E: infra/console.ts:40] [E: infra/console.ts:41] [E: infra/console.ts:42]。Lake ingest Linkable 暴露 ingest service URL 和 secret [E: infra/lake.ts:274] [E: infra/lake.ts:276] [E: infra/lake.ts:277]。Secret 模块还把 random password 包装成 Linkable property, 并集中声明 R2、Honeycomb、Upstash secrets [E: infra/secret.ts:1] [E: infra/secret.ts:7] [E: infra/secret.ts:8] [E: infra/secret.ts:9] [E: infra/secret.ts:10] [E: infra/secret.ts:13] [E: infra/secret.ts:14]。
 
 ## 控制流
 
@@ -76,12 +76,12 @@ Linkable 是跨资源配置模型。Console database Linkable 暴露 host/databa
 3. run phase 总是 import Console 并取出 `stat`, 总是 import Enterprise, production 或 `vimtor` 时 import Monitoring [E: sst.config.ts:35] [E: sst.config.ts:36] [E: sst.config.ts:37]。
 4. `infra/app.ts` 的 API Worker 绑定 R2 bucket、GitHub app secrets、admin secret、Discord/Feishu secrets, 并在 transform 中加 `SYNC_SERVER` Durable Object namespace 与 migrations [E: infra/app.ts:20] [E: infra/app.ts:21] [E: infra/app.ts:22] [E: infra/app.ts:23] [E: infra/app.ts:24] [E: infra/app.ts:25] [E: infra/app.ts:26] [E: infra/app.ts:27] [E: infra/app.ts:28] [E: infra/app.ts:37] [E: infra/app.ts:42]。
 5. Console module 为 production stage 读取 production PlanetScale branch, 其它 stage 创建从 production 分支派生的 branch [E: infra/console.ts:16] [E: infra/console.ts:18] [E: infra/console.ts:23] [E: infra/console.ts:27]。
-6. Lake module 的 Firehose destination 是 Iceberg, metadata extraction query 从 record 中读取 `_lake_database`, `_lake_table`, `_lake_operation` [E: infra/lake.ts:156] [E: infra/lake.ts:160] [E: infra/lake.ts:170] [E: infra/lake.ts:176]。
-7. Stats module 把 `StatsSyncService` 放进 lake cluster, 运行 `bun src/stat-sync.ts`, 链接 database、inferenceEvent、dataset config, 并使用 lake query permissions [E: infra/stats.ts:184] [E: infra/stats.ts:193] [E: infra/stats.ts:194] [E: infra/stats.ts:195]。
+6. Lake module 的 Firehose destination 是 Iceberg, metadata extraction query 从 record 中读取 `_lake_database`, `_lake_table`, `_lake_operation` [E: infra/lake.ts:160] [E: infra/lake.ts:164] [E: infra/lake.ts:174] [E: infra/lake.ts:180]。
+7. Stats module 把 `StatsSyncService` 放进 lake cluster, 运行 `bun src/stat-sync.ts`, 链接 database、inferenceEvent、dataset config, 并使用 lake query permissions [E: infra/stats.ts:184] [E: infra/stats.ts:195] [E: infra/stats.ts:196] [E: infra/stats.ts:197]。
 
 ## 设计动机与权衡
 
-SST config 把 Cloudflare 作为 home provider, 但把数据湖和 batch sync 放在 AWS, 这反映出 request/edge surfaces 与 analytics/storage surfaces 的部署边界不同 [E: sst.config.ts:9] [E: infra/app.ts:13] [E: infra/lake.ts:214] [I]。`deployAws` 限制 AWS-heavy resources 只在 production 或 `dev` 这种 canonical AWS stage 部署, 可以避免为每个临时 Cloudflare stage 都创建完整 lake/stats AWS stack [E: infra/stage.ts:8] [E: infra/stage.ts:9] [E: sst.config.ts:33] [I]。
+SST config 把 Cloudflare 作为 home provider, 但把数据湖和 batch sync 放在 AWS, 这反映出 request/edge surfaces 与 analytics/storage surfaces 的部署边界不同 [E: sst.config.ts:9] [E: infra/app.ts:13] [E: infra/lake.ts:218] [I]。`deployAws` 限制 AWS-heavy resources 只在 production 或 `dev` 这种 canonical AWS stage 部署, 可以避免为每个临时 Cloudflare stage 都创建完整 lake/stats AWS stack [E: infra/stage.ts:8] [E: infra/stage.ts:9] [E: sst.config.ts:33] [I]。
 
 ## Gotcha
 

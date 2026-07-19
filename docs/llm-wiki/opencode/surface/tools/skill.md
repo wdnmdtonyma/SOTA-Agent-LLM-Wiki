@@ -9,7 +9,7 @@ symbols: [SkillTool, Skill, SkillV2]
 related: [integrations.skills, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Skill 工具按 skill name 加载 `SKILL.md` 指令正文和同目录资源索引；V1 从 `Skill.Service.require()` 读取，V2 从 `SkillV2.Service.list()` 当前结果中查找。
@@ -26,7 +26,7 @@ updated: 8b68dc0d7
 
 ### 1 Identity
 
-V1 `SkillTool` 通过 `Tool.define("skill", ...)` 注册，registry 初始化 `skilltool` 并把 `tool.skill` 放入 builtin 列表。[E: packages/opencode/src/tool/skill.ts:12][E: packages/opencode/src/tool/skill.ts:13][E: packages/opencode/src/tool/registry.ts:106][E: packages/opencode/src/tool/registry.ts:209][E: packages/opencode/src/tool/registry.ts:231]
+V1 `SkillTool` 通过 `Tool.define("skill", ...)` 注册，registry 初始化 `skilltool` 并把 `tool.skill` 放入 builtin 列表。[E: packages/opencode/src/tool/skill.ts:12][E: packages/opencode/src/tool/skill.ts:13][E: packages/opencode/src/tool/registry.ts:111][E: packages/opencode/src/tool/registry.ts:216][E: packages/opencode/src/tool/registry.ts:239]
 
 ### 2 用途定位
 

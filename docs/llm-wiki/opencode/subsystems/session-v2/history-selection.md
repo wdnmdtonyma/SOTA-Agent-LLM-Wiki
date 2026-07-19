@@ -22,7 +22,7 @@ symbols: [SessionHistory.load, SessionHistory.loadForRunner, SessionHistory.entr
 related: [session-v2.projector, session-v2.compaction]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 history selection 是从 `session_message` read model 中选出当前有效 chronological Session History 的查询层:它同时应用最新 compaction boundary 与 Context Epoch baseline cutoff。
@@ -37,7 +37,7 @@ updated: 8b68dc0d7
 
 ## 职责边界
 
-`SessionHistory` 不投影 event,不 lower provider messages,也不估算 token;它只读取 `SessionMessageTable`,按 `seq` 排序,应用 compaction 与 epoch cutoff,再用 `SessionMessage.Message` schema decode row。[E: packages/core/src/session/history.ts:30][E: packages/core/src/session/history.ts:49][E: packages/core/src/session/history.ts:56][E: packages/schema/src/session-message.ts:200] Projection 由 `SessionProjector` 的 `insertMessage(...)` 写入 `session_message`,provider lowering 由 `toLLMMessages(...)` 做,auto/overflow compaction 由 `SessionCompaction.make(...)` 返回的 helpers 处理。[E: packages/core/src/session/projector.ts:193][E: packages/core/src/session/projector.ts:198][E: packages/core/src/session/runner/to-llm-message.ts:170][E: packages/core/src/session/compaction.ts:177][E: packages/core/src/session/compaction.ts:230]
+`SessionHistory` 不投影 event,不 lower provider messages,也不估算 token;它只读取 `SessionMessageTable`,按 `seq` 排序,应用 compaction 与 epoch cutoff,再用 `SessionMessage.Message` schema decode row。[E: packages/core/src/session/history.ts:30][E: packages/core/src/session/history.ts:49][E: packages/core/src/session/history.ts:56][E: packages/schema/src/session-message.ts:200] Projection 由 `SessionProjector` 的 `insertMessage(...)` 写入 `session_message`,provider lowering 由 `toLLMMessages(...)` 做,auto/overflow compaction 由 `SessionCompaction.make(...)` 返回的 helpers 处理。[E: packages/core/src/session/projector.ts:193][E: packages/core/src/session/projector.ts:198][E: packages/core/src/session/runner/to-llm-message.ts:170][E: packages/core/src/session/compaction.ts:172][E: packages/core/src/session/compaction.ts:225]
 
 `CONTEXT.md` 把 Session History 定义为 projected chronological conversation,并明确它是在 active compaction 与 Context Epoch cutoffs 后给 provider turn 使用的历史。[E: CONTEXT.md:12]
 
@@ -47,7 +47,7 @@ updated: 8b68dc0d7
 |---|---|
 | `session_message.seq` | durable aggregate sequence;history query 以该字段排序并作为 compaction/baseline boundary。[E: packages/core/src/session/sql.ts:128][E: packages/core/src/session/history.ts:38][E: packages/core/src/session/history.ts:46][E: specs/v2/session.md:175] |
 | `session_message.type` | 查找最新 `type = "compaction"` row,并筛选 old chronological `system` rows。[E: packages/core/src/session/history.ts:17][E: packages/core/src/session/history.ts:41][E: packages/core/src/session/history.ts:46] |
-| `session_context_epoch.baseline_seq` | current epoch 的 baseline cutoff;旧 system messages 不再参与当前 provider request。[E: packages/core/src/session/sql.ts:175][E: packages/core/src/session/history.ts:70][E: packages/core/src/session/runner/llm.ts:195] |
+| `session_context_epoch.baseline_seq` | current epoch 的 baseline cutoff;旧 system messages 不再参与当前 provider request。[E: packages/core/src/session/sql.ts:175][E: packages/core/src/session/history.ts:70][E: packages/core/src/session/runner/llm.ts:200] |
 | `SessionMessage.Message` | decode read-model row 的 discriminated union;解码失败包装为 `MessageDecodeError`。[E: packages/schema/src/session-message.ts:200][E: packages/core/src/session/history.ts:56][E: packages/core/src/session/history.ts:59] |
 
 `SessionMessageTable` 对 `(session_id, seq)` 建 unique index,并对 `(session_id, type, seq)` 建 index,支持按 session/type/sequence 选择历史边界。[E: packages/core/src/session/sql.ts:133][E: packages/core/src/session/sql.ts:134]
@@ -64,9 +64,9 @@ updated: 8b68dc0d7
 
 5. `SessionHistory.load@packages/core/src/session/history.ts:66` 并发读取 current epoch `baselineSeq` 与 latest compaction,再把它们交给 `messageRows`。[E: packages/core/src/session/history.ts:67][E: packages/core/src/session/history.ts:70][E: packages/core/src/session/history.ts:75][E: packages/core/src/session/history.ts:79]
 
-6. `SessionStore.context@packages/core/src/session/store.ts:39` 直接调用 `SessionHistory.load`;因此 `SessionV2.context` 与 runner 的 interrupted-tool scan 都拿到已应用 compaction/epoch cutoff 的 context view。[E: packages/core/src/session/store.ts:39][E: packages/core/src/session/store.ts:40][E: packages/core/src/session.ts:342][E: packages/core/src/session/runner/llm.ts:115][E: packages/core/src/session/runner/llm.ts:121]
+6. `SessionStore.context@packages/core/src/session/store.ts:39` 直接调用 `SessionHistory.load`;因此 `SessionV2.context` 与 runner 的 interrupted-tool scan 都拿到已应用 compaction/epoch cutoff 的 context view。[E: packages/core/src/session/store.ts:39][E: packages/core/src/session/store.ts:40][E: packages/core/src/session.ts:342][E: packages/core/src/session/runner/llm.ts:116][E: packages/core/src/session/runner/llm.ts:122]
 
-7. `SessionHistory.entriesForRunner@packages/core/src/session/history.ts:90` 用 latest compaction 与传入 `baselineSeq` 读取 rows,再返回 `{ seq, message }` entries; runner 把 entries map 成 messages,并把 entries 原样交给 compaction budget check。[E: packages/core/src/session/history.ts:95][E: packages/core/src/session/history.ts:97][E: packages/core/src/session/runner/llm.ts:195][E: packages/core/src/session/runner/llm.ts:196][E: packages/core/src/session/runner/llm.ts:210]
+7. `SessionHistory.entriesForRunner@packages/core/src/session/history.ts:90` 用 latest compaction 与传入 `baselineSeq` 读取 rows,再返回 `{ seq, message }` entries; runner 把 entries map 成 messages,并把 entries 原样交给 compaction budget check。[E: packages/core/src/session/history.ts:95][E: packages/core/src/session/history.ts:97][E: packages/core/src/session/runner/llm.ts:200][E: packages/core/src/session/runner/llm.ts:201][E: packages/core/src/session/runner/llm.ts:215]
 
 8. `toLLMMessage` 把 `SessionMessage.Compaction` lowering 成 user role `<conversation-checkpoint>` message,其中包含 summary 与 recent-context。[E: packages/core/src/session/runner/to-llm-message.ts:147][E: packages/core/src/session/runner/to-llm-message.ts:149][E: packages/core/src/session/runner/to-llm-message.ts:152][E: packages/core/src/session/runner/to-llm-message.ts:159]
 
@@ -84,9 +84,9 @@ Baseline System Context 与 chronological system messages 是两个通道。`CON
 
 ## 设计动机与权衡
 
-- `session_message` 是 projector 生成的 read model;history selection 不回放 raw EventV2 log,provider request 的 messages/history portion 来自 canonical projected messages,同时 request 还包含 baseline system context 和 materialized tools。[E: packages/core/src/session/projector.ts:193][E: packages/core/src/session/projector.ts:198][E: packages/core/src/session/runner/llm.ts:195][E: packages/core/src/session/runner/llm.ts:200][E: packages/core/src/session/runner/llm.ts:203][E: packages/core/src/session/runner/llm.ts:206][I]
+- `session_message` 是 projector 生成的 read model;history selection 不回放 raw EventV2 log,provider request 的 messages/history portion 来自 canonical projected messages,同时 request 还包含 baseline system context 和 materialized tools。[E: packages/core/src/session/projector.ts:193][E: packages/core/src/session/projector.ts:198][E: packages/core/src/session/runner/llm.ts:200][E: packages/core/src/session/runner/llm.ts:205][E: packages/core/src/session/runner/llm.ts:208][E: packages/core/src/session/runner/llm.ts:211][I]
 - compaction boundary 使用 latest compaction message 的 seq,让 repeated compactions 自动只保留最新 checkpoint 之后的 active context。[E: packages/core/src/session/history.ts:18][E: packages/core/src/session/history.ts:19][E: packages/core/src/session/history.ts:38]
-- runner entries 保留 seq,并把 entries 传给 compaction input;V2 spec 也要求 projected Session messages retain source aggregate sequence so pagination follows durable event order。[E: packages/core/src/session/history.ts:97][E: packages/core/src/session/runner/llm.ts:210][E: specs/v2/session.md:175]
+- runner entries 保留 seq,并把 entries 传给 compaction input;V2 spec 也要求 projected Session messages retain source aggregate sequence so pagination follows durable event order。[E: packages/core/src/session/history.ts:97][E: packages/core/src/session/runner/llm.ts:215][E: specs/v2/session.md:175]
 
 ## gotcha
 

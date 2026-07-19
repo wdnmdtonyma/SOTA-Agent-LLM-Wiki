@@ -15,7 +15,7 @@ related:
   - tui.dialog-kit
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > TUI dialog system 由 `ui/dialog.tsx` 的 modal stack、`ui/dialog-*.tsx` helper 和 `component/dialog-*.tsx` domain dialogs 组成；当前源码还把 command palette 实现为一个 `DialogSelect` wrapper。
@@ -28,7 +28,7 @@ updated: 8b68dc0d7
 
 ## UI 原语
 
-`Dialog` overlay 占满 terminal，zIndex 为 3000；backdrop mouseup 会调用 `props.onClose`，但如果 mousedown 时已有 terminal selection，则会清掉 dismiss flag 并跳过关闭 [E: packages/tui/src/ui/dialog.tsx:28] [E: packages/tui/src/ui/dialog.tsx:30] [E: packages/tui/src/ui/dialog.tsx:34] [E: packages/tui/src/ui/dialog.tsx:38] [E: packages/tui/src/ui/dialog.tsx:40] [E: packages/tui/src/ui/dialog.tsx:41] [E: packages/tui/src/ui/dialog.tsx:44]。`Dialog.init()` 持有 dialog stack 和 size store；stack 非空时会 push `modal` mode，Escape 或 Ctrl+C 会关闭最上层 dialog [E: packages/tui/src/ui/dialog.tsx:66] [E: packages/tui/src/ui/dialog.tsx:80] [E: packages/tui/src/ui/dialog.tsx:106] [E: packages/tui/src/ui/dialog.tsx:127] [E: packages/tui/src/ui/dialog.tsx:128] [E: packages/tui/src/ui/dialog.tsx:129]。`replace()` 只在原 stack 为空时 blur 当前 focus；随后会对已有 stack 调用 onClose、重置 size，并把 stack 替换成新 element [E: packages/tui/src/ui/dialog.tsx:147] [E: packages/tui/src/ui/dialog.tsx:148] [E: packages/tui/src/ui/dialog.tsx:150] [E: packages/tui/src/ui/dialog.tsx:153] [E: packages/tui/src/ui/dialog.tsx:155] [E: packages/tui/src/ui/dialog.tsx:156]。`DialogProvider` 只渲染 stack top，`useDialog()` 在 provider 外调用会抛错 [E: packages/tui/src/ui/dialog.tsx:196] [E: packages/tui/src/ui/dialog.tsx:212] [E: packages/tui/src/ui/dialog.tsx:214] [E: packages/tui/src/ui/dialog.tsx:222] [E: packages/tui/src/ui/dialog.tsx:225]。
+`Dialog` overlay 占满 terminal，zIndex 为 3000；backdrop mouseup 会调用 `props.onClose`，但如果 mousedown 时已有 terminal selection，则会清掉 dismiss flag 并跳过关闭 [E: packages/tui/src/ui/dialog.tsx:28] [E: packages/tui/src/ui/dialog.tsx:30] [E: packages/tui/src/ui/dialog.tsx:34] [E: packages/tui/src/ui/dialog.tsx:38] [E: packages/tui/src/ui/dialog.tsx:40] [E: packages/tui/src/ui/dialog.tsx:41] [E: packages/tui/src/ui/dialog.tsx:44]。`Dialog.init()` 持有 dialog stack 和 size store；stack 非空时会 push `modal` mode，Escape 或 Ctrl+C 会关闭最上层 dialog [E: packages/tui/src/ui/dialog.tsx:69] [E: packages/tui/src/ui/dialog.tsx:83] [E: packages/tui/src/ui/dialog.tsx:109] [E: packages/tui/src/ui/dialog.tsx:130] [E: packages/tui/src/ui/dialog.tsx:131] [E: packages/tui/src/ui/dialog.tsx:132]。`replace()` 只在原 stack 为空时 blur 当前 focus；随后会对已有 stack 调用 onClose、重置 size，并把 stack 替换成新 element [E: packages/tui/src/ui/dialog.tsx:150] [E: packages/tui/src/ui/dialog.tsx:151] [E: packages/tui/src/ui/dialog.tsx:153] [E: packages/tui/src/ui/dialog.tsx:156] [E: packages/tui/src/ui/dialog.tsx:158] [E: packages/tui/src/ui/dialog.tsx:159]。`DialogProvider` 只渲染 stack top，`useDialog()` 在 provider 外调用会抛错 [E: packages/tui/src/ui/dialog.tsx:199] [E: packages/tui/src/ui/dialog.tsx:215] [E: packages/tui/src/ui/dialog.tsx:217] [E: packages/tui/src/ui/dialog.tsx:225] [E: packages/tui/src/ui/dialog.tsx:228]。
 
 ## Helper Dialogs
 

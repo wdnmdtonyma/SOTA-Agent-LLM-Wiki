@@ -9,7 +9,7 @@ symbols: [ReadTool, ReadToolFileSystem]
 related: [subsys.tools.v1, subsys.tools.v2, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Read 工具是 opencode 面向模型暴露的文件/目录读取入口；V1 活跑实现位于 `packages/opencode/src/tool/read.ts`，V2 新内核实现位于 `packages/core/src/tool/read.ts` 与 `packages/core/src/tool/read-filesystem.ts`。
@@ -104,7 +104,7 @@ V2 Read 先通过 `LocationMutation.resolve` 得到 canonical target、permissio
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 活跑状态 | 当前活跑路径，经 `SessionTools.resolve` 转成 AI SDK tool。[E: packages/opencode/src/session/tools.ts:78][E: packages/opencode/src/session/tools.ts:89] | 新内核 built-in，经 `ToolRegistry.materialize` 广告给 `@opencode-ai/llm`，runner 把 materialized definitions 放进 LLM request。[E: packages/core/src/tool/registry.ts:106][E: packages/core/src/tool/registry.ts:115][E: packages/core/src/session/runner/llm.ts:198][E: packages/core/src/session/runner/llm.ts:207] |
+| 活跑状态 | 当前活跑路径，经 `SessionTools.resolve` 转成 AI SDK tool。[E: packages/opencode/src/session/tools.ts:81][E: packages/opencode/src/session/tools.ts:92] | 新内核 built-in，经 `ToolRegistry.materialize` 广告给 `@opencode-ai/llm`，runner 把 materialized definitions 放进 LLM request。[E: packages/core/src/tool/registry.ts:106][E: packages/core/src/tool/registry.ts:115][E: packages/core/src/session/runner/llm.ts:203][E: packages/core/src/session/runner/llm.ts:212] |
 | 输入路径字段 | `filePath`；schema 描述 absolute，但 execute 接受 relative 并 resolve。[E: packages/opencode/src/tool/read.ts:29][E: packages/opencode/src/tool/read.ts:235] | `path`；相对路径不能逃出 active Location，external absolute path 需要 `external_directory` approval。[E: packages/core/src/tool/read.ts:18][E: packages/core/src/location-mutation.ts:124][E: packages/core/src/location-mutation.ts:141] |
 | 文本限制 | 2000 行、50KB、单行 2000 字符。[E: packages/opencode/src/tool/read.ts:13][E: packages/opencode/src/tool/read.ts:14][E: packages/opencode/src/tool/read.ts:16] | 2000 行、50KB、单行 2000 字符。[E: packages/core/src/tool/read-filesystem.ts:11][E: packages/core/src/tool/read-filesystem.ts:12][E: packages/core/src/tool/read-filesystem.ts:14] |
 | PDF | V1 把 PDF 当 attachment 返回成功。[E: packages/opencode/src/tool/read.ts:306][E: packages/opencode/src/tool/read.ts:308] | V2 对 `%PDF` 返回 binary error，当前不是 supported media。[E: packages/core/src/tool/read-filesystem.ts:212][E: packages/core/src/tool/read-filesystem.ts:213] |

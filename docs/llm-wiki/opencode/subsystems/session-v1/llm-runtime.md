@@ -9,7 +9,7 @@ symbols: [LLM, LLM.stream, LLM.run, LLMRequestPrep.prepare, LLMAISDK.toLLMEvents
 related: [model-layer.llm-protocol-engine, spine.v1-v2-relationship]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V1 `LLM.Service` 是每次 provider request 的 runtime seam:默认调用 Vercel AI SDK `streamText`,仅当 `OPENCODE_EXPERIMENTAL_NATIVE_LLM` 打开且当前 provider/model 支持时改走 `@opencode-ai/llm` native runtime。
@@ -25,7 +25,7 @@ updated: 8b68dc0d7
 
 `LLM.StreamInput` 是 V1 session 层交给模型层的规范化输入:包含 user/sessionID/model/agent/permission/system/messages/tools/retries/toolChoice 等字段。[E: packages/opencode/src/session/llm.ts:36][E: packages/opencode/src/session/llm.ts:37][E: packages/opencode/src/session/llm.ts:39][E: packages/opencode/src/session/llm.ts:40][E: packages/opencode/src/session/llm.ts:41][E: packages/opencode/src/session/llm.ts:42][E: packages/opencode/src/session/llm.ts:43][E: packages/opencode/src/session/llm.ts:45][E: packages/opencode/src/session/llm.ts:46][E: packages/opencode/src/session/llm.ts:47]
 
-`LLM.Service` 的 `stream(input)` 返回 `Stream.Stream<LLMEvent, unknown>`;`SessionProcessor` 把 stream event typed 为 `LLMEvent` 并交给 `handleEvent`,实际 runtime 是 AI SDK 还是 native 由 `LLM.Service` seam 隔离。[E: packages/opencode/src/session/llm.ts:54][E: packages/opencode/src/session/llm.ts:55][E: packages/opencode/src/session/processor.ts:27][E: packages/opencode/src/session/processor.ts:77][E: packages/opencode/src/session/processor.ts:276][E: packages/opencode/src/session/processor.ts:638][E: packages/opencode/src/session/processor.ts:641][I]
+`LLM.Service` 的 `stream(input)` 返回 `Stream.Stream<LLMEvent, unknown>`;`SessionProcessor` 把 stream event typed 为 `LLMEvent` 并交给 `handleEvent`,实际 runtime 是 AI SDK 还是 native 由 `LLM.Service` seam 隔离。[E: packages/opencode/src/session/llm.ts:54][E: packages/opencode/src/session/llm.ts:55][E: packages/opencode/src/session/processor.ts:27][E: packages/opencode/src/session/processor.ts:77][E: packages/opencode/src/session/processor.ts:278][E: packages/opencode/src/session/processor.ts:640][E: packages/opencode/src/session/processor.ts:643][I]
 
 `session/llm/AGENTS.md` 把边界写得很明确:`../llm.ts` 拥有 auth/config/model/provider/plugin/permission/telemetry/runtime selection 等 opencode concerns,子目录适配器只负责 AI SDK fullStream 转 event、native request lowering、native runtime gate/tool bridge/LLMClient handoff。[E: packages/opencode/src/session/llm/AGENTS.md:3][E: packages/opencode/src/session/llm/AGENTS.md:7][E: packages/opencode/src/session/llm/AGENTS.md:8][E: packages/opencode/src/session/llm/AGENTS.md:9]
 
@@ -82,7 +82,7 @@ native streaming path 取 `input.llmClient`,调用 `.stream(LLMRequest.update(re
 
 ## gotcha
 
-- `session/llm/AGENTS.md` 的 safety boundary 写到 `OPENCODE_EXPERIMENTAL=true` 也会 opt in native,但当前 `RuntimeFlags.experimentalNativeLlm` 源码只读取 `OPENCODE_EXPERIMENTAL_NATIVE_LLM`,没有使用 `enabledByExperimental(...)`;本节点按源码当前行为标注 native gate。[E: packages/opencode/src/session/llm/AGENTS.md:88][E: packages/opencode/src/effect/runtime-flags.ts:53][I]
+- `session/llm/AGENTS.md` 的 safety boundary 写到 `OPENCODE_EXPERIMENTAL=true` 也会 opt in native,但当前 `RuntimeFlags.experimentalNativeLlm` 源码只读取 `OPENCODE_EXPERIMENTAL_NATIVE_LLM`,没有使用 `enabledByExperimental(...)`;本节点按源码当前行为标注 native gate。[E: packages/opencode/src/session/llm/AGENTS.md:88][E: packages/opencode/src/effect/runtime-flags.ts:54][I]
 - AI SDK branch 的 `experimental_repairToolCall` 会先尝试把 toolName 小写修复到已存在 tool;否则把 malformed call 转成 `toolName: "invalid"` 且 input 里带原 tool 与 error JSON。[E: packages/opencode/src/session/llm.ts:296][E: packages/opencode/src/session/llm.ts:297][E: packages/opencode/src/session/llm.ts:298][E: packages/opencode/src/session/llm.ts:304][E: packages/opencode/src/session/llm.ts:310]
 - OpenAI OAuth 是 native status 的例外:OAuth-specific gate 只有在 provider id 是 `openai` 且 provider options 提供 fetch override 时才通过;之后仍需通过 provider/package/API-key gates,否则 native unsupported 会在 `llm.ts` fallback 到 AI SDK。[E: packages/opencode/src/session/llm/native-runtime.ts:54][E: packages/opencode/src/session/llm/native-runtime.ts:58][E: packages/opencode/src/session/llm/native-runtime.ts:60][E: packages/opencode/src/session/llm/native-runtime.ts:64][E: packages/opencode/src/session/llm/native-runtime.ts:65][E: packages/opencode/src/session/llm/native-runtime.ts:148][E: packages/opencode/src/session/llm/native-runtime.ts:149][E: packages/opencode/src/session/llm/native-runtime.ts:150][E: packages/opencode/src/session/llm/native-runtime.ts:151][E: packages/opencode/src/session/llm.ts:254][E: packages/opencode/src/session/llm.ts:279]
 

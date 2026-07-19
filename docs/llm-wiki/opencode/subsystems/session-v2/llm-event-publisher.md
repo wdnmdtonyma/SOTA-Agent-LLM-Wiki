@@ -14,10 +14,10 @@ symbols: [createLLMEventPublisher, publish, flush, failAssistant, failUnsettledT
 related: [spine.v2-provider-turn, session-v2.projector]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
-> `createLLMEventPublisher` 是 V2 runner 的 event translation layer:它把 `@opencode-ai/llm` stream events 转成 `SessionEvent.Step/Text/Reasoning/Tool` events,其中包含 durable boundaries 和 ephemeral deltas;它不执行工具、不启动 continuation turn。[E: packages/core/src/session/runner/publish-llm-event.ts:54][E: packages/core/src/session/runner/publish-llm-event.ts:239][E: packages/core/src/session/runner/llm.ts:237][E: packages/core/src/session/runner/llm.ts:247][I]
+> `createLLMEventPublisher` 是 V2 runner 的 event translation layer:它把 `@opencode-ai/llm` stream events 转成 `SessionEvent.Step/Text/Reasoning/Tool` events,其中包含 durable boundaries 和 ephemeral deltas;它不执行工具、不启动 continuation turn。[E: packages/core/src/session/runner/publish-llm-event.ts:54][E: packages/core/src/session/runner/publish-llm-event.ts:239][E: packages/core/src/session/runner/llm.ts:242][E: packages/core/src/session/runner/llm.ts:252][I]
 
 ## 能回答的问题
 
@@ -29,7 +29,7 @@ updated: 8b68dc0d7
 
 ## 职责边界
 
-`createLLMEventPublisher` 返回的 publisher API 包含 `publish`、`flush`、`failAssistant`、`failUnsettledTools`、assistant/provider status helpers 和 `stepSettlement`;tool execution 和 continuation orchestration 属于 runner 调用者,不属于 publisher 内部状态机。[E: packages/core/src/session/runner/publish-llm-event.ts:411][E: packages/core/src/session/runner/publish-llm-event.ts:412][E: packages/core/src/session/runner/publish-llm-event.ts:413][E: packages/core/src/session/runner/publish-llm-event.ts:414][E: packages/core/src/session/runner/publish-llm-event.ts:415][E: packages/core/src/session/runner/publish-llm-event.ts:419][E: packages/core/src/session/runner/llm.ts:247][E: packages/core/src/session/runner/llm.ts:340]
+`createLLMEventPublisher` 返回的 publisher API 包含 `publish`、`flush`、`failAssistant`、`failUnsettledTools`、assistant/provider status helpers 和 `stepSettlement`;tool execution 和 continuation orchestration 属于 runner 调用者,不属于 publisher 内部状态机。[E: packages/core/src/session/runner/publish-llm-event.ts:411][E: packages/core/src/session/runner/publish-llm-event.ts:412][E: packages/core/src/session/runner/publish-llm-event.ts:413][E: packages/core/src/session/runner/publish-llm-event.ts:414][E: packages/core/src/session/runner/publish-llm-event.ts:415][E: packages/core/src/session/runner/publish-llm-event.ts:419][E: packages/core/src/session/runner/llm.ts:252][E: packages/core/src/session/runner/llm.ts:345]
 
 ## 数据模型
 
@@ -37,7 +37,7 @@ Publisher 内部维护 `tools: Map<string, ...>`。每个 callID 记录 owning `
 
 | 状态 | 事件边界 |
 |---|---|
-| assistant step absent | 第一次 text/reasoning/tool/provider-error 需要 assistant 时调用 `startAssistant` publish `Step.Started`。`step-finish` 只 records settlement,runner 稍后 publish `Step.Ended`。 [E: packages/core/src/session/runner/publish-llm-event.ts:74][E: packages/core/src/session/runner/publish-llm-event.ts:78][E: packages/core/src/session/runner/publish-llm-event.ts:246][E: packages/core/src/session/runner/publish-llm-event.ts:268][E: packages/core/src/session/runner/publish-llm-event.ts:291][E: packages/core/src/session/runner/publish-llm-event.ts:396][E: packages/core/src/session/runner/llm.ts:311][E: packages/core/src/session/runner/llm.ts:321] |
+| assistant step absent | 第一次 text/reasoning/tool/provider-error 需要 assistant 时调用 `startAssistant` publish `Step.Started`。`step-finish` 只 records settlement,runner 稍后 publish `Step.Ended`。 [E: packages/core/src/session/runner/publish-llm-event.ts:74][E: packages/core/src/session/runner/publish-llm-event.ts:78][E: packages/core/src/session/runner/publish-llm-event.ts:246][E: packages/core/src/session/runner/publish-llm-event.ts:268][E: packages/core/src/session/runner/publish-llm-event.ts:291][E: packages/core/src/session/runner/publish-llm-event.ts:396][E: packages/core/src/session/runner/llm.ts:316][E: packages/core/src/session/runner/llm.ts:326] |
 | text/reasoning/tool input fragments | `fragments(...)` 以 id 为 key 缓存 chunks,start/delta/end 顺序错误会 die。 [E: packages/core/src/session/runner/publish-llm-event.ts:91][E: packages/core/src/session/runner/publish-llm-event.ts:96][E: packages/core/src/session/runner/publish-llm-event.ts:98][E: packages/core/src/session/runner/publish-llm-event.ts:102][E: packages/core/src/session/runner/publish-llm-event.ts:105][E: packages/core/src/session/runner/publish-llm-event.ts:109][E: packages/core/src/session/runner/publish-llm-event.ts:111] |
 | tool call | `Tool.Called` 记录 call input 与 provider executed/metadata。 [E: packages/core/src/session/runner/publish-llm-event.ts:313][E: packages/core/src/session/runner/publish-llm-event.ts:323][E: packages/core/src/session/runner/publish-llm-event.ts:329][E: packages/core/src/session/runner/publish-llm-event.ts:330] |
 | tool settlement | `Tool.Success` 记录 structured/content/outputPaths/provider metadata;`Tool.Failed` 记录 error/result/provider metadata。 [E: packages/core/src/session/runner/publish-llm-event.ts:347][E: packages/core/src/session/runner/publish-llm-event.ts:353][E: packages/core/src/session/runner/publish-llm-event.ts:359][E: packages/core/src/session/runner/publish-llm-event.ts:364][E: packages/core/src/session/runner/publish-llm-event.ts:370][E: packages/core/src/session/runner/publish-llm-event.ts:383] |
@@ -64,7 +64,7 @@ Publisher 内部维护 `tools: Map<string, ...>`。每个 callID 记录 owning `
 
 9. `settledOutput@packages/core/src/session/runner/publish-llm-event.ts:46` 把 `ToolOutput` 或 `ToolResultValue` 转成 `structured/content`;error result 转成 unknown error message。[E: packages/core/src/session/runner/publish-llm-event.ts:46][E: packages/core/src/session/runner/publish-llm-event.ts:47][E: packages/core/src/session/runner/publish-llm-event.ts:48][E: packages/core/src/session/runner/publish-llm-event.ts:50]
 
-10. `step-finish` 先 `flush()`,再把 finish reason 与 token usage 存到 `stepSettlement`;runner 在 tool fibers settle 之后读取 `publisher.stepSettlement()` 并发布 durable `Step.Ended` with snapshot/files。[E: packages/core/src/session/runner/publish-llm-event.ts:396][E: packages/core/src/session/runner/publish-llm-event.ts:397][E: packages/core/src/session/runner/publish-llm-event.ts:400][E: packages/core/src/session/runner/llm.ts:311][E: packages/core/src/session/runner/llm.ts:313][E: packages/core/src/session/runner/llm.ts:321][E: packages/core/src/session/runner/llm.ts:328][E: packages/core/src/session/runner/llm.ts:329]
+10. `step-finish` 先 `flush()`,再把 finish reason 与 token usage 存到 `stepSettlement`;runner 在 tool fibers settle 之后读取 `publisher.stepSettlement()` 并发布 durable `Step.Ended` with snapshot/files。[E: packages/core/src/session/runner/publish-llm-event.ts:396][E: packages/core/src/session/runner/publish-llm-event.ts:397][E: packages/core/src/session/runner/publish-llm-event.ts:400][E: packages/core/src/session/runner/llm.ts:316][E: packages/core/src/session/runner/llm.ts:318][E: packages/core/src/session/runner/llm.ts:326][E: packages/core/src/session/runner/llm.ts:333][E: packages/core/src/session/runner/llm.ts:334]
 
 11. `provider-error` sets `providerFailed` and delegates to `failAssistant`,which flushes fragments,starts assistant if necessary,and publishes `Step.Failed`。[E: packages/core/src/session/runner/publish-llm-event.ts:404][E: packages/core/src/session/runner/publish-llm-event.ts:405][E: packages/core/src/session/runner/publish-llm-event.ts:406][E: packages/core/src/session/runner/publish-llm-event.ts:199][E: packages/core/src/session/runner/publish-llm-event.ts:205]
 
@@ -78,8 +78,8 @@ Publisher 内部维护 `tools: Map<string, ...>`。每个 callID 记录 owning `
 
 ## gotcha
 
-- `step-start` 是 no-op;assistant step 由 first content/tool/provider-error 触发 lazy `startAssistant`,或由 runner publishing `Step.Ended` 时强制 start if needed。[E: packages/core/src/session/runner/publish-llm-event.ts:244][E: packages/core/src/session/runner/publish-llm-event.ts:245][E: packages/core/src/session/runner/publish-llm-event.ts:250][E: packages/core/src/session/runner/publish-llm-event.ts:272][E: packages/core/src/session/runner/publish-llm-event.ts:292][E: packages/core/src/session/runner/llm.ts:324]
-- `finish` event is no-op;durable step closure is tied to `step-finish` settlement plus runner-side `SessionEvent.Step.Ended` publish。[E: packages/core/src/session/runner/publish-llm-event.ts:396][E: packages/core/src/session/runner/publish-llm-event.ts:402][E: packages/core/src/session/runner/publish-llm-event.ts:403][E: packages/core/src/session/runner/llm.ts:321]
+- `step-start` 是 no-op;assistant step 由 first content/tool/provider-error 触发 lazy `startAssistant`,或由 runner publishing `Step.Ended` 时强制 start if needed。[E: packages/core/src/session/runner/publish-llm-event.ts:244][E: packages/core/src/session/runner/publish-llm-event.ts:245][E: packages/core/src/session/runner/publish-llm-event.ts:250][E: packages/core/src/session/runner/publish-llm-event.ts:272][E: packages/core/src/session/runner/publish-llm-event.ts:292][E: packages/core/src/session/runner/llm.ts:329]
+- `finish` event is no-op;durable step closure is tied to `step-finish` settlement plus runner-side `SessionEvent.Step.Ended` publish。[E: packages/core/src/session/runner/publish-llm-event.ts:396][E: packages/core/src/session/runner/publish-llm-event.ts:402][E: packages/core/src/session/runner/publish-llm-event.ts:403][E: packages/core/src/session/runner/llm.ts:326]
 
 ## Sources
 

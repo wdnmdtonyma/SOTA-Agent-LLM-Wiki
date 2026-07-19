@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 source:
   - packages/opencode/src/tool/truncate.ts
   - packages/core/src/tool-output-store.ts
@@ -82,10 +82,10 @@ V2 `ToolOutputStore.Service` 是 core registry settlement 的 model-output bound
 
 | 维度 | V1 | V2 |
 | --- | --- | --- |
-| bounding 位置 | leaf wrapper 和 MCP bridge 调用 `Truncate.output`；shell 使用 Truncate limits/write 加 shell-local tail bounding。[E: packages/opencode/src/tool/tool.ts:135][E: packages/opencode/src/session/tools.ts:457][E: packages/opencode/src/tool/shell.ts:438][E: packages/opencode/src/tool/shell.ts:569][E: packages/opencode/src/tool/shell.ts:572] | registry settlement 后统一调用 ToolOutputStore。[E: packages/core/src/tool/registry.ts:75] |
+| bounding 位置 | leaf wrapper 和 MCP bridge 调用 `Truncate.output`；shell 使用 Truncate limits/write 加 shell-local tail bounding。[E: packages/opencode/src/tool/tool.ts:135][E: packages/opencode/src/session/tools.ts:464][E: packages/opencode/src/tool/shell.ts:438][E: packages/opencode/src/tool/shell.ts:569][E: packages/opencode/src/tool/shell.ts:572] | registry settlement 后统一调用 ToolOutputStore。[E: packages/core/src/tool/registry.ts:75] |
 | preview 策略 | head 或 tail，默认 head；shell 用 local `tail(...)` 生成结尾 preview。[E: packages/opencode/src/tool/truncate.ts:89][E: packages/opencode/src/tool/shell.ts:569] | beginning + end，行数/字节大致对半分配。[E: packages/core/src/tool-output-store.ts:74][E: packages/core/src/tool-output-store.ts:93] |
 | 完整输出文件 | `Truncate.write` 写 `TRUNCATION_DIR/ToolID.ascending()`。[E: packages/opencode/src/tool/truncate.ts:68] | `ToolOutputStore.write` 写 global data 下 `tool-output/tool_<Identifier>`。[E: packages/core/src/tool-output-store.ts:129] |
-| path 暴露 | `Truncate.output` result 含 `outputPath`，V1 wrapper/MCP bridge/shell 可把它复制到 metadata；preview 文本也直接提示 full output path。[E: packages/opencode/src/tool/truncate.ts:129][E: packages/opencode/src/tool/truncate.ts:139][E: packages/opencode/src/tool/tool.ts:141][E: packages/opencode/src/tool/tool.ts:142][E: packages/opencode/src/session/tools.ts:461][E: packages/opencode/src/tool/shell.ts:579][E: packages/opencode/src/tool/shell.ts:591] | V2 settlement 有 typed `outputPaths`，bounded preview marker 也包含 path。[E: packages/core/src/tool/registry.ts:80][E: packages/core/src/tool-output-store.ts:159] |
+| path 暴露 | `Truncate.output` result 含 `outputPath`，V1 wrapper/MCP bridge/shell 可把它复制到 metadata；preview 文本也直接提示 full output path。[E: packages/opencode/src/tool/truncate.ts:129][E: packages/opencode/src/tool/truncate.ts:139][E: packages/opencode/src/tool/tool.ts:141][E: packages/opencode/src/tool/tool.ts:142][E: packages/opencode/src/session/tools.ts:468][E: packages/opencode/src/tool/shell.ts:579][E: packages/opencode/src/tool/shell.ts:591] | V2 settlement 有 typed `outputPaths`，bounded preview marker 也包含 path。[E: packages/core/src/tool/registry.ts:80][E: packages/core/src/tool-output-store.ts:159] |
 | structured output | V1 主要处理 string output。[E: packages/opencode/src/tool/truncate.ts:40] | V2 保留 structured unchanged，model replay 用 bounded textual JSON preview。[E: packages/core/src/tool-output-store.ts:163][E: packages/core/src/tool-output-store.ts:145][E: specs/v2/tools.md:157] |
 
 ## 6 设计动机与 tradeoff
@@ -101,7 +101,7 @@ V2 `ToolOutputStore.Service` 是 core registry settlement 的 model-output bound
 - `read` 工具的 2000 行/50KB 文本分页不是本节点的 generic tool output bounding；`read` 自己在文件读取层分页。[E: packages/opencode/src/tool/read.ts:13][E: packages/opencode/src/tool/read.ts:16][E: packages/opencode/src/tool/read.ts:164][E: packages/core/src/tool/read-filesystem.ts:11][E: packages/core/src/tool/read-filesystem.ts:12][E: packages/core/src/tool/read-filesystem.ts:201][E: packages/core/src/tool/read-filesystem.ts:214]
 - V1 shell 大输出完整文件是 shell/truncate 合作产生的，不能推断所有 V1 工具都一定有 `outputPath` metadata。[E: packages/opencode/src/tool/shell.ts:505][E: packages/opencode/src/tool/shell.ts:515][E: packages/opencode/src/tool/shell.ts:579][E: packages/opencode/src/tool/shell.ts:591][E: packages/opencode/src/tool/tool.ts:131][E: packages/opencode/src/tool/tool.ts:141][E: packages/opencode/src/tool/tool.ts:142]
 - V2 managed output file 是 temporary，bounded Model Tool Output 才是 durable replayable record。[E: CONTEXT.md:55][E: CONTEXT.md:58]
-- Provider-executed tool results 不走 generic Tool Registry bounding；runner 在 `providerExecuted` tool-call 上直接返回,所以 provider-native transcript facts 保持在 provider stream 路径中。[E: packages/core/src/session/runner/llm.ts:238][I]
+- Provider-executed tool results 不走 generic Tool Registry bounding；runner 在 `providerExecuted` tool-call 上直接返回,所以 provider-native transcript facts 保持在 provider stream 路径中。[E: packages/core/src/session/runner/llm.ts:243][I]
 
 ## Sources
 

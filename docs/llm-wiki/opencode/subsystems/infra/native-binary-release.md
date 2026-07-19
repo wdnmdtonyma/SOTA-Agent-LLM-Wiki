@@ -20,7 +20,7 @@ related:
   - infra.ci-workflows
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > 原生二进制与发布节点描述 V1 CLI package `packages/opencode` 怎样通过 `Bun.build({ compile })` 产出跨平台 `opencode` 可执行文件, 再发布到 npm optional dependencies、GitHub Releases、Docker、Homebrew 和 AUR。
@@ -41,15 +41,15 @@ V1/V2 关系: 这个发布链路打包的是 V1 CLI package `packages/opencode`�
 
 ## 技术栈
 
-- Bun compile: `script/build.ts` 对每个 target 调用 `Bun.build`, 并在 `compile.target` 和 `compile.outfile` 指定 Bun native target 与 `dist/<name>/bin/opencode` [E: packages/opencode/script/build.ts:168] [E: packages/opencode/script/build.ts:177] [E: packages/opencode/script/build.ts:182] [E: packages/opencode/script/build.ts:183]。
-- Solid/OpenTUI build plugin: build script 创建 `createSolidTransformPlugin()` 并作为 Bun plugin 传入 build [E: packages/opencode/script/build.ts:24] [E: packages/opencode/script/build.ts:171]。
+- Bun compile: `script/build.ts` 对每个 target 调用 `Bun.build`, 并在 `compile.target` 和 `compile.outfile` 指定 Bun native target 与 `dist/<name>/bin/opencode` [E: packages/opencode/script/build.ts:163] [E: packages/opencode/script/build.ts:172] [E: packages/opencode/script/build.ts:177] [E: packages/opencode/script/build.ts:178]。
+- Solid/OpenTUI build plugin: build script 创建 `createSolidTransformPlugin()` 并作为 Bun plugin 传入 build [E: packages/opencode/script/build.ts:23] [E: packages/opencode/script/build.ts:166]。
 - GitHub CLI/npm/docker/git: publish script 使用 `npm view`, `bun pm pack`, `npm publish`, `docker buildx build`, AUR git clone/push, Homebrew tap git clone/push [E: packages/opencode/script/publish.ts:11] [E: packages/opencode/script/publish.ts:22] [E: packages/opencode/script/publish.ts:23] [E: packages/opencode/script/publish.ts:88] [E: packages/opencode/script/publish.ts:131] [E: packages/opencode/script/publish.ts:138] [E: packages/opencode/script/publish.ts:206] [E: packages/opencode/script/publish.ts:210] [E: packages/opencode/script/publish.ts:211]。
 
 ## 关键文件
 
 | 文件 | 角色 |
 | --- | --- |
-| `packages/opencode/script/build.ts` | native binary builder。构造 embedded Web UI, 枚举 targets, 安装跨平台 native deps, 调用 `Bun.build({ compile })`, smoke test 当前平台, 写每个平台 package manifest [E: packages/opencode/script/build.ts:27] [E: packages/opencode/script/build.ts:53] [E: packages/opencode/script/build.ts:140] [E: packages/opencode/script/build.ts:168] [E: packages/opencode/script/build.ts:202] [E: packages/opencode/script/build.ts:214]。 |
+| `packages/opencode/script/build.ts` | native binary builder。构造 embedded Web UI，并用 `import.meta.resolve` + `Bun.file(...).text()` 读取 OpenTUI parser worker，随后枚举 targets、安装跨平台 native deps、调用 `Bun.build({ compile })`、smoke test 当前平台并写 package manifest [E: packages/opencode/script/build.ts:26] [E: packages/opencode/script/build.ts:50] [E: packages/opencode/script/build.ts:51] [E: packages/opencode/script/build.ts:53] [E: packages/opencode/script/build.ts:140] [E: packages/opencode/script/build.ts:163] [E: packages/opencode/script/build.ts:205] [E: packages/opencode/script/build.ts:217]。 |
 | `packages/opencode/script/publish.ts` | release publisher。发布平台 binary packages 与 wrapper package, 推 Docker image, 生成 AUR PKGBUILD, 更新 Homebrew formula [E: packages/opencode/script/publish.ts:75] [E: packages/opencode/script/publish.ts:79] [E: packages/opencode/script/publish.ts:88] [E: packages/opencode/script/publish.ts:98] [E: packages/opencode/script/publish.ts:147]。 |
 | `install` | curl installer。解析版本/本地 binary 参数, 检测 OS/arch/musl/AVX2, 下载 GitHub release asset, 解压到 `$HOME/.opencode/bin`, 可写 shell profile [E: install:39] [E: install:48] [E: install:79] [E: install:117] [E: install:130] [E: install:332] [E: install:334] [E: install:337] [E: install:340] [E: install:343] [E: install:403] [E: install:416] [E: install:421] [E: install:424]。 |
 | `.github/workflows/publish.yml` | release CI orchestrator。version job 产出版本, build-cli 构建 CLI 与新 `packages/cli`, sign-cli-windows 签 Windows CLI, build-electron 构建 Desktop, publish job 上传 release assets 并运行 `./script/publish.ts` [E: .github/workflows/publish.yml:35] [E: .github/workflows/publish.yml:66] [E: .github/workflows/publish.yml:92] [E: .github/workflows/publish.yml:93] [E: .github/workflows/publish.yml:155] [E: .github/workflows/publish.yml:175] [E: .github/workflows/publish.yml:313] [E: .github/workflows/publish.yml:325] [E: .github/workflows/publish.yml:338] [E: .github/workflows/publish.yml:498] [E: .github/workflows/publish.yml:509] [E: .github/workflows/publish.yml:511]。 |
@@ -58,19 +58,19 @@ V1/V2 关系: 这个发布链路打包的是 V1 CLI package `packages/opencode`�
 
 `allTargets` 是 build matrix。当前枚举 12 个 CLI target: linux arm64/x64/x64-baseline, linux arm64-musl/x64-musl/x64-baseline-musl, darwin arm64/x64/x64-baseline, windows arm64/x64/x64-baseline [E: packages/opencode/script/build.ts:60] [E: packages/opencode/script/build.ts:64] [E: packages/opencode/script/build.ts:68] [E: packages/opencode/script/build.ts:73] [E: packages/opencode/script/build.ts:78] [E: packages/opencode/script/build.ts:83] [E: packages/opencode/script/build.ts:89] [E: packages/opencode/script/build.ts:93] [E: packages/opencode/script/build.ts:97] [E: packages/opencode/script/build.ts:102] [E: packages/opencode/script/build.ts:106] [E: packages/opencode/script/build.ts:110]。
 
-每个平台 package manifest 包含 `name`, `version`, `preferUnplugged`, `os`, `cpu`, optional `libc`, 并以 `binaries[name] = Script.version` 记录给 publish script 使用 [E: packages/opencode/script/build.ts:218] [E: packages/opencode/script/build.ts:219] [E: packages/opencode/script/build.ts:220] [E: packages/opencode/script/build.ts:221] [E: packages/opencode/script/build.ts:222] [E: packages/opencode/script/build.ts:223] [E: packages/opencode/script/build.ts:229]。
+每个平台 package manifest 包含 `name`, `version`, `preferUnplugged`, `os`, `cpu`, optional `libc`, 并以 `binaries[name] = Script.version` 记录给 publish script 使用 [E: packages/opencode/script/build.ts:221] [E: packages/opencode/script/build.ts:222] [E: packages/opencode/script/build.ts:223] [E: packages/opencode/script/build.ts:224] [E: packages/opencode/script/build.ts:225] [E: packages/opencode/script/build.ts:226] [E: packages/opencode/script/build.ts:232]。
 
 wrapper npm package 在 `publish.ts` 写成 `${pkg.name}-ai`, `bin.opencode` 指向 `./bin/opencode.exe`, `postinstall` 运行 `node ./postinstall.mjs`, `optionalDependencies` 填入平台 binary package map [E: packages/opencode/script/publish.ts:57] [E: packages/opencode/script/publish.ts:59] [E: packages/opencode/script/publish.ts:62] [E: packages/opencode/script/publish.ts:68]。
 
 ## 控制流
 
-1. build script 解析 `--single`, `--baseline`, `--skip-install`, `--sourcemaps`, `--skip-embed-web-ui` flags [E: packages/opencode/script/build.ts:20] [E: packages/opencode/script/build.ts:21] [E: packages/opencode/script/build.ts:22] [E: packages/opencode/script/build.ts:23] [E: packages/opencode/script/build.ts:25]。
-2. 默认构建 Web UI embed map: 进入 `packages/app`, 用 `OPENCODE_CHANNEL=${Script.channel}` 跑 build, 扫描 `dist`, 为每个文件生成 `with { type: "file" }` import 和 export map [E: packages/opencode/script/build.ts:29] [E: packages/opencode/script/build.ts:31] [E: packages/opencode/script/build.ts:32] [E: packages/opencode/script/build.ts:38] [E: packages/opencode/script/build.ts:45]。
+1. build script 解析 `--single`, `--baseline`, `--skip-install`, `--sourcemaps`, `--skip-embed-web-ui` flags [E: packages/opencode/script/build.ts:19] [E: packages/opencode/script/build.ts:20] [E: packages/opencode/script/build.ts:21] [E: packages/opencode/script/build.ts:22] [E: packages/opencode/script/build.ts:24]。
+2. 默认构建 Web UI embed map: 进入 `packages/app`, 用 `OPENCODE_CHANNEL=${Script.channel}` 跑 build, 扫描 `dist`, 为每个文件生成 `with { type: "file" }` import 和 export map [E: packages/opencode/script/build.ts:28] [E: packages/opencode/script/build.ts:30] [E: packages/opencode/script/build.ts:31] [E: packages/opencode/script/build.ts:37] [E: packages/opencode/script/build.ts:44]。
 3. 非 `--single` 时构建所有 `allTargets`; `--single` 时只保留当前 `process.platform/process.arch`, 默认跳过 baseline 与 abi-specific target [E: packages/opencode/script/build.ts:116] [E: packages/opencode/script/build.ts:118] [E: packages/opencode/script/build.ts:124] [E: packages/opencode/script/build.ts:129]。
 4. build script 为跨平台 native deps 运行 `bun install --os="*" --cpu="*"` 安装 OpenTUI、Parcel watcher、FFF Bun 包 [E: packages/opencode/script/build.ts:141] [E: packages/opencode/script/build.ts:142] [E: packages/opencode/script/build.ts:143]。
-5. 每个 target 的 Bun compile 定义 `FFF_LIBC`, `OPENCODE_VERSION`, `OPENCODE_MODELS_DEV`, OpenTUI worker path, opencode worker path, channel, Linux libc [E: packages/opencode/script/build.ts:190] [E: packages/opencode/script/build.ts:191] [E: packages/opencode/script/build.ts:192] [E: packages/opencode/script/build.ts:193] [E: packages/opencode/script/build.ts:194] [E: packages/opencode/script/build.ts:195] [E: packages/opencode/script/build.ts:196]。
-6. 当前平台 binary 会执行 `opencode --version` smoke test, failure 直接 exit 1 [E: packages/opencode/script/build.ts:202] [E: packages/opencode/script/build.ts:206] [E: packages/opencode/script/build.ts:210]。
-7. release 模式下 build script 对 Linux target 产出 `.tar.gz`, 其它 target 产出 `.zip`, 并通过 `gh release upload` 推到 GitHub release [E: packages/opencode/script/build.ts:232] [E: packages/opencode/script/build.ts:235] [E: packages/opencode/script/build.ts:237] [E: packages/opencode/script/build.ts:240]。
+5. 每个 target 把 parser worker 以稳定名 `opentui-tree-sitter-worker.js` 放入 `Bun.build.files` 和 entrypoints，`OTUI_TREE_SITTER_WORKER_PATH` 指向对应 bunfs root；同一 compile 还定义 `FFF_LIBC`, `OPENCODE_VERSION`, model data, opencode worker path, channel 与 Linux libc [E: packages/opencode/script/build.ts:159] [E: packages/opencode/script/build.ts:160] [E: packages/opencode/script/build.ts:161] [E: packages/opencode/script/build.ts:182] [E: packages/opencode/script/build.ts:183] [E: packages/opencode/script/build.ts:186] [E: packages/opencode/script/build.ts:189] [E: packages/opencode/script/build.ts:193] [E: packages/opencode/script/build.ts:194] [E: packages/opencode/script/build.ts:195] [E: packages/opencode/script/build.ts:196] [E: packages/opencode/script/build.ts:197] [E: packages/opencode/script/build.ts:198] [E: packages/opencode/script/build.ts:199]。
+6. 当前平台 binary 会执行 `opencode --version` smoke test, failure 直接 exit 1 [E: packages/opencode/script/build.ts:205] [E: packages/opencode/script/build.ts:209] [E: packages/opencode/script/build.ts:213]。
+7. release 模式下 build script 对 Linux target 产出 `.tar.gz`, 其它 target 产出 `.zip`, 并通过 `gh release upload` 推到 GitHub release [E: packages/opencode/script/build.ts:235] [E: packages/opencode/script/build.ts:238] [E: packages/opencode/script/build.ts:240] [E: packages/opencode/script/build.ts:243]。
 8. publish script 先 publish 每个平台 package, 再 publish wrapper `opencode-ai`, 然后非 preview 时推 Docker image、AUR、Homebrew [E: packages/opencode/script/publish.ts:75] [E: packages/opencode/script/publish.ts:79] [E: packages/opencode/script/publish.ts:87] [E: packages/opencode/script/publish.ts:127] [E: packages/opencode/script/publish.ts:199]。
 
 ## Installer 流程
@@ -81,7 +81,9 @@ Linux 会检测 Alpine 与 `ldd --version` 中的 musl [E: install:117] [E: inst
 
 ## 设计动机与权衡
 
-build script 把 Web UI 静态文件转成 Bun file imports 并传入 `Bun.build.files`, 这让 single native binary 能内嵌 Web UI, 同时保留 `--skip-embed-web-ui` 给 Desktop/Nix 等不需要 embedded UI 的场景 [E: packages/opencode/script/build.ts:25] [E: packages/opencode/script/build.ts:51] [E: packages/opencode/script/build.ts:187]。`baseline` targets 为没有 AVX2 的 x64 CPU 保留兼容 binary, installer 的 AVX2 探测负责把用户导向 baseline asset [E: packages/opencode/script/build.ts:70] [E: install:130] [I]。
+build script 把 Web UI 静态文件转成 Bun file imports 并传入 `Bun.build.files`, 这让 single native binary 能内嵌 Web UI, 同时保留 `--skip-embed-web-ui` 给 Desktop/Nix 等不需要 embedded UI 的场景 [E: packages/opencode/script/build.ts:24] [E: packages/opencode/script/build.ts:50] [E: packages/opencode/script/build.ts:187]。`baseline` targets 为没有 AVX2 的 x64 CPU 保留兼容 binary, installer 的 AVX2 探测负责把用户导向 baseline asset [E: packages/opencode/script/build.ts:70] [E: install:130] [I]。
+
+parser worker 不再依赖 local/root `node_modules` 的真实路径选择；它在 build 开始时读成内容，再以固定 bunfs 名称嵌入每个 target [E: packages/opencode/script/build.ts:51] [E: packages/opencode/script/build.ts:160] [E: packages/opencode/script/build.ts:182] [E: packages/opencode/script/build.ts:183] [E: packages/opencode/script/build.ts:196]。这消除了 package-manager 安装布局对 worker 路径的影响 [I]。
 
 ## Gotcha
 

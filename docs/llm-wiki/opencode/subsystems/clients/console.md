@@ -21,7 +21,7 @@ related:
   - infra.sst
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Console 是 opencode 的 hosted 管理和计费 surface: `packages/console/app` 是 SolidStart/Nitro Cloudflare app, `packages/console/core` 封装 PlanetScale/Drizzle、Stripe billing、workspace/user/provider 等业务数据。
@@ -42,7 +42,7 @@ V1/V2 关系: Console 节点标 `v: na`, 因为它不运行 V1 `SessionPrompt.ru
 
 ## 技术栈
 
-- SolidStart 文件路由: app root import `Router` 和 `FileRoutes`, 并在 default `App` 里渲染 `FileRoutes` [E: packages/console/app/src/app.tsx:2] [E: packages/console/app/src/app.tsx:3] [E: packages/console/app/src/app.tsx:25] [E: packages/console/app/src/app.tsx:41]。
+- SolidStart 文件路由: app root import `Router` 和 `FileRoutes`, 并在 default `App` 里渲染 `FileRoutes` [E: packages/console/app/src/app.tsx:2] [E: packages/console/app/src/app.tsx:3] [E: packages/console/app/src/app.tsx:26] [E: packages/console/app/src/app.tsx:43]。
 - Nitro Cloudflare module preset: Vite config 同时安装 `solidStart` middleware 和 `nitro({ preset: "cloudflare-module", cloudflare.nodeCompat: true })` [E: packages/console/app/vite.config.ts:7] [E: packages/console/app/vite.config.ts:8] [E: packages/console/app/vite.config.ts:10] [E: packages/console/app/vite.config.ts:12] [E: packages/console/app/vite.config.ts:14]。
 - PlanetScale + Drizzle: `Database.client` 用 `@planetscale/database` Client, host/username/password 来自 SST `Resource.Database`, 再传给 `drizzle` [E: packages/console/core/src/drizzle/index.ts:1] [E: packages/console/core/src/drizzle/index.ts:4] [E: packages/console/core/src/drizzle/index.ts:20] [E: packages/console/core/src/drizzle/index.ts:21] [E: packages/console/core/src/drizzle/index.ts:22] [E: packages/console/core/src/drizzle/index.ts:23] [E: packages/console/core/src/drizzle/index.ts:25]。
 - Stripe billing: `Billing.stripe()` 使用 `Resource.STRIPE_SECRET_KEY` 创建 Stripe client, API version 是 `2025-03-31.basil` [E: packages/console/core/src/billing.ts:29] [E: packages/console/core/src/billing.ts:30] [E: packages/console/core/src/billing.ts:31]。
@@ -51,7 +51,7 @@ V1/V2 关系: Console 节点标 `v: na`, 因为它不运行 V1 `SessionPrompt.ru
 
 | 文件 | 角色 |
 | --- | --- |
-| `packages/console/app/src/app.tsx` | App shell。安装 `LanguageProvider`, `I18nProvider`, `MetaProvider`, Suspense 和 `FileRoutes` [E: packages/console/app/src/app.tsx:31] [E: packages/console/app/src/app.tsx:32] [E: packages/console/app/src/app.tsx:33] [E: packages/console/app/src/app.tsx:35] [E: packages/console/app/src/app.tsx:41]。 |
+| `packages/console/app/src/app.tsx` | App shell。安装 `LanguageProvider`, `I18nProvider`, `MetaProvider`, Suspense 和 `FileRoutes` [E: packages/console/app/src/app.tsx:32] [E: packages/console/app/src/app.tsx:33] [E: packages/console/app/src/app.tsx:34] [E: packages/console/app/src/app.tsx:36] [E: packages/console/app/src/app.tsx:43]。 |
 | `packages/console/app/src/context/auth.ts` | OpenAuth client 和 SolidStart session。`AuthClient` 使用 `VITE_AUTH_URL`, `useAuthSession()` 使用 `Resource.ZEN_SESSION_SECRET`, `getActor()` 解析 public/account/user actor [E: packages/console/app/src/context/auth.ts:9] [E: packages/console/app/src/context/auth.ts:11] [E: packages/console/app/src/context/auth.ts:28] [E: packages/console/app/src/context/auth.ts:30] [E: packages/console/app/src/context/auth.ts:40] [E: packages/console/app/src/context/auth.ts:73] [E: packages/console/app/src/context/auth.ts:102]。 |
 | `packages/console/app/src/routes/stripe/webhook.ts` | Stripe webhook endpoint。验证 `stripe-signature`, 处理 checkout、customer、subscription、invoice 等事件 [E: packages/console/app/src/routes/stripe/webhook.ts:14] [E: packages/console/app/src/routes/stripe/webhook.ts:15] [E: packages/console/app/src/routes/stripe/webhook.ts:17] [E: packages/console/app/src/routes/stripe/webhook.ts:23] [E: packages/console/app/src/routes/stripe/webhook.ts:46] [E: packages/console/app/src/routes/stripe/webhook.ts:108] [E: packages/console/app/src/routes/stripe/webhook.ts:209]。 |
 | `packages/console/core/src/drizzle/index.ts` | Database context 和 transaction helper。`Database.use` 自动选择当前 transaction context 或 root client [E: packages/console/core/src/drizzle/index.ts:31] [E: packages/console/core/src/drizzle/index.ts:36] [E: packages/console/core/src/drizzle/index.ts:38] [E: packages/console/core/src/drizzle/index.ts:69]。 |
@@ -67,7 +67,7 @@ V1/V2 关系: Console 节点标 `v: na`, 因为它不运行 V1 `SessionPrompt.ru
 
 ## 控制流
 
-1. HTTP request 进入 SolidStart app, `App` 的 router 使用 `FileRoutes`, route 文件定义页面/API endpoint [E: packages/console/app/src/app.tsx:27] [E: packages/console/app/src/app.tsx:41]。
+1. HTTP request 进入 SolidStart app, `App` 的 router 使用 `FileRoutes`, route 文件定义页面/API endpoint [E: packages/console/app/src/app.tsx:28] [E: packages/console/app/src/app.tsx:43]。
 2. 需要身份的 server function 调用 `getActor(workspace?)`。`getActor` 先从 request locals 复用 actor, 再读 `useAuthSession()` session [E: packages/console/app/src/context/auth.ts:40] [E: packages/console/app/src/context/auth.ts:42] [E: packages/console/app/src/context/auth.ts:44] [E: packages/console/app/src/context/auth.ts:46]。
 3. workspace actor 解析查询 `UserTable`, 条件是 workspaceID、未删除、accountID in session accounts, 找到后更新 `timeSeen` [E: packages/console/app/src/context/auth.ts:78] [E: packages/console/app/src/context/auth.ts:80] [E: packages/console/app/src/context/auth.ts:86] [E: packages/console/app/src/context/auth.ts:87] [E: packages/console/app/src/context/auth.ts:88] [E: packages/console/app/src/context/auth.ts:95] [E: packages/console/app/src/context/auth.ts:99]。
 4. Stripe webhook POST 先用 Stripe secret 验证事件, 再按事件类型分支处理 [E: packages/console/app/src/routes/stripe/webhook.ts:14] [E: packages/console/app/src/routes/stripe/webhook.ts:15] [E: packages/console/app/src/routes/stripe/webhook.ts:18] [E: packages/console/app/src/routes/stripe/webhook.ts:23]。

@@ -15,7 +15,7 @@ symbols: [toLLMMessages, toLLMMessage, assistant, toolCall, toolResult]
 related: [spine.v2-provider-turn, model-layer.llm-schema]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Message lowering 把 projected V2 `SessionMessage.Message[]` 转成 canonical `@opencode-ai/llm Message[]`,并在同 provider/model continuation 且 assistant step 未失败时保留 provider-native reasoning 与 hosted tool metadata。
@@ -30,9 +30,9 @@ updated: 8b68dc0d7
 
 ## 职责边界
 
-`toLLMMessages` 只做 projected history 到 LLM schema 的 lowering;history selection、tool materialization 和 request assembly 都在 runner 中完成,selected protocol adapter owns provider wire encoding。[E: packages/core/src/session/runner/to-llm-message.ts:170][E: packages/core/src/session/runner/llm.ts:195][E: packages/core/src/session/runner/llm.ts:198][E: packages/core/src/session/runner/llm.ts:200][E: CONTEXT.md:136][I]
+`toLLMMessages` 只做 projected history 到 LLM schema 的 lowering;history selection、tool materialization 和 request assembly 都在 runner 中完成,selected protocol adapter owns provider wire encoding。[E: packages/core/src/session/runner/to-llm-message.ts:170][E: packages/core/src/session/runner/llm.ts:200][E: packages/core/src/session/runner/llm.ts:203][E: packages/core/src/session/runner/llm.ts:205][E: CONTEXT.md:136][I]
 
-provider request assembly 在 runner 中把 `toLLMMessages(context, model)` 放入 `LLM.request` 的 `messages` 字段。[E: packages/core/src/session/runner/llm.ts:200][E: packages/core/src/session/runner/llm.ts:206] `CONTEXT.md` 把 Session History 定义为 projected chronological conversation after compaction and Context Epoch cutoffs;runner 从 `SessionHistory.entriesForRunner` 取 entries,映射成 context,再调用 `toLLMMessages(context, model)`。[E: CONTEXT.md:12][E: packages/core/src/session/runner/llm.ts:195][E: packages/core/src/session/runner/llm.ts:196][E: packages/core/src/session/runner/llm.ts:206]
+provider request assembly 在 runner 中把 `toLLMMessages(context, model)` 放入 `LLM.request` 的 `messages` 字段。[E: packages/core/src/session/runner/llm.ts:205][E: packages/core/src/session/runner/llm.ts:211] `CONTEXT.md` 把 Session History 定义为 projected chronological conversation after compaction and Context Epoch cutoffs;runner 从 `SessionHistory.entriesForRunner` 取 entries,映射成 context,再调用 `toLLMMessages(context, model)`。[E: CONTEXT.md:12][E: packages/core/src/session/runner/llm.ts:200][E: packages/core/src/session/runner/llm.ts:201][E: packages/core/src/session/runner/llm.ts:211]
 
 ## 输入输出表
 

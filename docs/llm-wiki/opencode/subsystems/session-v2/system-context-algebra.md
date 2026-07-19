@@ -25,7 +25,7 @@ related:
   - session-v2.system-context-registry
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > System Context 代数把 privileged runtime context 建模成可独立观测、可比较、可渲染的 typed `Source<A>` 集合; runner 在 safe provider-turn boundary 用 `initialize/reconcile/replace` 把它准入为 baseline 或 chronological system message。
@@ -40,7 +40,7 @@ updated: 8b68dc0d7
 
 ## 职责边界
 
-`SystemContext` 只负责组合 source、观察 source、比较 snapshot、渲染 baseline/update/removal text;它不直接描述 DB 持久化、agent/model 选择或 event publish 接口。[E: packages/core/src/system-context/index.ts:198][I] 持久化与 `ContextUpdated` publish 在 `SessionContextEpoch.prepare` 中完成,runner 在 `runTurnAttempt` 内 load/compose context 后交给 Context Epoch initialize/prepare。[E: packages/core/src/session/context-epoch.ts:72][E: packages/core/src/session/runner/llm.ts:163][E: packages/core/src/session/runner/llm.ts:178][E: packages/core/src/session/runner/llm.ts:193]
+`SystemContext` 只负责组合 source、观察 source、比较 snapshot、渲染 baseline/update/removal text;它不直接描述 DB 持久化、agent/model 选择或 event publish 接口。[E: packages/core/src/system-context/index.ts:198][I] 持久化与 `ContextUpdated` publish 在 `SessionContextEpoch.prepare` 中完成,runner 在 `runTurnAttempt` 内 load/compose context 后交给 Context Epoch initialize/prepare。[E: packages/core/src/session/context-epoch.ts:72][E: packages/core/src/session/runner/llm.ts:168][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:198]
 
 `CONTEXT.md` 的术语边界是: System Context 是模型初始 instructions 和 chronological updates 的 structured facts; Session History 是应用 compaction 与 Context Epoch cutoff 后为 provider turn 选择的 projected conversation; Context Snapshot 是 model-hidden JSON comparison state。[E: CONTEXT.md:8][E: CONTEXT.md:12][E: CONTEXT.md:34]
 
@@ -79,13 +79,13 @@ updated: 8b68dc0d7
 ## 设计动机与权衡
 
 - `CONTEXT.md` says Context Source loaders return one coherent typed value; `SystemContext.make(...)` hides that value type so differently typed sources compose uniformly, and codec stores/compares that value。[E: CONTEXT.md:110]
-- `CONTEXT.md` says context changes are sampled lazily at safe provider-turn boundaries, never pushed asynchronously when a source changes; in the current runner path, `systemContext.load()` is called through `loadSystemContext(agent)` during `runTurnAttempt` and passed to Context Epoch initialize/prepare。[E: CONTEXT.md:98][E: packages/core/src/session/runner/llm.ts:163][E: packages/core/src/session/runner/llm.ts:178][E: packages/core/src/session/runner/llm.ts:193] The absence of an async subscription in this path is an implementation inference rather than a global codebase proof。[I]
+- `CONTEXT.md` says context changes are sampled lazily at safe provider-turn boundaries, never pushed asynchronously when a source changes; in the current runner path, `systemContext.load()` is called through `loadSystemContext(agent)` during `runTurnAttempt` and passed to Context Epoch initialize/prepare。[E: CONTEXT.md:98][E: packages/core/src/session/runner/llm.ts:168][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:198] The absence of an async subscription in this path is an implementation inference rather than a global codebase proof。[I]
 - `unavailable` implements stale-while-revalidate semantics: ordinary reconcile retains prior admitted snapshot while replacement waits for a complete admitted context。[E: CONTEXT.md:114][E: packages/core/src/system-context/index.ts:251][E: packages/core/src/system-context/index.ts:288][E: packages/core/src/system-context/index.ts:289]
 - Replacement is stricter than update because it creates a new baseline for a baseline-replacing transition; current `SessionContextEpoch.prepare` uses replacement when completed compaction is newer than the stored baseline。[E: CONTEXT.md:113][E: packages/core/src/session/context-epoch.ts:59][E: packages/core/src/session/context-epoch.ts:61][I]
 
 ## Gotcha
 
-- `Source<A>.load` is typed as `Effect.Effect<A | Unavailable>`, and project terminology describes the loader as infallible; `observe` maps source load results with no local recovery branch in that mapping path [I], while `InstructionContext` is one producer that catches expected errors/defects and returns `SystemContext.unavailable`。[E: packages/core/src/system-context/index.ts:35][E: CONTEXT.md:16][E: packages/core/src/system-context/index.ts:182][E: packages/core/src/system-context/index.ts:186][E: packages/core/src/instruction-context.ts:84][E: packages/core/src/instruction-context.ts:85]
+- `Source<A>.load` is typed as `Effect.Effect<A | Unavailable>`, and project terminology describes the loader as infallible; `observe` maps source load results with no local recovery branch in that mapping path [I], while `InstructionContext` is one producer that catches expected errors/defects and returns `SystemContext.unavailable`。[E: packages/core/src/system-context/index.ts:35][E: CONTEXT.md:16][E: packages/core/src/system-context/index.ts:182][E: packages/core/src/system-context/index.ts:186][E: packages/core/src/instruction-context.ts:86][E: packages/core/src/instruction-context.ts:87]
 - `SystemContext.combine` is order-preserving for callers, while `SystemContextRegistry.load` sorts registry entries by contribution key before combining; deterministic registry ordering belongs to registry, not the algebra primitive。[E: packages/core/src/system-context/index.ts:176][E: packages/core/src/system-context/registry.ts:40][I]
 
 ## Sources

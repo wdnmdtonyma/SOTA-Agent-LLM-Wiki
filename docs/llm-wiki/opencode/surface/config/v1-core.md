@@ -11,7 +11,7 @@ source:
   - packages/core/src/v1/config/config.ts
   - packages/core/src/v1/config/agent.ts
   - packages/core/src/v1/config/permission.ts
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 ---
 
@@ -39,14 +39,14 @@ evidence: explicit
 | `model` | optional string；schema default omitted | 默认 model，格式 `provider/model`。[E: packages/core/src/v1/config/config.ts:74] | V2 仍保留 `model`。[E: packages/core/src/config.ts:36] |
 | `small_model` | optional string；schema default omitted | title generation 等小任务 model。[E: packages/core/src/v1/config/config.ts:77] | V2 schema 不含 `small_model`；V2 设计规范标为 remove。[E: specs/v2/config.md:179] |
 | `default_agent` | optional string；schema default omitted | 未指定 agent 时的默认 primary agent。[E: packages/core/src/v1/config/config.ts:80] | 当前 V2 code 仍保留 `default_agent`。[E: packages/core/src/config.ts:39] 但 V2 设计规范曾标为 remove，属于规范与当前代码不同步的迁移痕迹。[E: specs/v2/config.md:245] |
-| `username` | optional string；schema default omitted | conversation display/telemetry identity override。[E: packages/core/src/v1/config/config.ts:84] | V2 仍保留 `username`。[E: packages/core/src/config.ts:57] |
-| `mode` | optional struct/rest；deprecated | 旧的 agent alias，只显式列 `build` 和 `plan`，其余走 rest map。[E: packages/core/src/v1/config/config.ts:87] | V2 不保留顶层 `mode`；migration 把它合并到 `agents` 并强制 `mode: "primary"`。[E: packages/core/src/v1/config/migrate.ts:100] |
-| `agent` | optional builtins/rest map | 配置 `plan`、`build`、`general`、`explore`、`title`、`summary`、`compaction` 和 custom agents。[E: packages/core/src/v1/config/config.ts:93] | V2 改名为 `agents`。[E: packages/core/src/config.ts:63] |
-| `instructions` | optional string array | additional instruction files/patterns。[E: packages/core/src/v1/config/config.ts:121] | V2 仍保留 `instructions` string array。[E: packages/core/src/config.ts:96] |
-| `layout` | optional layout；deprecated | 旧 TUI layout setting，说明写着 always uses stretch layout。[E: packages/core/src/v1/config/config.ts:124] | V2 schema 不含 `layout`；`isV1` 只用它识别 legacy config。[E: packages/core/src/v1/config/migrate.ts:27] |
-| `permission` | optional `ConfigPermissionV1.Info` | 全局 tool permission map。[E: packages/core/src/v1/config/config.ts:125] | V2 改名为 `permissions` ordered ruleset。[E: packages/core/src/config.ts:60] |
-| `tools` | optional record boolean | deprecated tool enable/disable map。[E: packages/core/src/v1/config/config.ts:126] | V2 不保留；migration 将 boolean map 转成 permission rules。[E: packages/core/src/v1/config/migrate.ts:75] |
-| `enterprise.url` | optional string | enterprise URL。[E: packages/core/src/v1/config/config.ts:130] | V2 仍保留 `enterprise.url`。[E: packages/core/src/config.ts:51] |
+| `username` | optional string；schema default omitted | conversation display/telemetry identity override。[E: packages/core/src/v1/config/config.ts:87] | V2 仍保留 `username`。[E: packages/core/src/config.ts:57] |
+| `mode` | optional struct/rest；deprecated | 旧的 agent alias，只显式列 `build` 和 `plan`，其余走 rest map。[E: packages/core/src/v1/config/config.ts:90] | V2 不保留顶层 `mode`；migration 把它合并到 `agents` 并强制 `mode: "primary"`。[E: packages/core/src/v1/config/migrate.ts:100] |
+| `agent` | optional builtins/rest map | 配置 `plan`、`build`、`general`、`explore`、`title`、`summary`、`compaction` 和 custom agents。[E: packages/core/src/v1/config/config.ts:96] | V2 改名为 `agents`。[E: packages/core/src/config.ts:63] |
+| `instructions` | optional string array | additional instruction files/patterns。[E: packages/core/src/v1/config/config.ts:124] | V2 仍保留 `instructions` string array。[E: packages/core/src/config.ts:96] |
+| `layout` | optional layout；deprecated | 旧 TUI layout setting，说明写着 always uses stretch layout。[E: packages/core/src/v1/config/config.ts:127] | V2 schema 不含 `layout`；`isV1` 只用它识别 legacy config。[E: packages/core/src/v1/config/migrate.ts:27] |
+| `permission` | optional `ConfigPermissionV1.Info` | 全局 tool permission map。[E: packages/core/src/v1/config/config.ts:128] | V2 改名为 `permissions` ordered ruleset。[E: packages/core/src/config.ts:60] |
+| `tools` | optional record boolean | deprecated tool enable/disable map。[E: packages/core/src/v1/config/config.ts:129] | V2 不保留；migration 将 boolean map 转成 permission rules。[E: packages/core/src/v1/config/migrate.ts:75] |
+| `enterprise.url` | optional string | enterprise URL。[E: packages/core/src/v1/config/config.ts:133] | V2 仍保留 `enterprise.url`。[E: packages/core/src/config.ts:51] |
 
 ## V1 Agent Entry Fields
 

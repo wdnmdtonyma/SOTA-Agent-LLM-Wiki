@@ -9,7 +9,7 @@ symbols: [Session, UserMessage, AssistantMessage]
 related: [tui.sync-store, tui.prompt]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Session screen 是 `session` route 的聊天界面：它从 `SyncProvider` 读取 session/message/part/status/permission/question，渲染 scrollbox transcript、sidebar、permission/question prompts、subagent footer 和可被 plugin replace 的 prompt slot。
@@ -89,7 +89,7 @@ Session screen 把 transcript scrollbox、blocking prompt footer、session comma
 ## Gotcha
 
 - `visible()` 只在 parent/root session 且没有 pending permission/question 时为 true；因此“prompt disabled”和“prompt hidden”是两个不同状态，plugin `session_prompt` 也会收到这两个 props。[E: packages/tui/src/routes/session/index.tsx:235] [E: packages/tui/src/routes/session/index.tsx:236] [E: packages/tui/src/routes/session/index.tsx:1303] [E: packages/tui/src/routes/session/index.tsx:1304]
-- `Session` route 进入时的 workspace bootstrap 是 non-fatal；这意味着 session 可以显示但相关 SDK actions 可能因 workspace unavailable 而被 prompt/dialog 拦截。[E: packages/tui/src/routes/session/index.tsx:302] [E: packages/tui/src/component/prompt/index.tsx:972] [I]
+- `Session` route 进入时的 workspace bootstrap 是 non-fatal；这意味着 session 可以显示但相关 SDK actions 可能因 workspace unavailable 而被 prompt/dialog 拦截。[E: packages/tui/src/routes/session/index.tsx:302] [E: packages/tui/src/component/prompt/index.tsx:976] [I]
 
 ## Sources
 

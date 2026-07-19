@@ -9,7 +9,7 @@ symbols: [SessionV2.prompt, SessionInput.admit, SessionRunCoordinator.wake, Sess
 related: [spine.v2-coordinator, session-v2.inbox]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 mid-turn steer 是把新的 user prompt 作为 durable steer input 入列,再通过 coordinator wake/coalesce 让当前或下一次 safe boundary promote;它不会直接改写已经打开的 provider stream。[I]
@@ -45,11 +45,11 @@ flowchart TD
 
 5. wake coalesce 是布尔 pending 语义:多个 steer wake 在同一 active drain 中会合并成一个 `pendingWake`,不再保存 admitted seq。[E: packages/core/src/session/run-coordinator.ts:20][E: packages/core/src/session/run-coordinator.ts:52][E: packages/core/src/session/run-coordinator.ts:53]
 
-6. 当前 provider stream 的 event loop 仍围绕已经构造好的 `request` 运行;源码中的 stream loop只处理 provider event、publisher 与 local tool settle,没有读取新的 inbox row 来修改当前 request。[E: packages/core/src/session/runner/llm.ts:245][E: packages/core/src/session/runner/llm.ts:255][I]
+6. 当前 provider stream 的 event loop 仍围绕已经构造好的 `request` 运行;源码中的 stream loop只处理 provider event、publisher 与 local tool settle,没有读取新的 inbox row 来修改当前 request。[E: packages/core/src/session/runner/llm.ts:250][E: packages/core/src/session/runner/llm.ts:260][I]
 
-7. 当前 provider turn 结束后,outer runner loop 把下一轮 promotion 设为 `"steer"`;如果本轮没有 continuation,它会调用 `SessionInput.hasPending(..., "steer")` 检查是否已有新 steer input。[E: packages/core/src/session/runner/llm.ts:395][E: packages/core/src/session/runner/llm.ts:396]
+7. 当前 provider turn 结束后,outer runner loop 把下一轮 promotion 设为 `"steer"`;如果本轮没有 continuation,它会调用 `SessionInput.hasPending(..., "steer")` 检查是否已有新 steer input。[E: packages/core/src/session/runner/llm.ts:400][E: packages/core/src/session/runner/llm.ts:401]
 
-8. 当 runner 进入下一次 `runTurnAttempt` 且 promotion 为 `"steer"` 时,它先读取 latest seq 作为 cutoff,再调用 `SessionInput.promoteSteers(db, events, session.id, cutoff)`。[E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:185]
+8. 当 runner 进入下一次 `runTurnAttempt` 且 promotion 为 `"steer"` 时,它先读取 latest seq 作为 cutoff,再调用 `SessionInput.promoteSteers(db, events, session.id, cutoff)`。[E: packages/core/src/session/runner/llm.ts:188][E: packages/core/src/session/runner/llm.ts:190]
 
 9. `promoteSteers@packages/core/src/session/input.ts:245` 选择当前 session 中 `promoted_seq IS NULL`、delivery 为 `"steer"`、且 `admitted_seq <= cutoff` 的 rows,按 admitted seq 升序交给 `publish`,而 `publish` 对每行发布 `Prompted`。[E: packages/core/src/session/input.ts:245][E: packages/core/src/session/input.ts:251][E: packages/core/src/session/input.ts:256][E: packages/core/src/session/input.ts:257][E: packages/core/src/session/input.ts:258][E: packages/core/src/session/input.ts:259][E: packages/core/src/session/input.ts:262][E: packages/core/src/session/input.ts:265][E: packages/core/src/session/input.ts:225]
 
@@ -59,8 +59,8 @@ flowchart TD
 
 ## 关键决策点
 
-- steer 是 durable inbox 语义: admission 先发布 `PromptAdmitted` 并投影到 `SessionInputTable`,之后 promotion 才把 row 提升到 model-visible message;它不是 provider stream 的即时 stdin,因为当前 stream loop 只消费已建立的 `llm.stream(request)` 事件。[E: packages/core/src/session/input.ts:55][E: packages/core/src/session/input.ts:101][E: packages/core/src/session/input.ts:225][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:227][I]
-- coordinator pending wake 是兜底机制:当前 drain 如果自己看到 pending steer 会继续,如果没看到也会由 pending successor drain 重新检查。[E: packages/core/src/session/runner/llm.ts:396][E: packages/core/src/session/run-coordinator.ts:52]
+- steer 是 durable inbox 语义: admission 先发布 `PromptAdmitted` 并投影到 `SessionInputTable`,之后 promotion 才把 row 提升到 model-visible message;它不是 provider stream 的即时 stdin,因为当前 stream loop 只消费已建立的 `llm.stream(request)` 事件。[E: packages/core/src/session/input.ts:55][E: packages/core/src/session/input.ts:101][E: packages/core/src/session/input.ts:225][E: packages/core/src/session/runner/llm.ts:188][E: packages/core/src/session/runner/llm.ts:232][I]
+- coordinator pending wake 是兜底机制:当前 drain 如果自己看到 pending steer 会继续,如果没看到也会由 pending successor drain 重新检查。[E: packages/core/src/session/runner/llm.ts:401][E: packages/core/src/session/run-coordinator.ts:52]
 - `resume: false` 会跳过 `execution.wake`,因此只 admission 而不主动唤醒 runner。[E: packages/core/src/session.ts:382]
 
 ## Sources

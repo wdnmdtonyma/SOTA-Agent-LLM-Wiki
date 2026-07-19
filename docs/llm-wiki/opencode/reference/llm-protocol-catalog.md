@@ -8,7 +8,7 @@ source:
   - packages/llm/src/protocols/
   - packages/llm/src/route/protocol.ts
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 symbols:
   - Protocol

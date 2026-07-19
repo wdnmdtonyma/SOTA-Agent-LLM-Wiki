@@ -22,7 +22,7 @@ related:
   - spine.v2-overview
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 `server.embedded-public-api` 记录 8b68dc0d7 下 V2 core 的 same-process embedding surface。旧 `packages/core/src/public/*` facade 在当前源码树中没有等价文件；本节点把可核证部分收敛到 core Effect services: `SessionV2`、`ApplicationTools`、`SessionExecutionLocal` 和 `LocationServiceMap`。[U]
@@ -61,7 +61,7 @@ updated: 8b68dc0d7
 
 `locationServices` 现在集中声明 location-scoped graph，包含 `Location`、`Policy`、`Config`、`AgentV2`、`CommandV2`、`Reference`、`Integration`、`Catalog`、`AISDK`、`PluginV2`、`PluginInternal`、`ProjectCopy`、filesystem、watcher、pty、skill、system context、permission、tool registry、built-in tools、runner model、snapshot 和 LLM runner nodes。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:78]
 
-`buildLocationServiceMap()` 用 `LayerMap.make` 按 `Location.Ref` 构造 layer，给每个 ref 追加 `Location.boundNode(ref)` replacement，compile 后用 `Layer.fresh` 和全局 hoisted layer provide。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:94][E: packages/core/src/location-services.ts:102]
+`buildLocationServiceMap()` 用 `LayerMap.make` 按 `Location.Ref` 构造 layer，给每个 ref 追加 `Location.boundNode(ref)` replacement，compile 后用 `Layer.fresh` 和全局 hoisted layer provide。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:98][E: packages/core/src/location-services.ts:106]
 
 `LocationServiceMap.Service.get(ref)` 只是把 `locations.get(ref)` unwrap 成 `Layer`，service tag 是 `@opencode/example/LocationServiceMap`。[E: packages/core/src/location-service-map.ts:7][E: packages/core/src/location-service-map.ts:12]
 

@@ -5,7 +5,7 @@ kind: tool
 tier: T1
 v: shared
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 source:
   - packages/opencode/src/tool/grep.ts
   - packages/core/src/tool/grep.ts
@@ -36,7 +36,7 @@ related:
 | 维度 | V1 | V2 |
 | --- | --- | --- |
 | wire name | `grep`，由 `Tool.define("grep", ...)` 注册。[E: packages/opencode/src/tool/grep.ts:21] | `grep`，由 `export const name = "grep"` 暴露。[E: packages/core/src/tool/grep.ts:17] |
-| provider 可见性 | V1 builtins 包含 `GrepTool`。[E: packages/opencode/src/tool/registry.ts:224] | V2 builtins 节点把 `GrepTool.node` 列入 deps。[E: packages/core/src/tool/builtins.ts:39] |
+| provider 可见性 | V1 builtins 包含 `GrepTool`。[E: packages/opencode/src/tool/registry.ts:232] | V2 builtins 节点把 `GrepTool.node` 列入 deps。[E: packages/core/src/tool/builtins.ts:39] |
 | permission key | V1 使用 `ctx.ask({ permission: "grep" })`。[E: packages/opencode/src/tool/grep.ts:39] | V2 使用 `permission.assert({ action: "grep" })`。[E: packages/core/src/tool/grep.ts:81] |
 | search backend | V1 直接调用 `Ripgrep.grep`。[E: packages/opencode/src/tool/grep.ts:63] | V2 注入 `Ripgrep.Service` 并调用 `ripgrep.grep`。[E: packages/core/src/tool/grep.ts:57][E: packages/core/src/tool/grep.ts:97] |
 

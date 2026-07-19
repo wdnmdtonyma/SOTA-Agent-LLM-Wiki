@@ -11,7 +11,7 @@ source:
   - packages/opencode/src/agent/agent.ts
   - packages/core/src/v1/config/agent.ts
   - packages/core/src/config/agent.ts
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 ---
 
@@ -26,7 +26,7 @@ evidence: explicit
 
 ## V1 Agent Config
 
-V1 config schema 的单个 agent 使用 `ConfigAgentV1.Info`，该 schema 位于 `packages/core/src/v1/config/agent.ts`。[E: packages/core/src/v1/config/agent.ts:83] 顶层 V1 config 允许 `agent.plan`、`agent.build`、`agent.general`、`agent.explore`、`agent.title`、`agent.summary`、`agent.compaction` 以及任意自定义 agent key。[E: packages/core/src/v1/config/config.ts:93]
+V1 config schema 的单个 agent 使用 `ConfigAgentV1.Info`，该 schema 位于 `packages/core/src/v1/config/agent.ts`。[E: packages/core/src/v1/config/agent.ts:83] 顶层 V1 config 允许 `agent.plan`、`agent.build`、`agent.general`、`agent.explore`、`agent.title`、`agent.summary`、`agent.compaction` 以及任意自定义 agent key。[E: packages/core/src/v1/config/config.ts:96]
 
 | V1 key | type/default | 含义 | V1 runtime effect | V1-V2 关系 |
 | --- | --- | --- | --- | --- |

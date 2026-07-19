@@ -23,7 +23,7 @@ related:
   - integrations.integration-v2
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > opencode glossary 把 V1 当前活跑路径、V2 新内核、shared package 和容易误读的 codename 分开定义，避免把迁移期同名概念混讲。
@@ -38,9 +38,9 @@ updated: 8b68dc0d7
 
 | Term | 定义 |
 | --- | --- |
-| V1 current runtime | 当前活跑路径主要在 `packages/opencode/src`。`SessionPrompt.run` 定义 `runLoop`，循环中读取 V1 message stream、降到 model messages，并继续 provider/tool turn [E: packages/opencode/src/session/prompt.ts:1081] [E: packages/opencode/src/session/prompt.ts:1092] [E: packages/opencode/src/session/prompt.ts:1261] [E: packages/opencode/src/session/prompt.ts:1271]。 |
-| `SessionPrompt.loop(...)` | V1 对外 loop 入口，使用 `state.ensureRunning(..., runLoop(sessionID))` 保证同一 session 的 loop 运行被协调 [E: packages/opencode/src/session/prompt.ts:1342] [E: packages/opencode/src/session/prompt.ts:1345]。 |
-| `SessionProcessor` | V1 stream event processor。`SessionProcessor.process` 在开始处理前把 session status 设为 busy，并调用 `llm.stream(streamInput)` 消费 LLM stream [E: packages/opencode/src/session/processor.ts:625] [E: packages/opencode/src/session/processor.ts:637] [E: packages/opencode/src/session/processor.ts:638]。 |
+| V1 current runtime | 当前活跑路径主要在 `packages/opencode/src`。`SessionPrompt.run` 定义 `runLoop`，循环中读取 V1 message stream、降到 model messages，并继续 provider/tool turn [E: packages/opencode/src/session/prompt.ts:1081] [E: packages/opencode/src/session/prompt.ts:1092] [E: packages/opencode/src/session/prompt.ts:1262] [E: packages/opencode/src/session/prompt.ts:1272]。 |
+| `SessionPrompt.loop(...)` | V1 对外 loop 入口，使用 `state.ensureRunning(..., runLoop(sessionID))` 保证同一 session 的 loop 运行被协调 [E: packages/opencode/src/session/prompt.ts:1343] [E: packages/opencode/src/session/prompt.ts:1346]。 |
+| `SessionProcessor` | V1 stream event processor。`SessionProcessor.process` 在开始处理前把 session status 设为 busy，并调用 `llm.stream(streamInput)` 消费 LLM stream [E: packages/opencode/src/session/processor.ts:627] [E: packages/opencode/src/session/processor.ts:639] [E: packages/opencode/src/session/processor.ts:640]。 |
 | Vercel AI SDK path | V1 `LLM` seam 中仍包含 AI SDK 兼容路径；native LLM adapter 是 `experimentalNativeLlm` 打开时的 opt-in branch，未选中 native 时会返回 `type: "ai-sdk"` 并调用 `streamText(...)` [E: packages/opencode/src/session/llm.ts:226] [E: packages/opencode/src/session/llm.ts:243] [E: packages/opencode/src/session/llm.ts:271] [E: packages/opencode/src/session/llm.ts:279] [E: packages/opencode/src/session/llm.ts:280]。 |
 | `packages/opencode/src/session/message-v2.ts` | 名字带 `v2`，但该文件导入 `ai` 的 `convertToModelMessages`/`UIMessage`，同时导入 `SessionV1` 和 core session SQL tables，因此它是 V1 与 AI-SDK/current session projection 的消息转换层，不是 V2 core runner [E: packages/opencode/src/session/message-v2.ts:2] [E: packages/opencode/src/session/message-v2.ts:20] [E: packages/opencode/src/session/message-v2.ts:30] [E: packages/opencode/src/session/message-v2.ts:131] [E: packages/opencode/src/session/message-v2.ts:407] [E: packages/opencode/src/session/message-v2.ts:417]。 |
 | `GlobalBus` | V1 side 的 global event emitter 位于 `packages/opencode/src/bus/global.ts`，只定义 `event` channel，并给缺少 id 的 payload 补事件 id [E: packages/opencode/src/bus/global.ts:12] [E: packages/opencode/src/bus/global.ts:15] [E: packages/opencode/src/bus/global.ts:16] [E: packages/opencode/src/bus/global.ts:22]。 |
@@ -55,7 +55,7 @@ updated: 8b68dc0d7
 | `session_input` | Durable admission inbox；admitted inputs 在 runner 发布 `Prompted` 前不进入 model-visible Session history [E: specs/v2/session.md:35]。 |
 | `SessionExecution` | V2 process-global execution coordinator；routing 从 Session ID 经 `SessionStore.get(sessionID)` 到 `LocationServiceMap.get(session.location)`，再到 `SessionRunner.run(...)` [E: specs/v2/session.md:39] [E: specs/v2/session.md:42] [E: specs/v2/session.md:44] [E: specs/v2/session.md:45] [E: specs/v2/session.md:48]。 |
 | `SessionRunner` | V2 Location-scoped runner；catalog、model resolver、tool registry、permission state 和 filesystem 都按 Location cache [E: specs/v2/session.md:48]。AGENTS.md 要求不要 bridge through legacy `SessionPrompt.loop(...)`，并保持每个 provider turn 一个显式 `llm.stream(request)` [E: AGENTS.md:156] [E: AGENTS.md:157]。 |
-| V2 `llm.stream` | `packages/core/src/session/runner/llm.ts` 在 provider turn 中调用 `llm.stream(request)`，随后在同一 runner 流程里处理 tool-call settlement 和 continuation 判断 [E: packages/core/src/session/runner/llm.ts:227] [E: packages/core/src/session/runner/llm.ts:244] [E: packages/core/src/session/runner/llm.ts:247] [E: packages/core/src/session/runner/llm.ts:256] [E: packages/core/src/session/runner/llm.ts:260] [E: packages/core/src/session/runner/llm.ts:340]。 |
+| V2 `llm.stream` | `packages/core/src/session/runner/llm.ts` 在 provider turn 中调用 `llm.stream(request)`，随后在同一 runner 流程里处理 tool-call settlement 和 continuation 判断 [E: packages/core/src/session/runner/llm.ts:232] [E: packages/core/src/session/runner/llm.ts:249] [E: packages/core/src/session/runner/llm.ts:252] [E: packages/core/src/session/runner/llm.ts:261] [E: packages/core/src/session/runner/llm.ts:265] [E: packages/core/src/session/runner/llm.ts:345]。 |
 | `Context Epoch` | 一个 effective agent 的初始 `System Context` 保持不可变的 span，到 compaction 或其他 baseline replacement 结束 [E: CONTEXT.md:27]。V2 spec 进一步说 Context Epoch stores one immutable provider-cache baseline and a model-hidden structured snapshot [E: specs/v2/session.md:56]。 |
 | `Baseline System Context` | Context Epoch 开始时渲染出的完整 System Context [E: CONTEXT.md:30]。Baseline 会在 epoch 内 durably preserved 并跨进程重启复用 [E: CONTEXT.md:130] [E: CONTEXT.md:131] [E: CONTEXT.md:132]。 |
 | `Context Snapshot` | Model-hidden JSON state，用于比较每个 Context Source 与上次已 admission 的值 [E: CONTEXT.md:34]。Snapshot 会与 durable Mid-Conversation System Message 原子推进 [E: CONTEXT.md:95]。 |

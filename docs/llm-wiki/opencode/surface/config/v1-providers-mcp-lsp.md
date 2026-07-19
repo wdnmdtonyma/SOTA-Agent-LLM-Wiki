@@ -13,7 +13,7 @@ source:
   - packages/core/src/v1/config/mcp.ts
   - packages/core/src/v1/config/lsp.ts
   - packages/core/src/v1/config/formatter.ts
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 ---
 
@@ -32,10 +32,10 @@ evidence: explicit
 | --- | --- | --- | --- |
 | `disabled_providers` | optional string array；schema default omitted | 禁用自动加载的 providers。[E: packages/core/src/v1/config/config.ts:68] | V2 不保留；设计改用 `experimental.policies` 的 provider policy。[E: specs/v2/config.md:176] |
 | `enabled_providers` | optional string array；schema default omitted | 只启用这些 providers。[E: packages/core/src/v1/config/config.ts:71] | V2 不保留；设计改用 allow/deny policy statements。[E: specs/v2/config.md:177] |
-| `provider` | optional record provider info | custom provider configurations 和 model overrides。[E: packages/core/src/v1/config/config.ts:107] | V2 改名为 `providers`。[E: packages/core/src/config.ts:106] |
-| `mcp` | optional record of MCP info or `{ enabled }` | MCP server configurations。[E: packages/core/src/v1/config/config.ts:110] | V2 改成 `mcp.timeout` + `mcp.servers`。[E: packages/core/src/config/mcp.ts:46] [E: packages/core/src/config/mcp.ts:47] |
-| `formatter` | optional boolean or record | formatter built-ins/overrides。[E: packages/core/src/v1/config/config.ts:113] | V2 仍保留 singular `formatter`。[E: packages/core/src/config.ts:72] |
-| `lsp` | optional boolean or record | LSP built-ins/overrides。[E: packages/core/src/v1/config/config.ts:117] | V2 仍保留 singular `lsp`。[E: packages/core/src/config.ts:75] |
+| `provider` | optional record provider info | custom provider configurations 和 model overrides。[E: packages/core/src/v1/config/config.ts:110] | V2 改名为 `providers`。[E: packages/core/src/config.ts:106] |
+| `mcp` | optional record of MCP info or `{ enabled }` | MCP server configurations。[E: packages/core/src/v1/config/config.ts:113] | V2 改成 `mcp.timeout` + `mcp.servers`。[E: packages/core/src/config/mcp.ts:46] [E: packages/core/src/config/mcp.ts:47] |
+| `formatter` | optional boolean or record | formatter built-ins/overrides。[E: packages/core/src/v1/config/config.ts:116] | V2 仍保留 singular `formatter`。[E: packages/core/src/config.ts:72] |
+| `lsp` | optional boolean or record | LSP built-ins/overrides。[E: packages/core/src/v1/config/config.ts:120] | V2 仍保留 singular `lsp`。[E: packages/core/src/config.ts:75] |
 
 ## Provider Catalog
 

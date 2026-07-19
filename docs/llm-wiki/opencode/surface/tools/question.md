@@ -9,7 +9,7 @@ symbols: [QuestionTool, Question, QuestionV2]
 related: [integrations.question, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Question 工具允许模型在执行中暂停并向用户提问；V1 通过 `Question.Service.ask()` 挂起 pending Deferred，V2 在调用 `QuestionV2.ask()` 前先执行 `permission.assert({ action: "question" })`。
@@ -26,7 +26,7 @@ updated: 8b68dc0d7
 
 ### 1 Identity
 
-V1 `QuestionTool` 通过 `Tool.define("question", ...)` 注册，registry 总是初始化 `question`，但只有 `flags.client` 是 `app`、`cli`、`desktop` 或 `OPENCODE_ENABLE_QUESTION_TOOL` 开启时才放入 builtin 列表。[E: packages/opencode/src/tool/question.ts:14][E: packages/opencode/src/tool/question.ts:15][E: packages/opencode/src/tool/registry.ts:211][E: packages/opencode/src/tool/registry.ts:195][E: packages/opencode/src/effect/runtime-flags.ts:41][E: packages/opencode/src/tool/registry.ts:220]
+V1 `QuestionTool` 通过 `Tool.define("question", ...)` 注册，registry 总是初始化 `question`，但只有 `flags.client` 是 `app`、`cli`、`desktop` 或 `OPENCODE_ENABLE_QUESTION_TOOL` 开启时才放入 builtin 列表。[E: packages/opencode/src/tool/question.ts:14][E: packages/opencode/src/tool/question.ts:15][E: packages/opencode/src/tool/registry.ts:218][E: packages/opencode/src/tool/registry.ts:202][E: packages/opencode/src/effect/runtime-flags.ts:41][E: packages/opencode/src/tool/registry.ts:228]
 
 ### 2 用途定位
 
@@ -49,7 +49,7 @@ V1 execute 把 answers 格式化为 `"question"="answer1, answer2"`，没有 ans
 
 ### 5 权限
 
-V1 QuestionTool 本身不调用 `ctx.ask` permission；它直接调用 `Question.Service.ask()`。V1 访问控制主要体现在 registry 是否暴露 `question` 工具，以及 session/agent 是否能看到该 tool。[E: packages/opencode/src/tool/question.ts:24][E: packages/opencode/src/tool/registry.ts:195][E: packages/opencode/src/tool/registry.ts:220][I]
+V1 QuestionTool 本身不调用 `ctx.ask` permission；它直接调用 `Question.Service.ask()`。V1 访问控制主要体现在 registry 是否暴露 `question` 工具，以及 session/agent 是否能看到该 tool。[E: packages/opencode/src/tool/question.ts:24][E: packages/opencode/src/tool/registry.ts:202][E: packages/opencode/src/tool/registry.ts:228][I]
 
 ### 6 execute() 走读
 
@@ -97,7 +97,7 @@ V2 QuestionTool 在 ask 前执行 `permission.assert({ action: "question", resou
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 暴露门控 | client 是 app/cli/desktop 或 `OPENCODE_ENABLE_QUESTION_TOOL` 才放入 builtin。[E: packages/opencode/src/effect/runtime-flags.ts:41][E: packages/opencode/src/tool/registry.ts:195][E: packages/opencode/src/tool/registry.ts:220] | V2 builtins 直接注册 question，没有 V1 的 client gate。[E: packages/core/src/tool/builtins.ts:40][I] |
+| 暴露门控 | client 是 app/cli/desktop 或 `OPENCODE_ENABLE_QUESTION_TOOL` 才放入 builtin。[E: packages/opencode/src/effect/runtime-flags.ts:41][E: packages/opencode/src/tool/registry.ts:202][E: packages/opencode/src/tool/registry.ts:228] | V2 builtins 直接注册 question，没有 V1 的 client gate。[E: packages/core/src/tool/builtins.ts:40][I] |
 | 权限 | Tool execute 不调用 permission ask。[E: packages/opencode/src/tool/question.ts:24][I] | Tool execute 调 `permission.assert({ action: "question" })`。[E: packages/core/src/tool/question.ts:63][E: packages/core/src/tool/question.ts:65] |
 | Event 名 | `question.asked/replied/rejected`。[E: packages/schema/src/v1/question.ts:58][E: packages/schema/src/v1/question.ts:59][E: packages/schema/src/v1/question.ts:60] | `question.v2.asked/replied/rejected`。[E: packages/schema/src/question.ts:70][E: packages/schema/src/question.ts:72][E: packages/schema/src/question.ts:80] |
 | `custom` 字段 | `Question.Info` 有 optional custom，但 tool input 是 `Question.Prompt`，不含 custom。[E: packages/opencode/src/tool/question.ts:7][E: packages/schema/src/v1/question.ts:29][E: packages/schema/src/v1/question.ts:31] | V2 同样用 `QuestionV2.Prompt`，不含 custom。[E: packages/core/src/tool/question.ts:26][E: packages/schema/src/question.ts:37][E: packages/schema/src/question.ts:43] |

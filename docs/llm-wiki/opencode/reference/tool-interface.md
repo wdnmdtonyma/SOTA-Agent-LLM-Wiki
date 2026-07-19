@@ -11,7 +11,7 @@ source:
   - packages/core/src/tool/AGENTS.md
   - specs/v2/tools.md
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 symbols:
   - Tool.Context
@@ -43,7 +43,7 @@ V1 工具定义是一个带公开字段的对象：`id`、静态 `description`�
 | `Context` | `agent` | `string` | 当前 agent 名称或 ID，供权限与描述逻辑使用。[E: packages/opencode/src/tool/tool.ts:39] |
 | `Context` | `abort` | `AbortSignal` | V1 工具用 AbortSignal 接收取消，而 V2 工具依赖 Effect interruption。[E: packages/opencode/src/tool/tool.ts:40] |
 | `Context` | `callID?` | `string` | 可选 tool call ID，V1 不把它放进强制字段。[E: packages/opencode/src/tool/tool.ts:41] |
-| `Context` | `extra?` | `Record<string, unknown>` | V1 工具可通过 `extra` 携带 runner 专用能力；`task` 工具用它取 `promptOps`。[E: packages/opencode/src/tool/tool.ts:42] [E: packages/opencode/src/tool/task.ts:183] |
+| `Context` | `extra?` | `Record<string, unknown>` | V1 工具可通过 `extra` 携带 runner 专用能力；`task` 工具用它取 `promptOps`。[E: packages/opencode/src/tool/tool.ts:42] [E: packages/opencode/src/tool/task.ts:197] |
 | `Context` | `messages` | `SessionV1.WithParts[]` | 当前消息视图直接传给工具，V2 context 不携带消息数组。[E: packages/opencode/src/tool/tool.ts:43] |
 | `Context` | `metadata` | `(val: ExecuteResult["metadata"]) => void` | 工具执行中可上报中间 metadata。[E: packages/opencode/src/tool/tool.ts:44] |
 | `Context` | `ask` | permission ask callback | V1 叶子工具直接调用 `ask` 发起权限请求。[E: packages/opencode/src/tool/tool.ts:45] |
@@ -52,7 +52,7 @@ V1 工具定义是一个带公开字段的对象：`id`、静态 `description`�
 | `ExecuteResult` | `output` | `string` | V1 tool 的模型可见主体输出是字符串。[E: packages/opencode/src/tool/tool.ts:51] |
 | `ExecuteResult` | `attachments?` | `Omit<SessionV1.FilePart, "id" \| "sessionID" \| "messageID">[]` | V1 tool 可返回文件 attachments，但不携带 session/message identity 字段。[E: packages/opencode/src/tool/tool.ts:52] |
 | `Def` | `parameters` | `Schema.Schema<Parameters>` | Effect schema 是校验和 JSON schema 转换的源 schema。[E: packages/opencode/src/tool/tool.ts:61] |
-| `Def` | `jsonSchema?` | `JSONSchema7` | 工具可以提供覆盖 schema；registry 在 plugin tool 或特殊转换后使用它。[E: packages/opencode/src/tool/tool.ts:62] [E: packages/opencode/src/tool/registry.ts:290] |
+| `Def` | `jsonSchema?` | `JSONSchema7` | 工具可以提供覆盖 schema；registry 在 plugin tool 或特殊转换后使用它。[E: packages/opencode/src/tool/tool.ts:62] [E: packages/opencode/src/tool/registry.ts:315] |
 | `Def` | `execute` | `(parameters, ctx) => Effect<ExecuteResult>` | V1 executor 返回 `ExecuteResult`，不是 V2 的 typed domain output。[E: packages/opencode/src/tool/tool.ts:63] |
 
 ### V1 执行包装控制流
@@ -65,7 +65,7 @@ V1 工具定义是一个带公开字段的对象：`id`、静态 `description`�
 
 ### V1 设计含义
 
-V1 的权限、消息访问和输出截断都靠 `Context` 或 wrapper glue 拼装：工具 leaf 拿到 `ask(...)` 自行发权限请求，输出以 string 为中心，wrapper 再统一追加截断 metadata。[E: packages/opencode/src/tool/tool.ts:45] [E: packages/opencode/src/tool/tool.ts:135] 这使 V1 tool registry 能兼容 plugin tool、Zod 参数、legacy JSON schema 和内置工具，但每个 leaf 可以形成局部约定。[E: packages/opencode/src/tool/registry.ts:118] [E: packages/opencode/src/tool/registry.ts:121] [E: packages/opencode/src/tool/registry.ts:354]
+V1 的权限、消息访问和输出截断都靠 `Context` 或 wrapper glue 拼装：工具 leaf 拿到 `ask(...)` 自行发权限请求，输出以 string 为中心，wrapper 再统一追加截断 metadata。[E: packages/opencode/src/tool/tool.ts:45] [E: packages/opencode/src/tool/tool.ts:135] 这使 V1 tool registry 能兼容 plugin tool、Zod 参数、legacy JSON schema 和内置工具，但每个 leaf 可以形成局部约定。[E: packages/opencode/src/tool/registry.ts:125] [E: packages/opencode/src/tool/registry.ts:128] [E: packages/opencode/src/tool/registry.ts:383]
 
 ## V2
 

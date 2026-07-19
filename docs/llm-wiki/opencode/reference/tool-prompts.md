@@ -8,7 +8,7 @@ source:
   - packages/opencode/src/tool/
   - packages/opencode/src/tool/shell/prompt.ts
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 symbols:
   - ShellPrompt.render
@@ -20,7 +20,7 @@ related:
 
 # Tool Prompt Assets Reference
 
-本节点只描述 V1 tool prompt assets。V1 tool descriptions 大量来自 `packages/opencode/src/tool/*.txt`，各 TypeScript leaf 通过 `import DESCRIPTION from "./*.txt"` 绑定文本；V2 current built-ins 在 `packages/core/src/tool/*.ts` 中以内联 `description` 字符串构造 `Tool.make`，没有同构 `.txt` prompt 目录。[E: packages/opencode/src/tool/read.ts:7] [E: packages/core/src/tool/bash.ts:118] [E: packages/core/src/tool/AGENTS.md:16]
+本节点只描述 V1 tool prompt assets。V1 tool descriptions 大量来自 `packages/opencode/src/tool/*.txt`，各 TypeScript leaf 通过 `import DESCRIPTION from "./*.txt"` 绑定文本；V2 current built-ins 在 `packages/core/src/tool/*.ts` 中以内联 `description` 字符串构造 `Tool.make`，没有同构 `.txt` prompt 目录。[E: packages/opencode/src/tool/read.ts:7] [E: packages/core/src/tool/bash.ts:122] [E: packages/core/src/tool/AGENTS.md:16]
 
 ## V1 Prompt 文件总表
 

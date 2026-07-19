@@ -9,7 +9,7 @@ symbols: [createBuiltinPlugins, createPluginRuntime, createSlots, createTuiApiAd
 related: [ref.tui-slots, ref.tui-api, tui.runtime-hosting]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > TUI feature plugin 层只负责 presentation extensibility：内建 feature plugin 数组、slots、plugin routes、TUI-facing API adapters；插件发现、安装、启停和外部模块执行由 V1 host runtime 注入。
@@ -60,7 +60,7 @@ Base adapter 的 `slots.register()` 会抛错 “only available in plugin contex
 
 ## Host boundary
 
-Root `App` 创建 API adapters 后调用 `props.pluginHost.start({ api, config, runtime, dispose })`；失败只 console.error，finally 设置 TUI ready。[E: packages/tui/src/app.tsx:384] [E: packages/tui/src/app.tsx:404] [E: packages/tui/src/app.tsx:405] [E: packages/tui/src/app.tsx:406] [E: packages/tui/src/app.tsx:407] [E: packages/tui/src/app.tsx:408] [E: packages/tui/src/app.tsx:411] [E: packages/tui/src/app.tsx:414]
+Root `App` 创建 API adapters 后调用 `props.pluginHost.start({ api, config, runtime, dispose })`；失败只 console.error，finally 设置 TUI ready。[E: packages/tui/src/app.tsx:389] [E: packages/tui/src/app.tsx:409] [E: packages/tui/src/app.tsx:410] [E: packages/tui/src/app.tsx:411] [E: packages/tui/src/app.tsx:412] [E: packages/tui/src/app.tsx:413] [E: packages/tui/src/app.tsx:416] [E: packages/tui/src/app.tsx:419]
 
 `specs/tui-package.md` 明确 Section 7 已完成：slots、route registration、TUI-facing APIs、runtime presentation state、built-in feature plugins 在 `@opencode-ai/tui`；legacy host 保留 discovery、installation、manifest/config mutation、external module execution、pure-mode filtering、cleanup ownership。[E: specs/tui-package.md:395] [E: specs/tui-package.md:396] [E: specs/tui-package.md:397] [E: specs/tui-package.md:398] [E: specs/tui-package.md:399]
 

@@ -9,7 +9,7 @@ symbols: [PlanExitTool]
 related: [agent.builtins, prompt.system-prompts]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Plan-Exit 工具是 V1 plan mode 的实验性退出工具；它询问用户是否从 plan agent 切到 build agent，并在用户同意后写入一条 build-agent user message，再写入 `synthetic: true` 的 text part。
@@ -24,7 +24,7 @@ updated: 8b68dc0d7
 
 ## 1 Identity
 
-V1 `PlanExitTool` 通过 `Tool.define("plan_exit", ...)` 注册；V1 registry 初始化 `PlanExitTool`，但只有 `flags.experimentalPlanMode && flags.client === "cli"` 时才放入 builtin 列表。[E: packages/opencode/src/tool/plan.ts:15][E: packages/opencode/src/tool/plan.ts:16][E: packages/opencode/src/tool/registry.ts:97][E: packages/opencode/src/tool/registry.ts:213][E: packages/opencode/src/tool/registry.ts:234] `experimentalPlanMode` 来自 `enabledByExperimental("OPENCODE_EXPERIMENTAL_PLAN_MODE")`，因此 `OPENCODE_EXPERIMENTAL_PLAN_MODE=true` 或总开关 `OPENCODE_EXPERIMENTAL=true` 均可启用；`client` 来自 `OPENCODE_CLIENT` 且默认 `"cli"`。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:11][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:47][E: packages/opencode/src/effect/runtime-flags.ts:55]
+V1 `PlanExitTool` 通过 `Tool.define("plan_exit", ...)` 注册；V1 registry 初始化 `PlanExitTool`，但只有 `flags.experimentalPlanMode && flags.client === "cli"` 时才放入 builtin 列表。[E: packages/opencode/src/tool/plan.ts:15][E: packages/opencode/src/tool/plan.ts:16][E: packages/opencode/src/tool/registry.ts:102][E: packages/opencode/src/tool/registry.ts:220][E: packages/opencode/src/tool/registry.ts:243] `experimentalPlanMode` 来自 `enabledByExperimental("OPENCODE_EXPERIMENTAL_PLAN_MODE")`，因此 `OPENCODE_EXPERIMENTAL_PLAN_MODE=true` 或总开关 `OPENCODE_EXPERIMENTAL=true` 均可启用；`client` 来自 `OPENCODE_CLIENT` 且默认 `"cli"`。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:11][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:47][E: packages/opencode/src/effect/runtime-flags.ts:56]
 
 V2 没有 Plan-Exit tool。当前 `BuiltInTools.node` 的 deps 列表包含 ApplyPatch/Bash/Edit/Glob/Grep/Question/Read/Skill/TodoWrite/WebFetch/WebSearch/Write，没有注册 `plan_exit`。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:36][E: packages/core/src/tool/builtins.ts:37][E: packages/core/src/tool/builtins.ts:38][E: packages/core/src/tool/builtins.ts:39][E: packages/core/src/tool/builtins.ts:40][E: packages/core/src/tool/builtins.ts:41][E: packages/core/src/tool/builtins.ts:42][E: packages/core/src/tool/builtins.ts:43][E: packages/core/src/tool/builtins.ts:44][E: packages/core/src/tool/builtins.ts:45][E: packages/core/src/tool/builtins.ts:46][I]
 
@@ -44,7 +44,7 @@ Plan-Exit prompt 规定：完成 planning phase、plan file 已写完、问题�
 
 ## 5 权限
 
-Plan-Exit 不调用 `ctx.ask` permission[I]；它调用 `Question.Service.ask()` 向用户发出 Yes/No confirmation。[E: packages/opencode/src/tool/plan.ts:19][E: packages/opencode/src/tool/plan.ts:30][E: packages/opencode/src/tool/plan.ts:32][E: packages/opencode/src/tool/plan.ts:38][E: packages/opencode/src/tool/plan.ts:39] 因此它的 gating 是 registry flag/client gate，而不是 per-call permission rule。[E: packages/opencode/src/tool/registry.ts:234][I]
+Plan-Exit 不调用 `ctx.ask` permission[I]；它调用 `Question.Service.ask()` 向用户发出 Yes/No confirmation。[E: packages/opencode/src/tool/plan.ts:19][E: packages/opencode/src/tool/plan.ts:30][E: packages/opencode/src/tool/plan.ts:32][E: packages/opencode/src/tool/plan.ts:38][E: packages/opencode/src/tool/plan.ts:39] 因此它的 gating 是 registry flag/client gate，而不是 per-call permission rule。[E: packages/opencode/src/tool/registry.ts:243][I]
 
 ## 6 execute() 走读
 
@@ -60,7 +60,7 @@ Plan-Exit 不调用 `ctx.ask` permission[I]；它调用 `Question.Service.ask()`
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 注册 | 需要 `OPENCODE_EXPERIMENTAL_PLAN_MODE` 或总 experimental，且 `OPENCODE_CLIENT=cli`。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:47][E: packages/opencode/src/tool/registry.ts:234] | V2 shipped built-ins node 当前没有注册 plan_exit。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:46][I] |
+| 注册 | 需要 `OPENCODE_EXPERIMENTAL_PLAN_MODE` 或总 experimental，且 `OPENCODE_CLIENT=cli`。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:47][E: packages/opencode/src/tool/registry.ts:243] | V2 shipped built-ins node 当前没有注册 plan_exit。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:46][I] |
 | 行为 | 通过 Question 确认后切换到 build agent。[E: packages/opencode/src/tool/plan.ts:30][E: packages/opencode/src/tool/plan.ts:58] | shipped built-ins node 无 V2 equivalent。[E: packages/core/src/tool/builtins.ts:31][I] |
 | 输入 | 空 schema。[E: packages/opencode/src/tool/plan.ts:13] | shipped built-ins node 无 V2 equivalent。[E: packages/core/src/tool/builtins.ts:31][I] |
 

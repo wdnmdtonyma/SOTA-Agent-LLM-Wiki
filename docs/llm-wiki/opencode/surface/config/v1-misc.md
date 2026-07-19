@@ -14,7 +14,7 @@ source:
   - packages/core/src/v1/config/skills.ts
   - packages/core/src/v1/config/attachment.ts
   - packages/core/src/v1/config/plugin.ts
-updated: 8b68dc0d7
+updated: 67caf894e
 evidence: explicit
 ---
 
@@ -30,10 +30,10 @@ evidence: explicit
 | `references` | optional reference info | named git/local directory references。[E: packages/core/src/v1/config/config.ts:45] | V2 仍叫 plural `references`。[E: packages/core/src/config.ts:99] |
 | `reference` | optional reference info；deprecated | `references` 旧名单数 alias。[E: packages/core/src/v1/config/config.ts:48] | V2 只保留 `references`；migration 用 `references ?? reference`。[E: packages/core/src/v1/config/migrate.ts:65] |
 | `plugin` | optional array plugin spec | configured plugin modules。[E: packages/core/src/v1/config/config.ts:56] | V2 改名为 `plugins`，entry 可为 string 或 `{ package, options }`。[E: packages/core/src/config/plugin.ts:5] [E: packages/core/src/config/plugin.ts:10] |
-| `attachment` | optional attachment config | attachment processing config。[E: packages/core/src/v1/config/config.ts:127] | V2 改名为 `attachments`。[E: packages/core/src/config.ts:78] |
-| `tool_output` | optional thresholds | truncation thresholds for tool output。[E: packages/core/src/v1/config/config.ts:133] | V2 仍保留 `tool_output`。[E: packages/core/src/config.ts:81] |
-| `compaction` | optional compaction object | context compaction behavior。[E: packages/core/src/v1/config/config.ts:146] | V2 仍保留 `compaction` 但重塑 `keep.tokens` 和 `buffer`。[E: packages/core/src/config/compaction.ts:13] [E: packages/core/src/config/compaction.ts:14] |
-| `experimental` | optional experimental object | experimental flags and policies。[E: packages/core/src/v1/config/config.ts:166] | V2 `experimental` 目前只含 `policies`。[E: packages/core/src/config/experimental.ts:17] |
+| `attachment` | optional attachment config | attachment processing config。[E: packages/core/src/v1/config/config.ts:130] | V2 改名为 `attachments`。[E: packages/core/src/config.ts:78] |
+| `tool_output` | optional thresholds | truncation thresholds for tool output。[E: packages/core/src/v1/config/config.ts:136] | V2 仍保留 `tool_output`。[E: packages/core/src/config.ts:81] |
+| `compaction` | optional compaction object | context compaction behavior。[E: packages/core/src/v1/config/config.ts:149] | V2 仍保留 `compaction` 但重塑 `keep.tokens` 和 `buffer`。[E: packages/core/src/config/compaction.ts:13] [E: packages/core/src/config/compaction.ts:14] |
+| `experimental` | optional experimental object | experimental flags and policies。[E: packages/core/src/v1/config/config.ts:169] | V2 `experimental` 目前只含 `policies`。[E: packages/core/src/config/experimental.ts:17] |
 
 ## Server Catalog
 
@@ -68,25 +68,25 @@ evidence: explicit
 | `attachment.image.max_width` | optional positive int；description default 2000 | max image width。[E: packages/core/src/v1/config/attachment.ts:10] | V2 `attachments.image.max_width`。[E: packages/core/src/config/attachments.ts:8] |
 | `attachment.image.max_height` | optional positive int；description default 2000 | max image height。[E: packages/core/src/v1/config/attachment.ts:13] | V2 `attachments.image.max_height`。[E: packages/core/src/config/attachments.ts:9] |
 | `attachment.image.max_base64_bytes` | optional positive int；description default 5242880 | max base64 payload bytes。[E: packages/core/src/v1/config/attachment.ts:16] | V2 `attachments.image.max_base64_bytes`。[E: packages/core/src/config/attachments.ts:10] |
-| `tool_output.max_lines` | optional positive int；description default 2000 | max lines before truncation/save-to-disk。[E: packages/core/src/v1/config/config.ts:135] | V2 same field。[E: packages/core/src/config/tool-output.ts:7] |
-| `tool_output.max_bytes` | optional positive int；description default 51200 | max bytes before truncation/save-to-disk。[E: packages/core/src/v1/config/config.ts:138] | V2 same field。[E: packages/core/src/config/tool-output.ts:8] |
-| `compaction.auto` | optional boolean；description default true | enable automatic compaction when context full。[E: packages/core/src/v1/config/config.ts:148] | V2 same field。[E: packages/core/src/config/compaction.ts:11] |
-| `compaction.prune` | optional boolean；description default false | prune old tool outputs。[E: packages/core/src/v1/config/config.ts:151] | V2 same field。[E: packages/core/src/config/compaction.ts:12] |
-| `compaction.tail_turns` | optional non-negative int；description default 2 | recent user turns kept verbatim during compaction。[E: packages/core/src/v1/config/config.ts:154] | Current V2 schema does not include `tail_turns`; migration drops it。[I] |
-| `compaction.preserve_recent_tokens` | optional non-negative int | token budget for recent turns after compaction。[E: packages/core/src/v1/config/config.ts:158] | V2 `compaction.keep.tokens`。[E: packages/core/src/v1/config/migrate.ts:58] |
-| `compaction.reserved` | optional non-negative int | token headroom buffer。[E: packages/core/src/v1/config/config.ts:161] | V2 `compaction.buffer`。[E: packages/core/src/v1/config/migrate.ts:60] |
+| `tool_output.max_lines` | optional positive int；description default 2000 | max lines before truncation/save-to-disk。[E: packages/core/src/v1/config/config.ts:138] | V2 same field。[E: packages/core/src/config/tool-output.ts:7] |
+| `tool_output.max_bytes` | optional positive int；description default 51200 | max bytes before truncation/save-to-disk。[E: packages/core/src/v1/config/config.ts:141] | V2 same field。[E: packages/core/src/config/tool-output.ts:8] |
+| `compaction.auto` | optional boolean；description default true | enable automatic compaction when context full。[E: packages/core/src/v1/config/config.ts:151] | V2 same field。[E: packages/core/src/config/compaction.ts:11] |
+| `compaction.prune` | optional boolean；description default false | prune old tool outputs。[E: packages/core/src/v1/config/config.ts:154] | V2 same field。[E: packages/core/src/config/compaction.ts:12] |
+| `compaction.tail_turns` | optional non-negative int；description default 2 | recent user turns kept verbatim during compaction。[E: packages/core/src/v1/config/config.ts:157] | Current V2 schema does not include `tail_turns`; migration drops it。[I] |
+| `compaction.preserve_recent_tokens` | optional non-negative int | token budget for recent turns after compaction。[E: packages/core/src/v1/config/config.ts:161] | V2 `compaction.keep.tokens`。[E: packages/core/src/v1/config/migrate.ts:58] |
+| `compaction.reserved` | optional non-negative int | token headroom buffer。[E: packages/core/src/v1/config/config.ts:164] | V2 `compaction.buffer`。[E: packages/core/src/v1/config/migrate.ts:60] |
 
 ## Experimental Catalog
 
 | key | type/default | 含义 | V1-V2 关系 |
 | --- | --- | --- | --- |
-| `experimental.disable_paste_summary` | optional boolean | paste summary experimental flag。[E: packages/core/src/v1/config/config.ts:168] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
-| `experimental.batch_tool` | optional boolean | enable batch tool。[E: packages/core/src/v1/config/config.ts:169] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
-| `experimental.openTelemetry` | optional boolean | enable OpenTelemetry spans for AI SDK calls。[E: packages/core/src/v1/config/config.ts:170] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
-| `experimental.primary_tools` | optional string array | tools only available to primary agents。[E: packages/core/src/v1/config/config.ts:173] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
-| `experimental.continue_loop_on_deny` | optional boolean | continue loop when tool call denied。[E: packages/core/src/v1/config/config.ts:176] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
-| `experimental.mcp_timeout` | optional positive int | MCP request timeout.[E: packages/core/src/v1/config/config.ts:179] | V2 migration moves to `mcp.timeout`。[E: packages/core/src/v1/config/migrate.ts:135] |
-| `experimental.policies` | optional policy array | supported resource policy statements。[E: packages/core/src/v1/config/config.ts:182] | V2 keeps only `experimental.policies`。[E: packages/core/src/config/experimental.ts:17] |
+| `experimental.disable_paste_summary` | optional boolean | paste summary experimental flag。[E: packages/core/src/v1/config/config.ts:171] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
+| `experimental.batch_tool` | optional boolean | enable batch tool。[E: packages/core/src/v1/config/config.ts:172] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
+| `experimental.openTelemetry` | optional boolean | enable OpenTelemetry spans for AI SDK calls。[E: packages/core/src/v1/config/config.ts:173] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
+| `experimental.primary_tools` | optional string array | tools only available to primary agents。[E: packages/core/src/v1/config/config.ts:176] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
+| `experimental.continue_loop_on_deny` | optional boolean | continue loop when tool call denied。[E: packages/core/src/v1/config/config.ts:179] | V2 schema 不含该 flag。[E: packages/core/src/config/experimental.ts:17] |
+| `experimental.mcp_timeout` | optional positive int | MCP request timeout.[E: packages/core/src/v1/config/config.ts:182] | V2 migration moves to `mcp.timeout`。[E: packages/core/src/v1/config/migrate.ts:135] |
+| `experimental.policies` | optional policy array | supported resource policy statements。[E: packages/core/src/v1/config/config.ts:185] | V2 keeps only `experimental.policies`。[E: packages/core/src/config/experimental.ts:17] |
 
 ## Sources
 

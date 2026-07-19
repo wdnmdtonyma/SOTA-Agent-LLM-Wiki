@@ -13,7 +13,7 @@ related:
   - tui.feature-plugins
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > TUI slot 是插件把 Solid/OpenTUI UI 挂进 host 界面的 named extension point；host 暴露 slot 名、props 和渲染模式，插件 runtime 负责注册、渲染、清理。
@@ -34,8 +34,8 @@ updated: 8b68dc0d7
 
 | Slot | Props | Host mount | Render mode | 用途 |
 | --- | --- | --- | --- | --- |
-| `app` | `{}` [E: packages/plugin/src/tui.ts:456] | `packages/tui/src/app.tsx` [E: packages/tui/src/app.tsx:1094] | default | 顶层 app 挂载点或全局 UI 扩展点。 |
-| `app_bottom` | `{}` [E: packages/plugin/src/tui.ts:457] | `packages/tui/src/app.tsx` [E: packages/tui/src/app.tsx:1092] | default | app 底部区域扩展点。 |
+| `app` | `{}` [E: packages/plugin/src/tui.ts:456] | `packages/tui/src/app.tsx` [E: packages/tui/src/app.tsx:1108] | default | 顶层 app 挂载点或全局 UI 扩展点。 |
+| `app_bottom` | `{}` [E: packages/plugin/src/tui.ts:457] | `packages/tui/src/app.tsx` [E: packages/tui/src/app.tsx:1106] | default | app 底部区域扩展点。 |
 | `home_logo` | `{}` [E: packages/plugin/src/tui.ts:458] | home route [E: packages/tui/src/routes/home.tsx:76] | `replace` | 替换 home logo 区域。 |
 | `home_prompt` | `{ ref?: ... }` [E: packages/plugin/src/tui.ts:460] | home route [E: packages/tui/src/routes/home.tsx:82] | `replace` | 替换 home prompt，并可拿到 prompt ref。 |
 | `home_prompt_right` | `{}` [E: packages/plugin/src/tui.ts:462] | home prompt right prop [E: packages/tui/src/routes/home.tsx:83] | default | home prompt 右侧附加 UI。 |

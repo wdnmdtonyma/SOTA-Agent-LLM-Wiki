@@ -9,7 +9,7 @@ symbols: [LspTool]
 related: [integrations.lsp, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > LSP 工具是 V1 experimental code-intelligence tool；它把模型请求映射到 Language Server Protocol definition/references/hover/symbol/call-hierarchy 等操作。
@@ -24,7 +24,7 @@ updated: 8b68dc0d7
 
 ## 1 Identity
 
-V1 `LspTool` 通过 `Tool.define("lsp", ...)` 注册；V1 registry 初始化 `lsptool`，但只有 `flags.experimentalLspTool` 为 true 时才把 `tool.lsp` 加入 builtin 列表。[E: packages/opencode/src/tool/lsp.ts:37][E: packages/opencode/src/tool/lsp.ts:38][E: packages/opencode/src/tool/registry.ts:96][E: packages/opencode/src/tool/registry.ts:212][E: packages/opencode/src/tool/registry.ts:233] `experimentalLspTool` 来自 `enabledByExperimental("OPENCODE_EXPERIMENTAL_LSP_TOOL")`，所以可由专门 flag 或总开关 `OPENCODE_EXPERIMENTAL` 打开。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:11][E: packages/opencode/src/effect/runtime-flags.ts:12][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:45]
+V1 `LspTool` 通过 `Tool.define("lsp", ...)` 注册；V1 registry 初始化 `lsptool`，但只有 `flags.experimentalLspTool` 为 true 时才把 `tool.lsp` 加入 builtin 列表。[E: packages/opencode/src/tool/lsp.ts:37][E: packages/opencode/src/tool/lsp.ts:38][E: packages/opencode/src/tool/registry.ts:101][E: packages/opencode/src/tool/registry.ts:219][E: packages/opencode/src/tool/registry.ts:242] `experimentalLspTool` 来自 `enabledByExperimental("OPENCODE_EXPERIMENTAL_LSP_TOOL")`，所以可由专门 flag 或总开关 `OPENCODE_EXPERIMENTAL` 打开。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:11][E: packages/opencode/src/effect/runtime-flags.ts:12][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:45]
 
 V2 没有 LSP tool。当前 `BuiltInTools.node` 的 deps 列表包含 ApplyPatch/Bash/Edit/Glob/Grep/Question/Read/Skill/TodoWrite/WebFetch/WebSearch/Write，没有注册 LSP。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:36][E: packages/core/src/tool/builtins.ts:37][E: packages/core/src/tool/builtins.ts:38][E: packages/core/src/tool/builtins.ts:39][E: packages/core/src/tool/builtins.ts:40][E: packages/core/src/tool/builtins.ts:41][E: packages/core/src/tool/builtins.ts:42][E: packages/core/src/tool/builtins.ts:43][E: packages/core/src/tool/builtins.ts:44][E: packages/core/src/tool/builtins.ts:45][E: packages/core/src/tool/builtins.ts:46][I]
 
@@ -66,7 +66,7 @@ LSP tool 先调用 `assertExternalDirectoryEffect(ctx, file)`，越界路径会�
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 注册 | `OPENCODE_EXPERIMENTAL_LSP_TOOL` 或 `OPENCODE_EXPERIMENTAL` 开启时暴露。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:12][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:45][E: packages/opencode/src/tool/registry.ts:233] | V2 shipped built-ins node 当前没有注册 LSP。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:46][I] |
+| 注册 | `OPENCODE_EXPERIMENTAL_LSP_TOOL` 或 `OPENCODE_EXPERIMENTAL` 开启时暴露。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:12][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:45][E: packages/opencode/src/tool/registry.ts:242] | V2 shipped built-ins node 当前没有注册 LSP。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:46][I] |
 | 权限 | `external_directory` + `lsp` permission。[E: packages/opencode/src/tool/lsp.ts:49][E: packages/opencode/src/tool/lsp.ts:56] | shipped built-ins node 无 V2 equivalent。[E: packages/core/src/tool/builtins.ts:31][I] |
 | 坐标 | schema 是 1-based，execute 转 0-based 给 service。[E: packages/opencode/src/tool/lsp.ts:27][E: packages/opencode/src/tool/lsp.ts:64] | shipped built-ins node 无 V2 equivalent。[E: packages/core/src/tool/builtins.ts:31][I] |
 

@@ -9,7 +9,7 @@ symbols: [SessionV2.prompt, SessionInput.admit, SessionInput.Admitted, SessionIn
 related: [spine.v2-coordinator, session-v2.inbox]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 admission 是把用户 prompt 先写成 durable inbox event,再由 runner promotion 与 projector 转成 model-visible user history 的机制。
@@ -66,14 +66,14 @@ flowchart TD
 
 15. `promoteSteers` 按 `admitted_seq <= cutoff` 批量 promote 未 promoted 的 steer rows;`promoteNextQueued` 只取最早一个 queue row。[E: packages/core/src/session/input.ts:245][E: packages/core/src/session/input.ts:259][E: packages/core/src/session/input.ts:265][E: packages/core/src/session/input.ts:268][E: packages/core/src/session/input.ts:283][E: packages/core/src/session/input.ts:287]
 
-16. runner 在 provider-turn boundary 读取 latest sequence 作为 cutoff;`steer` promote steer rows,`queue` 先 promote 一个 queued row 再 promote eligible steers。[E: packages/core/src/session/runner/llm.ts:182][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:185][E: packages/core/src/session/runner/llm.ts:187][E: packages/core/src/session/runner/llm.ts:188]
+16. runner 在 provider-turn boundary 读取 latest sequence 作为 cutoff;`steer` promote steer rows,`queue` 先 promote 一个 queued row 再 promote eligible steers。[E: packages/core/src/session/runner/llm.ts:187][E: packages/core/src/session/runner/llm.ts:188][E: packages/core/src/session/runner/llm.ts:190][E: packages/core/src/session/runner/llm.ts:192][E: packages/core/src/session/runner/llm.ts:193]
 
 17. V2 spec 对同一设计的文字定义是:`session_input` 是 durable admission inbox,admitted inputs 在 serialized runner 发布 `Prompted` 前不进入 model-visible Session history。[E: specs/v2/session.md:35]
 
 ## 关键决策点
 
 - admission 与 model-visible history 分离:admit 写 `PromptAdmitted` 和 inbox row,promote 写 `Prompted`,projector 再插入 projected history。[E: packages/core/src/session/input.ts:55][E: packages/core/src/session/projector.ts:364][E: packages/core/src/session/input.ts:225][E: packages/core/src/session/projector.ts:350]
-- `steer` 是默认 delivery;runner 在 promotion 为 `"steer"` 时调用 `promoteSteers`,而 `queue` 由 `promoteNextQueued` 一次只推进一个。[E: packages/core/src/session.ts:366][E: packages/core/src/session/runner/llm.ts:185][E: packages/core/src/session/runner/llm.ts:187]
+- `steer` 是默认 delivery;runner 在 promotion 为 `"steer"` 时调用 `promoteSteers`,而 `queue` 由 `promoteNextQueued` 一次只推进一个。[E: packages/core/src/session.ts:366][E: packages/core/src/session/runner/llm.ts:190][E: packages/core/src/session/runner/llm.ts:192]
 - 当前源码没有 `PromptLifecycle.*` 命名空间;durable admission/promotion 事件名是 `SessionEvent.PromptAdmitted` 与 `SessionEvent.Prompted`。[E: packages/schema/src/session-event.ts:87][E: packages/schema/src/session-event.ts:94]
 
 ## 深挖入口

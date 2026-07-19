@@ -35,7 +35,7 @@ related:
   - plugin-api.tui
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 `server.plugin-system` 分成三条线: V1 server callback plugins、V1 TUI plugin host、V2 Effect-native `PluginV2` plus `PluginInternal` boot. V1 server service tag 是 `@opencode/Plugin`，V2 service tag 是 `@opencode/v2/Plugin`。[E: packages/opencode/src/plugin/index.ts:58][E: packages/core/src/plugin.ts:29]
@@ -90,7 +90,7 @@ Boot order is explicit: config reference, AgentPlugin, CommandPlugin, SkillPlugi
 
 `ProviderPlugins` now includes Alibaba, Amazon Bedrock, Anthropic, Azure Cognitive Services, Azure, Cerebras, Cloudflare AI Gateway, Cloudflare Workers AI, Cohere, DeepInfra, Gateway, GitHub Copilot, GitLab, Google, Google Vertex, Groq, Kilo, LLMGateway, Mistral, Nvidia, Opencode, Snowflake Cortex, OpenAI-compatible, OpenAI, OpenRouter, Perplexity, SAP AI Core, TogetherAI, Vercel, Venice, XAI, Zenmux and DynamicProviderPlugin。[E: packages/core/src/plugin/provider.ts:36][E: packages/core/src/plugin/provider.ts:70]
 
-Provider plugin examples use the new context hooks: GitHub Copilot registers catalog transform, AISDK SDK hook and AISDK language hook; Azure registers catalog transform, SDK hook and language hook; Cloudflare Workers AI registers catalog transform, SDK hook and language hook; Cloudflare AI Gateway registers SDK hook; XAI registers SDK and language hooks。[E: packages/core/src/plugin/provider/github-copilot.ts:17][E: packages/core/src/plugin/provider/github-copilot.ts:28][E: packages/core/src/plugin/provider/github-copilot.ts:35][E: packages/core/src/plugin/provider/azure.ts:16][E: packages/core/src/plugin/provider/azure.ts:31][E: packages/core/src/plugin/provider/azure.ts:49][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:12][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:24][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:40][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:9][E: packages/core/src/plugin/provider/xai.ts:8][E: packages/core/src/plugin/provider/xai.ts:15]
+Provider plugin examples use the new context hooks: GitHub Copilot registers catalog transform, AISDK SDK hook and AISDK language hook; Azure registers catalog transform, SDK hook and language hook; Cloudflare Workers AI registers catalog transform, SDK hook and language hook; Cloudflare AI Gateway registers SDK hook; XAI registers SDK and language hooks。[E: packages/core/src/plugin/provider/github-copilot.ts:9][E: packages/core/src/plugin/provider/github-copilot.ts:20][E: packages/core/src/plugin/provider/github-copilot.ts:27][E: packages/core/src/plugin/provider/azure.ts:16][E: packages/core/src/plugin/provider/azure.ts:31][E: packages/core/src/plugin/provider/azure.ts:49][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:12][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:24][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:40][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:9][E: packages/core/src/plugin/provider/xai.ts:8][E: packages/core/src/plugin/provider/xai.ts:15]
 
 ## V1 / V2 对照
 

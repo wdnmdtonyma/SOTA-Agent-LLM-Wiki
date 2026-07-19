@@ -9,10 +9,10 @@ symbols: [createOpenaiCompatible, OpenAICompatibleChatLanguageModel, OpenAIRespo
 related: [ref.copilot-tool-catalog]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
-> GitHub Copilot 在 opencode 里有双适配:core 目录提供 AI SDK `LanguageModelV3` compatible provider,同时 `packages/llm/src/providers/github-copilot.ts` 提供 native route configure helper。GPT-5 class model 默认走 Responses,但 `gpt-5-mini` 仍走 Chat。
+> GitHub Copilot 在 opencode 里有双适配:core 目录提供 AI SDK `LanguageModelV3` compatible provider,同时 `packages/llm/src/providers/github-copilot.ts` 提供 native route configure helper。V1 registry、V2 plugin 与 native helper 的 route selection 都先尊重显式 `endpoint`,然后才用 GPT-5 class 默认 Responses、`gpt-5-mini` 默认 Chat 的 heuristic。
 
 ## 能回答的问题
 - Copilot 的 AI SDK provider 如何同时暴露 `chat` 与 `responses`?
@@ -25,19 +25,19 @@ updated: 8b68dc0d7
 
 V1 provider registry 把 `@ai-sdk/github-copilot` 映射到 core 的 `@opencode-ai/core/github-copilot/copilot-provider`,创建 AI SDK compatible provider。[E: packages/opencode/src/provider/provider.ts:131][E: packages/opencode/src/provider/provider.ts:132]
 
-V1 custom loader 对 Copilot model 选择路由:SDK 如果没有 `responses/chat` 就退回 `languageModel`;否则 GPT major >= 5 且不是 `gpt-5-mini` 时走 `sdk.responses(modelID)`,其他走 `sdk.chat(modelID)`。[E: packages/opencode/src/provider/provider.ts:222][E: packages/opencode/src/provider/provider.ts:224][E: packages/opencode/src/provider/provider.ts:225]
+V1 custom loader 对 Copilot model 选择路由:SDK 如果没有 `responses/chat` 就退回 `languageModel`;否则 model API 显式 `endpoint:responses|chat` 优先,GPT major >= 5 且不是 `gpt-5-mini` 的默认路由才走 `sdk.responses(modelID)`,其他走 `sdk.chat(modelID)`。[E: packages/opencode/src/provider/provider.ts:228][E: packages/opencode/src/provider/provider.ts:229][E: packages/opencode/src/provider/provider.ts:230][E: packages/opencode/src/provider/provider.ts:231][E: packages/opencode/src/provider/provider.ts:232][E: packages/opencode/src/provider/provider.ts:234][E: packages/opencode/src/provider/provider.ts:235][E: packages/opencode/src/provider/provider.ts:236]
 
-V1 provider transform 对 `@ai-sdk/github-copilot` 默认设置 `store=false`,GPT-5 class 还会默认设置 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1090][E: packages/opencode/src/provider/transform.ts:1093][E: packages/opencode/src/provider/transform.ts:1096][E: packages/opencode/src/provider/transform.ts:1182][E: packages/opencode/src/provider/transform.ts:1188][E: packages/opencode/src/provider/transform.ts:1191]
+V1 provider transform 对 `@ai-sdk/github-copilot` 默认设置 `store=false`,GPT-5 class 还会默认设置 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1101][E: packages/opencode/src/provider/transform.ts:1104][E: packages/opencode/src/provider/transform.ts:1108][E: packages/opencode/src/provider/transform.ts:1206][E: packages/opencode/src/provider/transform.ts:1212][E: packages/opencode/src/provider/transform.ts:1215]
 
 ## V2
 
-V2 `GithubCopilotPlugin` 提供三个 hook registrations:`catalog.transform`、`aisdk.sdk`、`aisdk.language`。[E: packages/core/src/plugin/provider/github-copilot.ts:17][E: packages/core/src/plugin/provider/github-copilot.ts:28][E: packages/core/src/plugin/provider/github-copilot.ts:35]
+V2 `GithubCopilotPlugin` 提供三个 hook registrations:`catalog.transform`、`aisdk.sdk`、`aisdk.language`。[E: packages/core/src/plugin/provider/github-copilot.ts:9][E: packages/core/src/plugin/provider/github-copilot.ts:20][E: packages/core/src/plugin/provider/github-copilot.ts:27]
 
-`aisdk.sdk` hook 只匹配 `@ai-sdk/github-copilot`,动态 import core copilot-provider,并把 `evt.sdk` 设置成 `createOpenaiCompatible(evt.options)` 的结果。[E: packages/core/src/plugin/provider/github-copilot.ts:30][E: packages/core/src/plugin/provider/github-copilot.ts:31][E: packages/core/src/plugin/provider/github-copilot.ts:32]
+`aisdk.sdk` hook 只匹配 `@ai-sdk/github-copilot`,动态 import core copilot-provider,并把 `evt.sdk` 设置成 `createOpenaiCompatible(evt.options)` 的结果。[E: packages/core/src/plugin/provider/github-copilot.ts:22][E: packages/core/src/plugin/provider/github-copilot.ts:23][E: packages/core/src/plugin/provider/github-copilot.ts:24]
 
-`aisdk.language` hook 只处理 `ProviderV2.ID.githubCopilot`;当 SDK 没有 responses/chat 时退回 `languageModel`,否则复用同一 GPT-5 rule 在 responses/chat 之间选择。[E: packages/core/src/plugin/provider/github-copilot.ts:37][E: packages/core/src/plugin/provider/github-copilot.ts:38][E: packages/core/src/plugin/provider/github-copilot.ts:39][E: packages/core/src/plugin/provider/github-copilot.ts:42][E: packages/core/src/plugin/provider/github-copilot.ts:43][E: packages/core/src/plugin/provider/github-copilot.ts:44]
+`aisdk.language` hook 只处理 `ProviderV2.ID.githubCopilot`;当 SDK 没有 responses/chat 时退回 `languageModel`。否则 `evt.options.endpoint` 显式选的 responses/chat 优先,最后才用 GPT-5 heuristic。[E: packages/core/src/plugin/provider/github-copilot.ts:29][E: packages/core/src/plugin/provider/github-copilot.ts:30][E: packages/core/src/plugin/provider/github-copilot.ts:31][E: packages/core/src/plugin/provider/github-copilot.ts:34][E: packages/core/src/plugin/provider/github-copilot.ts:35][E: packages/core/src/plugin/provider/github-copilot.ts:38][E: packages/core/src/plugin/provider/github-copilot.ts:39][E: packages/core/src/plugin/provider/github-copilot.ts:42][E: packages/core/src/plugin/provider/github-copilot.ts:46][E: packages/core/src/plugin/provider/github-copilot.ts:48]
 
-`catalog.transform` 会隐藏 Copilot 下的 `gpt-5-chat-latest`;实现只在 Copilot provider record 中把该 model 的 `enabled` 设为 false。[E: packages/core/src/plugin/provider/github-copilot.ts:19][E: packages/core/src/plugin/provider/github-copilot.ts:20][E: packages/core/src/plugin/provider/github-copilot.ts:21][E: packages/core/src/plugin/provider/github-copilot.ts:24]
+`catalog.transform` 会隐藏 Copilot 下的 `gpt-5-chat-latest`;实现只在 Copilot provider record 中把该 model 的 `enabled` 设为 false。[E: packages/core/src/plugin/provider/github-copilot.ts:11][E: packages/core/src/plugin/provider/github-copilot.ts:12][E: packages/core/src/plugin/provider/github-copilot.ts:13][E: packages/core/src/plugin/provider/github-copilot.ts:16]
 
 ## Core AI SDK Provider
 
@@ -57,14 +57,14 @@ Responses prepare-tools 支持 6 个 provider-hosted tools: `openai.file_search`
 
 ## Native packages/llm Provider
 
-`packages/llm/src/providers/github-copilot.ts` 是 native route helper。它导出 provider id `github-copilot`,routes 是 OpenAI Responses route 与 OpenAI Chat route,`configure` 根据 `shouldUseResponsesApi` 返回 responses 或 chat model。[E: packages/llm/src/providers/github-copilot.ts:8][E: packages/llm/src/providers/github-copilot.ts:25][E: packages/llm/src/providers/github-copilot.ts:47][E: packages/llm/src/providers/github-copilot.ts:56] 它不是 AI SDK provider。[I]
+`packages/llm/src/providers/github-copilot.ts` 是 native route helper。它导出 provider id `github-copilot`,routes 是 OpenAI Responses route 与 OpenAI Chat route,`configure` 根据 `shouldUseResponsesApi` 返回 responses 或 chat model。[E: packages/llm/src/providers/github-copilot.ts:8][E: packages/llm/src/providers/github-copilot.ts:27][E: packages/llm/src/providers/github-copilot.ts:49][E: packages/llm/src/providers/github-copilot.ts:56] 它不是 AI SDK provider。[I]
 
-native helper 的 `ModelOptions` 要求 `baseURL: string`,configure 阶段把该 baseURL patch 到 chat/responses route endpoint。[E: packages/llm/src/providers/github-copilot.ts:14][E: packages/llm/src/providers/github-copilot.ts:37][E: packages/llm/src/providers/github-copilot.ts:43]
+native helper 的 `ModelOptions` 要求 `baseURL: string`,可选 `endpoint: "chat" | "responses"`;configure 阶段把 baseURL patch 到两个 route,而 `model()` 把 endpoint 传入 `shouldUseResponsesApi()` 做显式 override。[E: packages/llm/src/providers/github-copilot.ts:12][E: packages/llm/src/providers/github-copilot.ts:14][E: packages/llm/src/providers/github-copilot.ts:15][E: packages/llm/src/providers/github-copilot.ts:19][E: packages/llm/src/providers/github-copilot.ts:20][E: packages/llm/src/providers/github-copilot.ts:37][E: packages/llm/src/providers/github-copilot.ts:43][E: packages/llm/src/providers/github-copilot.ts:58][E: packages/llm/src/providers/github-copilot.ts:59]
 
 ## 易错点
 
-- `@ai-sdk/github-copilot` 在 V1/V2 AI SDK path 里由 core provider 实现;`packages/llm/src/providers/github-copilot.ts` 是 native engine helper。[E: packages/opencode/src/provider/provider.ts:131][E: packages/core/src/plugin/provider/github-copilot.ts:30][E: packages/llm/src/providers/github-copilot.ts:55] 二者同名但接口不同。[I]
-- GPT-5 mini 是显式排除项,不能简单写成所有 GPT-5 都走 Responses。[E: packages/core/src/plugin/provider/github-copilot.ts:6][E: packages/core/src/plugin/provider/github-copilot.ts:11]
+- `@ai-sdk/github-copilot` 在 V1/V2 AI SDK path 里由 core provider 实现;`packages/llm/src/providers/github-copilot.ts` 是 native engine helper。[E: packages/opencode/src/provider/provider.ts:131][E: packages/core/src/plugin/provider/github-copilot.ts:22][E: packages/llm/src/providers/github-copilot.ts:57] 二者同名但接口不同。[I]
+- GPT-5 mini 是 heuristic 的显式排除项,不能简单写成所有 GPT-5 都走 Responses;更不能忽略比 heuristic 更高优先级的 endpoint override。[E: packages/core/src/plugin/provider/github-copilot.ts:34][E: packages/core/src/plugin/provider/github-copilot.ts:38][E: packages/core/src/plugin/provider/github-copilot.ts:42][E: packages/core/src/plugin/provider/github-copilot.ts:46]
 - local_shell 是 provider-hosted OpenAI Responses tool id。[E: packages/core/src/github-copilot/responses/openai-responses-prepare-tools.ts:73][E: packages/core/src/github-copilot/responses/openai-responses-prepare-tools.ts:75] 它不等同于 opencode 本地 shell tool registry。[I]
 
 ## Sources

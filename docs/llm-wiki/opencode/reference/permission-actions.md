@@ -23,7 +23,7 @@ symbols:
   - Permission.Reply
   - PermissionSaved.Info
 evidence: explicit
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > 这份节点是给检索 agent 用的权限 action 逐实例总账：V1 写的是 config key 与 runtime `permission` 名称，V2 写的是 `action/resources/save/effect/reply` 词汇。
@@ -74,7 +74,7 @@ V1 config schema 对未知 permission key 还开放了 `Schema.Record({ key: Sch
 
 V2 schema 仍使用 `allow|deny|ask` 三个 `effect` 字面量，但 rule 字段变成 `action/resource/effect`。[E: packages/schema/src/permission.ts:54][E: packages/schema/src/permission.ts:59][E: packages/schema/src/permission.ts:60][E: packages/schema/src/permission.ts:61] V2 请求字段是 `sessionID`、`action`、`resources`、可选 `save`、可选 `metadata` 与 `source`，所以 V2 权限判断是“一个 action 对多个 resource 取聚合 effect”。[E: packages/schema/src/permission.ts:26][E: packages/schema/src/permission.ts:27][E: packages/schema/src/permission.ts:28][E: packages/schema/src/permission.ts:29][E: packages/schema/src/permission.ts:30][E: packages/schema/src/permission.ts:31][E: packages/core/src/permission.ts:159][E: packages/core/src/permission.ts:160]
 
-V2 reply 仍是 `once|always|reject`；`always` 不保存整条 request，而是把 request 中的 `save` 列表逐项保存为 `action+resource`，后续再以 `effect: "allow"` 的 saved rules 参与评估。[E: packages/schema/src/permission.ts:40][E: packages/core/src/permission.ts:249][E: packages/core/src/permission.ts:252][E: packages/core/src/permission.ts:253][E: packages/core/src/permission/saved.ts:57][E: packages/core/src/permission/saved.ts:62][E: packages/core/src/permission/saved.ts:63][E: packages/core/src/permission.ts:133][E: packages/core/src/permission.ts:159] V2 `evaluateInput` 先取 agent config 权限，再取数据库保存权限；聚合规则是任一 `deny` 优先，其次任一 `ask`，否则为 `allow`。[E: packages/core/src/permission.ts:156][E: packages/core/src/permission.ts:158][E: packages/core/src/permission.ts:160]
+V2 reply 仍是 `once|always|reject`；`always` 不保存整条 request，而是把 request 中的 `save` 列表逐项保存为 `action+resource`，后续再以 `effect: "allow"` 的 saved rules 参与评估。[E: packages/schema/src/permission.ts:40][E: packages/core/src/permission.ts:250][E: packages/core/src/permission.ts:253][E: packages/core/src/permission.ts:254][E: packages/core/src/permission/saved.ts:57][E: packages/core/src/permission/saved.ts:62][E: packages/core/src/permission/saved.ts:63][E: packages/core/src/permission.ts:133][E: packages/core/src/permission.ts:159] V2 `evaluateInput` 先取 agent config 权限，再取数据库保存权限；聚合规则是任一 `deny` 优先，其次任一 `ask`，否则为 `allow`。[E: packages/core/src/permission.ts:156][E: packages/core/src/permission.ts:158][E: packages/core/src/permission.ts:160]
 
 V2 permission request 会发布 `permission.v2.asked` 和 `permission.v2.replied` 事件，request ID 使用 `per_` 前缀。[E: packages/schema/src/permission.ts:10][E: packages/schema/src/permission.ts:43][E: packages/schema/src/permission.ts:45]
 
@@ -82,7 +82,7 @@ V2 permission request 会发布 `permission.v2.asked` 和 `permission.v2.replied
 
 | V2 action | 产生者 | `resources` | `save` | 默认/门控语义 |
 |---|---|---|---|---|
-| `bash` | Bash tool。[E: packages/core/src/tool/bash.ts:139] | shell command 字符串。[E: packages/core/src/tool/bash.ts:140] | shell command 字符串。[E: packages/core/src/tool/bash.ts:141] | tool name 就是 `bash`。[E: packages/core/src/tool/bash.ts:18] |
+| `bash` | Bash tool。[E: packages/core/src/tool/bash.ts:143] | shell command 字符串。[E: packages/core/src/tool/bash.ts:144] | shell command 字符串。[E: packages/core/src/tool/bash.ts:145] | tool name 就是 `bash`。[E: packages/core/src/tool/bash.ts:18] |
 | `edit` | Edit tool。[E: packages/core/src/tool/edit.ts:153] | 待编辑文件路径。[E: packages/core/src/tool/edit.ts:154] | `"*"`。[E: packages/core/src/tool/edit.ts:155] | Edit tool name 是 `edit`。[E: packages/core/src/tool/edit.ts:22] |
 | `edit` | Write tool。[E: packages/core/src/tool/write.ts:80] | 写入目标文件路径。[E: packages/core/src/tool/write.ts:81] | `"*"`。[E: packages/core/src/tool/write.ts:82] | 命名陷阱：V2 `write` tool 的 permission action 不是 `write`，而是 `edit`。[E: packages/core/src/tool/write.ts:19] |
 | `edit` | ApplyPatch tool。[E: packages/core/src/tool/apply-patch.ts:117] | patch 影响的文件路径集合。[E: packages/core/src/tool/apply-patch.ts:118] | `"*"`。[E: packages/core/src/tool/apply-patch.ts:119] | 命名陷阱：V2 `apply_patch` tool 的 permission action 也是 `edit`。[E: packages/core/src/tool/apply-patch.ts:17] |
@@ -108,7 +108,7 @@ V2 builtins layer 当前装配 `apply_patch`、`bash`、`edit`、`glob`、`grep`
 | rule 字段 | `permission + pattern + action`。[E: packages/schema/src/v1/permission.ts:19] | `action + resource + effect`。[E: packages/schema/src/permission.ts:59][E: packages/schema/src/permission.ts:60][E: packages/schema/src/permission.ts:61] |
 | 默认结果 | 无匹配时 `ask`。[E: packages/opencode/src/permission/index.ts:33] | 无匹配时 `ask`。[E: packages/core/src/permission.ts:83] |
 | 批量资源 | `Permission.ask` 接受 `patterns` 并逐个 evaluate。[E: packages/schema/src/v1/permission.ts:31][E: packages/opencode/src/permission/index.ts:72] | request 内置 `resources: string[]`。[E: packages/schema/src/permission.ts:28] |
-| 持久允许 | `always` 追加 approved ruleset。[E: packages/opencode/src/permission/index.ts:145][E: packages/opencode/src/permission/index.ts:146] | `always` 写入 saved permission 表。[E: packages/core/src/permission.ts:250][E: packages/core/src/permission/saved.ts:57] |
+| 持久允许 | `always` 追加 approved ruleset。[E: packages/opencode/src/permission/index.ts:145][E: packages/opencode/src/permission/index.ts:146] | `always` 写入 saved permission 表。[E: packages/core/src/permission.ts:251][E: packages/core/src/permission/saved.ts:57] |
 | 保存粒度 | pattern rule。[E: packages/schema/src/v1/permission.ts:19] | `action + resource`，数据库有唯一索引。[E: packages/core/src/permission/sql.ts:15][E: packages/core/src/permission/sql.ts:19] |
 | 事件名 | `permission.asked` / `permission.replied`。[E: packages/schema/src/v1/permission.ts:61][E: packages/schema/src/v1/permission.ts:63] | `permission.v2.asked` / `permission.v2.replied`。[E: packages/schema/src/permission.ts:43][E: packages/schema/src/permission.ts:45] |
 

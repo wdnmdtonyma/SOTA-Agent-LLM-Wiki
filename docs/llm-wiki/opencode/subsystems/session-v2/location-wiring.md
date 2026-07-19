@@ -20,7 +20,7 @@ symbols: [LocationServiceMap.Service, buildLocationServiceMap, locationServices,
 related: [spine.v2-coordinator, persistence.project-instance-location, integrations.integration-v2, persistence.project-directories]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Location wiring 是 V2 runner 的 layer graph: `LocationServiceMap.Service` 为每个 `Location.Ref` 构建 runner/model/tools/context 等 Location-scoped services,server routes 用 `SessionExecutionLocal.node` 接入本进程 runner,embedded SDK 通过 in-memory HTTP routes 暴露同一 session API。
@@ -45,7 +45,7 @@ V2 design says execution routing starts from Session ID,then loads the session,e
 
 1. `LocationServiceMap.Service@packages/core/src/location-service-map.ts:7` is the global unbound service;`Service.get(ref)` unwraps the layer stored for a `Location.Ref`。[E: packages/core/src/location-service-map.ts:7][E: packages/core/src/location-service-map.ts:11][E: packages/core/src/location-service-map.ts:16]
 
-2. `buildLocationServiceMap@packages/core/src/location-services.ts:84` returns a `Layer.Layer<LocationServiceMap.Service>` built with `LayerMap.make(...)`;each lookup adds a `Location.boundNode(ref)` replacement,hoists global dependencies,compiles the Location node fresh,and sets idle TTL to 60 minutes。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:87][E: packages/core/src/location-services.ts:89][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:92][E: packages/core/src/location-services.ts:94][E: packages/core/src/location-services.ts:95][E: packages/core/src/location-services.ts:102][E: packages/core/src/location-services.ts:105]
+2. `buildLocationServiceMap@packages/core/src/location-services.ts:84` returns a `Layer.Layer<LocationServiceMap.Service>` built with `LayerMap.make(...)`;each lookup adds a `Location.boundNode(ref)` replacement,hoists global dependencies,compiles the Location node fresh,and sets idle TTL to 60 minutes。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:87][E: packages/core/src/location-services.ts:89][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:96][E: packages/core/src/location-services.ts:98][E: packages/core/src/location-services.ts:99][E: packages/core/src/location-services.ts:106][E: packages/core/src/location-services.ts:109]
 
 3. `locationServices` names the concrete Location-scoped services. The old monolithic `packages/core/src/location-layer.ts` has been deleted; this node's source of truth is now `location-services.ts` plus `location-service-map.ts`。[E: packages/core/src/location-services.ts:42][I]
 
@@ -69,7 +69,7 @@ V2 design says execution routing starts from Session ID,then loads the session,e
 
 ## 设计动机与权衡
 
-- Location-scoped runner lets one process run different projects/workspaces with distinct catalog,integrations,permissions,tools,filesystem watcher,system context,model resolver and runner,while `AppNodeBuilder` hoists process-global dependencies outside each Location instance。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:49][E: packages/core/src/location-services.ts:65][E: packages/core/src/location-services.ts:67][E: packages/core/src/location-services.ts:76][E: packages/core/src/location-services.ts:78][E: packages/core/src/location-services.ts:92][E: packages/core/src/location-services.ts:102][I]
+- Location-scoped runner lets one process run different projects/workspaces with distinct catalog,integrations,permissions,tools,filesystem watcher,system context,model resolver and runner,while `AppNodeBuilder` hoists process-global dependencies outside each Location instance。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:49][E: packages/core/src/location-services.ts:65][E: packages/core/src/location-services.ts:67][E: packages/core/src/location-services.ts:76][E: packages/core/src/location-services.ts:78][E: packages/core/src/location-services.ts:96][E: packages/core/src/location-services.ts:106][I]
 - `SessionExecutionLocal.layer` starts from only `sessionID` and resolves the current session location at drain time;this matches V2 spec and makes moved sessions route to the destination Location on the next run。[E: specs/v2/session.md:39][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:21][I]
 - Server routes explicitly replace `SessionExecution.node` with `SessionExecutionLocal.node`;plain `SessionV2.node` remains reusable in tests or embedding graphs that want durable recording without local drains。[E: packages/server/src/routes.ts:52][E: packages/core/src/session/execution.ts:26][I]
 

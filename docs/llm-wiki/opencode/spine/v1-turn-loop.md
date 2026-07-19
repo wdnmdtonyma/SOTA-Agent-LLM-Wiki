@@ -9,7 +9,7 @@ symbols: [SessionPrompt.prompt, SessionPrompt.loop, runLoop, SessionProcessor.cr
 related: [session-v1.prompt, session-v1.processor, session-v1.llm-runtime]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V1 turn loop 是 `packages/opencode/src/session/prompt.ts` 内部的 assistant loop:它从 V1 user message 组装模型输入,调用 `SessionProcessor`,再由 `LLM.stream` 把 AI SDK/native seam event 转成 V1 message part。
@@ -46,7 +46,7 @@ flowchart TD
 
 4. `prompt@packages/opencode/src/session/prompt.ts:1069` 在 `noReply` 为 true 时只返回 user message;正常 assistant 回复路径调用 `loop({ sessionID: input.sessionID })`。[E: packages/opencode/src/session/prompt.ts:1069][E: packages/opencode/src/session/prompt.ts:1070]
 
-5. `loop@packages/opencode/src/session/prompt.ts:1342` 使用 `state.ensureRunning(input.sessionID, lastAssistant(...), runLoop(...))` 保证同一 V1 session 的 run loop 受 runner state 管理。[E: packages/opencode/src/session/prompt.ts:1342][E: packages/opencode/src/session/prompt.ts:1345]
+5. `loop@packages/opencode/src/session/prompt.ts:1342` 使用 `state.ensureRunning(input.sessionID, lastAssistant(...), runLoop(...))` 保证同一 V1 session 的 run loop 受 runner state 管理。[E: packages/opencode/src/session/prompt.ts:1343][E: packages/opencode/src/session/prompt.ts:1346]
 
 6. `runLoop@packages/opencode/src/session/prompt.ts:1081` 进入 `while (true)` 后先把 session status 置为 busy,再读取 compacted-filtered messages 与最新 message/task 状态。[E: packages/opencode/src/session/prompt.ts:1081][E: packages/opencode/src/session/prompt.ts:1088][E: packages/opencode/src/session/prompt.ts:1089][E: packages/opencode/src/session/prompt.ts:1092][E: packages/opencode/src/session/prompt.ts:1096]
 
@@ -56,23 +56,23 @@ flowchart TD
 
 9. `runLoop@packages/opencode/src/session/prompt.ts:1186` 创建新的 assistant message 并写入 session,随后 `processor.create` 捕获本轮 assistant context,`SessionTools.resolve` 生成可用 tool 列表。[E: packages/opencode/src/session/prompt.ts:1186][E: packages/opencode/src/session/prompt.ts:1201][E: packages/opencode/src/session/prompt.ts:1213][E: packages/opencode/src/session/prompt.ts:1226]
 
-10. `MessageV2.toModelMessagesEffect@packages/opencode/src/session/prompt.ts:1261` 把 V1 messages 转成 AI SDK model messages;`message-v2.ts` 之所以是命名陷阱,是因为该文件导入 `SessionV1` 与 AI SDK `ModelMessage`,并在 `toModelMessagesEffect` 中调用 AI SDK `convertToModelMessages`。[E: packages/opencode/src/session/prompt.ts:1261][E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:417]
+10. `MessageV2.toModelMessagesEffect@packages/opencode/src/session/prompt.ts:1261` 把 V1 messages 转成 AI SDK model messages;`message-v2.ts` 之所以是命名陷阱,是因为该文件导入 `SessionV1` 与 AI SDK `ModelMessage`,并在 `toModelMessagesEffect` 中调用 AI SDK `convertToModelMessages`。[E: packages/opencode/src/session/prompt.ts:1262][E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:417]
 
-11. `handle.process@packages/opencode/src/session/prompt.ts:1271` 把 `system`、`messages`、`tools`、`model`、`toolChoice` 交给 `SessionProcessor`。[E: packages/opencode/src/session/prompt.ts:1271]
+11. `handle.process@packages/opencode/src/session/prompt.ts:1271` 把 `system`、`messages`、`tools`、`model`、`toolChoice` 交给 `SessionProcessor`。[E: packages/opencode/src/session/prompt.ts:1272]
 
-12. `SessionProcessor.process@packages/opencode/src/session/processor.ts:625` 设置 session busy,然后在 `llm.stream(streamInput)` 处真正打开模型 event stream。[E: packages/opencode/src/session/processor.ts:625][E: packages/opencode/src/session/processor.ts:637][E: packages/opencode/src/session/processor.ts:638]
+12. `SessionProcessor.process@packages/opencode/src/session/processor.ts:625` 设置 session busy,然后在 `llm.stream(streamInput)` 处真正打开模型 event stream。[E: packages/opencode/src/session/processor.ts:627][E: packages/opencode/src/session/processor.ts:639][E: packages/opencode/src/session/processor.ts:640]
 
 13. `LLM.stream@packages/opencode/src/session/llm.ts:357` 创建 abort controller 并调用 `run`;默认 `run` 分支调用 AI SDK `streamText`,experimental native 分支则尝试 `LLMNativeRuntime.stream`。[E: packages/opencode/src/session/llm.ts:357][E: packages/opencode/src/session/llm.ts:271][E: packages/opencode/src/session/llm.ts:226]
 
-14. `SessionProcessor` 逐个处理 LLM event:text-start/text-delta/text-end 更新 V1 text part,tool-call/tool-result 更新 V1 tool part,step-finish 写 usage 与 finish 状态。[E: packages/opencode/src/session/processor.ts:484][E: packages/opencode/src/session/processor.ts:497][E: packages/opencode/src/session/processor.ts:510][E: packages/opencode/src/session/processor.ts:329][E: packages/opencode/src/session/processor.ts:381][E: packages/opencode/src/session/processor.ts:433]
+14. `SessionProcessor` 逐个处理 LLM event:text-start/text-delta/text-end 更新 V1 text part,tool-call/tool-result 更新 V1 tool part,step-finish 写 usage 与 finish 状态。[E: packages/opencode/src/session/processor.ts:486][E: packages/opencode/src/session/processor.ts:499][E: packages/opencode/src/session/processor.ts:512][E: packages/opencode/src/session/processor.ts:331][E: packages/opencode/src/session/processor.ts:383][E: packages/opencode/src/session/processor.ts:435]
 
-15. `SessionProcessor.process` 的返回值把下游结果压成 `"compact" | "stop" | "continue"`:`ctx.needsCompaction` 为 true 时返回 `compact`,`ctx.blocked` 或 assistant message error 时返回 `stop`,其余返回 `continue` 让 `runLoop` 判断是否进入下一 step。[E: packages/opencode/src/session/processor.ts:677][E: packages/opencode/src/session/processor.ts:678][E: packages/opencode/src/session/processor.ts:679]
+15. `SessionProcessor.process` 的返回值把下游结果压成 `"compact" | "stop" | "continue"`:`ctx.needsCompaction` 为 true 时返回 `compact`,`ctx.blocked` 或 assistant message error 时返回 `stop`,其余返回 `continue` 让 `runLoop` 判断是否进入下一 step。[E: packages/opencode/src/session/processor.ts:679][E: packages/opencode/src/session/processor.ts:680][E: packages/opencode/src/session/processor.ts:681]
 
 ## 关键决策点
 
-- V1 loop 的 compaction 有两条入口:step-finish overflow 会在 processor 中设置 `ctx.needsCompaction`,而 `handle.process()` 返回 `"compact"` 后由 `SessionPrompt.runLoop` 调 `compaction.create({ auto: true, overflow: !handle.message.finish })`。[E: packages/opencode/src/session/processor.ts:475][E: packages/opencode/src/session/processor.ts:479][E: packages/opencode/src/session/prompt.ts:1318][E: packages/opencode/src/session/prompt.ts:1319][E: packages/opencode/src/session/prompt.ts:1320][E: packages/opencode/src/session/prompt.ts:1325]
-- V1 `SessionProcessor` 当前依赖 `EventV2Bridge` 发布 error 类事件,但 Text/Tool/Step 的主状态仍写入 V1 message parts。[E: packages/opencode/src/session/processor.ts:25][E: packages/opencode/src/session/processor.ts:95][E: packages/opencode/src/session/processor.ts:424][E: packages/opencode/src/session/processor.ts:444][E: packages/opencode/src/session/processor.ts:494]
-- V1 默认模型 runtime 仍是 AI SDK;native provider engine 是 `experimentalNativeLlm` flag 下的可选 seam。[E: packages/opencode/src/effect/runtime-flags.ts:53][E: packages/opencode/src/session/llm.ts:278]
+- V1 loop 的 compaction 有两条入口:step-finish overflow 会在 processor 中设置 `ctx.needsCompaction`,而 `handle.process()` 返回 `"compact"` 后由 `SessionPrompt.runLoop` 调 `compaction.create({ auto: true, overflow: !handle.message.finish })`。[E: packages/opencode/src/session/processor.ts:477][E: packages/opencode/src/session/processor.ts:481][E: packages/opencode/src/session/prompt.ts:1319][E: packages/opencode/src/session/prompt.ts:1320][E: packages/opencode/src/session/prompt.ts:1321][E: packages/opencode/src/session/prompt.ts:1326]
+- V1 `SessionProcessor` 当前依赖 `EventV2Bridge` 发布 error 类事件,但 Text/Tool/Step 的主状态仍写入 V1 message parts。[E: packages/opencode/src/session/processor.ts:25][E: packages/opencode/src/session/processor.ts:95][E: packages/opencode/src/session/processor.ts:426][E: packages/opencode/src/session/processor.ts:446][E: packages/opencode/src/session/processor.ts:496]
+- V1 默认模型 runtime 仍是 AI SDK;native provider engine 是 `experimentalNativeLlm` flag 下的可选 seam。[E: packages/opencode/src/effect/runtime-flags.ts:54][E: packages/opencode/src/session/llm.ts:278]
 
 ## 深挖入口
 - `session-v1.prompt`: V1 prompt/message part 结构

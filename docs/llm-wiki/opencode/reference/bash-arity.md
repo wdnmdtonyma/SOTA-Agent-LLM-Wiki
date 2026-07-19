@@ -11,7 +11,7 @@ symbols:
   - prefix
   - ARITY
 evidence: explicit
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > 这份节点是 V1 shell permission 的命令前缀归一化表：给一串 shell tokens，`prefix()` 决定审批时保留几个 token。
@@ -33,7 +33,7 @@ updated: 8b68dc0d7
 
 ## V2
 
-V2 Bash tool 的 wire name 仍是 `bash`，但 V2 实现直接以完整 command 字符串做 permission `resources` 与 `save`。[E: packages/core/src/tool/bash.ts:18][E: packages/core/src/tool/bash.ts:138][E: packages/core/src/tool/bash.ts:140][E: packages/core/src/tool/bash.ts:141] 源码 TODO 还写着要移植 BashArity reusable command-prefix approvals，因此当前没有复用 V1 前缀表。[I] 因此这个节点的 `v` 是 `v1`，不是 shared。
+V2 Bash tool 的 wire name 仍是 `bash`，但 V2 实现直接以完整 command 字符串做 permission `resources` 与 `save`。[E: packages/core/src/tool/bash.ts:18][E: packages/core/src/tool/bash.ts:142][E: packages/core/src/tool/bash.ts:144][E: packages/core/src/tool/bash.ts:145] 源码 TODO 还写着要移植 BashArity reusable command-prefix approvals，因此当前没有复用 V1 前缀表。[I] 因此这个节点的 `v` 是 `v1`，不是 shared。
 
 ## ARITY catalog
 

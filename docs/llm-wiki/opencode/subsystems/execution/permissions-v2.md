@@ -28,7 +28,7 @@ related:
   - ref.permission-actions
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > V2 权限模型是 Location-scoped core service：工具自己构造 `PermissionV2.assert({ action, resources, save, source, agent })`，服务先查 agent ruleset，再叠加 SQLite saved approvals，并把用户 `always` 持久化为 project 级 allow rule。
@@ -39,11 +39,11 @@ updated: 8b68dc0d7
 - agent 没有权限配置时为什么是 deny-all，而不是 ask-all？
 - `save` 字段如何变成 SQLite `permission` 表记录？
 - `Tool.withPermission("write", "edit")` 与实际 `permission.assert({ action: "edit" })` 有什么出入？
-- V2 reject 是否也会级联拒绝同 session 的 pending 请求？
+- V2 reject 是否也会级联拒绝同 session 的 pending 请求，且无 feedback 的拒绝如何离开 typed error channel？
 
 ## 职责边界
 
-`PermissionV2.Service` 的 service tag 是 `@opencode/v2/Permission`，并由 `locationLayer` 提供 Location-scoped layer [E: packages/core/src/permission.ts:101] [E: packages/core/src/permission.ts:303]。V2 权限 request 以 `action + resources` 表达，而不是 V1 的 `permission + patterns`；`AssertInput` 还可以携带 `save`、`metadata`、`source` 与可选 `agent` [E: packages/core/src/permission.ts:23] [E: packages/core/src/permission.ts:38] [E: packages/core/src/permission.ts:41]。
+`PermissionV2.Service` 的 service tag 是 `@opencode/v2/Permission`，并由 `locationLayer` 提供 Location-scoped layer [E: packages/core/src/permission.ts:101] [E: packages/core/src/permission.ts:304]。V2 权限 request 以 `action + resources` 表达，而不是 V1 的 `permission + patterns`；`AssertInput` 还可以携带 `save`、`metadata`、`source` 与可选 `agent` [E: packages/core/src/permission.ts:23] [E: packages/core/src/permission.ts:38] [E: packages/core/src/permission.ts:41]。
 
 `PermissionSaved.Service` 是单独的 SQLite-backed registry，记录 project 级 `{ projectID, action, resource }` [E: packages/core/src/permission/saved.ts:35] [E: packages/core/src/permission/saved.ts:40] [E: packages/schema/src/permission-saved.ts:16] [E: packages/schema/src/permission-saved.ts:17] [E: packages/schema/src/permission-saved.ts:18]。底层 Drizzle 表名是 `"permission"`，并用 `(project_id, action, resource)` 建 unique index 防重复 [E: packages/core/src/permission/sql.ts:7] [E: packages/core/src/permission/sql.ts:19]。
 
@@ -67,12 +67,12 @@ V2 `evaluate(action, resource, ...rulesets)` 仍使用 wildcard last-match-wins�
 1. 工具调用 `permission.assert(input)` 或 `permission.ask(input)`，input 可带 `agent`；服务通过 `SessionStore.get(sessionID)` 查 session，并用 `agents.resolve(agentID ?? session.agent)` 解析有效 agent [E: packages/core/src/permission.ts:137] [E: packages/core/src/permission.ts:141] [E: packages/core/src/permission.ts:143]。
 2. `savedRules()` 按当前 Location 的 `location.project.id` 读取 saved approvals，并映射成 allow rules [E: packages/core/src/permission.ts:131] [E: packages/core/src/permission.ts:132] [E: packages/core/src/permission.ts:133]。
 3. `ask` 只做 non-blocking request 创建：如果求值结果是 `ask`，`create` pending request 并 publish `permission.v2.asked`，随后返回 `{ id, effect }` [E: packages/core/src/permission.ts:190] [E: packages/core/src/permission.ts:191] [E: packages/core/src/permission.ts:193] [E: packages/core/src/permission.ts:194]。
-4. `assert` 是 blocking gate：`deny` 抛 `PermissionV2.DeniedError`，`allow` 直接返回，`ask` 创建 pending request 并等待 deferred [E: packages/core/src/permission.ts:197] [E: packages/core/src/permission.ts:201] [E: packages/core/src/permission.ts:206] [E: packages/core/src/permission.ts:207] [E: packages/core/src/permission.ts:208]。
+4. `assert` 是 blocking gate：`deny` 以 `PermissionV2.BlockedError` 失败，`allow` 直接返回，`ask` 创建 pending request 并等待 deferred [E: packages/core/src/permission.ts:197] [E: packages/core/src/permission.ts:201] [E: packages/core/src/permission.ts:202] [E: packages/core/src/permission.ts:206] [E: packages/core/src/permission.ts:207] [E: packages/core/src/permission.ts:208]。
 5. `create` 在 `uninterruptible` 区域创建 deferred、检查重复 request id、写入 `pending`，并在 publish event 出错时删除 pending [E: packages/core/src/permission.ts:176] [E: packages/core/src/permission.ts:179] [E: packages/core/src/permission.ts:181] [E: packages/core/src/permission.ts:182] [E: packages/core/src/permission.ts:185]。
-6. `reply("reject")` fail 当前 deferred，然后遍历同 session pending request，逐个 publish `reply: "reject"`、fail deferred、从 pending 删除，实现级联拒绝 [E: packages/core/src/permission.ts:230] [E: packages/core/src/permission.ts:236] [E: packages/core/src/permission.ts:244]。
-7. `reply("always")` 且 request 带 `save` 时，服务调用 `PermissionSaved.add({ projectID, action, resources: save })` [E: packages/core/src/permission.ts:249] [E: packages/core/src/permission.ts:250] [E: packages/core/src/permission.ts:251] [E: packages/core/src/permission.ts:253]。
+6. `reply("reject")` 对当前 request：带 message 时 fail `CorrectedError`，否则 fail `DeclinedError`；随后遍历同 session pending request，逐个 publish `reply: "reject"`、fail `DeclinedError`、从 pending 删除，实现级联拒绝 [E: packages/core/src/permission.ts:231] [E: packages/core/src/permission.ts:232] [E: packages/core/src/permission.ts:234] [E: packages/core/src/permission.ts:237] [E: packages/core/src/permission.ts:244] [E: packages/core/src/permission.ts:245]。
+7. `reply("always")` 且 request 带 `save` 时，服务调用 `PermissionSaved.add({ projectID, action, resources: save })` [E: packages/core/src/permission.ts:250] [E: packages/core/src/permission.ts:251] [E: packages/core/src/permission.ts:252] [E: packages/core/src/permission.ts:254]。
 8. `PermissionSaved.add` 对每个 resource 插入一行 `(id, project_id, action, resource)`，并 `onConflictDoNothing()` 去重 [E: packages/core/src/permission/saved.ts:54] [E: packages/core/src/permission/saved.ts:59] [E: packages/core/src/permission/saved.ts:60] [E: packages/core/src/permission/saved.ts:66]。
-9. saved approvals 写入后，服务重算其它 pending request；如果 agent configured rules 不 deny 且 remembered rules 让所有 resources allow，就自动 publish `reply: "always"` 并 unblock [E: packages/core/src/permission.ts:260] [E: packages/core/src/permission.ts:263] [E: packages/core/src/permission.ts:267] [E: packages/core/src/permission.ts:270] [E: packages/core/src/permission.ts:275] [E: packages/core/src/permission.ts:280]。
+9. saved approvals 写入后，服务重算其它 pending request；如果 agent configured rules 不 deny 且 remembered rules 让所有 resources allow，就自动 publish `reply: "always"` 并 unblock [E: packages/core/src/permission.ts:261] [E: packages/core/src/permission.ts:264] [E: packages/core/src/permission.ts:268] [E: packages/core/src/permission.ts:271] [E: packages/core/src/permission.ts:276] [E: packages/core/src/permission.ts:281]。
 
 ## `withPermission` 与实际 assert action
 
@@ -84,11 +84,14 @@ V2 `Tool.withPermission(tool, permission)` 只给 tool runtime 附加一个 perm
 
 V2 tools spec 要求 trusted tools 自己构造 permission request，registry 不注入 `assertPermission` helper；spec 示例也把 `permission.assert` 放在 tool executor 内部 [E: specs/v2/tools.md:111] [E: specs/v2/tools.md:131]。这样做让每个工具能把 action、resources、save、metadata 与 durable source 绑定到具体业务语义，而不是让 registry 猜测资源边界 [I]。
 
-V2 session spec 还要求 local tool authorization 保留发起 tool call 时的 effective agent，即使之后 agent switch，也不能改变该 call 的 policy [E: CONTEXT.md:125]。`AssertInput.agent` 与 pending item 存储 `agent?: AgentV2.ID` 支持这一点：pending item 在自动 remembered approval 时仍用原 agent 重新 configured [E: packages/core/src/permission.ts:41] [E: packages/core/src/permission.ts:105] [E: packages/core/src/permission.ts:263]。
+V2 session spec 还要求 local tool authorization 保留发起 tool call 时的 effective agent，即使之后 agent switch，也不能改变该 call 的 policy [E: CONTEXT.md:125]。`AssertInput.agent` 与 pending item 存储 `agent?: AgentV2.ID` 支持这一点：pending item 在自动 remembered approval 时仍用原 agent 重新 configured [E: packages/core/src/permission.ts:41] [E: packages/core/src/permission.ts:105] [E: packages/core/src/permission.ts:264]。
+
+目标 SHA 中 `PermissionV2.Error` 只公开 `BlockedError | CorrectedError`；plain reject 产生的 `DeclinedError` 会在 `assert` 等待处经 `Effect.die` 转成 defect，而带 feedback 的 reject 仍作为 typed `CorrectedError` 传播 [E: packages/core/src/permission.ts:60] [E: packages/core/src/permission.ts:62] [E: packages/core/src/permission.ts:66] [E: packages/core/src/permission.ts:74] [E: packages/core/src/permission.ts:208] [E: packages/core/src/permission.ts:209]。这一区分意味着调用方不能再按旧名 `RejectedError` / `DeniedError` 做 typed catch。
 
 ## Gotcha
 
 - `ask` 与 `assert` 都会求值，但 `ask` 不等待用户回复；`assert` 会阻塞到 deferred 被 reply。
+- configured deny 的 typed error 名为 `PermissionV2.BlockedError`；带 feedback 的 reject 是 `CorrectedError`，plain reject 的 `DeclinedError` 在 `assert` 内转成 defect。
 - saved approval 只追加 allow rules，不能覆盖 configured agent deny，因为 configured deny 在合并 saved rules 之前就短路。
 - `write` 与 `apply_patch` 的 `withPermission` tag 是 `"edit"`，实际 `assert.action` 也是 `"edit"`；不要把 wire name `"write"` 或 `"apply_patch"` 当作 mutation policy action。
 - V2 Integration/Credential 是本地凭据注册表，不是云连接器；V2 permission persistence 在 `permission/saved.ts` 与 `permission/sql.ts`。

@@ -13,7 +13,7 @@ symbols: [Script]
 related: [infra.native-binary-release]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > `packages/script` 提供发布脚本共享的 channel/version/team identity，`packages/identity` 保存 opencode mark 的 SVG/PNG 品牌资源。
@@ -57,15 +57,15 @@ updated: 8b68dc0d7
 
 ## Team identity
 
-`Script.team` 从 `.github/TEAM_MEMBERS` 读取非空、非注释行，再追加 `actions-user`、`opencode`、`opencode-agent[bot]` 三个 bot id [E: packages/script/src/index.ts:50] [E: packages/script/src/index.ts:51] [E: packages/script/src/index.ts:53] [E: packages/script/src/index.ts:56] [E: packages/script/src/index.ts:57]。`.github/TEAM_MEMBERS` 当前列出 `adamdotdevin`、`Brendonovich`、`fwang`、`starptech` 等 username entries [E: .github/TEAM_MEMBERS:1] [E: .github/TEAM_MEMBERS:2] [E: .github/TEAM_MEMBERS:3] [E: .github/TEAM_MEMBERS:17]。
+`Script.team` 从 `.github/TEAM_MEMBERS` 读取非空、非注释行，再追加 `actions-user`、`opencode`、`opencode-agent[bot]` 三个 bot id [E: packages/script/src/index.ts:50] [E: packages/script/src/index.ts:51] [E: packages/script/src/index.ts:53] [E: packages/script/src/index.ts:56] [E: packages/script/src/index.ts:57]。目标 SHA 的 team list 新增 `arvsrn`、`ludvigrask`、`Slickstef11`、`usrnk1`，并把末项规范为 `StarpTech` [E: .github/TEAM_MEMBERS:2] [E: .github/TEAM_MEMBERS:11] [E: .github/TEAM_MEMBERS:18] [E: .github/TEAM_MEMBERS:19] [E: .github/TEAM_MEMBERS:21]。
 
 ## 被主仓使用的位置
 
-Legacy `packages/opencode/script/build.ts` import `Script`，用 `Script.channel` 构建 embedded Web UI，用 `Script.version` 写 Bun compile user-agent 和 `OPENCODE_VERSION` define，用 `Script.channel` 写 `OPENCODE_CHANNEL` define，并把每个 binary package version 设为 `Script.version` [E: packages/opencode/script/build.ts:17] [E: packages/opencode/script/build.ts:31] [E: packages/opencode/script/build.ts:184] [E: packages/opencode/script/build.ts:191] [E: packages/opencode/script/build.ts:195] [E: packages/opencode/script/build.ts:219]。
+Legacy `packages/opencode/script/build.ts` import `Script`，用 `Script.channel` 构建 embedded Web UI，用 `Script.version` 写 Bun compile user-agent 和 `OPENCODE_VERSION` define，用 `Script.channel` 写 `OPENCODE_CHANNEL` define，并把每个 binary package version 设为 `Script.version` [E: packages/opencode/script/build.ts:16] [E: packages/opencode/script/build.ts:30] [E: packages/opencode/script/build.ts:179] [E: packages/opencode/script/build.ts:194] [E: packages/opencode/script/build.ts:198] [E: packages/opencode/script/build.ts:222]。
 
-`packages/opencode/script/build.ts` 还在 `Script.release` 为真时打包 zip/tar.gz，并上传 GitHub release assets 到 `v${Script.version}` [E: packages/opencode/script/build.ts:232] [E: packages/opencode/script/build.ts:235] [E: packages/opencode/script/build.ts:237] [E: packages/opencode/script/build.ts:240]。`packages/opencode/script/publish.ts` 用 `Script.channel` 作为 npm dist-tag，用 `Script.preview` 决定是否跳过 Docker/AUR/Homebrew 发布；Docker tags 使用 dist binary package 的 `version` 和 `Script.channel`，AUR/Homebrew metadata 使用 `Script.version` 生成 release URL 与 formula version [E: packages/opencode/script/publish.ts:23] [E: packages/opencode/script/publish.ts:28] [E: packages/opencode/script/publish.ts:32] [E: packages/opencode/script/publish.ts:83] [E: packages/opencode/script/publish.ts:87] [E: packages/opencode/script/publish.ts:95] [E: packages/opencode/script/publish.ts:115] [E: packages/opencode/script/publish.ts:118] [E: packages/opencode/script/publish.ts:155] [E: packages/opencode/script/publish.ts:161] [E: packages/opencode/script/publish.ts:169] [E: packages/opencode/script/publish.ts:180] [E: packages/opencode/script/publish.ts:187]。
+`packages/opencode/script/build.ts` 还在 `Script.release` 为真时打包 zip/tar.gz，并上传 GitHub release assets 到 `v${Script.version}` [E: packages/opencode/script/build.ts:235] [E: packages/opencode/script/build.ts:238] [E: packages/opencode/script/build.ts:240] [E: packages/opencode/script/build.ts:243]。`packages/opencode/script/publish.ts` 用 `Script.channel` 作为 npm dist-tag，用 `Script.preview` 决定是否跳过 Docker/AUR/Homebrew 发布；Docker tags 使用 dist binary package 的 `version` 和 `Script.channel`，AUR/Homebrew metadata 使用 `Script.version` 生成 release URL 与 formula version [E: packages/opencode/script/publish.ts:23] [E: packages/opencode/script/publish.ts:28] [E: packages/opencode/script/publish.ts:32] [E: packages/opencode/script/publish.ts:83] [E: packages/opencode/script/publish.ts:87] [E: packages/opencode/script/publish.ts:95] [E: packages/opencode/script/publish.ts:115] [E: packages/opencode/script/publish.ts:118] [E: packages/opencode/script/publish.ts:155] [E: packages/opencode/script/publish.ts:161] [E: packages/opencode/script/publish.ts:169] [E: packages/opencode/script/publish.ts:180] [E: packages/opencode/script/publish.ts:187]。
 
-新 CLI host `packages/cli/script/build.ts` 同样 import `Script`，把 compile user-agent 设为 `lildax/${Script.version}`，并 define `OPENCODE_VERSION`、`OPENCODE_CHANNEL`、`OPENCODE_LIBC`，输出 package version 也是 `Script.version` [E: packages/cli/script/build.ts:7] [E: packages/cli/script/build.ts:13] [E: packages/cli/script/build.ts:86] [E: packages/cli/script/build.ts:90] [E: packages/cli/script/build.ts:93] [E: packages/cli/script/build.ts:94] [E: packages/cli/script/build.ts:115]。
+新 CLI host `packages/cli/script/build.ts` 同样 import `Script`，把 compile user-agent 设为 `lildax/${Script.version}`，并 define `OPENCODE_VERSION`、`OPENCODE_CHANNEL`、`OPENCODE_LIBC`，输出 package version 也是 `Script.version` [E: packages/cli/script/build.ts:6] [E: packages/cli/script/build.ts:12] [E: packages/cli/script/build.ts:81] [E: packages/cli/script/build.ts:85] [E: packages/cli/script/build.ts:88] [E: packages/cli/script/build.ts:89] [E: packages/cli/script/build.ts:106]。
 
 ## Identity resources
 
@@ -75,7 +75,7 @@ Legacy `packages/opencode/script/build.ts` import `Script`，用 `Script.channel
 
 ## 设计动机与权衡
 
-`Script` 把 release identity 集中到一个 workspace package，避免 legacy opencode build、新 lildax CLI build、plugin/sdk publish、desktop prepare 各自重复计算 channel/version [I]。从源码看，legacy opencode build、opencode publish、lildax build 都直接 import `@opencode-ai/script` [E: packages/opencode/script/build.ts:17] [E: packages/opencode/script/publish.ts:4] [E: packages/cli/script/build.ts:7]。
+`Script` 把 release identity 集中到一个 workspace package，避免 legacy opencode build、新 lildax CLI build、plugin/sdk publish、desktop prepare 各自重复计算 channel/version [I]。从源码看，legacy opencode build、opencode publish、lildax build 都直接 import `@opencode-ai/script` [E: packages/opencode/script/build.ts:16] [E: packages/opencode/script/publish.ts:4] [E: packages/cli/script/build.ts:6]。
 
 `CHANNEL` fallback 到 git branch，使非 latest branch 自动进入 preview version `0.0.0-${branch}-${timestamp}`，这让 preview publish 不需要手动写 semver [E: packages/script/src/index.ts:30] [E: packages/script/src/index.ts:36]。当未显式设置 `OPENCODE_VERSION` 且 channel 是 latest 时，`VERSION` 计算依赖 npm registry 当前 `opencode-ai/latest` 版本，再 bump major/minor/patch；这意味着该路径需要网络访问 npm registry [E: packages/script/src/index.ts:35] [E: packages/script/src/index.ts:37] [E: packages/script/src/index.ts:42] [I]。
 

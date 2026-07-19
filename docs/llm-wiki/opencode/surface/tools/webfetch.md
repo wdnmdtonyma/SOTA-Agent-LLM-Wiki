@@ -9,7 +9,7 @@ symbols: [WebFetchTool]
 related: [ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > WebFetch 工具把 HTTP/HTTPS URL 取回为 `markdown`、`text` 或 `html`；V1 当前活跑路径允许图片以 attachment 返回，V2 core 工具只接受 textual content。
@@ -26,7 +26,7 @@ updated: 8b68dc0d7
 
 ### 1 Identity
 
-V1 `WebFetchTool` 通过 `Tool.define("webfetch", ...)` 注册，`ToolRegistry` 初始化 `webfetch` 并把它作为 `tool.fetch` 加入 builtin 列表。[E: packages/opencode/src/tool/webfetch.ts:24][E: packages/opencode/src/tool/webfetch.ts:25][E: packages/opencode/src/tool/registry.ts:98][E: packages/opencode/src/tool/registry.ts:206][E: packages/opencode/src/tool/registry.ts:228]
+V1 `WebFetchTool` 通过 `Tool.define("webfetch", ...)` 注册，`ToolRegistry` 初始化 `webfetch` 并把它作为 `tool.fetch` 加入 builtin 列表。[E: packages/opencode/src/tool/webfetch.ts:24][E: packages/opencode/src/tool/webfetch.ts:25][E: packages/opencode/src/tool/registry.ts:103][E: packages/opencode/src/tool/registry.ts:213][E: packages/opencode/src/tool/registry.ts:236]
 
 ### 2 用途定位
 
@@ -98,7 +98,7 @@ V2 WebFetch 使用 `PermissionV2.Service.assert`，`action` 是 `"webfetch"`，`
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 活跑状态 | V1 registry tools 在 `SessionTools.resolve` 中被桥接为 AI SDK `tool(...)`。[E: packages/opencode/src/session/tools.ts:89][E: packages/opencode/src/session/tools.ts:95] | V2 core built-in，经 `Tools.Service.register` 注册。[E: packages/core/src/tool/webfetch.ts:125][E: packages/core/src/tool/webfetch.ts:126] |
+| 活跑状态 | V1 registry tools 在 `SessionTools.resolve` 中被桥接为 AI SDK `tool(...)`。[E: packages/opencode/src/session/tools.ts:92][E: packages/opencode/src/session/tools.ts:99] | V2 core built-in，经 `Tools.Service.register` 注册。[E: packages/core/src/tool/webfetch.ts:125][E: packages/core/src/tool/webfetch.ts:126] |
 | 图片 | 支持 image attachment。[E: packages/opencode/src/tool/webfetch.ts:110][E: packages/opencode/src/tool/webfetch.ts:116] | 拒绝 fetched image MIME。[E: packages/core/src/tool/webfetch.ts:154][E: packages/core/src/tool/webfetch.ts:155] |
 | 错误呈现 | execute pipe `Effect.orDie`，很多错误成为 defect。[E: packages/opencode/src/tool/webfetch.ts:153] | 映射为 `ToolFailure`，registry 会把 `ToolFailure` 转成 error result，消息统一为 `Unable to fetch <url>`。[E: packages/core/src/tool/webfetch.ts:176][E: packages/core/src/tool/registry.ts:69][E: packages/core/src/tool/registry.ts:70] |
 | 输出 bounding | V1 通用 `Tool.define` wrapper 处理文本截断。[E: packages/opencode/src/tool/tool.ts:135][E: packages/opencode/src/tool/tool.ts:138] | V2 `ToolRegistry.settle` 调 `ToolOutputStore.bound()` 做 generic model-output bounding。[E: packages/core/src/tool/registry.ts:75][E: packages/core/src/tool/registry.ts:76] |

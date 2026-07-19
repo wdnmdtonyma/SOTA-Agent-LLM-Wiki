@@ -9,7 +9,7 @@ symbols: [Dialog, DialogProvider, useDialog, DialogSelect, Toast, ToastProvider,
 related: [ref.tui-dialogs, tui.keybindings, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Dialog kit 是 TUI 的 modal stack 与 select/prompt/confirm 等通用交互层；Toast 是独立的单条 transient notification store。二者都由 root provider 挂载，插件 API 也复用这些组件。
@@ -24,19 +24,19 @@ updated: 8b68dc0d7
 
 ## Dialog overlay
 
-`Dialog` 接收 `size?: "medium" | "large" | "xlarge"` 和 `onClose`；width 分别是 60、88、116，但 maxWidth 会限制到 terminal width - 2。[E: packages/tui/src/ui/dialog.tsx:13] [E: packages/tui/src/ui/dialog.tsx:14] [E: packages/tui/src/ui/dialog.tsx:23] [E: packages/tui/src/ui/dialog.tsx:24] [E: packages/tui/src/ui/dialog.tsx:25] [E: packages/tui/src/ui/dialog.tsx:56] overlay 占满 terminal dimensions、absolute zIndex 3000、顶部 padding 为高度 1/4、背景是半透明黑色 RGBA。[E: packages/tui/src/ui/dialog.tsx:40] [E: packages/tui/src/ui/dialog.tsx:41] [E: packages/tui/src/ui/dialog.tsx:43] [E: packages/tui/src/ui/dialog.tsx:44] [E: packages/tui/src/ui/dialog.tsx:45] [E: packages/tui/src/ui/dialog.tsx:48]
+`Dialog` 接收 `size?: "medium" | "large" | "xlarge"` 和 `onClose`；width 分别是 60、88、116，但 maxWidth 会限制到 terminal width - 2。[E: packages/tui/src/ui/dialog.tsx:13] [E: packages/tui/src/ui/dialog.tsx:14] [E: packages/tui/src/ui/dialog.tsx:23] [E: packages/tui/src/ui/dialog.tsx:24] [E: packages/tui/src/ui/dialog.tsx:25] [E: packages/tui/src/ui/dialog.tsx:59] overlay 占满 terminal dimensions、absolute zIndex 3000、顶部 padding 为高度 1/4、背景是半透明黑色 RGBA。[E: packages/tui/src/ui/dialog.tsx:40] [E: packages/tui/src/ui/dialog.tsx:41] [E: packages/tui/src/ui/dialog.tsx:43] [E: packages/tui/src/ui/dialog.tsx:44] [E: packages/tui/src/ui/dialog.tsx:45] [E: packages/tui/src/ui/dialog.tsx:48]
 
-overlay mouse down 时如果 renderer 有 selection，会设置 dismiss guard；mouse up 若没有 selection guard 则调用 onClose。panel 内部 mouse up 会 stopPropagation，避免点击 dialog 内容关闭 dialog。[E: packages/tui/src/ui/dialog.tsx:30] [E: packages/tui/src/ui/dialog.tsx:31] [E: packages/tui/src/ui/dialog.tsx:33] [E: packages/tui/src/ui/dialog.tsx:38] [E: packages/tui/src/ui/dialog.tsx:51] [E: packages/tui/src/ui/dialog.tsx:53]
+overlay mouse down 时如果 renderer 有 selection，会设置 dismiss guard；mouse up 若没有 selection guard 则调用 onClose。panel 内部 mouse up 会 stopPropagation，避免点击 dialog 内容关闭 dialog。[E: packages/tui/src/ui/dialog.tsx:30] [E: packages/tui/src/ui/dialog.tsx:31] [E: packages/tui/src/ui/dialog.tsx:33] [E: packages/tui/src/ui/dialog.tsx:38] [E: packages/tui/src/ui/dialog.tsx:51] [E: packages/tui/src/ui/dialog.tsx:56]
 
 ## DialogProvider stack
 
-`init()` 的 store 包含 `stack: { element, onClose? }[]` 和 `size`。[E: packages/tui/src/ui/dialog.tsx:68] [E: packages/tui/src/ui/dialog.tsx:69] [E: packages/tui/src/ui/dialog.tsx:70] [E: packages/tui/src/ui/dialog.tsx:72] stack 非空时 push keymap mode `modal`，确保 modal-specific bindings 生效。[E: packages/tui/src/ui/dialog.tsx:79] [E: packages/tui/src/ui/dialog.tsx:80]
+`init()` 的 store 包含 `stack: { element, onClose? }[]` 和 `size`。[E: packages/tui/src/ui/dialog.tsx:71] [E: packages/tui/src/ui/dialog.tsx:72] [E: packages/tui/src/ui/dialog.tsx:73] [E: packages/tui/src/ui/dialog.tsx:75] stack 非空时 push keymap mode `modal`，确保 modal-specific bindings 生效。[E: packages/tui/src/ui/dialog.tsx:82] [E: packages/tui/src/ui/dialog.tsx:83]
 
-`replace(input, onClose?)` 在打开第一个 dialog 时保存并 blur 当前 focused renderable，调用旧 stack 的 onClose，然后把 stack 替换成单个 element。[E: packages/tui/src/ui/dialog.tsx:147] [E: packages/tui/src/ui/dialog.tsx:148] [E: packages/tui/src/ui/dialog.tsx:149] [E: packages/tui/src/ui/dialog.tsx:150] [E: packages/tui/src/ui/dialog.tsx:152] [E: packages/tui/src/ui/dialog.tsx:153] [E: packages/tui/src/ui/dialog.tsx:156] [E: packages/tui/src/ui/dialog.tsx:158] `clear()` 对 stack 中每个 item 调 onClose，重置 size 和 stack，并 refocus 原 renderable。[E: packages/tui/src/ui/dialog.tsx:136] [E: packages/tui/src/ui/dialog.tsx:138] [E: packages/tui/src/ui/dialog.tsx:139] [E: packages/tui/src/ui/dialog.tsx:142] [E: packages/tui/src/ui/dialog.tsx:143] [E: packages/tui/src/ui/dialog.tsx:145]
+`replace(input, onClose?)` 在打开第一个 dialog 时保存并 blur 当前 focused renderable，调用旧 stack 的 onClose，然后把 stack 替换成单个 element。[E: packages/tui/src/ui/dialog.tsx:150] [E: packages/tui/src/ui/dialog.tsx:151] [E: packages/tui/src/ui/dialog.tsx:152] [E: packages/tui/src/ui/dialog.tsx:153] [E: packages/tui/src/ui/dialog.tsx:155] [E: packages/tui/src/ui/dialog.tsx:156] [E: packages/tui/src/ui/dialog.tsx:159] [E: packages/tui/src/ui/dialog.tsx:161] `clear()` 对 stack 中每个 item 调 onClose，重置 size 和 stack，并 refocus 原 renderable。[E: packages/tui/src/ui/dialog.tsx:139] [E: packages/tui/src/ui/dialog.tsx:141] [E: packages/tui/src/ui/dialog.tsx:142] [E: packages/tui/src/ui/dialog.tsx:145] [E: packages/tui/src/ui/dialog.tsx:146] [E: packages/tui/src/ui/dialog.tsx:148]
 
-Escape 和 ctrl+c bindings 只在 stack 非空且没有 selected text 时启用；它们会清 selection、调用当前 onClose、pop stack，然后 refocus。[E: packages/tui/src/ui/dialog.tsx:102] [E: packages/tui/src/ui/dialog.tsx:103] [E: packages/tui/src/ui/dialog.tsx:106] [E: packages/tui/src/ui/dialog.tsx:111] [E: packages/tui/src/ui/dialog.tsx:114] [E: packages/tui/src/ui/dialog.tsx:115] [E: packages/tui/src/ui/dialog.tsx:116] [E: packages/tui/src/ui/dialog.tsx:120] [E: packages/tui/src/ui/dialog.tsx:125] [E: packages/tui/src/ui/dialog.tsx:128] [E: packages/tui/src/ui/dialog.tsx:129] [E: packages/tui/src/ui/dialog.tsx:130]
+Escape 和 ctrl+c bindings 只在 stack 非空且没有 selected text 时启用；它们会清 selection、调用当前 onClose、pop stack，然后 refocus。[E: packages/tui/src/ui/dialog.tsx:105] [E: packages/tui/src/ui/dialog.tsx:106] [E: packages/tui/src/ui/dialog.tsx:109] [E: packages/tui/src/ui/dialog.tsx:114] [E: packages/tui/src/ui/dialog.tsx:117] [E: packages/tui/src/ui/dialog.tsx:118] [E: packages/tui/src/ui/dialog.tsx:119] [E: packages/tui/src/ui/dialog.tsx:123] [E: packages/tui/src/ui/dialog.tsx:128] [E: packages/tui/src/ui/dialog.tsx:131] [E: packages/tui/src/ui/dialog.tsx:132] [E: packages/tui/src/ui/dialog.tsx:133]
 
-DialogProvider 还处理 dialog 期间的 copy selection：右键 copy 行为受 `Flag.OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT` 控制，普通 mouse up 可 copy selection 并 toast “Copied to clipboard”。[E: packages/tui/src/ui/dialog.tsx:185] [E: packages/tui/src/ui/dialog.tsx:188] [E: packages/tui/src/ui/dialog.tsx:189] [E: packages/tui/src/ui/dialog.tsx:203] [E: packages/tui/src/ui/dialog.tsx:204] [E: packages/tui/src/ui/dialog.tsx:210]
+DialogProvider 还处理 dialog 期间的 copy selection：右键 copy 行为受 `Flag.OPENCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT` 控制，普通 mouse up 可 copy selection 并 toast “Copied to clipboard”。[E: packages/tui/src/ui/dialog.tsx:188] [E: packages/tui/src/ui/dialog.tsx:191] [E: packages/tui/src/ui/dialog.tsx:192] [E: packages/tui/src/ui/dialog.tsx:206] [E: packages/tui/src/ui/dialog.tsx:207] [E: packages/tui/src/ui/dialog.tsx:213]
 
 ## DialogSelect
 
@@ -60,11 +60,11 @@ Toast store 只保存一个 `currentToast`；`show()` 默认 duration 5000ms，�
 
 ## 设计动机与权衡
 
-DialogProvider 只保留单个 stack，但 `replace()` 会清旧 stack 并设置新 root dialog；这使大多数 TUI modal 采用“当前唯一 dialog surface”模型，减少嵌套焦点与 keybinding 冲突。[E: packages/tui/src/ui/dialog.tsx:152] [E: packages/tui/src/ui/dialog.tsx:153] [E: packages/tui/src/ui/dialog.tsx:156] [E: packages/tui/src/ui/dialog.tsx:158] [I] DialogSelect 把 filter/list/actions/footer 放在一个 reusable component 中，使 provider/model/session/plugin manager 等高频选择器共享 fuzzysort、keymap 和 scrolling 逻辑。[E: packages/tui/src/ui/dialog-select.tsx:24] [E: packages/tui/src/ui/dialog-select.tsx:165] [E: packages/tui/src/ui/dialog-select.tsx:369] [E: packages/tui/src/ui/dialog-select.tsx:312] [I]
+DialogProvider 只保留单个 stack，但 `replace()` 会清旧 stack 并设置新 root dialog；这使大多数 TUI modal 采用“当前唯一 dialog surface”模型，减少嵌套焦点与 keybinding 冲突。[E: packages/tui/src/ui/dialog.tsx:155] [E: packages/tui/src/ui/dialog.tsx:156] [E: packages/tui/src/ui/dialog.tsx:159] [E: packages/tui/src/ui/dialog.tsx:161] [I] DialogSelect 把 filter/list/actions/footer 放在一个 reusable component 中，使 provider/model/session/plugin manager 等高频选择器共享 fuzzysort、keymap 和 scrolling 逻辑。[E: packages/tui/src/ui/dialog-select.tsx:24] [E: packages/tui/src/ui/dialog-select.tsx:165] [E: packages/tui/src/ui/dialog-select.tsx:369] [E: packages/tui/src/ui/dialog-select.tsx:312] [I]
 
 ## Gotcha
 
-- Dialog `replace(input: any)` 的 input 在 store 中作为 `element` 保存；类型没有在此层严格约束。[E: packages/tui/src/ui/dialog.tsx:147] [E: packages/tui/src/ui/dialog.tsx:158] [I]
+- Dialog `replace(input: any)` 的 input 在 store 中作为 `element` 保存；类型没有在此层严格约束。[E: packages/tui/src/ui/dialog.tsx:150] [E: packages/tui/src/ui/dialog.tsx:161] [I]
 - Toast 同一时间只显示一条，新的 `show()` 会覆盖旧 toast 并重置 timeout。[E: packages/tui/src/ui/toast.tsx:55] [E: packages/tui/src/ui/toast.tsx:63] [E: packages/tui/src/ui/toast.tsx:64]
 
 ## Sources

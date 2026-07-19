@@ -9,7 +9,7 @@ symbols: [WebSearchTool, selectWebSearchProvider, webSearchEnabled, McpWebSearch
 related: [ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > WebSearch 工具是 opencode 的本地 web search provider 工具；V1 通过 registry gate 按 provider/flags 暴露，V2 core 内建保留 Exa/Parallel MCP-JSON 调用以实现 launch parity。
@@ -26,7 +26,7 @@ updated: 8b68dc0d7
 
 ### 1 Identity
 
-V1 `WebSearchTool` 通过 `Tool.define("websearch", ...)` 注册，`ToolRegistry` 初始化 `websearch` 并加入 builtin 列表。[E: packages/opencode/src/tool/websearch.ts:99][E: packages/opencode/src/tool/websearch.ts:100][E: packages/opencode/src/tool/registry.ts:99][E: packages/opencode/src/tool/registry.ts:208][E: packages/opencode/src/tool/registry.ts:230] 但 V1 registry 后续会过滤：只有 `webSearchEnabled(input.providerID, { exa: flags.enableExa, parallel: flags.enableParallel })` 为 true 时才把 `websearch` 暴露给模型。[E: packages/opencode/src/tool/registry.ts:268][E: packages/opencode/src/tool/registry.ts:269]
+V1 `WebSearchTool` 通过 `Tool.define("websearch", ...)` 注册，`ToolRegistry` 初始化 `websearch` 并加入 builtin 列表。[E: packages/opencode/src/tool/websearch.ts:99][E: packages/opencode/src/tool/websearch.ts:100][E: packages/opencode/src/tool/registry.ts:104][E: packages/opencode/src/tool/registry.ts:215][E: packages/opencode/src/tool/registry.ts:238] 但 V1 registry 后续会过滤：只有 `webSearchEnabled(input.providerID, { exa: flags.enableExa, parallel: flags.enableParallel })` 为 true 时才把 `websearch` 暴露给模型。[E: packages/opencode/src/tool/registry.ts:288][E: packages/opencode/src/tool/registry.ts:289]
 
 ### 2 用途定位
 
@@ -52,7 +52,7 @@ V1 execute 先记录 tool metadata（title 和 provider），然后 `ctx.ask` �
 
 ### 6 execute() 走读
 
-1. `webSearchEnabled()` 的逻辑是：provider id 是 `opencode`，或 Exa flag 开启，或 Parallel flag 开启。[E: packages/opencode/src/tool/registry.ts:55][E: packages/opencode/src/tool/registry.ts:56]
+1. `webSearchEnabled()` 的逻辑是：provider id 是 `opencode`，或 Exa flag 开启，或 Parallel flag 开启。[E: packages/opencode/src/tool/registry.ts:58][E: packages/opencode/src/tool/registry.ts:59]
 2. V1 `RuntimeFlags` 把 `OPENCODE_EXPERIMENTAL`、`OPENCODE_ENABLE_EXA`、`OPENCODE_EXPERIMENTAL_EXA` 合成 `enableExa`，把 `OPENCODE_ENABLE_PARALLEL`、`OPENCODE_EXPERIMENTAL_PARALLEL` 合成 `enableParallel`。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:31][E: packages/opencode/src/effect/runtime-flags.ts:33][E: packages/opencode/src/effect/runtime-flags.ts:34][E: packages/opencode/src/effect/runtime-flags.ts:35][E: packages/opencode/src/effect/runtime-flags.ts:36][E: packages/opencode/src/effect/runtime-flags.ts:37][E: packages/opencode/src/effect/runtime-flags.ts:38][E: packages/opencode/src/effect/runtime-flags.ts:39]
 3. `selectWebSearchProvider()` 先读 `OPENCODE_WEBSEARCH_PROVIDER` override；没有 override 时优先 parallel flag，再优先 exa flag，最后用 session checksum 奇偶在 `"exa"` 和 `"parallel"` 间分流。[E: packages/opencode/src/tool/websearch.ts:30][E: packages/opencode/src/tool/websearch.ts:31][E: packages/opencode/src/tool/websearch.ts:32][E: packages/opencode/src/tool/websearch.ts:33][E: packages/opencode/src/tool/websearch.ts:34][E: packages/opencode/src/tool/websearch.ts:36]
 4. Parallel provider 调 `McpWebSearch.call()` 的 tool name 是 `web_search`，payload 是 `objective`、`search_queries`、`session_id`、`model_name`，timeout 是 `25 seconds`。[E: packages/opencode/src/tool/websearch.ts:66][E: packages/opencode/src/tool/websearch.ts:67][E: packages/opencode/src/tool/websearch.ts:70][E: packages/opencode/src/tool/websearch.ts:73][E: packages/opencode/src/tool/websearch.ts:74][E: packages/opencode/src/tool/websearch.ts:75][E: packages/opencode/src/tool/websearch.ts:76][E: packages/opencode/src/tool/websearch.ts:78]
@@ -99,7 +99,7 @@ V2 WebSearch 使用 `PermissionV2.Service.assert`，`action` 是 `websearch`，`
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 门控 | `webSearchEnabled()` 要求 provider 是 `opencode` 或 Exa/Parallel flag 开启。[E: packages/opencode/src/tool/registry.ts:55][E: packages/opencode/src/tool/registry.ts:56] | V2 builtins 注册 websearch；源码没有 V1 registry 的 provider gate。[E: packages/core/src/tool/builtins.ts:45][E: packages/core/src/tool/websearch.ts:199][I] |
+| 门控 | `webSearchEnabled()` 要求 provider 是 `opencode` 或 Exa/Parallel flag 开启。[E: packages/opencode/src/tool/registry.ts:58][E: packages/opencode/src/tool/registry.ts:59] | V2 builtins 注册 websearch；源码没有 V1 registry 的 provider gate。[E: packages/core/src/tool/builtins.ts:45][E: packages/core/src/tool/websearch.ts:199][I] |
 | Provider 选择 | `selectWebSearchProvider()` 使用 env override、flags、session checksum。[E: packages/opencode/src/tool/websearch.ts:31][E: packages/opencode/src/tool/websearch.ts:32][E: packages/opencode/src/tool/websearch.ts:33][E: packages/opencode/src/tool/websearch.ts:34][E: packages/opencode/src/tool/websearch.ts:36] | `selectProvider()` 使用 config override、flags、session checksum。[E: packages/core/src/tool/websearch.ts:93][E: packages/core/src/tool/websearch.ts:94][E: packages/core/src/tool/websearch.ts:95][E: packages/core/src/tool/websearch.ts:96] |
 | 字段限制 | V1 `numResults` 与 `contextMaxCharacters` 是 optional number，没有 max schema check。[E: packages/opencode/src/tool/websearch.ts:12][E: packages/opencode/src/tool/websearch.ts:22] | V2 限制 `numResults <= 20`、`contextMaxCharacters <= 50000`。[E: packages/core/src/tool/websearch.ts:22][E: packages/core/src/tool/websearch.ts:42][E: packages/core/src/tool/websearch.ts:52] |
 | Parallel payload | V1 会传 `model_name`。[E: packages/opencode/src/tool/websearch.ts:76] | V2 Parallel payload 只含 `objective`、`search_queries`、`session_id`，不含 model name。[E: packages/core/src/tool/websearch.ts:234][E: packages/core/src/tool/websearch.ts:235][E: packages/core/src/tool/websearch.ts:236][I] |

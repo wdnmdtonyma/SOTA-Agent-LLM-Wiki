@@ -9,7 +9,7 @@ symbols: [Auth.Service, ProviderAuth.Service, Account.Service, Credential.Servic
 related: [provider.auth-accounts, model-layer.credential-v2, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: 8b68dc0d7
+updated: 67caf894e
 ---
 
 > Model auth 横跨两代:V1 用 `auth.json` + provider auth hooks + account device flow 给 AI SDK provider registry 提供 key/OAuth token;V2 把 credentials 放进 SQLite `Credential` 表,并用 `Integration` 管 key/OAuth/env connection 与 OAuth attempt。
@@ -43,7 +43,7 @@ layer 初始化时从 V1 plugin list 收集 `x.auth.provider` hooks,并把 provi
 
 `Account.Service` 是 opencode account/login 层,接口包含 active/list/orgs/config/token/login/poll 等方法。[E: packages/opencode/src/account/account.ts:168][E: packages/opencode/src/account/account.ts:182] 它不等于 generic provider auth。[I]
 
-device login 用 `/auth/device/code` 拿 device/user code 与 verification URL,poll 用 device grant 调 `/auth/device/token`,成功后并发 fetch user/orgs,再把 account、accessToken、refreshToken、expiry、orgID 持久化。[E: packages/opencode/src/account/account.ts:378][E: packages/opencode/src/account/account.ts:388][E: packages/opencode/src/account/account.ts:393][E: packages/opencode/src/account/account.ts:399][E: packages/opencode/src/account/account.ts:403][E: packages/opencode/src/account/account.ts:421][E: packages/opencode/src/account/account.ts:430][E: packages/opencode/src/account/account.ts:437]
+device login 用 `/auth/device/code` 拿 device/user code 与 verification URL,poll 用 device grant 调 `/auth/device/token`,成功后并发 fetch user/orgs,再把 account、accessToken、refreshToken、expiry、orgID 持久化。[E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:400][E: packages/opencode/src/account/account.ts:405][E: packages/opencode/src/account/account.ts:411][E: packages/opencode/src/account/account.ts:415][E: packages/opencode/src/account/account.ts:433][E: packages/opencode/src/account/account.ts:442][E: packages/opencode/src/account/account.ts:449]
 
 refresh token flow 调 `/auth/device/token` 的 refresh_token grant,解析 token 后持久化新的 access/refresh/expiry。[E: packages/opencode/src/account/account.ts:220][E: packages/opencode/src/account/account.ts:224][E: packages/opencode/src/account/account.ts:232][E: packages/opencode/src/account/account.ts:238][E: packages/opencode/src/account/account.ts:242]
 
@@ -62,7 +62,7 @@ V1 auth 是文件与 plugin hook 的组合;V2 credential/integration 把 provide
 ## 易错点
 
 - V1 `ProviderAuth` 的 method type 名叫 `api`;V2 `Integration.KeyMethod` 的 method type 是 `key`,V2 credential value type 也是 `key`。[E: packages/opencode/src/provider/auth.ts:42][E: packages/schema/src/integration.ts:60][E: packages/schema/src/integration.ts:61][E: packages/schema/src/credential.ts:26][E: packages/schema/src/credential.ts:27]
-- V1 account login 是 opencode server account device flow。[E: packages/opencode/src/account/account.ts:378][E: packages/opencode/src/account/account.ts:399] 它不是 provider API key login。[I]
+- V1 account login 是 opencode server account device flow。[E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:411] 它不是 provider API key login。[I]
 - V2 Integration 的 OAuth attempt 有 oauth/status/complete/cancel 生命周期。[E: packages/core/src/integration.ts:163][E: packages/core/src/integration.ts:183][E: packages/core/src/integration.ts:185][E: packages/core/src/integration.ts:192] 它不是 external SaaS connector abstraction。[I]
 
 ## Sources
