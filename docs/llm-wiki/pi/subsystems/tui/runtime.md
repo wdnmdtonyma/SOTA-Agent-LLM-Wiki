@@ -18,7 +18,7 @@ related:
   - surface.modes.interactive
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 > `subsys.tui.runtime` 描述 `pi-tui` 的 runtime: `Container` 把组件树渲染为 lines, `TUI` 继承 `Container` 并接管 terminal input、focus、overlay stack、render scheduling 和 differential terminal writes。
@@ -38,12 +38,12 @@ updated: 8c943640
 
 `TUI` 是 terminal runtime class:它 `extends Container`, 持有 `terminal: Terminal`, 并保存 previous lines、previous terminal dimensions、focus state、input listeners、render timer、cursor state、overlay stack 和 terminal color listeners [E: packages/tui/src/tui.ts:295] [E: packages/tui/src/tui.ts:296] [E: packages/tui/src/tui.ts:297] [E: packages/tui/src/tui.ts:299] [E: packages/tui/src/tui.ts:300] [E: packages/tui/src/tui.ts:301] [E: packages/tui/src/tui.ts:302] [E: packages/tui/src/tui.ts:307] [E: packages/tui/src/tui.ts:310] [E: packages/tui/src/tui.ts:311] [E: packages/tui/src/tui.ts:325] [E: packages/tui/src/tui.ts:320]。因此 `TUI` 的边界不是具体 widget 样式, 而是把 component tree 的 line output 安排到真实 terminal 上 [I]。
 
-`packages/coding-agent/docs/tui.md` 把 component contract 写成公开文档:component 必须实现 `render(width): string[]` 和 `invalidate()`, 可选实现 `handleInput?(data)` 和 `wantsKeyRelease?` [E: packages/coding-agent/docs/tui.md:14] [E: packages/coding-agent/docs/tui.md:15] [E: packages/coding-agent/docs/tui.md:16] [E: packages/coding-agent/docs/tui.md:17] [E: packages/coding-agent/docs/tui.md:18]。公开文档还明确每条 `render(width)` 返回行不得超过 `width`, 这是 runtime 后续宽度校验的输入契约 [E: packages/coding-agent/docs/tui.md:24] [E: packages/coding-agent/docs/tui.md:301]。
+`packages/coding-agent/docs/tui.md` 把 component contract 写成公开文档:component 必须实现 `render(width): string[]` 和 `invalidate()`, 可选实现 `handleInput?(data)` 和 `wantsKeyRelease?` [E: packages/coding-agent/docs/tui.md:14] [E: packages/coding-agent/docs/tui.md:15] [E: packages/coding-agent/docs/tui.md:16] [E: packages/coding-agent/docs/tui.md:17] [E: packages/coding-agent/docs/tui.md:18]。公开文档还明确每条 `render(width)` 返回行不得超过 `width`, 这是 runtime 后续宽度校验的输入契约 [E: packages/coding-agent/docs/tui.md:24] [E: packages/coding-agent/docs/tui.md:314]。
 
 ## 关键文件
 
 - `packages/tui/src/tui.ts`:定义 `Component`、`Focusable`、`CURSOR_MARKER`、overlay types、`Container` 和 `TUI`, 是本节点的源码事实来源 [E: packages/tui/src/tui.ts:64] [E: packages/tui/src/tui.ts:104] [E: packages/tui/src/tui.ts:120] [E: packages/tui/src/tui.ts:171] [E: packages/tui/src/tui.ts:256] [E: packages/tui/src/tui.ts:295]。
-- `packages/coding-agent/docs/tui.md`:面向 extension/custom tool 作者说明 component contract、custom UI usage、overlay、line width、performance 和 invalidation 规则 [E: packages/coding-agent/docs/tui.md:5] [E: packages/coding-agent/docs/tui.md:91] [E: packages/coding-agent/docs/tui.md:111] [E: packages/coding-agent/docs/tui.md:297] [E: packages/coding-agent/docs/tui.md:463] [E: packages/coding-agent/docs/tui.md:491]。
+- `packages/coding-agent/docs/tui.md`:面向 extension/custom tool 作者说明 component contract、custom UI usage、overlay、line width、performance 和 invalidation 规则 [E: packages/coding-agent/docs/tui.md:5] [E: packages/coding-agent/docs/tui.md:91] [E: packages/coding-agent/docs/tui.md:124] [E: packages/coding-agent/docs/tui.md:310] [E: packages/coding-agent/docs/tui.md:478] [E: packages/coding-agent/docs/tui.md:506]。
 
 ## 数据模型
 
@@ -71,7 +71,7 @@ Overlay 由 `OverlayStackEntry` 保存 component、options、preFocus、hidden �
 
 `handleInput()` 会过滤 key release event, 除非 focused component 把 `wantsKeyRelease` 设为 true;这把 Kitty release protocol 的噪声从默认 component path 中隔离出去 [E: packages/tui/src/tui.ts:829] [E: packages/tui/src/tui.ts:830]。
 
-Overlay composition 是渲染期发生的:runtime 过滤可见 overlay, 按 `focusOrder` 排序, 用 overlay options 解析宽度、高度、row/col, 先渲染 overlay component, 再通过 `compositeLineAt()` 把 overlay line splice 到 base line 上 [E: packages/tui/src/tui.ts:1040] [E: packages/tui/src/tui.ts:1041] [E: packages/tui/src/tui.ts:1047] [E: packages/tui/src/tui.ts:1050] [E: packages/tui/src/tui.ts:1058] [E: packages/tui/src/tui.ts:1084] [E: packages/tui/src/tui.ts:1085]。公开文档把 overlay 暴露为 `ctx.ui.custom(..., { overlay: true })`, 并说明 overlay 不清屏而是在现有内容之上渲染 [E: packages/coding-agent/docs/tui.md:111] [E: packages/coding-agent/docs/tui.md:116]。
+Overlay composition 是渲染期发生的:runtime 过滤可见 overlay, 按 `focusOrder` 排序, 用 overlay options 解析宽度、高度、row/col, 先渲染 overlay component, 再通过 `compositeLineAt()` 把 overlay line splice 到 base line 上 [E: packages/tui/src/tui.ts:1040] [E: packages/tui/src/tui.ts:1041] [E: packages/tui/src/tui.ts:1047] [E: packages/tui/src/tui.ts:1050] [E: packages/tui/src/tui.ts:1058] [E: packages/tui/src/tui.ts:1084] [E: packages/tui/src/tui.ts:1085]。公开文档把 overlay 暴露为 `ctx.ui.custom(..., { overlay: true })`, 并说明 overlay 不清屏而是在现有内容之上渲染 [E: packages/coding-agent/docs/tui.md:124] [E: packages/coding-agent/docs/tui.md:129]。
 
 ## 设计动机与权衡
 
@@ -79,9 +79,9 @@ Overlay composition 是渲染期发生的:runtime 过滤可见 overlay, 按 `foc
 
 每行尾部追加 full SGR reset 和 OSC 8 reset 是 runtime-level 防御:源码对非 image line 执行 `normalizeTerminalOutput(line) + reset`, 文档也提醒 styles 不跨行继承, 多行 styled text 需要每行重加样式或使用 `wrapTextWithAnsi()` [E: packages/tui/src/tui.ts:1095] [E: packages/tui/src/tui.ts:1099] [E: packages/tui/src/tui.ts:1100] [E: packages/coding-agent/docs/tui.md:29]。
 
-Differential render 路径对过宽普通行有 hard failure:如果非 image line 的 `visibleWidth(line) > width`, runtime 会写 crash log、停止 TUI, 并抛出提示 custom component 使用 `visibleWidth()` 和 `truncateToWidth()` 的 Error [E: packages/tui/src/tui.ts:1520] [E: packages/tui/src/tui.ts:1522] [E: packages/tui/src/tui.ts:1532] [E: packages/tui/src/tui.ts:1536] [E: packages/tui/src/tui.ts:1539] [E: packages/tui/src/tui.ts:1541] [E: packages/tui/src/tui.ts:1546]。这是公开文档把 line width 标为 critical 的一个运行时后果 [E: packages/coding-agent/docs/tui.md:297] [E: packages/coding-agent/docs/tui.md:301] [E: packages/coding-agent/docs/tui.md:302] [E: packages/coding-agent/docs/tui.md:306]。
+Differential render 路径对过宽普通行有 hard failure:如果非 image line 的 `visibleWidth(line) > width`, runtime 会写 crash log、停止 TUI, 并抛出提示 custom component 使用 `visibleWidth()` 和 `truncateToWidth()` 的 Error [E: packages/tui/src/tui.ts:1520] [E: packages/tui/src/tui.ts:1522] [E: packages/tui/src/tui.ts:1532] [E: packages/tui/src/tui.ts:1536] [E: packages/tui/src/tui.ts:1539] [E: packages/tui/src/tui.ts:1541] [E: packages/tui/src/tui.ts:1546]。这是公开文档把 line width 标为 critical 的一个运行时后果 [E: packages/coding-agent/docs/tui.md:310] [E: packages/coding-agent/docs/tui.md:314] [E: packages/coding-agent/docs/tui.md:315] [E: packages/coding-agent/docs/tui.md:319]。
 
-Theme/cache invalidation 的责任分布是:runtime 会递归调用 components 的 `invalidate()`, 但如果 component 把 theme colors 预先烘进 child content, component 自己必须在 `invalidate()` 中 rebuild content [E: packages/tui/src/tui.ts:630] [E: packages/tui/src/tui.ts:631] [E: packages/tui/src/tui.ts:632] [E: packages/coding-agent/docs/tui.md:493] [E: packages/coding-agent/docs/tui.md:497] [E: packages/coding-agent/docs/tui.md:518] [E: packages/coding-agent/docs/tui.md:572] [E: packages/coding-agent/docs/tui.md:574]。
+Theme/cache invalidation 的责任分布是:runtime 会递归调用 components 的 `invalidate()`, 但如果 component 把 theme colors 预先烘进 child content, component 自己必须在 `invalidate()` 中 rebuild content [E: packages/tui/src/tui.ts:630] [E: packages/tui/src/tui.ts:631] [E: packages/tui/src/tui.ts:632] [E: packages/coding-agent/docs/tui.md:508] [E: packages/coding-agent/docs/tui.md:512] [E: packages/coding-agent/docs/tui.md:533] [E: packages/coding-agent/docs/tui.md:587] [E: packages/coding-agent/docs/tui.md:589]。
 
 ## Gotcha
 

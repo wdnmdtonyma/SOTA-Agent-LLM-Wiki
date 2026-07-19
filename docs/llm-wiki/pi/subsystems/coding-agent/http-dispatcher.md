@@ -13,7 +13,7 @@ related:
   - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 > `http-dispatcher.ts` 是 pi-coding-agent 的 HTTP dispatcher bootstrap:它把 `undici` 全局 dispatcher 配成 env-proxy aware,并在安全条件下把 `globalThis.fetch` 也切到同一份 npm `undici` implementation。
@@ -78,7 +78,7 @@ timeout parser 对空 string 和非法值返回 `undefined`,但 `configureHttpDi
 
 ## 跨包边界
 
-`surface.sdk.embedding` 是 coding-agent 的 SDK 嵌入 surface,索引显示它的 related 包含本节点;嵌入式 caller 如果复用 coding-agent session,会受到这个 process/global HTTP bootstrap 的影响 [I]。该 related 节点当前在 index 中仍是 planned,所以这里保留 id 而不创建 markdown 链接。
+[surface.sdk.embedding](../../surface/sdk/embedding.md) 是 coding-agent 的 SDK 嵌入 surface,其 related 包含本节点;嵌入式 caller 如果复用 coding-agent session,会受到这个 process/global HTTP bootstrap 的影响 [I]。
 
 [subsys.ai.wire-protocol-dispatch](../ai/wire-protocol-dispatch.md) 描述 `pi-ai` 如何把 `Model.api` 分派到 provider-specific `stream` / `streamSimple`;本节点提供的是更低层的 process HTTP dispatcher/fetch setup,二者通过运行时 HTTP 请求路径相邻,但 source file 没有直接 import `pi-ai` [I]。
 
@@ -88,5 +88,5 @@ timeout parser 对空 string 和非法值返回 `undefined`,但 `configureHttpDi
 
 ## 相关
 
-- `surface.sdk.embedding`: SDK 嵌入 surface;该节点当前未落盘,所以保留 index id。
+- [surface.sdk.embedding](../../surface/sdk/embedding.md): SDK 嵌入 surface如何创建和驱动 coding-agent session。
 - [subsys.ai.wire-protocol-dispatch](../ai/wire-protocol-dispatch.md): `pi-ai` 的 provider wire protocol dispatch,负责选择 provider streaming implementation。

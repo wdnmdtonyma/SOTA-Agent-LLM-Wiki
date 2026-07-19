@@ -4,9 +4,9 @@ Source node: `ref.interactive.components` (`docs/llm-wiki/pi/reference/component
 
 ## [U] directory instance count vs public barrel
 
-`index.json` 的 group ground truth 是 `packages/coding-agent/src/modes/interactive/components/`, instance_count 是 38;该目录正好有 38 个 `.ts` 文件, 但其中 `index.ts` 是 barrel, 不是 runtime component class。当前节点按“目录文件”计入 `index.ts`;如果后续把 instance 定义改成“public component/helper symbol”, 需要重算。
+`index.json` 的 group ground truth 是 `packages/coding-agent/src/modes/interactive/components/`；目标目录与 catalog 已同步为 40 个 `.ts` 文件，包括新增 `custom-entry.ts`。其中 `index.ts` 是 barrel，不是 runtime component class；当前节点按“目录文件”计入它。如果后续把 instance 定义改成“public component/helper symbol”，需要重算。
 
-Evidence: `packages/coding-agent/src/modes/interactive/components/index.ts:2`, `packages/coding-agent/src/modes/interactive/components/index.ts:38`
+Evidence: `packages/coding-agent/src/modes/interactive/components/index.ts:2`, `packages/coding-agent/src/modes/interactive/components/index.ts:38`, `packages/coding-agent/src/modes/interactive/components/custom-entry.ts:11`
 
 ## [U] internal-only files not exported by components/index.ts
 

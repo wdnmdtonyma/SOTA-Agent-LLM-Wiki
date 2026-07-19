@@ -9,7 +9,7 @@ symbols: [SessionTreeEntry, MessageEntry, LeafEntry, uuidv7]
 related: [spine.session-state-model, subsys.agent-core.tree-navigation, ref.agent.session-entry-types]
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 > `subsys.agent-core.session-tree` 定义 pi-agent-core 的 append-only session tree entry 形状: 所有 entry 都有 `id`、`parentId`、`timestamp`, 具体变体用 `type` 区分; `uuidv7()` 提供默认 entry id 形态。
@@ -34,7 +34,7 @@ updated: 8c943640
 
 `id` 是 entry 自身标识，`parentId` 是指向父 entry 的可空引用，`timestamp` 是 entry 时间戳字符串，`type` 是 discriminated union 的分派字段 [E: packages/agent/src/harness/types.ts:335] [E: packages/agent/src/harness/types.ts:336] [E: packages/agent/src/harness/types.ts:337] [E: packages/agent/src/harness/types.ts:338]。根 entry 或无父上下文的 entry 可以用 `parentId: null` 表示，因为字段类型是 `string | null` [E: packages/agent/src/harness/types.ts:337]。
 
-源码窗口里没有 `children` 或 `childIds` 字段; child relation 是 `parentId` 的反向索引概念，而不是 entry 自身存储的字段 [I]。storage contract 暴露 `getPathToRoot(leafId)`，说明导航 API 以 leaf id 为输入返回 path，而不是要求 entry 保存 child list [E: packages/agent/src/harness/types.ts:452] [I]。
+源码窗口里没有 `children` 或 `childIds` 字段; child relation 是 `parentId` 的反向索引概念，而不是 entry 自身存储的字段 [I]。storage contract 暴露 `getPathToRoot(leafId)`，说明导航 API 以 leaf id 为输入返回 path，而不是要求 entry 保存 child list [E: packages/agent/src/harness/types.ts:453] [I]。
 
 ### Entry variants
 
@@ -58,9 +58,9 @@ updated: 8c943640
 
 `MessageEntry` 只在 variant payload 中增加 `message: AgentMessage`; 它仍继承 `SessionTreeEntryBase` 的 `id`、`parentId`、`timestamp`，所以消息既是 payload 也是 tree node [E: packages/agent/src/harness/types.ts:341] [E: packages/agent/src/harness/types.ts:343] [E: packages/agent/src/harness/types.ts:334]。
 
-`LeafEntry` 的 `targetId` 是 `string | null`，它和普通 entry 的 `parentId` 是两种不同指针: `parentId` 描述 entry 在树中的父节点，`targetId` 描述当前 leaf pointer 应指向哪条 entry 或空 leaf [E: packages/agent/src/harness/types.ts:337] [E: packages/agent/src/harness/types.ts:404] [E: packages/agent/src/harness/types.ts:405] [E: packages/agent/src/harness/types.ts:406]。`SessionStorage` contract 也把 `getLeafId()` / `setLeafId()` 与 `appendEntry()` / `getPathToRoot()` 分开建模，说明 leaf pointer 是 storage 层的一等状态，而不只是普通 message payload [E: packages/agent/src/harness/types.ts:442] [E: packages/agent/src/harness/types.ts:444] [E: packages/agent/src/harness/types.ts:446] [E: packages/agent/src/harness/types.ts:452]。
+`LeafEntry` 的 `targetId` 是 `string | null`，它和普通 entry 的 `parentId` 是两种不同指针: `parentId` 描述 entry 在树中的父节点，`targetId` 描述当前 leaf pointer 应指向哪条 entry 或空 leaf [E: packages/agent/src/harness/types.ts:337] [E: packages/agent/src/harness/types.ts:404] [E: packages/agent/src/harness/types.ts:405] [E: packages/agent/src/harness/types.ts:406]。`SessionStorage` contract 也把 `getLeafId()` / `setLeafId()` 与 `appendEntry()` / `getPathToRoot()` 分开建模，说明 leaf pointer 是 storage 层的一等状态，而不只是普通 message payload [E: packages/agent/src/harness/types.ts:443] [E: packages/agent/src/harness/types.ts:445] [E: packages/agent/src/harness/types.ts:447] [E: packages/agent/src/harness/types.ts:453]。
 
-`PendingSessionWrite` 是 `SessionTreeEntry` 去掉 `id`、`parentId`、`timestamp` 后的待写入形态; 这暗示 harness/storage 边界会在写入时补齐 tree identity 和位置字段，而调用方只提交 variant payload [E: packages/agent/src/harness/types.ts:494] [E: packages/agent/src/harness/types.ts:495] [E: packages/agent/src/harness/types.ts:496] [E: packages/agent/src/harness/types.ts:497] [I]。
+`PendingSessionWrite` 是 `SessionTreeEntry` 去掉 `id`、`parentId`、`timestamp` 后的待写入形态; 这暗示 harness/storage 边界会在写入时补齐 tree identity 和位置字段，而调用方只提交 variant payload [E: packages/agent/src/harness/types.ts:496] [E: packages/agent/src/harness/types.ts:497] [E: packages/agent/src/harness/types.ts:498] [E: packages/agent/src/harness/types.ts:499] [I]。
 
 ## uuidv7
 
@@ -75,14 +75,14 @@ id 的时间成分来自 `Date.now()`; 当新 timestamp 大于 `lastTimestamp` �
 ## Gotcha
 
 - `SessionTreeEntryBase.type` 是宽泛 `string`，但 union 成员把具体 `type` 收窄成 literal; 需要做 variant 判断时应以 union 成员为准 [E: packages/agent/src/harness/types.ts:335] [E: packages/agent/src/harness/types.ts:342] [E: packages/agent/src/harness/types.ts:409]。
-- `LeafEntry` 自身也是 `SessionTreeEntry` union 的一个成员，不等同于 `SessionStorage.getLeafId()` 返回的 leaf pointer; 前者是可持久化 entry，后者是 storage API 暴露的当前 pointer [E: packages/agent/src/harness/types.ts:404] [E: packages/agent/src/harness/types.ts:420] [E: packages/agent/src/harness/types.ts:442]。
+- `LeafEntry` 自身也是 `SessionTreeEntry` union 的一个成员，不等同于 `SessionStorage.getLeafId()` 返回的 leaf pointer; 前者是可持久化 entry，后者是 storage API 暴露的当前 pointer [E: packages/agent/src/harness/types.ts:404] [E: packages/agent/src/harness/types.ts:420] [E: packages/agent/src/harness/types.ts:443]。
 - `uuidv7()` 的 fallback 使用 `Math.random()`，因此没有 `crypto.getRandomValues` 的运行时随机性更弱; 这是代码路径事实，不应把所有运行时都描述为 cryptographically strong [E: packages/agent/src/harness/session/uuid.ts:5] [E: packages/agent/src/harness/session/uuid.ts:6] [E: packages/agent/src/harness/session/uuid.ts:10] [E: packages/agent/src/harness/session/uuid.ts:11] [I]。
 
 ## 跨包边界
 
 [spine.session-state-model](../../spine/session-state-model.md) 负责解释 session tree 如何被读成当前 LLM context; 本节点负责 entry data model 和 id generator [I]。
 
-[subsys.agent-core.tree-navigation](tree-navigation.md) 应负责 `getPathToRoot()`、branch navigation、current leaf 变化的控制流; 本节点只说明 storage contract 中存在这些 API [E: packages/agent/src/harness/types.ts:442] [E: packages/agent/src/harness/types.ts:444] [E: packages/agent/src/harness/types.ts:452] [I]。
+[subsys.agent-core.tree-navigation](tree-navigation.md) 应负责 `getPathToRoot()`、branch navigation、current leaf 变化的控制流; 本节点只说明 storage contract 中存在这些 API [E: packages/agent/src/harness/types.ts:443] [E: packages/agent/src/harness/types.ts:445] [E: packages/agent/src/harness/types.ts:453] [I]。
 
 [ref.agent.session-entry-types](../../reference/session-entry-types.md) 应作为 catalog 全覆盖每个 entry variant 的字段; 本节点给 data model 关系和边界解释 [I]。
 

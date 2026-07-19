@@ -13,7 +13,7 @@ related:
   - subsys.ai.image-generation
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 > `ref.ai.image-models` 是 pi-ai 图像模型 catalog: 以 generated `IMAGE_MODELS` 为 ground truth,逐实例列出 OpenRouter 图像模型的 id/name、provider、能力字段、成本字段和 provider 装配关系。

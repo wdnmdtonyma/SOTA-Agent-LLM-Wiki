@@ -2,7 +2,7 @@
 
 batch: agent-core
 node: ref.agent.error-codes
-updated: 5a073885
+updated: 3da591ab
 
 ## 当前状态
 

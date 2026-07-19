@@ -10,7 +10,7 @@ source:
   - packages/coding-agent/src/cli/session-picker.ts
 evidence: unknown
 status: draft
-updated: 5a073885
+updated: 3da591ab
 ---
 
 > 本 staging 记录本轮按 `docs/llm-wiki/pi/index.json` 的 source 核验 `surface.sessions.management` 后,仍不能用三源直接证明的事项。

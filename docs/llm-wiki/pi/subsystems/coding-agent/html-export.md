@@ -9,14 +9,15 @@ source:
   - packages/coding-agent/src/core/export-html/ansi-to-html.ts
   - packages/coding-agent/src/core/export-html/tool-renderer.ts
 symbols:
-  - exportHtml
+  - exportSessionToHtml
+  - exportFromFile
   - ansiToHtml
 related:
   - surface.sessions.management
   - subsys.coding-agent.theme-controller
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 > 会话 HTML 导出是 pi-coding-agent 把 `SessionManager` 的 JSONL 会话、可选 `AgentState` 元数据、主题色和扩展工具渲染结果打包成单个 standalone HTML 文件的子系统。

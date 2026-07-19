@@ -5,11 +5,18 @@ kind: subsystem
 tier: T2
 pkg: ai
 source:
-  - packages/ai/src/utils/oauth/index.ts
-  - packages/ai/src/utils/oauth/device-code.ts
-  - packages/ai/src/utils/oauth/pkce.ts
+  - packages/ai/src/oauth.ts
+  - packages/ai/src/auth/oauth/load.ts
+  - packages/ai/src/auth/oauth/device-code.ts
+  - packages/ai/src/auth/oauth/pkce.ts
+  - packages/ai/src/bun-oauth.ts
+  - packages/ai/src/providers/anthropic.ts
+  - packages/ai/src/providers/openai-codex.ts
+  - packages/ai/package.json
 symbols:
-  - getOAuthProvider
+  - loadAnthropicOAuth
+  - loadOpenAICodexOAuth
+  - registerBundledOAuthFlowLoaders
   - pollOAuthDeviceCodeFlow
   - generatePKCE
 related:
@@ -17,107 +24,74 @@ related:
   - subsys.ai.auth-resolution
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
-> `subsys.ai.oauth-flow` covers the `pi-ai` legacy OAuth provider registry plus two provider-neutral helpers: device-code polling and PKCE verifier/challenge generation.
+> `subsys.ai.oauth-flow` 描述当前 `pi-ai` OAuth 实现入口：provider 按需加载 flow，standalone Bun 注入静态 flow，公共 `./oauth` subpath 仅保留 coding-agent extension 的类型兼容面。
 
 ## 能回答的问题
 
-- `getOAuthProvider()` 从哪里找到 Anthropic、GitHub Copilot、OpenAI Codex 的 legacy OAuth provider?
-- legacy OAuth provider registry 如何注册、注销、重置和列出 provider?
-- device-code polling helper 如何处理 `pending`、`slow_down`、`failed`、取消和超时?
-- PKCE verifier 与 challenge 如何生成?
-- 本节点和 `subsys.ai.auth-resolution` 的边界在哪里?
+- 被删除的 `packages/ai/src/utils/oauth/index.ts` 由什么入口取代?
+- 普通 Node/bundler 与 standalone Bun 如何加载同一组 OAuth flow?
+- device-code polling 如何处理首次等待、`slow_down`、取消和超时?
+- PKCE verifier/challenge 如何生成?
+- `@earendil-works/pi-ai/oauth` 现在导出实现还是只导出类型?
 
-## 职责边界
+## 搬家后的入口边界
 
-`packages/ai/src/utils/oauth/index.ts` is the legacy/high-level OAuth provider registry. It re-exports provider-specific OAuth modules for Anthropic, GitHub Copilot and OpenAI Codex, then builds an in-memory registry from their provider objects [E: packages/ai/src/utils/oauth/index.ts:11] [E: packages/ai/src/utils/oauth/index.ts:14] [E: packages/ai/src/utils/oauth/index.ts:22] [E: packages/ai/src/utils/oauth/index.ts:42] [E: packages/ai/src/utils/oauth/index.ts:43] [E: packages/ai/src/utils/oauth/index.ts:44] [E: packages/ai/src/utils/oauth/index.ts:45].
+旧 `packages/ai/src/utils/oauth/index.ts` 的全局 registry、`getOAuthProvider()` 与 deprecated token wrapper 已删除；当前 OAuth 实现没有新的同形 `index.ts`。内部实现入口是 `packages/ai/src/auth/oauth/load.ts`：它定义 Anthropic、OpenAI Codex、GitHub Copilot、xAI 与 Radius 的 lazy loader，并统一返回新的 `OAuthAuth` contract [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:19] [E: packages/ai/src/auth/oauth/load.ts:29] [E: packages/ai/src/auth/oauth/load.ts:49]。
 
-`packages/ai/src/utils/oauth/device-code.ts` is a generic polling loop. Its options contain caller-supplied `poll()`, optional `intervalSeconds`, optional `expiresInSeconds`, and optional `AbortSignal`; the helper itself has no provider endpoint or provider id parameter [E: packages/ai/src/utils/oauth/device-code.ts:18] [E: packages/ai/src/utils/oauth/device-code.ts:19] [E: packages/ai/src/utils/oauth/device-code.ts:20] [E: packages/ai/src/utils/oauth/device-code.ts:21] [E: packages/ai/src/utils/oauth/device-code.ts:22] [I].
+公共 package subpath `./oauth` 仍存在于 exports map [E: packages/ai/package.json:30]，但对应 `src/oauth.ts` 只 `export type` coding-agent extension compatibility declarations；它不再重导出 OAuth flow 实现、registry 或 helpers [E: packages/ai/src/oauth.ts:2] [E: packages/ai/src/oauth.ts:10]。因此“被删 `index.ts` 的新入口”要分成两层理解：应用内部 flow 加载走 `auth/oauth/load.ts`，外部 `@earendil-works/pi-ai/oauth` 只是 type-only compatibility entry。
 
-`packages/ai/src/utils/oauth/pkce.ts` is a generic PKCE helper. It creates a random verifier, hashes that verifier with SHA-256, encodes both byte sequences as base64url strings, and returns `{ verifier, challenge }` [E: packages/ai/src/utils/oauth/pkce.ts:21] [E: packages/ai/src/utils/oauth/pkce.ts:23] [E: packages/ai/src/utils/oauth/pkce.ts:24] [E: packages/ai/src/utils/oauth/pkce.ts:25] [E: packages/ai/src/utils/oauth/pkce.ts:28] [E: packages/ai/src/utils/oauth/pkce.ts:29] [E: packages/ai/src/utils/oauth/pkce.ts:30] [E: packages/ai/src/utils/oauth/pkce.ts:31] [E: packages/ai/src/utils/oauth/pkce.ts:33].
+provider factory 自己声明 OAuth 能力并绑定 loader。例如 `anthropicProvider()` 把 `loadAnthropicOAuth` 包进 `lazyOAuth()` [E: packages/ai/src/providers/anthropic.ts:3] [E: packages/ai/src/providers/anthropic.ts:15]；`openaiCodexProvider()` 同样绑定 `loadOpenAICodexOAuth` [E: packages/ai/src/providers/openai-codex.ts:3] [E: packages/ai/src/providers/openai-codex.ts:13]。这取代了旧的 module-global OAuth provider registry。[I]
 
-This node does not directly verify the newer runtime `OAuthAuth` contract or credential-store locking path, because those are outside this node's source list. It treats `subsys.ai.auth-resolution` as the related node for stored credential precedence, locked refresh, and request auth derivation [I].
+## Lazy flow 与 standalone Bun
 
-## 关键文件
+普通运行时通过 variable specifier 调用 dynamic `import()`；loader 在源 `.ts` 与构建后 `.js` 之间重写后缀，使 bundler 不必静态追入依赖 `node:http` / `node:crypto` 的 flow 实现 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/auth/oauth/load.ts:10] [E: packages/ai/src/auth/oauth/load.ts:11]。
 
-- `packages/ai/src/utils/oauth/index.ts`: provider module re-exports, built-in provider registry, custom register/unregister/reset/list helpers, and deprecated high-level refresh/key wrappers [E: packages/ai/src/utils/oauth/index.ts:11] [E: packages/ai/src/utils/oauth/index.ts:31] [E: packages/ai/src/utils/oauth/index.ts:42] [E: packages/ai/src/utils/oauth/index.ts:55] [E: packages/ai/src/utils/oauth/index.ts:62] [E: packages/ai/src/utils/oauth/index.ts:72] [E: packages/ai/src/utils/oauth/index.ts:84] [E: packages/ai/src/utils/oauth/index.ts:94] [E: packages/ai/src/utils/oauth/index.ts:117] [E: packages/ai/src/utils/oauth/index.ts:135].
-- `packages/ai/src/utils/oauth/device-code.ts`: device-code poll result union, poll options, abortable sleep, and `pollOAuthDeviceCodeFlow()` [E: packages/ai/src/utils/oauth/device-code.ts:11] [E: packages/ai/src/utils/oauth/device-code.ts:16] [E: packages/ai/src/utils/oauth/device-code.ts:18] [E: packages/ai/src/utils/oauth/device-code.ts:25] [E: packages/ai/src/utils/oauth/device-code.ts:45].
-- `packages/ai/src/utils/oauth/pkce.ts`: base64url encoding helper and `generatePKCE()` [E: packages/ai/src/utils/oauth/pkce.ts:9] [E: packages/ai/src/utils/oauth/pkce.ts:14] [E: packages/ai/src/utils/oauth/pkce.ts:21].
+每个 `load*OAuth()` 先检查 module-local `bundledLoaders`：存在时调用已注册函数，否则动态 import 对应实现并取出 `OAuthAuth` object [E: packages/ai/src/auth/oauth/load.ts:22] [E: packages/ai/src/auth/oauth/load.ts:25] [E: packages/ai/src/auth/oauth/load.ts:30] [E: packages/ai/src/auth/oauth/load.ts:31] [E: packages/ai/src/auth/oauth/load.ts:35] [E: packages/ai/src/auth/oauth/load.ts:36]。
 
-## OAuth provider lookup
+standalone Bun 不能依赖这些 flow 在运行时仍是可发现 chunk，所以 `registerBunOAuthFlows()` 静态导入五组实现并调用 `registerBundledOAuthFlowLoaders()`；Radius 以 factory 接受 `{name, gateway}`，其余 loader 返回固定 `OAuthAuth` object [E: packages/ai/src/bun-oauth.ts:1] [E: packages/ai/src/bun-oauth.ts:6] [E: packages/ai/src/bun-oauth.ts:9] [E: packages/ai/src/bun-oauth.ts:10] [E: packages/ai/src/bun-oauth.ts:15]。package exports 为该 bundle bridge 提供独立 `./bun-oauth` subpath [E: packages/ai/package.json:38]。
 
-`BUILT_IN_OAUTH_PROVIDERS` contains exactly the three imported provider objects `anthropicOAuthProvider`, `githubCopilotOAuthProvider`, and `openaiCodexOAuthProvider` [E: packages/ai/src/utils/oauth/index.ts:37] [E: packages/ai/src/utils/oauth/index.ts:38] [E: packages/ai/src/utils/oauth/index.ts:39] [E: packages/ai/src/utils/oauth/index.ts:42] [E: packages/ai/src/utils/oauth/index.ts:43] [E: packages/ai/src/utils/oauth/index.ts:44] [E: packages/ai/src/utils/oauth/index.ts:45].
+## Device-code polling
 
-`oauthProviderRegistry` is a `Map<string, OAuthProviderInterface>` whose initial entries are `[provider.id, provider]` pairs from `BUILT_IN_OAUTH_PROVIDERS` [E: packages/ai/src/utils/oauth/index.ts:48] [E: packages/ai/src/utils/oauth/index.ts:49].
+`OAuthDeviceCodePollResult<T>` 的非终态是 `pending` 或带可选 server interval 的 `slow_down`；终态是带 message 的 `failed` 或带 value 的 `complete` [E: packages/ai/src/auth/oauth/device-code.ts:11] [E: packages/ai/src/auth/oauth/device-code.ts:16]。options 提供初始 interval、过期时间、是否首次 poll 前等待、caller-supplied `poll()` 与 `AbortSignal` [E: packages/ai/src/auth/oauth/device-code.ts:18] [E: packages/ai/src/auth/oauth/device-code.ts:23]。
 
-`getOAuthProvider(id)` only returns `oauthProviderRegistry.get(id)`. Unknown ids therefore return the normal `Map.get()` miss value, and this function does not perform login, credential reads, or dynamic provider loading [E: packages/ai/src/utils/oauth/index.ts:55] [E: packages/ai/src/utils/oauth/index.ts:56] [I].
+deadline 由 `expiresInSeconds` 计算，未提供时为 infinity；初始 interval 默认 5 秒且不会低于 1000ms [E: packages/ai/src/auth/oauth/device-code.ts:47] [E: packages/ai/src/auth/oauth/device-code.ts:50] [E: packages/ai/src/auth/oauth/device-code.ts:51] [E: packages/ai/src/auth/oauth/device-code.ts:53]。`waitBeforeFirstPoll` 为 true 时，helper 会先睡 `min(interval, remaining)`，避免立即打第一枪 [E: packages/ai/src/auth/oauth/device-code.ts:57] [E: packages/ai/src/auth/oauth/device-code.ts:60]。
 
-`registerOAuthProvider(provider)` upserts a registry entry under `provider.id` [E: packages/ai/src/utils/oauth/index.ts:62] [E: packages/ai/src/utils/oauth/index.ts:63].
+循环先检查 cancel，再调用 caller 的 `poll()`；`complete` 返回 value，`failed` 抛出 message [E: packages/ai/src/auth/oauth/device-code.ts:64] [E: packages/ai/src/auth/oauth/device-code.ts:66] [E: packages/ai/src/auth/oauth/device-code.ts:69] [E: packages/ai/src/auth/oauth/device-code.ts:74]。`slow_down` 若携带有限正数 `intervalSeconds` 就采用 server minimum，否则在当前 interval 上增加 5000ms；两种情况都保持 1000ms 下限 [E: packages/ai/src/auth/oauth/device-code.ts:76] [E: packages/ai/src/auth/oauth/device-code.ts:82] [E: packages/ai/src/auth/oauth/device-code.ts:86]。
 
-`unregisterOAuthProvider(id)` searches the built-in provider array first. If the id is built in, it restores that built-in object in the registry; otherwise it deletes the id from the registry [E: packages/ai/src/utils/oauth/index.ts:72] [E: packages/ai/src/utils/oauth/index.ts:73] [E: packages/ai/src/utils/oauth/index.ts:74] [E: packages/ai/src/utils/oauth/index.ts:75] [E: packages/ai/src/utils/oauth/index.ts:78].
-
-`resetOAuthProviders()` clears the registry and re-adds all built-ins; `getOAuthProviders()` returns `Array.from(oauthProviderRegistry.values())`, so registered custom providers remain listable until unregister or reset changes the map [E: packages/ai/src/utils/oauth/index.ts:84] [E: packages/ai/src/utils/oauth/index.ts:85] [E: packages/ai/src/utils/oauth/index.ts:86] [E: packages/ai/src/utils/oauth/index.ts:87] [E: packages/ai/src/utils/oauth/index.ts:94] [E: packages/ai/src/utils/oauth/index.ts:95] [I].
-
-## Device-code flow
-
-`OAuthDeviceCodePollResult<T>` has four statuses: `pending`, `slow_down`, `failed`, and `complete`. `failed` carries `message`; `complete` carries `value` [E: packages/ai/src/utils/oauth/device-code.ts:11] [E: packages/ai/src/utils/oauth/device-code.ts:12] [E: packages/ai/src/utils/oauth/device-code.ts:13] [E: packages/ai/src/utils/oauth/device-code.ts:14] [E: packages/ai/src/utils/oauth/device-code.ts:16].
-
-The polling deadline is `Date.now() + expiresInSeconds * 1000` when `expiresInSeconds` is numeric; otherwise the deadline is `Number.POSITIVE_INFINITY` [E: packages/ai/src/utils/oauth/device-code.ts:46] [E: packages/ai/src/utils/oauth/device-code.ts:47] [E: packages/ai/src/utils/oauth/device-code.ts:48] [E: packages/ai/src/utils/oauth/device-code.ts:49].
-
-The initial poll interval is `Math.floor((options.intervalSeconds ?? DEFAULT_POLL_INTERVAL_SECONDS) * 1000)` capped to at least `MINIMUM_INTERVAL_MS`; the constants are 5 seconds default and 1000 ms minimum [E: packages/ai/src/utils/oauth/device-code.ts:5] [E: packages/ai/src/utils/oauth/device-code.ts:7] [E: packages/ai/src/utils/oauth/device-code.ts:50] [E: packages/ai/src/utils/oauth/device-code.ts:51] [E: packages/ai/src/utils/oauth/device-code.ts:52].
-
-Each loop iteration first checks `options.signal?.aborted`, then calls `options.poll()`. `complete` returns the value, `failed` throws the supplied message, and `slow_down` increments a counter and adds 5000 ms to current and later sleeps [E: packages/ai/src/utils/oauth/device-code.ts:56] [E: packages/ai/src/utils/oauth/device-code.ts:57] [E: packages/ai/src/utils/oauth/device-code.ts:58] [E: packages/ai/src/utils/oauth/device-code.ts:61] [E: packages/ai/src/utils/oauth/device-code.ts:62] [E: packages/ai/src/utils/oauth/device-code.ts:63] [E: packages/ai/src/utils/oauth/device-code.ts:65] [E: packages/ai/src/utils/oauth/device-code.ts:66] [E: packages/ai/src/utils/oauth/device-code.ts:68] [E: packages/ai/src/utils/oauth/device-code.ts:69] [E: packages/ai/src/utils/oauth/device-code.ts:71].
-
-Sleep is abortable. `abortableSleep()` rejects with `"Login cancelled"` if the signal is already aborted or aborts before timeout resolution, clears the timeout on abort, and removes the abort listener when the timeout resolves normally [E: packages/ai/src/utils/oauth/device-code.ts:1] [E: packages/ai/src/utils/oauth/device-code.ts:25] [E: packages/ai/src/utils/oauth/device-code.ts:27] [E: packages/ai/src/utils/oauth/device-code.ts:28] [E: packages/ai/src/utils/oauth/device-code.ts:32] [E: packages/ai/src/utils/oauth/device-code.ts:33] [E: packages/ai/src/utils/oauth/device-code.ts:34] [E: packages/ai/src/utils/oauth/device-code.ts:36] [E: packages/ai/src/utils/oauth/device-code.ts:37] [E: packages/ai/src/utils/oauth/device-code.ts:41].
-
-When the loop exits by timeout, the thrown message depends on whether any `slow_down` response was seen: no slow-down uses `"Device flow timed out"`; one or more slow-down responses uses the longer clock-drift hint [E: packages/ai/src/utils/oauth/device-code.ts:2] [E: packages/ai/src/utils/oauth/device-code.ts:3] [E: packages/ai/src/utils/oauth/device-code.ts:4] [E: packages/ai/src/utils/oauth/device-code.ts:55] [E: packages/ai/src/utils/oauth/device-code.ts:82].
+每次 sleep 都被 remaining deadline 截断并受 signal 取消 [E: packages/ai/src/auth/oauth/device-code.ts:89] [E: packages/ai/src/auth/oauth/device-code.ts:94]。超时后，只要曾收到 `slow_down` 就抛带 WSL/VM clock-drift 提示的 message，否则抛普通 timeout [E: packages/ai/src/auth/oauth/device-code.ts:3] [E: packages/ai/src/auth/oauth/device-code.ts:97]。
 
 ## PKCE helper
 
-`base64urlEncode(bytes)` builds a binary string from the bytes, calls `btoa(binary)`, replaces `+` with `-`, replaces `/` with `_`, and removes `=` padding [E: packages/ai/src/utils/oauth/pkce.ts:9] [E: packages/ai/src/utils/oauth/pkce.ts:10] [E: packages/ai/src/utils/oauth/pkce.ts:11] [E: packages/ai/src/utils/oauth/pkce.ts:12] [E: packages/ai/src/utils/oauth/pkce.ts:14].
+`base64urlEncode()` 把 bytes 拼成 binary string，经 `btoa()` 后替换 `+`、`/` 并移除 `=` padding [E: packages/ai/src/auth/oauth/pkce.ts:9] [E: packages/ai/src/auth/oauth/pkce.ts:14]。`generatePKCE()` 生成 32 个 random bytes 并编码为 verifier，再用 Web Crypto SHA-256 digest verifier 的 UTF-8 bytes，最后把 digest 编成 challenge [E: packages/ai/src/auth/oauth/pkce.ts:21] [E: packages/ai/src/auth/oauth/pkce.ts:23] [E: packages/ai/src/auth/oauth/pkce.ts:25] [E: packages/ai/src/auth/oauth/pkce.ts:28] [E: packages/ai/src/auth/oauth/pkce.ts:31]。
 
-`generatePKCE()` allocates 32 random bytes, fills them with `crypto.getRandomValues()`, and base64url-encodes those bytes as the verifier [E: packages/ai/src/utils/oauth/pkce.ts:21] [E: packages/ai/src/utils/oauth/pkce.ts:23] [E: packages/ai/src/utils/oauth/pkce.ts:24] [E: packages/ai/src/utils/oauth/pkce.ts:25].
+## 设计动机与 gotcha
 
-The challenge is `base64urlEncode(new Uint8Array(hashBuffer))` where `hashBuffer` comes from `crypto.subtle.digest("SHA-256", encoder.encode(verifier))` [E: packages/ai/src/utils/oauth/pkce.ts:28] [E: packages/ai/src/utils/oauth/pkce.ts:29] [E: packages/ai/src/utils/oauth/pkce.ts:30] [E: packages/ai/src/utils/oauth/pkce.ts:31].
-
-The helper depends on global `btoa`, `crypto.getRandomValues`, `crypto.subtle.digest`, and `TextEncoder`; this file has no fallback implementation for runtimes that lack those globals [E: packages/ai/src/utils/oauth/pkce.ts:10] [E: packages/ai/src/utils/oauth/pkce.ts:14] [E: packages/ai/src/utils/oauth/pkce.ts:24] [E: packages/ai/src/utils/oauth/pkce.ts:28] [E: packages/ai/src/utils/oauth/pkce.ts:30] [I].
-
-## Token refresh and key wrapper
-
-`refreshOAuthToken(providerId, credentials)` is a deprecated high-level wrapper. It looks up the provider with `getOAuthProvider(providerId)`, throws `Unknown OAuth provider: ${providerId}` when missing, and otherwise delegates to `provider.refreshToken(credentials)` [E: packages/ai/src/utils/oauth/index.ts:117] [E: packages/ai/src/utils/oauth/index.ts:121] [E: packages/ai/src/utils/oauth/index.ts:122] [E: packages/ai/src/utils/oauth/index.ts:123] [E: packages/ai/src/utils/oauth/index.ts:125].
-
-`getOAuthApiKey(providerId, credentials)` is a deprecated high-level token-to-key wrapper. It looks up the provider, reads `credentials[providerId]`, returns `null` for missing credentials, refreshes when `Date.now() >= creds.expires`, then returns `{ newCredentials: creds, apiKey }` after `provider.getApiKey(creds)` [E: packages/ai/src/utils/oauth/index.ts:135] [E: packages/ai/src/utils/oauth/index.ts:139] [E: packages/ai/src/utils/oauth/index.ts:144] [E: packages/ai/src/utils/oauth/index.ts:145] [E: packages/ai/src/utils/oauth/index.ts:146] [E: packages/ai/src/utils/oauth/index.ts:150] [E: packages/ai/src/utils/oauth/index.ts:152] [E: packages/ai/src/utils/oauth/index.ts:158] [E: packages/ai/src/utils/oauth/index.ts:159].
-
-`getOAuthApiKey()` catches any refresh error and throws a new generic `Failed to refresh OAuth token for ${providerId}` error, so provider-specific refresh details are not preserved by this wrapper [E: packages/ai/src/utils/oauth/index.ts:150] [E: packages/ai/src/utils/oauth/index.ts:151] [E: packages/ai/src/utils/oauth/index.ts:152] [E: packages/ai/src/utils/oauth/index.ts:153] [E: packages/ai/src/utils/oauth/index.ts:154] [I].
-
-## 设计动机与权衡
-
-The registry and helpers are provider-neutral at their public boundary: registry operations accept provider ids or provider objects, device-code polling accepts a caller-supplied poll function, and PKCE returns only verifier/challenge material. Endpoint-specific request and response parsing is left to provider modules re-exported from `index.ts` [E: packages/ai/src/utils/oauth/index.ts:11] [E: packages/ai/src/utils/oauth/index.ts:14] [E: packages/ai/src/utils/oauth/index.ts:22] [E: packages/ai/src/utils/oauth/index.ts:55] [E: packages/ai/src/utils/oauth/index.ts:62] [E: packages/ai/src/utils/oauth/device-code.ts:21] [E: packages/ai/src/utils/oauth/pkce.ts:33] [I].
-
-The deprecated wrappers still expose the legacy "OAuth credentials to API key" path, while the related auth-resolution node should own the newer runtime request-auth path [E: packages/ai/src/utils/oauth/index.ts:117] [E: packages/ai/src/utils/oauth/index.ts:135] [I].
-
-## Gotcha
-
-- `getOAuthProvider()` and `getOAuthProviders()` operate on this module-local legacy registry, not on a visible provider collection in these three files [E: packages/ai/src/utils/oauth/index.ts:48] [E: packages/ai/src/utils/oauth/index.ts:55] [E: packages/ai/src/utils/oauth/index.ts:94] [I].
-- `getOAuthApiKey()` performs refresh directly through the legacy provider object; this source window does not show credential-store locking around that refresh [E: packages/ai/src/utils/oauth/index.ts:150] [E: packages/ai/src/utils/oauth/index.ts:152] [I].
-- A `slow_down` response changes subsequent polling cadence by increasing `intervalMs`; timeout after any slow-down uses the special slow-down timeout message [E: packages/ai/src/utils/oauth/device-code.ts:68] [E: packages/ai/src/utils/oauth/device-code.ts:69] [E: packages/ai/src/utils/oauth/device-code.ts:71] [E: packages/ai/src/utils/oauth/device-code.ts:82].
-- `generatePKCE()` uses Web Crypto and `btoa` globals directly; there is no fallback path inside `pkce.ts` [E: packages/ai/src/utils/oauth/pkce.ts:14] [E: packages/ai/src/utils/oauth/pkce.ts:24] [E: packages/ai/src/utils/oauth/pkce.ts:30] [I].
+- flow loader 隔离 Node-only implementation，provider factory 只持有 lazy `OAuthAuth`；这让 core/provider import 不必立刻加载 callback server 与 PKCE 依赖 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/providers/anthropic.ts:15] [I]。
+- `registerBundledOAuthFlowLoaders()` 是 process/module 级 override，不是 per-provider registry；调用后五类 loader 都优先使用 bundled functions [E: packages/ai/src/auth/oauth/load.ts:22] [E: packages/ai/src/auth/oauth/load.ts:25] [I]。
+- `@earendil-works/pi-ai/oauth` 名称容易让人误以为仍包含实现；目标 commit 中它只保留 extension OAuth types [E: packages/ai/src/oauth.ts:2]。
+- `waitBeforeFirstPoll` 与 server-supplied `slow_down.intervalSeconds` 都是本轮新增的 cadence 控制，旧 wiki 的“总是先 poll、slow_down 固定 +5 秒”描述已不成立 [E: packages/ai/src/auth/oauth/device-code.ts:21] [E: packages/ai/src/auth/oauth/device-code.ts:85]。
 
 ## 跨包边界
 
-[surface.providers.auth](../../surface/providers/auth.md) should describe user-visible login/auth commands and interactions; this node only verifies the lower-level registry and generic OAuth helpers present in `packages/ai/src/utils/oauth/*` [I].
+[surface.providers.auth](../../surface/providers/auth.md) 描述 coding-agent 用户可见的 login/logout、credential storage 与 provider auth selection；本节点只解释 `pi-ai` 的 flow loading 和通用 OAuth helpers。
 
-[subsys.ai.auth-resolution](auth-resolution.md) should describe stored credential precedence, locked refresh, and request auth derivation; this node only verifies the legacy registry, device-code polling helper, and PKCE helper in the three source files listed here [I].
+[subsys.ai.auth-resolution](auth-resolution.md) 描述 stored credential refresh 与 request auth derivation；本节点不负责 credential precedence 或锁语义。
 
 ## Sources
 
-- packages/ai/src/utils/oauth/index.ts
-- packages/ai/src/utils/oauth/device-code.ts
-- packages/ai/src/utils/oauth/pkce.ts
+- packages/ai/src/oauth.ts
+- packages/ai/src/auth/oauth/load.ts
+- packages/ai/src/auth/oauth/device-code.ts
+- packages/ai/src/auth/oauth/pkce.ts
+- packages/ai/src/bun-oauth.ts
+- packages/ai/src/providers/anthropic.ts
+- packages/ai/src/providers/openai-codex.ts
+- packages/ai/package.json
 
 ## 相关
 
-- [surface.providers.auth](../../surface/providers/auth.md): provider 登录、认证入口和用户可见 OAuth/api-key 交互。
-- [subsys.ai.auth-resolution](auth-resolution.md): stored credential precedence、OAuth refresh locking and request auth derivation.
+- [surface.providers.auth](../../surface/providers/auth.md): coding-agent 登录、登出与 credential UX。
+- [subsys.ai.auth-resolution](auth-resolution.md): stored credential、refresh lock 与 request auth。

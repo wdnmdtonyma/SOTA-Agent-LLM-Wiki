@@ -1,10 +1,5 @@
 # uncertainty-ai-oauth-flow
 
-L2 verified with no unresolved `[U]` claims.
-
-Corrections made in the node:
-
-- Removed or downgraded all `[E]` claims that required files outside this node's source list (`auth/types.ts`, `auth/resolve.ts`, `models.ts`, `cli.ts`, `utils/oauth/types.ts`). The node now treats `OAuthAuth` and auth-resolution behavior as related-node boundary material rather than direct evidence in this L2 pass.
-- Replaced the broad token/auth-resolution sections with source-scoped registry, device-code, PKCE, and deprecated wrapper facts.
-- Kept provider-neutral/helper-boundary statements as `[I]` when they depend on absence of provider-specific endpoint logic or cross-file design interpretation.
-- Set node status to `verified`; remaining explicit evidence points only at `packages/ai/src/utils/oauth/index.ts`, `packages/ai/src/utils/oauth/device-code.ts`, and `packages/ai/src/utils/oauth/pkce.ts`.
+- 目标 commit 已删除旧 `packages/ai/src/utils/oauth/index.ts`，且没有新建同形 index；内部 flow loader 的新入口是 `packages/ai/src/auth/oauth/load.ts`。
+- device-code 与 PKCE helpers 已迁到 `packages/ai/src/auth/oauth/`；公共 `packages/ai/src/oauth.ts` 仅保留 extension compatibility types，standalone Bun 由 `packages/ai/src/bun-oauth.ts` 静态注册 bundled loaders。
+- 节点中的 explicit evidence 已全部重定位到当前存在的 source；本轮没有遗留 `[U]`。

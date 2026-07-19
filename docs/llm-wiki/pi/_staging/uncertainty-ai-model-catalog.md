@@ -1,6 +1,5 @@
 # uncertainty-ai-model-catalog
 
-- L2 verified `ref.ai.model-catalog` against current `pi/packages/ai/src/models.generated.ts` import expansion: 35 provider buckets, 1019 expected model instances, 1019 Markdown rows, 0 missing, 0 extra, 0 duplicate, 0 identity/field drift for id/name/provider/api/context/cost/reasoning/input.
-- L2 verified `[E]` references: 17161 total refs, 16139 unique refs, 37 source files, 0 missing paths or out-of-range lines; row evidence labels checked against 16046 cited source lines with 0 mismatches.
-- L3 lint fix: generated-file header comments in `ref.ai.model-catalog` now use path-level evidence markers instead of line-level evidence anchors.
-- [U] `index.json` still lists `group.models.instance_count` as `200`, but current `MODELS` import expansion produced `1019` rows for this node. I did not update `index.json` because this task requested only the catalog node and this staging file.
+- 本轮按目标 commit 的 35 个已提交 `*.models.ts` structural shards 重建 `ref.ai.model-catalog`：1069 个 model id、1069 个目录行，未发现 key/id/provider 结构不一致或跨 shard 混用 provider。
+- 完整 name/cost/context 等 values 已移到 gitignored `src/providers/data/*.json`，当前 checkout 无法把这些字段作为 commit-local `[E]`；引用页因此只枚举可静态核证的 id/provider/api，并把完整 JSON bundle 的生成、验证和发布交给 `subsys.ai.model-catalog-publication`。
+- `index.json` 的 `group.models.instance_count` 已同步为 1069；本轮没有遗留 `[U]`。

@@ -33,7 +33,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 > 输出截断子系统把工具输出限制成模型和 TUI 可消费的 preview: 纯函数决定 head/tail/line 裁剪, `OutputAccumulator` 负责 streaming bash 的 tail snapshot 与 temp-file spillover, `details.truncation/fullOutputPath` 把裁剪元数据交给工具结果和 renderer。
@@ -93,7 +93,7 @@ updated: 8c943640
 10. grep 零 context path 对 rg JSON match line 调 `truncateLine()`, context path 对读出的上下文行也调 `truncateLine()`, 然后对整体 `rawOutput` 调 `truncateHead(rawOutput, { maxLines: Number.MAX_SAFE_INTEGER })` 来只施加 byte 限制 [E: packages/coding-agent/src/core/tools/grep.ts:324] [E: packages/coding-agent/src/core/tools/grep.ts:262] [E: packages/coding-agent/src/core/tools/grep.ts:333] [E: packages/coding-agent/src/core/tools/grep.ts:335]。
 11. read text path 在 offset/limit 选出内容后调用 `truncateHead(selectedContent)`, 首行超限时给 bash/sed fallback, 普通截断时在 output 后追加 continuation offset, 并把 `details = { truncation }` [E: packages/coding-agent/src/core/tools/read.ts:280] [E: packages/coding-agent/src/core/tools/read.ts:282] [E: packages/coding-agent/src/core/tools/read.ts:285] [E: packages/coding-agent/src/core/tools/read.ts:288] [E: packages/coding-agent/src/core/tools/read.ts:290] [E: packages/coding-agent/src/core/tools/read.ts:294] [E: packages/coding-agent/src/core/tools/read.ts:301] [E: packages/coding-agent/src/core/tools/read.ts:305]。
 12. find 的 custom/default 两条路径和 ls 都对已被 result/entry limit 控制住的行集合调用 `truncateHead(rawOutput, { maxLines: Number.MAX_SAFE_INTEGER })`, 因而这些路径的 `truncation` 主要是 byte cap 而非行数 cap [E: packages/coding-agent/src/core/tools/find.ts:187] [E: packages/coding-agent/src/core/tools/find.ts:189] [E: packages/coding-agent/src/core/tools/find.ts:241] [E: packages/coding-agent/src/core/tools/find.ts:322] [E: packages/coding-agent/src/core/tools/find.ts:324] [E: packages/coding-agent/src/core/tools/ls.ts:180] [E: packages/coding-agent/src/core/tools/ls.ts:182]。
-13. `takeOverStdout@packages/coding-agent/src/core/output-guard.ts:45` 在 main 的非 interactive 非 metadata 命令路径启用, RPC mode 也在入口立即启用; RPC responses 之后通过 `writeRawStdout(serializeJsonLine(obj))` 写回真正 stdout [E: packages/coding-agent/src/main.ts:535] [E: packages/coding-agent/src/main.ts:537] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:53] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:54] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:60]。
+13. `takeOverStdout@packages/coding-agent/src/core/output-guard.ts:45` 在 main 的非 interactive 非 metadata 命令路径启用, RPC mode 也在入口立即启用; RPC responses 之后通过 `writeRawStdout(serializeJsonLine(obj))` 写回真正 stdout [E: packages/coding-agent/src/main.ts:541] [E: packages/coding-agent/src/main.ts:543] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:53] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:54] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:60]。
 
 ## 设计动机与权衡
 
@@ -103,7 +103,7 @@ Head vs tail 是按工具语义拆开的: read/grep/find/ls 偏向保留列表�
 
 grep 的 `truncateLine()` 是为了避免单个 match/context 行吞掉大量输出预算; 总输出仍要再经过 `truncateHead()`, 所以 grep 可能同时出现 `details.linesTruncated` 和 `details.truncation` [E: packages/coding-agent/src/core/tools/grep.ts:263] [E: packages/coding-agent/src/core/tools/grep.ts:335] [E: packages/coding-agent/src/core/tools/grep.ts:348] [E: packages/coding-agent/src/core/tools/grep.ts:354]。
 
-`takeOverStdout()` 的设计动机是保护 stdout 协议通道: main 在非 interactive path 启用 takeover, RPC mode 入口也启用 takeover 并通过 `writeRawStdout(serializeJsonLine(obj))` 写协议 stdout, 因而普通 stdout write 被改到 stderr [E: packages/coding-agent/src/main.ts:535] [E: packages/coding-agent/src/core/output-guard.ts:54] [E: packages/coding-agent/src/core/output-guard.ts:62] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:54] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:60] [I]。
+`takeOverStdout()` 的设计动机是保护 stdout 协议通道: main 在非 interactive path 启用 takeover, RPC mode 入口也启用 takeover 并通过 `writeRawStdout(serializeJsonLine(obj))` 写协议 stdout, 因而普通 stdout write 被改到 stderr [E: packages/coding-agent/src/main.ts:541] [E: packages/coding-agent/src/core/output-guard.ts:54] [E: packages/coding-agent/src/core/output-guard.ts:62] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:54] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:60] [I]。
 
 ## Gotcha
 
@@ -124,7 +124,7 @@ grep 的 `truncateLine()` 是为了避免单个 match/context 行吞掉大量输
 
 `packages/agent` harness 也有 message/full-output 字段和 shell-output helper: `BashExecutionMessage.fullOutputPath` 在 agent-core message converter 中会被追加到 LLM text, `executeShellWithCapture()` 也有自己的 `fullOutputPath` 和 `truncateTail()` 流程 [E: packages/agent/src/harness/messages.ts:26] [E: packages/agent/src/harness/messages.ts:75] [E: packages/agent/src/harness/utils/shell-output.ts:13] [E: packages/agent/src/harness/utils/shell-output.ts:35] [E: packages/agent/src/harness/utils/shell-output.ts:60] [E: packages/agent/src/harness/utils/shell-output.ts:70] [E: packages/agent/src/harness/utils/shell-output.ts:104]。这说明 full-output 语义跨包复用, 但 coding-agent tool `details` 的 shape 和 TUI renderer 仍在 `packages/coding-agent` 内 [I]。
 
-`AgentSession.recordBashResult()` 把 direct bash helper 的 `BashResult.fullOutputPath` 写入 coding-agent history message, `bashExecutionToText()` 只在 `truncated && fullOutputPath` 时把完整输出路径加入 LLM context [E: packages/coding-agent/src/core/agent-session.ts:2645] [E: packages/coding-agent/src/core/agent-session.ts:2653] [E: packages/coding-agent/src/core/messages.ts:82] [E: packages/coding-agent/src/core/messages.ts:94]。
+`AgentSession.recordBashResult()` 把 direct bash helper 的 `BashResult.fullOutputPath` 写入 coding-agent history message, `bashExecutionToText()` 只在 `truncated && fullOutputPath` 时把完整输出路径加入 LLM context [E: packages/coding-agent/src/core/agent-session.ts:2746] [E: packages/coding-agent/src/core/agent-session.ts:2754] [E: packages/coding-agent/src/core/messages.ts:82] [E: packages/coding-agent/src/core/messages.ts:94]。
 
 ## Sources
 

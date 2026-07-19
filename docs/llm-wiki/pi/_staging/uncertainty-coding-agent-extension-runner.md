@@ -2,7 +2,6 @@
 
 本轮新增需要上收 `reference/uncertainty.md` 的 `[U]` 项:
 
-- `subsys.coding-agent.extension-runner` 的 index symbol 写作 `emitProjectTrust`, 但当前源码导出名是 `emitProjectTrustEvent`;需要确认 index symbol 是否允许简称, 还是应协调修正为源码导出名。
 - `ExtensionRunner.emitToolCall()` 没有 try/catch, 与多数专用 emitter 和通用 `emit()` 的 error-to-`emitError()` 模式不同;当前源码未直接说明这是刻意的 fail-closed 行为还是遗漏。
 
 本轮主要 `[I]` 降级:

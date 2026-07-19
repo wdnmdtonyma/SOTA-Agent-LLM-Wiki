@@ -1,3 +1,3 @@
-# Uncertainty · coding-agent keybindings
+# Recheck · coding-agent keybindings
 
-- [U] `index.json` node `subsys.coding-agent.keybindings` lists symbols `DEFAULT_APP_KEYBINDINGS` and `DEFAULT_EDITOR_KEYBINDINGS`, and `conventions.md` section 7 also names those as keybinding ground-truth symbols. At pi HEAD `5a073885`, `packages/coding-agent/src/core/keybindings.ts` instead exports `KEYBINDINGS`, `migrateKeybindingsConfig`, `KeybindingsManager`, and type re-exports; neither planned symbol appears in the source. The node frontmatter uses current source symbols and the body calls out the mismatch rather than editing `index.json`.
+- `index.json`、节点 frontmatter 与 `3da591ab` 源码已统一使用 `KEYBINDINGS`、`migrateKeybindingsConfig`、`KeybindingsManager` 和 `AppKeybindings`；旧 planned symbols 已清除。

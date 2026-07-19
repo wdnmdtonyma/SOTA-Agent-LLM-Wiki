@@ -13,10 +13,10 @@ related:
   - subsys.agent-core.turn-control
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
-> `ref.agent.thinking-levels` 是 agent-core `ThinkingLevel` literal union 的逐实例目录:覆盖 `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"` 六个值,以及这些值在 `packages/agent/src/types.ts` 内暴露到 turn update 和 public state 的字段边界;`AgentLoopConfig` 在本文件中只证明继承 `SimpleStreamOptions` 的 options shape。
+> `ref.agent.thinking-levels` 是 agent-core `ThinkingLevel` literal union 的逐实例目录:覆盖 `"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"` 七个值,以及这些值在 `packages/agent/src/types.ts` 内暴露到 turn update 和 public state 的字段边界;`AgentLoopConfig` 在本文件中只证明继承 `SimpleStreamOptions` 的 options shape。
 
 ## 能回答的问题
 
@@ -36,10 +36,11 @@ updated: 8c943640
 | `"medium"` | `ThinkingLevel` union member;表示中等 reasoning effort 请求值。[E: packages/agent/src/types.ts:289] | public state 层通过 `AgentState.thinkingLevel` 暴露当前/未来 turn 的 requested reasoning level。[E: packages/agent/src/types.ts:322][E: packages/agent/src/types.ts:328] | `medium` 是类型允许值,不是保证每个 `Model<any>` 都支持该值;模型支持性需要结合 model metadata 或 runtime adapter 判断。[I] | `packages/agent/src/types.ts:289` |
 | `"high"` | `ThinkingLevel` union member;表示高 reasoning effort 请求值。[E: packages/agent/src/types.ts:289] | `AgentState.thinkingLevel` 与 `AgentLoopTurnUpdate.thinkingLevel?` 在类型层都允许 `"high"`。[E: packages/agent/src/types.ts:328][E: packages/agent/src/types.ts:135] | `AgentLoopConfig` 只在本文件里 import 并继承 `SimpleStreamOptions`;`SimpleStreamOptions.reasoning` 的具体字段类型来自 `@earendil-works/pi-ai`,不是 `packages/agent/src/types.ts` 自己声明。[E: packages/agent/src/types.ts:10][E: packages/agent/src/types.ts:140][I] | `packages/agent/src/types.ts:289` |
 | `"xhigh"` | `ThinkingLevel` union member;表示 extra-high reasoning effort 请求值。[E: packages/agent/src/types.ts:289] | `AgentState.thinkingLevel` 与 `AgentLoopTurnUpdate.thinkingLevel?` 在类型层都允许 `"xhigh"`。[E: packages/agent/src/types.ts:328][E: packages/agent/src/types.ts:135] | `"xhigh"` 是否只对部分模型族有效、是否需要 model-specific 映射或是否被 clamp,都不由 `ThinkingLevel` union 自身强制;这些属于 model metadata/provider adapter 行为。[I] | `packages/agent/src/types.ts:289` |
+| `"max"` | `ThinkingLevel` union member；表示最高 reasoning effort 请求值。[E: packages/agent/src/types.ts:289] | `AgentState.thinkingLevel` 与 `AgentLoopTurnUpdate.thinkingLevel?` 在类型层都允许 `"max"`。[E: packages/agent/src/types.ts:328][E: packages/agent/src/types.ts:135] | provider/model 是否原生支持 `"max"`、是否映射或 clamp，由 model metadata/provider adapter 决定，不由 union 本身保证。[I] | `packages/agent/src/types.ts:289` |
 
 ## 字段与使用边界
 
-`ThinkingLevel` 在 `packages/agent/src/types.ts` 中的本地定义是一个 exported literal union。[E: packages/agent/src/types.ts:289] 在本节点的 source 范围内,没有可直接证明 numeric order、默认值、mapping table 或 runtime clamp 函数的代码;因此本节点把六个 literal 值当作完整实例集合,但不把 `"minimal"` 到 `"xhigh"` 解释成可比较的强度枚举算法。[I]
+`ThinkingLevel` 在 `packages/agent/src/types.ts` 中的本地定义是一个 exported literal union。[E: packages/agent/src/types.ts:289] 在本节点的 source 范围内,没有可直接证明 numeric order、默认值、mapping table 或 runtime clamp 函数的代码;因此本节点把七个 literal 值当作完整实例集合,但不把 `"minimal"` 到 `"max"` 解释成可比较的强度枚举算法。[I]
 
 `AgentLoopTurnUpdate.thinkingLevel?` 是 turn update payload 的可选字段;`prepareNextTurn()` 可以返回 `AgentLoopTurnUpdate | undefined`,所以 thinking level 更新是下一轮 turn state 的一部分,不是每次 turn 必填的 config 字段。[E: packages/agent/src/types.ts:129][E: packages/agent/src/types.ts:135][E: packages/agent/src/types.ts:220][E: packages/agent/src/types.ts:222]
 

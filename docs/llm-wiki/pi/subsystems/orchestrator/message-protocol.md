@@ -10,9 +10,12 @@ source:
 symbols:
   - OrchestratorRequest
   - OrchestratorResponse
+related:
+  - subsys.orchestrator.ipc-transport
+  - ref.orchestrator.ipc-messages
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 > Orchestrator message protocol 是 orchestrator 进程与客户端之间的 JSONL IPC/RPC 消息类型层:它定义请求 union、响应 union、RPC stream 两端消息和最小的 encode/parse 函数。

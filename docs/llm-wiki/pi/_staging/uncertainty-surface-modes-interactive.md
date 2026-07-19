@@ -7,4 +7,4 @@
 - `InteractiveMode` 不是直接创建 session 的 factory;它通过 `runtimeHost.session` 访问当前 session。
 - built-in slash commands 在 submit handler 内 return, 不进入 `getUserInput()` 的普通 prompt queue。
 - `onInputCallback`/`pendingUserInputs` 这个 callback queue 的作用是解耦 editor submit timing 和 `run()` 的 awaited prompt loop。
-- related 节点的职责边界按 index title/source/symbols 与现有已填节点归纳;`subsys.tui.runtime` 本身仍是 planned。
+- related 节点的职责边界按 index title/source/symbols 与现有已填节点归纳；`subsys.tui.runtime` 已核验为 verified，本节点只描述 interactive mode 对它的调用边界。

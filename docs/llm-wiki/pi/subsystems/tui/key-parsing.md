@@ -16,7 +16,7 @@ related:
   - ref.tui.key-codes
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 > `key-parsing` 是 TUI 把 raw terminal input 转成稳定 `KeyId` 字符串的解析层: 它优先识别 Kitty/CSI-u 和 xterm `modifyOtherKeys`, 再落到 legacy escape/control-byte fallback。
@@ -34,13 +34,13 @@ updated: 8c943640
 
 `packages/tui/src/keys.ts` 同时包含 parsing、matching、printable decoding 和 Kitty protocol state; 本节点只权威覆盖 `parseKey()`、`parseKittySequence()`、`parseModifyOtherKeysSequence()` 以及它们直接依赖的 key-name formatting 规则 [E: packages/tui/src/keys.ts:587] [E: packages/tui/src/keys.ts:696] [E: packages/tui/src/keys.ts:1212] [E: packages/tui/src/keys.ts:1251]。
 
-`parseKey(data)` 的输出是 key identifier string; 识别成功时从 `formatParsedKey()` 或 legacy fallback 返回字符串, 未识别时返回 `undefined` [E: packages/tui/src/keys.ts:1254] [E: packages/tui/src/keys.ts:1259] [E: packages/tui/src/keys.ts:1267] [E: packages/tui/src/keys.ts:1325]。它不判断某个 binding 是否命中; binding matching 属于 [subsys.tui.keybinding-matching](keybinding-matching.md), 其入口是同文件里的 `matchesKey(data, keyId)` [E: packages/tui/src/keys.ts:820]。
+`parseKey(data)` 的输出是 key identifier string; 识别成功时从 `formatParsedKey()` 或 legacy fallback 返回字符串, 未识别时返回 `undefined` [E: packages/tui/src/keys.ts:1254] [E: packages/tui/src/keys.ts:1259] [E: packages/tui/src/keys.ts:1267] [E: packages/tui/src/keys.ts:1326]。它不判断某个 binding 是否命中; binding matching 属于 [subsys.tui.keybinding-matching](keybinding-matching.md), 其入口是同文件里的 `matchesKey(data, keyId)` [E: packages/tui/src/keys.ts:820]。
 
 输入 chunk 的边界、Kitty protocol negotiation、bracketed paste re-wrap 和 modifyOtherKeys fallback enablement 不在本节点内; 这些由 [subsys.tui.key-pipeline](key-pipeline.md) 覆盖, `keys.ts` 只保存一个全局 `_kittyProtocolActive` flag 供解析 legacy ambiguity 时使用 [E: packages/tui/src/keys.ts:25] [E: packages/tui/src/keys.ts:31] [E: packages/tui/src/keys.ts:38] [I]。
 
 ## 关键文件
 
-- `packages/tui/src/keys.ts`: 定义 `KeyId`、`Key` helper、modifier bitmask、codepoint table、legacy sequence table、Kitty/CSI-u parser、modifyOtherKeys parser、`parseKey()` 和 printable decoding [E: packages/tui/src/keys.ts:152] [E: packages/tui/src/keys.ts:163] [E: packages/tui/src/keys.ts:292] [E: packages/tui/src/keys.ts:301] [E: packages/tui/src/keys.ts:368] [E: packages/tui/src/keys.ts:587] [E: packages/tui/src/keys.ts:696] [E: packages/tui/src/keys.ts:1251] [E: packages/tui/src/keys.ts:1349]。
+- `packages/tui/src/keys.ts`: 定义 `KeyId`、`Key` helper、modifier bitmask、codepoint table、legacy sequence table、Kitty/CSI-u parser、modifyOtherKeys parser、`parseKey()` 和 printable decoding [E: packages/tui/src/keys.ts:152] [E: packages/tui/src/keys.ts:163] [E: packages/tui/src/keys.ts:292] [E: packages/tui/src/keys.ts:301] [E: packages/tui/src/keys.ts:368] [E: packages/tui/src/keys.ts:587] [E: packages/tui/src/keys.ts:696] [E: packages/tui/src/keys.ts:1251] [E: packages/tui/src/keys.ts:1350]。
 
 ## 数据模型
 
@@ -63,7 +63,7 @@ modifier bitmask 在解析层使用 Kitty/xterm 的 one-indexed modifier value �
 7. `formatKeyNameWithModifiers@packages/tui/src/keys.ts:776` 按固定顺序输出 modifier prefix: `shift`、`ctrl`、`alt`、`super`; 如果 modifier 含这四种以外的 effective bits, 返回 `undefined`, 因而 unsupported modifier bits 会让 modern sequence 解析失败 [E: packages/tui/src/keys.ts:780] [E: packages/tui/src/keys.ts:781] [E: packages/tui/src/keys.ts:782] [E: packages/tui/src/keys.ts:783] [E: packages/tui/src/keys.ts:784] [E: packages/tui/src/keys.ts:1248] [E: packages/tui/src/keys.ts:1254] [E: packages/tui/src/keys.ts:1259]。
 8. 若两种 modern sequence 都没命中, `parseKey()` 进入 mode-aware legacy fallback: Kitty protocol active 时 `\x1b\r` 和 `\n` 解析成 `shift+enter`; Kitty inactive 时 `\n` 是 `enter`, `\x1b\r` 是 `alt+enter` [E: packages/tui/src/keys.ts:1252] [E: packages/tui/src/keys.ts:1257] [E: packages/tui/src/keys.ts:1266] [E: packages/tui/src/keys.ts:1267] [E: packages/tui/src/keys.ts:1283] [E: packages/tui/src/keys.ts:1289]。
 9. Legacy table lookup `LEGACY_SEQUENCE_KEY_IDS[data]` covers named arrows, Home/End, insert/delete/page keys, F keys, shifted/ctrl variants and a few alt movement sequences before the hand-coded single-byte fallback runs [E: packages/tui/src/keys.ts:423] [E: packages/tui/src/keys.ts:427] [E: packages/tui/src/keys.ts:433] [E: packages/tui/src/keys.ts:438] [E: packages/tui/src/keys.ts:440] [E: packages/tui/src/keys.ts:444] [E: packages/tui/src/keys.ts:456] [E: packages/tui/src/keys.ts:477] [E: packages/tui/src/keys.ts:480] [E: packages/tui/src/keys.ts:1270] [E: packages/tui/src/keys.ts:1271]。
-10. The final fallback maps raw control bytes and simple printable bytes: `\x1c` -> `ctrl+\`, `\x1d` -> `ctrl+]`, `\x1f` -> `ctrl+-`, `\x00` -> `ctrl+space`, `\x7f` -> `backspace`, one-byte control codes 1..26 -> `ctrl+a`..`ctrl+z`, and ASCII printable bytes to themselves [E: packages/tui/src/keys.ts:1274] [E: packages/tui/src/keys.ts:1275] [E: packages/tui/src/keys.ts:1276] [E: packages/tui/src/keys.ts:1277] [E: packages/tui/src/keys.ts:1284] [E: packages/tui/src/keys.ts:1286] [E: packages/tui/src/keys.ts:1315] [E: packages/tui/src/keys.ts:1318] [E: packages/tui/src/keys.ts:1321]。
+10. The final fallback maps raw control bytes and simple printable bytes: `\x1c` -> `ctrl+\`, `\x1d` -> `ctrl+]`, `\x1f` -> `ctrl+-`, `\x00` -> `ctrl+space`, `\x7f` -> `backspace`, one-byte control codes 1..26 -> `ctrl+a`..`ctrl+z`, and ASCII printable bytes to themselves [E: packages/tui/src/keys.ts:1274] [E: packages/tui/src/keys.ts:1275] [E: packages/tui/src/keys.ts:1276] [E: packages/tui/src/keys.ts:1277] [E: packages/tui/src/keys.ts:1284] [E: packages/tui/src/keys.ts:1286] [E: packages/tui/src/keys.ts:1316] [E: packages/tui/src/keys.ts:1319] [E: packages/tui/src/keys.ts:1322]。
 
 ## 设计动机与权衡
 
@@ -80,7 +80,7 @@ The base-layout fallback is intentionally conservative: it helps non-Latin layou
 - `parseKittySequence()` and `parseModifyOtherKeysSequence()` are local functions, not exported package API; the index symbols name them because they are load-bearing implementation symbols for this node [E: packages/tui/src/keys.ts:587] [E: packages/tui/src/keys.ts:696] [I]。
 - `parseKey()` parses Kitty release/repeat sequences into the same key identifier shape as press sequences; release/repeat status is exposed by `isKeyRelease(data)` / `isKeyRepeat(data)`, which scan the raw sequence for Kitty flag-2 event markers [E: packages/tui/src/keys.ts:527] [E: packages/tui/src/keys.ts:539] [E: packages/tui/src/keys.ts:557] [E: packages/tui/src/keys.ts:565] [E: packages/tui/src/keys.ts:579] [E: packages/tui/src/keys.ts:604] [E: packages/tui/src/keys.ts:1252] [I]。
 - Bracketed paste content is explicitly excluded from `isKeyRelease()` / `isKeyRepeat()` substring detection because pasted text can contain strings like `:3F`; this protects event-type classification, not `parseKey()` itself [E: packages/tui/src/keys.ts:527] [E: packages/tui/src/keys.ts:532] [E: packages/tui/src/keys.ts:539] [E: packages/tui/src/keys.ts:557] [E: packages/tui/src/keys.ts:560] [I]。
-- `shiftedKey` is parsed from Kitty alternate-key CSI-u, but `formatParsedKey()` currently receives `codepoint` and optional `baseLayoutKey` for key identifiers; shifted printable insertion is handled separately by `decodeKittyPrintable()` [E: packages/tui/src/keys.ts:601] [E: packages/tui/src/keys.ts:1212] [E: packages/tui/src/keys.ts:1254] [E: packages/tui/src/keys.ts:1349] [E: packages/tui/src/keys.ts:1369] [I]。
+- `shiftedKey` is parsed from Kitty alternate-key CSI-u, but `formatParsedKey()` currently receives `codepoint` and optional `baseLayoutKey` for key identifiers; shifted printable insertion is handled separately by `decodeKittyPrintable()` [E: packages/tui/src/keys.ts:601] [E: packages/tui/src/keys.ts:1212] [E: packages/tui/src/keys.ts:1254] [E: packages/tui/src/keys.ts:1350] [E: packages/tui/src/keys.ts:1370] [I]。
 
 ## 跨包边界
 

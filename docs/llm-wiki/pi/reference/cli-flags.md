@@ -13,7 +13,7 @@ symbols:
   - printHelp
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 related:
   - surface.cli.overview
 ---
@@ -72,7 +72,7 @@ related:
 | `-t` | next argv comma list | `tools?: string[]`,默认 unset | `--tools` 的 short alias,共享 split/trim/filter 行为。 | [E: packages/coding-agent/src/cli/args.ts:120] [E: packages/coding-agent/src/cli/args.ts:121] [E: packages/coding-agent/src/cli/args.ts:124] [E: packages/coding-agent/src/cli/args.ts:257] |
 | `--exclude-tools` | next argv comma list | `excludeTools?: string[]`,默认 unset | 以逗号 split、trim 并 filter 空项;作为 tool denylist。 | [E: packages/coding-agent/src/cli/args.ts:32] [E: packages/coding-agent/src/cli/args.ts:125] [E: packages/coding-agent/src/cli/args.ts:126] [E: packages/coding-agent/src/cli/args.ts:129] [E: packages/coding-agent/src/cli/args.ts:259] |
 | `-xt` | next argv comma list | `excludeTools?: string[]`,默认 unset | `--exclude-tools` 的 exact short alias。 | [E: packages/coding-agent/src/cli/args.ts:125] [E: packages/coding-agent/src/cli/args.ts:126] [E: packages/coding-agent/src/cli/args.ts:129] [E: packages/coding-agent/src/cli/args.ts:259] |
-| `--thinking` | next argv level | `thinking?: ThinkingLevel`,默认 unset | 只接受 `off`、`minimal`、`low`、`medium`、`high`、`xhigh`;非法值加入 warning diagnostic。 | [E: packages/coding-agent/src/cli/args.ts:18] [E: packages/coding-agent/src/cli/args.ts:57] [E: packages/coding-agent/src/cli/args.ts:130] [E: packages/coding-agent/src/cli/args.ts:132] [E: packages/coding-agent/src/cli/args.ts:135] [E: packages/coding-agent/src/cli/args.ts:261] |
+| `--thinking` | next argv level | `thinking?: ThinkingLevel`,默认 unset | 只接受 `off`、`minimal`、`low`、`medium`、`high`、`xhigh`、`max`;非法值加入 warning diagnostic。 | [E: packages/coding-agent/src/cli/args.ts:18] [E: packages/coding-agent/src/cli/args.ts:57] [E: packages/coding-agent/src/cli/args.ts:130] [E: packages/coding-agent/src/cli/args.ts:132] [E: packages/coding-agent/src/cli/args.ts:135] [E: packages/coding-agent/src/cli/args.ts:261] |
 | `--print` | boolean + optional following message | `print?: boolean`,默认 unset;可能 push `messages[]` | 设置 non-interactive print mode;若下一 argv 不是 `@file` 且不是 normal flag,或以 `---` 开头,会被消费进 `messages`。 | [E: packages/coding-agent/src/cli/args.ts:37] [E: packages/coding-agent/src/cli/args.ts:140] [E: packages/coding-agent/src/cli/args.ts:141] [E: packages/coding-agent/src/cli/args.ts:143] [E: packages/coding-agent/src/cli/args.ts:144] [E: packages/coding-agent/src/cli/args.ts:244] |
 | `-p` | boolean + optional following message | `print?: boolean`,默认 unset;可能 push `messages[]` | `--print` 的 short alias,共享 optional following message 规则。 | [E: packages/coding-agent/src/cli/args.ts:140] [E: packages/coding-agent/src/cli/args.ts:141] [E: packages/coding-agent/src/cli/args.ts:143] [E: packages/coding-agent/src/cli/args.ts:144] [E: packages/coding-agent/src/cli/args.ts:244] |
 | `--export` | next argv string | `export?: string`,默认 unset | 写入 session export source file;help examples 显示 output path 可作为普通 message positional 追加 [I]。 | [E: packages/coding-agent/src/cli/args.ts:38] [E: packages/coding-agent/src/cli/args.ts:147] [E: packages/coding-agent/src/cli/args.ts:148] [E: packages/coding-agent/src/cli/args.ts:271] [E: packages/coding-agent/src/cli/args.ts:331] [E: packages/coding-agent/src/cli/args.ts:333] |
@@ -106,7 +106,7 @@ related:
 
 ## Help-only 与动态 flag 边界
 
-`printHelp()` 的 Commands 区展示 `install <source> [-l]`、`remove <source> [-l]`、`uninstall <source> [-l]`、`update [source|self|pi]` 和 "use `--all` for pi and extensions",但 `parseArgs()` 本文件没有为 `-l` 或 `--all` 建立全局 `Args` 字段;这些子命令 flag 的实际行为需要到 package-manager CLI 或命令处理器另核,本节点不把它们计入全局 60 实例 [E: packages/coding-agent/src/cli/args.ts:229] [E: packages/coding-agent/src/cli/args.ts:230] [E: packages/coding-agent/src/cli/args.ts:231] [E: packages/coding-agent/src/cli/args.ts:232] [U]。
+`printHelp()` 的 Commands 区展示 `install <source> [-l]`、`remove <source> [-l]`、`uninstall <source> [-l]`、`update [source|self|pi]`（可更新 pi、extensions 或 model catalogs）、`list` 与 `config [-l]`；这些 subcommand 参数不进入全局 `Args` schema，因此不计入本页 60 个固定 parser 实例 [E: packages/coding-agent/src/cli/args.ts:229] [E: packages/coding-agent/src/cli/args.ts:230] [E: packages/coding-agent/src/cli/args.ts:231] [E: packages/coding-agent/src/cli/args.ts:232] [I]。
 
 Extension flags 是 runtime-loaded 动态 surface:`printHelp(extensionFlags)` 对 `flag.type === "string"` 的 flag 追加 ` <value>`,description 优先使用 `flag.description`,否则显示 registering extension path [E: packages/coding-agent/src/cli/args.ts:213] [E: packages/coding-agent/src/cli/args.ts:217] [E: packages/coding-agent/src/cli/args.ts:218] [E: packages/coding-agent/src/cli/args.ts:219]。这些动态 flags 在 `parseArgs()` 视角只会先进入 `unknownFlags`,具体名字和含义由 extension 注册时决定,不是本固定 catalog 的可枚举实例 [E: packages/coding-agent/src/cli/args.ts:188] [E: packages/coding-agent/src/cli/args.ts:191] [E: packages/coding-agent/src/cli/args.ts:196] [E: packages/coding-agent/src/cli/args.ts:199] [I]。
 

@@ -17,7 +17,7 @@ related:
   - subsys.agent-core.exec-env
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 > `bash-executor` 是 pi-coding-agent 的命令执行子系统: `executeBashWithOperations()` 负责 bash 风格命令的流式输出、取消和 tail 截断, `execCommand()` 负责扩展/custom tool runtime 里的 argv 进程执行。
@@ -43,9 +43,9 @@ updated: 8c943640
 
 - `packages/coding-agent/src/core/bash-executor.ts`: `BashExecutorOptions`、`BashResult` 和 `executeBashWithOperations()` 的权威实现 [E: packages/coding-agent/src/core/bash-executor.ts:22] [E: packages/coding-agent/src/core/bash-executor.ts:29] [E: packages/coding-agent/src/core/bash-executor.ts:50]。
 - `packages/coding-agent/src/core/exec.ts`: `ExecOptions`、`ExecResult` 和 `execCommand()` 的权威实现 [E: packages/coding-agent/src/core/exec.ts:11] [E: packages/coding-agent/src/core/exec.ts:23] [E: packages/coding-agent/src/core/exec.ts:34]。
-- `packages/coding-agent/src/core/agent-session.ts`: 调用点背景, `AgentSession.executeBash()` 把 settings prefix/shellPath 转成 `executeBashWithOperations()` 调用, 并把结果写成 bash execution history [E: packages/coding-agent/src/core/agent-session.ts:2619] [E: packages/coding-agent/src/core/agent-session.ts:2620] [E: packages/coding-agent/src/core/agent-session.ts:2624] [E: packages/coding-agent/src/core/agent-session.ts:2634]。
-- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`: 调用点背景, RPC `"bash"` command 调 `session.executeBash()` 并把 `BashResult` 放进 success response [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:551] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:554]。
-- `packages/coding-agent/src/core/extensions/loader.ts`: 调用点背景, extension runtime 的 `exec()` 包装 `execCommand()` [E: packages/coding-agent/src/core/extensions/loader.ts:310] [E: packages/coding-agent/src/core/extensions/loader.ts:312]。
+- `packages/coding-agent/src/core/agent-session.ts`: 调用点背景, `AgentSession.executeBash()` 把 settings prefix/shellPath 转成 `executeBashWithOperations()` 调用, 并把结果写成 bash execution history [E: packages/coding-agent/src/core/agent-session.ts:2720] [E: packages/coding-agent/src/core/agent-session.ts:2721] [E: packages/coding-agent/src/core/agent-session.ts:2725] [E: packages/coding-agent/src/core/agent-session.ts:2735]。
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`: 调用点背景, RPC `"bash"` command 调 `session.executeBash()` 并把 `BashResult` 放进 success response [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:554] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:557]。
+- `packages/coding-agent/src/core/extensions/loader.ts`: 调用点背景, extension runtime 的 `exec()` 包装 `execCommand()` [E: packages/coding-agent/src/core/extensions/loader.ts:334] [E: packages/coding-agent/src/core/extensions/loader.ts:336]。
 
 ## 数据模型
 
@@ -53,7 +53,7 @@ updated: 8c943640
 
 `BashResult` 是 direct bash helper 的返回模型: `output` 是合并 stdout/stderr 后的 sanitized 文本, `exitCode` 在 killed/cancelled 时可以是 `undefined`, `cancelled` 标记是否由 signal 取消, `truncated` 标记返回 preview 是否被裁剪, `fullOutputPath` 指向超过阈值时写出的完整临时日志 [E: packages/coding-agent/src/core/bash-executor.ts:29] [E: packages/coding-agent/src/core/bash-executor.ts:31] [E: packages/coding-agent/src/core/bash-executor.ts:33] [E: packages/coding-agent/src/core/bash-executor.ts:35] [E: packages/coding-agent/src/core/bash-executor.ts:37] [E: packages/coding-agent/src/core/bash-executor.ts:39]。
 
-`ExecOptions` 是 argv helper 的控制模型: 它支持 `signal`、毫秒级 `timeout` 和可选 `cwd`; `execCommand()` 形参要求一个 `cwd: string`, extension loader 会用 `options.cwd ?? cwd` 选择传给 `execCommand()` 的工作目录 [E: packages/coding-agent/src/core/exec.ts:13] [E: packages/coding-agent/src/core/exec.ts:15] [E: packages/coding-agent/src/core/exec.ts:17] [E: packages/coding-agent/src/core/exec.ts:37] [E: packages/coding-agent/src/core/exec.ts:78] [E: packages/coding-agent/src/core/extensions/loader.ts:312]。
+`ExecOptions` 是 argv helper 的控制模型: 它支持 `signal`、毫秒级 `timeout` 和可选 `cwd`; `execCommand()` 形参要求一个 `cwd: string`, extension loader 会用 `options.cwd ?? cwd` 选择传给 `execCommand()` 的工作目录 [E: packages/coding-agent/src/core/exec.ts:13] [E: packages/coding-agent/src/core/exec.ts:15] [E: packages/coding-agent/src/core/exec.ts:17] [E: packages/coding-agent/src/core/exec.ts:37] [E: packages/coding-agent/src/core/exec.ts:78] [E: packages/coding-agent/src/core/extensions/loader.ts:336]。
 
 `ExecResult` 保留 stdout 和 stderr 分离, 返回 `code` 与 `killed` 布尔值; 这与 `BashResult.output` 合并 stdout/stderr 的设计不同, 因为 extension runtime 的 process exec 更接近传统 child_process wrapper [E: packages/coding-agent/src/core/exec.ts:24] [E: packages/coding-agent/src/core/exec.ts:25] [E: packages/coding-agent/src/core/exec.ts:26] [E: packages/coding-agent/src/core/exec.ts:27] [I]。
 
@@ -96,7 +96,7 @@ updated: 8c943640
 
 [subsys.coding-agent.output-truncation](output-truncation.md) 是输出截断节点: `bash-executor.ts` 使用 `DEFAULT_MAX_BYTES` 和 `truncateTail()` 来决定 preview 与 `fullOutputPath`, 因此 tail preview 规则应在那里权威解释 [E: packages/coding-agent/src/core/bash-executor.ts:58] [E: packages/coding-agent/src/core/bash-executor.ts:85] [E: packages/coding-agent/src/core/bash-executor.ts:114] [E: packages/coding-agent/src/core/bash-executor.ts:128]。
 
-[subsys.agent-core.exec-env](../agent-core/exec-env.md) 是 agent-core 执行环境边界节点: `execCommand()` 是 pi-coding-agent extension loader 暴露的 process helper, 不是 `packages/agent` harness 的 exec abstraction; 两者名字相近但 package 边界不同 [E: packages/coding-agent/src/core/exec.ts:34] [E: packages/coding-agent/src/core/extensions/loader.ts:310] [E: packages/coding-agent/src/core/extensions/loader.ts:312] [I]。
+[subsys.agent-core.exec-env](../agent-core/exec-env.md) 是 agent-core 执行环境边界节点: `execCommand()` 是 pi-coding-agent extension loader 暴露的 process helper, 不是 `packages/agent` harness 的 exec abstraction; 两者名字相近但 package 边界不同 [E: packages/coding-agent/src/core/exec.ts:34] [E: packages/coding-agent/src/core/extensions/loader.ts:334] [E: packages/coding-agent/src/core/extensions/loader.ts:336] [I]。
 
 ## Sources
 

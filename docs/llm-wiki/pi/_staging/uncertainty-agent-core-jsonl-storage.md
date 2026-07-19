@@ -2,7 +2,7 @@
 
 batch: agent-core
 node: subsys.agent-core.jsonl-storage
-updated: 5a073885
+updated: 3da591ab
 
 ## 当前状态
 

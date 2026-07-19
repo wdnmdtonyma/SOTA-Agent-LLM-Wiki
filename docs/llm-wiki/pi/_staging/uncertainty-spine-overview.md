@@ -2,7 +2,7 @@
 
 ## [I] `spine.layered-architecture` 的详细职责
 
-`spine.overview` 只从 README、`main()`、`Agent`、`runAgentLoop`、`Models` 和辅助源码推断 `spine.layered-architecture` 应继续细化 package dependency direction 与 reusable/product boundary。该 related 节点在 index.json 中仍是 planned，本轮未创建该节点。
+`spine.layered-architecture` 已核验为 verified，并负责细化 package dependency direction 与 reusable/product boundary；`spine.overview` 仍只保留跨包入口与主链路摘要，避免重复分层节点的详细职责。
 
 ## [I] TUI 交互渲染细节
 

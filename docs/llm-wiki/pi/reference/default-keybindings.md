@@ -1,6 +1,6 @@
 ---
 id: ref.coding-agent.default-keybindings
-title: 默认键位目录(72)
+title: 默认键位目录(73)
 kind: catalog
 tier: T3
 pkg: coding-agent
@@ -14,7 +14,7 @@ symbols:
   - AppKeybindings
 evidence: explicit
 status: verified
-updated: 8c943640
+updated: 3da591ab
 related:
   - surface.config.keybindings
   - subsys.coding-agent.keybindings
@@ -28,15 +28,15 @@ related:
 - 每个 action id 默认绑定哪些 key chord?
 - 哪些默认键位来自 pi-tui,哪些由 pi-coding-agent 追加?
 - 哪些默认键位按平台变化或默认不绑定任何 key?
-- index 里的 `DEFAULT_APP_KEYBINDINGS` / `DEFAULT_EDITOR_KEYBINDINGS` 是否还是当前源码符号?
+- 旧 catalog 名 `DEFAULT_APP_KEYBINDINGS` / `DEFAULT_EDITOR_KEYBINDINGS` 在当前源码中由什么取代?
 
 ## Catalog 口径
 
-`packages/coding-agent/src/core/keybindings.ts` 从 `@earendil-works/pi-tui` 导入 `TUI_KEYBINDINGS`,并导出 `KEYBINDINGS` [E: packages/coding-agent/src/core/keybindings.ts:6] [E: packages/coding-agent/src/core/keybindings.ts:63]。`KEYBINDINGS` 先展开 `TUI_KEYBINDINGS`,再追加 `app.*` actions,所以本 catalog 同时列出 TUI defaults 与 coding-agent app defaults [E: packages/coding-agent/src/core/keybindings.ts:64] [E: packages/coding-agent/src/core/keybindings.ts:65] [E: packages/coding-agent/src/core/keybindings.ts:202]。
+`packages/coding-agent/src/core/keybindings.ts` 从 `@earendil-works/pi-tui` 导入 `TUI_KEYBINDINGS`,并导出 `KEYBINDINGS` [E: packages/coding-agent/src/core/keybindings.ts:6] [E: packages/coding-agent/src/core/keybindings.ts:64]。`KEYBINDINGS` 先展开 `TUI_KEYBINDINGS`,再追加 `app.*` actions,所以本 catalog 同时列出 TUI defaults 与 coding-agent app defaults [E: packages/coding-agent/src/core/keybindings.ts:65] [E: packages/coding-agent/src/core/keybindings.ts:66] [E: packages/coding-agent/src/core/keybindings.ts:207]。
 
-`TUI_KEYBINDINGS` 当前包含 31 个 `tui.*` 实例,覆盖 editor、generic input 和 selection actions [E: packages/tui/src/keybindings.ts:54] [E: packages/tui/src/keybindings.ts:134]。`AppKeybindings` 当前声明 41 个 `app.*` action id,并通过 module augmentation 合并进 pi-tui 的 `Keybindings` interface [E: packages/coding-agent/src/core/keybindings.ts:13] [E: packages/coding-agent/src/core/keybindings.ts:54] [E: packages/coding-agent/src/core/keybindings.ts:59]。因此当前默认键位实例数是 72,而 `index.json` 的 `group.keybindings.instance_count` 仍写 55 [U]。
+`TUI_KEYBINDINGS` 当前包含 31 个 `tui.*` 实例,覆盖 editor、generic input 和 selection actions [E: packages/tui/src/keybindings.ts:54] [E: packages/tui/src/keybindings.ts:134]。`AppKeybindings` 当前声明 42 个 `app.*` action id,并通过 module augmentation 合并进 pi-tui 的 `Keybindings` interface [E: packages/coding-agent/src/core/keybindings.ts:13] [E: packages/coding-agent/src/core/keybindings.ts:26] [E: packages/coding-agent/src/core/keybindings.ts:55] [E: packages/coding-agent/src/core/keybindings.ts:60]。因此当前默认键位实例数与 index 统一为 73 [I]。
 
-当前源码没有导出 `DEFAULT_APP_KEYBINDINGS` 或 `DEFAULT_EDITOR_KEYBINDINGS`;当前可核默认目录符号是 `KEYBINDINGS`、`TUI_KEYBINDINGS` 和 `AppKeybindings` [E: packages/coding-agent/src/core/keybindings.ts:63] [E: packages/tui/src/keybindings.ts:54] [E: packages/coding-agent/src/core/keybindings.ts:13] [U]。
+当前源码没有导出旧 catalog 名 `DEFAULT_APP_KEYBINDINGS` 或 `DEFAULT_EDITOR_KEYBINDINGS`;index 与节点已统一到可核默认目录符号 `KEYBINDINGS`、`TUI_KEYBINDINGS` 和 `AppKeybindings` [E: packages/coding-agent/src/core/keybindings.ts:64] [E: packages/tui/src/keybindings.ts:54] [E: packages/coding-agent/src/core/keybindings.ts:13]。
 
 ## TUI editor defaults
 
@@ -83,53 +83,54 @@ related:
 
 | action id | default keys | 含义 / why | 源码证据 |
 | --- | --- | --- | --- |
-| `app.interrupt` | `escape` | Cancel or abort. | [E: packages/coding-agent/src/core/keybindings.ts:65] |
-| `app.clear` | `ctrl+c` | Clear editor. | [E: packages/coding-agent/src/core/keybindings.ts:66] |
-| `app.exit` | `ctrl+d` | Exit when editor is empty. | [E: packages/coding-agent/src/core/keybindings.ts:67] |
-| `app.suspend` | non-Windows: `ctrl+z`; Windows: none | Suspend to background; default branches on `process.platform === "win32"`. | [E: packages/coding-agent/src/core/keybindings.ts:68] [E: packages/coding-agent/src/core/keybindings.ts:69] [E: packages/coding-agent/src/core/keybindings.ts:70] |
-| `app.thinking.cycle` | `shift+tab` | Cycle thinking level. | [E: packages/coding-agent/src/core/keybindings.ts:72] [E: packages/coding-agent/src/core/keybindings.ts:73] [E: packages/coding-agent/src/core/keybindings.ts:74] |
-| `app.model.cycleForward` | `ctrl+p` | Cycle to next model. | [E: packages/coding-agent/src/core/keybindings.ts:76] [E: packages/coding-agent/src/core/keybindings.ts:77] [E: packages/coding-agent/src/core/keybindings.ts:78] |
-| `app.model.cycleBackward` | `shift+ctrl+p` | Cycle to previous model. | [E: packages/coding-agent/src/core/keybindings.ts:80] [E: packages/coding-agent/src/core/keybindings.ts:81] [E: packages/coding-agent/src/core/keybindings.ts:82] |
-| `app.model.select` | `ctrl+l` | Open model selector. | [E: packages/coding-agent/src/core/keybindings.ts:84] |
-| `app.tools.expand` | `ctrl+o` | Toggle tool output. | [E: packages/coding-agent/src/core/keybindings.ts:85] |
-| `app.thinking.toggle` | `ctrl+t` | Toggle thinking blocks. | [E: packages/coding-agent/src/core/keybindings.ts:86] [E: packages/coding-agent/src/core/keybindings.ts:87] [E: packages/coding-agent/src/core/keybindings.ts:88] |
-| `app.session.toggleNamedFilter` | `ctrl+n` | Toggle named session filter. | [E: packages/coding-agent/src/core/keybindings.ts:90] [E: packages/coding-agent/src/core/keybindings.ts:91] [E: packages/coding-agent/src/core/keybindings.ts:92] |
-| `app.editor.external` | `ctrl+g` | Open external editor. | [E: packages/coding-agent/src/core/keybindings.ts:94] [E: packages/coding-agent/src/core/keybindings.ts:95] [E: packages/coding-agent/src/core/keybindings.ts:96] |
-| `app.message.followUp` | `alt+enter` | Queue follow-up message. | [E: packages/coding-agent/src/core/keybindings.ts:98] [E: packages/coding-agent/src/core/keybindings.ts:99] [E: packages/coding-agent/src/core/keybindings.ts:100] |
-| `app.message.dequeue` | `alt+up` | Restore queued messages. | [E: packages/coding-agent/src/core/keybindings.ts:102] [E: packages/coding-agent/src/core/keybindings.ts:103] [E: packages/coding-agent/src/core/keybindings.ts:104] |
-| `app.clipboard.pasteImage` | non-Windows: `ctrl+v`; Windows: `alt+v` | Paste image from clipboard; default branches on `process.platform === "win32"`. | [E: packages/coding-agent/src/core/keybindings.ts:106] [E: packages/coding-agent/src/core/keybindings.ts:107] [E: packages/coding-agent/src/core/keybindings.ts:108] |
-| `app.session.new` | none | Start a new session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:110] |
-| `app.session.tree` | none | Open session tree; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:111] |
-| `app.session.fork` | none | Fork current session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:112] |
-| `app.session.resume` | none | Resume a session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:113] |
-| `app.tree.foldOrUp` | `ctrl+left`, `alt+left` | Fold tree branch or move up. | [E: packages/coding-agent/src/core/keybindings.ts:114] [E: packages/coding-agent/src/core/keybindings.ts:115] [E: packages/coding-agent/src/core/keybindings.ts:116] |
-| `app.tree.unfoldOrDown` | `ctrl+right`, `alt+right` | Unfold tree branch or move down. | [E: packages/coding-agent/src/core/keybindings.ts:118] [E: packages/coding-agent/src/core/keybindings.ts:119] [E: packages/coding-agent/src/core/keybindings.ts:120] |
-| `app.tree.editLabel` | `shift+l` | Edit tree label. | [E: packages/coding-agent/src/core/keybindings.ts:122] [E: packages/coding-agent/src/core/keybindings.ts:123] [E: packages/coding-agent/src/core/keybindings.ts:124] |
-| `app.tree.toggleLabelTimestamp` | `shift+t` | Toggle tree label timestamps. | [E: packages/coding-agent/src/core/keybindings.ts:126] [E: packages/coding-agent/src/core/keybindings.ts:127] [E: packages/coding-agent/src/core/keybindings.ts:128] |
-| `app.session.togglePath` | `ctrl+p` | Toggle session path display. | [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/core/keybindings.ts:131] [E: packages/coding-agent/src/core/keybindings.ts:132] |
-| `app.session.toggleSort` | `ctrl+s` | Toggle session sort mode. | [E: packages/coding-agent/src/core/keybindings.ts:134] [E: packages/coding-agent/src/core/keybindings.ts:135] [E: packages/coding-agent/src/core/keybindings.ts:136] |
-| `app.session.rename` | `ctrl+r` | Rename session. | [E: packages/coding-agent/src/core/keybindings.ts:138] [E: packages/coding-agent/src/core/keybindings.ts:139] [E: packages/coding-agent/src/core/keybindings.ts:140] |
-| `app.session.delete` | `ctrl+d` | Delete session. | [E: packages/coding-agent/src/core/keybindings.ts:142] [E: packages/coding-agent/src/core/keybindings.ts:143] [E: packages/coding-agent/src/core/keybindings.ts:144] |
-| `app.session.deleteNoninvasive` | `ctrl+backspace` | Delete session when query is empty. | [E: packages/coding-agent/src/core/keybindings.ts:146] [E: packages/coding-agent/src/core/keybindings.ts:147] [E: packages/coding-agent/src/core/keybindings.ts:148] |
-| `app.models.save` | `ctrl+s` | Save model selection. | [E: packages/coding-agent/src/core/keybindings.ts:150] [E: packages/coding-agent/src/core/keybindings.ts:151] [E: packages/coding-agent/src/core/keybindings.ts:152] |
-| `app.models.enableAll` | `ctrl+a` | Enable all models. | [E: packages/coding-agent/src/core/keybindings.ts:154] [E: packages/coding-agent/src/core/keybindings.ts:155] [E: packages/coding-agent/src/core/keybindings.ts:156] |
-| `app.models.clearAll` | `ctrl+x` | Clear all models. | [E: packages/coding-agent/src/core/keybindings.ts:158] [E: packages/coding-agent/src/core/keybindings.ts:159] [E: packages/coding-agent/src/core/keybindings.ts:160] |
-| `app.models.toggleProvider` | `ctrl+p` | Toggle all models for provider. | [E: packages/coding-agent/src/core/keybindings.ts:162] [E: packages/coding-agent/src/core/keybindings.ts:163] [E: packages/coding-agent/src/core/keybindings.ts:164] |
-| `app.models.reorderUp` | `alt+up` | Move model up in order. | [E: packages/coding-agent/src/core/keybindings.ts:166] [E: packages/coding-agent/src/core/keybindings.ts:167] [E: packages/coding-agent/src/core/keybindings.ts:168] |
-| `app.models.reorderDown` | `alt+down` | Move model down in order. | [E: packages/coding-agent/src/core/keybindings.ts:170] [E: packages/coding-agent/src/core/keybindings.ts:171] [E: packages/coding-agent/src/core/keybindings.ts:172] |
-| `app.tree.filter.default` | `ctrl+d` | Tree filter: default view. | [E: packages/coding-agent/src/core/keybindings.ts:174] [E: packages/coding-agent/src/core/keybindings.ts:175] [E: packages/coding-agent/src/core/keybindings.ts:176] |
-| `app.tree.filter.noTools` | `ctrl+t` | Tree filter: hide tool results. | [E: packages/coding-agent/src/core/keybindings.ts:178] [E: packages/coding-agent/src/core/keybindings.ts:179] [E: packages/coding-agent/src/core/keybindings.ts:180] |
-| `app.tree.filter.userOnly` | `ctrl+u` | Tree filter: user messages only. | [E: packages/coding-agent/src/core/keybindings.ts:182] [E: packages/coding-agent/src/core/keybindings.ts:183] [E: packages/coding-agent/src/core/keybindings.ts:184] |
-| `app.tree.filter.labeledOnly` | `ctrl+l` | Tree filter: labeled entries only. | [E: packages/coding-agent/src/core/keybindings.ts:186] [E: packages/coding-agent/src/core/keybindings.ts:187] [E: packages/coding-agent/src/core/keybindings.ts:188] |
-| `app.tree.filter.all` | `ctrl+a` | Tree filter: show all entries. | [E: packages/coding-agent/src/core/keybindings.ts:190] [E: packages/coding-agent/src/core/keybindings.ts:191] [E: packages/coding-agent/src/core/keybindings.ts:192] |
-| `app.tree.filter.cycleForward` | `ctrl+o` | Tree filter: cycle forward. | [E: packages/coding-agent/src/core/keybindings.ts:194] [E: packages/coding-agent/src/core/keybindings.ts:195] [E: packages/coding-agent/src/core/keybindings.ts:196] |
-| `app.tree.filter.cycleBackward` | `shift+ctrl+o` | Tree filter: cycle backward. | [E: packages/coding-agent/src/core/keybindings.ts:198] [E: packages/coding-agent/src/core/keybindings.ts:199] [E: packages/coding-agent/src/core/keybindings.ts:200] |
+| `app.interrupt` | `escape` | Cancel or abort. | [E: packages/coding-agent/src/core/keybindings.ts:66] |
+| `app.clear` | `ctrl+c` | Clear editor. | [E: packages/coding-agent/src/core/keybindings.ts:67] |
+| `app.exit` | `ctrl+d` | Exit when editor is empty. | [E: packages/coding-agent/src/core/keybindings.ts:68] |
+| `app.suspend` | non-Windows: `ctrl+z`; Windows: none | Suspend to background; default branches on `process.platform === "win32"`. | [E: packages/coding-agent/src/core/keybindings.ts:69] [E: packages/coding-agent/src/core/keybindings.ts:70] [E: packages/coding-agent/src/core/keybindings.ts:71] |
+| `app.thinking.cycle` | `shift+tab` | Cycle thinking level. | [E: packages/coding-agent/src/core/keybindings.ts:73] [E: packages/coding-agent/src/core/keybindings.ts:74] [E: packages/coding-agent/src/core/keybindings.ts:75] |
+| `app.model.cycleForward` | `ctrl+p` | Cycle to next model. | [E: packages/coding-agent/src/core/keybindings.ts:77] [E: packages/coding-agent/src/core/keybindings.ts:78] [E: packages/coding-agent/src/core/keybindings.ts:79] |
+| `app.model.cycleBackward` | `shift+ctrl+p` | Cycle to previous model. | [E: packages/coding-agent/src/core/keybindings.ts:81] [E: packages/coding-agent/src/core/keybindings.ts:82] [E: packages/coding-agent/src/core/keybindings.ts:83] |
+| `app.model.select` | `ctrl+l` | Open model selector. | [E: packages/coding-agent/src/core/keybindings.ts:85] |
+| `app.tools.expand` | `ctrl+o` | Toggle tool output. | [E: packages/coding-agent/src/core/keybindings.ts:86] |
+| `app.thinking.toggle` | `ctrl+t` | Toggle thinking blocks. | [E: packages/coding-agent/src/core/keybindings.ts:87] [E: packages/coding-agent/src/core/keybindings.ts:88] [E: packages/coding-agent/src/core/keybindings.ts:89] |
+| `app.session.toggleNamedFilter` | `ctrl+n` | Toggle named session filter. | [E: packages/coding-agent/src/core/keybindings.ts:91] [E: packages/coding-agent/src/core/keybindings.ts:92] [E: packages/coding-agent/src/core/keybindings.ts:93] |
+| `app.editor.external` | `ctrl+g` | Open external editor. | [E: packages/coding-agent/src/core/keybindings.ts:95] [E: packages/coding-agent/src/core/keybindings.ts:96] [E: packages/coding-agent/src/core/keybindings.ts:97] |
+| `app.message.copy` | `ctrl+x` | Copy the selected message to the clipboard. | [E: packages/coding-agent/src/core/keybindings.ts:99] [E: packages/coding-agent/src/core/keybindings.ts:100] [E: packages/coding-agent/src/core/keybindings.ts:101] |
+| `app.message.followUp` | `alt+enter` | Queue follow-up message. | [E: packages/coding-agent/src/core/keybindings.ts:103] [E: packages/coding-agent/src/core/keybindings.ts:104] [E: packages/coding-agent/src/core/keybindings.ts:105] |
+| `app.message.dequeue` | `alt+up` | Restore queued messages. | [E: packages/coding-agent/src/core/keybindings.ts:107] [E: packages/coding-agent/src/core/keybindings.ts:108] [E: packages/coding-agent/src/core/keybindings.ts:109] |
+| `app.clipboard.pasteImage` | non-Windows: `ctrl+v`; Windows: `alt+v` | Paste image from clipboard; default branches on `process.platform === "win32"`. | [E: packages/coding-agent/src/core/keybindings.ts:111] [E: packages/coding-agent/src/core/keybindings.ts:112] [E: packages/coding-agent/src/core/keybindings.ts:108] |
+| `app.session.new` | none | Start a new session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:115] |
+| `app.session.tree` | none | Open session tree; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:116] |
+| `app.session.fork` | none | Fork current session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:117] |
+| `app.session.resume` | none | Resume a session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:118] |
+| `app.tree.foldOrUp` | `ctrl+left`, `alt+left` | Fold tree branch or move up. | [E: packages/coding-agent/src/core/keybindings.ts:119] [E: packages/coding-agent/src/core/keybindings.ts:115] [E: packages/coding-agent/src/core/keybindings.ts:121] |
+| `app.tree.unfoldOrDown` | `ctrl+right`, `alt+right` | Unfold tree branch or move down. | [E: packages/coding-agent/src/core/keybindings.ts:123] [E: packages/coding-agent/src/core/keybindings.ts:119] [E: packages/coding-agent/src/core/keybindings.ts:125] |
+| `app.tree.editLabel` | `shift+l` | Edit tree label. | [E: packages/coding-agent/src/core/keybindings.ts:127] [E: packages/coding-agent/src/core/keybindings.ts:128] [E: packages/coding-agent/src/core/keybindings.ts:129] |
+| `app.tree.toggleLabelTimestamp` | `shift+t` | Toggle tree label timestamps. | [E: packages/coding-agent/src/core/keybindings.ts:131] [E: packages/coding-agent/src/core/keybindings.ts:132] [E: packages/coding-agent/src/core/keybindings.ts:133] |
+| `app.session.togglePath` | `ctrl+p` | Toggle session path display. | [E: packages/coding-agent/src/core/keybindings.ts:135] [E: packages/coding-agent/src/core/keybindings.ts:136] [E: packages/coding-agent/src/core/keybindings.ts:137] |
+| `app.session.toggleSort` | `ctrl+s` | Toggle session sort mode. | [E: packages/coding-agent/src/core/keybindings.ts:139] [E: packages/coding-agent/src/core/keybindings.ts:140] [E: packages/coding-agent/src/core/keybindings.ts:141] |
+| `app.session.rename` | `ctrl+r` | Rename session. | [E: packages/coding-agent/src/core/keybindings.ts:143] [E: packages/coding-agent/src/core/keybindings.ts:144] [E: packages/coding-agent/src/core/keybindings.ts:145] |
+| `app.session.delete` | `ctrl+d` | Delete session. | [E: packages/coding-agent/src/core/keybindings.ts:147] [E: packages/coding-agent/src/core/keybindings.ts:148] [E: packages/coding-agent/src/core/keybindings.ts:149] |
+| `app.session.deleteNoninvasive` | `ctrl+backspace` | Delete session when query is empty. | [E: packages/coding-agent/src/core/keybindings.ts:151] [E: packages/coding-agent/src/core/keybindings.ts:152] [E: packages/coding-agent/src/core/keybindings.ts:153] |
+| `app.models.save` | `ctrl+s` | Save model selection. | [E: packages/coding-agent/src/core/keybindings.ts:155] [E: packages/coding-agent/src/core/keybindings.ts:156] [E: packages/coding-agent/src/core/keybindings.ts:157] |
+| `app.models.enableAll` | `ctrl+a` | Enable all models. | [E: packages/coding-agent/src/core/keybindings.ts:159] [E: packages/coding-agent/src/core/keybindings.ts:160] [E: packages/coding-agent/src/core/keybindings.ts:161] |
+| `app.models.clearAll` | `ctrl+x` | Clear all models. | [E: packages/coding-agent/src/core/keybindings.ts:163] [E: packages/coding-agent/src/core/keybindings.ts:164] [E: packages/coding-agent/src/core/keybindings.ts:165] |
+| `app.models.toggleProvider` | `ctrl+p` | Toggle all models for provider. | [E: packages/coding-agent/src/core/keybindings.ts:167] [E: packages/coding-agent/src/core/keybindings.ts:168] [E: packages/coding-agent/src/core/keybindings.ts:169] |
+| `app.models.reorderUp` | `alt+up` | Move model up in order. | [E: packages/coding-agent/src/core/keybindings.ts:171] [E: packages/coding-agent/src/core/keybindings.ts:172] [E: packages/coding-agent/src/core/keybindings.ts:173] |
+| `app.models.reorderDown` | `alt+down` | Move model down in order. | [E: packages/coding-agent/src/core/keybindings.ts:175] [E: packages/coding-agent/src/core/keybindings.ts:176] [E: packages/coding-agent/src/core/keybindings.ts:177] |
+| `app.tree.filter.default` | `ctrl+d` | Tree filter: default view. | [E: packages/coding-agent/src/core/keybindings.ts:179] [E: packages/coding-agent/src/core/keybindings.ts:180] [E: packages/coding-agent/src/core/keybindings.ts:181] |
+| `app.tree.filter.noTools` | `ctrl+t` | Tree filter: hide tool results. | [E: packages/coding-agent/src/core/keybindings.ts:183] [E: packages/coding-agent/src/core/keybindings.ts:184] [E: packages/coding-agent/src/core/keybindings.ts:185] |
+| `app.tree.filter.userOnly` | `ctrl+u` | Tree filter: user messages only. | [E: packages/coding-agent/src/core/keybindings.ts:187] [E: packages/coding-agent/src/core/keybindings.ts:188] [E: packages/coding-agent/src/core/keybindings.ts:189] |
+| `app.tree.filter.labeledOnly` | `ctrl+l` | Tree filter: labeled entries only. | [E: packages/coding-agent/src/core/keybindings.ts:191] [E: packages/coding-agent/src/core/keybindings.ts:192] [E: packages/coding-agent/src/core/keybindings.ts:193] |
+| `app.tree.filter.all` | `ctrl+a` | Tree filter: show all entries. | [E: packages/coding-agent/src/core/keybindings.ts:195] [E: packages/coding-agent/src/core/keybindings.ts:196] [E: packages/coding-agent/src/core/keybindings.ts:197] |
+| `app.tree.filter.cycleForward` | `ctrl+o` | Tree filter: cycle forward. | [E: packages/coding-agent/src/core/keybindings.ts:199] [E: packages/coding-agent/src/core/keybindings.ts:200] [E: packages/coding-agent/src/core/keybindings.ts:201] |
+| `app.tree.filter.cycleBackward` | `shift+ctrl+o` | Tree filter: cycle backward. | [E: packages/coding-agent/src/core/keybindings.ts:203] [E: packages/coding-agent/src/core/keybindings.ts:204] [E: packages/coding-agent/src/core/keybindings.ts:205] |
 
 ## 配置与覆盖边界
 
 `keybindings.json` 使用同一批 namespaced action ids;用户文档说明每个 action 可绑定一个或多个 keys,旧的 pre-namespaced ids 会在启动时迁移,编辑配置后运行 `/reload` 可应用变更 [E: packages/coding-agent/docs/keybindings.md:3] [E: packages/coding-agent/docs/keybindings.md:5] [E: packages/coding-agent/docs/keybindings.md:7] [E: packages/coding-agent/docs/keybindings.md:9]。本节点只列默认 catalog;用户配置语法、迁移和 reload 路径由 [surface.config.keybindings](../surface/config/keybindings.md) 与 [subsys.coding-agent.keybindings](../subsystems/coding-agent/keybindings.md) 详述 [I]。
 
-多个 action 可以共享同一个默认 key chord,例如 `ctrl+p` 同时出现在 model cycling、session path display 和 scoped models provider toggling;是否冲突取决于当前 UI context 和 TUI manager 的匹配/dispatch 语义,不是本默认目录直接判定 [E: packages/coding-agent/src/core/keybindings.ts:76] [E: packages/coding-agent/src/core/keybindings.ts:77] [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/core/keybindings.ts:131] [E: packages/coding-agent/src/core/keybindings.ts:162] [E: packages/coding-agent/src/core/keybindings.ts:163] [I]。
+多个 action 可以共享同一个默认 key chord,例如 `ctrl+p` 同时出现在 model cycling、session path display 和 scoped models provider toggling;是否冲突取决于当前 UI context 和 TUI manager 的匹配/dispatch 语义,不是本默认目录直接判定 [E: packages/coding-agent/src/core/keybindings.ts:77] [E: packages/coding-agent/src/core/keybindings.ts:78] [E: packages/coding-agent/src/core/keybindings.ts:135] [E: packages/coding-agent/src/core/keybindings.ts:136] [E: packages/coding-agent/src/core/keybindings.ts:167] [E: packages/coding-agent/src/core/keybindings.ts:168] [I]。
 
 ## Sources
 

@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 8c943640
+updated: 3da591ab
 ---
 
 # 不确定项日志([U] 汇总)
@@ -57,7 +57,7 @@ L2 verifier 已逐条对照 `packages/agent/src/types.ts` 与 `packages/agent/sr
 
 batch: agent-core
 node: ref.agent.error-codes
-updated: 5a073885
+updated: 3da591ab
 
 ## 当前状态
 
@@ -95,7 +95,7 @@ L2 verifier 已逐条证伪本节点 `[E]` 的可核性、行号精度与过度�
 
 batch: agent-core
 node: subsys.agent-core.jsonl-storage
-updated: 5a073885
+updated: 3da591ab
 
 ## 当前状态
 
@@ -234,12 +234,12 @@ L2 已逐条证伪 `subsys.agent-core.system-prompt` 的 `[E]` 可核性、行�
 
 batch: agent-core
 node: ref.agent.thinking-levels
-updated: 5a073885
+updated: 3da591ab
 
 ## 当前状态
 
 - L2 verifier 已逐条核对 `ref.agent.thinking-levels` 的 `[E]` 可核性、行号精度和过度推断风险;节点已置 `status: verified`。
-- `ThinkingLevel` 当前六个值已按 `packages/agent/src/types.ts:289` 确认为完整 union 覆盖:`"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`。
+- `ThinkingLevel` 当前七个值已按 `packages/agent/src/types.ts:289` 确认为完整 union 覆盖:`"off"`、`"minimal"`、`"low"`、`"medium"`、`"high"`、`"xhigh"`、`"max"`。
 - 本轮未留下需要并入 `reference/uncertainty.md` 的 `[U]` 项。
 - 节点按 `source=[packages/agent/src/types.ts]` 收窄证据:所有 provider/model support、`SimpleStreamOptions.reasoning` 字段细节、`"off"` 到 provider request 的 runtime 转换都标为 `[I]`,没有用 source 外文件作 `[E]`。L2 将 `AgentLoopConfig` 边界收紧为本文件只证明继承 imported `SimpleStreamOptions` shape,不把具体 `reasoning` 字段写成当前 source 可直接证明。
 
@@ -443,18 +443,15 @@ L2 核验后,`subsys.ai.mistral-conversations` 未新增需要上卷到 `referen
 
 # uncertainty-ai-model-catalog
 
-- L2 verified `ref.ai.model-catalog` against current `pi/packages/ai/src/models.generated.ts` import expansion: 35 provider buckets, 1019 expected model instances, 1019 Markdown rows, 0 missing, 0 extra, 0 duplicate, 0 identity/field drift for id/name/provider/api/context/cost/reasoning/input.
-- L2 verified `[E]` references: 17161 total refs, 16139 unique refs, 37 source files, 0 missing paths or out-of-range lines; row evidence labels checked against 16046 cited source lines with 0 mismatches.
-- L3 lint fix: generated-file header comments in `ref.ai.model-catalog` now use path-level evidence markers instead of line-level evidence anchors.
-- [U] `index.json` still lists `group.models.instance_count` as `200`, but current `MODELS` import expansion produced `1019` rows for this node. I did not update `index.json` because this task requested only the catalog node and this staging file.
+- 本轮按目标 commit 的 35 个已提交 `*.models.ts` structural shards 重建 `ref.ai.model-catalog`：1069 个 model id、1069 个目录行，未发现 key/id/provider 结构不一致或跨 shard 混用 provider。
+- 完整 name/cost/context 等 values 已移到 gitignored `src/providers/data/*.json`，当前 checkout 无法把这些字段作为 commit-local `[E]`；引用页因此只枚举可静态核证的 id/provider/api，并把完整 JSON bundle 的生成、验证和发布交给 `subsys.ai.model-catalog-publication`。
+- `index.json` 的 `group.models.instance_count` 已同步为 1069；本轮没有遗留 `[U]`。
 
 ## ai-model-discovery
 
 # uncertainty-ai-model-discovery
 
-L2 核验后 `subsys.ai.model-discovery` 保留 1 条 `[U]`:
-
-- `docs/llm-wiki/pi/index.json` 里 `subsys.ai.model-discovery.source` 只列 `packages/ai/src/models.generated.ts` 与 `packages/ai/src/models.ts`, 但本节点被要求覆盖的 `builtinModels()` / `getBuiltinModel()` 实现在 `packages/ai/src/providers/all.ts`, `Model` 字段定义在 `packages/ai/src/types.ts`, generated gotcha 的可执行入口在 `packages/ai/scripts/generate-models.ts` 与 `packages/ai/package.json`。本节点 frontmatter 暂列实际支撑源, index 元数据留待后续专门 reconcile。
+L2 核验后，`subsys.ai.model-discovery` 的 supporting sources 与 index 元数据已 reconcile，没有遗留 metadata `[U]`。
 
 降级或保留为 `[I]` 的主要结论:
 
@@ -472,14 +469,9 @@ L2 行号/可核性修正:
 
 # uncertainty-ai-oauth-flow
 
-L2 verified with no unresolved `[U]` claims.
-
-Corrections made in the node:
-
-- Removed or downgraded all `[E]` claims that required files outside this node's source list (`auth/types.ts`, `auth/resolve.ts`, `models.ts`, `cli.ts`, `utils/oauth/types.ts`). The node now treats `OAuthAuth` and auth-resolution behavior as related-node boundary material rather than direct evidence in this L2 pass.
-- Replaced the broad token/auth-resolution sections with source-scoped registry, device-code, PKCE, and deprecated wrapper facts.
-- Kept provider-neutral/helper-boundary statements as `[I]` when they depend on absence of provider-specific endpoint logic or cross-file design interpretation.
-- Set node status to `verified`; remaining explicit evidence points only at `packages/ai/src/utils/oauth/index.ts`, `packages/ai/src/utils/oauth/device-code.ts`, and `packages/ai/src/utils/oauth/pkce.ts`.
+- 目标 commit 已删除旧 `packages/ai/src/utils/oauth/index.ts`，且没有新建同形 index；内部 flow loader 的新入口是 `packages/ai/src/auth/oauth/load.ts`。
+- device-code 与 PKCE helpers 已迁到 `packages/ai/src/auth/oauth/`；公共 `packages/ai/src/oauth.ts` 仅保留 extension compatibility types，standalone Bun 由 `packages/ai/src/bun-oauth.ts` 静态注册 bundled loaders。
+- 节点中的 explicit evidence 已全部重定位到当前存在的 source；本轮没有遗留 `[U]`。
 
 ## ai-openai-codex-responses
 
@@ -519,22 +511,13 @@ L2 verifier 修正了三处过宽 [E]:assistant 历史 content 增补 `requiresT
 
 # uncertainty-ai-provider-catalog
 
-- L2 provider-catalog 核验结论: `reference/provider-catalog.md` 已按 `packages/ai/src/providers/all.ts` 的 `builtinProviders()` return array 覆盖 35 个文本 provider factory call, 表格顺序对应 `all.ts:72-106`, 节点正文不再保留旧 `~38` / `38` 数量口径。
-- 外部 index 漂移仍未在本批次修改: `docs/llm-wiki/pi/index.json` 里 `ref.ai.provider-catalog` 标题仍是 `provider 完整目录(~38)`, `group.providers.instance_count` 仍是 `38`; 当前任务限定只改 provider-catalog 节点与本 staging 文件。
+- 已按目标 `builtinProviders()` 覆盖 36 个 runtime provider，包括没有 structural model shard 的 Radius；catalog title 与 index group 已同步。本轮未留下 `[U]`。
 
 ## ai-provider-registry
 
 # uncertainty-ai-provider-registry
 
-本轮填充 `subsys.ai.provider-registry` 新增 1 条 `[U]`:
-
-- `docs/llm-wiki/pi/index.json` 里 `group.providers.instance_count` 与 `ref.ai.provider-catalog` 标题仍暗示约 38 个 provider, 但当前源码 ground truth `packages/ai/src/providers/all.ts` 的 `builtinProviders()` 只返回 35 个 factory call；`packages/ai/src/models.generated.ts` 的 generated provider key 数也为 35。按 conventions 第 7 节, 本节点采用 `builtinProviders()` 的 35 作为当前事实, catalog/index 计数留待后续专门 reconcile。
-
-降级为 `[I]` 的主要结论:
-
-- `builtinProviders()` 每次调用构造 fresh provider instances: 源码显示直接调用 factories, 但“fresh”语义跨入各 provider factory 的实现。
-- `builtinProviders()` 与 generated `MODELS` 当前数量一致不构成 API 契约: 这是本轮人工对照, 源码没有写同步不变量。
-- provider catalog 应以 `builtinProviders()` 做 membership, 以 generated model catalog 做 cross-check: 这是 conventions ground-truth 约定加当前代码结构推出。
+- 已区分 36 个 runtime built-in providers 与 35 个 generated structural buckets，并按当前 `refresh(options)`、`fetchModels`、`ModelsStore` contract 重审证据。本轮未留下 `[U]`。
 
 ## ai-session-resources
 
@@ -552,7 +535,7 @@ Inferred boundaries checked during L2:
 
 # uncertainty: ref.ai.wire-protocol-catalog
 
-L2 核验后,`ref.ai.wire-protocol-catalog` 未新增需要上卷到 `reference/uncertainty.md` 的 `[U]`。9 个 chat/text wire protocol key 已逐实例对齐 `KnownApi`、对应 `*.lazy.ts` wrapper、`ProviderStreams` 的 `stream` / `streamSimple` contract,以及 `lazyApi()` 对两种调用的委托;`openrouter-images` 已收紧为 image-only contract 后再推断排除。lazy wrapper 到 subsystem 节点的映射属于 wiki 组织映射,仍在节点表格中标为 `[I]`。
+L2 核验后,`ref.ai.wire-protocol-catalog` 未新增需要上卷到 `reference/uncertainty.md` 的 `[U]`。10 个 chat/text wire protocol key（含 `pi-messages`）已逐实例对齐 `KnownApi`、对应 `*.lazy.ts` wrapper、`ProviderStreams` 的 `stream` / `streamSimple` contract,以及 `lazyApi()` 对两种调用的委托;`openrouter-images` 已收紧为 image-only contract 后再推断排除。lazy wrapper 到 subsystem 节点的映射属于 wiki 组织映射,仍在节点表格中标为 `[I]`。
 
 ## ai-wire-protocol-dispatch
 
@@ -571,9 +554,9 @@ L2 核验后未新增 `[U]`。核心 dispatch 结论可落到 `models.ts`、`api
 # Batch AA uncertainties
 
 - `ref.ai.image-models`: `openrouter/auto` still uses `-1000000` for both image-model `cost.input` and `cost.output`; the catalog records the source values but does not infer product semantics for negative cost.
-- `ref.coding-agent.extension-events`: `index.json` still lists `group.extension-events.instance_count` as 29, while current `ExtensionEvent` / `ExtensionAPI.on(...)` source exposes 31 event names including `session_info_changed`.
-- `ref.coding-agent.env-vars`: this catalog remains scoped to coding-agent plus directly consumed `pi-ai` provider env channels; `packages/orchestrator` `PI_ORCHESTRATOR_*` / Radius env and TUI-only debug env are intentionally outside this node's authority.
-- `ref.coding-agent.config-keys`: `index.json` still lists `group.config-keys.instance_count` as 50, while current `Settings` + nested leaves + `PackageSource` object keys produce 72 catalog rows after adding `outputPad`.
+- `ref.coding-agent.extension-events`: source、catalog 与 `group.extension-events.instance_count` 已收敛为 33 个事件名，包括 `before_provider_headers` 与 `agent_settled`。
+- `ref.coding-agent.env-vars`: this catalog remains scoped to coding-agent plus directly consumed `pi-ai` provider env channels, including `RADIUS_API_KEY`; `packages/orchestrator` `PI_ORCHESTRATOR_*` and TUI-only debug env are intentionally outside this node's authority.
+- `ref.coding-agent.config-keys`: current `Settings` + nested leaves + `PackageSource` object keys and `group.config-keys.instance_count` have converged on 74 catalog rows, including `showCacheMissNotices` and `packages[].autoload`.
 - `ref.coding-agent.config-keys`: `terminal.showTerminalProgress` is present in `SettingsManager` but still absent from `packages/coding-agent/docs/settings.md`.
 - `ref.interactive.components`: the catalog counts directory files, so whether `components/index.ts` should count as an instance or only barrel metadata remains a catalog-definition question.
 - `ref.interactive.components`: `ConfigSelectorComponent`, `CountdownTimer`, `EarendilAnnouncementComponent`, and `session-selector-search.ts` have real callers but are not exported by `components/index.ts`; this looks internal-only but needs maintainer/API-policy confirmation.
@@ -581,8 +564,8 @@ L2 核验后未新增 `[U]`。核心 dispatch 结论可落到 `models.ts`、`api
 
 ## batch-ab
 
-- `ref.ai.model-catalog`: `packages/ai/src/models.generated.ts` at pi HEAD `8c943640` enumerates 1034 text model instances, while `index.json` still records `group.models.instance_count: 1019`. `index.json` is outside this batch's allowed write scope.
-- `ref.coding-agent.rpc-methods`: `RpcCommand` and `handleCommand()` at pi HEAD `8c943640` cover 31 ordinary RPC commands, while `index.json` still records `group.rpc-methods.instance_count: 29`. `extension_ui_response` remains excluded from the command catalog.
+- `ref.ai.model-catalog`: publication shards、生成目录与 `group.models.instance_count` 已收敛为 1069 个模型实例。
+- `ref.coding-agent.rpc-methods`: `RpcCommand`、catalog 与 `group.rpc-methods.instance_count` 已收敛为 31；`extension_ui_response` 仍按协议定义排除在普通 command catalog 外。
 - `ref.coding-agent.rpc-methods`: `packages/coding-agent/docs/rpc.md` still documents `get_commands` response examples/fields with top-level `location` and `path`, but `RpcSlashCommand` and `rpc-mode.ts` emit `sourceInfo` instead.
 
 ## batch-ae
@@ -590,15 +573,14 @@ L2 核验后未新增 `[U]`。核心 dispatch 结论可落到 `models.ts`、`api
 # Uncertainty staging - batch ae
 
 - `subsystems/ai/google-vertex.md`: `subsys.ai.env-api-keys` credential discovery details require that node's own source; the Vertex node only verifies how `google-vertex.ts` consumes already-resolved values, so this remains `[U]`.
-- `subsystems/ai/model-discovery.md`: the current index entry mismatch noted in the node remains unresolved in this batch because the requested scope forbids editing `index.json`; the node keeps the reconciliation note as `[U]`.
+- `subsystems/ai/model-discovery.md`: supporting sources and index metadata have been reconciled; the earlier source-list mismatch is resolved.
 
 ## batch-ah
 
 # Uncertainty batch ah
 
 - `subsystems/coding-agent/settings-manager.md`: `CONFIG_DIR_NAME` 的字面值来自 `packages/coding-agent/src/config.ts`, 本节点只把 `settings-manager.ts` 作为证据范围, 因此不在该断言里展开 `.pi` 字面值。
-- `subsystems/coding-agent/settings-manager.md`: index.json 为本节点列出 `loadSettings`, 但当前 `packages/coding-agent/src/core/settings-manager.ts` 没有 `loadSettings` 函数或 export; 实际读取路径是 private static `loadFromStorage()` 与 `tryLoadFromStorage()`。
-- `subsystems/coding-agent/settings-manager.md`: index.json 为本节点列出 `deepMergeSettings`, 当前源码确有 `function deepMergeSettings(...)`, 但它不是 `export function`; 如果 symbols 语义要求 exported symbol, 这里与源码不一致。
+- `subsystems/coding-agent/settings-manager.md`: 节点与 index symbols 已收敛到当前 exported storage/manager API；private `loadFromStorage()` 与非导出的 `deepMergeSettings()` 仅作为正文实现细节，不再冒充 authoritative symbols。
 
 ## batch-aj
 
@@ -615,7 +597,7 @@ L2 核验后未新增 `[U]`。核心 dispatch 结论可落到 `models.ts`、`api
 
 # Uncertainty · subsys.coding-agent.auth-storage
 
-- [U] `index.json` lists `saveApiKey` as a symbol for `subsys.coding-agent.auth-storage`, but `packages/coding-agent/src/core/auth-storage.ts` and `packages/coding-agent/src/core/auth-guidance.ts` do not define or export `saveApiKey`. Current source exposes generic `AuthStorage.set(provider, credential)` and callers can store `{ type: "api_key", key }`.
+- `index.json` 与节点 symbols 已按当前实现统一为 `AuthStorage`、`FileAuthStorageBackend`、`RuntimeCredentials` 和 `readStoredCredential`;旧 `saveApiKey` 漂移已清除。
 - [I] `getAuthStatus()` reports runtime/environment auth with `configured: false` while `hasAuth()` treats runtime override and environment key as usable auth. This likely separates persisted credentials from transient/fallback sources, but the two source files do not document the intended UI semantics.
 - [I] The sync lock retry loop uses a busy wait to keep the backend interface synchronous. That behavior is visible in code, but the design motivation is inferred from the inline comment and method shape rather than a design doc.
 
@@ -659,7 +641,6 @@ No unresolved [U] items found while reading the listed source files and immediat
 
 本轮新增需要上收 `reference/uncertainty.md` 的 `[U]` 项:
 
-- `subsys.coding-agent.extension-runner` 的 index symbol 写作 `emitProjectTrust`, 但当前源码导出名是 `emitProjectTrustEvent`;需要确认 index symbol 是否允许简称, 还是应协调修正为源码导出名。
 - `ExtensionRunner.emitToolCall()` 没有 try/catch, 与多数专用 emitter 和通用 `emit()` 的 error-to-`emitError()` 模式不同;当前源码未直接说明这是刻意的 fail-closed 行为还是遗漏。
 
 本轮主要 `[I]` 降级:
@@ -692,9 +673,8 @@ No unresolved [U] items found while reading the listed source files and immediat
 
 # uncertainty-coding-agent-html-export
 
-- `exportHtml` 在 index.json 的 symbols 中列出,但当前源码导出的函数名是 `exportSessionToHtml` 和 `exportFromFile`;RPC client/mode 使用 `exportHtml` / `export_html` 作为协议方法名。节点将 `exportHtml` 保留在 frontmatter 以匹配 index.json,正文按实际源码函数名讲解。[U]
+- index 与节点 symbols 已改为当前源码导出的 `exportSessionToHtml`、`exportFromFile` 和 `ansiToHtml`;RPC 的 `exportHtml` / `export_html` 仅作为协议方法名保留在对应 surface 说明中。
 - `getExportTemplateDir()`、`template.html`、`template.css` 和 `template.js` 对最终浏览器端渲染很关键,但 node 109 的 index source 只列出 `core/export-html/index.ts`、`ansi-to-html.ts`、`tool-renderer.ts`。节点只把这些作为 Sources,入口/模板行为仅在必要处引用邻近源码。[I]
-- `../../../pi` 从当前工作目录 `/Users/makii/Project/Agent_Wiki` 不存在;实际源码仓库位于 `/Users/makii/Project/Agent_Wiki/pi`,本节点 `updated` 使用 `git -C pi rev-parse --short HEAD` 得到的 `5a073885`。[U]
 
 ## coding-agent-http-dispatcher
 
@@ -730,9 +710,9 @@ No unresolved [U] items found while reading the listed source files and immediat
 
 ## coding-agent-keybindings
 
-# Uncertainty · coding-agent keybindings
+# Recheck · coding-agent keybindings
 
-- [U] `index.json` node `subsys.coding-agent.keybindings` lists symbols `DEFAULT_APP_KEYBINDINGS` and `DEFAULT_EDITOR_KEYBINDINGS`, and `conventions.md` section 7 also names those as keybinding ground-truth symbols. At pi HEAD `5a073885`, `packages/coding-agent/src/core/keybindings.ts` instead exports `KEYBINDINGS`, `migrateKeybindingsConfig`, `KeybindingsManager`, and type re-exports; neither planned symbol appears in the source. The node frontmatter uses current source symbols and the body calls out the mismatch rather than editing `index.json`.
+- `index.json`、节点 frontmatter 与 `3da591ab` 源码已统一使用 `KEYBINDINGS`、`migrateKeybindingsConfig`、`KeybindingsManager` 和 `AppKeybindings`；旧 planned symbols 已清除。
 
 ## coding-agent-migrations
 
@@ -814,8 +794,7 @@ No unresolved [U] items found while reading the listed source files.
 
 # uncertainty: coding-agent settings-manager
 
-- `subsys.coding-agent.settings-manager` 的 index symbols 包含 `loadSettings`, 但 `packages/coding-agent/src/core/settings-manager.ts` 当前没有 `loadSettings` 函数或 export; 实际读取 helper 是 private static `loadFromStorage()` 与 `tryLoadFromStorage()`。
-- `subsys.coding-agent.settings-manager` 的 index symbols 包含 `deepMergeSettings`; 源码确有 `function deepMergeSettings(...)`, 但它不是 exported symbol。如果 wiki 的 `symbols` 语义必须是导出符号, 这里需要后续 reconcile index 或源码。
+- `subsys.coding-agent.settings-manager` 的 frontmatter/index symbols 已收敛到当前 exported manager/storage API；private loaders 与非导出 merge helper 保留为正文实现证据。
 - 本节点只按 source 列表读取 `packages/coding-agent/src/core/settings-manager.ts`; `CONFIG_DIR_NAME` 的字面值、config resolution 细节、settings 用户文档默认值需要在对应 related/catalog 节点中核对。
 
 ## coding-agent-system-prompt
@@ -1049,7 +1028,7 @@ L3 后本节点的权威范围已收窄到 `packages/orchestrator/src/types.ts` 
 
 ## [I] `spine.layered-architecture` 的详细职责
 
-`spine.overview` 只从 README、`main()`、`Agent`、`runAgentLoop`、`Models` 和辅助源码推断 `spine.layered-architecture` 应继续细化 package dependency direction 与 reusable/product boundary。该 related 节点在 index.json 中仍是 planned，本轮未创建该节点。
+`spine.layered-architecture` 已核验为 verified，并负责细化 package dependency direction 与 reusable/product boundary；`spine.overview` 仍只保留跨包入口与主链路摘要，避免重复分层节点的详细职责。
 
 ## [I] TUI 交互渲染细节
 
@@ -1135,7 +1114,7 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 
 # Uncertainty · surface commands overview
 
-- [U] `docs/llm-wiki/pi/index.json` still says `group.slash-commands.instance_count: 21` and titles `ref.coding-agent.slash-commands` as `内置 slash 命令目录(~21)`, but pi HEAD `5a073885` has 22 entries in `packages/coding-agent/src/core/slash-commands.ts` `BUILTIN_SLASH_COMMANDS`: `settings`, `model`, `scoped-models`, `export`, `import`, `share`, `copy`, `name`, `session`, `changelog`, `hotkeys`, `fork`, `clone`, `tree`, `trust`, `login`, `logout`, `new`, `compact`, `resume`, `reload`, `quit`.
+- `BUILTIN_SLASH_COMMANDS`、catalog 与 `group.slash-commands.instance_count` 已收敛为 22 个静态内置命令；由内置 extension 动态注册的 `/llama` 单独记录，不计入该静态数组目录。
 - [U] `/reload` has two visible descriptions: `packages/coding-agent/src/core/slash-commands.ts` says it reloads keybindings, extensions, skills, prompts, and themes; `packages/coding-agent/docs/usage.md` says it reloads keybindings, extensions, skills, prompts, and context files. The implementation-level reload scope should be reconciled when the slash-command catalog or reload subsystem node is filled.
 - [U] `packages/coding-agent/src/modes/interactive/interactive-mode.ts` accepts `/debug`, `/arminsayshi`, and `/dementedelves`, but those branches are absent from `BUILTIN_SLASH_COMMANDS` and from the user docs Slash Commands table. This node treats `packages/coding-agent/src/core/slash-commands.ts` as the public built-in command ground truth per `conventions.md`.
 
@@ -1143,9 +1122,7 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 
 # Uncertainty · surface config keybindings
 
-- [U] `index.json` node `surface.config.keybindings` still lists only `packages/coding-agent/src/core/keybindings.ts` and `packages/coding-agent/docs/keybindings.md` as source. The verified node needs additional explicit source files for the surface-level claims about default TUI actions, key syntax, agent-dir resolution, `/reload`, and interactive-mode injection: `packages/tui/src/keybindings.ts`, `packages/tui/src/keys.ts`, `packages/coding-agent/src/config.ts`, `packages/coding-agent/src/core/slash-commands.ts`, and `packages/coding-agent/src/modes/interactive/interactive-mode.ts`. I did not change `index.json` in this batch.
-- [U] `index.json` node `surface.config.keybindings` still lists planned symbols `DEFAULT_APP_KEYBINDINGS` and `DEFAULT_EDITOR_KEYBINDINGS`. At pi HEAD `5a073885`, `packages/coding-agent/src/core/keybindings.ts` exports `KEYBINDINGS`, `migrateKeybindingsConfig`, `KeybindingsManager`, and type re-exports instead; neither `DEFAULT_APP_KEYBINDINGS` nor `DEFAULT_EDITOR_KEYBINDINGS` appears in the current source.
-- [U] `docs/llm-wiki/pi/index.json` group `group.keybindings` says the default-keybinding catalog has `instance_count: 55`, while the current source shape is `KEYBINDINGS = {...TUI_KEYBINDINGS, app defaults}`. The exact catalog count should be reconciled when `ref.coding-agent.default-keybindings` is filled.
+- 节点 source/symbols 已与当前 `KEYBINDINGS`、`KeybindingsManager`、TUI key grammar、config resolution 和 interactive injection 证据同步；默认键位目录及 group 计数也已 reconcile。没有遗留 metadata/count `[U]`。
 - [U] `packages/coding-agent/docs/keybindings.md` documents `ctrl`, `shift`, and `alt` as user-facing modifiers, but `packages/tui/src/keys.ts` also includes `super` in the `KeyId` type and `MODIFIERS` table. This node treats `super` as not-yet-confirmed user-facing surface rather than a documented config promise.
 
 ## surface-config-resolution
@@ -1158,8 +1135,7 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 
 # uncertainty: surface config settings
 
-- `surface.config.settings` 的 index symbols 包含 `loadSettings`,但 `packages/coding-agent/src/core/settings-manager.ts` 当前没有 `loadSettings` 函数或 export;实际读取 helper 是 private static `loadFromStorage()` 与 `tryLoadFromStorage()`。
-- `surface.config.settings` 的 index symbols 包含 `deepMergeSettings`;源码确有 `function deepMergeSettings(...)`,但它不是 exported symbol。如果 `symbols` 语义必须是导出符号,这里需要后续 reconcile index 或源码。
+- `surface.config.settings` 的 frontmatter/index symbols 已收敛到 `SettingsManager`、`Settings` 与 `PackageSource` 三个当前导出；旧 `loadSettings` 与非导出 `deepMergeSettings` metadata 漂移已解决。
 - `FileSettingsStorage` 的 project path 使用 `CONFIG_DIR_NAME`,本节点 source 列表没有 `packages/coding-agent/src/config.ts`;`.pi/settings.json` 的用户可见路径由 `packages/coding-agent/docs/settings.md` 佐证。
 - `packages/coding-agent/src/core/defaults.ts` 在本 source set 中只导出 `DEFAULT_THINKING_LEVEL = "medium"`,而 `SettingsManager.getDefaultThinkingLevel()` 不使用该常量;默认 thinking level 的最终消费点需要在调用方节点核对。
 
@@ -1173,9 +1149,7 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 
 # Uncertainty: surface.extensions.context-ui
 
-- [U] `surface.extensions.api` 的文件现在存在,但自身仍是 draft,且 `docs/llm-wiki/pi/index.json` 里的 entry 仍标为 planned。本节点只把它作为 companion 边界链接,未复核其完整 API 内容或同步 index 状态。
-- [U] `index.json` 中 `surface.extensions.context-ui` 的 planned source 只列出 `packages/coding-agent/src/core/extensions/types.ts` 和 `.pi/extensions/prompt-url-widget.ts`;本节点正文还需要 `runner.ts`、`interactive-mode.ts`、`extensions.md`、`rpc.md` 以及两个 examples 文件才能说明真实注入链路、mode behavior 和 dogfood 示例。用户限制本轮只写本节点和本 staging 文件,所以没有同步修改 `index.json`。
-- L2 核验后节点已置 `status: verified`。本轮修正了 no-op UI constructor/默认返回值锚点、`resetExtensionUI()` 的 reload/session invalidate 调用点和清理项锚点、prompt URL pattern 锚点,并把 `custom-footer.ts` 的示例描述收窄为源码实际调用的 `footerData.getGitBranch()`。
+- `surface.extensions.api` 与本节点均已 verified，实际 source set 已同步到 index。本轮未留下 `[U]`。
 
 ## surface-extensions-contribution-points
 
@@ -1191,9 +1165,7 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 
 # uncertainty-surface-extensions-events
 
-- [U] `index.json` 的 `surface.extensions.events.source` 只有 `packages/coding-agent/src/core/extensions/types.ts` 和 `packages/coding-agent/src/core/extensions/runner.ts`,但本批任务指定扩展事件 ground truth 还要核 `packages/coding-agent/docs/extensions.md`;本节点 frontmatter/Sources 已加入 docs 文件,后续如要求 index/file 完全同源需要协调 index。
-- [U] `index.json` 为 `surface.extensions.events.symbols` 列了 `emitSessionStart`,但当前 `packages/coding-agent/src/core/extensions/runner.ts` 未看到同名专用 emitter;`session_start` 由通用 `ExtensionRunner.emit()` 处理。后续应把 symbol 改成 `ExtensionAPI.on`、`emitToolResult`、`emitInput` 或明确 `emitSessionStart` 是文档简称。
-- [U] `index.json` 的 `group.extension-events.instance_count` 写作 29,但当前 `ExtensionAPI.on` overload 可数到 30 个事件名。需要在 T3 `ref.coding-agent.extension-events` 填充时确认是否某个 overload 不计入 catalog,或更新 group 计数。
+本轮 reconcile 已把节点 source/symbols 与正文同步；事件目录与 `group.extension-events.instance_count` 均按当前 `ExtensionEvent` ground truth 收敛为 33。没有遗留 `[U]`。
 
 ## surface-misc-containerization
 
@@ -1223,10 +1195,10 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 
 # uncertainty-surface-misc-packages
 
-本轮填充 `surface.misc.packages` 新增 2 条 `[U]`:
+本轮增量复核已收敛先前的 2 条 source-scope `[U]`:
 
-- [U] `surface.misc.packages` 的 index source 只有 `packages/coding-agent/src/core/package-manager.ts` 和 `packages/coding-agent/docs/packages.md`,但 index symbols 包含 `PackageSource`;当前节点只能从 `package-manager.ts` 核到 package entry 的 runtime 消费形态,不能在 index source 内核到 `PackageSource` 的完整 public settings schema。已把原先指向 `settings-manager.ts` 的 `[E]` 从节点正文降级为 source-set 不确定项,未修改 index 或 frontmatter source。
-- [U] 用户文档说明 `pi config` 可启用/禁用 installed packages 和 local directories 中的资源,但本节点 source 未包含 `packages/coding-agent/src/cli/config-selector.ts` 或相关 settings 写入实现;节点只记录用户可见承诺,不展开具体写入行为。
+- `PackageSource` 的完整 schema 已由 `settings-manager.ts` 纳入 source set，并与 `package-manager.ts` 的消费形状交叉核对。
+- `pi config` 的 package 启停与 project/global 写入入口已由 `cli/config-selector.ts` 和 `package-manager-cli.ts` 纳入 source set。
 
 ## surface-misc-security
 
@@ -1246,7 +1218,7 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 - `InteractiveMode` 不是直接创建 session 的 factory;它通过 `runtimeHost.session` 访问当前 session。
 - built-in slash commands 在 submit handler 内 return, 不进入 `getUserInput()` 的普通 prompt queue。
 - `onInputCallback`/`pendingUserInputs` 这个 callback queue 的作用是解耦 editor submit timing 和 `run()` 的 awaited prompt loop。
-- related 节点的职责边界按 index title/source/symbols 与现有已填节点归纳;`subsys.tui.runtime` 本身仍是 planned。
+- related 节点的职责边界按 index title/source/symbols 与现有已填节点归纳；`subsys.tui.runtime` 已核验为 verified，本节点只描述 interactive mode 对它的调用边界。
 
 ## surface-modes-print
 
@@ -1382,9 +1354,9 @@ Source node: `ref.interactive.components` (`docs/llm-wiki/pi/reference/component
 
 ## [U] directory instance count vs public barrel
 
-`index.json` 的 group ground truth 是 `packages/coding-agent/src/modes/interactive/components/`, instance_count 是 38;该目录正好有 38 个 `.ts` 文件, 但其中 `index.ts` 是 barrel, 不是 runtime component class。当前节点按“目录文件”计入 `index.ts`;如果后续把 instance 定义改成“public component/helper symbol”, 需要重算。
+`index.json` 的 group ground truth 是 `packages/coding-agent/src/modes/interactive/components/`；目标目录与 catalog 已同步为 40 个 `.ts` 文件，包括新增 `custom-entry.ts`。其中 `index.ts` 是 barrel，不是 runtime component class；当前节点按“目录文件”计入它。如果后续把 instance 定义改成“public component/helper symbol”，需要重算。
 
-Evidence: `packages/coding-agent/src/modes/interactive/components/index.ts:2`, `packages/coding-agent/src/modes/interactive/components/index.ts:38`
+Evidence: `packages/coding-agent/src/modes/interactive/components/index.ts:2`, `packages/coding-agent/src/modes/interactive/components/index.ts:38`, `packages/coding-agent/src/modes/interactive/components/custom-entry.ts:11`
 
 ## [U] internal-only files not exported by components/index.ts
 
@@ -1402,7 +1374,7 @@ Evidence: `packages/coding-agent/src/modes/interactive/components/index.ts:29`, 
 
 # uncertainty: surface reference config keys
 
-- [U] `index.json` 的 `group.config-keys.instance_count` 仍写作 50,但当前 `packages/coding-agent/src/core/settings-manager.ts` 按主节点口径逐 key 展开为 71 个实例:43 个 `Settings` top-level 字段、23 个嵌套 settings leaf 字段、5 个 `PackageSource` object fields。主节点采用源码优先口径逐实例覆盖,没有改 `index.json`。
+- 当前 catalog 与 index 已统一为 74 个实例：45 个 `Settings` top-level 字段、23 个嵌套 leaf、6 个 `PackageSource` object fields。
 - [U] `terminal.showTerminalProgress` 在 `TerminalSettings` 与 getter/setter 中存在,默认 `false`,但 `packages/coding-agent/docs/settings.md` 的 Terminal & Images 表没有列出该 key。主节点把它保留为源码支持的配置键。
 - [U] `websocketConnectTimeoutMs` 的 docs 默认写 `15000`,但 `SettingsManager.getWebSocketConnectTimeoutMs()` 只解析 setting 本身,未在本 ground-truth 三件套中找到 15000 fallback 的直接代码锚点。主节点保留 docs 默认并标注 getter 口径。
 - [U] `retry.provider.maxRetries` 的 docs 默认写 `0`,但 `SettingsManager.getProviderRetrySettings()` 对 unset 值原样返回 `undefined`;默认 0 可能由下游 SDK/provider option 口径承担。主节点保留 docs 默认并标注 getter 口径。
@@ -1422,9 +1394,8 @@ Evidence: `packages/coding-agent/src/modes/interactive/components/index.ts:29`, 
 
 # Uncertainty: surface/reference/default-keybindings
 
-- `group.keybindings.instance_count` in `docs/llm-wiki/pi/index.json` is `55`, while current source expands to 72 default keybinding instances: 31 from `packages/tui/src/keybindings.ts` `TUI_KEYBINDINGS` plus 41 `app.*` actions declared in `packages/coding-agent/src/core/keybindings.ts` `AppKeybindings` / `KEYBINDINGS`. [U]
-- The planned node symbols in `index.json` are `DEFAULT_APP_KEYBINDINGS` and `DEFAULT_EDITOR_KEYBINDINGS`, but current source exports `KEYBINDINGS`, imports/spreads `TUI_KEYBINDINGS`, and declares `AppKeybindings`; no `DEFAULT_APP_KEYBINDINGS` or `DEFAULT_EDITOR_KEYBINDINGS` symbol exists in the current keybindings source. [U]
-- The planned node source list omits `packages/tui/src/keybindings.ts`, but `KEYBINDINGS` includes TUI defaults by spreading `TUI_KEYBINDINGS`; the catalog node therefore cites the TUI file directly to keep every `tui.*` row evidence-backed. [U]
+- Catalog 与 index 已统一为 73 个实例：31 个 `TUI_KEYBINDINGS` 加 42 个 `app.*` actions；本轮补入 `app.message.copy`。
+- 当前 source/symbol metadata 已同步为 `KEYBINDINGS`、`TUI_KEYBINDINGS`、`AppKeybindings`，不再引用已不存在的 `DEFAULT_*` symbols。本轮未留下相关 `[U]`。
 
 ## surface-reference-env-vars
 
@@ -1444,7 +1415,7 @@ Batch: `surface`
 
 # uncertainty-surface-reference-extension-events
 
-- [U] `index.json` 的 `group.extension-events.instance_count` 是 29,但当前 `packages/coding-agent/src/core/extensions/types.ts` 中 `ExtensionAPI.on(...)` overload 与 `ExtensionEvent` union 对齐后可数到 30 个事件名: `project_trust`, `resources_discover`, 8 个 session events, 9 个 agent/message/context events, 4 个 provider/model events, 5 个 tool events, `user_bash`, `input`。本节点按源码写 30 个;后续应单独更新 index group 计数或明确 catalog 计数口径。
+- `ExtensionAPI.on(...)` overload、catalog 表与 index 已统一为 33 个事件名。本轮未留下计数 `[U]`。
 
 ## surface-reference-json-events
 
@@ -1467,9 +1438,8 @@ Batch: `surface`
 
 # uncertainty: surface reference rpc methods
 
-本轮核验后 `docs/llm-wiki/pi/reference/rpc-methods.md` 已置 `status: verified`。`RpcCommand` union、`handleCommand()` switch case、节点 catalog 表格均为 29 个实例且逐项一致;节点内 `[E]` 引用均落在当前 source 的非空、非注释、非纯括号行号范围内。
+本轮核验后 `RpcCommand` union、`handleCommand()` switch case、节点 catalog 表格与 index 均为 31 个普通 command 实例；`extension_ui_response` 仍按独立 UI sub-protocol 排除。
 
-- [U] `index.json` 的 `group.rpc-methods.instance_count` 写作 30,但当前 `packages/coding-agent/src/modes/rpc/rpc-types.ts` 的 `RpcCommand` union 与 `rpc-mode.ts` 的普通 command dispatch 覆盖 29 个 command。主节点按源码 union 计数为 29,没有把 `extension_ui_response` 或 extension UI request methods 计入 `RpcCommand` catalog。
 - [U] `packages/coding-agent/docs/rpc.md` 的 `get_commands` response 示例和字段说明使用 top-level `location`/`path`,但当前 `RpcSlashCommand` 类型与 `rpc-mode.ts` dispatch 输出的是 `sourceInfo` 字段。主节点采用类型和 dispatch 口径,并把 docs/type 差异保留为不确定项。
 
 ## surface-reference-session-events
@@ -1518,16 +1488,15 @@ L2 surface 核验按 `docs/llm-wiki/pi/index.json` 的 source 执行;该 index s
 batch: surface
 node: `ref.coding-agent.slash-commands`
 path: `reference/slash-commands.md`
-updated: `5a073885`
+updated: `3da591ab`
 
-## [U] group count drift
+## Group count
 
-- `index.json` 当前 `group.slash-commands.instance_count` 写作 `21`,但 `packages/coding-agent/src/core/slash-commands.ts` 的 `BUILTIN_SLASH_COMMANDS` 枚举为 22 个实例: `settings`, `model`, `scoped-models`, `export`, `import`, `share`, `copy`, `name`, `session`, `changelog`, `hotkeys`, `fork`, `clone`, `tree`, `trust`, `login`, `logout`, `new`, `compact`, `resume`, `reload`, `quit`.
-- 本轮按用户约束不改 `docs/llm-wiki/pi/index.json`;主节点按源码 catalog 写 22 个实例并已标记 `status: verified`,但 index group 计数仍需后续单独 reconcile。
+- `BUILTIN_SLASH_COMMANDS`、catalog 与 index 已统一为 22 个实例。
 
-## [U] index source scope drift
+## Index source scope
 
-- `docs/llm-wiki/pi/index.json` 中 `ref.coding-agent.slash-commands.source` 仍只有 `packages/coding-agent/src/core/slash-commands.ts` 和 `packages/coding-agent/docs/usage.md`,但本节点为了核验交互 dispatch、handler 行为、动态命令来源和 RPC `get_commands` 边界,实际引用了 `interactive-mode.ts`、`agent-session.ts`、`extensions/runner.ts`、`prompt-templates.ts`、`rpc-mode.ts`。本轮不改 index;后续应补 index source 或把节点范围收窄为纯 catalog+usage。
+- 实际 source set 已同步到 index。
 
 ## [U] runtime-only slash branches
 
@@ -1570,7 +1539,7 @@ source:
   - packages/coding-agent/src/cli/session-picker.ts
 evidence: unknown
 status: draft
-updated: 5a073885
+updated: 3da591ab
 ---
 
 > 本 staging 记录本轮按 `docs/llm-wiki/pi/index.json` 的 source 核验 `surface.sessions.management` 后,仍不能用三源直接证明的事项。
@@ -1713,7 +1682,7 @@ Node: `subsys.coding-agent.bash-executor`
 
 # uncertainty: tools path resolution
 
-- `resolveToolPath` naming drift: 当前 `5a073885` 源码和 `index.json` symbols 未找到 `resolveToolPath`; 实际工具侧入口是 `resolveToCwd()`、`resolveReadPath()`、`resolveReadPathAsync()` 和 `expandPath()`。节点正文已按源码写为 [U], 后续若有历史文档或未枚举 source 证明 `resolveToolPath` 是旧名/外部 API, 再补充来源。
+- `resolveToolPath` naming drift: 当前 `3da591ab` 源码和 `index.json` symbols 未找到 `resolveToolPath`; 实际工具侧入口是 `resolveToCwd()`、`resolveReadPath()`、`resolveReadPathAsync()` 和 `expandPath()`。节点正文已按源码写为 [U], 后续若有历史文档或未枚举 source 证明 `resolveToolPath` 是旧名/外部 API, 再补充来源。
 
 ## tools-read
 
@@ -1816,7 +1785,7 @@ node: subsys.tui.editor-mechanics
 
 batch: tui
 node: ref.tui.key-codes
-updated: 5a073885
+updated: 3da591ab
 
 本轮未登记需要同步到 `reference/uncertainty.md` 的 `[U]` 项。
 
