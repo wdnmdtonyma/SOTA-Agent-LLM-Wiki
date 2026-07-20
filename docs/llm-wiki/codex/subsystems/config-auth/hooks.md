@@ -39,7 +39,7 @@ updated: 4d7a5c7c73
 
 1. `ClaudeHooksEngine::new` 在 hooks disabled 时返回空 handler set；enabled 时加载 generated schemas 并调用 `discover_handlers`。[E: codex-rs/hooks/src/engine/mod.rs:110][E: codex-rs/hooks/src/engine/mod.rs:119][E: codex-rs/hooks/src/engine/mod.rs:128][E: codex-rs/hooks/src/engine/mod.rs:129]
 2. `discover_handlers` 先从 `ConfigLayerStack::requirements().managed_hooks` append managed requirement hooks，再遍历 enabled config layers，最后 append plugin hook sources。[E: codex-rs/hooks/src/engine/discovery.rs:65][E: codex-rs/hooks/src/engine/discovery.rs:88][E: codex-rs/hooks/src/engine/discovery.rs:99][E: codex-rs/hooks/src/engine/discovery.rs:161]
-3. Config layer traversal 使用 `LowestPrecedenceFirst` 且 `include_disabled=false`；每个 layer 可同时加载 `hooks.json` 和 TOML `[hooks]`，两者同时非空时会记录 warning。[E: codex-rs/hooks/src/engine/discovery.rs:99][E: codex-rs/hooks/src/engine/discovery.rs:100][E: codex-rs/hooks/src/engine/discovery.rs:101][E: codex-rs/hooks/src/engine/discovery.rs:118][E: codex-rs/hooks/src/engine/discovery.rs:124][E: codex-rs/hooks/src/engine/discovery.rs:126]
+3. Config layer traversal 使用 `LowestPrecedenceFirst` 且 `include_disabled=false`；每个 layer 可同时加载 `hooks.json` 和 TOML `[hooks]`，两者同时非空时会记录 warning。[E: codex-rs/hooks/src/engine/discovery.rs:99][E: codex-rs/hooks/src/engine/discovery.rs:100][E: codex-rs/hooks/src/engine/discovery.rs:118][E: codex-rs/hooks/src/engine/discovery.rs:124][E: codex-rs/hooks/src/engine/discovery.rs:126]
 4. `allow_managed_hooks_only` 来自 requirements；policy 不允许的 source 会被跳过，managed hooks 仍可运行。[E: codex-rs/hooks/src/engine/discovery.rs:77][E: codex-rs/hooks/src/engine/discovery.rs:78][E: codex-rs/hooks/src/engine/discovery.rs:59][E: codex-rs/hooks/src/engine/discovery.rs:60][E: codex-rs/hooks/src/engine/discovery.rs:115]
 5. Plugin hook sources 会注入 `PLUGIN_ROOT`/`PLUGIN_DATA` 以及 Claude 兼容 env，然后以 `HookSource::Plugin` append。[E: codex-rs/hooks/src/engine/discovery.rs:220][E: codex-rs/hooks/src/engine/discovery.rs:232][E: codex-rs/hooks/src/engine/discovery.rs:235][E: codex-rs/hooks/src/engine/discovery.rs:250][E: codex-rs/hooks/src/engine/discovery.rs:257]
 
@@ -47,7 +47,7 @@ updated: 4d7a5c7c73
 
 `load_hooks_json` 只读取存在的 `hooks.json`，parse 失败记录 warning 并返回 None；`load_toml_hooks_from_layer` 从 layer config 的 `hooks` 字段反序列化 `HookEventsToml`，空 hooks 不产生 source。[E: codex-rs/hooks/src/engine/discovery.rs:305][E: codex-rs/hooks/src/engine/discovery.rs:309][E: codex-rs/hooks/src/engine/discovery.rs:325][E: codex-rs/hooks/src/engine/discovery.rs:328][E: codex-rs/hooks/src/engine/discovery.rs:348][E: codex-rs/hooks/src/engine/discovery.rs:353][E: codex-rs/hooks/src/engine/discovery.rs:365]
 
-Discovery 会按 event 计算 matcher pattern、validate matcher 并拒绝空 command。普通 event 仍拒绝 async、timeout 缺省 600 秒且最小 1 秒；`SessionEnd` 可接受 async 配置但当前会 warning 后同步运行，timeout 缺省 1 秒并强制 cap 为 3 秒。[E: codex-rs/hooks/src/engine/discovery.rs:453][E: codex-rs/hooks/src/engine/discovery.rs:455][E: codex-rs/hooks/src/engine/discovery.rs:477][E: codex-rs/hooks/src/engine/discovery.rs:498][E: codex-rs/hooks/src/engine/discovery.rs:575][E: codex-rs/hooks/src/engine/discovery.rs:583][E: codex-rs/hooks/src/engine/discovery.rs:587]
+Discovery 会按 event 计算 matcher pattern、validate matcher 并拒绝空 command。普通 event 仍拒绝 async、timeout 缺省 600 秒且最小 1 秒；`SessionEnd` 可接受 async 配置但当前会 warning 后同步运行，timeout 缺省 1 秒并强制 cap 为 3 秒。[E: codex-rs/hooks/src/engine/discovery.rs:453][E: codex-rs/hooks/src/engine/discovery.rs:455][E: codex-rs/hooks/src/engine/discovery.rs:477][E: codex-rs/hooks/src/engine/discovery.rs:498][E: codex-rs/hooks/src/engine/discovery.rs:583][E: codex-rs/hooks/src/engine/discovery.rs:587]
 
 每个 command handler 都会生成 `HookListEntry`；只有 enabled 且 trust status 是 Managed/Trusted，或 source 启用了 bypass hook trust，才会 push 到 runnable `ConfiguredHandler` list。[E: codex-rs/hooks/src/engine/discovery.rs:511][E: codex-rs/hooks/src/engine/discovery.rs:520][E: codex-rs/hooks/src/engine/discovery.rs:522][E: codex-rs/hooks/src/engine/discovery.rs:524][E: codex-rs/hooks/src/engine/discovery.rs:541][E: codex-rs/hooks/src/engine/discovery.rs:548]
 
@@ -61,24 +61,24 @@ Discovery 会按 event 计算 matcher pattern、validate matcher 并拒绝空 co
 
 `ToolRegistry::dispatch_any_with_terminal_outcome` 在 handler 提供 pre payload 时调用 pre hook；如果被 block，会终止该 tool call 并通知 lifecycle outcome 为 blocked。[E: codex-rs/core/src/tools/registry.rs:399][E: codex-rs/core/src/tools/registry.rs:489][E: codex-rs/core/src/tools/registry.rs:499][E: codex-rs/core/src/tools/registry.rs:502][E: codex-rs/core/src/tools/registry.rs:505]
 
-`PostToolUse` 只在 tool handler 成功且产生 post payload 时运行；它拿到 handler 已适配过的 stable tool input/response，而不是内部 raw payload。[E: codex-rs/core/src/tools/registry.rs:585][E: codex-rs/core/src/tools/registry.rs:593][E: codex-rs/core/src/hook_runtime.rs:258][E: codex-rs/core/src/hook_runtime.rs:260][E: codex-rs/core/src/hook_runtime.rs:264][E: codex-rs/core/src/hook_runtime.rs:273]
+`PostToolUse` 只在 tool handler 成功且产生 post payload 时运行；它拿到 handler 已适配过的 stable tool input/response，而不是内部 raw payload。[E: codex-rs/core/src/tools/registry.rs:585][E: codex-rs/core/src/tools/registry.rs:593][E: codex-rs/core/src/hook_runtime.rs:264][E: codex-rs/core/src/hook_runtime.rs:273]
 
-Permission request、Stop/SubagentStop、PreCompact/PostCompact hooks 分别有独立 request builders；PermissionRequest 返回 optional decision，compact hooks 可返回 stopped/continue，Stop 会按 root/subagent source 选择 target。[E: codex-rs/core/src/hook_runtime.rs:222][E: codex-rs/core/src/hook_runtime.rs:225][E: codex-rs/core/src/hook_runtime.rs:298][E: codex-rs/core/src/hook_runtime.rs:304][E: codex-rs/core/src/hook_runtime.rs:400][E: codex-rs/core/src/hook_runtime.rs:437]
+Permission request、Stop/SubagentStop、PreCompact/PostCompact hooks 分别有独立 request builders；PermissionRequest 返回 optional decision，compact hooks 可返回 stopped/continue，Stop 会按 root/subagent source 选择 target。[E: codex-rs/core/src/hook_runtime.rs:225][E: codex-rs/core/src/hook_runtime.rs:298][E: codex-rs/core/src/hook_runtime.rs:400][E: codex-rs/core/src/hook_runtime.rs:437]
 
-`run_session_end_hooks` 只运行 root session 的 `SessionEnd`：先创建 default turn context 并跳过 `SessionSource::SubAgent`，构造带 transcript path 的 request，flush rollout 后发 started/completed events。Thread-spawn 子会话仍由 SubagentStart/SubagentStop 覆盖。[E: codex-rs/core/src/hook_runtime.rs:369][E: codex-rs/core/src/hook_runtime.rs:376][E: codex-rs/core/src/hook_runtime.rs:378][E: codex-rs/core/src/hook_runtime.rs:384][E: codex-rs/core/src/hook_runtime.rs:391][E: codex-rs/core/src/hook_runtime.rs:394][E: codex-rs/core/src/hook_runtime.rs:397]
+`run_session_end_hooks` 只运行 root session 的 `SessionEnd`：先创建 default turn context 并跳过 `SessionSource::SubAgent`，构造带 transcript path 的 request，flush rollout 后发 started/completed events。Thread-spawn 子会话仍由 SubagentStart/SubagentStop 覆盖。[E: codex-rs/core/src/hook_runtime.rs:369][E: codex-rs/core/src/hook_runtime.rs:376][E: codex-rs/core/src/hook_runtime.rs:384][E: codex-rs/core/src/hook_runtime.rs:391][E: codex-rs/core/src/hook_runtime.rs:394][E: codex-rs/core/src/hook_runtime.rs:397]
 
 ## Command 执行
 
-Dispatcher 按 event name 和 matcher input 筛选 handlers；源码注释说明同一个 configured handler 只检查一次，避免 compatibility aliases 对同一 tool call 重复运行同一 hook。[E: codex-rs/hooks/src/engine/dispatcher.rs:27][E: codex-rs/hooks/src/engine/dispatcher.rs:41][E: codex-rs/hooks/src/engine/dispatcher.rs:44][E: codex-rs/hooks/src/engine/dispatcher.rs:47]
+Dispatcher 按 event name 和 matcher input 筛选 handlers；源码注释说明同一个 configured handler 只检查一次，避免 compatibility aliases 对同一 tool call 重复运行同一 hook。[E: codex-rs/hooks/src/engine/dispatcher.rs:27][E: codex-rs/hooks/src/engine/dispatcher.rs:44][E: codex-rs/hooks/src/engine/dispatcher.rs:47][I]
 
 Command runner 使用 configured shell 或默认 shell，设置 cwd、stdin、stdout/stderr pipe、kill_on_drop，并将 hook request JSON 写入 stdin；timeout 会被映射成 `"hook timed out after ..."` error。[E: codex-rs/hooks/src/engine/command_runner.rs:49][E: codex-rs/hooks/src/engine/command_runner.rs:59][E: codex-rs/hooks/src/engine/command_runner.rs:61][E: codex-rs/hooks/src/engine/command_runner.rs:84][E: codex-rs/hooks/src/engine/command_runner.rs:101][E: codex-rs/hooks/src/engine/command_runner.rs:91]
 
 ## Gotchas
 
-- `include_disabled=false` 意味着 disabled project layers 不会贡献 layer-local hooks；managed requirements 和 plugin sources 走单独路径。[E: codex-rs/hooks/src/engine/discovery.rs:99][E: codex-rs/hooks/src/engine/discovery.rs:101][E: codex-rs/hooks/src/engine/discovery.rs:88][E: codex-rs/hooks/src/engine/discovery.rs:161]
+- `include_disabled=false` 意味着 disabled project layers 不会贡献 layer-local hooks；managed requirements 和 plugin sources 走单独路径。[E: codex-rs/hooks/src/engine/discovery.rs:99][E: codex-rs/hooks/src/engine/discovery.rs:88][E: codex-rs/hooks/src/engine/discovery.rs:161]
 - `HookHandlerConfig::Prompt` 和 `HookHandlerConfig::Agent` 是 schema 可读类型，但当前 discovery 会跳过并 warning；不能把它们当作 runnable handlers。[E: codex-rs/config/src/hook_config.rs:163][E: codex-rs/config/src/hook_config.rs:165][E: codex-rs/hooks/src/engine/discovery.rs:562][E: codex-rs/hooks/src/engine/discovery.rs:566]
 - legacy `AfterAgent` hook contract 仍在 `types.rs` 和 `run_legacy_after_agent_hook` 中存在，和 Claude-style lifecycle hook engine 是两条不同路径。[E: codex-rs/hooks/src/types.rs:92][E: codex-rs/hooks/src/types.rs:93][E: codex-rs/core/src/hook_runtime.rs:465][E: codex-rs/core/src/hook_runtime.rs:481]
-- 配置里把 `SessionEnd` 标成 async 不会让进程 fire-and-forget；当前实现明确同步等待，只有超时预算被压到 1–3 秒。[E: codex-rs/hooks/src/engine/discovery.rs:498][E: codex-rs/hooks/src/engine/discovery.rs:575]
+- 配置里把 `SessionEnd` 标成 async 不会让进程 fire-and-forget；当前实现明确同步等待，只有超时预算被压到 1–3 秒。[E: codex-rs/hooks/src/engine/discovery.rs:498]
 
 ## Sources
 

@@ -11,7 +11,7 @@ status: verified
 updated: 4d7a5c7c73
 ---
 
-> `codex-rs/Cargo.toml` defines the Rust workspace: the current `members` array contains 124 workspace member paths, closes at line 127, uses Cargo resolver `"2"`, and centralizes workspace package version, edition, license, and dependency declarations.[E: codex-rs/Cargo.toml:1][E: codex-rs/Cargo.toml:2][E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:126][E: codex-rs/Cargo.toml:127][E: codex-rs/Cargo.toml:128][E: codex-rs/Cargo.toml:130][E: codex-rs/Cargo.toml:131][E: codex-rs/Cargo.toml:136][E: codex-rs/Cargo.toml:137][E: codex-rs/Cargo.toml:139]
+> `codex-rs/Cargo.toml` defines the Rust workspace: the current `members` array contains 124 workspace member paths, closes at line 127, uses Cargo resolver `"2"`, and centralizes workspace package version, edition, license, and dependency declarations.[E: codex-rs/Cargo.toml:1][E: codex-rs/Cargo.toml:2][E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:126][E: codex-rs/Cargo.toml:128][E: codex-rs/Cargo.toml:130][E: codex-rs/Cargo.toml:131][E: codex-rs/Cargo.toml:136][E: codex-rs/Cargo.toml:137][E: codex-rs/Cargo.toml:139]
 
 ## 能回答的问题
 
@@ -25,12 +25,12 @@ updated: 4d7a5c7c73
 
 | Symbol | 当前值 | 说明 | 定义处 |
 |---|---|---|---|
-| `[workspace].members` | 124 entries | `members` starts at line 2, member entries cover line 3 through line 126, and the array closes at line 127. | [E: codex-rs/Cargo.toml:1][E: codex-rs/Cargo.toml:2][E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:126][E: codex-rs/Cargo.toml:127] |
+| `[workspace].members` | 124 entries | `members` starts at line 2, member entries cover line 3 through line 126, and the array closes at line 127. | [E: codex-rs/Cargo.toml:1][E: codex-rs/Cargo.toml:2][E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:126] |
 | `[workspace].resolver` | `"2"` | Cargo resolver setting for the workspace. | [E: codex-rs/Cargo.toml:128] |
 | `[workspace.package].version` | `"0.0.0"` | Shared workspace package version. | [E: codex-rs/Cargo.toml:130][E: codex-rs/Cargo.toml:131] |
-| `[workspace.package].edition` | `"2024"` | The workspace package edition; surrounding comments explain new workspace crates inherit this edition by default. | [E: codex-rs/Cargo.toml:132][E: codex-rs/Cargo.toml:134][E: codex-rs/Cargo.toml:136] |
+| `[workspace.package].edition` | `"2024"` | Shared workspace package edition. | [E: codex-rs/Cargo.toml:136] |
 | `[workspace.package].license` | `"Apache-2.0"` | Shared workspace package license. | [E: codex-rs/Cargo.toml:137] |
-| `[workspace.dependencies]` | starts at line 139 | Workspace dependency table; the first following section is the internal dependency list. | [E: codex-rs/Cargo.toml:139][E: codex-rs/Cargo.toml:140][E: codex-rs/Cargo.toml:141] |
+| `[workspace.dependencies]` | starts at line 139 | Workspace dependency table; the first dependency entry follows at line 141. | [E: codex-rs/Cargo.toml:139][E: codex-rs/Cargo.toml:141] |
 
 ## Workspace members 全量表
 

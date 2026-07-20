@@ -4,7 +4,7 @@ title: shell exec flow
 kind: flow
 tier: T0
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/shell.rs, codex-rs/core/src/tools/handlers/shell/shell_command.rs, codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs, codex-rs/core/src/tools/handlers/apply_patch.rs, codex-rs/core/src/tools/orchestrator.rs, codex-rs/core/src/tools/runtimes/shell.rs, codex-rs/core/src/tools/events.rs]
-symbols: [add_shell_tools, ShellCommandHandler, run_exec_like, ExecCommandHandler, intercept_apply_patch, ToolOrchestrator, ShellRuntime, ToolEmitter]
+symbols: [ShellRuntime, ToolEmitter]
 related: [spine.tool-call-anatomy, spine.trace-apply-patch, tool.exec-command, tool.shell-command, subsys.exec-sandbox.overview, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified

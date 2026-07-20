@@ -69,7 +69,7 @@ handler 还拒绝非 root agent thread，并在 mode 不可用时通过 `request
 
 ## 6 parallel support
 
-`RequestUserInputHandler` 未覆盖 `supports_parallel_tool_calls()`，因此使用 `ToolExecutor` 默认值 `false`。[E: codex-rs/core/src/tools/handlers/request_user_input.rs:23][E: codex-rs/core/src/tools/handlers/request_user_input.rs:35][E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
+`RequestUserInputHandler` 未覆盖 `supports_parallel_tool_calls()`，因此使用 `ToolExecutor` 默认值 `false`。[E: codex-rs/core/src/tools/handlers/request_user_input.rs:23][E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
 
 ## 7 handler 走读
 

@@ -4,7 +4,7 @@ title: Python SDK 总览
 kind: sdk
 tier: T1
 source: [sdk/python/src/openai_codex/api.py, sdk/python/src/openai_codex/client.py, sdk/python/src/openai_codex/async_client.py, sdk/python/src/openai_codex/_run.py, sdk/python/src/openai_codex/__init__.py, sdk/python/pyproject.toml, sdk/python/src/openai_codex/_approval_mode.py, sdk/python/src/openai_codex/_sandbox.py, sdk/python/src/openai_codex/_initialize_metadata.py]
-symbols: [Codex, AsyncCodex, Thread, AsyncThread, TurnHandle, AsyncTurnHandle, CodexClient, AsyncCodexClient, CodexConfig, TurnResult, ApprovalMode, Sandbox]
+symbols: [python::Codex, AsyncCodex, python::Thread, AsyncThread, TurnHandle, AsyncTurnHandle, CodexClient, AsyncCodexClient, CodexConfig, TurnResult, ApprovalMode, Sandbox]
 related: [sdk.py-inputs-errors, sdk.sdk-architecture, rpc.overview, rpc.thread-methods, rpc.turn-methods]
 evidence: explicit
 status: verified
@@ -49,7 +49,7 @@ Generated flat methods on `Codex` wrap thread lifecycle: `thread_start`, `thread
 
 ## Async surface
 
-`AsyncCodex` wraps `AsyncCodexClient`, initializes lazily on context entry or first awaited API use, protects initialization with `asyncio.Lock`, and mirrors login/account/thread/model helpers after `_ensure_initialized()`.[E: sdk/python/src/openai_codex/api.py:287][E: sdk/python/src/openai_codex/api.py:295][E: sdk/python/src/openai_codex/api.py:296][E: sdk/python/src/openai_codex/api.py:299][E: sdk/python/src/openai_codex/api.py:301][E: sdk/python/src/openai_codex/api.py:308][E: sdk/python/src/openai_codex/api.py:311][E: sdk/python/src/openai_codex/api.py:315][E: sdk/python/src/openai_codex/api.py:317][E: sdk/python/src/openai_codex/api.py:339][E: sdk/python/src/openai_codex/api.py:371][E: sdk/python/src/openai_codex/api.py:391]
+`AsyncCodex` wraps `AsyncCodexClient`, initializes lazily on context entry or first awaited API use, protects initialization with `asyncio.Lock`, and mirrors login/account/thread/model helpers after `_ensure_initialized()`.[E: sdk/python/src/openai_codex/api.py:287][E: sdk/python/src/openai_codex/api.py:295][E: sdk/python/src/openai_codex/api.py:296][E: sdk/python/src/openai_codex/api.py:299][E: sdk/python/src/openai_codex/api.py:301][E: sdk/python/src/openai_codex/api.py:308][E: sdk/python/src/openai_codex/api.py:311][E: sdk/python/src/openai_codex/api.py:315][E: sdk/python/src/openai_codex/api.py:317][E: sdk/python/src/openai_codex/api.py:339][E: sdk/python/src/openai_codex/api.py:391]
 
 `AsyncCodexClient` is a thin async wrapper around `CodexClient`: it owns one sync client and calls blocking sync operations through `asyncio.to_thread()`.[E: sdk/python/src/openai_codex/async_client.py:52][E: sdk/python/src/openai_codex/async_client.py:55][E: sdk/python/src/openai_codex/async_client.py:57][E: sdk/python/src/openai_codex/async_client.py:68][E: sdk/python/src/openai_codex/async_client.py:75][E: sdk/python/src/openai_codex/async_client.py:76][E: sdk/python/src/openai_codex/async_client.py:88][E: sdk/python/src/openai_codex/async_client.py:96]
 

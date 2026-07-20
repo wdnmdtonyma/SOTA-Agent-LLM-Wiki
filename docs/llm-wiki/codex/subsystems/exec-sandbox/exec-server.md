@@ -65,7 +65,7 @@ exec-server 节点覆盖 `codex-rs/exec-server/src/server` 的 JSON-RPC server/s
 ## 设计动机与权衡
 
 - session registry allows a WebSocket or stdio JSON-RPC connection to detach and resume briefly, avoiding immediate loss of a running process on transport churn; TTL expiry still shuts down the process backend so detached sessions do not live forever.[I]
-- output retention 使用 sequence numbers、1 MiB byte cap 和 50,000 chunk cap，让 `exec/read` 可以补读历史输出，同时避免大量微小 chunks 超过共享 JSON value budget。[E: codex-rs/exec-server/src/local_process.rs:66][E: codex-rs/exec-server/src/local_process.rs:67][E: codex-rs/exec-server/src/local_process.rs:69][E: codex-rs/exec-server/src/local_process.rs:91][E: codex-rs/exec-server/src/local_process.rs:93][E: codex-rs/exec-server/src/local_process.rs:413][E: codex-rs/exec-server/src/local_process.rs:792]
+- output retention 使用 sequence numbers、1 MiB byte cap 和 50,000 chunk cap，让 `exec/read` 可以补读历史输出，同时避免大量微小 chunks 超过共享 JSON value budget。[E: codex-rs/exec-server/src/local_process.rs:66][E: codex-rs/exec-server/src/local_process.rs:69][E: codex-rs/exec-server/src/local_process.rs:91][E: codex-rs/exec-server/src/local_process.rs:93][E: codex-rs/exec-server/src/local_process.rs:413][E: codex-rs/exec-server/src/local_process.rs:792]
 - PTY 与 pipe backend 共享 `ProcessDriver`/`ProcessHandle` abstraction，exec-server 不需要知道底层是 ConPTY、portable PTY 还是 pipe process。[E: codex-rs/utils/pty/src/lib.rs:19][E: codex-rs/utils/pty/src/lib.rs:21][E: codex-rs/utils/pty/src/lib.rs:39]
 
 ## gotcha

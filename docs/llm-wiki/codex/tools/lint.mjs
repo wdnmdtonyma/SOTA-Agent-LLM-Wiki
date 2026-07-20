@@ -55,11 +55,29 @@ function parseFront(text, file) {
 
 const srcExists = (p) => existsSync(join(SRC, p.replace(/:.*$/, '').trim()))
 const lineCountCache = new Map()
+const sourceLinesCache = new Map()
 function srcLineCount(p) {
   if (lineCountCache.has(p)) return lineCountCache.get(p)
   let c = null
   try { if (statSync(join(SRC, p)).isFile()) c = readFileSync(join(SRC, p), 'utf8').split('\n').length } catch {}
   lineCountCache.set(p, c); return c
+}
+
+function srcLine(p, lineNumber) {
+  if (!sourceLinesCache.has(p)) {
+    let lines = null
+    try { if (statSync(join(SRC, p)).isFile()) lines = readFileSync(join(SRC, p), 'utf8').split(/\r?\n/) } catch {}
+    sourceLinesCache.set(p, lines)
+  }
+  return sourceLinesCache.get(p)?.[lineNumber - 1]
+}
+
+function isNonSupportingEvidenceLine(path, line) {
+  const trimmed = line?.trim() || ''
+  return !trimmed
+    || /^(\/\/|\/\*|\*|<!--)/.test(trimmed)
+    || (!path.endsWith('.md') && /^#(?!\[)/.test(trimmed))
+    || /^[}\])>,;]+$/.test(trimmed)
 }
 
 // ---- 载入 index.json ----
@@ -76,12 +94,18 @@ const groupDirs = groups.map(g => g.dir).filter(Boolean)
 
 // Rule: index 内部完整性 ----
 const seenId = new Set(), seenPath = new Set()
+const symbolOwner = new Map()
 for (const e of allEntries) {
   if (seenId.has(e.id)) err(`index: 重复 id ${e.id}`); seenId.add(e.id)
   if (e.path) { if (seenPath.has(e.path)) err(`index: 重复 path ${e.path}`); seenPath.add(e.path) }
   if (e.kind && !KINDS.includes(e.kind)) err(`index ${e.id}: kind 非法 "${e.kind}"`)
   if (e.tier && !TIERS.includes(e.tier)) err(`index ${e.id}: tier 非法 "${e.tier}"`)
   if (e.status && !STATUS.includes(e.status)) err(`index ${e.id}: status 非法 "${e.status}"`)
+  for (const symbol of e.symbols || []) {
+    const owner = symbolOwner.get(symbol)
+    if (owner && owner !== e.id) err(`index: symbol "${symbol}" 同时由 ${owner} 与 ${e.id} 声明权威`)
+    else symbolOwner.set(symbol, e.id)
+  }
   for (const r of e.related || []) if (!idSet.has(r)) err(`index ${e.id}: related 指向未知 id "${r}"`)
   const ns = e.id.split('.')[0]
   if (e.path && NS_DIR[ns] && !e.path.startsWith(NS_DIR[ns])) warn(`index ${e.id}: path "${e.path}" 与命名空间 ${ns}/ 不一致`)
@@ -132,7 +156,12 @@ for (const f of files) {
       const lm = ref.match(/^(.*?):(\d+)$/)
       const path = lm ? lm[1] : ref
       if (!existsSync(join(SRC, path))) { err(`${f}: [E: ${ref}] 路径不存在于 Best/codex/`); continue }
-      if (lm) { const lc = srcLineCount(path); if (lc != null && Number(lm[2]) > lc) err(`${f}: [E: ${ref}] 行号超出文件范围(${path} 共 ${lc} 行)`) }
+      if (lm) {
+        const lineNumber = Number(lm[2])
+        const lc = srcLineCount(path)
+        if (lc != null && (lineNumber < 1 || lineNumber > lc)) err(`${f}: [E: ${ref}] 行号超出文件范围(${path} 共 ${lc} 行)`)
+        else if (isNonSupportingEvidenceLine(path, srcLine(path, lineNumber))) err(`${f}: [E: ${ref}] 目标是空行、纯注释或闭合符,未落在直接支撑代码上`)
+      }
     }
   }
 }

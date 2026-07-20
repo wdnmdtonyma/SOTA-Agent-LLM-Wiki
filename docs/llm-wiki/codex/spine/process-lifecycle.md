@@ -4,7 +4,7 @@ title: 进程生命周期
 kind: flow
 tier: T0
 source: [codex-rs/cli/src/main.rs, codex-rs/arg0/src/lib.rs, codex-rs/core/src/thread_manager.rs, codex-rs/core/src/session/mod.rs]
-symbols: [main, arg0_dispatch_or_else, cli_main, ThreadManagerState::spawn_thread_with_source, Session::spawn, SessionIo]
+symbols: [main, ThreadManagerState::spawn_thread_with_source]
 related: [spine.overview, spine.sq-eq-architecture, spine.turn-end-to-end, cli.subcommands, subsys.core.session-lifecycle]
 evidence: explicit
 status: verified

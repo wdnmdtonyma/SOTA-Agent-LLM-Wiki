@@ -4,7 +4,7 @@ title: 工具系统机制
 kind: subsystem
 tier: T2
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/registry.rs, codex-rs/core/src/tools/router.rs, codex-rs/tools/src/tool_spec.rs]
-symbols: [build_tool_router, PlannedTools, CoreToolRuntime, ToolRegistry, ToolRouter, ToolSpec, ToolExposure]
+symbols: [build_tool_router, PlannedTools, CoreToolRuntime, ToolRegistry, ToolSpec, ToolExposure, add_core_utility_tools, add_mcp_resource_tools, add_shell_tools, add_tool_sources, ToolSpec::Function]
 related: [spine.tool-call-anatomy, subsys.core.tool-router, subsys.core.unified-exec, tool.exec-command, tool.tool-search, tool.web-search, tool.image-generation]
 evidence: explicit
 status: verified
@@ -27,7 +27,7 @@ updated: 4d7a5c7c73
 |---|---|---|
 | `ToolSpec` | Responses API 可见的 schema 形态，包含 Function、Namespace、ToolSearch、WebSearch、Freeform。 | enum 使用 `#[serde(tag = "type")]`；image generation 不再是该 union 的 variant。[E: codex-rs/tools/src/tool_spec.rs:17][E: codex-rs/tools/src/tool_spec.rs:50] |
 | `CoreToolRuntime` | 本地执行工具的 typed runtime contract，扩展 `ToolExecutor<ToolInvocation>`，并提供 hooks、telemetry、diff、cancellation 等 core metadata。 | trait 定义在 `registry.rs`。[E: codex-rs/core/src/tools/registry.rs:51] |
-| `PlannedTools` | 计划阶段的中间容器，分开保存本地 `runtimes` 和 hosted-only `hosted_specs`。 | struct 字段为 `runtimes` 与 `hosted_specs`。[E: codex-rs/core/src/tools/spec_plan.rs:102][E: codex-rs/core/src/tools/spec_plan.rs:105] |
+| `PlannedTools` | 计划阶段的中间容器，分开保存本地 `runtimes` 和 hosted-only `hosted_specs`。 | struct 字段为 `runtimes` 与 `hosted_specs`。[E: codex-rs/core/src/tools/spec_plan.rs:102] |
 | `ToolRegistry` | runtime dispatch map，按 `ToolName` 保存 `Arc<dyn CoreToolRuntime>`。 | `ToolRegistry` 包含 `HashMap<ToolName, Arc<dyn CoreToolRuntime>>`，`from_tools` 去重写入 map。[E: codex-rs/core/src/tools/registry.rs:325][E: codex-rs/core/src/tools/registry.rs:345] |
 | `ToolRouter` | 组合 runtime registry 与 model-visible specs，并负责 dispatch tool call。 | `ToolRouter` 字段是 `registry` 和 `model_visible_specs`，`from_context` 调 `build_tool_router`。[E: codex-rs/core/src/tools/router.rs:35][E: codex-rs/core/src/tools/router.rs:60][E: codex-rs/core/src/tools/router.rs:65] |
 

@@ -4,7 +4,7 @@ title: spawn_agent (V2) 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/multi_agents_spec.rs, codex-rs/core/src/tools/handlers/multi_agents_v2.rs, codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs, codex-rs/core/src/tools/handlers/multi_agents_common.rs, codex-rs/protocol/src/agent_path.rs, codex-rs/tools/src/tool_executor.rs]
-symbols: [create_spawn_agent_tool_v2, SpawnAgentHandlerV2, multi_agents_v2::spawn::Handler, SpawnAgentArgs]
+symbols: [create_spawn_agent_tool_v2, SpawnAgentHandlerV2, multi_agents_v2::spawn::Handler, multi_agents_v2::SpawnAgentArgs]
 related: [spine.trace-subagent, subsys.core.tool-system, subsys.core.collaboration-modes]
 evidence: explicit
 status: verified
@@ -50,7 +50,7 @@ handler 解析 function arguments、计算 fork mode、从父 turn 构建子 age
 
 它用父 agent path 作 author、新 canonical path 作 recipient，直接构造 `InterAgentCommunication`，并附上 `AgentCommunicationKind::Spawn` 的日志上下文。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:102][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:106][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:107]
 
-真正创建与首次投递由 `agent_control.spawn_agent_with_communication` 完成；`SpawnAgentOptions` 带 fork call id/mode、parent thread 和 environments。成功后发送 `SubAgentActivityKind::Started` turn item 并记录 `codex.multi_agent.spawn` telemetry，其中 version tag 是 `v2`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:108][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:112][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:117][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:123][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:137][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:144][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:149][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:152]
+真正创建与首次投递由 `agent_control.spawn_agent_with_communication` 完成；`SpawnAgentOptions` 带 fork call id/mode、parent thread 和 environments。成功后发送 `SubAgentActivityKind::Started` turn item 并记录 `codex.multi_agent.spawn` telemetry，其中 version tag 是 `v2`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:108][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:112][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:117][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:137][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:144][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:149][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:152]
 
 ## 输出与 parallel
 

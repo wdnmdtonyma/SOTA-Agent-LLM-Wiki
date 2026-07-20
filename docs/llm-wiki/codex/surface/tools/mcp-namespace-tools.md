@@ -4,7 +4,7 @@ title: MCP namespace tools
 kind: tool
 tier: T1
 source: [codex-rs/core/src/mcp_tool_exposure.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/tools/src/responses_api.rs, codex-rs/tools/src/tool_search.rs]
-symbols: [build_mcp_tool_runtimes, ToolRouterParams, McpHandler, create_tool_spec, mcp_tool_to_responses_api_tool, ToolSearchInfo, build_mcp_search_text]
+symbols: [build_mcp_tool_runtimes, McpHandler, create_tool_spec, mcp_tool_to_responses_api_tool, build_mcp_search_text]
 related: [tool.tool-search, tool.list-mcp-resources, tool.dynamic-tools, subsys.mcp.connectors]
 evidence: explicit
 status: verified
@@ -34,9 +34,9 @@ MCP runtime 的构造已移出 planner。`build_mcp_tool_runtimes` 先过滤 mod
 
 turn 构建阶段把这些 runtime 作为 `ToolRouterParams.tool_runtimes` 传入 router；planner 只是遍历已构造的 runtime 并加入 `PlannedTools`，不再持有两组原始 `ToolInfo` 或自行区分 direct/deferred。[E: codex-rs/core/src/session/turn.rs:1340][E: codex-rs/core/src/session/turn.rs:1346][E: codex-rs/core/src/session/turn.rs:1348][E: codex-rs/core/src/session/turn.rs:1349][E: codex-rs/core/src/tools/router.rs:40][E: codex-rs/core/src/tools/router.rs:41][E: codex-rs/core/src/tools/spec_plan.rs:181][E: codex-rs/core/src/tools/spec_plan.rs:183][E: codex-rs/core/src/tools/spec_plan.rs:611][E: codex-rs/core/src/tools/spec_plan.rs:612]
 
-deferred MCP runtime 不是无条件进入 `tool_search`：planner 先 `add_tool_sources`，再应用 direct-model-only namespace overrides，最后才 `append_tool_search_executor`；后者要求 `search_tool_enabled` 为 true，并只从 exposure 为 Deferred 的 runtimes 收集 `search_info()`。[E: codex-rs/core/src/tools/spec_plan.rs:192][E: codex-rs/core/src/tools/spec_plan.rs:193][E: codex-rs/core/src/tools/spec_plan.rs:194][E: codex-rs/core/src/tools/spec_plan.rs:199][E: codex-rs/core/src/tools/spec_plan.rs:214][E: codex-rs/core/src/tools/spec_plan.rs:218][E: codex-rs/core/src/tools/spec_plan.rs:932][E: codex-rs/core/src/tools/spec_plan.rs:933][E: codex-rs/core/src/tools/spec_plan.rs:937][E: codex-rs/core/src/tools/spec_plan.rs:940][E: codex-rs/core/src/tools/spec_plan.rs:941]
+deferred MCP runtime 不是无条件进入 `tool_search`：planner 先 `add_tool_sources`，再应用 direct-model-only namespace overrides，最后才 `append_tool_search_executor`；后者要求 `search_tool_enabled` 为 true，并只从 exposure 为 Deferred 的 runtimes 收集 `search_info()`。[E: codex-rs/core/src/tools/spec_plan.rs:192][E: codex-rs/core/src/tools/spec_plan.rs:193][E: codex-rs/core/src/tools/spec_plan.rs:194][E: codex-rs/core/src/tools/spec_plan.rs:199][E: codex-rs/core/src/tools/spec_plan.rs:218][E: codex-rs/core/src/tools/spec_plan.rs:932][E: codex-rs/core/src/tools/spec_plan.rs:933][E: codex-rs/core/src/tools/spec_plan.rs:937][E: codex-rs/core/src/tools/spec_plan.rs:940][E: codex-rs/core/src/tools/spec_plan.rs:941]
 
-`namespace_tools_enabled` 不再是 `append_tool_search_executor` 的进入条件；它在构建 model-visible specs 的最后过滤 `ToolSpec::Namespace`，但 registry 仍由 planned runtimes 构建。[E: codex-rs/core/src/tools/spec_plan.rs:258][E: codex-rs/core/src/tools/spec_plan.rs:259][E: codex-rs/core/src/tools/spec_plan.rs:261][E: codex-rs/core/src/tools/spec_plan.rs:262][E: codex-rs/core/src/tools/spec_plan.rs:263]
+`namespace_tools_enabled` 不再是 `append_tool_search_executor` 的进入条件；它在构建 model-visible specs 的最后过滤 `ToolSpec::Namespace`，但 registry 仍由 planned runtimes 构建。[E: codex-rs/core/src/tools/spec_plan.rs:258][E: codex-rs/core/src/tools/spec_plan.rs:259][E: codex-rs/core/src/tools/spec_plan.rs:261][E: codex-rs/core/src/tools/spec_plan.rs:262]
 
 ## 3 search metadata
 

@@ -4,7 +4,7 @@ title: OpenAI provider
 kind: subsystem
 tier: T2
 source: [codex-rs/model-provider-info/src/lib.rs, codex-rs/model-provider/src/auth.rs, codex-rs/model-provider/src/bearer_auth_provider.rs]
-symbols: [create_openai_provider, OPENAI_PROVIDER_ID, ModelProviderInfo, resolve_provider_auth, auth_provider_from_auth, BearerAuthProvider, HeaderAuthProvider]
+symbols: [create_openai_provider, OPENAI_PROVIDER_ID]
 related: [subsys.providers.overview, subsys.providers.auth-layer, subsys.providers.responses-api, subsys.providers.model-catalog]
 evidence: explicit
 status: verified

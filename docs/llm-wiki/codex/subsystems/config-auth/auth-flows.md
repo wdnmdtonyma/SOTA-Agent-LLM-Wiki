@@ -11,7 +11,7 @@ status: verified
 updated: 4d7a5c7c73
 ---
 
-> Codex 认证流程把 API key、ChatGPT OAuth/device code、external auth（包括整组 HTTP headers）、agent identity、personal access token 和 Bedrock API key 都统一为 `CodexAuth` snapshots；`AuthManager` 负责缓存、env/external auth precedence、forced login/workspace restrictions 和 token refresh。[E: codex-rs/login/src/auth/manager.rs:71][E: codex-rs/login/src/auth/manager.rs:75][E: codex-rs/login/src/auth/manager.rs:215][E: codex-rs/login/src/auth/manager.rs:2023]
+> Codex 认证流程把 API key、ChatGPT OAuth/device code、external auth（包括整组 HTTP headers）、agent identity、personal access token 和 Bedrock API key 都统一为 `CodexAuth` snapshots；`AuthManager` 负责缓存、env/external auth precedence、forced login/workspace restrictions 和 token refresh。[E: codex-rs/login/src/auth/manager.rs:71][E: codex-rs/login/src/auth/manager.rs:75][E: codex-rs/login/src/auth/manager.rs:2023]
 
 ## 能回答的问题
 
@@ -30,13 +30,13 @@ auth-flows 节点覆盖登录、限制、refresh 和 runtime auth snapshot，不
 
 ## 数据模型
 
-`CodexAuth` 当前 variants 是 `ApiKey`、`Chatgpt`、`ChatgptAuthTokens`、`Headers`、`AgentIdentity`、`PersonalAccessToken` 和 `BedrockApiKey`；`Headers(AuthHeaders)` 表示由宿主外部管理的一整组请求 headers，它不暴露 bearer token、account id/email/plan，也不能从 auth storage 恢复。[E: codex-rs/login/src/auth/manager.rs:71][E: codex-rs/login/src/auth/manager.rs:75][E: codex-rs/login/src/auth/manager.rs:314][E: codex-rs/login/src/auth/manager.rs:496][E: codex-rs/login/src/auth/manager.rs:517][E: codex-rs/login/src/auth/manager.rs:539][E: codex-rs/login/src/auth/manager.rs:561]
+`CodexAuth` 当前 variants 是 `ApiKey`、`Chatgpt`、`ChatgptAuthTokens`、`Headers`、`AgentIdentity`、`PersonalAccessToken` 和 `BedrockApiKey`；`Headers(AuthHeaders)` 表示由宿主外部管理的一整组请求 headers，它不暴露 bearer token、account id/email/plan，也不能从 auth storage 恢复。[E: codex-rs/login/src/auth/manager.rs:71][E: codex-rs/login/src/auth/manager.rs:75][E: codex-rs/login/src/auth/manager.rs:314]
 
 `AuthConfig` 聚合 codex_home、credential store mode、keyring backend、forced login method、ChatGPT base URL、forced workspace ids 和 auth route config；`enforce_login_restrictions` 会从 ChatGPT base URL 派生 agent identity AuthAPI base URL 后传入内部 restriction helper。[E: codex-rs/login/src/auth/manager.rs:1041][E: codex-rs/login/src/auth/manager.rs:1042][E: codex-rs/login/src/auth/manager.rs:1043][E: codex-rs/login/src/auth/manager.rs:1044][E: codex-rs/login/src/auth/manager.rs:1045][E: codex-rs/login/src/auth/manager.rs:1046][E: codex-rs/login/src/auth/manager.rs:1047][E: codex-rs/login/src/auth/manager.rs:1048][E: codex-rs/login/src/auth/manager.rs:1053][E: codex-rs/login/src/auth/manager.rs:1057]
 
 `AuthManager` 是 runtime cache owner；配置了 `ExternalAuth` 时，`auth()` 每次先 reload，并由 external provider 的 `resolve()` 产出任意合法 `CodexAuth` snapshot；否则才读取 cached auth，并在需要时进入 proactive guarded refresh。[E: codex-rs/login/src/auth/manager.rs:218][E: codex-rs/login/src/auth/manager.rs:2023][E: codex-rs/login/src/auth/manager.rs:2024][E: codex-rs/login/src/auth/manager.rs:2195][E: codex-rs/login/src/auth/manager.rs:2196]
 
-`set_external_auth` 在安装 provider 前先 resolve、校验并 commit snapshot；`clear_external_auth` 同时清空 cache。外部 `ChatgptAuthTokens` 还会镜像到 process-local ephemeral store，让 app/connectors 自建的 `AuthManager` 也能读取，而 `Headers` 等其他 external variants 只更新当前 cache。[E: codex-rs/login/src/auth/manager.rs:2242][E: codex-rs/login/src/auth/manager.rs:2250][E: codex-rs/login/src/auth/manager.rs:2253][E: codex-rs/login/src/auth/manager.rs:2557][E: codex-rs/login/src/auth/manager.rs:2564][E: codex-rs/login/src/auth/manager.rs:2575]
+`set_external_auth` 在安装 provider 前先 resolve、校验并 commit snapshot；`clear_external_auth` 同时清空 cache。外部 `ChatgptAuthTokens` 还会镜像到 process-local ephemeral store，让 app/connectors 自建的 `AuthManager` 也能读取，而 `Headers` 等其他 external variants 只更新当前 cache。[E: codex-rs/login/src/auth/manager.rs:2242][E: codex-rs/login/src/auth/manager.rs:2250][E: codex-rs/login/src/auth/manager.rs:2253][E: codex-rs/login/src/auth/manager.rs:2557][E: codex-rs/login/src/auth/manager.rs:2575]
 
 ## Browser OAuth flow
 
@@ -50,7 +50,7 @@ auth-flows 节点覆盖登录、限制、refresh 和 runtime auth snapshot，不
 
 `run_device_code_login` 先 request device code，打印 verification URL 和 user code，再调用 `complete_device_code_login`。[E: codex-rs/login/src/device_code_auth.rs:234][E: codex-rs/login/src/device_code_auth.rs:235][E: codex-rs/login/src/device_code_auth.rs:236][E: codex-rs/login/src/device_code_auth.rs:237]
 
-`request_device_code` 以 issuer 派生 `/api/accounts` base URL，请求 user code 后返回 verification URL、user code、device_auth_id 和 interval。[E: codex-rs/login/src/device_code_auth.rs:165][E: codex-rs/login/src/device_code_auth.rs:166][E: codex-rs/login/src/device_code_auth.rs:163][E: codex-rs/login/src/device_code_auth.rs:171][E: codex-rs/login/src/device_code_auth.rs:173]
+`request_device_code` 以 issuer 派生 `/api/accounts` base URL，请求 user code 后返回 verification URL、user code、device_auth_id 和 interval。[E: codex-rs/login/src/device_code_auth.rs:165][E: codex-rs/login/src/device_code_auth.rs:166][E: codex-rs/login/src/device_code_auth.rs:171][E: codex-rs/login/src/device_code_auth.rs:173]
 
 `poll_for_token` 最多等待 15 分钟；HTTP 403/404 表示继续等待授权，其他 non-success status 立即失败。[E: codex-rs/login/src/device_code_auth.rs:100][E: codex-rs/login/src/device_code_auth.rs:107][E: codex-rs/login/src/device_code_auth.rs:108][E: codex-rs/login/src/device_code_auth.rs:127][E: codex-rs/login/src/device_code_auth.rs:131][E: codex-rs/login/src/device_code_auth.rs:142]
 
@@ -74,7 +74,7 @@ Forced workspace restriction 使用 configured workspace ids 比对有 account i
 
 ## Gotchas
 
-- `Headers` 是 runtime-only external auth：它不能从 `auth.json` 加载，也没有可供普通 bearer-token client 使用的单一 token。[E: codex-rs/login/src/auth/manager.rs:314][E: codex-rs/login/src/auth/manager.rs:496][E: codex-rs/login/src/auth/manager.rs:507]
+- `Headers` 是 runtime-only external auth：它不能从 `auth.json` 加载，也没有可供普通 bearer-token client 使用的单一 token。[E: codex-rs/login/src/auth/manager.rs:314][E: codex-rs/login/src/auth/manager.rs:507]
 - URL redaction 的 sensitive query keys 包含 access_token、api_key、client_secret、code、code_verifier、id_token、refresh_token、state、token 等；日志事实不要引用未 redacted URL。[E: codex-rs/login/src/server.rs:694][E: codex-rs/login/src/server.rs:695][E: codex-rs/login/src/server.rs:696][E: codex-rs/login/src/server.rs:699][E: codex-rs/login/src/server.rs:701][E: codex-rs/login/src/server.rs:703][E: codex-rs/login/src/server.rs:705]
 - device code flow 的 user code prompt 明确提示 code 15 分钟过期且不要分享；不要把 user code 当作长期 credential。[E: codex-rs/login/src/device_code_auth.rs:160][E: codex-rs/login/src/device_code_auth.rs:154][E: codex-rs/login/src/device_code_auth.rs:155]
 

@@ -11,7 +11,7 @@ status: verified
 updated: 4d7a5c7c73
 ---
 
-> Codex 现在有五个 SQLite path specs：metadata、logs、goals、memories，以及 rebuildable paginated history (`thread_history_1.sqlite`)。`StateRuntime::init` 自身仍只持有并打开前四类；thread-history DB 由 thread store 按需通过独立 helper 打开。[E: codex-rs/state/src/lib.rs:102][E: codex-rs/state/src/lib.rs:106][E: codex-rs/state/src/runtime.rs:143][E: codex-rs/state/src/runtime.rs:151][E: codex-rs/state/src/runtime.rs:161][E: codex-rs/state/src/runtime.rs:423]
+> Codex 现在有五个 SQLite path specs：metadata、logs、goals、memories，以及 rebuildable paginated history (`thread_history_1.sqlite`)。`StateRuntime::init` 自身仍只持有并打开前四类；thread-history DB 由 thread store 按需通过独立 helper 打开。[E: codex-rs/state/src/lib.rs:102][E: codex-rs/state/src/lib.rs:106][E: codex-rs/state/src/runtime.rs:143][E: codex-rs/state/src/runtime.rs:151][E: codex-rs/state/src/runtime.rs:161]
 
 ## 能回答的问题
 
@@ -32,7 +32,7 @@ updated: 4d7a5c7c73
 | 文件 | 角色 |
 |---|---|
 | `codex-rs/state/src/lib.rs` | Public exports, SQLite filenames, metrics constants.[E: codex-rs/state/src/lib.rs:22][E: codex-rs/state/src/lib.rs:100][E: codex-rs/state/src/lib.rs:105] |
-| `codex-rs/state/src/runtime.rs` | Runtime DB specs, `StateRuntime` fields, SQLite open/migration options, startup maintenance.[E: codex-rs/state/src/runtime.rs:111][E: codex-rs/state/src/runtime.rs:147][E: codex-rs/state/src/runtime.rs:172][E: codex-rs/state/src/runtime.rs:362] |
+| `codex-rs/state/src/runtime.rs` | Runtime DB specs, `StateRuntime` fields, SQLite open/migration options, startup maintenance.[E: codex-rs/state/src/runtime.rs:111][E: codex-rs/state/src/runtime.rs:147][E: codex-rs/state/src/runtime.rs:172] |
 | `codex-rs/state/src/runtime/threads.rs` | Thread metadata reads/lists/upserts and incremental rollout item application.[E: codex-rs/state/src/runtime/threads.rs:402][E: codex-rs/state/src/runtime/threads.rs:437][E: codex-rs/state/src/runtime/threads.rs:906] |
 | `codex-rs/state/src/extract.rs` | Field projection from rollout items into `ThreadMetadata`.[E: codex-rs/state/src/extract.rs:15][E: codex-rs/state/src/extract.rs:36] |
 | `codex-rs/state/src/runtime/backfill.rs` | Backfill state row, lease claim, checkpoint, completion.[E: codex-rs/state/src/runtime/backfill.rs:4][E: codex-rs/state/src/runtime/backfill.rs:23][E: codex-rs/state/src/runtime/backfill.rs:64][E: codex-rs/state/src/runtime/backfill.rs:82] |
@@ -53,12 +53,12 @@ updated: 4d7a5c7c73
 1. `StateRuntime::init` creates the SQLite home, constructs four migrators and opens state/logs/goals/memories；它不主动打开 thread-history DB。[E: codex-rs/state/src/runtime.rs:196][E: codex-rs/state/src/runtime.rs:202][E: codex-rs/state/src/runtime.rs:203][E: codex-rs/state/src/runtime.rs:210][E: codex-rs/state/src/runtime.rs:211]
 2. It opens state, logs, goals, and memories SQLite pools in sequence; failures close pools already opened before returning an error.[E: codex-rs/state/src/runtime.rs:205][E: codex-rs/state/src/runtime.rs:212][E: codex-rs/state/src/runtime.rs:221][E: codex-rs/state/src/runtime.rs:249][E: codex-rs/state/src/runtime.rs:263]
 3. After DB open, init ensures the backfill row, reads max thread updated/recency timestamps, builds `GoalStore`/`MemoryStore`, and runs logs startup maintenance best-effort.[E: codex-rs/state/src/runtime.rs:268][E: codex-rs/state/src/runtime.rs:287][E: codex-rs/state/src/runtime.rs:317][E: codex-rs/state/src/runtime.rs:318][E: codex-rs/state/src/runtime.rs:319][E: codex-rs/state/src/runtime.rs:327]
-4. `open_thread_history_db` 独立创建 migrator 并复用统一 `open_sqlite` 配置；thread store 用 lazy pool 调用它。[E: codex-rs/state/src/runtime.rs:423][E: codex-rs/state/src/runtime.rs:426][E: codex-rs/state/src/runtime.rs:427][E: codex-rs/thread-store/src/local/mod.rs:154][E: codex-rs/thread-store/src/local/mod.rs:157]
+4. `open_thread_history_db` 独立创建 migrator 并复用统一 `open_sqlite` 配置；thread store 用 lazy pool 调用它。[E: codex-rs/state/src/runtime.rs:426][E: codex-rs/state/src/runtime.rs:427][E: codex-rs/thread-store/src/local/mod.rs:154][E: codex-rs/thread-store/src/local/mod.rs:157]
 
 ## 控制流：rollout 投影
 
-1. `rollout_item_affects_thread_metadata` accepts `SessionMeta`/`TurnContext`, legacy token/user/goal/settings events, plus Paginated `ItemCompleted(UserMessage)`；这让两种 history mode 都能更新 preview/title。[E: codex-rs/state/src/extract.rs:36][E: codex-rs/state/src/extract.rs:38][E: codex-rs/state/src/extract.rs:40][E: codex-rs/state/src/extract.rs:45][E: codex-rs/state/src/extract.rs:49]
-2. `apply_rollout_item` dispatches by rollout item type, and response items currently do not mutate metadata.[E: codex-rs/state/src/extract.rs:15][E: codex-rs/state/src/extract.rs:20][E: codex-rs/state/src/extract.rs:24][E: codex-rs/state/src/extract.rs:119]
+1. `rollout_item_affects_thread_metadata` accepts `SessionMeta`/`TurnContext`, legacy token/user/goal/settings events, plus Paginated `ItemCompleted(UserMessage)`；这让两种 history mode 都能更新 preview/title。[E: codex-rs/state/src/extract.rs:36][E: codex-rs/state/src/extract.rs:38][E: codex-rs/state/src/extract.rs:40][E: codex-rs/state/src/extract.rs:45]
+2. `apply_rollout_item` dispatches by rollout item type, and response items currently do not mutate metadata.[E: codex-rs/state/src/extract.rs:15][E: codex-rs/state/src/extract.rs:20][E: codex-rs/state/src/extract.rs:24]
 3. `TurnContext` updates cwd fallback, model, reasoning effort, sandbox policy, and approval mode.[E: codex-rs/state/src/extract.rs:88][E: codex-rs/state/src/extract.rs:90][E: codex-rs/state/src/extract.rs:92][E: codex-rs/state/src/extract.rs:93][E: codex-rs/state/src/extract.rs:94][E: codex-rs/state/src/extract.rs:96]
 4. `UserMessage` initializes first-user-message/preview/title; `ThreadGoalUpdated` can fill preview; `TokenCount` records total tokens.[E: codex-rs/state/src/extract.rs:101][E: codex-rs/state/src/extract.rs:103][E: codex-rs/state/src/extract.rs:106][E: codex-rs/state/src/extract.rs:139][E: codex-rs/state/src/extract.rs:145][E: codex-rs/state/src/extract.rs:114][E: codex-rs/state/src/extract.rs:117]
 5. `StateRuntime::apply_rollout_items` reads existing metadata or builds defaults, applies each item, preserves existing git info, updates `updated_at`, then upserts metadata and memory mode.[E: codex-rs/state/src/runtime/threads.rs:906][E: codex-rs/state/src/runtime/threads.rs:916][E: codex-rs/state/src/runtime/threads.rs:919][E: codex-rs/state/src/runtime/threads.rs:922][E: codex-rs/state/src/runtime/threads.rs:925][E: codex-rs/state/src/runtime/threads.rs:931][E: codex-rs/state/src/runtime/threads.rs:935][E: codex-rs/state/src/runtime/threads.rs:941]
@@ -73,9 +73,9 @@ updated: 4d7a5c7c73
 
 ## Gotcha
 
-- 不要把 `RUNTIME_DBS` 的五个 path specs 误写成 `StateRuntime` 同时持有五个 pool：runtime 仍打开四个主库，thread-history SQLite 是 thread-store-owned、可重建的 lazy projection。[E: codex-rs/state/src/runtime.rs:151][E: codex-rs/state/src/runtime.rs:161][E: codex-rs/state/src/runtime.rs:423]
+- 不要把 `RUNTIME_DBS` 的五个 path specs 误写成 `StateRuntime` 同时持有五个 pool：runtime 仍打开四个主库，thread-history SQLite 是 thread-store-owned、可重建的 lazy projection。[E: codex-rs/state/src/runtime.rs:151][E: codex-rs/state/src/runtime.rs:161]
 - `get_state_db` in the rollout wrapper is optional and read-oriented: it requires the DB file to exist, opens the runtime, then requires startup backfill completion.[E: codex-rs/rollout/src/state_db.rs:217][E: codex-rs/rollout/src/state_db.rs:219][E: codex-rs/rollout/src/state_db.rs:227][E: codex-rs/rollout/src/state_db.rs:243]
-- `ResponseItem`s are still accepted by `apply_rollout_item`, but the current response projection function is empty.[E: codex-rs/state/src/extract.rs:24][E: codex-rs/state/src/extract.rs:119]
+- `ResponseItem`s are still accepted by `apply_rollout_item`, but the current response projection function is empty.[E: codex-rs/state/src/extract.rs:24]
 
 ## Sources
 

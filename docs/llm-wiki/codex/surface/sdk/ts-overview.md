@@ -4,7 +4,7 @@ title: TypeScript SDK 总览
 kind: sdk
 tier: T1
 source: [sdk/typescript/src/codex.ts, sdk/typescript/src/thread.ts, sdk/typescript/src/exec.ts, sdk/typescript/src/codexOptions.ts, sdk/typescript/src/threadOptions.ts, sdk/typescript/src/turnOptions.ts]
-symbols: [Codex, Thread, Turn, RunResult, StreamedTurn, UserInput, Input, CodexOptions, ThreadOptions, CodexExec]
+symbols: [typescript::Codex, typescript::Thread, Turn, RunResult, StreamedTurn, typescript::UserInput, Input, CodexOptions, ThreadOptions, CodexExec]
 related: [sdk.ts-events-items, sdk.ts-structured-output, sdk.sdk-architecture]
 evidence: explicit
 status: verified

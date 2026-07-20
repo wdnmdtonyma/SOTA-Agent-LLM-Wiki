@@ -24,7 +24,7 @@ updated: 4d7a5c7c73
 
 execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator。已删除的 legacy engine 不再属于当前实现；本节点也不覆盖 approval prompt UI 或 shell escalation 的 socket protocol，后两者只消费 `Decision` 与 `Evaluation` 的结果。[I]
 
-`Decision` 只有三个值：`Allow`、`Prompt`、`Forbidden`。字符串解析接受 `"allow"`、`"prompt"`、`"forbidden"`；network rule 的 parser 还把 `"deny"` 作为 `Forbidden` 的别名。[E: codex-rs/execpolicy/src/decision.rs:9][E: codex-rs/execpolicy/src/decision.rs:13][E: codex-rs/execpolicy/src/decision.rs:15][E: codex-rs/execpolicy/src/decision.rs:19][E: codex-rs/execpolicy/src/decision.rs:22][E: codex-rs/execpolicy/src/decision.rs:25][E: codex-rs/execpolicy/src/parser.rs:253]
+`Decision` 只有三个值：`Allow`、`Prompt`、`Forbidden`。字符串解析接受 `"allow"`、`"prompt"`、`"forbidden"`；network rule 的 parser 还把 `"deny"` 作为 `Forbidden` 的别名。[E: codex-rs/execpolicy/src/decision.rs:9][E: codex-rs/execpolicy/src/decision.rs:13][E: codex-rs/execpolicy/src/decision.rs:15][E: codex-rs/execpolicy/src/decision.rs:19][E: codex-rs/execpolicy/src/decision.rs:22][E: codex-rs/execpolicy/src/parser.rs:253]
 
 ## 关键 crate/文件
 
@@ -38,15 +38,15 @@ execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator。已删除�
 
 - `prefix_rule(pattern, decision=None, match=None, not_match=None, justification=None)`: `pattern` 可以是 string token 列表，也可以包含 list alternatives；`decision` 为空时默认 `Allow`；`justification` 为空字符串会报错；如果第一 token 有 alternatives，parser 会展开成多个 `PrefixRule`。[E: codex-rs/execpolicy/src/parser.rs:348][E: codex-rs/execpolicy/src/parser.rs:356][E: codex-rs/execpolicy/src/parser.rs:362][E: codex-rs/execpolicy/src/parser.rs:390][E: codex-rs/execpolicy/src/parser.rs:405]
 - `network_rule(host, protocol, decision, justification=None)`: `protocol` 解析为 `NetworkRuleProtocol`，`decision` 解析为 `Decision` 或 `deny` alias，`host` 经过 normalization 后存入 rule。[E: codex-rs/execpolicy/src/parser.rs:410][E: codex-rs/execpolicy/src/parser.rs:416][E: codex-rs/execpolicy/src/parser.rs:417][E: codex-rs/execpolicy/src/parser.rs:427]
-- `host_executable(name, paths)`: `name` 必须是 bare executable name；`paths` 必须是 absolute path，basename 必须匹配 `name`；parser 会 dedupe paths 并按 lookup key 保存。[E: codex-rs/execpolicy/src/parser.rs:437][E: codex-rs/execpolicy/src/parser.rs:441][E: codex-rs/execpolicy/src/parser.rs:451][E: codex-rs/execpolicy/src/parser.rs:452][E: codex-rs/execpolicy/src/parser.rs:464][E: codex-rs/execpolicy/src/parser.rs:470]
+- `host_executable(name, paths)`: `name` 必须是 bare executable name；`paths` 必须是 absolute path，basename 必须匹配 `name`；parser 会 dedupe paths 并按 lookup key 保存。[E: codex-rs/execpolicy/src/parser.rs:437][E: codex-rs/execpolicy/src/parser.rs:441][E: codex-rs/execpolicy/src/parser.rs:451][E: codex-rs/execpolicy/src/parser.rs:452][E: codex-rs/execpolicy/src/parser.rs:470]
 
-`parse_pattern` 对 string value 直接保存为单个 pattern token；对 list alternatives 递归解析并拒绝空 alternatives。examples 可以从 string 通过 `shlex::split` 解析，也可以直接写 list。[E: codex-rs/execpolicy/src/parser.rs:171][E: codex-rs/execpolicy/src/parser.rs:186][E: codex-rs/execpolicy/src/parser.rs:194][E: codex-rs/execpolicy/src/parser.rs:216][E: codex-rs/execpolicy/src/parser.rs:284][E: codex-rs/execpolicy/src/parser.rs:314]
+`parse_pattern` 对 string value 直接保存为单个 pattern token；对 list alternatives 递归解析并拒绝空 alternatives。examples 可以从 string 通过 `shlex::split` 解析，也可以直接写 list。[E: codex-rs/execpolicy/src/parser.rs:171][E: codex-rs/execpolicy/src/parser.rs:186][E: codex-rs/execpolicy/src/parser.rs:194][E: codex-rs/execpolicy/src/parser.rs:284][E: codex-rs/execpolicy/src/parser.rs:314]
 
 ## 数据模型
 
 - `Policy`: 保存 `rules_by_program`、`network_rules`、`host_executables` 三类表。[E: codex-rs/execpolicy/src/policy.rs:27][E: codex-rs/execpolicy/src/policy.rs:28][E: codex-rs/execpolicy/src/policy.rs:29][E: codex-rs/execpolicy/src/policy.rs:30]
-- `PrefixPattern`: `first` 是首 token，`rest` 是后续 tokens，`matches_prefix` 要求 command 长度足够、首 token 匹配、后续 tokens 逐个匹配。[E: codex-rs/execpolicy/src/rule.rs:37][E: codex-rs/execpolicy/src/rule.rs:39][E: codex-rs/execpolicy/src/rule.rs:40][E: codex-rs/execpolicy/src/rule.rs:45][E: codex-rs/execpolicy/src/rule.rs:55]
-- `PatternToken`: `Single(String)` 或 `Alts(Vec<String>)`，matching 时 `Single` 做字符串相等，`Alts` 用 alternatives membership。[E: codex-rs/execpolicy/src/rule.rs:14][E: codex-rs/execpolicy/src/rule.rs:15][E: codex-rs/execpolicy/src/rule.rs:16][E: codex-rs/execpolicy/src/rule.rs:24][E: codex-rs/execpolicy/src/rule.rs:29]
+- `PrefixPattern`: `first` 是首 token，`rest` 是后续 tokens，`matches_prefix` 要求 command 长度足够、首 token 匹配、后续 tokens 逐个匹配。[E: codex-rs/execpolicy/src/rule.rs:39][E: codex-rs/execpolicy/src/rule.rs:40][E: codex-rs/execpolicy/src/rule.rs:45]
+- `PatternToken`: `Single(String)` 或 `Alts(Vec<String>)`，matching 时 `Single` 做字符串相等，`Alts` 用 alternatives membership。[E: codex-rs/execpolicy/src/rule.rs:15][E: codex-rs/execpolicy/src/rule.rs:16][E: codex-rs/execpolicy/src/rule.rs:24][E: codex-rs/execpolicy/src/rule.rs:29]
 - `RuleMatch`: `PrefixRuleMatch` 记录 matched prefix、decision、resolved program、justification；`HeuristicsRuleMatch` 记录 fallback command 和 fallback decision。[E: codex-rs/execpolicy/src/rule.rs:64][E: codex-rs/execpolicy/src/rule.rs:67][E: codex-rs/execpolicy/src/rule.rs:70][E: codex-rs/execpolicy/src/rule.rs:76][E: codex-rs/execpolicy/src/rule.rs:78]
 - `Evaluation`: 保存最终 `decision` 与 `matched_rules`。[E: codex-rs/execpolicy/src/policy.rs:349][E: codex-rs/execpolicy/src/policy.rs:350][E: codex-rs/execpolicy/src/policy.rs:351]
 
@@ -54,12 +54,12 @@ execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator。已删除�
 
 1. `PolicyParser::parse` 解析 policy 文本，执行 builtins，把规则写入 `PolicyBuilder`，再运行 examples validation。[E: codex-rs/execpolicy/src/parser.rs:57][E: codex-rs/execpolicy/src/parser.rs:87][E: codex-rs/execpolicy/src/parser.rs:133]
 2. `Policy::add_prefix_rule` 把 `PrefixRule` 按首 token(`first_token`)作为 key 插入 `rules_by_program` map；`add_network_rule` 按 protocol/host/decision 保存 network rule。[E: codex-rs/execpolicy/src/policy.rs:91][E: codex-rs/execpolicy/src/policy.rs:109][E: codex-rs/execpolicy/src/policy.rs:113][E: codex-rs/execpolicy/src/policy.rs:129]
-3. `Policy::merge_overlay` 把 overlay 的 prefix rules、network rules 和 host executable paths 追加或覆盖进 base policy。[E: codex-rs/execpolicy/src/policy.rs:141][E: codex-rs/execpolicy/src/policy.rs:147][E: codex-rs/execpolicy/src/policy.rs:154][E: codex-rs/execpolicy/src/policy.rs:160]
+3. `Policy::merge_overlay` 把 overlay 的 prefix rules、network rules 和 host executable paths 追加或覆盖进 base policy。[E: codex-rs/execpolicy/src/policy.rs:141][E: codex-rs/execpolicy/src/policy.rs:154][E: codex-rs/execpolicy/src/policy.rs:160]
 4. `Policy::check_multiple_with_options` 对候选 command 逐个调用 `matches`，收集所有 matches 后交给 `Evaluation::from_matches`。[E: codex-rs/execpolicy/src/policy.rs:232][E: codex-rs/execpolicy/src/policy.rs:240][E: codex-rs/execpolicy/src/policy.rs:250]
-5. `matches` 先尝试 exact rules，再可选解析 host executable；都没有匹配时调用 fallback 生成 heuristics match。[E: codex-rs/execpolicy/src/policy.rs:268][E: codex-rs/execpolicy/src/policy.rs:278][E: codex-rs/execpolicy/src/policy.rs:282][E: codex-rs/execpolicy/src/policy.rs:290]
-6. host executable matching 要求 argv[0] 是 absolute path，按 basename lookup host executable rule，allowlist 不为空时要求 exact path 命中，然后把 command[0] 改写为 basename 参与 prefix rule match。[E: codex-rs/execpolicy/src/policy.rs:307][E: codex-rs/execpolicy/src/policy.rs:314][E: codex-rs/execpolicy/src/policy.rs:319][E: codex-rs/execpolicy/src/policy.rs:326][E: codex-rs/execpolicy/src/policy.rs:331]
+5. `matches` 先尝试 exact rules，再可选解析 host executable；都没有匹配时调用 fallback 生成 heuristics match。[E: codex-rs/execpolicy/src/policy.rs:268][E: codex-rs/execpolicy/src/policy.rs:278][E: codex-rs/execpolicy/src/policy.rs:290]
+6. host executable matching 要求 argv[0] 是 absolute path，按 basename lookup host executable rule，allowlist 不为空时要求 exact path 命中，然后把 command[0] 改写为 basename 参与 prefix rule match。[E: codex-rs/execpolicy/src/policy.rs:307][E: codex-rs/execpolicy/src/policy.rs:314][E: codex-rs/execpolicy/src/policy.rs:326][E: codex-rs/execpolicy/src/policy.rs:331]
 7. `Evaluation::from_matches` 取所有 matched rules 中最大的 `Decision` 作为最终 decision；由于 enum 派生 `Ord` 且顺序为 Allow、Prompt、Forbidden，Forbidden 优先级最高。[E: codex-rs/execpolicy/src/policy.rs:365][E: codex-rs/execpolicy/src/policy.rs:371][E: codex-rs/execpolicy/src/decision.rs:9][E: codex-rs/execpolicy/src/decision.rs:15]
-8. `compiled_network_domains` 对 network rules 做 allow/deny 域集合编译；`Allow` 会移除 denied 并插入 allowed，`Forbidden` 会移除 allowed 并插入 denied，`Prompt` 被忽略。[E: codex-rs/execpolicy/src/policy.rs:167][E: codex-rs/execpolicy/src/policy.rs:172][E: codex-rs/execpolicy/src/policy.rs:177][E: codex-rs/execpolicy/src/policy.rs:182]
+8. `compiled_network_domains` 对 network rules 做 allow/deny 域集合编译；`Allow` 会移除 denied 并插入 allowed，`Forbidden` 会移除 allowed 并插入 denied，`Prompt` 被忽略。[E: codex-rs/execpolicy/src/policy.rs:167][E: codex-rs/execpolicy/src/policy.rs:172][E: codex-rs/execpolicy/src/policy.rs:177]
 
 ## 设计动机与权衡
 

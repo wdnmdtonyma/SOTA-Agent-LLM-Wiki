@@ -4,7 +4,7 @@ title: get_context_remaining 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/get_context_remaining.rs, codex-rs/core/src/tools/handlers/get_context_remaining_spec.rs, codex-rs/tools/src/tool_executor.rs]
-symbols: [GetContextRemainingHandler, create_get_context_remaining_tool, GET_CONTEXT_REMAINING_TOOL_NAME, Feature::TokenBudget]
+symbols: [GetContextRemainingHandler, create_get_context_remaining_tool, GET_CONTEXT_REMAINING_TOOL_NAME]
 related: [tool.new-context, subsys.core.tool-system, subsys.core.context-manager]
 evidence: explicit
 status: verified

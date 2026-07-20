@@ -4,7 +4,7 @@ title: Responses API
 kind: subsystem
 tier: T2
 source: [codex-rs/codex-api/src/common.rs, codex-rs/codex-api/src/endpoint/responses.rs, codex-rs/codex-api/src/endpoint/session.rs, codex-rs/codex-api/src/requests/responses.rs, codex-rs/responses-api-proxy/src/lib.rs, codex-rs/responses-api-proxy/src/dump.rs, codex-rs/responses-api-proxy/src/read_api_key.rs]
-symbols: [ResponsesApiRequest, ResponseEvent, ResponseStream, StreamOptions, ReasoningSummaryDelivery, ResponsesClient, ResponsesOptions, EndpointSession, Compression, run_main, forward_request]
+symbols: [ResponsesApiRequest, ResponseStream, StreamOptions, ReasoningSummaryDelivery, ResponsesClient, ResponsesOptions, EndpointSession, Compression, responses_api_proxy::run_main, forward_request]
 related: [subsys.providers.overview, subsys.providers.http-client, subsys.providers.sse-streaming, subsys.providers.retry-errors, subsys.providers.auth-layer]
 evidence: explicit
 status: verified

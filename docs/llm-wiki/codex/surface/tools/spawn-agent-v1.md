@@ -4,7 +4,7 @@ title: spawn_agent (V1) 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/multi_agents_spec.rs, codex-rs/core/src/tools/handlers/multi_agents.rs, codex-rs/core/src/tools/handlers/multi_agents/spawn.rs, codex-rs/core/src/tools/handlers/multi_agents_common.rs, codex-rs/tools/src/tool_executor.rs]
-symbols: [create_spawn_agent_tool_v1, SpawnAgentHandler, multi_agents::spawn::Handler, SpawnAgentArgs]
+symbols: [create_spawn_agent_tool_v1, SpawnAgentHandler, multi_agents::spawn::Handler, multi_agents::SpawnAgentArgs]
 related: [tool.spawn-agent-v2, tool.send-input-v1, tool.wait-agent-v1, subsys.core.collaboration-modes]
 evidence: explicit
 status: verified
@@ -18,7 +18,7 @@ updated: 4d7a5c7c73
 | 项 | 当前源码事实 |
 |---|---|
 | namespace / wire name | handler 返回 `ToolName::namespaced(MULTI_AGENT_V1_NAMESPACE, "spawn_agent")`，其中 namespace 常量是 `multi_agent_v1`。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:23][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:25][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:14] |
-| spec builder | `create_spawn_agent_tool_v1` 返回 `ToolSpec::Namespace`，namespace 内的 function name 是 `spawn_agent`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:48][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:84][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:88] |
+| spec builder | `create_spawn_agent_tool_v1` 返回 `ToolSpec::Namespace`，namespace 内的 function name 是 `spawn_agent`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:84][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:88] |
 | handler | `multi_agents.rs` re-export `spawn::Handler as SpawnAgentHandler`；handler 只匹配 function payload。[E: codex-rs/core/src/tools/handlers/multi_agents.rs:77][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:219][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:221] |
 
 ## 注册与门控
@@ -46,7 +46,7 @@ handler 解析 arguments、生成 input preview、检查 agent depth limit，随
 
 spawn config 来自父 turn 的 effective config；公共 helper 会刷新 model/provider/reasoning/developer instructions，并复制 approval policy、cwd、permission profile 等 runtime state。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:88][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:173][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:177][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:192][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:193][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:199][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:220][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:234]
 
-V1 spawn 调用 `spawn_agent_with_metadata`，但传给 `thread_spawn_source` 的 `task_name` 是 `None`，所以它返回 thread id 风格的 `agent_id`，不是 V2 canonical task path。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:116][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:119][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:124][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:213][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:214]
+V1 spawn 调用 `spawn_agent_with_metadata`，但传给 `thread_spawn_source` 的 `task_name` 是 `None`，所以它返回 thread id 风格的 `agent_id`，不是 V2 canonical task path。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:116][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:119][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:213][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:214]
 
 输出 schema 是 `{ agent_id, nickname }`；handler 的 `ToolOutput` 以 success true 写回 function output。handler 没有覆写 `supports_parallel_tool_calls`，按默认 trait 不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:391][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:395][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:399][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:404][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:252][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:253][E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
 

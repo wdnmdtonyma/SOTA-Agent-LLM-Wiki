@@ -4,7 +4,7 @@ title: 配置加载
 kind: subsystem
 tier: T2
 source: [codex-rs/config/src/loader/mod.rs, codex-rs/config/src/loader/layer_io.rs, codex-rs/config/src/requirements_layers/stack.rs, codex-rs/config/src/requirements_layers/hooks.rs, codex-rs/config/src/requirements_layers/rules.rs, codex-rs/config/src/requirements_layers/permissions.rs, codex-rs/config/src/state.rs, codex-rs/config/src/merge.rs, codex-rs/config/src/fingerprint.rs, codex-rs/app-server-protocol/src/protocol/v2/config.rs, codex-rs/config/src/thread_config.rs]
-symbols: [ConfigLayerEntry, ConfigLayerStack, ConfigLayerSource, compose_requirements, merge_toml_values, load_config_layers_state, load_project_layers, SessionThreadConfig]
+symbols: [ConfigLayerEntry, ConfigLayerStack, ConfigLayerSource, compose_requirements, merge_toml_values, load_config_layers_state, load_project_layers, SessionThreadConfig, ConfigToml]
 related: [subsys.config-auth.profiles, subsys.config-auth.features-system, config.approval-sandbox, config.storage-telemetry-misc]
 evidence: explicit
 status: verified

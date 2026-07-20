@@ -4,7 +4,7 @@ title: shell_command 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/shell_spec.rs, codex-rs/core/src/tools/handlers/shell.rs, codex-rs/core/src/tools/handlers/shell/shell_command.rs, codex-rs/core/src/tools/runtimes/shell.rs, codex-rs/core/src/tools/runtimes/shell/zsh_fork_backend.rs, codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs, codex-rs/tools/src/tool_config.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/protocol/src/models.rs, codex-rs/protocol/src/openai_models.rs]
-symbols: [add_shell_tools, ShellCommandHandler, ShellCommandHandlerOptions, ShellCommandBackendConfig, ShellCommandToolCallParams, create_shell_command_tool, shell_command_backend_for_features, ShellRuntimeBackend, run_exec_like, ConfigShellToolType::ShellCommand]
+symbols: [ShellCommandHandler, ShellCommandHandlerOptions, ShellCommandBackendConfig, ShellCommandToolCallParams, create_shell_command_tool, shell_command_backend_for_features, ShellRuntimeBackend, run_exec_like, ConfigShellToolType::ShellCommand]
 related: [tool.exec-command, tool.write-stdin, subsys.core.tool-system, subsys.exec-sandbox.shell-parsing, subsys.exec-sandbox.shell-escalation]
 evidence: explicit
 status: verified

@@ -4,7 +4,7 @@ title: MCP 与工具设置
 kind: config
 tier: T1
 source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/config/src/mcp_types.rs, codex-rs/protocol/src/config_types.rs]
-symbols: [ConfigToml, McpServerConfig, OAuthCredentialsStoreMode, AppToolApproval, ToolsToml, ToolSuggestConfig, WebSearchMode]
+symbols: [McpServerConfig, OAuthCredentialsStoreMode, AppToolApproval, ToolsToml, ToolSuggestConfig]
 related: [tool.mcp-namespace-tools, tool.web-search, config.skills-plugins-features, subsys.mcp.client]
 evidence: explicit
 status: verified
@@ -26,7 +26,7 @@ updated: 4d7a5c7c73
 
 `ToolsToml` is the nested `[tools]` section and currently contains `web_search` plus `experimental_request_user_input`.[E: codex-rs/config/src/config_toml.rs:637][E: codex-rs/config/src/config_toml.rs:642][E: codex-rs/config/src/config_toml.rs:643]
 
-`AppToolApproval` adds `writes` between prompt and approve, allowing app-tool policy to distinguish write-like calls from the fully approved mode。[E: codex-rs/config/src/mcp_types.rs:21][E: codex-rs/config/src/mcp_types.rs:24][E: codex-rs/config/src/mcp_types.rs:25][E: codex-rs/config/src/mcp_types.rs:26][E: codex-rs/config/src/mcp_types.rs:27]
+`AppToolApproval` adds `writes` between prompt and approve, allowing app-tool policy to distinguish write-like calls from the fully approved mode。[E: codex-rs/config/src/mcp_types.rs:21][E: codex-rs/config/src/mcp_types.rs:24][E: codex-rs/config/src/mcp_types.rs:25][E: codex-rs/config/src/mcp_types.rs:26]
 
 ## 字段 catalog
 

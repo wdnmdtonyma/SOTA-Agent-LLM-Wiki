@@ -4,7 +4,7 @@ title: exec_command 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/shell_spec.rs, codex-rs/core/src/tools/handlers/unified_exec.rs, codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs, codex-rs/core/src/tools/context.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/unified_exec/mod.rs, codex-rs/tools/src/tool_config.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/protocol/src/openai_models.rs]
-symbols: [build_tool_router, add_tool_sources, add_shell_tools, ExecCommandHandler, ExecCommandHandlerOptions, ExecCommandArgs, create_exec_command_tool_with_environment_id, unified_exec_output_schema, resolve_max_tokens, ToolSpec::Function, ConfigShellToolType::UnifiedExec]
+symbols: [ExecCommandHandler, ExecCommandHandlerOptions, ExecCommandArgs, create_exec_command_tool_with_environment_id, resolve_max_tokens, ConfigShellToolType::UnifiedExec]
 related: [tool.write-stdin, tool.shell-command, subsys.core.unified-exec, subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified

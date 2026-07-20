@@ -4,7 +4,7 @@ title: 一次 turn 端到端
 kind: flow
 tier: T0
 source: [codex-rs/protocol/src/protocol.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/session/input_queue.rs, codex-rs/core/src/tasks/mod.rs, codex-rs/core/src/tasks/regular.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/stream_events_utils.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/context_manager/history.rs]
-symbols: [user_input_or_turn_inner, TurnInput, Session::spawn_task, RegularTask::run, run_turn, run_sampling_request, try_run_sampling_request, handle_output_item_done]
+symbols: [user_input_or_turn_inner, TurnInput, RegularTask::run, handle_output_item_done]
 related: [spine.overview, spine.sq-eq-architecture, spine.tool-call-anatomy, spine.context-and-compaction, ref.protocol-op, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified
@@ -54,7 +54,7 @@ sequenceDiagram
 8. 每次 sampling 前，`run_turn` 从 cloned history 调 `for_prompt` 构造模型输入；`ContextManager::for_prompt` 会 normalize history 并按模型 input modalities 过滤不适配 items。[E: codex-rs/core/src/session/turn.rs:268][E: codex-rs/core/src/session/turn.rs:270][E: codex-rs/core/src/context_manager/history.rs:140][E: codex-rs/core/src/context_manager/history.rs:140]
 9. `run_sampling_request` 调 `built_tools` 得到 `ToolRouter`，创建 `ToolCallRuntime`，再用 prompt input、router、turn context 和 base instructions 构造 `Prompt`。[E: codex-rs/core/src/session/turn.rs:1134][E: codex-rs/core/src/session/turn.rs:1138][E: codex-rs/core/src/session/turn.rs:1162]
 10. `try_run_sampling_request` 调 `client_session.stream(...)` 发起 provider stream，并用 `FuturesOrdered` 保存 in-flight tool futures。[E: codex-rs/core/src/session/turn.rs:1978][E: codex-rs/core/src/session/turn.rs:1992]
-11. stream 收到 `ResponseEvent::OutputItemDone(item)` 时，`try_run_sampling_request` 构造 `HandleOutputCtx` 并调用 `handle_output_item_done`；产生 tool future 时推入 `in_flight`。[E: codex-rs/core/src/session/turn.rs:1988][E: codex-rs/core/src/session/turn.rs:2099][E: codex-rs/core/src/session/turn.rs:2129][E: codex-rs/core/src/session/turn.rs:2137]
+11. stream 收到 `ResponseEvent::OutputItemDone(item)` 时，`try_run_sampling_request` 构造 `HandleOutputCtx` 并调用 `handle_output_item_done`；产生 tool future 时推入 `in_flight`。[E: codex-rs/core/src/session/turn.rs:2099][E: codex-rs/core/src/session/turn.rs:2129][E: codex-rs/core/src/session/turn.rs:2137]
 12. `handle_output_item_done` 调 `ToolRouter::build_tool_call`；识别到工具调用后先记录 model-emitted item，再创建 `tool_runtime.handle_tool_call(...)` future，并把 `needs_follow_up` 设为 true。[E: codex-rs/core/src/stream_events_utils.rs:327][E: codex-rs/core/src/stream_events_utils.rs:346][E: codex-rs/core/src/stream_events_utils.rs:350][E: codex-rs/core/src/stream_events_utils.rs:356]
 13. provider `ResponseEvent::Completed` 先发出含 response id 与 usage 的 `RawResponseCompleted` event，再记录 token usage、设置 token-count/turn-diff 标志并返回 `SamplingRequestResult { needs_follow_up, last_agent_message }`。它只结束一次 sampling request。[E: codex-rs/core/src/session/turn.rs:2287][E: codex-rs/core/src/session/turn.rs:2301][E: codex-rs/core/src/session/turn.rs:2307][E: codex-rs/core/src/session/turn.rs:2318]
 14. sampling 后，`run_turn` 合并 model follow-up 和 pending input；如果 token limit reached 且仍需 follow-up，会执行 mid-turn auto compact 后继续 loop。[E: codex-rs/core/src/session/turn.rs:308][E: codex-rs/core/src/session/turn.rs:322][E: codex-rs/core/src/session/turn.rs:309][E: codex-rs/core/src/session/turn.rs:355]

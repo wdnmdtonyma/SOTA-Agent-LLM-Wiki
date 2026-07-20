@@ -4,7 +4,7 @@ title: SDK 架构对照
 kind: sdk
 tier: T1
 source: [sdk/typescript/src/codex.ts, sdk/typescript/src/thread.ts, sdk/typescript/src/exec.ts, sdk/typescript/src/events.ts, sdk/typescript/src/items.ts, sdk/python/src/openai_codex/api.py, sdk/python/src/openai_codex/client.py, sdk/python/src/openai_codex/async_client.py, sdk/python/src/openai_codex/_message_router.py, sdk/python/src/openai_codex/_run.py, sdk/python/src/openai_codex/models.py]
-symbols: [Codex, CodexExec, CodexClient, AsyncCodexClient, MessageRouter, Thread, TurnHandle, ThreadEvent, ThreadItem, TurnResult]
+symbols: []
 related: [sdk.ts-overview, sdk.ts-events-items, sdk.ts-structured-output, sdk.py-overview, sdk.py-inputs-errors, rpc.overview]
 evidence: explicit
 status: verified
@@ -26,7 +26,7 @@ TS `Codex` constructs one `CodexExec`; `startThread()` and `resumeThread(id)` on
 
 `CodexExec.run()` starts CLI args with `["exec", "--experimental-json"]`, appends options such as config/model/sandbox/cwd/add-dir/output-schema/web-search/approval/resume/images, writes the prompt to stdin, yields each stdout line, and throws with stderr details on non-zero exit or signal.[E: sdk/typescript/src/exec.ts:86][E: sdk/typescript/src/exec.ts:87][E: sdk/typescript/src/exec.ts:89][E: sdk/typescript/src/exec.ts:102][E: sdk/typescript/src/exec.ts:106][E: sdk/typescript/src/exec.ts:110][E: sdk/typescript/src/exec.ts:114][E: sdk/typescript/src/exec.ts:124][E: sdk/typescript/src/exec.ts:139][E: sdk/typescript/src/exec.ts:147][E: sdk/typescript/src/exec.ts:151][E: sdk/typescript/src/exec.ts:155][E: sdk/typescript/src/exec.ts:181][E: sdk/typescript/src/exec.ts:193][E: sdk/typescript/src/exec.ts:222][E: sdk/typescript/src/exec.ts:224][E: sdk/typescript/src/exec.ts:229][E: sdk/typescript/src/exec.ts:232]
 
-TS public stream schema is local to the exec event surface: `ThreadEvent` is the top-level JSONL union, and `ThreadItem` is the union of agent-visible item payloads.[E: sdk/typescript/src/events.ts:75][E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/events.ts:77][E: sdk/typescript/src/events.ts:83][E: sdk/typescript/src/items.ts:119][E: sdk/typescript/src/items.ts:120][E: sdk/typescript/src/items.ts:121][E: sdk/typescript/src/items.ts:128]
+TS public stream schema is local to the exec event surface: `ThreadEvent` is the top-level JSONL union, and `ThreadItem` is the union of agent-visible item payloads.[E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/events.ts:77][E: sdk/typescript/src/events.ts:83][E: sdk/typescript/src/items.ts:120][E: sdk/typescript/src/items.ts:121][E: sdk/typescript/src/items.ts:128]
 
 `Thread.run()` consumes the same event stream as `runStreamed()`: completed agent-message items update `finalResponse`, all completed items are collected, `turn.completed` provides usage, and `turn.failed` raises.[E: sdk/typescript/src/thread.ts:117][E: sdk/typescript/src/thread.ts:118][E: sdk/typescript/src/thread.ts:123][E: sdk/typescript/src/thread.ts:124][E: sdk/typescript/src/thread.ts:125][E: sdk/typescript/src/thread.ts:126][E: sdk/typescript/src/thread.ts:128][E: sdk/typescript/src/thread.ts:129][E: sdk/typescript/src/thread.ts:131][E: sdk/typescript/src/thread.ts:137][E: sdk/typescript/src/thread.ts:139]
 

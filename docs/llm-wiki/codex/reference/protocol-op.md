@@ -4,7 +4,7 @@ title: Protocol Op 变体索引
 kind: reference
 tier: T3
 source: [codex-rs/protocol/src/protocol.rs]
-symbols: [Submission, Op, ThreadSettingsOverrides, ThreadMemoryMode]
+symbols: [Submission, Op, ThreadMemoryMode]
 related: [spine.turn-end-to-end, subsys.core.session-lifecycle, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified
@@ -31,32 +31,32 @@ updated: 4d7a5c7c73
 
 | # | Variant | Payload | 语义 | 定义锚 |
 |---:|---|---|---|---|
-| 1 | `Interrupt` | unit | 中断当前 task,不终止后台 terminal process；响应侧发送 `TurnAborted`。[E: codex-rs/protocol/src/protocol.rs:531] | `protocol.rs:509` |
-| 2 | `CleanBackgroundTerminals` | unit | 终止当前 thread 的所有后台 terminal process。[E: codex-rs/protocol/src/protocol.rs:535] | `protocol.rs:513` |
-| 3 | `RealtimeConversationStart` | `ConversationStartParams` | 启动 realtime conversation stream。[E: codex-rs/protocol/src/protocol.rs:538] | `protocol.rs:516` |
-| 4 | `RealtimeConversationAudio` | `ConversationAudioParams` | 向运行中的 realtime conversation stream 发送 audio input。[E: codex-rs/protocol/src/protocol.rs:541] | `protocol.rs:519` |
-| 5 | `RealtimeConversationText` | `ConversationTextParams` | 向 realtime conversation stream 发送 text input。[E: codex-rs/protocol/src/protocol.rs:544] | `protocol.rs:522` |
-| 6 | `RealtimeConversationSpeech` | `ConversationSpeechParams` | 向 realtime conversation stream 追加 speakable text。[E: codex-rs/protocol/src/protocol.rs:547] | `protocol.rs:525` |
-| 7 | `RealtimeConversationClose` | unit | 关闭运行中的 realtime conversation stream。[E: codex-rs/protocol/src/protocol.rs:550] | `protocol.rs:528` |
-| 8 | `RealtimeConversationListVoices` | unit | 请求 realtime conversation 支持的 voice 列表。[E: codex-rs/protocol/src/protocol.rs:553] | `protocol.rs:531` |
-| 9 | `UserInput` | `items`, `final_output_json_schema`, `responsesapi_client_metadata`, `additional_context`, `thread_settings` | 用户输入并可先应用 thread-settings overrides。[E: codex-rs/protocol/src/protocol.rs:556][E: codex-rs/protocol/src/protocol.rs:558][E: codex-rs/protocol/src/protocol.rs:560][E: codex-rs/protocol/src/protocol.rs:562][E: codex-rs/protocol/src/protocol.rs:564][E: codex-rs/protocol/src/protocol.rs:567] | `protocol.rs:543` |
-| 10 | `ThreadSettings` | `thread_settings` | 只应用持久 thread-settings overrides,不启动 turn。[E: codex-rs/protocol/src/protocol.rs:574][E: codex-rs/protocol/src/protocol.rs:576] | `protocol.rs:561` |
-| 11 | `InterAgentCommunication` | `communication` | 记录 inter-agent communication 为 agent-message history,仍走 normal thread submission lifecycle。[E: codex-rs/protocol/src/protocol.rs:581][E: codex-rs/protocol/src/protocol.rs:582] | `protocol.rs:559` |
-| 12 | `ExecApproval` | `id`, `turn_id?`, `decision` | 回答 command execution approval request。[E: codex-rs/protocol/src/protocol.rs:586][E: codex-rs/protocol/src/protocol.rs:588][E: codex-rs/protocol/src/protocol.rs:590][E: codex-rs/protocol/src/protocol.rs:592] | `protocol.rs:573` |
-| 13 | `PatchApproval` | `id`, `decision` | 回答 code patch approval request。[E: codex-rs/protocol/src/protocol.rs:596][E: codex-rs/protocol/src/protocol.rs:598][E: codex-rs/protocol/src/protocol.rs:600] | `protocol.rs:583` |
-| 14 | `ResolveElicitation` | `server_name`, `request_id`, `decision`, `content?`, `meta?` | 回答 MCP elicitation request。[E: codex-rs/protocol/src/protocol.rs:604][E: codex-rs/protocol/src/protocol.rs:606][E: codex-rs/protocol/src/protocol.rs:608][E: codex-rs/protocol/src/protocol.rs:610][E: codex-rs/protocol/src/protocol.rs:612][E: codex-rs/protocol/src/protocol.rs:614] | `protocol.rs:582` |
-| 15 | `UserInputAnswer` | `id`, `response` | 回答 `request_user_input` tool call。[E: codex-rs/protocol/src/protocol.rs:618][E: codex-rs/protocol/src/protocol.rs:622] | `protocol.rs:596` |
-| 16 | `RequestPermissionsResponse` | `id`, `response` | 回答 `request_permissions` tool call。[E: codex-rs/protocol/src/protocol.rs:626][E: codex-rs/protocol/src/protocol.rs:630] | `protocol.rs:604` |
-| 17 | `DynamicToolResponse` | `id`, `response` | 回答 dynamic tool call request。[E: codex-rs/protocol/src/protocol.rs:634][E: codex-rs/protocol/src/protocol.rs:638] | `protocol.rs:612` |
-| 18 | `RefreshMcpServers` | `config: McpServerRefreshConfig` | 重新初始化 MCP servers 并刷新 cached tool lists。[E: codex-rs/protocol/src/protocol.rs:642] | `protocol.rs:620` |
-| 19 | `ReloadUserConfig` | unit | 重新加载 active session 的 user config layer overrides。[E: codex-rs/protocol/src/protocol.rs:648] | `protocol.rs:626` |
-| 20 | `Compact` | unit | 要求 agent 总结当前 conversation context；summary 作为 `AgentMessage` event 返回。[E: codex-rs/protocol/src/protocol.rs:653] | `protocol.rs:640` |
-| 21 | `SetThreadMemoryMode` | `mode: ThreadMemoryMode` | 持久化 thread 是否 eligible for memory generation,不调用模型。[E: codex-rs/protocol/src/protocol.rs:659] | `protocol.rs:637` |
-| 22 | `ThreadRollback` | `num_turns` | 从 in-memory context 丢弃最后 N 个 user turns；不尝试 revert 本地文件系统变更。[E: codex-rs/protocol/src/protocol.rs:665] | `protocol.rs:643` |
-| 23 | `Review` | `review_request` | 请求 agent 做 code review。[E: codex-rs/protocol/src/protocol.rs:668] | `protocol.rs:646` |
-| 24 | `ApproveGuardianDeniedAction` | `event: GuardianAssessmentEvent` | 记录用户批准重试一个具体 Guardian-denied action。[E: codex-rs/protocol/src/protocol.rs:671] | `protocol.rs:649` |
-| 25 | `Shutdown` | unit | 请求关闭 codex instance。[E: codex-rs/protocol/src/protocol.rs:674] | `protocol.rs:661` |
-| 26 | `RunUserShellCommand` | `command` | 执行 `!cmd` 触发的 user-initiated shell command；输出通过 `ExecCommand*` events streaming。[E: codex-rs/protocol/src/protocol.rs:681][E: codex-rs/protocol/src/protocol.rs:683] | `protocol.rs:659` |
+| 1 | `Interrupt` | unit | 中断当前 task,不终止后台 terminal process；响应侧发送 `TurnAborted`。[E: codex-rs/protocol/src/protocol.rs:531] | `protocol.rs:531` |
+| 2 | `CleanBackgroundTerminals` | unit | 终止当前 thread 的所有后台 terminal process。[E: codex-rs/protocol/src/protocol.rs:535] | `protocol.rs:535` |
+| 3 | `RealtimeConversationStart` | `ConversationStartParams` | 启动 realtime conversation stream。[E: codex-rs/protocol/src/protocol.rs:538] | `protocol.rs:538` |
+| 4 | `RealtimeConversationAudio` | `ConversationAudioParams` | 向运行中的 realtime conversation stream 发送 audio input。[E: codex-rs/protocol/src/protocol.rs:541] | `protocol.rs:541` |
+| 5 | `RealtimeConversationText` | `ConversationTextParams` | 向 realtime conversation stream 发送 text input。[E: codex-rs/protocol/src/protocol.rs:544] | `protocol.rs:544` |
+| 6 | `RealtimeConversationSpeech` | `ConversationSpeechParams` | 向 realtime conversation stream 追加 speakable text。[E: codex-rs/protocol/src/protocol.rs:547] | `protocol.rs:547` |
+| 7 | `RealtimeConversationClose` | unit | 关闭运行中的 realtime conversation stream。[E: codex-rs/protocol/src/protocol.rs:550] | `protocol.rs:550` |
+| 8 | `RealtimeConversationListVoices` | unit | 请求 realtime conversation 支持的 voice 列表。[E: codex-rs/protocol/src/protocol.rs:553] | `protocol.rs:553` |
+| 9 | `UserInput` | `items`, `final_output_json_schema`, `responsesapi_client_metadata`, `additional_context`, `thread_settings` | 用户输入并可先应用 thread-settings overrides。[E: codex-rs/protocol/src/protocol.rs:556][E: codex-rs/protocol/src/protocol.rs:558][E: codex-rs/protocol/src/protocol.rs:560][E: codex-rs/protocol/src/protocol.rs:562][E: codex-rs/protocol/src/protocol.rs:564][E: codex-rs/protocol/src/protocol.rs:567] | `protocol.rs:556` |
+| 10 | `ThreadSettings` | `thread_settings` | 只应用持久 thread-settings overrides,不启动 turn。[E: codex-rs/protocol/src/protocol.rs:574][E: codex-rs/protocol/src/protocol.rs:576] | `protocol.rs:574` |
+| 11 | `InterAgentCommunication` | `communication` | 记录 inter-agent communication 为 agent-message history,仍走 normal thread submission lifecycle。[E: codex-rs/protocol/src/protocol.rs:581][E: codex-rs/protocol/src/protocol.rs:582] | `protocol.rs:581` |
+| 12 | `ExecApproval` | `id`, `turn_id?`, `decision` | 回答 command execution approval request。[E: codex-rs/protocol/src/protocol.rs:586][E: codex-rs/protocol/src/protocol.rs:588][E: codex-rs/protocol/src/protocol.rs:590][E: codex-rs/protocol/src/protocol.rs:592] | `protocol.rs:586` |
+| 13 | `PatchApproval` | `id`, `decision` | 回答 code patch approval request。[E: codex-rs/protocol/src/protocol.rs:596][E: codex-rs/protocol/src/protocol.rs:598][E: codex-rs/protocol/src/protocol.rs:600] | `protocol.rs:596` |
+| 14 | `ResolveElicitation` | `server_name`, `request_id`, `decision`, `content?`, `meta?` | 回答 MCP elicitation request。[E: codex-rs/protocol/src/protocol.rs:604][E: codex-rs/protocol/src/protocol.rs:606][E: codex-rs/protocol/src/protocol.rs:608][E: codex-rs/protocol/src/protocol.rs:610][E: codex-rs/protocol/src/protocol.rs:612][E: codex-rs/protocol/src/protocol.rs:614] | `protocol.rs:604` |
+| 15 | `UserInputAnswer` | `id`, `response` | 回答 `request_user_input` tool call。[E: codex-rs/protocol/src/protocol.rs:618][E: codex-rs/protocol/src/protocol.rs:622] | `protocol.rs:618` |
+| 16 | `RequestPermissionsResponse` | `id`, `response` | 回答 `request_permissions` tool call。[E: codex-rs/protocol/src/protocol.rs:626][E: codex-rs/protocol/src/protocol.rs:630] | `protocol.rs:626` |
+| 17 | `DynamicToolResponse` | `id`, `response` | 回答 dynamic tool call request。[E: codex-rs/protocol/src/protocol.rs:634][E: codex-rs/protocol/src/protocol.rs:638] | `protocol.rs:634` |
+| 18 | `RefreshMcpServers` | `config: McpServerRefreshConfig` | 重新初始化 MCP servers 并刷新 cached tool lists。[E: codex-rs/protocol/src/protocol.rs:642] | `protocol.rs:642` |
+| 19 | `ReloadUserConfig` | unit | 重新加载 active session 的 user config layer overrides。[E: codex-rs/protocol/src/protocol.rs:648] | `protocol.rs:648` |
+| 20 | `Compact` | unit | 要求 agent 总结当前 conversation context；summary 作为 `AgentMessage` event 返回。[E: codex-rs/protocol/src/protocol.rs:653] | `protocol.rs:653` |
+| 21 | `SetThreadMemoryMode` | `mode: ThreadMemoryMode` | 持久化 thread 是否 eligible for memory generation,不调用模型。[E: codex-rs/protocol/src/protocol.rs:659] | `protocol.rs:659` |
+| 22 | `ThreadRollback` | `num_turns` | 从 in-memory context 丢弃最后 N 个 user turns；不尝试 revert 本地文件系统变更。[E: codex-rs/protocol/src/protocol.rs:665] | `protocol.rs:665` |
+| 23 | `Review` | `review_request` | 请求 agent 做 code review。[E: codex-rs/protocol/src/protocol.rs:668] | `protocol.rs:668` |
+| 24 | `ApproveGuardianDeniedAction` | `event: GuardianAssessmentEvent` | 记录用户批准重试一个具体 Guardian-denied action。[E: codex-rs/protocol/src/protocol.rs:671] | `protocol.rs:671` |
+| 25 | `Shutdown` | unit | 请求关闭 codex instance。[E: codex-rs/protocol/src/protocol.rs:674] | `protocol.rs:674` |
+| 26 | `RunUserShellCommand` | `command` | 执行 `!cmd` 触发的 user-initiated shell command；输出通过 `ExecCommand*` events streaming。[E: codex-rs/protocol/src/protocol.rs:681][E: codex-rs/protocol/src/protocol.rs:683] | `protocol.rs:681` |
 
 ## Thread settings companion
 

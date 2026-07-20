@@ -4,7 +4,7 @@ title: list_mcp_resource_templates 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/mcp_resource_spec.rs, codex-rs/core/src/tools/handlers/mcp_resource.rs, codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs]
-symbols: [add_mcp_resource_tools, create_list_mcp_resource_templates_tool, ListMcpResourceTemplatesHandler, ListResourceTemplatesArgs, ListResourceTemplatesPayload]
+symbols: [create_list_mcp_resource_templates_tool, ListMcpResourceTemplatesHandler, ListResourceTemplatesArgs, ListResourceTemplatesPayload]
 related: [tool.list-mcp-resources, tool.read-mcp-resource, subsys.mcp.server]
 evidence: explicit
 status: verified
@@ -39,7 +39,7 @@ schema 没有 required 字段，并关闭 additional properties。[E: codex-rs/c
 
 ## 3 注册与执行
 
-`add_mcp_resource_tools` 在当前 step MCP runtime 的 manager 报告 `has_servers()` 时注册三件套，其中包括 `ListMcpResourceTemplatesHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:689][E: codex-rs/core/src/tools/spec_plan.rs:690][E: codex-rs/core/src/tools/spec_plan.rs:692][E: codex-rs/core/src/tools/spec_plan.rs:693]
+`add_mcp_resource_tools` 在当前 step MCP runtime 的 manager 报告 `has_servers()` 时注册三件套，其中包括 `ListMcpResourceTemplatesHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:689][E: codex-rs/core/src/tools/spec_plan.rs:692][E: codex-rs/core/src/tools/spec_plan.rs:693]
 
 handler 只接受 Function payload；参数 parse 和 optional string normalization 与 `list_mcp_resources` 共用 helper，空字符串会被 trim 后转成 `None`。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:64][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:65][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:73][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:77][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:281][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:283][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:284][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:287]
 

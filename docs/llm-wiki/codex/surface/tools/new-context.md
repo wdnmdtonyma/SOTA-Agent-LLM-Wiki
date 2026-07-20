@@ -4,7 +4,7 @@ title: new_context 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/new_context_window.rs, codex-rs/core/src/tools/handlers/new_context_window_spec.rs, codex-rs/tools/src/tool_executor.rs]
-symbols: [NewContextWindowHandler, create_new_context_window_tool, NEW_CONTEXT_WINDOW_TOOL_NAME, Feature::TokenBudget]
+symbols: [NewContextWindowHandler, create_new_context_window_tool, NEW_CONTEXT_WINDOW_TOOL_NAME]
 related: [tool.get-context-remaining, subsys.core.tool-system, subsys.core.context-manager]
 evidence: explicit
 status: verified

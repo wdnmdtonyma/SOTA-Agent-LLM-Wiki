@@ -4,7 +4,7 @@ title: trace: MCP call
 kind: flow
 tier: T0
 source: [codex-rs/core/src/session/turn.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/core/src/mcp_tool_call.rs, codex-rs/codex-mcp/src/connection_manager.rs, codex-rs/rmcp-client/src/rmcp_client.rs]
-symbols: [built_tools, add_mcp_resource_tools, add_mcp_runtime_tools, ToolRouter::build_tool_call, McpHandler, handle_mcp_tool_call, McpConnectionManager::call_tool]
+symbols: [add_mcp_runtime_tools, handle_mcp_tool_call, McpConnectionManager::call_tool]
 related: [spine.tool-call-anatomy, spine.turn-end-to-end, tool.list-mcp-resources, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified
@@ -41,7 +41,7 @@ flowchart TD
 
 1. `run_sampling_request` 调用 `built_tools`，tool router 随后用于 prompt build；该入口把当前 turn 的 MCP exposure 纳入工具系统。[E: codex-rs/core/src/session/turn.rs:1134][E: codex-rs/core/src/session/turn.rs:1162]
 2. `add_mcp_resource_tools` 在 `context.mcp_tools.is_some()` 时注册 list resources、list resource templates 和 read resource handlers。[E: codex-rs/core/src/tools/spec_plan.rs:693][E: codex-rs/core/src/tools/spec_plan.rs:695][E: codex-rs/core/src/tools/spec_plan.rs:696][E: codex-rs/core/src/tools/spec_plan.rs:697]
-3. `add_mcp_runtime_tools` 对 direct MCP tools 调 `McpHandler::new(tool.clone())` 并 direct 注册；对 deferred MCP tools 用同一 handler 加 `ToolExposure::Deferred`。[E: codex-rs/core/src/tools/spec_plan.rs:885][E: codex-rs/core/src/tools/spec_plan.rs:888][E: codex-rs/core/src/tools/spec_plan.rs:889][E: codex-rs/core/src/tools/spec_plan.rs:898][E: codex-rs/core/src/tools/spec_plan.rs:901]
+3. `add_mcp_runtime_tools` 对 direct MCP tools 调 `McpHandler::new(tool.clone())` 并 direct 注册；对 deferred MCP tools 用同一 handler 加 `ToolExposure::Deferred`。[E: codex-rs/core/src/tools/spec_plan.rs:885][E: codex-rs/core/src/tools/spec_plan.rs:889][E: codex-rs/core/src/tools/spec_plan.rs:898][E: codex-rs/core/src/tools/spec_plan.rs:901]
 4. `ToolRouter::build_tool_call` 对 `ResponseItem::FunctionCall { name, namespace, arguments, call_id }` 构造 `ToolName::new(namespace, name)` 和 `ToolPayload::Function { arguments }`；当前 MCP 身份由 registry 中的 `McpHandler` 处理。[E: codex-rs/core/src/tools/router.rs:112][E: codex-rs/core/src/tools/router.rs:114][E: codex-rs/core/src/tools/router.rs:121][E: codex-rs/core/src/tools/router.rs:125]
 5. `McpHandler::new` 生成 tool spec；handler 的 `tool_name()` 返回 `tool_info.canonical_tool_name()`，因此 registry 用 canonical MCP tool name 匹配 router 产出的 namespaced `ToolName`。[E: codex-rs/core/src/tools/handlers/mcp.rs:37][E: codex-rs/core/src/tools/handlers/mcp.rs:39][E: codex-rs/core/src/tools/handlers/mcp.rs:67][E: codex-rs/core/src/tools/handlers/mcp.rs:69]
 6. `McpHandler` 只接受 `ToolPayload::Function`；它把 arguments、server name、server-local tool name 和 hook tool name 传入 `handle_mcp_tool_call`。[E: codex-rs/core/src/tools/handlers/mcp.rs:120][E: codex-rs/core/src/tools/handlers/mcp.rs:134][E: codex-rs/core/src/tools/handlers/mcp.rs:145][E: codex-rs/core/src/tools/handlers/mcp.rs:149][E: codex-rs/core/src/tools/handlers/mcp.rs:151]

@@ -14,7 +14,7 @@ id: tool.apply-patch          # 全局唯一;点分命名空间,且与路径对�
 title: apply_patch 工具
 kind: tool                    # tool | command | cli | config | rpc | sdk | subsystem | flow | reference
 tier: T1                      # T0 | T1 | T2 | T3
-source: [codex-rs/tools/src/apply_patch_tool.rs, codex-rs/apply-patch/src/lib.rs]  # 相对 Best/codex/;纯导览节点可空
+source: [codex-rs/core/src/tools/handlers/apply_patch.rs, codex-rs/apply-patch/src/lib.rs]  # 相对 Best/codex/;纯导览节点可空
 symbols: [create_apply_patch_freeform_tool, ApplyPatchToolType]  # 本节点权威覆盖的 Rust 符号(crate 内导出项/方法)
 related: [tool.shell-command, subsys.exec-sandbox.apply-patch-engine, subsys.core.tool-system]  # 其它节点 id,构成图
 evidence: explicit            # 页级主导级:explicit | inferred | unknown(未写完可省略)
@@ -80,6 +80,7 @@ updated: 0000000              # 末次核对的 git 短 SHA(codex 是 git 仓,st
 8. 证据:`status=verified` 的节点,load-bearing 段须含 `[E]`,且 `[E: path]` 路径存在。
 9. 行号:`[E: path:line]` 的 line 不得超出文件实际行数;且应指向**被断言的代码行本身**,而非其上方的注释/doc-comment(语义精度由 L2 把关)。
 10. `updated:` 若存在,须是合法 git 短 SHA(7+ hex)。
+11. `symbols:` 是权威归属声明；同一个 qualified symbol 只能由一个节点声明，跨语言/跨模块同名实体须写成可区分的 qualified 名称。
 
 > L1 = 机械可刷的下限;真正把关是 L2(独立 subagent 逐 claim 证伪)→ L3(≤2 轮修复)。别把 L1 当验收门。
 

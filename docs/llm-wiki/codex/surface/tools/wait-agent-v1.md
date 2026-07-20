@@ -4,7 +4,7 @@ title: wait_agent (V1) 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/multi_agents_spec.rs, codex-rs/core/src/tools/handlers/multi_agents.rs, codex-rs/core/src/tools/handlers/multi_agents/wait.rs, codex-rs/tools/src/tool_executor.rs]
-symbols: [create_wait_agent_tool_v1, WaitAgentHandler, multi_agents::wait::Handler, WaitAgentResult]
+symbols: [create_wait_agent_tool_v1, WaitAgentHandler, multi_agents::wait::Handler, multi_agents::WaitAgentResult]
 related: [tool.spawn-agent-v1, tool.send-input-v1, tool.wait-agent-v2]
 evidence: explicit
 status: verified
@@ -44,7 +44,7 @@ handler 解析 targets 后，为每个目标收集 metadata、建立 target disp
 
 ## 输出
 
-V1 output schema 是 `{ status, timed_out }`；schema description 仍写着 final statuses keyed by agent id，但 runtime 构造结果时使用上文的 target display key。`timed_out` 等于 `statuses.is_empty()`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:495][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:499][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:501][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:507][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:509][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:188][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:190][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:194]
+V1 output schema 是 `{ status, timed_out }`；schema description 仍写着 final statuses keyed by agent id，但 runtime 构造结果时使用上文的 target display key。`timed_out` 等于 `statuses.is_empty()`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:495][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:499][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:501][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:509][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:188][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:190][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:194]
 
 `wait_for_final_status` 在 watch 关闭时会重新读取 latest status；只有 latest 是 final 时才返回结果。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:304][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:314][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:315][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:316][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:317][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:320]
 

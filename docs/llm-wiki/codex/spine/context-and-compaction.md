@@ -4,7 +4,7 @@ title: Context 与 compaction
 kind: flow
 tier: T0
 source: [codex-rs/core/src/context_manager/history.rs, codex-rs/core/src/context_manager/updates.rs, codex-rs/core/src/context/world_state/mod.rs, codex-rs/core/src/session/world_state.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/compact.rs, codex-rs/core/src/compact_remote.rs, codex-rs/core/src/compact_remote_request.rs, codex-rs/core/src/compact_remote_v2.rs, codex-rs/core/src/compact_remote_v2_attempt.rs]
-symbols: [ContextManager, ContextManager::record_items, ContextManager::for_prompt, WorldState, WorldStateSnapshot, build_settings_update_items, Session::record_context_updates_and_set_reference_context_item, run_pre_sampling_compact, run_auto_compact, run_inline_auto_compact_task, run_inline_remote_auto_compact_task, RemoteCompactAttempt, RemoteCompactV2Attempt]
+symbols: [WorldStateSnapshot, run_pre_sampling_compact, run_auto_compact, RemoteCompactAttempt, RemoteCompactV2Attempt]
 related: [spine.turn-end-to-end, spine.sq-eq-architecture, subsys.core.session-lifecycle, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified

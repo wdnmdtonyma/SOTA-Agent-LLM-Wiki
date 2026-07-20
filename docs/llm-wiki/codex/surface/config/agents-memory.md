@@ -4,7 +4,7 @@ title: agents 与 memory 设置
 kind: config
 tier: T1
 source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/profile_toml.rs, codex-rs/config/src/types.rs]
-symbols: [ConfigToml, ConfigProfile, AgentsToml, AgentRoleToml, MemoriesToml, MemoriesConfig, ProjectConfig, ThreadStoreToml]
+symbols: [AgentsToml, AgentRoleToml, MemoriesToml, ThreadStoreToml]
 related: [command.session-thread, command.realtime-debug, config.skills-plugins-features, subsys.core.memory, subsys.core.thread-store]
 evidence: explicit
 status: verified

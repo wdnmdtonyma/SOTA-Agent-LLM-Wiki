@@ -1,6 +1,6 @@
 # Codex 源码 LLM Wiki
 
-一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 OpenAI **Codex**(`Best/codex/`)的真实源码——一个 **~95 crate 的 Rust workspace**(`codex-rs/`)+ TypeScript/Python SDK + TUI/CLI/app-server 前端,细到每个工具的字段与设计动机。
+一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 OpenAI **Codex**(`Best/codex/`)的真实源码——一个 **124-crate Rust workspace**(`codex-rs/`)+ TypeScript/Python SDK + TUI/CLI/app-server 前端,细到每个工具的字段与设计动机。
 
 ## 这是 LLM wiki,不是书
 
@@ -15,8 +15,8 @@
 
 ## codex 的形态(决定本 wiki 的画像)
 
-- **真源码**:codex 是公开的真实工程,**git 仓 + 701 测试 + 完整 `docs/`**。所以证据以 `[E]` 为主、inferred 少;**staleness 用 git SHA**(不是 claude 那种内容 hash),节点 `updated:` 记 commit SHA。
-- **Rust 为主**:核心在 `codex-rs/`(~95 crate),前端含 TUI(`tui/`)、CLI(`cli/`)、app-server(`app-server/`,供 IDE/SDK 接入)。外围 SDK 在 `sdk/typescript`、`sdk/python`。
+- **真源码**:codex 是公开的真实工程,有 **git 历史、完整测试套件与 `docs/`**。所以证据以 `[E]` 为主、inferred 少;**staleness 用 git SHA**(不是 claude 那种内容 hash),节点 `updated:` 记 commit SHA。
+- **Rust 为主**:核心在 `codex-rs/`(124 个 workspace crate),前端含 TUI(`tui/`)、CLI(`cli/`)、app-server(`app-server/`,供 IDE/SDK 接入)。外围 SDK 在 `sdk/typescript`、`sdk/python`。
 - **SQ/EQ 架构**:core 是 **Submission Queue → Event Queue** 的异步消息循环(`Op` 进、`EventMsg` 出),是全 wiki 的脊柱。
 - **范围**:**全 monorepo 同深度**——含 SDK、cloud-tasks、遥测、TUI 渲染细节、平台 crate,均逐子系统覆盖。
 
@@ -36,7 +36,7 @@ tools/            lint.mjs(L1 机械校验)· reconcile.mjs(登记新节点)
 
 ## 证据图例
 
-- `[E]` explicit —— 源码直证,尽量带路径:`[E: codex-rs/tools/src/apply_patch_tool.rs:89]`(相对 `Best/codex/`)
+- `[E]` explicit —— 源码直证,尽量带路径:`[E: codex-rs/core/src/tools/handlers/apply_patch.rs:93]`(相对 `Best/codex/`)
 - `[I]` inferred —— 基于代码的合理推断,未完全证实
 - `[U]` unknown —— 待查 / 待证实(汇总进 `reference/uncertainty.md`)
 

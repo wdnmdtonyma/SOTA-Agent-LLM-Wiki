@@ -4,7 +4,7 @@ title: Cloud task API
 kind: subsystem
 tier: T2
 source: [codex-rs/cloud-tasks-client/src/lib.rs, codex-rs/cloud-tasks-client/src/api.rs, codex-rs/cloud-tasks-client/src/http.rs, codex-rs/cloud-tasks/src/lib.rs]
-symbols: [CloudBackend, HttpClient, TaskSummary, TaskText, TurnAttempt, ApplyOutcome, CreatedTask, TaskListPage, DiffSummary]
+symbols: [CloudBackend, cloud_tasks_client::HttpClient, TaskSummary, TaskText, TurnAttempt, ApplyOutcome, CreatedTask, TaskListPage, DiffSummary]
 related: [subsys.cloud.cloud-tasks, subsys.platform.git-utils]
 evidence: explicit
 status: verified

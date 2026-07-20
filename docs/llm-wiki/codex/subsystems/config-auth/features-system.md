@@ -4,7 +4,7 @@ title: Feature 系统
 kind: subsystem
 tier: T2
 source: [codex-rs/features/src/lib.rs, codex-rs/features/src/feature_configs.rs, codex-rs/features/src/legacy.rs]
-symbols: [Feature, Features, FeatureOverrides, FeatureConfigSource, FeaturesToml, FeatureSpec, MultiAgentV2ConfigToml, TokenBudgetConfigToml]
+symbols: [Feature, Features, FeatureOverrides, FeatureConfigSource, FeaturesToml, FeatureSpec, MultiAgentV2ConfigToml, TokenBudgetConfigToml, Feature::TokenBudget]
 related: [subsys.config-auth.config-loading, subsys.config-auth.profiles, subsys.core.tool-system, config.skills-plugins-features]
 evidence: explicit
 status: verified
@@ -40,9 +40,9 @@ features-system 节点解释 feature registry、TOML parsing、合并、legacy c
 
 Structured feature config 由 untagged `FeatureToml<T>` 表达，可以是 `Enabled(bool)` 或 `Config(T)`；`FeatureConfig` trait 要求 structured config 能读写 enabled state。[E: codex-rs/features/src/lib.rs:766][E: codex-rs/features/src/lib.rs:766][E: codex-rs/features/src/lib.rs:767][E: codex-rs/features/src/lib.rs:768][E: codex-rs/features/src/lib.rs:789][E: codex-rs/features/src/lib.rs:789]
 
-`MultiAgentV2ConfigToml` 是 current structured feature config 之一，除 enabled、并发/等待 timeout、usage hint、tool namespace、metadata hiding 和 non-code-mode-only 外，还新增 `multi_agent_mode_hint_text` 与 `expose_spawn_agent_model_overrides`；后者控制 spawn tool 是否暴露 model/reasoning override。[E: codex-rs/features/src/feature_configs.rs:34][E: codex-rs/features/src/feature_configs.rs:39][E: codex-rs/features/src/feature_configs.rs:42][E: codex-rs/features/src/feature_configs.rs:59][E: codex-rs/features/src/feature_configs.rs:62][E: codex-rs/features/src/feature_configs.rs:65][E: codex-rs/features/src/feature_configs.rs:68]
+`MultiAgentV2ConfigToml` 是 current structured feature config 之一，除 enabled、并发/等待 timeout、usage hint、tool namespace、metadata hiding 和 non-code-mode-only 外，还新增 `multi_agent_mode_hint_text` 与 `expose_spawn_agent_model_overrides`；后者控制 spawn tool 是否暴露 model/reasoning override。[E: codex-rs/features/src/feature_configs.rs:34][E: codex-rs/features/src/feature_configs.rs:39][E: codex-rs/features/src/feature_configs.rs:42][E: codex-rs/features/src/feature_configs.rs:59][E: codex-rs/features/src/feature_configs.rs:62][E: codex-rs/features/src/feature_configs.rs:68]
 
-`TokenBudgetConfigToml` 新增 `auto_compact_fallback_prompt` 和 `auto_compact_fallback_buffer_tokens`：前者是在自动 context rollover 前采样的 developer message，后者为 fallback note-taking 预留 compaction threshold 之后的额外 token buffer。[E: codex-rs/features/src/feature_configs.rs:85][E: codex-rs/features/src/feature_configs.rs:101][E: codex-rs/features/src/feature_configs.rs:104][E: codex-rs/features/src/feature_configs.rs:105][E: codex-rs/features/src/feature_configs.rs:108]
+`TokenBudgetConfigToml` 新增 `auto_compact_fallback_prompt` 和 `auto_compact_fallback_buffer_tokens`：前者是在自动 context rollover 前采样的 developer message，后者为 fallback note-taking 预留 compaction threshold 之后的额外 token buffer。[E: codex-rs/features/src/feature_configs.rs:85][E: codex-rs/features/src/feature_configs.rs:104][E: codex-rs/features/src/feature_configs.rs:108]
 
 ## 合并控制流
 
@@ -75,7 +75,7 @@ Structured feature config 由 untagged `FeatureToml<T>` 表达，可以是 `Enab
 ## Gotchas
 
 - `FeatureOverrides` 不再包含旧文档里的 `include_apply_patch_tool`；当前只有 `web_search_request`。[E: codex-rs/features/src/lib.rs:340][E: codex-rs/features/src/lib.rs:341]
-- `normalize_dependencies` 当前没有关闭 `JsReplToolsOnly` 之类的反向规则；只做 SpawnCsv->Collab 和 CodeModeOnly->CodeMode。[E: codex-rs/features/src/lib.rs:557][E: codex-rs/features/src/lib.rs:558][E: codex-rs/features/src/lib.rs:561][E: codex-rs/features/src/lib.rs:564]
+- `normalize_dependencies` 当前没有关闭 `JsReplToolsOnly` 之类的反向规则；只做 SpawnCsv->Collab 和 CodeModeOnly->CodeMode。[E: codex-rs/features/src/lib.rs:557][E: codex-rs/features/src/lib.rs:558][E: codex-rs/features/src/lib.rs:561]
 - `FeaturesToml` 仍能反序列化旧 `apps_mcp_path_override` 输入，但字段是 private removed compatibility storage；materialize/resolved path 会清掉它和同名 flatten entry，它不是新的可用 feature config。[E: codex-rs/features/src/lib.rs:658][E: codex-rs/features/src/lib.rs:658][E: codex-rs/features/src/lib.rs:675][E: codex-rs/features/src/lib.rs:676][E: codex-rs/features/src/lib.rs:677][E: codex-rs/features/src/lib.rs:707][E: codex-rs/features/src/lib.rs:708]
 - feature default 以每个 `FeatureSpec::default_enabled` 为准，不能只按 stage 推断；例如 `ShellTool` default true，而 `AppsMcpPathOverride` removed 且 default false。[E: codex-rs/features/src/lib.rs:812][E: codex-rs/features/src/lib.rs:814][E: codex-rs/features/src/lib.rs:815][E: codex-rs/features/src/lib.rs:1080][E: codex-rs/features/src/lib.rs:1082][E: codex-rs/features/src/lib.rs:1083]
 - `imagegenext` 现在只是 `image_generation` 的 legacy alias；若两者同时出现，canonical key 胜出，不能再把它当成独立 registry feature。[E: codex-rs/features/src/lib.rs:504][E: codex-rs/features/src/lib.rs:508][E: codex-rs/features/src/legacy.rs:33]

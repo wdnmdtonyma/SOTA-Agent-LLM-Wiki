@@ -4,7 +4,7 @@ title: apply_patch 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/apply_patch_spec.rs, codex-rs/core/src/tools/handlers/apply_patch.lark, codex-rs/core/src/tools/handlers/apply_patch.rs, codex-rs/core/src/apply_patch.rs, codex-rs/core/src/tools/runtimes/apply_patch.rs, codex-rs/core/src/tools/handlers/shell.rs, codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs, codex-rs/core/src/tools/router.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/apply-patch/src/invocation.rs, codex-rs/apply-patch/src/parser.rs, codex-rs/apply-patch/src/streaming_parser.rs]
-symbols: [add_core_utility_tools, ApplyPatchHandler, create_apply_patch_freeform_tool, APPLY_PATCH_LARK_GRAMMAR, parse_patch, verify_apply_patch_args, maybe_parse_apply_patch_verified, intercept_apply_patch, ApplyPatchRuntime]
+symbols: [ApplyPatchHandler, create_apply_patch_freeform_tool, APPLY_PATCH_LARK_GRAMMAR, verify_apply_patch_args, intercept_apply_patch, ApplyPatchRuntime]
 related: [tool.exec-command, tool.shell-command, subsys.core.tool-system, subsys.core.tool-router, subsys.exec-sandbox.apply-patch-engine]
 evidence: explicit
 status: verified
@@ -47,7 +47,7 @@ updated: 4d7a5c7c73
 
 ## 4 输出与错误
 
-freeform tool 没有单独的 JSON output schema；handler 的文本结果用 `ApplyPatchToolOutput::from_text(...)` 包装。当前 auto-approve 和 ask-user 写入路径都先进入 `DelegateToRuntime`，再由 emitter finish 产出文本；`Output` 分支主要承接直接返回或错误传播路径。[E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:18][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:26][E: codex-rs/core/src/apply_patch.rs:39][E: codex-rs/core/src/apply_patch.rs:50][E: codex-rs/core/src/apply_patch.rs:62][E: codex-rs/core/src/apply_patch.rs:71][E: codex-rs/core/src/tools/handlers/apply_patch.rs:410][E: codex-rs/core/src/tools/handlers/apply_patch.rs:412][E: codex-rs/core/src/tools/handlers/apply_patch.rs:469][E: codex-rs/core/src/tools/handlers/apply_patch.rs:470]
+freeform tool 没有单独的 JSON output schema；handler 的文本结果用 `ApplyPatchToolOutput::from_text(...)` 包装。当前 auto-approve 和 ask-user 写入路径都先进入 `DelegateToRuntime`，再由 emitter finish 产出文本；`Output` 分支主要承接直接返回或错误传播路径。[E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:18][E: codex-rs/core/src/apply_patch.rs:39][E: codex-rs/core/src/apply_patch.rs:50][E: codex-rs/core/src/apply_patch.rs:62][E: codex-rs/core/src/apply_patch.rs:71][E: codex-rs/core/src/tools/handlers/apply_patch.rs:410][E: codex-rs/core/src/tools/handlers/apply_patch.rs:412][E: codex-rs/core/src/tools/handlers/apply_patch.rs:469][E: codex-rs/core/src/tools/handlers/apply_patch.rs:470]
 
 parse/verification 错误面向模型返回明确文本：初始 parse error 是 `apply_patch verification failed: ...`，verified path 的 correctness error 也带同样前缀；shell parse error 与非 apply_patch 输入分别返回 invalid patch input / non-apply_patch input。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:364][E: codex-rs/core/src/tools/handlers/apply_patch.rs:368][E: codex-rs/core/src/tools/handlers/apply_patch.rs:474][E: codex-rs/core/src/tools/handlers/apply_patch.rs:476][E: codex-rs/core/src/tools/handlers/apply_patch.rs:479][E: codex-rs/core/src/tools/handlers/apply_patch.rs:482][E: codex-rs/core/src/tools/handlers/apply_patch.rs:485][E: codex-rs/core/src/tools/handlers/apply_patch.rs:487]
 

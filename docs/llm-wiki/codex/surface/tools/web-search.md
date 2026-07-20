@@ -55,7 +55,7 @@ Standalone web search 由 namespace tools 加 `use_responses_lite` 或 `Feature:
 | `filters` | `WebSearchConfig.filters` | 通过 `Into` 转成 Responses API filters；config 侧当前只有 `allowed_domains`。[E: codex-rs/core/src/tools/hosted_spec.rs:32][E: codex-rs/core/src/tools/hosted_spec.rs:37][E: codex-rs/protocol/src/config_types.rs:402] |
 | `user_location` | `WebSearchConfig.user_location` | location 包括 `type/country/region/city/timezone`，`type` 默认 `Approximate`。[E: codex-rs/core/src/tools/hosted_spec.rs:38][E: codex-rs/core/src/tools/hosted_spec.rs:40][E: codex-rs/protocol/src/config_types.rs:411][E: codex-rs/protocol/src/config_types.rs:413][E: codex-rs/protocol/src/config_types.rs:418][E: codex-rs/protocol/src/config_types.rs:420][E: codex-rs/protocol/src/config_types.rs:424] |
 | `search_context_size` | `WebSearchConfig.search_context_size` | enum 值为 `Low/Medium/High`。[E: codex-rs/core/src/tools/hosted_spec.rs:41][E: codex-rs/core/src/tools/hosted_spec.rs:43][E: codex-rs/protocol/src/config_types.rs:337][E: codex-rs/protocol/src/config_types.rs:349][E: codex-rs/protocol/src/config_types.rs:350][E: codex-rs/protocol/src/config_types.rs:351] |
-| `search_content_types` | `ModelInfo.web_search_tool_type` | `Text` 不填；`TextAndImage` 填 `["text", "image"]`。[E: codex-rs/core/src/tools/hosted_spec.rs:22][E: codex-rs/core/src/tools/hosted_spec.rs:29][E: codex-rs/protocol/src/openai_models.rs:296][E: codex-rs/protocol/src/openai_models.rs:299] |
+| `search_content_types` | `ModelInfo.web_search_tool_type` | `Text` 不填；`TextAndImage` 填 `["text", "image"]`。[E: codex-rs/core/src/tools/hosted_spec.rs:22][E: codex-rs/protocol/src/openai_models.rs:296][E: codex-rs/protocol/src/openai_models.rs:299] |
 
 用户配置会先解析为 `WebSearchConfig { filters, user_location, search_context_size }`；`WebSearchToolConfig` 的 `allowed_domains/location/context_size` 分别映射到这三个字段。[E: codex-rs/protocol/src/config_types.rs:376][E: codex-rs/protocol/src/config_types.rs:379][E: codex-rs/protocol/src/config_types.rs:447][E: codex-rs/protocol/src/config_types.rs:450][E: codex-rs/protocol/src/config_types.rs:455][E: codex-rs/protocol/src/config_types.rs:456]
 
@@ -63,7 +63,7 @@ Standalone web search 由 namespace tools 加 `use_responses_lite` 或 `Feature:
 
 Provider 返回 `ResponseItem::WebSearchCall` 后，`parse_turn_item` 将它转换为 `TurnItem::WebSearch(WebSearchItem { id, query, action })`；没有 `action` 时 action 为 `Other`、query 为空字符串。[E: codex-rs/core/src/event_mapping.rs:218][E: codex-rs/core/src/event_mapping.rs:219][E: codex-rs/core/src/event_mapping.rs:221][E: codex-rs/protocol/src/items.rs:298][E: codex-rs/protocol/src/items.rs:299][E: codex-rs/protocol/src/items.rs:301]
 
-stream utils 把 `WebSearchCall` 视为普通 turn item 解析路径的一部分，同时把它标记为可能带外部上下文的 item，用于污染 memory mode。[E: codex-rs/core/src/stream_events_utils.rs:163][E: codex-rs/core/src/stream_events_utils.rs:169][E: codex-rs/core/src/stream_events_utils.rs:454][E: codex-rs/core/src/stream_events_utils.rs:458]
+stream utils 把 `WebSearchCall` 视为普通 turn item 解析路径的一部分，同时把它标记为可能带外部上下文的 item，用于污染 memory mode。[E: codex-rs/core/src/stream_events_utils.rs:163][E: codex-rs/core/src/stream_events_utils.rs:454][E: codex-rs/core/src/stream_events_utils.rs:458]
 
 legacy event 表面仍有 `WebSearchBegin` 与 `WebSearchEnd`：begin event 只携带 `call_id`，end event 携带 `call_id/query/action`。[E: codex-rs/protocol/src/protocol.rs:1381][E: codex-rs/protocol/src/protocol.rs:1383][E: codex-rs/protocol/src/protocol.rs:2489][E: codex-rs/protocol/src/protocol.rs:2494][E: codex-rs/protocol/src/protocol.rs:2497]
 

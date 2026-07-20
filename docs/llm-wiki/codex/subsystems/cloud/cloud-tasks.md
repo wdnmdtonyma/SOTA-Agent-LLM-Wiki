@@ -4,7 +4,7 @@ title: Cloud tasks
 kind: subsystem
 tier: T2
 source: [codex-rs/cloud-tasks/src/lib.rs, codex-rs/cloud-tasks/src/cli.rs, codex-rs/cloud-tasks/src/app.rs, codex-rs/cloud-tasks/src/new_task.rs, codex-rs/cloud-tasks/src/env_detect.rs, codex-rs/cloud-tasks/src/util.rs]
-symbols: [Command, run_main, init_backend, run_exec_command, resolve_environment_id, parse_task_id, App, NewTaskPage, autodetect_environment_id, ApplyJob]
+symbols: [Command, cloud_tasks::run_main, init_backend, run_exec_command, resolve_environment_id, parse_task_id, cloud_tasks::App, NewTaskPage, autodetect_environment_id, ApplyJob]
 related: [subsys.cloud.cloud-task-api, subsys.cloud.cloud-config, subsys.platform.git-utils]
 evidence: explicit
 status: verified

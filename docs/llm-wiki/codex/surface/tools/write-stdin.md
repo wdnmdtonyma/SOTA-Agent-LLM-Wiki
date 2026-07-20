@@ -4,7 +4,7 @@ title: write_stdin 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/shell_spec.rs, codex-rs/core/src/tools/handlers/unified_exec.rs, codex-rs/core/src/tools/handlers/unified_exec/write_stdin.rs, codex-rs/core/src/tools/context.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/unified_exec/mod.rs, codex-rs/core/src/unified_exec/process_manager.rs, codex-rs/tools/src/tool_config.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/tools/src/tool_spec.rs]
-symbols: [add_shell_tools, WriteStdinHandler, WriteStdinArgs, create_write_stdin_tool, unified_exec_output_schema, WriteStdinRequest, UnifiedExecProcessManager::write_stdin, TerminalInteractionEvent, ToolSpec::Function]
+symbols: [WriteStdinHandler, WriteStdinArgs, create_write_stdin_tool, WriteStdinRequest, UnifiedExecProcessManager::write_stdin, TerminalInteractionEvent]
 related: [tool.exec-command, tool.shell-command, subsys.core.unified-exec, subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified

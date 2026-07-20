@@ -4,7 +4,7 @@ title: update_plan 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/plan_spec.rs, codex-rs/core/src/tools/handlers/plan.rs, codex-rs/protocol/src/plan_tool.rs, codex-rs/protocol/src/protocol.rs, codex-rs/tools/src/tool_executor.rs]
-symbols: [add_core_utility_tools, create_update_plan_tool, PlanHandler, PlanToolOutput, parse_update_plan_arguments, UpdatePlanArgs, EventMsg::PlanUpdate]
+symbols: [create_update_plan_tool, PlanHandler, PlanToolOutput, parse_update_plan_arguments, UpdatePlanArgs, EventMsg::PlanUpdate]
 related: [spine.tool-call-anatomy, subsys.core.tool-system]
 evidence: explicit
 status: verified

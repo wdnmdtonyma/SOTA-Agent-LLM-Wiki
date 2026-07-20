@@ -64,12 +64,12 @@ updated: 4d7a5c7c73
 ## 设计动机与权衡
 
 - datagram socket 只用于传 per-request stream fd；response 在单独 stream socket 上完成，使同一个 inherited fd 可以处理多个并发 exec escalation requests。[E: codex-rs/shell-escalation/src/unix/escalate_server.rs:229][E: codex-rs/shell-escalation/src/unix/escalate_server.rs:244][I]
-- wrapper 的 `Run` path 使用 `libc::execv` 而不是 `std::process::Command`，代码说明这是为了尽量透明，避免 `CommandExt::exec()` 的 signal mask 和 fd 操作副作用。[E: codex-rs/shell-escalation/src/unix/escalate_client.rs:94][E: codex-rs/shell-escalation/src/unix/escalate_client.rs:109]
-- shell-wrapper parsing 默认关闭，core 注释说明 shell wrapper 只能看到 script text，不能看到最终 resolved executable path，所以 path-sensitive rules 依赖后续 authoritative execve interception。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:629][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:633]
+- wrapper 的 `Run` path 使用 `libc::execv` 而不是 `std::process::Command`，代码说明这是为了尽量透明，避免 `CommandExt::exec()` 的 signal mask 和 fd 操作副作用。[E: codex-rs/shell-escalation/src/unix/escalate_client.rs:109]
+- shell-wrapper parsing 默认关闭，core 注释说明 shell wrapper 只能看到 script text，不能看到最终 resolved executable path，所以 path-sensitive rules 依赖后续 authoritative execve interception。[E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:633]
 
 ## gotcha
 
-- `EscalationSession::env()` 只返回 wrapper/socket overlay，不是完整 child environment；core executor 只合并 `CODEX_ESCALATE_SOCKET` 和 `EXEC_WRAPPER` 两个变量。[E: codex-rs/shell-escalation/src/unix/escalate_server.rs:112][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:877][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:879]
+- `EscalationSession::env()` 只返回 wrapper/socket overlay，不是完整 child environment；core executor 只合并 `CODEX_ESCALATE_SOCKET` 和 `EXEC_WRAPPER` 两个变量。[E: codex-rs/shell-escalation/src/unix/escalate_server.rs:112][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:879]
 - wrapper 转发 `EscalateRequest.env` 时会过滤掉 escalation env vars，避免 server-side escalated child 继承旧 wrapper/socket control vars。[E: codex-rs/shell-escalation/src/unix/escalate_client.rs:47][E: codex-rs/shell-escalation/src/unix/escalate_client.rs:48]
 - `Stopwatch::pause_for` 会在 approval prompt 期间暂停 timeout，避免用户/Guardian 等待时间直接耗尽命令执行 timeout。[E: codex-rs/shell-escalation/src/unix/stopwatch.rs:97][E: codex-rs/shell-escalation/src/unix/stopwatch.rs:101][E: codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs:460]
 

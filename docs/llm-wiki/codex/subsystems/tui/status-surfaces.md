@@ -11,7 +11,7 @@ status: verified
 updated: 4d7a5c7c73
 ---
 
-> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/status/rate_limits.rs:1][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/bottom_pane/mod.rs:1005][E: codex-rs/tui/src/chatwidget.rs:637]
+> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/bottom_pane/mod.rs:1005][E: codex-rs/tui/src/chatwidget.rs:637]
 
 ## 能回答的问题
 
@@ -32,13 +32,13 @@ permissions label 会把 built-in profile、sandbox、approval policy 和 worksp
 
 ## Rate-Limit Display
 
-`status/rate_limits.rs` 将 protocol `RateLimitSnapshot` 映射为 TUI display rows；模块 contract 明确要求 time-sensitive values 以 caller-provided capture timestamp 解释，确保 stale/reset labels 在同一次 draw 内一致。[E: codex-rs/tui/src/status/rate_limits.rs:1][E: codex-rs/tui/src/status/rate_limits.rs:3][E: codex-rs/tui/src/status/rate_limits.rs:6]
+`status/rate_limits.rs` 将 protocol `RateLimitSnapshot` 映射为 TUI display rows；模块 contract 明确要求 time-sensitive values 以 caller-provided capture timestamp 解释，确保 stale/reset labels 在同一次 draw 内一致。[I]
 
-display model 包括 `StatusRateLimitRow`、`StatusRateLimitValue::{Window, Text}`、`StatusRateLimitData::{Available, Stale, Unavailable, Missing}`，stale threshold 是 15 分钟。[E: codex-rs/tui/src/status/rate_limits.rs:28][E: codex-rs/tui/src/status/rate_limits.rs:35][E: codex-rs/tui/src/status/rate_limits.rs:39][E: codex-rs/tui/src/status/rate_limits.rs:48][E: codex-rs/tui/src/status/rate_limits.rs:51][E: codex-rs/tui/src/status/rate_limits.rs:55][E: codex-rs/tui/src/status/rate_limits.rs:57][E: codex-rs/tui/src/status/rate_limits.rs:59][E: codex-rs/tui/src/status/rate_limits.rs:61][E: codex-rs/tui/src/status/rate_limits.rs:65]
+display model 包括 `StatusRateLimitRow`、`StatusRateLimitValue::{Window, Text}`、`StatusRateLimitData::{Available, Stale, Unavailable, Missing}`，stale threshold 是 15 分钟。[E: codex-rs/tui/src/status/rate_limits.rs:28][E: codex-rs/tui/src/status/rate_limits.rs:39][E: codex-rs/tui/src/status/rate_limits.rs:48][E: codex-rs/tui/src/status/rate_limits.rs:55][E: codex-rs/tui/src/status/rate_limits.rs:57][E: codex-rs/tui/src/status/rate_limits.rs:59][E: codex-rs/tui/src/status/rate_limits.rs:61][E: codex-rs/tui/src/status/rate_limits.rs:65]
 
-`RateLimitSnapshotDisplay` 保存 canonical limit name、capture time、primary/secondary windows、credits 和 individual monthly spend control limit；conversion 从 snapshot fields 映射并把 core credits/spend-control 类型转成 display 类型。[E: codex-rs/tui/src/status/rate_limits.rs:95][E: codex-rs/tui/src/status/rate_limits.rs:96][E: codex-rs/tui/src/status/rate_limits.rs:99][E: codex-rs/tui/src/status/rate_limits.rs:101][E: codex-rs/tui/src/status/rate_limits.rs:103][E: codex-rs/tui/src/status/rate_limits.rs:105][E: codex-rs/tui/src/status/rate_limits.rs:107][E: codex-rs/tui/src/status/rate_limits.rs:144][E: codex-rs/tui/src/status/rate_limits.rs:149][E: codex-rs/tui/src/status/rate_limits.rs:152][E: codex-rs/tui/src/status/rate_limits.rs:160][E: codex-rs/tui/src/status/rate_limits.rs:161][E: codex-rs/tui/src/status/rate_limits.rs:168][E: codex-rs/tui/src/status/rate_limits.rs:178]
+`RateLimitSnapshotDisplay` 保存 canonical limit name、capture time、primary/secondary windows、credits 和 individual monthly spend control limit；conversion 从 snapshot fields 映射并把 core credits/spend-control 类型转成 display 类型。[E: codex-rs/tui/src/status/rate_limits.rs:95][E: codex-rs/tui/src/status/rate_limits.rs:99][E: codex-rs/tui/src/status/rate_limits.rs:101][E: codex-rs/tui/src/status/rate_limits.rs:103][E: codex-rs/tui/src/status/rate_limits.rs:105][E: codex-rs/tui/src/status/rate_limits.rs:107][E: codex-rs/tui/src/status/rate_limits.rs:144][E: codex-rs/tui/src/status/rate_limits.rs:149][E: codex-rs/tui/src/status/rate_limits.rs:152][E: codex-rs/tui/src/status/rate_limits.rs:160][E: codex-rs/tui/src/status/rate_limits.rs:161][E: codex-rs/tui/src/status/rate_limits.rs:168][E: codex-rs/tui/src/status/rate_limits.rs:178]
 
-credits row 会优先显示 `Unlimited`，即使 `has_credits=false`；有限 credits 只有 `has_credits=true` 才出现，balance 缺失、为空、不可解析或非 finite 时显示 `Available`，正的有限数值才四舍五入为 credits 数量。[E: codex-rs/tui/src/status/rate_limits.rs:360][E: codex-rs/tui/src/status/rate_limits.rs:363][E: codex-rs/tui/src/status/rate_limits.rs:364][E: codex-rs/tui/src/status/rate_limits.rs:370][E: codex-rs/tui/src/status/rate_limits.rs:373][E: codex-rs/tui/src/status/rate_limits.rs:376][E: codex-rs/tui/src/status/rate_limits.rs:378][E: codex-rs/tui/src/status/rate_limits.rs:387]
+credits row 会优先显示 `Unlimited`，即使 `has_credits=false`；有限 credits 只有 `has_credits=true` 才出现，balance 缺失、为空、不可解析或非 finite 时显示 `Available`，正的有限数值才四舍五入为 credits 数量。[E: codex-rs/tui/src/status/rate_limits.rs:363][E: codex-rs/tui/src/status/rate_limits.rs:364][E: codex-rs/tui/src/status/rate_limits.rs:370][E: codex-rs/tui/src/status/rate_limits.rs:373][E: codex-rs/tui/src/status/rate_limits.rs:376][E: codex-rs/tui/src/status/rate_limits.rs:378][E: codex-rs/tui/src/status/rate_limits.rs:387]
 
 ## Usage Limit Resets
 
@@ -50,13 +50,13 @@ reset picker 将 `available_count` clamp 到非负数，只取 `Available` credi
 
 ## Status Line 与 Terminal Title
 
-`CachedProjectRootName` 用 cwd 缓存 project-root display name，注释说明 terminal-title refresh 很频繁，避免重复向上查找同一 root。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:76][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:78][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:82][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:83][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:84]
+`CachedProjectRootName` 用 cwd 缓存 project-root display name，注释说明 terminal-title refresh 很频繁，避免重复向上查找同一 root。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:82][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:83][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:84][I]
 
 `status_surface_selections` 同时收集 status-line items/invalids 和 terminal-title items/invalids；invalid warnings 只在 thread id 已存在、invalid list 非空、对应 atomic flag 首次 compare_exchange 成功时发出一次。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:89][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:90][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:92][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:100][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:101][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:102][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:104][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:113][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:117][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:121][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:125][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:134][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:138]
 
 ## Running Status
 
-running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1005][E: codex-rs/tui/src/bottom_pane/mod.rs:1007][E: codex-rs/tui/src/bottom_pane/mod.rs:1008][E: codex-rs/tui/src/bottom_pane/mod.rs:1012][E: codex-rs/tui/src/bottom_pane/mod.rs:1013][E: codex-rs/tui/src/bottom_pane/mod.rs:1020][E: codex-rs/tui/src/bottom_pane/mod.rs:1023][E: codex-rs/tui/src/bottom_pane/mod.rs:1027]
+running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1005][E: codex-rs/tui/src/bottom_pane/mod.rs:1007][E: codex-rs/tui/src/bottom_pane/mod.rs:1008][E: codex-rs/tui/src/bottom_pane/mod.rs:1012][E: codex-rs/tui/src/bottom_pane/mod.rs:1013][E: codex-rs/tui/src/bottom_pane/mod.rs:1020][E: codex-rs/tui/src/bottom_pane/mod.rs:1023]
 
 ## Gotchas
 

@@ -44,7 +44,7 @@ info exports include `GitInfo`、`collect_git_info`、branch/default branch help
 
 `get_git_repo_root` is a filesystem walk: it starts at the base path or its parent and looks for a `.git` entry, without requiring the git binary。[E: codex-rs/git-utils/src/info.rs:35][E: codex-rs/git-utils/src/info.rs:36][E: codex-rs/git-utils/src/info.rs:39][E: codex-rs/git-utils/src/info.rs:41]
 
-`local_git_branches` 通过 `git for-each-ref --format=%(refname:short) refs/heads` 只读本地 branch refs，因此 detached `HEAD` 不会被当作分支项；结果先排序，再在 default branch 存在时把它移到首位。[E: codex-rs/git-utils/src/info.rs:864][E: codex-rs/git-utils/src/info.rs:866][E: codex-rs/git-utils/src/info.rs:867][E: codex-rs/git-utils/src/info.rs:868][E: codex-rs/git-utils/src/info.rs:874][E: codex-rs/git-utils/src/info.rs:883][E: codex-rs/git-utils/src/info.rs:885][E: codex-rs/git-utils/src/info.rs:889]
+`local_git_branches` 通过 `git for-each-ref --format=%(refname:short) refs/heads` 只读本地 branch refs，因此 detached `HEAD` 不会被当作分支项；结果先排序，再在 default branch 存在时把它移到首位。[E: codex-rs/git-utils/src/info.rs:866][E: codex-rs/git-utils/src/info.rs:867][E: codex-rs/git-utils/src/info.rs:868][E: codex-rs/git-utils/src/info.rs:874][E: codex-rs/git-utils/src/info.rs:883][E: codex-rs/git-utils/src/info.rs:885][E: codex-rs/git-utils/src/info.rs:889]
 
 ## Patch apply
 

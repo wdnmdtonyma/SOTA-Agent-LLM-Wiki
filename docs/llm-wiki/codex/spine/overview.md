@@ -4,7 +4,7 @@ title: Codex 源码总览
 kind: flow
 tier: T0
 source: [codex-rs/cli/src/main.rs, codex-rs/arg0/src/lib.rs, codex-rs/core/src/lib.rs, codex-rs/protocol/src/protocol.rs, codex-rs/core/src/thread_manager.rs, codex-rs/core/src/codex_thread.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/tasks/regular.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/stream_events_utils.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/spec_plan.rs]
-symbols: [main, arg0_dispatch_or_else, ThreadManager, Session, SessionIo, CodexThread, Submission, Op, EventMsg, RegularTask, run_turn, ToolRouter, build_tool_router]
+symbols: []
 related: [spine.sq-eq-architecture, spine.process-lifecycle, spine.turn-end-to-end, spine.tool-call-anatomy, subsys.core.session-lifecycle, subsys.core.tool-system]
 evidence: explicit
 status: verified

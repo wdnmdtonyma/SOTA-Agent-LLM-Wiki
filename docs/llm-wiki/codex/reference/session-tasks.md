@@ -4,7 +4,7 @@ title: Session task 类型与调度索引
 kind: reference
 tier: T3
 source: [codex-rs/core/src/tasks/mod.rs, codex-rs/core/src/tasks/regular.rs, codex-rs/core/src/tasks/compact.rs, codex-rs/core/src/tasks/review.rs, codex-rs/core/src/tasks/user_shell.rs, codex-rs/core/src/tasks/lifecycle.rs, codex-rs/core/src/state/turn.rs, codex-rs/core/src/session/handlers.rs]
-symbols: [SessionTask, AnySessionTask, SessionTaskContext, RegularTask, CompactTask, ReviewTask, UserShellCommandTask, ActiveTurn, RunningTask, TaskKind, TurnState]
+symbols: [SessionTask, AnySessionTask, SessionTaskContext, UserShellCommandTask, RunningTask, TaskKind]
 related: [subsys.core.turn-engine, subsys.core.session-lifecycle, subsys.core.ghost-undo, subsys.core.review-mode]
 evidence: explicit
 status: verified
@@ -45,7 +45,7 @@ updated: 4d7a5c7c73
 
 `start_task()` erases the task, records kind/span/timing/token usage, creates a cancellation token and done notifier, clears the guardian rejection circuit breaker for the turn, moves queued input into the turn state, and emits turn-start lifecycle callbacks.[E: codex-rs/core/src/tasks/mod.rs:325][E: codex-rs/core/src/tasks/mod.rs:331][E: codex-rs/core/src/tasks/mod.rs:332][E: codex-rs/core/src/tasks/mod.rs:333][E: codex-rs/core/src/tasks/mod.rs:334][E: codex-rs/core/src/tasks/mod.rs:342][E: codex-rs/core/src/tasks/mod.rs:344][E: codex-rs/core/src/tasks/mod.rs:341][E: codex-rs/core/src/tasks/mod.rs:353][E: codex-rs/core/src/tasks/mod.rs:360][E: codex-rs/core/src/tasks/mod.rs:361][E: codex-rs/core/src/tasks/mod.rs:364]
 
-`start_task()` then spawns the task under a tracing span. After `run()` returns, it flushes rollout, emits a warning if flush failed, and calls `on_task_finished()` unless the task cancellation token was cancelled.[E: codex-rs/core/src/tasks/mod.rs:387][E: codex-rs/core/src/tasks/mod.rs:402][E: codex-rs/core/src/tasks/mod.rs:399][E: codex-rs/core/src/tasks/mod.rs:406][E: codex-rs/core/src/tasks/mod.rs:415][E: codex-rs/core/src/tasks/mod.rs:417][E: codex-rs/core/src/tasks/mod.rs:427][E: codex-rs/core/src/tasks/mod.rs:423]
+`start_task()` then spawns the task under a tracing span. After `run()` returns, it flushes rollout, emits a warning if flush failed, and calls `on_task_finished()` unless the task cancellation token was cancelled.[E: codex-rs/core/src/tasks/mod.rs:387][E: codex-rs/core/src/tasks/mod.rs:402][E: codex-rs/core/src/tasks/mod.rs:399][E: codex-rs/core/src/tasks/mod.rs:406][E: codex-rs/core/src/tasks/mod.rs:415][E: codex-rs/core/src/tasks/mod.rs:417][E: codex-rs/core/src/tasks/mod.rs:427]
 
 The `RunningTask` inserted into `ActiveTurn` contains the spawned handle, task kind, cancellation token, turn context, turn extension data, agent execution guard and telemetry timer.[E: codex-rs/core/src/tasks/mod.rs:436][E: codex-rs/core/src/tasks/mod.rs:440][E: codex-rs/core/src/tasks/mod.rs:442][E: codex-rs/core/src/tasks/mod.rs:443][E: codex-rs/core/src/tasks/mod.rs:444][E: codex-rs/core/src/tasks/mod.rs:439][E: codex-rs/core/src/tasks/mod.rs:446][E: codex-rs/core/src/tasks/mod.rs:441][E: codex-rs/core/src/tasks/mod.rs:448][E: codex-rs/core/src/tasks/mod.rs:449][E: codex-rs/core/src/tasks/mod.rs:451]
 

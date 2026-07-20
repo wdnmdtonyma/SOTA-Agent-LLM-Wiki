@@ -4,7 +4,7 @@ title: read_mcp_resource 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/mcp_resource_spec.rs, codex-rs/core/src/tools/handlers/mcp_resource.rs, codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs]
-symbols: [add_mcp_resource_tools, create_read_mcp_resource_tool, ReadMcpResourceHandler, ReadResourceArgs, ReadResourcePayload]
+symbols: [create_read_mcp_resource_tool, ReadMcpResourceHandler, ReadResourceArgs, ReadResourcePayload]
 related: [tool.list-mcp-resources, tool.list-mcp-resource-templates, subsys.mcp.server]
 evidence: explicit
 status: verified
@@ -39,7 +39,7 @@ schema required 是 `server` 和 `uri`，并关闭 additional properties。[E: c
 
 ## 3 注册与执行
 
-`add_mcp_resource_tools` 在当前 step MCP runtime 的 manager 报告 `has_servers()` 时注册三件套，其中包括 `ReadMcpResourceHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:689][E: codex-rs/core/src/tools/spec_plan.rs:690][E: codex-rs/core/src/tools/spec_plan.rs:692][E: codex-rs/core/src/tools/spec_plan.rs:693]
+`add_mcp_resource_tools` 在当前 step MCP runtime 的 manager 报告 `has_servers()` 时注册三件套，其中包括 `ReadMcpResourceHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:689][E: codex-rs/core/src/tools/spec_plan.rs:692][E: codex-rs/core/src/tools/spec_plan.rs:693]
 
 handler 只接受 Function payload；它把 arguments 反序列化成 `ReadResourceArgs`，再对 `server` 和 `uri` 使用 `normalize_required_string`，该 helper 先 trim，空字符串会返回 `{field} must be provided`。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:63][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:64][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:72][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:73][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:75][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:76][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:283][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:284][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:292][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:293][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:294][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:296]
 

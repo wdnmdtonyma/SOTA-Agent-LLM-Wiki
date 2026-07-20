@@ -4,7 +4,7 @@ title: 审批与沙箱设置
 kind: config
 tier: T1
 source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/config/src/permissions_toml.rs, codex-rs/protocol/src/config_types.rs, codex-rs/protocol/src/permissions.rs, codex-rs/protocol/src/protocol.rs]
-symbols: [ConfigToml, AutoReviewToml, ShellEnvironmentPolicyToml, SandboxWorkspaceWrite, PermissionsToml, PermissionProfileToml, AskForApproval, ApprovalsReviewer, SandboxMode]
+symbols: [AutoReviewToml, ShellEnvironmentPolicyToml, SandboxWorkspaceWrite, PermissionsToml, PermissionProfileToml]
 related: [cli.global-flags, cli.exec-mode, command.config-system, subsys.core.approval-policy, subsys.exec-sandbox.overview]
 evidence: explicit
 status: verified

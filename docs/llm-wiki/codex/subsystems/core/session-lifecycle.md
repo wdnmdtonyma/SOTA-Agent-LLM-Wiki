@@ -4,14 +4,14 @@ title: Session 生命周期
 kind: subsystem
 tier: T2
 source: [codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/session.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/elicitation.rs, codex-rs/core/src/tasks/mod.rs, codex-rs/core/src/tasks/regular.rs, codex-rs/core/src/tasks/compact.rs, codex-rs/core/src/tasks/review.rs, codex-rs/core/src/state/session.rs, codex-rs/core/src/state/turn.rs, codex-rs/core/src/state/service.rs]
-symbols: [Session, SessionIo, SessionSpawnArgs, SessionConfiguration, SessionState, ActiveTurn, TurnState, ElicitationService, ElicitationRegistration, SessionTask, submission_loop, Session::spawn, Session::spawn_task, Session::start_task, Session::on_task_finished]
+symbols: [Session, SessionIo, SessionSpawnArgs, SessionConfiguration, SessionState, ActiveTurn, TurnState, ElicitationService, ElicitationRegistration, submission_loop, Session::spawn, Session::spawn_task, Session::start_task, Session::on_task_finished, CodexThread, ThreadManager]
 related: [spine.sq-eq-architecture, spine.turn-end-to-end, subsys.core.turn-engine, subsys.core.compaction, subsys.core.unified-exec]
 evidence: explicit
 status: verified
 updated: 4d7a5c7c73
 ---
 
-> Session lifecycle is the core SQ/EQ control plane: runtime state lives on `Session`, while `SessionIo` holds submission sender、event receiver、agent-status receiver and shared loop-termination future；`Session::spawn_internal` starts the background `submission_loop`。[E: codex-rs/core/src/session/mod.rs:387][E: codex-rs/core/src/session/mod.rs:392][E: codex-rs/core/src/session/mod.rs:399][E: codex-rs/core/src/session/mod.rs:469][E: codex-rs/core/src/session/mod.rs:721][E: codex-rs/core/src/session/mod.rs:726]
+> Session lifecycle is the core SQ/EQ control plane: runtime state lives on `Session`, while `SessionIo` holds submission sender、event receiver、agent-status receiver and shared loop-termination future；`Session::spawn_internal` starts the background `submission_loop`。[E: codex-rs/core/src/session/mod.rs:392][E: codex-rs/core/src/session/mod.rs:399][E: codex-rs/core/src/session/mod.rs:469][E: codex-rs/core/src/session/mod.rs:721][E: codex-rs/core/src/session/mod.rs:726]
 
 ## 能回答的问题
 
@@ -23,7 +23,7 @@ updated: 4d7a5c7c73
 
 ## 职责边界
 
-`Session` 是状态和服务容器，`SessionIo` 是可丢弃的 queue/lifecycle endpoints；public `CodexThread` 组合二者成为 bidirectional conduit。[E: codex-rs/core/src/session/mod.rs:387][E: codex-rs/core/src/session/mod.rs:392][E: codex-rs/core/src/codex_thread.rs:162][E: codex-rs/core/src/codex_thread.rs:187]
+`Session` 是状态和服务容器，`SessionIo` 是可丢弃的 queue/lifecycle endpoints；public `CodexThread` 组合二者成为 bidirectional conduit。[E: codex-rs/core/src/session/mod.rs:392][E: codex-rs/core/src/codex_thread.rs:162][E: codex-rs/core/src/codex_thread.rs:187]
 
 `SessionTask` 抽象 regular chat、review、compact 等后台任务：trait 要求 `kind`、`span_name`、`run`，并提供可覆盖的 `abort` cleanup hook。[E: codex-rs/core/src/tasks/mod.rs:214][E: codex-rs/core/src/tasks/mod.rs:217][E: codex-rs/core/src/tasks/mod.rs:220][E: codex-rs/core/src/tasks/mod.rs:232][E: codex-rs/core/src/tasks/mod.rs:245]
 
@@ -32,7 +32,7 @@ updated: 4d7a5c7c73
 - `codex-rs/core/src/session/mod.rs`: `SessionIo`、`SessionSpawnArgs`、`Session::spawn`、submit/event receive queue endpoints。[E: codex-rs/core/src/session/mod.rs:392][E: codex-rs/core/src/session/mod.rs:404][E: codex-rs/core/src/session/mod.rs:471][E: codex-rs/core/src/session/mod.rs:737][E: codex-rs/core/src/session/mod.rs:800]
 - `codex-rs/core/src/session/session.rs`: `Session` 和 `SessionConfiguration` fields。[E: codex-rs/core/src/session/session.rs:28][E: codex-rs/core/src/session/session.rs:51]
 - `codex-rs/core/src/session/handlers.rs`: `submission_loop` 与 per-op dispatch handler。[E: codex-rs/core/src/session/handlers.rs:710][E: codex-rs/core/src/session/handlers.rs:721]
-- `codex-rs/core/src/tasks/mod.rs`: task spawn/start/finish 共享逻辑。[E: codex-rs/core/src/tasks/mod.rs:314][E: codex-rs/core/src/tasks/mod.rs:325][E: codex-rs/core/src/tasks/mod.rs:459][E: codex-rs/core/src/tasks/mod.rs:568]
+- `codex-rs/core/src/tasks/mod.rs`: task spawn/start/finish 共享逻辑。[E: codex-rs/core/src/tasks/mod.rs:314][E: codex-rs/core/src/tasks/mod.rs:325][E: codex-rs/core/src/tasks/mod.rs:568]
 - `codex-rs/core/src/state/session.rs` 与 `codex-rs/core/src/state/turn.rs`: session-scoped state、active turn 和 turn-local waiters/queues。[E: codex-rs/core/src/state/session.rs:26][E: codex-rs/core/src/state/turn.rs:30][E: codex-rs/core/src/state/turn.rs:87]
 
 ## 数据模型
@@ -45,7 +45,7 @@ updated: 4d7a5c7c73
 
 `SessionServices` 是 long-lived managers 的集合，包括 MCP runtime、unified exec、elicitation counter/service、analytics、hooks、auth/model managers、skills/plugins、extensions、agent control 和 network proxy services。[E: codex-rs/core/src/state/service.rs:51][E: codex-rs/core/src/state/service.rs:53][E: codex-rs/core/src/state/service.rs:59][E: codex-rs/core/src/state/service.rs:65][E: codex-rs/core/src/state/service.rs:66][E: codex-rs/core/src/state/service.rs:70][E: codex-rs/core/src/state/service.rs:71][E: codex-rs/core/src/state/service.rs:72][E: codex-rs/core/src/state/service.rs:78][E: codex-rs/core/src/state/service.rs:82]
 
-`ElicitationService` 用 reference-counted registration 统一表示 session 是否处于用户交互暂停：并发 MCP elicitation、approval 等 holder 全部释放后 watch 才回到 false。Unified exec 的 timeout deadline 与 code-mode result delivery 都订阅/等待这一状态，因此不再只针对某一种 out-of-band elicitation。[E: codex-rs/core/src/elicitation.rs:7][E: codex-rs/core/src/elicitation.rs:38][E: codex-rs/core/src/elicitation.rs:66][E: codex-rs/core/src/elicitation.rs:70][E: codex-rs/core/src/session/mod.rs:1084]
+`ElicitationService` 用 reference-counted registration 统一表示 session 是否处于用户交互暂停：并发 MCP elicitation、approval 等 holder 全部释放后 watch 才回到 false。Unified exec 的 timeout deadline 与 code-mode result delivery 都订阅/等待这一状态，因此不再只针对某一种 out-of-band elicitation。[E: codex-rs/core/src/elicitation.rs:66][E: codex-rs/core/src/elicitation.rs:70][E: codex-rs/core/src/session/mod.rs:1084]
 
 ## 控制流
 
@@ -57,7 +57,7 @@ updated: 4d7a5c7c73
 6. `spawn_task` aborts current tasks, clears connector selection, then calls `start_task`; `start_task` creates cancellation token/done notify, migrates pending input into turn state, emits turn-start lifecycle, and tokio-spawns task `run`.[E: codex-rs/core/src/tasks/mod.rs:314][E: codex-rs/core/src/tasks/mod.rs:320][E: codex-rs/core/src/tasks/mod.rs:321][E: codex-rs/core/src/tasks/mod.rs:322][E: codex-rs/core/src/tasks/mod.rs:344][E: codex-rs/core/src/tasks/mod.rs:345][E: codex-rs/core/src/tasks/mod.rs:353][E: codex-rs/core/src/tasks/mod.rs:362][E: codex-rs/core/src/tasks/mod.rs:364][E: codex-rs/core/src/tasks/mod.rs:402][E: codex-rs/core/src/tasks/mod.rs:406]
 7. task body 完成后，spawn wrapper flushes rollout；若未取消，则调用 `on_task_finished`。[E: codex-rs/core/src/tasks/mod.rs:415][E: codex-rs/core/src/tasks/mod.rs:427][E: codex-rs/core/src/tasks/mod.rs:429]
 8. `on_task_finished` 取消 git enrichment、从 active turn 取出 task handle、读 pending input/turn stats。[E: codex-rs/core/src/tasks/mod.rs:568][E: codex-rs/core/src/tasks/mod.rs:581][E: codex-rs/core/src/tasks/mod.rs:586][E: codex-rs/core/src/tasks/mod.rs:588][E: codex-rs/core/src/tasks/mod.rs:596][E: codex-rs/core/src/tasks/mod.rs:600]
-9. mailbox-triggered pending work 可在 session idle 时启动 synthetic regular turn：`maybe_start_turn_for_pending_work_with_sub_id` 要求有 trigger-turn mailbox item 且当前没有 active turn，然后用 empty input start `RegularTask`。[E: codex-rs/core/src/tasks/mod.rs:474][E: codex-rs/core/src/tasks/mod.rs:478][E: codex-rs/core/src/tasks/mod.rs:484][E: codex-rs/core/src/tasks/mod.rs:487][E: codex-rs/core/src/tasks/mod.rs:490][E: codex-rs/core/src/tasks/mod.rs:493]
+9. mailbox-triggered pending work 可在 session idle 时启动 synthetic regular turn：`maybe_start_turn_for_pending_work_with_sub_id` 要求有 trigger-turn mailbox item 且当前没有 active turn，然后用 empty input start `RegularTask`。[E: codex-rs/core/src/tasks/mod.rs:474][E: codex-rs/core/src/tasks/mod.rs:478][E: codex-rs/core/src/tasks/mod.rs:484][E: codex-rs/core/src/tasks/mod.rs:490][E: codex-rs/core/src/tasks/mod.rs:493]
 10. shutdown runtime 会 abort startup prewarm、abort active tasks、shutdown realtime conversation、terminate unified exec processes、shutdown code mode、MCP manager 和 guardian review session；`shutdown` also shuts down live thread persistence before session end.[E: codex-rs/core/src/session/handlers.rs:597][E: codex-rs/core/src/session/handlers.rs:599][E: codex-rs/core/src/session/handlers.rs:602][E: codex-rs/core/src/session/handlers.rs:601][E: codex-rs/core/src/session/handlers.rs:605][E: codex-rs/core/src/session/handlers.rs:607][E: codex-rs/core/src/session/handlers.rs:603][E: codex-rs/core/src/session/handlers.rs:611][E: codex-rs/core/src/session/handlers.rs:627][E: codex-rs/core/src/session/handlers.rs:646][E: codex-rs/core/src/session/handlers.rs:647]
 
 ## Task 类型
@@ -70,7 +70,7 @@ updated: 4d7a5c7c73
 
 ## 设计动机与权衡
 
-`SessionIo` 暴露 queue-pair API，`Session` 持 mutable state/services，`submission_loop` 统一分发 ops；分离 endpoints 还允许所有 submission sender 被 drop 后终止 loop。[E: codex-rs/core/src/session/mod.rs:387][E: codex-rs/core/src/session/mod.rs:389][E: codex-rs/core/src/session/mod.rs:737][E: codex-rs/core/src/session/handlers.rs:710][I]
+`SessionIo` 暴露 queue-pair API，`Session` 持 mutable state/services，`submission_loop` 统一分发 ops；分离 endpoints 还允许所有 submission sender 被 drop 后终止 loop。[E: codex-rs/core/src/session/mod.rs:737][E: codex-rs/core/src/session/handlers.rs:710][I]
 
 `spawn_task` 启动任何新 task 前都会 abort active tasks，体现了 session 以 `active_turn` 承载当前 task 的约束；但 active turn 内的 `steer_input` 和 pending-input loop 允许当前 task 吸收追加输入。[E: codex-rs/core/src/session/session.rs:43][E: codex-rs/core/src/tasks/mod.rs:320][E: codex-rs/core/src/session/handlers.rs:229][E: codex-rs/core/src/tasks/regular.rs:83][I]
 

@@ -4,7 +4,7 @@ title: 模型与 provider 设置
 kind: config
 tier: T1
 source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/profile_toml.rs, codex-rs/config/src/types.rs, codex-rs/model-provider-info/src/lib.rs, codex-rs/protocol/src/config_types.rs, codex-rs/protocol/src/openai_models.rs]
-symbols: [ConfigToml, ConfigProfile, ModelProviderInfo, AutoCompactTokenLimitScope, ReasoningEffort, ReasoningSummary, Verbosity, Personality]
+symbols: [AutoCompactTokenLimitScope, ReasoningEffort, ReasoningSummary, Verbosity, Personality]
 related: [command.model-mode, config.auth-account, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
@@ -48,7 +48,7 @@ updated: 4d7a5c7c73
 | `openai_base_url` | `Option<String>` | none | Built-in OpenAI provider base URL override. | [E: codex-rs/config/src/config_toml.rs:379] |
 | `oss_provider` | `Option<String>` | none | Preferred OSS provider for local models. | [E: codex-rs/config/src/config_toml.rs:515] |
 
-`model_supports_reasoning_summaries` has been removed from the target schema; reasoning-summary capability now comes from the selected model metadata, while `model_reasoning_summary` remains the request-mode override。[E: codex-rs/config/src/config_toml.rs:354][E: codex-rs/config/src/config_toml.rs:356][E: codex-rs/config/src/config_toml.rs:359][I]
+`model_supports_reasoning_summaries` has been removed from the target schema; reasoning-summary capability now comes from the selected model metadata, while `model_reasoning_summary` remains the request-mode override。[E: codex-rs/config/src/config_toml.rs:354][E: codex-rs/config/src/config_toml.rs:356][I]
 
 ## Sources
 

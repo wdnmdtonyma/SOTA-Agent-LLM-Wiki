@@ -4,7 +4,7 @@ title: trace: apply_patch
 kind: flow
 tier: T0
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/apply_patch.rs, codex-rs/core/src/tools/handlers/shell.rs, codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs, codex-rs/core/src/apply_patch.rs, codex-rs/core/src/tools/runtimes/apply_patch.rs, codex-rs/core/src/tools/orchestrator.rs, codex-rs/core/src/tools/events.rs, codex-rs/apply-patch/src/lib.rs]
-symbols: [ApplyPatchHandler, intercept_apply_patch, apply_patch::apply_patch, ApplyPatchRuntime, codex_apply_patch::apply_patch]
+symbols: [apply_patch::apply_patch, codex_apply_patch::apply_patch]
 related: [spine.tool-call-anatomy, spine.shell-exec-flow, tool.apply-patch, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified

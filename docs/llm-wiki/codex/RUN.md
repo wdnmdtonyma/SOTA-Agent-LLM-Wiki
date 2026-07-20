@@ -1,6 +1,6 @@
 # RUN — 填充令(codex 源码 LLM Wiki)
 
-你是执行者。把本 wiki(`Best/docs/llm-wiki/codex/`)从"只有骨架"填成完整的、给 agent 检索的 LLM wiki。文档对象是 OpenAI **Codex** 真实源码(`Best/codex/`,相对本目录 `../../../codex/`,~95 crate Rust workspace + TS/Py SDK)。要细到每个工具的字段与设计动机。
+你是执行者。把本 wiki(`Best/docs/llm-wiki/codex/`)从"只有骨架"填成完整的、给 agent 检索的 LLM wiki。文档对象是 OpenAI **Codex** 真实源码(`Best/codex/`,相对本目录 `../../../codex/`,124-crate Rust workspace + TS/Py SDK)。要细到每个工具的字段与设计动机。
 
 ## 0. 先读这五个文件(权威规范,必须遵守)
 1. `README.md` —— 形态、四支柱、证据图例、优先级、codex 画像。

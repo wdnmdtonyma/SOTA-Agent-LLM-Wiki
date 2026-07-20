@@ -4,7 +4,7 @@ title: SQ/EQ 双队列架构
 kind: flow
 tier: T0
 source: [codex-rs/protocol/src/protocol.rs, codex-rs/core/src/codex_thread.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/handlers.rs]
-symbols: [Submission, Op, Event, EventMsg, CodexThread, SessionIo, Session::spawn_internal, submission_loop]
+symbols: [Session::spawn_internal]
 related: [spine.overview, spine.turn-end-to-end, subsys.core.session-lifecycle, ref.protocol-op, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified

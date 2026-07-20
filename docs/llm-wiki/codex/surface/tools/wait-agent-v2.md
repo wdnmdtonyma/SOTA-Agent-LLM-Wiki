@@ -4,7 +4,7 @@ title: wait_agent (V2) 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/multi_agents_spec.rs, codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs, codex-rs/core/src/tools/handlers/multi_agents_v2.rs, codex-rs/tools/src/tool_executor.rs]
-symbols: [create_wait_agent_tool_v2, WaitAgentHandlerV2, multi_agents_v2::wait::Handler, WaitAgentResult]
+symbols: [create_wait_agent_tool_v2, WaitAgentHandlerV2, multi_agents_v2::wait::Handler, multi_agents_v2::WaitAgentResult]
 related: [tool.spawn-agent-v2, tool.send-message, tool.followup-task, tool.list-agents]
 evidence: explicit
 status: verified
@@ -47,7 +47,7 @@ handler 解析 arguments 后，基于当前 active turn/sub-id 读取 `turn_stat
 
 `WaitAgentResult::from_outcome` 把三类 outcome 映射成三条固定 summary：`Wait completed.`、`Wait interrupted by new input.`、`Wait timed out.`；只有 timed out outcome 会把 `timed_out` 设为 true。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:139][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:141][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:142][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:143][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:144][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:148]
 
-输出 schema 也只有 `message` 和 `timed_out`，`message` 描述明确是不含 agent final content 的 brief wait summary。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:514][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:518][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:520][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:525][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:527]
+输出 schema 也只有 `message` 和 `timed_out`，`message` 描述明确是不含 agent final content 的 brief wait summary。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:514][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:518][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:520][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:527]
 
 ## Sources
 

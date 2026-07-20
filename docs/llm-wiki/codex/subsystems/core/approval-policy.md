@@ -4,7 +4,7 @@ title: Approval policy 与权限状态机
 kind: subsystem
 tier: T2
 source: [codex-rs/utils/approval-presets/src/lib.rs, codex-rs/protocol/src/protocol.rs, codex-rs/protocol/src/approvals.rs, codex-rs/core/src/exec_policy.rs, codex-rs/core/src/tools/approvals.rs]
-symbols: [ApprovalPreset, AskForApproval, PermissionProfile, ActivePermissionProfile, GranularApprovalConfig, SandboxPolicy, ExecPolicyManager, ExecApprovalRequestEvent, ApprovalAction, ApprovalReviewer, resolve_tool_apporval, create_exec_approval_requirement_for_command, prompt_is_rejected_by_policy, load_exec_policy, render_decision_for_unmatched_command]
+symbols: [ApprovalPreset, AskForApproval, PermissionProfile, ActivePermissionProfile, GranularApprovalConfig, SandboxPolicy, ExecPolicyManager, ExecApprovalRequestEvent, ApprovalAction, ApprovalReviewer, resolve_tool_apporval, create_exec_approval_requirement_for_command, prompt_is_rejected_by_policy, load_exec_policy, render_decision_for_unmatched_command, ApprovalsReviewer, NetworkSandboxPolicy, SandboxMode]
 related: [subsys.core.approval-guardian, subsys.exec-sandbox.execpolicy-dsl, config.approval-sandbox, ref.protocol-items]
 evidence: explicit
 status: verified
@@ -27,9 +27,9 @@ updated: 4d7a5c7c73
 |---|---|
 | `codex-rs/utils/approval-presets/src/lib.rs` | 定义内置 approval presets 以及 built-in profile 到 `PermissionProfile` 的映射。[E: codex-rs/utils/approval-presets/src/lib.rs:28][E: codex-rs/utils/approval-presets/src/lib.rs:64] |
 | `codex-rs/protocol/src/protocol.rs` | 定义 `AskForApproval`、`GranularApprovalConfig`、`SandboxPolicy` 等 protocol shape。[E: codex-rs/protocol/src/protocol.rs:914][E: codex-rs/protocol/src/protocol.rs:941][E: codex-rs/protocol/src/protocol.rs:1001] |
-| `codex-rs/protocol/src/approvals.rs` | 定义 `ExecPolicyAmendment`、Guardian assessment action/event、exec approval request event。[E: codex-rs/protocol/src/approvals.rs:32][E: codex-rs/protocol/src/approvals.rs:137][E: codex-rs/protocol/src/approvals.rs:179][E: codex-rs/protocol/src/approvals.rs:218] |
+| `codex-rs/protocol/src/approvals.rs` | 定义 `ExecPolicyAmendment`、Guardian assessment action/event、exec approval request event。[E: codex-rs/protocol/src/approvals.rs:137][E: codex-rs/protocol/src/approvals.rs:179][E: codex-rs/protocol/src/approvals.rs:218] |
 | `codex-rs/core/src/exec_policy.rs` | 加载 execpolicy、检查命令、生成 `ExecApprovalRequirement`、追加 allow/network rule。[E: codex-rs/core/src/exec_policy.rs:258][E: codex-rs/core/src/exec_policy.rs:270][E: codex-rs/core/src/exec_policy.rs:395][E: codex-rs/core/src/exec_policy.rs:445] |
-| `codex-rs/core/src/tools/approvals.rs` | 新的 central approval policy stage：先跑 permission-request hooks，再路由 Guardian/user reviewer，统一 rejection normalization 与 telemetry source。[E: codex-rs/core/src/tools/approvals.rs:1][E: codex-rs/core/src/tools/approvals.rs:139][E: codex-rs/core/src/tools/approvals.rs:165][E: codex-rs/core/src/tools/approvals.rs:220][E: codex-rs/core/src/tools/approvals.rs:300] |
+| `codex-rs/core/src/tools/approvals.rs` | 新的 central approval policy stage：先跑 permission-request hooks，再路由 Guardian/user reviewer，统一 rejection normalization 与 telemetry source。[E: codex-rs/core/src/tools/approvals.rs:139][E: codex-rs/core/src/tools/approvals.rs:165][E: codex-rs/core/src/tools/approvals.rs:300] |
 
 ## 数据模型
 
@@ -39,7 +39,7 @@ updated: 4d7a5c7c73
 | built-in presets | `read-only` 和 `auto` 都是 `AskForApproval::OnRequest`；`full-access` 是 `AskForApproval::Never` 且 `PermissionProfile::Disabled`。[E: codex-rs/utils/approval-presets/src/lib.rs:31][E: codex-rs/utils/approval-presets/src/lib.rs:34][E: codex-rs/utils/approval-presets/src/lib.rs:38][E: codex-rs/utils/approval-presets/src/lib.rs:41][E: codex-rs/utils/approval-presets/src/lib.rs:44][E: codex-rs/utils/approval-presets/src/lib.rs:48][E: codex-rs/utils/approval-presets/src/lib.rs:51][E: codex-rs/utils/approval-presets/src/lib.rs:54][E: codex-rs/utils/approval-presets/src/lib.rs:58] |
 | `AskForApproval` | 变体包括 `UnlessTrusted`、default `OnRequest`、`Granular(GranularApprovalConfig)` 和 `Never`；legacy serialized value `on-failure` is accepted as an alias for `OnRequest` rather than a separate enum variant。[E: codex-rs/protocol/src/protocol.rs:914][E: codex-rs/protocol/src/protocol.rs:920][E: codex-rs/protocol/src/protocol.rs:923][E: codex-rs/protocol/src/protocol.rs:925][E: codex-rs/protocol/src/protocol.rs:933][E: codex-rs/protocol/src/protocol.rs:937] |
 | `GranularApprovalConfig` | 独立控制 sandbox approval、execpolicy prompt rules、skill approval、`request_permissions`、MCP elicitation prompt。[E: codex-rs/protocol/src/protocol.rs:941][E: codex-rs/protocol/src/protocol.rs:944][E: codex-rs/protocol/src/protocol.rs:946][E: codex-rs/protocol/src/protocol.rs:949][E: codex-rs/protocol/src/protocol.rs:952][E: codex-rs/protocol/src/protocol.rs:954] |
-| `SandboxPolicy` | 表达 danger-full-access、read-only、external sandbox、workspace-write 及 network/filesystem 约束；它仍是 protocol 类型，但 built-in presets 现在通过 permission profiles 表达运行权限。[E: codex-rs/protocol/src/protocol.rs:997][E: codex-rs/protocol/src/protocol.rs:1001][E: codex-rs/protocol/src/protocol.rs:1006][E: codex-rs/protocol/src/protocol.rs:1015][E: codex-rs/protocol/src/protocol.rs:1024][I] |
+| `SandboxPolicy` | 表达 danger-full-access、read-only、external sandbox、workspace-write 及 network/filesystem 约束；它仍是 protocol 类型，但 built-in presets 现在通过 permission profiles 表达运行权限。[E: codex-rs/protocol/src/protocol.rs:1001][I] |
 | `ExecApprovalRequestEvent` | UI event 携带 command、cwd、reason、network context、proposed exec/network amendments、additional permissions、available decisions 和 parsed command。[E: codex-rs/protocol/src/approvals.rs:218][E: codex-rs/protocol/src/approvals.rs:245][E: codex-rs/protocol/src/approvals.rs:247][E: codex-rs/protocol/src/approvals.rs:250][E: codex-rs/protocol/src/approvals.rs:254][E: codex-rs/protocol/src/approvals.rs:258][E: codex-rs/protocol/src/approvals.rs:262][E: codex-rs/protocol/src/approvals.rs:266][E: codex-rs/protocol/src/approvals.rs:273][E: codex-rs/protocol/src/approvals.rs:274] |
 
 ## 控制流
@@ -54,7 +54,7 @@ updated: 4d7a5c7c73
 8. 对没有命中 dangerous/Windows legacy managed-filesystem earlier branch 的非危险 unmatched command，`OnRequest` 和 `Granular` 在 unrestricted/external filesystem policy 下 allow；restricted sandbox 只有请求 sandbox override 时 prompt，否则 allow。[E: codex-rs/core/src/exec_policy.rs:677][E: codex-rs/core/src/exec_policy.rs:752][E: codex-rs/core/src/exec_policy.rs:753][E: codex-rs/core/src/exec_policy.rs:758][E: codex-rs/core/src/exec_policy.rs:760][E: codex-rs/core/src/exec_policy.rs:764][E: codex-rs/core/src/exec_policy.rs:772][E: codex-rs/core/src/exec_policy.rs:779][E: codex-rs/core/src/exec_policy.rs:782]
 9. 接受 execpolicy amendment 时，`append_amendment_and_update` 写入默认 policy file，并在内存 policy 中补一条 allow prefix rule；network rule 走 `append_network_rule_and_update` 写文件并更新内存 policy。[E: codex-rs/core/src/exec_policy.rs:395][E: codex-rs/core/src/exec_policy.rs:409][E: codex-rs/core/src/exec_policy.rs:413][E: codex-rs/core/src/exec_policy.rs:439][E: codex-rs/core/src/exec_policy.rs:440][E: codex-rs/core/src/exec_policy.rs:445][E: codex-rs/core/src/exec_policy.rs:469][E: codex-rs/core/src/exec_policy.rs:485][E: codex-rs/core/src/exec_policy.rs:486]
 
-Tool runtime 真正请求审批时统一进入 `resolve_tool_apporval()`（源码保留该拼写）：若 tool 产生 permission-request payload，hook 的 allow/deny 先于 reviewer 生效；hook 未决时才按 `ApprovalReviewer` 路由 Guardian 或 user UI。Guardian/user 的 deny、abort、timeout 会归一化为 `ToolError::Rejected`，并把 decision source 记录为 config / automated reviewer / user。[E: codex-rs/core/src/tools/approvals.rs:139][E: codex-rs/core/src/tools/approvals.rs:165][E: codex-rs/core/src/tools/approvals.rs:177][E: codex-rs/core/src/tools/approvals.rs:220][E: codex-rs/core/src/tools/approvals.rs:246][E: codex-rs/core/src/tools/approvals.rs:300]
+Tool runtime 真正请求审批时统一进入 `resolve_tool_apporval()`（源码保留该拼写）：若 tool 产生 permission-request payload，hook 的 allow/deny 先于 reviewer 生效；hook 未决时才按 `ApprovalReviewer` 路由 Guardian 或 user UI。Guardian/user 的 deny、abort、timeout 会归一化为 `ToolError::Rejected`，并把 decision source 记录为 config / automated reviewer / user。[E: codex-rs/core/src/tools/approvals.rs:139][E: codex-rs/core/src/tools/approvals.rs:165][E: codex-rs/core/src/tools/approvals.rs:246][E: codex-rs/core/src/tools/approvals.rs:300]
 
 ## 设计动机与权衡
 
@@ -66,7 +66,7 @@ Tool runtime 真正请求审批时统一进入 `resolve_tool_apporval()`（源�
 
 - `on-failure` 现在只是 `OnRequest` 的 serde alias，不是独立的 `AskForApproval` variant；新文档不要把它当成推荐模式。[E: codex-rs/protocol/src/protocol.rs:923][E: codex-rs/protocol/src/protocol.rs:925]
 - `full-access` preset 是 `AskForApproval::Never` 加 `PermissionProfile::Disabled`，不是 “自动问询后批准”。[E: codex-rs/utils/approval-presets/src/lib.rs:51][E: codex-rs/utils/approval-presets/src/lib.rs:54][E: codex-rs/utils/approval-presets/src/lib.rs:58]
-- `Granular` 的 unmatched command fallback mirrors `OnRequest`，但 prompt-vs-reject 仍由 `prompt_is_rejected_by_policy` 决定。[E: codex-rs/core/src/exec_policy.rs:772][E: codex-rs/core/src/exec_policy.rs:774][E: codex-rs/core/src/exec_policy.rs:779]
+- `Granular` 的 unmatched command fallback mirrors `OnRequest`，但 prompt-vs-reject 仍由 `prompt_is_rejected_by_policy` 决定。[E: codex-rs/core/src/exec_policy.rs:772][E: codex-rs/core/src/exec_policy.rs:779]
 
 ## Sources
 

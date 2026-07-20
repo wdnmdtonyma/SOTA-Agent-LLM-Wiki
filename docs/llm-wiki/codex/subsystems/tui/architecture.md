@@ -4,7 +4,7 @@ title: TUI 架构
 kind: subsystem
 tier: T2
 source: [codex-rs/tui/src/app.rs, codex-rs/tui/src/app/event_dispatch.rs, codex-rs/tui/src/app/app_server_events.rs, codex-rs/tui/src/tui.rs, codex-rs/tui/src/tui/event_stream.rs, codex-rs/tui/src/lib.rs, codex-rs/tui/src/chatwidget.rs, codex-rs/tui/src/bottom_pane/mod.rs]
-symbols: [App, App::run, App::handle_event, resolve_startup_resume_or_fork_cwd, Tui, TuiEvent, TuiEventStream, ChatWidget, BottomPane]
+symbols: [tui::App, App::run, resolve_startup_resume_or_fork_cwd, tui::Tui]
 related: [subsys.tui.event-system, subsys.tui.chatwidget, subsys.tui.bottom-pane, subsys.app-server.session-management]
 evidence: explicit
 status: verified
@@ -40,7 +40,7 @@ startup resume/fork 现在在真正 attach 前调用 `resolve_startup_resume_or_
 
 ## Terminal 与 alternate screen
 
-`Tui::event_stream` 创建 `TuiEventStream`，共享 `EventBroker` 以避免多个 crossterm readers 争抢 stdin；`pause_events`/`resume_events` 通过 drop/recreate underlying event stream 让外部交互程序临时接管终端输入。[E: codex-rs/tui/src/tui.rs:648][E: codex-rs/tui/src/tui.rs:648][E: codex-rs/tui/src/tui.rs:654][E: codex-rs/tui/src/tui.rs:731][E: codex-rs/tui/src/tui/event_stream.rs:51][E: codex-rs/tui/src/tui/event_stream.rs:95][E: codex-rs/tui/src/tui/event_stream.rs:51]
+`Tui::event_stream` 创建 `TuiEventStream`，共享 `EventBroker` 以避免多个 crossterm readers 争抢 stdin；`pause_events`/`resume_events` 通过 drop/recreate underlying event stream 让外部交互程序临时接管终端输入。[E: codex-rs/tui/src/tui.rs:648][E: codex-rs/tui/src/tui.rs:648][E: codex-rs/tui/src/tui.rs:654][E: codex-rs/tui/src/tui.rs:731][E: codex-rs/tui/src/tui/event_stream.rs:51][E: codex-rs/tui/src/tui/event_stream.rs:51]
 
 当前 alternate-screen 控制是代码事实：CLI 计算 `determine_alt_screen_mode(no_alt_screen, config.tui_alternate_screen)` 后调用 `tui.set_alt_screen_enabled`；`--no-alt-screen` 直接禁用，除此之外只有 `AltScreenMode::Never` 禁用。不要沿用旧文档里“auto 在 Zellij 禁用”的说法。[E: codex-rs/tui/src/lib.rs:1725][E: codex-rs/tui/src/lib.rs:1726][E: codex-rs/tui/src/lib.rs:1868][E: codex-rs/tui/src/lib.rs:1868][E: codex-rs/tui/src/lib.rs:1869][E: codex-rs/tui/src/lib.rs:1873]
 
@@ -50,7 +50,7 @@ startup resume/fork 现在在真正 attach 前调用 `resolve_startup_resume_or_
 
 - `App::run` 不再自己“创建 session 后端”；它接收 `AppServerSession` 并在 startup path 上 bootstrap/resume/fork/start thread。[E: codex-rs/tui/src/app.rs:766][E: codex-rs/tui/src/app.rs:768][E: codex-rs/tui/src/app.rs:803][I]
 - `app.rs` 仍是 orchestration hub，但 app event dispatch、server events、thread routing、input handling 等都已拆分到 `app/*` 子模块；行号不要从旧单文件 mental model 迁移。[E: codex-rs/tui/src/app/event_dispatch.rs:18][E: codex-rs/tui/src/app/event_dispatch.rs:24][E: codex-rs/tui/src/app/app_server_events.rs:32]
-- syntax theme 要在 resume/fork 可能触发的最后一次 config reload 之后设置；提前设置会拿到错误 cwd 下的 theme config。[E: codex-rs/tui/src/lib.rs:1686][E: codex-rs/tui/src/lib.rs:1689]
+- syntax theme 要在 resume/fork 可能触发的最后一次 config reload 之后设置；提前设置会拿到错误 cwd 下的 theme config。[E: codex-rs/tui/src/lib.rs:1689]
 
 ## Sources
 

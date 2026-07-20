@@ -4,7 +4,7 @@ title: server notifications: thread/turn/item
 kind: rpc
 tier: T1
 source: [codex-rs/app-server-protocol/src/protocol/common.rs, codex-rs/app-server-protocol/src/protocol/v2/thread.rs, codex-rs/app-server-protocol/src/protocol/v2/turn.rs, codex-rs/app-server-protocol/src/protocol/v2/item.rs, codex-rs/app-server-protocol/src/protocol/v2/hook.rs, codex-rs/app-server-protocol/src/protocol/v2/realtime.rs, codex-rs/app-server-protocol/src/protocol/v2/mcp.rs, codex-rs/app-server-protocol/src/protocol/v2/model.rs]
-symbols: [ServerNotification, ThreadStartedNotification, TurnStartedNotification, ItemStartedNotification, RawResponseCompletedNotification, AgentMessageDeltaNotification, ThreadRealtimeStartedNotification]
+symbols: [ThreadStartedNotification, TurnStartedNotification, ItemStartedNotification, RawResponseCompletedNotification, AgentMessageDeltaNotification, ThreadRealtimeStartedNotification]
 related: [rpc.overview, rpc.thread-methods, rpc.turn-methods, rpc.notifications-system, rpc.server-requests]
 evidence: explicit
 status: verified
@@ -52,7 +52,7 @@ updated: 4d7a5c7c73
 | `ItemGuardianApprovalReviewCompleted` | `item/autoApprovalReview/completed` | `v2::ItemGuardianApprovalReviewCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1665] |
 | `ItemCompleted` | `item/completed` | `v2::ItemCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1666] |
 | `RawResponseItemCompleted` | `rawResponseItem/completed` | `v2::RawResponseItemCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1668] |
-| `RawResponseCompleted` | `rawResponse/completed` | `v2::RawResponseCompletedNotification` | stable, internal-only exact upstream usage | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1669][E: codex-rs/app-server-protocol/src/protocol/common.rs:1670] |
+| `RawResponseCompleted` | `rawResponse/completed` | `v2::RawResponseCompletedNotification` | stable, internal-only exact upstream usage | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1670] |
 | `AgentMessageDelta` | `item/agentMessage/delta` | `v2::AgentMessageDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1671] |
 | `PlanDelta` | `item/plan/delta` | `v2::PlanDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1673] |
 | `CommandExecutionOutputDelta` | `item/commandExecution/outputDelta` | `v2::CommandExecutionOutputDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1682] |
@@ -74,7 +74,7 @@ updated: 4d7a5c7c73
 | `ThreadRealtimeError` | `thread/realtime/error` | `v2::ThreadRealtimeErrorNotification` | experimental: thread/realtime/error | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1726][E: codex-rs/app-server-protocol/src/protocol/common.rs:1727] |
 | `ThreadRealtimeClosed` | `thread/realtime/closed` | `v2::ThreadRealtimeClosedNotification` | experimental: thread/realtime/closed | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1728][E: codex-rs/app-server-protocol/src/protocol/common.rs:1729] |
 
-`RawResponseCompletedNotification` 带 thread/turn/response ids 和 optional `TokenUsageBreakdown`，面向需要 exact upstream usage 的内部客户端；它与逐 item 的 `rawResponseItem/completed` 是不同粒度。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1465][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1470][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1471][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1474]
+`RawResponseCompletedNotification` 带 thread/turn/response ids 和 optional `TokenUsageBreakdown`，面向需要 exact upstream usage 的内部客户端；它与逐 item 的 `rawResponseItem/completed` 是不同粒度。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1470][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1471][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1474]
 
 ## Sources
 

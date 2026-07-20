@@ -4,7 +4,7 @@ title: view_image 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/view_image_spec.rs, codex-rs/core/src/tools/handlers/view_image.rs, codex-rs/core/src/tools/router.rs, codex-rs/tools/src/image_detail.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/protocol/src/models.rs, codex-rs/protocol/src/openai_models.rs]
-symbols: [add_core_utility_tools, create_view_image_tool, ViewImageToolOptions, ViewImageHandler, ViewImageOutput, can_request_original_image_detail, VIEW_IMAGE_TOOL_NAME, ImageDetail]
+symbols: [create_view_image_tool, ViewImageToolOptions, ViewImageHandler, ViewImageOutput, can_request_original_image_detail, VIEW_IMAGE_TOOL_NAME]
 related: [subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified
@@ -27,7 +27,7 @@ updated: 4d7a5c7c73
 | 项 | 值 |
 |---|---|
 | wire name | `ViewImageHandler::tool_name()` 返回 plain `"view_image"`；schema constructor 使用 `VIEW_IMAGE_TOOL_NAME`，协议常量值也是 `"view_image"`。[E: codex-rs/core/src/tools/handlers/view_image.rs:66][E: codex-rs/core/src/tools/handlers/view_image.rs:68][E: codex-rs/core/src/tools/handlers/view_image_spec.rs:41][E: codex-rs/core/src/tools/handlers/view_image_spec.rs:42][E: codex-rs/protocol/src/models.rs:1367] |
-| concrete handler | `ViewImageHandler` 保存 `ViewImageToolOptions`；`spec()` 调用 `create_view_image_tool(self.options)`。[E: codex-rs/core/src/tools/handlers/view_image.rs:28][E: codex-rs/core/src/tools/handlers/view_image.rs:29][E: codex-rs/core/src/tools/handlers/view_image.rs:47][E: codex-rs/core/src/tools/handlers/view_image.rs:71][E: codex-rs/core/src/tools/handlers/view_image.rs:72] |
+| concrete handler | `ViewImageHandler` 保存 `ViewImageToolOptions`；`spec()` 调用 `create_view_image_tool(self.options)`。[E: codex-rs/core/src/tools/handlers/view_image.rs:28][E: codex-rs/core/src/tools/handlers/view_image.rs:29][E: codex-rs/core/src/tools/handlers/view_image.rs:71][E: codex-rs/core/src/tools/handlers/view_image.rs:72] |
 | ToolSpec | `create_view_image_tool` 返回 `ToolSpec::Function(ResponsesApiTool { ... })`，并声明 `output_schema: Some(view_image_output_schema())`。[E: codex-rs/core/src/tools/handlers/view_image_spec.rs:15][E: codex-rs/core/src/tools/handlers/view_image_spec.rs:41][E: codex-rs/core/src/tools/handlers/view_image_spec.rs:48][E: codex-rs/tools/src/tool_spec.rs:17][E: codex-rs/tools/src/tool_spec.rs:19] |
 | handler exposure | handler 未覆盖 `exposure()`，因此使用 `ToolExecutor` 默认 Direct。[E: codex-rs/core/src/tools/handlers/view_image.rs:66][E: codex-rs/core/src/tools/handlers/view_image.rs:79][E: codex-rs/tools/src/tool_executor.rs:55][E: codex-rs/tools/src/tool_executor.rs:56] |
 

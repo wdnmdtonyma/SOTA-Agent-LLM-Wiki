@@ -19,7 +19,7 @@
 - [Shell 执行流](spine/shell-exec-flow.md): tool call → execpolicy → sandbox transform → spawn → 流式输出 — exec-server/ · sandboxing/
 
 ### 端到端 worked traces(具体范例)
-- [trace:apply_patch 落盘](spine/trace-apply-patch.md): apply_patch 从 dispatch → 解析 hunk → 沙箱写盘 → diff event — tools/src/apply_patch_tool.rs · apply-patch/
+- [trace:apply_patch 落盘](spine/trace-apply-patch.md): apply_patch 从 dispatch → 解析 hunk → 沙箱写盘 → diff event — core/src/tools/handlers/apply_patch.rs · apply-patch/
 - [trace:MCP 工具调用](spine/trace-mcp-call.md): 外部 MCP server 工具 发现 → 注册 → 调用路由 → 结果回流 — codex-mcp/ · rmcp-client/
 - [trace:spawn 子 agent](spine/trace-subagent.md): spawn_agent → 子 agent 循环 → mailbox/wait_agent → 结果回流 — core/src/tools/handlers/multi_agents*/ · core/
 
@@ -84,7 +84,7 @@
 
 > 工具系统机制(ToolSpec/CoreToolRuntime/registry/discovery/code-mode)见 `subsystems/core/tool-system.md`。
 
-## T1 — Surface / Slash 命令(按类目 catalog,6 节点,覆盖 42 命令)
+## T1 — Surface / Slash 命令(按类目 catalog,6 节点,覆盖 55 命令)
 - [会话与线程命令](surface/slash-commands/session-thread.md): /new /clear /resume /fork /compact /rename /rollout /quit … — tui/src/slash_command.rs
 - [模型与模式命令](surface/slash-commands/model-mode.md): /model /fast /plan /collab /approvals /permissions /experimental /theme /personality … — tui/src/slash_command.rs
 - [代码与评审命令](surface/slash-commands/code-review.md): /review /diff /copy /init — tui/src/slash_command.rs
@@ -92,13 +92,13 @@
 - [配置与系统命令](surface/slash-commands/config-system.md): /status /debug-config /settings /memories /title /statusline /sandbox-* /logout /feedback /ps /stop — tui/src/slash_command.rs · feedback/
 - [实时与调试命令](surface/slash-commands/realtime-debug.md): /realtime /side /agent /debug-* /test-* — tui/src/slash_command.rs
 
-## T1 — Surface / CLI(4 节点,覆盖 22 子命令 + ~18 全局 flag + external-agent import)
+## T1 — Surface / CLI(4 节点,覆盖 27 个 top-level 子命令 + 20 个 root/global catalog 条目)
 - [子命令 catalog](surface/cli/subcommands.md): exec/login/logout/mcp/plugin/mcp-server/app-server/app/completion/sandbox/debug/execpolicy/apply/resume/fork/cloud/responses*/exec-server/features … — cli/src/main.rs
 - [从外部 agent 导入](surface/cli/external-agent-import.md): /import + externalAgentConfig/* + Claude/Cursor config、memory、sessions migration — external-agent-migration/ · app-server/src/external_agent_migration/
 - [全局 flag](surface/cli/global-flags.md): --model --profile -c/--config --full-auto --sandbox-mode --approval-policy --add-dir --oss --remote … — cli/src/main.rs · utils/cli/src/shared_options.rs
 - [exec 非交互模式](surface/cli/exec-mode.md): `codex exec` 标志 + --json + event processors — exec/src/cli.rs · exec/src/lib.rs · docs/exec.md
 
-## T1 — Surface / Config(按区 catalog,8 节点,覆盖 ConfigToml 91 键)
+## T1 — Surface / Config(按区 catalog,8 节点,覆盖 ConfigToml 96 个顶层键)
 - [模型与 provider 设置](surface/config/model-provider.md): model · model_provider · model_providers · context_window · reasoning_effort/summary/verbosity · personality · service_tier · *_base_url — config/src/config_toml.rs
 - [审批与沙箱设置](surface/config/approval-sandbox.md): approval_policy · sandbox_mode · sandbox_workspace_write · permissions · shell_environment_policy · allow_login_shell — config/src/config_toml.rs · docs/sandbox.md
 - [认证与账户设置](surface/config/auth-account.md): forced_chatgpt_workspace_id · forced_login_method · cli_auth_credentials_store · mcp_oauth_* — config/src/config_toml.rs
@@ -108,16 +108,16 @@
 - [skills/plugins/features 设置](surface/config/skills-plugins-features.md): skills · plugins · marketplaces · features · suppress_unstable_features_warning — config/src/config_toml.rs
 - [存储/遥测/杂项设置](surface/config/storage-telemetry-misc.md): sqlite_home · log_dir · history · analytics · feedback · otel · ghost_snapshot · projects · windows · oss_provider · commit_attribution · instructions — config/src/config_toml.rs
 
-## T1 — Surface / App-Server 协议(集成面 catalog,9 节点,覆盖 153 RPC)
+## T1 — Surface / App-Server 协议(集成面 catalog,9 节点,覆盖 212 个 RPC 实例：129 client requests + 72 notifications + 11 server requests)
 - [协议总览](surface/app-server/overview.md): JSON-RPC 2.0 · v1/v2 · ClientRequest/Response/ServerRequest/ServerNotification · 传输 — app-server-protocol/src/protocol/common.rs
 - [thread 方法](surface/app-server/thread-methods.md): thread/start|resume|fork|archive|list|read|rollback|compact… — app-server-protocol/src/protocol/v2.rs
 - [turn 方法](surface/app-server/turn-methods.md): turn/start|steer|interrupt — app-server-protocol/src/protocol/common.rs
 - [fs 与 command 方法](surface/app-server/fs-command-methods.md): fs/* · command/exec* — app-server-protocol/src/protocol/common.rs
 - [config/account/model 方法](surface/app-server/config-account-methods.md): config/* · account/* · model/* · experimentalFeature/* — app-server-protocol/src/protocol/common.rs
 - [mcp/skills/plugin 方法](surface/app-server/mcp-skills-plugin-methods.md): mcpServer/* · skills/* · plugin/* · marketplace/* · device/key/* — app-server-protocol/src/protocol/common.rs
-- [server notifications:thread/turn/item](surface/app-server/notifications-thread.md): thread/turn/item 流 ~30 通知 — app-server-protocol/src/protocol/common.rs
-- [server notifications:account/mcp/fs/hook/realtime](surface/app-server/notifications-system.md): 其余 ~27 通知 — app-server-protocol/src/protocol/common.rs
-- [server→client requests](surface/app-server/server-requests.md): 审批/elicitation 等 9 个反向请求 — app-server-protocol/src/protocol/common.rs
+- [server notifications:thread/turn/item](surface/app-server/notifications-thread.md): thread/turn/item/hook/raw-response 流 43 个通知 — app-server-protocol/src/protocol/common.rs
+- [server notifications:account/mcp/fs/hook/realtime](surface/app-server/notifications-system.md): 其余 29 个通知 — app-server-protocol/src/protocol/common.rs
+- [server→client requests](surface/app-server/server-requests.md): 审批/elicitation 等 11 个反向请求 — app-server-protocol/src/protocol/common.rs
 
 ## T1 — Surface / SDK(6 节点,TS + Python)
 - [TS SDK 总览](surface/sdk/ts-overview.md): Codex · Thread · run/runStreamed · CodexOptions/ThreadOptions/TurnOptions — sdk/typescript/src/
@@ -225,7 +225,7 @@
 - [Agent identity](subsystems/platform/agent-identity.md): agent 身份 + install-context — agent-identity/ · install-context/
 
 ## T3 — Reference
-- [协议 Op catalog](reference/protocol-op.md): 34 个 Submission/Op 变体逐一 — protocol/src/protocol.rs
+- [协议 Op catalog](reference/protocol-op.md): 26 个 Submission/Op 变体逐一 — protocol/src/protocol.rs
 - [协议 Event catalog:生命周期/turn/exec/patch](reference/protocol-event-lifecycle.md): EventMsg 约前半(生命周期/turn/exec/patch/审批)— protocol/src/protocol.rs
 - [协议 Event catalog:streaming/collab/realtime/mcp](reference/protocol-event-streaming.md): EventMsg 约后半(delta/collab/realtime/mcp)— protocol/src/protocol.rs
 - [协议 items / approvals 类型](reference/protocol-items.md): ResponseItem · approvals · permissions — protocol/src/items.rs · approvals.rs · permissions.rs
@@ -233,10 +233,10 @@
 - [数据模型](reference/data-model.md): 核心共享类型 — protocol/ · core/
 - [关键类型索引](reference/key-types.md): 各子系统 load-bearing struct/trait 索引 — codex-rs/
 - [Crate 索引](reference/crate-index.md): 124 个 workspace crate 一句话目录 — codex-rs/Cargo.toml
-- [Feature flag 目录](reference/feature-flags.md): 62 个 flag 按 stage 全 catalog — features/src/lib.rs
+- [Feature flag 目录](reference/feature-flags.md): 95 个 flag 按 stage 全 catalog — features/src/lib.rs
 - [环境变量目录](reference/env-vars.md): CODEX_* 等 — codex-rs/
 - [术语表与 codename](reference/glossary.md): SQ/EQ · rollout · ghost commit · seatbelt · landlock · guardian · code-mode …
 - [不确定项日志](reference/uncertainty.md): `[U]` 汇总
 
 ## 工具
-- [lint 工具](tools/lint.mjs): L1 机械校验(待落地)· [reconcile](tools/reconcile.mjs): 登记新节点
+- [lint 工具](tools/lint.mjs): L1 机械校验 · [reconcile](tools/reconcile.mjs): 从节点 frontmatter 同步索引并汇总 uncertainty

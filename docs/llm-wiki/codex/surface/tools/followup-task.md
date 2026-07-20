@@ -40,7 +40,7 @@ schema required 为 `target` 和 `message`，additional properties 为 false；r
 
 共享 handler 在 TriggerTurn 模式下禁止 root agent target；如果目标 path 是 root，会返回 model-facing error `Follow-up tasks can't target the root agent`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:79][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:83][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:85][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:86]
 
-`TriggerTurn` 会把 communication 的 `trigger_turn` 设为 true，并为投递构造 `AgentCommunicationKind::Followup` 上下文；投递路径与 `send_message` 共用 `send_inter_agent_communication`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:28][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:29][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:107][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:110][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:115]
+`TriggerTurn` 会把 communication 的 `trigger_turn` 设为 true，并为投递构造 `AgentCommunicationKind::Followup` 上下文；投递路径与 `send_message` 共用 `send_inter_agent_communication`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:28][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:107][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:110][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:115]
 
 ## 输出与边界
 

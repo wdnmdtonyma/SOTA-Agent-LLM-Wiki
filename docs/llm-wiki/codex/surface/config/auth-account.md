@@ -4,7 +4,7 @@ title: 认证与账户设置
 kind: config
 tier: T1
 source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/protocol/src/config_types.rs]
-symbols: [ConfigToml, ForcedChatgptWorkspaceIds, ForcedLoginMethod, AuthCredentialsStoreMode]
+symbols: [ForcedChatgptWorkspaceIds, ForcedLoginMethod, AuthCredentialsStoreMode]
 related: [config.model-provider, config.mcp-tools, subsys.config-auth.auth-flows, subsys.config-auth.credential-storage]
 evidence: explicit
 status: verified

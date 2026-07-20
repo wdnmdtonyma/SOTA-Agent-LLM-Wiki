@@ -60,7 +60,7 @@ runtime result 是 `InterruptAgentResult { previous_status }`,并可转换为 to
 
 ## 8 handler 走读
 
-handler 从 function arguments 解析 `target`,解析为 agent id,确认 agent 已知,拒绝 root target 和 self target,记录 previous status,调用 `agent_control.interrupt_agent(agent_id)`,然后发出 `SubAgentActivityKind::Interrupted` completed turn item。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:36] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:42] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:47] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:53] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:62] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:66] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:71] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:79]
+handler 从 function arguments 解析 `target`,解析为 agent id,确认 agent 已知,拒绝 root target 和 self target,记录 previous status,调用 `agent_control.interrupt_agent(agent_id)`,然后发出 `SubAgentActivityKind::Interrupted` completed turn item。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:36] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:42] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:47] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:53] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:62] [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:66]  [E: codex-rs/core/src/tools/handlers/multi_agents_v2/interrupt_agent.rs:79]
 
 ## 9 设计动机·edge·历史
 

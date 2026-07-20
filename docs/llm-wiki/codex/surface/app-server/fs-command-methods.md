@@ -4,7 +4,7 @@ title: fs/command/process/fuzzyFileSearch 方法
 kind: rpc
 tier: T1
 source: [codex-rs/app-server-protocol/src/protocol/common.rs, codex-rs/app-server-protocol/src/protocol/v2/fs.rs, codex-rs/app-server-protocol/src/protocol/v2/command_exec.rs, codex-rs/app-server-protocol/src/protocol/v2/process.rs]
-symbols: [FsReadFileParams, FsWriteFileParams, FsWatchParams, FsChangedNotification, CommandExecParams, CommandExecResponse, ProcessSpawnParams, FuzzyFileSearchParams]
+symbols: [FsReadFileParams, FsWriteFileParams, FsWatchParams, CommandExecParams, CommandExecResponse, ProcessSpawnParams, FuzzyFileSearchParams]
 related: [rpc.overview, rpc.notifications-system, subsys.app-server.transport, subsys.exec-sandbox.exec-server]
 evidence: explicit
 status: verified
@@ -26,7 +26,7 @@ fs params/notification 定义在 `v2/fs.rs`，包括 `FsReadFileParams`、`FsWri
 
 `ClientRequestSerializationScope` 明确有 command process、process handle、fuzzy file search session 和 fs watch scope，宏调用里相应方法使用这些 serialization 函数。[E: codex-rs/app-server-protocol/src/protocol/common.rs:120][E: codex-rs/app-server-protocol/src/protocol/common.rs:121][E: codex-rs/app-server-protocol/src/protocol/common.rs:122][E: codex-rs/app-server-protocol/src/protocol/common.rs:123][E: codex-rs/app-server-protocol/src/protocol/common.rs:161][E: codex-rs/app-server-protocol/src/protocol/common.rs:172][E: codex-rs/app-server-protocol/src/protocol/common.rs:177][E: codex-rs/app-server-protocol/src/protocol/common.rs:182]
 
-本轮新增的 4 个 client request 不属于 fs/command/process/fuzzy-search 域，因此该 catalog 的 21 个方法集合未变；`AppsRead`/`AppsInstalled` 插入在 fs methods 之前只造成后续宏行号漂移。[E: codex-rs/app-server-protocol/src/protocol/common.rs:745][E: codex-rs/app-server-protocol/src/protocol/common.rs:755][E: codex-rs/app-server-protocol/src/protocol/common.rs:760][E: codex-rs/app-server-protocol/src/protocol/common.rs:762]
+本轮新增的 4 个 client request 不属于 fs/command/process/fuzzy-search 域，因此该 catalog 的 21 个方法集合未变；`AppsRead`/`AppsInstalled` 插入在 fs methods 之前只造成后续宏行号漂移。[E: codex-rs/app-server-protocol/src/protocol/common.rs:745][E: codex-rs/app-server-protocol/src/protocol/common.rs:755][E: codex-rs/app-server-protocol/src/protocol/common.rs:762]
 
 ## 方法 catalog
 
