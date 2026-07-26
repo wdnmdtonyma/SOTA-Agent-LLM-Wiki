@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 # 不确定项日志([U] 汇总)
@@ -57,7 +57,7 @@ L2 verifier 已逐条对照 `packages/agent/src/types.ts` 与 `packages/agent/sr
 
 batch: agent-core
 node: ref.agent.error-codes
-updated: 3da591ab
+updated: cee5ff7520
 
 ## 当前状态
 
@@ -95,13 +95,13 @@ L2 verifier 已逐条证伪本节点 `[E]` 的可核性、行号精度与过度�
 
 batch: agent-core
 node: subsys.agent-core.jsonl-storage
-updated: 3da591ab
+updated: cee5ff7520
 
 ## 当前状态
 
 - L2 已逐条核对 `[E]` 可核性、行号精度与过度推断;未留下需要升级为 uncertainty 条目的不确定点。
 - 已将节点标记为 `status: verified`。
-- 收紧项:区分 full open path 的“过滤空白行后首行 header”和 list path 的“物理第一行 header”;把 `getPathToRoot()` 改写为从传入 entry id 回溯;明确 `encodeCwd()` 只移除一个开头 slash/backslash;删除“普通对话消息”这类超出本节点 source 的表述。
+- 收紧项:区分 full open path 的“过滤空白行后首行 header”和 list path 的“物理第一行 header”;把 `getPathToRootOrCompaction()` 改写为从传入 entry id 回溯;明确 `encodeCwd()` 只移除一个开头 slash/backslash;删除“普通对话消息”这类超出本节点 source 的表述。
 - 节点只依据 `packages/agent/src/harness/session/jsonl-storage.ts` 与 `packages/agent/src/harness/session/jsonl-repo.ts` 写入,未把测试文件作为 frontmatter source。
 
 ## agent-core-memory-storage
@@ -202,7 +202,7 @@ JSONL 文件格式、目录扫描、append 策略、memory backend 的 Map/array
 # Uncertainty staging: subsys.agent-core.session-tree
 
 - 本轮未留下 `[U]`。
-- `[I]` child relation: 本节点 source 只暴露 `parentId`、`LeafEntry.targetId` 与 `SessionStorage.getPathToRoot()`, 未包含 storage backend 的 child/path 构建算法, 所以正文把 child relation 写成由 `parentId` 反向索引得到的模型判断。
+- `[I]` child relation: 本节点 source 只暴露 `parentId`、`LeafEntry.targetId` 与 `SessionStorage.getPathToRootOrCompaction()`, 未包含 storage backend 的 child/path 构建算法, 所以正文把 child relation 写成由 `parentId` 反向索引得到的模型判断。
 - `[I]` session-state spine 边界: 本节点 source 未包含 `session.ts`, 因此 `buildSessionContext()`、entry-to-message projection、compaction read-time behavior 都只作为 `spine.session-state-model` 边界说明, 不在本节点内用 `[E]` 证明。
 - `[I]` uuidv7 ordering: `uuidv7()` 的 timestamp/sequence 代码支持单进程内大体单调的描述, 但跨进程严格有序性不由这两个 source 证明。
 
@@ -234,7 +234,7 @@ L2 已逐条证伪 `subsys.agent-core.system-prompt` 的 `[E]` 可核性、行�
 
 batch: agent-core
 node: ref.agent.thinking-levels
-updated: 3da591ab
+updated: cee5ff7520
 
 ## 当前状态
 
@@ -273,7 +273,7 @@ L2 verifier 已逐条证伪 `[E]` 可核性、行号精度与过度推断风险;
 
 # uncertainty: subsys.agent-core.tree-navigation
 
-L2 verifier 已逐条证伪 `[E]` 的可核性、行号精度与过度推断风险;节点已标记 `status: verified`。正文保留 1 个 source-scope `[U]`: `getPathToRoot` backend 具体实现不在本节点指定 source `packages/agent/src/harness/session/session.ts` 中;这不是失败的 `[E]`,而是本节点的覆盖边界。
+L2 verifier 已逐条证伪 `[E]` 的可核性、行号精度与过度推断风险;节点已标记 `status: verified`。正文保留 1 个 source-scope `[U]`: `getPathToRootOrCompaction` backend 具体实现不在本节点指定 source `packages/agent/src/harness/session/session.ts` 中;这不是失败的 `[E]`,而是本节点的覆盖边界。
 
 本轮收紧的表述:
 
@@ -285,7 +285,7 @@ L2 verifier 已逐条证伪 `[E]` 的可核性、行号精度与过度推断风�
 
 保留为边界/推断的点:
 
-- `getPathToRoot` 的具体 backend 实现不在本节点 source 中;本节点只证明 `Session.getBranch()` 调用 `storage.getPathToRoot(leafId)`。
+- `getPathToRootOrCompaction` 的具体 backend 实现不在本节点 source 中;本节点只证明 `Session.getBranch()` 调用 `storage.getPathToRootOrCompaction(leafId)`。
 - `fromId` 被解释为指定 leaf/path anchor,以及多个 compaction 时最后一次扫描到的 compaction 生效,均来自源码控制流推断,正文继续用 `[I]` 标注。
 
 ## agent-core-turn-control
@@ -405,13 +405,13 @@ Notes for later catalog work:
 
 # uncertainty: subsys.ai.image-generation
 
-- [U] 当前节点按任务指定 source 只核了 `packages/ai/src/images-models.ts`、`packages/ai/src/images.ts`、`packages/ai/src/providers/openrouter-images.ts`。从这些文件能确认 `openrouterImagesProvider()` 这个内置 image provider binding,但未在本节点内核完整 builtin registration 是否只包含 OpenRouter;若 L2 需要断言“唯一内置 image provider”,应追加核 `packages/ai/src/providers/images/register-builtins.ts` 与相关 registry 文件。
+- 本轮未留下 `[U]`：L2 已核 `packages/ai/src/providers/all.ts` 的 `builtinImagesProviders()`，目标树内置 image-generation provider 数组只返回 OpenRouter。
 
 ## ai-image-models
 
 # uncertainty-ai-image-models
 
-- [U] `openrouter/auto` 在 generated catalog 中声明 `cost.input=-1000000` 和 `cost.output=-1000000`,但本轮只从指定 source 核到数值本身,没有核到负数成本的产品语义或上游约定。证据: [E: packages/ai/src/image-models.generated.ts:272] [E: packages/ai/src/image-models.generated.ts:273]
+- [U] `openrouter/auto` 与 `openrouter/auto-beta` 在 generated catalog 中都声明 `cost.input=-1000000` 和 `cost.output=-1000000`，但本轮只从指定 source 核到数值本身，没有核到负数成本的产品语义或上游约定。证据：[E: packages/ai/src/image-models.generated.ts:347] [E: packages/ai/src/image-models.generated.ts:348] [E: packages/ai/src/image-models.generated.ts:362] [E: packages/ai/src/image-models.generated.ts:363]
 
 ## ai-lazy-loading
 
@@ -443,9 +443,10 @@ L2 核验后,`subsys.ai.mistral-conversations` 未新增需要上卷到 `referen
 
 # uncertainty-ai-model-catalog
 
-- 本轮按目标 commit 的 35 个已提交 `*.models.ts` structural shards 重建 `ref.ai.model-catalog`：1069 个 model id、1069 个目录行，未发现 key/id/provider 结构不一致或跨 shard 混用 provider。
-- 完整 name/cost/context 等 values 已移到 gitignored `src/providers/data/*.json`，当前 checkout 无法把这些字段作为 commit-local `[E]`；引用页因此只枚举可静态核证的 id/provider/api，并把完整 JSON bundle 的生成、验证和发布交给 `subsys.ai.model-catalog-publication`。
-- `index.json` 的 `group.models.instance_count` 已同步为 1069；本轮没有遗留 `[U]`。
+- 目标 `cee5ff7520` 的 Git tree 不含最终 model-data JSON，不能仅从 commit-local 文件完整枚举模型实例。
+- 本轮用官方 `@earendil-works/pi-ai@0.82.1` 制品重建目录：37 个静态 provider bucket、1,109 个 model id。tarball SHA-256 为 `2f9df9522808b621cd3449876537f03d8a8df8b8d7ec2d5b18c6a910aa85b490`，manifest structure hash 为 `1a3c7cf59ada71c94abe4540976960524ee933034491c75d6418e2abc1b42535`。
+- 制品 source map 内 `model-catalog.ts` 与 `models.generated.ts` 的 `sourcesContent` 和目标源码逐字节一致，但 package metadata 没有 `gitHead`；因此制品实例归属仍是强推断 `[I]`，逐模型行不升级为 commit-local `[E]`。
+- `index.json` 的 `group.models.instance_count` 已同步为 1,109；复现细节见 `_research/model-catalog-v0.82.1.md`。
 
 ## ai-model-discovery
 
@@ -511,13 +512,13 @@ L2 verifier 修正了三处过宽 [E]:assistant 历史 content 增补 `requiresT
 
 # uncertainty-ai-provider-catalog
 
-- 已按目标 `builtinProviders()` 覆盖 36 个 runtime provider，包括没有 structural model shard 的 Radius；catalog title 与 index group 已同步。本轮未留下 `[U]`。
+- 已按目标 `builtinProviders()` 覆盖 38 个 runtime provider，包括没有 structural model shard 的 Radius；catalog title 与 index group 已同步。本轮未留下 `[U]`。
 
 ## ai-provider-registry
 
 # uncertainty-ai-provider-registry
 
-- 已区分 36 个 runtime built-in providers 与 35 个 generated structural buckets，并按当前 `refresh(options)`、`fetchModels`、`ModelsStore` contract 重审证据。本轮未留下 `[U]`。
+- 已区分 38 个 runtime built-in providers 与 37 个 generated structural buckets，并按当前 `refresh(options)`、`fetchModels`、`ModelsStore` contract 重审证据。本轮未留下 `[U]`。
 
 ## ai-session-resources
 
@@ -553,9 +554,9 @@ L2 核验后未新增 `[U]`。核心 dispatch 结论可落到 `models.ts`、`api
 
 # Batch AA uncertainties
 
-- `ref.ai.image-models`: `openrouter/auto` still uses `-1000000` for both image-model `cost.input` and `cost.output`; the catalog records the source values but does not infer product semantics for negative cost.
+- `ref.ai.image-models`: `openrouter/auto` and `openrouter/auto-beta` both use `-1000000` for image-model `cost.input` and `cost.output`; the catalog records the source values but does not infer product semantics for negative cost.
 - `ref.coding-agent.extension-events`: source、catalog 与 `group.extension-events.instance_count` 已收敛为 33 个事件名，包括 `before_provider_headers` 与 `agent_settled`。
-- `ref.coding-agent.env-vars`: this catalog remains scoped to coding-agent plus directly consumed `pi-ai` provider env channels, including `RADIUS_API_KEY`; `packages/orchestrator` `PI_ORCHESTRATOR_*` and TUI-only debug env are intentionally outside this node's authority.
+- `ref.coding-agent.env-vars`: this catalog remains scoped to coding-agent plus directly consumed `pi-ai` provider env channels, including `RADIUS_API_KEY`; `packages/server` `PI_SERVER_*` and TUI-only debug env are intentionally outside this node's authority.
 - `ref.coding-agent.config-keys`: current `Settings` + nested leaves + `PackageSource` object keys and `group.config-keys.instance_count` have converged on 74 catalog rows, including `showCacheMissNotices` and `packages[].autoload`.
 - `ref.coding-agent.config-keys`: `terminal.showTerminalProgress` is present in `SettingsManager` but still absent from `packages/coding-agent/docs/settings.md`.
 - `ref.interactive.components`: the catalog counts directory files, so whether `components/index.ts` should count as an instance or only barrel metadata remains a catalog-definition question.
@@ -564,8 +565,8 @@ L2 核验后未新增 `[U]`。核心 dispatch 结论可落到 `models.ts`、`api
 
 ## batch-ab
 
-- `ref.ai.model-catalog`: publication shards、生成目录与 `group.models.instance_count` 已收敛为 1069 个模型实例。
-- `ref.coding-agent.rpc-methods`: `RpcCommand`、catalog 与 `group.rpc-methods.instance_count` 已收敛为 31；`extension_ui_response` 仍按协议定义排除在普通 command catalog 外。
+- `ref.ai.model-catalog`: publication shards、生成目录与 `group.models.instance_count` 在 `cee5ff7520` 已收敛为 1109 个模型实例。
+- `ref.coding-agent.rpc-methods`: `RpcCommand`、catalog 与 `group.rpc-methods.instance_count` 在 `cee5ff7520` 已收敛为 32；`extension_ui_response` 仍按协议定义排除在普通 command catalog 外。
 - `ref.coding-agent.rpc-methods`: `packages/coding-agent/docs/rpc.md` still documents `get_commands` response examples/fields with top-level `location` and `path`, but `RpcSlashCommand` and `rpc-mode.ts` emit `sourceInfo` instead.
 
 ## batch-ae
@@ -712,7 +713,7 @@ No unresolved [U] items found while reading the listed source files and immediat
 
 # Recheck · coding-agent keybindings
 
-- `index.json`、节点 frontmatter 与 `3da591ab` 源码已统一使用 `KEYBINDINGS`、`migrateKeybindingsConfig`、`KeybindingsManager` 和 `AppKeybindings`；旧 planned symbols 已清除。
+- `index.json`、节点 frontmatter 与 `cee5ff7520` 源码已统一使用 `KEYBINDINGS`、`migrateKeybindingsConfig`、`KeybindingsManager` 和 `AppKeybindings`；旧 planned symbols 已清除。
 
 ## coding-agent-migrations
 
@@ -844,71 +845,71 @@ L2 复核中修正了一批落在注释行或承载不足行的 `[E]` 引用,并
 - parent-folder trust option 的产品意图、拒绝 trust 的较窄粒度、sorted JSON 便于 diff/排查, 都是由 update/write 控制流推出的设计含义。
 - `resolveProjectTrusted()` 的 override chain 命名、non-interactive `ask` 的 fail-closed 表述, 以及 extension runner / loader 的职责边界, 都由当前两个 source files 的调用顺序和 imports 推断。
 
-## orchestrator-config
+## server-config
 
-# uncertainty-orchestrator-config
+# uncertainty-server-config
 
-- `subsys.orchestrator.config`: `socket 与 JSON state 文件共享一个 orchestrator dir` 是源码明确事实,但“没有展示跨进程锁或迁移策略”只基于本节点 source 未见相关逻辑;真正的锁/清理语义需要 `subsys.orchestrator.ipc-transport` 和 storage 节点继续核验。[U]
-- `subsys.orchestrator.config`: `rpc-stream` stdin loop 对无效 JSON line 的进程级表现未跑集成测试;源码显示 loop 内直接 `JSON.parse(line)`,但具体 unhandled exception/exit 行为需测试确认。[U]
-- `subsys.orchestrator.config`: `isBunBinary` 对未来 Bun compiled binary virtual path 的兼容性未知;当前只能证实它匹配 `"$bunfs"`, `"~BUN"`, `"%7EBUN"` 三种字符串片段。[U]
+- `subsys.server.config`: `socket 与 JSON state 文件共享一个 server dir` 是源码明确事实,但“没有展示跨进程锁或迁移策略”只基于本节点 source 未见相关逻辑;真正的锁/清理语义需要 `subsys.server.ipc-transport` 和 storage 节点继续核验。[U]
+- `subsys.server.config`: `rpc-stream` stdin loop 对无效 JSON line 的进程级表现未跑集成测试;源码显示 loop 内直接 `JSON.parse(line)`,但具体 unhandled exception/exit 行为需测试确认。[U]
+- `subsys.server.config`: `isBunBinary` 对未来 Bun compiled binary virtual path 的兼容性未知;当前只能证实它匹配 `"$bunfs"`, `"~BUN"`, `"%7EBUN"` 三种字符串片段。[U]
 
-## orchestrator-glossary
+## server-glossary
 
-# uncertainty-orchestrator-glossary
+# uncertainty-server-glossary
 
-Batch: orchestrator
+Batch: server
 Node: ref.glossary
 Path: docs/llm-wiki/pi/reference/glossary.md
 
 ## [U] 待同步项
 
-- 当前无阻塞 `ref.glossary` verified 状态的 unknown 条目。该节点是术语导览，不负责证明 package-internal、RPC/IPC、provider/model 或 orchestrator 细节；这些内容已在正文标为 `[I]` 并链接到对应权威节点。
+- 当前无阻塞 `ref.glossary` verified 状态的 unknown 条目。该节点是术语导览，不负责证明 package-internal、RPC/IPC、provider/model 或 server 细节；这些内容已在正文标为 `[I]` 并链接到对应权威节点。
 
 ## [I] 降级说明
 
 - “Pi monorepo”是 wiki 对 README public package table 的组织性归纳；README 只直接列出 `pi-ai`、`pi-agent-core`、`pi-coding-agent`、`pi-tui` 四个包。
 - “wire API” 是 wiki 术语；本轮限定 source 无法直证它对应 `Api` / `KnownApi` 字符串协议类型。
 - “spine.overview 是背景入口”是 wiki 编排判断，不是 pi 源码自身概念。
-- `pi-orchestrator`、IPC、Unix socket path、OrchestratorRequest、OrchestratorSupervisor、RPC stream bridge、Radius、serve lifecycle 等术语已作为导览 `[I]` 保留，并链接到 `ref.package-index` / `subsys.orchestrator.*` / `ref.orchestrator.ipc-messages` 等节点；不再因为 glossary 自身 source 只有 README/AGENTS 而登记为 unknown。
+- `pi-server`、IPC、Unix socket path、ServerRequest、ServerSupervisor、RPC stream bridge、Radius、serve lifecycle 等术语已作为导览 `[I]` 保留，并链接到 `ref.package-index` / `subsys.server.*` / `ref.server.ipc-messages` 等节点；不再因为 glossary 自身 source 只有 README/AGENTS 而登记为 unknown。
 - Agent loop、Tool call、ModelRegistry、Provider、Skill、Slash command、RPC JSONL framing 等 package-internal 术语已作为导览 `[I]` 保留，并链接到对应 spine/surface/subsystem/reference 节点；不再作为 glossary 节点的 L2 阻塞项。
 
-## orchestrator-instance-status
+## server-instance-status
 
-# uncertainty: ref.orchestrator.instance-status
+# uncertainty: ref.server.instance-status
 
-L3 后本节点的权威范围已收窄到 `packages/orchestrator/src/types.ts` 与 `packages/orchestrator/src/config.ts`: `InstanceStatus` union、`InstanceRecord` interface 字段、以及 orchestrator 本地路径 helper。L2 中“153 条因不在 source 列而降为 unknown”的逐项噪音已移除;对应 storage/supervisor/README 行为不再在本 reference 节点重复证明。
+L3 后本节点的权威范围已收窄到 `packages/server/src/types.ts` 与 `packages/server/src/config.ts`: `InstanceStatus` union、`InstanceRecord` interface 字段、以及 server 本地路径 helper。L2 中“153 条因不在 source 列而降为 unknown”的逐项噪音已移除;对应 storage/supervisor/README 行为不再在本 reference 节点重复证明。
 
 ## 仍保留的不确定项
 
-- `InstanceRecord` 是否构成 `instances.json` 的完整 runtime schema、是否有 migration/locking/validation 语义,不能仅由 `types.ts` 与 `config.ts` 证明;需要在 `subsys.orchestrator.storage` 或 storage 源码范围内复核。[U]
+- `InstanceRecord` 是否构成 `instances.json` 的完整 runtime schema、是否有 migration/locking/validation 语义,不能仅由 `types.ts` 与 `config.ts` 证明;需要在 `subsys.server.storage` 或 storage 源码范围内复核。[U]
 - `starting`、`online`、`stopping`、`stopped`、`error` 的写入点、状态迁移和 restart recovery 行为,不能仅由 `InstanceStatus` union 证明;需要在 supervisor/storage 行为节点复核。[U]
 
-## orchestrator-ipc-messages
+## server-ipc-messages
 
-# uncertainty-orchestrator-ipc-messages
+# uncertainty-server-ipc-messages
 
 本轮未留下需要上收 `reference/uncertainty.md` 的 `[U]` 项。
 
-- `[I]` `status` 的具体取值未在 `ref.orchestrator.ipc-messages` 展开:当前节点只引用 `protocol.ts` 中 `InstanceStatus` 的导入与 `InstanceSummary.status` 字段,实例状态生命周期应由 orchestrator 实例/transport/supervisor 相关节点覆盖。
+- `[I]` `status` 的具体取值未在 `ref.server.ipc-messages` 展开:当前节点只引用 `protocol.ts` 中 `InstanceStatus` 的导入与 `InstanceSummary.status` 字段,实例状态生命周期应由 server 实例/transport/supervisor 相关节点覆盖。
 - `[I]` `parseRequestLine()` / `parseResponseLine()` 不做 runtime validation:源码显示仅 `JSON.parse` 后类型断言,但是否有调用方前置校验不属于本节点 source 列表。
-- `[I]` `subsys.orchestrator.message-protocol` 的分工说明来自 index related 与本节点 catalog 定位,不是 `protocol.ts` 内部注释。
+- `[I]` `subsys.server.message-protocol` 的分工说明来自 index related 与本节点 catalog 定位,不是 `protocol.ts` 内部注释。
 
-## orchestrator-ipc-transport
+## server-ipc-transport
 
-# uncertainty-orchestrator-ipc-transport
+# uncertainty-server-ipc-transport
 
 本轮独立复核后未留下需要升级到全局 `reference/uncertainty.md` 的 `[U]`。无法作为逐行源码事实承诺的内容均留在节点正文的 `[I]`: 主要是 Unix-style socket path 的平台边界、短连接/长流设计取舍、无 runtime schema validation 的影响、无 timeout/retry/backpressure policy 的调用方风险, 以及长期兼容性边界。
 
-## orchestrator-message-protocol
+## server-message-protocol
 
-# uncertainty · orchestrator message protocol
+# uncertainty · server message protocol
 
 - 本轮未留下需要并入 `reference/uncertainty.md` 的 `[U]`。
 - 有四类内容已降级或保留为 `[I]`:协议文件之外的职责边界推断,request `type` 名称对应的业务语义,`parseRequestLine()`/`parseResponseLine()` 缺少运行时 schema validation 的行为影响判断,以及 imported coding-agent payload 未在本协议文件内重定义的归纳。
 
-## orchestrator-package-index
+## server-package-index
 
-# uncertainty-orchestrator-package-index
+# uncertainty-server-package-index
 
 本批次填充 `ref.package-index` 没有新增 `[U]`。
 
@@ -919,21 +920,21 @@ L3 后本节点的权威范围已收窄到 `packages/orchestrator/src/types.ts` 
 - 根 build 顺序与依赖方向相容：build script 与 package dependencies 可核到，但“相容”是跨文件推断。
 - `pi-agent-core` 的 entrypoint 可支撑 `spine.layered-architecture` 中 reusable runtime API 面的归纳：导出项可核到，但与 spine 节点的对应关系不是本节点 source 直接事实。
 - `pi-coding-agent` 的 entrypoint 可归纳为产品层 API 面：导出项和 CLI package description 可核到，但“产品层(product assembly)”是跨证据解释。
-- `pi-orchestrator` 的 runtime model 可归纳为 experimental instance orchestration：experimental 标记与 serve/supervisor 行为可核到，但 “runtime model” 是对这些行为的概括。
+- `pi-server` 的 runtime model 可归纳为 experimental instance orchestration：experimental 标记与 serve/supervisor 行为可核到，但 “runtime model” 是对这些行为的概括。
 - `spine.layered-architecture` / `spine.overview` 应如何使用本 catalog：这是 wiki 导览判断，不是单一源码事实。
 
-## orchestrator-radius
+## server-radius
 
-# uncertainty-orchestrator-radius
+# uncertainty-server-radius
 
-- Radius 云端服务端如何展示、路由或 relay 已注册的 machine/Pi instance, 本地 `packages/orchestrator/src/radius.ts` 只能证明注册 payload 和 `relay: false`/`iroh: false`, 不能证明云端行为。[U]
-- Radius OAuth credential 的刷新、过期处理和 scope 语义不在 orchestrator 源码中实现；本节点只能证明 `AuthStorage` 读取 provider `radius` 的 access token, 以及 `PI_RADIUS_API_KEY` fallback。[U]
+- Radius 云端服务端如何展示、路由或 relay 已注册的 machine/Pi instance, 本地 `packages/server/src/radius.ts` 只能证明注册 payload 和 `relay: false`/`iroh: false`, 不能证明云端行为。[U]
+- Radius OAuth credential 的刷新、过期处理和 scope 语义不在 server 源码中实现；本节点只能证明 `AuthStorage` 读取 provider `radius` 的 access token, 以及 `RADIUS_API_KEY` fallback。[U]
 - `isRadiusEnabled()` 只做本地 token/env 存在性判断, 不能证明 token 会被 Radius 云端接受；云端拒绝原因只能在后续 HTTP error 中表现。[U]
 - `RadiusRegistration.expiresInMs` 在 type 中存在, 但当前本地 Radius client 没有使用它；是否由云端仅作提示或未来续约字段未在源码中说明。[U]
 
-## orchestrator-request-handler
+## server-request-handler
 
-# uncertainty-orchestrator-request-handler
+# uncertainty-server-request-handler
 
 本轮没有留下需要上升为 `[U]` 的源码不确定项。
 
@@ -942,43 +943,43 @@ L3 后本节点的权威范围已收窄到 `packages/orchestrator/src/types.ts` 
 - request handler 与 IPC transport 的拆分动机来自 `serve()` 只传 handler object、`ipc/server.ts` 负责 JSONL/socket、`handler.ts` 只处理 typed request 的结构;源码没有设计说明,所以主节点标 `[I]`。
 - `rpc_stream` 两步握手的动机来自 `handleIpcRequest()` 先回 `rpc_ready`、`ipc/server.ts` 再打开 stream 的控制流;源码没有注释说明,所以主节点标 `[I]`。
 - 同一 stream 内 UI response 与 RPC command 分流的设计意图来自 `openRpcStream()` 的 branch 行为;源码没有注释说明,所以主节点标 `[I]`。
-- experimental 稳定性可由 `packages/orchestrator/package.json` 的 description 核到;“不要假设 wire/API 已稳定”是文档层风险提示,所以主节点保留 `[I]`。
+- experimental 稳定性可由 `packages/server/package.json` 的 description 核到;“不要假设 wire/API 已稳定”是文档层风险提示,所以主节点保留 `[I]`。
 
-## orchestrator-rpc-spawner
+## server-rpc-spawner
 
-# uncertainty-orchestrator-rpc-spawner
+# uncertainty-server-rpc-spawner
 
 本轮没有需要上升为 `[U]` 的源码缺口;下列项目是节点正文中保留为 `[I]` 的推断或风险说明。
 
-- `[I]` `surface.modes.rpc` 与 `subsys.orchestrator.rpc-spawner` 的边界:源码证明 orchestrator import coding-agent RPC 类型并通过 JSONL 驱动子进程,但边界归纳来自节点职责划分;protocol 细节不在本节点源码中展开。
-- `[I]` experimental 稳定性: `packages/orchestrator/package.json` 明确 description 为 `experimental orchestrator package for pi`,节点把该包级描述降级为 subsystem 稳定性判断。
+- `[I]` `surface.modes.rpc` 与 `subsys.server.rpc-spawner` 的边界:源码证明 server import coding-agent RPC 类型并通过 JSONL 驱动子进程,但边界归纳来自节点职责划分;protocol 细节不在本节点源码中展开。
+- `[I]` experimental 稳定性: `packages/server/package.json` 明确 description 为 `experimental server package for pi`,节点把该包级描述降级为 subsystem 稳定性判断。
 - `[I]` Bun binary 分支显式启动同目录 `pi` / `pi.exe` 并传 `--mode rpc`:源码给出 command/args,把它解释成“同目录 CLI binary”是路径构造语义。
 - `[I]` Node/package 分支通过 `rpc-entry` 而不是 `getSpawnCommand()` 自身传 `--mode rpc`:已用 `rpc-entry.ts` 核到 entry 调用 `main(["--mode", "rpc", ...])`,但这是跨包入口语义归纳;因此节点正文只把“字面 `pi --mode rpc`”用于 Bun 分支。
 - `[I]` stderrBuffer 增长、JSON.parse 未捕获、dispose 无 timeout、stray response 静默忽略等 gotcha:源码能核到对应代码路径,影响描述是风险推断。
 
-## orchestrator-storage
+## server-storage
 
-# uncertainty: subsys.orchestrator.storage
+# uncertainty: subsys.server.storage
 
-本轮未新增 `[U]`。`storage.ts`、`config.ts`、`types.ts`、`supervisor.ts` 和 `packages/orchestrator/README.md` 足以核验 instance persistence 的文件格式、读写路径、upsert/remove 行为、路径依赖与 experimental 稳定性。
+本轮未新增 `[U]`。`storage.ts`、`config.ts`、`types.ts`、`supervisor.ts` 和 `packages/server/README.md` 足以核验 instance persistence 的文件格式、读写路径、upsert/remove 行为、路径依赖与 experimental 稳定性。
 
-本轮改正/降级的内容主要是: 把 storage 只做本地 I/O 的概括标成解释性判断并把证据挪到实际读写行; 把 supervisor 调用证据挪到导入和调用行; 把 whole-file JSON array 的表述改成 load/get 读数组、save/upsert/remove 写回数组; 把 `upsertInstance()` 的“唯一键”降为源码可证的“匹配键”, 并明确它不清理既有重复 id; 把 `ensureOrchestratorDir()` 的保存路径证据挪到实际调用行; 把 session metadata “只在特定 RPC command 后刷新”改成 spawn 期间以及特定 RPC command 后刷新。
+本轮改正/降级的内容主要是: 把 storage 只做本地 I/O 的概括标成解释性判断并把证据挪到实际读写行; 把 supervisor 调用证据挪到导入和调用行; 把 whole-file JSON array 的表述改成 load/get 读数组、save/upsert/remove 写回数组; 把 `upsertInstance()` 的“唯一键”降为源码可证的“匹配键”, 并明确它不清理既有重复 id; 把 `ensureServerDir()` 的保存路径证据挪到实际调用行; 把 session metadata “只在特定 RPC command 后刷新”改成 spawn 期间以及特定 RPC command 后刷新。
 
-仍保留为 `[I]` 的内容主要是解释性判断: whole-file JSON array 是一种简化存储取舍; storage.ts 没有 process/subscription/status-transition 逻辑; `upsertInstance()` 不做 field-level merge; `removeInstance()` 对 persisted record 执行硬删除后 stopped record 不保留在 `instances.json`; `loadInstances()` 的 parse error 会传播; `saveInstances()` 未展示 temp-file rename、file lock、schema migration, 因而不宣称 crash consistency、多进程写入一致性或历史格式兼容性; `ref.orchestrator.instance-status` 承担状态语义 catalog, 本节点只覆盖落盘行为。
+仍保留为 `[I]` 的内容主要是解释性判断: whole-file JSON array 是一种简化存储取舍; storage.ts 没有 process/subscription/status-transition 逻辑; `upsertInstance()` 不做 field-level merge; `removeInstance()` 对 persisted record 执行硬删除后 stopped record 不保留在 `instances.json`; `loadInstances()` 的 parse error 会传播; `saveInstances()` 未展示 temp-file rename、file lock、schema migration, 因而不宣称 crash consistency、多进程写入一致性或历史格式兼容性; `ref.server.instance-status` 承担状态语义 catalog, 本节点只覆盖落盘行为。
 
-## orchestrator-supervisor
+## server-supervisor
 
-# uncertainty-orchestrator-supervisor
+# uncertainty-server-supervisor
 
 ## 本轮 [U]
 
-- 无。`subsys.orchestrator.supervisor` 中无法完全由 `packages/orchestrator/src/supervisor.ts` 单文件说明的 `--mode rpc`、IPC Unix socket、Radius enabled/registration 事实,已改用相邻源码文件落 `[E]`;对源码控制流含义的解释保留为 `[I]`。
+- 无。`subsys.server.supervisor` 中无法完全由 `packages/server/src/supervisor.ts` 单文件说明的 `--mode rpc`、IPC Unix socket、Radius enabled/registration 事实,已改用相邻源码文件落 `[E]`;对源码控制流含义的解释保留为 `[I]`。
 
 ## 本轮 [I]
 
 - `recoverAfterRestart()` 不重建 RPC 子进程或 live map:源码只加载并保存 records、disconnect Radius,未出现 spawn/bind live process 的调用。
 - `failSpawn()` 可能留下 `stopped` record:源码路径没有 `removeInstance()`;这是从 `setStatus()` 会 upsert 和 fail path 未删除 storage record 推导。
-- `surface.modes.rpc` 是 orchestrator child process 的 headless host surface:该关系由 `rpc-process.ts` 的 spawn/stdin/stdout 与 coding-agent `rpc-mode.ts` 的 stdout event 输出共同推导。
+- `surface.modes.rpc` 是 server child process 的 headless host surface:该关系由 `rpc-process.ts` 的 spawn/stdin/stdout 与 coding-agent `rpc-mode.ts` 的 stdout event 输出共同推导。
 
 ## spine-agent-loop
 
@@ -1265,13 +1266,13 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 - `main.ts` 的 mode 解析、CLI `--mode` 枚举和 RPC mode 禁用 `@file` 参数都不在本节点 index source 内;主节点不再把这些作为本节点 `[E]` 展开。
 - `runRpcMode` 在 `new_session`、`switch_session`、`fork`、`clone` 后 rebind 的原因来自控制流和 `runtimeHost.session` 重新读取方式,源码能证明调用关系,设计原因标为 `[I]`。
 - host 用 response `id` 关联 command 接受/失败、用 event stream 观察 agent 生命周期,来自文档中的 response/event 区分和 event 无 `id` 语义归纳。
-- `surface.modes.rpc-protocol`、`ref.coding-agent.rpc-methods`、`subsys.orchestrator.rpc-spawner` 的职责分工来自 index related/source/symbols 和节点粒度,不是 RPC runtime 源码内声明。
+- `surface.modes.rpc-protocol`、`ref.coding-agent.rpc-methods`、`subsys.server.rpc-spawner` 的职责分工来自 index related/source/symbols 和节点粒度,不是 RPC runtime 源码内声明。
 
 ## 未展开范围
 
 - 未逐项列出全部 `RpcCommand` 字段和每个 `RpcResponse` payload;该内容应由 `ref.coding-agent.rpc-methods` 覆盖。
 - 未逐字段解释 `RpcExtensionUIRequest`、`RpcSessionState`、JSONL reader 的边界条件或 typed client;该内容应由 `surface.modes.rpc-protocol` 覆盖。
-- 未核验 orchestrator 的 spawn/pending-response 实现;该内容不在本节点 index source 内,应由 `subsys.orchestrator.rpc-spawner` 覆盖。
+- 未核验 server 的 spawn/pending-response 实现;该内容不在本节点 index source 内,应由 `subsys.server.rpc-spawner` 覆盖。
 
 ## surface-prompts-system
 
@@ -1285,19 +1286,20 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 
 # uncertainty: surface.providers.auth
 
-本轮核验 `surface.providers.auth` 保留 1 个 `[U]`:
+本轮核验 `surface.providers.auth` 保留 1 个 `[U]`：
 
-- index 中 `surface.providers.auth` 的 `symbols` 包含 `login`,且 `source` 包含 `packages/ai/src/cli.ts`;但用户可见的 coding-agent `/login` 实际分流在 `packages/coding-agent/src/modes/interactive/interactive-mode.ts`,持久化在 `packages/coding-agent/src/core/auth-storage.ts`,而 `packages/ai/src/cli.ts` 的 standalone `login(providerId)` 写的是当前目录 `auth.json`。因此 `login` 这个 symbol 在本节点中的权威归属需要后续消歧。
+- runtime OAuth registry 已包含 Kimi Coding，且 coding-agent 的登录路径可调用该 provider；但 `packages/coding-agent/docs/providers.md` 的 subscription provider bullet 尚未列 Kimi Coding。Wiki 以运行时代码为 ground truth，并把这项用户文档漂移保留为 `[U]`。
 
 保留为 `[I]` 的主要结论:
 
-- `Models.getAuth()`/`applyAuth()` 是 `pi-ai` runtime request auth path,而 `AuthStorage.getApiKey()`/model-registry 是 coding-agent 产品层 compatibility path:这是由调用边界和 source ownership 推出,不是某个文件里的单句设计声明。
-- `builtinProviders()` 是 provider membership ground truth,`env-api-keys.ts` 是 API key 环境变量 ground truth:这是 `conventions.md` 的 pi 专属约定与当前 source 布局共同推出。
+- `Models.getAuth()`/`applyAuth()` 是 `pi-ai` runtime request auth path，而 `AuthStorage.getApiKey()`/model-registry 是 coding-agent 产品层 compatibility path：这是由调用边界和 source ownership 推出，不是某个文件里的单句设计声明。
+- `builtinProviders()` 是 provider membership ground truth，`env-api-keys.ts` 是 API key 环境变量 ground truth：这是 `conventions.md` 的 pi 专属约定与当前 source 布局共同推出。
 
 L3 lint 修正:
 
-- `surface.providers.auth` 中指向 `models.ts:239` 的纯括号锚点已移除,同一断言改由 `apiKey`/`env` 参数行承载。
-- `env-api-keys.ts:115-117` 与 `auth/resolve.ts:34,36-38` 原本只指向注释/JSDoc,已改为函数签名、分支和返回语句等真实承载行;其中 `findEnvKeys` 不返回 ambient credential source 的结论保留为 `[I]` 辅助解释。
+- 旧版把裸 `login` symbol 与 `packages/ai/src/cli.ts` 当作 metadata 歧义；当前 frontmatter 已改为 `ModelRuntime.login` / `Models.login` 等精确 symbols，且不再把该 CLI 文件列为 source，因此这项历史歧义已关闭。
+- `surface.providers.auth` 中指向 `models.ts:239` 的纯括号锚点已移除，同一断言改由 `apiKey`/`env` 参数行承载。
+- `env-api-keys.ts:115-117` 与 `auth/resolve.ts:34,36-38` 原本只指向注释/JSDoc，已改为函数签名、分支和返回语句等真实承载行；其中 `findEnvKeys` 不返回 ambient credential source 的结论保留为 `[I]` 辅助解释。
 
 ## surface-providers-custom-provider
 
@@ -1407,7 +1409,7 @@ Batch: `surface`
 
 ## Items
 
-- [U] 本节点刻意限定为 coding-agent 产品层和它直接调用的 `pi-ai` provider/env 通道;`packages/orchestrator` 的 Radius / orchestrator env 和纯 `packages/tui` 内部 debug env 没有并入 `ref.coding-agent.env-vars`。如果后续要做全仓库 env catalog,需要新增 cross/package-specific catalog 或扩大本节点范围。
+- [U] 本节点刻意限定为 coding-agent 产品层和它直接调用的 `pi-ai` provider/env 通道;`packages/server` 的 Radius / server env 和纯 `packages/tui` 内部 debug env 没有并入 `ref.coding-agent.env-vars`。如果后续要做全仓库 env catalog,需要新增 cross/package-specific catalog 或扩大本节点范围。
 - [U] `AWS_ENDPOINT_URL_BEDROCK_RUNTIME` 在用户文档中作为 Bedrock proxy env 出现,但当前核查到的 source set 没有显式 `getProviderEnvValue()` / `process.env` 读取;行为可能由 AWS SDK 默认 env 机制承接。
 - [U] `OPENROUTER_API_KEY` 在 `env-api-keys.ts` 覆盖 text provider `openrouter`;OpenRouter image provider 也使用同名 env,但本节点没有把 image provider catalog 作为逐实例权威来源展开。
 
@@ -1488,7 +1490,7 @@ L2 surface 核验按 `docs/llm-wiki/pi/index.json` 的 source 执行;该 index s
 batch: surface
 node: `ref.coding-agent.slash-commands`
 path: `reference/slash-commands.md`
-updated: `3da591ab`
+updated: `cee5ff7520`
 
 ## Group count
 
@@ -1539,7 +1541,7 @@ source:
   - packages/coding-agent/src/cli/session-picker.ts
 evidence: unknown
 status: draft
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > 本 staging 记录本轮按 `docs/llm-wiki/pi/index.json` 的 source 核验 `surface.sessions.management` 后,仍不能用三源直接证明的事项。
@@ -1682,7 +1684,7 @@ Node: `subsys.coding-agent.bash-executor`
 
 # uncertainty: tools path resolution
 
-- `resolveToolPath` naming drift: 当前 `3da591ab` 源码和 `index.json` symbols 未找到 `resolveToolPath`; 实际工具侧入口是 `resolveToCwd()`、`resolveReadPath()`、`resolveReadPathAsync()` 和 `expandPath()`。节点正文已按源码写为 [U], 后续若有历史文档或未枚举 source 证明 `resolveToolPath` 是旧名/外部 API, 再补充来源。
+- `resolveToolPath` naming drift: 当前 `cee5ff7520` 源码和 `index.json` symbols 未找到 `resolveToolPath`; 实际工具侧入口是 `resolveToCwd()`、`resolveReadPath()`、`resolveReadPathAsync()` 和 `expandPath()`。节点正文已按源码写为 [U], 后续若有历史文档或未枚举 source 证明 `resolveToolPath` 是旧名/外部 API, 再补充来源。
 
 ## tools-read
 
@@ -1785,7 +1787,7 @@ node: subsys.tui.editor-mechanics
 
 batch: tui
 node: ref.tui.key-codes
-updated: 3da591ab
+updated: cee5ff7520
 
 本轮未登记需要同步到 `reference/uncertainty.md` 的 `[U]` 项。
 
@@ -1869,4 +1871,11 @@ updated: 3da591ab
 # uncertainty-tui-text-utilities
 
 本轮填充 `subsys.tui.text-utilities` 未新增需要汇总到 `reference/uncertainty.md` 的 `[U]` 项。
+
+## update-cee5ff7520
+
+# update-cee5ff7520
+
+- `[U]` 目标源码的 OAuth registry 与 Kimi provider 已提供 Kimi Coding OAuth，但 `packages/coding-agent/docs/providers.md` 的 subscription bullet 尚未列 Kimi Coding。运行时事实以源码为准；用户文档列表存在同步滞后。
+- `[I]` 官方 `@earendil-works/pi-ai@0.82.1` 模型制品与目标源码的关键 source-map `sourcesContent` 一致，但 npm metadata 缺少 `gitHead`，所以不能把“该 tarball 必然由 `cee5ff7520` 构建”标为 explicit。
 

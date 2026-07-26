@@ -19,7 +19,7 @@ related:
   - surface.modes.interactive
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `surface.cli.overview` 描述 `pi` 用户可见 CLI surface: argv 如何被 `parseArgs()` 拆成 `Args`,哪些子命令在 agent runtime 前短路,以及 `resolveAppMode()` 如何选择 interactive / print / json / rpc。
@@ -79,7 +79,7 @@ updated: 3da591ab
 
 `resolveAppMode(parsed, stdinIsTTY, stdoutIsTTY)` 的真实优先级是: `parsed.mode === "rpc"` 返回 `rpc`;`parsed.mode === "json"` 返回 `json`;`parsed.print || !stdinIsTTY || !stdoutIsTTY` 返回 `print`;否则返回 `interactive` [E: packages/coding-agent/src/main.ts:100] [E: packages/coding-agent/src/main.ts:101] [E: packages/coding-agent/src/main.ts:102] [E: packages/coding-agent/src/main.ts:104] [E: packages/coding-agent/src/main.ts:105] [E: packages/coding-agent/src/main.ts:107] [E: packages/coding-agent/src/main.ts:108] [E: packages/coding-agent/src/main.ts:110]。
 
-`json` 是 app mode,但执行器复用 print path: `toPrintOutputMode(appMode)` 把 `json` 映射为 `"json"`,其他非 RPC print path 映射为 `"text"`,最后 `runPrintMode(runtime, { mode: toPrintOutputMode(appMode), ... })` 执行 [E: packages/coding-agent/src/main.ts:113] [E: packages/coding-agent/src/main.ts:114] [E: packages/coding-agent/src/main.ts:846] [E: packages/coding-agent/src/main.ts:847]。
+`json` 是 app mode,但执行器复用 print path: `toPrintOutputMode(appMode)` 把 `json` 映射为 `"json"`,其他非 RPC print path 映射为 `"text"`,最后 `runPrintMode(runtime, { mode: toPrintOutputMode(appMode), ... })` 执行 [E: packages/coding-agent/src/main.ts:113] [E: packages/coding-agent/src/main.ts:114] [E: packages/coding-agent/src/main.ts:851] [E: packages/coding-agent/src/main.ts:852]。
 
 RPC mode 有两个输入约束: 用户文档定义 RPC over stdin/stdout,`main` 不为 RPC 读取 piped stdin;并且 `--mode rpc` 搭配 `@file` 会报错退出 [E: packages/coding-agent/docs/usage.md:173] [E: packages/coding-agent/src/main.ts:546] [E: packages/coding-agent/src/main.ts:547] [E: packages/coding-agent/src/main.ts:548] [E: packages/coding-agent/src/main.ts:768]。
 
@@ -103,7 +103,7 @@ model/tool flags 在 `buildSessionOptions` 里变成 `CreateAgentSessionOptions`
 
 `prepareInitialMessage(parsed, autoResizeImages, stdinContent)` 在没有 `@file` 时直接调用 `buildInitialMessage({ parsed, stdinContent })`;有 `@file` 时先 `processFileArguments(parsed.fileArgs, { autoResizeImages })`,再把 file text/images 与 stdinContent 一起交给 initial-message builder [E: packages/coding-agent/src/main.ts:121] [E: packages/coding-agent/src/main.ts:129] [E: packages/coding-agent/src/main.ts:130] [E: packages/coding-agent/src/main.ts:133] [E: packages/coding-agent/src/main.ts:134] [E: packages/coding-agent/src/main.ts:136] [E: packages/coding-agent/src/main.ts:137] [E: packages/coding-agent/src/main.ts:138]。
 
-最终 mode dispatch 是三分支: `rpc` 调用 `runRpcMode(runtime)`;`interactive` 创建 `InteractiveMode(runtime, ...)` 并 `run()`;其余 print/json path 调用 `runPrintMode(runtime, { mode, messages, initialMessage, initialImages })` [E: packages/coding-agent/src/main.ts:811] [E: packages/coding-agent/src/main.ts:813] [E: packages/coding-agent/src/main.ts:814] [E: packages/coding-agent/src/main.ts:815] [E: packages/coding-agent/src/main.ts:819] [E: packages/coding-agent/src/main.ts:820] [E: packages/coding-agent/src/main.ts:821] [E: packages/coding-agent/src/main.ts:822] [E: packages/coding-agent/src/main.ts:843] [E: packages/coding-agent/src/main.ts:846] [E: packages/coding-agent/src/main.ts:847] [E: packages/coding-agent/src/main.ts:848] [E: packages/coding-agent/src/main.ts:849] [E: packages/coding-agent/src/main.ts:850]。
+最终 mode dispatch 是三分支: `rpc` 调用 `runRpcMode(runtime)`;`interactive` 创建 `InteractiveMode(runtime, ...)` 并 `run()`;其余 print/json path 调用 `runPrintMode(runtime, { mode, messages, initialMessage, initialImages })` [E: packages/coding-agent/src/main.ts:816] [E: packages/coding-agent/src/main.ts:818] [E: packages/coding-agent/src/main.ts:819] [E: packages/coding-agent/src/main.ts:820] [E: packages/coding-agent/src/main.ts:824] [E: packages/coding-agent/src/main.ts:825] [E: packages/coding-agent/src/main.ts:826] [E: packages/coding-agent/src/main.ts:827] [E: packages/coding-agent/src/main.ts:848] [E: packages/coding-agent/src/main.ts:851] [E: packages/coding-agent/src/main.ts:852] [E: packages/coding-agent/src/main.ts:853] [E: packages/coding-agent/src/main.ts:854] [E: packages/coding-agent/src/main.ts:855]。
 
 ## Gotcha
 
@@ -118,7 +118,7 @@ model/tool flags 在 `buildSessionOptions` 里变成 `CreateAgentSessionOptions`
 
 `ref.coding-agent.cli-flags` 应是完整 CLI flag catalog;本节点只按功能区解释 flag classes,不逐一枚举所有实例 [I]。
 
-`surface.modes.interactive` 应 owns `InteractiveMode` 内部 UI 和 turn orchestration;本节点只证明 interactive 是 CLI dispatch 的一个目标,实际创建点是 `new InteractiveMode(runtime, ...)` [E: packages/coding-agent/src/main.ts:814] [E: packages/coding-agent/src/main.ts:815] [I]。
+`surface.modes.interactive` 应 owns `InteractiveMode` 内部 UI 和 turn orchestration;本节点只证明 interactive 是 CLI dispatch 的一个目标,实际创建点是 `new InteractiveMode(runtime, ...)` [E: packages/coding-agent/src/main.ts:819] [E: packages/coding-agent/src/main.ts:820] [I]。
 
 ## Sources
 

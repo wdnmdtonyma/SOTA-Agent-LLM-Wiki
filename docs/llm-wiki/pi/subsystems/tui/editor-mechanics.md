@@ -16,7 +16,7 @@ related:
   - subsys.tui.editor-component
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `editor-mechanics` 是 TUI editor/input 的文本编辑 primitives: `KillRing` 保存 kill/yank 文本, `UndoStack` 保存 state snapshot, `word-navigation` 用 word segmentation 计算 word movement 边界。
@@ -89,7 +89,7 @@ Word navigation 使用 `Intl.SegmentData.isWordLike` 作为 word-like 判断, �
 
 ## 跨包边界
 
-本节点属于 `pkg: tui`, 不跨 `ai`、`agent`、`coding-agent` 或 `orchestrator` 包。`subsys.tui.editor-component` 是相关节点: 它应解释多行 editor component 如何把 key events、cursor state、rendering 和这些 mechanics 组合成用户可见编辑行为; 本节点只定义 mechanics primitive 本身 [I]。
+本节点属于 `pkg: tui`, 不跨 `ai`、`agent`、`coding-agent` 或 `server` 包。`subsys.tui.editor-component` 是相关节点: 它应解释多行 editor component 如何把 key events、cursor state、rendering 和这些 mechanics 组合成用户可见编辑行为; 本节点只定义 mechanics primitive 本身 [I]。
 
 ## Sources
 

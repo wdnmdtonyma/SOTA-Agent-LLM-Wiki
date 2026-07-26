@@ -1,6 +1,6 @@
 # RUN — 填充令(pi 源码 LLM Wiki)
 
-你是执行者(codex)。把本 wiki(`docs/llm-wiki/pi/`)从"只有骨架"填成完整的、给 agent 检索的 LLM wiki。文档对象是 **pi** 真实源码(`pi/`,相对本目录 `../../../pi/`,5-package TypeScript monorepo)。要细到每个工具的字段与设计动机。
+你是执行者(codex)。把本 wiki(`docs/llm-wiki/pi/`)维护成完整的、给 agent 检索的 LLM wiki。文档对象是 **pi** 真实源码(`pi/`,相对本目录 `../../../pi/`,7 个核心 package + 5 个 extension-example workspace 的 TypeScript monorepo)。要细到每个工具的字段与设计动机。
 
 ## 0. 先读这五个文件(权威规范,必须遵守)
 1. `README.md` —— 形态、四支柱、证据图例、优先级、pi 画像(分层栈 + pkg 字段)。
@@ -17,7 +17,7 @@
 ## 2. 顺序(价值优先)
 1. **T0 `spine/`**(12,mermaid 图先行)—— 先立脊柱(分层架构、agent-loop 一次 turn、工具调用解剖、provider stream、会话/压缩、扩展生命周期 + 3 worked traces),后续节点引用它。
 2. **T1 `surface/tools/`**(7)—— 用户核心诉求;`bash`/`edit`/`read`/`write` 大件优先。
-3. **T2 `subsystems/`**:`coding-agent/` 与 `agent-core/`(脊柱依赖)→ `ai/` → `tui/` → `orchestrator/`。
+3. **T2 `subsystems/`**:`coding-agent/` 与 `agent-core/`(脊柱依赖)→ `ai/` → `tui/` → `server/` → `storage/` / `evals/`。
 4. **T1 其它可见面 + T3 `reference/` catalog**:cli/modes/config/extensions/providers/skills/slash/sdk + provider/model/config-keys/slash/keybinding/rpc/extension-event/env catalog。
 5. **cross 引用**:package-index、glossary、uncertainty(uncertainty 由 reconcile 生成,勿手写)。
 
@@ -27,7 +27,7 @@
 3. **L1 机械校验**:`node tools/lint.mjs` —— 必须 **0 error** 才算这步过。
 4. **L2 独立证伪(关键,绝不可省)**:**另起一个干净的 subagent**,只给它"这个节点 + 它引用的源文件",让它**逐条尝试推翻** `[E]` 论断(它没有你的上下文,只信源码)。被驳倒的改 `[I]/[U]` 或修正。**同时核对每个 `[E: path:line]` 的行号确实落在被断言的那行代码上(不是其上方的注释/import/空行),漂移就改准——行号精确可核是本 wiki 的卖点。**
 5. **L3 修复**:按 L2 反馈修,**≤2 轮**;仍不能证实的降级为 `[I]/[U]`。
-6. **收尾**:`status:"verified"`,补 `evidence:` 与 `updated:`(`git -C ../../../pi rev-parse --short HEAD`);若新增节点,只写它的 `.md`(reconcile 会登记)。再 `node tools/lint.mjs` 确认 0 error。
+6. **收尾**:`status:"verified"`,补 `evidence:` 与 `updated:`(`git -C ../../../pi rev-parse --short=10 HEAD`);若新增节点,只写它的 `.md`(reconcile 会登记)。再 `node tools/lint.mjs` 确认 0 error。
 
 > ⚠️ **lint 过 ≠ 完成**。lint 只是结构下限(防漂移),真正把关是 L2 独立证伪。**不要写能骗过 lint 的模板化空话**。
 
@@ -39,7 +39,7 @@
 
 ## 5. 纪律
 - **歧义自己定**:记成 `[I]/[U]`,继续;不卡单点(查不动 → 标 `[U]` 跳过,先推进其它)。
-- **价值排序**:脊柱+工具优先,tui/orchestrator/平台靠后。
+- **价值排序**:脊柱+工具优先,tui/server/平台靠后。
 - **诚实**:事实永远以 `../../../pi/` 源码为准,不以本 RUN 或 survey 为准。pi 是真源码且有测试——**能核到就核到,别臆造**;拿不准就 `[I]/[U]`。
 - **节流提交**:每填完一个节点就更新该 `.md` 的 `status`,保持可续跑。
 - **git 隔离坑**:输出全部落在非 git 的 `docs/llm-wiki/pi/`;**不要**往 `pi/` 写文件(subagent isolation 会清掉源仓未跟踪文件)。
@@ -53,7 +53,7 @@
 `tools/lint.mjs`(L1 机械校验,落地 `conventions.md` 第 5 节规则 + git-SHA 校验)与 `tools/reconcile.mjs`(把各 node `.md` frontmatter 同步回 `index.json`、登记新节点、合并 `_staging/uncertainty-*.md` → `reference/uncertainty.md`)已就位,自测 0 error。每波填完由 lead 跑 reconcile + lint(见 §8);整体收尾前再 reconcile + lint 全绿。
 
 ## 8. 编排:单会话 + 多 subagent 并行填充
-本 wiki 由**一个 lead codex 会话**编排,用 **subagent 并行**填节点。节点级并行是安全的:每个节点是独立 `.md` 文件、源码只读、填充期不动 `index.json`/`llms.txt`,跨节点 `related`/正文链接靠 `index.json` 解析(177 个 planned 已全登记)→ 节点之间**无写依赖、无先后约束**。批次=fan-out 清单,见 `_fill-prompts.md`(含 lead/filler/verifier 三段提示词)。
+本 wiki 由**一个 lead codex 会话**编排,用 **subagent 并行**填节点。节点级并行是安全的:每个节点是独立 `.md` 文件、源码只读,填充期不动 `index.json`/`llms.txt`,跨节点 `related`/正文链接靠 `index.json` 解析。当前清单为 186 个 verified 节点；后续增量更新只处理影响节点和新增候选,节点之间仍**无写依赖、无先后约束**。历史 seed-fill 批次与提示词见 `_fill-prompts.md`。
 
 **lead 会话(串行,唯一改共享文件者):**
 - 按批次推进:**批 A(脊柱)必须先整批跑完**(后续节点要读完成的脊柱 prose 才写得准);之后 B–H 逐波,可合并,只要把单波并发量框住。

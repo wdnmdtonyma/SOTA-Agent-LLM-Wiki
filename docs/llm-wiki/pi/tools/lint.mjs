@@ -11,7 +11,7 @@ const SRC = path.resolve(WIKI, "../../../pi") // pi repo root (源码)
 const TIER_DIR = { T0: "spine", T1: "surface", T2: "subsystems", T3: "reference" }
 const KINDS = new Set(["flow", "tool", "surface", "subsystem", "reference", "catalog"])
 const TIERS = new Set(["T0", "T1", "T2", "T3"])
-const PKGS = new Set(["ai", "agent", "coding-agent", "tui", "orchestrator", "cross"])
+const PKGS = new Set(["ai", "agent", "coding-agent", "tui", "server", "storage", "evals", "cross"])
 const EVID = new Set(["explicit", "inferred", "unknown"])
 const STATUS = new Set(["planned", "draft", "verified"])
 const REQUIRED = ["id", "title", "kind", "tier", "pkg", "status"]
@@ -197,11 +197,14 @@ for (const n of nodes) {
 // ===== Rule 6: llms.txt 链接解析 =====
 try {
   const llms = fs.readFileSync(path.join(WIKI, "llms.txt"), "utf8")
+  const linkedNodePaths = new Set()
   for (const mm of llms.matchAll(/\]\(([^)]+)\)/g)) {
     const target = mm[1].replace(/#.*$/, "")
     if (/^https?:\/\//.test(target)) continue
     if (!nodePaths.has(target) && !fs.existsSync(path.join(WIKI, target))) err(`llms.txt`, `链接无法解析: ${target}`)
+    if (nodePaths.has(target)) linkedNodePaths.add(target)
   }
+  for (const n of nodes) if (!linkedNodePaths.has(n.path)) err(`llms.txt`, `缺少 index 节点链接: ${n.path}`)
 } catch { err("llms.txt", "无法读取") }
 
 // ===== 输出 =====

@@ -14,13 +14,13 @@ id: surface.tools.bash         # 全局唯一;点分命名空间,且与路径对
 title: bash 执行工具
 kind: tool                     # flow | tool | surface | subsystem | reference | catalog
 tier: T1                       # T0 | T1 | T2 | T3
-pkg: coding-agent              # ai | agent | coding-agent | tui | orchestrator | cross ——本节点描述的代码属哪个包(pi 专属字段)
+pkg: coding-agent              # ai | agent | coding-agent | tui | server | storage | evals | cross ——本节点描述的代码属哪个包(pi 专属字段)
 source: [packages/coding-agent/src/core/tools/bash.ts, packages/coding-agent/src/core/bash-executor.ts]  # 相对 pi/;纯导览可空
 symbols: [createBashTool, BashToolInput, BashOperations]   # 本节点权威覆盖的导出符号(T3 覆盖率据此计)
 related: [spine.tool-call-anatomy, subsys.coding-agent.bash-executor, ref.tools-catalog]  # 其它节点 id,构成图
 evidence: explicit             # 页级主导级:explicit | inferred | unknown(未写完可省略)
 status: planned                # planned | draft | verified
-updated: <pi HEAD 短 SHA>      # fill 时跑 git -C ../../../pi rev-parse --short HEAD
+updated: <pi HEAD 10 位短 SHA> # fill 时跑 git -C ../../../pi rev-parse --short=10 HEAD
 ---
 ```
 
@@ -28,7 +28,7 @@ updated: <pi HEAD 短 SHA>      # fill 时跑 git -C ../../../pi rev-parse --sho
 
 ### 1.2 `pkg` 字段(pi 分层主线)
 
-pi 是分层栈:`ai`(provider 引擎)→ `agent`(可复用运行时 harness)→ `coding-agent`(产品)+ `tui`(渲染)+ `orchestrator`(实验性)。每节点标 `pkg`,使"这条逻辑属哪一层"可 grep。**跨层节点**(如脊柱总览)标 `pkg: cross`。脊柱页须把 `agent`(可复用)与 `coding-agent`(产品)的复用边界写清:哪些逻辑在 `pi-agent-core`(任何 app 都能用),哪些是 `pi-coding-agent` 的产品装配。
+pi 是分层栈:`ai`(provider 引擎)→ `agent`(可复用运行时 harness)→ `coding-agent`(产品)+ `tui`(渲染),并包含 `server`(实验性远程会话)、`storage`(SQLite adapter)与 `evals`(私有评测 harness)工作区。每节点标 `pkg`,使"这条逻辑属哪一层"可 grep。**跨层节点**(如脊柱总览)标 `pkg: cross`。脊柱页须把 `agent`(可复用)与 `coding-agent`(产品)的复用边界写清:哪些逻辑在 `pi-agent-core`(任何 app 都能用),哪些是 `pi-coding-agent` 的产品装配。
 
 ### 1.3 正文骨架(H2/H3 可预测)
 
@@ -63,7 +63,7 @@ pi 是分层栈:`ai`(provider 引擎)→ `agent`(可复用运行时 harness)→ 
   "source_root": "pi/",
   "tiers": {"T0":"spine","T1":"surface","T2":"subsystems","T3":"reference"},
   "evidence_levels": ["explicit","inferred","unknown"],
-  "packages": {"ai":"…","agent":"…","coding-agent":"…","tui":"…","orchestrator":"…","cross":"…"},
+  "packages": {"ai":"…","agent":"…","coding-agent":"…","tui":"…","server":"…","storage":"…","evals":"…","cross":"…"},
   "staleness": "git-sha",
   "nodes":  [ {"id":"...","title":"...","kind":"...","tier":"...","pkg":"...","path":"...",
                "source":["..."],"symbols":["..."],"related":["..."],"status":"planned"} ],
@@ -118,5 +118,5 @@ frontmatter + 符号/变体/键 表(每行一个实例:名 · 类型/签名 · �
 - **RPC 方法** = `packages/coding-agent/src/modes/rpc/rpc-types.ts`(`RpcCommand`)+ `rpc-mode.ts` 的 dispatch。
 - **配置键** = `packages/coding-agent/src/core/settings-manager.ts` + `core/defaults.ts`(对照 `docs/settings.md`)。
 - **会话格式** = `packages/coding-agent/src/core/session-manager.ts` 与 `packages/agent/src/harness/types.ts`(`SessionTreeEntry`),对照 `docs/session-format.md`。
-- **设计动机权威来源**:`packages/coding-agent/docs/*.md`(29 篇,见 `index.md`)、根 `AGENTS.md`、`README.md`;dogfood 实例在 `.pi/`(extensions/prompts/skills)。
+- **设计动机权威来源**:`packages/coding-agent/docs/*.md`(30 篇,见 `index.md`)、根 `AGENTS.md`、`README.md`;dogfood 实例在 `.pi/`(extensions/prompts/skills)。
 - **`.pi/` vs `.claude/`**:pi 自身配置目录是 `.pi/`(项目级)与 `~/.pi/agent/`(全局);`.claude/` 仅作跨 harness 共享 context 文件的 fallback,别混。

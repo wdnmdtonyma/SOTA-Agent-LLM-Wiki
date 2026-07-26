@@ -3,7 +3,7 @@
 batch: surface
 node: `ref.coding-agent.slash-commands`
 path: `reference/slash-commands.md`
-updated: `3da591ab`
+updated: `cee5ff7520`
 
 ## Group count
 

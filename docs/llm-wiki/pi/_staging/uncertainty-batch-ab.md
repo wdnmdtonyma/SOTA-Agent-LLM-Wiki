@@ -1,3 +1,3 @@
-- `ref.ai.model-catalog`: publication shards、生成目录与 `group.models.instance_count` 已收敛为 1069 个模型实例。
-- `ref.coding-agent.rpc-methods`: `RpcCommand`、catalog 与 `group.rpc-methods.instance_count` 已收敛为 31；`extension_ui_response` 仍按协议定义排除在普通 command catalog 外。
+- `ref.ai.model-catalog`: publication shards、生成目录与 `group.models.instance_count` 在 `cee5ff7520` 已收敛为 1109 个模型实例。
+- `ref.coding-agent.rpc-methods`: `RpcCommand`、catalog 与 `group.rpc-methods.instance_count` 在 `cee5ff7520` 已收敛为 32；`extension_ui_response` 仍按协议定义排除在普通 command catalog 外。
 - `ref.coding-agent.rpc-methods`: `packages/coding-agent/docs/rpc.md` still documents `get_commands` response examples/fields with top-level `location` and `path`, but `RpcSlashCommand` and `rpc-mode.ts` emit `sourceInfo` instead.

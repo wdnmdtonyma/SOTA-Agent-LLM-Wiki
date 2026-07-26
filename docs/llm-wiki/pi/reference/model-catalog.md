@@ -1,11 +1,12 @@
 ---
 id: ref.ai.model-catalog
-title: 模型结构目录(generated)
+title: 模型目录(generated + v0.82.1 artifact)
 kind: catalog
 tier: T3
 pkg: ai
 source:
   - packages/ai/src/models.generated.ts
+  - packages/ai/src/model-catalog.ts
   - packages/ai/src/providers/amazon-bedrock.models.ts
   - packages/ai/src/providers/ant-ling.models.ts
   - packages/ai/src/providers/anthropic.models.ts
@@ -16,1356 +17,1411 @@ source:
   - packages/ai/src/providers/deepseek.models.ts
   - packages/ai/src/providers/fireworks.models.ts
   - packages/ai/src/providers/github-copilot.models.ts
-  - packages/ai/src/providers/google-vertex.models.ts
   - packages/ai/src/providers/google.models.ts
+  - packages/ai/src/providers/google-vertex.models.ts
   - packages/ai/src/providers/groq.models.ts
   - packages/ai/src/providers/huggingface.models.ts
   - packages/ai/src/providers/kimi-coding.models.ts
-  - packages/ai/src/providers/minimax-cn.models.ts
   - packages/ai/src/providers/minimax.models.ts
+  - packages/ai/src/providers/minimax-cn.models.ts
   - packages/ai/src/providers/mistral.models.ts
-  - packages/ai/src/providers/moonshotai-cn.models.ts
   - packages/ai/src/providers/moonshotai.models.ts
+  - packages/ai/src/providers/moonshotai-cn.models.ts
   - packages/ai/src/providers/nvidia.models.ts
-  - packages/ai/src/providers/openai-codex.models.ts
   - packages/ai/src/providers/openai.models.ts
-  - packages/ai/src/providers/opencode-go.models.ts
+  - packages/ai/src/providers/openai-codex.models.ts
   - packages/ai/src/providers/opencode.models.ts
+  - packages/ai/src/providers/opencode-go.models.ts
   - packages/ai/src/providers/openrouter.models.ts
+  - packages/ai/src/providers/qwen-token-plan.models.ts
+  - packages/ai/src/providers/qwen-token-plan-cn.models.ts
   - packages/ai/src/providers/together.models.ts
   - packages/ai/src/providers/vercel-ai-gateway.models.ts
   - packages/ai/src/providers/xai.models.ts
+  - packages/ai/src/providers/xiaomi.models.ts
   - packages/ai/src/providers/xiaomi-token-plan-ams.models.ts
   - packages/ai/src/providers/xiaomi-token-plan-cn.models.ts
   - packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts
-  - packages/ai/src/providers/xiaomi.models.ts
-  - packages/ai/src/providers/zai-coding-cn.models.ts
   - packages/ai/src/providers/zai.models.ts
+  - packages/ai/src/providers/zai-coding-cn.models.ts
   - packages/ai/scripts/generate-models.ts
-  - packages/ai/src/types.ts
+  - packages/ai/scripts/model-data.ts
+  - packages/ai/scripts/check-model-data.ts
+  - packages/ai/package.json
 symbols:
   - MODELS
-  - Model
+  - ModelCatalog
+  - flattenModelCatalog
 related:
   - subsys.ai.model-discovery
   - subsys.ai.model-catalog-publication
-evidence: explicit
+evidence: inferred
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
-> `ref.ai.model-catalog` 逐实例枚举目标 commit 中已提交的 generated model 结构：模型 id、provider bucket 与 `Model.api` wire 协议；完整 name/cost/context 等值在构建时生成的 JSON 中，不属于 git 可核证面。
-
-## 能回答的问题
-
-- 当前提交的 `MODELS` 有哪些 provider bucket，每桶有多少结构化 model id?
-- 某个 model id 属于哪个 provider，使用哪个 `Model.api` wire 协议?
-- 为什么本页不再声称能从已提交源码核对 name、cost、contextWindow、maxTokens?
-- model structure、gitignored JSON values 与远端发布 bundle 分别由哪一层负责?
+> 目标 commit 显式定义 37 个静态 provider bucket；逐模型 id/api 来自结构与目标源码精确匹配的官方 `@earendil-works/pi-ai@0.82.1` 发布制品，共 1,109 个模型。
 
 ## 证据边界
 
-目标 commit 提交了 35 个 provider structural shard，共 1069 个 model id。`models.generated.ts` 把这些 shard 聚合为 `MODELS`；每个 shard 只保留 model key、literal `id`、literal `provider` 和泛型参数中的 `api`，实际 values 从相邻 `./data/<provider>.json` 导入 [E: packages/ai/src/models.generated.ts:4] [E: packages/ai/src/providers/amazon-bedrock.models.ts:4] [E: packages/ai/src/providers/amazon-bedrock.models.ts:7]。
+目标源码的 provider shard 不再内联 model values，而是 import 被 Git 忽略的 `./data/<provider>.json`，再由 `ModelCatalog` / `flattenModelCatalog()` 形成类型化目录。[E: packages/ai/src/providers/openai.models.ts:4] [E: packages/ai/src/providers/openai.models.ts:5] [E: packages/ai/src/providers/openai.models.ts:7] [E: packages/ai/src/model-catalog.ts:15] [E: packages/ai/src/model-catalog.ts:22]
 
-`generate-models.ts` 会先按 provider/model id 排序，再生成 structural `.models.ts` 与 `src/providers/data/*.json`；后者由仓库忽略，不应拿旧 commit 的 literal metadata 行号冒充当前证据 [E: packages/ai/scripts/generate-models.ts:2341] [E: packages/ai/scripts/generate-models.ts:2352] [E: packages/ai/scripts/generate-models.ts:2361] [E: packages/ai/scripts/generate-models.ts:2365] [E: packages/ai/scripts/generate-models.ts:2373]。
+`models.generated.ts` 显式聚合 37 个 provider；Qwen Token Plan 与中国区是本轮新增 bucket。[E: packages/ai/src/models.generated.ts:4] [E: packages/ai/src/models.generated.ts:30] [E: packages/ai/src/models.generated.ts:31] [E: packages/ai/src/models.generated.ts:42] [E: packages/ai/src/models.generated.ts:69] [E: packages/ai/src/models.generated.ts:70]
 
-因此，本页的逐实例表只声明已提交源码能证明的三件事：id、provider、api。name、baseUrl、reasoning、input、cost、contextWindow、maxTokens、headers 与 compat 的当前值要从同一 source commit 生成的 JSON bundle 查询；其生成、校验和 content-addressed 发布见 `subsys.ai.model-catalog-publication` [I]。
+生成器分别写 structural shards、ignored JSON data 与发布用 JSON bundle；package build 会先 hydrate/check data，再把它复制进 dist。[E: packages/ai/scripts/generate-models.ts:2619] [E: packages/ai/scripts/generate-models.ts:2626] [E: packages/ai/scripts/generate-models.ts:2657] [E: packages/ai/scripts/generate-models.ts:2681] [E: packages/ai/package.json:52] [E: packages/ai/package.json:58]
+
+逐模型表使用官方 npm v0.82.1 制品并标为 [I]。该 tarball SHA-256、manifest structure hash、source-map 与目标源码逐字比较及计数过程记录在 [研究记录](../_research/model-catalog-v0.82.1.md)。npm 包没有 `gitHead`，所以这些行不会标作 commit 内 [E]。
 
 ## Provider 覆盖摘要
 
-| provider | instances | structural shard | MODELS bucket |
+本摘要的 model 数与 API 分布同样由官方 npm v0.82.1 artifact 推导，统一为 `[I]`；末列 `[E]` 只证明目标 commit 存在对应 structural provider bucket，不把制品中的数量提升为 commit-local explicit fact。
+
+| provider | models | API 分布 | commit bucket evidence |
 |---|---:|---|---|
-| `amazon-bedrock` | 109 | `packages/ai/src/providers/amazon-bedrock.models.ts` | [E: packages/ai/src/models.generated.ts:41] |
-| `ant-ling` | 3 | `packages/ai/src/providers/ant-ling.models.ts` | [E: packages/ai/src/models.generated.ts:42] |
-| `anthropic` | 14 | `packages/ai/src/providers/anthropic.models.ts` | [E: packages/ai/src/models.generated.ts:43] |
-| `azure-openai-responses` | 46 | `packages/ai/src/providers/azure-openai-responses.models.ts` | [E: packages/ai/src/models.generated.ts:44] |
-| `cerebras` | 3 | `packages/ai/src/providers/cerebras.models.ts` | [E: packages/ai/src/models.generated.ts:45] |
-| `cloudflare-ai-gateway` | 42 | `packages/ai/src/providers/cloudflare-ai-gateway.models.ts` | [E: packages/ai/src/models.generated.ts:46] |
-| `cloudflare-workers-ai` | 13 | `packages/ai/src/providers/cloudflare-workers-ai.models.ts` | [E: packages/ai/src/models.generated.ts:47] |
-| `deepseek` | 2 | `packages/ai/src/providers/deepseek.models.ts` | [E: packages/ai/src/models.generated.ts:48] |
-| `fireworks` | 16 | `packages/ai/src/providers/fireworks.models.ts` | [E: packages/ai/src/models.generated.ts:49] |
-| `github-copilot` | 28 | `packages/ai/src/providers/github-copilot.models.ts` | [E: packages/ai/src/models.generated.ts:50] |
-| `google-vertex` | 10 | `packages/ai/src/providers/google-vertex.models.ts` | [E: packages/ai/src/models.generated.ts:52] |
-| `google` | 16 | `packages/ai/src/providers/google.models.ts` | [E: packages/ai/src/models.generated.ts:51] |
-| `groq` | 7 | `packages/ai/src/providers/groq.models.ts` | [E: packages/ai/src/models.generated.ts:53] |
-| `huggingface` | 49 | `packages/ai/src/providers/huggingface.models.ts` | [E: packages/ai/src/models.generated.ts:54] |
-| `kimi-coding` | 3 | `packages/ai/src/providers/kimi-coding.models.ts` | [E: packages/ai/src/models.generated.ts:55] |
-| `minimax-cn` | 3 | `packages/ai/src/providers/minimax-cn.models.ts` | [E: packages/ai/src/models.generated.ts:57] |
-| `minimax` | 3 | `packages/ai/src/providers/minimax.models.ts` | [E: packages/ai/src/models.generated.ts:56] |
-| `mistral` | 30 | `packages/ai/src/providers/mistral.models.ts` | [E: packages/ai/src/models.generated.ts:58] |
-| `moonshotai-cn` | 10 | `packages/ai/src/providers/moonshotai-cn.models.ts` | [E: packages/ai/src/models.generated.ts:60] |
-| `moonshotai` | 10 | `packages/ai/src/providers/moonshotai.models.ts` | [E: packages/ai/src/models.generated.ts:59] |
-| `nvidia` | 20 | `packages/ai/src/providers/nvidia.models.ts` | [E: packages/ai/src/models.generated.ts:61] |
-| `openai-codex` | 7 | `packages/ai/src/providers/openai-codex.models.ts` | [E: packages/ai/src/models.generated.ts:63] |
-| `openai` | 46 | `packages/ai/src/providers/openai.models.ts` | [E: packages/ai/src/models.generated.ts:62] |
-| `opencode-go` | 15 | `packages/ai/src/providers/opencode-go.models.ts` | [E: packages/ai/src/models.generated.ts:65] |
-| `opencode` | 54 | `packages/ai/src/providers/opencode.models.ts` | [E: packages/ai/src/models.generated.ts:64] |
-| `openrouter` | 270 | `packages/ai/src/providers/openrouter.models.ts` | [E: packages/ai/src/models.generated.ts:66] |
-| `together` | 20 | `packages/ai/src/providers/together.models.ts` | [E: packages/ai/src/models.generated.ts:67] |
-| `vercel-ai-gateway` | 190 | `packages/ai/src/providers/vercel-ai-gateway.models.ts` | [E: packages/ai/src/models.generated.ts:68] |
-| `xai` | 3 | `packages/ai/src/providers/xai.models.ts` | [E: packages/ai/src/models.generated.ts:69] |
-| `xiaomi-token-plan-ams` | 3 | `packages/ai/src/providers/xiaomi-token-plan-ams.models.ts` | [E: packages/ai/src/models.generated.ts:71] |
-| `xiaomi-token-plan-cn` | 3 | `packages/ai/src/providers/xiaomi-token-plan-cn.models.ts` | [E: packages/ai/src/models.generated.ts:72] |
-| `xiaomi-token-plan-sgp` | 3 | `packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts` | [E: packages/ai/src/models.generated.ts:73] |
-| `xiaomi` | 6 | `packages/ai/src/providers/xiaomi.models.ts` | [E: packages/ai/src/models.generated.ts:70] |
-| `zai-coding-cn` | 6 | `packages/ai/src/providers/zai-coding-cn.models.ts` | [E: packages/ai/src/models.generated.ts:75] |
-| `zai` | 6 | `packages/ai/src/providers/zai.models.ts` | [E: packages/ai/src/models.generated.ts:74] |
+| `amazon-bedrock` | 114 | `bedrock-converse-stream` 114 | [E: packages/ai/src/models.generated.ts:43] |
+| `ant-ling` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:44] |
+| `anthropic` | 15 | `anthropic-messages` 15 | [E: packages/ai/src/models.generated.ts:45] |
+| `azure-openai-responses` | 38 | `azure-openai-responses` 38 | [E: packages/ai/src/models.generated.ts:46] |
+| `cerebras` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:47] |
+| `cloudflare-ai-gateway` | 42 | `anthropic-messages` 18; `openai-completions` 5; `openai-responses` 19 | [E: packages/ai/src/models.generated.ts:48] |
+| `cloudflare-workers-ai` | 13 | `openai-completions` 13 | [E: packages/ai/src/models.generated.ts:49] |
+| `deepseek` | 2 | `openai-completions` 2 | [E: packages/ai/src/models.generated.ts:50] |
+| `fireworks` | 16 | `anthropic-messages` 14; `openai-completions` 2 | [E: packages/ai/src/models.generated.ts:51] |
+| `github-copilot` | 29 | `anthropic-messages` 10; `openai-completions` 7; `openai-responses` 12 | [E: packages/ai/src/models.generated.ts:52] |
+| `google` | 24 | `google-generative-ai` 24 | [E: packages/ai/src/models.generated.ts:53] |
+| `google-vertex` | 12 | `google-vertex` 12 | [E: packages/ai/src/models.generated.ts:54] |
+| `groq` | 7 | `openai-completions` 7 | [E: packages/ai/src/models.generated.ts:55] |
+| `huggingface` | 50 | `openai-completions` 50 | [E: packages/ai/src/models.generated.ts:56] |
+| `kimi-coding` | 4 | `anthropic-messages` 4 | [E: packages/ai/src/models.generated.ts:57] |
+| `minimax` | 3 | `anthropic-messages` 3 | [E: packages/ai/src/models.generated.ts:58] |
+| `minimax-cn` | 3 | `anthropic-messages` 3 | [E: packages/ai/src/models.generated.ts:59] |
+| `mistral` | 30 | `mistral-conversations` 30 | [E: packages/ai/src/models.generated.ts:60] |
+| `moonshotai` | 10 | `openai-completions` 10 | [E: packages/ai/src/models.generated.ts:61] |
+| `moonshotai-cn` | 10 | `openai-completions` 10 | [E: packages/ai/src/models.generated.ts:62] |
+| `nvidia` | 18 | `openai-completions` 18 | [E: packages/ai/src/models.generated.ts:63] |
+| `openai` | 38 | `openai-responses` 38 | [E: packages/ai/src/models.generated.ts:64] |
+| `openai-codex` | 7 | `openai-codex-responses` 7 | [E: packages/ai/src/models.generated.ts:65] |
+| `opencode` | 58 | `anthropic-messages` 14; `google-generative-ai` 5; `openai-completions` 19; `openai-responses` 20 | [E: packages/ai/src/models.generated.ts:66] |
+| `opencode-go` | 16 | `anthropic-messages` 3; `openai-completions` 12; `openai-responses` 1 | [E: packages/ai/src/models.generated.ts:67] |
+| `openrouter` | 276 | `openai-completions` 276 | [E: packages/ai/src/models.generated.ts:68] |
+| `qwen-token-plan` | 15 | `openai-completions` 15 | [E: packages/ai/src/models.generated.ts:69] |
+| `qwen-token-plan-cn` | 15 | `openai-completions` 15 | [E: packages/ai/src/models.generated.ts:70] |
+| `together` | 16 | `openai-completions` 16 | [E: packages/ai/src/models.generated.ts:71] |
+| `vercel-ai-gateway` | 192 | `anthropic-messages` 192 | [E: packages/ai/src/models.generated.ts:72] |
+| `xai` | 3 | `openai-completions` 2; `openai-responses` 1 | [E: packages/ai/src/models.generated.ts:73] |
+| `xiaomi` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:74] |
+| `xiaomi-token-plan-ams` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:75] |
+| `xiaomi-token-plan-cn` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:76] |
+| `xiaomi-token-plan-sgp` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:77] |
+| `zai` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:78] |
+| `zai-coding-cn` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:79] |
 
 ## MODELS 逐实例目录
 
 ### amazon-bedrock
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `amazon.nova-2-lite-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:8] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:9] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:10] |
-| `amazon.nova-lite-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:12] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:13] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:14] |
-| `amazon.nova-micro-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:16] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:17] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:18] |
-| `amazon.nova-pro-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:20] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:21] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:22] |
-| `anthropic.claude-fable-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:24] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:25] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:26] |
-| `anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:28] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:29] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:30] |
-| `anthropic.claude-opus-4-1-20250805-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:32] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:33] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:34] |
-| `anthropic.claude-opus-4-5-20251101-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:36] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:37] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:38] |
-| `anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:40] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:41] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:42] |
-| `anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:44] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:45] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:46] |
-| `anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:48] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:49] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:50] |
-| `anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:52] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:53] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:54] |
-| `anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:56] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:57] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:58] |
-| `anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:60] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:61] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:62] |
-| `au.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:64] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:65] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:66] |
-| `au.anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:68] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:69] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:70] |
-| `au.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:72] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:73] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:74] |
-| `au.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:76] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:77] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:78] |
-| `au.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:80] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:81] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:82] |
-| `au.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:84] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:85] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:86] |
-| `deepseek.r1-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:88] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:89] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:90] |
-| `deepseek.v3-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:92] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:93] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:94] |
-| `deepseek.v3.2` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:96] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:97] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:98] |
-| `eu.anthropic.claude-fable-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:100] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:101] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:102] |
-| `eu.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:104] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:105] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:106] |
-| `eu.anthropic.claude-opus-4-5-20251101-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:108] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:109] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:110] |
-| `eu.anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:112] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:113] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:114] |
-| `eu.anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:116] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:117] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:118] |
-| `eu.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:120] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:121] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:122] |
-| `eu.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:124] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:125] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:126] |
-| `eu.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:128] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:129] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:130] |
-| `eu.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:132] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:133] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:134] |
-| `global.anthropic.claude-fable-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:136] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:137] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:138] |
-| `global.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:140] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:141] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:142] |
-| `global.anthropic.claude-opus-4-5-20251101-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:144] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:145] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:146] |
-| `global.anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:148] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:149] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:150] |
-| `global.anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:152] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:153] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:154] |
-| `global.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:156] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:157] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:158] |
-| `global.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:160] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:161] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:162] |
-| `global.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:164] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:165] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:166] |
-| `global.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:168] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:169] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:170] |
-| `google.gemma-3-27b-it` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:172] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:173] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:174] |
-| `google.gemma-3-4b-it` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:176] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:177] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:178] |
-| `jp.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:180] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:181] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:182] |
-| `jp.anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:184] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:185] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:186] |
-| `jp.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:188] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:189] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:190] |
-| `jp.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:192] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:193] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:194] |
-| `jp.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:196] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:197] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:198] |
-| `jp.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:200] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:201] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:202] |
-| `meta.llama3-1-70b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:204] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:205] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:206] |
-| `meta.llama3-1-8b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:208] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:209] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:210] |
-| `meta.llama3-3-70b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:212] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:213] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:214] |
-| `meta.llama4-maverick-17b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:216] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:217] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:218] |
-| `meta.llama4-scout-17b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:220] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:221] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:222] |
-| `minimax.minimax-m2` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:224] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:225] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:226] |
-| `minimax.minimax-m2.1` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:228] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:229] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:230] |
-| `minimax.minimax-m2.5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:232] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:233] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:234] |
-| `mistral.devstral-2-123b` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:236] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:237] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:238] |
-| `mistral.magistral-small-2509` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:240] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:241] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:242] |
-| `mistral.ministral-3-14b-instruct` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:244] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:245] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:246] |
-| `mistral.ministral-3-3b-instruct` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:248] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:249] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:250] |
-| `mistral.ministral-3-8b-instruct` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:252] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:253] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:254] |
-| `mistral.mistral-large-3-675b-instruct` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:256] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:257] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:258] |
-| `mistral.pixtral-large-2502-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:260] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:261] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:262] |
-| `mistral.voxtral-mini-3b-2507` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:264] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:265] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:266] |
-| `mistral.voxtral-small-24b-2507` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:268] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:269] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:270] |
-| `moonshot.kimi-k2-thinking` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:272] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:273] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:274] |
-| `moonshotai.kimi-k2.5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:276] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:277] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:278] |
-| `nvidia.nemotron-nano-12b-v2` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:280] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:281] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:282] |
-| `nvidia.nemotron-nano-3-30b` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:284] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:285] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:286] |
-| `nvidia.nemotron-nano-9b-v2` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:288] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:289] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:290] |
-| `nvidia.nemotron-super-3-120b` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:292] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:293] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:294] |
-| `openai.gpt-5.4` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:296] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:297] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:298] |
-| `openai.gpt-5.5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:300] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:301] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:302] |
-| `openai.gpt-5.6-luna` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:304] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:305] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:306] |
-| `openai.gpt-5.6-sol` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:308] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:309] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:310] |
-| `openai.gpt-5.6-terra` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:312] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:313] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:314] |
-| `openai.gpt-oss-120b` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:316] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:317] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:318] |
-| `openai.gpt-oss-120b-1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:320] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:321] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:322] |
-| `openai.gpt-oss-20b` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:324] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:325] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:326] |
-| `openai.gpt-oss-20b-1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:328] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:329] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:330] |
-| `openai.gpt-oss-safeguard-120b` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:332] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:333] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:334] |
-| `openai.gpt-oss-safeguard-20b` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:336] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:337] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:338] |
-| `qwen.qwen3-235b-a22b-2507-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:340] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:341] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:342] |
-| `qwen.qwen3-32b-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:344] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:345] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:346] |
-| `qwen.qwen3-coder-30b-a3b-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:348] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:349] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:350] |
-| `qwen.qwen3-coder-480b-a35b-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:352] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:353] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:354] |
-| `qwen.qwen3-coder-next` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:356] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:357] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:358] |
-| `qwen.qwen3-next-80b-a3b` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:360] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:361] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:362] |
-| `qwen.qwen3-vl-235b-a22b` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:364] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:365] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:366] |
-| `us.anthropic.claude-fable-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:368] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:369] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:370] |
-| `us.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:372] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:373] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:374] |
-| `us.anthropic.claude-opus-4-1-20250805-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:376] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:377] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:378] |
-| `us.anthropic.claude-opus-4-5-20251101-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:380] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:381] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:382] |
-| `us.anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:384] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:385] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:386] |
-| `us.anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:388] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:389] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:390] |
-| `us.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:392] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:393] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:394] |
-| `us.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:396] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:397] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:398] |
-| `us.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:400] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:401] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:402] |
-| `us.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:404] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:405] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:406] |
-| `us.deepseek.r1-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:408] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:409] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:410] |
-| `us.meta.llama4-maverick-17b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:412] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:413] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:414] |
-| `us.meta.llama4-scout-17b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:416] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:417] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:418] |
-| `writer.palmyra-x4-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:420] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:421] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:422] |
-| `writer.palmyra-x5-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:424] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:425] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:426] |
-| `xai.grok-4.3` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:428] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:429] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:430] |
-| `zai.glm-4.7` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:432] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:433] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:434] |
-| `zai.glm-4.7-flash` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:436] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:437] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:438] |
-| `zai.glm-5` | `amazon-bedrock` | `bedrock-converse-stream` | key/api [E: packages/ai/src/providers/amazon-bedrock.models.ts:440] · id [E: packages/ai/src/providers/amazon-bedrock.models.ts:441] · provider [E: packages/ai/src/providers/amazon-bedrock.models.ts:442] |
+| `amazon.nova-2-lite-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `amazon.nova-lite-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `amazon.nova-micro-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `amazon.nova-pro-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-fable-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-opus-4-1-20250805-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-opus-4-5-20251101-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `au.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `au.anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `au.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `au.anthropic.claude-opus-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `au.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `au.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `au.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `deepseek.r1-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `deepseek.v3-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `deepseek.v3.2` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-fable-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-opus-4-5-20251101-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-opus-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `eu.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-fable-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-opus-4-5-20251101-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-opus-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `global.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `google.gemma-3-27b-it` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `google.gemma-3-4b-it` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `jp.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `jp.anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `jp.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `jp.anthropic.claude-opus-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `jp.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `jp.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `jp.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `meta.llama3-1-70b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `meta.llama3-1-8b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `meta.llama3-3-70b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `meta.llama4-maverick-17b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `meta.llama4-scout-17b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `minimax.minimax-m2` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `minimax.minimax-m2.1` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `minimax.minimax-m2.5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `mistral.devstral-2-123b` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `mistral.magistral-small-2509` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `mistral.ministral-3-14b-instruct` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `mistral.ministral-3-3b-instruct` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `mistral.ministral-3-8b-instruct` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `mistral.mistral-large-3-675b-instruct` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `mistral.pixtral-large-2502-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `mistral.voxtral-mini-3b-2507` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `mistral.voxtral-small-24b-2507` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `moonshot.kimi-k2-thinking` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `moonshotai.kimi-k2.5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `nvidia.nemotron-nano-12b-v2` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `nvidia.nemotron-nano-3-30b` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `nvidia.nemotron-nano-9b-v2` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `nvidia.nemotron-super-3-120b` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-5.4` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-5.5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-5.6-luna` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-5.6-sol` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-5.6-terra` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-oss-120b` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-oss-120b-1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-oss-20b` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-oss-20b-1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-oss-safeguard-120b` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `openai.gpt-oss-safeguard-20b` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `qwen.qwen3-235b-a22b-2507-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `qwen.qwen3-32b-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `qwen.qwen3-coder-30b-a3b-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `qwen.qwen3-coder-480b-a35b-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `qwen.qwen3-coder-next` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `qwen.qwen3-next-80b-a3b` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `qwen.qwen3-vl-235b-a22b` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-fable-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-haiku-4-5-20251001-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-opus-4-1-20250805-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-opus-4-5-20251101-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-opus-4-6-v1` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-opus-4-7` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-opus-4-8` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-opus-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-sonnet-4-5-20250929-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-sonnet-4-6` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.anthropic.claude-sonnet-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.deepseek.r1-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.meta.llama4-maverick-17b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `us.meta.llama4-scout-17b-instruct-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `writer.palmyra-x4-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `writer.palmyra-x5-v1:0` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `xai.grok-4.3` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `zai.glm-4.7` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `zai.glm-4.7-flash` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
+| `zai.glm-5` | `amazon-bedrock` | `bedrock-converse-stream` | npm v0.82.1 artifact [I] |
 
 ### ant-ling
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `Ling-2.6-1T` | `ant-ling` | `openai-completions` | key/api [E: packages/ai/src/providers/ant-ling.models.ts:8] · id [E: packages/ai/src/providers/ant-ling.models.ts:9] · provider [E: packages/ai/src/providers/ant-ling.models.ts:10] |
-| `Ling-2.6-flash` | `ant-ling` | `openai-completions` | key/api [E: packages/ai/src/providers/ant-ling.models.ts:12] · id [E: packages/ai/src/providers/ant-ling.models.ts:13] · provider [E: packages/ai/src/providers/ant-ling.models.ts:14] |
-| `Ring-2.6-1T` | `ant-ling` | `openai-completions` | key/api [E: packages/ai/src/providers/ant-ling.models.ts:16] · id [E: packages/ai/src/providers/ant-ling.models.ts:17] · provider [E: packages/ai/src/providers/ant-ling.models.ts:18] |
+| `Ling-2.6-1T` | `ant-ling` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Ling-2.6-flash` | `ant-ling` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Ring-2.6-1T` | `ant-ling` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### anthropic
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `claude-fable-5` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:8] · id [E: packages/ai/src/providers/anthropic.models.ts:9] · provider [E: packages/ai/src/providers/anthropic.models.ts:10] |
-| `claude-haiku-4-5` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:12] · id [E: packages/ai/src/providers/anthropic.models.ts:13] · provider [E: packages/ai/src/providers/anthropic.models.ts:14] |
-| `claude-haiku-4-5-20251001` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:16] · id [E: packages/ai/src/providers/anthropic.models.ts:17] · provider [E: packages/ai/src/providers/anthropic.models.ts:18] |
-| `claude-opus-4-1` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:20] · id [E: packages/ai/src/providers/anthropic.models.ts:21] · provider [E: packages/ai/src/providers/anthropic.models.ts:22] |
-| `claude-opus-4-1-20250805` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:24] · id [E: packages/ai/src/providers/anthropic.models.ts:25] · provider [E: packages/ai/src/providers/anthropic.models.ts:26] |
-| `claude-opus-4-5` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:28] · id [E: packages/ai/src/providers/anthropic.models.ts:29] · provider [E: packages/ai/src/providers/anthropic.models.ts:30] |
-| `claude-opus-4-5-20251101` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:32] · id [E: packages/ai/src/providers/anthropic.models.ts:33] · provider [E: packages/ai/src/providers/anthropic.models.ts:34] |
-| `claude-opus-4-6` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:36] · id [E: packages/ai/src/providers/anthropic.models.ts:37] · provider [E: packages/ai/src/providers/anthropic.models.ts:38] |
-| `claude-opus-4-7` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:40] · id [E: packages/ai/src/providers/anthropic.models.ts:41] · provider [E: packages/ai/src/providers/anthropic.models.ts:42] |
-| `claude-opus-4-8` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:44] · id [E: packages/ai/src/providers/anthropic.models.ts:45] · provider [E: packages/ai/src/providers/anthropic.models.ts:46] |
-| `claude-sonnet-4-5` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:48] · id [E: packages/ai/src/providers/anthropic.models.ts:49] · provider [E: packages/ai/src/providers/anthropic.models.ts:50] |
-| `claude-sonnet-4-5-20250929` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:52] · id [E: packages/ai/src/providers/anthropic.models.ts:53] · provider [E: packages/ai/src/providers/anthropic.models.ts:54] |
-| `claude-sonnet-4-6` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:56] · id [E: packages/ai/src/providers/anthropic.models.ts:57] · provider [E: packages/ai/src/providers/anthropic.models.ts:58] |
-| `claude-sonnet-5` | `anthropic` | `anthropic-messages` | key/api [E: packages/ai/src/providers/anthropic.models.ts:60] · id [E: packages/ai/src/providers/anthropic.models.ts:61] · provider [E: packages/ai/src/providers/anthropic.models.ts:62] |
+| `claude-fable-5` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-haiku-4-5` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-haiku-4-5-20251001` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-1` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-1-20250805` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-5` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-5-20251101` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-6` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-7` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-8` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-5` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4-5` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4-5-20250929` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4-6` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-5` | `anthropic` | `anthropic-messages` | npm v0.82.1 artifact [I] |
 
 ### azure-openai-responses
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `gpt-4` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:8] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:9] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:10] |
-| `gpt-4-turbo` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:12] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:13] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:14] |
-| `gpt-4.1` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:16] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:17] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:18] |
-| `gpt-4.1-mini` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:20] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:21] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:22] |
-| `gpt-4.1-nano` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:24] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:25] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:26] |
-| `gpt-4o` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:28] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:29] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:30] |
-| `gpt-4o-2024-05-13` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:32] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:33] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:34] |
-| `gpt-4o-2024-08-06` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:36] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:37] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:38] |
-| `gpt-4o-2024-11-20` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:40] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:41] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:42] |
-| `gpt-4o-mini` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:44] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:45] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:46] |
-| `gpt-5` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:48] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:49] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:50] |
-| `gpt-5-chat-latest` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:52] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:53] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:54] |
-| `gpt-5-codex` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:56] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:57] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:58] |
-| `gpt-5-mini` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:60] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:61] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:62] |
-| `gpt-5-nano` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:64] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:65] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:66] |
-| `gpt-5-pro` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:68] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:69] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:70] |
-| `gpt-5.1` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:72] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:73] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:74] |
-| `gpt-5.1-chat-latest` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:76] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:77] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:78] |
-| `gpt-5.1-codex` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:80] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:81] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:82] |
-| `gpt-5.1-codex-max` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:84] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:85] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:86] |
-| `gpt-5.1-codex-mini` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:88] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:89] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:90] |
-| `gpt-5.2` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:92] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:93] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:94] |
-| `gpt-5.2-chat-latest` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:96] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:97] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:98] |
-| `gpt-5.2-codex` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:100] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:101] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:102] |
-| `gpt-5.2-pro` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:104] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:105] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:106] |
-| `gpt-5.3-chat-latest` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:108] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:109] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:110] |
-| `gpt-5.3-codex` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:112] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:113] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:114] |
-| `gpt-5.3-codex-spark` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:116] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:117] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:118] |
-| `gpt-5.4` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:120] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:121] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:122] |
-| `gpt-5.4-mini` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:124] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:125] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:126] |
-| `gpt-5.4-nano` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:128] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:129] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:130] |
-| `gpt-5.4-pro` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:132] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:133] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:134] |
-| `gpt-5.5` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:136] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:137] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:138] |
-| `gpt-5.5-pro` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:140] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:141] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:142] |
-| `gpt-5.6-luna` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:144] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:145] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:146] |
-| `gpt-5.6-sol` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:148] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:149] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:150] |
-| `gpt-5.6-terra` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:152] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:153] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:154] |
-| `gpt-realtime-2.1` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:156] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:157] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:158] |
-| `o1` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:160] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:161] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:162] |
-| `o1-pro` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:164] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:165] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:166] |
-| `o3` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:168] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:169] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:170] |
-| `o3-deep-research` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:172] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:173] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:174] |
-| `o3-mini` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:176] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:177] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:178] |
-| `o3-pro` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:180] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:181] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:182] |
-| `o4-mini` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:184] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:185] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:186] |
-| `o4-mini-deep-research` | `azure-openai-responses` | `azure-openai-responses` | key/api [E: packages/ai/src/providers/azure-openai-responses.models.ts:188] · id [E: packages/ai/src/providers/azure-openai-responses.models.ts:189] · provider [E: packages/ai/src/providers/azure-openai-responses.models.ts:190] |
+| `gpt-4` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4-turbo` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4.1` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4.1-mini` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4.1-nano` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o-2024-05-13` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o-2024-08-06` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o-2024-11-20` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o-mini` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-chat-latest` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-mini` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-nano` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-pro` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.1` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2-chat-latest` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2-pro` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.3-chat-latest` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.3-codex` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.3-codex-spark` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-mini` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-nano` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-pro` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.5` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.5-pro` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-luna` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-sol` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-terra` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-realtime-2.1` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `o1` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `o1-pro` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `o3` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `o3-mini` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `o3-pro` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
+| `o4-mini` | `azure-openai-responses` | `azure-openai-responses` | npm v0.82.1 artifact [I] |
 
 ### cerebras
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `gemma-4-31b` | `cerebras` | `openai-completions` | key/api [E: packages/ai/src/providers/cerebras.models.ts:8] · id [E: packages/ai/src/providers/cerebras.models.ts:9] · provider [E: packages/ai/src/providers/cerebras.models.ts:10] |
-| `gpt-oss-120b` | `cerebras` | `openai-completions` | key/api [E: packages/ai/src/providers/cerebras.models.ts:12] · id [E: packages/ai/src/providers/cerebras.models.ts:13] · provider [E: packages/ai/src/providers/cerebras.models.ts:14] |
-| `zai-glm-4.7` | `cerebras` | `openai-completions` | key/api [E: packages/ai/src/providers/cerebras.models.ts:16] · id [E: packages/ai/src/providers/cerebras.models.ts:17] · provider [E: packages/ai/src/providers/cerebras.models.ts:18] |
+| `gemma-4-31b` | `cerebras` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `gpt-oss-120b` | `cerebras` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-glm-4.7` | `cerebras` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### cloudflare-ai-gateway
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `claude-3-5-haiku` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:8] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:9] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:10] |
-| `claude-3-haiku` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:12] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:13] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:14] |
-| `claude-3-opus` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:16] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:17] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:18] |
-| `claude-3-sonnet` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:20] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:21] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:22] |
-| `claude-3.5-haiku` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:24] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:25] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:26] |
-| `claude-3.5-sonnet` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:28] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:29] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:30] |
-| `claude-fable-5` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:32] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:33] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:34] |
-| `claude-haiku-4-5` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:36] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:37] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:38] |
-| `claude-opus-4` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:40] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:41] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:42] |
-| `claude-opus-4-1` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:44] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:45] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:46] |
-| `claude-opus-4-5` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:48] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:49] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:50] |
-| `claude-opus-4-6` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:52] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:53] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:54] |
-| `claude-opus-4-7` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:56] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:57] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:58] |
-| `claude-opus-4-8` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:60] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:61] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:62] |
-| `claude-sonnet-4` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:64] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:65] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:66] |
-| `claude-sonnet-4-5` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:68] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:69] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:70] |
-| `claude-sonnet-4-6` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:72] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:73] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:74] |
-| `claude-sonnet-5` | `cloudflare-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:76] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:77] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:78] |
-| `gpt-4` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:80] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:81] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:82] |
-| `gpt-4-turbo` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:84] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:85] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:86] |
-| `gpt-4o` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:88] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:89] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:90] |
-| `gpt-4o-mini` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:92] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:93] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:94] |
-| `gpt-5.1` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:96] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:97] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:98] |
-| `gpt-5.1-codex` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:100] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:101] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:102] |
-| `gpt-5.2` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:104] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:105] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:106] |
-| `gpt-5.2-codex` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:108] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:109] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:110] |
-| `gpt-5.3-codex` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:112] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:113] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:114] |
-| `gpt-5.4` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:116] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:117] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:118] |
-| `gpt-5.5` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:120] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:121] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:122] |
-| `gpt-5.6-luna` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:124] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:125] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:126] |
-| `gpt-5.6-sol` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:128] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:129] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:130] |
-| `gpt-5.6-terra` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:132] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:133] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:134] |
-| `o1` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:136] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:137] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:138] |
-| `o3` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:140] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:141] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:142] |
-| `o3-mini` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:144] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:145] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:146] |
-| `o3-pro` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:148] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:149] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:150] |
-| `o4-mini` | `cloudflare-ai-gateway` | `openai-responses` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:152] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:153] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:154] |
-| `workers-ai/@cf/moonshotai/kimi-k2.5` | `cloudflare-ai-gateway` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:156] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:157] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:158] |
-| `workers-ai/@cf/moonshotai/kimi-k2.6` | `cloudflare-ai-gateway` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:160] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:161] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:162] |
-| `workers-ai/@cf/nvidia/nemotron-3-120b-a12b` | `cloudflare-ai-gateway` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:164] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:165] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:166] |
-| `workers-ai/@cf/zai-org/glm-4.7-flash` | `cloudflare-ai-gateway` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:168] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:169] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:170] |
-| `workers-ai/@cf/zai-org/glm-5.2` | `cloudflare-ai-gateway` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:172] · id [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:173] · provider [E: packages/ai/src/providers/cloudflare-ai-gateway.models.ts:174] |
+| `claude-3-5-haiku` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-3-haiku` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-3-opus` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-3-sonnet` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-3.5-haiku` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-3.5-sonnet` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-fable-5` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-haiku-4-5` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-1` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-5` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-6` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-7` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-8` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4-5` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4-6` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-5` | `cloudflare-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `workers-ai/@cf/moonshotai/kimi-k2.5` | `cloudflare-ai-gateway` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `workers-ai/@cf/moonshotai/kimi-k2.6` | `cloudflare-ai-gateway` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `workers-ai/@cf/nvidia/nemotron-3-120b-a12b` | `cloudflare-ai-gateway` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `workers-ai/@cf/zai-org/glm-4.7-flash` | `cloudflare-ai-gateway` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `workers-ai/@cf/zai-org/glm-5.2` | `cloudflare-ai-gateway` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `gpt-4` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4-turbo` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o-mini` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.1` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.1-codex` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2-codex` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.3-codex` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.5` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-luna` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-sol` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-terra` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o1` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o3` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o3-mini` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o3-pro` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o4-mini` | `cloudflare-ai-gateway` | `openai-responses` | npm v0.82.1 artifact [I] |
 
 ### cloudflare-workers-ai
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `@cf/google/gemma-4-26b-a4b-it` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:8] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:9] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:10] |
-| `@cf/ibm-granite/granite-4.0-h-micro` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:12] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:13] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:14] |
-| `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:16] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:17] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:18] |
-| `@cf/meta/llama-4-scout-17b-16e-instruct` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:20] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:21] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:22] |
-| `@cf/mistralai/mistral-small-3.1-24b-instruct` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:24] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:25] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:26] |
-| `@cf/moonshotai/kimi-k2.6` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:28] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:29] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:30] |
-| `@cf/moonshotai/kimi-k2.7-code` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:32] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:33] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:34] |
-| `@cf/nvidia/nemotron-3-120b-a12b` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:36] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:37] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:38] |
-| `@cf/openai/gpt-oss-120b` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:40] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:41] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:42] |
-| `@cf/openai/gpt-oss-20b` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:44] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:45] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:46] |
-| `@cf/qwen/qwen3-30b-a3b-fp8` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:48] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:49] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:50] |
-| `@cf/zai-org/glm-4.7-flash` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:52] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:53] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:54] |
-| `@cf/zai-org/glm-5.2` | `cloudflare-workers-ai` | `openai-completions` | key/api [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:56] · id [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:57] · provider [E: packages/ai/src/providers/cloudflare-workers-ai.models.ts:58] |
+| `@cf/google/gemma-4-26b-a4b-it` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/ibm-granite/granite-4.0-h-micro` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/meta/llama-4-scout-17b-16e-instruct` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/mistralai/mistral-small-3.1-24b-instruct` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/moonshotai/kimi-k2.6` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/moonshotai/kimi-k2.7-code` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/nvidia/nemotron-3-120b-a12b` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/openai/gpt-oss-120b` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/openai/gpt-oss-20b` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/qwen/qwen3-30b-a3b-fp8` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/zai-org/glm-4.7-flash` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `@cf/zai-org/glm-5.2` | `cloudflare-workers-ai` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### deepseek
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `deepseek-v4-flash` | `deepseek` | `openai-completions` | key/api [E: packages/ai/src/providers/deepseek.models.ts:8] · id [E: packages/ai/src/providers/deepseek.models.ts:9] · provider [E: packages/ai/src/providers/deepseek.models.ts:10] |
-| `deepseek-v4-pro` | `deepseek` | `openai-completions` | key/api [E: packages/ai/src/providers/deepseek.models.ts:12] · id [E: packages/ai/src/providers/deepseek.models.ts:13] · provider [E: packages/ai/src/providers/deepseek.models.ts:14] |
+| `deepseek-v4-flash` | `deepseek` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-pro` | `deepseek` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### fireworks
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `accounts/fireworks/models/deepseek-v4-flash` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:8] · id [E: packages/ai/src/providers/fireworks.models.ts:9] · provider [E: packages/ai/src/providers/fireworks.models.ts:10] |
-| `accounts/fireworks/models/deepseek-v4-pro` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:12] · id [E: packages/ai/src/providers/fireworks.models.ts:13] · provider [E: packages/ai/src/providers/fireworks.models.ts:14] |
-| `accounts/fireworks/models/glm-5p1` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:16] · id [E: packages/ai/src/providers/fireworks.models.ts:17] · provider [E: packages/ai/src/providers/fireworks.models.ts:18] |
-| `accounts/fireworks/models/glm-5p2` | `fireworks` | `openai-completions` | key/api [E: packages/ai/src/providers/fireworks.models.ts:20] · id [E: packages/ai/src/providers/fireworks.models.ts:21] · provider [E: packages/ai/src/providers/fireworks.models.ts:22] |
-| `accounts/fireworks/models/gpt-oss-120b` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:24] · id [E: packages/ai/src/providers/fireworks.models.ts:25] · provider [E: packages/ai/src/providers/fireworks.models.ts:26] |
-| `accounts/fireworks/models/gpt-oss-20b` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:28] · id [E: packages/ai/src/providers/fireworks.models.ts:29] · provider [E: packages/ai/src/providers/fireworks.models.ts:30] |
-| `accounts/fireworks/models/kimi-k2p6` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:32] · id [E: packages/ai/src/providers/fireworks.models.ts:33] · provider [E: packages/ai/src/providers/fireworks.models.ts:34] |
-| `accounts/fireworks/models/kimi-k2p7-code` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:36] · id [E: packages/ai/src/providers/fireworks.models.ts:37] · provider [E: packages/ai/src/providers/fireworks.models.ts:38] |
-| `accounts/fireworks/models/minimax-m2p7` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:40] · id [E: packages/ai/src/providers/fireworks.models.ts:41] · provider [E: packages/ai/src/providers/fireworks.models.ts:42] |
-| `accounts/fireworks/models/minimax-m3` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:44] · id [E: packages/ai/src/providers/fireworks.models.ts:45] · provider [E: packages/ai/src/providers/fireworks.models.ts:46] |
-| `accounts/fireworks/models/qwen3p7-plus` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:48] · id [E: packages/ai/src/providers/fireworks.models.ts:49] · provider [E: packages/ai/src/providers/fireworks.models.ts:50] |
-| `accounts/fireworks/routers/glm-5p1-fast` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:52] · id [E: packages/ai/src/providers/fireworks.models.ts:53] · provider [E: packages/ai/src/providers/fireworks.models.ts:54] |
-| `accounts/fireworks/routers/glm-5p2-fast` | `fireworks` | `openai-completions` | key/api [E: packages/ai/src/providers/fireworks.models.ts:56] · id [E: packages/ai/src/providers/fireworks.models.ts:57] · provider [E: packages/ai/src/providers/fireworks.models.ts:58] |
-| `accounts/fireworks/routers/kimi-k2p6-fast` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:60] · id [E: packages/ai/src/providers/fireworks.models.ts:61] · provider [E: packages/ai/src/providers/fireworks.models.ts:62] |
-| `accounts/fireworks/routers/kimi-k2p6-turbo` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:64] · id [E: packages/ai/src/providers/fireworks.models.ts:65] · provider [E: packages/ai/src/providers/fireworks.models.ts:66] |
-| `accounts/fireworks/routers/kimi-k2p7-code-fast` | `fireworks` | `anthropic-messages` | key/api [E: packages/ai/src/providers/fireworks.models.ts:68] · id [E: packages/ai/src/providers/fireworks.models.ts:69] · provider [E: packages/ai/src/providers/fireworks.models.ts:70] |
+| `accounts/fireworks/models/deepseek-v4-flash` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/deepseek-v4-pro` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/glm-5p1` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/gpt-oss-120b` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/gpt-oss-20b` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/kimi-k2p6` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/kimi-k2p7-code` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/minimax-m2p7` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/minimax-m3` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/qwen3p7-plus` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/routers/glm-5p1-fast` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/routers/kimi-k2p6-fast` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/routers/kimi-k2p6-turbo` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/routers/kimi-k2p7-code-fast` | `fireworks` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/models/glm-5p2` | `fireworks` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `accounts/fireworks/routers/glm-5p2-fast` | `fireworks` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### github-copilot
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `claude-fable-5` | `github-copilot` | `openai-completions` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:8] · id [E: packages/ai/src/providers/github-copilot.models.ts:9] · provider [E: packages/ai/src/providers/github-copilot.models.ts:10] |
-| `claude-haiku-4.5` | `github-copilot` | `anthropic-messages` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:12] · id [E: packages/ai/src/providers/github-copilot.models.ts:13] · provider [E: packages/ai/src/providers/github-copilot.models.ts:14] |
-| `claude-opus-4.5` | `github-copilot` | `anthropic-messages` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:16] · id [E: packages/ai/src/providers/github-copilot.models.ts:17] · provider [E: packages/ai/src/providers/github-copilot.models.ts:18] |
-| `claude-opus-4.6` | `github-copilot` | `anthropic-messages` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:20] · id [E: packages/ai/src/providers/github-copilot.models.ts:21] · provider [E: packages/ai/src/providers/github-copilot.models.ts:22] |
-| `claude-opus-4.7` | `github-copilot` | `anthropic-messages` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:24] · id [E: packages/ai/src/providers/github-copilot.models.ts:25] · provider [E: packages/ai/src/providers/github-copilot.models.ts:26] |
-| `claude-opus-4.8` | `github-copilot` | `anthropic-messages` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:28] · id [E: packages/ai/src/providers/github-copilot.models.ts:29] · provider [E: packages/ai/src/providers/github-copilot.models.ts:30] |
-| `claude-sonnet-4` | `github-copilot` | `anthropic-messages` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:32] · id [E: packages/ai/src/providers/github-copilot.models.ts:33] · provider [E: packages/ai/src/providers/github-copilot.models.ts:34] |
-| `claude-sonnet-4.5` | `github-copilot` | `anthropic-messages` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:36] · id [E: packages/ai/src/providers/github-copilot.models.ts:37] · provider [E: packages/ai/src/providers/github-copilot.models.ts:38] |
-| `claude-sonnet-4.6` | `github-copilot` | `anthropic-messages` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:40] · id [E: packages/ai/src/providers/github-copilot.models.ts:41] · provider [E: packages/ai/src/providers/github-copilot.models.ts:42] |
-| `claude-sonnet-5` | `github-copilot` | `anthropic-messages` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:44] · id [E: packages/ai/src/providers/github-copilot.models.ts:45] · provider [E: packages/ai/src/providers/github-copilot.models.ts:46] |
-| `gemini-2.5-pro` | `github-copilot` | `openai-completions` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:48] · id [E: packages/ai/src/providers/github-copilot.models.ts:49] · provider [E: packages/ai/src/providers/github-copilot.models.ts:50] |
-| `gemini-3-flash-preview` | `github-copilot` | `openai-completions` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:52] · id [E: packages/ai/src/providers/github-copilot.models.ts:53] · provider [E: packages/ai/src/providers/github-copilot.models.ts:54] |
-| `gemini-3.1-pro-preview` | `github-copilot` | `openai-completions` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:56] · id [E: packages/ai/src/providers/github-copilot.models.ts:57] · provider [E: packages/ai/src/providers/github-copilot.models.ts:58] |
-| `gemini-3.5-flash` | `github-copilot` | `openai-completions` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:60] · id [E: packages/ai/src/providers/github-copilot.models.ts:61] · provider [E: packages/ai/src/providers/github-copilot.models.ts:62] |
-| `gpt-4.1` | `github-copilot` | `openai-completions` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:64] · id [E: packages/ai/src/providers/github-copilot.models.ts:65] · provider [E: packages/ai/src/providers/github-copilot.models.ts:66] |
-| `gpt-5-mini` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:68] · id [E: packages/ai/src/providers/github-copilot.models.ts:69] · provider [E: packages/ai/src/providers/github-copilot.models.ts:70] |
-| `gpt-5.2` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:72] · id [E: packages/ai/src/providers/github-copilot.models.ts:73] · provider [E: packages/ai/src/providers/github-copilot.models.ts:74] |
-| `gpt-5.2-codex` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:76] · id [E: packages/ai/src/providers/github-copilot.models.ts:77] · provider [E: packages/ai/src/providers/github-copilot.models.ts:78] |
-| `gpt-5.3-codex` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:80] · id [E: packages/ai/src/providers/github-copilot.models.ts:81] · provider [E: packages/ai/src/providers/github-copilot.models.ts:82] |
-| `gpt-5.4` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:84] · id [E: packages/ai/src/providers/github-copilot.models.ts:85] · provider [E: packages/ai/src/providers/github-copilot.models.ts:86] |
-| `gpt-5.4-mini` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:88] · id [E: packages/ai/src/providers/github-copilot.models.ts:89] · provider [E: packages/ai/src/providers/github-copilot.models.ts:90] |
-| `gpt-5.4-nano` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:92] · id [E: packages/ai/src/providers/github-copilot.models.ts:93] · provider [E: packages/ai/src/providers/github-copilot.models.ts:94] |
-| `gpt-5.5` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:96] · id [E: packages/ai/src/providers/github-copilot.models.ts:97] · provider [E: packages/ai/src/providers/github-copilot.models.ts:98] |
-| `gpt-5.6-luna` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:100] · id [E: packages/ai/src/providers/github-copilot.models.ts:101] · provider [E: packages/ai/src/providers/github-copilot.models.ts:102] |
-| `gpt-5.6-sol` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:104] · id [E: packages/ai/src/providers/github-copilot.models.ts:105] · provider [E: packages/ai/src/providers/github-copilot.models.ts:106] |
-| `gpt-5.6-terra` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:108] · id [E: packages/ai/src/providers/github-copilot.models.ts:109] · provider [E: packages/ai/src/providers/github-copilot.models.ts:110] |
-| `kimi-k2.7-code` | `github-copilot` | `openai-completions` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:112] · id [E: packages/ai/src/providers/github-copilot.models.ts:113] · provider [E: packages/ai/src/providers/github-copilot.models.ts:114] |
-| `mai-code-1-flash-picker` | `github-copilot` | `openai-responses` | key/api [E: packages/ai/src/providers/github-copilot.models.ts:116] · id [E: packages/ai/src/providers/github-copilot.models.ts:117] · provider [E: packages/ai/src/providers/github-copilot.models.ts:118] |
-
-### google-vertex
-
-| id | provider | api/wire | committed structural evidence |
-|---|---|---|---|
-| `gemini-2.5-flash` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:8] · id [E: packages/ai/src/providers/google-vertex.models.ts:9] · provider [E: packages/ai/src/providers/google-vertex.models.ts:10] |
-| `gemini-2.5-flash-lite` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:12] · id [E: packages/ai/src/providers/google-vertex.models.ts:13] · provider [E: packages/ai/src/providers/google-vertex.models.ts:14] |
-| `gemini-2.5-pro` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:16] · id [E: packages/ai/src/providers/google-vertex.models.ts:17] · provider [E: packages/ai/src/providers/google-vertex.models.ts:18] |
-| `gemini-3-flash-preview` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:20] · id [E: packages/ai/src/providers/google-vertex.models.ts:21] · provider [E: packages/ai/src/providers/google-vertex.models.ts:22] |
-| `gemini-3.1-flash-lite` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:24] · id [E: packages/ai/src/providers/google-vertex.models.ts:25] · provider [E: packages/ai/src/providers/google-vertex.models.ts:26] |
-| `gemini-3.1-pro-preview` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:28] · id [E: packages/ai/src/providers/google-vertex.models.ts:29] · provider [E: packages/ai/src/providers/google-vertex.models.ts:30] |
-| `gemini-3.1-pro-preview-customtools` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:32] · id [E: packages/ai/src/providers/google-vertex.models.ts:33] · provider [E: packages/ai/src/providers/google-vertex.models.ts:34] |
-| `gemini-3.5-flash` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:36] · id [E: packages/ai/src/providers/google-vertex.models.ts:37] · provider [E: packages/ai/src/providers/google-vertex.models.ts:38] |
-| `gemini-flash-latest` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:40] · id [E: packages/ai/src/providers/google-vertex.models.ts:41] · provider [E: packages/ai/src/providers/google-vertex.models.ts:42] |
-| `gemini-flash-lite-latest` | `google-vertex` | `google-vertex` | key/api [E: packages/ai/src/providers/google-vertex.models.ts:44] · id [E: packages/ai/src/providers/google-vertex.models.ts:45] · provider [E: packages/ai/src/providers/google-vertex.models.ts:46] |
+| `claude-haiku-4.5` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4.5` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4.6` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4.7` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4.8` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-5` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4.5` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4.6` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-5` | `github-copilot` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-fable-5` | `github-copilot` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `gemini-2.5-pro` | `github-copilot` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `gemini-3-flash-preview` | `github-copilot` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-pro-preview` | `github-copilot` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `gemini-3.5-flash` | `github-copilot` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `gpt-4.1` | `github-copilot` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.7-code` | `github-copilot` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `gpt-5-mini` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2-codex` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.3-codex` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-mini` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-nano` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.5` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-luna` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-sol` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-terra` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `mai-code-1-flash-picker` | `github-copilot` | `openai-responses` | npm v0.82.1 artifact [I] |
 
 ### google
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `gemini-2.0-flash` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:8] · id [E: packages/ai/src/providers/google.models.ts:9] · provider [E: packages/ai/src/providers/google.models.ts:10] |
-| `gemini-2.0-flash-lite` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:12] · id [E: packages/ai/src/providers/google.models.ts:13] · provider [E: packages/ai/src/providers/google.models.ts:14] |
-| `gemini-2.5-flash` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:16] · id [E: packages/ai/src/providers/google.models.ts:17] · provider [E: packages/ai/src/providers/google.models.ts:18] |
-| `gemini-2.5-flash-lite` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:20] · id [E: packages/ai/src/providers/google.models.ts:21] · provider [E: packages/ai/src/providers/google.models.ts:22] |
-| `gemini-2.5-pro` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:24] · id [E: packages/ai/src/providers/google.models.ts:25] · provider [E: packages/ai/src/providers/google.models.ts:26] |
-| `gemini-3-flash-preview` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:28] · id [E: packages/ai/src/providers/google.models.ts:29] · provider [E: packages/ai/src/providers/google.models.ts:30] |
-| `gemini-3-pro-preview` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:32] · id [E: packages/ai/src/providers/google.models.ts:33] · provider [E: packages/ai/src/providers/google.models.ts:34] |
-| `gemini-3.1-flash-lite` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:36] · id [E: packages/ai/src/providers/google.models.ts:37] · provider [E: packages/ai/src/providers/google.models.ts:38] |
-| `gemini-3.1-flash-lite-preview` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:40] · id [E: packages/ai/src/providers/google.models.ts:41] · provider [E: packages/ai/src/providers/google.models.ts:42] |
-| `gemini-3.1-pro-preview` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:44] · id [E: packages/ai/src/providers/google.models.ts:45] · provider [E: packages/ai/src/providers/google.models.ts:46] |
-| `gemini-3.1-pro-preview-customtools` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:48] · id [E: packages/ai/src/providers/google.models.ts:49] · provider [E: packages/ai/src/providers/google.models.ts:50] |
-| `gemini-3.5-flash` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:52] · id [E: packages/ai/src/providers/google.models.ts:53] · provider [E: packages/ai/src/providers/google.models.ts:54] |
-| `gemini-flash-latest` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:56] · id [E: packages/ai/src/providers/google.models.ts:57] · provider [E: packages/ai/src/providers/google.models.ts:58] |
-| `gemini-flash-lite-latest` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:60] · id [E: packages/ai/src/providers/google.models.ts:61] · provider [E: packages/ai/src/providers/google.models.ts:62] |
-| `gemma-4-26b-a4b-it` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:64] · id [E: packages/ai/src/providers/google.models.ts:65] · provider [E: packages/ai/src/providers/google.models.ts:66] |
-| `gemma-4-31b-it` | `google` | `google-generative-ai` | key/api [E: packages/ai/src/providers/google.models.ts:68] · id [E: packages/ai/src/providers/google.models.ts:69] · provider [E: packages/ai/src/providers/google.models.ts:70] |
+| `deep-research-max-preview-04-2026` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `deep-research-preview-04-2026` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-2.0-flash` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-2.0-flash-lite` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-2.5-computer-use-preview-10-2025` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-2.5-flash` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-2.5-flash-lite` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-2.5-pro` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3-flash-preview` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3-pro-preview` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-flash-lite` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-flash-lite-image` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-flash-lite-preview` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-flash-live-preview` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-pro-preview` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-pro-preview-customtools` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.5-flash` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.5-flash-lite` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.6-flash` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-flash-latest` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-flash-lite-latest` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-robotics-er-1.6-preview` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemma-4-26b-a4b-it` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemma-4-31b-it` | `google` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+
+### google-vertex
+
+| id | provider | api/wire | evidence |
+|---|---|---|---|
+| `gemini-2.5-flash` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-2.5-flash-lite` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-2.5-pro` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-3-flash-preview` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-flash-lite` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-pro-preview` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-pro-preview-customtools` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-3.5-flash` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-3.5-flash-lite` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-3.6-flash` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-flash-latest` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
+| `gemini-flash-lite-latest` | `google-vertex` | `google-vertex` | npm v0.82.1 artifact [I] |
 
 ### groq
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `llama-3.1-8b-instant` | `groq` | `openai-completions` | key/api [E: packages/ai/src/providers/groq.models.ts:8] · id [E: packages/ai/src/providers/groq.models.ts:9] · provider [E: packages/ai/src/providers/groq.models.ts:10] |
-| `llama-3.3-70b-versatile` | `groq` | `openai-completions` | key/api [E: packages/ai/src/providers/groq.models.ts:12] · id [E: packages/ai/src/providers/groq.models.ts:13] · provider [E: packages/ai/src/providers/groq.models.ts:14] |
-| `meta-llama/llama-4-scout-17b-16e-instruct` | `groq` | `openai-completions` | key/api [E: packages/ai/src/providers/groq.models.ts:16] · id [E: packages/ai/src/providers/groq.models.ts:17] · provider [E: packages/ai/src/providers/groq.models.ts:18] |
-| `openai/gpt-oss-120b` | `groq` | `openai-completions` | key/api [E: packages/ai/src/providers/groq.models.ts:20] · id [E: packages/ai/src/providers/groq.models.ts:21] · provider [E: packages/ai/src/providers/groq.models.ts:22] |
-| `openai/gpt-oss-20b` | `groq` | `openai-completions` | key/api [E: packages/ai/src/providers/groq.models.ts:24] · id [E: packages/ai/src/providers/groq.models.ts:25] · provider [E: packages/ai/src/providers/groq.models.ts:26] |
-| `openai/gpt-oss-safeguard-20b` | `groq` | `openai-completions` | key/api [E: packages/ai/src/providers/groq.models.ts:28] · id [E: packages/ai/src/providers/groq.models.ts:29] · provider [E: packages/ai/src/providers/groq.models.ts:30] |
-| `qwen/qwen3-32b` | `groq` | `openai-completions` | key/api [E: packages/ai/src/providers/groq.models.ts:32] · id [E: packages/ai/src/providers/groq.models.ts:33] · provider [E: packages/ai/src/providers/groq.models.ts:34] |
+| `llama-3.1-8b-instant` | `groq` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `llama-3.3-70b-versatile` | `groq` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta-llama/llama-4-scout-17b-16e-instruct` | `groq` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-120b` | `groq` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-20b` | `groq` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-safeguard-20b` | `groq` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-32b` | `groq` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### huggingface
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `MiniMaxAI/MiniMax-M2` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:8] · id [E: packages/ai/src/providers/huggingface.models.ts:9] · provider [E: packages/ai/src/providers/huggingface.models.ts:10] |
-| `MiniMaxAI/MiniMax-M2.1` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:12] · id [E: packages/ai/src/providers/huggingface.models.ts:13] · provider [E: packages/ai/src/providers/huggingface.models.ts:14] |
-| `MiniMaxAI/MiniMax-M2.5` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:16] · id [E: packages/ai/src/providers/huggingface.models.ts:17] · provider [E: packages/ai/src/providers/huggingface.models.ts:18] |
-| `MiniMaxAI/MiniMax-M2.7` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:20] · id [E: packages/ai/src/providers/huggingface.models.ts:21] · provider [E: packages/ai/src/providers/huggingface.models.ts:22] |
-| `MiniMaxAI/MiniMax-M3` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:24] · id [E: packages/ai/src/providers/huggingface.models.ts:25] · provider [E: packages/ai/src/providers/huggingface.models.ts:26] |
-| `Qwen/Qwen3-235B-A22B` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:28] · id [E: packages/ai/src/providers/huggingface.models.ts:29] · provider [E: packages/ai/src/providers/huggingface.models.ts:30] |
-| `Qwen/Qwen3-235B-A22B-Thinking-2507` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:32] · id [E: packages/ai/src/providers/huggingface.models.ts:33] · provider [E: packages/ai/src/providers/huggingface.models.ts:34] |
-| `Qwen/Qwen3-32B` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:36] · id [E: packages/ai/src/providers/huggingface.models.ts:37] · provider [E: packages/ai/src/providers/huggingface.models.ts:38] |
-| `Qwen/Qwen3-Coder-30B-A3B-Instruct` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:40] · id [E: packages/ai/src/providers/huggingface.models.ts:41] · provider [E: packages/ai/src/providers/huggingface.models.ts:42] |
-| `Qwen/Qwen3-Coder-480B-A35B-Instruct` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:44] · id [E: packages/ai/src/providers/huggingface.models.ts:45] · provider [E: packages/ai/src/providers/huggingface.models.ts:46] |
-| `Qwen/Qwen3-Coder-Next` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:48] · id [E: packages/ai/src/providers/huggingface.models.ts:49] · provider [E: packages/ai/src/providers/huggingface.models.ts:50] |
-| `Qwen/Qwen3-Next-80B-A3B-Instruct` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:52] · id [E: packages/ai/src/providers/huggingface.models.ts:53] · provider [E: packages/ai/src/providers/huggingface.models.ts:54] |
-| `Qwen/Qwen3-Next-80B-A3B-Thinking` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:56] · id [E: packages/ai/src/providers/huggingface.models.ts:57] · provider [E: packages/ai/src/providers/huggingface.models.ts:58] |
-| `Qwen/Qwen3.5-122B-A10B` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:60] · id [E: packages/ai/src/providers/huggingface.models.ts:61] · provider [E: packages/ai/src/providers/huggingface.models.ts:62] |
-| `Qwen/Qwen3.5-27B` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:64] · id [E: packages/ai/src/providers/huggingface.models.ts:65] · provider [E: packages/ai/src/providers/huggingface.models.ts:66] |
-| `Qwen/Qwen3.5-35B-A3B` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:68] · id [E: packages/ai/src/providers/huggingface.models.ts:69] · provider [E: packages/ai/src/providers/huggingface.models.ts:70] |
-| `Qwen/Qwen3.5-397B-A17B` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:72] · id [E: packages/ai/src/providers/huggingface.models.ts:73] · provider [E: packages/ai/src/providers/huggingface.models.ts:74] |
-| `Qwen/Qwen3.5-9B` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:76] · id [E: packages/ai/src/providers/huggingface.models.ts:77] · provider [E: packages/ai/src/providers/huggingface.models.ts:78] |
-| `Qwen/Qwen3.6-27B` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:80] · id [E: packages/ai/src/providers/huggingface.models.ts:81] · provider [E: packages/ai/src/providers/huggingface.models.ts:82] |
-| `Qwen/Qwen3.6-35B-A3B` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:84] · id [E: packages/ai/src/providers/huggingface.models.ts:85] · provider [E: packages/ai/src/providers/huggingface.models.ts:86] |
-| `XiaomiMiMo/MiMo-V2-Flash` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:88] · id [E: packages/ai/src/providers/huggingface.models.ts:89] · provider [E: packages/ai/src/providers/huggingface.models.ts:90] |
-| `XiaomiMiMo/MiMo-V2.5-Pro` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:92] · id [E: packages/ai/src/providers/huggingface.models.ts:93] · provider [E: packages/ai/src/providers/huggingface.models.ts:94] |
-| `deepseek-ai/DeepSeek-R1` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:96] · id [E: packages/ai/src/providers/huggingface.models.ts:97] · provider [E: packages/ai/src/providers/huggingface.models.ts:98] |
-| `deepseek-ai/DeepSeek-R1-0528` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:100] · id [E: packages/ai/src/providers/huggingface.models.ts:101] · provider [E: packages/ai/src/providers/huggingface.models.ts:102] |
-| `deepseek-ai/DeepSeek-V3.2` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:104] · id [E: packages/ai/src/providers/huggingface.models.ts:105] · provider [E: packages/ai/src/providers/huggingface.models.ts:106] |
-| `deepseek-ai/DeepSeek-V4-Flash` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:108] · id [E: packages/ai/src/providers/huggingface.models.ts:109] · provider [E: packages/ai/src/providers/huggingface.models.ts:110] |
-| `deepseek-ai/DeepSeek-V4-Pro` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:112] · id [E: packages/ai/src/providers/huggingface.models.ts:113] · provider [E: packages/ai/src/providers/huggingface.models.ts:114] |
-| `google/gemma-4-26B-A4B-it` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:116] · id [E: packages/ai/src/providers/huggingface.models.ts:117] · provider [E: packages/ai/src/providers/huggingface.models.ts:118] |
-| `google/gemma-4-31B-it` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:120] · id [E: packages/ai/src/providers/huggingface.models.ts:121] · provider [E: packages/ai/src/providers/huggingface.models.ts:122] |
-| `meta-llama/Llama-3.3-70B-Instruct` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:124] · id [E: packages/ai/src/providers/huggingface.models.ts:125] · provider [E: packages/ai/src/providers/huggingface.models.ts:126] |
-| `moonshotai/Kimi-K2-Instruct` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:128] · id [E: packages/ai/src/providers/huggingface.models.ts:129] · provider [E: packages/ai/src/providers/huggingface.models.ts:130] |
-| `moonshotai/Kimi-K2-Instruct-0905` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:132] · id [E: packages/ai/src/providers/huggingface.models.ts:133] · provider [E: packages/ai/src/providers/huggingface.models.ts:134] |
-| `moonshotai/Kimi-K2-Thinking` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:136] · id [E: packages/ai/src/providers/huggingface.models.ts:137] · provider [E: packages/ai/src/providers/huggingface.models.ts:138] |
-| `moonshotai/Kimi-K2.5` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:140] · id [E: packages/ai/src/providers/huggingface.models.ts:141] · provider [E: packages/ai/src/providers/huggingface.models.ts:142] |
-| `moonshotai/Kimi-K2.6` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:144] · id [E: packages/ai/src/providers/huggingface.models.ts:145] · provider [E: packages/ai/src/providers/huggingface.models.ts:146] |
-| `moonshotai/Kimi-K2.7-Code` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:148] · id [E: packages/ai/src/providers/huggingface.models.ts:149] · provider [E: packages/ai/src/providers/huggingface.models.ts:150] |
-| `openai/gpt-oss-120b` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:152] · id [E: packages/ai/src/providers/huggingface.models.ts:153] · provider [E: packages/ai/src/providers/huggingface.models.ts:154] |
-| `openai/gpt-oss-20b` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:156] · id [E: packages/ai/src/providers/huggingface.models.ts:157] · provider [E: packages/ai/src/providers/huggingface.models.ts:158] |
-| `stepfun-ai/Step-3.5-Flash` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:160] · id [E: packages/ai/src/providers/huggingface.models.ts:161] · provider [E: packages/ai/src/providers/huggingface.models.ts:162] |
-| `stepfun-ai/Step-3.7-Flash` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:164] · id [E: packages/ai/src/providers/huggingface.models.ts:165] · provider [E: packages/ai/src/providers/huggingface.models.ts:166] |
-| `zai-org/GLM-4.5` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:168] · id [E: packages/ai/src/providers/huggingface.models.ts:169] · provider [E: packages/ai/src/providers/huggingface.models.ts:170] |
-| `zai-org/GLM-4.5-Air` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:172] · id [E: packages/ai/src/providers/huggingface.models.ts:173] · provider [E: packages/ai/src/providers/huggingface.models.ts:174] |
-| `zai-org/GLM-4.5V` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:176] · id [E: packages/ai/src/providers/huggingface.models.ts:177] · provider [E: packages/ai/src/providers/huggingface.models.ts:178] |
-| `zai-org/GLM-4.6` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:180] · id [E: packages/ai/src/providers/huggingface.models.ts:181] · provider [E: packages/ai/src/providers/huggingface.models.ts:182] |
-| `zai-org/GLM-4.7` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:184] · id [E: packages/ai/src/providers/huggingface.models.ts:185] · provider [E: packages/ai/src/providers/huggingface.models.ts:186] |
-| `zai-org/GLM-4.7-Flash` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:188] · id [E: packages/ai/src/providers/huggingface.models.ts:189] · provider [E: packages/ai/src/providers/huggingface.models.ts:190] |
-| `zai-org/GLM-5` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:192] · id [E: packages/ai/src/providers/huggingface.models.ts:193] · provider [E: packages/ai/src/providers/huggingface.models.ts:194] |
-| `zai-org/GLM-5.1` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:196] · id [E: packages/ai/src/providers/huggingface.models.ts:197] · provider [E: packages/ai/src/providers/huggingface.models.ts:198] |
-| `zai-org/GLM-5.2` | `huggingface` | `openai-completions` | key/api [E: packages/ai/src/providers/huggingface.models.ts:200] · id [E: packages/ai/src/providers/huggingface.models.ts:201] · provider [E: packages/ai/src/providers/huggingface.models.ts:202] |
+| `deepseek-ai/DeepSeek-R1` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-ai/DeepSeek-R1-0528` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-ai/DeepSeek-V3.2` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-ai/DeepSeek-V4-Flash` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-ai/DeepSeek-V4-Pro` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemma-4-26B-A4B-it` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemma-4-31B-it` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta-llama/Llama-3.3-70B-Instruct` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `MiniMaxAI/MiniMax-M2` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `MiniMaxAI/MiniMax-M2.1` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `MiniMaxAI/MiniMax-M2.5` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `MiniMaxAI/MiniMax-M2.7` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `MiniMaxAI/MiniMax-M3` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/Kimi-K2-Instruct` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/Kimi-K2-Instruct-0905` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/Kimi-K2-Thinking` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/Kimi-K2.5` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/Kimi-K2.6` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/Kimi-K2.7-Code` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-120b` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-20b` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3-235B-A22B` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3-235B-A22B-Thinking-2507` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3-32B` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3-Coder-30B-A3B-Instruct` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3-Coder-480B-A35B-Instruct` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3-Coder-Next` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3-Next-80B-A3B-Instruct` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3-Next-80B-A3B-Thinking` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.5-122B-A10B` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.5-27B` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.5-35B-A3B` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.5-397B-A17B` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.5-9B` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.6-27B` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.6-35B-A3B` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `stepfun-ai/Step-3.5-Flash` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `stepfun-ai/Step-3.7-Flash` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `XiaomiMiMo/MiMo-V2-Flash` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `XiaomiMiMo/MiMo-V2.5` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `XiaomiMiMo/MiMo-V2.5-Pro` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-4.5` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-4.5-Air` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-4.5V` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-4.6` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-4.7` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-4.7-Flash` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-5` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-5.1` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-5.2` | `huggingface` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### kimi-coding
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `k2p7` | `kimi-coding` | `anthropic-messages` | key/api [E: packages/ai/src/providers/kimi-coding.models.ts:8] · id [E: packages/ai/src/providers/kimi-coding.models.ts:9] · provider [E: packages/ai/src/providers/kimi-coding.models.ts:10] |
-| `k3` | `kimi-coding` | `anthropic-messages` | key/api [E: packages/ai/src/providers/kimi-coding.models.ts:12] · id [E: packages/ai/src/providers/kimi-coding.models.ts:13] · provider [E: packages/ai/src/providers/kimi-coding.models.ts:14] |
-| `kimi-for-coding-highspeed` | `kimi-coding` | `anthropic-messages` | key/api [E: packages/ai/src/providers/kimi-coding.models.ts:16] · id [E: packages/ai/src/providers/kimi-coding.models.ts:17] · provider [E: packages/ai/src/providers/kimi-coding.models.ts:18] |
-
-### minimax-cn
-
-| id | provider | api/wire | committed structural evidence |
-|---|---|---|---|
-| `MiniMax-M2.7` | `minimax-cn` | `anthropic-messages` | key/api [E: packages/ai/src/providers/minimax-cn.models.ts:8] · id [E: packages/ai/src/providers/minimax-cn.models.ts:9] · provider [E: packages/ai/src/providers/minimax-cn.models.ts:10] |
-| `MiniMax-M2.7-highspeed` | `minimax-cn` | `anthropic-messages` | key/api [E: packages/ai/src/providers/minimax-cn.models.ts:12] · id [E: packages/ai/src/providers/minimax-cn.models.ts:13] · provider [E: packages/ai/src/providers/minimax-cn.models.ts:14] |
-| `MiniMax-M3` | `minimax-cn` | `anthropic-messages` | key/api [E: packages/ai/src/providers/minimax-cn.models.ts:16] · id [E: packages/ai/src/providers/minimax-cn.models.ts:17] · provider [E: packages/ai/src/providers/minimax-cn.models.ts:18] |
+| `k3` | `kimi-coding` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `k3-256k` | `kimi-coding` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `kimi-for-coding` | `kimi-coding` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `kimi-for-coding-highspeed` | `kimi-coding` | `anthropic-messages` | npm v0.82.1 artifact [I] |
 
 ### minimax
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `MiniMax-M2.7` | `minimax` | `anthropic-messages` | key/api [E: packages/ai/src/providers/minimax.models.ts:8] · id [E: packages/ai/src/providers/minimax.models.ts:9] · provider [E: packages/ai/src/providers/minimax.models.ts:10] |
-| `MiniMax-M2.7-highspeed` | `minimax` | `anthropic-messages` | key/api [E: packages/ai/src/providers/minimax.models.ts:12] · id [E: packages/ai/src/providers/minimax.models.ts:13] · provider [E: packages/ai/src/providers/minimax.models.ts:14] |
-| `MiniMax-M3` | `minimax` | `anthropic-messages` | key/api [E: packages/ai/src/providers/minimax.models.ts:16] · id [E: packages/ai/src/providers/minimax.models.ts:17] · provider [E: packages/ai/src/providers/minimax.models.ts:18] |
+| `MiniMax-M2.7` | `minimax` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `MiniMax-M2.7-highspeed` | `minimax` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `MiniMax-M3` | `minimax` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+
+### minimax-cn
+
+| id | provider | api/wire | evidence |
+|---|---|---|---|
+| `MiniMax-M2.7` | `minimax-cn` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `MiniMax-M2.7-highspeed` | `minimax-cn` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `MiniMax-M3` | `minimax-cn` | `anthropic-messages` | npm v0.82.1 artifact [I] |
 
 ### mistral
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `codestral-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:8] · id [E: packages/ai/src/providers/mistral.models.ts:9] · provider [E: packages/ai/src/providers/mistral.models.ts:10] |
-| `devstral-2512` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:12] · id [E: packages/ai/src/providers/mistral.models.ts:13] · provider [E: packages/ai/src/providers/mistral.models.ts:14] |
-| `devstral-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:16] · id [E: packages/ai/src/providers/mistral.models.ts:17] · provider [E: packages/ai/src/providers/mistral.models.ts:18] |
-| `devstral-medium-2507` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:20] · id [E: packages/ai/src/providers/mistral.models.ts:21] · provider [E: packages/ai/src/providers/mistral.models.ts:22] |
-| `devstral-medium-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:24] · id [E: packages/ai/src/providers/mistral.models.ts:25] · provider [E: packages/ai/src/providers/mistral.models.ts:26] |
-| `devstral-small-2505` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:28] · id [E: packages/ai/src/providers/mistral.models.ts:29] · provider [E: packages/ai/src/providers/mistral.models.ts:30] |
-| `devstral-small-2507` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:32] · id [E: packages/ai/src/providers/mistral.models.ts:33] · provider [E: packages/ai/src/providers/mistral.models.ts:34] |
-| `labs-devstral-small-2512` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:36] · id [E: packages/ai/src/providers/mistral.models.ts:37] · provider [E: packages/ai/src/providers/mistral.models.ts:38] |
-| `magistral-medium-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:40] · id [E: packages/ai/src/providers/mistral.models.ts:41] · provider [E: packages/ai/src/providers/mistral.models.ts:42] |
-| `magistral-small` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:44] · id [E: packages/ai/src/providers/mistral.models.ts:45] · provider [E: packages/ai/src/providers/mistral.models.ts:46] |
-| `ministral-3b-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:48] · id [E: packages/ai/src/providers/mistral.models.ts:49] · provider [E: packages/ai/src/providers/mistral.models.ts:50] |
-| `ministral-8b-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:52] · id [E: packages/ai/src/providers/mistral.models.ts:53] · provider [E: packages/ai/src/providers/mistral.models.ts:54] |
-| `mistral-large-2411` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:56] · id [E: packages/ai/src/providers/mistral.models.ts:57] · provider [E: packages/ai/src/providers/mistral.models.ts:58] |
-| `mistral-large-2512` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:60] · id [E: packages/ai/src/providers/mistral.models.ts:61] · provider [E: packages/ai/src/providers/mistral.models.ts:62] |
-| `mistral-large-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:64] · id [E: packages/ai/src/providers/mistral.models.ts:65] · provider [E: packages/ai/src/providers/mistral.models.ts:66] |
-| `mistral-medium-2505` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:68] · id [E: packages/ai/src/providers/mistral.models.ts:69] · provider [E: packages/ai/src/providers/mistral.models.ts:70] |
-| `mistral-medium-2508` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:72] · id [E: packages/ai/src/providers/mistral.models.ts:73] · provider [E: packages/ai/src/providers/mistral.models.ts:74] |
-| `mistral-medium-2604` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:76] · id [E: packages/ai/src/providers/mistral.models.ts:77] · provider [E: packages/ai/src/providers/mistral.models.ts:78] |
-| `mistral-medium-3.5` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:80] · id [E: packages/ai/src/providers/mistral.models.ts:81] · provider [E: packages/ai/src/providers/mistral.models.ts:82] |
-| `mistral-medium-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:84] · id [E: packages/ai/src/providers/mistral.models.ts:85] · provider [E: packages/ai/src/providers/mistral.models.ts:86] |
-| `mistral-nemo` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:88] · id [E: packages/ai/src/providers/mistral.models.ts:89] · provider [E: packages/ai/src/providers/mistral.models.ts:90] |
-| `mistral-small-2506` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:92] · id [E: packages/ai/src/providers/mistral.models.ts:93] · provider [E: packages/ai/src/providers/mistral.models.ts:94] |
-| `mistral-small-2603` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:96] · id [E: packages/ai/src/providers/mistral.models.ts:97] · provider [E: packages/ai/src/providers/mistral.models.ts:98] |
-| `mistral-small-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:100] · id [E: packages/ai/src/providers/mistral.models.ts:101] · provider [E: packages/ai/src/providers/mistral.models.ts:102] |
-| `open-mistral-7b` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:104] · id [E: packages/ai/src/providers/mistral.models.ts:105] · provider [E: packages/ai/src/providers/mistral.models.ts:106] |
-| `open-mistral-nemo` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:108] · id [E: packages/ai/src/providers/mistral.models.ts:109] · provider [E: packages/ai/src/providers/mistral.models.ts:110] |
-| `open-mixtral-8x22b` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:112] · id [E: packages/ai/src/providers/mistral.models.ts:113] · provider [E: packages/ai/src/providers/mistral.models.ts:114] |
-| `open-mixtral-8x7b` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:116] · id [E: packages/ai/src/providers/mistral.models.ts:117] · provider [E: packages/ai/src/providers/mistral.models.ts:118] |
-| `pixtral-12b` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:120] · id [E: packages/ai/src/providers/mistral.models.ts:121] · provider [E: packages/ai/src/providers/mistral.models.ts:122] |
-| `pixtral-large-latest` | `mistral` | `mistral-conversations` | key/api [E: packages/ai/src/providers/mistral.models.ts:124] · id [E: packages/ai/src/providers/mistral.models.ts:125] · provider [E: packages/ai/src/providers/mistral.models.ts:126] |
-
-### moonshotai-cn
-
-| id | provider | api/wire | committed structural evidence |
-|---|---|---|---|
-| `kimi-k2-0711-preview` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:8] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:9] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:10] |
-| `kimi-k2-0905-preview` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:12] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:13] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:14] |
-| `kimi-k2-thinking` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:16] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:17] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:18] |
-| `kimi-k2-thinking-turbo` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:20] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:21] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:22] |
-| `kimi-k2-turbo-preview` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:24] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:25] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:26] |
-| `kimi-k2.5` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:28] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:29] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:30] |
-| `kimi-k2.6` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:32] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:33] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:34] |
-| `kimi-k2.7-code` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:36] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:37] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:38] |
-| `kimi-k2.7-code-highspeed` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:40] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:41] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:42] |
-| `kimi-k3` | `moonshotai-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai-cn.models.ts:44] · id [E: packages/ai/src/providers/moonshotai-cn.models.ts:45] · provider [E: packages/ai/src/providers/moonshotai-cn.models.ts:46] |
+| `codestral-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `devstral-2512` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `devstral-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `devstral-medium-2507` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `devstral-medium-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `devstral-small-2505` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `devstral-small-2507` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `labs-devstral-small-2512` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `magistral-medium-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `magistral-small` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `ministral-3b-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `ministral-8b-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-large-2411` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-large-2512` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-large-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-medium-2505` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-medium-2508` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-medium-2604` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-medium-3.5` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-medium-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-nemo` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-small-2506` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-small-2603` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `mistral-small-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `open-mistral-7b` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `open-mistral-nemo` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `open-mixtral-8x22b` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `open-mixtral-8x7b` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `pixtral-12b` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
+| `pixtral-large-latest` | `mistral` | `mistral-conversations` | npm v0.82.1 artifact [I] |
 
 ### moonshotai
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `kimi-k2-0711-preview` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:8] · id [E: packages/ai/src/providers/moonshotai.models.ts:9] · provider [E: packages/ai/src/providers/moonshotai.models.ts:10] |
-| `kimi-k2-0905-preview` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:12] · id [E: packages/ai/src/providers/moonshotai.models.ts:13] · provider [E: packages/ai/src/providers/moonshotai.models.ts:14] |
-| `kimi-k2-thinking` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:16] · id [E: packages/ai/src/providers/moonshotai.models.ts:17] · provider [E: packages/ai/src/providers/moonshotai.models.ts:18] |
-| `kimi-k2-thinking-turbo` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:20] · id [E: packages/ai/src/providers/moonshotai.models.ts:21] · provider [E: packages/ai/src/providers/moonshotai.models.ts:22] |
-| `kimi-k2-turbo-preview` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:24] · id [E: packages/ai/src/providers/moonshotai.models.ts:25] · provider [E: packages/ai/src/providers/moonshotai.models.ts:26] |
-| `kimi-k2.5` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:28] · id [E: packages/ai/src/providers/moonshotai.models.ts:29] · provider [E: packages/ai/src/providers/moonshotai.models.ts:30] |
-| `kimi-k2.6` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:32] · id [E: packages/ai/src/providers/moonshotai.models.ts:33] · provider [E: packages/ai/src/providers/moonshotai.models.ts:34] |
-| `kimi-k2.7-code` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:36] · id [E: packages/ai/src/providers/moonshotai.models.ts:37] · provider [E: packages/ai/src/providers/moonshotai.models.ts:38] |
-| `kimi-k2.7-code-highspeed` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:40] · id [E: packages/ai/src/providers/moonshotai.models.ts:41] · provider [E: packages/ai/src/providers/moonshotai.models.ts:42] |
-| `kimi-k3` | `moonshotai` | `openai-completions` | key/api [E: packages/ai/src/providers/moonshotai.models.ts:44] · id [E: packages/ai/src/providers/moonshotai.models.ts:45] · provider [E: packages/ai/src/providers/moonshotai.models.ts:46] |
+| `kimi-k2-0711-preview` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2-0905-preview` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2-thinking` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2-thinking-turbo` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2-turbo-preview` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.5` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.6` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.7-code` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.7-code-highspeed` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k3` | `moonshotai` | `openai-completions` | npm v0.82.1 artifact [I] |
+
+### moonshotai-cn
+
+| id | provider | api/wire | evidence |
+|---|---|---|---|
+| `kimi-k2-0711-preview` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2-0905-preview` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2-thinking` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2-thinking-turbo` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2-turbo-preview` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.5` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.6` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.7-code` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.7-code-highspeed` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k3` | `moonshotai-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### nvidia
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `meta/llama-3.1-70b-instruct` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:8] · id [E: packages/ai/src/providers/nvidia.models.ts:9] · provider [E: packages/ai/src/providers/nvidia.models.ts:10] |
-| `meta/llama-3.1-8b-instruct` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:12] · id [E: packages/ai/src/providers/nvidia.models.ts:13] · provider [E: packages/ai/src/providers/nvidia.models.ts:14] |
-| `meta/llama-3.2-11b-vision-instruct` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:16] · id [E: packages/ai/src/providers/nvidia.models.ts:17] · provider [E: packages/ai/src/providers/nvidia.models.ts:18] |
-| `meta/llama-3.2-90b-vision-instruct` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:20] · id [E: packages/ai/src/providers/nvidia.models.ts:21] · provider [E: packages/ai/src/providers/nvidia.models.ts:22] |
-| `meta/llama-3.3-70b-instruct` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:24] · id [E: packages/ai/src/providers/nvidia.models.ts:25] · provider [E: packages/ai/src/providers/nvidia.models.ts:26] |
-| `minimaxai/minimax-m3` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:28] · id [E: packages/ai/src/providers/nvidia.models.ts:29] · provider [E: packages/ai/src/providers/nvidia.models.ts:30] |
-| `mistralai/mistral-large-3-675b-instruct-2512` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:32] · id [E: packages/ai/src/providers/nvidia.models.ts:33] · provider [E: packages/ai/src/providers/nvidia.models.ts:34] |
-| `mistralai/mistral-small-4-119b-2603` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:36] · id [E: packages/ai/src/providers/nvidia.models.ts:37] · provider [E: packages/ai/src/providers/nvidia.models.ts:38] |
-| `moonshotai/kimi-k2.6` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:40] · id [E: packages/ai/src/providers/nvidia.models.ts:41] · provider [E: packages/ai/src/providers/nvidia.models.ts:42] |
-| `nvidia/nemotron-3-nano-30b-a3b` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:44] · id [E: packages/ai/src/providers/nvidia.models.ts:45] · provider [E: packages/ai/src/providers/nvidia.models.ts:46] |
-| `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:48] · id [E: packages/ai/src/providers/nvidia.models.ts:49] · provider [E: packages/ai/src/providers/nvidia.models.ts:50] |
-| `nvidia/nemotron-3-super-120b-a12b` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:52] · id [E: packages/ai/src/providers/nvidia.models.ts:53] · provider [E: packages/ai/src/providers/nvidia.models.ts:54] |
-| `nvidia/nemotron-3-ultra-550b-a55b` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:56] · id [E: packages/ai/src/providers/nvidia.models.ts:57] · provider [E: packages/ai/src/providers/nvidia.models.ts:58] |
-| `nvidia/nvidia-nemotron-nano-9b-v2` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:60] · id [E: packages/ai/src/providers/nvidia.models.ts:61] · provider [E: packages/ai/src/providers/nvidia.models.ts:62] |
-| `openai/gpt-oss-120b` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:64] · id [E: packages/ai/src/providers/nvidia.models.ts:65] · provider [E: packages/ai/src/providers/nvidia.models.ts:66] |
-| `openai/gpt-oss-20b` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:68] · id [E: packages/ai/src/providers/nvidia.models.ts:69] · provider [E: packages/ai/src/providers/nvidia.models.ts:70] |
-| `qwen/qwen3.5-122b-a10b` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:72] · id [E: packages/ai/src/providers/nvidia.models.ts:73] · provider [E: packages/ai/src/providers/nvidia.models.ts:74] |
-| `stepfun-ai/step-3.5-flash` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:76] · id [E: packages/ai/src/providers/nvidia.models.ts:77] · provider [E: packages/ai/src/providers/nvidia.models.ts:78] |
-| `stepfun-ai/step-3.7-flash` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:80] · id [E: packages/ai/src/providers/nvidia.models.ts:81] · provider [E: packages/ai/src/providers/nvidia.models.ts:82] |
-| `z-ai/glm-5.2` | `nvidia` | `openai-completions` | key/api [E: packages/ai/src/providers/nvidia.models.ts:84] · id [E: packages/ai/src/providers/nvidia.models.ts:85] · provider [E: packages/ai/src/providers/nvidia.models.ts:86] |
-
-### openai-codex
-
-| id | provider | api/wire | committed structural evidence |
-|---|---|---|---|
-| `gpt-5.3-codex-spark` | `openai-codex` | `openai-codex-responses` | key/api [E: packages/ai/src/providers/openai-codex.models.ts:8] · id [E: packages/ai/src/providers/openai-codex.models.ts:9] · provider [E: packages/ai/src/providers/openai-codex.models.ts:10] |
-| `gpt-5.4` | `openai-codex` | `openai-codex-responses` | key/api [E: packages/ai/src/providers/openai-codex.models.ts:12] · id [E: packages/ai/src/providers/openai-codex.models.ts:13] · provider [E: packages/ai/src/providers/openai-codex.models.ts:14] |
-| `gpt-5.4-mini` | `openai-codex` | `openai-codex-responses` | key/api [E: packages/ai/src/providers/openai-codex.models.ts:16] · id [E: packages/ai/src/providers/openai-codex.models.ts:17] · provider [E: packages/ai/src/providers/openai-codex.models.ts:18] |
-| `gpt-5.5` | `openai-codex` | `openai-codex-responses` | key/api [E: packages/ai/src/providers/openai-codex.models.ts:20] · id [E: packages/ai/src/providers/openai-codex.models.ts:21] · provider [E: packages/ai/src/providers/openai-codex.models.ts:22] |
-| `gpt-5.6-luna` | `openai-codex` | `openai-codex-responses` | key/api [E: packages/ai/src/providers/openai-codex.models.ts:24] · id [E: packages/ai/src/providers/openai-codex.models.ts:25] · provider [E: packages/ai/src/providers/openai-codex.models.ts:26] |
-| `gpt-5.6-sol` | `openai-codex` | `openai-codex-responses` | key/api [E: packages/ai/src/providers/openai-codex.models.ts:28] · id [E: packages/ai/src/providers/openai-codex.models.ts:29] · provider [E: packages/ai/src/providers/openai-codex.models.ts:30] |
-| `gpt-5.6-terra` | `openai-codex` | `openai-codex-responses` | key/api [E: packages/ai/src/providers/openai-codex.models.ts:32] · id [E: packages/ai/src/providers/openai-codex.models.ts:33] · provider [E: packages/ai/src/providers/openai-codex.models.ts:34] |
+| `meta/llama-3.1-70b-instruct` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta/llama-3.1-8b-instruct` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta/llama-3.2-11b-vision-instruct` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta/llama-3.2-90b-vision-instruct` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta/llama-3.3-70b-instruct` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimaxai/minimax-m3` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-small-4-119b-2603` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2.6` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-nano-30b-a3b` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-super-120b-a12b` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-ultra-550b-a55b` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nvidia-nemotron-nano-9b-v2` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-120b` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-20b` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `stepfun-ai/step-3.5-flash` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `stepfun-ai/step-3.7-flash` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-5.2` | `nvidia` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### openai
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `gpt-4` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:8] · id [E: packages/ai/src/providers/openai.models.ts:9] · provider [E: packages/ai/src/providers/openai.models.ts:10] |
-| `gpt-4-turbo` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:12] · id [E: packages/ai/src/providers/openai.models.ts:13] · provider [E: packages/ai/src/providers/openai.models.ts:14] |
-| `gpt-4.1` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:16] · id [E: packages/ai/src/providers/openai.models.ts:17] · provider [E: packages/ai/src/providers/openai.models.ts:18] |
-| `gpt-4.1-mini` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:20] · id [E: packages/ai/src/providers/openai.models.ts:21] · provider [E: packages/ai/src/providers/openai.models.ts:22] |
-| `gpt-4.1-nano` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:24] · id [E: packages/ai/src/providers/openai.models.ts:25] · provider [E: packages/ai/src/providers/openai.models.ts:26] |
-| `gpt-4o` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:28] · id [E: packages/ai/src/providers/openai.models.ts:29] · provider [E: packages/ai/src/providers/openai.models.ts:30] |
-| `gpt-4o-2024-05-13` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:32] · id [E: packages/ai/src/providers/openai.models.ts:33] · provider [E: packages/ai/src/providers/openai.models.ts:34] |
-| `gpt-4o-2024-08-06` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:36] · id [E: packages/ai/src/providers/openai.models.ts:37] · provider [E: packages/ai/src/providers/openai.models.ts:38] |
-| `gpt-4o-2024-11-20` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:40] · id [E: packages/ai/src/providers/openai.models.ts:41] · provider [E: packages/ai/src/providers/openai.models.ts:42] |
-| `gpt-4o-mini` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:44] · id [E: packages/ai/src/providers/openai.models.ts:45] · provider [E: packages/ai/src/providers/openai.models.ts:46] |
-| `gpt-5` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:48] · id [E: packages/ai/src/providers/openai.models.ts:49] · provider [E: packages/ai/src/providers/openai.models.ts:50] |
-| `gpt-5-chat-latest` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:52] · id [E: packages/ai/src/providers/openai.models.ts:53] · provider [E: packages/ai/src/providers/openai.models.ts:54] |
-| `gpt-5-codex` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:56] · id [E: packages/ai/src/providers/openai.models.ts:57] · provider [E: packages/ai/src/providers/openai.models.ts:58] |
-| `gpt-5-mini` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:60] · id [E: packages/ai/src/providers/openai.models.ts:61] · provider [E: packages/ai/src/providers/openai.models.ts:62] |
-| `gpt-5-nano` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:64] · id [E: packages/ai/src/providers/openai.models.ts:65] · provider [E: packages/ai/src/providers/openai.models.ts:66] |
-| `gpt-5-pro` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:68] · id [E: packages/ai/src/providers/openai.models.ts:69] · provider [E: packages/ai/src/providers/openai.models.ts:70] |
-| `gpt-5.1` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:72] · id [E: packages/ai/src/providers/openai.models.ts:73] · provider [E: packages/ai/src/providers/openai.models.ts:74] |
-| `gpt-5.1-chat-latest` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:76] · id [E: packages/ai/src/providers/openai.models.ts:77] · provider [E: packages/ai/src/providers/openai.models.ts:78] |
-| `gpt-5.1-codex` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:80] · id [E: packages/ai/src/providers/openai.models.ts:81] · provider [E: packages/ai/src/providers/openai.models.ts:82] |
-| `gpt-5.1-codex-max` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:84] · id [E: packages/ai/src/providers/openai.models.ts:85] · provider [E: packages/ai/src/providers/openai.models.ts:86] |
-| `gpt-5.1-codex-mini` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:88] · id [E: packages/ai/src/providers/openai.models.ts:89] · provider [E: packages/ai/src/providers/openai.models.ts:90] |
-| `gpt-5.2` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:92] · id [E: packages/ai/src/providers/openai.models.ts:93] · provider [E: packages/ai/src/providers/openai.models.ts:94] |
-| `gpt-5.2-chat-latest` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:96] · id [E: packages/ai/src/providers/openai.models.ts:97] · provider [E: packages/ai/src/providers/openai.models.ts:98] |
-| `gpt-5.2-codex` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:100] · id [E: packages/ai/src/providers/openai.models.ts:101] · provider [E: packages/ai/src/providers/openai.models.ts:102] |
-| `gpt-5.2-pro` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:104] · id [E: packages/ai/src/providers/openai.models.ts:105] · provider [E: packages/ai/src/providers/openai.models.ts:106] |
-| `gpt-5.3-chat-latest` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:108] · id [E: packages/ai/src/providers/openai.models.ts:109] · provider [E: packages/ai/src/providers/openai.models.ts:110] |
-| `gpt-5.3-codex` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:112] · id [E: packages/ai/src/providers/openai.models.ts:113] · provider [E: packages/ai/src/providers/openai.models.ts:114] |
-| `gpt-5.3-codex-spark` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:116] · id [E: packages/ai/src/providers/openai.models.ts:117] · provider [E: packages/ai/src/providers/openai.models.ts:118] |
-| `gpt-5.4` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:120] · id [E: packages/ai/src/providers/openai.models.ts:121] · provider [E: packages/ai/src/providers/openai.models.ts:122] |
-| `gpt-5.4-mini` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:124] · id [E: packages/ai/src/providers/openai.models.ts:125] · provider [E: packages/ai/src/providers/openai.models.ts:126] |
-| `gpt-5.4-nano` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:128] · id [E: packages/ai/src/providers/openai.models.ts:129] · provider [E: packages/ai/src/providers/openai.models.ts:130] |
-| `gpt-5.4-pro` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:132] · id [E: packages/ai/src/providers/openai.models.ts:133] · provider [E: packages/ai/src/providers/openai.models.ts:134] |
-| `gpt-5.5` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:136] · id [E: packages/ai/src/providers/openai.models.ts:137] · provider [E: packages/ai/src/providers/openai.models.ts:138] |
-| `gpt-5.5-pro` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:140] · id [E: packages/ai/src/providers/openai.models.ts:141] · provider [E: packages/ai/src/providers/openai.models.ts:142] |
-| `gpt-5.6-luna` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:144] · id [E: packages/ai/src/providers/openai.models.ts:145] · provider [E: packages/ai/src/providers/openai.models.ts:146] |
-| `gpt-5.6-sol` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:148] · id [E: packages/ai/src/providers/openai.models.ts:149] · provider [E: packages/ai/src/providers/openai.models.ts:150] |
-| `gpt-5.6-terra` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:152] · id [E: packages/ai/src/providers/openai.models.ts:153] · provider [E: packages/ai/src/providers/openai.models.ts:154] |
-| `gpt-realtime-2.1` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:156] · id [E: packages/ai/src/providers/openai.models.ts:157] · provider [E: packages/ai/src/providers/openai.models.ts:158] |
-| `o1` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:160] · id [E: packages/ai/src/providers/openai.models.ts:161] · provider [E: packages/ai/src/providers/openai.models.ts:162] |
-| `o1-pro` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:164] · id [E: packages/ai/src/providers/openai.models.ts:165] · provider [E: packages/ai/src/providers/openai.models.ts:166] |
-| `o3` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:168] · id [E: packages/ai/src/providers/openai.models.ts:169] · provider [E: packages/ai/src/providers/openai.models.ts:170] |
-| `o3-deep-research` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:172] · id [E: packages/ai/src/providers/openai.models.ts:173] · provider [E: packages/ai/src/providers/openai.models.ts:174] |
-| `o3-mini` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:176] · id [E: packages/ai/src/providers/openai.models.ts:177] · provider [E: packages/ai/src/providers/openai.models.ts:178] |
-| `o3-pro` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:180] · id [E: packages/ai/src/providers/openai.models.ts:181] · provider [E: packages/ai/src/providers/openai.models.ts:182] |
-| `o4-mini` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:184] · id [E: packages/ai/src/providers/openai.models.ts:185] · provider [E: packages/ai/src/providers/openai.models.ts:186] |
-| `o4-mini-deep-research` | `openai` | `openai-responses` | key/api [E: packages/ai/src/providers/openai.models.ts:188] · id [E: packages/ai/src/providers/openai.models.ts:189] · provider [E: packages/ai/src/providers/openai.models.ts:190] |
+| `gpt-4` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4-turbo` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4.1` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4.1-mini` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4.1-nano` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o-2024-05-13` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o-2024-08-06` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o-2024-11-20` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-4o-mini` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-chat-latest` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-mini` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-nano` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-pro` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.1` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2-chat-latest` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2-pro` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.3-chat-latest` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.3-codex` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.3-codex-spark` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-mini` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-nano` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-pro` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.5` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.5-pro` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-luna` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-sol` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-terra` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-realtime-2.1` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o1` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o1-pro` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o3` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o3-mini` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o3-pro` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `o4-mini` | `openai` | `openai-responses` | npm v0.82.1 artifact [I] |
 
-### opencode-go
+### openai-codex
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `deepseek-v4-flash` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:8] · id [E: packages/ai/src/providers/opencode-go.models.ts:9] · provider [E: packages/ai/src/providers/opencode-go.models.ts:10] |
-| `deepseek-v4-pro` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:12] · id [E: packages/ai/src/providers/opencode-go.models.ts:13] · provider [E: packages/ai/src/providers/opencode-go.models.ts:14] |
-| `glm-5.1` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:16] · id [E: packages/ai/src/providers/opencode-go.models.ts:17] · provider [E: packages/ai/src/providers/opencode-go.models.ts:18] |
-| `glm-5.2` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:20] · id [E: packages/ai/src/providers/opencode-go.models.ts:21] · provider [E: packages/ai/src/providers/opencode-go.models.ts:22] |
-| `grok-4.5` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:24] · id [E: packages/ai/src/providers/opencode-go.models.ts:25] · provider [E: packages/ai/src/providers/opencode-go.models.ts:26] |
-| `kimi-k2.6` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:28] · id [E: packages/ai/src/providers/opencode-go.models.ts:29] · provider [E: packages/ai/src/providers/opencode-go.models.ts:30] |
-| `kimi-k2.7-code` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:32] · id [E: packages/ai/src/providers/opencode-go.models.ts:33] · provider [E: packages/ai/src/providers/opencode-go.models.ts:34] |
-| `kimi-k3` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:36] · id [E: packages/ai/src/providers/opencode-go.models.ts:37] · provider [E: packages/ai/src/providers/opencode-go.models.ts:38] |
-| `mimo-v2.5` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:40] · id [E: packages/ai/src/providers/opencode-go.models.ts:41] · provider [E: packages/ai/src/providers/opencode-go.models.ts:42] |
-| `mimo-v2.5-pro` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:44] · id [E: packages/ai/src/providers/opencode-go.models.ts:45] · provider [E: packages/ai/src/providers/opencode-go.models.ts:46] |
-| `minimax-m2.7` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:48] · id [E: packages/ai/src/providers/opencode-go.models.ts:49] · provider [E: packages/ai/src/providers/opencode-go.models.ts:50] |
-| `minimax-m3` | `opencode-go` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:52] · id [E: packages/ai/src/providers/opencode-go.models.ts:53] · provider [E: packages/ai/src/providers/opencode-go.models.ts:54] |
-| `qwen3.6-plus` | `opencode-go` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:56] · id [E: packages/ai/src/providers/opencode-go.models.ts:57] · provider [E: packages/ai/src/providers/opencode-go.models.ts:58] |
-| `qwen3.7-max` | `opencode-go` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:60] · id [E: packages/ai/src/providers/opencode-go.models.ts:61] · provider [E: packages/ai/src/providers/opencode-go.models.ts:62] |
-| `qwen3.7-plus` | `opencode-go` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode-go.models.ts:64] · id [E: packages/ai/src/providers/opencode-go.models.ts:65] · provider [E: packages/ai/src/providers/opencode-go.models.ts:66] |
+| `gpt-5.3-codex-spark` | `openai-codex` | `openai-codex-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4` | `openai-codex` | `openai-codex-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-mini` | `openai-codex` | `openai-codex-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.5` | `openai-codex` | `openai-codex-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-luna` | `openai-codex` | `openai-codex-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-sol` | `openai-codex` | `openai-codex-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-terra` | `openai-codex` | `openai-codex-responses` | npm v0.82.1 artifact [I] |
 
 ### opencode
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `big-pickle` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:8] · id [E: packages/ai/src/providers/opencode.models.ts:9] · provider [E: packages/ai/src/providers/opencode.models.ts:10] |
-| `claude-fable-5` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:12] · id [E: packages/ai/src/providers/opencode.models.ts:13] · provider [E: packages/ai/src/providers/opencode.models.ts:14] |
-| `claude-haiku-4-5` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:16] · id [E: packages/ai/src/providers/opencode.models.ts:17] · provider [E: packages/ai/src/providers/opencode.models.ts:18] |
-| `claude-opus-4-1` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:20] · id [E: packages/ai/src/providers/opencode.models.ts:21] · provider [E: packages/ai/src/providers/opencode.models.ts:22] |
-| `claude-opus-4-5` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:24] · id [E: packages/ai/src/providers/opencode.models.ts:25] · provider [E: packages/ai/src/providers/opencode.models.ts:26] |
-| `claude-opus-4-6` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:28] · id [E: packages/ai/src/providers/opencode.models.ts:29] · provider [E: packages/ai/src/providers/opencode.models.ts:30] |
-| `claude-opus-4-7` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:32] · id [E: packages/ai/src/providers/opencode.models.ts:33] · provider [E: packages/ai/src/providers/opencode.models.ts:34] |
-| `claude-opus-4-8` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:36] · id [E: packages/ai/src/providers/opencode.models.ts:37] · provider [E: packages/ai/src/providers/opencode.models.ts:38] |
-| `claude-sonnet-4` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:40] · id [E: packages/ai/src/providers/opencode.models.ts:41] · provider [E: packages/ai/src/providers/opencode.models.ts:42] |
-| `claude-sonnet-4-5` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:44] · id [E: packages/ai/src/providers/opencode.models.ts:45] · provider [E: packages/ai/src/providers/opencode.models.ts:46] |
-| `claude-sonnet-4-6` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:48] · id [E: packages/ai/src/providers/opencode.models.ts:49] · provider [E: packages/ai/src/providers/opencode.models.ts:50] |
-| `claude-sonnet-5` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:52] · id [E: packages/ai/src/providers/opencode.models.ts:53] · provider [E: packages/ai/src/providers/opencode.models.ts:54] |
-| `deepseek-v4-flash` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:56] · id [E: packages/ai/src/providers/opencode.models.ts:57] · provider [E: packages/ai/src/providers/opencode.models.ts:58] |
-| `deepseek-v4-flash-free` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:60] · id [E: packages/ai/src/providers/opencode.models.ts:61] · provider [E: packages/ai/src/providers/opencode.models.ts:62] |
-| `deepseek-v4-pro` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:64] · id [E: packages/ai/src/providers/opencode.models.ts:65] · provider [E: packages/ai/src/providers/opencode.models.ts:66] |
-| `gemini-3-flash` | `opencode` | `google-generative-ai` | key/api [E: packages/ai/src/providers/opencode.models.ts:68] · id [E: packages/ai/src/providers/opencode.models.ts:69] · provider [E: packages/ai/src/providers/opencode.models.ts:70] |
-| `gemini-3.1-pro` | `opencode` | `google-generative-ai` | key/api [E: packages/ai/src/providers/opencode.models.ts:72] · id [E: packages/ai/src/providers/opencode.models.ts:73] · provider [E: packages/ai/src/providers/opencode.models.ts:74] |
-| `gemini-3.5-flash` | `opencode` | `google-generative-ai` | key/api [E: packages/ai/src/providers/opencode.models.ts:76] · id [E: packages/ai/src/providers/opencode.models.ts:77] · provider [E: packages/ai/src/providers/opencode.models.ts:78] |
-| `glm-5` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:80] · id [E: packages/ai/src/providers/opencode.models.ts:81] · provider [E: packages/ai/src/providers/opencode.models.ts:82] |
-| `glm-5.1` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:84] · id [E: packages/ai/src/providers/opencode.models.ts:85] · provider [E: packages/ai/src/providers/opencode.models.ts:86] |
-| `glm-5.2` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:88] · id [E: packages/ai/src/providers/opencode.models.ts:89] · provider [E: packages/ai/src/providers/opencode.models.ts:90] |
-| `gpt-5` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:92] · id [E: packages/ai/src/providers/opencode.models.ts:93] · provider [E: packages/ai/src/providers/opencode.models.ts:94] |
-| `gpt-5-codex` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:96] · id [E: packages/ai/src/providers/opencode.models.ts:97] · provider [E: packages/ai/src/providers/opencode.models.ts:98] |
-| `gpt-5-nano` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:100] · id [E: packages/ai/src/providers/opencode.models.ts:101] · provider [E: packages/ai/src/providers/opencode.models.ts:102] |
-| `gpt-5.1` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:104] · id [E: packages/ai/src/providers/opencode.models.ts:105] · provider [E: packages/ai/src/providers/opencode.models.ts:106] |
-| `gpt-5.1-codex` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:108] · id [E: packages/ai/src/providers/opencode.models.ts:109] · provider [E: packages/ai/src/providers/opencode.models.ts:110] |
-| `gpt-5.1-codex-max` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:112] · id [E: packages/ai/src/providers/opencode.models.ts:113] · provider [E: packages/ai/src/providers/opencode.models.ts:114] |
-| `gpt-5.1-codex-mini` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:116] · id [E: packages/ai/src/providers/opencode.models.ts:117] · provider [E: packages/ai/src/providers/opencode.models.ts:118] |
-| `gpt-5.2` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:120] · id [E: packages/ai/src/providers/opencode.models.ts:121] · provider [E: packages/ai/src/providers/opencode.models.ts:122] |
-| `gpt-5.2-codex` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:124] · id [E: packages/ai/src/providers/opencode.models.ts:125] · provider [E: packages/ai/src/providers/opencode.models.ts:126] |
-| `gpt-5.3-codex` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:128] · id [E: packages/ai/src/providers/opencode.models.ts:129] · provider [E: packages/ai/src/providers/opencode.models.ts:130] |
-| `gpt-5.4` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:132] · id [E: packages/ai/src/providers/opencode.models.ts:133] · provider [E: packages/ai/src/providers/opencode.models.ts:134] |
-| `gpt-5.4-mini` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:136] · id [E: packages/ai/src/providers/opencode.models.ts:137] · provider [E: packages/ai/src/providers/opencode.models.ts:138] |
-| `gpt-5.4-nano` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:140] · id [E: packages/ai/src/providers/opencode.models.ts:141] · provider [E: packages/ai/src/providers/opencode.models.ts:142] |
-| `gpt-5.4-pro` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:144] · id [E: packages/ai/src/providers/opencode.models.ts:145] · provider [E: packages/ai/src/providers/opencode.models.ts:146] |
-| `gpt-5.5` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:148] · id [E: packages/ai/src/providers/opencode.models.ts:149] · provider [E: packages/ai/src/providers/opencode.models.ts:150] |
-| `gpt-5.5-pro` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:152] · id [E: packages/ai/src/providers/opencode.models.ts:153] · provider [E: packages/ai/src/providers/opencode.models.ts:154] |
-| `gpt-5.6-luna` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:156] · id [E: packages/ai/src/providers/opencode.models.ts:157] · provider [E: packages/ai/src/providers/opencode.models.ts:158] |
-| `gpt-5.6-sol` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:160] · id [E: packages/ai/src/providers/opencode.models.ts:161] · provider [E: packages/ai/src/providers/opencode.models.ts:162] |
-| `gpt-5.6-terra` | `opencode` | `openai-responses` | key/api [E: packages/ai/src/providers/opencode.models.ts:164] · id [E: packages/ai/src/providers/opencode.models.ts:165] · provider [E: packages/ai/src/providers/opencode.models.ts:166] |
-| `grok-4.5` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:168] · id [E: packages/ai/src/providers/opencode.models.ts:169] · provider [E: packages/ai/src/providers/opencode.models.ts:170] |
-| `grok-build-0.1` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:172] · id [E: packages/ai/src/providers/opencode.models.ts:173] · provider [E: packages/ai/src/providers/opencode.models.ts:174] |
-| `hy3-free` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:176] · id [E: packages/ai/src/providers/opencode.models.ts:177] · provider [E: packages/ai/src/providers/opencode.models.ts:178] |
-| `kimi-k2.5` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:180] · id [E: packages/ai/src/providers/opencode.models.ts:181] · provider [E: packages/ai/src/providers/opencode.models.ts:182] |
-| `kimi-k2.6` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:184] · id [E: packages/ai/src/providers/opencode.models.ts:185] · provider [E: packages/ai/src/providers/opencode.models.ts:186] |
-| `kimi-k2.7-code` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:188] · id [E: packages/ai/src/providers/opencode.models.ts:189] · provider [E: packages/ai/src/providers/opencode.models.ts:190] |
-| `mimo-v2.5-free` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:192] · id [E: packages/ai/src/providers/opencode.models.ts:193] · provider [E: packages/ai/src/providers/opencode.models.ts:194] |
-| `minimax-m2.5` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:196] · id [E: packages/ai/src/providers/opencode.models.ts:197] · provider [E: packages/ai/src/providers/opencode.models.ts:198] |
-| `minimax-m2.7` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:200] · id [E: packages/ai/src/providers/opencode.models.ts:201] · provider [E: packages/ai/src/providers/opencode.models.ts:202] |
-| `minimax-m3` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:204] · id [E: packages/ai/src/providers/opencode.models.ts:205] · provider [E: packages/ai/src/providers/opencode.models.ts:206] |
-| `nemotron-3-ultra-free` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:208] · id [E: packages/ai/src/providers/opencode.models.ts:209] · provider [E: packages/ai/src/providers/opencode.models.ts:210] |
-| `north-mini-code-free` | `opencode` | `openai-completions` | key/api [E: packages/ai/src/providers/opencode.models.ts:212] · id [E: packages/ai/src/providers/opencode.models.ts:213] · provider [E: packages/ai/src/providers/opencode.models.ts:214] |
-| `qwen3.5-plus` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:216] · id [E: packages/ai/src/providers/opencode.models.ts:217] · provider [E: packages/ai/src/providers/opencode.models.ts:218] |
-| `qwen3.6-plus` | `opencode` | `anthropic-messages` | key/api [E: packages/ai/src/providers/opencode.models.ts:220] · id [E: packages/ai/src/providers/opencode.models.ts:221] · provider [E: packages/ai/src/providers/opencode.models.ts:222] |
+| `claude-fable-5` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-haiku-4-5` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-1` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-5` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-6` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-7` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-4-8` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-opus-5` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4-5` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-4-6` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `claude-sonnet-5` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `qwen3.5-plus` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `qwen3.6-plus` | `opencode` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `gemini-3-flash` | `opencode` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.1-pro` | `opencode` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.5-flash` | `opencode` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.5-flash-lite` | `opencode` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `gemini-3.6-flash` | `opencode` | `google-generative-ai` | npm v0.82.1 artifact [I] |
+| `big-pickle` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-flash` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-flash-free` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-pro` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.1` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.2` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `grok-build-0.1` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.5` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.6` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.7-code` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `laguna-s-2.1-free` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `ling-3.0-flash-free` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5-free` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax-m2.5` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax-m2.7` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax-m3` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nemotron-3-ultra-free` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `north-mini-code-free` | `opencode` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `gpt-5` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-codex` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5-nano` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.1` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.1-codex` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.1-codex-max` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.1-codex-mini` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.2-codex` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.3-codex` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-mini` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-nano` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.4-pro` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.5` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.5-pro` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-luna` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-sol` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `gpt-5.6-terra` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+| `grok-4.5` | `opencode` | `openai-responses` | npm v0.82.1 artifact [I] |
+
+### opencode-go
+
+| id | provider | api/wire | evidence |
+|---|---|---|---|
+| `minimax-m3` | `opencode-go` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `qwen3.7-max` | `opencode-go` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `qwen3.7-plus` | `opencode-go` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-flash` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-pro` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.1` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.2` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `hy3` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.6` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.7-code` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k3` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5-pro` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax-m2.7` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.6-plus` | `opencode-go` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `grok-4.5` | `opencode-go` | `openai-responses` | npm v0.82.1 artifact [I] |
 
 ### openrouter
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `ai21/jamba-large-1.7` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:8] · id [E: packages/ai/src/providers/openrouter.models.ts:9] · provider [E: packages/ai/src/providers/openrouter.models.ts:10] |
-| `aion-labs/aion-2.0` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:12] · id [E: packages/ai/src/providers/openrouter.models.ts:13] · provider [E: packages/ai/src/providers/openrouter.models.ts:14] |
-| `aion-labs/aion-3.0` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:16] · id [E: packages/ai/src/providers/openrouter.models.ts:17] · provider [E: packages/ai/src/providers/openrouter.models.ts:18] |
-| `aion-labs/aion-3.0-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:20] · id [E: packages/ai/src/providers/openrouter.models.ts:21] · provider [E: packages/ai/src/providers/openrouter.models.ts:22] |
-| `amazon/nova-2-lite-v1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:24] · id [E: packages/ai/src/providers/openrouter.models.ts:25] · provider [E: packages/ai/src/providers/openrouter.models.ts:26] |
-| `amazon/nova-lite-v1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:28] · id [E: packages/ai/src/providers/openrouter.models.ts:29] · provider [E: packages/ai/src/providers/openrouter.models.ts:30] |
-| `amazon/nova-micro-v1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:32] · id [E: packages/ai/src/providers/openrouter.models.ts:33] · provider [E: packages/ai/src/providers/openrouter.models.ts:34] |
-| `amazon/nova-premier-v1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:36] · id [E: packages/ai/src/providers/openrouter.models.ts:37] · provider [E: packages/ai/src/providers/openrouter.models.ts:38] |
-| `amazon/nova-pro-v1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:40] · id [E: packages/ai/src/providers/openrouter.models.ts:41] · provider [E: packages/ai/src/providers/openrouter.models.ts:42] |
-| `anthropic/claude-3-haiku` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:44] · id [E: packages/ai/src/providers/openrouter.models.ts:45] · provider [E: packages/ai/src/providers/openrouter.models.ts:46] |
-| `anthropic/claude-fable-5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:48] · id [E: packages/ai/src/providers/openrouter.models.ts:49] · provider [E: packages/ai/src/providers/openrouter.models.ts:50] |
-| `anthropic/claude-haiku-4.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:52] · id [E: packages/ai/src/providers/openrouter.models.ts:53] · provider [E: packages/ai/src/providers/openrouter.models.ts:54] |
-| `anthropic/claude-opus-4` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:56] · id [E: packages/ai/src/providers/openrouter.models.ts:57] · provider [E: packages/ai/src/providers/openrouter.models.ts:58] |
-| `anthropic/claude-opus-4.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:60] · id [E: packages/ai/src/providers/openrouter.models.ts:61] · provider [E: packages/ai/src/providers/openrouter.models.ts:62] |
-| `anthropic/claude-opus-4.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:64] · id [E: packages/ai/src/providers/openrouter.models.ts:65] · provider [E: packages/ai/src/providers/openrouter.models.ts:66] |
-| `anthropic/claude-opus-4.6` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:68] · id [E: packages/ai/src/providers/openrouter.models.ts:69] · provider [E: packages/ai/src/providers/openrouter.models.ts:70] |
-| `anthropic/claude-opus-4.7` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:72] · id [E: packages/ai/src/providers/openrouter.models.ts:73] · provider [E: packages/ai/src/providers/openrouter.models.ts:74] |
-| `anthropic/claude-opus-4.7-fast` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:76] · id [E: packages/ai/src/providers/openrouter.models.ts:77] · provider [E: packages/ai/src/providers/openrouter.models.ts:78] |
-| `anthropic/claude-opus-4.8` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:80] · id [E: packages/ai/src/providers/openrouter.models.ts:81] · provider [E: packages/ai/src/providers/openrouter.models.ts:82] |
-| `anthropic/claude-opus-4.8-fast` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:84] · id [E: packages/ai/src/providers/openrouter.models.ts:85] · provider [E: packages/ai/src/providers/openrouter.models.ts:86] |
-| `anthropic/claude-sonnet-4` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:88] · id [E: packages/ai/src/providers/openrouter.models.ts:89] · provider [E: packages/ai/src/providers/openrouter.models.ts:90] |
-| `anthropic/claude-sonnet-4.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:92] · id [E: packages/ai/src/providers/openrouter.models.ts:93] · provider [E: packages/ai/src/providers/openrouter.models.ts:94] |
-| `anthropic/claude-sonnet-4.6` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:96] · id [E: packages/ai/src/providers/openrouter.models.ts:97] · provider [E: packages/ai/src/providers/openrouter.models.ts:98] |
-| `anthropic/claude-sonnet-5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:100] · id [E: packages/ai/src/providers/openrouter.models.ts:101] · provider [E: packages/ai/src/providers/openrouter.models.ts:102] |
-| `arcee-ai/trinity-large-thinking` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:104] · id [E: packages/ai/src/providers/openrouter.models.ts:105] · provider [E: packages/ai/src/providers/openrouter.models.ts:106] |
-| `arcee-ai/virtuoso-large` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:108] · id [E: packages/ai/src/providers/openrouter.models.ts:109] · provider [E: packages/ai/src/providers/openrouter.models.ts:110] |
-| `auto` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:112] · id [E: packages/ai/src/providers/openrouter.models.ts:113] · provider [E: packages/ai/src/providers/openrouter.models.ts:114] |
-| `bytedance-seed/seed-1.6` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:116] · id [E: packages/ai/src/providers/openrouter.models.ts:117] · provider [E: packages/ai/src/providers/openrouter.models.ts:118] |
-| `bytedance-seed/seed-1.6-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:120] · id [E: packages/ai/src/providers/openrouter.models.ts:121] · provider [E: packages/ai/src/providers/openrouter.models.ts:122] |
-| `bytedance-seed/seed-2.0-lite` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:124] · id [E: packages/ai/src/providers/openrouter.models.ts:125] · provider [E: packages/ai/src/providers/openrouter.models.ts:126] |
-| `bytedance-seed/seed-2.0-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:128] · id [E: packages/ai/src/providers/openrouter.models.ts:129] · provider [E: packages/ai/src/providers/openrouter.models.ts:130] |
-| `cohere/command-r-08-2024` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:132] · id [E: packages/ai/src/providers/openrouter.models.ts:133] · provider [E: packages/ai/src/providers/openrouter.models.ts:134] |
-| `cohere/command-r-plus-08-2024` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:136] · id [E: packages/ai/src/providers/openrouter.models.ts:137] · provider [E: packages/ai/src/providers/openrouter.models.ts:138] |
-| `cohere/north-mini-code:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:140] · id [E: packages/ai/src/providers/openrouter.models.ts:141] · provider [E: packages/ai/src/providers/openrouter.models.ts:142] |
-| `deepseek/deepseek-chat` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:144] · id [E: packages/ai/src/providers/openrouter.models.ts:145] · provider [E: packages/ai/src/providers/openrouter.models.ts:146] |
-| `deepseek/deepseek-chat-v3-0324` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:148] · id [E: packages/ai/src/providers/openrouter.models.ts:149] · provider [E: packages/ai/src/providers/openrouter.models.ts:150] |
-| `deepseek/deepseek-chat-v3.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:152] · id [E: packages/ai/src/providers/openrouter.models.ts:153] · provider [E: packages/ai/src/providers/openrouter.models.ts:154] |
-| `deepseek/deepseek-r1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:156] · id [E: packages/ai/src/providers/openrouter.models.ts:157] · provider [E: packages/ai/src/providers/openrouter.models.ts:158] |
-| `deepseek/deepseek-r1-0528` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:160] · id [E: packages/ai/src/providers/openrouter.models.ts:161] · provider [E: packages/ai/src/providers/openrouter.models.ts:162] |
-| `deepseek/deepseek-v3.1-terminus` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:164] · id [E: packages/ai/src/providers/openrouter.models.ts:165] · provider [E: packages/ai/src/providers/openrouter.models.ts:166] |
-| `deepseek/deepseek-v3.2` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:168] · id [E: packages/ai/src/providers/openrouter.models.ts:169] · provider [E: packages/ai/src/providers/openrouter.models.ts:170] |
-| `deepseek/deepseek-v3.2-exp` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:172] · id [E: packages/ai/src/providers/openrouter.models.ts:173] · provider [E: packages/ai/src/providers/openrouter.models.ts:174] |
-| `deepseek/deepseek-v4-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:176] · id [E: packages/ai/src/providers/openrouter.models.ts:177] · provider [E: packages/ai/src/providers/openrouter.models.ts:178] |
-| `deepseek/deepseek-v4-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:180] · id [E: packages/ai/src/providers/openrouter.models.ts:181] · provider [E: packages/ai/src/providers/openrouter.models.ts:182] |
-| `google/gemini-2.5-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:184] · id [E: packages/ai/src/providers/openrouter.models.ts:185] · provider [E: packages/ai/src/providers/openrouter.models.ts:186] |
-| `google/gemini-2.5-flash-lite` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:188] · id [E: packages/ai/src/providers/openrouter.models.ts:189] · provider [E: packages/ai/src/providers/openrouter.models.ts:190] |
-| `google/gemini-2.5-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:192] · id [E: packages/ai/src/providers/openrouter.models.ts:193] · provider [E: packages/ai/src/providers/openrouter.models.ts:194] |
-| `google/gemini-2.5-pro-preview` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:196] · id [E: packages/ai/src/providers/openrouter.models.ts:197] · provider [E: packages/ai/src/providers/openrouter.models.ts:198] |
-| `google/gemini-2.5-pro-preview-05-06` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:200] · id [E: packages/ai/src/providers/openrouter.models.ts:201] · provider [E: packages/ai/src/providers/openrouter.models.ts:202] |
-| `google/gemini-3-flash-preview` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:204] · id [E: packages/ai/src/providers/openrouter.models.ts:205] · provider [E: packages/ai/src/providers/openrouter.models.ts:206] |
-| `google/gemini-3-pro-image` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:208] · id [E: packages/ai/src/providers/openrouter.models.ts:209] · provider [E: packages/ai/src/providers/openrouter.models.ts:210] |
-| `google/gemini-3.1-flash-lite` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:212] · id [E: packages/ai/src/providers/openrouter.models.ts:213] · provider [E: packages/ai/src/providers/openrouter.models.ts:214] |
-| `google/gemini-3.1-flash-lite-preview` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:216] · id [E: packages/ai/src/providers/openrouter.models.ts:217] · provider [E: packages/ai/src/providers/openrouter.models.ts:218] |
-| `google/gemini-3.1-pro-preview` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:220] · id [E: packages/ai/src/providers/openrouter.models.ts:221] · provider [E: packages/ai/src/providers/openrouter.models.ts:222] |
-| `google/gemini-3.1-pro-preview-customtools` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:224] · id [E: packages/ai/src/providers/openrouter.models.ts:225] · provider [E: packages/ai/src/providers/openrouter.models.ts:226] |
-| `google/gemini-3.5-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:228] · id [E: packages/ai/src/providers/openrouter.models.ts:229] · provider [E: packages/ai/src/providers/openrouter.models.ts:230] |
-| `google/gemma-3-12b-it` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:232] · id [E: packages/ai/src/providers/openrouter.models.ts:233] · provider [E: packages/ai/src/providers/openrouter.models.ts:234] |
-| `google/gemma-3-27b-it` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:236] · id [E: packages/ai/src/providers/openrouter.models.ts:237] · provider [E: packages/ai/src/providers/openrouter.models.ts:238] |
-| `google/gemma-4-26b-a4b-it` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:240] · id [E: packages/ai/src/providers/openrouter.models.ts:241] · provider [E: packages/ai/src/providers/openrouter.models.ts:242] |
-| `google/gemma-4-26b-a4b-it:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:244] · id [E: packages/ai/src/providers/openrouter.models.ts:245] · provider [E: packages/ai/src/providers/openrouter.models.ts:246] |
-| `google/gemma-4-31b-it` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:248] · id [E: packages/ai/src/providers/openrouter.models.ts:249] · provider [E: packages/ai/src/providers/openrouter.models.ts:250] |
-| `google/gemma-4-31b-it:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:252] · id [E: packages/ai/src/providers/openrouter.models.ts:253] · provider [E: packages/ai/src/providers/openrouter.models.ts:254] |
-| `ibm-granite/granite-4.1-8b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:256] · id [E: packages/ai/src/providers/openrouter.models.ts:257] · provider [E: packages/ai/src/providers/openrouter.models.ts:258] |
-| `inception/mercury-2` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:260] · id [E: packages/ai/src/providers/openrouter.models.ts:261] · provider [E: packages/ai/src/providers/openrouter.models.ts:262] |
-| `inclusionai/ling-2.6-1t` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:264] · id [E: packages/ai/src/providers/openrouter.models.ts:265] · provider [E: packages/ai/src/providers/openrouter.models.ts:266] |
-| `inclusionai/ling-2.6-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:268] · id [E: packages/ai/src/providers/openrouter.models.ts:269] · provider [E: packages/ai/src/providers/openrouter.models.ts:270] |
-| `inclusionai/ring-2.6-1t` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:272] · id [E: packages/ai/src/providers/openrouter.models.ts:273] · provider [E: packages/ai/src/providers/openrouter.models.ts:274] |
-| `kwaipilot/kat-coder-air-v2.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:276] · id [E: packages/ai/src/providers/openrouter.models.ts:277] · provider [E: packages/ai/src/providers/openrouter.models.ts:278] |
-| `kwaipilot/kat-coder-pro-v2` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:280] · id [E: packages/ai/src/providers/openrouter.models.ts:281] · provider [E: packages/ai/src/providers/openrouter.models.ts:282] |
-| `kwaipilot/kat-coder-pro-v2.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:284] · id [E: packages/ai/src/providers/openrouter.models.ts:285] · provider [E: packages/ai/src/providers/openrouter.models.ts:286] |
-| `meta-llama/llama-3.1-70b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:288] · id [E: packages/ai/src/providers/openrouter.models.ts:289] · provider [E: packages/ai/src/providers/openrouter.models.ts:290] |
-| `meta-llama/llama-3.1-8b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:292] · id [E: packages/ai/src/providers/openrouter.models.ts:293] · provider [E: packages/ai/src/providers/openrouter.models.ts:294] |
-| `meta-llama/llama-3.3-70b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:296] · id [E: packages/ai/src/providers/openrouter.models.ts:297] · provider [E: packages/ai/src/providers/openrouter.models.ts:298] |
-| `meta-llama/llama-3.3-70b-instruct:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:300] · id [E: packages/ai/src/providers/openrouter.models.ts:301] · provider [E: packages/ai/src/providers/openrouter.models.ts:302] |
-| `meta-llama/llama-4-maverick` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:304] · id [E: packages/ai/src/providers/openrouter.models.ts:305] · provider [E: packages/ai/src/providers/openrouter.models.ts:306] |
-| `meta-llama/llama-4-scout` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:308] · id [E: packages/ai/src/providers/openrouter.models.ts:309] · provider [E: packages/ai/src/providers/openrouter.models.ts:310] |
-| `meta/muse-spark-1.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:312] · id [E: packages/ai/src/providers/openrouter.models.ts:313] · provider [E: packages/ai/src/providers/openrouter.models.ts:314] |
-| `minimax/minimax-m1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:316] · id [E: packages/ai/src/providers/openrouter.models.ts:317] · provider [E: packages/ai/src/providers/openrouter.models.ts:318] |
-| `minimax/minimax-m2` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:320] · id [E: packages/ai/src/providers/openrouter.models.ts:321] · provider [E: packages/ai/src/providers/openrouter.models.ts:322] |
-| `minimax/minimax-m2.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:324] · id [E: packages/ai/src/providers/openrouter.models.ts:325] · provider [E: packages/ai/src/providers/openrouter.models.ts:326] |
-| `minimax/minimax-m2.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:328] · id [E: packages/ai/src/providers/openrouter.models.ts:329] · provider [E: packages/ai/src/providers/openrouter.models.ts:330] |
-| `minimax/minimax-m2.7` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:332] · id [E: packages/ai/src/providers/openrouter.models.ts:333] · provider [E: packages/ai/src/providers/openrouter.models.ts:334] |
-| `minimax/minimax-m3` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:336] · id [E: packages/ai/src/providers/openrouter.models.ts:337] · provider [E: packages/ai/src/providers/openrouter.models.ts:338] |
-| `mistralai/codestral-2508` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:340] · id [E: packages/ai/src/providers/openrouter.models.ts:341] · provider [E: packages/ai/src/providers/openrouter.models.ts:342] |
-| `mistralai/devstral-2512` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:344] · id [E: packages/ai/src/providers/openrouter.models.ts:345] · provider [E: packages/ai/src/providers/openrouter.models.ts:346] |
-| `mistralai/ministral-14b-2512` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:348] · id [E: packages/ai/src/providers/openrouter.models.ts:349] · provider [E: packages/ai/src/providers/openrouter.models.ts:350] |
-| `mistralai/ministral-3b-2512` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:352] · id [E: packages/ai/src/providers/openrouter.models.ts:353] · provider [E: packages/ai/src/providers/openrouter.models.ts:354] |
-| `mistralai/ministral-8b-2512` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:356] · id [E: packages/ai/src/providers/openrouter.models.ts:357] · provider [E: packages/ai/src/providers/openrouter.models.ts:358] |
-| `mistralai/mistral-large` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:360] · id [E: packages/ai/src/providers/openrouter.models.ts:361] · provider [E: packages/ai/src/providers/openrouter.models.ts:362] |
-| `mistralai/mistral-large-2407` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:364] · id [E: packages/ai/src/providers/openrouter.models.ts:365] · provider [E: packages/ai/src/providers/openrouter.models.ts:366] |
-| `mistralai/mistral-large-2512` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:368] · id [E: packages/ai/src/providers/openrouter.models.ts:369] · provider [E: packages/ai/src/providers/openrouter.models.ts:370] |
-| `mistralai/mistral-medium-3` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:372] · id [E: packages/ai/src/providers/openrouter.models.ts:373] · provider [E: packages/ai/src/providers/openrouter.models.ts:374] |
-| `mistralai/mistral-medium-3-5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:376] · id [E: packages/ai/src/providers/openrouter.models.ts:377] · provider [E: packages/ai/src/providers/openrouter.models.ts:378] |
-| `mistralai/mistral-medium-3.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:380] · id [E: packages/ai/src/providers/openrouter.models.ts:381] · provider [E: packages/ai/src/providers/openrouter.models.ts:382] |
-| `mistralai/mistral-nemo` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:384] · id [E: packages/ai/src/providers/openrouter.models.ts:385] · provider [E: packages/ai/src/providers/openrouter.models.ts:386] |
-| `mistralai/mistral-saba` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:388] · id [E: packages/ai/src/providers/openrouter.models.ts:389] · provider [E: packages/ai/src/providers/openrouter.models.ts:390] |
-| `mistralai/mistral-small-2603` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:392] · id [E: packages/ai/src/providers/openrouter.models.ts:393] · provider [E: packages/ai/src/providers/openrouter.models.ts:394] |
-| `mistralai/mistral-small-3.2-24b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:396] · id [E: packages/ai/src/providers/openrouter.models.ts:397] · provider [E: packages/ai/src/providers/openrouter.models.ts:398] |
-| `mistralai/mixtral-8x22b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:400] · id [E: packages/ai/src/providers/openrouter.models.ts:401] · provider [E: packages/ai/src/providers/openrouter.models.ts:402] |
-| `mistralai/voxtral-small-24b-2507` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:404] · id [E: packages/ai/src/providers/openrouter.models.ts:405] · provider [E: packages/ai/src/providers/openrouter.models.ts:406] |
-| `moonshotai/kimi-k2` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:408] · id [E: packages/ai/src/providers/openrouter.models.ts:409] · provider [E: packages/ai/src/providers/openrouter.models.ts:410] |
-| `moonshotai/kimi-k2-0905` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:412] · id [E: packages/ai/src/providers/openrouter.models.ts:413] · provider [E: packages/ai/src/providers/openrouter.models.ts:414] |
-| `moonshotai/kimi-k2-thinking` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:416] · id [E: packages/ai/src/providers/openrouter.models.ts:417] · provider [E: packages/ai/src/providers/openrouter.models.ts:418] |
-| `moonshotai/kimi-k2.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:420] · id [E: packages/ai/src/providers/openrouter.models.ts:421] · provider [E: packages/ai/src/providers/openrouter.models.ts:422] |
-| `moonshotai/kimi-k2.6` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:424] · id [E: packages/ai/src/providers/openrouter.models.ts:425] · provider [E: packages/ai/src/providers/openrouter.models.ts:426] |
-| `moonshotai/kimi-k2.7-code` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:428] · id [E: packages/ai/src/providers/openrouter.models.ts:429] · provider [E: packages/ai/src/providers/openrouter.models.ts:430] |
-| `moonshotai/kimi-k3` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:432] · id [E: packages/ai/src/providers/openrouter.models.ts:433] · provider [E: packages/ai/src/providers/openrouter.models.ts:434] |
-| `nex-agi/nex-n2-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:436] · id [E: packages/ai/src/providers/openrouter.models.ts:437] · provider [E: packages/ai/src/providers/openrouter.models.ts:438] |
-| `nex-agi/nex-n2-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:440] · id [E: packages/ai/src/providers/openrouter.models.ts:441] · provider [E: packages/ai/src/providers/openrouter.models.ts:442] |
-| `nvidia/nemotron-3-nano-30b-a3b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:444] · id [E: packages/ai/src/providers/openrouter.models.ts:445] · provider [E: packages/ai/src/providers/openrouter.models.ts:446] |
-| `nvidia/nemotron-3-nano-30b-a3b:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:448] · id [E: packages/ai/src/providers/openrouter.models.ts:449] · provider [E: packages/ai/src/providers/openrouter.models.ts:450] |
-| `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:452] · id [E: packages/ai/src/providers/openrouter.models.ts:453] · provider [E: packages/ai/src/providers/openrouter.models.ts:454] |
-| `nvidia/nemotron-3-super-120b-a12b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:456] · id [E: packages/ai/src/providers/openrouter.models.ts:457] · provider [E: packages/ai/src/providers/openrouter.models.ts:458] |
-| `nvidia/nemotron-3-super-120b-a12b:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:460] · id [E: packages/ai/src/providers/openrouter.models.ts:461] · provider [E: packages/ai/src/providers/openrouter.models.ts:462] |
-| `nvidia/nemotron-3-ultra-550b-a55b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:464] · id [E: packages/ai/src/providers/openrouter.models.ts:465] · provider [E: packages/ai/src/providers/openrouter.models.ts:466] |
-| `nvidia/nemotron-3-ultra-550b-a55b:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:468] · id [E: packages/ai/src/providers/openrouter.models.ts:469] · provider [E: packages/ai/src/providers/openrouter.models.ts:470] |
-| `nvidia/nemotron-nano-12b-v2-vl:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:472] · id [E: packages/ai/src/providers/openrouter.models.ts:473] · provider [E: packages/ai/src/providers/openrouter.models.ts:474] |
-| `nvidia/nemotron-nano-9b-v2:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:476] · id [E: packages/ai/src/providers/openrouter.models.ts:477] · provider [E: packages/ai/src/providers/openrouter.models.ts:478] |
-| `openai/gpt-3.5-turbo` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:480] · id [E: packages/ai/src/providers/openrouter.models.ts:481] · provider [E: packages/ai/src/providers/openrouter.models.ts:482] |
-| `openai/gpt-3.5-turbo-0613` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:484] · id [E: packages/ai/src/providers/openrouter.models.ts:485] · provider [E: packages/ai/src/providers/openrouter.models.ts:486] |
-| `openai/gpt-3.5-turbo-16k` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:488] · id [E: packages/ai/src/providers/openrouter.models.ts:489] · provider [E: packages/ai/src/providers/openrouter.models.ts:490] |
-| `openai/gpt-4` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:492] · id [E: packages/ai/src/providers/openrouter.models.ts:493] · provider [E: packages/ai/src/providers/openrouter.models.ts:494] |
-| `openai/gpt-4-turbo` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:496] · id [E: packages/ai/src/providers/openrouter.models.ts:497] · provider [E: packages/ai/src/providers/openrouter.models.ts:498] |
-| `openai/gpt-4-turbo-preview` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:500] · id [E: packages/ai/src/providers/openrouter.models.ts:501] · provider [E: packages/ai/src/providers/openrouter.models.ts:502] |
-| `openai/gpt-4.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:504] · id [E: packages/ai/src/providers/openrouter.models.ts:505] · provider [E: packages/ai/src/providers/openrouter.models.ts:506] |
-| `openai/gpt-4.1-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:508] · id [E: packages/ai/src/providers/openrouter.models.ts:509] · provider [E: packages/ai/src/providers/openrouter.models.ts:510] |
-| `openai/gpt-4.1-nano` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:512] · id [E: packages/ai/src/providers/openrouter.models.ts:513] · provider [E: packages/ai/src/providers/openrouter.models.ts:514] |
-| `openai/gpt-4o` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:516] · id [E: packages/ai/src/providers/openrouter.models.ts:517] · provider [E: packages/ai/src/providers/openrouter.models.ts:518] |
-| `openai/gpt-4o-2024-05-13` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:520] · id [E: packages/ai/src/providers/openrouter.models.ts:521] · provider [E: packages/ai/src/providers/openrouter.models.ts:522] |
-| `openai/gpt-4o-2024-08-06` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:524] · id [E: packages/ai/src/providers/openrouter.models.ts:525] · provider [E: packages/ai/src/providers/openrouter.models.ts:526] |
-| `openai/gpt-4o-2024-11-20` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:528] · id [E: packages/ai/src/providers/openrouter.models.ts:529] · provider [E: packages/ai/src/providers/openrouter.models.ts:530] |
-| `openai/gpt-4o-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:532] · id [E: packages/ai/src/providers/openrouter.models.ts:533] · provider [E: packages/ai/src/providers/openrouter.models.ts:534] |
-| `openai/gpt-4o-mini-2024-07-18` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:536] · id [E: packages/ai/src/providers/openrouter.models.ts:537] · provider [E: packages/ai/src/providers/openrouter.models.ts:538] |
-| `openai/gpt-5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:540] · id [E: packages/ai/src/providers/openrouter.models.ts:541] · provider [E: packages/ai/src/providers/openrouter.models.ts:542] |
-| `openai/gpt-5-codex` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:544] · id [E: packages/ai/src/providers/openrouter.models.ts:545] · provider [E: packages/ai/src/providers/openrouter.models.ts:546] |
-| `openai/gpt-5-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:548] · id [E: packages/ai/src/providers/openrouter.models.ts:549] · provider [E: packages/ai/src/providers/openrouter.models.ts:550] |
-| `openai/gpt-5-nano` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:552] · id [E: packages/ai/src/providers/openrouter.models.ts:553] · provider [E: packages/ai/src/providers/openrouter.models.ts:554] |
-| `openai/gpt-5-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:556] · id [E: packages/ai/src/providers/openrouter.models.ts:557] · provider [E: packages/ai/src/providers/openrouter.models.ts:558] |
-| `openai/gpt-5.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:560] · id [E: packages/ai/src/providers/openrouter.models.ts:561] · provider [E: packages/ai/src/providers/openrouter.models.ts:562] |
-| `openai/gpt-5.1-chat` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:564] · id [E: packages/ai/src/providers/openrouter.models.ts:565] · provider [E: packages/ai/src/providers/openrouter.models.ts:566] |
-| `openai/gpt-5.1-codex` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:568] · id [E: packages/ai/src/providers/openrouter.models.ts:569] · provider [E: packages/ai/src/providers/openrouter.models.ts:570] |
-| `openai/gpt-5.1-codex-max` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:572] · id [E: packages/ai/src/providers/openrouter.models.ts:573] · provider [E: packages/ai/src/providers/openrouter.models.ts:574] |
-| `openai/gpt-5.1-codex-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:576] · id [E: packages/ai/src/providers/openrouter.models.ts:577] · provider [E: packages/ai/src/providers/openrouter.models.ts:578] |
-| `openai/gpt-5.2` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:580] · id [E: packages/ai/src/providers/openrouter.models.ts:581] · provider [E: packages/ai/src/providers/openrouter.models.ts:582] |
-| `openai/gpt-5.2-chat` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:584] · id [E: packages/ai/src/providers/openrouter.models.ts:585] · provider [E: packages/ai/src/providers/openrouter.models.ts:586] |
-| `openai/gpt-5.2-codex` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:588] · id [E: packages/ai/src/providers/openrouter.models.ts:589] · provider [E: packages/ai/src/providers/openrouter.models.ts:590] |
-| `openai/gpt-5.2-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:592] · id [E: packages/ai/src/providers/openrouter.models.ts:593] · provider [E: packages/ai/src/providers/openrouter.models.ts:594] |
-| `openai/gpt-5.3-chat` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:596] · id [E: packages/ai/src/providers/openrouter.models.ts:597] · provider [E: packages/ai/src/providers/openrouter.models.ts:598] |
-| `openai/gpt-5.3-codex` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:600] · id [E: packages/ai/src/providers/openrouter.models.ts:601] · provider [E: packages/ai/src/providers/openrouter.models.ts:602] |
-| `openai/gpt-5.4` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:604] · id [E: packages/ai/src/providers/openrouter.models.ts:605] · provider [E: packages/ai/src/providers/openrouter.models.ts:606] |
-| `openai/gpt-5.4-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:608] · id [E: packages/ai/src/providers/openrouter.models.ts:609] · provider [E: packages/ai/src/providers/openrouter.models.ts:610] |
-| `openai/gpt-5.4-nano` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:612] · id [E: packages/ai/src/providers/openrouter.models.ts:613] · provider [E: packages/ai/src/providers/openrouter.models.ts:614] |
-| `openai/gpt-5.4-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:616] · id [E: packages/ai/src/providers/openrouter.models.ts:617] · provider [E: packages/ai/src/providers/openrouter.models.ts:618] |
-| `openai/gpt-5.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:620] · id [E: packages/ai/src/providers/openrouter.models.ts:621] · provider [E: packages/ai/src/providers/openrouter.models.ts:622] |
-| `openai/gpt-5.5-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:624] · id [E: packages/ai/src/providers/openrouter.models.ts:625] · provider [E: packages/ai/src/providers/openrouter.models.ts:626] |
-| `openai/gpt-5.6-luna` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:628] · id [E: packages/ai/src/providers/openrouter.models.ts:629] · provider [E: packages/ai/src/providers/openrouter.models.ts:630] |
-| `openai/gpt-5.6-luna-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:632] · id [E: packages/ai/src/providers/openrouter.models.ts:633] · provider [E: packages/ai/src/providers/openrouter.models.ts:634] |
-| `openai/gpt-5.6-sol` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:636] · id [E: packages/ai/src/providers/openrouter.models.ts:637] · provider [E: packages/ai/src/providers/openrouter.models.ts:638] |
-| `openai/gpt-5.6-sol-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:640] · id [E: packages/ai/src/providers/openrouter.models.ts:641] · provider [E: packages/ai/src/providers/openrouter.models.ts:642] |
-| `openai/gpt-5.6-terra` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:644] · id [E: packages/ai/src/providers/openrouter.models.ts:645] · provider [E: packages/ai/src/providers/openrouter.models.ts:646] |
-| `openai/gpt-5.6-terra-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:648] · id [E: packages/ai/src/providers/openrouter.models.ts:649] · provider [E: packages/ai/src/providers/openrouter.models.ts:650] |
-| `openai/gpt-audio` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:652] · id [E: packages/ai/src/providers/openrouter.models.ts:653] · provider [E: packages/ai/src/providers/openrouter.models.ts:654] |
-| `openai/gpt-audio-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:656] · id [E: packages/ai/src/providers/openrouter.models.ts:657] · provider [E: packages/ai/src/providers/openrouter.models.ts:658] |
-| `openai/gpt-chat-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:660] · id [E: packages/ai/src/providers/openrouter.models.ts:661] · provider [E: packages/ai/src/providers/openrouter.models.ts:662] |
-| `openai/gpt-oss-120b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:664] · id [E: packages/ai/src/providers/openrouter.models.ts:665] · provider [E: packages/ai/src/providers/openrouter.models.ts:666] |
-| `openai/gpt-oss-20b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:668] · id [E: packages/ai/src/providers/openrouter.models.ts:669] · provider [E: packages/ai/src/providers/openrouter.models.ts:670] |
-| `openai/gpt-oss-20b:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:672] · id [E: packages/ai/src/providers/openrouter.models.ts:673] · provider [E: packages/ai/src/providers/openrouter.models.ts:674] |
-| `openai/gpt-oss-safeguard-20b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:676] · id [E: packages/ai/src/providers/openrouter.models.ts:677] · provider [E: packages/ai/src/providers/openrouter.models.ts:678] |
-| `openai/o1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:680] · id [E: packages/ai/src/providers/openrouter.models.ts:681] · provider [E: packages/ai/src/providers/openrouter.models.ts:682] |
-| `openai/o3` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:684] · id [E: packages/ai/src/providers/openrouter.models.ts:685] · provider [E: packages/ai/src/providers/openrouter.models.ts:686] |
-| `openai/o3-deep-research` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:688] · id [E: packages/ai/src/providers/openrouter.models.ts:689] · provider [E: packages/ai/src/providers/openrouter.models.ts:690] |
-| `openai/o3-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:692] · id [E: packages/ai/src/providers/openrouter.models.ts:693] · provider [E: packages/ai/src/providers/openrouter.models.ts:694] |
-| `openai/o3-mini-high` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:696] · id [E: packages/ai/src/providers/openrouter.models.ts:697] · provider [E: packages/ai/src/providers/openrouter.models.ts:698] |
-| `openai/o3-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:700] · id [E: packages/ai/src/providers/openrouter.models.ts:701] · provider [E: packages/ai/src/providers/openrouter.models.ts:702] |
-| `openai/o4-mini` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:704] · id [E: packages/ai/src/providers/openrouter.models.ts:705] · provider [E: packages/ai/src/providers/openrouter.models.ts:706] |
-| `openai/o4-mini-deep-research` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:708] · id [E: packages/ai/src/providers/openrouter.models.ts:709] · provider [E: packages/ai/src/providers/openrouter.models.ts:710] |
-| `openai/o4-mini-high` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:712] · id [E: packages/ai/src/providers/openrouter.models.ts:713] · provider [E: packages/ai/src/providers/openrouter.models.ts:714] |
-| `openrouter/auto` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:716] · id [E: packages/ai/src/providers/openrouter.models.ts:717] · provider [E: packages/ai/src/providers/openrouter.models.ts:718] |
-| `openrouter/free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:720] · id [E: packages/ai/src/providers/openrouter.models.ts:721] · provider [E: packages/ai/src/providers/openrouter.models.ts:722] |
-| `openrouter/fusion` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:724] · id [E: packages/ai/src/providers/openrouter.models.ts:725] · provider [E: packages/ai/src/providers/openrouter.models.ts:726] |
-| `poolside/laguna-m.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:728] · id [E: packages/ai/src/providers/openrouter.models.ts:729] · provider [E: packages/ai/src/providers/openrouter.models.ts:730] |
-| `poolside/laguna-m.1:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:732] · id [E: packages/ai/src/providers/openrouter.models.ts:733] · provider [E: packages/ai/src/providers/openrouter.models.ts:734] |
-| `poolside/laguna-xs-2.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:736] · id [E: packages/ai/src/providers/openrouter.models.ts:737] · provider [E: packages/ai/src/providers/openrouter.models.ts:738] |
-| `poolside/laguna-xs-2.1:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:740] · id [E: packages/ai/src/providers/openrouter.models.ts:741] · provider [E: packages/ai/src/providers/openrouter.models.ts:742] |
-| `qwen/qwen-2.5-72b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:744] · id [E: packages/ai/src/providers/openrouter.models.ts:745] · provider [E: packages/ai/src/providers/openrouter.models.ts:746] |
-| `qwen/qwen-2.5-7b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:748] · id [E: packages/ai/src/providers/openrouter.models.ts:749] · provider [E: packages/ai/src/providers/openrouter.models.ts:750] |
-| `qwen/qwen-plus` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:752] · id [E: packages/ai/src/providers/openrouter.models.ts:753] · provider [E: packages/ai/src/providers/openrouter.models.ts:754] |
-| `qwen/qwen-plus-2025-07-28` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:756] · id [E: packages/ai/src/providers/openrouter.models.ts:757] · provider [E: packages/ai/src/providers/openrouter.models.ts:758] |
-| `qwen/qwen-plus-2025-07-28:thinking` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:760] · id [E: packages/ai/src/providers/openrouter.models.ts:761] · provider [E: packages/ai/src/providers/openrouter.models.ts:762] |
-| `qwen/qwen3-14b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:764] · id [E: packages/ai/src/providers/openrouter.models.ts:765] · provider [E: packages/ai/src/providers/openrouter.models.ts:766] |
-| `qwen/qwen3-235b-a22b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:768] · id [E: packages/ai/src/providers/openrouter.models.ts:769] · provider [E: packages/ai/src/providers/openrouter.models.ts:770] |
-| `qwen/qwen3-235b-a22b-2507` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:772] · id [E: packages/ai/src/providers/openrouter.models.ts:773] · provider [E: packages/ai/src/providers/openrouter.models.ts:774] |
-| `qwen/qwen3-235b-a22b-thinking-2507` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:776] · id [E: packages/ai/src/providers/openrouter.models.ts:777] · provider [E: packages/ai/src/providers/openrouter.models.ts:778] |
-| `qwen/qwen3-30b-a3b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:780] · id [E: packages/ai/src/providers/openrouter.models.ts:781] · provider [E: packages/ai/src/providers/openrouter.models.ts:782] |
-| `qwen/qwen3-30b-a3b-instruct-2507` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:784] · id [E: packages/ai/src/providers/openrouter.models.ts:785] · provider [E: packages/ai/src/providers/openrouter.models.ts:786] |
-| `qwen/qwen3-30b-a3b-thinking-2507` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:788] · id [E: packages/ai/src/providers/openrouter.models.ts:789] · provider [E: packages/ai/src/providers/openrouter.models.ts:790] |
-| `qwen/qwen3-32b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:792] · id [E: packages/ai/src/providers/openrouter.models.ts:793] · provider [E: packages/ai/src/providers/openrouter.models.ts:794] |
-| `qwen/qwen3-8b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:796] · id [E: packages/ai/src/providers/openrouter.models.ts:797] · provider [E: packages/ai/src/providers/openrouter.models.ts:798] |
-| `qwen/qwen3-coder` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:800] · id [E: packages/ai/src/providers/openrouter.models.ts:801] · provider [E: packages/ai/src/providers/openrouter.models.ts:802] |
-| `qwen/qwen3-coder-30b-a3b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:804] · id [E: packages/ai/src/providers/openrouter.models.ts:805] · provider [E: packages/ai/src/providers/openrouter.models.ts:806] |
-| `qwen/qwen3-coder-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:808] · id [E: packages/ai/src/providers/openrouter.models.ts:809] · provider [E: packages/ai/src/providers/openrouter.models.ts:810] |
-| `qwen/qwen3-coder-next` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:812] · id [E: packages/ai/src/providers/openrouter.models.ts:813] · provider [E: packages/ai/src/providers/openrouter.models.ts:814] |
-| `qwen/qwen3-coder-plus` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:816] · id [E: packages/ai/src/providers/openrouter.models.ts:817] · provider [E: packages/ai/src/providers/openrouter.models.ts:818] |
-| `qwen/qwen3-coder:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:820] · id [E: packages/ai/src/providers/openrouter.models.ts:821] · provider [E: packages/ai/src/providers/openrouter.models.ts:822] |
-| `qwen/qwen3-max` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:824] · id [E: packages/ai/src/providers/openrouter.models.ts:825] · provider [E: packages/ai/src/providers/openrouter.models.ts:826] |
-| `qwen/qwen3-max-thinking` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:828] · id [E: packages/ai/src/providers/openrouter.models.ts:829] · provider [E: packages/ai/src/providers/openrouter.models.ts:830] |
-| `qwen/qwen3-next-80b-a3b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:832] · id [E: packages/ai/src/providers/openrouter.models.ts:833] · provider [E: packages/ai/src/providers/openrouter.models.ts:834] |
-| `qwen/qwen3-next-80b-a3b-instruct:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:836] · id [E: packages/ai/src/providers/openrouter.models.ts:837] · provider [E: packages/ai/src/providers/openrouter.models.ts:838] |
-| `qwen/qwen3-next-80b-a3b-thinking` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:840] · id [E: packages/ai/src/providers/openrouter.models.ts:841] · provider [E: packages/ai/src/providers/openrouter.models.ts:842] |
-| `qwen/qwen3-vl-235b-a22b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:844] · id [E: packages/ai/src/providers/openrouter.models.ts:845] · provider [E: packages/ai/src/providers/openrouter.models.ts:846] |
-| `qwen/qwen3-vl-235b-a22b-thinking` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:848] · id [E: packages/ai/src/providers/openrouter.models.ts:849] · provider [E: packages/ai/src/providers/openrouter.models.ts:850] |
-| `qwen/qwen3-vl-30b-a3b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:852] · id [E: packages/ai/src/providers/openrouter.models.ts:853] · provider [E: packages/ai/src/providers/openrouter.models.ts:854] |
-| `qwen/qwen3-vl-30b-a3b-thinking` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:856] · id [E: packages/ai/src/providers/openrouter.models.ts:857] · provider [E: packages/ai/src/providers/openrouter.models.ts:858] |
-| `qwen/qwen3-vl-32b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:860] · id [E: packages/ai/src/providers/openrouter.models.ts:861] · provider [E: packages/ai/src/providers/openrouter.models.ts:862] |
-| `qwen/qwen3-vl-8b-instruct` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:864] · id [E: packages/ai/src/providers/openrouter.models.ts:865] · provider [E: packages/ai/src/providers/openrouter.models.ts:866] |
-| `qwen/qwen3-vl-8b-thinking` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:868] · id [E: packages/ai/src/providers/openrouter.models.ts:869] · provider [E: packages/ai/src/providers/openrouter.models.ts:870] |
-| `qwen/qwen3.5-122b-a10b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:872] · id [E: packages/ai/src/providers/openrouter.models.ts:873] · provider [E: packages/ai/src/providers/openrouter.models.ts:874] |
-| `qwen/qwen3.5-27b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:876] · id [E: packages/ai/src/providers/openrouter.models.ts:877] · provider [E: packages/ai/src/providers/openrouter.models.ts:878] |
-| `qwen/qwen3.5-35b-a3b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:880] · id [E: packages/ai/src/providers/openrouter.models.ts:881] · provider [E: packages/ai/src/providers/openrouter.models.ts:882] |
-| `qwen/qwen3.5-397b-a17b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:884] · id [E: packages/ai/src/providers/openrouter.models.ts:885] · provider [E: packages/ai/src/providers/openrouter.models.ts:886] |
-| `qwen/qwen3.5-9b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:888] · id [E: packages/ai/src/providers/openrouter.models.ts:889] · provider [E: packages/ai/src/providers/openrouter.models.ts:890] |
-| `qwen/qwen3.5-flash-02-23` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:892] · id [E: packages/ai/src/providers/openrouter.models.ts:893] · provider [E: packages/ai/src/providers/openrouter.models.ts:894] |
-| `qwen/qwen3.5-plus-02-15` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:896] · id [E: packages/ai/src/providers/openrouter.models.ts:897] · provider [E: packages/ai/src/providers/openrouter.models.ts:898] |
-| `qwen/qwen3.5-plus-20260420` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:900] · id [E: packages/ai/src/providers/openrouter.models.ts:901] · provider [E: packages/ai/src/providers/openrouter.models.ts:902] |
-| `qwen/qwen3.6-27b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:904] · id [E: packages/ai/src/providers/openrouter.models.ts:905] · provider [E: packages/ai/src/providers/openrouter.models.ts:906] |
-| `qwen/qwen3.6-35b-a3b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:908] · id [E: packages/ai/src/providers/openrouter.models.ts:909] · provider [E: packages/ai/src/providers/openrouter.models.ts:910] |
-| `qwen/qwen3.6-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:912] · id [E: packages/ai/src/providers/openrouter.models.ts:913] · provider [E: packages/ai/src/providers/openrouter.models.ts:914] |
-| `qwen/qwen3.6-max-preview` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:916] · id [E: packages/ai/src/providers/openrouter.models.ts:917] · provider [E: packages/ai/src/providers/openrouter.models.ts:918] |
-| `qwen/qwen3.6-plus` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:920] · id [E: packages/ai/src/providers/openrouter.models.ts:921] · provider [E: packages/ai/src/providers/openrouter.models.ts:922] |
-| `qwen/qwen3.7-max` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:924] · id [E: packages/ai/src/providers/openrouter.models.ts:925] · provider [E: packages/ai/src/providers/openrouter.models.ts:926] |
-| `qwen/qwen3.7-plus` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:928] · id [E: packages/ai/src/providers/openrouter.models.ts:929] · provider [E: packages/ai/src/providers/openrouter.models.ts:930] |
-| `rekaai/reka-edge` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:932] · id [E: packages/ai/src/providers/openrouter.models.ts:933] · provider [E: packages/ai/src/providers/openrouter.models.ts:934] |
-| `relace/relace-search` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:936] · id [E: packages/ai/src/providers/openrouter.models.ts:937] · provider [E: packages/ai/src/providers/openrouter.models.ts:938] |
-| `sakana/fugu-ultra` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:940] · id [E: packages/ai/src/providers/openrouter.models.ts:941] · provider [E: packages/ai/src/providers/openrouter.models.ts:942] |
-| `sao10k/l3.1-euryale-70b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:944] · id [E: packages/ai/src/providers/openrouter.models.ts:945] · provider [E: packages/ai/src/providers/openrouter.models.ts:946] |
-| `stepfun/step-3.5-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:948] · id [E: packages/ai/src/providers/openrouter.models.ts:949] · provider [E: packages/ai/src/providers/openrouter.models.ts:950] |
-| `stepfun/step-3.7-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:952] · id [E: packages/ai/src/providers/openrouter.models.ts:953] · provider [E: packages/ai/src/providers/openrouter.models.ts:954] |
-| `tencent/hy3` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:956] · id [E: packages/ai/src/providers/openrouter.models.ts:957] · provider [E: packages/ai/src/providers/openrouter.models.ts:958] |
-| `tencent/hy3-preview` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:960] · id [E: packages/ai/src/providers/openrouter.models.ts:961] · provider [E: packages/ai/src/providers/openrouter.models.ts:962] |
-| `tencent/hy3:free` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:964] · id [E: packages/ai/src/providers/openrouter.models.ts:965] · provider [E: packages/ai/src/providers/openrouter.models.ts:966] |
-| `thedrummer/unslopnemo-12b` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:968] · id [E: packages/ai/src/providers/openrouter.models.ts:969] · provider [E: packages/ai/src/providers/openrouter.models.ts:970] |
-| `upstage/solar-pro-3` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:972] · id [E: packages/ai/src/providers/openrouter.models.ts:973] · provider [E: packages/ai/src/providers/openrouter.models.ts:974] |
-| `x-ai/grok-4.20` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:976] · id [E: packages/ai/src/providers/openrouter.models.ts:977] · provider [E: packages/ai/src/providers/openrouter.models.ts:978] |
-| `x-ai/grok-4.3` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:980] · id [E: packages/ai/src/providers/openrouter.models.ts:981] · provider [E: packages/ai/src/providers/openrouter.models.ts:982] |
-| `x-ai/grok-4.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:984] · id [E: packages/ai/src/providers/openrouter.models.ts:985] · provider [E: packages/ai/src/providers/openrouter.models.ts:986] |
-| `x-ai/grok-build-0.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:988] · id [E: packages/ai/src/providers/openrouter.models.ts:989] · provider [E: packages/ai/src/providers/openrouter.models.ts:990] |
-| `xiaomi/mimo-v2.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:992] · id [E: packages/ai/src/providers/openrouter.models.ts:993] · provider [E: packages/ai/src/providers/openrouter.models.ts:994] |
-| `xiaomi/mimo-v2.5-pro` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:996] · id [E: packages/ai/src/providers/openrouter.models.ts:997] · provider [E: packages/ai/src/providers/openrouter.models.ts:998] |
-| `z-ai/glm-4.5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1000] · id [E: packages/ai/src/providers/openrouter.models.ts:1001] · provider [E: packages/ai/src/providers/openrouter.models.ts:1002] |
-| `z-ai/glm-4.5-air` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1004] · id [E: packages/ai/src/providers/openrouter.models.ts:1005] · provider [E: packages/ai/src/providers/openrouter.models.ts:1006] |
-| `z-ai/glm-4.5v` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1008] · id [E: packages/ai/src/providers/openrouter.models.ts:1009] · provider [E: packages/ai/src/providers/openrouter.models.ts:1010] |
-| `z-ai/glm-4.6` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1012] · id [E: packages/ai/src/providers/openrouter.models.ts:1013] · provider [E: packages/ai/src/providers/openrouter.models.ts:1014] |
-| `z-ai/glm-4.6v` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1016] · id [E: packages/ai/src/providers/openrouter.models.ts:1017] · provider [E: packages/ai/src/providers/openrouter.models.ts:1018] |
-| `z-ai/glm-4.7` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1020] · id [E: packages/ai/src/providers/openrouter.models.ts:1021] · provider [E: packages/ai/src/providers/openrouter.models.ts:1022] |
-| `z-ai/glm-4.7-flash` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1024] · id [E: packages/ai/src/providers/openrouter.models.ts:1025] · provider [E: packages/ai/src/providers/openrouter.models.ts:1026] |
-| `z-ai/glm-5` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1028] · id [E: packages/ai/src/providers/openrouter.models.ts:1029] · provider [E: packages/ai/src/providers/openrouter.models.ts:1030] |
-| `z-ai/glm-5-turbo` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1032] · id [E: packages/ai/src/providers/openrouter.models.ts:1033] · provider [E: packages/ai/src/providers/openrouter.models.ts:1034] |
-| `z-ai/glm-5.1` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1036] · id [E: packages/ai/src/providers/openrouter.models.ts:1037] · provider [E: packages/ai/src/providers/openrouter.models.ts:1038] |
-| `z-ai/glm-5.2` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1040] · id [E: packages/ai/src/providers/openrouter.models.ts:1041] · provider [E: packages/ai/src/providers/openrouter.models.ts:1042] |
-| `z-ai/glm-5v-turbo` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1044] · id [E: packages/ai/src/providers/openrouter.models.ts:1045] · provider [E: packages/ai/src/providers/openrouter.models.ts:1046] |
-| `~anthropic/claude-fable-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1048] · id [E: packages/ai/src/providers/openrouter.models.ts:1049] · provider [E: packages/ai/src/providers/openrouter.models.ts:1050] |
-| `~anthropic/claude-haiku-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1052] · id [E: packages/ai/src/providers/openrouter.models.ts:1053] · provider [E: packages/ai/src/providers/openrouter.models.ts:1054] |
-| `~anthropic/claude-opus-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1056] · id [E: packages/ai/src/providers/openrouter.models.ts:1057] · provider [E: packages/ai/src/providers/openrouter.models.ts:1058] |
-| `~anthropic/claude-sonnet-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1060] · id [E: packages/ai/src/providers/openrouter.models.ts:1061] · provider [E: packages/ai/src/providers/openrouter.models.ts:1062] |
-| `~google/gemini-flash-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1064] · id [E: packages/ai/src/providers/openrouter.models.ts:1065] · provider [E: packages/ai/src/providers/openrouter.models.ts:1066] |
-| `~google/gemini-pro-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1068] · id [E: packages/ai/src/providers/openrouter.models.ts:1069] · provider [E: packages/ai/src/providers/openrouter.models.ts:1070] |
-| `~moonshotai/kimi-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1072] · id [E: packages/ai/src/providers/openrouter.models.ts:1073] · provider [E: packages/ai/src/providers/openrouter.models.ts:1074] |
-| `~openai/gpt-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1076] · id [E: packages/ai/src/providers/openrouter.models.ts:1077] · provider [E: packages/ai/src/providers/openrouter.models.ts:1078] |
-| `~openai/gpt-mini-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1080] · id [E: packages/ai/src/providers/openrouter.models.ts:1081] · provider [E: packages/ai/src/providers/openrouter.models.ts:1082] |
-| `~x-ai/grok-latest` | `openrouter` | `openai-completions` | key/api [E: packages/ai/src/providers/openrouter.models.ts:1084] · id [E: packages/ai/src/providers/openrouter.models.ts:1085] · provider [E: packages/ai/src/providers/openrouter.models.ts:1086] |
+| `~anthropic/claude-fable-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `~anthropic/claude-haiku-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `~anthropic/claude-opus-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `~anthropic/claude-sonnet-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `~google/gemini-flash-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `~google/gemini-pro-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `~moonshotai/kimi-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `~openai/gpt-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `~openai/gpt-mini-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `~x-ai/grok-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `ai21/jamba-large-1.7` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `aion-labs/aion-2.0` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `aion-labs/aion-3.0` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `aion-labs/aion-3.0-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `amazon/nova-2-lite-v1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `amazon/nova-lite-v1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `amazon/nova-micro-v1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `amazon/nova-premier-v1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `amazon/nova-pro-v1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-3-haiku` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-fable-5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-haiku-4.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.6` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.7` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.7-fast` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.8` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.8-fast` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-5-fast` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-sonnet-4` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-sonnet-4.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-sonnet-4.6` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-sonnet-5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `arcee-ai/trinity-large-thinking` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `arcee-ai/virtuoso-large` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `auto` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `bytedance-seed/seed-1.6` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `bytedance-seed/seed-1.6-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `bytedance-seed/seed-2.0-lite` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `bytedance-seed/seed-2.0-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `cohere/command-r-08-2024` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `cohere/command-r-plus-08-2024` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `cohere/north-mini-code:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-chat` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-chat-v3-0324` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-chat-v3.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-r1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-r1-0528` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v3.1-terminus` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v3.2` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v3.2-exp` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v4-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v4-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-2.5-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-2.5-flash-lite` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-2.5-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-2.5-pro-preview` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-2.5-pro-preview-05-06` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-3-flash-preview` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-3-pro-image` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.1-flash-lite` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.1-flash-lite-preview` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.1-pro-preview` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.1-pro-preview-customtools` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.5-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.5-flash-lite` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.6-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemma-3-12b-it` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemma-3-27b-it` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemma-4-26b-a4b-it` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemma-4-26b-a4b-it:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemma-4-31b-it` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemma-4-31b-it:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `ibm-granite/granite-4.1-8b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `inception/mercury-2` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `inclusionai/ling-2.6-1t` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `inclusionai/ling-2.6-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `inclusionai/ling-3.0-flash:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `inclusionai/ring-2.6-1t` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kwaipilot/kat-coder-air-v2.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kwaipilot/kat-coder-pro-v2` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kwaipilot/kat-coder-pro-v2.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meituan/longcat-2.0` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta-llama/llama-3.1-70b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta-llama/llama-3.1-8b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta-llama/llama-3.3-70b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta-llama/llama-4-maverick` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta-llama/llama-4-scout` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta/muse-spark-1.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2.7` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m3` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/codestral-2508` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/devstral-2512` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/ministral-14b-2512` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/ministral-3b-2512` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/ministral-8b-2512` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-large` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-large-2407` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-large-2512` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-medium-3` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-medium-3-5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-medium-3.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-nemo` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-saba` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-small-2603` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mistral-small-3.2-24b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/mixtral-8x22b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mistralai/voxtral-small-24b-2507` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2-0905` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2-thinking` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2.6` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2.7-code` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k3` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nex-agi/nex-n2-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nex-agi/nex-n2-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-nano-30b-a3b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-nano-30b-a3b:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-super-120b-a12b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-super-120b-a12b:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-ultra-550b-a55b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-ultra-550b-a55b:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-nano-12b-v2-vl:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-nano-9b-v2:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-3.5-turbo` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-3.5-turbo-0613` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-3.5-turbo-16k` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4-turbo` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4-turbo-preview` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4.1-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4.1-nano` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4o` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4o-2024-05-13` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4o-2024-08-06` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4o-2024-11-20` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4o-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4o-mini-2024-07-18` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5-codex` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5-nano` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1-chat` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1-codex` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1-codex-max` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1-codex-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.2` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.2-chat` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.2-codex` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.2-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.3-chat` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.3-codex` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.4` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.4-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.4-nano` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.4-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.5-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.6-luna` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.6-luna-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.6-sol` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.6-sol-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.6-terra` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.6-terra-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-audio` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-audio-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-chat-latest` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-120b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-20b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-20b:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-safeguard-20b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/o1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/o3` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/o3-deep-research` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/o3-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/o3-mini-high` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/o3-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/o4-mini` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/o4-mini-deep-research` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/o4-mini-high` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openrouter/auto` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openrouter/auto-beta` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openrouter/free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openrouter/fusion` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `poolside/laguna-m.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `poolside/laguna-m.1:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `poolside/laguna-s-2.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `poolside/laguna-s-2.1:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `poolside/laguna-xs-2.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `poolside/laguna-xs-2.1:free` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen-2.5-72b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen-2.5-7b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen-plus` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen-plus-2025-07-28` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen-plus-2025-07-28:thinking` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-14b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-235b-a22b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-235b-a22b-2507` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-235b-a22b-thinking-2507` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-30b-a3b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-30b-a3b-instruct-2507` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-30b-a3b-thinking-2507` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-32b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-8b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-coder` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-coder-30b-a3b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-coder-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-coder-next` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-coder-plus` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-max` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-max-thinking` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-next-80b-a3b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-next-80b-a3b-thinking` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-vl-235b-a22b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-vl-235b-a22b-thinking` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-vl-30b-a3b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-vl-30b-a3b-thinking` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-vl-32b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-vl-8b-instruct` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3-vl-8b-thinking` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.5-122b-a10b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.5-27b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.5-35b-a3b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.5-397b-a17b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.5-9b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.5-flash-02-23` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.5-plus-02-15` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.5-plus-20260420` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.6-27b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.6-35b-a3b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.6-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.6-max-preview` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.6-plus` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.7-max` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen/qwen3.7-plus` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `rekaai/reka-edge` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `relace/relace-search` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `sakana/fugu-ultra` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `sao10k/l3.1-euryale-70b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `stepfun/step-3.5-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `stepfun/step-3.7-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `tencent/hy3` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `tencent/hy3-preview` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `thedrummer/unslopnemo-12b` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `thinkingmachines/inkling` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `upstage/solar-pro-3` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `x-ai/grok-4.20` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `x-ai/grok-4.3` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `x-ai/grok-4.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `x-ai/grok-build-0.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `xiaomi/mimo-v2.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `xiaomi/mimo-v2.5-pro` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-4.5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-4.5-air` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-4.5v` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-4.6` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-4.6v` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-4.7` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-4.7-flash` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-5` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-5-turbo` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-5.1` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-5.2` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `z-ai/glm-5v-turbo` | `openrouter` | `openai-completions` | npm v0.82.1 artifact [I] |
+
+### qwen-token-plan
+
+| id | provider | api/wire | evidence |
+|---|---|---|---|
+| `deepseek-v3.2` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-flash` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-pro` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.1` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.2` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.5` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.6` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.7-code` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `MiniMax-M2.5` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.6-flash` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.6-plus` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.7-max` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.7-plus` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.8-max-preview` | `qwen-token-plan` | `openai-completions` | npm v0.82.1 artifact [I] |
+
+### qwen-token-plan-cn
+
+| id | provider | api/wire | evidence |
+|---|---|---|---|
+| `deepseek-v3.2` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-flash` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `deepseek-v4-pro` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.1` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.2` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.5` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.6` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `kimi-k2.7-code` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `MiniMax-M2.5` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.6-flash` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.6-plus` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.7-max` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.7-plus` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `qwen3.8-max-preview` | `qwen-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### together
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `MiniMaxAI/MiniMax-M2.7` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:8] · id [E: packages/ai/src/providers/together.models.ts:9] · provider [E: packages/ai/src/providers/together.models.ts:10] |
-| `MiniMaxAI/MiniMax-M3` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:12] · id [E: packages/ai/src/providers/together.models.ts:13] · provider [E: packages/ai/src/providers/together.models.ts:14] |
-| `Qwen/Qwen2.5-7B-Instruct-Turbo` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:16] · id [E: packages/ai/src/providers/together.models.ts:17] · provider [E: packages/ai/src/providers/together.models.ts:18] |
-| `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:20] · id [E: packages/ai/src/providers/together.models.ts:21] · provider [E: packages/ai/src/providers/together.models.ts:22] |
-| `Qwen/Qwen3.5-397B-A17B` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:24] · id [E: packages/ai/src/providers/together.models.ts:25] · provider [E: packages/ai/src/providers/together.models.ts:26] |
-| `Qwen/Qwen3.5-9B` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:28] · id [E: packages/ai/src/providers/together.models.ts:29] · provider [E: packages/ai/src/providers/together.models.ts:30] |
-| `Qwen/Qwen3.6-Plus` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:32] · id [E: packages/ai/src/providers/together.models.ts:33] · provider [E: packages/ai/src/providers/together.models.ts:34] |
-| `Qwen/Qwen3.7-Max` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:36] · id [E: packages/ai/src/providers/together.models.ts:37] · provider [E: packages/ai/src/providers/together.models.ts:38] |
-| `deepseek-ai/DeepSeek-V4-Pro` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:40] · id [E: packages/ai/src/providers/together.models.ts:41] · provider [E: packages/ai/src/providers/together.models.ts:42] |
-| `essentialai/Rnj-1-Instruct` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:44] · id [E: packages/ai/src/providers/together.models.ts:45] · provider [E: packages/ai/src/providers/together.models.ts:46] |
-| `google/gemma-4-31B-it` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:48] · id [E: packages/ai/src/providers/together.models.ts:49] · provider [E: packages/ai/src/providers/together.models.ts:50] |
-| `meta-llama/Llama-3.3-70B-Instruct-Turbo` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:52] · id [E: packages/ai/src/providers/together.models.ts:53] · provider [E: packages/ai/src/providers/together.models.ts:54] |
-| `moonshotai/Kimi-K2.6` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:56] · id [E: packages/ai/src/providers/together.models.ts:57] · provider [E: packages/ai/src/providers/together.models.ts:58] |
-| `moonshotai/Kimi-K2.7-Code` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:60] · id [E: packages/ai/src/providers/together.models.ts:61] · provider [E: packages/ai/src/providers/together.models.ts:62] |
-| `nvidia/nemotron-3-ultra-550b-a55b` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:64] · id [E: packages/ai/src/providers/together.models.ts:65] · provider [E: packages/ai/src/providers/together.models.ts:66] |
-| `openai/gpt-oss-120b` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:68] · id [E: packages/ai/src/providers/together.models.ts:69] · provider [E: packages/ai/src/providers/together.models.ts:70] |
-| `openai/gpt-oss-20b` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:72] · id [E: packages/ai/src/providers/together.models.ts:73] · provider [E: packages/ai/src/providers/together.models.ts:74] |
-| `zai-org/GLM-5` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:76] · id [E: packages/ai/src/providers/together.models.ts:77] · provider [E: packages/ai/src/providers/together.models.ts:78] |
-| `zai-org/GLM-5.1` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:80] · id [E: packages/ai/src/providers/together.models.ts:81] · provider [E: packages/ai/src/providers/together.models.ts:82] |
-| `zai-org/GLM-5.2` | `together` | `openai-completions` | key/api [E: packages/ai/src/providers/together.models.ts:84] · id [E: packages/ai/src/providers/together.models.ts:85] · provider [E: packages/ai/src/providers/together.models.ts:86] |
+| `deepseek-ai/DeepSeek-V4-Pro` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `google/gemma-4-31B-it` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `meta-llama/Llama-3.3-70B-Instruct-Turbo` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `MiniMaxAI/MiniMax-M2.7` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `MiniMaxAI/MiniMax-M3` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/Kimi-K2.6` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `moonshotai/Kimi-K2.7-Code` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-ultra-550b-a55b` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-120b` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-20b` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen2.5-7B-Instruct-Turbo` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.5-9B` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.6-Plus` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `Qwen/Qwen3.7-Max` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `thinkingmachines/Inkling` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `zai-org/GLM-5.2` | `together` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### vercel-ai-gateway
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `alibaba/qwen-3-14b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:8] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:9] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:10] |
-| `alibaba/qwen-3-235b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:12] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:13] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:14] |
-| `alibaba/qwen-3-30b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:16] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:17] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:18] |
-| `alibaba/qwen-3-32b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:20] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:21] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:22] |
-| `alibaba/qwen-3.6-max-preview` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:24] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:25] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:26] |
-| `alibaba/qwen3-235b-a22b-thinking` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:28] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:29] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:30] |
-| `alibaba/qwen3-coder` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:32] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:33] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:34] |
-| `alibaba/qwen3-coder-30b-a3b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:36] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:37] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:38] |
-| `alibaba/qwen3-coder-next` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:40] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:41] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:42] |
-| `alibaba/qwen3-coder-plus` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:44] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:45] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:46] |
-| `alibaba/qwen3-max` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:48] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:49] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:50] |
-| `alibaba/qwen3-max-preview` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:52] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:53] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:54] |
-| `alibaba/qwen3-max-thinking` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:56] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:57] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:58] |
-| `alibaba/qwen3-next-80b-a3b-instruct` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:60] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:61] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:62] |
-| `alibaba/qwen3-next-80b-a3b-thinking` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:64] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:65] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:66] |
-| `alibaba/qwen3-vl-235b-a22b-instruct` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:68] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:69] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:70] |
-| `alibaba/qwen3-vl-instruct` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:72] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:73] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:74] |
-| `alibaba/qwen3-vl-thinking` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:76] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:77] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:78] |
-| `alibaba/qwen3.5-flash` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:80] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:81] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:82] |
-| `alibaba/qwen3.5-plus` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:84] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:85] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:86] |
-| `alibaba/qwen3.6-27b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:88] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:89] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:90] |
-| `alibaba/qwen3.6-plus` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:92] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:93] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:94] |
-| `alibaba/qwen3.7-max` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:96] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:97] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:98] |
-| `alibaba/qwen3.7-plus` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:100] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:101] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:102] |
-| `amazon/nova-2-lite` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:104] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:105] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:106] |
-| `amazon/nova-lite` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:108] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:109] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:110] |
-| `amazon/nova-micro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:112] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:113] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:114] |
-| `amazon/nova-pro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:116] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:117] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:118] |
-| `anthropic/claude-3-haiku` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:120] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:121] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:122] |
-| `anthropic/claude-fable-5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:124] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:125] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:126] |
-| `anthropic/claude-haiku-4.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:128] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:129] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:130] |
-| `anthropic/claude-opus-4` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:132] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:133] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:134] |
-| `anthropic/claude-opus-4.1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:136] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:137] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:138] |
-| `anthropic/claude-opus-4.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:140] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:141] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:142] |
-| `anthropic/claude-opus-4.6` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:144] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:145] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:146] |
-| `anthropic/claude-opus-4.7` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:148] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:149] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:150] |
-| `anthropic/claude-opus-4.7-fast` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:152] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:153] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:154] |
-| `anthropic/claude-opus-4.8` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:156] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:157] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:158] |
-| `anthropic/claude-opus-4.8-fast` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:160] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:161] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:162] |
-| `anthropic/claude-sonnet-4` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:164] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:165] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:166] |
-| `anthropic/claude-sonnet-4.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:168] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:169] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:170] |
-| `anthropic/claude-sonnet-4.6` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:172] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:173] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:174] |
-| `anthropic/claude-sonnet-5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:176] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:177] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:178] |
-| `arcee-ai/trinity-large-thinking` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:180] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:181] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:182] |
-| `arcee-ai/trinity-mini` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:184] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:185] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:186] |
-| `bytedance/seed-1.6` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:188] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:189] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:190] |
-| `bytedance/seed-1.8` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:192] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:193] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:194] |
-| `cohere/command-a` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:196] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:197] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:198] |
-| `deepseek/deepseek-r1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:200] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:201] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:202] |
-| `deepseek/deepseek-v3` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:204] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:205] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:206] |
-| `deepseek/deepseek-v3.1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:208] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:209] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:210] |
-| `deepseek/deepseek-v3.1-terminus` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:212] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:213] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:214] |
-| `deepseek/deepseek-v3.2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:216] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:217] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:218] |
-| `deepseek/deepseek-v3.2-thinking` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:220] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:221] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:222] |
-| `deepseek/deepseek-v4-flash` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:224] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:225] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:226] |
-| `deepseek/deepseek-v4-pro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:228] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:229] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:230] |
-| `google/gemini-2.5-flash` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:232] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:233] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:234] |
-| `google/gemini-2.5-flash-lite` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:236] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:237] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:238] |
-| `google/gemini-2.5-pro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:240] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:241] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:242] |
-| `google/gemini-3-flash` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:244] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:245] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:246] |
-| `google/gemini-3-pro-preview` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:248] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:249] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:250] |
-| `google/gemini-3.1-flash-lite` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:252] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:253] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:254] |
-| `google/gemini-3.1-flash-lite-preview` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:256] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:257] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:258] |
-| `google/gemini-3.1-pro-preview` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:260] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:261] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:262] |
-| `google/gemini-3.5-flash` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:264] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:265] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:266] |
-| `google/gemma-4-26b-a4b-it` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:268] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:269] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:270] |
-| `google/gemma-4-31b-it` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:272] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:273] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:274] |
-| `inception/mercury-2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:276] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:277] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:278] |
-| `inception/mercury-coder-small` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:280] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:281] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:282] |
-| `interfaze/interfaze-beta` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:284] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:285] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:286] |
-| `kwaipilot/kat-coder-air-v2.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:288] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:289] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:290] |
-| `kwaipilot/kat-coder-pro-v1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:292] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:293] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:294] |
-| `kwaipilot/kat-coder-pro-v2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:296] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:297] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:298] |
-| `kwaipilot/kat-coder-pro-v2.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:300] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:301] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:302] |
-| `meta/llama-3.1-70b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:304] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:305] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:306] |
-| `meta/llama-3.1-8b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:308] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:309] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:310] |
-| `meta/llama-3.2-11b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:312] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:313] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:314] |
-| `meta/llama-3.2-90b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:316] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:317] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:318] |
-| `meta/llama-3.3-70b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:320] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:321] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:322] |
-| `meta/llama-4-maverick` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:324] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:325] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:326] |
-| `meta/llama-4-scout` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:328] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:329] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:330] |
-| `meta/muse-spark-1.1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:332] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:333] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:334] |
-| `minimax/minimax-m2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:336] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:337] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:338] |
-| `minimax/minimax-m2.1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:340] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:341] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:342] |
-| `minimax/minimax-m2.1-lightning` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:344] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:345] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:346] |
-| `minimax/minimax-m2.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:348] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:349] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:350] |
-| `minimax/minimax-m2.5-highspeed` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:352] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:353] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:354] |
-| `minimax/minimax-m2.7` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:356] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:357] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:358] |
-| `minimax/minimax-m2.7-highspeed` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:360] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:361] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:362] |
-| `minimax/minimax-m3` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:364] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:365] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:366] |
-| `mistral/codestral` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:368] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:369] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:370] |
-| `mistral/devstral-2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:372] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:373] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:374] |
-| `mistral/devstral-small-2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:376] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:377] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:378] |
-| `mistral/magistral-medium` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:380] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:381] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:382] |
-| `mistral/magistral-small` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:384] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:385] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:386] |
-| `mistral/ministral-14b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:388] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:389] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:390] |
-| `mistral/ministral-3b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:392] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:393] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:394] |
-| `mistral/ministral-8b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:396] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:397] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:398] |
-| `mistral/mistral-large-3` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:400] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:401] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:402] |
-| `mistral/mistral-medium` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:404] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:405] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:406] |
-| `mistral/mistral-medium-3.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:408] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:409] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:410] |
-| `mistral/mistral-nemo` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:412] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:413] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:414] |
-| `mistral/mistral-small` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:416] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:417] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:418] |
-| `mistral/pixtral-12b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:420] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:421] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:422] |
-| `moonshotai/kimi-k2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:424] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:425] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:426] |
-| `moonshotai/kimi-k2-thinking` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:428] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:429] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:430] |
-| `moonshotai/kimi-k2.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:432] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:433] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:434] |
-| `moonshotai/kimi-k2.6` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:436] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:437] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:438] |
-| `moonshotai/kimi-k2.7-code` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:440] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:441] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:442] |
-| `moonshotai/kimi-k2.7-code-highspeed` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:444] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:445] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:446] |
-| `moonshotai/kimi-k3` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:448] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:449] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:450] |
-| `nvidia/nemotron-3-nano-30b-a3b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:452] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:453] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:454] |
-| `nvidia/nemotron-3-super-120b-a12b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:456] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:457] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:458] |
-| `nvidia/nemotron-3-ultra-550b-a55b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:460] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:461] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:462] |
-| `nvidia/nemotron-nano-12b-v2-vl` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:464] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:465] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:466] |
-| `nvidia/nemotron-nano-9b-v2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:468] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:469] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:470] |
-| `openai/gpt-3.5-turbo` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:472] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:473] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:474] |
-| `openai/gpt-4-turbo` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:476] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:477] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:478] |
-| `openai/gpt-4.1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:480] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:481] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:482] |
-| `openai/gpt-4.1-mini` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:484] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:485] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:486] |
-| `openai/gpt-4.1-nano` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:488] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:489] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:490] |
-| `openai/gpt-4o` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:492] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:493] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:494] |
-| `openai/gpt-4o-mini` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:496] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:497] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:498] |
-| `openai/gpt-5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:500] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:501] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:502] |
-| `openai/gpt-5-chat` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:504] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:505] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:506] |
-| `openai/gpt-5-codex` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:508] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:509] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:510] |
-| `openai/gpt-5-mini` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:512] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:513] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:514] |
-| `openai/gpt-5-nano` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:516] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:517] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:518] |
-| `openai/gpt-5-pro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:520] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:521] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:522] |
-| `openai/gpt-5.1-codex` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:524] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:525] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:526] |
-| `openai/gpt-5.1-codex-max` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:528] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:529] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:530] |
-| `openai/gpt-5.1-codex-mini` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:532] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:533] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:534] |
-| `openai/gpt-5.1-instant` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:536] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:537] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:538] |
-| `openai/gpt-5.1-thinking` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:540] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:541] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:542] |
-| `openai/gpt-5.2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:544] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:545] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:546] |
-| `openai/gpt-5.2-chat` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:548] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:549] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:550] |
-| `openai/gpt-5.2-codex` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:552] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:553] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:554] |
-| `openai/gpt-5.2-pro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:556] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:557] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:558] |
-| `openai/gpt-5.3-chat` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:560] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:561] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:562] |
-| `openai/gpt-5.3-codex` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:564] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:565] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:566] |
-| `openai/gpt-5.4` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:568] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:569] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:570] |
-| `openai/gpt-5.4-mini` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:572] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:573] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:574] |
-| `openai/gpt-5.4-nano` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:576] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:577] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:578] |
-| `openai/gpt-5.4-pro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:580] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:581] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:582] |
-| `openai/gpt-5.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:584] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:585] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:586] |
-| `openai/gpt-5.5-pro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:588] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:589] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:590] |
-| `openai/gpt-5.6-luna` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:592] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:593] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:594] |
-| `openai/gpt-5.6-sol` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:596] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:597] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:598] |
-| `openai/gpt-5.6-terra` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:600] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:601] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:602] |
-| `openai/gpt-oss-120b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:604] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:605] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:606] |
-| `openai/gpt-oss-20b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:608] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:609] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:610] |
-| `openai/gpt-oss-safeguard-20b` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:612] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:613] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:614] |
-| `openai/o1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:616] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:617] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:618] |
-| `openai/o3` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:620] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:621] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:622] |
-| `openai/o3-deep-research` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:624] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:625] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:626] |
-| `openai/o3-mini` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:628] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:629] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:630] |
-| `openai/o3-pro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:632] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:633] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:634] |
-| `openai/o4-mini` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:636] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:637] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:638] |
-| `sakana/fugu-ultra` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:640] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:641] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:642] |
-| `stepfun/step-3.5-flash` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:644] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:645] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:646] |
-| `stepfun/step-3.7-flash` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:648] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:649] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:650] |
-| `thinkingmachines/inkling` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:652] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:653] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:654] |
-| `xai/grok-4.1-fast-non-reasoning` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:656] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:657] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:658] |
-| `xai/grok-4.1-fast-reasoning` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:660] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:661] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:662] |
-| `xai/grok-4.20-multi-agent` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:664] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:665] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:666] |
-| `xai/grok-4.20-multi-agent-beta` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:668] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:669] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:670] |
-| `xai/grok-4.20-non-reasoning` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:672] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:673] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:674] |
-| `xai/grok-4.20-non-reasoning-beta` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:676] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:677] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:678] |
-| `xai/grok-4.20-reasoning` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:680] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:681] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:682] |
-| `xai/grok-4.20-reasoning-beta` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:684] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:685] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:686] |
-| `xai/grok-4.3` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:688] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:689] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:690] |
-| `xai/grok-4.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:692] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:693] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:694] |
-| `xai/grok-build-0.1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:696] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:697] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:698] |
-| `xiaomi/mimo-v2.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:700] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:701] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:702] |
-| `xiaomi/mimo-v2.5-pro` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:704] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:705] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:706] |
-| `zai/glm-4.5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:708] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:709] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:710] |
-| `zai/glm-4.5-air` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:712] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:713] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:714] |
-| `zai/glm-4.5v` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:716] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:717] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:718] |
-| `zai/glm-4.6` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:720] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:721] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:722] |
-| `zai/glm-4.6v` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:724] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:725] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:726] |
-| `zai/glm-4.6v-flash` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:728] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:729] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:730] |
-| `zai/glm-4.7` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:732] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:733] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:734] |
-| `zai/glm-4.7-flash` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:736] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:737] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:738] |
-| `zai/glm-4.7-flashx` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:740] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:741] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:742] |
-| `zai/glm-5` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:744] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:745] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:746] |
-| `zai/glm-5-turbo` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:748] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:749] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:750] |
-| `zai/glm-5.1` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:752] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:753] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:754] |
-| `zai/glm-5.2` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:756] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:757] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:758] |
-| `zai/glm-5.2-fast` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:760] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:761] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:762] |
-| `zai/glm-5v-turbo` | `vercel-ai-gateway` | `anthropic-messages` | key/api [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:764] · id [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:765] · provider [E: packages/ai/src/providers/vercel-ai-gateway.models.ts:766] |
+| `alibaba/qwen-3-14b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen-3-235b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen-3-30b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen-3-32b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen-3.6-max-preview` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-235b-a22b-thinking` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-coder` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-coder-30b-a3b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-coder-next` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-coder-plus` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-max` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-max-preview` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-max-thinking` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-next-80b-a3b-instruct` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-next-80b-a3b-thinking` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-vl-235b-a22b-instruct` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-vl-instruct` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3-vl-thinking` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3.5-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3.5-plus` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3.6-27b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3.6-plus` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3.7-max` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `alibaba/qwen3.7-plus` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `amazon/nova-2-lite` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `amazon/nova-lite` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `amazon/nova-micro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `amazon/nova-pro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-3-haiku` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-fable-5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-haiku-4.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.6` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.7` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.8` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-4.8-fast` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-opus-5-fast` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-sonnet-4` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-sonnet-4.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-sonnet-4.6` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `anthropic/claude-sonnet-5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `arcee-ai/trinity-large-thinking` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `arcee-ai/trinity-mini` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `bytedance/seed-1.6` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `bytedance/seed-1.8` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `cohere/command-a` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-r1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v3` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v3.1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v3.1-terminus` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v3.2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v3.2-thinking` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v4-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `deepseek/deepseek-v4-pro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-2.5-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-2.5-flash-lite` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-2.5-pro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-3-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-3-pro-preview` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.1-flash-lite` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.1-pro-preview` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.5-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.5-flash-lite` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemini-3.6-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemma-4-26b-a4b-it` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `google/gemma-4-31b-it` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `inception/mercury-2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `inception/mercury-coder-small` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `inclusionai/ling-3.0-flash-free` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `interfaze/interfaze-beta` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `kwaipilot/kat-coder-air-v2.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `kwaipilot/kat-coder-pro-v1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `kwaipilot/kat-coder-pro-v2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `kwaipilot/kat-coder-pro-v2.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `meta/llama-3.1-70b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `meta/llama-3.1-8b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `meta/llama-3.3-70b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `meta/llama-4-maverick` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `meta/llama-4-scout` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `meta/muse-spark-1.1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2.1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2.1-lightning` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2.5-highspeed` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2.7` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m2.7-highspeed` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `minimax/minimax-m3` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/codestral` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/devstral-2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/devstral-small-2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/magistral-medium` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/magistral-small` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/ministral-14b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/ministral-3b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/ministral-8b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/mistral-large-3` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/mistral-medium` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/mistral-medium-3.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/mistral-nemo` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/mistral-small` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `mistral/pixtral-12b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2-thinking` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2.6` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2.7-code` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k2.7-code-highspeed` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `moonshotai/kimi-k3` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-nano-30b-a3b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-super-120b-a12b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-3-ultra-550b-a55b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-nano-12b-v2-vl` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `nvidia/nemotron-nano-9b-v2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-3.5-turbo` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4-turbo` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4.1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4.1-mini` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4.1-nano` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4o` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-4o-mini` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5-codex` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5-mini` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5-nano` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5-pro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1-codex` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1-codex-max` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1-codex-mini` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1-instant` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.1-thinking` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.2-codex` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.2-pro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.3-chat` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.3-codex` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.4` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.4-mini` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.4-nano` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.4-pro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.5-pro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.6-luna` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.6-sol` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-5.6-terra` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-120b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-20b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/gpt-oss-safeguard-20b` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/o1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/o3` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/o3-deep-research` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/o3-mini` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/o3-pro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `openai/o4-mini` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `poolside/laguna-s-2.1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `poolside/laguna-s-2.1-free` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `sakana/fugu-ultra` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `stepfun/step-3.5-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `stepfun/step-3.7-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `tencent/hy3` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `thinkingmachines/inkling` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.1-fast-non-reasoning` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.1-fast-reasoning` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.20-multi-agent` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.20-multi-agent-beta` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.20-non-reasoning` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.20-non-reasoning-beta` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.20-reasoning` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.20-reasoning-beta` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.3` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-4.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xai/grok-build-0.1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xiaomi/mimo-v2.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `xiaomi/mimo-v2.5-pro` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-4.5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-4.5-air` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-4.5v` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-4.6` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-4.6v` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-4.6v-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-4.7` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-4.7-flash` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-4.7-flashx` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-5` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-5-turbo` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-5.1` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-5.2` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-5.2-fast` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
+| `zai/glm-5v-turbo` | `vercel-ai-gateway` | `anthropic-messages` | npm v0.82.1 artifact [I] |
 
 ### xai
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `grok-4.3` | `xai` | `openai-completions` | key/api [E: packages/ai/src/providers/xai.models.ts:8] · id [E: packages/ai/src/providers/xai.models.ts:9] · provider [E: packages/ai/src/providers/xai.models.ts:10] |
-| `grok-4.5` | `xai` | `openai-responses` | key/api [E: packages/ai/src/providers/xai.models.ts:12] · id [E: packages/ai/src/providers/xai.models.ts:13] · provider [E: packages/ai/src/providers/xai.models.ts:14] |
-| `grok-build-0.1` | `xai` | `openai-completions` | key/api [E: packages/ai/src/providers/xai.models.ts:16] · id [E: packages/ai/src/providers/xai.models.ts:17] · provider [E: packages/ai/src/providers/xai.models.ts:18] |
-
-### xiaomi-token-plan-ams
-
-| id | provider | api/wire | committed structural evidence |
-|---|---|---|---|
-| `mimo-v2-pro` | `xiaomi-token-plan-ams` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi-token-plan-ams.models.ts:8] · id [E: packages/ai/src/providers/xiaomi-token-plan-ams.models.ts:9] · provider [E: packages/ai/src/providers/xiaomi-token-plan-ams.models.ts:10] |
-| `mimo-v2.5` | `xiaomi-token-plan-ams` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi-token-plan-ams.models.ts:12] · id [E: packages/ai/src/providers/xiaomi-token-plan-ams.models.ts:13] · provider [E: packages/ai/src/providers/xiaomi-token-plan-ams.models.ts:14] |
-| `mimo-v2.5-pro` | `xiaomi-token-plan-ams` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi-token-plan-ams.models.ts:16] · id [E: packages/ai/src/providers/xiaomi-token-plan-ams.models.ts:17] · provider [E: packages/ai/src/providers/xiaomi-token-plan-ams.models.ts:18] |
-
-### xiaomi-token-plan-cn
-
-| id | provider | api/wire | committed structural evidence |
-|---|---|---|---|
-| `mimo-v2-pro` | `xiaomi-token-plan-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi-token-plan-cn.models.ts:8] · id [E: packages/ai/src/providers/xiaomi-token-plan-cn.models.ts:9] · provider [E: packages/ai/src/providers/xiaomi-token-plan-cn.models.ts:10] |
-| `mimo-v2.5` | `xiaomi-token-plan-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi-token-plan-cn.models.ts:12] · id [E: packages/ai/src/providers/xiaomi-token-plan-cn.models.ts:13] · provider [E: packages/ai/src/providers/xiaomi-token-plan-cn.models.ts:14] |
-| `mimo-v2.5-pro` | `xiaomi-token-plan-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi-token-plan-cn.models.ts:16] · id [E: packages/ai/src/providers/xiaomi-token-plan-cn.models.ts:17] · provider [E: packages/ai/src/providers/xiaomi-token-plan-cn.models.ts:18] |
-
-### xiaomi-token-plan-sgp
-
-| id | provider | api/wire | committed structural evidence |
-|---|---|---|---|
-| `mimo-v2-pro` | `xiaomi-token-plan-sgp` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts:8] · id [E: packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts:9] · provider [E: packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts:10] |
-| `mimo-v2.5` | `xiaomi-token-plan-sgp` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts:12] · id [E: packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts:13] · provider [E: packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts:14] |
-| `mimo-v2.5-pro` | `xiaomi-token-plan-sgp` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts:16] · id [E: packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts:17] · provider [E: packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts:18] |
+| `grok-4.3` | `xai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `grok-build-0.1` | `xai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `grok-4.5` | `xai` | `openai-responses` | npm v0.82.1 artifact [I] |
 
 ### xiaomi
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `mimo-v2-flash` | `xiaomi` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi.models.ts:8] · id [E: packages/ai/src/providers/xiaomi.models.ts:9] · provider [E: packages/ai/src/providers/xiaomi.models.ts:10] |
-| `mimo-v2-omni` | `xiaomi` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi.models.ts:12] · id [E: packages/ai/src/providers/xiaomi.models.ts:13] · provider [E: packages/ai/src/providers/xiaomi.models.ts:14] |
-| `mimo-v2-pro` | `xiaomi` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi.models.ts:16] · id [E: packages/ai/src/providers/xiaomi.models.ts:17] · provider [E: packages/ai/src/providers/xiaomi.models.ts:18] |
-| `mimo-v2.5` | `xiaomi` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi.models.ts:20] · id [E: packages/ai/src/providers/xiaomi.models.ts:21] · provider [E: packages/ai/src/providers/xiaomi.models.ts:22] |
-| `mimo-v2.5-pro` | `xiaomi` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi.models.ts:24] · id [E: packages/ai/src/providers/xiaomi.models.ts:25] · provider [E: packages/ai/src/providers/xiaomi.models.ts:26] |
-| `mimo-v2.5-pro-ultraspeed` | `xiaomi` | `openai-completions` | key/api [E: packages/ai/src/providers/xiaomi.models.ts:28] · id [E: packages/ai/src/providers/xiaomi.models.ts:29] · provider [E: packages/ai/src/providers/xiaomi.models.ts:30] |
+| `mimo-v2-flash` | `xiaomi` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2-omni` | `xiaomi` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2-pro` | `xiaomi` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5` | `xiaomi` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5-pro` | `xiaomi` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5-pro-ultraspeed` | `xiaomi` | `openai-completions` | npm v0.82.1 artifact [I] |
 
-### zai-coding-cn
+### xiaomi-token-plan-ams
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `glm-4.5-air` | `zai-coding-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/zai-coding-cn.models.ts:8] · id [E: packages/ai/src/providers/zai-coding-cn.models.ts:9] · provider [E: packages/ai/src/providers/zai-coding-cn.models.ts:10] |
-| `glm-4.7` | `zai-coding-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/zai-coding-cn.models.ts:12] · id [E: packages/ai/src/providers/zai-coding-cn.models.ts:13] · provider [E: packages/ai/src/providers/zai-coding-cn.models.ts:14] |
-| `glm-5-turbo` | `zai-coding-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/zai-coding-cn.models.ts:16] · id [E: packages/ai/src/providers/zai-coding-cn.models.ts:17] · provider [E: packages/ai/src/providers/zai-coding-cn.models.ts:18] |
-| `glm-5.1` | `zai-coding-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/zai-coding-cn.models.ts:20] · id [E: packages/ai/src/providers/zai-coding-cn.models.ts:21] · provider [E: packages/ai/src/providers/zai-coding-cn.models.ts:22] |
-| `glm-5.2` | `zai-coding-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/zai-coding-cn.models.ts:24] · id [E: packages/ai/src/providers/zai-coding-cn.models.ts:25] · provider [E: packages/ai/src/providers/zai-coding-cn.models.ts:26] |
-| `glm-5v-turbo` | `zai-coding-cn` | `openai-completions` | key/api [E: packages/ai/src/providers/zai-coding-cn.models.ts:28] · id [E: packages/ai/src/providers/zai-coding-cn.models.ts:29] · provider [E: packages/ai/src/providers/zai-coding-cn.models.ts:30] |
+| `mimo-v2-pro` | `xiaomi-token-plan-ams` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5` | `xiaomi-token-plan-ams` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5-pro` | `xiaomi-token-plan-ams` | `openai-completions` | npm v0.82.1 artifact [I] |
+
+### xiaomi-token-plan-cn
+
+| id | provider | api/wire | evidence |
+|---|---|---|---|
+| `mimo-v2-pro` | `xiaomi-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5` | `xiaomi-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5-pro` | `xiaomi-token-plan-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+
+### xiaomi-token-plan-sgp
+
+| id | provider | api/wire | evidence |
+|---|---|---|---|
+| `mimo-v2-pro` | `xiaomi-token-plan-sgp` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5` | `xiaomi-token-plan-sgp` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `mimo-v2.5-pro` | `xiaomi-token-plan-sgp` | `openai-completions` | npm v0.82.1 artifact [I] |
 
 ### zai
 
-| id | provider | api/wire | committed structural evidence |
+| id | provider | api/wire | evidence |
 |---|---|---|---|
-| `glm-4.5-air` | `zai` | `openai-completions` | key/api [E: packages/ai/src/providers/zai.models.ts:8] · id [E: packages/ai/src/providers/zai.models.ts:9] · provider [E: packages/ai/src/providers/zai.models.ts:10] |
-| `glm-4.7` | `zai` | `openai-completions` | key/api [E: packages/ai/src/providers/zai.models.ts:12] · id [E: packages/ai/src/providers/zai.models.ts:13] · provider [E: packages/ai/src/providers/zai.models.ts:14] |
-| `glm-5-turbo` | `zai` | `openai-completions` | key/api [E: packages/ai/src/providers/zai.models.ts:16] · id [E: packages/ai/src/providers/zai.models.ts:17] · provider [E: packages/ai/src/providers/zai.models.ts:18] |
-| `glm-5.1` | `zai` | `openai-completions` | key/api [E: packages/ai/src/providers/zai.models.ts:20] · id [E: packages/ai/src/providers/zai.models.ts:21] · provider [E: packages/ai/src/providers/zai.models.ts:22] |
-| `glm-5.2` | `zai` | `openai-completions` | key/api [E: packages/ai/src/providers/zai.models.ts:24] · id [E: packages/ai/src/providers/zai.models.ts:25] · provider [E: packages/ai/src/providers/zai.models.ts:26] |
-| `glm-5v-turbo` | `zai` | `openai-completions` | key/api [E: packages/ai/src/providers/zai.models.ts:28] · id [E: packages/ai/src/providers/zai.models.ts:29] · provider [E: packages/ai/src/providers/zai.models.ts:30] |
+| `glm-4.5-air` | `zai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-4.7` | `zai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5-turbo` | `zai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.1` | `zai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.2` | `zai` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5v-turbo` | `zai` | `openai-completions` | npm v0.82.1 artifact [I] |
 
-## 设计动机与 gotcha
+### zai-coding-cn
 
-- `*.models.ts` 现在是 TypeScript structure/type surface，不是完整 metadata snapshot；把旧版 literal cost/context 表原样保留会制造无法在目标 commit 复核的 `[E]`。[I]
-- structural shard 的 model count 是静态 checkout 可复现的数量；发布 bundle 的 count 由生成时外部 catalog 输入与 strict validation 决定，二者应通过 source commit 关联而不能默认永远相等。[I]
-- `MODELS` 仍提供 typed built-in catalog aggregation；运行时 dynamic refresh 和远端 overlay 属于 `subsys.ai.model-discovery` 与 coding-agent model runtime，不由本引用页展开。[I]
+| id | provider | api/wire | evidence |
+|---|---|---|---|
+| `glm-4.5-air` | `zai-coding-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-4.7` | `zai-coding-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5-turbo` | `zai-coding-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.1` | `zai-coding-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5.2` | `zai-coding-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+| `glm-5v-turbo` | `zai-coding-cn` | `openai-completions` | npm v0.82.1 artifact [I] |
+
+## L2 证伪
+
+- 目标 Git tree 中不存在 `src/providers/data/*.json`，因此不能用 shard 的 8 行 wrapper 假装逐模型 id 是显式源码证据。[E: packages/ai/src/providers/openai.models.ts:4] [E: packages/ai/src/providers/openai.models.ts:8]
+- v0.82.1 npm 包的 `model-catalog.ts` 与 `models.generated.ts` source-map 内容和目标 commit 对应文件完全一致，37 个 data shards 也与 `MODELS` bucket 一一对应；但包 metadata 无 `gitHead`，所以结论维持 [I]。
+- `builtinProviders()` 另有动态 Radius provider，静态模型 bucket 数 37 不等于 runtime provider factory 数 38。[I]
 
 ## Sources
 
 - packages/ai/src/models.generated.ts
+- packages/ai/src/model-catalog.ts
 - packages/ai/src/providers/amazon-bedrock.models.ts
 - packages/ai/src/providers/ant-ling.models.ts
 - packages/ai/src/providers/anthropic.models.ts
@@ -1376,35 +1432,39 @@ updated: 3da591ab
 - packages/ai/src/providers/deepseek.models.ts
 - packages/ai/src/providers/fireworks.models.ts
 - packages/ai/src/providers/github-copilot.models.ts
-- packages/ai/src/providers/google-vertex.models.ts
 - packages/ai/src/providers/google.models.ts
+- packages/ai/src/providers/google-vertex.models.ts
 - packages/ai/src/providers/groq.models.ts
 - packages/ai/src/providers/huggingface.models.ts
 - packages/ai/src/providers/kimi-coding.models.ts
-- packages/ai/src/providers/minimax-cn.models.ts
 - packages/ai/src/providers/minimax.models.ts
+- packages/ai/src/providers/minimax-cn.models.ts
 - packages/ai/src/providers/mistral.models.ts
-- packages/ai/src/providers/moonshotai-cn.models.ts
 - packages/ai/src/providers/moonshotai.models.ts
+- packages/ai/src/providers/moonshotai-cn.models.ts
 - packages/ai/src/providers/nvidia.models.ts
-- packages/ai/src/providers/openai-codex.models.ts
 - packages/ai/src/providers/openai.models.ts
-- packages/ai/src/providers/opencode-go.models.ts
+- packages/ai/src/providers/openai-codex.models.ts
 - packages/ai/src/providers/opencode.models.ts
+- packages/ai/src/providers/opencode-go.models.ts
 - packages/ai/src/providers/openrouter.models.ts
+- packages/ai/src/providers/qwen-token-plan.models.ts
+- packages/ai/src/providers/qwen-token-plan-cn.models.ts
 - packages/ai/src/providers/together.models.ts
 - packages/ai/src/providers/vercel-ai-gateway.models.ts
 - packages/ai/src/providers/xai.models.ts
+- packages/ai/src/providers/xiaomi.models.ts
 - packages/ai/src/providers/xiaomi-token-plan-ams.models.ts
 - packages/ai/src/providers/xiaomi-token-plan-cn.models.ts
 - packages/ai/src/providers/xiaomi-token-plan-sgp.models.ts
-- packages/ai/src/providers/xiaomi.models.ts
-- packages/ai/src/providers/zai-coding-cn.models.ts
 - packages/ai/src/providers/zai.models.ts
+- packages/ai/src/providers/zai-coding-cn.models.ts
 - packages/ai/scripts/generate-models.ts
-- packages/ai/src/types.ts
+- packages/ai/scripts/model-data.ts
+- packages/ai/scripts/check-model-data.ts
+- packages/ai/package.json
 
 ## 相关
 
-- [subsys.ai.model-discovery](../subsystems/ai/model-discovery.md): provider catalog 装配、查询与动态刷新。
-- [subsys.ai.model-catalog-publication](../subsystems/ai/model-catalog-publication.md): JSON bundle 生成、校验、版本化发布与 CI 门控。
+- [subsys.ai.model-discovery](../subsystems/ai/model-discovery.md)
+- [subsys.ai.model-catalog-publication](../subsystems/ai/model-catalog-publication.md)

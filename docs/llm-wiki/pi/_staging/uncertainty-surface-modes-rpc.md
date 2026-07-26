@@ -19,10 +19,10 @@
 - `main.ts` 的 mode 解析、CLI `--mode` 枚举和 RPC mode 禁用 `@file` 参数都不在本节点 index source 内;主节点不再把这些作为本节点 `[E]` 展开。
 - `runRpcMode` 在 `new_session`、`switch_session`、`fork`、`clone` 后 rebind 的原因来自控制流和 `runtimeHost.session` 重新读取方式,源码能证明调用关系,设计原因标为 `[I]`。
 - host 用 response `id` 关联 command 接受/失败、用 event stream 观察 agent 生命周期,来自文档中的 response/event 区分和 event 无 `id` 语义归纳。
-- `surface.modes.rpc-protocol`、`ref.coding-agent.rpc-methods`、`subsys.orchestrator.rpc-spawner` 的职责分工来自 index related/source/symbols 和节点粒度,不是 RPC runtime 源码内声明。
+- `surface.modes.rpc-protocol`、`ref.coding-agent.rpc-methods`、`subsys.server.rpc-spawner` 的职责分工来自 index related/source/symbols 和节点粒度,不是 RPC runtime 源码内声明。
 
 ## 未展开范围
 
 - 未逐项列出全部 `RpcCommand` 字段和每个 `RpcResponse` payload;该内容应由 `ref.coding-agent.rpc-methods` 覆盖。
 - 未逐字段解释 `RpcExtensionUIRequest`、`RpcSessionState`、JSONL reader 的边界条件或 typed client;该内容应由 `surface.modes.rpc-protocol` 覆盖。
-- 未核验 orchestrator 的 spawn/pending-response 实现;该内容不在本节点 index source 内,应由 `subsys.orchestrator.rpc-spawner` 覆盖。
+- 未核验 server 的 spawn/pending-response 实现;该内容不在本节点 index source 内,应由 `subsys.server.rpc-spawner` 覆盖。

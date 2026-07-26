@@ -7,7 +7,9 @@
 ```text
 你是 lead 会话,编排填充 pi 源码 LLM wiki(在本仓库 docs/llm-wiki/pi/ 下,源码在该目录的 ../../../pi/)。先完整读 docs/llm-wiki/pi/ 的 README.md、conventions.md、RUN.md、index.json、llms.txt。然后用 subagent 并行把所有 status=planned 的节点填成 verified,规则如下。
 
-【模型】你(lead,串行)+ 每节点一个 subagent(并行)。节点级并行安全:每节点是独立 .md、源码只读、填充期不动 index.json/llms.txt,跨节点 related/正文链接靠 index.json 解析(177 个 planned 已全登记)→ 节点之间无写依赖、无先后约束。你是唯一且串行碰 index.json/reconcile/lint 的人;保持自己上下文精简:只读 subagent 返回摘要 + lint 输出,别把节点正文拉进自己上下文。
+> 历史说明：本文件保留最初 177-node seed fill 的分批方式；当前权威清单是 `index.json` 的 186 个 verified 节点，新增/迁移记录见 `_UPDATE-SCOPE.md`。
+
+【模型】你(lead,串行)+ 每节点一个 subagent(并行)。节点级并行安全:每节点是独立 .md、源码只读、填充期不动 index.json/llms.txt,跨节点 related/正文链接靠 index.json 解析→ 节点之间无写依赖、无先后约束。你是唯一且串行碰 index.json/reconcile/lint 的人;保持自己上下文精简:只读 subagent 返回摘要 + lint 输出,别把节点正文拉进自己上下文。
 
 【流程】批 A(脊柱)必须先整批跑完(后续节点要读完成的脊柱 prose);之后 B–H 逐批。每批两波 fan-out:
   1) 填充波:对该批每个节点派一个 filler subagent(模板见下),并行,单波 ≤8–10 个,超了分组。
@@ -18,7 +20,7 @@
 【filler subagent 模板】（每节点一个，把 <node-id>/<path>/<batch> 填进去再派）
 "你填一个 pi wiki 节点：id=<node-id>，path=<path>，batch=<batch>。源码在本 wiki 目录的 ../../../pi/。先读 docs/llm-wiki/pi/conventions.md（节点模板 + 第 7 节 ground-truth 约定）和该节点在 index.json 里的 source/symbols/related。然后：
  1. 读源：打开 source 列的真实文件读，不靠记忆。工具/provider/命令节点先按 conventions §7 核 ground truth（core/tools/index.ts / providers/all.ts / slash-commands.ts / rpc-types.ts 等）。
- 2. 写 <path>：套对应模板，中文讲解+英文术语，自包含（显式实体名，禁“见上文/见某节”）；每条 load-bearing 且非显然的论断就近标 [E: path:line]（相对 pi/，行号要精确落在被断言代码行），推断 [I]，存疑 [U]。frontmatter 含 pkg、status: draft、updated=$(git -C ../../../pi rev-parse --short HEAD)。跨包节点显式点名对方节点 id。
+ 2. 写 <path>：套对应模板，中文讲解+英文术语，自包含（显式实体名，禁“见上文/见某节”）；每条 load-bearing 且非显然的论断就近标 [E: path:line]（相对 pi/，行号要精确落在被断言代码行），推断 [I]，存疑 [U]。frontmatter 含 pkg、status: draft、updated=$(git -C ../../../pi rev-parse --short=10 HEAD)。跨包节点显式点名对方节点 id。
  3. 只写两个文件：<path> 和 _staging/uncertainty-<batch>-<slug>.md（<slug>=节点 id 末段，[U] 写这里）。绝不碰 index.json/llms.txt/reference/uncertainty.md/tools/*/别的节点 .md。
  4. L1 自检：node tools/lint.mjs，只看含 node:<path> 的报错并修（并行时兄弟节点的报错忽略）。
 返回一句话摘要：填了哪些 H2、标了几条 [E]、降级了哪些 [I]/[U]。"
@@ -52,13 +54,13 @@
 批 G · batch=tui（21）— 独立可复用库；差分渲染(tui.ts/terminal.ts 的 doRender)、键盘协议(kitty/CSI-u, keys.ts)、编辑器是大件；组件覆盖 packages/tui/src/components/ 全 12：
   subsys.tui.runtime, subsys.tui.diff-engine, subsys.tui.component-model, subsys.tui.overlay, subsys.tui.cursor-positioning, subsys.tui.key-pipeline, subsys.tui.key-parsing, subsys.tui.keybinding-matching, subsys.tui.editor-component, subsys.tui.editor-mechanics, subsys.tui.stdin-buffer, subsys.tui.terminal-capabilities, subsys.tui.native-modifiers, subsys.tui.autocomplete, subsys.tui.fuzzy-match, subsys.tui.text-utilities, subsys.tui.terminal-colors, subsys.tui.terminal-image, ref.tui.key-codes, ref.tui.keybinding-actions, ref.tui.component-types
 
-批 H · batch=orchestrator（12）— experimental，如实标稳定性；写清 --mode rpc 子进程跑 pi、IPC(Unix socket)协议、Radius 云端；ref.uncertainty 不手写(reconcile 合并各 _staging/uncertainty-*.md 生成)：
-  subsys.orchestrator.supervisor, subsys.orchestrator.rpc-spawner, subsys.orchestrator.ipc-transport, subsys.orchestrator.message-protocol, subsys.orchestrator.request-handler, subsys.orchestrator.storage, subsys.orchestrator.radius, subsys.orchestrator.config, ref.orchestrator.ipc-messages, ref.orchestrator.instance-status, ref.package-index, ref.glossary
+批 H · batch=server（12）— experimental，如实标稳定性；写清 --mode rpc 子进程跑 pi、IPC(Unix socket)协议、Radius 云端；ref.uncertainty 不手写(reconcile 合并各 _staging/uncertainty-*.md 生成)：
+  subsys.server.supervisor, subsys.server.rpc-spawner, subsys.server.ipc-transport, subsys.server.message-protocol, subsys.server.request-handler, subsys.server.storage, subsys.server.radius, subsys.server.config, ref.server.ipc-messages, ref.server.instance-status, ref.package-index, ref.glossary
 ```
 
 ## 说明（给人看，不必复制）
 
 - **为什么节点级并行安全**:每节点独立 `.md`、源码只读、填充期不动 `index.json`/`llms.txt`,跨节点链接靠 `index.json` 解析 → 无写依赖。**唯一并行写点**是各 subagent 的 `[U]` 暂存,已拆成每节点一个 `_staging/uncertainty-<batch>-<slug>.md`(`reconcile` glob `uncertainty-*.md` 全量合并)。**lead 串行独占** `index.json`/reconcile/lint → 无竞争。机制详解见 `RUN.md §8`。
-- **节点总数**:177(批 A–H 合计填 176 + `ref.uncertainty` 由 reconcile 生成)。单波并发建议 ≤8–10 个 subagent。
+- **seed 节点总数**:177(批 A–H 合计填 176 + `ref.uncertainty` 由 reconcile 生成)；当前节点总数以 `index.json` 为准。单波并发建议 ≤8–10 个 subagent。
 - **每批后 / 全程末**(lead 串行):`cd docs/llm-wiki/pi && node tools/reconcile.mjs && node tools/lint.mjs`(须 0 error)。整体收尾确认 `index.json` 无 `planned`、所有 `groups` 的 `catalog_node` 已逐实例展开。
 - **备选**:也可"一批一会话"并行多个 lead(回到多会话模型)——那时任何会话都不得跑 reconcile / 改 `index.json`,由人最后统一 reconcile + lint。默认推荐单 lead 会话编排全程。

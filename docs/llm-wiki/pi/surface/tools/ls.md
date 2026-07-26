@@ -26,7 +26,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `ls` 是 pi-coding-agent 暴露给模型的 directory listing tool: 给定目录路径,按字母序返回条目名,目录追加 `/`,包含 dotfiles,并用 entry limit 与 byte truncation 控制输出体积。
@@ -73,9 +73,9 @@ TUI render 层还有显示折叠:未 expanded 时最多展示 20 行,剩余行�
 
 ## 5 执行模式
 
-`createLsToolDefinition()` 返回对象没有显式 `executionMode` 字段:它设置 `name`、`label`、`description`、`promptSnippet`、`parameters`、`execute`、`renderCall` 和 `renderResult`,但没有 per-tool execution override [E: packages/coding-agent/src/core/tools/ls.ts:100] [E: packages/coding-agent/src/core/tools/ls.ts:106] [E: packages/coding-agent/src/core/tools/ls.ts:210] [I]。`ToolDefinition.executionMode` 是 optional,省略时使用 default execution mode [E: packages/coding-agent/src/core/extensions/types.ts:465]。
+`createLsToolDefinition()` 返回对象没有显式 `executionMode` 字段:它设置 `name`、`label`、`description`、`promptSnippet`、`parameters`、`execute`、`renderCall` 和 `renderResult`,但没有 per-tool execution override [E: packages/coding-agent/src/core/tools/ls.ts:100] [E: packages/coding-agent/src/core/tools/ls.ts:106] [E: packages/coding-agent/src/core/tools/ls.ts:210] [I]。`ToolDefinition.executionMode` 是 optional,省略时使用 default execution mode [E: packages/coding-agent/src/core/extensions/types.ts:471]。
 
-agent-core 的全局默认 `toolExecution` 是 `"parallel"`,并在 agent loop 中只有当全局配置为 sequential 或某个 tool 显式 `executionMode === "sequential"` 时才整批顺序执行;否则走 parallel 执行路径 [E: packages/agent/src/agent.ts:228] [E: packages/agent/src/agent-loop.ts:421] [E: packages/agent/src/agent-loop.ts:424] [E: packages/agent/src/agent-loop.ts:427]。因此 `ls` 自身没有强制 sequential;在默认 Agent 配置下,多个 `ls` 或其它未声明 sequential 的 tool calls 可并行执行 [I]。
+agent-core 的全局默认 `toolExecution` 是 `"parallel"`,并在 agent loop 中只有当全局配置为 sequential 或某个 tool 显式 `executionMode === "sequential"` 时才整批顺序执行;否则走 parallel 执行路径 [E: packages/agent/src/agent.ts:230] [E: packages/agent/src/agent-loop.ts:419] [E: packages/agent/src/agent-loop.ts:422] [E: packages/agent/src/agent-loop.ts:425]。因此 `ls` 自身没有强制 sequential;在默认 Agent 配置下,多个 `ls` 或其它未声明 sequential 的 tool calls 可并行执行 [I]。
 
 ## 6 注册与装配
 
@@ -83,7 +83,7 @@ agent-core 的全局默认 `toolExecution` 是 `"parallel"`,并在 agent loop �
 
 `ls` 不在 coding preset 里: `createCodingToolDefinitions()` 只返回 read/bash/edit/write [E: packages/coding-agent/src/core/tools/index.ts:140] [E: packages/coding-agent/src/core/tools/index.ts:141] [E: packages/coding-agent/src/core/tools/index.ts:142] [E: packages/coding-agent/src/core/tools/index.ts:143]。`ls` 在 read-only preset 里: `createReadOnlyToolDefinitions()` 返回 read/grep/find/ls [E: packages/coding-agent/src/core/tools/index.ts:149] [E: packages/coding-agent/src/core/tools/index.ts:150] [E: packages/coding-agent/src/core/tools/index.ts:151] [E: packages/coding-agent/src/core/tools/index.ts:152]。完整 registry 里也有 `ls`: `createAllToolDefinitions()` 的 `ls` key 绑定到 `createLsToolDefinition(cwd, options?.ls)` [E: packages/coding-agent/src/core/tools/index.ts:156] [E: packages/coding-agent/src/core/tools/index.ts:164]。
 
-`AgentSession._buildRuntime()` 默认调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix, shellPath } })`,所以 `ls` 会进入 base tool definitions,但没有专属 options 传入 [E: packages/coding-agent/src/core/agent-session.ts:2535] [E: packages/coding-agent/src/core/agent-session.ts:2542] [E: packages/coding-agent/src/core/agent-session.ts:2543] [E: packages/coding-agent/src/core/agent-session.ts:2544] [E: packages/coding-agent/src/core/agent-session.ts:2547]。随后 `_refreshToolRegistry()` 把 base definitions 标成 builtin source,用 `wrapRegisteredTools()` 包成 `AgentTool`,并写入 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:2457] [E: packages/coding-agent/src/core/agent-session.ts:2486] [E: packages/coding-agent/src/core/agent-session.ts:2491] [E: packages/coding-agent/src/core/agent-session.ts:2496] [E: packages/coding-agent/src/core/agent-session.ts:2498] [E: packages/coding-agent/src/core/agent-session.ts:2500]。`AgentSession` 默认 active built-ins 是 `["read", "bash", "edit", "write"]`,所以 `ls` 是内置可用 registry tool,但不是默认 active tool,除非 active tool names、allowlist、plan/read-only mode 或 extension/runtime 流程启用它 [E: packages/coding-agent/src/core/agent-session.ts:2571] [E: packages/coding-agent/src/core/agent-session.ts:2573] [E: packages/coding-agent/src/core/agent-session.ts:2574] [I]。
+`AgentSession._buildRuntime()` 默认调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix, shellPath } })`,所以 `ls` 会进入 base tool definitions,但没有专属 options 传入 [E: packages/coding-agent/src/core/agent-session.ts:2555] [E: packages/coding-agent/src/core/agent-session.ts:2562] [E: packages/coding-agent/src/core/agent-session.ts:2563] [E: packages/coding-agent/src/core/agent-session.ts:2564] [E: packages/coding-agent/src/core/agent-session.ts:2567]。随后 `_refreshToolRegistry()` 把 base definitions 标成 builtin source,用 `wrapRegisteredTools()` 包成 `AgentTool`,并写入 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:2477] [E: packages/coding-agent/src/core/agent-session.ts:2506] [E: packages/coding-agent/src/core/agent-session.ts:2511] [E: packages/coding-agent/src/core/agent-session.ts:2516] [E: packages/coding-agent/src/core/agent-session.ts:2518] [E: packages/coding-agent/src/core/agent-session.ts:2520]。`AgentSession` 默认 active built-ins 是 `["read", "bash", "edit", "write"]`,所以 `ls` 是内置可用 registry tool,但不是默认 active tool,除非 active tool names、allowlist、plan/read-only mode 或 extension/runtime 流程启用它 [E: packages/coding-agent/src/core/agent-session.ts:2591] [E: packages/coding-agent/src/core/agent-session.ts:2593] [E: packages/coding-agent/src/core/agent-session.ts:2594] [I]。
 
 ## 7 execute() 走读
 

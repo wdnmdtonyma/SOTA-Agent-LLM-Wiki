@@ -9,7 +9,7 @@ symbols: [runLoop]
 related: [spine.agent-loop, subsys.agent-core.message-queue, subsys.agent-core.hooks]
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `subsys.agent-core.turn-control` 聚焦 `runLoop` 如何在一次 agent run 中决定何时开始下一轮 provider request、何时注入 queued messages、何时停止。
@@ -31,7 +31,7 @@ updated: 3da591ab
 
 ## 关键文件
 
-- `packages/agent/src/agent-loop.ts`：定义 `runLoop`、assistant streaming、tool-call execution，以及 `runLoop` 依赖的事件发射顺序。[E: packages/agent/src/agent-loop.ts:155] [E: packages/agent/src/agent-loop.ts:193] [E: packages/agent/src/agent-loop.ts:413]
+- `packages/agent/src/agent-loop.ts`：定义 `runLoop`、assistant streaming、tool-call execution，以及 `runLoop` 依赖的事件发射顺序。[E: packages/agent/src/agent-loop.ts:155] [E: packages/agent/src/agent-loop.ts:193] [E: packages/agent/src/agent-loop.ts:411]
 
 ## 数据模型
 
@@ -55,7 +55,7 @@ updated: 3da591ab
 
 6. 正常 assistant message 会筛出 `toolCall` content；有 tool calls 时执行 `executeToolCalls@packages/agent/src/agent-loop.ts:373`，并把返回的 tool result messages 追加到 context 与 `newMessages`。[E: packages/agent/src/agent-loop.ts:203] [E: packages/agent/src/agent-loop.ts:205] [E: packages/agent/src/agent-loop.ts:214] [E: packages/agent/src/agent-loop.ts:218] [E: packages/agent/src/agent-loop.ts:219] [E: packages/agent/src/agent-loop.ts:220]
 
-7. `executeToolCalls` 的 `terminate` 只控制是否因当前 tool batch 自动继续下一次 assistant response；当所有 finalized tool result 都带 `terminate === true` 时，`hasMoreToolCalls` 会变成 `false`。[E: packages/agent/src/agent-loop.ts:216] [E: packages/agent/src/agent-loop.ts:584] [E: packages/agent/src/agent-loop.ts:585] steering 或 follow-up messages 仍能通过内外层循环条件让 run 继续。[E: packages/agent/src/agent-loop.ts:174] [E: packages/agent/src/agent-loop.ts:263] [E: packages/agent/src/agent-loop.ts:264] [E: packages/agent/src/agent-loop.ts:266] [E: packages/agent/src/agent-loop.ts:267]
+7. `executeToolCalls` 的 `terminate` 只控制是否因当前 tool batch 自动继续下一次 assistant response；当所有 finalized tool result 都带 `terminate === true` 时，`hasMoreToolCalls` 会变成 `false`。[E: packages/agent/src/agent-loop.ts:216] [E: packages/agent/src/agent-loop.ts:582] [E: packages/agent/src/agent-loop.ts:583] steering 或 follow-up messages 仍能通过内外层循环条件让 run 继续。[E: packages/agent/src/agent-loop.ts:174] [E: packages/agent/src/agent-loop.ts:263] [E: packages/agent/src/agent-loop.ts:264] [E: packages/agent/src/agent-loop.ts:266] [E: packages/agent/src/agent-loop.ts:267]
 
 8. 非 error/aborted 路径下，每轮 assistant/tool 阶段结束后，`runLoop` 发 `turn_end`，随后构造 `nextTurnContext` 交给 `prepareNextTurn`，允许替换下一次 provider request 的 context、model 和 reasoning。[E: packages/agent/src/agent-loop.ts:196] [E: packages/agent/src/agent-loop.ts:224] [E: packages/agent/src/agent-loop.ts:226] [E: packages/agent/src/agent-loop.ts:232] [E: packages/agent/src/agent-loop.ts:234] [E: packages/agent/src/agent-loop.ts:237] [E: packages/agent/src/agent-loop.ts:238]
 

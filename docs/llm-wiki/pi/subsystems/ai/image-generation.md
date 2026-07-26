@@ -8,6 +8,8 @@ source:
   - packages/ai/src/images-models.ts
   - packages/ai/src/images.ts
   - packages/ai/src/providers/openrouter-images.ts
+  - packages/ai/src/providers/all.ts
+  - packages/ai/test/openrouter-oauth.test.ts
 symbols:
   - ImagesProvider
   - ImagesModel
@@ -16,7 +18,7 @@ related:
   - ref.ai.image-models
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `subsys.ai.image-generation` 描述 `pi-ai` 的图像生成 provider/model runtime: `ImagesModels` 管 provider 清单、模型清单、refresh 和鉴权包装,底层 `generateImages` 再按 `ImagesModel.api` 分派到已注册的 image API implementation。
@@ -35,13 +37,13 @@ updated: 3da591ab
 
 `ImagesModels` 是 runtime provider collection: 它暴露 provider lookup、模型 lookup、dynamic refresh、auth resolution 和 auth-wrapped `generateImages()` convenience method [E: packages/ai/src/images-models.ts:49] [E: packages/ai/src/images-models.ts:50] [E: packages/ai/src/images-models.ts:51] [E: packages/ai/src/images-models.ts:57] [E: packages/ai/src/images-models.ts:60] [E: packages/ai/src/images-models.ts:68] [E: packages/ai/src/images-models.ts:75] [E: packages/ai/src/images-models.ts:83]。
 
-本节点覆盖图像 provider/model runtime 和 OpenRouter provider binding,不展开 OpenRouter wire payload、response parsing,也不枚举 `IMAGE_MODELS.openrouter` 的每个模型;模型清单枚举归 [ref.ai.image-models](../../reference/image-models.md) 所有 [E: packages/ai/src/providers/openrouter-images.ts:3] [E: packages/ai/src/providers/openrouter-images.ts:11] [I]。
+本节点覆盖图像 provider/model runtime 和 OpenRouter provider binding,不展开 OpenRouter wire payload、response parsing,也不枚举 `IMAGE_MODELS.openrouter` 的每个模型;模型清单枚举归 [ref.ai.image-models](../../reference/image-models.md) 所有 [E: packages/ai/src/providers/openrouter-images.ts:4] [E: packages/ai/src/providers/openrouter-images.ts:19] [I]。
 
 ## 关键文件
 
 - `packages/ai/src/images-models.ts`: 定义 `ImagesProvider`/`ImagesModels`,实现 provider map、模型读取、refresh、auth resolution、auth merge、错误编码和 `createImagesProvider()` [E: packages/ai/src/images-models.ts:12] [E: packages/ai/src/images-models.ts:49] [E: packages/ai/src/images-models.ts:97] [E: packages/ai/src/images-models.ts:180] [E: packages/ai/src/images-models.ts:206] [E: packages/ai/src/images-models.ts:212] [E: packages/ai/src/images-models.ts:218] [E: packages/ai/src/images-models.ts:250]。
 - `packages/ai/src/images.ts`: 导入 image builtins registration,用 `getImagesApiProvider(model.api)` 找 image API provider,并把 `model/context/options` 转交给该 API provider 的 `generateImages()` [E: packages/ai/src/images.ts:1] [E: packages/ai/src/images.ts:3] [E: packages/ai/src/images.ts:7] [E: packages/ai/src/images.ts:14] [E: packages/ai/src/images.ts:19] [E: packages/ai/src/images.ts:20]。
-- `packages/ai/src/providers/openrouter-images.ts`: 创建内置 OpenRouter image provider,把 provider id/name/auth、generated model catalog 和 lazy image API adapter 绑在一起 [E: packages/ai/src/providers/openrouter-images.ts:1] [E: packages/ai/src/providers/openrouter-images.ts:3] [E: packages/ai/src/providers/openrouter-images.ts:6] [E: packages/ai/src/providers/openrouter-images.ts:8] [E: packages/ai/src/providers/openrouter-images.ts:9] [E: packages/ai/src/providers/openrouter-images.ts:10] [E: packages/ai/src/providers/openrouter-images.ts:11] [E: packages/ai/src/providers/openrouter-images.ts:12]。
+- `packages/ai/src/providers/openrouter-images.ts`: 创建内置 OpenRouter image provider,把 provider id/name/auth、generated model catalog 和 lazy image API adapter 绑在一起 [E: packages/ai/src/providers/openrouter-images.ts:1] [E: packages/ai/src/providers/openrouter-images.ts:4] [E: packages/ai/src/providers/openrouter-images.ts:7] [E: packages/ai/src/providers/openrouter-images.ts:9] [E: packages/ai/src/providers/openrouter-images.ts:10] [E: packages/ai/src/providers/openrouter-images.ts:12] [E: packages/ai/src/providers/openrouter-images.ts:19] [E: packages/ai/src/providers/openrouter-images.ts:20]。
 
 ## 数据模型
 
@@ -66,13 +68,13 @@ updated: 3da591ab
 
 ## OpenRouter image provider
 
-`openrouterImagesProvider()` 返回 `createImagesProvider({...})` 的结果,provider id 固定为 `"openrouter"`,显示名为 `"OpenRouter"` [E: packages/ai/src/providers/openrouter-images.ts:6] [E: packages/ai/src/providers/openrouter-images.ts:7] [E: packages/ai/src/providers/openrouter-images.ts:8] [E: packages/ai/src/providers/openrouter-images.ts:9]。
+`openrouterImagesProvider()` 返回 `createImagesProvider({...})` 的结果,provider id 固定为 `"openrouter"`,显示名为 `"OpenRouter"` [E: packages/ai/src/providers/openrouter-images.ts:7] [E: packages/ai/src/providers/openrouter-images.ts:8] [E: packages/ai/src/providers/openrouter-images.ts:9] [E: packages/ai/src/providers/openrouter-images.ts:10]。
 
-OpenRouter image provider 的 auth 是 API key auth helper,环境变量名为 `OPENROUTER_API_KEY`;这说明 image provider 和文字 provider 一样通过 provider auth 机制注入 request apiKey,而不是在 provider factory 内直接读取环境变量值 [E: packages/ai/src/providers/openrouter-images.ts:2] [E: packages/ai/src/providers/openrouter-images.ts:10] [E: packages/ai/src/images-models.ts:180] [I]。
+OpenRouter image provider 的 auth 同时包含 `OPENROUTER_API_KEY` helper 与 lazy OpenRouter OAuth loader；它与 text provider 共用 id `openrouter`。两个 collection 注入同一个 `CredentialStore` 时，会从同一 provider key 解析相同 stored OAuth access key；测试分别调用 text/image `getAuth("openrouter")` 并断言结果一致 [E: packages/ai/src/providers/openrouter-images.ts:2] [E: packages/ai/src/providers/openrouter-images.ts:3] [E: packages/ai/src/providers/openrouter-images.ts:9] [E: packages/ai/src/providers/openrouter-images.ts:12] [E: packages/ai/src/providers/openrouter-images.ts:13] [E: packages/ai/src/providers/openrouter-images.ts:16] [E: packages/ai/src/images-models.ts:177] [E: packages/ai/src/images-models.ts:180] [E: packages/ai/test/openrouter-oauth.test.ts:36] [E: packages/ai/test/openrouter-oauth.test.ts:38] [E: packages/ai/test/openrouter-oauth.test.ts:45] [E: packages/ai/test/openrouter-oauth.test.ts:47] [E: packages/ai/test/openrouter-oauth.test.ts:50] [E: packages/ai/test/openrouter-oauth.test.ts:51]。
 
-OpenRouter image provider 的模型列表来自 generated catalog `IMAGE_MODELS.openrouter`,并以 `Object.values(...)` 交给 `createImagesProvider()` 的 `models` 字段;本文件不维护逐模型常量 [E: packages/ai/src/providers/openrouter-images.ts:3] [E: packages/ai/src/providers/openrouter-images.ts:11] [I]。
+OpenRouter image provider 的模型列表来自 generated catalog `IMAGE_MODELS.openrouter`,并以 `Object.values(...)` 交给 `createImagesProvider()` 的 `models` 字段;本文件不维护逐模型常量 [E: packages/ai/src/providers/openrouter-images.ts:4] [E: packages/ai/src/providers/openrouter-images.ts:19] [I]。
 
-OpenRouter image provider 的 API adapter 来自 `openrouterImagesApi()` lazy wrapper,并作为 `api` 字段交给 provider factory;后续 provider `generateImages()` 会转调这个 adapter 的 `generateImages()` [E: packages/ai/src/providers/openrouter-images.ts:1] [E: packages/ai/src/providers/openrouter-images.ts:12] [E: packages/ai/src/images-models.ts:272]。
+OpenRouter image provider 的 API adapter 来自 `openrouterImagesApi()` lazy wrapper,并作为 `api` 字段交给 provider factory;后续 provider `generateImages()` 会转调这个 adapter 的 `generateImages()` [E: packages/ai/src/providers/openrouter-images.ts:1] [E: packages/ai/src/providers/openrouter-images.ts:20] [E: packages/ai/src/images-models.ts:272]。
 
 ## 设计动机与权衡
 
@@ -86,11 +88,11 @@ OpenRouter image provider 的 API adapter 来自 `openrouterImagesApi()` lazy wr
 
 - 同名 `generateImages` 有两个层级: `packages/ai/src/images.ts` 的导出函数按 `model.api` 选择 image API provider,`ImagesModels.generateImages()` 按 `model.provider` 选择 owning provider 并处理 auth/error wrapper;读调用栈时要先看 caller 持有的是 API-level function 还是 `ImagesModels` instance [E: packages/ai/src/images.ts:19] [E: packages/ai/src/images-models.ts:189] [I]。
 - `ImagesModels.getAuth(model)` 只按 `model.provider` 找 provider;provider 不存在时返回 `undefined`,不构造 error result,而 `ImagesModels.generateImages()` 的未知 provider 会被 catch 后转成 error result [E: packages/ai/src/images-models.ts:171] [E: packages/ai/src/images-models.ts:189] [E: packages/ai/src/images-models.ts:179] [E: packages/ai/src/images-models.ts:188] [E: packages/ai/src/images-models.ts:191] [E: packages/ai/src/images-models.ts:212]。
-- 当前已核到的内置 image provider 只有 OpenRouter 这个文件中的 `openrouterImagesProvider()`;是否还有其他 image provider registration 来源未在本节点的指定 source 集合内核完,记录在 `_staging/uncertainty-ai-image-generation.md` [E: packages/ai/src/providers/openrouter-images.ts:6] [U]。
+- `builtinImagesProviders()` 的完整返回数组当前只含 `openrouterImagesProvider()`，因此目标树唯一内置 image-generation provider 是 OpenRouter；外部调用方仍可向 mutable collection 注册第三方 provider。[E: packages/ai/src/providers/all.ts:140] [E: packages/ai/src/providers/all.ts:141] [E: packages/ai/src/images-models.ts:107]
 
 ## 跨包边界
 
-[ref.ai.image-models](../../reference/image-models.md) 应逐模型覆盖 generated image catalog,包括 `IMAGE_MODELS.openrouter` 中有哪些模型、各模型 metadata 和对应 provider;本节点只记录 OpenRouter provider 从 generated catalog 取 `Object.values(IMAGE_MODELS.openrouter)` 作为模型清单 [E: packages/ai/src/providers/openrouter-images.ts:3] [E: packages/ai/src/providers/openrouter-images.ts:11] [I]。
+[ref.ai.image-models](../../reference/image-models.md) 应逐模型覆盖 generated image catalog,包括 `IMAGE_MODELS.openrouter` 中有哪些模型、各模型 metadata 和对应 provider;本节点只记录 OpenRouter provider 从 generated catalog 取 `Object.values(IMAGE_MODELS.openrouter)` 作为模型清单 [E: packages/ai/src/providers/openrouter-images.ts:4] [E: packages/ai/src/providers/openrouter-images.ts:19] [I]。
 
 文字模型的 `subsys.ai.wire-protocol-dispatch` 以 `ProviderStreams.stream/streamSimple` 为核心,图像生成不走这个 contract;本节点只说 image-side `ProviderImages.generateImages()` promise contract 和 `ImagesModels` wrapper [E: packages/ai/src/images.ts:14] [E: packages/ai/src/images.ts:20] [I]。
 
@@ -99,6 +101,8 @@ OpenRouter image provider 的 API adapter 来自 `openrouterImagesApi()` lazy wr
 - packages/ai/src/images-models.ts
 - packages/ai/src/images.ts
 - packages/ai/src/providers/openrouter-images.ts
+- packages/ai/src/providers/all.ts
+- packages/ai/test/openrouter-oauth.test.ts
 
 ## 相关
 

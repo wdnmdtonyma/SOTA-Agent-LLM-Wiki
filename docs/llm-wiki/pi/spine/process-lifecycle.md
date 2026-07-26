@@ -9,7 +9,7 @@ symbols: [main, parseArgs, resolveAppMode]
 related: [spine.overview, surface.cli.overview, surface.modes.interactive, surface.modes.rpc]
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `spine.process-lifecycle` 描述 `pi-coding-agent` 从 shell `argv` 进入进程、解析 CLI、选择 app mode、绑定 session/runtime，最后进入 interactive/RPC/print 的真实生命周期。
@@ -69,7 +69,7 @@ Bun 打包入口 `packages/coding-agent/src/bun/cli.ts` 不是另一套 CLI 逻�
 
 `resolveAppMode(parsed, stdinIsTTY, stdoutIsTTY)` 的优先级是显式 `--mode rpc` 最高，其次显式 `--mode json`，再由 `--print` 或任一 stdio 非 TTY 进入 `print`，最后才是 `interactive` [E: packages/coding-agent/src/main.ts:100] [E: packages/coding-agent/src/main.ts:101] [E: packages/coding-agent/src/main.ts:104] [E: packages/coding-agent/src/main.ts:107] [E: packages/coding-agent/src/main.ts:110]。
 
-`json` 在 app mode 层是独立模式，但进入 print executor 前会被 `toPrintOutputMode` 映射成 print mode 的 `json` 输出；其他非 RPC mode 映射为 `text` [E: packages/coding-agent/src/main.ts:113] [E: packages/coding-agent/src/main.ts:114] [E: packages/coding-agent/src/main.ts:846] [E: packages/coding-agent/src/main.ts:847]。
+`json` 在 app mode 层是独立模式，但进入 print executor 前会被 `toPrintOutputMode` 映射成 print mode 的 `json` 输出；其他非 RPC mode 映射为 `text` [E: packages/coding-agent/src/main.ts:113] [E: packages/coding-agent/src/main.ts:114] [E: packages/coding-agent/src/main.ts:851] [E: packages/coding-agent/src/main.ts:852]。
 
 `main` 在 mode 选择后会对非 interactive 且非纯 metadata 命令接管 stdout，并禁止 RPC mode 使用 `@file` 参数 [E: packages/coding-agent/src/main.ts:540] [E: packages/coding-agent/src/main.ts:541] [E: packages/coding-agent/src/main.ts:543] [E: packages/coding-agent/src/main.ts:546] [E: packages/coding-agent/src/main.ts:547] [E: packages/coding-agent/src/main.ts:548]。这里的 metadata 命令定义为未设置 `--print`、未设置 `--mode`、且是 `--help` 或 `--list-models` [E: packages/coding-agent/src/main.ts:117] [E: packages/coding-agent/src/main.ts:118]。
 
@@ -97,7 +97,7 @@ RPC mode 不进入 piped stdin 读取分支；只有非 RPC mode 会调用 `read
 
 `prepareInitialMessage` 把 `fileArgs`、图片自动缩放设置与 stdinContent 交给 file processor / initial-message builder；无 `@file` 时直接基于 parsed 和 stdin 构造初始消息 [E: packages/coding-agent/src/main.ts:121] [E: packages/coding-agent/src/main.ts:129] [E: packages/coding-agent/src/main.ts:130] [E: packages/coding-agent/src/main.ts:133] [E: packages/coding-agent/src/main.ts:776] [E: packages/coding-agent/src/main.ts:778] [E: packages/coding-agent/src/main.ts:779]。
 
-最终 dispatch 是单点三分支：`rpc` 打印 timings 后 `runRpcMode(runtime)`；`interactive` 创建 `InteractiveMode`，传入迁移提示、model fallback、auto trust reload cwd、initialMessage、initialImages、initialMessages 和 verbose，再 `run()`；其余 print/json 分支调用 `runPrintMode(runtime, ...)`，随后停止 theme watcher、恢复 stdout，并把非零 exitCode 写入 `process.exitCode` [E: packages/coding-agent/src/main.ts:811] [E: packages/coding-agent/src/main.ts:812] [E: packages/coding-agent/src/main.ts:813] [E: packages/coding-agent/src/main.ts:814] [E: packages/coding-agent/src/main.ts:815] [E: packages/coding-agent/src/main.ts:816] [E: packages/coding-agent/src/main.ts:817] [E: packages/coding-agent/src/main.ts:818] [E: packages/coding-agent/src/main.ts:819] [E: packages/coding-agent/src/main.ts:820] [E: packages/coding-agent/src/main.ts:821] [E: packages/coding-agent/src/main.ts:822] [E: packages/coding-agent/src/main.ts:843] [E: packages/coding-agent/src/main.ts:846] [E: packages/coding-agent/src/main.ts:852] [E: packages/coding-agent/src/main.ts:853] [E: packages/coding-agent/src/main.ts:855]。
+最终 dispatch 是单点三分支：`rpc` 打印 timings 后 `runRpcMode(runtime)`；`interactive` 创建 `InteractiveMode`，传入迁移提示、model fallback、auto trust reload cwd、initialMessage、initialImages、initialMessages 和 verbose，再 `run()`；其余 print/json 分支调用 `runPrintMode(runtime, ...)`，随后停止 theme watcher、恢复 stdout，并把非零 exitCode 写入 `process.exitCode` [E: packages/coding-agent/src/main.ts:816] [E: packages/coding-agent/src/main.ts:817] [E: packages/coding-agent/src/main.ts:818] [E: packages/coding-agent/src/main.ts:819] [E: packages/coding-agent/src/main.ts:820] [E: packages/coding-agent/src/main.ts:821] [E: packages/coding-agent/src/main.ts:822] [E: packages/coding-agent/src/main.ts:823] [E: packages/coding-agent/src/main.ts:824] [E: packages/coding-agent/src/main.ts:825] [E: packages/coding-agent/src/main.ts:826] [E: packages/coding-agent/src/main.ts:827] [E: packages/coding-agent/src/main.ts:848] [E: packages/coding-agent/src/main.ts:851] [E: packages/coding-agent/src/main.ts:857] [E: packages/coding-agent/src/main.ts:858] [E: packages/coding-agent/src/main.ts:860]。
 
 ## 关键决策点
 

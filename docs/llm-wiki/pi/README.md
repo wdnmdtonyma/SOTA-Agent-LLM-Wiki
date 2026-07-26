@@ -1,6 +1,6 @@
 # pi 源码 LLM Wiki
 
-一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 **pi**(`pi/`)的真实源码——一个 **5-package 的 TypeScript monorepo**(`@earendil-works/pi-*`),一个**自扩展的编码 agent harness**:多 provider LLM 引擎 + 可复用 agent 运行时 + 交互式编码 agent CLI + 差分渲染 TUI + 实验性编排器。细到每个工具的字段与设计动机。
+一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 **pi**(`pi/`)的真实源码——一个含 **7 个核心 package + 5 个 extension-example workspace** 的 TypeScript monorepo,一个**自扩展的编码 agent harness**:多 provider LLM 引擎 + 可复用 agent 运行时 + 交互式编码 agent CLI + 差分渲染 TUI + 实验性 server + 可选 SQLite backend + private eval harness。细到每个工具的字段与设计动机。
 
 ## 这是 LLM wiki,不是书
 
@@ -15,16 +15,17 @@
 
 ## pi 的形态(决定本 wiki 的画像)
 
-- **真源码**:pi 是公开真实工程,**git 仓 + 各包测试(`./test.sh`)+ 完整 `packages/coding-agent/docs/`(29 篇)**。证据以 `[E]` 为主;**staleness 用 pi git SHA**,节点 `updated:` 记 fill 时的 pi HEAD 短 SHA。
+- **真源码**:pi 是公开真实工程,**git 仓 + 各包测试(`./test.sh`)+ 完整 `packages/coding-agent/docs/`(30 篇)**。证据以 `[E]` 为主;**staleness 用 pi git SHA**,节点 `updated:` 记 fill 时的 pi HEAD 10 位短 SHA。
 - **TypeScript monorepo**:Node ≥22 / Bun 双运行时,Biome + TypeScript native(tsgo)。源路径一律相对 `pi/`(如 `packages/coding-agent/src/...`)。
 - **★ 分层栈 = 全 wiki 的组织主线**:pi 把"可复用运行时"与"产品"分层:
-  - **`pi-ai`** = 多 provider 统一 LLM API(35 provider,9 wire 协议,auth/oauth,模型目录)。
+  - **`pi-ai`** = 多 provider 统一 LLM API(38 built-in runtime provider，其中 37 个有静态模型目录；10 wire 协议；auth/oauth；1,109 模型)。
   - **`pi-agent-core`** = **可复用** agent 运行时 harness:agent-loop(turn → provider stream → 工具调用 → state)、会话树存储、压缩/分支总结、skills、system-prompt。任何 app 都能拿它建 agent。
   - **`pi-coding-agent`** = **产品**:7 个内置工具(bash/read/edit/write/grep/find/ls)、**扩展系统(自扩展招牌)**、skills、slash 命令、三种模式(interactive TUI / RPC / print)、配置/信任/会话管理。
   - **`pi-tui`** = 独立可复用的差分渲染终端 UI 库(渲染循环、编辑器、键盘协议、autocomplete)。
-  - **`pi-orchestrator`** = **实验性**多实例编排器(把 pi 以 RPC 子进程跑、IPC 监督、Radius 云端)。
-  - 每个节点 frontmatter 带 `pkg: ai | agent | coding-agent | tui | orchestrator | cross`,使分层可 grep。**`agent`(可复用)↔ `coding-agent`(产品)的边界、与扩展系统是 pi 的画像主线**(类比 codex 的 SQ/EQ、opencode 的 V1/V2)。
-- **范围**:**全 monorepo 同深度**——含 TUI 渲染细节、实验性 orchestrator,均逐子系统覆盖。
+  - **`pi-server`** = **实验性**多实例服务(把 pi 以 RPC 子进程跑、IPC 监督、Radius 云端)。
+  - **`pi-storage-sqlite-node`** = 可选的 Node SQLite session backend；**`pi-evals`** = private 行为评测 consumer。
+  - 每个节点 frontmatter 带 `pkg: ai | agent | coding-agent | tui | server | storage | evals | cross`,使分层可 grep。**`agent`(可复用)↔ `coding-agent`(产品)的边界、与扩展系统是 pi 的画像主线**。
+- **范围**:**全 monorepo 同深度**——含 TUI 渲染细节、实验性 server,均逐子系统覆盖。
 
 ## 结构
 
@@ -36,9 +37,9 @@ conventions.md    节点模板 + frontmatter schema(含 pkg)+ 证据分级 + L1 
 RUN.md            填充令(给 codex 执行者):读序 / 填序 / L1→L2→L3 循环 / 工具与 provider ground truth
 spine/            T0 端到端"怎么跑"(mermaid 先行,自包含)+ worked traces
 surface/          T1 可见面:tools/ cli/ modes/ config/ providers/ extensions/ skills/ prompts/ commands/ sdk/ sessions/ trust/ misc/
-subsystems/       T2 内部子系统:ai/ agent-core/ coding-agent/ tui/ orchestrator/
+subsystems/       T2 内部子系统:ai/ agent-core/ coding-agent/ tui/ server/ storage/ evals/
 reference/        T3 符号·类型·catalog(provider/model/wire/config/slash/keybinding/rpc/extension-event/env…)· glossary · 不确定项 · package 索引
-tools/            lint.mjs(L1 机械校验)· reconcile.mjs(frontmatter→index.json 同步 + 登记 + _staging 合并)— 已就位
+tools/            lint/reconcile + 默认 dry-run 的 evidence rebase 工具
 _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
 _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 ```
@@ -60,13 +61,13 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**大纲 → 人 review → 逐节点读源码填 → 独立 subagent 对照源码校验 → 修 → 直到整仓覆盖完**。当前**已完成全部 177 节点的填充与独立证伪校验**(分层栈组织、全 monorepo 同深度;6 批 A–H 均经独立 subagent 对照源码逐条核验,`tools/lint.mjs` 0 error / 0 warning)。批次计划见 `_fill-prompts.md`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **186 个节点全部 verified 于 pi `cee5ff7520`**；本轮新增 SQLite、eval harness、agent execution tools、constrained sampling、provider retry 与 usage accounting 节点，并完成 orchestrator→server 迁移。审计见 `_UPDATE-SCOPE.md` 与 `_research/`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱(9)+ worked traces(3) | 12 | ✅ 完成 |
-| T1 surface | tools(7)+ cli(1)+ modes(4)+ config(3)+ providers(3)+ extensions(4)+ skills/prompts/commands/sdk/sessions/trust(6)+ misc(4) | 32 | ✅ 完成 |
-| T2 subsystems | ai(23)+ agent-core(18)+ coding-agent(31)+ tui(18)+ orchestrator(8,experimental) | 98 | ✅ 完成 |
-| T3 reference | ai(6)+ agent-core(8)+ coding-agent(13)+ tui(3)+ orchestrator(2)+ cross(3) | 35 | ✅ 完成 |
+| T1 surface | tools、CLI、modes、config、providers、extensions 与其它用户可见面 | 33 | ✅ 完成 |
+| T2 subsystems | ai(27)+ agent-core(19)+ coding-agent(32)+ tui(18)+ server(8)+ storage(1)+ evals(1) | 106 | ✅ 完成 |
+| T3 reference | ai(6)+ agent-core(8)+ coding-agent(13)+ tui(3)+ server(2)+ cross(3) | 35 | ✅ 完成 |
 
-下一步:从 T0 脊柱 + T1 `surface/tools/`(用户核心诉求)起填。`tools/lint.mjs` + `tools/reconcile.mjs` 已就位;并发批次计划见 `_fill-prompts.md`(8 批,A 脊柱先行)。
+后续更新以 `RUN.md` 的 L1→L2→L3 流程、`index.json.updated` 与节点 `updated` 为 staleness 门槛。

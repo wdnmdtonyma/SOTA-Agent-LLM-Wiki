@@ -16,7 +16,7 @@ related:
   - subsys.agent-core.turn-control
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `subsys.agent-core.transport-proxy` 是 `pi-agent-core` 的 stream transport adapter: `StreamFn` 定义 agent loop 可消费的 assistant stream 边界, `streamProxy()` 把远端 proxy 的瘦事件流重建成同一类 assistant message events。
@@ -32,17 +32,17 @@ updated: 3da591ab
 
 ## 职责边界
 
-`StreamFn` 是 agent 层注入 provider stream 的结构化函数类型: 入参是 `Model<Api>`、`Context` 和可选 `SimpleStreamOptions`, 返回 `AssistantMessageEventStream` 或其 Promise [E: packages/agent/src/types.ts:27] [E: packages/agent/src/types.ts:28] [E: packages/agent/src/types.ts:29] [E: packages/agent/src/types.ts:30] [E: packages/agent/src/types.ts:31]。
+`StreamFn` 是 agent 层注入 provider stream 的结构化函数类型: 入参是 `Model<Api>`、`Context` 和可选 `SimpleStreamOptions`, 返回 `AssistantMessageEventStream` 或其 Promise [E: packages/agent/src/types.ts:28] [E: packages/agent/src/types.ts:29] [E: packages/agent/src/types.ts:30] [E: packages/agent/src/types.ts:31] [E: packages/agent/src/types.ts:32]。
 
-`StreamFn` 的类型签名要求调用方最终拿到 `AssistantMessageEventStream`;在本节点可核的 `streamProxy()` 实现中,fetch、HTTP、parse 或 event processing failure 会通过已返回的 stream push `error` event,并在 final assistant message 上写入 `"error"` 或 `"aborted"` stop reason 与 `errorMessage` [E: packages/agent/src/types.ts:27] [E: packages/agent/src/types.ts:31] [E: packages/agent/src/proxy.ts:116] [E: packages/agent/src/proxy.ts:117] [E: packages/agent/src/proxy.ts:214] [E: packages/agent/src/proxy.ts:216] [E: packages/agent/src/proxy.ts:217] [E: packages/agent/src/proxy.ts:218] [E: packages/agent/src/proxy.ts:219] [E: packages/agent/src/proxy.ts:220] [E: packages/agent/src/proxy.ts:232]。
+`StreamFn` 的类型签名要求调用方最终拿到 `AssistantMessageEventStream`;在本节点可核的 `streamProxy()` 实现中,fetch、HTTP、parse 或 event processing failure 会通过已返回的 stream push `error` event,并在 final assistant message 上写入 `"error"` 或 `"aborted"` stop reason 与 `errorMessage` [E: packages/agent/src/types.ts:28] [E: packages/agent/src/types.ts:32] [E: packages/agent/src/proxy.ts:116] [E: packages/agent/src/proxy.ts:117] [E: packages/agent/src/proxy.ts:214] [E: packages/agent/src/proxy.ts:216] [E: packages/agent/src/proxy.ts:217] [E: packages/agent/src/proxy.ts:218] [E: packages/agent/src/proxy.ts:219] [E: packages/agent/src/proxy.ts:220] [E: packages/agent/src/proxy.ts:232]。
 
-`streamProxy()` 是一个 concrete proxy adapter,它接收 `Model<any>`、`Context` 和 `ProxyStreamOptions`,同步返回 `ProxyMessageEventStream`;调用方要把它接到只提供 `SimpleStreamOptions` 的 `StreamFn` boundary 时,需要在调用点补齐 `authToken` 与 `proxyUrl` [E: packages/agent/src/types.ts:30] [E: packages/agent/src/proxy.ts:73] [E: packages/agent/src/proxy.ts:77] [E: packages/agent/src/proxy.ts:79] [E: packages/agent/src/proxy.ts:116] [E: packages/agent/src/proxy.ts:232]。
+`streamProxy()` 是一个 concrete proxy adapter,它接收 `Model<any>`、`Context` 和 `ProxyStreamOptions`,同步返回 `ProxyMessageEventStream`;调用方要把它接到只提供 `SimpleStreamOptions` 的 `StreamFn` boundary 时,需要在调用点补齐 `authToken` 与 `proxyUrl` [E: packages/agent/src/types.ts:31] [E: packages/agent/src/proxy.ts:73] [E: packages/agent/src/proxy.ts:77] [E: packages/agent/src/proxy.ts:79] [E: packages/agent/src/proxy.ts:116] [E: packages/agent/src/proxy.ts:232]。
 
-本节点只覆盖 agent package 内的 transport proxy 和 `StreamFn` boundary。`pi-ai` 如何从 `Models.stream` / `streamSimple` 进入 provider registry、API lazy module、wire request 与 normalized `AssistantMessageEventStream`,由 [spine.provider-stream](../../spine/provider-stream.md) 说明;本节点只说明 `streamProxy()` 如何在这个 normalized assistant event protocol 之外增加一跳 proxy server transport [E: packages/agent/src/proxy.ts:7] [E: packages/agent/src/proxy.ts:11] [E: packages/agent/src/proxy.ts:13] [E: packages/agent/src/proxy.ts:14] [E: packages/agent/src/proxy.ts:17] [E: packages/agent/src/types.ts:27] [E: packages/agent/src/types.ts:31]。
+本节点只覆盖 agent package 内的 transport proxy 和 `StreamFn` boundary。`pi-ai` 如何从 `Models.stream` / `streamSimple` 进入 provider registry、API lazy module、wire request 与 normalized `AssistantMessageEventStream`,由 [spine.provider-stream](../../spine/provider-stream.md) 说明;本节点只说明 `streamProxy()` 如何在这个 normalized assistant event protocol 之外增加一跳 proxy server transport [E: packages/agent/src/proxy.ts:7] [E: packages/agent/src/proxy.ts:11] [E: packages/agent/src/proxy.ts:13] [E: packages/agent/src/proxy.ts:14] [E: packages/agent/src/proxy.ts:17] [E: packages/agent/src/types.ts:28] [E: packages/agent/src/types.ts:32]。
 
 ## 关键文件
 
-- `packages/agent/src/types.ts`: `StreamFn`、`AgentLoopConfig`、`AgentEvent` 等 agent runtime 类型;本节点只权威覆盖 `StreamFn` [E: packages/agent/src/types.ts:27]。
+- `packages/agent/src/types.ts`: `StreamFn`、`AgentLoopConfig`、`AgentEvent` 等 agent runtime 类型;本节点只权威覆盖 `StreamFn` [E: packages/agent/src/types.ts:28]。
 - `packages/agent/src/proxy.ts`: `ProxyMessageEventStream`、`ProxyAssistantMessageEvent`、`ProxyStreamOptions`、`streamProxy()`、`buildProxyRequestOptions()` 和 `processProxyEvent()` 的实现 [E: packages/agent/src/proxy.ts:20] [E: packages/agent/src/proxy.ts:36] [E: packages/agent/src/proxy.ts:73] [E: packages/agent/src/proxy.ts:101] [E: packages/agent/src/proxy.ts:116] [E: packages/agent/src/proxy.ts:238]。
 
 ## 数据模型
@@ -93,7 +93,7 @@ proxy request 的 body 只携带可序列化 stream options;本地-only control 
 
 ## Gotcha
 
-- `streamProxy()` 的 public options 比 `StreamFn` 的 third parameter 更窄且更具体: `StreamFn` 接收可选 `SimpleStreamOptions`,而 `streamProxy()` 要求 `ProxyStreamOptions` 中的 `authToken` 和 `proxyUrl`;接入 `StreamFn` boundary 时,调用方必须确保这些字段被补上 [E: packages/agent/src/types.ts:30] [E: packages/agent/src/proxy.ts:73] [E: packages/agent/src/proxy.ts:77] [E: packages/agent/src/proxy.ts:79] [E: packages/agent/src/proxy.ts:116]。
+- `streamProxy()` 的 public options 比 `StreamFn` 的 third parameter 更窄且更具体: `StreamFn` 接收可选 `SimpleStreamOptions`,而 `streamProxy()` 要求 `ProxyStreamOptions` 中的 `authToken` 和 `proxyUrl`;接入 `StreamFn` boundary 时,调用方必须确保这些字段被补上 [E: packages/agent/src/types.ts:31] [E: packages/agent/src/proxy.ts:73] [E: packages/agent/src/proxy.ts:77] [E: packages/agent/src/proxy.ts:79] [E: packages/agent/src/proxy.ts:116]。
 - abort 不是单一路径: abort signal 会传给 fetch,reader 存在时会被 cancel,read loop 内外也都会检查 `signal.aborted`;最终 catch 用当前 `signal.aborted` 决定 terminal reason 是 `"aborted"` 还是 `"error"` [E: packages/agent/src/proxy.ts:141] [E: packages/agent/src/proxy.ts:143] [E: packages/agent/src/proxy.ts:163] [E: packages/agent/src/proxy.ts:187] [E: packages/agent/src/proxy.ts:209] [E: packages/agent/src/proxy.ts:216]。
 - `processProxyEvent()` 对未知事件类型只走 exhaustiveness default 并返回 `undefined`;但对类型正确、顺序错误的 text/thinking delta/end 或 toolcall_delta 会 throw,因此 consumer 看到的是 outer stream 的 `error` event,不是一个单独的 unknown-event event [E: packages/agent/src/proxy.ts:261] [E: packages/agent/src/proxy.ts:275] [E: packages/agent/src/proxy.ts:293] [E: packages/agent/src/proxy.ts:307] [E: packages/agent/src/proxy.ts:333] [E: packages/agent/src/proxy.ts:361] [E: packages/agent/src/proxy.ts:362] [E: packages/agent/src/proxy.ts:363] [E: packages/agent/src/proxy.ts:364] [E: packages/agent/src/proxy.ts:214] [E: packages/agent/src/proxy.ts:219]。
 - `stream.end()` 本身不携带 final result;final result 来自已经 push 过的 `done` 或 `error` complete event。若 proxy response 正常结束但从未发送 terminal proxy event,`streamProxy()` 仍会调用 `stream.end()` [E: packages/agent/src/proxy.ts:20] [E: packages/agent/src/proxy.ts:23] [E: packages/agent/src/proxy.ts:25] [E: packages/agent/src/proxy.ts:26] [E: packages/agent/src/proxy.ts:213]。
@@ -102,7 +102,7 @@ proxy request 的 body 只携带可序列化 stream options;本地-only control 
 
 [spine.provider-stream](../../spine/provider-stream.md) 是 `pi-ai` provider stream path 的权威节点:它覆盖 model/provider/API dispatch、provider wire request、wire event 到 normalized `AssistantMessageEventStream` 的归一化。本节点覆盖 `pi-agent-core` 的 optional proxy transport,即在 caller 与 provider stream 之间增加 HTTP `/api/stream` 一跳,再把 proxy server 的瘦事件恢复成同一 assistant event protocol [E: packages/agent/src/proxy.ts:152] [E: packages/agent/src/proxy.ts:158] [E: packages/agent/src/proxy.ts:159] [E: packages/agent/src/proxy.ts:160] [E: packages/agent/src/proxy.ts:161] [E: packages/agent/src/proxy.ts:199] [E: packages/agent/src/proxy.ts:200]。
 
-[subsys.agent-core.turn-control](turn-control.md) 应说明 agent loop 在一轮 turn 内如何消费 `StreamFn` 返回的 events、何时转成 `message_update`/`message_end`/`turn_end`;本节点只说明 proxy stream 自身如何生产 `AssistantMessageEvent` [E: packages/agent/src/types.ts:27] [E: packages/agent/src/types.ts:31] [E: packages/agent/src/proxy.ts:200] [E: packages/agent/src/proxy.ts:202]。
+[subsys.agent-core.turn-control](turn-control.md) 应说明 agent loop 在一轮 turn 内如何消费 `StreamFn` 返回的 events、何时转成 `message_update`/`message_end`/`turn_end`;本节点只说明 proxy stream 自身如何生产 `AssistantMessageEvent` [E: packages/agent/src/types.ts:28] [E: packages/agent/src/types.ts:32] [E: packages/agent/src/proxy.ts:200] [E: packages/agent/src/proxy.ts:202]。
 
 ## Sources
 

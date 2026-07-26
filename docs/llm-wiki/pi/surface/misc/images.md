@@ -24,6 +24,7 @@ source:
   - packages/ai/src/providers/all.ts
   - packages/ai/src/providers/openrouter-images.ts
   - packages/ai/src/image-models.generated.ts
+  - packages/ai/test/openrouter-oauth.test.ts
 symbols:
   - processFileArguments
   - renderImage
@@ -38,7 +39,7 @@ related:
   - ref.ai.model-catalog
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `surface.misc.images` 描述 pi-coding-agent 的图像可见面: CLI `@file` 和交互输入把本地图片变成用户消息里的 `ImageContent`, settings 决定是否 resize 或 block, TUI 只在终端能力允许时把 image content 渲染成 Kitty/iTerm2 inline graphics。
@@ -61,7 +62,7 @@ updated: 3da591ab
 
 ## 2 CLI `@file` 图像输入
 
-usage 文档把 file arguments 定义为用 `@` 前缀把文件包含进消息,并给出 `pi -p @screenshot.png "What's in this image?"` 的图像示例 [E: packages/coding-agent/docs/usage.md:248] [E: packages/coding-agent/docs/usage.md:250] [E: packages/coding-agent/docs/usage.md:254]。主入口在非 RPC 模式读取 stdin 后调用 `prepareInitialMessage(parsed, settingsManager.getImageAutoResize(), stdinContent)`,并把产出的 `initialMessage`、`initialImages` 传给 interactive 或 print 模式 [E: packages/coding-agent/src/main.ts:768] [E: packages/coding-agent/src/main.ts:769] [E: packages/coding-agent/src/main.ts:776] [E: packages/coding-agent/src/main.ts:778] [E: packages/coding-agent/src/main.ts:815] [E: packages/coding-agent/src/main.ts:820] [E: packages/coding-agent/src/main.ts:846] [E: packages/coding-agent/src/main.ts:850]。
+usage 文档把 file arguments 定义为用 `@` 前缀把文件包含进消息,并给出 `pi -p @screenshot.png "What's in this image?"` 的图像示例 [E: packages/coding-agent/docs/usage.md:248] [E: packages/coding-agent/docs/usage.md:250] [E: packages/coding-agent/docs/usage.md:254]。主入口在非 RPC 模式读取 stdin 后调用 `prepareInitialMessage(parsed, settingsManager.getImageAutoResize(), stdinContent)`,并把产出的 `initialMessage`、`initialImages` 传给 interactive 或 print 模式 [E: packages/coding-agent/src/main.ts:768] [E: packages/coding-agent/src/main.ts:769] [E: packages/coding-agent/src/main.ts:776] [E: packages/coding-agent/src/main.ts:778] [E: packages/coding-agent/src/main.ts:820] [E: packages/coding-agent/src/main.ts:825] [E: packages/coding-agent/src/main.ts:851] [E: packages/coding-agent/src/main.ts:855]。
 
 `prepareInitialMessage()` 只在 `parsed.fileArgs.length > 0` 时调用 `processFileArguments()`,并把返回的 `text` 和 `images` 作为 `fileText`、`fileImages` 交给 `buildInitialMessage()` [E: packages/coding-agent/src/main.ts:129] [E: packages/coding-agent/src/main.ts:133] [E: packages/coding-agent/src/main.ts:136] [E: packages/coding-agent/src/main.ts:137]。`buildInitialMessage()` 会拼接 stdin、`@file` text 和第一条 CLI message,并且只有 `fileImages.length > 0` 时才设置 `initialImages` [E: packages/coding-agent/src/cli/initial-message.ts:26] [E: packages/coding-agent/src/cli/initial-message.ts:27] [E: packages/coding-agent/src/cli/initial-message.ts:30] [E: packages/coding-agent/src/cli/initial-message.ts:34] [E: packages/coding-agent/src/cli/initial-message.ts:40] [E: packages/coding-agent/src/cli/initial-message.ts:41]。
 
@@ -79,11 +80,11 @@ MIME sniffing 读取文件前 4100 bytes,当前显式识别 JPEG、非 animated 
 
 ## 4 消息装配与 blockImages 防线
 
-interactive startup 直接调用 `session.prompt(initialMessage, { images: initialImages })`,print/json 模式也用同样的 `{ images: initialImages }` 发送初始 prompt [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:876] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:878] [E: packages/coding-agent/src/modes/print-mode.ts:121] [E: packages/coding-agent/src/modes/print-mode.ts:122]。`AgentSession` 在构造 user message 时先放 `{ type: "text", text: expandedText }`,然后把当前 images 追加到同一个 user content array [E: packages/coding-agent/src/core/agent-session.ts:1196] [E: packages/coding-agent/src/core/agent-session.ts:1197] [E: packages/coding-agent/src/core/agent-session.ts:1198] [E: packages/coding-agent/src/core/agent-session.ts:1201] [E: packages/coding-agent/src/core/agent-session.ts:1202]。
+interactive startup 直接调用 `session.prompt(initialMessage, { images: initialImages })`,print/json 模式也用同样的 `{ images: initialImages }` 发送初始 prompt [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:890] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:892] [E: packages/coding-agent/src/modes/print-mode.ts:121] [E: packages/coding-agent/src/modes/print-mode.ts:122]。`AgentSession` 在构造 user message 时先放 `{ type: "text", text: expandedText }`,然后把当前 images 追加到同一个 user content array [E: packages/coding-agent/src/core/agent-session.ts:1208] [E: packages/coding-agent/src/core/agent-session.ts:1209] [E: packages/coding-agent/src/core/agent-session.ts:1210] [E: packages/coding-agent/src/core/agent-session.ts:1213] [E: packages/coding-agent/src/core/agent-session.ts:1214]。
 
-steering 和 follow-up 也能携带 images: `_queueSteer()`、`_queueFollowUp()` 都把 text part 和 optional images 放进 user content,再调用 `agent.steer()` 或 `agent.followUp()` [E: packages/coding-agent/src/core/agent-session.ts:1359] [E: packages/coding-agent/src/core/agent-session.ts:1362] [E: packages/coding-agent/src/core/agent-session.ts:1363] [E: packages/coding-agent/src/core/agent-session.ts:1366] [E: packages/coding-agent/src/core/agent-session.ts:1376] [E: packages/coding-agent/src/core/agent-session.ts:1379] [E: packages/coding-agent/src/core/agent-session.ts:1380] [E: packages/coding-agent/src/core/agent-session.ts:1383]。
+steering 和 follow-up 也能携带 images: `_queueSteer()`、`_queueFollowUp()` 都把 text part 和 optional images 放进 user content,再调用 `agent.steer()` 或 `agent.followUp()` [E: packages/coding-agent/src/core/agent-session.ts:1371] [E: packages/coding-agent/src/core/agent-session.ts:1374] [E: packages/coding-agent/src/core/agent-session.ts:1375] [E: packages/coding-agent/src/core/agent-session.ts:1378] [E: packages/coding-agent/src/core/agent-session.ts:1388] [E: packages/coding-agent/src/core/agent-session.ts:1391] [E: packages/coding-agent/src/core/agent-session.ts:1392] [E: packages/coding-agent/src/core/agent-session.ts:1395]。
 
-`images.blockImages` 是 provider 发送前的防线:SDK wrapper 先 `convertToLlm(messages)`,若 `settingsManager.getBlockImages()` 为 false 就原样返回;若为 true,它把 user/toolResult content array 里的 image part 替换为文本 `"Image reading is disabled."` [E: packages/coding-agent/src/core/sdk.ts:251] [E: packages/coding-agent/src/core/sdk.ts:252] [E: packages/coding-agent/src/core/sdk.ts:254] [E: packages/coding-agent/src/core/sdk.ts:258] [E: packages/coding-agent/src/core/sdk.ts:259] [E: packages/coding-agent/src/core/sdk.ts:262] [E: packages/coding-agent/src/core/sdk.ts:266]。这意味着 blockImages 不阻止 CLI/TUI 先构造 `ImageContent`,而是在 LLM conversion 边界过滤图片 [I]。
+`images.blockImages` 是 provider 发送前的防线:SDK wrapper 先 `convertToLlm(messages)`,若 `settingsManager.getBlockImages()` 为 false 就原样返回;若为 true,它把 user/toolResult content array 里的 image part 替换为文本 `"Image reading is disabled."` [E: packages/coding-agent/src/core/sdk.ts:256] [E: packages/coding-agent/src/core/sdk.ts:257] [E: packages/coding-agent/src/core/sdk.ts:259] [E: packages/coding-agent/src/core/sdk.ts:263] [E: packages/coding-agent/src/core/sdk.ts:264] [E: packages/coding-agent/src/core/sdk.ts:267] [E: packages/coding-agent/src/core/sdk.ts:271]。这意味着 blockImages 不阻止 CLI/TUI 先构造 `ImageContent`,而是在 LLM conversion 边界过滤图片 [I]。
 
 ## 5 用户设置与显示开关
 
@@ -103,9 +104,9 @@ tool result image rendering 还受 `showImages` 与 terminal capability 共同�
 
 ## 7 与 image/model/provider catalog 的边界
 
-文字模型 provider catalog 的 ground truth 是 `builtinProviders()`;当前 `builtinProviders()` 列表包含 `openrouterProvider()` 等文本/streaming provider,与内置 image-generation provider catalog 分开 [E: packages/ai/src/providers/all.ts:78] [E: packages/ai/src/providers/all.ts:79] [E: packages/ai/src/providers/all.ts:105] [I]。内置 image-generation provider 的 ground truth 是 `builtinImagesProviders()`,当前只返回 `[openrouterImagesProvider()]` [E: packages/ai/src/providers/all.ts:129] [E: packages/ai/src/providers/all.ts:130]。
+文字模型 provider catalog 的 ground truth 是 `builtinProviders()`;当前 `builtinProviders()` 列表包含 `openrouterProvider()` 等文本/streaming provider,与内置 image-generation provider catalog 分开 [E: packages/ai/src/providers/all.ts:87] [E: packages/ai/src/providers/all.ts:88] [E: packages/ai/src/providers/all.ts:114] [I]。内置 image-generation provider 的 ground truth 是 `builtinImagesProviders()`,当前只返回 `[openrouterImagesProvider()]` [E: packages/ai/src/providers/all.ts:140] [E: packages/ai/src/providers/all.ts:141]。
 
-image model catalog 的 ground truth 是 `IMAGE_MODELS`,当前顶层有 `openrouter` bucket,每个条目声明 `api: "openrouter-images"`, `provider: "openrouter"`, `input`/`output` 能力和成本字段 [E: packages/ai/src/image-models.generated.ts:6] [E: packages/ai/src/image-models.generated.ts:7] [E: packages/ai/src/image-models.generated.ts:11] [E: packages/ai/src/image-models.generated.ts:12] [E: packages/ai/src/image-models.generated.ts:14] [E: packages/ai/src/image-models.generated.ts:15] [E: packages/ai/src/image-models.generated.ts:16]。`openrouterImagesProvider()` 把 `Object.values(IMAGE_MODELS.openrouter)` 作为 image provider 模型清单,并用 `OPENROUTER_API_KEY` 的 API-key auth 与 `openrouterImagesApi()` adapter [E: packages/ai/src/providers/openrouter-images.ts:6] [E: packages/ai/src/providers/openrouter-images.ts:8] [E: packages/ai/src/providers/openrouter-images.ts:10] [E: packages/ai/src/providers/openrouter-images.ts:11] [E: packages/ai/src/providers/openrouter-images.ts:12]。
+image model catalog 的 ground truth 是 `IMAGE_MODELS`,当前顶层有 `openrouter` bucket,每个条目声明 `api: "openrouter-images"`, `provider: "openrouter"`, `input`/`output` 能力和成本字段 [E: packages/ai/src/image-models.generated.ts:6] [E: packages/ai/src/image-models.generated.ts:7] [E: packages/ai/src/image-models.generated.ts:11] [E: packages/ai/src/image-models.generated.ts:12] [E: packages/ai/src/image-models.generated.ts:14] [E: packages/ai/src/image-models.generated.ts:15] [E: packages/ai/src/image-models.generated.ts:16]。`openrouterImagesProvider()` 把 `Object.values(IMAGE_MODELS.openrouter)` 作为 image provider 模型清单,auth 同时支持 `OPENROUTER_API_KEY` 与 lazy OpenRouter OAuth,并使用 `openrouterImagesApi()` adapter [E: packages/ai/src/providers/openrouter-images.ts:7] [E: packages/ai/src/providers/openrouter-images.ts:9] [E: packages/ai/src/providers/openrouter-images.ts:12] [E: packages/ai/src/providers/openrouter-images.ts:13] [E: packages/ai/src/providers/openrouter-images.ts:16] [E: packages/ai/src/providers/openrouter-images.ts:19] [E: packages/ai/src/providers/openrouter-images.ts:20]。text/image provider 共用 `openrouter` id；若 caller 给两个 collection 注入同一 credential store，两边会解析同一 stored OAuth key [E: packages/ai/test/openrouter-oauth.test.ts:36] [E: packages/ai/test/openrouter-oauth.test.ts:38] [E: packages/ai/test/openrouter-oauth.test.ts:45] [E: packages/ai/test/openrouter-oauth.test.ts:47] [E: packages/ai/test/openrouter-oauth.test.ts:50] [E: packages/ai/test/openrouter-oauth.test.ts:51]。
 
 本 surface 的 `ImageContent` 输入图片可以被有 vision/input-image 能力的聊天模型消费,但本节点没有完整枚举哪些 text models 支持 image input;该模型目录属于 [ref.ai.model-catalog](../../reference/model-catalog.md) [U]。同样,OpenRouter image-generation models 的逐项枚举属于 [ref.ai.image-models](../../reference/image-models.md),不是 `surface.misc.images` 的职责 [I]。
 
@@ -130,6 +131,7 @@ image model catalog 的 ground truth 是 `IMAGE_MODELS`,当前顶层有 `openrou
 - packages/ai/src/providers/all.ts
 - packages/ai/src/providers/openrouter-images.ts
 - packages/ai/src/image-models.generated.ts
+- packages/ai/test/openrouter-oauth.test.ts
 
 ## 相关
 

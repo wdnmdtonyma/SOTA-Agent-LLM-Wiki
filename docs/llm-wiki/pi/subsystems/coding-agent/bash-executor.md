@@ -7,17 +7,21 @@ pkg: coding-agent
 source:
   - packages/coding-agent/src/core/bash-executor.ts
   - packages/coding-agent/src/core/exec.ts
+  - packages/coding-agent/src/core/agent-session.ts
+  - packages/coding-agent/src/modes/rpc/rpc-mode.ts
 symbols:
   - executeBashWithOperations
   - execCommand
   - BashResult
+  - AgentSession.executeBash
 related:
   - surface.tools.bash
   - subsys.coding-agent.output-truncation
   - subsys.agent-core.exec-env
+  - ref.coding-agent.json-events
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `bash-executor` 是 pi-coding-agent 的命令执行子系统: `executeBashWithOperations()` 负责 bash 风格命令的流式输出、取消和 tail 截断, `execCommand()` 负责扩展/custom tool runtime 里的 argv 进程执行。
@@ -43,8 +47,8 @@ updated: 3da591ab
 
 - `packages/coding-agent/src/core/bash-executor.ts`: `BashExecutorOptions`、`BashResult` 和 `executeBashWithOperations()` 的权威实现 [E: packages/coding-agent/src/core/bash-executor.ts:22] [E: packages/coding-agent/src/core/bash-executor.ts:29] [E: packages/coding-agent/src/core/bash-executor.ts:50]。
 - `packages/coding-agent/src/core/exec.ts`: `ExecOptions`、`ExecResult` 和 `execCommand()` 的权威实现 [E: packages/coding-agent/src/core/exec.ts:11] [E: packages/coding-agent/src/core/exec.ts:23] [E: packages/coding-agent/src/core/exec.ts:34]。
-- `packages/coding-agent/src/core/agent-session.ts`: 调用点背景, `AgentSession.executeBash()` 把 settings prefix/shellPath 转成 `executeBashWithOperations()` 调用, 并把结果写成 bash execution history [E: packages/coding-agent/src/core/agent-session.ts:2720] [E: packages/coding-agent/src/core/agent-session.ts:2721] [E: packages/coding-agent/src/core/agent-session.ts:2725] [E: packages/coding-agent/src/core/agent-session.ts:2735]。
-- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`: 调用点背景, RPC `"bash"` command 调 `session.executeBash()` 并把 `BashResult` 放进 success response [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:554] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:557]。
+- `packages/coding-agent/src/core/agent-session.ts`: 调用点背景, `AgentSession.executeBash()` 把 settings prefix/shellPath 转成 `executeBashWithOperations()` 调用,把每个 chunk 发成带可选 command id 的 `bash_execution_update`，并把结果写成 bash execution history [E: packages/coding-agent/src/core/agent-session.ts:2764] [E: packages/coding-agent/src/core/agent-session.ts:2772] [E: packages/coding-agent/src/core/agent-session.ts:2784] [E: packages/coding-agent/src/core/agent-session.ts:2790]。
+- `packages/coding-agent/src/modes/rpc/rpc-mode.ts`: 调用点背景, RPC `"bash"` command 调 `session.executeBash()` 并把 `BashResult` 放进 success response [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:559] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:563]。
 - `packages/coding-agent/src/core/extensions/loader.ts`: 调用点背景, extension runtime 的 `exec()` 包装 `execCommand()` [E: packages/coding-agent/src/core/extensions/loader.ts:334] [E: packages/coding-agent/src/core/extensions/loader.ts:336]。
 
 ## 数据模型
@@ -67,9 +71,10 @@ updated: 3da591ab
 6. `operations.exec@packages/coding-agent/src/core/bash-executor.ts:108` 接收原始 command/cwd 和 `{ onData, signal }`; timeout 不由 `executeBashWithOperations()` 注入, 需要由调用方选择的 `BashOperations` 契约或上层 tool path 提供 [E: packages/coding-agent/src/core/bash-executor.ts:108] [E: packages/coding-agent/src/core/bash-executor.ts:109] [E: packages/coding-agent/src/core/bash-executor.ts:110] [I]。
 7. 正常结束时 helper 将 rolling chunks join 成 `fullOutput`, 调 `truncateTail(fullOutput)`, 若截断就确保 temp file 存在, 关闭 temp stream, 并把 aborted signal 映射为 `cancelled` 与 `exitCode: undefined` [E: packages/coding-agent/src/core/bash-executor.ts:113] [E: packages/coding-agent/src/core/bash-executor.ts:114] [E: packages/coding-agent/src/core/bash-executor.ts:115] [E: packages/coding-agent/src/core/bash-executor.ts:116] [E: packages/coding-agent/src/core/bash-executor.ts:119] [E: packages/coding-agent/src/core/bash-executor.ts:121] [E: packages/coding-agent/src/core/bash-executor.ts:125]。
 8. `operations.exec` 抛错时, 如果 signal 已 aborted, helper 走同样的 snapshot/truncate/temp-file 收尾并返回 `cancelled: true`; 如果不是 abort, helper 只关闭 temp stream 后重新抛错 [E: packages/coding-agent/src/core/bash-executor.ts:130] [E: packages/coding-agent/src/core/bash-executor.ts:132] [E: packages/coding-agent/src/core/bash-executor.ts:133] [E: packages/coding-agent/src/core/bash-executor.ts:134] [E: packages/coding-agent/src/core/bash-executor.ts:136] [E: packages/coding-agent/src/core/bash-executor.ts:144] [E: packages/coding-agent/src/core/bash-executor.ts:151] [E: packages/coding-agent/src/core/bash-executor.ts:154]。
-9. `execCommand@packages/coding-agent/src/core/exec.ts:34` 用 `spawn(command, args)` 创建非 shell 子进程, stdio 配置为 ignore stdin 与 pipe stdout/stderr, 然后把 data events 追加进两个 string accumulator [E: packages/coding-agent/src/core/exec.ts:41] [E: packages/coding-agent/src/core/exec.ts:43] [E: packages/coding-agent/src/core/exec.ts:44] [E: packages/coding-agent/src/core/exec.ts:82] [E: packages/coding-agent/src/core/exec.ts:86]。
-10. `killProcess@packages/coding-agent/src/core/exec.ts:52` 对 abort 或 timeout 先发 `SIGTERM`, 5 秒后如果 `proc.killed` 仍不成立则发 `SIGKILL`; timeout only 在 `options.timeout > 0` 时启用 [E: packages/coding-agent/src/core/exec.ts:52] [E: packages/coding-agent/src/core/exec.ts:55] [E: packages/coding-agent/src/core/exec.ts:57] [E: packages/coding-agent/src/core/exec.ts:58] [E: packages/coding-agent/src/core/exec.ts:59] [E: packages/coding-agent/src/core/exec.ts:75]。
-11. `waitForChildProcess@packages/coding-agent/src/core/exec.ts:91` 返回后清理 timeout 和 abort listener, 成功 resolve `{ stdout, stderr, code: code ?? 0, killed }`, 异常时 resolve fallback `{ stdout, stderr, code: 1, killed }` [E: packages/coding-agent/src/core/exec.ts:91] [E: packages/coding-agent/src/core/exec.ts:93] [E: packages/coding-agent/src/core/exec.ts:95] [E: packages/coding-agent/src/core/exec.ts:97] [E: packages/coding-agent/src/core/exec.ts:99] [E: packages/coding-agent/src/core/exec.ts:100] [E: packages/coding-agent/src/core/exec.ts:102] [E: packages/coding-agent/src/core/exec.ts:104]。
+9. `AgentSession.executeBash()` 包装 `onChunk`:先调用调用方 callback，再 emit `{ type: "bash_execution_update", id: options?.id, delta }` [E: packages/coding-agent/src/core/agent-session.ts:2780] [E: packages/coding-agent/src/core/agent-session.ts:2784]。RPC handler 把 command `id` 传入该 options，所以 host 能把并发/连续 direct bash 的 chunk 与 response 关联 [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:559] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:561]。
+10. `execCommand@packages/coding-agent/src/core/exec.ts:34` 用 `spawn(command, args)` 创建非 shell 子进程, stdio 配置为 ignore stdin 与 pipe stdout/stderr, 然后把 data events 追加进两个 string accumulator [E: packages/coding-agent/src/core/exec.ts:41] [E: packages/coding-agent/src/core/exec.ts:43] [E: packages/coding-agent/src/core/exec.ts:44] [E: packages/coding-agent/src/core/exec.ts:82] [E: packages/coding-agent/src/core/exec.ts:86]。
+11. `killProcess@packages/coding-agent/src/core/exec.ts:52` 对 abort 或 timeout 先发 `SIGTERM`, 5 秒后如果 `proc.killed` 仍不成立则发 `SIGKILL`; timeout only 在 `options.timeout > 0` 时启用 [E: packages/coding-agent/src/core/exec.ts:52] [E: packages/coding-agent/src/core/exec.ts:55] [E: packages/coding-agent/src/core/exec.ts:57] [E: packages/coding-agent/src/core/exec.ts:58] [E: packages/coding-agent/src/core/exec.ts:59] [E: packages/coding-agent/src/core/exec.ts:75]。
+12. `waitForChildProcess@packages/coding-agent/src/core/exec.ts:91` 返回后清理 timeout 和 abort listener, 成功 resolve `{ stdout, stderr, code: code ?? 0, killed }`, 异常时 resolve fallback `{ stdout, stderr, code: 1, killed }` [E: packages/coding-agent/src/core/exec.ts:91] [E: packages/coding-agent/src/core/exec.ts:93] [E: packages/coding-agent/src/core/exec.ts:95] [E: packages/coding-agent/src/core/exec.ts:97] [E: packages/coding-agent/src/core/exec.ts:99] [E: packages/coding-agent/src/core/exec.ts:100] [E: packages/coding-agent/src/core/exec.ts:102] [E: packages/coding-agent/src/core/exec.ts:104]。
 
 ## 设计动机与权衡
 
@@ -113,3 +118,4 @@ updated: 3da591ab
 - [surface.tools.bash](../../surface/tools/bash.md): 模型可见 `bash` tool 的 schema、注册、renderer、local shell backend 与 tool-call 行为。
 - [subsys.coding-agent.output-truncation](output-truncation.md): `DEFAULT_MAX_BYTES`、`truncateTail()`、tail preview 和完整输出临时文件策略。
 - [subsys.agent-core.exec-env](../agent-core/exec-env.md): agent-core/harness 层的执行环境语义, 用来和 pi-coding-agent 的 extension `execCommand()` 区分。
+- [ref.coding-agent.json-events](../../reference/json-events.md): `bash_execution_update` 的 JSONL payload 与 RPC correlation 语义。

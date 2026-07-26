@@ -12,18 +12,18 @@ related:
   - spine.overview
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `ref.glossary` 是 Pi agent harness 常用英文术语的中文导览索引；README 能直接证明的公开定位标 `[E]`，更细的内部实现术语标 `[I]` 并指向对应节点。
 
 ## 能回答的问题
 
-- Pi monorepo 里 `pi-ai`、`pi-agent-core`、`pi-coding-agent`、`pi-tui`、`pi-orchestrator` 各是什么意思？
+- Pi monorepo 里 `pi-ai`、`pi-agent-core`、`pi-coding-agent`、`pi-tui`、`pi-server` 各是什么意思？
 - Agent loop、Agent、AgentSession、tool call、steering、follow-up 在 Pi 语境中怎样区分？
 - Provider、ModelRegistry、Models、wire API、transport 这些模型调用术语怎样对应源码？
 - RPC 与 IPC 在 Pi 里分别跑在哪条通道上？
-- Orchestrator、Radius、Unix socket、extension、skill、slash command 的边界是什么？
+- Server、Radius、Unix socket、extension、skill、slash command 的边界是什么？
 
 ## 包与分层
 
@@ -36,7 +36,7 @@ updated: 3da591ab
 | `pi-agent-core` / `@earendil-works/pi-agent-core` | README 定义为带 tool calling 和 state management 的 agent runtime。 | [E: README.md:31] |
 | `pi-coding-agent` / `@earendil-works/pi-coding-agent` | README 定义为 Interactive coding agent CLI。 | [E: README.md:32] |
 | `pi-tui` / `@earendil-works/pi-tui` | README 定义为带 differential rendering 的 Terminal UI library。 | [E: README.md:33] |
-| `pi-orchestrator` / `@earendil-works/pi-orchestrator` | orchestrator 不是 README All Packages 表中的公开包条目；本 wiki 将它作为实验性编排层处理，源码证明应看 [ref.package-index](package-index.md) 与 `subsys.orchestrator.*` 节点。[I] | [I] |
+| `pi-server` / `@earendil-works/pi-server` | server 不是 README All Packages 表中的公开包条目；本 wiki 将它作为实验性编排层处理，源码证明应看 [ref.package-index](package-index.md) 与 `subsys.server.*` 节点。[I] | [I] |
 | `spine.overview` | 本 wiki 的跨包总览节点，负责把 CLI 产品入口、agent runtime、provider streaming 的主路径串起来；本术语表只是速查入口。[I] | [I] |
 
 ## 运行时与 Agent Loop
@@ -81,7 +81,7 @@ updated: 3da591ab
 | Slash command | Slash command 是 coding-agent 交互入口之一；command surface 与逐项 catalog 看 [surface.commands.overview](../surface/commands/overview.md) 和 [ref.coding-agent.slash-commands](slash-commands.md)。[I] | [I] |
 | Project context files | AGENTS/CLAUDE 等上下文文件如何被发现和拼接属于 resource/system-prompt 细节；项目级规则文件 `AGENTS.md` 自称 Development Rules。[I] | [E: AGENTS.md:1] |
 
-## RPC、IPC 与 Orchestrator
+## RPC、IPC 与 Server
 
 | 术语 | 中文解释 | 源码锚点 |
 |---|---|---|
@@ -89,21 +89,21 @@ updated: 3da591ab
 | RpcCommand | `RpcCommand` 是 RPC mode 的 command union 名称；逐项命令看 [ref.coding-agent.rpc-methods](rpc-methods.md)。[I] | [I] |
 | JSONL framing | JSONL framing 是 RPC/IPC 的行分隔消息边界术语；coding-agent RPC 协议看 [surface.modes.rpc-protocol](../surface/modes/rpc-protocol.md)。[I] | [I] |
 | RPC dispatch | RPC dispatch 是 headless command 到 session action 的分派逻辑；详见 [surface.modes.rpc](../surface/modes/rpc.md) 和 [spine.trace-rpc-prompt](../spine/trace-rpc-prompt.md)。[I] | [I] |
-| IPC | IPC 在 orchestrator 语境中指本地 client/server 通道；transport 与 protocol 分别看 [subsys.orchestrator.ipc-transport](../subsystems/orchestrator/ipc-transport.md) 和 [subsys.orchestrator.message-protocol](../subsystems/orchestrator/message-protocol.md)。[I] | [I] |
-| Unix socket path | Unix socket path 是 orchestrator IPC 监听地址相关术语；配置来源看 [subsys.orchestrator.config](../subsystems/orchestrator/config.md)，传输实现看 [subsys.orchestrator.ipc-transport](../subsystems/orchestrator/ipc-transport.md)。[I] | [I] |
-| OrchestratorRequest | OrchestratorRequest 是 orchestrator IPC request union 名称；逐项消息看 [ref.orchestrator.ipc-messages](ipc-messages.md) 与 [subsys.orchestrator.message-protocol](../subsystems/orchestrator/message-protocol.md)。[I] | [I] |
-| OrchestratorSupervisor | OrchestratorSupervisor 是 orchestrator 的 live instance 管理对象；详见 [subsys.orchestrator.supervisor](../subsystems/orchestrator/supervisor.md)。[I] | [I] |
-| RPC stream bridge | RPC stream bridge 指 orchestrator 把 client IPC stream 接到 coding-agent RPC 子进程的桥接路径；详见 [subsys.orchestrator.request-handler](../subsystems/orchestrator/request-handler.md) 与 [subsys.orchestrator.rpc-spawner](../subsystems/orchestrator/rpc-spawner.md)。[I] | [I] |
-| Radius | Radius 是 orchestrator 的远端 presence/registration 集成导览名；详见 [subsys.orchestrator.radius](../subsystems/orchestrator/radius.md)。[I] | [I] |
-| Orchestrator serve lifecycle | serve lifecycle 指 orchestrator server 启动、恢复实例、处理 shutdown 的过程；详见 [subsys.orchestrator.request-handler](../subsystems/orchestrator/request-handler.md)。[I] | [I] |
+| IPC | IPC 在 server 语境中指本地 client/server 通道；transport 与 protocol 分别看 [subsys.server.ipc-transport](../subsystems/server/ipc-transport.md) 和 [subsys.server.message-protocol](../subsystems/server/message-protocol.md)。[I] | [I] |
+| Unix socket path | Unix socket path 是 server IPC 监听地址相关术语；配置来源看 [subsys.server.config](../subsystems/server/config.md)，传输实现看 [subsys.server.ipc-transport](../subsystems/server/ipc-transport.md)。[I] | [I] |
+| ServerRequest | ServerRequest 是 server IPC request union 名称；逐项消息看 [ref.server.ipc-messages](ipc-messages.md) 与 [subsys.server.message-protocol](../subsystems/server/message-protocol.md)。[I] | [I] |
+| ServerSupervisor | ServerSupervisor 是 server 的 live instance 管理对象；详见 [subsys.server.supervisor](../subsystems/server/supervisor.md)。[I] | [I] |
+| RPC stream bridge | RPC stream bridge 指 server 把 client IPC stream 接到 coding-agent RPC 子进程的桥接路径；详见 [subsys.server.request-handler](../subsystems/server/request-handler.md) 与 [subsys.server.rpc-spawner](../subsystems/server/rpc-spawner.md)。[I] | [I] |
+| Radius | Radius 是 server 的远端 presence/registration 集成导览名；详见 [subsys.server.radius](../subsystems/server/radius.md)。[I] | [I] |
+| Server serve lifecycle | serve lifecycle 指 server server 启动、恢复实例、处理 shutdown 的过程；详见 [subsys.server.request-handler](../subsystems/server/request-handler.md)。[I] | [I] |
 
 ## 证据边界与跨包入口
 
 - `ref.glossary` 的 source 只包括 `README.md` 与 `AGENTS.md`；本页 `[E]` 只用于这两个文件能直接证明的项目定位、公开包说明、permission/containerization 和 Development Rules 语境。
 - README 明确说明 Pi 默认没有内置 permission system；需要更强边界时应 containerize 或 sandbox Pi，并列出 Gondolin extension、Plain Docker、OpenShell 三种方向。[E: README.md:39] [E: README.md:41] [E: README.md:43] [E: README.md:44] [E: README.md:45]
-- README 的 Development 段列出 `npm install --ignore-scripts`、`npm run build`、`npm run check`、`./test.sh`、`./pi-test.sh` 等开发入口；更细的测试/命令策略由 `AGENTS.md` 的 Development Rules 约束。[E: README.md:51] [E: README.md:54] [E: README.md:55] [E: README.md:56] [E: README.md:57] [E: README.md:58] [E: AGENTS.md:1]
-- package-internal、RPC/IPC、provider/model、orchestrator/RPC bridge 等术语在本页标 `[I]`，其源码证明责任属于链接到的 `spine.*`、`surface.*`、`subsys.*` 或 `ref.*` 节点。
-- README 的 All Packages 表只直接列出 `pi-ai`、`pi-agent-core`、`pi-coding-agent`、`pi-tui` 四个公开包；`pi-orchestrator` 的存在和 experimental/stability 口径不在本 glossary 节点用 README/AGENTS 直证。[E: README.md:26] [E: README.md:30] [E: README.md:31] [E: README.md:32] [E: README.md:33] [I]
+- README 的 Development 段列出 `npm install --ignore-scripts`、`npm run build`、`npm run check`、`./test.sh`、`./pi-test.sh` 等开发入口；更细的测试/命令策略由 `AGENTS.md` 的 Development Rules 约束。[E: README.md:51] [E: README.md:54] [E: README.md:55] [E: README.md:57] [E: README.md:58] [E: README.md:59] [E: AGENTS.md:1]
+- package-internal、RPC/IPC、provider/model、server/RPC bridge 等术语在本页标 `[I]`，其源码证明责任属于链接到的 `spine.*`、`surface.*`、`subsys.*` 或 `ref.*` 节点。
+- README 的 All Packages 表只直接列出 `pi-ai`、`pi-agent-core`、`pi-coding-agent`、`pi-tui` 四个公开包；`pi-server` 的存在和 experimental/stability 口径不在本 glossary 节点用 README/AGENTS 直证。[E: README.md:26] [E: README.md:30] [E: README.md:31] [E: README.md:32] [E: README.md:33] [I]
 
 ## Sources
 

@@ -25,7 +25,7 @@ related:
   - subsys.tui.keybinding-matching
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `keybindings.json` 是 pi-coding-agent 的用户可见键位配置面:用户用 namespaced action id 覆盖默认快捷键,interactive mode 启动和 `/reload` 时把它读入同一个 app keybinding manager。
@@ -67,7 +67,7 @@ pi-tui 的 `KeyId` 类型还包含 `super` modifier,并且 `MODIFIERS` 常量也
 
 ## 读取、覆盖与冲突
 
-interactive mode 构造时调用 `KeybindingsManager.create()` 并把返回值注入全局 TUI keybindings,随后默认 editor 和其它组件复用同一个 manager [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:456] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:457] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:460]。`KeybindingsManager.create(agentDir = getAgentDir())` 把配置路径拼成 `<agentDir>/keybindings.json`,读取 user bindings 后构造 coding-agent manager [E: packages/coding-agent/src/core/keybindings.ts:348] [E: packages/coding-agent/src/core/keybindings.ts:349] [E: packages/coding-agent/src/core/keybindings.ts:350] [E: packages/coding-agent/src/core/keybindings.ts:351]。
+interactive mode 构造时调用 `KeybindingsManager.create()` 并把返回值注入全局 TUI keybindings,随后默认 editor 和其它组件复用同一个 manager [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:463] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:464] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:467]。`KeybindingsManager.create(agentDir = getAgentDir())` 把配置路径拼成 `<agentDir>/keybindings.json`,读取 user bindings 后构造 coding-agent manager [E: packages/coding-agent/src/core/keybindings.ts:348] [E: packages/coding-agent/src/core/keybindings.ts:349] [E: packages/coding-agent/src/core/keybindings.ts:350] [E: packages/coding-agent/src/core/keybindings.ts:351]。
 
 文件读取失败、文件不存在、JSON parse 失败或 parse 后不是 object 时,`loadRawConfig()` 返回 `undefined`,最终 user bindings 变成空 object;这意味着坏的 `keybindings.json` 不会阻止启动,但当前读取函数本身不产生诊断 [E: packages/coding-agent/src/core/keybindings.ts:329] [E: packages/coding-agent/src/core/keybindings.ts:330] [E: packages/coding-agent/src/core/keybindings.ts:332] [E: packages/coding-agent/src/core/keybindings.ts:334] [E: packages/coding-agent/src/core/keybindings.ts:336] [E: packages/coding-agent/src/core/keybindings.ts:365] [I]。
 
@@ -75,7 +75,7 @@ pi-tui manager 的覆盖语义是:每个 definition 若没有 user value 就使�
 
 ## Reload 与迁移
 
-用户文档说编辑 `keybindings.json` 后运行 `/reload` 可在不重启 session 的情况下应用变更 [E: packages/coding-agent/docs/keybindings.md:9]。内置 slash command 列表包含 `reload`,说明是 Reload keybindings、extensions、skills、prompts 和 themes [E: packages/coding-agent/src/core/slash-commands.ts:40]。interactive mode 收到文本 `/reload` 时调用 `handleReloadCommand()`,该流程在 session reload 后执行 `this.keybindings.reload()` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:2712] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:2714] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5338] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5341]。
+用户文档说编辑 `keybindings.json` 后运行 `/reload` 可在不重启 session 的情况下应用变更 [E: packages/coding-agent/docs/keybindings.md:9]。内置 slash command 列表包含 `reload`,说明是 Reload keybindings、extensions、skills、prompts 和 themes [E: packages/coding-agent/src/core/slash-commands.ts:40]。interactive mode 收到文本 `/reload` 时调用 `handleReloadCommand()`,该流程在 session reload 后执行 `this.keybindings.reload()` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:2735] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:2737] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5379] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5382]。
 
 `KeybindingsManager.reload()` 在有 `configPath` 时重新读取配置文件并调用 `setUserBindings(...)`;`getEffectiveConfig()` 返回 pi-tui manager 的 resolved bindings,extension shortcut 和 UI hint 可以基于这个 effective config 渲染用户实际按键 [E: packages/coding-agent/src/core/keybindings.ts:354] [E: packages/coding-agent/src/core/keybindings.ts:356] [E: packages/coding-agent/src/core/keybindings.ts:359] [E: packages/coding-agent/src/core/keybindings.ts:360] [I]。
 

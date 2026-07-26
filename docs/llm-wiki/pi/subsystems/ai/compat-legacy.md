@@ -15,7 +15,7 @@ related:
   - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `subsys.ai.compat-legacy` 说明 `@earendil-works/pi-ai/compat` 的旧全局 API 兼容层:它重导出 legacy surface,保留 `stream` / `complete` / `getModel` 入口,并把新代码迁移边界指向 `createModels()` 和 provider factories。[E: packages/ai/src/compat.ts:27][E: packages/ai/src/compat.ts:28][E: packages/ai/src/compat.ts:63][E: packages/ai/src/compat.ts:250][E: packages/ai/src/compat.ts:266][I]

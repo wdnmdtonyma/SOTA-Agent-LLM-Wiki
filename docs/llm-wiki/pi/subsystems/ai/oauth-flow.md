@@ -9,13 +9,19 @@ source:
   - packages/ai/src/auth/oauth/load.ts
   - packages/ai/src/auth/oauth/device-code.ts
   - packages/ai/src/auth/oauth/pkce.ts
+  - packages/ai/src/auth/oauth/kimi-coding.ts
+  - packages/ai/src/auth/oauth/openrouter.ts
   - packages/ai/src/bun-oauth.ts
   - packages/ai/src/providers/anthropic.ts
   - packages/ai/src/providers/openai-codex.ts
+  - packages/ai/src/providers/kimi-coding.ts
+  - packages/ai/src/providers/openrouter.ts
   - packages/ai/package.json
 symbols:
   - loadAnthropicOAuth
   - loadOpenAICodexOAuth
+  - loadKimiCodingOAuth
+  - loadOpenRouterOAuth
   - registerBundledOAuthFlowLoaders
   - pollOAuthDeviceCodeFlow
   - generatePKCE
@@ -24,7 +30,7 @@ related:
   - subsys.ai.auth-resolution
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `subsys.ai.oauth-flow` 描述当前 `pi-ai` OAuth 实现入口：provider 按需加载 flow，standalone Bun 注入静态 flow，公共 `./oauth` subpath 仅保留 coding-agent extension 的类型兼容面。
@@ -39,19 +45,25 @@ updated: 3da591ab
 
 ## 搬家后的入口边界
 
-旧 `packages/ai/src/utils/oauth/index.ts` 的全局 registry、`getOAuthProvider()` 与 deprecated token wrapper 已删除；当前 OAuth 实现没有新的同形 `index.ts`。内部实现入口是 `packages/ai/src/auth/oauth/load.ts`：它定义 Anthropic、OpenAI Codex、GitHub Copilot、xAI 与 Radius 的 lazy loader，并统一返回新的 `OAuthAuth` contract [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:19] [E: packages/ai/src/auth/oauth/load.ts:29] [E: packages/ai/src/auth/oauth/load.ts:49]。
+旧 `packages/ai/src/utils/oauth/index.ts` 的全局 registry、`getOAuthProvider()` 与 deprecated token wrapper 已删除；当前 OAuth 实现没有新的同形 `index.ts`。内部实现入口是 `packages/ai/src/auth/oauth/load.ts`：它定义 Anthropic、OpenAI Codex、GitHub Copilot、OpenRouter、Kimi Coding、xAI 与 Radius 的 lazy loader，并统一返回 `OAuthAuth` contract [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:21] [E: packages/ai/src/auth/oauth/load.ts:33] [E: packages/ai/src/auth/oauth/load.ts:67]。
 
 公共 package subpath `./oauth` 仍存在于 exports map [E: packages/ai/package.json:30]，但对应 `src/oauth.ts` 只 `export type` coding-agent extension compatibility declarations；它不再重导出 OAuth flow 实现、registry 或 helpers [E: packages/ai/src/oauth.ts:2] [E: packages/ai/src/oauth.ts:10]。因此“被删 `index.ts` 的新入口”要分成两层理解：应用内部 flow 加载走 `auth/oauth/load.ts`，外部 `@earendil-works/pi-ai/oauth` 只是 type-only compatibility entry。
 
-provider factory 自己声明 OAuth 能力并绑定 loader。例如 `anthropicProvider()` 把 `loadAnthropicOAuth` 包进 `lazyOAuth()` [E: packages/ai/src/providers/anthropic.ts:3] [E: packages/ai/src/providers/anthropic.ts:15]；`openaiCodexProvider()` 同样绑定 `loadOpenAICodexOAuth` [E: packages/ai/src/providers/openai-codex.ts:3] [E: packages/ai/src/providers/openai-codex.ts:13]。这取代了旧的 module-global OAuth provider registry。[I]
+provider factory 自己声明 OAuth 能力并绑定 loader。除 Anthropic/OpenAI Codex 外，Kimi 与 OpenRouter 现在也同时提供 API-key 与 lazy OAuth method。[E: packages/ai/src/providers/kimi-coding.ts:12] [E: packages/ai/src/providers/kimi-coding.ts:14] [E: packages/ai/src/providers/openrouter.ts:12] [E: packages/ai/src/providers/openrouter.ts:14]
+
+## 新增 Kimi 与 OpenRouter flow
+
+Kimi Code 使用 RFC 8628 device authorization：默认 host 为 `https://auth.kimi.com`，可由 provider env 覆盖；授权与 token polling 都使用 JSON/form 请求，成功 credential 携带 access/refresh/expiry。[E: packages/ai/src/auth/oauth/kimi-coding.ts:9] [E: packages/ai/src/auth/oauth/kimi-coding.ts:13] [E: packages/ai/src/auth/oauth/kimi-coding.ts:35] [E: packages/ai/src/auth/oauth/kimi-coding.ts:69] [E: packages/ai/src/auth/oauth/kimi-coding.ts:119] [E: packages/ai/src/auth/oauth/kimi-coding.ts:141]
+
+OpenRouter 使用 PKCE 与单次 loopback HTTP callback；它把 authorization code 换成长期 API key，并保存为 `type: "oauth"`、空 refresh、`Number.MAX_SAFE_INTEGER` expiry。callback host 默认 `127.0.0.1`，可由 `PI_OAUTH_CALLBACK_HOST` 覆盖。[E: packages/ai/src/auth/oauth/openrouter.ts:12] [E: packages/ai/src/auth/oauth/openrouter.ts:18] [E: packages/ai/src/auth/oauth/openrouter.ts:23] [E: packages/ai/src/auth/oauth/openrouter.ts:53] [E: packages/ai/src/auth/oauth/openrouter.ts:96] [E: packages/ai/src/auth/oauth/openrouter.ts:100] [E: packages/ai/src/auth/oauth/openrouter.ts:208]
 
 ## Lazy flow 与 standalone Bun
 
 普通运行时通过 variable specifier 调用 dynamic `import()`；loader 在源 `.ts` 与构建后 `.js` 之间重写后缀，使 bundler 不必静态追入依赖 `node:http` / `node:crypto` 的 flow 实现 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/auth/oauth/load.ts:10] [E: packages/ai/src/auth/oauth/load.ts:11]。
 
-每个 `load*OAuth()` 先检查 module-local `bundledLoaders`：存在时调用已注册函数，否则动态 import 对应实现并取出 `OAuthAuth` object [E: packages/ai/src/auth/oauth/load.ts:22] [E: packages/ai/src/auth/oauth/load.ts:25] [E: packages/ai/src/auth/oauth/load.ts:30] [E: packages/ai/src/auth/oauth/load.ts:31] [E: packages/ai/src/auth/oauth/load.ts:35] [E: packages/ai/src/auth/oauth/load.ts:36]。
+每个 `load*OAuth()` 先检查 module-local `bundledLoaders`：存在时调用已注册函数，否则动态 import 对应实现并取出 `OAuthAuth` object [E: packages/ai/src/auth/oauth/load.ts:24] [E: packages/ai/src/auth/oauth/load.ts:27] [E: packages/ai/src/auth/oauth/load.ts:32] [E: packages/ai/src/auth/oauth/load.ts:31] [E: packages/ai/src/auth/oauth/load.ts:37] [E: packages/ai/src/auth/oauth/load.ts:38]。
 
-standalone Bun 不能依赖这些 flow 在运行时仍是可发现 chunk，所以 `registerBunOAuthFlows()` 静态导入五组实现并调用 `registerBundledOAuthFlowLoaders()`；Radius 以 factory 接受 `{name, gateway}`，其余 loader 返回固定 `OAuthAuth` object [E: packages/ai/src/bun-oauth.ts:1] [E: packages/ai/src/bun-oauth.ts:6] [E: packages/ai/src/bun-oauth.ts:9] [E: packages/ai/src/bun-oauth.ts:10] [E: packages/ai/src/bun-oauth.ts:15]。package exports 为该 bundle bridge 提供独立 `./bun-oauth` subpath [E: packages/ai/package.json:38]。
+standalone Bun 不能依赖这些 flow 在运行时仍是可发现 chunk，所以 `registerBunOAuthFlows()` 静态导入七组实现并调用 `registerBundledOAuthFlowLoaders()`；Radius 以 factory 接受 `{name, gateway}`，其余 loader 返回固定 `OAuthAuth` object [E: packages/ai/src/bun-oauth.ts:1] [E: packages/ai/src/bun-oauth.ts:8] [E: packages/ai/src/bun-oauth.ts:11] [E: packages/ai/src/bun-oauth.ts:19]。package exports 为该 bundle bridge 提供独立 `./bun-oauth` subpath [E: packages/ai/package.json:38]。
 
 ## Device-code polling
 
@@ -69,8 +81,8 @@ deadline 由 `expiresInSeconds` 计算，未提供时为 infinity；初始 inter
 
 ## 设计动机与 gotcha
 
-- flow loader 隔离 Node-only implementation，provider factory 只持有 lazy `OAuthAuth`；这让 core/provider import 不必立刻加载 callback server 与 PKCE 依赖 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/providers/anthropic.ts:15] [I]。
-- `registerBundledOAuthFlowLoaders()` 是 process/module 级 override，不是 per-provider registry；调用后五类 loader 都优先使用 bundled functions [E: packages/ai/src/auth/oauth/load.ts:22] [E: packages/ai/src/auth/oauth/load.ts:25] [I]。
+- flow loader 隔离 Node-only implementation，provider factory 只持有 lazy `OAuthAuth`；这让 core/provider import 不必立刻加载 callback server 与 PKCE 依赖 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/providers/anthropic.ts:45] [I]。
+- `registerBundledOAuthFlowLoaders()` 是 process/module 级 override，不是 per-provider registry；loader shape 明确包含 Anthropic、OpenAI Codex、GitHub Copilot、OpenRouter、Kimi Coding、xAI 与 Radius 七类，注册后都优先使用 bundled functions [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:15] [E: packages/ai/src/auth/oauth/load.ts:16] [E: packages/ai/src/auth/oauth/load.ts:17] [E: packages/ai/src/auth/oauth/load.ts:18] [E: packages/ai/src/auth/oauth/load.ts:19] [E: packages/ai/src/auth/oauth/load.ts:20] [E: packages/ai/src/auth/oauth/load.ts:21] [E: packages/ai/src/auth/oauth/load.ts:27] [E: packages/ai/src/auth/oauth/load.ts:28]。
 - `@earendil-works/pi-ai/oauth` 名称容易让人误以为仍包含实现；目标 commit 中它只保留 extension OAuth types [E: packages/ai/src/oauth.ts:2]。
 - `waitBeforeFirstPoll` 与 server-supplied `slow_down.intervalSeconds` 都是本轮新增的 cadence 控制，旧 wiki 的“总是先 poll、slow_down 固定 +5 秒”描述已不成立 [E: packages/ai/src/auth/oauth/device-code.ts:21] [E: packages/ai/src/auth/oauth/device-code.ts:85]。
 
@@ -86,9 +98,13 @@ deadline 由 `expiresInSeconds` 计算，未提供时为 infinity；初始 inter
 - packages/ai/src/auth/oauth/load.ts
 - packages/ai/src/auth/oauth/device-code.ts
 - packages/ai/src/auth/oauth/pkce.ts
+- packages/ai/src/auth/oauth/kimi-coding.ts
+- packages/ai/src/auth/oauth/openrouter.ts
 - packages/ai/src/bun-oauth.ts
 - packages/ai/src/providers/anthropic.ts
 - packages/ai/src/providers/openai-codex.ts
+- packages/ai/src/providers/kimi-coding.ts
+- packages/ai/src/providers/openrouter.ts
 - packages/ai/package.json
 
 ## 相关

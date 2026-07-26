@@ -29,7 +29,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 3da591ab
+updated: cee5ff7520
 ---
 
 > `find` 是 pi-coding-agent 暴露给模型的文件路径搜索工具:模型给 glob pattern 和可选搜索目录,工具返回相对搜索目录的匹配路径列表。
@@ -47,7 +47,7 @@ updated: 3da591ab
 
 `createFindToolDefinition(cwd, options?)` 创建 coding-agent 层的 `ToolDefinition`,其 LLM-facing `name` 和 UI `label` 都是 `"find"` [E: packages/coding-agent/src/core/tools/find.ts:112] [E: packages/coding-agent/src/core/tools/find.ts:115] [E: packages/coding-agent/src/core/tools/find.ts:116]. `createFindTool(cwd, options?)` 再用 `wrapToolDefinition` 把这个 definition 适配成 agent-core 的 `AgentTool` [E: packages/coding-agent/src/core/tools/find.ts:372] [E: packages/coding-agent/src/core/tools/find.ts:373].
 
-`find` 属于 `pi-coding-agent` 的内置工具集,但实际 tool-call 执行批次由 `pi-agent-core` 的 agent loop 调度;这个跨包边界是 `ToolDefinition -> AgentTool` adapter [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:5] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:16] [I].
+`find` 属于 `pi-coding-agent` 的内置工具集,但实际 tool-call 执行批次由 `pi-agent-core` 的 agent loop 调度;这个跨包边界是 `ToolDefinition -> AgentTool` adapter [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:5] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:17] [I].
 
 ## 2 用途定位
 
@@ -79,9 +79,9 @@ TUI 渲染层默认只展示前 20 行;展开状态展示全部已返回文本�
 
 ## 5 执行模式
 
-`find` 的 returned `ToolDefinition` 没有显式 `executionMode` 属性,因此 `wrapToolDefinition` 复制到 `AgentTool.executionMode` 时得到的是省略值 [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:15] [E: packages/coding-agent/src/core/extensions/types.ts:465] [I].
+`find` 的 returned `ToolDefinition` 没有显式 `executionMode` 属性,因此 `wrapToolDefinition` 复制到 `AgentTool.executionMode` 时得到的是省略值 [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:16] [E: packages/coding-agent/src/core/extensions/types.ts:471] [I].
 
-agent-core 的 `Agent` 构造器把缺省 `toolExecution` 设为 `"parallel"` [E: packages/agent/src/agent.ts:228],而 `executeToolCalls` 只有在全局配置为 sequential 或批次中任一目标工具 `executionMode === "sequential"` 时才走 sequential 分支 [E: packages/agent/src/agent-loop.ts:421] [E: packages/agent/src/agent-loop.ts:422] [E: packages/agent/src/agent-loop.ts:424] [E: packages/agent/src/agent-loop.ts:427]. 因此,在默认 agent 配置且同批次没有 sequential 工具时,`find` 可以和其他允许并行的工具并发执行 [I].
+agent-core 的 `Agent` 构造器把缺省 `toolExecution` 设为 `"parallel"` [E: packages/agent/src/agent.ts:230],而 `executeToolCalls` 只有在全局配置为 sequential 或批次中任一目标工具 `executionMode === "sequential"` 时才走 sequential 分支 [E: packages/agent/src/agent-loop.ts:419] [E: packages/agent/src/agent-loop.ts:420] [E: packages/agent/src/agent-loop.ts:422] [E: packages/agent/src/agent-loop.ts:425]. 因此,在默认 agent 配置且同批次没有 sequential 工具时,`find` 可以和其他允许并行的工具并发执行 [I].
 
 ## 6 注册与装配
 
@@ -91,9 +91,9 @@ agent-core 的 `Agent` 构造器把缺省 `toolExecution` 设为 `"parallel"` [E
 
 `find` 是 read-only preset 的一员:`createReadOnlyToolDefinitions` 返回 `read`、`grep`、`find`、`ls`,而 `createReadOnlyTools` 返回对应 runtime tools [E: packages/coding-agent/src/core/tools/index.ts:147] [E: packages/coding-agent/src/core/tools/index.ts:149] [E: packages/coding-agent/src/core/tools/index.ts:150] [E: packages/coding-agent/src/core/tools/index.ts:151] [E: packages/coding-agent/src/core/tools/index.ts:152] [E: packages/coding-agent/src/core/tools/index.ts:177] [E: packages/coding-agent/src/core/tools/index.ts:179] [E: packages/coding-agent/src/core/tools/index.ts:180] [E: packages/coding-agent/src/core/tools/index.ts:181] [E: packages/coding-agent/src/core/tools/index.ts:182]. `createAllToolDefinitions` 也把 `find` 放进七个内置 definition 的 record [E: packages/coding-agent/src/core/tools/index.ts:156] [E: packages/coding-agent/src/core/tools/index.ts:163].
 
-`AgentSession._buildRuntime` 在没有 `baseToolsOverride` 时调用 `createAllToolDefinitions(this._cwd, { read: ..., bash: ... })`;这会创建包含 `find` 的内置 definition map,但只给 `read` 和 `bash` 传入 session settings [E: packages/coding-agent/src/core/agent-session.ts:2535] [E: packages/coding-agent/src/core/agent-session.ts:2542] [E: packages/coding-agent/src/core/agent-session.ts:2543] [E: packages/coding-agent/src/core/agent-session.ts:2544]. `_refreshToolRegistry` 随后把 base definitions、extension tools、SDK custom tools 合并,应用 allow/deny 过滤,通过 `wrapRegisteredTools` 适配为 `AgentTool`,最后调用 `setActiveToolsByName` [E: packages/coding-agent/src/core/agent-session.ts:2437] [E: packages/coding-agent/src/core/agent-session.ts:2449] [E: packages/coding-agent/src/core/agent-session.ts:2450] [E: packages/coding-agent/src/core/agent-session.ts:2485] [E: packages/coding-agent/src/core/agent-session.ts:2486] [E: packages/coding-agent/src/core/agent-session.ts:2496] [E: packages/coding-agent/src/core/agent-session.ts:2498] [E: packages/coding-agent/src/core/agent-session.ts:2524].
+`AgentSession._buildRuntime` 在没有 `baseToolsOverride` 时调用 `createAllToolDefinitions(this._cwd, { read: ..., bash: ... })`;这会创建包含 `find` 的内置 definition map,但只给 `read` 和 `bash` 传入 session settings [E: packages/coding-agent/src/core/agent-session.ts:2555] [E: packages/coding-agent/src/core/agent-session.ts:2562] [E: packages/coding-agent/src/core/agent-session.ts:2563] [E: packages/coding-agent/src/core/agent-session.ts:2564]. `_refreshToolRegistry` 随后把 base definitions、extension tools、SDK custom tools 合并,应用 allow/deny 过滤,通过 `wrapRegisteredTools` 适配为 `AgentTool`,最后调用 `setActiveToolsByName` [E: packages/coding-agent/src/core/agent-session.ts:2457] [E: packages/coding-agent/src/core/agent-session.ts:2469] [E: packages/coding-agent/src/core/agent-session.ts:2470] [E: packages/coding-agent/src/core/agent-session.ts:2505] [E: packages/coding-agent/src/core/agent-session.ts:2506] [E: packages/coding-agent/src/core/agent-session.ts:2516] [E: packages/coding-agent/src/core/agent-session.ts:2518] [E: packages/coding-agent/src/core/agent-session.ts:2544].
 
-默认 active built-in tools 是 `read`、`bash`、`edit`、`write`,所以普通 startup 不一定主动暴露 `find`;但 `find` 已在 registry 中,可由模式/扩展/配置激活 [E: packages/coding-agent/src/core/agent-session.ts:2571] [E: packages/coding-agent/src/core/agent-session.ts:2573] [E: packages/coding-agent/src/core/agent-session.ts:2574] [I]. plan-mode 示例测试显示进入 plan mode 时 active tools 包含 `grep`、`find`、`ls` 和 `questionnaire` [E: packages/coding-agent/test/plan-mode-extension.test.ts:111] [E: packages/coding-agent/test/plan-mode-extension.test.ts:113] [E: packages/coding-agent/test/plan-mode-extension.test.ts:119].
+默认 active built-in tools 是 `read`、`bash`、`edit`、`write`,所以普通 startup 不一定主动暴露 `find`;但 `find` 已在 registry 中,可由模式/扩展/配置激活 [E: packages/coding-agent/src/core/agent-session.ts:2591] [E: packages/coding-agent/src/core/agent-session.ts:2593] [E: packages/coding-agent/src/core/agent-session.ts:2594] [I]. plan-mode 示例测试显示进入 plan mode 时 active tools 包含 `grep`、`find`、`ls` 和 `questionnaire` [E: packages/coding-agent/test/plan-mode-extension.test.ts:111] [E: packages/coding-agent/test/plan-mode-extension.test.ts:113] [E: packages/coding-agent/test/plan-mode-extension.test.ts:119].
 
 ## 7 execute() 走读
 

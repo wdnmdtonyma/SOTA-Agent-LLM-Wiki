@@ -2,7 +2,7 @@
 
 batch: tui
 node: ref.tui.key-codes
-updated: 3da591ab
+updated: cee5ff7520
 
 本轮未登记需要同步到 `reference/uncertainty.md` 的 `[U]` 项。
 
