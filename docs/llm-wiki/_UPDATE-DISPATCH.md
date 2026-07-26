@@ -1,4 +1,4 @@
-# UPDATE DISPATCH — LLM Wiki 三仓增量更新总令(2026-07-01)
+# UPDATE DISPATCH — LLM Wiki 三仓增量更新总令(2026-07-26)
 
 > 给执行更新的 **codex** 会话读。本文件是三个 wiki(`codex` / `opencode` / `pi`)这一轮增量更新的总调度。
 > 每个 wiki 的**逐节点工作清单**在各自的 `docs/llm-wiki/<wiki>/_UPDATE-SCOPE.md`(附录 A 是自动生成的分级表)。
@@ -6,22 +6,26 @@
 
 ## 背景
 
-三个上游 submodule 已 checkout 到最新 HEAD(父仓 commit `c3ebd35`)。各 wiki 的 `index.json` 仍 verified 在**旧** HEAD;本轮任务就是把 wiki 追到新 HEAD。基线/目标 SHA 见下表与各 `_UPDATE-SCOPE.md`。
+三个上游 submodule 先在父仓 commit `ae45606` 钉到 2026-07-26 首轮观察值;收尾复拉时 Pi 又快进 1 个 README-only commit，因此最终目标抬到 `cee5ff7520`。各 wiki 已完成上一轮 2026-07-19 基线;本轮任务是把 wiki 从该基线追到最终 HEAD。官方身份、release、compare 与结构性断点的独立核验见 `../research/2026-07-26-codex-opencode-pi-upstream.md`;基线/目标 SHA 见下表与各 `_UPDATE-SCOPE.md`。
 
-| wiki | 上游分支 | 基线(wiki)→ 目标(新 HEAD) | commit | 节点总数 | A-BROKEN | B-HEAVY | C-DRIFT | D-CLEAN | **需动手(A+B+C)** |
+| wiki | 上游分支 | 基线(wiki)→ 目标(新 HEAD) | commit | 基线节点 | A-BROKEN | B-HEAVY | C-DRIFT | D-CLEAN | **需动手(A+B+C)** |
 |---|---|---|---|---|---|---|---|---|---|
-| **pi** | `main` | `5a073885` → `8c943640` | 34 | 176 | 0 | 0 | 38 | 138 | **38** |
-| **codex** | `main` | `5670360009` → `db887d03e1` | 328 | 171 | 1 | 4 | 151 | 15 | **156** |
-| **opencode** | `dev` | `355a0bcf5` → `8b68dc0d7` | 514 | 183 | 22 | 0 | 137 | 24 | **159** |
-| **合计** | | | 876 | 530 | 23 | 4 | 326 | 177 | **353** |
+| **codex** | `main` | `4d7a5c7c73` → `61a44880a8` | 275 | 172 | 3 | 3 | 150 | 16 | **156** |
+| **opencode** | `dev` | `67caf894e` → `7534d23551` | 101 | 186 | 0 | 0 | 27 | 159 | **27** |
+| **pi** | `main` | `3da591ab` → `cee5ff7520` | 124 | 180 | 12 | 1 | 121 | 46 | **134** |
+| **合计** | | | 500 | 538 | 15 | 4 | 298 | 221 | **317** |
 
-分级含义(详见各 `_UPDATE-SCOPE.md` 附录 A):**A-BROKEN**=引用了已删/移文件,必改 source 列;**B-HEAVY**=无删除但 churn≥2000 行;**C-DRIFT**=轻中度行漂移,重核 `[E:path:line]` 行号;**D-CLEAN**=源全未变,仅快速复核 + bump `updated`。
+分级含义(详见各 `_UPDATE-SCOPE.md` 附录 A):**A-BROKEN**=引用了已删/移文件,必改 source 列或退役节点;**B-HEAVY**=无删除但 source churn≥2000 行;**C-DRIFT**=轻中度行漂移,重核 `[E:path:line]` 行号;**D-CLEAN**=已登记 source 全未变,仍需快速复核 + bump `updated`。表中是更新前节点集合的精确 source 路径扫描;新增目录/能力另做语义扫描。
 
-## 推荐执行顺序(由易到难,让流程先热起来)
+更新后 verified 节点为 Codex 172（退役 2、新增 2）、OpenCode 188（新增 2）、Pi 186（新增 6），合计 546。
 
-1. **pi**(最轻,~半天):0 结构性失效,改动几乎全是 `packages/ai/src/providers/*.models.ts`(自动生成的模型目录)。38 个 C-DRIFT 集中在 `ref.ai.*` 目录型 reference 节点 + 少量 ai 子系统;138 个 D-CLEAN 走快速复核。先拿它把「读 RUN.md → 改节点 → lint → reconcile」的流程跑顺。
-2. **codex**(量大但机械):唯一 1 个 A-BROKEN 已定位(`jsonrpc_lite.rs` → `rpc.rs`,节点 `rpc.overview`)。其余是 4 个 B-HEAVY + 151 个 C-DRIFT——**路径基本稳,主要是重核行号**,可按 `_UPDATE-SCOPE.md` §3 的分组切多个并发会话。
-3. **opencode**(最重,放最后):22 个 A-BROKEN 要先修(其中 ~6 个是 `groups/*` 移到 `packages/protocol/` 的机械路径修,~7 个是 v2 core 真删除、要读新结构重定位)。v1/v2 + plugin 系统在活跃重构,churn 面最广。等前两个把流程磨顺再啃。
+## 本轮执行分工
+
+三个 wiki 由三个独立 Codex worktree 并行更新,主会话负责钉住 submodule、合入、复核与最终提交:
+
+1. **pi(结构变化最集中)**:`packages/orchestrator`→`packages/server`;新增 `packages/storage/sqlite-node`、private `packages/evals`、AgentHarness execution tools 与 constrained sampling。先修 12 个失效 source,再更新 package topology、模型目录/OAuth/RPC/compaction。
+2. **codex(覆盖面最广)**:退役 `spawn_agents_on_csv`/`report_agent_job_result`;重定位 HTTP client;重点重读 paginated thread history、MCP runtime、multi-agent、remote code-mode、plugins、app-server protocol、network policy 与 TUI。
+3. **opencode(结构断点最少)**:已登记 source 无删除;重点不是普通行漂移,而是 app 的 legacy/current 双协议迁移、session timeline/event transport、provider reasoning/cache、repository cache 与 grep symlink 语义。
 
 ## 每个 wiki 的执行闭环
 
@@ -43,10 +47,10 @@
 
 ## 完成定义(整轮)
 
-- 三个 `index.json` 均无 `planned`,顶层 `updated` 分别为 `8c943640` / `db887d03e1` / `8b68dc0d7`。
+- 三个 `index.json` 共 546 个节点且均无 `planned`,顶层 `updated` 分别为 `61a44880a8`(codex)/ `7534d23551`(opencode)/ `cee5ff7520`(pi)。
 - 每个节点 frontmatter `updated` = 对应新短 SHA;A-BROKEN 的 source 列已修;载重论断有可核到的 `[E:path:line]`。
 - 三个 `node tools/lint.mjs` 全绿;`reference/uncertainty.md` 汇总本轮全部 `[U]`。
-- 新增子系统/工具(如 codex 的 `code-mode-protocol`/`connectors`、opencode 的 v2 plugin)已判定「建新节点」或「本轮跳过并在此记一笔」。
+- 新增/退役面(Codex agent-jobs/remote code-mode/Agent Plugins;OpenCode app hybrid migration;Pi server/SQLite/evals/harness tools/constrained sampling)均已判定「建新节点」「并入既有」「退役」或「明确跳过」。
 
 ## git 隔离坑(务必)
 
