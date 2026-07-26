@@ -3,12 +3,12 @@ id: subsys.exec-sandbox.process-hardening
 title: process hardening
 kind: subsystem
 tier: T2
-source: [codex-rs/process-hardening/src/lib.rs]
-symbols: [pre_main_hardening]
+source: [codex-rs/process-hardening/src/lib.rs, codex-rs/utils/pty/src/win/job.rs]
+symbols: [pre_main_hardening, JobObject, JobObject::create, JobObject::preserve_descendants, JobObject::terminate]
 related: [spine.process-lifecycle, subsys.exec-sandbox.overview, subsys.exec-sandbox.arg0-dispatch]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > process hardening 是 Codex 进程 main 之前的 best-effort defense layer:Linux 关闭 dumpability、禁 core dump、移除 `LD_` env；FreeBSD/OpenBSD 禁 core dump 并移除 `LD_` env；macOS deny attach、禁 core dump、移除 `DYLD_` env；Windows 当前是 no-op。[E: codex-rs/process-hardening/src/lib.rs:12][E: codex-rs/process-hardening/src/lib.rs:14][E: codex-rs/process-hardening/src/lib.rs:44][E: codex-rs/process-hardening/src/lib.rs:56][E: codex-rs/process-hardening/src/lib.rs:60][E: codex-rs/process-hardening/src/lib.rs:75][E: codex-rs/process-hardening/src/lib.rs:77][E: codex-rs/process-hardening/src/lib.rs:83][E: codex-rs/process-hardening/src/lib.rs:85][E: codex-rs/process-hardening/src/lib.rs:95][E: codex-rs/process-hardening/src/lib.rs:99][E: codex-rs/process-hardening/src/lib.rs:120]
@@ -24,6 +24,8 @@ updated: 4d7a5c7c73
 ## 职责边界
 
 process hardening 节点只覆盖 `codex-rs/process-hardening/src/lib.rs` 中的进程级预启动防护。它不创建 sandbox，也不修改命令执行 policy；它保护的是当前 Codex 进程自身被 dump、attach 或通过 loader env 注入的风险面。[I]
+
+Windows PTY 的 `JobObject` 是相邻的 child-process lifecycle 防护，不属于 `pre_main_hardening`：前者约束 spawned process tree，后者在 Windows 仍是 no-op。本页一并记录它，是为了避免把 “Windows pre-main no-op” 误读为 Windows child cleanup 也没有保护。[E: codex-rs/process-hardening/src/lib.rs:119][E: codex-rs/process-hardening/src/lib.rs:120][E: codex-rs/utils/pty/src/win/job.rs:17][E: codex-rs/utils/pty/src/win/job.rs:27]
 
 ## 关键 crate/文件
 
@@ -44,6 +46,12 @@ process hardening 节点只覆盖 `codex-rs/process-hardening/src/lib.rs` 中的
 7. `remove_env_vars_with_prefix` 遍历 `env_keys_with_prefix(std::env::vars_os(), prefix)` 的结果并调用 `remove_var`；prefix matching 在 helper 中以 raw bytes 执行。[E: codex-rs/process-hardening/src/lib.rs:125][E: codex-rs/process-hardening/src/lib.rs:126][E: codex-rs/process-hardening/src/lib.rs:128][E: codex-rs/process-hardening/src/lib.rs:134][E: codex-rs/process-hardening/src/lib.rs:140][E: codex-rs/process-hardening/src/lib.rs:142]
 8. Windows `pre_main_hardening_windows` 当前只有 TODO 和 no-op body。[E: codex-rs/process-hardening/src/lib.rs:119][E: codex-rs/process-hardening/src/lib.rs:120]
 
+## Windows PTY process tree
+
+`JobObject::create` 建立 Windows Job Object，默认同时设置 `KILL_ON_JOB_CLOSE` 和 `BREAKAWAY_OK`；将 root process 分配进去后，关闭最后一个 handle 或显式 `terminate()` 会清理 job 中的 process tree。[E: codex-rs/utils/pty/src/win/job.rs:17][E: codex-rs/utils/pty/src/win/job.rs:27][E: codex-rs/utils/pty/src/win/job.rs:34][E: codex-rs/utils/pty/src/win/job.rs:59][E: codex-rs/utils/pty/src/win/job.rs:98][E: codex-rs/utils/pty/src/win/job.rs:107]
+
+正常 root exit 若要保留后台 descendants，可调用 `preserve_descendants()` 去掉 kill-on-close，只保留 breakaway；同一 mutex 把 preserve/terminate 的 state check 与 OS API 调用串行化，先取得 lock 的操作决定保留或终止。assignment 不是 retroactive，分配完成前已创建的 descendants 不保证进入 job。[E: codex-rs/utils/pty/src/win/job.rs:19][E: codex-rs/utils/pty/src/win/job.rs:59][E: codex-rs/utils/pty/src/win/job.rs:73][E: codex-rs/utils/pty/src/win/job.rs:83][E: codex-rs/utils/pty/src/win/job.rs:92][E: codex-rs/utils/pty/src/win/job.rs:99][E: codex-rs/utils/pty/src/win/job.rs:103]
+
 ## 设计动机与权衡
 
 - Linux/macOS 对 attach/dump/core-limit hardening failure 都选择显式退出，退出码分别由 `PRCTL_FAILED_EXIT_CODE`、`PTRACE_DENY_ATTACH_FAILED_EXIT_CODE`、`SET_RLIMIT_CORE_FAILED_EXIT_CODE` 常量定义。[E: codex-rs/process-hardening/src/lib.rs:28][E: codex-rs/process-hardening/src/lib.rs:31][E: codex-rs/process-hardening/src/lib.rs:41][E: codex-rs/process-hardening/src/lib.rs:52][E: codex-rs/process-hardening/src/lib.rs:91][E: codex-rs/process-hardening/src/lib.rs:115]
@@ -59,6 +67,7 @@ process hardening 节点只覆盖 `codex-rs/process-hardening/src/lib.rs` 中的
 ## Sources
 
 - `codex-rs/process-hardening/src/lib.rs`
+- `codex-rs/utils/pty/src/win/job.rs`
 
 ## 相关
 

@@ -3,83 +3,64 @@ id: spine.trace-mcp-call
 title: trace: MCP call
 kind: flow
 tier: T0
-source: [codex-rs/core/src/session/turn.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/core/src/mcp_tool_call.rs, codex-rs/codex-mcp/src/connection_manager.rs, codex-rs/rmcp-client/src/rmcp_client.rs]
-symbols: [add_mcp_runtime_tools, handle_mcp_tool_call, McpConnectionManager::call_tool]
-related: [spine.tool-call-anatomy, spine.turn-end-to-end, tool.list-mcp-resources, ref.protocol-event-lifecycle]
+source: [codex-rs/core/src/session/mcp.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/core/src/mcp_tool_call.rs, codex-rs/codex-mcp/src/runtime.rs, codex-rs/codex-mcp/src/binding.rs, codex-rs/codex-mcp/src/rmcp_client.rs]
+symbols: [mcp_runtime_for_step, add_mcp_runtime_tools, handle_mcp_tool_call, PreparedMcpCall::call_with_preparation]
+related: [spine.tool-call-anatomy, spine.turn-end-to-end, subsys.mcp.client, tool.list-mcp-resources, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> MCP call trace 从 `built_tools` 把 direct/deferred MCP tool info 交给 `spec_plan` 注册开始；模型返回 namespaced `FunctionCall` 后，registry 命中 `McpHandler`，再由 `handle_mcp_tool_call` 处理 approval、request metadata、`McpConnectionManager::call_tool` 和 result sanitization。[E: codex-rs/core/src/session/turn.rs:1134][E: codex-rs/core/src/tools/spec_plan.rs:885][E: codex-rs/core/src/tools/router.rs:114][E: codex-rs/core/src/tools/handlers/mcp.rs:120][E: codex-rs/core/src/mcp_tool_call.rs:114]
+> 一次 MCP tool call 有两个 binding 边界：sampling step 的 binding 决定模型看到的 tool spec；执行前会再次 refresh，并从 call-time current binding 解析同名 tool 的 approval metadata、config 与 exact client。revision guard 只保护后一个 prepared call 到发送之间的窗口。
 
-## 能回答的问题
-
-- MCP resource tools 与 MCP runtime tools 在 `spec_plan.rs` 中如何注册？
-- 当前 router 是否生成专门的 MCP payload？
-- `McpHandler` 如何把 Function payload 转成 MCP tool call？
-- MCP approval、metadata、sandbox state 和 image sanitization 在哪里发生？
-- 最终 JSON-RPC `tools/call` 从哪里发出？
+## 流程
 
 ```mermaid
 flowchart TD
-    TURN["built_tools"] --> PLAN["spec_plan"]
-    PLAN --> RESOURCE["list/read MCP resource handlers"]
-    PLAN --> HANDLER["McpHandler per direct/deferred tool"]
-    MODEL["ResponseItem::FunctionCall(namespace,name)"] --> ROUTER["ToolRouter::build_tool_call"]
-    ROUTER --> PAYLOAD["ToolPayload::Function"]
-    PAYLOAD --> REGISTRY["ToolRegistry"]
-    REGISTRY --> HANDLER
-    HANDLER --> TRACE["handle_mcp_tool_call"]
-    TRACE --> APPROVAL["MCP approval / app policy"]
-    TRACE --> META["request _meta + sandbox state"]
-    META --> SESSION["McpConnectionManager::call_tool"]
-    SESSION --> RMCP["rmcp_client tools/call"]
+    STEP["sampling step"] --> REFRESH["refresh_mcp_if_dirty"]
+    REFRESH --> BINDING["McpBinding: frozen tools + prepared calls"]
+    BINDING --> PLAN["spec_plan / McpHandler (ToolInfo + spec)"]
+    MODEL["FunctionCall(namespace, name)"] --> ROUTER["ToolRouter"]
+    ROUTER --> HANDLER["McpHandler"]
+    HANDLER --> REFRESH2["refresh_mcp_if_dirty"]
+    REFRESH2 --> CURRENT["current_binding"]
+    CURRENT --> PREPARED["prepare_call(server, tool)"]
+    PREPARED --> APPROVAL["policy / approval / metadata"]
+    APPROVAL --> REVISION["catalog revision check"]
+    REVISION --> RMCP["exact RmcpClient tools/call"]
 ```
 
 ## 端到端步骤
 
-1. `run_sampling_request` 调用 `built_tools`，tool router 随后用于 prompt build；该入口把当前 turn 的 MCP exposure 纳入工具系统。[E: codex-rs/core/src/session/turn.rs:1134][E: codex-rs/core/src/session/turn.rs:1162]
-2. `add_mcp_resource_tools` 在 `context.mcp_tools.is_some()` 时注册 list resources、list resource templates 和 read resource handlers。[E: codex-rs/core/src/tools/spec_plan.rs:693][E: codex-rs/core/src/tools/spec_plan.rs:695][E: codex-rs/core/src/tools/spec_plan.rs:696][E: codex-rs/core/src/tools/spec_plan.rs:697]
-3. `add_mcp_runtime_tools` 对 direct MCP tools 调 `McpHandler::new(tool.clone())` 并 direct 注册；对 deferred MCP tools 用同一 handler 加 `ToolExposure::Deferred`。[E: codex-rs/core/src/tools/spec_plan.rs:885][E: codex-rs/core/src/tools/spec_plan.rs:889][E: codex-rs/core/src/tools/spec_plan.rs:898][E: codex-rs/core/src/tools/spec_plan.rs:901]
-4. `ToolRouter::build_tool_call` 对 `ResponseItem::FunctionCall { name, namespace, arguments, call_id }` 构造 `ToolName::new(namespace, name)` 和 `ToolPayload::Function { arguments }`；当前 MCP 身份由 registry 中的 `McpHandler` 处理。[E: codex-rs/core/src/tools/router.rs:112][E: codex-rs/core/src/tools/router.rs:114][E: codex-rs/core/src/tools/router.rs:121][E: codex-rs/core/src/tools/router.rs:125]
-5. `McpHandler::new` 生成 tool spec；handler 的 `tool_name()` 返回 `tool_info.canonical_tool_name()`，因此 registry 用 canonical MCP tool name 匹配 router 产出的 namespaced `ToolName`。[E: codex-rs/core/src/tools/handlers/mcp.rs:37][E: codex-rs/core/src/tools/handlers/mcp.rs:39][E: codex-rs/core/src/tools/handlers/mcp.rs:67][E: codex-rs/core/src/tools/handlers/mcp.rs:69]
-6. `McpHandler` 只接受 `ToolPayload::Function`；它把 arguments、server name、server-local tool name 和 hook tool name 传入 `handle_mcp_tool_call`。[E: codex-rs/core/src/tools/handlers/mcp.rs:120][E: codex-rs/core/src/tools/handlers/mcp.rs:134][E: codex-rs/core/src/tools/handlers/mcp.rs:145][E: codex-rs/core/src/tools/handlers/mcp.rs:149][E: codex-rs/core/src/tools/handlers/mcp.rs:151]
-7. `handle_mcp_tool_call` 解析 JSON arguments；空字符串允许为 None，无效 JSON 直接返回 error text result。[E: codex-rs/core/src/mcp_tool_call.rs:114][E: codex-rs/core/src/mcp_tool_call.rs:127][E: codex-rs/core/src/mcp_tool_call.rs:127][E: codex-rs/core/src/mcp_tool_call.rs:130][E: codex-rs/core/src/mcp_tool_call.rs:134]
-8. handler 查询 MCP metadata，并对 Codex Apps MCP server 用 app tool policy evaluator 计算 policy input。[E: codex-rs/core/src/mcp_tool_call.rs:148][E: codex-rs/core/src/mcp_tool_call.rs:174][E: codex-rs/core/src/mcp_tool_call.rs:178][E: codex-rs/core/src/mcp_tool_call.rs:179]
-9. MCP begin item 在 approval 前发送；`notify_mcp_tool_call_started` 构造 `TurnItem::McpToolCall`，状态为 `InProgress`。[E: codex-rs/core/src/mcp_tool_call.rs:244][E: codex-rs/core/src/mcp_tool_call.rs:253][E: codex-rs/core/src/mcp_tool_call.rs:893][E: codex-rs/core/src/mcp_tool_call.rs:905][E: codex-rs/core/src/mcp_tool_call.rs:916]
-10. `maybe_request_mcp_tool_approval` 在 permission prompt 自动批准时返回 None；如果 annotations 不要求 approval 且 mode 不是 Prompt，也返回 None；否则会走 permission hooks、guardian 或 prompt options。[E: codex-rs/core/src/mcp_tool_call.rs:1216][E: codex-rs/core/src/mcp_tool_call.rs:1228][E: codex-rs/core/src/mcp_tool_call.rs:1235][E: codex-rs/core/src/mcp_tool_call.rs:1238][E: codex-rs/core/src/mcp_tool_call.rs:1227][E: codex-rs/core/src/mcp_tool_call.rs:1255][E: codex-rs/core/src/mcp_tool_call.rs:1285][E: codex-rs/core/src/mcp_tool_call.rs:1307]
-11. approved/no-prompt path 会 rewrite OpenAI file inputs，构造 request meta，然后进入 `execute_mcp_tool_call`；completed path 会发送 MCP completion event 并记录 metrics。[E: codex-rs/core/src/mcp_tool_call.rs:396][E: codex-rs/core/src/mcp_tool_call.rs:412][E: codex-rs/core/src/mcp_tool_call.rs:414][E: codex-rs/core/src/mcp_tool_call.rs:446][E: codex-rs/core/src/mcp_tool_call.rs:459]
-12. `execute_mcp_tool_call` 把 thread id 写入 request meta，并在 server 支持 sandbox-state capability 时注入 permission profile、linux sandbox exe、cwd 和 legacy landlock flag。[E: codex-rs/core/src/mcp_tool_call.rs:581][E: codex-rs/core/src/mcp_tool_call.rs:592][E: codex-rs/core/src/mcp_tool_call.rs:722][E: codex-rs/core/src/mcp_tool_call.rs:729][E: codex-rs/core/src/mcp_tool_call.rs:744]
-13. MCP call 最终通过 `McpConnectionManager::call_tool(server, tool, arguments, meta)` 委托到 managed RMCP client；rmcp client 要求 arguments 和 `_meta` 都是 JSON object，随后发 `tools/call` service operation。[E: codex-rs/core/src/mcp_tool_call.rs:606][E: codex-rs/core/src/mcp_tool_call.rs:607][E: codex-rs/codex-mcp/src/connection_manager.rs:837][E: codex-rs/codex-mcp/src/connection_manager.rs:853][E: codex-rs/rmcp-client/src/rmcp_client.rs:605][E: codex-rs/rmcp-client/src/rmcp_client.rs:613][E: codex-rs/rmcp-client/src/rmcp_client.rs:622][E: codex-rs/rmcp-client/src/rmcp_client.rs:634]
-14. result 回来后，`sanitize_mcp_tool_result_for_model` 按模型是否支持 image input 处理结果；event copy 还会被 `truncate_mcp_tool_result_for_event` 控制大小。[E: codex-rs/core/src/mcp_tool_call.rs:600][E: codex-rs/core/src/mcp_tool_call.rs:849][E: codex-rs/core/src/mcp_tool_call.rs:859][E: codex-rs/core/src/mcp_tool_call.rs:876]
-15. skip/error path 会在需要时补发 begin，再发送 completed item，并返回 error text。[E: codex-rs/core/src/mcp_tool_call.rs:2206][E: codex-rs/core/src/mcp_tool_call.rs:2217][E: codex-rs/core/src/mcp_tool_call.rs:2227]
+1. `mcp_runtime_for_step` 比较 selected capability roots，必要时标记 runtime dirty，等待 refresh 完成后捕获最新 `McpBinding`；这一步发生在 model-visible tools 被构建之前。[E: codex-rs/core/src/session/mcp.rs:258][E: codex-rs/core/src/session/mcp.rs:279]
+2. binding 保存该 step 的冻结 `tools` 与 prepared-call map；planner 用 `tools` 创建 model-visible specs，但后续普通 MCP handler 不携带这个 binding。[E: codex-rs/codex-mcp/src/binding.rs:30][E: codex-rs/codex-mcp/src/binding.rs:36][E: codex-rs/codex-mcp/src/binding.rs:79][E: codex-rs/core/src/tools/handlers/mcp.rs:32]
+3. `add_mcp_resource_tools` 只在 binding 有 server 时注册 list/read resource handlers；`add_mcp_runtime_tools` 把 direct/deferred `ToolInfo` 注册为 `McpHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:722][E: codex-rs/core/src/tools/spec_plan.rs:726][E: codex-rs/core/src/tools/spec_plan.rs:919][E: codex-rs/core/src/tools/spec_plan.rs:935]
+4. 模型返回 namespaced `FunctionCall` 后，router 用 namespace/name 构造 `ToolName` 与 function payload；registry 通过 canonical MCP tool name 命中对应 handler。[E: codex-rs/core/src/tools/router.rs:128][E: codex-rs/core/src/tools/router.rs:141][E: codex-rs/core/src/tools/handlers/mcp.rs:67][E: codex-rs/core/src/tools/handlers/mcp.rs:69]
+5. `McpHandler` 只保存 `ToolInfo/spec`；收到 function payload 后只把 arguments、server 与 server-local tool name 交给 `handle_mcp_tool_call`，没有传 step binding 或 prepared call。[E: codex-rs/core/src/tools/handlers/mcp.rs:32][E: codex-rs/core/src/tools/handlers/mcp.rs:120][E: codex-rs/core/src/tools/handlers/mcp.rs:145][E: codex-rs/core/src/tools/handlers/mcp.rs:151]
+6. `handle_mcp_tool_call` 解析 JSON 后先 `refresh_mcp_if_dirty()`，从 runtime 的 `current_binding()` 重新 `prepare_call(server, tool)`；最新 catalog 已无该 tool 时，在任何 started item 前返回 unavailable result。[E: codex-rs/core/src/mcp_tool_call.rs:119][E: codex-rs/core/src/mcp_tool_call.rs:143][E: codex-rs/core/src/mcp_tool_call.rs:144][E: codex-rs/core/src/mcp_tool_call.rs:145][E: codex-rs/core/src/mcp_tool_call.rs:149][E: codex-rs/core/src/mcp_tool_call.rs:157]
+7. 若 call-time lookup 成功，core 使用该 `PreparedMcpCall` 的 Apps policy、approval metadata、permission hooks/guardian/prompt，并准备 OpenAI file inputs、request `_meta` 与可选 sandbox state。[E: codex-rs/core/src/mcp_tool_call.rs:167][E: codex-rs/core/src/mcp_tool_call.rs:169][E: codex-rs/core/src/mcp_tool_call.rs:182][E: codex-rs/core/src/mcp_tool_call.rs:221][E: codex-rs/core/src/mcp_tool_call.rs:235][E: codex-rs/core/src/mcp_tool_call.rs:396][E: codex-rs/core/src/mcp_tool_call.rs:414][E: codex-rs/core/src/mcp_tool_call.rs:723][E: codex-rs/core/src/mcp_tool_call.rs:747]
+8. irreversible preparation 与发送进入 call-time `PreparedMcpCall::call_with_preparation`。prepared call 建立后、revision read guard 获取前若 catalog revision 已变化就拒绝；匹配时在 guard 内完成参数准备与 exact `ManagedClient` call，使 replacement 等待发送结束。[E: codex-rs/codex-mcp/src/binding.rs:248][E: codex-rs/codex-mcp/src/binding.rs:258][E: codex-rs/codex-mcp/src/binding.rs:265][E: codex-rs/codex-mcp/src/binding.rs:273]
+9. RMCP result 转成 Codex `CallToolResult` 后，core 按模型 image capability sanitize，并为 event copy 做大小截断，再发送 completed item。[E: codex-rs/codex-mcp/src/binding.rs:277][E: codex-rs/codex-mcp/src/binding.rs:290][E: codex-rs/core/src/mcp_tool_call.rs:850][E: codex-rs/core/src/mcp_tool_call.rs:877]
 
-## 关键决策点
+## 决策点
 
-- MCP approval 没有复用 shell/apply_patch 的 `ToolOrchestrator`；approval、app policy、permission hooks 和 guardian flow 在 `mcp_tool_call.rs` 内部实现。[E: codex-rs/core/src/mcp_tool_call.rs:253][E: codex-rs/core/src/mcp_tool_call.rs:1216][I]
-- MCP direct tool 的 model-visible shape 是 namespaced Function tool，runtime handler identity 来自 `ToolInfo::canonical_tool_name()`。[E: codex-rs/core/src/tools/router.rs:121][E: codex-rs/core/src/tools/handlers/mcp.rs:69][I]
-- sandbox state 是 request metadata 的一部分，只有 server capability 显示支持时才注入。[E: codex-rs/core/src/mcp_tool_call.rs:729][E: codex-rs/core/src/mcp_tool_call.rs:733]
-
-## 深挖入口
-
-- `spine.tool-call-anatomy` 解释 FunctionCall 到 registry dispatch 的通用路径。
-- `tool.list-mcp-resources` 解释 MCP resource list/read tools。
-- `ref.protocol-event-lifecycle` 列出 MCP begin/end/approval 相关事件。
+- approval authority、server metadata、plugin provenance 与 client identity 来自执行前 current binding 生成的 prepared call，而不是广告时 binding。read guard 避免的是 prepare 后的 catalog replacement 穿透，不是整个 sampling step 的 refresh。[E: codex-rs/core/src/mcp_tool_call.rs:143][E: codex-rs/core/src/mcp_tool_call.rs:167][E: codex-rs/codex-mcp/src/binding.rs:258][I]
+- MCP approval 仍在 `mcp_tool_call.rs` 内实现，没有复用 shell/apply-patch 的 `ToolOrchestrator`。[E: codex-rs/core/src/mcp_tool_call.rs:235][E: codex-rs/core/src/mcp_tool_call.rs:1275][I]
+- resource tools 走 step binding，extension resource client follow latest，而普通 MCP call 在执行前 refresh 并取 current binding；见 `subsys.mcp.client`。[I]
 
 ## Sources
 
-- codex-rs/core/src/session/turn.rs
-- codex-rs/core/src/tools/spec_plan.rs
-- codex-rs/core/src/tools/router.rs
-- codex-rs/core/src/tools/handlers/mcp.rs
-- codex-rs/core/src/mcp_tool_call.rs
-- codex-rs/codex-mcp/src/connection_manager.rs
-- codex-rs/rmcp-client/src/rmcp_client.rs
+- `codex-rs/core/src/session/mcp.rs`
+- `codex-rs/core/src/tools/spec_plan.rs`
+- `codex-rs/core/src/tools/router.rs`
+- `codex-rs/core/src/tools/handlers/mcp.rs`
+- `codex-rs/core/src/mcp_tool_call.rs`
+- `codex-rs/codex-mcp/src/runtime.rs`
+- `codex-rs/codex-mcp/src/binding.rs`
+- `codex-rs/codex-mcp/src/rmcp_client.rs`
 
 ## 相关
 
+- [MCP client runtime](../subsystems/mcp/client.md)
 - [工具调用解剖](tool-call-anatomy.md)
 - [一次 turn 端到端](turn-end-to-end.md)
-- [list_mcp_resources 工具](../surface/tools/list-mcp-resources.md)
-- 索引 id：`ref.protocol-event-lifecycle`

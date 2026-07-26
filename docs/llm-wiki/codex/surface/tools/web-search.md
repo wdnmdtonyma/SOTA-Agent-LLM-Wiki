@@ -8,10 +8,10 @@ symbols: [ToolSpec::WebSearch, WebSearchToolOptions, create_web_search_tool, hos
 related: [spine.extension-system, tool.tool-search, tool.image-generation, subsys.providers.responses-api, subsys.core.tool-system, subsys.config-auth.features-system]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> `web_search` 是 Codex 发送给模型/provider 的 hosted Responses tool spec；当前源码在 `spec_plan.rs` 里把 hosted specs 直接追加到 model-visible spec 列表，而不是为 `web_search` 建本地 `ToolExecutor` runtime。[E: codex-rs/core/src/tools/spec_plan.rs:134][E: codex-rs/core/src/tools/spec_plan.rs:256][E: codex-rs/core/src/tools/spec_plan.rs:258]
+> `web_search` 是 Codex 发送给模型/provider 的 hosted Responses tool spec；当前源码在 `spec_plan.rs` 里把 hosted specs 直接追加到 model-visible spec 列表，而不是为 `web_search` 建本地 `ToolExecutor` runtime。[E: codex-rs/core/src/tools/spec_plan.rs:133][E: codex-rs/core/src/tools/spec_plan.rs:270][E: codex-rs/core/src/tools/spec_plan.rs:272]
 
 ## 能回答的问题
 
@@ -25,47 +25,47 @@ updated: 4d7a5c7c73
 
 | 项 | 值 | 证据 |
 |---|---|---|
-| wire name | `web_search` | `ToolSpec::WebSearch` 使用 serde rename `web_search`，`ToolSpec::name()` 对该变体返回 `web_search`。[E: codex-rs/tools/src/tool_spec.rs:34][E: codex-rs/tools/src/tool_spec.rs:59] |
-| ToolSpec 类型 | hosted `ToolSpec::WebSearch` | 该变体含 `external_web_access`、`indexed_web_access`、`filters`、`user_location`、`search_context_size`、`search_content_types` 字段。[E: codex-rs/tools/src/tool_spec.rs:34][E: codex-rs/tools/src/tool_spec.rs:37][E: codex-rs/tools/src/tool_spec.rs:39][E: codex-rs/tools/src/tool_spec.rs:47] |
+| wire name | `web_search` | `ToolSpec::WebSearch` 使用 serde rename `web_search`，`ToolSpec::name()` 对该变体返回 `web_search`。[E: codex-rs/tools/src/tool_spec.rs:36][E: codex-rs/tools/src/tool_spec.rs:61] |
+| ToolSpec 类型 | hosted `ToolSpec::WebSearch` | 该变体含 `external_web_access`、`indexed_web_access`、`filters`、`user_location`、`search_context_size`、`search_content_types` 字段。[E: codex-rs/tools/src/tool_spec.rs:36][E: codex-rs/tools/src/tool_spec.rs:39][E: codex-rs/tools/src/tool_spec.rs:41][E: codex-rs/tools/src/tool_spec.rs:49] |
 | 创建函数 | `create_web_search_tool(WebSearchToolOptions)` | `WebSearchToolOptions` 携带 mode/config/tool type；创建函数返回 `Option<ToolSpec>`。[E: codex-rs/core/src/tools/hosted_spec.rs:8][E: codex-rs/core/src/tools/hosted_spec.rs:14] |
-| 本地 handler | 无本地 Function handler | `hosted_specs` 由 `add_hosted_spec` 收集后直接 `specs.extend(hosted_specs)`；registry 只由 `runtimes` 构造。[E: codex-rs/core/src/tools/spec_plan.rs:134][E: codex-rs/core/src/tools/spec_plan.rs:256][E: codex-rs/core/src/tools/spec_plan.rs:258] |
-| response item | `ResponseItem::WebSearchCall` | protocol model 定义 `WebSearchCall { id: Option<ResponseItemId>, status, action, internal_chat_message_metadata_passthrough }`。[E: codex-rs/protocol/src/models.rs:972][E: codex-rs/protocol/src/models.rs:975][E: codex-rs/protocol/src/models.rs:978][E: codex-rs/protocol/src/models.rs:981][E: codex-rs/protocol/src/models.rs:984] |
+| 本地 handler | 无本地 Function handler | `hosted_specs` 由 `add_hosted_spec` 收集后直接 `specs.extend(hosted_specs)`；registry 只由 `runtimes` 构造。[E: codex-rs/core/src/tools/spec_plan.rs:133][E: codex-rs/core/src/tools/spec_plan.rs:270][E: codex-rs/core/src/tools/spec_plan.rs:272] |
+| response item | `ResponseItem::WebSearchCall` | protocol model 定义 `WebSearchCall { id: Option<ResponseItemId>, status, action, internal_chat_message_metadata_passthrough }`。[E: codex-rs/protocol/src/models.rs:967][E: codex-rs/protocol/src/models.rs:970][E: codex-rs/protocol/src/models.rs:973][E: codex-rs/protocol/src/models.rs:976][E: codex-rs/protocol/src/models.rs:979] |
 
 ## 2 注册与门控
 
-`add_tool_sources` 在 core/shell/MCP/extension/dynamic tools 之后，把 `hosted_model_tool_specs(context)` 的结果加入 `planned_tools.hosted_specs`。[E: codex-rs/core/src/tools/spec_plan.rs:579][E: codex-rs/core/src/tools/spec_plan.rs:617]
+`add_tool_sources` 在 core/shell/MCP/extension/dynamic tools 之后，把 `hosted_model_tool_specs(context)` 的结果加入 `planned_tools.hosted_specs`。[E: codex-rs/core/src/tools/spec_plan.rs:608][E: codex-rs/core/src/tools/spec_plan.rs:646]
 
 Hosted `web_search` 的核心 gate 是：
 
 | 条件 | 结果 | 证据 |
 |---|---|---|
-| Responses Lite | 不发 hosted specs | `hosted_model_tool_specs` 在 `use_responses_lite` 时直接返回空 vec。[E: codex-rs/core/src/tools/spec_plan.rs:288][E: codex-rs/core/src/tools/spec_plan.rs:292] |
-| standalone `web.run` 已可用 | 不发 hosted `web_search` | standalone 可用要求 `standalone_web_search_enabled` 且 extension executor 名为 `web.run`；随后 `web_search_mode` 只在 standalone 不可用且 provider 支持 web search 时取配置值。[E: codex-rs/core/src/tools/spec_plan.rs:296][E: codex-rs/core/src/tools/spec_plan.rs:305] |
-| provider 不支持 web search | 不发 hosted `web_search` | `web_search_mode` 的 `.then_some(...)` 同时要求 `turn_context.provider.capabilities().web_search`。[E: codex-rs/core/src/tools/spec_plan.rs:303][E: codex-rs/model-provider/src/provider.rs:34][E: codex-rs/model-provider/src/provider.rs:37] |
+| Responses Lite | 不发 hosted specs | `hosted_model_tool_specs` 在 `use_responses_lite` 时直接返回空 vec。[E: codex-rs/core/src/tools/spec_plan.rs:302][E: codex-rs/core/src/tools/spec_plan.rs:306] |
+| standalone `web.run` 已可用 | 不发 hosted `web_search` | standalone 可用要求 `standalone_web_search_enabled` 且 extension executor 名为 `web.run`；随后 `web_search_mode` 只在 standalone 不可用且 provider 支持 web search 时取配置值。[E: codex-rs/core/src/tools/spec_plan.rs:310][E: codex-rs/core/src/tools/spec_plan.rs:319] |
+| provider 不支持 web search | 不发 hosted `web_search` | `web_search_mode` 的 `.then_some(...)` 同时要求 `turn_context.provider.capabilities().web_search`。[E: codex-rs/core/src/tools/spec_plan.rs:317][E: codex-rs/model-provider/src/provider.rs:34][E: codex-rs/model-provider/src/provider.rs:37] |
 | mode 为 Disabled 或 None | `create_web_search_tool` 返回 `None` | mode match 中 `Disabled`/`None` 直接返回 `None`。[E: codex-rs/core/src/tools/hosted_spec.rs:15][E: codex-rs/core/src/tools/hosted_spec.rs:19] |
 
-Standalone web search 由 namespace tools 加 `use_responses_lite` 或 `Feature::StandaloneWebSearch` 开启；extension tool 发布阶段还会在 standalone 未开启或 web search mode 为 disabled 时跳过 `web.run`。[E: codex-rs/core/src/tools/spec_plan.rs:621][E: codex-rs/core/src/tools/spec_plan.rs:628][E: codex-rs/core/src/tools/spec_plan.rs:988][E: codex-rs/core/src/tools/spec_plan.rs:994]
-`Feature::StandaloneWebSearch` 的 key 是 `standalone_web_search`，stage 仍是 UnderDevelopment，默认关闭。[E: codex-rs/features/src/lib.rs:125][E: codex-rs/features/src/lib.rs:902][E: codex-rs/features/src/lib.rs:904][E: codex-rs/features/src/lib.rs:905]
+Standalone web search 由 namespace tools 加 `use_responses_lite` 或 `Feature::StandaloneWebSearch` 开启；extension tool 发布阶段还会在 standalone 未开启或 web search mode 为 disabled 时跳过 `web.run`。[E: codex-rs/core/src/tools/spec_plan.rs:650][E: codex-rs/core/src/tools/spec_plan.rs:658][E: codex-rs/core/src/tools/spec_plan.rs:1033][E: codex-rs/core/src/tools/spec_plan.rs:1039]
+`Feature::StandaloneWebSearch` 的 key 是 `standalone_web_search`，stage 仍是 UnderDevelopment，默认关闭。[E: codex-rs/features/src/lib.rs:129][E: codex-rs/features/src/lib.rs:935][E: codex-rs/features/src/lib.rs:937][E: codex-rs/features/src/lib.rs:938]
 
 ## 3 Tool Spec 字段
 
 | 字段 | 来源 | 说明 |
 |---|---|---|
 | `external_web_access` / `indexed_web_access` | `WebSearchMode` | `Cached` -> `(false, None)`，`Indexed` -> `(true, Some(true))`，`Live` -> `(true, None)`，`Disabled`/`None` -> 不生成 tool。[E: codex-rs/core/src/tools/hosted_spec.rs:15][E: codex-rs/core/src/tools/hosted_spec.rs:16][E: codex-rs/core/src/tools/hosted_spec.rs:17][E: codex-rs/core/src/tools/hosted_spec.rs:18][E: codex-rs/core/src/tools/hosted_spec.rs:19] |
-| `filters` | `WebSearchConfig.filters` | 通过 `Into` 转成 Responses API filters；config 侧当前只有 `allowed_domains`。[E: codex-rs/core/src/tools/hosted_spec.rs:32][E: codex-rs/core/src/tools/hosted_spec.rs:37][E: codex-rs/protocol/src/config_types.rs:402] |
-| `user_location` | `WebSearchConfig.user_location` | location 包括 `type/country/region/city/timezone`，`type` 默认 `Approximate`。[E: codex-rs/core/src/tools/hosted_spec.rs:38][E: codex-rs/core/src/tools/hosted_spec.rs:40][E: codex-rs/protocol/src/config_types.rs:411][E: codex-rs/protocol/src/config_types.rs:413][E: codex-rs/protocol/src/config_types.rs:418][E: codex-rs/protocol/src/config_types.rs:420][E: codex-rs/protocol/src/config_types.rs:424] |
-| `search_context_size` | `WebSearchConfig.search_context_size` | enum 值为 `Low/Medium/High`。[E: codex-rs/core/src/tools/hosted_spec.rs:41][E: codex-rs/core/src/tools/hosted_spec.rs:43][E: codex-rs/protocol/src/config_types.rs:337][E: codex-rs/protocol/src/config_types.rs:349][E: codex-rs/protocol/src/config_types.rs:350][E: codex-rs/protocol/src/config_types.rs:351] |
+| `filters` | `WebSearchConfig.filters` | 通过 `Into` 转成 Responses API filters；config 侧当前只有 `allowed_domains`。[E: codex-rs/core/src/tools/hosted_spec.rs:32][E: codex-rs/core/src/tools/hosted_spec.rs:37][E: codex-rs/protocol/src/config_types.rs:422] |
+| `user_location` | `WebSearchConfig.user_location` | location 包括 `type/country/region/city/timezone`，`type` 默认 `Approximate`。[E: codex-rs/core/src/tools/hosted_spec.rs:38][E: codex-rs/core/src/tools/hosted_spec.rs:40][E: codex-rs/protocol/src/config_types.rs:431][E: codex-rs/protocol/src/config_types.rs:433][E: codex-rs/protocol/src/config_types.rs:438][E: codex-rs/protocol/src/config_types.rs:440][E: codex-rs/protocol/src/config_types.rs:444] |
+| `search_context_size` | `WebSearchConfig.search_context_size` | enum 值为 `Low/Medium/High`。[E: codex-rs/core/src/tools/hosted_spec.rs:41][E: codex-rs/core/src/tools/hosted_spec.rs:43][E: codex-rs/protocol/src/config_types.rs:357][E: codex-rs/protocol/src/config_types.rs:369][E: codex-rs/protocol/src/config_types.rs:370][E: codex-rs/protocol/src/config_types.rs:371] |
 | `search_content_types` | `ModelInfo.web_search_tool_type` | `Text` 不填；`TextAndImage` 填 `["text", "image"]`。[E: codex-rs/core/src/tools/hosted_spec.rs:22][E: codex-rs/protocol/src/openai_models.rs:296][E: codex-rs/protocol/src/openai_models.rs:299] |
 
-用户配置会先解析为 `WebSearchConfig { filters, user_location, search_context_size }`；`WebSearchToolConfig` 的 `allowed_domains/location/context_size` 分别映射到这三个字段。[E: codex-rs/protocol/src/config_types.rs:376][E: codex-rs/protocol/src/config_types.rs:379][E: codex-rs/protocol/src/config_types.rs:447][E: codex-rs/protocol/src/config_types.rs:450][E: codex-rs/protocol/src/config_types.rs:455][E: codex-rs/protocol/src/config_types.rs:456]
+用户配置会先解析为 `WebSearchConfig { filters, user_location, search_context_size }`；`WebSearchToolConfig` 的 `allowed_domains/location/context_size` 分别映射到这三个字段。[E: codex-rs/protocol/src/config_types.rs:396][E: codex-rs/protocol/src/config_types.rs:399][E: codex-rs/protocol/src/config_types.rs:467][E: codex-rs/protocol/src/config_types.rs:470][E: codex-rs/protocol/src/config_types.rs:475][E: codex-rs/protocol/src/config_types.rs:476]
 
 ## 4 Runtime 与事件
 
-Provider 返回 `ResponseItem::WebSearchCall` 后，`parse_turn_item` 将它转换为 `TurnItem::WebSearch(WebSearchItem { id, query, action })`；没有 `action` 时 action 为 `Other`、query 为空字符串。[E: codex-rs/core/src/event_mapping.rs:218][E: codex-rs/core/src/event_mapping.rs:219][E: codex-rs/core/src/event_mapping.rs:221][E: codex-rs/protocol/src/items.rs:298][E: codex-rs/protocol/src/items.rs:299][E: codex-rs/protocol/src/items.rs:301]
+Provider 返回 `ResponseItem::WebSearchCall` 后，`parse_turn_item` 将它转换为 `TurnItem::WebSearch(WebSearchItem { id, query, action })`；没有 `action` 时 action 为 `Other`、query 为空字符串。[E: codex-rs/core/src/event_mapping.rs:221][E: codex-rs/core/src/event_mapping.rs:222][E: codex-rs/core/src/event_mapping.rs:224][E: codex-rs/protocol/src/items.rs:322][E: codex-rs/protocol/src/items.rs:323][E: codex-rs/protocol/src/items.rs:325]
 
-stream utils 把 `WebSearchCall` 视为普通 turn item 解析路径的一部分，同时把它标记为可能带外部上下文的 item，用于污染 memory mode。[E: codex-rs/core/src/stream_events_utils.rs:163][E: codex-rs/core/src/stream_events_utils.rs:454][E: codex-rs/core/src/stream_events_utils.rs:458]
+stream utils 把 `WebSearchCall` 视为普通 turn item 解析路径的一部分，同时把它标记为可能带外部上下文的 item，用于污染 memory mode。[E: codex-rs/core/src/stream_events_utils.rs:131][E: codex-rs/core/src/stream_events_utils.rs:422][E: codex-rs/core/src/stream_events_utils.rs:426]
 
-legacy event 表面仍有 `WebSearchBegin` 与 `WebSearchEnd`：begin event 只携带 `call_id`，end event 携带 `call_id/query/action`。[E: codex-rs/protocol/src/protocol.rs:1381][E: codex-rs/protocol/src/protocol.rs:1383][E: codex-rs/protocol/src/protocol.rs:2489][E: codex-rs/protocol/src/protocol.rs:2494][E: codex-rs/protocol/src/protocol.rs:2497]
+legacy event 表面仍有 `WebSearchBegin` 与 `WebSearchEnd`：begin event 只携带 `call_id`，end event 携带 `call_id/query/action`。[E: codex-rs/protocol/src/protocol.rs:1375][E: codex-rs/protocol/src/protocol.rs:1377][E: codex-rs/protocol/src/protocol.rs:2498][E: codex-rs/protocol/src/protocol.rs:2503][E: codex-rs/protocol/src/protocol.rs:2506]
 
 ## Sources
 

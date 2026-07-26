@@ -1,6 +1,6 @@
 # Codex 源码 LLM Wiki
 
-一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 OpenAI **Codex**(`Best/codex/`)的真实源码——一个 **124-crate Rust workspace**(`codex-rs/`)+ TypeScript/Python SDK + TUI/CLI/app-server 前端,细到每个工具的字段与设计动机。
+一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 OpenAI **Codex**(`Best/codex/`)的真实源码——一个 **126-crate Rust workspace**(`codex-rs/`)+ TypeScript/Python SDK + TUI/CLI/app-server 前端,细到每个工具的字段与设计动机。
 
 ## 这是 LLM wiki,不是书
 
@@ -16,7 +16,7 @@
 ## codex 的形态(决定本 wiki 的画像)
 
 - **真源码**:codex 是公开的真实工程,有 **git 历史、完整测试套件与 `docs/`**。所以证据以 `[E]` 为主、inferred 少;**staleness 用 git SHA**(不是 claude 那种内容 hash),节点 `updated:` 记 commit SHA。
-- **Rust 为主**:核心在 `codex-rs/`(124 个 workspace crate),前端含 TUI(`tui/`)、CLI(`cli/`)、app-server(`app-server/`,供 IDE/SDK 接入)。外围 SDK 在 `sdk/typescript`、`sdk/python`。
+- **Rust 为主**:核心在 `codex-rs/`(126 个 workspace crate),前端含 TUI(`tui/`)、CLI(`cli/`)、app-server(`app-server/`,供 IDE/SDK 接入)。外围 SDK 在 `sdk/typescript`、`sdk/python`。
 - **SQ/EQ 架构**:core 是 **Submission Queue → Event Queue** 的异步消息循环(`Op` 进、`EventMsg` 出),是全 wiki 的脊柱。
 - **范围**:**全 monorepo 同深度**——含 SDK、cloud-tasks、遥测、TUI 渲染细节、平台 crate,均逐子系统覆盖。
 
@@ -51,13 +51,13 @@ tools/            lint.mjs(L1 机械校验)· reconcile.mjs(登记新节点)
 
 ## 方法 & 状态
 
-逐节点循环:**大纲 → 人 review → 逐节点读源码填 → 独立 subagent 对照源码校验 → 修 → 直到整仓覆盖完**。当前 **172 个节点均已对照 `4d7a5c7c73` 复核并标记 verified**。
+逐节点循环:**大纲 → 人 review → 逐节点读源码填 → 独立 subagent 对照源码校验 → 修 → 直到整仓覆盖完**。当前 **172 个节点均已对照 `61a44880a8` 复核并标记 verified**。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱(8)+ worked traces(3) | 11 | ✅ verified |
-| T1 surface | tools(37)+ slash(6)+ cli(4)+ config(8)+ app-server(9)+ sdk(6) | 70 | ✅ verified |
-| T2 subsystems | core(19)/exec-sandbox(12)/mcp(6)/providers(10)/tui(9)/app-server(4)/config-auth(8)/cloud(3)/platform(8) | 79 | ✅ verified |
-| T3 reference | 协议 Op/Event catalog + session-tasks + 数据模型 + crate 索引(124)+ glossary 等 | 12 | ✅ verified |
+| T1 surface | tools(36)+ slash(6)+ cli(4)+ config(8)+ app-server(9)+ sdk(6) | 69 | ✅ verified |
+| T2 subsystems | core(20)/exec-sandbox(12)/mcp(6)/providers(10)/tui(9)/app-server(4)/config-auth(8)/cloud(3)/platform(8) | 80 | ✅ verified |
+| T3 reference | 协议 Op/Event catalog + session-tasks + 数据模型 + crate 索引(126)+ glossary 等 | 12 | ✅ verified |
 
 后续增量更新继续以 `tools/lint.mjs` 做 L1 机械校验，并按 `RUN.md` 对高 churn 节点执行源码重读与独立 L2 复核。

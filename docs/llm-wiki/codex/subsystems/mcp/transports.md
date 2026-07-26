@@ -8,7 +8,7 @@ symbols: [RmcpClient, TransportRecipe, StdioServerLauncher, LocalStdioServerLaun
 related: [subsys.mcp.client, subsys.mcp.oauth, subsys.mcp.server]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > MCP transports are owned by `rmcp-client`: stdio can run as a local child process or through the executor process API, while streamable HTTP uses default headers, optional bearer/runtime auth, optional stored OAuth, session-expiry recovery, and active-time timeouts around RMCP service operations.[E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:245][E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:475][E: codex-rs/rmcp-client/src/executor_process_transport.rs:159][E: codex-rs/rmcp-client/src/rmcp_client.rs:326]
@@ -23,22 +23,22 @@ updated: 4d7a5c7c73
 
 ## 职责边界
 
-`rmcp-client` owns transport construction and RMCP service calls; `codex-mcp/src/rmcp_client.rs::make_rmcp_client` owns config/environment selection and passes the chosen launcher or HTTP client into `RmcpClient`.[E: codex-rs/rmcp-client/src/rmcp_client.rs:336][E: codex-rs/rmcp-client/src/rmcp_client.rs:356][E: codex-rs/rmcp-client/src/rmcp_client.rs:391][E: codex-rs/codex-mcp/src/rmcp_client.rs:1016]
+`rmcp-client` owns transport construction and RMCP service calls; `codex-mcp/src/rmcp_client.rs::make_rmcp_client` owns config/environment selection and passes the chosen launcher or HTTP client into `RmcpClient`.[E: codex-rs/rmcp-client/src/rmcp_client.rs:336][E: codex-rs/rmcp-client/src/rmcp_client.rs:356][E: codex-rs/rmcp-client/src/rmcp_client.rs:391][E: codex-rs/codex-mcp/src/rmcp_client.rs:964]
 
-OAuth behavior is covered in `subsys.mcp.oauth`; this node only covers how OAuth-bearing transports are plugged into RMCP service operations.[E: codex-rs/rmcp-client/src/rmcp_client.rs:937]
+OAuth behavior is covered in `subsys.mcp.oauth`; this node only covers how OAuth-bearing transports are plugged into RMCP service operations.[E: codex-rs/rmcp-client/src/rmcp_client.rs:955]
 
 ## 关键文件
 
-- `codex-rs/rmcp-client/src/rmcp_client.rs`: transport recipes, client constructors, initialize, RMCP operations, pending transport creation, retry/recovery logic.[E: codex-rs/rmcp-client/src/rmcp_client.rs:326][E: codex-rs/rmcp-client/src/rmcp_client.rs:336][E: codex-rs/rmcp-client/src/rmcp_client.rs:356][E: codex-rs/rmcp-client/src/rmcp_client.rs:391][E: codex-rs/rmcp-client/src/rmcp_client.rs:430][E: codex-rs/rmcp-client/src/rmcp_client.rs:770][E: codex-rs/rmcp-client/src/rmcp_client.rs:976]
+- `codex-rs/rmcp-client/src/rmcp_client.rs`: transport recipes, client constructors, initialize, RMCP operations, pending transport creation, retry/recovery logic.[E: codex-rs/rmcp-client/src/rmcp_client.rs:326][E: codex-rs/rmcp-client/src/rmcp_client.rs:336][E: codex-rs/rmcp-client/src/rmcp_client.rs:356][E: codex-rs/rmcp-client/src/rmcp_client.rs:391][E: codex-rs/rmcp-client/src/rmcp_client.rs:430][E: codex-rs/rmcp-client/src/rmcp_client.rs:788][E: codex-rs/rmcp-client/src/rmcp_client.rs:994]
 - `codex-rs/rmcp-client/src/stdio_server_launcher.rs`: stdio launch abstraction, local child process launcher, executor process launcher, remote env policy.[E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:72][E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:95][E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:245][E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:449][E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:475][E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:568]
 - `codex-rs/rmcp-client/src/executor_process_transport.rs`: executor process stdin/stdout/stderr adapter for rmcp `Transport`.[E: codex-rs/rmcp-client/src/executor_process_transport.rs:159][E: codex-rs/rmcp-client/src/executor_process_transport.rs:164][E: codex-rs/rmcp-client/src/executor_process_transport.rs:175][E: codex-rs/rmcp-client/src/executor_process_transport.rs:178][E: codex-rs/rmcp-client/src/executor_process_transport.rs:182][E: codex-rs/rmcp-client/src/executor_process_transport.rs:185][E: codex-rs/rmcp-client/src/executor_process_transport.rs:232][E: codex-rs/rmcp-client/src/executor_process_transport.rs:279]
-- `codex-rs/rmcp-client/src/utils.rs`: local vs remote env construction and HTTP default-header construction.[E: codex-rs/rmcp-client/src/utils.rs:12][E: codex-rs/rmcp-client/src/utils.rs:27][E: codex-rs/rmcp-client/src/utils.rs:42][E: codex-rs/rmcp-client/src/utils.rs:60]
+- `codex-rs/rmcp-client/src/utils.rs`: local vs remote env construction and HTTP default-header construction.[E: codex-rs/rmcp-client/src/utils.rs:15][E: codex-rs/rmcp-client/src/utils.rs:30][E: codex-rs/rmcp-client/src/utils.rs:45][E: codex-rs/rmcp-client/src/utils.rs:63]
 
 ## Config selection
 
-- `make_rmcp_client` resolves server environment first, then branches on `McpServerTransportConfig::Stdio` or `StreamableHttp`.[E: codex-rs/codex-mcp/src/rmcp_client.rs:931][E: codex-rs/codex-mcp/src/rmcp_client.rs:1033][E: codex-rs/codex-mcp/src/rmcp_client.rs:1071]
-- Stdio uses `LocalStdioServerLauncher` for local environments and `ExecutorStdioServerLauncher` for non-local environments, then constructs `RmcpClient::new_stdio_client`.[E: codex-rs/codex-mcp/src/rmcp_client.rs:1048][E: codex-rs/codex-mcp/src/rmcp_client.rs:1056][E: codex-rs/codex-mcp/src/rmcp_client.rs:1061][E: codex-rs/codex-mcp/src/rmcp_client.rs:1067]
-- Streamable HTTP chooses a plain reqwest-backed HTTP client or the resolved environment's HTTP client, resolves any bearer token env var, then calls `RmcpClient::new_streamable_http_client`.[E: codex-rs/codex-mcp/src/rmcp_client.rs:1077][E: codex-rs/codex-mcp/src/rmcp_client.rs:1082][E: codex-rs/codex-mcp/src/rmcp_client.rs:1087]
+- `make_rmcp_client` resolves server environment first, then branches on `McpServerTransportConfig::Stdio` or `StreamableHttp`.[E: codex-rs/codex-mcp/src/rmcp_client.rs:930][E: codex-rs/codex-mcp/src/rmcp_client.rs:979][E: codex-rs/codex-mcp/src/rmcp_client.rs:1017]
+- Stdio uses `LocalStdioServerLauncher` for local environments and `ExecutorStdioServerLauncher` for non-local environments, then constructs `RmcpClient::new_stdio_client`.[E: codex-rs/codex-mcp/src/rmcp_client.rs:994][E: codex-rs/codex-mcp/src/rmcp_client.rs:1002][E: codex-rs/codex-mcp/src/rmcp_client.rs:1007][E: codex-rs/codex-mcp/src/rmcp_client.rs:1013]
+- Streamable HTTP chooses a plain reqwest-backed HTTP client or the resolved environment's HTTP client, resolves any bearer token env var, then calls `RmcpClient::new_streamable_http_client`.[E: codex-rs/codex-mcp/src/rmcp_client.rs:1023][E: codex-rs/codex-mcp/src/rmcp_client.rs:1028][E: codex-rs/codex-mcp/src/rmcp_client.rs:1033]
 
 ## Stdio transports
 
@@ -55,9 +55,9 @@ OAuth behavior is covered in `subsys.mcp.oauth`; this node only covers how OAuth
 
 ## Streamable HTTP and service operations
 
-- `create_pending_transport` builds default headers, loads stored OAuth tokens only when no bearer/runtime auth/Authorization header is present, creates an OAuth transport when possible, otherwise constructs streamable HTTP with optional bearer token and runtime auth provider.[E: codex-rs/rmcp-client/src/rmcp_client.rs:770][E: codex-rs/rmcp-client/src/rmcp_client.rs:796][E: codex-rs/rmcp-client/src/rmcp_client.rs:796][E: codex-rs/rmcp-client/src/rmcp_client.rs:895][E: codex-rs/rmcp-client/src/rmcp_client.rs:902]
-- `connect_pending_transport` passes every pending transport variant to `rmcp::service::serve_client`; only OAuth transport returns an `OAuthPersistor` to the ready state.[E: codex-rs/rmcp-client/src/rmcp_client.rs:916][E: codex-rs/rmcp-client/src/rmcp_client.rs:924][E: codex-rs/rmcp-client/src/rmcp_client.rs:937][E: codex-rs/rmcp-client/src/rmcp_client.rs:946]
-- `run_service_operation` wraps operations with active-time timeout, retries retryable streamable HTTP `tools/list` send errors, and reinitializes the transport once on session-expired 404 before retrying.[E: codex-rs/rmcp-client/src/rmcp_client.rs:186][E: codex-rs/rmcp-client/src/rmcp_client.rs:976][E: codex-rs/rmcp-client/src/rmcp_client.rs:1014][E: codex-rs/rmcp-client/src/rmcp_client.rs:1033][E: codex-rs/rmcp-client/src/rmcp_client.rs:1044][E: codex-rs/rmcp-client/src/rmcp_client.rs:1083][E: codex-rs/rmcp-client/src/rmcp_client.rs:1095][E: codex-rs/rmcp-client/src/rmcp_client.rs:1111][E: codex-rs/rmcp-client/src/rmcp_client.rs:1131]
+- `create_pending_transport` builds default headers, loads stored OAuth tokens only when no bearer/runtime auth/Authorization header is present, creates an OAuth transport when possible, otherwise constructs streamable HTTP with optional bearer token and runtime auth provider.[E: codex-rs/rmcp-client/src/rmcp_client.rs:788][E: codex-rs/rmcp-client/src/rmcp_client.rs:814][E: codex-rs/rmcp-client/src/rmcp_client.rs:814][E: codex-rs/rmcp-client/src/rmcp_client.rs:913][E: codex-rs/rmcp-client/src/rmcp_client.rs:920]
+- `connect_pending_transport` passes every pending transport variant to `rmcp::service::serve_client`; only OAuth transport returns an `OAuthPersistor` to the ready state.[E: codex-rs/rmcp-client/src/rmcp_client.rs:934][E: codex-rs/rmcp-client/src/rmcp_client.rs:942][E: codex-rs/rmcp-client/src/rmcp_client.rs:955][E: codex-rs/rmcp-client/src/rmcp_client.rs:964]
+- `run_service_operation` wraps operations with active-time timeout, retries retryable streamable HTTP `tools/list` send errors, and reinitializes the transport once on session-expired 404 before retrying.[E: codex-rs/rmcp-client/src/rmcp_client.rs:186][E: codex-rs/rmcp-client/src/rmcp_client.rs:994][E: codex-rs/rmcp-client/src/rmcp_client.rs:1032][E: codex-rs/rmcp-client/src/rmcp_client.rs:1051][E: codex-rs/rmcp-client/src/rmcp_client.rs:1062][E: codex-rs/rmcp-client/src/rmcp_client.rs:1101][E: codex-rs/rmcp-client/src/rmcp_client.rs:1113][E: codex-rs/rmcp-client/src/rmcp_client.rs:1129][E: codex-rs/rmcp-client/src/rmcp_client.rs:1149]
 
 ## Sources
 

@@ -8,7 +8,7 @@ symbols: [RealtimeCallClient, RealtimeCallResponse, RealtimeWebsocketClient, Rea
 related: [subsys.core.realtime-conversation, rpc.notifications-system]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > Codex 的 realtime platform control plane 现在集中在 `codex-api`：`RealtimeCallClient` 以 HTTP POST 交换 WebRTC SDP 并从响应取得 `call_id`，[E: codex-rs/codex-api/src/endpoint/realtime_call.rs:29][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:90][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:110][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:117][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:123][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:124] `RealtimeWebsocketClient` 则负责独立 realtime WebSocket 或加入既有 WebRTC call 的 sideband。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:697][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:706][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:712][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:729][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:778][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:783] 旧的本地 `realtime-webrtc` crate 已不再是该节点的实现来源。[I]

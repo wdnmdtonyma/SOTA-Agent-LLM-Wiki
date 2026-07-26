@@ -8,7 +8,7 @@ symbols: [create_spawn_agent_tool_v1, SpawnAgentHandler, multi_agents::spawn::Ha
 related: [tool.spawn-agent-v2, tool.send-input-v1, tool.wait-agent-v1, subsys.core.collaboration-modes]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > `spawn_agent` V1 是 `multi_agent_v1` namespace 下的子 agent 创建工具；当 collaboration tools 开启但 MultiAgentV2 分支未启用时注册。
@@ -23,9 +23,9 @@ updated: 4d7a5c7c73
 
 ## 注册与门控
 
-`add_collaboration_tools` 在 `collab_tools_enabled` 为 true 后分流：`multi_agent_v2_enabled` 为 false 时进入 V1 注册路径，注册 `SpawnAgentHandler`、`SendInputHandler`、`ResumeAgentHandler`、`WaitAgentHandler` 和 `CloseAgentHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:788][E: codex-rs/core/src/tools/spec_plan.rs:789][E: codex-rs/core/src/tools/spec_plan.rs:851][E: codex-rs/core/src/tools/spec_plan.rs:863][E: codex-rs/core/src/tools/spec_plan.rs:866][E: codex-rs/core/src/tools/spec_plan.rs:867]
+`add_collaboration_tools` 在 `collab_tools_enabled` 为 true 后分流：`multi_agent_v2_enabled` 为 false 时进入 V1 注册路径，注册 `SpawnAgentHandler`、`SendInputHandler`、`ResumeAgentHandler`、`WaitAgentHandler` 和 `CloseAgentHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:827][E: codex-rs/core/src/tools/spec_plan.rs:828][E: codex-rs/core/src/tools/spec_plan.rs:892][E: codex-rs/core/src/tools/spec_plan.rs:904][E: codex-rs/core/src/tools/spec_plan.rs:907][E: codex-rs/core/src/tools/spec_plan.rs:908]
 
-V1 exposure 在 search tool 和 namespace tools 同时开启时是 `Deferred`，否则是 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:846][E: codex-rs/core/src/tools/spec_plan.rs:847][E: codex-rs/core/src/tools/spec_plan.rs:849]
+V1 exposure 在 search tool 和 namespace tools 同时开启时是 `Deferred`，否则是 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:887][E: codex-rs/core/src/tools/spec_plan.rs:888][E: codex-rs/core/src/tools/spec_plan.rs:890]
 
 handler 提供 `search_info()`，其 source name/description 来自 `multi_agent_tool_search_info`。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:32][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:33][E: codex-rs/core/src/tools/handlers/multi_agents.rs:36][E: codex-rs/core/src/tools/handlers/multi_agents.rs:64]
 
@@ -33,9 +33,9 @@ handler 提供 `search_info()`，其 source name/description 来自 `multi_agent
 
 | 字段 | 必填 | 说明 |
 |---|---:|---|
-| `message` / `items` | 否，但二选一 | schema 同时提供 legacy plain-text `message` 和 structured `items`；runtime `parse_collab_input` 要求两者二选一，不能都传，也不能都缺。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:589][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:592][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:564][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:133][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:138][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:141] |
+| `message` / `items` | 否，但二选一 | schema 同时提供 legacy plain-text `message` 和 structured `items`；runtime `parse_collab_input` 要求两者二选一，不能都传，也不能都缺。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:589][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:592][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:564][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:136][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:141][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:144] |
 | `agent_type` | 否 | 非空白 agent type 会在非 full-history fork 分支应用 role config；full-history fork 只拒绝这个 role override。当配置没有 agent roles 时，spec 会隐藏该字段。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:75][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:76][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:56][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:60][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:93][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:104][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:105] |
-| `fork_context` | 否 | 默认 false；true 表示 full-history fork。此时继承父 agent type 并拒绝显式 `agent_type`，但 model / reasoning override 仍可按请求应用。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:603][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:605][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:93][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:94][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:96][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:104][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:205][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:210] |
+| `fork_context` | 否 | 默认 false；true 表示 full-history fork。此时继承父 agent type 并拒绝显式 `agent_type`，但 model / reasoning override 仍可按请求应用。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:603][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:605][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:93][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:94][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:96][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:104][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:208][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:213] |
 | `model` / `reasoning_effort` / `service_tier` | 否 | model/reasoning override 在 fork 与非 fork 路径都经公共 helper 验证并应用；`service_tier` 再经 service-tier helper 处理。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:610][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:616][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:623][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:90][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:96][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:107] |
 
 V1 schema 没有 required 字段，additional properties 为 false；这是因为 required 约束由 `parse_collab_input` 的二选一逻辑在 runtime 实现。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:96]
@@ -44,7 +44,7 @@ V1 schema 没有 required 字段，additional properties 为 false；这是因�
 
 handler 解析 arguments、生成 input preview、检查 agent depth limit，随后发送 spawn begin event。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:54][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:61][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:62][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:64][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:66][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:71]
 
-spawn config 来自父 turn 的 effective config；公共 helper 会刷新 model/provider/reasoning/developer instructions，并复制 approval policy、cwd、permission profile 等 runtime state。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:88][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:173][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:177][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:192][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:193][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:199][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:220][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:234]
+spawn config 来自父 turn 的 effective config；公共 helper 会刷新 model/provider/reasoning/developer instructions，并复制 approval policy、cwd、permission profile 等 runtime state。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:88][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:176][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:180][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:195][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:196][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:202][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:223][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:237]
 
 V1 spawn 调用 `spawn_agent_with_metadata`，但传给 `thread_spawn_source` 的 `task_name` 是 `None`，所以它返回 thread id 风格的 `agent_id`，不是 V2 canonical task path。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:116][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:119][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:213][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:214]
 

@@ -8,7 +8,7 @@ symbols: [parse_command, extract_shell_command, try_parse_word_only_commands_seq
 related: [tool.shell-command, subsys.exec-sandbox.execpolicy-dsl, subsys.exec-sandbox.shell-escalation]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > shell parsing subsystem 是 Codex 对 model-produced argv 的 conservative metadata/safety parser:它能归类 read/search/list-files 的常见命令，也能在复杂或危险形态出现时退回 `Unknown` 或要求 approval。[E: codex-rs/shell-command/src/parse_command.rs:30][E: codex-rs/shell-command/src/parse_command.rs:42][E: codex-rs/shell-command/src/parse_command.rs:44]
@@ -29,7 +29,7 @@ shell parsing 节点覆盖 `codex_shell_command` crate 的 metadata parsing 与 
 
 ## 关键 crate/文件
 
-- `codex-rs/shell-command/src/parse_command.rs`: public `parse_command`、shell command extraction、normalization、connector split、summaries。[E: codex-rs/shell-command/src/parse_command.rs:10][E: codex-rs/shell-command/src/parse_command.rs:16][E: codex-rs/shell-command/src/parse_command.rs:1275][E: codex-rs/shell-command/src/parse_command.rs:2074]
+- `codex-rs/shell-command/src/parse_command.rs`: public `parse_command`、shell command extraction、normalization、connector split、summaries。[E: codex-rs/shell-command/src/parse_command.rs:10][E: codex-rs/shell-command/src/parse_command.rs:16][E: codex-rs/shell-command/src/parse_command.rs:1275][E: codex-rs/shell-command/src/parse_command.rs:2075]
 - `codex-rs/shell-command/src/bash.rs`: tree-sitter-bash parser、plain word-only command subset、bash/sh/zsh command extraction。[E: codex-rs/shell-command/src/bash.rs:13][E: codex-rs/shell-command/src/bash.rs:29][E: codex-rs/shell-command/src/bash.rs:98]
 - `codex-rs/shell-command/src/powershell.rs`: PowerShell executable detection、`-Command/-c` script extraction、UTF-8 output prefix helper。[E: codex-rs/shell-command/src/powershell.rs:9][E: codex-rs/shell-command/src/powershell.rs:13][E: codex-rs/shell-command/src/powershell.rs:43]
 - `codex-rs/shell-command/src/command_safety/is_safe_command.rs`: Unix/common known-safe command allowlist 与 bash plain-command composite check。[E: codex-rs/shell-command/src/command_safety/is_safe_command.rs:10][E: codex-rs/shell-command/src/command_safety/is_safe_command.rs:47]
@@ -39,7 +39,7 @@ shell parsing 节点覆盖 `codex_shell_command` crate 的 metadata parsing 与 
 ## 数据模型
 
 - `ShellType`: shell detection 支持 `Zsh`、`Bash`、`PowerShell`、`Sh`、`Cmd`。[E: codex-rs/shell-command/src/shell_detect.rs:6][E: codex-rs/shell-command/src/shell_detect.rs:7][E: codex-rs/shell-command/src/shell_detect.rs:8][E: codex-rs/shell-command/src/shell_detect.rs:9][E: codex-rs/shell-command/src/shell_detect.rs:10][E: codex-rs/shell-command/src/shell_detect.rs:11][E: codex-rs/shell-command/src/shell_detect.rs:12]
-- `ParsedCommand` 由 `codex_protocol` 提供，shell parser 根据 command shape 构造 `Read`、`Search`、`ListFiles` 或 `Unknown`；unknown 一旦出现在 deduped list 中，public `parse_command` 会 collapse 为单个 `Unknown`。[E: codex-rs/shell-command/src/parse_command.rs:40][E: codex-rs/shell-command/src/parse_command.rs:44][E: codex-rs/shell-command/src/parse_command.rs:2074]
+- `ParsedCommand` 由 `codex_protocol` 提供，shell parser 根据 command shape 构造 `Read`、`Search`、`ListFiles` 或 `Unknown`；unknown 一旦出现在 deduped list 中，public `parse_command` 会 collapse 为单个 `Unknown`。[E: codex-rs/shell-command/src/parse_command.rs:40][E: codex-rs/shell-command/src/parse_command.rs:44][E: codex-rs/shell-command/src/parse_command.rs:2075]
 - `DangerousCommandMatch` 区分强制删除 `ForcedRm` 和其它危险规则 `Other`；`dangerous_command_match` 返回 `Option<DangerousCommandMatch>`，使调用方不只得到 bool，还能区分命中类型。[E: codex-rs/shell-command/src/command_safety/is_dangerous_command.rs:9][E: codex-rs/shell-command/src/command_safety/is_dangerous_command.rs:11][E: codex-rs/shell-command/src/command_safety/is_dangerous_command.rs:13][E: codex-rs/shell-command/src/command_safety/is_dangerous_command.rs:19]
 - `PowershellParseOutcome`: Windows PowerShell safety parser 的 AST child process 返回 `Commands(Vec<Vec<String>>)`、`Unsupported` 或 `Failed`。[E: codex-rs/shell-command/src/command_safety/powershell_parser.rs:37][E: codex-rs/shell-command/src/command_safety/powershell_parser.rs:39][E: codex-rs/shell-command/src/command_safety/powershell_parser.rs:40][E: codex-rs/shell-command/src/command_safety/powershell_parser.rs:41]
 
@@ -48,7 +48,7 @@ shell parsing 节点覆盖 `codex_shell_command` crate 的 metadata parsing 与 
 1. `parse_command` 先调用 `parse_command_impl`，去掉连续重复 command summary；如果任何 summary 是 `Unknown`，返回一个覆盖原始 command 的 `Unknown`。[E: codex-rs/shell-command/src/parse_command.rs:30][E: codex-rs/shell-command/src/parse_command.rs:33][E: codex-rs/shell-command/src/parse_command.rs:40][E: codex-rs/shell-command/src/parse_command.rs:44]
 2. `parse_command_impl` 优先尝试 `parse_shell_lc_commands`；如果是 PowerShell invocation，则直接把 script body 作为 `Unknown` 返回。[E: codex-rs/shell-command/src/parse_command.rs:1275][E: codex-rs/shell-command/src/parse_command.rs:1276][E: codex-rs/shell-command/src/parse_command.rs:1280][E: codex-rs/shell-command/src/parse_command.rs:1281]
 3. 非 shell wrapper command 会 normalize tokens，按 connector split，然后逐段 `summarize_main_tokens`；遇到 `cd` 会更新 effective cwd 并影响后续 Read path。[E: codex-rs/shell-command/src/parse_command.rs:1286][E: codex-rs/shell-command/src/parse_command.rs:1288][E: codex-rs/shell-command/src/parse_command.rs:1300][E: codex-rs/shell-command/src/parse_command.rs:1312]
-4. `parse_shell_lc_commands` 对 bash/zsh/sh script 使用 tree-sitter parse，再要求所有命令都属于 word-only safe subset；formatting helpers 会被 drop，剩余 command 再被 summary。[E: codex-rs/shell-command/src/parse_command.rs:1825]
+4. `parse_shell_lc_commands` 对 bash/zsh/sh script 使用 tree-sitter parse，再要求所有命令都属于 word-only safe subset；formatting helpers 会被 drop，剩余 command 再被 summary。[E: codex-rs/shell-command/src/parse_command.rs:1826]
 5. `try_parse_word_only_commands_sequence` 拒绝 tree-sitter parse error，只允许 `program/list/pipeline/command/command_name/word/string/raw_string/number/concatenation` 等 named node，并只允许 `&&`、`||`、`;`、`|`、quote tokens。[E: codex-rs/shell-command/src/bash.rs:30][E: codex-rs/shell-command/src/bash.rs:36][E: codex-rs/shell-command/src/bash.rs:52][E: codex-rs/shell-command/src/bash.rs:61][E: codex-rs/shell-command/src/bash.rs:69]
 6. `parse_shell_lc_literal_commands` 另走一条只用于 dangerous detection 的路径：它允许复杂但语法正确的 shell tree，收集每个 command node 的静态 literal words，略过 dynamic words 与 redirection；源码明确禁止用这个结果证明命令 safe。[E: codex-rs/shell-command/src/bash.rs:133][E: codex-rs/shell-command/src/bash.rs:137][E: codex-rs/shell-command/src/bash.rs:144][E: codex-rs/shell-command/src/bash.rs:145]
 7. `extract_bash_command` 只接受三段 argv `[shell, flag, script]`，flag 必须是 `-lc` 或 `-c`，shell type 必须是 zsh/bash/sh。[E: codex-rs/shell-command/src/bash.rs:98][E: codex-rs/shell-command/src/bash.rs:103][E: codex-rs/shell-command/src/bash.rs:109]
@@ -56,9 +56,9 @@ shell parsing 节点覆盖 `codex_shell_command` crate 的 metadata parsing 与 
 
 ## summary 分类
 
-- list-files: `ls/eza/exa`、`tree`、`du`、`rg --files`、`git ls-files`、`fd` without query、`find` without query、python walk patterns 都会被映射到 `ParsedCommand::ListFiles`。[E: codex-rs/shell-command/src/parse_command.rs:2104][E: codex-rs/shell-command/src/parse_command.rs:2115][E: codex-rs/shell-command/src/parse_command.rs:2159][E: codex-rs/shell-command/src/parse_command.rs:2201][E: codex-rs/shell-command/src/parse_command.rs:2217]
-- search: `rg/rga/ripgrep-all` without `--files`、`git grep`、`fd` with query、`find` with query、grep-like tools、`ag/ack/pt` 会被映射到 `ParsedCommand::Search`。[E: codex-rs/shell-command/src/parse_command.rs:2166][E: codex-rs/shell-command/src/parse_command.rs:2192][E: codex-rs/shell-command/src/parse_command.rs:2223]
-- read: `cat`、`bat/batcat`、`less`、`more`、`head`、`tail`、`awk` with data file、`nl` with file、`sed -n` with file 会被映射到 `ParsedCommand::Read`。[E: codex-rs/shell-command/src/parse_command.rs:2251][E: codex-rs/shell-command/src/parse_command.rs:2265][E: codex-rs/shell-command/src/parse_command.rs:2290][E: codex-rs/shell-command/src/parse_command.rs:2319][E: codex-rs/shell-command/src/parse_command.rs:2333][E: codex-rs/shell-command/src/parse_command.rs:2383][E: codex-rs/shell-command/src/parse_command.rs:2437][E: codex-rs/shell-command/src/parse_command.rs:2451][E: codex-rs/shell-command/src/parse_command.rs:2468]
+- list-files: `ls/eza/exa`、`tree`、`du`、`rg --files`、`git ls-files`、`fd` without query、`find` without query、python walk patterns 都会被映射到 `ParsedCommand::ListFiles`。[E: codex-rs/shell-command/src/parse_command.rs:2105][E: codex-rs/shell-command/src/parse_command.rs:2116][E: codex-rs/shell-command/src/parse_command.rs:2160][E: codex-rs/shell-command/src/parse_command.rs:2202][E: codex-rs/shell-command/src/parse_command.rs:2218]
+- search: `rg/rga/ripgrep-all` without `--files`、`git grep`、`fd` with query、`find` with query、grep-like tools、`ag/ack/pt` 会被映射到 `ParsedCommand::Search`。[E: codex-rs/shell-command/src/parse_command.rs:2167][E: codex-rs/shell-command/src/parse_command.rs:2193][E: codex-rs/shell-command/src/parse_command.rs:2224]
+- read: `cat`、`bat/batcat`、`less`、`more`、`head`、`tail`、`awk` with data file、`nl` with file、`sed -n` with file 会被映射到 `ParsedCommand::Read`。[E: codex-rs/shell-command/src/parse_command.rs:2252][E: codex-rs/shell-command/src/parse_command.rs:2266][E: codex-rs/shell-command/src/parse_command.rs:2291][E: codex-rs/shell-command/src/parse_command.rs:2320][E: codex-rs/shell-command/src/parse_command.rs:2334][E: codex-rs/shell-command/src/parse_command.rs:2384][E: codex-rs/shell-command/src/parse_command.rs:2438][E: codex-rs/shell-command/src/parse_command.rs:2452][E: codex-rs/shell-command/src/parse_command.rs:2469]
 
 ## safety 控制流
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Reconcile: 把各并发任务写在 node .md frontmatter 里的真实状态同步回 index.json
-// (status/source/symbols/related/title/kind/tier),登记 group 展开出的新节点,标记已展开 group,
+// (status/source/symbols/related/title/kind/tier/updated),登记 group 展开出的新节点,标记已展开 group,
 // 并把 _staging/uncertainty-*.md 合并进 reference/uncertainty.md。幂等,可重复跑。
 // 并发填充模型:codex 各批次只写自己的 .md(frontmatter 带 status)+ _staging/uncertainty-<batch>.md,
 // 从不碰 index.json/llms.txt;填完一波后由本脚本统一登记,再跑 lint.mjs。
@@ -75,7 +75,7 @@ ${uBody || '\n(暂无)\n'}`)
 // 2) 把 node 文件 frontmatter 同步进 index.json
 const index = JSON.parse(readFileSync(join(WIKI, 'index.json'), 'utf8'))
 const nodeByPath = new Map(index.nodes.map(n => [n.path, n]))
-let updated = 0, added = 0
+let updated = 0, added = 0, pruned = 0
 const issues = []
 for (const rel of TIER_DIRS.flatMap(walk)) {
   const fm = parseFront(readFileSync(join(WIKI, rel), 'utf8'))
@@ -83,15 +83,22 @@ for (const rel of TIER_DIRS.flatMap(walk)) {
   if (fm.path && fm.path !== rel) issues.push(`${rel}: frontmatter path=${fm.path} 不一致`)
   const ex = nodeByPath.get(rel)
   if (ex) {
-    for (const k of ['status', 'source', 'symbols', 'related', 'title', 'kind', 'tier']) if (fm[k]) ex[k] = fm[k]
+    for (const k of ['status', 'source', 'symbols', 'related', 'title', 'kind', 'tier', 'updated']) if (fm[k]) ex[k] = fm[k]
     updated++
   } else {
-    const node = { id: fm.id, title: fm.title, kind: fm.kind, tier: fm.tier, path: rel, source: fm.source || [], status: fm.status || 'planned' }
+    const node = { id: fm.id, title: fm.title, kind: fm.kind, tier: fm.tier, path: rel, source: fm.source || [], status: fm.status || 'planned', updated: fm.updated || sha || '0000000' }
     if (fm.symbols) node.symbols = fm.symbols
     if (fm.related) node.related = fm.related
     index.nodes.push(node); nodeByPath.set(rel, node); added++
   }
 }
+
+// 删除磁盘节点时同步移除旧 index entry；保留 groups 由下方独立处理。
+index.nodes = index.nodes.filter(node => {
+  const keep = existsSync(join(WIKI, node.path))
+  if (!keep) pruned++
+  return keep
+})
 
 // 3) 标记已展开的 group(dir 下已有 node 文件)
 let expandedGroups = 0
@@ -111,6 +118,6 @@ writeFileSync(join(WIKI, 'index.json'), out)
 
 const counts = {}
 for (const n of index.nodes) counts[n.status] = (counts[n.status] || 0) + 1
-console.log(`git SHA ${sha || '(none)'} · updated ${updated} · added ${added} · expanded groups ${expandedGroups}`)
+console.log(`git SHA ${sha || '(none)'} · updated ${updated} · added ${added} · pruned ${pruned} · expanded groups ${expandedGroups}`)
 console.log('node status:', JSON.stringify(counts))
 console.log(issues.length ? `\n⚠ ${issues.length} issue:\n  - ` + issues.join('\n  - ') : '\n✓ no issues')

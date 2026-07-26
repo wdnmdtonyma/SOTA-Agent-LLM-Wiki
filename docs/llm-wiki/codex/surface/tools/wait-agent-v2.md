@@ -8,7 +8,7 @@ symbols: [create_wait_agent_tool_v2, WaitAgentHandlerV2, multi_agents_v2::wait::
 related: [tool.spawn-agent-v2, tool.send-message, tool.followup-task, tool.list-agents]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > `wait_agent` V2 等待当前 turn 的 input queue activity：mailbox 更新、steered user input，或 timeout。它只返回摘要，不返回子 agent 消息正文。
@@ -18,12 +18,12 @@ updated: 4d7a5c7c73
 | 项 | 当前源码事实 |
 |---|---|
 | wire name | `wait_agent`，由 handler 和 spec builder 定义。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:22][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:24][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:285][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:287] |
-| handler | V2 module re-export `wait::Handler as WaitAgentHandler`；`spec_plan.rs` 用 `WaitAgentHandlerV2::new(context.wait_agent_timeouts)` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:34][E: codex-rs/core/src/tools/spec_plan.rs:829][E: codex-rs/core/src/tools/spec_plan.rs:830] |
+| handler | V2 module re-export `wait::Handler as WaitAgentHandler`；`spec_plan.rs` 用 `WaitAgentHandlerV2::new(context.wait_agent_timeouts)` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:34][E: codex-rs/core/src/tools/spec_plan.rs:842][E: codex-rs/core/src/tools/spec_plan.rs:870] |
 | spec | function tool，`strict: false`、`defer_loading: None`，有 `{ message, timed_out }` output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:285][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:286][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:290][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:291][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:293] |
 
 ## 注册与门控
 
-`wait_agent` V2 注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支，并经过相同的 exposure/namespace 包装。[E: codex-rs/core/src/tools/spec_plan.rs:786][E: codex-rs/core/src/tools/spec_plan.rs:788][E: codex-rs/core/src/tools/spec_plan.rs:789][E: codex-rs/core/src/tools/spec_plan.rs:829][E: codex-rs/core/src/tools/spec_plan.rs:830][E: codex-rs/core/src/tools/spec_plan.rs:1011][E: codex-rs/core/src/tools/spec_plan.rs:1034]
+`wait_agent` V2 注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支，并进一步要求 `multi_agent_v2.wait_agent_enabled`；该 sub-gate 默认 true，可在不关闭其它 V2 collaboration tools 的情况下单独隐藏 wait。通过后它仍使用相同 exposure/namespace 包装。[E: codex-rs/core/src/tools/spec_plan.rs:825][E: codex-rs/core/src/tools/spec_plan.rs:827][E: codex-rs/core/src/tools/spec_plan.rs:828][E: codex-rs/core/src/tools/spec_plan.rs:867][E: codex-rs/core/src/tools/spec_plan.rs:870][E: codex-rs/core/src/config/mod.rs:1185][E: codex-rs/core/src/config/mod.rs:1209]
 
 handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 返回 false。[E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
 

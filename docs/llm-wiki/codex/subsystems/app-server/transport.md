@@ -25,12 +25,15 @@ related:
   - subsys.app-server.session-management
   - subsys.app-server.client-libs
   - subsys.app-server.message-processor
+  - subsys.core.code-mode-runtime
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 app-server transport implementation moved to `codex-app-server-transport`; `codex-rs/app-server/src/transport.rs` now re-exports transport types/functions and keeps only app-server-local connection/outbound filtering glue. The transport surface feeds processor-facing `TransportEvent` values and writer channels for stdio, Unix socket, WebSocket, and remote-control origins [E: codex-rs/app-server/src/transport.rs:15][E: codex-rs/app-server/src/transport.rs:27][E: codex-rs/app-server/src/transport.rs:31][E: codex-rs/app-server/src/transport.rs:35][E: codex-rs/app-server/src/transport.rs:36][E: codex-rs/app-server-transport/src/transport/mod.rs:73][E: codex-rs/app-server-transport/src/transport/mod.rs:170][E: codex-rs/app-server-transport/src/transport/mod.rs:187]。
+
+这里的 `--listen` 是客户端到 app-server 的 JSON-RPC transport；`app-server --code-mode-host WS_URL` 是 app-server 到远端 Code Mode host 的另一条进程级 transport，二者不可混为同一个 WebSocket listener。[E: codex-rs/cli/src/main.rs:519][E: codex-rs/cli/src/main.rs:528][E: codex-rs/app-server/src/code_mode_host.rs:5][E: codex-rs/app-server/src/code_mode_host.rs:17][I]
 
 ## 能回答的问题
 
@@ -61,7 +64,7 @@ app-server transport implementation moved to `codex-app-server-transport`; `code
 
 - Transport channels use bounded capacity `CHANNEL_CAPACITY = 128`; inbound JSON payloads parse to `JSONRPCMessage` and are wrapped as `TransportEvent::IncomingMessage` [E: codex-rs/app-server-transport/src/transport/mod.rs:24][E: codex-rs/app-server-transport/src/transport/mod.rs:200][E: codex-rs/app-server-transport/src/transport/mod.rs:206][E: codex-rs/app-server-transport/src/transport/mod.rs:208][E: codex-rs/app-server-transport/src/transport/mod.rs:217][E: codex-rs/app-server-transport/src/transport/mod.rs:223]。
 - `OutboundConnectionState` lives in app-server local glue and stores initialized/experimental flags, opted-out notification methods, writer channel, and optional disconnect token [E: codex-rs/app-server/src/transport.rs:62][E: codex-rs/app-server/src/transport.rs:63][E: codex-rs/app-server/src/transport.rs:64][E: codex-rs/app-server/src/transport.rs:65][E: codex-rs/app-server/src/transport.rs:66][E: codex-rs/app-server/src/transport.rs:67]。
-- `OutgoingMessage::AppServerNotification` 现在承载扁平化的 `ServerNotificationEnvelope`；envelope 除具体 notification 外还带 optional `emitted_at_ms`，当前 server 在 fan-out 前写入该 Unix 毫秒时间，而 optional 形态让客户端仍可解码旧 server 消息。[E: codex-rs/app-server-transport/src/outgoing_message.rs:24][E: codex-rs/app-server-transport/src/outgoing_message.rs:28][E: codex-rs/app-server-protocol/src/protocol/common.rs:1748][E: codex-rs/app-server-protocol/src/protocol/common.rs:1749][E: codex-rs/app-server-protocol/src/protocol/common.rs:1758]
+- `OutgoingMessage::AppServerNotification` 现在承载扁平化的 `ServerNotificationEnvelope`；envelope 除具体 notification 外还带 optional `emitted_at_ms`，当前 server 在 fan-out 前写入该 Unix 毫秒时间，而 optional 形态让客户端仍可解码旧 server 消息。[E: codex-rs/app-server-transport/src/outgoing_message.rs:24][E: codex-rs/app-server-transport/src/outgoing_message.rs:28][E: codex-rs/app-server-protocol/src/protocol/common.rs:1762][E: codex-rs/app-server-protocol/src/protocol/common.rs:1763][E: codex-rs/app-server-protocol/src/protocol/common.rs:1772]
 - WebSocket auth settings support capability-token sources (`TokenFile` or `TokenSha256`) and signed bearer-token settings (`shared_secret_file`, optional issuer/audience, max clock skew) [E: codex-rs/app-server-transport/src/transport/auth.rs:65][E: codex-rs/app-server-transport/src/transport/auth.rs:70][E: codex-rs/app-server-transport/src/transport/auth.rs:71][E: codex-rs/app-server-transport/src/transport/auth.rs:74][E: codex-rs/app-server-transport/src/transport/auth.rs:75][E: codex-rs/app-server-transport/src/transport/auth.rs:76][E: codex-rs/app-server-transport/src/transport/auth.rs:77][E: codex-rs/app-server-transport/src/transport/auth.rs:78][E: codex-rs/app-server-transport/src/transport/auth.rs:82][E: codex-rs/app-server-transport/src/transport/auth.rs:83][E: codex-rs/app-server-transport/src/transport/auth.rs:84][E: codex-rs/app-server-transport/src/transport/auth.rs:85]。
 
 ## 控制流
@@ -103,3 +106,4 @@ app-server transport implementation moved to `codex-app-server-transport`; `code
 - `subsys.app-server.session-management`
 - `subsys.app-server.client-libs`
 - `subsys.app-server.message-processor`
+- [Code Mode runtime](../core/code-mode-runtime.md)

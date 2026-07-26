@@ -3,12 +3,12 @@ id: tool.image-generation
 title: image_gen.imagegen 工具
 kind: tool
 tier: T1
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/extension_tools.rs, codex-rs/ext/image-generation/src/extension.rs, codex-rs/ext/image-generation/src/tool.rs, codex-rs/ext/image-generation/src/backend.rs, codex-rs/ext/items/src/image_generation.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/protocol/src/openai_models.rs, codex-rs/model-provider/src/provider.rs, codex-rs/features/src/lib.rs]
-symbols: [ImageGenerationExtension, ImageGenerationTool, ImagegenArgs, imagegen_tool_spec, GeneratedImageOutput, image_generation_runtime_enabled, standalone_image_generation_model_visible]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/extension_tools.rs, codex-rs/ext/image-generation/src/extension.rs, codex-rs/ext/image-generation/src/tool.rs, codex-rs/ext/image-generation/src/backend.rs, codex-rs/ext/image-generation/src/artifact.rs, codex-rs/ext/items/src/image_generation.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/protocol/src/openai_models.rs, codex-rs/model-provider/src/provider.rs, codex-rs/features/src/lib.rs]
+symbols: [ImageGenerationExtension, ImageGenerationTool, ImagegenArgs, imagegen_tool_spec, GeneratedImageOutput, image_generation_artifact_path, image_generation_output_hint, image_generation_runtime_enabled, standalone_image_generation_model_visible]
 related: [spine.extension-system, tool.view-image, tool.web-search, subsys.providers.responses-api, subsys.core.tool-system, subsys.config-auth.auth-flows]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > `image_gen.imagegen` 是 image-generation extension 提供的 namespace function tool，既能按 prompt 生成新图，也能用本地路径或 recent conversation images 做编辑。[E: codex-rs/ext/image-generation/src/extension.rs:97][E: codex-rs/ext/image-generation/src/tool.rs:113][E: codex-rs/ext/image-generation/src/tool.rs:254][E: codex-rs/ext/image-generation/src/tool.rs:255][E: codex-rs/ext/image-generation/src/tool.rs:256][E: codex-rs/ext/image-generation/src/tool.rs:270][E: codex-rs/ext/image-generation/src/tool.rs:272][E: codex-rs/ext/image-generation/src/tool.rs:319] 相比基线，旧 hosted `ToolSpec::ImageGeneration` 已从工具计划器移除。[I]
@@ -28,7 +28,7 @@ updated: 4d7a5c7c73
 | wire name | namespace `image_gen` / function `imagegen` | executor 返回 `ToolName::namespaced(IMAGE_GEN_NAMESPACE, IMAGEGEN_TOOL_NAME)`。[E: codex-rs/ext/image-generation/src/tool.rs:110][E: codex-rs/ext/image-generation/src/tool.rs:113] |
 | runtime | `ImageGenerationTool` | extension 的 `ToolContributor` 为可用 thread 构造一个 image tool，core 再用 `ExtensionToolAdapter` 适配成 `CoreToolRuntime`。[E: codex-rs/ext/image-generation/src/extension.rs:83][E: codex-rs/ext/image-generation/src/extension.rs:90][E: codex-rs/ext/image-generation/src/extension.rs:97][E: codex-rs/core/src/tools/handlers/extension_tools.rs:28][E: codex-rs/core/src/tools/handlers/extension_tools.rs:57][E: codex-rs/core/src/tools/handlers/extension_tools.rs:62] |
 | ToolSpec | `ToolSpec::Namespace` 内一个 Function | namespace name 是 `image_gen`；function name 是 `imagegen`，`strict=false`，无 output schema。[E: codex-rs/ext/image-generation/src/tool.rs:463][E: codex-rs/ext/image-generation/src/tool.rs:480][E: codex-rs/ext/image-generation/src/tool.rs:483][E: codex-rs/ext/image-generation/src/tool.rs:486][E: codex-rs/ext/image-generation/src/tool.rs:489] |
-| exposure | `Direct` | executor 显式返回 `ToolExposure::Direct`；code-mode planner 排除 `DirectModelOnly`、`Hidden` 及 config-excluded tools，再把其余 spec 收进 nested tool set。[E: codex-rs/ext/image-generation/src/tool.rs:122][E: codex-rs/ext/image-generation/src/tool.rs:123][E: codex-rs/core/src/tools/spec_plan.rs:462][E: codex-rs/core/src/tools/spec_plan.rs:463][E: codex-rs/core/src/tools/spec_plan.rs:467][E: codex-rs/core/src/tools/spec_plan.rs:471][E: codex-rs/core/src/tools/spec_plan.rs:475][E: codex-rs/core/src/tools/spec_plan.rs:484] |
+| exposure | `Direct` | executor 显式返回 `ToolExposure::Direct`；code-mode planner 排除 `DirectModelOnly`、`Hidden` 及 config-excluded tools，再把其余 spec 收进 nested tool set。[E: codex-rs/ext/image-generation/src/tool.rs:122][E: codex-rs/ext/image-generation/src/tool.rs:123][E: codex-rs/core/src/tools/spec_plan.rs:471][E: codex-rs/core/src/tools/spec_plan.rs:472][E: codex-rs/core/src/tools/spec_plan.rs:476][E: codex-rs/core/src/tools/spec_plan.rs:480][E: codex-rs/core/src/tools/spec_plan.rs:484][E: codex-rs/core/src/tools/spec_plan.rs:493] |
 | parallel-safe | `false` | `ImageGenerationTool` 未覆写 `supports_parallel_tool_calls`，trait 默认返回 false。[E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65] |
 
 ## 2 输入 schema
@@ -49,13 +49,14 @@ core publication 还有更严格的 model-visible gate：
 
 | gate | 要求 | 证据 |
 |---|---|---|
-| auth | provider 使用 OpenAI actor authorization，或 provider 要求 OpenAI auth 且当前 auth 使用 Codex backend | [E: codex-rs/core/src/tools/spec_plan.rs:367][E: codex-rs/core/src/tools/spec_plan.rs:371][E: codex-rs/core/src/tools/spec_plan.rs:372][E: codex-rs/core/src/tools/spec_plan.rs:376] |
+| auth | provider 使用 OpenAI actor authorization，或 provider 要求 OpenAI auth 且当前 auth 使用 Codex backend | [E: codex-rs/core/src/tools/spec_plan.rs:367][E: codex-rs/core/src/tools/spec_plan.rs:370][E: codex-rs/core/src/tools/spec_plan.rs:373][E: codex-rs/core/src/tools/spec_plan.rs:402] |
+| account plan | 当前 auth 的 account plan 不是 `Free`；Free plan 直接返回 unavailable | [E: codex-rs/core/src/tools/spec_plan.rs:373][E: codex-rs/core/src/tools/spec_plan.rs:377][E: codex-rs/core/src/tools/spec_plan.rs:378][E: codex-rs/core/src/tools/spec_plan.rs:380] |
 | provider | `capabilities().image_generation` | [E: codex-rs/core/src/tools/spec_plan.rs:377][E: codex-rs/model-provider/src/provider.rs:34][E: codex-rs/model-provider/src/provider.rs:36] |
-| model | input modalities 含 `Image` | [E: codex-rs/core/src/tools/spec_plan.rs:379][E: codex-rs/core/src/tools/spec_plan.rs:380][E: codex-rs/core/src/tools/spec_plan.rs:381][E: codex-rs/protocol/src/openai_models.rs:155][E: codex-rs/protocol/src/openai_models.rs:159] |
-| namespace | provider 支持 namespace tools | [E: codex-rs/core/src/tools/spec_plan.rs:330][E: codex-rs/core/src/tools/spec_plan.rs:331][E: codex-rs/core/src/tools/spec_plan.rs:385] |
-| feature | `Feature::ImageGeneration` 开启 | feature key 是 `image_generation`，Stable，默认开启。[E: codex-rs/core/src/tools/spec_plan.rs:393][E: codex-rs/features/src/lib.rs:1182][E: codex-rs/features/src/lib.rs:1183][E: codex-rs/features/src/lib.rs:1184][E: codex-rs/features/src/lib.rs:1185] |
+| model | input modalities 含 `Image` | [E: codex-rs/core/src/tools/spec_plan.rs:389][E: codex-rs/core/src/tools/spec_plan.rs:390][E: codex-rs/core/src/tools/spec_plan.rs:391][E: codex-rs/protocol/src/openai_models.rs:155][E: codex-rs/protocol/src/openai_models.rs:159] |
+| namespace | provider 支持 namespace tools | [E: codex-rs/core/src/tools/spec_plan.rs:344][E: codex-rs/core/src/tools/spec_plan.rs:345][E: codex-rs/core/src/tools/spec_plan.rs:385] |
+| feature | `Feature::ImageGeneration` 开启 | feature key 是 `image_generation`，Stable，默认开启。[E: codex-rs/core/src/tools/spec_plan.rs:368][E: codex-rs/features/src/lib.rs:1227][E: codex-rs/features/src/lib.rs:1228][E: codex-rs/features/src/lib.rs:1229][E: codex-rs/features/src/lib.rs:1230] |
 
-`append_extension_tool_executors` 对 `image_gen.imagegen` 应用该 gate；未满足就跳过。它还用 reserved names 阻止 extension 覆盖 core/code-mode/tool-search 已注册名称。[E: codex-rs/core/src/tools/spec_plan.rs:969][E: codex-rs/core/src/tools/spec_plan.rs:975][E: codex-rs/core/src/tools/spec_plan.rs:976][E: codex-rs/core/src/tools/spec_plan.rs:979][E: codex-rs/core/src/tools/spec_plan.rs:985][E: codex-rs/core/src/tools/spec_plan.rs:998][E: codex-rs/core/src/tools/spec_plan.rs:999][E: codex-rs/core/src/tools/spec_plan.rs:1001][E: codex-rs/core/src/tools/spec_plan.rs:1003][E: codex-rs/core/src/tools/spec_plan.rs:1004]
+`append_extension_tool_executors` 对 `image_gen.imagegen` 应用该 gate；未满足就跳过。它还用 reserved names 阻止 extension 覆盖 core/code-mode/tool-search 已注册名称。[E: codex-rs/core/src/tools/spec_plan.rs:1014][E: codex-rs/core/src/tools/spec_plan.rs:1020][E: codex-rs/core/src/tools/spec_plan.rs:1021][E: codex-rs/core/src/tools/spec_plan.rs:1024][E: codex-rs/core/src/tools/spec_plan.rs:1030][E: codex-rs/core/src/tools/spec_plan.rs:1043][E: codex-rs/core/src/tools/spec_plan.rs:999][E: codex-rs/core/src/tools/spec_plan.rs:1046][E: codex-rs/core/src/tools/spec_plan.rs:1048][E: codex-rs/core/src/tools/spec_plan.rs:1049]
 
 ## 4 Handler 走读
 
@@ -63,17 +64,19 @@ core publication 还有更严格的 model-visible gate：
 2. 执行前发布 extension `ImageGenerationItem { status: in_progress }`，并附带 legacy `ImageGenerationBegin`。[E: codex-rs/ext/image-generation/src/tool.rs:138][E: codex-rs/ext/image-generation/src/tool.rs:140][E: codex-rs/ext/image-generation/src/tool.rs:142][E: codex-rs/ext/image-generation/src/tool.rs:147]
 3. backend 通过当前 provider/auth 构造 `ImagesClient`，generate/edit 都带 originator header。[E: codex-rs/ext/image-generation/src/backend.rs:27][E: codex-rs/ext/image-generation/src/backend.rs:30][E: codex-rs/ext/image-generation/src/backend.rs:35][E: codex-rs/ext/image-generation/src/backend.rs:38][E: codex-rs/ext/image-generation/src/backend.rs:46][E: codex-rs/ext/image-generation/src/backend.rs:52][E: codex-rs/ext/image-generation/src/backend.rs:58][E: codex-rs/ext/image-generation/src/backend.rs:61][E: codex-rs/ext/image-generation/src/backend.rs:67][E: codex-rs/ext/image-generation/src/backend.rs:70]
 4. API 失败时发布 `status: failed` completed item 并把错误响应模型；成功时取第一张 base64 image，保存到可选 save root 后发布 `status: completed` item。[E: codex-rs/ext/image-generation/src/tool.rs:152][E: codex-rs/ext/image-generation/src/tool.rs:153][E: codex-rs/ext/image-generation/src/tool.rs:154][E: codex-rs/ext/image-generation/src/tool.rs:161][E: codex-rs/ext/image-generation/src/tool.rs:162][E: codex-rs/ext/image-generation/src/tool.rs:168][E: codex-rs/ext/image-generation/src/tool.rs:170][E: codex-rs/ext/image-generation/src/tool.rs:176][E: codex-rs/ext/image-generation/src/tool.rs:177][E: codex-rs/ext/image-generation/src/tool.rs:179][E: codex-rs/ext/image-generation/src/tool.rs:182][E: codex-rs/ext/image-generation/src/tool.rs:207][E: codex-rs/ext/image-generation/src/tool.rs:209][E: codex-rs/ext/image-generation/src/tool.rs:215][E: codex-rs/ext/image-generation/src/tool.rs:216]
-5. 保存逻辑 base64 decode，并通过 executor filesystem 创建目录、写 PNG；路径由 core 的 `image_generation_artifact_path` 决定。[E: codex-rs/ext/image-generation/src/tool.rs:229][E: codex-rs/ext/image-generation/src/tool.rs:236][E: codex-rs/ext/image-generation/src/tool.rs:239][E: codex-rs/ext/image-generation/src/tool.rs:241][E: codex-rs/ext/image-generation/src/tool.rs:248]
+5. 保存逻辑 base64 decode，并通过 executor filesystem 创建目录、写 PNG；artifact helper 已归 image-generation extension 所有，默认路径为 `generated_images/<sanitized-session>/<sanitized-call>.png`。[E: codex-rs/ext/image-generation/src/tool.rs:229][E: codex-rs/ext/image-generation/src/tool.rs:236][E: codex-rs/ext/image-generation/src/tool.rs:239][E: codex-rs/ext/image-generation/src/tool.rs:241][E: codex-rs/ext/image-generation/src/tool.rs:248][E: codex-rs/ext/image-generation/src/artifact.rs:5][E: codex-rs/ext/image-generation/src/artifact.rs:9][E: codex-rs/ext/image-generation/src/artifact.rs:31]
 
 ## 5 输出与事件
 
 direct tool output 是 `FunctionCallOutput` content items：第一项为 `data:image/png;base64,...` 的 `InputImage`，保存成功时再附一段 output hint。code-mode result 则是 `{ image_url, output_hint? }`。[E: codex-rs/ext/image-generation/src/tool.rs:512][E: codex-rs/ext/image-generation/src/tool.rs:513][E: codex-rs/ext/image-generation/src/tool.rs:515][E: codex-rs/ext/image-generation/src/tool.rs:517][E: codex-rs/ext/image-generation/src/tool.rs:519][E: codex-rs/ext/image-generation/src/tool.rs:527][E: codex-rs/ext/image-generation/src/tool.rs:528][E: codex-rs/ext/image-generation/src/tool.rs:529][E: codex-rs/ext/image-generation/src/tool.rs:532][E: codex-rs/ext/image-generation/src/tool.rs:533][E: codex-rs/ext/image-generation/src/tool.rs:537]
 
+output hint 最多 1,024 bytes；它明确告诉模型图片已直接展示给用户、无需在 final response 再渲染，并要求除非用户明确请求，否则不要删除原 artifact。[E: codex-rs/ext/image-generation/src/artifact.rs:6][E: codex-rs/ext/image-generation/src/artifact.rs:38][E: codex-rs/ext/image-generation/src/artifact.rs:42][E: codex-rs/ext/image-generation/src/artifact.rs:45]
+
 extension-owned item 是 `ImageGenerationItem { id, status, revised_prompt, result, saved_path }`，core adapter 把它包成 `TurnItem::Extension`，同时转发 extension 自带的 legacy begin/end events。[E: codex-rs/ext/items/src/image_generation.rs:13][E: codex-rs/ext/items/src/image_generation.rs:14][E: codex-rs/ext/items/src/image_generation.rs:15][E: codex-rs/ext/items/src/image_generation.rs:16][E: codex-rs/ext/items/src/image_generation.rs:17][E: codex-rs/ext/items/src/image_generation.rs:20][E: codex-rs/core/src/tools/handlers/extension_tools.rs:90][E: codex-rs/core/src/tools/handlers/extension_tools.rs:94][E: codex-rs/core/src/tools/handlers/extension_tools.rs:95][E: codex-rs/core/src/tools/handlers/extension_tools.rs:96][E: codex-rs/core/src/tools/handlers/extension_tools.rs:105][E: codex-rs/core/src/tools/handlers/extension_tools.rs:109][E: codex-rs/core/src/tools/handlers/extension_tools.rs:110][E: codex-rs/core/src/tools/handlers/extension_tools.rs:111]
 
 ## 6 设计变化
 
-当前 image extension 注册 thread lifecycle、config 和 tool contributors；core 的 `add_extension_tools` 只把 contributor 产生的 executor 交给统一 planner，并在 append 阶段对 `image_gen.imagegen` 应用可见性 gate。[E: codex-rs/ext/image-generation/src/extension.rs:111][E: codex-rs/ext/image-generation/src/extension.rs:120][E: codex-rs/ext/image-generation/src/extension.rs:121][E: codex-rs/ext/image-generation/src/extension.rs:122][E: codex-rs/core/src/tools/spec_plan.rs:917][E: codex-rs/core/src/tools/spec_plan.rs:920][E: codex-rs/core/src/tools/spec_plan.rs:998][E: codex-rs/core/src/tools/spec_plan.rs:999]
+当前 image extension 注册 thread lifecycle、config 和 tool contributors；core 的 `add_extension_tools` 只把 contributor 产生的 executor 交给统一 planner，并在 append 阶段对 `image_gen.imagegen` 应用可见性 gate。[E: codex-rs/ext/image-generation/src/extension.rs:111][E: codex-rs/ext/image-generation/src/extension.rs:120][E: codex-rs/ext/image-generation/src/extension.rs:121][E: codex-rs/ext/image-generation/src/extension.rs:122][E: codex-rs/core/src/tools/spec_plan.rs:951][E: codex-rs/core/src/tools/spec_plan.rs:954][E: codex-rs/core/src/tools/spec_plan.rs:1043][E: codex-rs/core/src/tools/spec_plan.rs:999]
 
 ## Sources
 
@@ -82,6 +85,7 @@ extension-owned item 是 `ImageGenerationItem { id, status, revised_prompt, resu
 - `codex-rs/ext/image-generation/src/extension.rs`
 - `codex-rs/ext/image-generation/src/tool.rs`
 - `codex-rs/ext/image-generation/src/backend.rs`
+- `codex-rs/ext/image-generation/src/artifact.rs`
 - `codex-rs/ext/items/src/image_generation.rs`
 - `codex-rs/tools/src/tool_executor.rs`
 - `codex-rs/protocol/src/openai_models.rs`

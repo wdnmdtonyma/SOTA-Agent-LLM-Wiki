@@ -8,7 +8,7 @@ symbols: [GetContextRemainingHandler, create_get_context_remaining_tool, GET_CON
 related: [tool.new-context, subsys.core.tool-system, subsys.core.context-manager]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > `get_context_remaining` 查询当前 context window 剩余 token 数,在 token-budget feature 下与 `new_context` 同时注册。
@@ -48,7 +48,7 @@ handler 调用 `context_window_token_status(session, turn)` 取得当前 context
 
 ## 6 注册与门控
 
-`add_core_utility_tools` 在 `Feature::TokenBudget` 开启时注册 `NewContextWindowHandler` 和 `GetContextRemainingHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:726] [E: codex-rs/core/src/tools/spec_plan.rs:727] [E: codex-rs/core/src/tools/spec_plan.rs:728]
+`add_core_utility_tools` 在 `Feature::TokenBudget` 开启时注册 `NewContextWindowHandler` 和 `GetContextRemainingHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:765] [E: codex-rs/core/src/tools/spec_plan.rs:766] [E: codex-rs/core/src/tools/spec_plan.rs:767]
 
 ## 7 parallel-safe
 

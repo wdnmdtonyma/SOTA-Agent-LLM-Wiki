@@ -8,7 +8,7 @@ symbols: [create_seatbelt_command_args, CreateSeatbeltCommandArgsParams, build_s
 related: [subsys.exec-sandbox.overview, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > macOS Seatbelt backend 把 Codex 的 filesystem/network policies 编译成 SBPL profile，并通过 `/usr/bin/sandbox-exec -p <profile> -D... -- <command>` 启动目标命令；生成函数现在返回 `Result<Vec<String>, String>` because network proxy env preparation can fail.[E: codex-rs/sandboxing/src/seatbelt.rs:30][E: codex-rs/sandboxing/src/seatbelt.rs:623][E: codex-rs/sandboxing/src/seatbelt.rs:625][E: codex-rs/sandboxing/src/seatbelt.rs:761][E: codex-rs/sandboxing/src/seatbelt.rs:767][E: codex-rs/sandboxing/src/seatbelt.rs:768][E: codex-rs/sandboxing/src/seatbelt.rs:769][E: codex-rs/sandboxing/src/seatbelt.rs:770]

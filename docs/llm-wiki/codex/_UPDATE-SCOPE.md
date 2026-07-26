@@ -1,293 +1,172 @@
-# UPDATE SCOPE — codex wiki 增量更新令(db887d03e1 → 4d7a5c7c73)
+# UPDATE SCOPE — Codex Wiki 完成记录（4d7a5c7c73 → 61a44880a8）
 
-> 本文件由分析会话生成(2026-07-19),给执行更新的 codex 会话读。
-> **基线(wiki 当前 verified 的 codex HEAD)**:`db887d03e1f907467e33271572dffb73bceecd6b`
-> **目标(已 checkout 的 codex submodule HEAD,上游 `main` 分支)**:`4d7a5c7c7394b687ebcb67e634528b2b8c5578d9`
-> **跨度**:411 commit · 1679 files changed, 119799 insertions(+), 35098 deletions(-) · 2026-07-01 → 2026-07-19
+> 完成日期：2026-07-26
+> Wiki verified base：`4d7a5c7c7394b687ebcb67e634528b2b8c5578d9`
+> 官方 `openai/codex origin/main` target：`61a44880a85d2fd0d8770908dea5733495e571c8`
+> 最终 submodule checkout：detached `61a44880a85d2fd0d8770908dea5733495e571c8`
 
-复现 diff(在 `codex/` 内):
+本文件记录本轮已经执行的影响分析、节点取舍、L2 证伪与验证结果。方法约束仍以 `RUN.md` 和 `conventions.md` 为准。
+
+## 1. 源码跨度
+
+```text
+275 commits
+1344 files changed
+78779 insertions(+)
+29945 deletions(-)
+159 added / 24 deleted / 1159 modified / 2 renamed
 ```
-git diff --stat db887d03e1f907467e33271572dffb73bceecd6b..4d7a5c7c7394b687ebcb67e634528b2b8c5578d9
+
+复现：
+
+```bash
+git -C codex rev-list --count 4d7a5c7c7394b687ebcb67e634528b2b8c5578d9..61a44880a85d2fd0d8770908dea5733495e571c8
+git -C codex diff --shortstat 4d7a5c7c7394b687ebcb67e634528b2b8c5578d9..61a44880a85d2fd0d8770908dea5733495e571c8
+git -C codex diff --name-status 4d7a5c7c7394b687ebcb67e634528b2b8c5578d9..61a44880a85d2fd0d8770908dea5733495e571c8
 ```
 
-> 执行前先读 **`RUN.md`**(填充令,L1→L2→L3 流程不变)+ **`conventions.md`**(节点模板 / 证据分级)。本文件只回答"这次改了哪些、每个节点要动什么",不重复 RUN.md 的方法论。
+## 2. 172 个基线节点的影响分级
 
-## 0. 结论:两次 crate 改名 + 高强度 churn,本轮三仓中最重
+分级以基线 `index.json` 的 source 集合与目标树的 `git diff --numstat`、删除状态交叉计算，再按源码事实复核：
 
-| 维度 | 数字 |
+| 分级 | 数量 | 处理 |
+|---|---:|---|
+| A-BROKEN | 3 | source 删除或重命名，必须退役或重定位 |
+| B-HEAVY | 3 | 直接 source churn ≥ 2,000 行，整页重读 |
+| C-DRIFT | 150 | 至少一个直接 source 改动且命中节点语义，逐 claim 修复 |
+| D-CLEAN | 16 | source 未变，或共享 catalog source 的 hunk 经复核与该节点无关；快速复核并统一 SHA |
+
+A-BROKEN：
+
+1. `tool.spawn-agents-on-csv`：agent-jobs spec/handler 已删除。
+2. `tool.report-agent-job-result`：agent-jobs handler/state runtime 已删除。
+3. `subsys.providers.http-client`：旧 `default_client.rs` 重命名/重构到 route-aware client 结构，节点保留并重写 source 与行为。
+
+B-HEAVY：
+
+1. `ref.glossary`
+2. `spine.trace-mcp-call`
+3. `subsys.core.thread-store`
+
+D-CLEAN 只允许省略逐段语义重写，不允许跳过目标 SHA、source existence、引用和横切架构检查。`subsys.exec-sandbox.process-hardening` 虽直接 source clean，但 Windows PTY Job Object 是相邻新增行为，因此仍扩写并走 L2。SDK、trace-bundle、execpolicy、Seatbelt、file-search、telemetry、terminal detection、realtime 等 clean 节点执行了 source/引用抽样。
+
+原始 source-path 交集会得到 `3 / 3 / 152 / 14`；其中两个命中来自共享 catalog source 的无关 hunk。加入 node-level hunk 复核后的最终分级是本节采用的 `3 / 3 / 150 / 16`，避免把“同文件有改动”机械等同于“节点语义漂移”。
+
+## 3. Inventory 变化
+
+### 退役节点
+
+- `tool.spawn-agents-on-csv`
+- `tool.report-agent-job-result`
+
+目标源码同时以 state migration 0042 删除 `agent_jobs` 与 `agent_job_items`；`agents.job_max_runtime_seconds` 只剩兼容 no-op，未被误写为仍可用能力。
+
+### 新增节点
+
+- `tool.current-time` → `surface/tools/current-time.md`
+  - `clock.curr_time` 在 base 已存在，是旧 Wiki inventory 漏项，不归因成目标提交新增。
+- `subsys.core.code-mode-runtime` → `subsystems/core/code-mode-runtime.md`
+  - 自包含覆盖 in-process/local host、app-server remote WebSocket host、handshake、共享连接、fallback 与 transport 边界。
+
+最终仍为 172 个 verified nodes：
+
+| Tier | 数量 |
+|---|---:|
+| T0 | 11 |
+| T1 | 69 |
+| T2 | 80 |
+| T3 | 12 |
+
+其中 tool nodes 为 36；workspace members 为 126；App-Server catalog 为 213（130 client requests + 72 notifications + 11 server requests）。
+
+## 4. 必须覆盖的新架构与对外行为
+
+| 主题 | 承载节点与结论 |
 |---|---|
-| 被 wiki 引用的去重源文件 | 615 |
-| ├ 已删/移 | **17** |
-| ├ 改动(churn) | **289** |
-| └ 不变 | 309 |
-| 节点(172) | |
-| ├ 结构性失效(A-BROKEN) | **7** |
-| ├ 重 churn(B-HEAVY≥2000 行) | **4** |
-| ├ 轻中 churn(C-DRIFT) | **144** |
-| └ 完全不受影响(D-CLEAN,仅复核) | **17** |
+| Remote Code Mode host | 新建 `subsys.core.code-mode-runtime`，并更新 `subsys.app-server.transport`、`cli.subcommands`、`ref.glossary`；区分 app-server inbound listener 与 outbound code-host connection，记录 `ws`/`wss`、Origin 拒绝、frame limit 和 fallback。 |
+| MCP runtime/connection refresh/resource clients | 重写 `subsys.mcp.client`、`spine.trace-mcp-call`、`tool.mcp-namespace-tools` 和三个 resource tool 节点；区分 per-step binding、call-time refresh/current binding、prepared-call revision guard 与 latest resource client。 |
+| agent_jobs 整套移除 | 删除两个工具节点；更新 tool system、router、state DB、agents config、index 与 llms。 |
+| paginated thread fork/single writer | 重写 `subsys.core.thread-store`，扩写 `rpc.thread-methods`、session/rollout/context；区分 paginated cross-process writer lock、fork 的进程内 prepare lease 和 lineage boundary。 |
+| Agent Plugins manifest | 扩写 plugins、skills、extension system 与 plugin RPC；root `plugin.json` 有 parser，但默认 discovery allow-list 尚未接线，保留 `[U]`。 |
+| persisted thread pinning | thread metadata/list/response、thread store 与 glossary 均记录 `isPinned`。 |
+| PathUri approval key | 更新 shell flow、approval policy 与 key types；cwd cache key 使用 `PathUri`，跨 host identity 的含义仅标 `[I]`。 |
+| exec-server network callbacks | 扩写 exec-server/network policy；覆盖 HTTP、CONNECT、SOCKS5 TCP/UDP 的 Allow/Deny/Ask、callback timeout、disconnect/cancel recovery 与 fail-closed 边界。 |
 
-churn 集中在 `codex-rs/tui/src`(265 改/77 新)、`codex-rs/core/src`(249 改/37 新)、`codex-rs/app-server-protocol/schema`(128 改/32 新)。**7 个 A-BROKEN 全部已定位**,主因是三件结构性变化:
-1. **`codex-rs/codex-client/` crate 改名为 `codex-rs/http-client/`**(影响 `ref.env-vars`、`subsys.providers.retry-errors`、`subsys.providers.http-client`)——机械改路径。
-2. **`codex-rs/external-agent-sessions/` 重组为 `codex-rs/external-agent-migration/`**(影响 `surface.cli.external-agent-import`,该节点 churn 5510 行,是全仓最重的一个节点,要按新结构重读)。
-3. 零散删除:`core/src/context/collaboration_mode_instructions.rs`(删,`subsys.core.collaboration-modes` 需找新去处)、`realtime-webrtc/src/{lib,native}.rs`(删,`subsys.platform.realtime` 需确认 realtime 子系统现状)、`core/src/review_format.rs` → `protocol/src/review_format.rs`(机械改路径)。
+其它重要更新：
 
----
+- World State 新增 `multi_agent_mode` 与 deferred `tools` sections，分别承载 delegation policy 与 namespace diff。
+- HTTP client 改为 route-aware pool，补 system-proxy cache、PAC 单 route、manual redirect/replayability 边界。
+- skills extension 增 catalog budget、`skills.list`/`skills.read` pagination 与 executor resource provider。
+- Git attribution 进入 extension registry、commit/PR marker 与 auth-generation cache。
+- image generation 对 Free plan 隐藏，artifact path/hint 归 extension。
+- `tools.update_plan.enabled` 与 `multi_agent_v2.wait_agent_enabled` 可独立关闭对应工具。
+- App-Server 新增 `externalAgentConfig/import/recordHistory`、notification envelope timestamp、thread pinning、plugin/app 字段和 successful `turn/completed` summary item。
+- TUI 增命名 `/new`/`/clear`、side-conversation persistence、1 MiB live-output head/tail truncation。
+- protocol `Op`/`EventMsg` 数量保持 26/80，但 payload/字段与引用已更新。
 
-## 1. 结构性失效(A-BROKEN,先修:必改 source 列)
+## 5. L2 独立证伪
 
-- **`surface.cli.external-agent-import`**(churn ~5510 行):
-  - `codex-rs/external-agent-sessions/src/lib.rs` → `codex-rs/external-agent-migration/src/sessions/mod.rs`(机械改路径)
-  - `codex-rs/external-agent-sessions/src/detect.rs` → `codex-rs/external-agent-migration/src/detect/sessions/cla.rs`(机械改路径)
-  - `codex-rs/external-agent-sessions/src/export.rs` → `codex-rs/external-agent-migration/src/sessions/export.rs`(机械改路径)
-  - `codex-rs/external-agent-sessions/src/ledger.rs` → `codex-rs/external-agent-migration/src/sessions/ledger.rs`(机械改路径)
-  - `codex-rs/external-agent-sessions/src/records.rs` → `codex-rs/external-agent-migration/src/sessions/records.rs`(机械改路径)
-  - `codex-rs/app-server/src/config/external_agent_config.rs` → **已删,读新结构重定位**
-  - `codex-rs/app-server/src/request_processors/external_agent_config_processor.rs` → **已删,读新结构重定位**
-  - `codex-rs/app-server/src/request_processors/external_agent_session_import.rs` → `codex-rs/app-server/src/external_agent_migration/session_importer.rs`(机械改路径)
-- **`ref.env-vars`**(churn ~2040 行):
-  - `codex-rs/codex-client/src/custom_ca.rs` → `codex-rs/http-client/src/custom_ca.rs`(机械改路径)
-- **`subsys.core.collaboration-modes`**(churn ~1287 行):
-  - `codex-rs/core/src/context/collaboration_mode_instructions.rs` → **已删,读新结构重定位**
-- **`subsys.core.review-mode`**(churn ~831 行):
-  - `codex-rs/core/src/review_format.rs` → `codex-rs/protocol/src/review_format.rs`(机械改路径)
-- **`subsys.platform.realtime`**(churn ~657 行):
-  - `codex-rs/realtime-webrtc/src/lib.rs` → **已删,读新结构重定位**
-  - `codex-rs/realtime-webrtc/src/native.rs` → **已删,读新结构重定位**
-- **`subsys.providers.retry-errors`**(churn ~244 行):
-  - `codex-rs/codex-client/src/error.rs` → `codex-rs/http-client/src/error.rs`(机械改路径)
-  - `codex-rs/codex-client/src/transport.rs` → `codex-rs/http-client/src/transport.rs`(机械改路径)
-- **`subsys.providers.http-client`**(churn ~69 行):
-  - `codex-rs/codex-client/src/default_client.rs` → `codex-rs/http-client/src/default_client.rs`(机械改路径)
-  - `codex-rs/codex-client/src/request.rs` → `codex-rs/http-client/src/request.rs`(机械改路径)
-  - `codex-rs/codex-client/src/transport.rs` → `codex-rs/http-client/src/transport.rs`(机械改路径)
+结构性与语义改动节点均由独立 agent 对目标源码复核；L2 不复用节点正文作为证据。发现反例后先修 Wiki，再复核：
 
----
+| 领域 | 重点节点 | L2 结论与已修反例 |
+|---|---|---|
+| MCP | client、trace、namespace/resource tools | 修正“step binding 贯穿调用”的错误；实际 ordinary call 先 refresh，再取 current binding，revision guard 只覆盖 prepared-call 到 exact send。 |
+| Thread | thread-store、thread methods | 修正 legacy thread 也有跨进程 lock 的误写；writer lock 仅 paginated live writer。修正 fork 会抛 cross-process writer conflict 的误写。 |
+| HTTP | http-client | 补全 global system-proxy cache TTL/cap、non-replayable redirect 返回原 response、PAC 候选不 fail over。 |
+| Exec/network | exec-server | 修正 client recovery 的适用面：能响应的 callback Deny/error；connection cancellation 等场景由 server timeout/fail closed。 |
+| Approval/PathUri | shell flow、approval policy | PathUri key 通过；修正 dangerous/Windows legacy unmatched + `Never` 为 Forbidden，不因 disabled/external sandbox 放行。 |
+| Code Mode | new runtime、transport、CLI | 修正 protocol source path，补 frame/message size evidence；认证能力保留 `[U]`，不从 Origin filter 推断。 |
+| Plugins/skills | plugins、skills、extension system、plugin RPC | 修正 Agent Plugins 默认 discovery 已接线的误写；补 name 首尾规则、local+remote force-refetch、share/icon/hook fields。 |
+| App-Server/protocol | overview、thread/config/plugin methods、notifications、server requests | 130/72/11 计数通过；修正 ClientRequest 与 ServerRequest wire-name差异、requirements delta、notification 分组和 `turn/completed` source。 |
+| Tool gates/image | tool system、current-time、update-plan、wait-agent-v2、image generation | 修正 hosted image-generation 旧描述、config gates、Free plan 和 extension-owned artifact；current-time 标为 base inventory 漏项。 |
+| World State | context manager、collaboration modes、tool search | 修正 settings builder 仍处理 multi-agent 的误写；multi-agent 已是独立 typed section，tools section 仅描述 deferred namespaces。 |
+| Process/TUI/Git | process-hardening、TUI nodes、git-utils | Windows Job preserve/terminate race、side conversation/live output、Git attribution 均按目标 source 复核。 |
 
-## 2. 新增面扫描(355 新文件 → 判断是否需新节点)
+纯 SHA 与只移动行号的节点采用 L2 抽样；A-BROKEN、B-HEAVY、MCP、thread、HTTP、Code Mode、plugins、protocol、approval、exec-network、skills、World State 等结构性节点不降级为抽样。
 
-对照现有 `index.json`,重点核这些新增区是否已有节点覆盖,缺则按 `conventions.md` 建新节点并登记 `index.json` + `llms.txt`:
-- `codex-rs/external-agent-migration/`(+47,由 `external-agent-sessions` 重组扩建):`surface.cli.external-agent-import` 单节点是否够,还是要拆?
-- `codex-rs/tui/src`(+77)、`codex-rs/core/src`(+37):既有子系统内新增,核对是否有新工具/新 Op/Event/新 overlay 需要进对应节点。
-- `codex-rs/app-server-protocol/schema`(+32):schema 扩面,`rpc.*` 节点核对新方法/通知。
-- `codex-rs/ext/skills`(+10)、`codex-rs/ext/items`(+7):ext 体系扩面,核对 `spine.extension-system` 是否覆盖。
-- `codex-rs/connectors/src`(+6)、`codex-rs/codex-mcp/src`(+5)、`codex-rs/thread-store/src`(+8):上轮新建的子系统继续演进,核对既有节点。
+## 6. `[I]` / `[U]` 与跳过判定
 
----
+保留的主要不确定项已写入 `_staging/uncertainty-61a44880.md` 并由 reconcile 生成 `reference/uncertainty.md`：
 
-## 3. 批次划分(并发会话,按 RUN.md §8)
+- `[U]` remote Code Mode listener 的应用层认证/TLS 部署保证。
+- `[U]` multi-segment lineage 的 incremental replay。
+- `[U]` Agent Plugins root `plugin.json` 默认 discovery 接线。
+- `[U]` exec-network `Ask` 是否最终有可用 UI。
+- `[U]` system proxy/PAC 的稳定性与候选 failover。
+- `[U]` Windows TCP attribution 的 IPv6 行为。
+- `[U]` dynamic skills shadow selector、remote plugin cache 长期契约。
+- `[U]` legacy v1 denied wire compatibility 与 core/v2 completion timestamp 对应关系。
+- `[I]` PathUri cache key 对跨 executor/host identity 的设计意图。
 
-受影响节点(155 个,不含 17 个 D-CLEAN)按 id 分组如下——可据此切批,一个会话认领一组、只写自己那批的 node `.md`(共享文件 `index.json`/`llms.txt`/`reference/uncertainty.md` 收尾统一 reconcile):
+没有因“direct source clean”跳过全局 SHA 或引用检查。未拆出独立 Git-attribution、MCP-binding、World-State 节点：现有 `extension-system` + `git-utils`、`mcp.client`、`context-manager`/`collaboration-modes` 已能自包含承载；Code Mode 则因形成独立 host/runtime/transport 模块而新建节点。
 
-| 分组 | A-BROKEN | B-HEAVY | C-DRIFT | D-CLEAN | 受影响小计 |
-|---|---|---|---|---|---|
-| `tool.*` | 0 | 2 | 35 | 0 | 37 |
-| `subsys.core.*` | 2 | 0 | 16 | 1 | 18 |
-| `spine.*` | 0 | 0 | 11 | 0 | 11 |
-| `ref.*` | 1 | 1 | 9 | 1 | 11 |
-| `subsys.providers.*` | 2 | 0 | 8 | 0 | 10 |
-| `rpc.*` | 0 | 0 | 9 | 0 | 9 |
-| `subsys.tui.*` | 0 | 1 | 8 | 0 | 9 |
-| `config.*` | 0 | 0 | 8 | 0 | 8 |
-| `subsys.config-auth.*` | 0 | 0 | 8 | 0 | 8 |
-| `command.*` | 0 | 0 | 6 | 0 | 6 |
-| `subsys.mcp.*` | 0 | 0 | 6 | 0 | 6 |
-| `subsys.platform.*` | 1 | 0 | 5 | 2 | 6 |
-| `sdk.*` | 0 | 0 | 5 | 1 | 5 |
-| `cli.*` | 0 | 0 | 3 | 0 | 3 |
-| `subsys.exec-sandbox.*` | 0 | 0 | 3 | 9 | 3 |
-| `subsys.app-server.*` | 0 | 0 | 3 | 1 | 3 |
-| `subsys.cloud.*` | 0 | 0 | 1 | 2 | 1 |
-| `surface.cli.*` | 1 | 0 | 0 | 0 | 1 |
+## 7. 元数据与引用收敛
 
-> D-CLEAN 的 17 个节点单独一批走"快速复核":只确认 path/行号仍成立,bump `updated=4d7a5c7c73`,省 L2(除非复核发现行号漂了)。
+- 所有 172 个 retained verified node frontmatter：`updated: 61a44880a8`。
+- `index.json.updated` 与所有 `index.nodes[].updated`：`61a44880a8`。
+- `README.md`、`llms.txt`、`index.json` 的节点、tool、crate、RPC 计数一致。
+- reconcile 会在文件删除时 prune stale index entry，并同步每节点 `updated`。
+- lint 会校验 verified node frontmatter/index/top-level SHA 一致，以及 source/evidence path、行号与弱锚点。
+- 全量行号审计后，失效引用已重新定位；最后一轮又把 252 个落在空行、纯注释或闭合符的 evidence refs 锚到相邻直接代码行。
 
----
+## 8. 最终验证
 
-## 4. 每节点收尾 & 完成定义
+```bash
+git -C codex rev-parse HEAD
+git -C codex status --short
+node docs/llm-wiki/codex/tools/reconcile.mjs
+node docs/llm-wiki/codex/tools/lint.mjs
+jq -r '.updated, (.nodes|length), ([.nodes[].updated]|unique|join(\",\"))' docs/llm-wiki/codex/index.json
+rg -n '^updated:' docs/llm-wiki/codex/{spine,surface,subsystems,reference} --glob '*.md'
+rg -n 'tool\\.spawn-agents-on-csv|tool\\.report-agent-job-result' docs/llm-wiki/codex/index.json docs/llm-wiki/codex/llms.txt
+git diff --check
+```
 
-- 单节点循环照 **RUN.md §3**(L1 读源 → L2 独立证伪 → L3 修复),把 `[E:path:line]` 行号重新落准是本次核心。
-- 完成即置 `status: verified` + `updated: 4d7a5c7c73`(权威取 `git -C ../../../codex/ rev-parse --short HEAD`)。
-- **整体收尾**:`node tools/reconcile.mjs` 同步 frontmatter → `index.json`,并把 `index.json` 顶层 `updated` 改成 `4d7a5c7c73`;`node tools/lint.mjs` 全绿;有增删节点则同步 `llms.txt`。
-- **git 隔离坑**:只往 `docs/llm-wiki/codex/` 写,别碰 `codex/` 源仓。
+验收结果：
 
----
-
-## 附录 A — 逐节点影响分级(自动生成 @ db887d03e1..4d7a5c7c73)
-
-分级:**A-BROKEN**=source 引用了已删/移文件(必改 source 列)· **B-HEAVY**=无删除但 churn≥2000 行 · **C-DRIFT**=轻中度行漂移 · **D-CLEAN**=源全未变(仅复核)。
-计数:A-BROKEN=7 · B-HEAVY=4 · C-DRIFT=144 · D-CLEAN=17(共 172)
-
-| node id | tier | 分级 | del/chg/total-src | ~churn 行 | 已删·移的 source(需重定位) |
-|---|---|---|---|---|---|
-| `surface.cli.external-agent-import` | T1 | A-BROKEN | 8/5/13 | 5510 | `codex-rs/external-agent-sessions/src/lib.rs` → `codex-rs/external-agent-migration/src/sessions/mod.rs`; `codex-rs/external-agent-sessions/src/detect.rs` → `codex-rs/external-agent-migration/src/detect/sessions/cla.rs`; `codex-rs/external-agent-sessions/src/export.rs` → `codex-rs/external-agent-migration/src/sessions/export.rs`; `codex-rs/external-agent-sessions/src/ledger.rs` → `codex-rs/external-agent-migration/src/sessions/ledger.rs`; `codex-rs/external-agent-sessions/src/records.rs` → `codex-rs/external-agent-migration/src/sessions/records.rs`; `codex-rs/app-server/src/config/external_agent_config.rs` → **已删,需重定位**; `codex-rs/app-server/src/request_processors/external_agent_config_processor.rs` → **已删,需重定位**; `codex-rs/app-server/src/request_processors/external_agent_session_import.rs` → `codex-rs/app-server/src/external_agent_migration/session_importer.rs` |
-| `ref.env-vars` | T3 | A-BROKEN | 1/13/27 | 2040 | `codex-rs/codex-client/src/custom_ca.rs` → `codex-rs/http-client/src/custom_ca.rs` |
-| `subsys.core.collaboration-modes` | T2 | A-BROKEN | 1/6/14 | 1287 | `codex-rs/core/src/context/collaboration_mode_instructions.rs` → **已删,需重定位** |
-| `subsys.core.review-mode` | T2 | A-BROKEN | 1/5/6 | 831 | `codex-rs/core/src/review_format.rs` → `codex-rs/protocol/src/review_format.rs` |
-| `subsys.platform.realtime` | T2 | A-BROKEN | 2/3/7 | 657 | `codex-rs/realtime-webrtc/src/lib.rs` → **已删,需重定位**; `codex-rs/realtime-webrtc/src/native.rs` → **已删,需重定位** |
-| `subsys.providers.retry-errors` | T2 | A-BROKEN | 2/4/8 | 244 | `codex-rs/codex-client/src/error.rs` → `codex-rs/http-client/src/error.rs`; `codex-rs/codex-client/src/transport.rs` → `codex-rs/http-client/src/transport.rs` |
-| `subsys.providers.http-client` | T2 | A-BROKEN | 3/3/7 | 69 | `codex-rs/codex-client/src/default_client.rs` → `codex-rs/http-client/src/default_client.rs`; `codex-rs/codex-client/src/request.rs` → `codex-rs/http-client/src/request.rs`; `codex-rs/codex-client/src/transport.rs` → `codex-rs/http-client/src/transport.rs` |
-| `ref.glossary` | T3 | B-HEAVY | 0/18/26 | 2844 |  |
-| `subsys.tui.bottom-pane` | T2 | B-HEAVY | 0/5/12 | 2573 |  |
-| `tool.web-search` | T1 | B-HEAVY | 0/12/12 | 2369 |  |
-| `tool.image-generation` | T1 | B-HEAVY | 0/11/11 | 2335 |  |
-| `spine.overview` | T0 | C-DRIFT | 0/12/13 | 1952 |  |
-| `ref.key-types` | T3 | C-DRIFT | 0/13/16 | 1917 |  |
-| `spine.trace-subagent` | T0 | C-DRIFT | 0/12/14 | 1726 |  |
-| `subsys.core.ghost-undo` | T2 | C-DRIFT | 0/7/8 | 1693 |  |
-| `subsys.app-server.message-processor` | T2 | C-DRIFT | 0/4/4 | 1576 |  |
-| `tool.request-user-input` | T1 | C-DRIFT | 0/7/12 | 1560 |  |
-| `spine.turn-end-to-end` | T0 | C-DRIFT | 0/9/9 | 1535 |  |
-| `tool.tool-search` | T1 | C-DRIFT | 0/12/17 | 1512 |  |
-| `subsys.app-server.session-management` | T2 | C-DRIFT | 0/8/8 | 1360 |  |
-| `subsys.core.realtime-conversation` | T2 | C-DRIFT | 0/3/5 | 1356 |  |
-| `subsys.providers.model-catalog` | T2 | C-DRIFT | 0/10/11 | 1326 |  |
-| `spine.sq-eq-architecture` | T0 | C-DRIFT | 0/4/4 | 1284 |  |
-| `subsys.core.memory` | T2 | C-DRIFT | 0/9/20 | 1278 |  |
-| `ref.data-model` | T3 | C-DRIFT | 0/5/8 | 1278 |  |
-| `ref.protocol-event-streaming` | T3 | C-DRIFT | 0/3/3 | 1271 |  |
-| `subsys.tui.overlays-dialogs` | T2 | C-DRIFT | 0/13/23 | 1270 |  |
-| `subsys.core.compaction` | T2 | C-DRIFT | 0/6/7 | 1250 |  |
-| `tool.shell-command` | T1 | C-DRIFT | 0/7/12 | 1166 |  |
-| `tool.view-image` | T1 | C-DRIFT | 0/6/9 | 1133 |  |
-| `spine.context-and-compaction` | T0 | C-DRIFT | 0/6/6 | 1106 |  |
-| `subsys.tui.architecture` | T2 | C-DRIFT | 0/7/8 | 1014 |  |
-| `subsys.platform.network-proxy` | T2 | C-DRIFT | 0/9/10 | 979 |  |
-| `subsys.core.unified-exec` | T2 | C-DRIFT | 0/12/14 | 953 |  |
-| `spine.extension-system` | T0 | C-DRIFT | 0/17/27 | 937 |  |
-| `subsys.core.session-lifecycle` | T2 | C-DRIFT | 0/8/10 | 934 |  |
-| `subsys.core.instruction-assembly` | T2 | C-DRIFT | 0/10/14 | 858 |  |
-| `spine.trace-mcp-call` | T0 | C-DRIFT | 0/7/7 | 841 |  |
-| `ref.protocol-items` | T3 | C-DRIFT | 0/2/3 | 841 |  |
-| `spine.tool-call-anatomy` | T0 | C-DRIFT | 0/7/7 | 809 |  |
-| `subsys.tui.event-system` | T2 | C-DRIFT | 0/8/9 | 793 |  |
-| `subsys.core.context-manager` | T2 | C-DRIFT | 0/6/7 | 776 |  |
-| `tool.request-permissions` | T1 | C-DRIFT | 0/7/9 | 772 |  |
-| `config.approval-sandbox` | T1 | C-DRIFT | 0/6/6 | 743 |  |
-| `tool.resume-agent-v1` | T1 | C-DRIFT | 0/6/7 | 740 |  |
-| `spine.process-lifecycle` | T0 | C-DRIFT | 0/3/4 | 703 |  |
-| `rpc.config-account-methods` | T1 | C-DRIFT | 0/7/13 | 700 |  |
-| `subsys.core.thread-store` | T2 | C-DRIFT | 0/9/11 | 678 |  |
-| `tool.send-input-v1` | T1 | C-DRIFT | 0/6/7 | 656 |  |
-| `tool.update-plan` | T1 | C-DRIFT | 0/3/6 | 645 |  |
-| `subsys.core.approval-policy` | T2 | C-DRIFT | 0/2/4 | 629 |  |
-| `subsys.config-auth.auth-flows` | T2 | C-DRIFT | 0/4/5 | 625 |  |
-| `tool.interrupt-agent-v2` | T1 | C-DRIFT | 0/5/6 | 583 |  |
-| `rpc.notifications-thread` | T1 | C-DRIFT | 0/6/8 | 572 |  |
-| `rpc.server-requests` | T1 | C-DRIFT | 0/4/8 | 572 |  |
-| `rpc.notifications-system` | T1 | C-DRIFT | 0/5/13 | 560 |  |
-| `subsys.core.turn-engine` | T2 | C-DRIFT | 0/5/5 | 558 |  |
-| `subsys.config-auth.plugins` | T2 | C-DRIFT | 0/3/6 | 557 |  |
-| `subsys.mcp.client` | T2 | C-DRIFT | 0/4/5 | 553 |  |
-| `subsys.config-auth.skills` | T2 | C-DRIFT | 0/2/6 | 501 |  |
-| `ref.protocol-op` | T3 | C-DRIFT | 0/1/1 | 497 |  |
-| `ref.protocol-event-lifecycle` | T3 | C-DRIFT | 0/1/1 | 497 |  |
-| `tool.spawn-agent-v2` | T1 | C-DRIFT | 0/5/7 | 490 |  |
-| `tool.request-plugin-install` | T1 | C-DRIFT | 0/4/6 | 479 |  |
-| `subsys.mcp.oauth` | T2 | C-DRIFT | 0/3/5 | 477 |  |
-| `tool.spawn-agent-v1` | T1 | C-DRIFT | 0/5/6 | 475 |  |
-| `tool.list-agents` | T1 | C-DRIFT | 0/4/6 | 469 |  |
-| `tool.sleep` | T1 | C-DRIFT | 0/3/4 | 464 |  |
-| `subsys.core.tool-router` | T2 | C-DRIFT | 0/5/7 | 458 |  |
-| `tool.list-available-plugins-to-install` | T1 | C-DRIFT | 0/2/5 | 457 |  |
-| `spine.trace-apply-patch` | T0 | C-DRIFT | 0/6/9 | 454 |  |
-| `subsys.core.rollout-persistence` | T2 | C-DRIFT | 0/4/5 | 442 |  |
-| `subsys.tui.streaming-pipeline` | T2 | C-DRIFT | 0/4/6 | 438 |  |
-| `spine.shell-exec-flow` | T0 | C-DRIFT | 0/6/8 | 437 |  |
-| `subsys.config-auth.hooks` | T2 | C-DRIFT | 0/7/8 | 433 |  |
-| `rpc.mcp-skills-plugin-methods` | T1 | C-DRIFT | 0/3/4 | 427 |  |
-| `subsys.tui.chatwidget` | T2 | C-DRIFT | 0/7/10 | 423 |  |
-| `subsys.mcp.transports` | T2 | C-DRIFT | 0/4/5 | 413 |  |
-| `subsys.mcp.connectors` | T2 | C-DRIFT | 0/3/7 | 411 |  |
-| `tool.exec-command` | T1 | C-DRIFT | 0/8/10 | 398 |  |
-| `subsys.core.state-db` | T2 | C-DRIFT | 0/6/8 | 397 |  |
-| `rpc.thread-methods` | T1 | C-DRIFT | 0/2/2 | 384 |  |
-| `tool.wait-agent-v1` | T1 | C-DRIFT | 0/4/5 | 359 |  |
-| `subsys.mcp.name-qualification` | T2 | C-DRIFT | 0/3/3 | 339 |  |
-| `config.model-provider` | T1 | C-DRIFT | 0/5/6 | 335 |  |
-| `tool.close-agent-v1` | T1 | C-DRIFT | 0/5/6 | 331 |  |
-| `tool.test-sync-tool` | T1 | C-DRIFT | 0/2/4 | 326 |  |
-| `tool.write-stdin` | T1 | C-DRIFT | 0/8/11 | 324 |  |
-| `rpc.turn-methods` | T1 | C-DRIFT | 0/3/4 | 318 |  |
-| `subsys.config-auth.profiles` | T2 | C-DRIFT | 0/3/5 | 317 |  |
-| `rpc.overview` | T1 | C-DRIFT | 0/4/7 | 293 |  |
-| `subsys.core.approval-guardian` | T2 | C-DRIFT | 0/4/6 | 290 |  |
-| `tool.wait-agent-v2` | T1 | C-DRIFT | 0/4/5 | 284 |  |
-| `tool.send-message` | T1 | C-DRIFT | 0/4/7 | 283 |  |
-| `tool.followup-task` | T1 | C-DRIFT | 0/4/7 | 283 |  |
-| `subsys.providers.provider-bedrock` | T2 | C-DRIFT | 0/5/8 | 283 |  |
-| `subsys.providers.overview` | T2 | C-DRIFT | 0/3/4 | 282 |  |
-| `tool.code-mode-exec` | T1 | C-DRIFT | 0/6/9 | 281 |  |
-| `rpc.fs-command-methods` | T1 | C-DRIFT | 0/1/4 | 275 |  |
-| `subsys.tui.status-surfaces` | T2 | C-DRIFT | 0/4/5 | 259 |  |
-| `subsys.config-auth.credential-storage` | T2 | C-DRIFT | 0/2/8 | 250 |  |
-| `tool.apply-patch` | T1 | C-DRIFT | 0/7/14 | 248 |  |
-| `tool.dynamic-tools` | T1 | C-DRIFT | 0/4/6 | 232 |  |
-| `subsys.providers.sse-streaming` | T2 | C-DRIFT | 0/3/3 | 230 |  |
-| `subsys.exec-sandbox.file-system` | T2 | C-DRIFT | 0/1/1 | 224 |  |
-| `ref.session-tasks` | T3 | C-DRIFT | 0/6/8 | 218 |  |
-| `tool.code-mode-wait` | T1 | C-DRIFT | 0/4/8 | 193 |  |
-| `subsys.core.tool-system` | T2 | C-DRIFT | 0/4/4 | 190 |  |
-| `subsys.exec-sandbox.exec-server` | T2 | C-DRIFT | 0/1/3 | 186 |  |
-| `tool.spawn-agents-on-csv` | T1 | C-DRIFT | 0/3/6 | 167 |  |
-| `subsys.providers.provider-openai` | T2 | C-DRIFT | 0/2/3 | 164 |  |
-| `tool.report-agent-job-result` | T1 | C-DRIFT | 0/2/6 | 159 |  |
-| `config.skills-plugins-features` | T1 | C-DRIFT | 0/4/5 | 158 |  |
-| `tool.mcp-namespace-tools` | T1 | C-DRIFT | 0/3/4 | 157 |  |
-| `tool.list-mcp-resources` | T1 | C-DRIFT | 0/2/4 | 148 |  |
-| `tool.list-mcp-resource-templates` | T1 | C-DRIFT | 0/2/4 | 148 |  |
-| `tool.read-mcp-resource` | T1 | C-DRIFT | 0/2/4 | 148 |  |
-| `tool.get-context-remaining` | T1 | C-DRIFT | 0/2/4 | 148 |  |
-| `subsys.platform.analytics` | T2 | C-DRIFT | 0/5/5 | 147 |  |
-| `tool.new-context` | T1 | C-DRIFT | 0/1/4 | 146 |  |
-| `subsys.providers.auth-layer` | T2 | C-DRIFT | 0/2/4 | 140 |  |
-| `config.mcp-tools` | T1 | C-DRIFT | 0/4/4 | 124 |  |
-| `config.auth-account` | T1 | C-DRIFT | 0/3/3 | 123 |  |
-| `config.ui-tui` | T1 | C-DRIFT | 0/3/3 | 123 |  |
-| `config.agents-memory` | T1 | C-DRIFT | 0/2/3 | 89 |  |
-| `config.storage-telemetry-misc` | T1 | C-DRIFT | 0/2/3 | 89 |  |
-| `subsys.platform.agent-identity` | T2 | C-DRIFT | 0/1/2 | 85 |  |
-| `subsys.config-auth.features-system` | T2 | C-DRIFT | 0/3/3 | 78 |  |
-| `ref.feature-flags` | T3 | C-DRIFT | 0/1/1 | 60 |  |
-| `cli.exec-mode` | T1 | C-DRIFT | 0/3/5 | 50 |  |
-| `subsys.platform.git-utils` | T2 | C-DRIFT | 0/1/9 | 46 |  |
-| `subsys.config-auth.config-loading` | T2 | C-DRIFT | 0/2/11 | 42 |  |
-| `cli.global-flags` | T1 | C-DRIFT | 0/2/8 | 36 |  |
-| `subsys.providers.provider-oss` | T2 | C-DRIFT | 0/1/6 | 32 |  |
-| `subsys.providers.responses-api` | T2 | C-DRIFT | 0/1/7 | 32 |  |
-| `sdk.ts-structured-output` | T1 | C-DRIFT | 0/2/8 | 31 |  |
-| `ref.crate-index` | T3 | C-DRIFT | 0/1/1 | 21 |  |
-| `subsys.mcp.server` | T2 | C-DRIFT | 0/2/3 | 17 |  |
-| `subsys.app-server.transport` | T2 | C-DRIFT | 0/2/7 | 17 |  |
-| `command.realtime-debug` | T1 | C-DRIFT | 0/2/4 | 9 |  |
-| `sdk.py-overview` | T1 | C-DRIFT | 0/1/9 | 8 |  |
-| `cli.subcommands` | T1 | C-DRIFT | 0/1/2 | 7 |  |
-| `subsys.tui.rendering-theming` | T2 | C-DRIFT | 0/1/5 | 5 |  |
-| `sdk.ts-events-items` | T1 | C-DRIFT | 0/2/3 | 4 |  |
-| `sdk.sdk-architecture` | T1 | C-DRIFT | 0/2/11 | 4 |  |
-| `subsys.tui.onboarding` | T2 | C-DRIFT | 0/1/3 | 3 |  |
-| `command.session-thread` | T1 | C-DRIFT | 0/1/3 | 2 |  |
-| `command.model-mode` | T1 | C-DRIFT | 0/1/3 | 2 |  |
-| `command.code-review` | T1 | C-DRIFT | 0/1/1 | 2 |  |
-| `command.tools-integrations` | T1 | C-DRIFT | 0/1/3 | 2 |  |
-| `command.config-system` | T1 | C-DRIFT | 0/1/3 | 2 |  |
-| `sdk.ts-overview` | T1 | C-DRIFT | 0/1/6 | 2 |  |
-| `subsys.exec-sandbox.shell-escalation` | T2 | C-DRIFT | 0/1/2 | 2 |  |
-| `subsys.cloud.cloud-tasks` | T2 | C-DRIFT | 0/1/6 | 2 |  |
-| `subsys.platform.telemetry-otel` | T2 | C-DRIFT | 0/1/5 | 1 |  |
-| `sdk.py-inputs-errors` | T1 | D-CLEAN | 0/0/5 |  |  |
-| `subsys.core.trace-bundle` | T2 | D-CLEAN | 0/0/11 |  |  |
-| `subsys.exec-sandbox.overview` | T2 | D-CLEAN | 0/0/3 |  |  |
-| `subsys.exec-sandbox.execpolicy-dsl` | T2 | D-CLEAN | 0/0/6 |  |  |
-| `subsys.exec-sandbox.apply-patch-engine` | T2 | D-CLEAN | 0/0/5 |  |  |
-| `subsys.exec-sandbox.sandbox-seatbelt` | T2 | D-CLEAN | 0/0/1 |  |  |
-| `subsys.exec-sandbox.sandbox-linux` | T2 | D-CLEAN | 0/0/4 |  |  |
-| `subsys.exec-sandbox.sandbox-windows` | T2 | D-CLEAN | 0/0/2 |  |  |
-| `subsys.exec-sandbox.shell-parsing` | T2 | D-CLEAN | 0/0/1 |  |  |
-| `subsys.exec-sandbox.process-hardening` | T2 | D-CLEAN | 0/0/1 |  |  |
-| `subsys.exec-sandbox.arg0-dispatch` | T2 | D-CLEAN | 0/0/4 |  |  |
-| `subsys.app-server.client-libs` | T2 | D-CLEAN | 0/0/2 |  |  |
-| `subsys.cloud.cloud-task-api` | T2 | D-CLEAN | 0/0/4 |  |  |
-| `subsys.cloud.cloud-config` | T2 | D-CLEAN | 0/0/10 |  |  |
-| `subsys.platform.file-search` | T2 | D-CLEAN | 0/0/4 |  |  |
-| `subsys.platform.terminal-detection` | T2 | D-CLEAN | 0/0/2 |  |  |
-| `ref.uncertainty` | T3 | D-CLEAN | 0/0/0 |  |  |
+- submodule HEAD 精确等于目标 full SHA，子模块源码工作树 clean。
+- reconcile：172 verified nodes，0 issue。
+- lint：0 error。
+- stale node/index SHA：0。
+- 已退役工具在 index/llms 的残留：0。
+- `opencode`、`pi` 子模块未初始化、未修改。

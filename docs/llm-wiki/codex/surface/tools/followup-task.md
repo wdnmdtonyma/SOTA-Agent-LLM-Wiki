@@ -8,7 +8,7 @@ symbols: [create_followup_task_tool, FollowupTaskHandlerV2, multi_agents_v2::fol
 related: [tool.spawn-agent-v2, tool.send-message, tool.wait-agent-v2]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > `followup_task` 是 MultiAgentV2 的 trigger-turn 消息工具：它给现有非 root agent 投递纯文本任务，并让目标 agent 处理该任务。
@@ -18,12 +18,12 @@ updated: 4d7a5c7c73
 | 项 | 当前源码事实 |
 |---|---|
 | wire name | `followup_task`，由 handler 和 spec builder 定义。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/followup_task.rs:10][E: codex-rs/core/src/tools/handlers/multi_agents_v2/followup_task.rs:12][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:236][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:237] |
-| handler | V2 module re-export `followup_task::Handler as FollowupTaskHandler`；`spec_plan.rs` 用 `FollowupTaskHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:29][E: codex-rs/core/src/tools/spec_plan.rs:825] |
+| handler | V2 module re-export `followup_task::Handler as FollowupTaskHandler`；`spec_plan.rs` 用 `FollowupTaskHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:29][E: codex-rs/core/src/tools/spec_plan.rs:864] |
 | spec | function tool，`strict: false`、`defer_loading: None`，无 output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:218][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:236][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:240][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:241][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:243] |
 
 ## 注册与门控
 
-`followup_task` 与其他 V2 协作工具一起注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支，并经过相同的 exposure/namespace 包装。[E: codex-rs/core/src/tools/spec_plan.rs:786][E: codex-rs/core/src/tools/spec_plan.rs:788][E: codex-rs/core/src/tools/spec_plan.rs:789][E: codex-rs/core/src/tools/spec_plan.rs:795][E: codex-rs/core/src/tools/spec_plan.rs:825][E: codex-rs/core/src/tools/spec_plan.rs:1011][E: codex-rs/core/src/tools/spec_plan.rs:1015][E: codex-rs/core/src/tools/spec_plan.rs:1016][E: codex-rs/core/src/tools/spec_plan.rs:1020]
+`followup_task` 与其他 V2 协作工具一起注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支，并经过相同的 exposure/namespace 包装。[E: codex-rs/core/src/tools/spec_plan.rs:825][E: codex-rs/core/src/tools/spec_plan.rs:827][E: codex-rs/core/src/tools/spec_plan.rs:828][E: codex-rs/core/src/tools/spec_plan.rs:834][E: codex-rs/core/src/tools/spec_plan.rs:864][E: codex-rs/core/src/tools/spec_plan.rs:1056][E: codex-rs/core/src/tools/spec_plan.rs:1060][E: codex-rs/core/src/tools/spec_plan.rs:1061][E: codex-rs/core/src/tools/spec_plan.rs:1065]
 
 handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 返回 false。[E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
 
@@ -31,7 +31,7 @@ handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 返�
 
 | 字段 | 必填 | 说明 |
 |---|---:|---|
-| `target` | 是 | agent id 或 canonical task name；运行时走 `resolve_agent_target`，先支持 thread id，后支持当前 agent path 下的相对/绝对路径解析。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:220][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:223][E: codex-rs/core/src/agent/agent_resolver.rs:14][E: codex-rs/core/src/agent/agent_resolver.rs:18][E: codex-rs/core/src/agent/agent_resolver.rs:21] |
+| `target` | 是 | agent id 或 canonical task name；运行时走 `resolve_agent_target`，先支持 thread id，后支持当前 agent path 下的相对/绝对路径解析。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:220][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:223][E: codex-rs/core/src/agent/agent_resolver.rs:15][E: codex-rs/core/src/agent/agent_resolver.rs:19][E: codex-rs/core/src/agent/agent_resolver.rs:22] |
 | `message` | 是 | 加密 string；共享 handler 会拒绝 trim 后为空的消息。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:228][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:232][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:51] |
 
 schema required 为 `target` 和 `message`，additional properties 为 false；runtime args 使用 `#[serde(deny_unknown_fields)]`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:242][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:45][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:43]

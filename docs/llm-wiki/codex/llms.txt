@@ -1,8 +1,8 @@
 # Codex 源码 LLM Wiki — 入口索引
 
-> OpenAI Codex 真实源码(`Best/codex/`,124-crate Rust workspace + TS/Py SDK)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
+> OpenAI Codex 真实源码(`Best/codex/`,126-crate Rust workspace + TS/Py SDK)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
 >
-> **状态:172 个节点均已对照 `4d7a5c7c73` 复核并标记 verified。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
+> **状态:172 个节点均已对照 `61a44880a8` 复核并标记 verified。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
 
 ## 怎么用
 - **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
@@ -23,7 +23,7 @@
 - [trace:MCP 工具调用](spine/trace-mcp-call.md): 外部 MCP server 工具 发现 → 注册 → 调用路由 → 结果回流 — codex-mcp/ · rmcp-client/
 - [trace:spawn 子 agent](spine/trace-subagent.md): spawn_agent → 子 agent 循环 → mailbox/wait_agent → 结果回流 — core/src/tools/handlers/multi_agents*/ · core/
 
-## T1 — Surface / Tools(每工具一节点,37)
+## T1 — Surface / Tools(每工具一节点,36)
 
 ### Shell 执行
 - [exec_command](surface/tools/exec-command.md): unified-exec 单命令执行(TTY/管道)— core/src/tools/handlers/unified_exec/exec_command.rs
@@ -61,10 +61,6 @@
 - [close_agent (V1)](surface/tools/close-agent-v1.md): V1 关闭子 agent — core/src/tools/handlers/multi_agents/close_agent.rs
 - [resume_agent (V1)](surface/tools/resume-agent-v1.md): V1 恢复子 agent — core/src/tools/handlers/multi_agents/resume_agent.rs
 
-### Agent 批处理 jobs
-- [spawn_agents_on_csv](surface/tools/spawn-agents-on-csv.md): 按 CSV 行并行 spawn N 子 agent — core/src/tools/handlers/agent_jobs/spawn_agents_on_csv.rs
-- [report_agent_job_result](surface/tools/report-agent-job-result.md): worker 回报 job 结果 — core/src/tools/handlers/agent_jobs/report_agent_job_result.rs
-
 ### MCP 资源
 - [list_mcp_resources](surface/tools/list-mcp-resources.md): 列 MCP server 资源 — core/src/tools/handlers/mcp_resource/list_mcp_resources.rs
 - [list_mcp_resource_templates](surface/tools/list-mcp-resource-templates.md): 列 MCP 资源模板 — core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs
@@ -75,9 +71,10 @@
 - [list_available_plugins_to_install](surface/tools/list-available-plugins-to-install.md): 列出可安装 plugin/connector 候选 — core/src/tools/handlers/list_available_plugins_to_install.rs
 - [request_plugin_install](surface/tools/request-plugin-install.md): 请求用户安装 plugin/connector — core/src/tools/handlers/request_plugin_install.rs
 - [web_search](surface/tools/web-search.md): 联网/缓存搜索(hosted 或 extension-backed)— core/src/tools/hosted_spec.rs · ext/web-search/src/tool.rs
-- [image_generation](surface/tools/image-generation.md): 图片生成(hosted 或 extension-backed)— core/src/tools/hosted_spec.rs · ext/image-generation/src/tool.rs
+- [image_generation](surface/tools/image-generation.md): extension-backed 图片生成/编辑与 artifact 保存 — ext/image-generation/src/tool.rs
 
 ### 测试 / 元
+- [current_time](surface/tools/current-time.md): 通过可注入 TimeProvider 返回当前 UTC 时间 — core/src/tools/handlers/current_time.rs
 - [test_sync_tool](surface/tools/test-sync-tool.md): 集成测试同步/barrier 工具 — core/src/tools/handlers/test_sync.rs
 - [MCP namespace 工具](surface/tools/mcp-namespace-tools.md): 外部 MCP server 工具按 namespace 合并(动态)— core/src/tools/handlers/mcp.rs · core/src/tools/spec_plan.rs
 - [dynamic 工具](surface/tools/dynamic-tools.md): 协议传入的 per-session 自定义工具 — core/src/tools/handlers/dynamic.rs · core/src/tools/spec_plan.rs
@@ -108,7 +105,7 @@
 - [skills/plugins/features 设置](surface/config/skills-plugins-features.md): skills · plugins · marketplaces · features · suppress_unstable_features_warning — config/src/config_toml.rs
 - [存储/遥测/杂项设置](surface/config/storage-telemetry-misc.md): sqlite_home · log_dir · history · analytics · feedback · otel · ghost_snapshot · projects · windows · oss_provider · commit_attribution · instructions — config/src/config_toml.rs
 
-## T1 — Surface / App-Server 协议(集成面 catalog,9 节点,覆盖 212 个 RPC 实例：129 client requests + 72 notifications + 11 server requests)
+## T1 — Surface / App-Server 协议(集成面 catalog,9 节点,覆盖 213 个 RPC 实例：130 client requests + 72 notifications + 11 server requests)
 - [协议总览](surface/app-server/overview.md): JSON-RPC 2.0 · v1/v2 · ClientRequest/Response/ServerRequest/ServerNotification · 传输 — app-server-protocol/src/protocol/common.rs
 - [thread 方法](surface/app-server/thread-methods.md): thread/start|resume|fork|archive|list|read|rollback|compact… — app-server-protocol/src/protocol/v2.rs
 - [turn 方法](surface/app-server/turn-methods.md): turn/start|steer|interrupt — app-server-protocol/src/protocol/common.rs
@@ -127,8 +124,9 @@
 - [Python 输入与错误](surface/sdk/py-inputs-errors.md): Input 变体 · 错误层级 · retry_on_overload · MessageRouter — sdk/python/src/openai_codex/
 - [SDK 架构](surface/sdk/sdk-architecture.md): TS 走 codex exec JSONL; Python 走 app-server stdio JSON-RPC — sdk/
 
-## T2 — Subsystems / Core(19)
+## T2 — Subsystems / Core(20)
 - [工具系统机制](subsystems/core/tool-system.md): ToolSpec/JsonSchema/CoreToolRuntime/registry/discovery/dynamic/code-mode — core/src/tools/
+- [Code Mode runtime](subsystems/core/code-mode-runtime.md): in-process/remote host、WebSocket handshake、fallback 与 shared connection — core/src/tools/code_mode/ · code-mode-host/
 - [Turn 引擎](subsystems/core/turn-engine.md): run_turn 生成器循环 — core/src/session/turn.rs
 - [Session 生命周期](subsystems/core/session-lifecycle.md): Session · active_turn · handlers 分派 — core/src/session/
 - [Context manager](subsystems/core/context-manager.md): 对话上下文装配 + 注入机制 — core/src/context_manager/
@@ -232,7 +230,7 @@
 - [SessionTask 变体目录](reference/session-tasks.md): SessionTask trait + 变体(Review/Compact/Undo/GhostSnapshot/Regular/UserShell)— core/src/tasks/mod.rs
 - [数据模型](reference/data-model.md): 核心共享类型 — protocol/ · core/
 - [关键类型索引](reference/key-types.md): 各子系统 load-bearing struct/trait 索引 — codex-rs/
-- [Crate 索引](reference/crate-index.md): 124 个 workspace crate 一句话目录 — codex-rs/Cargo.toml
+- [Crate 索引](reference/crate-index.md): 126 个 workspace crate 一句话目录 — codex-rs/Cargo.toml
 - [Feature flag 目录](reference/feature-flags.md): 95 个 flag 按 stage 全 catalog — features/src/lib.rs
 - [环境变量目录](reference/env-vars.md): CODEX_* 等 — codex-rs/
 - [术语表与 codename](reference/glossary.md): SQ/EQ · rollout · ghost commit · seatbelt · landlock · guardian · code-mode …

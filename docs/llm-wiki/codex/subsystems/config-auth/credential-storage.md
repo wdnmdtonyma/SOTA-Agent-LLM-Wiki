@@ -8,10 +8,10 @@ symbols: [AuthDotJson, AuthStorageBackend, FileAuthStorage, DirectKeyringAuthSto
 related: [subsys.config-auth.auth-flows, config.auth-account, subsys.platform.agent-identity]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> Codex 凭据存储由 login auth storage、keyring-store 和 secrets 三层组成：`AuthDotJson` 是 CLI auth schema，auth storage 可在 file、keyring、auto、ephemeral mode 间切换；keyring mode 再按 `AuthKeyringBackendKind` 选择直接 OS keyring 或本地加密 secrets 文件。[E: codex-rs/login/src/auth/storage.rs:40][E: codex-rs/config/src/types.rs:109][E: codex-rs/config/src/types.rs:109][E: codex-rs/config/src/types.rs:141][E: codex-rs/login/src/auth/storage.rs:532]
+> Codex 凭据存储由 login auth storage、keyring-store 和 secrets 三层组成：`AuthDotJson` 是 CLI auth schema，auth storage 可在 file、keyring、auto、ephemeral mode 间切换；keyring mode 再按 `AuthKeyringBackendKind` 选择直接 OS keyring 或本地加密 secrets 文件。[E: codex-rs/login/src/auth/storage.rs:40][E: codex-rs/config/src/types.rs:107][E: codex-rs/config/src/types.rs:107][E: codex-rs/config/src/types.rs:139][E: codex-rs/login/src/auth/storage.rs:532]
 
 ## 能回答的问题
 
@@ -43,7 +43,7 @@ credential-storage 节点覆盖 secret material 的持久化和 backend fallback
 
 `codex-rs/keyring-store` 把平台 keyring 封装成 `KeyringStore` trait，暴露 `load`、`save`、`delete` 三个操作。[E: codex-rs/keyring-store/src/lib.rs:42][E: codex-rs/keyring-store/src/lib.rs:43][E: codex-rs/keyring-store/src/lib.rs:45] `DefaultKeyringStore` 每次操作都创建 `keyring::Entry`，并在 trait 方法内部调用底层 `get_password`、`set_password`、`delete_credential`。[E: codex-rs/keyring-store/src/lib.rs:51][E: codex-rs/keyring-store/src/lib.rs:55][E: codex-rs/keyring-store/src/lib.rs:77][E: codex-rs/keyring-store/src/lib.rs:92]
 
-`AuthKeyringBackendKind` 有 `Direct` 和 `Secrets` 两种；默认值在 Windows 上是 `Secrets`，其他平台是 `Direct`。[E: codex-rs/config/src/types.rs:141][E: codex-rs/config/src/types.rs:141][E: codex-rs/config/src/types.rs:143][E: codex-rs/config/src/types.rs:145][E: codex-rs/config/src/types.rs:148][E: codex-rs/config/src/types.rs:150][E: codex-rs/config/src/types.rs:153] runtime config 的 `auth_keyring_backend_kind()` 不直接用这个 default，而是由 `SecretAuthStorage` feature 决定：开启时返回 `Secrets`，关闭时返回 `Direct`。[E: codex-rs/core/src/config/auth_keyring.rs:10][E: codex-rs/core/src/config/auth_keyring.rs:11][E: codex-rs/core/src/config/auth_keyring.rs:13][E: codex-rs/core/src/config/auth_keyring.rs:47][E: codex-rs/core/src/config/auth_keyring.rs:50][E: codex-rs/core/src/config/auth_keyring.rs:53]
+`AuthKeyringBackendKind` 有 `Direct` 和 `Secrets` 两种；默认值在 Windows 上是 `Secrets`，其他平台是 `Direct`。[E: codex-rs/config/src/types.rs:139][E: codex-rs/config/src/types.rs:139][E: codex-rs/config/src/types.rs:141][E: codex-rs/config/src/types.rs:143][E: codex-rs/config/src/types.rs:146][E: codex-rs/config/src/types.rs:148][E: codex-rs/config/src/types.rs:151] runtime config 的 `auth_keyring_backend_kind()` 不直接用这个 default，而是由 `SecretAuthStorage` feature 决定：开启时返回 `Secrets`，关闭时返回 `Direct`。[E: codex-rs/core/src/config/auth_keyring.rs:10][E: codex-rs/core/src/config/auth_keyring.rs:11][E: codex-rs/core/src/config/auth_keyring.rs:13][E: codex-rs/core/src/config/auth_keyring.rs:47][E: codex-rs/core/src/config/auth_keyring.rs:50][E: codex-rs/core/src/config/auth_keyring.rs:53]
 
 ## Secrets subsystem
 
@@ -59,14 +59,14 @@ credential-storage 节点覆盖 secret material 的持久化和 backend fallback
 
 `AutoAuthStorage` 的 keyring-first/file-fallback 让支持 keyring 的平台优先走 OS credential store，同时保留无 keyring 环境的可用性。[I] 该行为由 `AutoAuthStorage::load` 和 `AutoAuthStorage::save` 中的 fallback 分支直接体现。[E: codex-rs/login/src/auth/storage.rs:428][E: codex-rs/login/src/auth/storage.rs:431][E: codex-rs/login/src/auth/storage.rs:439][E: codex-rs/login/src/auth/storage.rs:443]
 
-`SecretsKeyringAuthStorage` 把 auth payload 放进 age 加密文件、只把 passphrase 放进 OS keyring，降低了直接在 keyring value 中保存整段 serialized auth 的依赖面；这是由 `AuthKeyringBackendKind::Secrets` 的注释、`SecretsKeyringAuthStorage::new` 的 namespace 选择和 `LocalSecretsBackend::load_or_create_passphrase` 的 keyring 用法共同支撑的推断。[I][E: codex-rs/config/src/types.rs:145][E: codex-rs/login/src/auth/storage.rs:340][E: codex-rs/login/src/auth/storage.rs:344][E: codex-rs/secrets/src/local.rs:192][E: codex-rs/secrets/src/local.rs:196][E: codex-rs/secrets/src/local.rs:207]
+`SecretsKeyringAuthStorage` 把 auth payload 放进 age 加密文件、只把 passphrase 放进 OS keyring，降低了直接在 keyring value 中保存整段 serialized auth 的依赖面；这是由 `AuthKeyringBackendKind::Secrets` 的注释、`SecretsKeyringAuthStorage::new` 的 namespace 选择和 `LocalSecretsBackend::load_or_create_passphrase` 的 keyring 用法共同支撑的推断。[I][E: codex-rs/config/src/types.rs:143][E: codex-rs/login/src/auth/storage.rs:340][E: codex-rs/login/src/auth/storage.rs:344][E: codex-rs/secrets/src/local.rs:192][E: codex-rs/secrets/src/local.rs:196][E: codex-rs/secrets/src/local.rs:207]
 
 ## Gotchas
 
 - keyring auth storage 的 account key 与 canonicalized `codex_home` 绑定；移动 `codex_home` 可能导致 keyring account key 变化。[I]
 - `FileAuthStorage::save` 使用 0600 mode，但这只覆盖 Unix permissions 语义；跨平台权限细节由 Rust/OpenOptionsExt 条件编译和平台 filesystem 处理。[I]
-- local dev build 会把 configured `Keyring`/`Auto` CLI auth storage 解析成 `File`，这会绕过 keyring 与 secrets backend。[E: codex-rs/core/src/config/mod.rs:289][E: codex-rs/core/src/config/mod.rs:293][E: codex-rs/core/src/config/mod.rs:296][E: codex-rs/core/src/config/mod.rs:297][E: codex-rs/core/src/config/mod.rs:3940][E: codex-rs/core/src/config/mod.rs:3941]
-- `ChatgptAuthTokens` 形态会强制使用 `Ephemeral` storage，不跟随配置的 auth credentials store mode。[E: codex-rs/login/src/auth/manager.rs:1507][E: codex-rs/login/src/auth/manager.rs:1511][E: codex-rs/login/src/auth/manager.rs:1512]
+- local dev build 会把 configured `Keyring`/`Auto` CLI auth storage 解析成 `File`，这会绕过 keyring 与 secrets backend。[E: codex-rs/core/src/config/mod.rs:287][E: codex-rs/core/src/config/mod.rs:291][E: codex-rs/core/src/config/mod.rs:294][E: codex-rs/core/src/config/mod.rs:295][E: codex-rs/core/src/config/mod.rs:4025][E: codex-rs/core/src/config/mod.rs:4026]
+- `ChatgptAuthTokens` 形态会强制使用 `Ephemeral` storage，不跟随配置的 auth credentials store mode。[E: codex-rs/login/src/auth/manager.rs:1509][E: codex-rs/login/src/auth/manager.rs:1513][E: codex-rs/login/src/auth/manager.rs:1514]
 - `secrets` local store 的 passphrase 会保存在 keyring；如果 keyring 不可用，local secret store 的具体失败行为要沿 `LocalSecretsBackend::load_or_create_passphrase` 调用链判断。[E: codex-rs/secrets/src/local.rs:192][E: codex-rs/secrets/src/local.rs:196][E: codex-rs/secrets/src/local.rs:207][E: codex-rs/secrets/src/local.rs:208]
 
 ## Sources

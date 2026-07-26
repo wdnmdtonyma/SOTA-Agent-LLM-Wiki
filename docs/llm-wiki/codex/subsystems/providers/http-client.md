@@ -1,83 +1,81 @@
 ---
 id: subsys.providers.http-client
-title: Provider HTTP client
+title: HTTP client、proxy route 与 redirect
 kind: subsystem
 tier: T2
-source: [codex-rs/http-client/src/default_client.rs, codex-rs/http-client/src/request.rs, codex-rs/http-client/src/transport.rs, codex-rs/codex-client/src/retry.rs, codex-rs/backend-client/src/client.rs, codex-rs/backend-client/src/types.rs, codex-rs/codex-backend-openapi-models/src/lib.rs]
-symbols: [HttpClient, RequestBuilder, Request, RequestBody, EncodedJsonBody, RequestCompression, ReqwestTransport, Client, PathStyle]
-related: [subsys.providers.overview, subsys.providers.responses-api, subsys.providers.retry-errors, subsys.providers.auth-layer]
+source: [codex-rs/http-client/src/client.rs, codex-rs/http-client/src/client_builder.rs, codex-rs/http-client/src/outbound_proxy.rs, codex-rs/http-client/src/route_aware_client_pool.rs, codex-rs/http-client/src/route_aware_redirect.rs, codex-rs/http-client/src/request.rs, codex-rs/http-client/src/transport.rs, codex-rs/codex-client/src/retry.rs, codex-rs/backend-client/src/client.rs]
+symbols: [HttpClient, HttpClientBuilder, HttpClientFactory, OutboundProxyPolicy, OutboundProxyRoute, ClientRouteClass, RouteAwareClientPool, RouteAwareRequestBuilder, HttpTransport]
+related: [subsys.providers.overview, subsys.providers.responses-api, subsys.providers.retry-errors, subsys.providers.auth-layer, subsys.platform.network-proxy, subsys.core.code-mode-runtime]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> Provider HTTP client 层现在分成三块：`http-client` 拥有通用 HTTP transport、body preparation/compression 与 reqwest adapter，`codex-client` 保留 retry/SSE/telemetry，`backend-client` 则是 ChatGPT/Codex backend API 的 typed client；generated OpenAPI models 与 hand-written backend payload types 继续并存。[E: codex-rs/http-client/src/transport.rs:25][E: codex-rs/http-client/src/request.rs:76][E: codex-rs/codex-client/src/retry.rs:8][E: codex-rs/backend-client/src/client.rs:124][E: codex-rs/codex-backend-openapi-models/src/lib.rs:6][E: codex-rs/backend-client/src/types.rs:190]
+> `codex-http-client` 不再只有一个默认 reqwest wrapper。应用先解析 `OutboundProxyPolicy`，固定目标可由 `HttpClientFactory` 构建 client；目标或 redirect 会变化的调用方必须走 `RouteAwareClientPool`，让每个 URL/hop 都按自己的 system/PAC/env route 选择或复用 transport client。
 
-## 能回答的问题
+## 分层
 
-- Responses endpoint 使用的 generic transport 如何构造 request、stream、retry？
-- JSON request body 何时 zstd 压缩，raw body 为什么不能压缩？
-- backend-client 怎样归一化 ChatGPT base URL 和路径风格？
-- transport error 如何区分 HTTP status、timeout、network、build？
-- generated OpenAPI models 与 hand-written backend types 如何分工？
+| 层 | 职责 |
+|---|---|
+| `HttpClient` | reqwest wrapper、trace header 与可关闭的 request diagnostics；产品调用方应由 factory/pool 获得实例。[E: codex-rs/http-client/src/client.rs:18][E: codex-rs/http-client/src/client.rs:40][E: codex-rs/http-client/src/client.rs:114] |
+| `HttpClientBuilder` | TLS、redirect、timeout、UA 等构造选项，并针对已解析 route 构造 client。[E: codex-rs/http-client/src/client_builder.rs:19][E: codex-rs/http-client/src/client_builder.rs:62] |
+| `HttpClientFactory` | 保存一次解析出的 outbound proxy policy，并按目标 URL 解析 `TransportDefault`、`Direct` 或 `Proxy` route。[E: codex-rs/http-client/src/outbound_proxy.rs:141][E: codex-rs/http-client/src/outbound_proxy.rs:170] |
+| `RouteAwareClientPool` | 按 `OutboundProxyRoute` 缓存最多 16 个 client；每个 request URL 与每个 redirect hop 独立解析 route。[E: codex-rs/http-client/src/route_aware_client_pool.rs:33][E: codex-rs/http-client/src/route_aware_client_pool.rs:45] |
+| `HttpTransport` / retry | 通用 prepared request 的 execute/stream boundary 与 codex-client 的重试策略；不负责 provider auth 或 route policy。[E: codex-rs/http-client/src/transport.rs:25][E: codex-rs/codex-client/src/retry.rs:8] |
 
-## 职责边界
+`default_client.rs` 已被重构为 `client.rs`；继续引用旧文件会把普通 wrapper 和新 route policy 混成一个层次。[I]
 
-`http-client` 不知道 provider auth 或 Responses semantics；它只执行调用方准备的 `Request`。`codex-client` 在这条边界上增加重试等 Codex API 通用机制。`backend-client` 面向 ChatGPT backend task/rate-limit/config APIs，不是通用 LLM provider endpoint。[E: codex-rs/http-client/src/transport.rs:25][E: codex-rs/http-client/src/transport.rs:30][E: codex-rs/codex-client/src/retry.rs:49][E: codex-rs/backend-client/src/client.rs:283][E: codex-rs/backend-client/src/client.rs:318][E: codex-rs/backend-client/src/client.rs:354]
+## Proxy policy
 
-## 关键 crate/文件
+`HttpClientFactory` 对 WebSocket URL 用对应 HTTP scheme 解析 proxy，使 `ws/wss` 与 `http/https` 能复用平台 PAC/system proxy 规则；system resolution 不可用时，显式 environment 设置优先，最后 direct。[E: codex-rs/http-client/src/outbound_proxy.rs:156][E: codex-rs/http-client/src/outbound_proxy.rs:170]
 
-- `codex-rs/http-client/src/default_client.rs`: `HttpClient` reqwest wrapper、`RequestBuilder`、trace header injection，以及可关闭 URL/response-header diagnostics 的认证端点专用构造路径。[E: codex-rs/http-client/src/default_client.rs:17][E: codex-rs/http-client/src/default_client.rs:34][E: codex-rs/http-client/src/default_client.rs:77][E: codex-rs/http-client/src/default_client.rs:147][E: codex-rs/http-client/src/default_client.rs:195]
-- `codex-rs/http-client/src/request.rs`: request/response structs、JSON/raw body、可复用的 `EncodedJsonBody`、zstd compression 与 one-time preparation。[E: codex-rs/http-client/src/request.rs:15][E: codex-rs/http-client/src/request.rs:23][E: codex-rs/http-client/src/request.rs:42][E: codex-rs/http-client/src/request.rs:49][E: codex-rs/http-client/src/request.rs:77][E: codex-rs/http-client/src/request.rs:118][E: codex-rs/http-client/src/request.rs:156]
-- `codex-rs/http-client/src/transport.rs`: `HttpTransport` trait 和 reqwest execute/stream implementation。[E: codex-rs/http-client/src/transport.rs:25][E: codex-rs/http-client/src/transport.rs:30][E: codex-rs/http-client/src/transport.rs:97][E: codex-rs/http-client/src/transport.rs:129]
-- `codex-rs/backend-client/src/client.rs`: ChatGPT/Codex backend API client、auth headers、path styles。[E: codex-rs/backend-client/src/client.rs:106][E: codex-rs/backend-client/src/client.rs:118][E: codex-rs/backend-client/src/client.rs:124][E: codex-rs/backend-client/src/client.rs:127][E: codex-rs/backend-client/src/client.rs:212][E: codex-rs/backend-client/src/client.rs:219][E: codex-rs/backend-client/src/client.rs:226]
+route class 让 builder 区分一般 product traffic 与本地/internal exceptions；直接构造 reqwest client 的路径是少数显式 legacy/direct 边界，不应被概括成全局绕过策略。[E: codex-rs/http-client/src/client_builder.rs:99][E: codex-rs/http-client/src/client_builder.rs:187][I]
 
-## 数据模型
+system-proxy resolution 另有独立的 URL decision cache，不等于 pool 的 16-route client cache。key 是 URL-specific SHA-256，不保存 raw URL；Direct/Proxy 缓存 60 秒，Unavailable 缓存 5 秒，容量最多 256，过期时清理、满时逐出最早到期项，cache miss 在 mutex 内 single-flight。[E: codex-rs/http-client/src/outbound_proxy.rs:24][E: codex-rs/http-client/src/outbound_proxy.rs:28][E: codex-rs/http-client/src/outbound_proxy.rs:468][E: codex-rs/http-client/src/outbound_proxy.rs:495][E: codex-rs/http-client/src/outbound_proxy.rs:524][E: codex-rs/http-client/src/outbound_proxy.rs:600]
 
-- `HttpClient` wraps `reqwest::Client` 并记录 request-logging mode；`RequestBuilder` 保存 reqwest builder、method、url 与 logging mode，并通过 methods 委托设置 headers、bearer、timeout、json、body。[E: codex-rs/http-client/src/default_client.rs:17][E: codex-rs/http-client/src/default_client.rs:18][E: codex-rs/http-client/src/default_client.rs:19][E: codex-rs/http-client/src/default_client.rs:77][E: codex-rs/http-client/src/default_client.rs:78][E: codex-rs/http-client/src/default_client.rs:79][E: codex-rs/http-client/src/default_client.rs:80][E: codex-rs/http-client/src/default_client.rs:81][E: codex-rs/http-client/src/default_client.rs:108][E: codex-rs/http-client/src/default_client.rs:122][E: codex-rs/http-client/src/default_client.rs:129][E: codex-rs/http-client/src/default_client.rs:133][E: codex-rs/http-client/src/default_client.rs:140]
-- `Request` 保存 method、url、headers、optional body、compression、timeout；`RequestBody` 分 JSON、encoded JSON 和 raw bytes，`EncodedJsonBody` 让 clone 共享序列化/压缩后的 reference-counted bytes。[E: codex-rs/http-client/src/request.rs:15][E: codex-rs/http-client/src/request.rs:49][E: codex-rs/http-client/src/request.rs:50][E: codex-rs/http-client/src/request.rs:51][E: codex-rs/http-client/src/request.rs:52][E: codex-rs/http-client/src/request.rs:77][E: codex-rs/http-client/src/request.rs:78][E: codex-rs/http-client/src/request.rs:83]
-- `RetryPolicy` 使用 max_attempts、base_delay 和 `RetryOn` 三个布尔开关控制 HTTP 429、5xx、transport retry。[E: codex-rs/codex-client/src/retry.rs:9][E: codex-rs/codex-client/src/retry.rs:10][E: codex-rs/codex-client/src/retry.rs:11][E: codex-rs/codex-client/src/retry.rs:17][E: codex-rs/codex-client/src/retry.rs:18][E: codex-rs/codex-client/src/retry.rs:19][E: codex-rs/codex-client/src/retry.rs:28][E: codex-rs/codex-client/src/retry.rs:29][E: codex-rs/codex-client/src/retry.rs:30][E: codex-rs/codex-client/src/retry.rs:32]
-- `backend_client::Client` 保存 base_url、reqwest client、`SharedAuthProvider`、user agent、account id、FedRAMP flag 和 path style；auth headers 由 shared provider 在 request header 构造时注入。[E: codex-rs/backend-client/src/client.rs:124][E: codex-rs/backend-client/src/client.rs:125][E: codex-rs/backend-client/src/client.rs:126][E: codex-rs/backend-client/src/client.rs:127][E: codex-rs/backend-client/src/client.rs:128][E: codex-rs/backend-client/src/client.rs:129][E: codex-rs/backend-client/src/client.rs:130][E: codex-rs/backend-client/src/client.rs:131][E: codex-rs/backend-client/src/client.rs:219]
+## Route-aware request 与 redirect
 
-## 控制流
+pool 在发送前解析当前 URL，按 resolved route 复用/新建 client；route cache 满 16 项时逐出一个已有 route。[E: codex-rs/http-client/src/route_aware_client_pool.rs:389][E: codex-rs/http-client/src/route_aware_client_pool.rs:402][E: codex-rs/http-client/src/route_aware_client_pool.rs:520][E: codex-rs/http-client/src/route_aware_client_pool.rs:565]
 
-1. `RequestBuilder::send` 在发送前注入 OpenTelemetry trace headers；只有 `RequestLogging::Enabled` 才记录包含 URL/response headers 的 success/failure diagnostics，认证端点可以通过 `new_without_request_logging` 关闭这些日志。[E: codex-rs/http-client/src/default_client.rs:34][E: codex-rs/http-client/src/default_client.rs:147][E: codex-rs/http-client/src/default_client.rs:148][E: codex-rs/http-client/src/default_client.rs:152][E: codex-rs/http-client/src/default_client.rs:166]
-2. `Request::into_prepared` 把最终 headers/body 固化回 request；clone 因此复用完全相同的 bytes，retry 不会重复 JSON serialization/compression，request-signing auth 也能看到 transport 真正发送的最终 body。[E: codex-rs/http-client/src/request.rs:118][E: codex-rs/http-client/src/request.rs:136][E: codex-rs/http-client/src/request.rs:147]
-3. `Request::prepare_body_for_send` 拒绝 raw body compression；JSON body 先序列化，zstd compression 会写 `content-encoding: zstd`，没有 content-type 时补 `application/json`；如果调用方已经设置 `content-encoding`，再请求压缩会报冲突。[E: codex-rs/http-client/src/request.rs:156][E: codex-rs/http-client/src/request.rs:159][E: codex-rs/http-client/src/request.rs:160][E: codex-rs/http-client/src/request.rs:168][E: codex-rs/http-client/src/request.rs:192][E: codex-rs/http-client/src/request.rs:193][E: codex-rs/http-client/src/request.rs:195][E: codex-rs/http-client/src/request.rs:205][E: codex-rs/http-client/src/request.rs:213][E: codex-rs/http-client/src/request.rs:227]
-4. `ReqwestTransport::execute` 构造 reqwest request，读取 status/headers/body，非 success 返回 `TransportError::Http` 并携带 url、status、headers、body。[E: codex-rs/http-client/src/transport.rs:97][E: codex-rs/http-client/src/transport.rs:108][E: codex-rs/http-client/src/transport.rs:113][E: codex-rs/http-client/src/transport.rs:115]
-5. `ReqwestTransport::stream` 成功时返回 status、headers 和 bytes stream，stream item error 会映射为 `TransportError`。[E: codex-rs/http-client/src/transport.rs:17][E: codex-rs/http-client/src/transport.rs:129][E: codex-rs/http-client/src/transport.rs:140][E: codex-rs/http-client/src/transport.rs:153][E: codex-rs/http-client/src/transport.rs:155]
-6. `RetryOn::should_retry` 在 attempt 达到 max_attempts 后停止；429、5xx、Timeout/Network 由对应 flags 决定是否 retry。[E: codex-rs/codex-client/src/retry.rs:23][E: codex-rs/codex-client/src/retry.rs:28][E: codex-rs/codex-client/src/retry.rs:30][E: codex-rs/codex-client/src/retry.rs:32]
-7. `run_with_retry` 逐 attempt 调用 operation，遇到 retryable error 按 exponential backoff 和 jitter sleep，然后重试。[E: codex-rs/codex-client/src/retry.rs:38][E: codex-rs/codex-client/src/retry.rs:42][E: codex-rs/codex-client/src/retry.rs:45][E: codex-rs/codex-client/src/retry.rs:49][E: codex-rs/codex-client/src/retry.rs:59][E: codex-rs/codex-client/src/retry.rs:63][E: codex-rs/codex-client/src/retry.rs:67]
-8. `backend-client::Client::new` 把 `chatgpt.com`/`chat.openai.com` 归一化到 `/backend-api`，并 trim trailing slash。[E: codex-rs/backend-client/src/client.rs:151][E: codex-rs/backend-client/src/client.rs:152][E: codex-rs/backend-client/src/client.rs:155][E: codex-rs/backend-client/src/client.rs:158][E: codex-rs/backend-client/src/client.rs:160][E: codex-rs/backend-client/src/client.rs:162]
-9. backend headers 会写 user-agent，调用 `auth_provider.add_auth_headers` 注入 provider auth headers，并按 client state 写 ChatGPT-Account-Id 与 X-OpenAI-Fedramp。[E: codex-rs/backend-client/src/client.rs:212][E: codex-rs/backend-client/src/client.rs:214][E: codex-rs/backend-client/src/client.rs:219][E: codex-rs/backend-client/src/client.rs:220][E: codex-rs/backend-client/src/client.rs:226]
-10. backend `PathStyle` 决定 Codex API path 是 `/api/codex/...`，ChatGPT API path 是 `/wham/...`。[E: codex-rs/backend-client/src/client.rs:106][E: codex-rs/backend-client/src/client.rs:106][E: codex-rs/backend-client/src/client.rs:108][E: codex-rs/backend-client/src/client.rs:108][E: codex-rs/backend-client/src/client.rs:110][E: codex-rs/backend-client/src/client.rs:110][E: codex-rs/backend-client/src/client.rs:114][E: codex-rs/backend-client/src/client.rs:116][E: codex-rs/backend-client/src/client.rs:118]
+当 policy 是 `RespectSystemProxy` 且 builder 允许 redirect 时，pool 关闭 reqwest 自动 redirect，并对 valid、可 replay 的 redirect 逐 hop 手工执行：
 
-## 设计动机与权衡
+1. 为 redirect target 重新解析 route；
+2. route 改变时移除 `Proxy-Authorization`；
+3. 跨 origin 清理 sensitive headers，并按规则设置 Referer；
+4. 拒绝非 HTTP(S) target，限制 redirect 次数；
+5. 一个 request timeout deadline 覆盖 route resolution、建连、所有 hops 与最终响应。[E: codex-rs/http-client/src/route_aware_client_pool.rs:414][E: codex-rs/http-client/src/route_aware_client_pool.rs:455][E: codex-rs/http-client/src/route_aware_client_pool.rs:496][E: codex-rs/http-client/src/route_aware_client_pool.rs:516]
 
-- `http-client` 把 `HttpTransport` trait 抽出来，`execute` 和 `stream` 都挂在 trait boundary 上；替换 transport 的测试/runtime 用法是基于这个 trait 形状的推断。[E: codex-rs/http-client/src/transport.rs:25][E: codex-rs/http-client/src/transport.rs:26][E: codex-rs/http-client/src/transport.rs:30][I]
-- backend types 有 hand-written `CodeTaskDetailsResponse`，generated OpenAPI models 通过 `codex_backend_openapi_models::models` 和 `pub mod models` 暴露；这解释了 generated models 与手写 types 并存。[E: codex-rs/backend-client/src/types.rs:190][E: codex-rs/backend-client/src/types.rs:1][E: codex-rs/codex-backend-openapi-models/src/lib.rs:6]
-- `backend-client` 直接保存 `reqwest::Client` 和 `SharedAuthProvider`，而 generic provider transport 通过 `codex_http_client::HttpTransport` 暴露 execute/stream；两条 HTTP client path 的抽象层级不同。[E: codex-rs/backend-client/src/client.rs:126][E: codex-rs/backend-client/src/client.rs:127][E: codex-rs/http-client/src/transport.rs:25][E: codex-rs/http-client/src/transport.rs:26][E: codex-rs/http-client/src/transport.rs:30][I]
+若 `Location` 缺失/invalid，或 307/308 等保留 body 的 redirect 无法 `try_clone()` 原请求，`redirect_request` 返回 `None`，pool 会把原 redirect response 交给 caller，而不是强行继续下一 hop。[E: codex-rs/http-client/src/route_aware_redirect.rs:44][E: codex-rs/http-client/src/route_aware_redirect.rs:49][E: codex-rs/http-client/src/route_aware_redirect.rs:93][E: codex-rs/http-client/src/route_aware_client_pool.rs:490][E: codex-rs/http-client/src/route_aware_client_pool.rs:502]
 
-## gotcha
+这意味着“同一次逻辑请求”不等于“固定使用初始 proxy”：redirect 目标可命中另一条 PAC/system route，但总 timeout budget 不重置。[I]
 
-- `RequestCompression::Zstd` 只支持 JSON/encoded JSON body；如果调用者传 raw body 又要求压缩，会在 prepare 阶段返回 error。[E: codex-rs/http-client/src/request.rs:49][E: codex-rs/http-client/src/request.rs:50][E: codex-rs/http-client/src/request.rs:51][E: codex-rs/http-client/src/request.rs:52][E: codex-rs/http-client/src/request.rs:159][E: codex-rs/http-client/src/request.rs:160][E: codex-rs/http-client/src/request.rs:161]
-- `into_prepared` 会把 compression 重置为 `None`；prepared `EncodedJsonBody` 再进入 prepare path 时直接复用 bytes，避免 double compression。[E: codex-rs/http-client/src/request.rs:139][E: codex-rs/http-client/src/request.rs:142][E: codex-rs/http-client/src/request.rs:147][E: codex-rs/http-client/src/request.rs:185][E: codex-rs/http-client/src/request.rs:188]
-- transport retry 不会自动 retry 任意 stream item error；`ReqwestTransport::stream` 建立 stream 后的 bytes stream item error 仍是 `TransportError`。[E: codex-rs/http-client/src/transport.rs:17][E: codex-rs/http-client/src/transport.rs:153][E: codex-rs/http-client/src/transport.rs:155][I]
-- backend `RequestError::is_unauthorized` 只对 unexpected status 401 返回 true，network/parse 等错误不是 unauthorized。[E: codex-rs/backend-client/src/client.rs:47][E: codex-rs/backend-client/src/client.rs:48][E: codex-rs/backend-client/src/client.rs:50][E: codex-rs/backend-client/src/client.rs:51][E: codex-rs/backend-client/src/client.rs:55][E: codex-rs/backend-client/src/client.rs:56]
+## Request body、transport 与 retry
+
+通用 `Request` 仍可在发送前把 JSON 序列化/可选 zstd 压缩成可复用 bytes；raw body 不能请求该 compression。prepared clone 让 retry 与 request-signing 看见相同 bytes。[E: codex-rs/http-client/src/request.rs:118][E: codex-rs/http-client/src/request.rs:147][E: codex-rs/http-client/src/request.rs:156][E: codex-rs/http-client/src/request.rs:161]
+
+`HttpTransport` 将非 success status、timeout、network 与 build error 映射为 transport error；`codex-client` 的 `RetryPolicy` 再按 429、5xx、transport flags 与 attempt budget 决定是否重试。[E: codex-rs/http-client/src/transport.rs:25][E: codex-rs/http-client/src/transport.rs:30][E: codex-rs/codex-client/src/retry.rs:9][E: codex-rs/codex-client/src/retry.rs:32]
+
+## 边界与不确定性
+
+- system proxy 支持受 feature/platform 与 application-resolved policy 控制；存在代码路径不代表所有构建默认启用。[U]
+- PAC resolver 返回 ordered candidates 时，当前 policy 只折叠为一条 route；该 route 连接失败不会继续尝试后续 proxy 或 `DIRECT` candidate。[E: codex-rs/http-client/src/outbound_proxy.rs:357][E: codex-rs/http-client/src/outbound_proxy.rs:368]
+- route-aware pool 解决的是 destination→transport route 一致性，不替代 network sandbox/proxy 的 allow/deny/ask policy。[I]
+- backend-client 仍有自己的 typed API/path/auth layer；本节点不把它等同于 provider generic transport。[E: codex-rs/backend-client/src/client.rs:128][I]
 
 ## Sources
 
-- codex-rs/http-client/src/default_client.rs
-- codex-rs/http-client/src/request.rs
-- codex-rs/http-client/src/transport.rs
-- codex-rs/codex-client/src/retry.rs
-- codex-rs/backend-client/src/client.rs
-- codex-rs/backend-client/src/types.rs
-- codex-rs/codex-backend-openapi-models/src/lib.rs
+- `codex-rs/http-client/src/client.rs`
+- `codex-rs/http-client/src/client_builder.rs`
+- `codex-rs/http-client/src/outbound_proxy.rs`
+- `codex-rs/http-client/src/route_aware_client_pool.rs`
+- `codex-rs/http-client/src/route_aware_redirect.rs`
+- `codex-rs/http-client/src/request.rs`
+- `codex-rs/http-client/src/transport.rs`
+- `codex-rs/codex-client/src/retry.rs`
+- `codex-rs/backend-client/src/client.rs`
 
 ## 相关
 
-- `subsys.providers.overview`
-- `subsys.providers.responses-api`
-- `subsys.providers.retry-errors`
-- `subsys.providers.auth-layer`
+- [Network proxy](../platform/network-proxy.md)
+- [Code Mode runtime](../core/code-mode-runtime.md)
+- [Provider overview](overview.md)

@@ -3,15 +3,15 @@ id: subsys.tui.streaming-pipeline
 title: Streaming Pipeline
 kind: subsystem
 tier: T2
-source: [codex-rs/tui/src/markdown_stream.rs, codex-rs/tui/src/markdown_render/streaming.rs, codex-rs/tui/src/streaming/mod.rs, codex-rs/tui/src/streaming/render.rs, codex-rs/tui/src/streaming/chunking.rs, codex-rs/tui/src/streaming/commit_tick.rs, codex-rs/tui/src/streaming/controller.rs, codex-rs/tui/src/chatwidget/streaming.rs]
-symbols: [MarkdownStreamCollector, StreamingMarkdownRender, StreamingRender, StreamState, AdaptiveChunkingPolicy, ChunkingMode, DrainPlan, run_commit_tick, StreamController, PlanStreamController]
+source: [codex-rs/tui/src/markdown_stream.rs, codex-rs/tui/src/markdown_render/streaming.rs, codex-rs/tui/src/streaming/mod.rs, codex-rs/tui/src/streaming/render.rs, codex-rs/tui/src/streaming/chunking.rs, codex-rs/tui/src/streaming/commit_tick.rs, codex-rs/tui/src/streaming/controller.rs, codex-rs/tui/src/chatwidget/streaming.rs, codex-rs/tui/src/exec_cell/live_output.rs]
+symbols: [MarkdownStreamCollector, StreamingMarkdownRender, StreamingRender, StreamState, AdaptiveChunkingPolicy, ChunkingMode, DrainPlan, run_commit_tick, StreamController, PlanStreamController, LiveCommandOutput]
 related: [subsys.tui.chatwidget, subsys.tui.rendering-theming, subsys.tui.event-system]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/chatwidget/streaming.rs:126][I]
+> TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/chatwidget/streaming.rs:141][I]
 
 ## 能回答的问题
 
@@ -50,17 +50,19 @@ snapshot 会 sum controller queue depth，并取最大 oldest age；plan applica
 
 ## Controllers 与 ChatWidget Glue
 
-`StreamingRender` 保存 source 与 rendered-line 两个 stable prefix boundary，只重新渲染最后一个 top-level Markdown block；width/render-mode change、reference-style link definition 或 inline-visualization rewrite 会退化为 full recompute，因为它们可能影响已稳定的前缀。[E: codex-rs/tui/src/streaming/render.rs:105][E: codex-rs/tui/src/streaming/render.rs:116][E: codex-rs/tui/src/streaming/render.rs:142]
+`StreamingRender` 保存 source 与 rendered-line 两个 stable prefix boundary，只重新渲染最后一个 top-level Markdown block；width/render-mode change、reference-style link definition 或 inline-visualization rewrite 会退化为 full recompute，因为它们可能影响已稳定的前缀。[E: codex-rs/tui/src/streaming/render.rs:105][E: codex-rs/tui/src/streaming/render.rs:122][E: codex-rs/tui/src/streaming/render.rs:148]
 
 `StreamController` 包装 `StreamCore` 并产出 `AgentMessageCell`；`PlanStreamController` 包装同一 core 但带 plan-specific header、indentation 和 background styling。两者都有 new/push/finalize/on_commit_tick/on_commit_tick_batch/queued_lines/oldest_queued_age 等接口。[E: codex-rs/tui/src/streaming/controller.rs:475][E: codex-rs/tui/src/streaming/controller.rs:487][E: codex-rs/tui/src/streaming/controller.rs:508][E: codex-rs/tui/src/streaming/controller.rs:514][E: codex-rs/tui/src/streaming/controller.rs:526][E: codex-rs/tui/src/streaming/controller.rs:531][E: codex-rs/tui/src/streaming/controller.rs:543][E: codex-rs/tui/src/streaming/controller.rs:547][E: codex-rs/tui/src/streaming/controller.rs:579][E: codex-rs/tui/src/streaming/controller.rs:600][E: codex-rs/tui/src/streaming/controller.rs:612][E: codex-rs/tui/src/streaming/controller.rs:625][E: codex-rs/tui/src/streaming/controller.rs:631][E: codex-rs/tui/src/streaming/controller.rs:643][E: codex-rs/tui/src/streaming/controller.rs:651]
 
-`ChatWidget` glue 中，answer stream 用带 thread-scoped inline-visualization context 的 controller，plan stream 仍使用普通 controller；delta 没有 newline 时不重建可见 tail，tail 内容未变化时也不 bump active-cell revision/redraw。[E: codex-rs/tui/src/chatwidget/streaming.rs:130][E: codex-rs/tui/src/chatwidget/streaming.rs:143][E: codex-rs/tui/src/chatwidget/streaming.rs:425][E: codex-rs/tui/src/chatwidget/streaming.rs:444][E: codex-rs/tui/src/chatwidget/streaming.rs:450][E: codex-rs/tui/src/chatwidget/streaming.rs:481][E: codex-rs/tui/src/chatwidget/streaming.rs:502]
+command execution 的 live cell 另有独立内存边界：`LiveCommandOutput` 在累计输出超过 1 MiB 后切换为 bounded preview，保留最前与最后各 50 条 completed lines、当前 partial line，并对单条超长行再保留 head/tail；transcript renderer 会插入 omitted-line marker。[E: codex-rs/tui/src/exec_cell/live_output.rs:5][E: codex-rs/tui/src/exec_cell/live_output.rs:11][E: codex-rs/tui/src/exec_cell/live_output.rs:18][E: codex-rs/tui/src/exec_cell/live_output.rs:18][E: codex-rs/tui/src/exec_cell/live_output.rs:142][E: codex-rs/tui/src/exec_cell/live_output.rs:149][E: codex-rs/tui/src/exec_cell/live_output.rs:150]
+
+`ChatWidget` glue 中，answer stream 用带 thread-scoped inline-visualization context 的 controller，plan stream 仍使用普通 controller；delta 没有 newline 时不重建可见 tail，tail 内容未变化时也不 bump active-cell revision/redraw。[E: codex-rs/tui/src/chatwidget/streaming.rs:145][E: codex-rs/tui/src/chatwidget/streaming.rs:158][E: codex-rs/tui/src/chatwidget/streaming.rs:442][E: codex-rs/tui/src/chatwidget/streaming.rs:461][E: codex-rs/tui/src/chatwidget/streaming.rs:467][E: codex-rs/tui/src/chatwidget/streaming.rs:498][E: codex-rs/tui/src/chatwidget/streaming.rs:519]
 
 ## Gotchas
 
 - chunking policy 的 non-responsibilities 明确包括 tick scheduling、line reordering 和 transport-specific semantics；调参时不要把 source 类型塞进 policy。[I]
 - `commit_tick.rs` 不直接 mutate UI state；调用者负责 animation events 和 history insertion side effects。[I]
-- incremental stable-prefix optimization 对 reference definitions 与 inline visualization 主动 fail open 到 full render；不能假设所有 Markdown 都只重绘 tail。[E: codex-rs/tui/src/streaming/render.rs:105][E: codex-rs/tui/src/streaming/render.rs:116]
+- incremental stable-prefix optimization 对 reference definitions 与 inline visualization 主动 fail open 到 full render；不能假设所有 Markdown 都只重绘 tail。[E: codex-rs/tui/src/streaming/render.rs:105][E: codex-rs/tui/src/streaming/render.rs:122]
 
 ## Sources
 
@@ -72,6 +74,7 @@ snapshot 会 sum controller queue depth，并取最大 oldest age；plan applica
 - `codex-rs/tui/src/streaming/commit_tick.rs`
 - `codex-rs/tui/src/streaming/controller.rs`
 - `codex-rs/tui/src/chatwidget/streaming.rs`
+- `codex-rs/tui/src/exec_cell/live_output.rs`
 
 ## 相关
 

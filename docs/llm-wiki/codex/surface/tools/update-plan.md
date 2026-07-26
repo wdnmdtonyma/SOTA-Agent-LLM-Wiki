@@ -8,7 +8,7 @@ symbols: [create_update_plan_tool, PlanHandler, PlanToolOutput, parse_update_pla
 related: [spine.tool-call-anatomy, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > `update_plan` 是 Codex 的本地 checklist/TODO 状态更新 function tool。它让模型提交结构化 plan，handler 把参数转成 `EventMsg::PlanUpdate(args)` 发给客户端，并向模型返回固定的 `Plan updated` 成功文本。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan_spec.rs:43][E: codex-rs/core/src/tools/handlers/plan.rs:22][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92]
@@ -34,7 +34,7 @@ updated: 4d7a5c7c73
 
 工具描述说明它用于更新 task plan，可带可选 explanation，并要求最多一个 step 处于 `in_progress`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:44][E: codex-rs/core/src/tools/handlers/plan_spec.rs:45][E: codex-rs/core/src/tools/handlers/plan_spec.rs:46]
 
-执行层不会把 plan 内容拼进工具输出；`PlanHandler` 解析 arguments 后调用 `session.send_event(turn.as_ref(), EventMsg::PlanUpdate(args)).await`，通过 `EventMsg::PlanUpdate` 暴露给 event surface。[E: codex-rs/core/src/tools/handlers/plan.rs:90][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92][E: codex-rs/protocol/src/protocol.rs:1443]
+执行层不会把 plan 内容拼进工具输出；`PlanHandler` 解析 arguments 后调用 `session.send_event(turn.as_ref(), EventMsg::PlanUpdate(args)).await`，通过 `EventMsg::PlanUpdate` 暴露给 event surface。[E: codex-rs/core/src/tools/handlers/plan.rs:90][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92][E: codex-rs/protocol/src/protocol.rs:1437]
 
 当前源码中，“最多一个 `in_progress`”只出现在工具描述；handler 路径显示它做 JSON 反序列化并发送 event，未见额外 runtime 校验该约束。[E: codex-rs/core/src/tools/handlers/plan.rs:90][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92][I]
 
@@ -59,7 +59,7 @@ code-mode nested result 返回空 JSON object。[E: codex-rs/core/src/tools/hand
 
 ## 5 注册与门控
 
-`build_tool_router` 委托 `build_tool_specs_and_registry`；后者构造 `CoreToolPlanContext` 后调用 `add_tool_sources`，而 `add_tool_sources` 调用 `add_core_utility_tools`；该函数无额外 feature gate 地 `planned_tools.add(PlanHandler)`。[E: codex-rs/core/src/tools/spec_plan.rs:156][E: codex-rs/core/src/tools/spec_plan.rs:161][E: codex-rs/core/src/tools/spec_plan.rs:191][E: codex-rs/core/src/tools/spec_plan.rs:192][E: codex-rs/core/src/tools/spec_plan.rs:579][E: codex-rs/core/src/tools/spec_plan.rs:609][E: codex-rs/core/src/tools/spec_plan.rs:702][E: codex-rs/core/src/tools/spec_plan.rs:707]
+`build_tool_router` 委托 `build_tool_specs_and_registry`；后者经 `add_tool_sources` 调用 `add_core_utility_tools`。只有 resolved `config.update_plan_enabled` 为 true 时才 `planned_tools.add(PlanHandler)`；`tools.update_plan.enabled` 未配置时默认 true，因此这是可显式关闭的 config gate，不是 feature flag。[E: codex-rs/core/src/tools/spec_plan.rs:158][E: codex-rs/core/src/tools/spec_plan.rs:205][E: codex-rs/core/src/tools/spec_plan.rs:608][E: codex-rs/core/src/tools/spec_plan.rs:731][E: codex-rs/core/src/tools/spec_plan.rs:736][E: codex-rs/core/src/config/mod.rs:2551][E: codex-rs/core/src/config/mod.rs:2556]
 
 runtime gate 在 handler 内：当当前 `turn.mode` 是 `ModeKind::Plan` 时，handler 返回错误 `update_plan is a TODO/checklist tool and is not allowed in Plan mode`。[E: codex-rs/core/src/tools/handlers/plan.rs:84][E: codex-rs/core/src/tools/handlers/plan.rs:85][E: codex-rs/core/src/tools/handlers/plan.rs:86]
 

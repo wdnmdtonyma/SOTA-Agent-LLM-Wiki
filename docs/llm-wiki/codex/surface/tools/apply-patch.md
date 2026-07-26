@@ -8,10 +8,10 @@ symbols: [ApplyPatchHandler, create_apply_patch_freeform_tool, APPLY_PATCH_LARK_
 related: [tool.exec-command, tool.shell-command, subsys.core.tool-system, subsys.core.tool-router, subsys.exec-sandbox.apply-patch-engine]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> `apply_patch` 是当前 Codex 的 freeform custom tool 文件编辑 surface：模型提交完整 patch envelope，handler 只接受 `ToolPayload::Custom`，重新解析、按 turn environment 校验文件系统与 sandbox，再根据 safety/approval 决策直接拒绝或委托 `ApplyPatchRuntime` 写入。[E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:18][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:20][E: codex-rs/core/src/tools/handlers/apply_patch.rs:359][E: codex-rs/core/src/tools/handlers/apply_patch.rs:364][E: codex-rs/core/src/tools/handlers/apply_patch.rs:388][E: codex-rs/core/src/apply_patch.rs:39][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:232]
+> `apply_patch` 是当前 Codex 的 freeform custom tool 文件编辑 surface：模型提交完整 patch envelope，handler 只接受 `ToolPayload::Custom`，重新解析、按 turn environment 校验文件系统与 sandbox，再根据 safety/approval 决策直接拒绝或委托 `ApplyPatchRuntime` 写入。[E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:18][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:20][E: codex-rs/core/src/tools/handlers/apply_patch.rs:359][E: codex-rs/core/src/tools/handlers/apply_patch.rs:364][E: codex-rs/core/src/tools/handlers/apply_patch.rs:388][E: codex-rs/core/src/apply_patch.rs:39][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:233]
 
 ## 能回答的问题
 
@@ -28,14 +28,14 @@ updated: 4d7a5c7c73
 |---|---|
 | wire name | `ApplyPatchHandler::tool_name()` 返回 plain `"apply_patch"`；schema constructor 也把 `FreeformTool.name` 设为 `"apply_patch"`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:329][E: codex-rs/core/src/tools/handlers/apply_patch.rs:331][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:18][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:19] |
 | concrete handler | `ApplyPatchHandler` 保存 `multi_environment`，`spec()` 调用 `create_apply_patch_freeform_tool(self.multi_environment)`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:61][E: codex-rs/core/src/tools/handlers/apply_patch.rs:62][E: codex-rs/core/src/tools/handlers/apply_patch.rs:66][E: codex-rs/core/src/tools/handlers/apply_patch.rs:67][E: codex-rs/core/src/tools/handlers/apply_patch.rs:335] |
-| ToolSpec | 当前 constructor 返回 `ToolSpec::Freeform(FreeformTool { ... })`；`ToolSpec` 的 freeform variant 序列化为 Responses API custom tool。[E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:18][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:21][E: codex-rs/tools/src/tool_spec.rs:49][E: codex-rs/tools/src/tool_spec.rs:50] |
+| ToolSpec | 当前 constructor 返回 `ToolSpec::Freeform(FreeformTool { ... })`；`ToolSpec` 的 freeform variant 序列化为 Responses API custom tool。[E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:18][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:21][E: codex-rs/tools/src/tool_spec.rs:51][E: codex-rs/tools/src/tool_spec.rs:52] |
 | handler exposure | `ApplyPatchHandler` 没有覆盖 `exposure()`，因此使用 `ToolExecutor` 默认 `Direct`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:329][E: codex-rs/core/src/tools/handlers/apply_patch.rs:338][E: codex-rs/tools/src/tool_executor.rs:55][E: codex-rs/tools/src/tool_executor.rs:56] |
 
 ## 2 用途定位
 
 `apply_patch` 把模型的文件编辑意图限制在显式 patch grammar 内。handler 先用 `codex_apply_patch::parse_patch` 解析 custom payload，再用 `verify_apply_patch_args` 在选中 environment 的 cwd、filesystem 和 sandbox context 上验证 add/delete/update/move 所需内容。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:359][E: codex-rs/core/src/tools/handlers/apply_patch.rs:364][E: codex-rs/core/src/tools/handlers/apply_patch.rs:376][E: codex-rs/core/src/tools/handlers/apply_patch.rs:385][E: codex-rs/core/src/tools/handlers/apply_patch.rs:388]
 
-验证通过后，core 会计算变更路径和额外写权限，把 `apply_patch::apply_patch` 的 safety 结果映射为直接输出或 runtime delegation；runtime 最终通过 selected turn environment filesystem 调用 `codex_apply_patch::apply_patch`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:397][E: codex-rs/core/src/tools/handlers/apply_patch.rs:407][E: codex-rs/core/src/apply_patch.rs:50][E: codex-rs/core/src/apply_patch.rs:62][E: codex-rs/core/src/apply_patch.rs:71][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:228][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:232]
+验证通过后，core 会计算变更路径和额外写权限，把 `apply_patch::apply_patch` 的 safety 结果映射为直接输出或 runtime delegation；runtime 最终通过 selected turn environment filesystem 调用 `codex_apply_patch::apply_patch`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:397][E: codex-rs/core/src/tools/handlers/apply_patch.rs:407][E: codex-rs/core/src/apply_patch.rs:50][E: codex-rs/core/src/apply_patch.rs:62][E: codex-rs/core/src/apply_patch.rs:71][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:229][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:233]
 
 ## 3 输入 grammar
 
@@ -43,7 +43,7 @@ updated: 4d7a5c7c73
 
 基础 grammar 要求 `start: begin_patch hunk+ end_patch`；begin/end marker 分别是 `*** Begin Patch` 和 `*** End Patch`，end 允许可选 LF。[E: codex-rs/core/src/tools/handlers/apply_patch.lark:1][E: codex-rs/core/src/tools/handlers/apply_patch.lark:2][E: codex-rs/core/src/tools/handlers/apply_patch.lark:3] hunk 可以是 add、delete 或 update；add 要求至少一行 `+` 内容，update 允许可选 `*** Move to:` 和 change block。[E: codex-rs/core/src/tools/handlers/apply_patch.lark:5][E: codex-rs/core/src/tools/handlers/apply_patch.lark:6][E: codex-rs/core/src/tools/handlers/apply_patch.lark:8][E: codex-rs/core/src/tools/handlers/apply_patch.lark:11][E: codex-rs/core/src/tools/handlers/apply_patch.lark:13][E: codex-rs/core/src/tools/handlers/apply_patch.lark:14]
 
-当 `ToolEnvironmentMode::Multiple` 生效时，spec constructor 会把 start rule 改写为允许 `*** Environment ID: ...` preamble；parser/streaming parser 会保存该 environment id，并拒绝重复或空 id。[E: codex-rs/core/src/tools/spec_plan.rs:759][E: codex-rs/core/src/tools/spec_plan.rs:761][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:10][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:13][E: codex-rs/apply-patch/src/parser.rs:189][E: codex-rs/apply-patch/src/parser.rs:194][E: codex-rs/apply-patch/src/streaming_parser.rs:86][E: codex-rs/apply-patch/src/streaming_parser.rs:88][E: codex-rs/apply-patch/src/streaming_parser.rs:94][E: codex-rs/apply-patch/src/streaming_parser.rs:99]
+当 `ToolEnvironmentMode::Multiple` 生效时，spec constructor 会把 start rule 改写为允许 `*** Environment ID: ...` preamble；parser/streaming parser 会保存该 environment id，并拒绝重复或空 id。[E: codex-rs/core/src/tools/spec_plan.rs:798][E: codex-rs/core/src/tools/spec_plan.rs:800][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:10][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:13][E: codex-rs/apply-patch/src/parser.rs:189][E: codex-rs/apply-patch/src/parser.rs:194][E: codex-rs/apply-patch/src/streaming_parser.rs:86][E: codex-rs/apply-patch/src/streaming_parser.rs:88][E: codex-rs/apply-patch/src/streaming_parser.rs:94][E: codex-rs/apply-patch/src/streaming_parser.rs:99]
 
 ## 4 输出与错误
 
@@ -53,13 +53,13 @@ parse/verification 错误面向模型返回明确文本：初始 parse error 是
 
 ## 5 注册与门控
 
-`add_tool_sources` 调用 `add_core_utility_tools`；该段只在 `environment_mode.has_environment()` 且 `turn_context.model_info.apply_patch_tool_type.is_some()` 时注册 `ApplyPatchHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:579][E: codex-rs/core/src/tools/spec_plan.rs:609][E: codex-rs/core/src/tools/spec_plan.rs:702][E: codex-rs/core/src/tools/spec_plan.rs:705][E: codex-rs/core/src/tools/spec_plan.rs:759][E: codex-rs/core/src/tools/spec_plan.rs:762]
+`add_tool_sources` 调用 `add_core_utility_tools`；该段只在 `environment_mode.has_environment()` 且 `turn_context.model_info.apply_patch_tool_type.is_some()` 时注册 `ApplyPatchHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:608][E: codex-rs/core/src/tools/spec_plan.rs:638][E: codex-rs/core/src/tools/spec_plan.rs:731][E: codex-rs/core/src/tools/spec_plan.rs:704][E: codex-rs/core/src/tools/spec_plan.rs:798][E: codex-rs/core/src/tools/spec_plan.rs:801]
 
-visible spec 构建会遍历 runtime，只有 direct exposure 且未被 code-mode-only 隐藏时才把 `runtime.spec()` 推入 model-visible specs；`ApplyPatchHandler` 因默认 Direct exposure 会进入这一流程。[E: codex-rs/core/src/tools/spec_plan.rs:239][E: codex-rs/core/src/tools/spec_plan.rs:244][E: codex-rs/core/src/tools/spec_plan.rs:245][E: codex-rs/core/src/tools/spec_plan.rs:247][E: codex-rs/core/src/tools/spec_plan.rs:258][E: codex-rs/tools/src/tool_executor.rs:55]
+visible spec 构建会遍历 runtime，只有 direct exposure 且未被 code-mode-only 隐藏时才把 `runtime.spec()` 推入 model-visible specs；`ApplyPatchHandler` 因默认 Direct exposure 会进入这一流程。[E: codex-rs/core/src/tools/spec_plan.rs:253][E: codex-rs/core/src/tools/spec_plan.rs:258][E: codex-rs/core/src/tools/spec_plan.rs:259][E: codex-rs/core/src/tools/spec_plan.rs:261][E: codex-rs/core/src/tools/spec_plan.rs:272][E: codex-rs/tools/src/tool_executor.rs:55]
 
 ## 6 parallel support
 
-`ApplyPatchHandler` 的 `ToolExecutor` impl 只定义 `tool_name`、`spec`、`handle`，没有 `supports_parallel_tool_calls()` override；因此使用 trait 默认 false，router 查询不到支持位时也回退 false。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:329][E: codex-rs/core/src/tools/handlers/apply_patch.rs:334][E: codex-rs/core/src/tools/handlers/apply_patch.rs:338][E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65][E: codex-rs/core/src/tools/router.rs:99][E: codex-rs/core/src/tools/router.rs:102]
+`ApplyPatchHandler` 的 `ToolExecutor` impl 只定义 `tool_name`、`spec`、`handle`，没有 `supports_parallel_tool_calls()` override；因此使用 trait 默认 false，router 查询不到支持位时也回退 false。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:329][E: codex-rs/core/src/tools/handlers/apply_patch.rs:334][E: codex-rs/core/src/tools/handlers/apply_patch.rs:338][E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65][E: codex-rs/core/src/tools/router.rs:115][E: codex-rs/core/src/tools/router.rs:118]
 
 ## 7 handler 走读
 
@@ -70,7 +70,7 @@ visible spec 构建会遍历 runtime，只有 direct exposure 且未被 code-mod
 5. `effective_patch_permissions` 合并 session 与 turn grants，计算 effective filesystem sandbox policy，并为当前 patch 需要但 sandbox 未允许的写路径生成 additional permissions。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:272][E: codex-rs/core/src/tools/handlers/apply_patch.rs:274][E: codex-rs/core/src/tools/handlers/apply_patch.rs:285][E: codex-rs/core/src/tools/handlers/apply_patch.rs:293][E: codex-rs/core/src/tools/handlers/apply_patch.rs:298][E: codex-rs/core/src/tools/handlers/apply_patch.rs:305]
 6. `apply_patch::apply_patch` 用 safety check 决定 auto approve、ask user 或 reject；AskUser 会设置 `ExecApprovalRequirement::NeedsApproval` 交给 runtime/orchestrator。[E: codex-rs/core/src/apply_patch.rs:39][E: codex-rs/core/src/apply_patch.rs:47][E: codex-rs/core/src/apply_patch.rs:50][E: codex-rs/core/src/apply_patch.rs:58][E: codex-rs/core/src/apply_patch.rs:62][E: codex-rs/core/src/apply_patch.rs:65][E: codex-rs/core/src/apply_patch.rs:71]
 7. delegation path 构造 `ApplyPatchRequest`，用 `ToolOrchestrator` 运行 `ApplyPatchRuntime`，然后用 emitter finish 产出最终文本。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:429][E: codex-rs/core/src/tools/handlers/apply_patch.rs:441][E: codex-rs/core/src/tools/handlers/apply_patch.rs:442][E: codex-rs/core/src/tools/handlers/apply_patch.rs:449][E: codex-rs/core/src/tools/handlers/apply_patch.rs:455][E: codex-rs/core/src/tools/handlers/apply_patch.rs:469]
-8. runtime 的 approval key 包含 environment id 与路径；实际 run 从 environment filesystem 取 fs，并带 sandbox context 调用 `codex_apply_patch::apply_patch`。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:39][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:41][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:42][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:119][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:124][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:125][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:228][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:229][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:232]
+8. runtime 的 approval key 包含 environment id 与路径；实际 run 从 environment filesystem 取 fs，并带 sandbox context 调用 `codex_apply_patch::apply_patch`。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:39][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:41][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:42][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:120][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:125][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:126][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:229][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:230][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:233]
 
 ## 8 shell / unified-exec 拦截
 

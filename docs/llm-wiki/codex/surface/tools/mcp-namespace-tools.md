@@ -3,12 +3,12 @@ id: tool.mcp-namespace-tools
 title: MCP namespace tools
 kind: tool
 tier: T1
-source: [codex-rs/core/src/mcp_tool_exposure.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/tools/src/responses_api.rs, codex-rs/tools/src/tool_search.rs]
+source: [codex-rs/core/src/mcp_tool_exposure.rs, codex-rs/core/src/session/step_context.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/core/src/mcp_tool_call.rs, codex-rs/codex-mcp/src/binding.rs, codex-rs/tools/src/responses_api.rs, codex-rs/tools/src/tool_search.rs]
 symbols: [build_mcp_tool_runtimes, McpHandler, create_tool_spec, mcp_tool_to_responses_api_tool, build_mcp_search_text]
 related: [tool.tool-search, tool.list-mcp-resources, tool.dynamic-tools, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > MCP namespace tools 是 Codex 把 MCP server tools 适配为 Responses API namespace tools 的 runtime：`McpHandler` 根据 `ToolInfo` 构造 namespace `ToolSpec`，function call 再转发给 MCP tool call path。[E: codex-rs/core/src/tools/handlers/mcp.rs:32][E: codex-rs/core/src/tools/handlers/mcp.rs:38][E: codex-rs/core/src/tools/handlers/mcp.rs:233][E: codex-rs/core/src/tools/handlers/mcp.rs:252][E: codex-rs/core/src/tools/handlers/mcp.rs:145]
@@ -32,11 +32,13 @@ updated: 4d7a5c7c73
 
 MCP runtime 的构造已移出 planner。`build_mcp_tool_runtimes` 先过滤 model-visible 的普通 MCP tools，再根据 connector 可见性与 app-tool policy 补入 Codex Apps tools；它为每个 tool 构造 `McpHandler`，并在 search 开启时统一改为 `Deferred`，否则为 `Direct`。[E: codex-rs/core/src/mcp_tool_exposure.rs:20][E: codex-rs/core/src/mcp_tool_exposure.rs:26][E: codex-rs/core/src/mcp_tool_exposure.rs:27][E: codex-rs/core/src/mcp_tool_exposure.rs:35][E: codex-rs/core/src/mcp_tool_exposure.rs:40][E: codex-rs/core/src/mcp_tool_exposure.rs:44][E: codex-rs/core/src/mcp_tool_exposure.rs:47]
 
-turn 构建阶段把这些 runtime 作为 `ToolRouterParams.tool_runtimes` 传入 router；planner 只是遍历已构造的 runtime 并加入 `PlannedTools`，不再持有两组原始 `ToolInfo` 或自行区分 direct/deferred。[E: codex-rs/core/src/session/turn.rs:1340][E: codex-rs/core/src/session/turn.rs:1346][E: codex-rs/core/src/session/turn.rs:1348][E: codex-rs/core/src/session/turn.rs:1349][E: codex-rs/core/src/tools/router.rs:40][E: codex-rs/core/src/tools/router.rs:41][E: codex-rs/core/src/tools/spec_plan.rs:181][E: codex-rs/core/src/tools/spec_plan.rs:183][E: codex-rs/core/src/tools/spec_plan.rs:611][E: codex-rs/core/src/tools/spec_plan.rs:612]
+turn 构建阶段把这些 runtime 作为 `ToolRouterParams.tool_runtimes` 传入 router；planner 只是遍历已构造的 runtime 并加入 `PlannedTools`，不再持有两组原始 `ToolInfo` 或自行区分 direct/deferred。[E: codex-rs/core/src/session/turn.rs:1388][E: codex-rs/core/src/session/turn.rs:1346][E: codex-rs/core/src/session/turn.rs:1398][E: codex-rs/core/src/session/turn.rs:1399][E: codex-rs/core/src/tools/router.rs:43][E: codex-rs/core/src/tools/router.rs:44][E: codex-rs/core/src/tools/spec_plan.rs:192][E: codex-rs/core/src/tools/spec_plan.rs:196][E: codex-rs/core/src/tools/spec_plan.rs:640][E: codex-rs/core/src/tools/spec_plan.rs:641]
 
-deferred MCP runtime 不是无条件进入 `tool_search`：planner 先 `add_tool_sources`，再应用 direct-model-only namespace overrides，最后才 `append_tool_search_executor`；后者要求 `search_tool_enabled` 为 true，并只从 exposure 为 Deferred 的 runtimes 收集 `search_info()`。[E: codex-rs/core/src/tools/spec_plan.rs:192][E: codex-rs/core/src/tools/spec_plan.rs:193][E: codex-rs/core/src/tools/spec_plan.rs:194][E: codex-rs/core/src/tools/spec_plan.rs:199][E: codex-rs/core/src/tools/spec_plan.rs:218][E: codex-rs/core/src/tools/spec_plan.rs:932][E: codex-rs/core/src/tools/spec_plan.rs:933][E: codex-rs/core/src/tools/spec_plan.rs:937][E: codex-rs/core/src/tools/spec_plan.rs:940][E: codex-rs/core/src/tools/spec_plan.rs:941]
+这些 runtime 的 spec 来自 step-scoped `McpBinding`，但 `McpHandler` 只保存 `ToolInfo/spec`。实际调用会在 `handle_mcp_tool_call` 中 refresh 并从 current binding 重新 `prepare_call(server, tool)`；所以同名 tool 的 call-time client/metadata 可以随 publication 更新，已删除 tool 则返回 unavailable。[E: codex-rs/core/src/session/step_context.rs:21][E: codex-rs/core/src/tools/handlers/mcp.rs:32][E: codex-rs/core/src/tools/handlers/mcp.rs:145][E: codex-rs/core/src/mcp_tool_call.rs:143][E: codex-rs/core/src/mcp_tool_call.rs:145][E: codex-rs/core/src/mcp_tool_call.rs:157]
 
-`namespace_tools_enabled` 不再是 `append_tool_search_executor` 的进入条件；它在构建 model-visible specs 的最后过滤 `ToolSpec::Namespace`，但 registry 仍由 planned runtimes 构建。[E: codex-rs/core/src/tools/spec_plan.rs:258][E: codex-rs/core/src/tools/spec_plan.rs:259][E: codex-rs/core/src/tools/spec_plan.rs:261][E: codex-rs/core/src/tools/spec_plan.rs:262]
+deferred MCP runtime 不是无条件进入 `tool_search`：planner 先 `add_tool_sources`，再应用 direct-model-only namespace overrides，最后才 `append_tool_search_executor`；后者要求 `search_tool_enabled` 为 true，并只从 exposure 为 Deferred 的 runtimes 收集 `search_info()`。[E: codex-rs/core/src/tools/spec_plan.rs:206][E: codex-rs/core/src/tools/spec_plan.rs:207][E: codex-rs/core/src/tools/spec_plan.rs:208][E: codex-rs/core/src/tools/spec_plan.rs:213][E: codex-rs/core/src/tools/spec_plan.rs:232][E: codex-rs/core/src/tools/spec_plan.rs:932][E: codex-rs/core/src/tools/spec_plan.rs:967][E: codex-rs/core/src/tools/spec_plan.rs:971][E: codex-rs/core/src/tools/spec_plan.rs:974][E: codex-rs/core/src/tools/spec_plan.rs:975]
+
+`namespace_tools_enabled` 不再是 `append_tool_search_executor` 的进入条件；它在构建 model-visible specs 的最后过滤 `ToolSpec::Namespace`，但 registry 仍由 planned runtimes 构建。[E: codex-rs/core/src/tools/spec_plan.rs:272][E: codex-rs/core/src/tools/spec_plan.rs:273][E: codex-rs/core/src/tools/spec_plan.rs:275][E: codex-rs/core/src/tools/spec_plan.rs:276]
 
 ## 3 search metadata
 
@@ -63,6 +65,7 @@ MCP handler 的 parallel 支持来自 server-level opt-in 或 MCP annotations �
 - `codex-rs/core/src/tools/router.rs`
 - `codex-rs/core/src/tools/spec_plan.rs`
 - `codex-rs/core/src/tools/handlers/mcp.rs`
+- `codex-rs/core/src/mcp_tool_call.rs`
 - `codex-rs/tools/src/responses_api.rs`
 - `codex-rs/tools/src/tool_search.rs`
 

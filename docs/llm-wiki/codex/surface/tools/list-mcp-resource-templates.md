@@ -3,12 +3,12 @@ id: tool.list-mcp-resource-templates
 title: list_mcp_resource_templates 工具
 kind: tool
 tier: T1
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/mcp_resource_spec.rs, codex-rs/core/src/tools/handlers/mcp_resource.rs, codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs]
+source: [codex-rs/core/src/session/step_context.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/mcp_resource_spec.rs, codex-rs/core/src/tools/handlers/mcp_resource.rs, codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs, codex-rs/codex-mcp/src/binding.rs]
 symbols: [create_list_mcp_resource_templates_tool, ListMcpResourceTemplatesHandler, ListResourceTemplatesArgs, ListResourceTemplatesPayload]
-related: [tool.list-mcp-resources, tool.read-mcp-resource, subsys.mcp.server]
+related: [tool.list-mcp-resources, tool.read-mcp-resource, subsys.mcp.server, subsys.mcp.client]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > `list_mcp_resource_templates` 是本地 Function 工具，用于列出 MCP server 暴露的 parameterized resource templates；可指定单个 server 与 cursor，也可省略 server 汇总所有 configured servers。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:33][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:52][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:53][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:89][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:113]
@@ -39,9 +39,11 @@ schema 没有 required 字段，并关闭 additional properties。[E: codex-rs/c
 
 ## 3 注册与执行
 
-`add_mcp_resource_tools` 在当前 step MCP runtime 的 manager 报告 `has_servers()` 时注册三件套，其中包括 `ListMcpResourceTemplatesHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:689][E: codex-rs/core/src/tools/spec_plan.rs:692][E: codex-rs/core/src/tools/spec_plan.rs:693]
+`add_mcp_resource_tools` 在当前 step MCP runtime 的 manager 报告 `has_servers()` 时注册三件套，其中包括 `ListMcpResourceTemplatesHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:718][E: codex-rs/core/src/tools/spec_plan.rs:721][E: codex-rs/core/src/tools/spec_plan.rs:722]
 
 handler 只接受 Function payload；参数 parse 和 optional string normalization 与 `list_mcp_resources` 共用 helper，空字符串会被 trim 后转成 `None`。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:64][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:65][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:73][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:77][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:281][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:283][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:284][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:287]
+
+模板 list 调用绑定在 `StepContext.mcp` 的不可变 `McpBinding`，不会在执行到一半跳到新发布的 connection set；refresh 后的新 binding 由后续 step capture。[E: codex-rs/core/src/session/step_context.rs:21][E: codex-rs/core/src/session/step_context.rs:21][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:61][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resource_templates.rs:62][E: codex-rs/codex-mcp/src/binding.rs:109]
 
 ## 4 输出与事件
 

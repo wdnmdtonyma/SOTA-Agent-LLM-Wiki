@@ -8,10 +8,10 @@ symbols: [DynamicToolSpec, DynamicToolFunctionSpec, DynamicToolNamespaceSpec, Dy
 related: [tool.tool-search, tool.mcp-namespace-tools, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> Dynamic tools 是 planner 从 `context.dynamic_tools` 遍历出来的运行时工具定义。planner 把 `DynamicToolSpec::Function` 或 namespace 内 function 转成 `DynamicToolHandler`；handler 登记 pending response，通过 `DynamicToolCallItem` 发出 started/completed turn-item 生命周期，并在其间等待 response。[E: codex-rs/protocol/src/dynamic_tools.rs:13][E: codex-rs/protocol/src/dynamic_tools.rs:21][E: codex-rs/core/src/tools/spec_plan.rs:880][E: codex-rs/core/src/tools/spec_plan.rs:881][E: codex-rs/core/src/tools/spec_plan.rs:883][E: codex-rs/core/src/tools/spec_plan.rs:896][E: codex-rs/core/src/tools/handlers/dynamic.rs:182][E: codex-rs/core/src/tools/handlers/dynamic.rs:197][E: codex-rs/core/src/tools/handlers/dynamic.rs:243]
+> Dynamic tools 是 planner 从 `context.dynamic_tools` 遍历出来的运行时工具定义。planner 把 `DynamicToolSpec::Function` 或 namespace 内 function 转成 `DynamicToolHandler`；handler 登记 pending response，通过 `DynamicToolCallItem` 发出 started/completed turn-item 生命周期，并在其间等待 response。[E: codex-rs/protocol/src/dynamic_tools.rs:13][E: codex-rs/protocol/src/dynamic_tools.rs:21][E: codex-rs/core/src/tools/spec_plan.rs:914][E: codex-rs/core/src/tools/spec_plan.rs:915][E: codex-rs/core/src/tools/spec_plan.rs:917][E: codex-rs/core/src/tools/spec_plan.rs:930][E: codex-rs/core/src/tools/handlers/dynamic.rs:182][E: codex-rs/core/src/tools/handlers/dynamic.rs:197][E: codex-rs/core/src/tools/handlers/dynamic.rs:243]
 
 ## 能回答的问题
 
@@ -28,7 +28,7 @@ namespace spec 包含 namespace `name`、`description` 和 `tools: Vec<DynamicTo
 
 ## 2 runtime 构造
 
-`add_dynamic_tools` 遍历当前 turn 的 dynamic specs：Function 走 `DynamicToolHandler::new`，Namespace 则遍历 namespace.tools 并走 `DynamicToolHandler::new_in_namespace`。[E: codex-rs/core/src/tools/spec_plan.rs:880][E: codex-rs/core/src/tools/spec_plan.rs:883][E: codex-rs/core/src/tools/spec_plan.rs:884][E: codex-rs/core/src/tools/spec_plan.rs:891][E: codex-rs/core/src/tools/spec_plan.rs:893][E: codex-rs/core/src/tools/spec_plan.rs:894][E: codex-rs/core/src/tools/spec_plan.rs:896][E: codex-rs/core/src/tools/spec_plan.rs:891]
+`add_dynamic_tools` 遍历当前 turn 的 dynamic specs：Function 走 `DynamicToolHandler::new`，Namespace 则遍历 namespace.tools 并走 `DynamicToolHandler::new_in_namespace`。[E: codex-rs/core/src/tools/spec_plan.rs:914][E: codex-rs/core/src/tools/spec_plan.rs:917][E: codex-rs/core/src/tools/spec_plan.rs:918][E: codex-rs/core/src/tools/spec_plan.rs:925][E: codex-rs/core/src/tools/spec_plan.rs:927][E: codex-rs/core/src/tools/spec_plan.rs:928][E: codex-rs/core/src/tools/spec_plan.rs:930][E: codex-rs/core/src/tools/spec_plan.rs:925]
 
 handler construction 用 namespace/name 生成 `ToolName`，把 protocol spec 转成 `ResponsesApiTool`，再包装为 Function 或 Namespace `ToolSpec`。[E: codex-rs/core/src/tools/handlers/dynamic.rs:54][E: codex-rs/core/src/tools/handlers/dynamic.rs:58][E: codex-rs/core/src/tools/handlers/dynamic.rs:61][E: codex-rs/core/src/tools/handlers/dynamic.rs:62][E: codex-rs/core/src/tools/handlers/dynamic.rs:69][E: codex-rs/core/src/tools/handlers/dynamic.rs:71]
 
@@ -38,7 +38,7 @@ handler construction 用 namespace/name 生成 `ToolName`，把 protocol spec �
 
 `DynamicToolHandler` 将 `tool.defer_loading` 映射为 `ToolExposure::Deferred`，否则为 Direct；同时先清掉 Responses API tool 上的 `defer_loading` marker，由 tool search 输出时恢复。[E: codex-rs/core/src/tools/handlers/dynamic.rs:60][E: codex-rs/core/src/tools/handlers/dynamic.rs:76][E: codex-rs/core/src/tools/handlers/dynamic.rs:77][E: codex-rs/core/src/tools/handlers/dynamic.rs:79][E: codex-rs/tools/src/tool_search.rs:37][E: codex-rs/tools/src/tool_search.rs:47]
 
-deferred dynamic tools 也不是无条件进入 `tool_search`：planner 会先应用 direct-model-only namespace overrides，再调用 `append_tool_search_executor`；该函数只在 `search_tool_enabled` 为 true 时继续，并只收集仍为 `Deferred` 的 runtimes。[E: codex-rs/core/src/tools/spec_plan.rs:192][E: codex-rs/core/src/tools/spec_plan.rs:193][E: codex-rs/core/src/tools/spec_plan.rs:194][E: codex-rs/core/src/tools/spec_plan.rs:208][E: codex-rs/core/src/tools/spec_plan.rs:213][E: codex-rs/core/src/tools/spec_plan.rs:216][E: codex-rs/core/src/tools/spec_plan.rs:218][E: codex-rs/core/src/tools/spec_plan.rs:928][E: codex-rs/core/src/tools/spec_plan.rs:933][E: codex-rs/core/src/tools/spec_plan.rs:937][E: codex-rs/core/src/tools/spec_plan.rs:940][E: codex-rs/core/src/tools/spec_plan.rs:941]
+deferred dynamic tools 也不是无条件进入 `tool_search`：planner 会先应用 direct-model-only namespace overrides，再调用 `append_tool_search_executor`；该函数只在 `search_tool_enabled` 为 true 时继续，并只收集仍为 `Deferred` 的 runtimes。[E: codex-rs/core/src/tools/spec_plan.rs:206][E: codex-rs/core/src/tools/spec_plan.rs:207][E: codex-rs/core/src/tools/spec_plan.rs:208][E: codex-rs/core/src/tools/spec_plan.rs:222][E: codex-rs/core/src/tools/spec_plan.rs:227][E: codex-rs/core/src/tools/spec_plan.rs:230][E: codex-rs/core/src/tools/spec_plan.rs:232][E: codex-rs/core/src/tools/spec_plan.rs:962][E: codex-rs/core/src/tools/spec_plan.rs:967][E: codex-rs/core/src/tools/spec_plan.rs:971][E: codex-rs/core/src/tools/spec_plan.rs:974][E: codex-rs/core/src/tools/spec_plan.rs:975]
 
 `DynamicToolHandler::search_info()` 标记 source 为 “Dynamic tools”，描述为 “Tools provided by the current Codex thread.”；`ToolSearchInfo::from_tool_spec` 会为 returned loadable Function 或 Namespace tools 恢复 `defer_loading: Some(true)` 并清空 output schema。[E: codex-rs/core/src/tools/handlers/dynamic.rs:98][E: codex-rs/core/src/tools/handlers/dynamic.rs:99][E: codex-rs/core/src/tools/handlers/dynamic.rs:102][E: codex-rs/core/src/tools/handlers/dynamic.rs:103][E: codex-rs/tools/src/tool_search.rs:22][E: codex-rs/tools/src/tool_search.rs:37][E: codex-rs/tools/src/tool_search.rs:38][E: codex-rs/tools/src/tool_search.rs:41][E: codex-rs/tools/src/tool_search.rs:47][E: codex-rs/tools/src/tool_search.rs:48]
 

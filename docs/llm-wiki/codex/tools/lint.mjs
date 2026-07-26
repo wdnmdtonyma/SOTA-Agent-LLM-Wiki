@@ -101,6 +101,7 @@ for (const e of allEntries) {
   if (e.kind && !KINDS.includes(e.kind)) err(`index ${e.id}: kind 非法 "${e.kind}"`)
   if (e.tier && !TIERS.includes(e.tier)) err(`index ${e.id}: tier 非法 "${e.tier}"`)
   if (e.status && !STATUS.includes(e.status)) err(`index ${e.id}: status 非法 "${e.status}"`)
+  if (e.path && e.status === 'verified' && e.updated !== index.updated) err(`index ${e.id}: updated "${e.updated || '(missing)'}" ≠ 顶层 updated "${index.updated}"`)
   for (const symbol of e.symbols || []) {
     const owner = symbolOwner.get(symbol)
     if (owner && owner !== e.id) err(`index: symbol "${symbol}" 同时由 ${owner} 与 ${e.id} 声明权威`)
@@ -140,6 +141,8 @@ for (const f of files) {
   if (fm.status && !STATUS.includes(fm.status)) err(`${f}: status 非法 "${fm.status}"`)
   if (fm.evidence && !EVID.includes(fm.evidence)) err(`${f}: evidence 非法 "${fm.evidence}"`)
   if (fm.updated && !SHA.test(String(fm.updated))) warn(`${f}: updated "${fm.updated}" 不像 git 短 SHA(codex staleness 用 SHA)`)
+  if (fm.status === 'verified' && fm.updated !== index.updated) err(`${f}: updated "${fm.updated || '(missing)'}" ≠ index 顶层 updated "${index.updated}"`)
+  if (fm.status === 'verified' && inIndex && nodeByPath.get(f).updated !== fm.updated) err(`${f}: frontmatter updated "${fm.updated}" ≠ index node updated "${nodeByPath.get(f).updated || '(missing)'}"`)
   if (fm.id && inIndex && nodeByPath.get(f).id !== fm.id) err(`${f}: frontmatter id "${fm.id}" ≠ index 中该 path 的 id "${nodeByPath.get(f).id}"`)
   if (fm.status === 'verified') {
     for (const s of fm.source || []) if (!srcExists(s)) err(`${f}: source "${s}" 在 Best/codex/ 不存在`)

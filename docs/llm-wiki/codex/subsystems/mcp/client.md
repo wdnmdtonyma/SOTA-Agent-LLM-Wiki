@@ -1,80 +1,87 @@
 ---
 id: subsys.mcp.client
-title: MCP client
+title: MCP client runtime
 kind: subsystem
 tier: T2
-source: [codex-rs/codex-mcp/src/connection_manager.rs, codex-rs/codex-mcp/src/rmcp_client.rs, codex-rs/codex-mcp/src/tools.rs, codex-rs/codex-mcp/src/codex_apps/file_params.rs, codex-rs/codex-mcp/src/tool_catalog_cache.rs, codex-rs/codex-mcp/src/openai_docs_source_attribution.rs, codex-rs/codex-mcp/src/resource_client.rs, codex-rs/codex-mcp/src/server.rs]
-symbols: [McpConnectionManager, AsyncManagedClient, ManagedClient, McpToolCatalogCache, ToolInfo, ToolFilter, prepare_openai_file_params_for_model, list_all_tools, tool_info, list_tools_for_client_uncached, call_tool]
+source: [codex-rs/codex-mcp/src/runtime.rs, codex-rs/codex-mcp/src/binding.rs, codex-rs/codex-mcp/src/binding_clients.rs, codex-rs/codex-mcp/src/connection_manager.rs, codex-rs/codex-mcp/src/rmcp_client.rs, codex-rs/codex-mcp/src/resource_client.rs, codex-rs/codex-mcp/src/tools.rs, codex-rs/core/src/session/mcp.rs, codex-rs/core/src/session/mcp_refresh.rs, codex-rs/core/src/session/mcp_prewarm.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/core/src/mcp_tool_call.rs]
+symbols: [McpRuntime, McpRuntimeInput, PublishedMcpRuntime, McpBinding, PreparedMcpCall, McpConnectionSet, McpResourceClient, McpRefresh]
 related: [spine.extension-system, subsys.mcp.transports, subsys.mcp.oauth, subsys.mcp.name-qualification, subsys.mcp.connectors, spine.trace-mcp-call, tool.mcp-namespace-tools, tool.list-mcp-resources, tool.read-mcp-resource]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> `McpConnectionManager` owns Codex's client-side MCP server set: it starts async `RmcpClient` instances, records server metadata, aggregates tools/resources/templates, routes `tools/call`, and exposes the manager API used by `codex-core`.[E: codex-rs/codex-mcp/src/connection_manager.rs:116]
+> MCP client 的线程级 owner 现在是 `McpRuntime`：它原子发布最新 `McpConnectionSet`，每个 model sampling step 捕获不可变 `McpBinding` 来构建广告目录和 resource tools；普通 MCP tool 真正执行前则再次 refresh，并从 call-time current binding 取得 client、metadata 与 approval authority。
 
 ## 能回答的问题
 
-- Codex 怎样为每个 enabled MCP server 启动并管理 client？
-- MCP tools 怎样被过滤、缓存、归一化成 model-visible names？
-- Codex Apps tools 为什么有 cache、schema masking 和 connector metadata？
-- resources/resource templates 怎样分页聚合？
-- `tools/call` 怎样从 model-visible trace 回到 raw server/tool name？
+- MCP 配置、auth、plugin/capability 变化怎样触发 refresh？
+- 新旧 connection set 在什么条件下复用或强制重连？
+- 广告目录与最终 MCP call 为什么可能来自不同 binding？
+- step-bound resource tools、thread-owned resource client 与 ordinary tool call 为什么读取三种视图？
+- Codex Apps 的 hard refresh 怎样建立新的 publication？
 
-## 职责边界
+## 1 三层状态
 
-`codex-mcp` 的 client 方向负责连接外部 MCP server、维护 metadata、聚合工具与资源、执行 raw MCP protocol calls；它不负责 Codex 自己作为 MCP server 暴露 `codex`/`codex-reply`，那部分在 `codex-rs/mcp-server`。[E: codex-rs/codex-mcp/src/connection_manager.rs:567][E: codex-rs/codex-mcp/src/connection_manager.rs:692][E: codex-rs/codex-mcp/src/connection_manager.rs:763][E: codex-rs/codex-mcp/src/connection_manager.rs:837]
+| 层 | 生命周期 | 一致性语义 |
+|---|---|---|
+| `McpRuntime` | 每个 Codex thread 一个 | `ArcSwap<PublishedMcpRuntime>` 原子发布最新 connections/config/auth；旧 snapshot 由现存 binding 持有。[E: codex-rs/codex-mcp/src/runtime.rs:66][E: codex-rs/codex-mcp/src/runtime.rs:85] |
+| `McpConnectionSet` | 一次 runtime publication | 启动/复用 enabled servers，保存最新可发现的工具、资源与 metadata；replace 可传前一 set 做安全复用。[E: codex-rs/codex-mcp/src/runtime.rs:163][E: codex-rs/codex-mcp/src/runtime.rs:197] |
+| `McpBinding` | 一次 captured runtime view | 冻结该 view 的 `tools`、prepared calls、config、plugin availability 与 exact clients；step capture 用它广告 tools，ordinary call 又会从 current runtime capture 一次。[E: codex-rs/codex-mcp/src/binding.rs:30][E: codex-rs/codex-mcp/src/binding.rs:36][E: codex-rs/codex-mcp/src/binding.rs:79][E: codex-rs/codex-mcp/src/binding.rs:87][E: codex-rs/core/src/mcp_tool_call.rs:143][E: codex-rs/core/src/mcp_tool_call.rs:144] |
 
-tool registry 的 ground truth 不在本节点；当前 registry 由 `codex-rs/core/src/tools/spec_plan.rs` 生成 tool router，本节点只解释 MCP manager 怎样提供 tool/resource data 给上层。[I]
+`McpRuntimeInput` 把 exact config、server projection、auth、environment/runtime context、Apps cache、selected capability roots 和 elicitation plumbing 聚成一次 publication 的输入。[E: codex-rs/codex-mcp/src/runtime.rs:50][E: codex-rs/codex-mcp/src/runtime.rs:66]
 
-## 关键文件
+## 2 Refresh 与 publication
 
-- `codex-rs/codex-mcp/src/connection_manager.rs`: manager 结构体、startup、tool/resource aggregation、tool call routing。[E: codex-rs/codex-mcp/src/connection_manager.rs:116][E: codex-rs/codex-mcp/src/connection_manager.rs:128][E: codex-rs/codex-mcp/src/connection_manager.rs:837]
-- `codex-rs/codex-mcp/src/rmcp_client.rs`: `AsyncManagedClient` lifecycle、startup cache、server initialize、uncached tool listing、transport selection。[E: codex-rs/codex-mcp/src/rmcp_client.rs:401][E: codex-rs/codex-mcp/src/rmcp_client.rs:419][E: codex-rs/codex-mcp/src/rmcp_client.rs:625][E: codex-rs/codex-mcp/src/rmcp_client.rs:866][E: codex-rs/codex-mcp/src/rmcp_client.rs:1016]
-- `codex-rs/codex-mcp/src/tools.rs`: `ToolInfo`、allow/deny filter and model-visible name normalization；Apps file-schema shaping moved to `codex_apps/file_params.rs`。[E: codex-rs/codex-mcp/src/tools.rs:25][E: codex-rs/codex-mcp/src/tools.rs:43]
-- `codex-rs/codex-mcp/src/tool_catalog_cache.rs`: process-local, identity-keyed reusable stdio tool catalogs with LRU/TTL and server opt-out。[E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:27][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:72][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:106][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:129][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:224]
-- `codex-rs/codex-mcp/src/openai_docs_source_attribution.rs`: exact OpenAI docs MCP URL wrapper adds `?source=codex` to unary and streaming requests。[E: codex-rs/codex-mcp/src/openai_docs_source_attribution.rs:10][E: codex-rs/codex-mcp/src/openai_docs_source_attribution.rs:13][E: codex-rs/codex-mcp/src/openai_docs_source_attribution.rs:29][E: codex-rs/codex-mcp/src/openai_docs_source_attribution.rs:36][E: codex-rs/codex-mcp/src/openai_docs_source_attribution.rs:45]
-- `codex-rs/codex-mcp/src/resource_client.rs`: session-scoped resource adapter backed by replaceable manager handle。[E: codex-rs/codex-mcp/src/resource_client.rs:34][E: codex-rs/codex-mcp/src/resource_client.rs:61][E: codex-rs/codex-mcp/src/resource_client.rs:77][E: codex-rs/codex-mcp/src/resource_client.rs:101]
+session 的 `McpRefresh` 使用 atomic pending bit 加单 permit semaphore；多个 invalidation 被合并，但 refresh 执行期间再次变脏会让 loop 再发布一次。取消发生在 publication 前时，guard 会把 dirty bit 放回去。[E: codex-rs/core/src/session/mcp_refresh.rs:8][E: codex-rs/core/src/session/mcp_refresh.rs:34][E: codex-rs/core/src/session/mcp_refresh.rs:43][E: codex-rs/core/src/session/mcp_refresh.rs:51]
 
-## 数据模型
+`refresh_mcp_if_dirty` 在 gate 内重新检查 auth/plugin mode、解析 selected capability roots 与 executor discovery，再构造并发布 runtime；只有 pending 被耗尽才退出。[E: codex-rs/core/src/session/mcp.rs:135][E: codex-rs/core/src/session/mcp.rs:165][E: codex-rs/core/src/session/mcp.rs:198]
 
-- `McpConnectionManager` stores `clients`, `server_metadata`, `required_servers`, plugin provenance, name-prefix mode, elicitation state, and startup cancellation token.[E: codex-rs/codex-mcp/src/connection_manager.rs:116]
-- `ManagedClient` stores the initialized `RmcpClient`, advertised `McpServerInfo`, filtered `ToolInfo` list, timeout/filter settings, server instructions, sandbox-state support, and optional Codex Apps tool-cache context.[E: codex-rs/codex-mcp/src/rmcp_client.rs:108]
-- `ToolInfo` preserves raw routing fields (`server_name`, raw `tool`) separately from model-visible `callable_namespace`/`callable_name`, and records optional fields accepted by declared `openai/fileParams` for execution-time upload rewriting。[E: codex-rs/codex-mcp/src/tools.rs:25][E: codex-rs/codex-mcp/src/tools.rs:43][E: codex-rs/codex-mcp/src/tools.rs:58][E: codex-rs/codex-mcp/src/codex_apps/file_params.rs:47]
-- Server metadata retains origin, memory-pollution behavior, parallel-tool support, default approval mode, and per-tool approval overrides after launch.[E: codex-rs/codex-mcp/src/server.rs:77][E: codex-rs/codex-mcp/src/server.rs:96]
+普通 `McpRuntime::replace` 可把前一 `McpConnectionSet` 交给新 set 复用兼容连接；`reconnect_on_next_refresh` 和 `replace_fresh` 则不提供 previous set，强制 fresh connections。[E: codex-rs/codex-mcp/src/runtime.rs:163][E: codex-rs/codex-mcp/src/runtime.rs:180][E: codex-rs/codex-mcp/src/runtime.rs:211][E: codex-rs/codex-mcp/src/runtime.rs:212]
 
-## 启动链路
+Codex Apps 的 explicit hard refresh 先等 dirty refresh，再独占 refresh gate，使用 `replace_fresh` 发布新 clients 后读取完整 refreshed catalog；该返回值与 hard-refresh 完成时的 publication 一致，但后续 ordinary call 仍按 call-time current binding 解析。[E: codex-rs/core/src/session/mcp.rs:204][E: codex-rs/core/src/session/mcp.rs:251][E: codex-rs/codex-mcp/src/runtime.rs:178][E: codex-rs/codex-mcp/src/runtime.rs:180][E: codex-rs/core/src/mcp_tool_call.rs:143][E: codex-rs/core/src/mcp_tool_call.rs:147]
 
-1. `McpConnectionManager::new` receives effective servers and records required enabled server names before spawning one `AsyncManagedClient` per enabled server.[E: codex-rs/codex-mcp/src/connection_manager.rs:128][E: codex-rs/codex-mcp/src/connection_manager.rs:152][E: codex-rs/codex-mcp/src/connection_manager.rs:179]
-2. Startup emits `McpStartupStatus::Starting`, attaches the account/workspace Codex Apps runtime context, and uses an `AuthManager`-backed provider for the reserved Apps registration so token refreshes are visible without crossing identity boundaries；an env bearer override still suppresses ambient auth。[E: codex-rs/codex-mcp/src/connection_manager.rs:162][E: codex-rs/codex-mcp/src/connection_manager.rs:206][E: codex-rs/codex-mcp/src/connection_manager.rs:215][E: codex-rs/codex-mcp/src/connection_manager.rs:232][E: codex-rs/codex-mcp/src/connection_manager.rs:238]
-3. `AsyncManagedClient::new` builds a `ToolFilter`, loads startup cache server info for Codex Apps when possible, validates the server name, creates the underlying `RmcpClient`, then calls `start_server_task`.[E: codex-rs/codex-mcp/src/rmcp_client.rs:440][E: codex-rs/codex-mcp/src/rmcp_client.rs:444][E: codex-rs/codex-mcp/src/rmcp_client.rs:328][E: codex-rs/codex-mcp/src/rmcp_client.rs:312][E: codex-rs/codex-mcp/src/rmcp_client.rs:353]
-4. `start_server_task` initializes the server with Codex client capabilities, detects the sandbox-state experimental capability, lists tools uncached, publishes Codex Apps cache if applicable, filters tools, and returns `ManagedClient`.[E: codex-rs/codex-mcp/src/rmcp_client.rs:970][E: codex-rs/codex-mcp/src/rmcp_client.rs:890][E: codex-rs/codex-mcp/src/rmcp_client.rs:908][E: codex-rs/codex-mcp/src/rmcp_client.rs:918][E: codex-rs/codex-mcp/src/rmcp_client.rs:929][E: codex-rs/codex-mcp/src/rmcp_client.rs:950][E: codex-rs/codex-mcp/src/rmcp_client.rs:952]
+## 3 Step binding 与 call authority
 
-## Tool 列表与执行
+每个 step 在 `mcp_runtime_for_step` 比较 selected capability roots，必要时标 dirty、完成 refresh，然后调用 `current_binding`；如果尚无发布 config 才返回空 binding。[E: codex-rs/core/src/session/mcp.rs:258][E: codex-rs/core/src/session/mcp.rs:279]
 
-- `list_all_tools` awaits each managed client, extends the collected `ToolInfo` with server metadata, then calls `normalize_tools_for_model_with_prefix` once over the whole set.[E: codex-rs/codex-mcp/src/connection_manager.rs:567][E: codex-rs/codex-mcp/src/connection_manager.rs:577][E: codex-rs/codex-mcp/src/connection_manager.rs:597]
-- Codex Apps hard refresh bypasses the current snapshot, lists tools uncached, then generation-guards publication so an older completion cannot replace newer runtime state；file params are shaped after deriving execution-time optional fields。[E: codex-rs/codex-mcp/src/connection_manager.rs:637][E: codex-rs/codex-mcp/src/connection_manager.rs:656][E: codex-rs/codex-mcp/src/codex_apps/file_params.rs:48][E: codex-rs/codex-mcp/src/codex_apps/file_params.rs:57]
-- Regular stdio servers may reuse a 30-minute, 32-entry process-local catalog keyed by launch/environment/capability fingerprint；cached entries drop per-connection instructions and annotations, and a server capability can explicitly disable reuse。[E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:27][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:28][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:111][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:129][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:135]
-- `call_tool` resolves the raw server client, rejects disabled raw tool names, calls `RmcpClient::call_tool(tool, arguments, meta, timeout)`, then converts MCP content/structured content/error/meta into Codex protocol `CallToolResult`.[E: codex-rs/codex-mcp/src/connection_manager.rs:837][E: codex-rs/codex-mcp/src/connection_manager.rs:844][E: codex-rs/codex-mcp/src/connection_manager.rs:845][E: codex-rs/codex-mcp/src/connection_manager.rs:851][E: codex-rs/codex-mcp/src/connection_manager.rs:866]
+`McpBinding::tools` 是冻结目录；step planner 据此创建只保存 `ToolInfo/spec` 的 `McpHandler`，handler 不保存 step binding 或 prepared call。[E: codex-rs/codex-mcp/src/binding.rs:79][E: codex-rs/core/src/tools/handlers/mcp.rs:32][E: codex-rs/core/src/tools/handlers/mcp.rs:38][E: codex-rs/core/src/tools/handlers/mcp.rs:145]
 
-## Resources
+真正调用时，`handle_mcp_tool_call` 先执行 `refresh_mcp_if_dirty()`，再从 runtime 的 `current_binding()` 按 `(server, tool)` 查 `PreparedMcpCall`。若 tool 已从最新 catalog 消失，调用直接返回 “not available to the model”；若仍存在，approval metadata、config、plugin provenance 与 exact client 来自这个 call-time binding，而非广告时 binding。[E: codex-rs/core/src/mcp_tool_call.rs:143][E: codex-rs/core/src/mcp_tool_call.rs:144][E: codex-rs/core/src/mcp_tool_call.rs:145][E: codex-rs/core/src/mcp_tool_call.rs:157][E: codex-rs/core/src/mcp_tool_call.rs:167][E: codex-rs/core/src/mcp_tool_call.rs:169]
 
-- `list_all_resources` and `list_all_resource_templates` fan out across clients, follow pagination cursors, reject duplicate cursors, and warn rather than failing the whole aggregate when one server fails.[E: codex-rs/codex-mcp/src/connection_manager.rs:692][E: codex-rs/codex-mcp/src/connection_manager.rs:715][E: codex-rs/codex-mcp/src/connection_manager.rs:726][E: codex-rs/codex-mcp/src/connection_manager.rs:728][E: codex-rs/codex-mcp/src/connection_manager.rs:750][E: codex-rs/codex-mcp/src/connection_manager.rs:763][E: codex-rs/codex-mcp/src/connection_manager.rs:786][E: codex-rs/codex-mcp/src/connection_manager.rs:797][E: codex-rs/codex-mcp/src/connection_manager.rs:823]
-- `McpResourceClient` keeps an `ArcSwap<McpConnectionManager>` rather than a snapshot, so resource reads/lists use the currently published manager after startup or refresh replacement.[E: codex-rs/codex-mcp/src/resource_client.rs:34][E: codex-rs/codex-mcp/src/resource_client.rs:61][E: codex-rs/codex-mcp/src/resource_client.rs:77][E: codex-rs/codex-mcp/src/resource_client.rs:101]
+真正发送前，call-time `PreparedMcpCall::call_with_preparation` 获取 catalog revision read guard：prepared call 建立后、guard 获取前 revision 已变化则拒绝；匹配时在 guard 持有期间完成不可逆参数准备与 exact-client call，因此 catalog replacement 被阻塞到发送结束。这个 guard 保护 “call-time prepare → send” 窗口，不把 model 广告时 binding 延长到执行时。[E: codex-rs/codex-mcp/src/binding.rs:248][E: codex-rs/codex-mcp/src/binding.rs:258][E: codex-rs/codex-mcp/src/binding.rs:265][E: codex-rs/codex-mcp/src/binding.rs:273][I]
+
+## 4 Discovery 与 resources
+
+非模型 discovery 可以调用 runtime 的 `latest_list_all_tools`、`latest_call_tool`、`latest_read_resource` 等 API；它们明确读取最新 connection set，而不是某个旧 step binding。[E: codex-rs/codex-mcp/src/runtime.rs:276][E: codex-rs/codex-mcp/src/runtime.rs:306]
+
+`McpResourceClient` 同样持有 `Arc<McpRuntime>`，每次 list/read 都从 `latest_connections()` 取当前 set；`cache_key` 用 connection-set weak identity，让上层在 publication 更换时失效资源 cache。[E: codex-rs/codex-mcp/src/resource_client.rs:31][E: codex-rs/codex-mcp/src/resource_client.rs:64][E: codex-rs/codex-mcp/src/resource_client.rs:75][E: codex-rs/codex-mcp/src/resource_client.rs:111]
+
+binding 自己也能 list/read resources，但那条路径通过 frozen `McpBindingClients`，适合需要与该 sampling step 完全一致的 resource view。[E: codex-rs/codex-mcp/src/binding.rs:94][E: codex-rs/codex-mcp/src/binding.rs:131]
+
+## 5 边界与 gotcha
+
+- “refresh 成功”表示新 publication 对未来读取可见，不会修改已经捕获的 binding；旧连接会由引用生命周期自然保留。[E: codex-rs/codex-mcp/src/runtime.rs:66][E: codex-rs/codex-mcp/src/runtime.rs:73][I]
+- model-advertised schema 来自 step binding，但 ordinary MCP execution follow call-time current binding；因此 refresh 后同名 tool 的 execution authority 可以变化，删除则得到 unavailable。不要把 revision guard描述成整步冻结。[E: codex-rs/core/src/mcp_tool_call.rs:143][E: codex-rs/core/src/mcp_tool_call.rs:157][I]
+- tool-facing list/read resource handlers 使用 step binding；extension-facing `McpResourceClient` 每次 follow latest runtime；ordinary MCP call 则在执行前主动 refresh 后取 current binding。[E: codex-rs/core/src/mcp_tool_call.rs:143][E: codex-rs/codex-mcp/src/resource_client.rs:64][I]
+- prewarm 是 bounded best-effort 启动优化；step path 的 refresh/capture 才是正确性屏障，不能把 prewarm 完成当成 binding 已冻结。[U]
 
 ## Sources
 
-- codex-rs/codex-mcp/src/connection_manager.rs
-- codex-rs/codex-mcp/src/rmcp_client.rs
-- codex-rs/codex-mcp/src/tools.rs
-- codex-rs/codex-mcp/src/codex_apps/file_params.rs
-- codex-rs/codex-mcp/src/tool_catalog_cache.rs
-- codex-rs/codex-mcp/src/openai_docs_source_attribution.rs
-- codex-rs/codex-mcp/src/resource_client.rs
-- codex-rs/codex-mcp/src/server.rs
+- `codex-rs/codex-mcp/src/runtime.rs`
+- `codex-rs/codex-mcp/src/binding.rs`
+- `codex-rs/codex-mcp/src/binding_clients.rs`
+- `codex-rs/codex-mcp/src/connection_manager.rs`
+- `codex-rs/codex-mcp/src/rmcp_client.rs`
+- `codex-rs/codex-mcp/src/resource_client.rs`
+- `codex-rs/core/src/session/mcp.rs`
+- `codex-rs/core/src/session/mcp_refresh.rs`
+- `codex-rs/core/src/session/mcp_prewarm.rs`
+- `codex-rs/core/src/tools/handlers/mcp.rs`
+- `codex-rs/core/src/mcp_tool_call.rs`
 
 ## 相关
 
-- [Ext 扩展插件系统](../../spine/extension-system.md)
 - [trace:MCP 工具调用](../../spine/trace-mcp-call.md)
-- [MCP namespace 工具](../../surface/tools/mcp-namespace-tools.md)
+- [MCP transports](transports.md)
+- [MCP resource tools](../../surface/tools/list-mcp-resources.md)

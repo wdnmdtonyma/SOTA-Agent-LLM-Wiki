@@ -3,15 +3,15 @@ id: subsys.platform.git-utils
 title: Git utils
 kind: subsystem
 tier: T2
-source: [codex-rs/git-utils/src/lib.rs, codex-rs/git-utils/src/info.rs, codex-rs/git-utils/src/branch.rs, codex-rs/git-utils/src/apply.rs, codex-rs/git-utils/src/baseline.rs, codex-rs/git-utils/src/fsmonitor.rs, codex-rs/git-utils/src/operations.rs, codex-rs/git-utils/src/errors.rs, codex-rs/git-utils/src/platform.rs]
-symbols: [GitInfo, collect_git_info, ApplyGitRequest, ApplyGitResult, apply_git_patch, extract_paths_from_patch, stage_paths, merge_base_with_head, GitBaselineDiff, ensure_git_baseline_repository, diff_since_latest_init, FsmonitorOverride, detect_fsmonitor_override, create_symlink]
-related: [subsys.cloud.cloud-tasks, subsys.cloud.cloud-task-api, config.storage-telemetry-misc]
+source: [codex-rs/git-utils/src/lib.rs, codex-rs/git-utils/src/info.rs, codex-rs/git-utils/src/branch.rs, codex-rs/git-utils/src/apply.rs, codex-rs/git-utils/src/baseline.rs, codex-rs/git-utils/src/fsmonitor.rs, codex-rs/git-utils/src/operations.rs, codex-rs/git-utils/src/errors.rs, codex-rs/git-utils/src/platform.rs, codex-rs/ext/git-attribution/src/lib.rs, codex-rs/ext/git-attribution/src/policy.rs, codex-rs/ext/git-attribution/src/world_state.rs]
+symbols: [GitInfo, collect_git_info, ApplyGitRequest, ApplyGitResult, apply_git_patch, extract_paths_from_patch, stage_paths, merge_base_with_head, GitBaselineDiff, ensure_git_baseline_repository, diff_since_latest_init, FsmonitorOverride, detect_fsmonitor_override, create_symlink, GitAttributionExtension]
+related: [subsys.cloud.cloud-tasks, subsys.cloud.cloud-task-api, config.storage-telemetry-misc, spine.extension-system]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> `codex_git_utils` is Codex's local Git support crate: `lib.rs` re-exports patch apply, baseline diff/reset, merge-base, metadata, fsmonitor policy, and symlink helpers, while `operations.rs` remains a crate-private system-git execution layer。[E: codex-rs/git-utils/src/lib.rs:1][E: codex-rs/git-utils/src/lib.rs:10][E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:22][E: codex-rs/git-utils/src/lib.rs:25][E: codex-rs/git-utils/src/lib.rs:28][E: codex-rs/git-utils/src/lib.rs:45][E: codex-rs/git-utils/src/operations.rs:11]
+> `codex_git_utils` is Codex's local Git support crate: `lib.rs` re-exports patch apply, baseline diff/reset, merge-base, metadata, fsmonitor policy, and symlink helpers, while `operations.rs` remains a crate-private system-git execution layer。[E: codex-rs/git-utils/src/lib.rs:1][E: codex-rs/git-utils/src/lib.rs:10][E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:22][E: codex-rs/git-utils/src/lib.rs:25][E: codex-rs/git-utils/src/lib.rs:28][E: codex-rs/git-utils/src/lib.rs:44][E: codex-rs/git-utils/src/operations.rs:11]
 
 ## 能回答的问题
 
@@ -26,7 +26,7 @@ updated: 4d7a5c7c73
 
 git-utils 节点覆盖 `codex-rs/git-utils` crate 的 public API 与支撑性 crate-private helpers。`operations.rs` 的 `ensure_git_repository`、`resolve_head`、`resolve_repository_root`、`run_git_for_status` 和 `run_git_for_stdout` 都是 `pub(crate)`，供 branch/baseline 等模块内部复用，不是 crate 外部 API。[E: codex-rs/git-utils/src/operations.rs:11][E: codex-rs/git-utils/src/operations.rs:33][E: codex-rs/git-utils/src/operations.rs:49][E: codex-rs/git-utils/src/operations.rs:61][E: codex-rs/git-utils/src/operations.rs:74]
 
-`GitToolingError` 是 branch/operations/platform helpers 使用的结构化错误类型；`apply_git_patch` 自身返回 `std::io::Result<ApplyGitResult>`，`collect_git_info` 返回 `Option<GitInfo>`，baseline helpers 返回 `anyhow::Result`。[E: codex-rs/git-utils/src/errors.rs:10][E: codex-rs/git-utils/src/branch.rs:18][E: codex-rs/git-utils/src/operations.rs:65][E: codex-rs/git-utils/src/operations.rs:78][E: codex-rs/git-utils/src/platform.rs:10][E: codex-rs/git-utils/src/apply.rs:41][E: codex-rs/git-utils/src/info.rs:95][E: codex-rs/git-utils/src/baseline.rs:69][E: codex-rs/git-utils/src/baseline.rs:78][E: codex-rs/git-utils/src/baseline.rs:105]
+`GitToolingError` 是 branch/operations/platform helpers 使用的结构化错误类型；`apply_git_patch` 自身返回 `std::io::Result<ApplyGitResult>`，`collect_git_info` 返回 `Option<GitInfo>`，baseline helpers 返回 `anyhow::Result`。[E: codex-rs/git-utils/src/errors.rs:10][E: codex-rs/git-utils/src/branch.rs:18][E: codex-rs/git-utils/src/operations.rs:65][E: codex-rs/git-utils/src/operations.rs:78][E: codex-rs/git-utils/src/platform.rs:10][E: codex-rs/git-utils/src/apply.rs:41][E: codex-rs/git-utils/src/info.rs:72][E: codex-rs/git-utils/src/baseline.rs:69][E: codex-rs/git-utils/src/baseline.rs:78][E: codex-rs/git-utils/src/baseline.rs:105]
 
 ## Public exports
 
@@ -34,17 +34,17 @@ git-utils 节点覆盖 `codex-rs/git-utils` crate 的 public API 与支撑性 cr
 
 baseline exports include `GitBaselineChange`、`GitBaselineChangeStatus`、`GitBaselineDiff`、`diff_since_latest_init`、`ensure_git_baseline_repository` and `reset_git_repository`; branch/fsmonitor exports include `merge_base_with_head`、`FsmonitorOverride`、`FsmonitorProbeRunner` and `detect_fsmonitor_override`。[E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:17][E: codex-rs/git-utils/src/lib.rs:18][E: codex-rs/git-utils/src/lib.rs:19][E: codex-rs/git-utils/src/lib.rs:20][E: codex-rs/git-utils/src/lib.rs:21][E: codex-rs/git-utils/src/lib.rs:22][E: codex-rs/git-utils/src/lib.rs:25][E: codex-rs/git-utils/src/lib.rs:26][E: codex-rs/git-utils/src/lib.rs:27]
 
-info exports include `GitInfo`、`collect_git_info`、branch/default branch helpers、remote URL helpers、repo root, HEAD hash, dirty-state, remote diff, local branches, recent commits, and trust-root resolution。[E: codex-rs/git-utils/src/lib.rs:28][E: codex-rs/git-utils/src/lib.rs:30][E: codex-rs/git-utils/src/lib.rs:31][E: codex-rs/git-utils/src/lib.rs:32][E: codex-rs/git-utils/src/lib.rs:33][E: codex-rs/git-utils/src/lib.rs:34][E: codex-rs/git-utils/src/lib.rs:35][E: codex-rs/git-utils/src/lib.rs:36][E: codex-rs/git-utils/src/lib.rs:37][E: codex-rs/git-utils/src/lib.rs:39][E: codex-rs/git-utils/src/lib.rs:40][E: codex-rs/git-utils/src/lib.rs:41][E: codex-rs/git-utils/src/lib.rs:42][E: codex-rs/git-utils/src/lib.rs:43][E: codex-rs/git-utils/src/lib.rs:44]
+info exports include `GitInfo`、`collect_git_info`、branch/default branch helpers、remote URL helpers、repo root, HEAD hash, dirty-state, remote diff, local branches, recent commits, and trust-root resolution。[E: codex-rs/git-utils/src/lib.rs:28][E: codex-rs/git-utils/src/lib.rs:30][E: codex-rs/git-utils/src/lib.rs:31][E: codex-rs/git-utils/src/lib.rs:32][E: codex-rs/git-utils/src/lib.rs:33][E: codex-rs/git-utils/src/lib.rs:34][E: codex-rs/git-utils/src/lib.rs:35][E: codex-rs/git-utils/src/lib.rs:36][E: codex-rs/git-utils/src/lib.rs:37][E: codex-rs/git-utils/src/lib.rs:38][E: codex-rs/git-utils/src/lib.rs:39][E: codex-rs/git-utils/src/lib.rs:40][E: codex-rs/git-utils/src/lib.rs:41][E: codex-rs/git-utils/src/lib.rs:42][E: codex-rs/git-utils/src/lib.rs:43]
 
 ## Git metadata
 
-`GitInfo` contains only `commit_hash`、`branch` and `repository_url` optional fields; working-tree dirty state, recent commits, remote diff, and branches are separate helper APIs。[E: codex-rs/git-utils/src/info.rs:73][E: codex-rs/git-utils/src/info.rs:76][E: codex-rs/git-utils/src/info.rs:79][E: codex-rs/git-utils/src/info.rs:82][E: codex-rs/git-utils/src/info.rs:291][E: codex-rs/git-utils/src/info.rs:343][E: codex-rs/git-utils/src/info.rs:390][E: codex-rs/git-utils/src/info.rs:866]
+`GitInfo` contains only `commit_hash`、`branch` and `repository_url` optional fields; working-tree dirty state, recent commits, remote diff, and branches are separate helper APIs。[E: codex-rs/git-utils/src/info.rs:50][E: codex-rs/git-utils/src/info.rs:53][E: codex-rs/git-utils/src/info.rs:56][E: codex-rs/git-utils/src/info.rs:59][E: codex-rs/git-utils/src/info.rs:268][E: codex-rs/git-utils/src/info.rs:320][E: codex-rs/git-utils/src/info.rs:367][E: codex-rs/git-utils/src/info.rs:861]
 
-`collect_git_info` first checks `git rev-parse --git-dir`; after a successful repo check it runs `git rev-parse HEAD`、`git rev-parse --abbrev-ref HEAD` and `git remote get-url origin` with `tokio::join!`, then fills the three optional fields independently。[E: codex-rs/git-utils/src/info.rs:95][E: codex-rs/git-utils/src/info.rs:97][E: codex-rs/git-utils/src/info.rs:102][E: codex-rs/git-utils/src/info.rs:107][E: codex-rs/git-utils/src/info.rs:108][E: codex-rs/git-utils/src/info.rs:109][E: codex-rs/git-utils/src/info.rs:113][E: codex-rs/git-utils/src/info.rs:124][E: codex-rs/git-utils/src/info.rs:134][E: codex-rs/git-utils/src/info.rs:143]
+`collect_git_info` first checks `git rev-parse --git-dir`; after a successful repo check it runs `git rev-parse HEAD`、`git rev-parse --abbrev-ref HEAD` and `git remote get-url origin` with `tokio::join!`, then fills the three optional fields independently。[E: codex-rs/git-utils/src/info.rs:72][E: codex-rs/git-utils/src/info.rs:74][E: codex-rs/git-utils/src/info.rs:79][E: codex-rs/git-utils/src/info.rs:84][E: codex-rs/git-utils/src/info.rs:85][E: codex-rs/git-utils/src/info.rs:86][E: codex-rs/git-utils/src/info.rs:90][E: codex-rs/git-utils/src/info.rs:101][E: codex-rs/git-utils/src/info.rs:111][E: codex-rs/git-utils/src/info.rs:120]
 
-`get_git_repo_root` is a filesystem walk: it starts at the base path or its parent and looks for a `.git` entry, without requiring the git binary。[E: codex-rs/git-utils/src/info.rs:35][E: codex-rs/git-utils/src/info.rs:36][E: codex-rs/git-utils/src/info.rs:39][E: codex-rs/git-utils/src/info.rs:41]
+`get_git_repo_root` is a filesystem walk: it starts at the base path or its parent and looks for a `.git` entry, without requiring the git binary。[E: codex-rs/git-utils/src/info.rs:36][E: codex-rs/git-utils/src/info.rs:37][E: codex-rs/git-utils/src/info.rs:40][E: codex-rs/git-utils/src/info.rs:42]
 
-`local_git_branches` 通过 `git for-each-ref --format=%(refname:short) refs/heads` 只读本地 branch refs，因此 detached `HEAD` 不会被当作分支项；结果先排序，再在 default branch 存在时把它移到首位。[E: codex-rs/git-utils/src/info.rs:866][E: codex-rs/git-utils/src/info.rs:867][E: codex-rs/git-utils/src/info.rs:868][E: codex-rs/git-utils/src/info.rs:874][E: codex-rs/git-utils/src/info.rs:883][E: codex-rs/git-utils/src/info.rs:885][E: codex-rs/git-utils/src/info.rs:889]
+`local_git_branches` 通过 `git for-each-ref --format=%(refname:short) refs/heads` 只读本地 branch refs，因此 detached `HEAD` 不会被当作分支项；结果先排序，再在 default branch 存在时把它移到首位。[E: codex-rs/git-utils/src/info.rs:861][E: codex-rs/git-utils/src/info.rs:862][E: codex-rs/git-utils/src/info.rs:863][E: codex-rs/git-utils/src/info.rs:869][E: codex-rs/git-utils/src/info.rs:878][E: codex-rs/git-utils/src/info.rs:880][E: codex-rs/git-utils/src/info.rs:884]
 
 ## Patch apply
 
@@ -72,14 +72,20 @@ Baseline rendering handles added, modified, deleted, and mode-change cases by co
 
 `detect_fsmonitor_override` reads raw effective `core.fsmonitor`, rejects malformed values, normalizes uncommon boolean spellings through Git when needed, and keeps `BuiltIn` only when `git version --build-options` advertises `feature: fsmonitor--daemon`。[E: codex-rs/git-utils/src/fsmonitor.rs:49][E: codex-rs/git-utils/src/fsmonitor.rs:57][E: codex-rs/git-utils/src/fsmonitor.rs:63][E: codex-rs/git-utils/src/fsmonitor.rs:66][E: codex-rs/git-utils/src/fsmonitor.rs:80][E: codex-rs/git-utils/src/fsmonitor.rs:91][E: codex-rs/git-utils/src/fsmonitor.rs:100][E: codex-rs/git-utils/src/fsmonitor.rs:114][E: codex-rs/git-utils/src/fsmonitor.rs:117][E: codex-rs/git-utils/src/fsmonitor.rs:121]
 
-`info.rs`'s git command helper sets `GIT_OPTIONAL_LOCKS=0`, disables hook lookup with `core.hooksPath`, adds the selected fsmonitor override, uses `kill_on_drop(true)`, and wraps command output in a 5 second timeout。[E: codex-rs/git-utils/src/info.rs:69][E: codex-rs/git-utils/src/info.rs:435][E: codex-rs/git-utils/src/info.rs:440][E: codex-rs/git-utils/src/info.rs:448][E: codex-rs/git-utils/src/info.rs:451][E: codex-rs/git-utils/src/info.rs:452][E: codex-rs/git-utils/src/info.rs:455][E: codex-rs/git-utils/src/info.rs:456][E: codex-rs/git-utils/src/info.rs:459]
+`info.rs`'s git command helper sets `GIT_OPTIONAL_LOCKS=0`, disables hook lookup with `core.hooksPath`, adds the selected fsmonitor override, uses `kill_on_drop(true)`, and wraps command output in a 5 second timeout。[E: codex-rs/git-utils/src/info.rs:46][E: codex-rs/git-utils/src/info.rs:416][E: codex-rs/git-utils/src/info.rs:421][E: codex-rs/git-utils/src/info.rs:429][E: codex-rs/git-utils/src/info.rs:432][E: codex-rs/git-utils/src/info.rs:433][E: codex-rs/git-utils/src/info.rs:437][E: codex-rs/git-utils/src/info.rs:438][E: codex-rs/git-utils/src/info.rs:441]
 
 Unix symlink creation directly calls `std::os::unix::fs::symlink` with `link_target`; Windows reads source metadata and selects `symlink_dir` or `symlink_file` based on `is_symlink_dir()`。[E: codex-rs/git-utils/src/platform.rs:6][E: codex-rs/git-utils/src/platform.rs:11][E: codex-rs/git-utils/src/platform.rs:13][E: codex-rs/git-utils/src/platform.rs:18][E: codex-rs/git-utils/src/platform.rs:27][E: codex-rs/git-utils/src/platform.rs:28][E: codex-rs/git-utils/src/platform.rs:29][E: codex-rs/git-utils/src/platform.rs:31]
+
+## Git attribution extension
+
+`ext/git-attribution` 是与 `git-utils` 相邻但不同的 production extension：app-server 安装它后，`ContextContributor` 在每次 world-state contribution 时按 auth generation 读取/复用 backend user setting。解析有 5 秒 timeout；失败把 retry 推迟 30 秒，auth generation 变化则使旧 policy/cache 失效。[E: codex-rs/ext/git-attribution/src/lib.rs:25][E: codex-rs/ext/git-attribution/src/lib.rs:32][E: codex-rs/ext/git-attribution/src/lib.rs:38][E: codex-rs/ext/git-attribution/src/policy.rs:46][E: codex-rs/ext/git-attribution/src/policy.rs:50][E: codex-rs/ext/git-attribution/src/policy.rs:52][E: codex-rs/ext/git-attribution/src/policy.rs:95]
+
+enabled world-state 要求 commit message 保留并唯一追加 `Co-authored-by: Codex <noreply@openai.com>`，PR body 保留并唯一追加 `Generated with Codex.`；policy 从 enabled 转为 disabled/unknown 时会发显式 disabled fragment，避免旧指令继续生效。[E: codex-rs/ext/git-attribution/src/world_state.rs:17][E: codex-rs/ext/git-attribution/src/world_state.rs:25][E: codex-rs/ext/git-attribution/src/world_state.rs:29][E: codex-rs/ext/git-attribution/src/world_state.rs:43][E: codex-rs/ext/git-attribution/src/world_state.rs:51]
 
 ## Gotchas
 
 - `git-utils` no longer contains `ghost_commits.rs` or re-exports ghost commit helpers; current internal snapshot support in this crate is baseline repository diff/reset, while ghost snapshot/undo must be documented from current core/protocol sources。[E: codex-rs/git-utils/src/lib.rs:1][E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:21][E: codex-rs/git-utils/src/baseline.rs:69][E: codex-rs/git-utils/src/baseline.rs:105]
-- `operations.rs`'s crate-private git command wrapper has no timeout; the 5 second timeout and fsmonitor policy live in `info.rs`'s async command helpers。[E: codex-rs/git-utils/src/operations.rs:92][E: codex-rs/git-utils/src/operations.rs:121][E: codex-rs/git-utils/src/info.rs:69][E: codex-rs/git-utils/src/info.rs:440][E: codex-rs/git-utils/src/info.rs:452][E: codex-rs/git-utils/src/info.rs:456][E: codex-rs/git-utils/src/info.rs:459]
+- `operations.rs`'s crate-private git command wrapper has no timeout; the 5 second timeout and fsmonitor policy live in `info.rs`'s async command helpers。[E: codex-rs/git-utils/src/operations.rs:92][E: codex-rs/git-utils/src/operations.rs:121][E: codex-rs/git-utils/src/info.rs:46][E: codex-rs/git-utils/src/info.rs:421][E: codex-rs/git-utils/src/info.rs:433][E: codex-rs/git-utils/src/info.rs:438][E: codex-rs/git-utils/src/info.rs:441]
 - Baseline reset is intentionally destructive for `root/.git` and is documented for internal directories, not user repositories。[I] 该结论由 `reset_git_repository` public entrypoint 与 destructive reset implementation 支撑。[E: codex-rs/git-utils/src/baseline.rs:69][E: codex-rs/git-utils/src/baseline.rs:94][E: codex-rs/git-utils/src/baseline.rs:97]
 
 ## Sources
@@ -93,9 +99,13 @@ Unix symlink creation directly calls `std::os::unix::fs::symlink` with `link_tar
 - codex-rs/git-utils/src/operations.rs
 - codex-rs/git-utils/src/errors.rs
 - codex-rs/git-utils/src/platform.rs
+- codex-rs/ext/git-attribution/src/lib.rs
+- codex-rs/ext/git-attribution/src/policy.rs
+- codex-rs/ext/git-attribution/src/world_state.rs
 
 ## 相关
 
 - `subsys.cloud.cloud-tasks`: cloud task environment/git ref detection 使用本地 git metadata。
 - `subsys.cloud.cloud-task-api`: cloud task apply run 使用 `ApplyGitRequest` 和 `apply_git_patch`。
 - `config.storage-telemetry-misc`: config 中的 ghost snapshot 设置已不等同于 `git-utils` public ghost commit API。
+- `spine.extension-system`: Git attribution 如何作为 context contributor 安装到 app-server registry。

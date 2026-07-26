@@ -8,7 +8,7 @@ symbols: [TraceWriter, RawTraceEvent, RawTraceEventPayload, RawTraceEventContext
 related: [subsys.core.rollout-persistence, ref.protocol-op, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > `codex-rollout-trace` owns Codex trace-bundle schema, writer API, and deterministic replay. Hot-path Codex code depends on the small writer API, while reducer/viewer projections stay outside `codex-core`.[E: codex-rs/rollout-trace/src/lib.rs:58][E: codex-rs/rollout-trace/src/lib.rs:78]

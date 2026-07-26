@@ -8,10 +8,10 @@ symbols: [StatusHistoryCell, StatusHistoryHandle, StatusRateLimitData, RateLimit
 related: [subsys.tui.chatwidget, subsys.tui.bottom-pane, subsys.config-auth.features-system]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
-> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/bottom_pane/mod.rs:1005][E: codex-rs/tui/src/chatwidget.rs:637]
+> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/bottom_pane/mod.rs:1034][E: codex-rs/tui/src/chatwidget.rs:636]
 
 ## 能回答的问题
 
@@ -56,7 +56,7 @@ reset picker 将 `available_count` clamp 到非负数，只取 `Available` credi
 
 ## Running Status
 
-running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1005][E: codex-rs/tui/src/bottom_pane/mod.rs:1007][E: codex-rs/tui/src/bottom_pane/mod.rs:1008][E: codex-rs/tui/src/bottom_pane/mod.rs:1012][E: codex-rs/tui/src/bottom_pane/mod.rs:1013][E: codex-rs/tui/src/bottom_pane/mod.rs:1020][E: codex-rs/tui/src/bottom_pane/mod.rs:1023]
+running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1034][E: codex-rs/tui/src/bottom_pane/mod.rs:1036][E: codex-rs/tui/src/bottom_pane/mod.rs:1037][E: codex-rs/tui/src/bottom_pane/mod.rs:1041][E: codex-rs/tui/src/bottom_pane/mod.rs:1042][E: codex-rs/tui/src/bottom_pane/mod.rs:1049][E: codex-rs/tui/src/bottom_pane/mod.rs:1052]
 
 ## Gotchas
 

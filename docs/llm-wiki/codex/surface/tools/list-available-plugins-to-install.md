@@ -8,7 +8,7 @@ symbols: [ListAvailablePluginsToInstallHandler, create_list_available_plugins_to
 related: [tool.request-plugin-install, tool.tool-search, subsys.config-auth.plugins, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: 4d7a5c7c73
+updated: 61a44880a8
 ---
 
 > `list_available_plugins_to_install` 列出当前可安装的 plugin/connector 候选,供模型再用 `request_plugin_install` 发起安装请求。
@@ -48,11 +48,11 @@ handler 把 `ListAvailablePluginsToInstallResult { tools }` 序列化为 JSON �
 
 ## 6 注册与门控
 
-`tool_suggest_enabled` 要求 `Feature::ToolSuggest`、`Feature::Apps`、`Feature::Plugins` 全部开启。[E: codex-rs/core/src/tools/spec_plan.rs:323] [E: codex-rs/core/src/tools/spec_plan.rs:325] [E: codex-rs/core/src/tools/spec_plan.rs:326] [E: codex-rs/core/src/tools/spec_plan.rs:327]
+`tool_suggest_enabled` 要求 `Feature::ToolSuggest`、`Feature::Apps`、`Feature::Plugins` 全部开启。[E: codex-rs/core/src/tools/spec_plan.rs:337] [E: codex-rs/core/src/tools/spec_plan.rs:339] [E: codex-rs/core/src/tools/spec_plan.rs:340] [E: codex-rs/core/src/tools/spec_plan.rs:341]
 
-`add_core_utility_tools` 还要求存在非空 `tool_suggest_candidates`;当 presentation 是 `ToolSuggestPresentation::ListTool` 时才注册 `ListAvailablePluginsToInstallHandler`,随后总是注册 `RequestPluginInstallHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:744] [E: codex-rs/core/src/tools/spec_plan.rs:746] [E: codex-rs/core/src/tools/spec_plan.rs:748] [E: codex-rs/core/src/tools/spec_plan.rs:749] [E: codex-rs/core/src/tools/spec_plan.rs:753]
+`add_core_utility_tools` 还要求存在非空 `tool_suggest_candidates`;当 presentation 是 `ToolSuggestPresentation::ListTool` 时才注册 `ListAvailablePluginsToInstallHandler`,随后总是注册 `RequestPluginInstallHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:783] [E: codex-rs/core/src/tools/spec_plan.rs:785] [E: codex-rs/core/src/tools/spec_plan.rs:787] [E: codex-rs/core/src/tools/spec_plan.rs:788] [E: codex-rs/core/src/tools/spec_plan.rs:792]
 
-spec tests 覆盖任一 discovery feature 关闭、候选为空时两件套不可见,以及开启后两件套可见。[E: codex-rs/core/src/tools/spec_plan_tests.rs:917] [E: codex-rs/core/src/tools/spec_plan_tests.rs:918] [E: codex-rs/core/src/tools/spec_plan_tests.rs:933] [E: codex-rs/core/src/tools/spec_plan_tests.rs:939] [E: codex-rs/core/src/tools/spec_plan_tests.rs:959] [E: codex-rs/core/src/tools/spec_plan_tests.rs:978] [E: codex-rs/core/src/tools/spec_plan_tests.rs:979] [E: codex-rs/core/src/tools/spec_plan_tests.rs:980]
+spec tests 覆盖任一 discovery feature 关闭、候选为空时两件套不可见,以及开启后两件套可见。[E: codex-rs/core/src/tools/spec_plan_tests.rs:1141] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1142] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1157] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1163] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1183] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1202] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1203] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1204]
 
 ## 7 parallel-safe
 
