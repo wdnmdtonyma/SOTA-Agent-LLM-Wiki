@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 # 不确定项日志([U] 汇总)
@@ -26,15 +26,23 @@ updated: 67caf894e
 
 # Uncertainty Batch AR
 
-- `server.embedded-public-api`: `packages/core/src/public/*` 已从 8b68dc0d7 源码树移除；当前可证 same-process embedding surface 是 `SessionV2` / `ApplicationTools` / `SessionExecutionLocal` / `LocationServiceMap` 等 Effect services，但旧 `OpenCode` public facade 是否有命名等价 replacement 未在本轮源码阅读中确认。
-- `server.plugin-system`: `packages/core/src/plugin/boot.ts` 已从 8b68dc0d7 源码树移除；当前可证 boot path 是 `packages/core/src/plugin/internal.ts` 的 `PluginInternal`，但旧 `PluginBoot` 名称没有直接 replacement。
+- `server.plugin-system`: 目标源码树中没有 `packages/core/src/plugin/boot.ts`；当前可证 boot path 是 `packages/core/src/plugin/internal.ts` 的 `PluginInternal`，但旧 `PluginBoot` 名称没有直接 replacement。
 - `tool.grep`: V2 `grep` 的 `path` schema 字段使用 `RelativePath`，但 `packages/schema/src/schema.ts` 中 `RelativePath` 当前只是 string brand；`packages/core/src/tool/grep.ts` 使用 `path.resolve(location.directory, input.path ?? ".")`，所以 relative input 可证以 Location 为根，但 absolute input 是否会被上游 codec/schema 拒绝、或是否对应 description 中的 absolute managed tool-output file，本轮未完全确认。
+- `tool.grep`: V1 symlink-alias 输出测试在 Windows 明确跳过，平台一致性尚未验证；symlink-to-file 也没有测试，当前“搜索 real file 的父目录、按 requested file dirname 重建结果”的组合可能产生 sibling-style 展示路径。[U]
 
 ## batch-aw
 
 # Uncertainty Batch AW
 
 - `tui.theming`: OpenTUI palette detection 的内部算法不在 opencode 源码内；当前只能核到 TUI 调用 `renderer.getPalette()`、监听 `THEME_MODE`/terminal color-scheme notification 并合成 `ThemeJson` 的行为。[U]
+
+## clients
+
+# uncertainty-clients
+
+- `clients.app-compatibility`: current SSE 重连不发送 `Last-Event-ID`，仓内只看到 missed promoted input 的单条 hydrate；一般事件缺口最终能否收敛没有可证的客户端 contract。[U]
+- `clients.app-compatibility`: timeline rows 按传入的 current message source 顺序构造，不自行按 timestamp 或 event sequence 排序；该输入顺序是否总等于 durable aggregate sequence 尚未在 App 层证明。[U]
+- `clients.app-compatibility`: migration checklist 把 current PTY connect-token 标为完成，但目标 App 中 `api.pty.connectToken` 调用与 no-ticket guard 仍被注释，同时仍尝试创建 current WebSocket；App 源码不能证明 ticketless handshake 能成功，也不能证明这条 path 的预期 authorization contract。[U]
 
 ## execution
 
@@ -63,7 +71,8 @@ updated: 67caf894e
 
 # persistence batch uncertainty
 
-No unresolved uncertainty items were added in this batch.
+- `persistence.repository-cache`: branchless refresh 依赖本地 `refs/remotes/origin/HEAD`；upstream 默认分支变化或 symbolic ref 缺失时的长期行为没有测试覆盖。[U]
+- `persistence.repository-cache`: branch 名只做 URI encoding 后进入 cache path；大小写不敏感文件系统上的 branch-name case collision 尚未覆盖。[U]
 
 ## ref-exec-persist
 

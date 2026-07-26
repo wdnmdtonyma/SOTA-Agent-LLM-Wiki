@@ -12,7 +12,11 @@ source:
   - packages/core/src/location-services.ts
   - packages/core/src/location-service-map.ts
   - packages/server/src/routes.ts
+  - packages/sdk-next/package.json
+  - packages/sdk-next/src/opencode.ts
 symbols:
+  - OpenCode.create
+  - OpenCode.Service
   - SessionV2
   - ApplicationTools
   - SessionExecutionLocal
@@ -20,24 +24,28 @@ symbols:
 related:
   - session-v2.location-wiring
   - spine.v2-overview
+  - subsys.tools.v2
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
-`server.embedded-public-api` 记录 8b68dc0d7 下 V2 core 的 same-process embedding surface。旧 `packages/core/src/public/*` facade 在当前源码树中没有等价文件；本节点把可核证部分收敛到 core Effect services: `SessionV2`、`ApplicationTools`、`SessionExecutionLocal` 和 `LocationServiceMap`。[U]
+> `server.embedded-public-api` 记录 current V2 same-process embedding surface：monorepo-private 的 `@opencode-ai/sdk-next` 用 `OpenCode.create()` 把 embedded Effect HttpApi、generated Effect client、application-tool registration 和 permission state 组装成 consumer-facing scoped facade。[E: packages/sdk-next/package.json:3][E: packages/sdk-next/package.json:4][E: packages/sdk-next/src/opencode.ts:10][E: packages/sdk-next/src/opencode.ts:39][E: packages/sdk-next/src/opencode.ts:41]
 
 ## 能回答的问题
-- 8b68dc0d7 还有没有 `packages/core/src/public` embedded facade?
+- 当前 same-process `OpenCode` facade 在哪里?
+- `OpenCode.create()` 怎样把本地 route 变成 generated client?
 - same-process 调用 V2 session 的核心 service 是哪个?
 - 本进程 session execution 如何拿到 location-scoped services?
 - application-defined tools 现在落在哪个 registry service?
 
 ## 当前边界
 
-`@opencode-ai/core` package exports 采用 wildcard `./*` 指到 `./src/*.ts`，没有单独导出 `./public/*` facade。[E: packages/core/package.json:18][E: packages/core/package.json:23] 当前源码树中未找到 `packages/core/src/public/index.ts`、`packages/core/src/public/opencode.ts`、`packages/core/src/public/session.ts`、`packages/core/src/public/tool.ts` 的 replacement；“旧 public facade 已删除但 replacement 名称未确认”按存疑处理。[U]
+`@opencode-ai/core` package exports 采用 wildcard `./*` 指到 `./src/*.ts`，没有单独导出 `./public/*` facade。[E: packages/core/package.json:18][E: packages/core/package.json:23] current same-process replacement 位于 `packages/sdk-next/src/opencode.ts`；该 package 标记 `private: true`，所以这里的 consumer-facing facade 是 monorepo 内部 API，不代表已发布的外部 npm surface。[E: packages/sdk-next/package.json:4][E: packages/sdk-next/package.json:7][E: packages/sdk-next/src/opencode.ts:10][E: packages/sdk-next/src/opencode.ts:47][E: packages/sdk-next/src/opencode.ts:49]
 
-这意味着旧节点里 `OpenCode.Interface`、`OpenCode.layer`、`Session.Interface`、`Tool.Interface`、`OpenCode.create(...)` 等 public-facing 断言不能继续标 `[E]`。当前可证的 embedded path 是 host 直接组合 Effect services，而不是通过 `OpenCode.Service` facade。[I]
+`OpenCode.create()` 先在 caller `Scope` 内构建 `ApplicationTools` 与 `PermissionSaved` context；随后把 permission service 注入 `createEmbeddedRoutes()`，用 `HttpRouter.toWebHandler()` 得到本地 web handler，并注册 disposer。[E: packages/sdk-next/src/opencode.ts:11][E: packages/sdk-next/src/opencode.ts:13][E: packages/sdk-next/src/opencode.ts:14][E: packages/sdk-next/src/opencode.ts:18][E: packages/sdk-next/src/opencode.ts:19][E: packages/sdk-next/src/opencode.ts:20][E: packages/sdk-next/src/opencode.ts:22][E: packages/sdk-next/src/opencode.ts:23][E: packages/sdk-next/src/opencode.ts:24][E: packages/sdk-next/src/opencode.ts:30]
+
+facade 再把 web handler 包成 local `fetch`，交给 generated Effect `OpenCode.make()`；返回值展开 generated client，并额外暴露 `tools.register`。`OpenCode.Service` 与 `OpenCode.layer` 分别提供 service tag 和可注入 Layer。[E: packages/sdk-next/src/opencode.ts:32][E: packages/sdk-next/src/opencode.ts:35][E: packages/sdk-next/src/opencode.ts:39][E: packages/sdk-next/src/opencode.ts:41][E: packages/sdk-next/src/opencode.ts:47][E: packages/sdk-next/src/opencode.ts:49]
 
 ## Session service
 
@@ -51,9 +59,9 @@ updated: 67caf894e
 
 ## Application tools
 
-`ApplicationTools.Interface.register` 接受 `Readonly<Record<string, Tool.AnyTool>>`，effect type 仍带 `Scope.Scope` requirement；注册失败类型是 `RegistrationError`。[E: packages/core/src/tool/application-tools.ts:23][E: packages/core/src/tool/application-tools.ts:24] 当前实现校验 tool name、构造 registrations、把 registration 写入 state，并通过 `entries()` 暴露当前 map；旧节点里“scope close 会移除工具”的 cleanup path 在 8b68dc0d7 的 `application-tools.ts` 中没有出现。[E: packages/core/src/tool/application-tools.ts:43][E: packages/core/src/tool/application-tools.ts:46][E: packages/core/src/tool/application-tools.ts:47][E: packages/core/src/tool/application-tools.ts:49][E: packages/core/src/tool/application-tools.ts:52][I]
+`ApplicationTools.Interface.register` 接受 `Readonly<Record<string, Tool.AnyTool>>`，effect type 仍带 `Scope.Scope` requirement；注册失败类型是 `RegistrationError`。[E: packages/core/src/tool/application-tools.ts:23][E: packages/core/src/tool/application-tools.ts:24] 当前实现校验 tool name、构造 registrations、把 registration 写入 state，并通过 `entries()` 暴露当前 map；旧节点里“scope close 会移除工具”的 cleanup path 在目标源码的 `application-tools.ts` 中没有出现。[E: packages/core/src/tool/application-tools.ts:43][E: packages/core/src/tool/application-tools.ts:46][E: packages/core/src/tool/application-tools.ts:47][E: packages/core/src/tool/application-tools.ts:49][E: packages/core/src/tool/application-tools.ts:52][I]
 
-`ApplicationTools` 的 public-facing 位置现在不是 `packages/core/src/public/tool.ts`，而是 location service graph 里的 `ToolRegistry`/application tools 能力。[I]
+`OpenCode.create()` 在 global context 中构建并取出 `ApplicationTools.Service`，再把 `tools.register` 直接挂到 facade return 上。[E: packages/sdk-next/src/opencode.ts:14][E: packages/sdk-next/src/opencode.ts:18][E: packages/sdk-next/src/opencode.ts:41]
 
 ## Execution context
 
@@ -67,7 +75,7 @@ updated: 67caf894e
 
 ## Design notes
 
-8b68dc0d7 的 embedded story 更像“直接组合 Effect nodes/services”，而不是“导入一个 public `OpenCode` facade”。`packages/server/src/routes.ts` 也体现同一模式: server route layer 用 `AppNodeBuilder.build(applicationServices, [[SessionExecution.node, SessionExecutionLocal.node]])` 组合 core services。[E: packages/server/src/routes.ts:26][E: packages/server/src/routes.ts:52][I]
+当前 embedded API 是“monorepo-private consumer-facing `OpenCode` facade 包住直接组合的 Effect nodes/services”：SDK layer 提供 `create/Service/layer`，server route layer 仍用 `AppNodeBuilder.build(applicationServices, [[SessionExecution.node, SessionExecutionLocal.node]])` 组合 core services。[E: packages/sdk-next/package.json:4][E: packages/sdk-next/src/opencode.ts:10][E: packages/sdk-next/src/opencode.ts:47][E: packages/sdk-next/src/opencode.ts:49][E: packages/server/src/routes.ts:26][E: packages/server/src/routes.ts:52]
 
 ## Sources
 
@@ -78,8 +86,11 @@ updated: 67caf894e
 - `packages/core/src/location-services.ts`
 - `packages/core/src/location-service-map.ts`
 - `packages/server/src/routes.ts`
+- `packages/sdk-next/package.json`
+- `packages/sdk-next/src/opencode.ts`
 
 ## Related
 
 - [session-v2.location-wiring](../session-v2/location-wiring.md)
 - [spine.v2-overview](../../spine/v2-overview.md)
+- [V2 tool system](../tools/v2.md)

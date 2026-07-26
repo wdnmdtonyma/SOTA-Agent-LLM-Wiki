@@ -26,7 +26,7 @@ related:
   - session-v2.compaction
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V1 compaction 是 `SessionPrompt.runLoop` 内的历史缩短机制: overflow 或 queued compaction 会写一个 V1 compaction user part，下一轮用 compaction agent 生成 summary assistant，随后由 `MessageV2.filterCompacted` 选择 provider request 的 active history。
@@ -89,7 +89,7 @@ V1 overflow 判断在 `overflow.ts`: `compaction.auto === false` 或 model conte
 
 15. compaction 成功且 auto 时，overflow replay 会克隆原始 user prompt；非 replay auto compaction 可能追加 synthetic continue user message，其文本要求模型继续下一步或请求澄清。[E: packages/opencode/src/session/compaction.ts:422][E: packages/opencode/src/session/compaction.ts:423][E: packages/opencode/src/session/compaction.ts:425][E: packages/opencode/src/session/compaction.ts:438][E: packages/opencode/src/session/compaction.ts:473][E: packages/opencode/src/session/compaction.ts:485][E: packages/opencode/src/session/compaction.ts:486][E: packages/opencode/src/session/compaction.ts:495]
 
-16. compaction 成功且 processor result 是 `"continue"` 时发布 `SessionCompactionEvent.Compacted` via `EventV2Bridge`；8b68dc0d7 的 V1 compaction code 不再包含旧节点描述的 `Compaction.Started/Ended` experimental publish path。[E: packages/opencode/src/session/compaction.ts:506][E: packages/opencode/src/session/compaction.ts:508][I]
+16. compaction layer 从 `EventV2Bridge.Service` 取得 publisher；compaction 成功且 processor result 是 `"continue"` 时发布 `SessionCompactionEvent.Compacted`（本模块的 `Event` alias）via bridge。目标源码的 V1 compaction code 不再包含旧节点描述的 `Compaction.Started/Ended` experimental publish path。[E: packages/opencode/src/session/compaction.ts:20][E: packages/opencode/src/session/compaction.ts:24][E: packages/opencode/src/session/compaction.ts:26][E: packages/opencode/src/session/compaction.ts:165][E: packages/opencode/src/session/compaction.ts:507][E: packages/opencode/src/session/compaction.ts:508][I]
 
 ## active history 过滤
 

@@ -9,7 +9,7 @@ symbols: [RootHttpApi, InstanceHttpApi, EventApi, PtyConnectApi]
 related: [server-api.overview, sdk.surface]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V1 legacy HTTP route catalog 覆盖 `packages/opencode/src/server/routes/instance/httpapi/groups` 下的 typed Effect HttpApi routes；这些 routes 仍是当前 V1 server surface 的主要对外面。

@@ -14,7 +14,7 @@ symbols:
   - Config.Info
   - ConfigMigrateV1.migrate
 evidence: explicit
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > 这份节点是机器可读的 config key 总账：V1 是当前 V1 CLI/agent surface 的配置 schema，V2 是 `@opencode/v2` core 的 `Config.Info` schema。

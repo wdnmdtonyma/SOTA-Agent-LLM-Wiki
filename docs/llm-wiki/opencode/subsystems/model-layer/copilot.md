@@ -9,7 +9,7 @@ symbols: [createOpenaiCompatible, OpenAICompatibleChatLanguageModel, OpenAIRespo
 related: [ref.copilot-tool-catalog]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > GitHub Copilot 在 opencode 里有双适配:core 目录提供 AI SDK `LanguageModelV3` compatible provider,同时 `packages/llm/src/providers/github-copilot.ts` 提供 native route configure helper。V1 registry、V2 plugin 与 native helper 的 route selection 都先尊重显式 `endpoint`,然后才用 GPT-5 class 默认 Responses、`gpt-5-mini` 默认 Chat 的 heuristic。
@@ -27,7 +27,7 @@ V1 provider registry 把 `@ai-sdk/github-copilot` 映射到 core 的 `@opencode-
 
 V1 custom loader 对 Copilot model 选择路由:SDK 如果没有 `responses/chat` 就退回 `languageModel`;否则 model API 显式 `endpoint:responses|chat` 优先,GPT major >= 5 且不是 `gpt-5-mini` 的默认路由才走 `sdk.responses(modelID)`,其他走 `sdk.chat(modelID)`。[E: packages/opencode/src/provider/provider.ts:228][E: packages/opencode/src/provider/provider.ts:229][E: packages/opencode/src/provider/provider.ts:230][E: packages/opencode/src/provider/provider.ts:231][E: packages/opencode/src/provider/provider.ts:232][E: packages/opencode/src/provider/provider.ts:234][E: packages/opencode/src/provider/provider.ts:235][E: packages/opencode/src/provider/provider.ts:236]
 
-V1 provider transform 对 `@ai-sdk/github-copilot` 默认设置 `store=false`,GPT-5 class 还会默认设置 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1101][E: packages/opencode/src/provider/transform.ts:1104][E: packages/opencode/src/provider/transform.ts:1108][E: packages/opencode/src/provider/transform.ts:1206][E: packages/opencode/src/provider/transform.ts:1212][E: packages/opencode/src/provider/transform.ts:1215]
+V1 provider transform 对 `@ai-sdk/github-copilot` 默认设置 `store=false`,GPT-5 class 还会默认设置 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1155][E: packages/opencode/src/provider/transform.ts:1158][E: packages/opencode/src/provider/transform.ts:1162][E: packages/opencode/src/provider/transform.ts:1267][E: packages/opencode/src/provider/transform.ts:1273][E: packages/opencode/src/provider/transform.ts:1276]
 
 ## V2
 

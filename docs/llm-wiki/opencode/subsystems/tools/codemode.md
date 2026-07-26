@@ -21,7 +21,7 @@ symbols: [CodeMode, CodeMode.make, CodeMode.execute, Tool.make, OpenAPI.fromSpec
 related: [tool.execute, subsys.tools.v1, integrations.mcp-client, ref.package-index]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > `@opencode-ai/codemode` 是 Effect-native confined code execution package：host 显式提供 schema-described tool tree，程序在受限 JavaScript interpreter 内编排调用，没有 ambient application authority。

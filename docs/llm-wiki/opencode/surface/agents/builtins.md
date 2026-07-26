@@ -10,7 +10,7 @@ schema: node
 source:
   - packages/opencode/src/agent/agent.ts
   - packages/opencode/src/agent/prompt/
-updated: 67caf894e
+updated: 7534d23551
 evidence: explicit
 ---
 
@@ -59,7 +59,7 @@ agent state 初始化时会先计算 `whitelistedDirs`，包括 truncation glob�
 
 ## V2 关系
 
-这个节点是 `v: v1`。V2 `packages/core/src/config/agent.ts` 目前只定义 agent 配置 shape，不在本节点 source 中定义这 7 个 runtime built-in agents。[I] V2 的真正执行入口需要通过 `packages/core/src/public/opencode.ts` 的 embedded API 接通，而本节点描述的是 V1 yargs/TUI/session loop 当前使用的 agent registry。[I]
+这个节点是 `v: v1`。V2 `packages/core/src/config/agent.ts` 目前只定义 agent 配置 shape，不在本节点 source 中定义这 7 个 runtime built-in agents。[I] V2 的 same-process execution 由 `packages/sdk-next/src/opencode.ts` 与 server routes 组合 core services，而本节点描述的是 V1 yargs/TUI/session loop 当前使用的 agent registry。[I]
 
 ## Sources
 

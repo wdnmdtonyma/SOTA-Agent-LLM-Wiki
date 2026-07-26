@@ -4,10 +4,10 @@ title: Grep 工具
 kind: tool
 tier: T1
 v: shared
-status: verified
-updated: 67caf894e
 source:
   - packages/opencode/src/tool/grep.ts
+  - packages/opencode/test/tool/grep.test.ts
+  - packages/core/src/fs-util.ts
   - packages/core/src/tool/grep.ts
   - packages/opencode/src/tool/glob.ts
   - packages/core/src/filesystem.ts
@@ -15,20 +15,25 @@ source:
   - packages/core/src/ripgrep.ts
   - packages/opencode/src/tool/registry.ts
   - packages/core/src/tool/builtins.ts
-  - packages/core/src/tool/registry.ts
   - specs/v2/tools.md
+symbols:
+  - GrepTool
 related:
   - persistence.filesystem-search
   - ref.tool-catalog
+evidence: explicit
+status: verified
+updated: 7534d23551
 ---
 
-> `grep` 按正则搜索文件内容；V1 固定最多 100 个 match 并返回 grouped text，V2 返回 typed `FileSystem.Match[]` 并允许调用方提供 `limit`。
+> `grep` 按正则搜索文件内容；V1 固定最多 100 个 match 并返回 grouped text，输出会保留用户请求路径中的目录 symlink alias；V2 返回 typed `FileSystem.Match[]` 并允许调用方提供 `limit`。
 
 ## 能回答的问题
 
 - V1/V2 的 `pattern`, `path`, `include`, `limit` 差异。
 - 为什么 V1 正好 100 条会提示 truncated，V2 的 limit 由输入控制。
 - 权限资源是 pattern 还是 path。
+- V1 为什么在 symlink target 上搜索，却用 alias path 展示结果。
 - V2 grep 文案和 schema 对 absolute managed output file 的支持边界。
 
 ## 1 Identity
@@ -44,7 +49,7 @@ related:
 
 ### V1
 
-V1 `grep` 是内容搜索工具，输出按文件分组并展示匹配行。它不读取完整文件，只返回 match line 和 text；路径在外部目录时会触发 external directory guard。[E: packages/opencode/src/tool/grep.ts:71][E: packages/opencode/src/tool/grep.ts:84][E: packages/opencode/src/tool/grep.ts:55]
+V1 `grep` 是内容搜索工具，输出按文件分组并展示匹配行。它不读取完整文件，只返回 match line 和 text；路径在外部目录时会触发 external directory guard。[E: packages/opencode/src/tool/grep.ts:71][E: packages/opencode/src/tool/grep.ts:87][E: packages/opencode/src/tool/grep.ts:55]
 
 ### V2
 
@@ -64,9 +69,10 @@ V2 `grep` 是 Location-aware typed search tool。它返回 `FileSystem.Match[]`�
 ### V1
 
 - V1 `grep` 固定请求 100 条 match。[E: packages/opencode/src/tool/grep.ts:67]
-- `truncated` 判定是 `rows.length === limit`，正好 100 条会提示结果可能被截断。[E: packages/opencode/src/tool/grep.ts:77][E: packages/opencode/src/tool/grep.ts:96]
-- 输出文本以 `Found N matches` 开头，按文件 header 分组，再列出 `Line <line>: <text>`。[E: packages/opencode/src/tool/grep.ts:84][E: packages/opencode/src/tool/grep.ts:91][E: packages/opencode/src/tool/grep.ts:93]
-- metadata 记录 `matches` 和 `truncated`，不把 pattern/path/include 写回 metadata。[E: packages/opencode/src/tool/grep.ts:104][E: packages/opencode/src/tool/grep.ts:105]
+- `truncated` 判定是 `rows.length === limit`，正好 100 条会提示结果可能被截断。[E: packages/opencode/src/tool/grep.ts:80][E: packages/opencode/src/tool/grep.ts:99]
+- 输出文本以 `Found N matches` 开头，按文件 header 分组，再列出 `Line <line>: <text>`。[E: packages/opencode/src/tool/grep.ts:87][E: packages/opencode/src/tool/grep.ts:94][E: packages/opencode/src/tool/grep.ts:96]
+- metadata 记录 `matches` 和 `truncated`，不把 pattern/path/include 写回 metadata。[E: packages/opencode/src/tool/grep.ts:107][E: packages/opencode/src/tool/grep.ts:108]
+- V1 搜索前用 `FSUtil.resolve()` realpath target，但 result path 以原始 requested directory（文件输入时为 requested dirname）为根重新构造。因此目录 symlink 下的结果展示 normalized absolute alias path，而不是 canonical target path。[E: packages/opencode/src/tool/grep.ts:60][E: packages/core/src/fs-util.ts:247][E: packages/core/src/fs-util.ts:250][E: packages/opencode/src/tool/grep.ts:71][E: packages/opencode/src/tool/grep.ts:72][E: packages/opencode/src/tool/grep.ts:73][E: packages/opencode/src/tool/grep.ts:74]
 
 ### V2
 
@@ -95,7 +101,7 @@ V2 申请 action `"grep"`，resources 是 `[input.pattern]`，save 是 `["*"]`�
 4. external path 走 guard。[E: packages/opencode/src/tool/grep.ts:55]
 5. 如果 target 是文件，ripgrep cwd 用 dirname；V1 没有把 basename 作为 file 参数传入，因此文件 path 主要影响 cwd，不限定单个文件搜索。[E: packages/opencode/src/tool/grep.ts:61][E: packages/opencode/src/tool/grep.ts:63]
 6. 调用 `Ripgrep.grep`，limit 固定 100。[E: packages/opencode/src/tool/grep.ts:63][E: packages/opencode/src/tool/grep.ts:67]
-7. 将 rows 转成 absolute path、line、text，再格式化输出。[E: packages/opencode/src/tool/grep.ts:71][E: packages/opencode/src/tool/grep.ts:84]
+7. 将 rows 转成 absolute path、line、text；path 以 requested spelling 为根，所以 directory symlink alias 会保留在输出，再格式化 grouped text。[E: packages/opencode/src/tool/grep.ts:71][E: packages/opencode/src/tool/grep.ts:73][E: packages/opencode/src/tool/grep.ts:74][E: packages/opencode/src/tool/grep.ts:87]
 
 ### V2
 
@@ -111,19 +117,24 @@ V2 申请 action `"grep"`，resources 是 `[input.pattern]`，save 是 `["*"]`�
 | --- | --- | --- |
 | 默认结果规模 | 固定 100。[E: packages/opencode/src/tool/grep.ts:67] | limit 可选，缺省为 `Number.MAX_SAFE_INTEGER`。[E: packages/core/src/tool/grep.ts:29][E: packages/core/src/tool/grep.ts:103] |
 | 文件 path 语义 | 文件 path 只影响 cwd，没有向 ripgrep 传 basename file 参数。[E: packages/opencode/src/tool/grep.ts:62][E: packages/opencode/src/tool/grep.ts:63] | 文件 path 会设置 `file: path.basename(target)`，因此限定该文件。[E: packages/core/src/tool/grep.ts:99][E: packages/core/src/tool/grep.ts:101] |
-| typed output | 只返回文本 output 和 metadata。[E: packages/opencode/src/tool/grep.ts:103][E: packages/opencode/src/tool/grep.ts:107] | tool output 是 `FileSystem.Match[]`，model output 是投影文本。[E: packages/core/src/tool/grep.ts:34][E: packages/core/src/tool/grep.ts:68] |
+| symlink path 展示 | 搜索 cwd 使用 realpath，输出 path 以 requested directory 重建；目录 alias 被保留。[E: packages/opencode/src/tool/grep.ts:60][E: packages/opencode/src/tool/grep.ts:62][E: packages/opencode/src/tool/grep.ts:71][E: packages/opencode/src/tool/grep.ts:73] | 本轮没有改变 V2 path projection。[I] |
+| typed output | 只返回文本 output 和 metadata。[E: packages/opencode/src/tool/grep.ts:106][E: packages/opencode/src/tool/grep.ts:110] | tool output 是 `FileSystem.Match[]`，model output 是投影文本。[E: packages/core/src/tool/grep.ts:34][E: packages/core/src/tool/grep.ts:68] |
 | external path | 任意 path string 可触发 external directory guard。[E: packages/opencode/src/tool/grep.ts:12][E: packages/opencode/src/tool/grep.ts:55] | V2 `grep` 没有同名 guard；相对 path 以 Location 为根，absolute path 准入边界未证实。[E: packages/core/src/tool/grep.ts:95][E: packages/schema/src/schema.ts:6][U] |
 | invalid regex | V1 没有专门的 typed invalid-regex 分支；错误来自 ripgrep effect 流。[I] | V2 ripgrep 层有 invalid pattern 检测。[E: packages/core/src/ripgrep.ts:136] |
 
 ## 8 设计动机·edge·历史
 
 - V1 的 `grep` 和 `glob` 都固定 100 条结果，这是一种工具级上下文保护，而不是 provider 或 registry 层统一策略。[E: packages/opencode/src/tool/grep.ts:67][E: packages/opencode/src/tool/glob.ts:49]
+- alias regression test 在非 Windows 平台创建 directory symlink，并断言输出包含 alias、不包含 real target；Windows 明确跳过，因此 Windows 行为仍未由该测试证实。[E: packages/opencode/test/tool/grep.test.ts:173][E: packages/opencode/test/tool/grep.test.ts:175][E: packages/opencode/test/tool/grep.test.ts:182][E: packages/opencode/test/tool/grep.test.ts:185][E: packages/opencode/test/tool/grep.test.ts:217][E: packages/opencode/test/tool/grep.test.ts:218][E: packages/opencode/test/tool/grep.test.ts:219][U]
+- symlink-to-file 也未由本轮 test 覆盖；V1 文件 path 仍未把 basename 传给 ripgrep，因此不要把 directory-alias regression 泛化成精确单文件 symlink contract。[E: packages/opencode/src/tool/grep.ts:61][E: packages/opencode/src/tool/grep.ts:62][E: packages/opencode/src/tool/grep.ts:63][U]
 - V2 把 output typed 化后，模型投影只是其中一个 view；registry settle 还可以统一 bound tool output，符合 V2 tools spec 对 output bounding 的描述。[E: packages/core/src/tool/registry.ts:75][E: specs/v2/tools.md:157]
 - V2 grep description 与 schema/execute 对 absolute managed tool-output file 的表达存在张力：description 提到 absolute managed tool-output file；schema 字段名是 `RelativePath`，但该 schema 目前只是 string brand；execute 使用 `path.resolve(location.directory, input.path ?? ".")`，因此 absolute input 的最终准入边界需要继续核实。[E: packages/core/src/tool/grep.ts:65][E: packages/core/src/filesystem.ts:42][E: packages/schema/src/schema.ts:6][E: packages/core/src/tool/grep.ts:95][U]
 
 ## Sources
 
 - `packages/opencode/src/tool/grep.ts`
+- `packages/opencode/test/tool/grep.test.ts`
+- `packages/core/src/fs-util.ts`
 - `packages/opencode/src/tool/glob.ts`
 - `packages/core/src/tool/grep.ts`
 - `packages/core/src/filesystem.ts`
@@ -131,7 +142,6 @@ V2 申请 action `"grep"`，resources 是 `[input.pattern]`，save 是 `["*"]`�
 - `packages/core/src/ripgrep.ts`
 - `packages/opencode/src/tool/registry.ts`
 - `packages/core/src/tool/builtins.ts`
-- `packages/core/src/tool/registry.ts`
 - `specs/v2/tools.md`
 
 ## 相关

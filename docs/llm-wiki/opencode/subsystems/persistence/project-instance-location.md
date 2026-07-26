@@ -28,9 +28,10 @@ symbols:
 related:
   - spine.boot
   - session-v2.location-wiring
+  - persistence.repository-cache
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > Project/Instance/Location 是 opencode 持久化与运行时作用域的三层边界：V2 `ProjectV2` 解析稳定 project identity，V2 `Location` 给 core services 一个 directory/workspace/project scope，V1 `InstanceStore` 为每个 cwd 缓存 legacy service bundle。
@@ -127,3 +128,4 @@ layer 依赖 legacy `Project.Service` 和 `InstanceBootstrap.Service`，内部 c
 - [进程启动与运行时装配](../../spine/boot.md)
 - [Location-scoped runner 装配](../session-v2/location-wiring.md)
 - [Worktree 管理](../execution/worktree.md)
+- [Remote repository reference cache](repository-cache.md)

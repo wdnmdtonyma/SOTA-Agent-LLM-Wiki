@@ -23,7 +23,7 @@ related:
   - ref.bash-arity
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V1 shell 执行是活跑 `bash` tool：先用 tree-sitter bash/PowerShell AST 扫描命令和路径，触发 `external_directory` 与 `bash` 权限，再用 Effect child process 执行并持续更新 metadata、截断或 spill 完整输出。

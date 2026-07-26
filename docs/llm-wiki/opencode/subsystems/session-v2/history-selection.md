@@ -22,7 +22,7 @@ symbols: [SessionHistory.load, SessionHistory.loadForRunner, SessionHistory.entr
 related: [session-v2.projector, session-v2.compaction]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V2 history selection 是从 `session_message` read model 中选出当前有效 chronological Session History 的查询层:它同时应用最新 compaction boundary 与 Context Epoch baseline cutoff。

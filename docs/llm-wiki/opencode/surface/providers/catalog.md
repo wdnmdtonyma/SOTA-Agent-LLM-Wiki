@@ -9,7 +9,7 @@ symbols: [LLMProvider, OpenAI, Anthropic, OpenAICompatible, AmazonBedrock, Googl
 related: [model-layer.llm-protocols, ref.llm-provider-facade-catalog]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > Provider catalog 有两层：V1 当前活跑用 models.dev + Vercel AI SDK package loader；`packages/llm` 是原生 provider protocol/facade 引擎，在 V1 里是可选 seam，在 V2 里是设计方向。
@@ -51,7 +51,7 @@ V1 AI SDK runtime catalog 由 `BUNDLED_PROVIDERS` 和 dynamic npm import 执行�
 |---|---|---|
 | catalog source | `modelsDevSvc.get()` 生成基线 catalog，`provider.ts` 内部再经 config/env/auth/plugin/custom provider merge 链路得到 V1 active provider set。[E: packages/opencode/src/provider/provider.ts:1335][E: packages/opencode/src/provider/provider.ts:1342][E: packages/opencode/src/provider/provider.ts:1343][E: packages/opencode/src/provider/provider.ts:1420][E: packages/opencode/src/provider/provider.ts:1518][E: packages/opencode/src/provider/provider.ts:1531][E: packages/opencode/src/provider/provider.ts:1544][E: packages/opencode/src/provider/provider.ts:1564][E: packages/opencode/src/provider/provider.ts:1606][E: packages/opencode/src/provider/provider.ts:1608][E: packages/opencode/src/provider/provider.ts:1609] | `packages/llm` provider facade 直接描述 protocol route/auth/config；V2 core 可把 facade 当 engine seam。[E: packages/llm/src/providers/index.ts:1][E: packages/llm/src/providers/openai.ts:12] |
 | execution engine | Vercel AI SDK `LanguageModelV3`，由 bundled/dynamic AI SDK factory 产生。[E: packages/opencode/src/provider/provider.ts:102][E: packages/opencode/src/provider/provider.ts:103][E: packages/opencode/src/provider/provider.ts:104][E: packages/opencode/src/provider/provider.ts:1152][E: packages/opencode/src/provider/provider.ts:1765][E: packages/opencode/src/provider/provider.ts:1788][E: packages/opencode/src/provider/provider.ts:1830][E: packages/opencode/src/provider/provider.ts:1839][E: packages/opencode/src/provider/provider.ts:1850] | 原生 route/protocol facade：每个 provider 明确 routes、auth 和 model factory。[E: packages/llm/src/providers/anthropic.ts:9][E: packages/llm/src/providers/openai.ts:12][E: packages/llm/src/providers/amazon-bedrock.ts:18] |
-| providerOptions | V1 `ProviderTransform.providerOptions()` 把 options 转成 AI SDK namespace。[E: packages/opencode/src/provider/transform.ts:1287][E: packages/opencode/src/provider/transform.ts:1337][E: packages/opencode/src/provider/transform.ts:1344] | packages/llm facade 的 options 更靠近 provider protocol；例如 OpenAI facade 分 `responses()` 与 `chat()`。[E: packages/llm/src/providers/openai.ts:42][E: packages/llm/src/providers/openai.ts:46] |
+| providerOptions | V1 `ProviderTransform.providerOptions()` 把 options 转成 AI SDK namespace。[E: packages/opencode/src/provider/transform.ts:1335][E: packages/opencode/src/provider/transform.ts:1385][E: packages/opencode/src/provider/transform.ts:1392] | packages/llm facade 的 options 更靠近 provider protocol；例如 OpenAI facade 分 `responses()` 与 `chat()`。[E: packages/llm/src/providers/openai.ts:42][E: packages/llm/src/providers/openai.ts:46] |
 
 ## Sources
 

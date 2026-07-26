@@ -21,7 +21,7 @@ symbols: [PluginV2, PluginV2.Service, PluginHost, PluginInternal]
 related: [server.plugin-system, model-layer.model-catalog-v2]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V2 plugin hooks are Effect-native registration functions exposed through `@opencode-ai/plugin/v2/effect` `PluginContext`; the current context groups hook-like APIs under `agent`, `aisdk`, `catalog`, `command`, `integration`, `reference`, and `skill`, plus a `plugin` domain for loading and unloading plugins。[E: packages/plugin/src/v2/effect/context.ts:12][E: packages/plugin/src/v2/effect/context.ts:14][E: packages/plugin/src/v2/effect/context.ts:15][E: packages/plugin/src/v2/effect/context.ts:16][E: packages/plugin/src/v2/effect/context.ts:17][E: packages/plugin/src/v2/effect/context.ts:18][E: packages/plugin/src/v2/effect/context.ts:19][E: packages/plugin/src/v2/effect/context.ts:20][E: packages/plugin/src/v2/effect/context.ts:21]

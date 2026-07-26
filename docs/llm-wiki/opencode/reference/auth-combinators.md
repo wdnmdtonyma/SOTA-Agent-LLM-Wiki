@@ -9,7 +9,7 @@ source:
   - packages/opencode/src/auth/index.ts
   - packages/opencode/src/provider/provider.ts
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 evidence: explicit
 symbols:
   - Auth

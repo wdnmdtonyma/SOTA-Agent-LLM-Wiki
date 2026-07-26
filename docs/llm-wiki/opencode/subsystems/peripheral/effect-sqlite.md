@@ -14,7 +14,7 @@ symbols: [EffectDrizzleSqlite, EffectSQLiteDatabase, EffectSQLiteSession, NodeSq
 related: [persistence.database]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > `@opencode-ai/effect-drizzle-sqlite` 和 `@opencode-ai/effect-sqlite-node` 是两个 vendored generic adapter 包：前者把 Drizzle SQLite query builder 变成 Effect-yieldable，后者用 Node `node:sqlite` 实现 Effect `SqlClient`。

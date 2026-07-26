@@ -9,7 +9,7 @@ symbols: [OpenCodeHttpApi, RootHttpApi, InstanceHttpApi, Api, createRoutes, Http
 related: [server-api.v1-routes, server-api.v2-routes, server.http-server]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > opencode server API 是 Effect HttpApi surface：V1 server 在 `packages/opencode/src/server/routes/instance/httpapi` 装配 legacy routes，同时把 V2 `@opencode-ai/server/api` 的 `/api/*` group 挂进同一个 route tree；V2 API declaration 由 `@opencode-ai/protocol/api` 生成，两个 HTTP server 都不是 Hono。

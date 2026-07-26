@@ -9,7 +9,7 @@ symbols: [Provider.Service, BUNDLED_PROVIDERS, fromModelsDevProvider, resolveSDK
 related: [provider.resolution, ref.ai-sdk-provider-map]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V1 provider registry 是 `packages/opencode/src/provider/provider.ts` 里的 AI SDK provider/model resolver:它从 models.dev catalog、config、env、auth、plugin hooks 和 provider-specific custom loader 合成 `Provider.Info` / `Provider.Model`,再按 model 的 npm package 创建或缓存 `LanguageModelV3`。
@@ -31,7 +31,7 @@ V1 当前活跑主线是 Vercel AI SDK path,所以这个 registry 是默认 prov
 
 `fromModelsDevProvider` 把 models.dev provider 转成 V1 `Info`:遍历 provider.models,每个 model 调 `fromModelsDevModel`,并把 experimental modes 展开成 `${model.id}-${mode}` 的额外 model id。[E: packages/opencode/src/provider/provider.ts:1260][E: packages/opencode/src/provider/provider.ts:1262][E: packages/opencode/src/provider/provider.ts:1263][E: packages/opencode/src/provider/provider.ts:1264][E: packages/opencode/src/provider/provider.ts:1265]
 
-`fromModelsDevModel` 会把 models.dev api/status/cost/limits/capabilities 等字段投影到 V1 model,然后优先调用 `ProviderTransform.reasoningVariants(model, base)`;它返回 `undefined`——例如字段缺失,或 toggle/budget 对该 npm package 没有可用映射——时才回退 `ProviderTransform.variants(base)`。[E: packages/opencode/src/provider/provider.ts:1207][E: packages/opencode/src/provider/provider.ts:1213][E: packages/opencode/src/provider/provider.ts:1218][E: packages/opencode/src/provider/provider.ts:1221][E: packages/opencode/src/provider/provider.ts:1222][E: packages/opencode/src/provider/provider.ts:1227][E: packages/opencode/src/provider/provider.ts:1252][E: packages/opencode/src/provider/provider.ts:1256][E: packages/opencode/src/provider/transform.ts:1591][E: packages/opencode/src/provider/transform.ts:1593][E: packages/opencode/src/provider/transform.ts:1595][E: packages/opencode/src/provider/transform.ts:1630][E: packages/opencode/src/provider/transform.ts:1631]
+`fromModelsDevModel` 会把 models.dev api/status/cost/limits/capabilities 等字段投影到 V1 model,然后优先调用 `ProviderTransform.reasoningVariants(model, base)`;它返回 `undefined`——例如字段缺失,或 toggle/budget 对该 npm package 没有可用映射——时才回退 `ProviderTransform.variants(base)`。[E: packages/opencode/src/provider/provider.ts:1207][E: packages/opencode/src/provider/provider.ts:1213][E: packages/opencode/src/provider/provider.ts:1218][E: packages/opencode/src/provider/provider.ts:1221][E: packages/opencode/src/provider/provider.ts:1222][E: packages/opencode/src/provider/provider.ts:1227][E: packages/opencode/src/provider/provider.ts:1252][E: packages/opencode/src/provider/provider.ts:1256][E: packages/opencode/src/provider/transform.ts:1639][E: packages/opencode/src/provider/transform.ts:1641][E: packages/opencode/src/provider/transform.ts:1643][E: packages/opencode/src/provider/transform.ts:1678][E: packages/opencode/src/provider/transform.ts:1679]
 
 experimental mode body 经 `modeOptions()` 转 camelCase;`@ai-sdk/openai` 的 `{ reasoning: { mode } }` 特别转成 `{ reasoningMode }`,避免把 nested `reasoning` 原样传给 SDK。[E: packages/opencode/src/provider/provider.ts:1272][E: packages/opencode/src/provider/provider.ts:1287][E: packages/opencode/src/provider/provider.ts:1289][E: packages/opencode/src/provider/provider.ts:1292][E: packages/opencode/src/provider/provider.ts:1293][E: packages/opencode/src/provider/provider.ts:1295]
 

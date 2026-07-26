@@ -9,7 +9,7 @@ symbols: [SkillTool, Skill, SkillV2]
 related: [integrations.skills, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > Skill 工具按 skill name 加载 `SKILL.md` 指令正文和同目录资源索引；V1 从 `Skill.Service.require()` 读取，V2 从 `SkillV2.Service.list()` 当前结果中查找。

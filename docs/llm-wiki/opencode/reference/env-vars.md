@@ -12,13 +12,16 @@ source:
   - packages/opencode/src/provider/provider.ts
   - packages/core/src/pty.ts
   - packages/core/src/shell.ts
+  - packages/core/src/repository.ts
 status: verified
 symbols:
   - Flag
   - RuntimeFlags
   - OPENCODE_EXPERIMENTAL
 evidence: explicit
-updated: 67caf894e
+related:
+  - persistence.repository-cache
+updated: 7534d23551
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -127,7 +130,7 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `OTEL_RESOURCE_ATTRIBUTES` | OTLP resource attributes。 | [E: packages/core/src/observability/otlp.ts:21] |
 | `OPENCODE_AUTH_CONTENT` | V1 auth JSON injection。 | [E: packages/opencode/src/auth/index.ts:59][E: packages/opencode/src/auth/index.ts:61] |
 | `OPENCODE_DISABLE_SHARE` | disables share-next when `true` or `1`。 | [E: packages/opencode/src/share/share-next.ts:23] |
-| `OPENCODE_REPO_CLONE_GITHUB_BASE_URL` | V2 core repository clone URL base override；V1 util repository 也读取同名 override。 | [E: packages/core/src/repository.ts:169][E: packages/opencode/src/util/repository.ts:100] |
+| `OPENCODE_REPO_CLONE_GITHUB_BASE_URL` | V2 core repository clone URL base override；V1 util repository 也读取同名 override。 | [E: packages/core/src/repository.ts:175][E: packages/opencode/src/util/repository.ts:100] |
 | `OPENCODE_ACP_PROFILE` | ACP profiling flag。 | [E: packages/opencode/src/acp/profile.ts:1] |
 | `OPENCODE_TERMINAL` | spawned terminal marker。 | [E: packages/core/src/pty.ts:204] |
 | `OPENCODE_CALLER` | VS Code caller detection。 | [E: packages/opencode/src/ide/index.ts:40] |
@@ -212,6 +215,7 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 - `packages/opencode/src/provider/provider.ts`
 - `packages/core/src/pty.ts`
 - `packages/core/src/shell.ts`
+- `packages/core/src/repository.ts`
 - `packages/opencode/src/cli/cmd/github.handler.ts`
 
 ## 相关
@@ -220,3 +224,4 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 - `config.v1-core`
 - `config.v2-schema`
 - `provider.resolution`
+- `persistence.repository-cache`

@@ -35,7 +35,7 @@ related:
   - plugin-api.tui
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 `server.plugin-system` 分成三条线: V1 server callback plugins、V1 TUI plugin host、V2 Effect-native `PluginV2` plus `PluginInternal` boot. V1 server service tag 是 `@opencode/Plugin`，V2 service tag 是 `@opencode/v2/Plugin`。[E: packages/opencode/src/plugin/index.ts:58][E: packages/core/src/plugin.ts:29]
@@ -43,7 +43,7 @@ updated: 67caf894e
 ## 能回答的问题
 - V1 server plugin hooks 如何 load、trigger、dispose?
 - TUI plugin host 如何按顺序 activate/deactivate plugin?
-- 8b68dc0d7 下 V2 plugin boot 从 `PluginBoot` 改成了什么?
+- 当前目标源码中的 V2 plugin boot 由什么承担?
 - V2 plugin host 暴露哪些 transform / AISDK / integration capabilities?
 
 ## V1 server plugins
@@ -82,7 +82,7 @@ V2 plugin package exports an Effect plugin shape: `PluginContext`, `define`, and
 
 ## V2 internal boot
 
-`packages/core/src/plugin/boot.ts` was removed before 8b68dc0d7; current built-in boot is `PluginInternal` in `packages/core/src/plugin/internal.ts`。[U] `PluginInternal.Requirements` includes AgentV2, Catalog, CommandV2, Config, EventV2, FileSystem, FSUtil, Global, HttpClient, Integration, Location, ModelsDev, Npm, Reference and SkillV2 services。[E: packages/core/src/plugin/internal.ts:37][E: packages/core/src/plugin/internal.ts:52]
+目标源码中没有 `packages/core/src/plugin/boot.ts`，旧 `PluginBoot` 是否有一对一命名 replacement 仍不确定。[U] current built-in boot 由 `PluginInternal` 承担，其 boot batch 以 `PluginInternal.boot` span fork scoped。[E: packages/core/src/plugin/internal.ts:123] `PluginInternal.Requirements` includes AgentV2, Catalog, CommandV2, Config, EventV2, FileSystem, FSUtil, Global, HttpClient, Integration, Location, ModelsDev, Npm, Reference and SkillV2 services。[E: packages/core/src/plugin/internal.ts:37][E: packages/core/src/plugin/internal.ts:52]
 
 `PluginInternal` wraps each internal plugin effect with concrete services using `Effect.provideService(...)`, then calls `plugin.add(PluginV2.ID.make(loaded.id), loaded.effect)`。[E: packages/core/src/plugin/internal.ts:81][E: packages/core/src/plugin/internal.ts:88][E: packages/core/src/plugin/internal.ts:105]
 

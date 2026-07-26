@@ -13,7 +13,7 @@ symbols: [syncStats, Ingest, Routes, getStatsHomeData, getStatsModelData, getSta
 related: [infra.sst]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > `packages/stats` 是 opencode 的用量、成本、market share 与模型比较数据产品：`core` 做 Athena/Drizzle/Effect domain，`server` 做 ingest 与 sync daemon，`app` 做 SolidStart 数据站点。

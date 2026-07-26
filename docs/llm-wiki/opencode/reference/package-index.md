@@ -14,7 +14,7 @@ related:
   - subsys.tools.codemode
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > opencode monorepo 是 Bun workspace；当前 HEAD 的 workspace globs 展开为 36 个 package，而不是固定 27 个 package。

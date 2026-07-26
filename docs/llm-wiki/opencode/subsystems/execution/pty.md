@@ -38,7 +38,7 @@ related:
   - execution.core-shell-v2
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > PTY 子系统是 V2 Location-scoped pseudo-terminal service：core 用 `#pty` 适配 bun-pty/node-pty，维护进程内 session/buffer/subscribers；canonical server package 暴露 `/api/pty/*` JSON endpoint 和 `/api/pty/:ptyID/connect` WebSocket，legacy instance server tree 仍暴露 `/pty/*` compatibility surface。两条 surface 都使用短期 connect ticket 保护 browser WS 连接。
@@ -73,7 +73,7 @@ Canonical HTTP API 的 schema 在 protocol package 下：`PtyGroup` 使用 group
 
 `packages/core/src/pty/pty.ts` 定义统一 `Proc` 接口：`pid`、`onData`、`onExit`、`write`、`resize`、`kill`。[E: packages/core/src/pty/pty.ts:19][E: packages/core/src/pty/pty.ts:20][E: packages/core/src/pty/pty.ts:21][E: packages/core/src/pty/pty.ts:22][E: packages/core/src/pty/pty.ts:23][E: packages/core/src/pty/pty.ts:24]
 
-Bun runtime adapter 从 `bun-pty` import `spawn`，Node adapter 从 `@lydell/node-pty` import `spawn`，两者都包装成同一个 `Proc` 形状。[E: packages/core/src/pty/pty.bun.ts:1][E: packages/core/src/pty/pty.bun.ts:6][E: packages/core/src/pty/pty.bun.ts:9][E: packages/core/src/pty/pty.node.ts:1][E: packages/core/src/pty/pty.node.ts:6][E: packages/core/src/pty/pty.node.ts:9]
+Bun runtime adapter 从 `bun-pty` import `spawn`，Node adapter 从 `@lydell/node-pty` import `spawn`，两者都包装成同一个 `Proc` 形状。Node adapter 在 Windows 额外传 `useConptyDll: true`，其他平台原样转发 opts。[E: packages/core/src/pty/pty.bun.ts:1][E: packages/core/src/pty/pty.bun.ts:6][E: packages/core/src/pty/pty.bun.ts:9][E: packages/core/src/pty/pty.node.ts:1][E: packages/core/src/pty/pty.node.ts:6][E: packages/core/src/pty/pty.node.ts:7][E: packages/core/src/pty/pty.node.ts:9][E: packages/core/src/pty/pty.node.ts:12]
 
 ## Core 控制流
 

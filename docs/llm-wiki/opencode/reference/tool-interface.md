@@ -11,7 +11,7 @@ source:
   - packages/core/src/tool/AGENTS.md
   - specs/v2/tools.md
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 evidence: explicit
 symbols:
   - Tool.Context

@@ -4,12 +4,18 @@ title: Provider Transforms
 kind: subsystem
 tier: T2
 v: v1
-source: [packages/opencode/src/provider/transform.ts]
+source:
+  - packages/opencode/src/provider/transform.ts
+  - packages/opencode/src/provider/provider.ts
+  - patches/@ai-sdk%2Fmistral@3.0.51.patch
+  - packages/opencode/test/provider/transform.test.ts
+  - packages/core/test/provider-mistral.test.ts
+  - packages/opencode/test/session/llm.test.ts
 symbols: [ProviderTransform.message, ProviderTransform.reasoningVariants, ProviderTransform.variants, ProviderTransform.options, ProviderTransform.temperature, ProviderTransform.topP, ProviderTransform.topK]
 related: [ref.reasoning-variant-tables]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V1 provider transforms 是 AI SDK request 的 provider-specific normalization 层:它修 message content、cache hints、providerOptions key、Responses item metadata、reasoning variants、default generation/provider options,让同一条 V1 session loop 能喂给不同 AI SDK provider。
@@ -23,41 +29,45 @@ updated: 67caf894e
 
 ## Message Transform Pipeline
 
-`message(msgs, model, options)` 的顺序是:先 `unsupportedParts`,再 `normalizeMessages`,再按 Anthropic/Claude/Alibaba 类 provider 应用 caching,然后 remap providerOptions key,最后在 Responses store 不为 true 时剥离 itemId。[E: packages/opencode/src/provider/transform.ts:430][E: packages/opencode/src/provider/transform.ts:431][E: packages/opencode/src/provider/transform.ts:432][E: packages/opencode/src/provider/transform.ts:444][E: packages/opencode/src/provider/transform.ts:459][E: packages/opencode/src/provider/transform.ts:470]
+`message(msgs, model, options)` 的顺序是:先 `unsupportedParts`,再 `normalizeMessages`,按模型与 SDK 决定是否注入 cache breakpoints,然后 remap providerOptions key,最后在 Responses store 不为 true 时剥离 itemId。[E: packages/opencode/src/provider/transform.ts:464][E: packages/opencode/src/provider/transform.ts:465][E: packages/opencode/src/provider/transform.ts:466][E: packages/opencode/src/provider/transform.ts:486][E: packages/opencode/src/provider/transform.ts:497][E: packages/opencode/src/provider/transform.ts:508]
 
-`unsupportedParts` 会根据 model capabilities 把不支持的 file/image part 替换成 error text,避免把 provider 不接受的媒体直接传给 AI SDK。[E: packages/opencode/src/provider/transform.ts:374][E: packages/opencode/src/provider/transform.ts:404]
+`unsupportedParts` 会根据 model capabilities 把不支持的 file/image part 替换成 error text,避免把 provider 不接受的媒体直接传给 AI SDK。[E: packages/opencode/src/provider/transform.ts:408][E: packages/opencode/src/provider/transform.ts:438]
 
-`normalizeMessages` 做多 provider hack:Anthropic/Bedrock 会过滤空 text/reasoning content,Claude toolCallId 会 scrub 到 `[a-zA-Z0-9_-]`,Mistral toolCallId 会压成 9 位 alnum 并在 tool 与 user 消息之间插 assistant "Done.",DeepSeek 会给 assistant 补空 reasoning。[E: packages/opencode/src/provider/transform.ts:134][E: packages/opencode/src/provider/transform.ts:186][E: packages/opencode/src/provider/transform.ts:189][E: packages/opencode/src/provider/transform.ts:208][E: packages/opencode/src/provider/transform.ts:219][E: packages/opencode/src/provider/transform.ts:259][E: packages/opencode/src/provider/transform.ts:269][E: packages/opencode/src/provider/transform.ts:280]
+`normalizeMessages` 做多 provider hack:Anthropic/Bedrock 会过滤空 text/reasoning content,Claude toolCallId 会 scrub 到 `[a-zA-Z0-9_-]`；Mistral family（provider ID 为 `mistral`，或 API ID 含 mistral/devstral/codestral/pixtral/mixtral）把 toolCallId 压成 9 位 alnum，并在 tool 与 user 消息之间插 assistant `"Done."`；DeepSeek 会给 assistant 补空 reasoning。[E: packages/opencode/src/provider/transform.ts:168][E: packages/opencode/src/provider/transform.ts:220][E: packages/opencode/src/provider/transform.ts:242][E: packages/opencode/src/provider/transform.ts:252][E: packages/opencode/src/provider/transform.ts:260][E: packages/opencode/src/provider/transform.ts:293][E: packages/opencode/src/provider/transform.ts:303][E: packages/opencode/src/provider/transform.ts:314]
 
-`applyCaching` 选择前两个 system message 与最后两个 non-system message,并给 Anthropic/OpenRouter/Bedrock/OpenAI-compatible/Copilot/Alibaba 等 provider 写对应 providerOptions cache controls。[E: packages/opencode/src/provider/transform.ts:323][E: packages/opencode/src/provider/transform.ts:344]
+`applyCaching` 选择前两个 system message 与最后两个 non-system message,并给 Anthropic/OpenRouter/Bedrock/OpenAI-compatible/Copilot/Alibaba 等 provider 写对应 providerOptions cache controls。[E: packages/opencode/src/provider/transform.ts:357][E: packages/opencode/src/provider/transform.ts:378] 但 Anthropic/Vertex-Anthropic SDK 的 request options 已带 `cacheControl` 时，transform 会跳过这组手工 breakpoints；代码只证明“不再注入”，不证明服务端一定产生 cache hit。[E: packages/opencode/src/provider/transform.ts:467][E: packages/opencode/src/provider/transform.ts:469][E: packages/opencode/src/provider/transform.ts:480][E: packages/opencode/test/provider/transform.test.ts:3115]
 
-providerOptions key remap 用 `sdkKey(model.api.npm)`:如果 SDK 期望的 key 与 `model.providerID` 不同,会把 providerOptions 从 stored providerID 搬到 SDK key。[E: packages/opencode/src/provider/transform.ts:448][E: packages/opencode/src/provider/transform.ts:459]
+providerOptions key remap 用 `sdkKey(model.api.npm)`:如果 SDK 期望的 key 与 `model.providerID` 不同,会把 providerOptions 从 stored providerID 搬到 SDK key。[E: packages/opencode/src/provider/transform.ts:486][E: packages/opencode/src/provider/transform.ts:497]
 
-Responses item id 剥离只在 `options.store !== true` 且 npm 是 OpenAI/Azure/Bedrock Mantle 这类 Responses path 时做,并删除 provider options 中的 `itemId`。[E: packages/opencode/src/provider/transform.ts:464][E: packages/opencode/src/provider/transform.ts:471]
+Responses item id 剥离只在 `options.store !== true` 且 npm 是 OpenAI/Azure/Bedrock Mantle 这类 Responses path 时做,并删除 provider options 中的 `itemId`。[E: packages/opencode/src/provider/transform.ts:502][E: packages/opencode/src/provider/transform.ts:509]
 
 ## Generation Defaults
 
-`temperature`/`topP`/`topK` 是 model-id heuristic:例如 qwen temperature 0.55,Claude temperature undefined,Gemini topK 64,MiniMax topK 按 m2 variant 20/40。[E: packages/opencode/src/provider/transform.ts:484][E: packages/opencode/src/provider/transform.ts:485][E: packages/opencode/src/provider/transform.ts:511][E: packages/opencode/src/provider/transform.ts:512][E: packages/opencode/src/provider/transform.ts:513][E: packages/opencode/src/provider/transform.ts:515]
+`temperature`/`topP`/`topK` 是 model-id heuristic:例如 qwen temperature 0.55,Claude temperature undefined,Gemini topK 64,MiniMax topK 按 m2 variant 20/40。[E: packages/opencode/src/provider/transform.ts:522][E: packages/opencode/src/provider/transform.ts:523][E: packages/opencode/src/provider/transform.ts:549][E: packages/opencode/src/provider/transform.ts:550][E: packages/opencode/src/provider/transform.ts:551][E: packages/opencode/src/provider/transform.ts:553]
 
-`options` 是 provider default options 聚合器:它可以关 tool streaming、设置 store false、prompt cache key、OpenRouter/LLM Gateway usage include、Gemini thinkingConfig、Alibaba `enable_thinking`、GPT-5 与 Azure `gpt-5.5` 的 reasoningSummary/reasoningEffort/textVerbosity/encrypted reasoning include 等。[E: packages/opencode/src/provider/transform.ts:1086][E: packages/opencode/src/provider/transform.ts:1097][E: packages/opencode/src/provider/transform.ts:1108][E: packages/opencode/src/provider/transform.ts:1117][E: packages/opencode/src/provider/transform.ts:1160][E: packages/opencode/src/provider/transform.ts:1198][E: packages/opencode/src/provider/transform.ts:1201][E: packages/opencode/src/provider/transform.ts:1215][E: packages/opencode/src/provider/transform.ts:1218][E: packages/opencode/src/provider/transform.ts:1230]
+`options` 是 provider default options 聚合器:它可以关 tool streaming、设置 store false、按 SDK 选择 prompt cache key、设置 gateway usage/caching、Gemini thinkingConfig、Alibaba `enable_thinking`、Kimi adaptive thinking，以及 GPT-5 与 Azure `gpt-5.5` 的 reasoningSummary/reasoningEffort/textVerbosity/encrypted reasoning include 等。[E: packages/opencode/src/provider/transform.ts:1140][E: packages/opencode/src/provider/transform.ts:1151][E: packages/opencode/src/provider/transform.ts:1162][E: packages/opencode/src/provider/transform.ts:1169][E: packages/opencode/src/provider/transform.ts:1200][E: packages/opencode/src/provider/transform.ts:1220][E: packages/opencode/src/provider/transform.ts:1243][E: packages/opencode/src/provider/transform.ts:1258][E: packages/opencode/src/provider/transform.ts:1262][E: packages/opencode/src/provider/transform.ts:1276][E: packages/opencode/src/provider/transform.ts:1291]
 
 重要默认:
 
-- OpenAI、`@ai-sdk/openai`、GitHub Copilot、Bedrock Mantle 和 xAI 默认 `store=false`。[E: packages/opencode/src/provider/transform.ts:1102][E: packages/opencode/src/provider/transform.ts:1103][E: packages/opencode/src/provider/transform.ts:1104][E: packages/opencode/src/provider/transform.ts:1105][E: packages/opencode/src/provider/transform.ts:1106][E: packages/opencode/src/provider/transform.ts:1108]
-- Azure 默认 `store=false` 并用 session id 做 `promptCacheKey`。[E: packages/opencode/src/provider/transform.ts:1111][E: packages/opencode/src/provider/transform.ts:1112][E: packages/opencode/src/provider/transform.ts:1113]
-- 除非 `setCacheKey === false`,OpenAI provider、`@ai-sdk/openai`、`@ai-sdk/xai` 或显式启用 `setCacheKey` 会把 session id 放进 `promptCacheKey`。[E: packages/opencode/src/provider/transform.ts:1142][E: packages/opencode/src/provider/transform.ts:1143][E: packages/opencode/src/provider/transform.ts:1144][E: packages/opencode/src/provider/transform.ts:1145][E: packages/opencode/src/provider/transform.ts:1146][E: packages/opencode/src/provider/transform.ts:1149]
-- Meta provider 在 `@ai-sdk/openai` path 上默认 `reasoningEffort=xhigh`、`reasoningSummary=auto` 并 include encrypted reasoning。[E: packages/opencode/src/provider/transform.ts:1152][E: packages/opencode/src/provider/transform.ts:1153][E: packages/opencode/src/provider/transform.ts:1154][E: packages/opencode/src/provider/transform.ts:1155]
-- 非 chat GPT-5 默认 `reasoningEffort=medium`;OpenAI/Azure/Copilot/Bedrock Mantle 还默认 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1206][E: packages/opencode/src/provider/transform.ts:1208][E: packages/opencode/src/provider/transform.ts:1215]
+- OpenAI、`@ai-sdk/openai`、GitHub Copilot、Bedrock Mantle 和 xAI 默认 `store=false`。[E: packages/opencode/src/provider/transform.ts:1156][E: packages/opencode/src/provider/transform.ts:1157][E: packages/opencode/src/provider/transform.ts:1158][E: packages/opencode/src/provider/transform.ts:1159][E: packages/opencode/src/provider/transform.ts:1160][E: packages/opencode/src/provider/transform.ts:1162]
+- Azure 默认 `store=false`；和 OpenAI、xAI、Mistral、Venice 一样，在没有 `setCacheKey:false` 时用 session id 做 `promptCacheKey`。[E: packages/opencode/src/provider/transform.ts:1165][E: packages/opencode/src/provider/transform.ts:1166][E: packages/opencode/src/provider/transform.ts:1243][E: packages/opencode/src/provider/transform.ts:1247][E: packages/opencode/src/provider/transform.ts:1254]
+- DeepInfra/Cerebras 使用 snake-case `prompt_cache_key`；其他 SDK 只有显式 `setCacheKey:true` 才加入 camel-case key。OpenRouter 不在默认列表中。[E: packages/opencode/src/provider/transform.ts:1244][E: packages/opencode/src/provider/transform.ts:1245][E: packages/opencode/src/provider/transform.ts:1252][E: packages/opencode/test/provider/transform.test.ts:270][E: packages/opencode/test/provider/transform.test.ts:291]
+- Meta provider 在 `@ai-sdk/openai` path 上只默认 `reasoningSummary=auto` 并 include encrypted reasoning，不再强制 `reasoningEffort=xhigh`。[E: packages/opencode/src/provider/transform.ts:1195][E: packages/opencode/src/provider/transform.ts:1196][E: packages/opencode/src/provider/transform.ts:1197]
+- 非 chat GPT-5 默认 `reasoningEffort=medium`;OpenAI/Azure/Copilot/Bedrock Mantle 还默认 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1267][E: packages/opencode/src/provider/transform.ts:1269][E: packages/opencode/src/provider/transform.ts:1276]
 
 ## Reasoning Variants
 
-models.dev 模型现在可以用 `reasoning_options` 声明 `effort`、`toggle` 或 `budget_tokens` 能力;`reasoningVariants(model, target)` 会优先把这些 catalog 能力翻译成 provider-specific variants。它返回 `undefined` 时回退到 heuristic `variants(target)`;这可能是字段缺失,也可能是 toggle/budget 对当前 npm package 没有映射,而显式空数组会得到空 variants。[E: packages/opencode/src/provider/transform.ts:1583][E: packages/opencode/src/provider/transform.ts:1584][E: packages/opencode/src/provider/transform.ts:1585][E: packages/opencode/src/provider/transform.ts:1586][E: packages/opencode/src/provider/transform.ts:1588][E: packages/opencode/src/provider/transform.ts:1591][E: packages/opencode/src/provider/transform.ts:1592][E: packages/opencode/src/provider/transform.ts:1593][E: packages/opencode/src/provider/transform.ts:1595][E: packages/opencode/src/provider/transform.ts:1630][E: packages/opencode/src/provider/transform.ts:1631]
+models.dev 模型现在可以用 `reasoning_options` 声明 `effort`、`toggle` 或 `budget_tokens` 能力;`reasoningVariants(model, target)` 会优先把这些 catalog 能力翻译成 provider-specific variants。它返回 `undefined` 时回退到 heuristic `variants(target)`;这可能是字段缺失,也可能是 toggle/budget 对当前 npm package 没有映射,而显式空数组会得到空 variants。[E: packages/opencode/src/provider/transform.ts:1631][E: packages/opencode/src/provider/transform.ts:1632][E: packages/opencode/src/provider/transform.ts:1633][E: packages/opencode/src/provider/transform.ts:1634][E: packages/opencode/src/provider/transform.ts:1636][E: packages/opencode/src/provider/transform.ts:1639][E: packages/opencode/src/provider/transform.ts:1640][E: packages/opencode/src/provider/transform.ts:1641][E: packages/opencode/src/provider/transform.ts:1643][E: packages/opencode/src/provider/transform.ts:1678][E: packages/opencode/src/provider/transform.ts:1679]
 
-heuristic `variants(model)` 首先要求 `model.capabilities.reasoning`,没有 reasoning capability 直接返回空对象。[E: packages/opencode/src/provider/transform.ts:673][E: packages/opencode/src/provider/transform.ts:674]
+heuristic `variants(model)` 首先要求 `model.capabilities.reasoning`,没有 reasoning capability 直接返回空对象。[E: packages/opencode/src/provider/transform.ts:710][E: packages/opencode/src/provider/transform.ts:711]
 
-变体生成是 provider/npm/model-id 组合规则,不是统一标准字段。例如 MiniMax M3 在 Anthropic/OpenAI-compatible path 返回 disabled/adaptive thinking 两个变体,DeepSeek/MiniMax/非 GLM 5.2/Kimi/Qwen/Big Pickle 等 id 直接不生成 variants,grok-3-mini 在 OpenRouter 下用 `{ reasoning: { effort } }`,非 OpenRouter 用 `{ reasoningEffort }`。[E: packages/opencode/src/provider/transform.ts:681][E: packages/opencode/src/provider/transform.ts:685][E: packages/opencode/src/provider/transform.ts:686][E: packages/opencode/src/provider/transform.ts:710][E: packages/opencode/src/provider/transform.ts:725][E: packages/opencode/src/provider/transform.ts:728][E: packages/opencode/src/provider/transform.ts:733]
+变体生成是 provider/npm/model-id 组合规则,不是统一标准字段。例如 MiniMax M3 的 nvidia/lilac 分支用 `chat_template_kwargs.thinking_mode`，其余 Anthropic/OpenAI-compatible 分支用 disabled/adaptive thinking；Kimi heuristic 在 Anthropic/Vertex-Anthropic path 上先生成五档 adaptive+summarized variants，其他 Kimi path 才可能落入 suppress；grok-3-mini 在 OpenRouter 下用 `{ reasoning: { effort } }`,非 OpenRouter 用 `{ reasoningEffort }`。[E: packages/opencode/src/provider/transform.ts:717][E: packages/opencode/src/provider/transform.ts:721][E: packages/opencode/src/provider/transform.ts:727][E: packages/opencode/src/provider/transform.ts:754][E: packages/opencode/src/provider/transform.ts:762][E: packages/opencode/src/provider/transform.ts:777][E: packages/opencode/src/provider/transform.ts:780][E: packages/opencode/src/provider/transform.ts:785]
 
-OpenRouter branch 用 `reasoning.effort`;AI Gateway branch 返回 OpenAI-compatible style 的 `reasoningEffort` variants。[E: packages/opencode/src/provider/transform.ts:739][E: packages/opencode/src/provider/transform.ts:744][E: packages/opencode/src/provider/transform.ts:747][E: packages/opencode/src/provider/transform.ts:756][E: packages/opencode/src/provider/transform.ts:758]
+Claude adaptive classification is API-ID heuristic: 4.7+、major >4，以及无法解析版本但含 `claude-` 的 future alias 会获得 `low/medium/high/xhigh/max` adaptive variants，并请求 summarized display；4.6 仍是四档且不显式请求 display。dated Claude 4 ID 的日期不会被误判成 minor version。[E: packages/opencode/src/provider/transform.ts:638][E: packages/opencode/src/provider/transform.ts:642][E: packages/opencode/src/provider/transform.ts:643][E: packages/opencode/src/provider/transform.ts:646][E: packages/opencode/src/provider/transform.ts:653][E: packages/opencode/src/provider/transform.ts:662][E: packages/opencode/src/provider/transform.ts:667][E: packages/opencode/test/provider/transform.test.ts:4656][E: packages/opencode/test/provider/transform.test.ts:4707]
+
+Mistral reasoning 只为 Small 4 / Medium 3.5 identifiers 输出 `high` effort；同时 pinned AI SDK patch 把 `promptCacheKey` 序列化成 wire `prompt_cache_key`，保留 native thinking（含 references/signature）到 provider metadata，并在后续 assistant history 恢复 structured content。[E: packages/opencode/src/provider/transform.ts:1066][E: packages/opencode/src/provider/transform.ts:1078][E: patches/@ai-sdk%2Fmistral@3.0.51.patch:67][E: patches/@ai-sdk%2Fmistral@3.0.51.patch:81][E: patches/@ai-sdk%2Fmistral@3.0.51.patch:85][E: patches/@ai-sdk%2Fmistral@3.0.51.patch:145][E: packages/core/test/provider-mistral.test.ts:4][E: packages/core/test/provider-mistral.test.ts:30][E: packages/core/test/provider-mistral.test.ts:134]
+
+OpenRouter branch 用 `reasoning.effort`;AI Gateway branch 返回 OpenAI-compatible style 的 `reasoningEffort` variants。[E: packages/opencode/src/provider/transform.ts:791][E: packages/opencode/src/provider/transform.ts:796][E: packages/opencode/src/provider/transform.ts:799][E: packages/opencode/src/provider/transform.ts:808][E: packages/opencode/src/provider/transform.ts:810]
 
 ## 设计动机
 
@@ -66,12 +76,16 @@ V1 provider transforms 存在是因为 AI SDK abstraction 不完全屏蔽 provid
 ## 易错点
 
 - 这里是 V1 AI SDK transform,不是 `packages/llm` native protocol adapter;不要把 `ProviderTransform.options` 和 native route defaults 混写。[I]
-- `store=false` 会影响 Responses item metadata;transform 在相关 provider options 中显式删除 `itemId`。[E: packages/opencode/src/provider/transform.ts:464][E: packages/opencode/src/provider/transform.ts:471]
-- reasoning variants 优先由 models.dev `reasoning_options` 声明并按 npm package 翻译;`reasoningVariants()` 返回 `undefined` 时才按 model capability、model id、npm package 走 heuristic。[E: packages/opencode/src/provider/transform.ts:1583][E: packages/opencode/src/provider/transform.ts:1585][E: packages/opencode/src/provider/transform.ts:1593][E: packages/opencode/src/provider/transform.ts:1595][E: packages/opencode/src/provider/transform.ts:1648]
+- `store=false` 会影响 Responses item metadata;transform 在相关 provider options 中显式删除 `itemId`。[E: packages/opencode/src/provider/transform.ts:502][E: packages/opencode/src/provider/transform.ts:509]
+- reasoning variants 优先由 models.dev `reasoning_options` 声明并按 npm package 翻译;`reasoningVariants()` 返回 `undefined` 时才按 model capability、model id、npm package 走 heuristic。[E: packages/opencode/src/provider/transform.ts:1631][E: packages/opencode/src/provider/transform.ts:1633][E: packages/opencode/src/provider/transform.ts:1641][E: packages/opencode/src/provider/transform.ts:1643][E: packages/opencode/src/provider/transform.ts:1696]
 
 ## Sources
 - packages/opencode/src/provider/transform.ts
 - packages/opencode/src/provider/provider.ts
+- patches/@ai-sdk%2Fmistral@3.0.51.patch
+- packages/opencode/test/provider/transform.test.ts
+- packages/core/test/provider-mistral.test.ts
+- packages/opencode/test/session/llm.test.ts
 
 ## Related
 - ref.reasoning-variant-tables

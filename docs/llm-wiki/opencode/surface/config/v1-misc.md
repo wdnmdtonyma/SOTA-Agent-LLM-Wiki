@@ -14,7 +14,7 @@ source:
   - packages/core/src/v1/config/skills.ts
   - packages/core/src/v1/config/attachment.ts
   - packages/core/src/v1/config/plugin.ts
-updated: 67caf894e
+updated: 7534d23551
 evidence: explicit
 ---
 

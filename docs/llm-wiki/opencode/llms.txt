@@ -2,7 +2,7 @@
 
 > SST **opencode**(`Best/opencode/`,36-workspace-package Bun/TypeScript Effect monorepo,AI 编码 agent)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 opencode git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
 >
-> **状态:wiki 已增量更新到 `67caf894e`(186 节点 + grouped-catalog),护栏(lint/reconcile)就位。**
+> **状态:wiki 已增量更新到 `7534d23551`(188 节点 + grouped-catalog),护栏(lint/reconcile)就位。**
 >
 > **核心组织主线 —— V1/V2 迁移**:opencode 一套进程跑两代。**V1**(活跑)= `packages/opencode/src`,Vercel-AI-SDK,`SessionPrompt→SessionProcessor→LLM.stream`。**V2**(新内核,多数已建未设默认)= `packages/core/src`,命名空间 `@opencode/v2`,Effect-native durable/event-sourced。`packages/llm` = 原生协议引擎。每节点标 `v: v1|v2|shared|na`;hybrid 组织 —— 一概念一节点、内分 V1/V2,只有真正分叉(session 内核/tools/permissions/shell/patch/compaction)才拆 `-v1`/`-v2`。
 
@@ -15,7 +15,7 @@
 - [进程启动与运行时装配](spine/boot.md) `[v1]`: bin shim → yargs/cli → AppRuntime/InstanceStore — bin/opencode · src/index.ts · effect/app-runtime.ts
 - [从 CLI 调用到运行中的 session](spine/cli-to-session.md) `[v1]`: CLI → 进程内 Hono-less Effect server → SDK → session — cli/cmd/run.ts · server/server.ts
 - [V1 回合循环(活跑)](spine/v1-turn-loop.md) `[v1]`: runLoop → processor → LLM.stream → 工具循环 → compaction — session/prompt.ts · processor.ts · llm.ts
-- [V1/V2 共存关系](spine/v1-v2-relationship.md): 谁在跑 · dual-write · 嵌入式接通点 — session/processor.ts · effect/runtime-flags.ts · core/src/public/opencode.ts
+- [V1/V2 共存关系](spine/v1-v2-relationship.md): 谁在跑 · dual-write · current same-process 接通点 — session/processor.ts · effect/runtime-flags.ts · sdk-next/src/opencode.ts
 - [V2 Session Core 总览](spine/v2-overview.md) `[v2]`: admission↔execution 分离 · 事件溯源读模型 · Location-scoped runner — core/src/session.ts · session/runner/llm.ts
 - [V2 prompt admission](spine/v2-admission.md) `[v2]`: SessionV2.prompt → session_input durable 入列 · steer/queue · resume — core/src/session/input.ts
 - [V2 drain 协调](spine/v2-coordinator.md) `[v2]`: wake/run/interrupt 串行化 · 一链一 session · coalesce — core/src/session/run-coordinator.ts
@@ -150,11 +150,12 @@
 - [Ask-user / Question](subsystems/integrations/question.md): Deferred 阻塞提问 — question/ · core/src/question.ts
 - [图片处理](subsystems/integrations/image.md): Photon WASM normalize/resize — image/ · core/src/image.ts
 
-## T2 — Subsystems / Persistence(8)
+## T2 — Subsystems / Persistence(9)
 - [配置加载](subsystems/persistence/config-loading.md): 发现/分层/合并/变量替换/managed — config/config.ts · core/src/config.ts
 - [V1 JSON 键值存储](subsystems/persistence/storage-v1.md) `[v1]` — storage/storage.ts
 - [V2 数据库](subsystems/persistence/database.md) `[v2]`: Drizzle/SQLite · Bun/Node driver · 迁移 — core/src/database/
 - [Project/Instance/Location/Worktree 模型](subsystems/persistence/project-instance-location.md): 身份/解析 — core/src/{project,location}.ts · project/instance-store.ts
+- [Remote Repository Reference Cache](subsystems/persistence/repository-cache.md) `[v2]`: branch-keyed checkout · newest-wins refresh · async materialization — core/src/{repository,repository-cache,reference}.ts
 - [Project Directories 与 Copies](subsystems/persistence/project-directories.md) `[v2]`: project_directory table · copy registry · git_worktree refresh — core/src/project/{directories,copy}.ts
 - [事件系统](subsystems/persistence/eventing.md): GlobalBus + EventV2 bridge — bus/global.ts · event-v2-bridge.ts · core/src/event.ts
 - [安装与升级](subsystems/persistence/installation.md): version/channel/method — installation/index.ts
@@ -176,15 +177,16 @@
 
 ## T2 — Subsystems / Server & cloud(6)
 - [HTTP server](subsystems/server/http-server.md): V1+V2 都用 Effect HttpApi · 三层 · in-process vs port — server/server.ts · packages/server/src/
-- [嵌入式原生 API](subsystems/server/embedded-public-api.md) `[v2]`: @opencode/public/OpenCode — core/src/public/
+- [Embedded Public API](subsystems/server/embedded-public-api.md) `[v2]`: sdk-next `OpenCode.create/Service/layer` · local embedded routes/client · application-tool registration — sdk-next/src/opencode.ts · server/src/routes.ts
 - [会话分享](subsystems/server/sharing.md): ShareNext/SessionShare · disabled/manual/auto — share/ · core/src/share/sql.ts
 - [Control Plane / Workspaces](subsystems/server/control-plane.md): workspace 编排 · adapters · sync — control-plane/ · core/src/control-plane/
 - [Observability](subsystems/server/observability.md) `[v2]`: 日志 + OTLP logs/traces(无 metrics)— core/src/observability/
 - [插件系统](subsystems/server/plugin-system.md): V1 加载/生命周期 + V2 + TUI host + 内建 auth/provider 插件 — plugin/ · core/src/plugin.ts
 
-## T2 — Subsystems / Clients(6,full-depth)
+## T2 — Subsystems / Clients(7,full-depth)
 - [Desktop 应用(Electron)](subsystems/clients/desktop.md) `[na]`: server sidecar + app 渲染 — packages/desktop/
-- [App UI shell(SolidJS)](subsystems/clients/app.md) `[na]`: 浏览器/Electron 共享前端 + Platform 抽象 — packages/app/
+- [App UI shell(SolidJS)](subsystems/clients/app.md) `[na]`: 浏览器/Electron 共享前端 + Platform 抽象 + Home controller/view seams — packages/app/
+- [App legacy/current server 兼容层](subsystems/clients/app-compatibility.md) `[na]`: protocol probe · compatible API · current event/session/timeline 投影 · PTY CRUD/WS transport — packages/app/src/
 - [Web/文档站(Astro+Starlight)](subsystems/clients/web.md) `[na]` — packages/web/
 - [Console(SolidStart)](subsystems/clients/console.md) `[na]`: 计费/管理 · Stripe/OpenAuth/Drizzle — packages/console/
 - [共享 UI 组件库](subsystems/clients/ui.md) `[na]`: v1+v2 组件 · 主题 · i18n — packages/ui/

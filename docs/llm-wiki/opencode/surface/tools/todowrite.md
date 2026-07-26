@@ -9,7 +9,7 @@ symbols: [TodoWriteTool, Todo, SessionTodo]
 related: [ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > TodoWrite 工具维护当前 session 的结构化 todo list；V1 与 V2 的字段语义基本同构[I]，但 V1 输出 `{ title, output, metadata }`，V2 输出经 output schema encode 的 `{ todos }` structured result。[E: packages/opencode/src/tool/todo.ts:37][E: packages/opencode/src/tool/todo.ts:38][E: packages/opencode/src/tool/todo.ts:39][E: packages/opencode/src/tool/todo.ts:40][E: packages/core/src/tool/todowrite.ts:18][E: packages/core/src/tool/todowrite.ts:19][E: packages/core/src/tool/tool.ts:97][E: packages/core/src/tool/tool.ts:100]

@@ -9,7 +9,7 @@ symbols: [createOpencodeClient, createOpencodeServer, createOpencode, OpencodeCl
 related: [sdk.surface, server-api.overview]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > TypeScript SDK 有两个入口：`@opencode-ai/sdk` 是旧/小 legacy SDK；`@opencode-ai/sdk/v2` 是当前全量 SDK，包含 legacy namespaces 与 `.v2.*` `/api/*` namespace。

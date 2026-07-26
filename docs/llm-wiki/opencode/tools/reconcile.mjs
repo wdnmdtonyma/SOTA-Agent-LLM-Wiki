@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 登记/同步 —— opencode 源码 LLM wiki。无外部依赖,跑:node tools/reconcile.mjs
-// 1) 各 node .md 的 frontmatter(status/evidence/updated/symbols)同步回 index.json;新节点登记进 index.json。
+// 1) 各 node .md 的 frontmatter(source/related/status/evidence/updated/symbols)同步回 index.json;新节点登记进 index.json。
 // 2) _staging/uncertainty-*.md 合并生成 reference/uncertainty.md。
 // 不改源文件;只 rewrite index.json(且仅当有变更)。一节点一行,保持稳定 diff。
 import fs from "node:fs"
@@ -10,7 +10,7 @@ import { execSync } from "node:child_process"
 
 const WIKI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const NODE_DIRS = ["spine", "surface", "subsystems", "reference"]
-const SYNC_KEYS = ["status", "evidence", "updated", "symbols"]
+const SYNC_KEYS = ["source", "related", "status", "evidence", "updated", "symbols"]
 const NODE_KEY_ORDER = ["id", "title", "kind", "tier", "v", "path", "source", "symbols", "related", "evidence", "status", "updated"]
 
 function stripQuotes(s) { return s.replace(/^["']/, "").replace(/["']$/, "") }
@@ -94,7 +94,7 @@ const stage = fs.existsSync(stagingDir) ? fs.readdirSync(stagingDir).filter((f) 
 let uncertaintyWritten = false
 if (stage.length) {
   let sha = ""
-  try { sha = execSync(`git -C "${path.resolve(WIKI, "../../../opencode")}" rev-parse --short HEAD`, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim() } catch {}
+  try { sha = execSync(`git -C "${path.resolve(WIKI, "../../../opencode")}" rev-parse --short=10 HEAD`, { stdio: ["ignore", "pipe", "ignore"] }).toString().trim() } catch {}
   const fmLines = [
     "---", "id: ref.uncertainty", "title: 不确定项日志([U] 汇总)", "kind: reference", "tier: T3", "v: na",
     "source: []", "symbols: []", "related: []", "evidence: unknown", "status: verified",

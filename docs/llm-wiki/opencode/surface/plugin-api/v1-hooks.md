@@ -9,7 +9,7 @@ symbols: [Plugin, Hooks, AuthHook, ProviderHook, ToolDefinition, Plugin.Service]
 related: [server.plugin-system, plugin-api.tui]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V1 plugin hooks are Promise-based callbacks returned by `@opencode-ai/plugin` server plugins; opencode loads internal and external plugins into `Plugin.Service`, and `Plugin.trigger()` executes matching hooks sequentially in registration order.

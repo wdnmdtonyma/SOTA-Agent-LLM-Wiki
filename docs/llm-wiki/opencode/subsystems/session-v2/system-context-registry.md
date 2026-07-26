@@ -22,7 +22,7 @@ related:
   - session-v2.system-context-algebra
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > System Context registry 是 Location-scoped contribution registry: built-ins 与 instruction context register keyed producers;runner 在 provider-turn preparation 中调 `load()` 并把 registry context、skill guidance、reference guidance 用 `SystemContext.combine(...)` 合成 deterministic context。[E: packages/core/src/system-context/builtins.ts:42][E: packages/core/src/instruction-context.ts:76][E: packages/core/src/session/runner/llm.ts:168][E: packages/core/src/session/runner/llm.ts:171][E: packages/core/src/system-context/registry.ts:39][E: packages/core/src/system-context/registry.ts:41] Plugin-defined context registration 仍是后续工作。[E: CONTEXT.md:121]

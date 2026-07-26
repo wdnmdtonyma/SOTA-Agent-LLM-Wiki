@@ -10,7 +10,7 @@ source:
   - packages/llm/src/tool-runtime.ts
   - packages/schema/src/llm.ts
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 evidence: explicit
 symbols:
   - ToolDefinition

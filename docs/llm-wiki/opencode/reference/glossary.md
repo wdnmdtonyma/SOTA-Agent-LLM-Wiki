@@ -23,7 +23,7 @@ related:
   - integrations.integration-v2
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > opencode glossary 把 V1 当前活跑路径、V2 新内核、shared package 和容易误读的 codename 分开定义，避免把迁移期同名概念混讲。
@@ -78,7 +78,7 @@ updated: 67caf894e
 | `Location` | V2 placement/cache identity；SessionExecution 只有在 drain starts 时通过 `LocationServiceMap.get(session.location)` 进入 Session 当前 Location，Location runner 会 fence new provider turn 防止 moved Session 继续用 source-Location tools/context [E: specs/v2/session.md:167]。 |
 | `Instance` | V1 per-directory runtime context。V1 effect command wrapper 会在 command 需要 instance 时 load `InstanceStore`，提供 `InstanceRef`，并在结束时 dispose context [E: packages/opencode/src/cli/effect-cmd.ts:79] [E: packages/opencode/src/cli/effect-cmd.ts:84] [E: packages/opencode/src/cli/effect-cmd.ts:87] [E: packages/opencode/src/cli/effect-cmd.ts:91] [E: packages/opencode/src/cli/effect-cmd.ts:93]。 |
 | `Project` | Project spec 目标是单个 OpenCode instance 能为多个 project/worktree 运行 sessions [E: specs/project.md:3]；API sketch 以 `/project`、`/project/init`、`/project/:projectID/session` 等 endpoint 表达 project/session 资源 [E: specs/project.md:8] [E: specs/project.md:10] [E: specs/project.md:13]。 |
-| `ShareNext` | V1 import command 使用 `ShareNext` 服务获取 share request metadata，并对返回的 `ShareData[]` 执行 `transformShareData(...)`，把 flat `session`/`message`/`part` items 重组成 `{ info, messages: [{ info, parts }] }` 本地结构 [E: packages/opencode/src/cli/cmd/import.ts:20] [E: packages/opencode/src/cli/cmd/import.ts:21] [E: packages/opencode/src/cli/cmd/import.ts:22] [E: packages/opencode/src/cli/cmd/import.ts:23] [E: packages/opencode/src/cli/cmd/import.ts:49] [E: packages/opencode/src/cli/cmd/import.ts:59] [E: packages/opencode/src/cli/cmd/import.ts:72] [E: packages/opencode/src/cli/cmd/import.ts:74] [E: packages/opencode/src/cli/cmd/import.ts:76] [E: packages/opencode/src/cli/cmd/import.ts:100] [E: packages/opencode/src/cli/cmd/import.ts:130] [E: packages/opencode/src/cli/cmd/import.ts:143]。 |
+| `ShareNext` | V1 import command 使用 `ShareNext` 服务获取 share request metadata，并对返回的 `ShareData[]` 执行 `transformShareData(...)`，把 flat `session`/`message`/`part` items 重组成 `{ info, messages: [{ info, parts }] }` 本地结构 [E: packages/opencode/src/cli/cmd/import.ts:20] [E: packages/opencode/src/cli/cmd/import.ts:21] [E: packages/opencode/src/cli/cmd/import.ts:22] [E: packages/opencode/src/cli/cmd/import.ts:23] [E: packages/opencode/src/cli/cmd/import.ts:60] [E: packages/opencode/src/cli/cmd/import.ts:70] [E: packages/opencode/src/cli/cmd/import.ts:83] [E: packages/opencode/src/cli/cmd/import.ts:85] [E: packages/opencode/src/cli/cmd/import.ts:87] [E: packages/opencode/src/cli/cmd/import.ts:111] [E: packages/opencode/src/cli/cmd/import.ts:141] [E: packages/opencode/src/cli/cmd/import.ts:154]。 |
 
 ## Sources
 

@@ -4,12 +4,15 @@ title: LLM Protocol Engine
 kind: subsystem
 tier: T2
 v: shared
-source: [packages/llm/src/route/]
+source:
+  - packages/llm/src/route/
+  - packages/llm/src/provider-error.ts
+  - packages/llm/test/executor.test.ts
 symbols: [Route.make, Route.compile, RequestExecutor, Protocol, Endpoint, Auth, Framing, Transport]
 related: [model-layer.llm-protocols, model-layer.llm-schema]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > LLM protocol engine 是 `packages/llm` 里的 provider-native 执行层:一个 route 把 `Protocol + Endpoint + Auth + Framing/Transport` 四个轴组合成可执行模型,再由 `Route.compile` 验证 request body、准备 transport,最后交给 `RequestExecutor` 做 HTTP 执行、重试、错误归因和密钥脱敏。
@@ -67,6 +70,8 @@ V2 的 `packages/core/src` 以 `@opencode/v2` 命名空间推进,model catalog �
 
 状态码归因是显式规则:401 变 authentication invalid,403 变 authentication insufficient-permissions,429 根据 quota regex 分成 quota exceeded 或 rate limit,400/404/409/413/422 变 invalid request 并尝试 context overflow 分类,5xx 或其他 retryable status 分支变 provider internal。[E: packages/llm/src/route/executor.ts:236][E: packages/llm/src/route/executor.ts:239][E: packages/llm/src/route/executor.ts:242][E: packages/llm/src/route/executor.ts:253][E: packages/llm/src/route/executor.ts:266][E: packages/llm/src/route/executor.ts:91]
 
+context-overflow classifier 识别多家 provider 的 `request_too_large`、`request entity too large`、maximum-context、too-many-tokens 与 token-limit-exceeded 文案，也把无 body 的 400/413 status 文案视为 overflow；普通带 body 的 `"request too large"` 明确不命中。它只排除以 `Throttling error:` / `Service unavailable:` 开头的文案，以及任意含 rate limit / too many requests 的文案，避免把它们误分类为 context overflow。[E: packages/llm/src/provider-error.ts:4][E: packages/llm/src/provider-error.ts:6][E: packages/llm/src/provider-error.ts:23][E: packages/llm/src/provider-error.ts:30][E: packages/llm/src/provider-error.ts:31][E: packages/llm/src/provider-error.ts:34][E: packages/llm/src/provider-error.ts:36][E: packages/llm/src/provider-error.ts:38][E: packages/llm/test/executor.test.ts:94][E: packages/llm/test/executor.test.ts:102]
+
 重试只在 `error.retryable` 为 true 且剩余次数大于 0 时发生;delay 优先使用 `retry-after`,否则走指数 jitter。[E: packages/llm/src/route/executor.ts:345][E: packages/llm/src/route/executor.ts:359][E: packages/llm/src/route/executor.ts:362]
 
 脱敏不是只脱 header。executor 收集敏感 header/query 值和 bearer token 片段,再对 body 做 replacement,响应 body 也会脱敏并限制到 `BODY_LIMIT = 16_384`。[E: packages/llm/src/route/executor.ts:35][E: packages/llm/src/route/executor.ts:166][E: packages/llm/src/route/executor.ts:191][E: packages/llm/src/route/executor.ts:197]
@@ -85,6 +90,8 @@ OpenAI Responses 同时拥有 HTTP+SSE route 与 WebSocket route,两条 route �
 
 ## Sources
 - packages/llm/src/route/
+- packages/llm/src/provider-error.ts
+- packages/llm/test/executor.test.ts
 - packages/llm/src/protocols/openai-responses.ts
 
 ## Related

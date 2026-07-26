@@ -9,7 +9,7 @@ symbols: [SessionPrompt, SessionPrompt.prompt, SessionPrompt.loop, SessionPrompt
 related: [spine.v1-turn-loop, session-v1.processor]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > `SessionPrompt` 是 V1 当前活跑的 session 编排器:它创建 user message,驱动 assistant `runLoop`,并把 command、subtask、shell 这些入口统一写成 V1 `SessionV1` message/part 历史;旧的 prompt-level V2 mirror gate 已从当前文件移除。

@@ -9,7 +9,7 @@ symbols: [SessionV2.prompt, SessionInput.admit, SessionInput.Admitted, SessionIn
 related: [spine.v2-coordinator, session-v2.inbox]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V2 admission 是把用户 prompt 先写成 durable inbox event,再由 runner promotion 与 projector 转成 model-visible user history 的机制。

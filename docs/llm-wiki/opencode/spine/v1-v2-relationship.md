@@ -4,12 +4,12 @@ title: V1/V2 关系与迁移边界
 kind: flow
 tier: T0
 v: shared
-source: [packages/opencode/src/cli/cmd/run.ts, packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts, packages/opencode/src/server/routes/instance/httpapi/server.ts, packages/opencode/src/session/processor.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/llm.ts, packages/opencode/src/session/message-v2.ts, packages/opencode/src/effect/runtime-flags.ts, packages/opencode/src/event-v2-bridge.ts, packages/schema/src/event-manifest.ts, packages/schema/src/durable-event-manifest.ts, packages/core/src/session.ts, packages/core/src/session/execution.ts, packages/core/src/session/execution/local.ts, packages/core/src/session/runner/llm.ts, packages/server/src/routes.ts, packages/sdk-next/src/opencode.ts]
+source: [packages/opencode/src/cli/cmd/run.ts, packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts, packages/opencode/src/server/routes/instance/httpapi/server.ts, packages/opencode/src/session/processor.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/llm.ts, packages/opencode/src/session/message-v2.ts, packages/opencode/src/effect/runtime-flags.ts, packages/opencode/src/event-v2-bridge.ts, packages/schema/src/event-manifest.ts, packages/schema/src/durable-event-manifest.ts, packages/core/src/event.ts, packages/core/src/session.ts, packages/core/src/session/execution.ts, packages/core/src/session/execution/local.ts, packages/core/src/session/runner/llm.ts, packages/server/src/routes.ts, packages/sdk-next/src/opencode.ts]
 symbols: [RuntimeFlags.experimentalEventSystem, EventV2Bridge, SessionV2, SessionExecutionLocal, OpenCode.create]
 related: [spine.v1-turn-loop, spine.v2-overview]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > V1/V2 迁移边界是:默认 opencode CLI/server 仍保留 V1 session prompt loop,但 V1 durable events 与 V2 durable events 共享 EventV2/manifest/projector 基础设施;current V2 embedded API 通过 server routes 与 sdk-next 接入,不再通过已删除的 `packages/core/src/public/opencode.ts`。
@@ -17,7 +17,7 @@ updated: 67caf894e
 ## 能回答的问题
 - 现在默认 CLI prompt 跑 V1 还是 V2?
 - V1 event 到 V2 read model 的桥在哪里?
-- V2 的当前公开接通点是什么?
+- V2 的 current same-process 接通点是什么?
 - `SessionV2` 哪些操作已经可用,哪些仍抛 `OperationUnavailableError`?
 - `EventV2Bridge` 与 `GlobalBus` 的当前关系是什么?
 
@@ -45,7 +45,7 @@ flowchart TD
 
 V1 prompt/processor 当前通过 `EventV2Bridge.Service` 取得 event service;`EventV2Bridge` 包装 `EventV2.Service.publish`,没有 location 时从 `InstanceRef`/`WorkspaceRef` 补 location,并监听 EventV2 后 fan-out 到 `GlobalBus`。[E: packages/opencode/src/session/prompt.ts:140][E: packages/opencode/src/session/processor.ts:95][E: packages/opencode/src/event-v2-bridge.ts:12][E: packages/opencode/src/event-v2-bridge.ts:19][E: packages/opencode/src/event-v2-bridge.ts:22][E: packages/opencode/src/event-v2-bridge.ts:24][E: packages/opencode/src/event-v2-bridge.ts:25][E: packages/opencode/src/event-v2-bridge.ts:39]
 
-V1 durable events 是 EventV2 durable manifest 的一部分:global durable manifest 合并 `SessionV1.Event.Definitions` 中 durable 的定义与 V2 `SessionEvent.DurableDefinitions`。[E: packages/schema/src/durable-event-manifest.ts:12][E: packages/schema/src/durable-event-manifest.ts:13][E: packages/schema/src/durable-event-manifest.ts:14]
+V1 durable events 是 EventV2 durable manifest 的一部分:global durable manifest 合并 `SessionV1.Event.Definitions` 中 durable 的定义与 V2 `SessionEvent.DurableDefinitions`，而 `EventV2` runtime 直接导入该 `Durable` manifest。[E: packages/schema/src/durable-event-manifest.ts:12][E: packages/schema/src/durable-event-manifest.ts:13][E: packages/schema/src/durable-event-manifest.ts:14][E: packages/core/src/event.ts:12]
 
 `RuntimeFlags.experimentalEventSystem` 仍由 `OPENCODE_EXPERIMENTAL_EVENT_SYSTEM` 或伞形 `OPENCODE_EXPERIMENTAL` 启用,但当前 session prompt/processor 源文件没有用该 flag gate EventV2Bridge 发布路径;它仍被 TUI plugin plumbing 使用。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:11][E: packages/opencode/src/effect/runtime-flags.ts:49][I]
 
@@ -59,7 +59,7 @@ V1 durable events 是 EventV2 durable manifest 的一部分:global durable manif
 
 legacy opencode server 也在 instance HttpApi server layer 中提供 V2 session graph:它构建 `locationServiceMapV2`,并把 `SessionV2.node` 的 `LocationServiceMap.node` 和 `SessionExecution.node` 分别替换成 V2 location map 与 `SessionExecutionLocal.node`。[E: packages/opencode/src/server/routes/instance/httpapi/server.ts:274][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:299][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:300][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:301]
 
-`packages/sdk-next/src/opencode.ts` 的 embedded SDK 通过 `createEmbeddedRoutes()` 建本地 web handler,再用 generated `OpenCode.make` 创建 client,并额外暴露 `tools.register`。[E: packages/sdk-next/src/opencode.ts:10][E: packages/sdk-next/src/opencode.ts:23][E: packages/sdk-next/src/opencode.ts:35][E: packages/sdk-next/src/opencode.ts:41]
+`packages/sdk-next/src/opencode.ts` 的 embedded SDK 通过 `createEmbeddedRoutes()` 建本地 web handler，把 direct handler 包成 local fetch，再用 generated `OpenCode.make` 创建 client，并额外暴露 `tools.register`。[E: packages/sdk-next/src/opencode.ts:10][E: packages/sdk-next/src/opencode.ts:22][E: packages/sdk-next/src/opencode.ts:23][E: packages/sdk-next/src/opencode.ts:32][E: packages/sdk-next/src/opencode.ts:35][E: packages/sdk-next/src/opencode.ts:41]
 
 `SessionExecutionLocal` 的 drain 会从 `SessionStore` 读 session,用 `LocationServiceMap.get(session.location)` 找 location-scoped services,再调用 `SessionRunner.Service.use(runner => runner.run(...))`。[E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:20][E: packages/core/src/session/execution/local.ts:21]
 
@@ -89,6 +89,7 @@ legacy opencode server 也在 instance HttpApi server layer 中提供 V2 session
 - packages/opencode/src/event-v2-bridge.ts
 - packages/schema/src/event-manifest.ts
 - packages/schema/src/durable-event-manifest.ts
+- packages/core/src/event.ts
 - packages/core/src/session.ts
 - packages/core/src/session/execution.ts
 - packages/core/src/session/execution/local.ts

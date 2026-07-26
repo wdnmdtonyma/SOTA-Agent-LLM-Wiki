@@ -19,7 +19,7 @@
 - **TypeScript / Effect monorepo**:workspace globs 当前展开为 36 个 package,核心集中在 `packages/`,全栈基于 Effect(Layer/Service/Context/Schema)。Bun 运行时,Turborepo + catalog 版本管理。
 - **★ V1→V2 迁移 = 全 wiki 的组织主线**:opencode **一套进程跑两代代码**。
   - **V1(当前活跑路径)** = `packages/opencode/src`,基于 Vercel **AI SDK**;链路 `SessionPrompt.runLoop → SessionProcessor → LLM.stream`;CLI → 进程内 Effect HttpApi server → SDK → session。
-  - **V2(新内核,多数已建但未设为默认)** = `packages/core/src`,命名空间 `@opencode/v2`,Effect-native,durable + 事件溯源(`SessionV2`/`SessionExecution`/`SessionRunner`、System Context 代数、`EventV2`);目前仅经 `core/src/public/opencode.ts` 的嵌入式 API 真正接通执行。
+  - **V2(新内核,多数已建但未设为默认)** = `packages/core/src`,命名空间 `@opencode/v2`,Effect-native,durable + 事件溯源(`SessionV2`/`SessionExecution`/`SessionRunner`、System Context 代数、`EventV2`);current same-process 接通点位于 `packages/sdk-next/src/opencode.ts` 与 `packages/server/src/routes.ts`,旧 `core/src/public/*` facade 已删除。
   - **`packages/llm`** = 原生 provider 协议引擎(Route/Protocol/Transport/Auth);V1 里是可选 seam(`OPENCODE_EXPERIMENTAL_NATIVE_LLM`),V2 里是执行引擎。
   - **`packages/codemode`** = confined orchestration interpreter;V1 通过 experimental wire tool `execute` 把 permission 可见的 MCP tools 映射进显式 tool tree。
   - 每个节点 frontmatter 带 `v: v1 | v2 | shared | na`;**hybrid 组织**:一概念一节点、内部分 V1/V2 小节;只有实现真正分叉到值得各自成页时(session 内核、tool 系统、permissions、shell、patch、compaction)才拆 `-v1`/`-v2`。
@@ -58,13 +58,13 @@ _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
 
 ## 方法 & 状态
 
-逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `67caf894e`，共 186 个 verified 节点 + 14 个 grouped-catalog 组；本轮为新增 Code Mode 建立 T1 `execute` 与 T2 package subsystem 两个节点。
+逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `7534d23551`，共 188 个 verified 节点 + 14 个 grouped-catalog 组；本轮新增 App legacy/current server 兼容层与 branch-keyed repository cache 两个 T2 节点。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱 + worked traces | 15 | verified |
 | T1 surface | tools(18)+ agents/prompts/cli/config/providers/server-api/sdk/plugin-api | 42 | verified |
-| T2 subsystems | tools(含 Code Mode)+ session/model/execution/integrations/persistence/TUI/server/clients/infra/peripheral | 97 | verified |
+| T2 subsystems | tools(含 Code Mode)+ session/model/execution/integrations/persistence/TUI/server/clients/infra/peripheral | 99 | verified |
 | T3 reference | tool/llm/exec/config/db/lsp/formatter/tui catalog + glossary + package 索引 + uncertainty | 32 | verified |
 
 更新入口以 `index.json.updated` 与各节点 `updated` 为准；`tools/reconcile.mjs` 负责 frontmatter→index 同步，`tools/lint.mjs` 负责结构与证据锚点机械校验。

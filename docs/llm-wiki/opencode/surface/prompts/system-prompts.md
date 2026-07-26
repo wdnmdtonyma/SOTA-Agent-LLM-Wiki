@@ -13,7 +13,11 @@ source:
   - packages/opencode/src/session/reminders.ts
   - packages/opencode/src/session/prompt/
   - packages/core/src/session/runner/max-steps.ts
-updated: 67caf894e
+symbols:
+  - SystemPrompt.provider
+  - SystemPrompt.Service
+  - LLMRequestPrep.prepare
+updated: 7534d23551
 evidence: explicit
 ---
 
@@ -21,7 +25,7 @@ evidence: explicit
 
 ## 能回答的问题
 
-- 一个 model 会拿到 `anthropic`、`beast`、`codex`、`gpt`、`gemini`、`kimi`、`trinity` 还是 `default` prompt。
+- 一个 model 会拿到 `meta`、`anthropic`、`beast`、`codex`、`gpt`、`gemini`、`kimi`、`trinity` 还是 `default` prompt。
 - agent-level `prompt` 如何覆盖 model-family prompt。
 - plan/build mode reminder 如何作为 synthetic text part 注入。
 - `session/prompt/*.txt` 里哪些文件被源码引用，哪些疑似 orphan。
@@ -32,6 +36,7 @@ evidence: explicit
 
 | match 条件 | prompt family | source line |
 | --- | --- | --- |
+| `model.api.id` 包含 `muse-spark` | `meta.txt` | [E: packages/opencode/src/session/system.ts:28] |
 | `model.api.id` 包含 `gpt-4`、`o1` 或 `o3` | `beast.txt` | [E: packages/opencode/src/session/system.ts:29] |
 | `model.api.id` 包含 `gpt` 且包含 `codex` | `codex.txt` | [E: packages/opencode/src/session/system.ts:33] |
 | `model.api.id` 包含 `gpt` 但不包含 `codex` | `gpt.txt` | [E: packages/opencode/src/session/system.ts:35] |
@@ -41,7 +46,9 @@ evidence: explicit
 | lower-case `model.api.id` 包含 `kimi` | `kimi.txt` | [E: packages/opencode/src/session/system.ts:40] |
 | 以上条件都不满足 | `default.txt` | [E: packages/opencode/src/session/system.ts:41] |
 
-导入表显示这些 family prompt 的真实 `.txt` 文件：`anthropic.txt`、`default.txt`、`beast.txt`、`gemini.txt`、`gpt.txt`、`kimi.txt`、`codex.txt` 和 `trinity.txt`。[E: packages/opencode/src/session/system.ts:6][E: packages/opencode/src/session/system.ts:15]
+导入表显示这些 family prompt 的真实 `.txt` 文件，包括 `meta.txt` 与其余 Anthropic/GPT/Gemini/Kimi/Trinity/default families。[E: packages/opencode/src/session/system.ts:6][E: packages/opencode/src/session/system.ts:7][E: packages/opencode/src/session/system.ts:8][E: packages/opencode/src/session/system.ts:9][E: packages/opencode/src/session/system.ts:10][E: packages/opencode/src/session/system.ts:11][E: packages/opencode/src/session/system.ts:12][E: packages/opencode/src/session/system.ts:14][E: packages/opencode/src/session/system.ts:15]
+
+目标 SHA 的 `meta.txt` 由 `system.ts` 导入，并由 `muse-spark` 分支返回，因此是 live prompt 而不是 orphan；该 wiring 只影响命中 `muse-spark` 的 model family。[E: packages/opencode/src/session/system.ts:12][E: packages/opencode/src/session/system.ts:28] prompt 本身要求简短、直接客观的沟通、源码位置引用、执行验证、证据优先、约束持续生效，并给出 file/Todo/Task/parallel tool 规则。[E: packages/opencode/src/session/prompt/meta.txt:1][E: packages/opencode/src/session/prompt/meta.txt:6][E: packages/opencode/src/session/prompt/meta.txt:8][E: packages/opencode/src/session/prompt/meta.txt:10][E: packages/opencode/src/session/prompt/meta.txt:17][E: packages/opencode/src/session/prompt/meta.txt:18][E: packages/opencode/src/session/prompt/meta.txt:25][E: packages/opencode/src/session/prompt/meta.txt:29][E: packages/opencode/src/session/prompt/meta.txt:37][E: packages/opencode/src/session/prompt/meta.txt:43][E: packages/opencode/src/session/prompt/meta.txt:48]
 
 ## LLM Request 拼装
 
@@ -81,6 +88,7 @@ session loop 在构造 model request 前调用 `SessionReminders.apply()`；当 
 | `gemini.txt` | imported by `system.ts` | Gemini prompt family。[E: packages/opencode/src/session/system.ts:9] |
 | `gpt.txt` | imported by `system.ts` | non-codex GPT prompt family。[E: packages/opencode/src/session/system.ts:10] |
 | `kimi.txt` | imported by `system.ts` | Kimi prompt family。[E: packages/opencode/src/session/system.ts:11] |
+| `meta.txt` | imported by `system.ts` | `muse-spark` prompt family；目标 SHA 已重写其沟通、验证与工具使用规则。[E: packages/opencode/src/session/system.ts:12][E: packages/opencode/src/session/system.ts:28] |
 | `trinity.txt` | imported by `system.ts` | Trinity prompt family。[E: packages/opencode/src/session/system.ts:15] |
 | `build-switch.txt` | imported by `reminders.ts` | 从 plan 切回 build 时提醒执行 plan。[E: packages/opencode/src/session/reminders.ts:12] |
 | `plan-mode.txt` | imported by `reminders.ts` | experimental plan mode 进入 plan 时的长 reminder。[E: packages/opencode/src/session/reminders.ts:13] |
@@ -109,6 +117,7 @@ session loop 在构造 model request 前调用 `SessionReminders.apply()`；当 
 - `packages/opencode/src/session/prompt/gemini.txt`
 - `packages/opencode/src/session/prompt/gpt.txt`
 - `packages/opencode/src/session/prompt/kimi.txt`
+- `packages/opencode/src/session/prompt/meta.txt`
 - `packages/opencode/src/session/prompt/plan-mode.txt`
 - `packages/opencode/src/session/prompt/plan-reminder-anthropic.txt`
 - `packages/opencode/src/session/prompt/plan.txt`

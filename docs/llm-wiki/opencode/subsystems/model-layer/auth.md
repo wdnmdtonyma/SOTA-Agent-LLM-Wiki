@@ -9,7 +9,7 @@ symbols: [Auth.Service, ProviderAuth.Service, Account.Service, Credential.Servic
 related: [provider.auth-accounts, model-layer.credential-v2, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > Model auth 横跨两代:V1 用 `auth.json` + provider auth hooks + account device flow 给 AI SDK provider registry 提供 key/OAuth token;V2 把 credentials 放进 SQLite `Credential` 表,并用 `Integration` 管 key/OAuth/env connection 与 OAuth attempt。

@@ -17,12 +17,18 @@ source:
   - packages/session-ui/src/v2/components/attachment-card-v2.tsx
   - packages/session-ui/src/v2/components/prompt-input/attachments.ts
   - packages/session-ui/src/v2/components/prompt-input/index.tsx
+  - packages/session-ui/src/v2/components/prompt-input/interaction.ts
+  - packages/session-ui/src/v2/components/prompt-input/machine.ts
+  - packages/session-ui/src/v2/components/prompt-input/store.ts
   - packages/session-ui/src/v2/components/prompt-input/types.ts
   - packages/session-ui/src/v2/components/session-review-v2.tsx
+  - packages/app/e2e/regression/prompt-input-v2-command-draft.spec.ts
 symbols:
   - ButtonV2
   - ThemeProvider
   - PromptInputV2
+  - transitionPromptInputV2
+  - createPromptInputV2Store
   - AttachmentCardV2
   - SessionReviewV2
 related:
@@ -30,7 +36,7 @@ related:
   - clients.storybook
 evidence: explicit
 status: verified
-updated: 67caf894e
+updated: 7534d23551
 ---
 
 > 共享 UI 层由 `@opencode-ai/ui` 的 design-system primitives 与 `@opencode-ai/session-ui` 的 session-facing components 组成；前者提供 theme/i18n/icons 和 v1/v2 primitives，后者组装 prompt input、attachments、message timeline 与 review surfaces。
@@ -43,13 +49,14 @@ updated: 67caf894e
 - theme provider 如何把 theme JSON 转成 CSS variables?
 - UI i18n dictionary 覆盖哪些通用文案?
 - 新的 `@opencode-ai/session-ui/v2/prompt-input` 如何表示 prompt parts、attachments 与 comments?
+- V2 prompt input 怎样在 cursor 位置插入文本，并区分 inline command 与 populated command menu?
 - V2 session review 为什么不应并入 `packages/app` 节点?
 
 ## 职责边界
 
 `@opencode-ai/ui` 是 presentation primitive library, 不是 App shell。package exports 将 `./*` 映射到 `src/components/*.tsx`, 将 `./v2/*` 映射到 `src/v2/components/*.tsx`, 还暴露 i18n、hooks、context、storybook fixtures/scaffold、styles、theme、icons、fonts、audio 等资源 [E: packages/ui/package.json:35] [E: packages/ui/package.json:37] [E: packages/ui/package.json:38] [E: packages/ui/package.json:39] [E: packages/ui/package.json:40] [E: packages/ui/package.json:42] [E: packages/ui/package.json:44] [E: packages/ui/package.json:46] [E: packages/ui/package.json:48] [E: packages/ui/package.json:49] [E: packages/ui/package.json:50] [E: packages/ui/package.json:51] [E: packages/ui/package.json:52] [E: packages/ui/package.json:53] [E: packages/ui/package.json:54] [E: packages/ui/package.json:55] [E: packages/ui/package.json:56]。
 
-`@opencode-ai/session-ui` 是同一 presentation boundary 中的 session-specific 层，它依赖 `@opencode-ai/ui` 并分别暴露 legacy components、`./v2/*` 以及 prompt-input 的 component/interaction/store/types 入口 [E: packages/session-ui/package.json:2] [E: packages/session-ui/package.json:8] [E: packages/session-ui/package.json:20] [E: packages/session-ui/package.json:22] [E: packages/session-ui/package.json:23] [E: packages/session-ui/package.json:24] [E: packages/session-ui/package.json:25] [E: packages/session-ui/package.json:44]。因此本轮新增的 V2 prompt-input/review/attachment 组件归入本 `clients.ui` 节点，而不是 `clients.app` 的 routing/state shell [I]。
+`@opencode-ai/session-ui` 是同一 presentation boundary 中的 session-specific 层，它依赖 `@opencode-ai/ui` 并分别暴露 legacy components、`./v2/*` 以及 prompt-input 的 component/interaction/store/types 入口 [E: packages/session-ui/package.json:2] [E: packages/session-ui/package.json:8] [E: packages/session-ui/package.json:20] [E: packages/session-ui/package.json:22] [E: packages/session-ui/package.json:23] [E: packages/session-ui/package.json:24] [E: packages/session-ui/package.json:25] [E: packages/session-ui/package.json:45]。因此本轮新增的 V2 prompt-input/review/attachment 组件归入本 `clients.ui` 节点，而不是 `clients.app` 的 routing/state shell [I]。
 
 V1/V2 关系: UI 包自身是 `v: na`, 但它暴露两个 design-system generation。`./*` 是旧组件入口, `./v2/*` 是 v2 组件入口 [E: packages/ui/package.json:37] [E: packages/ui/package.json:55]。
 
@@ -69,7 +76,8 @@ V1/V2 关系: UI 包自身是 `v: na`, 但它暴露两个 design-system generati
 | `packages/ui/src/v2/components/button-v2.tsx` | v2 component pattern。导入自己的 CSS, variant set 包含 `neutral/danger/warning/outline/contrast/ghost/ghost-muted/loading`, render 时写 `data-component="button-v2"` [E: packages/ui/src/v2/components/button-v2.tsx:4] [E: packages/ui/src/v2/components/button-v2.tsx:6] [E: packages/ui/src/v2/components/button-v2.tsx:10] [E: packages/ui/src/v2/components/button-v2.tsx:20]。 |
 | `packages/ui/src/theme/context.tsx` | ThemeProvider。动态 glob `./themes/*.json`, 本地存储 theme/color scheme, 注入 `#oc-theme` style element, 暴露 preview/commit/cancel/register APIs [E: packages/ui/src/theme/context.tsx:28] [E: packages/ui/src/theme/context.tsx:14] [E: packages/ui/src/theme/context.tsx:16] [E: packages/ui/src/theme/context.tsx:119] [E: packages/ui/src/theme/context.tsx:123] [E: packages/ui/src/theme/context.tsx:326] [E: packages/ui/src/theme/context.tsx:327] [E: packages/ui/src/theme/context.tsx:353] [E: packages/ui/src/theme/context.tsx:363]。 |
 | `packages/ui/src/theme/v2/resolve.ts` | v2 token resolver。生成 primitive ramps, semantic tokens, foreground tokens, 输出 CSS variables [E: packages/ui/src/theme/v2/resolve.ts:9] [E: packages/ui/src/theme/v2/resolve.ts:109] [E: packages/ui/src/theme/v2/resolve.ts:121] [E: packages/ui/src/theme/v2/resolve.ts:135] [E: packages/ui/src/theme/v2/resolve.ts:137] [E: packages/ui/src/theme/v2/resolve.ts:138] [E: packages/ui/src/theme/v2/resolve.ts:149]。 |
-| `packages/session-ui/src/v2/components/prompt-input/index.tsx` | `PromptInputV2` view 边界：文件选择、drag/drop、attachments/comments cards、contenteditable editor、command/context/agent/model controls 和 submit/stop [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:44] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:73] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:105] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:127] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:147] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:197] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:241]。 |
+| `packages/session-ui/src/v2/components/prompt-input/index.tsx` | `PromptInputV2` view 边界：文件选择、drag/drop、attachments/comments cards、contenteditable editor、command/context/agent/model controls 和 submit/stop [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:46] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:75] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:107] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:129] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:149] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:199] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:247]。 |
+| `packages/session-ui/src/v2/components/prompt-input/{machine,interaction,store}.ts` | interaction state machine 解释 keyboard/popover 事件，controller 执行 commands/host actions，store 维护 cursor-aware structured draft；三者把状态转移、host side effect 与 persisted prompt 分开 [E: packages/session-ui/src/v2/components/prompt-input/machine.ts:59] [E: packages/session-ui/src/v2/components/prompt-input/interaction.ts:162] [E: packages/session-ui/src/v2/components/prompt-input/store.ts:20]。 |
 | `packages/session-ui/src/v2/components/session-review-v2.tsx` | V2 review surface 接收 files/active file/diff style/expand mode，提供可缩放 sidebar、filter 和前后文件导航 [E: packages/session-ui/src/v2/components/session-review-v2.tsx:23] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:30] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:61] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:88] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:150] [E: packages/session-ui/src/v2/components/session-review-v2.tsx:181]。 |
 
 ## 数据模型
@@ -77,6 +85,8 @@ V1/V2 关系: UI 包自身是 `v: na`, 但它暴露两个 design-system generati
 v1 `ButtonProps` 允许 `size: "small" | "normal" | "large"`, `variant: "primary" | "secondary" | "ghost"`, `icon` 来自 `IconProps["name"]` [E: packages/ui/src/components/button.tsx:5] [E: packages/ui/src/components/button.tsx:8] [E: packages/ui/src/components/button.tsx:9] [E: packages/ui/src/components/button.tsx:10]。v2 `ButtonV2Props` 同样保留 size/icon, 但 variant 集合换成 `neutral`, `danger`, `warning`, `outline`, `contrast`, `ghost`, `ghost-muted`, `loading` [E: packages/ui/src/v2/components/button-v2.tsx:6] [E: packages/ui/src/v2/components/button-v2.tsx:9] [E: packages/ui/src/v2/components/button-v2.tsx:10]。
 
 `PromptInputV2Prompt` 是 text/file/agent/image attachment 的 union；persisted state 另带 cursor、model 和 comment context items [E: packages/session-ui/src/v2/components/prompt-input/types.ts:9] [E: packages/session-ui/src/v2/components/prompt-input/types.ts:28] [E: packages/session-ui/src/v2/components/prompt-input/types.ts:37] [E: packages/session-ui/src/v2/components/prompt-input/types.ts:68] [E: packages/session-ui/src/v2/components/prompt-input/types.ts:72]。attachment helper 对 picker/paste/drop 走同一添加路径，将 image/PDF/text-like 文件转为 data URL，并拒绝明显 binary payload [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:82] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:97] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:104] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:125] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:160] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:235] [E: packages/session-ui/src/v2/components/prompt-input/attachments.ts:246]。
+
+store 的 `addText()` 按 persisted cursor 把文本插入 structured prompt，并重新计算非 image parts 的 offsets；mention insertion 复用同一 offset normalization。[E: packages/session-ui/src/v2/components/prompt-input/store.ts:50] [E: packages/session-ui/src/v2/components/prompt-input/store.ts:53] [E: packages/session-ui/src/v2/components/prompt-input/store.ts:96] [E: packages/session-ui/src/v2/components/prompt-input/store.ts:114] [E: packages/session-ui/src/v2/components/prompt-input/store.ts:137] [E: packages/session-ui/src/v2/components/prompt-input/store.ts:140]
 
 Theme context 的 store 包含 `themes`, `themeId`, `colorScheme`, `mode`, `previewThemeId`, `previewScheme` [E: packages/ui/src/theme/context.tsx:183] [E: packages/ui/src/theme/context.tsx:184] [E: packages/ui/src/theme/context.tsx:187] [E: packages/ui/src/theme/context.tsx:188] [E: packages/ui/src/theme/context.tsx:189] [E: packages/ui/src/theme/context.tsx:190] [E: packages/ui/src/theme/context.tsx:191]。默认 theme id 是 `oc-2`, 并且 `oc-1` 会 normalize 到 `oc-2` [E: packages/ui/src/theme/context.tsx:87] [E: packages/ui/src/theme/context.tsx:180]。
 
@@ -89,6 +99,7 @@ v2 theme primitive steps 是 100 到 1200, `generateV2Primitives` 从 neutral/in
 3. `applyThemeCss` 同时调用 v1 `themeToCss` 和 v2 `themeV2ToCss`, 合并写入 `:root` CSS variables [E: packages/ui/src/theme/context.tsx:133] [E: packages/ui/src/theme/context.tsx:136] [E: packages/ui/src/theme/context.tsx:137] [E: packages/ui/src/theme/context.tsx:138] [E: packages/ui/src/theme/context.tsx:144] [E: packages/ui/src/theme/context.tsx:147] [E: packages/ui/src/theme/context.tsx:148]。
 4. `createEffect` 监听当前 theme/mode/color scheme, 有 theme 时调用 `applyTheme(theme, store.themeId, store.mode, store.colorScheme)`；`onThemeApplied` 因此能同时获得 resolved mode 和用户选择的 scheme [E: packages/ui/src/theme/context.tsx:176] [E: packages/ui/src/theme/context.tsx:178] [E: packages/ui/src/theme/context.tsx:281] [E: packages/ui/src/theme/context.tsx:284]。
 5. Components 通过 Kobalte primitive + data attributes 表达状态, 例如 `Button` 和 `ButtonV2` 都把 size/variant/icon 写成 data attributes 给 CSS 消费 [E: packages/ui/src/components/button.tsx:16] [E: packages/ui/src/components/button.tsx:18] [E: packages/ui/src/components/button.tsx:19] [E: packages/ui/src/components/button.tsx:20] [E: packages/ui/src/components/button.tsx:21] [E: packages/ui/src/v2/components/button-v2.tsx:18] [E: packages/ui/src/v2/components/button-v2.tsx:20] [E: packages/ui/src/v2/components/button-v2.tsx:21] [E: packages/ui/src/v2/components/button-v2.tsx:22] [E: packages/ui/src/v2/components/button-v2.tsx:23]。
+6. `inputChanged()` 只用 cursor 之前的文本识别 `@` context trigger；command menu 在 draft 已 populated 时进入独立 search focus。若 populated command menu 选择的是 host built-in action，controller 不执行 state-machine 的 draft replacement，所以原 draft 保留；新增 e2e 用 `model.choose` 固定该行为。[E: packages/session-ui/src/v2/components/prompt-input/machine.ts:96] [E: packages/session-ui/src/v2/components/prompt-input/machine.ts:120] [E: packages/session-ui/src/v2/components/prompt-input/machine.ts:131] [E: packages/session-ui/src/v2/components/prompt-input/interaction.ts:165] [E: packages/session-ui/src/v2/components/prompt-input/interaction.ts:167] [E: packages/session-ui/src/v2/components/prompt-input/interaction.ts:183] [E: packages/app/e2e/regression/prompt-input-v2-command-draft.spec.ts:10] [E: packages/app/e2e/regression/prompt-input-v2-command-draft.spec.ts:44] [E: packages/app/e2e/regression/prompt-input-v2-command-draft.spec.ts:49]
 
 ## 设计动机与权衡
 
@@ -99,6 +110,7 @@ UI 包把 low-level components、theme、i18n、icons 和 render helpers 收进�
 - v2 组件入口映射到 `src/v2/components/*.tsx` [E: packages/ui/package.json:55]; 它不是 `packages/core` V2 session kernel, 而是 UI design-system generation [I]。
 - Theme provider 同时生成旧 token 和 `--v2-*` token [E: packages/ui/src/theme/context.tsx:137] [E: packages/ui/src/theme/context.tsx:138] [E: packages/ui/src/theme/context.tsx:148] [E: packages/ui/src/theme/v2/resolve.ts:149], 所以某个页面使用 v2 component 不一定需要另起 theme provider [I]。
 - `@opencode-ai/session-ui` 的 `v2` 同样是 UI generation，不是 V2 session kernel；它从 `@opencode-ai/ui/v2/*` 复用 primitives [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:6] [E: packages/session-ui/src/v2/components/prompt-input/index.tsx:11]。
+- command selection 不是一律保留或一律清空 draft：保留规则只针对 populated `command-menu` 中由 host 返回 action 的 selection；inline command 仍执行 replacement/cleanup 路径。[E: packages/session-ui/src/v2/components/prompt-input/interaction.ts:165] [E: packages/session-ui/src/v2/components/prompt-input/interaction.ts:168]
 
 ## Sources
 
@@ -114,8 +126,12 @@ UI 包把 low-level components、theme、i18n、icons 和 render helpers 收进�
 - `packages/session-ui/src/v2/components/attachment-card-v2.tsx`
 - `packages/session-ui/src/v2/components/prompt-input/attachments.ts`
 - `packages/session-ui/src/v2/components/prompt-input/index.tsx`
+- `packages/session-ui/src/v2/components/prompt-input/interaction.ts`
+- `packages/session-ui/src/v2/components/prompt-input/machine.ts`
+- `packages/session-ui/src/v2/components/prompt-input/store.ts`
 - `packages/session-ui/src/v2/components/prompt-input/types.ts`
 - `packages/session-ui/src/v2/components/session-review-v2.tsx`
+- `packages/app/e2e/regression/prompt-input-v2-command-draft.spec.ts`
 
 ## 相关
 
