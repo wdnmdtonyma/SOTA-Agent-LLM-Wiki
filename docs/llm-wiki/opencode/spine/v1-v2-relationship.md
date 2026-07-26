@@ -4,7 +4,7 @@ title: V1/V2 关系与迁移边界
 kind: flow
 tier: T0
 v: shared
-source: [packages/opencode/src/cli/cmd/run.ts, packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts, packages/opencode/src/server/routes/instance/httpapi/server.ts, packages/opencode/src/session/processor.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/llm.ts, packages/opencode/src/session/message-v2.ts, packages/opencode/src/effect/runtime-flags.ts, packages/opencode/src/event-v2-bridge.ts, packages/schema/src/event-manifest.ts, packages/core/src/session.ts, packages/core/src/session/execution.ts, packages/core/src/session/execution/local.ts, packages/core/src/session/runner/llm.ts, packages/server/src/routes.ts, packages/sdk-next/src/opencode.ts]
+source: [packages/opencode/src/cli/cmd/run.ts, packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts, packages/opencode/src/server/routes/instance/httpapi/server.ts, packages/opencode/src/session/processor.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/llm.ts, packages/opencode/src/session/message-v2.ts, packages/opencode/src/effect/runtime-flags.ts, packages/opencode/src/event-v2-bridge.ts, packages/schema/src/event-manifest.ts, packages/schema/src/durable-event-manifest.ts, packages/core/src/session.ts, packages/core/src/session/execution.ts, packages/core/src/session/execution/local.ts, packages/core/src/session/runner/llm.ts, packages/server/src/routes.ts, packages/sdk-next/src/opencode.ts]
 symbols: [RuntimeFlags.experimentalEventSystem, EventV2Bridge, SessionV2, SessionExecutionLocal, OpenCode.create]
 related: [spine.v1-turn-loop, spine.v2-overview]
 evidence: explicit
@@ -45,7 +45,7 @@ flowchart TD
 
 V1 prompt/processor 当前通过 `EventV2Bridge.Service` 取得 event service;`EventV2Bridge` 包装 `EventV2.Service.publish`,没有 location 时从 `InstanceRef`/`WorkspaceRef` 补 location,并监听 EventV2 后 fan-out 到 `GlobalBus`。[E: packages/opencode/src/session/prompt.ts:140][E: packages/opencode/src/session/processor.ts:95][E: packages/opencode/src/event-v2-bridge.ts:12][E: packages/opencode/src/event-v2-bridge.ts:19][E: packages/opencode/src/event-v2-bridge.ts:22][E: packages/opencode/src/event-v2-bridge.ts:24][E: packages/opencode/src/event-v2-bridge.ts:25][E: packages/opencode/src/event-v2-bridge.ts:39]
 
-V1 durable events 是 EventV2 durable manifest 的一部分:global durable manifest 合并 `SessionV1.Event.Definitions` 中 durable 的定义与 V2 `SessionEvent.DurableDefinitions`。[E: packages/schema/src/event-manifest.ts:34][E: packages/schema/src/event-manifest.ts:37]
+V1 durable events 是 EventV2 durable manifest 的一部分:global durable manifest 合并 `SessionV1.Event.Definitions` 中 durable 的定义与 V2 `SessionEvent.DurableDefinitions`。[E: packages/schema/src/durable-event-manifest.ts:12][E: packages/schema/src/durable-event-manifest.ts:13][E: packages/schema/src/durable-event-manifest.ts:14]
 
 `RuntimeFlags.experimentalEventSystem` 仍由 `OPENCODE_EXPERIMENTAL_EVENT_SYSTEM` 或伞形 `OPENCODE_EXPERIMENTAL` 启用,但当前 session prompt/processor 源文件没有用该 flag gate EventV2Bridge 发布路径;它仍被 TUI plugin plumbing 使用。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:11][E: packages/opencode/src/effect/runtime-flags.ts:49][I]
 
@@ -88,6 +88,7 @@ legacy opencode server 也在 instance HttpApi server layer 中提供 V2 session
 - packages/opencode/src/effect/runtime-flags.ts
 - packages/opencode/src/event-v2-bridge.ts
 - packages/schema/src/event-manifest.ts
+- packages/schema/src/durable-event-manifest.ts
 - packages/core/src/session.ts
 - packages/core/src/session/execution.ts
 - packages/core/src/session/execution/local.ts
