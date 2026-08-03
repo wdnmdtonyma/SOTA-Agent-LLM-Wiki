@@ -9,7 +9,7 @@ symbols: [runLoop]
 related: [spine.agent-loop, subsys.agent-core.message-queue, subsys.agent-core.hooks]
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `subsys.agent-core.turn-control` 聚焦 `runLoop` 如何在一次 agent run 中决定何时开始下一轮 provider request、何时注入 queued messages、何时停止。

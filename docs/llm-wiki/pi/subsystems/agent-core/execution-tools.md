@@ -33,16 +33,16 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `packages/agent` 现在提供一组可复用的 harness execution tools：`bash`、`read`、`edit`、`write`。它们依赖抽象 `ExecutionEnv`，不等同于 coding-agent 产品层的七个内置工具。
 
 ## 公共边界
 
-`AgentHarnessTool<TContext>` 在标准 `AgentTool` 上增加第五个 `context` 参数；`AgentHarness` 每个 turn 解析一次静态或异步 `toolContext`，只把当前 active tools 绑定成 loop 可执行的 `AgentTool`。[E: packages/agent/src/harness/types.ts:99] [E: packages/agent/src/harness/types.ts:105] [E: packages/agent/src/harness/types.ts:115] [E: packages/agent/src/harness/agent-harness.ts:340] [E: packages/agent/src/harness/agent-harness.ts:347] [E: packages/agent/src/harness/agent-harness.ts:354] [E: packages/agent/src/harness/agent-harness.ts:396]
+`AgentHarnessTool<TContext>` 在标准 `AgentTool` 上增加第五个 `context` 参数；`AgentHarness` 每个 turn 解析一次静态或异步 `toolContext`，只把当前 active tools 绑定成 loop 可执行的 `AgentTool`。[E: packages/agent/src/harness/types.ts:99] [E: packages/agent/src/harness/types.ts:105] [E: packages/agent/src/harness/types.ts:115] [E: packages/agent/src/harness/agent-harness.ts:381] [E: packages/agent/src/harness/agent-harness.ts:388] [E: packages/agent/src/harness/agent-harness.ts:395] [E: packages/agent/src/harness/agent-harness.ts:438]
 
-内置 execution tools 的最小 context 是 `{ env: ExecutionEnv }`；package index 公开四个 factory 及其输入/详情类型，并从顶层 `src/index.ts` 重导出。[E: packages/agent/src/harness/tools/tool-context.ts:1] [E: packages/agent/src/harness/tools/tool-context.ts:4] [E: packages/agent/src/harness/tools/index.ts:1] [E: packages/agent/src/harness/tools/index.ts:23] [E: packages/agent/src/index.ts:40]
+内置 execution tools 的最小 context 是 `{ env: ExecutionEnv }`；package index 公开四个 factory 及其输入/详情类型，并从顶层 `src/index.ts` 重导出。[E: packages/agent/src/harness/tools/tool-context.ts:1] [E: packages/agent/src/harness/tools/tool-context.ts:4] [E: packages/agent/src/harness/tools/index.ts:1] [E: packages/agent/src/harness/tools/index.ts:23] [E: packages/agent/src/index.ts:57]
 
 ## 四个工具
 
@@ -56,7 +56,7 @@ read path resolution 先把 Unicode spaces 归一为空格并移除开头 `@`，
 ## L2 证伪与边界
 
 - `harness/tools/index.ts` 只导出四个 factory；`grep`、`find`、`ls` 仍只属于 coding-agent 的产品工具目录，因此不能把这里称为七工具全集。[E: packages/agent/src/harness/tools/index.ts:1] [E: packages/agent/src/harness/tools/index.ts:23]
-- factory 只是可选构件：`AgentHarness` 从调用方传入的 `options.tools` 建表，源码没有自动安装四个工具。[E: packages/agent/src/harness/agent-harness.ts:207] [E: packages/agent/src/harness/agent-harness.ts:211] [E: packages/agent/src/harness/agent-harness.ts:216]
+- factory 只是可选构件：`AgentHarness` 从调用方传入的 `options.tools` 建表，源码没有自动安装四个工具。[E: packages/agent/src/harness/agent-harness.ts:211] [E: packages/agent/src/harness/agent-harness.ts:215] [E: packages/agent/src/harness/agent-harness.ts:220]
 - 这些工具只依赖 `ExecutionEnv`，不携带 coding-agent 的 settings、session env、extension wrapper 或 TUI renderer；两套工具实现应分别阅读。[I]
 
 ## Sources

@@ -1,107 +1,59 @@
 ---
 id: subsys.tui.overlay
-title: 浮窗系统与合成
+title: Overlay 栈、布局与焦点恢复
 kind: subsystem
 tier: T2
 pkg: tui
-source: [packages/tui/src/tui.ts]
-symbols: [showOverlay, OverlayHandle, compositeOverlays]
-related: [subsys.tui.runtime, subsys.tui.diff-engine]
+source:
+  - packages/tui/src/tui.ts
+  - packages/tui/src/tui-main-screen.ts
+  - packages/tui/src/tui-alt-screen.ts
+symbols:
+  - OverlayOptions
+  - OverlayHandle
+  - TuiBase.showOverlay
+  - TuiBase.compositeOverlays
+related:
+  - subsys.tui.runtime
+  - subsys.tui.diff-engine
+  - subsys.tui.alternate-screen
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
-> TUI overlay 是 `TUI` 内部的 floating layer stack: 调用方用 `showOverlay()` 挂载一个 `Component`，TUI 负责 focus capture、临时隐藏、布局定位，并在 differential rendering 前把 overlay lines 合成到底层内容上。
+> Overlay 是 `TuiBase` 的 renderer-neutral 能力：共享栈管理位置、可见性和焦点恢复，main-screen 与 alternate-screen 在各自 frame diff 前调用同一合成器。
 
-## 能回答的问题
+## 栈与句柄
 
-- `showOverlay()` 创建 overlay 时会保存哪些状态，什么时候夺取 keyboard focus？
-- `OverlayHandle` 的 `hide()`、`setHidden()`、`focus()`、`unfocus()` 分别改变什么？
-- `nonCapturing` overlay 和普通 capturing overlay 在 focus restore 上有什么区别？
-- `compositeOverlays()` 如何按层级、尺寸和 viewport 把浮窗叠到底层 lines 上？
-- overlay 为什么会影响 shrink clearing 与 differential rendering 的时机？
+`showOverlay()` 记录 component、options、先前焦点、hidden 状态和单调递增的 `focusOrder`；可见且非 `nonCapturing` 的 overlay 会取得焦点。[E: packages/tui/src/tui.ts:538] [E: packages/tui/src/tui.ts:539] [E: packages/tui/src/tui.ts:542] [E: packages/tui/src/tui.ts:544] [E: packages/tui/src/tui.ts:548]
 
-## 职责边界
+返回的 handle 区分删除 entry 的 `hide()` 与保留 entry 的 `setHidden()`，并支持 bring-to-front 的 `focus()`、显式恢复目标的 `unfocus()` 及状态查询。[E: packages/tui/src/tui.ts:556] [E: packages/tui/src/tui.ts:571] [E: packages/tui/src/tui.ts:592] [E: packages/tui/src/tui.ts:598] [E: packages/tui/src/tui.ts:629]
 
-overlay 系统只处理 terminal UI 内的浮层生命周期、focus policy、布局计算和 line compositing；它不定义具体弹窗内容，overlay 内容仍是普通 `Component.render(width): string[]` 输出。[E: packages/tui/src/tui.ts:70] `showOverlay()` 接受任意 `Component` 和可选 `OverlayOptions`，返回 `OverlayHandle` 给调用方控制该浮层。[E: packages/tui/src/tui.ts:495]
+topmost capturing overlay 按 `focusOrder` 选择，而不是数组位置；`nonCapturing` entry 仍被渲染，但不会成为 fallback focus target。[E: packages/tui/src/tui.ts:664] [E: packages/tui/src/tui.ts:667] [E: packages/tui/src/tui.ts:668]
 
-这个子系统位于 `packages/tui/src/tui.ts` 的 `TUI` class 内部：`overlayStack` 是 overlay entry 数组字段，`focusOrderCounter` 在创建、重新显示或手动 focus overlay 时递增写入 `focusOrder`，`overlayFocusRestore` 记录 overlay focus restore 状态。[E: packages/tui/src/tui.ts:295][E: packages/tui/src/tui.ts:325][E: packages/tui/src/tui.ts:326][E: packages/tui/src/tui.ts:327][E: packages/tui/src/tui.ts:501][E: packages/tui/src/tui.ts:542][E: packages/tui/src/tui.ts:551]
+## 布局与合成
 
-## 关键文件
+overlay width/maxHeight 先按 terminal 尺寸和 margin 解析，支持 absolute/percentage row/col、anchor 与 offsets，最终 clamp 在可用边界内。[E: packages/tui/src/tui.ts:928] [E: packages/tui/src/tui.ts:947] [E: packages/tui/src/tui.ts:951] [E: packages/tui/src/tui.ts:973] [E: packages/tui/src/tui.ts:1018] [E: packages/tui/src/tui.ts:1022]
 
-- `packages/tui/src/tui.ts`: 定义 `OverlayOptions`、`OverlayHandle`、`OverlayStackEntry`，并在 `TUI` 内实现 `showOverlay()`、`hideOverlay()`、`resolveOverlayLayout()`、`compositeOverlays()` 和 `compositeLineAt()`。[E: packages/tui/src/tui.ts:171][E: packages/tui/src/tui.ts:218][E: packages/tui/src/tui.ts:233][E: packages/tui/src/tui.ts:495][E: packages/tui/src/tui.ts:591][E: packages/tui/src/tui.ts:901][E: packages/tui/src/tui.ts:1036][E: packages/tui/src/tui.ts:1180]
+`compositeOverlays()` 过滤 visible entries、按 `focusOrder` 升序渲染，先确定宽度再以真实渲染高度重新定位，并把短 base document pad 到至少一个 viewport 高度。[E: packages/tui/src/tui.ts:1063] [E: packages/tui/src/tui.ts:1071] [E: packages/tui/src/tui.ts:1078] [E: packages/tui/src/tui.ts:1089] [E: packages/tui/src/tui.ts:1098]
 
-## 数据模型
+overlay line 在按列合成前会被防御性截断；底层 `compositeTuiLine()` 遇到 image line 会保留 base image，普通文本则按 terminal columns 拼接并限制总宽。[E: packages/tui/src/tui.ts:1114] [E: packages/tui/src/tui.ts:1116] [E: packages/tui/src/tui.ts:253] [E: packages/tui/src/tui.ts:260] [E: packages/tui/src/tui.ts:278]
 
-### OverlayOptions
+## 与两种 renderer 的关系
 
-`OverlayOptions` 同时描述 sizing、positioning 和 visibility/focus policy: `width`、`minWidth`、`maxHeight` 控制宽高；`anchor`、`offsetX`、`offsetY`、`row`、`col`、`margin` 控制位置；`visible(termWidth, termHeight)` 是判断可见性时调用的 predicate；`nonCapturing` 表示显示时不捕获 keyboard focus。[E: packages/tui/src/tui.ts:171][E: packages/tui/src/tui.ts:174][E: packages/tui/src/tui.ts:176][E: packages/tui/src/tui.ts:178][E: packages/tui/src/tui.ts:182][E: packages/tui/src/tui.ts:184][E: packages/tui/src/tui.ts:186][E: packages/tui/src/tui.ts:190][E: packages/tui/src/tui.ts:192][E: packages/tui/src/tui.ts:196][E: packages/tui/src/tui.ts:204][E: packages/tui/src/tui.ts:206][E: packages/tui/src/tui.ts:615][E: packages/tui/src/tui.ts:505]
+main-screen 在生成完整 document 后合成 overlays，再提取 cursor marker和做 scrollback diff。[E: packages/tui/src/tui-main-screen.ts:164] [E: packages/tui/src/tui-main-screen.ts:172] [E: packages/tui/src/tui-main-screen.ts:174]
 
-`SizeValue` 是 absolute number 或百分比字符串，例如 `"50%"`；百分比会按 reference size 取 `Math.floor(referenceSize * percent / 100)`。[E: packages/tui/src/tui.ts:149][E: packages/tui/src/tui.ts:158]
-
-### OverlayStackEntry
-
-`OverlayStackEntry` 是 runtime stack item，保存 `component`、可选 `options`、打开 overlay 前的 `preFocus`、临时隐藏位 `hidden` 和 `focusOrder`。[E: packages/tui/src/tui.ts:233][E: packages/tui/src/tui.ts:234][E: packages/tui/src/tui.ts:235][E: packages/tui/src/tui.ts:236][E: packages/tui/src/tui.ts:237][E: packages/tui/src/tui.ts:238] `preFocus` 是 focus restore 的关键字段：overlay 被移除或隐藏且当前焦点正是它时，TUI 会尝试转到 topmost visible capturing overlay，否则回到该 entry 的 `preFocus`。[E: packages/tui/src/tui.ts:520][E: packages/tui/src/tui.ts:521][E: packages/tui/src/tui.ts:522][E: packages/tui/src/tui.ts:535][E: packages/tui/src/tui.ts:536][E: packages/tui/src/tui.ts:537]
-
-### OverlayHandle
-
-`OverlayHandle` 是 `showOverlay()` 返回的控制面: `hide()` 永久移除，`setHidden()` 临时隐藏或恢复显示，`isHidden()` 查询隐藏位，`focus()` 重新聚焦并 bring to visual front，`unfocus()` 释放 focus，`isFocused()` 查询当前 focus 是否在该 overlay。[E: packages/tui/src/tui.ts:218][E: packages/tui/src/tui.ts:220][E: packages/tui/src/tui.ts:222][E: packages/tui/src/tui.ts:224][E: packages/tui/src/tui.ts:226][E: packages/tui/src/tui.ts:228][E: packages/tui/src/tui.ts:230]
-
-## 控制流
-
-1. `showOverlay(component, options)` 创建 `OverlayStackEntry`，把当前 `focusedComponent` 存为 `preFocus`，把 `hidden` 初始化为 `false`，并用递增的 `focusOrderCounter` 写入 `focusOrder`。[E: packages/tui/src/tui.ts:495][E: packages/tui/src/tui.ts:496][E: packages/tui/src/tui.ts:499][E: packages/tui/src/tui.ts:500][E: packages/tui/src/tui.ts:501]
-2. `showOverlay()` 将 entry push 到 `overlayStack`；如果 overlay 不是 `nonCapturing` 且当前可见，就调用 `setFocus(component)` 捕获 keyboard focus。[E: packages/tui/src/tui.ts:503][E: packages/tui/src/tui.ts:505][E: packages/tui/src/tui.ts:506]
-3. `showOverlay()` 随后隐藏 terminal cursor 并请求下一次 render；`hide()`、`setHidden()`、`focus()`、`unfocus()` 的状态变更路径也会请求 render，这是 overlay 生命周期和 render scheduler 的直接连接点。[E: packages/tui/src/tui.ts:508][E: packages/tui/src/tui.ts:509][E: packages/tui/src/tui.ts:525][E: packages/tui/src/tui.ts:546][E: packages/tui/src/tui.ts:553][E: packages/tui/src/tui.ts:575][E: packages/tui/src/tui.ts:584]
-4. `hide()` 会从 `overlayStack` 删除当前 entry，清理或重定向 focus restore 状态；若当前 focus 在该 overlay 上，就转到 topmost visible capturing overlay 或 `preFocus`。[E: packages/tui/src/tui.ts:513][E: packages/tui/src/tui.ts:516][E: packages/tui/src/tui.ts:517][E: packages/tui/src/tui.ts:518][E: packages/tui/src/tui.ts:520][E: packages/tui/src/tui.ts:522]
-5. `setHidden(true)` 只改 `entry.hidden`，不从 stack 删除；如果被隐藏的是当前 focused overlay，就走同样的 fallback focus 逻辑。[E: packages/tui/src/tui.ts:528][E: packages/tui/src/tui.ts:530][E: packages/tui/src/tui.ts:533][E: packages/tui/src/tui.ts:535][E: packages/tui/src/tui.ts:537]
-6. `setHidden(false)` 对 capturing 且可见的 overlay 递增 `focusOrder` 并恢复 focus；`compositeOverlays()` 后续按 `focusOrder` 升序渲染，所以重新显示会把该 overlay 带到 visual front。[E: packages/tui/src/tui.ts:541][E: packages/tui/src/tui.ts:542][E: packages/tui/src/tui.ts:543][E: packages/tui/src/tui.ts:1036][E: packages/tui/src/tui.ts:1045][E: packages/tui/src/tui.ts:1081][E: packages/tui/src/tui.ts:1089]
-7. `focus()` 要求 entry 仍在 stack 且可见，然后递增 `focusOrder`、调用 `setFocus(component)` 并 request render。[E: packages/tui/src/tui.ts:549][E: packages/tui/src/tui.ts:550][E: packages/tui/src/tui.ts:551][E: packages/tui/src/tui.ts:552][E: packages/tui/src/tui.ts:553]
-8. `unfocus()` 只有在 overlay 当前 focused 或已有该 entry 的 pending restore 时继续；blocked restore 且传入显式 target 时会把 resume 改成 `focus-target` 并返回，否则清理该 entry 的 restore 状态，再在当前 focused 或有 options 时把 focus 转到显式 target、其它 topmost capturing overlay 或 `preFocus`。[E: packages/tui/src/tui.ts:555][E: packages/tui/src/tui.ts:556][E: packages/tui/src/tui.ts:558][E: packages/tui/src/tui.ts:559][E: packages/tui/src/tui.ts:565][E: packages/tui/src/tui.ts:570][E: packages/tui/src/tui.ts:576][E: packages/tui/src/tui.ts:578][E: packages/tui/src/tui.ts:580][E: packages/tui/src/tui.ts:581][E: packages/tui/src/tui.ts:582]
-
-## Focus restore 与 nonCapturing
-
-`isOverlayVisible()` 首先检查 `entry.hidden`，再调用 `options.visible(this.terminal.columns, this.terminal.rows)`，没有 predicate 时默认可见。[E: packages/tui/src/tui.ts:612][E: packages/tui/src/tui.ts:613][E: packages/tui/src/tui.ts:614][E: packages/tui/src/tui.ts:615][E: packages/tui/src/tui.ts:617] `getTopmostVisibleOverlay()` 只考虑 visible 且不是 `nonCapturing` 的 overlay，并按最高 `focusOrder` 选择目标；因此 `nonCapturing` overlay 可以被渲染在 stack 中，但不会成为 fallback focus target。[E: packages/tui/src/tui.ts:621][E: packages/tui/src/tui.ts:623][E: packages/tui/src/tui.ts:624][E: packages/tui/src/tui.ts:625]
-
-当普通 `setFocus()` 要离开一个 focused overlay 且新焦点不是该 overlay 的 preFocus ancestry 时，TUI 会把 overlay focus restore 标成 `blocked`，并记住阻塞它的 component；后续输入处理发现 focus 不在 overlay 上时，会根据 restore state 把 focus 拉回 overlay 或转到显式 resume target。[E: packages/tui/src/tui.ts:398][E: packages/tui/src/tui.ts:402][E: packages/tui/src/tui.ts:404][E: packages/tui/src/tui.ts:407][E: packages/tui/src/tui.ts:408][E: packages/tui/src/tui.ts:814][E: packages/tui/src/tui.ts:816][E: packages/tui/src/tui.ts:817][E: packages/tui/src/tui.ts:821][E: packages/tui/src/tui.ts:824]
-
-当 terminal resize 或 `visible()` predicate 让当前 focused overlay 变为不可见，`handleInput()` 会把 focus 迁到 topmost visible capturing overlay；如果没有这样的 overlay，则用 `setFocusInternal(..., overlayFocusRestore: "preserve")` 回到该 overlay 的 `preFocus`。[E: packages/tui/src/tui.ts:803][E: packages/tui/src/tui.ts:803][E: packages/tui/src/tui.ts:803][E: packages/tui/src/tui.ts:804][E: packages/tui/src/tui.ts:806][E: packages/tui/src/tui.ts:808][E: packages/tui/src/tui.ts:810]
-
-## Layout 与 Compositing
-
-`resolveOverlayLayout()` 将 options 归一化为 `{ width, row, col, maxHeight }`，先把 margin clamp 到非负，再从 terminal width/height 扣出 available width/height。[E: packages/tui/src/tui.ts:901][E: packages/tui/src/tui.ts:914][E: packages/tui/src/tui.ts:915][E: packages/tui/src/tui.ts:916][E: packages/tui/src/tui.ts:917][E: packages/tui/src/tui.ts:920][E: packages/tui/src/tui.ts:921] 默认宽度是 `Math.min(80, availWidth)`，随后应用 `minWidth` 并 clamp 到 available width；`maxHeight` 如果存在也 clamp 到 available height。[E: packages/tui/src/tui.ts:924][E: packages/tui/src/tui.ts:926][E: packages/tui/src/tui.ts:930][E: packages/tui/src/tui.ts:933][E: packages/tui/src/tui.ts:936]
-
-positioning 支持 absolute row/col、百分比 row/col 和 anchor。百分比 row/col 不是直接取 terminal 百分比坐标，而是在 `availHeight - effectiveHeight` 或 `availWidth - width` 的可移动范围内取比例，因此 `"100%"` 表示贴近 bottom/right 且保持 overlay 不越界。[E: packages/tui/src/tui.ts:946][E: packages/tui/src/tui.ts:960][E: packages/tui/src/tui.ts:964][E: packages/tui/src/tui.ts:968][E: packages/tui/src/tui.ts:982][E: packages/tui/src/tui.ts:986][E: packages/tui/src/tui.ts:951][E: packages/tui/src/tui.ts:953][E: packages/tui/src/tui.ts:973][E: packages/tui/src/tui.ts:975] 最终 row/col 会加上 `offsetY`/`offsetX`，再 clamp 到 terminal bounds 和 margins 内。[E: packages/tui/src/tui.ts:991][E: packages/tui/src/tui.ts:992][E: packages/tui/src/tui.ts:995][E: packages/tui/src/tui.ts:996]
-
-`compositeOverlays()` 在 stack 非空时复制 base lines，筛出 visible entries，并按 `focusOrder` 升序排序；后渲染的 overlay 会覆盖先渲染的 overlay，因此更高 `focusOrder` 在视觉上更靠前。[E: packages/tui/src/tui.ts:1036][E: packages/tui/src/tui.ts:1037][E: packages/tui/src/tui.ts:1038][E: packages/tui/src/tui.ts:1044][E: packages/tui/src/tui.ts:1045][I] 每个 overlay 先用 height `0` 解析 width/maxHeight，再以该 width 调用 `component.render(width)`，必要时截断到 `maxHeight`，最后用真实 overlay height 再解析 row/col。[E: packages/tui/src/tui.ts:1051][E: packages/tui/src/tui.ts:1054][E: packages/tui/src/tui.ts:1057][E: packages/tui/src/tui.ts:1058][E: packages/tui/src/tui.ts:1062]
-
-合成前，TUI 把 result padding 到 `Math.max(result.length, termHeight, minLinesNeeded)`，然后用 `viewportStart = Math.max(0, workingHeight - termHeight)` 让 overlay row/col 以可见 viewport 为基准定位。[E: packages/tui/src/tui.ts:1071][E: packages/tui/src/tui.ts:1074][E: packages/tui/src/tui.ts:1078][E: packages/tui/src/tui.ts:1083] 每条 overlay line 会先按声明 width 防御性截断，再交给 `compositeLineAt()` splice 到 base line 指定 column。[E: packages/tui/src/tui.ts:1087][E: packages/tui/src/tui.ts:1088][E: packages/tui/src/tui.ts:1089]
-
-`compositeLineAt()` 对 image line 直接返回 base line，避免覆盖 Kitty image 行；普通文本则通过 `extractSegments()`、`sliceWithWidth()` 和 padding 拼出 before/overlay/after 三段，最后如果 `visibleWidth(result) > totalWidth` 就严格截断到 terminal width。[E: packages/tui/src/tui.ts:1187][E: packages/tui/src/tui.ts:1191][E: packages/tui/src/tui.ts:1194][E: packages/tui/src/tui.ts:1197][E: packages/tui/src/tui.ts:1198][E: packages/tui/src/tui.ts:1202][E: packages/tui/src/tui.ts:1206][E: packages/tui/src/tui.ts:1207][E: packages/tui/src/tui.ts:1210][E: packages/tui/src/tui.ts:1213][E: packages/tui/src/tui.ts:1222][E: packages/tui/src/tui.ts:1223][E: packages/tui/src/tui.ts:1227]
-
-## 与 runtime 和 diff engine 的关系
-
-`subsys.tui.runtime` 描述 `TUI` 作为 root `Container`、input dispatcher 和 render scheduler 的运行时外壳；overlay 依附这个 runtime 的 `focusedComponent`、`handleInput()` 和 `requestRender()`，但 overlay 内容本身仍遵守普通 `Component` contract。[E: packages/tui/src/tui.ts:295][E: packages/tui/src/tui.ts:301][E: packages/tui/src/tui.ts:716][E: packages/tui/src/tui.ts:765][E: packages/tui/src/tui.ts:831][E: packages/tui/src/tui.ts:70]
-
-`subsys.tui.diff-engine` 描述 terminal differential rendering。overlay 合成发生在 `doRender()` 里所有 child components 产出 `newLines` 之后、cursor marker 提取和 line reset/diff compare 之前；因此 diff engine 看到的是已经包含 overlay 的最终 frame。[E: packages/tui/src/tui.ts:1275][E: packages/tui/src/tui.ts:1278][E: packages/tui/src/tui.ts:1279][E: packages/tui/src/tui.ts:1283][E: packages/tui/src/tui.ts:1285][E: packages/tui/src/tui.ts:1373][E: packages/tui/src/tui.ts:1380] 内容 shrink clearing 在有 overlay 时不会触发，因为 overlay 需要 padding 保持 screen-relative placement。[E: packages/tui/src/tui.ts:1366][E: packages/tui/src/tui.ts:1366]
-
-## 设计动机与权衡
-
-- overlay stack 用 `focusOrder` 而不是数组顺序决定 visual-frontmost capturing overlay；`focus()` 和重新显示都会递增 `focusOrder`，这允许旧 overlay 被 bring to front，而不必重排 stack entry。[E: packages/tui/src/tui.ts:625][E: packages/tui/src/tui.ts:1045][E: packages/tui/src/tui.ts:551][E: packages/tui/src/tui.ts:542][I]
-- `visible()` predicate 每次通过当前 terminal `columns`/`rows` 判断，可表达响应式 overlay；代价是 focus routing 必须在 input path 再检查 focused overlay 是否仍可见。[E: packages/tui/src/tui.ts:615][E: packages/tui/src/tui.ts:803][I]
-- `compositeOverlays()` 先算 width 再 render，再用真实 height 重算 position；这避免 component render 依赖 width 时提前需要 height，但意味着 position 计算可能调用两次。[E: packages/tui/src/tui.ts:1051][E: packages/tui/src/tui.ts:1054][E: packages/tui/src/tui.ts:1062][I]
+alternate-screen 在 layout frame 后合成 overlays，再叠加 selection 与 flash；overlay 不属于 layout tree，也不跟随 ScrollView 的 clip/scrollTop。[E: packages/tui/src/tui-alt-screen.ts:823] [E: packages/tui/src/tui-alt-screen.ts:826] [E: packages/tui/src/tui-alt-screen.ts:828] [I]
 
 ## Gotchas
 
-- `setHidden(true)` 不是 `hide()`：前者保留 entry 和 handle，后者从 stack 删除 entry，删除后 `focus()` 会因为 entry 不在 stack 中直接 return。[E: packages/tui/src/tui.ts:518][E: packages/tui/src/tui.ts:530][E: packages/tui/src/tui.ts:550]
-- `hideOverlay()` 只 pop `overlayStack` 数组末尾，不按 `focusOrder` 找 visual top；如果调用方混用 `focus()` bring-to-front 和 `hideOverlay()`，需要意识到 stack top 与 visual top 可能不同。[E: packages/tui/src/tui.ts:592][E: packages/tui/src/tui.ts:596][E: packages/tui/src/tui.ts:551][I]
-- `nonCapturing` overlay 仍会参与 `compositeOverlays()`，但不会通过 `showOverlay()` 或 `getTopmostVisibleOverlay()` 捕获/恢复 keyboard focus。[E: packages/tui/src/tui.ts:505][E: packages/tui/src/tui.ts:624][E: packages/tui/src/tui.ts:1044]
+- `hideOverlay()` 删除数组最后一个 entry，不按 visual `focusOrder` 查找；bring-to-front 后的视觉顶层不一定等于数组尾。[E: packages/tui/src/tui.ts:634] [E: packages/tui/src/tui.ts:635] [E: packages/tui/src/tui.ts:639]
+- `visible()` 使用当前 terminal columns/rows 动态判断；input path 会重新验证 focused overlay，必要时迁移焦点。[E: packages/tui/src/tui.ts:655] [E: packages/tui/src/tui.ts:658] [E: packages/tui/src/tui.ts:830]
+- fullscreen 的 selection/flash 在 overlay 之后合成，不能假设 overlay 永远是最终视觉层。[E: packages/tui/src/tui-alt-screen.ts:826] [E: packages/tui/src/tui-alt-screen.ts:828] [E: packages/tui/src/tui-alt-screen.ts:829]
 
 ## Sources
 
 - `packages/tui/src/tui.ts`
-
-## 相关
-
-- [subsys.tui.runtime](runtime.md): `TUI` root container、input dispatch、focus state 与 render scheduling。
-- [subsys.tui.diff-engine](diff-engine.md): overlay 合成后进入的 terminal diff rendering 与 cursor/image 处理。
+- `packages/tui/src/tui-main-screen.ts`
+- `packages/tui/src/tui-alt-screen.ts`

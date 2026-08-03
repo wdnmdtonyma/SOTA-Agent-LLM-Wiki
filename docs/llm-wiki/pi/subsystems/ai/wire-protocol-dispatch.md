@@ -18,7 +18,7 @@ related:
   - subsys.ai.message-transform
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `subsys.ai.wire-protocol-dispatch` 说明 `pi-ai` 如何把统一的 `Model` + `Context` streaming request,按 `Model.api` 分派到 `packages/ai/src/api/<name>.ts` 的 `stream` / `streamSimple` wire implementation。
@@ -34,31 +34,31 @@ updated: cee5ff7520
 
 ## 职责边界
 
-wire 协议调度层的职责是选择并调用一个 `ProviderStreams` implementation;`ProviderStreams` 的 runtime contract 只暴露 `stream` 与 `streamSimple`,二者返回 `AssistantMessageEventStream`。[E: packages/ai/src/types.ts:229][E: packages/ai/src/types.ts:230][E: packages/ai/src/types.ts:231] 因此 provider-specific payload 构造与 event normalization 不属于 dispatch contract 本身,而属于具体 `api/<name>.ts` implementation 的职责边界。[I]
+wire 协议调度层的职责是选择并调用一个 `ProviderStreams` implementation;`ProviderStreams` 的 runtime contract 只暴露 `stream` 与 `streamSimple`,二者返回 `AssistantMessageEventStream`。[E: packages/ai/src/types.ts:236][E: packages/ai/src/types.ts:237][E: packages/ai/src/types.ts:238] 因此 provider-specific payload 构造与 event normalization 不属于 dispatch contract 本身,而属于具体 `api/<name>.ts` implementation 的职责边界。[I]
 
-dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议名,`provider` 字段保存 provider id;因此同一个 provider 可以持有多个 API implementation,选择键来自 model metadata 而不是 caller 手写的协议枚举。[E: packages/ai/src/types.ts:749][E: packages/ai/src/types.ts:752][E: packages/ai/src/types.ts:753][E: packages/ai/src/models.ts:547][E: packages/ai/src/models.ts:570][E: packages/ai/src/models.ts:572][E: packages/ai/src/models.ts:574]
+dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议名,`provider` 字段保存 provider id;因此同一个 provider 可以持有多个 API implementation,选择键来自 model metadata 而不是 caller 手写的协议枚举。[E: packages/ai/src/types.ts:761][E: packages/ai/src/types.ts:764][E: packages/ai/src/types.ts:765][E: packages/ai/src/models.ts:547][E: packages/ai/src/models.ts:570][E: packages/ai/src/models.ts:572][E: packages/ai/src/models.ts:574]
 
 `Models.stream` / `Models.streamSimple` 是上层统一入口和 auth 边界:它们先返回 `lazyStream` 包装的 `AssistantMessageEventStream`,再在异步 setup 中执行 provider lookup、auth 合并和 provider 调用。[E: packages/ai/src/models.ts:494][E: packages/ai/src/models.ts:495][E: packages/ai/src/models.ts:515][E: packages/ai/src/models.ts:500][E: packages/ai/src/models.ts:513][E: packages/ai/src/models.ts:514][E: packages/ai/src/models.ts:515][E: packages/ai/src/models.ts:516]
 
 ## 关键文件
 
-- `packages/ai/src/types.ts`:定义 `KnownApi` 名称集合、`ApiStreamOptions<TApi>` 的类型映射、`ProviderStreams` 的 wire module contract,以及 `StreamFunction` 的函数形状。[E: packages/ai/src/types.ts:16][E: packages/ai/src/types.ts:24][E: packages/ai/src/types.ts:200][E: packages/ai/src/types.ts:217][E: packages/ai/src/types.ts:229][E: packages/ai/src/types.ts:311][E: packages/ai/src/types.ts:315]
+- `packages/ai/src/types.ts`:定义 `KnownApi` 名称集合、`ApiStreamOptions<TApi>` 的类型映射、`ProviderStreams` 的 wire module contract,以及 `StreamFunction` 的函数形状。[E: packages/ai/src/types.ts:16][E: packages/ai/src/types.ts:24][E: packages/ai/src/types.ts:207][E: packages/ai/src/types.ts:224][E: packages/ai/src/types.ts:236][E: packages/ai/src/types.ts:320][E: packages/ai/src/types.ts:324]
 - `packages/ai/src/models.ts`:实现 `ModelsImpl.stream` / `streamSimple` 的 provider/auth wrapper,以及 `createProvider` 对单 API 与 per-API map 的 dispatch。[E: packages/ai/src/models.ts:489][E: packages/ai/src/models.ts:278][E: packages/ai/src/models.ts:556][E: packages/ai/src/models.ts:570][E: packages/ai/src/models.ts:574][E: packages/ai/src/models.ts:619]
 - `packages/ai/src/api/lazy.ts`:实现 `lazyStream` 和 `lazyApi`,把 lazy import/auth/setup 的异步失败转为 terminal `error` event。[E: packages/ai/src/api/lazy.ts:46][E: packages/ai/src/api/lazy.ts:50][E: packages/ai/src/api/lazy.ts:54][E: packages/ai/src/api/lazy.ts:56][E: packages/ai/src/api/lazy.ts:57][E: packages/ai/src/api/lazy.ts:68]
 - `packages/ai/src/api/<name>.lazy.ts`:文字模型 wire 协议的常规 lazy wrapper 返回 `ProviderStreams`,并直接 `lazyApi(() => import("./<name>.ts"))`;OpenAI Responses、Anthropic Messages、Google Generative AI 都是这种形态。[E: packages/ai/src/api/openai-responses.lazy.ts:4][E: packages/ai/src/api/anthropic-messages.lazy.ts:4][E: packages/ai/src/api/google-generative-ai.lazy.ts:4]
-- `packages/ai/src/api/<name>.ts`:`KnownApi` 列出文字 wire API 名称集合,`ProviderStreams` interface 要求 `stream` 与 `streamSimple`;OpenAI Responses 与 Anthropic Messages 是这一路径的代表性 implementation。[E: packages/ai/src/types.ts:16][E: packages/ai/src/types.ts:24][E: packages/ai/src/types.ts:229][E: packages/ai/src/types.ts:230][E: packages/ai/src/types.ts:231][E: packages/ai/src/api/openai-responses.ts:112][E: packages/ai/src/api/openai-responses.ts:204][E: packages/ai/src/api/anthropic-messages.ts:487][E: packages/ai/src/api/anthropic-messages.ts:796]
+- `packages/ai/src/api/<name>.ts`:`KnownApi` 列出文字 wire API 名称集合,`ProviderStreams` interface 要求 `stream` 与 `streamSimple`;OpenAI Responses 与 Anthropic Messages 是这一路径的代表性 implementation。[E: packages/ai/src/types.ts:16][E: packages/ai/src/types.ts:24][E: packages/ai/src/types.ts:236][E: packages/ai/src/types.ts:237][E: packages/ai/src/types.ts:238][E: packages/ai/src/api/openai-responses.ts:112][E: packages/ai/src/api/openai-responses.ts:207][E: packages/ai/src/api/anthropic-messages.ts:487][E: packages/ai/src/api/anthropic-messages.ts:801]
 
 ## 数据模型
 
-`ProviderStreams` 是调度层的最小可执行值:它只有 `stream(model, context, options?)` 和 `streamSimple(model, context, options?)`,二者都返回 `AssistantMessageEventStream`。[E: packages/ai/src/types.ts:229][E: packages/ai/src/types.ts:230][E: packages/ai/src/types.ts:231]
+`ProviderStreams` 是调度层的最小可执行值:它只有 `stream(model, context, options?)` 和 `streamSimple(model, context, options?)`,二者都返回 `AssistantMessageEventStream`。[E: packages/ai/src/types.ts:236][E: packages/ai/src/types.ts:237][E: packages/ai/src/types.ts:238]
 
-`StreamFunction<TApi, TOptions>` 是 wire implementation 的函数形状,返回 `AssistantMessageEventStream`;error termination 在事件协议中表现为 `error` event,其 payload 是带 `stopReason` / `errorMessage` 字段的 `AssistantMessage`。[E: packages/ai/src/types.ts:311][E: packages/ai/src/types.ts:315][E: packages/ai/src/types.ts:400][E: packages/ai/src/types.ts:401][E: packages/ai/src/types.ts:503]
+`StreamFunction<TApi, TOptions>` 是 wire implementation 的函数形状,返回 `AssistantMessageEventStream`;error termination 在事件协议中表现为 `error` event,其 payload 是带 `stopReason` / `errorMessage` 字段的 `AssistantMessage`。[E: packages/ai/src/types.ts:320][E: packages/ai/src/types.ts:324][E: packages/ai/src/types.ts:409][E: packages/ai/src/types.ts:410][E: packages/ai/src/types.ts:513]
 
 `CreateProviderOptions.api` 接受两种形态:一个 `ProviderStreams` 供所有 models 复用,或一个 `Partial<Record<TApi, ProviderStreams>>` 供 mixed-API provider 按 `model.api` 分派。[E: packages/ai/src/models.ts:533][E: packages/ai/src/models.ts:547][E: packages/ai/src/models.ts:570][E: packages/ai/src/models.ts:572][E: packages/ai/src/models.ts:574]
 
-`ApiStreamOptions<TApi>` 把 known API string 映射到 provider-specific options type;未知自定义 API string 退回到 generic `StreamOptions & Record<string, unknown>`。[E: packages/ai/src/types.ts:200][E: packages/ai/src/types.ts:217][E: packages/ai/src/types.ts:218][E: packages/ai/src/types.ts:219]
+`ApiStreamOptions<TApi>` 把 known API string 映射到 provider-specific options type;未知自定义 API string 退回到 generic `StreamOptions & Record<string, unknown>`。[E: packages/ai/src/types.ts:207][E: packages/ai/src/types.ts:224][E: packages/ai/src/types.ts:225][E: packages/ai/src/types.ts:226]
 
-`SimpleStreamOptions` 是统一 convenience surface,只额外携带 `reasoning` 与 `thinkingBudgets`;provider-specific conversion 留在具体 wire module 内,例如 OpenAI Responses 与 Anthropic Messages 的 `streamSimple` 都在同文件内转换后调用 `stream`。[E: packages/ai/src/types.ts:297][E: packages/ai/src/types.ts:298][E: packages/ai/src/types.ts:300][E: packages/ai/src/api/openai-responses.ts:204][E: packages/ai/src/api/openai-responses.ts:215][E: packages/ai/src/api/anthropic-messages.ts:796][E: packages/ai/src/api/anthropic-messages.ts:830]
+`SimpleStreamOptions` 是统一 convenience surface,只额外携带 `reasoning` 与 `thinkingBudgets`;provider-specific conversion 留在具体 wire module 内,例如 OpenAI Responses 与 Anthropic Messages 的 `streamSimple` 都在同文件内转换后调用 `stream`。[E: packages/ai/src/types.ts:306][E: packages/ai/src/types.ts:307][E: packages/ai/src/types.ts:309][E: packages/ai/src/api/openai-responses.ts:207][E: packages/ai/src/api/openai-responses.ts:219][E: packages/ai/src/api/anthropic-messages.ts:801][E: packages/ai/src/api/anthropic-messages.ts:835]
 
 ## 控制流
 
@@ -78,23 +78,23 @@ dispatch 以 `ProviderStreams` 为 runtime value,让 provider factory 可以只�
 
 `lazyStream` 把 auth resolution、dynamic import、缺失 API implementation 这些 setup failure 都压进同一个 assistant event protocol;这使 caller 侧可以把 setup failure 当作 stream terminal error 处理。[E: packages/ai/src/api/lazy.ts:46][E: packages/ai/src/api/lazy.ts:52][E: packages/ai/src/api/lazy.ts:54][E: packages/ai/src/api/lazy.ts:56][E: packages/ai/src/api/lazy.ts:57][I]
 
-`streamSimple` 保持统一 caller surface,但 provider options 的具体映射仍在 wire module 内完成;例如 OpenAI Responses 把 `reasoning` clamp 后转成 `reasoningEffort`,Anthropic Messages 在 no-reasoning、adaptive thinking、budget thinking 三种路径间选择 provider-specific options。[E: packages/ai/src/api/openai-responses.ts:211][E: packages/ai/src/api/openai-responses.ts:212][E: packages/ai/src/api/openai-responses.ts:213][E: packages/ai/src/api/openai-responses.ts:215][E: packages/ai/src/api/anthropic-messages.ts:804][E: packages/ai/src/api/anthropic-messages.ts:805][E: packages/ai/src/api/anthropic-messages.ts:810][E: packages/ai/src/api/anthropic-messages.ts:830]
+`streamSimple` 保持统一 caller surface,但 provider options 的具体映射仍在 wire module 内完成;例如 OpenAI Responses 把 `reasoning` clamp 后转成 `reasoningEffort`,Anthropic Messages 在 no-reasoning、adaptive thinking、budget thinking 三种路径间选择 provider-specific options。[E: packages/ai/src/api/openai-responses.ts:214][E: packages/ai/src/api/openai-responses.ts:215][E: packages/ai/src/api/openai-responses.ts:216][E: packages/ai/src/api/openai-responses.ts:219][E: packages/ai/src/api/anthropic-messages.ts:809][E: packages/ai/src/api/anthropic-messages.ts:810][E: packages/ai/src/api/anthropic-messages.ts:815][E: packages/ai/src/api/anthropic-messages.ts:835]
 
 ## gotcha
 
-不要把 README 或 provider 名称当作 wire 协议 ground truth。[I] 文字模型 wire 协议的核验路径是 `Model.api` -> `createProvider` 的 `api` / by-API map -> `api/<name>.lazy.ts` -> `api/<name>.ts` 的 `stream` / `streamSimple`。[E: packages/ai/src/types.ts:752][E: packages/ai/src/models.ts:574][E: packages/ai/src/api/lazy.ts:71][E: packages/ai/src/api/lazy.ts:73]
+不要把 README 或 provider 名称当作 wire 协议 ground truth。[I] 文字模型 wire 协议的核验路径是 `Model.api` -> `createProvider` 的 `api` / by-API map -> `api/<name>.lazy.ts` -> `api/<name>.ts` 的 `stream` / `streamSimple`。[E: packages/ai/src/types.ts:764][E: packages/ai/src/models.ts:574][E: packages/ai/src/api/lazy.ts:71][E: packages/ai/src/api/lazy.ts:73]
 
 Bedrock 的 lazy wrapper 是一个特例:它通过 variable specifier import 加载 Node-only AWS SDK implementation,并允许 Bun binary build 注入 `bedrockModuleOverride`;因此不能把所有 `<name>.lazy.ts` 都机械理解成一行静态 dynamic import。[E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:10][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:11][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:12][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:15][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:22][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:29]
 
 `KnownApi` 是已知文字 API 的类型集合,但 `Api = KnownApi | (string & {})` 允许 custom API string;如果 custom provider 给出未知 `model.api`,运行时仍必须提供匹配的 `ProviderStreams` map entry,否则 dispatch 会生成 stream error。[E: packages/ai/src/types.ts:16][E: packages/ai/src/types.ts:28][E: packages/ai/src/models.ts:574][E: packages/ai/src/models.ts:581][E: packages/ai/src/models.ts:583]
 
-图片 API 不走本节点的 `ProviderStreams` contract;`ProviderImages` 使用 `generateImages(...)` Promise contract,`openrouter-images.lazy.ts` 也返回 `ProviderImages` 而不是 `ProviderStreams`。[E: packages/ai/src/types.ts:240][E: packages/ai/src/types.ts:241][E: packages/ai/src/types.ts:245][E: packages/ai/src/api/openrouter-images.lazy.ts:3][E: packages/ai/src/api/openrouter-images.lazy.ts:4]
+图片 API 不走本节点的 `ProviderStreams` contract;`ProviderImages` 使用 `generateImages(...)` Promise contract,`openrouter-images.lazy.ts` 也返回 `ProviderImages` 而不是 `ProviderStreams`。[E: packages/ai/src/types.ts:247][E: packages/ai/src/types.ts:248][E: packages/ai/src/types.ts:252][E: packages/ai/src/api/openrouter-images.lazy.ts:3][E: packages/ai/src/api/openrouter-images.lazy.ts:4]
 
 ## 跨包边界
 
 `spine.provider-stream` 描述从 `Models.stream` 到 normalized assistant events 的端到端主路径;本节点只展开其中 `ProviderStreams` selection、lazy loading 与 `model.api` dispatch 这一段。[I]
 
-`subsys.ai.message-transform` 是 wire payload 前的消息归一化边界:dispatch 层只把 `Context` 交给 wire module。[I] `transformMessages(messages, model, ...)` 本身处理 unsupported image downgrade、thinking replay、tool call id normalization 与 orphaned tool result 补齐,并由 provider-specific builders 调用。[E: packages/ai/src/api/transform-messages.ts:64][E: packages/ai/src/api/transform-messages.ts:74][E: packages/ai/src/api/transform-messages.ts:100][E: packages/ai/src/api/transform-messages.ts:136][E: packages/ai/src/api/transform-messages.ts:163][E: packages/ai/src/api/transform-messages.ts:220][E: packages/ai/src/api/openai-responses-shared.ts:170][E: packages/ai/src/api/anthropic-messages.ts:938]
+`subsys.ai.message-transform` 是 wire payload 前的消息归一化边界:dispatch 层只把 `Context` 交给 wire module。[I] `transformMessages(messages, model, ...)` 本身处理 unsupported image downgrade、thinking replay、tool call id normalization 与 orphaned tool result 补齐,并由 provider-specific builders 调用。[E: packages/ai/src/api/transform-messages.ts:64][E: packages/ai/src/api/transform-messages.ts:74][E: packages/ai/src/api/transform-messages.ts:100][E: packages/ai/src/api/transform-messages.ts:136][E: packages/ai/src/api/transform-messages.ts:163][E: packages/ai/src/api/transform-messages.ts:220][E: packages/ai/src/api/openai-responses-shared.ts:170][E: packages/ai/src/api/anthropic-messages.ts:947]
 
 `ref.ai.wire-protocol-catalog` 应逐项列出每个 `api/<name>.lazy.ts`、目标 `api/<name>.ts` 与 provider bindings;本节点只保留 dispatch invariant 和 representative evidence,避免把 catalog 表格复制到 subsystem 文档。[I]
 

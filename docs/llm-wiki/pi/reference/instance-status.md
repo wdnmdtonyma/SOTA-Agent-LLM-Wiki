@@ -1,12 +1,12 @@
 ---
 id: ref.server.instance-status
-title: 实例状态与记录
+title: Legacy supervisor 实例状态与记录
 kind: reference
 tier: T3
 pkg: server
 source:
-  - packages/server/src/types.ts
-  - packages/server/src/config.ts
+  - packages/server/src/legacy/types.ts
+  - packages/server/src/legacy/config.ts
 symbols:
   - InstanceStatus
   - InstanceRecord
@@ -14,10 +14,10 @@ related:
   - subsys.server.storage
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
-> `ref.server.instance-status` 是 server instance metadata 的窄口径引用节点:只枚举 `InstanceStatus`、`InstanceRecord` 以及 `config.ts` 中可直接核验的本地路径 helper。
+> `ref.server.instance-status` 是迁入 `src/legacy/` 的 supervisor instance metadata catalog:只枚举 `InstanceStatus`、`InstanceRecord` 与 legacy config path helpers。[E: packages/server/src/legacy/types.ts:1][E: packages/server/src/legacy/types.ts:15][E: packages/server/src/legacy/config.ts:45][E: packages/server/src/legacy/config.ts:64]
 
 ## 能回答的问题
 
@@ -28,44 +28,44 @@ updated: cee5ff7520
 
 ## InstanceStatus union
 
-`InstanceStatus` 是一个 TypeScript string union,当前只包含 `"starting"`、`"online"`、`"stopping"`、`"stopped"`、`"error"` 五个字面量值。[E: packages/server/src/types.ts:1]
+`InstanceStatus` 是一个 TypeScript string union,当前只包含 `"starting"`、`"online"`、`"stopping"`、`"stopped"`、`"error"` 五个字面量值。[E: packages/server/src/legacy/types.ts:1]
 
 | 状态值 | 类型含义 | 源码证据 |
 | --- | --- | --- |
-| `starting` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/types.ts:1] |
-| `online` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/types.ts:1] |
-| `stopping` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/types.ts:1] |
-| `stopped` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/types.ts:1] |
-| `error` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/types.ts:1] |
+| `starting` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/legacy/types.ts:1] |
+| `online` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/legacy/types.ts:1] |
+| `stopping` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/legacy/types.ts:1] |
+| `stopped` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/legacy/types.ts:1] |
+| `error` | `InstanceStatus` 的合法字符串字面量之一。 | [E: packages/server/src/legacy/types.ts:1] |
 
 ## InstanceRecord 字段目录
 
-`InstanceRecord` 是一个 interface,包含四个 required 字段和五个 optional 字段;其中 `status` 字段引用 `InstanceStatus` union。[E: packages/server/src/types.ts:15][E: packages/server/src/types.ts:17]
+`InstanceRecord` 是一个 interface,包含四个 required 字段和五个 optional 字段;其中 `status` 字段引用 `InstanceStatus` union。[E: packages/server/src/legacy/types.ts:15][E: packages/server/src/legacy/types.ts:17]
 
 | 字段 | TypeScript 声明 | 必填性 | 类型含义 | 源码证据 |
 | --- | --- | --- | --- | --- |
-| `id` | `id: string` | required | instance record 的字符串标识字段。 | [E: packages/server/src/types.ts:16] |
-| `status` | `status: InstanceStatus` | required | instance record 的状态字段,取值受 `InstanceStatus` 限定。 | [E: packages/server/src/types.ts:17] |
-| `cwd` | `cwd: string` | required | instance record 的工作目录字符串字段。 | [E: packages/server/src/types.ts:18] |
-| `createdAt` | `createdAt: string` | required | instance record 的创建时间字符串字段。 | [E: packages/server/src/types.ts:19] |
-| `lastSeenAt` | `lastSeenAt?: string` | optional | instance record 的最近可见时间字符串字段。 | [E: packages/server/src/types.ts:20] |
-| `label` | `label?: string` | optional | instance record 的可选标签字符串字段。 | [E: packages/server/src/types.ts:21] |
-| `sessionId` | `sessionId?: string` | optional | instance record 的可选 session id 字符串字段。 | [E: packages/server/src/types.ts:22] |
-| `sessionFile` | `sessionFile?: string` | optional | instance record 的可选 session file 字符串字段。 | [E: packages/server/src/types.ts:23] |
-| `radiusPiId` | `radiusPiId?: string` | optional | instance record 的可选 Radius Pi id 字符串字段。 | [E: packages/server/src/types.ts:24] |
+| `id` | `id: string` | required | instance record 的字符串标识字段。 | [E: packages/server/src/legacy/types.ts:16] |
+| `status` | `status: InstanceStatus` | required | instance record 的状态字段,取值受 `InstanceStatus` 限定。 | [E: packages/server/src/legacy/types.ts:17] |
+| `cwd` | `cwd: string` | required | instance record 的工作目录字符串字段。 | [E: packages/server/src/legacy/types.ts:18] |
+| `createdAt` | `createdAt: string` | required | instance record 的创建时间字符串字段。 | [E: packages/server/src/legacy/types.ts:19] |
+| `lastSeenAt` | `lastSeenAt?: string` | optional | instance record 的最近可见时间字符串字段。 | [E: packages/server/src/legacy/types.ts:20] |
+| `label` | `label?: string` | optional | instance record 的可选标签字符串字段。 | [E: packages/server/src/legacy/types.ts:21] |
+| `sessionId` | `sessionId?: string` | optional | instance record 的可选 session id 字符串字段。 | [E: packages/server/src/legacy/types.ts:22] |
+| `sessionFile` | `sessionFile?: string` | optional | instance record 的可选 session file 字符串字段。 | [E: packages/server/src/legacy/types.ts:23] |
+| `radiusPiId` | `radiusPiId?: string` | optional | instance record 的可选 Radius Pi id 字符串字段。 | [E: packages/server/src/legacy/types.ts:24] |
 
 ## Config 路径 helper
 
-`getServerDir()` 先读取 `process.env[ENV_SERVER_DIR]`,而 `ENV_SERVER_DIR` 的字符串值是 `"PI_SERVER_DIR"`;当该环境变量存在时,函数直接返回环境变量值。[E: packages/server/src/config.ts:7][E: packages/server/src/config.ts:45][E: packages/server/src/config.ts:46][E: packages/server/src/config.ts:47][E: packages/server/src/config.ts:48]
+`getServerDir()` 先读取 `process.env[ENV_SERVER_DIR]`,而 `ENV_SERVER_DIR` 的字符串值是 `"PI_SERVER_DIR"`;当该环境变量存在时,函数直接返回环境变量值。[E: packages/server/src/legacy/config.ts:7][E: packages/server/src/legacy/config.ts:45][E: packages/server/src/legacy/config.ts:46][E: packages/server/src/legacy/config.ts:47][E: packages/server/src/legacy/config.ts:48]
 
-当 `PI_SERVER_DIR` 不存在时,`getServerDir()` 使用 `process.env.PI_CONFIG_DIR || join(homedir(), CONFIG_DIR_NAME)` 得到 pi config root,再返回 `join(piDir, "server")`;`CONFIG_DIR_NAME` 当前是 `".pi"`。[E: packages/server/src/config.ts:6][E: packages/server/src/config.ts:51][E: packages/server/src/config.ts:52]
+当 `PI_SERVER_DIR` 不存在时,`getServerDir()` 使用 `process.env.PI_CONFIG_DIR || join(homedir(), CONFIG_DIR_NAME)` 得到 pi config root,再返回 `join(piDir, "server")`;`CONFIG_DIR_NAME` 当前是 `".pi"`。[E: packages/server/src/legacy/config.ts:6][E: packages/server/src/legacy/config.ts:51][E: packages/server/src/legacy/config.ts:52]
 
 | helper | 返回表达式 | 类型含义 | 源码证据 |
 | --- | --- | --- | --- |
-| `getAuthPath()` | `join(getServerDir(), "auth.json")` | server auth JSON 文件路径。 | [E: packages/server/src/config.ts:55][E: packages/server/src/config.ts:56] |
-| `getMachinePath()` | `join(getServerDir(), "machine.json")` | server machine JSON 文件路径。 | [E: packages/server/src/config.ts:59][E: packages/server/src/config.ts:60] |
-| `getInstancesPath()` | `join(getServerDir(), "instances.json")` | server instances JSON 文件路径。 | [E: packages/server/src/config.ts:63][E: packages/server/src/config.ts:64] |
-| `getSocketPath()` | `join(getServerDir(), "server.sock")` | server Unix socket 文件路径。 | [E: packages/server/src/config.ts:67][E: packages/server/src/config.ts:68] |
+| `getAuthPath()` | `join(getServerDir(), "auth.json")` | server auth JSON 文件路径。 | [E: packages/server/src/legacy/config.ts:55][E: packages/server/src/legacy/config.ts:56] |
+| `getMachinePath()` | `join(getServerDir(), "machine.json")` | server machine JSON 文件路径。 | [E: packages/server/src/legacy/config.ts:59][E: packages/server/src/legacy/config.ts:60] |
+| `getInstancesPath()` | `join(getServerDir(), "instances.json")` | server instances JSON 文件路径。 | [E: packages/server/src/legacy/config.ts:63][E: packages/server/src/legacy/config.ts:64] |
+| `getSocketPath()` | `join(getServerDir(), "server.sock")` | server Unix socket 文件路径。 | [E: packages/server/src/legacy/config.ts:67][E: packages/server/src/legacy/config.ts:68] |
 
 ## 边界
 
@@ -75,8 +75,8 @@ updated: cee5ff7520
 
 ## Sources
 
-- `packages/server/src/types.ts`
-- `packages/server/src/config.ts`
+- `packages/server/src/legacy/types.ts`
+- `packages/server/src/legacy/config.ts`
 
 ## 相关
 

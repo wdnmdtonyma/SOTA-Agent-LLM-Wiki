@@ -14,7 +14,7 @@ id: surface.tools.bash         # 全局唯一;点分命名空间,且与路径对
 title: bash 执行工具
 kind: tool                     # flow | tool | surface | subsystem | reference | catalog
 tier: T1                       # T0 | T1 | T2 | T3
-pkg: coding-agent              # ai | agent | coding-agent | tui | server | storage | evals | cross ——本节点描述的代码属哪个包(pi 专属字段)
+pkg: coding-agent              # ai | agent | protocol | client | coding-agent | tui | server | storage | evals | cross
 source: [packages/coding-agent/src/core/tools/bash.ts, packages/coding-agent/src/core/bash-executor.ts]  # 相对 pi/;纯导览可空
 symbols: [createBashTool, BashToolInput, BashOperations]   # 本节点权威覆盖的导出符号(T3 覆盖率据此计)
 related: [spine.tool-call-anatomy, subsys.coding-agent.bash-executor, ref.tools-catalog]  # 其它节点 id,构成图
@@ -28,7 +28,7 @@ updated: <pi HEAD 10 位短 SHA> # fill 时跑 git -C ../../../pi rev-parse --sh
 
 ### 1.2 `pkg` 字段(pi 分层主线)
 
-pi 是分层栈:`ai`(provider 引擎)→ `agent`(可复用运行时 harness)→ `coding-agent`(产品)+ `tui`(渲染),并包含 `server`(实验性远程会话)、`storage`(SQLite adapter)与 `evals`(私有评测 harness)工作区。每节点标 `pkg`,使"这条逻辑属哪一层"可 grep。**跨层节点**(如脊柱总览)标 `pkg: cross`。脊柱页须把 `agent`(可复用)与 `coding-agent`(产品)的复用边界写清:哪些逻辑在 `pi-agent-core`(任何 app 都能用),哪些是 `pi-coding-agent` 的产品装配。
+pi 是分层栈:`ai`(provider 引擎)→ `agent`(可复用 runtime harness)→ `coding-agent`(产品)+ `tui`(渲染)，远程栈为 `protocol`(wire schema/codec)→ `client`(transport-neutral client) 与 `server`(实验性服务端)，另有 `storage`(SQLite adapter)和 `evals`(私有评测 harness)。每节点标 `pkg`,使"这条逻辑属哪一层"可 grep。**跨层节点**(如脊柱总览)标 `pkg: cross`。脊柱页须写清 `agent` 与 `coding-agent` 的复用边界，以及 remote protocol/client/server 不等同于本地 RPC mode。
 
 ### 1.3 正文骨架(H2/H3 可预测)
 
@@ -63,7 +63,7 @@ pi 是分层栈:`ai`(provider 引擎)→ `agent`(可复用运行时 harness)→ 
   "source_root": "pi/",
   "tiers": {"T0":"spine","T1":"surface","T2":"subsystems","T3":"reference"},
   "evidence_levels": ["explicit","inferred","unknown"],
-  "packages": {"ai":"…","agent":"…","coding-agent":"…","tui":"…","server":"…","storage":"…","evals":"…","cross":"…"},
+  "packages": {"ai":"…","agent":"…","protocol":"…","client":"…","coding-agent":"…","tui":"…","server":"…","storage":"…","evals":"…","cross":"…"},
   "staleness": "git-sha",
   "nodes":  [ {"id":"...","title":"...","kind":"...","tier":"...","pkg":"...","path":"...",
                "source":["..."],"symbols":["..."],"related":["..."],"status":"planned"} ],

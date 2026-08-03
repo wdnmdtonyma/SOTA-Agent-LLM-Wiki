@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 # 不确定项日志([U] 汇总)
@@ -443,10 +443,10 @@ L2 核验后,`subsys.ai.mistral-conversations` 未新增需要上卷到 `referen
 
 # uncertainty-ai-model-catalog
 
-- 目标 `cee5ff7520` 的 Git tree 不含最终 model-data JSON，不能仅从 commit-local 文件完整枚举模型实例。
-- 本轮用官方 `@earendil-works/pi-ai@0.82.1` 制品重建目录：37 个静态 provider bucket、1,109 个 model id。tarball SHA-256 为 `2f9df9522808b621cd3449876537f03d8a8df8b8d7ec2d5b18c6a910aa85b490`，manifest structure hash 为 `1a3c7cf59ada71c94abe4540976960524ee933034491c75d6418e2abc1b42535`。
-- 制品 source map 内 `model-catalog.ts` 与 `models.generated.ts` 的 `sourcesContent` 和目标源码逐字节一致，但 package metadata 没有 `gitHead`；因此制品实例归属仍是强推断 `[I]`，逐模型行不升级为 commit-local `[E]`。
-- `index.json` 的 `group.models.instance_count` 已同步为 1,109；复现细节见 `_research/model-catalog-v0.82.1.md`。
+- 目标 `a8ee03b815` 的 Git tree 不含最终 model-data JSON，不能仅从 commit-local 文件完整枚举模型实例。
+- 本轮用官方 `@earendil-works/pi-ai@0.83.0` 制品重建目录：37 个静态 provider bucket、1,153 个 model id。tarball SHA-256 为 `f983c28a21209305ed9c274977e29130fa4d8848df6cdf37e9094d95cc7bc6d4`，manifest structure hash 为 `5d82f5b1946bdf6d01733aa2a4e4410849c6d44a2ad3038171078c17aed367ce`。
+- registry metadata 的 `gitHead=845d6ff1f6643aba440341cce877ce1c43ebbc39` 是目标提交祖先；release→target 的 generator diff 只把两个 Fireworks Kimi K3 rows 调整为 OpenAI Completions wire，不改变 membership。由于目标 tree 仍不保存生成 JSON，逐模型行继续标为强推断 `[I]`。
+- `index.json` 的 `group.models.instance_count` 已同步为 1,153；复现细节见 `_research/model-catalog-v0.83.0.md`。
 
 ## ai-model-discovery
 

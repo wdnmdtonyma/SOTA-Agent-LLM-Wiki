@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Rebase existing [E: path:line] anchors between two pi commits.
-// Usage: node tools/rebase-evidence.mjs <base-pi-sha> <target-pi-sha> [wiki-git-ref] [--write]
+// Usage: node tools/rebase-evidence.mjs <base-pi-sha> <target-pi-sha> [wiki-git-ref] [--write] [--safe-only]
 //
 // The current node body can contain newly written target-SHA evidence. To avoid
 // remapping those anchors as if they belonged to the base, only citation
@@ -15,9 +15,12 @@ const ROOT = path.resolve(WIKI, "../../..")
 const SRC = path.join(ROOT, "pi")
 const rawArgs = process.argv.slice(2)
 const write = rawArgs.includes("--write")
-const [base, target, wikiRef = "HEAD"] = rawArgs.filter((arg) => arg !== "--write")
+const safeOnly = rawArgs.includes("--safe-only")
+const [base, target, wikiRef = "HEAD"] = rawArgs.filter((arg) => arg !== "--write" && arg !== "--safe-only")
 if (!base || !target) {
-  console.error("usage: node tools/rebase-evidence.mjs <base-pi-sha> <target-pi-sha> [wiki-git-ref] [--write]")
+  console.error(
+    "usage: node tools/rebase-evidence.mjs <base-pi-sha> <target-pi-sha> [wiki-git-ref] [--write] [--safe-only]",
+  )
   process.exit(2)
 }
 
@@ -25,7 +28,7 @@ const NODE_DIRS = ["spine", "surface", "subsystems", "reference"]
 const CITE_RE = /\[E:\s*([^\]\s:]+)(?::(\d+))?\]/g
 const sourceCache = new Map()
 const mappingCache = new Map()
-const stats = { files: 0, citations: 0, changed: 0, exact: 0, contextual: 0, fuzzy: 0, unresolved: 0 }
+const stats = { files: 0, citations: 0, changed: 0, exact: 0, contextual: 0, fuzzy: 0, unresolved: 0, skipped: 0 }
 const lowConfidence = []
 
 function walk(dir) {
@@ -42,18 +45,32 @@ function git(args, cwd = ROOT) {
   return execFileSync("git", args, { cwd, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 })
 }
 
+function sourceRenames() {
+  const forward = new Map()
+  const reverse = new Map()
+  const output = git(["diff", "--name-status", "--find-renames", base, target], SRC)
+  for (const line of output.split("\n")) {
+    if (!line.startsWith("R")) continue
+    const [, oldPath, nextPath] = line.split("\t")
+    if (!oldPath || !nextPath) continue
+    forward.set(oldPath, nextPath)
+    reverse.set(nextPath, oldPath)
+  }
+  return { forward, reverse }
+}
+
+const renames = sourceRenames()
+
 function oldSourcePath(currentPath) {
-  if (currentPath === "packages/ai/src/utils/uuid.ts") return "packages/agent/src/harness/session/uuid.ts"
-  return currentPath.replace(/^packages\/server\//, "packages/orchestrator/")
+  return renames.reverse.get(currentPath) || currentPath
 }
 
 function newSourcePath(oldPath) {
-  if (oldPath === "packages/agent/src/harness/session/uuid.ts") return "packages/ai/src/utils/uuid.ts"
-  return oldPath.replace(/^packages\/orchestrator\//, "packages/server/")
+  return renames.forward.get(oldPath) || oldPath
 }
 
 function oldWikiPath(rel) {
-  return rel.replace(/^subsystems\/server\//, "subsystems/orchestrator/")
+  return rel
 }
 
 function loadSource(oldPath) {
@@ -257,6 +274,10 @@ for (const file of nodeFiles) {
         `${rel}: ${whole} -> [E: ${mapped.path}:${mapped.line}] (${mapped.confidence}${mapped.score === undefined ? "" : ` ${mapped.score.toFixed(2)}`})`,
       )
     }
+    if (safeOnly && mapped.confidence !== "exact") {
+      stats.skipped++
+      return whole
+    }
     const replacement = `[E: ${mapped.path}${mapped.line === undefined ? "" : `:${mapped.line}`}]`
     if (replacement !== whole) {
       fileChanged++
@@ -270,7 +291,7 @@ for (const file of nodeFiles) {
   }
 }
 
-console.log(JSON.stringify({ mode: write ? "write" : "dry-run", ...stats }, null, 2))
+console.log(JSON.stringify({ mode: write ? "write" : "dry-run", safeOnly, ...stats }, null, 2))
 if (lowConfidence.length) {
   console.log(`LOW_CONFIDENCE ${lowConfidence.length}`)
   for (const item of lowConfidence) console.log(item)

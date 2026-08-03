@@ -1,6 +1,6 @@
 # RUN — 填充令(pi 源码 LLM Wiki)
 
-你是执行者(codex)。把本 wiki(`docs/llm-wiki/pi/`)维护成完整的、给 agent 检索的 LLM wiki。文档对象是 **pi** 真实源码(`pi/`,相对本目录 `../../../pi/`,7 个核心 package + 5 个 extension-example workspace 的 TypeScript monorepo)。要细到每个工具的字段与设计动机。
+你是执行者(codex)。把本 wiki(`docs/llm-wiki/pi/`)维护成完整的、给 agent 检索的 LLM wiki。文档对象是 **pi** 真实源码(`pi/`,相对本目录 `../../../pi/`,9 个源码 package workspace + 5 个 extension-example workspace 的 TypeScript monorepo)。要细到每个工具的字段与设计动机。
 
 ## 0. 先读这五个文件(权威规范,必须遵守)
 1. `README.md` —— 形态、四支柱、证据图例、优先级、pi 画像(分层栈 + pkg 字段)。
@@ -17,7 +17,7 @@
 ## 2. 顺序(价值优先)
 1. **T0 `spine/`**(12,mermaid 图先行)—— 先立脊柱(分层架构、agent-loop 一次 turn、工具调用解剖、provider stream、会话/压缩、扩展生命周期 + 3 worked traces),后续节点引用它。
 2. **T1 `surface/tools/`**(7)—— 用户核心诉求;`bash`/`edit`/`read`/`write` 大件优先。
-3. **T2 `subsystems/`**:`coding-agent/` 与 `agent-core/`(脊柱依赖)→ `ai/` → `tui/` → `server/` → `storage/` / `evals/`。
+3. **T2 `subsystems/`**:`coding-agent/` 与 `agent-core/`(脊柱依赖)→ `ai/` → `tui/` → `protocol/` / `client/` / `server/` → `storage/` / `evals/`。
 4. **T1 其它可见面 + T3 `reference/` catalog**:cli/modes/config/extensions/providers/skills/slash/sdk + provider/model/config-keys/slash/keybinding/rpc/extension-event/env catalog。
 5. **cross 引用**:package-index、glossary、uncertainty(uncertainty 由 reconcile 生成,勿手写)。
 

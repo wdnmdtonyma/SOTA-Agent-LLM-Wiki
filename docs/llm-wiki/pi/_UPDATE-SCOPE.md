@@ -1,125 +1,104 @@
-# UPDATE SCOPE — pi Wiki 增量更新令（3da591ab → cee5ff7520）
+# UPDATE SCOPE — Pi Wiki 增量更新（cee5ff7520 → a8ee03b815）
 
-> 本文件记录 2026-07-26 完成的影响分析与更新决策。
-> **基线（更新前 Wiki verified SHA）**：`3da591ab74ab9ab407e72ed882600b2c851fae21`
-> **目标（官方 `earendil-works/pi` `origin/main`）**：`cee5ff7520d8828bed9955ef00419e995d1f91e0`
-> **跨度**：124 commits · 390 files changed · +17,263 / -7,353 · 2026-07-17 → 2026-07-26
+> 本文件记录 2026-08-03 完成的 Pi-only 增量更新。
+> **旧父仓 gitlink / Wiki 基线**：`cee5ff7520d8828bed9955ef00419e995d1f91e0`
+> **目标（官方 `origin/main` remote HEAD）**：`a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe`
+> **跨度**：254 commits · 406 files changed · +36,495 / -3,895 · 2026-07-25 → 2026-08-03
 
 复现：
 
 ```bash
-git -C pi diff --shortstat 3da591ab74ab9ab407e72ed882600b2c851fae21..cee5ff7520d8828bed9955ef00419e995d1f91e0
-git -C pi rev-list --count 3da591ab74ab9ab407e72ed882600b2c851fae21..cee5ff7520d8828bed9955ef00419e995d1f91e0
+git -C pi fetch origin main
+git -C pi symbolic-ref refs/remotes/origin/HEAD
+git -C pi rev-list --count cee5ff7520d8828bed9955ef00419e995d1f91e0..a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe
+git -C pi diff --shortstat cee5ff7520d8828bed9955ef00419e995d1f91e0..a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe
 ```
 
-## 1. 基线节点影响重算
+## 1. 既有节点影响分类
 
-以更新前 `index.json` 的 180 个节点为总体，将每个 `source` 与目标树存在性、`git diff --numstat` churn 交叉：
+以更新前 186 个节点为总体，按 source 删除/移动与 diff churn 分类：
 
-| 分级 | 节点数 | 判定 |
+| 分类 | 节点数 | 判定 |
 |---|---:|---|
-| A-BROKEN | 12 | 至少一个 source 在目标树消失；均可定位到明确 rename |
-| B-HEAVY | 1 | `ref.ai.model-catalog`，模型目录生成/分片体系重写，粗 churn 5,012 |
-| C-DRIFT | 121 | source 存在但内容或行号变化 |
-| D-CLEAN | 46 | source 内容不变；抽样复核后统一刷新 verified SHA |
-| 合计 | 180 | 不含本轮新增的 6 个节点 |
+| A-BROKEN | 14 | 至少一个 source 删除或移动；均已重映射到目标树有效路径 |
+| B-HEAVY | 0 | 本轮没有仅凭 churn 判为独立重写的节点 |
+| C-DRIFT | 117 | source 仍存在但内容/行号变化，需重锚和语义复核 |
+| D-CLEAN | 55 | source content 未变；仍重新核验目标 SHA |
+| 合计 | 186 | 不含本轮新增节点 |
 
-目标最后一个提交 `cee5ff7520` 仅从 `packages/coding-agent/README.md` 删除一个 OpenClaw 外链（1+/1-）。该 README 不在更新前或更新后任何节点的 `source`/`[E:]` 中，因此不会改变上述 180 节点分级，也无需改写节点语义；它只推进本轮 verified SHA 与根仓 submodule gitlink。
+132 个既有节点通过 `tools/rebase-evidence.mjs --safe-only` 重定位可确定的 exact anchors；自动迁移后仍对新增/删除 API、catalog、events 与所有 weak anchors 做人工源码复核。更新后的 202 个节点统一 `updated: a8ee03b815`。
 
-12 个 A-BROKEN：
+## 2. 结构新增与退役
 
-- `subsys.agent-core.session-tree`：UUID helper 从 `packages/agent/src/harness/session/uuid.ts` 迁入 `packages/ai/src/utils/uuid.ts`。
-- `subsys.orchestrator.{supervisor,rpc-spawner,ipc-transport,message-protocol,request-handler,storage,radius,config}`：迁移为 `subsys.server.*`。
-- `ref.orchestrator.{ipc-messages,instance-status}`：迁移为 `ref.server.*`。
-- `ref.package-index`：全部 `packages/orchestrator/**` source 迁为 `packages/server/**`。
+新增 16 个节点，退役 0 个：
 
-结构迁移不是兼容别名：目标树采用 package `@earendil-works/pi-server`、bin `server`、`ServerSupervisor`、`ServerRequest/ServerResponse`、`getServerDir()`、`PI_SERVER_DIR`、`PI_RADIUS_SERVER_URL`、`.pi/server/server.sock`。既有 Wiki 节点、related id、路径与 uncertainty staging 文件随之改名，不新建重复的 server 节点。
-
-## 2. 高价值新增面的判定
-
-| 候选 | 判定 | 落点 |
-|---|---|---|
-| `packages/storage/sqlite-node/**` | **建节点** | `subsys.storage.sqlite-node`；公开、可发布的 Node `node:sqlite` session backend |
-| `packages/ai/src/api/constrained-sampling.ts` | **建节点** | `subsys.ai.constrained-sampling`；统一 grammar/JSON schema 能力与 provider 降级边界 |
-| `packages/agent/src/harness/tools/**` | **建节点** | `subsys.agent-core.execution-tools`；可复用 harness 的 bash/read/edit/write factories，与 coding-agent 产品工具分层 |
-| provider retry / summarization retry | **建节点** | `subsys.ai.provider-retry`；wire retry 与 harness retry policy/callbacks |
-| tool / compaction / branch-summary usage | **建节点** | `subsys.coding-agent.usage-accounting`；usage 从工具和摘要到 session total 的链路 |
-| `packages/evals/**` | **建节点** | `subsys.evals.pi-harness`；private behavioral-eval consumer，不误写成发布 API |
-| Kimi/OpenRouter OAuth | **并入既有** | `subsys.ai.oauth-flow`、`surface.providers.auth`、provider catalog；不复制 OAuth 总体节点 |
-| Qwen provider families | **并入既有** | provider catalog / auth / model discovery |
-| `packages/ai/src/model-catalog.ts` 与分片生成器 | **并入既有** | `ref.ai.model-catalog`、`subsys.ai.model-discovery`、`subsys.ai.model-catalog-publication` |
-| 外部编辑器 helper / renderer `outputPad` | **并入既有** | interactive、interactive orchestration、components、extension contribution points |
-| RPC thinking-level query、bash/session events | **并入既有** | RPC surface/catalog、JSON events、bash 与 env catalog |
-
-更新后节点数为 186，全部 `verified`。
-
-## 3. 模型目录制品限制
-
-目标 Git tree 不保存最终 model-data JSON；`packages/ai/src/model-catalog.ts` 只装配生成分片，逐模型事实不能只靠目标 tree 完整枚举。本轮使用官方 npm 制品 `@earendil-works/pi-ai@0.82.1`：
-
-- tarball SHA-256：`2f9df9522808b621cd3449876537f03d8a8df8b8d7ec2d5b18c6a910aa85b490`
-- manifest schema：3；structure hash：`1a3c7cf59ada71c94abe4540976960524ee933034491c75d6418e2abc1b42535`
-- 37 providers、1,109 models
-- source map 内 `model-catalog.ts` / `models.generated.ts` 的 `sourcesContent` 与目标 SHA 源码逐字节相同
-
-npm manifest 没有 `gitHead`，所以“该制品必然由目标 commit 构建”不能提升为 explicit；逐模型行统一标 `[I]`，完整限制与计数记录于 `_research/model-catalog-v0.82.1.md` 和 uncertainty。
-
-## 4. 语义更新重点
-
-- agent harness：新增可复用 execution tools、tool context、usage-bearing tool result、summary retry 与 usage。
-- AI：constrained sampling、provider retry、Kimi/OpenRouter OAuth、Qwen providers、catalog 分片/校验/发布链。
-- coding-agent：RPC `get_available_thinking_levels`、`modelRuntime` state、`agent_settled` / `entry_appended` / bash update / retry events、子进程 session env、共享 external editor、renderer `outputPad`。
-- storage/evals：SQLite adapter 与 private eval harness 纳入分层图和 package catalog。
-- server：完成 workspace、API、CLI、env、socket、节点 id 和引用的全链路 rename。
-
-## 5. 引用迁移
-
-旧 Wiki 共约 31k 条 `[E:]`。本轮用 `tools/rebase-evidence.mjs` 以基线/目标源码内容和上下文重定位旧锚点：
-
-- 125 个节点文件发生锚点更新；
-- 13,384 个引用文本被改写；
-- 30,746 次 exact 映射、541 次 contextual 映射、0 unresolved；
-- weak-anchor 扫描又筛出 54 个落在空行、注释或纯括号行的候选；这些锚点逐项重锚到对应语义代码，并重新接受 lint/L2 复核，没有保留“就近代码行即语义等价”的自动修复器。
-
-保留的 `rebase-evidence.mjs` 默认只做 dry-run；必须先审阅 `LOW_CONFIDENCE` 候选，再显式传 `--write`。机械迁移只负责候选定位；新增节点、rename、模型目录、SQLite、harness tools、OAuth/RPC/usage 等语义变化另走 L2。
-
-## 6. L2 证伪矩阵
-
-| 面 | 独立反证 |
+| 包 | 新增节点 |
 |---|---|
-| server rename | 对目标 tree grep 旧 package/path/symbol/env；检查新 package/bin/class/config/socket；旧名仅允许 changelog 历史或 fixture 文本 |
-| harness tools | 从 `harness/tools/index.ts` 与 agent entrypoint 枚举 factory；检查 `AgentHarnessOptions.tools` 与 context binding；确认 coding-agent 工具仍是产品装配 |
-| SQLite | 解析 workspace/package metadata、exports、Node engine、migrations 与 repo/storage interface；反查 coding-agent 默认依赖，确认它是可选 backend |
-| constrained sampling | 对 provider API 实现逐项核对支持/拒绝策略和 coding-agent wrapper 透传 |
-| provider retry | 核对 retryable status/error、budget/backoff/abort、callbacks，以及 compaction/branch summary 的调用边界 |
-| model catalog | 对官方 0.82.1 制品重新统计 provider/model 数，校验 structure hash 与 source-map `sourcesContent` |
-| OAuth | 枚举 built-in OAuth providers，确认 Kimi/OpenRouter flow、credential shape 和文档列表差异 |
-| usage | 从 tool result、extension patch、compaction/branch result、session entry、storage total 做端到端字段追踪 |
-| RPC/events | 从 `RpcCommand` union 与 dispatch 独立计数 32 个命令；验证新增 response/state/event payload |
-| eval harness | 检查 private package、真实 session 构造、凭据要求，以及不注入 tools/resources 的边界 |
+| agent | `subsys.agent-core.agent-harness-lifecycle`、`subsys.agent-core.session-search` |
+| protocol | `subsys.protocol.cbor-framing`、`subsys.protocol.wire-protocol` |
+| client | `subsys.client.remote-session-client`、`subsys.client.session-leases`、`subsys.client.unix-transport` |
+| coding-agent | `surface.sdk.remote-session`、`subsys.coding-agent.experimental-cli` |
+| tui | `subsys.tui.layout`、`subsys.tui.alternate-screen` |
+| server | `subsys.server.session-server`、`subsys.server.live-sessions`、`subsys.server.protocol-adapters`、`subsys.server.unix-transport` |
+| evals | `subsys.evals.comparative-harness` |
 
-L2 命令与结果落在 `_research/update-3da591ab-cee5ff7520-l2.md`。任何源码无法闭合的断言降级为 `[I]` / `[U]`，不以 lint 通过代替语义证据。
+保留既有八个 `server` 节点：上游把旧实现移动到 `src/legacy/`，根 export 与 `server` bin 继续暴露 legacy API；新 composable server 是 additive surface，不构成旧节点退役。
 
-## 7. 保留的不确定项
+更新后节点总数 202：T0 12、T1 34、T2 121、T3 35；全部 verified，planned 为 0。
 
-- `[I]`：官方 0.82.1 npm 制品与目标源码 source map 相同，但缺少 `gitHead`，因此 1,109 个模型实例的 commit 归属是强推断。
-- `[U]`：`packages/coding-agent/docs/providers.md` 的 subscription bullet 尚未列 Kimi Coding，而 OAuth registry/source 已包含它；以代码为运行时 ground truth，记录文档漂移。
-- server 跨进程锁、异常 JSON CLI 表现、Bun virtual path 未来兼容等既有实现外推继续保留在 uncertainty，不伪装成已验证行为。
+## 3. 真实增量影响
 
-## 8. 完成门槛
+- **Agent/session/compaction**：`SessionStorage` 改为 `readHead/readEntry/readEntries/appendEntry/findEntriesOnBranch/readPathToRootOrCompaction`；新增 repository search、harness phase/retry lifecycle、retained tail 与 usage-bearing compaction/tool result。
+- **AI/provider**：stream partial 从 `pending` 开始并保留 `rawStopReason`；新增 request-scoped fetch 的 provider-specific支持边界、Google initial-request retry、OAuth 五分钟/min-validity refresh window、nullable union validation 与 OpenAI compat fields。
+- **Catalog**：38 runtime providers、37 static model buckets、10 chat/text wire keys；官方 0.83.0 artifact 复核为 1,153 models，较 0.82.1 `+51/-7`。
+- **Coding-agent**：active CLI 62、config keys 76、env vars 93、ExtensionAPI contribution/action entries 26、extension events 33、RPC methods 32；新增 public `RemoteSession` 与尚未接入发布入口的 experimental client/server CLI。
+- **TUI**：`TUI` 从 concrete class 拆为 interface + main/alternate screen；新增 HStack/VStack/ScrollView、viewport layout、37 TUI actions、79 total default keybindings、Kitty placement/crop/cache 与 fullscreen image boundary。
+- **Remote stack**：新增 TypeBox DTO + CBOR/framing protocol、transport-neutral client、Unix transport、composable server、live-session ownership 与 protocol adapters；旧 legacy server 同时保留。
+- **Storage/evals**：SQLite branch cache、bounded canonical traversal、FTS/repository lifecycle得到更新；evals 新增 baseline/candidate pairing、artifact persistence 与 paired comparison report。
+
+## 4. 模型目录制品边界
+
+目标 tree 不保存最终生成 model JSON，因此逐实例目录保持 `[I]`。本轮独立核验官方 `@earendil-works/pi-ai@0.83.0` artifact：
+
+- registry `gitHead=845d6ff1f6643aba440341cce877ce1c43ebbc39`，且为目标 commit 祖先；
+- tarball SHA-256：`f983c28a21209305ed9c274977e29130fa4d8848df6cdf37e9094d95cc7bc6d4`；
+- manifest schema 3、structure hash `5d82f5b1946bdf6d01733aa2a4e4410849c6d44a2ad3038171078c17aed367ce`、37 files、0 hash mismatch；
+- flatten 后 1,153 models；0.82.1 → 0.83.0 为 +51 / -7；
+- release → target generator 只把两个 Fireworks Kimi K3 rows 调整为 `openai-completions` wire，因此 membership 总数不变。
+
+复核记录见 `_research/model-catalog-v0.83.0.md`。
+
+## 5. 独立 L2 证伪
+
+按 `RUN.md` 分面使用独立 verifier，初次均以反例为目标而非确认结论。发现并修复的主要问题：
+
+- agent：旧 `getLeafId/getPathToRootOrCompaction` contract、19→22 harness events、retry/usage/retainedTail 漏项；
+- AI：Responses provisional/terminal event 混淆、OAuth refresh 旧语义、Azure `pending`、auth resolver 虚构 model 参数；
+- coding-agent：遗漏 `registerEntryRenderer`、Kimi OAuth env、provider overload/refreshModels 与 tool-result usage；
+- TUI：错误实例化 interface `TUI`、31→37 actions、renderImage columns、fallback/path link、placement/crop/fullscreen image 边界；
+- remote server：revision 单调性过度承诺、request-id 唯一性、malformed decoder close、strict-object 与 enumerable-symbol 限定；
+- storage/evals：bounded query 不修 cache 的例外、metadata provenance、文件 mode 只在新建时请求。
+
+完整矩阵与精确验证记录见 `_research/update-cee5ff7520-a8ee03b815-l2.md`。
+
+## 6. 验证与残余风险
+
+收尾要求：
 
 ```bash
 node docs/llm-wiki/pi/tools/reconcile.mjs
 node docs/llm-wiki/pi/tools/lint.mjs
+node docs/llm-wiki/pi/tools/reconcile.mjs
+node docs/llm-wiki/pi/tools/lint.mjs
 git diff --check -- docs/llm-wiki/pi pi
-git -C pi rev-parse HEAD
-git -C pi status --short
 ```
 
-此外必须断言：
+并断言：
 
-- 所有 verified node frontmatter `updated`、`index.json.updated` 与每个 index node `updated` 均为 `cee5ff7520`；
-- `index.json`、`llms.txt`、文件树是 186 节点一致集；
-- 所有 frontmatter/source/`[E:]` 路径存在，行号在范围内且不落空行/注释；
-- 旧基线 `3da591ab` 只出现在本更新范围/研究历史中；
-- 根仓只 stage `docs/llm-wiki/pi/**` 与 `pi` gitlink。
+- `index.json.updated`、202 个 index node 与所有 node frontmatter 都是 `a8ee03b815`；
+- index/file tree/`llms.txt` 为同一 202-node 集，0 planned；
+- 所有 `[E:path:line]` 路径、范围和代码行有效，lint 0 error / 0 warning；
+- root gitlink、submodule HEAD 都是目标 full SHA，Pi submodule clean；
+- root 只 stage `docs/llm-wiki/pi/**` 与 `pi`，不改其他产品 Wiki/submodule。
+
+残余风险：Pi submodule 未安装 `node_modules`，独立 verifier 尝试运行定向 upstream tests 时因依赖缺失（如 Vitest / `get-east-asian-width`）未进入用例；本轮验证因此是源码、测试实现与文档证据的静态交叉核验，加 Wiki 自身的 reconcile/lint/idempotence，而不是 Pi runtime test pass。

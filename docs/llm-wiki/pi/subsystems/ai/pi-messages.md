@@ -21,7 +21,7 @@ related:
   - ref.ai.wire-protocol-catalog
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `subsys.ai.pi-messages` 描述 Pi 自有的 HTTP/SSE wire protocol：client 向 `<baseUrl>/messages` POST 统一的 model/context/options，再把服务端序列化事件还原为标准 `AssistantMessageEventStream`。Radius gateway 和 `models.json` custom provider 都能使用它。
@@ -66,6 +66,10 @@ gateway config 把每个 model 固定成 `api: "pi-messages"` 并注入 provider
 - `pi-messages` 是 Pi client/backend 之间的协议，不等于 session JSONL 或 RPC stdin/stdout protocol。[I]
 - bearer key 是必需的；即使后端不检查 secret，provider auth 也必须向 request path 提供非空 key [E: packages/ai/src/api/pi-messages.ts:355] [E: packages/ai/src/api/pi-messages.ts:357]。
 - rewrite metadata 只作为 diagnostic 附加，不会重写 client 侧已经还原的 transcript content [E: packages/ai/src/api/pi-messages.ts:165] [E: packages/ai/src/api/pi-messages.ts:172] [I]。
+
+## 本轮 stream 状态与 fetch 变化
+
+Pi-native SSE partial message 从 `stopReason: "pending"` 开始；协议的 `done`/`error` event 仍只允许 terminal reason，因此 event variant 没有新增。HTTP POST 现在用 `options.fetch ?? globalThis.fetch`，支持 request-scoped custom fetch。[E: packages/ai/src/api/pi-messages.ts:69] [E: packages/ai/src/api/pi-messages.ts:82] [E: packages/ai/src/api/pi-messages.ts:176] [E: packages/ai/src/api/pi-messages.ts:185] [E: packages/ai/src/api/pi-messages.ts:382] [E: packages/ai/src/api/pi-messages.ts:391]
 
 ## Sources
 

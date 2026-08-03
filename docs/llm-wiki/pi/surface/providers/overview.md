@@ -21,7 +21,7 @@ related:
   - ref.ai.provider-catalog
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `surface.providers.overview` 是用户可见的 provider 心智模型：选择 provider/model 后，Pi 从 runtime `Models` collection 检查配置、筛选可用模型、解析 credential，再把请求交给 provider-owned wire implementation。
@@ -36,7 +36,7 @@ updated: cee5ff7520
 
 ## 用户入口
 
-Provider docs 把配置分成 OAuth subscription 和 API key 两类：交互模式用 `/login`/`/logout` 管理 credential，API-key provider 也能直接从环境变量启动 [E: packages/coding-agent/docs/providers.md:3] [E: packages/coding-agent/docs/providers.md:17] [E: packages/coding-agent/docs/providers.md:26] [E: packages/coding-agent/docs/providers.md:61] [E: packages/coding-agent/docs/providers.md:65]。用户再通过 `/model`、CLI `--provider`/`--model` 或 embedding API 选择具体模型；完整登录与 credential precedence 由 [surface.providers.auth](auth.md) 解释。[I]
+Provider docs 把配置分成 OAuth subscription 和 API key 两类：交互模式用 `/login`/`/logout` 管理 credential，API-key provider 也能直接从环境变量启动 [E: packages/coding-agent/docs/providers.md:3] [E: packages/coding-agent/docs/providers.md:17] [E: packages/coding-agent/docs/providers.md:26] [E: packages/coding-agent/docs/providers.md:62] [E: packages/coding-agent/docs/providers.md:66]。用户再通过 `/model`、CLI `--provider`/`--model` 或 embedding API 选择具体模型；完整登录与 credential precedence 由 [surface.providers.auth](auth.md) 解释。[I]
 
 ## 内置集合与 static catalog
 
@@ -58,11 +58,11 @@ provider 必须给 id/name、auth、同步 last-known `getModels()` 与 stream/s
 
 stream 先按 `model.provider` require provider，调用 `getAuth()`；request options 的 apiKey/headers/env 覆盖 resolved auth，`transformHeaders` 最后运行 [E: packages/ai/src/models.ts:455] [E: packages/ai/src/models.ts:463] [E: packages/ai/src/models.ts:468] [E: packages/ai/src/models.ts:478] [E: packages/ai/src/models.ts:480] [E: packages/ai/src/models.ts:484]。之后 `stream()`/`streamSimple()` 才委派给 provider object [E: packages/ai/src/models.ts:489] [E: packages/ai/src/models.ts:500] [E: packages/ai/src/models.ts:512] [E: packages/ai/src/models.ts:516]。
 
-Docs 给出的用户可见 credential precedence 是 CLI `--api-key`、`auth.json`、环境变量、`models.json` provider key [E: packages/coding-agent/docs/providers.md:301] [E: packages/coding-agent/docs/providers.md:308]。Provider-scoped credential env 能覆盖进程环境，并承载 Cloudflare、Azure、Vertex、Bedrock 等附加配置 [E: packages/coding-agent/docs/providers.md:130] [E: packages/coding-agent/docs/providers.md:148]。
+Docs 给出的用户可见 credential precedence 是 CLI `--api-key`、`auth.json`、环境变量、`models.json` provider key [E: packages/coding-agent/docs/providers.md:302] [E: packages/coding-agent/docs/providers.md:309]。Provider-scoped credential env 能覆盖进程环境，并承载 Cloudflare、Azure、Vertex、Bedrock 等附加配置 [E: packages/coding-agent/docs/providers.md:131] [E: packages/coding-agent/docs/providers.md:149]。
 
 ## Custom provider 的两条路
 
-`models.json` 适合复用现有 wire protocol 的 base URL、headers、auth 与 model list；extension 适合新 stream implementation、OAuth 或自定义生命周期 [E: packages/coding-agent/docs/providers.md:295] [I]。`createProvider()` 支持 static baseline `models`、可选 `fetchModels()` dynamic overlay、credential filter，以及单一 API 或按 `model.api` 的 map [E: packages/ai/src/models.ts:533] [E: packages/ai/src/models.ts:542] [E: packages/ai/src/models.ts:544] [E: packages/ai/src/models.ts:545] [E: packages/ai/src/models.ts:547]。
+`models.json` 适合复用现有 wire protocol 的 base URL、headers、auth 与 model list；extension 适合新 stream implementation、OAuth 或自定义生命周期 [E: packages/coding-agent/docs/providers.md:296] [I]。`createProvider()` 支持 static baseline `models`、可选 `fetchModels()` dynamic overlay、credential filter，以及单一 API 或按 `model.api` 的 map [E: packages/ai/src/models.ts:533] [E: packages/ai/src/models.ts:542] [E: packages/ai/src/models.ts:544] [E: packages/ai/src/models.ts:545] [E: packages/ai/src/models.ts:547]。
 
 dynamic overlay 会从 `ModelsStore` 恢复，联网 fetch 成功后再替换并持久化；相同 model id 覆盖 baseline [E: packages/ai/src/models.ts:561] [E: packages/ai/src/models.ts:565] [E: packages/ai/src/models.ts:600] [E: packages/ai/src/models.ts:607] [E: packages/ai/src/models.ts:610]。缺少对应 API implementation 时，stream path 返回 `ModelsError("stream", ...)` [E: packages/ai/src/models.ts:574] [E: packages/ai/src/models.ts:580] [E: packages/ai/src/models.ts:583]。
 

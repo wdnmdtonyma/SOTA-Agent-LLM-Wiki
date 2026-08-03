@@ -9,7 +9,7 @@ symbols: [SessionTreeEntry, MessageEntry, LeafEntry, uuidv7]
 related: [spine.session-state-model, subsys.agent-core.tree-navigation, ref.agent.session-entry-types]
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `subsys.agent-core.session-tree` 定义 pi-agent-core 的 append-only session tree entry 形状: 所有 entry 都有 `id`、`parentId`、`timestamp`, 具体变体用 `type` 区分; `uuidv7()` 提供默认 entry id 形态。
@@ -34,7 +34,7 @@ updated: cee5ff7520
 
 `id` 是 entry 自身标识，`parentId` 是指向父 entry 的可空引用，`timestamp` 是 entry 时间戳字符串，`type` 是 discriminated union 的分派字段 [E: packages/agent/src/harness/types.ts:376] [E: packages/agent/src/harness/types.ts:377] [E: packages/agent/src/harness/types.ts:378] [E: packages/agent/src/harness/types.ts:379]。根 entry 或无父上下文的 entry 可以用 `parentId: null` 表示，因为字段类型是 `string | null` [E: packages/agent/src/harness/types.ts:378]。
 
-源码窗口里没有 `children` 或 `childIds` 字段; child relation 是 `parentId` 的反向索引概念，而不是 entry 自身存储的字段 [I]。storage contract 暴露 `getPathToRootOrCompaction(leafId)`，说明导航 API 以 leaf id 为输入返回 path，而不是要求 entry 保存 child list [E: packages/agent/src/harness/types.ts:512] [I]。
+源码窗口里没有 `children` 或 `childIds` 字段; child relation 是 `parentId` 的反向索引概念，而不是 entry 自身存储的字段 [I]。storage contract 暴露 `readPathToRootOrCompaction(leafId)`，说明导航 API 以 leaf id 为输入返回 path，而不是要求 entry 保存 child list [E: packages/agent/src/harness/types.ts:567] [I]。
 
 ### Entry variants
 
@@ -44,7 +44,7 @@ updated: cee5ff7520
 | `thinking_level_change` | `thinkingLevel: string` | branch 上的 thinking level 状态变更 entry [E: packages/agent/src/harness/types.ts:387] [E: packages/agent/src/harness/types.ts:388] [E: packages/agent/src/harness/types.ts:389] |
 | `model_change` | `provider`, `modelId` | branch 上的 provider/model 状态变更 entry [E: packages/agent/src/harness/types.ts:392] [E: packages/agent/src/harness/types.ts:393] [E: packages/agent/src/harness/types.ts:394] [E: packages/agent/src/harness/types.ts:395] |
 | `active_tools_change` | `activeToolNames: string[]` | branch 上的 active tool name set 变更 entry [E: packages/agent/src/harness/types.ts:398] [E: packages/agent/src/harness/types.ts:399] [E: packages/agent/src/harness/types.ts:400] |
-| `compaction` | `summary`, `firstKeptEntryId`, `tokensBefore`, optional `details`, `fromHook` | 压缩摘要 entry, 并记录从哪条 entry 开始保留原始上下文 [E: packages/agent/src/harness/types.ts:403] [E: packages/agent/src/harness/types.ts:404] [E: packages/agent/src/harness/types.ts:405] [E: packages/agent/src/harness/types.ts:851] [E: packages/agent/src/harness/types.ts:407] [E: packages/agent/src/harness/types.ts:433] [E: packages/agent/src/harness/types.ts:411] |
+| `compaction` | `summary`, optional `firstKeptEntryId`, `tokensBefore`, optional `retainedTail`, `details`, `usage`, `fromHook` | 压缩摘要 entry；保留边界可由 storage anchor 或直接 message tail 表示，并可记录生成摘要的 LLM usage [E: packages/agent/src/harness/types.ts:403] [E: packages/agent/src/harness/types.ts:405] [E: packages/agent/src/harness/types.ts:406] [E: packages/agent/src/harness/types.ts:407] [E: packages/agent/src/harness/types.ts:408] [E: packages/agent/src/harness/types.ts:409] [E: packages/agent/src/harness/types.ts:410] [E: packages/agent/src/harness/types.ts:411] |
 | `branch_summary` | `fromId`, `summary`, optional `details`, `fromHook` | 针对某个 branch 起点的 summary entry [E: packages/agent/src/harness/types.ts:414] [E: packages/agent/src/harness/types.ts:415] [E: packages/agent/src/harness/types.ts:416] [E: packages/agent/src/harness/types.ts:417] [E: packages/agent/src/harness/types.ts:418] [E: packages/agent/src/harness/types.ts:420] |
 | `custom` | `customType`, optional `data` | 扩展自定义状态 entry [E: packages/agent/src/harness/types.ts:423] [E: packages/agent/src/harness/types.ts:424] [E: packages/agent/src/harness/types.ts:425] [E: packages/agent/src/harness/types.ts:426] |
 | `custom_message` | `customType`, `content`, optional `details`, `display` | 扩展自定义消息 entry, content 可以是字符串或 text/image content 数组 [E: packages/agent/src/harness/types.ts:429] [E: packages/agent/src/harness/types.ts:430] [E: packages/agent/src/harness/types.ts:431] [E: packages/agent/src/harness/types.ts:432] [E: packages/agent/src/harness/types.ts:433] [E: packages/agent/src/harness/types.ts:434] |
@@ -58,9 +58,9 @@ updated: cee5ff7520
 
 `MessageEntry` 只在 variant payload 中增加 `message: AgentMessage`; 它仍继承 `SessionTreeEntryBase` 的 `id`、`parentId`、`timestamp`，所以消息既是 payload 也是 tree node [E: packages/agent/src/harness/types.ts:382] [E: packages/agent/src/harness/types.ts:384] [E: packages/agent/src/harness/types.ts:375]。
 
-`LeafEntry` 的 `targetId` 是 `string | null`，它和普通 entry 的 `parentId` 是两种不同指针: `parentId` 描述 entry 在树中的父节点，`targetId` 描述当前 leaf pointer 应指向哪条 entry 或空 leaf [E: packages/agent/src/harness/types.ts:378] [E: packages/agent/src/harness/types.ts:448] [E: packages/agent/src/harness/types.ts:449] [E: packages/agent/src/harness/types.ts:450]。`SessionStorage` contract 也把 `getLeafId()` / `setLeafId()` 与 `appendEntry()` / `getPathToRootOrCompaction()` 分开建模，说明 leaf pointer 是 storage 层的一等状态，而不只是普通 message payload [E: packages/agent/src/harness/types.ts:500] [E: packages/agent/src/harness/types.ts:502] [E: packages/agent/src/harness/types.ts:504] [E: packages/agent/src/harness/types.ts:512]。
+`LeafEntry` 的 `targetId` 是 `string | null`，它和普通 entry 的 `parentId` 是两种不同指针: `parentId` 描述 entry 在树中的父节点，`targetId` 描述当前 leaf pointer 应指向哪条 entry 或空 leaf [E: packages/agent/src/harness/types.ts:378] [E: packages/agent/src/harness/types.ts:448] [E: packages/agent/src/harness/types.ts:449] [E: packages/agent/src/harness/types.ts:450]。`SessionStorage.readHead()` 单独返回 `SessionHead.leafId`，而 `appendEntry()` 与 `readPathToRootOrCompaction()` 分别负责持久化 entry 和读取 active path；leaf mutation 则由更高层 `Session` 排队写入 [E: packages/agent/src/harness/types.ts:554] [E: packages/agent/src/harness/types.ts:555] [E: packages/agent/src/harness/types.ts:562] [E: packages/agent/src/harness/types.ts:565] [E: packages/agent/src/harness/types.ts:567] [I]。
 
-`PendingSessionWrite` 是 `SessionTreeEntry` 去掉 `id`、`parentId`、`timestamp` 后的待写入形态; 这暗示 harness/storage 边界会在写入时补齐 tree identity 和位置字段，而调用方只提交 variant payload [E: packages/agent/src/harness/types.ts:555] [E: packages/agent/src/harness/types.ts:556] [E: packages/agent/src/harness/types.ts:557] [E: packages/agent/src/harness/types.ts:558] [I]。
+`PendingSessionWrite` 是 `SessionTreeEntry` 去掉 `id`、`parentId`、`timestamp` 后的待写入形态; 这暗示 harness/storage 边界会在写入时补齐 tree identity 和位置字段，而调用方只提交 variant payload [E: packages/agent/src/harness/types.ts:585] [E: packages/agent/src/harness/types.ts:586] [E: packages/agent/src/harness/types.ts:587] [E: packages/agent/src/harness/types.ts:588] [I]。
 
 ## uuidv7
 
@@ -75,14 +75,14 @@ id 的时间成分来自 `Date.now()`; 当新 timestamp 大于 `lastTimestamp` �
 ## Gotcha
 
 - `SessionTreeEntryBase.type` 是宽泛 `string`，但 union 成员把具体 `type` 收窄成 literal; 需要做 variant 判断时应以 union 成员为准 [E: packages/agent/src/harness/types.ts:376] [E: packages/agent/src/harness/types.ts:383] [E: packages/agent/src/harness/types.ts:453]。
-- `LeafEntry` 自身也是 `SessionTreeEntry` union 的一个成员，不等同于 `SessionStorage.getLeafId()` 返回的 leaf pointer; 前者是可持久化 entry，后者是 storage API 暴露的当前 pointer [E: packages/agent/src/harness/types.ts:448] [E: packages/agent/src/harness/types.ts:464] [E: packages/agent/src/harness/types.ts:500]。
+- `LeafEntry` 自身也是 `SessionTreeEntry` union 的一个成员，不等同于 `SessionHead.leafId`; 前者是可持久化 entry，后者是 `SessionStorage.readHead()` 暴露的当前 pointer [E: packages/agent/src/harness/types.ts:448] [E: packages/agent/src/harness/types.ts:464] [E: packages/agent/src/harness/types.ts:554] [E: packages/agent/src/harness/types.ts:555] [E: packages/agent/src/harness/types.ts:562]。
 - `uuidv7()` 的 fallback 使用 `Math.random()`，因此没有 `crypto.getRandomValues` 的运行时随机性更弱; 这是代码路径事实，不应把所有运行时都描述为 cryptographically strong [E: packages/ai/src/utils/uuid.ts:5] [E: packages/ai/src/utils/uuid.ts:5] [E: packages/ai/src/utils/uuid.ts:9] [E: packages/ai/src/utils/uuid.ts:10] [I]。
 
 ## 跨包边界
 
 [spine.session-state-model](../../spine/session-state-model.md) 负责解释 session tree 如何被读成当前 LLM context; 本节点负责 entry data model 和 id generator [I]。
 
-[subsys.agent-core.tree-navigation](tree-navigation.md) 应负责 `getPathToRootOrCompaction()`、branch navigation、current leaf 变化的控制流; 本节点只说明 storage contract 中存在这些 API [E: packages/agent/src/harness/types.ts:500] [E: packages/agent/src/harness/types.ts:502] [E: packages/agent/src/harness/types.ts:512] [I]。
+[subsys.agent-core.tree-navigation](tree-navigation.md) 应负责 `findEntriesOnBranch()`、`readPathToRootOrCompaction()`、branch navigation 与 current leaf 变化的控制流; 本节点只说明 storage contract 中存在这些读取 API [E: packages/agent/src/harness/types.ts:566] [E: packages/agent/src/harness/types.ts:567] [I]。
 
 [ref.agent.session-entry-types](../../reference/session-entry-types.md) 应作为 catalog 全覆盖每个 entry variant 的字段; 本节点给 data model 关系和边界解释 [I]。
 

@@ -24,7 +24,7 @@ related:
   - ref.coding-agent.env-vars
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `bash` 是 pi-coding-agent 暴露给模型的 shell command tool: 它在当前工作目录执行命令, 合并 stdout/stderr, 流式更新 UI, 并把过长输出裁成 tail preview 加临时完整日志文件。
@@ -49,7 +49,7 @@ updated: cee5ff7520
 
 `bash` 用于让模型在当前工作目录运行 shell command, 返回合并后的 stdout 和 stderr; tool description 还明确说明输出会按最后 `DEFAULT_MAX_LINES` 行或 `DEFAULT_MAX_BYTES / 1024` KB 截断, 截断时完整输出保存到临时文件 [E: packages/coding-agent/src/core/tools/bash.ts:327]。默认截断常量是 2000 lines 和 50KB, 两个限制谁先命中谁生效 [E: packages/coding-agent/src/core/tools/truncate.ts:11] [E: packages/coding-agent/src/core/tools/truncate.ts:12]。
 
-这个节点只把 `bash` 作为模型工具详写; `AgentSession.executeBash()` 是会话层可直接调用的命令执行 API, 它复用 `executeBashWithOperations()` 并把结果记入 session, 但它不是模型通过 tool call 进入的 `createBashToolDefinition().execute()` 主路径 [E: packages/coding-agent/src/core/agent-session.ts:2764] [E: packages/coding-agent/src/core/agent-session.ts:2777] [E: packages/coding-agent/src/core/agent-session.ts:2790] [I]。
+这个节点只把 `bash` 作为模型工具详写; `AgentSession.executeBash()` 是会话层可直接调用的命令执行 API, 它复用 `executeBashWithOperations()` 并把结果记入 session, 但它不是模型通过 tool call 进入的 `createBashToolDefinition().execute()` 主路径 [E: packages/coding-agent/src/core/agent-session.ts:2776] [E: packages/coding-agent/src/core/agent-session.ts:2790] [E: packages/coding-agent/src/core/agent-session.ts:2803] [I]。
 
 ## 3 输入 schema 表
 
@@ -66,7 +66,7 @@ updated: cee5ff7520
 
 `exposeSessionEnvironment` 默认 `true` [E: packages/coding-agent/src/core/tools/bash.ts:194] [E: packages/coding-agent/src/core/tools/bash.ts:322]；关闭时这些变量保持删除状态，并且 tool prompt 不再提示模型检查 `PI_*` [E: packages/coding-agent/src/core/tools/bash.ts:329] [E: packages/coding-agent/src/core/tools/bash.ts:331]。`spawnHook` 在清理/注入之后收到 `{ command, cwd, env }`，所以调用方仍能最终调整环境 [E: packages/coding-agent/src/core/tools/bash.ts:182] [E: packages/coding-agent/src/core/tools/bash.ts:183]。
 
-L2 反证边界：`AgentSession.executeBash()` 的 direct RPC/interactive helper 直接调用 `executeBashWithOperations()`，没有经过 `resolveSpawnContext()`；不能从模型 tool 的默认注入推断 direct bash command 也收到这五个变量 [E: packages/coding-agent/src/core/agent-session.ts:2764] [E: packages/coding-agent/src/core/agent-session.ts:2777] [E: packages/coding-agent/src/core/agent-session.ts:2786]。
+L2 反证边界：`AgentSession.executeBash()` 的 direct RPC/interactive helper 直接调用 `executeBashWithOperations()`，没有经过 `resolveSpawnContext()`；不能从模型 tool 的默认注入推断 direct bash command 也收到这五个变量 [E: packages/coding-agent/src/core/agent-session.ts:2776] [E: packages/coding-agent/src/core/agent-session.ts:2790] [E: packages/coding-agent/src/core/agent-session.ts:2786]。
 
 ## 4 输出 & 截断
 
@@ -80,7 +80,7 @@ bash 截断保留 tail; `truncateTail()` 从末尾向前收集输出行, 适合�
 
 ## 5 执行模式
 
-`bash` 的 `ToolDefinition` 没有设置 `executionMode` 字段: 返回对象包含 `name`、`label`、`description`、`promptSnippet`、`parameters`、`execute` 和 renderer, 但没有 `executionMode` property [E: packages/coding-agent/src/core/tools/bash.ts:324] [I]。agent-core 的 `ToolExecutionMode` 默认是 `parallel`, per-tool `executionMode` 只有显式写 `"sequential"` 时才让整批 tool calls 走 sequential 分支 [E: packages/agent/src/agent.ts:230] [E: packages/agent/src/agent-loop.ts:420] [E: packages/agent/src/agent-loop.ts:422]。因此 `bash` 继承默认 parallel executionMode, 除非外层 agent config 把整轮工具执行改为 sequential [I]。
+`bash` 的 `ToolDefinition` 没有设置 `executionMode` 字段: 返回对象包含 `name`、`label`、`description`、`promptSnippet`、`parameters`、`execute` 和 renderer, 但没有 `executionMode` property [E: packages/coding-agent/src/core/tools/bash.ts:324] [I]。agent-core 的 `ToolExecutionMode` 默认是 `parallel`, per-tool `executionMode` 只有显式写 `"sequential"` 时才让整批 tool calls 走 sequential 分支 [E: packages/agent/src/agent.ts:237] [E: packages/agent/src/agent-loop.ts:420] [E: packages/agent/src/agent-loop.ts:422]。因此 `bash` 继承默认 parallel executionMode, 除非外层 agent config 把整轮工具执行改为 sequential [I]。
 
 这个设计意味着多个 tool call 可以并发执行, 但 `bash` 本身没有像 file mutation tool 那样在 tool definition 上声明强制串行 [I]。如果一个命令会修改共享文件或依赖另一个工具结果, 顺序性需要由模型或更高层流程约束, 当前 `bash` tool definition 没有内建 per-command serialization [I]。
 
@@ -88,9 +88,9 @@ bash 截断保留 tail; `truncateTail()` 从末尾向前收集输出行, 适合�
 
 内置工具集的 ground truth 在 `packages/coding-agent/src/core/tools/index.ts`: `ToolName` union 包含 `"bash"`, `allToolNames` 也包含 `"bash"` [E: packages/coding-agent/src/core/tools/index.ts:83] [E: packages/coding-agent/src/core/tools/index.ts:84]。`createToolDefinition("bash", cwd, options)` 分派到 `createBashToolDefinition(cwd, options?.bash)`, `createTool("bash", ...)` 分派到 `createBashTool(cwd, options?.bash)` [E: packages/coding-agent/src/core/tools/index.ts:101] [E: packages/coding-agent/src/core/tools/index.ts:122]。`createCodingToolDefinitions()` 的默认 coding preset 包含 read/bash/edit/write, 而 read-only preset 不含 bash [E: packages/coding-agent/src/core/tools/index.ts:140] [E: packages/coding-agent/src/core/tools/index.ts:141] [E: packages/coding-agent/src/core/tools/index.ts:142] [E: packages/coding-agent/src/core/tools/index.ts:143] [E: packages/coding-agent/src/core/tools/index.ts:149] [E: packages/coding-agent/src/core/tools/index.ts:150] [E: packages/coding-agent/src/core/tools/index.ts:151] [E: packages/coding-agent/src/core/tools/index.ts:152]。
 
-`createAllToolDefinitions()` 返回 record 时把 key `bash` 绑定到 `createBashToolDefinition(cwd, options?.bash)` [E: packages/coding-agent/src/core/tools/index.ts:156] [E: packages/coding-agent/src/core/tools/index.ts:159]。`AgentSession._buildRuntime()` 读取 settings 里的 `imageAutoResize`、`shellCommandPrefix` 和 `shellPath`, 然后调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix: shellCommandPrefix, shellPath } })` [E: packages/coding-agent/src/core/agent-session.ts:2552] [E: packages/coding-agent/src/core/agent-session.ts:2553] [E: packages/coding-agent/src/core/agent-session.ts:2554] [E: packages/coding-agent/src/core/agent-session.ts:2562] [E: packages/coding-agent/src/core/agent-session.ts:2564]。
+`createAllToolDefinitions()` 返回 record 时把 key `bash` 绑定到 `createBashToolDefinition(cwd, options?.bash)` [E: packages/coding-agent/src/core/tools/index.ts:156] [E: packages/coding-agent/src/core/tools/index.ts:159]。`AgentSession._buildRuntime()` 读取 settings 里的 `imageAutoResize`、`shellCommandPrefix` 和 `shellPath`, 然后调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix: shellCommandPrefix, shellPath } })` [E: packages/coding-agent/src/core/agent-session.ts:2564] [E: packages/coding-agent/src/core/agent-session.ts:2565] [E: packages/coding-agent/src/core/agent-session.ts:2566] [E: packages/coding-agent/src/core/agent-session.ts:2574] [E: packages/coding-agent/src/core/agent-session.ts:2576]。
 
-`_buildRuntime()` 默认 active tools 是 `["read", "bash", "edit", "write"]`, 然后 `_refreshToolRegistry()` 会把 built-in tool definitions 通过 `wrapRegisteredTools()` 转成 agent-core `AgentTool` 并写入 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:2593] [E: packages/coding-agent/src/core/agent-session.ts:2595] [E: packages/coding-agent/src/core/agent-session.ts:2506] [E: packages/coding-agent/src/core/agent-session.ts:2520]。`wrapRegisteredTools()` 最终复用 `wrapToolDefinition()`, 后者把 `name`、`description`、`parameters`、`executionMode` 和 `execute` 映射成 core runtime 的 `AgentTool` shape [E: packages/coding-agent/src/core/extensions/wrapper.ts:26] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:10] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:12] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:13] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:16] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:17]。
+`_buildRuntime()` 默认 active tools 是 `["read", "bash", "edit", "write"]`, 然后 `_refreshToolRegistry()` 会把 built-in tool definitions 通过 `wrapRegisteredTools()` 转成 agent-core `AgentTool` 并写入 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:2605] [E: packages/coding-agent/src/core/agent-session.ts:2607] [E: packages/coding-agent/src/core/agent-session.ts:2518] [E: packages/coding-agent/src/core/agent-session.ts:2532]。`wrapRegisteredTools()` 最终复用 `wrapToolDefinition()`, 后者把 `name`、`description`、`parameters`、`executionMode` 和 `execute` 映射成 core runtime 的 `AgentTool` shape [E: packages/coding-agent/src/core/extensions/wrapper.ts:26] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:10] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:12] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:13] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:16] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:17]。
 
 ## 7 execute() 走读
 
@@ -103,7 +103,7 @@ bash 截断保留 tail; `truncateTail()` 从末尾向前收集输出行, 适合�
 
 local backend `createLocalBashOperations()` 先解析 shell config, 检查 cwd 是否存在, 再用 `spawn()` 启动 shell [E: packages/coding-agent/src/core/tools/bash.ts:89] [E: packages/coding-agent/src/core/tools/bash.ts:91] [E: packages/coding-agent/src/core/tools/bash.ts:97]。它把 stdout 和 stderr 都绑定到同一个 `onData`, 所以 tool 输出是 combined output [E: packages/coding-agent/src/core/tools/bash.ts:124] [E: packages/coding-agent/src/core/tools/bash.ts:125]。timeout 和 abort 都会 kill process tree; timeout 抛 `timeout:N`, abort 在等待后抛 `aborted` [E: packages/coding-agent/src/core/tools/bash.ts:112] [E: packages/coding-agent/src/core/tools/bash.ts:120] [E: packages/coding-agent/src/core/tools/bash.ts:135] [E: packages/coding-agent/src/core/tools/bash.ts:138]。
 
-`executeBashWithOperations()` 是 direct bash execution helper: 它也接收 `BashOperations`, 会 strip ANSI、sanitize binary output、normalize `\r`, 然后用 `truncateTail()` 产出 `BashResult` [E: packages/coding-agent/src/core/bash-executor.ts:50] [E: packages/coding-agent/src/core/bash-executor.ts:82] [E: packages/coding-agent/src/core/bash-executor.ts:114]。`AgentSession.executeBash()` 使用这条 helper, 并通过 `recordBashResult()` 写入 `bashExecution` message; streaming 期间记录会先进入 pending queue, 避免破坏 tool_use/tool_result ordering [E: packages/coding-agent/src/core/agent-session.ts:2790] [E: packages/coding-agent/src/core/agent-session.ts:2803] [E: packages/coding-agent/src/core/agent-session.ts:2815] [E: packages/coding-agent/src/core/agent-session.ts:2817]。
+`executeBashWithOperations()` 是 direct bash execution helper: 它也接收 `BashOperations`, 会 strip ANSI、sanitize binary output、normalize `\r`, 然后用 `truncateTail()` 产出 `BashResult` [E: packages/coding-agent/src/core/bash-executor.ts:50] [E: packages/coding-agent/src/core/bash-executor.ts:82] [E: packages/coding-agent/src/core/bash-executor.ts:114]。`AgentSession.executeBash()` 使用这条 helper, 并通过 `recordBashResult()` 写入 `bashExecution` message; streaming 期间记录会先进入 pending queue, 避免破坏 tool_use/tool_result ordering [E: packages/coding-agent/src/core/agent-session.ts:2803] [E: packages/coding-agent/src/core/agent-session.ts:2816] [E: packages/coding-agent/src/core/agent-session.ts:2828] [E: packages/coding-agent/src/core/agent-session.ts:2830]。
 
 ## 8 设计动机·edge
 

@@ -13,7 +13,7 @@ related:
   - surface.tools.read
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > 路径解析子系统把工具输入里的路径字符串做规范化或解析为 cwd 下的绝对路径, 并只在 read/@file 场景额外尝试 macOS 截图与 Unicode 文件名变体。
@@ -82,7 +82,7 @@ read-specific fallback 是保守设计: `read` 和 CLI `@file` 面向用户手�
 
 - `resolveToolPath` 不是当前源码 symbol; 如果别的文档或需求提到它, 应映射到 `resolveToCwd()` 或 read-only 的 `resolveReadPathAsync()` 语义后再继续 [U]。
 - `expandPath()` 不等于 `resolveToCwd()`: 前者不会把 `foo.ts` 变成 absolute path, 后者会 [E: packages/coding-agent/src/core/tools/path-utils.ts:40] [E: packages/coding-agent/src/core/tools/path-utils.ts:48]。
-- Leading `@` 会被 `expandPath()`/`resolveToCwd()` 剥掉, 但 CLI parser 已经把 `@file` 的 `@` 去掉后再传给 `processFileArguments()`; 因此剥 `@` 是兼容多入口输入, 不是 CLI `@file` 唯一去前缀步骤 [E: packages/coding-agent/src/utils/paths.ts:62] [E: packages/coding-agent/src/cli/args.ts:186] [E: packages/coding-agent/src/cli/args.ts:187] [E: packages/coding-agent/src/cli/file-processor.ts:29]。
+- Leading `@` 会被 `expandPath()`/`resolveToCwd()` 剥掉, 但 CLI parser 已经把 `@file` 的 `@` 去掉后再传给 `processFileArguments()`; 因此剥 `@` 是兼容多入口输入, 不是 CLI `@file` 唯一去前缀步骤 [E: packages/coding-agent/src/utils/paths.ts:62] [E: packages/coding-agent/src/cli/args.ts:204] [E: packages/coding-agent/src/cli/args.ts:205] [E: packages/coding-agent/src/cli/file-processor.ts:29]。
 - `~draft.md` 是 cwd 下的普通文件名, 不是 home-relative path; 测试对 `expandPath("~draft.md")` 和 `resolveToCwd("~draft.md", cwd)` 都有覆盖 [E: packages/coding-agent/test/path-utils.test.ts:20] [E: packages/coding-agent/test/path-utils.test.ts:46]。
 - read fallback 的 AM-PM/NFD/curly/NFD+curly variant 是按顺序短路返回第一个存在的 path; 如果多个变体同时存在, 源码不会做歧义检测 [E: packages/coding-agent/src/core/tools/path-utils.ts:89] [E: packages/coding-agent/src/core/tools/path-utils.ts:95] [E: packages/coding-agent/src/core/tools/path-utils.ts:101] [E: packages/coding-agent/src/core/tools/path-utils.ts:107] [E: packages/coding-agent/src/core/tools/path-utils.ts:113] [I]。
 - `edit` 和 `write` 在 resolved absolute path 上进入 `withFileMutationQueue()`, 但该队列的 realpath/symlink 行为属于文件变更串行化节点, 不是本节点的 path variant 解析 [E: packages/coding-agent/src/core/tools/edit.ts:310] [E: packages/coding-agent/src/core/tools/edit.ts:312] [E: packages/coding-agent/src/core/tools/write.ts:201] [E: packages/coding-agent/src/core/tools/write.ts:203] [I]。
@@ -91,7 +91,7 @@ read-specific fallback 是保守设计: `read` 和 CLI `@file` 面向用户手�
 
 [surface.tools.read](../../surface/tools/read.md) 是模型可见 read tool 的入口节点: 它覆盖 `createReadToolDefinition()` 的 schema、image/text 输出和 truncation; 本节点只解释该 tool 在执行前如何把 `path` 变成 `absolutePath` [E: packages/coding-agent/src/core/tools/read.ts:203] [E: packages/coding-agent/src/core/tools/read.ts:238]。
 
-`packages/coding-agent/src/utils/paths.ts` 在 pi-coding-agent 包内提供更通用的 path helpers, 也被 settings、resource loader、main/export 等非 tool 代码使用; 本节点只覆盖 tools 调用时启用的 `normalizeUnicodeSpaces` 与 `stripAtPrefix` 组合 [E: packages/coding-agent/src/core/settings-manager.ts:192] [E: packages/coding-agent/src/core/resource-loader.ts:92] [E: packages/coding-agent/src/main.ts:166] [E: packages/coding-agent/src/core/export-html/index.ts:290] [E: packages/coding-agent/src/core/tools/path-utils.ts:41] [E: packages/coding-agent/src/core/tools/path-utils.ts:49]。
+`packages/coding-agent/src/utils/paths.ts` 在 pi-coding-agent 包内提供更通用的 path helpers, 也被 settings、resource loader、main/export 等非 tool 代码使用; 本节点只覆盖 tools 调用时启用的 `normalizeUnicodeSpaces` 与 `stripAtPrefix` 组合 [E: packages/coding-agent/src/core/settings-manager.ts:197] [E: packages/coding-agent/src/core/resource-loader.ts:122] [E: packages/coding-agent/src/main.ts:214] [E: packages/coding-agent/src/core/export-html/index.ts:290] [E: packages/coding-agent/src/core/tools/path-utils.ts:41] [E: packages/coding-agent/src/core/tools/path-utils.ts:49]。
 
 `pi-agent-core` 不参与本文件的 path resolution: `read` 的 cwd/path normalization 在 pi-coding-agent tool implementation 内完成, 然后才进入后续文件访问 [E: packages/coding-agent/src/core/tools/read.ts:238] [E: packages/coding-agent/src/core/tools/read.ts:241] [I]。
 

@@ -30,7 +30,7 @@ related:
   - subsys.ai.auth-resolution
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `subsys.ai.oauth-flow` 描述当前 `pi-ai` OAuth 实现入口：provider 按需加载 flow，standalone Bun 注入静态 flow，公共 `./oauth` subpath 仅保留 coding-agent extension 的类型兼容面。
@@ -55,7 +55,9 @@ provider factory 自己声明 OAuth 能力并绑定 loader。除 Anthropic/OpenA
 
 Kimi Code 使用 RFC 8628 device authorization：默认 host 为 `https://auth.kimi.com`，可由 provider env 覆盖；授权与 token polling 都使用 JSON/form 请求，成功 credential 携带 access/refresh/expiry。[E: packages/ai/src/auth/oauth/kimi-coding.ts:9] [E: packages/ai/src/auth/oauth/kimi-coding.ts:13] [E: packages/ai/src/auth/oauth/kimi-coding.ts:35] [E: packages/ai/src/auth/oauth/kimi-coding.ts:69] [E: packages/ai/src/auth/oauth/kimi-coding.ts:119] [E: packages/ai/src/auth/oauth/kimi-coding.ts:141]
 
-OpenRouter 使用 PKCE 与单次 loopback HTTP callback；它把 authorization code 换成长期 API key，并保存为 `type: "oauth"`、空 refresh、`Number.MAX_SAFE_INTEGER` expiry。callback host 默认 `127.0.0.1`，可由 `PI_OAUTH_CALLBACK_HOST` 覆盖。[E: packages/ai/src/auth/oauth/openrouter.ts:12] [E: packages/ai/src/auth/oauth/openrouter.ts:18] [E: packages/ai/src/auth/oauth/openrouter.ts:23] [E: packages/ai/src/auth/oauth/openrouter.ts:53] [E: packages/ai/src/auth/oauth/openrouter.ts:96] [E: packages/ai/src/auth/oauth/openrouter.ts:100] [E: packages/ai/src/auth/oauth/openrouter.ts:208]
+OpenRouter 使用 PKCE 与单次 loopback HTTP callback；它把 authorization code 换成长期 API key，并保存为 `type: "oauth"`、空 refresh、`Number.MAX_SAFE_INTEGER` expiry。callback host 默认 `127.0.0.1`，可由 `PI_OAUTH_CALLBACK_HOST` 覆盖。[E: packages/ai/src/auth/oauth/openrouter.ts:14] [E: packages/ai/src/auth/oauth/openrouter.ts:20] [E: packages/ai/src/auth/oauth/openrouter.ts:25] [E: packages/ai/src/auth/oauth/openrouter.ts:80] [E: packages/ai/src/auth/oauth/openrouter.ts:123] [E: packages/ai/src/auth/oauth/openrouter.ts:127] [E: packages/ai/src/auth/oauth/openrouter.ts:242]
+
+OpenRouter 登录同时启动 loopback callback 等待与 `manual_code` prompt；用户可粘贴裸 authorization code 或最终 redirect URL。两条路径竞争同一个登录结果：manual input 会取消未 claimed 的 callback wait，成功 callback 则返回 credential；`finally` 同时 abort manual prompt 并关闭 callback server，因此 remote/headless browser 不必能回连运行 pi 的机器。[E: packages/ai/src/auth/oauth/openrouter.ts:242] [E: packages/ai/src/auth/oauth/openrouter.ts:245] [E: packages/ai/src/auth/oauth/openrouter.ts:262] [E: packages/ai/src/auth/oauth/openrouter.ts:269] [E: packages/ai/src/auth/oauth/openrouter.ts:278] [E: packages/ai/src/auth/oauth/openrouter.ts:285] [E: packages/ai/src/auth/oauth/openrouter.ts:291] [E: packages/ai/src/auth/oauth/openrouter.ts:294] [E: packages/ai/src/auth/oauth/openrouter.ts:295]
 
 ## Lazy flow 与 standalone Bun
 

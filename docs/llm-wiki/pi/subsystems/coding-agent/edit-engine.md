@@ -24,7 +24,7 @@ related:
   - subsys.coding-agent.file-mutation-queue
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `edit-engine` 是 pi-coding-agent 的 targeted replacement 子系统: 它把 `oldText -> newText` 编辑转换成一次性匹配、可预览的 diff/patch, 并在必要时用受限 fuzzy normalization 容忍模型容易写错的 Unicode 和行尾差异。
@@ -114,7 +114,7 @@ diff preview 和真实写文件共用 `applyEditsToNormalizedContent()`, 因此 
 - 多 edit 不支持 overlap 或 nested edits; 两个变更 touching 同一块时应合并成一个 edit, 这既是 schema description 也是运行时 overlap check 的要求 [E: packages/coding-agent/src/core/tools/edit.ts:49] [E: packages/coding-agent/src/core/tools/edit-diff.ts:351]。
 - fuzzy matching 一旦被任一 edit 触发, 所有 replacement matching 都在 fuzzy-normalized base content 上重新执行, 这会让 duplicate 检测和 offset 都基于 normalized space [E: packages/coding-agent/src/core/tools/edit-diff.ts:321] [E: packages/coding-agent/src/core/tools/edit-diff.ts:322] [E: packages/coding-agent/src/core/tools/edit-diff.ts:327] [I]。
 - `computeEditsDiff()` 不进入 `withFileMutationQueue()`, 因为它只读文件并生成 preview; 真正的 write path 才在 `edit.ts` 中包 queue [E: packages/coding-agent/src/core/tools/edit-diff.ts:518] [E: packages/coding-agent/src/core/tools/edit.ts:312] [I]。
-- `ToolDefinition` 支持可选 per-tool `executionMode`; agent-core 默认 tool execution 是 parallel, agent loop 仅在全局 sequential 或任一 tool 标记 sequential 时顺序执行。`createEditToolDefinition()` 返回对象中未看到 `executionMode` override, 所以同文件安全依赖 per-file queue 而不是全局顺序执行 [E: packages/coding-agent/src/core/extensions/types.ts:471] [E: packages/agent/src/agent.ts:220] [E: packages/agent/src/agent-loop.ts:422] [E: packages/agent/src/agent-loop.ts:425] [I]。
+- `ToolDefinition` 支持可选 per-tool `executionMode`; agent-core 默认 tool execution 是 parallel, agent loop 仅在全局 sequential 或任一 tool 标记 sequential 时顺序执行。`createEditToolDefinition()` 返回对象中未看到 `executionMode` override, 所以同文件安全依赖 per-file queue 而不是全局顺序执行 [E: packages/coding-agent/src/core/extensions/types.ts:477] [E: packages/agent/src/agent.ts:226] [E: packages/agent/src/agent-loop.ts:422] [E: packages/agent/src/agent-loop.ts:425] [I]。
 
 ## 跨包边界
 
@@ -122,7 +122,7 @@ diff preview 和真实写文件共用 `applyEditsToNormalizedContent()`, 因此 
 
 [surface.tools.edit](../../surface/tools/edit.md) 是模型可见工具面的权威节点: 它覆盖 wire name、schema 表、注册装配、renderer 和 execute path。本文只详写 `edit-diff.ts` 的 matching/diff 算法, 并在必要处引用 `edit.ts` 说明入口边界 [I]。
 
-[subsys.coding-agent.file-mutation-queue](file-mutation-queue.md) 是 per-file mutation serialization 的权威节点: `edit` 与 `write` 都把真实 mutation window 包进 `withFileMutationQueue()`, extension 文档也要求自定义 mutating tool 参与同一个 queue, 因为默认并行 tool calls 可能同时读取旧内容并导致 last-write-wins [E: packages/coding-agent/src/core/tools/edit.ts:312] [E: packages/coding-agent/src/core/tools/write.ts:203] [E: packages/coding-agent/docs/extensions.md:1851] [E: packages/coding-agent/docs/extensions.md:1857]。
+[subsys.coding-agent.file-mutation-queue](file-mutation-queue.md) 是 per-file mutation serialization 的权威节点: `edit` 与 `write` 都把真实 mutation window 包进 `withFileMutationQueue()`, extension 文档也要求自定义 mutating tool 参与同一个 queue, 因为默认并行 tool calls 可能同时读取旧内容并导致 last-write-wins [E: packages/coding-agent/src/core/tools/edit.ts:312] [E: packages/coding-agent/src/core/tools/write.ts:203] [E: packages/coding-agent/docs/extensions.md:1874] [E: packages/coding-agent/docs/extensions.md:1880]。
 
 ## Sources
 

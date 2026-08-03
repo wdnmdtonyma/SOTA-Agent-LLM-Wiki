@@ -13,7 +13,7 @@ related:
   - ref.ai.core-types
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `subsys.ai.message-transform` 描述 `transformMessages` 如何在 provider-specific wire payload 构造前,把历史 `Message[]` 归一成更适合目标 `Model` replay 的 `Message[]`。
@@ -33,7 +33,7 @@ updated: cee5ff7520
 
 这个 subsystem 覆盖 replay normalization,不覆盖 `Context.systemPrompt` 的 provider-specific role 选择;`transformMessages` 只接收 `messages: Message[]`,源码没有读取 system prompt 的参数或分支。[E: packages/ai/src/api/transform-messages.ts:64][E: packages/ai/src/api/transform-messages.ts:65][I]
 
-`transformMessages` 通常由 provider-specific `convertMessages` / `convertResponsesMessages` 在构造 wire payload 前调用;OpenAI Responses、OpenAI Completions、Anthropic Messages、Google shared、Bedrock Converse 和 Mistral Conversations 都在各自 serializer 内调用它。[E: packages/ai/src/api/openai-responses-shared.ts:170][E: packages/ai/src/api/openai-completions.ts:1021][E: packages/ai/src/api/anthropic-messages.ts:938][E: packages/ai/src/api/google-shared.ts:99][E: packages/ai/src/api/bedrock-converse-stream.ts:757][E: packages/ai/src/api/mistral-conversations.ts:72]
+`transformMessages` 通常由 provider-specific `convertMessages` / `convertResponsesMessages` 在构造 wire payload 前调用;OpenAI Responses、OpenAI Completions、Anthropic Messages、Google shared、Bedrock Converse 和 Mistral Conversations 都在各自 serializer 内调用它。[E: packages/ai/src/api/openai-responses-shared.ts:170][E: packages/ai/src/api/openai-completions.ts:1032][E: packages/ai/src/api/anthropic-messages.ts:947][E: packages/ai/src/api/google-shared.ts:105][E: packages/ai/src/api/bedrock-converse-stream.ts:824][E: packages/ai/src/api/mistral-conversations.ts:73]
 
 ## 关键文件
 
@@ -82,7 +82,7 @@ tool call id normalization 由 caller 注入,因为各 wire API 的 id 规则不
 
 ## 跨包边界
 
-`subsys.ai.wire-protocol-dispatch` 覆盖 `Model.api` 如何选择 `ProviderStreams` implementation;本节点只覆盖已经进入 provider-specific serializer 后、wire payload 构造前的 message normalization。[E: packages/ai/src/api/openai-responses-shared.ts:170][E: packages/ai/src/api/openai-completions.ts:1021][I]
+`subsys.ai.wire-protocol-dispatch` 覆盖 `Model.api` 如何选择 `ProviderStreams` implementation;本节点只覆盖已经进入 provider-specific serializer 后、wire payload 构造前的 message normalization。[E: packages/ai/src/api/openai-responses-shared.ts:170][E: packages/ai/src/api/openai-completions.ts:1032][I]
 
 `ref.ai.core-types` 应覆盖 `Message`、`AssistantMessage`、`ToolResultMessage`、`TextContent`、`ImageContent`、`ThinkingContent`、`ToolCall` 和 `Model` 的字段级定义;本节点只描述这些类型在 `transformMessages` 中被读取或改写的行为。[E: packages/ai/src/api/transform-messages.ts:1][E: packages/ai/src/api/transform-messages.ts:10][I]
 

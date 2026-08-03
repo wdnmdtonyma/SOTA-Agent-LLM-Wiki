@@ -14,7 +14,7 @@ related:
   - subsys.ai.openai-responses
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
 > `subsys.ai.prompt-caching` 描述 `pi-ai` 的 prompt caching 边界:OpenAI family 侧集中约束 `prompt_cache_key`,Anthropic Messages 侧把统一 cache retention 转成 Anthropic `cache_control` block metadata。
@@ -32,7 +32,7 @@ updated: cee5ff7520
 
 `packages/ai/src/api/openai-prompt-cache.ts` 是 OpenAI-family prompt cache key 的小型 helper:它定义 `OPENAI_PROMPT_CACHE_KEY_MAX_LENGTH = 64`,并导出 `clampOpenAIPromptCacheKey`。[E: packages/ai/src/api/openai-prompt-cache.ts:1][E: packages/ai/src/api/openai-prompt-cache.ts:3]
 
-`packages/ai/src/api/anthropic-messages.ts` 是 Anthropic Messages 的 prompt caching 实现点:它解析统一 cache retention,生成 Anthropic SDK 的 `CacheControlEphemeral`,并在 request construction 中把 `cache_control` 写入可缓存的 system/user/tool 位置。[E: packages/ai/src/api/anthropic-messages.ts:49][E: packages/ai/src/api/anthropic-messages.ts:59][E: packages/ai/src/api/anthropic-messages.ts:936][E: packages/ai/src/api/anthropic-messages.ts:972][E: packages/ai/src/api/anthropic-messages.ts:1257][E: packages/ai/src/api/anthropic-messages.ts:1311]
+`packages/ai/src/api/anthropic-messages.ts` 是 Anthropic Messages 的 prompt caching 实现点:它解析统一 cache retention,生成 Anthropic SDK 的 `CacheControlEphemeral`,并在 request construction 中把 `cache_control` 写入可缓存的 system/user/tool 位置。[E: packages/ai/src/api/anthropic-messages.ts:49][E: packages/ai/src/api/anthropic-messages.ts:59][E: packages/ai/src/api/anthropic-messages.ts:945][E: packages/ai/src/api/anthropic-messages.ts:981][E: packages/ai/src/api/anthropic-messages.ts:1266][E: packages/ai/src/api/anthropic-messages.ts:1320]
 
 本节点只把 OpenAI helper 与 Anthropic Messages 的缓存落点放在同一张图里;OpenAI Responses request payload 的完整转换属于 [subsys.ai.openai-responses](openai-responses.md),Anthropic message/tool/stream 细节属于 [subsys.ai.anthropic-messages](anthropic-messages.md)。[I]
 
@@ -54,33 +54,33 @@ Anthropic compat 默认支持 long cache retention 和 tool 上的 cache control
 
 ## Anthropic cache_control 落点
 
-`buildParams` 先调用 `getCacheControl`,再把 `cacheControl` 传给 `convertMessages`,并只在 `compat.supportsCacheControlOnTools` 为真时把它传给 `convertTools`。[E: packages/ai/src/api/anthropic-messages.ts:936][E: packages/ai/src/api/anthropic-messages.ts:921][E: packages/ai/src/api/anthropic-messages.ts:106][E: packages/ai/src/api/anthropic-messages.ts:1005]
+`buildParams` 先调用 `getCacheControl`,再把 `cacheControl` 传给 `convertMessages`,并只在 `compat.supportsCacheControlOnTools` 为真时把它传给 `convertTools`。[E: packages/ai/src/api/anthropic-messages.ts:945][E: packages/ai/src/api/anthropic-messages.ts:929][E: packages/ai/src/api/anthropic-messages.ts:106][E: packages/ai/src/api/anthropic-messages.ts:1014]
 
-OAuth token 路径会创建第一段 Claude Code identity system text,并在有 `cacheControl` 时给该 system block 写 `cache_control`;调用方 system prompt 如果存在,也会作为第二个 system text block 获得同一个 `cache_control`。[E: packages/ai/src/api/anthropic-messages.ts:967][E: packages/ai/src/api/anthropic-messages.ts:971][E: packages/ai/src/api/anthropic-messages.ts:972][E: packages/ai/src/api/anthropic-messages.ts:975][E: packages/ai/src/api/anthropic-messages.ts:979]
+OAuth token 路径会创建第一段 Claude Code identity system text,并在有 `cacheControl` 时给该 system block 写 `cache_control`;调用方 system prompt 如果存在,也会作为第二个 system text block 获得同一个 `cache_control`。[E: packages/ai/src/api/anthropic-messages.ts:976][E: packages/ai/src/api/anthropic-messages.ts:980][E: packages/ai/src/api/anthropic-messages.ts:981][E: packages/ai/src/api/anthropic-messages.ts:984][E: packages/ai/src/api/anthropic-messages.ts:988]
 
-非 OAuth 路径只在 `context.systemPrompt` 存在时创建 system array,并在有 `cacheControl` 时给该 system text block 写 `cache_control`。[E: packages/ai/src/api/anthropic-messages.ts:982][E: packages/ai/src/api/anthropic-messages.ts:984][E: packages/ai/src/api/anthropic-messages.ts:987][E: packages/ai/src/api/anthropic-messages.ts:988]
+非 OAuth 路径只在 `context.systemPrompt` 存在时创建 system array,并在有 `cacheControl` 时给该 system text block 写 `cache_control`。[E: packages/ai/src/api/anthropic-messages.ts:991][E: packages/ai/src/api/anthropic-messages.ts:993][E: packages/ai/src/api/anthropic-messages.ts:996][E: packages/ai/src/api/anthropic-messages.ts:997]
 
-`convertMessages` 只在转换后的 params 最后一条消息存在且 `role === "user"` 时挂 conversation-history cache point:数组 content 时要求最后一个 block 是 `text`、`image` 或 `tool_result`,然后给这个 block 写 `cache_control`;string content 时会把整条 user content 改成一个 text block array 并写 `cache_control`。[E: packages/ai/src/api/anthropic-messages.ts:1248][E: packages/ai/src/api/anthropic-messages.ts:1250][E: packages/ai/src/api/anthropic-messages.ts:1252][E: packages/ai/src/api/anthropic-messages.ts:1255][E: packages/ai/src/api/anthropic-messages.ts:1257][E: packages/ai/src/api/anthropic-messages.ts:1259][E: packages/ai/src/api/anthropic-messages.ts:1264]
+`convertMessages` 只在转换后的 params 最后一条消息存在且 `role === "user"` 时挂 conversation-history cache point:数组 content 时要求最后一个 block 是 `text`、`image` 或 `tool_result`,然后给这个 block 写 `cache_control`;string content 时会把整条 user content 改成一个 text block array 并写 `cache_control`。[E: packages/ai/src/api/anthropic-messages.ts:1257][E: packages/ai/src/api/anthropic-messages.ts:1259][E: packages/ai/src/api/anthropic-messages.ts:1261][E: packages/ai/src/api/anthropic-messages.ts:1264][E: packages/ai/src/api/anthropic-messages.ts:1266][E: packages/ai/src/api/anthropic-messages.ts:1268][E: packages/ai/src/api/anthropic-messages.ts:1273]
 
-`convertTools` 只把 `cache_control` 写到最后一个 tool definition,同时保留 tool name、description、input schema 和可选 `eager_input_streaming` 字段。[E: packages/ai/src/api/anthropic-messages.ts:1288][E: packages/ai/src/api/anthropic-messages.ts:1305][E: packages/ai/src/api/anthropic-messages.ts:1306][E: packages/ai/src/api/anthropic-messages.ts:1307][E: packages/ai/src/api/anthropic-messages.ts:1309][E: packages/ai/src/api/anthropic-messages.ts:1311]
+`convertTools` 只把 `cache_control` 写到最后一个 tool definition,同时保留 tool name、description、input schema 和可选 `eager_input_streaming` 字段。[E: packages/ai/src/api/anthropic-messages.ts:1297][E: packages/ai/src/api/anthropic-messages.ts:1314][E: packages/ai/src/api/anthropic-messages.ts:1315][E: packages/ai/src/api/anthropic-messages.ts:1316][E: packages/ai/src/api/anthropic-messages.ts:1318][E: packages/ai/src/api/anthropic-messages.ts:1320]
 
 ## Session 与 usage 边界
 
-Anthropic 自行创建 client 的路径在 cache retention 为 `"none"` 时不会把 `options.sessionId` 传入 `createClient`;其它 retention 会把 `options.sessionId` 作为 `cacheSessionId` 传入。[E: packages/ai/src/api/anthropic-messages.ts:533][E: packages/ai/src/api/anthropic-messages.ts:534][E: packages/ai/src/api/anthropic-messages.ts:536][E: packages/ai/src/api/anthropic-messages.ts:543]
+Anthropic 自行创建 client 的路径在 cache retention 为 `"none"` 时不会把 `options.sessionId` 传入 `createClient`;其它 retention 会把 `options.sessionId` 作为 `cacheSessionId` 传入。[E: packages/ai/src/api/anthropic-messages.ts:533][E: packages/ai/src/api/anthropic-messages.ts:534][E: packages/ai/src/api/anthropic-messages.ts:536][E: packages/ai/src/api/anthropic-messages.ts:544]
 
-普通 API key 或 header-owned auth 路径只有在存在 session id 且 compat 允许 `sendSessionAffinityHeaders` 时才添加 `x-session-affinity` header。[E: packages/ai/src/api/anthropic-messages.ts:907][E: packages/ai/src/api/anthropic-messages.ts:908]
+普通 API key 或 header-owned auth 路径只有在存在 session id 且 compat 允许 `sendSessionAffinityHeaders` 时才添加 `x-session-affinity` header。[E: packages/ai/src/api/anthropic-messages.ts:915][E: packages/ai/src/api/anthropic-messages.ts:916]
 
-Anthropic stream 会把 `cache_read_input_tokens` 计入 unified `usage.cacheRead`,把 `cache_creation_input_tokens` 计入 `usage.cacheWrite`,并把 `cache_creation.ephemeral_1h_input_tokens` 计入 `usage.cacheWrite1h`。[E: packages/ai/src/api/anthropic-messages.ts:579][E: packages/ai/src/api/anthropic-messages.ts:580][E: packages/ai/src/api/anthropic-messages.ts:581]
+Anthropic stream 会把 `cache_read_input_tokens` 计入 unified `usage.cacheRead`,把 `cache_creation_input_tokens` 计入 `usage.cacheWrite`,并把 `cache_creation.ephemeral_1h_input_tokens` 计入 `usage.cacheWrite1h`。[E: packages/ai/src/api/anthropic-messages.ts:580][E: packages/ai/src/api/anthropic-messages.ts:581][E: packages/ai/src/api/anthropic-messages.ts:582]
 
 ## 设计动机与 gotcha
 
-OpenAI helper 只负责 key 长度边界,不表达 retention;Anthropic implementation 不使用 `prompt_cache_key`,而是通过 `cache_control` metadata 在 system/user/tool block 上声明缓存点。[E: packages/ai/src/api/openai-prompt-cache.ts:1][E: packages/ai/src/api/openai-prompt-cache.ts:3][E: packages/ai/src/api/anthropic-messages.ts:71][E: packages/ai/src/api/anthropic-messages.ts:972][E: packages/ai/src/api/anthropic-messages.ts:1257][E: packages/ai/src/api/anthropic-messages.ts:1311][I]
+OpenAI helper 只负责 key 长度边界,不表达 retention;Anthropic implementation 不使用 `prompt_cache_key`,而是通过 `cache_control` metadata 在 system/user/tool block 上声明缓存点。[E: packages/ai/src/api/openai-prompt-cache.ts:1][E: packages/ai/src/api/openai-prompt-cache.ts:3][E: packages/ai/src/api/anthropic-messages.ts:71][E: packages/ai/src/api/anthropic-messages.ts:981][E: packages/ai/src/api/anthropic-messages.ts:1266][E: packages/ai/src/api/anthropic-messages.ts:1320][I]
 
 `cacheRetention: "none"` 对 Anthropic 同时关掉 `cache_control` 与 session affinity 输入:前者来自 `getCacheControl` 不返回 cache control,后者来自 `cacheSessionId` 被置为 `undefined`。[E: packages/ai/src/api/anthropic-messages.ts:65][E: packages/ai/src/api/anthropic-messages.ts:66][E: packages/ai/src/api/anthropic-messages.ts:533][E: packages/ai/src/api/anthropic-messages.ts:534]
 
 Anthropic 的 `"long"` retention 在本文件里是 `ttl: "1h"`,而 OpenAI-family long-retention policy 不在本节点 source 中定义;比较跨 provider TTL 时应跳到对应 OpenAI 节点核对。[E: packages/ai/src/api/anthropic-messages.ts:68][E: packages/ai/src/api/anthropic-messages.ts:71][I]
 
-`convertMessages` 只在转换后的 params 最后一条消息是 user 时缓存其最后一个可缓存 block,所以在最后一条消息不是 user、或最后一个 block 不是 text/image/tool_result 时,conversation-history cache point 不会落到 messages 上。[E: packages/ai/src/api/anthropic-messages.ts:1248][E: packages/ai/src/api/anthropic-messages.ts:1250][E: packages/ai/src/api/anthropic-messages.ts:1252][E: packages/ai/src/api/anthropic-messages.ts:1255]
+`convertMessages` 只在转换后的 params 最后一条消息是 user 时缓存其最后一个可缓存 block,所以在最后一条消息不是 user、或最后一个 block 不是 text/image/tool_result 时,conversation-history cache point 不会落到 messages 上。[E: packages/ai/src/api/anthropic-messages.ts:1257][E: packages/ai/src/api/anthropic-messages.ts:1259][E: packages/ai/src/api/anthropic-messages.ts:1261][E: packages/ai/src/api/anthropic-messages.ts:1264]
 
 ## 跨包边界
 

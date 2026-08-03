@@ -1,6 +1,6 @@
 ---
 id: ref.ai.model-catalog
-title: 模型目录(generated + v0.82.1 artifact)
+title: 模型目录(target structure + v0.83.0 artifact)
 kind: catalog
 tier: T3
 pkg: ai
@@ -57,24 +57,24 @@ related:
   - subsys.ai.model-catalog-publication
 evidence: inferred
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
-> 目标 commit 显式定义 37 个静态 provider bucket；逐模型 id/api 来自结构与目标源码精确匹配的官方 `@earendil-works/pi-ai@0.82.1` 发布制品，共 1,109 个模型。
+> 目标 commit 显式定义 37 个静态 provider bucket；目标 membership 由官方 `@earendil-works/pi-ai@0.83.0` 制品的 1,153 个模型，加上 release commit 到目标 commit 的 tracked catalog diff 约束。逐模型数仍标为 `[I]`：ignored JSON 不在 target tree，且 generator 输入依赖实时远端目录。
 
 ## 证据边界
 
 目标源码的 provider shard 不再内联 model values，而是 import 被 Git 忽略的 `./data/<provider>.json`，再由 `ModelCatalog` / `flattenModelCatalog()` 形成类型化目录。[E: packages/ai/src/providers/openai.models.ts:4] [E: packages/ai/src/providers/openai.models.ts:5] [E: packages/ai/src/providers/openai.models.ts:7] [E: packages/ai/src/model-catalog.ts:15] [E: packages/ai/src/model-catalog.ts:22]
 
-`models.generated.ts` 显式聚合 37 个 provider；Qwen Token Plan 与中国区是本轮新增 bucket。[E: packages/ai/src/models.generated.ts:4] [E: packages/ai/src/models.generated.ts:30] [E: packages/ai/src/models.generated.ts:31] [E: packages/ai/src/models.generated.ts:42] [E: packages/ai/src/models.generated.ts:69] [E: packages/ai/src/models.generated.ts:70]
+`models.generated.ts` 显式聚合 37 个 provider；本轮 target 相对 base 没有新增、删除或改写 structural bucket。[E: packages/ai/src/models.generated.ts:4] [E: packages/ai/src/models.generated.ts:40] [E: packages/ai/src/models.generated.ts:42] [E: packages/ai/src/models.generated.ts:79]
 
-生成器分别写 structural shards、ignored JSON data 与发布用 JSON bundle；package build 会先 hydrate/check data，再把它复制进 dist。[E: packages/ai/scripts/generate-models.ts:2619] [E: packages/ai/scripts/generate-models.ts:2626] [E: packages/ai/scripts/generate-models.ts:2657] [E: packages/ai/scripts/generate-models.ts:2681] [E: packages/ai/package.json:52] [E: packages/ai/package.json:58]
+生成器分别写 structural shards、ignored JSON data 与发布用 JSON bundle；package build 会先 hydrate/check data，再把它复制进 dist。[E: packages/ai/scripts/generate-models.ts:2619] [E: packages/ai/scripts/generate-models.ts:2622] [E: packages/ai/scripts/generate-models.ts:2657] [E: packages/ai/scripts/generate-models.ts:2681] [E: packages/ai/package.json:52] [E: packages/ai/package.json:58]
 
-逐模型表使用官方 npm v0.82.1 制品并标为 [I]。该 tarball SHA-256、manifest structure hash、source-map 与目标源码逐字比较及计数过程记录在 [研究记录](../_research/model-catalog-v0.82.1.md)。npm 包没有 `gitHead`，所以这些行不会标作 commit 内 [E]。
+官方 npm registry 的 `@earendil-works/pi-ai@0.83.0` metadata 给出 `gitHead=845d6ff1f6643aba440341cce877ce1c43ebbc39`，该 release commit 是目标 `a8ee03b815` 的祖先；artifact manifest schema 3、37 个 JSON shard，flatten 后为 1,153 个 model。release→target 没有修改 `models.generated.ts`、`model-catalog.ts` 或任何 `*.models.ts` membership shard；只修改 generator metadata policy 与 `opencode-go` display name。因 target tree 不含 ignored JSON，1,153 仍是 artifact + incremental diff 的 `[I]`，不能提升成 commit-local `[E]`。
 
 ## Provider 覆盖摘要
 
-本摘要的 model 数与 API 分布同样由官方 npm v0.82.1 artifact 推导，统一为 `[I]`；末列 `[E]` 只证明目标 commit 存在对应 structural provider bucket，不把制品中的数量提升为 commit-local explicit fact。
+本摘要的 model 数由官方 npm v0.83.0 artifact 推导；API 分布再应用 target generator 对 Fireworks 两个 Kimi K3 row 的 wire override，统一为 `[I]`。末列 `[E]` 只证明目标 commit 存在对应 structural provider bucket，不把制品中的数量提升为 commit-local explicit fact。
 
 | provider | models | API 分布 | commit bucket evidence |
 |---|---:|---|---|
@@ -83,31 +83,31 @@ updated: cee5ff7520
 | `anthropic` | 15 | `anthropic-messages` 15 | [E: packages/ai/src/models.generated.ts:45] |
 | `azure-openai-responses` | 38 | `azure-openai-responses` 38 | [E: packages/ai/src/models.generated.ts:46] |
 | `cerebras` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:47] |
-| `cloudflare-ai-gateway` | 42 | `anthropic-messages` 18; `openai-completions` 5; `openai-responses` 19 | [E: packages/ai/src/models.generated.ts:48] |
+| `cloudflare-ai-gateway` | 43 | `anthropic-messages` 19; `openai-completions` 5; `openai-responses` 19 | [E: packages/ai/src/models.generated.ts:48] |
 | `cloudflare-workers-ai` | 13 | `openai-completions` 13 | [E: packages/ai/src/models.generated.ts:49] |
 | `deepseek` | 2 | `openai-completions` 2 | [E: packages/ai/src/models.generated.ts:50] |
-| `fireworks` | 16 | `anthropic-messages` 14; `openai-completions` 2 | [E: packages/ai/src/models.generated.ts:51] |
+| `fireworks` | 16 | `anthropic-messages` 12; `openai-completions` 4 | [E: packages/ai/src/models.generated.ts:51] |
 | `github-copilot` | 29 | `anthropic-messages` 10; `openai-completions` 7; `openai-responses` 12 | [E: packages/ai/src/models.generated.ts:52] |
 | `google` | 24 | `google-generative-ai` 24 | [E: packages/ai/src/models.generated.ts:53] |
 | `google-vertex` | 12 | `google-vertex` 12 | [E: packages/ai/src/models.generated.ts:54] |
 | `groq` | 7 | `openai-completions` 7 | [E: packages/ai/src/models.generated.ts:55] |
-| `huggingface` | 50 | `openai-completions` 50 | [E: packages/ai/src/models.generated.ts:56] |
+| `huggingface` | 51 | `openai-completions` 51 | [E: packages/ai/src/models.generated.ts:56] |
 | `kimi-coding` | 4 | `anthropic-messages` 4 | [E: packages/ai/src/models.generated.ts:57] |
 | `minimax` | 3 | `anthropic-messages` 3 | [E: packages/ai/src/models.generated.ts:58] |
 | `minimax-cn` | 3 | `anthropic-messages` 3 | [E: packages/ai/src/models.generated.ts:59] |
 | `mistral` | 30 | `mistral-conversations` 30 | [E: packages/ai/src/models.generated.ts:60] |
 | `moonshotai` | 10 | `openai-completions` 10 | [E: packages/ai/src/models.generated.ts:61] |
 | `moonshotai-cn` | 10 | `openai-completions` 10 | [E: packages/ai/src/models.generated.ts:62] |
-| `nvidia` | 18 | `openai-completions` 18 | [E: packages/ai/src/models.generated.ts:63] |
+| `nvidia` | 30 | `openai-completions` 30 | [E: packages/ai/src/models.generated.ts:63] |
 | `openai` | 38 | `openai-responses` 38 | [E: packages/ai/src/models.generated.ts:64] |
 | `openai-codex` | 7 | `openai-codex-responses` 7 | [E: packages/ai/src/models.generated.ts:65] |
-| `opencode` | 58 | `anthropic-messages` 14; `google-generative-ai` 5; `openai-completions` 19; `openai-responses` 20 | [E: packages/ai/src/models.generated.ts:66] |
+| `opencode` | 59 | `anthropic-messages` 14; `google-generative-ai` 5; `openai-completions` 20; `openai-responses` 20 | [E: packages/ai/src/models.generated.ts:66] |
 | `opencode-go` | 16 | `anthropic-messages` 3; `openai-completions` 12; `openai-responses` 1 | [E: packages/ai/src/models.generated.ts:67] |
-| `openrouter` | 276 | `openai-completions` 276 | [E: packages/ai/src/models.generated.ts:68] |
+| `openrouter` | 303 | `openai-completions` 303 | [E: packages/ai/src/models.generated.ts:68] |
 | `qwen-token-plan` | 15 | `openai-completions` 15 | [E: packages/ai/src/models.generated.ts:69] |
 | `qwen-token-plan-cn` | 15 | `openai-completions` 15 | [E: packages/ai/src/models.generated.ts:70] |
-| `together` | 16 | `openai-completions` 16 | [E: packages/ai/src/models.generated.ts:71] |
-| `vercel-ai-gateway` | 192 | `anthropic-messages` 192 | [E: packages/ai/src/models.generated.ts:72] |
+| `together` | 17 | `openai-completions` 17 | [E: packages/ai/src/models.generated.ts:71] |
+| `vercel-ai-gateway` | 193 | `anthropic-messages` 193 | [E: packages/ai/src/models.generated.ts:72] |
 | `xai` | 3 | `openai-completions` 2; `openai-responses` 1 | [E: packages/ai/src/models.generated.ts:73] |
 | `xiaomi` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:74] |
 | `xiaomi-token-plan-ams` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:75] |
@@ -116,7 +116,17 @@ updated: cee5ff7520
 | `zai` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:78] |
 | `zai-coding-cn` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:79] |
 
-## MODELS 逐实例目录
+## v0.82.1 → target membership delta
+
+目标 membership 相比下方保留的 v0.82.1 逐行 snapshot 为 `+51 / -7`，净增 44，故 target 总数为 `1,109 + 44 = 1,153`。删除 7 个 id：Fireworks 的 `accounts/fireworks/models/glm-5p1`、`accounts/fireworks/routers/glm-5p1-fast`；NVIDIA 的 `mistralai/mistral-small-4-119b-2603`、`stepfun-ai/step-3.5-flash`；OpenRouter 的 `poolside/laguna-m.1`、`poolside/laguna-m.1:free`；Vercel AI Gateway 的 `google/gemini-3-pro-preview`。[I]
+
+新增分布为 Cloudflare AI Gateway +1 `claude-opus-5`；Fireworks +2 `accounts/fireworks/models/kimi-k3`、`accounts/fireworks/routers/kimi-k3-fast`；Hugging Face +1 `moonshotai/Kimi-K3`；OpenCode +1 `kimi-k3`；Together +1 `moonshotai/Kimi-K3`；Vercel AI Gateway +2 `alibaba/qwen3.7-flash`、`moonshotai/kimi-k3-fast`；NVIDIA +14（Gemma 3、Mistral、Nemotron、Laguna XS 与 Inkling rows）；OpenRouter +29（28 个 `:batch` alias 与 `qwen/qwen3.7-flash`）。[I]
+
+目标 generator 还把 Fireworks 两个 Kimi K3 id 固定到 `openai-completions`、Fireworks base URL，并启用 reasoning/deferred/session-affinity compat；因此 target API 总分布是 `anthropic-messages=276`、`azure-openai-responses=38`、`bedrock-converse-stream=114`、`google-generative-ai=29`、`google-vertex=12`、`mistral-conversations=30`、`openai-codex-responses=7`、`openai-completions=556`、`openai-responses=91`，合计 1,153。[E: packages/ai/scripts/generate-models.ts:2172] [E: packages/ai/scripts/generate-models.ts:2174] [E: packages/ai/scripts/generate-models.ts:2175] [E: packages/ai/scripts/generate-models.ts:2178] [E: packages/ai/scripts/generate-models.ts:2180] [E: packages/ai/scripts/generate-models.ts:2181] [E: packages/ai/scripts/generate-models.ts:2182] [I]
+
+以下逐实例表保留 v0.82.1 artifact snapshot，结合本节 delta 才是 target membership；不能把单个旧 snapshot row 误写成 target tree 内 `[E]`。
+
+## MODELS 逐实例目录（v0.82.1 snapshot）
 
 ### amazon-bedrock
 

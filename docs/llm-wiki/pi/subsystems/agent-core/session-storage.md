@@ -1,102 +1,100 @@
 ---
 id: subsys.agent-core.session-storage
-title: 会话存储接口(SessionStorage/SessionRepo)
+title: 会话仓库与存储接口(SessionRepository/SessionStorage)
 kind: subsystem
 tier: T2
 pkg: agent
 source:
   - packages/agent/src/harness/types.ts
-  - packages/agent/src/harness/session/repo-utils.ts
+  - packages/agent/src/harness/session/repository.ts
+  - packages/agent/src/harness/session/session.ts
+  - packages/agent/src/harness/session/array-session-index.ts
+  - packages/agent/src/harness/session/keyed-operation-queue.ts
 symbols:
+  - SessionRepository
   - SessionStorage
-  - SessionRepo
+  - SessionForkSelection
+  - SessionBranchQuery
+  - ArraySessionIndex
+  - KeyedOperationQueue
 related:
   - subsys.agent-core.jsonl-storage
   - subsys.agent-core.memory-storage
   - subsys.agent-core.session-tree
+  - subsys.agent-core.tree-navigation
 evidence: explicit
 status: verified
-updated: cee5ff7520
+updated: a8ee03b815
 ---
 
-> `subsys.agent-core.session-storage` 是 `pi-agent-core` 的会话持久化抽象层: `SessionStorage` 定义单个会话树如何读写,`SessionRepo` 定义会话集合如何 create/open/list/delete/fork。
+> `subsys.agent-core.session-storage` 描述两层边界：`SessionRepository` 管会话集合与资源寿命，`SessionStorage` 只管一个已打开会话的持久化原语；`Session` 在两者之间提供面向调用方的状态、导航和 append API。
 
 ## 能回答的问题
 
-- `SessionStorage` 的最小接口包含哪些会话树读写能力?
-- `SessionRepo` 和 `SessionStorage` 的职责边界在哪里?
-- `repo-utils.ts` 如何把通用 repo 操作和存储后端解耦?
-- fork 会话时 `entryId` 与 `position` 如何决定复制哪些 entry?
-- JSONL 与 memory implementation 应该在哪里解释,哪些内容不属于本节点?
+- `SessionRepository` 与 `SessionStorage` 各自拥有哪一段生命周期？
+- entry id、当前 leaf 和 append 串行化现在由谁负责？
+- fork、游标读取和 branch query 的契约是什么？
+- 内存与 JSONL backend 复用哪些索引和并发原语？
 
 ## 职责边界
 
-`SessionStorage<TMetadata>` 是单个 session 的后端无关接口:它暴露 metadata、当前 leaf、entry id 生成、entry append、entry lookup、按 type 查找、label lookup、path-to-root 和完整 entries 读取 [E: packages/agent/src/harness/types.ts:498] [E: packages/agent/src/harness/types.ts:499] [E: packages/agent/src/harness/types.ts:500] [E: packages/agent/src/harness/types.ts:503] [E: packages/agent/src/harness/types.ts:504] [E: packages/agent/src/harness/types.ts:505] [E: packages/agent/src/harness/types.ts:506] [E: packages/agent/src/harness/types.ts:509] [E: packages/agent/src/harness/types.ts:512] [E: packages/agent/src/harness/types.ts:513]。
+`SessionRepository<TMetadata, TCreateOptions, TListOptions>` 继承 `AsyncDisposable`，提供 `create/open/list/delete/fork`；`create/open/fork` 都返回 `Session<TMetadata>`，而不是把底层 storage 暴露给调用方。[E: packages/agent/src/harness/session/repository.ts:22] [E: packages/agent/src/harness/session/repository.ts:26] [E: packages/agent/src/harness/session/repository.ts:27] [E: packages/agent/src/harness/session/repository.ts:31]
 
-`SessionRepo<TMetadata, TCreateOptions, TListOptions>` 是 session 集合接口:它负责创建、打开、列出、删除和 fork session,每个方法以 `Session<TMetadata>` 或 metadata 为边界,不直接暴露底层文件或内存容器 [E: packages/agent/src/harness/types.ts:528] [E: packages/agent/src/harness/types.ts:533] [E: packages/agent/src/harness/types.ts:534] [E: packages/agent/src/harness/types.ts:535] [E: packages/agent/src/harness/types.ts:536] [E: packages/agent/src/harness/types.ts:537]。
+`SessionStorage<TMetadata>` 是一个已打开会话的完整 backend contract。它暴露只读 metadata，以及 head、entry、游标读取、append、branch 查询、compaction-boundary path、label/name/stats；其 lifetime 明确由 repository 拥有。[E: packages/agent/src/harness/types.ts:559] [E: packages/agent/src/harness/types.ts:560] [E: packages/agent/src/harness/types.ts:562] [E: packages/agent/src/harness/types.ts:570]
 
-`SessionMetadata` 只要求 `id` 与 `createdAt`;JSONL repo 在这个基础上扩展 `cwd`、`path` 和可选 `parentSessionPath`,所以通用 repo contract 不要求所有 backend 都有文件路径或工作目录 [E: packages/agent/src/harness/types.ts:481] [E: packages/agent/src/harness/types.ts:482] [E: packages/agent/src/harness/types.ts:483] [E: packages/agent/src/harness/types.ts:486] [E: packages/agent/src/harness/types.ts:487] [E: packages/agent/src/harness/types.ts:488] [E: packages/agent/src/harness/types.ts:489]。
+`Session` 不再是纯转发 facade：构造器被标成 repository 内部入口，它缓存 metadata 和 active leaf，并持有 `appendTail`。[E: packages/agent/src/harness/session/session.ts:152] [E: packages/agent/src/harness/session/session.ts:155] [E: packages/agent/src/harness/session/session.ts:157] [E: packages/agent/src/harness/session/session.ts:160] `createSession()` 从 storage 的 `readHead()` 初始化该缓存。[E: packages/agent/src/harness/session/session.ts:425] [E: packages/agent/src/harness/session/session.ts:429]
 
-## 关键文件
+## 核心契约
 
-- `packages/agent/src/harness/types.ts`: 定义 `SessionErrorCode` / `SessionError`、`SessionMetadata` / `JsonlSessionMetadata`、`SessionStorage`、`SessionRepo`、`SessionCreateOptions`、`SessionForkOptions`、JSONL-specific create/list/repo API 类型 [E: packages/agent/src/harness/types.ts:226] [E: packages/agent/src/harness/types.ts:235] [E: packages/agent/src/harness/types.ts:481] [E: packages/agent/src/harness/types.ts:486] [E: packages/agent/src/harness/types.ts:498] [E: packages/agent/src/harness/types.ts:528] [E: packages/agent/src/harness/types.ts:518] [E: packages/agent/src/harness/types.ts:522] [E: packages/agent/src/harness/types.ts:540] [E: packages/agent/src/harness/types.ts:546] [E: packages/agent/src/harness/types.ts:550]。
-- `packages/agent/src/harness/session/repo-utils.ts`: 定义 repo helper: `createSessionId()`、`createTimestamp()`、`toSession()`、filesystem-result 到 `SessionError` 的转换、以及 `getEntriesToFork()` [E: packages/agent/src/harness/session/repo-utils.ts:12] [E: packages/agent/src/harness/session/repo-utils.ts:16] [E: packages/agent/src/harness/session/repo-utils.ts:20] [E: packages/agent/src/harness/session/repo-utils.ts:24] [E: packages/agent/src/harness/session/repo-utils.ts:32]。
+### Metadata、游标和 head
 
-## 数据模型
+通用 metadata 只有 `id` 与 `createdAt`；JSONL metadata 额外携带 `cwd/path/parentSessionPath/metadata`。[E: packages/agent/src/harness/types.ts:481] [E: packages/agent/src/harness/types.ts:486] [E: packages/agent/src/harness/types.ts:490]
 
-`SessionErrorCode` 为 session 子系统列出稳定错误码:`not_found`、`invalid_session`、`invalid_entry`、`invalid_fork_target`、`storage` 和 `unknown`;`SessionError` 是 `Error` 子类,构造器接收其中一个 code 并写入 public `code` 字段 [E: packages/agent/src/harness/types.ts:226] [E: packages/agent/src/harness/types.ts:227] [E: packages/agent/src/harness/types.ts:228] [E: packages/agent/src/harness/types.ts:229] [E: packages/agent/src/harness/types.ts:230] [E: packages/agent/src/harness/types.ts:231] [E: packages/agent/src/harness/types.ts:232] [E: packages/agent/src/harness/types.ts:235] [E: packages/agent/src/harness/types.ts:237] [E: packages/agent/src/harness/types.ts:239] [E: packages/agent/src/harness/types.ts:242]。
+`readEntries({ afterEntrySeq, limit })` 使用零基序号游标：`afterEntrySeq` 表示已经消费的 entry 数，backend 从该位置开始切片。[E: packages/agent/src/harness/types.ts:493] [E: packages/agent/src/harness/session/array-session-index.ts:112] [E: packages/agent/src/harness/session/array-session-index.ts:115] `readHead()` 若发现非空 leaf 没有对应 entry，必须以 `invalid_session` 拒绝；共享数组索引实现了这项校验。[E: packages/agent/src/harness/types.ts:562] [E: packages/agent/src/harness/session/array-session-index.ts:101] [E: packages/agent/src/harness/session/array-session-index.ts:103]
 
-`SessionStorage` 同时暴露 `getLeafId()` 和 `setLeafId(leafId)`,所以 leaf position 是 storage 层可读写状态,不是 repo 层状态 [E: packages/agent/src/harness/types.ts:500] [E: packages/agent/src/harness/types.ts:502] [I]。
+### Fork selection
 
-`SessionForkOptions` 只定义 `entryId`、`position?: "before" | "at"` 和可选新 session `id`;repo 的 `fork()` 把这些 fork 选项与 backend-specific create options 组合后返回新的 `Session<TMetadata>` [E: packages/agent/src/harness/types.ts:522] [E: packages/agent/src/harness/types.ts:523] [E: packages/agent/src/harness/types.ts:524] [E: packages/agent/src/harness/types.ts:525] [E: packages/agent/src/harness/types.ts:537]。
+fork 有三种显式 selection：复制全部 entry、复制到目标 user message 之前、复制到目标 entry（含目标）。[E: packages/agent/src/harness/types.ts:529] [E: packages/agent/src/harness/types.ts:533] [E: packages/agent/src/harness/types.ts:535] 兼容的 `SessionForkOptions` 被转成该 union；`before_user_message` 会验证目标确为 user message，并以目标 parent 的 active path 作为结果。[E: packages/agent/src/harness/session/repository.ts:51] [E: packages/agent/src/harness/session/repository.ts:67] [E: packages/agent/src/harness/session/repository.ts:70]
 
-`JsonlSessionCreateOptions` 在通用 `SessionCreateOptions` 上要求 `cwd` 并允许 `parentSessionPath`;`JsonlSessionListOptions` 允许按 `cwd` 过滤;`JsonlSessionRepoApi` 是 `SessionRepo<JsonlSessionMetadata, JsonlSessionCreateOptions, JsonlSessionListOptions>` 的命名 specialization [E: packages/agent/src/harness/types.ts:540] [E: packages/agent/src/harness/types.ts:541] [E: packages/agent/src/harness/types.ts:542] [E: packages/agent/src/harness/types.ts:546] [E: packages/agent/src/harness/types.ts:547] [E: packages/agent/src/harness/types.ts:550] [E: packages/agent/src/harness/types.ts:551]。
+### Branch query
 
-## Repo Utils 控制流
+`SessionBranchQuery` 可指定 start、按 type/id 截止、entry type/custom type 过滤、顺序和 limit；默认从 active leaf 开始且顺序为 newest-first。[E: packages/agent/src/harness/types.ts:537] [E: packages/agent/src/harness/types.ts:549] [E: packages/agent/src/harness/types.ts:551] `Session.findEntriesOnBranch()` 补上缺省 start，`findEntryOnBranch()` 则固定 `limit: 1`。[E: packages/agent/src/harness/session/session.ts:188] [E: packages/agent/src/harness/session/session.ts:192] [E: packages/agent/src/harness/session/session.ts:197]
 
-1. `createSessionId@packages/agent/src/harness/session/repo-utils.ts:12` 直接返回 `uuidv7()`,是 repo 层创建 session id 的通用 helper [E: packages/agent/src/harness/session/repo-utils.ts:12] [E: packages/agent/src/harness/session/repo-utils.ts:13]。
-2. `createTimestamp@packages/agent/src/harness/session/repo-utils.ts:16` 返回 `new Date().toISOString()`,是 repo-utils 暴露的 ISO timestamp helper [E: packages/agent/src/harness/session/repo-utils.ts:16] [E: packages/agent/src/harness/session/repo-utils.ts:17]。
-3. `toSession@packages/agent/src/harness/session/repo-utils.ts:20` 接收任意 `SessionStorage<TMetadata>` 并返回 `new Session(storage)`,这把 backend-specific storage 包装成统一 `Session<TMetadata>` API [E: packages/agent/src/harness/session/repo-utils.ts:20] [E: packages/agent/src/harness/session/repo-utils.ts:21]。
-4. `getFileSystemResultOrThrow@packages/agent/src/harness/session/repo-utils.ts:24` 把 `FileSystem` 的 `Result<TValue, FileError>` 转成返回值或 `SessionError`;底层 file error code 为 `not_found` 时映射到 session `not_found`,其余 file failure 映射到 session `storage` [E: packages/agent/src/harness/session/repo-utils.ts:24] [E: packages/agent/src/harness/session/repo-utils.ts:25] [E: packages/agent/src/harness/session/repo-utils.ts:26] [E: packages/agent/src/harness/session/repo-utils.ts:27]。
-5. `getEntriesToFork@packages/agent/src/harness/session/repo-utils.ts:32` 在没有 `entryId` 时返回 `storage.getEntries()`,也就是返回完整 session entry 列表 [E: packages/agent/src/harness/session/repo-utils.ts:32] [E: packages/agent/src/harness/session/repo-utils.ts:36]。
-6. `getEntriesToFork()` 带 `entryId` 时先调用 `storage.getEntry(entryId)`;目标不存在会抛 `SessionError("invalid_fork_target", ...)` [E: packages/agent/src/harness/session/repo-utils.ts:37] [E: packages/agent/src/harness/session/repo-utils.ts:38] [E: packages/agent/src/harness/session/repo-utils.ts:39]。
-7. fork `position: "at"` 时 effective leaf 是 target entry 自身;默认 `"before"` 时 target 必须是 user message,然后 effective leaf 改为 target 的 `parentId` [E: packages/agent/src/harness/session/repo-utils.ts:41] [E: packages/agent/src/harness/session/repo-utils.ts:42] [E: packages/agent/src/harness/session/repo-utils.ts:43] [E: packages/agent/src/harness/session/repo-utils.ts:45] [E: packages/agent/src/harness/session/repo-utils.ts:46] [E: packages/agent/src/harness/session/repo-utils.ts:48]。
-8. `getEntriesToFork()` 最终只要求 storage 提供 `getPathToRootOrCompaction(effectiveLeafId)`，因此 fork copy 会遵守 backend 的 compaction boundary，而 repo helper 不需要知道 JSONL 或 memory 的内部数据结构。[E: packages/agent/src/harness/session/repo-utils.ts:50] [E: packages/agent/src/harness/types.ts:512] [I]。
+共享 `ArraySessionIndex` 从 start 沿 `parentId` 向上走，检测环与缺失 parent，再应用 traversal bound、filter 和 limit；非正整数 limit 会立即抛 `RangeError`。[E: packages/agent/src/harness/session/array-session-index.ts:118] [E: packages/agent/src/harness/session/array-session-index.ts:128] [E: packages/agent/src/harness/session/array-session-index.ts:138] [E: packages/agent/src/harness/session/array-session-index.ts:146] [E: packages/agent/src/harness/session/array-session-index.ts:152]
 
-## JSONL 与 Memory Implementation 边界
+## Append 与派生索引
 
-本节点权威覆盖接口和 repo utilities,不详写 JSONL 的 header/version/file layout、append 策略、目录扫描或 corrupt-file 容错;这些应由 [subsys.agent-core.jsonl-storage](jsonl-storage.md) 覆盖。当前类型层只证明 JSONL backend 有专用 metadata、create/list options 和 `JsonlSessionRepoApi` specialization [E: packages/agent/src/harness/types.ts:486] [E: packages/agent/src/harness/types.ts:540] [E: packages/agent/src/harness/types.ts:546] [E: packages/agent/src/harness/types.ts:550]。
+entry id 生成、parent 绑定、持久化和 leaf 缓存更新都在 `Session.enqueueAppend()` 中按 `appendTail` 串行完成；storage 只接收已经完整构造的 entry。[E: packages/agent/src/harness/session/session.ts:229] [E: packages/agent/src/harness/session/session.ts:237] [E: packages/agent/src/harness/session/session.ts:243] [E: packages/agent/src/harness/session/session.ts:246] [E: packages/agent/src/harness/session/session.ts:250] `moveTo()` 也通过 append 一条 `leaf` entry 表示导航，而不是就地改写旧记录。[E: packages/agent/src/harness/session/session.ts:257] [E: packages/agent/src/harness/session/session.ts:262] [E: packages/agent/src/harness/session/session.ts:407]
 
-本节点也不详写 memory backend 的 Map/array/cache 行为或生命周期;这些应由 [subsys.agent-core.memory-storage](memory-storage.md) 覆盖。接口层只要求任何 backend 实现 `SessionStorage` 或 `SessionRepo` 的方法集合,而不规定持久化介质、并发控制或进程生命周期 [E: packages/agent/src/harness/types.ts:498] [E: packages/agent/src/harness/types.ts:528] [I]。
+`ArraySessionIndex` 是内存与 JSONL backend 共用的有序 entry/index/projection：它维护 id map、leaf、session name、labels 和 usage stats，并拒绝重复 entry id。[E: packages/agent/src/harness/session/array-session-index.ts:58] [E: packages/agent/src/harness/session/array-session-index.ts:60] [E: packages/agent/src/harness/session/array-session-index.ts:73] [E: packages/agent/src/harness/session/array-session-index.ts:78] [E: packages/agent/src/harness/session/array-session-index.ts:163]
+
+`KeyedOperationQueue` 让同一 session key 的操作顺序执行，并用 barrier 等待所有既有 key；可选的全局 permit 再限制跨 key 并发。[E: packages/agent/src/harness/session/keyed-operation-queue.ts:18] [E: packages/agent/src/harness/session/keyed-operation-queue.ts:20] [E: packages/agent/src/harness/session/keyed-operation-queue.ts:32] [E: packages/agent/src/harness/session/keyed-operation-queue.ts:45]
 
 ## 设计动机与权衡
 
-`SessionStorage` 和 `SessionRepo` 分离了“一个 session tree 怎么读写”和“一组 session 怎么管理”:前者面向 leaf/entry/path/label,后者面向 create/open/list/delete/fork [E: packages/agent/src/harness/types.ts:498] [E: packages/agent/src/harness/types.ts:504] [E: packages/agent/src/harness/types.ts:512] [E: packages/agent/src/harness/types.ts:528] [E: packages/agent/src/harness/types.ts:533] [E: packages/agent/src/harness/types.ts:537] [I]。
-
-`repo-utils.ts` 把 id、timestamp、storage-to-session wrapping、filesystem error normalization 和 fork entry selection 放在 shared helper 中;JSONL repo 与 memory repo 可以复用这些不依赖具体存储介质的规则 [E: packages/agent/src/harness/session/repo-utils.ts:12] [E: packages/agent/src/harness/session/repo-utils.ts:16] [E: packages/agent/src/harness/session/repo-utils.ts:20] [E: packages/agent/src/harness/session/repo-utils.ts:24] [E: packages/agent/src/harness/session/repo-utils.ts:32] [I]。
-
-Fork 的默认语义偏向“从某个 user message 之前分叉”:当 `position` 不是 `"at"` 时,目标必须是 user message,复制路径停在该 message 的 parent;这让 caller 可以从即将发送的 user turn 之前创建分支,而 `"at"` 则保留目标 entry 本身 [E: packages/agent/src/harness/session/repo-utils.ts:42] [E: packages/agent/src/harness/session/repo-utils.ts:45] [E: packages/agent/src/harness/session/repo-utils.ts:46] [E: packages/agent/src/harness/session/repo-utils.ts:48] [I]。
+collection lifetime、单会话 persistence 和用户态状态机被拆成 repository → storage → `Session` 三层，使 backend 可以共享同一套 `Session` 行为，同时 repository disposal 能停止新操作并等待已接收操作结束。[E: packages/agent/src/harness/session/repository.ts:26] [E: packages/agent/src/harness/session/session.ts:425] [I]
 
 ## Gotcha
 
-- `SessionStorage.createEntryId()` 只承诺返回 `Promise<string>`;接口没有规定 UUID、短 id、去重尝试次数或排序语义,这些属于具体 storage 实现 [E: packages/agent/src/harness/types.ts:503] [I]。
-- `getFileSystemResultOrThrow()` 只把 file `not_found` 保留为 session `not_found`;`not_found` 之外的 file failure 在该 helper 中统一变成 session `storage` [E: packages/agent/src/harness/session/repo-utils.ts:24] [E: packages/agent/src/harness/session/repo-utils.ts:26] [E: packages/agent/src/harness/session/repo-utils.ts:27]。
-- `getEntriesToFork()` 对 missing target 和 non-user-message default fork 都使用 `invalid_fork_target`,而不是 `not_found`;这是 fork 操作自己的 validation error boundary [E: packages/agent/src/harness/session/repo-utils.ts:39] [E: packages/agent/src/harness/session/repo-utils.ts:46] [I]。
-- `JsonlSessionRepoApi` 是一个 type-level specialization,不是 JSONL implementation 本身;JSONL 文件读写不在 `types.ts` 或 `repo-utils.ts` 中发生 [E: packages/agent/src/harness/types.ts:550] [E: packages/agent/src/harness/types.ts:551] [I]。
+- `Session.getEntries()` 是 append-order 游标读取；`getBranch()` 与 `findEntriesOnBranch()` 才是沿 parent 链的 active-path 查询，三者不能互换。[E: packages/agent/src/harness/session/session.ts:180] [E: packages/agent/src/harness/session/session.ts:184] [E: packages/agent/src/harness/session/session.ts:188]
+- `SessionStorage` 不再负责 `createEntryId` 或 `setLeafId`；调用方也没有公开的 `getStorage()` 逃生口。entry identity 与 leaf movement 都由 `Session` 编排。[E: packages/agent/src/harness/types.ts:559] [E: packages/agent/src/harness/session/session.ts:229] [E: packages/agent/src/harness/session/session.ts:257]
+- `ArraySessionIndex.readPathToRootOrCompaction()` 会在 compaction 的 retained-tail 或 first-kept 边界截断，不保证总能回到根。[E: packages/agent/src/harness/session/array-session-index.ts:167] [E: packages/agent/src/harness/session/array-session-index.ts:176] [E: packages/agent/src/harness/session/array-session-index.ts:178]
 
 ## 跨包边界
 
-本节点的直接 source 位于 `packages/agent/src/harness/...`: `SessionStorage`/`SessionRepo` contract 在 `types.ts`,JSONL-specific API 仍是 agent package 内的 harness 类型;CLI session manager、TUI export 或 product settings 不在本节点 source 覆盖范围内,因此不在这里展开 [E: packages/agent/src/harness/types.ts:498] [E: packages/agent/src/harness/types.ts:528] [E: packages/agent/src/harness/types.ts:550] [I]。
-
-[subsys.agent-core.session-tree](session-tree.md) 应解释 `SessionTreeEntry` 的 union shape、leaf entry 和 parent path 语义;本节点只说明 storage/repo 如何暴露这些 entry 的读写接口 [E: packages/agent/src/harness/types.ts:453] [E: packages/agent/src/harness/types.ts:464] [E: packages/agent/src/harness/types.ts:498]。
+本节点属于可复用的 `pi-agent-core` harness。`pi-coding-agent` 仍有自己的产品级 `SessionManager` 和文件格式；二者应按各自 entry model 与 persistence contract 分开理解。[I]
 
 ## Sources
 
 - packages/agent/src/harness/types.ts
-- packages/agent/src/harness/session/repo-utils.ts
+- packages/agent/src/harness/session/repository.ts
+- packages/agent/src/harness/session/session.ts
+- packages/agent/src/harness/session/array-session-index.ts
+- packages/agent/src/harness/session/keyed-operation-queue.ts
 
 ## 相关
 
-- [subsys.agent-core.jsonl-storage](jsonl-storage.md): JSONL session storage/repo 的文件格式、目录策略和异常处理边界。
-- [subsys.agent-core.memory-storage](memory-storage.md): in-memory session storage/repo 的进程内生命周期和数据结构边界。
-- [subsys.agent-core.session-tree](session-tree.md): `SessionTreeEntry`、leaf entry、parent path 和 tree navigation 的数据模型。
+- [subsys.agent-core.jsonl-storage](jsonl-storage.md)：durable JSONL repository/backend。
+- [subsys.agent-core.memory-storage](memory-storage.md)：进程内 repository/backend。
+- [subsys.agent-core.session-tree](session-tree.md)：entry union 与 parent/leaf 数据模型。
+- [subsys.agent-core.tree-navigation](tree-navigation.md)：branch 查询、leaf 移动与 context projection。
