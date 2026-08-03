@@ -17,7 +17,7 @@ symbols: [discoverAndLoadExtensions, bindCore, ExtensionRuntime, ResourceLoader,
 related: [surface.extensions.api, subsys.coding-agent.extension-loader, subsys.coding-agent.extension-runner, ref.coding-agent.extension-events]
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `spine.extension-lifecycle` 说明 extension loader、shared runtime、runner binding、event dispatch, 以及 resource loader / `AgentSession` / SDK stream hooks 如何把 extension runner 接入产品会话和 agent runtime。

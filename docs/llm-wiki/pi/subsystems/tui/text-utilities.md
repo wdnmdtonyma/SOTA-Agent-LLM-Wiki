@@ -9,7 +9,7 @@ symbols: [visibleWidth, truncateToWidth, wrapTextWithAnsi]
 related: [subsys.tui.diff-engine]
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 文本宽度/截断/换行工具是 `pi-tui` 的 terminal text measurement layer:它把 Unicode grapheme、East Asian Width、emoji、tab、ANSI/OSC escape sequence 统一折算成 terminal columns,并提供 ANSI-safe truncation 与 word wrapping。

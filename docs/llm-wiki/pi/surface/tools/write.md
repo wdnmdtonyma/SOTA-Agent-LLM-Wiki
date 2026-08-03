@@ -26,7 +26,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `write` 是 pi-coding-agent 内置的完整文件写入工具:模型给出 `path` 和 `content`,工具把路径解析到当前 `cwd`,创建父目录,覆盖写入文件,并用同文件 file mutation queue 避免并发写互相踩踏。

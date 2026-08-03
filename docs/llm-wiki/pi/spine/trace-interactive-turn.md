@@ -9,7 +9,7 @@ symbols: [InteractiveMode, AgentSession.prompt, runAgentLoop, getDefaultStreamFn
 related: [spine.agent-loop, surface.modes.interactive, subsys.coding-agent.interactive-orchestration]
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `spine.trace-interactive-turn` 走读一次 TUI interactive turn:用户在 `InteractiveMode` 提交文本,`AgentSession.prompt` 做产品层 preflight 与消息装配,再进入 `pi-agent-core` 的 `runAgentLoop` 生成 assistant response、tool results 与 UI events。

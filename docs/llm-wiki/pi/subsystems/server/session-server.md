@@ -27,7 +27,7 @@ related:
   - subsys.server.supervisor
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `PiServer` 是 `@earendil-works/pi-server` 新增的 transport-composable remote session core：listener 提供 ordered byte connections，server 负责 bearer-token/version handshake、request dispatch、snapshot publication 与 lifecycle cleanup。[E: packages/server/src/server.ts:38][E: packages/server/src/server.ts:54][E: packages/server/src/listener.ts:4][E: packages/server/src/listener.ts:4][E: packages/server/src/listener.ts:7][E: packages/server/src/listener.ts:8]

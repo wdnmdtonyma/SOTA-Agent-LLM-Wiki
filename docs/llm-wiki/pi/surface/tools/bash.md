@@ -24,7 +24,7 @@ related:
   - ref.coding-agent.env-vars
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `bash` 是 pi-coding-agent 暴露给模型的 shell command tool: 它在当前工作目录执行命令, 合并 stdout/stderr, 流式更新 UI, 并把过长输出裁成 tail preview 加临时完整日志文件。

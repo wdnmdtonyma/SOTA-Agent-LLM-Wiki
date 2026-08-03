@@ -18,7 +18,7 @@ related:
   - ref.ai.wire-protocol-catalog
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `surface.providers.custom-provider` 说明 pi 暴露给使用者的两条自定义 provider 路径:简单兼容端点写 `~/.pi/agent/models.json`,需要扩展生命周期、OAuth/SSO 或自定义 streaming 时用扩展 API `pi.registerProvider()`。
@@ -49,6 +49,8 @@ model config 的文档字段包括必填 `id`,以及可选 `name`、`api`、`rea
 覆盖内置 provider 时,只写 `baseUrl` 可保留内置模型并改走 proxy;若提供 `models` 数组,custom models 会按 `id` merge/upsert 到内置 provider,同 id 替换,新 id 追加 [E: packages/coding-agent/docs/models.md:281] [E: packages/coding-agent/docs/models.md:283] [E: packages/coding-agent/docs/models.md:295] [E: packages/coding-agent/docs/models.md:297] [E: packages/coding-agent/docs/models.md:312] [E: packages/coding-agent/docs/models.md:313] [E: packages/coding-agent/docs/models.md:314] [E: packages/coding-agent/docs/models.md:315] [E: packages/coding-agent/docs/models.md:316]。
 
 `modelOverrides` 是内置模型的 per-model override 入口,支持 `name`、`reasoning`、`input`、partial `cost`、`contextWindow`、`maxTokens`、`headers` 和 `compat`;未知 model id 会被忽略,同一 provider 同时定义 `models` 时 custom models 在 built-in overrides 之后合并 [E: packages/coding-agent/docs/models.md:320] [E: packages/coding-agent/docs/models.md:341] [E: packages/coding-agent/docs/models.md:361] [E: packages/coding-agent/docs/models.md:362] [E: packages/coding-agent/docs/models.md:363] [E: packages/coding-agent/docs/models.md:366]。
+
+OpenAI-compatible custom models 现在可配置 `thinkingFormat: "baseten"` 与 `chatTemplateArgs`；该格式把 toggle values 放进 `chat_template_args`，并可同时发送 top-level `reasoning_effort`。[E: packages/coding-agent/docs/models.md:450] [E: packages/coding-agent/docs/models.md:452] [E: packages/coding-agent/docs/models.md:463] [E: packages/coding-agent/docs/custom-provider.md:754] [E: packages/coding-agent/docs/custom-provider.md:756] [E: packages/coding-agent/docs/custom-provider.md:773]
 
 ## 3 扩展 API: `ProviderConfig`
 

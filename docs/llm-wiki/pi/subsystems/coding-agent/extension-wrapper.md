@@ -15,7 +15,7 @@ related:
   - subsys.coding-agent.tool-wrapper
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `extensions/wrapper.ts` 是 pi-coding-agent 把 extension-registered `ToolDefinition` 转成 agent-core `AgentTool` 的极薄适配层: 它不执行工具、不拦截事件, 只在 tool execution 时通过 `ExtensionRunner.createContext()` 注入最新 `ExtensionContext`。

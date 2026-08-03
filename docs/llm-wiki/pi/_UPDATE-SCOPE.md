@@ -1,89 +1,68 @@
-# UPDATE SCOPE — Pi Wiki 增量更新（cee5ff7520 → a8ee03b815）
+# UPDATE SCOPE — Pi Wiki follow-up（a8ee03b815 → c1019d9202）
 
-> 本文件记录 2026-08-03 完成的 Pi-only 增量更新。
-> **旧父仓 gitlink / Wiki 基线**：`cee5ff7520d8828bed9955ef00419e995d1f91e0`
-> **目标（官方 `origin/main` remote HEAD）**：`a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe`
-> **跨度**：254 commits · 406 files changed · +36,495 / -3,895 · 2026-07-25 → 2026-08-03
+> 本文件记录 2026-08-03 的 Pi-only follow-up 增量更新。
+> **旧父仓 gitlink / Wiki 基线**：`a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe`
+> **目标（官方 `origin/main` remote HEAD）**：`c1019d9202b648143d123b7e6fb76543a6b82de6`
+> **跨度**：2 commits · 36 files changed · +502 / -38 · 2026-08-03
 
 复现：
 
 ```bash
 git -C pi fetch origin main
 git -C pi symbolic-ref refs/remotes/origin/HEAD
-git -C pi rev-list --count cee5ff7520d8828bed9955ef00419e995d1f91e0..a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe
-git -C pi diff --shortstat cee5ff7520d8828bed9955ef00419e995d1f91e0..a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe
+git -C pi rev-list --count a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe..c1019d9202b648143d123b7e6fb76543a6b82de6
+git -C pi diff --shortstat a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe..c1019d9202b648143d123b7e6fb76543a6b82de6
 ```
+
+上游提交：
+
+1. `a24fb9e96a3fbc7be2a87e81aa1aa5c0ddf95d35` — `fix(coding-agent): preserve auth header deletion markers (#7539)`
+2. `c1019d9202b648143d123b7e6fb76543a6b82de6` — `feat(ai): add Baseten provider`
 
 ## 1. 既有节点影响分类
 
-以更新前 186 个节点为总体，按 source 删除/移动与 diff churn 分类：
+以基线 202 个节点为总体，把每个节点的 frontmatter `source` 与真实 36-file diff 求交：
 
 | 分类 | 节点数 | 判定 |
 |---|---:|---|
-| A-BROKEN | 14 | 至少一个 source 删除或移动；均已重映射到目标树有效路径 |
-| B-HEAVY | 0 | 本轮没有仅凭 churn 判为独立重写的节点 |
-| C-DRIFT | 117 | source 仍存在但内容/行号变化，需重锚和语义复核 |
-| D-CLEAN | 55 | source content 未变；仍重新核验目标 SHA |
-| 合计 | 186 | 不含本轮新增节点 |
+| A-BROKEN | 0 | diff 无删除/移动文件，既有 source 路径全部保留 |
+| B-HEAVY | 0 | 无既有节点达到结构重写判定 |
+| C-DRIFT | 30 | 至少一个已有 source 位于真实 diff，均已重锚并重新做语义核验 |
+| D-CLEAN | 172 | source content 未变；仍统一刷新并核验目标 SHA |
+| 合计 | 202 | 本轮无新增或退役节点 |
 
-132 个既有节点通过 `tools/rebase-evidence.mjs --safe-only` 重定位可确定的 exact anchors；自动迁移后仍对新增/删除 API、catalog、events 与所有 weak anchors 做人工源码复核。更新后的 202 个节点统一 `updated: a8ee03b815`。
+30 个 C-DRIFT 节点按面归类：
 
-## 2. 结构新增与退役
+- spine / lifecycle：`spine.overview`、`spine.process-lifecycle`、`spine.provider-stream`；
+- provider surface：`surface.cli.overview`、`surface.modes.print`、`surface.providers.overview`、`surface.providers.auth`、`surface.providers.custom-provider`、`surface.misc.images`、`surface.misc.security`；
+- AI subsystem：`subsys.ai.provider-registry`、`subsys.ai.wire-protocol-dispatch`、`subsys.ai.openai-completions`、`subsys.ai.env-api-keys`、`subsys.ai.model-discovery`、`subsys.ai.image-generation`、`subsys.ai.model-catalog-publication`、`subsys.ai.pi-messages`、`subsys.ai.constrained-sampling`、`subsys.ai.provider-retry`；
+- coding-agent subsystem：`subsys.coding-agent.model-registry`、`subsys.coding-agent.model-resolver`、`subsys.coding-agent.file-mutation-queue`；
+- reference：`ref.ai.provider-catalog`、`ref.ai.model-catalog`、`ref.ai.wire-protocol-catalog`、`ref.ai.core-types`、`ref.coding-agent.env-vars`、`ref.coding-agent.cli-flags`、`ref.coding-agent.json-events`。
 
-新增 16 个节点，退役 0 个：
+`tools/rebase-evidence.mjs --safe-only` 在目标 checkout 上扫描 25 个含受影响 anchors 的文件、33,113 条 citations：33,112 exact、1 contextual、0 fuzzy、0 unresolved；改变 964 个行号。唯一 contextual anchor 位于 `model-registry.ts`，已结合新类型、实现和回归测试人工重写核验。
 
-| 包 | 新增节点 |
-|---|---|
-| agent | `subsys.agent-core.agent-harness-lifecycle`、`subsys.agent-core.session-search` |
-| protocol | `subsys.protocol.cbor-framing`、`subsys.protocol.wire-protocol` |
-| client | `subsys.client.remote-session-client`、`subsys.client.session-leases`、`subsys.client.unix-transport` |
-| coding-agent | `surface.sdk.remote-session`、`subsys.coding-agent.experimental-cli` |
-| tui | `subsys.tui.layout`、`subsys.tui.alternate-screen` |
-| server | `subsys.server.session-server`、`subsys.server.live-sessions`、`subsys.server.protocol-adapters`、`subsys.server.unix-transport` |
-| evals | `subsys.evals.comparative-harness` |
+## 2. 新增与退役判定
 
-保留既有八个 `server` 节点：上游把旧实现移动到 `src/legacy/`，根 export 与 `server` bin 继续暴露 legacy API；新 composable server 是 additive surface，不构成旧节点退役。
-
-更新后节点总数 202：T0 12、T1 34、T2 121、T3 35；全部 verified，planned 为 0。
+- **Wiki 节点**：新增 0，退役 0；节点总数保持 202，T0/T1/T2/T3 为 12/34/121/35，全部 verified，planned 0。
+- **源码 surface**：新增 `basetenProvider()`、`BASETEN_MODELS` shard wrapper、`KnownProvider` / `models.generated.ts` / env-key / default-model 注册项和 Baseten reasoning compatibility；这些都属于现有 provider/catalog/model-resolution 节点的扩展面，不需要拆出新 Wiki 节点。
+- **source 删除/移动**：0；新增的 `packages/ai/src/providers/baseten.ts` 与 `baseten.models.ts` 已加入相关节点 source。
 
 ## 3. 真实增量影响
 
-- **Agent/session/compaction**：`SessionStorage` 改为 `readHead/readEntry/readEntries/appendEntry/findEntriesOnBranch/readPathToRootOrCompaction`；新增 repository search、harness phase/retry lifecycle、retained tail 与 usage-bearing compaction/tool result。
-- **AI/provider**：stream partial 从 `pending` 开始并保留 `rawStopReason`；新增 request-scoped fetch 的 provider-specific支持边界、Google initial-request retry、OAuth 五分钟/min-validity refresh window、nullable union validation 与 OpenAI compat fields。
-- **Catalog**：38 runtime providers、37 static model buckets、10 chat/text wire keys；官方 0.83.0 artifact 复核为 1,153 models，较 0.82.1 `+51/-7`。
-- **Coding-agent**：active CLI 62、config keys 76、env vars 93、ExtensionAPI contribution/action entries 26、extension events 33、RPC methods 32；新增 public `RemoteSession` 与尚未接入发布入口的 experimental client/server CLI。
-- **TUI**：`TUI` 从 concrete class 拆为 interface + main/alternate screen；新增 HStack/VStack/ScrollView、viewport layout、37 TUI actions、79 total default keybindings、Kitty placement/crop/cache 与 fullscreen image boundary。
-- **Remote stack**：新增 TypeBox DTO + CBOR/framing protocol、transport-neutral client、Unix transport、composable server、live-session ownership 与 protocol adapters；旧 legacy server 同时保留。
-- **Storage/evals**：SQLite branch cache、bounded canonical traversal、FTS/repository lifecycle得到更新；evals 新增 baseline/candidate pairing、artifact persistence 与 paired comparison report。
+- **provider registry/catalog**：新增 `baseten`，以 `https://inference.baseten.co/v1` 走 `openai-completions`，读取 `BASETEN_API_KEY`；runtime built-in provider 从 38 增至 39，静态 model bucket 从 37 增至 38。Radius 继续是 runtime-only provider。[E: packages/ai/src/providers/baseten.ts:6] [E: packages/ai/src/providers/baseten.ts:8] [E: packages/ai/src/providers/baseten.ts:10] [E: packages/ai/src/providers/baseten.ts:11] [E: packages/ai/src/providers/baseten.ts:13] [E: packages/ai/src/providers/all.ts:88] [E: packages/ai/src/providers/all.ts:94] [E: packages/ai/src/providers/all.ts:119] [E: packages/ai/src/providers/all.ts:128] [E: packages/ai/src/models.generated.ts:43] [E: packages/ai/src/models.generated.ts:48] [E: packages/ai/src/models.generated.ts:81] [E: packages/ai/src/models.generated.ts:87]
+- **model catalog**：target generator 从 models.dev 的 Baseten catalog 排除 `status=deprecated` rows，并为保留模型生成 OpenAI Completions、reasoning toggle/effort、thinking-level map 与成本/窗口元数据。[E: packages/ai/scripts/generate-models.ts:1094] [E: packages/ai/scripts/generate-models.ts:1107] [E: packages/ai/scripts/generate-models.ts:1112] [E: packages/ai/scripts/generate-models.ts:1122] [E: packages/ai/scripts/generate-models.ts:1142] [E: packages/ai/scripts/generate-models.ts:1143] [E: packages/ai/scripts/generate-models.ts:1145] [E: packages/ai/scripts/generate-models.ts:1148] [E: packages/ai/scripts/generate-models.ts:1150] [E: packages/ai/scripts/generate-models.ts:1158] [E: packages/ai/scripts/generate-models.ts:1164] [E: packages/ai/scripts/generate-models.ts:1173] [E: packages/ai/scripts/generate-models.ts:1179] [E: packages/ai/scripts/generate-models.ts:1180] [E: packages/ai/scripts/generate-models.ts:1181]
+- **catalog snapshot**：目标 Git tree 不保存 ignored `data/baseten.json`，因此以 2026-08-03T13:10:07Z 获取的 `https://models.dev/api.json`（SHA-256 `b3a52ba98bb4b58714734f8bb98c9bc7ffeff3558f915bcc3211cfe5f276728d`）复核：Baseten 18 rows，其中 16 active、2 deprecated；按 target filter 得到 16，叠加官方 0.83.0 artifact 的 1,153，当前目录为 1,169。[I]
+- **model resolver**：Baseten 默认模型新增为 `zai-org/GLM-5.2`。[E: packages/coding-agent/src/core/model-resolver.ts:42]
+- **compat schema/API**：`OpenAICompletionsCompat.thinkingFormat` 增加 `baseten`，`chatTemplateArgs` 支持由 `thinking.enabled` 等变量驱动的模板参数；OpenAI Completions request 只在计算后值非 `undefined` 时写入 `chat_template_args`。[E: packages/ai/src/types.ts:547] [E: packages/ai/src/types.ts:557] [E: packages/coding-agent/src/core/model-config.ts:82] [E: packages/coding-agent/src/core/model-config.ts:87] [E: packages/coding-agent/src/core/model-config.ts:98] [E: packages/ai/src/api/openai-completions.ts:774] [E: packages/ai/src/api/openai-completions.ts:779] [E: packages/ai/src/api/openai-completions.ts:781] [E: packages/ai/src/api/openai-completions.ts:861] [E: packages/ai/src/api/openai-completions.ts:875]
+- **auth header deletion**：`ProviderHeaders` 允许 `string | null`；case-insensitive merge 保留 `null`，`ModelRegistry.getApiKeyAndHeaders()` 不再过滤 markers，extension 原样传给 provider adapter 后由 API SDK 作为 default-header suppression marker。[E: packages/ai/src/types.ts:108] [E: packages/coding-agent/src/core/model-runtime.ts:81] [E: packages/coding-agent/src/core/model-runtime.ts:92] [E: packages/coding-agent/src/core/model-registry.ts:15] [E: packages/coding-agent/src/core/model-registry.ts:61] [E: packages/coding-agent/src/core/model-registry.ts:74] [E: packages/ai/src/api/openai-completions.ts:662] [E: packages/ai/src/api/openai-completions.ts:672] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:91] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:99] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:100]
 
-## 4. 模型目录制品边界
+## 4. 独立 L2 证伪
 
-目标 tree 不保存最终生成 model JSON，因此逐实例目录保持 `[I]`。本轮独立核验官方 `@earendil-works/pi-ai@0.83.0` artifact：
+按 `RUN.md` 对两条增量分别使用独立只读 verifier：一条证伪 Baseten provider/model/env/reasoning/catalog 结论；另一条证伪 auth deletion/model-registry/model-resolver/custom-provider 结论。初次反例包括 provider title 仍为 38、旧 37-bucket 断言、generator/output 与 env source anchors 漂移、source/Sources 漏项、ambient auth 误述、null-marker 链路时序不准和默认模型选择过度概括；逐项修复后两路 verifier 均最终 PASS，且各自重跑 lint 为 0 error / 0 warning。完整记录见 `_research/update-a8ee03b815-c1019d9202-l2.md`。
 
-- registry `gitHead=845d6ff1f6643aba440341cce877ce1c43ebbc39`，且为目标 commit 祖先；
-- tarball SHA-256：`f983c28a21209305ed9c274977e29130fa4d8848df6cdf37e9094d95cc7bc6d4`；
-- manifest schema 3、structure hash `5d82f5b1946bdf6d01733aa2a4e4410849c6d44a2ad3038171078c17aed367ce`、37 files、0 hash mismatch；
-- flatten 后 1,153 models；0.82.1 → 0.83.0 为 +51 / -7；
-- release → target generator 只把两个 Fireworks Kimi K3 rows 调整为 `openai-completions` wire，因此 membership 总数不变。
+## 5. 验证与残余风险
 
-复核记录见 `_research/model-catalog-v0.83.0.md`。
-
-## 5. 独立 L2 证伪
-
-按 `RUN.md` 分面使用独立 verifier，初次均以反例为目标而非确认结论。发现并修复的主要问题：
-
-- agent：旧 `getLeafId/getPathToRootOrCompaction` contract、19→22 harness events、retry/usage/retainedTail 漏项；
-- AI：Responses provisional/terminal event 混淆、OAuth refresh 旧语义、Azure `pending`、auth resolver 虚构 model 参数；
-- coding-agent：遗漏 `registerEntryRenderer`、Kimi OAuth env、provider overload/refreshModels 与 tool-result usage；
-- TUI：错误实例化 interface `TUI`、31→37 actions、renderImage columns、fallback/path link、placement/crop/fullscreen image 边界；
-- remote server：revision 单调性过度承诺、request-id 唯一性、malformed decoder close、strict-object 与 enumerable-symbol 限定；
-- storage/evals：bounded query 不修 cache 的例外、metadata provenance、文件 mode 只在新建时请求。
-
-完整矩阵与精确验证记录见 `_research/update-cee5ff7520-a8ee03b815-l2.md`。
-
-## 6. 验证与残余风险
-
-收尾要求：
+收尾验证命令：
 
 ```bash
 node docs/llm-wiki/pi/tools/reconcile.mjs
@@ -93,12 +72,13 @@ node docs/llm-wiki/pi/tools/lint.mjs
 git diff --check -- docs/llm-wiki/pi pi
 ```
 
-并断言：
+最终断言：
 
-- `index.json.updated`、202 个 index node 与所有 node frontmatter 都是 `a8ee03b815`；
-- index/file tree/`llms.txt` 为同一 202-node 集，0 planned；
-- 所有 `[E:path:line]` 路径、范围和代码行有效，lint 0 error / 0 warning；
-- root gitlink、submodule HEAD 都是目标 full SHA，Pi submodule clean；
+- `index.json.updated`、202 个 index node 与所有 node frontmatter 都是 `c1019d9202`；
+- index/file tree/`llms.txt` 是同一 202-node 集，0 planned；
+- provider catalog 39 rows、静态 model summary 38 rows且总和 1,169、env catalog 94 rows；
+- 所有 `[E:path:line]` 路径、范围和代码行有效，lint 为 0 error / 0 warning；
+- root gitlink 与 submodule HEAD 都是目标 full SHA，Pi submodule clean；
 - root 只 stage `docs/llm-wiki/pi/**` 与 `pi`，不改其他产品 Wiki/submodule。
 
-残余风险：Pi submodule 未安装 `node_modules`，独立 verifier 尝试运行定向 upstream tests 时因依赖缺失（如 Vitest / `get-east-asian-width`）未进入用例；本轮验证因此是源码、测试实现与文档证据的静态交叉核验，加 Wiki 自身的 reconcile/lint/idempotence，而不是 Pi runtime test pass。
+残余风险：1,169 的精确模型实例数包含远程 models.dev snapshot 推断，因 target Git tree 不保存 `data/baseten.json` 而保持 `[I]`；Pi submodule 未安装依赖，本轮验证以目标源码、上游测试实现和 Wiki reconcile/lint/一致性审计为主，不宣称 Pi runtime test pass。

@@ -29,7 +29,7 @@ related:
   - subsys.coding-agent.interactive-orchestration
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `ExtensionUIContext` 是扩展通过 `ctx.ui` 访问用户交互和可见 TUI/RPC 表面的接口:它把选择、确认、输入、通知、footer/status/widget、editor、autocomplete、theme 和 tool-output 展开状态统一暴露给 extension handler、tool 和 command。

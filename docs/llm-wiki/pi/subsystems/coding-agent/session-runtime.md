@@ -14,7 +14,7 @@ related:
   - subsys.coding-agent.session-services
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `AgentSessionRuntime` 是 pi-coding-agent 在一个 host 中持有“当前 `AgentSession` + 当前 cwd-bound services”的 lifecycle owner: `/new`、resume、fork、import 和 quit 都通过它先通知 extension、再 teardown 旧 session、再用同一个 factory 创建 replacement runtime。

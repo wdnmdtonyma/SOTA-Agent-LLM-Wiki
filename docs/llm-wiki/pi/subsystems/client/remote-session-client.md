@@ -25,7 +25,7 @@ related:
   - subsys.server.session-server
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `@earendil-works/pi-client` 的 package root 是 runtime-neutral `PiClient`：它只依赖 ordered byte transport，完成 protocol handshake、request correlation、authoritative snapshot cache、多 session attachment 与显式 reconnect。[E: packages/client/package.json:2][E: packages/client/package.json:4][E: packages/client/package.json:37][E: packages/client/src/index.ts:1][E: packages/client/src/transport.ts:1][E: packages/client/src/transport.ts:18]

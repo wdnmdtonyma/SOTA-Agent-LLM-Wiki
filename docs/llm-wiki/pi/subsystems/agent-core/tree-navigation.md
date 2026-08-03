@@ -20,7 +20,7 @@ related:
   - spine.session-state-model
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.agent-core.tree-navigation` 说明 `Session` 如何选择 active branch、做有界查询、移动 leaf，并把 branch entries 经可扩展 transform/projector 投影成 LLM context。

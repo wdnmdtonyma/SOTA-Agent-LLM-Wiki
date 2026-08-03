@@ -22,7 +22,7 @@ related:
   - subsys.server.message-protocol
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `surface.sdk.remote-session` 描述 `@earendil-works/pi-coding-agent/client` 的 public client facade：它在 `PiClient`/protocol lease 上封装单个远程 session 的 attach、input、model/thinking control、reconnect、transcript reduction 与 disposal。

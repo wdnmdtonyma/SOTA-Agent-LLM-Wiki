@@ -24,7 +24,7 @@ related:
   - subsys.agent-core.tree-navigation
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.agent-core.session-storage` 描述两层边界：`SessionRepository` 管会话集合与资源寿命，`SessionStorage` 只管一个已打开会话的持久化原语；`Session` 在两者之间提供面向调用方的状态、导航和 append API。

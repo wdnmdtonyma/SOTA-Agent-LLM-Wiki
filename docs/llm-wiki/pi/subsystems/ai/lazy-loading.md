@@ -9,7 +9,7 @@ symbols: [lazyApi, lazyStream]
 related: [subsys.ai.wire-protocol-dispatch]
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.ai.lazy-loading` 描述 `pi-ai` 的 wire API 懒加载薄层: `lazyApi(load)` 把异步 API module loader 包装成 `ProviderStreams`, `lazyStream(model, setup)` 先同步返回外层 assistant event stream,再把 setup 成功或失败接入同一个 stream 协议。

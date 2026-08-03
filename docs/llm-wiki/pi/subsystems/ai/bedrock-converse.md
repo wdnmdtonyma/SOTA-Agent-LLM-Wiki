@@ -15,7 +15,7 @@ related:
   - subsys.ai.env-api-keys
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.ai.bedrock-converse` 描述 `pi-ai` 的 AWS Bedrock Converse Stream wire 入口:把统一 `Context` 转成 AWS `ConverseStreamCommand`,配置 AWS SDK client/auth/region,再把 Bedrock stream events 归一成 `AssistantMessageEventStream`。

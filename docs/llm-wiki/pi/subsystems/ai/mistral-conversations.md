@@ -13,7 +13,7 @@ related:
   - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.ai.mistral-conversations` 描述 `pi-ai` 的 Mistral Conversations wire implementation:它把统一 `Context` 和 `MistralOptions` 转成 Mistral SDK `chat.stream` 请求,再把 Mistral streaming chunk 归一为 `AssistantMessageEventStream`。

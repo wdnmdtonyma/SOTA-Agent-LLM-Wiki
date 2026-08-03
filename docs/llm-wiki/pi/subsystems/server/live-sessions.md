@@ -21,7 +21,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `LiveSessionManager` 把 durable `PiSessionBackend` 与 protocol connection attachments 组合为 singleton live runtime：backend 负责 list/create/open，runtime 负责 snapshot、phase、mutation、events 与 dispose。[E: packages/server/src/types.ts:43][E: packages/server/src/types.ts:43][E: packages/server/src/types.ts:44][E: packages/server/src/types.ts:45][E: packages/server/src/types.ts:46][E: packages/server/src/types.ts:51][E: packages/server/src/types.ts:52][E: packages/server/src/types.ts:56][E: packages/server/src/types.ts:56][E: packages/server/src/types.ts:57][E: packages/server/src/types.ts:59][E: packages/server/src/types.ts:60]

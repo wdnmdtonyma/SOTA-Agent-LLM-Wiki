@@ -13,7 +13,7 @@ related:
   - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `http-dispatcher.ts` 是 pi-coding-agent 的 HTTP dispatcher bootstrap:它把 `undici` 全局 dispatcher 配成 env-proxy aware,并在安全条件下把 `globalThis.fetch` 也切到同一份 npm `undici` implementation。

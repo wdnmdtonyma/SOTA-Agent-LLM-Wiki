@@ -20,7 +20,7 @@ related:
   - ref.tui.component-types
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > Component 仍以 `render(width): string[]` 为最小契约；本轮新增的 stack/scroll layout 是 fullscreen renderer 可识别的增量协议，不取代 line-oriented component model。

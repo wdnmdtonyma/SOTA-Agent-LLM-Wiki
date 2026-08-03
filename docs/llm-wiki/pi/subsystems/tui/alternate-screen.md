@@ -19,7 +19,7 @@ related:
   - subsys.tui.overlay
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `TuiAltScreen` 是固定 viewport 的 fullscreen renderer，整合 alternate-screen lifecycle、layout、滚动导航、鼠标选择、链接、flash 与 Kitty placement cache。

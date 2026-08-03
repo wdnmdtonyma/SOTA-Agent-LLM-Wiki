@@ -24,7 +24,7 @@ related:
   - subsys.tui.diff-engine
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 新 viewport layout engine 把 line-oriented components 组织为固定尺寸的 stack/scroll 几何树，并负责 clip、scrollbar、图片裁剪与 pointer hit testing。

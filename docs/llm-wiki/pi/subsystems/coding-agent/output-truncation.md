@@ -33,7 +33,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 输出截断子系统把工具输出限制成模型和 TUI 可消费的 preview: 纯函数决定 head/tail/line 裁剪, `OutputAccumulator` 负责 streaming bash 的 tail snapshot 与 temp-file spillover, `details.truncation/fullOutputPath` 把裁剪元数据交给工具结果和 renderer。

@@ -17,7 +17,7 @@ related:
   - subsys.tui.keybinding-matching
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `keybindings.ts` 是 pi-coding-agent 的 product-level keybinding layer: 它把 pi-tui 的默认键位表扩展为 app actions, 从 `keybindings.json` 读取 user bindings, 迁移 legacy action names, 再交给 pi-tui 的 `KeybindingsManager` 做匹配与解析。
@@ -37,7 +37,7 @@ updated: a8ee03b815
 
 本节点不逐项枚举全部默认键位;逐项 catalog 应由 [ref.coding-agent.default-keybindings](../../reference/default-keybindings.md) 覆盖 [I]。本节点也不定义 key press matching semantics;`KeybindingsManager` 继承自 pi-tui manager, matching 语义属于 [subsys.tui.keybinding-matching](../tui/keybinding-matching.md) [E: packages/coding-agent/src/core/keybindings.ts:340] [I]。
 
-当前 `a8ee03b815` 源码与 index 已统一到 `KEYBINDINGS`、`migrateKeybindingsConfig`、`KeybindingsManager` 和 `AppKeybindings`;旧名 `DEFAULT_APP_KEYBINDINGS` / `DEFAULT_EDITOR_KEYBINDINGS` 已不再作为权威符号 [E: packages/coding-agent/src/core/keybindings.ts:13] [E: packages/coding-agent/src/core/keybindings.ts:64] [E: packages/coding-agent/src/core/keybindings.ts:289] [E: packages/coding-agent/src/core/keybindings.ts:340]。
+当前 `c1019d9202` 源码与 index 已统一到 `KEYBINDINGS`、`migrateKeybindingsConfig`、`KeybindingsManager` 和 `AppKeybindings`;旧名 `DEFAULT_APP_KEYBINDINGS` / `DEFAULT_EDITOR_KEYBINDINGS` 已不再作为权威符号 [E: packages/coding-agent/src/core/keybindings.ts:13] [E: packages/coding-agent/src/core/keybindings.ts:64] [E: packages/coding-agent/src/core/keybindings.ts:289] [E: packages/coding-agent/src/core/keybindings.ts:340]。
 
 ## 关键文件
 

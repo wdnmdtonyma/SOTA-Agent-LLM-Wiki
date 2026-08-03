@@ -17,7 +17,7 @@ related:
   - ref.coding-agent.env-vars
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.coding-agent.telemetry` 描述 `pi-coding-agent` 里三类轻量开关: install telemetry / provider attribution headers、experimental feature gates、startup timing instrumentation。

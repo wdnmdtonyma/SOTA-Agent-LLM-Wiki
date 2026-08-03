@@ -23,7 +23,7 @@ related:
   - subsys.server.unix-transport
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.protocol.cbor-framing` 覆盖远程 session protocol 的 byte contract：一个 4-byte unsigned big-endian payload length，后接一个 definite-length CBOR item；schema validation 位于 CBOR/framing 之上。[E: packages/protocol/src/framing.ts:28][E: packages/protocol/src/framing.ts:28][E: packages/protocol/src/framing.ts:31][E: packages/protocol/src/framing.ts:33][E: packages/protocol/src/framing.ts:34][E: packages/protocol/src/framing.ts:35][E: packages/protocol/src/framing.ts:36][E: packages/protocol/src/framing.ts:37]

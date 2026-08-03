@@ -19,7 +19,7 @@ related:
   - subsys.server.request-handler
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.server.ipc-transport` 是迁入 `src/legacy/` 的本机 JSONL IPC transport:`startIpcServer()` 用 `getSocketPath()` 得到的 `server.sock` path 调用 `server.listen(socketPath)`,并按 newline-delimited JSON 读取请求；`sendIpcRequest()` 连接同一路径、写入一次 encoded request、等待第一行响应。[E: packages/server/src/legacy/ipc/server.ts:47][E: packages/server/src/legacy/ipc/server.ts:55][E: packages/server/src/legacy/ipc/server.ts:60][E: packages/server/src/legacy/ipc/server.ts:153][E: packages/server/src/legacy/config.ts:68][E: packages/server/src/legacy/ipc/client.ts:6][E: packages/server/src/legacy/ipc/client.ts:9][E: packages/server/src/legacy/ipc/client.ts:19][E: packages/server/src/legacy/ipc/client.ts:24]

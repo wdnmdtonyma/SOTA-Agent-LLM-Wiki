@@ -13,7 +13,7 @@ related:
   - surface.tools.read
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 路径解析子系统把工具输入里的路径字符串做规范化或解析为 cwd 下的绝对路径, 并只在 read/@file 场景额外尝试 macOS 截图与 Unicode 文件名变体。

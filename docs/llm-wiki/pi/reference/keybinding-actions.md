@@ -9,7 +9,7 @@ symbols: [TUI_KEYBINDINGS, Keybindings]
 related: [subsys.tui.keybinding-matching]
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `TUI_KEYBINDINGS` 是 TUI 包的全局 keybinding action registry:它把每个 `tui.*` action id 映射到默认按键(default keys)和英文描述(description)。

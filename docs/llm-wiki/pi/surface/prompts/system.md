@@ -18,7 +18,7 @@ related:
   - surface.slash-commands.overview
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `surface.prompt-templates.system` 是 pi-coding-agent 的 prompt template 用户入口:用户把 Markdown snippet 放进 prompt template 位置,文件名去掉 `.md` 后成为 `/name`,发送 `/name args` 时模板正文会按参数替换规则展开成完整用户 prompt。

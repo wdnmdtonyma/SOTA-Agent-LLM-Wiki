@@ -15,7 +15,7 @@ related:
   - ref.server.ipc-messages
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.server.message-protocol` 是迁入 `src/legacy/` 的 JSONL IPC/RPC 消息类型层:它定义 request/response unions、RPC stream 双向消息和最小 encode/parse helpers。[E: packages/server/src/legacy/ipc/protocol.ts:44][E: packages/server/src/legacy/ipc/protocol.ts:106][E: packages/server/src/legacy/ipc/protocol.ts:115][E: packages/server/src/legacy/ipc/protocol.ts:122][E: packages/server/src/legacy/ipc/protocol.ts:130]

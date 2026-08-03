@@ -14,7 +14,7 @@ related:
   - surface.trust.model
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 项目信任管理是 pi-coding-agent 在读取 project-local resources 前使用的 trust gate: `ProjectTrustStore` 负责持久化/继承 trust decision, `resolveProjectTrusted()` 负责把 CLI override、资源探测、extension hook、saved decision、global default 和 UI prompt 合成为本次运行的 boolean trusted 状态。

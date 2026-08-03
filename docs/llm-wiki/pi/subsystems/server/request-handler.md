@@ -19,7 +19,7 @@ related:
   - subsys.server.ipc-transport
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.server.request-handler` 是迁入 `src/legacy/` 的 IPC request facade:`serve()` 启动本地 JSONL IPC server，`handleIpcRequest()` 把一次性命令转给 supervisor，`openRpcStream()` 把长连接桥接到 live coding-agent RPC process。[E: packages/server/src/legacy/serve.ts:9][E: packages/server/src/legacy/serve.ts:12][E: packages/server/src/legacy/handler.ts:57][E: packages/server/src/legacy/handler.ts:132]

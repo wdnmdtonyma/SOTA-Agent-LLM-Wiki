@@ -41,7 +41,7 @@ related:
   - ref.ai.model-catalog
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `surface.misc.images` 描述 pi-coding-agent 的图像可见面: CLI `@file` 和交互输入把本地图片变成用户消息里的 `ImageContent`, settings 决定是否 resize 或 block, TUI 只在终端能力允许时把 image content 渲染成 Kitty/iTerm2 inline graphics。
@@ -112,7 +112,7 @@ tool result image rendering 还受 `showImages` 与 terminal capability 共同�
 
 ## 7 与 image/model/provider catalog 的边界
 
-文字模型 provider catalog 的 ground truth 是 `builtinProviders()`;当前 `builtinProviders()` 列表包含 `openrouterProvider()` 等文本/streaming provider,与内置 image-generation provider catalog 分开 [E: packages/ai/src/providers/all.ts:87] [E: packages/ai/src/providers/all.ts:88] [E: packages/ai/src/providers/all.ts:114] [I]。内置 image-generation provider 的 ground truth 是 `builtinImagesProviders()`,当前只返回 `[openrouterImagesProvider()]` [E: packages/ai/src/providers/all.ts:140] [E: packages/ai/src/providers/all.ts:141]。
+文字模型 provider catalog 的 ground truth 是 `builtinProviders()`;当前 `builtinProviders()` 列表包含 `openrouterProvider()` 等文本/streaming provider,与内置 image-generation provider catalog 分开 [E: packages/ai/src/providers/all.ts:88] [E: packages/ai/src/providers/all.ts:89] [E: packages/ai/src/providers/all.ts:116] [I]。内置 image-generation provider 的 ground truth 是 `builtinImagesProviders()`,当前只返回 `[openrouterImagesProvider()]` [E: packages/ai/src/providers/all.ts:142] [E: packages/ai/src/providers/all.ts:143]。
 
 image model catalog 的 ground truth 是 `IMAGE_MODELS`,当前顶层有 `openrouter` bucket,每个条目声明 `api: "openrouter-images"`, `provider: "openrouter"`, `input`/`output` 能力和成本字段 [E: packages/ai/src/image-models.generated.ts:6] [E: packages/ai/src/image-models.generated.ts:7] [E: packages/ai/src/image-models.generated.ts:11] [E: packages/ai/src/image-models.generated.ts:12] [E: packages/ai/src/image-models.generated.ts:14] [E: packages/ai/src/image-models.generated.ts:15] [E: packages/ai/src/image-models.generated.ts:16]。`openrouterImagesProvider()` 把 `Object.values(IMAGE_MODELS.openrouter)` 作为 image provider 模型清单,auth 同时支持 `OPENROUTER_API_KEY` 与 lazy OpenRouter OAuth,并使用 `openrouterImagesApi()` adapter [E: packages/ai/src/providers/openrouter-images.ts:7] [E: packages/ai/src/providers/openrouter-images.ts:9] [E: packages/ai/src/providers/openrouter-images.ts:12] [E: packages/ai/src/providers/openrouter-images.ts:13] [E: packages/ai/src/providers/openrouter-images.ts:16] [E: packages/ai/src/providers/openrouter-images.ts:19] [E: packages/ai/src/providers/openrouter-images.ts:20]。text/image provider 共用 `openrouter` id；若 caller 给两个 collection 注入同一 credential store，两边会解析同一 stored OAuth key [E: packages/ai/test/openrouter-oauth.test.ts:36] [E: packages/ai/test/openrouter-oauth.test.ts:38] [E: packages/ai/test/openrouter-oauth.test.ts:45] [E: packages/ai/test/openrouter-oauth.test.ts:47] [E: packages/ai/test/openrouter-oauth.test.ts:50] [E: packages/ai/test/openrouter-oauth.test.ts:51]。
 

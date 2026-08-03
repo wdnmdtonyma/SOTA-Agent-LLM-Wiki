@@ -17,7 +17,7 @@ related:
   - subsys.server.supervisor
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.server.radius` 是迁入 `src/legacy/` 的 experimental Radius presence layer:本地 legacy server 在凭据存在时注册 machine 与 Pi instance，并用 heartbeat 维持云端可见性。[E: packages/server/src/legacy/radius.ts:139][E: packages/server/src/legacy/radius.ts:161][E: packages/server/src/legacy/radius.ts:197][E: packages/server/src/legacy/radius.ts:224]

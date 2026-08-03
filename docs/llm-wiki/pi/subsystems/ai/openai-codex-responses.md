@@ -17,7 +17,7 @@ related:
   - subsys.ai.session-resources
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `openai-codex-responses.ts` 是 `pi-ai` 调 ChatGPT Codex Responses backend 的 wire 协议入口: 它把统一 `Context`/`StreamOptions` 转成 Codex request, 优先走 WebSocket streaming, 必要时降级 SSE, 再复用 OpenAI Responses shared normalizer 输出 `AssistantMessageEventStream`。
@@ -105,7 +105,7 @@ Codex headers are ChatGPT-specific: base headers extract account id from JWT, se
 
 Codex Responses accumulator 从 `pending` 开始；shared Responses processor 完成后，adapter 断言结果已 terminal，避免把未收敛 partial 当 final。`rawStopReason` 来自 shared terminal response status。[E: packages/ai/src/api/openai-codex-responses.ts:252] [E: packages/ai/src/api/openai-codex-responses.ts:266] [E: packages/ai/src/api/openai-codex-responses.ts:481] [E: packages/ai/src/api/openai-codex-responses.ts:488] [E: packages/ai/src/api/openai-responses-shared.ts:567] [E: packages/ai/src/api/openai-responses-shared.ts:568]
 
-custom fetch 只注入 Codex SSE request path；公开 contract 明确 fetch 不影响 WebSocket transport。[E: packages/ai/src/api/openai-codex-responses.ts:401] [E: packages/ai/src/api/openai-codex-responses.ts:406] [E: packages/ai/src/types.ts:126] [E: packages/ai/src/types.ts:126]
+custom fetch 只注入 Codex SSE request path；公开 contract 明确 fetch 不影响 WebSocket transport。[E: packages/ai/src/api/openai-codex-responses.ts:401] [E: packages/ai/src/api/openai-codex-responses.ts:406] [E: packages/ai/src/types.ts:127] [E: packages/ai/src/types.ts:127]
 
 ## Sources
 

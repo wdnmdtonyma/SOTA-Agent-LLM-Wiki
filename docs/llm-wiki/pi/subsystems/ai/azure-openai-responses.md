@@ -14,7 +14,7 @@ related:
   - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `azure-openai-responses.ts` 是 pi-ai 的 Azure OpenAI Responses wire 协议入口: 它把 pi 的 `Context` 转成 Responses API payload, 用 Azure 专属 endpoint/deployment/api-version 配置创建 SDK client, 再复用 OpenAI Responses shared 流解析器产出统一的 `AssistantMessageEventStream`。
@@ -95,7 +95,7 @@ Azure 差异五: OpenAI Responses 对 GitHub Copilot provider 动态补 headers�
 
 ## 跨包边界
 
-[subsys.ai.wire-protocol-dispatch](wire-protocol-dispatch.md) 覆盖 `Models`/`ProviderStreams` 的统一分派模型: API module 只需要满足 `stream` 和 `streamSimple` contract, provider 和 models 层负责 lazy loading、auth application 与按 `model.api` 选择实现 [E: packages/ai/src/types.ts:236] [E: packages/ai/src/types.ts:237] [E: packages/ai/src/types.ts:238] [E: packages/ai/src/models.ts:463] [E: packages/ai/src/models.ts:253] [E: packages/ai/src/models.ts:619]。
+[subsys.ai.wire-protocol-dispatch](wire-protocol-dispatch.md) 覆盖 `Models`/`ProviderStreams` 的统一分派模型: API module 只需要满足 `stream` 和 `streamSimple` contract, provider 和 models 层负责 lazy loading、auth application 与按 `model.api` 选择实现 [E: packages/ai/src/types.ts:237] [E: packages/ai/src/types.ts:238] [E: packages/ai/src/types.ts:239] [E: packages/ai/src/models.ts:463] [E: packages/ai/src/models.ts:253] [E: packages/ai/src/models.ts:619]。
 
 [subsys.ai.openai-responses](openai-responses.md) 覆盖 OpenAI Responses 原生入口: Azure 节点只详写 Azure endpoint/deployment/api-version/client 差异, 对 message/tool/stream 共享逻辑引用 `openai-responses-shared.ts` 的实现 [E: packages/ai/src/api/azure-openai-responses.ts:20] [E: packages/ai/src/api/openai-responses.ts:27] [E: packages/ai/src/api/openai-responses-shared.ts:136] [E: packages/ai/src/api/openai-responses-shared.ts:344] [E: packages/ai/src/api/openai-responses-shared.ts:416]。
 

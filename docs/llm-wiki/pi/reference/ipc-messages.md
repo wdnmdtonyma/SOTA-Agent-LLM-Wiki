@@ -14,7 +14,7 @@ symbols:
   - ResponseMap
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 related:
   - subsys.server.message-protocol
 ---
@@ -34,7 +34,7 @@ related:
 
 本目录以 `packages/server/src/legacy/ipc/protocol.ts` 为消息全集的 ground truth:`RequestMap` 当前列出 6 个 request key,`ResponseMap` 当前列出 6 个 success response key [E: packages/server/src/legacy/ipc/protocol.ts:44] [E: packages/server/src/legacy/ipc/protocol.ts:45] [E: packages/server/src/legacy/ipc/protocol.ts:46] [E: packages/server/src/legacy/ipc/protocol.ts:47] [E: packages/server/src/legacy/ipc/protocol.ts:48] [E: packages/server/src/legacy/ipc/protocol.ts:49] [E: packages/server/src/legacy/ipc/protocol.ts:106] [E: packages/server/src/legacy/ipc/protocol.ts:107] [E: packages/server/src/legacy/ipc/protocol.ts:108] [E: packages/server/src/legacy/ipc/protocol.ts:109] [E: packages/server/src/legacy/ipc/protocol.ts:110] [E: packages/server/src/legacy/ipc/protocol.ts:111]。`ServerRequest` 由 `RequestMap[keyof RequestMap]` 派生,所以本目录把 `RequestMap` 的每个 key 视为一个 IPC request 实例 [E: packages/server/src/legacy/ipc/protocol.ts:52]。`ServerResponse` 由 `ResponseMap[keyof ResponseMap] | ErrorResponse` 派生,所以本目录把 6 个 success response 与统一 `error` response 都列入 response 变体 [E: packages/server/src/legacy/ipc/protocol.ts:99] [E: packages/server/src/legacy/ipc/protocol.ts:114]。
 
-server 包稳定性是 experimental:包 README 明确说该 package 处于 active development,CLI、API 和 behavior 尚不稳定,可能无通知变更或移除 [E: packages/server/README.md:3]。本节点只记录当前 `a8ee03b815` 源码快照的 message shape,不把这些 IPC 字段描述成稳定外部 API [I]。
+server 包稳定性是 experimental:包 README 明确说该 package 处于 active development,CLI、API 和 behavior 尚不稳定,可能无通知变更或移除 [E: packages/server/README.md:3]。本节点只记录当前 `c1019d9202` 源码快照的 message shape,不把这些 IPC 字段描述成稳定外部 API [I]。
 
 ## IPC request 逐实例目录
 

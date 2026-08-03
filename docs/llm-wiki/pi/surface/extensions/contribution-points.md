@@ -22,7 +22,7 @@ related:
   - subsys.ai.constrained-sampling
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `surface.extensions.contribution-points` 描述 pi 扩展作者可以向 `pi-coding-agent` 注入的主要贡献点: LLM 工具、slash 命令、键盘快捷键、模型 provider 和自定义消息渲染器。

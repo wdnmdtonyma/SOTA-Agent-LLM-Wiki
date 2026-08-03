@@ -19,7 +19,7 @@ related:
   - subsys.agent-core.memory-storage
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.agent-core.session-search` 描述独立于 repository CRUD 的查询接口，以及无需维护倒排索引、直接扫描 canonical sessions 的默认实现。

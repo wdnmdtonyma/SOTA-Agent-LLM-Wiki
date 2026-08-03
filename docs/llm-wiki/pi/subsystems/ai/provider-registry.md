@@ -7,6 +7,7 @@ pkg: ai
 source:
   - packages/ai/src/providers/all.ts
   - packages/ai/src/models.ts
+  - packages/ai/src/providers/baseten.ts
   - packages/ai/src/providers/radius.ts
 symbols:
   - builtinProviders
@@ -19,10 +20,10 @@ related:
   - subsys.ai.pi-messages
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
-> `subsys.ai.provider-registry` 描述 `pi-ai` 当前的 provider 装配与 runtime collection：38 个 fresh built-in provider 进入 `ModelsImpl`，其中 Radius 是没有 structural model shard 的动态 provider；generated `MODELS` 只负责 37 个静态 catalog buckets。
+> `subsys.ai.provider-registry` 描述 `pi-ai` 当前的 provider 装配与 runtime collection：39 个 fresh built-in provider 进入 `ModelsImpl`，其中 Radius 是没有 structural model shard 的动态 provider；generated `MODELS` 负责其余 38 个静态 catalog buckets。
 
 ## 能回答的问题
 
@@ -33,11 +34,13 @@ updated: a8ee03b815
 
 ## 两个 ground truth
 
-runtime membership 以 `builtinProviders()` 为准：它返回从 `amazonBedrockProvider()` 到 `zaiCodingCnProvider()` 的 38 个 fresh provider objects，Radius 位于 OpenRouter 与 Together 之间 [E: packages/ai/src/providers/all.ts:87] [E: packages/ai/src/providers/all.ts:89] [E: packages/ai/src/providers/all.ts:114] [E: packages/ai/src/providers/all.ts:117] [E: packages/ai/src/providers/all.ts:126]。
+runtime membership 以 `builtinProviders()` 为准：它返回从 `amazonBedrockProvider()` 到 `zaiCodingCnProvider()` 的 39 个 fresh provider objects；Baseten 位于 Azure 与 Cerebras 之间，Radius 仍位于 OpenRouter 与 Together 之间 [E: packages/ai/src/providers/all.ts:88] [E: packages/ai/src/providers/all.ts:89] [E: packages/ai/src/providers/all.ts:94] [E: packages/ai/src/providers/all.ts:119] [E: packages/ai/src/providers/all.ts:128]。
 
-static catalog membership 则来自 generated `MODELS`。`BuiltinProvider = keyof typeof MODELS`，而 Radius 只在 runtime provider array 中；因此它没有 static catalog entry [E: packages/ai/src/providers/all.ts:51] [E: packages/ai/src/providers/all.ts:117] [I]。`getBuiltinModel()`、`getBuiltinProviders()` 和 `getBuiltinModels()` 都只读该 generated object [E: packages/ai/src/providers/all.ts:59] [E: packages/ai/src/providers/all.ts:63] [E: packages/ai/src/providers/all.ts:67] [E: packages/ai/src/providers/all.ts:77]。
+static catalog membership 则来自 generated `MODELS`。`BuiltinProvider = keyof typeof MODELS`，而 Radius 只在 runtime provider array 中；因此它没有 static catalog entry [E: packages/ai/src/providers/all.ts:52] [E: packages/ai/src/providers/all.ts:119] [I]。`getBuiltinModel()`、`getBuiltinProviders()` 和 `getBuiltinModels()` 都只读该 generated object [E: packages/ai/src/providers/all.ts:60] [E: packages/ai/src/providers/all.ts:64] [E: packages/ai/src/providers/all.ts:68] [E: packages/ai/src/providers/all.ts:78]。
 
-`builtinModels(options)` 创建 collection，逐个 `setProvider()` 注册 `builtinProviders()` 的结果 [E: packages/ai/src/providers/all.ts:131] [E: packages/ai/src/providers/all.ts:132] [E: packages/ai/src/providers/all.ts:133] [E: packages/ai/src/providers/all.ts:136]。图片生成另有 `builtinImagesProviders()`/`builtinImagesModels()`，当前只注册 OpenRouter images，不属于本 chat/text collection [E: packages/ai/src/providers/all.ts:140] [E: packages/ai/src/providers/all.ts:141] [E: packages/ai/src/providers/all.ts:145] [E: packages/ai/src/providers/all.ts:150]。
+Baseten 是普通 static builtin：factory 固定 `https://inference.baseten.co/v1`、`BASETEN_API_KEY`、`openai-completions` 与 `BASETEN_MODELS`；它同时出现在 runtime array 和 generated catalog，不具备 Radius 的动态-only例外。[E: packages/ai/src/providers/baseten.ts:6] [E: packages/ai/src/providers/baseten.ts:10] [E: packages/ai/src/providers/baseten.ts:11] [E: packages/ai/src/providers/baseten.ts:12] [E: packages/ai/src/providers/baseten.ts:13] [E: packages/ai/src/models.generated.ts:48]
+
+`builtinModels(options)` 创建 collection，逐个 `setProvider()` 注册 `builtinProviders()` 的结果 [E: packages/ai/src/providers/all.ts:133] [E: packages/ai/src/providers/all.ts:134] [E: packages/ai/src/providers/all.ts:135] [E: packages/ai/src/providers/all.ts:138]。图片生成另有 `builtinImagesProviders()`/`builtinImagesModels()`，当前只注册 OpenRouter images，不属于本 chat/text collection [E: packages/ai/src/providers/all.ts:142] [E: packages/ai/src/providers/all.ts:143] [E: packages/ai/src/providers/all.ts:147] [E: packages/ai/src/providers/all.ts:152]。
 
 ## Provider 与 Models contract
 
@@ -71,7 +74,7 @@ stream path 先按 `model.provider` require provider，再用 `getAuth()` 解析
 
 ## Gotcha
 
-- `getBuiltinProviders()` 的 37 个 generated keys 不是 runtime `builtinProviders()` 的 38 个 objects；名字相近但 universe 不同 [E: packages/ai/src/providers/all.ts:51] [E: packages/ai/src/providers/all.ts:67] [E: packages/ai/src/providers/all.ts:87] [I]。
+- `getBuiltinProviders()` 的 38 个 generated keys 不是 runtime `builtinProviders()` 的 39 个 objects；名字相近但 universe 不同 [E: packages/ai/src/providers/all.ts:52] [E: packages/ai/src/providers/all.ts:68] [E: packages/ai/src/providers/all.ts:88] [I]。
 - `Models.refresh()` 是全体 refresh，失败集中返回，不是旧版的 `refresh(provider)` throw-on-one-provider contract [E: packages/ai/src/models.ts:147] [E: packages/ai/src/models.ts:276] [E: packages/ai/src/models.ts:327]。
 - `getModels()` 是 last-known synchronous read；是否 configured/available 要看 `checkAuth()`/`getAvailable()` [E: packages/ai/src/models.ts:97] [E: packages/ai/src/models.ts:104] [E: packages/ai/src/models.ts:150] [E: packages/ai/src/models.ts:153]。
 
@@ -84,6 +87,6 @@ stream path 先按 `model.provider` require provider，再用 `getAuth()` 解析
 ## 相关
 
 - [surface.providers.overview](../../surface/providers/overview.md): 用户可见的 provider 选择、配置与 custom provider。
-- [ref.ai.provider-catalog](../../reference/provider-catalog.md): 38 个 runtime built-in provider 逐实例目录。
-- [ref.ai.model-catalog](../../reference/model-catalog.md): 37 个 structural provider buckets 下的静态模型目录。
+- [ref.ai.provider-catalog](../../reference/provider-catalog.md): 39 个 runtime built-in provider 逐实例目录。
+- [ref.ai.model-catalog](../../reference/model-catalog.md): 38 个 structural provider buckets 下的静态模型目录。
 - [subsys.ai.pi-messages](pi-messages.md): Radius 使用的动态 wire protocol。

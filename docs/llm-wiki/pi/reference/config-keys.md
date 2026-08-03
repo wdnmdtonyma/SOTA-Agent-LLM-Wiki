@@ -12,7 +12,7 @@ symbols:
   - Settings
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 related:
   - surface.config.settings
   - subsys.coding-agent.settings-manager

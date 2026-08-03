@@ -25,7 +25,7 @@ related:
   - subsys.server.storage
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.server.supervisor` 是 `@earendil-works/pi-server` 迁入 `src/legacy/` 的实验性多实例 supervisor:它把每个 live Pi instance 绑定到一个 coding-agent RPC 子进程、一个持久化 `InstanceRecord`、一组 event subscribers 和可选 Radius presence。[E: packages/server/package.json:4][E: packages/server/src/legacy/supervisor.ts:16][E: packages/server/src/legacy/supervisor.ts:17][E: packages/server/src/legacy/supervisor.ts:22][E: packages/server/src/legacy/supervisor.ts:24][E: packages/server/src/legacy/supervisor.ts:63][E: packages/server/src/legacy/supervisor.ts:64][E: packages/server/src/legacy/supervisor.ts:288][E: packages/server/src/legacy/supervisor.ts:289]

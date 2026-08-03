@@ -22,7 +22,7 @@ related:
   - subsys.server.session-server
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `@earendil-works/pi-protocol` 定义实验性远程 Pi session 的 transport-neutral wire DTO、TypeBox runtime schema 与 validated codec；协议版本固定为 `2`，所有 object schema 都拒绝未知字段。[E: packages/protocol/package.json:2][E: packages/protocol/package.json:4][E: packages/protocol/src/schemas.ts:3][E: packages/protocol/src/schemas.ts:7][E: packages/protocol/src/schemas.ts:8]

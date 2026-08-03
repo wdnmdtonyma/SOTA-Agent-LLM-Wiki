@@ -25,7 +25,7 @@ related:
   - subsys.coding-agent.model-registry
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `surface.providers.llama-cpp` 描述 coding-agent 新增的内置、隐藏扩展：它注册动态 `llama.cpp` provider 和交互式 `/llama` 命令，把 llama.cpp router 的模型目录、装载状态与 Hugging Face GGUF 搜索/下载接入 Pi。
@@ -65,7 +65,7 @@ details 请求只从 `.gguf` siblings 汇总 quantization，排除 `mmproj`，�
 
 ## Gotcha
 
-- 这不是 `packages/ai/src/providers/all.ts` 的第 37 个静态 built-in provider；它由 coding-agent 内置 extension 在运行时注册，model list 也取决于 router 当前 loaded 状态。[I]
+- 这不是 `packages/ai/src/providers/all.ts` 的 38 个静态 built-in provider 之一；它由 coding-agent 内置 extension 在运行时注册，model list 也取决于 router 当前 loaded 状态。[I]
 - `/llama` 的“下载”把 repository/quantization 交给 router；Pi 不直接把 GGUF 写入本地 cache，也没有 silent delete 路径 [E: packages/coding-agent/src/extensions/llama/index.ts:159] [E: packages/coding-agent/src/extensions/llama/index.ts:166] [I]。
 - 普通 Hugging Face inference provider 与本节点不同：前者是 `pi-ai` 静态 provider，后者搜索 Hugging Face GGUF 并控制本地 llama.cpp router。[I]
 

@@ -25,7 +25,7 @@ related:
   - subsys.tui.keybinding-matching
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `keybindings.json` 是 pi-coding-agent 的用户可见键位配置面:用户用 namespaced action id 覆盖默认快捷键,interactive mode 启动和 `/reload` 时把它读入同一个 app keybinding manager。

@@ -1,6 +1,6 @@
 ---
 id: ref.ai.model-catalog
-title: 模型目录(target structure + v0.83.0 artifact)
+title: 模型目录(target structure + v0.83.0/Baseten snapshot)
 kind: catalog
 tier: T3
 pkg: ai
@@ -11,6 +11,7 @@ source:
   - packages/ai/src/providers/ant-ling.models.ts
   - packages/ai/src/providers/anthropic.models.ts
   - packages/ai/src/providers/azure-openai-responses.models.ts
+  - packages/ai/src/providers/baseten.models.ts
   - packages/ai/src/providers/cerebras.models.ts
   - packages/ai/src/providers/cloudflare-ai-gateway.models.ts
   - packages/ai/src/providers/cloudflare-workers-ai.models.ts
@@ -57,72 +58,77 @@ related:
   - subsys.ai.model-catalog-publication
 evidence: inferred
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
-> 目标 commit 显式定义 37 个静态 provider bucket；目标 membership 由官方 `@earendil-works/pi-ai@0.83.0` 制品的 1,153 个模型，加上 release commit 到目标 commit 的 tracked catalog diff 约束。逐模型数仍标为 `[I]`：ignored JSON 不在 target tree，且 generator 输入依赖实时远端目录。
+> 目标 commit 显式定义 38 个静态 provider bucket；目标 membership 由官方 `@earendil-works/pi-ai@0.83.0` 制品的 1,153 个模型，加上 target 新增 Baseten generator 在审计快照中的 16 个 active models，合计 1,169。逐模型数仍标为 `[I]`：ignored JSON 不在 target tree，且 Baseten 输入来自会漂移的 models.dev。
 
 ## 证据边界
 
 目标源码的 provider shard 不再内联 model values，而是 import 被 Git 忽略的 `./data/<provider>.json`，再由 `ModelCatalog` / `flattenModelCatalog()` 形成类型化目录。[E: packages/ai/src/providers/openai.models.ts:4] [E: packages/ai/src/providers/openai.models.ts:5] [E: packages/ai/src/providers/openai.models.ts:7] [E: packages/ai/src/model-catalog.ts:15] [E: packages/ai/src/model-catalog.ts:22]
 
-`models.generated.ts` 显式聚合 37 个 provider；本轮 target 相对 base 没有新增、删除或改写 structural bucket。[E: packages/ai/src/models.generated.ts:4] [E: packages/ai/src/models.generated.ts:40] [E: packages/ai/src/models.generated.ts:42] [E: packages/ai/src/models.generated.ts:79]
+`models.generated.ts` 显式聚合 38 个 provider；本轮相对 `a8ee03b815` 新增 `BASETEN_MODELS` import、typed key 与 value entry。[E: packages/ai/src/models.generated.ts:4] [E: packages/ai/src/models.generated.ts:8] [E: packages/ai/src/models.generated.ts:43] [E: packages/ai/src/models.generated.ts:48] [E: packages/ai/src/models.generated.ts:82] [E: packages/ai/src/models.generated.ts:87]
 
-生成器分别写 structural shards、ignored JSON data 与发布用 JSON bundle；package build 会先 hydrate/check data，再把它复制进 dist。[E: packages/ai/scripts/generate-models.ts:2619] [E: packages/ai/scripts/generate-models.ts:2622] [E: packages/ai/scripts/generate-models.ts:2657] [E: packages/ai/scripts/generate-models.ts:2681] [E: packages/ai/package.json:52] [E: packages/ai/package.json:58]
+生成器分别写 structural shards、`models.generated.ts`、ignored JSON data 与发布用 JSON bundle；package build 会先 hydrate/check data，再把它复制进 dist。[E: packages/ai/scripts/generate-models.ts:2770] [E: packages/ai/scripts/generate-models.ts:2777] [E: packages/ai/scripts/generate-models.ts:2785] [E: packages/ai/scripts/generate-models.ts:2791] [E: packages/ai/scripts/generate-models.ts:2804] [E: packages/ai/scripts/generate-models.ts:2808] [E: packages/ai/scripts/generate-models.ts:2812] [E: packages/ai/scripts/generate-models.ts:2832] [E: packages/ai/scripts/generate-models.ts:2836] [E: packages/ai/scripts/generate-models.ts:2839] [E: packages/ai/package.json:52] [E: packages/ai/package.json:58]
 
-官方 npm registry 的 `@earendil-works/pi-ai@0.83.0` metadata 给出 `gitHead=845d6ff1f6643aba440341cce877ce1c43ebbc39`，该 release commit 是目标 `a8ee03b815` 的祖先；artifact manifest schema 3、37 个 JSON shard，flatten 后为 1,153 个 model。release→target 没有修改 `models.generated.ts`、`model-catalog.ts` 或任何 `*.models.ts` membership shard；只修改 generator metadata policy 与 `opencode-go` display name。因 target tree 不含 ignored JSON，1,153 仍是 artifact + incremental diff 的 `[I]`，不能提升成 commit-local `[E]`。
+官方 npm registry 的 `@earendil-works/pi-ai@0.83.0` metadata 给出 `gitHead=845d6ff1f6643aba440341cce877ce1c43ebbc39`，该 release commit 是目标 `c1019d9202` 的祖先；artifact manifest schema 3、37 个 JSON shard，flatten 后为 1,153 个 model。[I] `c1019d9202` 显式新增第 38 个 Baseten shard，但 ignored `data/baseten.json` 不在 Git tree。[E: packages/ai/src/providers/baseten.models.ts:4] [E: packages/ai/src/providers/baseten.models.ts:7] [E: packages/ai/src/providers/baseten.models.ts:8]
+
+审计于 `2026-08-03T13:10:07Z` 下载 `https://models.dev/api.json`（SHA-256 `b3a52ba98bb4b58714734f8bb98c9bc7ffeff3558f915bcc3211cfe5f276728d`）：Baseten 有 18 rows，其中 2 个 `status: deprecated`，按 target generator 的唯一 membership filter 后为 16。[E: packages/ai/scripts/generate-models.ts:1094] [E: packages/ai/scripts/generate-models.ts:1142] [E: packages/ai/scripts/generate-models.ts:1143] [I] 因此 target catalog 口径为 `1,153 + 16 = 1,169`；这个 Baseten 数是带时间/hash 的远端快照，不伪装成 commit-local `[E]`。
 
 ## Provider 覆盖摘要
 
-本摘要的 model 数由官方 npm v0.83.0 artifact 推导；API 分布再应用 target generator 对 Fireworks 两个 Kimi K3 row 的 wire override，统一为 `[I]`。末列 `[E]` 只证明目标 commit 存在对应 structural provider bucket，不把制品中的数量提升为 commit-local explicit fact。
+本摘要的旧 37-bucket model 数由官方 npm v0.83.0 artifact 推导；API 分布再应用 target generator 对 Fireworks 两个 Kimi K3 row 的 wire override。Baseten 一行来自上述带 hash 的 models.dev 快照，统一为 `[I]`。末列 `[E]` 只证明目标 commit 存在对应 structural provider bucket，不把制品/远端快照中的数量提升为 commit-local explicit fact。
 
 | provider | models | API 分布 | commit bucket evidence |
 |---|---:|---|---|
-| `amazon-bedrock` | 114 | `bedrock-converse-stream` 114 | [E: packages/ai/src/models.generated.ts:43] |
-| `ant-ling` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:44] |
-| `anthropic` | 15 | `anthropic-messages` 15 | [E: packages/ai/src/models.generated.ts:45] |
-| `azure-openai-responses` | 38 | `azure-openai-responses` 38 | [E: packages/ai/src/models.generated.ts:46] |
-| `cerebras` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:47] |
-| `cloudflare-ai-gateway` | 43 | `anthropic-messages` 19; `openai-completions` 5; `openai-responses` 19 | [E: packages/ai/src/models.generated.ts:48] |
-| `cloudflare-workers-ai` | 13 | `openai-completions` 13 | [E: packages/ai/src/models.generated.ts:49] |
-| `deepseek` | 2 | `openai-completions` 2 | [E: packages/ai/src/models.generated.ts:50] |
-| `fireworks` | 16 | `anthropic-messages` 12; `openai-completions` 4 | [E: packages/ai/src/models.generated.ts:51] |
-| `github-copilot` | 29 | `anthropic-messages` 10; `openai-completions` 7; `openai-responses` 12 | [E: packages/ai/src/models.generated.ts:52] |
-| `google` | 24 | `google-generative-ai` 24 | [E: packages/ai/src/models.generated.ts:53] |
-| `google-vertex` | 12 | `google-vertex` 12 | [E: packages/ai/src/models.generated.ts:54] |
-| `groq` | 7 | `openai-completions` 7 | [E: packages/ai/src/models.generated.ts:55] |
-| `huggingface` | 51 | `openai-completions` 51 | [E: packages/ai/src/models.generated.ts:56] |
-| `kimi-coding` | 4 | `anthropic-messages` 4 | [E: packages/ai/src/models.generated.ts:57] |
-| `minimax` | 3 | `anthropic-messages` 3 | [E: packages/ai/src/models.generated.ts:58] |
-| `minimax-cn` | 3 | `anthropic-messages` 3 | [E: packages/ai/src/models.generated.ts:59] |
-| `mistral` | 30 | `mistral-conversations` 30 | [E: packages/ai/src/models.generated.ts:60] |
-| `moonshotai` | 10 | `openai-completions` 10 | [E: packages/ai/src/models.generated.ts:61] |
-| `moonshotai-cn` | 10 | `openai-completions` 10 | [E: packages/ai/src/models.generated.ts:62] |
-| `nvidia` | 30 | `openai-completions` 30 | [E: packages/ai/src/models.generated.ts:63] |
-| `openai` | 38 | `openai-responses` 38 | [E: packages/ai/src/models.generated.ts:64] |
-| `openai-codex` | 7 | `openai-codex-responses` 7 | [E: packages/ai/src/models.generated.ts:65] |
-| `opencode` | 59 | `anthropic-messages` 14; `google-generative-ai` 5; `openai-completions` 20; `openai-responses` 20 | [E: packages/ai/src/models.generated.ts:66] |
-| `opencode-go` | 16 | `anthropic-messages` 3; `openai-completions` 12; `openai-responses` 1 | [E: packages/ai/src/models.generated.ts:67] |
-| `openrouter` | 303 | `openai-completions` 303 | [E: packages/ai/src/models.generated.ts:68] |
-| `qwen-token-plan` | 15 | `openai-completions` 15 | [E: packages/ai/src/models.generated.ts:69] |
-| `qwen-token-plan-cn` | 15 | `openai-completions` 15 | [E: packages/ai/src/models.generated.ts:70] |
-| `together` | 17 | `openai-completions` 17 | [E: packages/ai/src/models.generated.ts:71] |
-| `vercel-ai-gateway` | 193 | `anthropic-messages` 193 | [E: packages/ai/src/models.generated.ts:72] |
-| `xai` | 3 | `openai-completions` 2; `openai-responses` 1 | [E: packages/ai/src/models.generated.ts:73] |
-| `xiaomi` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:74] |
-| `xiaomi-token-plan-ams` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:75] |
-| `xiaomi-token-plan-cn` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:76] |
-| `xiaomi-token-plan-sgp` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:77] |
-| `zai` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:78] |
-| `zai-coding-cn` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:79] |
+| `amazon-bedrock` | 114 | `bedrock-converse-stream` 114 | [E: packages/ai/src/models.generated.ts:44] |
+| `ant-ling` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:45] |
+| `anthropic` | 15 | `anthropic-messages` 15 | [E: packages/ai/src/models.generated.ts:46] |
+| `azure-openai-responses` | 38 | `azure-openai-responses` 38 | [E: packages/ai/src/models.generated.ts:47] |
+| `baseten` | 16 | `openai-completions` 16 | [E: packages/ai/src/models.generated.ts:48] |
+| `cerebras` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:49] |
+| `cloudflare-ai-gateway` | 43 | `anthropic-messages` 19; `openai-completions` 5; `openai-responses` 19 | [E: packages/ai/src/models.generated.ts:50] |
+| `cloudflare-workers-ai` | 13 | `openai-completions` 13 | [E: packages/ai/src/models.generated.ts:51] |
+| `deepseek` | 2 | `openai-completions` 2 | [E: packages/ai/src/models.generated.ts:52] |
+| `fireworks` | 16 | `anthropic-messages` 12; `openai-completions` 4 | [E: packages/ai/src/models.generated.ts:53] |
+| `github-copilot` | 29 | `anthropic-messages` 10; `openai-completions` 7; `openai-responses` 12 | [E: packages/ai/src/models.generated.ts:54] |
+| `google` | 24 | `google-generative-ai` 24 | [E: packages/ai/src/models.generated.ts:55] |
+| `google-vertex` | 12 | `google-vertex` 12 | [E: packages/ai/src/models.generated.ts:56] |
+| `groq` | 7 | `openai-completions` 7 | [E: packages/ai/src/models.generated.ts:57] |
+| `huggingface` | 51 | `openai-completions` 51 | [E: packages/ai/src/models.generated.ts:58] |
+| `kimi-coding` | 4 | `anthropic-messages` 4 | [E: packages/ai/src/models.generated.ts:59] |
+| `minimax` | 3 | `anthropic-messages` 3 | [E: packages/ai/src/models.generated.ts:60] |
+| `minimax-cn` | 3 | `anthropic-messages` 3 | [E: packages/ai/src/models.generated.ts:61] |
+| `mistral` | 30 | `mistral-conversations` 30 | [E: packages/ai/src/models.generated.ts:62] |
+| `moonshotai` | 10 | `openai-completions` 10 | [E: packages/ai/src/models.generated.ts:63] |
+| `moonshotai-cn` | 10 | `openai-completions` 10 | [E: packages/ai/src/models.generated.ts:64] |
+| `nvidia` | 30 | `openai-completions` 30 | [E: packages/ai/src/models.generated.ts:65] |
+| `openai` | 38 | `openai-responses` 38 | [E: packages/ai/src/models.generated.ts:66] |
+| `openai-codex` | 7 | `openai-codex-responses` 7 | [E: packages/ai/src/models.generated.ts:67] |
+| `opencode` | 59 | `anthropic-messages` 14; `google-generative-ai` 5; `openai-completions` 20; `openai-responses` 20 | [E: packages/ai/src/models.generated.ts:68] |
+| `opencode-go` | 16 | `anthropic-messages` 3; `openai-completions` 12; `openai-responses` 1 | [E: packages/ai/src/models.generated.ts:69] |
+| `openrouter` | 303 | `openai-completions` 303 | [E: packages/ai/src/models.generated.ts:70] |
+| `qwen-token-plan` | 15 | `openai-completions` 15 | [E: packages/ai/src/models.generated.ts:71] |
+| `qwen-token-plan-cn` | 15 | `openai-completions` 15 | [E: packages/ai/src/models.generated.ts:72] |
+| `together` | 17 | `openai-completions` 17 | [E: packages/ai/src/models.generated.ts:73] |
+| `vercel-ai-gateway` | 193 | `anthropic-messages` 193 | [E: packages/ai/src/models.generated.ts:74] |
+| `xai` | 3 | `openai-completions` 2; `openai-responses` 1 | [E: packages/ai/src/models.generated.ts:75] |
+| `xiaomi` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:76] |
+| `xiaomi-token-plan-ams` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:77] |
+| `xiaomi-token-plan-cn` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:78] |
+| `xiaomi-token-plan-sgp` | 3 | `openai-completions` 3 | [E: packages/ai/src/models.generated.ts:79] |
+| `zai` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:80] |
+| `zai-coding-cn` | 6 | `openai-completions` 6 | [E: packages/ai/src/models.generated.ts:81] |
 
 ## v0.82.1 → target membership delta
 
-目标 membership 相比下方保留的 v0.82.1 逐行 snapshot 为 `+51 / -7`，净增 44，故 target 总数为 `1,109 + 44 = 1,153`。删除 7 个 id：Fireworks 的 `accounts/fireworks/models/glm-5p1`、`accounts/fireworks/routers/glm-5p1-fast`；NVIDIA 的 `mistralai/mistral-small-4-119b-2603`、`stepfun-ai/step-3.5-flash`；OpenRouter 的 `poolside/laguna-m.1`、`poolside/laguna-m.1:free`；Vercel AI Gateway 的 `google/gemini-3-pro-preview`。[I]
+v0.82.1 → v0.83.0 membership 为 `+51 / -7`，净增 44，即 `1,109 + 44 = 1,153`。删除 7 个 id：Fireworks 的 `accounts/fireworks/models/glm-5p1`、`accounts/fireworks/routers/glm-5p1-fast`；NVIDIA 的 `mistralai/mistral-small-4-119b-2603`、`stepfun-ai/step-3.5-flash`；OpenRouter 的 `poolside/laguna-m.1`、`poolside/laguna-m.1:free`；Vercel AI Gateway 的 `google/gemini-3-pro-preview`。[I]
 
 新增分布为 Cloudflare AI Gateway +1 `claude-opus-5`；Fireworks +2 `accounts/fireworks/models/kimi-k3`、`accounts/fireworks/routers/kimi-k3-fast`；Hugging Face +1 `moonshotai/Kimi-K3`；OpenCode +1 `kimi-k3`；Together +1 `moonshotai/Kimi-K3`；Vercel AI Gateway +2 `alibaba/qwen3.7-flash`、`moonshotai/kimi-k3-fast`；NVIDIA +14（Gemma 3、Mistral、Nemotron、Laguna XS 与 Inkling rows）；OpenRouter +29（28 个 `:batch` alias 与 `qwen/qwen3.7-flash`）。[I]
 
-目标 generator 还把 Fireworks 两个 Kimi K3 id 固定到 `openai-completions`、Fireworks base URL，并启用 reasoning/deferred/session-affinity compat；因此 target API 总分布是 `anthropic-messages=276`、`azure-openai-responses=38`、`bedrock-converse-stream=114`、`google-generative-ai=29`、`google-vertex=12`、`mistral-conversations=30`、`openai-codex-responses=7`、`openai-completions=556`、`openai-responses=91`，合计 1,153。[E: packages/ai/scripts/generate-models.ts:2172] [E: packages/ai/scripts/generate-models.ts:2174] [E: packages/ai/scripts/generate-models.ts:2175] [E: packages/ai/scripts/generate-models.ts:2178] [E: packages/ai/scripts/generate-models.ts:2180] [E: packages/ai/scripts/generate-models.ts:2181] [E: packages/ai/scripts/generate-models.ts:2182] [I]
+target generator 还把 Fireworks 两个 Kimi K3 id 固定到 `openai-completions`、Fireworks base URL，并启用 reasoning/deferred/session-affinity compat；加上 Baseten 16 个 `openai-completions` models 后，target API 总分布是 `anthropic-messages=276`、`azure-openai-responses=38`、`bedrock-converse-stream=114`、`google-generative-ai=29`、`google-vertex=12`、`mistral-conversations=30`、`openai-codex-responses=7`、`openai-completions=572`、`openai-responses=91`，合计 1,169。[E: packages/ai/scripts/generate-models.ts:1094] [E: packages/ai/scripts/generate-models.ts:1164] [E: packages/ai/scripts/generate-models.ts:1167] [E: packages/ai/scripts/generate-models.ts:1168] [I]
+
+Baseten 的 16 个 active snapshot ids 是：`nvidia/Nemotron-120B-A12B`、`nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B`、`thinkingmachines/inkling-small`、`thinkingmachines/inkling`、`zai-org/GLM-5`、`zai-org/GLM-5.2-Fast`、`zai-org/GLM-5.2`、`zai-org/GLM-5.1`、`zai-org/GLM-4.7`、`deepseek-ai/DeepSeek-V4-Flash-0731`、`deepseek-ai/DeepSeek-V4-Pro`、`moonshotai/Kimi-K2.6`、`moonshotai/Kimi-K2.5`、`moonshotai/Kimi-K2.7-Code`、`moonshotai/Kimi-K3`、`openai/gpt-oss-120b`。[I]
 
 以下逐实例表保留 v0.82.1 artifact snapshot，结合本节 delta 才是 target membership；不能把单个旧 snapshot row 误写成 target tree 内 `[E]`。
 
@@ -1425,8 +1431,8 @@ updated: a8ee03b815
 ## L2 证伪
 
 - 目标 Git tree 中不存在 `src/providers/data/*.json`，因此不能用 shard 的 8 行 wrapper 假装逐模型 id 是显式源码证据。[E: packages/ai/src/providers/openai.models.ts:4] [E: packages/ai/src/providers/openai.models.ts:8]
-- v0.82.1 npm 包的 `model-catalog.ts` 与 `models.generated.ts` source-map 内容和目标 commit 对应文件完全一致，37 个 data shards 也与 `MODELS` bucket 一一对应；但包 metadata 无 `gitHead`，所以结论维持 [I]。
-- `builtinProviders()` 另有动态 Radius provider，静态模型 bucket 数 37 不等于 runtime provider factory 数 38。[I]
+- v0.83.0 artifact 给出 Baseten 之前的 37-bucket/1,153-model baseline；target 新增的第 38 个 shard 只能用带时间/hash 的 models.dev snapshot 补齐，因此 1,169 仍维持 [I]。
+- `builtinProviders()` 另有动态 Radius provider，静态模型 bucket 数 38 不等于 runtime provider factory 数 39。[I]
 
 ## Sources
 
@@ -1436,6 +1442,7 @@ updated: a8ee03b815
 - packages/ai/src/providers/ant-ling.models.ts
 - packages/ai/src/providers/anthropic.models.ts
 - packages/ai/src/providers/azure-openai-responses.models.ts
+- packages/ai/src/providers/baseten.models.ts
 - packages/ai/src/providers/cerebras.models.ts
 - packages/ai/src/providers/cloudflare-ai-gateway.models.ts
 - packages/ai/src/providers/cloudflare-workers-ai.models.ts

@@ -15,7 +15,7 @@ related:
   - subsys.agent-core.exec-env
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `ref.agent.error-codes` 是 `packages/agent/src/harness/types.ts` 中 agent harness 公开错误代码的逐实例目录:覆盖 filesystem、execution env 与 top-level harness 三组 error code union,并记录对应 Error class 的 `code` 字段承载关系。

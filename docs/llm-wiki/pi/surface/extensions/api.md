@@ -21,7 +21,7 @@ related:
   - ref.coding-agent.extension-events
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `ExtensionAPI` 是 pi-coding-agent 给扩展 factory 的主入口:扩展以 TypeScript default factory 声明事件、工具、命令、快捷键、flag、renderer、provider,再由 loader 和 runner 把这些声明接到会话 runtime。

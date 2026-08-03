@@ -19,7 +19,7 @@ related:
   - ref.server.instance-status
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.server.storage` 是迁入 `src/legacy/` 的同步 JSON 持久化层:它把 legacy supervisor 的 machine record 与 instance records 写到 server 配置目录，其中 instance persistence 的权威文件是 `instances.json`。[E: packages/server/src/legacy/storage.ts:18][E: packages/server/src/legacy/storage.ts:24][E: packages/server/src/legacy/storage.ts:35][E: packages/server/src/legacy/storage.ts:36][E: packages/server/src/legacy/storage.ts:45][E: packages/server/src/legacy/storage.ts:47]

@@ -21,7 +21,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 扩展事件是 pi-coding-agent 暴露给 extension 作者的 hook 面:extension 通过 `pi.on(event, handler)` 订阅生命周期、输入、agent、provider、工具、模型和会话事件,并在少数事件上返回 block、transform、cancel 或 replacement。

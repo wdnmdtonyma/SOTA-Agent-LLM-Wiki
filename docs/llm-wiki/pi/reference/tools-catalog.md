@@ -31,7 +31,7 @@ symbols:
   - createReadOnlyTools
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 related:
   - surface.tools.bash
   - surface.tools.read

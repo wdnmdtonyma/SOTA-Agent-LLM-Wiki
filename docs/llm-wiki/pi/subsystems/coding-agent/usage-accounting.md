@@ -24,7 +24,7 @@ related:
   - surface.extensions.events
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 会话统计现在归集 assistant、tool result、compaction 和 branch summary 的 usage；交互式 `/session` UI 可按模型与“Tools/summaries”分桶展示成本。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5727] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5736] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5767] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5770]

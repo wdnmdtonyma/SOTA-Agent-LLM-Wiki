@@ -19,7 +19,7 @@ related:
   - surface.modes.rpc
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.server.rpc-spawner` 是 `pi-server` 迁入 `src/legacy/` 的 child process adapter:它把一个工作目录 `cwd` 包装成独立 RPC mode 子进程,用 stdin/stdout JSONL 发送 `RpcCommand`、接收 `RpcResponse`、agent events 和 extension UI requests。[E: packages/server/src/legacy/rpc-process.ts:39][E: packages/server/src/legacy/rpc-process.ts:42][E: packages/server/src/legacy/rpc-process.ts:143][E: packages/server/src/legacy/rpc-process.ts:151]

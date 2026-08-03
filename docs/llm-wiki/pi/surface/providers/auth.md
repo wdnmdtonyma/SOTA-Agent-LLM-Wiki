@@ -11,12 +11,18 @@ source:
   - packages/coding-agent/src/core/runtime-credentials.ts
   - packages/coding-agent/src/core/auth-storage.ts
   - packages/coding-agent/src/core/model-registry.ts
+  - packages/coding-agent/test/model-registry.test.ts
+  - packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts
   - packages/coding-agent/src/main.ts
   - packages/ai/src/models.ts
+  - packages/ai/src/types.ts
+  - packages/ai/src/compat.ts
+  - packages/ai/src/api/openai-completions.ts
   - packages/ai/src/auth/resolve.ts
   - packages/ai/src/auth/helpers.ts
   - packages/ai/src/env-api-keys.ts
   - packages/ai/src/providers/all.ts
+  - packages/ai/src/providers/baseten.ts
   - packages/ai/src/providers/kimi-coding.ts
   - packages/ai/src/providers/openrouter.ts
   - packages/ai/src/auth/oauth/kimi-coding.ts
@@ -33,7 +39,7 @@ related:
   - ref.ai.auth-types
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `surface.providers.auth` 把 coding-agent 的 `/login`、`/logout`、CLI `--api-key`、`auth.json` 与 `ModelRuntime`/`pi-ai Models` 的请求时认证连成一条当前可检索路径。
@@ -73,11 +79,15 @@ logout selector 只由 `modelRuntime.listCredentials()` 生成，所以只列 ru
 
 CLI `--api-key` 要求先选定 model，然后按该 model provider 调 `modelRuntime.setRuntimeApiKey()` 并刷新 availability [E: packages/coding-agent/src/main.ts:757] [E: packages/coding-agent/src/main.ts:761] [E: packages/coding-agent/src/main.ts:764] [E: packages/coding-agent/src/main.ts:765]。`ModelRuntime` 同步更新 auth/configured snapshot，再按 network policy refresh catalog；值没有写进 `auth.json` [E: packages/coding-agent/src/core/model-runtime.ts:435] [E: packages/coding-agent/src/core/model-runtime.ts:430] [E: packages/coding-agent/src/core/model-runtime.ts:437]。
 
-`ModelRegistry` 在目标 commit 只保存一个 `ModelRuntime`，model/auth 查询与 provider registration 都转发给它 [E: packages/coding-agent/src/core/model-registry.ts:28] [E: packages/coding-agent/src/core/model-registry.ts:29] [E: packages/coding-agent/src/core/model-registry.ts:31] [E: packages/coding-agent/src/core/model-registry.ts:32] [E: packages/coding-agent/src/core/model-registry.ts:44] [E: packages/coding-agent/src/core/model-registry.ts:45] [E: packages/coding-agent/src/core/model-registry.ts:99] [E: packages/coding-agent/src/core/model-registry.ts:100] [E: packages/coding-agent/src/core/model-registry.ts:137] [E: packages/coding-agent/src/core/model-registry.ts:140] [E: packages/coding-agent/src/core/model-registry.ts:143]。扩展仍可通过这个 compatibility facade 操作 runtime，但不能再把它当成 credential owner。[I]
+`ModelRegistry` 在目标 commit 只保存一个 `ModelRuntime`，model/auth 查询与 provider registration 都转发给它 [E: packages/coding-agent/src/core/model-registry.ts:29] [E: packages/coding-agent/src/core/model-registry.ts:30] [E: packages/coding-agent/src/core/model-registry.ts:32] [E: packages/coding-agent/src/core/model-registry.ts:33] [E: packages/coding-agent/src/core/model-registry.ts:45] [E: packages/coding-agent/src/core/model-registry.ts:46] [E: packages/coding-agent/src/core/model-registry.ts:91] [E: packages/coding-agent/src/core/model-registry.ts:92] [E: packages/coding-agent/src/core/model-registry.ts:129] [E: packages/coding-agent/src/core/model-registry.ts:132] [E: packages/coding-agent/src/core/model-registry.ts:135]。扩展仍可通过这个 compatibility facade 操作 runtime，但不能再把它当成 credential owner。[I]
+
+`ModelRuntime.getAuth()` 的 case-insensitive merge 会先移除同名旧 casing，再把 override value（包括 `null`）写回；compatibility facade 随后原样返回这些 `ProviderHeaders`，不再过滤 deletion markers。extension 把 auth result 传给 `complete()` 后，OpenAI adapter 继续把 `null` 留在 SDK `defaultHeaders`；结合 nullable header contract，这作为默认 `Authorization` / `x-api-key` suppression marker。[E: packages/coding-agent/src/core/model-runtime.ts:81] [E: packages/coding-agent/src/core/model-runtime.ts:87] [E: packages/coding-agent/src/core/model-runtime.ts:90] [E: packages/coding-agent/src/core/model-runtime.ts:92] [E: packages/coding-agent/src/core/model-runtime.ts:401] [E: packages/coding-agent/src/core/model-runtime.ts:411] [E: packages/coding-agent/src/core/model-registry.ts:61] [E: packages/coding-agent/src/core/model-registry.ts:74] [E: packages/ai/src/types.ts:162] [E: packages/ai/src/compat.ts:250] [E: packages/ai/src/compat.ts:260] [E: packages/ai/src/compat.ts:266] [E: packages/ai/src/compat.ts:271] [E: packages/ai/src/api/openai-completions.ts:663] [E: packages/ai/src/api/openai-completions.ts:664] [E: packages/ai/src/api/openai-completions.ts:672] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:82] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:91] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:99] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:100] [I]
+
+Baseten 是普通 API-key auth provider：支持 stored API-key credential 与 ambient `BASETEN_API_KEY`，没有 OAuth 或自定义 ambient resolver 分支。[E: packages/ai/src/providers/baseten.ts:6] [E: packages/ai/src/providers/baseten.ts:11] [E: packages/ai/src/auth/helpers.ts:16] [E: packages/ai/src/auth/helpers.ts:20] [E: packages/ai/src/auth/helpers.ts:22] [E: packages/ai/src/auth/resolve.ts:83] [E: packages/ai/src/auth/resolve.ts:84] [E: packages/ai/src/auth/resolve.ts:85]
 
 ## auth.json 形状、权限与锁
 
-默认 auth path 是 `join(getAgentDir(), "auth.json")` [E: packages/coding-agent/src/core/auth-storage.ts:48]。父目录缺失时以 `0700` 创建；文件缺失时以 `0600` 写 `{}` 并显式 chmod [E: packages/coding-agent/src/core/auth-storage.ts:52] [E: packages/coding-agent/src/core/auth-storage.ts:55] [E: packages/coding-agent/src/core/auth-storage.ts:59] [E: packages/coding-agent/src/core/auth-storage.ts:62]。文档也明确 auth-file credential 优先于 environment，并允许 API-key credential 携带 provider-scoped `env` [E: packages/coding-agent/docs/providers.md:131] [E: packages/coding-agent/docs/providers.md:133]。
+默认 auth path 是 `join(getAgentDir(), "auth.json")` [E: packages/coding-agent/src/core/auth-storage.ts:48]。父目录缺失时以 `0700` 创建；文件缺失时以 `0600` 写 `{}` 并显式 chmod [E: packages/coding-agent/src/core/auth-storage.ts:52] [E: packages/coding-agent/src/core/auth-storage.ts:55] [E: packages/coding-agent/src/core/auth-storage.ts:59] [E: packages/coding-agent/src/core/auth-storage.ts:62]。文档也明确 auth-file credential 优先于 environment，并允许 API-key credential 携带 provider-scoped `env` [E: packages/coding-agent/docs/providers.md:132] [E: packages/coding-agent/docs/providers.md:134]。
 
 storage data 是 `Record<string, Credential>`，所以 `auth.json` 可同时持有 `{type:"api_key", key, env?}` 与 `{type:"oauth", ...}` [E: packages/coding-agent/src/core/auth-storage.ts:14]。`read()` 对 API-key credential 解析 command/`$ENV` config value，但 OAuth 或无 key credential 原样返回 [E: packages/coding-agent/src/core/auth-storage.ts:275] [E: packages/coding-agent/src/core/auth-storage.ts:279]。
 
@@ -87,7 +97,7 @@ sync lock path 对 `ELOCKED` 最多尝试 10 次、每次 busy-wait 20ms，然�
 
 ## 请求时优先级
 
-用户文档给出 product-level 顺序：CLI `--api-key`、`auth.json`、environment、custom provider keys from `models.json` [E: packages/coding-agent/docs/providers.md:304] [E: packages/coding-agent/docs/providers.md:306] [E: packages/coding-agent/docs/providers.md:309]。代码层需要拆成两段看：CLI key 通过 `RuntimeCredentials` 伪装成 store credential；`models.json` 通过 `ModelRuntime` provider composition/headers 叠加，而不是 `AuthStorage` 自己查表。[I]
+用户文档给出 product-level 顺序：CLI `--api-key`、`auth.json`、environment、custom provider keys from `models.json` [E: packages/coding-agent/docs/providers.md:305] [E: packages/coding-agent/docs/providers.md:307] [E: packages/coding-agent/docs/providers.md:310]。代码层需要拆成两段看：CLI key 通过 `RuntimeCredentials` 伪装成 store credential；`models.json` 通过 `ModelRuntime` provider composition/headers 叠加，而不是 `AuthStorage` 自己查表。[I]
 
 `resolveProviderAuth()` 先建立 request env overlay；若 request 明确带 `apiKey` 且 provider 支持 API-key auth，就直接解析该 override [E: packages/ai/src/auth/resolve.ts:54] [E: packages/ai/src/auth/resolve.ts:56] [E: packages/ai/src/auth/resolve.ts:60]。否则读取 composite credential store：stored OAuth 走 OAuth handler，stored API key 走 API-key handler，credential type 与 provider handler 不匹配时返回 `undefined` [E: packages/ai/src/auth/resolve.ts:64] [E: packages/ai/src/auth/resolve.ts:65] [E: packages/ai/src/auth/resolve.ts:75] [E: packages/ai/src/auth/resolve.ts:79]。只有 store 完全没有 credential 时才尝试 ambient env/AWS/ADC path [E: packages/ai/src/auth/resolve.ts:83] [E: packages/ai/src/auth/resolve.ts:85]。
 
@@ -130,12 +140,18 @@ coding-agent `ModelRuntime.getAuth(model)` 还把 `models.json`/extension config
 - packages/coding-agent/src/core/runtime-credentials.ts
 - packages/coding-agent/src/core/auth-storage.ts
 - packages/coding-agent/src/core/model-registry.ts
+- packages/coding-agent/test/model-registry.test.ts
+- packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts
 - packages/coding-agent/src/main.ts
 - packages/ai/src/models.ts
+- packages/ai/src/types.ts
+- packages/ai/src/compat.ts
+- packages/ai/src/api/openai-completions.ts
 - packages/ai/src/auth/resolve.ts
 - packages/ai/src/auth/helpers.ts
 - packages/ai/src/env-api-keys.ts
 - packages/ai/src/providers/all.ts
+- packages/ai/src/providers/baseten.ts
 - packages/ai/src/providers/kimi-coding.ts
 - packages/ai/src/providers/openrouter.ts
 - packages/ai/src/auth/oauth/kimi-coding.ts

@@ -23,7 +23,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 私有 `@earendil-works/pi-evals` workspace 把真实 `AgentSession` 适配成 `vitest-evals` harness，在临时 project/agent 目录中运行模型驱动的端到端行为评测。[E: packages/evals/package.json:2] [E: packages/evals/package.json:4] [E: packages/evals/README.md:3] [E: packages/evals/README.md:4]

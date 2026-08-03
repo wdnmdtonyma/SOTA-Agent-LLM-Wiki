@@ -19,7 +19,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 会话管理面是 pi-coding-agent 暴露给用户的 session lifecycle:自动保存 JSONL 会话、浏览并恢复历史会话、在同一 session tree 内移动 active leaf,以及把已有路径复制到新的 session 文件继续工作。

@@ -18,7 +18,7 @@
 - **真源码**:pi 是公开真实工程,**git 仓 + 各包测试(`./test.sh`)+ 完整 `packages/coding-agent/docs/`(30 篇)**。证据以 `[E]` 为主;**staleness 用 pi git SHA**,节点 `updated:` 记 fill 时的 pi HEAD 10 位短 SHA。
 - **TypeScript monorepo**:Node ≥22 / Bun 双运行时,Biome + TypeScript native(tsgo)。源路径一律相对 `pi/`(如 `packages/coding-agent/src/...`)。
 - **★ 分层栈 = 全 wiki 的组织主线**:pi 把"可复用运行时"与"产品"分层:
-  - **`pi-ai`** = 多 provider 统一 LLM API(38 built-in runtime provider，其中 37 个有静态模型目录；10 wire 协议；auth/oauth；官方 0.83.0 制品共 1,153 模型)。
+  - **`pi-ai`** = 多 provider 统一 LLM API(39 built-in runtime provider，其中 38 个有静态模型目录；10 wire 协议；auth/oauth；官方 0.83.0 制品 + target Baseten snapshot 共 1,169 模型)。
   - **`pi-agent-core`** = **可复用** agent 运行时 harness:agent-loop(turn → provider stream → 工具调用 → state)、会话树存储、压缩/分支总结、skills、system-prompt。任何 app 都能拿它建 agent。
   - **`pi-coding-agent`** = **产品**:7 个内置工具(bash/read/edit/write/grep/find/ls)、**扩展系统(自扩展招牌)**、skills、slash 命令、三种模式(interactive TUI / RPC / print)、配置/信任/会话管理。
   - **`pi-tui`** = 独立可复用的差分渲染终端 UI 库(渲染循环、编辑器、键盘协议、autocomplete)。
@@ -63,7 +63,7 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **202 个节点全部 verified 于 pi `a8ee03b815`**。本轮从 `cee5ff7520` 更新至目标 HEAD，新增 remote protocol/client/server、AgentHarness lifecycle/search、fullscreen TUI layout、experimental CLI 与 comparative eval 等 16 个结构节点，无退役节点。审计见 `_UPDATE-SCOPE.md` 与 `_research/`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **202 个节点全部 verified 于 pi `c1019d9202`**。本次 follow-up 从 `a8ee03b815` 前进 2 commits：保留 request auth header 的 `null` 删除标记，并新增 Baseten provider、`BASETEN_API_KEY`、默认模型、catalog bucket 与 `chat_template_args` reasoning compatibility；无新增或退役 Wiki 节点。审计见 `_UPDATE-SCOPE.md` 与 `_research/`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

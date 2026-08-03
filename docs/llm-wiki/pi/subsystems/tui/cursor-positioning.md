@@ -19,7 +19,7 @@ related:
   - subsys.tui.alternate-screen
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > 两种 renderer 共用 `CURSOR_MARKER` 提取协议，但 main-screen 用 scrollback-relative movement，alternate-screen 在固定 viewport 中写绝对光标坐标。

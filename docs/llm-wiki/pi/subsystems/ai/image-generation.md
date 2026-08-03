@@ -18,7 +18,7 @@ related:
   - ref.ai.image-models
 evidence: explicit
 status: verified
-updated: a8ee03b815
+updated: c1019d9202
 ---
 
 > `subsys.ai.image-generation` 描述 `pi-ai` 的图像生成 provider/model runtime: `ImagesModels` 管 provider 清单、模型清单、refresh 和鉴权包装,底层 `generateImages` 再按 `ImagesModel.api` 分派到已注册的 image API implementation。
@@ -88,7 +88,7 @@ OpenRouter image provider 的 API adapter 来自 `openrouterImagesApi()` lazy wr
 
 - 同名 `generateImages` 有两个层级: `packages/ai/src/images.ts` 的导出函数按 `model.api` 选择 image API provider,`ImagesModels.generateImages()` 按 `model.provider` 选择 owning provider 并处理 auth/error wrapper;读调用栈时要先看 caller 持有的是 API-level function 还是 `ImagesModels` instance [E: packages/ai/src/images.ts:19] [E: packages/ai/src/images-models.ts:189] [I]。
 - `ImagesModels.getAuth(model)` 只按 `model.provider` 找 provider;provider 不存在时返回 `undefined`,不构造 error result,而 `ImagesModels.generateImages()` 的未知 provider 会被 catch 后转成 error result [E: packages/ai/src/images-models.ts:171] [E: packages/ai/src/images-models.ts:189] [E: packages/ai/src/images-models.ts:179] [E: packages/ai/src/images-models.ts:188] [E: packages/ai/src/images-models.ts:191] [E: packages/ai/src/images-models.ts:212]。
-- `builtinImagesProviders()` 的完整返回数组当前只含 `openrouterImagesProvider()`，因此目标树唯一内置 image-generation provider 是 OpenRouter；外部调用方仍可向 mutable collection 注册第三方 provider。[E: packages/ai/src/providers/all.ts:140] [E: packages/ai/src/providers/all.ts:141] [E: packages/ai/src/images-models.ts:107]
+- `builtinImagesProviders()` 的完整返回数组当前只含 `openrouterImagesProvider()`，因此目标树唯一内置 image-generation provider 是 OpenRouter；外部调用方仍可向 mutable collection 注册第三方 provider。[E: packages/ai/src/providers/all.ts:142] [E: packages/ai/src/providers/all.ts:143] [E: packages/ai/src/images-models.ts:107]
 
 ## 跨包边界
 
@@ -98,7 +98,7 @@ OpenRouter image provider 的 API adapter 来自 `openrouterImagesApi()` lazy wr
 
 ## 本轮 fetch 注入
 
-`ImagesOptions.fetch` 新增 request-scoped HTTP fetch surface；OpenRouter image client 把它传入 SDK，默认仍使用 `globalThis.fetch`。这与 chat/text wire 的 fetch 支持矩阵分开计数。[E: packages/ai/src/types.ts:255] [E: packages/ai/src/types.ts:259] [E: packages/ai/src/api/openrouter-images.ts:59] [E: packages/ai/src/api/openrouter-images.ts:127]
+`ImagesOptions.fetch` 新增 request-scoped HTTP fetch surface；OpenRouter image client 把它传入 SDK，默认仍使用 `globalThis.fetch`。这与 chat/text wire 的 fetch 支持矩阵分开计数。[E: packages/ai/src/types.ts:256] [E: packages/ai/src/types.ts:260] [E: packages/ai/src/api/openrouter-images.ts:59] [E: packages/ai/src/api/openrouter-images.ts:127]
 
 ## Sources
 
