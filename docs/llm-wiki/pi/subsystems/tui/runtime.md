@@ -23,7 +23,7 @@ related:
   - surface.modes.interactive
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `pi-tui` 的 runtime 已从单一可构造 `TUI` class 拆成共享契约、共享基类和两个具体 renderer：regular main screen 与 fullscreen alternate screen。

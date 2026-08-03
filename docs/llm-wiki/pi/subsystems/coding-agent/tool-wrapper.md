@@ -18,7 +18,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `tool-definition-wrapper` 是 pi-coding-agent 把产品层 `ToolDefinition` 适配成 agent-core `AgentTool` 的薄边界: runtime 只拿执行所需字段, UI/prompt/source metadata 仍留在 `AgentSession` 的 definition registry。

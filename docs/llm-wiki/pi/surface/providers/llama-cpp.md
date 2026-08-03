@@ -25,7 +25,7 @@ related:
   - subsys.coding-agent.model-registry
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `surface.providers.llama-cpp` 描述 coding-agent 新增的内置、隐藏扩展：它注册动态 `llama.cpp` provider 和交互式 `/llama` 命令，把 llama.cpp router 的模型目录、装载状态与 Hugging Face GGUF 搜索/下载接入 Pi。

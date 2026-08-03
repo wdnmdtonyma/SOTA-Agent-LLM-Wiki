@@ -14,7 +14,7 @@ related:
   - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `azure-openai-responses.ts` 是 pi-ai 的 Azure OpenAI Responses wire 协议入口: 它把 pi 的 `Context` 转成 Responses API payload, 用 Azure 专属 endpoint/deployment/api-version 配置创建 SDK client, 再复用 OpenAI Responses shared 流解析器产出统一的 `AssistantMessageEventStream`。

@@ -9,7 +9,7 @@ symbols: [createEditTool, EditToolInput, computeEditsDiff, normalizeForFuzzyMatc
 related: [subsys.coding-agent.edit-engine, subsys.coding-agent.file-mutation-queue, ref.tools-catalog]
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `edit` 是 pi-coding-agent 暴露给模型的精确文本替换工具: 一次调用编辑一个文件, 用 `edits[]` 描述一个或多个互不重叠的 `oldText` -> `newText` replacement, 并在成功后返回 display diff 与 unified patch。

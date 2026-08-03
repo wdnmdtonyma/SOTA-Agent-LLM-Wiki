@@ -22,7 +22,7 @@ related:
   - ref.agent.agent-events
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.agent-core.agent-harness-lifecycle` 说明 `AgentHarness` 如何区分长期实例状态、单次可取消 operation 与并发 mutation，并比较可恢复的 `abort()` 和永久的 shutdown。

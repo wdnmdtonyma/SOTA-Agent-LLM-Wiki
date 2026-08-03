@@ -13,7 +13,7 @@ related:
   - ref.ai.core-types
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.ai.message-transform` 描述 `transformMessages` 如何在 provider-specific wire payload 构造前,把历史 `Message[]` 归一成更适合目标 `Model` replay 的 `Message[]`。

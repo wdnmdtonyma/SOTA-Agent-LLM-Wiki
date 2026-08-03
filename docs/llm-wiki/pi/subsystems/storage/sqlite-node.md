@@ -34,7 +34,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `@earendil-works/pi-storage-sqlite-node` 是可选的 Node SQLite session backend：repository 持有 canonical session 数据，独立的 search façade 在同一数据库上维护 FTS5 projection。

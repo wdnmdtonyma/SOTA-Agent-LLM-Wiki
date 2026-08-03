@@ -15,7 +15,7 @@ related:
   - subsys.ai.env-api-keys
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.ai.google-vertex` 描述 `pi-ai` 的 `google-vertex` wire 协议入口:它用 `@google/genai` 的 Vertex 模式构造客户端,把 pi 的 `Context` 转成 Gemini `GenerateContentParameters`,并把 Vertex/Gemini stream chunk 归一成 `AssistantMessageEventStream`。

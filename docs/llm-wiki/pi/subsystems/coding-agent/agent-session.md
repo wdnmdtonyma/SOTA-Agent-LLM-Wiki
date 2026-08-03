@@ -17,7 +17,7 @@ related:
   - ref.coding-agent.session-events
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `AgentSession` 是 pi-coding-agent 的产品会话核心: 它把 `pi-agent-core` 的 `Agent`、会话持久化、extension runtime、工具注册、system prompt、compaction、retry、bash 和 tree navigation 组织成一个 run mode 可调用的 facade。

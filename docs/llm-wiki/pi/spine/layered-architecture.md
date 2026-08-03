@@ -9,7 +9,7 @@ symbols: [Agent, AgentHarness, AgentSession, ModelRuntime, Models, PiClient, PiS
 related: [spine.overview, spine.agent-loop, subsys.coding-agent.agent-session, subsys.agent-core.execution-tools, subsys.protocol.wire-protocol, subsys.client.remote-session-client, subsys.server.session-server, subsys.storage.sqlite-node, subsys.evals.pi-harness, ref.package-index]
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > Pi 的主线分层是 `pi-ai` 提供 provider/model API，`pi-agent-core` 提供可复用 agent runtime，`pi-coding-agent` 把 runtime 装配成 coding-agent CLI 产品；`AgentSession` 是产品层和 core runtime 的主要边界对象。[E: packages/ai/package.json:2][E: packages/ai/package.json:4][E: packages/agent/package.json:2][E: packages/agent/package.json:4][E: packages/coding-agent/package.json:2][E: packages/coding-agent/package.json:4][E: packages/coding-agent/src/core/agent-session.ts:197][E: packages/coding-agent/src/core/agent-session.ts:198]

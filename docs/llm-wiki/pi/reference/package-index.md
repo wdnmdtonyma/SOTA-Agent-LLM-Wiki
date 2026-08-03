@@ -36,7 +36,7 @@ related:
   - spine.overview
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `ref.package-index` 枚举 Pi monorepo 的九个源码 package workspace、五个 extension-example workspace、公开入口与发布边界；`packages/protocol` 和 `packages/client` 是本轮新增的远程会话协议层与客户端层。

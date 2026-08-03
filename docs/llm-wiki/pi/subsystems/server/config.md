@@ -23,7 +23,7 @@ related:
   - ref.coding-agent.rpc-methods
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.server.config` 描述迁入 `src/legacy/` 的 server/CLI 本地路径 contract:配置根目录如何由 env 解析，auth/machine/instances/socket 文件如何派生，以及 legacy instance metadata 如何约束。[E: packages/server/src/legacy/config.ts:45][E: packages/server/src/legacy/config.ts:56][E: packages/server/src/legacy/config.ts:60][E: packages/server/src/legacy/config.ts:64][E: packages/server/src/legacy/config.ts:68][E: packages/server/src/legacy/types.ts:15]

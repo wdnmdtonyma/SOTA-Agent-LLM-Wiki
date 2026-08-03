@@ -6,14 +6,18 @@ tier: T2
 pkg: protocol
 source:
   - packages/protocol/package.json
+  - packages/protocol/README.md
   - packages/protocol/src/index.ts
   - packages/protocol/src/schemas.ts
   - packages/protocol/src/codec.ts
+  - packages/protocol/test/protocol.test.ts
 symbols:
   - PROTOCOL_VERSION
   - Command
   - ClientMessage
+  - ClientHello
   - ServerMessage
+  - ProtocolErrorCode
   - SessionSnapshot
   - ServerSnapshot
 related:
@@ -22,10 +26,10 @@ related:
   - subsys.server.session-server
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
-> `@earendil-works/pi-protocol` 定义实验性远程 Pi session 的 transport-neutral wire DTO、TypeBox runtime schema 与 validated codec；协议版本固定为 `2`，所有 object schema 都拒绝未知字段。[E: packages/protocol/package.json:2][E: packages/protocol/package.json:4][E: packages/protocol/src/schemas.ts:3][E: packages/protocol/src/schemas.ts:7][E: packages/protocol/src/schemas.ts:8]
+> `@earendil-works/pi-protocol` 定义实验性远程 Pi session 的 transport-neutral wire DTO、TypeBox runtime schema 与 validated codec；协议版本固定为 `1`，所有结构化 DTO object schema 都拒绝未知字段。[E: packages/protocol/package.json:2][E: packages/protocol/package.json:4][E: packages/protocol/src/schemas.ts:3][E: packages/protocol/src/schemas.ts:7][E: packages/protocol/src/schemas.ts:8][E: packages/protocol/test/protocol.test.ts:55][E: packages/protocol/test/protocol.test.ts:56]
 
 ## 能回答的问题
 
@@ -61,43 +65,48 @@ updated: c1019d9202
 | `set_model` | `sessionId`, model | snapshot |
 | `set_thinking` | `sessionId`, thinkingLevel | snapshot |
 
-这 9 个 command 由 `CommandSchema` 的 union 明确枚举，`CommandResultSchema` 按相同 command discriminator 返回结果；`ResultForCommand<T>` 在类型层把 request 映射到对应 result。[E: packages/protocol/src/schemas.ts:287][E: packages/protocol/src/schemas.ts:288][E: packages/protocol/src/schemas.ts:295][E: packages/protocol/src/schemas.ts:296][E: packages/protocol/src/schemas.ts:297][E: packages/protocol/src/schemas.ts:298][E: packages/protocol/src/schemas.ts:299][E: packages/protocol/src/schemas.ts:300][E: packages/protocol/src/schemas.ts:305][E: packages/protocol/src/schemas.ts:310][E: packages/protocol/src/schemas.ts:353][E: packages/protocol/src/schemas.ts:361][E: packages/protocol/src/schemas.ts:374]
+这 9 个 command 由 `CommandSchema` 的 union 明确枚举，`CommandResultSchema` 按相同 command discriminator 返回结果；`ResultForCommand<T>` 在类型层把 request 映射到对应 result。[E: packages/protocol/src/schemas.ts:286][E: packages/protocol/src/schemas.ts:287][E: packages/protocol/src/schemas.ts:294][E: packages/protocol/src/schemas.ts:295][E: packages/protocol/src/schemas.ts:296][E: packages/protocol/src/schemas.ts:297][E: packages/protocol/src/schemas.ts:298][E: packages/protocol/src/schemas.ts:299][E: packages/protocol/src/schemas.ts:304][E: packages/protocol/src/schemas.ts:309][E: packages/protocol/src/schemas.ts:352][E: packages/protocol/src/schemas.ts:360][E: packages/protocol/src/schemas.ts:373]
 
-当前 mutation payload 只接受 text；image 是 transcript content 类型，不是 `prompt`/`steer` command 输入字段。[E: packages/protocol/src/schemas.ts:75][E: packages/protocol/src/schemas.ts:84][E: packages/protocol/src/schemas.ts:282][E: packages/protocol/src/schemas.ts:297][E: packages/protocol/src/schemas.ts:298]
+当前 mutation payload 只接受 text；image 是 transcript content 类型，不是 `prompt`/`steer` command 输入字段。[E: packages/protocol/src/schemas.ts:75][E: packages/protocol/src/schemas.ts:84][E: packages/protocol/src/schemas.ts:281][E: packages/protocol/src/schemas.ts:296][E: packages/protocol/src/schemas.ts:297]
 
 ### Envelope 与 error
 
-client 第一条消息是 `{type:"hello", version, token}`；后续消息是带 request id 的 `{type:"request", request: Command}`。[E: packages/protocol/src/schemas.ts:381][E: packages/protocol/src/schemas.ts:381][E: packages/protocol/src/schemas.ts:383][E: packages/protocol/src/schemas.ts:384][E: packages/protocol/src/schemas.ts:388][E: packages/protocol/src/schemas.ts:389][E: packages/protocol/src/schemas.ts:390][E: packages/protocol/src/schemas.ts:391][E: packages/protocol/src/schemas.ts:394]
+client 第一条消息是仅含 `{type:"hello", version}` 的 strict DTO；后续消息是带 request id 的 `{type:"request", request: Command}`。credential 不再属于 wire hello，携 `token` 反而会被 strict validation 拒绝；transport 必须在交换 protocol bytes 前完成认证。[E: packages/protocol/src/schemas.ts:380][E: packages/protocol/src/schemas.ts:381][E: packages/protocol/src/schemas.ts:382][E: packages/protocol/src/schemas.ts:386][E: packages/protocol/src/schemas.ts:387][E: packages/protocol/src/schemas.ts:388][E: packages/protocol/src/schemas.ts:389][E: packages/protocol/src/schemas.ts:392][E: packages/protocol/README.md:10][E: packages/protocol/test/protocol.test.ts:73][E: packages/protocol/test/protocol.test.ts:75][E: packages/protocol/test/protocol.test.ts:76]
 
-server 第一条消息是成功 `hello` 或 `hello_error`；ready 状态使用 correlated `response` 与 uncorrelated `event`。success response 携带 `CommandResult`，failure response 携带 `ProtocolError`。[E: packages/protocol/src/schemas.ts:409][E: packages/protocol/src/schemas.ts:415][E: packages/protocol/src/schemas.ts:419][E: packages/protocol/src/schemas.ts:421][E: packages/protocol/src/schemas.ts:423][E: packages/protocol/src/schemas.ts:424][E: packages/protocol/src/schemas.ts:427][E: packages/protocol/src/schemas.ts:429][E: packages/protocol/src/schemas.ts:430][E: packages/protocol/src/schemas.ts:433][E: packages/protocol/src/schemas.ts:437]
+server 第一条消息是成功 `hello` 或 `hello_error`；ready 状态使用 correlated `response` 与 uncorrelated `event`。success response 携带 `CommandResult`，failure response 携带 `ProtocolError`。[E: packages/protocol/src/schemas.ts:407][E: packages/protocol/src/schemas.ts:413][E: packages/protocol/src/schemas.ts:417][E: packages/protocol/src/schemas.ts:419][E: packages/protocol/src/schemas.ts:421][E: packages/protocol/src/schemas.ts:422][E: packages/protocol/src/schemas.ts:425][E: packages/protocol/src/schemas.ts:427][E: packages/protocol/src/schemas.ts:428][E: packages/protocol/src/schemas.ts:431][E: packages/protocol/src/schemas.ts:435]
 
-error code catalog 是 `auth`、`version`、`busy`、`session_locked`、`not_found`、`invalid_request`。[E: packages/protocol/src/schemas.ts:266][E: packages/protocol/src/schemas.ts:267][E: packages/protocol/src/schemas.ts:268][E: packages/protocol/src/schemas.ts:269][E: packages/protocol/src/schemas.ts:270][E: packages/protocol/src/schemas.ts:271][E: packages/protocol/src/schemas.ts:272] server backend/runtime 公共错误只暴露后四个 operation code，握手层生成 `auth`/`version`；该跨包分工由 server 节点负责直证。[I]
+error code catalog 是 `version`、`busy`、`session_locked`、`not_found`、`invalid_request` 五项；wire-level `auth` code 已删除，因为认证失败发生在 transport establishment、进入 protocol 前。[E: packages/protocol/src/schemas.ts:266][E: packages/protocol/src/schemas.ts:267][E: packages/protocol/src/schemas.ts:268][E: packages/protocol/src/schemas.ts:269][E: packages/protocol/src/schemas.ts:270][E: packages/protocol/src/schemas.ts:271][E: packages/protocol/README.md:10]
 
 ## Snapshot 与 progress 语义
 
-server event 只有 `server_snapshot`、`session_snapshot`、`session_progress`、`session_removed` 四类。[E: packages/protocol/src/schemas.ts:397][E: packages/protocol/src/schemas.ts:398][E: packages/protocol/src/schemas.ts:399][E: packages/protocol/src/schemas.ts:401][E: packages/protocol/src/schemas.ts:405] `TranscriptProgress` 是 normalized incremental activity，schema 注释明确声明 snapshot 才是 authoritative；client 不应把 progress 直接提交成新的 authoritative snapshot。[E: packages/protocol/src/schemas.ts:204][E: packages/protocol/src/schemas.ts:204]
+server event 只有 `server_snapshot`、`session_snapshot`、`session_progress`、`session_removed` 四类。[E: packages/protocol/src/schemas.ts:395][E: packages/protocol/src/schemas.ts:396][E: packages/protocol/src/schemas.ts:397][E: packages/protocol/src/schemas.ts:399][E: packages/protocol/src/schemas.ts:403] `TranscriptProgress` 是 normalized incremental activity，schema 注释明确声明 snapshot 才是 authoritative；client 不应把 progress 直接提交成新的 authoritative snapshot。[E: packages/protocol/src/schemas.ts:204][E: packages/protocol/src/schemas.ts:204]
 
-`session_removed` 已进入 schema 和 client handling，但目标 server 的 event producer 只发 `server_snapshot`、`session_snapshot` 与 `session_progress`；因此不能从当前 server 实现推断存在 delete/remove command。[E: packages/protocol/src/schemas.ts:405][E: packages/protocol/src/schemas.ts:310][I]
+`session_removed` 已进入 schema 和 client handling，但目标 server 的 event producer 只发 `server_snapshot`、`session_snapshot` 与 `session_progress`；因此不能从当前 server 实现推断存在 delete/remove command。[E: packages/protocol/src/schemas.ts:403][E: packages/protocol/src/schemas.ts:309][I]
 
 ## Gotcha
 
 - 所有结构化 DTO object schemas 都是 strict objects；向现有 message DTO 添加未声明字段会被 runtime validation 拒绝。自由键 `JsonValue` record 不属于这一限定。[E: packages/protocol/src/schemas.ts:7][E: packages/protocol/src/schemas.ts:8]
 - `parseClientMessage()` / `parseServerMessage()` 校验 already-decoded value，不解析 JSON string；失败统一抛 `ProtocolValidationError`。[E: packages/protocol/src/codec.ts:18][E: packages/protocol/src/codec.ts:41][E: packages/protocol/src/codec.ts:42][E: packages/protocol/src/codec.ts:48][E: packages/protocol/src/codec.ts:49]
-- protocol version 没有协商范围；`isSupportedProtocolVersion()` 只接受整数 `2`。[E: packages/protocol/src/codec.ts:170][E: packages/protocol/src/codec.ts:171]
+- protocol version 没有协商范围；`ClientHelloSchema` 接受非负整数供 server 判断，但 `isSupportedProtocolVersion()` 只接受整数 `1`。[E: packages/protocol/src/schemas.ts:382][E: packages/protocol/src/codec.ts:170][E: packages/protocol/src/codec.ts:171][E: packages/protocol/test/protocol.test.ts:55][E: packages/protocol/test/protocol.test.ts:57][E: packages/protocol/test/protocol.test.ts:58]
+- protocol DTO 不再承载 credentials；network transport 可在连接建立/upgrade 时认证，Unix transport 可依赖 endpoint access controls。把 bearer token 塞回 `hello` 不是向后兼容扩展，而是 strict-schema error。[E: packages/protocol/README.md:10][E: packages/protocol/README.md:48][E: packages/protocol/test/protocol.test.ts:73][E: packages/protocol/test/protocol.test.ts:76]
+- 这是 experimental lockstep 变更：旧 `{version:2, token}` client 会先因 extra credential field 被新 strict schema 拒绝，bare version `2` 才进入 version mismatch；新 version-1/tokenless client 也不满足旧 version-2/token server。上游明确不给兼容保证。[E: packages/protocol/test/protocol.test.ts:55][E: packages/protocol/test/protocol.test.ts:58][E: packages/protocol/test/protocol.test.ts:73][E: packages/protocol/test/protocol.test.ts:76][E: packages/protocol/README.md:67][I]
+- `ModelMetadata.authenticated` 仍然是 model metadata 中的 boolean field；它没有因为 session connection auth 移出 protocol 而删除，不能与 peer authentication 混为同一个字段。[E: packages/protocol/src/schemas.ts:60][E: packages/protocol/src/schemas.ts:71][I]
 
 ## 跨包边界
 
-`subsys.client.remote-session-client` 消费这些 schemas 做握手、request correlation 与 authoritative cache；`subsys.server.session-server` 认证 hello、执行 command 并发布 snapshots；`subsys.server.protocol-adapters` 负责把 `pi-ai` domain objects 转成 wire DTO，避免 protocol package 依赖 `pi-ai`。[I]
+`subsys.client.remote-session-client` 消费这些 schemas 做 version handshake、request correlation 与 authoritative cache；`subsys.server.session-server` 只接受 listener 已建立并授权的 connection，再校验 hello version、执行 command 并发布 snapshots；`subsys.server.protocol-adapters` 负责把 `pi-ai` domain objects 转成 wire DTO，避免 protocol package 依赖 `pi-ai`。[E: packages/protocol/README.md:10][I]
 
 ## Sources
 
 - packages/protocol/package.json
+- packages/protocol/README.md
 - packages/protocol/src/index.ts
 - packages/protocol/src/schemas.ts
 - packages/protocol/src/codec.ts
+- packages/protocol/test/protocol.test.ts
 
 ## 相关
 
 - [subsys.protocol.cbor-framing](cbor-framing.md) - CBOR subset、frame limits 与 incremental decoder。
 - [subsys.client.remote-session-client](../client/remote-session-client.md) - transport-neutral client 与 authoritative state cache。
-- [subsys.server.session-server](../server/session-server.md) - composable listener、认证握手与 request dispatch。
+- [subsys.server.session-server](../server/session-server.md) - composable listener、version handshake 与 request dispatch。

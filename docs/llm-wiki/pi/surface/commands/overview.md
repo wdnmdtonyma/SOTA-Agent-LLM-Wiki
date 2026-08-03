@@ -21,7 +21,7 @@ related:
   - surface.providers.llama-cpp
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > slash 命令是 pi-coding-agent 在交互输入里用 `/` 暴露的命令面:内置命令来自 `BUILTIN_SLASH_COMMANDS`,动态命令来自 extension、prompt template 和 skill。

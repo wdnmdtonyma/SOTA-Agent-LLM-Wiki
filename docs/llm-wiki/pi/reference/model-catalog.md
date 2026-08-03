@@ -58,7 +58,7 @@ related:
   - subsys.ai.model-catalog-publication
 evidence: inferred
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > 目标 commit 显式定义 38 个静态 provider bucket；目标 membership 由官方 `@earendil-works/pi-ai@0.83.0` 制品的 1,153 个模型，加上 target 新增 Baseten generator 在审计快照中的 16 个 active models，合计 1,169。逐模型数仍标为 `[I]`：ignored JSON 不在 target tree，且 Baseten 输入来自会漂移的 models.dev。

@@ -14,7 +14,7 @@ related:
   - subsys.server.storage
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `ref.server.instance-status` 是迁入 `src/legacy/` 的 supervisor instance metadata catalog:只枚举 `InstanceStatus`、`InstanceRecord` 与 legacy config path helpers。[E: packages/server/src/legacy/types.ts:1][E: packages/server/src/legacy/types.ts:15][E: packages/server/src/legacy/config.ts:45][E: packages/server/src/legacy/config.ts:64]

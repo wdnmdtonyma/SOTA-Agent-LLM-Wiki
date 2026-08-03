@@ -1,68 +1,82 @@
-# UPDATE SCOPE — Pi Wiki follow-up（a8ee03b815 → c1019d9202）
+# UPDATE SCOPE — Pi Wiki follow-up（c1019d9202 → 305c014dcc）
 
-> 本文件记录 2026-08-03 的 Pi-only follow-up 增量更新。
-> **旧父仓 gitlink / Wiki 基线**：`a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe`
-> **目标（官方 `origin/main` remote HEAD）**：`c1019d9202b648143d123b7e6fb76543a6b82de6`
-> **跨度**：2 commits · 36 files changed · +502 / -38 · 2026-08-03
+> 本文件记录 2026-08-03 的第三次 Pi-only follow-up。
+> **旧父仓 gitlink / Wiki 基线**：`c1019d9202b648143d123b7e6fb76543a6b82de6`
+> **最终点时快照 target**：`305c014dcccfe97ebd3f4057ac16c436f1e2c71e`
+> **冻结时间**：2026-08-03 21:44:27 +0800；冻结时已确认 target 是官方 `origin/main`
+> **跨度**：2 commits · 30 files changed · +92 / -141
+
+本轮采用点时快照语义：提交紧前 fetch 只观测冻结后的 remote drift；即使 `origin/main` 已前进，也不再扩入本轮，root gitlink 与全部 Wiki SHA 仍固定为 `305c014dcc`。
 
 复现：
 
 ```bash
 git -C pi fetch origin main
-git -C pi symbolic-ref refs/remotes/origin/HEAD
-git -C pi rev-list --count a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe..c1019d9202b648143d123b7e6fb76543a6b82de6
-git -C pi diff --shortstat a8ee03b8156c2232d67ad2cdb79683b4a5c8fdbe..c1019d9202b648143d123b7e6fb76543a6b82de6
+git -C pi rev-list --count c1019d9202b648143d123b7e6fb76543a6b82de6..305c014dcccfe97ebd3f4057ac16c436f1e2c71e
+git -C pi diff --shortstat c1019d9202b648143d123b7e6fb76543a6b82de6..305c014dcccfe97ebd3f4057ac16c436f1e2c71e
+git -C pi diff --name-status c1019d9202b648143d123b7e6fb76543a6b82de6..305c014dcccfe97ebd3f4057ac16c436f1e2c71e
 ```
 
 上游提交：
 
-1. `a24fb9e96a3fbc7be2a87e81aa1aa5c0ddf95d35` — `fix(coding-agent): preserve auth header deletion markers (#7539)`
-2. `c1019d9202b648143d123b7e6fb76543a6b82de6` — `feat(ai): add Baseten provider`
+- `0e633790c5a007f6d4bf35ba67ced457287c25ac` — `fix(tui): handle batched color scheme reports (#7550)`
+- `305c014dcccfe97ebd3f4057ac16c436f1e2c71e` — `fix: make session authentication transport-specific (#7551)`
 
-## 1. 既有节点影响分类
+## 1. 影响分类
 
-以基线 202 个节点为总体，把每个节点的 frontmatter `source` 与真实 36-file diff 求交：
+真实 diff 没有 source 删除、移动或新增源码面。以基线 202 个节点为总体，按 source 求交并沿调用/API contract 扩展后：
 
 | 分类 | 节点数 | 判定 |
 |---|---:|---|
-| A-BROKEN | 0 | diff 无删除/移动文件，既有 source 路径全部保留 |
-| B-HEAVY | 0 | 无既有节点达到结构重写判定 |
-| C-DRIFT | 30 | 至少一个已有 source 位于真实 diff，均已重锚并重新做语义核验 |
-| D-CLEAN | 172 | source content 未变；仍统一刷新并核验目标 SHA |
-| 合计 | 202 | 本轮无新增或退役节点 |
+| A-BROKEN | 0 | 无删除、移动或失效 source |
+| B-HEAVY | 0 | 无需新增节点或结构重写 |
+| C-DRIFT | 7 | TUI 2；protocol/client/server transport-auth 5 |
+| D-CLEAN | 195 | 含 6 个 source 直接命中但语义未变的节点，以及其它无依赖变化节点 |
+| 合计 | 202 | 新增 0、退役 0 |
 
-30 个 C-DRIFT 节点按面归类：
+实际语义更新节点：
 
-- spine / lifecycle：`spine.overview`、`spine.process-lifecycle`、`spine.provider-stream`；
-- provider surface：`surface.cli.overview`、`surface.modes.print`、`surface.providers.overview`、`surface.providers.auth`、`surface.providers.custom-provider`、`surface.misc.images`、`surface.misc.security`；
-- AI subsystem：`subsys.ai.provider-registry`、`subsys.ai.wire-protocol-dispatch`、`subsys.ai.openai-completions`、`subsys.ai.env-api-keys`、`subsys.ai.model-discovery`、`subsys.ai.image-generation`、`subsys.ai.model-catalog-publication`、`subsys.ai.pi-messages`、`subsys.ai.constrained-sampling`、`subsys.ai.provider-retry`；
-- coding-agent subsystem：`subsys.coding-agent.model-registry`、`subsys.coding-agent.model-resolver`、`subsys.coding-agent.file-mutation-queue`；
-- reference：`ref.ai.provider-catalog`、`ref.ai.model-catalog`、`ref.ai.wire-protocol-catalog`、`ref.ai.core-types`、`ref.coding-agent.env-vars`、`ref.coding-agent.cli-flags`、`ref.coding-agent.json-events`。
+- `subsys.tui.terminal-colors`
+- `subsys.tui.key-pipeline`
+- `subsys.protocol.wire-protocol`
+- `subsys.client.remote-session-client`
+- `subsys.client.unix-transport`
+- `subsys.server.session-server`
+- `subsys.server.unix-transport`
 
-`tools/rebase-evidence.mjs --safe-only` 在目标 checkout 上扫描 25 个含受影响 anchors 的文件、33,113 条 citations：33,112 exact、1 contextual、0 fuzzy、0 unresolved；改变 964 个行号。唯一 contextual anchor 位于 `model-registry.ts`，已结合新类型、实现和回归测试人工重写核验。
+`subsys.client.session-leases`、`subsys.server.live-sessions`、`subsys.server.ipc-transport`、`subsys.server.message-protocol`、`subsys.server.storage`、`ref.server.ipc-messages` 虽直接命中已修改 source/README/test，但本轮 diff 不改变其 domain 语义，只做 evidence/target SHA 复核。`subsys.protocol.cbor-framing` 等引用同文件的节点也只需精确 anchor 重定位。
 
-## 2. 新增与退役判定
+## 2. TUI 增量语义（c1019d9202 → 0e633790c5）
 
-- **Wiki 节点**：新增 0，退役 0；节点总数保持 202，T0/T1/T2/T3 为 12/34/121/35，全部 verified，planned 0。
-- **源码 surface**：新增 `basetenProvider()`、`BASETEN_MODELS` shard wrapper、`KnownProvider` / `models.generated.ts` / env-key / default-model 注册项和 Baseten reasoning compatibility；这些都属于现有 provider/catalog/model-resolution 节点的扩展面，不需要拆出新 Wiki 节点。
-- **source 删除/移动**：0；新增的 `packages/ai/src/providers/baseten.ts` 与 `baseten.models.ts` 已加入相关节点 source。
+- `COLOR_SCHEME_REPORT_PATTERN` 从单条 report 改为一个或多个首尾连续拼接的 `ESC [ ? 997 ; (1|2) n`；outer anchors 继续拒绝前后缀与非法中间 bytes。[E: packages/tui/src/terminal-colors.ts:29]
+- repeated capture 保留 batch 末条 report：末条 `2` 映射 `light`，末条 `1` 映射 `dark`；新增 `2,1,1 → dark` 与 `1,2,2 → light` 测试。[E: packages/tui/src/terminal-colors.ts:67] [E: packages/tui/src/terminal-colors.ts:68] [E: packages/tui/src/terminal-colors.ts:72] [E: packages/tui/test/terminal-colors.test.ts:118] [E: packages/tui/test/terminal-colors.test.ts:119]
+- 若某个 `Terminal` adapter 单次交付完整 batch，`TuiBase.handleTerminalInput()` 会在普通 listeners/focused dispatch 前折叠并消费它；默认 `ProcessTerminal` 则由 `StdinBuffer` 按完整 CSI sequence 逐条拆分，不能无条件声称 raw stdin batch 只回调一次。[E: packages/tui/src/tui.ts:792] [E: packages/tui/src/tui.ts:796] [E: packages/tui/src/tui.ts:800] [E: packages/tui/src/tui.ts:858] [E: packages/tui/src/tui.ts:892] [E: packages/tui/src/tui.ts:899] [E: packages/tui/src/stdin-buffer.ts:192] [E: packages/tui/src/stdin-buffer.ts:231] [E: packages/tui/src/terminal.ts:181] [E: packages/tui/src/terminal.ts:191]
 
-## 3. 真实增量影响
+## 3. Transport-specific auth 增量语义（0e633790c5 → 305c014dcc）
 
-- **provider registry/catalog**：新增 `baseten`，以 `https://inference.baseten.co/v1` 走 `openai-completions`，读取 `BASETEN_API_KEY`；runtime built-in provider 从 38 增至 39，静态 model bucket 从 37 增至 38。Radius 继续是 runtime-only provider。[E: packages/ai/src/providers/baseten.ts:6] [E: packages/ai/src/providers/baseten.ts:8] [E: packages/ai/src/providers/baseten.ts:10] [E: packages/ai/src/providers/baseten.ts:11] [E: packages/ai/src/providers/baseten.ts:13] [E: packages/ai/src/providers/all.ts:88] [E: packages/ai/src/providers/all.ts:94] [E: packages/ai/src/providers/all.ts:119] [E: packages/ai/src/providers/all.ts:128] [E: packages/ai/src/models.generated.ts:43] [E: packages/ai/src/models.generated.ts:48] [E: packages/ai/src/models.generated.ts:81] [E: packages/ai/src/models.generated.ts:87]
-- **model catalog**：target generator 从 models.dev 的 Baseten catalog 排除 `status=deprecated` rows，并为保留模型生成 OpenAI Completions、reasoning toggle/effort、thinking-level map 与成本/窗口元数据。[E: packages/ai/scripts/generate-models.ts:1094] [E: packages/ai/scripts/generate-models.ts:1107] [E: packages/ai/scripts/generate-models.ts:1112] [E: packages/ai/scripts/generate-models.ts:1122] [E: packages/ai/scripts/generate-models.ts:1142] [E: packages/ai/scripts/generate-models.ts:1143] [E: packages/ai/scripts/generate-models.ts:1145] [E: packages/ai/scripts/generate-models.ts:1148] [E: packages/ai/scripts/generate-models.ts:1150] [E: packages/ai/scripts/generate-models.ts:1158] [E: packages/ai/scripts/generate-models.ts:1164] [E: packages/ai/scripts/generate-models.ts:1173] [E: packages/ai/scripts/generate-models.ts:1179] [E: packages/ai/scripts/generate-models.ts:1180] [E: packages/ai/scripts/generate-models.ts:1181]
-- **catalog snapshot**：目标 Git tree 不保存 ignored `data/baseten.json`，因此以 2026-08-03T13:10:07Z 获取的 `https://models.dev/api.json`（SHA-256 `b3a52ba98bb4b58714734f8bb98c9bc7ffeff3558f915bcc3211cfe5f276728d`）复核：Baseten 18 rows，其中 16 active、2 deprecated；按 target filter 得到 16，叠加官方 0.83.0 artifact 的 1,153，当前目录为 1,169。[I]
-- **model resolver**：Baseten 默认模型新增为 `zai-org/GLM-5.2`。[E: packages/coding-agent/src/core/model-resolver.ts:42]
-- **compat schema/API**：`OpenAICompletionsCompat.thinkingFormat` 增加 `baseten`，`chatTemplateArgs` 支持由 `thinking.enabled` 等变量驱动的模板参数；OpenAI Completions request 只在计算后值非 `undefined` 时写入 `chat_template_args`。[E: packages/ai/src/types.ts:547] [E: packages/ai/src/types.ts:557] [E: packages/coding-agent/src/core/model-config.ts:82] [E: packages/coding-agent/src/core/model-config.ts:87] [E: packages/coding-agent/src/core/model-config.ts:98] [E: packages/ai/src/api/openai-completions.ts:774] [E: packages/ai/src/api/openai-completions.ts:779] [E: packages/ai/src/api/openai-completions.ts:781] [E: packages/ai/src/api/openai-completions.ts:861] [E: packages/ai/src/api/openai-completions.ts:875]
-- **auth header deletion**：`ProviderHeaders` 允许 `string | null`；case-insensitive merge 保留 `null`，`ModelRegistry.getApiKeyAndHeaders()` 不再过滤 markers，extension 原样传给 provider adapter 后由 API SDK 作为 default-header suppression marker。[E: packages/ai/src/types.ts:108] [E: packages/coding-agent/src/core/model-runtime.ts:81] [E: packages/coding-agent/src/core/model-runtime.ts:92] [E: packages/coding-agent/src/core/model-registry.ts:15] [E: packages/coding-agent/src/core/model-registry.ts:61] [E: packages/coding-agent/src/core/model-registry.ts:74] [E: packages/ai/src/api/openai-completions.ts:662] [E: packages/ai/src/api/openai-completions.ts:672] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:91] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:99] [E: packages/coding-agent/test/model-runtime-cloudflare-compat.test.ts:100]
+- protocol version 从 `2` 固定回 `1`；`ClientHello` 仅为 `{type, version}`，strict schema 明确拒绝 credential/token 字段。[E: packages/protocol/src/schemas.ts:3] [E: packages/protocol/src/schemas.ts:380] [E: packages/protocol/src/schemas.ts:381] [E: packages/protocol/src/schemas.ts:382] [E: packages/protocol/test/protocol.test.ts:55] [E: packages/protocol/test/protocol.test.ts:58] [E: packages/protocol/test/protocol.test.ts:73] [E: packages/protocol/test/protocol.test.ts:76]
+- `ProtocolErrorCode` 删除 `auth`，只剩 `version | busy | session_locked | not_found | invalid_request`；带 `auth` 的 `hello_error` 也不再是 schema-valid message。[E: packages/protocol/src/schemas.ts:266] [E: packages/protocol/src/schemas.ts:267] [E: packages/protocol/src/schemas.ts:268] [E: packages/protocol/src/schemas.ts:269] [E: packages/protocol/src/schemas.ts:270] [E: packages/protocol/src/schemas.ts:271] [E: packages/protocol/test/protocol.test.ts:103] [E: packages/protocol/test/protocol.test.ts:110] [E: packages/protocol/test/protocol.test.ts:114]
+- `PiClientOptions.token` 被删除且没有替代 credential field。`ByteTransportFactory` 必须在 resolve 前建立并认证 transport，client 随后只发 version hello；factory failure 归一成 `PiDisconnectedError`，schema-valid `hello_error` 才成为 `PiServerError`。[E: packages/client/src/types.ts:14] [E: packages/client/src/types.ts:15] [E: packages/client/src/types.ts:18] [E: packages/client/README.md:26] [E: packages/client/src/connection.ts:122] [E: packages/client/src/connection.ts:124] [E: packages/client/src/connection.ts:135] [E: packages/client/src/errors.ts:53] [E: packages/client/src/errors.ts:55]
+- `PiServerOptions.token`、digest/constant-time compare 与 core authenticate branch 被删除。listener contract 要求把已授权 connection 交给 core，`finishHandshake()` 只校验 protocol version；这是实现者责任，public `accept()` 不会 runtime attestation。[E: packages/server/src/types.ts:14] [E: packages/server/src/types.ts:15] [E: packages/server/README.md:42] [E: packages/server/src/server.ts:107] [E: packages/server/src/server.ts:125] [E: packages/server/src/server.ts:216] [E: packages/server/src/server.ts:217]
+- built-in Unix client/server options 都没有 credential；server listener 不检查 peer credentials，依赖 socket path permissions（默认 `0o600`，parent mkdir 请求 `0o700`）作为 access-control boundary。[E: packages/client/src/unix.ts:7] [E: packages/client/src/unix.ts:9] [E: packages/server/src/transports/unix/listener.ts:11] [E: packages/server/src/transports/unix/listener.ts:67] [E: packages/server/src/transports/unix/listener.ts:92] [E: packages/server/src/transports/unix/listener.ts:108] [E: packages/server/src/transports/unix/listener.ts:124]
+- testing API 也 breaking：删除 `TEST_TOKEN`，`ProtocolTestClient.hello()` 改为只接 optional version，test server 不再注入 default token。[E: packages/server/src/testing/index.ts:1] [E: packages/server/src/testing/client.ts:43] [E: packages/server/src/testing/client.ts:45] [E: packages/server/src/testing/server.ts:15] [E: packages/server/src/testing/server.ts:18]
+- 兼容性是 lockstep：旧 v2+token client 会被新 strict schema 拒绝；new v1/tokenless client 也不满足旧 server。protocol 本身仍是 experimental 且无兼容保证。[E: packages/protocol/README.md:67][I]
 
-## 4. 独立 L2 证伪
+## 4. 节点、catalog 与 evidence 收口
 
-按 `RUN.md` 对两条增量分别使用独立只读 verifier：一条证伪 Baseten provider/model/env/reasoning/catalog 结论；另一条证伪 auth deletion/model-registry/model-resolver/custom-provider 结论。初次反例包括 provider title 仍为 38、旧 37-bucket 断言、generator/output 与 env source anchors 漂移、source/Sources 漏项、ambient auth 误述、null-marker 链路时序不准和默认模型选择过度概括；逐项修复后两路 verifier 均最终 PASS，且各自重跑 lint 为 0 error / 0 warning。完整记录见 `_research/update-a8ee03b815-c1019d9202-l2.md`。
+- 202 个节点 frontmatter、`index.json.updated`、所有 index node `updated` 与 `llms.txt` 状态统一为 `305c014dcc`；planned 仍为 0。
+- provider 39、models 1,169、wire 10、config 76、slash 22、keybindings 79、extension events 33、RPC 32、CLI 62、env 94、interactive components 40、TUI components 15，均无 membership 变化。
+- 对 0e633→305c 的 evidence rebase 先安全写入 278 个 exact anchor；14 个 contextual candidate 均按新语义手工重落，不自动接受低置信映射。
+- README 当前状态与 root `pi` gitlink 同步到冻结 target；无新增或退役 Wiki 节点。
 
-## 5. 验证与残余风险
+## 5. 独立 L2 证伪
 
-收尾验证命令：
+- TUI verifier 首轮 FAIL 反证了“默认管道整批一次消费”并发现旧方法名/cell-size 顺序；修正后同 verifier PASS。记录：`_research/update-c1019d9202-0e633790c5-l2.md`。
+- protocol、client、server 三个只读 verifier 独立检查 transport-auth commit；首轮均 FAIL，集中反证旧 hello token、`auth` code、server SHA-256 auth 与 Unix “会认证 peer”等描述。修订后由同三位 verifier 分别复核为 PASS。记录：`_research/update-0e633790c5-305c014dcc-l2.md`。
+
+## 6. 验证、冻结后漂移与残余风险
+
+收尾命令：
 
 ```bash
 node docs/llm-wiki/pi/tools/reconcile.mjs
@@ -70,15 +84,17 @@ node docs/llm-wiki/pi/tools/lint.mjs
 node docs/llm-wiki/pi/tools/reconcile.mjs
 node docs/llm-wiki/pi/tools/lint.mjs
 git diff --check -- docs/llm-wiki/pi pi
+git -C pi fetch origin main
 ```
 
 最终断言：
 
-- `index.json.updated`、202 个 index node 与所有 node frontmatter 都是 `c1019d9202`；
-- index/file tree/`llms.txt` 是同一 202-node 集，0 planned；
-- provider catalog 39 rows、静态 model summary 38 rows且总和 1,169、env catalog 94 rows；
-- 所有 `[E:path:line]` 路径、范围和代码行有效，lint 为 0 error / 0 warning；
-- root gitlink 与 submodule HEAD 都是目标 full SHA，Pi submodule clean；
-- root 只 stage `docs/llm-wiki/pi/**` 与 `pi`，不改其他产品 Wiki/submodule。
+- 202 个节点全部 verified，0 planned，T0/T1/T2/T3 为 12/34/121/35；
+- index/file tree/`llms.txt` 是同一 202-node 集，target SHA 全为 `305c014dcc`；
+- 所有 `[E:path:line]` 路径与代码行有效，两次 lint 均为 0 error / 0 warning；
+- catalog counts 与冻结前一致；root gitlink 和 clean submodule HEAD 都是冻结 target；
+- staged/commit scope 只能是 `docs/llm-wiki/pi/**` 与 `pi`。
 
-残余风险：1,169 的精确模型实例数包含远程 models.dev snapshot 推断，因 target Git tree 不保存 `data/baseten.json` 而保持 `[I]`；Pi submodule 未安装依赖，本轮验证以目标源码、上游测试实现和 Wiki reconcile/lint/一致性审计为主，不宣称 Pi runtime test pass。
+提交紧前于 2026-08-03 21:53:40 +0800 再次 fetch：`origin/main` 仍为 `305c014dcccfe97ebd3f4057ac16c436f1e2c71e`，与冻结 target 和 submodule HEAD 一致；本轮未观测到 post-freeze drift。
+
+残余风险：Pi checkout 没有安装依赖，本轮不宣称 upstream TUI/protocol/client/server runtime tests pass；验证以冻结 target 源码、对应测试实现、独立 L2、Wiki reconcile/lint 与一致性审计为准。transport authentication 是 custom factory/listener 的 contract，core 无法证明实现者确实执行认证。

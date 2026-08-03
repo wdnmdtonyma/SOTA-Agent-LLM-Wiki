@@ -14,7 +14,7 @@ related:
   - surface.prompt-templates.system
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.agent-core.prompt-templates` 是 `pi-agent-core` 的 prompt template harness: 它从 markdown 文件或目录加载模板, 解析 frontmatter/body, 将命令行字符串拆成参数数组, 并把 `$1`、`$@`、`$ARGUMENTS`、`${@:N}` 这类占位符替换成调用参数。

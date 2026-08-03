@@ -2,7 +2,7 @@
 
 > **pi**(`pi/`,9 个源码 package workspace + 5 个 extension-example workspace 的 TypeScript monorepo,自扩展编码 agent harness)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 pi git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
 >
-> **状态:已完成 —— 全部 202 节点 verified 于 `c1019d9202`,`lint` 0 error / 0 warning。**
+> **状态:已完成 —— 全部 202 节点 verified 于 `305c014dcc`,`lint` 0 error / 0 warning。**
 >
 > **核心组织主线 —— 分层栈 + 复用边界 + 自扩展**:pi 是一条 `pi-ai`(provider 引擎)→ `pi-agent-core`(可复用 runtime/tools/session)→ `pi-coding-agent`(产品)+ `pi-tui`(差分渲染)，并由 `pi-protocol` / `pi-client` / `pi-server` 提供实验性 remote-session 链，旁接 `pi-storage-sqlite-node` 与 private `pi-evals`。每个节点 frontmatter 标 `pkg: ai|agent|protocol|client|coding-agent|tui|server|storage|evals|cross`。
 

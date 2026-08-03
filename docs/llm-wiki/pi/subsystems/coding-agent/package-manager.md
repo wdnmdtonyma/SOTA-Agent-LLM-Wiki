@@ -16,7 +16,7 @@ related:
   - subsys.coding-agent.resource-loader
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.coding-agent.package-manager` 描述 pi-coding-agent 的 package/resource source resolution 层: `DefaultPackageManager` 把 settings 里的 npm、git、本地路径和自动发现目录解析为 extensions、skills、prompts、themes 四类 `ResolvedPaths`。

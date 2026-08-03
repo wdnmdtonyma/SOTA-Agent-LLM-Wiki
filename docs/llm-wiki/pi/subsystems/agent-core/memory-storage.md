@@ -17,7 +17,7 @@ related:
   - subsys.agent-core.tree-navigation
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.agent-core.memory-storage` 描述进程内实现：公开的 `InMemorySessionRepository` 返回统一 `Session` API，内部 backend 用 session map、`ArraySessionIndex` 和 keyed queue 保存状态。

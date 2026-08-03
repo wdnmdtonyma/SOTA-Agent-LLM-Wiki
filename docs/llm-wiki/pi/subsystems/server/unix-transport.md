@@ -6,6 +6,7 @@ tier: T2
 pkg: server
 source:
   - packages/server/package.json
+  - packages/server/README.md
   - packages/server/src/transports/unix/index.ts
   - packages/server/src/transports/unix/types.ts
   - packages/server/src/transports/unix/preset.ts
@@ -23,7 +24,7 @@ related:
   - subsys.server.ipc-transport
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `@earendil-works/pi-server/unix` 同时提供 composable `createUnixListener()` 与 one-listener `createUnixServer()` preset；它服务 framed-CBOR session protocol，不是 legacy JSONL `startIpcServer()`。[E: packages/server/package.json:17][E: packages/server/package.json:18][E: packages/server/src/transports/unix/index.ts:1][E: packages/server/src/transports/unix/index.ts:2][E: packages/server/src/transports/unix/preset.ts:7][E: packages/server/src/transports/unix/preset.ts:7]
@@ -40,7 +41,11 @@ updated: c1019d9202
 
 `UnixListenerOptions` 要求 path，可选 mode、max pending bytes、graceful close timeout、matching max frame length 与 error observer；默认 socket mode 是 owner-only `0o600`。[E: packages/server/src/transports/unix/types.ts:3][E: packages/server/src/transports/unix/types.ts:4][E: packages/server/src/transports/unix/types.ts:6][E: packages/server/src/transports/unix/types.ts:8][E: packages/server/src/transports/unix/types.ts:8][E: packages/server/src/transports/unix/types.ts:9][E: packages/server/src/transports/unix/types.ts:11][E: packages/server/src/transports/unix/types.ts:11][E: packages/server/src/transports/unix/types.ts:12][E: packages/server/src/transports/unix/listener.ts:11]
 
-`createUnixServer()` 把 listener options 和 core server options拆开，再构造 `new PiServer(... listeners:[listener])`；custom max frame 必须同时传给 listener queue validation 与 server codec。[E: packages/server/src/transports/unix/preset.ts:7][E: packages/server/src/transports/unix/preset.ts:8][E: packages/server/src/transports/unix/preset.ts:11][E: packages/server/src/transports/unix/preset.ts:16][E: packages/server/src/transports/unix/preset.ts:18][E: packages/server/src/transports/unix/preset.ts:19]
+`UnixServerOptions` 由 `PiServerOptions` 去掉 `listeners` 后与 listener options 合并，两侧都没有 token field；Unix preset 的 access-control boundary 是 socket path/mode，默认 `0o600`。这满足 core 对 listener 先交付 authorized connection 的 contract，但实现没有额外 peer-credential handshake。[E: packages/server/src/transports/unix/types.ts:15][E: packages/server/src/types.ts:14][E: packages/server/src/types.ts:15][E: packages/server/src/types.ts:19][E: packages/server/src/transports/unix/listener.ts:11][E: packages/server/src/transports/unix/listener.ts:407][E: packages/server/README.md:42][I]
+
+具体实现对每个 accepted socket 直接构造 `UnixByteConnection` 并调用 core acceptor，没有检查 bearer token 或 OS peer credentials；parent directory 创建请求 `0o700`，public socket 再按配置 mode chmod。调用者若把 mode 放宽，授权边界也随之放宽。[E: packages/server/src/transports/unix/listener.ts:67][E: packages/server/src/transports/unix/listener.ts:91][E: packages/server/src/transports/unix/listener.ts:92][E: packages/server/src/transports/unix/listener.ts:108][E: packages/server/src/transports/unix/listener.ts:113][E: packages/server/src/transports/unix/listener.ts:124][I]
+
+`createUnixServer()` 把 listener options 和 core server options 拆开，再构造 tokenless `new PiServer(... listeners:[listener])`；custom max frame 必须同时传给 listener queue validation 与 server codec。[E: packages/server/src/transports/unix/preset.ts:7][E: packages/server/src/transports/unix/preset.ts:8][E: packages/server/src/transports/unix/preset.ts:11][E: packages/server/src/transports/unix/preset.ts:16][E: packages/server/src/transports/unix/preset.ts:17][E: packages/server/src/transports/unix/preset.ts:18][E: packages/server/src/transports/unix/preset.ts:19][E: packages/server/src/transports/unix/preset.ts:20][E: packages/server/src/transports/unix/preset.ts:21]
 
 默认 `maxPendingBytes = maxFrameLength * 4`，且必须至少容纳 `maxFrameLength + 4` 的完整 frame；默认 graceful close timeout 是 5 seconds。[E: packages/server/src/transports/unix/listener.ts:12][E: packages/server/src/transports/unix/listener.ts:411][E: packages/server/src/transports/unix/listener.ts:415][E: packages/server/src/transports/unix/listener.ts:416][E: packages/server/src/transports/unix/listener.ts:417][E: packages/server/src/transports/unix/listener.ts:419]
 
@@ -65,10 +70,12 @@ send queue 复制 bytes、按 Promise tail 保序并限制 pending bytes。[E: p
 - `mode` 只接受 `0..0o777`；Windows 上 chmod 被跳过，但 listener 没有像 client Unix factory 一样显式拒绝 Windows。[E: packages/server/src/transports/unix/listener.ts:378][E: packages/server/src/transports/unix/listener.ts:379][E: packages/server/src/transports/unix/listener.ts:407][E: packages/server/src/transports/unix/listener.ts:408][I]
 - live probe timeout 被保守视为 socket live，优先避免误删可能仍在服务的 endpoint。[E: packages/server/src/transports/unix/listener.ts:373][I]
 - legacy `subsys.server.ipc-transport` 和新 Unix listener 可以指向不同 path/options；源码没有自动 migration 或共享 socket arbitration。[I]
+- 这里的“authorized”依赖 filesystem path/mode，而不是 protocol bearer token；若部署环境允许不受信任进程访问 socket，应用必须在 transport/listener 层增加更强的认证。[E: packages/server/README.md:42][E: packages/server/src/transports/unix/listener.ts:407][I]
 
 ## Sources
 
 - packages/server/package.json
+- packages/server/README.md
 - packages/server/src/transports/unix/index.ts
 - packages/server/src/transports/unix/types.ts
 - packages/server/src/transports/unix/preset.ts

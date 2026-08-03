@@ -9,7 +9,7 @@ symbols: [StdinBuffer, isCompleteSequence]
 related: [subsys.tui.key-pipeline]
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `StdinBuffer` 是 TUI stdin byte stream 的 framing layer：它把可能被拆包、合包或处于 bracketed paste 的输入整理成完整 input sequence，再用 EventEmitter 发给上游管道。

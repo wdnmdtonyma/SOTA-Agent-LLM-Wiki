@@ -14,7 +14,7 @@ symbols:
   - AppKeybindings
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 related:
   - surface.config.keybindings
   - subsys.coding-agent.keybindings

@@ -16,7 +16,7 @@ related:
   - subsys.tui.terminal-colors
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.coding-agent.theme-controller` 描述 pi-coding-agent 的 interactive theme layer: 它把 `settings.theme`、terminal light/dark 检测、custom theme JSON loading、hot reload 和 TUI repaint 连接成一个运行时主题状态机。

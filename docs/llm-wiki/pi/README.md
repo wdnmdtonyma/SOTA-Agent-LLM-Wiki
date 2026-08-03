@@ -63,7 +63,7 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **202 个节点全部 verified 于 pi `c1019d9202`**。本次 follow-up 从 `a8ee03b815` 前进 2 commits：保留 request auth header 的 `null` 删除标记，并新增 Baseten provider、`BASETEN_API_KEY`、默认模型、catalog bucket 与 `chat_template_args` reasoning compatibility；无新增或退役 Wiki 节点。审计见 `_UPDATE-SCOPE.md` 与 `_research/`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **202 个节点全部 verified 于 pi `305c014dcc`**。本次 follow-up 从 `c1019d9202` 前进 2 commits：terminal color-scheme parser 接受 batched `?997;1n/2n` reports 并按末条决定 scheme；remote-session auth 从 strict hello/server core 移到 transport establishment，protocol 固定为 version 1。无新增或退役 Wiki 节点，provider/model/env 等 catalog 计数不变。审计见 `_UPDATE-SCOPE.md` 与 `_research/`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

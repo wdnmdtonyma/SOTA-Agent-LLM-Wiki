@@ -29,7 +29,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `find` 是 pi-coding-agent 暴露给模型的文件路径搜索工具:模型给 glob pattern 和可选搜索目录,工具返回相对搜索目录的匹配路径列表。

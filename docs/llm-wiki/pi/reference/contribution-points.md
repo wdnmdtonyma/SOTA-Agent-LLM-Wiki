@@ -14,7 +14,7 @@ symbols:
   - registerProvider
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 related:
   - surface.extensions.contribution-points
 ---

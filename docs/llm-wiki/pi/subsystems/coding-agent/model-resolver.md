@@ -16,7 +16,7 @@ related:
   - subsys.coding-agent.model-registry
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > 模型解析子系统把 CLI/model scope/settings/session fallback 等输入解析成 `Model<Api>` 与 `ThinkingLevel`, 并给交互式 model selector 提供可搜索文本。

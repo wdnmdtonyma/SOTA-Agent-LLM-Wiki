@@ -31,7 +31,7 @@ related:
   - surface.misc.containerization
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `surface.misc.security` 描述 pi-coding-agent 的用户可见安全边界:Pi 是本地编码代理,默认与启动它的本地用户处在同一 OS 权限边界内;project trust、auth resolution、HTTP dispatcher 和 tool execution hook 都是运行时门控或配置面,不是内置沙箱。

@@ -4,15 +4,15 @@ title: 键盘事件管道
 kind: subsystem
 tier: T2
 pkg: tui
-source: [packages/tui/src/terminal.ts, packages/tui/src/stdin-buffer.ts, packages/tui/src/native-modifiers.ts, packages/tui/src/tui.ts]
-symbols: [ProcessTerminal, handleInput, forwardInputSequence]
+source: [packages/tui/src/terminal.ts, packages/tui/src/stdin-buffer.ts, packages/tui/src/native-modifiers.ts, packages/tui/src/tui.ts, packages/tui/src/terminal-colors.ts, packages/tui/test/terminal-colors.test.ts]
+symbols: [ProcessTerminal, handleTerminalInput, forwardInputSequence]
 related: [subsys.tui.key-parsing, subsys.tui.stdin-buffer]
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
-> 键盘事件管道把真实终端的 raw stdin 字节流整理成一个个 input sequence，并交给 TUI 的 `handleInput` 做全局过滤、监听器改写、焦点组件分发。
+> 键盘事件管道把真实终端的 raw stdin 字节流整理成一个个 input sequence，并交给 `TuiBase.handleTerminalInput()` 做全局过滤、监听器改写、焦点组件分发。
 
 ## 能回答的问题
 
@@ -20,7 +20,7 @@ updated: c1019d9202
 - `StdinBuffer` 为什么要先把 stdin data event 拆成完整 escape sequence？
 - Kitty keyboard protocol 协商响应为什么不会直接传给组件？
 - Apple Terminal 的 Shift+Enter 在管道里如何被归一化？
-- `TUI.handleInput` 在把输入交给 focused component 前会做哪些 gate？
+- `TuiBase.handleTerminalInput()` 在把输入交给 focused component 前会做哪些 gate？
 
 ## 职责边界
 
@@ -28,14 +28,14 @@ updated: c1019d9202
 
 `StdinBuffer` 的职责是把可能被拆包或合包的 stdin chunk 转成单个可消费序列。它的 `process()` 会追加到内部 buffer、识别 bracketed paste、调用 `extractCompleteSequences()`，并对每个完整序列触发 `"data"` 事件 [E: packages/tui/src/stdin-buffer.ts:287][E: packages/tui/src/stdin-buffer.ts:313][E: packages/tui/src/stdin-buffer.ts:337][E: packages/tui/src/stdin-buffer.ts:371][E: packages/tui/src/stdin-buffer.ts:397]。这层不负责 keybinding 语义；键名解析和匹配属于 [subsys.tui.key-parsing](key-parsing.md) 描述的 `parseKey` / CSI-u 解析链路 [I]。
 
-`TUI.handleInput` 是管道的消费端。`TUI.start()` 把 terminal input callback 绑定为 `(data) => this.handleInput(data)`，因此 `ProcessTerminal.forwardInputSequence()` 传出的 sequence 会进入 `TUI.handleInput` [E: packages/tui/src/tui.ts:680][E: packages/tui/src/tui.ts:640][E: packages/tui/src/terminal.ts:317]。`handleInput` 会先消费终端能力/颜色/尺寸响应，再执行 input listeners、全局 debug shortcut、overlay focus 修正和 focused component 分发 [E: packages/tui/src/tui.ts:765][E: packages/tui/src/tui.ts:793][E: packages/tui/src/tui.ts:800][E: packages/tui/src/tui.ts:818][E: packages/tui/src/tui.ts:823][E: packages/tui/src/tui.ts:858]。
+`TuiBase.handleTerminalInput()` 是管道的消费端。`TuiBase.start()` 把 terminal input callback 绑定为 `(data) => this.handleTerminalInput(data)`，因此 `ProcessTerminal.forwardInputSequence()` 传出的 sequence 会进入该方法 [E: packages/tui/src/tui.ts:680][E: packages/tui/src/tui.ts:683][E: packages/tui/src/tui.ts:684][E: packages/tui/src/terminal.ts:317]。它依次尝试消费 OSC 11 与 color-scheme response、执行 input listeners、消费 cell-size response、处理全局 debug shortcut、修正 overlay focus 并向 focused component 分发 [E: packages/tui/src/tui.ts:792][E: packages/tui/src/tui.ts:793][E: packages/tui/src/tui.ts:796][E: packages/tui/src/tui.ts:800][E: packages/tui/src/tui.ts:818][E: packages/tui/src/tui.ts:823][E: packages/tui/src/tui.ts:858]。
 
 ## 关键文件
 
 - `packages/tui/src/terminal.ts`: 定义 `Terminal` interface 与 `ProcessTerminal`；负责 raw stdin、terminal mode、keyboard protocol 协商、`forwardInputSequence()` 和退出清理。
 - `packages/tui/src/stdin-buffer.ts`: 定义 `StdinBuffer`；负责 escape sequence 完整性判断、bracketed paste 聚合、timeout flush 和 Kitty printable duplicate 抑制。
 - `packages/tui/src/native-modifiers.ts`: 定义 macOS native modifier helper；`forwardInputSequence()` 用它补 Apple Terminal 的 Shift+Enter 缺失信息。
-- `packages/tui/src/tui.ts`: 定义 `TUI.handleInput`；负责把 terminal sequence 转成 TUI 组件层输入事件。
+- `packages/tui/src/tui.ts`: 定义 `TuiBase.handleTerminalInput()`；负责把 terminal sequence 转成 TUI 组件层输入事件。
 
 ## 数据模型
 
@@ -45,19 +45,20 @@ updated: c1019d9202
 
 ## 控制流
 
-1. `TUI.start@packages/tui/src/tui.ts:635` 调用 `terminal.start((data) => this.handleInput(data), () => this.requestRender())`，把键盘输入和 resize 都接入 TUI instance [E: packages/tui/src/tui.ts:680][E: packages/tui/src/tui.ts:683][E: packages/tui/src/tui.ts:640][E: packages/tui/src/tui.ts:685]。
+1. `TuiBase.start@packages/tui/src/tui.ts:680` 调用 `terminal.start((data) => this.handleTerminalInput(data), () => this.requestRender())`，把键盘输入和 resize 都接入 TUI instance [E: packages/tui/src/tui.ts:680][E: packages/tui/src/tui.ts:683][E: packages/tui/src/tui.ts:684][E: packages/tui/src/tui.ts:685]。
 2. `ProcessTerminal.start@packages/tui/src/terminal.ts:134` 进入 raw input mode，开启 bracketed paste，注册 resize，并调用 `queryAndEnableKittyProtocol()` [E: packages/tui/src/terminal.ts:139][E: packages/tui/src/terminal.ts:141][E: packages/tui/src/terminal.ts:147][E: packages/tui/src/terminal.ts:150][E: packages/tui/src/terminal.ts:166]。
 3. `queryAndEnableKittyProtocol@packages/tui/src/terminal.ts:220` 调用 `setupStdinBuffer()`，注册 `process.stdin.on("data", this.stdinDataHandler!)`，标记 keyboard protocol 已 push，然后写出 Kitty query sequence [E: packages/tui/src/terminal.ts:221][E: packages/tui/src/terminal.ts:222][E: packages/tui/src/terminal.ts:223][E: packages/tui/src/terminal.ts:225]。
 4. `setupStdinBuffer@packages/tui/src/terminal.ts:177` 建立 `new StdinBuffer({ timeout: 10 })`；stdin chunk 会进入 `stdinBuffer.process(data)`，buffer 的 `"data"` 事件再逐个 sequence 执行协议响应识别或 `forwardInputSequence(sequence)` [E: packages/tui/src/terminal.ts:178][E: packages/tui/src/terminal.ts:181][E: packages/tui/src/terminal.ts:182][E: packages/tui/src/terminal.ts:191][E: packages/tui/src/terminal.ts:202][E: packages/tui/src/terminal.ts:203]。
 5. `readKeyboardProtocolNegotiationSequence@packages/tui/src/terminal.ts:252` 会把拆开的 Kitty/DA 协商响应暂存在 `keyboardProtocolNegotiationBuffer`；如果只是前缀则返回 `"pending"`，`setupStdinBuffer()` 会安排 150 ms 的 flush timer 等待剩余片段 [E: packages/tui/src/terminal.ts:184][E: packages/tui/src/terminal.ts:257][E: packages/tui/src/terminal.ts:263][E: packages/tui/src/terminal.ts:264][E: packages/tui/src/terminal.ts:271][E: packages/tui/src/terminal.ts:272][E: packages/tui/src/terminal.ts:280][E: packages/tui/src/terminal.ts:295][E: packages/tui/src/terminal.ts:297][E: packages/tui/src/terminal.ts:300]。
 6. `handleKeyboardProtocolNegotiationSequence@packages/tui/src/terminal.ts:228` 消费完整协商响应：非零 Kitty flags 会关闭 modifyOtherKeys 并把全局 Kitty protocol active 标记置为 true；零 flags 或 DA fallback 会启用 modifyOtherKeys [E: packages/tui/src/terminal.ts:233][E: packages/tui/src/terminal.ts:234][E: packages/tui/src/terminal.ts:235][E: packages/tui/src/terminal.ts:237][E: packages/tui/src/terminal.ts:238][E: packages/tui/src/terminal.ts:241][E: packages/tui/src/terminal.ts:246][E: packages/tui/src/terminal.ts:247]。
 7. `forwardInputSequence@packages/tui/src/terminal.ts:309` 是普通输入进入 TUI 的最后 terminal-side hop：无 `inputHandler` 时直接返回；Apple Terminal 中 `"\r"` 且 native Shift pressed 时会变成 `\x1b[13;2u`，否则保持原 sequence，然后调用 `inputHandler(input)` [E: packages/tui/src/terminal.ts:310][E: packages/tui/src/terminal.ts:311][E: packages/tui/src/terminal.ts:315][E: packages/tui/src/terminal.ts:45][E: packages/tui/src/terminal.ts:46][E: packages/tui/src/terminal.ts:317]。
-8. `TUI.handleInput@packages/tui/src/tui.ts:761` 先过滤 OSC 11 background response 和 terminal color scheme report，再让 `inputListeners` 有机会 consume 或改写 data；空字符串会停止传播 [E: packages/tui/src/tui.ts:793][E: packages/tui/src/tui.ts:796][E: packages/tui/src/tui.ts:800][E: packages/tui/src/tui.ts:803][E: packages/tui/src/tui.ts:804][E: packages/tui/src/tui.ts:807][E: packages/tui/src/tui.ts:811]。
-9. `TUI.handleInput@packages/tui/src/tui.ts:786` 继续消费 cell-size response 和 global debug key；之后校正 overlay focus，把输入交给 focused component，默认过滤 key release event，最后请求重绘 [E: packages/tui/src/tui.ts:818][E: packages/tui/src/tui.ts:823][E: packages/tui/src/tui.ts:830][E: packages/tui/src/tui.ts:858][E: packages/tui/src/tui.ts:860][E: packages/tui/src/tui.ts:863][E: packages/tui/src/tui.ts:864]。
+8. `TuiBase.handleTerminalInput@packages/tui/src/tui.ts:792` 先过滤 OSC 11 background response 和 terminal color-scheme report，再让 `inputListeners` 有机会 consume 或改写 data；空字符串会停止传播。若某个 `Terminal` adapter 单次把连续拼接的合法 `?997;1n/2n` batch 交给此方法，parser 会以末条 report 决定 scheme，整批在 listeners 与 focused component 之前被一次消费，并对每个 scheme listener 调用一次。[E: packages/tui/src/tui.ts:792][E: packages/tui/src/tui.ts:793][E: packages/tui/src/tui.ts:796][E: packages/tui/src/tui.ts:800][E: packages/tui/src/tui.ts:803][E: packages/tui/src/tui.ts:804][E: packages/tui/src/tui.ts:807][E: packages/tui/src/tui.ts:811] [E: packages/tui/src/tui.ts:892] [E: packages/tui/src/tui.ts:893] [E: packages/tui/src/tui.ts:898] [E: packages/tui/src/tui.ts:899] [E: packages/tui/src/tui.ts:901] [E: packages/tui/src/terminal-colors.ts:29] [E: packages/tui/src/terminal-colors.ts:72] [E: packages/tui/test/terminal-colors.test.ts:118] [E: packages/tui/test/terminal-colors.test.ts:119]
+9. 默认 `ProcessTerminal` 的 `StdinBuffer` 会在每个完整 CSI sequence 结束时分别 emit，所以同一个 raw stdin chunk 里的多条 color reports 通常逐条进入 `handleTerminalInput()`，而不是触发上述 batch 折叠；batch 行为是 parser/consumer 对其他 adapter 或直接合并输入的兼容边界 [E: packages/tui/src/stdin-buffer.ts:192][E: packages/tui/src/stdin-buffer.ts:196][E: packages/tui/src/stdin-buffer.ts:207][E: packages/tui/src/stdin-buffer.ts:231][E: packages/tui/src/stdin-buffer.ts:254][E: packages/tui/src/terminal.ts:181][E: packages/tui/src/terminal.ts:191]。
+10. `TuiBase.handleTerminalInput@packages/tui/src/tui.ts:792` 在 input listeners 之后消费 cell-size response 和 global debug key；随后校正 overlay focus，把输入交给 focused component，默认过滤 key release event，最后请求重绘 [E: packages/tui/src/tui.ts:818][E: packages/tui/src/tui.ts:819][E: packages/tui/src/tui.ts:823][E: packages/tui/src/tui.ts:830][E: packages/tui/src/tui.ts:858][E: packages/tui/src/tui.ts:860][E: packages/tui/src/tui.ts:863][E: packages/tui/src/tui.ts:864]。
 
 ## 设计动机与权衡
 
-管道把 byte framing 和 semantic key parsing 分开：`StdinBuffer` 在 `isCompleteSequence()` / CSI helper 中做 escape sequence 完整性判断，后续组件或 keybinding 层再解释含义；`TUI.handleInput` 里的全局 debug shortcut 已经是用 `matchesKey` 匹配语义键 [E: packages/tui/src/stdin-buffer.ts:29][E: packages/tui/src/stdin-buffer.ts:84][E: packages/tui/src/tui.ts:823][I]。这个分层降低了 batched input、partial input、paste 和 terminal capability response 互相污染的概率 [I]。
+管道把 byte framing 和 semantic key parsing 分开：`StdinBuffer` 在 `isCompleteSequence()` / CSI helper 中做 escape sequence 完整性判断，后续组件或 keybinding 层再解释含义；`TuiBase.handleTerminalInput()` 里的全局 debug shortcut 已经是用 `matchesKey` 匹配语义键 [E: packages/tui/src/stdin-buffer.ts:29][E: packages/tui/src/stdin-buffer.ts:84][E: packages/tui/src/tui.ts:823][I]。这个分层降低了 batched input、partial input、paste 和 terminal capability response 互相污染的概率 [I]。
 
 Kitty protocol negotiation 被放在 `StdinBuffer` 之后，而不是直接在 raw stdin 上解析：实际实现先由 buffer 输出 sequence，再用 `readKeyboardProtocolNegotiationSequence()` 累积可能拆分的协商响应 [E: packages/tui/src/terminal.ts:181][E: packages/tui/src/terminal.ts:182][E: packages/tui/src/terminal.ts:255][E: packages/tui/src/terminal.ts:257][E: packages/tui/src/terminal.ts:263]。
 
@@ -67,7 +68,7 @@ bracketed paste 在 terminal 层被拆成 `"paste"` 事件，但又重新包回 
 
 - `forwardInputSequence()` 不是 key parser；它调用 Apple Terminal Shift+Enter normalization，然后把结果交给 TUI [E: packages/tui/src/terminal.ts:309][E: packages/tui/src/terminal.ts:312][E: packages/tui/src/terminal.ts:45][E: packages/tui/src/terminal.ts:46][E: packages/tui/src/terminal.ts:317]。
 - 协议协商响应是输入流的一部分，但被 `handleKeyboardProtocolNegotiationSequence()` 消费后不会传给 focused component [E: packages/tui/src/terminal.ts:187][E: packages/tui/src/terminal.ts:188]。
-- `TUI.handleInput` 默认丢弃 key release event，除非 focused component 声明 `wantsKeyRelease` [E: packages/tui/src/tui.ts:860][E: packages/tui/src/tui.ts:861]。
+- `TuiBase.handleTerminalInput()` 默认丢弃 key release event，除非 focused component 声明 `wantsKeyRelease` [E: packages/tui/src/tui.ts:860][E: packages/tui/src/tui.ts:861]。
 - `drainInput()` 会关闭 Kitty keyboard protocol / modifyOtherKeys 并暂时清空 `inputHandler`；`stop()` 会关闭协议、销毁 `StdinBuffer`、移除 stdin handler 并 pause stdin，避免退出后 late key release 或 buffered input 泄漏到父 shell [E: packages/tui/src/terminal.ts:368][E: packages/tui/src/terminal.ts:374][E: packages/tui/src/terminal.ts:379][E: packages/tui/src/terminal.ts:381][E: packages/tui/src/terminal.ts:382][E: packages/tui/src/terminal.ts:406][E: packages/tui/src/terminal.ts:419][E: packages/tui/src/terminal.ts:424][E: packages/tui/src/terminal.ts:427][E: packages/tui/src/terminal.ts:433][E: packages/tui/src/terminal.ts:446]。
 
 ## 跨包边界
@@ -80,6 +81,8 @@ bracketed paste 在 terminal 层被拆成 `"paste"` 事件，但又重新包回 
 - packages/tui/src/stdin-buffer.ts
 - packages/tui/src/native-modifiers.ts
 - packages/tui/src/tui.ts
+- packages/tui/src/terminal-colors.ts
+- packages/tui/test/terminal-colors.test.ts
 
 ## 相关
 

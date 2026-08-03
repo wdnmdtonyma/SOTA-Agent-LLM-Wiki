@@ -19,7 +19,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.agent-core.jsonl-storage` 描述 `pi-agent-core` 的 durable JSONL 实现：公开的 `JsonlSessionRepository` 返回 `Session`，内部 `JsonlSessionBackend` 负责文件、共享索引与并发队列。

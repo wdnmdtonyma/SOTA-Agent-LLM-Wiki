@@ -21,10 +21,10 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
-> `LiveSessionManager` 把 durable `PiSessionBackend` 与 protocol connection attachments 组合为 singleton live runtime：backend 负责 list/create/open，runtime 负责 snapshot、phase、mutation、events 与 dispose。[E: packages/server/src/types.ts:43][E: packages/server/src/types.ts:43][E: packages/server/src/types.ts:44][E: packages/server/src/types.ts:45][E: packages/server/src/types.ts:46][E: packages/server/src/types.ts:51][E: packages/server/src/types.ts:52][E: packages/server/src/types.ts:56][E: packages/server/src/types.ts:56][E: packages/server/src/types.ts:57][E: packages/server/src/types.ts:59][E: packages/server/src/types.ts:60]
+> `LiveSessionManager` 把 durable `PiSessionBackend` 与 protocol connection attachments 组合为 singleton live runtime：backend 负责 list/create/open，runtime 负责 snapshot、phase、mutation、events 与 dispose。[E: packages/server/src/types.ts:42][E: packages/server/src/types.ts:42][E: packages/server/src/types.ts:43][E: packages/server/src/types.ts:44][E: packages/server/src/types.ts:45][E: packages/server/src/types.ts:50][E: packages/server/src/types.ts:51][E: packages/server/src/types.ts:55][E: packages/server/src/types.ts:55][E: packages/server/src/types.ts:56][E: packages/server/src/types.ts:58][E: packages/server/src/types.ts:59]
 
 ## 能回答的问题
 
@@ -37,11 +37,11 @@ updated: c1019d9202
 
 ## Backend/runtime contract
 
-`createSession()` 接收 server 生成的 collision-resistant id，backend 必须持久化 exact id；`openSession()` 返回 exclusively acquired durable runtime。[E: packages/server/src/types.ts:28][E: packages/server/src/types.ts:30][E: packages/server/src/types.ts:30][E: packages/server/src/types.ts:56][E: packages/server/src/types.ts:59][E: packages/server/src/types.ts:60]
+`createSession()` 接收 server 生成的 collision-resistant id，backend 必须持久化 exact id；`openSession()` 返回 exclusively acquired durable runtime。[E: packages/server/src/types.ts:27][E: packages/server/src/types.ts:29][E: packages/server/src/types.ts:29][E: packages/server/src/types.ts:55][E: packages/server/src/types.ts:58][E: packages/server/src/types.ts:59]
 
-runtime mutation contract 明确要求 conflicting operations reject rather than queue；phase vocabulary 直接复用 protocol `SessionPhase`。[E: packages/server/src/types.ts:43][E: packages/server/src/types.ts:45][E: packages/server/src/types.ts:46][E: packages/server/src/types.ts:47][E: packages/server/src/types.ts:48][E: packages/server/src/types.ts:49][E: packages/server/src/types.ts:50]
+runtime mutation contract 明确要求 conflicting operations reject rather than queue；phase vocabulary 直接复用 protocol `SessionPhase`。[E: packages/server/src/types.ts:42][E: packages/server/src/types.ts:44][E: packages/server/src/types.ts:45][E: packages/server/src/types.ts:46][E: packages/server/src/types.ts:47][E: packages/server/src/types.ts:48][E: packages/server/src/types.ts:49]
 
-runtime event 有 `snapshot`、`progress`、`error` 三类；error 必须是安全跨 protocol boundary 的 `PiServerError`。[E: packages/server/src/types.ts:37][E: packages/server/src/types.ts:38][E: packages/server/src/types.ts:39][E: packages/server/src/types.ts:40]
+runtime event 有 `snapshot`、`progress`、`error` 三类；error 必须是安全跨 protocol boundary 的 `PiServerError`。[E: packages/server/src/types.ts:36][E: packages/server/src/types.ts:37][E: packages/server/src/types.ts:38][E: packages/server/src/types.ts:39]
 
 ## Command dispatch
 
@@ -63,12 +63,12 @@ server-wide list 先读 persisted summaries，再覆盖 live snapshots；`attach
 
 runtime progress 只发给 attached connections；snapshot signal 触发 full `session_snapshot` broadcast。runtime error 标记 terminal，报告 server error，关闭并 disconnect 所有 attached connections，然后 dispose。[E: packages/server/src/sessions.ts:255][E: packages/server/src/sessions.ts:256][E: packages/server/src/sessions.ts:260][E: packages/server/src/sessions.ts:263][E: packages/server/src/sessions.ts:265][E: packages/server/src/sessions.ts:267][E: packages/server/src/sessions.ts:272][E: packages/server/src/sessions.ts:274][E: packages/server/src/sessions.ts:275][E: packages/server/src/sessions.ts:278][E: packages/server/src/sessions.ts:279][E: packages/server/src/sessions.ts:280]
 
-runtime 只有在没有 connections、没有 active operation，且 terminal 或 phase=`idle` 时才 dispose；因此 client disconnect 后仍在运行的 prompt 被保留，下一次回到 idle 才释放 backend lock。[E: packages/server/src/sessions.ts:331][E: packages/server/src/sessions.ts:336][E: packages/server/src/sessions.ts:337][E: packages/server/src/sessions.ts:338][E: packages/server/src/sessions.ts:342][E: packages/server/src/sessions.ts:345][E: packages/server/src/sessions.ts:347][E: packages/server/test/sessions.test.ts:313]
+runtime 只有在没有 connections、没有 active operation，且 terminal 或 phase=`idle` 时才 dispose；因此 client disconnect 后仍在运行的 prompt 被保留，下一次回到 idle 才释放 backend lock。[E: packages/server/src/sessions.ts:331][E: packages/server/src/sessions.ts:336][E: packages/server/src/sessions.ts:337][E: packages/server/src/sessions.ts:338][E: packages/server/src/sessions.ts:342][E: packages/server/src/sessions.ts:345][E: packages/server/src/sessions.ts:347][E: packages/server/test/sessions.test.ts:310]
 
 ## Gotcha
 
-- client-side exclusive lease 不是 server-wide mutex；源码和 tests 都允许每个 attached client control 同一个 singleton runtime，conflict 由 runtime phase/error policy 拒绝。[E: packages/server/test/sessions.test.ts:223][E: packages/server/src/types.ts:43][I]
-- operation count 只保护 runtime disposal，不串行化 commands；prompt 未完成时 steer/abort 可以被并发 dispatch。[E: packages/server/src/sessions.ts:178][E: packages/server/src/sessions.ts:183][E: packages/server/src/sessions.ts:185][E: packages/server/src/sessions.ts:188][E: packages/server/test/sessions.test.ts:260][I]
+- client-side exclusive lease 不是 server-wide mutex；源码和 tests 都允许每个 attached client control 同一个 singleton runtime，conflict 由 runtime phase/error policy 拒绝。[E: packages/server/test/sessions.test.ts:220][E: packages/server/src/types.ts:42][I]
+- operation count 只保护 runtime disposal，不串行化 commands；prompt 未完成时 steer/abort 可以被并发 dispatch。[E: packages/server/src/sessions.ts:178][E: packages/server/src/sessions.ts:183][E: packages/server/src/sessions.ts:185][E: packages/server/src/sessions.ts:188][E: packages/server/test/sessions.test.ts:257][I]
 - protocol 定义 `session_removed`，但 `LiveSessionManager` 没有 delete/remove command 或该 event producer。[I]
 
 ## Sources

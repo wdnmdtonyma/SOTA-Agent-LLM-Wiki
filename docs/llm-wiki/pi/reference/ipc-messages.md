@@ -14,7 +14,7 @@ symbols:
   - ResponseMap
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 related:
   - subsys.server.message-protocol
 ---

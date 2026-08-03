@@ -9,7 +9,7 @@ symbols: [queryAndEnableKittyProtocol, setKittyProtocolActive]
 related: [subsys.tui.key-parsing]
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `terminal-capabilities` 是 `ProcessTerminal` 在 TUI 启动和退出时协商 keyboard protocol 的能力层: 优先启用 Kitty keyboard protocol, 未收到 Kitty 支持信号时降级到 xterm `modifyOtherKeys`, 并把 active state 同步给 key parsing。

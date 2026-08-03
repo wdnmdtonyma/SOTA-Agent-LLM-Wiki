@@ -15,7 +15,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `ref.agent.session-entry-types` 是 `packages/agent/src/harness/types.ts` 中 session tree entry exported types 的字段级目录:覆盖 `SessionTreeEntryBase`、所有 `SessionTreeEntry` variant、union 本身与 `PendingSessionWrite` 派生写入形态。

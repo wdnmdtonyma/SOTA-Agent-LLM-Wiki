@@ -16,7 +16,7 @@ related:
   - ref.ai.auth-types
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.ai.auth-resolution` 是 `pi-ai` 的 provider auth 决策层: 它把 provider 的 auth contract、credential store、`AuthContext` 和 request override 解析成可用于模型请求的 `AuthResult | undefined`；OAuth token 默认在剩余有效期不足五分钟时提前刷新。

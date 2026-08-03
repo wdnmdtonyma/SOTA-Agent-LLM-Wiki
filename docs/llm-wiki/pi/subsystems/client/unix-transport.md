@@ -6,6 +6,7 @@ tier: T2
 pkg: client
 source:
   - packages/client/package.json
+  - packages/client/README.md
   - packages/client/src/unix.ts
   - packages/client/test/unix.test.ts
 symbols:
@@ -17,7 +18,7 @@ related:
   - subsys.server.unix-transport
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `@earendil-works/pi-client/unix` 是显式 opt-in 的 Node-compatible Unix-domain socket `ByteTransportFactory`；root client 保持 runtime-neutral，Unix subpath 才 import `node:net`。[E: packages/client/package.json:13][E: packages/client/package.json:14][E: packages/client/package.json:15][E: packages/client/src/unix.ts:1][E: packages/client/src/unix.ts:13][E: packages/client/src/unix.ts:13]
@@ -33,6 +34,8 @@ updated: c1019d9202
 ## Factory 与连接
 
 `UnixTransportOptions` 要求 `path`，可选 `maxPendingBytes`；factory 拒绝空 path、超过平台 `sockaddr_un` UTF-8 byte limit 的 path、非正 safe-integer queue limit，以及 Windows。[E: packages/client/src/unix.ts:5][E: packages/client/src/unix.ts:7][E: packages/client/src/unix.ts:8][E: packages/client/src/unix.ts:9][E: packages/client/src/unix.ts:14][E: packages/client/src/unix.ts:15][E: packages/client/src/unix.ts:19][E: packages/client/src/unix.ts:20][E: packages/client/src/unix.ts:22]
+
+这个 built-in factory 没有 credential option；它只建立到配置 path 的 Unix socket。PiClient 要求 transport 在 resolve 前已经完成所需认证，因此 Unix deployment 的认证/授权边界只能由 server endpoint 的 filesystem permissions 或外层 connection policy提供，不是 protocol hello token。[E: packages/client/src/unix.ts:7][E: packages/client/src/unix.ts:8][E: packages/client/src/unix.ts:9][E: packages/client/src/unix.ts:23][E: packages/client/README.md:26][E: packages/client/README.md:40][I]
 
 默认 `maxPendingBytes` 是 protocol default max frame 的四倍；factory 每次调用 `connectUnixSocket()` 创建 fresh `node:net` connection。[E: packages/client/src/unix.ts:18][E: packages/client/src/unix.ts:23][E: packages/client/src/unix.ts:26][E: packages/client/src/unix.ts:32]
 
@@ -51,10 +54,13 @@ local `close()` 幂等，先标 closed/terminal 再 destroy socket，因此不�
 - queue limit 统计已经 enqueue 但尚未 settle 的 copied bytes，不包含 kernel/socket 内部不可见 buffer。[E: packages/client/src/unix.ts:73][E: packages/client/src/unix.ts:87][E: packages/client/src/unix.ts:90][E: packages/client/src/unix.ts:94][I]
 - client 默认 queue 是 `4 * DEFAULT_MAX_FRAME_LENGTH`；如果自定义 `PiClient.maxFrameLength`，Unix factory 不会自动读取该 client option，caller 应显式匹配 limits。[E: packages/client/src/unix.ts:18][I]
 - transport 支持 Bun 的依据是 Node-compatible `node:net` surface 与 package documentation；实现没有 Bun-specific branch。[E: packages/client/src/unix.ts:1][I]
+- `createUnixTransportFactory()` 不认证 peer 或发送 credential；安全性依赖目标 socket 的访问控制。需要其它认证机制时应提供 custom `ByteTransportFactory`。[E: packages/client/src/unix.ts:23][E: packages/client/README.md:26][E: packages/client/README.md:40][I]
+- tokenless `PiClient` + Unix factory 是目标公开用法；集成测试只传 `transportFactory` 并完成连接。[E: packages/client/test/unix.test.ts:80][E: packages/client/test/unix.test.ts:81][E: packages/client/test/unix.test.ts:85]
 
 ## Sources
 
 - packages/client/package.json
+- packages/client/README.md
 - packages/client/src/unix.ts
 - packages/client/test/unix.test.ts
 

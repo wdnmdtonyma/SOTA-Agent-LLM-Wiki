@@ -18,7 +18,7 @@ related:
   - ref.ai.image-models
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.ai.image-generation` 描述 `pi-ai` 的图像生成 provider/model runtime: `ImagesModels` 管 provider 清单、模型清单、refresh 和鉴权包装,底层 `generateImages` 再按 `ImagesModel.api` 分派到已注册的 image API implementation。

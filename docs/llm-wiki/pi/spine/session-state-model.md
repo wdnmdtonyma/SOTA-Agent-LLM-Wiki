@@ -29,7 +29,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `spine.session-state-model` 串起 `pi-agent-core` 的 repository → storage → `Session` → context 流程，并明确它与 `pi-coding-agent` 产品级 `SessionManager` 是两套相邻但独立的状态系统。

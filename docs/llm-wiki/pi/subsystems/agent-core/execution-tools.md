@@ -33,7 +33,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `packages/agent` 现在提供一组可复用的 harness execution tools：`bash`、`read`、`edit`、`write`。它们依赖抽象 `ExecutionEnv`，不等同于 coding-agent 产品层的七个内置工具。

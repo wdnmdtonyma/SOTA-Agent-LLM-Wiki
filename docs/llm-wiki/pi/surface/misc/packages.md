@@ -19,7 +19,7 @@ related:
   - subsys.coding-agent.resource-loader
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `surface.misc.packages` 描述 pi-coding-agent 的资源包可见面:用户可以用 npm、git 或本地路径安装包含 extensions、skills、prompt templates、themes 的 package,再由 package-manager 解析成资源路径。

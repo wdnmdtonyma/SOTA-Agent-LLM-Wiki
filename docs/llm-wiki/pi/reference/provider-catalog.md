@@ -59,7 +59,7 @@ symbols: [builtinProviders]
 related: [subsys.ai.provider-registry, surface.providers.overview]
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `ref.ai.provider-catalog` 逐实例列出 `packages/ai/src/providers/all.ts` 中 `builtinProviders()` 当前返回的内置文本 provider factory 与 `Provider.name`。

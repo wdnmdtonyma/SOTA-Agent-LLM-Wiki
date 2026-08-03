@@ -64,7 +64,7 @@ related:
   - subsys.coding-agent.telemetry
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `ref.coding-agent.env-vars` 是 pi-coding-agent 可见环境变量 catalog:覆盖 provider API key、provider request 配置、`PI_*` 产品开关、配置值 `$ENV` 模板读取规则,并标出当前未纳入本 coding-agent 节点的相邻包变量边界。

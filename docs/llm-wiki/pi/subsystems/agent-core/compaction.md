@@ -21,7 +21,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `subsys.agent-core.compaction` 是 `pi-agent-core` 的当前分支上下文压缩层: 它用 token threshold 决定是否该压缩,把 session path 切成 summary history 与 retained recent history,调用模型生成 checkpoint summary,并把文件读写 metadata 附在压缩结果上。

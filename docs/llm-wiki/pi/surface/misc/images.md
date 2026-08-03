@@ -41,7 +41,7 @@ related:
   - ref.ai.model-catalog
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 ---
 
 > `surface.misc.images` 描述 pi-coding-agent 的图像可见面: CLI `@file` 和交互输入把本地图片变成用户消息里的 `ImageContent`, settings 决定是否 resize 或 block, TUI 只在终端能力允许时把 image content 渲染成 Kitty/iTerm2 inline graphics。

@@ -13,7 +13,7 @@ symbols:
   - printHelp
 evidence: explicit
 status: verified
-updated: c1019d9202
+updated: 305c014dcc
 related:
   - surface.cli.overview
 ---
