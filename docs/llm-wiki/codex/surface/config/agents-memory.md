@@ -3,12 +3,12 @@ id: config.agents-memory
 title: agents 与 memory 设置
 kind: config
 tier: T1
-source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/profile_toml.rs, codex-rs/config/src/types.rs]
+source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/profile_toml.rs, codex-rs/config/src/types.rs, codex-rs/features/src/feature_configs.rs, codex-rs/config/src/merge.rs]
 symbols: [AgentsToml, AgentRoleToml, MemoriesToml, ThreadStoreToml]
 related: [command.session-thread, command.realtime-debug, config.skills-plugins-features, subsys.core.memory, subsys.core.thread-store]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > agents 与 memory 设置 catalog 覆盖 ConfigToml 中 instructions/developer blocks、profile selection、project docs、agent enablement/concurrency/default model, memory behavior, project trust and experimental thread config/store keys。
@@ -27,6 +27,8 @@ updated: 61a44880a8
 `AgentsToml` exposes `enabled`、per-session `max_concurrent_threads_per_session`（`max_threads` alias）、V1-only `max_depth`、默认 subagent model/reasoning effort、interrupt-message policy 与 flattened role declarations。`job_max_runtime_seconds` 只为旧配置可解析而保留，是 schema-hidden no-op；当前没有 agent-job runtime。[E: codex-rs/config/src/config_toml.rs:681][E: codex-rs/config/src/config_toml.rs:703][E: codex-rs/config/src/config_toml.rs:699][E: codex-rs/config/src/config_toml.rs:700]
 
 `MemoriesToml` includes generation/use toggles, dedicated tools, retention limits, rate-limit threshold, and model overrides; memory defaults set `max_rollouts_per_startup` to 2 and `max_rollout_age_days` to 10.[E: codex-rs/config/src/types.rs:290][E: codex-rs/config/src/types.rs:295][E: codex-rs/config/src/types.rs:297][E: codex-rs/config/src/types.rs:299][E: codex-rs/config/src/types.rs:309][E: codex-rs/config/src/types.rs:314][E: codex-rs/config/src/types.rs:316][E: codex-rs/config/src/types.rs:318][E: codex-rs/config/src/types.rs:46][E: codex-rs/config/src/types.rs:47][E: codex-rs/config/src/types.rs:347][E: codex-rs/config/src/types.rs:348]
+
+multi-agent v2 的配置不增加 ConfigToml 顶层字段，而是扩展 `features.multi_agent_v2` table：`subagent_developer_instructions` 可覆盖没有 role-specific instructions 的 subagent developer instructions。layer merge 对该 feature 特判 bool/table 兼容：低层 bool 遇高层 table 会提升为 `{ enabled = ... }`，低层 table 遇高层 bool 则只覆盖其 `enabled`，避免丢掉 table 内的其余 knobs。[E: codex-rs/features/src/feature_configs.rs:72][E: codex-rs/features/src/feature_configs.rs:100][E: codex-rs/config/src/merge.rs:61][E: codex-rs/config/src/merge.rs:75]
 
 ## 字段 catalog
 
@@ -57,6 +59,8 @@ updated: 61a44880a8
 - `codex-rs/config/src/config_toml.rs`
 - `codex-rs/config/src/profile_toml.rs`
 - `codex-rs/config/src/types.rs`
+- `codex-rs/features/src/feature_configs.rs`
+- `codex-rs/config/src/merge.rs`
 
 ## 相关
 

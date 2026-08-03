@@ -8,7 +8,7 @@ symbols: [create_resume_agent_tool, ResumeAgentHandler, multi_agents::resume_age
 related: [tool.spawn-agent-v1, tool.close-agent-v1, tool.send-input-v1]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `resume_agent` V1 是 `multi_agent_v1` namespace 下的恢复工具；它按 agent id 尝试从 recorded rollout 重新加载当前 not-live/missing 的 agent，并返回恢复后的 status。
@@ -23,9 +23,9 @@ updated: 61a44880a8
 
 ## 注册与门控
 
-`resume_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 在 `search_tool_enabled` true 时是 deferred，否则 direct。[E: codex-rs/core/src/tools/spec_plan.rs:825][E: codex-rs/core/src/tools/spec_plan.rs:827][E: codex-rs/core/src/tools/spec_plan.rs:884][E: codex-rs/core/src/tools/spec_plan.rs:887][E: codex-rs/core/src/tools/spec_plan.rs:888][E: codex-rs/core/src/tools/spec_plan.rs:890][E: codex-rs/core/src/tools/spec_plan.rs:905]
+`resume_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 在 `search_tool_enabled` true 时是 deferred，否则 direct。[E: codex-rs/core/src/tools/spec_plan.rs:886][E: codex-rs/core/src/tools/spec_plan.rs:888][E: codex-rs/core/src/tools/spec_plan.rs:889][E: codex-rs/core/src/tools/spec_plan.rs:945][E: codex-rs/core/src/tools/spec_plan.rs:948][E: codex-rs/core/src/tools/spec_plan.rs:949][E: codex-rs/core/src/tools/spec_plan.rs:951][E: codex-rs/core/src/tools/spec_plan.rs:966]
 
-handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:20][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:21][E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
+handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:20][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:21][E: codex-rs/tools/src/tool_executor.rs:73][E: codex-rs/tools/src/tool_executor.rs:74]
 
 ## 输入与 handler
 
@@ -33,9 +33,9 @@ schema 只有 required `id`，描述为 agent id；handler 直接用 `ThreadId::
 
 handler 读取目标 metadata，检查当前 spawn depth 是否超过 `agent_max_depth`，然后发出 `CollabAgentToolCall` started item。[E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:47][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:52][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:53][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:54][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:60][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:63]
 
-如果当前 status 是 `NotFound`，handler 调用 `try_resume_closed_agent`；该 helper 用 `build_agent_resume_config` 构造 resume config，`build_agent_resume_config` 先构造 shared config 再把 `config.base_instructions` 置为 `None`，然后 handler 调用 `resume_agent_from_rollout`。[E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:82][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:87][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:88][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:188][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:194][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:185][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:186][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:188][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:195]
+如果当前 status 是 `NotFound`，handler 调用 `try_resume_closed_agent`；该 helper 用 `build_agent_resume_config` 构造 resume config，`build_agent_resume_config` 先构造 shared config 再把 `config.base_instructions` 置为 `None`，然后 handler 调用 `resume_agent_from_rollout`。[E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:82][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:87][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:88][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:188][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:194][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:186][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:187][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:189][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:195]
 
-`AgentControl::resume_agent_from_rollout` 会恢复单个 recorded rollout；当配置或恢复出来的版本是 V2 时直接返回，否则继续遍历 persisted open spawn children 并恢复 legacy descendants。[E: codex-rs/core/src/agent/control/spawn.rs:717][E: codex-rs/core/src/agent/control/spawn.rs:723][E: codex-rs/core/src/agent/control/spawn.rs:724][E: codex-rs/core/src/agent/control/spawn.rs:729][E: codex-rs/core/src/agent/control/spawn.rs:732][E: codex-rs/core/src/agent/control/spawn.rs:738][E: codex-rs/core/src/agent/control/spawn.rs:741][E: codex-rs/core/src/agent/control/spawn.rs:743]
+`AgentControl::resume_agent_from_rollout` 会恢复单个 recorded rollout；当配置或恢复出来的版本是 V2 时直接返回，否则继续遍历 persisted open spawn children 并恢复 legacy descendants。[E: codex-rs/core/src/agent/control/spawn.rs:831][E: codex-rs/core/src/agent/control/spawn.rs:837][E: codex-rs/core/src/agent/control/spawn.rs:838][E: codex-rs/core/src/agent/control/spawn.rs:843][E: codex-rs/core/src/agent/control/spawn.rs:846][E: codex-rs/core/src/agent/control/spawn.rs:852][E: codex-rs/core/src/agent/control/spawn.rs:855][E: codex-rs/core/src/agent/control/spawn.rs:857]
 
 ## 输出
 

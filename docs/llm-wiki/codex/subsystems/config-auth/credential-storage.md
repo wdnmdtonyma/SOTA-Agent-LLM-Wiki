@@ -8,7 +8,7 @@ symbols: [AuthDotJson, AuthStorageBackend, FileAuthStorage, DirectKeyringAuthSto
 related: [subsys.config-auth.auth-flows, config.auth-account, subsys.platform.agent-identity]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > Codex 凭据存储由 login auth storage、keyring-store 和 secrets 三层组成：`AuthDotJson` 是 CLI auth schema，auth storage 可在 file、keyring、auto、ephemeral mode 间切换；keyring mode 再按 `AuthKeyringBackendKind` 选择直接 OS keyring 或本地加密 secrets 文件。[E: codex-rs/login/src/auth/storage.rs:40][E: codex-rs/config/src/types.rs:107][E: codex-rs/config/src/types.rs:107][E: codex-rs/config/src/types.rs:139][E: codex-rs/login/src/auth/storage.rs:532]
@@ -65,7 +65,7 @@ credential-storage 节点覆盖 secret material 的持久化和 backend fallback
 
 - keyring auth storage 的 account key 与 canonicalized `codex_home` 绑定；移动 `codex_home` 可能导致 keyring account key 变化。[I]
 - `FileAuthStorage::save` 使用 0600 mode，但这只覆盖 Unix permissions 语义；跨平台权限细节由 Rust/OpenOptionsExt 条件编译和平台 filesystem 处理。[I]
-- local dev build 会把 configured `Keyring`/`Auto` CLI auth storage 解析成 `File`，这会绕过 keyring 与 secrets backend。[E: codex-rs/core/src/config/mod.rs:287][E: codex-rs/core/src/config/mod.rs:291][E: codex-rs/core/src/config/mod.rs:294][E: codex-rs/core/src/config/mod.rs:295][E: codex-rs/core/src/config/mod.rs:4025][E: codex-rs/core/src/config/mod.rs:4026]
+- local dev build 会把 configured `Keyring`/`Auto` CLI auth storage 解析成 `File`，这会绕过 keyring 与 secrets backend。[E: codex-rs/core/src/config/mod.rs:288][E: codex-rs/core/src/config/mod.rs:292][E: codex-rs/core/src/config/mod.rs:295][E: codex-rs/core/src/config/mod.rs:296][E: codex-rs/core/src/config/mod.rs:4053][E: codex-rs/core/src/config/mod.rs:4054]
 - `ChatgptAuthTokens` 形态会强制使用 `Ephemeral` storage，不跟随配置的 auth credentials store mode。[E: codex-rs/login/src/auth/manager.rs:1509][E: codex-rs/login/src/auth/manager.rs:1513][E: codex-rs/login/src/auth/manager.rs:1514]
 - `secrets` local store 的 passphrase 会保存在 keyring；如果 keyring 不可用，local secret store 的具体失败行为要沿 `LocalSecretsBackend::load_or_create_passphrase` 调用链判断。[E: codex-rs/secrets/src/local.rs:192][E: codex-rs/secrets/src/local.rs:196][E: codex-rs/secrets/src/local.rs:207][E: codex-rs/secrets/src/local.rs:208]
 

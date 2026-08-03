@@ -3,15 +3,15 @@ id: subsys.tui.status-surfaces
 title: Status Surfaces
 kind: subsystem
 tier: T2
-source: [codex-rs/tui/src/status/card.rs, codex-rs/tui/src/status/rate_limits.rs, codex-rs/tui/src/chatwidget/status_surfaces.rs, codex-rs/tui/src/chatwidget/usage.rs, codex-rs/tui/src/chatwidget/reset_credits.rs, codex-rs/tui/src/bottom_pane/mod.rs, codex-rs/tui/src/chatwidget.rs]
-symbols: [StatusHistoryCell, StatusHistoryHandle, StatusRateLimitData, RateLimitSnapshotDisplay, ChatWidget::status_surface_selections, ChatWidget::open_usage_menu, ResetCreditOption, reset_credit_options, BottomPane::set_task_running]
+source: [codex-rs/tui/src/status/card.rs, codex-rs/tui/src/status/rate_limits.rs, codex-rs/tui/src/status/helpers.rs, codex-rs/tui/src/chatwidget/status_surfaces.rs, codex-rs/tui/src/chatwidget/usage.rs, codex-rs/tui/src/chatwidget/reset_credits.rs, codex-rs/tui/src/chatwidget/goal_menu.rs, codex-rs/tui/src/goal_display.rs, codex-rs/tui/src/bottom_pane/mod.rs, codex-rs/tui/src/chatwidget.rs, codex-rs/protocol/src/account.rs]
+symbols: [StatusHistoryCell, StatusHistoryHandle, StatusRateLimitData, RateLimitSnapshotDisplay, plan_type_display_name, goal_status_label, ChatWidget::status_surface_selections, ChatWidget::open_usage_menu, ResetCreditOption, reset_credit_options, BottomPane::set_task_running]
 related: [subsys.tui.chatwidget, subsys.tui.bottom-pane, subsys.config-auth.features-system]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
-> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/bottom_pane/mod.rs:1034][E: codex-rs/tui/src/chatwidget.rs:636]
+> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections 和 rate-limit display shaping；这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:87][E: codex-rs/tui/src/bottom_pane/mod.rs:1047][E: codex-rs/tui/src/chatwidget.rs:646]
 
 ## 能回答的问题
 
@@ -28,7 +28,13 @@ updated: 61a44880a8
 
 `new_status_output_with_rate_limits_handle` 构造一个 `/status` command cell 和 `StatusHistoryCell`，并返回 `CompositeHistoryCell` 与 handle；调用者可在异步 rate-limit refresh 完成后更新同一个 card。[E: codex-rs/tui/src/status/card.rs:200][E: codex-rs/tui/src/status/card.rs:201][E: codex-rs/tui/src/status/card.rs:211][E: codex-rs/tui/src/status/card.rs:218][E: codex-rs/tui/src/status/card.rs:220][E: codex-rs/tui/src/status/card.rs:221][E: codex-rs/tui/src/status/card.rs:238]
 
-permissions label 会把 built-in profile、sandbox、approval policy 和 workspace root suffix 压成用户可读短标签；auto-review reviewer 在 `OnRequest` 下显示为 `Approve for me`。[E: codex-rs/tui/src/status/card.rs:579][E: codex-rs/tui/src/status/card.rs:584][E: codex-rs/tui/src/status/card.rs:619][E: codex-rs/tui/src/status/card.rs:627][E: codex-rs/tui/src/status/card.rs:629][E: codex-rs/tui/src/status/card.rs:637][E: codex-rs/tui/src/status/card.rs:652][E: codex-rs/tui/src/status/card.rs:668][E: codex-rs/tui/src/status/card.rs:677][E: codex-rs/tui/src/status/card.rs:693][E: codex-rs/tui/src/status/card.rs:698][E: codex-rs/tui/src/status/card.rs:700]
+permissions label 会把 built-in profile、sandbox、approval policy 和 workspace root suffix 压成用户可读短标签；auto-review reviewer 在 `OnRequest` 下显示为 `Approve for me`。[E: codex-rs/tui/src/status/card.rs:577][E: codex-rs/tui/src/status/card.rs:582][E: codex-rs/tui/src/status/card.rs:617][E: codex-rs/tui/src/status/card.rs:625][E: codex-rs/tui/src/status/card.rs:627][E: codex-rs/tui/src/status/card.rs:635][E: codex-rs/tui/src/status/card.rs:650][E: codex-rs/tui/src/status/card.rs:666][E: codex-rs/tui/src/status/card.rs:675][E: codex-rs/tui/src/status/card.rs:691][E: codex-rs/tui/src/status/card.rs:696][E: codex-rs/tui/src/status/card.rs:698]
+
+## User-Facing Labels
+
+plan label 不是 protocol variant 的直接 title-case：`EnterpriseCbpAutomation` 显示为 `Enterprise (Automation)`，team-like variants（包括 `SelfServeBusinessProLite`）显示为 `Business`，business-like variants 显示为 `Enterprise`，`ProLite` 显示为 `Pro Lite`。[E: codex-rs/tui/src/status/helpers.rs:99][E: codex-rs/tui/src/status/helpers.rs:100][E: codex-rs/tui/src/status/helpers.rs:102][E: codex-rs/tui/src/status/helpers.rs:104][E: codex-rs/tui/src/status/helpers.rs:106][E: codex-rs/protocol/src/account.rs:54][E: codex-rs/protocol/src/account.rs:57][E: codex-rs/protocol/src/account.rs:61][E: codex-rs/protocol/src/account.rs:66]
+
+goal protocol status 仍是 `Blocked`，但两处 TUI label 都显式显示为 `stalled`：history/status display 使用 `ThreadGoalStatus`，goal menu 使用 `AppThreadGoalStatus`。[E: codex-rs/tui/src/goal_display.rs:33][E: codex-rs/tui/src/goal_display.rs:37][E: codex-rs/tui/src/chatwidget/goal_menu.rs:122][E: codex-rs/tui/src/chatwidget/goal_menu.rs:126]
 
 ## Rate-Limit Display
 
@@ -56,7 +62,7 @@ reset picker 将 `available_count` clamp 到非负数，只取 `Available` credi
 
 ## Running Status
 
-running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1034][E: codex-rs/tui/src/bottom_pane/mod.rs:1036][E: codex-rs/tui/src/bottom_pane/mod.rs:1037][E: codex-rs/tui/src/bottom_pane/mod.rs:1041][E: codex-rs/tui/src/bottom_pane/mod.rs:1042][E: codex-rs/tui/src/bottom_pane/mod.rs:1049][E: codex-rs/tui/src/bottom_pane/mod.rs:1052]
+running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1047][E: codex-rs/tui/src/bottom_pane/mod.rs:1049][E: codex-rs/tui/src/bottom_pane/mod.rs:1050][E: codex-rs/tui/src/bottom_pane/mod.rs:1054][E: codex-rs/tui/src/bottom_pane/mod.rs:1055][E: codex-rs/tui/src/bottom_pane/mod.rs:1062][E: codex-rs/tui/src/bottom_pane/mod.rs:1068]
 
 ## Gotchas
 
@@ -67,11 +73,15 @@ running-task inline status 属于 bottom pane：`set_task_running` 更新 compos
 
 - `codex-rs/tui/src/status/card.rs`
 - `codex-rs/tui/src/status/rate_limits.rs`
+- `codex-rs/tui/src/status/helpers.rs`
 - `codex-rs/tui/src/chatwidget/status_surfaces.rs`
 - `codex-rs/tui/src/chatwidget/usage.rs`
 - `codex-rs/tui/src/chatwidget/reset_credits.rs`
+- `codex-rs/tui/src/chatwidget/goal_menu.rs`
+- `codex-rs/tui/src/goal_display.rs`
 - `codex-rs/tui/src/bottom_pane/mod.rs`
 - `codex-rs/tui/src/chatwidget.rs`
+- `codex-rs/protocol/src/account.rs`
 
 ## 相关
 

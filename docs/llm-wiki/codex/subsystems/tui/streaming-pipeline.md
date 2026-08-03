@@ -3,12 +3,12 @@ id: subsys.tui.streaming-pipeline
 title: Streaming Pipeline
 kind: subsystem
 tier: T2
-source: [codex-rs/tui/src/markdown_stream.rs, codex-rs/tui/src/markdown_render/streaming.rs, codex-rs/tui/src/streaming/mod.rs, codex-rs/tui/src/streaming/render.rs, codex-rs/tui/src/streaming/chunking.rs, codex-rs/tui/src/streaming/commit_tick.rs, codex-rs/tui/src/streaming/controller.rs, codex-rs/tui/src/chatwidget/streaming.rs, codex-rs/tui/src/exec_cell/live_output.rs]
-symbols: [MarkdownStreamCollector, StreamingMarkdownRender, StreamingRender, StreamState, AdaptiveChunkingPolicy, ChunkingMode, DrainPlan, run_commit_tick, StreamController, PlanStreamController, LiveCommandOutput]
+source: [codex-rs/tui/src/markdown_stream.rs, codex-rs/tui/src/markdown_render/streaming.rs, codex-rs/tui/src/streaming/mod.rs, codex-rs/tui/src/streaming/render.rs, codex-rs/tui/src/streaming/chunking.rs, codex-rs/tui/src/streaming/commit_tick.rs, codex-rs/tui/src/streaming/controller.rs, codex-rs/tui/src/chatwidget/streaming.rs, codex-rs/tui/src/exec_cell/live_output.rs, codex-rs/tui/src/app/resize_reflow.rs]
+symbols: [MarkdownStreamCollector, StreamingMarkdownRender, StreamingRender, StreamState, AdaptiveChunkingPolicy, ChunkingMode, DrainPlan, run_commit_tick, StreamController, PlanStreamController, LiveCommandOutput, App::maybe_run_resize_reflow]
 related: [subsys.tui.chatwidget, subsys.tui.rendering-theming, subsys.tui.event-system]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/chatwidget/streaming.rs:141][I]
@@ -58,6 +58,10 @@ command execution 的 live cell 另有独立内存边界：`LiveCommandOutput` �
 
 `ChatWidget` glue 中，answer stream 用带 thread-scoped inline-visualization context 的 controller，plan stream 仍使用普通 controller；delta 没有 newline 时不重建可见 tail，tail 内容未变化时也不 bump active-cell revision/redraw。[E: codex-rs/tui/src/chatwidget/streaming.rs:145][E: codex-rs/tui/src/chatwidget/streaming.rs:158][E: codex-rs/tui/src/chatwidget/streaming.rs:442][E: codex-rs/tui/src/chatwidget/streaming.rs:461][E: codex-rs/tui/src/chatwidget/streaming.rs:467][E: codex-rs/tui/src/chatwidget/streaming.rs:498][E: codex-rs/tui/src/chatwidget/streaming.rs:519]
 
+## Resize Reflow
+
+pending resize reflow 到期后会按当前宽度从 transcript cells 重建 history；若 reflow 发生在 answer/plan stream 活跃或尾部 consolidation 尚未完成时，会额外记录 stream-time 标记。每次完成 reflow 都无条件安排一次 follow-up screen-size sample，以吸收 terminal resize settling。[E: codex-rs/tui/src/app/resize_reflow.rs:383][E: codex-rs/tui/src/app/resize_reflow.rs:388][E: codex-rs/tui/src/app/resize_reflow.rs:409][E: codex-rs/tui/src/app/resize_reflow.rs:412][E: codex-rs/tui/src/app/resize_reflow.rs:415][E: codex-rs/tui/src/app/resize_reflow.rs:421][E: codex-rs/tui/src/app/resize_reflow.rs:439][E: codex-rs/tui/src/app/resize_reflow.rs:448]
+
 ## Gotchas
 
 - chunking policy 的 non-responsibilities 明确包括 tick scheduling、line reordering 和 transport-specific semantics；调参时不要把 source 类型塞进 policy。[I]
@@ -75,6 +79,7 @@ command execution 的 live cell 另有独立内存边界：`LiveCommandOutput` �
 - `codex-rs/tui/src/streaming/controller.rs`
 - `codex-rs/tui/src/chatwidget/streaming.rs`
 - `codex-rs/tui/src/exec_cell/live_output.rs`
+- `codex-rs/tui/src/app/resize_reflow.rs`
 
 ## 相关
 

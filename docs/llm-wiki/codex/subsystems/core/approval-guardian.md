@@ -3,15 +3,15 @@ id: subsys.core.approval-guardian
 title: Guardian 自动审批审查
 kind: subsystem
 tier: T2
-source: [codex-rs/core/src/tools/approvals.rs, codex-rs/core/src/guardian/mod.rs, codex-rs/core/src/guardian/approval_request.rs, codex-rs/core/src/guardian/review.rs, codex-rs/core/src/guardian/prompt.rs, codex-rs/core/src/guardian/review_session.rs, codex-rs/protocol/src/approvals.rs]
+source: [codex-rs/core/src/tools/approvals.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/guardian/mod.rs, codex-rs/core/src/guardian/approval_request.rs, codex-rs/core/src/guardian/review.rs, codex-rs/core/src/guardian/prompt.rs, codex-rs/core/src/guardian/review_session.rs, codex-rs/protocol/src/approvals.rs]
 symbols: [GuardianApprovalRequest, GuardianAssessment, GuardianAssessmentEvent, GuardianRejectionCircuitBreaker, routes_approval_to_guardian, review_approval_request, build_guardian_prompt_items_with_parent_turn, GuardianReviewSessionManager, GuardianReviewSessionOutcome]
 related: [subsys.core.approval-policy, subsys.core.review-mode, subsys.core.instruction-assembly, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
-> Guardian 是 automatic approval reviewer：在 `OnRequest` 或 `Granular(_)` 且 `approvals_reviewer == AutoReview` 时，它把具体 approval request 交给名为 `guardian` 的子 Codex 审查；timeout、session failure、parse failure 都按 fail-closed 处理，不把动作静默放行。[E: codex-rs/core/src/guardian/mod.rs:47][E: codex-rs/core/src/guardian/review.rs:173][E: codex-rs/core/src/guardian/review.rs:190][E: codex-rs/core/src/guardian/review.rs:192][E: codex-rs/core/src/guardian/review.rs:293][E: codex-rs/core/src/guardian/review_session.rs:666][E: codex-rs/core/src/guardian/review_session.rs:680]
+> Guardian 是 automatic approval reviewer：在 `OnRequest` 或 `Granular(_)` 且 `approvals_reviewer == AutoReview` 时，它把具体 approval request 交给名为 `guardian` 的子 Codex 审查；timeout、session failure、parse failure 都按 fail-closed 处理，不把动作静默放行。[E: codex-rs/core/src/guardian/mod.rs:47][E: codex-rs/core/src/guardian/review.rs:173][E: codex-rs/core/src/guardian/review.rs:190][E: codex-rs/core/src/guardian/review.rs:192][E: codex-rs/core/src/guardian/review.rs:293][E: codex-rs/core/src/guardian/review_session.rs:667][E: codex-rs/core/src/guardian/review_session.rs:681]
 
 ## 能回答的问题
 
@@ -29,7 +29,7 @@ updated: 61a44880a8
 | `codex-rs/core/src/guardian/approval_request.rs` | `GuardianApprovalRequest` enum、action JSON 序列化、protocol assessment action 映射。[E: codex-rs/core/src/guardian/approval_request.rs:17][E: codex-rs/core/src/guardian/approval_request.rs:262][E: codex-rs/core/src/guardian/approval_request.rs:380] |
 | `codex-rs/core/src/guardian/prompt.rs` | transcript 收集、full/delta prompt、denied-read context、action JSON 注入、truncation。[E: codex-rs/core/src/guardian/prompt.rs:32][E: codex-rs/core/src/guardian/prompt.rs:78][E: codex-rs/core/src/guardian/prompt.rs:108][E: codex-rs/core/src/guardian/prompt.rs:244][E: codex-rs/core/src/guardian/prompt.rs:523] |
 | `codex-rs/core/src/guardian/review.rs` | routing gate、review state machine、events、analytics、deny rationale storage、circuit breaker callout。[E: codex-rs/core/src/guardian/review.rs:173][E: codex-rs/core/src/guardian/review.rs:326][E: codex-rs/core/src/guardian/review.rs:558][E: codex-rs/core/src/guardian/review.rs:606] |
-| `codex-rs/core/src/guardian/review_session.rs` | reusable trunk/ephemeral sessions、review lock、subagent spawn、prompt submit、read-only review turn settings。[E: codex-rs/core/src/guardian/review_session.rs:98][E: codex-rs/core/src/guardian/review_session.rs:300][E: codex-rs/core/src/guardian/review_session.rs:657][E: codex-rs/core/src/guardian/review_session.rs:701][E: codex-rs/core/src/guardian/review_session.rs:798] |
+| `codex-rs/core/src/guardian/review_session.rs` | reusable trunk/ephemeral sessions、review lock、subagent spawn、prompt submit、read-only review turn settings。[E: codex-rs/core/src/guardian/review_session.rs:98][E: codex-rs/core/src/guardian/review_session.rs:301][E: codex-rs/core/src/guardian/review_session.rs:658][E: codex-rs/core/src/guardian/review_session.rs:702][E: codex-rs/core/src/guardian/review_session.rs:799] |
 | `codex-rs/core/src/tools/approvals.rs` | tool approval 的 central policy stage；permission hooks 优先，随后才按 routing gate 选择 Guardian 或用户，并统一拒绝/timeout 文案和 telemetry。[E: codex-rs/core/src/tools/approvals.rs:135][E: codex-rs/core/src/tools/approvals.rs:161][E: codex-rs/core/src/tools/approvals.rs:169] |
 
 ## 数据模型
@@ -58,14 +58,16 @@ updated: 61a44880a8
 2. Full prompt 与 Delta prompt 都声明 transcript、tool arguments/results、retry reason、planned action 是 untrusted evidence；Delta 只发送 cursor 之后的新 retained entries。[E: codex-rs/core/src/guardian/prompt.rs:137][E: codex-rs/core/src/guardian/prompt.rs:145][E: codex-rs/core/src/guardian/prompt.rs:152][E: codex-rs/core/src/guardian/prompt.rs:155][E: codex-rs/core/src/guardian/prompt.rs:165]
 3. transcript rendering 保留首个和最后一个 user turn，优先从新到旧补 user entries，再按预算保留最近非 user entries；tool 与 message budget 分开。[E: codex-rs/core/src/guardian/prompt.rs:340][E: codex-rs/core/src/guardian/prompt.rs:346][E: codex-rs/core/src/guardian/prompt.rs:351][E: codex-rs/core/src/guardian/prompt.rs:374][E: codex-rs/core/src/guardian/prompt.rs:382]
 4. transcript collection 跳过 contextual user messages，但保留真实 user、developer auto-review marker、assistant、agent message、shell call、function/custom calls 和 tool outputs。[E: codex-rs/core/src/guardian/prompt.rs:432][E: codex-rs/core/src/guardian/prompt.rs:435][E: codex-rs/core/src/guardian/prompt.rs:441][E: codex-rs/core/src/guardian/prompt.rs:453][E: codex-rs/core/src/guardian/prompt.rs:456][E: codex-rs/core/src/guardian/prompt.rs:462][E: codex-rs/core/src/guardian/prompt.rs:466][E: codex-rs/core/src/guardian/prompt.rs:496]
-5. `GuardianReviewSessionManager::run_review` 用 reuse key 管理 trunk；key mismatch 且 trunk 空闲时替换 trunk，key mismatch 或 trunk busy 时走 ephemeral review。[E: codex-rs/core/src/guardian/review_session.rs:370][E: codex-rs/core/src/guardian/review_session.rs:375][E: codex-rs/core/src/guardian/review_session.rs:389][E: codex-rs/core/src/guardian/review_session.rs:396][E: codex-rs/core/src/guardian/review_session.rs:448][E: codex-rs/core/src/guardian/review_session.rs:458][E: codex-rs/core/src/guardian/review_session.rs:461]
-6. Guardian 子 Codex 通过 `run_codex_thread_interactive` spawn，source 是 `SubAgentSource::Other("guardian")`；review turn submit 时强制 `approval_policy: Never`、`permission_profile: read_only()`、collaboration mode `Default`。[E: codex-rs/core/src/guardian/review_session.rs:666][E: codex-rs/core/src/guardian/review_session.rs:680][E: codex-rs/core/src/guardian/review_session.rs:798][E: codex-rs/core/src/guardian/review_session.rs:811][E: codex-rs/core/src/guardian/review_session.rs:822][E: codex-rs/core/src/guardian/review_session.rs:824][E: codex-rs/core/src/guardian/review_session.rs:827][E: codex-rs/core/src/guardian/review_session.rs:828]
-7. review prompt 构建前会把 parent session 已批准 hosts 同步到 guardian session 的 network approval service。[E: codex-rs/core/src/guardian/review_session.rs:755][E: codex-rs/core/src/guardian/review_session.rs:760][E: codex-rs/core/src/guardian/review_session.rs:762]
+5. `GuardianReviewSessionManager::run_review` 用 reuse key 管理 trunk；key mismatch 且 trunk 空闲时替换 trunk，key mismatch 或 trunk busy 时走 ephemeral review。[E: codex-rs/core/src/guardian/review_session.rs:371][E: codex-rs/core/src/guardian/review_session.rs:376][E: codex-rs/core/src/guardian/review_session.rs:390][E: codex-rs/core/src/guardian/review_session.rs:397][E: codex-rs/core/src/guardian/review_session.rs:449][E: codex-rs/core/src/guardian/review_session.rs:459][E: codex-rs/core/src/guardian/review_session.rs:462]
+6. Guardian 子 Codex 通过 `run_codex_thread_interactive` spawn，source 是 `SubAgentSource::Other("guardian")`；review turn submit 时强制 `approval_policy: Never`、`permission_profile: read_only()`、collaboration mode `Default`。[E: codex-rs/core/src/guardian/review_session.rs:667][E: codex-rs/core/src/guardian/review_session.rs:681][E: codex-rs/core/src/guardian/review_session.rs:799][E: codex-rs/core/src/guardian/review_session.rs:811][E: codex-rs/core/src/guardian/review_session.rs:821][E: codex-rs/core/src/guardian/review_session.rs:823][E: codex-rs/core/src/guardian/review_session.rs:826][E: codex-rs/core/src/guardian/review_session.rs:827]
+7. review prompt 构建前会把 parent session 已批准 hosts 同步到 guardian session 的 network approval service。[E: codex-rs/core/src/guardian/review_session.rs:756][E: codex-rs/core/src/guardian/review_session.rs:761][E: codex-rs/core/src/guardian/review_session.rs:763]
+
+Guardian reviewer 的 model tool surface 也被 planner 单独收紧：`add_core_tool_sources` 识别 guardian source 后，只在 environment 存在时注册 `exec_command`、`write_stdin` 与 `view_image`，随后立即返回；普通 core utilities、MCP 与 collaboration tools 不会继续加入该 review turn。[E: codex-rs/core/src/tools/spec_plan.rs:669][E: codex-rs/core/src/tools/spec_plan.rs:672][E: codex-rs/core/src/tools/spec_plan.rs:694][E: codex-rs/core/src/tools/spec_plan.rs:697]
 
 ## 设计动机与权衡
 
-- Guardian 使用独立 child Codex 而不是 parent turn 内直接自评，是为了把审查运行在单独 prompt、read-only permission profile 和 `AskForApproval::Never` 下。[E: codex-rs/core/src/guardian/review_session.rs:666][E: codex-rs/core/src/guardian/review_session.rs:798][E: codex-rs/core/src/guardian/review_session.rs:822][E: codex-rs/core/src/guardian/review_session.rs:824][I]
-- reusable trunk 降低重复 reviewer 启动成本；ephemeral review 在 key mismatch 或 trunk lock 竞争时避免串行阻塞。[E: codex-rs/core/src/guardian/review_session.rs:389][E: codex-rs/core/src/guardian/review_session.rs:448][E: codex-rs/core/src/guardian/review_session.rs:458][I]
+- Guardian 使用独立 child Codex 而不是 parent turn 内直接自评，是为了把审查运行在单独 prompt、read-only permission profile 和 `AskForApproval::Never` 下。[E: codex-rs/core/src/guardian/review_session.rs:667][E: codex-rs/core/src/guardian/review_session.rs:799][E: codex-rs/core/src/guardian/review_session.rs:821][E: codex-rs/core/src/guardian/review_session.rs:823][I]
+- reusable trunk 降低重复 reviewer 启动成本；ephemeral review 在 key mismatch 或 trunk lock 竞争时避免串行阻塞。[E: codex-rs/core/src/guardian/review_session.rs:390][E: codex-rs/core/src/guardian/review_session.rs:449][E: codex-rs/core/src/guardian/review_session.rs:459][I]
 - fail-closed 策略让审查失败不会自动放行动作；timeout 被单独返回为 `TimedOut`，保留与 explicit deny 的语义差异。[E: codex-rs/core/src/guardian/review.rs:293][E: codex-rs/core/src/guardian/review.rs:434][E: codex-rs/core/src/guardian/review.rs:481][E: codex-rs/core/src/guardian/review.rs:546][I]
 
 ## Gotcha
@@ -77,6 +79,7 @@ updated: 61a44880a8
 ## Sources
 
 - `codex-rs/core/src/tools/approvals.rs`
+- `codex-rs/core/src/tools/spec_plan.rs`
 - `codex-rs/core/src/guardian/mod.rs`
 - `codex-rs/core/src/guardian/approval_request.rs`
 - `codex-rs/core/src/guardian/review.rs`

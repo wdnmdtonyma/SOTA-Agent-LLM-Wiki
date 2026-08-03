@@ -8,7 +8,7 @@ symbols: [AuthProvider, SharedAuthProvider, AuthError, auth_header_telemetry, au
 related: [subsys.providers.overview, subsys.providers.provider-openai, subsys.providers.provider-bedrock, subsys.providers.http-client, subsys.config-auth.auth-flows]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > Provider auth layer turns provider/login state into request mutation: generic providers usually attach header-only auth, AgentIdentity uses a signed authorization header, and Amazon Bedrock can sign the prepared request with AWS SigV4。[E: codex-rs/codex-api/src/auth.rs:30][E: codex-rs/model-provider/src/auth.rs:85][E: codex-rs/model-provider/src/auth.rs:88][E: codex-rs/model-provider/src/auth.rs:100][E: codex-rs/model-provider/src/auth.rs:179][E: codex-rs/model-provider/src/auth.rs:282][E: codex-rs/model-provider/src/amazon_bedrock/auth.rs:137][E: codex-rs/model-provider/src/amazon_bedrock/auth.rs:141][E: codex-rs/model-provider/src/amazon_bedrock/auth.rs:152][E: codex-rs/model-provider/src/amazon_bedrock/auth.rs:155]

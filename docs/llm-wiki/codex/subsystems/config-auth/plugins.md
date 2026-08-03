@@ -3,15 +3,15 @@ id: subsys.config-auth.plugins
 title: Plugins 系统
 kind: subsystem
 tier: T2
-source: [codex-rs/core-plugins/src/agent_plugin_manifest.rs, codex-rs/core-plugins/src/manifest.rs, codex-rs/plugin/src/lib.rs, codex-rs/plugin/src/plugin_id.rs, codex-rs/plugin/src/load_outcome.rs, codex-rs/utils/plugins/src/plugin_namespace.rs, codex-rs/exec-server-protocol/src/protocol.rs, codex-rs/core-skills/src/loader.rs]
-symbols: [PluginManifest, UriPluginManifest, parse_agent_plugin_manifest_uri, load_plugin_manifest, load_plugin_command_paths, parse_plugin_manifest_uri, PluginId, plugin_namespace_for_skill_path, LoadedPlugin, PluginLoadOutcome, PluginCapabilitySummary]
+source: [codex-rs/core-plugins/src/agent_plugin_manifest.rs, codex-rs/core-plugins/src/manifest.rs, codex-rs/core-plugins/src/loader.rs, codex-rs/core-plugins/src/manager.rs, codex-rs/core-plugins/src/provider.rs, codex-rs/core-plugins/src/store.rs, codex-rs/core-plugins/src/remote/search.rs, codex-rs/core-plugins/src/remote_bundle.rs, codex-rs/plugin/src/lib.rs, codex-rs/plugin/src/plugin_id.rs, codex-rs/plugin/src/load_outcome.rs, codex-rs/utils/plugins/src/plugin_namespace.rs, codex-rs/exec-server-protocol/src/protocol.rs, codex-rs/features/src/lib.rs, codex-rs/core-skills/src/loader.rs, codex-rs/hooks/src/engine/discovery.rs]
+symbols: [PluginManifest, UriPluginManifest, parse_agent_plugin_manifest_uri, load_plugin_manifest, load_plugin_command_paths, parse_plugin_manifest_uri, PluginId, plugin_namespace_for_skill_path, PluginsManager, search_remote_plugins, validate_remote_plugin_bundle, LoadedPlugin, PluginLoadOutcome, PluginCapabilitySummary]
 related: [subsys.config-auth.skills, subsys.config-auth.hooks, subsys.mcp.connectors, config.skills-plugins-features]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
-> Codex plugins 系统用 discoverable plugin manifests 描述 plugin metadata、skills、MCP servers、apps、hooks 和 interface metadata；loader 把 active plugins 汇总为 capability summaries、effective skill roots、MCP servers、apps 与 hook sources。[E: codex-rs/utils/plugins/src/plugin_namespace.rs:39][E: codex-rs/core-plugins/src/manifest.rs:36][E: codex-rs/core-plugins/src/manifest.rs:48][E: codex-rs/core-plugins/src/manifest.rs:50][E: codex-rs/core-plugins/src/manifest.rs:52][E: codex-rs/core-plugins/src/manifest.rs:54][E: codex-rs/plugin/src/load_outcome.rs:19][E: codex-rs/plugin/src/load_outcome.rs:106][E: codex-rs/plugin/src/load_outcome.rs:117][E: codex-rs/plugin/src/load_outcome.rs:156][E: codex-rs/plugin/src/load_outcome.rs:168][E: codex-rs/plugin/src/load_outcome.rs:177]
+> Codex plugins 系统用 discoverable plugin manifests 描述 plugin metadata、skills、MCP servers、apps、hooks 和 interface metadata；loader 把 active plugins 汇总为 capability summaries、effective skill roots、MCP servers、apps 与 hook sources。[E: codex-rs/utils/plugins/src/plugin_namespace.rs:41][E: codex-rs/core-plugins/src/manifest.rs:36][E: codex-rs/core-plugins/src/manifest.rs:48][E: codex-rs/core-plugins/src/manifest.rs:50][E: codex-rs/core-plugins/src/manifest.rs:52][E: codex-rs/core-plugins/src/manifest.rs:54][E: codex-rs/plugin/src/load_outcome.rs:19][E: codex-rs/plugin/src/load_outcome.rs:106][E: codex-rs/plugin/src/load_outcome.rs:117][E: codex-rs/plugin/src/load_outcome.rs:156][E: codex-rs/plugin/src/load_outcome.rs:168][E: codex-rs/plugin/src/load_outcome.rs:177]
 
 ## 能回答的问题
 
@@ -29,11 +29,11 @@ plugins 节点覆盖 manifest parsing、plugin id/namespace、load outcome 和 c
 
 ### Agent Plugins root manifest
 
-当调用方把 plugin root 的 `plugin.json` 显式交给 URI parser 时，它按 Agent Plugins 1.0 manifest 解析；只有这个 root path 走 Agent Plugins parser，`.codex-plugin/.claude-plugin/.cursor-plugin` manifest 继续走 legacy parser。[E: codex-rs/utils/plugins/src/plugin_namespace.rs:10][E: codex-rs/core-plugins/src/manifest.rs:236][E: codex-rs/core-plugins/src/manifest.rs:248]
+本地主机 discovery 会先检查 plugin root 的 `plugin.json`；只要 `$schema` 属于 Agent Plugins schema family，它就优先于 nested legacy manifests，随后 supported 1.0 schema 走 Agent Plugins parser。若 regular root file 与 Agent Plugins 无关，才回退 `.codex-plugin/.claude-plugin/.cursor-plugin`；若 root `plugin.json` 是 symlink 或非 regular file，host discovery 直接返回无 manifest。executor provider 与 `PathUri` namespace helper 只遍历 nested legacy paths，不检查 root `plugin.json`。[E: codex-rs/utils/plugins/src/plugin_namespace.rs:10][E: codex-rs/utils/plugins/src/plugin_namespace.rs:25][E: codex-rs/utils/plugins/src/plugin_namespace.rs:41][E: codex-rs/utils/plugins/src/plugin_namespace.rs:44][E: codex-rs/utils/plugins/src/plugin_namespace.rs:48][E: codex-rs/utils/plugins/src/plugin_namespace.rs:54][E: codex-rs/utils/plugins/src/plugin_namespace.rs:61][E: codex-rs/utils/plugins/src/plugin_namespace.rs:80][E: codex-rs/core-plugins/src/provider.rs:173][E: codex-rs/core-plugins/src/provider.rs:174][E: codex-rs/core-plugins/src/manifest.rs:145][E: codex-rs/core-plugins/src/manifest.rs:148]
 
-root manifest 必须是 JSON object，并声明受支持的 `$schema`；当前 canonical schema 是 `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`。parser 识别 `$schema`、name/version/description/author/homepage/repository/license/keywords/extensions，未知字段只 warning 后忽略。[E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:16][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:27][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:63][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:80][E: codex-rs/utils/plugins/src/plugin_namespace.rs:12]
+root manifest 必须是 JSON object，并声明受支持的 `$schema`；当前 canonical schema 是 `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`。parser 识别 `$schema`、name/version/description/author/homepage/repository/license/keywords/extensions，未知字段只 warning 后忽略。[E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:16][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:27][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:63][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:80][E: codex-rs/utils/plugins/src/plugin_namespace.rs:14]
 
-name 只允许小写 ASCII letters、digits、dot、hyphen，长度不超过 64，首尾必须是 ASCII alphanumeric，且不能出现连续 `--`/`..`；schema 或 name 不合法会使 manifest parse 失败。[E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:129][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:146][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:219][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:230][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:234]
+name 只允许小写 ASCII letters、digits、dot、hyphen，长度不超过 64，首尾必须是 ASCII alphanumeric，且不能出现连续 `--`/`..`；schema 或 name 不合法会使 manifest parse 失败。[E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:219][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:221][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:222][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:223][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:226][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:230][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:234]
 
 兼容映射默认把 Agent Plugin 的 skills 指向 `./skills`、MCP config 指向 `./mcp.json`，并用基础 metadata 构造 Codex interface。`extensions.com.openai` object 可覆盖 apps/hooks/interface；若 manifest 内没有该 extension，则可应用外部 Codex overlay。[E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:158][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:179][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:181][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:196]
 
@@ -63,9 +63,9 @@ Manifest path fields are resolved by `resolve_manifest_path`: path must be non-e
 
 `PluginId` 保存 plugin_name 和 marketplace_name；`parse` 只接受 `<plugin>@<marketplace>`，`as_key` 输出相同 key 形态。[E: codex-rs/plugin/src/plugin_id.rs:9][E: codex-rs/plugin/src/plugin_id.rs:10][E: codex-rs/plugin/src/plugin_id.rs:11][E: codex-rs/plugin/src/plugin_id.rs:12][E: codex-rs/plugin/src/plugin_id.rs:26][E: codex-rs/plugin/src/plugin_id.rs:45]
 
-Plugin id segment 校验只允许 ASCII letters/digits、underscore 和 hyphen，且不能为空。[E: codex-rs/plugin/src/plugin_id.rs:51][E: codex-rs/plugin/src/plugin_id.rs:52][E: codex-rs/plugin/src/plugin_id.rs:55][E: codex-rs/plugin/src/plugin_id.rs:57]
+`PluginId::new` 对两个 segment 使用同一 validator，但允许集按 `kind` 分叉：plugin name 可用 ASCII letters/digits、dot、underscore、hyphen，dot 不能位于首尾、不能连续，`.`/`..` 也被拒绝；marketplace name 不允许 dot，只接受 letters/digits、underscore、hyphen。两个 segment 都不能为空。[E: codex-rs/plugin/src/plugin_id.rs:16][E: codex-rs/plugin/src/plugin_id.rs:17][E: codex-rs/plugin/src/plugin_id.rs:18][E: codex-rs/plugin/src/plugin_id.rs:52][E: codex-rs/plugin/src/plugin_id.rs:55][E: codex-rs/plugin/src/plugin_id.rs:56][E: codex-rs/plugin/src/plugin_id.rs:59][E: codex-rs/plugin/src/plugin_id.rs:67][E: codex-rs/plugin/src/plugin_id.rs:69][E: codex-rs/plugin/src/plugin_id.rs:72]
 
-Namespace/manifest discovery 共享有序 path 列表：`.codex-plugin/plugin.json`、`.claude-plugin/plugin.json`、新增的 `.cursor-plugin/plugin.json`，取第一个存在的 manifest；namespace helper 从最近 ancestor manifest 读取 name。[E: codex-rs/exec-server-protocol/src/protocol.rs:46][E: codex-rs/exec-server-protocol/src/protocol.rs:49][E: codex-rs/utils/plugins/src/plugin_namespace.rs:39]
+legacy manifest path 列表仍按 `.codex-plugin/plugin.json`、`.claude-plugin/plugin.json`、`.cursor-plugin/plugin.json` 排序；但本地 `find_plugin_manifest_path` 先执行上述 root portable-manifest 检查。namespace helper 仍可沿 ancestor manifests 读取 name。[E: codex-rs/exec-server-protocol/src/protocol.rs:46][E: codex-rs/exec-server-protocol/src/protocol.rs:49][E: codex-rs/utils/plugins/src/plugin_namespace.rs:41][E: codex-rs/utils/plugins/src/plugin_namespace.rs:61]
 
 ## Load outcome 与 capabilities
 
@@ -77,10 +77,20 @@ Capability summary 只为 active plugin 生成；summary 包含 config_name、di
 
 Plugin description 会 whitespace-normalize 并截断到 1024 chars，以适合 model-facing capability summary。[E: codex-rs/plugin/src/load_outcome.rs:15][E: codex-rs/plugin/src/load_outcome.rs:73][E: codex-rs/plugin/src/load_outcome.rs:75][E: codex-rs/plugin/src/load_outcome.rs:83]
 
+## Remote catalog 与 portable bundle
+
+`remote_plugin` 已是 stable、default-on feature；ChatGPT backend auth 可启用 PS-backed global catalog，而其它 auth/provider 继续使用 local curated repository。manager 用 auth mode 选择 `OpenAiWithRemote`、`OpenAiApi` 或 `OpenAi` target marketplace，并在 load cache key 中包含 remote-global-active 状态。[E: codex-rs/features/src/lib.rs:1235][E: codex-rs/features/src/lib.rs:1238][E: codex-rs/core-plugins/src/manager.rs:472][E: codex-rs/core-plugins/src/manager.rs:489][E: codex-rs/core-plugins/src/manager.rs:583][E: codex-rs/core-plugins/src/manager.rs:593]
+
+`search_remote_plugins` 直接请求 `/ps/plugins/search`，支持 query/scope/limit/page token，并刻意不读写 remote catalog cache；错误/telemetry 使用不含 query 与 page token 的 URL，搜索结果因不 join installed endpoint而统一标为未安装。[E: codex-rs/core-plugins/src/remote/search.rs:17][E: codex-rs/core-plugins/src/remote/search.rs:37][E: codex-rs/core-plugins/src/remote/search.rs:44][E: codex-rs/core-plugins/src/remote/search.rs:48][E: codex-rs/core-plugins/src/remote/search.rs:50][E: codex-rs/core-plugins/src/remote/search.rs:75]
+
+远程 bundle 安装先校验 plugin id、release version 与 HTTPS download URL；download 最大 100 MiB、解压最大 512 MiB。bundle 解压到 staging 后再次用同一 manifest discovery/parser 验证 name，再原子 rename 到目标目录。Agent Plugins root manifest 保留自身 version，不被 legacy version rewrite 改写。[E: codex-rs/core-plugins/src/remote_bundle.rs:30][E: codex-rs/core-plugins/src/remote_bundle.rs:31][E: codex-rs/core-plugins/src/remote_bundle.rs:33][E: codex-rs/core-plugins/src/remote_bundle.rs:163][E: codex-rs/core-plugins/src/remote_bundle.rs:205][E: codex-rs/core-plugins/src/remote_bundle.rs:478][E: codex-rs/core-plugins/src/remote_bundle.rs:480][E: codex-rs/core-plugins/src/remote_bundle.rs:485][E: codex-rs/core-plugins/src/remote_bundle.rs:492][E: codex-rs/core-plugins/src/remote_bundle.rs:530]
+
+Auth-selected marketplace eligibility applies to hooks-only loading too：loader removes curated variants that do not match the selected target before it exports active hook sources/warnings, preventing an API-auth runtime from accidentally executing ChatGPT/remote curated hooks and vice versa。[E: codex-rs/core-plugins/src/loader.rs:199][E: codex-rs/core-plugins/src/loader.rs:203][E: codex-rs/core-plugins/src/loader.rs:214][E: codex-rs/core-plugins/src/loader.rs:284][E: codex-rs/core-plugins/src/loader.rs:291]
+
 ## Gotchas
 
 - inactive plugin 仍保留在 `PluginLoadOutcome::plugins()` 中，但不会贡献 capability summary、effective skill roots、MCP servers、apps 或 hook sources。[E: codex-rs/plugin/src/load_outcome.rs:94][E: codex-rs/plugin/src/load_outcome.rs:193][E: codex-rs/plugin/src/load_outcome.rs:197][E: codex-rs/plugin/src/load_outcome.rs:50][E: codex-rs/plugin/src/load_outcome.rs:121][E: codex-rs/plugin/src/load_outcome.rs:168][E: codex-rs/plugin/src/load_outcome.rs:177]
-- target 的默认 host/executor discovery allow-list 仍只有 `.codex-plugin/plugin.json`、`.claude-plugin/plugin.json` 和 `.cursor-plugin/plugin.json`；root `plugin.json` 虽有 Agent Plugins parser，却尚未被这条默认 discovery path 自动发现。是否由其它上游调用方显式传入该 path 取决于集成面，因此不能把 parser presence 等同于默认可安装性。[E: codex-rs/exec-server-protocol/src/protocol.rs:46][E: codex-rs/exec-server-protocol/src/protocol.rs:49][E: codex-rs/utils/plugins/src/plugin_namespace.rs:39][E: codex-rs/core-plugins/src/manifest.rs:236][U]
+- root `plugin.json` 只有声明 Agent Plugins schema family 才会优先；普通无关 `plugin.json` 不会遮蔽 legacy manifest。声明未来 Agent Plugins schema 会被选中但随后因 unsupported schema parse 失败，这是显式 fail-closed 行为。[E: codex-rs/utils/plugins/src/plugin_namespace.rs:25][E: codex-rs/utils/plugins/src/plugin_namespace.rs:32][E: codex-rs/utils/plugins/src/plugin_namespace.rs:34][E: codex-rs/utils/plugins/src/plugin_namespace.rs:51][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:63][E: codex-rs/core-plugins/src/agent_plugin_manifest.rs:80]
 - Manifest paths 的 `./...` 规则不能被解释为 symlink-resolved sandbox；它只是相对路径校验、`PathUri::join` 和 prefix check。[E: codex-rs/core-plugins/src/manifest.rs:575][E: codex-rs/core-plugins/src/manifest.rs:610][E: codex-rs/core-plugins/src/manifest.rs:617]
 - Plugin hooks 是 manifest surface 与 `PluginHookSource` load outcome surface；真正是否运行还受 hooks engine trust/policy 控制。[E: codex-rs/core-plugins/src/manifest.rs:54][E: codex-rs/plugin/src/load_outcome.rs:32][E: codex-rs/hooks/src/engine/discovery.rs:163]
 
@@ -88,12 +98,20 @@ Plugin description 会 whitespace-normalize 并截断到 1024 chars，以适合 
 
 - `codex-rs/core-plugins/src/agent_plugin_manifest.rs`
 - `codex-rs/core-plugins/src/manifest.rs`
+- `codex-rs/core-plugins/src/loader.rs`
+- `codex-rs/core-plugins/src/manager.rs`
+- `codex-rs/core-plugins/src/provider.rs`
+- `codex-rs/core-plugins/src/store.rs`
+- `codex-rs/core-plugins/src/remote/search.rs`
+- `codex-rs/core-plugins/src/remote_bundle.rs`
 - `codex-rs/plugin/src/lib.rs`
 - `codex-rs/plugin/src/plugin_id.rs`
 - `codex-rs/plugin/src/load_outcome.rs`
 - `codex-rs/utils/plugins/src/plugin_namespace.rs`
 - `codex-rs/exec-server-protocol/src/protocol.rs`
+- `codex-rs/features/src/lib.rs`
 - `codex-rs/core-skills/src/loader.rs`
+- `codex-rs/hooks/src/engine/discovery.rs`
 
 ## 相关
 

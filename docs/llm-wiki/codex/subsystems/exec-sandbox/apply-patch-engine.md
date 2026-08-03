@@ -3,12 +3,12 @@ id: subsys.exec-sandbox.apply-patch-engine
 title: apply_patch engine
 kind: subsystem
 tier: T2
-source: [codex-rs/apply-patch/src/parser.rs, codex-rs/apply-patch/src/lib.rs, codex-rs/apply-patch/src/invocation.rs, codex-rs/apply-patch/src/seek_sequence.rs, codex-rs/apply-patch/src/streaming_parser.rs]
-symbols: [parse_patch, parse_patch_text, StreamingPatchParser, Hunk, UpdateFileChunk, ApplyPatchArgs, apply_patch, apply_hunks_to_files, MaybeApplyPatchVerified, maybe_parse_apply_patch_verified]
+source: [codex-rs/apply-patch/src/parser.rs, codex-rs/apply-patch/src/lib.rs, codex-rs/apply-patch/src/invocation.rs, codex-rs/apply-patch/src/seek_sequence.rs, codex-rs/apply-patch/src/streaming_parser.rs, codex-rs/core/src/tools/handlers/apply_patch.rs, codex-rs/core/src/tools/runtimes/apply_patch.rs, codex-rs/protocol/src/permissions.rs]
+symbols: [parse_patch, parse_patch_text, StreamingPatchParser, Hunk, UpdateFileChunk, ApplyPatchArgs, apply_patch, apply_hunks_to_files, MaybeApplyPatchVerified, maybe_parse_apply_patch_verified, ApplyPatchRuntime, PROTECTED_METADATA_PATH_NAMES]
 related: [tool.apply-patch, spine.trace-apply-patch, subsys.exec-sandbox.arg0-dispatch]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > apply_patch engine 把 custom tool 或 shell-heredoc 里的 patch 文本解析成 add/delete/update hunks，再用 filesystem abstraction 计算替换、写文件、移动文件或删除文件。[E: codex-rs/apply-patch/src/parser.rs:130][E: codex-rs/apply-patch/src/lib.rs:276][E: codex-rs/apply-patch/src/lib.rs:361]
@@ -20,10 +20,11 @@ updated: 61a44880a8
 - update chunk 怎样定位旧行、处理 EOF 和 final newline？
 - shell 命令中的 `apply_patch <<EOF` 怎样被识别为 patch body？
 - parser strict/lenient/streaming mode 的边界有什么差异？
+- verified patch 怎样统一进入 runtime，并保留 workspace metadata protection？
 
 ## 职责边界
 
-apply_patch engine 节点覆盖 `codex_apply_patch` crate 的 parser、invocation classifier、patch application 和 replacement algorithm。它不覆盖模型可见 tool schema；tool schema 在 `tool.apply-patch`，shell/unified exec 的 interception trace 在 `spine.trace-apply-patch`。[I]
+apply_patch engine 节点覆盖 `codex_apply_patch` crate 的 parser、invocation classifier、patch application 和 replacement algorithm，并记录 core runtime 怎样把 verified patch 接到 permission/sandbox boundary。它不覆盖模型可见 tool schema；tool schema 在 `tool.apply-patch`，shell/unified exec 的完整 interception trace 在 `spine.trace-apply-patch`。[I]
 
 `CODEX_CORE_APPLY_PATCH_ARG1` 是 core 内部 argv1 marker，用来让 arg0 dispatch 直接执行 apply_patch body；它不是用户输入语法的一部分。[E: codex-rs/apply-patch/src/lib.rs:41]
 
@@ -72,6 +73,16 @@ apply_patch engine 节点覆盖 `codex_apply_patch` crate 的 parser、invocatio
 - `maybe_parse_apply_patch_verified` 会把 `ApplyPatchAction` 的 cwd 解析为 effective cwd，并把 AST changes 投影成 Add/Delete/Update 变更列表。[E: codex-rs/apply-patch/src/invocation.rs:169][E: codex-rs/apply-patch/src/invocation.rs:176][E: codex-rs/apply-patch/src/invocation.rs:191]
 - 如果模型直接给了 raw patch body 而不是 apply_patch command，classifier 会返回 implicit invocation correctness error。[E: codex-rs/apply-patch/src/invocation.rs:146][E: codex-rs/apply-patch/src/invocation.rs:152]
 
+## Core runtime 与 workspace protection
+
+direct custom-tool handler 和 shell/unified-exec interception 在验证成功后都进入 `execute_verified_patch`；该共用路径计算 effective permissions、运行 safety preparation，再构造 `ApplyPatchRequest` 交给 `ToolOrchestrator` 与 `ApplyPatchRuntime`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:395][E: codex-rs/core/src/tools/handlers/apply_patch.rs:402][E: codex-rs/core/src/tools/handlers/apply_patch.rs:498][E: codex-rs/core/src/tools/handlers/apply_patch.rs:505][E: codex-rs/core/src/tools/handlers/apply_patch.rs:522][E: codex-rs/core/src/tools/handlers/apply_patch.rs:529][E: codex-rs/core/src/tools/handlers/apply_patch.rs:539][E: codex-rs/core/src/tools/handlers/apply_patch.rs:558][E: codex-rs/core/src/tools/handlers/apply_patch.rs:567]
+
+Sandboxed patch runtime 从 executor base `PermissionProfile` 加上本次 patch 的 additional permissions 构造 filesystem context，并把 workspace roots 作为独立边界保留；它不会直接复用已经 materialize workspace roots 的 attempt profile。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:87][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:91][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:95][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:96][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:99][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:102]
+
+Restricted filesystem policy 默认保护 writable project roots 下的 `.git`、`.agents`、`.codex`；只有对具体 metadata path 的显式 write entry 才能形成更窄的例外。普通 workspace writable 并不等于这些 metadata children 可写。[E: codex-rs/protocol/src/permissions.rs:22][E: codex-rs/protocol/src/permissions.rs:27][E: codex-rs/protocol/src/permissions.rs:42][E: codex-rs/protocol/src/permissions.rs:57][E: codex-rs/protocol/src/permissions.rs:614][E: codex-rs/protocol/src/permissions.rs:615][E: codex-rs/protocol/src/permissions.rs:616][E: codex-rs/protocol/src/permissions.rs:725][E: codex-rs/protocol/src/permissions.rs:732]
+
+patch 执行失败且被判断为 sandbox denial 时，runtime 会记录 normalized filesystem violation，再把结果映射成 sandbox-denied error；该记录是 tracing seam，不是新的 protocol event。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:262][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:263][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:264]
+
 ## 设计动机与权衡
 
 - parser 默认 lenient mode，说明 engine 更愿意从裸 patch 或有限 heredoc boundary 中恢复 patch，而不是只接受严格裸 patch 文本。[E: codex-rs/apply-patch/src/parser.rs:53][E: codex-rs/apply-patch/src/parser.rs:130][E: codex-rs/apply-patch/src/parser.rs:134][E: codex-rs/apply-patch/src/parser.rs:217][E: codex-rs/apply-patch/src/parser.rs:220][E: codex-rs/apply-patch/src/parser.rs:227][E: codex-rs/apply-patch/src/parser.rs:231][E: codex-rs/apply-patch/src/parser.rs:232]
@@ -92,6 +103,9 @@ apply_patch engine 节点覆盖 `codex_apply_patch` crate 的 parser、invocatio
 - `codex-rs/apply-patch/src/invocation.rs`
 - `codex-rs/apply-patch/src/seek_sequence.rs`
 - `codex-rs/apply-patch/src/streaming_parser.rs`
+- `codex-rs/core/src/tools/handlers/apply_patch.rs`
+- `codex-rs/core/src/tools/runtimes/apply_patch.rs`
+- `codex-rs/protocol/src/permissions.rs`
 
 ## 相关
 

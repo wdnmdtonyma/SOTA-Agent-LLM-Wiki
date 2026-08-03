@@ -1,6 +1,6 @@
 # Codex 源码 LLM Wiki
 
-一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 OpenAI **Codex**(`Best/codex/`)的真实源码——一个 **126-crate Rust workspace**(`codex-rs/`)+ TypeScript/Python SDK + TUI/CLI/app-server 前端,细到每个工具的字段与设计动机。
+一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 OpenAI **Codex**(`Best/codex/`)的真实源码——一个 **128-crate Rust workspace**(`codex-rs/`)+ TypeScript/Python SDK + TUI/CLI/app-server 前端,细到每个工具的字段与设计动机。
 
 ## 这是 LLM wiki,不是书
 
@@ -16,7 +16,7 @@
 ## codex 的形态(决定本 wiki 的画像)
 
 - **真源码**:codex 是公开的真实工程,有 **git 历史、完整测试套件与 `docs/`**。所以证据以 `[E]` 为主、inferred 少;**staleness 用 git SHA**(不是 claude 那种内容 hash),节点 `updated:` 记 commit SHA。
-- **Rust 为主**:核心在 `codex-rs/`(126 个 workspace crate),前端含 TUI(`tui/`)、CLI(`cli/`)、app-server(`app-server/`,供 IDE/SDK 接入)。外围 SDK 在 `sdk/typescript`、`sdk/python`。
+- **Rust 为主**:核心在 `codex-rs/`(128 个 workspace crate),前端含 TUI(`tui/`)、CLI(`cli/`)、app-server(`app-server/`,供 IDE/SDK 接入)。外围 SDK 在 `sdk/typescript`、`sdk/python`。
 - **SQ/EQ 架构**:core 是 **Submission Queue → Event Queue** 的异步消息循环(`Op` 进、`EventMsg` 出),是全 wiki 的脊柱。
 - **范围**:**全 monorepo 同深度**——含 SDK、cloud-tasks、遥测、TUI 渲染细节、平台 crate,均逐子系统覆盖。
 
@@ -46,18 +46,18 @@ tools/            lint.mjs(L1 机械校验)· reconcile.mjs(登记新节点)
 
 - **语言**:中文讲解;代码 / 字段 / 类型 / crate 名 / 文件路径 / 协议方法名一律保留英文。
 - **源路径基准**:一律相对 `Best/codex/`(如 `codex-rs/core/src/...`、`sdk/typescript/src/...`、`docs/config.md`)。
-- **工具 ground truth**:工具集以 `codex-rs/core/src/tools/spec_plan.rs`(`build_tool_router` → `add_tool_sources`)的装配为准,handler 通常位于 `codex-rs/core/src/tools/handlers/`,不以 survey 清单为准。
+- **工具 ground truth**:工具集以 `codex-rs/core/src/tools/spec_plan.rs` 的 `build_tool_router` 为准:core sources、MCP、extension 与 dynamic runtime 先写入同一 `ToolRegistry`,再由 `finalize_tool_router` 生成 effective exposure 与 model-visible specs;handler 通常位于 `codex-rs/core/src/tools/handlers/`,不以 survey 清单为准。
 - **写作/机读/lint 规范**:见 `conventions.md`。
 
 ## 方法 & 状态
 
-逐节点循环:**大纲 → 人 review → 逐节点读源码填 → 独立 subagent 对照源码校验 → 修 → 直到整仓覆盖完**。当前 **172 个节点均已对照 `61a44880a8` 复核并标记 verified**。
+逐节点循环:**大纲 → 人 review → 逐节点读源码填 → 独立 subagent 对照源码校验 → 修 → 直到整仓覆盖完**。当前 **177 个节点均已对照 `7750465934` 复核并标记 verified**。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱(8)+ worked traces(3) | 11 | ✅ verified |
-| T1 surface | tools(36)+ slash(6)+ cli(4)+ config(8)+ app-server(9)+ sdk(6) | 69 | ✅ verified |
-| T2 subsystems | core(20)/exec-sandbox(12)/mcp(6)/providers(10)/tui(9)/app-server(4)/config-auth(8)/cloud(3)/platform(8) | 80 | ✅ verified |
-| T3 reference | 协议 Op/Event catalog + session-tasks + 数据模型 + crate 索引(126)+ glossary 等 | 12 | ✅ verified |
+| T1 surface | tools(37)+ slash(6)+ cli(4)+ config(8)+ app-server(9)+ sdk(6) | 70 | ✅ verified |
+| T2 subsystems | core(23)/exec-sandbox(12)/mcp(6)/providers(10)/tui(10)/app-server(4)/config-auth(8)/cloud(3)/platform(8) | 84 | ✅ verified |
+| T3 reference | 协议 Op/Event catalog + session-tasks + 数据模型 + crate 索引(128)+ glossary 等 | 12 | ✅ verified |
 
 后续增量更新继续以 `tools/lint.mjs` 做 L1 机械校验，并按 `RUN.md` 对高 churn 节点执行源码重读与独立 L2 复核。

@@ -3,12 +3,12 @@ id: config.ui-tui
 title: UI / TUI / 实时设置
 kind: config
 tier: T1
-source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/protocol/src/config_types.rs]
-symbols: [config::Tui, TuiNotificationSettings, RealtimeToml, RealtimeAudioToml, SessionPickerViewMode, ResumeCwdMode]
-related: [command.model-mode, command.realtime-debug, config.storage-telemetry-misc, subsys.core.realtime-conversation]
+source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/config/src/tui_keymap.rs, codex-rs/protocol/src/config_types.rs]
+symbols: [config::Tui, TuiNotificationSettings, RealtimeToml, RealtimeAudioToml, SessionPickerViewMode, ResumeCwdMode, KeybindingSpec]
+related: [command.model-mode, command.realtime-debug, config.storage-telemetry-misc, subsys.core.realtime-conversation, subsys.tui.keymap]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > UI / TUI / 实时设置 catalog 覆盖 ConfigToml 中 terminal UI, reasoning visibility, realtime audio/session/websocket/WebRTC overrides and paste burst detection 的顶层键。
@@ -27,6 +27,12 @@ updated: 61a44880a8
 `Tui` contains notifications, animations, tooltips, vim/raw output mode, alternate screen, status line, status-line colors, terminal title, theme, pet, pet anchor, session picker view, resume cwd policy, keymap, model availability NUX, and terminal resize-reflow cap settings.[E: codex-rs/config/src/types.rs:692][E: codex-rs/config/src/types.rs:694][E: codex-rs/config/src/types.rs:699][E: codex-rs/config/src/types.rs:704][E: codex-rs/config/src/types.rs:709][E: codex-rs/config/src/types.rs:714][E: codex-rs/config/src/types.rs:722][E: codex-rs/config/src/types.rs:729][E: codex-rs/config/src/types.rs:734][E: codex-rs/config/src/types.rs:743][E: codex-rs/config/src/types.rs:750][E: codex-rs/config/src/types.rs:756][E: codex-rs/config/src/types.rs:762][E: codex-rs/config/src/types.rs:766][E: codex-rs/config/src/types.rs:771][E: codex-rs/config/src/types.rs:778][E: codex-rs/config/src/types.rs:782][E: codex-rs/config/src/types.rs:789]
 
 `ResumeCwdMode` serializes as kebab-case `current` or `session`; when `[tui].resume_cwd` is unset, runtime may prompt if launch cwd differs from the selected session cwd。[E: codex-rs/config/src/types.rs:87][E: codex-rs/config/src/types.rs:88][E: codex-rs/config/src/types.rs:90][E: codex-rs/config/src/types.rs:92][E: codex-rs/config/src/types.rs:771]
+
+### `[tui.keymap]`
+
+`Tui.keymap` 是非 optional 的 `TuiKeymap`，默认为空 override snapshot；其 global/chat/composer/editor/Vim/pager/list/approval 子表中每个 action 都接受单个 binding string 或 alternatives array。空 array 表示显式 unbind，不继续 fallback 到 global 或 built-in default。[E: codex-rs/config/src/types.rs:778][E: codex-rs/config/src/tui_keymap.rs:70][E: codex-rs/config/src/tui_keymap.rs:72][E: codex-rs/config/src/tui_keymap.rs:74][E: codex-rs/config/src/tui_keymap.rs:406][E: codex-rs/config/src/tui_keymap.rs:408][E: codex-rs/config/src/tui_keymap.rs:426]
+
+binding string 现在可包含一个单键或最多两段的 chord，例如 `ctrl-x ctrl-s`；配置反序列化时分别规范化每个 stroke，超过两段直接拒绝。context precedence、runtime conflict、reserved key 与 `/keymap` capture/persistence 属于 `subsys.tui.keymap`。[E: codex-rs/config/src/tui_keymap.rs:30][E: codex-rs/config/src/tui_keymap.rs:38][E: codex-rs/config/src/tui_keymap.rs:40][E: codex-rs/config/src/tui_keymap.rs:439][E: codex-rs/config/src/tui_keymap.rs:444][E: codex-rs/config/src/tui_keymap.rs:451]
 
 ## 字段 catalog
 
@@ -49,6 +55,7 @@ updated: 61a44880a8
 
 - `codex-rs/config/src/config_toml.rs`
 - `codex-rs/config/src/types.rs`
+- `codex-rs/config/src/tui_keymap.rs`
 - `codex-rs/protocol/src/config_types.rs`
 
 ## 相关
@@ -57,3 +64,4 @@ updated: 61a44880a8
 - `command.realtime-debug`
 - `config.storage-telemetry-misc`
 - `subsys.core.realtime-conversation`
+- `subsys.tui.keymap`

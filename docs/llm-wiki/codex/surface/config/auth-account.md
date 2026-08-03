@@ -8,7 +8,7 @@ symbols: [ForcedChatgptWorkspaceIds, ForcedLoginMethod, AuthCredentialsStoreMode
 related: [config.model-provider, config.mcp-tools, subsys.config-auth.auth-flows, subsys.config-auth.credential-storage]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > 认证与账户设置 catalog 覆盖 ConfigToml 中限制 ChatGPT workspace、限制 login method 和选择 CLI auth credential storage backend 的顶层键。

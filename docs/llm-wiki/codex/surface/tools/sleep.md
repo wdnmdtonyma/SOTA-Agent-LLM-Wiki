@@ -8,7 +8,7 @@ symbols: [SleepHandler, create_sleep_tool, SleepArgs]
 related: [subsys.core.tool-system, subsys.core.tool-router, ref.feature-flags]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `sleep` 是 `clock` namespace 下的 Responses function 工具,让模型在当前 turn 内等待指定毫秒数;如果 active turn 收到新输入,等待会提前结束。
@@ -50,13 +50,13 @@ handler 使用 `SleepArgs { duration_ms }` 解析参数,并拒绝不在 `1..=MAX
 
 ## 6 注册与门控
 
-`add_core_utility_tools` 只在 `Feature::CurrentTimeReminder` 启用且 `current_time_reminder.sleep_tool` 为真时加入 `SleepHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:770] [E: codex-rs/core/src/tools/spec_plan.rs:774] [E: codex-rs/core/src/tools/spec_plan.rs:776] [E: codex-rs/core/src/tools/spec_plan.rs:778]
+`add_core_utility_tools` 只在 `Feature::CurrentTimeReminder` 启用且 `current_time_reminder.sleep_tool` 为真时加入 `SleepHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:831] [E: codex-rs/core/src/tools/spec_plan.rs:835] [E: codex-rs/core/src/tools/spec_plan.rs:837] [E: codex-rs/core/src/tools/spec_plan.rs:778]
 
-`spec_plan_tests::sleep_tool_follows_current_time_config` 覆盖了默认只暴露 `clock.curr_time`,开启 `sleep_tool` 后暴露 `clock.curr_time` 和 `clock.sleep` 的行为。[E: codex-rs/core/src/tools/spec_plan_tests.rs:850] [E: codex-rs/core/src/tools/spec_plan_tests.rs:852] [E: codex-rs/core/src/tools/spec_plan_tests.rs:855] [E: codex-rs/core/src/tools/spec_plan_tests.rs:858] [E: codex-rs/core/src/tools/spec_plan_tests.rs:861] [E: codex-rs/core/src/tools/spec_plan_tests.rs:868]
+`spec_plan_tests::sleep_tool_follows_current_time_config` 覆盖了默认只暴露 `clock.curr_time`,开启 `sleep_tool` 后暴露 `clock.curr_time` 和 `clock.sleep` 的行为。[E: codex-rs/core/src/tools/spec_plan_tests.rs:937] [E: codex-rs/core/src/tools/spec_plan_tests.rs:939] [E: codex-rs/core/src/tools/spec_plan_tests.rs:942] [E: codex-rs/core/src/tools/spec_plan_tests.rs:945] [E: codex-rs/core/src/tools/spec_plan_tests.rs:948] [E: codex-rs/core/src/tools/spec_plan_tests.rs:955]
 
 ## 7 parallel-safe
 
-`SleepHandler` 没有覆写 `supports_parallel_tool_calls`,因此使用 `ToolExecutor` 默认值 `false`。[E: codex-rs/tools/src/tool_executor.rs:64] [E: codex-rs/tools/src/tool_executor.rs:65]
+`SleepHandler` 没有覆写 `supports_parallel_tool_calls`,因此使用 `ToolExecutor` 默认值 `false`。[E: codex-rs/tools/src/tool_executor.rs:73] [E: codex-rs/tools/src/tool_executor.rs:74]
 
 ## 8 handler 走读
 

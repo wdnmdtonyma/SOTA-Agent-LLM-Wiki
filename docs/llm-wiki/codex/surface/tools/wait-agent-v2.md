@@ -8,7 +8,7 @@ symbols: [create_wait_agent_tool_v2, WaitAgentHandlerV2, multi_agents_v2::wait::
 related: [tool.spawn-agent-v2, tool.send-message, tool.followup-task, tool.list-agents]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `wait_agent` V2 等待当前 turn 的 input queue activity：mailbox 更新、steered user input，或 timeout。它只返回摘要，不返回子 agent 消息正文。
@@ -18,20 +18,22 @@ updated: 61a44880a8
 | 项 | 当前源码事实 |
 |---|---|
 | wire name | `wait_agent`，由 handler 和 spec builder 定义。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:22][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:24][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:285][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:287] |
-| handler | V2 module re-export `wait::Handler as WaitAgentHandler`；`spec_plan.rs` 用 `WaitAgentHandlerV2::new(context.wait_agent_timeouts)` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:34][E: codex-rs/core/src/tools/spec_plan.rs:842][E: codex-rs/core/src/tools/spec_plan.rs:870] |
+| handler | V2 module re-export `wait::Handler as WaitAgentHandler`；`spec_plan.rs` 用 `WaitAgentHandlerV2::new(context.wait_agent_timeouts)` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:37][E: codex-rs/core/src/tools/spec_plan.rs:903][E: codex-rs/core/src/tools/spec_plan.rs:931] |
 | spec | function tool，`strict: false`、`defer_loading: None`，有 `{ message, timed_out }` output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:285][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:286][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:290][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:291][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:293] |
 
 ## 注册与门控
 
-`wait_agent` V2 注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支，并进一步要求 `multi_agent_v2.wait_agent_enabled`；该 sub-gate 默认 true，可在不关闭其它 V2 collaboration tools 的情况下单独隐藏 wait。通过后它仍使用相同 exposure/namespace 包装。[E: codex-rs/core/src/tools/spec_plan.rs:825][E: codex-rs/core/src/tools/spec_plan.rs:827][E: codex-rs/core/src/tools/spec_plan.rs:828][E: codex-rs/core/src/tools/spec_plan.rs:867][E: codex-rs/core/src/tools/spec_plan.rs:870][E: codex-rs/core/src/config/mod.rs:1185][E: codex-rs/core/src/config/mod.rs:1209]
+`wait_agent` V2 注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支，并进一步要求 `multi_agent_v2.wait_agent_enabled`；该 sub-gate 默认 true，可在不关闭其它 V2 collaboration tools 的情况下单独隐藏 wait。通过后它仍使用相同 exposure/namespace 包装。[E: codex-rs/core/src/tools/spec_plan.rs:886][E: codex-rs/core/src/tools/spec_plan.rs:888][E: codex-rs/core/src/tools/spec_plan.rs:889][E: codex-rs/core/src/tools/spec_plan.rs:928][E: codex-rs/core/src/tools/spec_plan.rs:931][E: codex-rs/core/src/config/mod.rs:1256][E: codex-rs/core/src/config/mod.rs:1281]
 
-handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 返回 false。[E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
+handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 返回 false。[E: codex-rs/tools/src/tool_executor.rs:73][E: codex-rs/tools/src/tool_executor.rs:74]
 
 ## 输入与 timeout
 
 | 字段 | 必填 | 说明 |
 |---|---:|---|
 | `timeout_ms` | 否 | schema 描述来自 `WaitAgentTimeoutOptions`；runtime 从 `turn.config.multi_agent_v2` 读取 min/max/default，低于最小或高于最大都会返回 model-facing error，未提供时使用 default。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:51][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:52][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:876][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:879][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:50][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:53][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:54][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:59][E: codex-rs/core/src/tools/handlers/multi_agents_v2/wait.rs:65] |
+
+schema 文案明确建议使用分钟级较长等待以避免 busy polling；timeout 应由一次 bounded wait 表达，而不是短周期重复调用。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:876][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:880][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:881]
 
 V2 wait parameters 没有 `targets`，required 为 `None`，additional properties 为 false；这与 V1 required `targets` schema 不同。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:848][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:869][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:871][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:876][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:885]
 

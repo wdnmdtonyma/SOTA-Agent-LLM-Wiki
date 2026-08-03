@@ -1,153 +1,139 @@
-# UPDATE SCOPE — Codex Wiki 完成记录（4d7a5c7c73 → 61a44880a8）
+# UPDATE SCOPE — Codex Wiki 完成记录（61a44880a8 → 7750465934）
 
-> 完成日期：2026-07-26
-> Wiki verified base：`4d7a5c7c7394b687ebcb67e634528b2b8c5578d9`
-> 官方 `openai/codex origin/main` target：`61a44880a85d2fd0d8770908dea5733495e571c8`
-> 最终 submodule checkout：detached `61a44880a85d2fd0d8770908dea5733495e571c8`
+> 完成日期：2026-08-03
+> Wiki verified base / 父仓旧 gitlink：`61a44880a85d2fd0d8770908dea5733495e571c8`
+> 官方 `openai/codex origin/main` target：`7750465934d97dd3cbcb3b1655d2f622744010d3`
+> 最终 submodule checkout：detached `7750465934d97dd3cbcb3b1655d2f622744010d3`
 
-本文件记录本轮已经执行的影响分析、节点取舍、L2 证伪与验证结果。方法约束仍以 `RUN.md` 和 `conventions.md` 为准。
+本文件记录本轮已执行的 base→target 影响分析、新增/退役判定、L2 独立证伪与最终验证。方法约束仍以 `RUN.md` 和 `conventions.md` 为准。
 
-## 1. 源码跨度
+## 1. 上游与源码跨度
+
+已确认 submodule `origin` 为 `https://github.com/openai/codex`，官方默认分支为 `main`，且 base 是 target 的祖先。
+
+提交前再次执行 `git fetch origin main`；`refs/remotes/origin/main` 仍为 `7750465934d97dd3cbcb3b1655d2f622744010d3`，相对冻结 target 的尾差为 0 commit。
 
 ```text
-275 commits
-1344 files changed
-78779 insertions(+)
-29945 deletions(-)
-159 added / 24 deleted / 1159 modified / 2 renamed
+217 commits
+1123 files changed
+65644 insertions(+)
+14195 deletions(-)
+174 added / 7 deleted / 905 modified / 37 renamed
 ```
 
 复现：
 
 ```bash
-git -C codex rev-list --count 4d7a5c7c7394b687ebcb67e634528b2b8c5578d9..61a44880a85d2fd0d8770908dea5733495e571c8
-git -C codex diff --shortstat 4d7a5c7c7394b687ebcb67e634528b2b8c5578d9..61a44880a85d2fd0d8770908dea5733495e571c8
-git -C codex diff --name-status 4d7a5c7c7394b687ebcb67e634528b2b8c5578d9..61a44880a85d2fd0d8770908dea5733495e571c8
+git -C codex rev-list --count 61a44880a85d2fd0d8770908dea5733495e571c8..7750465934d97dd3cbcb3b1655d2f622744010d3
+git -C codex diff --shortstat 61a44880a85d2fd0d8770908dea5733495e571c8..7750465934d97dd3cbcb3b1655d2f622744010d3
+git -C codex diff --name-status 61a44880a85d2fd0d8770908dea5733495e571c8..7750465934d97dd3cbcb3b1655d2f622744010d3
 ```
 
 ## 2. 172 个基线节点的影响分级
 
-分级以基线 `index.json` 的 source 集合与目标树的 `git diff --numstat`、删除状态交叉计算，再按源码事实复核：
+分级把基线 `index.json` 的 source 文件/目录与 target diff 交叉，再人工复核共享 source 的 hunk 是否命中节点语义：
 
 | 分级 | 数量 | 处理 |
 |---|---:|---|
-| A-BROKEN | 3 | source 删除或重命名，必须退役或重定位 |
-| B-HEAVY | 3 | 直接 source churn ≥ 2,000 行，整页重读 |
-| C-DRIFT | 150 | 至少一个直接 source 改动且命中节点语义，逐 claim 修复 |
-| D-CLEAN | 16 | source 未变，或共享 catalog source 的 hunk 经复核与该节点无关；快速复核并统一 SHA |
+| A-BROKEN | 5 | source 删除/移动，必须重定位 |
+| B-HEAVY | 0 | 无独立的 non-broken source churn ≥ 2,000 节点 |
+| C-DRIFT | 138 | 直接 source 或 source 目录有改动，逐 claim 核对 |
+| D-CLEAN | 29 | 已登记 source 未改；仍核对路径/证据并 bump SHA |
 
-A-BROKEN：
+5 个 A-BROKEN 都是 source 退役，不是 Wiki 概念退役：
 
-1. `tool.spawn-agents-on-csv`：agent-jobs spec/handler 已删除。
-2. `tool.report-agent-job-result`：agent-jobs handler/state runtime 已删除。
-3. `subsys.providers.http-client`：旧 `default_client.rs` 重命名/重构到 route-aware client 结构，节点保留并重写 source 与行为。
+1. `tool.code-mode-exec` / `tool.code-mode-wait`：`codex-rs/code-mode/src/service.rs` 移到 `codex-rs/code-mode-runtime/src/service.rs`。
+2. `subsys.core.instruction-assembly`：删除 `core/src/context/available_skills_instructions.rs`，catalog fragment 下沉到 `ext/skills/src/fragments.rs` / `catalog_prompt.rs`。
+3. `subsys.config-auth.skills`：删除 `core-skills/src/render.rs`，渲染 ownership 转到 `ext/skills/src/render.rs`及配套 extension files。
+4. `surface.cli.external-agent-import`：删除 `sessions/records.rs`，拆成 `records_common.rs` / `records_cla.rs` / `records_cur.rs`，并新增 `append.rs`。
 
-B-HEAVY：
-
-1. `ref.glossary`
-2. `spine.trace-mcp-call`
-3. `subsys.core.thread-store`
-
-D-CLEAN 只允许省略逐段语义重写，不允许跳过目标 SHA、source existence、引用和横切架构检查。`subsys.exec-sandbox.process-hardening` 虽直接 source clean，但 Windows PTY Job Object 是相邻新增行为，因此仍扩写并走 L2。SDK、trace-bundle、execpolicy、Seatbelt、file-search、telemetry、terminal detection、realtime 等 clean 节点执行了 source/引用抽样。
-
-原始 source-path 交集会得到 `3 / 3 / 152 / 14`；其中两个命中来自共享 catalog source 的无关 hunk。加入 node-level hunk 复核后的最终分级是本节采用的 `3 / 3 / 150 / 16`，避免把“同文件有改动”机械等同于“节点语义漂移”。
+D-CLEAN 只允许省略语义重写，不允许跳过 target SHA、source existence、证据行与横切架构复核。
 
 ## 3. Inventory 变化
 
 ### 退役节点
 
-- `tool.spawn-agents-on-csv`
-- `tool.report-agent-job-result`
+无。
 
-目标源码同时以 state migration 0042 删除 `agent_jobs` 与 `agent_job_items`；`agents.job_max_runtime_seconds` 只剩兼容 no-op，未被误写为仍可用能力。
+本轮有概念/字段退役，但它们不是独立 Wiki 节点：
+
+- thread `isPinned` / `is_pinned` 与 metadata/list filter：被持久化 `ThreadSection` + 内建 Pinned section 取代。
+- `SessionTaskContext`：`SessionTask::run` / `abort` 改为直接接收 `Arc<Session>`。
+- hidden `codex exec --full-auto` compatibility flag：完全删除；新增 `--approve-for-me`。
+- Code Mode 在 core/app-server 内嵌 V8 fallback：退役，现在由 standalone process-owned host 执行。
+- 旧 tool assembly 函数 `build_tool_specs_and_registry` / `add_tool_sources` / `prepend_code_mode_executors`：被 registry-first finalization 流程取代。
 
 ### 新增节点
 
-- `tool.current-time` → `surface/tools/current-time.md`
-  - `clock.curr_time` 在 base 已存在，是旧 Wiki inventory 漏项，不归因成目标提交新增。
-- `subsys.core.code-mode-runtime` → `subsystems/core/code-mode-runtime.md`
-  - 自包含覆盖 in-process/local host、app-server remote WebSocket host、handshake、共享连接、fallback 与 transport 边界。
+| 节点 | 判定 |
+|---|---|
+| `tool.wait-for-environment` | `wait_for_environment` 在 base 已存在，是旧 Wiki 工具 inventory 漏项；本轮补齐 schema、`DeferredExecutor` 门控与 host config fallback。 |
+| `subsys.core.turn-metadata` | `TurnMetadataState`、parent-turn lineage 与 attempted/executed tool metadata 已形成独立 Responses/MCP/analytics seam。 |
+| `subsys.core.rollout-budget` | root/subagent tree 共享 rollout units、provider-reported units、fallback accounting 与 exhaustion 语义是独立 runtime。 |
+| `subsys.core.token-budget` | model default、用户显式配置优先级、world-state guidance 与 reminder/compaction 语义不同于 rollout accounting。 |
+| `subsys.tui.keymap` | 新 `keymap/bindings.rs`、`keymap/chords.rs`、setup capture 已形成独立数据模型和 two-stroke 状态机。 |
 
-最终仍为 172 个 verified nodes：
+最终为 **177 个 verified nodes**：
 
 | Tier | 数量 |
 |---|---:|
 | T0 | 11 |
-| T1 | 69 |
-| T2 | 80 |
+| T1 | 70 |
+| T2 | 84 |
 | T3 | 12 |
 
-其中 tool nodes 为 36；workspace members 为 126；App-Server catalog 为 213（130 client requests + 72 notifications + 11 server requests）。
+其中 tool nodes 37；workspace members 128；App-Server catalog 219（136 client requests + 72 notifications + 11 server requests）；`ConfigToml` 顶层键 96；`Op`/`EventMsg` 仍为 26/80；feature registry 102。
 
 ## 4. 必须覆盖的新架构与对外行为
 
-| 主题 | 承载节点与结论 |
+| 主题 | 结论与承载节点 |
 |---|---|
-| Remote Code Mode host | 新建 `subsys.core.code-mode-runtime`，并更新 `subsys.app-server.transport`、`cli.subcommands`、`ref.glossary`；区分 app-server inbound listener 与 outbound code-host connection，记录 `ws`/`wss`、Origin 拒绝、frame limit 和 fallback。 |
-| MCP runtime/connection refresh/resource clients | 重写 `subsys.mcp.client`、`spine.trace-mcp-call`、`tool.mcp-namespace-tools` 和三个 resource tool 节点；区分 per-step binding、call-time refresh/current binding、prepared-call revision guard 与 latest resource client。 |
-| agent_jobs 整套移除 | 删除两个工具节点；更新 tool system、router、state DB、agents config、index 与 llms。 |
-| paginated thread fork/single writer | 重写 `subsys.core.thread-store`，扩写 `rpc.thread-methods`、session/rollout/context；区分 paginated cross-process writer lock、fork 的进程内 prepare lease 和 lineage boundary。 |
-| Agent Plugins manifest | 扩写 plugins、skills、extension system 与 plugin RPC；root `plugin.json` 有 parser，但默认 discovery allow-list 尚未接线，保留 `[U]`。 |
-| persisted thread pinning | thread metadata/list/response、thread store 与 glossary 均记录 `isPinned`。 |
-| PathUri approval key | 更新 shell flow、approval policy 与 key types；cwd cache key 使用 `PathUri`，跨 host identity 的含义仅标 `[I]`。 |
-| exec-server network callbacks | 扩写 exec-server/network policy；覆盖 HTTP、CONNECT、SOCKS5 TCP/UDP 的 Allow/Deny/Ask、callback timeout、disconnect/cancel recovery 与 fail-closed 边界。 |
-
-其它重要更新：
-
-- World State 新增 `multi_agent_mode` 与 deferred `tools` sections，分别承载 delegation policy 与 namespace diff。
-- HTTP client 改为 route-aware pool，补 system-proxy cache、PAC 单 route、manual redirect/replayability 边界。
-- skills extension 增 catalog budget、`skills.list`/`skills.read` pagination 与 executor resource provider。
-- Git attribution 进入 extension registry、commit/PR marker 与 auth-generation cache。
-- image generation 对 Free plan 隐藏，artifact path/hint 归 extension。
-- `tools.update_plan.enabled` 与 `multi_agent_v2.wait_agent_enabled` 可独立关闭对应工具。
-- App-Server 新增 `externalAgentConfig/import/recordHistory`、notification envelope timestamp、thread pinning、plugin/app 字段和 successful `turn/completed` summary item。
-- TUI 增命名 `/new`/`/clear`、side-conversation persistence、1 MiB live-output head/tail truncation。
-- protocol `Op`/`EventMsg` 数量保持 26/80，但 payload/字段与引用已更新。
+| Tool registry | `build_tool_router` 先写入 core/MCP/extension/dynamic runtime，再 `finalize_tool_router`；`StepContext` 持有 finalized router。更新 tool system/router/anatomy 与各 tool gate。 |
+| Apply patch | direct custom tool 与 shell interception 统一进入 `execute_verified_patch`，共用 permission/safety/orchestrator/runtime。 |
+| Code Mode | V8/cell/session runtime 移到新 `code-mode-runtime` crate；core 只选 process-owned 或 disabled provider，没有内嵌 fallback。 |
+| Multi-agent | 新 plaintext/encrypted message 分流、developer instruction override、ready environment 继承、parent-turn correlation、registry 双索引与 remote-compaction retention。 |
+| Thread sections | `isPinned` 退役；新 section CRUD/move/list filter/manual ordering，依赖 SQLite，内建 Pinned section 不可改名/删除。 |
+| MCP 2026 | `mcp_2026_07_28` 仍 default-off/under-development；stdio 还要求 `CODEX_MCP_PROTOCOL_VERSION`。新 discovery/pagination、step binding、environment OAuth/file path 隔离与 strict elicitation review。 |
+| Plugins / skills | portable Agent Plugins v1、remote `plugin/search`、bundle limits/eligibility metadata；skills rendering 下沉 `ext/skills`，host/executor 共享 context-window budget。 |
+| App-Server | +6 client methods：thread section 5 个 + experimental `plugin/search`；notification/server-request 数不变，多个 payload 增字段。 |
+| TUI | two-stroke key chord、`/fork <name>`、state-DB-first picker、non-blocking RUI countdown、side cleanup、Unicode/hyperlink width 与 screen-size cache。TUI 尚未提供 section 管理 UI。 |
+| Exec/network | canonical `PermissionProfile`、remote Guardian network callback、allow-amendment fail-closed、normalized violation tracing、exec-server dispatcher/lifetime/version-skew，以及 Windows interrupt/PathUri 边界。 |
+| HTTP/realtime/budgets | shared route-aware HTTP 扩展到 Ollama/file upload/MCP OAuth；Realtime 增 request-level transition instructions/ack；rollout/token budgets 拆成独立模型。 |
 
 ## 5. L2 独立证伪
 
-结构性与语义改动节点均由独立 agent 对目标源码复核；L2 不复用节点正文作为证据。发现反例后先修 Wiki，再复核：
+源码影响先由多个独立 agent 按 core/tools、thread/state、App-Server/protocol、MCP/plugins、TUI、exec/network、providers/SDK 与 inventory 分面重读；节点落盘后再交叉分配给没有撰写该批次的 agent 逐 claim 证伪。下列反例已先修 Wiki：
 
-| 领域 | 重点节点 | L2 结论与已修反例 |
-|---|---|---|
-| MCP | client、trace、namespace/resource tools | 修正“step binding 贯穿调用”的错误；实际 ordinary call 先 refresh，再取 current binding，revision guard 只覆盖 prepared-call 到 exact send。 |
-| Thread | thread-store、thread methods | 修正 legacy thread 也有跨进程 lock 的误写；writer lock 仅 paginated live writer。修正 fork 会抛 cross-process writer conflict 的误写。 |
-| HTTP | http-client | 补全 global system-proxy cache TTL/cap、non-replayable redirect 返回原 response、PAC 候选不 fail over。 |
-| Exec/network | exec-server | 修正 client recovery 的适用面：能响应的 callback Deny/error；connection cancellation 等场景由 server timeout/fail closed。 |
-| Approval/PathUri | shell flow、approval policy | PathUri key 通过；修正 dangerous/Windows legacy unmatched + `Never` 为 Forbidden，不因 disabled/external sandbox 放行。 |
-| Code Mode | new runtime、transport、CLI | 修正 protocol source path，补 frame/message size evidence；认证能力保留 `[U]`，不从 Origin filter 推断。 |
-| Plugins/skills | plugins、skills、extension system、plugin RPC | 修正 Agent Plugins 默认 discovery 已接线的误写；补 name 首尾规则、local+remote force-refetch、share/icon/hook fields。 |
-| App-Server/protocol | overview、thread/config/plugin methods、notifications、server requests | 130/72/11 计数通过；修正 ClientRequest 与 ServerRequest wire-name差异、requirements delta、notification 分组和 `turn/completed` source。 |
-| Tool gates/image | tool system、current-time、update-plan、wait-agent-v2、image generation | 修正 hosted image-generation 旧描述、config gates、Free plan 和 extension-owned artifact；current-time 标为 base inventory 漏项。 |
-| World State | context manager、collaboration modes、tool search | 修正 settings builder 仍处理 multi-agent 的误写；multi-agent 已是独立 typed section，tools section 仅描述 deferred namespaces。 |
-| Process/TUI/Git | process-hardening、TUI nodes、git-utils | Windows Job preserve/terminate race、side conversation/live output、Git attribution 均按目标 source 复核。 |
+- 纠正“tool router 仍用 `add_tool_sources`”：目标是 registry-first + single finalize。
+- 纠正“Code Mode 可回退 core 内嵌 V8”：目标只有 process-owned 或 disabled provider。
+- 纠正“`request_user_input.autoResolutionMs` 是模型参数”：tool schema 已只剩 `questions`，blocking 由 mode 决定。
+- 纠正“writer lock 只用于 Paginated history”：target 对所有 history mode 强制单写者。
+- 纠正“`isPinned` 仍在 wire/list/metadata”：target 是 section 模型。
+- 纠正“MCP call 始终使用 sampling 时同一 client”：call-time readiness 后会 capture latest binding，resource 还可 fallback live connection。
+- 纠正“MCP 2026 打开 feature 即全面现代化”：默认关闭，stdio 还有 env marker。
+- 纠正“TUI 已支持 section 管理”：TUI 只消费部分 ordering 信息，没有 CRUD/move UI。
+- 纠正“external-agent detect 已返回 connector candidates”：detector 与 protocol 存在，但 app-server `detect_response` 当前固定返回空 connectors。
+- 纠正“`plugin/search.cwds` 已过滤 workspace”：target processor 当前显式忽略该参数。
+- 纠正“`justification` 可不配 sandbox permission”：shell/exec 现在要求显式 `sandbox_permissions`。
+- 纠正“network allow amendment 写入失败仍放行”：target 是 fail closed。
 
-纯 SHA 与只移动行号的节点采用 L2 抽样；A-BROKEN、B-HEAVY、MCP、thread、HTTP、Code Mode、plugins、protocol、approval、exec-network、skills、World State 等结构性节点不降级为抽样。
+纯 SHA/行号移动的 D-CLEAN 节点采用 base/target blob diff 映射后抽样；A-BROKEN、tool router、Code Mode、apply patch、thread sections、MCP、plugins/skills、App-Server、TUI keymap、exec-network、budgets 不降级为抽样。
 
-## 6. `[I]` / `[U]` 与跳过判定
+## 6. 不确定项与跳过判定
 
-保留的主要不确定项已写入 `_staging/uncertainty-61a44880.md` 并由 reconcile 生成 `reference/uncertainty.md`：
+本轮不把明确代码边界误记成 `[U]`：MCP 2026 门控、TUI section UI 缺失、connector detect 未接线、`plugin/search.cwds` 忽略都有 target 直证。
 
-- `[U]` remote Code Mode listener 的应用层认证/TLS 部署保证。
-- `[U]` multi-segment lineage 的 incremental replay。
-- `[U]` Agent Plugins root `plugin.json` 默认 discovery 接线。
-- `[U]` exec-network `Ask` 是否最终有可用 UI。
-- `[U]` system proxy/PAC 的稳定性与候选 failover。
-- `[U]` Windows TCP attribution 的 IPv6 行为。
-- `[U]` dynamic skills shadow selector、remote plugin cache 长期契约。
-- `[U]` legacy v1 denied wire compatibility 与 core/v2 completion timestamp 对应关系。
-- `[I]` PathUri cache key 对跨 executor/host identity 的设计意图。
+继续保留的主要 `[U]` 包括：remote Code Mode 的部署层认证/TLS 保证、multi-segment history lineage 的未来 incremental replay、exec-network `Ask` 最终 UI、system proxy/PAC 长期契约、Windows IPv6 process attribution、dynamic skill selector 的稳定用户协议、remote plugin disk cache 长期格式。
 
-没有因“direct source clean”跳过全局 SHA 或引用检查。未拆出独立 Git-attribution、MCP-binding、World-State 节点：现有 `extension-system` + `git-utils`、`mcp.client`、`context-manager`/`collaboration-modes` 已能自包含承载；Code Mode 则因形成独立 host/runtime/transport 模块而新建节点。
+未为 MCP 2026、plugin search、thread sections、remote filesystem 另建节点：它们分别由既有 MCP catalog/client、plugin RPC/plugins、thread-store/thread RPC、exec-server/file-system 节点自包含承载。
 
 ## 7. 元数据与引用收敛
 
-- 所有 172 个 retained verified node frontmatter：`updated: 61a44880a8`。
-- `index.json.updated` 与所有 `index.nodes[].updated`：`61a44880a8`。
-- `README.md`、`llms.txt`、`index.json` 的节点、tool、crate、RPC 计数一致。
-- reconcile 会在文件删除时 prune stale index entry，并同步每节点 `updated`。
-- lint 会校验 verified node frontmatter/index/top-level SHA 一致，以及 source/evidence path、行号与弱锚点。
-- 全量行号审计后，失效引用已重新定位；最后一轮又把 252 个落在空行、纯注释或闭合符的 evidence refs 锚到相邻直接代码行。
+- 所有 177 个 retained/new verified node frontmatter：`updated: 7750465934`。
+- `index.json.updated` 与所有 `index.nodes[].updated`：`7750465934`。
+- `README.md`、`llms.txt`、`index.json` 的节点/tool/crate/RPC/feature 计数一致。
+- base 中 20,977 个证据引用先通过 blob diff 对“代码未变、只移行”的引用保守重定位；落入变更 hunk 的 claim 重读 target source，不用“最近非空行”规避 lint。
+- 5 个失效 source 均已重定位；submodule 源码工作树 clean。
 
 ## 8. 最终验证
 
@@ -155,18 +141,18 @@ D-CLEAN 只允许省略逐段语义重写，不允许跳过目标 SHA、source e
 git -C codex rev-parse HEAD
 git -C codex status --short
 node docs/llm-wiki/codex/tools/reconcile.mjs
+node docs/llm-wiki/codex/tools/reconcile.mjs
 node docs/llm-wiki/codex/tools/lint.mjs
-jq -r '.updated, (.nodes|length), ([.nodes[].updated]|unique|join(\",\"))' docs/llm-wiki/codex/index.json
+jq -r '.updated, (.nodes|length), ([.nodes[].updated]|unique|join(",")), ([.nodes[]|select(.status=="planned")]|length)' docs/llm-wiki/codex/index.json
 rg -n '^updated:' docs/llm-wiki/codex/{spine,surface,subsystems,reference} --glob '*.md'
-rg -n 'tool\\.spawn-agents-on-csv|tool\\.report-agent-job-result' docs/llm-wiki/codex/index.json docs/llm-wiki/codex/llms.txt
 git diff --check
+git submodule status -- codex opencode pi
 ```
 
 验收结果：
 
-- submodule HEAD 精确等于目标 full SHA，子模块源码工作树 clean。
-- reconcile：172 verified nodes，0 issue。
+- submodule HEAD 精确等于 target full SHA，子模块源码工作树 clean。
+- reconcile 首轮登记 5 个新节点，第二轮为幂等无额外 diff。
 - lint：0 error。
-- stale node/index SHA：0。
-- 已退役工具在 index/llms 的残留：0。
-- `opencode`、`pi` 子模块未初始化、未修改。
+- 177 verified / 0 planned，节点、index 顶层与子模块 SHA 一致。
+- `opencode` / `pi` 子模块未初始化、未修改。

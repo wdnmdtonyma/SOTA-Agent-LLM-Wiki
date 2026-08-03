@@ -3,12 +3,12 @@ id: tool.list-available-plugins-to-install
 title: list_available_plugins_to_install 工具
 kind: tool
 tier: T1
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs, codex-rs/core/src/tools/handlers/list_available_plugins_to_install_spec.rs, codex-rs/core/src/tools/spec_plan_tests.rs, codex-rs/tools/src/tool_discovery.rs]
+source: [codex-rs/core/src/session/turn.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs, codex-rs/core/src/tools/handlers/list_available_plugins_to_install_spec.rs, codex-rs/core/src/tools/spec_plan_tests.rs, codex-rs/tools/src/tool_discovery.rs]
 symbols: [ListAvailablePluginsToInstallHandler, create_list_available_plugins_to_install_tool, ListAvailablePluginsToInstallResult, RequestPluginInstallEntry]
 related: [tool.request-plugin-install, tool.tool-search, subsys.config-auth.plugins, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `list_available_plugins_to_install` 列出当前可安装的 plugin/connector 候选,供模型再用 `request_plugin_install` 发起安装请求。
@@ -48,11 +48,13 @@ handler 把 `ListAvailablePluginsToInstallResult { tools }` 序列化为 JSON �
 
 ## 6 注册与门控
 
-`tool_suggest_enabled` 要求 `Feature::ToolSuggest`、`Feature::Apps`、`Feature::Plugins` 全部开启。[E: codex-rs/core/src/tools/spec_plan.rs:337] [E: codex-rs/core/src/tools/spec_plan.rs:339] [E: codex-rs/core/src/tools/spec_plan.rs:340] [E: codex-rs/core/src/tools/spec_plan.rs:341]
+`tool_suggest_enabled` 要求 `Feature::ToolSuggest`、`Feature::Apps`、`Feature::Plugins` 全部开启。[E: codex-rs/core/src/tools/spec_plan.rs:387] [E: codex-rs/core/src/tools/spec_plan.rs:389] [E: codex-rs/core/src/tools/spec_plan.rs:390] [E: codex-rs/core/src/tools/spec_plan.rs:391]
 
-`add_core_utility_tools` 还要求存在非空 `tool_suggest_candidates`;当 presentation 是 `ToolSuggestPresentation::ListTool` 时才注册 `ListAvailablePluginsToInstallHandler`,随后总是注册 `RequestPluginInstallHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:783] [E: codex-rs/core/src/tools/spec_plan.rs:785] [E: codex-rs/core/src/tools/spec_plan.rs:787] [E: codex-rs/core/src/tools/spec_plan.rs:788] [E: codex-rs/core/src/tools/spec_plan.rs:792]
+`add_core_utility_tools` 还要求存在非空 `tool_suggest_candidates`;当 presentation 是 `ToolSuggestPresentation::ListTool` 时才注册 `ListAvailablePluginsToInstallHandler`,随后总是注册 `RequestPluginInstallHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:844] [E: codex-rs/core/src/tools/spec_plan.rs:846] [E: codex-rs/core/src/tools/spec_plan.rs:848] [E: codex-rs/core/src/tools/spec_plan.rs:849] [E: codex-rs/core/src/tools/spec_plan.rs:853]
 
-spec tests 覆盖任一 discovery feature 关闭、候选为空时两件套不可见,以及开启后两件套可见。[E: codex-rs/core/src/tools/spec_plan_tests.rs:1141] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1142] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1157] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1163] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1183] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1202] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1203] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1204]
+endpoint recommendation path 不走本工具：有 endpoint candidates 时 turn 直接选择 `RecommendationContext`，只保留 `request_plugin_install` 的简化 `plugin_id` schema；本节点描述的是没有 endpoint candidates 时的 legacy candidate enumeration。[E: codex-rs/core/src/session/turn.rs:1498][E: codex-rs/core/src/session/turn.rs:1504][E: codex-rs/core/src/session/turn.rs:1507][E: codex-rs/core/src/tools/spec_plan.rs:848]
+
+spec tests 覆盖任一 discovery feature 关闭、候选为空时两件套不可见,以及开启后两件套可见。[E: codex-rs/core/src/tools/spec_plan_tests.rs:1377] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1378] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1393] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1399] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1419] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1438] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1439] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1440]
 
 ## 7 parallel-safe
 
@@ -69,6 +71,7 @@ handler 构造时按 `name`、`id` 排序候选;调用时只接受 function payl
 ## Sources
 
 - codex-rs/core/src/tools/spec_plan.rs
+- codex-rs/core/src/session/turn.rs
 - codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs
 - codex-rs/core/src/tools/handlers/list_available_plugins_to_install_spec.rs
 - codex-rs/core/src/tools/spec_plan_tests.rs

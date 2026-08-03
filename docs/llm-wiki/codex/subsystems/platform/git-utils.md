@@ -8,7 +8,7 @@ symbols: [GitInfo, collect_git_info, ApplyGitRequest, ApplyGitResult, apply_git_
 related: [subsys.cloud.cloud-tasks, subsys.cloud.cloud-task-api, config.storage-telemetry-misc, spine.extension-system]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `codex_git_utils` is Codex's local Git support crate: `lib.rs` re-exports patch apply, baseline diff/reset, merge-base, metadata, fsmonitor policy, and symlink helpers, while `operations.rs` remains a crate-private system-git execution layer。[E: codex-rs/git-utils/src/lib.rs:1][E: codex-rs/git-utils/src/lib.rs:10][E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:22][E: codex-rs/git-utils/src/lib.rs:25][E: codex-rs/git-utils/src/lib.rs:28][E: codex-rs/git-utils/src/lib.rs:44][E: codex-rs/git-utils/src/operations.rs:11]

@@ -3,12 +3,12 @@ id: config.mcp-tools
 title: MCP 与工具设置
 kind: config
 tier: T1
-source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/config/src/mcp_types.rs, codex-rs/protocol/src/config_types.rs]
-symbols: [McpServerConfig, OAuthCredentialsStoreMode, AppToolApproval, ToolsToml, ToolSuggestConfig]
+source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/config/src/mcp_types.rs, codex-rs/protocol/src/config_types.rs, codex-rs/core/src/config/mod.rs, codex-rs/features/src/lib.rs]
+symbols: [McpServerConfig, McpServerAuth, OAuthCredentialsStoreMode, AppToolApproval, ToolsToml, ToolSuggestConfig]
 related: [tool.mcp-namespace-tools, tool.web-search, config.skills-plugins-features, subsys.mcp.client]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > MCP 与工具设置 catalog 覆盖 ConfigToml 中 MCP server definitions、MCP OAuth callback/storage、Apps MCP product SKU、tool output/background terminal limits、web search mode、nested tools config、tool suggestions 和 unified exec compatibility flag。
@@ -26,7 +26,11 @@ updated: 61a44880a8
 
 `ToolsToml` is the nested `[tools]` section and currently contains `web_search` plus `experimental_request_user_input`.[E: codex-rs/config/src/config_toml.rs:632][E: codex-rs/config/src/config_toml.rs:637][E: codex-rs/config/src/config_toml.rs:638]
 
-`AppToolApproval` adds `writes` between prompt and approve, allowing app-tool policy to distinguish write-like calls from the fully approved mode。[E: codex-rs/config/src/mcp_types.rs:21][E: codex-rs/config/src/mcp_types.rs:24][E: codex-rs/config/src/mcp_types.rs:25][E: codex-rs/config/src/mcp_types.rs:26]
+`AppToolApproval` adds `writes` between prompt and approve, allowing app-tool policy to distinguish write-like calls from the fully approved mode。[E: codex-rs/config/src/mcp_types.rs:24][E: codex-rs/config/src/mcp_types.rs:27][E: codex-rs/config/src/mcp_types.rs:28][E: codex-rs/config/src/mcp_types.rs:29]
+
+每个 `McpServerConfig` 还保存 transport、auth mode、effective `environment_id`、enabled/required、parallel opt-in、startup/tool timeout、server/tool approval、allow/deny lists、OAuth scopes/client/resource 和 per-tool overrides；`oauth_credential_name` 对非本地环境编码 environment+server，隔离 executor-owned credentials。[E: codex-rs/config/src/mcp_types.rs:162][E: codex-rs/config/src/mcp_types.rs:166][E: codex-rs/config/src/mcp_types.rs:169][E: codex-rs/config/src/mcp_types.rs:173][E: codex-rs/config/src/mcp_types.rs:177][E: codex-rs/config/src/mcp_types.rs:181][E: codex-rs/config/src/mcp_types.rs:193][E: codex-rs/config/src/mcp_types.rs:197][E: codex-rs/config/src/mcp_types.rs:201][E: codex-rs/config/src/mcp_types.rs:205][E: codex-rs/config/src/mcp_types.rs:209][E: codex-rs/config/src/mcp_types.rs:213][E: codex-rs/config/src/mcp_types.rs:217][E: codex-rs/config/src/mcp_types.rs:221][E: codex-rs/config/src/mcp_types.rs:225][E: codex-rs/config/src/mcp_types.rs:234][E: codex-rs/config/src/mcp_types.rs:242][E: codex-rs/config/src/mcp_types.rs:244]
+
+2026 protocol support is not a server-table field：`[features].mcp_2026_07_28`（under development，default false）maps to global `McpProtocolMode::V20260728`; otherwise config builds `Legacy`。[E: codex-rs/features/src/lib.rs:1127][E: codex-rs/features/src/lib.rs:1130][E: codex-rs/core/src/config/mod.rs:1758][E: codex-rs/core/src/config/mod.rs:1762]
 
 ## 字段 catalog
 
@@ -50,6 +54,8 @@ updated: 61a44880a8
 - `codex-rs/config/src/types.rs`
 - `codex-rs/config/src/mcp_types.rs`
 - `codex-rs/protocol/src/config_types.rs`
+- `codex-rs/core/src/config/mod.rs`
+- `codex-rs/features/src/lib.rs`
 
 ## 相关
 

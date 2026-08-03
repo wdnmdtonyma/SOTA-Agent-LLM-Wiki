@@ -8,7 +8,7 @@ symbols: [ModelProvider, create_model_provider, ConfiguredModelProvider, ModelPr
 related: [subsys.providers.provider-openai, subsys.providers.provider-bedrock, subsys.providers.provider-oss, subsys.providers.auth-layer, subsys.providers.http-client, subsys.providers.responses-api, subsys.providers.model-catalog, config.model-provider]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > Provider subsystem 把配置层的 `ModelProviderInfo` 转成 runtime `ModelProvider`，再转成 `codex_api::Provider` 和 `SharedAuthProvider`；wire API 目前只支持 Responses API。[E: codex-rs/model-provider-info/src/lib.rs:57][E: codex-rs/model-provider-info/src/lib.rs:57][E: codex-rs/model-provider/src/provider.rs:101][E: codex-rs/model-provider/src/provider.rs:101][E: codex-rs/model-provider/src/provider.rs:156][E: codex-rs/model-provider/src/provider.rs:172]

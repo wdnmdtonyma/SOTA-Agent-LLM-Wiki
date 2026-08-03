@@ -3,12 +3,12 @@ id: subsys.exec-sandbox.sandbox-windows
 title: Windows sandbox
 kind: subsystem
 tier: T2
-source: [codex-rs/windows-sandbox-rs/src, codex-rs/sandboxing/src/manager.rs]
-symbols: [run_windows_sandbox_capture, ResolvedWindowsSandboxPermissions, token_mode_for_permission_profile, create_readonly_token_with_cap, create_workspace_write_token_with_caps_from, prepare_legacy_spawn_context, prepare_elevated_spawn_context_for_permissions, spawn_windows_sandbox_session_legacy, spawn_windows_sandbox_session_elevated_for_permission_profile]
+source: [codex-rs/windows-sandbox-rs/src, codex-rs/sandboxing/src/manager.rs, codex-rs/sandboxing/src/policy_transforms.rs, codex-rs/protocol/src/permissions.rs, codex-rs/utils/pty/src/pipe.rs, codex-rs/utils/pty/src/process.rs, codex-rs/utils/absolute-path/src/lib.rs, codex-rs/utils/path-uri/src/lib.rs]
+symbols: [run_windows_sandbox_capture, ResolvedWindowsSandboxPermissions, token_mode_for_permission_profile, create_readonly_token_with_cap, create_workspace_write_token_with_caps_from, prepare_legacy_spawn_context, prepare_elevated_spawn_context_for_permissions, spawn_windows_sandbox_session_legacy, spawn_windows_sandbox_session_elevated_for_permission_profile, normalize_windows_device_path, PathUri]
 related: [subsys.exec-sandbox.overview, subsys.exec-sandbox.exec-server, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > Windows sandbox backend 用 Windows restricted token、capability SID、ACL allow/deny、可选 private desktop、以及 elevated runner IPC 两条 spawn 路径来执行 read-only 或 workspace-write policy 下的命令。[I]
@@ -20,10 +20,11 @@ updated: 61a44880a8
 - token、capability SID、workspace ACL、null device allow 是怎样组合的？
 - `SpawnRequest` 在 elevated unified exec 中如何流向 sandbox user runner？
 - Windows sandbox 在非 Windows target 上的行为是什么？
+- non-TTY interrupt、symbolic `:slash_tmp` 和 Windows namespace path 怎样跨 platform boundary 处理？
 
 ## 职责边界
 
-`codex_sandboxing::SandboxManager` 只把 `WindowsRestrictedToken` 带到 `SandboxExecRequest`；它不在 manager 层改写 argv。[E: codex-rs/sandboxing/src/manager.rs:414][E: codex-rs/sandboxing/src/manager.rs:415][E: codex-rs/sandboxing/src/manager.rs:416][E: codex-rs/sandboxing/src/manager.rs:418][E: codex-rs/sandboxing/src/manager.rs:421][E: codex-rs/sandboxing/src/manager.rs:422][E: codex-rs/sandboxing/src/manager.rs:424] Windows token、ACL、runner IPC 和 process creation 都在 `codex-rs/windows-sandbox-rs/src` 内实现。[I]
+`codex_sandboxing::SandboxManager` 只把 `WindowsRestrictedToken` 带到 `SandboxExecRequest`；它不在 manager 层改写 argv。[E: codex-rs/sandboxing/src/manager.rs:406][E: codex-rs/sandboxing/src/manager.rs:407][E: codex-rs/sandboxing/src/manager.rs:408][E: codex-rs/sandboxing/src/manager.rs:410][E: codex-rs/sandboxing/src/manager.rs:413][E: codex-rs/sandboxing/src/manager.rs:414][E: codex-rs/sandboxing/src/manager.rs:416] Windows token、ACL、runner IPC 和 process creation 都在 `codex-rs/windows-sandbox-rs/src` 内实现。[I]
 
 Windows policy resolution starts from a managed `PermissionProfile`: `ResolvedWindowsSandboxPermissions::try_from_permission_profile` rejects non-managed profiles and non-restricted filesystem policies, `try_from_permission_profile_for_workspace_roots` materializes workspace-root entries, and `token_mode_for_permission_profile` rejects full-disk write access before choosing read-only or writable-root capability token mode.[E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:38][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:44][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:49][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:54][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:62][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:63][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:69][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:82][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:86][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:87][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:89]
 
@@ -55,15 +56,24 @@ Windows policy resolution starts from a managed `PermissionProfile`: `ResolvedWi
 7. runner client 用 `CreateProcessWithLogonW` 以 sandbox user 启动 `codex-command-runner.exe`，connects the named pipes, sends the spawn request, waits for spawn-ready, and then transfers the pipe files to the driver.[E: codex-rs/windows-sandbox-rs/src/elevated/runner_client.rs:348][E: codex-rs/windows-sandbox-rs/src/elevated/runner_client.rs:379][E: codex-rs/windows-sandbox-rs/src/elevated/runner_client.rs:380][E: codex-rs/windows-sandbox-rs/src/elevated/runner_client.rs:406][E: codex-rs/windows-sandbox-rs/src/elevated/runner_client.rs:416][E: codex-rs/windows-sandbox-rs/src/elevated/runner_client.rs:417]
 8. runner 读取 `SpawnRequest` 后用 sandbox user 当前 token 派生 read-only 或 writable-root restricted token，再用 ConPTY 或 anonymous pipes spawn 实际命令。[E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:192][E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:234][E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:237][E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:271][E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:297][E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:302][E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:339]
 9. unified Windows driver 把 `Stdin`、`CloseStdin`、`Resize`、`Terminate` frame 写给 runner，把 runner 返回的 `Output` 和 `Exit` frame 映射到 `ProcessDriver` 的 stdout/stderr/exit 通道。[E: codex-rs/windows-sandbox-rs/src/unified_exec/backends/windows_common.rs:43][E: codex-rs/windows-sandbox-rs/src/unified_exec/backends/windows_common.rs:57][E: codex-rs/windows-sandbox-rs/src/unified_exec/backends/windows_common.rs:69][E: codex-rs/windows-sandbox-rs/src/unified_exec/backends/windows_common.rs:80][E: codex-rs/windows-sandbox-rs/src/unified_exec/backends/windows_common.rs:110][E: codex-rs/windows-sandbox-rs/src/unified_exec/backends/windows_common.rs:127]
+10. `ProcessDriver` 保存真实 `tty`；Windows 只有 non-TTY 且存在 terminator 时把 `Interrupt` 映射成 termination。Pipe backend 会 terminate JobObject 或单进程，成功 signal 后移除 killer，避免 Drop/后续 terminate 重复执行；ConPTY 不走这条强制终止语义。[E: codex-rs/utils/pty/src/pipe.rs:29][E: codex-rs/utils/pty/src/pipe.rs:42][E: codex-rs/utils/pty/src/pipe.rs:51][E: codex-rs/utils/pty/src/pipe.rs:70][E: codex-rs/utils/pty/src/process.rs:229][E: codex-rs/utils/pty/src/process.rs:237][E: codex-rs/utils/pty/src/process.rs:363][E: codex-rs/utils/pty/src/process.rs:373][E: codex-rs/utils/pty/src/process.rs:390]
 
 ## 设计动机与权衡
 
 - legacy path 直接在当前用户上下文中创建 restricted token 并修改 ACL；elevated path 先切到 sandbox user runner，再由 runner 创建更小的 restricted token，适合需要独立 sandbox identity/ACL orchestration 的场景。[I]
 - `create_token_with_caps_from` 使用 `DISABLE_MAX_PRIVILEGE | LUA_TOKEN | WRITE_RESTRICTED` 创建 restricted token，这表明 Windows backend 同时依赖 token privilege reduction 与 write-restricted SID 机制。[E: codex-rs/windows-sandbox-rs/src/token.rs:448][E: codex-rs/windows-sandbox-rs/src/token.rs:480][E: codex-rs/windows-sandbox-rs/src/token.rs:481]
-- `.codex` and `.agents` under the command cwd are explicitly protected with deny-write ACLs for workspace capability SIDs, so writable roots are not an unconditional write grant over every sensitive workspace child.[E: codex-rs/windows-sandbox-rs/src/spawn_prep.rs:339][E: codex-rs/windows-sandbox-rs/src/spawn_prep.rs:340][E: codex-rs/windows-sandbox-rs/src/workspace_acl.rs:13][E: codex-rs/windows-sandbox-rs/src/workspace_acl.rs:19][E: codex-rs/windows-sandbox-rs/src/workspace_acl.rs:23][E: codex-rs/windows-sandbox-rs/src/workspace_acl.rs:26]
+- Windows ACL preparation 本身显式保护 command cwd 下的 `.codex` 与 `.agents`；更上层的 restricted filesystem policy 还把 `.git`、`.agents`、`.codex` 都作为 writable project root 下的默认 read-only metadata，除非存在更窄的显式 write entry。因此 writable root 不是敏感 metadata children 的无条件写授权。[E: codex-rs/windows-sandbox-rs/src/spawn_prep.rs:339][E: codex-rs/windows-sandbox-rs/src/spawn_prep.rs:340][E: codex-rs/windows-sandbox-rs/src/workspace_acl.rs:13][E: codex-rs/protocol/src/permissions.rs:22][E: codex-rs/protocol/src/permissions.rs:27][E: codex-rs/protocol/src/permissions.rs:57][E: codex-rs/protocol/src/permissions.rs:614][E: codex-rs/protocol/src/permissions.rs:615][E: codex-rs/protocol/src/permissions.rs:616]
 - write allow ACE 不再在 parent 授予 `FILE_DELETE_CHILD`，而是在可继承的 descendant 授予 `DELETE`；`ensure_allow_write_aces` 会把仍含 `FILE_DELETE_CHILD` 的 stale ACE 视为需要替换，避免 parent grant 绕过 `.git` 或显式 read-only child 上的 deny-write。[E: codex-rs/windows-sandbox-rs/src/acl.rs:351][E: codex-rs/windows-sandbox-rs/src/acl.rs:352][E: codex-rs/windows-sandbox-rs/src/acl.rs:319][E: codex-rs/windows-sandbox-rs/src/acl.rs:321][E: codex-rs/windows-sandbox-rs/src/acl.rs:364][E: codex-rs/windows-sandbox-rs/src/acl.rs:499][E: codex-rs/windows-sandbox-rs/src/acl.rs:503][E: codex-rs/windows-sandbox-rs/src/acl.rs:504][E: codex-rs/windows-sandbox-rs/src/spawn_prep.rs:294][E: codex-rs/windows-sandbox-rs/src/spawn_prep.rs:298]
 - setup orchestration 对相同 base64 payload 做 in-process singleflight：第一个 caller 执行 helper，同 key 的 waiter 共享成功或保留 `SetupErrorCode` 的失败结果；refresh 与 full setup 都经过该合并层。[E: codex-rs/windows-sandbox-rs/src/setup.rs:76][E: codex-rs/windows-sandbox-rs/src/setup.rs:83][E: codex-rs/windows-sandbox-rs/src/setup.rs:96][E: codex-rs/windows-sandbox-rs/src/setup.rs:104][E: codex-rs/windows-sandbox-rs/src/setup.rs:117][E: codex-rs/windows-sandbox-rs/src/setup.rs:125][E: codex-rs/windows-sandbox-rs/src/setup.rs:143][E: codex-rs/windows-sandbox-rs/src/setup.rs:145][E: codex-rs/windows-sandbox-rs/src/setup.rs:151][E: codex-rs/windows-sandbox-rs/src/setup.rs:161][E: codex-rs/windows-sandbox-rs/src/setup.rs:165][E: codex-rs/windows-sandbox-rs/src/setup.rs:170][E: codex-rs/windows-sandbox-rs/src/setup.rs:327][E: codex-rs/windows-sandbox-rs/src/setup.rs:874]
 - setup 为 sandbox group 补齐 read/execute ACL 的 runtime roots 现在还包含 `%USERPROFILE%/.cache/codex-runtimes`；elevated pipe runner 只对 filesystem helper arg 选择 `ConsoleMode::NoWindow`/`CREATE_NO_WINDOW`，其它命令继承 console。[E: codex-rs/windows-sandbox-rs/src/bin/setup_main/win/setup_runtime_bin.rs:17][E: codex-rs/windows-sandbox-rs/src/bin/setup_main/win/setup_runtime_bin.rs:23][E: codex-rs/windows-sandbox-rs/src/bin/setup_main/win/setup_runtime_bin.rs:28][E: codex-rs/windows-sandbox-rs/src/bin/setup_main/win/setup_runtime_bin.rs:91][E: codex-rs/windows-sandbox-rs/src/bin/setup_main/win/setup_runtime_bin.rs:98][E: codex-rs/windows-sandbox-rs/src/bin/setup_main/win/setup_runtime_bin.rs:99][E: codex-rs/windows-sandbox-rs/src/process.rs:46][E: codex-rs/windows-sandbox-rs/src/process.rs:47][E: codex-rs/windows-sandbox-rs/src/process.rs:48][E: codex-rs/windows-sandbox-rs/src/process.rs:133][E: codex-rs/windows-sandbox-rs/src/process.rs:134][E: codex-rs/windows-sandbox-rs/src/process.rs:137][E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:346][E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:347][E: codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs:349]
+
+## Windows permission/path portability
+
+Symbolic `FileSystemSpecialPath::SlashTmp` 在非 Unix 上不会形成 deny-read 或 full-write narrowing，也不会被 policy transform 解析成字面 `/tmp`。配置里的普通 path `/tmp` 仍是普通 path；被忽略的是 special `:slash_tmp` token。[E: codex-rs/protocol/src/permissions.rs:463][E: codex-rs/protocol/src/permissions.rs:470][E: codex-rs/protocol/src/permissions.rs:554][E: codex-rs/sandboxing/src/policy_transforms.rs:408][E: codex-rs/sandboxing/src/policy_transforms.rs:413]
+
+Windows device/verbatim drive 和 namespace UNC aliases 先经 `normalize_windows_device_path` 规范化，再转为 canonical drive/UNC file URI；含混 namespace form、null 或无法安全表达的 path 保持 UTF-16LE opaque URI。这样 remote/app host 不需要把 executor path 当成本机 path 解释。[E: codex-rs/utils/absolute-path/src/lib.rs:154][E: codex-rs/utils/absolute-path/src/lib.rs:155][E: codex-rs/utils/absolute-path/src/lib.rs:161][E: codex-rs/utils/path-uri/src/lib.rs:680][E: codex-rs/utils/path-uri/src/lib.rs:690][E: codex-rs/utils/path-uri/src/lib.rs:704][E: codex-rs/utils/path-uri/src/lib.rs:747]
+
+`PathUri::join` 支持 same-drive relative path；跨 drive relative path 因其 current directory 属于 executor 而拒绝。Absolute path 则替换 base URI path。[E: codex-rs/utils/path-uri/src/lib.rs:339][E: codex-rs/utils/path-uri/src/lib.rs:355][E: codex-rs/utils/path-uri/src/lib.rs:359][E: codex-rs/utils/path-uri/src/lib.rs:369]
 
 ## gotcha
 
@@ -85,6 +95,12 @@ Windows policy resolution starts from a managed `PermissionProfile`: `ResolvedWi
 - `codex-rs/windows-sandbox-rs/src/elevated/runner_client.rs`
 - `codex-rs/windows-sandbox-rs/src/bin/command_runner/win.rs`
 - `codex-rs/sandboxing/src/manager.rs`
+- `codex-rs/sandboxing/src/policy_transforms.rs`
+- `codex-rs/protocol/src/permissions.rs`
+- `codex-rs/utils/pty/src/pipe.rs`
+- `codex-rs/utils/pty/src/process.rs`
+- `codex-rs/utils/absolute-path/src/lib.rs`
+- `codex-rs/utils/path-uri/src/lib.rs`
 
 ## 相关
 

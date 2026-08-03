@@ -1,6 +1,6 @@
 # RUN — 填充令(codex 源码 LLM Wiki)
 
-你是执行者。把本 wiki(`Best/docs/llm-wiki/codex/`)从"只有骨架"填成完整的、给 agent 检索的 LLM wiki。文档对象是 OpenAI **Codex** 真实源码(`Best/codex/`,相对本目录 `../../../codex/`,124-crate Rust workspace + TS/Py SDK)。要细到每个工具的字段与设计动机。
+你是执行者。把本 wiki(`Best/docs/llm-wiki/codex/`)从"只有骨架"填成完整的、给 agent 检索的 LLM wiki。文档对象是 OpenAI **Codex** 真实源码(`Best/codex/`,相对本目录 `../../../codex/`,128-crate Rust workspace + TS/Py SDK)。要细到每个工具的字段与设计动机。
 
 ## 0. 先读这五个文件(权威规范,必须遵守)
 1. `README.md` —— 形态、四支柱、证据图例、优先级、codex 画像。
@@ -32,7 +32,7 @@
 > ⚠️ **lint 过 ≠ 完成**。lint 只是结构下限(防漂移),真正把关是 L2 独立证伪。**不要写能骗过 lint 的模板化空话**。
 
 ## 4. 工具节点的硬约定
-- **`codex-rs/core/src/tools/spec_plan.rs` 是工具集的 ground truth**。开 `surface/tools/` 前先核对 `build_tool_router` → `build_tool_specs_and_registry` → `add_tool_sources` 的装配段,以及 `add_shell_tools` / `add_mcp_resource_tools` / `add_core_utility_tools` / `add_collaboration_tools` / `add_mcp_runtime_tools` / `add_extension_tools` / `add_dynamic_tools` 的门控、specs、handler 注册,**多退少补**(漏的补节点、错的修、真不存在的删并在 `reference/uncertainty.md` 记一笔)。
+- **`codex-rs/core/src/tools/spec_plan.rs` 是工具集的 ground truth**。开 `surface/tools/` 前先核对 `build_tool_router`: `add_core_tool_sources` 写入 core handlers,`append_mcp_tools` / `append_extension_tool_executors` / `append_dynamic_tool_runtimes` 追加外部 runtime,最后 `finalize_tool_router` 处理 exposure、tool search、code-mode 与 model-visible specs。core 内的 `add_shell_tools` / `add_mcp_resource_tools` / `add_core_utility_tools` / `add_collaboration_tools` 仍是门控与 handler 注册的主要分界,**多退少补**(漏的补节点、错的修、真不存在的删并在 `reference/uncertainty.md` 记一笔)。
 - **门控要写准**:每个工具节点必须写清它在哪个 `ToolEnvironmentMode` / `Feature` flag / config 字段 / provider capability / model capability 下启用(如 `Feature::TokenBudget`、`Feature::SleepTool`、`Feature::RequestPermissionsTool`、`MultiAgentVersion::V2`、namespace tools capability)。门控是 codex 工具系统的核心。
 - **V1/V2 并存**:multi-agent 工具有 V1/V2 两套(`spawn_agent` 等),各自独立节点或在节点内明确区分;别混。
 

@@ -1,11 +1,7 @@
-- [U] Remote Code Mode 的 app-server listener 接受 `ws://`，outbound host client 接受 `ws://`/`wss://`，但目标树没有足够证据证明另有应用层认证；部署安全不能只由 transport 名称推断。
+- [U] Remote Code Mode 的 process-owned host transport 支持 `ws://`/`wss://`，但目标树不足以证明部署层另有统一认证或 TLS 强制策略；不能从 transport 能力推出生产部署安全保证。
 - [U] Paginated thread 的 multi-segment lineage 当前不支持 incremental item replay；跨该边界的未来兼容策略尚未由目标源码定义。
-- [U] Agent Plugins root `plugin.json` 已有显式 URI parser，但默认 host/executor discovery allow-list 仍只包含 `.codex-plugin`、`.claude-plugin`、`.cursor-plugin`；其它调用方是否接线取决于集成面。
 - [U] exec-server network callback 返回 `Ask` 不保证一定出现 UI；最终结果还受 approval policy、permission profile、client callback 和连接存活状态约束。
 - [U] `respect_system_proxy` 仍是 under-development/default-off；PAC 只选择一个解析后的 route，当前实现没有候选间 failover，不能视为完整浏览器代理语义。
 - [U] Windows TCP process attribution 当前只覆盖 IPv4；IPv6 连接的 attribution 行为不能从现有实现外推。
 - [U] dynamic skill selector 仍是 shadow-selection path，不能写成已成为稳定的用户可见选择协议。
 - [U] remote plugin disk cache 的源码注释把它描述为迁移期机制；其长期持久化格式不是稳定契约。
-- [U] legacy v1 `ReviewDecision::Denied` wire shape 本轮变为携带 `rejection` 的对象；兼容影响与 v2 approval decision 分开评估。
-- [U] core `ItemCompletedEvent.started_at_ms` 不等于 v2 `ItemCompletedNotification.completedAt`，目标通知没有对应 `startedAt` 字段。
-- [U] `agents.job_max_runtime_seconds` 与 removed `enable_fanout` 仅保留兼容/no-op 入口，不代表 agent-jobs runtime 仍存在。

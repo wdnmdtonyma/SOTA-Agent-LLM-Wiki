@@ -3,12 +3,12 @@ id: config.approval-sandbox
 title: 审批与沙箱设置
 kind: config
 tier: T1
-source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/config/src/permissions_toml.rs, codex-rs/protocol/src/config_types.rs, codex-rs/protocol/src/permissions.rs, codex-rs/protocol/src/protocol.rs]
+source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/config/src/permissions_toml.rs, codex-rs/protocol/src/config_types.rs, codex-rs/protocol/src/permissions.rs, codex-rs/protocol/src/protocol.rs, codex-rs/utils/cli/src/shared_options.rs, codex-rs/core/src/config/mod.rs]
 symbols: [AutoReviewToml, ShellEnvironmentPolicyToml, SandboxWorkspaceWrite, PermissionsToml, PermissionProfileToml]
 related: [cli.global-flags, cli.exec-mode, command.config-system, subsys.core.approval-policy, subsys.exec-sandbox.overview]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > 审批与沙箱设置 catalog 覆盖 ConfigToml 中 command approval、approval reviewer、Guardian auto-review、shell environment、login shell、legacy sandbox 和 named permission profile 的顶层键。
@@ -25,6 +25,10 @@ updated: 61a44880a8
 当前 `ConfigToml` 有 96 个顶层 `pub` 字段；本节点覆盖其中 9 个字段。[E: codex-rs/config/src/config_toml.rs:150][E: codex-rs/config/src/config_toml.rs:510]
 
 `PermissionsToml` stores a flattened map of named permission profiles, and `PermissionProfileToml` has description, extends, workspace_roots, filesystem, and network sections.[E: codex-rs/config/src/permissions_toml.rs:24][E: codex-rs/config/src/permissions_toml.rs:25][E: codex-rs/config/src/permissions_toml.rs:113][E: codex-rs/config/src/permissions_toml.rs:114][E: codex-rs/config/src/permissions_toml.rs:115][E: codex-rs/config/src/permissions_toml.rs:116][E: codex-rs/config/src/permissions_toml.rs:117][E: codex-rs/config/src/permissions_toml.rs:118]
+
+CLI `--approve-for-me` 不新增 ConfigToml key，而是一次性注入现有 `approvals_reviewer="auto_review"`、`approval_policy="on-request"` 和 `sandbox_mode="workspace-write"`；它与显式 sandbox/dangerous bypass 冲突。旧 `--full-auto` 已从 parser 退役。[E: codex-rs/utils/cli/src/shared_options.rs:45][E: codex-rs/utils/cli/src/shared_options.rs:48][E: codex-rs/utils/cli/src/shared_options.rs:75][E: codex-rs/utils/cli/src/shared_options.rs:80][E: codex-rs/utils/cli/src/shared_options.rs:86]
+
+runtime 以 canonical `PermissionProfile` 作为有效权限事实源，再从它投影 filesystem/network 与 legacy sandbox policy；因此 legacy sandbox fields 仍是兼容输入/投影面，不应被描述成独立于 permission profile 的第二套 runtime 权限。[E: codex-rs/core/src/config/mod.rs:454][E: codex-rs/core/src/config/mod.rs:466][E: codex-rs/core/src/config/mod.rs:472][E: codex-rs/core/src/config/mod.rs:477]
 
 ## 字段 catalog
 
@@ -48,6 +52,8 @@ updated: 61a44880a8
 - `codex-rs/protocol/src/config_types.rs`
 - `codex-rs/protocol/src/permissions.rs`
 - `codex-rs/protocol/src/protocol.rs`
+- `codex-rs/utils/cli/src/shared_options.rs`
+- `codex-rs/core/src/config/mod.rs`
 
 ## 相关
 

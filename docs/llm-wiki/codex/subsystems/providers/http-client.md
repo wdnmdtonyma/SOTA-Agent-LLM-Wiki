@@ -3,12 +3,12 @@ id: subsys.providers.http-client
 title: HTTP client、proxy route 与 redirect
 kind: subsystem
 tier: T2
-source: [codex-rs/http-client/src/client.rs, codex-rs/http-client/src/client_builder.rs, codex-rs/http-client/src/outbound_proxy.rs, codex-rs/http-client/src/route_aware_client_pool.rs, codex-rs/http-client/src/route_aware_redirect.rs, codex-rs/http-client/src/request.rs, codex-rs/http-client/src/transport.rs, codex-rs/codex-client/src/retry.rs, codex-rs/backend-client/src/client.rs]
-symbols: [HttpClient, HttpClientBuilder, HttpClientFactory, OutboundProxyPolicy, OutboundProxyRoute, ClientRouteClass, RouteAwareClientPool, RouteAwareRequestBuilder, HttpTransport]
+source: [codex-rs/http-client/src/client.rs, codex-rs/http-client/src/client_builder.rs, codex-rs/http-client/src/outbound_proxy.rs, codex-rs/http-client/src/route_aware_client_pool.rs, codex-rs/http-client/src/route_aware_redirect.rs, codex-rs/http-client/src/request.rs, codex-rs/http-client/src/transport.rs, codex-rs/codex-api/src/files.rs, codex-rs/core/src/mcp_openai_file.rs, codex-rs/core/src/state/service.rs, codex-rs/core/src/session/session.rs, codex-rs/codex-client/src/retry.rs, codex-rs/backend-client/src/client.rs]
+symbols: [HttpClient, HttpClientBuilder, HttpClientFactory, OutboundProxyPolicy, OutboundProxyRoute, ClientRouteClass, RouteAwareClientPool, RouteAwareRequestBuilder, RouteAwareRequestError, upload_openai_file, HttpTransport]
 related: [subsys.providers.overview, subsys.providers.responses-api, subsys.providers.retry-errors, subsys.providers.auth-layer, subsys.platform.network-proxy, subsys.core.code-mode-runtime]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `codex-http-client` 不再只有一个默认 reqwest wrapper。应用先解析 `OutboundProxyPolicy`，固定目标可由 `HttpClientFactory` 构建 client；目标或 redirect 会变化的调用方必须走 `RouteAwareClientPool`，让每个 URL/hop 都按自己的 system/PAC/env route 选择或复用 transport client。
@@ -20,7 +20,7 @@ updated: 61a44880a8
 | `HttpClient` | reqwest wrapper、trace header 与可关闭的 request diagnostics；产品调用方应由 factory/pool 获得实例。[E: codex-rs/http-client/src/client.rs:18][E: codex-rs/http-client/src/client.rs:40][E: codex-rs/http-client/src/client.rs:114] |
 | `HttpClientBuilder` | TLS、redirect、timeout、UA 等构造选项，并针对已解析 route 构造 client。[E: codex-rs/http-client/src/client_builder.rs:19][E: codex-rs/http-client/src/client_builder.rs:62] |
 | `HttpClientFactory` | 保存一次解析出的 outbound proxy policy，并按目标 URL 解析 `TransportDefault`、`Direct` 或 `Proxy` route。[E: codex-rs/http-client/src/outbound_proxy.rs:141][E: codex-rs/http-client/src/outbound_proxy.rs:170] |
-| `RouteAwareClientPool` | 按 `OutboundProxyRoute` 缓存最多 16 个 client；每个 request URL 与每个 redirect hop 独立解析 route。[E: codex-rs/http-client/src/route_aware_client_pool.rs:33][E: codex-rs/http-client/src/route_aware_client_pool.rs:45] |
+| `RouteAwareClientPool` | 按 `OutboundProxyRoute` 缓存最多 16 个 client；每个 request URL 与每个 redirect hop 独立解析 route。[E: codex-rs/http-client/src/route_aware_client_pool.rs:35][E: codex-rs/http-client/src/route_aware_client_pool.rs:55] |
 | `HttpTransport` / retry | 通用 prepared request 的 execute/stream boundary 与 codex-client 的重试策略；不负责 provider auth 或 route policy。[E: codex-rs/http-client/src/transport.rs:25][E: codex-rs/codex-client/src/retry.rs:8] |
 
 `default_client.rs` 已被重构为 `client.rs`；继续引用旧文件会把普通 wrapper 和新 route policy 混成一个层次。[I]
@@ -35,7 +35,7 @@ system-proxy resolution 另有独立的 URL decision cache，不等于 pool 的 
 
 ## Route-aware request 与 redirect
 
-pool 在发送前解析当前 URL，按 resolved route 复用/新建 client；route cache 满 16 项时逐出一个已有 route。[E: codex-rs/http-client/src/route_aware_client_pool.rs:389][E: codex-rs/http-client/src/route_aware_client_pool.rs:402][E: codex-rs/http-client/src/route_aware_client_pool.rs:520][E: codex-rs/http-client/src/route_aware_client_pool.rs:565]
+pool 在发送前解析当前 URL，按 resolved route 复用/新建 client；route cache 满 16 项时逐出一个已有 route。[E: codex-rs/http-client/src/route_aware_client_pool.rs:440][E: codex-rs/http-client/src/route_aware_client_pool.rs:453][E: codex-rs/http-client/src/route_aware_client_pool.rs:571][E: codex-rs/http-client/src/route_aware_client_pool.rs:632]
 
 当 policy 是 `RespectSystemProxy` 且 builder 允许 redirect 时，pool 关闭 reqwest 自动 redirect，并对 valid、可 replay 的 redirect 逐 hop 手工执行：
 
@@ -43,9 +43,9 @@ pool 在发送前解析当前 URL，按 resolved route 复用/新建 client；ro
 2. route 改变时移除 `Proxy-Authorization`；
 3. 跨 origin 清理 sensitive headers，并按规则设置 Referer；
 4. 拒绝非 HTTP(S) target，限制 redirect 次数；
-5. 一个 request timeout deadline 覆盖 route resolution、建连、所有 hops 与最终响应。[E: codex-rs/http-client/src/route_aware_client_pool.rs:414][E: codex-rs/http-client/src/route_aware_client_pool.rs:455][E: codex-rs/http-client/src/route_aware_client_pool.rs:496][E: codex-rs/http-client/src/route_aware_client_pool.rs:516]
+5. 一个 request timeout deadline 覆盖 route resolution、建连、所有 hops 与最终响应。[E: codex-rs/http-client/src/route_aware_client_pool.rs:465][E: codex-rs/http-client/src/route_aware_client_pool.rs:506][E: codex-rs/http-client/src/route_aware_client_pool.rs:547][E: codex-rs/http-client/src/route_aware_client_pool.rs:567]
 
-若 `Location` 缺失/invalid，或 307/308 等保留 body 的 redirect 无法 `try_clone()` 原请求，`redirect_request` 返回 `None`，pool 会把原 redirect response 交给 caller，而不是强行继续下一 hop。[E: codex-rs/http-client/src/route_aware_redirect.rs:44][E: codex-rs/http-client/src/route_aware_redirect.rs:49][E: codex-rs/http-client/src/route_aware_redirect.rs:93][E: codex-rs/http-client/src/route_aware_client_pool.rs:490][E: codex-rs/http-client/src/route_aware_client_pool.rs:502]
+若 `Location` 缺失/invalid，或 307/308 等保留 body 的 redirect 无法 `try_clone()` 原请求，`redirect_request` 返回 `None`，pool 会把原 redirect response 交给 caller，而不是强行继续下一 hop。[E: codex-rs/http-client/src/route_aware_redirect.rs:44][E: codex-rs/http-client/src/route_aware_redirect.rs:49][E: codex-rs/http-client/src/route_aware_redirect.rs:93][E: codex-rs/http-client/src/route_aware_client_pool.rs:541][E: codex-rs/http-client/src/route_aware_client_pool.rs:553]
 
 这意味着“同一次逻辑请求”不等于“固定使用初始 proxy”：redirect 目标可命中另一条 PAC/system route，但总 timeout budget 不重置。[I]
 
@@ -53,7 +53,17 @@ pool 在发送前解析当前 URL，按 resolved route 复用/新建 client；ro
 
 通用 `Request` 仍可在发送前把 JSON 序列化/可选 zstd 压缩成可复用 bytes；raw body 不能请求该 compression。prepared clone 让 retry 与 request-signing 看见相同 bytes。[E: codex-rs/http-client/src/request.rs:118][E: codex-rs/http-client/src/request.rs:147][E: codex-rs/http-client/src/request.rs:156][E: codex-rs/http-client/src/request.rs:161]
 
+`RouteAwareRequestBuilder::body_stream` 把 `TryStream` 包装成 reqwest streaming body，同时把底层 URL 留在 shared route-aware boundary 内；`RouteAwareRequestError` 还暴露 timeout/connect/body/request 分类，并允许对含签名凭据的 URL 调用 `without_url()` 后再记录或向上返回。[E: codex-rs/http-client/src/route_aware_client_pool.rs:114][E: codex-rs/http-client/src/route_aware_client_pool.rs:125][E: codex-rs/http-client/src/route_aware_client_pool.rs:243][E: codex-rs/http-client/src/route_aware_client_pool.rs:249]
+
 `HttpTransport` 将非 success status、timeout、network 与 build error 映射为 transport error；`codex-client` 的 `RetryPolicy` 再按 429、5xx、transport flags 与 attempt budget 决定是否重试。[E: codex-rs/http-client/src/transport.rs:25][E: codex-rs/http-client/src/transport.rs:30][E: codex-rs/codex-client/src/retry.rs:9][E: codex-rs/codex-client/src/retry.rs:32]
+
+## OpenAI file upload consumer
+
+MCP Apps 的 `openai/fileParams` 路径使用 session-owned、关闭 request logging 的 `RouteAwareClientPool`；该 pool 跨 turn 复用，并显式保留 transport-default route 的 legacy custom-CA fallback。[E: codex-rs/core/src/state/service.rs:62][E: codex-rs/core/src/session/session.rs:1104][E: codex-rs/core/src/session/session.rs:1108][E: codex-rs/core/src/mcp_openai_file.rs:46][E: codex-rs/core/src/mcp_openai_file.rs:48]
+
+`upload_openai_file` 是三阶段协议：先对 OpenAI `/files` 创建上传，再以 streaming body `PUT` 到服务端返回的 blob URL，最后轮询 `/files/{id}/uploaded` 完成 finalize。blob transport failure 只记录 host/request IDs/分类与耗时，向上错误会移除可能含凭据的完整 URL。[E: codex-rs/codex-api/src/files.rs:110][E: codex-rs/codex-api/src/files.rs:126][E: codex-rs/codex-api/src/files.rs:160][E: codex-rs/codex-api/src/files.rs:166][E: codex-rs/codex-api/src/files.rs:171][E: codex-rs/codex-api/src/files.rs:185][E: codex-rs/codex-api/src/files.rs:199][E: codex-rs/codex-api/src/files.rs:231][E: codex-rs/codex-api/src/files.rs:238]
+
+legacy custom-CA fallback 不是 system-proxy route 的通用兜底：只有显式 opt-in pool 且 outbound policy 为 `ReqwestDefault` 时，custom CA 构建失败才回退 system roots；`RespectSystemProxy` 仍按 resolved route 构建并传播错误。fallback 本身发出 log-only warning event。[E: codex-rs/http-client/src/route_aware_client_pool.rs:344][E: codex-rs/http-client/src/route_aware_client_pool.rs:345][E: codex-rs/http-client/src/route_aware_client_pool.rs:606][E: codex-rs/http-client/src/route_aware_client_pool.rs:610][E: codex-rs/http-client/src/route_aware_client_pool.rs:612][E: codex-rs/http-client/src/client_builder.rs:215][E: codex-rs/http-client/src/client_builder.rs:218]
 
 ## 边界与不确定性
 
@@ -71,6 +81,10 @@ pool 在发送前解析当前 URL，按 resolved route 复用/新建 client；ro
 - `codex-rs/http-client/src/route_aware_redirect.rs`
 - `codex-rs/http-client/src/request.rs`
 - `codex-rs/http-client/src/transport.rs`
+- `codex-rs/codex-api/src/files.rs`
+- `codex-rs/core/src/mcp_openai_file.rs`
+- `codex-rs/core/src/state/service.rs`
+- `codex-rs/core/src/session/session.rs`
 - `codex-rs/codex-client/src/retry.rs`
 - `codex-rs/backend-client/src/client.rs`
 

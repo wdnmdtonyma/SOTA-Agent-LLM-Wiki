@@ -3,12 +3,12 @@ id: subsys.config-auth.auth-flows
 title: 认证流程
 kind: subsystem
 tier: T2
-source: [codex-rs/login/src/auth/manager.rs, codex-rs/login/src/device_code_auth.rs, codex-rs/login/src/server.rs, codex-rs/login/src/lib.rs, docs/authentication.md]
-symbols: [CodexAuth, AuthHeaders, ExternalAuth, AuthManager, set_external_auth, login_with_api_key, run_login_server, run_device_code_login, complete_device_code_login, enforce_login_restrictions]
+source: [codex-rs/login/src/auth/manager.rs, codex-rs/login/src/device_code_auth.rs, codex-rs/login/src/server.rs, codex-rs/login/src/callback_params.rs, codex-rs/login/src/lib.rs, docs/authentication.md]
+symbols: [CodexAuth, AuthHeaders, ExternalAuth, AuthManager, LoginCallbackResult, LoginOnboardingEntrypoint, set_external_auth, login_with_api_key, run_login_server, run_device_code_login, complete_device_code_login, enforce_login_restrictions]
 related: [subsys.config-auth.credential-storage, config.auth-account, subsys.providers.provider-openai, subsys.cloud.cloud-config]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > Codex 认证流程把 API key、ChatGPT OAuth/device code、external auth（包括整组 HTTP headers）、agent identity、personal access token 和 Bedrock API key 都统一为 `CodexAuth` snapshots；`AuthManager` 负责缓存、env/external auth precedence、forced login/workspace restrictions 和 token refresh。[E: codex-rs/login/src/auth/manager.rs:73][E: codex-rs/login/src/auth/manager.rs:77][E: codex-rs/login/src/auth/manager.rs:2029]
@@ -40,11 +40,11 @@ auth-flows 节点覆盖登录、限制、refresh 和 runtime auth snapshot，不
 
 ## Browser OAuth flow
 
-1. `run_login_server` 生成 PKCE、state，绑定本地 callback server，并构造 `http://localhost:<port>/auth/callback` redirect URI 和 authorize URL。[E: codex-rs/login/src/server.rs:151][E: codex-rs/login/src/server.rs:152][E: codex-rs/login/src/server.rs:153][E: codex-rs/login/src/server.rs:155][E: codex-rs/login/src/server.rs:167][E: codex-rs/login/src/server.rs:168]
-2. `build_authorize_url` 写入 response_type、client_id、redirect_uri、scope、code_challenge、state、originator；有 forced workspace ids 时追加 `allowed_workspace_id`。[E: codex-rs/login/src/server.rs:553][E: codex-rs/login/src/server.rs:561][E: codex-rs/login/src/server.rs:562][E: codex-rs/login/src/server.rs:566][E: codex-rs/login/src/server.rs:571][E: codex-rs/login/src/server.rs:577][E: codex-rs/login/src/server.rs:580]
-3. Callback handler 校验 state，处理 OAuth error，要求 authorization code 存在，再调用 `exchange_code_for_tokens`。[E: codex-rs/login/src/server.rs:328][E: codex-rs/login/src/server.rs:332][E: codex-rs/login/src/server.rs:335][E: codex-rs/login/src/server.rs:344][E: codex-rs/login/src/server.rs:356][E: codex-rs/login/src/server.rs:372][E: codex-rs/login/src/server.rs:384]
-4. Token exchange 对 `/oauth/token` 发 form body，包含 grant_type、code、redirect_uri、client_id、code_verifier；非 success status 会解析 error detail 并返回错误。[E: codex-rs/login/src/server.rs:749][E: codex-rs/login/src/server.rs:804][E: codex-rs/login/src/server.rs:811][E: codex-rs/login/src/server.rs:814][E: codex-rs/login/src/server.rs:815][E: codex-rs/login/src/server.rs:839][E: codex-rs/login/src/server.rs:841][E: codex-rs/login/src/server.rs:848]
-5. OAuth 成功后会检查 workspace restriction，尝试用 id token obtain API key，并通过 `persist_tokens_async` 写入 configured auth store。[E: codex-rs/login/src/server.rs:394][E: codex-rs/login/src/server.rs:395][E: codex-rs/login/src/server.rs:408][E: codex-rs/login/src/server.rs:411][E: codex-rs/login/src/server.rs:416][E: codex-rs/login/src/server.rs:863]
+1. `run_login_server` 生成 PKCE、state，绑定本地 callback server，并构造 `http://localhost:<port>/auth/callback` redirect URI 和 authorize URL。[E: codex-rs/login/src/server.rs:160][E: codex-rs/login/src/server.rs:161][E: codex-rs/login/src/server.rs:162][E: codex-rs/login/src/server.rs:164][E: codex-rs/login/src/server.rs:176][E: codex-rs/login/src/server.rs:177]
+2. `build_authorize_url` 写入 response_type、client_id、redirect_uri、scope、code_challenge、state、originator；有 forced workspace ids 时追加 `allowed_workspace_id`。[E: codex-rs/login/src/server.rs:576][E: codex-rs/login/src/server.rs:584][E: codex-rs/login/src/server.rs:585][E: codex-rs/login/src/server.rs:589][E: codex-rs/login/src/server.rs:594][E: codex-rs/login/src/server.rs:600][E: codex-rs/login/src/server.rs:603]
+3. Callback handler 校验 state，处理 OAuth error，要求 authorization code 存在，再调用 `exchange_code_for_tokens`。state 可以是原始 expected value，或精确追加 `.onboarding_entrypoint=life_sciences`；后者只把 `LifeSciences` 写入 callback result，任意其他 suffix 都校验失败。[E: codex-rs/login/src/callback_params.rs:1][E: codex-rs/login/src/callback_params.rs:13][E: codex-rs/login/src/server.rs:345][E: codex-rs/login/src/server.rs:349][E: codex-rs/login/src/server.rs:364][E: codex-rs/login/src/server.rs:392]
+4. Token exchange 对 `/oauth/token` 发 form body，包含 grant_type、code、redirect_uri、client_id、code_verifier；非 success status 会解析 error detail 并返回错误。[E: codex-rs/login/src/server.rs:772][E: codex-rs/login/src/server.rs:827][E: codex-rs/login/src/server.rs:834][E: codex-rs/login/src/server.rs:837][E: codex-rs/login/src/server.rs:838][E: codex-rs/login/src/server.rs:862][E: codex-rs/login/src/server.rs:864][E: codex-rs/login/src/server.rs:871]
+5. OAuth 成功后会检查 workspace restriction，尝试用 id token obtain API key，并通过 `persist_tokens_async` 写入 configured auth store。[E: codex-rs/login/src/server.rs:415][E: codex-rs/login/src/server.rs:416][E: codex-rs/login/src/server.rs:429][E: codex-rs/login/src/server.rs:432][E: codex-rs/login/src/server.rs:437][E: codex-rs/login/src/server.rs:886]
 
 ## Device code flow
 
@@ -75,7 +75,7 @@ Forced workspace restriction 使用 configured workspace ids 比对有 account i
 ## Gotchas
 
 - `Headers` 是 runtime-only external auth：它不能从 `auth.json` 加载，也没有可供普通 bearer-token client 使用的单一 token。[E: codex-rs/login/src/auth/manager.rs:316][E: codex-rs/login/src/auth/manager.rs:509]
-- URL redaction 的 sensitive query keys 包含 access_token、api_key、client_secret、code、code_verifier、id_token、refresh_token、state、token 等；日志事实不要引用未 redacted URL。[E: codex-rs/login/src/server.rs:694][E: codex-rs/login/src/server.rs:695][E: codex-rs/login/src/server.rs:696][E: codex-rs/login/src/server.rs:699][E: codex-rs/login/src/server.rs:701][E: codex-rs/login/src/server.rs:703][E: codex-rs/login/src/server.rs:705]
+- URL redaction 的 sensitive query keys 包含 access_token、api_key、client_secret、code、code_verifier、id_token、refresh_token、state、token 等；日志事实不要引用未 redacted URL。[E: codex-rs/login/src/server.rs:717][E: codex-rs/login/src/server.rs:718][E: codex-rs/login/src/server.rs:719][E: codex-rs/login/src/server.rs:722][E: codex-rs/login/src/server.rs:724][E: codex-rs/login/src/server.rs:726][E: codex-rs/login/src/server.rs:728]
 - device code flow 的 user code prompt 明确提示 code 15 分钟过期且不要分享；不要把 user code 当作长期 credential。[E: codex-rs/login/src/device_code_auth.rs:160][E: codex-rs/login/src/device_code_auth.rs:154][E: codex-rs/login/src/device_code_auth.rs:155]
 
 ## Sources
@@ -83,6 +83,7 @@ Forced workspace restriction 使用 configured workspace ids 比对有 account i
 - `codex-rs/login/src/auth/manager.rs`
 - `codex-rs/login/src/device_code_auth.rs`
 - `codex-rs/login/src/server.rs`
+- `codex-rs/login/src/callback_params.rs`
 - `codex-rs/login/src/lib.rs`
 - `docs/authentication.md`
 

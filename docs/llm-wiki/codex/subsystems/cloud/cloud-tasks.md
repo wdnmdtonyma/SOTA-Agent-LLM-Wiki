@@ -3,12 +3,12 @@ id: subsys.cloud.cloud-tasks
 title: Cloud tasks
 kind: subsystem
 tier: T2
-source: [codex-rs/cloud-tasks/src/lib.rs, codex-rs/cloud-tasks/src/cli.rs, codex-rs/cloud-tasks/src/app.rs, codex-rs/cloud-tasks/src/new_task.rs, codex-rs/cloud-tasks/src/env_detect.rs, codex-rs/cloud-tasks/src/util.rs]
-symbols: [Command, cloud_tasks::run_main, init_backend, run_exec_command, resolve_environment_id, parse_task_id, cloud_tasks::App, NewTaskPage, autodetect_environment_id, ApplyJob]
+source: [codex-rs/cloud-tasks/src/lib.rs, codex-rs/cloud-tasks/src/cli.rs, codex-rs/cloud-tasks/src/app.rs, codex-rs/cloud-tasks/src/new_task.rs, codex-rs/cloud-tasks/src/env_detect.rs, codex-rs/cloud-tasks/src/util.rs, codex-rs/cloud-tasks/src/scrollable_diff.rs]
+symbols: [Command, cloud_tasks::run_main, init_backend, run_exec_command, resolve_environment_id, parse_task_id, cloud_tasks::App, NewTaskPage, ScrollableDiff, autodetect_environment_id, ApplyJob]
 related: [subsys.cloud.cloud-task-api, subsys.cloud.cloud-config, subsys.platform.git-utils]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `codex cloud` 的 Cloud tasks 子系统是 CLI/TUI orchestration 层：它解析 exec/status/list/apply/diff 命令，初始化 ChatGPT-backed cloud backend，选择 environment，提交 task，并把 list/status/diff/apply/create 操作委托给 `cloud-tasks-client` 的 `CloudBackend` trait。[E: codex-rs/cloud-tasks/src/cli.rs:16][E: codex-rs/cloud-tasks/src/cli.rs:18][E: codex-rs/cloud-tasks/src/cli.rs:26][E: codex-rs/cloud-tasks/src/lib.rs:42][E: codex-rs/cloud-tasks/src/lib.rs:48][E: codex-rs/cloud-tasks/src/lib.rs:188][E: codex-rs/cloud-tasks/src/lib.rs:752]
@@ -57,6 +57,8 @@ status/list/diff/apply handlers 分别调用 `get_task_summary`、`list_tasks`�
 
 `NewTaskPage` 保存 composer、submitting、env_id 和 best_of_n；composer hints 包含 send/newline/env/attempts/quit。[E: codex-rs/cloud-tasks/src/new_task.rs:3][E: codex-rs/cloud-tasks/src/new_task.rs:4][E: codex-rs/cloud-tasks/src/new_task.rs:5][E: codex-rs/cloud-tasks/src/new_task.rs:6][E: codex-rs/cloud-tasks/src/new_task.rs:7][E: codex-rs/cloud-tasks/src/new_task.rs:11][E: codex-rs/cloud-tasks/src/new_task.rs:13][E: codex-rs/cloud-tasks/src/new_task.rs:14][E: codex-rs/cloud-tasks/src/new_task.rs:17] `AppEvent` 覆盖 tasks loaded、environment autodetect/list、details diff/messages、attempts loaded、new task submitted、apply preflight finished 和 apply finished。[E: codex-rs/cloud-tasks/src/app.rs:300][E: codex-rs/cloud-tasks/src/app.rs:301][E: codex-rs/cloud-tasks/src/app.rs:307][E: codex-rs/cloud-tasks/src/app.rs:309][E: codex-rs/cloud-tasks/src/app.rs:310][E: codex-rs/cloud-tasks/src/app.rs:315][E: codex-rs/cloud-tasks/src/app.rs:330][E: codex-rs/cloud-tasks/src/app.rs:335][E: codex-rs/cloud-tasks/src/app.rs:337][E: codex-rs/cloud-tasks/src/app.rs:346]
 
+diff overlay 的 `ScrollableDiff` 现在按 extended grapheme cluster 遍历、按 terminal cell width wrap，而不是逐 Unicode scalar 截断；`display_width` 还补计 `unicode-width` 遗漏的半角日文浊音/半浊音 marks，避免组合字符和东亚文本造成错误换行。[E: codex-rs/cloud-tasks/src/scrollable_diff.rs:1][E: codex-rs/cloud-tasks/src/scrollable_diff.rs:26][E: codex-rs/cloud-tasks/src/scrollable_diff.rs:134][E: codex-rs/cloud-tasks/src/scrollable_diff.rs:145][E: codex-rs/cloud-tasks/src/scrollable_diff.rs:198][E: codex-rs/cloud-tasks/src/scrollable_diff.rs:202]
+
 ## Gotchas
 
 - `codex cloud exec` 当前要求 `--env`；自动 environment selection 是 TUI/env-detect 路径，不是 exec 的默认行为。[E: codex-rs/cloud-tasks/src/cli.rs:37][E: codex-rs/cloud-tasks/src/lib.rs:186]
@@ -71,6 +73,7 @@ status/list/diff/apply handlers 分别调用 `get_task_summary`、`list_tasks`�
 - `codex-rs/cloud-tasks/src/new_task.rs`
 - `codex-rs/cloud-tasks/src/env_detect.rs`
 - `codex-rs/cloud-tasks/src/util.rs`
+- `codex-rs/cloud-tasks/src/scrollable_diff.rs`
 
 ## 相关
 

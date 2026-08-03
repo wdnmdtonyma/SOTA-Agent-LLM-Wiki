@@ -8,7 +8,7 @@ symbols: [create_close_agent_tool_v1, CloseAgentHandler, multi_agents::close_age
 related: [tool.spawn-agent-v1, tool.send-input-v1, tool.resume-agent-v1]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `close_agent` V1 是 `multi_agent_v1` namespace 下的关闭工具；它按 agent thread id 关闭目标 agent 及其 live descendants，并返回关闭前观察到的 status。
@@ -23,9 +23,9 @@ updated: 61a44880a8
 
 ## 注册与门控
 
-`close_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 只受 `search_tool_enabled` 控制，search 开启时是 `Deferred`，否则是 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:825][E: codex-rs/core/src/tools/spec_plan.rs:827][E: codex-rs/core/src/tools/spec_plan.rs:828][E: codex-rs/core/src/tools/spec_plan.rs:887][E: codex-rs/core/src/tools/spec_plan.rs:888][E: codex-rs/core/src/tools/spec_plan.rs:890][E: codex-rs/core/src/tools/spec_plan.rs:908]
+`close_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 只受 `search_tool_enabled` 控制，search 开启时是 `Deferred`，否则是 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:886][E: codex-rs/core/src/tools/spec_plan.rs:888][E: codex-rs/core/src/tools/spec_plan.rs:889][E: codex-rs/core/src/tools/spec_plan.rs:945][E: codex-rs/core/src/tools/spec_plan.rs:948][E: codex-rs/core/src/tools/spec_plan.rs:949][E: codex-rs/core/src/tools/spec_plan.rs:951][E: codex-rs/core/src/tools/spec_plan.rs:969]
 
-handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:17][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:18][E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
+handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:17][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:18][E: codex-rs/tools/src/tool_executor.rs:73][E: codex-rs/tools/src/tool_executor.rs:74]
 
 ## 输入与 handler
 
@@ -35,7 +35,7 @@ handler 发出 `CollabAgentToolCall` started item，订阅目标 status 以取�
 
 关闭动作由 `agent_control.close_agent(agent_id)` 执行；成功或失败后都会发出 completed item，带 receiver metadata 与状态映射，成功返回 `CloseAgentResult { previous_status }`。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:100][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:104][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:107][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:113][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:121][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:125][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:127]
 
-`AgentControl::close_agent` 会在 persisted state 可用时尝试把目标 spawn-edge status 标为 `Closed`；unknown `ThreadNotFound` 不做持久化标记，live-thread 持久化失败只 warn，而 stale known-agent 的持久化失败会返回 fatal。随后它调用 `shutdown_agent_tree`，该函数关闭目标并遍历 live descendants 逐个 shutdown。[E: codex-rs/core/src/agent/control/legacy.rs:30][E: codex-rs/core/src/agent/control/legacy.rs:36][E: codex-rs/core/src/agent/control/legacy.rs:38][E: codex-rs/core/src/agent/control/legacy.rs:40][E: codex-rs/core/src/agent/control/legacy.rs:44][E: codex-rs/core/src/agent/control/legacy.rs:47][E: codex-rs/core/src/agent/control/legacy.rs:52][E: codex-rs/core/src/agent/control/legacy.rs:54][E: codex-rs/core/src/agent/control/legacy.rs:58][E: codex-rs/core/src/agent/control/legacy.rs:59][E: codex-rs/core/src/agent/control/legacy.rs:68][E: codex-rs/core/src/agent/control/legacy.rs:84][E: codex-rs/core/src/agent/control/legacy.rs:85][E: codex-rs/core/src/agent/control/legacy.rs:86][E: codex-rs/core/src/agent/control/legacy.rs:87]
+`AgentControl::close_agent` 会在 persisted state 可用时尝试把目标 spawn-edge status 标为 `Closed`；unknown `ThreadNotFound` 不做持久化标记，live-thread 持久化失败只 warn，而 stale known-agent 的持久化失败会返回 fatal。随后它调用 `shutdown_agent_tree`，该函数关闭目标并遍历 live descendants 逐个 shutdown。[E: codex-rs/core/src/agent/control/legacy.rs:34][E: codex-rs/core/src/agent/control/legacy.rs:40][E: codex-rs/core/src/agent/control/legacy.rs:42][E: codex-rs/core/src/agent/control/legacy.rs:44][E: codex-rs/core/src/agent/control/legacy.rs:48][E: codex-rs/core/src/agent/control/legacy.rs:51][E: codex-rs/core/src/agent/control/legacy.rs:56][E: codex-rs/core/src/agent/control/legacy.rs:58][E: codex-rs/core/src/agent/control/legacy.rs:62][E: codex-rs/core/src/agent/control/legacy.rs:63][E: codex-rs/core/src/agent/control/legacy.rs:72][E: codex-rs/core/src/agent/control/legacy.rs:88][E: codex-rs/core/src/agent/control/legacy.rs:89][E: codex-rs/core/src/agent/control/legacy.rs:90][E: codex-rs/core/src/agent/control/legacy.rs:91]
 
 ## 输出
 

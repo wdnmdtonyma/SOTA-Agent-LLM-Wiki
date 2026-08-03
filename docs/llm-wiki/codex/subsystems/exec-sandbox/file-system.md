@@ -3,12 +3,12 @@ id: subsys.exec-sandbox.file-system
 title: Executor file system
 kind: subsystem
 tier: T2
-source: [codex-rs/file-system/src/lib.rs]
-symbols: [ExecutorFileSystem, FileSystemSandboxContext, ExecPermissionProfile, ExecManagedFileSystemPermissions, ExecFileSystemSandboxEntry, ExecFileSystemPath, FileSystemReadStream, FILE_READ_CHUNK_SIZE, CreateDirectoryOptions, RemoveOptions, CopyOptions, FileMetadata, ReadDirectoryEntry, WalkOptions, WalkOutcome]
+source: [codex-rs/file-system/src/lib.rs, codex-rs/exec-server/src/remote_file_system.rs, codex-rs/exec-server/src/capability_discovery.rs, codex-rs/exec-server/src/capability_discovery_cache.rs]
+symbols: [ExecutorFileSystem, FileSystemSandboxContext, ExecPermissionProfile, ExecManagedFileSystemPermissions, ExecFileSystemSandboxEntry, ExecFileSystemPath, FileSystemReadStream, FILE_READ_CHUNK_SIZE, CreateDirectoryOptions, RemoveOptions, CopyOptions, FileMetadata, ReadDirectoryEntry, WalkOptions, WalkOutcome, RemoteFileSystem, ExecutorCapabilityDiscoveryCache]
 related: [subsys.exec-sandbox.overview, subsys.exec-sandbox.exec-server, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `file-system` defines the host-neutral filesystem boundary for execution components: callers use `PathUri` plus optional `FileSystemSandboxContext`, and implementations expose async file primitives, chunked reads, and a bounded recursive walk.[E: codex-rs/file-system/src/lib.rs:18][E: codex-rs/file-system/src/lib.rs:286][E: codex-rs/file-system/src/lib.rs:413][E: codex-rs/file-system/src/lib.rs:428][E: codex-rs/file-system/src/lib.rs:473]
@@ -19,14 +19,17 @@ updated: 61a44880a8
 - `FileSystemSandboxContext` 如何把 legacy `SandboxPolicy` 投影成 permission profile？
 - 哪些 permission profile 需要真正跑 sandbox，哪些 cwd/workspace roots 可以被丢弃？
 - read-stream chunk size、metadata、directory entry、walk option/outcome 的 public shape 是什么？
+- remote backend 怎样保留 `PathUri`、隔离 sandboxed metadata，并执行 sandbox-aware capability discovery？
 
 ## 职责边界
 
-本节点覆盖 `codex-rs/file-system` crate 的 trait、context 和 value types。它不描述某个具体 backend 如何访问磁盘或远端主机，也不描述 shell command sandbox backend 的 argv 生成；那些分别归 `exec-server`、Linux/Seatbelt/Windows sandbox 节点覆盖。[E: codex-rs/file-system/src/lib.rs:413][E: codex-rs/file-system/src/lib.rs:415][E: codex-rs/file-system/src/lib.rs:446][E: codex-rs/file-system/src/lib.rs:473]
+本节点以 `codex-rs/file-system` trait/context/value types 为主，并补充 exec-server remote backend 对这一契约的关键安全语义。具体 JSON-RPC session lifecycle 仍归 `subsys.exec-sandbox.exec-server`，shell command argv 生成归各 OS sandbox 节点。[E: codex-rs/file-system/src/lib.rs:413][E: codex-rs/file-system/src/lib.rs:415][E: codex-rs/file-system/src/lib.rs:446][E: codex-rs/file-system/src/lib.rs:473]
 
 ## 关键 crate/文件
 
 - `codex-rs/file-system/src/lib.rs`: option structs、metadata/directory-entry structs、walk structs、sandbox context、read stream wrapper、`ExecutorFileSystem` trait 全部集中在单文件。[E: codex-rs/file-system/src/lib.rs:44][E: codex-rs/file-system/src/lib.rs:60][E: codex-rs/file-system/src/lib.rs:80][E: codex-rs/file-system/src/lib.rs:121][E: codex-rs/file-system/src/lib.rs:286][E: codex-rs/file-system/src/lib.rs:390][E: codex-rs/file-system/src/lib.rs:413]
+- `codex-rs/exec-server/src/remote_file_system.rs`: 把 trait primitive 映射为 remote RPC，并对 streaming、metadata sharing 和 mutations 施加额外边界。[E: codex-rs/exec-server/src/remote_file_system.rs:45][E: codex-rs/exec-server/src/remote_file_system.rs:76][E: codex-rs/exec-server/src/remote_file_system.rs:98][E: codex-rs/exec-server/src/remote_file_system.rs:155]
+- `codex-rs/exec-server/src/capability_discovery.rs`: 在同一 sandbox context 下 bounded walk/read plugin 与 skill manifests。[E: codex-rs/exec-server/src/capability_discovery.rs:50][E: codex-rs/exec-server/src/capability_discovery.rs:63][E: codex-rs/exec-server/src/capability_discovery.rs:101][E: codex-rs/exec-server/src/capability_discovery.rs:157]
 
 ## 数据模型
 
@@ -50,6 +53,14 @@ updated: 61a44880a8
 - The trait requires `canonicalize`, `read_file`, `read_file_stream`, `write_file`, `create_directory`, `get_metadata`, `read_directory`, `walk`, `remove`, and `copy`; every primitive method receives an optional sandbox context.[E: codex-rs/file-system/src/lib.rs:415][E: codex-rs/file-system/src/lib.rs:421][E: codex-rs/file-system/src/lib.rs:428][E: codex-rs/file-system/src/lib.rs:446][E: codex-rs/file-system/src/lib.rs:453][E: codex-rs/file-system/src/lib.rs:460][E: codex-rs/file-system/src/lib.rs:466][E: codex-rs/file-system/src/lib.rs:473][E: codex-rs/file-system/src/lib.rs:494][E: codex-rs/file-system/src/lib.rs:501]
 - `read_file_text` is the default helper: it awaits `read_file` and converts bytes with `String::from_utf8`, mapping invalid UTF-8 to `io::ErrorKind::InvalidData`.[E: codex-rs/file-system/src/lib.rs:435][E: codex-rs/file-system/src/lib.rs:440][E: codex-rs/file-system/src/lib.rs:441][E: codex-rs/file-system/src/lib.rs:442]
 
+## Remote backend 与 capability discovery
+
+Remote backend 保留 `PathUri` 的 executor 语义，不会在 app host 上先把 foreign executor path 转为本机绝对路径；optional `FileSystemSandboxContext` 在写入 RPC 前会 clone 并执行 transport compaction，移除执行端不需要的 `cwd`/workspace roots，而不是逐字段原样复制。[E: codex-rs/exec-server/src/remote_file_system.rs:59][E: codex-rs/exec-server/src/remote_file_system.rs:67][E: codex-rs/exec-server/src/remote_file_system.rs:76][E: codex-rs/exec-server/src/remote_file_system.rs:84][E: codex-rs/exec-server/src/remote_file_system.rs:413][E: codex-rs/exec-server/src/remote_file_system.rs:415][E: codex-rs/exec-server/src/remote_file_system.rs:418][E: codex-rs/file-system/src/lib.rs:374][E: codex-rs/file-system/src/lib.rs:377]
+
+`read_file_stream` 在 sandbox context 真正需要 platform sandbox 时返回 `Unsupported`，调用者必须使用 bounded/full read path。Metadata sharing 只覆盖同一 URI、sandbox context 缺省且尚未完成的 RPC；只要 context 存在就永远 fresh（即使它最终不要求 platform sandbox），完成后 entry 立即删除，write/create 等 mutation 也会清空 map。[E: codex-rs/exec-server/src/remote_file_system.rs:98][E: codex-rs/exec-server/src/remote_file_system.rs:103][E: codex-rs/exec-server/src/remote_file_system.rs:114][E: codex-rs/exec-server/src/remote_file_system.rs:129][E: codex-rs/exec-server/src/remote_file_system.rs:155][E: codex-rs/exec-server/src/remote_file_system.rs:160][E: codex-rs/exec-server/src/remote_file_system.rs:164][E: codex-rs/exec-server/src/remote_file_system.rs:181]
+
+Capability discovery request 逐 root 携带 sandbox context，metadata、walk 和 manifest read 复用它；Windows 上请求需要 sandbox 而 restricted-token backend disabled 时明确返回 unavailable。Caller cache identity 同时包含 selected root 与 sandbox，避免跨权限上下文复用结果。[E: codex-rs/exec-server/src/capability_discovery.rs:63][E: codex-rs/exec-server/src/capability_discovery.rs:79][E: codex-rs/exec-server/src/capability_discovery.rs:89][E: codex-rs/exec-server/src/capability_discovery.rs:101][E: codex-rs/exec-server/src/capability_discovery.rs:157][E: codex-rs/exec-server/src/capability_discovery_cache.rs:59][E: codex-rs/exec-server/src/capability_discovery_cache.rs:69][E: codex-rs/exec-server/src/capability_discovery_cache.rs:97]
+
 ## gotcha
 
 - A sandbox context for another host intentionally selects sandboxed execution when its `ExecPermissionProfile` cannot be converted to host paths; that branch prevents falling back to an unsandboxed local filesystem by accident.[E: codex-rs/file-system/src/lib.rs:147][E: codex-rs/file-system/src/lib.rs:266][E: codex-rs/file-system/src/lib.rs:344][E: codex-rs/file-system/src/lib.rs:346]
@@ -59,6 +70,9 @@ updated: 61a44880a8
 ## Sources
 
 - `codex-rs/file-system/src/lib.rs`
+- `codex-rs/exec-server/src/remote_file_system.rs`
+- `codex-rs/exec-server/src/capability_discovery.rs`
+- `codex-rs/exec-server/src/capability_discovery_cache.rs`
 
 ## 相关
 

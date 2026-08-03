@@ -3,12 +3,12 @@ id: subsys.cloud.cloud-config
 title: Cloud config
 kind: subsystem
 tier: T2
-source: [codex-rs/cloud-config/src/lib.rs, codex-rs/cloud-config/src/backend.rs, codex-rs/cloud-config/src/service.rs, codex-rs/cloud-config/src/cache.rs, codex-rs/cloud-config/src/bundle_loader.rs, codex-rs/cloud-config/src/validation.rs, codex-rs/cloud-config/src/metrics.rs, codex-rs/config/src/cloud_config_bundle.rs, codex-rs/config/src/cloud_config_layers.rs, codex-rs/config/src/loader/mod.rs]
-symbols: [cloud_config_bundle_loader, cloud_config_bundle_loader_for_storage, CloudConfigBundleService, BundleClient, BackendBundleClient, CloudConfigBundleCache, CloudConfigBundle, CloudConfigBundleLayers, CloudConfigFragment, CloudRequirementsFragment, CloudConfigBundleLoader]
-related: [subsys.config-auth.config-loading, subsys.config-auth.auth-flows, subsys.cloud.cloud-tasks]
+source: [codex-rs/cloud-config/src/lib.rs, codex-rs/cloud-config/src/backend.rs, codex-rs/cloud-config/src/service.rs, codex-rs/cloud-config/src/cache.rs, codex-rs/cloud-config/src/bundle_loader.rs, codex-rs/cloud-config/src/validation.rs, codex-rs/cloud-config/src/metrics.rs, codex-rs/config/src/cloud_config_bundle.rs, codex-rs/config/src/cloud_config_layers.rs, codex-rs/config/src/loader/mod.rs, codex-rs/cli/src/debug_sandbox/cloud_config.rs, codex-rs/cli/src/mcp_cmd/cloud_config.rs, codex-rs/cli/src/mcp_cmd.rs]
+symbols: [cloud_config_bundle_loader, cloud_config_bundle_loader_for_storage, CloudConfigBundleService, BundleClient, BackendBundleClient, CloudConfigBundleCache, CloudConfigBundle, CloudConfigBundleLayers, CloudConfigFragment, CloudRequirementsFragment, CloudConfigBundleLoader, bootstrap_cloud_config_bundle, load_mcp_config]
+related: [subsys.config-auth.config-loading, subsys.config-auth.auth-flows, subsys.cloud.cloud-tasks, cli.subcommands]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `cloud-config` 是当前 enterprise cloud-delivered config bundle 的 transport/cache/refresh 层：它从 backend 拉取 config + requirements fragments，验证后写入签名 cache，并把共享 loader 交给 `codex-config` 插入 config layer stack。[E: codex-rs/cloud-config/src/lib.rs:6][E: codex-rs/cloud-config/src/lib.rs:7][E: codex-rs/cloud-config/src/lib.rs:8][E: codex-rs/cloud-config/src/lib.rs:10][E: codex-rs/cloud-config/src/lib.rs:13][E: codex-rs/cloud-config/src/lib.rs:14][E: codex-rs/cloud-config/src/backend.rs:90][E: codex-rs/cloud-config/src/service.rs:300][E: codex-rs/cloud-config/src/cache.rs:151][E: codex-rs/cloud-config/src/cache.rs:152][E: codex-rs/cloud-config/src/cache.rs:220][E: codex-rs/config/src/loader/mod.rs:142][E: codex-rs/config/src/loader/mod.rs:243]
@@ -61,6 +61,14 @@ config fragments 被解析为 TOML、解析相对路径，并以 `ConfigLayerSou
 
 `load_config_layers_state` 在未忽略 managed requirements 时 await cloud bundle loader，把 enterprise-managed requirements 保存到 requirements layers，把 enterprise-managed config layers 插入 system layer 之后、user/profile/project/runtime layers 之前。[E: codex-rs/config/src/loader/mod.rs:118][E: codex-rs/config/src/loader/mod.rs:118][E: codex-rs/config/src/loader/mod.rs:118][E: codex-rs/config/src/loader/mod.rs:142][E: codex-rs/config/src/loader/mod.rs:143][E: codex-rs/config/src/loader/mod.rs:150][E: codex-rs/config/src/loader/mod.rs:154][E: codex-rs/config/src/loader/mod.rs:155][E: codex-rs/config/src/loader/mod.rs:242][E: codex-rs/config/src/loader/mod.rs:243]
 
+## CLI consumers
+
+`codex sandbox` 的 cloud bootstrap 有显式双门槛：必须同时提供 permissions profile 且选择 include managed requirements；默认路径返回空 loader，不为普通 sandbox debug 命令抓取 cloud bundle。[E: codex-rs/cli/src/debug_sandbox/cloud_config.rs:13][E: codex-rs/cli/src/debug_sandbox/cloud_config.rs:19][E: codex-rs/cli/src/debug_sandbox/cloud_config.rs:25][E: codex-rs/cli/src/debug_sandbox/cloud_config.rs:54]
+
+MCP CLI 则先在无 cloud bundle 的 bootstrap config 上解析 CODEX_HOME、credential store、keyring backend、ChatGPT base URL 与 auth route，再加载 cloud bundle 并用它构造完整 `Config`。[E: codex-rs/cli/src/mcp_cmd/cloud_config.rs:16][E: codex-rs/cli/src/mcp_cmd/cloud_config.rs:25][E: codex-rs/cli/src/mcp_cmd/cloud_config.rs:38][E: codex-rs/cli/src/mcp_cmd/cloud_config.rs:47][E: codex-rs/cli/src/mcp_cmd/cloud_config.rs:63]
+
+该 full-config path 只用于 `mcp list/get/login/logout`；`add/remove` 仍直接修改 user config，不能概括成所有 MCP CLI 命令都受 cloud-managed config 驱动。[E: codex-rs/cli/src/mcp_cmd.rs:191][E: codex-rs/cli/src/mcp_cmd.rs:202][E: codex-rs/cli/src/mcp_cmd.rs:205][E: codex-rs/cli/src/mcp_cmd.rs:208][E: codex-rs/cli/src/mcp_cmd.rs:213]
+
 ## Gotchas
 
 - Cloud bundle load failure is fail-closed for config loading: `cloud_config_bundle.get().await.map_err(io::Error::other)?` propagates loader errors.[E: codex-rs/config/src/loader/mod.rs:143]
@@ -79,6 +87,9 @@ config fragments 被解析为 TOML、解析相对路径，并以 `ConfigLayerSou
 - `codex-rs/config/src/cloud_config_bundle.rs`
 - `codex-rs/config/src/cloud_config_layers.rs`
 - `codex-rs/config/src/loader/mod.rs`
+- `codex-rs/cli/src/debug_sandbox/cloud_config.rs`
+- `codex-rs/cli/src/mcp_cmd/cloud_config.rs`
+- `codex-rs/cli/src/mcp_cmd.rs`
 
 ## 相关
 

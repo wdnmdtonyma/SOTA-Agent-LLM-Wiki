@@ -3,15 +3,15 @@ id: subsys.config-auth.hooks
 title: Hooks 系统
 kind: subsystem
 tier: T2
-source: [codex-rs/config/src/hook_config.rs, codex-rs/hooks/src/types.rs, codex-rs/hooks/src/engine/discovery.rs, codex-rs/hooks/src/engine/dispatcher.rs, codex-rs/hooks/src/engine/mod.rs, codex-rs/hooks/src/engine/command_runner.rs, codex-rs/core/src/hook_runtime.rs, codex-rs/core/src/tools/registry.rs]
-symbols: [HooksFile, HookEventsToml, HookHandlerConfig, ClaudeHooksEngine, discover_handlers, run_pre_tool_use_hooks, run_post_tool_use_hooks, run_permission_request_hooks, run_session_end_hooks, inspect_pending_input]
+source: [codex-rs/config/src/hook_config.rs, codex-rs/hooks/src/types.rs, codex-rs/hooks/src/engine/discovery.rs, codex-rs/hooks/src/engine/dispatcher.rs, codex-rs/hooks/src/engine/mod.rs, codex-rs/hooks/src/engine/command_runner.rs, codex-rs/core-plugins/src/manager.rs, codex-rs/core-plugins/src/loader.rs, codex-rs/core/src/hook_runtime.rs, codex-rs/core/src/tools/registry.rs]
+symbols: [HooksFile, HookEventsToml, HookHandlerConfig, ClaudeHooksEngine, discover_handlers, PluginsManager::plugin_hooks_for_layer_stack, TargetCuratedMarketplace, run_pre_tool_use_hooks, run_post_tool_use_hooks, run_permission_request_hooks, run_session_end_hooks, inspect_pending_input]
 related: [subsys.config-auth.config-loading, subsys.core.tool-system, subsys.core.tool-router, subsys.platform.analytics]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
-> Codex hooks 系统现在把 hook schema 放在 `codex_config::hook_config`，由 `codex_hooks::engine` 从 config layers、managed requirements 和 plugin hook sources 发现 handlers，再由 core session/tool runtime 发起 preview/start/completed flow。[E: codex-rs/config/src/hook_config.rs:12][E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/hooks/src/engine/discovery.rs:67][E: codex-rs/hooks/src/engine/mod.rs:113][E: codex-rs/core/src/hook_runtime.rs:163][E: codex-rs/core/src/tools/registry.rs:517]
+> Codex hooks 系统现在把 hook schema 放在 `codex_config::hook_config`，由 `codex_hooks::engine` 从 config layers、managed requirements 和 plugin hook sources 发现 handlers，再由 core session/tool runtime 发起 preview/start/completed flow。[E: codex-rs/config/src/hook_config.rs:12][E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/hooks/src/engine/discovery.rs:67][E: codex-rs/hooks/src/engine/mod.rs:114][E: codex-rs/core/src/hook_runtime.rs:163][E: codex-rs/core/src/tools/registry.rs:527]
 
 ## 能回答的问题
 
@@ -25,7 +25,7 @@ updated: 61a44880a8
 
 本节点覆盖 hooks config/discovery/dispatch/runtime integration。`codex-rs/hooks/src/types.rs` 中的 `Hook`/`HookPayload`/`HookEvent::AfterAgent` 是 legacy after-agent hook contract；Claude-style lifecycle hooks 的 schema 来自 `codex-rs/config/src/hook_config.rs`。[E: codex-rs/hooks/src/types.rs:39][E: codex-rs/hooks/src/types.rs:64][E: codex-rs/hooks/src/types.rs:92][E: codex-rs/config/src/hook_config.rs:36]
 
-工具 plan/spec 门控不在本节点展开；当前工具 ground truth 是 `codex-rs/core/src/tools/spec_plan.rs`，handler dispatch 在 `codex-rs/core/src/tools/registry.rs`。[E: codex-rs/core/src/tools/registry.rs:326][E: codex-rs/core/src/tools/registry.rs:427]
+工具 plan/spec 门控不在本节点展开；当前工具 ground truth 是 `codex-rs/core/src/tools/spec_plan.rs`，handler dispatch 在 `codex-rs/core/src/tools/registry.rs`。[E: codex-rs/core/src/tools/registry.rs:252][E: codex-rs/core/src/tools/registry.rs:437]
 
 ## 数据模型
 
@@ -37,11 +37,13 @@ updated: 61a44880a8
 
 ## Discovery
 
-1. `ClaudeHooksEngine::new` 在 hooks disabled 时返回空 handler set；enabled 时加载 generated schemas 并调用 `discover_handlers`。[E: codex-rs/hooks/src/engine/mod.rs:113][E: codex-rs/hooks/src/engine/mod.rs:122][E: codex-rs/hooks/src/engine/mod.rs:131][E: codex-rs/hooks/src/engine/mod.rs:132]
+1. `ClaudeHooksEngine::new` 在 hooks disabled 时返回空 handler set；enabled 时加载 generated schemas 并调用 `discover_handlers`。[E: codex-rs/hooks/src/engine/mod.rs:114][E: codex-rs/hooks/src/engine/mod.rs:123][E: codex-rs/hooks/src/engine/mod.rs:132][E: codex-rs/hooks/src/engine/mod.rs:133]
 2. `discover_handlers` 先从 `ConfigLayerStack::requirements().managed_hooks` append managed requirement hooks，再遍历 enabled config layers，最后 append plugin hook sources。[E: codex-rs/hooks/src/engine/discovery.rs:67][E: codex-rs/hooks/src/engine/discovery.rs:90][E: codex-rs/hooks/src/engine/discovery.rs:101][E: codex-rs/hooks/src/engine/discovery.rs:163]
 3. Config layer traversal 使用 `LowestPrecedenceFirst` 且 `include_disabled=false`；每个 layer 可同时加载 `hooks.json` 和 TOML `[hooks]`，两者同时非空时会记录 warning。[E: codex-rs/hooks/src/engine/discovery.rs:101][E: codex-rs/hooks/src/engine/discovery.rs:102][E: codex-rs/hooks/src/engine/discovery.rs:120][E: codex-rs/hooks/src/engine/discovery.rs:126][E: codex-rs/hooks/src/engine/discovery.rs:128]
 4. `allow_managed_hooks_only` 来自 requirements；policy 不允许的 source 会被跳过，managed hooks 仍可运行。[E: codex-rs/hooks/src/engine/discovery.rs:79][E: codex-rs/hooks/src/engine/discovery.rs:80][E: codex-rs/hooks/src/engine/discovery.rs:61][E: codex-rs/hooks/src/engine/discovery.rs:62][E: codex-rs/hooks/src/engine/discovery.rs:117]
 5. Plugin hook sources 会注入 `PLUGIN_ROOT`/`PLUGIN_DATA` 以及 Claude 兼容 env，然后以 `HookSource::Plugin` append。[E: codex-rs/hooks/src/engine/discovery.rs:222][E: codex-rs/hooks/src/engine/discovery.rs:234][E: codex-rs/hooks/src/engine/discovery.rs:237][E: codex-rs/hooks/src/engine/discovery.rs:252][E: codex-rs/hooks/src/engine/discovery.rs:259]
+
+Plugin hook discovery 在进入 hooks engine 前还经过 auth-aware marketplace 路由：`PluginsManager::plugin_hooks_for_layer_stack` 根据 auth mode/model provider 选择 curated target，再以 hooks-only scope 载入并过滤 plugin。ChatGPT backend 可接受 remote global/OpenAI curated，API/Bedrock target 排除 remote/OpenAI curated，未登录的普通 OpenAI target 排除 API/remote variants。[E: codex-rs/core-plugins/src/manager.rs:489][E: codex-rs/core-plugins/src/manager.rs:495][E: codex-rs/core-plugins/src/manager.rs:502][E: codex-rs/core-plugins/src/manager.rs:799][E: codex-rs/core-plugins/src/manager.rs:807][E: codex-rs/core-plugins/src/loader.rs:199][E: codex-rs/core-plugins/src/loader.rs:214][E: codex-rs/core-plugins/src/loader.rs:284]
 
 ## Handler 校验与 trust
 
@@ -59,9 +61,9 @@ Discovery 会按 event 计算 matcher pattern、validate matcher 并拒绝空 co
 
 `inspect_pending_input` 只对 `TurnInput::UserInput` 构造 `UserPromptSubmitRequest`，先 preview 再运行 `run_user_prompt_submit`，并复用 context-injecting outcome；非用户输入不会触发该 hook。[E: codex-rs/core/src/hook_runtime.rs:532][E: codex-rs/core/src/hook_runtime.rs:537][E: codex-rs/core/src/hook_runtime.rs:538][E: codex-rs/core/src/hook_runtime.rs:539][E: codex-rs/core/src/hook_runtime.rs:551][E: codex-rs/core/src/hook_runtime.rs:556][E: codex-rs/core/src/hook_runtime.rs:560]
 
-`ToolRegistry::dispatch_any_with_terminal_outcome` 在 handler 提供 pre payload 时调用 pre hook；如果被 block，会终止该 tool call 并通知 lifecycle outcome 为 blocked。[E: codex-rs/core/src/tools/registry.rs:427][E: codex-rs/core/src/tools/registry.rs:517][E: codex-rs/core/src/tools/registry.rs:527][E: codex-rs/core/src/tools/registry.rs:530][E: codex-rs/core/src/tools/registry.rs:533]
+`ToolRegistry::dispatch_any_with_terminal_outcome` 在 handler 提供 pre payload 时调用 pre hook；如果被 block，会终止该 tool call 并通知 lifecycle outcome 为 blocked。[E: codex-rs/core/src/tools/registry.rs:437][E: codex-rs/core/src/tools/registry.rs:527][E: codex-rs/core/src/tools/registry.rs:537][E: codex-rs/core/src/tools/registry.rs:540][E: codex-rs/core/src/tools/registry.rs:543]
 
-`PostToolUse` 只在 tool handler 成功且产生 post payload 时运行；它拿到 handler 已适配过的 stable tool input/response，而不是内部 raw payload。[E: codex-rs/core/src/tools/registry.rs:613][E: codex-rs/core/src/tools/registry.rs:621][E: codex-rs/core/src/hook_runtime.rs:264][E: codex-rs/core/src/hook_runtime.rs:273]
+`PostToolUse` 只在 tool handler 成功且产生 post payload 时运行；它拿到 handler 已适配过的 stable tool input/response，而不是内部 raw payload。[E: codex-rs/core/src/tools/registry.rs:623][E: codex-rs/core/src/tools/registry.rs:631][E: codex-rs/core/src/hook_runtime.rs:264][E: codex-rs/core/src/hook_runtime.rs:273]
 
 Permission request、Stop/SubagentStop、PreCompact/PostCompact hooks 分别有独立 request builders；PermissionRequest 返回 optional decision，compact hooks 可返回 stopped/continue，Stop 会按 root/subagent source 选择 target。[E: codex-rs/core/src/hook_runtime.rs:225][E: codex-rs/core/src/hook_runtime.rs:298][E: codex-rs/core/src/hook_runtime.rs:400][E: codex-rs/core/src/hook_runtime.rs:437]
 
@@ -88,6 +90,8 @@ Command runner 使用 configured shell 或默认 shell，设置 cwd、stdin、st
 - `codex-rs/hooks/src/engine/dispatcher.rs`
 - `codex-rs/hooks/src/engine/mod.rs`
 - `codex-rs/hooks/src/engine/command_runner.rs`
+- `codex-rs/core-plugins/src/manager.rs`
+- `codex-rs/core-plugins/src/loader.rs`
 - `codex-rs/core/src/hook_runtime.rs`
 - `codex-rs/core/src/tools/registry.rs`
 

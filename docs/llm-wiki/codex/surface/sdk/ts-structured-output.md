@@ -8,7 +8,7 @@ symbols: [TurnOptions, createOutputSchemaFile, CodexExecArgs.outputSchemaFile, l
 related: [sdk.ts-overview, sdk.ts-events-items, sdk.sdk-architecture]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > TypeScript structured output 是 per-turn `outputSchema` 到 CLI `--output-schema FILE` 的桥接：SDK 只接受 plain JSON object schema，写入临时 `schema.json`，把路径传给 `codex exec`，最终 response 仍从 agent message item text 读取。
@@ -36,7 +36,7 @@ README 和 sample 展示的是调用方通过外部 `zod-to-json-schema` 把 Zod
 
 ## CLI side
 
-Rust exec CLI 把 `--output-schema` 定义为 “Path to a JSON Schema file describing the model's final response shape”；exec runtime 的 `load_output_schema()` 读取该文件并按 JSON 解析，读文件失败或 JSON 无效时打印错误并 exit 1。[E: codex-rs/exec/src/cli.rs:53][E: codex-rs/exec/src/cli.rs:54][E: codex-rs/exec/src/lib.rs:759][E: codex-rs/exec/src/lib.rs:1805][E: codex-rs/exec/src/lib.rs:1808][E: codex-rs/exec/src/lib.rs:1815][E: codex-rs/exec/src/lib.rs:1819][E: codex-rs/exec/src/lib.rs:1826]
+Rust exec CLI 把 `--output-schema` 定义为 “Path to a JSON Schema file describing the model's final response shape”；exec runtime 的 `load_output_schema()` 读取该文件并按 JSON 解析，读文件失败或 JSON 无效时打印错误并 exit 1。[E: codex-rs/exec/src/cli.rs:43][E: codex-rs/exec/src/cli.rs:44][E: codex-rs/exec/src/lib.rs:753][E: codex-rs/exec/src/lib.rs:1801][E: codex-rs/exec/src/lib.rs:1804][E: codex-rs/exec/src/lib.rs:1811][E: codex-rs/exec/src/lib.rs:1815][E: codex-rs/exec/src/lib.rs:1822]
 
 `Thread.run()` 不解析 structured output JSON，它仍从 completed `agent_message` item 的 `text` 字段更新并返回 `finalResponse` string；调用方需要按自身 schema 解析 `finalResponse` 是由该返回类型推导出的使用要求。[E: sdk/typescript/src/thread.ts:124][E: sdk/typescript/src/thread.ts:125][E: sdk/typescript/src/thread.ts:126][E: sdk/typescript/src/thread.ts:139][I]
 

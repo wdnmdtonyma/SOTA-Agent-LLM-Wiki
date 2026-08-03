@@ -3,15 +3,15 @@ id: subsys.tui.rendering-theming
 title: Rendering 与 Theming
 kind: subsystem
 tier: T2
-source: [codex-rs/tui/src/render/renderable.rs, codex-rs/tui/src/render/highlight.rs, codex-rs/ansi-escape/src/lib.rs, codex-rs/tui/src/chatwidget/rendering.rs, codex-rs/tui/src/pager_overlay.rs, codex-rs/tui/src/markdown.rs, codex-rs/tui/src/terminal_hyperlinks.rs, codex-rs/tui/src/inline_visualization.rs, codex-rs/tui/src/inline_visualization/viewer.rs]
-symbols: [Renderable, RenderableItem, ColumnRenderable, set_theme_override, adaptive_default_theme_name, ansi_escape_line, ansi_escape, InlineVisualizationContext, rewrite_inline_visualizations, TerminalHyperlink]
+source: [codex-rs/tui/src/render/renderable.rs, codex-rs/tui/src/render/highlight.rs, codex-rs/ansi-escape/src/lib.rs, codex-rs/tui/src/chatwidget/rendering.rs, codex-rs/tui/src/pager_overlay.rs, codex-rs/tui/src/markdown.rs, codex-rs/tui/src/width.rs, codex-rs/tui/src/line_truncation.rs, codex-rs/tui/src/wrapping.rs, codex-rs/tui/src/terminal_hyperlinks.rs, codex-rs/tui/src/custom_terminal.rs, codex-rs/tui/src/inline_visualization.rs, codex-rs/tui/src/inline_visualization/viewer.rs]
+symbols: [Renderable, RenderableItem, ColumnRenderable, set_theme_override, adaptive_default_theme_name, ansi_escape_line, ansi_escape, display_width, truncate_line_to_width, mark_buffer_hyperlinks, InlineVisualizationContext, rewrite_inline_visualizations, TerminalHyperlink]
 related: [subsys.tui.chatwidget, subsys.tui.streaming-pipeline, subsys.tui.overlays-dialogs]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
-> TUI rendering 以 small `Renderable` trait 为公共拼装接口，以 syntect/two_face 主题解析代码处理 syntax highlight，以 `ansi-escape` crate 把 ANSI output 转成 ratatui text；ChatWidget/pager/bottom pane 再组合这些 renderables。[E: codex-rs/tui/src/render/renderable.rs:15][E: codex-rs/tui/src/render/highlight.rs:52][E: codex-rs/ansi-escape/src/lib.rs:26][E: codex-rs/tui/src/chatwidget/rendering.rs:5][E: codex-rs/tui/src/pager_overlay.rs:120]
+> TUI rendering 以 small `Renderable` trait 为公共拼装接口，以 syntect/two_face 主题解析代码处理 syntax highlight，以 `ansi-escape` crate 把 ANSI output 转成 ratatui text；ChatWidget/pager/bottom pane 再组合这些 renderables。[E: codex-rs/tui/src/render/renderable.rs:16][E: codex-rs/tui/src/render/highlight.rs:52][E: codex-rs/ansi-escape/src/lib.rs:26][E: codex-rs/tui/src/chatwidget/rendering.rs:5][E: codex-rs/tui/src/pager_overlay.rs:149]
 
 ## 能回答的问题
 
@@ -22,11 +22,11 @@ updated: 61a44880a8
 
 ## Renderable Contract
 
-`Renderable` 只要求 `render(area, buf)` 和 `desired_height(width)`，默认 cursor position 为 none、cursor style 为 terminal default user shape；这让 history cells、bottom-pane fragments 和 pager content 可以被共同测高/渲染。[E: codex-rs/tui/src/render/renderable.rs:15][E: codex-rs/tui/src/render/renderable.rs:16][E: codex-rs/tui/src/render/renderable.rs:17][E: codex-rs/tui/src/render/renderable.rs:18][E: codex-rs/tui/src/render/renderable.rs:21]
+`Renderable` 只要求 `render(area, buf)` 和 `desired_height(width)`，默认 cursor position 为 none、cursor style 为 terminal default user shape；这让 history cells、bottom-pane fragments 和 pager content 可以被共同测高/渲染。[E: codex-rs/tui/src/render/renderable.rs:16][E: codex-rs/tui/src/render/renderable.rs:17][E: codex-rs/tui/src/render/renderable.rs:18][E: codex-rs/tui/src/render/renderable.rs:19][E: codex-rs/tui/src/render/renderable.rs:22]
 
-`RenderableItem` 可以包 owned 或 borrowed child，并把 render/height/cursor 方法直接分发给 child；基础 impl 覆盖 `()`、`&str`、`String`、`Span`、`Line`、`Paragraph`、`Option<R>` 和 `Arc<R>`。[E: codex-rs/tui/src/render/renderable.rs:26][E: codex-rs/tui/src/render/renderable.rs:27][E: codex-rs/tui/src/render/renderable.rs:28][E: codex-rs/tui/src/render/renderable.rs:32][E: codex-rs/tui/src/render/renderable.rs:39][E: codex-rs/tui/src/render/renderable.rs:46][E: codex-rs/tui/src/render/renderable.rs:53][E: codex-rs/tui/src/render/renderable.rs:76][E: codex-rs/tui/src/render/renderable.rs:83][E: codex-rs/tui/src/render/renderable.rs:92][E: codex-rs/tui/src/render/renderable.rs:101][E: codex-rs/tui/src/render/renderable.rs:110][E: codex-rs/tui/src/render/renderable.rs:119][E: codex-rs/tui/src/render/renderable.rs:128][E: codex-rs/tui/src/render/renderable.rs:156]
+`RenderableItem` 可以包 owned 或 borrowed child，并把 render/height/cursor 方法直接分发给 child；基础 impl 覆盖 `()`、`&str`、`String`、`Span`、`Line`、`Paragraph`、`Option<R>` 和 `Arc<R>`。[E: codex-rs/tui/src/render/renderable.rs:27][E: codex-rs/tui/src/render/renderable.rs:28][E: codex-rs/tui/src/render/renderable.rs:29][E: codex-rs/tui/src/render/renderable.rs:33][E: codex-rs/tui/src/render/renderable.rs:40][E: codex-rs/tui/src/render/renderable.rs:47][E: codex-rs/tui/src/render/renderable.rs:54][E: codex-rs/tui/src/render/renderable.rs:77][E: codex-rs/tui/src/render/renderable.rs:84][E: codex-rs/tui/src/render/renderable.rs:93][E: codex-rs/tui/src/render/renderable.rs:102][E: codex-rs/tui/src/render/renderable.rs:111][E: codex-rs/tui/src/render/renderable.rs:120][E: codex-rs/tui/src/render/renderable.rs:129][E: codex-rs/tui/src/render/renderable.rs:157]
 
-`ColumnRenderable` 顺序渲染 children，逐个用 child desired height 切分 area；它的 total desired height 是 children 高度和，光标位置/样式取第一个有 cursor 的 child。[E: codex-rs/tui/src/render/renderable.rs:171][E: codex-rs/tui/src/render/renderable.rs:176][E: codex-rs/tui/src/render/renderable.rs:179][E: codex-rs/tui/src/render/renderable.rs:182][E: codex-rs/tui/src/render/renderable.rs:188][E: codex-rs/tui/src/render/renderable.rs:191][E: codex-rs/tui/src/render/renderable.rs:199][E: codex-rs/tui/src/render/renderable.rs:205][E: codex-rs/tui/src/render/renderable.rs:214][E: codex-rs/tui/src/render/renderable.rs:219]
+`ColumnRenderable` 顺序渲染 children，逐个用 child desired height 切分 area；它的 total desired height 是 children 高度和，光标位置/样式取第一个有 cursor 的 child。[E: codex-rs/tui/src/render/renderable.rs:172][E: codex-rs/tui/src/render/renderable.rs:177][E: codex-rs/tui/src/render/renderable.rs:180][E: codex-rs/tui/src/render/renderable.rs:183][E: codex-rs/tui/src/render/renderable.rs:189][E: codex-rs/tui/src/render/renderable.rs:192][E: codex-rs/tui/src/render/renderable.rs:200][E: codex-rs/tui/src/render/renderable.rs:206][E: codex-rs/tui/src/render/renderable.rs:215][E: codex-rs/tui/src/render/renderable.rs:220]
 
 ## Syntax Theme
 
@@ -38,19 +38,27 @@ custom theme 路径是 `{codex_home}/themes/{name}.tmTheme`，解析顺序是 bu
 
 `ansi_escape_line` 会先把 tab 展开成 spaces，调用 `ansi_escape`，若得到多行则 warning 并只取第一行；`ansi_escape` 使用 `ansi_to_tui::IntoText` 把字符串转成 `Text`，错误路径 log 后 panic。[E: codex-rs/ansi-escape/src/lib.rs:11][E: codex-rs/ansi-escape/src/lib.rs:26][E: codex-rs/ansi-escape/src/lib.rs:29][E: codex-rs/ansi-escape/src/lib.rs:33][E: codex-rs/ansi-escape/src/lib.rs:40][E: codex-rs/ansi-escape/src/lib.rs:43][E: codex-rs/ansi-escape/src/lib.rs:47]
 
-Chat surface 由 `ChatWidget::as_renderable` 组装 transcript、active/hook cells、token/rate-limit/warning rows、bottom pane 等，pager overlay 则用 `PagerView` 渲染一组 renderables 并管理 scroll state。[E: codex-rs/tui/src/chatwidget/rendering.rs:5][E: codex-rs/tui/src/chatwidget/rendering.rs:6][E: codex-rs/tui/src/chatwidget/rendering.rs:17][E: codex-rs/tui/src/chatwidget/rendering.rs:28][E: codex-rs/tui/src/pager_overlay.rs:120][E: codex-rs/tui/src/pager_overlay.rs:121][E: codex-rs/tui/src/pager_overlay.rs:122]
+Chat surface 由 `ChatWidget::as_renderable` 组装 transcript、active/hook cells、token/rate-limit/warning rows、bottom pane 等，pager overlay 则用 `PagerView` 渲染一组 renderables 并管理 scroll state。[E: codex-rs/tui/src/chatwidget/rendering.rs:5][E: codex-rs/tui/src/chatwidget/rendering.rs:6][E: codex-rs/tui/src/chatwidget/rendering.rs:17][E: codex-rs/tui/src/chatwidget/rendering.rs:28][E: codex-rs/tui/src/pager_overlay.rs:149][E: codex-rs/tui/src/pager_overlay.rs:150][E: codex-rs/tui/src/pager_overlay.rs:151]
+
+## Cell width、wrapping 与 terminal diff
+
+Ratatui/unicode-width 对 halfwidth Japanese voiced/semi-voiced marks `U+FF9E/U+FF9F` 的默认结果不符合目标 terminal cell 语义，TUI 的 `display_width`/`char_width` 因此显式为每个 mark 加 1 cell。[E: codex-rs/tui/src/width.rs:19][E: codex-rs/tui/src/width.rs:20][E: codex-rs/tui/src/width.rs:23][E: codex-rs/tui/src/width.rs:28][E: codex-rs/tui/src/width.rs:29][E: codex-rs/tui/src/width.rs:32]
+
+line truncation 以 extended grapheme 为切分单位，不会把组合中的 sound mark 拆开。wrapping 则把含 halfwidth marks 的 source grapheme 投影成等 cell-width、textwrap-safe 的 placeholder，包装后再通过 boundary map 还原 source byte ranges，使 textarea cursor、Markdown table、popup 和 status row 使用同一 width 语义。[E: codex-rs/tui/src/line_truncation.rs:13][E: codex-rs/tui/src/line_truncation.rs:47][E: codex-rs/tui/src/line_truncation.rs:49][E: codex-rs/tui/src/line_truncation.rs:56][E: codex-rs/tui/src/wrapping.rs:43][E: codex-rs/tui/src/wrapping.rs:53][E: codex-rs/tui/src/wrapping.rs:74][E: codex-rs/tui/src/wrapping.rs:99][E: codex-rs/tui/src/wrapping.rs:168][E: codex-rs/tui/src/wrapping.rs:217][E: codex-rs/tui/src/wrapping.rs:231][E: codex-rs/tui/src/wrapping.rs:236]
+
+OSC 8 hyperlink 在 Ratatui 已经 layout 完 buffer 后才被注入 cell symbol。由于 escape sequence 会改变 symbol bytes 却不改变可见宽度，`mark_buffer_hyperlinks` 把原 `cell_width` 保存为 `CellDiffOption::ForcedWidth`；custom terminal diff 额外修复 forced-width wide cell 缩短时的 trailing-cell invalidation。[E: codex-rs/tui/src/terminal_hyperlinks.rs:497][E: codex-rs/tui/src/terminal_hyperlinks.rs:533][E: codex-rs/tui/src/terminal_hyperlinks.rs:537][E: codex-rs/tui/src/terminal_hyperlinks.rs:558][E: codex-rs/tui/src/terminal_hyperlinks.rs:562][E: codex-rs/tui/src/terminal_hyperlinks.rs:569][E: codex-rs/tui/src/terminal_hyperlinks.rs:571][E: codex-rs/tui/src/custom_terminal.rs:608][E: codex-rs/tui/src/custom_terminal.rs:615][E: codex-rs/tui/src/custom_terminal.rs:616][E: codex-rs/tui/src/custom_terminal.rs:627][E: codex-rs/tui/src/custom_terminal.rs:638]
 
 ## Inline visualization fallback
 
 assistant 的 `::codex-inline-vis{file="...html"}` 独占行会被 TUI 改写为 browser link；code block 内同样字面量保持原样。context 只接受 thread visualization directory 下的单层 `.html` 文件，并 canonicalize visualizations root、thread dir 与 fragment，拒绝 symlink/path escape；无 context、非法 directive 或设备不可用时显示 unavailable 文案。[E: codex-rs/tui/src/inline_visualization.rs:27][E: codex-rs/tui/src/inline_visualization.rs:83][E: codex-rs/tui/src/inline_visualization.rs:97][E: codex-rs/tui/src/inline_visualization.rs:141][E: codex-rs/tui/src/inline_visualization.rs:152][E: codex-rs/tui/src/inline_visualization.rs:182][E: codex-rs/tui/src/inline_visualization.rs:201]
 
-fragment 最大 2 MiB；viewer 在 thread-local `.codex-viewers` 用 tempfile + persist 物化，外层 shell 与 sandboxed `srcdoc` iframe 各自带 CSP/referrer policy，iframe 不授予 same-origin。链接通过随机 HTTPS placeholder 参与 Markdown layout，再只把已登记 placeholder retarget 成 `TrustedFile`；普通 Markdown `file:` URL 仍不会获得 OSC 8 hyperlink。[E: codex-rs/tui/src/inline_visualization.rs:28][E: codex-rs/tui/src/inline_visualization.rs:186][E: codex-rs/tui/src/inline_visualization/viewer.rs:17][E: codex-rs/tui/src/inline_visualization/viewer.rs:31][E: codex-rs/tui/src/inline_visualization/viewer.rs:48][E: codex-rs/tui/src/inline_visualization/viewer.rs:57][E: codex-rs/tui/src/inline_visualization/viewer.rs:68][E: codex-rs/tui/src/markdown.rs:84][E: codex-rs/tui/src/markdown.rs:101][E: codex-rs/tui/src/terminal_hyperlinks.rs:49][E: codex-rs/tui/src/terminal_hyperlinks.rs:368]
+fragment 最大 2 MiB；viewer 在 thread-local `.codex-viewers` 用 tempfile + persist 物化，外层 shell 与 sandboxed `srcdoc` iframe 各自带 CSP/referrer policy，iframe 不授予 same-origin。链接通过随机 HTTPS placeholder 参与 Markdown layout，再只把已登记 placeholder retarget 成 `TrustedFile`；普通 Markdown `file:` URL 仍不会获得 OSC 8 hyperlink。[E: codex-rs/tui/src/inline_visualization.rs:28][E: codex-rs/tui/src/inline_visualization.rs:186][E: codex-rs/tui/src/inline_visualization/viewer.rs:17][E: codex-rs/tui/src/inline_visualization/viewer.rs:31][E: codex-rs/tui/src/inline_visualization/viewer.rs:48][E: codex-rs/tui/src/inline_visualization/viewer.rs:57][E: codex-rs/tui/src/inline_visualization/viewer.rs:68][E: codex-rs/tui/src/markdown.rs:84][E: codex-rs/tui/src/markdown.rs:101][E: codex-rs/tui/src/terminal_hyperlinks.rs:53][E: codex-rs/tui/src/terminal_hyperlinks.rs:375]
 
 ## Gotchas
 
 - `set_theme_override` 的 `OnceLock` 语义意味着第一次 call 固定 override/home 输入；live preview 可以 update runtime theme，但不能改已经持久化的 OnceLock 值。[I]
 - `ansi_escape_line` 不是多行 renderer；多行 output 应走 `ansi_escape` 或逐行处理。[E: codex-rs/ansi-escape/src/lib.rs:26][E: codex-rs/ansi-escape/src/lib.rs:33]
-- `TrustedFile` 是 inline-visualization rewrite 的窄能力，不会放宽 general Markdown link scheme allowlist。[E: codex-rs/tui/src/terminal_hyperlinks.rs:40][E: codex-rs/tui/src/terminal_hyperlinks.rs:49][E: codex-rs/tui/src/terminal_hyperlinks.rs:359]
+- `TrustedFile` 是 inline-visualization rewrite 的窄能力，不会放宽 general Markdown link scheme allowlist。[E: codex-rs/tui/src/terminal_hyperlinks.rs:44][E: codex-rs/tui/src/terminal_hyperlinks.rs:53][E: codex-rs/tui/src/terminal_hyperlinks.rs:366]
 
 ## Sources
 
@@ -60,7 +68,11 @@ fragment 最大 2 MiB；viewer 在 thread-local `.codex-viewers` 用 tempfile + 
 - `codex-rs/tui/src/chatwidget/rendering.rs`
 - `codex-rs/tui/src/pager_overlay.rs`
 - `codex-rs/tui/src/markdown.rs`
+- `codex-rs/tui/src/width.rs`
+- `codex-rs/tui/src/line_truncation.rs`
+- `codex-rs/tui/src/wrapping.rs`
 - `codex-rs/tui/src/terminal_hyperlinks.rs`
+- `codex-rs/tui/src/custom_terminal.rs`
 - `codex-rs/tui/src/inline_visualization.rs`
 - `codex-rs/tui/src/inline_visualization/viewer.rs`
 

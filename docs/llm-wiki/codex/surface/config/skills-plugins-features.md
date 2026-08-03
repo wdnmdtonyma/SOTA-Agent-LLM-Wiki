@@ -8,7 +8,7 @@ symbols: [SkillsConfig, HooksToml, PluginConfig, MarketplaceConfig]
 related: [config.mcp-tools, config.agents-memory, subsys.config-auth.skills, subsys.config-auth.plugins, ref.feature-flags]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > skills/plugins/features 设置 catalog 覆盖 ConfigToml 中 user-level skills config、hooks、plugins、marketplaces、orchestrator-owned skills/MCP switches、centralized feature flags 和 unstable-feature warning suppression 的顶层键。
@@ -26,6 +26,8 @@ updated: 61a44880a8
 当前 `ConfigToml` 有 96 个顶层 `pub` 字段；本节点覆盖其中 7 个。8 个 surface/config catalog 节点合计覆盖全部 96 个字段且不重复。[I]
 
 `features` is an optional `FeaturesToml` field with the `features_schema` helper, while `plugins` and `marketplaces` are defaulted top-level maps keyed by name.[E: codex-rs/config/src/config_toml.rs:444][E: codex-rs/config/src/config_toml.rs:445][E: codex-rs/config/src/config_toml.rs:448][E: codex-rs/config/src/config_toml.rs:449][E: codex-rs/config/src/config_toml.rs:454][E: codex-rs/config/src/config_toml.rs:455]
+
+本轮相关 feature 状态：`plugins`、`remote_plugin`、`plugin_sharing`、`skill_search` 都是 stable 且 default-on；`recommended_plugins` stable 但 default-off；`mcp_2026_07_28` 仍 under-development/default-off；`external_migration` 已 removed/no-op。它们属于 `[features]`，不是 `plugins`/`marketplaces` map 的成员。[E: codex-rs/features/src/lib.rs:1127][E: codex-rs/features/src/lib.rs:1130][E: codex-rs/features/src/lib.rs:1175][E: codex-rs/features/src/lib.rs:1178][E: codex-rs/features/src/lib.rs:1181][E: codex-rs/features/src/lib.rs:1184][E: codex-rs/features/src/lib.rs:1235][E: codex-rs/features/src/lib.rs:1244][E: codex-rs/features/src/lib.rs:1247][E: codex-rs/features/src/lib.rs:1250][E: codex-rs/features/src/lib.rs:1283][E: codex-rs/features/src/lib.rs:1286]
 
 ## 字段 catalog
 

@@ -1,8 +1,8 @@
 # Codex 源码 LLM Wiki — 入口索引
 
-> OpenAI Codex 真实源码(`Best/codex/`,126-crate Rust workspace + TS/Py SDK)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
+> OpenAI Codex 真实源码(`Best/codex/`,128-crate Rust workspace + TS/Py SDK)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
 >
-> **状态:172 个节点均已对照 `61a44880a8` 复核并标记 verified。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
+> **状态:177 个节点均已对照 `7750465934` 复核并标记 verified。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
 
 ## 怎么用
 - **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
@@ -23,7 +23,7 @@
 - [trace:MCP 工具调用](spine/trace-mcp-call.md): 外部 MCP server 工具 发现 → 注册 → 调用路由 → 结果回流 — codex-mcp/ · rmcp-client/
 - [trace:spawn 子 agent](spine/trace-subagent.md): spawn_agent → 子 agent 循环 → mailbox/wait_agent → 结果回流 — core/src/tools/handlers/multi_agents*/ · core/
 
-## T1 — Surface / Tools(每工具一节点,36)
+## T1 — Surface / Tools(每工具一节点,37)
 
 ### Shell 执行
 - [exec_command](surface/tools/exec-command.md): unified-exec 单命令执行(TTY/管道)— core/src/tools/handlers/unified_exec/exec_command.rs
@@ -45,6 +45,7 @@
 - [sleep](surface/tools/sleep.md): 模型可请求等待一段时间的工具 — core/src/tools/handlers/sleep.rs
 - [new_context](surface/tools/new-context.md): 打开新上下文窗口/预算相关工具 — core/src/tools/handlers/new_context_window.rs
 - [get_context_remaining](surface/tools/get-context-remaining.md): 查询剩余上下文预算 — core/src/tools/handlers/get_context_remaining.rs
+- [wait_for_environment](surface/tools/wait-for-environment.md): 等待 deferred executor 环境 ready，并在不可等待时返回 host fallback 配置 — core/src/tools/handlers/wait_for_environment.rs
 
 ### 多 agent(V2)
 - [spawn_agent (V2)](surface/tools/spawn-agent-v2.md): 任务式 spawn 子 agent(model 继承)— core/src/tools/handlers/multi_agents_v2/spawn.rs
@@ -105,7 +106,7 @@
 - [skills/plugins/features 设置](surface/config/skills-plugins-features.md): skills · plugins · marketplaces · features · suppress_unstable_features_warning — config/src/config_toml.rs
 - [存储/遥测/杂项设置](surface/config/storage-telemetry-misc.md): sqlite_home · log_dir · history · analytics · feedback · otel · ghost_snapshot · projects · windows · oss_provider · commit_attribution · instructions — config/src/config_toml.rs
 
-## T1 — Surface / App-Server 协议(集成面 catalog,9 节点,覆盖 213 个 RPC 实例：130 client requests + 72 notifications + 11 server requests)
+## T1 — Surface / App-Server 协议(集成面 catalog,9 节点,覆盖 219 个 RPC 实例：136 client requests + 72 notifications + 11 server requests)
 - [协议总览](surface/app-server/overview.md): JSON-RPC 2.0 · v1/v2 · ClientRequest/Response/ServerRequest/ServerNotification · 传输 — app-server-protocol/src/protocol/common.rs
 - [thread 方法](surface/app-server/thread-methods.md): thread/start|resume|fork|archive|list|read|rollback|compact… — app-server-protocol/src/protocol/v2.rs
 - [turn 方法](surface/app-server/turn-methods.md): turn/start|steer|interrupt — app-server-protocol/src/protocol/common.rs
@@ -124,9 +125,9 @@
 - [Python 输入与错误](surface/sdk/py-inputs-errors.md): Input 变体 · 错误层级 · retry_on_overload · MessageRouter — sdk/python/src/openai_codex/
 - [SDK 架构](surface/sdk/sdk-architecture.md): TS 走 codex exec JSONL; Python 走 app-server stdio JSON-RPC — sdk/
 
-## T2 — Subsystems / Core(20)
+## T2 — Subsystems / Core(23)
 - [工具系统机制](subsystems/core/tool-system.md): ToolSpec/JsonSchema/CoreToolRuntime/registry/discovery/dynamic/code-mode — core/src/tools/
-- [Code Mode runtime](subsystems/core/code-mode-runtime.md): in-process/remote host、WebSocket handshake、fallback 与 shared connection — core/src/tools/code_mode/ · code-mode-host/
+- [Code Mode runtime](subsystems/core/code-mode-runtime.md): standalone process-owned host、WebSocket handshake 与 shared connection — code-mode-runtime/ · core/src/tools/code_mode/
 - [Turn 引擎](subsystems/core/turn-engine.md): run_turn 生成器循环 — core/src/session/turn.rs
 - [Session 生命周期](subsystems/core/session-lifecycle.md): Session · active_turn · handlers 分派 — core/src/session/
 - [Context manager](subsystems/core/context-manager.md): 对话上下文装配 + 注入机制 — core/src/context_manager/
@@ -140,11 +141,14 @@
 - [Review mode](subsystems/core/review-mode.md): ReviewTask 生命周期 · review session · ReviewRequest/Output — core/src/tasks/review.rs · guardian/review_session.rs
 - [Realtime 对话状态机](subsystems/core/realtime-conversation.md): realtime 会话 start→active→end · async vs sync turn — core/src/realtime_conversation.rs
 - [Collaboration modes](subsystems/core/collaboration-modes.md): mode settings · typed world-state 指令注入 · 工具 availability — collaboration-mode-templates/ · core/src/context/world_state/collaboration_mode.rs
-- [Ghost commit 与 undo](subsystems/core/ghost-undo.md): baseline 快照 · 冲突检测 · undo task · 状态回退 — core/src/tasks/ghost_snapshot.rs · undo.rs · git-utils/
+- [Ghost/undo 兼容边界](subsystems/core/ghost-undo.md): legacy config/feature/rollout 兼容 + 当前 `ThreadRollback`（不回滚 filesystem）— config/ · features/ · protocol/ · core/src/session/handlers.rs
 - [Rollout 持久化](subsystems/core/rollout-persistence.md): JSONL recorder + thread 索引 — rollout/
 - [State DB(SQLite)](subsystems/core/state-db.md): 元数据镜像 — state/
 - [Thread store](subsystems/core/thread-store.md): local/remote 存储抽象 — thread-store/
 - [Trace bundle](subsystems/core/trace-bundle.md): 确定性 replay + reducer — rollout-trace/
+- [Turn metadata](subsystems/core/turn-metadata.md): parent-turn lineage + attempted/executed tool metadata + Responses/MCP/analytics correlation — core/src/turn_metadata.rs · core/src/tools/executed_tool_calls.rs
+- [Rollout budget](subsystems/core/rollout-budget.md): provider units/fallback accounting + root/subagent 共享预算 + exhaustion — core/src/rollout_budget.rs · core/src/session/rollout_budget.rs
+- [Token budget](subsystems/core/token-budget.md): model defaults + 用户配置优先级 + world-state guidance/reminder/compaction — core/src/session/token_budget.rs
 
 ## T2 — Subsystems / Exec & Sandbox(12)
 - [执行与沙箱总览](subsystems/exec-sandbox/overview.md): SandboxType(4)+ exec 管线 — sandboxing/src/manager.rs
@@ -180,7 +184,7 @@
 - [Auth 层](subsystems/providers/auth-layer.md): AuthProvider · Bearer · command-backed · SigV4 — codex-api/src/auth.rs
 - [模型 catalog](subsystems/providers/model-catalog.md): models-manager · models.json · ModelInfo · prompt cache — models-manager/
 
-## T2 — Subsystems / TUI(9)
+## T2 — Subsystems / TUI(10)
 - [TUI 架构](subsystems/tui/architecture.md): App · run loop · tokio::select 三源 · alt-screen — tui/src/app.rs · docs/tui-alternate-screen.md
 - [事件系统](subsystems/tui/event-system.md): AppEvent · 通道 — tui/src/app_event.rs
 - [流式渲染管线](subsystems/tui/streaming-pipeline.md): markdown collector → controller → commit_tick → render · chunking 策略 — tui/src/streaming/ · docs/tui-stream-chunking-*.md
@@ -190,6 +194,7 @@
 - [Status surfaces](subsystems/tui/status-surfaces.md): account/rate-limit/session 卡片 — tui/src/status/
 - [Onboarding](subsystems/tui/onboarding.md): welcome/trust/login — tui/src/onboarding/
 - [渲染与主题](subsystems/tui/rendering-theming.md): markdown_render · highlight · ansi-escape · wrapping — tui/src/render/ · ansi-escape/
+- [Keymap 与 chord](subsystems/tui/keymap.md): two-stroke chord 状态机、binding registry 与 setup capture — tui/src/keymap/
 
 ## T2 — Subsystems / App-Server(4)
 - [Message processor](subsystems/app-server/message-processor.md): 请求分派 — app-server/src/message_processor.rs · request_processors/
@@ -227,11 +232,11 @@
 - [协议 Event catalog:生命周期/turn/exec/patch](reference/protocol-event-lifecycle.md): EventMsg 约前半(生命周期/turn/exec/patch/审批)— protocol/src/protocol.rs
 - [协议 Event catalog:streaming/collab/realtime/mcp](reference/protocol-event-streaming.md): EventMsg 约后半(delta/collab/realtime/mcp)— protocol/src/protocol.rs
 - [协议 items / approvals 类型](reference/protocol-items.md): ResponseItem · approvals · permissions — protocol/src/items.rs · approvals.rs · permissions.rs
-- [SessionTask 变体目录](reference/session-tasks.md): SessionTask trait + 变体(Review/Compact/Undo/GhostSnapshot/Regular/UserShell)— core/src/tasks/mod.rs
+- [SessionTask 变体目录](reference/session-tasks.md): SessionTask trait + 当前 Regular/Review/Compact task classes — core/src/tasks/mod.rs · core/src/state/turn.rs
 - [数据模型](reference/data-model.md): 核心共享类型 — protocol/ · core/
 - [关键类型索引](reference/key-types.md): 各子系统 load-bearing struct/trait 索引 — codex-rs/
-- [Crate 索引](reference/crate-index.md): 126 个 workspace crate 一句话目录 — codex-rs/Cargo.toml
-- [Feature flag 目录](reference/feature-flags.md): 95 个 flag 按 stage 全 catalog — features/src/lib.rs
+- [Crate 索引](reference/crate-index.md): 128 个 workspace crate 一句话目录 — codex-rs/Cargo.toml
+- [Feature flag 目录](reference/feature-flags.md): 102 个 flag 按 stage 全 catalog — features/src/lib.rs
 - [环境变量目录](reference/env-vars.md): CODEX_* 等 — codex-rs/
 - [术语表与 codename](reference/glossary.md): SQ/EQ · rollout · ghost commit · seatbelt · landlock · guardian · code-mode …
 - [不确定项日志](reference/uncertainty.md): `[U]` 汇总

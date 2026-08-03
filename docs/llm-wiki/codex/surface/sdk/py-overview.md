@@ -3,12 +3,12 @@ id: sdk.py-overview
 title: Python SDK 总览
 kind: sdk
 tier: T1
-source: [sdk/python/src/openai_codex/api.py, sdk/python/src/openai_codex/client.py, sdk/python/src/openai_codex/async_client.py, sdk/python/src/openai_codex/_run.py, sdk/python/src/openai_codex/__init__.py, sdk/python/pyproject.toml, sdk/python/src/openai_codex/_approval_mode.py, sdk/python/src/openai_codex/_sandbox.py, sdk/python/src/openai_codex/_initialize_metadata.py]
-symbols: [python::Codex, AsyncCodex, python::Thread, AsyncThread, TurnHandle, AsyncTurnHandle, CodexClient, AsyncCodexClient, CodexConfig, TurnResult, ApprovalMode, Sandbox]
+source: [sdk/python/src/openai_codex/api.py, sdk/python/src/openai_codex/client.py, sdk/python/src/openai_codex/async_client.py, sdk/python/src/openai_codex/_run.py, sdk/python/src/openai_codex/__init__.py, sdk/python/pyproject.toml, sdk/python/src/openai_codex/_approval_mode.py, sdk/python/src/openai_codex/_sandbox.py, sdk/python/src/openai_codex/_initialize_metadata.py, sdk/python/src/openai_codex/generated/v2_all.py, sdk/python/scripts/update_sdk_artifacts.py, sdk/python/tests/test_client_rpc_methods.py]
+symbols: [python::Codex, AsyncCodex, python::Thread, AsyncThread, TurnHandle, AsyncTurnHandle, CodexClient, AsyncCodexClient, CodexConfig, TurnResult, ApprovalMode, Sandbox, python::PlanType]
 related: [sdk.py-inputs-errors, sdk.sdk-architecture, rpc.overview, rpc.thread-methods, rpc.turn-methods]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > Python SDK package is now `openai_codex`: the high-level `Codex` / `AsyncCodex` APIs wrap a typed app-server JSON-RPC client (`CodexClient` / `AsyncCodexClient`) that starts `codex app-server --listen stdio://`, initializes metadata, exposes account/thread/turn helpers, and collects turn notifications into `TurnResult`.[E: sdk/python/pyproject.toml:6][E: sdk/python/src/openai_codex/api.py:75][E: sdk/python/src/openai_codex/api.py:82][E: sdk/python/src/openai_codex/client.py:212][E: sdk/python/src/openai_codex/client.py:238][E: sdk/python/src/openai_codex/client.py:252][E: sdk/python/src/openai_codex/async_client.py:52][E: sdk/python/src/openai_codex/_run.py:21]
@@ -67,6 +67,12 @@ The sync and async collectors gather matching `ItemCompletedNotification`, `Thre
 
 `Sandbox` exposes `read_only`, `workspace_write`, and `full_access`; thread lifecycle uses `_sandbox_mode`, while per-turn overrides use `_sandbox_policy` with generated readOnly/workspaceWrite/dangerFullAccess policy roots.[E: sdk/python/src/openai_codex/_sandbox.py:15][E: sdk/python/src/openai_codex/_sandbox.py:24][E: sdk/python/src/openai_codex/_sandbox.py:25][E: sdk/python/src/openai_codex/_sandbox.py:26][E: sdk/python/src/openai_codex/_sandbox.py:36][E: sdk/python/src/openai_codex/_sandbox.py:43][E: sdk/python/src/openai_codex/_sandbox.py:46][E: sdk/python/src/openai_codex/_sandbox.py:48][E: sdk/python/src/openai_codex/_sandbox.py:53][E: sdk/python/src/openai_codex/_sandbox.py:61][E: sdk/python/src/openai_codex/_sandbox.py:65][E: sdk/python/src/openai_codex/_sandbox.py:69]
 
+## Generated protocol compatibility
+
+Python generator 会把 generated `PlanType` 固定改写为 `str, Enum`，并通过 `_missing_` 为任意非空、尚未知的 runtime plan string 创建动态 enum member。这样使用较新 `codex_bin` 时，account payload 的新 plan value 仍保持 typed，而不是因 SDK catalog 滞后而 validation 失败。[E: sdk/python/scripts/update_sdk_artifacts.py:699][E: sdk/python/scripts/update_sdk_artifacts.py:710][E: sdk/python/scripts/update_sdk_artifacts.py:717][E: sdk/python/scripts/update_sdk_artifacts.py:724][E: sdk/python/src/openai_codex/generated/v2_all.py:2508][E: sdk/python/src/openai_codex/generated/v2_all.py:2522][E: sdk/python/src/openai_codex/generated/v2_all.py:2529]
+
+这是 generated protocol 的前向兼容修复，不是高层 `Codex`/`Thread` API 新增；回归用尚未进入静态 enum catalog 的 `self_serve_business_prolite` 验证 round-trip value。[E: sdk/python/tests/test_client_rpc_methods.py:44][E: sdk/python/tests/test_client_rpc_methods.py:46][E: sdk/python/tests/test_client_rpc_methods.py:47][E: sdk/python/tests/test_client_rpc_methods.py:58]
+
 ## 设计动机
 
 Python SDK keeps the rich app-server protocol path, not the TypeScript `codex exec` path, so it can expose login/account/thread/turn control and routed notifications through typed generated models.[I] The async layer deliberately reuses the sync stdio transport through thread offloading, keeping one message router and one stdout reader as the single source of transport ordering.[I]
@@ -82,6 +88,9 @@ Python SDK keeps the rich app-server protocol path, not the TypeScript `codex ex
 - `sdk/python/src/openai_codex/_approval_mode.py`
 - `sdk/python/src/openai_codex/_sandbox.py`
 - `sdk/python/src/openai_codex/_initialize_metadata.py`
+- `sdk/python/src/openai_codex/generated/v2_all.py`
+- `sdk/python/scripts/update_sdk_artifacts.py`
+- `sdk/python/tests/test_client_rpc_methods.py`
 
 ## 相关
 

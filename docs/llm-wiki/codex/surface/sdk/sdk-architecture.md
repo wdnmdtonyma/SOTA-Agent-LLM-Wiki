@@ -3,12 +3,12 @@ id: sdk.sdk-architecture
 title: SDK 架构对照
 kind: sdk
 tier: T1
-source: [sdk/typescript/src/codex.ts, sdk/typescript/src/thread.ts, sdk/typescript/src/exec.ts, sdk/typescript/src/events.ts, sdk/typescript/src/items.ts, sdk/python/src/openai_codex/api.py, sdk/python/src/openai_codex/client.py, sdk/python/src/openai_codex/async_client.py, sdk/python/src/openai_codex/_message_router.py, sdk/python/src/openai_codex/_run.py, sdk/python/src/openai_codex/models.py]
+source: [sdk/typescript/src/codex.ts, sdk/typescript/src/thread.ts, sdk/typescript/src/exec.ts, sdk/typescript/src/events.ts, sdk/typescript/src/items.ts, sdk/python/src/openai_codex/api.py, sdk/python/src/openai_codex/client.py, sdk/python/src/openai_codex/async_client.py, sdk/python/src/openai_codex/_message_router.py, sdk/python/src/openai_codex/_run.py, sdk/python/src/openai_codex/models.py, sdk/python/src/openai_codex/generated/v2_all.py, sdk/python/scripts/update_sdk_artifacts.py]
 symbols: []
 related: [sdk.ts-overview, sdk.ts-events-items, sdk.ts-structured-output, sdk.py-overview, sdk.py-inputs-errors, rpc.overview]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > Codex SDK currently has two different runtime paths: TypeScript is a typed wrapper over `codex exec --experimental-json` JSONL events, while Python `openai_codex` is a typed JSON-RPC client over `codex app-server --listen stdio://` with a reader-thread message router.[E: sdk/typescript/src/exec.ts:86][E: sdk/typescript/src/exec.ts:87][E: sdk/typescript/src/exec.ts:181][E: sdk/typescript/src/exec.ts:222][E: sdk/python/src/openai_codex/client.py:238][E: sdk/python/src/openai_codex/client.py:252][E: sdk/python/src/openai_codex/client.py:323][E: sdk/python/src/openai_codex/client.py:803][E: sdk/python/src/openai_codex/_message_router.py:17]
@@ -39,6 +39,8 @@ Python high-level `Codex` constructs `CodexClient`, starts the process, initiali
 Python request path is app-server JSON-RPC line protocol: `_request_raw()` writes a message with id/method/params, waits on a router response queue, and typed `request()` validates the result with a pydantic response model.[E: sdk/python/src/openai_codex/client.py:311][E: sdk/python/src/openai_codex/client.py:318][E: sdk/python/src/openai_codex/client.py:321][E: sdk/python/src/openai_codex/client.py:323][E: sdk/python/src/openai_codex/client.py:325][E: sdk/python/src/openai_codex/client.py:326][E: sdk/python/src/openai_codex/client.py:329][E: sdk/python/src/openai_codex/client.py:331][E: sdk/python/src/openai_codex/client.py:332][E: sdk/python/src/openai_codex/client.py:337][E: sdk/python/src/openai_codex/client.py:340]
 
 Python typed helpers call app-server v2 methods directly: `thread_start` sends `thread/start`, `thread_resume` sends `thread/resume`, `turn_start` sends `turn/start`, `turn_steer` sends `turn/steer`, and `model_list` sends `model/list`; generated params models are serialized with `model_dump(by_alias=True, exclude_none=True, mode="json")`.[E: sdk/python/src/openai_codex/client.py:82][E: sdk/python/src/openai_codex/client.py:98][E: sdk/python/src/openai_codex/client.py:99][E: sdk/python/src/openai_codex/client.py:100][E: sdk/python/src/openai_codex/client.py:101][E: sdk/python/src/openai_codex/client.py:430][E: sdk/python/src/openai_codex/client.py:434][E: sdk/python/src/openai_codex/client.py:437][E: sdk/python/src/openai_codex/client.py:443][E: sdk/python/src/openai_codex/client.py:602][E: sdk/python/src/openai_codex/client.py:620][E: sdk/python/src/openai_codex/client.py:648][E: sdk/python/src/openai_codex/client.py:655][E: sdk/python/src/openai_codex/client.py:664][E: sdk/python/src/openai_codex/client.py:666]
+
+Python 的 generated schema 还有一层手工 post-processing：`PlanType` 保留当前 known constants，同时以 `_missing_` 接受未来非空 string；这是 app-server runtime 与较旧 Python wheel 的版本偏斜防护。TypeScript SDK 本轮没有对应 source diff，因为它继续消费 exec JSONL schema而非该 generated account enum。[E: sdk/python/scripts/update_sdk_artifacts.py:699][E: sdk/python/scripts/update_sdk_artifacts.py:717][E: sdk/python/src/openai_codex/generated/v2_all.py:2508][E: sdk/python/src/openai_codex/generated/v2_all.py:2523]
 
 `MessageRouter` is the split point for Python transport ordering: the reader thread classifies server requests, notifications, and responses; the router routes errors through `map_jsonrpc_error`, turn-scoped notifications to turn queues, login notifications to login queues, goal notifications to goal state, and everything else to the global queue.[E: sdk/python/src/openai_codex/client.py:803][E: sdk/python/src/openai_codex/client.py:808][E: sdk/python/src/openai_codex/client.py:812][E: sdk/python/src/openai_codex/client.py:815][E: sdk/python/src/openai_codex/client.py:819][E: sdk/python/src/openai_codex/_message_router.py:151][E: sdk/python/src/openai_codex/_message_router.py:160][E: sdk/python/src/openai_codex/_message_router.py:164][E: sdk/python/src/openai_codex/_message_router.py:176][E: sdk/python/src/openai_codex/_message_router.py:179][E: sdk/python/src/openai_codex/_message_router.py:191][E: sdk/python/src/openai_codex/_message_router.py:193][E: sdk/python/src/openai_codex/_message_router.py:203][E: sdk/python/src/openai_codex/_message_router.py:207]
 
@@ -75,6 +77,8 @@ Both SDKs expose a “Codex -> Thread -> run/stream” shape, but TS optimizes f
 - `sdk/python/src/openai_codex/_message_router.py`
 - `sdk/python/src/openai_codex/_run.py`
 - `sdk/python/src/openai_codex/models.py`
+- `sdk/python/src/openai_codex/generated/v2_all.py`
+- `sdk/python/scripts/update_sdk_artifacts.py`
 
 ## 相关
 

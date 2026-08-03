@@ -8,7 +8,7 @@ symbols: [History, DebugToml, UriBasedFileOpener, AnalyticsConfigToml, FeedbackC
 related: [command.config-system, config.ui-tui, config.approval-sandbox, subsys.platform.telemetry-otel, subsys.core.ghost-undo]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > 存储/遥测/杂项设置 catalog 覆盖 ConfigToml 中 notifications, deprecated js_repl placeholders, history/state/log/debug, file opener, ghost snapshot, project root markers, update checks, analytics/feedback, apps, desktop, OTEL, Windows and notice state。

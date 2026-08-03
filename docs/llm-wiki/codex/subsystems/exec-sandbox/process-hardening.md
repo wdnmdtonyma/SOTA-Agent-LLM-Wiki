@@ -3,12 +3,12 @@ id: subsys.exec-sandbox.process-hardening
 title: process hardening
 kind: subsystem
 tier: T2
-source: [codex-rs/process-hardening/src/lib.rs, codex-rs/utils/pty/src/win/job.rs]
-symbols: [pre_main_hardening, JobObject, JobObject::create, JobObject::preserve_descendants, JobObject::terminate]
+source: [codex-rs/process-hardening/src/lib.rs, codex-rs/utils/pty/src/win/job.rs, codex-rs/utils/pty/src/pipe.rs, codex-rs/utils/pty/src/process.rs]
+symbols: [pre_main_hardening, JobObject, JobObject::create, JobObject::preserve_descendants, JobObject::terminate, WindowsChildTerminator, ProcessDriver]
 related: [spine.process-lifecycle, subsys.exec-sandbox.overview, subsys.exec-sandbox.arg0-dispatch]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > process hardening 是 Codex 进程 main 之前的 best-effort defense layer:Linux 关闭 dumpability、禁 core dump、移除 `LD_` env；FreeBSD/OpenBSD 禁 core dump 并移除 `LD_` env；macOS deny attach、禁 core dump、移除 `DYLD_` env；Windows 当前是 no-op。[E: codex-rs/process-hardening/src/lib.rs:12][E: codex-rs/process-hardening/src/lib.rs:14][E: codex-rs/process-hardening/src/lib.rs:44][E: codex-rs/process-hardening/src/lib.rs:56][E: codex-rs/process-hardening/src/lib.rs:60][E: codex-rs/process-hardening/src/lib.rs:75][E: codex-rs/process-hardening/src/lib.rs:77][E: codex-rs/process-hardening/src/lib.rs:83][E: codex-rs/process-hardening/src/lib.rs:85][E: codex-rs/process-hardening/src/lib.rs:95][E: codex-rs/process-hardening/src/lib.rs:99][E: codex-rs/process-hardening/src/lib.rs:120]
@@ -20,6 +20,7 @@ updated: 61a44880a8
 - macOS 为什么调用 `ptrace(PT_DENY_ATTACH)`？
 - core dump limit 如何设置为 0？
 - 哪些 dynamic loader env vars 会被清掉？
+- Windows non-TTY interrupt 怎样终止 process tree 而不重复 kill？
 
 ## 职责边界
 
@@ -52,6 +53,8 @@ Windows PTY 的 `JobObject` 是相邻的 child-process lifecycle 防护，不属
 
 正常 root exit 若要保留后台 descendants，可调用 `preserve_descendants()` 去掉 kill-on-close，只保留 breakaway；同一 mutex 把 preserve/terminate 的 state check 与 OS API 调用串行化，先取得 lock 的操作决定保留或终止。assignment 不是 retroactive，分配完成前已创建的 descendants 不保证进入 job。[E: codex-rs/utils/pty/src/win/job.rs:19][E: codex-rs/utils/pty/src/win/job.rs:59][E: codex-rs/utils/pty/src/win/job.rs:73][E: codex-rs/utils/pty/src/win/job.rs:83][E: codex-rs/utils/pty/src/win/job.rs:92][E: codex-rs/utils/pty/src/win/job.rs:99][E: codex-rs/utils/pty/src/win/job.rs:103]
 
+Windows pipe backend 的 `Interrupt` 现在调用同一 terminator：有 JobObject 时终止整个 job，否则终止单 PID。Driver-backed backend 仅在 non-TTY 且存在 terminator 时把 interrupt 映射为 termination；signal 成功后 `ProcessHandle` 取走 killer，防止 Drop 或后续 terminate 再次执行。[E: codex-rs/utils/pty/src/pipe.rs:29][E: codex-rs/utils/pty/src/pipe.rs:42][E: codex-rs/utils/pty/src/pipe.rs:51][E: codex-rs/utils/pty/src/pipe.rs:70][E: codex-rs/utils/pty/src/process.rs:229][E: codex-rs/utils/pty/src/process.rs:237][E: codex-rs/utils/pty/src/process.rs:279][E: codex-rs/utils/pty/src/process.rs:287][E: codex-rs/utils/pty/src/process.rs:390]
+
 ## 设计动机与权衡
 
 - Linux/macOS 对 attach/dump/core-limit hardening failure 都选择显式退出，退出码分别由 `PRCTL_FAILED_EXIT_CODE`、`PTRACE_DENY_ATTACH_FAILED_EXIT_CODE`、`SET_RLIMIT_CORE_FAILED_EXIT_CODE` 常量定义。[E: codex-rs/process-hardening/src/lib.rs:28][E: codex-rs/process-hardening/src/lib.rs:31][E: codex-rs/process-hardening/src/lib.rs:41][E: codex-rs/process-hardening/src/lib.rs:52][E: codex-rs/process-hardening/src/lib.rs:91][E: codex-rs/process-hardening/src/lib.rs:115]
@@ -68,6 +71,8 @@ Windows PTY 的 `JobObject` 是相邻的 child-process lifecycle 防护，不属
 
 - `codex-rs/process-hardening/src/lib.rs`
 - `codex-rs/utils/pty/src/win/job.rs`
+- `codex-rs/utils/pty/src/pipe.rs`
+- `codex-rs/utils/pty/src/process.rs`
 
 ## 相关
 

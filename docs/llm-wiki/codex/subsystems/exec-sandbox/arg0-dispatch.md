@@ -8,7 +8,7 @@ symbols: [arg0_dispatch, arg0_dispatch_or_else, Arg0DispatchPaths, prepare_path_
 related: [spine.process-lifecycle, subsys.exec-sandbox.sandbox-linux, subsys.exec-sandbox.apply-patch-engine, subsys.exec-sandbox.shell-escalation]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > arg0 dispatch 是 Codex 单二进制多入口机制:同一个 executable 可以根据 argv0/argv1 伪装成 `apply_patch`、`codex-linux-sandbox`、`codex-execve-wrapper`、exec-server fs helper 或 core apply-patch helper。[E: codex-rs/arg0/src/lib.rs:60][E: codex-rs/arg0/src/lib.rs:95][E: codex-rs/arg0/src/lib.rs:98][E: codex-rs/arg0/src/lib.rs:102][E: codex-rs/arg0/src/lib.rs:114]

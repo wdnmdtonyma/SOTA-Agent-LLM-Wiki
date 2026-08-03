@@ -8,7 +8,7 @@ symbols: [ConfigLayerEntry, ConfigLayerStack, ConfigLayerSource, compose_require
 related: [subsys.config-auth.profiles, subsys.config-auth.features-system, config.approval-sandbox, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > Codex 配置加载现在由 `codex_config::loader::load_config_layers_state` 负责：它收集 managed/system/cloud/user/profile/project/session/legacy layers，生成 `ConfigLayerStack`，再由 `ConfigLayerStack::effective_config()` 用 `merge_toml_values` 得出 effective TOML。[E: codex-rs/config/src/loader/mod.rs:118][E: codex-rs/config/src/loader/mod.rs:181][E: codex-rs/config/src/loader/mod.rs:430][E: codex-rs/config/src/state.rs:492][E: codex-rs/config/src/merge.rs:57]
@@ -45,6 +45,8 @@ updated: 61a44880a8
 
 `ConfigLayerStack::new` 调用 `verify_layer_ordering`，要求 source precedence 已排序；profile config 允许多个 User layers，并把最高优先级 user layer 作为 writable user layer；project layers 还必须按 root 到 cwd 排列。[E: codex-rs/config/src/state.rs:276][E: codex-rs/config/src/state.rs:282][E: codex-rs/config/src/state.rs:254][E: codex-rs/config/src/state.rs:254][E: codex-rs/config/src/state.rs:569][E: codex-rs/config/src/state.rs:581][E: codex-rs/config/src/state.rs:588]
 
+`merge_toml_values` 对 `features.multi_agent_v2`（包括 profile 内同一路径）做 bool/table compatibility merge：base bool + overlay table 会先把 bool 提升为 table 的 `enabled`，base table + overlay bool 则只写入 `enabled` 并保留其他 table fields。这个特判让旧 `multi_agent_v2 = true` 与新 nested knobs 能跨 layer 共存。[E: codex-rs/config/src/merge.rs:61][E: codex-rs/config/src/merge.rs:75][E: codex-rs/config/src/merge.rs:78][E: codex-rs/config/src/merge.rs:86]
+
 ## 控制流
 
 1. Loader 先按 requirements precedence 收集 system/cloud/legacy/MDM requirements，再调用 `compose_requirements`；field-aware merge 由 requirements layer stack 执行，而不是 loader 内联完成。[E: codex-rs/config/src/loader/mod.rs:118][E: codex-rs/config/src/loader/mod.rs:142][E: codex-rs/config/src/loader/mod.rs:175][E: codex-rs/config/src/loader/mod.rs:184][E: codex-rs/config/src/loader/mod.rs:189][E: codex-rs/config/src/loader/mod.rs:192][E: codex-rs/config/src/loader/mod.rs:195][E: codex-rs/config/src/requirements_layers/stack.rs:58][E: codex-rs/config/src/requirements_layers/stack.rs:151][E: codex-rs/config/src/requirements_layers/stack.rs:171]
@@ -57,11 +59,11 @@ updated: 61a44880a8
 
 ## Layer 合并语义
 
-`merge_toml_values(base, overlay)` 给 overlay 更高优先级；两个值都是 table 时递归合并并先 normalize key aliases，否则 overlay 直接替换 base。[E: codex-rs/config/src/merge.rs:57][E: codex-rs/config/src/merge.rs:61][E: codex-rs/config/src/merge.rs:67][E: codex-rs/config/src/merge.rs:79][E: codex-rs/config/src/merge.rs:81][E: codex-rs/config/src/merge.rs:88]
+`merge_toml_values(base, overlay)` 给 overlay 更高优先级；两个值都是 table 时递归合并并先 normalize key aliases，否则 overlay 直接替换 base。[E: codex-rs/config/src/merge.rs:57][E: codex-rs/config/src/merge.rs:75][E: codex-rs/config/src/merge.rs:97][E: codex-rs/config/src/merge.rs:109][E: codex-rs/config/src/merge.rs:111][E: codex-rs/config/src/merge.rs:118]
 
 `ConfigLayerStack::get_layers(HighestPrecedenceFirst, include_disabled)` 通过反转返回高到低顺序；`effective_config()` 使用低到高且排除 disabled layers 的顺序，因此 higher precedence layer 会在 merge 中覆盖 lower precedence layer。[E: codex-rs/config/src/state.rs:534][E: codex-rs/config/src/state.rs:539][E: codex-rs/config/src/state.rs:544][E: codex-rs/config/src/state.rs:492][E: codex-rs/config/src/state.rs:494][E: codex-rs/config/src/state.rs:498]
 
-`origins()` 同样低到高遍历 layers，并把 path origin 写入 HashMap；后写入的高优先级 origin 会覆盖同一路径的低优先级 origin。[E: codex-rs/config/src/state.rs:506][E: codex-rs/config/src/state.rs:510][E: codex-rs/config/src/state.rs:514][E: codex-rs/config/src/fingerprint.rs:30][E: codex-rs/config/src/fingerprint.rs:31]
+`origins()` 同样低到高遍历 layers，并把 path origin 写入 HashMap；后写入的高优先级 origin 会覆盖同一路径的低优先级 origin。[E: codex-rs/config/src/state.rs:506][E: codex-rs/config/src/state.rs:510][E: codex-rs/config/src/state.rs:514][E: codex-rs/config/src/fingerprint.rs:31][E: codex-rs/config/src/fingerprint.rs:38]
 
 ## Gotchas
 

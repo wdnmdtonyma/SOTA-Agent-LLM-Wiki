@@ -3,12 +3,12 @@ id: subsys.core.rollout-persistence
 title: Rollout persistence 与 JSONL recorder
 kind: subsystem
 tier: T2
-source: [codex-rs/rollout/src/recorder.rs, codex-rs/rollout/src/policy.rs, codex-rs/rollout/src/state_db.rs, codex-rs/state/src/runtime/threads.rs, codex-rs/state/src/extract.rs]
+source: [codex-rs/rollout/src/recorder.rs, codex-rs/rollout/src/policy.rs, codex-rs/rollout/src/state_db.rs, codex-rs/state/src/runtime/threads.rs, codex-rs/state/src/extract.rs, codex-rs/app-server/src/request_processors/thread_goal_processor.rs]
 symbols: [RolloutRecorder, RolloutRecorderParams, RolloutCmd, RolloutWriterTask, RolloutWriterState, persisted_rollout_items, is_persisted_rollout_item, should_persist_event_msg, load_rollout_items, list_threads_with_db_fallback, StateDbHandle, reconcile_rollout]
 related: [subsys.core.state-db, subsys.core.thread-store, ref.protocol-op, ref.data-model]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > Rollout persistence remains the durable JSONL replay layer, but canonical filtering is now parameterized by `ThreadHistoryMode`: Legacy records selected compatibility events, whereas Paginated records completed canonical `TurnItem`s for history hydration。[E: codex-rs/rollout/src/recorder.rs:85]
@@ -27,7 +27,7 @@ updated: 61a44880a8
 - `RolloutRecorderParams` 只有 `Create` 和 `Resume` 两种形态；create carries thread/session metadata and dynamic tools, resume carries an existing path.[E: codex-rs/rollout/src/recorder.rs:93][E: codex-rs/rollout/src/recorder.rs:94][E: codex-rs/rollout/src/recorder.rs:96][E: codex-rs/rollout/src/recorder.rs:103][E: codex-rs/rollout/src/recorder.rs:105][E: codex-rs/rollout/src/recorder.rs:111][E: codex-rs/rollout/src/recorder.rs:112]
 - `RolloutCmd` serializes `AddItems`, `Persist`, `Flush`, and `Shutdown` through the writer task.[E: codex-rs/rollout/src/recorder.rs:116][E: codex-rs/rollout/src/recorder.rs:117][E: codex-rs/rollout/src/recorder.rs:118][E: codex-rs/rollout/src/recorder.rs:122][E: codex-rs/rollout/src/recorder.rs:125]
 - Policy is mode-aware: response items and executive markers stay durable in both modes；`ItemCompleted` is generally durable only in Paginated mode（Legacy 特例保留 Plan 与 extension Sleep），legacy user/assistant/reasoning/review/tool-end events 则只在 Legacy durable。[E: codex-rs/rollout/src/policy.rs:89][E: codex-rs/rollout/src/policy.rs:95][E: codex-rs/rollout/src/policy.rs:119]
-- The rollout crate does not own SQLite schema details. Its state DB wrapper opens/gets a `codex_state::StateRuntime` handle and delegates list/reconcile/apply work to that runtime.[E: codex-rs/rollout/src/state_db.rs:29][E: codex-rs/rollout/src/state_db.rs:45][E: codex-rs/rollout/src/state_db.rs:208][E: codex-rs/rollout/src/state_db.rs:486][E: codex-rs/rollout/src/state_db.rs:631]
+- The rollout crate does not own SQLite schema details. Its state DB wrapper opens/gets a `codex_state::StateRuntime` handle and delegates list/reconcile/apply work to that runtime.[E: codex-rs/rollout/src/state_db.rs:29][E: codex-rs/rollout/src/state_db.rs:45][E: codex-rs/rollout/src/state_db.rs:208][E: codex-rs/rollout/src/state_db.rs:516][E: codex-rs/rollout/src/state_db.rs:661]
 
 ## 关键文件
 
@@ -35,8 +35,8 @@ updated: 61a44880a8
 |---|---|
 | `codex-rs/rollout/src/recorder.rs` | JSONL recorder, background writer, load/resume helpers, list fallback/repair path.[E: codex-rs/rollout/src/recorder.rs:85][E: codex-rs/rollout/src/recorder.rs:437][E: codex-rs/rollout/src/recorder.rs:982][E: codex-rs/rollout/src/recorder.rs:1608] |
 | `codex-rs/rollout/src/policy.rs` | Shared canonical persistence policy for `RolloutItem`, `ResponseItem`, memories, and `EventMsg`.[E: codex-rs/rollout/src/policy.rs:6][E: codex-rs/rollout/src/policy.rs:39][E: codex-rs/rollout/src/policy.rs:81] |
-| `codex-rs/rollout/src/state_db.rs` | Core-facing wrapper for state runtime init/get/list/reconcile/apply/read-repair.[E: codex-rs/rollout/src/state_db.rs:45][E: codex-rs/rollout/src/state_db.rs:208][E: codex-rs/rollout/src/state_db.rs:352][E: codex-rs/rollout/src/state_db.rs:486][E: codex-rs/rollout/src/state_db.rs:631] |
-| `codex-rs/state/src/runtime/threads.rs` | SQLite thread metadata listing and incremental `apply_rollout_items` target.[E: codex-rs/state/src/runtime/threads.rs:405][E: codex-rs/state/src/runtime/threads.rs:945] |
+| `codex-rs/rollout/src/state_db.rs` | Core-facing wrapper for state runtime init/get/list/reconcile/apply/read-repair.[E: codex-rs/rollout/src/state_db.rs:45][E: codex-rs/rollout/src/state_db.rs:208][E: codex-rs/rollout/src/state_db.rs:352][E: codex-rs/rollout/src/state_db.rs:516][E: codex-rs/rollout/src/state_db.rs:661] |
+| `codex-rs/state/src/runtime/threads.rs` | SQLite thread metadata listing and incremental `apply_rollout_items` target.[E: codex-rs/state/src/runtime/threads.rs:412][E: codex-rs/state/src/runtime/threads.rs:952] |
 | `codex-rs/state/src/extract.rs` | Per-item projection rules from rollout history into `ThreadMetadata`.[E: codex-rs/state/src/extract.rs:15][E: codex-rs/state/src/extract.rs:36] |
 
 ## 控制流：写入
@@ -53,13 +53,16 @@ updated: 61a44880a8
 2. Normal listing scans filesystem first, overfetching where needed, so it can repair stale/missing SQLite rows before returning DB-backed or filesystem-backed pages.[E: codex-rs/rollout/src/recorder.rs:483][E: codex-rs/rollout/src/recorder.rs:490][E: codex-rs/rollout/src/recorder.rs:492][E: codex-rs/rollout/src/recorder.rs:661][E: codex-rs/rollout/src/recorder.rs:677]
 3. When metadata filters require filesystem fallback, listing records a fallback and returns a filesystem scan page enriched from state DB where possible.[E: codex-rs/rollout/src/recorder.rs:665][E: codex-rs/rollout/src/recorder.rs:670][E: codex-rs/rollout/src/recorder.rs:671]
 4. If SQLite listing still fails, the recorder records a DB-error fallback and returns the filesystem page instead of failing the list.[E: codex-rs/rollout/src/recorder.rs:695][E: codex-rs/rollout/src/recorder.rs:696]
+5. DB-only listing skips rows whose rollout file is missing but deliberately retains those SQLite rows；它继续从 next anchor 拉取，尽量填满 requested page，而不是因一个 stale path 提前返回短页。[E: codex-rs/rollout/src/state_db.rs:427][E: codex-rs/rollout/src/state_db.rs:430][E: codex-rs/rollout/src/state_db.rs:452][E: codex-rs/rollout/src/state_db.rs:459][E: codex-rs/rollout/src/state_db.rs:465][E: codex-rs/rollout/src/state_db.rs:469][E: codex-rs/rollout/src/state_db.rs:472]
 
 ## 控制流：state DB 投影
 
-1. `state_db::reconcile_rollout` returns immediately without a runtime handle; with builder/items it delegates to incremental `apply_rollout_items`, otherwise it extracts metadata by scanning the rollout file.[E: codex-rs/rollout/src/state_db.rs:486][E: codex-rs/rollout/src/state_db.rs:495][E: codex-rs/rollout/src/state_db.rs:498][E: codex-rs/rollout/src/state_db.rs:512]
-2. Reconcile preserves existing git/title metadata where appropriate, then upserts the thread and stores memory mode.[E: codex-rs/rollout/src/state_db.rs:526][E: codex-rs/rollout/src/state_db.rs:532][E: codex-rs/rollout/src/state_db.rs:533][E: codex-rs/rollout/src/state_db.rs:544][E: codex-rs/rollout/src/state_db.rs:476]
-3. Incremental apply requires either an explicit builder or a builder derived from the item batch; missing builder only warns and returns.[E: codex-rs/rollout/src/state_db.rs:631][E: codex-rs/rollout/src/state_db.rs:644][E: codex-rs/rollout/src/state_db.rs:646][E: codex-rs/rollout/src/state_db.rs:649][E: codex-rs/rollout/src/state_db.rs:654]
-4. `codex_state::StateRuntime::apply_rollout_items` reads or builds `ThreadMetadata`, applies each item via `apply_rollout_item`, preserves existing git info, then upserts metadata and memory mode.[E: codex-rs/state/src/runtime/threads.rs:945][E: codex-rs/state/src/runtime/threads.rs:955][E: codex-rs/state/src/runtime/threads.rs:958][E: codex-rs/state/src/runtime/threads.rs:961][E: codex-rs/state/src/runtime/threads.rs:964][E: codex-rs/state/src/runtime/threads.rs:974][E: codex-rs/state/src/runtime/threads.rs:980]
+1. `state_db::reconcile_rollout` returns immediately without a runtime handle; with builder/items it delegates to incremental `apply_rollout_items`, otherwise it extracts metadata by scanning the rollout file.[E: codex-rs/rollout/src/state_db.rs:516][E: codex-rs/rollout/src/state_db.rs:525][E: codex-rs/rollout/src/state_db.rs:528][E: codex-rs/rollout/src/state_db.rs:542]
+2. Full-file reconcile treats Paginated metadata updates as SQLite-only: rollout seeds a missing row, while an existing row keeps explicit title、git info and memory mode rather than being overwritten by stale JSONL-derived values。[E: codex-rs/rollout/src/state_db.rs:553][E: codex-rs/rollout/src/state_db.rs:560][E: codex-rs/rollout/src/state_db.rs:561][E: codex-rs/rollout/src/state_db.rs:562][E: codex-rs/rollout/src/state_db.rs:563][E: codex-rs/rollout/src/state_db.rs:581]
+3. Incremental apply requires either an explicit builder or a builder derived from the item batch; missing builder only warns and returns.[E: codex-rs/rollout/src/state_db.rs:661][E: codex-rs/rollout/src/state_db.rs:674][E: codex-rs/rollout/src/state_db.rs:676][E: codex-rs/rollout/src/state_db.rs:679][E: codex-rs/rollout/src/state_db.rs:684]
+4. `codex_state::StateRuntime::apply_rollout_items` reads or builds `ThreadMetadata`, applies each item via `apply_rollout_item`, preserves existing git info, then upserts metadata and memory mode.[E: codex-rs/state/src/runtime/threads.rs:952][E: codex-rs/state/src/runtime/threads.rs:962][E: codex-rs/state/src/runtime/threads.rs:965][E: codex-rs/state/src/runtime/threads.rs:968][E: codex-rs/state/src/runtime/threads.rs:971][E: codex-rs/state/src/runtime/threads.rs:981][E: codex-rs/state/src/runtime/threads.rs:987]
+5. read-repair fast path only changes rollout path/cwd normalization/archive state on an existing row；只有 row missing/unreadable 或 direct upsert failed 才从 rollout 重建 metadata。[E: codex-rs/rollout/src/state_db.rs:607][E: codex-rs/rollout/src/state_db.rs:611][E: codex-rs/rollout/src/state_db.rs:612][E: codex-rs/rollout/src/state_db.rs:614][E: codex-rs/rollout/src/state_db.rs:623][E: codex-rs/rollout/src/state_db.rs:642][E: codex-rs/rollout/src/state_db.rs:647]
+6. Thread-goal mutation first verifies that SQLite points to the same plain rollout path, that the file exists, and that `SessionMeta.id` matches；只有这些条件不满足时才 reconcile rollout, preventing needless replacement of SQLite-only metadata。[E: codex-rs/app-server/src/request_processors/thread_goal_processor.rs:327][E: codex-rs/app-server/src/request_processors/thread_goal_processor.rs:328][E: codex-rs/app-server/src/request_processors/thread_goal_processor.rs:330][E: codex-rs/app-server/src/request_processors/thread_goal_processor.rs:332][E: codex-rs/app-server/src/request_processors/thread_goal_processor.rs:334][E: codex-rs/app-server/src/request_processors/thread_goal_processor.rs:339]
 
 ## Gotcha
 
@@ -74,6 +77,7 @@ updated: 61a44880a8
 - `codex-rs/rollout/src/state_db.rs`
 - `codex-rs/state/src/runtime/threads.rs`
 - `codex-rs/state/src/extract.rs`
+- `codex-rs/app-server/src/request_processors/thread_goal_processor.rs`
 
 ## 相关
 

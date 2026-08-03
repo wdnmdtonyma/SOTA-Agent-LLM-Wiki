@@ -8,7 +8,7 @@ symbols: [CurrentTimeHandler, CurrentTimeOutput, CurrentTimeReminder, TimeProvid
 related: [tool.sleep, subsys.core.tool-system, ref.feature-flags]
 evidence: explicit
 status: verified
-updated: 61a44880a8
+updated: 7750465934
 ---
 
 > `clock.curr_time` 是无参数的当前 UTC 时间工具。它从 session 的 `TimeProvider` 读取时间，普通 tool call 返回 reminder 文本，code mode 则返回结构化的 `{"current_time": ...}`。
@@ -23,9 +23,9 @@ updated: 61a44880a8
 
 handler 只接受 function payload，通过 session service 的 `time_provider.current_time(thread_id)` 取值，再包装为 `CurrentTimeReminder`；provider 失败属于 fatal tool error。[E: codex-rs/core/src/tools/handlers/current_time.rs:84][E: codex-rs/core/src/tools/handlers/current_time.rs:100][E: codex-rs/core/src/tools/handlers/current_time.rs:101][E: codex-rs/core/src/tools/handlers/current_time.rs:102]
 
-`add_core_utility_tools` 在 `Feature::CurrentTimeReminder` 启用时注册 `CurrentTimeHandler`；同一配置下 `sleep_tool` 另行控制 `clock.sleep`，所以启用时间提醒不等于必然暴露 sleep。[E: codex-rs/core/src/tools/spec_plan.rs:765][E: codex-rs/core/src/tools/spec_plan.rs:770][E: codex-rs/core/src/tools/spec_plan.rs:778]
+`add_core_utility_tools` 在 `Feature::CurrentTimeReminder` 启用时注册 `CurrentTimeHandler`；同一配置下 `sleep_tool` 另行控制 `clock.sleep`，所以启用时间提醒不等于必然暴露 sleep。[E: codex-rs/core/src/tools/spec_plan.rs:826][E: codex-rs/core/src/tools/spec_plan.rs:831][E: codex-rs/core/src/tools/spec_plan.rs:778]
 
-`CurrentTimeHandler` 没有覆写 parallel 能力，沿用 `ToolExecutor` 默认的 `false`。[E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65]
+`CurrentTimeHandler` 没有覆写 parallel 能力，沿用 `ToolExecutor` 默认的 `false`。[E: codex-rs/tools/src/tool_executor.rs:73][E: codex-rs/tools/src/tool_executor.rs:74]
 
 ## Sources
 
