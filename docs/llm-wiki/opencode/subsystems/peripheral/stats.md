@@ -8,12 +8,13 @@ source:
   - packages/stats/core/
   - packages/stats/server/
   - packages/stats/app/
+  - packages/stats/app/src/routes/model-catalog.ts
   - infra/stats.ts
 symbols: [syncStats, Ingest, Routes, getStatsHomeData, getStatsModelData, getStatsLabData, getStatsModelsComparisonData]
 related: [infra.sst]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > `packages/stats` 是 opencode 的用量、成本、market share 与模型比较数据产品：`core` 做 Athena/Drizzle/Effect domain，`server` 做 ingest 与 sync daemon，`app` 做 SolidStart 数据站点。
@@ -87,6 +88,8 @@ Lab 和 model dynamic routes 通过 `domain/home` 读取 `getStatsLabData` 与 `
 
 `getStatsModelsComparisonData` 只读一次 `ModelStatRepo.listDaily()`，逐 request 复用 `buildStatsModelData`，找不到的模型保留为 `null`，并取所有非空 entry 中最新的 `updatedAt` [E: packages/stats/core/src/domain/home.ts:297] [E: packages/stats/core/src/domain/home.ts:301] [E: packages/stats/core/src/domain/home.ts:302] [E: packages/stats/core/src/domain/home.ts:303] [E: packages/stats/core/src/domain/home.ts:304] [E: packages/stats/core/src/domain/home.ts:308] [E: packages/stats/core/src/domain/home.ts:310]。
 
+model catalog route 已把模型、价格与 lab 三个数据源统一切到 `models.opencode.ai`：`catalog.json`、`api.json`、`labs`；loader 在同一个 `Promise.all` 中 fetch 三者再合成 comparison catalog。[E: packages/stats/app/src/routes/model-catalog.ts:3][E: packages/stats/app/src/routes/model-catalog.ts:4][E: packages/stats/app/src/routes/model-catalog.ts:5][E: packages/stats/app/src/routes/model-catalog.ts:59][E: packages/stats/app/src/routes/model-catalog.ts:60][E: packages/stats/app/src/routes/model-catalog.ts:61][E: packages/stats/app/src/routes/model-catalog.ts:62][E: packages/stats/app/src/routes/model-catalog.ts:63][E: packages/stats/app/src/routes/model-catalog.ts:65][E: packages/stats/app/src/routes/model-catalog.ts:230][E: packages/stats/app/src/routes/model-catalog.ts:231][E: packages/stats/app/src/routes/model-catalog.ts:232][E: packages/stats/app/src/routes/model-catalog.ts:236][E: packages/stats/app/src/routes/model-catalog.ts:237][E: packages/stats/app/src/routes/model-catalog.ts:240]
+
 ## 部署关系
 
 `infra/stats.ts` 定义 inference S3 Tables namespace/table，table format 是 ICEBERG，schema 中包含 event timestamp、Cloudflare geo、duration/status、provider/model、tokens 和 cost fields [E: infra/stats.ts:9] [E: infra/stats.ts:14] [E: infra/stats.ts:20] [E: infra/stats.ts:25] [E: infra/stats.ts:29] [E: infra/stats.ts:30] [E: infra/stats.ts:36] [E: infra/stats.ts:38] [E: infra/stats.ts:47] [E: infra/stats.ts:48] [E: infra/stats.ts:49] [E: infra/stats.ts:65] [E: infra/stats.ts:81]。Stats database 使用 PlanetScale `opencode-stats`，production 复用 production branch，非 production 创建 stage branch [E: infra/stats.ts:107] [E: infra/stats.ts:112] [E: infra/stats.ts:114] [E: infra/stats.ts:119]。
@@ -117,6 +120,7 @@ Stats app 部署成 Cloudflare SolidStart，domain 为 `stats.${domain}`，link 
 - `packages/stats/server/src/stat-sync.ts`
 - `packages/stats/server/Dockerfile`
 - `packages/stats/app/src/routes/index.tsx`
+- `packages/stats/app/src/routes/model-catalog.ts`
 - `packages/stats/app/src/routes/compare/index.tsx`
 - `packages/stats/app/src/component/model-compare-detail.tsx`
 - `packages/stats/app/src/lib/comparison-pages.ts`

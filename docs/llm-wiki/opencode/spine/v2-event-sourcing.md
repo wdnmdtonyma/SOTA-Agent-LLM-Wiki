@@ -9,7 +9,7 @@ symbols: [EventV2.define, EventV2.publish, EventV2.replay, EventV2.readAggregate
 related: [session-v2.projector, persistence.eventing, ref.events]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > V2 event sourcing 是 core 的同步 durable event 层:durable event 以 aggregate seq 写入 EventTable,同一 SQLite immediate transaction 内运行 projectors 与 local commit hook,再通知 live subscribers。

@@ -25,7 +25,7 @@ related:
   - spine.cli-to-session
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 `server.http-server` 覆盖两个 Effect HTTP server surface: V1 `packages/opencode/src/server` host listener，以及 V2 `@opencode-ai/server` package mounted under the same process. 两者都 use Effect `HttpRouter`/`HttpServer`/`HttpApiBuilder`;本节点读取的 server code 中没有 Hono app construction。[E: packages/opencode/src/server/server.ts:6][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:141][E: packages/server/src/routes.ts:14][E: packages/server/src/routes.ts:15][I]

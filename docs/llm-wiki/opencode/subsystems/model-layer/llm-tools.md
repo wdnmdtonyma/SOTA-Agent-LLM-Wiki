@@ -9,7 +9,7 @@ symbols: [Tool.make, ToolDefinition, ToolRuntime.dispatch, ToolFailure, ToolOutp
 related: [ref.tool-wire-protocol, subsys.tools.v2]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > `packages/llm/src/tool.ts` 定义 native LLM engine 的 tool schema 与 projection,`tool-runtime.ts` 定义本地 tool call 的 decode/execute/encode/settle 流程。它把 provider-facing `ToolDefinition`、runtime `execute`、model-visible `ToolOutput` 分成三层。

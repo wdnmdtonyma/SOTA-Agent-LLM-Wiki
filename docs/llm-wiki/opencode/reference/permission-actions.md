@@ -23,7 +23,7 @@ symbols:
   - Permission.Reply
   - PermissionSaved.Info
 evidence: explicit
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > 这份节点是给检索 agent 用的权限 action 逐实例总账：V1 写的是 config key 与 runtime `permission` 名称，V2 写的是 `action/resources/save/effect/reply` 词汇。

@@ -9,7 +9,7 @@ symbols: [Credential.Service, CredentialTable, Integration.Service, IntegrationC
 related: [model-layer.auth, model-layer.model-catalog-v2, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > V2 credential layer 把 provider credentials 存在 SQLite `credential` 表；`Integration.Service` 注册 key/OAuth/env methods、暴露 active connection，并管理 OAuth attempt lifecycle。schema 定义在 `@opencode-ai/schema` 的 credential/integration/connection 文件中，core 的 `credential.ts` 与 `integration.ts` 负责 re-export 和服务实现。

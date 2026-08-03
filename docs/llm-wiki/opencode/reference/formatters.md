@@ -14,7 +14,7 @@ related:
   - integrations.formatters
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > V1 formatter catalog 是 `packages/opencode/src/format/formatter.ts` 中导出的 `Info` 集合；当前 HEAD 有 26 个内建 formatter [I]。

@@ -9,7 +9,7 @@ symbols: [SessionRunner.run, runTurnAttempt, createLLMEventPublisher, toLLMMessa
 related: [spine.v2-context-epoch, session-v2.llm-event-publisher, model-layer.llm-protocol-engine]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > V2 provider turn 是 `SessionRunner` 的单次模型调用单元:它在安全边界 promote input、准备 context epoch、构造 `LLM.request`,执行一次 `llm.stream(request)`,并把 LLM events、tool settlement、snapshot diff 投影为 durable session events。

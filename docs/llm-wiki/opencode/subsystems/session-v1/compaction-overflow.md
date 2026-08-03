@@ -26,7 +26,7 @@ related:
   - session-v2.compaction
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > V1 compaction 是 `SessionPrompt.runLoop` 内的历史缩短机制: overflow 或 queued compaction 会写一个 V1 compaction user part，下一轮用 compaction agent 生成 summary assistant，随后由 `MessageV2.filterCompacted` 选择 provider request 的 active history。

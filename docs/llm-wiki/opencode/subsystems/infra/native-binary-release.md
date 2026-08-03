@@ -20,7 +20,7 @@ related:
   - infra.ci-workflows
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > 原生二进制与发布节点描述 V1 CLI package `packages/opencode` 怎样通过 `Bun.build({ compile })` 产出跨平台 `opencode` 可执行文件, 再发布到 npm optional dependencies、GitHub Releases、Docker、Homebrew 和 AUR。
@@ -52,7 +52,7 @@ V1/V2 关系: 这个发布链路打包的是 V1 CLI package `packages/opencode`�
 | `packages/opencode/script/build.ts` | native binary builder。构造 embedded Web UI，并用 `import.meta.resolve` + `Bun.file(...).text()` 读取 OpenTUI parser worker，随后枚举 targets、安装跨平台 native deps、调用 `Bun.build({ compile })`、smoke test 当前平台并写 package manifest [E: packages/opencode/script/build.ts:26] [E: packages/opencode/script/build.ts:50] [E: packages/opencode/script/build.ts:51] [E: packages/opencode/script/build.ts:53] [E: packages/opencode/script/build.ts:140] [E: packages/opencode/script/build.ts:163] [E: packages/opencode/script/build.ts:205] [E: packages/opencode/script/build.ts:217]。 |
 | `packages/opencode/script/publish.ts` | release publisher。发布平台 binary packages 与 wrapper package, 推 Docker image, 生成 AUR PKGBUILD, 更新 Homebrew formula [E: packages/opencode/script/publish.ts:75] [E: packages/opencode/script/publish.ts:79] [E: packages/opencode/script/publish.ts:88] [E: packages/opencode/script/publish.ts:98] [E: packages/opencode/script/publish.ts:147]。 |
 | `install` | curl installer。解析版本/本地 binary 参数, 检测 OS/arch/musl/AVX2, 下载 GitHub release asset, 解压到 `$HOME/.opencode/bin`, 可写 shell profile [E: install:39] [E: install:48] [E: install:79] [E: install:117] [E: install:130] [E: install:332] [E: install:334] [E: install:337] [E: install:340] [E: install:343] [E: install:403] [E: install:416] [E: install:421] [E: install:424]。 |
-| `.github/workflows/publish.yml` | release CI orchestrator。version job 产出版本, build-cli 构建 CLI 与新 `packages/cli`, sign-cli-windows 签 Windows CLI, build-electron 构建 Desktop, publish job 上传 release assets 并运行 `./script/publish.ts` [E: .github/workflows/publish.yml:35] [E: .github/workflows/publish.yml:66] [E: .github/workflows/publish.yml:92] [E: .github/workflows/publish.yml:93] [E: .github/workflows/publish.yml:155] [E: .github/workflows/publish.yml:175] [E: .github/workflows/publish.yml:313] [E: .github/workflows/publish.yml:325] [E: .github/workflows/publish.yml:338] [E: .github/workflows/publish.yml:498] [E: .github/workflows/publish.yml:509] [E: .github/workflows/publish.yml:511]。 |
+| `.github/workflows/publish.yml` | release CI orchestrator。version job 产出版本, build-cli 构建 CLI 与新 `packages/cli`, sign-cli-windows 签 Windows CLI, build-electron 构建 Desktop, publish job 上传 release assets 并运行 `./script/publish.ts` [E: .github/workflows/publish.yml:35] [E: .github/workflows/publish.yml:66] [E: .github/workflows/publish.yml:92] [E: .github/workflows/publish.yml:93] [E: .github/workflows/publish.yml:155] [E: .github/workflows/publish.yml:175] [E: .github/workflows/publish.yml:312] [E: .github/workflows/publish.yml:321] [E: .github/workflows/publish.yml:334] [E: .github/workflows/publish.yml:493] [E: .github/workflows/publish.yml:504] [E: .github/workflows/publish.yml:506]。 |
 
 ## 数据模型
 

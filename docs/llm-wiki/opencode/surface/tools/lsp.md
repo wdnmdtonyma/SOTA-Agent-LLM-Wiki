@@ -9,7 +9,7 @@ symbols: [LspTool]
 related: [integrations.lsp, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > LSP 工具是 V1 experimental code-intelligence tool；它把模型请求映射到 Language Server Protocol definition/references/hover/symbol/call-hierarchy 等操作。

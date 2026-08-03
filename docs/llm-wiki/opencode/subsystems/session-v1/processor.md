@@ -9,7 +9,7 @@ symbols: [SessionProcessor, SessionProcessor.create, SessionProcessor.Handle, DO
 related: [spine.v1-turn-loop, session-v1.llm-runtime]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > `SessionProcessor` 消费 `LLM.stream(...)` 产出的 `LLMEvent`,把 text/reasoning/tool/step/tool-error 等事件落成或更新 V1 message parts;provider/error paths 则更新 assistant/session error state,当前文件已不再包含旧的 V2 mirror dual-write 分支。

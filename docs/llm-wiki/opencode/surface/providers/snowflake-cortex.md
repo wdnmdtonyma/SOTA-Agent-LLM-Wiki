@@ -9,7 +9,7 @@ symbols: [SnowflakeCortexAuthPlugin, SnowflakeCortexPlugin, cortexFetch, Provide
 related: [provider.resolution, provider.auth-accounts, model-layer.provider-registry-v1]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > Snowflake Cortex provider 同时有 V1 provider/auth plugin surface 和 V2 AISDK provider plugin：V1 provider loader 解析 account/token 并设置 Cortex base URL，内建 `SnowflakeCortexAuthPlugin` 提供 external-browser OAuth；V2 `SnowflakeCortexPlugin` 在 AISDK `sdk` hook 中设置 token、usage 和 Cortex fetch compatibility shim。
@@ -25,7 +25,7 @@ updated: 7534d23551
 
 ## 注册位置
 
-V1 plugin host 把 `SnowflakeCortexAuthPlugin` 作为 internal plugin 装入内建 plugin 列表；这意味着它不需要用户从 npm 安装 plugin。[E: packages/opencode/src/plugin/index.ts:22][E: packages/opencode/src/plugin/index.ts:65][E: packages/opencode/src/plugin/index.ts:66][E: packages/opencode/src/plugin/index.ts:79]
+V1 plugin host 把 `SnowflakeCortexAuthPlugin` 作为 internal plugin 装入内建 plugin 列表；这意味着它不需要用户从 npm 安装 plugin。[E: packages/opencode/src/plugin/index.ts:23][E: packages/opencode/src/plugin/index.ts:66][E: packages/opencode/src/plugin/index.ts:67][E: packages/opencode/src/plugin/index.ts:81]
 
 provider registry 的 per-provider loader key 是 `"snowflake-cortex"`；它读取 env、V1 auth storage 和 provider config options。[E: packages/opencode/src/provider/provider.ts:862][E: packages/opencode/src/provider/provider.ts:863][E: packages/opencode/src/provider/provider.ts:864][E: packages/opencode/src/provider/provider.ts:870]
 

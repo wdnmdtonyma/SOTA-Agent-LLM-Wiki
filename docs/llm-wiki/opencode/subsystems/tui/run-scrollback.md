@@ -9,7 +9,7 @@ symbols: [runInteractiveRuntime, runInteractiveLocalMode, runInteractiveMode, cr
 related: [tui.runtime-hosting, tui.prompt, tui.keybindings]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > `opencode run --interactive` 有一套独立于 full TUI 的第二运行时：OpenTUI split-footer renderer 把 transcript 写入 immutable scrollback，把 prompt/status/permission/question 留在 mutable footer。

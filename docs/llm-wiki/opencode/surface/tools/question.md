@@ -9,7 +9,7 @@ symbols: [QuestionTool, Question, QuestionV2]
 related: [integrations.question, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > Question 工具允许模型在执行中暂停并向用户提问；V1 通过 `Question.Service.ask()` 挂起 pending Deferred，V2 在调用 `QuestionV2.ask()` 前先执行 `permission.assert({ action: "question" })`。

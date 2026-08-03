@@ -9,7 +9,7 @@ symbols: [Dialog, DialogProvider, useDialog, DialogSelect, Toast, ToastProvider,
 related: [ref.tui-dialogs, tui.keybindings, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > Dialog kit 是 TUI 的 modal stack 与 select/prompt/confirm 等通用交互层；Toast 是独立的单条 transient notification store。二者都由 root provider 挂载，插件 API 也复用这些组件。

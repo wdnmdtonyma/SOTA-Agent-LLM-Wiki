@@ -1,137 +1,125 @@
-# UPDATE SCOPE — opencode wiki 增量更新（67caf894e → 7534d23551）
+# UPDATE SCOPE — opencode wiki 增量更新（7534d23551 → 89130db6b0）
 
-> 更新日期：2026-07-26
+> 更新日期：2026-08-03
 >
-> **base（上一轮 verified HEAD）**：`67caf894e0843ee370e72839e8265e483233479b`
+> **base（上一轮 verified HEAD / 父仓旧 gitlink）**：`7534d23551f665e65080809975b4ca5c7d63807b`
 >
-> **target（官方 `anomalyco/opencode` `origin/dev`）**：`7534d23551f665e65080809975b4ca5c7d63807b`
+> **target（官方 `anomalyco/opencode` `origin/dev`）**：`89130db6b0060a345548d870c51132ee71d6a828`
 >
-> **跨度**：101 commits · 269 files changed · 15,539 insertions · 4,516 deletions
+> **跨度**：120 commits · 276 files changed · 10,169 insertions · 2,683 deletions
 
-目标 checkout 已用 `git -C opencode rev-parse HEAD` 与 `refs/remotes/origin/dev` 双重确认。`opencode` 只更新根仓 gitlink；本轮没有修改子模块工作树内容，也没有初始化其他子模块。
+目标 checkout 已用 `git -C opencode rev-parse HEAD`、`git -C opencode rev-parse refs/remotes/origin/dev` 和 ancestry check 交叉确认。`opencode` 只更新根仓 gitlink；本轮没有修改上游源码，也没有初始化或更新 `codex`、`pi` 两个其他 submodule。
 
 ## 1. 影响重算
 
-重算使用上一轮 `index.json` 的 186 个 verified nodes，与本轮代码 diff 的 path/numstat 交叉：
+重算以更新前 `index.json` 的 188 个 verified nodes 为集合，将每个 frontmatter `source[]` 与真实 numstat 交叉；directory source 按 path prefix 展开，同一 changed file 在单节点内只计一次。
 
 ```sh
 git -C opencode diff --numstat \
-  67caf894e0843ee370e72839e8265e483233479b..7534d23551f665e65080809975b4ca5c7d63807b
+  7534d23551f665e65080809975b4ca5c7d63807b..89130db6b0060a345548d870c51132ee71d6a828
 ```
 
 | 分类 | 数量 | 判定 |
 |---|---:|---|
-| A-BROKEN | 0 | 旧 index 的 source path 没有在本区间删除或移动 |
-| B-HEAVY | 0 | 没有单一既有节点因自身具体 source 形成结构性重写；`ref.package-index` 的 `packages/` umbrella churn 不按单节点 heavy 处理 |
-| C-DRIFT | 27 | 至少一个具体 `source[]` path 直接出现在 numstat |
-| D-CLEAN / manifest-only 快速复核 | 159 | source 未直接命中；仍检查 path、引用与 target SHA |
-| 新节点 | 2 | App legacy/current compatibility；branch-keyed repository cache |
-| 完成后 verified nodes | 188 | 186 + 2 |
+| A-BROKEN | 0 | 已登记 source 没有删除或移动；所有 source 在 target checkout 仍存在 |
+| B-HEAVY | 1 | `ref.package-index` 的 `packages/` umbrella source 命中 12,539 行 churn；36 个 workspace package 集合未变化，逐 package catalog 重新核对 |
+| C-DRIFT | 42 | source churn 小于 2,000 行；受影响证据行已按 target checkout 重落 |
+| D-CLEAN | 145 | source 未命中；快速复核后统一 bump `updated` |
+| 新节点 | 0 | 新能力可由现有 provider/MCP/client/console/stats 节点自包含承载 |
+| 退役节点 | 0 | 没有节点因 source 删除或职责消失而退役 |
+| 完成后 verified nodes | 188 | 节点总数保持不变 |
 
-27 个直接命中节点是：
+42 个 C-DRIFT 节点是：
 
-- architecture/behavior：`clients.app`、`clients.ui`、`clients.desktop`、`clients.console`、`provider.resolution`、`model-layer.provider-transforms`、`model-layer.copilot`、`ref.reasoning-variant-tables`、`tool.grep`、`spine.overview`。
-- evidence/manifest：`sdk.overview`、`integrations.acp`、`tui.architecture`、`tui.runtime-hosting`、`server.embedded-public-api`、`clients.web`、`infra.build-monorepo`、`infra.native-binary-release`、`infra.sst`、`infra.nix`、`peripheral.slack`、`peripheral.function`、`peripheral.enterprise`、`peripheral.containers`、`peripheral.script-identity`、`ref.package-index`、`subsys.tools.codemode`。
+- provider / config / plugin：`ref.ai-sdk-provider-map`、`ref.auth-combinators`、`ref.config-keys`、`ref.copilot-tool-catalog`、`ref.env-vars`、`ref.reasoning-variant-tables`、`model-layer.copilot`、`model-layer.model-catalog-v2`、`model-layer.provider-registry-v1`、`model-layer.provider-transforms`、`config.v1-providers-mcp-lsp`、`plugin-api.v1-hooks`、`provider.catalog`、`provider.resolution`、`provider.snowflake-cortex`、`server.plugin-system`。
+- clients / integrations：`clients.app`、`clients.app-compatibility`、`clients.console`、`clients.desktop`、`clients.ui`、`clients.web`、`integrations.acp`、`integrations.mcp-client`、`sdk.overview`。
+- infra / peripheral / manifests：`spine.overview`、`server.embedded-public-api`、`tui.architecture`、`tui.runtime-hosting`、`infra.build-monorepo`、`infra.ci-workflows`、`infra.native-binary-release`、`infra.nix`、`infra.sst`、`peripheral.containers`、`peripheral.effect-sqlite`、`peripheral.enterprise`、`peripheral.function`、`peripheral.http-recorder`、`peripheral.script-identity`、`peripheral.slack`、`peripheral.stats`。
 
-目录 source prefix 与新增文件扫描还发现了不能由“27 个具体命中”表达的 cross-cutting 变化：repository cache、App current transport/session projection、`meta.txt` system prompt、LLM provider-error matcher、CLI import error mapping、Node PTY Windows adapter。它们均已人工纳入下述节点判定，而不是机械标成 clean。
-
-## 2. 新增架构与对外行为判定
+## 2. 真实 diff 的影响判定
 
 | 代码变化 | Wiki 承载 | 判定 |
 |---|---|---|
-| App V1/V2 protocol probe、current-shaped hybrid API、current event transport、session reducer/legacy projection、timeline rows | `clients.app` + 新 `clients.app-compatibility` | 新建专门 T2；原 App 节点只保留 shell/platform 总览并链接兼容层 |
-| App Home 从单体页面拆成 controller / view / scroll / search seams | `clients.app` | 属于现有 App shell 内部架构，不再另建节点 |
-| PromptInputV2 cursor-aware structured draft、populated command-menu draft preservation、可配置 keybind | `clients.ui` | 属于现有 shared Session UI 节点，不再另建节点 |
-| App current PTY CRUD、abnormal-close gone check 与 direct WebSocket transport | `clients.app-compatibility` | 并入兼容层节点；明确 V1/current URL 与 location query 分流，并把 current connect-token checklist/runtime 张力记为 `[U]` |
-| sdk-next `OpenCode.create/Service/layer` same-process facade、embedded routes/local client 与 application tools | `server.embedded-public-api` + `spine.v1-v2-relationship` | 修正旧 core-public-facade 遗留；属于既有 V2 embedding 节点，不新增节点 |
-| branch-keyed remote repository checkout、lock、refresh、Reference async materialization | 新 `persistence.repository-cache` | 现有 persistence 节点无法自包含 cache identity/readiness，新增 T2 |
-| Claude adaptive thinking、Kimi adaptive options、MiniMax provider split | `model-layer.provider-transforms`、`provider.resolution`、`ref.reasoning-variant-tables` | provider transform 既有职责内，不新增节点 |
-| Mistral reasoning variants、prompt cache key、native thinking metadata/history round-trip patch | 同上，重点落在 `model-layer.provider-transforms` | patch 与 mock-fetch tests 加入 source/evidence；不单建 provider 节点 |
-| V1 grep realpath search + requested symlink-alias output | `tool.grep`、`ref.tool-catalog` | 只改变既有工具的 presentation-path 语义，不新增节点 |
-| `muse-spark` 使用 `meta.txt` prompt | `prompt.system-prompts` | 并入既有 prompt catalog |
-| native LLM overflow/error pattern expansion | `model-layer.llm-protocol-engine` | 并入既有 protocol engine |
-| Desktop dual health endpoint、CLI import error、Console moderation flags、Windows node-pty ConPTY DLL | `clients.desktop`、`cli.opencode-yargs`、`clients.console`、`execution.pty` | 各自并入既有节点 |
-| version bumps、Nix hashes、CSS token、translations、generated/vendor/test artifacts | 对应 manifest/client/infra 节点快速复核 | 没有独立架构 contract，不新增节点 |
+| models.dev `interleaved` 扩展为 boolean/string/object，string 规范成 `{ field }`；默认 catalog host 改为 `models.opencode.ai` | `provider.resolution`、`provider.catalog`、`model-layer.provider-registry-v1`、`config.v1-providers-mcp-lsp` | 既有 catalog/registry contract，更新 schema、投影和 source host；不新增节点 |
+| Gemini sampling defaults 限定到明确 2.5/3/3.1/3.5 patterns，并改按 `model.api.id` 判定 | `model-layer.provider-transforms` | provider transform 既有职责；只把“未命中当前 whitelist pattern”的 API ID 判为省略 controls，不用“future version”泛化 |
+| 新增内建 Modal provider hook 与 `/models` best-effort discovery | `model-layer.provider-registry-v1`、`provider.resolution`、`server.plugin-system` | plugin-driven provider discovery；仅看 catalog 首个 model URL，template 只做一次 nullish-key lookup，空 override 可能让 active Modal provider 被过滤 |
+| MCP SDK 曾尝试升级后回到 pinned 1.29.0，并扩展 repo patch：callTool typings、分页 metadata、expired session recovery、SSE JSON-RPC error reconnect guard | `integrations.mcp-client` | 这是 compatibility patch，不是 SDK v2 migration；加入 patch/test/package sources |
+| App current/V2 bootstrap 不再读 legacy global/directory config；timeline 只显示最后一个 assistant error | `clients.app-compatibility` | 现有 legacy/current compatibility contract；补充 V2 empty config 与 streaming recovery 行为 |
+| prompt draft 的 canonical path 改为 content-addressed BlobReference；Web 用 IndexedDB，Desktop 用 SQLite/WAL + IPC | `clients.app`、`clients.ui`、`clients.desktop` | 跨 host persistence seam；显式保留 legacy `{id:dataUrl,url:dataUrl}` 与无 draft-store storage fallback 例外 |
+| new-session 页面拆出 draft/workspace/view controllers | `clients.app` | App shell 内部结构面；不创建只描述文件拆分的新节点 |
+| `OPENCODE_SIDECAR_V2=1` 选择 bundled CLI background service，默认仍是 embedded V1 utility-process sidecar | `clients.desktop` | Desktop host rollout；同 state-home 仅复用同版本 daemon，main health probe 失败不阻断窗口恢复，但 renderer 仍走共享 health gate |
+| Console 添加 lite subscription unique index、referral reward index，Google usage 将 reasoning 加入 output tokens；源码仍隐藏 reward history等待 index 部署 | `clients.console` | schema/migration/runtime 边界并存；不把 migration 文件存在写成远端已应用 |
+| Stats model catalog URL 从 models.dev 切到 `models.opencode.ai/{catalog.json,api.json,labs}` | `peripheral.stats` | 现有 stats catalog ingestion 变化 |
+| App/desktop/provider/console/infra manifest 与 generated/vendor/test churn | 对应 C-DRIFT/B-HEAVY 节点 | 重落证据、核 manifest；未把版本或生成物 churn伪装成独立架构能力 |
 
-## 3. 节点改动
+## 3. 显式快速核验：本轮未变化的专属重点
 
-### 新增
+- `SessionV2` / `SessionRunner` / SessionV2 repository 与 persistence core 没有直接源码 diff；保持既有节点语义，只 bump target SHA。
+- Effect HttpApi 的 current/V1 route group 核心没有结构性变化；MCP 管理 API 仍是 Effect HttpApi，不是 Hono。
+- V1/V2 tool registries 没有直接源码 diff；没有新增、删除或改名的模型可见 tool 节点。
+- branch-keyed repository cache 与核心 persistence schema 没有直接源码 diff；本轮 Console migration 属 hosted Console database，不混入 V2 SQLite persistence。
+- App/desktop 的 V2 字样分别可能表示 current server protocol、UI generation 或 sidecar rollout；节点正文继续显式区分，不把它们混写成 SessionV2 kernel 已成为默认。
 
-- `clients.app-compatibility`
-- `persistence.repository-cache`
+## 4. 节点改动
 
 ### 语义更新
 
+- `model-layer.provider-transforms`
+- `model-layer.provider-registry-v1`
+- `provider.resolution`
+- `provider.catalog`
+- `config.v1-providers-mcp-lsp`
+- `server.plugin-system`
+- `integrations.mcp-client`
 - `clients.app`
+- `clients.app-compatibility`
 - `clients.ui`
 - `clients.desktop`
 - `clients.console`
-- `provider.resolution`
-- `model-layer.provider-transforms`
-- `ref.reasoning-variant-tables`
-- `tool.grep`
-- `ref.tool-catalog`
-- `prompt.system-prompts`
-- `model-layer.llm-protocol-engine`
-- `cli.opencode-yargs`
-- `execution.pty`
-- `server.embedded-public-api`
+- `peripheral.stats`
 
-### 证据、行号或入口一致性更新
+### 证据、manifest 或 target 元数据更新
 
-- `spine.overview`
-- `spine.v1-v2-relationship`
-- `clients.app` / provider-family nodes 的关联与 source 清单
-- `ref.env-vars`、`persistence.project-instance-location` 只补 repository-cache source/related/link 与漂移行号，不宣称新行为
-- `reference/glossary`、`model-layer.copilot`、`model-layer.provider-registry-v1`、`provider.catalog`
-- D-CLEAN 文本抽查同时清除了 `server.plugin-system`、`session-v1.compaction-overflow` 与 uncertainty staging 中残留的更早快照措辞
-- `group.db-schema` 的 manifest 计数同步为 19 tables + 38 migrations（57 instances），与 target `migration.gen.ts` 和 `ref.db-schema` 一致
-- README、`llms.txt`、`index.json`、`reference/uncertainty.md`
-- 其余 verified nodes 完成 target SHA bump；未把 manifest-only 变化伪装成新的架构事实
+- 其余 B-HEAVY/C-DRIFT 节点重落受影响 `[E:path:line]`；`ref.package-index` 重新确认 36 个 workspace packages。
+- 145 个 D-CLEAN 节点完成 source/path 快速复核。
+- 全部 188 个 node frontmatter `updated` 统一为 `89130db6b0`。
+- `README.md`、`index.json`、`llms.txt` 与 gitlink target 一致；没有新增/退役节点，因此 llms 目录结构保持 188 nodes。
 
-## 4. L2 独立证伪
+## 5. L2 独立证伪
 
-四组只读 L2 分别独立对照 target 源码、diff 与测试定义：
+四组独立 clean subagent 对本轮 13 个语义节点做源码反证；首轮均主动找到了过宽结论或证据链缺口，修复后再次只读复核，最终全部 PASS：
 
-1. **App compatibility / timeline**
-   - 确认 App 不实现 server-side `SessionPrompt.runLoop` / `SessionRunner`；证伪“同时双写两套 server API”“完整 endpoint parity”“current SSE durable replay”“timeline 自行保证 durable sequence”。
-   - 确认为 per-server probe 后单选、hybrid façade、16ms current-event batching、无 `Last-Event-ID`、current source + legacy render projection，以及只针对 missing promoted input 的 best-effort hydrate。
-   - Home/PromptInputV2 补充证伪把 controller/view extraction、current session list + V1-only archive 与 populated command-menu draft-preservation 限定在现有 client 节点；PTY follow-up 则按 target code 确认 current CRUD/direct WS 分流，同时否定“current connect-token 已 live-wired”。
-2. **Provider transforms**
-   - 证伪 Anthropic 一律手工 cache breakpoints、Meta 默认 xhigh、Kimi 一律 suppress、Opus 4.5 只有 effort 等旧说法。
-   - 确认 Claude 4.7+/future-alias adaptive heuristic、Kimi summarized adaptive、SDK-specific cache key、Mistral 3.0.51 pinned patch 的 native thinking round-trip。
-3. **Repository cache / grep**
-   - 证伪“Reference.list 表示 checkout ready”“lock 保护 readers”“grep 在 alias path 上搜索”“输出完整保留原始字符串”。
-   - 确认 branch-keyed cache path、per-checkout lock、newest-wins refresh、异步 materialization，以及 realpath search/requested-alias presentation。
-4. **Misc surface / migration boundaries**
-   - 确认 Desktop dual health、Console model-specific moderation、Muse Spark `meta.txt` wiring、CLI import error presentation、Windows `useConptyDll`、EventV2 durable manifest、`PluginInternal.boot` 与 compaction bridge publish。
-   - 证伪 generic `"request too large"` 一律 overflow，以及“目标没有 current `OpenCode` facade”；据此收紧 matcher 文案，并把 sdk-next facade 标明为 monorepo-private same-process surface。
+1. **Provider/Modal/Gemini — PASS**：纠正 Modal “任意 model URL”“template 逐级 fallback”“空覆盖清除静态 catalog”三项错误；明确 first-model URL、single nullish-key lookup、working database copy/active-provider deletion。Gemini 改为 current regex whitelist，不把 future 命名当版本判断；GPT-5 defaults 改成精确 `gpt-5-chat` / `gpt-5-pro` substring 与 Azure `gpt-5.5` reasoning-default early return。
+2. **MCP — PASS**：确认 target 当前仍 pinned `@modelcontextprotocol/sdk@1.29.0`，中间曾尝试 v2 后恢复 legacy compatibility；补齐 declaration-only `callTool`、reinitialize、pagination metadata、session recovery/active-request guard、JSON-RPC error reconnect guard、OAuth `offline_access` 五类行为与测试/fixture sources。
+3. **App/UI/Desktop — PASS**：纠正 main-process health probe 为 best-effort 而非窗口恢复门槛，同时保留 renderer `ConnectionGate`；daemon 仅同 state-home/同版本复用；区分 `main` selector sentinel 与实际 worktree；保留 legacy `{id:dataUrl,url:dataUrl}`，并把 data URL 限定为 App adapter choice。
+4. **Console/Stats — PASS**：纠正 referral placeholder 对 invitee pending 的抑制与 inviter pending 行为；确认 Google inclusive output 进入 cost/metrics/storage，同时把下游重复相加与陈旧测试登记为 `[U]`；schema/migration 只证明代码意图，不外推 production 部署；Stats 三个 URL 与 fetch chain 证据闭环。
 
-本机没有 `bun`，以下独立测试运行尝试均以 exit 127 结束，因此 L2 等级是“源码 + 测试定义证伪”，不是运行时通过：
+最终 L2 同时逐条复查新增 `[E:path:line]`；语义阻断项全部收敛，剩余事项均已降为下面的运行/线上状态风险。
 
-- `bun test packages/opencode/test/provider/transform.test.ts`
-- core repository/reference targeted tests
-- V1 grep targeted test
+## 6. 未决与风险边界
 
-## 5. 降级与未决项
+- Modal discovery 是 3 秒超时的 best-effort network call；现有测试未覆盖首 model 缺 URL、首选 template key lookup miss、空 override 到 active-provider deletion 的完整链路，也不能证明真实 Modal endpoint 当前可用。
+- Desktop V2 sidecar 由 env opt-in，且 target builder 只在 dev channel extraResources 中携带 CLI；不能外推 beta/prod 发布状态。
+- Console migration 文件与 schema 同步，但本任务没有远端数据库权限；production migration state 未验证，既有重复 non-NULL ID 可能使 unique-index migration 失败，reward history 在 target 源码仍被显式隐藏。
+- Google normalizer 的 inclusive output 与 generic trial/Stats 再加 reasoning 之间可能重复计算 thoughts；target test 仍期待旧 output 值，二者已登记进 `reference/uncertainty.md`。
+- MCP behavior 依赖 patched third-party SDK dist；targeted test 覆盖 JSON-RPC error reconnect guard，expired-session并发 recovery 的真实 server interoperability 仍以 patch/source contract 为限。
+- `models.opencode.ai` / Modal / Stats endpoint 仅做源码 URL 与 payload shape 核验，没有执行线上可达性检查。
+- 本轮不改上游源码；package install/test 环境不完整，实际测试结果与 docs 验证分开记录。
 
-已写入节点正文与 `_staging`，并由 reconcile 汇总到 `reference/uncertainty.md`：
+## 7. 实际验证与环境边界
 
-- `[U]` current SSE 没有通用 replay/gap-recovery contract；timeline input order 是否恒等于 durable aggregate sequence 未由 App 层证明。
-- `[U]` App current PTY connect-token checklist 与 runtime wiring 不一致；目标代码在没有 current client ticket 时仍尝试 WebSocket 连接，App 源码未证明 ticketless handshake 能成功或其预期 authorization contract。
-- `[U]` grep symlink-alias 行为在 Windows 被测试跳过；symlink-to-file presentation 未覆盖。
-- `[U]` branchless cache 对 `origin/HEAD` 变化/缺失的长期行为、大小写不敏感文件系统的 branch collision 未覆盖。
-- `[U]` 旧 `PluginBoot` 是否有一对一命名 replacement 未确认；current `PluginInternal.boot` path 已由源码证实。
-- `[I]` repository `reset --hard` 不清理 untracked files；`repo@branch` 字符串形状存在理论 collision。
-- `[I]` Anthropic `cacheControl` 只证明 transform 跳过手工 breakpoints，不证明真实服务 cache hit。
-- `[I]` Mistral patch/mock-fetch tests 证明序列化与 metadata round-trip，不等于真实 Mistral service 验收。
+- `bun install --frozen-lockfile`：失败，内部 `npm.mihoyo.com` 对 Effect packages 返回 404；改用 public registry 的重试未完成并被终止，lockfile 未修改。
+- `packages/opencode` 七个 provider/MCP targeted test files：测试收集阶段因 partial dependency tree 缺 `@babel/types`，0 pass / 7 fail；不是断言失败。
+- `packages/app` 三个 targeted test files：测试收集阶段缺 `@solid-primitives/keyed` / `pure-rand`，0 pass / 3 fail。
+- `packages/desktop`：`electron-builder.config.test.ts` 7 pass；`draft-store.test.ts` 因 Bun 环境不提供 `node:sqlite` 在收集阶段失败。
+- `packages/session-ui/src/v2/components/prompt-input/store.test.ts`：5 pass / 0 fail。
+- `packages/console/app/test/providerUsage.test.ts`：测试收集阶段缺 `@smithy/util-buffer-from`，0 pass / 1 fail；此外源码与测试期望的 Google output 已由 L2 静态确认冲突。
+- 所有 test 命令均从适用 package 目录运行，没有从 `opencode` 根执行测试；上游源码与 lockfile 均未修改。
 
-## 6. 完成门槛
+## 8. 完成门槛
 
-- 所有 188 个 verified node frontmatter `updated` 必须精确为 `7534d23551`。
-- `index.json.updated` 与全部 node entries 必须同为 `7534d23551`。
-- `llms.txt` 必须登记 188 nodes 与两个新增节点。
-- `tools/reconcile.mjs`、`tools/lint.mjs` 必须全绿且 reconcile 再跑幂等。
-- 所有 `[E:path:line]` 指向 target checkout 的存在且非空/非注释/非纯括号行。
-- submodule HEAD 必须精确为 target，submodule工作树 clean。
-- stage 只允许 `docs/llm-wiki/opencode/**` 与根仓 `opencode` gitlink。
+- 所有 188 个 verified node frontmatter `updated` 精确为 `89130db6b0`；`index.json.updated` 与每个 node entry 同步。
+- `index.json` planned=0，节点数保持 188；`llms.txt` 仍登记全部节点。
+- `node tools/reconcile.mjs`、`node tools/lint.mjs` 全绿；第二次 reconcile 必须 0 更新且工作树幂等。
+- 所有 `[E:path:line]` 指向 target checkout 的存在且非空/非注释/非纯括号行；L2 对语义精度另行证伪。
+- submodule HEAD 与 `refs/remotes/origin/dev` 都是 target，submodule工作树 clean。
+- 最终 diff/stage 只允许 `docs/llm-wiki/opencode/**` 与根仓 `opencode` gitlink；不包含临时文件，不更新其他 submodule。

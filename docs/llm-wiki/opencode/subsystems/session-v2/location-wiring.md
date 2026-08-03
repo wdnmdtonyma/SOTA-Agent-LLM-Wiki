@@ -20,7 +20,7 @@ symbols: [LocationServiceMap.Service, buildLocationServiceMap, locationServices,
 related: [spine.v2-coordinator, persistence.project-instance-location, integrations.integration-v2, persistence.project-directories]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > Location wiring 是 V2 runner 的 layer graph: `LocationServiceMap.Service` 为每个 `Location.Ref` 构建 runner/model/tools/context 等 Location-scoped services,server routes 用 `SessionExecutionLocal.node` 接入本进程 runner,embedded SDK 通过 in-memory HTTP routes 暴露同一 session API。

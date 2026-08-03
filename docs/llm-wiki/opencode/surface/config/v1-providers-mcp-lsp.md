@@ -13,7 +13,7 @@ source:
   - packages/core/src/v1/config/mcp.ts
   - packages/core/src/v1/config/lsp.ts
   - packages/core/src/v1/config/formatter.ts
-updated: 7534d23551
+updated: 89130db6b0
 evidence: explicit
 ---
 
@@ -41,54 +41,54 @@ evidence: explicit
 
 | provider key | type/default | 含义 | V1-V2 关系 |
 | --- | --- | --- | --- |
-| `provider.<name>.api` | optional string | provider API URL 或 upstream endpoint。[E: packages/core/src/v1/config/provider.ts:77] | 仅当 V1 `provider.<name>.npm` 存在时迁移为 V2 `providers.<name>.api.url`；没有 `npm` 时 current migration 不保留该字段。[E: packages/core/src/v1/config/migrate.ts:177] [E: packages/core/src/v1/config/migrate.ts:181] [E: packages/core/src/v1/config/migrate.ts:184] |
-| `provider.<name>.name` | optional string | display name。[E: packages/core/src/v1/config/provider.ts:78] | V2 `providers.<name>.name`。[E: packages/core/src/config/provider.ts:66] |
-| `provider.<name>.env` | optional string array | credential env var names。[E: packages/core/src/v1/config/provider.ts:79] | V2 `providers.<name>.env`。[E: packages/core/src/config/provider.ts:67] |
-| `provider.<name>.id` | optional string | provider id override。[E: packages/core/src/v1/config/provider.ts:80] | V2 provider field list contains `name`/`env`/`api`/`request`/`models` but no first-class `id`。[E: packages/core/src/config/provider.ts:66] [E: packages/core/src/config/provider.ts:67] [E: packages/core/src/config/provider.ts:68] [E: packages/core/src/config/provider.ts:69] [E: packages/core/src/config/provider.ts:70] [I] |
-| `provider.<name>.npm` | optional string | AI SDK provider package name。[E: packages/core/src/v1/config/provider.ts:81] | V2 provider `api` can be AISDK package metadata。[E: packages/core/src/config/provider.ts:68] |
-| `provider.<name>.whitelist` | optional string array | provider model allowlist。[E: packages/core/src/v1/config/provider.ts:82] | V2 不保留 whitelist；设计改用 policies 或 explicit configured models。[E: specs/v2/config.md:218] |
-| `provider.<name>.blacklist` | optional string array | provider model denylist。[E: packages/core/src/v1/config/provider.ts:83] | V2 不保留 blacklist；设计改用 policies 或 explicit configured models。[E: specs/v2/config.md:218] |
-| `provider.<name>.options.apiKey` | optional string | provider API key option。[E: packages/core/src/v1/config/provider.ts:87] | V2 provider `request`/`api.settings` 由 lowerer 输出。[E: packages/core/src/v1/config/migrate.ts:172] |
-| `provider.<name>.options.baseURL` | optional string | provider base URL option。[E: packages/core/src/v1/config/provider.ts:88] | V2 provider `api.url` 或 request lowering 输出。[E: packages/core/src/v1/config/migrate.ts:181] |
-| `provider.<name>.options.enterpriseUrl` | optional string | GitHub Enterprise URL for copilot auth。[E: packages/core/src/v1/config/provider.ts:89] | V2 通过 lowerer 转入 provider request/settings。[I] |
-| `provider.<name>.options.setCacheKey` | optional boolean | enable prompt cache key。[E: packages/core/src/v1/config/provider.ts:92] | V2 通过 request body/options 表达。[I] |
-| `provider.<name>.options.timeout` | optional positive int or false | full request timeout。[E: packages/core/src/v1/config/provider.ts:95] | V2 通过 request body/options 表达。[I] |
-| `provider.<name>.options.headerTimeout` | optional positive int or false | response header timeout。[E: packages/core/src/v1/config/provider.ts:102] | V2 通过 request body/options 表达。[I] |
-| `provider.<name>.options.chunkTimeout` | optional positive int | streamed SSE chunk timeout。[E: packages/core/src/v1/config/provider.ts:111] | V2 通过 request body/options 表达。[I] |
-| `provider.<name>.options.<unknown>` | rest record any | provider-specific AI SDK options。[E: packages/core/src/v1/config/provider.ts:116] | V2 `ConfigProvider.Request.body` 是 unknown record。[E: packages/core/src/config/provider.ts:9] |
-| `provider.<name>.models` | optional record model | provider-local model overrides。[E: packages/core/src/v1/config/provider.ts:119] | V2 `providers.<name>.models`。[E: packages/core/src/config/provider.ts:70] |
+| `provider.<name>.api` | optional string | provider API URL 或 upstream endpoint。[E: packages/core/src/v1/config/provider.ts:83] | 仅当 V1 `provider.<name>.npm` 存在时迁移为 V2 `providers.<name>.api.url`；没有 `npm` 时 current migration 不保留该字段。[E: packages/core/src/v1/config/migrate.ts:177] [E: packages/core/src/v1/config/migrate.ts:181] [E: packages/core/src/v1/config/migrate.ts:184] |
+| `provider.<name>.name` | optional string | display name。[E: packages/core/src/v1/config/provider.ts:84] | V2 `providers.<name>.name`。[E: packages/core/src/config/provider.ts:66] |
+| `provider.<name>.env` | optional string array | credential env var names。[E: packages/core/src/v1/config/provider.ts:85] | V2 `providers.<name>.env`。[E: packages/core/src/config/provider.ts:67] |
+| `provider.<name>.id` | optional string | provider id override。[E: packages/core/src/v1/config/provider.ts:86] | V2 provider field list contains `name`/`env`/`api`/`request`/`models` but no first-class `id`。[E: packages/core/src/config/provider.ts:66] [E: packages/core/src/config/provider.ts:67] [E: packages/core/src/config/provider.ts:68] [E: packages/core/src/config/provider.ts:69] [E: packages/core/src/config/provider.ts:70] [I] |
+| `provider.<name>.npm` | optional string | AI SDK provider package name。[E: packages/core/src/v1/config/provider.ts:87] | V2 provider `api` can be AISDK package metadata。[E: packages/core/src/config/provider.ts:68] |
+| `provider.<name>.whitelist` | optional string array | provider model allowlist。[E: packages/core/src/v1/config/provider.ts:88] | V2 不保留 whitelist；设计改用 policies 或 explicit configured models。[E: specs/v2/config.md:218] |
+| `provider.<name>.blacklist` | optional string array | provider model denylist。[E: packages/core/src/v1/config/provider.ts:89] | V2 不保留 blacklist；设计改用 policies 或 explicit configured models。[E: specs/v2/config.md:218] |
+| `provider.<name>.options.apiKey` | optional string | provider API key option。[E: packages/core/src/v1/config/provider.ts:93] | V2 provider `request`/`api.settings` 由 lowerer 输出。[E: packages/core/src/v1/config/migrate.ts:172] |
+| `provider.<name>.options.baseURL` | optional string | provider base URL option。[E: packages/core/src/v1/config/provider.ts:94] | V2 provider `api.url` 或 request lowering 输出。[E: packages/core/src/v1/config/migrate.ts:181] |
+| `provider.<name>.options.enterpriseUrl` | optional string | GitHub Enterprise URL for copilot auth。[E: packages/core/src/v1/config/provider.ts:95] | V2 通过 lowerer 转入 provider request/settings。[I] |
+| `provider.<name>.options.setCacheKey` | optional boolean | enable prompt cache key。[E: packages/core/src/v1/config/provider.ts:98] | V2 通过 request body/options 表达。[I] |
+| `provider.<name>.options.timeout` | optional positive int or false | full request timeout。[E: packages/core/src/v1/config/provider.ts:101] | V2 通过 request body/options 表达。[I] |
+| `provider.<name>.options.headerTimeout` | optional positive int or false | response header timeout。[E: packages/core/src/v1/config/provider.ts:108] | V2 通过 request body/options 表达。[I] |
+| `provider.<name>.options.chunkTimeout` | optional positive int | streamed SSE chunk timeout。[E: packages/core/src/v1/config/provider.ts:117] | V2 通过 request body/options 表达。[I] |
+| `provider.<name>.options.<unknown>` | rest record any | provider-specific AI SDK options。[E: packages/core/src/v1/config/provider.ts:122] | V2 `ConfigProvider.Request.body` 是 unknown record。[E: packages/core/src/config/provider.ts:9] |
+| `provider.<name>.models` | optional record model | provider-local model overrides。[E: packages/core/src/v1/config/provider.ts:125] | V2 `providers.<name>.models`。[E: packages/core/src/config/provider.ts:70] |
 
 ## Provider Model Catalog
 
 | model key | type/default | 含义 | V1-V2 关系 |
 | --- | --- | --- | --- |
-| `id` | optional string | upstream model id。[E: packages/core/src/v1/config/provider.ts:9] | V2 nests as model `api.id` when present, either inside AISDK model API or id-only model API。[E: packages/core/src/v1/config/migrate.ts:222] [E: packages/core/src/v1/config/migrate.ts:230] |
-| `name` | optional string | display name。[E: packages/core/src/v1/config/provider.ts:10] | V2 `models.<name>.name`。[E: packages/core/src/config/provider.ts:49] |
-| `family` | optional string | model family metadata。[E: packages/core/src/v1/config/provider.ts:11] | V2 `family`。[E: packages/core/src/config/provider.ts:48] |
-| `release_date` | optional string | release metadata。[E: packages/core/src/v1/config/provider.ts:12] | V2 设计不 port `release_date`。[E: specs/v2/config.md:218] |
-| `attachment` | optional boolean | legacy model attachment capability flag。[E: packages/core/src/v1/config/provider.ts:13] | V2 capabilities use structured `input`/`output` modalities。[E: packages/core/src/config/provider.ts:51] |
-| `reasoning` | optional boolean | legacy reasoning capability flag。[E: packages/core/src/v1/config/provider.ts:14] | V2 设计不 port first-class `reasoning`。[E: specs/v2/config.md:218] |
-| `temperature` | optional boolean | whether model supports temperature。[E: packages/core/src/v1/config/provider.ts:15] | V2 设计不 port first-class `temperature`。[E: specs/v2/config.md:218] |
-| `tool_call` | optional boolean | tool-call support flag。[E: packages/core/src/v1/config/provider.ts:16] | V2 migration maps into `capabilities.tools`。[E: packages/core/src/v1/config/migrate.ts:215] |
-| `interleaved` | optional true or field object | interleaved reasoning field configuration。[E: packages/core/src/v1/config/provider.ts:17] | V2 设计不 port first-class `interleaved`。[E: specs/v2/config.md:218] |
-| `cost.input` | finite | input token price。[E: packages/core/src/v1/config/provider.ts:27] | V2 `cost.input`。[E: packages/core/src/config/provider.ts:22] |
-| `cost.output` | finite | output token price。[E: packages/core/src/v1/config/provider.ts:28] | V2 `cost.output`。[E: packages/core/src/config/provider.ts:23] |
-| `cost.cache_read` | optional finite | cache read price。[E: packages/core/src/v1/config/provider.ts:29] | V2 `cost.cache.read`。[E: packages/core/src/v1/config/migrate.ts:200] |
-| `cost.cache_write` | optional finite | cache write price。[E: packages/core/src/v1/config/provider.ts:30] | V2 `cost.cache.write`。[E: packages/core/src/v1/config/migrate.ts:200] |
-| `cost.context_over_200k` | optional cost object | >200k context tier price。[E: packages/core/src/v1/config/provider.ts:31] | V2 migration creates tier `{ type: "context", size: 200000 }`。[E: packages/core/src/v1/config/migrate.ts:205] |
-| `limit.context` | finite | context window.[E: packages/core/src/v1/config/provider.ts:43] | V2 `limit.context` int optional。[E: packages/core/src/config/provider.ts:28] |
-| `limit.input` | optional finite | input limit。[E: packages/core/src/v1/config/provider.ts:44] | V2 `limit.input` int optional。[E: packages/core/src/config/provider.ts:29] |
-| `limit.output` | finite | output limit。[E: packages/core/src/v1/config/provider.ts:45] | V2 `limit.output` int optional。[E: packages/core/src/config/provider.ts:30] |
-| `modalities.input` | optional array of text/audio/image/video/pdf | input modalities。[E: packages/core/src/v1/config/provider.ts:50] | V2 migration maps to `capabilities.input`。[E: packages/core/src/v1/config/migrate.ts:215] |
-| `modalities.output` | optional array of text/audio/image/video/pdf | output modalities。[E: packages/core/src/v1/config/provider.ts:51] | V2 migration maps to `capabilities.output`。[E: packages/core/src/v1/config/migrate.ts:215] |
-| `experimental` | optional boolean | legacy experimental marker。[E: packages/core/src/v1/config/provider.ts:56] | V2 设计不 port model `experimental`。[E: specs/v2/config.md:218] |
-| `status` | optional `alpha`/`beta`/`deprecated`/`active` | model status。[E: packages/core/src/v1/config/provider.ts:57] | V2 migration only maps `deprecated` to `disabled: true`。[E: packages/core/src/v1/config/migrate.ts:243] |
-| `provider.npm` | optional string | model-specific provider package override。[E: packages/core/src/v1/config/provider.ts:58] | V2 model `api` can carry AISDK package.[E: packages/core/src/config/provider.ts:36] |
-| `provider.api` | optional string | model-specific API URL override。[E: packages/core/src/v1/config/provider.ts:59] | 仅当 model-level `provider.npm` 存在时迁移为 V2 model `api.url`；没有 `provider.npm` 时 non-AISDK branch 只能输出 `{ id }`。[E: packages/core/src/v1/config/migrate.ts:220] [E: packages/core/src/v1/config/migrate.ts:225] [E: packages/core/src/v1/config/migrate.ts:230] |
-| `options` | optional record any | model request options。[E: packages/core/src/v1/config/provider.ts:61] | V2 model `request.body` via migration。[E: packages/core/src/v1/config/migrate.ts:234] |
-| `headers` | optional record string | model request headers。[E: packages/core/src/v1/config/provider.ts:62] | V2 model `request.headers`。[E: packages/core/src/v1/config/migrate.ts:233] |
-| `variants.<id>.disabled` | optional boolean | disable this variant。[E: packages/core/src/v1/config/provider.ts:68] | V2 variants have no first-class disabled flag；current migration may pass the field through inside `variants[].body` because it lowers the whole variant options object。[E: packages/core/src/v1/config/migrate.ts:240] |
-| `variants.<id>.<unknown>` | rest record any | variant-specific options。[E: packages/core/src/v1/config/provider.ts:70] | V2 migration lowers variant body。[E: packages/core/src/v1/config/migrate.ts:240] |
+| `id` | optional string | upstream model id。[E: packages/core/src/v1/config/provider.ts:14] | V2 nests as model `api.id` when present, either inside AISDK model API or id-only model API。[E: packages/core/src/v1/config/migrate.ts:222] [E: packages/core/src/v1/config/migrate.ts:230] |
+| `name` | optional string | display name。[E: packages/core/src/v1/config/provider.ts:15] | V2 `models.<name>.name`。[E: packages/core/src/config/provider.ts:49] |
+| `family` | optional string | model family metadata。[E: packages/core/src/v1/config/provider.ts:16] | V2 `family`。[E: packages/core/src/config/provider.ts:48] |
+| `release_date` | optional string | release metadata。[E: packages/core/src/v1/config/provider.ts:17] | V2 设计不 port `release_date`。[E: specs/v2/config.md:218] |
+| `attachment` | optional boolean | legacy model attachment capability flag。[E: packages/core/src/v1/config/provider.ts:18] | V2 capabilities use structured `input`/`output` modalities。[E: packages/core/src/config/provider.ts:51] |
+| `reasoning` | optional boolean | legacy reasoning capability flag。[E: packages/core/src/v1/config/provider.ts:19] | V2 设计不 port first-class `reasoning`。[E: specs/v2/config.md:218] |
+| `temperature` | optional boolean | whether model supports temperature。[E: packages/core/src/v1/config/provider.ts:20] | V2 设计不 port first-class `temperature`。[E: specs/v2/config.md:218] |
+| `tool_call` | optional boolean | tool-call support flag。[E: packages/core/src/v1/config/provider.ts:21] | V2 migration maps into `capabilities.tools`。[E: packages/core/src/v1/config/migrate.ts:215] |
+| `interleaved` | optional boolean、field string shorthand 或 `{ field }` | interleaved reasoning field configuration。已知 field 是 `reasoning`、`reasoning_content`、`reasoning_text`，schema 也接受任意 string。[E: packages/core/src/v1/config/provider.ts:8][E: packages/core/src/v1/config/provider.ts:9][E: packages/core/src/v1/config/provider.ts:10][E: packages/core/src/v1/config/provider.ts:22][E: packages/core/src/v1/config/provider.ts:24][E: packages/core/src/v1/config/provider.ts:25][E: packages/core/src/v1/config/provider.ts:26][E: packages/core/src/v1/config/provider.ts:27] | V2 设计不 port first-class `interleaved`。[E: specs/v2/config.md:218] |
+| `cost.input` | finite | input token price。[E: packages/core/src/v1/config/provider.ts:33] | V2 `cost.input`。[E: packages/core/src/config/provider.ts:22] |
+| `cost.output` | finite | output token price。[E: packages/core/src/v1/config/provider.ts:34] | V2 `cost.output`。[E: packages/core/src/config/provider.ts:23] |
+| `cost.cache_read` | optional finite | cache read price。[E: packages/core/src/v1/config/provider.ts:35] | V2 `cost.cache.read`。[E: packages/core/src/v1/config/migrate.ts:200] |
+| `cost.cache_write` | optional finite | cache write price。[E: packages/core/src/v1/config/provider.ts:36] | V2 `cost.cache.write`。[E: packages/core/src/v1/config/migrate.ts:200] |
+| `cost.context_over_200k` | optional cost object | >200k context tier price。[E: packages/core/src/v1/config/provider.ts:37] | V2 migration creates tier `{ type: "context", size: 200000 }`。[E: packages/core/src/v1/config/migrate.ts:205] |
+| `limit.context` | finite | context window.[E: packages/core/src/v1/config/provider.ts:49] | V2 `limit.context` int optional。[E: packages/core/src/config/provider.ts:28] |
+| `limit.input` | optional finite | input limit。[E: packages/core/src/v1/config/provider.ts:50] | V2 `limit.input` int optional。[E: packages/core/src/config/provider.ts:29] |
+| `limit.output` | finite | output limit。[E: packages/core/src/v1/config/provider.ts:51] | V2 `limit.output` int optional。[E: packages/core/src/config/provider.ts:30] |
+| `modalities.input` | optional array of text/audio/image/video/pdf | input modalities。[E: packages/core/src/v1/config/provider.ts:56] | V2 migration maps to `capabilities.input`。[E: packages/core/src/v1/config/migrate.ts:215] |
+| `modalities.output` | optional array of text/audio/image/video/pdf | output modalities。[E: packages/core/src/v1/config/provider.ts:57] | V2 migration maps to `capabilities.output`。[E: packages/core/src/v1/config/migrate.ts:215] |
+| `experimental` | optional boolean | legacy experimental marker。[E: packages/core/src/v1/config/provider.ts:62] | V2 设计不 port model `experimental`。[E: specs/v2/config.md:218] |
+| `status` | optional `alpha`/`beta`/`deprecated`/`active` | model status。[E: packages/core/src/v1/config/provider.ts:63] | V2 migration only maps `deprecated` to `disabled: true`。[E: packages/core/src/v1/config/migrate.ts:243] |
+| `provider.npm` | optional string | model-specific provider package override。[E: packages/core/src/v1/config/provider.ts:64] | V2 model `api` can carry AISDK package.[E: packages/core/src/config/provider.ts:36] |
+| `provider.api` | optional string | model-specific API URL override。[E: packages/core/src/v1/config/provider.ts:65] | 仅当 model-level `provider.npm` 存在时迁移为 V2 model `api.url`；没有 `provider.npm` 时 non-AISDK branch 只能输出 `{ id }`。[E: packages/core/src/v1/config/migrate.ts:220] [E: packages/core/src/v1/config/migrate.ts:225] [E: packages/core/src/v1/config/migrate.ts:230] |
+| `options` | optional record any | model request options。[E: packages/core/src/v1/config/provider.ts:67] | V2 model `request.body` via migration。[E: packages/core/src/v1/config/migrate.ts:234] |
+| `headers` | optional record string | model request headers。[E: packages/core/src/v1/config/provider.ts:68] | V2 model `request.headers`。[E: packages/core/src/v1/config/migrate.ts:233] |
+| `variants.<id>.disabled` | optional boolean | disable this variant。[E: packages/core/src/v1/config/provider.ts:74] | V2 variants have no first-class disabled flag；current migration may pass the field through inside `variants[].body` because it lowers the whole variant options object。[E: packages/core/src/v1/config/migrate.ts:240] |
+| `variants.<id>.<unknown>` | rest record any | variant-specific options。[E: packages/core/src/v1/config/provider.ts:76] | V2 migration lowers variant body。[E: packages/core/src/v1/config/migrate.ts:240] |
 
 ## MCP Catalog
 

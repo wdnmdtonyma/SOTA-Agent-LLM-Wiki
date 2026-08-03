@@ -20,7 +20,7 @@ related:
   - config.v2-schema
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > 配置加载节点覆盖两套并存 loader：V1 `@opencode/Config` 把多来源配置 deep-merge 成一个 `Info`，V2 `@opencode/v2/Config` 暴露从低优先级到高优先级的 ordered `Entry[]`。

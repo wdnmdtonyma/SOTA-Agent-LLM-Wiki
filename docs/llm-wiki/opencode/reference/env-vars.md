@@ -21,7 +21,7 @@ symbols:
 evidence: explicit
 related:
   - persistence.repository-cache
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -74,7 +74,7 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `OPENCODE_PURE` | truthy | pure mode。 | [E: packages/core/src/flag/flag.ts:67] |
 | `OPENCODE_PERMISSION` | string | permission behavior override。 | [E: packages/core/src/flag/flag.ts:70] |
 | `OPENCODE_PLUGIN_META_FILE` | string | plugin metadata file override。 | [E: packages/core/src/flag/flag.ts:73] |
-| `OPENCODE_CLIENT` | string default `cli` | client identity/user-agent。 | [E: packages/core/src/flag/flag.ts:76][E: packages/core/src/models-dev.ts:18] |
+| `OPENCODE_CLIENT` | string default `cli` | client identity/user-agent。 | [E: packages/core/src/flag/flag.ts:76][E: packages/core/src/models-dev.ts:23] |
 
 ## V1 runtime flags
 
@@ -122,7 +122,7 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 |---|---|---|
 | `OPENCODE_TEST_HOME` | core global home override。 | [E: packages/core/src/global.ts:19] |
 | `OPENCODE_DISABLE_CHANNEL_DB` | 禁用 channel DB 条件之一。 | [E: packages/core/src/database/database.ts:50] |
-| `OPENCODE_MODELS_DEV` | bundler/global models.dev injection。 | [E: packages/core/src/models-dev.ts:130][E: packages/core/src/models-dev.ts:193] |
+| `OPENCODE_MODELS_DEV` | bundler/global models.dev injection。 | [E: packages/core/src/models-dev.ts:136][E: packages/core/src/models-dev.ts:199] |
 | `OPENCODE_LOG_LEVEL` | logging level。 | [E: packages/core/src/observability/logging.ts:57] |
 | `OPENCODE_PRINT_LOGS` | 打印 stderr logs。 | [E: packages/core/src/observability/logging.ts:68] |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP endpoint flag。 | [E: packages/core/src/flag/flag.ts:16] |

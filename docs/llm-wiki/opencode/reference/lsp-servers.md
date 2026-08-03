@@ -16,7 +16,7 @@ related:
   - integrations.lsp
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > V1 LSP server catalog 是 `packages/opencode/src/lsp/server.ts` 中导出的 `Info` 集合；当前 HEAD 有 38 个内建 server [I]。

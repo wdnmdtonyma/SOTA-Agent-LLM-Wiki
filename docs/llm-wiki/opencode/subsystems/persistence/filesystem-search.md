@@ -27,7 +27,7 @@ related:
   - tool.grep
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > V2 filesystem-search 是 Location-scoped filesystem facade：`FileSystem` 负责 read/list 的 path containment，`FileSystemSearch` 在 FFF 可用时使用 fast-file-finder，否则回退 core-owned ripgrep adapter。

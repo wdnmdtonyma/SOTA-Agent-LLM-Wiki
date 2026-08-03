@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 source:
   - packages/opencode/src/question/index.ts
   - packages/opencode/src/question/schema.ts

@@ -9,7 +9,7 @@ symbols: [Shell.preferred, Shell.acceptable, Shell.args, Shell.list, Shell.killT
 related: [execution.shell-v1, execution.shell-v2, execution.pty, tool.bash]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > `packages/core/src/shell.ts` 是 V2 core 的 shell utility module：它负责 shell path/name/metadata、preferred/acceptable 选择、login shell 检测、shell args 生成和 process-tree cleanup；它不是 V2 bash tool 本身，也不是 Effect service。

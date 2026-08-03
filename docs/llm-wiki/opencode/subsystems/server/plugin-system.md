@@ -6,6 +6,8 @@ tier: T2
 v: shared
 source:
   - packages/opencode/src/plugin/index.ts
+  - packages/opencode/src/plugin/modal/modal.ts
+  - packages/opencode/src/plugin/modal/models.ts
   - packages/opencode/src/plugin/loader.ts
   - packages/opencode/src/plugin/tui/runtime.ts
   - packages/plugin/src/index.ts
@@ -35,10 +37,10 @@ related:
   - plugin-api.tui
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
-`server.plugin-system` 分成三条线: V1 server callback plugins、V1 TUI plugin host、V2 Effect-native `PluginV2` plus `PluginInternal` boot. V1 server service tag 是 `@opencode/Plugin`，V2 service tag 是 `@opencode/v2/Plugin`。[E: packages/opencode/src/plugin/index.ts:58][E: packages/core/src/plugin.ts:29]
+`server.plugin-system` 分成三条线: V1 server callback plugins、V1 TUI plugin host、V2 Effect-native `PluginV2` plus `PluginInternal` boot. V1 server service tag 是 `@opencode/Plugin`，V2 service tag 是 `@opencode/v2/Plugin`。[E: packages/opencode/src/plugin/index.ts:59][E: packages/core/src/plugin.ts:29]
 
 ## 能回答的问题
 - V1 server plugin hooks 如何 load、trigger、dispose?
@@ -48,17 +50,17 @@ updated: 7534d23551
 
 ## V1 server plugins
 
-`Plugin.Interface.trigger` 传 `name`、`input`、`output` 并返回 `Effect<Output>`；`list()` 返回 hooks，`init()` 初始化 plugin state。[E: packages/opencode/src/plugin/index.ts:45][E: packages/opencode/src/plugin/index.ts:55] `experimentalWebSocketsEnabled` 在显式 enabled 或 channel 为 local/dev/beta 时返回 true。[E: packages/opencode/src/plugin/index.ts:60][E: packages/opencode/src/plugin/index.ts:61]
+`Plugin.Interface.trigger` 传 `name`、`input`、`output` 并返回 `Effect<Output>`；`list()` 返回 hooks，`init()` 初始化 plugin state。[E: packages/opencode/src/plugin/index.ts:46][E: packages/opencode/src/plugin/index.ts:56] `experimentalWebSocketsEnabled` 在显式 enabled 或 channel 为 local/dev/beta 时返回 true。[E: packages/opencode/src/plugin/index.ts:61][E: packages/opencode/src/plugin/index.ts:62]
 
-内建 server plugins 在 `internalPlugins(flags)` 中组装，包含 Codex、Copilot、Gitlab、Poe、Cloudflare Workers、Cloudflare AI Gateway、Azure、DigitalOcean、Xai；Codex built-in 收到 `experimentalWebSockets` option。[E: packages/opencode/src/plugin/index.ts:65][E: packages/opencode/src/plugin/index.ts:68][E: packages/opencode/src/plugin/index.ts:80]
+内建 server plugins 在 `internalPlugins(flags)` 中组装，包含 Codex、Copilot、Modal、Gitlab、Poe、Cloudflare Workers、Cloudflare AI Gateway、Azure、DigitalOcean、Snowflake Cortex、Xai；Codex built-in 收到 `experimentalWebSockets` option。[E: packages/opencode/src/plugin/index.ts:66][E: packages/opencode/src/plugin/index.ts:69][E: packages/opencode/src/plugin/index.ts:74][E: packages/opencode/src/plugin/index.ts:81][E: packages/opencode/src/plugin/index.ts:82] Modal built-in 暴露 provider model hook，带 API token 且 catalog 首个 model 有 base URL 时向去掉尾斜杠的 `${baseURL}/models` 发 Bearer 请求，3 秒超时，失败返回空模型集。[E: packages/opencode/src/plugin/modal/modal.ts:4][E: packages/opencode/src/plugin/modal/modal.ts:6][E: packages/opencode/src/plugin/modal/modal.ts:9][E: packages/opencode/src/plugin/modal/modal.ts:10][E: packages/opencode/src/plugin/modal/modal.ts:13][E: packages/opencode/src/plugin/modal/models.ts:51][E: packages/opencode/src/plugin/modal/models.ts:53][E: packages/opencode/src/plugin/modal/models.ts:55]
 
-Plugin input 的 `client` 通过 `createOpencodeClient` 构造，base URL 是 `http://localhost:4096`，但 fetch 使用 `Server.Default().app.fetch`，所以 server plugin client 是进程内调用 V1 server handler。[E: packages/opencode/src/plugin/index.ts:142][E: packages/opencode/src/plugin/index.ts:143]
+Plugin input 的 `client` 通过 `createOpencodeClient` 构造，base URL 是 `http://localhost:4096`，但 fetch 使用 `Server.Default().app.fetch`，所以 server plugin client 是进程内调用 V1 server handler。[E: packages/opencode/src/plugin/index.ts:144][E: packages/opencode/src/plugin/index.ts:145]
 
-Internal plugins 直接 `plugin(input)` load，受 `flags.disableDefaultPlugins` 控制。[E: packages/opencode/src/plugin/index.ts:166][E: packages/opencode/src/plugin/index.ts:174] External origins 来自 `cfg.plugin_origins`，但 `flags.pure` 时为空；存在 external plugins 时会先 `config.waitForDependencies()`。[E: packages/opencode/src/plugin/index.ts:177][E: packages/opencode/src/plugin/index.ts:180]
+Internal plugins 直接 `plugin(input)` load，受 `flags.disableDefaultPlugins` 控制。[E: packages/opencode/src/plugin/index.ts:168][E: packages/opencode/src/plugin/index.ts:176] External origins 来自 `cfg.plugin_origins`，但 `flags.pure` 时为空；存在 external plugins 时会先 `config.waitForDependencies()`。[E: packages/opencode/src/plugin/index.ts:179][E: packages/opencode/src/plugin/index.ts:182]
 
-External plugin apply 是顺序执行: `for (const load of loaded)` 后逐项 `applyPlugin(load, input, hooks)`。[E: packages/opencode/src/plugin/index.ts:215][E: packages/opencode/src/plugin/index.ts:221] `PluginLoader.loadExternal` 内部并行收集 attempts，`Promise.all(list)` 完成后把成功 item push 到 ready。[E: packages/opencode/src/plugin/loader.ts:209][E: packages/opencode/src/plugin/loader.ts:212][E: packages/opencode/src/plugin/loader.ts:233]
+External plugin apply 是顺序执行: `for (const load of loaded)` 后逐项 `applyPlugin(load, input, hooks)`。[E: packages/opencode/src/plugin/index.ts:217][E: packages/opencode/src/plugin/index.ts:223] `PluginLoader.loadExternal` 内部并行收集 attempts，`Promise.all(list)` 完成后把成功 item push 到 ready。[E: packages/opencode/src/plugin/loader.ts:209][E: packages/opencode/src/plugin/loader.ts:212][E: packages/opencode/src/plugin/loader.ts:233]
 
-`trigger(name, input, output)` 按当前 hooks 顺序执行，hook 上没有该 name 就跳过，最后返回 output。[E: packages/opencode/src/plugin/index.ts:286][E: packages/opencode/src/plugin/index.ts:289][E: packages/opencode/src/plugin/index.ts:292]
+`trigger(name, input, output)` 按当前 hooks 顺序执行，hook 上没有该 name 就跳过，最后返回 output。[E: packages/opencode/src/plugin/index.ts:288][E: packages/opencode/src/plugin/index.ts:291][E: packages/opencode/src/plugin/index.ts:294]
 
 V1 server hook surface 覆盖 dispose/event/config/tool/auth/provider，以及 chat、permission、command、tool execution、shell env、compaction、text completion、tool definition 等 callback hooks。[E: packages/plugin/src/index.ts:222][E: packages/plugin/src/index.ts:334]
 
@@ -97,12 +99,14 @@ Provider plugin examples use the new context hooks: GitHub Copilot registers cat
 | 维度 | V1 server/TUI plugins | V2 PluginV2 |
 | --- | --- | --- |
 | Hook surface | V1 server callback hooks cover config, auth/provider, chat, permission, command, tools, shell and more; TUI has separate host slots/API。[E: packages/plugin/src/index.ts:222][E: packages/plugin/src/tui.ts:581] | V2 host exposes transform/reload domains plus AISDK sdk/language hooks through `PluginContext`。[E: packages/core/src/plugin/host.ts:31][E: packages/core/src/plugin/host.ts:44][E: packages/core/src/plugin/host.ts:72] |
-| Loading | Built-ins call plugin factory directly; external plugins resolve/load then apply in ready order。[E: packages/opencode/src/plugin/index.ts:166][E: packages/opencode/src/plugin/index.ts:215] | `PluginInternal` adds built-ins/providers/config plugins through `PluginV2.add` and forked scoped boot。[E: packages/core/src/plugin/internal.ts:105][E: packages/core/src/plugin/internal.ts:123] |
-| Lifetime | V1 finalizer unsubscribes event listener and calls dispose hooks; TUI dispose reverse-deactivates plugins。[E: packages/opencode/src/plugin/index.ts:259][E: packages/opencode/src/plugin/index.ts:266][E: packages/opencode/src/plugin/tui/runtime.ts:1037] | V2 add/remove owns plugin lifetime through child scopes and keyed locks。[E: packages/core/src/plugin.ts:58][E: packages/core/src/plugin.ts:94] |
+| Loading | Built-ins call plugin factory directly; external plugins resolve/load then apply in ready order。[E: packages/opencode/src/plugin/index.ts:168][E: packages/opencode/src/plugin/index.ts:217] | `PluginInternal` adds built-ins/providers/config plugins through `PluginV2.add` and forked scoped boot。[E: packages/core/src/plugin/internal.ts:105][E: packages/core/src/plugin/internal.ts:123] |
+| Lifetime | V1 finalizer unsubscribes event listener and calls dispose hooks; TUI dispose reverse-deactivates plugins。[E: packages/opencode/src/plugin/index.ts:261][E: packages/opencode/src/plugin/index.ts:268][E: packages/opencode/src/plugin/tui/runtime.ts:1037] | V2 add/remove owns plugin lifetime through child scopes and keyed locks。[E: packages/core/src/plugin.ts:58][E: packages/core/src/plugin.ts:94] |
 
 ## Sources
 
 - `packages/opencode/src/plugin/index.ts`
+- `packages/opencode/src/plugin/modal/modal.ts`
+- `packages/opencode/src/plugin/modal/models.ts`
 - `packages/opencode/src/plugin/loader.ts`
 - `packages/opencode/src/plugin/tui/runtime.ts`
 - `packages/plugin/src/index.ts`

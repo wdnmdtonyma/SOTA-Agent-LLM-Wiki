@@ -18,7 +18,7 @@ symbols: [SessionRunnerModel, SessionRunnerModel.resolve, fromCatalogModel, with
 related: [model-layer.model-catalog-v2, model-layer.llm-protocols]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > V2 runner model resolution 把 Location catalog 中的 `ModelV2.Info` 解析成 `@opencode-ai/llm` `Model`,并在当前实现中只支持 OpenAI Responses、Anthropic Messages、OpenAI-compatible Chat 三类 AI-SDK-shaped catalog model。

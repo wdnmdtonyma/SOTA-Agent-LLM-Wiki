@@ -17,7 +17,7 @@ symbols: [CodeModeTool, CODE_MODE_TOOL, describeCatalog]
 related: [subsys.tools.codemode, subsys.tools.v1, integrations.mcp-client, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > Execute 是 V1 的 experimental Code Mode 工具：模型提交一段受限 JavaScript orchestration code，运行时只把当前 permission 可见的 MCP tools 暴露给程序。

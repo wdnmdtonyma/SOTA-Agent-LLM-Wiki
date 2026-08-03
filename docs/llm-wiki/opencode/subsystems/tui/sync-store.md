@@ -9,7 +9,7 @@ symbols: [SDKProvider, EventSource, SyncProvider, useSync, DataProvider, useData
 related: [tui.architecture, sdk.overview]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > TUI Sync store 是 server state 的 reactive mirror：`SDKProvider` 把 HTTP/SSE 或 host event source 合成 `sdk.event`，`SyncProvider` 维护 V1 SDK-shaped state，`DataProvider` 维护 V2 `session.next.*`/location state。

@@ -38,7 +38,7 @@ related:
   - execution.core-shell-v2
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > PTY 子系统是 V2 Location-scoped pseudo-terminal service：core 用 `#pty` 适配 bun-pty/node-pty，维护进程内 session/buffer/subscribers；canonical server package 暴露 `/api/pty/*` JSON endpoint 和 `/api/pty/:ptyID/connect` WebSocket，legacy instance server tree 仍暴露 `/pty/*` compatibility surface。两条 surface 都使用短期 connect ticket 保护 browser WS 连接。

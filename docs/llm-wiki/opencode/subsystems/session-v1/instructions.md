@@ -9,7 +9,7 @@ symbols: [Instruction, Instruction.systemPaths, Instruction.system, Instruction.
 related: [prompt.system-prompts]
 evidence: explicit
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 > V1 `Instruction` service 负责把 global/project/config/nearby instruction files 转成 provider-turn system context 或 read-tool 后续 system-reminder;它发现 `AGENTS.md`、可选 `CLAUDE.md` 和 deprecated `CONTEXT.md`。

@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 ---
 
 # 不确定项日志([U] 汇总)
@@ -60,6 +60,13 @@ updated: 7534d23551
 
 - `integrations.lsp`: 当前源码内建 LSP server id 列表按 `packages/core/src/v1/config/lsp.ts` 计数为 38；这与批次提示中的 40 不一致，节点以源码为准。
 - `integrations.formatters`: 当前 `packages/opencode/src/format/formatter.ts` 的 `Formatter` object 按条目计数为 26；这与批次提示中的 27 不一致，节点以源码为准。
+
+## opencode-89130db6b0
+
+# uncertainty-opencode-89130db6b0
+
+- `clients.console`: Google usage normalization now includes `thoughtsTokenCount` inside `outputTokens` while generic trial-limiter and Stats presentation paths still add `reasoningTokens` separately. Whether those downstream consumers should change to avoid double-counting Google thoughts is unresolved. [U]
+- `clients.console`: `packages/console/app/test/providerUsage.test.ts` still expects Google candidate tokens without thoughts in `outputTokens`, while the target implementation returns candidates plus thoughts. The intended test/contract update is unresolved. [U]
 
 ## peripheral
 

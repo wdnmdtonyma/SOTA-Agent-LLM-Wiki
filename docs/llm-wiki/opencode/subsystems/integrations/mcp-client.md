@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: 7534d23551
+updated: 89130db6b0
 source:
   - packages/opencode/src/mcp/index.ts
   - packages/opencode/src/mcp/browser.ts
@@ -18,6 +18,14 @@ source:
   - packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts
   - packages/opencode/src/server/routes/instance/httpapi/handlers/mcp.ts
   - packages/core/src/v1/config/mcp.ts
+  - packages/opencode/package.json
+  - package.json
+  - patches/@modelcontextprotocol%2Fsdk@1.29.0.patch
+  - packages/opencode/test/mcp/transport.test.ts
+  - packages/opencode/test/mcp/session-recovery.test.ts
+  - packages/opencode/test/fixture/mcp-session-recovery.ts
+  - packages/opencode/test/mcp/catalog.test.ts
+  - packages/opencode/test/mcp/oauth-provider.test.ts
 symbols:
   - MCP.Service
   - MCP.Status
@@ -65,6 +73,11 @@ MCP 管理 API 是 Effect `HttpApi`，不是 Hono：route group 文件直接 `im
 | `packages/opencode/src/session/tools.ts` | 把 MCP tools 合并进 session 可用工具集合，并把 MCP content 转成 opencode output/attachment。 |
 | `packages/opencode/src/session/prompt.ts` | 把 MCP resource reference materialize 成 prompt file part。 |
 | `packages/core/src/v1/config/mcp.ts` | V1 MCP config schema；schema 注释里的 timeout 默认值已经和实现不一致。 |
+| `patches/@modelcontextprotocol%2Fsdk@1.29.0.patch` | pinned MCP SDK 兼容层：callTool typings、分页 tool metadata、session recovery、active-request guard、StreamableHTTP SSE reconnect 判定与 OAuth refresh-token scope。 |
+| `packages/opencode/test/mcp/transport.test.ts` | 固定 JSON-RPC error response 不应触发 SSE reconnect loop。 |
+| `packages/opencode/test/mcp/session-recovery.test.ts` + fixture | 以真实 local HTTP transport 固定旧 session 404 后 reinitialize + retry 一次。 |
+| `packages/opencode/test/mcp/catalog.test.ts` | 固定 paginated tool discovery 后第一页 output schema validator 仍保留。 |
+| `packages/opencode/test/mcp/oauth-provider.test.ts` | 固定 authorization server/client 都支持 refresh token 时追加 `offline_access`。 |
 
 ## 数据模型
 
@@ -113,6 +126,22 @@ V1 config schema 中 local MCP server 有 `type: "local"`、`command`、`environ
 8. `authenticate` 在无 auth URL 时会直接尝试保存 client；有 auth URL 时先调用 `McpBrowser.Service.open`，打开失败只发布 `BrowserOpenFailed` 而不取消 callback 等待，然后校验 state 并进入 `finishAuth`。[E: packages/opencode/src/mcp/index.ts:898] [E: packages/opencode/src/mcp/index.ts:901] [E: packages/opencode/src/mcp/index.ts:903] [E: packages/opencode/src/mcp/index.ts:907] [E: packages/opencode/src/mcp/index.ts:909] [E: packages/opencode/src/mcp/index.ts:915]
 9. `finishAuth` 从 pending transport 取回 transport，调用 MCP SDK `finishAuth(code)`，随后清理 verifier 和 pending transport，再重建 server client。[E: packages/opencode/src/mcp/index.ts:920] [E: packages/opencode/src/mcp/index.ts:924] [E: packages/opencode/src/mcp/index.ts:936] [E: packages/opencode/src/mcp/index.ts:937] [E: packages/opencode/src/mcp/index.ts:941]
 
+### Pinned SDK compatibility patch
+
+当前 target 的 dependency 固定为 `@modelcontextprotocol/sdk@1.29.0`，根 `patchedDependencies` 把它绑定到仓库 patch。[E: packages/opencode/package.json:83][E: package.json:159] 更新区间中间曾尝试 SDK v2，但 target 已恢复 legacy SDK compatibility；不能把历史中间态写成当前依赖状态。[I]
+
+patch 先增加两组 declaration-only `callTool` overload；没有对应 JS runtime hunk，所以这只修 TypeScript compatibility。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:9][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:22]
+
+runtime compatibility 有五组。第一，client connect 把 initialize 抽成可重入 `_initialize()`，并在 transport 报 session expired 时重新握手；fixture test 固定第一次 session-bound ping 404 后，以 replacement session 重做 initialize/initialized/ping。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:35][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:36][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:73][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:81][E: packages/opencode/test/mcp/session-recovery.test.ts:5][E: packages/opencode/test/mcp/session-recovery.test.ts:18][E: packages/opencode/test/mcp/session-recovery.test.ts:24][E: packages/opencode/test/fixture/mcp-session-recovery.ts:14][E: packages/opencode/test/fixture/mcp-session-recovery.ts:18][E: packages/opencode/test/fixture/mcp-session-recovery.ts:30][E: packages/opencode/test/fixture/mcp-session-recovery.ts:37]
+
+第二，分页 `listTools` 只在第一页清空 validator/task metadata cache，后续 cursor 页追加；catalog test 证明第一页的 output validator 在发现第二页后仍生效。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:122][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:136][E: packages/opencode/test/mcp/catalog.test.ts:53][E: packages/opencode/test/mcp/catalog.test.ts:57][E: packages/opencode/test/mcp/catalog.test.ts:83][E: packages/opencode/test/mcp/catalog.test.ts:99][E: packages/opencode/test/mcp/catalog.test.ts:101]
+
+第三，StreamableHTTP 收到带旧 session id 的 404 时只做一次 recovery、等待 reinitialize，再 retry 仍活跃的 request；并发 request 等待同一个 recovery promise。Protocol 层把 response-handler membership 注入 `isRequestActive`，transport 在等待 recovery 后检查它，避免 timeout/cancel 后继续 retry。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:159][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:167][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:181][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:183][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:185][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:196][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:210][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:216][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:249][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:253]
+
+第四，JSON-RPC error response 也标记本次 SSE request 已收到 response，不再被误判成断流而自动重连。transport test 构造 error event 和 aggressive reconnect options，执行 request 后断言总 request 数仍为 1。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:145][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:149][E: packages/opencode/test/mcp/transport.test.ts:12][E: packages/opencode/test/mcp/transport.test.ts:15][E: packages/opencode/test/mcp/transport.test.ts:24][E: packages/opencode/test/mcp/transport.test.ts:28][E: packages/opencode/test/mcp/transport.test.ts:32][E: packages/opencode/test/mcp/transport.test.ts:37]
+
+第五，OAuth scope selection 依次取 requested/resource/client scope；authorization server 支持 `offline_access` 且 client grant types 支持 refresh token 时追加该 scope，authorization URL 的 consent 判定改成精确 token match。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:297][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:302][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:320][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:325][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:333][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:334][E: packages/opencode/test/mcp/oauth-provider.test.ts:64][E: packages/opencode/test/mcp/oauth-provider.test.ts:65][E: packages/opencode/test/mcp/oauth-provider.test.ts:77][E: packages/opencode/test/mcp/oauth-provider.test.ts:81][E: packages/opencode/test/mcp/oauth-provider.test.ts:84][E: packages/opencode/test/mcp/oauth-provider.test.ts:100]
+
 ## 设计动机与权衡
 
 V1 MCP client 明确偏向“尽量接上”：remote 传输同时支持 StreamableHTTP 和 SSE fallback，这是为了兼容不同 MCP server 的传输实现。[E: packages/opencode/src/mcp/index.ts:269] [I] OAuth client 信息支持 dynamic registration，本地 auth 读写也通过 `flock.withLock(lockKey)` 包裹，这让用户能长期复用 MCP server 登录状态。[E: packages/opencode/src/mcp/oauth-provider.ts:81] [E: packages/opencode/src/mcp/auth.ts:73] [E: packages/opencode/src/mcp/auth.ts:81] [I]
@@ -130,6 +159,10 @@ MCP 工具名同时携带 client name 和 tool name，是为了避免多个 serv
 - `packages/opencode/src/mcp/index.ts` 的 HTTP 管理接口通过 Effect HttpApi route group 暴露，不是 Hono。[E: packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts:4]
 - MCP server notification `ToolListChanged` 会触发重新 fetch defs 并发布 `mcp.tools.changed`，所以工具集合可能在 session 运行期间变化。[E: packages/opencode/src/mcp/index.ts:462] [E: packages/opencode/src/mcp/index.ts:465] [E: packages/opencode/src/mcp/index.ts:470]
 - prompt resource materialization 在 `session/prompt.ts`，它把 `source.type === "resource"` 的 file part 通过 `mcp.readResource(clientName, uri)` 读成 prompt text/binary notes；这不是 MCP tool execution 路径。[E: packages/opencode/src/session/prompt.ts:703] [E: packages/opencode/src/session/prompt.ts:715] [I]
+- 404 session recovery 只在 request 携带旧 `mcp-session-id`、不是 initialized notification、且尚未 retry 时触发；它不是所有 404 的通用 retry policy。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:196][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:210]
+- patch 同时增加 `callTool` overload 只是 TypeScript compatibility；不能把 declaration 修补误写成新的 runtime tool protocol。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:9][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:22]
+- session-recovery test 只固定单 request 的 404→reinitialize→retry；并发共享 recovery promise、active-request timeout/cancel guard 与第二次 404 不再 recovery 目前由 patch code 直证，没有专门 test。[E: packages/opencode/test/mcp/session-recovery.test.ts:5][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:160][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:210]
+- pagination test 直接证明 output validator 跨页保留；known/required task metadata cache 的同样追加行为来自共用 `cacheToolMetadata` implementation，而不是独立断言。[E: packages/opencode/test/mcp/catalog.test.ts:101][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:122][I]
 
 ## Sources
 
@@ -144,6 +177,14 @@ MCP 工具名同时携带 client name 和 tool name，是为了避免多个 serv
 - packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts
 - packages/opencode/src/server/routes/instance/httpapi/handlers/mcp.ts
 - packages/core/src/v1/config/mcp.ts
+- packages/opencode/package.json
+- package.json
+- patches/@modelcontextprotocol%2Fsdk@1.29.0.patch
+- packages/opencode/test/mcp/transport.test.ts
+- packages/opencode/test/mcp/session-recovery.test.ts
+- packages/opencode/test/fixture/mcp-session-recovery.ts
+- packages/opencode/test/mcp/catalog.test.ts
+- packages/opencode/test/mcp/oauth-provider.test.ts
 
 ## 相关
 
