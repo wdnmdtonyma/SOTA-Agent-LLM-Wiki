@@ -1,0 +1,4 @@
+# uncertainty · attachment
+
+- **attachment-local README 写「读取也完整 decode」，源码读路径只 `probeImage`。** `packages/attachment/attachment-local/README.md` / `README.zh.md` 说 write admission **and reads** fully decode the raster。`packages/attachment/attachment-local/src/store.ts` 的 `readImageFile` 在 digest 对上之后调用 `probeImage`；`packages/attachment/attachment-local/src/image.ts` 的 `probeImage` 明确只解析 header（`limitInputPixels: false` 的 `metadata()`），注释写不再付完整 raster decode。wiki 跟代码：准入 `detectImage` + `raw().toBuffer()`，重放 `probeImage`。
+- **`store.spec.ts` 标题写 stricter limits，body 不改限额。** `it('keeps admitted history readable after deployment limits become stricter')`（`packages/attachment/attachment-local/tests/store.spec.ts` :137）对 `saveImageFile(..., LIMITS)` 再用 `readImageFile(root, ref)` 读回同一份 `LIMITS` 产出的 ref。`readImageFile` 签名没有 `ImageAttachmentLimits`，这条测试不能证明部署后收紧 `maxImagePixels` 旧对象仍可读。该命题只是签名推论，页内标 `[I]`。

@@ -1,0 +1,3 @@
+# uncertainty · subsys.llm.retry
+
+- **官方 README 与 loop 代码冲突（重试是否新开 turn）。** `packages/llm/llm-retry/README.md` / `README.zh.md` 写：plugin 不包 `ctx.llm.stream()`（这句与代码一致），但又写 “every retry opens a fresh numbered turn” / “The loop then closes the failed turn and opens a retry turn”，中文作「随后循环关闭失败轮次，并在同一持久历史上开启重试轮次」。还把挂钩写成 “closed-step `agent/request-error`”。源码：`ReactLoopAgent.step` 在同一 `while (true)` 里对 `{ kind: 'retry' }` 做 `continue`（`packages/core/agent-loop/src/agent.ts`）；`packages/llm/llm-retry/tests/retry.spec.ts` 断言全程只有一条 `step/start { turn: 1, step: 1 }`。companion 要求 `llm/retry` 时最近边界是开着的 `step/start`，不是 `step/end`（`packages/llm/llm-retry/src/invariant.ts`）。wiki 跟代码：同 step 再打；README 当官方漂移，不标 `[E]`。

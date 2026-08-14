@@ -1,0 +1,3 @@
+# uncertainty · subsys.interaction.approval
+
+- **`setApprovalPolicy` JSDoc 写 sole durable representation，delegation 另有一条 append。** `packages/interaction/user-approval/src/index.ts` 的 `setApprovalPolicy` 注释称它是会话 override 的 sole durable representation。`packages/subagent/subagent/src/child-agent.ts` 的 `appendDelegatedPolicyOverrides` 直接 `session.append('approval/policy', { policy, source: 'delegation' })`，不经该函数，也不经 `ApprovalService.setPolicy`。wiki 跟两条可执行路径：pin / `set(session)` 走 `setApprovalPolicy`（无 `source`）；live `/permission` 走 `setPolicy`（无 `source`，另 `inject` 通知）；delegation 带 `source: 'delegation'`。`effectiveApprovalPolicy` 不区分 `source`。

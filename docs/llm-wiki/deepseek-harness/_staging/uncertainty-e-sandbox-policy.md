@@ -1,0 +1,5 @@
+# uncertainty · subsys.execution.sandbox-policy
+
+- **`setSandboxMode` JSDoc 写 THE write path，代码还有第二条 append。** `packages/sandbox/sandbox-policy/src/session-mode.ts` 注释称 `setSandboxMode` 是「THE write path」。`packages/subagent/subagent/src/child-agent.ts` 的 `appendDelegatedPolicyOverrides` 直接 `session.append('sandbox/mode', { mode, source: 'delegation' })`，不经过该函数。wiki 跟两条可执行路径：运行时开关走 `setSandboxMode`（无 `source`）；delegation 带 `source`。fold 不区分。
+- **`resolve({ mode })` 是政策家合同，shipped 工具不走这个参数。** `SandboxPolicyRequest.mode` 与测试 `resolve({ session, mode: 'danger-full-access' })` 证明批准档盖过 session fold。`FsSandboxController.resolvePolicy` / `tool-bash` execute 先 `resolve({ session })`，再 `{ ...standing, mode: approved }`。效果等价（保留 cwd / sessionId），但生产路径没有调用 `resolve({ mode })`。
+- **`./invariant` companion 未核进 shipped boot。** 包导出 `@deepseek-ai/dsh-sandbox-policy/invariant`，测试钉死未知 `sandbox/mode` 抛 `InvariantError`。`dsh-base` 的 `cordis.patch.yml` 没有单独 invariant 行；是否被 invariants 自动发现未核。wiki 正文不写这条 companion。

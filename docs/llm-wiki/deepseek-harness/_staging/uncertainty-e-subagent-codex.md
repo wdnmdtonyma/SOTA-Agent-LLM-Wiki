@@ -1,0 +1,3 @@
+# uncertainty · subsys.orchestration.subagent-codex
+
+- **包 README 与 shipped 组合冲突（「host 上 load 一次」）。** `packages/subagent/subagent-codex/README.md` / `README.zh.md` 写：Shipped profiles load this provider once on the host and start no Codex process until a tool call。`packages/bundle/base/tests/base.spec.ts` 要求 `id: subagent-codex` insert 长度为 0，且 `dependencies` 不含 `@deepseek-ai/dsh-subagent-codex`。`dsh-base` / `dsh-web-app` / `dsh-headless` 都没有该行。wiki 跟代码：包存在、base 不装；preset 只留 `tool-subagent-codex` `disabled: true`。旧 Agent Note「Keep dormant providers in the base bundle」已被 `2026-08-12-production-dsh-excludes-product-subagent-providers` 取代，不能再当组合真源。

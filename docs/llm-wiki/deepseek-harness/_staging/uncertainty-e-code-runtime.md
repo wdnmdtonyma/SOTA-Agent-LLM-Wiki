@@ -1,0 +1,4 @@
+# uncertainty · subsys.execution.code-runtime
+
+- **yml / JSDoc 写「缺 runtime 则 mount 失败」，可执行路径是 pending + native 回落。** `apps/cli/config/agent-presets/code/agent.cordis.yml` 头注释与 `packages/core/agent-tool-presentation/src/index.ts` 的 `apply` 旁注释写：缺 host `codeRuntime` 时本行 pending，激活审计点名 `tool-presentation`。静态 `inject = ['tools']`；`ctx.inject(['codeRuntime'], …)` 建的是子 fiber。`inactiveRows` 只读 loader entry 的 `fiber.inject`。单测钉死 `row.ctx.get('codeRuntime') === undefined` 且 `assemble` 仍是 native `echo`。wiki 跟测试；「mount 一定失败」标 `[U]`。与 `_staging/uncertainty-d-agent-tool-presentation.md` 同一条漂移，从本缝 Consumer 角再记一次。
+- **`dsh-base` 无 `code-runtime` 没有对称单测。** `packages/bundle/base/tests/base.spec.ts` 只断言 `subagent-codex` / `subagent-claude-code` 行数为 0。本页「不在 dsh-base」来自对 `cordis.patch.yml` / `package.json` 的全文检索（无 `code-runtime`、无 `@deepseek-ai/dsh-code-runtime*`），标 `[I]`。若以后 `base.spec.ts` 补一行 `rows.filter(id === 'code-runtime').toHaveLength(0)`，可升为 `[E]`。

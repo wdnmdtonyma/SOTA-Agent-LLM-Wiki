@@ -1,0 +1,232 @@
+# DeepSeek Harness 源码 LLM Wiki — 入口索引
+
+> **deepseek-harness**(`deepseek-harness/`,Cordis 插件树 TypeScript monorepo,组装运行时)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 deepseek-harness git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
+>
+> **状态:已完成 —— 全部 183 节点 verified 于 `47f943859b`,`lint` 0 error / 0 warning。**
+>
+> **核心组织主线 —— 组合运行时**:profile → bundle → agent preset;capability seam = Service Definition / Provider / Consumer;model-visible ⟺ logged。每个节点 frontmatter 标 `pkg: composition|core|llm|execution|orchestration|context|persistence|interaction|host|client|integration|vendor|util|cross`。官方 `docs/` 不是 `[E]`。
+
+## 怎么用
+- **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
+- **人**:先读 [`README.md`](README.md) 与 `spine/overview`,再按需深入 T1/T2。写作规范 [`conventions.md`](conventions.md),填充令 [`RUN.md`](RUN.md)。
+
+## T0 — Spine(端到端脊柱,mermaid 先行)
+- [DSH 源码总览](spine/overview.md) `[cross]`: `组合运行时是什么 + 全仓地图`
+- [组合启动(profile→bundle→preset)](spine/composition-boot.md) `[composition]`: `空入口表叠 bundle / home / --patch`
+- [turn 与 step(可替换 loop)](spine/turn-and-step.md) `[core]`: `turn = 0..n step; inbox followup/steer/inject`
+- [工具调用解剖](spine/tool-call-anatomy.md) `[core]`: `pre-execute → execute → post-execute waterfall`
+- [会话日志与 deriveMessages](spine/session-log.md) `[core]`: `model-visible ⟺ logged; replace-only compaction`
+- [能力缝(Definition/Provider/Consumer)](spine/capability-seams.md) `[cross]`: `换一条 seam 会带走哪些 consumer`
+- [上下文装配与压缩](spine/context-and-compaction.md) `[context]`: `prompt sections + surfaceOp: replace`
+
+### 端到端 worked traces
+- [trace: Web 第一次提问](spine/trace-web-first-prompt.md) `[cross]`: `dsh web → 宿主 → 会话 → 第一轮 turn`
+- [trace: headless 一轮](spine/trace-headless-turn.md) `[composition]`: `dsh --profile headless 一次任务`
+- [trace: 带审批的工具调用](spine/trace-tool-approval.md) `[interaction]`: `tool/call → approval → sandbox → result`
+- [trace: Code Mode 一轮](spine/trace-code-mode.md) `[core]`: `run_code 是唯一 wire 工具,子调用重入管线`
+- [trace: 拉起子代理](spine/trace-subagent.md) `[orchestration]`: `spawn/fork 到子 session 再回收`
+
+## T1 — Surface / Tools(model-visible;同名不同包拆页;家族页须逐名入表)
+- [read 读文件](surface/tools/read.md) `[execution]`: `读工作区文件;观察策略在 fs-observation-policy`
+- [read_image 读图](surface/tools/read-image.md) `[execution]`: `依赖 ctx.attachments 与图像路由`
+- [write 整文件写](surface/tools/write.md) `[execution]`: `整文件写入;走 fs/write-intent`
+- [edit 字符串替换](surface/tools/edit.md) `[execution]`: `无 apply_patch;read-before-write 由 observation policy`
+- [glob 找文件](surface/tools/glob.md) `[execution]`: `打包 ripgrep,经 ctx.subprocess`
+- [grep 搜内容](surface/tools/grep.md) `[execution]`: `打包 ripgrep,不是宿主 rg`
+- [str_replace_editor](surface/tools/str-replace-editor.md) `[execution]`: `minimal 用的 Anthropic 风格编辑器`
+- [bash 一次性执行](surface/tools/bash.md) `[execution]`: `ctx.shell;可 run_in_background → jobs`
+- [bash 持久 PTY](surface/tools/bash-persistent.md) `[execution]`: `同名 bash,包是 tool-bash-persistent;minimal 用它`
+- [pwsh](surface/tools/pwsh.md) `[execution]`: `PowerShell 方言,镜像 bash 减 sandbox 控件`
+- [terminal_* 六件套](surface/tools/terminal.md) `[execution]`: `opt-in,不在 shipped preset;六个名字必须入表`
+- [job_list / job_output / job_kill](surface/tools/jobs.md) `[orchestration]`: `后台 bash / PTY / subagent 共用控制器`
+- [exit_plan_mode](surface/tools/exit-plan-mode.md) `[orchestration]`: `schema 在 plan 外仍在,execute 拒掉`
+- [todo_write](surface/tools/todo-write.md) `[orchestration]`: `会话所有;allowParallelInProgress 无默认`
+- [create_goal / get_goal / update_goal](surface/tools/goal.md) `[orchestration]`: `同会话续跑;activation 不落盘`
+- [subagent](surface/tools/subagent.md) `[orchestration]`: `wire 名是 load-time toolName;continuable`
+- [subagent_fork](surface/tools/subagent-fork.md) `[orchestration]`: `one-shot fork;与 subagent schema 不同`
+- [send_message / interrupt_agent / list_agents](surface/tools/subagent-control.md) `[orchestration]`: `全局控制件,不是第二个 spawn`
+- [report](surface/tools/report.md) `[orchestration]`: `只装在 continuable 子代理里`
+- [workflow](surface/tools/workflow.md) `[orchestration]`: `JS 编排器,子调用走完整管线`
+- [ralph](surface/tools/ralph.md) `[orchestration]`: `每轮全新子代理,无对话种子`
+- [web_search](surface/tools/web-search.md) `[integration]`: `辅助 Messages 调 web_search_20250305;密钥走 SEARCH_BASE_URL`
+- [web_fetch](surface/tools/web-fetch.md) `[integration]`: `shipped preset 默认关;SSRF 未完成`
+- [skill](surface/tools/skill.md) `[context]`: `扫描 .dsh/skills 与 .agents/skills`
+- [ask_user_question](surface/tools/ask-user-question.md) `[interaction]`: `停在 tool/call 直到 UI 答`
+- [run_code (Code Mode)](surface/tools/run-code.md) `[core]`: `code preset 唯一 wire 工具`
+- [lsp](surface/tools/lsp.md) `[execution]`: `四 ops;无 provider 则 LSP_UNAVAILABLE`
+- [session_* 查询五件套](surface/tools/session-query.md) `[persistence]`: `opt-in;五个名字必须入表`
+- [schedule_create / list / delete](surface/tools/schedule.md) `[orchestration]`: `opt-in;只在 live root Agent scope`
+- [cordis_* 自修改套件](surface/tools/cordis.md) `[composition]`: `cordis preset;无 cordis_mount/unmount`
+
+> 工具基础设施见 `subsystems/core/tools` 与 `reference/tools-catalog`。
+
+## T1 — Surface / 其它可见面
+- [CLI 入口与旗标](surface/cli/overview.md) `[composition]`: `dsh web / headless / plugin / dump-config`
+- [dsh plugin 子命令](surface/cli/plugin.md) `[composition]`: `往 profile 装 out-of-tree 插件`
+- [web profile](surface/profiles/web.md) `[composition]`: `默认安装路径;浏览器工作台`
+- [headless profile](surface/profiles/headless.md) `[composition]`: `一次性 runner,无 server`
+- [agent preset 总览](surface/presets/overview.md) `[composition]`: `四份 shipped preset 怎么被发现和挂上`
+- [minimal preset](surface/presets/minimal.md) `[composition]`: `benchmark;无 compaction;persistent bash + str_replace_editor`
+- [standard preset](surface/presets/standard.md) `[composition]`: `Web 默认;全套编码工具`
+- [code preset (PTC)](surface/presets/code.md) `[composition]`: `standard + Code Mode`
+- [cordis preset](surface/presets/cordis.md) `[composition]`: `standard + 自修改;当 shell 访问`
+- [用户设置与 Config](surface/config/settings.md) `[persistence]`: `defaults → composition base → user document`
+- [人命令 ctx.commands](surface/commands/overview.md) `[interaction]`: `不经模型 turn 的直接调用`
+- [skills 系统](surface/skills/system.md) `[context]`: `发现优先级与 skill 工具`
+- [MCP 客户端](surface/mcp/client.md) `[integration]`: `stdio / streamable-http;默认无 server;仅 tools`
+- [Claude / Codex hooks 桥](surface/hooks/bridges.md) `[interaction]`: `回放到同一批 interception 点`
+- [ACP server](surface/acp/server.md) `[integration]`: `fresh-session only;JSON-RPC stdio`
+- [TypeScript JSON-RPC SDK](surface/sdk/typescript.md) `[integration]`: `进程外 runtime 客户端`
+- [Python SDK](surface/sdk/python.md) `[integration]`: `bundled runtime + 客户端`
+- [Web 工作台可见面](surface/web/workbench.md) `[client]`: `默认 GUI;拒 --host 0.0.0.0`
+- [DeepSeek 官方路由](surface/providers/deepseek.md) `[llm]`: `默认 deepseek-v4-flash;stream-only`
+- [pi-ai 多协议路由](surface/providers/pi-ai.md) `[llm]`: `始终加载,零 route 直到 Settings 加 profile`
+- [DSH_HOME 与路径](surface/misc/home.md) `[util]`: `$DSH_HOME 否则 ~/.dsh`
+- [审批与沙箱产品面](surface/misc/security.md) `[execution]`: `文件副作用 only;ask|never;fail-loud`
+
+## T2 — Subsystems(按 seam / 控制流,不镜像官方 docs/subsystems)
+
+### composition
+- [app-boot 与 profile 发现](subsystems/composition/app-boot.md) `[composition]`: `两锚点解析 bundle / out-of-tree`
+- [cmdline 启动胶](subsystems/composition/cmdline.md) `[composition]`: `旗标派生的 patch`
+- [dsh-base bundle](subsystems/composition/bundle-base.md) `[composition]`: `每个 profile 第一层;当前不含休眠 Codex/Claude 行`
+- [dsh-web-app bundle](subsystems/composition/bundle-web-app.md) `[composition]`: `关掉 base 里给单会话 TUI 留的工具行`
+- [dsh-headless bundle](subsystems/composition/bundle-headless.md) `[composition]`: `一次性 runner 装配`
+- [preset 发现与挂载](subsystems/composition/agent-presets.md) `[composition]`: `per-session cordis.yml + isolate`
+- [persona 段](subsystems/composition/persona.md) `[composition]`: `preset 的人设 / 完整 persona`
+
+### core
+- [scope 作用域原语](subsystems/core/scope.md) `[core]`: `无 ctx key 的库;scoped 注册`
+- [SessionEvent 日志](subsystems/core/session.md) `[core]`: `append-only 内存店 + 投影`
+- [system-prompt 装配](subsystems/core/system-prompt.md) `[core]`: `sections + tool schema 合作装配`
+- [工具注册表与执行管线](subsystems/core/tools.md) `[core]`: `scoped registry + 守卫管线`
+- [Code Mode 运行时](subsystems/core/code-mode.md) `[core]`: `生成 SDK;子调用重入`
+- [Agent 合同与注册表](subsystems/core/agent.md) `[core]`: `loop 可换;插件依赖此缝`
+- [inbox(followup/steer/inject)](subsystems/core/agent-inbox.md) `[core]`: `唤醒 vs 等待下一条`
+- [默认 agent-loop 驱动](subsystems/core/agent-loop.md) `[core]`: `可替换的默认驱动`
+- [默认模型选择](subsystems/core/agent-default-model.md) `[core]`: `仅当会话自己没选模型`
+- [工具呈现模式](subsystems/core/agent-tool-presentation.md) `[core]`: `mode: code / both 等呈现`
+- [运行时不变量](subsystems/core/invariants.md) `[core]`: `断言拥有的关系,不是服务在场`
+
+### llm
+- [llm 服务缝](subsystems/llm/service.md) `[llm]`: `Message / StreamChunk / adapter`
+- [DeepSeek adapter](subsystems/llm/deepseek.md) `[llm]`: `deepseek-official;reasoningEffort`
+- [pi-ai adapter](subsystems/llm/pi-ai.md) `[llm]`: `openai-completions / responses / anthropic-messages`
+- [llm retry](subsystems/llm/retry.md) `[llm]`: `请求失败重试与历史`
+- [token-meter](subsystems/llm/token-meter.md) `[llm]`: `不可变标量与位置回放测量`
+
+### execution
+- [fs 服务缝](subsystems/execution/fs.md) `[execution]`: `FsTarget / 观察 / 错误码`
+- [fs-local provider](subsystems/execution/fs-local.md) `[execution]`: `本地实现 + win32`
+- [fs 观察策略](subsystems/execution/fs-observation.md) `[execution]`: `read-before-write/edit;无 schema 变化`
+- [fs-sandbox 包装](subsystems/execution/fs-sandbox.md) `[execution]`: `文件副作用走 sandbox`
+- [shell 执行缝](subsystems/execution/shell.md) `[execution]`: `request/spec 拆分模板`
+- [bash-local provider](subsystems/execution/bash-local.md) `[execution]`: `本地 bash + sandbox 包装`
+- [pwsh-local provider](subsystems/execution/pwsh-local.md) `[execution]`: `Windows 组合的 shell provider`
+- [subprocess 缝](subsystems/execution/subprocess.md) `[execution]`: `显式 SpawnSpec;与 fs 同一执行世界`
+- [terminals PTY 缝](subsystems/execution/terminal.md) `[execution]`: `owner-scoped 持久会话`
+- [sandbox 缝](subsystems/execution/sandbox.md) `[execution]`: `只罩文件副作用;不可用则 SANDBOX_UNAVAILABLE`
+- [sandbox-local 后端](subsystems/execution/sandbox-local.md) `[execution]`: `bwrap→Landlock;macOS Seatbelt;Windows ACL`
+- [sandboxPolicy](subsystems/execution/sandbox-policy.md) `[execution]`: `read-only / workspace-write / danger-full-access`
+- [code-runtime 缝](subsystems/execution/code-runtime.md) `[execution]`: `worker-thread provider + Code Mode consumer`
+- [E2B 远程世界](subsystems/execution/e2b.md) `[execution]`: `POC:一次换 fs+subprocess`
+- [lsp 缝](subsystems/execution/lsp.md) `[execution]`: `四 ops;stdio provider`
+
+### orchestration
+- [subagent 缝](subsystems/orchestration/subagent.md) `[orchestration]`: `named-provider 注册表`
+- [in-process spawn](subsystems/orchestration/subagent-in-process.md) `[orchestration]`: `进程内新子代理`
+- [in-process fork](subsystems/orchestration/subagent-fork.md) `[orchestration]`: `分叉当前会话`
+- [ACP 子代理后端](subsystems/orchestration/subagent-acp.md) `[orchestration]`: `经 ACP 委派`
+- [DSH SDK 子进程后端](subsystems/orchestration/subagent-dsh-sdk.md) `[orchestration]`: `拉起另一个 dsh runtime`
+- [Codex 子代理后端](subsystems/orchestration/subagent-codex.md) `[orchestration]`: `包存在;base bundle 默认不装`
+- [Claude Code 子代理后端](subsystems/orchestration/subagent-claude-code.md) `[orchestration]`: `包存在;base bundle 默认不装`
+- [workflow 引擎](subsystems/orchestration/workflow.md) `[orchestration]`: `worker-thread + ralph`
+- [jobs 运行时](subsystems/orchestration/jobs.md) `[orchestration]`: `kind-agnostic 后台任务`
+- [goal 生命周期](subsystems/orchestration/goal.md) `[orchestration]`: `phase 落盘;activation 不落盘`
+- [plan mode 状态](subsystems/orchestration/plan.md) `[orchestration]`: `log-only plan/mode;工具表不换(KV cache)`
+- [schedule 提醒](subsystems/orchestration/schedule.md) `[orchestration]`: `会话内 after_seconds / at / every_seconds`
+
+### context
+- [compaction 缝](subsystems/context/compaction.md) `[context]`: `replace-only;阈值默认 0.8 / 0.16`
+- [compaction-basic provider](subsystems/context/compaction-basic.md) `[context]`: `默认引擎 + tool-result pruner`
+- [工作区指令](subsystems/context/agent-instructions.md) `[context]`: `AGENTS.md 一类前缀`
+- [时间上下文](subsystems/context/time-context.md) `[context]`: `注入当前时间`
+- [跨会话引用](subsystems/context/session-reference.md) `[context]`: `结构化 session 引用`
+- [skills 注册与加载](subsystems/context/skills.md) `[context]`: `provider registry + local impl`
+- [工具超时策略](subsystems/context/timeout-policy.md) `[context]`: `tools/execute 截止`
+- [重复调用提醒](subsystems/context/repeat-reminder.md) `[context]`: `loop hygiene,advisory`
+
+### persistence
+- [session persistence 缝](subsystems/persistence/session-persistence.md) `[persistence]`: `JSONL + SQLite 后端协调`
+- [JSONL 后端](subsystems/persistence/jsonl.md) `[persistence]`: `SESSION_FORMAT_VERSION = 0`
+- [SQLite 后端](subsystems/persistence/sqlite.md) `[persistence]`: `单调 SCHEMA_VERSION;拒旧盘`
+- [checkpoint 策略](subsystems/persistence/checkpoint.md) `[persistence]`: `llm/stream 前 + tool body 前`
+- [session projection](subsystems/persistence/projection.md) `[persistence]`: `纯 ProjectionDefinition + 一致切面`
+- [会话标题](subsystems/persistence/title.md) `[persistence]`: `异步 provider;引用源 message seq`
+- [session telemetry](subsystems/persistence/telemetry.md) `[persistence]`: `outbound record + OTel sink`
+- [非会话 storage](subsystems/persistence/storage.md) `[persistence]`: `backend + domain form`
+- [spill 大输出](subsystems/persistence/spill.md) `[persistence]`: `工具结果溢出到 locator`
+- [attachment 附件](subsystems/persistence/attachment.md) `[persistence]`: `内容寻址图片身份`
+- [session-query 检索](subsystems/persistence/session-query.md) `[persistence]`: `语料 / 血缘 / FTS`
+- [workspace 实体](subsystems/persistence/workspace.md) `[persistence]`: `cwd 与 workspace id`
+- [settings 缝](subsystems/persistence/settings.md) `[persistence]`: `namespace 注册 + 热提交`
+- [credentials 缝](subsystems/persistence/credentials.md) `[persistence]`: `配置里只放 CredentialRef`
+
+### interaction
+- [user-approval](subsystems/interaction/approval.md) `[interaction]`: `ask|never;allowed-once;无答者 fail-closed`
+- [user-questions](subsystems/interaction/user-questions.md) `[interaction]`: `结构化提问 / 选项`
+- [commands 注册表](subsystems/interaction/commands.md) `[interaction]`: `人命令定义与适配`
+- [permission presets](subsystems/interaction/permission-presets.md) `[interaction]`: `PresetSpec + custom;log-only 事件`
+- [hook-protocol 库](subsystems/interaction/hooks-protocol.md) `[interaction]`: `Claude / Codex 共用 wire`
+- [Claude Code hooks 桥](subsystems/interaction/hooks-claude.md) `[interaction]`: `hooks.json → Cordis 监听点`
+- [Codex hooks 桥](subsystems/interaction/hooks-codex.md) `[interaction]`: `Codex hook 文件 → 同一批点`
+- [message feedback](subsystems/interaction/feedback.md) `[interaction]`: `生命周期绑定的反馈记录`
+
+### host
+- [HTTP 宿主](subsystems/host/webserver.md) `[host]`: `路由匹配与 fallback seat`
+- [API proxy / BFF](subsystems/host/apiproxy.md) `[host]`: `浏览器到 host 的 RPC`
+- [前端静态资源](subsystems/host/frontend-static.md) `[host]`: `把 client bundle 挂上`
+- [plugin inventory](subsystems/host/plugin-inventory.md) `[host]`: `已装插件清单给 UI`
+- [directory picker](subsystems/host/directory-picker.md) `[host]`: `工作区选目录`
+
+### client
+- [client runtime](subsystems/client/runtime.md) `[client]`: `浏览器半边引导`
+- [client modules 表](subsystems/client/modules.md) `[client]`: `dsh.client 声明与 boot graph`
+- [web shell](subsystems/client/web.md) `[client]`: `应用壳`
+- [client connection](subsystems/client/connection.md) `[client]`: `到 host 的连线`
+- [client HMR](subsystems/client/hmr.md) `[client]`: `运行时装 UI 插件`
+- [ui-slots](subsystems/client/ui-slots.md) `[client]`: `插槽装配点`
+- [ui-conversation](subsystems/client/ui-conversation.md) `[client]`: `会话流渲染`
+- [ui-layout](subsystems/client/ui-layout.md) `[client]`: `工作台布局`
+
+### integration
+- [mcp-client 实现](subsystems/integration/mcp-client.md) `[integration]`: `名字 mcp__<server>__<raw>`
+- [ACP codec / server](subsystems/integration/acp.md) `[integration]`: `无 resume/fork;committed text`
+- [SDK JSON-RPC 协议](subsystems/integration/sdk-protocol.md) `[integration]`: `进程外协议`
+- [SDK server 插件](subsystems/integration/sdk-server.md) `[integration]`: `把 runtime 暴露成 JSON-RPC`
+- [SDK TS client](subsystems/integration/sdk-client.md) `[integration]`: `TypeScript 客户端`
+- [Typert 类型图](subsystems/integration/typert.md) `[integration]`: `远程调用描述符与 registry`
+- [API gateway](subsystems/integration/api-gateway.md) `[integration]`: `Host Gateway / remotes`
+- [web search providers](subsystems/integration/web-search.md) `[integration]`: `DeepSeek 默认;Exa / Perplexity 可选`
+- [web fetch provider](subsystems/integration/web-fetch.md) `[integration]`: `HTTP fetch;SSRF 未完成`
+
+### vendor / util
+- [vendored Cordis](subsystems/vendor/cordis.md) `[vendor]`: `可逆 effect / waterfall / fiber`
+- [cordis plugin loader](subsystems/vendor/loader.md) `[vendor]`: `cordis.yml 装载与 !!js`
+- [home-paths](subsystems/util/home-paths.md) `[util]`: `Harness home 解析`
+- [Branded ids](subsystems/util/brand.md) `[util]`: `跨边界不透明 id`
+
+## T3 — Reference / catalog
+- [模型可见工具目录](reference/tools-catalog.md) `[core]`: `按 boot schemas 逐名覆盖;官方 catalog 只当查漏`
+- [SessionEvent 目录](reference/session-events.md) `[core]`: `每个事件变体一行`
+- [Config 键目录](reference/config-keys.md) `[persistence]`: `分组实例全覆盖;生成物只当查漏`
+- [环境变量目录](reference/env-vars.md) `[cross]`: `含 SEARCH_BASE_URL 与 BASE_URL 分家`
+- [ctx 服务键目录](reference/ctx-keys.md) `[cross]`: `ctx.sessions / tools / llm … 对照包`
+- [事件生产消费图](reference/event-map.md) `[cross]`: `session / agent / capability 三域`
+- [CLI 旗标目录](reference/cli-flags.md) `[composition]`: `每个旗标一行`
+- [shipped preset 对照表](reference/presets.md) `[composition]`: `工具/插件成员矩阵`
+- [SDK / RPC 方法目录](reference/sdk-methods.md) `[integration]`: `JSON-RPC 方法逐条`
+- [seam 清单](reference/capability-seams.md) `[cross]`: `每条缝的三角角色与包`
+- [monorepo 包索引](reference/package-index.md) `[cross]`: `group → 包 → ctx key;不是 219 页`
+- [术语表](reference/glossary.md) `[cross]`: `profile / bundle / preset / seam / turn / step`
+- [不确定项日志([U] 汇总)](reference/uncertainty.md) `[cross]`: `reconcile 从 _staging/uncertainty-*.md 合并`

@@ -1,0 +1,1 @@
+- spine.trace-code-mode：`dsh-agent-tool-presentation` 模块 JSDoc 与 `agent-tool-presentation.spec.ts` 的注释写「缺 codeRuntime 则 mount 失败、审计点名该行」。可执行断言与 `inactiveRows` 只读静态 `inject: ['tools']`：`row.await()` 成功，assemble 保持 native `echo`。以测试断言 / `mount.ts:295` 为准；注释与代码是否会再对齐待查。
