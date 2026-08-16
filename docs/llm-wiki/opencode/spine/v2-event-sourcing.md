@@ -9,7 +9,7 @@ symbols: [EventV2.define, EventV2.publish, EventV2.replay, EventV2.readAggregate
 related: [session-v2.projector, persistence.eventing, ref.events]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V2 event sourcing 是 core 的同步 durable event 层:durable event 以 aggregate seq 写入 EventTable,同一 SQLite immediate transaction 内运行 projectors 与 local commit hook,再通知 live subscribers。
@@ -65,9 +65,9 @@ flowchart TD
 
 14. `replayAll` 要求所有 replay events 属于同一 aggregate,并检查序列连续;`claim` 则把 aggregate 的 owner 写到 `EventSequenceTable.owner_id`。[E: packages/core/src/event.ts:480][E: packages/core/src/event.ts:485][E: packages/core/src/event.ts:487][E: packages/core/src/event.ts:495][E: packages/core/src/event.ts:498][E: packages/core/src/event.ts:525][E: packages/core/src/event.ts:528]
 
-15. `SessionProjector.layer` 在 layer 启动时注册 session 相关 projector;当前 EventV2 文件没有 before-commit guard 注册接口,session input 冲突由 projector 内部 die 处理。[E: packages/core/src/session/projector.ts:211][E: packages/core/src/session/projector.ts:215][E: packages/core/src/session/projector.ts:350][E: packages/core/src/session/projector.ts:364]
+15. `SessionProjector.layer` 在 layer 启动时注册 session 相关 projector;当前 EventV2 文件没有 before-commit guard 注册接口,session input 冲突由 projector 内部 die 处理。[E: packages/core/src/session/projector.ts:210][E: packages/core/src/session/projector.ts:214][E: packages/core/src/session/projector.ts:348][E: packages/core/src/session/projector.ts:362]
 
-16. Session projector 把 V1 session created/updated/deleted、V1 message/part update、V2 prompt admitted/prompted、context/tool/text/step/reasoning events 与 `Compaction.Ended` 等投影到 session read model;这个文件没有注册 `Compaction.Started` 或 `Compaction.Delta` projector。[E: packages/core/src/session/projector.ts:215][E: packages/core/src/session/projector.ts:235][E: packages/core/src/session/projector.ts:259][E: packages/core/src/session/projector.ts:262][E: packages/core/src/session/projector.ts:331][E: packages/core/src/session/projector.ts:350][E: packages/core/src/session/projector.ts:364][E: packages/core/src/session/projector.ts:377][E: packages/core/src/session/projector.ts:381][E: packages/core/src/session/projector.ts:388][E: packages/core/src/session/projector.ts:395]
+16. Session projector 把 V1 session created/updated/deleted、V1 message/part update、V2 prompt admitted/prompted、context/tool/text/step/reasoning events 与 `Compaction.Ended` 等投影到 session read model;这个文件没有注册 `Compaction.Started` 或 `Compaction.Delta` projector。[E: packages/core/src/session/projector.ts:214][E: packages/core/src/session/projector.ts:234][E: packages/core/src/session/projector.ts:257][E: packages/core/src/session/projector.ts:260][E: packages/core/src/session/projector.ts:329][E: packages/core/src/session/projector.ts:348][E: packages/core/src/session/projector.ts:362][E: packages/core/src/session/projector.ts:375][E: packages/core/src/session/projector.ts:379][E: packages/core/src/session/projector.ts:386][E: packages/core/src/session/projector.ts:393]
 
 17. `SessionEvent.DurableDefinitions` 包含 durable V2 session events,其中包含 `Compaction.Started` 与 `Compaction.Ended`;`Definitions` 额外包含 live-only deltas,包括 `Text.Delta`、`Reasoning.Delta`、`Tool.Input.Delta`、`Compaction.Delta`。[E: packages/schema/src/session-event.ts:448][E: packages/schema/src/session-event.ts:472][E: packages/schema/src/session-event.ts:473][E: packages/schema/src/session-event.ts:479][E: packages/schema/src/session-event.ts:493][E: packages/schema/src/session-event.ts:496][E: packages/schema/src/session-event.ts:499][E: packages/schema/src/session-event.ts:507]
 

@@ -5,7 +5,7 @@ kind: tool
 tier: T1
 v: shared
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 source:
   - packages/opencode/src/tool/glob.ts
   - packages/core/src/tool/glob.ts
@@ -28,7 +28,7 @@ related:
 | 维度 | V1 | V2 |
 | --- | --- | --- |
 | wire name | `glob`，由 `Tool.define("glob", ...)` 注册。[E: packages/opencode/src/tool/glob.ts:18] | `glob`，由 `export const name = "glob"` 暴露。[E: packages/core/src/tool/glob.ts:16] |
-| provider 可见性 | V1 builtins 包含 `GlobTool`。[E: packages/opencode/src/tool/registry.ts:232] | V2 builtins 合入 `GlobTool.node`。[E: packages/core/src/tool/builtins.ts:38] |
+| provider 可见性 | V1 builtins 包含 `GlobTool`。[E: packages/opencode/src/tool/registry.ts:237] | V2 builtins 合入 `GlobTool.node`。[E: packages/core/src/tool/builtins.ts:38] |
 | permission key | V1 使用 `ctx.ask({ permission: "glob" })`。[E: packages/opencode/src/tool/glob.ts:28] | V2 使用 `permission.assert({ action: "glob" })`。[E: packages/core/src/tool/glob.ts:62][E: packages/core/src/tool/glob.ts:63] |
 | search backend | V1 调用 `Ripgrep.glob`。[E: packages/opencode/src/tool/glob.ts:50] | V2 注入 `Ripgrep.Service` 并调用 `ripgrep.glob`。[E: packages/core/src/tool/glob.ts:41][E: packages/core/src/tool/glob.ts:76] |
 

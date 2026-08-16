@@ -9,7 +9,7 @@ symbols: [TodoWriteTool, Todo, SessionTodo]
 related: [ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > TodoWrite 工具维护当前 session 的结构化 todo list；V1 与 V2 的字段语义基本同构[I]，但 V1 输出 `{ title, output, metadata }`，V2 输出经 output schema encode 的 `{ todos }` structured result。[E: packages/opencode/src/tool/todo.ts:37][E: packages/opencode/src/tool/todo.ts:38][E: packages/opencode/src/tool/todo.ts:39][E: packages/opencode/src/tool/todo.ts:40][E: packages/core/src/tool/todowrite.ts:18][E: packages/core/src/tool/todowrite.ts:19][E: packages/core/src/tool/tool.ts:97][E: packages/core/src/tool/tool.ts:100]
@@ -26,7 +26,7 @@ updated: 89130db6b0
 
 ### 1 Identity
 
-V1 文件名是 `todo.ts`，但 exported tool 是 `TodoWriteTool`，wire id 是 `"todowrite"`；V1 registry 初始化 `TodoWriteTool` 并把 `tool.todo` 放入 builtin 列表。[E: packages/opencode/src/tool/todo.ts:14][E: packages/opencode/src/tool/todo.ts:15][E: packages/opencode/src/tool/registry.ts:100][E: packages/opencode/src/tool/registry.ts:214][E: packages/opencode/src/tool/registry.ts:237]
+V1 文件名是 `todo.ts`，但 exported tool 是 `TodoWriteTool`，wire id 是 `"todowrite"`；V1 registry 初始化 `TodoWriteTool` 并把 `tool.todo` 放入 builtin 列表。[E: packages/opencode/src/tool/todo.ts:14][E: packages/opencode/src/tool/todo.ts:15][E: packages/opencode/src/tool/registry.ts:105][E: packages/opencode/src/tool/registry.ts:219][E: packages/opencode/src/tool/registry.ts:242]
 
 ### 2 用途定位
 

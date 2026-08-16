@@ -9,7 +9,7 @@ symbols: [Instruction, Instruction.systemPaths, Instruction.system, Instruction.
 related: [prompt.system-prompts]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V1 `Instruction` service 负责把 global/project/config/nearby instruction files 转成 provider-turn system context 或 read-tool 后续 system-reminder;它发现 `AGENTS.md`、可选 `CLAUDE.md` 和 deprecated `CONTEXT.md`。
@@ -59,7 +59,7 @@ updated: 89130db6b0
 
 9. read tool 调 `instruction.resolve(ctx.messages, filepath, ctx.messageID)`;如果 loaded instructions 非空,文本文件 output 末尾追加 `<system-reminder>` 包裹的 instruction content,同时 metadata.loaded 记录这些 filepath。[E: packages/opencode/src/tool/read.ts:300][E: packages/opencode/src/tool/read.ts:355][E: packages/opencode/src/tool/read.ts:356][E: packages/opencode/src/tool/read.ts:362][E: packages/opencode/src/tool/read.ts:365]
 
-10. `Instruction.clear(messageID)` 删除 per-message claims;`SessionPrompt.createUserMessage` 和 processor outcome 都注册/执行 clear,避免跨 message 泄漏 nearby instruction claims。[E: packages/opencode/src/session/instruction.ts:105][E: packages/opencode/src/session/instruction.ts:107][E: packages/opencode/src/session/prompt.ts:704][E: packages/opencode/src/session/prompt.ts:1393]
+10. `Instruction.clear(messageID)` 删除 per-message claims;`createUserMessage` 用 scoped finalizer 清 user message claims,run loop 在 `handle.process` 结束后 `ensuring(instruction.clear(handle.message.id))`,避免跨 message 泄漏 nearby instruction claims。[E: packages/opencode/src/session/instruction.ts:105][E: packages/opencode/src/session/instruction.ts:107][E: packages/opencode/src/session/prompt.ts:691][E: packages/opencode/src/session/prompt.ts:1331]
 
 ## V1 与 V2 迁移边界
 

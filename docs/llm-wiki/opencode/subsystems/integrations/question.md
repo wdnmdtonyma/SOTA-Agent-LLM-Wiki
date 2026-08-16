@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 source:
   - packages/opencode/src/question/index.ts
   - packages/opencode/src/question/schema.ts
@@ -65,7 +65,7 @@ V1 `Question.Service` 管理 pending question map，提供 ask/reply/reject/list
 
 1. V1 `question` tool 参数是 `questions: Array(Question.Prompt)`。[E: packages/opencode/src/tool/question.ts:6]
 2. tool 执行时把 sessionID 和可选 tool call source 传给 `Question.ask`。[E: packages/opencode/src/tool/question.ts:22]
-3. registry 中 `question` tool 只在 client 是 app/cli/desktop 或显式 `enableQuestionTool` 时加入 built-in tool list。[E: packages/opencode/src/tool/registry.ts:202] [E: packages/opencode/src/tool/registry.ts:228]
+3. registry 中 `question` tool 只在 client 是 app/cli/desktop 或显式 `enableQuestionTool` 时加入 built-in tool list。[E: packages/opencode/src/tool/registry.ts:207] [E: packages/opencode/src/tool/registry.ts:233]
 4. V1 HTTP route group root 是 `/question`，定义 list/reply/reject endpoints。[E: packages/opencode/src/server/routes/instance/httpapi/groups/question.ts:11] [E: packages/opencode/src/server/routes/instance/httpapi/groups/question.ts:22] [E: packages/opencode/src/server/routes/instance/httpapi/groups/question.ts:32] [E: packages/opencode/src/server/routes/instance/httpapi/groups/question.ts:45]
 5. V1 route handler 的 `reply` 和 `reject` 直接调用 `Question.Service`，并把 `Question.NotFoundError` 映射为 `QuestionNotFoundError` HTTP error。[E: packages/opencode/src/server/routes/instance/httpapi/handlers/question.ts:20] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/question.ts:26] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/question.ts:39] [E: packages/opencode/src/server/routes/instance/httpapi/handlers/question.ts:40]
 
@@ -97,7 +97,7 @@ V2 `Question.Option`、base question、Info/Prompt/Tool/Request/Answer/Reply 与
 4. permission denied 会映射成 tool failure，而不是直接抛普通异常给 runner。[E: packages/core/src/tool/question.ts:71]
 5. V2 LLM runner 现在把 `QuestionV2.RejectedError` 与 `PermissionV2.DeclinedError` 统一归为 `isUserDeclined`；两者都代表用户拒绝一个交互 prompt，不应成为 model-facing tool output。[E: packages/core/src/session/runner/llm.ts:145] [E: packages/core/src/session/runner/llm.ts:146] [E: packages/core/src/session/runner/llm.ts:149]
 6. 当 question rejected（或 permission declined）时，runner 会清理 running tool fibers、失败未 settled tools，并 interrupt。[E: packages/core/src/session/runner/llm.ts:297] [E: packages/core/src/session/runner/llm.ts:298] [E: packages/core/src/session/runner/llm.ts:299] [E: packages/core/src/session/runner/llm.ts:300]
-7. V2 默认 agent 插件里，基础默认 permission deny question，但 default agent 和 plan agent 又显式 allow question。[E: packages/core/src/plugin/agent.ts:115] [E: packages/core/src/plugin/agent.ts:130] [E: packages/core/src/plugin/agent.ts:142]
+7. V2 默认 agent 插件里，基础默认 permission deny question，但 default agent 和 plan agent 又显式 allow question。[E: packages/core/src/plugin/agent.ts:111] [E: packages/core/src/plugin/agent.ts:126] [E: packages/core/src/plugin/agent.ts:138]
 
 ### Server API
 
@@ -123,7 +123,7 @@ V2 把 pending prompts 的 pending map 放在 location layer 中，配合 finali
 
 ## 易踩坑
 
-- V1 `question` tool 不是总是给模型可见；registry 受 client/flag 控制。[E: packages/opencode/src/tool/registry.ts:201]
+- V1 `question` tool 不是总是给模型可见；registry 受 client/flag 控制。[E: packages/opencode/src/tool/registry.ts:206]
 - V2 question denied 会变成 tool failure，不是普通 permission exception 泄漏给模型。[E: packages/core/src/tool/question.ts:71]
 - V2 reply/reject 必须匹配 sessionID；handler 会阻止跨 session 操作 pending question。[E: packages/server/src/handlers/question.ts:21]
 - 拒绝 V2 question 会中断 LLM loop，不能把 reject 当作“返回空答案继续执行”；同一分支也处理 permission decline。[E: packages/core/src/session/runner/llm.ts:149] [E: packages/core/src/session/runner/llm.ts:297] [E: packages/core/src/session/runner/llm.ts:300]

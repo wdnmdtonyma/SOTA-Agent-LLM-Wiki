@@ -9,7 +9,7 @@ symbols: [RunCommand, Server.Default, SessionPrompt.prompt, SessionPrompt.loop]
 related: [spine.v1-turn-loop, server.http-server, sdk.overview]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V1 CLI-to-session 节点描述 `opencode run` 如何解析 directory/session/mode,创建 SDK client,再经 process-local Effect HttpApi server 调到 `SessionPrompt.prompt`。

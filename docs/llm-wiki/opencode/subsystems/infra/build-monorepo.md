@@ -19,7 +19,7 @@ related:
   - infra.native-binary-release
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > 构建与 monorepo 节点描述 opencode 仓库的 root-level 包管理、脚本入口、Turbo task graph 和 Bun install 策略；它是终端 AI agent、Web/Desktop/Console 客户端与发布脚本共用的工程地基。

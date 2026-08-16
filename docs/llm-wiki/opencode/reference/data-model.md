@@ -20,7 +20,7 @@ symbols:
   - SessionSchema.Info
   - MessageV2.toModelMessagesEffect
 evidence: explicit
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > 这份节点记录 session/message 的核心共享数据模型；V2 是 `packages/core/src/session/*` 的 typed schema，V1 是 `packages/opencode/src/session/message-v2.ts` 的 AI SDK 转换层。
@@ -108,8 +108,8 @@ V1 message-v2 exports legacy message events by aliasing `SessionV1.Event.Message
 | `stream` | Pages through all legacy messages for a session. | [E: packages/opencode/src/session/message-v2.ts:469][E: packages/opencode/src/session/message-v2.ts:475][E: packages/opencode/src/session/message-v2.ts:485][E: packages/opencode/src/session/message-v2.ts:488] |
 | `parts` | Reads `PartTable` rows for one message. | [E: packages/opencode/src/session/message-v2.ts:492][E: packages/opencode/src/session/message-v2.ts:497][E: packages/opencode/src/session/message-v2.ts:498][E: packages/opencode/src/session/message-v2.ts:502] |
 | `filterCompacted` | Reorders retained compaction tail for model consumption. | [E: packages/opencode/src/session/message-v2.ts:521][E: packages/opencode/src/session/message-v2.ts:563][E: packages/opencode/src/session/message-v2.ts:565][E: packages/opencode/src/session/message-v2.ts:568] |
-| `latest` | Derives latest user/assistant/finished/task bindings by max message ID. | [E: packages/opencode/src/session/message-v2.ts:585][E: packages/opencode/src/session/message-v2.ts:591][E: packages/opencode/src/session/message-v2.ts:592][E: packages/opencode/src/session/message-v2.ts:593][E: packages/opencode/src/session/message-v2.ts:595] |
-| `fromError` | Maps thrown provider/runtime errors to assistant error shape. | [E: packages/opencode/src/session/message-v2.ts:603][E: packages/opencode/src/session/message-v2.ts:615][E: packages/opencode/src/session/message-v2.ts:617] |
+| `latest` | Derives latest user/assistant/finished/task bindings by `time.created`, then `id` as tie-breaker. `filterCompacted` reorders arrays and imported IDs are not necessarily monotonic. | [E: packages/opencode/src/session/message-v2.ts:582][E: packages/opencode/src/session/message-v2.ts:588][E: packages/opencode/src/session/message-v2.ts:590][E: packages/opencode/src/session/message-v2.ts:600][E: packages/opencode/src/session/message-v2.ts:602] |
+| `fromError` | Maps thrown provider/runtime errors to assistant error shape. | [E: packages/opencode/src/session/message-v2.ts:606][E: packages/opencode/src/session/message-v2.ts:618][E: packages/opencode/src/session/message-v2.ts:620] |
 
 ## V1/V2 差异速查
 

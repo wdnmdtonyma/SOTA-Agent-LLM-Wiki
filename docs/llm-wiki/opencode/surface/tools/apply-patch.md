@@ -5,7 +5,7 @@ kind: tool
 tier: T1
 v: shared
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 evidence: explicit
 source:
   - packages/opencode/src/tool/apply_patch.ts
@@ -30,8 +30,8 @@ related:
 | 维度 | V1 | V2 |
 | --- | --- | --- |
 | wire name | `apply_patch`，由 `Tool.define("apply_patch", ...)` 注册。[E: packages/opencode/src/tool/apply_patch.ts:22] | `apply_patch`，由 `export const name = "apply_patch"` 暴露。[E: packages/core/src/tool/apply-patch.ts:17] |
-| model gating | V1 registry 在 modelID 包含 `gpt-`、不包含 `oss`、不包含 `gpt-4` 时使用 patch path，并只在该条件下暴露 `ApplyPatchTool`。[E: packages/opencode/src/tool/registry.ts:293][E: packages/opencode/src/tool/registry.ts:294] | V2 builtins 包含 `ApplyPatchTool.node`，该 tool layer 内调用 `tools.register`，当前没有同一段 modelID gating。[E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/apply-patch.ts:68] |
-| 与 edit/write 的关系 | V1 usePatch 时隐藏 `edit` 和 `write`，只给模型 patch 工具。[E: packages/opencode/src/tool/registry.ts:294][E: packages/opencode/src/tool/registry.ts:295] | V2 builtins 同时注册 apply_patch、edit、write。[E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:37][E: packages/core/src/tool/builtins.ts:46] |
+| model gating | V1 registry 在 modelID 包含 `gpt-`、不包含 `oss`、不包含 `gpt-4` 时使用 patch path，并只在该条件下暴露 `ApplyPatchTool`。[E: packages/opencode/src/tool/registry.ts:298][E: packages/opencode/src/tool/registry.ts:299] | V2 builtins 包含 `ApplyPatchTool.node`，该 tool layer 内调用 `tools.register`，当前没有同一段 modelID gating。[E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/apply-patch.ts:68] |
+| 与 edit/write 的关系 | V1 usePatch 时隐藏 `edit` 和 `write`，只给模型 patch 工具。[E: packages/opencode/src/tool/registry.ts:299][E: packages/opencode/src/tool/registry.ts:300] | V2 builtins 同时注册 apply_patch、edit、write。[E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:37][E: packages/core/src/tool/builtins.ts:46] |
 | permission key | V1 申请 permission `"edit"`。[E: packages/opencode/src/tool/apply_patch.ts:207] | V2 用 `Tool.withPermission(..., "edit")` 并显式 assert action `"edit"`。[E: packages/core/src/tool/apply-patch.ts:192][E: packages/core/src/tool/apply-patch.ts:117] |
 
 ## 2 用途定位
@@ -102,14 +102,14 @@ V2 先解析所有 patch targets，去重 external directories 并申请 `extern
 | 差异点 | V1 | V2 |
 | --- | --- | --- |
 | move | 支持 `*** Move to:`，fileChange type 可为 `move`。[E: packages/opencode/src/patch/index.ts:92][E: packages/opencode/src/patch/index.ts:93][E: packages/opencode/src/tool/apply_patch.ts:149] | parser type 可含 movePath，但 tool 显式拒绝 moves。[E: packages/core/src/patch.ts:9][E: packages/core/src/tool/apply-patch.ts:97][E: packages/core/src/tool/apply-patch.ts:98] |
-| gating | 只在 GPT patch 条件下暴露，并隐藏 edit/write。[E: packages/opencode/src/tool/registry.ts:293][E: packages/opencode/src/tool/registry.ts:294][E: packages/opencode/src/tool/registry.ts:295] | builtins 固定注册，无同等 modelID gate。[E: packages/core/src/tool/builtins.ts:35] |
+| gating | 只在 GPT patch 条件下暴露，并隐藏 edit/write。[E: packages/opencode/src/tool/registry.ts:298][E: packages/opencode/src/tool/registry.ts:299][E: packages/opencode/src/tool/registry.ts:300] | builtins 固定注册，无同等 modelID gate。[E: packages/core/src/tool/builtins.ts:35] |
 | formatter/events/LSP | 有 formatter、FileSystem/Watcher event、LSP diagnostics。[E: packages/opencode/src/tool/apply_patch.ts:252][E: packages/opencode/src/tool/apply_patch.ts:261][E: packages/opencode/src/tool/apply_patch.ts:266] | V2 add/delete/update 分别委托 `FileMutation` 的 `files.create` / `files.remove` / `writeIfUnchanged`；当前文件未见 V1 那组 formatter/watcher/LSP 调用。[E: packages/core/src/tool/apply-patch.ts:164][E: packages/core/src/tool/apply-patch.ts:175][E: packages/core/src/tool/apply-patch.ts:179][I] |
 | patch seek | V1 derive 用多策略 seek sequence：exact/rstrip/trim/normalized。[E: packages/opencode/src/patch/index.ts:464][E: packages/opencode/src/patch/index.ts:468][E: packages/opencode/src/patch/index.ts:472][E: packages/opencode/src/patch/index.ts:476] | V2 patch derive 也有 exact/rstrip/trim/normalized comparators。[E: packages/core/src/patch.ts:162][E: packages/core/src/patch.ts:183][E: packages/core/src/patch.ts:184][E: packages/core/src/patch.ts:185][E: packages/core/src/patch.ts:186] |
 | failure model | V1 预计算后顺序应用，实际写入失败没有 typed partial result schema。[I] | V2 failure message 会列 partial applied resources，但 output schema 只覆盖成功 `{ applied, files }`。[E: packages/core/src/tool/apply-patch.ts:31][E: packages/core/src/tool/apply-patch.ts:78] |
 
 ## 8 设计动机·edge·历史
 
-- V1 apply_patch 是模型选择层的一部分：registry 根据 model id 决定是暴露 patch 工具，还是暴露 edit/write。这不是 patch parser 的能力判断，而是模型能力/提示策略判断。[E: packages/opencode/src/tool/registry.ts:293][E: packages/opencode/src/tool/registry.ts:294][E: packages/opencode/src/tool/registry.ts:295][I]
+- V1 apply_patch 是模型选择层的一部分：registry 根据 model id 决定是暴露 patch 工具，还是暴露 edit/write。这不是 patch parser 的能力判断，而是模型能力/提示策略判断。[E: packages/opencode/src/tool/registry.ts:298][E: packages/opencode/src/tool/registry.ts:299][E: packages/opencode/src/tool/registry.ts:300][I]
 - V2 apply_patch 的 description 把 unsupported moves/rollback 写进工具说明，说明 core 当前优先接通 deterministic add/update/delete 与 partial reporting，而不是完整复刻 V1 patch mutation surface。[E: packages/core/src/tool/apply-patch.ts:72][I]
 - 两代 patch parser 都有 fuzzy-ish hunk seek 策略；这和 V2 `edit` 的 exact-only 状态不同，不能把“V2 edit 精确匹配”误推广到 “V2 apply_patch 只做完全逐字符 patch”。[E: packages/core/src/patch.ts:162][E: packages/core/src/patch.ts:183][E: packages/core/src/tool/edit.ts:165]
 

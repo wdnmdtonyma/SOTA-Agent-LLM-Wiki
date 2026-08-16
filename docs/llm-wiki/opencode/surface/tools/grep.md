@@ -23,7 +23,7 @@ related:
   - ref.tool-catalog
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > `grep` 按正则搜索文件内容；V1 固定最多 100 个 match 并返回 grouped text，输出会保留用户请求路径中的目录 symlink alias；V2 返回 typed `FileSystem.Match[]` 并允许调用方提供 `limit`。
@@ -41,7 +41,7 @@ updated: 89130db6b0
 | 维度 | V1 | V2 |
 | --- | --- | --- |
 | wire name | `grep`，由 `Tool.define("grep", ...)` 注册。[E: packages/opencode/src/tool/grep.ts:21] | `grep`，由 `export const name = "grep"` 暴露。[E: packages/core/src/tool/grep.ts:17] |
-| provider 可见性 | V1 builtins 包含 `GrepTool`。[E: packages/opencode/src/tool/registry.ts:232] | V2 builtins 节点把 `GrepTool.node` 列入 deps。[E: packages/core/src/tool/builtins.ts:39] |
+| provider 可见性 | V1 builtins 包含 `GrepTool`。[E: packages/opencode/src/tool/registry.ts:237] | V2 builtins 节点把 `GrepTool.node` 列入 deps。[E: packages/core/src/tool/builtins.ts:39] |
 | permission key | V1 使用 `ctx.ask({ permission: "grep" })`。[E: packages/opencode/src/tool/grep.ts:39] | V2 使用 `permission.assert({ action: "grep" })`。[E: packages/core/src/tool/grep.ts:81] |
 | search backend | V1 直接调用 `Ripgrep.grep`。[E: packages/opencode/src/tool/grep.ts:63] | V2 注入 `Ripgrep.Service` 并调用 `ripgrep.grep`。[E: packages/core/src/tool/grep.ts:57][E: packages/core/src/tool/grep.ts:97] |
 
@@ -79,7 +79,7 @@ V2 `grep` 是 Location-aware typed search tool。它返回 `FileSystem.Match[]`�
 - V2 输出是 typed `Array(FileSystem.Match)`。[E: packages/core/src/tool/grep.ts:34]
 - V2 `toModelOutput` 在无结果时返回 `No files found`，有结果时生成 grouped text。[E: packages/core/src/tool/grep.ts:39][E: packages/core/src/tool/grep.ts:45]
 - `Tool.make` 的 model projection 会把每个 match 的 entry path 先转成 `path.resolve(location.directory, match.entry.path)`，所以模型看到绝对路径 header，typed output 内部仍是 Location-relative entry。[E: packages/core/src/tool/grep.ts:68][E: packages/core/src/tool/grep.ts:74][E: packages/core/src/tool/grep.ts:112]
-- core ripgrep 层限制单条 JSON record 大小并截断过长 line text，避免单条 match 撑爆模型上下文或内存。[E: packages/core/src/ripgrep.ts:233][E: packages/core/src/ripgrep.ts:267]
+- core ripgrep 层限制单条 JSON record 大小并截断过长 line text，避免单条 match 撑爆模型上下文或内存。超过 2000 字符时先 `slice(0, 2000)`，再丢掉末尾孤立的高位代理（`[\uD800-\uDBFF]$`），避免把 UTF-16 surrogate pair 切成无效预览。[E: packages/core/src/ripgrep.ts:233][E: packages/core/src/ripgrep.ts:267][E: packages/core/src/ripgrep.ts:268][E: packages/core/src/ripgrep.ts:269]
 
 ## 5 权限
 

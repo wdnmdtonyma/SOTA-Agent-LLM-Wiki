@@ -6,7 +6,9 @@ tier: T2
 v: shared
 source:
   - packages/opencode/src/config/config.ts
+  - packages/opencode/src/config/parse.ts
   - packages/core/src/config.ts
+  - packages/core/src/v1/config/config.ts
   - packages/opencode/src/config/managed.ts
   - packages/opencode/src/session/message-v2.ts
 symbols:
@@ -20,7 +22,7 @@ related:
   - config.v2-schema
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > 配置加载节点覆盖两套并存 loader：V1 `@opencode/Config` 把多来源配置 deep-merge 成一个 `Info`，V2 `@opencode/v2/Config` 暴露从低优先级到高优先级的 ordered `Entry[]`。
@@ -44,6 +46,8 @@ updated: 89130db6b0
 | 文件 | 作用 |
 | --- | --- |
 | `packages/opencode/src/config/config.ts` | V1 `@opencode/Config` Effect service，负责 global/project/remote/managed 合并、plugin origin provenance、updateGlobal/update。 |
+| `packages/opencode/src/config/parse.ts` | JSONC parse 与 `ConfigV1.Info` schema decode；未知字段 `onExcessProperty: "ignore"`。 |
+| `packages/core/src/v1/config/config.ts` | V1 `ConfigV1.Info` closed `Schema.Struct`；unknown keys 不在 schema 里，由 decode option 丢弃。 |
 | `packages/opencode/src/config/variable.ts` | 对原始配置文本做 `{env:}` 和 `{file:}` substitution。 |
 | `packages/opencode/src/config/paths.ts` | 向上搜索 project config files 和 `.opencode` directories。 |
 | `packages/opencode/src/config/managed.ts` | system managed config dir 与 macOS managed preferences 读取。 |
@@ -61,7 +65,7 @@ updated: 89130db6b0
 ### 控制流
 
 1. `loadConfig(text, options, env?)` 先调用 `ConfigVariable.substitute`，路径来源用 `{ type: "path", path }`，虚拟来源用 `{ type: "virtual", dir, source }`。[E: packages/opencode/src/config/config.ts:213][E: packages/opencode/src/config/config.ts:220][E: packages/opencode/src/config/config.ts:222][E: packages/opencode/src/config/config.ts:223]
-2. substitution 后的文本经 `ConfigParse.jsonc` parse，再用 `ConfigParse.schema(ConfigV1.Info, ...)` decode；legacy `theme/keybinds/tui` keys 会被 `normalizeLoadedConfig` 删除。[E: packages/opencode/src/config/config.ts:226][E: packages/opencode/src/config/config.ts:227][E: packages/opencode/src/config/config.ts:56][E: packages/opencode/src/config/config.ts:58][E: packages/opencode/src/config/config.ts:59][E: packages/opencode/src/config/config.ts:60]
+2. substitution 后的文本经 `ConfigParse.jsonc` parse，再用 `ConfigParse.schema(ConfigV1.Info, ...)` decode。decode option 是 `errors: "all"`、`onExcessProperty: "ignore"`、`propertyOrder: "original"`，因此 `ConfigV1.Info` 以外的未知字段被丢弃而不是 decode 失败。`ConfigV1.Info` 本身仍是 closed `Schema.Struct`，没有把 extras 存进 schema。legacy `theme/keybinds/tui` keys 会被 `normalizeLoadedConfig` 删除。[E: packages/opencode/src/config/config.ts:226][E: packages/opencode/src/config/config.ts:227][E: packages/opencode/src/config/parse.ts:40][E: packages/opencode/src/config/parse.ts:41][E: packages/opencode/src/config/parse.ts:42][E: packages/core/src/v1/config/config.ts:32][E: packages/core/src/v1/config/config.ts:190][E: packages/opencode/src/config/config.ts:56][E: packages/opencode/src/config/config.ts:58][E: packages/opencode/src/config/config.ts:59][E: packages/opencode/src/config/config.ts:60]
 3. path-backed config 才会执行 `resolveLoadedPlugins(data, options.path)`，该 helper 把 `options.path` 传给 `ConfigPlugin.resolvePluginSpec`。[E: packages/opencode/src/config/config.ts:228][E: packages/opencode/src/config/config.ts:230][E: packages/opencode/src/config/config.ts:106]
 4. path-backed config 如果没有 `$schema`，loader 写回 `https://opencode.ai/config.json` schema hint；虚拟 config 在 writeback 分支前直接返回，不触发写回。[E: packages/opencode/src/config/config.ts:228][E: packages/opencode/src/config/config.ts:231][E: packages/opencode/src/config/config.ts:232][E: packages/opencode/src/config/config.ts:234]
 5. `loadGlobal()` 在没有 `OPENCODE_CONFIG`、`OPENCODE_CONFIG_DIR`、`OPENCODE_CONFIG_CONTENT` 时，默认创建带 `$schema` 的 global config 文件。[E: packages/opencode/src/config/config.ts:250][E: packages/opencode/src/config/config.ts:252][E: packages/opencode/src/config/config.ts:254]
@@ -113,7 +117,7 @@ updated: 89130db6b0
 
 1. V2 layer 依赖 `FSUtil.Service`、`Global.Service`、`Location.Service`、`Policy.Service`。[E: packages/core/src/config.ts:138][E: packages/core/src/config.ts:139][E: packages/core/src/config.ts:140][E: packages/core/src/config.ts:141]
 2. loader 只识别 `opencode.json`、`opencode.jsonc` 两个 file names；`config.json` 不在 V2 `names` list 中。[E: packages/core/src/config.ts:142]
-3. decode options 设置 `errors: "all"`、`onExcessProperty: "ignore"`、`propertyOrder: "original"`，再建立 V2 `decodeInfo` 和 V1 `decodeV1Info`。[E: packages/core/src/config.ts:143][E: packages/core/src/config.ts:144][E: packages/core/src/config.ts:145]
+3. decode options 设置 `errors: "all"`、`onExcessProperty: "ignore"`、`propertyOrder: "original"`，再建立 V2 `decodeInfo` 和 V1 `decodeV1Info`。V1 与 V2 loader 都忽略 unknown config fields。[E: packages/core/src/config.ts:143][E: packages/core/src/config.ts:144][E: packages/core/src/config.ts:145]
 4. `loadFile(filepath)` 读取 safe text，空文本或 JSONC parse errors 直接返回 `undefined`。[E: packages/core/src/config.ts:147][E: packages/core/src/config.ts:148][E: packages/core/src/config.ts:149][E: packages/core/src/config.ts:151][E: packages/core/src/config.ts:153]
 5. 如果 `ConfigMigrateV1.isV1(input)` 为真，V2 loader 会先按 V1 schema decode，再 `ConfigMigrateV1.migrate`，最后按 V2 schema decode；否则直接 decode V2 schema。[E: packages/core/src/config.ts:155][E: packages/core/src/config.ts:156][E: packages/core/src/config.ts:157][E: packages/core/src/config.ts:158]
 6. 成功 decode 后返回 `Document({ type: "document", path: filepath, info })`。[E: packages/core/src/config.ts:160][E: packages/core/src/config.ts:161]
@@ -139,6 +143,7 @@ V2 config spec 明确 `$schema` 在 V2 loader 中应保持 read-only metadata，
 | 输出 shape | 单个 cached `Info` object；load flow 多次 `merge(...)` into `result`，`loadInstanceState` 返回 `{ config: result }`，`get()` 返回 `s.config`。[E: packages/opencode/src/config/config.ts:258][E: packages/opencode/src/config/config.ts:408][E: packages/opencode/src/config/config.ts:429][E: packages/opencode/src/config/config.ts:586][E: packages/opencode/src/config/config.ts:587][E: packages/opencode/src/config/config.ts:606][E: packages/opencode/src/config/config.ts:607] | ordered `Entry[]`，`entries()` 返回 `configs`。[E: packages/core/src/config.ts:214][E: packages/core/src/config.ts:215] |
 | V1 compatibility | V1 本身解析 `ConfigV1.Info`，并继续接受 legacy aliases。 | loader inline `isV1 → migrate → decodeInfo`。[E: packages/opencode/src/config/config.ts:227][E: packages/opencode/src/config/config.ts:56][E: packages/opencode/src/config/config.ts:58][E: packages/opencode/src/config/config.ts:59][E: packages/opencode/src/config/config.ts:60][E: packages/core/src/config.ts:156][E: packages/core/src/config.ts:157] |
 | Variable substitution | loader 调 `ConfigVariable.substitute` 后 parse JSONC。[E: packages/opencode/src/config/config.ts:220][E: packages/opencode/src/config/config.ts:226] | `core/src/config.ts` 的 loader 路径是 readFileStringSafe → jsonc parse → schema decode，当前文件没有调用 V1 `ConfigVariable.substitute`。[E: packages/core/src/config.ts:148][E: packages/core/src/config.ts:152][E: packages/core/src/config.ts:156][E: packages/core/src/config.ts:157][E: packages/core/src/config.ts:158][I] |
+| Unknown fields | `ConfigParse.schema` decode `ConfigV1.Info` 时 `onExcessProperty: "ignore"`，未知 key 丢弃。[E: packages/opencode/src/config/parse.ts:42][E: packages/core/src/v1/config/config.ts:32] | V2 `decodeOptions` 同样 `onExcessProperty: "ignore"`，V1 migrate path 与 V2 decode 都忽略 extras。[E: packages/core/src/config.ts:143][E: packages/core/src/config.ts:144][E: packages/core/src/config.ts:145] |
 | Project config | `ConfigPaths.files()` 和 `ConfigPaths.directories()` 共同参与 merge into result。[E: packages/opencode/src/config/config.ts:407][E: packages/opencode/src/config/config.ts:408][E: packages/opencode/src/config/config.ts:416][E: packages/opencode/src/config/config.ts:429] | `fs.up()` discovery 产生 direct paths 与 `.opencode` directories，再组成 ordered entries。[E: packages/core/src/config.ts:179][E: packages/core/src/config.ts:195][E: packages/core/src/config.ts:203] |
 | Managed/MDM | managed directory 与 macOS MDM preferences 在普通来源之后合并，MDM 最后 merge。[E: packages/opencode/src/config/config.ts:516][E: packages/opencode/src/config/config.ts:525][E: packages/opencode/src/config/config.ts:527] | `core/src/config.ts` 本节点读取范围内没有 managed directory 或 macOS MDM reader wiring。[I] |
 
@@ -158,11 +163,13 @@ V2 config spec 明确 `$schema` 在 V2 loader 中应保持 read-only metadata，
 ## Sources
 
 - `packages/opencode/src/config/config.ts`
+- `packages/opencode/src/config/parse.ts`
 - `packages/opencode/src/config/paths.ts`
 - `packages/opencode/src/config/variable.ts`
 - `packages/opencode/src/config/managed.ts`
 - `packages/opencode/src/session/message-v2.ts`
 - `packages/core/src/config.ts`
+- `packages/core/src/v1/config/config.ts`
 - `packages/core/src/v1/config/migrate.ts`
 - `specs/v2/config.md`
 

@@ -4,12 +4,12 @@ title: GitHub Copilot Provider
 kind: subsystem
 tier: T2
 v: shared
-source: [packages/core/src/github-copilot/, packages/core/src/plugin/provider/github-copilot.ts, packages/opencode/src/provider/provider.ts, packages/opencode/src/provider/transform.ts, packages/llm/src/providers/github-copilot.ts]
-symbols: [createOpenaiCompatible, OpenAICompatibleChatLanguageModel, OpenAIResponsesLanguageModel, GithubCopilotPlugin, GithubCopilotNativeProvider]
+source: [packages/core/src/github-copilot/, packages/core/src/plugin/provider/github-copilot.ts, packages/opencode/src/plugin/github-copilot/models.ts, packages/opencode/src/plugin/github-copilot/copilot.ts, packages/opencode/src/provider/provider.ts, packages/opencode/src/provider/transform.ts, packages/llm/src/providers/github-copilot.ts]
+symbols: [createOpenaiCompatible, OpenAICompatibleChatLanguageModel, OpenAIResponsesLanguageModel, GithubCopilotPlugin, GithubCopilotNativeProvider, CopilotModels]
 related: [ref.copilot-tool-catalog]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > GitHub Copilot 在 opencode 里有双适配:core 目录提供 AI SDK `LanguageModelV3` compatible provider,同时 `packages/llm/src/providers/github-copilot.ts` 提供 native route configure helper。V1 registry、V2 plugin 与 native helper 的 route selection 都先尊重显式 `endpoint`,然后才用 GPT-5 class 默认 Responses、`gpt-5-mini` 默认 Chat 的 heuristic。
@@ -27,7 +27,9 @@ V1 provider registry 把 `@ai-sdk/github-copilot` 映射到 core 的 `@opencode-
 
 V1 custom loader 对 Copilot model 选择路由:SDK 如果没有 `responses/chat` 就退回 `languageModel`;否则 model API 显式 `endpoint:responses|chat` 优先,GPT major >= 5 且不是 `gpt-5-mini` 的默认路由才走 `sdk.responses(modelID)`,其他走 `sdk.chat(modelID)`。[E: packages/opencode/src/provider/provider.ts:228][E: packages/opencode/src/provider/provider.ts:229][E: packages/opencode/src/provider/provider.ts:230][E: packages/opencode/src/provider/provider.ts:231][E: packages/opencode/src/provider/provider.ts:232][E: packages/opencode/src/provider/provider.ts:234][E: packages/opencode/src/provider/provider.ts:235][E: packages/opencode/src/provider/provider.ts:236]
 
-V1 provider transform 对 `@ai-sdk/github-copilot` 默认设置 `store=false`,GPT-5 class 还会默认设置 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1166][E: packages/opencode/src/provider/transform.ts:1169][E: packages/opencode/src/provider/transform.ts:1173][E: packages/opencode/src/provider/transform.ts:1278][E: packages/opencode/src/provider/transform.ts:1284][E: packages/opencode/src/provider/transform.ts:1287]
+V1 provider transform 对 `@ai-sdk/github-copilot` 默认设置 `store=false`,GPT-5 class 还会默认设置 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1174][E: packages/opencode/src/provider/transform.ts:1177][E: packages/opencode/src/provider/transform.ts:1181][E: packages/opencode/src/provider/transform.ts:1292][E: packages/opencode/src/provider/transform.ts:1298][E: packages/opencode/src/provider/transform.ts:1301]
+
+V1 `CopilotAuthPlugin` 在 OAuth auth 下调用 `CopilotModels.get()` 拉 `/models`，`build()` 把 remote capabilities 写成 V1 model。[E: packages/opencode/src/plugin/github-copilot/copilot.ts:70][E: packages/opencode/src/plugin/github-copilot/models.ts:82][E: packages/opencode/src/plugin/github-copilot/models.ts:221] `capabilities.input.pdf` 不再写死 false：只有 `supports.vision` 为真且 `limits.vision.supported_media_types` 含 `application/pdf` 时才为 true。image 则是 `supports.vision` 或任一 `image/` media type，判定比 PDF 宽。[E: packages/opencode/src/plugin/github-copilot/models.ts:88][E: packages/opencode/src/plugin/github-copilot/models.ts:91][E: packages/opencode/src/plugin/github-copilot/models.ts:92][E: packages/opencode/src/plugin/github-copilot/models.ts:93][E: packages/opencode/src/plugin/github-copilot/models.ts:130][E: packages/opencode/src/plugin/github-copilot/models.ts:133]
 
 ## V2
 
@@ -70,6 +72,8 @@ native helper 的 `ModelOptions` 要求 `baseURL: string`,可选 `endpoint: "cha
 ## Sources
 - packages/core/src/github-copilot/
 - packages/core/src/plugin/provider/github-copilot.ts
+- packages/opencode/src/plugin/github-copilot/models.ts
+- packages/opencode/src/plugin/github-copilot/copilot.ts
 - packages/opencode/src/provider/provider.ts
 - packages/opencode/src/provider/transform.ts
 - packages/llm/src/providers/github-copilot.ts

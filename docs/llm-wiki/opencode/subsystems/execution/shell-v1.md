@@ -23,7 +23,7 @@ related:
   - ref.bash-arity
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V1 shell 执行是活跑 `bash` tool：先用 tree-sitter bash/PowerShell AST 扫描命令和路径，触发 `external_directory` 与 `bash` 权限，再用 Effect child process 执行并持续更新 metadata、截断或 spill 完整输出。
@@ -38,7 +38,7 @@ updated: 89130db6b0
 
 ## 职责边界
 
-`ShellTool` 的 tool id 和 permission key 兼容保留为 `"bash"`，`ShellID.ToolID` 常量就是 model-facing wire id [E: packages/opencode/src/tool/shell/id.ts:16]。V1 registry 把 `ShellTool` 初始化成 builtin tool，并在 tool list 中始终包含 `tool.shell` [E: packages/opencode/src/tool/registry.ts:206] [E: packages/opencode/src/tool/registry.ts:229]。
+`ShellTool` 的 tool id 和 permission key 兼容保留为 `"bash"`，`ShellID.ToolID` 常量就是 model-facing wire id [E: packages/opencode/src/tool/shell/id.ts:16]。V1 registry 把 `ShellTool` 初始化成 builtin tool，并在 tool list 中始终包含 `tool.shell` [E: packages/opencode/src/tool/registry.ts:211] [E: packages/opencode/src/tool/registry.ts:234]。
 
 输入 schema 由 `ShellPrompt.parameterSchema` 生成：`command` 必填，`timeout` 可选正整数毫秒，`workdir` 可选 [E: packages/opencode/src/tool/shell/prompt.ts:15] [E: packages/opencode/src/tool/shell/prompt.ts:17] [E: packages/opencode/src/tool/shell/prompt.ts:18] [E: packages/opencode/src/tool/shell/prompt.ts:19]。tool runtime 使用 configured shell：`Shell.acceptable(cfg.shell)` 会拒绝不合适 shell 并选择 fallback；`Shell` helper 现在从 `@opencode-ai/core/shell` import。[E: packages/opencode/src/tool/shell.ts:15] [E: packages/opencode/src/tool/shell.ts:600] [E: packages/core/src/shell.ts:214] [E: packages/core/src/shell.ts:215] [E: packages/core/src/shell.ts:114] [E: packages/core/src/shell.ts:115] [E: packages/core/src/shell.ts:120]。
 

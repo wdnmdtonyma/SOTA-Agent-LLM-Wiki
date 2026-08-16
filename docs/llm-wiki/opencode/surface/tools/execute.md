@@ -17,7 +17,7 @@ symbols: [CodeModeTool, CODE_MODE_TOOL, describeCatalog]
 related: [subsys.tools.codemode, subsys.tools.v1, integrations.mcp-client, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Execute 是 V1 的 experimental Code Mode 工具：模型提交一段受限 JavaScript orchestration code，运行时只把当前 permission 可见的 MCP tools 暴露给程序。
@@ -34,7 +34,7 @@ updated: 89130db6b0
 
 V1 adapter 把 wire id 固定为 `execute`，description 是“Run a confined orchestration script with access to connected MCP tools.”，并用 `Tool.define(CODE_MODE_TOOL, ...)` 构造 `CodeModeTool`。[E: packages/opencode/src/tool/code-mode.ts:12][E: packages/opencode/src/tool/code-mode.ts:14][E: packages/opencode/src/tool/code-mode.ts:188][E: packages/opencode/src/tool/code-mode.ts:189]
 
-`ToolRegistry` 只有在 `RuntimeFlags.experimentalCodeMode` 为 true 时才动态 import adapter；flag 为 false 时连 module 与工具实例都不创建。[E: packages/opencode/src/tool/registry.ts:113][E: packages/opencode/src/tool/registry.ts:114] `experimentalCodeMode` 由 `enabledByExperimental("OPENCODE_EXPERIMENTAL_CODE_MODE")` 解析，所以专用 env 未设置时可继承 `OPENCODE_EXPERIMENTAL`，显式设置专用 env 时由专用值决定。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:11][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:48]
+`ToolRegistry` 只有在 `RuntimeFlags.experimentalCodeMode` 为 true 时才动态 import adapter；flag 为 false 时连 module 与工具实例都不创建。[E: packages/opencode/src/tool/registry.ts:118][E: packages/opencode/src/tool/registry.ts:119] `experimentalCodeMode` 由 `enabledByExperimental("OPENCODE_EXPERIMENTAL_CODE_MODE")` 解析，所以专用 env 未设置时可继承 `OPENCODE_EXPERIMENTAL`，显式设置专用 env 时由专用值决定。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:11][E: packages/opencode/src/effect/runtime-flags.ts:13][E: packages/opencode/src/effect/runtime-flags.ts:48]
 
 ## 2 用途定位
 
@@ -46,7 +46,7 @@ Execute 用一段程序在单次 model tool call 内编排多个 MCP 调用、�
 |---|---|---:|---|---|---|
 | `code` | `string` | 是 | 无 | `Schema.String`；package runtime 还会拒绝 trim 后为空的程序 | 在 confined interpreter 中执行的 script body。[E: packages/opencode/src/tool/code-mode.ts:16][E: packages/opencode/src/tool/code-mode.ts:17][E: packages/opencode/src/tool/code-mode.ts:18][E: packages/codemode/src/interpreter/runtime.ts:3358][E: packages/codemode/src/interpreter/runtime.ts:3361] |
 
-模型看到的 tool description 不只是一句静态文本：registry 会从 permission 可见的 MCP tools 构造 budgeted Code Mode catalog；没有任何可见 MCP tool 时，`execute` 会从本回合的 `visible` tools 中移除。[E: packages/opencode/src/tool/registry.ts:275][E: packages/opencode/src/tool/registry.ts:280][E: packages/opencode/src/tool/registry.ts:281][E: packages/opencode/src/tool/registry.ts:282][E: packages/opencode/src/tool/registry.ts:300][E: packages/opencode/src/tool/registry.ts:303][E: packages/opencode/src/tool/registry.ts:323]
+模型看到的 tool description 不只是一句静态文本：registry 会从 permission 可见的 MCP tools 构造 budgeted Code Mode catalog；没有任何可见 MCP tool 时，`execute` 会从本回合的 `visible` tools 中移除。[E: packages/opencode/src/tool/registry.ts:280][E: packages/opencode/src/tool/registry.ts:285][E: packages/opencode/src/tool/registry.ts:286][E: packages/opencode/src/tool/registry.ts:287][E: packages/opencode/src/tool/registry.ts:305][E: packages/opencode/src/tool/registry.ts:308][E: packages/opencode/src/tool/registry.ts:328]
 
 ## 4 输出 & 大小/截断限制
 
@@ -56,7 +56,7 @@ Code Mode adapter 没有给 package runtime 配 `ExecutionLimits`，因此 packa
 
 ## 5 权限
 
-Code Mode 不把全部 MCP tools 交给模型。生成 catalog 与实际 execute 都先合并 agent permission 与 session permission，再用 `Permission.visibleTools()` 删除顶层 deny 的 MCP tools。[E: packages/opencode/src/tool/registry.ts:280][E: packages/opencode/src/tool/registry.ts:281][E: packages/opencode/src/tool/code-mode.ts:207][E: packages/opencode/src/tool/code-mode.ts:209][E: packages/opencode/src/tool/code-mode.ts:210][E: packages/opencode/src/permission/index.ts:204][E: packages/opencode/src/permission/index.ts:216]
+Code Mode 不把全部 MCP tools 交给模型。生成 catalog 与实际 execute 都先合并 agent permission 与 session permission，再用 `Permission.visibleTools()` 删除顶层 deny 的 MCP tools。[E: packages/opencode/src/tool/registry.ts:285][E: packages/opencode/src/tool/registry.ts:286][E: packages/opencode/src/tool/code-mode.ts:207][E: packages/opencode/src/tool/code-mode.ts:209][E: packages/opencode/src/tool/code-mode.ts:210][E: packages/opencode/src/permission/index.ts:204][E: packages/opencode/src/permission/index.ts:216]
 
 每个 child MCP call 仍会触发 `tool.execute.before`，随后以真实 MCP key 调 `ctx.ask({ permission: key, patterns: ["*"] })`，transport 完成后再触发 `tool.execute.after`；Code Mode 不是绕过 MCP permission/plugin lifecycle 的旁路。[E: packages/opencode/src/tool/code-mode.ts:141][E: packages/opencode/src/tool/code-mode.ts:147][E: packages/opencode/src/tool/code-mode.ts:149][E: packages/opencode/src/tool/code-mode.ts:180][E: packages/opencode/src/tool/code-mode.ts:185]
 
@@ -73,7 +73,7 @@ Code Mode 不把全部 MCP tools 交给模型。生成 catalog 与实际 execute
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| product wiring | `ToolRegistry` 在 experimental flag 下注册 `execute`。[E: packages/opencode/src/tool/registry.ts:113][E: packages/opencode/src/tool/registry.ts:221][E: packages/opencode/src/tool/registry.ts:241] | V2 `BuiltInTools` 当前没有 Code Mode leaf；该结论来自 V2 builtin 静态列表未注册 codemode。[I] |
+| product wiring | `ToolRegistry` 在 experimental flag 下注册 `execute`。[E: packages/opencode/src/tool/registry.ts:118][E: packages/opencode/src/tool/registry.ts:226][E: packages/opencode/src/tool/registry.ts:246] | V2 `BuiltInTools` 当前没有 Code Mode leaf；该结论来自 V2 builtin 静态列表未注册 codemode。[I] |
 | tool source | 只把 permission 可见的 MCP tools 放进 confined tree。[E: packages/opencode/src/tool/code-mode.ts:209][E: packages/opencode/src/tool/code-mode.ts:239] | 无对应 product adapter。[I] |
 | direct MCP tools | flag 开启时 `SessionTools.resolve` 在 resource tools 后提前返回，不再逐个把 MCP callable tools 注入 AI SDK tools；MCP resource list/read tools仍已在 return 前装配。[E: packages/opencode/src/session/tools.ts:136][E: packages/opencode/src/session/tools.ts:388][E: packages/opencode/src/session/tools.ts:390] | 无对应 V2 分支。[I] |
 

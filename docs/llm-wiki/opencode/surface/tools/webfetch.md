@@ -9,7 +9,7 @@ symbols: [WebFetchTool]
 related: [ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > WebFetch 工具把 HTTP/HTTPS URL 取回为 `markdown`、`text` 或 `html`；V1 当前活跑路径允许图片以 attachment 返回，V2 core 工具只接受 textual content。
@@ -26,7 +26,7 @@ updated: 89130db6b0
 
 ### 1 Identity
 
-V1 `WebFetchTool` 通过 `Tool.define("webfetch", ...)` 注册，`ToolRegistry` 初始化 `webfetch` 并把它作为 `tool.fetch` 加入 builtin 列表。[E: packages/opencode/src/tool/webfetch.ts:24][E: packages/opencode/src/tool/webfetch.ts:25][E: packages/opencode/src/tool/registry.ts:103][E: packages/opencode/src/tool/registry.ts:213][E: packages/opencode/src/tool/registry.ts:236]
+V1 `WebFetchTool` 通过 `Tool.define("webfetch", ...)` 注册，`ToolRegistry` 初始化 `webfetch` 并把它作为 `tool.fetch` 加入 builtin 列表。[E: packages/opencode/src/tool/webfetch.ts:24][E: packages/opencode/src/tool/webfetch.ts:25][E: packages/opencode/src/tool/registry.ts:108][E: packages/opencode/src/tool/registry.ts:218][E: packages/opencode/src/tool/registry.ts:241]
 
 ### 2 用途定位
 

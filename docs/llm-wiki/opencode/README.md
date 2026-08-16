@@ -58,7 +58,7 @@ _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
 
 ## 方法 & 状态
 
-逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `89130db6b0`（官方 `dev`），共 188 个 verified 节点 + 14 个 grouped-catalog 组。本轮没有新增或退役节点；主要增量是 Modal/provider catalog 与 Gemini transforms、MCP SDK 1.29.0 compatibility patch、Desktop V2 background CLI、prompt draft Blob persistence、App new-session/compatibility、Console migration/referral 边界及 Stats catalog host。
+逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `3fd77ae980`（官方 `dev`），共 188 个 verified 节点 + 14 个 grouped-catalog 组。本轮没有新增或退役节点；主要增量是 provider reasoning pass-through 与 Muse/Kimi prompt 路由、session compaction/retry/时序边界、ACP drain 与 cache usage、App/Desktop/TUI i18n·RTL·JSON export、Console Go usage，以及 Stats R2 catalog。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

@@ -9,7 +9,7 @@ symbols: [EditTool, SimpleReplacer, LineTrimmedReplacer, BlockAnchorReplacer, Wh
 related: [execution.patch-v1, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Edit 工具负责在单个文件内把 `oldString` 替换成 `newString`；V1 是当前活跑的 fuzzy edit 工具，V2 是只做 exact edit 的新内核 leaf。
@@ -43,7 +43,7 @@ V1 Edit 面向模型做“局部替换”，但实现不是纯 exact match：`re
 
 ### 4 输出 & 大小/截断限制
 
-V1 Edit 返回 `title` 为 worktree-relative path，`output` 默认是 `Edit applied successfully.`，metadata 包含 `diagnostics`、`diff` 和 `filediff`。[E: packages/opencode/src/tool/edit.ts:196][E: packages/opencode/src/tool/edit.ts:203][E: packages/opencode/src/tool/edit.ts:204][E: packages/opencode/src/tool/edit.ts:209] `Tool.define` wrapper 会在 result 没有 `metadata.truncated` 时调用 `Truncate.output` 做通用 2000 行 / 50KB 截断。[E: packages/opencode/src/tool/tool.ts:131][E: packages/opencode/src/tool/tool.ts:135][E: packages/opencode/src/tool/truncate.ts:15][E: packages/opencode/src/tool/truncate.ts:16]
+V1 Edit 返回 `title` 为 worktree-relative path，`output` 默认是 `Edit applied successfully.`，metadata 包含 `diagnostics`、`diff` 和 `filediff`。[E: packages/opencode/src/tool/edit.ts:196][E: packages/opencode/src/tool/edit.ts:203][E: packages/opencode/src/tool/edit.ts:204][E: packages/opencode/src/tool/edit.ts:209] `Tool.define` wrapper 会在 result 没有 `metadata.truncated` 时调用 `Truncate.output` 做通用 2000 行 / 50KB 截断。[E: packages/opencode/src/tool/tool.ts:131][E: packages/opencode/src/tool/tool.ts:135][E: packages/opencode/src/tool/truncate.ts:14][E: packages/opencode/src/tool/truncate.ts:15]
 
 ### 5 权限
 

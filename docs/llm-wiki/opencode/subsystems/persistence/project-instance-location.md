@@ -31,7 +31,7 @@ related:
   - persistence.repository-cache
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Project/Instance/Location 是 opencode 持久化与运行时作用域的三层边界：V2 `ProjectV2` 解析稳定 project identity，V2 `Location` 给 core services 一个 directory/workspace/project scope，V1 `InstanceStore` 为每个 cwd 缓存 legacy service bundle。

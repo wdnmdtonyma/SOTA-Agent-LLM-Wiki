@@ -10,7 +10,7 @@ schema: node
 source:
   - packages/opencode/src/agent/agent.ts
   - packages/opencode/src/agent/prompt/
-updated: 89130db6b0
+updated: 3fd77ae980
 evidence: explicit
 ---
 
@@ -37,7 +37,7 @@ agent state 初始化时会先计算 `whitelistedDirs`，包括 truncation glob�
 | `plan` | `primary` [E: packages/opencode/src/agent/agent.ts:179] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:180] | 无内置 prompt override；plan reminder 在 session 层注入 | `question`、`plan_exit` allow，`task.general` deny，普通 edit deny，但 `.opencode/plans/*.md` 和 data plans markdown allow。[E: packages/opencode/src/agent/agent.ts:162] | 计划模式；源码描述明确说 disallows all edit tools。[E: packages/opencode/src/agent/agent.ts:158] |
 | `general` | `subagent` [E: packages/opencode/src/agent/agent.ts:193] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:194] | 无内置 prompt override | 继承 defaults/user，但把 `todowrite` 设为 `deny`。[E: packages/opencode/src/agent/agent.ts:187] | 供复杂研究和多步任务使用，描述建议并行执行多个 work units。[E: packages/opencode/src/agent/agent.ts:184] |
 | `explore` | `subagent` [E: packages/opencode/src/agent/agent.ts:216] | 否 | `true` [E: packages/opencode/src/agent/agent.ts:217] | `PROMPT_EXPLORE` [E: packages/opencode/src/agent/agent.ts:214] | 先 `* deny`，再 allow `grep`、`glob`、`list`、`bash`、`webfetch`、`websearch`、`read`，外部目录按 readonly whitelist 处理。[E: packages/opencode/src/agent/agent.ts:200] | 快速探索 codebase；描述要求调用方给出 thoroughness level。[E: packages/opencode/src/agent/agent.ts:213] |
-| `compaction` | `primary` [E: packages/opencode/src/agent/agent.ts:221] | `true` [E: packages/opencode/src/agent/agent.ts:223] | `true` [E: packages/opencode/src/agent/agent.ts:222] | `PROMPT_COMPACTION` [E: packages/opencode/src/agent/agent.ts:224] | `* deny` 后再合并用户权限。[E: packages/opencode/src/agent/agent.ts:227] | hidden compaction worker；prompt 文本要求生成 anchored conversation summary。[E: packages/opencode/src/agent/prompt/compaction.txt:1] |
+| `compaction` | `primary` [E: packages/opencode/src/agent/agent.ts:221] | `true` [E: packages/opencode/src/agent/agent.ts:223] | `true` [E: packages/opencode/src/agent/agent.ts:222] | `PROMPT_COMPACTION` [E: packages/opencode/src/agent/agent.ts:224] | `* deny` 后再合并用户权限。[E: packages/opencode/src/agent/agent.ts:227] | hidden compaction worker；prompt 要求按用户给定格式输出 structured summary，供另一个 coding agent 继续工作，且不得续写对话或回答对话里的问题。[E: packages/opencode/src/agent/prompt/compaction.txt:1][E: packages/opencode/src/agent/prompt/compaction.txt:5] |
 | `title` | `primary` [E: packages/opencode/src/agent/agent.ts:236] | `true` [E: packages/opencode/src/agent/agent.ts:239] | `true` [E: packages/opencode/src/agent/agent.ts:238] | `PROMPT_TITLE` [E: packages/opencode/src/agent/agent.ts:248] | `* deny` 后再合并用户权限，且 temperature 固定为 `0.5`。[E: packages/opencode/src/agent/agent.ts:240] | hidden title worker；prompt 限制 title 不超过 50 个字符。[E: packages/opencode/src/agent/prompt/title.txt:4] |
 | `summary` | `primary` [E: packages/opencode/src/agent/agent.ts:252] | `true` [E: packages/opencode/src/agent/agent.ts:255] | `true` [E: packages/opencode/src/agent/agent.ts:254] | `PROMPT_SUMMARY` [E: packages/opencode/src/agent/agent.ts:263] | `* deny` 后再合并用户权限。[E: packages/opencode/src/agent/agent.ts:258] | hidden summary worker；prompt 要求写 2-3 句 PR-description 风格摘要。[E: packages/opencode/src/agent/prompt/summary.txt:1] |
 
@@ -52,7 +52,7 @@ agent state 初始化时会先计算 `whitelistedDirs`，包括 truncation glob�
 | prompt file | 被哪个 agent 使用 | 关键约束 |
 | --- | --- | --- |
 | `packages/opencode/src/agent/prompt/explore.txt` | `explore` | 文件说明自己是 file search specialist，并明确禁止创建文件或运行会修改系统状态的 bash 命令。[E: packages/opencode/src/agent/prompt/explore.txt:1] [E: packages/opencode/src/agent/prompt/explore.txt:16] |
-| `packages/opencode/src/agent/prompt/compaction.txt` | `compaction` | 要求写 structured summary，供 future AI agents 继续工作。[E: packages/opencode/src/agent/prompt/compaction.txt:1] |
+| `packages/opencode/src/agent/prompt/compaction.txt` | `compaction` | 身份是 context summarization agent，必须遵循用户 prompt 的精确输出结构，保留已知路径与 identifier，用短 bullet；禁止继续对话或回答对话中的问题，语言跟随原对话。[E: packages/opencode/src/agent/prompt/compaction.txt:1][E: packages/opencode/src/agent/prompt/compaction.txt:3][E: packages/opencode/src/agent/prompt/compaction.txt:5] |
 | `packages/opencode/src/agent/prompt/title.txt` | `title` | title 必须帮助用户稍后找回对话、不超过 50 字符、不能包含 tool names。[E: packages/opencode/src/agent/prompt/title.txt:4] [E: packages/opencode/src/agent/prompt/title.txt:10] [E: packages/opencode/src/agent/prompt/title.txt:17] |
 | `packages/opencode/src/agent/prompt/summary.txt` | `summary` | 要求 summary 面向 pull request description。[E: packages/opencode/src/agent/prompt/summary.txt:1] |
 | `packages/opencode/src/agent/generate.txt` | `Agent.generate` | 生成器必须返回 `identifier`、`whenToUse`、`systemPrompt` 三个字段的 JSON object。[E: packages/opencode/src/agent/agent.ts:12] [E: packages/opencode/src/agent/generate.txt:59] |

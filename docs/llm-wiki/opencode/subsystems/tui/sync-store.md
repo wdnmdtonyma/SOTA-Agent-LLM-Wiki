@@ -9,7 +9,7 @@ symbols: [SDKProvider, EventSource, SyncProvider, useSync, DataProvider, useData
 related: [tui.architecture, sdk.overview]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > TUI Sync store 是 server state 的 reactive mirror：`SDKProvider` 把 HTTP/SSE 或 host event source 合成 `sdk.event`，`SyncProvider` 维护 V1 SDK-shaped state，`DataProvider` 维护 V2 `session.next.*`/location state。
@@ -26,7 +26,7 @@ updated: 89130db6b0
 
 `SDKProvider` 创建 `createOpencodeClient`，传入 `baseUrl`、abort signal、directory、custom fetch 和 headers。[E: packages/tui/src/context/sdk.tsx:24] [E: packages/tui/src/context/sdk.tsx:25] [E: packages/tui/src/context/sdk.tsx:26] [E: packages/tui/src/context/sdk.tsx:27] [E: packages/tui/src/context/sdk.tsx:28] [E: packages/tui/src/context/sdk.tsx:29] 它对外暴露 `client` getter、`directory`、`event` emitter、effective `fetch` 和 `url`。[E: packages/tui/src/context/sdk.tsx:142] [E: packages/tui/src/context/sdk.tsx:145] [E: packages/tui/src/context/sdk.tsx:146] [E: packages/tui/src/context/sdk.tsx:147] [E: packages/tui/src/context/sdk.tsx:148]
 
-`SyncProvider` 的 store 是 legacy/current TUI 消费面，字段包含 provider/default/auth、console_state、agent、command、permission、question、config、session、session_status、session_diff、todo、message、part、lsp、mcp、mcp_resource、formatter、vcs 等。[E: packages/tui/src/context/sync.tsx:64] [E: packages/tui/src/context/sync.tsx:108] `DataProvider` 是 V2 mirror，字段分成 `session.info/message/permission/question`、`project.permission`、`location` caches。[E: packages/tui/src/context/data.tsx:37] [E: packages/tui/src/context/data.tsx:47]
+`SyncProvider` 的 store 是 legacy/current TUI 消费面，字段包含 provider/default/auth、console_state、agent、command、permission、question、config、session、session_status、session_diff、todo、message、part、lsp、mcp、mcp_resource、formatter、vcs 等。[E: packages/tui/src/context/sync.tsx:70] [E: packages/tui/src/context/sync.tsx:114] `DataProvider` 是 V2 mirror，字段分成 `session.info/message/permission/question`、`project.permission`、`location` caches。[E: packages/tui/src/context/data.tsx:37] [E: packages/tui/src/context/data.tsx:47]
 
 ## SDK event stream
 
@@ -38,35 +38,35 @@ updated: 89130db6b0
 
 ## SyncProvider 数据模型
 
-`SyncProvider` 初始化状态为 `status: "loading"`；bootstrap 成功后先变 `partial`，non-blocking resources 完成后变 `complete`。[E: packages/tui/src/context/sync.tsx:120] [E: packages/tui/src/context/sync.tsx:512] [E: packages/tui/src/context/sync.tsx:531]
+`SyncProvider` 初始化状态为 `status: "loading"`；bootstrap 成功后先变 `partial`，non-blocking resources 完成后变 `complete`。[E: packages/tui/src/context/sync.tsx:126] [E: packages/tui/src/context/sync.tsx:518] [E: packages/tui/src/context/sync.tsx:537]
 
 | Store 字段 | 说明 |
 |---|---|
-| `provider`, `provider_default`, `provider_next`, `provider_auth` | provider config/list/auth 方法。[E: packages/tui/src/context/sync.tsx:66] [E: packages/tui/src/context/sync.tsx:73] |
-| `agent`, `command`, `config` | app agents、slash/server commands、server config。[E: packages/tui/src/context/sync.tsx:74] [E: packages/tui/src/context/sync.tsx:82] |
-| `permission`, `question` | 以 `sessionID` 分组的 pending permission/question requests。[E: packages/tui/src/context/sync.tsx:76] [E: packages/tui/src/context/sync.tsx:80] |
-| `session`, `message`, `part`, `todo`, `session_diff`, `session_status` | transcript/session screen 主数据。[E: packages/tui/src/context/sync.tsx:83] [E: packages/tui/src/context/sync.tsx:84] [E: packages/tui/src/context/sync.tsx:87] [E: packages/tui/src/context/sync.tsx:90] [E: packages/tui/src/context/sync.tsx:93] [E: packages/tui/src/context/sync.tsx:96] |
-| `lsp`, `mcp`, `mcp_resource`, `formatter`, `vcs` | sidebar/status/feature plugin 数据源。[E: packages/tui/src/context/sync.tsx:99] [E: packages/tui/src/context/sync.tsx:107] |
+| `provider`, `provider_default`, `provider_next`, `provider_auth` | provider config/list/auth 方法。[E: packages/tui/src/context/sync.tsx:72] [E: packages/tui/src/context/sync.tsx:79] |
+| `agent`, `command`, `config` | app agents、slash/server commands、server config。[E: packages/tui/src/context/sync.tsx:80] [E: packages/tui/src/context/sync.tsx:88] |
+| `permission`, `question` | 以 `sessionID` 分组的 pending permission/question requests。[E: packages/tui/src/context/sync.tsx:82] [E: packages/tui/src/context/sync.tsx:86] |
+| `session`, `message`, `part`, `todo`, `session_diff`, `session_status` | transcript/session screen 主数据。[E: packages/tui/src/context/sync.tsx:89] [E: packages/tui/src/context/sync.tsx:90] [E: packages/tui/src/context/sync.tsx:93] [E: packages/tui/src/context/sync.tsx:96] [E: packages/tui/src/context/sync.tsx:99] [E: packages/tui/src/context/sync.tsx:102] |
+| `lsp`, `mcp`, `mcp_resource`, `formatter`, `vcs` | sidebar/status/feature plugin 数据源。[E: packages/tui/src/context/sync.tsx:105] [E: packages/tui/src/context/sync.tsx:113] |
 
-`sessionListQuery()` 会在 session directory filter disabled 时只传 `{ scope: "project" }`；如果有 worktree+directory，则传相对 worktree 的 `path`，用于按当前 subdirectory 过滤 session list。[E: packages/tui/src/context/sync.tsx:155] [E: packages/tui/src/context/sync.tsx:156] [E: packages/tui/src/context/sync.tsx:158] [E: packages/tui/src/context/sync.tsx:159] [E: packages/tui/src/context/sync.tsx:160]
+`sessionListQuery()` 会在 session directory filter disabled 时只传 `{ scope: "project" }`；如果有 worktree+directory，则传相对 worktree 的 `path`，用于按当前 subdirectory 过滤 session list。[E: packages/tui/src/context/sync.tsx:161] [E: packages/tui/src/context/sync.tsx:162] [E: packages/tui/src/context/sync.tsx:164] [E: packages/tui/src/context/sync.tsx:165] [E: packages/tui/src/context/sync.tsx:166]
 
 ## SyncProvider event reducers
 
-1. `server.instance.disposed` 会重新 `bootstrap()`，用于 worker/server reload 后刷新全局 mirror。[E: packages/tui/src/context/sync.tsx:170] [E: packages/tui/src/context/sync.tsx:173]
-2. `permission.asked`/`permission.replied` 和 `question.asked`/`question.replied`/`question.rejected` 维护 per-session sorted-ish request arrays，使用 binary `search()` 按 request id 插入/替换/删除。[E: packages/tui/src/context/sync.tsx:41] [E: packages/tui/src/context/sync.tsx:190] [E: packages/tui/src/context/sync.tsx:221]
-3. `todo.updated`、`session.diff`、`session.status` 直接更新对应 session map。[E: packages/tui/src/context/sync.tsx:260] [E: packages/tui/src/context/sync.tsx:264] [E: packages/tui/src/context/sync.tsx:311]
-4. `session.updated` 按 session id 查找并 reconcile 或插入 `store.session`。[E: packages/tui/src/context/sync.tsx:280] [E: packages/tui/src/context/sync.tsx:282] [E: packages/tui/src/context/sync.tsx:288]
-5. `message.updated` 会 touch hydrating tracker、insert/reconcile message，并把每个 session 的 visible messages 限制为最近 100 条；被 shift 掉的 oldest message 会删除对应 `part`。[E: packages/tui/src/context/sync.tsx:315] [E: packages/tui/src/context/sync.tsx:335] [E: packages/tui/src/context/sync.tsx:348]
-6. `message.part.delta` 把 delta append 到目标 part 的动态 field；`message.part.updated`/`removed` 分别 reconcile/删除 part。[E: packages/tui/src/context/sync.tsx:392] [E: packages/tui/src/context/sync.tsx:405] [E: packages/tui/src/context/sync.tsx:370] [E: packages/tui/src/context/sync.tsx:379] [E: packages/tui/src/context/sync.tsx:411] [E: packages/tui/src/context/sync.tsx:420]
-7. `lsp.updated` 触发 `sdk.client.lsp.status()` refresh；`vcs.branch.updated` 只在 event workspace 等于 current workspace 时更新 branch。[E: packages/tui/src/context/sync.tsx:427] [E: packages/tui/src/context/sync.tsx:433]
+1. `server.instance.disposed` 会重新 `bootstrap()`，用于 worker/server reload 后刷新全局 mirror。[E: packages/tui/src/context/sync.tsx:176] [E: packages/tui/src/context/sync.tsx:179]
+2. `permission.asked`/`permission.replied` 和 `question.asked`/`question.replied`/`question.rejected` 维护 per-session sorted-ish request arrays，使用 binary `search()` 按 request id 插入/替换/删除。[E: packages/tui/src/context/sync.tsx:41] [E: packages/tui/src/context/sync.tsx:196] [E: packages/tui/src/context/sync.tsx:227]
+3. `todo.updated`、`session.diff`、`session.status` 直接更新对应 session map。[E: packages/tui/src/context/sync.tsx:266] [E: packages/tui/src/context/sync.tsx:270] [E: packages/tui/src/context/sync.tsx:317]
+4. `session.updated` 按 session id 查找并 reconcile 或插入 `store.session`。[E: packages/tui/src/context/sync.tsx:274] [E: packages/tui/src/context/sync.tsx:288] [E: packages/tui/src/context/sync.tsx:294]
+5. `message.updated` 会 touch hydrating tracker、按 `messageKey`（`time.created + id`）二分插入/reconcile message，并把每个 session 的 visible messages 限制为最近 100 条；被 shift 掉的 oldest message 会删除对应 `part`。[E: packages/tui/src/context/sync.tsx:54] [E: packages/tui/src/context/sync.tsx:58] [E: packages/tui/src/context/sync.tsx:321] [E: packages/tui/src/context/sync.tsx:328] [E: packages/tui/src/context/sync.tsx:341] [E: packages/tui/src/context/sync.tsx:354]
+6. `message.part.delta` 把 delta append 到目标 part 的动态 field；`message.part.updated`/`removed` 分别 reconcile/删除 part。[E: packages/tui/src/context/sync.tsx:398] [E: packages/tui/src/context/sync.tsx:411] [E: packages/tui/src/context/sync.tsx:376] [E: packages/tui/src/context/sync.tsx:385] [E: packages/tui/src/context/sync.tsx:417] [E: packages/tui/src/context/sync.tsx:426]
+7. `lsp.updated` 触发 `sdk.client.lsp.status()` refresh；`vcs.branch.updated` 只在 event workspace 等于 current workspace 时更新 branch。[E: packages/tui/src/context/sync.tsx:433] [E: packages/tui/src/context/sync.tsx:439]
 
 ## Bootstrap 两阶段
 
-`bootstrap()` 先同步 project path/current project，然后发起 session list promise。[E: packages/tui/src/context/sync.tsx:448] [E: packages/tui/src/context/sync.tsx:449] blocking phase 等 provider config、provider list、agents、config、project，以及 `--continue` 情况下的 session list；这些成功后 batch 写入 provider/agent/config/session 等关键数据。[E: packages/tui/src/context/sync.tsx:452] [E: packages/tui/src/context/sync.tsx:471] [E: packages/tui/src/context/sync.tsx:499] [E: packages/tui/src/context/sync.tsx:507]
+`bootstrap()` 先同步 project path/current project，然后发起 session list promise。[E: packages/tui/src/context/sync.tsx:454] [E: packages/tui/src/context/sync.tsx:455] blocking phase 等 provider config、provider list、agents、config、project，以及 `--continue` 情况下的 session list；这些成功后 batch 写入 provider/agent/config/session 等关键数据。[E: packages/tui/src/context/sync.tsx:458] [E: packages/tui/src/context/sync.tsx:477] [E: packages/tui/src/context/sync.tsx:505] [E: packages/tui/src/context/sync.tsx:513]
 
-blocking 成功后如果尚未 complete 就设为 `partial`，再并发加载 session list、console state、command、lsp、mcp、resource、formatter、session.status、provider.auth、vcs、workspace，全部完成后设 `complete`。[E: packages/tui/src/context/sync.tsx:511] [E: packages/tui/src/context/sync.tsx:514] [E: packages/tui/src/context/sync.tsx:531]
+blocking 成功后如果尚未 complete 就设为 `partial`，再并发加载 session list、console state、command、lsp、mcp、resource、formatter、session.status、provider.auth、vcs、workspace，全部完成后设 `complete`。[E: packages/tui/src/context/sync.tsx:517] [E: packages/tui/src/context/sync.tsx:520] [E: packages/tui/src/context/sync.tsx:537]
 
-`sync.session.sync(sessionID)` 有 full-sync guard 和 in-flight promise map；它一次加载 session info、最近 100 条 messages、todo、diff，再用 hydrating tracker 避免 SSE 已到的新 message/part 被 hydration 旧数据覆盖。[E: packages/tui/src/context/sync.tsx:589] [E: packages/tui/src/context/sync.tsx:591] [E: packages/tui/src/context/sync.tsx:595] [E: packages/tui/src/context/sync.tsx:597] [E: packages/tui/src/context/sync.tsx:608] [E: packages/tui/src/context/sync.tsx:629] [E: packages/tui/src/context/sync.tsx:653]
+`sync.session.sync(sessionID)` 有 full-sync guard 和 in-flight promise map；它一次加载 session info、最近 100 条 messages、todo、diff，hydrate 后 `infos.sort(compareMessage)`（creation time，并列比 id），再用 hydrating tracker 避免 SSE 已到的新 message/part 被 hydration 旧数据覆盖。[E: packages/tui/src/context/sync.tsx:595] [E: packages/tui/src/context/sync.tsx:597] [E: packages/tui/src/context/sync.tsx:601] [E: packages/tui/src/context/sync.tsx:603] [E: packages/tui/src/context/sync.tsx:614] [E: packages/tui/src/context/sync.tsx:624] [E: packages/tui/src/context/sync.tsx:636] [E: packages/tui/src/context/sync.tsx:660] 这保证 transcript 按 persisted creation time 排列，但不声明能消除全部 hydrate/SSE 竞态。[I]
 
 ## DataProvider(V2 mirror)
 
@@ -76,7 +76,7 @@ V2 location data refreshers 走 generated SDK 的 `v2.*` namespaces：`v2.agent.
 
 ## 设计动机与权衡
 
-`specs/tui-package.md` 要求 SDK state/event synchronization 和 route/prompt/session views 迁入 `packages/tui`，并把 SDK 设为 domain boundary。[E: specs/tui-package.md:352] [E: specs/tui-package.md:353] [E: specs/tui-package.md:348] 当前实现把 HTTP/SSE/event-source transport 抽象进 `SDKProvider`，把 V1 和 V2 read models 都留在 TUI-local Solid stores；这符合“local-only UI state stays in TUI package”的迁移原则。[I] [E: packages/tui/src/context/sdk.tsx:11] [E: packages/tui/src/context/sync.tsx:54] [E: packages/tui/src/context/data.tsx:58] [E: specs/tui-package.md:363]
+`specs/tui-package.md` 要求 SDK state/event synchronization 和 route/prompt/session views 迁入 `packages/tui`，并把 SDK 设为 domain boundary。[E: specs/tui-package.md:352] [E: specs/tui-package.md:353] [E: specs/tui-package.md:348] 当前实现把 HTTP/SSE/event-source transport 抽象进 `SDKProvider`，把 V1 和 V2 read models 都留在 TUI-local Solid stores；这符合“local-only UI state stays in TUI package”的迁移原则。[I] [E: packages/tui/src/context/sdk.tsx:11] [E: packages/tui/src/context/sync.tsx:60] [E: packages/tui/src/context/data.tsx:58] [E: specs/tui-package.md:363]
 
 ## Gotcha
 

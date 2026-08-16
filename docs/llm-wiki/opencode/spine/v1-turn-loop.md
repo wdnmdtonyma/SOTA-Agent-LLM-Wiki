@@ -9,7 +9,7 @@ symbols: [SessionPrompt.prompt, SessionPrompt.loop, runLoop, SessionProcessor.cr
 related: [session-v1.prompt, session-v1.processor, session-v1.llm-runtime]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V1 turn loop 是 `packages/opencode/src/session/prompt.ts` 内部的 assistant loop:它从 V1 user message 组装模型输入,调用 `SessionProcessor`,再由 `LLM.stream` 把 AI SDK/native seam event 转成 V1 message part。
@@ -50,7 +50,7 @@ flowchart TD
 
 6. `runLoop@packages/opencode/src/session/prompt.ts:1081` 进入 `while (true)` 后先把 session status 置为 busy,再读取 compacted-filtered messages 与最新 message/task 状态。[E: packages/opencode/src/session/prompt.ts:1081][E: packages/opencode/src/session/prompt.ts:1088][E: packages/opencode/src/session/prompt.ts:1089][E: packages/opencode/src/session/prompt.ts:1092][E: packages/opencode/src/session/prompt.ts:1096]
 
-7. `runLoop@packages/opencode/src/session/prompt.ts:1111` 如果最新 assistant message 已 finish、finish reason 不是 `tool-calls`、没有未完成 tool calls、且 last user id 早于 assistant id,循环会记录 exiting loop 并 break;第一步还会触发 session title 更新。[E: packages/opencode/src/session/prompt.ts:1111][E: packages/opencode/src/session/prompt.ts:1112][E: packages/opencode/src/session/prompt.ts:1114][E: packages/opencode/src/session/prompt.ts:1115][E: packages/opencode/src/session/prompt.ts:1128][E: packages/opencode/src/session/prompt.ts:1133]
+7. `runLoop@packages/opencode/src/session/prompt.ts:1111` 如果最新 assistant message 已 finish、finish reason 不是 `tool-calls`、没有未完成 tool calls、且 `lastAssistant.parentID === lastUser.id`,循环会记录 exiting loop 并 break;第一步还会触发 session title 更新。[E: packages/opencode/src/session/prompt.ts:1111][E: packages/opencode/src/session/prompt.ts:1112][E: packages/opencode/src/session/prompt.ts:1114][E: packages/opencode/src/session/prompt.ts:1115][E: packages/opencode/src/session/prompt.ts:1128][E: packages/opencode/src/session/prompt.ts:1133]
 
 8. 每个 step 会先解析模型、处理 subtask 或已排队的 compaction task;若上一个 finished assistant 非 summary 且 `compaction.isOverflow` 命中,`SessionPrompt` 会调用 `compaction.create({ auto: true })` 并继续下一轮,随后才解析当前 agent。[E: packages/opencode/src/session/prompt.ts:1141][E: packages/opencode/src/session/prompt.ts:1142][E: packages/opencode/src/session/prompt.ts:1144][E: packages/opencode/src/session/prompt.ts:1149][E: packages/opencode/src/session/prompt.ts:1161][E: packages/opencode/src/session/prompt.ts:1166][E: packages/opencode/src/session/prompt.ts:1170]
 
@@ -60,7 +60,7 @@ flowchart TD
 
 11. `handle.process@packages/opencode/src/session/prompt.ts:1271` 把 `system`、`messages`、`tools`、`model`、`toolChoice` 交给 `SessionProcessor`。[E: packages/opencode/src/session/prompt.ts:1272]
 
-12. `SessionProcessor.process@packages/opencode/src/session/processor.ts:625` 设置 session busy,然后在 `llm.stream(streamInput)` 处真正打开模型 event stream。[E: packages/opencode/src/session/processor.ts:627][E: packages/opencode/src/session/processor.ts:639][E: packages/opencode/src/session/processor.ts:640]
+12. `SessionProcessor.process@packages/opencode/src/session/processor.ts:627` 设置 session busy,然后在 `llm.stream(streamInput)` 处真正打开模型 event stream。[E: packages/opencode/src/session/processor.ts:627][E: packages/opencode/src/session/processor.ts:639][E: packages/opencode/src/session/processor.ts:640]
 
 13. `LLM.stream@packages/opencode/src/session/llm.ts:357` 创建 abort controller 并调用 `run`;默认 `run` 分支调用 AI SDK `streamText`,experimental native 分支则尝试 `LLMNativeRuntime.stream`。[E: packages/opencode/src/session/llm.ts:357][E: packages/opencode/src/session/llm.ts:271][E: packages/opencode/src/session/llm.ts:226]
 

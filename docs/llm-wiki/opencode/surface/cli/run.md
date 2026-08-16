@@ -10,7 +10,7 @@ schema: node
 source:
   - packages/opencode/src/cli/cmd/run.ts
   - packages/opencode/src/cli/cmd/run/
-updated: 89130db6b0
+updated: 3fd77ae980
 evidence: explicit
 ---
 

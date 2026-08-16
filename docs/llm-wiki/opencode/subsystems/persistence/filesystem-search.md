@@ -27,7 +27,7 @@ related:
   - tool.grep
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V2 filesystem-search 是 Location-scoped filesystem facade：`FileSystem` 负责 read/list 的 path containment，`FileSystemSearch` 在 FFF 可用时使用 fast-file-finder，否则回退 core-owned ripgrep adapter。
@@ -85,7 +85,7 @@ FFF `glob` 调 `result.value.glob(prefix ? "<prefix>/<pattern>" : pattern, { pag
 
 `Ripgrep.Service` tag 是 `@opencode/v2/Ripgrep`，接口有 `find/glob/grep`。[E: packages/core/src/ripgrep.ts:79][E: packages/core/src/ripgrep.ts:80][E: packages/core/src/ripgrep.ts:81][E: packages/core/src/ripgrep.ts:82][E: packages/core/src/ripgrep.ts:85] adapter 的 `run()` spawn `binary.filepath`，用 `Stream.splitLines` 解析 stdout，`Stream.take(limit + 1)` 判断 truncated，并收集最多 8KiB stderr。[E: packages/core/src/ripgrep.ts:18][E: packages/core/src/ripgrep.ts:98][E: packages/core/src/ripgrep.ts:109][E: packages/core/src/ripgrep.ts:110][E: packages/core/src/ripgrep.ts:112][E: packages/core/src/ripgrep.ts:117][E: packages/core/src/ripgrep.ts:118][E: packages/core/src/ripgrep.ts:126][E: packages/core/src/ripgrep.ts:130] exit code 1 表示 no matches，exit code 2 可产生 partial result 或 invalid regex error，其他非 0 code 是 failure。[E: packages/core/src/ripgrep.ts:135][E: packages/core/src/ripgrep.ts:136][E: packages/core/src/ripgrep.ts:138][E: packages/core/src/ripgrep.ts:141]
 
-`glob` 和 `find` 都用 `rg --no-config --files`；`glob` 总是加 `--glob=<pattern>`，`find` 只有 pattern 不是 `"*"` 时加 `--glob=<pattern>`，二者都排除 `.git`。[E: packages/core/src/ripgrep.ts:160][E: packages/core/src/ripgrep.ts:161][E: packages/core/src/ripgrep.ts:162][E: packages/core/src/ripgrep.ts:165][E: packages/core/src/ripgrep.ts:166][E: packages/core/src/ripgrep.ts:192][E: packages/core/src/ripgrep.ts:193][E: packages/core/src/ripgrep.ts:194][E: packages/core/src/ripgrep.ts:197][E: packages/core/src/ripgrep.ts:198] `grep` 用 `rg --json --hidden --no-messages`，optional include glob，显式 `--` 后传 pattern 和 file/dot。[E: packages/core/src/ripgrep.ts:221][E: packages/core/src/ripgrep.ts:222][E: packages/core/src/ripgrep.ts:223][E: packages/core/src/ripgrep.ts:224][E: packages/core/src/ripgrep.ts:225][E: packages/core/src/ripgrep.ts:226][E: packages/core/src/ripgrep.ts:227][E: packages/core/src/ripgrep.ts:228][E: packages/core/src/ripgrep.ts:229][E: packages/core/src/ripgrep.ts:230]
+`glob` 和 `find` 都用 `rg --no-config --files`；`glob` 总是加 `--glob=<pattern>`，`find` 只有 pattern 不是 `"*"` 时加 `--glob=<pattern>`，二者都排除 `.git`。[E: packages/core/src/ripgrep.ts:160][E: packages/core/src/ripgrep.ts:161][E: packages/core/src/ripgrep.ts:162][E: packages/core/src/ripgrep.ts:165][E: packages/core/src/ripgrep.ts:166][E: packages/core/src/ripgrep.ts:192][E: packages/core/src/ripgrep.ts:193][E: packages/core/src/ripgrep.ts:194][E: packages/core/src/ripgrep.ts:197][E: packages/core/src/ripgrep.ts:198] `grep` 用 `rg --json --hidden --no-messages`，optional include glob，显式 `--` 后传 pattern 和 file/dot。[E: packages/core/src/ripgrep.ts:221][E: packages/core/src/ripgrep.ts:222][E: packages/core/src/ripgrep.ts:223][E: packages/core/src/ripgrep.ts:224][E: packages/core/src/ripgrep.ts:225][E: packages/core/src/ripgrep.ts:226][E: packages/core/src/ripgrep.ts:227][E: packages/core/src/ripgrep.ts:228][E: packages/core/src/ripgrep.ts:229][E: packages/core/src/ripgrep.ts:230] 单条 match text 超过 2000 字符会截断，并 strip 末尾孤立 UTF-16 高位代理，避免预览出现残缺 Unicode。[E: packages/core/src/ripgrep.ts:267][E: packages/core/src/ripgrep.ts:268][E: packages/core/src/ripgrep.ts:269]
 
 ## Ignore/protected/watcher 相关
 

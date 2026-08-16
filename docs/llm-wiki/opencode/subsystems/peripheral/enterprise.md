@@ -15,7 +15,7 @@ symbols: [Share, Storage]
 related: [server.sharing]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > `@opencode-ai/enterprise` 是 SolidStart 自托管 share 后端：它用 S3/R2-compatible object storage 保存 share snapshot，并提供 REST API 与 viewer page。

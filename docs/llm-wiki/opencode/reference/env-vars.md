@@ -21,7 +21,7 @@ symbols:
 evidence: explicit
 related:
   - persistence.repository-cache
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -102,7 +102,7 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `experimentalLspTool` | `OPENCODE_EXPERIMENTAL_LSP_TOOL` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:45] |
 | `experimentalOxfmt` | `OPENCODE_EXPERIMENTAL_OXFMT` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:46] |
 | `experimentalPlanMode` | `OPENCODE_EXPERIMENTAL_PLAN_MODE` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:47] |
-| `experimentalCodeMode` | `OPENCODE_EXPERIMENTAL_CODE_MODE` | experimental truthy；启用 V1 `execute`/Code Mode 工具 | [E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:113] |
+| `experimentalCodeMode` | `OPENCODE_EXPERIMENTAL_CODE_MODE` | experimental truthy；启用 V1 `execute`/Code Mode 工具 | [E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:118] |
 | `experimentalEventSystem` | `OPENCODE_EXPERIMENTAL_EVENT_SYSTEM` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:49] |
 | `experimentalWorkspaces` | `OPENCODE_EXPERIMENTAL_WORKSPACES` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:50] |
 | `experimentalIconDiscovery` | `OPENCODE_EXPERIMENTAL_ICON_DISCOVERY` | experimental truthy | [E: packages/opencode/src/effect/runtime-flags.ts:51] |
@@ -188,20 +188,20 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 
 | Env | 用途 | Evidence |
 |---|---|---|
-| `VARIANT` | GitHub command variant input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:406] |
-| `GITHUB_TOKEN` | GitHub API token when `use_github_token` is enabled. | [E: packages/opencode/src/cli/cmd/github.handler.ts:470][E: packages/opencode/src/cli/cmd/github.handler.ts:471] |
-| `MODEL` | GitHub automation model input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:656] |
-| `GITHUB_RUN_ID` | GitHub run id. | [E: packages/opencode/src/cli/cmd/github.handler.ts:667] |
-| `SHARE` | GitHub automation share input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:673] |
-| `USE_GITHUB_TOKEN` | GitHub token mode input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:681] |
-| `OIDC_BASE_URL` | GitHub OIDC base URL input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:689] |
-| `PROMPT` | GitHub automation custom prompt. | [E: packages/opencode/src/cli/cmd/github.handler.ts:724] |
-| `MENTIONS` | GitHub mention trigger list. | [E: packages/opencode/src/cli/cmd/github.handler.ts:739] |
+| `VARIANT` | GitHub command variant input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:408] |
+| `GITHUB_TOKEN` | GitHub API token when `use_github_token` is enabled. | [E: packages/opencode/src/cli/cmd/github.handler.ts:472][E: packages/opencode/src/cli/cmd/github.handler.ts:473] |
+| `MODEL` | GitHub automation model input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:658] |
+| `GITHUB_RUN_ID` | GitHub run id. | [E: packages/opencode/src/cli/cmd/github.handler.ts:669] |
+| `SHARE` | GitHub automation share input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:675] |
+| `USE_GITHUB_TOKEN` | GitHub token mode input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:683] |
+| `OIDC_BASE_URL` | GitHub OIDC base URL input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:691] |
+| `PROMPT` | GitHub automation custom prompt. | [E: packages/opencode/src/cli/cmd/github.handler.ts:726] |
+| `MENTIONS` | GitHub mention trigger list. | [E: packages/opencode/src/cli/cmd/github.handler.ts:741] |
 
 ## 设计动机与坑位
 
 - `OPENCODE_EXPERIMENTAL` 是 umbrella only when a specific experimental flag is absent；设置了具体 env 后，具体 env 的 true/false 优先级更高。[E: packages/core/src/flag/flag.ts:12][E: packages/opencode/src/effect/runtime-flags.ts:13]
-- `OPENCODE_EXPERIMENTAL_CODE_MODE` 开启后，V1 registry 动态加载 wire tool `execute`；若专用 flag 未设置，umbrella `OPENCODE_EXPERIMENTAL` 可使其生效。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:113][E: packages/opencode/src/tool/code-mode.ts:12]
+- `OPENCODE_EXPERIMENTAL_CODE_MODE` 开启后，V1 registry 动态加载 wire tool `execute`；若专用 flag 未设置，umbrella `OPENCODE_EXPERIMENTAL` 可使其生效。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:118][E: packages/opencode/src/tool/code-mode.ts:12]
 - 同名 env 可能被 V1 与 V2 双读，例如 `OPENCODE_CLIENT` 同时出现在 core `Flag` 与 V1 `RuntimeFlags`，因此排查 client identity 时要看当前执行路径属于 V1 CLI 还是 V2 embedded core。[E: packages/core/src/flag/flag.ts:75][E: packages/opencode/src/effect/runtime-flags.ts:56]
 - provider env 同时存在 `packages/core/src/plugin/provider/*` 与 `packages/opencode/src/provider/provider.ts` 两套 adapter；这反映 V1/V2 迁移期间 provider 入口并存。[E: packages/core/src/plugin/provider/google-vertex.ts:10][E: packages/opencode/src/provider/provider.ts:504][I]
 

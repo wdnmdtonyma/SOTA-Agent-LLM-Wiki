@@ -20,7 +20,7 @@ related:
   - session-v1.store
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V1 snapshots 是一个 shadow git 子系统：每个 worktree 对应 `Global.Path.data/snapshot/<project-id>/<hash(worktree)>` 下的独立 git dir，通过 `--git-dir`/`--work-tree` 和 `objects/info/alternates` 记录、diff、restore、revert 用户会话修改。
@@ -56,9 +56,9 @@ updated: 89130db6b0
 
 ## SessionRevert 集成
 
-`SessionRevert.revert` 先 `state.assertNotBusy(sessionID)`，避免运行中 session 被回滚 [E: packages/opencode/src/session/revert.ts:39]。它扫描 session messages，从目标 message/part 之后收集 `part.type === "patch"` 的 snapshot patch entries [E: packages/opencode/src/session/revert.ts:46] [E: packages/opencode/src/session/revert.ts:51]。第一次 revert 时会保存 `rev.snapshot = session.revert?.snapshot ?? snap.track()`；已有 revert snapshot 时先 restore，再 `snap.revert(patches)` [E: packages/opencode/src/session/revert.ts:70] [E: packages/opencode/src/session/revert.ts:71] [E: packages/opencode/src/session/revert.ts:72]。之后计算 diff summary、写 `session_diff` storage、publish `Session.Event.Diff`，并把 revert summary 写回 session [E: packages/opencode/src/session/revert.ts:73] [E: packages/opencode/src/session/revert.ts:76] [E: packages/opencode/src/session/revert.ts:78]。
+`SessionRevert.revert` 先 `state.assertNotBusy(sessionID)`，避免运行中 session 被回滚 [E: packages/opencode/src/session/revert.ts:39]。它扫描 session messages，从目标 message/part 之后收集 `part.type === "patch"` 的 snapshot patch entries [E: packages/opencode/src/session/revert.ts:46] [E: packages/opencode/src/session/revert.ts:51]。第一次 revert 时会保存 `rev.snapshot = session.revert?.snapshot ?? snap.track()`；已有 revert snapshot 时先 restore，再 `snap.revert(patches)` [E: packages/opencode/src/session/revert.ts:70] [E: packages/opencode/src/session/revert.ts:71] [E: packages/opencode/src/session/revert.ts:72]。之后计算 diff summary、写 `session_diff` storage、publish `Session.Event.Diff`，并把 revert summary 写回 session [E: packages/opencode/src/session/revert.ts:73] [E: packages/opencode/src/session/revert.ts:77] [E: packages/opencode/src/session/revert.ts:79]。
 
-`unrevert` 会 restore 保存的 snapshot 并 clear revert state [E: packages/opencode/src/session/revert.ts:95] [E: packages/opencode/src/session/revert.ts:96]。`cleanup` 会删除 revert target 之后的 messages 或 parts，然后 clear revert [E: packages/opencode/src/session/revert.ts:119] [E: packages/opencode/src/session/revert.ts:129] [E: packages/opencode/src/session/revert.ts:133]。
+`unrevert` 会 restore 保存的 snapshot 并 clear revert state [E: packages/opencode/src/session/revert.ts:96] [E: packages/opencode/src/session/revert.ts:97]。`cleanup` 会删除 revert target 之后的 messages 或 parts，然后 clear revert [E: packages/opencode/src/session/revert.ts:109] [E: packages/opencode/src/session/revert.ts:119] [E: packages/opencode/src/session/revert.ts:123]。
 
 ## 设计动机与权衡
 

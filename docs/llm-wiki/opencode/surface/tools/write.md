@@ -9,7 +9,7 @@ symbols: [WriteTool]
 related: [execution.permissions-v1, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Write 工具负责整文件写入；V1 活跑实现复用 edit permission、formatter、watcher 与 LSP diagnostics，V2 新内核实现复用 `FileMutation.writeTextPreservingBom` 与 `PermissionV2`。

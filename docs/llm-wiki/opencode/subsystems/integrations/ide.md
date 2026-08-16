@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 source:
   - packages/opencode/src/ide/index.ts
 symbols:

@@ -9,7 +9,7 @@ symbols: [SessionTools.resolve, SessionProcessor.process, SessionRunner.run, cre
 related: [spine.v2-provider-turn, subsys.tools.v2]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Tool call trace 在 V1 与 V2 中不是同一条机制:V1 依赖 AI SDK tool execution wrapper 与 `SessionProcessor` 更新 V1 parts,V2 由 runner 在 durable `Tool.Called` 后 settle local tool 并发布 `Tool.Success/Failed`。

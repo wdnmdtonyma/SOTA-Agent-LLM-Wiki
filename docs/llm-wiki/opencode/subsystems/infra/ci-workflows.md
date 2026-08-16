@@ -26,7 +26,7 @@ related:
   - infra.native-binary-release
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > CI/CD workflows 节点描述 `.github/workflows` 中约 26 个 GitHub Actions workflow 的主要交付路径: tests/typecheck, SST deploy, CLI/Desktop publish, Storybook build, container image build, beta branch sync, Nix evaluation and hash refresh。
@@ -47,8 +47,8 @@ V1/V2 关系: CI 跑的是整个 monorepo 的 tests/typecheck/build/publish。�
 
 ## 技术栈
 
-- GitHub Actions YAML: workflows 使用 `actions/checkout`, repo-local `.github/actions/setup-bun`, `actions/setup-node`, `actions/cache`, Docker buildx/QEMU, Azure signing, AWS OIDC credentials, Nix installer actions [E: .github/workflows/test.yml:39] [E: .github/workflows/test.yml:49] [E: .github/workflows/deploy.yml:26] [E: .github/workflows/test.yml:57] [E: .github/workflows/publish.yml:426] [E: .github/workflows/publish.yml:148] [E: .github/workflows/deploy.yml:30] [E: .github/workflows/nix-eval.yml:25]。
-- Bun command surface: test/typecheck/deploy/storybook/containers/publish workflows all enter repo scripts through Bun [E: .github/workflows/test.yml:68] [E: .github/workflows/typecheck.yml:21] [E: .github/workflows/deploy.yml:36] [E: .github/workflows/storybook.yml:40] [E: .github/workflows/containers.yml:42] [E: .github/workflows/publish.yml:506]。
+- GitHub Actions YAML: workflows 使用 `actions/checkout`, repo-local `.github/actions/setup-bun`, `actions/setup-node`, `actions/cache`, Docker buildx/QEMU, Azure signing, AWS OIDC credentials, Nix installer actions [E: .github/workflows/test.yml:39] [E: .github/workflows/test.yml:49] [E: .github/workflows/deploy.yml:26] [E: .github/workflows/test.yml:57] [E: .github/workflows/publish.yml:427] [E: .github/workflows/publish.yml:148] [E: .github/workflows/deploy.yml:30] [E: .github/workflows/nix-eval.yml:25]。
+- Bun command surface: test/typecheck/deploy/storybook/containers/publish workflows all enter repo scripts through Bun [E: .github/workflows/test.yml:68] [E: .github/workflows/typecheck.yml:21] [E: .github/workflows/deploy.yml:36] [E: .github/workflows/storybook.yml:40] [E: .github/workflows/containers.yml:42] [E: .github/workflows/publish.yml:507]。
 
 ## 关键文件
 
@@ -56,7 +56,7 @@ V1/V2 关系: CI 跑的是整个 monorepo 的 tests/typecheck/build/publish。�
 | --- | --- |
 | `.github/workflows/test.yml` | PR/dev test gate。unit job 在 Linux 和 Windows 跑 `bun turbo test`; Linux 额外在 `packages/opencode` 跑 `bun run test:httpapi`; e2e job 在 Linux/Windows 跑 `bun --cwd packages/app test:e2e:local` 并上传 Playwright artifacts [E: .github/workflows/test.yml:24] [E: .github/workflows/test.yml:30] [E: .github/workflows/test.yml:66] [E: .github/workflows/test.yml:77] [E: .github/workflows/test.yml:82] [E: .github/workflows/test.yml:136] [E: .github/workflows/test.yml:142]。 |
 | `.github/workflows/typecheck.yml` | PR/dev typecheck gate。push/pull_request 都限制 dev branch, command 是 `bun typecheck` [E: .github/workflows/typecheck.yml:3] [E: .github/workflows/typecheck.yml:5] [E: .github/workflows/typecheck.yml:6] [E: .github/workflows/typecheck.yml:21]。 |
-| `.github/workflows/publish.yml` | release orchestration。version job 生成 version/release/tag/repo outputs; build-cli 构建 `packages/opencode` 和 `packages/cli`; sign-cli-windows 做 Azure signing; build-electron matrix 构建 Desktop; publish job 上传 Desktop release assets 并运行 `./script/publish.ts` [E: .github/workflows/publish.yml:35] [E: .github/workflows/publish.yml:65] [E: .github/workflows/publish.yml:89] [E: .github/workflows/publish.yml:120] [E: .github/workflows/publish.yml:220] [E: .github/workflows/publish.yml:493] [E: .github/workflows/publish.yml:506]。 |
+| `.github/workflows/publish.yml` | release orchestration。version job 生成 version/release/tag/repo outputs; build-cli 构建 `packages/opencode` 和 `packages/cli`; sign-cli-windows 做 Azure signing; build-electron matrix 构建 Desktop; publish job 上传 Desktop release assets 并运行 `./script/publish.ts` [E: .github/workflows/publish.yml:35] [E: .github/workflows/publish.yml:65] [E: .github/workflows/publish.yml:89] [E: .github/workflows/publish.yml:120] [E: .github/workflows/publish.yml:220] [E: .github/workflows/publish.yml:494] [E: .github/workflows/publish.yml:507]。 |
 | `.github/workflows/deploy.yml` | hosted infra deploy。dev/production branch push 或 manual dispatch 触发, job 条件限制仓库和 ref, 通过 AWS OIDC 配置 credentials, 运行 `bun sst deploy --stage=${{ github.ref_name }}` [E: .github/workflows/deploy.yml:3] [E: .github/workflows/deploy.yml:5] [E: .github/workflows/deploy.yml:7] [E: .github/workflows/deploy.yml:18] [E: .github/workflows/deploy.yml:30] [E: .github/workflows/deploy.yml:36]。 |
 | `.github/workflows/storybook.yml` | UI documentation build gate。只在 Storybook/UI/root dependency 相关 paths 变化时触发, command 是 `bun --cwd packages/storybook build` [E: .github/workflows/storybook.yml:6] [E: .github/workflows/storybook.yml:10] [E: .github/workflows/storybook.yml:11] [E: .github/workflows/storybook.yml:39] [E: .github/workflows/storybook.yml:40]。 |
 | `.github/workflows/containers.yml` | container image build。dev branch 上 containers 相关 paths 触发, 登录 GHCR, 运行 `packages/containers/script/build.ts --push` [E: .github/workflows/containers.yml:4] [E: .github/workflows/containers.yml:8] [E: .github/workflows/containers.yml:34] [E: .github/workflows/containers.yml:42]。 |
@@ -76,8 +76,8 @@ Nix hash workflow 的 matrix 覆盖 `x86_64-linux`, `aarch64-linux`, `x86_64-dar
 3. publish flow 的 version job 可安装当前 release `opencode-ai`, 运行 `./script/version.ts`, 输出 version/release/tag/repo [E: .github/workflows/publish.yml:52] [E: .github/workflows/publish.yml:56] [E: .github/workflows/publish.yml:65]。
 4. build-cli job 运行 `./packages/opencode/script/build.ts` 和 `./packages/cli/script/build.ts`, 上传 Linux/macOS CLI、Windows CLI、新 CLI preview artifacts [E: .github/workflows/publish.yml:92] [E: .github/workflows/publish.yml:93] [E: .github/workflows/publish.yml:100] [E: .github/workflows/publish.yml:107] [E: .github/workflows/publish.yml:112]。
 5. sign-cli-windows job 对三个 Windows CLI exe 调 Azure artifact signing, 验证 Authenticode signature, 重新打 zip, release 时上传 Windows CLI assets [E: .github/workflows/publish.yml:155] [E: .github/workflows/publish.yml:175] [E: .github/workflows/publish.yml:191] [E: .github/workflows/publish.yml:199]。
-6. build-electron job 先在 `packages/desktop` 运行 `scripts/prepare.ts`, 再 `bun run build`, release 时用 electron-builder package, 最后上传 Desktop artifacts [E: .github/workflows/publish.yml:312] [E: .github/workflows/publish.yml:320] [E: .github/workflows/publish.yml:334] [E: .github/workflows/publish.yml:392]。
-7. publish job 下载 CLI/Desktop artifacts, 上传 Desktop release assets, 然后执行 root `./script/publish.ts`; npm/Docker/Homebrew/AUR 等后续发布面由 release 脚本体系继续展开 [E: .github/workflows/publish.yml:434] [E: .github/workflows/publish.yml:460] [E: .github/workflows/publish.yml:493] [E: .github/workflows/publish.yml:506] [I]。
+6. build-electron job 先在 `packages/desktop` 运行 `scripts/prepare.ts`, 再 `bun run build`, release 时用 electron-builder package, 最后上传 Desktop artifacts [E: .github/workflows/publish.yml:312] [E: .github/workflows/publish.yml:320] [E: .github/workflows/publish.yml:335] [E: .github/workflows/publish.yml:393]。
+7. publish job 下载 CLI/Desktop artifacts, 上传 Desktop release assets, 然后执行 root `./script/publish.ts`; npm/Docker/Homebrew/AUR 等后续发布面由 release 脚本体系继续展开 [E: .github/workflows/publish.yml:435] [E: .github/workflows/publish.yml:461] [E: .github/workflows/publish.yml:494] [E: .github/workflows/publish.yml:507] [I]。
 
 ## 设计动机与权衡
 

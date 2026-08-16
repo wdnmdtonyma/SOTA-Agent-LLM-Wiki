@@ -9,12 +9,13 @@ source:
   - packages/web/astro.config.mjs
   - packages/web/src/content.config.ts
   - packages/web/config.mjs
+  - packages/web/src/components/Share.tsx
   - infra/app.ts
 related:
   - infra.sst
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Web/文档站是 `@opencode-ai/web` Astro 5 + Starlight 站点, 由 Cloudflare adapter 以 server output 部署, 主要承载 docs、多语言内容、品牌页面和分享页的 Web surface。
@@ -26,12 +27,13 @@ updated: 89130db6b0
 - Web 站点的生产/dev URL 如何由 SST stage 决定?
 - 文档内容和 i18n collection 的 schema 从哪里来?
 - Web 站点和 `infra.sst` 的部署关系是什么?
+- 分享页 shared messages 按什么顺序渲染?
 
 ## 职责边界
 
 `@opencode-ai/web` 是 docs/web surface, 不是 App UI shell。package scripts 全部是 Astro dev/build/preview 命令 [E: packages/web/package.json:7] [E: packages/web/package.json:10] [E: packages/web/package.json:11], 依赖包含 `astro`, `@astrojs/starlight`, `@astrojs/cloudflare`, `@astrojs/solid-js` 和 `toolbeam-docs-theme` [E: packages/web/package.json:15] [E: packages/web/package.json:17] [E: packages/web/package.json:18] [E: packages/web/package.json:24] [E: packages/web/package.json:35]。
 
-V1/V2 关系: Web docs 站点是 `v: na`。它会发布面向用户的文档和分享页面, 但不承载 V1/V2 session 执行路径 [I]。
+V1/V2 关系: Web docs 站点是 `v: na`。它会发布面向用户的文档和分享页面, 但不承载 V1/V2 session 执行路径 [I]。分享页 `Share` 把 `store.messages` 按 `time.created` 升序排列，并列再比 `id`；这是 client-side render order，不是 App timeline 的 durable-seq 合同。[E: packages/web/src/components/Share.tsx:78] [E: packages/web/src/components/Share.tsx:79]
 
 ## 技术栈
 
@@ -48,6 +50,7 @@ V1/V2 关系: Web docs 站点是 `v: na`。它会发布面向用户的文档和�
 | `packages/web/astro.config.mjs` | Astro runtime config。设置 `site`, `base: "/docs"`, server output, Cloudflare adapter, Starlight integration [E: packages/web/astro.config.mjs:14] [E: packages/web/astro.config.mjs:15] [E: packages/web/astro.config.mjs:16] [E: packages/web/astro.config.mjs:17] [E: packages/web/astro.config.mjs:33]。 |
 | `packages/web/src/content.config.ts` | Content collection schema。`docs` 用 `docsLoader/docsSchema`, `i18n` 用 `i18nLoader/i18nSchema` 并基于 English keys 扩展 string schema [E: packages/web/src/content.config.ts:2] [E: packages/web/src/content.config.ts:3] [E: packages/web/src/content.config.ts:6] [E: packages/web/src/content.config.ts:9] [E: packages/web/src/content.config.ts:11] [E: packages/web/src/content.config.ts:12] [E: packages/web/src/content.config.ts:13]。 |
 | `packages/web/config.mjs` | Stage-aware public URLs。production 用 `https://opencode.ai`, 非 production 用 `${stage}.opencode.ai`, console auth URL 也按 stage 生成 [E: packages/web/config.mjs:1] [E: packages/web/config.mjs:4] [E: packages/web/config.mjs:5]。 |
+| `packages/web/src/components/Share.tsx` | Shared session page。messages 按 creation time（并列 id）排序后渲染。[E: packages/web/src/components/Share.tsx:78] [E: packages/web/src/components/Share.tsx:79] |
 
 ## 数据模型
 
@@ -78,6 +81,7 @@ Web 站点把 docs 放在 Astro/Starlight, 把 App shell 放在 `packages/app`�
 - `packages/web/astro.config.mjs`
 - `packages/web/src/content.config.ts`
 - `packages/web/config.mjs`
+- `packages/web/src/components/Share.tsx`
 - `infra/app.ts`
 
 ## 相关

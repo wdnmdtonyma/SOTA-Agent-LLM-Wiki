@@ -11,7 +11,7 @@ source:
   - packages/core/src/tool/AGENTS.md
   - specs/v2/tools.md
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 evidence: explicit
 symbols:
   - Tool.Context
@@ -52,7 +52,7 @@ V1 工具定义是一个带公开字段的对象：`id`、静态 `description`�
 | `ExecuteResult` | `output` | `string` | V1 tool 的模型可见主体输出是字符串。[E: packages/opencode/src/tool/tool.ts:51] |
 | `ExecuteResult` | `attachments?` | `Omit<SessionV1.FilePart, "id" \| "sessionID" \| "messageID">[]` | V1 tool 可返回文件 attachments，但不携带 session/message identity 字段。[E: packages/opencode/src/tool/tool.ts:52] |
 | `Def` | `parameters` | `Schema.Schema<Parameters>` | Effect schema 是校验和 JSON schema 转换的源 schema。[E: packages/opencode/src/tool/tool.ts:61] |
-| `Def` | `jsonSchema?` | `JSONSchema7` | 工具可以提供覆盖 schema；registry 在 plugin tool 或特殊转换后使用它。[E: packages/opencode/src/tool/tool.ts:62] [E: packages/opencode/src/tool/registry.ts:315] |
+| `Def` | `jsonSchema?` | `JSONSchema7` | 工具可以提供覆盖 schema；registry 在 plugin tool 或特殊转换后使用它。[E: packages/opencode/src/tool/tool.ts:62] [E: packages/opencode/src/tool/registry.ts:320] |
 | `Def` | `execute` | `(parameters, ctx) => Effect<ExecuteResult>` | V1 executor 返回 `ExecuteResult`，不是 V2 的 typed domain output。[E: packages/opencode/src/tool/tool.ts:63] |
 
 ### V1 执行包装控制流
@@ -65,7 +65,7 @@ V1 工具定义是一个带公开字段的对象：`id`、静态 `description`�
 
 ### V1 设计含义
 
-V1 的权限、消息访问和输出截断都靠 `Context` 或 wrapper glue 拼装：工具 leaf 拿到 `ask(...)` 自行发权限请求，输出以 string 为中心，wrapper 再统一追加截断 metadata。[E: packages/opencode/src/tool/tool.ts:45] [E: packages/opencode/src/tool/tool.ts:135] 这使 V1 tool registry 能兼容 plugin tool、Zod 参数、legacy JSON schema 和内置工具，但每个 leaf 可以形成局部约定。[E: packages/opencode/src/tool/registry.ts:125] [E: packages/opencode/src/tool/registry.ts:128] [E: packages/opencode/src/tool/registry.ts:383]
+V1 的权限、消息访问和输出截断都靠 `Context` 或 wrapper glue 拼装：工具 leaf 拿到 `ask(...)` 自行发权限请求，输出以 string 为中心，wrapper 再统一追加截断 metadata。[E: packages/opencode/src/tool/tool.ts:45] [E: packages/opencode/src/tool/tool.ts:135] 这使 V1 tool registry 能兼容 plugin tool、Zod 参数、legacy JSON schema 和内置工具，但每个 leaf 可以形成局部约定。[E: packages/opencode/src/tool/registry.ts:130] [E: packages/opencode/src/tool/registry.ts:133] [E: packages/opencode/src/tool/registry.ts:388]
 
 ## V2
 

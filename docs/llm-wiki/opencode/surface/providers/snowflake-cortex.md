@@ -9,7 +9,7 @@ symbols: [SnowflakeCortexAuthPlugin, SnowflakeCortexPlugin, cortexFetch, Provide
 related: [provider.resolution, provider.auth-accounts, model-layer.provider-registry-v1]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Snowflake Cortex provider 同时有 V1 provider/auth plugin surface 和 V2 AISDK provider plugin：V1 provider loader 解析 account/token 并设置 Cortex base URL，内建 `SnowflakeCortexAuthPlugin` 提供 external-browser OAuth；V2 `SnowflakeCortexPlugin` 在 AISDK `sdk` hook 中设置 token、usage 和 Cortex fetch compatibility shim。

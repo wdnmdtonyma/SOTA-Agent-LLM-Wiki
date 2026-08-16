@@ -9,7 +9,7 @@ symbols: [SessionV2.create, SessionV2.prompt, SessionInput.admit, SessionExecuti
 related: [spine.v2-admission, spine.v2-provider-turn]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > 这条 trace 走读 V2 新 session 的第一次 prompt:session 已创建后,用户 prompt 先进入 durable inbox,execution wake 触发 runner,runner 初始化 Context Epoch,再执行第一轮 provider turn。
@@ -58,7 +58,7 @@ flowchart TD
 
 10. 首次 epoch 不存在时,`initializeOnce` 调 `SystemContext.initialize` 并 insert baseline/snapshot;runner 在 prompt promotion 前调用 initialize,随后把 `system.baseline` 放入 provider request system parts。[E: packages/core/src/session/context-epoch.ts:80][E: packages/core/src/session/context-epoch.ts:85][E: packages/core/src/session/context-epoch.ts:86][E: packages/core/src/session/context-epoch.ts:87][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:208]
 
-11. runner 取得 cutoff seq 后调用 `SessionInput.promoteSteers`;promotion publish helper 发布 `Prompted`,projector 再通过 `projectPrompted` 标记 inbox row promoted,并调用通用 projection `run(db,event)` 写入可见 Session message。[E: packages/core/src/session/runner/llm.ts:188][E: packages/core/src/session/runner/llm.ts:190][E: packages/core/src/session/input.ts:245][E: packages/core/src/session/input.ts:251][E: packages/core/src/session/input.ts:258][E: packages/core/src/session/input.ts:265][E: packages/core/src/session/input.ts:225][E: packages/core/src/session/projector.ts:350][E: packages/core/src/session/projector.ts:353][E: packages/core/src/session/projector.ts:361]
+11. runner 取得 cutoff seq 后调用 `SessionInput.promoteSteers`;promotion publish helper 发布 `Prompted`,projector 再通过 `projectPrompted` 标记 inbox row promoted,并调用通用 projection `run(db,event)` 写入可见 Session message。[E: packages/core/src/session/runner/llm.ts:188][E: packages/core/src/session/runner/llm.ts:190][E: packages/core/src/session/input.ts:245][E: packages/core/src/session/input.ts:251][E: packages/core/src/session/input.ts:258][E: packages/core/src/session/input.ts:265][E: packages/core/src/session/input.ts:225][E: packages/core/src/session/projector.ts:348][E: packages/core/src/session/projector.ts:351][E: packages/core/src/session/projector.ts:359]
 
 12. runner 重新解析 model/history,materialize tools,构造 `LLM.request`,并把 `system.baseline` 放入 provider system parts。[E: packages/core/src/session/runner/llm.ts:199][E: packages/core/src/session/runner/llm.ts:200][E: packages/core/src/session/runner/llm.ts:203][E: packages/core/src/session/runner/llm.ts:205][E: packages/core/src/session/runner/llm.ts:208]
 

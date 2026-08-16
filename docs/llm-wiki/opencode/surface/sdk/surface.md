@@ -9,7 +9,7 @@ symbols: [OpencodeClient]
 related: [sdk.overview, server-api.v1-routes, server-api.v2-routes]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > SDK method surface 是 generated client 的逐方法目录：`src/gen` 是旧 legacy SDK；`src/v2/gen` 是当前全量 SDK，包含 legacy compatibility namespaces 和 `client.v2.*` native `/api/*` namespaces。

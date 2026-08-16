@@ -9,7 +9,7 @@ symbols: [SessionV2.prompt, SessionInput.admit, SessionInput.Admitted, SessionIn
 related: [spine.v2-coordinator, session-v2.inbox]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V2 admission 是把用户 prompt 先写成 durable inbox event,再由 runner promotion 与 projector 转成 model-visible user history 的机制。
@@ -60,9 +60,9 @@ flowchart TD
 
 12. runner promotion 时发布 `SessionEvent.Prompted`;`publish` 对每个 selected inbox row 发布 Prompted event,而不是直接写 message row。[E: packages/core/src/session/input.ts:216][E: packages/core/src/session/input.ts:222][E: packages/core/src/session/input.ts:225]
 
-13. Prompted projector 先调用 `SessionInput.projectPrompted` 标记 inbox row 的 `promotedSeq`,再调用 `run(db,event)` 把事件投影成 visible user message。[E: packages/core/src/session/projector.ts:350][E: packages/core/src/session/projector.ts:353][E: packages/core/src/session/projector.ts:359][E: packages/core/src/session/projector.ts:361]
+13. Prompted projector 先调用 `SessionInput.projectPrompted` 标记 inbox row 的 `promotedSeq`,再调用 `run(db,event)` 把事件投影成 visible user message。[E: packages/core/src/session/projector.ts:348][E: packages/core/src/session/projector.ts:351][E: packages/core/src/session/projector.ts:357][E: packages/core/src/session/projector.ts:359]
 
-14. PromptAdmitted projector 只调用 `SessionInput.projectAdmitted`,因此 admitted prompt 在 Prompted 之前停留在 durable inbox 中。[E: packages/core/src/session/projector.ts:364][E: packages/core/src/session/projector.ts:367][E: packages/core/src/session/projector.ts:367]
+14. PromptAdmitted projector 只调用 `SessionInput.projectAdmitted`,因此 admitted prompt 在 Prompted 之前停留在 durable inbox 中。[E: packages/core/src/session/projector.ts:362][E: packages/core/src/session/projector.ts:365][E: packages/core/src/session/projector.ts:365]
 
 15. `promoteSteers` 按 `admitted_seq <= cutoff` 批量 promote 未 promoted 的 steer rows;`promoteNextQueued` 只取最早一个 queue row。[E: packages/core/src/session/input.ts:245][E: packages/core/src/session/input.ts:259][E: packages/core/src/session/input.ts:265][E: packages/core/src/session/input.ts:268][E: packages/core/src/session/input.ts:283][E: packages/core/src/session/input.ts:287]
 
@@ -72,7 +72,7 @@ flowchart TD
 
 ## 关键决策点
 
-- admission 与 model-visible history 分离:admit 写 `PromptAdmitted` 和 inbox row,promote 写 `Prompted`,projector 再插入 projected history。[E: packages/core/src/session/input.ts:55][E: packages/core/src/session/projector.ts:364][E: packages/core/src/session/input.ts:225][E: packages/core/src/session/projector.ts:350]
+- admission 与 model-visible history 分离:admit 写 `PromptAdmitted` 和 inbox row,promote 写 `Prompted`,projector 再插入 projected history。[E: packages/core/src/session/input.ts:55][E: packages/core/src/session/projector.ts:362][E: packages/core/src/session/input.ts:225][E: packages/core/src/session/projector.ts:348]
 - `steer` 是默认 delivery;runner 在 promotion 为 `"steer"` 时调用 `promoteSteers`,而 `queue` 由 `promoteNextQueued` 一次只推进一个。[E: packages/core/src/session.ts:366][E: packages/core/src/session/runner/llm.ts:190][E: packages/core/src/session/runner/llm.ts:192]
 - 当前源码没有 `PromptLifecycle.*` 命名空间;durable admission/promotion 事件名是 `SessionEvent.PromptAdmitted` 与 `SessionEvent.Prompted`。[E: packages/schema/src/session-event.ts:87][E: packages/schema/src/session-event.ts:94]
 

@@ -9,7 +9,7 @@ symbols: [Catalog.Service, ProviderV2.Info, ModelV2.Info, ProviderPlugins, Model
 related: [plugin-api.v2-hooks, provider.catalog, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V2 model catalog 是 plugin-ordered provider/model registry:provider plugins、models.dev、config provider plugin、integration connection availability 和 provider policy 一起构造 `ProviderV2.Info` / `ModelV2.Info`,再由 catalog API 提供 provider/model get/all/available/default/small 查询。`packages/core/src/provider.ts` 与 `packages/core/src/model.ts` 现在 re-export `@opencode-ai/schema` 的 provider/model schema。

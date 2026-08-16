@@ -4,12 +4,12 @@ title: TUI 架构(OpenTUI + SolidJS)
 kind: subsystem
 tier: T2
 v: na
-source: [packages/tui/src/app.tsx, packages/tui/src/index.tsx, packages/tui/package.json, specs/tui-package.md]
+source: [packages/tui/src/app.tsx, packages/tui/src/index.tsx, packages/tui/package.json, packages/tui/src/config/index.tsx, specs/tui-package.md]
 symbols: [run, TuiInput, App]
 related: [tui.routing, tui.sync-store, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > TUI 架构是 `@opencode-ai/tui` 里的 OpenTUI `CliRenderer` + SolidJS reactive tree；OpenCode domain 边界主要是 `@opencode-ai/sdk/v2` client/event stream，V1 legacy CLI 只是 host/transport/plugin adapter。
@@ -38,13 +38,13 @@ updated: 89130db6b0
 | `packages/tui/src/app.tsx` | `Effect.fn("Tui.run")`、OpenTUI renderer lifecycle、Solid provider stack、global command palette、route switch。[E: packages/tui/src/app.tsx:189] [E: packages/tui/src/app.tsx:245] [E: packages/tui/src/app.tsx:559] [E: packages/tui/src/app.tsx:1113] |
 | `packages/tui/src/context/route.tsx` | route discriminated union 存在 Solid store 中，`navigate()` 直接 reconcile 新 route；没有 URL/history router 的判断来自该文件未接 URL/history adapter。[E: packages/tui/src/context/route.tsx:23] [E: packages/tui/src/context/route.tsx:29] [E: packages/tui/src/context/route.tsx:38] [I] |
 | `packages/tui/src/context/sdk.tsx` | `@opencode-ai/sdk/v2` client + SSE/host event source + 16ms event batching。[E: packages/tui/src/context/sdk.tsx:24] [E: packages/tui/src/context/sdk.tsx:82] [E: packages/tui/src/context/sdk.tsx:120] [E: packages/tui/src/context/sdk.tsx:69] [E: packages/tui/src/context/sdk.tsx:76] |
-| `packages/tui/src/context/sync.tsx` | legacy/current TUI server-state mirror；bootstrap 后进入 `partial`/`complete` 状态。[E: packages/tui/src/context/sync.tsx:64] [E: packages/tui/src/context/sync.tsx:512] [E: packages/tui/src/context/sync.tsx:531] [I] |
+| `packages/tui/src/context/sync.tsx` | legacy/current TUI server-state mirror；bootstrap 后进入 `partial`/`complete` 状态。[E: packages/tui/src/context/sync.tsx:70] [E: packages/tui/src/context/sync.tsx:518] [E: packages/tui/src/context/sync.tsx:537] [I] |
 | `packages/tui/src/context/data.tsx` | V2 `session.next.*`/location data mirror，和 `SyncProvider` 在 root provider stack 中并存。[E: packages/tui/src/context/data.tsx:47] [E: packages/tui/src/context/data.tsx:132] [E: packages/tui/src/app.tsx:307] [E: packages/tui/src/app.tsx:308] |
 | `packages/tui/src/plugin/runtime.tsx` | TUI-side plugin runtime state：commands、status、slots、routes；discovery/install 的 ownership 留给 host runtime 是架构边界。[E: packages/tui/src/plugin/runtime.tsx:13] [E: packages/tui/src/plugin/runtime.tsx:21] [E: specs/tui-package.md:397] [E: specs/tui-package.md:398] [I] |
 
 ## 数据模型
 
-`TuiInput` 把 TUI 的 host dependence 显式化：transport (`url`/`fetch`/`headers`/`events`)、launch args (`args`)、resolved TUI config (`config`)、heap snapshot hook (`onSnapshot`) 和 host-owned plugin bridge (`pluginHost`) 都从外部传入。[E: packages/tui/src/app.tsx:143] [E: packages/tui/src/app.tsx:151] `SDKProvider` 接收同一批 transport 字段并传给 `createOpencodeClient({ baseUrl, signal, directory, fetch, headers })`。[E: packages/tui/src/context/sdk.tsx:24] [E: packages/tui/src/context/sdk.tsx:29]
+`TuiInput` 把 TUI 的 host dependence 显式化：transport (`url`/`fetch`/`headers`/`events`)、launch args (`args`)、resolved TUI config (`config`，含 optional `cursor`)、heap snapshot hook (`onSnapshot`) 和 host-owned plugin bridge (`pluginHost`) 都从外部传入。[E: packages/tui/src/app.tsx:143] [E: packages/tui/src/app.tsx:151] [E: packages/tui/src/config/index.tsx:73] `SDKProvider` 接收同一批 transport 字段并传给 `createOpencodeClient({ baseUrl, signal, directory, fetch, headers })`。[E: packages/tui/src/context/sdk.tsx:24] [E: packages/tui/src/context/sdk.tsx:29]
 
 `App` 内部同时消费 `useRoute`、`useSync`、`useProject`、`usePluginRuntime`、`useTheme`、`useKV`、`useSDK`、`useDialog`、`usePromptRef` 等 contexts，说明根组件是 orchestration layer，而不是纯展示组件。[E: packages/tui/src/app.tsx:365] [E: packages/tui/src/app.tsx:384]
 
@@ -66,7 +66,7 @@ updated: 89130db6b0
 
 ## Gotcha
 
-- `packages/tui` 是 terminal UI package，不是 V2 core；节点 `v: na` 表示它是 client/presentation layer，但它同时消费 legacy SDK events 和 V2 `session.next.*` events。[E: packages/tui/src/context/sync.tsx:170] [E: packages/tui/src/context/data.tsx:132] [I]
+- `packages/tui` 是 terminal UI package，不是 V2 core；节点 `v: na` 表示它是 client/presentation layer，但它同时消费 legacy SDK events 和 V2 `session.next.*` events。[E: packages/tui/src/context/sync.tsx:176] [E: packages/tui/src/context/data.tsx:132] [I]
 - `@opentui/*` 是 catalog external dependency；OpenTUI renderer/keymap/slot registry 的内部实现不在 opencode 源码内，本 wiki 只写 opencode 如何调用这些 APIs。[E: packages/tui/package.json:55] [E: packages/tui/package.json:56] [E: packages/tui/package.json:57] [U]
 - `packages/tui/src/runtime.tsx` 不是 renderer runtime，只包含 `abbreviateHome()` helper；主 renderer lifecycle 在 `packages/tui/src/app.tsx`。[E: packages/tui/src/runtime.tsx:3] [E: packages/tui/src/app.tsx:189]
 
@@ -75,6 +75,7 @@ updated: 89130db6b0
 - `packages/tui/src/app.tsx`
 - `packages/tui/src/index.tsx`
 - `packages/tui/package.json`
+- `packages/tui/src/config/index.tsx`
 - `packages/tui/src/context/route.tsx`
 - `packages/tui/src/context/sdk.tsx`
 - `packages/tui/src/context/sync.tsx`

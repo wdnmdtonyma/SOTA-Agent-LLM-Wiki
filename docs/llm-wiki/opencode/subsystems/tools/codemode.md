@@ -21,7 +21,7 @@ symbols: [CodeMode, CodeMode.make, CodeMode.execute, Tool.make, OpenAPI.fromSpec
 related: [tool.execute, subsys.tools.v1, integrations.mcp-client, ref.package-index]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > `@opencode-ai/codemode` 是 Effect-native confined code execution package：host 显式提供 schema-described tool tree，程序在受限 JavaScript interpreter 内编排调用，没有 ambient application authority。
@@ -37,7 +37,7 @@ updated: 89130db6b0
 
 ## 1 职责边界与建节点判定
 
-`packages/codemode` 的 package 名为 `@opencode-ai/codemode`，description 是 “Effect-native confined code execution over schema-described tools”，当前标记 `private: true`，root export 指向 `src/index.ts`。[E: packages/codemode/package.json:2][E: packages/codemode/package.json:4][E: packages/codemode/package.json:5][E: packages/codemode/package.json:8] `src/index.ts` 对外暴露 `CodeMode`、`Tool`、`OpenAPI` 与 `ToolError` 四组 API。[E: packages/codemode/src/index.ts:1][E: packages/codemode/src/index.ts:4]
+`packages/codemode` 的 package 名为 `@opencode-ai/codemode`，description 是 “Effect-native confined code execution over schema-described tools”，当前标记 `private: true`，root export 指向 `src/index.ts`。[E: packages/codemode/package.json:3][E: packages/codemode/package.json:5][E: packages/codemode/package.json:6][E: packages/codemode/package.json:10] `src/index.ts` 对外暴露 `CodeMode`、`Tool`、`OpenAPI` 与 `ToolError` 四组 API。[E: packages/codemode/src/index.ts:1][E: packages/codemode/src/index.ts:4]
 
 它有独立 interpreter、standard-library adapters、tool runtime/schema、OpenAPI adapter 和 package tests，不是单个 V1 leaf helper。[E: packages/codemode/src/interpreter/runtime.ts:115][E: packages/codemode/src/tool-runtime.ts:316][E: packages/codemode/src/openapi/index.ts:39] 当前 opencode product wiring 只存在于 V1 `tool.execute` adapter，所以本节点标 `v: v1`；package API 本身不依赖 V1 session types。[E: packages/opencode/src/tool/code-mode.ts:4][E: packages/opencode/src/tool/code-mode.ts:188][I]
 

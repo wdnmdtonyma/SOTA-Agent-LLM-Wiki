@@ -15,6 +15,10 @@ source:
   - packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts
   - packages/opencode/src/server/routes/instance/httpapi/groups/control-plane.ts
   - packages/opencode/src/server/routes/instance/httpapi/handlers/control-plane.ts
+  - packages/opencode/src/server/shared/workspace-routing.ts
+  - packages/opencode/src/server/proxy-util.ts
+  - packages/opencode/src/server/routes/instance/httpapi/middleware/proxy.ts
+  - packages/opencode/src/server/routes/instance/httpapi/middleware/workspace-routing.ts
 symbols:
   - Workspace
   - WorkspaceAdapter
@@ -28,7 +32,7 @@ related:
   - integrations.integration-v2
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > `server.control-plane` 描述 workspace adapter orchestration、remote workspace sync/session warp，以及 V2 core 的 `MoveSession`。
@@ -51,7 +55,7 @@ updated: 89130db6b0
 
 `create(input)` generates a workspace id, obtains adapter/config, inserts `WorkspaceTable`, passes auth/workspace/OTEL env to `WorkspaceAdapterRuntime.create`, then waits for status/startSync race completion。[E: packages/opencode/src/control-plane/workspace.ts:503][E: packages/opencode/src/control-plane/workspace.ts:514][E: packages/opencode/src/control-plane/workspace.ts:515][E: packages/opencode/src/control-plane/workspace.ts:529][E: packages/opencode/src/control-plane/workspace.ts:530][E: packages/opencode/src/control-plane/workspace.ts:538][E: packages/opencode/src/control-plane/workspace.ts:539][E: packages/opencode/src/control-plane/workspace.ts:553]
 
-`syncList(project)` 先用当前 workspace names 建 set，再并发调用 `registeredAdapters(project.id)` 中每个 adapter 的 `list`，最后只插入 name 不在 set 中的 discovered workspace。[E: packages/opencode/src/control-plane/workspace.ts:727][E: packages/opencode/src/control-plane/workspace.ts:728][E: packages/opencode/src/control-plane/workspace.ts:729][E: packages/opencode/src/control-plane/workspace.ts:730][E: packages/opencode/src/control-plane/workspace.ts:737][E: packages/opencode/src/control-plane/workspace.ts:744][E: packages/opencode/src/control-plane/workspace.ts:758]
+`syncList(project)` 先用当前 workspace names 建 set，再并发调用 `registeredAdapters(project.id)` 中每个 adapter 的 `list`，最后只插入 name 不在 set 中的 discovered workspace。[E: packages/opencode/src/control-plane/workspace.ts:728][E: packages/opencode/src/control-plane/workspace.ts:729][E: packages/opencode/src/control-plane/workspace.ts:730][E: packages/opencode/src/control-plane/workspace.ts:731][E: packages/opencode/src/control-plane/workspace.ts:738][E: packages/opencode/src/control-plane/workspace.ts:745][E: packages/opencode/src/control-plane/workspace.ts:759]
 
 ### Local and remote target execution
 
@@ -72,6 +76,14 @@ sync loop 对 payload type `"sync"` 且带 `syncEvent` 的事件调用 `events.r
 Workspace API root 是 `/experimental/workspace`，paths 是 adapter、root list/create、sync-list、status、remove `/:id`、warp。[E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:12][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:40][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:41][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:42][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:43][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:44][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:45][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:46] create 是 `POST` 到 `WorkspacePaths.list`，remove 是 `DELETE` 到 `WorkspacePaths.remove`，warp 返回 `NoContent`。[E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:73][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:105][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:117][E: packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts:120]
 
 Control-plane move-session route 在 opencode server package 中声明，root 是 `/experimental/control-plane`，endpoint 是 `POST /experimental/control-plane/move-session`，success 是 `HttpApiSchema.NoContent`。[E: packages/opencode/src/server/routes/instance/httpapi/groups/control-plane.ts:6][E: packages/opencode/src/server/routes/instance/httpapi/groups/control-plane.ts:19][E: packages/opencode/src/server/routes/instance/httpapi/groups/control-plane.ts:22][E: packages/opencode/src/server/routes/instance/httpapi/groups/control-plane.ts:24] Handler 从 V2 core `MoveSession.Service` 取 service，并调用 `service.moveSession(ctx.payload)`。[E: packages/opencode/src/server/routes/instance/httpapi/handlers/control-plane.ts:8][E: packages/opencode/src/server/routes/instance/httpapi/handlers/control-plane.ts:10][E: packages/opencode/src/server/routes/instance/httpapi/handlers/control-plane.ts:15]
+
+### Remote workspace HTTP proxy
+
+`WorkspaceRoutingMiddleware` 对 remote target 走 `workspaceProxyURL` + `HttpApiProxy`；`/experimental/workspace`、`GET /session` 和 `/console` 留在 host control plane，不转发。[E: packages/opencode/src/server/shared/workspace-routing.ts:6][E: packages/opencode/src/server/shared/workspace-routing.ts:8][E: packages/opencode/src/server/routes/instance/httpapi/middleware/workspace-routing.ts:90][E: packages/opencode/src/server/routes/instance/httpapi/middleware/workspace-routing.ts:128][E: packages/opencode/src/server/routes/instance/httpapi/middleware/workspace-routing.ts:131]
+
+`workspaceProxyURL` 复制 target path/search/hash，但删除 `workspace` 与 host `directory` query。host directory 对 remote sandbox 无意义，去掉后 remote 回退到自己的 project root。`ProxyUtil.headers` 同样删除 `x-opencode-directory`，避免 header 把 host cwd 带进 remote。[E: packages/opencode/src/server/shared/workspace-routing.ts:31][E: packages/opencode/src/server/shared/workspace-routing.ts:36][E: packages/opencode/src/server/shared/workspace-routing.ts:43][E: packages/opencode/src/server/proxy-util.ts:17]
+
+proxied HTTP 若 upstream status ≥ 500，middleware 会 buffer 最多 2000 字符 body，用 `Effect.logError("workspace proxy upstream error")` 打到 host log，再原样转发（保留 content-type，方便 client 解析 structured error）。[E: packages/opencode/src/server/routes/instance/httpapi/middleware/proxy.ts:105][E: packages/opencode/src/server/routes/instance/httpapi/middleware/proxy.ts:106][E: packages/opencode/src/server/routes/instance/httpapi/middleware/proxy.ts:109][E: packages/opencode/src/server/routes/instance/httpapi/middleware/proxy.ts:113][E: packages/opencode/src/server/routes/instance/httpapi/middleware/proxy.ts:115]
 
 ## V2
 
@@ -107,6 +119,10 @@ V1 workspace control plane 把 local worktree 与 remote opencode instance 都�
 - `packages/opencode/src/server/routes/instance/httpapi/groups/workspace.ts`
 - `packages/opencode/src/server/routes/instance/httpapi/groups/control-plane.ts`
 - `packages/opencode/src/server/routes/instance/httpapi/handlers/control-plane.ts`
+- `packages/opencode/src/server/shared/workspace-routing.ts`
+- `packages/opencode/src/server/proxy-util.ts`
+- `packages/opencode/src/server/routes/instance/httpapi/middleware/proxy.ts`
+- `packages/opencode/src/server/routes/instance/httpapi/middleware/workspace-routing.ts`
 
 ## Related
 

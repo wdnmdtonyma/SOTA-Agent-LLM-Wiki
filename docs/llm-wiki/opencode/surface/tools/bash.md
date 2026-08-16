@@ -9,7 +9,7 @@ symbols: [ShellTool, ShellPrompt, BashTool]
 related: [execution.shell-v1, execution.shell-v2, ref.bash-arity]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Bash/Shell 工具执行 shell command；V1 文件名是 `shell.ts` 但对外 wire id 与 permission key 都保持 `"bash"`，V2 文件名和 tool name 都是 `bash`。
@@ -42,7 +42,7 @@ V1 Bash 执行用户配置 shell 下的一条命令，并在执行前解析命�
 
 ### 4 输出 & 大小/截断限制
 
-V1 Bash 使用 `Truncate.Service.limits()` 取得 `maxLines/maxBytes`，默认值来自 V1 `Truncate` 的 2000 行 / 50KB 或 config override。[E: packages/opencode/src/tool/shell.ts:438][E: packages/opencode/src/tool/truncate.ts:15][E: packages/opencode/src/tool/truncate.ts:16][E: packages/opencode/src/tool/truncate.ts:80][E: packages/opencode/src/tool/truncate.ts:81] 执行时如果 accumulated full output 超过 `limits.maxBytes`，会调用 `trunc.write(full)` 写完整输出并把后续 chunk append 到文件。[E: packages/opencode/src/tool/shell.ts:504][E: packages/opencode/src/tool/shell.ts:505][E: packages/opencode/src/tool/shell.ts:508][E: packages/opencode/src/tool/shell.ts:510] 最终模型输出只保留 tail bounded preview；如果截断且有文件，则前置 `Full output saved to: <file>`。[E: packages/opencode/src/tool/shell.ts:579][E: packages/opencode/src/tool/shell.ts:588][E: packages/opencode/src/tool/shell.ts:589]
+V1 Bash 使用 `Truncate.Service.limits()` 取得 `maxLines/maxBytes`，默认值来自 V1 `Truncate` 的 2000 行 / 50KB 或 config override。[E: packages/opencode/src/tool/shell.ts:438][E: packages/opencode/src/tool/truncate.ts:14][E: packages/opencode/src/tool/truncate.ts:15][E: packages/opencode/src/tool/truncate.ts:80][E: packages/opencode/src/tool/truncate.ts:81] 执行时如果 accumulated full output 超过 `limits.maxBytes`，会调用 `trunc.write(full)` 写完整输出并把后续 chunk append 到文件。[E: packages/opencode/src/tool/shell.ts:504][E: packages/opencode/src/tool/shell.ts:505][E: packages/opencode/src/tool/shell.ts:508][E: packages/opencode/src/tool/shell.ts:510] 最终模型输出只保留 tail bounded preview；如果截断且有文件，则前置 `Full output saved to: <file>`。[E: packages/opencode/src/tool/shell.ts:579][E: packages/opencode/src/tool/shell.ts:588][E: packages/opencode/src/tool/shell.ts:589]
 
 metadata 中保存 `output` preview、`exit` code、`truncated` 和可选 `outputPath`。[E: packages/opencode/src/tool/shell.ts:587][E: packages/opencode/src/tool/shell.ts:588][E: packages/opencode/src/tool/shell.ts:589][E: packages/opencode/src/tool/shell.ts:590][E: packages/opencode/src/tool/shell.ts:591] 如果 timeout 或 user abort 发生，V1 Bash 会把原因写入 `<shell_metadata>`。[E: packages/opencode/src/tool/shell.ts:562][E: packages/opencode/src/tool/shell.ts:567][E: packages/opencode/src/tool/shell.ts:582][E: packages/opencode/src/tool/shell.ts:583]
 

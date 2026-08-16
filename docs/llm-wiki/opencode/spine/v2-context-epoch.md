@@ -9,7 +9,7 @@ symbols: [SessionContextEpoch.initialize, SessionContextEpoch.prepare, SessionCo
 related: [session-v2.system-context-algebra, session-v2.compaction]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > V2 Context Epoch 是一代已准入的 privileged System Context:它保存 baseline 文本、结构化 snapshot 与 baseline seq;首次 baseline admission 在 prompt promotion 前完成,后续 reconcile/replace 在 safe provider-turn boundary 完成。
@@ -17,7 +17,7 @@ updated: 89130db6b0
 ## 能回答的问题
 - System Context 与 Session History 的边界是什么?
 - 第一次 prompt 为什么要等完整 context observation?
-- compaction 或 session movement 如何影响 context epoch?
+- compaction 如何触发 Context Epoch replacement?session movement 当前还会 reset epoch 吗?
 - unavailable source 在 reconcile 与 replace 中有什么不同?
 
 ```mermaid
@@ -63,9 +63,9 @@ flowchart TD
 
 14. replacement ready 时,`prepareOnce` 以 compaction seq 或 latest seq 作为新 baseline seq,调用 `replace` 写入新 baseline/snapshot/baseline_seq。[E: packages/core/src/session/context-epoch.ts:66][E: packages/core/src/session/context-epoch.ts:67][E: packages/core/src/session/context-epoch.ts:68][E: packages/core/src/session/context-epoch.ts:147][E: packages/core/src/session/context-epoch.ts:150][E: packages/core/src/session/context-epoch.ts:152]
 
-15. `SessionHistory.latestCompaction` 从 projected `SessionMessageTable` 里找最新 `type = "compaction"` 的 seq;Session projector 会投影 `Compaction.Ended`,但当前文件没有注册 `Compaction.Started` projector。[E: packages/core/src/session/history.ts:13][E: packages/core/src/session/history.ts:17][E: packages/core/src/session/history.ts:18][E: packages/core/src/session/projector.ts:395]
+15. `SessionHistory.latestCompaction` 从 projected `SessionMessageTable` 里找最新 `type = "compaction"` 的 seq;Session projector 会投影 `Compaction.Ended`,但当前文件没有注册 `Compaction.Started` projector。[E: packages/core/src/session/history.ts:13][E: packages/core/src/session/history.ts:17][E: packages/core/src/session/history.ts:18][E: packages/core/src/session/projector.ts:393]
 
-16. Session movement 与 revert commit 会调用 `SessionContextEpoch.reset`,删除该 session 的 epoch row,使下一次 prepare/initialize 重新建立 baseline。[E: packages/core/src/session/projector.ts:256][E: packages/core/src/session/projector.ts:452][E: packages/core/src/session/context-epoch.ts:111][E: packages/core/src/session/context-epoch.ts:116]
+16. `SessionContextEpoch.reset` 仍会删除该 session 的 epoch row,但当前 `SessionProjector` 的 `Moved` 与 `RevertEvent.Committed` 都不再调用它。`Moved` 只改 session location fields;`Committed` 删除 boundary 之后的 `session_message`/`session_input` 并清 revert pointer。production packages 里没有 `reset` caller。[E: packages/core/src/session/context-epoch.ts:111][E: packages/core/src/session/context-epoch.ts:116][E: packages/core/src/session/projector.ts:242][E: packages/core/src/session/projector.ts:246][E: packages/core/src/session/projector.ts:413][E: packages/core/src/session/projector.ts:428][E: packages/core/src/session/projector.ts:445][U]
 
 ## 关键决策点
 

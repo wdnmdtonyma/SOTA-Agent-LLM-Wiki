@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 source:
   - packages/opencode/src/tool/truncate.ts
   - packages/core/src/tool-output-store.ts
@@ -28,7 +28,7 @@ related:
 
 ### V1
 
-V1 `Truncate.Service` 是当前 V1 tool output 的通用截断/保留服务：它解析 `tool_output` config limit，判断文本是否超出行数或字节上限，超出时把完整文本写入 truncation directory，再返回带提示的 preview。[E: packages/opencode/src/tool/truncate.ts:40][E: packages/opencode/src/tool/truncate.ts:75][E: packages/opencode/src/tool/truncate.ts:127]
+V1 `Truncate.Service` 是当前 V1 tool output 的通用截断/保留服务：它解析 `tool_output` config limit，判断文本是否超出行数或字节上限，超出时把完整文本写入 truncation directory，再返回带提示的 preview。[E: packages/opencode/src/tool/truncate.ts:39][E: packages/opencode/src/tool/truncate.ts:75][E: packages/opencode/src/tool/truncate.ts:127]
 
 ### V2
 
@@ -49,12 +49,12 @@ V2 `ToolOutputStore.Service` 是 core registry settlement 的 model-output bound
 
 | 实体 | V1 | V2 |
 | --- | --- | --- |
-| 默认行数 | `MAX_LINES = 2000`。[E: packages/opencode/src/tool/truncate.ts:15] | `MAX_LINES = 2_000`。[E: packages/core/src/tool-output-store.ts:13] |
-| 默认字节 | `MAX_BYTES = 50 * 1024`。[E: packages/opencode/src/tool/truncate.ts:16] | `MAX_BYTES = 50 * 1024`。[E: packages/core/src/tool-output-store.ts:14] |
-| 保留时间 | `RETENTION = Duration.days(7)`。[E: packages/opencode/src/tool/truncate.ts:13] | `RETENTION = Duration.days(7)`。[E: packages/core/src/tool-output-store.ts:15] |
-| result | `{ content, truncated }` 或 `{ content, truncated, outputPath }`。[E: packages/opencode/src/tool/truncate.ts:20] | `{ output, outputPaths }`。[E: packages/core/src/tool-output-store.ts:25] |
+| 默认行数 | `MAX_LINES = 2000`。[E: packages/opencode/src/tool/truncate.ts:14] | `MAX_LINES = 2_000`。[E: packages/core/src/tool-output-store.ts:13] |
+| 默认字节 | `MAX_BYTES = 50 * 1024`。[E: packages/opencode/src/tool/truncate.ts:15] | `MAX_BYTES = 50 * 1024`。[E: packages/core/src/tool-output-store.ts:14] |
+| 保留时间 | `RETENTION = Duration.days(7)`。[E: packages/opencode/src/tool/truncate.ts:12] | `RETENTION = Duration.days(7)`。[E: packages/core/src/tool-output-store.ts:15] |
+| result | `{ content, truncated }` 或 `{ content, truncated, outputPath }`。[E: packages/opencode/src/tool/truncate.ts:19] | `{ output, outputPaths }`。[E: packages/core/src/tool-output-store.ts:25] |
 | config | V1 从 config `tool_output.max_lines/max_bytes` 读，缺省用常量。[E: packages/opencode/src/tool/truncate.ts:79] | V2 config schema `max_lines/max_bytes`，store 从 document entries 合并配置。[E: packages/core/src/config/tool-output.ts:7][E: packages/core/src/config/tool-output.ts:8][E: packages/core/src/tool-output-store.ts:117][E: packages/core/src/tool-output-store.ts:121][E: packages/core/src/tool-output-store.ts:126] |
-| storage dir | `TRUNCATION_DIR`。[E: packages/opencode/src/tool/truncate.ts:17] | `MANAGED_DIRECTORY = "tool-output"` under global data。[E: packages/core/src/tool-output-store.ts:17][E: packages/core/src/tool-output-store.ts:118] |
+| storage dir | `TRUNCATION_DIR`。[E: packages/opencode/src/tool/truncate.ts:16] | `MANAGED_DIRECTORY = "tool-output"` under global data。[E: packages/core/src/tool-output-store.ts:17][E: packages/core/src/tool-output-store.ts:118] |
 
 ## 4 控制流
 
@@ -66,7 +66,7 @@ V2 `ToolOutputStore.Service` 是 core registry settlement 的 model-output bound
 4. 否则按 `direction` 选择 head 或 tail preview，默认 direction 是 head。[E: packages/opencode/src/tool/truncate.ts:89][E: packages/opencode/src/tool/truncate.ts:102][E: packages/opencode/src/tool/truncate.ts:112]
 5. 计算 removed bytes/lines，写完整文本到 truncation directory。[E: packages/opencode/src/tool/truncate.ts:124][E: packages/opencode/src/tool/truncate.ts:127]
 6. 根据 agent 是否有 task tool 生成不同 hint，返回带 `outputPath` 的 truncated result。[E: packages/opencode/src/tool/truncate.ts:129][E: packages/opencode/src/tool/truncate.ts:133][E: packages/opencode/src/tool/truncate.ts:139]
-7. cleanup fiber 延迟 1 分钟启动，每小时清理超过 7 天的 `tool_` 文件。[E: packages/opencode/src/tool/truncate.ts:54][E: packages/opencode/src/tool/truncate.ts:55][E: packages/opencode/src/tool/truncate.ts:59][E: packages/opencode/src/tool/truncate.ts:63][E: packages/opencode/src/tool/truncate.ts:64][E: packages/opencode/src/tool/truncate.ts:143][E: packages/opencode/src/tool/truncate.ts:145][E: packages/opencode/src/tool/truncate.ts:146]
+7. cleanup 读 truncation directory 里 `tool_` 前缀文件,用 `fs.stat` 的 `mtime` 判断是否超过 7 天;fiber 延迟 1 分钟启动,之后每小时再跑。[E: packages/opencode/src/tool/truncate.ts:53][E: packages/opencode/src/tool/truncate.ts:54][E: packages/opencode/src/tool/truncate.ts:55][E: packages/opencode/src/tool/truncate.ts:56][E: packages/opencode/src/tool/truncate.ts:61][E: packages/opencode/src/tool/truncate.ts:62][E: packages/opencode/src/tool/truncate.ts:63][E: packages/opencode/src/tool/truncate.ts:64][E: packages/opencode/src/tool/truncate.ts:143][E: packages/opencode/src/tool/truncate.ts:145][E: packages/opencode/src/tool/truncate.ts:146]
 
 ### V2
 
@@ -86,7 +86,7 @@ V2 `ToolOutputStore.Service` 是 core registry settlement 的 model-output bound
 | preview 策略 | head 或 tail，默认 head；shell 用 local `tail(...)` 生成结尾 preview。[E: packages/opencode/src/tool/truncate.ts:89][E: packages/opencode/src/tool/shell.ts:569] | beginning + end，行数/字节大致对半分配。[E: packages/core/src/tool-output-store.ts:74][E: packages/core/src/tool-output-store.ts:93] |
 | 完整输出文件 | `Truncate.write` 写 `TRUNCATION_DIR/ToolID.ascending()`。[E: packages/opencode/src/tool/truncate.ts:68] | `ToolOutputStore.write` 写 global data 下 `tool-output/tool_<Identifier>`。[E: packages/core/src/tool-output-store.ts:129] |
 | path 暴露 | `Truncate.output` result 含 `outputPath`，V1 wrapper/MCP bridge/shell 可把它复制到 metadata；preview 文本也直接提示 full output path。[E: packages/opencode/src/tool/truncate.ts:129][E: packages/opencode/src/tool/truncate.ts:139][E: packages/opencode/src/tool/tool.ts:141][E: packages/opencode/src/tool/tool.ts:142][E: packages/opencode/src/session/tools.ts:468][E: packages/opencode/src/tool/shell.ts:579][E: packages/opencode/src/tool/shell.ts:591] | V2 settlement 有 typed `outputPaths`，bounded preview marker 也包含 path。[E: packages/core/src/tool/registry.ts:80][E: packages/core/src/tool-output-store.ts:159] |
-| structured output | V1 主要处理 string output。[E: packages/opencode/src/tool/truncate.ts:40] | V2 保留 structured unchanged，model replay 用 bounded textual JSON preview。[E: packages/core/src/tool-output-store.ts:163][E: packages/core/src/tool-output-store.ts:145][E: specs/v2/tools.md:157] |
+| structured output | V1 主要处理 string output。[E: packages/opencode/src/tool/truncate.ts:39] | V2 保留 structured unchanged，model replay 用 bounded textual JSON preview。[E: packages/core/src/tool-output-store.ts:163][E: packages/core/src/tool-output-store.ts:145][E: specs/v2/tools.md:157] |
 
 ## 6 设计动机与 tradeoff
 

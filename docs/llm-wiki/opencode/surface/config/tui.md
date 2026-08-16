@@ -11,7 +11,7 @@ source:
   - packages/opencode/src/config/tui.ts
   - packages/opencode/src/config/tui-migrate.ts
   - packages/tui/src/config/
-updated: 89130db6b0
+updated: 3fd77ae980
 evidence: explicit
 ---
 
@@ -42,36 +42,39 @@ V2 preview CLI 的 `runTui` 直接调用 `@opencode-ai/tui` 的 `run`，传入�
 
 | key | type/default | 含义 | V1/V2 关系 |
 | --- | --- | --- | --- |
-| `$schema` | optional string；schema default omitted | TUI schema reference。[E: packages/tui/src/config/index.tsx:54] | V1 host 读写；V2 package schema owner。 |
-| `theme` | optional string | selected theme id。[E: packages/tui/src/config/index.tsx:55] | legacy `opencode.json` top-level `theme` 可迁移到 `tui.json`。[E: packages/opencode/src/config/tui-migrate.ts:38] |
-| `keybinds` | optional keybind overrides | per-command keybinding overrides。[E: packages/tui/src/config/index.tsx:56] | V1 host drops unknown keybind names before schema parse。[E: packages/opencode/src/config/tui.ts:74] [E: packages/opencode/src/config/tui.ts:79] |
-| `plugin` | optional array of plugin specs | TUI plugin packages。[E: packages/tui/src/config/index.tsx:57] | V1 host resolves package spec by source file and tracks origins。[E: packages/opencode/src/config/tui.ts:93] [E: packages/opencode/src/config/tui.ts:94] |
-| `plugin_enabled` | optional record boolean | enable/disable TUI plugin by id/name。[E: packages/tui/src/config/index.tsx:58] | package schema field；host just loads and merges it。[I] |
-| `leader_timeout` | optional positive int；resolved default `2000` | leader key timeout in ms。[E: packages/tui/src/config/index.tsx:21] | `resolve` uses `LeaderTimeoutDefault` when omitted。[E: packages/tui/src/config/index.tsx:114] |
-| `attention` | optional object | notifications and sound settings。[E: packages/tui/src/config/index.tsx:36] | V1 host resolves sound paths; package owns defaults。 |
-| `attention.enabled` | optional boolean；resolved default false | attention feature enabled flag。[E: packages/tui/src/config/index.tsx:103] | package default。 |
-| `attention.notifications` | optional boolean；resolved default true | OS/terminal notification flag。[E: packages/tui/src/config/index.tsx:104] | package default。 |
-| `attention.sound` | optional boolean；resolved default true | sound playback flag。[E: packages/tui/src/config/index.tsx:105] | package default。 |
-| `attention.volume` | optional number 0..1；resolved default 0.4 | sound volume。[E: packages/tui/src/config/index.tsx:40] | package enforces range and default。[E: packages/tui/src/config/index.tsx:106] |
-| `attention.sound_pack` | optional string；resolved default `opencode.default` | sound pack id。[E: packages/tui/src/config/index.tsx:41] | package default。[E: packages/tui/src/config/index.tsx:107] |
-| `attention.sounds.default` | optional string | custom sound path for default event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:9] [E: packages/tui/src/config/index.tsx:34] | V1 host resolves relative path。[E: packages/opencode/src/config/tui.ts:115] |
-| `attention.sounds.question` | optional string | custom sound path for question event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:10] [E: packages/tui/src/config/index.tsx:34] | same `AttentionSoundName` union。 |
-| `attention.sounds.permission` | optional string | custom sound path for permission event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:11] [E: packages/tui/src/config/index.tsx:34] | same `AttentionSoundName` union。 |
-| `attention.sounds.error` | optional string | custom sound path for error event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:12] [E: packages/tui/src/config/index.tsx:34] | same `AttentionSoundName` union。 |
-| `attention.sounds.done` | optional string | custom sound path for done event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:13] [E: packages/tui/src/config/index.tsx:34] | same `AttentionSoundName` union。 |
-| `attention.sounds.subagent_done` | optional string | custom sound path for subagent completion event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:14] [E: packages/tui/src/config/index.tsx:34] | same `AttentionSoundName` union。 |
-| `prompt.max_height` | optional positive int | prompt textarea max height。[E: packages/tui/src/config/index.tsx:47] | package schema field。 |
-| `prompt.max_width` | optional positive int or `"auto"` | home prompt width cap。[E: packages/tui/src/config/index.tsx:48] | package schema field。 |
-| `scroll_speed` | optional number >= 0.001 | TUI scroll speed。[E: packages/tui/src/config/index.tsx:62] | legacy nested `tui.scroll_speed` migrates to top-level `scroll_speed`。[E: packages/opencode/src/config/tui-migrate.ts:77] |
+| `$schema` | optional string；schema default omitted | TUI schema reference。[E: packages/tui/src/config/index.tsx:62] | V1 host 读写；V2 package schema owner。 |
+| `theme` | optional string | selected theme id。[E: packages/tui/src/config/index.tsx:63] | legacy `opencode.json` top-level `theme` 可迁移到 `tui.json`。[E: packages/opencode/src/config/tui-migrate.ts:38] |
+| `keybinds` | optional keybind overrides | per-command keybinding overrides。[E: packages/tui/src/config/index.tsx:64] | V1 host drops unknown keybind names before schema parse。[E: packages/opencode/src/config/tui.ts:74] [E: packages/opencode/src/config/tui.ts:79] |
+| `plugin` | optional array of plugin specs | TUI plugin packages。[E: packages/tui/src/config/index.tsx:65] | V1 host resolves package spec by source file and tracks origins。[E: packages/opencode/src/config/tui.ts:93] [E: packages/opencode/src/config/tui.ts:94] |
+| `plugin_enabled` | optional record boolean | enable/disable TUI plugin by id/name。[E: packages/tui/src/config/index.tsx:66] | package schema field；host just loads and merges it。[I] |
+| `leader_timeout` | optional positive int；resolved default `2000` | leader key timeout in ms。[E: packages/tui/src/config/index.tsx:21] | `resolve` uses `LeaderTimeoutDefault` when omitted。[E: packages/tui/src/config/index.tsx:127] |
+| `attention` | optional object | notifications and sound settings。[E: packages/tui/src/config/index.tsx:44] | V1 host resolves sound paths; package owns defaults。 |
+| `attention.enabled` | optional boolean；resolved default false | attention feature enabled flag。[E: packages/tui/src/config/index.tsx:116] | package default。 |
+| `attention.notifications` | optional boolean；resolved default true | OS/terminal notification flag。[E: packages/tui/src/config/index.tsx:117] | package default。 |
+| `attention.sound` | optional boolean；resolved default true | sound playback flag。[E: packages/tui/src/config/index.tsx:118] | package default。 |
+| `attention.volume` | optional number 0..1；resolved default 0.4 | sound volume。[E: packages/tui/src/config/index.tsx:48] | package enforces range and default。[E: packages/tui/src/config/index.tsx:119] |
+| `attention.sound_pack` | optional string；resolved default `opencode.default` | sound pack id。[E: packages/tui/src/config/index.tsx:49] | package default。[E: packages/tui/src/config/index.tsx:120] |
+| `attention.sounds.default` | optional string | custom sound path for default event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:9] [E: packages/tui/src/config/index.tsx:42] | V1 host resolves relative path。[E: packages/opencode/src/config/tui.ts:115] |
+| `attention.sounds.question` | optional string | custom sound path for question event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:10] [E: packages/tui/src/config/index.tsx:42] | same `AttentionSoundName` union。 |
+| `attention.sounds.permission` | optional string | custom sound path for permission event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:11] [E: packages/tui/src/config/index.tsx:42] | same `AttentionSoundName` union。 |
+| `attention.sounds.error` | optional string | custom sound path for error event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:12] [E: packages/tui/src/config/index.tsx:42] | same `AttentionSoundName` union。 |
+| `attention.sounds.done` | optional string | custom sound path for done event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:13] [E: packages/tui/src/config/index.tsx:42] | same `AttentionSoundName` union。 |
+| `attention.sounds.subagent_done` | optional string | custom sound path for subagent completion event；`sounds` is a record from `AttentionSoundName` to optional string。[E: packages/tui/src/config/index.tsx:14] [E: packages/tui/src/config/index.tsx:42] | same `AttentionSoundName` union。 |
+| `prompt.max_height` | optional positive int | prompt textarea max height。[E: packages/tui/src/config/index.tsx:55] | package schema field。 |
+| `prompt.max_width` | optional positive int or `"auto"` | home prompt width cap。[E: packages/tui/src/config/index.tsx:56] | package schema field。 |
+| `scroll_speed` | optional number >= 0.001 | TUI scroll speed。[E: packages/tui/src/config/index.tsx:70] | legacy nested `tui.scroll_speed` migrates to top-level `scroll_speed`。[E: packages/opencode/src/config/tui-migrate.ts:77] |
 | `scroll_acceleration.enabled` | boolean | scroll acceleration flag。[E: packages/tui/src/config/index.tsx:27] | legacy nested `tui.scroll_acceleration` migrates to top-level object。[E: packages/opencode/src/config/tui-migrate.ts:79] |
 | `diff_style` | optional `auto`/`stacked` | diff rendering style。[E: packages/tui/src/config/index.tsx:30] | legacy nested `tui.diff_style` migrates to top-level `diff_style`。[E: packages/opencode/src/config/tui-migrate.ts:80] |
-| `mouse` | optional boolean；resolved default true | enable/disable mouse capture。[E: packages/tui/src/config/index.tsx:65] | `resolve` defaults to true。[E: packages/tui/src/config/index.tsx:115] |
+| `cursor` | optional object | terminal cursor settings。[E: packages/tui/src/config/index.tsx:33] [E: packages/tui/src/config/index.tsx:73] | omitted means TUI does not override the terminal cursor。[E: packages/tui/src/config/index.tsx:129] [E: packages/tui/src/config/index.tsx:134] |
+| `cursor.style` | optional `block`/`underline`/`line`/`default`；resolved default `block` when `cursor` is set | cursor shape。`default` 保留 terminal 自己的 cursor。[E: packages/tui/src/config/index.tsx:34] | package resolve only。[E: packages/tui/src/config/index.tsx:131] |
+| `cursor.blinking` | optional boolean；resolved default true when `cursor` is set | whether the cursor blinks。`style: "default"` 时无效。[E: packages/tui/src/config/index.tsx:37] | package resolve only。[E: packages/tui/src/config/index.tsx:132] |
+| `mouse` | optional boolean；resolved default true | enable/disable mouse capture。[E: packages/tui/src/config/index.tsx:74] | `resolve` defaults to true。[E: packages/tui/src/config/index.tsx:128] |
 
 ## Keybind Semantics
 
-Keybind override values can be `false`、`"none"`、one binding item or array of binding items。[E: packages/tui/src/config/keybind.ts:27] [E: packages/tui/src/config/keybind.ts:28] 默认 leader key 是 `ctrl+x`。[E: packages/tui/src/config/keybind.ts:41] `resolve` converts parsed overrides into a binding lookup using `CommandMap` and binding defaults。[E: packages/tui/src/config/index.tsx:110] [E: packages/tui/src/config/index.tsx:111] [E: packages/tui/src/config/index.tsx:112]
+Keybind override values can be `false`、`"none"`、one binding item or array of binding items。[E: packages/tui/src/config/keybind.ts:27] [E: packages/tui/src/config/keybind.ts:28] 默认 leader key 是 `ctrl+x`。[E: packages/tui/src/config/keybind.ts:41] `resolve` converts parsed overrides into a binding lookup using `CommandMap` and binding defaults。[E: packages/tui/src/config/index.tsx:123] [E: packages/tui/src/config/index.tsx:124] [E: packages/tui/src/config/index.tsx:125]
 
-When `terminalSuspend` is false, `resolve` disables `terminal_suspend` and adds `ctrl+z` to `input_undo` if the user did not configure it。[E: packages/tui/src/config/index.tsx:90] [E: packages/tui/src/config/index.tsx:91] [E: packages/tui/src/config/index.tsx:92] [E: packages/tui/src/config/index.tsx:94] This is why the V2 preview CLI can pass `terminalSuspend: false` and still keep `ctrl+z` useful inside the TUI instead of suspending the process。[I]
+When `terminalSuspend` is false, `resolve` disables `terminal_suspend` and adds `ctrl+z` to `input_undo` if the user did not configure it。[E: packages/tui/src/config/index.tsx:103] [E: packages/tui/src/config/index.tsx:104] [E: packages/tui/src/config/index.tsx:105] [E: packages/tui/src/config/index.tsx:107] This is why the V2 preview CLI can pass `terminalSuspend: false` and still keep `ctrl+z` useful inside the TUI instead of suspending the process。[I]
 
 ## Legacy Migration
 

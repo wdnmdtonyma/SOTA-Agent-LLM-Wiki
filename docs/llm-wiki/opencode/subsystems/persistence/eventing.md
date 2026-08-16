@@ -24,7 +24,7 @@ related:
   - ref.events
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > 事件系统节点覆盖两个同时存在的 surface：V1 host 侧只有 `GlobalBus` EventEmitter，V2 core 侧是持久 EventV2 engine，`EventV2Bridge` 把 core events 映射回 GlobalBus 兼容流。

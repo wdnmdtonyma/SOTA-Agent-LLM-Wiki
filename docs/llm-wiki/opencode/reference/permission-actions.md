@@ -23,7 +23,7 @@ symbols:
   - Permission.Reply
   - PermissionSaved.Info
 evidence: explicit
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > 这份节点是给检索 agent 用的权限 action 逐实例总账：V1 写的是 config key 与 runtime `permission` 名称，V2 写的是 `action/resources/save/effect/reply` 词汇。
@@ -57,8 +57,8 @@ V1 reply 只有 `once`、`always`、`reject` 三种；`reject` 会拒绝同一 s
 | `bash` | [E: packages/core/src/v1/config/permission.ts:24] | schema 声明的稳定 key。 | V1 shell 审批还使用 bash arity 表做命令前缀归一化。[I] |
 | `task` | [E: packages/core/src/v1/config/permission.ts:25] | schema 声明的稳定 key。 | V2 builtins deps 未装配 task。[I] |
 | `external_directory` | [E: packages/core/src/v1/config/permission.ts:26] | schema 声明的稳定 key。 | V2 也保留这个 action。[E: packages/core/src/location-mutation.ts:142] |
-| `todowrite` | [E: packages/core/src/v1/config/permission.ts:27] | schema 声明的稳定 key。 | V2 内置 general agent 默认 deny。[E: packages/core/src/plugin/agent.ts:160] |
-| `question` | [E: packages/core/src/v1/config/permission.ts:28] | schema 声明的稳定 key。 | V2 内置 build/plan agent 默认 allow。[E: packages/core/src/plugin/agent.ts:132][E: packages/core/src/plugin/agent.ts:143] |
+| `todowrite` | [E: packages/core/src/v1/config/permission.ts:27] | schema 声明的稳定 key。 | V2 内置 general agent 默认 deny。[E: packages/core/src/plugin/agent.ts:156] |
+| `question` | [E: packages/core/src/v1/config/permission.ts:28] | schema 声明的稳定 key。 | V2 内置 build/plan agent 默认 allow。[E: packages/core/src/plugin/agent.ts:128][E: packages/core/src/plugin/agent.ts:139] |
 | `webfetch` | [E: packages/core/src/v1/config/permission.ts:29] | schema 声明的稳定 key。 | V2 也有同名 action。[E: packages/core/src/tool/webfetch.ts:148] |
 | `websearch` | [E: packages/core/src/v1/config/permission.ts:30] | schema 声明的稳定 key。 | V1 是否装配还受 provider/runtime flag 影响。[I] |
 | `lsp` | [E: packages/core/src/v1/config/permission.ts:31] | schema 声明的稳定 key。 | V1 experimental LSP tool；V2 builtins deps 未装配 lsp。[I] |
@@ -89,15 +89,15 @@ V2 permission request 会发布 `permission.v2.asked` 和 `permission.v2.replied
 | `external_directory` | Location mutation helper | `resolve` 在外部路径时返回 `Target.externalDirectory`，helper 再把它映射为 permission request 片段。[E: packages/core/src/location-mutation.ts:38][E: packages/core/src/location-mutation.ts:40][E: packages/core/src/location-mutation.ts:141] | workspace 外部路径。[E: packages/core/src/location-mutation.ts:137][E: packages/core/src/location-mutation.ts:145] | action/resource/save 都来自 `externalDirectory` 对象。[E: packages/core/src/location-mutation.ts:143][E: packages/core/src/location-mutation.ts:145][E: packages/core/src/location-mutation.ts:146] |
 | `glob` | Glob tool。[E: packages/core/src/tool/glob.ts:61] | glob pattern。[E: packages/core/src/tool/glob.ts:62] | `"*"`。[E: packages/core/src/tool/glob.ts:63] | 搜索类 action。 |
 | `grep` | Grep tool。[E: packages/core/src/tool/grep.ts:80] | grep pattern。[E: packages/core/src/tool/grep.ts:81] | `"*"`。[E: packages/core/src/tool/grep.ts:82] | 搜索类 action。 |
-| `question` | Question tool。[E: packages/core/src/tool/question.ts:65] | `"*"`。[E: packages/core/src/tool/question.ts:66] | assert object 未设置 `save`。[E: packages/core/src/tool/question.ts:64][E: packages/core/src/tool/question.ts:67] | build/plan 默认 allow question。[E: packages/core/src/plugin/agent.ts:131][E: packages/core/src/plugin/agent.ts:142] |
-| `read` | Read tool。[E: packages/core/src/tool/read.ts:73] | 目标文件路径。[E: packages/core/src/tool/read.ts:74] | `"*"`。[E: packages/core/src/tool/read.ts:75] | 默认 agent 允许 read，但 `.env` 与 `.env.*` ask，`.env.example` allow。[E: packages/core/src/plugin/agent.ts:118][E: packages/core/src/plugin/agent.ts:119][E: packages/core/src/plugin/agent.ts:121] |
+| `question` | Question tool。[E: packages/core/src/tool/question.ts:65] | `"*"`。[E: packages/core/src/tool/question.ts:66] | assert object 未设置 `save`。[E: packages/core/src/tool/question.ts:64][E: packages/core/src/tool/question.ts:67] | build/plan 默认 allow question。[E: packages/core/src/plugin/agent.ts:127][E: packages/core/src/plugin/agent.ts:138] |
+| `read` | Read tool。[E: packages/core/src/tool/read.ts:73] | 目标文件路径。[E: packages/core/src/tool/read.ts:74] | `"*"`。[E: packages/core/src/tool/read.ts:75] | 默认 agent 允许 read，但 `.env` 与 `.env.*` ask，`.env.example` allow。[E: packages/core/src/plugin/agent.ts:114][E: packages/core/src/plugin/agent.ts:115][E: packages/core/src/plugin/agent.ts:117] |
 | `skill` | Skill tool。[E: packages/core/src/tool/skill.ts:79] | skill 名称。[E: packages/core/src/tool/skill.ts:80] | skill 名称。[E: packages/core/src/tool/skill.ts:81] | Skill tool name 是 `skill`。 |
-| `todowrite` | TodoWrite tool。[E: packages/core/src/tool/todowrite.ts:42] | `"*"`。[E: packages/core/src/tool/todowrite.ts:43] | `"*"`。[E: packages/core/src/tool/todowrite.ts:44] | general agent 默认 deny todowrite。[E: packages/core/src/plugin/agent.ts:160] |
-| `webfetch` | WebFetch tool。[E: packages/core/src/tool/webfetch.ts:148] | URL。[E: packages/core/src/tool/webfetch.ts:149] | `"*"`。[E: packages/core/src/tool/webfetch.ts:150] | explore agent 默认 allow webfetch。[E: packages/core/src/plugin/agent.ts:176] |
-| `websearch` | WebSearch tool。[E: packages/core/src/tool/websearch.ts:202] | query 字符串。[E: packages/core/src/tool/websearch.ts:203] | `"*"`。[E: packages/core/src/tool/websearch.ts:204] | explore agent 默认 allow websearch。[E: packages/core/src/plugin/agent.ts:177] |
-| `plan_enter` | Agent permission rule | `"*"`。[E: packages/core/src/plugin/agent.ts:132] | 不适用。 | build agent 默认 allow plan_enter。[E: packages/core/src/plugin/agent.ts:132] |
-| `plan_exit` | Agent permission rule | `"*"`。[E: packages/core/src/plugin/agent.ts:144] | 不适用。 | plan agent 默认 allow plan_exit。[E: packages/core/src/plugin/agent.ts:144] |
-| `*` | Agent permission rule | `"*"`。[E: packages/core/src/plugin/agent.ts:113] | 不适用。 | 默认 rules 先 allow all，再叠加更具体规则；explore/compaction/title/summary 也用 deny-all 基线。[E: packages/core/src/plugin/agent.ts:172][E: packages/core/src/plugin/agent.ts:188][E: packages/core/src/plugin/agent.ts:195][E: packages/core/src/plugin/agent.ts:202] |
+| `todowrite` | TodoWrite tool。[E: packages/core/src/tool/todowrite.ts:42] | `"*"`。[E: packages/core/src/tool/todowrite.ts:43] | `"*"`。[E: packages/core/src/tool/todowrite.ts:44] | general agent 默认 deny todowrite。[E: packages/core/src/plugin/agent.ts:156] |
+| `webfetch` | WebFetch tool。[E: packages/core/src/tool/webfetch.ts:148] | URL。[E: packages/core/src/tool/webfetch.ts:149] | `"*"`。[E: packages/core/src/tool/webfetch.ts:150] | explore agent 默认 allow webfetch。[E: packages/core/src/plugin/agent.ts:172] |
+| `websearch` | WebSearch tool。[E: packages/core/src/tool/websearch.ts:202] | query 字符串。[E: packages/core/src/tool/websearch.ts:203] | `"*"`。[E: packages/core/src/tool/websearch.ts:204] | explore agent 默认 allow websearch。[E: packages/core/src/plugin/agent.ts:173] |
+| `plan_enter` | Agent permission rule | `"*"`。[E: packages/core/src/plugin/agent.ts:128] | 不适用。 | build agent 默认 allow plan_enter。[E: packages/core/src/plugin/agent.ts:128] |
+| `plan_exit` | Agent permission rule | `"*"`。[E: packages/core/src/plugin/agent.ts:140] | 不适用。 | plan agent 默认 allow plan_exit。[E: packages/core/src/plugin/agent.ts:140] |
+| `*` | Agent permission rule | `"*"`。[E: packages/core/src/plugin/agent.ts:109] | 不适用。 | 默认 rules 先 allow all，再叠加更具体规则；explore/compaction/title/summary 也用 deny-all 基线。[E: packages/core/src/plugin/agent.ts:168][E: packages/core/src/plugin/agent.ts:191][E: packages/core/src/plugin/agent.ts:198][E: packages/core/src/plugin/agent.ts:198] |
 
 V2 builtins layer 当前装配 `apply_patch`、`bash`、`edit`、`glob`、`grep`、`question`、`read`、`skill`、`todowrite`、`webfetch`、`websearch`、`write`。[E: packages/core/src/tool/builtins.ts:31][E: packages/core/src/tool/builtins.ts:46] `task`、`LSP`、`repo_clone`、`repo_overview`、`plan_exit` 和 Rune/code mode 不在当前 built-in deps 列表内，因此不要把 V1 config key `task/lsp/list` 误认为已经是 V2 built-in action。[I]
 

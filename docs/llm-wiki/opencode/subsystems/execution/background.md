@@ -17,7 +17,7 @@ related:
   - tool.task
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Background jobs 是一个进程内、非 durable 的 job registry：core 提供 `BackgroundJob.make` 引擎，V1 用 `packages/opencode/src/background/job.ts` 包成 instance-scoped service，当前主要由 V1 `task` tool 的 experimental background subagents 使用；V2 builtins 尚未移植 task/background leaf。

@@ -16,7 +16,7 @@ related:
   - ref.env-vars
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 `server.observability` 描述 core observability layer。实现位于 `packages/core/src/observability*.ts`，包含 structured text logging、OTLP logs、OTLP traces；已读 observability files 中没有 metrics exporter。[I]

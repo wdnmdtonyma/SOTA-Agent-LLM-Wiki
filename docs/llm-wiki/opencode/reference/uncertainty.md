@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 # 不确定项日志([U] 汇总)
@@ -35,6 +35,37 @@ updated: 89130db6b0
 # Uncertainty Batch AW
 
 - `tui.theming`: OpenTUI palette detection 的内部算法不在 opencode 源码内；当前只能核到 TUI 调用 `renderer.getPalette()`、监听 `THEME_MODE`/terminal color-scheme notification 并合成 `ThemeJson` 的行为。[U]
+
+## batch-clients
+
+# uncertainty-batch-clients
+
+- `clients.app-compatibility`: timeline turns 仍按传入的 current `session_message` source 顺序构造；optimistic user 才按 `compareMessages`（`time.created + id`）插入。该 source 顺序是否总等于 durable aggregate sequence 尚未在 App 层证明。[U]
+- `clients.app-compatibility`: current SSE 重连不发送 `Last-Event-ID`，仓内只看到 missed promoted input 的单条 hydrate；一般事件缺口最终能否收敛没有可证的客户端 contract。[U]
+- `clients.app-compatibility`: migration checklist 把 current PTY connect-token 标为完成，但 App 源码不能证明 ticketless current handshake 能成功，也不能证明这条 path 的预期 authorization contract。[U]
+
+## batch-hosted
+
+# uncertainty-batch-hosted
+
+- `clients.console`: Google usage normalization 把 `thoughtsTokenCount` 加进 `outputTokens`，同时仍单独保留 `reasoningTokens`。generic trial limiter 把 `outputTokens + reasoningTokens` 再相加，Stats `buildTokenCost` 也用 `outputTokens + reasoningTokens` 做 output cost-per-million。对 Google usage 是否二次计算 thoughts、下游契约应否改，当前源码无法判定。[U]
+  - [E: packages/console/app/src/routes/zen/util/provider/google.ts:68]
+  - [E: packages/console/app/src/routes/zen/util/trialLimiter.ts:31]
+  - [E: packages/console/app/src/routes/zen/util/trialLimiter.ts:33]
+  - [E: packages/console/app/src/routes/zen/util/trialLimiter.ts:34]
+  - [E: packages/stats/core/src/domain/home.ts:647]
+- `clients.console`: `packages/console/app/test/providerUsage.test.ts` 仍期待 Google `candidates=3, thoughts=2` 得到 `outputTokens=3`，而 `google.normalizeUsage` 返回 5。测试与实现哪个才是 intended contract 未确认。[U]
+  - [E: packages/console/app/test/providerUsage.test.ts:21]
+  - [E: packages/console/app/test/providerUsage.test.ts:22]
+  - [E: packages/console/app/test/providerUsage.test.ts:27]
+  - [E: packages/console/app/test/providerUsage.test.ts:29]
+  - [E: packages/console/app/src/routes/zen/util/provider/google.ts:68]
+
+## batch-session
+
+# Uncertainty batch: session (3fd77ae980)
+
+- `session-v2.projector` / `spine.v2-context-epoch`: `SessionContextEpoch.reset` 仍导出并会删除 epoch row,但当前 `packages/core` production path 没有 caller。`SessionProjector` 的 `Moved` 只更新 location fields,`RevertEvent.Committed` 删除 boundary 之后的 messages/inputs,两者都不再 reset epoch。无法从本轮源码确认这是有意让 destination Location 复用旧 baseline,还是漏掉的 call site。[U]
 
 ## clients
 

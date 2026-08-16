@@ -17,7 +17,7 @@ symbols:
   - SystemPrompt.provider
   - SystemPrompt.Service
   - LLMRequestPrep.prepare
-updated: 89130db6b0
+updated: 3fd77ae980
 evidence: explicit
 ---
 
@@ -36,33 +36,33 @@ evidence: explicit
 
 | match 条件 | prompt family | source line |
 | --- | --- | --- |
-| `model.api.id` 包含 `muse-spark` | `meta.txt` | [E: packages/opencode/src/session/system.ts:28] |
-| `model.api.id` 包含 `gpt-4`、`o1` 或 `o3` | `beast.txt` | [E: packages/opencode/src/session/system.ts:29] |
-| `model.api.id` 包含 `gpt` 且包含 `codex` | `codex.txt` | [E: packages/opencode/src/session/system.ts:33] |
-| `model.api.id` 包含 `gpt` 但不包含 `codex` | `gpt.txt` | [E: packages/opencode/src/session/system.ts:35] |
-| `model.api.id` 包含 `gemini-` | `gemini.txt` | [E: packages/opencode/src/session/system.ts:37] |
-| `model.api.id` 包含 `claude` | `anthropic.txt` | [E: packages/opencode/src/session/system.ts:38] |
-| lower-case `model.api.id` 包含 `trinity` | `trinity.txt` | [E: packages/opencode/src/session/system.ts:39] |
-| lower-case `model.api.id` 包含 `kimi` | `kimi.txt` | [E: packages/opencode/src/session/system.ts:40] |
-| 以上条件都不满足 | `default.txt` | [E: packages/opencode/src/session/system.ts:41] |
+| `model.api.id` 包含 `muse`（不限于 `muse-spark`） | `meta.txt`，并把 `{{MODEL_NAME}}` 换成 `Muse Glimmer` 或默认 `Muse Spark` | [E: packages/opencode/src/session/system.ts:28][E: packages/opencode/src/session/system.ts:29][E: packages/opencode/src/session/system.ts:30] |
+| `model.api.id` 包含 `gpt-4`、`o1` 或 `o3` | `beast.txt` | [E: packages/opencode/src/session/system.ts:32] |
+| `model.api.id` 包含 `gpt` 且包含 `codex` | `codex.txt` | [E: packages/opencode/src/session/system.ts:36] |
+| `model.api.id` 包含 `gpt` 但不包含 `codex` | `gpt.txt` | [E: packages/opencode/src/session/system.ts:38] |
+| `model.api.id` 包含 `gemini-` | `gemini.txt` | [E: packages/opencode/src/session/system.ts:40] |
+| `model.api.id` 包含 `claude` | `anthropic.txt` | [E: packages/opencode/src/session/system.ts:41] |
+| lower-case `model.api.id` 包含 `trinity` | `trinity.txt` | [E: packages/opencode/src/session/system.ts:42] |
+| lower-case `model.api.id` 包含 `kimi`，或 `providerID` 是 `kimi-for-coding` / `moonshotai` / `moonshotai-cn` | `kimi.txt` | [E: packages/opencode/src/session/system.ts:44][E: packages/opencode/src/session/system.ts:45][E: packages/opencode/src/session/system.ts:47] |
+| 以上条件都不满足 | `default.txt` | [E: packages/opencode/src/session/system.ts:48] |
 
 导入表显示这些 family prompt 的真实 `.txt` 文件，包括 `meta.txt` 与其余 Anthropic/GPT/Gemini/Kimi/Trinity/default families。[E: packages/opencode/src/session/system.ts:6][E: packages/opencode/src/session/system.ts:7][E: packages/opencode/src/session/system.ts:8][E: packages/opencode/src/session/system.ts:9][E: packages/opencode/src/session/system.ts:10][E: packages/opencode/src/session/system.ts:11][E: packages/opencode/src/session/system.ts:12][E: packages/opencode/src/session/system.ts:14][E: packages/opencode/src/session/system.ts:15]
 
-目标 SHA 的 `meta.txt` 由 `system.ts` 导入，并由 `muse-spark` 分支返回，因此是 live prompt 而不是 orphan；该 wiring 只影响命中 `muse-spark` 的 model family。[E: packages/opencode/src/session/system.ts:12][E: packages/opencode/src/session/system.ts:28] prompt 本身要求简短、直接客观的沟通、源码位置引用、执行验证、证据优先、约束持续生效，并给出 file/Todo/Task/parallel tool 规则。[E: packages/opencode/src/session/prompt/meta.txt:1][E: packages/opencode/src/session/prompt/meta.txt:6][E: packages/opencode/src/session/prompt/meta.txt:8][E: packages/opencode/src/session/prompt/meta.txt:10][E: packages/opencode/src/session/prompt/meta.txt:17][E: packages/opencode/src/session/prompt/meta.txt:18][E: packages/opencode/src/session/prompt/meta.txt:25][E: packages/opencode/src/session/prompt/meta.txt:29][E: packages/opencode/src/session/prompt/meta.txt:37][E: packages/opencode/src/session/prompt/meta.txt:43][E: packages/opencode/src/session/prompt/meta.txt:48]
+目标 SHA 的 `meta.txt` 由 `system.ts` 导入，并由 `muse` family 分支返回，因此是 live prompt 而不是 orphan。命中条件是 API ID 包含 `muse`，覆盖 Spark 与 Glimmer 等 Muse 家族；模板第一句用 `{{MODEL_NAME}}`，运行时按是否包含 `muse-glimmer` 替换成 `Muse Glimmer` 或 `Muse Spark`。[E: packages/opencode/src/session/system.ts:12][E: packages/opencode/src/session/system.ts:28][E: packages/opencode/src/session/system.ts:29][E: packages/opencode/src/session/system.ts:30][E: packages/opencode/src/session/prompt/meta.txt:1] prompt 本身要求简短、直接客观的沟通、源码位置引用、执行验证、证据优先、约束持续生效，并给出 file/Todo/Task/parallel tool 规则。[E: packages/opencode/src/session/prompt/meta.txt:6][E: packages/opencode/src/session/prompt/meta.txt:8][E: packages/opencode/src/session/prompt/meta.txt:10][E: packages/opencode/src/session/prompt/meta.txt:17][E: packages/opencode/src/session/prompt/meta.txt:18][E: packages/opencode/src/session/prompt/meta.txt:25][E: packages/opencode/src/session/prompt/meta.txt:29][E: packages/opencode/src/session/prompt/meta.txt:37][E: packages/opencode/src/session/prompt/meta.txt:43][E: packages/opencode/src/session/prompt/meta.txt:48]
 
 ## LLM Request 拼装
 
 `LLMRequestPrep.prepare` 构造的 `system` 数组只有一个字符串：agent prompt 或 model-family prompt、调用方传入的 `input.system`、用户自定义 `input.user.system` 会先拼进同一个字符串。[E: packages/opencode/src/session/llm/request.ts:58] 如果 `input.agent.prompt` 存在，就使用 agent prompt；否则调用 `SystemPrompt.provider(input.model)`。[E: packages/opencode/src/session/llm/request.ts:60]
 
-plugin hook `experimental.chat.system.transform` 可以修改 system 数组。[E: packages/opencode/src/session/llm/request.ts:68] 若 hook 追加了多个 system fragment，且第一个 fragment 没变，源码会把追加内容合并成第二个 system fragment，减少 system message 数量。[E: packages/opencode/src/session/llm/request.ts:74]
+plugin hook `experimental.chat.system.transform` 可以修改 system 数组。[E: packages/opencode/src/session/llm/request.ts:69] 若 hook 追加了多个 system fragment，且第一个 fragment 没变，源码会把追加内容合并成第二个 system fragment，减少 system message 数量。[E: packages/opencode/src/session/llm/request.ts:74]
 
 OpenAI OAuth 或 workflow 请求不会把 system prompt 放进 AI SDK `messages`，其中 OpenAI OAuth 把 instructions 放到 options 上。[E: packages/opencode/src/session/llm/request.ts:99] 普通请求会把 system 数组映射成 `role: "system"` message 后再接原始 `input.messages`。[E: packages/opencode/src/session/llm/request.ts:101]
 
 ## Environment 与 Skills
 
-environment prompt 会写入精确 model id、working directory、workspace root、git repo 状态、platform 和当天日期。[E: packages/opencode/src/session/system.ts:67][E: packages/opencode/src/session/system.ts:70][E: packages/opencode/src/session/system.ts:74] 如果 reference service 返回带 description 的 references，environment prompt 会附加 `<available_references>`，每条 reference 带 name、path 和可选 description。[E: packages/opencode/src/session/system.ts:77][E: packages/opencode/src/session/system.ts:81][E: packages/opencode/src/session/system.ts:86][E: packages/opencode/src/session/system.ts:90]
+environment prompt 会写入精确 model id、working directory、workspace root、git repo 状态、platform 和当天日期。[E: packages/opencode/src/session/system.ts:74][E: packages/opencode/src/session/system.ts:77][E: packages/opencode/src/session/system.ts:81] 如果 reference service 返回带 description 的 references，environment prompt 会附加 `<available_references>`，每条 reference 带 name、path 和可选 description。[E: packages/opencode/src/session/system.ts:84][E: packages/opencode/src/session/system.ts:88][E: packages/opencode/src/session/system.ts:93][E: packages/opencode/src/session/system.ts:97]
 
-skills prompt 先检查 agent permission：如果 `skill` permission disabled，就直接不注入 skills 文字。[E: packages/opencode/src/session/system.ts:99] 未禁用时，源码调用 `skill.available(agent)`，并以 verbose 格式加入 skills 列表。[E: packages/opencode/src/session/system.ts:101][E: packages/opencode/src/session/system.ts:108]
+skills prompt 先检查 agent permission：如果 `skill` permission disabled，就直接不注入 skills 文字。[E: packages/opencode/src/session/system.ts:106] 未禁用时，源码调用 `skill.available(agent)`，并以 verbose 格式加入 skills 列表。[E: packages/opencode/src/session/system.ts:108][E: packages/opencode/src/session/system.ts:115]
 
 ## Reminder 注入
 
@@ -87,8 +87,8 @@ session loop 在构造 model request 前调用 `SessionReminders.apply()`；当 
 | `default.txt` | imported by `system.ts` | fallback prompt family。[E: packages/opencode/src/session/system.ts:7] |
 | `gemini.txt` | imported by `system.ts` | Gemini prompt family。[E: packages/opencode/src/session/system.ts:9] |
 | `gpt.txt` | imported by `system.ts` | non-codex GPT prompt family。[E: packages/opencode/src/session/system.ts:10] |
-| `kimi.txt` | imported by `system.ts` | Kimi prompt family。[E: packages/opencode/src/session/system.ts:11] |
-| `meta.txt` | imported by `system.ts` | `muse-spark` prompt family；目标 SHA 已重写其沟通、验证与工具使用规则。[E: packages/opencode/src/session/system.ts:12][E: packages/opencode/src/session/system.ts:28] |
+| `kimi.txt` | imported by `system.ts` | Kimi prompt family。选择不只看 API ID 含 `kimi`，也包括 provider ID `kimi-for-coding` / `moonshotai` / `moonshotai-cn`。[E: packages/opencode/src/session/system.ts:11][E: packages/opencode/src/session/system.ts:44][E: packages/opencode/src/session/system.ts:45] |
+| `meta.txt` | imported by `system.ts` | 全部 Muse family（API ID 含 `muse`）的 prompt；`{{MODEL_NAME}}` 运行时替换为 `Muse Glimmer` 或 `Muse Spark`。[E: packages/opencode/src/session/system.ts:12][E: packages/opencode/src/session/system.ts:28][E: packages/opencode/src/session/system.ts:29][E: packages/opencode/src/session/prompt/meta.txt:1] |
 | `trinity.txt` | imported by `system.ts` | Trinity prompt family。[E: packages/opencode/src/session/system.ts:15] |
 | `build-switch.txt` | imported by `reminders.ts` | 从 plan 切回 build 时提醒执行 plan。[E: packages/opencode/src/session/reminders.ts:12] |
 | `plan-mode.txt` | imported by `reminders.ts` | experimental plan mode 进入 plan 时的长 reminder。[E: packages/opencode/src/session/reminders.ts:13] |

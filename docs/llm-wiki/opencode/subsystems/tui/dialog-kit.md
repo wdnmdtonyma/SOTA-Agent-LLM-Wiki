@@ -9,7 +9,7 @@ symbols: [Dialog, DialogProvider, useDialog, DialogSelect, Toast, ToastProvider,
 related: [ref.tui-dialogs, tui.keybindings, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Dialog kit 是 TUI 的 modal stack 与 select/prompt/confirm 等通用交互层；Toast 是独立的单条 transient notification store。二者都由 root provider 挂载，插件 API 也复用这些组件。
@@ -46,7 +46,7 @@ filter 默认排除 disabled options；有 filter text 时用 fuzzysort 搜 titl
 
 DialogSelect 注册 `dialog.select.prev/next/page_up/page_down/home/end/submit` commands，并把 visible actions 的 command bindings 也加入同一 binding set；如果有 visible actions，还提供 tab/shift+tab 在 footer actions 间移动 focus。[E: packages/tui/src/ui/dialog-select.tsx:369] [E: packages/tui/src/ui/dialog-select.tsx:375] [E: packages/tui/src/ui/dialog-select.tsx:384] [E: packages/tui/src/ui/dialog-select.tsx:464] [E: packages/tui/src/ui/dialog-select.tsx:402] [E: packages/tui/src/ui/dialog-select.tsx:411] [E: packages/tui/src/ui/dialog-select.tsx:421] [E: packages/tui/src/ui/dialog-select.tsx:431] [E: packages/tui/src/ui/dialog-select.tsx:450] [E: packages/tui/src/ui/dialog-select.tsx:460] [E: packages/tui/src/ui/dialog-select.tsx:464] [E: packages/tui/src/ui/dialog-select.tsx:470]
 
-render 结构包含标题栏和 esc label、可选 filter input、scrollbox list、footer/action hints；option render 支持当前项 marker、gutter、left/right truncation、details、footer 和 mouse select。[E: packages/tui/src/ui/dialog-select.tsx:561] [E: packages/tui/src/ui/dialog-select.tsx:566] [E: packages/tui/src/ui/dialog-select.tsx:570] [E: packages/tui/src/ui/dialog-select.tsx:609] [E: packages/tui/src/ui/dialog-select.tsx:647] [E: packages/tui/src/ui/dialog-select.tsx:649] [E: packages/tui/src/ui/dialog-select.tsx:650] [E: packages/tui/src/ui/dialog-select.tsx:697] [E: packages/tui/src/ui/dialog-select.tsx:716] [E: packages/tui/src/ui/dialog-select.tsx:755] [E: packages/tui/src/ui/dialog-select.tsx:760] [E: packages/tui/src/ui/dialog-select.tsx:762] [E: packages/tui/src/ui/dialog-select.tsx:773] [E: packages/tui/src/ui/dialog-select.tsx:774] [E: packages/tui/src/ui/dialog-select.tsx:777] [E: packages/tui/src/ui/dialog-select.tsx:783]
+render 结构包含标题栏和 esc label、可选 filter input、scrollbox list、footer/action hints；option render 支持当前项 marker、gutter、left/right truncation、details、footer 和 mouse select。[E: packages/tui/src/ui/dialog-select.tsx:561] [E: packages/tui/src/ui/dialog-select.tsx:566] [E: packages/tui/src/ui/dialog-select.tsx:570] [E: packages/tui/src/ui/dialog-select.tsx:610] [E: packages/tui/src/ui/dialog-select.tsx:648] [E: packages/tui/src/ui/dialog-select.tsx:650] [E: packages/tui/src/ui/dialog-select.tsx:651] [E: packages/tui/src/ui/dialog-select.tsx:698] [E: packages/tui/src/ui/dialog-select.tsx:717] [E: packages/tui/src/ui/dialog-select.tsx:756] [E: packages/tui/src/ui/dialog-select.tsx:761] [E: packages/tui/src/ui/dialog-select.tsx:763] [E: packages/tui/src/ui/dialog-select.tsx:774] [E: packages/tui/src/ui/dialog-select.tsx:775] [E: packages/tui/src/ui/dialog-select.tsx:778] [E: packages/tui/src/ui/dialog-select.tsx:784]
 
 ## Toast
 

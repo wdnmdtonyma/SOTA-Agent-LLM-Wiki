@@ -26,7 +26,7 @@ related:
   - peripheral.function
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > SST 云基础设施节点描述 opencode 的 hosted surfaces: Cloudflare Workers/R2/KV/SolidStart/Astro, PlanetScale/Stripe/Honeycomb providers, 以及只在指定 stage 部署的 AWS data lake 与 stats services。
@@ -60,7 +60,7 @@ V1/V2 关系: SST 资源为 Web docs、Web app、Console、share/backend functio
 | `infra/app.ts` | public Cloudflare app front door。创建 API Worker、Durable Object namespace binding、docs Astro、WebApp StaticSite [E: infra/app.ts:13] [E: infra/app.ts:37] [E: infra/app.ts:42] [E: infra/app.ts:52] [E: infra/app.ts:62]。 |
 | `infra/console.ts` | Console infra。创建 PlanetScale branch/password Linkable, Auth Worker, Stripe webhook/products/prices, LogProcessor Worker, Console SolidStart, Stat Worker [E: infra/console.ts:11] [E: infra/console.ts:29] [E: infra/console.ts:36] [E: infra/console.ts:63] [E: infra/console.ts:74] [E: infra/console.ts:142] [E: infra/console.ts:243] [E: infra/console.ts:248] [E: infra/console.ts:307]。 |
 | `infra/lake.ts` | AWS lake foundation。创建 S3 Tables bucket, Glue federated catalog, Athena results bucket/workgroup, Firehose Iceberg delivery, ingest ECS service, lake Linkables and query permissions [E: infra/lake.ts:16] [E: infra/lake.ts:21] [E: infra/lake.ts:64] [E: infra/lake.ts:160] [E: infra/lake.ts:218] [E: infra/lake.ts:274] [E: infra/lake.ts:281]。 |
-| `infra/stats.ts` | stats app and sync. 定义 `inference.event` Iceberg table, Stats PlanetScale database, Stats SolidStart app, `StatsSyncService` ECS service [E: infra/stats.ts:9] [E: infra/stats.ts:14] [E: infra/stats.ts:107] [E: infra/stats.ts:137] [E: infra/stats.ts:164] [E: infra/stats.ts:184]。 |
+| `infra/stats.ts` | stats app and sync. 定义 `inference.event` Iceberg table, Stats PlanetScale database, Stats SolidStart app, `R2Sql` Linkable/`R2SqlAuthToken`, `StatsSyncService` ECS service [E: infra/stats.ts:9] [E: infra/stats.ts:14] [E: infra/stats.ts:107] [E: infra/stats.ts:164] [E: infra/stats.ts:184] [E: infra/stats.ts:185] [E: infra/stats.ts:194]。 |
 | `infra/monitoring.ts` | Honeycomb alerts. 只由 config 在 production 或 `vimtor` stage 导入, 内部用 Discord webhook recipient 和 triggers 监控 model/provider HTTP errors、TPS、free tier request spike [E: sst.config.ts:37] [E: infra/monitoring.ts:7] [E: infra/monitoring.ts:160] [E: infra/monitoring.ts:200] [E: infra/monitoring.ts:240] [E: infra/monitoring.ts:260]。 |
 
 ## 数据模型
@@ -77,7 +77,7 @@ Linkable 是跨资源配置模型。Console database Linkable 暴露 host/databa
 4. `infra/app.ts` 的 API Worker 绑定 R2 bucket、GitHub app secrets、admin secret、Discord/Feishu secrets, 并在 transform 中加 `SYNC_SERVER` Durable Object namespace 与 migrations [E: infra/app.ts:20] [E: infra/app.ts:21] [E: infra/app.ts:22] [E: infra/app.ts:23] [E: infra/app.ts:24] [E: infra/app.ts:25] [E: infra/app.ts:26] [E: infra/app.ts:27] [E: infra/app.ts:28] [E: infra/app.ts:37] [E: infra/app.ts:42]。
 5. Console module 为 production stage 读取 production PlanetScale branch, 其它 stage 创建从 production 分支派生的 branch [E: infra/console.ts:16] [E: infra/console.ts:18] [E: infra/console.ts:23] [E: infra/console.ts:27]。
 6. Lake module 的 Firehose destination 是 Iceberg, metadata extraction query 从 record 中读取 `_lake_database`, `_lake_table`, `_lake_operation` [E: infra/lake.ts:160] [E: infra/lake.ts:164] [E: infra/lake.ts:174] [E: infra/lake.ts:180]。
-7. Stats module 把 `StatsSyncService` 放进 lake cluster, 运行 `bun src/stat-sync.ts`, 链接 database、inferenceEvent、dataset config, 并使用 lake query permissions [E: infra/stats.ts:184] [E: infra/stats.ts:195] [E: infra/stats.ts:196] [E: infra/stats.ts:197]。
+7. Stats module 把 `StatsSyncService` 放进 lake cluster，architecture `arm64`，运行 `bun src/stat-sync.ts`。link 包含 database、legacy `inferenceEvent`、`r2Sql`、`r2SqlAuthToken`、`statsSyncConfig`，并使用 lake query permissions [E: infra/stats.ts:185] [E: infra/stats.ts:194] [E: infra/stats.ts:195] [E: infra/stats.ts:196] [E: infra/stats.ts:205] [E: infra/stats.ts:208] [E: infra/stats.ts:209]。
 
 ## 设计动机与权衡
 

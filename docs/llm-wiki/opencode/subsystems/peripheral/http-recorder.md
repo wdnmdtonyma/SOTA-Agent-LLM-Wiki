@@ -13,7 +13,7 @@ symbols: [HttpRecorder, http, socket, recordingLayer, Service]
 related: [model-layer.llm-protocol-engine]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > `@opencode-ai/http-recorder` 是给 Effect HTTP/WebSocket client 测试用的 cassette recorder：本地缺 cassette 时录制，已有 cassette 或 CI 中 replay，以确定性 JSON fixtures 测 provider 协议。

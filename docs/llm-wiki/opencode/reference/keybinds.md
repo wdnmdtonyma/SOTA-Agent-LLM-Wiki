@@ -14,7 +14,7 @@ related:
   - tui.keybindings
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > TUI keybind catalog 由 183 个 `Definitions` 和 162 个 `CommandMap` entries 组成；未映射 command 的点号 key 多数是 dialog/prompt 内部绑定。

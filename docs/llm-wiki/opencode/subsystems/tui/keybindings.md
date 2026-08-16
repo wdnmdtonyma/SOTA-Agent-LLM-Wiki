@@ -9,7 +9,7 @@ symbols: [registerOpencodeKeymap, createOpencodeModeStack, TuiKeybind.Definition
 related: [ref.keybinds, tui.dialog-kit, tui.prompt]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > TUI keybinding 层把 opencode command ids 映射到 `@opentui/keymap`：默认 leader 是 `ctrl+x`，mode stack 用 keymap data field 控制 layer 可见性，完整绑定细表在 `ref.keybinds`。
@@ -46,15 +46,15 @@ Autocomplete popup 显示时 push `autocomplete` mode；Dialog stack 非空时 p
 
 ## Config resolve
 
-TUI config `Info` 包含 `keybinds?: TuiKeybind.KeybindOverrides`、`leader_timeout?: LeaderTimeout`、`mouse?: boolean` 等字段。[E: packages/tui/src/config/index.tsx:53] [E: packages/tui/src/config/index.tsx:56] [E: packages/tui/src/config/index.tsx:59] [E: packages/tui/src/config/index.tsx:65] `resolve(input, options)` 会先复制 keybind overrides；如果 host 禁用 terminal suspend，就把 `terminal_suspend` 设 `"none"`，并在用户未覆盖 `input_undo` 时把 `ctrl+z` 加进 input undo binding。[E: packages/tui/src/config/index.tsx:89] [E: packages/tui/src/config/index.tsx:90] [E: packages/tui/src/config/index.tsx:91] [E: packages/tui/src/config/index.tsx:92] [E: packages/tui/src/config/index.tsx:93] [E: packages/tui/src/config/index.tsx:94]
+TUI config `Info` 包含 `keybinds?: TuiKeybind.KeybindOverrides`、`leader_timeout?: LeaderTimeout`、`mouse?: boolean` 等字段。[E: packages/tui/src/config/index.tsx:61] [E: packages/tui/src/config/index.tsx:64] [E: packages/tui/src/config/index.tsx:67] [E: packages/tui/src/config/index.tsx:74] `resolve(input, options)` 会先复制 keybind overrides；如果 host 禁用 terminal suspend，就把 `terminal_suspend` 设 `"none"`，并在用户未覆盖 `input_undo` 时把 `ctrl+z` 加进 input undo binding。[E: packages/tui/src/config/index.tsx:102] [E: packages/tui/src/config/index.tsx:103] [E: packages/tui/src/config/index.tsx:104] [E: packages/tui/src/config/index.tsx:105] [E: packages/tui/src/config/index.tsx:106] [E: packages/tui/src/config/index.tsx:107]
 
-最终 resolved config 用 `createBindingLookup(toBindingConfig(parse(keybinds)), { commandMap, bindingDefaults })`，并填充 `leader_timeout` 默认 2000、`mouse` 默认 true。[E: packages/tui/src/config/index.tsx:110] [E: packages/tui/src/config/index.tsx:111] [E: packages/tui/src/config/index.tsx:112] [E: packages/tui/src/config/index.tsx:114] [E: packages/tui/src/config/index.tsx:115]
+最终 resolved config 用 `createBindingLookup(toBindingConfig(parse(keybinds)), { commandMap, bindingDefaults })`，并填充 `leader_timeout` 默认 2000、`mouse` 默认 true。[E: packages/tui/src/config/index.tsx:123] [E: packages/tui/src/config/index.tsx:124] [E: packages/tui/src/config/index.tsx:125] [E: packages/tui/src/config/index.tsx:127] [E: packages/tui/src/config/index.tsx:128]
 
 ## Slash commands 与 command palette
 
 `useCommandSlashes()` 从 keymap 中读取 reachable 且 namespace 为 `palette` 的 command entries，过滤 hidden 和 command palette 本身；有 `slashName` 的 command 会映射成 `/name` entry，aliases 映射成 `/alias`，onSelect dispatch 原 command。[E: packages/tui/src/keymap.tsx:260] [E: packages/tui/src/keymap.tsx:264] [E: packages/tui/src/keymap.tsx:265] [E: packages/tui/src/keymap.tsx:266] [E: packages/tui/src/keymap.tsx:49] [E: packages/tui/src/keymap.tsx:50] [E: packages/tui/src/keymap.tsx:276] [E: packages/tui/src/keymap.tsx:283] [E: packages/tui/src/keymap.tsx:284] [E: packages/tui/src/keymap.tsx:286]
 
-Session screen 和 Prompt 都把自己的 commands 注册到 namespace `palette`；slash autocomplete 调 `useCommandSlashes()`，因此可以混合全局/session/prompt commands。[E: packages/tui/src/routes/session/index.tsx:1085] [E: packages/tui/src/routes/session/index.tsx:1094] [E: packages/tui/src/routes/session/index.tsx:1095] [E: packages/tui/src/component/prompt/index.tsx:556] [E: packages/tui/src/component/prompt/index.tsx:561] [E: packages/tui/src/component/prompt/index.tsx:562] [E: packages/tui/src/component/prompt/autocomplete.tsx:447] [I]
+Session screen 和 Prompt 都把自己的 commands 注册到 namespace `palette`；slash autocomplete 调 `useCommandSlashes()`，因此可以混合全局/session/prompt commands。[E: packages/tui/src/routes/session/index.tsx:1089] [E: packages/tui/src/routes/session/index.tsx:1098] [E: packages/tui/src/routes/session/index.tsx:1099] [E: packages/tui/src/component/prompt/index.tsx:557] [E: packages/tui/src/component/prompt/index.tsx:562] [E: packages/tui/src/component/prompt/index.tsx:563] [E: packages/tui/src/component/prompt/autocomplete.tsx:447] [I]
 
 ## 设计动机与权衡
 

@@ -9,7 +9,7 @@ symbols: [TaskTool, TaskPromptOps, deriveSubagentSessionPermission, BackgroundJo
 related: [agent.builtins, execution.background]
 evidence: explicit
 status: verified
-updated: 89130db6b0
+updated: 3fd77ae980
 ---
 
 > Task 工具是 V1 活跑路径里的子 agent dispatcher：模型调用 wire id `task` 后，V1 在同一 opencode 进程内创建或续接 child session，并用 `SessionPrompt` 继续驱动该 child session。
@@ -24,13 +24,13 @@ updated: 89130db6b0
 
 ## 1 Identity
 
-V1 `TaskTool` 的 wire id 是常量 `id = "task"`，并通过 `Tool.define(id, ...)` 生成工具定义。[E: packages/opencode/src/tool/task.ts:24][E: packages/opencode/src/tool/task.ts:81][E: packages/opencode/src/tool/task.ts:82] `ToolRegistry.layer` 初始化 `TaskTool`，再把 `tool.task` 放进 `builtin` 列表，所以 V1 registry 默认会暴露 task 工具。[E: packages/opencode/src/tool/registry.ts:97][E: packages/opencode/src/tool/registry.ts:235]
+V1 `TaskTool` 的 wire id 是常量 `id = "task"`，并通过 `Tool.define(id, ...)` 生成工具定义。[E: packages/opencode/src/tool/task.ts:24][E: packages/opencode/src/tool/task.ts:81][E: packages/opencode/src/tool/task.ts:82] `ToolRegistry.layer` 初始化 `TaskTool`，再把 `tool.task` 放进 `builtin` 列表，所以 V1 registry 默认会暴露 task 工具。[E: packages/opencode/src/tool/registry.ts:102][E: packages/opencode/src/tool/registry.ts:240]
 
 Task 是 V1-only 节点。V2 `BuiltInTools.node` 的静态 deps 列表注册 ApplyPatch/Bash/Edit/Glob/Grep/Question/Read/Skill/TodoWrite/WebFetch/WebSearch/Write，未出现 `TaskTool.node` 的结论来自该列表枚举结果。[E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:42][E: packages/core/src/tool/builtins.ts:46][I]
 
 ## 2 用途定位
 
-V1 Task 用来把复杂、多步、可自治的工作交给 subagent；tool prompt 明确要求调用方指定 `subagent_type`，并建议在可能时并发启动多个 agent。[E: packages/opencode/src/tool/task.txt:1][E: packages/opencode/src/tool/task.txt:3][E: packages/opencode/src/tool/task.txt:13] registry 在拼接 model-visible available agents 时过滤 `item.mode !== "primary"`，所以可选列表不是 primary agents。[E: packages/opencode/src/tool/registry.ts:262] 新 task 默认新建 child session；传入 `task_id` 时会尝试把该 id 当作既有 session id 续接，查不到既有 session 时回落到 `sessions.create()`。[E: packages/opencode/src/tool/task.ts:47][E: packages/opencode/src/tool/task.ts:49][E: packages/opencode/src/tool/task.ts:136][E: packages/opencode/src/tool/task.ts:137][E: packages/opencode/src/tool/task.ts:156][E: packages/opencode/src/tool/task.ts:158]
+V1 Task 用来把复杂、多步、可自治的工作交给 subagent；tool prompt 明确要求调用方指定 `subagent_type`，并建议在可能时并发启动多个 agent。[E: packages/opencode/src/tool/task.txt:1][E: packages/opencode/src/tool/task.txt:3][E: packages/opencode/src/tool/task.txt:13] registry 在拼接 model-visible available agents 时过滤 `item.mode !== "primary"`，所以可选列表不是 primary agents。[E: packages/opencode/src/tool/registry.ts:267] 新 task 默认新建 child session；传入 `task_id` 时会尝试把该 id 当作既有 session id 续接，查不到既有 session 时回落到 `sessions.create()`。[E: packages/opencode/src/tool/task.ts:47][E: packages/opencode/src/tool/task.ts:49][E: packages/opencode/src/tool/task.ts:136][E: packages/opencode/src/tool/task.ts:137][E: packages/opencode/src/tool/task.ts:156][E: packages/opencode/src/tool/task.ts:158]
 
 ## 3 输入 schema 表
 
@@ -73,7 +73,7 @@ child session 的 permission 不是简单复制 parent agent：`deriveSubagentSe
 
 | 维度 | V1 | V2 |
 |---|---|---|
-| 注册 | `tool.task` 在 V1 `ToolRegistry` builtin 列表中默认存在。[E: packages/opencode/src/tool/registry.ts:235] | V2 builtins deps 列表没有 `TaskTool.node`，这是从静态 deps 枚举推断。[E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:46][I] |
+| 注册 | `tool.task` 在 V1 `ToolRegistry` builtin 列表中默认存在。[E: packages/opencode/src/tool/registry.ts:240] | V2 builtins deps 列表没有 `TaskTool.node`，这是从静态 deps 枚举推断。[E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:46][I] |
 | 执行模型 | 通过 `SessionPrompt` 在 child session 中跑 V1 loop。[E: packages/opencode/src/tool/task.ts:202][E: packages/opencode/src/tool/task.ts:204] | 没有 V2 task leaf，这是从 V2 builtins deps 枚举推断。[E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:46][I] |
 | 背景模式 | 可选 experimental；field 只有 flag 开启才暴露给模型。[E: packages/opencode/src/tool/task.ts:351][E: packages/opencode/src/tool/task.ts:355] | 没有 V2 equivalent，这是从 V2 builtins deps 枚举推断。[E: packages/core/src/tool/builtins.ts:35][E: packages/core/src/tool/builtins.ts:46][I] |
 
