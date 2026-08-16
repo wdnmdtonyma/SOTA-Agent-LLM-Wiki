@@ -21,7 +21,7 @@ related:
   - ref.ai.wire-protocol-catalog
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `subsys.ai.pi-messages` 描述 Pi 自有的 HTTP/SSE wire protocol：client 向 `<baseUrl>/messages` POST 统一的 model/context/options，再把服务端序列化事件还原为标准 `AssistantMessageEventStream`。Radius gateway 和 `models.json` custom provider 都能使用它。
@@ -35,7 +35,7 @@ updated: 305c014dcc
 
 ## 协议边界
 
-`KnownApi` 在目标提交加入 `"pi-messages"`，lazy wrapper 通过 `lazyApi()` 首次调用时导入 implementation [E: packages/ai/src/types.ts:16] [E: packages/ai/src/types.ts:26] [E: packages/ai/src/api/pi-messages.lazy.ts:1] [E: packages/ai/src/api/pi-messages.lazy.ts:4]。Radius 直接绑定该 API；因为它已进入 `KnownApi`，`models.json` custom provider 也可选择该 wire key [E: packages/ai/src/providers/radius.ts:20] [E: packages/ai/src/providers/radius.ts:26] [I]。
+`KnownApi` 在目标提交加入 `"pi-messages"`，lazy wrapper 通过 `lazyApi()` 首次调用时导入 implementation [E: packages/ai/src/types.ts:17] [E: packages/ai/src/types.ts:27] [E: packages/ai/src/api/pi-messages.lazy.ts:1] [E: packages/ai/src/api/pi-messages.lazy.ts:4]。Radius 直接绑定该 API；因为它已进入 `KnownApi`，`models.json` custom provider 也可选择该 wire key [E: packages/ai/src/providers/radius.ts:20] [E: packages/ai/src/providers/radius.ts:25] [I]。
 
 ## Request
 
@@ -57,7 +57,7 @@ converter 按 `contentIndex` 累积 text/thinking/tool JSON；tool delta 通过 
 
 ## Radius binding
 
-`radiusProvider()` 是 `Provider<"pi-messages">`：provider id 默认 `radius`，auth 同时支持 `RADIUS_API_KEY` 和 lazy Radius OAuth [E: packages/ai/src/providers/radius.ts:20] [E: packages/ai/src/providers/radius.ts:21] [E: packages/ai/src/providers/radius.ts:31] [E: packages/ai/src/providers/radius.ts:33]。refresh 先恢复 provider-scoped store，必要时迁移旧 OAuth credential 中的 catalog；允许 network 时再取 gateway `/v1/config`，持久化新的 models [E: packages/ai/src/providers/radius.ts:36] [E: packages/ai/src/providers/radius.ts:39] [E: packages/ai/src/providers/radius.ts:43] [E: packages/ai/src/providers/radius.ts:47] [E: packages/ai/src/providers/radius.ts:51] [E: packages/ai/src/providers/radius.ts:54] [E: packages/ai/src/providers/radius.ts:57]。
+`radiusProvider()` 是 `Provider<"pi-messages">`：provider id 默认 `radius`，auth 同时支持 `RADIUS_API_KEY` 和 lazy Radius OAuth [E: packages/ai/src/providers/radius.ts:20] [E: packages/ai/src/providers/radius.ts:21] [E: packages/ai/src/providers/radius.ts:30] [E: packages/ai/src/providers/radius.ts:32]。refresh 先恢复 provider-scoped store，必要时迁移旧 OAuth credential 中的 catalog；允许 network 时再取 gateway `/v1/config`，持久化新的 models [E: packages/ai/src/providers/radius.ts:36] [E: packages/ai/src/providers/radius.ts:39] [E: packages/ai/src/providers/radius.ts:51] [E: packages/ai/src/providers/radius.ts:46] [E: packages/ai/src/providers/radius.ts:51] [E: packages/ai/src/providers/radius.ts:69] [E: packages/ai/src/providers/radius.ts:57]。
 
 gateway config 把每个 model 固定成 `api: "pi-messages"` 并注入 provider id 与 config base URL [E: packages/ai/src/providers/radius-config.ts:61] [E: packages/ai/src/providers/radius-config.ts:64] [E: packages/ai/src/providers/radius-config.ts:66]。这也是 Radius 不出现在 structural model shards、但仍属于 runtime built-in provider 的原因。[I]
 

@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 # 不确定项日志([U] 汇总)
@@ -844,142 +844,6 @@ L2 复核中修正了一批落在注释行或承载不足行的 `[E]` 引用,并
 - `normalizeCwd()` 的具体 symlink/case canonicalization 语义来自 `utils/paths.ts`, 但本节点 Sources 只保留 index 指定的 trust source files, 因而只把它描述为 path normalization 边界。
 - parent-folder trust option 的产品意图、拒绝 trust 的较窄粒度、sorted JSON 便于 diff/排查, 都是由 update/write 控制流推出的设计含义。
 - `resolveProjectTrusted()` 的 override chain 命名、non-interactive `ask` 的 fail-closed 表述, 以及 extension runner / loader 的职责边界, 都由当前两个 source files 的调用顺序和 imports 推断。
-
-## server-config
-
-# uncertainty-server-config
-
-- `subsys.server.config`: `socket 与 JSON state 文件共享一个 server dir` 是源码明确事实,但“没有展示跨进程锁或迁移策略”只基于本节点 source 未见相关逻辑;真正的锁/清理语义需要 `subsys.server.ipc-transport` 和 storage 节点继续核验。[U]
-- `subsys.server.config`: `rpc-stream` stdin loop 对无效 JSON line 的进程级表现未跑集成测试;源码显示 loop 内直接 `JSON.parse(line)`,但具体 unhandled exception/exit 行为需测试确认。[U]
-- `subsys.server.config`: `isBunBinary` 对未来 Bun compiled binary virtual path 的兼容性未知;当前只能证实它匹配 `"$bunfs"`, `"~BUN"`, `"%7EBUN"` 三种字符串片段。[U]
-
-## server-glossary
-
-# uncertainty-server-glossary
-
-Batch: server
-Node: ref.glossary
-Path: docs/llm-wiki/pi/reference/glossary.md
-
-## [U] 待同步项
-
-- 当前无阻塞 `ref.glossary` verified 状态的 unknown 条目。该节点是术语导览，不负责证明 package-internal、RPC/IPC、provider/model 或 server 细节；这些内容已在正文标为 `[I]` 并链接到对应权威节点。
-
-## [I] 降级说明
-
-- “Pi monorepo”是 wiki 对 README public package table 的组织性归纳；README 只直接列出 `pi-ai`、`pi-agent-core`、`pi-coding-agent`、`pi-tui` 四个包。
-- “wire API” 是 wiki 术语；本轮限定 source 无法直证它对应 `Api` / `KnownApi` 字符串协议类型。
-- “spine.overview 是背景入口”是 wiki 编排判断，不是 pi 源码自身概念。
-- `pi-server`、IPC、Unix socket path、ServerRequest、ServerSupervisor、RPC stream bridge、Radius、serve lifecycle 等术语已作为导览 `[I]` 保留，并链接到 `ref.package-index` / `subsys.server.*` / `ref.server.ipc-messages` 等节点；不再因为 glossary 自身 source 只有 README/AGENTS 而登记为 unknown。
-- Agent loop、Tool call、ModelRegistry、Provider、Skill、Slash command、RPC JSONL framing 等 package-internal 术语已作为导览 `[I]` 保留，并链接到对应 spine/surface/subsystem/reference 节点；不再作为 glossary 节点的 L2 阻塞项。
-
-## server-instance-status
-
-# uncertainty: ref.server.instance-status
-
-L3 后本节点的权威范围已收窄到 `packages/server/src/types.ts` 与 `packages/server/src/config.ts`: `InstanceStatus` union、`InstanceRecord` interface 字段、以及 server 本地路径 helper。L2 中“153 条因不在 source 列而降为 unknown”的逐项噪音已移除;对应 storage/supervisor/README 行为不再在本 reference 节点重复证明。
-
-## 仍保留的不确定项
-
-- `InstanceRecord` 是否构成 `instances.json` 的完整 runtime schema、是否有 migration/locking/validation 语义,不能仅由 `types.ts` 与 `config.ts` 证明;需要在 `subsys.server.storage` 或 storage 源码范围内复核。[U]
-- `starting`、`online`、`stopping`、`stopped`、`error` 的写入点、状态迁移和 restart recovery 行为,不能仅由 `InstanceStatus` union 证明;需要在 supervisor/storage 行为节点复核。[U]
-
-## server-ipc-messages
-
-# uncertainty-server-ipc-messages
-
-本轮未留下需要上收 `reference/uncertainty.md` 的 `[U]` 项。
-
-- `[I]` `status` 的具体取值未在 `ref.server.ipc-messages` 展开:当前节点只引用 `protocol.ts` 中 `InstanceStatus` 的导入与 `InstanceSummary.status` 字段,实例状态生命周期应由 server 实例/transport/supervisor 相关节点覆盖。
-- `[I]` `parseRequestLine()` / `parseResponseLine()` 不做 runtime validation:源码显示仅 `JSON.parse` 后类型断言,但是否有调用方前置校验不属于本节点 source 列表。
-- `[I]` `subsys.server.message-protocol` 的分工说明来自 index related 与本节点 catalog 定位,不是 `protocol.ts` 内部注释。
-
-## server-ipc-transport
-
-# uncertainty-server-ipc-transport
-
-本轮独立复核后未留下需要升级到全局 `reference/uncertainty.md` 的 `[U]`。无法作为逐行源码事实承诺的内容均留在节点正文的 `[I]`: 主要是 Unix-style socket path 的平台边界、短连接/长流设计取舍、无 runtime schema validation 的影响、无 timeout/retry/backpressure policy 的调用方风险, 以及长期兼容性边界。
-
-## server-message-protocol
-
-# uncertainty · server message protocol
-
-- 本轮未留下需要并入 `reference/uncertainty.md` 的 `[U]`。
-- 有四类内容已降级或保留为 `[I]`:协议文件之外的职责边界推断,request `type` 名称对应的业务语义,`parseRequestLine()`/`parseResponseLine()` 缺少运行时 schema validation 的行为影响判断,以及 imported coding-agent payload 未在本协议文件内重定义的归纳。
-
-## server-package-index
-
-# uncertainty-server-package-index
-
-本批次填充 `ref.package-index` 没有新增 `[U]`。
-
-## 降级为 `[I]` 的判断
-
-- `pi-coding-agent` 是把 runtime、provider 和 terminal UI 组合成产品 CLI 的 package：依赖关系可由 package metadata 直接核到，但“组合成产品 CLI”是基于 package description、dependencies 与 `spine.layered-architecture` 的归纳。
-- `pi-tui` 的 `get-east-asian-width` / `marked` 分别对应 terminal width 与 Markdown rendering：依赖名和 entrypoint exports 可核到，但用途对应关系是语义归纳。
-- 根 build 顺序与依赖方向相容：build script 与 package dependencies 可核到，但“相容”是跨文件推断。
-- `pi-agent-core` 的 entrypoint 可支撑 `spine.layered-architecture` 中 reusable runtime API 面的归纳：导出项可核到，但与 spine 节点的对应关系不是本节点 source 直接事实。
-- `pi-coding-agent` 的 entrypoint 可归纳为产品层 API 面：导出项和 CLI package description 可核到，但“产品层(product assembly)”是跨证据解释。
-- `pi-server` 的 runtime model 可归纳为 experimental instance orchestration：experimental 标记与 serve/supervisor 行为可核到，但 “runtime model” 是对这些行为的概括。
-- `spine.layered-architecture` / `spine.overview` 应如何使用本 catalog：这是 wiki 导览判断，不是单一源码事实。
-
-## server-radius
-
-# uncertainty-server-radius
-
-- Radius 云端服务端如何展示、路由或 relay 已注册的 machine/Pi instance, 本地 `packages/server/src/radius.ts` 只能证明注册 payload 和 `relay: false`/`iroh: false`, 不能证明云端行为。[U]
-- Radius OAuth credential 的刷新、过期处理和 scope 语义不在 server 源码中实现；本节点只能证明 `AuthStorage` 读取 provider `radius` 的 access token, 以及 `RADIUS_API_KEY` fallback。[U]
-- `isRadiusEnabled()` 只做本地 token/env 存在性判断, 不能证明 token 会被 Radius 云端接受；云端拒绝原因只能在后续 HTTP error 中表现。[U]
-- `RadiusRegistration.expiresInMs` 在 type 中存在, 但当前本地 Radius client 没有使用它；是否由云端仅作提示或未来续约字段未在源码中说明。[U]
-
-## server-request-handler
-
-# uncertainty-server-request-handler
-
-本轮没有留下需要上升为 `[U]` 的源码不确定项。
-
-## 降级为 [I] 的推断
-
-- request handler 与 IPC transport 的拆分动机来自 `serve()` 只传 handler object、`ipc/server.ts` 负责 JSONL/socket、`handler.ts` 只处理 typed request 的结构;源码没有设计说明,所以主节点标 `[I]`。
-- `rpc_stream` 两步握手的动机来自 `handleIpcRequest()` 先回 `rpc_ready`、`ipc/server.ts` 再打开 stream 的控制流;源码没有注释说明,所以主节点标 `[I]`。
-- 同一 stream 内 UI response 与 RPC command 分流的设计意图来自 `openRpcStream()` 的 branch 行为;源码没有注释说明,所以主节点标 `[I]`。
-- experimental 稳定性可由 `packages/server/package.json` 的 description 核到;“不要假设 wire/API 已稳定”是文档层风险提示,所以主节点保留 `[I]`。
-
-## server-rpc-spawner
-
-# uncertainty-server-rpc-spawner
-
-本轮没有需要上升为 `[U]` 的源码缺口;下列项目是节点正文中保留为 `[I]` 的推断或风险说明。
-
-- `[I]` `surface.modes.rpc` 与 `subsys.server.rpc-spawner` 的边界:源码证明 server import coding-agent RPC 类型并通过 JSONL 驱动子进程,但边界归纳来自节点职责划分;protocol 细节不在本节点源码中展开。
-- `[I]` experimental 稳定性: `packages/server/package.json` 明确 description 为 `experimental server package for pi`,节点把该包级描述降级为 subsystem 稳定性判断。
-- `[I]` Bun binary 分支显式启动同目录 `pi` / `pi.exe` 并传 `--mode rpc`:源码给出 command/args,把它解释成“同目录 CLI binary”是路径构造语义。
-- `[I]` Node/package 分支通过 `rpc-entry` 而不是 `getSpawnCommand()` 自身传 `--mode rpc`:已用 `rpc-entry.ts` 核到 entry 调用 `main(["--mode", "rpc", ...])`,但这是跨包入口语义归纳;因此节点正文只把“字面 `pi --mode rpc`”用于 Bun 分支。
-- `[I]` stderrBuffer 增长、JSON.parse 未捕获、dispose 无 timeout、stray response 静默忽略等 gotcha:源码能核到对应代码路径,影响描述是风险推断。
-
-## server-storage
-
-# uncertainty: subsys.server.storage
-
-本轮未新增 `[U]`。`storage.ts`、`config.ts`、`types.ts`、`supervisor.ts` 和 `packages/server/README.md` 足以核验 instance persistence 的文件格式、读写路径、upsert/remove 行为、路径依赖与 experimental 稳定性。
-
-本轮改正/降级的内容主要是: 把 storage 只做本地 I/O 的概括标成解释性判断并把证据挪到实际读写行; 把 supervisor 调用证据挪到导入和调用行; 把 whole-file JSON array 的表述改成 load/get 读数组、save/upsert/remove 写回数组; 把 `upsertInstance()` 的“唯一键”降为源码可证的“匹配键”, 并明确它不清理既有重复 id; 把 `ensureServerDir()` 的保存路径证据挪到实际调用行; 把 session metadata “只在特定 RPC command 后刷新”改成 spawn 期间以及特定 RPC command 后刷新。
-
-仍保留为 `[I]` 的内容主要是解释性判断: whole-file JSON array 是一种简化存储取舍; storage.ts 没有 process/subscription/status-transition 逻辑; `upsertInstance()` 不做 field-level merge; `removeInstance()` 对 persisted record 执行硬删除后 stopped record 不保留在 `instances.json`; `loadInstances()` 的 parse error 会传播; `saveInstances()` 未展示 temp-file rename、file lock、schema migration, 因而不宣称 crash consistency、多进程写入一致性或历史格式兼容性; `ref.server.instance-status` 承担状态语义 catalog, 本节点只覆盖落盘行为。
-
-## server-supervisor
-
-# uncertainty-server-supervisor
-
-## 本轮 [U]
-
-- 无。`subsys.server.supervisor` 中无法完全由 `packages/server/src/supervisor.ts` 单文件说明的 `--mode rpc`、IPC Unix socket、Radius enabled/registration 事实,已改用相邻源码文件落 `[E]`;对源码控制流含义的解释保留为 `[I]`。
-
-## 本轮 [I]
-
-- `recoverAfterRestart()` 不重建 RPC 子进程或 live map:源码只加载并保存 records、disconnect Radius,未出现 spawn/bind live process 的调用。
-- `failSpawn()` 可能留下 `stopped` record:源码路径没有 `removeInstance()`;这是从 `setStatus()` 会 upsert 和 fail path 未删除 storage record 推导。
-- `surface.modes.rpc` 是 server child process 的 headless host surface:该关系由 `rpc-process.ts` 的 spawn/stdin/stdout 与 coding-agent `rpc-mode.ts` 的 stdout event 输出共同推导。
 
 ## spine-agent-loop
 
@@ -1871,6 +1735,182 @@ updated: cee5ff7520
 # uncertainty-tui-text-utilities
 
 本轮填充 `subsys.tui.text-utilities` 未新增需要汇总到 `reference/uncertainty.md` 的 `[U]` 项。
+
+## update-086c32e745-agent-core-harness
+
+# update-086c32e745 · agent-core harness / search / events
+
+batch: update-086c32e745
+nodes:
+  - subsys.agent-core.session-search
+  - subsys.agent-core.agent-harness-lifecycle
+  - subsys.agent-core.harness-events
+  - ref.agent.agent-events
+  - ref.agent.error-codes
+updated: 086c32e745
+
+## [U]
+
+- `packages/agent/docs/harness.md` 仍描述带 `sync()` / `notify()` / durable cursor 的 `SessionSearchService`。`packages/agent/src` 没有该符号；当前公开面是 `SessionSearch` + `createScanningSessionSearch`。无法从源码判断这份设计稿是否仍是后续实现目标。
+- `packages/agent/docs/search.md` 写 follow-up 应增加默认 no-op 的 `NOOP_SEARCH_INDEX_SINK`。源码与导出里都没有该符号，是否落地未知。
+
+## 本轮已核清、不再当 [U]
+
+- `SessionSearch` 仍从 `pi-agent-core` 根入口 `export * from "./search/index.ts"` 导出；旧 `harness/session/search.ts` 已删除。
+- `AgentHarnessEvent` / `AgentHarnessErrorCode` 已从 `harness/types.ts` 删除。事件 catalog 改为 `AgentEvent` + `HarnessEvent`；错误 catalog 改为 File/Exec/Compaction/BranchSummary/Session + `JsonlDecodeError.kind` + `TaggedError` `_tag` + `RecordLogCorruptionReason`。
+- `AgentHarness` 是 named export，经包 `"."` 入口再导出；`package.json` 无 experimental subpath。多数 lane API 仍 `HarnessNotImplemented`。
+- `reset()` 拒绝 active run 的是 `Agent.reset()`，不是 `AgentHarness`。
+- `expandPromptTemplates` 只存在于 `coding-agent` `AgentSession`，不在 `AgentHarness`。
+- `HarnessEventBus` 未从 `packages/agent/src/index.ts` 再导出，也未接到 `AgentHarness.events`。
+
+## update-086c32e745-catalog-surfaces
+
+# update-086c32e745 catalog/surface
+
+- `[U]` `Settings` / `docs/settings.md` 没有 `markdown.latex` 键。LaTeX 由 `@earendil-works/pi-tui` 的 `renderLatex` 与 markdown `renderLatex` option 负责;catalog 未把它计为 settings instance。
+- `[U]` `terminal.showTerminalProgress` 仍在 `Settings`/`SettingsManager` 中,但当前 `docs/settings.md` 未列此 key。
+- `[U]` `interactive-mode.ts` 仍直接处理 `/debug`、`/arminsayshi`、`/dementedelves`;它们不在 `BUILTIN_SLASH_COMMANDS` 或 `usage.md` 表中,本轮 slash catalog 仍不计这三项。
+- `[I]` `defaultTools` 只选择初始 built-in active set;extension/SDK custom tools 的保留是由 `allowedToolNames`/`_refreshToolRegistry` 控制,不是 settings schema 自己保证。
+- `[I]` `message_update` 的内部 `AgentSessionEvent` 仍携带 cumulative `message`;JSON/RPC stdout 的 breaking 发生在 `toJsonEvent()` 边界。
+
+## update-086c32e745-cloudflare-gateway-binding
+
+# uncertainty-update-086c32e745-cloudflare-gateway-binding
+
+- `[U]` 模块注释写 binding `run()` “pre-authenticated in-account”。本仓库只有 fake `AiGatewayBinding`;没有 Workers runtime 证明 Cloudflare 平台确实免 API token。
+- `[U]` `packages/coding-agent/CHANGELOG.md` 写 inherited `createGatewayBindingFetch()`,但 `packages/coding-agent/src` 无引用、无再导出。是否只是 changelog 对 `pi-ai` 公开面的继承句,本仓库无法从源码确认。
+
+## update-086c32e745-contracts
+
+# uncertainty-update-086c32e745-contracts
+
+- `[U]` `AgentHarnessOptions.context?: TelemetryContext` 已声明,但 `AgentHarness` 构造函数不读取该字段,`prompt` / `compact` / `navigateTree` 等仍 `HarnessNotImplemented`。本节点只证明 schema + `startAiSpan` / `startHarnessSpan` / `createTypedSpanStarter(AGENT_TELEMETRY_SCHEMAS)` 的组合方式,不能证明 harness 运行时已按 schema 发射 span。
+- `[U]` `packages/agent/docs/harness.md` §5.8 把 `pi.harness.sleep` 的允许 parents 写成 run/compaction/navigation/turn/checkpoint,并把 `pi.session.write` 描述为带 `item_count` / `item_kinds` 的 transaction。当前 `HARNESS_TELEMETRY_SCHEMA` 中 sleep parents 仅为 `pi.harness.step` 与 `pi.harness.run`,`pi.session.write` start 字段为 `mutation` / `item_type`。以 TypeScript schema 为准;设计文档是否过时未知。
+
+## update-086c32e745-filler
+
+# update-086c32e745 filler
+
+- `[U]` `ExtensionRunner.emitToolCall()` 仍无 try/catch;handler 抛错会直接 reject, 与 `emit()` / `emitToolResult()` / `emitInput()` 的 `emitError()` 模式不同。源码未说明这是 fail-closed 还是遗漏。本节点沿用既有 `[U]`。
+- `[U]` `docs/rpc.md` 的 `get_commands` 示例仍写 `location`/`path`, 当前 `RpcSlashCommand` / `rpc-mode.ts` 输出 `sourceInfo`。这是基线已有文档滞后, 本轮 `rpc-types.ts` 命令集无增减。
+- `[I]` 任务写 “theme detection delay 200ms→100ms”;`theme-controller.ts` 在 `305c014dcc` 已是 `timeoutMs: 100`。`086c32e745` 的可见变化是 `detectTerminalThemeForAuto()` 并发启动 color-scheme 与 OSC 11/`COLORFGBG` probe, 不是 timeout 从 200 改到 100。
+- `[I]` `createCodingAgentHarness()` 在 `packages/coding-agent/src/server/create-harness.ts`, 不是 `AgentSession` 符号。本轮只在 `agent-session.md` 作跨包对照, 不把它收进该节点 `symbols`。
+- `[I]` “inherit subagent session config” 的实现在 `packages/coding-agent/examples/extensions/subagent/index.ts`(#7897);`AgentSession` 侧对应的是 scoped-model cycle 对 undefined thinking level 的 inherit。wiki 两边都点了名, 不以 example 作为 `AgentSession` 权威源。
+- `[I]` TUI wrapper 不再无限递归的修复在 `createInteractiveTuiReference()` (`interactive-mode.ts`), 不在 `extensions/runner.ts` / `extensions/wrapper.ts`。`extension-runner.md` 只写交叉指针。
+- RPC: `RpcCommand` 仍为 32, `305c014dcc..086c32e745` 无增删。
+
+## update-086c32e745-l2-catalogs
+
+# L2 verifier — 086c32e745 catalogs / new nodes
+
+Verifier HEAD: `086c32e745`. Did not touch `index.json` / `llms.txt` / `tools/*`.
+
+## Special checks
+
+- runtime `builtinProviders()` is **40**, not 39 (Radius has no static `MODELS` bucket; generated `MODELS` has 39 keys).
+- stdout `message_update` is delta-only: `toJsonEvent()` drops cumulative `message` and `assistantMessageEvent.partial`.
+- Mistral wire is native `POST {baseUrl}/v1/chat/completions` SSE; no Mistral SDK client.
+- protocol `list` / `ServerSnapshot.sessions` use `SessionMetadata`, not list summaries.
+- `tui.altScreen.search*` defaults match `packages/tui/src/keybindings.ts` (`ctrl+shift+f`, `enter`/`ctrl+g`, `shift+enter`/`ctrl+shift+g`, `escape`).
+- sqlite one-file-per-session: **N/A** for this 12-node set (no sqlite claims).
+
+## L2 corrections (false or comment-line `[E]`)
+
+- `ref.coding-agent.config-keys`: `deepMergeSettings` citation landed on the doc comment (`settings-manager.ts:165`); retargeted to the recursive assign. `images.autoResize` had `settings.md:182` (`terminal.imageWidthCells`); retargeted to `:184`. Product default `["read","bash","edit","write"]` now cites `agent-session.ts:2602`.
+- `ref.coding-agent.env-vars`: `helpers.ts:16` is login abort, not stored-credential resolve; retargeted to `:9`. `providers.md:240` is a bash comment; kept `:237`/`:241`.
+- `ref.coding-agent.json-events`: `queue_update` cited `agent-session.ts:599` (`agent_settled` extension emit); replaced with consume-path `:621`.
+- `subsys.ai.cloudflare-gateway-binding`: CHANGELOG “inherited” line is `:26`, not `:25`.
+- `subsys.tui.latex`: added `:1058` for `\pmod` (was only `\bmod` at `:1055`).
+
+## Remaining `[U]` (not upgraded)
+
+- `subsys.telemetry.contracts`: `AgentHarnessOptions.context` is unused; schema helpers do not prove runtime span emission. `packages/agent/docs/harness.md` §5.8 still disagrees with `HARNESS_TELEMETRY_SCHEMA` sleep parents / `pi.session.write` fields.
+- `subsys.ai.cloudflare-gateway-binding`: “pre-authenticated in-account” is module commentary; tests use a fake binding. coding-agent CHANGELOG says inherited, but this checkout has no `createGatewayBindingFetch` wiring.
+- `ref.coding-agent.env-vars`: catalog still excludes `packages/server` `PI_SERVER_*` / Radius env and tui-internal debug env. `AWS_ENDPOINT_URL_BEDROCK_RUNTIME` is only in `docs/providers.md`, not an explicit `getProviderEnvValue()` read.
+- `ref.coding-agent.config-keys`: no `markdown.latex` Settings key. `terminal.showTerminalProgress` exists in `Settings` but is absent from `docs/settings.md`.
+
+## update-086c32e745-provider-env-mistral
+
+# uncertainty-update-086c32e745-provider-env-mistral
+
+Nodes: `ref.ai.provider-catalog`, `ref.ai.model-catalog`, `subsys.ai.provider-registry`, `subsys.ai.env-api-keys`, `ref.coding-agent.env-vars`, `surface.providers.overview`, `subsys.ai.mistral-conversations`
+
+- [U] `tools/generate-model-catalog.mjs` 仍按旧的逐模型 `Model<"api"> & { id; provider }` shard 形态解析。`086c32e745` 的 `*.models.ts` 已是 `flattenModelCatalog(provider, values)` wrapper，JSON 被 gitignore；生成器对本 commit 抛 `No model shapes found`。本轮未改该脚本。因此 `ref.ai.model-catalog` 只能核 39 个 structural bucket，不能从 checkout 给出完整逐 id/`Model.api` 表。
+- [U] `QWEN_TOKEN_PLAN_INDIVIDUAL_MODEL_IDS` 的 7 个 id 是 `generate-models.ts` 的 allowlist，不是 gitignored `data/qwen-token-plan-individual.json` 的 membership 证明。生成时若远端 catalog 缺行，JSON 可能少于 7。
+- [U] `ref.coding-agent.env-vars` 仍限定 coding-agent 产品层与它直接消费的 `pi-ai` provider/env 通道。`packages/tui` 内部 debug/build env（`PI_TUI_WRITE_LOG`、`PI_TUI_DEBUG`、`PI_DEBUG_REDRAW`、`PI_TUI_WIN32_TOOLCHAIN`）和测试门 `PI_NO_LOCAL_LLM` 未并入逐实例表。本轮只新增用户可见的 `PI_TUI_ESC_TIMEOUT`。
+- [U] `AWS_ENDPOINT_URL_BEDROCK_RUNTIME` 仍只出现在 `packages/coding-agent/docs/providers.md`；本节点 source set 没有显式 `getProviderEnvValue()` / `process.env` 读取，行为可能由 AWS SDK 默认 env 承接。
+
+## update-086c32e745-session-v4
+
+# uncertainty-update-086c32e745-session-v4
+
+batch: 086c32e745 session v4 rewrite
+nodes: subsys.agent-core.session-storage, subsys.agent-core.jsonl-storage, subsys.agent-core.memory-storage, subsys.agent-core.tree-navigation, subsys.agent-core.session-tree, ref.agent.session-entry-types
+updated: 086c32e745
+status: draft
+
+本轮把 6 个 session 节点从已删除的 `SessionRepository` / `ArraySessionIndex` / `KeyedOperationQueue` / `jsonl-repo.ts` / `memory-repo.ts` 面完整改写到 v4 `Session` / `SessionStorage` / `SessionRepo` + lane/record/fact。下列 `[U]` 是当前 source 无法在本批节点内闭合的点。
+
+## [U] SessionRepo.open 的 writer claim
+
+- 节点: `subsys.agent-core.session-storage`
+- `SessionRepo.open` 的 JSDoc 写 “acquires any backend writer claim”。[E: packages/agent/src/harness/session/types.ts:368]
+- `JsonlSessionRepo.open` 与 `InMemorySessionRepo.open` 都只是 `new Session(storage)`，没有文件锁、lease 或跨进程互斥。
+- 不知道是否另有 backend（例如 session-backends SQLite）实现了 claim，还是注释超前于实现。
+
+## [U] harness.md 设计面 vs types.ts
+
+- 节点: `subsys.agent-core.session-storage`
+- `packages/agent/docs/harness.md` 描述 `storageVersion`、`commit(tx)`、registers 等。
+- 当前 `SessionMetadata` / `Session` / `SessionRepo` 在 `types.ts` 里没有这些符号。
+- 本批不以 harness.md 为 ground truth。若后续代码补上这些 API，节点需要再填。
+
+## [U] `sourceFormat: 3 | 4` 但从不见 3
+
+- 节点: `subsys.agent-core.jsonl-storage`
+- `JsonlSessionMetadata.sourceFormat` 类型是 `3 | 4`。[E: packages/agent/src/harness/session/jsonl/types.ts:31]
+- `metadataFromHeader()` 写死 `sourceFormat: 4`。[E: packages/agent/src/harness/session/jsonl/codec.ts:122]
+- 本包 `packages/agent/src/harness/session/**` 没有把 v3 文件转成 v4 或写出 `sourceFormat: 3` 的路径。
+- 不知道 `3` 是预留给 coding-agent 迁移层、外部 importer，还是未完成的类型残留。
+
+## [U] `legacyParentSessionPath` 的写入者
+
+- 节点: `subsys.agent-core.jsonl-storage`
+- header 允许 `legacyParentSessionPath`，且与 `parentSessionId` 互斥。[E: packages/agent/src/harness/session/jsonl/types.ts:55] [E: packages/agent/src/harness/session/jsonl/codec.ts:82]
+- `JsonlSessionRepo.prepareCreate` 只写 `parentSessionId`。[E: packages/agent/src/harness/session/jsonl/repo.ts:215]
+- 谁在什么时候把无法解析的 v3 parent path 写进该字段，本批 source 看不到。
+
+## [U] InMemorySessionStorage 并发
+
+- 节点: `subsys.agent-core.memory-storage`
+- 内存 backend 没有 JSONL 的 `enqueue` tail。`appendEntry` / `appendRecord` 直接读 `nextSequence` 再 `applyMutation`。[E: packages/agent/src/harness/session/memory.ts:59]
+- 同一 storage 上未串行化的并发 await 是否允许交错、是否算契约违规，conformance 测试没有覆盖。
+
+## update-086c32e745-sqlite-node
+
+# uncertainty: subsys.session-backends.sqlite-node (086c32e745)
+
+- `[U]` CHANGELOG 0.84.0 声明既有 WIP 库不迁移，且 `001_initial.sql` 全部是 `CREATE TABLE IF NOT EXISTS`。打开 pre-v4 / 旧 `pi-storage-sqlite-node` 文件时，新旧表并存或同名表列不匹配的具体失败形态没有测试覆盖。
+- `[U]` `readOpenOperationRows()` 把 `limit` 写成未使用的 `_options`，一条 lane 只存一个 `open_operation_id`。agent-core `SessionStorage.findOpenOperations` 注释用 `limit: 2` 探测双开/损坏；本包既不能表示两个 open op，也不实现该 limit。这是有意收窄还是契约缺口，源码未说明。
+- 任务 prompt 假设「one sqlite file per session」。当前源码是 **one sqlite file per repository**（`databasePath` 共享，`sessions`/`entries` 用 `session_id` 分行）。主节点按源码写成共享文件，不把反事实写进正文。
+
+## update-086c32e745-tui-latex-search
+
+# uncertainty-update-086c32e745-tui-latex-search
+
+batch: tui latex / alt-screen-search / keybinding-actions / alternate-screen / runtime
+updated: 086c32e745
+
+本轮未登记 `[U]`。
+
+保留为 `[I]` 的边界：
+
+- `renderLatex` 是终端近似排版、不是 TeX；嵌套分数保持线性，属于实现选择而非完整 math mode 语义。
+- `TUI.mode` 不能原地改写；coding-agent `InteractiveMode.switchTuiMode` 走 `stop({ preserveScreen })` + 重建 renderer，该调度不在 `packages/tui/src/tui.ts` 内，runtime 节点只标 `[I]`。
+- 未注入 `copySelection` 时 OSC 52 写入后总是 flash `Copied!`，终端是否真正进剪贴板无法从 tui 源码自证。
+- `tui.editor.yank` / `yankPop` 的 kill-ring 语义仍按 description 归纳，未在本 catalog 展开 editor 实现。
+
+未写入 index.json / llms.txt（按 filler 任务约束）。新节点 `subsys.tui.latex`、`subsys.tui.alt-screen-search` 需后续 reconcile 才能被 lint 认进图。
 
 ## update-cee5ff7520
 

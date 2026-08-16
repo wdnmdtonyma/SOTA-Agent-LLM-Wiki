@@ -18,7 +18,7 @@ related:
   - subsys.coding-agent.extension-runner
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `EventBus` 是 pi-coding-agent 给 extensions 共享的轻量 pub/sub: publisher 用 string channel 和 `unknown` payload 发事件, subscriber 注册 handler 并拿到 unsubscribe function。
@@ -34,25 +34,25 @@ updated: 305c014dcc
 
 ## 职责边界
 
-`EventBus` 只覆盖 inter-extension communication 的 shared bus, 不覆盖 pi 自身的 extension hooks。extension hooks 是 `pi.on("session_start", handler)` 这类注册, 由 `ExtensionRunner` 按 typed extension events 调用; event bus 是 `pi.events.emit(channel, data)` / `pi.events.on(channel, handler)` 这类任意 channel 的 side channel [E: packages/coding-agent/src/core/extensions/loader.ts:242] [E: packages/coding-agent/src/core/extensions/loader.ts:398] [I]。
+`EventBus` 只覆盖 inter-extension communication 的 shared bus, 不覆盖 pi 自身的 extension hooks。extension hooks 是 `pi.on("session_start", handler)` 这类注册, 由 `ExtensionRunner` 按 typed extension events 调用; event bus 是 `pi.events.emit(channel, data)` / `pi.events.on(channel, handler)` 这类任意 channel 的 side channel [E: packages/coding-agent/src/core/extensions/loader.ts:257] [E: packages/coding-agent/src/core/extensions/loader.ts:398] [I]。
 
 `EventBus` 的 channel 是普通 `string`, payload 是 `unknown`, handler 只收到 payload 而没有 sender、context 或 event object;源码没有 channel registry、payload validation、priority、once listener、wildcard matching 或 replay storage [E: packages/coding-agent/src/core/event-bus.ts:3] [E: packages/coding-agent/src/core/event-bus.ts:4] [E: packages/coding-agent/src/core/event-bus.ts:5] [I]。
 
-`EventBusController` 在 `EventBus` 之外额外暴露 `clear()`, 但 extension API 的 `events` 字段类型是 `EventBus`, 所以 extension 正常只能 emit/on/unsubscribe, 不能直接清空整个 bus [E: packages/coding-agent/src/core/event-bus.ts:8] [E: packages/coding-agent/src/core/event-bus.ts:9] [E: packages/coding-agent/src/core/extensions/types.ts:1430]。
+`EventBusController` 在 `EventBus` 之外额外暴露 `clear()`, 但 extension API 的 `events` 字段类型是 `EventBus`, 所以 extension 正常只能 emit/on/unsubscribe, 不能直接清空整个 bus [E: packages/coding-agent/src/core/event-bus.ts:8] [E: packages/coding-agent/src/core/event-bus.ts:9] [E: packages/coding-agent/src/core/extensions/types.ts:1436]。
 
 ## 关键文件
 
 - `packages/coding-agent/src/core/event-bus.ts`: 定义 `EventBus`、`EventBusController` 和 `createEventBus()` 的完整实现 [E: packages/coding-agent/src/core/event-bus.ts:3] [E: packages/coding-agent/src/core/event-bus.ts:8] [E: packages/coding-agent/src/core/event-bus.ts:12]。
 - `packages/coding-agent/src/core/resource-loader.ts`: `DefaultResourceLoader` 接收 optional `eventBus`, 缺省创建一个 bus, 并把同一个 bus 传入 extension loading path [E: packages/coding-agent/src/core/resource-loader.ts:162] [E: packages/coding-agent/src/core/resource-loader.ts:257] [E: packages/coding-agent/src/core/resource-loader.ts:558] [E: packages/coding-agent/src/core/resource-loader.ts:578] [E: packages/coding-agent/src/core/resource-loader.ts:601]。
-- `packages/coding-agent/src/core/extensions/loader.ts`: extension loader 把 bus 注入 `ExtensionAPI.events`, path extensions 与 inline factories 都走这个注入点 [E: packages/coding-agent/src/core/extensions/loader.ts:234] [E: packages/coding-agent/src/core/extensions/loader.ts:238] [E: packages/coding-agent/src/core/extensions/loader.ts:398] [E: packages/coding-agent/src/core/extensions/loader.ts:483] [E: packages/coding-agent/src/core/extensions/loader.ts:506]。
-- `packages/coding-agent/src/core/extensions/types.ts`: public `ExtensionAPI` 类型把 `events` 描述为 shared event bus for extension communication [E: packages/coding-agent/src/core/extensions/types.ts:1430]。
+- `packages/coding-agent/src/core/extensions/loader.ts`: extension loader 把 bus 注入 `ExtensionAPI.events`, path extensions 与 inline factories 都走这个注入点 [E: packages/coding-agent/src/core/extensions/loader.ts:249] [E: packages/coding-agent/src/core/extensions/loader.ts:253] [E: packages/coding-agent/src/core/extensions/loader.ts:398] [E: packages/coding-agent/src/core/extensions/loader.ts:507] [E: packages/coding-agent/src/core/extensions/loader.ts:530]。
+- `packages/coding-agent/src/core/extensions/types.ts`: public `ExtensionAPI` 类型把 `events` 描述为 shared event bus for extension communication [E: packages/coding-agent/src/core/extensions/types.ts:1436]。
 - `packages/coding-agent/src/index.ts`: package root re-export `createEventBus`, `EventBus` 和 `EventBusController`, 因此外部 embedding/test code 可以显式构造或传入 bus [E: packages/coding-agent/src/index.ts:51] [I]。
 
 ## 数据模型
 
 `EventBus` 是两个 method 的 structural interface: `emit(channel: string, data: unknown): void` 和 `on(channel: string, handler: (data: unknown) => void): () => void` [E: packages/coding-agent/src/core/event-bus.ts:3] [E: packages/coding-agent/src/core/event-bus.ts:4] [E: packages/coding-agent/src/core/event-bus.ts:5]。这意味着 channel 命名、payload shape、versioning 和 type narrowing 都是 extension 作者之间的约定, 不是 core event-bus 层强制的 contract [I]。
 
-`EventBusController` extends `EventBus` 并添加 `clear(): void`;`createEventBus()` 返回 controller, 但调用链中多数参数只接受 `EventBus`, 例如 resource-loader options 和 extension loader parameters [E: packages/coding-agent/src/core/event-bus.ts:8] [E: packages/coding-agent/src/core/event-bus.ts:9] [E: packages/coding-agent/src/core/event-bus.ts:12] [E: packages/coding-agent/src/core/resource-loader.ts:162] [E: packages/coding-agent/src/core/extensions/loader.ts:238]。
+`EventBusController` extends `EventBus` 并添加 `clear(): void`;`createEventBus()` 返回 controller, 但调用链中多数参数只接受 `EventBus`, 例如 resource-loader options 和 extension loader parameters [E: packages/coding-agent/src/core/event-bus.ts:8] [E: packages/coding-agent/src/core/event-bus.ts:9] [E: packages/coding-agent/src/core/event-bus.ts:12] [E: packages/coding-agent/src/core/resource-loader.ts:162] [E: packages/coding-agent/src/core/extensions/loader.ts:253]。
 
 `createEventBus()` 内部只创建一个 Node `EventEmitter`, 没有额外 map、queue 或 state snapshot;listener state 全部由 `EventEmitter` 持有 [E: packages/coding-agent/src/core/event-bus.ts:13] [I]。
 
@@ -65,7 +65,7 @@ updated: 305c014dcc
 5. `on()` 把 `safeHandler` 注册到 `EventEmitter`, 并返回一个 closure;调用该 closure 会用同一个 `safeHandler` 执行 `emitter.off(channel, safeHandler)` [E: packages/coding-agent/src/core/event-bus.ts:26] [E: packages/coding-agent/src/core/event-bus.ts:27]。
 6. `clear()` 调用 `emitter.removeAllListeners()`, 一次性移除所有 channel 的所有 listeners [E: packages/coding-agent/src/core/event-bus.ts:29] [E: packages/coding-agent/src/core/event-bus.ts:30]。
 7. `DefaultResourceLoader.constructor@resource-loader.ts:217` 把调用方传入的 bus 保存到 loader, 没传时使用 `createEventBus()`;后续 `loadExtensionsCached()` 和 `loadExtensionFromFactory()` 都使用该字段, 让同一次 loader/runtime 下的 extensions 共享同一个 bus [E: packages/coding-agent/src/core/resource-loader.ts:253] [E: packages/coding-agent/src/core/resource-loader.ts:257] [E: packages/coding-agent/src/core/resource-loader.ts:558] [E: packages/coding-agent/src/core/resource-loader.ts:957] [I]。
-8. `createExtensionAPI@extensions/loader.ts:212` 把传入 bus 挂到 `api.events`;path extension factory 和 inline extension factory 都收到这个 API object [E: packages/coding-agent/src/core/extensions/loader.ts:234] [E: packages/coding-agent/src/core/extensions/loader.ts:398] [E: packages/coding-agent/src/core/extensions/loader.ts:483] [E: packages/coding-agent/src/core/extensions/loader.ts:507]。
+8. `createExtensionAPI@extensions/loader.ts:212` 把传入 bus 挂到 `api.events`;path extension factory 和 inline extension factory 都收到这个 API object [E: packages/coding-agent/src/core/extensions/loader.ts:249] [E: packages/coding-agent/src/core/extensions/loader.ts:398] [E: packages/coding-agent/src/core/extensions/loader.ts:507] [E: packages/coding-agent/src/core/extensions/loader.ts:531]。
 
 ## 设计动机与权衡
 
@@ -79,7 +79,7 @@ event-bus 是 deliberately small API: 它把 extension-to-extension signaling �
 
 - `handler` 的 TypeScript signature 写成 `(data: unknown) => void`, 但 wrapper 使用 `await handler(data)`;这能捕获实际返回 promise 的 async handler rejection, 但类型层不会告诉 publisher handler 是否完成 [E: packages/coding-agent/src/core/event-bus.ts:5] [E: packages/coding-agent/src/core/event-bus.ts:21] [I]。
 - `clear()` 是 controller-only 管理能力;把 `createEventBus()` 返回值直接共享给不可信调用方时, 对方如果持有 controller 类型就能清空所有 listeners [E: packages/coding-agent/src/core/event-bus.ts:8] [E: packages/coding-agent/src/core/event-bus.ts:30] [I]。
-- event-bus 不自动绑定 `ExtensionContext`;listener 只拿到 payload, 如果需要 UI/session/model 等 context, extension 必须自己在 extension hook 中保存或传递所需状态 [E: packages/coding-agent/src/core/event-bus.ts:5] [E: packages/coding-agent/src/core/extensions/types.ts:1430] [I]。
+- event-bus 不自动绑定 `ExtensionContext`;listener 只拿到 payload, 如果需要 UI/session/model 等 context, extension 必须自己在 extension hook 中保存或传递所需状态 [E: packages/coding-agent/src/core/event-bus.ts:5] [E: packages/coding-agent/src/core/extensions/types.ts:1436] [I]。
 
 ## 跨包边界
 

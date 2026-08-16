@@ -7,15 +7,18 @@ pkg: coding-agent
 source:
   - packages/coding-agent/src/core/system-prompt.ts
   - packages/coding-agent/src/core/prompt-templates.ts
+  - packages/coding-agent/src/core/resource-loader.ts
 symbols:
   - buildSystemPrompt
   - BuildSystemPromptOptions
+  - loadContextFileFromDir
+  - loadProjectContextFiles
 related:
   - subsys.coding-agent.agent-session
   - subsys.agent-core.system-prompt
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `subsys.coding-agent.system-prompt` 描述 `pi-coding-agent` 产品层如何把默认 coding assistant 文案、tool snippets、prompt guidelines、project context、skills、日期和 cwd 拼成模型看到的 system prompt。
@@ -35,13 +38,13 @@ updated: 305c014dcc
 
 `buildSystemPrompt` 接收的输入包含 `customPrompt`、`selectedTools`、`toolSnippets`、`promptGuidelines`、`appendSystemPrompt`、`cwd`、`contextFiles`、`skills`,所以该 builder 只消费已经准备好的资源,不负责从磁盘加载 context files、skills 或 prompts。[E: packages/coding-agent/src/core/system-prompt.ts:8] [E: packages/coding-agent/src/core/system-prompt.ts:10] [E: packages/coding-agent/src/core/system-prompt.ts:12] [E: packages/coding-agent/src/core/system-prompt.ts:14] [E: packages/coding-agent/src/core/system-prompt.ts:16] [E: packages/coding-agent/src/core/system-prompt.ts:18] [E: packages/coding-agent/src/core/system-prompt.ts:20] [E: packages/coding-agent/src/core/system-prompt.ts:22] [E: packages/coding-agent/src/core/system-prompt.ts:24] [I]
 
-`packages/coding-agent/src/core/prompt-templates.ts` 属于同一节点的相邻 prompt subsystem,但它处理的是用户输入里的 `/template args` 展开,不是 system prompt 的主体文案构造;`AgentSession` 在发送用户消息前调用 `expandPromptTemplate`,再把展开后的 text 传给 `before_agent_start` extension hook。[E: packages/coding-agent/src/core/prompt-templates.ts:269] [E: packages/coding-agent/src/core/prompt-templates.ts:278] [E: packages/coding-agent/src/core/prompt-templates.ts:281] [E: packages/coding-agent/src/core/agent-session.ts:1164] [E: packages/coding-agent/src/core/agent-session.ts:1166] [E: packages/coding-agent/src/core/agent-session.ts:1236] [E: packages/coding-agent/src/core/agent-session.ts:1237]
+`packages/coding-agent/src/core/prompt-templates.ts` 属于同一节点的相邻 prompt subsystem,但它处理的是用户输入里的 `/template args` 展开,不是 system prompt 的主体文案构造;`AgentSession` 在发送用户消息前调用 `expandPromptTemplate`,再把展开后的 text 传给 `before_agent_start` extension hook。[E: packages/coding-agent/src/core/prompt-templates.ts:269] [E: packages/coding-agent/src/core/prompt-templates.ts:278] [E: packages/coding-agent/src/core/prompt-templates.ts:281] [E: packages/coding-agent/src/core/agent-session.ts:1161] [E: packages/coding-agent/src/core/agent-session.ts:1163] [E: packages/coding-agent/src/core/agent-session.ts:1233] [E: packages/coding-agent/src/core/agent-session.ts:1234]
 
 ## 输入来源与 BuildSystemPromptOptions
 
-`AgentSession._rebuildSystemPrompt(toolNames)` 是产品层把资源装入 builder 的主要调用点:它先过滤 active tool names,再汇总 tool snippets、tool prompt guidelines、resource loader 中的 custom prompt、append prompt、skills、AGENTS context files,最后把这些字段写入 `_baseSystemPromptOptions` 并调用 `buildSystemPrompt`。[E: packages/coding-agent/src/core/agent-session.ts:1026] [E: packages/coding-agent/src/core/agent-session.ts:1027] [E: packages/coding-agent/src/core/agent-session.ts:1028] [E: packages/coding-agent/src/core/agent-session.ts:1029] [E: packages/coding-agent/src/core/agent-session.ts:1042] [E: packages/coding-agent/src/core/agent-session.ts:1043] [E: packages/coding-agent/src/core/agent-session.ts:1046] [E: packages/coding-agent/src/core/agent-session.ts:1047] [E: packages/coding-agent/src/core/agent-session.ts:1049] [E: packages/coding-agent/src/core/agent-session.ts:1059]
+`AgentSession._rebuildSystemPrompt(toolNames)` 是产品层把资源装入 builder 的主要调用点:它先过滤 active tool names,再汇总 tool snippets、tool prompt guidelines、resource loader 中的 custom prompt、append prompt、skills、AGENTS context files,最后把这些字段写入 `_baseSystemPromptOptions` 并调用 `buildSystemPrompt`。[E: packages/coding-agent/src/core/agent-session.ts:1023] [E: packages/coding-agent/src/core/agent-session.ts:1024] [E: packages/coding-agent/src/core/agent-session.ts:1025] [E: packages/coding-agent/src/core/agent-session.ts:1026] [E: packages/coding-agent/src/core/agent-session.ts:1039] [E: packages/coding-agent/src/core/agent-session.ts:1040] [E: packages/coding-agent/src/core/agent-session.ts:1043] [E: packages/coding-agent/src/core/agent-session.ts:1044] [E: packages/coding-agent/src/core/agent-session.ts:1046] [E: packages/coding-agent/src/core/agent-session.ts:1056]
 
-`setActiveToolsByName(toolNames)` 修改 `agent.state.tools` 后会重建 base system prompt,因此模型看到的 Available tools 与 active tools 同步到下一次 agent turn。[E: packages/coding-agent/src/core/agent-session.ts:931] [E: packages/coding-agent/src/core/agent-session.ts:941] [E: packages/coding-agent/src/core/agent-session.ts:944] [E: packages/coding-agent/src/core/agent-session.ts:917]
+`setActiveToolsByName(toolNames)` 修改 `agent.state.tools` 后会重建 base system prompt,因此模型看到的 Available tools 与 active tools 同步到下一次 agent turn。[E: packages/coding-agent/src/core/agent-session.ts:928] [E: packages/coding-agent/src/core/agent-session.ts:938] [E: packages/coding-agent/src/core/agent-session.ts:941] [E: packages/coding-agent/src/core/agent-session.ts:914]
 
 `DefaultResourceLoader` 的 options 允许 CLI/SDK 提供 `systemPrompt` 和 `appendSystemPrompt`;loader 在 reload 时解析 system prompt source 或自动发现的 prompt file,再解析 append prompt sources,供 `AgentSession._rebuildSystemPrompt` 消费。[E: packages/coding-agent/src/core/resource-loader.ts:173] [E: packages/coding-agent/src/core/resource-loader.ts:174] [E: packages/coding-agent/src/core/resource-loader.ts:273] [E: packages/coding-agent/src/core/resource-loader.ts:274] [E: packages/coding-agent/src/core/resource-loader.ts:477] [E: packages/coding-agent/src/core/resource-loader.ts:477] [E: packages/coding-agent/src/core/resource-loader.ts:527] [E: packages/coding-agent/src/core/resource-loader.ts:483] [E: packages/coding-agent/src/core/resource-loader.ts:484] [E: packages/coding-agent/src/core/resource-loader.ts:484] [E: packages/coding-agent/src/core/resource-loader.ts:537] [E: packages/coding-agent/src/core/resource-loader.ts:539]
 
@@ -63,15 +66,17 @@ updated: 305c014dcc
 
 `appendSystemPrompt` 被转换成 `appendSection`,无论默认 prompt 还是 custom prompt path 都会在主体之后拼接这个 section。[E: packages/coding-agent/src/core/system-prompt.ts:41] [E: packages/coding-agent/src/core/system-prompt.ts:49] [E: packages/coding-agent/src/core/system-prompt.ts:50] [E: packages/coding-agent/src/core/system-prompt.ts:140] [E: packages/coding-agent/src/core/system-prompt.ts:141]
 
-CLI 参数层把 `--system-prompt <text>` 写入 `Args.systemPrompt`,把可重复的 `--append-system-prompt <text>` 追加进 `Args.appendSystemPrompt`;这说明命令行可替换默认 system prompt 或附加额外文本,但具体内容仍由 resource loader 解析后交给 builder。[E: packages/coding-agent/src/cli/args.ts:17] [E: packages/coding-agent/src/cli/args.ts:18] [E: packages/coding-agent/src/cli/args.ts:95] [E: packages/coding-agent/src/cli/args.ts:96] [E: packages/coding-agent/src/cli/args.ts:97] [E: packages/coding-agent/src/cli/args.ts:99] [I]
+CLI 参数层把 `--system-prompt <text>` 写入 `Args.systemPrompt`,把可重复的 `--append-system-prompt <text>` 追加进 `Args.appendSystemPrompt`;这说明命令行可替换默认 system prompt 或附加额外文本,但具体内容仍由 resource loader 解析后交给 builder。[E: packages/coding-agent/src/cli/args.ts:17] [E: packages/coding-agent/src/cli/args.ts:18] [E: packages/coding-agent/src/cli/args.ts:96] [E: packages/coding-agent/src/cli/args.ts:97] [E: packages/coding-agent/src/cli/args.ts:98] [E: packages/coding-agent/src/cli/args.ts:100] [I]
 
 ## Project context、skills、日期与 cwd
 
-context files 在 custom prompt 和默认 prompt 两条路径都会被追加为 `<project_context>` block,每个文件以 `<project_instructions path="...">content</project_instructions>` 包裹。[E: packages/coding-agent/src/core/system-prompt.ts:54] [E: packages/coding-agent/src/core/system-prompt.ts:55] [E: packages/coding-agent/src/core/system-prompt.ts:56] [E: packages/coding-agent/src/core/system-prompt.ts:57] [E: packages/coding-agent/src/core/system-prompt.ts:58] [E: packages/coding-agent/src/core/system-prompt.ts:60] [E: packages/coding-agent/src/core/system-prompt.ts:145] [E: packages/coding-agent/src/core/system-prompt.ts:149] [E: packages/coding-agent/src/core/system-prompt.ts:151]
+每个目录只加载一个 context 文件。`loadContextFileFromDir()` 按 `AGENTS.override.md`、`AGENTS.md`、`AGENTS.MD`、`CLAUDE.md`、`CLAUDE.MD` 的顺序取第一个存在的普通文件;因此同目录的 `AGENTS.override.md` 会替换 `AGENTS.md` / `CLAUDE.md`,不会叠加 [E: packages/coding-agent/src/core/resource-loader.ts:70] [E: packages/coding-agent/src/core/resource-loader.ts:71] [E: packages/coding-agent/src/core/resource-loader.ts:74]。`loadProjectContextFiles()` 先读 `agentDir` 的 global context,再从 cwd 向上收集 ancestor context,并用 path set 去重;嵌套 worktree 还会跳过被 shadow 的 main-repo 副本 [E: packages/coding-agent/src/core/resource-loader.ts:118] [E: packages/coding-agent/src/core/resource-loader.ts:128] [E: packages/coding-agent/src/core/resource-loader.ts:140] [E: packages/coding-agent/src/core/resource-loader.ts:143]。
+
+context files 在 custom prompt 和默认 prompt 两条路径都会被追加为 `<project_context>` block,每个文件以 `<project_instructions path="...">content</project_instructions>` 包裹。[E: packages/coding-agent/src/core/system-prompt.ts:54] [E: packages/coding-agent/src/core/system-prompt.ts:57] [E: packages/coding-agent/src/core/system-prompt.ts:145] [E: packages/coding-agent/src/core/system-prompt.ts:149] [E: packages/coding-agent/src/core/system-prompt.ts:151]
 
 skills section 由 `formatSkillsForPrompt(skills)` 追加,但 custom prompt path 要求 `selectedTools` 缺省或包含 `read`,默认 prompt path 要求 `hasRead` 为 true;因此禁用 read tool 会让 loaded skills 不进入 system prompt。[E: packages/coding-agent/src/core/system-prompt.ts:64] [E: packages/coding-agent/src/core/system-prompt.ts:65] [E: packages/coding-agent/src/core/system-prompt.ts:66] [E: packages/coding-agent/src/core/system-prompt.ts:155] [E: packages/coding-agent/src/core/system-prompt.ts:156]
 
-system prompt 末尾会追加当前工作目录，`cwd` 在进入 prompt 前把反斜杠替换成 `/`；目标版本已不再由这个 builder 追加当前日期 [E: packages/coding-agent/src/core/system-prompt.ts:35] [E: packages/coding-agent/src/core/system-prompt.ts:39] [E: packages/coding-agent/src/core/system-prompt.ts:69] [E: packages/coding-agent/src/core/system-prompt.ts:159]。
+system prompt 末尾会追加当前工作目录，`cwd` 在进入 prompt 前把反斜杠替换成 `/`；目标版本已不再由这个 builder 追加当前日期 [E: packages/coding-agent/src/core/system-prompt.ts:35] [E: packages/coding-agent/src/core/system-prompt.ts:39] [E: packages/coding-agent/src/core/system-prompt.ts:159] [E: packages/coding-agent/src/core/system-prompt.ts:159]。
 
 ## Prompt templates relationship
 
@@ -83,33 +88,33 @@ template markdown frontmatter 可提供 `description` 和 `argument-hint`;正文
 
 ## Per-turn extension override
 
-`AgentSession.prompt` 在组装 user message 前会先展开 skill command 和 prompt template,然后把 `expandedText`、images、`_baseSystemPrompt`、`_baseSystemPromptOptions` 传给 extension runner 的 `emitBeforeAgentStart`。[E: packages/coding-agent/src/core/agent-session.ts:1163] [E: packages/coding-agent/src/core/agent-session.ts:1165] [E: packages/coding-agent/src/core/agent-session.ts:1166] [E: packages/coding-agent/src/core/agent-session.ts:1219] [E: packages/coding-agent/src/core/agent-session.ts:1236] [E: packages/coding-agent/src/core/agent-session.ts:1239] [E: packages/coding-agent/src/core/agent-session.ts:1240]
+`AgentSession.prompt` 在组装 user message 前会先展开 skill command 和 prompt template,然后把 `expandedText`、images、`_baseSystemPrompt`、`_baseSystemPromptOptions` 传给 extension runner 的 `emitBeforeAgentStart`。[E: packages/coding-agent/src/core/agent-session.ts:1160] [E: packages/coding-agent/src/core/agent-session.ts:1162] [E: packages/coding-agent/src/core/agent-session.ts:1163] [E: packages/coding-agent/src/core/agent-session.ts:1216] [E: packages/coding-agent/src/core/agent-session.ts:1233] [E: packages/coding-agent/src/core/agent-session.ts:1236] [E: packages/coding-agent/src/core/agent-session.ts:1237]
 
 `emitBeforeAgentStart` 会把当前 system prompt 放进 event,允许 handler 返回 `systemPrompt`;多个 handler 链式修改 `currentSystemPrompt`,最终只有发生修改时才返回 `systemPrompt` 字段。[E: packages/coding-agent/src/core/extensions/runner.ts:1081] [E: packages/coding-agent/src/core/extensions/runner.ts:1087] [E: packages/coding-agent/src/core/extensions/runner.ts:1105] [E: packages/coding-agent/src/core/extensions/runner.ts:1109] [E: packages/coding-agent/src/core/extensions/runner.ts:1110] [E: packages/coding-agent/src/core/extensions/runner.ts:1112] [E: packages/coding-agent/src/core/extensions/runner.ts:1119] [E: packages/coding-agent/src/core/extensions/runner.ts:1120] [E: packages/coding-agent/src/core/extensions/runner.ts:1137] [E: packages/coding-agent/src/core/extensions/runner.ts:1140]
 
-如果 extension result 带 `systemPrompt`,`AgentSession` 将 `agent.state.systemPrompt` 设成该值;否则它会显式恢复 `_baseSystemPrompt`,避免上一 turn 的临时修改泄漏到下一 turn。[E: packages/coding-agent/src/core/agent-session.ts:1236] [E: packages/coding-agent/src/core/agent-session.ts:1259] [E: packages/coding-agent/src/core/agent-session.ts:1263]
+如果 extension result 带 `systemPrompt`,`AgentSession` 将 `agent.state.systemPrompt` 设成该值;否则它会显式恢复 `_baseSystemPrompt`,避免上一 turn 的临时修改泄漏到下一 turn。[E: packages/coding-agent/src/core/agent-session.ts:1233] [E: packages/coding-agent/src/core/agent-session.ts:1256] [E: packages/coding-agent/src/core/agent-session.ts:1260]
 
 ## 跨包边界
 
-`subsys.coding-agent.agent-session` 是 `pi-coding-agent` 产品会话核心:它决定 active tools、资源加载结果和 extension hook 如何进入 `_baseSystemPromptOptions`,并把 builder 输出写入 `agent.state.systemPrompt`。[E: packages/coding-agent/src/core/agent-session.ts:1026] [E: packages/coding-agent/src/core/agent-session.ts:1049] [E: packages/coding-agent/src/core/agent-session.ts:1059]
+`subsys.coding-agent.agent-session` 是 `pi-coding-agent` 产品会话核心:它决定 active tools、资源加载结果和 extension hook 如何进入 `_baseSystemPromptOptions`,并把 builder 输出写入 `agent.state.systemPrompt`。[E: packages/coding-agent/src/core/agent-session.ts:1023] [E: packages/coding-agent/src/core/agent-session.ts:1046] [E: packages/coding-agent/src/core/agent-session.ts:1056]
 
 `subsys.agent-core.system-prompt` 只覆盖 `pi-agent-core` harness 的 `formatSkillsForSystemPrompt(skills)` helper;当前 `buildSystemPrompt` 使用的是 coding-agent 自己的 `formatSkillsForPrompt`,不是 agent-core 的 formatter。[E: packages/agent/src/harness/system-prompt.ts:3] [E: packages/coding-agent/src/core/system-prompt.ts:6] [E: packages/coding-agent/src/core/system-prompt.ts:66] [E: packages/coding-agent/src/core/system-prompt.ts:156]
 
-`pi-agent-core` 的 reusable `AgentHarness` 接受 string 或函数形式的 `systemPrompt`,并在 turn context 中把 system prompt 传给 `runAgentLoop`;这说明 agent-core 消费 prompt,而 coding-agent 产品层负责本节点描述的产品 prompt 内容。[E: packages/agent/src/harness/agent-harness.ts:189] [E: packages/agent/src/harness/agent-harness.ts:405] [E: packages/agent/src/harness/agent-harness.ts:406] [E: packages/agent/src/harness/agent-harness.ts:409] [E: packages/agent/src/harness/agent-harness.ts:423] [E: packages/agent/src/harness/agent-harness.ts:434] [E: packages/agent/src/harness/agent-harness.ts:436] [E: packages/agent/src/harness/agent-harness.ts:658] [E: packages/agent/src/harness/agent-harness.ts:660] [I]
+`pi-agent-core` 的 reusable `AgentHarness` 接受 string 或函数形式的 `systemPrompt`,并在 turn context 中把 system prompt 传给 `runAgentLoop`;这说明 agent-core 消费 prompt,而 coding-agent 产品层负责本节点描述的产品 prompt 内容。[E: packages/agent/src/harness/agent-harness.ts:189] [E: packages/agent/src/harness/agent-harness.ts:405] [E: packages/agent/src/harness/agent-harness.ts:405] [E: packages/agent/src/harness/agent-harness.ts:408] [E: packages/agent/src/harness/agent-harness.ts:423] [E: packages/agent/src/harness/agent-harness.ts:434] [E: packages/agent/src/harness/agent-harness.ts:435] [E: packages/agent/src/harness/agent-harness.ts:506] [E: packages/agent/src/harness/agent-harness.ts:506] [I]
 
 ## Gotcha
 
-- `customPrompt` 是替换默认 prompt,不是在默认 prompt 前增加前缀;但 context files、skills、date、cwd 仍会追加。[E: packages/coding-agent/src/core/system-prompt.ts:46] [E: packages/coding-agent/src/core/system-prompt.ts:47] [E: packages/coding-agent/src/core/system-prompt.ts:54] [E: packages/coding-agent/src/core/system-prompt.ts:58] [E: packages/coding-agent/src/core/system-prompt.ts:64] [E: packages/coding-agent/src/core/system-prompt.ts:66] [E: packages/coding-agent/src/core/system-prompt.ts:77] [E: packages/coding-agent/src/core/system-prompt.ts:69]
+- `customPrompt` 是替换默认 prompt,不是在默认 prompt 前增加前缀;但 context files、skills 和 cwd 仍会追加。同目录若存在 `AGENTS.override.md`,该目录不会再读 `AGENTS.md` 或 `CLAUDE.md`。[E: packages/coding-agent/src/core/system-prompt.ts:46] [E: packages/coding-agent/src/core/system-prompt.ts:54] [E: packages/coding-agent/src/core/system-prompt.ts:64] [E: packages/coding-agent/src/core/system-prompt.ts:159] [E: packages/coding-agent/src/core/resource-loader.ts:71]
 - `selectedTools` 控制默认 tool set 和 skill block 的 read gate,但 Available tools section 只展示有 `toolSnippets` 的工具。[E: packages/coding-agent/src/core/system-prompt.ts:64] [E: packages/coding-agent/src/core/system-prompt.ts:81] [E: packages/coding-agent/src/core/system-prompt.ts:82] [E: packages/coding-agent/src/core/system-prompt.ts:84]
 - `promptGuidelines` 会 trim 空白、丢弃空字符串,并通过 Set 去重后追加到默认 guidelines 前部。[E: packages/coding-agent/src/core/system-prompt.ts:88] [E: packages/coding-agent/src/core/system-prompt.ts:108] [E: packages/coding-agent/src/core/system-prompt.ts:109] [E: packages/coding-agent/src/core/system-prompt.ts:110] [E: packages/coding-agent/src/core/system-prompt.ts:111] [E: packages/coding-agent/src/core/system-prompt.ts:116]
-- prompt templates 展开的是 user prompt text;不要把 `/template` markdown content 误认为 system prompt append source。[E: packages/coding-agent/src/core/prompt-templates.ts:269] [E: packages/coding-agent/src/core/agent-session.ts:1166] [I]
+- prompt templates 展开的是 user prompt text;不要把 `/template` markdown content 误认为 system prompt append source。[E: packages/coding-agent/src/core/prompt-templates.ts:269] [E: packages/coding-agent/src/core/agent-session.ts:1163] [I]
 
 ## Sources
 
 - packages/coding-agent/src/core/system-prompt.ts
 - packages/coding-agent/src/core/prompt-templates.ts
-- packages/coding-agent/src/core/agent-session.ts
 - packages/coding-agent/src/core/resource-loader.ts
+- packages/coding-agent/src/core/agent-session.ts
 - packages/coding-agent/src/core/extensions/runner.ts
 - packages/coding-agent/src/cli/args.ts
 - packages/agent/src/harness/system-prompt.ts

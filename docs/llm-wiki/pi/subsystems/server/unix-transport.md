@@ -21,10 +21,9 @@ related:
   - subsys.server.session-server
   - subsys.client.unix-transport
   - subsys.protocol.cbor-framing
-  - subsys.server.ipc-transport
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `@earendil-works/pi-server/unix` 同时提供 composable `createUnixListener()` 与 one-listener `createUnixServer()` preset；它服务 framed-CBOR session protocol，不是 legacy JSONL `startIpcServer()`。[E: packages/server/package.json:17][E: packages/server/package.json:18][E: packages/server/src/transports/unix/index.ts:1][E: packages/server/src/transports/unix/index.ts:2][E: packages/server/src/transports/unix/preset.ts:7][E: packages/server/src/transports/unix/preset.ts:7]
@@ -69,7 +68,7 @@ send queue 复制 bytes、按 Promise tail 保序并限制 pending bytes。[E: p
 
 - `mode` 只接受 `0..0o777`；Windows 上 chmod 被跳过，但 listener 没有像 client Unix factory 一样显式拒绝 Windows。[E: packages/server/src/transports/unix/listener.ts:378][E: packages/server/src/transports/unix/listener.ts:379][E: packages/server/src/transports/unix/listener.ts:407][E: packages/server/src/transports/unix/listener.ts:408][I]
 - live probe timeout 被保守视为 socket live，优先避免误删可能仍在服务的 endpoint。[E: packages/server/src/transports/unix/listener.ts:373][I]
-- legacy `subsys.server.ipc-transport` 和新 Unix listener 可以指向不同 path/options；源码没有自动 migration 或共享 socket arbitration。[I]
+- Unix listener 的 path/mode 是 filesystem access-control 边界；源码没有跨进程 socket arbitration，也没有从已删除的 legacy JSONL IPC 做自动 migration。[I]
 - 这里的“authorized”依赖 filesystem path/mode，而不是 protocol bearer token；若部署环境允许不受信任进程访问 socket，应用必须在 transport/listener 层增加更强的认证。[E: packages/server/README.md:42][E: packages/server/src/transports/unix/listener.ts:407][I]
 
 ## Sources
@@ -87,4 +86,3 @@ send queue 复制 bytes、按 Promise tail 保序并限制 pending bytes。[E: p
 - [subsys.server.session-server](session-server.md) - transport-neutral server core。
 - [subsys.client.unix-transport](../client/unix-transport.md) - client socket transport。
 - [subsys.protocol.cbor-framing](../protocol/cbor-framing.md) - framed-CBOR byte contract。
-- [subsys.server.ipc-transport](ipc-transport.md) - 仍保留的 legacy JSONL IPC socket。

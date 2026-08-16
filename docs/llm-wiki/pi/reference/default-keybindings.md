@@ -1,6 +1,6 @@
 ---
 id: ref.coding-agent.default-keybindings
-title: 默认键位目录(79)
+title: 默认键位目录(89)
 kind: catalog
 tier: T3
 pkg: coding-agent
@@ -14,7 +14,7 @@ symbols:
   - AppKeybindings
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 related:
   - surface.config.keybindings
   - subsys.coding-agent.keybindings
@@ -34,61 +34,71 @@ related:
 
 `packages/coding-agent/src/core/keybindings.ts` 从 `@earendil-works/pi-tui` 导入 `TUI_KEYBINDINGS`,并导出 `KEYBINDINGS` [E: packages/coding-agent/src/core/keybindings.ts:6] [E: packages/coding-agent/src/core/keybindings.ts:64]。`KEYBINDINGS` 先展开 `TUI_KEYBINDINGS`,再追加 `app.*` actions,所以本 catalog 同时列出 TUI defaults 与 coding-agent app defaults [E: packages/coding-agent/src/core/keybindings.ts:65] [E: packages/coding-agent/src/core/keybindings.ts:66] [E: packages/coding-agent/src/core/keybindings.ts:207]。
 
-`TUI_KEYBINDINGS` 当前包含 37 个 `tui.*` 实例，覆盖 editor、generic input、selection 和 6 个 alternate-screen viewport actions [E: packages/tui/src/keybindings.ts:61] [E: packages/tui/src/keybindings.ts:141] [E: packages/tui/src/keybindings.ts:158] [E: packages/tui/src/keybindings.ts:159]。`AppKeybindings` 仍声明 42 个 `app.*` action id，并通过 module augmentation 合并进 pi-tui 的 `Keybindings` interface [E: packages/coding-agent/src/core/keybindings.ts:13] [E: packages/coding-agent/src/core/keybindings.ts:26] [E: packages/coding-agent/src/core/keybindings.ts:55] [E: packages/coding-agent/src/core/keybindings.ts:60]。因此默认键位实例总数为 79 [I]。
+`TUI_KEYBINDINGS` 当前包含 47 个 `tui.*` 实例，覆盖 editor(含 history)、generic input、selection 和 14 个 alternate-screen viewport/search actions [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:74] [E: packages/tui/src/keybindings.ts:168] [E: packages/tui/src/keybindings.ts:192] [E: packages/tui/src/keybindings.ts:209]。`AppKeybindings` 仍声明 42 个 `app.*` action id，并通过 module augmentation 合并进 pi-tui 的 `Keybindings` interface [E: packages/coding-agent/src/core/keybindings.ts:13] [E: packages/coding-agent/src/core/keybindings.ts:55] [E: packages/coding-agent/src/core/keybindings.ts:60]。因此默认键位实例总数为 89 [I]。
 
-当前源码没有导出旧 catalog 名 `DEFAULT_APP_KEYBINDINGS` 或 `DEFAULT_EDITOR_KEYBINDINGS`;index 与节点已统一到可核默认目录符号 `KEYBINDINGS`、`TUI_KEYBINDINGS` 和 `AppKeybindings` [E: packages/coding-agent/src/core/keybindings.ts:64] [E: packages/tui/src/keybindings.ts:61] [E: packages/coding-agent/src/core/keybindings.ts:13]。
+当前源码没有导出旧 catalog 名 `DEFAULT_APP_KEYBINDINGS` 或 `DEFAULT_EDITOR_KEYBINDINGS`;index 与节点已统一到可核默认目录符号 `KEYBINDINGS`、`TUI_KEYBINDINGS` 和 `AppKeybindings` [E: packages/coding-agent/src/core/keybindings.ts:64] [E: packages/tui/src/keybindings.ts:71] [E: packages/coding-agent/src/core/keybindings.ts:13]。
 
 ## TUI editor defaults
 
 | action id | default keys | 含义 / why | 源码证据 |
 | --- | --- | --- | --- |
-| `tui.editor.cursorUp` | `up` | Move cursor up. | [E: packages/tui/src/keybindings.ts:62] |
-| `tui.editor.cursorDown` | `down` | Move cursor down. | [E: packages/tui/src/keybindings.ts:63] |
-| `tui.editor.cursorLeft` | `left`, `ctrl+b` | Move cursor left. | [E: packages/tui/src/keybindings.ts:64] [E: packages/tui/src/keybindings.ts:65] [E: packages/tui/src/keybindings.ts:66] |
-| `tui.editor.cursorRight` | `right`, `ctrl+f` | Move cursor right. | [E: packages/tui/src/keybindings.ts:68] [E: packages/tui/src/keybindings.ts:69] [E: packages/tui/src/keybindings.ts:70] |
-| `tui.editor.cursorWordLeft` | `alt+left`, `ctrl+left`, `alt+b` | Move cursor word left. | [E: packages/tui/src/keybindings.ts:72] [E: packages/tui/src/keybindings.ts:73] [E: packages/tui/src/keybindings.ts:74] |
-| `tui.editor.cursorWordRight` | `alt+right`, `ctrl+right`, `alt+f` | Move cursor word right. | [E: packages/tui/src/keybindings.ts:76] [E: packages/tui/src/keybindings.ts:77] [E: packages/tui/src/keybindings.ts:78] |
-| `tui.editor.cursorLineStart` | `home`, `ctrl+a` | Move to line start. | [E: packages/tui/src/keybindings.ts:80] [E: packages/tui/src/keybindings.ts:81] [E: packages/tui/src/keybindings.ts:82] |
-| `tui.editor.cursorLineEnd` | `end`, `ctrl+e` | Move to line end. | [E: packages/tui/src/keybindings.ts:84] [E: packages/tui/src/keybindings.ts:85] [E: packages/tui/src/keybindings.ts:86] |
-| `tui.editor.jumpForward` | `ctrl+]` | Jump forward to character. | [E: packages/tui/src/keybindings.ts:88] [E: packages/tui/src/keybindings.ts:89] [E: packages/tui/src/keybindings.ts:90] |
-| `tui.editor.jumpBackward` | `ctrl+alt+]` | Jump backward to character. | [E: packages/tui/src/keybindings.ts:92] [E: packages/tui/src/keybindings.ts:93] [E: packages/tui/src/keybindings.ts:94] |
-| `tui.editor.pageUp` | `pageUp` | Page up. | [E: packages/tui/src/keybindings.ts:96] |
-| `tui.editor.pageDown` | `pageDown` | Page down. | [E: packages/tui/src/keybindings.ts:97] |
-| `tui.editor.deleteCharBackward` | `backspace` | Delete character backward. | [E: packages/tui/src/keybindings.ts:98] [E: packages/tui/src/keybindings.ts:99] [E: packages/tui/src/keybindings.ts:100] |
-| `tui.editor.deleteCharForward` | `delete`, `ctrl+d` | Delete character forward. | [E: packages/tui/src/keybindings.ts:102] [E: packages/tui/src/keybindings.ts:103] [E: packages/tui/src/keybindings.ts:104] |
-| `tui.editor.deleteWordBackward` | `ctrl+w`, `alt+backspace` | Delete word backward. | [E: packages/tui/src/keybindings.ts:106] [E: packages/tui/src/keybindings.ts:107] [E: packages/tui/src/keybindings.ts:108] |
-| `tui.editor.deleteWordForward` | `alt+d`, `alt+delete` | Delete word forward. | [E: packages/tui/src/keybindings.ts:110] [E: packages/tui/src/keybindings.ts:111] [E: packages/tui/src/keybindings.ts:112] |
-| `tui.editor.deleteToLineStart` | `ctrl+u` | Delete to line start. | [E: packages/tui/src/keybindings.ts:114] [E: packages/tui/src/keybindings.ts:115] [E: packages/tui/src/keybindings.ts:116] |
-| `tui.editor.deleteToLineEnd` | `ctrl+k` | Delete to line end. | [E: packages/tui/src/keybindings.ts:118] [E: packages/tui/src/keybindings.ts:119] [E: packages/tui/src/keybindings.ts:120] |
-| `tui.editor.yank` | `ctrl+y` | Yank. | [E: packages/tui/src/keybindings.ts:122] |
-| `tui.editor.yankPop` | `alt+y` | Yank pop. | [E: packages/tui/src/keybindings.ts:123] |
-| `tui.editor.undo` | `ctrl+-` | Undo. | [E: packages/tui/src/keybindings.ts:124] |
+| `tui.editor.cursorUp` | `up` | Move cursor up. | [E: packages/tui/src/keybindings.ts:72] |
+| `tui.editor.cursorDown` | `down` | Move cursor down. | [E: packages/tui/src/keybindings.ts:73] |
+| `tui.editor.historyPrevious` | none | Select previous prompt history entry; default key array is empty。 | [E: packages/tui/src/keybindings.ts:74] [E: packages/tui/src/keybindings.ts:76] |
+| `tui.editor.historyNext` | none | Select next prompt history entry; default key array is empty。 | [E: packages/tui/src/keybindings.ts:78] [E: packages/tui/src/keybindings.ts:80] |
+| `tui.editor.cursorLeft` | `left`, `ctrl+b` | Move cursor left. | [E: packages/tui/src/keybindings.ts:82] [E: packages/tui/src/keybindings.ts:83] [E: packages/tui/src/keybindings.ts:84] |
+| `tui.editor.cursorRight` | `right`, `ctrl+f` | Move cursor right. | [E: packages/tui/src/keybindings.ts:86] [E: packages/tui/src/keybindings.ts:87] [E: packages/tui/src/keybindings.ts:88] |
+| `tui.editor.cursorWordLeft` | `alt+left`, `ctrl+left`, `alt+b` | Move cursor word left. | [E: packages/tui/src/keybindings.ts:90] [E: packages/tui/src/keybindings.ts:91] [E: packages/tui/src/keybindings.ts:92] |
+| `tui.editor.cursorWordRight` | `alt+right`, `ctrl+right`, `alt+f` | Move cursor word right. | [E: packages/tui/src/keybindings.ts:94] [E: packages/tui/src/keybindings.ts:95] [E: packages/tui/src/keybindings.ts:96] |
+| `tui.editor.cursorLineStart` | `home`, `ctrl+home`, `ctrl+a` | Move to line start. | [E: packages/tui/src/keybindings.ts:98] [E: packages/tui/src/keybindings.ts:99] [E: packages/tui/src/keybindings.ts:100] |
+| `tui.editor.cursorLineEnd` | `end`, `ctrl+end`, `ctrl+e` | Move to line end. | [E: packages/tui/src/keybindings.ts:102] [E: packages/tui/src/keybindings.ts:103] [E: packages/tui/src/keybindings.ts:104] |
+| `tui.editor.jumpForward` | `ctrl+]` | Jump forward to character. | [E: packages/tui/src/keybindings.ts:106] [E: packages/tui/src/keybindings.ts:107] [E: packages/tui/src/keybindings.ts:108] |
+| `tui.editor.jumpBackward` | `ctrl+alt+]` | Jump backward to character. | [E: packages/tui/src/keybindings.ts:110] [E: packages/tui/src/keybindings.ts:111] [E: packages/tui/src/keybindings.ts:112] |
+| `tui.editor.pageUp` | `pageUp`, `ctrl+pageUp` | Page up. | [E: packages/tui/src/keybindings.ts:114] |
+| `tui.editor.pageDown` | `pageDown`, `ctrl+pageDown` | Page down. | [E: packages/tui/src/keybindings.ts:115] |
+| `tui.editor.deleteCharBackward` | `backspace` | Delete character backward. | [E: packages/tui/src/keybindings.ts:116] [E: packages/tui/src/keybindings.ts:117] [E: packages/tui/src/keybindings.ts:118] |
+| `tui.editor.deleteCharForward` | `delete`, `ctrl+d` | Delete character forward. | [E: packages/tui/src/keybindings.ts:120] [E: packages/tui/src/keybindings.ts:121] [E: packages/tui/src/keybindings.ts:122] |
+| `tui.editor.deleteWordBackward` | `ctrl+w`, `alt+backspace` | Delete word backward. | [E: packages/tui/src/keybindings.ts:124] [E: packages/tui/src/keybindings.ts:125] [E: packages/tui/src/keybindings.ts:126] |
+| `tui.editor.deleteWordForward` | `alt+d`, `alt+delete` | Delete word forward. | [E: packages/tui/src/keybindings.ts:128] [E: packages/tui/src/keybindings.ts:129] [E: packages/tui/src/keybindings.ts:130] |
+| `tui.editor.deleteToLineStart` | `ctrl+u` | Delete to line start. | [E: packages/tui/src/keybindings.ts:132] [E: packages/tui/src/keybindings.ts:133] [E: packages/tui/src/keybindings.ts:134] |
+| `tui.editor.deleteToLineEnd` | `ctrl+k` | Delete to line end. | [E: packages/tui/src/keybindings.ts:136] [E: packages/tui/src/keybindings.ts:137] [E: packages/tui/src/keybindings.ts:138] |
+| `tui.editor.yank` | `ctrl+y` | Yank. | [E: packages/tui/src/keybindings.ts:140] |
+| `tui.editor.yankPop` | `alt+y` | Yank pop. | [E: packages/tui/src/keybindings.ts:141] |
+| `tui.editor.undo` | `ctrl+-` | Undo. | [E: packages/tui/src/keybindings.ts:142] |
 
 ## TUI input and selection defaults
 
 | action id | default keys | 含义 / why | 源码证据 |
 | --- | --- | --- | --- |
-| `tui.input.newLine` | `shift+enter`, `ctrl+j` | Insert newline. | [E: packages/tui/src/keybindings.ts:125] |
-| `tui.input.submit` | `enter` | Submit input. | [E: packages/tui/src/keybindings.ts:126] |
-| `tui.input.tab` | `tab` | Tab / autocomplete. | [E: packages/tui/src/keybindings.ts:127] |
-| `tui.input.copy` | `ctrl+c` | Copy selection. | [E: packages/tui/src/keybindings.ts:128] |
-| `tui.select.up` | `up` | Move selection up. | [E: packages/tui/src/keybindings.ts:129] |
-| `tui.select.down` | `down` | Move selection down. | [E: packages/tui/src/keybindings.ts:130] |
-| `tui.select.pageUp` | `pageUp` | Selection page up. | [E: packages/tui/src/keybindings.ts:131] |
-| `tui.select.pageDown` | `pageDown` | Selection page down. | [E: packages/tui/src/keybindings.ts:132] [E: packages/tui/src/keybindings.ts:133] [E: packages/tui/src/keybindings.ts:134] |
-| `tui.select.confirm` | `enter` | Confirm selection. | [E: packages/tui/src/keybindings.ts:136] |
-| `tui.select.cancel` | `escape`, `ctrl+c` | Cancel selection. | [E: packages/tui/src/keybindings.ts:137] [E: packages/tui/src/keybindings.ts:138] [E: packages/tui/src/keybindings.ts:139] |
+| `tui.input.newLine` | `shift+enter`, `ctrl+j` | Insert newline. | [E: packages/tui/src/keybindings.ts:143] |
+| `tui.input.submit` | `enter` | Submit input. | [E: packages/tui/src/keybindings.ts:144] |
+| `tui.input.tab` | `tab` | Tab / autocomplete. | [E: packages/tui/src/keybindings.ts:145] |
+| `tui.input.copy` | `ctrl+c` | Copy selection. | [E: packages/tui/src/keybindings.ts:146] |
+| `tui.select.up` | `up` | Move selection up. | [E: packages/tui/src/keybindings.ts:147] |
+| `tui.select.down` | `down` | Move selection down. | [E: packages/tui/src/keybindings.ts:148] |
+| `tui.select.pageUp` | `pageUp` | Selection page up. | [E: packages/tui/src/keybindings.ts:149] |
+| `tui.select.pageDown` | `pageDown` | Selection page down. | [E: packages/tui/src/keybindings.ts:150] [E: packages/tui/src/keybindings.ts:151] [E: packages/tui/src/keybindings.ts:152] |
+| `tui.select.confirm` | `enter` | Confirm selection. | [E: packages/tui/src/keybindings.ts:154] |
+| `tui.select.cancel` | `escape`, `ctrl+c` | Cancel selection. | [E: packages/tui/src/keybindings.ts:155] [E: packages/tui/src/keybindings.ts:156] [E: packages/tui/src/keybindings.ts:157] |
 
 ## TUI alternate-screen viewport defaults
 
 | action id | default keys | 含义 / why | 源码证据 |
 | --- | --- | --- | --- |
-| `tui.altScreen.pageUp` | `pageUp` | Scroll fullscreen viewport up one page. | [E: packages/tui/src/keybindings.ts:141] [E: packages/tui/src/keybindings.ts:142] |
-| `tui.altScreen.pageDown` | `pageDown` | Scroll fullscreen viewport down one page. | [E: packages/tui/src/keybindings.ts:145] [E: packages/tui/src/keybindings.ts:146] |
-| `tui.altScreen.previousPrompt` | `ctrl+shift+up` | Jump to previous semantic message marker. | [E: packages/tui/src/keybindings.ts:149] [E: packages/tui/src/keybindings.ts:150] |
-| `tui.altScreen.nextPrompt` | `ctrl+shift+down` | Jump to next semantic message marker. | [E: packages/tui/src/keybindings.ts:153] [E: packages/tui/src/keybindings.ts:154] |
-| `tui.altScreen.top` | `home` | Scroll fullscreen viewport to top. | [E: packages/tui/src/keybindings.ts:157] |
-| `tui.altScreen.bottom` | `end` | Scroll fullscreen viewport to bottom. | [E: packages/tui/src/keybindings.ts:158] |
+| `tui.altScreen.pageUp` | `pageUp` | Scroll viewport up one page. | [E: packages/tui/src/keybindings.ts:160] [E: packages/tui/src/keybindings.ts:162] |
+| `tui.altScreen.pageDown` | `pageDown` | Scroll viewport down one page. | [E: packages/tui/src/keybindings.ts:164] [E: packages/tui/src/keybindings.ts:166] |
+| `tui.altScreen.halfPageUp` | none | Scroll viewport up half a page; default key array is empty。 | [E: packages/tui/src/keybindings.ts:168] [E: packages/tui/src/keybindings.ts:170] |
+| `tui.altScreen.halfPageDown` | none | Scroll viewport down half a page; default key array is empty。 | [E: packages/tui/src/keybindings.ts:172] [E: packages/tui/src/keybindings.ts:174] |
+| `tui.altScreen.lineUp` | none | Scroll viewport up one line; default key array is empty。 | [E: packages/tui/src/keybindings.ts:176] [E: packages/tui/src/keybindings.ts:178] |
+| `tui.altScreen.lineDown` | none | Scroll viewport down one line; default key array is empty。 | [E: packages/tui/src/keybindings.ts:180] [E: packages/tui/src/keybindings.ts:182] |
+| `tui.altScreen.previousPrompt` | `ctrl+shift+up` | Jump to previous semantic prompt. | [E: packages/tui/src/keybindings.ts:184] [E: packages/tui/src/keybindings.ts:186] |
+| `tui.altScreen.nextPrompt` | `ctrl+shift+down` | Jump to next semantic prompt. | [E: packages/tui/src/keybindings.ts:188] [E: packages/tui/src/keybindings.ts:190] |
+| `tui.altScreen.search` | `ctrl+shift+f` | Search the primary scroll view. | [E: packages/tui/src/keybindings.ts:192] [E: packages/tui/src/keybindings.ts:194] |
+| `tui.altScreen.searchNext` | `enter`, `ctrl+g` | Select the next search match. | [E: packages/tui/src/keybindings.ts:196] [E: packages/tui/src/keybindings.ts:198] |
+| `tui.altScreen.searchPrevious` | `shift+enter`, `ctrl+shift+g` | Select the previous search match. | [E: packages/tui/src/keybindings.ts:200] [E: packages/tui/src/keybindings.ts:202] |
+| `tui.altScreen.searchClose` | `escape` | Close transcript search. | [E: packages/tui/src/keybindings.ts:204] [E: packages/tui/src/keybindings.ts:206] |
+| `tui.altScreen.top` | `home` | Scroll viewport to top. | [E: packages/tui/src/keybindings.ts:208] |
+| `tui.altScreen.bottom` | `end` | Scroll viewport to bottom. | [E: packages/tui/src/keybindings.ts:209] |
 
 这些默认键与 editor/select 的 `pageUp/pageDown/home/end` 有重叠；在 fullscreen 中 alt-screen listener 先于 focused component 匹配并消费对应 action，冲突结果由当前 renderer context 决定。[I]
 
@@ -111,13 +121,13 @@ related:
 | `app.message.copy` | `ctrl+x` | Copy the selected message to the clipboard. | [E: packages/coding-agent/src/core/keybindings.ts:99] [E: packages/coding-agent/src/core/keybindings.ts:100] [E: packages/coding-agent/src/core/keybindings.ts:101] |
 | `app.message.followUp` | `alt+enter` | Queue follow-up message. | [E: packages/coding-agent/src/core/keybindings.ts:103] [E: packages/coding-agent/src/core/keybindings.ts:104] [E: packages/coding-agent/src/core/keybindings.ts:105] |
 | `app.message.dequeue` | `alt+up` | Restore queued messages. | [E: packages/coding-agent/src/core/keybindings.ts:107] [E: packages/coding-agent/src/core/keybindings.ts:108] [E: packages/coding-agent/src/core/keybindings.ts:109] |
-| `app.clipboard.pasteImage` | non-Windows: `ctrl+v`; Windows: `alt+v` | Paste image from clipboard; default branches on `process.platform === "win32"`. | [E: packages/coding-agent/src/core/keybindings.ts:111] [E: packages/coding-agent/src/core/keybindings.ts:112] [E: packages/coding-agent/src/core/keybindings.ts:108] |
+| `app.clipboard.pasteImage` | non-Windows: `ctrl+v`; Windows: `alt+v` | Paste image from clipboard (text fallback); default branches on `process.platform === "win32"`. | [E: packages/coding-agent/src/core/keybindings.ts:111] [E: packages/coding-agent/src/core/keybindings.ts:112] [E: packages/coding-agent/src/core/keybindings.ts:113] |
 | `app.session.new` | none | Start a new session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:115] |
 | `app.session.tree` | none | Open session tree; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:116] |
 | `app.session.fork` | none | Fork current session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:117] |
 | `app.session.resume` | none | Resume a session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:118] |
-| `app.tree.foldOrUp` | `ctrl+left`, `alt+left` | Fold tree branch or move up. | [E: packages/coding-agent/src/core/keybindings.ts:119] [E: packages/coding-agent/src/core/keybindings.ts:115] [E: packages/coding-agent/src/core/keybindings.ts:121] |
-| `app.tree.unfoldOrDown` | `ctrl+right`, `alt+right` | Unfold tree branch or move down. | [E: packages/coding-agent/src/core/keybindings.ts:123] [E: packages/coding-agent/src/core/keybindings.ts:119] [E: packages/coding-agent/src/core/keybindings.ts:125] |
+| `app.tree.foldOrUp` | darwin: `alt+left`, `ctrl+left`; else `ctrl+left`, `alt+left` | Fold tree branch or move up. | [E: packages/coding-agent/src/core/keybindings.ts:119] [E: packages/coding-agent/src/core/keybindings.ts:120] [E: packages/coding-agent/src/core/keybindings.ts:121] |
+| `app.tree.unfoldOrDown` | darwin: `alt+right`, `ctrl+right`; else `ctrl+right`, `alt+right` | Unfold tree branch or move down. | [E: packages/coding-agent/src/core/keybindings.ts:123] [E: packages/coding-agent/src/core/keybindings.ts:124] [E: packages/coding-agent/src/core/keybindings.ts:125] |
 | `app.tree.editLabel` | `shift+l` | Edit tree label. | [E: packages/coding-agent/src/core/keybindings.ts:127] [E: packages/coding-agent/src/core/keybindings.ts:128] [E: packages/coding-agent/src/core/keybindings.ts:129] |
 | `app.tree.toggleLabelTimestamp` | `shift+t` | Toggle tree label timestamps. | [E: packages/coding-agent/src/core/keybindings.ts:131] [E: packages/coding-agent/src/core/keybindings.ts:132] [E: packages/coding-agent/src/core/keybindings.ts:133] |
 | `app.session.togglePath` | `ctrl+p` | Toggle session path display. | [E: packages/coding-agent/src/core/keybindings.ts:135] [E: packages/coding-agent/src/core/keybindings.ts:136] [E: packages/coding-agent/src/core/keybindings.ts:137] |

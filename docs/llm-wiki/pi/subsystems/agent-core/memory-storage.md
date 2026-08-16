@@ -1,83 +1,96 @@
 ---
 id: subsys.agent-core.memory-storage
-title: 内存会话仓库与存储
+title: 内存会话仓库(InMemorySessionRepo)
 kind: subsystem
 tier: T2
 pkg: agent
 source:
-  - packages/agent/src/harness/session/memory-repo.ts
-  - packages/agent/src/harness/session/array-session-index.ts
-  - packages/agent/src/harness/session/keyed-operation-queue.ts
+  - packages/agent/src/harness/session/memory.ts
+  - packages/agent/src/harness/session/state.ts
   - packages/agent/src/harness/session/session.ts
 symbols:
-  - InMemorySessionRepository
-  - InMemorySessionBackend
+  - InMemorySessionRepo
+  - InMemorySessionStorage
 related:
   - subsys.agent-core.session-storage
   - subsys.agent-core.tree-navigation
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
-> `subsys.agent-core.memory-storage` 描述进程内实现：公开的 `InMemorySessionRepository` 返回统一 `Session` API，内部 backend 用 session map、`ArraySessionIndex` 和 keyed queue 保存状态。
+> `subsys.agent-core.memory-storage` 描述进程内 v4 session backend：`InMemorySessionRepo` 用 `Map<id, InMemorySessionStorage>` 保存会话；每个 storage 持有一份 `SessionState`，并通过 `structuredClone` 隔离调用方与内部状态。
 
 ## 能回答的问题
 
-- 内存 backend 保存什么状态，哪些 projection 与 JSONL 共用？
-- create/open/list/delete/fork 如何串行化？
-- storage facade 如何读取与 append entry？
-- disposal 后的 repository 如何表现？
+- 内存 backend 保存什么，重启后还在吗？
+- `InMemorySessionStorage` 如何赋值 `parentId` / `seq` / `timestamp`？
+- create / open / list / delete / fork 如何操作 Map？
+- 它与 JSONL backend 共享哪些 mutation 语义？
+- 已打开的 `Session` 在 `delete` 之后会怎样？
 
 ## 职责边界
 
-`InMemorySessionRepository` 实现通用 `SessionRepository`，私有拥有一个 `InMemorySessionBackend`；`create/open/fork` 都通过 `createSession()` 返回 `Session<SessionMetadata>`。[E: packages/agent/src/harness/session/memory-repo.ts:132] [E: packages/agent/src/harness/session/memory-repo.ts:135] [E: packages/agent/src/harness/session/memory-repo.ts:142] [E: packages/agent/src/harness/session/memory-repo.ts:146] [E: packages/agent/src/harness/session/memory-repo.ts:158]
+`InMemorySessionRepo` 实现无类型参数特化的 `SessionRepo`（默认 `SessionMetadata` / `SessionCreateOptions` / `void` list options）。它只拥有进程内 `Map`，没有文件系统、header 或 disposal 协议。[E: packages/agent/src/harness/session/memory.ts:148] [E: packages/agent/src/harness/session/memory.ts:149]
 
-backend 中每个 session state 由 metadata 与一个 `ArraySessionIndex` 组成，所有 session 存在进程内 `Map<string, InMemorySessionState>`；没有文件系统或外部持久化。[E: packages/agent/src/harness/session/memory-repo.ts:22] [E: packages/agent/src/harness/session/memory-repo.ts:24] [E: packages/agent/src/harness/session/memory-repo.ts:27] [E: packages/agent/src/harness/session/memory-repo.ts:28]
+`InMemorySessionStorage` 实现 `SessionStorage`：所有写操作直接 `SessionState.applyMutation()`；读操作返回 `structuredClone` 副本。[E: packages/agent/src/harness/session/memory.ts:25] [E: packages/agent/src/harness/session/memory.ts:68] [E: packages/agent/src/harness/session/memory.ts:93]
 
-## Repository 控制流
+`create` / `open` / `fork` 都 `new Session(storage)`，因此调用方面与 JSONL 相同。[E: packages/agent/src/harness/session/memory.ts:160] [E: packages/agent/src/harness/session/memory.ts:164] [E: packages/agent/src/harness/session/memory.ts:184]
 
-1. create 采用指定 id 或生成 UUIDv7，创建 metadata 与空 `ArraySessionIndex`，再写入 sessions map。[E: packages/agent/src/harness/session/memory-repo.ts:33] [E: packages/agent/src/harness/session/memory-repo.ts:35] [E: packages/agent/src/harness/session/memory-repo.ts:37] [E: packages/agent/src/harness/session/memory-repo.ts:41]
-2. open 以 metadata.id 定位现有 state，并返回绑定该 state 的 storage facade；不存在时 `getState()` 抛 `not_found`。[E: packages/agent/src/harness/session/memory-repo.ts:46] [E: packages/agent/src/harness/session/memory-repo.ts:48] [E: packages/agent/src/harness/session/memory-repo.ts:121] [E: packages/agent/src/harness/session/memory-repo.ts:123]
-3. list 用 queue barrier 等待既有 keyed 操作后，投影所有 metadata；delete 则在该 session id 的 key 上执行。[E: packages/agent/src/harness/session/memory-repo.ts:51] [E: packages/agent/src/harness/session/memory-repo.ts:53] [E: packages/agent/src/harness/session/memory-repo.ts:56] [E: packages/agent/src/harness/session/memory-repo.ts:58]
-4. fork 在 source id 的 key 上读取 selection 对应 entries，再在目标 id key 上构造新的 `ArraySessionIndex` 与 metadata。[E: packages/agent/src/harness/session/memory-repo.ts:63] [E: packages/agent/src/harness/session/memory-repo.ts:70] [E: packages/agent/src/harness/session/memory-repo.ts:74] [E: packages/agent/src/harness/session/memory-repo.ts:76]
+`SessionState` 的连续 `seq`、lane leaf、open-operation 集合、stats 与 fork mutation 生成由 [subsys.agent-core.session-storage](session-storage.md) 权威说明；本节点只写内存封装差异。[E: packages/agent/src/harness/session/state.ts:50] [E: packages/agent/src/harness/session/state.ts:97]
 
-## Storage facade 与索引
+## 关键文件
 
-backend 为每个 state 创建 `SessionStorage` facade。所有 read 都重新按 metadata.id 取得当前 state，并在同一 keyed queue 中访问共享 index；append 也在该 key 上调用 `ArraySessionIndex.append()`。[E: packages/agent/src/harness/session/memory-repo.ts:91] [E: packages/agent/src/harness/session/memory-repo.ts:94] [E: packages/agent/src/harness/session/memory-repo.ts:96] [E: packages/agent/src/harness/session/memory-repo.ts:101] [E: packages/agent/src/harness/session/memory-repo.ts:110] [E: packages/agent/src/harness/session/memory-repo.ts:113]
+- `packages/agent/src/harness/session/memory.ts`：`InMemorySessionStorage` 与 `InMemorySessionRepo`。[E: packages/agent/src/harness/session/memory.ts:25] [E: packages/agent/src/harness/session/memory.ts:148]
+- `packages/agent/src/harness/session/state.ts`：共享 mutation 引擎与 `createForkMutations()`。[E: packages/agent/src/harness/session/state.ts:260]
+- `packages/agent/src/harness/session/session.ts`：`Session` 包装与 `assertJsonSerializable`（由 `Session.commitEntry` 调用，不在 storage 内重复）。[E: packages/agent/src/harness/session/session.ts:286]
 
-`ArraySessionIndex` 维护 append-order array、id map、leaf 与派生 projection。普通 entry 把 leaf 指向自己，`leaf` entry 则把 active leaf 指向 targetId；重复 id 会被拒绝。[E: packages/agent/src/harness/session/array-session-index.ts:58] [E: packages/agent/src/harness/session/array-session-index.ts:60] [E: packages/agent/src/harness/session/array-session-index.ts:72] [E: packages/agent/src/harness/session/array-session-index.ts:74] [E: packages/agent/src/harness/session/array-session-index.ts:78]
+## 数据模型
 
-name、label 与 token/cost stats 不是独立可变字段，而是 append/replace 时从 entries 更新的 projection。[E: packages/agent/src/harness/session/array-session-index.ts:24] [E: packages/agent/src/harness/session/array-session-index.ts:25] [E: packages/agent/src/harness/session/array-session-index.ts:32] [E: packages/agent/src/harness/session/array-session-index.ts:51] [E: packages/agent/src/harness/session/array-session-index.ts:54]
+每个 storage 保存一份 `structuredClone` 过的 `SessionMetadata`（`id` / `createdAt` / 可选 `parentSessionId`）和一份私有 `SessionState`。[E: packages/agent/src/harness/session/memory.ts:26] [E: packages/agent/src/harness/session/memory.ts:27] [E: packages/agent/src/harness/session/memory.ts:30]
 
-## 并发与生命周期
+repo 的 `sessions: Map<string, InMemorySessionStorage>` 以 session id 为键。没有 cwd、path、`sourceFormat` 或 application metadata 字段。[E: packages/agent/src/harness/session/memory.ts:149]
 
-`KeyedOperationQueue` 使同一 session id 的操作排队，list barrier 则等待所有 session key；内存 backend 没有配置跨 key 的全局并发上限。[E: packages/agent/src/harness/session/memory-repo.ts:29] [E: packages/agent/src/harness/session/keyed-operation-queue.ts:18] [E: packages/agent/src/harness/session/keyed-operation-queue.ts:32] [E: packages/agent/src/harness/session/keyed-operation-queue.ts:55]
+`appendEntry` 用 `requireLane(lane)` 取当前 leaf 作为 `parentId`，`nextSequence` 作为 `seq`，`Date.now()` 作为 `timestamp`，然后 apply `{ kind: "entry", lane, entry }`。[E: packages/agent/src/harness/session/memory.ts:60] [E: packages/agent/src/harness/session/memory.ts:62] [E: packages/agent/src/harness/session/memory.ts:68]
 
-async disposal 会永久标记 backend disposed 并 drain 已接收操作；后续 storage/repository 操作会抛 `SessionError("storage", ...)`。[E: packages/agent/src/harness/session/memory-repo.ts:83] [E: packages/agent/src/harness/session/memory-repo.ts:85] [E: packages/agent/src/harness/session/memory-repo.ts:86] [E: packages/agent/src/harness/session/memory-repo.ts:117] [E: packages/agent/src/harness/session/memory-repo.ts:118]
+`appendRecord` 同样补 `seq` / `timestamp`。若新 record 是 `operation_started` 且该 lane 已有 open operation，抛 `SessionError("storage", ... already has an open operation ...)`。[E: packages/agent/src/harness/session/memory.ts:75] [E: packages/agent/src/harness/session/memory.ts:77]
+
+## 控制流
+
+1. `InMemorySessionRepo.create@packages/agent/src/harness/session/memory.ts:151`：`id = options.id ?? uuidv7()`；Map 已有该 id 则 `already_exists`。新建 storage 的 `createdAt = Date.now()`，可选继承 `parentSessionId`。[E: packages/agent/src/harness/session/memory.ts:152] [E: packages/agent/src/harness/session/memory.ts:153] [E: packages/agent/src/harness/session/memory.ts:156]
+2. `open@packages/agent/src/harness/session/memory.ts:163` 按 `metadata.id` 取 storage；缺失则 `not_found`。[E: packages/agent/src/harness/session/memory.ts:164] [E: packages/agent/src/harness/session/memory.ts:189]
+3. `list@packages/agent/src/harness/session/memory.ts:167` 对 Map 中每个 storage `getMetadata()`，无过滤、无排序约定写在代码里（遍历顺序即 Map 插入顺序）。[E: packages/agent/src/harness/session/memory.ts:168]
+4. `delete@packages/agent/src/harness/session/memory.ts:171` 直接 `sessions.delete(metadata.id)`，不存在也不报错。[E: packages/agent/src/harness/session/memory.ts:172]
+5. `fork@packages/agent/src/harness/session/memory.ts:175`：目标 id 同样判重；`parentSessionId` 默认 `source.id`；`sourceStorage.fork` 新建空 storage，再对 `createForkMutations(options)` 逐条 `applyMutation`。[E: packages/agent/src/harness/session/memory.ts:177] [E: packages/agent/src/harness/session/memory.ts:180] [E: packages/agent/src/harness/session/memory.ts:33] [E: packages/agent/src/harness/session/memory.ts:35]
+6. `createLane` / `moveLane` / `setName` / `setLabel` 都先 validate，再 apply 一条带 `nextSequence` 的 lane 或 fact mutation。[E: packages/agent/src/harness/session/memory.ts:48] [E: packages/agent/src/harness/session/memory.ts:54] [E: packages/agent/src/harness/session/memory.ts:125] [E: packages/agent/src/harness/session/memory.ts:133]
 
 ## 设计动机与权衡
 
-内存与 JSONL 复用 `ArraySessionIndex`，因此 branch traversal、duplicate-id、leaf 与 projection 语义一致；差别只在 durable 写入与 repository metadata。[E: packages/agent/src/harness/session/memory-repo.ts:9] [E: packages/agent/src/harness/session/memory-repo.ts:24] [I]
+内存与 JSONL 共用 `SessionState`，因此 branch walk、duplicate id、lane 链接、open-operation 集合、stats 投影与 fork 选择语义一致；差别只在 durable 写入、metadata 形状、以及 JSONL 的文件修复/并发预约。[E: packages/agent/src/harness/session/memory.ts:27] [E: packages/agent/src/harness/session/state.ts:50] [I]
+
+每次读都 `structuredClone`，避免调用方 mutate 返回值污染内部 index。这比共享引用安全，但大 session 上有复制成本。[E: packages/agent/src/harness/session/memory.ts:93] [E: packages/agent/src/harness/session/memory.ts:97] [I]
 
 ## Gotcha
 
-- 这是易失的 repository：进程或 repository 实例结束后没有可重建介质，不能用它验证 reopen-from-disk 行为。[E: packages/agent/src/harness/session/memory-repo.ts:28] [I]
-- storage facade 每次读都按 id 查询 map；delete 后，既有 `Session` handle 的后续读取也会得到 `not_found`。[E: packages/agent/src/harness/session/memory-repo.ts:94] [E: packages/agent/src/harness/session/memory-repo.ts:121] [E: packages/agent/src/harness/session/memory-repo.ts:123]
-- `Session` 自己缓存 leaf 并串行 append；backend queue 只保证 persistence 操作按 session id 排队。[E: packages/agent/src/harness/session/session.ts:155] [E: packages/agent/src/harness/session/session.ts:237] [E: packages/agent/src/harness/session/memory-repo.ts:112]
+- 这是易失仓库：进程或 repo 实例结束后没有可重建介质，不能用它验证 reopen-from-disk、torn-tail 或 `renameFile` 行为。[E: packages/agent/src/harness/session/memory.ts:149] [I]
+- `delete` 只从 Map 移除。已经拿着该 storage 的 `Session` handle 仍指向同一对象，后续 append/read 会继续成功；这与“按 id 再 `open` 会 `not_found`”不同。[E: packages/agent/src/harness/session/memory.ts:172] [E: packages/agent/src/harness/session/memory.ts:164] [E: packages/agent/src/harness/session/memory.ts:189]
+- 内存 storage **没有** JSONL 那种 `enqueue` tail。同一 storage 上的并发 await 可能交错执行 `nextSequence` 与 `applyMutation`；conformance 测试按顺序 await，不覆盖这个竞态。[E: packages/agent/src/harness/session/memory.ts:59] [E: packages/agent/src/harness/session/memory.ts:68] [U]
+- `InMemorySessionRepo` 不实现 `AsyncDisposable`，也没有 disposed 开关；旧文档里的 disposal / `KeyedOperationQueue` 不再适用。[E: packages/agent/src/harness/session/memory.ts:148]
+- list 没有 cwd 过滤：内存 metadata 根本没有 `cwd`。[E: packages/agent/src/harness/session/memory.ts:167]
 
 ## 跨包边界
 
-本节点属于 `pi-agent-core` 的通用 harness，适合测试或无需 durable persistence 的宿主；`pi-coding-agent` 的产品 session manager 不由该 repository 替代。[I]
+本节点属于 `pi-agent-core` 通用 harness，适合测试与无需落盘的宿主。产品级 coding-agent session 文件与 JSONL v4 磁盘布局分别见 [ref.coding-agent.session-format](../../reference/session-format.md) 与 [subsys.agent-core.jsonl-storage](jsonl-storage.md)。[I]
+
+`session/index.ts` 通过 `export * from "./memory.ts"` 导出这两个 class，再由 `packages/agent/src/index.ts` 进入公共 API。[E: packages/agent/src/harness/session/index.ts:11]
 
 ## Sources
 
-- packages/agent/src/harness/session/memory-repo.ts
-- packages/agent/src/harness/session/array-session-index.ts
-- packages/agent/src/harness/session/keyed-operation-queue.ts
+- packages/agent/src/harness/session/memory.ts
+- packages/agent/src/harness/session/state.ts
 - packages/agent/src/harness/session/session.ts
 
 ## 相关
 
-- [subsys.agent-core.session-storage](session-storage.md)：repository/storage/Session 三层 contract。
-- [subsys.agent-core.tree-navigation](tree-navigation.md)：branch path、leaf 移动与 context projection。
+- [subsys.agent-core.session-storage](session-storage.md)：`SessionRepo` / `SessionStorage` / `SessionState` 契约。
+- [subsys.agent-core.tree-navigation](tree-navigation.md)：lane view、branch query、context 投影。

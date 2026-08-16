@@ -17,7 +17,7 @@ related:
   - subsys.coding-agent.keybindings
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > 键位匹配(keybinding matching)把 terminal raw input data 与 typed `KeyId` chord、再与 namespaced action id 连接起来: `matchesKey(data, keyId)` 判断一个具体 key 是否命中, `KeybindingsManager.matches(data, action)` 判断一个动作的 resolved keys 是否任一命中。
@@ -33,14 +33,14 @@ updated: 305c014dcc
 
 ## 职责边界
 
-`packages/tui/src/keys.ts` 负责 key identifier grammar、terminal sequence parsing 和 raw input matching;它导出 `KeyId`、`Key` helper、`matchesKey()`、`parseKey()`、Kitty protocol 状态函数等键盘基础 API [E: packages/tui/src/keys.ts:31] [E: packages/tui/src/keys.ts:38] [E: packages/tui/src/keys.ts:152] [E: packages/tui/src/keys.ts:163] [E: packages/tui/src/keys.ts:820] [E: packages/tui/src/keys.ts:1251]。`packages/tui/src/keybindings.ts` 负责 action registry、默认 TUI action definitions、user binding resolution、conflict reporting 和全局 manager singleton [E: packages/tui/src/keybindings.ts:7] [E: packages/tui/src/keybindings.ts:61] [E: packages/tui/src/keybindings.ts:180] [E: packages/tui/src/keybindings.ts:258]。
+`packages/tui/src/keys.ts` 负责 key identifier grammar、terminal sequence parsing 和 raw input matching;它导出 `KeyId`、`Key` helper、`matchesKey()`、`parseKey()`、Kitty protocol 状态函数等键盘基础 API [E: packages/tui/src/keys.ts:31] [E: packages/tui/src/keys.ts:38] [E: packages/tui/src/keys.ts:152] [E: packages/tui/src/keys.ts:163] [E: packages/tui/src/keys.ts:820] [E: packages/tui/src/keys.ts:1251]。`packages/tui/src/keybindings.ts` 负责 action registry、默认 TUI action definitions、user binding resolution、conflict reporting 和全局 manager singleton [E: packages/tui/src/keybindings.ts:7] [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:231] [E: packages/tui/src/keybindings.ts:309]。
 
 本节点讲 "raw data 是否命中某个 key/action";不展开 `parseKey()` 的完整 CSI-u parser 细节, 该细节属于 [subsys.tui.key-parsing](key-parsing.md) [I]。本节点也不逐项解释每个 TUI action 的用户含义, 逐项目录属于 [ref.tui.keybinding-actions](../../reference/keybinding-actions.md) [I]。
 
 ## 关键文件
 
 - `packages/tui/src/keys.ts`: 定义 `KeyId`、modifier bit mask、legacy sequence tables、Kitty / modifyOtherKeys matching helpers、`matchesKey()` 和 `parseKey()` [E: packages/tui/src/keys.ts:141] [E: packages/tui/src/keys.ts:292] [E: packages/tui/src/keys.ts:368] [E: packages/tui/src/keys.ts:394] [E: packages/tui/src/keys.ts:408] [E: packages/tui/src/keys.ts:653] [E: packages/tui/src/keys.ts:709] [E: packages/tui/src/keys.ts:820] [E: packages/tui/src/keys.ts:1251]。
-- `packages/tui/src/keybindings.ts`: 定义 `Keybindings` interface、`TUI_KEYBINDINGS`、`normalizeKeys()`、`KeybindingsManager` 和 global `getKeybindings()` / `setKeybindings()` [E: packages/tui/src/keybindings.ts:7] [E: packages/tui/src/keybindings.ts:61] [E: packages/tui/src/keybindings.ts:166] [E: packages/tui/src/keybindings.ts:180] [E: packages/tui/src/keybindings.ts:260] [E: packages/tui/src/keybindings.ts:264]。
+- `packages/tui/src/keybindings.ts`: 定义 `Keybindings` interface、`TUI_KEYBINDINGS`、`normalizeKeys()`、`KeybindingsManager` 和 global `getKeybindings()` / `setKeybindings()` [E: packages/tui/src/keybindings.ts:7] [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:217] [E: packages/tui/src/keybindings.ts:231] [E: packages/tui/src/keybindings.ts:311] [E: packages/tui/src/keybindings.ts:315]。
 
 ## 数据模型
 
@@ -48,18 +48,18 @@ updated: 305c014dcc
 
 `matchesKey()` 先用 `parseKeyId()` 把 key id lower-case 并按 `+` 拆分, 最后一段作为 base key, 其余段映射到 boolean modifier flags [E: packages/tui/src/keys.ts:788] [E: packages/tui/src/keys.ts:791] [E: packages/tui/src/keys.ts:792] [E: packages/tui/src/keys.ts:796] [E: packages/tui/src/keys.ts:797] [E: packages/tui/src/keys.ts:798] [E: packages/tui/src/keys.ts:799]。随后 `matchesKey()` 把这些 flags 叠成 bit mask: `shift=1`、`alt=2`、`ctrl=4`、`super=8` [E: packages/tui/src/keys.ts:292] [E: packages/tui/src/keys.ts:825] [E: packages/tui/src/keys.ts:826] [E: packages/tui/src/keys.ts:827] [E: packages/tui/src/keys.ts:828] [E: packages/tui/src/keys.ts:829]。
 
-`Keybindings` 是可 declaration merging 的 global keybinding registry, TUI 基础动作使用 `tui.editor.*`、`tui.input.*`、`tui.select.*` 与 `tui.altScreen.*` namespace [E: packages/tui/src/keybindings.ts:7] [E: packages/tui/src/keybindings.ts:9] [E: packages/tui/src/keybindings.ts:31] [E: packages/tui/src/keybindings.ts:36] [E: packages/tui/src/keybindings.ts:43] [E: packages/tui/src/keybindings.ts:48]。`KeybindingDefinition.defaultKeys` 支持单个 `KeyId` 或 `KeyId[]`, user config 也支持 action id 到 `KeyId | KeyId[] | undefined` 的映射 [E: packages/tui/src/keybindings.ts:53] [E: packages/tui/src/keybindings.ts:54] [E: packages/tui/src/keybindings.ts:59]。
+`Keybindings` 是可 declaration merging 的 global keybinding registry, TUI 基础动作使用 `tui.editor.*`、`tui.input.*`、`tui.select.*` 与 `tui.altScreen.*` namespace [E: packages/tui/src/keybindings.ts:7] [E: packages/tui/src/keybindings.ts:9] [E: packages/tui/src/keybindings.ts:33] [E: packages/tui/src/keybindings.ts:38] [E: packages/tui/src/keybindings.ts:45] [E: packages/tui/src/keybindings.ts:58]。`KeybindingDefinition.defaultKeys` 支持单个 `KeyId` 或 `KeyId[]`, user config 也支持 action id 到 `KeyId | KeyId[] | undefined` 的映射 [E: packages/tui/src/keybindings.ts:63] [E: packages/tui/src/keybindings.ts:64] [E: packages/tui/src/keybindings.ts:69]。
 
-`TUI_KEYBINDINGS` 是 TUI 层默认 action definitions, 当前源码有 37 个 `tui.*` action, 覆盖 editor navigation/editing、generic input、generic selection 和六个 alternate-screen viewport 动作 [E: packages/tui/src/keybindings.ts:61] [E: packages/tui/src/keybindings.ts:62] [E: packages/tui/src/keybindings.ts:125] [E: packages/tui/src/keybindings.ts:129] [E: packages/tui/src/keybindings.ts:141] [E: packages/tui/src/keybindings.ts:159] [I]。该对象用 `as const satisfies KeybindingDefinitions` 约束每项 shape [E: packages/tui/src/keybindings.ts:159]。
+`TUI_KEYBINDINGS` 是 TUI 层默认 action definitions, 当前源码有 37 个 `tui.*` action, 覆盖 editor navigation/editing、generic input、generic selection 和六个 alternate-screen viewport 动作 [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:72] [E: packages/tui/src/keybindings.ts:143] [E: packages/tui/src/keybindings.ts:147] [E: packages/tui/src/keybindings.ts:160] [E: packages/tui/src/keybindings.ts:210] [I]。该对象用 `as const satisfies KeybindingDefinitions` 约束每项 shape [E: packages/tui/src/keybindings.ts:210]。
 
 ## 控制流
 
-1. 调用方通过 `getKeybindings()` 获取全局 manager;如果还没有设置过 global manager, TUI 会用 `new KeybindingsManager(TUI_KEYBINDINGS)` 创建默认 manager [E: packages/tui/src/keybindings.ts:264] [E: packages/tui/src/keybindings.ts:265] [E: packages/tui/src/keybindings.ts:266]。由于 manager 暴露的是 `matches(data, action)` 布尔查询, 具体 UI context 可以自行决定要查询哪些 action [E: packages/tui/src/keybindings.ts:219] [I]。
-2. `KeybindingsManager` constructor 保存 definitions 与 user bindings, 然后调用 `rebuild()` 生成 `keysById` 和 `conflicts` [E: packages/tui/src/keybindings.ts:186] [E: packages/tui/src/keybindings.ts:187] [E: packages/tui/src/keybindings.ts:188] [E: packages/tui/src/keybindings.ts:189]。
-3. `rebuild()` 先扫描 `userBindings`;未知 action id 会被跳过, 已知 action 的 user keys 会经过 `normalizeKeys()` 去重后进入 `userClaims` [E: packages/tui/src/keybindings.ts:196] [E: packages/tui/src/keybindings.ts:197] [E: packages/tui/src/keybindings.ts:198] [E: packages/tui/src/keybindings.ts:199] [E: packages/tui/src/keybindings.ts:172] [E: packages/tui/src/keybindings.ts:174]。
-4. `rebuild()` 只把同一个 user-provided key 被多个 action claim 的情况加入 `conflicts`;默认键位之间的重复不会进入 `userClaims`, 因而不会由这里记录为 conflict [E: packages/tui/src/keybindings.ts:196] [E: packages/tui/src/keybindings.ts:206] [E: packages/tui/src/keybindings.ts:207] [E: packages/tui/src/keybindings.ts:208] [I]。
-5. 对每个 definition, `rebuild()` 若没有 user override 就使用 `definition.defaultKeys`, 若有 override 就使用 user keys;最终写入 `keysById` [E: packages/tui/src/keybindings.ts:212] [E: packages/tui/src/keybindings.ts:213] [E: packages/tui/src/keybindings.ts:214] [E: packages/tui/src/keybindings.ts:215]。
-6. `KeybindingsManager.matches(data, action)` 取出 action 的 resolved keys, 逐个调用 `matchesKey(data, key)`, 任一 key 命中即返回 true [E: packages/tui/src/keybindings.ts:219] [E: packages/tui/src/keybindings.ts:220] [E: packages/tui/src/keybindings.ts:221] [E: packages/tui/src/keybindings.ts:222] [E: packages/tui/src/keybindings.ts:224]。
+1. 调用方通过 `getKeybindings()` 获取全局 manager;如果还没有设置过 global manager, TUI 会用 `new KeybindingsManager(TUI_KEYBINDINGS)` 创建默认 manager [E: packages/tui/src/keybindings.ts:315] [E: packages/tui/src/keybindings.ts:316] [E: packages/tui/src/keybindings.ts:317]。由于 manager 暴露的是 `matches(data, action)` 布尔查询, 具体 UI context 可以自行决定要查询哪些 action [E: packages/tui/src/keybindings.ts:270] [I]。
+2. `KeybindingsManager` constructor 保存 definitions 与 user bindings, 然后调用 `rebuild()` 生成 `keysById` 和 `conflicts` [E: packages/tui/src/keybindings.ts:237] [E: packages/tui/src/keybindings.ts:238] [E: packages/tui/src/keybindings.ts:239] [E: packages/tui/src/keybindings.ts:240]。
+3. `rebuild()` 先扫描 `userBindings`;未知 action id 会被跳过, 已知 action 的 user keys 会经过 `normalizeKeys()` 去重后进入 `userClaims` [E: packages/tui/src/keybindings.ts:247] [E: packages/tui/src/keybindings.ts:248] [E: packages/tui/src/keybindings.ts:249] [E: packages/tui/src/keybindings.ts:250] [E: packages/tui/src/keybindings.ts:223] [E: packages/tui/src/keybindings.ts:225]。
+4. `rebuild()` 只把同一个 user-provided key 被多个 action claim 的情况加入 `conflicts`;默认键位之间的重复不会进入 `userClaims`, 因而不会由这里记录为 conflict [E: packages/tui/src/keybindings.ts:247] [E: packages/tui/src/keybindings.ts:257] [E: packages/tui/src/keybindings.ts:258] [E: packages/tui/src/keybindings.ts:259] [I]。
+5. 对每个 definition, `rebuild()` 若没有 user override 就使用 `definition.defaultKeys`, 若有 override 就使用 user keys;最终写入 `keysById` [E: packages/tui/src/keybindings.ts:263] [E: packages/tui/src/keybindings.ts:264] [E: packages/tui/src/keybindings.ts:265] [E: packages/tui/src/keybindings.ts:266]。
+6. `KeybindingsManager.matches(data, action)` 取出 action 的 resolved keys, 逐个调用 `matchesKey(data, key)`, 任一 key 命中即返回 true [E: packages/tui/src/keybindings.ts:270] [E: packages/tui/src/keybindings.ts:271] [E: packages/tui/src/keybindings.ts:272] [E: packages/tui/src/keybindings.ts:273] [E: packages/tui/src/keybindings.ts:275]。
 7. `matchesKey(data, keyId)` 在 special key switch 中优先处理 escape、space、tab、enter、backspace、functional keys、arrows 和 function keys;这些分支混合 raw bytes、legacy sequence tables、Kitty CSI-u 和 modifyOtherKeys matching helper [E: packages/tui/src/keys.ts:831] [E: packages/tui/src/keys.ts:836] [E: packages/tui/src/keys.ts:838] [E: packages/tui/src/keys.ts:853] [E: packages/tui/src/keys.ts:865] [E: packages/tui/src/keys.ts:883] [E: packages/tui/src/keys.ts:940] [E: packages/tui/src/keys.ts:981] [E: packages/tui/src/keys.ts:1050] [E: packages/tui/src/keys.ts:1128]。
 8. 如果 base key 是单个 letter、digit 或 known symbol, `matchesKey()` 用 codepoint 与 raw control-character rules 处理 printable keys;plain key 可直接匹配 raw char, modified key 主要走 Kitty 或 modifyOtherKeys, legacy `alt+letter/digit` 和 `ctrl+alt+key` 仅在 Kitty protocol inactive 时使用 ESC-prefixed forms [E: packages/tui/src/keys.ts:1149] [E: packages/tui/src/keys.ts:1155] [E: packages/tui/src/keys.ts:1162] [E: packages/tui/src/keys.ts:1167] [E: packages/tui/src/keys.ts:1183] [E: packages/tui/src/keys.ts:1192] [E: packages/tui/src/keys.ts:1200]。
 
@@ -79,22 +79,22 @@ Backspace 有一个 terminal-specific heuristic: raw `0x7f` 只匹配 plain back
 
 匹配层 deliberately accepts multiple terminal encodings for the same semantic key: `enter` can be raw carriage return, legacy numpad enter, Kitty enter, or Kitty keypad enter;`shift+enter` and `alt+enter` also distinguish Kitty-active custom mappings from legacy ESC-prefixed forms [E: packages/tui/src/keys.ts:880] [E: packages/tui/src/keys.ts:883] [E: packages/tui/src/keys.ts:895] [E: packages/tui/src/keys.ts:900] [E: packages/tui/src/keys.ts:914] [E: packages/tui/src/keys.ts:919] [E: packages/tui/src/keys.ts:921] [E: packages/tui/src/keys.ts:923] [E: packages/tui/src/keys.ts:924] [E: packages/tui/src/keys.ts:925] [I]。这让同一个 `KeyId` 可以跨 terminal protocol 命中, 代价是部分 legacy byte sequence 的语义依赖 `_kittyProtocolActive` 与平台环境 [I]。
 
-`KeybindingsManager` 的 conflict model 聚焦 user overrides, 而不是全局动作语义冲突;manager 只提供 per-action `matches(data, action)` 查询, 不在这里做跨 context dispatch [E: packages/tui/src/keybindings.ts:206] [E: packages/tui/src/keybindings.ts:219] [E: packages/tui/src/keybindings.ts:222] [I]。
+`KeybindingsManager` 的 conflict model 聚焦 user overrides, 而不是全局动作语义冲突;manager 只提供 per-action `matches(data, action)` 查询, 不在这里做跨 context dispatch [E: packages/tui/src/keybindings.ts:257] [E: packages/tui/src/keybindings.ts:270] [E: packages/tui/src/keybindings.ts:273] [I]。
 
 ## Gotcha
 
-- `parseKeyId()` lower-case 整个 key id, 所以 `pageUp` 在 matching switch 中实际以 `pageup` case 处理;`TUI_KEYBINDINGS` 中使用的 `pageUp` / `pageDown` 仍可命中 [E: packages/tui/src/keys.ts:791] [E: packages/tui/src/keys.ts:1020] [E: packages/tui/src/keys.ts:1032] [E: packages/tui/src/keybindings.ts:96] [E: packages/tui/src/keybindings.ts:97] [E: packages/tui/src/keybindings.ts:131] [E: packages/tui/src/keybindings.ts:132]。
-- `getResolvedBindings()` 把一个 action 的 resolved keys 序列化回 config shape: 单键返回 string, 多键返回 array, 零键也返回空 array [E: packages/tui/src/keybindings.ts:248] [E: packages/tui/src/keybindings.ts:250] [E: packages/tui/src/keybindings.ts:251] [E: packages/tui/src/keybindings.ts:252]。
-- `setUserBindings()` 会替换整份 user binding object 并 rebuild;它不是增量 patch [E: packages/tui/src/keybindings.ts:239] [E: packages/tui/src/keybindings.ts:240] [E: packages/tui/src/keybindings.ts:241]。
+- `parseKeyId()` lower-case 整个 key id, 所以 `pageUp` 在 matching switch 中实际以 `pageup` case 处理;`TUI_KEYBINDINGS` 中使用的 `pageUp` / `pageDown` 仍可命中 [E: packages/tui/src/keys.ts:791] [E: packages/tui/src/keys.ts:1020] [E: packages/tui/src/keys.ts:1032] [E: packages/tui/src/keybindings.ts:96] [E: packages/tui/src/keybindings.ts:96] [E: packages/tui/src/keybindings.ts:149] [E: packages/tui/src/keybindings.ts:150]。
+- `getResolvedBindings()` 把一个 action 的 resolved keys 序列化回 config shape: 单键返回 string, 多键返回 array, 零键也返回空 array [E: packages/tui/src/keybindings.ts:299] [E: packages/tui/src/keybindings.ts:301] [E: packages/tui/src/keybindings.ts:302] [E: packages/tui/src/keybindings.ts:303]。
+- `setUserBindings()` 会替换整份 user binding object 并 rebuild;它不是增量 patch [E: packages/tui/src/keybindings.ts:290] [E: packages/tui/src/keybindings.ts:291] [E: packages/tui/src/keybindings.ts:292]。
 - `matchesKey()` 对 `f1` 到 `f12` 的 modified forms 直接返回 false, 因为 function key switch 中 `modifier !== 0` 时不继续尝试 Kitty modified function-key matching [E: packages/tui/src/keys.ts:1128] [E: packages/tui/src/keys.ts:1140] [E: packages/tui/src/keys.ts:1141] [I]。
 
 ## 跨包边界
 
-[subsys.coding-agent.keybindings](../coding-agent/keybindings.md) 是 pi-coding-agent 的 product-level layer;本节点 source 只能证实 TUI 层提供可复用的 `KeybindingsManager`, coding-agent 层如何展开 `TUI_KEYBINDINGS`、添加 `app.*` actions、读取/迁移 `keybindings.json` 需在对应节点 source 中核验 [E: packages/tui/src/keybindings.ts:180] [U]。
+[subsys.coding-agent.keybindings](../coding-agent/keybindings.md) 是 pi-coding-agent 的 product-level layer;本节点 source 只能证实 TUI 层提供可复用的 `KeybindingsManager`, coding-agent 层如何展开 `TUI_KEYBINDINGS`、添加 `app.*` actions、读取/迁移 `keybindings.json` 需在对应节点 source 中核验 [E: packages/tui/src/keybindings.ts:231] [U]。
 
 [subsys.tui.key-parsing](key-parsing.md) 应覆盖 `parseKey()`、`parseKittySequence()`、`parseModifyOtherKeysSequence()` 怎样把 raw data 转成 key id;本节点只在 matching 需要时描述 parser 输出如何参与比较 [E: packages/tui/src/keys.ts:587] [E: packages/tui/src/keys.ts:696] [E: packages/tui/src/keys.ts:1251] [I]。
 
-[ref.tui.keybinding-actions](../../reference/keybinding-actions.md) 应逐项列出 `TUI_KEYBINDINGS` 的 action id、default keys 和 description;本节点只解释这些 definitions 如何被 manager resolve 与 match [E: packages/tui/src/keybindings.ts:61] [E: packages/tui/src/keybindings.ts:212] [E: packages/tui/src/keybindings.ts:219]。
+[ref.tui.keybinding-actions](../../reference/keybinding-actions.md) 应逐项列出 `TUI_KEYBINDINGS` 的 action id、default keys 和 description;本节点只解释这些 definitions 如何被 manager resolve 与 match [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:263] [E: packages/tui/src/keybindings.ts:270]。
 
 ## Sources
 

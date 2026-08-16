@@ -9,7 +9,7 @@ symbols: [lazyApi, lazyStream]
 related: [subsys.ai.wire-protocol-dispatch]
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `subsys.ai.lazy-loading` 描述 `pi-ai` 的 wire API 懒加载薄层: `lazyApi(load)` 把异步 API module loader 包装成 `ProviderStreams`, `lazyStream(model, setup)` 先同步返回外层 assistant event stream,再把 setup 成功或失败接入同一个 stream 协议。
@@ -36,25 +36,25 @@ updated: 305c014dcc
 
 `lazyStream(model, setup)` 的输入模型用于构造 setup error message: error message 会保留 `model.api`、`model.provider` 和 `model.id`,usage/cost 全部写零值,`stopReason` 写 `"error"`,并把 unknown error 转成 `errorMessage` 字符串。[E: packages/ai/src/api/lazy.ts:4][E: packages/ai/src/api/lazy.ts:8][E: packages/ai/src/api/lazy.ts:9][E: packages/ai/src/api/lazy.ts:10][E: packages/ai/src/api/lazy.ts:11][E: packages/ai/src/api/lazy.ts:19][E: packages/ai/src/api/lazy.ts:20]
 
-`lazyApi(load)` 返回一个 `ProviderStreams` 对象 literal,其中定义 `stream(model, context, options)` 和 `streamSimple(model, context, options)` 两个字段;二者都把调用包进 `lazyStream`,然后在 async setup 内等待 `load()` 并转调目标 module 的同名字段。[E: packages/ai/src/api/lazy.ts:68][E: packages/ai/src/api/lazy.ts:69][E: packages/ai/src/api/lazy.ts:70][E: packages/ai/src/api/lazy.ts:71][E: packages/ai/src/api/lazy.ts:72][E: packages/ai/src/api/lazy.ts:73]
+`lazyApi(load)` 返回一个 `ProviderStreams` 对象 literal,其中定义 `stream(model, context, options)` 和 `streamSimple(model, context, options)` 两个字段;二者都把调用包进 `lazyStream`,然后在 async setup 内等待 `load()` 并转调目标 module 的同名字段。[E: packages/ai/src/api/lazy.ts:68][E: packages/ai/src/api/lazy.ts:5][E: packages/ai/src/api/lazy.ts:75][E: packages/ai/src/api/lazy.ts:76][E: packages/ai/src/api/lazy.ts:77][E: packages/ai/src/api/lazy.ts:78]
 
-`load` 的类型是 `() => Promise<ProviderStreams>`,generic `lazyApi` 只依赖 Promise-returning loader contract,并在 `stream` / `streamSimple` 的 async setup 内 `await load()` 后转调目标 stream 字段。[E: packages/ai/src/api/lazy.ts:68][E: packages/ai/src/api/lazy.ts:71][E: packages/ai/src/api/lazy.ts:73] 动态 import implementation module 的说法来自本文件注释与各 wire wrapper 的惯例,实际 import specifier 不在本节点 source 内。[I]
+`load` 的类型是 `() => Promise<ProviderStreams>`,generic `lazyApi` 只依赖 Promise-returning loader contract,并在 `stream` / `streamSimple` 的 async setup 内 `await load()` 后转调目标 stream 字段。[E: packages/ai/src/api/lazy.ts:68][E: packages/ai/src/api/lazy.ts:76][E: packages/ai/src/api/lazy.ts:78] 动态 import implementation module 的说法来自本文件注释与各 wire wrapper 的惯例,实际 import specifier 不在本节点 source 内。[I]
 
 ## 控制流
 
 1. `lazyStream@packages/ai/src/api/lazy.ts:39` 先创建 `outer = new AssistantMessageEventStream()`,不等待 `setup` 完成就准备返回这个 outer stream。[E: packages/ai/src/api/lazy.ts:46][E: packages/ai/src/api/lazy.ts:50][E: packages/ai/src/api/lazy.ts:60]
 2. `setup()` 成功 resolve 为 `inner` 后,`lazyStream` 调用 `forwardStream(outer, inner)`;`forwardStream` 逐个 `for await` 读取 inner events 并 `target.push(event)`,inner 结束后调用 `target.end()`。[E: packages/ai/src/api/lazy.ts:25][E: packages/ai/src/api/lazy.ts:35][E: packages/ai/src/api/lazy.ts:36][E: packages/ai/src/api/lazy.ts:31][E: packages/ai/src/api/lazy.ts:52][E: packages/ai/src/api/lazy.ts:53]
 3. `setup()` reject 时,`lazyStream` 用 `createSetupErrorMessage(model, error)` 构造 terminal assistant message,向 outer stream push `{ type: "error", reason: "error", error: message }`,然后用同一个 message 调 `outer.end(message)`。[E: packages/ai/src/api/lazy.ts:54][E: packages/ai/src/api/lazy.ts:55][E: packages/ai/src/api/lazy.ts:56][E: packages/ai/src/api/lazy.ts:57]
-4. `lazyApi.stream` 调用 `lazyStream(model, async () => (await load()).stream(model, context, options))`;因此 module loading 和目标 `stream` 调用都发生在 lazy setup 阶段,而 caller 先拿到 `AssistantMessageEventStream`。[E: packages/ai/src/api/lazy.ts:70][E: packages/ai/src/api/lazy.ts:71][E: packages/ai/src/api/lazy.ts:50][E: packages/ai/src/api/lazy.ts:60]
-5. `lazyApi.streamSimple` 对 `streamSimple` 做同样包装,区别只在转调目标 `ProviderStreams.streamSimple` 字段。[E: packages/ai/src/api/lazy.ts:72][E: packages/ai/src/api/lazy.ts:73]
+4. `lazyApi.stream` 调用 `lazyStream(model, async () => (await load()).stream(model, context, options))`;因此 module loading 和目标 `stream` 调用都发生在 lazy setup 阶段,而 caller 先拿到 `AssistantMessageEventStream`。[E: packages/ai/src/api/lazy.ts:75][E: packages/ai/src/api/lazy.ts:76][E: packages/ai/src/api/lazy.ts:50][E: packages/ai/src/api/lazy.ts:60]
+5. `lazyApi.streamSimple` 对 `streamSimple` 做同样包装,区别只在转调目标 `ProviderStreams.streamSimple` 字段。[E: packages/ai/src/api/lazy.ts:77][E: packages/ai/src/api/lazy.ts:78]
 
 ## error / edge
 
 setup error message 按 `AssistantMessage` 返回: `content` 是空数组,usage/cost 全为零,`timestamp` 在错误发生时写入,并把 `error instanceof Error ? error.message : String(error)` 保存到 `errorMessage`。[E: packages/ai/src/api/lazy.ts:4][E: packages/ai/src/api/lazy.ts:7][E: packages/ai/src/api/lazy.ts:11][E: packages/ai/src/api/lazy.ts:12][E: packages/ai/src/api/lazy.ts:13][E: packages/ai/src/api/lazy.ts:14][E: packages/ai/src/api/lazy.ts:15][E: packages/ai/src/api/lazy.ts:16][E: packages/ai/src/api/lazy.ts:17][E: packages/ai/src/api/lazy.ts:20][E: packages/ai/src/api/lazy.ts:21]
 
-`lazyStream` 的失败分支覆盖 `setup()` reject。当 `lazyApi` 的 loader 或目标 stream 建立前的逻辑在 setup 内 reject 时,这些失败会被编码为 stream 内 `error` event。[E: packages/ai/src/api/lazy.ts:52][E: packages/ai/src/api/lazy.ts:54][E: packages/ai/src/api/lazy.ts:56][E: packages/ai/src/api/lazy.ts:57][E: packages/ai/src/api/lazy.ts:71][E: packages/ai/src/api/lazy.ts:73] auth resolution、lazy module loading 和 setup failure 同属该异步边界的说法来自源码注释,按注释-only 处理。[I]
+`lazyStream` 的失败分支覆盖 `setup()` reject。当 `lazyApi` 的 loader 或目标 stream 建立前的逻辑在 setup 内 reject 时,这些失败会被编码为 stream 内 `error` event。[E: packages/ai/src/api/lazy.ts:52][E: packages/ai/src/api/lazy.ts:54][E: packages/ai/src/api/lazy.ts:56][E: packages/ai/src/api/lazy.ts:57][E: packages/ai/src/api/lazy.ts:76][E: packages/ai/src/api/lazy.ts:78] auth resolution、lazy module loading 和 setup failure 同属该异步边界的说法来自源码注释,按注释-only 处理。[I]
 
-`lazy.ts` 没有手写 module memoization state;从本文件能确认 `lazyApi` 每次 stream call 都会等待 `load()`。[E: packages/ai/src/api/lazy.ts:68][E: packages/ai/src/api/lazy.ts:70][E: packages/ai/src/api/lazy.ts:71][E: packages/ai/src/api/lazy.ts:72][E: packages/ai/src/api/lazy.ts:73] load dedupe 归给 host import cache 的说法来自源码注释,不是 `lazyApi` 自己缓存,按注释-only 处理。[I]
+`lazy.ts` 没有手写 module memoization state;从本文件能确认 `lazyApi` 每次 stream call 都会等待 `load()`。[E: packages/ai/src/api/lazy.ts:68][E: packages/ai/src/api/lazy.ts:75][E: packages/ai/src/api/lazy.ts:76][E: packages/ai/src/api/lazy.ts:77][E: packages/ai/src/api/lazy.ts:78] load dedupe 归给 host import cache 的说法来自源码注释,不是 `lazyApi` 自己缓存,按注释-only 处理。[I]
 
 ## 跨包边界
 

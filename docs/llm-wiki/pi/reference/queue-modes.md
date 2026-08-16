@@ -12,7 +12,7 @@ related:
   - subsys.agent-core.message-queue
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `ref.agent.queue-modes` 是 `QueueMode` 的逐实例目录:覆盖 `"all"` 与 `"one-at-a-time"` 两个队列排空模式、它们在 steering/follow-up queue 上的默认绑定,以及 `PendingMessageQueue.drain()` 的实现语义边界。
@@ -44,7 +44,7 @@ updated: 305c014dcc
 
 `Agent.steeringMode` setter 直接写 `this.steeringQueue.mode`,getter 读回同一字段;`Agent.followUpMode` setter/getter 对 `followUpQueue.mode` 做同样操作。因此运行时改 mode 只影响后续 drain,不会重排或修改已经 queued 的 `AgentMessage[]` 内容。[I][E: packages/agent/src/agent.ts:275][E: packages/agent/src/agent.ts:266][E: packages/agent/src/agent.ts:279][E: packages/agent/src/agent.ts:270][E: packages/agent/src/agent.ts:274][E: packages/agent/src/agent.ts:275][E: packages/agent/src/agent.ts:278][E: packages/agent/src/agent.ts:279]
 
-`Agent.createLoopConfig()` 把 `steeringQueue.drain()` 暴露成 `getSteeringMessages`,把 `followUpQueue.drain()` 暴露成 `getFollowUpMessages`;底层 loop 何时调用这些 hooks 属于 `subsys.agent-core.message-queue` / `subsys.agent-core.turn-control` 的控制流范围,本 reference 节点只枚举 `QueueMode` 值域与 drain 行为。[I][E: packages/agent/src/agent.ts:471][E: packages/agent/src/agent.ts:476][E: packages/agent/src/agent.ts:478]
+`Agent.createLoopConfig()` 把 `steeringQueue.drain()` 暴露成 `getSteeringMessages`,把 `followUpQueue.drain()` 暴露成 `getFollowUpMessages`;底层 loop 何时调用这些 hooks 属于 `subsys.agent-core.message-queue` / `subsys.agent-core.turn-control` 的控制流范围,本 reference 节点只枚举 `QueueMode` 值域与 drain 行为。[I][E: packages/agent/src/agent.ts:475][E: packages/agent/src/agent.ts:480][E: packages/agent/src/agent.ts:482]
 
 ## 边界与 Gotcha
 

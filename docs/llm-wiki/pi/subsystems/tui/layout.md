@@ -24,7 +24,7 @@ related:
   - subsys.tui.diff-engine
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > 新 viewport layout engine 把 line-oriented components 组织为固定尺寸的 stack/scroll 几何树，并负责 clip、scrollbar、图片裁剪与 pointer hit testing。
@@ -41,21 +41,21 @@ updated: 305c014dcc
 
 `ScrollView` 只支持 vertical axis，并公开 follow-end、primary、overscroll chain/contain 与 hidden/auto/always scrollbar。[E: packages/tui/src/components/scroll-view.ts:4] [E: packages/tui/src/components/scroll-view.ts:6] [E: packages/tui/src/components/scroll-view.ts:8] [E: packages/tui/src/components/scroll-view.ts:9] [E: packages/tui/src/components/scroll-view.ts:10] [E: packages/tui/src/components/scroll-view.ts:11]
 
-`scrollBy()` 返回未消费的 delta，供 nested ScrollView 继续向外 chain；follow-end 会在内容增长时更新到新的 bottom，手动离开底部后停止追随。[E: packages/tui/src/components/scroll-view.ts:124] [E: packages/tui/src/components/scroll-view.ts:137] [E: packages/tui/src/components/scroll-view.ts:163] [E: packages/tui/src/components/scroll-view.ts:168]
+`scrollBy()` 返回未消费的 delta，供 nested ScrollView 继续向外 chain；follow-end 会在内容增长时更新到新的 bottom，手动离开底部后停止追随。[E: packages/tui/src/components/scroll-view.ts:140] [E: packages/tui/src/components/scroll-view.ts:153] [E: packages/tui/src/components/scroll-view.ts:181] [E: packages/tui/src/components/scroll-view.ts:186]
 
-`always` scrollbar在宽度大于 1 时永久保留最右列；`auto` 只在滚动/hover activity 后暂时显示，并覆盖内容列而不永久占宽。[E: packages/tui/src/components/scroll-view.ts:65] [E: packages/tui/src/components/scroll-view.ts:80] [E: packages/tui/src/components/scroll-view.ts:84]
+`always` scrollbar在宽度大于 1 时永久保留最右列；`auto` 只在滚动/hover activity 后暂时显示，并覆盖内容列而不永久占宽。[E: packages/tui/src/components/scroll-view.ts:71] [E: packages/tui/src/components/scroll-view.ts:86] [E: packages/tui/src/components/scroll-view.ts:90]
 
 ## Frame 构建与绘制
 
-`renderLayoutFrame()` 每帧创建 render cache和 `LayoutBox` tree，把 root 限制在 terminal width/height，然后 paint 到固定高度 lines。[E: packages/tui/src/layout.ts:345] [E: packages/tui/src/layout.ts:353] [E: packages/tui/src/layout.ts:359] [E: packages/tui/src/layout.ts:365] [E: packages/tui/src/layout.ts:366]
+`renderLayoutFrame()` 每帧创建 render cache和 `LayoutBox` tree，把 root 限制在 terminal width/height，然后 paint 到固定高度 lines。[E: packages/tui/src/layout.ts:353] [E: packages/tui/src/layout.ts:361] [E: packages/tui/src/layout.ts:367] [E: packages/tui/src/layout.ts:373] [E: packages/tui/src/layout.ts:374]
 
-paint 只遍历 clip 内的 rows；Kitty image 在 box bottom 或滚动 viewport top 被裁切时重建 placement，最后再绘制 scrollbar thumb。[E: packages/tui/src/layout.ts:304] [E: packages/tui/src/layout.ts:307] [E: packages/tui/src/layout.ts:313] [E: packages/tui/src/layout.ts:325] [E: packages/tui/src/layout.ts:342]
+paint 只遍历 clip 内的 rows；Kitty image 在 box bottom 或滚动 viewport top 被裁切时重建 placement，最后再绘制 scrollbar thumb。[E: packages/tui/src/layout.ts:304] [E: packages/tui/src/layout.ts:307] [E: packages/tui/src/layout.ts:313] [E: packages/tui/src/layout.ts:333] [E: packages/tui/src/layout.ts:350]
 
-scrollbar thumb 最少 2 行（track 不足时跟随 track），位置按 content/viewport 比例计算；`getScrollViewsAt()` 返回命中点的 ScrollViews，按 deepest-first 排序。[E: packages/tui/src/layout.ts:266] [E: packages/tui/src/layout.ts:272] [E: packages/tui/src/layout.ts:279] [E: packages/tui/src/layout.ts:392] [E: packages/tui/src/layout.ts:400]
+scrollbar thumb 最少 2 行（track 不足时跟随 track），位置按 content/viewport 比例计算；`getScrollViewsAt()` 返回命中点的 ScrollViews，按 deepest-first 排序。[E: packages/tui/src/layout.ts:266] [E: packages/tui/src/layout.ts:272] [E: packages/tui/src/layout.ts:279] [E: packages/tui/src/layout.ts:400] [E: packages/tui/src/layout.ts:408]
 
 ## Gotchas
 
-- `LAYOUT_NODE`、`LayoutNode` 和 `renderLayoutFrame()` 没有从 package root 导出；公开 authoring surface 是 `HStack/VStack/ScrollView`，不是自定义 layout node。[E: packages/tui/src/index.ts:16] [E: packages/tui/src/index.ts:21] [E: packages/tui/src/index.ts:33]
+- `LAYOUT_NODE`、`LayoutNode` 和 `renderLayoutFrame()` 没有从 package root 导出；公开 authoring surface 是 `HStack/VStack/ScrollView`，不是自定义 layout node。[E: packages/tui/src/index.ts:16] [E: packages/tui/src/index.ts:21] [E: packages/tui/src/index.ts:38]
 - 多个 explicit `primary:true` 没有唯一性校验；遍历时后遇到的 primary 会覆盖前者。[E: packages/tui/src/layout.ts:147]
 - `align` 目前只在 HStack 的 cross-axis 分支消费；不要把它描述成 VStack 的水平对齐能力。[E: packages/tui/src/layout.ts:216]
 

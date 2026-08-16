@@ -21,7 +21,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `SessionLease` 是 `PiClient` 的本地 attachment ownership token：shared leases 可并存，exclusive lease 与任意其它本地 lease 互斥；最后一个 lease release 才发送 protocol `detach`。[E: packages/client/src/session-handle.ts:13][E: packages/client/src/session-handle.ts:15][E: packages/client/src/session-handle.ts:19][E: packages/client/src/client.ts:381][E: packages/client/src/client.ts:383][E: packages/client/src/client.ts:386][E: packages/client/src/client.ts:390][E: packages/client/src/client.ts:391]

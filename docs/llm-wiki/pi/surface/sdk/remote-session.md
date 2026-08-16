@@ -18,11 +18,11 @@ symbols:
   - selectTranscript
 related:
   - surface.sdk.embedding
-  - surface.modes.rpc
-  - subsys.server.message-protocol
+  - subsys.protocol.wire-protocol
+  - subsys.client.remote-session-client
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `surface.sdk.remote-session` 描述 `@earendil-works/pi-coding-agent/client` 的 public client facade：它在 `PiClient`/protocol lease 上封装单个远程 session 的 attach、input、model/thinking control、reconnect、transcript reduction 与 disposal。
@@ -38,7 +38,7 @@ updated: 305c014dcc
 
 package manifest 把 `./client` 映射到 `dist/client/index.js` 与对应 declaration，并显式依赖 `pi-client`、`pi-protocol`;这与主包 `.` 和 `./rpc-entry` 是并列 public subpath [E: packages/coding-agent/package.json:14] [E: packages/coding-agent/package.json:19] [E: packages/coding-agent/package.json:22] [E: packages/coding-agent/package.json:23] [E: packages/coding-agent/package.json:24] [E: packages/coding-agent/package.json:48] [E: packages/coding-agent/package.json:49]。client index 导出 `RemoteSession`、options/state/lifecycle types 和 transcript reducer helpers [E: packages/coding-agent/src/client/index.ts:1] [E: packages/coding-agent/src/client/index.ts:8] [E: packages/coding-agent/src/client/index.ts:9] [E: packages/coding-agent/src/client/index.ts:15]。
 
-`RemoteSessionLifecycle` 有 `unbound`、`ready`、携带 operation 的 `busy`、`disposed` 四态；operation union 是 `open/create/submit/abort/setModel/setThinking/reconnect` [E: packages/coding-agent/src/client/remote-session.ts:26] [E: packages/coding-agent/src/client/remote-session.ts:28] [E: packages/coding-agent/src/client/remote-session.ts:32]。public state 同时暴露 lifecycle、optional snapshot 和 reduced transcript；另外 getters 可直接读取 id、phase、current operation、server models/sessions 与 connection state [E: packages/coding-agent/src/client/remote-session.ts:34] [E: packages/coding-agent/src/client/remote-session.ts:37] [E: packages/coding-agent/src/client/remote-session.ts:88] [E: packages/coding-agent/src/client/remote-session.ts:104] [E: packages/coding-agent/src/client/remote-session.ts:108] [E: packages/coding-agent/src/client/remote-session.ts:112] [E: packages/coding-agent/src/client/remote-session.ts:116] [E: packages/coding-agent/src/client/remote-session.ts:120]。
+`RemoteSessionLifecycle` 有 `unbound`、`ready`、携带 operation 的 `busy`、`disposed` 四态；operation union 是 `open/create/submit/abort/setModel/setThinking/reconnect` [E: packages/coding-agent/src/client/remote-session.ts:26] [E: packages/coding-agent/src/client/remote-session.ts:28] [E: packages/coding-agent/src/client/remote-session.ts:32]。public state 同时暴露 lifecycle、optional snapshot 和 reduced transcript；另外 getters 可直接读取 id、phase、current operation、server models、`SessionMetadata[]` sessions 与 connection state [E: packages/coding-agent/src/client/remote-session.ts:34] [E: packages/coding-agent/src/client/remote-session.ts:37] [E: packages/coding-agent/src/client/remote-session.ts:112] [E: packages/coding-agent/src/client/remote-session.ts:116]。`sessions` 来自 `PiClient.snapshot.sessions`,类型是 protocol `SessionMetadata`,不再是旧 list summary [E: packages/coding-agent/src/client/remote-session.ts:12] [E: packages/coding-agent/src/client/remote-session.ts:116] [E: packages/coding-agent/src/client/remote-session.ts:117]。
 
 `subscribe()` 会先注册 listener 并立即用 current state 回调；listener error 交给 optional `onListenerError`,而 diagnostics callback 自己的异常也不会影响 session/transport state [E: packages/coding-agent/src/client/remote-session.ts:128] [E: packages/coding-agent/src/client/remote-session.ts:131] [E: packages/coding-agent/src/client/remote-session.ts:371] [E: packages/coding-agent/src/client/remote-session.ts:375] [E: packages/coding-agent/src/client/remote-session.ts:379] [E: packages/coding-agent/src/client/remote-session.ts:382]。
 
@@ -79,5 +79,5 @@ progress 的 started/updated/finished 事件更新 overlay；finished 同时清�
 ## 相关
 
 - [surface.sdk.embedding](embedding.md): local `AgentSession` embedding API 与 runtime factory。
-- [surface.modes.rpc](../modes/rpc.md): coding-agent stdin/stdout RPC mode。
-- [subsys.server.message-protocol](../../subsystems/server/message-protocol.md): server snapshot、progress 与 command protocol。
+- [subsys.protocol.wire-protocol](../../subsystems/protocol/wire-protocol.md): remote session 的 wire schema,包括 `SessionMetadata` 与 snapshot/progress。
+- [subsys.client.remote-session-client](../../subsystems/client/remote-session-client.md): transport-neutral `PiClient` 与 exclusive lease。

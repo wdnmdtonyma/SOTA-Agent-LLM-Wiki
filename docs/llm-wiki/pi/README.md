@@ -18,15 +18,15 @@
 - **真源码**:pi 是公开真实工程,**git 仓 + 各包测试(`./test.sh`)+ 完整 `packages/coding-agent/docs/`(30 篇)**。证据以 `[E]` 为主;**staleness 用 pi git SHA**,节点 `updated:` 记 fill 时的 pi HEAD 10 位短 SHA。
 - **TypeScript monorepo**:Node ≥22 / Bun 双运行时,Biome + TypeScript native(tsgo)。源路径一律相对 `pi/`(如 `packages/coding-agent/src/...`)。
 - **★ 分层栈 = 全 wiki 的组织主线**:pi 把"可复用运行时"与"产品"分层:
-  - **`pi-ai`** = 多 provider 统一 LLM API(39 built-in runtime provider，其中 38 个有静态模型目录；10 wire 协议；auth/oauth；官方 0.83.0 制品 + target Baseten snapshot 共 1,169 模型)。
-  - **`pi-agent-core`** = **可复用** agent 运行时 harness:agent-loop(turn → provider stream → 工具调用 → state)、会话树存储、压缩/分支总结、skills、system-prompt。任何 app 都能拿它建 agent。
+  - **`pi-ai`** = 多 provider 统一 LLM API(40 built-in runtime provider，其中 39 个有静态模型结构目录；10 wire 协议；auth/oauth)。完整模型值在 generated/gitignored JSON。
+  - **`pi-agent-core`** = **可复用** agent 运行时 harness:agent-loop(turn → provider stream → 工具调用 → state)、v4 lane-based `Session`/`SessionRepo`、压缩/分支总结、skills、system-prompt、harness events。任何 app 都能拿它建 agent。
   - **`pi-coding-agent`** = **产品**:7 个内置工具(bash/read/edit/write/grep/find/ls)、**扩展系统(自扩展招牌)**、skills、slash 命令、三种模式(interactive TUI / RPC / print)、配置/信任/会话管理。
-  - **`pi-tui`** = 独立可复用的差分渲染终端 UI 库(渲染循环、编辑器、键盘协议、autocomplete)。
+  - **`pi-tui`** = 独立可复用的差分渲染终端 UI 库(渲染循环、编辑器、键盘协议、LaTeX、fullscreen search)。
   - **`pi-protocol`** = 远程 session 的 TypeBox wire schema + CBOR/framing；**`pi-client`** = transport-neutral client 与 Unix transport。
-  - **`pi-server`** = **实验性** composable remote-session server；旧多实例 RPC/IPC/Radius 链路保留在 `legacy` export/bin 下。
-  - **`pi-storage-sqlite-node`** = 可选的 Node SQLite session backend；**`pi-evals`** = private 行为评测 consumer。
-  - 根发布脚本发布 ai/agent/protocol/client/storage/tui/coding-agent 七包；server 与 private evals 是源码 workspace，不在该发布列表。
-  - 每个节点 frontmatter 带 `pkg: ai | agent | protocol | client | coding-agent | tui | server | storage | evals | cross`,使分层可 grep。**`agent`(可复用)↔ `coding-agent`(产品)的边界、扩展系统与远程 session 链是 pi 的画像主线**。
+  - **`pi-server`** = **实验性** composable remote-session server。legacy 多实例 JSONL IPC/supervisor/Radius 已删除。
+  - **`pi-session-backend-sqlite-node`** = 可选的 Node SQLite v4 session backend；**`pi-telemetry`** = vendor-neutral telemetry contracts；**`pi-evals`** = private 行为评测 consumer。
+  - 根 build 顺序为 tui → telemetry → ai → agent → session-backends/sqlite-node → protocol → client → server → coding-agent。
+  - 每个节点 frontmatter 带 `pkg: ai | agent | protocol | client | coding-agent | tui | server | session-backends | telemetry | evals | cross`,使分层可 grep。**`agent`(可复用)↔ `coding-agent`(产品)的边界、扩展系统与远程 session 链是 pi 的画像主线**。
 - **范围**:**全 monorepo 同深度**——含 TUI 渲染细节、实验性 server,均逐子系统覆盖。
 
 ## 结构
@@ -63,13 +63,13 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **202 个节点全部 verified 于 pi `305c014dcc`**。本次 follow-up 从 `c1019d9202` 前进 2 commits：terminal color-scheme parser 接受 batched `?997;1n/2n` reports 并按末条决定 scheme；remote-session auth 从 strict hello/server core 移到 transport establishment，protocol 固定为 version 1。无新增或退役 Wiki 节点，provider/model/env 等 catalog 计数不变。审计见 `_UPDATE-SCOPE.md` 与 `_research/`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **197 个节点全部 verified 于 pi `086c32e745`**。本轮从 `305c014dcc` 前进 317 commits（v0.84.0–v0.84.2 + Copilot login 修复）：harness v4 session API、storage 改名为 session-backends、抽出 `pi-telemetry`、删除 legacy server、新增 Qwen Token Plan Individual / TUI LaTeX / fullscreen search。审计见 `_UPDATE-SCOPE.md`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱(9)+ worked traces(3) | 12 | ✅ 完成 |
 | T1 surface | tools、CLI、modes、config、providers、extensions 与其它用户可见面 | 34 | ✅ 完成 |
-| T2 subsystems | ai(27)+ agent-core(21)+ protocol(2)+ client(3)+ coding-agent(33)+ tui(20)+ server(12)+ storage(1)+ evals(2) | 121 | ✅ 完成 |
-| T3 reference | ai(6)+ agent-core(8)+ coding-agent(13)+ tui(3)+ server(2)+ cross(3) | 35 | ✅ 完成 |
+| T2 subsystems | ai(28)+ agent-core(22)+ protocol(2)+ client(3)+ coding-agent(33)+ tui(22)+ server(4)+ session-backends(1)+ telemetry(1)+ evals(2) | 118 | ✅ 完成 |
+| T3 reference | ai(6)+ agent-core(8)+ coding-agent(13)+ tui(3)+ cross(3) | 33 | ✅ 完成 |
 
 后续更新以 `RUN.md` 的 L1→L2→L3 流程、`index.json.updated` 与节点 `updated` 为 staleness 门槛。

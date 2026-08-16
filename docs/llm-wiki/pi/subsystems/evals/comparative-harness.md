@@ -33,7 +33,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > Pi comparative eval 层把 baseline/candidate/repetition 编成稳定 iteration metadata，把每次真实 harness run 绑定到 Vitest task，并输出成对 correctness lift 与独立效率 delta。

@@ -18,7 +18,7 @@ related:
   - subsys.server.unix-transport
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `@earendil-works/pi-client/unix` 是显式 opt-in 的 Node-compatible Unix-domain socket `ByteTransportFactory`；root client 保持 runtime-neutral，Unix subpath 才 import `node:net`。[E: packages/client/package.json:13][E: packages/client/package.json:14][E: packages/client/package.json:15][E: packages/client/src/unix.ts:1][E: packages/client/src/unix.ts:13][E: packages/client/src/unix.ts:13]

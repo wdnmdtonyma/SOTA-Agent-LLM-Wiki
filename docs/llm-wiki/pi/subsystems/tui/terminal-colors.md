@@ -15,7 +15,7 @@ related:
   - subsys.coding-agent.theme-controller
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `subsys.tui.terminal-colors` 描述 pi-tui 的 terminal color protocol parser: 它把 terminal 返回的 OSC 11 background color response 和 CSI color-scheme report 解析成 `RgbColor` 或 `TerminalColorScheme`。
@@ -73,7 +73,7 @@ Hash-hex branch 只接受 6 或 12 digit, 而 slash-separated branch 的每个 c
 - `value.replace(/^rgba?:/i, "")` 只移除开头的 `rgb:` 或 `rgba:`;没有该 prefix 的 slash-separated payload 也会继续按 `red/green/blue` 解析 [E: packages/tui/src/terminal-colors.ts:56] [E: packages/tui/src/terminal-colors.ts:57] [I]。
 - `parseOscHexChannel` 的 regex 要求 channel 至少一个 hex digit, 所以 empty channel 会返回 `undefined` [E: packages/tui/src/terminal-colors.ts:18] [E: packages/tui/src/terminal-colors.ts:19] [I]。
 - `parseTerminalColorSchemeReport` 的 `"dark"` default 只发生在 regex 已保证最后一条 capture 为 `"1"` 或 `"2"` 之后；单条或 batch 中出现 `?997;3n` 都不会匹配。[E: packages/tui/src/terminal-colors.ts:29] [E: packages/tui/src/terminal-colors.ts:72] [E: packages/tui/test/terminal-colors.test.ts:120]
-- 默认 `ProcessTerminal` 会经 `StdinBuffer` 把一个 raw chunk 中的完整 CSI sequences 分别 emit；所以 parser 的 batch 分支主要覆盖其他 `Terminal` adapter 或直接把合并字符串交给 parser/consumer 的调用路径，不能据此推断默认 stdin path 只回调一次。[E: packages/tui/src/stdin-buffer.ts:192] [E: packages/tui/src/stdin-buffer.ts:207] [E: packages/tui/src/stdin-buffer.ts:231] [E: packages/tui/src/terminal.ts:181] [E: packages/tui/src/terminal.ts:191] [I]
+- 默认 `ProcessTerminal` 会经 `StdinBuffer` 把一个 raw chunk 中的完整 CSI sequences 分别 emit；所以 parser 的 batch 分支主要覆盖其他 `Terminal` adapter 或直接把合并字符串交给 parser/consumer 的调用路径，不能据此推断默认 stdin path 只回调一次。[E: packages/tui/src/stdin-buffer.ts:194] [E: packages/tui/src/stdin-buffer.ts:209] [E: packages/tui/src/stdin-buffer.ts:233] [E: packages/tui/src/terminal.ts:208] [E: packages/tui/src/terminal.ts:218] [I]
 
 ## 跨包边界
 

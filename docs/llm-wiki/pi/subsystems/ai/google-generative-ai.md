@@ -10,6 +10,7 @@ source:
   - packages/ai/src/api/google-vertex.ts
   - packages/ai/src/api/google-generative-ai.lazy.ts
   - packages/ai/src/providers/google.ts
+  - packages/ai/test/google-raw-stop-reason.test.ts
 symbols:
   - stream
   - GoogleOptions
@@ -18,7 +19,7 @@ related:
   - subsys.ai.google-vertex
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `subsys.ai.google-generative-ai` 描述 `pi-ai` 如何把统一 `Context` 和 `GoogleOptions` 转成 Gemini Developer API `generateContentStream` 请求,并把 Google SDK stream 归一回 `AssistantMessageEventStream`。
@@ -30,6 +31,7 @@ updated: 305c014dcc
 - `Context.messages` 如何转成 Gemini `Content[]`,包括文本、图片、thinking、tool call 和 tool result?
 - `context.tools` 与 `toolChoice` 如何转成 Gemini function declarations 和 function calling mode?
 - Google SDK streaming chunk 如何被转换成 pi 的 text/thinking/toolcall/done/error 事件?
+- `MAX_TOKENS` 同时带 tool call 时 stop reason 是 `length` 还是 `toolUse`?
 - Google Generative AI 与 Google Vertex AI 在认证、endpoint、thinking enum 和项目/地域参数上有什么差异?
 
 ## 职责边界
@@ -46,7 +48,7 @@ updated: 305c014dcc
 
 `createClient` 把 `model.baseUrl` 写入 SDK `httpOptions.baseUrl`,同时把 `apiVersion` 清空,因为该 base URL 已经包含版本路径;`model.headers` 和 `options.headers` 经 `providerHeadersToRecord` 合并后作为 SDK HTTP headers。[E: packages/ai/src/api/google-generative-ai.ts:334][E: packages/ai/src/api/google-generative-ai.ts:340][E: packages/ai/src/api/google-generative-ai.ts:342][E: packages/ai/src/api/google-generative-ai.ts:344][E: packages/ai/src/api/google-generative-ai.ts:349]
 
-`buildParams` 负责把 `Context` 转为 `GenerateContentParameters`:它调用 shared `convertMessages`,把 `temperature` 和 `maxTokens` 转成 `GenerateContentConfig.temperature` 和 `maxOutputTokens`,把 `context.systemPrompt` 转成 `systemInstruction`,把 `context.tools` 转成 Gemini `tools`,最后返回 `{ model, contents, config }`。[E: packages/ai/src/api/google-generative-ai.ts:355][E: packages/ai/src/api/google-generative-ai.ts:360][E: packages/ai/src/api/google-generative-ai.ts:363][E: packages/ai/src/api/google-generative-ai.ts:367][E: packages/ai/src/api/google-generative-ai.ts:373][E: packages/ai/src/api/google-generative-ai.ts:375][E: packages/ai/src/api/google-generative-ai.ts:376][E: packages/ai/src/api/google-generative-ai.ts:402]
+`buildParams` 负责把 `Context` 转为 `GenerateContentParameters`:它调用 shared `convertMessages`,把 `temperature` 和 `maxTokens` 转成 `GenerateContentConfig.temperature` 和 `maxOutputTokens`,把 `context.systemPrompt` 转成 `systemInstruction`,把 `context.tools` 转成 Gemini `tools`,最后返回 `{ model, contents, config }`。[E: packages/ai/src/api/google-generative-ai.ts:355][E: packages/ai/src/api/google-generative-ai.ts:360][E: packages/ai/src/api/google-generative-ai.ts:363][E: packages/ai/src/api/google-generative-ai.ts:367][E: packages/ai/src/api/google-generative-ai.ts:374][E: packages/ai/src/api/google-generative-ai.ts:376][E: packages/ai/src/api/google-generative-ai.ts:376][E: packages/ai/src/api/google-generative-ai.ts:406]
 
 `streamSimple` 是统一 simple options 到 Google options 的 adapter:没有 `options.reasoning` 时显式传 `thinking: { enabled: false }`;有 reasoning 时先 `clampThinkingLevel`,Gemini 3 Pro、Gemini 3 Flash/Lite 和 Gemma 4 走 thinking level,其他模型走 thinking budget。[E: packages/ai/src/api/google-generative-ai.ts:306][E: packages/ai/src/api/google-generative-ai.ts:307][E: packages/ai/src/api/google-generative-ai.ts:308][E: packages/ai/src/api/google-generative-ai.ts:311][E: packages/ai/src/api/google-generative-ai.ts:315][E: packages/ai/src/api/google-generative-ai.ts:320][E: packages/ai/src/api/google-generative-ai.ts:329]
 
@@ -68,9 +70,9 @@ tool result message 会转成 user turn 里的 `functionResponse`:文本结果�
 
 连续 tool result 会合并进同一个 user turn,因为 shared code 检查最后一个 content 是否已经是包含 `functionResponse` 的 user turn,是则 `lastContent.parts.push(functionResponsePart)`。[E: packages/ai/src/api/google-shared.ts:227][E: packages/ai/src/api/google-shared.ts:228][E: packages/ai/src/api/google-shared.ts:229]
 
-`convertTools` 把 pi `Tool[]` 转成 Gemini `functionDeclarations`;默认使用 `parametersJsonSchema`,只有 `useParameters=true` 时才使用经 `sanitizeForOpenApi` 处理的 legacy `parameters` 字段。[E: packages/ai/src/api/google-shared.ts:285][E: packages/ai/src/api/google-shared.ts:289][E: packages/ai/src/api/google-shared.ts:292][E: packages/ai/src/api/google-shared.ts:295][E: packages/ai/src/api/google-shared.ts:296][E: packages/ai/src/api/google-shared.ts:297]
+`convertTools` 把 pi `Tool[]` 转成 Gemini `functionDeclarations`;默认使用 `parametersJsonSchema`,只有 `useParameters=true` 时才使用经 `sanitizeForOpenApi` 处理的 legacy `parameters` 字段。[E: packages/ai/src/api/google-shared.ts:285][E: packages/ai/src/api/google-shared.ts:290][E: packages/ai/src/api/google-shared.ts:291][E: packages/ai/src/api/google-shared.ts:299][E: packages/ai/src/api/google-shared.ts:296][E: packages/ai/src/api/google-shared.ts:297]
 
-当存在工具且 `options.toolChoice` 有值时,`buildParams` 写入 `config.toolConfig.functionCallingConfig.mode`,mode 由 shared `mapToolChoice` 把 `"auto" | "none" | "any"` 映射到 Google SDK `FunctionCallingConfigMode`。[E: packages/ai/src/api/google-generative-ai.ts:376][E: packages/ai/src/api/google-generative-ai.ts:405][E: packages/ai/src/api/google-generative-ai.ts:371][E: packages/ai/src/api/google-shared.ts:310][E: packages/ai/src/api/google-shared.ts:313][E: packages/ai/src/api/google-shared.ts:315][E: packages/ai/src/api/google-shared.ts:317]
+当存在工具且 `options.toolChoice` 有值时,`buildParams` 写入 `config.toolConfig.functionCallingConfig.mode`,mode 由 shared `mapToolChoice` 把 `"auto" | "none" | "any"` 映射到 Google SDK `FunctionCallingConfigMode`。[E: packages/ai/src/api/google-generative-ai.ts:376][E: packages/ai/src/api/google-generative-ai.ts:409][E: packages/ai/src/api/google-generative-ai.ts:371][E: packages/ai/src/api/google-shared.ts:315][E: packages/ai/src/api/google-shared.ts:318][E: packages/ai/src/api/google-shared.ts:320][E: packages/ai/src/api/google-shared.ts:322]
 
 ## event 转换
 
@@ -80,7 +82,7 @@ Google SDK chunk 的 `candidate.content.parts` 是 streaming event 的主要输�
 
 当 chunk part 含 `functionCall` 时,当前 text/thinking block 会先结束,然后生成 pi `ToolCall` block;如果 Google 没给 id 或 id 与已有 tool call 重复,代码用 `${name}_${Date.now()}_${++toolCallCounter}` 生成 id,再发 `toolcall_start`、`toolcall_delta`、`toolcall_end`。[E: packages/ai/src/api/google-generative-ai.ts:166][E: packages/ai/src/api/google-generative-ai.ts:183][E: packages/ai/src/api/google-generative-ai.ts:187][E: packages/ai/src/api/google-generative-ai.ts:189][E: packages/ai/src/api/google-generative-ai.ts:191][E: packages/ai/src/api/google-generative-ai.ts:194][E: packages/ai/src/api/google-generative-ai.ts:203][E: packages/ai/src/api/google-generative-ai.ts:204][E: packages/ai/src/api/google-generative-ai.ts:210]
 
-finish reason 先经 shared `mapStopReason` 转成 pi `StopReason`;如果 output 中存在 tool call,stop reason 会被覆盖为 `toolUse`。[E: packages/ai/src/api/google-generative-ai.ts:215][E: packages/ai/src/api/google-generative-ai.ts:217][E: packages/ai/src/api/google-generative-ai.ts:218][E: packages/ai/src/api/google-generative-ai.ts:219][E: packages/ai/src/api/google-shared.ts:341][E: packages/ai/src/api/google-shared.ts:343][E: packages/ai/src/api/google-shared.ts:345][E: packages/ai/src/api/google-shared.ts:362]
+finish reason 先经 shared `mapStopReason` 转成 pi `StopReason`。`MAX_TOKENS` 映射为 `length`，`STOP` 映射为 `stop`。只有 mapped reason 仍是 `stop` 且 content 里已有 `toolCall` 时，才改写成 `toolUse`；`length` 即使夹带 function call 也保持 `length`，不再当普通 tool use。Vertex 用同一判断。测试锁定 `MAX_TOKENS` + tool call → `length`，`STOP` + tool call → `toolUse`。[E: packages/ai/src/api/google-generative-ai.ts:215][E: packages/ai/src/api/google-generative-ai.ts:217][E: packages/ai/src/api/google-generative-ai.ts:218][E: packages/ai/src/api/google-generative-ai.ts:219][E: packages/ai/src/api/google-shared.ts:346][E: packages/ai/src/api/google-shared.ts:348][E: packages/ai/src/api/google-shared.ts:350][E: packages/ai/src/api/google-shared.ts:351][E: packages/ai/src/api/google-vertex.ts:235][E: packages/ai/src/api/google-vertex.ts:236][E: packages/ai/test/google-raw-stop-reason.test.ts:141][E: packages/ai/test/google-raw-stop-reason.test.ts:147][E: packages/ai/test/google-raw-stop-reason.test.ts:152][E: packages/ai/test/google-raw-stop-reason.test.ts:158]
 
 usage metadata 被转成 pi `usage`:input 扣除 cache read,candidates token 与 thoughts token 合并为 output,thoughts token 另存为 `reasoning`,然后调用 `calculateCost(model, output.usage)`。[E: packages/ai/src/api/google-generative-ai.ts:223][E: packages/ai/src/api/google-generative-ai.ts:225][E: packages/ai/src/api/google-generative-ai.ts:228][E: packages/ai/src/api/google-generative-ai.ts:229][E: packages/ai/src/api/google-generative-ai.ts:231][E: packages/ai/src/api/google-generative-ai.ts:241]
 
@@ -96,13 +98,13 @@ Vertex 从 `options.project`、`GOOGLE_CLOUD_PROJECT` 或 `GCLOUD_PROJECT` 解�
 
 两者共享 message/tool/stop-reason/tool-choice 转换入口,因为 Vertex 也导入同一组 shared helpers,并在 `buildParams` 中调用 `convertMessages`、`convertTools`、`mapToolChoice`。[E: packages/ai/src/api/google-vertex.ts:33][E: packages/ai/src/api/google-vertex.ts:34][E: packages/ai/src/api/google-vertex.ts:35][E: packages/ai/src/api/google-vertex.ts:38][E: packages/ai/src/api/google-vertex.ts:454][E: packages/ai/src/api/google-vertex.ts:459][E: packages/ai/src/api/google-vertex.ts:475][E: packages/ai/src/api/google-vertex.ts:470]
 
-thinking level 的 SDK enum 表达不同:Generative AI 直接把 shared `GoogleThinkingLevel` 字符串 cast 到 SDK thinkingLevel,Vertex 先用 `THINKING_LEVEL_MAP` 映射到 `@google/genai` 的 `ThinkingLevel` enum。[E: packages/ai/src/api/google-generative-ai.ts:384][E: packages/ai/src/api/google-generative-ai.ts:386][E: packages/ai/src/api/google-vertex.ts:59][E: packages/ai/src/api/google-vertex.ts:60][E: packages/ai/src/api/google-vertex.ts:64][E: packages/ai/src/api/google-vertex.ts:483][E: packages/ai/src/api/google-vertex.ts:484]
+thinking level 的 SDK enum 表达不同:Generative AI 直接把 shared `GoogleThinkingLevel` 字符串 cast 到 SDK thinkingLevel,Vertex 先用 `THINKING_LEVEL_MAP` 映射到 `@google/genai` 的 `ThinkingLevel` enum。[E: packages/ai/src/api/google-generative-ai.ts:388][E: packages/ai/src/api/google-generative-ai.ts:390][E: packages/ai/src/api/google-vertex.ts:59][E: packages/ai/src/api/google-vertex.ts:60][E: packages/ai/src/api/google-vertex.ts:64][E: packages/ai/src/api/google-vertex.ts:487][E: packages/ai/src/api/google-vertex.ts:488]
 
 ## gotcha
 
 - `thoughtSignature` 是 replay context,不是 thinking 内容判据;只有 `part.thought === true` 会进入 pi `thinking` block。[E: packages/ai/src/api/google-shared.ts:35][E: packages/ai/src/api/google-shared.ts:36]
-- 对 Gemini 3/Gemma 4,禁用 visible thinking 不一定是 `thinkingBudget: 0`:Generative AI 对 Gemini 3 Pro 返回 `LOW`,对 Gemini 3 Flash/Gemma 4 返回 `MINIMAL`;未命中特殊分支的模型回退到 budget 0。[E: packages/ai/src/api/google-generative-ai.ts:426][E: packages/ai/src/api/google-generative-ai.ts:430][E: packages/ai/src/api/google-generative-ai.ts:433][E: packages/ai/src/api/google-generative-ai.ts:436][E: packages/ai/src/api/google-generative-ai.ts:441]
-- `convertTools` 默认发送 `parametersJsonSchema`;只有调用方显式传 `useParameters=true` 才会降级到 OpenAPI-style `parameters`。[E: packages/ai/src/api/google-shared.ts:285][E: packages/ai/src/api/google-shared.ts:295][E: packages/ai/src/api/google-shared.ts:297]
+- 对 Gemini 3/Gemma 4,禁用 visible thinking 不一定是 `thinkingBudget: 0`:Generative AI 对 Gemini 3 Pro 返回 `LOW`,对 Gemini 3 Flash/Gemma 4 返回 `MINIMAL`;未命中特殊分支的模型回退到 budget 0。[E: packages/ai/src/api/google-generative-ai.ts:430][E: packages/ai/src/api/google-generative-ai.ts:434][E: packages/ai/src/api/google-generative-ai.ts:437][E: packages/ai/src/api/google-generative-ai.ts:440][E: packages/ai/src/api/google-generative-ai.ts:445]
+- `convertTools` 默认发送 `parametersJsonSchema`;只有调用方显式传 `useParameters=true` 才会降级到 OpenAPI-style `parameters`。[E: packages/ai/src/api/google-shared.ts:285][E: packages/ai/src/api/google-shared.ts:299][E: packages/ai/src/api/google-shared.ts:297]
 
 ## 跨包边界
 
@@ -113,7 +115,7 @@ thinking level 的 SDK enum 表达不同:Generative AI 直接把 shared `GoogleT
 
 Accumulator 从 `pending` 开始；candidate finish reason 同时保存在 `rawStopReason` 并映射 unified reason，流结束仍为 pending 会转成 terminal error。[E: packages/ai/src/api/google-generative-ai.ts:60] [E: packages/ai/src/api/google-generative-ai.ts:74] [E: packages/ai/src/api/google-generative-ai.ts:215] [E: packages/ai/src/api/google-generative-ai.ts:219] [E: packages/ai/src/api/google-generative-ai.ts:267] [E: packages/ai/src/api/google-generative-ai.ts:274]
 
-`generateContentStream()` 建流请求现在经 `retryGoogleRequest()` 接入 shared provider retry；它不包后续 `for await` 的中途断流。Google SDK 不能注入任意 fetch，因此非 `globalThis.fetch` 会被显式拒绝。[E: packages/ai/src/api/google-generative-ai.ts:78] [E: packages/ai/src/api/google-generative-ai.ts:80] [E: packages/ai/src/api/google-generative-ai.ts:92] [E: packages/ai/src/api/google-shared.ts:393] [E: packages/ai/src/api/google-shared.ts:397]
+`generateContentStream()` 建流请求现在经 `retryGoogleRequest()` 接入 shared provider retry；它不包后续 `for await` 的中途断流。Google SDK 不能注入任意 fetch，因此非 `globalThis.fetch` 会被显式拒绝。[E: packages/ai/src/api/google-generative-ai.ts:78] [E: packages/ai/src/api/google-generative-ai.ts:80] [E: packages/ai/src/api/google-generative-ai.ts:92] [E: packages/ai/src/api/google-shared.ts:398] [E: packages/ai/src/api/google-shared.ts:402]
 
 ## Sources
 
@@ -122,6 +124,7 @@ Accumulator 从 `pending` 开始；candidate finish reason 同时保存在 `rawS
 - packages/ai/src/api/google-vertex.ts
 - packages/ai/src/api/google-generative-ai.lazy.ts
 - packages/ai/src/providers/google.ts
+- packages/ai/test/google-raw-stop-reason.test.ts
 
 ## 相关
 

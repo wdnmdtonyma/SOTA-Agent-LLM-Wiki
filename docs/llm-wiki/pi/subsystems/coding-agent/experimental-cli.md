@@ -27,7 +27,7 @@ related:
   - surface.sdk.remote-session
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `subsys.coding-agent.experimental-cli` 描述源码中独立的 experimental command parser：它为未来的 `pi` / `server` / `client` transport 形态组合 subcommand、auth 与 Unix socket address，但当前 target checkout 没有把 `experimentalCli` 接到发布 CLI entrypoint。

@@ -16,7 +16,7 @@ related:
   - ref.tui.key-codes
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `key-parsing` 是 TUI 把 raw terminal input 转成稳定 `KeyId` 字符串的解析层: 它优先识别 Kitty/CSI-u 和 xterm `modifyOtherKeys`, 再落到 legacy escape/control-byte fallback。

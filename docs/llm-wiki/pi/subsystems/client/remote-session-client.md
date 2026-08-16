@@ -22,6 +22,7 @@ symbols:
   - ByteTransportFactory
   - PiClientOptions
   - ConnectionState
+  - listSessions
 related:
   - subsys.client.session-leases
   - subsys.client.unix-transport
@@ -29,7 +30,7 @@ related:
   - subsys.server.session-server
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `@earendil-works/pi-client` 的 package root 是 runtime-neutral `PiClient`：它只依赖已经连接并完成 transport-specific authentication 的 ordered byte transport，完成 protocol version handshake、request correlation、authoritative snapshot cache、多 session attachment 与显式 reconnect。[E: packages/client/package.json:2][E: packages/client/package.json:4][E: packages/client/package.json:37][E: packages/client/src/index.ts:1][E: packages/client/src/transport.ts:1][E: packages/client/src/transport.ts:18][E: packages/client/README.md:26]
@@ -39,6 +40,7 @@ updated: 305c014dcc
 - 自定义 WebSocket/socket transport 要实现什么接口？
 - `PiClient.connect()` 如何发送 hello 并接受 server snapshot？
 - request id、out-of-order response 与 protocol mismatch 如何处理？
+- `listSessions()` 返回的是 `SessionMetadata` 还是带 runtime 字段的 summary？
 - progress event 为什么不会直接覆盖 snapshot cache？
 - disconnect、reconnect、dispose 分别如何影响 request 与 session handle？
 
@@ -48,7 +50,7 @@ root export 包含 `PiClient`、五个 structured error class、session lease ty
 
 `ByteTransport.send()` 必须按 invocation order delivery 并返回 backpressure-aware Promise；`close()` 要幂等。factory 每次 connection attempt 创建 fresh、connected、authenticated transport，在 resolve 前完成 transport-specific authentication；transport 通过 `onData`、`onClose`、`onError` 回报 arbitrary chunks 与 exactly one terminal outcome。[E: packages/client/src/transport.ts:1][E: packages/client/src/transport.ts:3][E: packages/client/src/transport.ts:5][E: packages/client/src/transport.ts:8][E: packages/client/src/transport.ts:10][E: packages/client/src/transport.ts:12][E: packages/client/src/transport.ts:14][E: packages/client/src/transport.ts:18][E: packages/client/README.md:26]
 
-`PiClientOptions` 只包含 `transportFactory`、optional `maxFrameLength` 与 `onListenerError`，不再有 `token` 或替代 credential field。WebSocket 等 custom factory 可在 upgrade request 中携凭据；认证失败应表现为 factory/transport establishment failure，而不是 protocol `hello_error.auth`。[E: packages/client/src/types.ts:14][E: packages/client/src/types.ts:15][E: packages/client/src/types.ts:16][E: packages/client/src/types.ts:18][E: packages/client/README.md:26][E: packages/client/README.md:40]
+`PiClientOptions` 只包含 `transportFactory`、optional `maxFrameLength` 与 `onListenerError`，不再有 `token` 或替代 credential field。WebSocket 等 custom factory 可在 upgrade request 中携凭据；认证失败应表现为 factory/transport establishment failure，而不是 protocol `hello_error.auth`。hello 仍是 `{type:"hello", version}`，credential 不进 protocol bytes。[E: packages/client/src/types.ts:14][E: packages/client/src/types.ts:15][E: packages/client/src/types.ts:16][E: packages/client/src/types.ts:18][E: packages/client/README.md:26][E: packages/client/README.md:40][E: packages/client/src/connection.ts:135]
 
 ## Connection lifecycle
 
@@ -70,7 +72,7 @@ response 可以 out of order，因为 lookup 只依赖 response id；不存在 m
 
 `ClientState.applyResult()` 只将成功 command response 中的 full session snapshot 写入 cache；`applyEvent()` 只 reduce `server_snapshot`、`session_snapshot` 与 removal，`session_progress` 仅通知 event listeners。[E: packages/client/src/state.ts:77][E: packages/client/src/state.ts:85][E: packages/client/src/state.ts:88][E: packages/client/src/state.ts:89][E: packages/client/src/state.ts:90][E: packages/client/src/state.ts:91][E: packages/client/src/state.ts:95]
 
-server/session snapshots 都带 revision guard，older snapshot 不会覆盖 newer authoritative state；subscriber exception 被隔离并交给 optional `onListenerError`。[E: packages/client/src/state.ts:100][E: packages/client/src/state.ts:101][E: packages/client/src/state.ts:108][E: packages/client/src/state.ts:110][E: packages/client/src/state.ts:117][E: packages/client/src/state.ts:121][E: packages/client/src/state.ts:122][E: packages/client/src/types.ts:18][E: packages/client/src/types.ts:18]
+server/session snapshots 都带 revision guard，older snapshot 不会覆盖 newer authoritative state；subscriber exception 被隔离并交给 optional `onListenerError`。[E: packages/client/src/state.ts:100][E: packages/client/src/state.ts:101][E: packages/client/src/state.ts:106][E: packages/client/src/state.ts:108][E: packages/client/src/state.ts:115][E: packages/client/src/state.ts:119][E: packages/client/src/state.ts:120][E: packages/client/src/types.ts:18][E: packages/client/src/types.ts:18]
 
 ## Disconnect、reconnect 与 dispose
 
@@ -82,8 +84,8 @@ server/session snapshots 都带 revision guard，older snapshot 不会覆盖 new
 
 - `PiClientOptions.maxFrameLength` 同时约束 inbound/outbound protocol frame，不是 transport queue 上限。[E: packages/client/src/types.ts:14][E: packages/client/src/types.ts:16][E: packages/client/src/connection.ts:48][E: packages/client/src/connection.ts:75][E: packages/client/src/connection.ts:135][E: packages/client/src/client.ts:197]
 - 不要把 session bearer token 加进 hello：client API 不接受它，protocol strict schema 也拒绝 credential field。认证必须由每次 factory 创建 transport 的过程实现。[E: packages/client/src/types.ts:14][E: packages/client/src/types.ts:18][E: packages/client/README.md:26][E: packages/protocol/test/protocol.test.ts:73][E: packages/protocol/test/protocol.test.ts:76]
-- `listSessions()` 发 request 获取 refreshed list，但 `ClientState.applyResult()` 对 list result 不更新 server snapshot；authoritative server-wide cache 由 hello/server_snapshot event 更新。[E: packages/client/src/client.ts:137][E: packages/client/src/client.ts:138][E: packages/client/src/state.ts:77][E: packages/client/src/state.ts:78][I]
-- listener failure 不应改变 protocol state；`onListenerError` 自身抛错也被吞掉。[E: packages/client/src/state.ts:127][E: packages/client/src/state.ts:129][E: packages/client/src/state.ts:130][E: packages/client/src/state.ts:131]
+- `listSessions()` 返回 `readonly SessionMetadata[]`：这是 durable list metadata（`id`/`createdAt` 必填，runtime phase/model/lock 不在此）。request 刷新 list 后，`ClientState.applyResult()` 对 list result 仍不写入 server snapshot；authoritative server-wide cache 由 hello/`server_snapshot` 更新，其 `sessions` 同样是 `SessionMetadata[]`。[E: packages/client/src/client.ts:137][E: packages/client/src/client.ts:138][E: packages/client/src/state.ts:77][E: packages/client/src/state.ts:78][E: packages/protocol/src/schemas.ts:233][E: packages/protocol/src/schemas.ts:264][E: packages/protocol/src/schemas.ts:359][E: packages/client/README.md:28][I]
+- listener failure 不应改变 protocol state；`onListenerError` 自身抛错也被吞掉。[E: packages/client/src/state.ts:125][E: packages/client/src/state.ts:127][E: packages/client/src/state.ts:128][E: packages/client/src/state.ts:129]
 
 ## Sources
 

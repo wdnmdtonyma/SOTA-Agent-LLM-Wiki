@@ -16,7 +16,7 @@ related:
   - subsys.tui.editor-component
 evidence: explicit
 status: verified
-updated: 305c014dcc
+updated: 086c32e745
 ---
 
 > `editor-mechanics` 是 TUI editor/input 的文本编辑 primitives: `KillRing` 保存 kill/yank 文本, `UndoStack` 保存 state snapshot, `word-navigation` 用 word segmentation 计算 word movement 边界。
