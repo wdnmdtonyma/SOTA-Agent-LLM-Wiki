@@ -8,7 +8,7 @@ symbols: [python::Codex, AsyncCodex, python::Thread, AsyncThread, TurnHandle, As
 related: [sdk.py-inputs-errors, sdk.sdk-architecture, rpc.overview, rpc.thread-methods, rpc.turn-methods]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > Python SDK package is now `openai_codex`: the high-level `Codex` / `AsyncCodex` APIs wrap a typed app-server JSON-RPC client (`CodexClient` / `AsyncCodexClient`) that starts `codex app-server --listen stdio://`, initializes metadata, exposes account/thread/turn helpers, and collects turn notifications into `TurnResult`.[E: sdk/python/pyproject.toml:6][E: sdk/python/src/openai_codex/api.py:75][E: sdk/python/src/openai_codex/api.py:82][E: sdk/python/src/openai_codex/client.py:212][E: sdk/python/src/openai_codex/client.py:238][E: sdk/python/src/openai_codex/client.py:252][E: sdk/python/src/openai_codex/async_client.py:52][E: sdk/python/src/openai_codex/_run.py:21]

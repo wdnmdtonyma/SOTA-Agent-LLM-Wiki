@@ -8,7 +8,7 @@ symbols: [pre_main_hardening, JobObject, JobObject::create, JobObject::preserve_
 related: [spine.process-lifecycle, subsys.exec-sandbox.overview, subsys.exec-sandbox.arg0-dispatch]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > process hardening 是 Codex 进程 main 之前的 best-effort defense layer:Linux 关闭 dumpability、禁 core dump、移除 `LD_` env；FreeBSD/OpenBSD 禁 core dump 并移除 `LD_` env；macOS deny attach、禁 core dump、移除 `DYLD_` env；Windows 当前是 no-op。[E: codex-rs/process-hardening/src/lib.rs:12][E: codex-rs/process-hardening/src/lib.rs:14][E: codex-rs/process-hardening/src/lib.rs:44][E: codex-rs/process-hardening/src/lib.rs:56][E: codex-rs/process-hardening/src/lib.rs:60][E: codex-rs/process-hardening/src/lib.rs:75][E: codex-rs/process-hardening/src/lib.rs:77][E: codex-rs/process-hardening/src/lib.rs:83][E: codex-rs/process-hardening/src/lib.rs:85][E: codex-rs/process-hardening/src/lib.rs:95][E: codex-rs/process-hardening/src/lib.rs:99][E: codex-rs/process-hardening/src/lib.rs:120]
@@ -49,11 +49,11 @@ Windows PTY 的 `JobObject` 是相邻的 child-process lifecycle 防护，不属
 
 ## Windows PTY process tree
 
-`JobObject::create` 建立 Windows Job Object，默认同时设置 `KILL_ON_JOB_CLOSE` 和 `BREAKAWAY_OK`；将 root process 分配进去后，关闭最后一个 handle 或显式 `terminate()` 会清理 job 中的 process tree。[E: codex-rs/utils/pty/src/win/job.rs:17][E: codex-rs/utils/pty/src/win/job.rs:27][E: codex-rs/utils/pty/src/win/job.rs:34][E: codex-rs/utils/pty/src/win/job.rs:59][E: codex-rs/utils/pty/src/win/job.rs:98][E: codex-rs/utils/pty/src/win/job.rs:107]
+`JobObject::create` 建立 Windows Job Object，默认同时设置 `KILL_ON_JOB_CLOSE` 和 `BREAKAWAY_OK`；将 root process 分配进去后，关闭最后一个 handle 或显式 `terminate()` 会清理 job 中的 process tree。[E: codex-rs/utils/pty/src/win/job.rs:17][E: codex-rs/utils/pty/src/win/job.rs:27][E: codex-rs/utils/pty/src/win/job.rs:34][E: codex-rs/utils/pty/src/win/job.rs:57][E: codex-rs/utils/pty/src/win/job.rs:98][E: codex-rs/utils/pty/src/win/job.rs:106]
 
-正常 root exit 若要保留后台 descendants，可调用 `preserve_descendants()` 去掉 kill-on-close，只保留 breakaway；同一 mutex 把 preserve/terminate 的 state check 与 OS API 调用串行化，先取得 lock 的操作决定保留或终止。assignment 不是 retroactive，分配完成前已创建的 descendants 不保证进入 job。[E: codex-rs/utils/pty/src/win/job.rs:19][E: codex-rs/utils/pty/src/win/job.rs:59][E: codex-rs/utils/pty/src/win/job.rs:73][E: codex-rs/utils/pty/src/win/job.rs:83][E: codex-rs/utils/pty/src/win/job.rs:92][E: codex-rs/utils/pty/src/win/job.rs:99][E: codex-rs/utils/pty/src/win/job.rs:103]
+正常 root exit 若要保留后台 descendants，可调用 `preserve_descendants()` 去掉 kill-on-close，只保留 breakaway；同一 mutex 把 preserve/terminate 的 state check 与 OS API 调用串行化，先取得 lock 的操作决定保留或终止。assignment 不是 retroactive，分配完成前已创建的 descendants 不保证进入 job。[E: codex-rs/utils/pty/src/win/job.rs:19][E: codex-rs/utils/pty/src/win/job.rs:57][E: codex-rs/utils/pty/src/win/job.rs:73][E: codex-rs/utils/pty/src/win/job.rs:83][E: codex-rs/utils/pty/src/win/job.rs:92][E: codex-rs/utils/pty/src/win/job.rs:99][E: codex-rs/utils/pty/src/win/job.rs:103]
 
-Windows pipe backend 的 `Interrupt` 现在调用同一 terminator：有 JobObject 时终止整个 job，否则终止单 PID。Driver-backed backend 仅在 non-TTY 且存在 terminator 时把 interrupt 映射为 termination；signal 成功后 `ProcessHandle` 取走 killer，防止 Drop 或后续 terminate 再次执行。[E: codex-rs/utils/pty/src/pipe.rs:29][E: codex-rs/utils/pty/src/pipe.rs:42][E: codex-rs/utils/pty/src/pipe.rs:51][E: codex-rs/utils/pty/src/pipe.rs:70][E: codex-rs/utils/pty/src/process.rs:229][E: codex-rs/utils/pty/src/process.rs:237][E: codex-rs/utils/pty/src/process.rs:279][E: codex-rs/utils/pty/src/process.rs:287][E: codex-rs/utils/pty/src/process.rs:390]
+Windows pipe backend 的 `Interrupt` 现在调用同一 terminator：有 JobObject 时终止整个 job，否则终止单 PID。Driver-backed backend 仅在 non-TTY 且存在 terminator 时把 interrupt 映射为 termination；signal 成功后 `ProcessHandle` 取走 killer，防止 Drop 或后续 terminate 再次执行。[E: codex-rs/utils/pty/src/pipe.rs:29][E: codex-rs/utils/pty/src/pipe.rs:42][E: codex-rs/utils/pty/src/pipe.rs:51][E: codex-rs/utils/pty/src/pipe.rs:70][E: codex-rs/utils/pty/src/process.rs:229][E: codex-rs/utils/pty/src/process.rs:237][E: codex-rs/utils/pty/src/process.rs:280][E: codex-rs/utils/pty/src/process.rs:287][E: codex-rs/utils/pty/src/process.rs:389]
 
 ## 设计动机与权衡
 

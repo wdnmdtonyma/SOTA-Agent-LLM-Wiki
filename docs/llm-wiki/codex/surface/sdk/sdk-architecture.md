@@ -8,10 +8,10 @@ symbols: []
 related: [sdk.ts-overview, sdk.ts-events-items, sdk.ts-structured-output, sdk.py-overview, sdk.py-inputs-errors, rpc.overview]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
-> Codex SDK currently has two different runtime paths: TypeScript is a typed wrapper over `codex exec --experimental-json` JSONL events, while Python `openai_codex` is a typed JSON-RPC client over `codex app-server --listen stdio://` with a reader-thread message router.[E: sdk/typescript/src/exec.ts:86][E: sdk/typescript/src/exec.ts:87][E: sdk/typescript/src/exec.ts:181][E: sdk/typescript/src/exec.ts:222][E: sdk/python/src/openai_codex/client.py:238][E: sdk/python/src/openai_codex/client.py:252][E: sdk/python/src/openai_codex/client.py:323][E: sdk/python/src/openai_codex/client.py:803][E: sdk/python/src/openai_codex/_message_router.py:17]
+> Codex SDK currently has two different runtime paths: TypeScript is a typed wrapper over `codex exec --experimental-json` JSONL events, while Python `openai_codex` is a typed JSON-RPC client over `codex app-server --listen stdio://` with a reader-thread message router.[E: sdk/typescript/src/exec.ts:90][E: sdk/typescript/src/exec.ts:190][E: sdk/typescript/src/exec.ts:231][E: sdk/python/src/openai_codex/client.py:238][E: sdk/python/src/openai_codex/client.py:252][E: sdk/python/src/openai_codex/_message_router.py:17]
 
 ## 能回答的问题
 
@@ -24,7 +24,7 @@ updated: 7750465934
 
 TS `Codex` constructs one `CodexExec`; `startThread()` and `resumeThread(id)` only create `Thread` objects, and actual execution happens later when `Thread.runStreamedInternal()` calls `_exec.run()`.[E: sdk/typescript/src/codex.ts:11][E: sdk/typescript/src/codex.ts:15][E: sdk/typescript/src/codex.ts:17][E: sdk/typescript/src/codex.ts:25][E: sdk/typescript/src/codex.ts:26][E: sdk/typescript/src/codex.ts:36][E: sdk/typescript/src/codex.ts:37][E: sdk/typescript/src/thread.ts:70][E: sdk/typescript/src/thread.ts:77]
 
-`CodexExec.run()` starts CLI args with `["exec", "--experimental-json"]`, appends options such as config/model/sandbox/cwd/add-dir/output-schema/web-search/approval/resume/images, writes the prompt to stdin, yields each stdout line, and throws with stderr details on non-zero exit or signal.[E: sdk/typescript/src/exec.ts:86][E: sdk/typescript/src/exec.ts:87][E: sdk/typescript/src/exec.ts:89][E: sdk/typescript/src/exec.ts:102][E: sdk/typescript/src/exec.ts:106][E: sdk/typescript/src/exec.ts:110][E: sdk/typescript/src/exec.ts:114][E: sdk/typescript/src/exec.ts:124][E: sdk/typescript/src/exec.ts:139][E: sdk/typescript/src/exec.ts:147][E: sdk/typescript/src/exec.ts:151][E: sdk/typescript/src/exec.ts:155][E: sdk/typescript/src/exec.ts:181][E: sdk/typescript/src/exec.ts:193][E: sdk/typescript/src/exec.ts:222][E: sdk/typescript/src/exec.ts:224][E: sdk/typescript/src/exec.ts:229][E: sdk/typescript/src/exec.ts:232]
+`CodexExec.run()` starts CLI args with `["exec", "--experimental-json"]`, then structured `config` flatten, then raw `configOverrides` strings, then model/sandbox/cwd/add-dir/output-schema/web-search/approval/resume/images. It writes the prompt to stdin, yields each stdout line, and throws with stderr details on non-zero exit or signal.[E: sdk/typescript/src/exec.ts:90][E: sdk/typescript/src/exec.ts:92][E: sdk/typescript/src/exec.ts:98][E: sdk/typescript/src/exec.ts:111][E: sdk/typescript/src/exec.ts:133][E: sdk/typescript/src/exec.ts:190][E: sdk/typescript/src/exec.ts:231]
 
 TS public stream schema is local to the exec event surface: `ThreadEvent` is the top-level JSONL union, and `ThreadItem` is the union of agent-visible item payloads.[E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/events.ts:77][E: sdk/typescript/src/events.ts:83][E: sdk/typescript/src/items.ts:120][E: sdk/typescript/src/items.ts:121][E: sdk/typescript/src/items.ts:128]
 
@@ -46,7 +46,7 @@ Python 的 generated schema 还有一层手工 post-processing：`PlanType` 保�
 
 ## Async and streaming contrast
 
-TS streaming is a CLI stdout JSONL async generator parsed into `ThreadEvent`; Python streaming is a turn-scoped app-server notification queue exposed by `TurnHandle.stream()` / `AsyncTurnHandle.stream()` until matching `turn/completed`.[E: sdk/typescript/src/thread.ts:66][E: sdk/typescript/src/thread.ts:70][E: sdk/typescript/src/thread.ts:97][E: sdk/typescript/src/thread.ts:100][E: sdk/typescript/src/exec.ts:222][E: sdk/typescript/src/exec.ts:224][E: sdk/python/src/openai_codex/api.py:737][E: sdk/python/src/openai_codex/api.py:739][E: sdk/python/src/openai_codex/api.py:742][E: sdk/python/src/openai_codex/api.py:745][E: sdk/python/src/openai_codex/api.py:751][E: sdk/python/src/openai_codex/api.py:784][E: sdk/python/src/openai_codex/api.py:790][E: sdk/python/src/openai_codex/api.py:793][E: sdk/python/src/openai_codex/api.py:799]
+TS streaming is a CLI stdout JSONL async generator parsed into `ThreadEvent`; Python streaming is a turn-scoped app-server notification queue exposed by `TurnHandle.stream()` / `AsyncTurnHandle.stream()` until matching `turn/completed`.[E: sdk/typescript/src/thread.ts:66][E: sdk/typescript/src/thread.ts:70][E: sdk/typescript/src/thread.ts:97][E: sdk/typescript/src/thread.ts:100][E: sdk/typescript/src/exec.ts:220][E: sdk/typescript/src/exec.ts:220][E: sdk/python/src/openai_codex/api.py:737][E: sdk/python/src/openai_codex/api.py:739][E: sdk/python/src/openai_codex/api.py:742][E: sdk/python/src/openai_codex/api.py:745][E: sdk/python/src/openai_codex/api.py:751][E: sdk/python/src/openai_codex/api.py:784][E: sdk/python/src/openai_codex/api.py:790][E: sdk/python/src/openai_codex/api.py:793][E: sdk/python/src/openai_codex/api.py:799]
 
 Python async layer has no independent subprocess protocol; `AsyncCodexClient` owns a sync `CodexClient` and uses `asyncio.to_thread()` for blocking operations.[E: sdk/python/src/openai_codex/async_client.py:52][E: sdk/python/src/openai_codex/async_client.py:55][E: sdk/python/src/openai_codex/async_client.py:57][E: sdk/python/src/openai_codex/async_client.py:68][E: sdk/python/src/openai_codex/async_client.py:75][E: sdk/python/src/openai_codex/async_client.py:76]
 
@@ -54,10 +54,10 @@ Python async layer has no independent subprocess protocol; `AsyncCodexClient` ow
 
 | 维度 | TypeScript SDK | Python SDK | Evidence |
 |---|---|---|---|
-| Runtime subcommand | `codex exec --experimental-json` | `codex app-server --listen stdio://` | [E: sdk/typescript/src/exec.ts:87][E: sdk/python/src/openai_codex/client.py:252] |
-| Transport | stdout JSONL lines parsed as `ThreadEvent` | line-delimited app-server JSON-RPC with routed queues | [E: sdk/typescript/src/exec.ts:222][E: sdk/typescript/src/thread.ts:100][E: sdk/python/src/openai_codex/client.py:323][E: sdk/python/src/openai_codex/_message_router.py:17] |
+| Runtime subcommand | `codex exec --experimental-json` | `codex app-server --listen stdio://` | [E: sdk/typescript/src/exec.ts:90][E: sdk/python/src/openai_codex/client.py:252] |
+| Transport | stdout JSONL lines parsed as `ThreadEvent` | line-delimited app-server JSON-RPC with routed queues | [E: sdk/typescript/src/exec.ts:231][E: sdk/typescript/src/thread.ts:100][E: sdk/python/src/openai_codex/_message_router.py:17] |
 | Public event model | `events.ts` / `items.ts` exec unions | generated app-server models wrapped in `Notification` / `TurnResult` | [E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/items.ts:120][E: sdk/python/src/openai_codex/models.py:52][E: sdk/python/src/openai_codex/models.py:88][E: sdk/python/src/openai_codex/models.py:89][E: sdk/python/src/openai_codex/models.py:90][E: sdk/python/src/openai_codex/client.py:750][E: sdk/python/src/openai_codex/client.py:753][E: sdk/python/src/openai_codex/client.py:758][E: sdk/python/src/openai_codex/client.py:761][E: sdk/python/src/openai_codex/_run.py:21] |
-| Server requests | TS public path goes through exec, not app-server request handlers | reader thread handles server requests via approval handler | [E: sdk/typescript/src/thread.ts:77][E: sdk/typescript/src/exec.ts:87][E: sdk/python/src/openai_codex/client.py:808][E: sdk/python/src/openai_codex/client.py:809][E: sdk/python/src/openai_codex/client.py:826] |
+| Server requests | TS public path goes through exec, not app-server request handlers | reader thread handles server requests via approval handler | [E: sdk/typescript/src/thread.ts:77][E: sdk/typescript/src/exec.ts:86][E: sdk/python/src/openai_codex/client.py:808][E: sdk/python/src/openai_codex/client.py:809][E: sdk/python/src/openai_codex/client.py:826] |
 | Structured output | temp schema path is passed to exec `--output-schema` | `Thread.turn()` passes `output_schema` in `TurnStartParams` | [E: sdk/typescript/src/thread.ts:74][E: sdk/typescript/src/thread.ts:87][E: sdk/typescript/src/exec.ts:124][E: sdk/typescript/src/exec.ts:125][E: sdk/python/src/openai_codex/api.py:582][E: sdk/python/src/openai_codex/api.py:599] |
 
 ## 设计动机

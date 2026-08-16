@@ -1,0 +1,4 @@
+- [U] `network/policyRequest` 的 `Ask` 是协议与 policy engine 的第三种决定，但仅凭 exec-server 层不能断言一定弹出 UI；是否提示、自动批准或拒绝由上层 controller 的 decider、approval policy、permission profile 与连接存活状态共同决定。
+- [U] 研究 brief 记 target `FEATURES` 为 116 条 `FeatureSpec`；对 `codex-rs/features/src/lib.rs` 的 `pub const FEATURES` 数组逐条 brace-parse 得到 114 条，且与 `Feature` enum 变体一一对应。114 是本批 catalog 采用的源码计数。
+- [U] pending environment attachment / per-environment permission profile snapshot 的完整协议与 session 状态机未在本批逐字段走完；exec-server 测试与 `CodexThread` 有 pending environment API，但不能从本批摘录推出稳定的跨 thread 环境绑定契约。
+- [U] `surface/config/*`、多数 `subsystems/core/*`（tool-system/tool-router/turn-engine/turn-metadata/compaction/memory/trace-bundle）与部分 exec-sandbox 页在本轮主要做了 SHA 对齐与已知失效 claim 修补；大量历史 `[E:]` 行号 仍在文件行数范围内，但不保证每条都仍落在原断言符号上。

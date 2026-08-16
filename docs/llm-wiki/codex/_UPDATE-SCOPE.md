@@ -1,53 +1,54 @@
-# UPDATE SCOPE — Codex Wiki 完成记录（61a44880a8 → 7750465934）
+# UPDATE SCOPE — Codex Wiki 完成记录（7750465934 → 9ded177ce7）
 
-> 完成日期：2026-08-03
-> Wiki verified base / 父仓旧 gitlink：`61a44880a85d2fd0d8770908dea5733495e571c8`
-> 官方 `openai/codex origin/main` target：`7750465934d97dd3cbcb3b1655d2f622744010d3`
-> 最终 submodule checkout：detached `7750465934d97dd3cbcb3b1655d2f622744010d3`
+> 完成日期：2026-08-16
+> Wiki verified base / 父仓旧 gitlink：`7750465934d97dd3cbcb3b1655d2f622744010d3`
+> 官方 `openai/codex origin/main` target：`9ded177ce7c1c0bd2047f902936c177612ab3434`
+> 最终 submodule checkout：detached `9ded177ce7c1c0bd2047f902936c177612ab3434`
+> 最新稳定版：`rust-v0.147.0`（2026-08-07）。最新 prerelease：`rust-v0.148.0-alpha.20`。HEAD 在稳定版之后。
 
-本文件记录本轮已执行的 base→target 影响分析、新增/退役判定、L2 独立证伪与最终验证。方法约束仍以 `RUN.md` 和 `conventions.md` 为准。
+本文件记录本轮已执行的 base→target 影响分析、新增/退役判定、L2 独立证伪与最终验证。方法约束仍以 `RUN.md` 和 `conventions.md` 为准。只读审计见 `_RESEARCH-9ded177ce7.md`。
 
 ## 1. 上游与源码跨度
 
 已确认 submodule `origin` 为 `https://github.com/openai/codex`，官方默认分支为 `main`，且 base 是 target 的祖先。
 
-提交前再次执行 `git fetch origin main`；`refs/remotes/origin/main` 仍为 `7750465934d97dd3cbcb3b1655d2f622744010d3`，相对冻结 target 的尾差为 0 commit。
+提交前再次执行 `git fetch origin main`；`refs/remotes/origin/main` 仍为 `9ded177ce7c1c0bd2047f902936c177612ab3434`，相对冻结 target 的尾差为 0 commit。
 
 ```text
-217 commits
-1123 files changed
-65644 insertions(+)
-14195 deletions(-)
-174 added / 7 deleted / 905 modified / 37 renamed
+519 commits
+1729 files changed
+180960 insertions(+)
+38952 deletions(-)
+374 added / 30 deleted / 1310 modified / 15 renamed
 ```
 
 复现：
 
 ```bash
-git -C codex rev-list --count 61a44880a85d2fd0d8770908dea5733495e571c8..7750465934d97dd3cbcb3b1655d2f622744010d3
-git -C codex diff --shortstat 61a44880a85d2fd0d8770908dea5733495e571c8..7750465934d97dd3cbcb3b1655d2f622744010d3
-git -C codex diff --name-status 61a44880a85d2fd0d8770908dea5733495e571c8..7750465934d97dd3cbcb3b1655d2f622744010d3
+git -C codex rev-list --count 7750465934d97dd3cbcb3b1655d2f622744010d3..9ded177ce7c1c0bd2047f902936c177612ab3434
+git -C codex diff --shortstat 7750465934d97dd3cbcb3b1655d2f622744010d3..9ded177ce7c1c0bd2047f902936c177612ab3434
+git -C codex diff --name-status 7750465934d97dd3cbcb3b1655d2f622744010d3..9ded177ce7c1c0bd2047f902936c177612ab3434
 ```
 
-## 2. 172 个基线节点的影响分级
+## 2. 177 个基线节点的影响分级
 
-分级把基线 `index.json` 的 source 文件/目录与 target diff 交叉，再人工复核共享 source 的 hunk 是否命中节点语义：
+分级把基线 `index.json` 的 source 文件/目录与 target diff 交叉：
 
 | 分级 | 数量 | 处理 |
 |---|---:|---|
-| A-BROKEN | 5 | source 删除/移动，必须重定位 |
-| B-HEAVY | 0 | 无独立的 non-broken source churn ≥ 2,000 节点 |
-| C-DRIFT | 138 | 直接 source 或 source 目录有改动，逐 claim 核对 |
-| D-CLEAN | 29 | 已登记 source 未改；仍核对路径/证据并 bump SHA |
+| A-BROKEN | 6 | source 删除/移动，必须重定位 |
+| B-HEAVY | 15 | 直接 source churn ≥ 2,000，重读 |
+| C-DRIFT | 146 | 至少一个直接 source 改动 |
+| D-CLEAN | 10 | 已登记 source 未改；仍 bump SHA 并核对路径 |
 
-5 个 A-BROKEN 都是 source 退役，不是 Wiki 概念退役：
+6 个 A-BROKEN 都是 source 退役，不是 Wiki 概念退役：
 
-1. `tool.code-mode-exec` / `tool.code-mode-wait`：`codex-rs/code-mode/src/service.rs` 移到 `codex-rs/code-mode-runtime/src/service.rs`。
-2. `subsys.core.instruction-assembly`：删除 `core/src/context/available_skills_instructions.rs`，catalog fragment 下沉到 `ext/skills/src/fragments.rs` / `catalog_prompt.rs`。
-3. `subsys.config-auth.skills`：删除 `core-skills/src/render.rs`，渲染 ownership 转到 `ext/skills/src/render.rs`及配套 extension files。
-4. `surface.cli.external-agent-import`：删除 `sessions/records.rs`，拆成 `records_common.rs` / `records_cla.rs` / `records_cur.rs`，并新增 `append.rs`。
-
-D-CLEAN 只允许省略语义重写，不允许跳过 target SHA、source existence、证据行与横切架构复核。
+1. `subsys.core.context-manager`：`core/src/audio_preparation.rs` → `utils/audio/src/lib.rs`
+2. `subsys.core.instruction-assembly`：`core-skills/src/skill_instructions.rs` 删除，指令下沉 `ext/skills`
+3. `subsys.core.collaboration-modes`：删除 `execute.md` / `pair_programming.md`
+4. `subsys.config-auth.skills`：`core-skills` crate 退役，迁到 `ext/skills` + `skills`
+5. `subsys.config-auth.plugins`：仍引用已删 `core-skills/src/loader.rs`
+6. `subsys.cloud.cloud-config`：`cli/src/mcp_cmd/cloud_config.rs` → `cli/src/cloud_config.rs`
 
 ## 3. Inventory 变化
 
@@ -57,83 +58,81 @@ D-CLEAN 只允许省略语义重写，不允许跳过 target SHA、source existe
 
 本轮有概念/字段退役，但它们不是独立 Wiki 节点：
 
-- thread `isPinned` / `is_pinned` 与 metadata/list filter：被持久化 `ThreadSection` + 内建 Pinned section 取代。
-- `SessionTaskContext`：`SessionTask::run` / `abort` 改为直接接收 `Arc<Session>`。
-- hidden `codex exec --full-auto` compatibility flag：完全删除；新增 `--approve-for-me`。
-- Code Mode 在 core/app-server 内嵌 V8 fallback：退役，现在由 standalone process-owned host 执行。
-- 旧 tool assembly 函数 `build_tool_specs_and_registry` / `add_tool_sources` / `prepend_code_mode_executors`：被 registry-first finalization 流程取代。
+- `ModeKind::PairProgramming` / `Execute` 变体删除；旧名是 `Default` 的 serde alias。
+- `core-skills` crate 整体删除。
+- `Op::UserInput` 不再是 regular turn 入口，换成 `Op::TurnInput`。
+- `thread/rollback` 对 Paginated 线程 deprecated，改走 `thread/revert`。
+- `RolloutItem` / `InitialHistory` 定义迁到 `history` crate。
+- `resolve_tool_apporval` 不再存在；中央入口是 `Session::request_approval()`。
 
 ### 新增节点
 
 | 节点 | 判定 |
 |---|---|
-| `tool.wait-for-environment` | `wait_for_environment` 在 base 已存在，是旧 Wiki 工具 inventory 漏项；本轮补齐 schema、`DeferredExecutor` 门控与 host config fallback。 |
-| `subsys.core.turn-metadata` | `TurnMetadataState`、parent-turn lineage 与 attempted/executed tool metadata 已形成独立 Responses/MCP/analytics seam。 |
-| `subsys.core.rollout-budget` | root/subagent tree 共享 rollout units、provider-reported units、fallback accounting 与 exhaustion 语义是独立 runtime。 |
-| `subsys.core.token-budget` | model default、用户显式配置优先级、world-state guidance 与 reminder/compaction 语义不同于 rollout accounting。 |
-| `subsys.tui.keymap` | 新 `keymap/bindings.rs`、`keymap/chords.rs`、setup capture 已形成独立数据模型和 two-stroke 状态机。 |
+| `subsys.core.approval-guardian-v2` | 独立 crate `ext/guardian-v2`：Luna 风险分类 + 低风险直批 + 高风险回落 V1 |
+| `subsys.core.thread-queue` | 独立 `ext/queue` + 6 个 `thread/queue/*` RPC + `ThreadQueueChanged` |
+| `subsys.core.rollout-migration` | legacy JSONL → Paginated 后台迁移 / rollback / CLI `migrate-rollouts` |
+| `subsys.platform.diagnostics` | `diagnostics` crate + `codex doctor` 扩展 + `server/diagnostics` |
 
-最终为 **177 个 verified nodes**：
+最终为 **181 个 verified nodes**：
 
 | Tier | 数量 |
 |---|---:|
 | T0 | 11 |
 | T1 | 70 |
-| T2 | 84 |
+| T2 | 88 |
 | T3 | 12 |
 
-其中 tool nodes 37；workspace members 128；App-Server catalog 219（136 client requests + 72 notifications + 11 server requests）；`ConfigToml` 顶层键 96；`Op`/`EventMsg` 仍为 26/80；feature registry 102。
+其中 tool nodes 37；workspace members **134**；App-Server catalog **229**（144 client requests + 74 notifications + 11 server requests）；`ConfigToml` 顶层键 **97**；`Op`/`EventMsg` **27/81**；feature registry **114**。
+
+`FEATURES` 数组与 `Feature` enum 均为 114 条一一对应。naive `FeatureSpec {` 字面计数会多算辅助类型，不能当 catalog 数。
 
 ## 4. 必须覆盖的新架构与对外行为
 
 | 主题 | 结论与承载节点 |
 |---|---|
-| Tool registry | `build_tool_router` 先写入 core/MCP/extension/dynamic runtime，再 `finalize_tool_router`；`StepContext` 持有 finalized router。更新 tool system/router/anatomy 与各 tool gate。 |
-| Apply patch | direct custom tool 与 shell interception 统一进入 `execute_verified_patch`，共用 permission/safety/orchestrator/runtime。 |
-| Code Mode | V8/cell/session runtime 移到新 `code-mode-runtime` crate；core 只选 process-owned 或 disabled provider，没有内嵌 fallback。 |
-| Multi-agent | 新 plaintext/encrypted message 分流、developer instruction override、ready environment 继承、parent-turn correlation、registry 双索引与 remote-compaction retention。 |
-| Thread sections | `isPinned` 退役；新 section CRUD/move/list filter/manual ordering，依赖 SQLite，内建 Pinned section 不可改名/删除。 |
-| MCP 2026 | `mcp_2026_07_28` 仍 default-off/under-development；stdio 还要求 `CODEX_MCP_PROTOCOL_VERSION`。新 discovery/pagination、step binding、environment OAuth/file path 隔离与 strict elicitation review。 |
-| Plugins / skills | portable Agent Plugins v1、remote `plugin/search`、bundle limits/eligibility metadata；skills rendering 下沉 `ext/skills`，host/executor 共享 context-window budget。 |
-| App-Server | +6 client methods：thread section 5 个 + experimental `plugin/search`；notification/server-request 数不变，多个 payload 增字段。 |
-| TUI | two-stroke key chord、`/fork <name>`、state-DB-first picker、non-blocking RUI countdown、side cleanup、Unicode/hyperlink width 与 screen-size cache。TUI 尚未提供 section 管理 UI。 |
-| Exec/network | canonical `PermissionProfile`、remote Guardian network callback、allow-amendment fail-closed、normalized violation tracing、exec-server dispatcher/lifetime/version-skew，以及 Windows interrupt/PathUri 边界。 |
-| HTTP/realtime/budgets | shared route-aware HTTP 扩展到 Ollama/file upload/MCP OAuth；Realtime 增 request-level transition instructions/ack；rollout/token budgets 拆成独立模型。 |
+| Guardian V2 | Luna 预打分、`SecurityRiskScore` 快照、低于 `review_threshold` 才直批；高风险/缺分/模型强制 auto-review 回落 V1。`subsys.core.approval-guardian-v2` |
+| Thread queue | `queue_1.sqlite`、`MAX_QUEUE_ITEMS=100`、6 experimental RPC、拒绝 ephemeral/v2 spawned subagents。`subsys.core.thread-queue` |
+| Rollout migration | feature `background_paginated_rollout_migration` default-off；CLI 默认 dry-run。`subsys.core.rollout-migration` |
+| Thread revert | Paginated 用 `thread/revert`；`thread/rollback` 对非 TUI 发 deprecationNotice。`rpc.thread-methods` / `thread-store` |
+| Skills 下沉 | host loader/catalog 在 `ext/skills`，invocation/selection 在 `skills`。`subsys.config-auth.skills` |
+| Code Mode gRPC | `grpc://` host、`/readyz` `/healthz`、dual transport。`subsys.core.code-mode-runtime` |
+| UnifiedExec | `Feature::UnifiedExec` 全平台默认 `true`（含 Windows），仍受 `conpty_supported()` 约束。 |
+| Collaboration modes | 只剩 `Plan` / `Default`。 |
+| Diagnostics | doctor disk/security/storage/endpoint + experimental `server/diagnostics`。 |
+| Workload identity | 新 crate，写入 `subsys.providers.auth-layer` / `subsys.config-auth.auth-flows`，不另建节点。 |
+| MCP | protocol discovery metrics、CIMD vs DCR OAuth registration、hooks `mcp_tool` handler。 |
+| TUI startup | composer 在非 first-login 时可编辑但不提交；`/export` 存在；仍无 thread-section CRUD UI。 |
+| Protocol | `Op` 27（`TurnInput`/`ThreadSettings`/`ThreadRollback`/`ApproveGuardianDeniedAction`）；`EventMsg` 81。 |
 
 ## 5. L2 独立证伪
 
-源码影响先由多个独立 agent 按 core/tools、thread/state、App-Server/protocol、MCP/plugins、TUI、exec/network、providers/SDK 与 inventory 分面重读；节点落盘后再交叉分配给没有撰写该批次的 agent 逐 claim 证伪。下列反例已先修 Wiki：
+源码影响按 core/tools、thread/state、Guardian、App-Server/protocol、MCP/providers、TUI、exec/network 与 catalogs 分面重读；节点落盘后再对四个新节点和 crate/feature/RPC 计数做独立证伪。
 
-- 纠正“tool router 仍用 `add_tool_sources`”：目标是 registry-first + single finalize。
-- 纠正“Code Mode 可回退 core 内嵌 V8”：目标只有 process-owned 或 disabled provider。
-- 纠正“`request_user_input.autoResolutionMs` 是模型参数”：tool schema 已只剩 `questions`，blocking 由 mode 决定。
-- 纠正“writer lock 只用于 Paginated history”：target 对所有 history mode 强制单写者。
-- 纠正“`isPinned` 仍在 wire/list/metadata”：target 是 section 模型。
-- 纠正“MCP call 始终使用 sampling 时同一 client”：call-time readiness 后会 capture latest binding，resource 还可 fallback live connection。
-- 纠正“MCP 2026 打开 feature 即全面现代化”：默认关闭，stdio 还有 env marker。
-- 纠正“TUI 已支持 section 管理”：TUI 只消费部分 ordering 信息，没有 CRUD/move UI。
-- 纠正“external-agent detect 已返回 connector candidates”：detector 与 protocol 存在，但 app-server `detect_response` 当前固定返回空 connectors。
-- 纠正“`plugin/search.cwds` 已过滤 workspace”：target processor 当前显式忽略该参数。
-- 纠正“`justification` 可不配 sandbox permission”：shell/exec 现在要求显式 `sandbox_permissions`。
-- 纠正“network allow amendment 写入失败仍放行”：target 是 fail closed。
+L2 已推翻并就地修复两条 Guardian V2 过宽结论：
 
-纯 SHA/行号移动的 D-CLEAN 节点采用 base/target blob diff 映射后抽样；A-BROKEN、tool router、Code Mode、apply patch、thread sections、MCP、plugins/skills、App-Server、TUI keymap、exec-network、budgets 不降级为抽样。
+- TUI/exec 并不是 empty-registry：它们走 app-server `thread_extensions()`，因此会装上 V2；只有 MCP 与 V1 reviewer 的 empty registry 没有 V2。
+- Guardian reviewer 工具面是 `spec_plan.rs` 硬编码的 `exec_command`/`write_stdin`/`view_image`，并不读取 `Feature::UnifiedExec`。
+
+其余高风险主张经源码存活：6 个 queue RPC 均为 experimental、`MAX_QUEUE_ITEMS=100`、background migration default-off、CLI 默认 dry-run、`server/diagnostics` experimental、crate 134、feature 114、RPC 144/74/11、Op/EventMsg 27/81。
+
+L1 先报 2096 error（9 个跨节点 symbol 冲突 + 2086 条 `[E:]` 落在注释/闭合符 + 1 条 uncertainty 示例路径）。已 qualify 冲突 symbol，并把闭合符/注释引用拨到邻近支撑代码行；随后 lint **0 error / 0 warning**。
+
+机械行号重定位不能代替语义重读。A-BROKEN、Guardian V2、thread queue/revert/migration、Code Mode gRPC、RPC 计数、crate/feature catalog 已按源码重写；部分低 churn 子系统页以 SHA + 已知失效 claim 修补为主，残余行号精度风险记在 `_staging/uncertainty-catalogs.md`。
 
 ## 6. 不确定项与跳过判定
 
-本轮不把明确代码边界误记成 `[U]`：MCP 2026 门控、TUI section UI 缺失、connector detect 未接线、`plugin/search.cwds` 忽略都有 target 直证。
+继续保留或新记的主要 `[U]` 包括：remote Code Mode 部署层认证/TLS、multi-segment incremental replay、exec-network `Ask` 最终 UI、system proxy/PAC 长期契约、Windows IPv6 process attribution、dynamic skill selector 稳定用户协议、remote plugin disk cache 长期格式、Guardian V2 是否只在 app-server `thread_extensions()` 安装、reserved thread id 的 first-party 调用面、background migration 未宣称完成。
 
-继续保留的主要 `[U]` 包括：remote Code Mode 的部署层认证/TLS 保证、multi-segment history lineage 的未来 incremental replay、exec-network `Ask` 最终 UI、system proxy/PAC 长期契约、Windows IPv6 process attribution、dynamic skill selector 的稳定用户协议、remote plugin disk cache 长期格式。
-
-未为 MCP 2026、plugin search、thread sections、remote filesystem 另建节点：它们分别由既有 MCP catalog/client、plugin RPC/plugins、thread-store/thread RPC、exec-server/file-system 节点自包含承载。
+未为 workload-identity、thread revert、thread usage、code-mode gRPC 另建节点：它们分别由 auth-layer/auth-flows、thread-store/thread RPC、token-budget、code-mode-runtime 自包含承载。
 
 ## 7. 元数据与引用收敛
 
-- 所有 177 个 retained/new verified node frontmatter：`updated: 7750465934`。
-- `index.json.updated` 与所有 `index.nodes[].updated`：`7750465934`。
+- 所有 181 个 retained/new verified node frontmatter：`updated: 9ded177ce7`。
+- `index.json.updated` 与所有 `index.nodes[].updated`：`9ded177ce7`。
 - `README.md`、`llms.txt`、`index.json` 的节点/tool/crate/RPC/feature 计数一致。
-- base 中 20,977 个证据引用先通过 blob diff 对“代码未变、只移行”的引用保守重定位；落入变更 hunk 的 claim 重读 target source，不用“最近非空行”规避 lint。
-- 5 个失效 source 均已重定位；submodule 源码工作树 clean。
+- 6 个失效 source 均已重定位；submodule 源码工作树 clean。
+- `opencode` / `pi` 子模块未初始化、未修改。
 
 ## 8. 最终验证
 
@@ -144,15 +143,12 @@ node docs/llm-wiki/codex/tools/reconcile.mjs
 node docs/llm-wiki/codex/tools/reconcile.mjs
 node docs/llm-wiki/codex/tools/lint.mjs
 jq -r '.updated, (.nodes|length), ([.nodes[].updated]|unique|join(",")), ([.nodes[]|select(.status=="planned")]|length)' docs/llm-wiki/codex/index.json
-rg -n '^updated:' docs/llm-wiki/codex/{spine,surface,subsystems,reference} --glob '*.md'
 git diff --check
-git submodule status -- codex opencode pi
 ```
 
 验收结果：
 
-- submodule HEAD 精确等于 target full SHA，子模块源码工作树 clean。
-- reconcile 首轮登记 5 个新节点，第二轮为幂等无额外 diff。
+- submodule HEAD 精确等于 target full SHA，子模块源码工作树 clean；相对 `origin/main` 尾差 0。
+- reconcile 首轮登记 4 个新节点，第二轮幂等。
 - lint：0 error。
-- 177 verified / 0 planned，节点、index 顶层与子模块 SHA 一致。
-- `opencode` / `pi` 子模块未初始化、未修改。
+- 181 verified / 0 planned，节点、index 顶层与子模块 SHA 一致。

@@ -8,10 +8,10 @@ symbols: [TuiKeymap, RuntimeKeymap, KeymapContext, KeymapActionId, RuntimeChordK
 related: [config.ui-tui, command.model-mode, subsys.tui.architecture, subsys.tui.event-system, subsys.tui.bottom-pane, subsys.tui.overlays-dialogs]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
-> TUI keymap 子系统把 `[tui.keymap]` 的持久化配置解析成 context-aware runtime bindings；目标版本同时支持单键和最多两段的 chord，并让 `/keymap` picker 复用同一套解析、冲突校验与在线更新路径。[E: codex-rs/config/src/tui_keymap.rs:406][E: codex-rs/tui/src/keymap.rs:535][E: codex-rs/tui/src/chatwidget/keymap_picker.rs:31]
+> TUI keymap 子系统把 `[tui.keymap]` 的持久化配置解析成 context-aware runtime bindings；目标版本同时支持单键和最多两段的 chord，并让 `/keymap` picker 复用同一套解析、冲突校验与在线更新路径。composer、textarea、startup draft、notes overlay 都通过同一份 `RuntimeKeymap` 安装 editor bindings。[E: codex-rs/config/src/tui_keymap.rs:407][E: codex-rs/tui/src/keymap.rs:535][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:866][E: codex-rs/tui/src/bottom_pane/textarea.rs:186]
 
 ## 能回答的问题
 
@@ -19,14 +19,15 @@ updated: 7750465934
 - `ctrl-x ctrl-s` 怎样被解析、等待、取消并分发到既有 action handler？
 - 两段式快捷键为什么不能遮蔽现有单键或使用某些保留键？
 - `/keymap` 怎样 capture、校验、持久化并立即刷新 live bindings？
+- editor keymap 如何在 composer、textarea、startup draft 和 notes overlay 之间共享？
 
 ## 配置模型与 runtime resolution
 
 `KeybindingSpec` 保存规范化后的单键或两段 chord；字符串中的空白分隔 stroke，数组表达多个备选 binding 而不是一个 chord，空数组则显式 unbind。解析最多接受两段，并把每段分别 canonicalize 后再用一个空格连接。[E: codex-rs/config/src/tui_keymap.rs:30][E: codex-rs/config/src/tui_keymap.rs:38][E: codex-rs/config/src/tui_keymap.rs:40][E: codex-rs/config/src/tui_keymap.rs:70][E: codex-rs/config/src/tui_keymap.rs:72][E: codex-rs/config/src/tui_keymap.rs:74][E: codex-rs/config/src/tui_keymap.rs:439][E: codex-rs/config/src/tui_keymap.rs:444][E: codex-rs/config/src/tui_keymap.rs:451]
 
-`TuiKeymap` 有 global、chat、composer、editor、三种 Vim、pager、list 和 approval 十个配置 context；对应的 `KeymapContext` 还定义哪些 surface 会同时活跃和发生冲突，只有 Vim contexts 允许 plain-character chord prefix。[E: codex-rs/config/src/tui_keymap.rs:406][E: codex-rs/config/src/tui_keymap.rs:408][E: codex-rs/config/src/tui_keymap.rs:426][E: codex-rs/tui/src/keymap/bindings.rs:14][E: codex-rs/tui/src/keymap/bindings.rs:24][E: codex-rs/tui/src/keymap/bindings.rs:43][E: codex-rs/tui/src/keymap/bindings.rs:50]
+`TuiKeymap` 有 global、chat、composer、editor、三种 Vim、pager、list 和 approval 十个配置 context；对应的 `KeymapContext` 还定义哪些 surface 会同时活跃和发生冲突，只有 Vim contexts 允许 plain-character chord prefix。[E: codex-rs/config/src/tui_keymap.rs:406][E: codex-rs/config/src/tui_keymap.rs:408][E: codex-rs/config/src/tui_keymap.rs:426][E: codex-rs/tui/src/keymap/bindings.rs:14][E: codex-rs/tui/src/keymap/bindings.rs:24][E: codex-rs/tui/src/keymap/bindings.rs:40][E: codex-rs/tui/src/keymap/bindings.rs:47]
 
-`RuntimeKeymap::from_config` 按 context override、支持的 global fallback、built-in defaults 解析完整 snapshot；完成单键冲突校验后，再校验 chord 并把内部 dispatch binding 安装回已有 action binding set。因此 UI handler 只消费 `RuntimeKeymap`，不直接解释 raw config。[E: codex-rs/tui/src/keymap.rs:61][E: codex-rs/tui/src/keymap.rs:535][E: codex-rs/tui/src/keymap.rs:2045][E: codex-rs/tui/src/keymap.rs:2048][E: codex-rs/tui/src/keymap.rs:2051][E: codex-rs/tui/src/keymap.rs:1059][E: codex-rs/tui/src/keymap.rs:1073][E: codex-rs/tui/src/keymap.rs:1075]
+`RuntimeKeymap::from_config` 按 context override、支持的 global fallback、built-in defaults 解析完整 snapshot；完成单键冲突校验后，再校验 chord 并把内部 dispatch binding 安装回已有 action binding set。因此 UI handler 只消费 `RuntimeKeymap`，不直接解释 raw config。[E: codex-rs/tui/src/keymap.rs:535][E: codex-rs/tui/src/keymap.rs:536][E: codex-rs/tui/src/keymap.rs:2058]
 
 ## Chord matcher 与分发
 
@@ -48,13 +49,17 @@ chord prefix 不得遮蔽会在重叠 context 中生效的单键；相同 chord 
 
 `/keymap` picker 先用当前 config 重建 `RuntimeKeymap`，无效配置直接显示错误；action menu 再选择 replace/add/remove，capture view 捕获单键或恰好两段 chord，只发出 canonical `KeymapCaptured` event，本身不写 config。[E: codex-rs/tui/src/chatwidget/keymap_picker.rs:31][E: codex-rs/tui/src/chatwidget/keymap_picker.rs:32][E: codex-rs/tui/src/keymap_setup.rs:146][E: codex-rs/tui/src/keymap_setup.rs:210][E: codex-rs/tui/src/keymap_setup.rs:225][E: codex-rs/tui/src/keymap_setup.rs:306][E: codex-rs/tui/src/keymap_setup/capture.rs:27][E: codex-rs/tui/src/keymap_setup/capture.rs:77][E: codex-rs/tui/src/keymap_setup/capture.rs:118][E: codex-rs/tui/src/keymap_setup/capture.rs:144]
 
-app dispatcher 用最新 raw config 与 runtime snapshot 应用 edit，重新执行 `RuntimeKeymap::from_config`；冲突时打开 conflict picker，成功时通过 `ConfigEditsBuilder` 持久化，并同步更新 App、ChatWidget、BottomPane 与 side-thread UI 的 runtime bindings。[E: codex-rs/tui/src/app/event_dispatch.rs:2381][E: codex-rs/tui/src/app/event_dispatch.rs:2388][E: codex-rs/tui/src/app/event_dispatch.rs:2414][E: codex-rs/tui/src/app/event_dispatch.rs:2417][E: codex-rs/tui/src/app/event_dispatch.rs:2425][E: codex-rs/tui/src/app/event_dispatch.rs:2432][E: codex-rs/tui/src/app/event_dispatch.rs:2433][E: codex-rs/tui/src/app/event_dispatch.rs:2437][E: codex-rs/tui/src/chatwidget/keymap_picker.rs:167][E: codex-rs/tui/src/chatwidget/keymap_picker.rs:172][E: codex-rs/tui/src/chatwidget/keymap_picker.rs:177]
+app dispatcher 用最新 raw config 与 runtime snapshot 应用 edit；`KeymapCaptured` 进入 `apply_keymap_capture`，成功时通过 `ConfigEditsBuilder` 持久化，并调用 `apply_keymap_update` 同步 App / ChatWidget / BottomPane 的 runtime bindings。[E: codex-rs/tui/src/app/event_dispatch.rs:2584][E: codex-rs/tui/src/app/event_dispatch.rs:2590][E: codex-rs/tui/src/app/event_dispatch.rs:2646][E: codex-rs/tui/src/app/event_dispatch.rs:2656]
+
+## 跨 composer 组件共享 editor keymap
+
+`tui.keymap.editor` 不是 composer 私有表。`BottomPane::set_keymap_bindings` 把同一份 `RuntimeKeymap` 交给 composer；composer 再把它交给 embedded textarea，并同时更新 submit/queue/history-search。startup draft、request-user-input notes 和 MCP elicitation 都走 `ChatComposer::set_keymap_bindings`，因此 remap 一次就会同时影响这些 surface。[E: codex-rs/tui/src/bottom_pane/mod.rs:410][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:866][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:874][E: codex-rs/tui/src/bottom_pane/textarea.rs:186][E: codex-rs/tui/src/startup_draft.rs:174][E: codex-rs/tui/src/bottom_pane/request_user_input/mod.rs:219][E: codex-rs/tui/src/bottom_pane/mcp_server_elicitation.rs:758]
 
 ## Gotchas
 
 - 用户数组是 alternatives，只有单个字符串内部的空格才形成 chord。[E: codex-rs/config/src/tui_keymap.rs:72][E: codex-rs/config/src/tui_keymap.rs:73][E: codex-rs/config/src/tui_keymap.rs:74]
 - chord matcher 不重放已经消费的 prefix；把常用文本键放在非 Vim prefix 会被校验拒绝。[E: codex-rs/tui/src/keymap/chords.rs:187][E: codex-rs/tui/src/keymap/chords.rs:416]
-- capture 与配置持久化分层；直接改 `ChatWidget.config.tui_keymap` 会让可见 hint 与 active handler 漂移。[E: codex-rs/tui/src/keymap_setup/capture.rs:144][E: codex-rs/tui/src/app/event_dispatch.rs:2425][E: codex-rs/tui/src/chatwidget/keymap_picker.rs:167]
+- capture 与配置持久化分层；直接改 `ChatWidget.config.tui_keymap` 会让可见 hint 与 active handler 漂移。[E: codex-rs/tui/src/keymap_setup/capture.rs:144][E: codex-rs/tui/src/app/event_dispatch.rs:2646][E: codex-rs/tui/src/app/event_dispatch.rs:2656]
 
 ## Sources
 

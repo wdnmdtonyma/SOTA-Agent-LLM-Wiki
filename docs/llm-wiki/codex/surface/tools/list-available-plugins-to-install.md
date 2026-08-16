@@ -8,7 +8,7 @@ symbols: [ListAvailablePluginsToInstallHandler, create_list_available_plugins_to
 related: [tool.request-plugin-install, tool.tool-search, subsys.config-auth.plugins, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > `list_available_plugins_to_install` 列出当前可安装的 plugin/connector 候选,供模型再用 `request_plugin_install` 发起安装请求。
@@ -24,11 +24,11 @@ updated: 7750465934
 
 wire name 常量是 `LIST_AVAILABLE_PLUGINS_TO_INSTALL_TOOL_NAME`,值为 `list_available_plugins_to_install`;handler 是 `ListAvailablePluginsToInstallHandler`。[E: codex-rs/tools/src/tool_discovery.rs:8] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:18]
 
-handler 的 `tool_name()` 返回该常量,`spec()` 返回 `create_list_available_plugins_to_install_tool()`。[E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:57] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:59] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:62] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:63]
+handler 的 `tool_name()` 返回该常量,`spec()` 返回 `create_list_available_plugins_to_install_tool()`。[E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:59] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:63]
 
 ## 2 用途定位
 
-spec 描述要求仅在用户明确要求安装具体 plugin/connector 且 `tool_search` 不可用或找不到目标时使用;输出候选可传给 `request_plugin_install`。[E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install_spec.rs:7] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install_spec.rs:9]
+spec 描述要求仅在用户明确要求安装具体 plugin/connector 且 `tool_search` 不可用或找不到目标时使用;输出候选可传给 `request_plugin_install`。[E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install_spec.rs:9]
 
 ## 3 输入 schema 表
 
@@ -38,9 +38,9 @@ spec 描述要求仅在用户明确要求安装具体 plugin/connector 且 `tool
 
 ## 4 输出 schema & 截断
 
-handler 把 `ListAvailablePluginsToInstallResult { tools }` 序列化为 JSON 文本输出。[E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:33] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:34] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:90] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:96]
+handler 把 `ListAvailablePluginsToInstallResult { tools }` 序列化为 JSON 文本输出。[E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:33] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:90] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:96]
 
-每个 `RequestPluginInstallEntry` 包含 `id`、`name`、`description`、`tool_type`、`has_skills`、`mcp_server_names`、`app_connector_ids`;handler 会把 description 截到 240 个字符边界。[E: codex-rs/tools/src/tool_discovery.rs:105] [E: codex-rs/tools/src/tool_discovery.rs:106] [E: codex-rs/tools/src/tool_discovery.rs:107] [E: codex-rs/tools/src/tool_discovery.rs:108] [E: codex-rs/tools/src/tool_discovery.rs:109] [E: codex-rs/tools/src/tool_discovery.rs:110] [E: codex-rs/tools/src/tool_discovery.rs:111] [E: codex-rs/tools/src/tool_discovery.rs:112] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:16] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:40] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:43] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:105] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:106] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:107]
+每个 `RequestPluginInstallEntry` 包含 `id`、`name`、`description`、`tool_type`、`has_skills`、`mcp_server_names`、`app_connector_ids`;handler 会把 description 截到 240 个字符边界。[E: codex-rs/tools/src/tool_discovery.rs:106] [E: codex-rs/tools/src/tool_discovery.rs:107] [E: codex-rs/tools/src/tool_discovery.rs:108] [E: codex-rs/tools/src/tool_discovery.rs:109] [E: codex-rs/tools/src/tool_discovery.rs:110] [E: codex-rs/tools/src/tool_discovery.rs:111] [E: codex-rs/tools/src/tool_discovery.rs:112] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:16] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:40]
 
 ## 5 ToolSpec 类型
 
@@ -48,13 +48,13 @@ handler 把 `ListAvailablePluginsToInstallResult { tools }` 序列化为 JSON �
 
 ## 6 注册与门控
 
-`tool_suggest_enabled` 要求 `Feature::ToolSuggest`、`Feature::Apps`、`Feature::Plugins` 全部开启。[E: codex-rs/core/src/tools/spec_plan.rs:387] [E: codex-rs/core/src/tools/spec_plan.rs:389] [E: codex-rs/core/src/tools/spec_plan.rs:390] [E: codex-rs/core/src/tools/spec_plan.rs:391]
+`tool_suggest_enabled` 要求 `Feature::ToolSuggest`、`Feature::Apps`、`Feature::Plugins` 全部开启。[E: codex-rs/core/src/tools/spec_plan.rs:585] [E: codex-rs/core/src/tools/spec_plan.rs:587] [E: codex-rs/core/src/tools/spec_plan.rs:588] [E: codex-rs/core/src/tools/spec_plan.rs:589]
 
-`add_core_utility_tools` 还要求存在非空 `tool_suggest_candidates`;当 presentation 是 `ToolSuggestPresentation::ListTool` 时才注册 `ListAvailablePluginsToInstallHandler`,随后总是注册 `RequestPluginInstallHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:844] [E: codex-rs/core/src/tools/spec_plan.rs:846] [E: codex-rs/core/src/tools/spec_plan.rs:848] [E: codex-rs/core/src/tools/spec_plan.rs:849] [E: codex-rs/core/src/tools/spec_plan.rs:853]
+`add_core_utility_tools` 还要求存在非空 `tool_suggest_candidates`;当 presentation 是 `ToolSuggestPresentation::ListTool` 时才注册 `ListAvailablePluginsToInstallHandler`,随后总是注册 `RequestPluginInstallHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1085] [E: codex-rs/core/src/tools/spec_plan.rs:1089] [E: codex-rs/core/src/tools/spec_plan.rs:1091] [E: codex-rs/core/src/tools/spec_plan.rs:1095]
 
-endpoint recommendation path 不走本工具：有 endpoint candidates 时 turn 直接选择 `RecommendationContext`，只保留 `request_plugin_install` 的简化 `plugin_id` schema；本节点描述的是没有 endpoint candidates 时的 legacy candidate enumeration。[E: codex-rs/core/src/session/turn.rs:1498][E: codex-rs/core/src/session/turn.rs:1504][E: codex-rs/core/src/session/turn.rs:1507][E: codex-rs/core/src/tools/spec_plan.rs:848]
+endpoint recommendation path 不走本工具：有 endpoint candidates 时 turn 直接选择 `RecommendationContext`，只保留 `request_plugin_install` 的简化 `plugin_id` schema；本节点描述的是没有 endpoint candidates 时的 legacy candidate enumeration。[E: codex-rs/core/src/session/turn.rs:1495][E: codex-rs/core/src/session/turn.rs:1499][E: codex-rs/core/src/tools/spec_plan.rs:1091]
 
-spec tests 覆盖任一 discovery feature 关闭、候选为空时两件套不可见,以及开启后两件套可见。[E: codex-rs/core/src/tools/spec_plan_tests.rs:1377] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1378] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1393] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1399] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1419] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1438] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1439] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1440]
+spec tests 覆盖任一 discovery feature 关闭、候选为空时两件套不可见,以及开启后两件套可见。[E: codex-rs/core/src/tools/spec_plan_tests.rs:1930] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1946] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1972] [E: codex-rs/core/src/tools/spec_plan_tests.rs:1991]
 
 ## 7 parallel-safe
 
@@ -62,7 +62,7 @@ spec tests 覆盖任一 discovery feature 关闭、候选为空时两件套不�
 
 ## 8 handler 走读
 
-handler 构造时按 `name`、`id` 排序候选;调用时只接受 function payload,然后输出当前候选 JSON。[E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:23] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:25] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:27] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:80] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:81] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:82] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:90] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:96] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:98]
+handler 构造时按 `name`、`id` 排序候选;调用时只接受 function payload,然后输出当前候选 JSON。[E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:23] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:25] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:82] [E: codex-rs/core/src/tools/handlers/list_available_plugins_to_install.rs:90]
 
 ## 9 设计动机·edge·历史
 

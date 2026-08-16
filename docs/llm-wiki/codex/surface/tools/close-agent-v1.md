@@ -8,7 +8,7 @@ symbols: [create_close_agent_tool_v1, CloseAgentHandler, multi_agents::close_age
 related: [tool.spawn-agent-v1, tool.send-input-v1, tool.resume-agent-v1]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > `close_agent` V1 是 `multi_agent_v1` namespace 下的关闭工具；它按 agent thread id 关闭目标 agent 及其 live descendants，并返回关闭前观察到的 status。
@@ -17,29 +17,29 @@ updated: 7750465934
 
 | 项 | 当前源码事实 |
 |---|---|
-| namespace / wire name | handler 返回 `ToolName::namespaced(MULTI_AGENT_V1_NAMESPACE, "close_agent")`；namespace 常量是 `multi_agent_v1`。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:8][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:10][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:14] |
-| spec builder | `create_close_agent_tool_v1` 返回 namespace spec，内部 function name 是 `close_agent`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:318][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:321][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:328] |
-| handler | `multi_agents.rs` re-export `close_agent::Handler as CloseAgentHandler`；handler 只匹配 function payload。[E: codex-rs/core/src/tools/handlers/multi_agents.rs:74][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:132][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:134] |
+| namespace / wire name | handler 返回 `ToolName::namespaced(MULTI_AGENT_V1_NAMESPACE, "close_agent")`；namespace 常量是 `multi_agent_v1`。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:10][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:14] |
+| spec builder | `create_close_agent_tool_v1` 返回 namespace spec，内部 function name 是 `close_agent`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:318][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:328] |
+| handler | `multi_agents.rs` re-export `close_agent::Handler as CloseAgentHandler`；handler 只匹配 function payload。[E: codex-rs/core/src/tools/handlers/multi_agents.rs:74][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:133][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:134] |
 
 ## 注册与门控
 
-`close_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 只受 `search_tool_enabled` 控制，search 开启时是 `Deferred`，否则是 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:886][E: codex-rs/core/src/tools/spec_plan.rs:888][E: codex-rs/core/src/tools/spec_plan.rs:889][E: codex-rs/core/src/tools/spec_plan.rs:945][E: codex-rs/core/src/tools/spec_plan.rs:948][E: codex-rs/core/src/tools/spec_plan.rs:949][E: codex-rs/core/src/tools/spec_plan.rs:951][E: codex-rs/core/src/tools/spec_plan.rs:969]
+`close_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 只受 `search_tool_enabled` 控制，search 开启时是 `Deferred`，否则是 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:1134][E: codex-rs/core/src/tools/spec_plan.rs:1135][E: codex-rs/core/src/tools/spec_plan.rs:1191][E: codex-rs/core/src/tools/spec_plan.rs:1194][E: codex-rs/core/src/tools/spec_plan.rs:1197][E: codex-rs/core/src/tools/spec_plan.rs:1215]
 
-handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:17][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:18][E: codex-rs/tools/src/tool_executor.rs:73][E: codex-rs/tools/src/tool_executor.rs:74]
+handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:17][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:18][E: codex-rs/tools/src/tool_executor.rs:122][E: codex-rs/tools/src/tool_executor.rs:123]
 
 ## 输入与 handler
 
-schema 只有 required `target`，描述为来自 `spawn_agent` 的 agent id；handler 用 `parse_agent_id_target` 把它解析为 `ThreadId`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:319][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:321][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:332][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:39][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:40][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:41]
+schema 只有 required `target`，描述为来自 `spawn_agent` 的 agent id；handler 用 `parse_agent_id_target` 把它解析为 `ThreadId`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:321][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:332][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:41]
 
-handler 发出 `CollabAgentToolCall` started item，订阅目标 status 以取得关闭前状态；如果 thread 不存在但 metadata 已知，会退回 `get_status`。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:45][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:48][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:62][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:65][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:68][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:69]
+handler 发出 `CollabAgentToolCall` started item，订阅目标 status 以取得关闭前状态；如果 thread 不存在但 metadata 已知，会退回 `get_status`。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:45][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:65][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:70][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:72]
 
-关闭动作由 `agent_control.close_agent(agent_id)` 执行；成功或失败后都会发出 completed item，带 receiver metadata 与状态映射，成功返回 `CloseAgentResult { previous_status }`。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:100][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:104][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:107][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:113][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:121][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:125][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:127]
+关闭动作由 `agent_control.close_agent(agent_id)` 执行；成功或失败后都会发出 completed item，带 receiver metadata 与状态映射，成功返回 `CloseAgentResult { previous_status }`。[E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:100][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:104][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:127][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:128]
 
-`AgentControl::close_agent` 会在 persisted state 可用时尝试把目标 spawn-edge status 标为 `Closed`；unknown `ThreadNotFound` 不做持久化标记，live-thread 持久化失败只 warn，而 stale known-agent 的持久化失败会返回 fatal。随后它调用 `shutdown_agent_tree`，该函数关闭目标并遍历 live descendants 逐个 shutdown。[E: codex-rs/core/src/agent/control/legacy.rs:34][E: codex-rs/core/src/agent/control/legacy.rs:40][E: codex-rs/core/src/agent/control/legacy.rs:42][E: codex-rs/core/src/agent/control/legacy.rs:44][E: codex-rs/core/src/agent/control/legacy.rs:48][E: codex-rs/core/src/agent/control/legacy.rs:51][E: codex-rs/core/src/agent/control/legacy.rs:56][E: codex-rs/core/src/agent/control/legacy.rs:58][E: codex-rs/core/src/agent/control/legacy.rs:62][E: codex-rs/core/src/agent/control/legacy.rs:63][E: codex-rs/core/src/agent/control/legacy.rs:72][E: codex-rs/core/src/agent/control/legacy.rs:88][E: codex-rs/core/src/agent/control/legacy.rs:89][E: codex-rs/core/src/agent/control/legacy.rs:90][E: codex-rs/core/src/agent/control/legacy.rs:91]
+`AgentControl::close_agent` 会在 persisted state 可用时尝试把目标 spawn-edge status 标为 `Closed`；unknown `ThreadNotFound` 不做持久化标记，live-thread 持久化失败只 warn，而 stale known-agent 的持久化失败会返回 fatal。随后它调用 `shutdown_agent_tree`，该函数关闭目标并遍历 live descendants 逐个 shutdown。[E: codex-rs/core/src/agent/control/legacy.rs:48][E: codex-rs/core/src/agent/control/legacy.rs:58][E: codex-rs/core/src/agent/control/legacy.rs:62][E: codex-rs/core/src/agent/control/legacy.rs:72][E: codex-rs/core/src/agent/control/legacy.rs:76][E: codex-rs/core/src/agent/control/legacy.rs:81][E: codex-rs/core/src/agent/control/legacy.rs:86]
 
 ## 输出
 
-输出 schema 是 `{ previous_status }`，其 status 形态复用通用 `agent_status_output_schema`；handler 以 success true 写回 function output。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:333][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:532][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:536][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:538][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:541][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:152][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:153]
+输出 schema 是 `{ previous_status }`，其 status 形态复用通用 `agent_status_output_schema`；handler 以 success true 写回 function output。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:333][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:532][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:541][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:152][E: codex-rs/core/src/tools/handlers/multi_agents/close_agent.rs:153]
 
 ## Sources
 

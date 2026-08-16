@@ -8,10 +8,10 @@ symbols: [TurnMetadataState, CodexResponsesMetadata, TurnMetadataWorkspace, Exec
 related: [subsys.core.tool-system, subsys.core.context-manager, ref.data-model]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
-> `TurnMetadataState` 是单 turn 的 Responses metadata source of truth：它携带 thread/turn lineage、workspace/git、sandbox、code-mode tool mapping、turn timing 与 caller extra metadata；`ExecutedToolCallRecorder` 则把模型尝试执行的 direct/nested tool calls 以有界、warehouse-only metadata 附到对应 tool output 上。[E: codex-rs/core/src/turn_metadata.rs:89][E: codex-rs/core/src/turn_metadata.rs:97][E: codex-rs/core/src/turn_metadata.rs:103][E: codex-rs/core/src/turn_metadata.rs:106][E: codex-rs/core/src/tools/executed_tool_calls.rs:23][E: codex-rs/protocol/src/models.rs:794]
+> `TurnMetadataState` 是单 turn 的 Responses metadata source of truth：它携带 thread/turn lineage、workspace/git、sandbox、code-mode tool mapping、turn timing 与 caller extra metadata；`ExecutedToolCallRecorder` 则把模型尝试执行的 direct/nested tool calls 以有界、warehouse-only metadata 附到对应 tool output 上。[E: codex-rs/core/src/turn_metadata.rs:89][E: codex-rs/core/src/turn_metadata.rs:95][E: codex-rs/core/src/turn_metadata.rs:103][E: codex-rs/core/src/turn_metadata.rs:106][E: codex-rs/core/src/tools/executed_tool_calls.rs:23][E: codex-rs/protocol/src/models.rs:794]
 
 ## 能回答的问题
 
@@ -24,7 +24,7 @@ updated: 7750465934
 
 ## 职责边界
 
-`TurnMetadataState` 属于 turn-scoped runtime metadata；它不改变 conversation history，也不定义 tool dispatch。`CodexResponsesMetadata` 把该 state 投影成 canonical `x-codex-turn-metadata` client metadata 与兼容 headers。[E: codex-rs/core/src/turn_metadata.rs:197][E: codex-rs/core/src/turn_metadata.rs:253][E: codex-rs/core/src/responses_metadata.rs:159][E: codex-rs/core/src/responses_metadata.rs:219][I]
+`TurnMetadataState` 属于 turn-scoped runtime metadata；它不改变 conversation history，也不定义 tool dispatch。`CodexResponsesMetadata` 把该 state 投影成 canonical `x-codex-turn-metadata` client metadata 与兼容 headers。[E: codex-rs/core/src/turn_metadata.rs:197][E: codex-rs/core/src/turn_metadata.rs:254][E: codex-rs/core/src/responses_metadata.rs:159][E: codex-rs/core/src/responses_metadata.rs:219][I]
 
 `ExecutedToolCallRecorder` 记录“模型尝试调用了什么”，再附着到下一次 prompt 的 tool output；actual tool result、approval 与 runtime event 仍由 tool system/context history 负责。[E: codex-rs/core/src/tools/executed_tool_calls.rs:64][E: codex-rs/core/src/tools/executed_tool_calls.rs:177][E: codex-rs/core/src/session/turn.rs:1347][I]
 
@@ -32,18 +32,18 @@ updated: 7750465934
 
 | 实体 | 关键字段/约束 | 语义 |
 |---|---|---|
-| `TurnMetadataState` | cwd/repo、session/thread/fork/parent IDs、`OnceLock<String>` parent turn、subagent kind/header、turn id、sandbox、workspaces、code-mode tool names、turn start time、extra metadata、user-input-requested flag | Mutable turn-scoped metadata accumulator。[E: codex-rs/core/src/turn_metadata.rs:89][E: codex-rs/core/src/turn_metadata.rs:91][E: codex-rs/core/src/turn_metadata.rs:95][E: codex-rs/core/src/turn_metadata.rs:97][E: codex-rs/core/src/turn_metadata.rs:103][E: codex-rs/core/src/turn_metadata.rs:107] |
+| `TurnMetadataState` | cwd/repo、session/thread/fork/parent IDs、`OnceLock<String>` parent turn、subagent kind/header、turn id、sandbox、workspaces、code-mode tool names、turn start time、extra metadata、user-input-requested flag | Mutable turn-scoped metadata accumulator。[E: codex-rs/core/src/turn_metadata.rs:89][E: codex-rs/core/src/turn_metadata.rs:91][E: codex-rs/core/src/turn_metadata.rs:95][E: codex-rs/core/src/turn_metadata.rs:95][E: codex-rs/core/src/turn_metadata.rs:103][E: codex-rs/core/src/turn_metadata.rs:107] |
 | `CodexResponsesMetadata` | installation/session/thread/turn/window IDs、request kind、lineage、subagent、sandbox、workspaces、tool names、turn timestamp、extra | Caller-owned request snapshot；canonical blob lives in `client_metadata["x-codex-turn-metadata"]`。[E: codex-rs/core/src/responses_metadata.rs:159][E: codex-rs/core/src/responses_metadata.rs:166][E: codex-rs/core/src/responses_metadata.rs:176][E: codex-rs/core/src/responses_metadata.rs:219][E: codex-rs/core/src/responses_metadata.rs:250] |
-| `InternalChatMessageMetadataPassthrough` | optional `turn_id`, optional `executed_tool_calls` | attempted calls are warehouse-only: skipped during deserialization, schema generation, and TypeScript export。[E: codex-rs/protocol/src/models.rs:786][E: codex-rs/protocol/src/models.rs:789][E: codex-rs/protocol/src/models.rs:791][E: codex-rs/protocol/src/models.rs:792][E: codex-rs/protocol/src/models.rs:793][E: codex-rs/protocol/src/models.rs:794] |
+| `InternalChatMessageMetadataPassthrough` | optional `turn_id`, optional `executed_tool_calls` | attempted calls are warehouse-only: skipped during deserialization, schema generation, and TypeScript export。[E: codex-rs/protocol/src/models.rs:786][E: codex-rs/protocol/src/models.rs:789][E: codex-rs/protocol/src/models.rs:789][E: codex-rs/protocol/src/models.rs:792][E: codex-rs/protocol/src/models.rs:792][E: codex-rs/protocol/src/models.rs:794] |
 | `ExecutedToolCall` | `name` + untagged raw/truncated arguments | truncation marker is locally trusted metadata；model-provided marker-shaped JSON is wrapped as raw data instead of being trusted。[E: codex-rs/protocol/src/models/executed_tool_calls.rs:232][E: codex-rs/protocol/src/models/executed_tool_calls.rs:243][E: codex-rs/protocol/src/models/executed_tool_calls.rs:244][E: codex-rs/protocol/src/models/executed_tool_calls.rs:246][E: codex-rs/protocol/src/models/executed_tool_calls.rs:262][E: codex-rs/protocol/src/models/executed_tool_calls.rs:263] |
 
 ## Parent lineage 与 Responses metadata
 
 1. `TurnMetadataState::new` captures thread/fork/parent identity and computes repo root/sandbox；`parent_turn_id` starts empty as `OnceLock`。[E: codex-rs/core/src/turn_metadata.rs:113][E: codex-rs/core/src/turn_metadata.rs:126][E: codex-rs/core/src/turn_metadata.rs:135][E: codex-rs/core/src/turn_metadata.rs:142]
-2. `set_parent_turn_id` ignores blank values and accepts only the first non-empty value, so later delivery cannot rewrite lineage。[E: codex-rs/core/src/turn_metadata.rs:227][E: codex-rs/core/src/turn_metadata.rs:228][E: codex-rs/core/src/turn_metadata.rs:231]
-3. `Session::start_task` retrieves pending input and optional parent turn id from the input queue；only `MailboxParentProvenance::Attribute` writes it into `TurnMetadataState`。[E: codex-rs/core/src/tasks/mod.rs:317][E: codex-rs/core/src/tasks/mod.rs:319][E: codex-rs/core/src/tasks/mod.rs:322]
-4. `responses_metadata_template` copies turn/fork/parent/subagent/sandbox/workspace/tool/timing/extra state into a request snapshot；caller-provided extra metadata is filtered so reserved core keys cannot be overridden。[E: codex-rs/core/src/turn_metadata.rs:234][E: codex-rs/core/src/turn_metadata.rs:242][E: codex-rs/core/src/turn_metadata.rs:253][E: codex-rs/core/src/turn_metadata.rs:255][E: codex-rs/core/src/turn_metadata.rs:258][E: codex-rs/core/src/turn_metadata.rs:270][E: codex-rs/core/src/responses_metadata.rs:47][E: codex-rs/core/src/responses_metadata.rs:64]
-5. `client_metadata()` emits flat compatibility IDs plus full `x-codex-turn-metadata` JSON；parent turn is also projected as a flat key when present。[E: codex-rs/core/src/responses_metadata.rs:219][E: codex-rs/core/src/responses_metadata.rs:229][E: codex-rs/core/src/responses_metadata.rs:244][E: codex-rs/core/src/responses_metadata.rs:247][E: codex-rs/core/src/responses_metadata.rs:250]
+2. `set_parent_turn_id` ignores blank values and accepts only the first non-empty value, so later delivery cannot rewrite lineage。[E: codex-rs/core/src/turn_metadata.rs:227][E: codex-rs/core/src/turn_metadata.rs:228][E: codex-rs/core/src/turn_metadata.rs:230]
+3. `Session::start_task` retrieves pending input and optional parent turn id from the input queue；only `MailboxParentProvenance::Attribute` writes it into `TurnMetadataState`。[E: codex-rs/core/src/tasks/mod.rs:317][E: codex-rs/core/src/tasks/mod.rs:318][E: codex-rs/core/src/tasks/mod.rs:322]
+4. `responses_metadata_template` copies turn/fork/parent/subagent/sandbox/workspace/tool/timing/extra state into a request snapshot；caller-provided extra metadata is filtered so reserved core keys cannot be overridden。[E: codex-rs/core/src/turn_metadata.rs:234][E: codex-rs/core/src/turn_metadata.rs:242][E: codex-rs/core/src/turn_metadata.rs:254][E: codex-rs/core/src/turn_metadata.rs:255][E: codex-rs/core/src/turn_metadata.rs:257][E: codex-rs/core/src/turn_metadata.rs:269][E: codex-rs/core/src/responses_metadata.rs:47][E: codex-rs/core/src/responses_metadata.rs:64]
+5. `client_metadata()` emits flat compatibility IDs plus full `x-codex-turn-metadata` JSON；parent turn is also projected as a flat key when present。[E: codex-rs/core/src/responses_metadata.rs:219][E: codex-rs/core/src/responses_metadata.rs:228][E: codex-rs/core/src/responses_metadata.rs:244][E: codex-rs/core/src/responses_metadata.rs:247][E: codex-rs/core/src/responses_metadata.rs:250]
 6. MCP projection deliberately removes both code-mode tool mapping and `parent_turn_id`, then adds current model/effort and whether user input was requested during the turn。[E: codex-rs/core/src/turn_metadata.rs:157][E: codex-rs/core/src/turn_metadata.rs:166][E: codex-rs/core/src/turn_metadata.rs:167][E: codex-rs/core/src/turn_metadata.rs:168][E: codex-rs/core/src/turn_metadata.rs:183][E: codex-rs/core/src/turn_metadata.rs:187]
 
 ## Executed tool metadata 控制流
@@ -61,8 +61,8 @@ updated: 7750465934
 
 ## Gotcha
 
-- `parent_thread_id` and `parent_turn_id` are different lineage dimensions；the latter is first-write-wins and intentionally removed from MCP metadata。[E: codex-rs/core/src/turn_metadata.rs:96][E: codex-rs/core/src/turn_metadata.rs:97][E: codex-rs/core/src/turn_metadata.rs:167][E: codex-rs/core/src/turn_metadata.rs:227]
-- `executed_tool_calls` is attached to tool-output chat metadata, not emitted as a standalone rollout item or public app-server field。[E: codex-rs/protocol/src/models.rs:791][E: codex-rs/protocol/src/models.rs:794][E: codex-rs/core/src/tools/executed_tool_calls.rs:255]
+- `parent_thread_id` and `parent_turn_id` are different lineage dimensions；the latter is first-write-wins and intentionally removed from MCP metadata。[E: codex-rs/core/src/turn_metadata.rs:95][E: codex-rs/core/src/turn_metadata.rs:95][E: codex-rs/core/src/turn_metadata.rs:167][E: codex-rs/core/src/turn_metadata.rs:227]
+- `executed_tool_calls` is attached to tool-output chat metadata, not emitted as a standalone rollout item or public app-server field。[E: codex-rs/protocol/src/models.rs:789][E: codex-rs/protocol/src/models.rs:794][E: codex-rs/core/src/tools/executed_tool_calls.rs:255]
 - Full Code Mode tool mapping remains in canonical client metadata, while direct compatibility headers omit that unbounded mapping。[E: codex-rs/core/src/responses_metadata.rs:219][E: codex-rs/core/src/responses_metadata.rs:260][E: codex-rs/core/src/responses_metadata.rs:262]
 
 ## Sources

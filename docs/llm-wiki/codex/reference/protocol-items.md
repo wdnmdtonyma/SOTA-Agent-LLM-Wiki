@@ -8,7 +8,7 @@ symbols: [TurnItem, UserMessageItem, AgentMessageItem, ImageViewItem, ExtensionI
 related: [ref.protocol-event-streaming, ref.protocol-op, subsys.core.approval-guardian]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > `items.rs` 定义 turn-item stream 的 `TurnItem` tagged union；`approvals.rs` 定义 approval、guardian assessment、network policy amendment、MCP elicitation 和 apply-patch approval 的交互 payload。[E: codex-rs/protocol/src/items.rs:44][E: codex-rs/protocol/src/approvals.rs:226][E: codex-rs/protocol/src/approvals.rs:179][E: codex-rs/protocol/src/approvals.rs:173][E: codex-rs/protocol/src/approvals.rs:353][E: codex-rs/protocol/src/approvals.rs:401]
@@ -53,8 +53,8 @@ updated: 7750465934
 - `UserMessageItem::as_legacy_event()` flatten text inputs 到 `UserMessageEvent.message`,并保留 remote/local image 与 audio 列表、detail hints 与 text elements。兼容实现已从 `protocol.rs` 搬到 `legacy_events.rs`。[E: codex-rs/protocol/src/items.rs:547][E: codex-rs/protocol/src/items.rs:557][E: codex-rs/protocol/src/legacy_events.rs:77][E: codex-rs/protocol/src/legacy_events.rs:81][E: codex-rs/protocol/src/legacy_events.rs:84][E: codex-rs/protocol/src/legacy_events.rs:88][E: codex-rs/protocol/src/legacy_events.rs:89][E: codex-rs/protocol/src/legacy_events.rs:94]
 - review enter/exit 首先是 canonical `TurnItem`；item completion 再借助 `legacy_events.rs` fan out `EnteredReviewMode` / `ExitedReviewMode`，并补上 turn/item correlation。[E: codex-rs/protocol/src/legacy_events.rs:114][E: codex-rs/protocol/src/legacy_events.rs:120][E: codex-rs/protocol/src/legacy_events.rs:125]
 - standalone image generation、sleep 与 web search 走 `TurnItem::Extension`; hosted Responses API 的 web/image item 仍保留 core-owned variant。[E: codex-rs/protocol/src/items.rs:69]
-- canonical `CommandExecutionItem`、legacy exec begin/end event 与 app-server v2 `ThreadItem::CommandExecution` 都携带 optional plugin id 和 safe plugin-relative script path；v2 只是把 canonical fields 投影为 `pluginId` / `scriptPath`。[E: codex-rs/protocol/src/items.rs:201][E: codex-rs/protocol/src/items.rs:206][E: codex-rs/protocol/src/items.rs:209][E: codex-rs/protocol/src/protocol.rs:3530][E: codex-rs/protocol/src/protocol.rs:3536][E: codex-rs/protocol/src/protocol.rs:3540][E: codex-rs/protocol/src/protocol.rs:3564][E: codex-rs/protocol/src/protocol.rs:3570][E: codex-rs/protocol/src/protocol.rs:3574][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:268][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:270][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:273][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:276]
-- app-server v2 的 `ThreadItem::McpToolCall` 同样投影 `read_only_hint`，因此 canonical core item、legacy MCP begin/end event 与 public v2 item 对这项 annotation 保持一致。[E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:308][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:319][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:320][E: codex-rs/protocol/src/protocol.rs:2446][E: codex-rs/protocol/src/protocol.rs:2448][E: codex-rs/protocol/src/protocol.rs:2476][I]
+- canonical `CommandExecutionItem`、legacy exec begin/end event 与 app-server v2 `ThreadItem::CommandExecution` 都携带 optional plugin id 和 safe plugin-relative script path；v2 只是把 canonical fields 投影为 `pluginId` / `scriptPath`。[E: codex-rs/protocol/src/items.rs:201][E: codex-rs/protocol/src/items.rs:206][E: codex-rs/protocol/src/items.rs:209][E: codex-rs/protocol/src/protocol.rs:3530][E: codex-rs/protocol/src/protocol.rs:3536][E: codex-rs/protocol/src/protocol.rs:3540][E: codex-rs/protocol/src/protocol.rs:3561][E: codex-rs/protocol/src/protocol.rs:3570][E: codex-rs/protocol/src/protocol.rs:3571][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:268][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:269][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:273][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:276]
+- app-server v2 的 `ThreadItem::McpToolCall` 同样投影 `read_only_hint`，因此 canonical core item、legacy MCP begin/end event 与 public v2 item 对这项 annotation 保持一致。[E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:307][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:319][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:321][E: codex-rs/protocol/src/protocol.rs:2446][E: codex-rs/protocol/src/protocol.rs:2449][E: codex-rs/protocol/src/protocol.rs:2476][I]
 
 ## Approval / guardian / elicitation payload 表
 
@@ -78,8 +78,8 @@ updated: 7750465934
 
 ## 设计动机速记
 
-- turn-item stream 与 legacy `EventMsg` 并存：`ItemStartedEvent`/`ItemCompletedEvent` 仍能通过 `HasLegacyEvent` 生成兼容事件,但 canonical payload 是 `TurnItem`。[E: codex-rs/protocol/src/protocol.rs:1839][E: codex-rs/protocol/src/protocol.rs:1847][I]
-- approval payload 把”prompt 内容”和”可展示 decision 列表”放在事件侧；对应 response 则由 `Op::ExecApproval`、`Op::PatchApproval`、`Op::ResolveElicitation` 等回传。[E: codex-rs/protocol/src/approvals.rs:289][E: codex-rs/protocol/src/protocol.rs:589][E: codex-rs/protocol/src/protocol.rs:599][E: codex-rs/protocol/src/protocol.rs:607][I]
+- turn-item stream 与 legacy `EventMsg` 并存：`ItemStartedEvent`/`ItemCompletedEvent` 仍能通过 `HasLegacyEvent` 生成兼容事件,但 canonical payload 是 `TurnItem`。[E: codex-rs/protocol/src/protocol.rs:1838][E: codex-rs/protocol/src/protocol.rs:1846][I]
+- approval payload 把”prompt 内容”和”可展示 decision 列表”放在事件侧；对应 response 则由 `Op::ExecApproval`、`Op::PatchApproval`、`Op::ResolveElicitation` 等回传。[E: codex-rs/protocol/src/approvals.rs:289][E: codex-rs/protocol/src/protocol.rs:587][E: codex-rs/protocol/src/protocol.rs:599][E: codex-rs/protocol/src/protocol.rs:607][I]
 
 ## Sources
 

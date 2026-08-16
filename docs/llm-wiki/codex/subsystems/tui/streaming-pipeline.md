@@ -8,7 +8,7 @@ symbols: [MarkdownStreamCollector, StreamingMarkdownRender, StreamingRender, Str
 related: [subsys.tui.chatwidget, subsys.tui.rendering-theming, subsys.tui.event-system]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/chatwidget/streaming.rs:141][I]
@@ -30,9 +30,9 @@ finalize path 的 `finalize_and_take_source` 转移完整 buffer ownership，必
 
 ## Queue State
 
-`StreamState` 持有 collector、FIFO queued lines 和 `has_seen_delta`；module contract 明确 queue ordering 是关键 invariant，drain 只从 front pop，enqueue 记录 arrival timestamp 以便 policy 计算 oldest queued age。[E: codex-rs/tui/src/streaming/mod.rs:32][E: codex-rs/tui/src/streaming/mod.rs:33][E: codex-rs/tui/src/streaming/mod.rs:34][I]
+`StreamState` 持有 collector、FIFO queued lines 和 `has_seen_delta`；drain 只从 front pop，enqueue 记录 arrival timestamp 以便 policy 计算 oldest queued age。[E: codex-rs/tui/src/streaming/mod.rs:31][E: codex-rs/tui/src/streaming/mod.rs:33][E: codex-rs/tui/src/streaming/mod.rs:34]
 
-state API 包括 `step` drain one、`drain_n` bounded multi-line drain、`clear_queue`、`is_idle`、`queued_len`、`oldest_queued_age` 和 `enqueue`；`enqueue` 给同一批 lines 共享 `Instant::now()`。[E: codex-rs/tui/src/streaming/mod.rs:56][E: codex-rs/tui/src/streaming/mod.rs:57][E: codex-rs/tui/src/streaming/mod.rs:67][E: codex-rs/tui/src/streaming/mod.rs:75][E: codex-rs/tui/src/streaming/mod.rs:79][E: codex-rs/tui/src/streaming/mod.rs:83][E: codex-rs/tui/src/streaming/mod.rs:87][E: codex-rs/tui/src/streaming/mod.rs:93][E: codex-rs/tui/src/streaming/mod.rs:94]
+state API 包括 `step` drain one、`drain_n` bounded multi-line drain、`clear_queue`、`is_idle`、`queued_len`、`oldest_queued_age` 和 `enqueue`；`enqueue` 给同一批 lines 共享 `Instant::now()`。[E: codex-rs/tui/src/streaming/mod.rs:56][E: codex-rs/tui/src/streaming/mod.rs:67][E: codex-rs/tui/src/streaming/mod.rs:75][E: codex-rs/tui/src/streaming/mod.rs:79][E: codex-rs/tui/src/streaming/mod.rs:83][E: codex-rs/tui/src/streaming/mod.rs:87][E: codex-rs/tui/src/streaming/mod.rs:93]
 
 ## Adaptive Chunking
 
@@ -54,13 +54,13 @@ snapshot 会 sum controller queue depth，并取最大 oldest age；plan applica
 
 `StreamController` 包装 `StreamCore` 并产出 `AgentMessageCell`；`PlanStreamController` 包装同一 core 但带 plan-specific header、indentation 和 background styling。两者都有 new/push/finalize/on_commit_tick/on_commit_tick_batch/queued_lines/oldest_queued_age 等接口。[E: codex-rs/tui/src/streaming/controller.rs:475][E: codex-rs/tui/src/streaming/controller.rs:487][E: codex-rs/tui/src/streaming/controller.rs:508][E: codex-rs/tui/src/streaming/controller.rs:514][E: codex-rs/tui/src/streaming/controller.rs:526][E: codex-rs/tui/src/streaming/controller.rs:531][E: codex-rs/tui/src/streaming/controller.rs:543][E: codex-rs/tui/src/streaming/controller.rs:547][E: codex-rs/tui/src/streaming/controller.rs:579][E: codex-rs/tui/src/streaming/controller.rs:600][E: codex-rs/tui/src/streaming/controller.rs:612][E: codex-rs/tui/src/streaming/controller.rs:625][E: codex-rs/tui/src/streaming/controller.rs:631][E: codex-rs/tui/src/streaming/controller.rs:643][E: codex-rs/tui/src/streaming/controller.rs:651]
 
-command execution 的 live cell 另有独立内存边界：`LiveCommandOutput` 在累计输出超过 1 MiB 后切换为 bounded preview，保留最前与最后各 50 条 completed lines、当前 partial line，并对单条超长行再保留 head/tail；transcript renderer 会插入 omitted-line marker。[E: codex-rs/tui/src/exec_cell/live_output.rs:5][E: codex-rs/tui/src/exec_cell/live_output.rs:11][E: codex-rs/tui/src/exec_cell/live_output.rs:18][E: codex-rs/tui/src/exec_cell/live_output.rs:18][E: codex-rs/tui/src/exec_cell/live_output.rs:142][E: codex-rs/tui/src/exec_cell/live_output.rs:149][E: codex-rs/tui/src/exec_cell/live_output.rs:150]
+command execution 的 live cell 另有独立内存边界：`LiveCommandOutput` 在累计输出超过 1 MiB 后切换为 bounded preview，保留最前与最后各 50 条 completed lines、当前 partial line，并对单条超长行再保留 head/tail。[E: codex-rs/tui/src/exec_cell/live_output.rs:5][E: codex-rs/tui/src/exec_cell/live_output.rs:6][E: codex-rs/tui/src/exec_cell/live_output.rs:19]
 
-`ChatWidget` glue 中，answer stream 用带 thread-scoped inline-visualization context 的 controller，plan stream 仍使用普通 controller；delta 没有 newline 时不重建可见 tail，tail 内容未变化时也不 bump active-cell revision/redraw。[E: codex-rs/tui/src/chatwidget/streaming.rs:145][E: codex-rs/tui/src/chatwidget/streaming.rs:158][E: codex-rs/tui/src/chatwidget/streaming.rs:442][E: codex-rs/tui/src/chatwidget/streaming.rs:461][E: codex-rs/tui/src/chatwidget/streaming.rs:467][E: codex-rs/tui/src/chatwidget/streaming.rs:498][E: codex-rs/tui/src/chatwidget/streaming.rs:519]
+`ChatWidget` glue 中，answer stream 进入 `on_agent_message_delta`，plan stream 进入 `on_plan_delta`；后者会 lazily 创建 `PlanStreamController`，发送 `StartCommitAnimation` 并立即补一个 catch-up tick。[E: codex-rs/tui/src/chatwidget/streaming.rs:141][E: codex-rs/tui/src/chatwidget/streaming.rs:145][E: codex-rs/tui/src/chatwidget/streaming.rs:158][E: codex-rs/tui/src/chatwidget/streaming.rs:167]
 
 ## Resize Reflow
 
-pending resize reflow 到期后会按当前宽度从 transcript cells 重建 history；若 reflow 发生在 answer/plan stream 活跃或尾部 consolidation 尚未完成时，会额外记录 stream-time 标记。每次完成 reflow 都无条件安排一次 follow-up screen-size sample，以吸收 terminal resize settling。[E: codex-rs/tui/src/app/resize_reflow.rs:383][E: codex-rs/tui/src/app/resize_reflow.rs:388][E: codex-rs/tui/src/app/resize_reflow.rs:409][E: codex-rs/tui/src/app/resize_reflow.rs:412][E: codex-rs/tui/src/app/resize_reflow.rs:415][E: codex-rs/tui/src/app/resize_reflow.rs:421][E: codex-rs/tui/src/app/resize_reflow.rs:439][E: codex-rs/tui/src/app/resize_reflow.rs:448]
+pending resize reflow 到期后会按当前宽度从 transcript cells 重建 history。`handle_draw_pre_render` 先判断是否需要 rebuild，再调用 `maybe_run_resize_reflow`；overlay 活跃时不重画 transcript，因为 overlay 拥有当前 draw surface。[E: codex-rs/tui/src/app/resize_reflow.rs:392][E: codex-rs/tui/src/app/resize_reflow.rs:408][E: codex-rs/tui/src/app/resize_reflow.rs:418][E: codex-rs/tui/src/app/resize_reflow.rs:423]
 
 ## Gotchas
 

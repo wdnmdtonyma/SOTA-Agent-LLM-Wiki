@@ -8,7 +8,7 @@ symbols: [normalize_tools_for_model_with_prefix, CallableToolCandidate, unique_c
 related: [subsys.mcp.client, subsys.mcp.connectors, tool.mcp-namespace-tools, spine.trace-mcp-call]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > MCP name qualification now lives in `codex-mcp/src/tools.rs`: raw MCP server/tool identities remain available for protocol routing, while `callable_namespace` and `callable_name` are sanitized, deduplicated, optionally legacy-prefixed, and bounded to the Responses API 64-byte model-visible name limit.[E: codex-rs/codex-mcp/src/tools.rs:25]
@@ -35,7 +35,8 @@ updated: 7750465934
 
 ## 数据模型
 
-- `ToolInfo.tool.name` is the raw MCP tool name sent back to the MCP server; `ToolInfo.callable_namespace` and `ToolInfo.callable_name` are the model-visible values after qualification.[E: codex-rs/codex-mcp/src/tools.rs:35][E: codex-rs/codex-mcp/src/tools.rs:36][E: codex-rs/codex-mcp/src/tools.rs:38][E: codex-rs/codex-mcp/src/tools.rs:39][E: codex-rs/codex-mcp/src/tools.rs:45]
+- `ToolInfo.tool.name` is the raw MCP tool name sent back to the MCP server; `ToolInfo.callable_namespace` and `ToolInfo.callable_name` are the model-visible values after qualification。[E: codex-rs/codex-mcp/src/tools.rs:35][E: codex-rs/codex-mcp/src/tools.rs:36][E: codex-rs/codex-mcp/src/tools.rs:38][E: codex-rs/codex-mcp/src/tools.rs:39][E: codex-rs/codex-mcp/src/tools.rs:45]
+- `ToolInfo.namespace_description` 是 model-visible namespace 说明；serde 用 `alias = "connector_description"` 读取旧 cache，因此磁盘/内存 cache 里的旧字段不会丢描述。[E: codex-rs/codex-mcp/src/tools.rs:42][E: codex-rs/codex-mcp/src/tools.rs:43]
 - `canonical_tool_name` creates a namespaced protocol `ToolName` from `callable_namespace` and `callable_name`, not from the raw MCP `tool.name`.[E: codex-rs/codex-mcp/src/tools.rs:57]
 - `LEGACY_MCP_TOOL_NAME_PREFIX` is the literal `mcp__`; when `prefix_mcp_tool_names` is true, it is added to the namespace unless the namespace already starts with that prefix.[E: codex-rs/codex-mcp/src/tools.rs:22][E: codex-rs/codex-mcp/src/tools.rs:228]
 - The final model-visible concatenation is constrained by `MCP_TOOL_NAME_DELIMITER` (`__`) and `MAX_TOOL_NAME_LENGTH` (`64`); hash suffixes use 12 hex chars plus a leading underscore.[E: codex-rs/codex-mcp/src/tools.rs:225][E: codex-rs/codex-mcp/src/tools.rs:226][E: codex-rs/codex-mcp/src/tools.rs:227][E: codex-rs/codex-mcp/src/tools.rs:243]
@@ -51,8 +52,8 @@ updated: 7750465934
 
 ## Codex Apps seeds
 
-- `list_tools_for_client_uncached` asks the underlying RMCP client for tools plus optional connector metadata, then dispatches to Codex Apps or regular MCP conversion before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:587][E: codex-rs/codex-mcp/src/rmcp_client.rs:613][E: codex-rs/codex-mcp/src/rmcp_client.rs:706][E: codex-rs/codex-mcp/src/rmcp_client.rs:712][E: codex-rs/codex-mcp/src/rmcp_client.rs:715]
-- Non-Codex-Apps servers cannot smuggle connector metadata into model-visible qualification: the regular MCP conversion strips untrusted connector meta and sets connector id/name to `None`, while preserving raw tool names and server-name namespaces.[E: codex-rs/codex-mcp/src/rmcp_client.rs:767][E: codex-rs/codex-mcp/src/rmcp_client.rs:773][E: codex-rs/codex-mcp/src/rmcp_client.rs:778][E: codex-rs/codex-mcp/src/rmcp_client.rs:779][E: codex-rs/codex-mcp/src/rmcp_client.rs:783][E: codex-rs/codex-mcp/src/rmcp_client.rs:784]
+- `list_tools_for_client_uncached` asks the underlying RMCP client for tools plus optional connector metadata, then dispatches to Codex Apps or regular MCP conversion before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:587][E: codex-rs/codex-mcp/src/rmcp_client.rs:613][E: codex-rs/codex-mcp/src/rmcp_client.rs:706][E: codex-rs/codex-mcp/src/rmcp_client.rs:712][E: codex-rs/codex-mcp/src/rmcp_client.rs:714]
+- Non-Codex-Apps servers cannot smuggle connector metadata into model-visible qualification: the regular MCP conversion strips untrusted connector meta and sets connector id/name to `None`, while preserving raw tool names and server-name namespaces.[E: codex-rs/codex-mcp/src/rmcp_client.rs:767][E: codex-rs/codex-mcp/src/rmcp_client.rs:772][E: codex-rs/codex-mcp/src/rmcp_client.rs:778][E: codex-rs/codex-mcp/src/rmcp_client.rs:779][E: codex-rs/codex-mcp/src/rmcp_client.rs:783][E: codex-rs/codex-mcp/src/rmcp_client.rs:784]
 
 ## Sources
 

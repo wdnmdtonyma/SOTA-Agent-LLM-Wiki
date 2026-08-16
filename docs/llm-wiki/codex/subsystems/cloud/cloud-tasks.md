@@ -8,7 +8,7 @@ symbols: [Command, cloud_tasks::run_main, init_backend, run_exec_command, resolv
 related: [subsys.cloud.cloud-task-api, subsys.cloud.cloud-config, subsys.platform.git-utils]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > `codex cloud` 的 Cloud tasks 子系统是 CLI/TUI orchestration 层：它解析 exec/status/list/apply/diff 命令，初始化 ChatGPT-backed cloud backend，选择 environment，提交 task，并把 list/status/diff/apply/create 操作委托给 `cloud-tasks-client` 的 `CloudBackend` trait。[E: codex-rs/cloud-tasks/src/cli.rs:16][E: codex-rs/cloud-tasks/src/cli.rs:18][E: codex-rs/cloud-tasks/src/cli.rs:26][E: codex-rs/cloud-tasks/src/lib.rs:42][E: codex-rs/cloud-tasks/src/lib.rs:48][E: codex-rs/cloud-tasks/src/lib.rs:188][E: codex-rs/cloud-tasks/src/lib.rs:752]
@@ -35,7 +35,7 @@ cloud-tasks 节点覆盖 CLI/TUI orchestration，不定义 HTTP wire schema。HT
 
 `init_backend` 默认使用 `https://chatgpt.com/backend-api`，debug build 下可用 `CODEX_CLOUD_TASKS_MODE=mock` 切到 mock client；它还用 suffix 设置 Codex user agent。[E: codex-rs/cloud-tasks/src/lib.rs:48][E: codex-rs/cloud-tasks/src/lib.rs:50][E: codex-rs/cloud-tasks/src/lib.rs:54][E: codex-rs/cloud-tasks/src/lib.rs:55][E: codex-rs/cloud-tasks/src/lib.rs:57][E: codex-rs/cloud-tasks/src/lib.rs:60][E: codex-rs/cloud-tasks/src/lib.rs:78][E: codex-rs/cloud-tasks/src/lib.rs:72][E: codex-rs/cloud-tasks/src/lib.rs:78]
 
-backend 初始化要求能取得 auth，且 `auth.uses_codex_backend()` 为 true；当前实现把 `auth_provider_from_auth(&auth)` 装到 `HttpClient`，不是手动塞 bearer token/account header。[E: codex-rs/cloud-tasks/src/lib.rs:73][E: codex-rs/cloud-tasks/src/lib.rs:91][E: codex-rs/cloud-tasks/src/lib.rs:105][E: codex-rs/cloud-tasks/src/lib.rs:112][E: codex-rs/cloud-tasks/src/lib.rs:113] TUI environment 请求仍通过 `build_chatgpt_headers()` 构造 User-Agent，并在 Codex backend auth 下扩展 `auth_provider_from_auth(&auth).to_auth_headers()`。[E: codex-rs/cloud-tasks/src/util.rs:76][E: codex-rs/cloud-tasks/src/util.rs:80][E: codex-rs/cloud-tasks/src/util.rs:82][E: codex-rs/cloud-tasks/src/util.rs:87][E: codex-rs/cloud-tasks/src/util.rs:89][E: codex-rs/cloud-tasks/src/util.rs:91]
+backend 初始化要求能取得 auth，且 `auth.uses_codex_backend()` 为 true；当前实现把 `auth_provider_from_auth(&auth)` 装到 `HttpClient`，不是手动塞 bearer token/account header。[E: codex-rs/cloud-tasks/src/lib.rs:73][E: codex-rs/cloud-tasks/src/lib.rs:91][E: codex-rs/cloud-tasks/src/lib.rs:105][E: codex-rs/cloud-tasks/src/lib.rs:112][E: codex-rs/cloud-tasks/src/lib.rs:113] TUI environment 请求仍通过 `build_chatgpt_headers()` 构造 User-Agent，并在 Codex backend auth 下扩展 `auth_provider_from_auth(&auth).to_auth_headers()`。[E: codex-rs/cloud-tasks/src/util.rs:76][E: codex-rs/cloud-tasks/src/util.rs:81][E: codex-rs/cloud-tasks/src/util.rs:82][E: codex-rs/cloud-tasks/src/util.rs:87][E: codex-rs/cloud-tasks/src/util.rs:89][E: codex-rs/cloud-tasks/src/util.rs:90]
 
 ## Exec / status / list / diff / apply
 
@@ -62,8 +62,8 @@ diff overlay 的 `ScrollableDiff` 现在按 extended grapheme cluster 遍历、�
 ## Gotchas
 
 - `codex cloud exec` 当前要求 `--env`；自动 environment selection 是 TUI/env-detect 路径，不是 exec 的默认行为。[E: codex-rs/cloud-tasks/src/cli.rs:37][E: codex-rs/cloud-tasks/src/lib.rs:186]
-- `load_auth_manager` 禁用 Codex API key env loading，因此 cloud tasks 依赖 stored ChatGPT/Codex backend auth，而不是 `OPENAI_API_KEY`。[E: codex-rs/cloud-tasks/src/util.rs:43][E: codex-rs/cloud-tasks/src/util.rs:64][E: codex-rs/cloud-tasks/src/lib.rs:105]
-- task URL 会规范化 ChatGPT/backend-api、api/codex 和 codex path style。[E: codex-rs/cloud-tasks/src/util.rs:97][E: codex-rs/cloud-tasks/src/util.rs:98][E: codex-rs/cloud-tasks/src/util.rs:99][E: codex-rs/cloud-tasks/src/util.rs:102][E: codex-rs/cloud-tasks/src/util.rs:105][E: codex-rs/cloud-tasks/src/util.rs:108]
+- `load_auth_manager` 禁用 Codex API key env loading，因此 cloud tasks 依赖 stored ChatGPT/Codex backend auth，而不是 `OPENAI_API_KEY`。[E: codex-rs/cloud-tasks/src/util.rs:42][E: codex-rs/cloud-tasks/src/util.rs:64][E: codex-rs/cloud-tasks/src/lib.rs:105]
+- task URL 会规范化 ChatGPT/backend-api、api/codex 和 codex path style。[E: codex-rs/cloud-tasks/src/util.rs:96][E: codex-rs/cloud-tasks/src/util.rs:98][E: codex-rs/cloud-tasks/src/util.rs:98][E: codex-rs/cloud-tasks/src/util.rs:102][E: codex-rs/cloud-tasks/src/util.rs:105][E: codex-rs/cloud-tasks/src/util.rs:108]
 
 ## Sources
 

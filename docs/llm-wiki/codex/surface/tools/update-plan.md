@@ -8,7 +8,7 @@ symbols: [create_update_plan_tool, PlanHandler, PlanToolOutput, parse_update_pla
 related: [spine.tool-call-anatomy, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > `update_plan` 是 Codex 的本地 checklist/TODO 状态更新 function tool。它让模型提交结构化 plan，handler 把参数转成 `EventMsg::PlanUpdate(args)` 发给客户端，并向模型返回固定的 `Plan updated` 成功文本。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan_spec.rs:43][E: codex-rs/core/src/tools/handlers/plan.rs:22][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92]
@@ -28,7 +28,7 @@ updated: 7750465934
 | wire name | `PlanHandler::tool_name()` 返回 plain `update_plan`；spec 的 `ResponsesApiTool.name` 也是 `update_plan`。[E: codex-rs/core/src/tools/handlers/plan.rs:49][E: codex-rs/core/src/tools/handlers/plan.rs:50][E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan_spec.rs:43] |
 | concrete handler | `PlanHandler` 实现 `ToolExecutor<ToolInvocation>`，`spec()` 调用 `create_update_plan_tool()`。[E: codex-rs/core/src/tools/handlers/plan.rs:18][E: codex-rs/core/src/tools/handlers/plan.rs:48][E: codex-rs/core/src/tools/handlers/plan.rs:53][E: codex-rs/core/src/tools/handlers/plan.rs:54] |
 | ToolSpec | `create_update_plan_tool` 返回 `ToolSpec::Function(ResponsesApiTool { ... })`，`strict: false`，`output_schema` 为 `None`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:7][E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan_spec.rs:49][E: codex-rs/core/src/tools/handlers/plan_spec.rs:56] |
-| handler exposure | `ToolExecutor` 的默认 `exposure()` 返回 Direct；`PlanHandler` 未见覆盖该方法，因此实际走默认 Direct。[E: codex-rs/tools/src/tool_executor.rs:64][E: codex-rs/tools/src/tool_executor.rs:65][I] |
+| handler exposure | `ToolExecutor` 的默认 `exposure()` 返回 Direct；`PlanHandler` 未见覆盖该方法，因此实际走默认 Direct。[E: codex-rs/tools/src/tool_executor.rs:113][E: codex-rs/tools/src/tool_executor.rs:114][I] |
 
 ## 2 用途定位
 
@@ -59,13 +59,15 @@ code-mode nested result 返回空 JSON object。[E: codex-rs/core/src/tools/hand
 
 ## 5 注册与门控
 
-`build_tool_router` 经 `add_core_tool_sources` 调用 `add_core_utility_tools`。只有 resolved `config.update_plan_enabled` 为 true 时才向 registry 注册 `PlanHandler`；`tools.update_plan.enabled` 未配置时默认 true，因此这是可显式关闭的 config gate，不是 feature flag。[E: codex-rs/core/src/tools/spec_plan.rs:114][E: codex-rs/core/src/tools/spec_plan.rs:139][E: codex-rs/core/src/tools/spec_plan.rs:669][E: codex-rs/core/src/tools/spec_plan.rs:699][E: codex-rs/core/src/tools/spec_plan.rs:792][E: codex-rs/core/src/tools/spec_plan.rs:798][E: codex-rs/core/src/config/mod.rs:2631][E: codex-rs/core/src/config/mod.rs:2636]
+`build_tool_router` 经 `add_core_tool_sources` 调用 `add_core_utility_tools`。Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，因此不会注册 `PlanHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:120][E: codex-rs/core/src/tools/spec_plan.rs:145][E: codex-rs/core/src/tools/spec_plan.rs:896][E: codex-rs/core/src/tools/spec_plan.rs:930][E: codex-rs/core/src/tools/spec_plan.rs:935]
+
+只有 resolved `config.update_plan_enabled` 为 true 时才向 registry 注册 `PlanHandler`；`tools.update_plan.enabled` 未配置时默认 true，因此这是可显式关闭的 config gate，不是 feature flag。[E: codex-rs/core/src/tools/spec_plan.rs:1039][E: codex-rs/core/src/tools/spec_plan.rs:1040][E: codex-rs/core/src/config/mod.rs:2580][E: codex-rs/core/src/config/mod.rs:2585]
 
 runtime gate 在 handler 内：当当前 `turn.mode` 是 `ModeKind::Plan` 时，handler 返回错误 `update_plan is a TODO/checklist tool and is not allowed in Plan mode`。[E: codex-rs/core/src/tools/handlers/plan.rs:84][E: codex-rs/core/src/tools/handlers/plan.rs:85][E: codex-rs/core/src/tools/handlers/plan.rs:86]
 
 ## 6 parallel support
 
-`ToolExecutor` 的默认 `supports_parallel_tool_calls()` 返回 `false`；`PlanHandler` 未见覆盖该方法，因此实际走默认 false。[E: codex-rs/tools/src/tool_executor.rs:73][E: codex-rs/tools/src/tool_executor.rs:74][I]
+`ToolExecutor` 的默认 `supports_parallel_tool_calls()` 返回 `false`；`PlanHandler` 未见覆盖该方法，因此实际走默认 false。[E: codex-rs/tools/src/tool_executor.rs:122][E: codex-rs/tools/src/tool_executor.rs:123][I]
 
 ## 7 handler 走读
 

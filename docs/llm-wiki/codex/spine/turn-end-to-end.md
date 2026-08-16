@@ -3,19 +3,19 @@ id: spine.turn-end-to-end
 title: 一次 turn 端到端
 kind: flow
 tier: T0
-source: [codex-rs/protocol/src/protocol.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/session/input_queue.rs, codex-rs/core/src/tasks/mod.rs, codex-rs/core/src/tasks/regular.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/stream_events_utils.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/context_manager/history.rs]
-symbols: [user_input_or_turn_inner, TurnInput, RegularTask::run, handle_output_item_done]
+source: [codex-rs/protocol/src/protocol.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/session/turn_input.rs, codex-rs/core/src/session/input_queue.rs, codex-rs/core/src/tasks/mod.rs, codex-rs/core/src/tasks/regular.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/stream_events_utils.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/context_manager/history.rs]
+symbols: [turn_input::handle, TurnInput, RegularTask::run, handle_output_item_done]
 related: [spine.overview, spine.sq-eq-architecture, spine.tool-call-anatomy, spine.context-and-compaction, ref.protocol-op, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
-> 一次 regular turn 从 `Op::UserInput` 进入 `submission_loop` 开始，经 `user_input_or_turn_inner` 创建 `TurnContext` 和 `RegularTask`，再由 `run_turn` 构造 prompt、stream 模型、调度工具 future，最后由 task lifecycle 发送完成事件。[E: codex-rs/core/src/session/handlers.rs:769][E: codex-rs/core/src/session/handlers.rs:189][E: codex-rs/core/src/session/handlers.rs:264][E: codex-rs/core/src/tasks/regular.rs:75][E: codex-rs/core/src/session/turn.rs:1308]
+> 一次 regular turn 从 `Op::TurnInput` 进入 `submission_loop` 开始，经 `turn_input::handle` 决定 start/steer/reject 并创建 `TurnContext` 和 `RegularTask`，再由 `run_turn` 构造 prompt、stream 模型、调度工具 future，最后由 task lifecycle 发送完成事件。[E: codex-rs/core/src/session/handlers.rs:570][E: codex-rs/core/src/session/turn_input.rs:141][E: codex-rs/core/src/session/turn_input.rs:241][E: codex-rs/core/src/tasks/regular.rs:77][E: codex-rs/core/src/session/turn.rs:153]
 
 ## 能回答的问题
 
-- `Op::UserInput` 如何变成 turn-scoped settings 和 `TurnInput`？
+- `Op::TurnInput` 如何变成 turn-scoped settings 和 session `TurnInput`？
 - `TurnStarted`、context update、prompt build、model stream、tool futures 的顺序是什么？
 - tool call 为什么会导致 follow-up sampling？
 - pending input 和 auto compact 如何影响 turn loop？
@@ -23,14 +23,14 @@ updated: 7750465934
 ```mermaid
 sequenceDiagram
     participant SQ as Submission Queue
-    participant Handler as user_input_or_turn_inner
+    participant Handler as turn_input::handle
     participant Task as RegularTask
     participant Turn as run_turn
     participant Model as ModelClientSession
     participant Tool as ToolCallRuntime
     participant EQ as Event Queue
-    SQ->>Handler: Op::UserInput
-    Handler->>Handler: new_turn_with_sub_id
+    SQ->>Handler: Op::TurnInput
+    Handler->>Handler: apply_started / steer
     Handler->>Task: spawn_task(RegularTask)
     Task->>EQ: TurnStarted
     Task->>Turn: run_turn(input)
@@ -44,25 +44,25 @@ sequenceDiagram
 
 ## 端到端步骤
 
-1. `submission_loop` 在 `Op::UserInput` 分支调用 `user_input_or_turn`，并把 submission id、operation、client message id 与 optional `parent_turn_id` 一并传入。[E: codex-rs/core/src/session/handlers.rs:769][E: codex-rs/core/src/session/handlers.rs:770][E: codex-rs/core/src/session/handlers.rs:775]
-2. `user_input_or_turn_inner` 只接受 `Op::UserInput`，拆出 items、final output schema、Responses metadata、additional context 和 thread settings；thread settings 非默认时先转成 `SessionSettingsUpdate`。[E: codex-rs/core/src/session/handlers.rs:189][E: codex-rs/core/src/session/handlers.rs:196][E: codex-rs/core/src/session/handlers.rs:206][E: codex-rs/core/src/session/handlers.rs:207]
-3. Handler 调用 `sess.new_turn_with_sub_id(sub_id.clone(), updates)` 创建 turn context；如果当前已有 active turn，后续 `steer_input` 可以把输入注入 active turn。[E: codex-rs/core/src/session/handlers.rs:215][E: codex-rs/core/src/session/handlers.rs:225][E: codex-rs/core/src/session/handlers.rs:226]
-4. 没有 active turn 时，handler 合并 additional context，构造 `TurnInput::ResponseItem` 和 `TurnInput::UserInput`，再 `spawn_task(..., RegularTask::new())`。[E: codex-rs/core/src/session/handlers.rs:239][E: codex-rs/core/src/session/handlers.rs:249][E: codex-rs/core/src/session/handlers.rs:253][E: codex-rs/core/src/session/handlers.rs:259][E: codex-rs/core/src/session/handlers.rs:264]
-5. `TurnInput` enum 明确 regular turn 可消费用户输入、response item 和 inter-agent communication 三类输入。[E: codex-rs/core/src/session/input_queue.rs:14][E: codex-rs/core/src/session/input_queue.rs:18][E: codex-rs/core/src/session/input_queue.rs:19]
-6. `RegularTask::run` 在调用 `run_turn` 前发送 `EventMsg::TurnStarted`，然后循环调用 `run_turn`；如果 session input queue 仍有 pending input，会以空 input 继续下一轮 sampling。[E: codex-rs/core/src/tasks/regular.rs:49][E: codex-rs/core/src/tasks/regular.rs:56][E: codex-rs/core/src/tasks/regular.rs:75][E: codex-rs/core/src/tasks/regular.rs:85][E: codex-rs/core/src/tasks/regular.rs:88]
-7. `run_turn` 先建立或复用 turn-scoped `ModelClientSession`，再执行 pre-sampling compact、context update、skills/plugins build、session-start hooks 和 input recording。[E: codex-rs/core/src/session/turn.rs:156][E: codex-rs/core/src/session/turn.rs:155][E: codex-rs/core/src/session/turn.rs:212][E: codex-rs/core/src/session/turn.rs:217][E: codex-rs/core/src/session/turn.rs:229][E: codex-rs/core/src/session/turn.rs:233]
-8. 每次 sampling 前，`run_turn` 从 cloned history 调 `for_prompt` 构造模型输入；`ContextManager::for_prompt` 会 normalize history 并按模型 input modalities 过滤不适配 items。[E: codex-rs/core/src/session/turn.rs:331][E: codex-rs/core/src/session/turn.rs:333][E: codex-rs/core/src/context_manager/history.rs:144][E: codex-rs/core/src/context_manager/history.rs:144]
-9. `run_sampling_request` 调 `built_tools` 得到 `ToolRouter`，创建 `ToolCallRuntime`，再用 prompt input、router、turn context 和 base instructions 构造 `Prompt`。[E: codex-rs/core/src/session/turn.rs:1271][E: codex-rs/core/src/session/turn.rs:1323][E: codex-rs/core/src/session/turn.rs:1353]
-10. `try_run_sampling_request` 调 `client_session.stream(...)` 发起 provider stream，并用 `FuturesOrdered` 保存 in-flight tool futures。[E: codex-rs/core/src/session/turn.rs:2187][E: codex-rs/core/src/session/turn.rs:2201]
-11. stream 收到 `ResponseEvent::OutputItemDone(item)` 时，`try_run_sampling_request` 构造 `HandleOutputCtx` 并调用 `handle_output_item_done`；产生 tool future 时推入 `in_flight`。[E: codex-rs/core/src/session/turn.rs:2325][E: codex-rs/core/src/session/turn.rs:2355][E: codex-rs/core/src/session/turn.rs:2363]
+1. `submission_loop` 在 `Op::TurnInput` 分支调用 `turn_input::handle`，传入 boxed `TurnInputRequest`、`TurnInputMode` 和 submission id，再把路由结果写入 oneshot reply。[E: codex-rs/core/src/session/handlers.rs:570][E: codex-rs/core/src/session/handlers.rs:575][E: codex-rs/core/src/session/turn_input.rs:141]
+2. `turn_input::handle` 按 mode 分流：`StartOrSteer` 调 `start_or_steer`，`StartIfIdle` 调 `start_if_idle`，`Steer { expected_turn_id }` 调 `steer`。`Op::RecoverTurn` 走独立 `handle_recovery`。[E: codex-rs/core/src/session/turn_input.rs:147][E: codex-rs/core/src/session/turn_input.rs:158][E: codex-rs/core/src/session/handlers.rs:579]
+3. `start_or_steer` 只接受 submitted `TurnInput::UserInput`，拆出 items、thread settings、`TurnStartOptions`、additional context 和 Responses metadata。thread settings 非默认时先 `PreparedTurnInputSettings::prepare` 校验，但不立即应用。[E: codex-rs/core/src/session/turn_input.rs:167][E: codex-rs/core/src/session/turn_input.rs:180][E: codex-rs/core/src/session/turn_input.rs:61][E: codex-rs/core/src/session/turn_input.rs:194]
+4. 若已有 active turn，`steer_input` 成功则只 `apply_steered` 并返回 `TurnInputSubmission::Steered`。没有 active turn 时 `apply_started` 调 `sess.new_turn_with_sub_id` 创建 turn context，写入 parent/root provenance，再 `spawn_task(..., RegularTask::new())`。[E: codex-rs/core/src/session/turn_input.rs:207][E: codex-rs/core/src/session/turn_input.rs:211][E: codex-rs/core/src/session/turn_input.rs:95][E: codex-rs/core/src/session/turn_input.rs:241]
+5. Session 侧 `TurnInput` enum 明确 regular turn 可消费用户输入、response item 和 inter-agent communication 三类输入。[E: codex-rs/core/src/session/input_queue.rs:21][E: codex-rs/core/src/session/input_queue.rs:22][E: codex-rs/core/src/session/input_queue.rs:28][E: codex-rs/core/src/session/input_queue.rs:29]
+6. `RegularTask::run` 在调用 `run_turn` 前发送 `EventMsg::TurnStarted`，然后循环调用 `run_turn`；如果 session input queue 仍有 pending input，会以空 input 继续下一轮 sampling。[E: codex-rs/core/src/tasks/regular.rs:50][E: codex-rs/core/src/tasks/regular.rs:57][E: codex-rs/core/src/tasks/regular.rs:77][E: codex-rs/core/src/tasks/regular.rs:86][E: codex-rs/core/src/tasks/regular.rs:89]
+7. `run_turn` 先建立或复用 turn-scoped `ModelClientSession`，再执行 pre-sampling compact、context update、skills/plugins build、session-start hooks 和 input recording。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:169][E: codex-rs/core/src/session/turn.rs:225][E: codex-rs/core/src/session/turn.rs:230][E: codex-rs/core/src/session/turn.rs:242][E: codex-rs/core/src/session/turn.rs:246]
+8. 每次 sampling 前，`run_turn` 从 cloned history 调 `for_prompt` 构造模型输入；`ContextManager::for_prompt` 会 normalize history 并按模型 input modalities 过滤不适配 items。[E: codex-rs/core/src/session/turn.rs:350][E: codex-rs/core/src/session/turn.rs:353][E: codex-rs/core/src/context_manager/history.rs:200][E: codex-rs/core/src/context_manager/history.rs:444]
+9. `run_sampling_request` 复用 `StepContext.tool_router`，创建 `ToolCallRuntime`，再用 prompt input、router、turn context 和 base instructions 构造 `Prompt`。[E: codex-rs/core/src/session/turn.rs:1322][E: codex-rs/core/src/session/turn.rs:1335][E: codex-rs/core/src/session/turn.rs:1365]
+10. `try_run_sampling_request` 调 `client_session.stream(...)` 发起 provider stream，并用 `FuturesOrdered` 保存 in-flight tool futures。[E: codex-rs/core/src/session/turn.rs:2179][E: codex-rs/core/src/session/turn.rs:2193]
+11. stream 收到 `ResponseEvent::OutputItemDone(item)` 时构造 `HandleOutputCtx` 并调用 `handle_output_item_done`；产生 tool future 时推入 `in_flight`。[E: codex-rs/core/src/stream_events_utils.rs:288][E: codex-rs/core/src/stream_events_utils.rs:296]
 12. `handle_output_item_done` 调 `ToolRouter::build_tool_call`；识别到工具调用后先记录 model-emitted item，再创建 `tool_runtime.handle_tool_call(...)` future，并把 `needs_follow_up` 设为 true。[E: codex-rs/core/src/stream_events_utils.rs:296][E: codex-rs/core/src/stream_events_utils.rs:315][E: codex-rs/core/src/stream_events_utils.rs:319][E: codex-rs/core/src/stream_events_utils.rs:325]
-13. provider `ResponseEvent::Completed` 先发出含 response id 与 usage 的 `RawResponseCompleted` event，再记录 token usage、设置 token-count/turn-diff 标志并返回 `SamplingRequestResult { needs_follow_up, last_agent_message }`。它只结束一次 sampling request。[E: codex-rs/core/src/session/turn.rs:2511][E: codex-rs/core/src/session/turn.rs:2535][E: codex-rs/core/src/session/turn.rs:2541][E: codex-rs/core/src/session/turn.rs:2552]
-14. sampling 后，`run_turn` 合并 model follow-up 和 pending input；如果 token limit reached 且仍需 follow-up，会执行 mid-turn auto compact 后继续 loop。[E: codex-rs/core/src/session/turn.rs:371][E: codex-rs/core/src/session/turn.rs:383][E: codex-rs/core/src/session/turn.rs:372][E: codex-rs/core/src/session/turn.rs:431]
+13. provider `ResponseEvent::Completed` 先发出含 response id 与 usage 的 `RawResponseCompleted` event，再记录 token usage、设置 token-count/turn-diff 标志并返回 `SamplingRequestResult { needs_follow_up, last_agent_message }`。它只结束一次 sampling request。[E: codex-rs/core/src/session/turn.rs:2508][E: codex-rs/core/src/session/turn.rs:2530][E: codex-rs/core/src/session/turn.rs:2538][E: codex-rs/core/src/session/turn.rs:2549]
+14. sampling 后，`run_turn` 合并 model follow-up 和 pending input；如果 token limit reached 且仍需 follow-up，会执行 mid-turn auto compact 后继续 loop。[E: codex-rs/core/src/session/turn.rs:405][E: codex-rs/core/src/session/turn.rs:440][E: codex-rs/core/src/session/turn.rs:452]
 
 ## 关键决策点
 
-- 当前 regular turn 入口名是 `Op::UserInput`；turn settings 通过 `ThreadSettingsOverrides` 嵌在 `UserInput` 内。[E: codex-rs/protocol/src/protocol.rs:559][E: codex-rs/protocol/src/protocol.rs:570]
-- `RawResponseCompleted` 是 provider response boundary，`TurnComplete` 才是 task lifecycle boundary；一次 turn 可能包含多次 sampling response。[E: codex-rs/core/src/session/turn.rs:2511][E: codex-rs/core/src/session/turn.rs:2535][E: codex-rs/core/src/tasks/mod.rs:785]
+- 当前 regular turn 入口名是 `Op::TurnInput`；旧 `Op::UserInput` 已不存在。turn settings 通过 `ThreadSettingsOverrides` 嵌在 `TurnInputRequest` 内，也可单独走 `Op::ThreadSettings`。[E: codex-rs/protocol/src/protocol.rs:569][E: codex-rs/protocol/src/protocol.rs:585]
+- `RawResponseCompleted` 是 provider response boundary，`TurnComplete` 才是 task lifecycle boundary；一次 turn 可能包含多次 sampling response。[E: codex-rs/core/src/session/turn.rs:2532][E: codex-rs/core/src/tasks/mod.rs:806]
 - 工具调用的 follow-up 是 runtime 需要把工具输出写回 history 后再让模型继续推理的结果；该判断落在 `handle_output_item_done` 的 `needs_follow_up` 字段上。[E: codex-rs/core/src/stream_events_utils.rs:325][I]
 
 ## 深挖入口
@@ -75,6 +75,7 @@ sequenceDiagram
 
 - codex-rs/protocol/src/protocol.rs
 - codex-rs/core/src/session/handlers.rs
+- codex-rs/core/src/session/turn_input.rs
 - codex-rs/core/src/session/input_queue.rs
 - codex-rs/core/src/tasks/mod.rs
 - codex-rs/core/src/tasks/regular.rs

@@ -3,15 +3,15 @@ id: subsys.tui.rendering-theming
 title: Rendering 与 Theming
 kind: subsystem
 tier: T2
-source: [codex-rs/tui/src/render/renderable.rs, codex-rs/tui/src/render/highlight.rs, codex-rs/ansi-escape/src/lib.rs, codex-rs/tui/src/chatwidget/rendering.rs, codex-rs/tui/src/pager_overlay.rs, codex-rs/tui/src/markdown.rs, codex-rs/tui/src/width.rs, codex-rs/tui/src/line_truncation.rs, codex-rs/tui/src/wrapping.rs, codex-rs/tui/src/terminal_hyperlinks.rs, codex-rs/tui/src/custom_terminal.rs, codex-rs/tui/src/inline_visualization.rs, codex-rs/tui/src/inline_visualization/viewer.rs]
+source: [codex-rs/tui/src/render/renderable.rs, codex-rs/tui/src/render/highlight.rs, codex-rs/ansi-escape/src/lib.rs, codex-rs/tui/src/chatwidget/rendering.rs, codex-rs/tui/src/pager_overlay.rs, codex-rs/tui/src/markdown.rs, codex-rs/tui/src/width.rs, codex-rs/tui/src/line_truncation.rs, codex-rs/tui/src/wrapping.rs, codex-rs/tui/src/terminal_hyperlinks.rs, codex-rs/tui/src/custom_terminal.rs, codex-rs/tui/src/inline_visualization.rs, codex-rs/tui/src/inline_visualization/viewer.rs, codex-rs/tui/src/bottom_pane/textarea.rs]
 symbols: [Renderable, RenderableItem, ColumnRenderable, set_theme_override, adaptive_default_theme_name, ansi_escape_line, ansi_escape, display_width, truncate_line_to_width, mark_buffer_hyperlinks, InlineVisualizationContext, rewrite_inline_visualizations, TerminalHyperlink]
 related: [subsys.tui.chatwidget, subsys.tui.streaming-pipeline, subsys.tui.overlays-dialogs]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
-> TUI rendering 以 small `Renderable` trait 为公共拼装接口，以 syntect/two_face 主题解析代码处理 syntax highlight，以 `ansi-escape` crate 把 ANSI output 转成 ratatui text；ChatWidget/pager/bottom pane 再组合这些 renderables。[E: codex-rs/tui/src/render/renderable.rs:16][E: codex-rs/tui/src/render/highlight.rs:52][E: codex-rs/ansi-escape/src/lib.rs:26][E: codex-rs/tui/src/chatwidget/rendering.rs:5][E: codex-rs/tui/src/pager_overlay.rs:149]
+> TUI rendering 以 small `Renderable` trait 为公共拼装接口，以 syntect/two_face 主题解析代码处理 syntax highlight，以 `ansi-escape` crate 把 ANSI output 转成 ratatui text；ChatWidget/pager/bottom pane 再组合这些 renderables。[E: codex-rs/tui/src/render/renderable.rs:16][E: codex-rs/tui/src/render/highlight.rs:52][E: codex-rs/ansi-escape/src/lib.rs:26][E: codex-rs/tui/src/chatwidget/rendering.rs:9][E: codex-rs/tui/src/pager_overlay.rs:150]
 
 ## 能回答的问题
 
@@ -30,15 +30,15 @@ updated: 7750465934
 
 ## Syntax Theme
 
-highlight module 用 `OnceLock` 保存 syntax set、theme、theme override 和 codex home；`set_theme_override` 应在 final resolved config 后调用，第一次持久化 override/home，后续调用仍会 live update runtime theme 并返回 user-facing warnings。[E: codex-rs/tui/src/render/highlight.rs:52][E: codex-rs/tui/src/render/highlight.rs:53][E: codex-rs/tui/src/render/highlight.rs:55][E: codex-rs/tui/src/render/highlight.rs:56]
+highlight module 用 `OnceLock` 保存 syntax set、theme、theme override 和 codex home；`set_theme_override` 应在 final resolved config 后调用，第一次持久化 override/home。当前实现在 THEME 已初始化时仍会 live-update runtime theme，但二次调用的 OnceLock 值不会变。[E: codex-rs/tui/src/render/highlight.rs:52][E: codex-rs/tui/src/render/highlight.rs:55][E: codex-rs/tui/src/render/highlight.rs:86][E: codex-rs/tui/src/render/highlight.rs:91][E: codex-rs/tui/src/render/highlight.rs:93]
 
-custom theme 路径是 `{codex_home}/themes/{name}.tmTheme`，解析顺序是 bundled theme name 先于 custom theme file；adaptive default 根据 terminal background lightness 选择 `catppuccin-latte` 或 `catppuccin-mocha`。[E: codex-rs/tui/src/render/highlight.rs:180][E: codex-rs/tui/src/render/highlight.rs:181][E: codex-rs/tui/src/render/highlight.rs:185][E: codex-rs/tui/src/render/highlight.rs:189][E: codex-rs/tui/src/render/highlight.rs:191][E: codex-rs/tui/src/render/highlight.rs:192][E: codex-rs/tui/src/render/highlight.rs:194][E: codex-rs/tui/src/render/highlight.rs:204][E: codex-rs/tui/src/render/highlight.rs:210][E: codex-rs/tui/src/render/highlight.rs:214]
+custom theme 路径是 `{codex_home}/themes/{name}.tmTheme`，解析顺序是 bundled theme name 先于 custom theme file；adaptive default 根据 terminal background lightness 选择 `catppuccin-latte` 或 `catppuccin-mocha`。[E: codex-rs/tui/src/render/highlight.rs:180][E: codex-rs/tui/src/render/highlight.rs:181][E: codex-rs/tui/src/render/highlight.rs:185][E: codex-rs/tui/src/render/highlight.rs:189][E: codex-rs/tui/src/render/highlight.rs:192][E: codex-rs/tui/src/render/highlight.rs:194][E: codex-rs/tui/src/render/highlight.rs:204][E: codex-rs/tui/src/render/highlight.rs:214]
 
 ## ANSI 与 Chat Surface
 
 `ansi_escape_line` 会先把 tab 展开成 spaces，调用 `ansi_escape`，若得到多行则 warning 并只取第一行；`ansi_escape` 使用 `ansi_to_tui::IntoText` 把字符串转成 `Text`，错误路径 log 后 panic。[E: codex-rs/ansi-escape/src/lib.rs:11][E: codex-rs/ansi-escape/src/lib.rs:26][E: codex-rs/ansi-escape/src/lib.rs:29][E: codex-rs/ansi-escape/src/lib.rs:33][E: codex-rs/ansi-escape/src/lib.rs:40][E: codex-rs/ansi-escape/src/lib.rs:43][E: codex-rs/ansi-escape/src/lib.rs:47]
 
-Chat surface 由 `ChatWidget::as_renderable` 组装 transcript、active/hook cells、token/rate-limit/warning rows、bottom pane 等，pager overlay 则用 `PagerView` 渲染一组 renderables 并管理 scroll state。[E: codex-rs/tui/src/chatwidget/rendering.rs:5][E: codex-rs/tui/src/chatwidget/rendering.rs:6][E: codex-rs/tui/src/chatwidget/rendering.rs:17][E: codex-rs/tui/src/chatwidget/rendering.rs:28][E: codex-rs/tui/src/pager_overlay.rs:149][E: codex-rs/tui/src/pager_overlay.rs:150][E: codex-rs/tui/src/pager_overlay.rs:151]
+Chat surface 由 `ChatWidget::as_renderable` 组装 transcript、active/hook cells、token/rate-limit/warning rows、bottom pane 等，pager overlay 则用 `PagerView` 渲染一组 renderables 并管理 scroll state。[E: codex-rs/tui/src/chatwidget/rendering.rs:9][E: codex-rs/tui/src/chatwidget/rendering.rs:11][E: codex-rs/tui/src/chatwidget/rendering.rs:36][E: codex-rs/tui/src/pager_overlay.rs:150][E: codex-rs/tui/src/pager_overlay.rs:151][E: codex-rs/tui/src/pager_overlay.rs:152]
 
 ## Cell width、wrapping 与 terminal diff
 
@@ -46,13 +46,15 @@ Ratatui/unicode-width 对 halfwidth Japanese voiced/semi-voiced marks `U+FF9E/U+
 
 line truncation 以 extended grapheme 为切分单位，不会把组合中的 sound mark 拆开。wrapping 则把含 halfwidth marks 的 source grapheme 投影成等 cell-width、textwrap-safe 的 placeholder，包装后再通过 boundary map 还原 source byte ranges，使 textarea cursor、Markdown table、popup 和 status row 使用同一 width 语义。[E: codex-rs/tui/src/line_truncation.rs:13][E: codex-rs/tui/src/line_truncation.rs:47][E: codex-rs/tui/src/line_truncation.rs:49][E: codex-rs/tui/src/line_truncation.rs:56][E: codex-rs/tui/src/wrapping.rs:43][E: codex-rs/tui/src/wrapping.rs:53][E: codex-rs/tui/src/wrapping.rs:74][E: codex-rs/tui/src/wrapping.rs:99][E: codex-rs/tui/src/wrapping.rs:168][E: codex-rs/tui/src/wrapping.rs:217][E: codex-rs/tui/src/wrapping.rs:231][E: codex-rs/tui/src/wrapping.rs:236]
 
-OSC 8 hyperlink 在 Ratatui 已经 layout 完 buffer 后才被注入 cell symbol。由于 escape sequence 会改变 symbol bytes 却不改变可见宽度，`mark_buffer_hyperlinks` 把原 `cell_width` 保存为 `CellDiffOption::ForcedWidth`；custom terminal diff 额外修复 forced-width wide cell 缩短时的 trailing-cell invalidation。[E: codex-rs/tui/src/terminal_hyperlinks.rs:497][E: codex-rs/tui/src/terminal_hyperlinks.rs:533][E: codex-rs/tui/src/terminal_hyperlinks.rs:537][E: codex-rs/tui/src/terminal_hyperlinks.rs:558][E: codex-rs/tui/src/terminal_hyperlinks.rs:562][E: codex-rs/tui/src/terminal_hyperlinks.rs:569][E: codex-rs/tui/src/terminal_hyperlinks.rs:571][E: codex-rs/tui/src/custom_terminal.rs:608][E: codex-rs/tui/src/custom_terminal.rs:615][E: codex-rs/tui/src/custom_terminal.rs:616][E: codex-rs/tui/src/custom_terminal.rs:627][E: codex-rs/tui/src/custom_terminal.rs:638]
+OSC 8 hyperlink 在 Ratatui 已经 layout 完 buffer 后才被注入 cell symbol。由于 escape sequence 会改变 symbol bytes 却不改变可见宽度，`mark_buffer_hyperlinks` 把原 `cell_width` 保存为 `CellDiffOption::ForcedWidth`；custom terminal diff 额外修复 forced-width wide cell 缩短时的 trailing-cell invalidation。[E: codex-rs/tui/src/terminal_hyperlinks.rs:497][E: codex-rs/tui/src/terminal_hyperlinks.rs:569][E: codex-rs/tui/src/terminal_hyperlinks.rs:571][E: codex-rs/tui/src/custom_terminal.rs:615][E: codex-rs/tui/src/custom_terminal.rs:621]
+
+textarea 的 `delete_backward` 对 Thai 非间距标记（`U+0E31`、`U+0E34..=U+0E3A`、`U+0E47..=U+0E4E`）单独剥一层，而不是按整个 grapheme 删除；spacing vowel 仍走 atomic boundary。这与 halfwidth Japanese sound marks 的 width 修正是两条独立规则。[E: codex-rs/tui/src/bottom_pane/textarea.rs:1005][E: codex-rs/tui/src/bottom_pane/textarea.rs:1016][E: codex-rs/tui/src/bottom_pane/textarea.rs:1016][E: codex-rs/tui/src/bottom_pane/textarea.rs:1025][E: codex-rs/tui/src/width.rs:23]
 
 ## Inline visualization fallback
 
-assistant 的 `::codex-inline-vis{file="...html"}` 独占行会被 TUI 改写为 browser link；code block 内同样字面量保持原样。context 只接受 thread visualization directory 下的单层 `.html` 文件，并 canonicalize visualizations root、thread dir 与 fragment，拒绝 symlink/path escape；无 context、非法 directive 或设备不可用时显示 unavailable 文案。[E: codex-rs/tui/src/inline_visualization.rs:27][E: codex-rs/tui/src/inline_visualization.rs:83][E: codex-rs/tui/src/inline_visualization.rs:97][E: codex-rs/tui/src/inline_visualization.rs:141][E: codex-rs/tui/src/inline_visualization.rs:152][E: codex-rs/tui/src/inline_visualization.rs:182][E: codex-rs/tui/src/inline_visualization.rs:201]
+assistant 的 `::codex-inline-vis{file="...html"}` 独占行会被 TUI 改写为 browser link；code block 内同样字面量保持原样。context 只接受 thread visualization directory 下的单层 `.html` 文件，并 canonicalize visualizations root、thread dir 与 fragment，拒绝 symlink/path escape；无 context、非法 directive 或设备不可用时显示 unavailable 文案。[E: codex-rs/tui/src/inline_visualization.rs:27][E: codex-rs/tui/src/inline_visualization.rs:83][E: codex-rs/tui/src/inline_visualization.rs:97][E: codex-rs/tui/src/inline_visualization.rs:141][E: codex-rs/tui/src/inline_visualization.rs:152][E: codex-rs/tui/src/inline_visualization.rs:181][E: codex-rs/tui/src/inline_visualization.rs:201]
 
-fragment 最大 2 MiB；viewer 在 thread-local `.codex-viewers` 用 tempfile + persist 物化，外层 shell 与 sandboxed `srcdoc` iframe 各自带 CSP/referrer policy，iframe 不授予 same-origin。链接通过随机 HTTPS placeholder 参与 Markdown layout，再只把已登记 placeholder retarget 成 `TrustedFile`；普通 Markdown `file:` URL 仍不会获得 OSC 8 hyperlink。[E: codex-rs/tui/src/inline_visualization.rs:28][E: codex-rs/tui/src/inline_visualization.rs:186][E: codex-rs/tui/src/inline_visualization/viewer.rs:17][E: codex-rs/tui/src/inline_visualization/viewer.rs:31][E: codex-rs/tui/src/inline_visualization/viewer.rs:48][E: codex-rs/tui/src/inline_visualization/viewer.rs:57][E: codex-rs/tui/src/inline_visualization/viewer.rs:68][E: codex-rs/tui/src/markdown.rs:84][E: codex-rs/tui/src/markdown.rs:101][E: codex-rs/tui/src/terminal_hyperlinks.rs:53][E: codex-rs/tui/src/terminal_hyperlinks.rs:375]
+fragment 最大 2 MiB；viewer 在 thread-local `.codex-viewers` 用 tempfile + persist 物化，外层 shell 与 sandboxed `srcdoc` iframe 各自带 CSP/referrer policy，iframe 不授予 same-origin。链接通过随机 HTTPS placeholder 参与 Markdown layout，再只把已登记 placeholder retarget 成 `TrustedFile`；普通 Markdown `file:` URL 仍不会获得 OSC 8 hyperlink。[E: codex-rs/tui/src/inline_visualization.rs:27][E: codex-rs/tui/src/inline_visualization.rs:186][E: codex-rs/tui/src/inline_visualization/viewer.rs:17][E: codex-rs/tui/src/inline_visualization/viewer.rs:31][E: codex-rs/tui/src/inline_visualization/viewer.rs:48][E: codex-rs/tui/src/inline_visualization/viewer.rs:57][E: codex-rs/tui/src/inline_visualization/viewer.rs:68][E: codex-rs/tui/src/markdown.rs:84][E: codex-rs/tui/src/markdown.rs:101][E: codex-rs/tui/src/terminal_hyperlinks.rs:53][E: codex-rs/tui/src/terminal_hyperlinks.rs:375]
 
 ## Gotchas
 
@@ -75,6 +77,7 @@ fragment 最大 2 MiB；viewer 在 thread-local `.codex-viewers` 用 tempfile + 
 - `codex-rs/tui/src/custom_terminal.rs`
 - `codex-rs/tui/src/inline_visualization.rs`
 - `codex-rs/tui/src/inline_visualization/viewer.rs`
+- `codex-rs/tui/src/bottom_pane/textarea.rs`
 
 ## 相关
 

@@ -8,7 +8,7 @@ symbols: [MessageProcessor, ActiveTurnRegistry, McpExtensionEventSink, CodexTool
 related: [subsys.mcp.client, subsys.mcp.transports, subsys.core.session-lifecycle, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > `codex-rs/mcp-server` is the reverse direction from `subsys.mcp.client`: it lets external MCP clients call Codex itself through two tools, `codex` for starting a session and `codex-reply` for continuing an existing thread.[E: codex-rs/mcp-server/src/message_processor.rs:40][E: codex-rs/mcp-server/src/message_processor.rs:335][E: codex-rs/mcp-server/src/message_processor.rs:349]
@@ -51,13 +51,13 @@ This crate does not connect to external MCP servers or qualify external tool nam
 
 - `handle_call_tool` routes raw tool name `codex` to session start and `codex-reply` to existing-session reply; unknown tools return an MCP error `CallToolResult`.[E: codex-rs/mcp-server/src/message_processor.rs:349][E: codex-rs/mcp-server/src/message_processor.rs:355][E: codex-rs/mcp-server/src/message_processor.rs:356][E: codex-rs/mcp-server/src/message_processor.rs:357][E: codex-rs/mcp-server/src/message_processor.rs:361]
 - `codex` parses `CodexToolCallParam`, converts it into a Codex `Config`, then spawns `run_codex_tool_session` so the message-processing loop is not blocked.[E: codex-rs/mcp-server/src/message_processor.rs:370][E: codex-rs/mcp-server/src/message_processor.rs:376][E: codex-rs/mcp-server/src/message_processor.rs:414]
-- `run_codex_tool_session` starts a thread through `ThreadManager`, emits a `SessionConfigured` notification with request/thread metadata, records the MCP request id to thread id mapping, and submits initial `Op::UserInput`.[E: codex-rs/mcp-server/src/codex_tool_runner.rs:58][E: codex-rs/mcp-server/src/codex_tool_runner.rs:66][E: codex-rs/mcp-server/src/codex_tool_runner.rs:84][E: codex-rs/mcp-server/src/codex_tool_runner.rs:89][E: codex-rs/mcp-server/src/codex_tool_runner.rs:103][E: codex-rs/mcp-server/src/codex_tool_runner.rs:101]
+- `run_codex_tool_session` starts a thread through `ThreadManager`, emits a `SessionConfigured` notification with request/thread metadata, records the MCP request id to thread id mapping, and submits initial `Op::UserInput`.[E: codex-rs/mcp-server/src/codex_tool_runner.rs:58][E: codex-rs/mcp-server/src/codex_tool_runner.rs:66][E: codex-rs/mcp-server/src/codex_tool_runner.rs:84][E: codex-rs/mcp-server/src/codex_tool_runner.rs:88][E: codex-rs/mcp-server/src/codex_tool_runner.rs:101][E: codex-rs/mcp-server/src/codex_tool_runner.rs:101]
 - `codex-reply` parses thread id/prompt, looks up the existing thread, and spawns `run_codex_tool_session_reply`; missing threads return a structured result with `is_error=true`.[E: codex-rs/mcp-server/src/message_processor.rs:426][E: codex-rs/mcp-server/src/message_processor.rs:435][E: codex-rs/mcp-server/src/message_processor.rs:459][E: codex-rs/mcp-server/src/message_processor.rs:475][E: codex-rs/mcp-server/src/message_processor.rs:479]
-- The runner streams each Codex event as an MCP notification, handles approval request events specially, returns error events as `CallToolResult` with `is_error=true`, and on `TurnComplete` returns the last agent message plus `threadId`/`content` structured content.[E: codex-rs/mcp-server/src/codex_tool_runner.rs:192][E: codex-rs/mcp-server/src/codex_tool_runner.rs:212][E: codex-rs/mcp-server/src/codex_tool_runner.rs:203][E: codex-rs/mcp-server/src/codex_tool_runner.rs:242][E: codex-rs/mcp-server/src/codex_tool_runner.rs:291][E: codex-rs/mcp-server/src/codex_tool_runner.rs:298]
+- The runner streams each Codex event as an MCP notification, handles approval request events specially, returns error events as `CallToolResult` with `is_error=true`, and on `TurnComplete` returns the last agent message plus `threadId`/`content` structured content.[E: codex-rs/mcp-server/src/codex_tool_runner.rs:192][E: codex-rs/mcp-server/src/codex_tool_runner.rs:212][E: codex-rs/mcp-server/src/codex_tool_runner.rs:203][E: codex-rs/mcp-server/src/codex_tool_runner.rs:241][E: codex-rs/mcp-server/src/codex_tool_runner.rs:290][E: codex-rs/mcp-server/src/codex_tool_runner.rs:298]
 
 ## Cancellation
 
-`notifications/cancelled` looks up the thread id by request id, fetches the Codex thread, submits `Op::Interrupt` with the original MCP request id string, and removes the request-id mapping.[E: codex-rs/mcp-server/src/message_processor.rs:533][E: codex-rs/mcp-server/src/message_processor.rs:536][E: codex-rs/mcp-server/src/message_processor.rs:562][E: codex-rs/mcp-server/src/message_processor.rs:571]
+`notifications/cancelled` looks up the thread id by request id, fetches the Codex thread, submits `Op::Interrupt` with the original MCP request id string, and removes the request-id mapping.[E: codex-rs/mcp-server/src/message_processor.rs:533][E: codex-rs/mcp-server/src/message_processor.rs:536][E: codex-rs/mcp-server/src/message_processor.rs:562][E: codex-rs/mcp-server/src/message_processor.rs:569]
 
 ## Extension warning routing
 

@@ -8,7 +8,7 @@ symbols: [ResponsesApiRequest, ResponseStream, StreamOptions, ReasoningSummaryDe
 related: [subsys.providers.overview, subsys.providers.http-client, subsys.providers.sse-streaming, subsys.providers.retry-errors, subsys.providers.auth-layer]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > Responses API subsystem defines Codex 的 canonical streaming request/response shape，并把 `ResponsesApiRequest` 通过 `ResponsesClient` 编码后 POST 到 provider path `responses`，再把 HTTP SSE stream 交给 `spawn_response_stream`。[E: codex-rs/codex-api/src/common.rs:252][E: codex-rs/codex-api/src/common.rs:76][E: codex-rs/codex-api/src/common.rs:381][E: codex-rs/codex-api/src/endpoint/responses.rs:70][E: codex-rs/codex-api/src/endpoint/responses.rs:84][E: codex-rs/codex-api/src/endpoint/responses.rs:140][E: codex-rs/codex-api/src/endpoint/responses.rs:144][E: codex-rs/codex-api/src/endpoint/responses.rs:157]
@@ -20,6 +20,7 @@ updated: 7750465934
 - conversation/session/source headers 怎样附加？
 - request compression 和 `Accept: text/event-stream` 在哪里设置？
 - `responses-api-proxy` 为什么只允许 `POST /v1/responses`？
+- delegated/session HTTP fallback 怎样永久关掉 WebSocket？
 
 ## 职责边界
 
@@ -49,6 +50,7 @@ updated: 7750465934
 5. Core 在生成 non-OpenAI provider 的 Responses input 时，除清理 internal chat-message passthrough metadata 外，还移除 `FunctionCall.encrypted_function_args`；OpenAI provider 保留这两类内部延续字段。[E: codex-rs/core/src/client.rs:847][E: codex-rs/core/src/client.rs:848][E: codex-rs/core/src/client.rs:849][E: codex-rs/core/src/client.rs:851][E: codex-rs/core/src/client.rs:852][E: codex-rs/core/src/client.rs:853]
 6. `responses-api-proxy::run_main` reads an auth header from stdin, parses upstream URL, binds localhost, optionally writes server info, and forwards each incoming request on a thread。[E: codex-rs/responses-api-proxy/src/lib.rs:73][E: codex-rs/responses-api-proxy/src/lib.rs:74][E: codex-rs/responses-api-proxy/src/lib.rs:76][E: codex-rs/responses-api-proxy/src/lib.rs:96][E: codex-rs/responses-api-proxy/src/lib.rs:97][E: codex-rs/responses-api-proxy/src/lib.rs:98][E: codex-rs/responses-api-proxy/src/lib.rs:117]
 7. proxy `forward_request` allows only `POST /v1/responses`; it strips incoming Authorization/Host, inserts the stdin bearer Authorization and upstream Host, forwards to upstream, and relays response headers/body。[E: codex-rs/responses-api-proxy/src/lib.rs:173][E: codex-rs/responses-api-proxy/src/lib.rs:173][E: codex-rs/responses-api-proxy/src/lib.rs:202][E: codex-rs/responses-api-proxy/src/lib.rs:217][E: codex-rs/responses-api-proxy/src/lib.rs:219][E: codex-rs/responses-api-proxy/src/lib.rs:221][E: codex-rs/responses-api-proxy/src/lib.rs:223][E: codex-rs/responses-api-proxy/src/lib.rs:236][E: codex-rs/responses-api-proxy/src/lib.rs:258][E: codex-rs/responses-api-proxy/src/lib.rs:265][E: codex-rs/responses-api-proxy/src/lib.rs:273]
+8. delegated/session HTTP fallback 仍保留：`ModelClient::force_http_fallback` 在 WebSocket 已启用时把 `disable_websockets` 设为 true、清掉 cached websocket session，并记 `codex.transport.fallback_to_http`。后续 `responses_websocket_enabled()` 看到该 flag 后只走 HTTP Responses。Guardian/delegated child 可继承 parent 的 HTTP fallback，避免子会话重新尝试已失败的 WebSocket。[E: codex-rs/core/src/client.rs:523][E: codex-rs/core/src/client.rs:530][E: codex-rs/core/src/client.rs:954][E: codex-rs/core/src/client.rs:1910]
 
 ## 设计动机与权衡
 

@@ -8,7 +8,7 @@ symbols: [ThreadEvent, ThreadStartedEvent, TurnCompletedEvent, typescript::ItemC
 related: [sdk.ts-overview, sdk.ts-structured-output]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > TypeScript SDK events/items 是 codex exec JSONL 的 public TypeScript surface：events 描述 stream 顶层 envelope，items 描述 agent/thread 中的具体 artifact。[E: sdk/typescript/src/events.ts:76][E: sdk/typescript/src/items.ts:120]
@@ -52,9 +52,9 @@ updated: 7750465934
 
 ## Run extraction
 
-`Thread.run()` 只把 `item.completed` 推入 returned `items`；如果 completed item 是 `agent_message`，则用该 item 的 `text` 更新 `finalResponse`，所以最后一个 completed agent message 会成为 final response。[E: sdk/typescript/src/thread.ts:123][E: sdk/typescript/src/thread.ts:124][E: sdk/typescript/src/thread.ts:125][E: sdk/typescript/src/thread.ts:126][E: sdk/typescript/src/thread.ts:128][E: sdk/typescript/src/thread.ts:139]
+`Thread.run()` 只把 `item.completed` 推入 returned `items`；如果 completed item 是 `agent_message`，则用该 item 的 `text` 更新 `finalResponse`，所以最后一个 completed agent message 会成为 final response。[E: sdk/typescript/src/thread.ts:124][E: sdk/typescript/src/thread.ts:125][E: sdk/typescript/src/thread.ts:126][E: sdk/typescript/src/thread.ts:128][E: sdk/typescript/src/thread.ts:139]
 
-`Thread.run()` 在 `turn.completed` 时记录 usage，在 `turn.failed` 时保存 error 并在循环后 throw；streamed parser 会把旧 CLI 省略的 `cache_write_input_tokens` 补成 `0`，再把 event yield 给调用者。[E: sdk/typescript/src/thread.ts:106][E: sdk/typescript/src/thread.ts:107][E: sdk/typescript/src/thread.ts:109][E: sdk/typescript/src/thread.ts:129][E: sdk/typescript/src/thread.ts:130][E: sdk/typescript/src/thread.ts:131][E: sdk/typescript/src/thread.ts:132][E: sdk/typescript/src/thread.ts:137]
+`Thread.run()` 在 `turn.completed` 时记录 usage，在 `turn.failed` 时保存 error 并在循环后 throw；streamed parser 会把旧 CLI 省略的 `cache_write_input_tokens` 补成 `0`，再把 event yield 给调用者。[E: sdk/typescript/src/thread.ts:104][E: sdk/typescript/src/thread.ts:107][E: sdk/typescript/src/thread.ts:129][E: sdk/typescript/src/thread.ts:131][E: sdk/typescript/src/thread.ts:136]
 
 ## 设计动机
 

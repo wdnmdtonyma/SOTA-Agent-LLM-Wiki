@@ -1,0 +1,2 @@
+- [U] `ext/skills` 的 dynamic skill selector 仍是 shadow-selection path，不能写成已成为稳定的用户可见选择协议。
+- [U] `SkillPolicy` 源码仍有 TODO，说 product gating 只 parse/store、尚未在 selection/injection 全路径 enforce；host merge 已按 product 过滤，但 selection/injection 是否另有漏网路径未完全证明。

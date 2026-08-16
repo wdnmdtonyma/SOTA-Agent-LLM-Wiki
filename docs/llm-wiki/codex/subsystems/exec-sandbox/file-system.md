@@ -8,7 +8,7 @@ symbols: [ExecutorFileSystem, FileSystemSandboxContext, ExecPermissionProfile, E
 related: [subsys.exec-sandbox.overview, subsys.exec-sandbox.exec-server, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 7750465934
+updated: 9ded177ce7
 ---
 
 > `file-system` defines the host-neutral filesystem boundary for execution components: callers use `PathUri` plus optional `FileSystemSandboxContext`, and implementations expose async file primitives, chunked reads, and a bounded recursive walk.[E: codex-rs/file-system/src/lib.rs:18][E: codex-rs/file-system/src/lib.rs:286][E: codex-rs/file-system/src/lib.rs:413][E: codex-rs/file-system/src/lib.rs:428][E: codex-rs/file-system/src/lib.rs:473]
@@ -55,11 +55,11 @@ updated: 7750465934
 
 ## Remote backend 与 capability discovery
 
-Remote backend 保留 `PathUri` 的 executor 语义，不会在 app host 上先把 foreign executor path 转为本机绝对路径；optional `FileSystemSandboxContext` 在写入 RPC 前会 clone 并执行 transport compaction，移除执行端不需要的 `cwd`/workspace roots，而不是逐字段原样复制。[E: codex-rs/exec-server/src/remote_file_system.rs:59][E: codex-rs/exec-server/src/remote_file_system.rs:67][E: codex-rs/exec-server/src/remote_file_system.rs:76][E: codex-rs/exec-server/src/remote_file_system.rs:84][E: codex-rs/exec-server/src/remote_file_system.rs:413][E: codex-rs/exec-server/src/remote_file_system.rs:415][E: codex-rs/exec-server/src/remote_file_system.rs:418][E: codex-rs/file-system/src/lib.rs:374][E: codex-rs/file-system/src/lib.rs:377]
+Remote backend 保留 `PathUri` 的 executor 语义，不会在 app host 上先把 foreign executor path 转为本机绝对路径；optional `FileSystemSandboxContext` 在写入 RPC 前会 clone 并执行 transport compaction，移除执行端不需要的 `cwd`/workspace roots，而不是逐字段原样复制。[E: codex-rs/exec-server/src/remote_file_system.rs:59][E: codex-rs/exec-server/src/remote_file_system.rs:67][E: codex-rs/exec-server/src/remote_file_system.rs:76][E: codex-rs/exec-server/src/remote_file_system.rs:84][E: codex-rs/exec-server/src/remote_file_system.rs:413][E: codex-rs/exec-server/src/remote_file_system.rs:413][E: codex-rs/exec-server/src/remote_file_system.rs:418][E: codex-rs/file-system/src/lib.rs:374][E: codex-rs/file-system/src/lib.rs:377]
 
 `read_file_stream` 在 sandbox context 真正需要 platform sandbox 时返回 `Unsupported`，调用者必须使用 bounded/full read path。Metadata sharing 只覆盖同一 URI、sandbox context 缺省且尚未完成的 RPC；只要 context 存在就永远 fresh（即使它最终不要求 platform sandbox），完成后 entry 立即删除，write/create 等 mutation 也会清空 map。[E: codex-rs/exec-server/src/remote_file_system.rs:98][E: codex-rs/exec-server/src/remote_file_system.rs:103][E: codex-rs/exec-server/src/remote_file_system.rs:114][E: codex-rs/exec-server/src/remote_file_system.rs:129][E: codex-rs/exec-server/src/remote_file_system.rs:155][E: codex-rs/exec-server/src/remote_file_system.rs:160][E: codex-rs/exec-server/src/remote_file_system.rs:164][E: codex-rs/exec-server/src/remote_file_system.rs:181]
 
-Capability discovery request 逐 root 携带 sandbox context，metadata、walk 和 manifest read 复用它；Windows 上请求需要 sandbox 而 restricted-token backend disabled 时明确返回 unavailable。Caller cache identity 同时包含 selected root 与 sandbox，避免跨权限上下文复用结果。[E: codex-rs/exec-server/src/capability_discovery.rs:63][E: codex-rs/exec-server/src/capability_discovery.rs:79][E: codex-rs/exec-server/src/capability_discovery.rs:89][E: codex-rs/exec-server/src/capability_discovery.rs:101][E: codex-rs/exec-server/src/capability_discovery.rs:157][E: codex-rs/exec-server/src/capability_discovery_cache.rs:59][E: codex-rs/exec-server/src/capability_discovery_cache.rs:69][E: codex-rs/exec-server/src/capability_discovery_cache.rs:97]
+Capability discovery request 逐 root 携带 sandbox context，metadata、walk 和 manifest read 复用它；Windows 上请求需要 sandbox 而 restricted-token backend disabled 时明确返回 unavailable。Caller cache identity 同时包含 selected root 与 sandbox，避免跨权限上下文复用结果。[E: codex-rs/exec-server/src/capability_discovery.rs:63][E: codex-rs/exec-server/src/capability_discovery.rs:79][E: codex-rs/exec-server/src/capability_discovery.rs:89][E: codex-rs/exec-server/src/capability_discovery.rs:101][E: codex-rs/exec-server/src/capability_discovery.rs:157][E: codex-rs/exec-server/src/capability_discovery_cache.rs:60][E: codex-rs/exec-server/src/capability_discovery_cache.rs:69][E: codex-rs/exec-server/src/capability_discovery_cache.rs:96]
 
 ## gotcha
 

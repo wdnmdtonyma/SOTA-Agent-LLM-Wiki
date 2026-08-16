@@ -1,8 +1,8 @@
 # Codex 源码 LLM Wiki — 入口索引
 
-> OpenAI Codex 真实源码(`Best/codex/`,128-crate Rust workspace + TS/Py SDK)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
+> OpenAI Codex 真实源码(`Best/codex/`,134-crate Rust workspace + TS/Py SDK)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
 >
-> **状态:177 个节点均已对照 `7750465934` 复核并标记 verified。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
+> **状态:181 个节点均已对照 `9ded177ce7` 复核并标记 verified。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
 
 ## 怎么用
 - **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
@@ -125,7 +125,7 @@
 - [Python 输入与错误](surface/sdk/py-inputs-errors.md): Input 变体 · 错误层级 · retry_on_overload · MessageRouter — sdk/python/src/openai_codex/
 - [SDK 架构](surface/sdk/sdk-architecture.md): TS 走 codex exec JSONL; Python 走 app-server stdio JSON-RPC — sdk/
 
-## T2 — Subsystems / Core(23)
+## T2 — Subsystems / Core(26)
 - [工具系统机制](subsystems/core/tool-system.md): ToolSpec/JsonSchema/CoreToolRuntime/registry/discovery/dynamic/code-mode — core/src/tools/
 - [Code Mode runtime](subsystems/core/code-mode-runtime.md): standalone process-owned host、WebSocket handshake 与 shared connection — code-mode-runtime/ · core/src/tools/code_mode/
 - [Turn 引擎](subsystems/core/turn-engine.md): run_turn 生成器循环 — core/src/session/turn.rs
@@ -137,6 +137,7 @@
 - [Tool router 与并行执行](subsystems/core/tool-router.md): 路由 + ToolCallRuntime 并行 DAG — core/src/tools/router.rs
 - [Unified-exec 运行时](subsystems/core/unified-exec.md): 后台终端会话/keep-alive/轮询(exec_command·write_stdin 背后)— core/src/unified_exec/
 - [Guardian 审批流](subsystems/core/approval-guardian.md): guardian 中介的用户审批请求生命周期 — core/src/guardian/
+- [Guardian V2 风险分类](subsystems/core/approval-guardian-v2.md): Luna 预打分 + 低风险直批 + 高风险回落 V1 reviewer — ext/guardian-v2/
 - [审批/沙箱策略解析](subsystems/core/approval-policy.md): AskForApproval + SandboxPolicy → Decision 自动批准/提示/禁止 — utils/approval-presets/ · protocol/approvals.rs · guardian/policy_template.md
 - [Review mode](subsystems/core/review-mode.md): ReviewTask 生命周期 · review session · ReviewRequest/Output — core/src/tasks/review.rs · guardian/review_session.rs
 - [Realtime 对话状态机](subsystems/core/realtime-conversation.md): realtime 会话 start→active→end · async vs sync turn — core/src/realtime_conversation.rs
@@ -145,6 +146,8 @@
 - [Rollout 持久化](subsystems/core/rollout-persistence.md): JSONL recorder + thread 索引 — rollout/
 - [State DB(SQLite)](subsystems/core/state-db.md): 元数据镜像 — state/
 - [Thread store](subsystems/core/thread-store.md): local/remote 存储抽象 — thread-store/
+- [Thread queue](subsystems/core/thread-queue.md): 持久化 per-thread 用户提交队列 + `thread/queue/*` — ext/queue/ · thread-store/src/queue_store.rs
+- [Rollout migration](subsystems/core/rollout-migration.md): legacy JSONL → Paginated 后台迁移与 rollback — thread-store/src/local/rollout_migration/
 - [Trace bundle](subsystems/core/trace-bundle.md): 确定性 replay + reducer — rollout-trace/
 - [Turn metadata](subsystems/core/turn-metadata.md): parent-turn lineage + attempted/executed tool metadata + Responses/MCP/analytics correlation — core/src/turn_metadata.rs · core/src/tools/executed_tool_calls.rs
 - [Rollout budget](subsystems/core/rollout-budget.md): provider units/fallback accounting + root/subagent 共享预算 + exhaustion — core/src/rollout_budget.rs · core/src/session/rollout_budget.rs
@@ -208,7 +211,7 @@
 - [认证流程](subsystems/config-auth/auth-flows.md): ChatGPT OAuth · device code · api key — login/src/auth/manager.rs · docs/authentication.md
 - [凭据存储](subsystems/config-auth/credential-storage.md): file/direct-keyring/secrets-keyring/auto/ephemeral · secrets — login/ · keyring-store/ · secrets/
 - [Hooks 系统](subsystems/config-auth/hooks.md): AfterAgent / AfterToolUse 生命周期钩子 + 触发点 — hooks/
-- [Skills 系统](subsystems/config-auth/skills.md): 加载/渲染/注入 — skills/ · core-skills/ · docs/skills.md
+- [Skills 系统](subsystems/config-auth/skills.md): 加载/渲染/注入 — skills/ · ext/skills/ · docs/skills.md
 - [Plugins 系统](subsystems/config-auth/plugins.md): manifest · marketplace · 安装 — plugin/ · core-plugins/
 - [Feature 系统](subsystems/config-auth/features-system.md): feature flag 门控机制(全 catalog 见 reference)— features/
 
@@ -217,7 +220,7 @@
 - [Cloud task API](subsystems/cloud/cloud-task-api.md): CloudBackend trait · TaskSummary/Status/ApplyOutcome — cloud-tasks-client/
 - [Cloud config](subsystems/cloud/cloud-config.md): 企业托管 config bundle · 签名缓存 · refresh — cloud-config/
 
-## T2 — Subsystems / Platform(8)
+## T2 — Subsystems / Platform(9)
 - [Git utils](subsystems/platform/git-utils.md): apply · branch · baseline · fsmonitor — git-utils/
 - [File search](subsystems/platform/file-search.md): 模糊文件搜索 — file-search/
 - [遥测 / OTEL](subsystems/platform/telemetry-otel.md): 导出器(Statsig/OTLP)· 指标 — otel/
@@ -226,6 +229,7 @@
 - [终端探测](subsystems/platform/terminal-detection.md): 终端能力探测 — terminal-detection/
 - [Realtime 传输(WebRTC call + WebSocket sideband)](subsystems/platform/realtime.md): SDP signaling、standalone/sideband WebSocket 与 V1/Frameless/V2 wire adapter — codex-api/endpoint/realtime_*
 - [Agent identity](subsystems/platform/agent-identity.md): agent 身份 + install-context — agent-identity/ · install-context/
+- [Diagnostics](subsystems/platform/diagnostics.md): 进程 snapshot + `codex doctor` + `server/diagnostics` — diagnostics/ · cli/src/doctor/
 
 ## T3 — Reference
 - [协议 Op catalog](reference/protocol-op.md): 26 个 Submission/Op 变体逐一 — protocol/src/protocol.rs
@@ -235,8 +239,8 @@
 - [SessionTask 变体目录](reference/session-tasks.md): SessionTask trait + 当前 Regular/Review/Compact task classes — core/src/tasks/mod.rs · core/src/state/turn.rs
 - [数据模型](reference/data-model.md): 核心共享类型 — protocol/ · core/
 - [关键类型索引](reference/key-types.md): 各子系统 load-bearing struct/trait 索引 — codex-rs/
-- [Crate 索引](reference/crate-index.md): 128 个 workspace crate 一句话目录 — codex-rs/Cargo.toml
-- [Feature flag 目录](reference/feature-flags.md): 102 个 flag 按 stage 全 catalog — features/src/lib.rs
+- [Crate 索引](reference/crate-index.md): 134 个 workspace crate 一句话目录 — codex-rs/Cargo.toml
+- [Feature flag 目录](reference/feature-flags.md): 114 个 flag 按 stage 全 catalog — features/src/lib.rs
 - [环境变量目录](reference/env-vars.md): CODEX_* 等 — codex-rs/
 - [术语表与 codename](reference/glossary.md): SQ/EQ · rollout · ghost commit · seatbelt · landlock · guardian · code-mode …
 - [不确定项日志](reference/uncertainty.md): `[U]` 汇总
