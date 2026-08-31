@@ -11,13 +11,13 @@ status: verified
 updated: a9519cbcdd
 ---
 
-> `codex_otel` 是 Codex 的 OpenTelemetry provider crate：它导出 OTEL settings/exporter types、trace-context validators 和 `OtelProvider`，把 Statsig exporter 解析成 OTLP HTTP JSON 或在 debug build 中禁用，并按 settings 构造 logs/traces/metrics exporters。[E: codex-rs/otel/src/lib.rs:16][E: codex-rs/otel/src/lib.rs:18][E: codex-rs/otel/src/lib.rs:29][E: codex-rs/otel/src/lib.rs:38][E: codex-rs/otel/src/config.rs:13][E: codex-rs/otel/src/config.rs:20][E: codex-rs/otel/src/config.rs:24][E: codex-rs/otel/src/provider.rs:90][E: codex-rs/otel/src/provider.rs:114][E: codex-rs/otel/src/provider.rs:132][E: codex-rs/otel/src/provider.rs:169]
+> `codex_otel` 是 Codex 的 OpenTelemetry provider crate：它导出 OTEL settings/exporter types、trace-context validators 和 `OtelProvider`，把 Statsig exporter 解析成 OTLP HTTP JSON 或在 debug build 中禁用，并按 settings 构造 logs/traces/metrics exporters。[E: codex-rs/otel/src/lib.rs:16][E: codex-rs/otel/src/lib.rs:18][E: codex-rs/otel/src/lib.rs:29][E: codex-rs/otel/src/lib.rs:38][E: codex-rs/otel/src/config.rs:13][E: codex-rs/otel/src/config.rs:20][E: codex-rs/otel/src/config.rs:24][E: codex-rs/otel/src/provider.rs:62][E: codex-rs/otel/src/provider.rs:194]
 
 ## 能回答的问题
 
 - `OtelSettings` 与 `OtelExporter` 的真实字段是什么？
 - Statsig exporter 在 debug/release 下怎样解析？
-- `OtelProvider::from` 什么时候返回 `None`，什么时候安装 global metrics/tracer provider？
+- `OtelProvider::try_new` 什么时候返回 `None`，什么时候安装 global metrics/tracer provider？
 - logs/traces 的 gRPC/HTTP/TLS/client 构造分别走哪些 helper？
 - header parse、timeout parse、TLS 文件读取的失败语义是什么？
 
@@ -35,15 +35,15 @@ updated: a9519cbcdd
 
 ## Provider 初始化
 
-`OtelProvider` 字段是 logger、tracer_provider、tracer、metrics 和 `shutdown_started: AtomicBool`；首次 `shutdown()` 才依次关闭 tracer/metrics/logger，之后显式调用或 `Drop` 都是 no-op，因此总计最多执行一次。[E: codex-rs/otel/src/provider.rs:59][E: codex-rs/otel/src/provider.rs:64][E: codex-rs/otel/src/provider.rs:68][E: codex-rs/otel/src/provider.rs:71][E: codex-rs/otel/src/provider.rs:73][E: codex-rs/otel/src/provider.rs:87][E: codex-rs/otel/src/provider.rs:249][E: codex-rs/otel/src/provider.rs:250]
+`OtelProvider` 字段是 logger、tracer_provider、tracer、metrics、`shutdown_started: AtomicBool` 和 optional shutdown worker；首次 `shutdown()` 才依次关闭 tracer/metrics/logger，之后显式调用都是 no-op，因此总计最多执行一次。[E: codex-rs/otel/src/provider.rs:62][E: codex-rs/otel/src/provider.rs:67][E: codex-rs/otel/src/provider.rs:68][E: codex-rs/otel/src/provider.rs:96][E: codex-rs/otel/src/provider.rs:97]
 
-`OtelProvider::from` 根据 log exporter、trace exporter 和 resolved metrics exporter 判断是否启用；三者都不存在时清空 process-global tracestate 并返回 `Ok(None)`。[E: codex-rs/otel/src/provider.rs:194] `shutdown()` 用 atomic gate 保证最多执行一次。[E: codex-rs/otel/src/provider.rs:96]
+`OtelProvider::try_new` 根据 log exporter、trace exporter 和 resolved metrics exporter 判断是否启用；三者都不存在时清空 process-global tracestate 并返回 `Ok(None)`。[E: codex-rs/otel/src/provider.rs:194][E: codex-rs/otel/src/provider.rs:200][E: codex-rs/otel/src/provider.rs:203][E: codex-rs/otel/src/provider.rs:205] `shutdown()` 用 atomic gate 保证最多执行一次。[E: codex-rs/otel/src/provider.rs:97]
 
 Statsig metrics config 把 `codex.tool.call` 与 `codex.tool.call.duration_ms` 标为 runtime-only：调用仍先校验并构造 attributes，但在创建 OTEL counter/duration instrument 前返回；显式 OTLP exporter 的排除列表为空，不能概括成全局禁用 tool metrics。[E: codex-rs/otel/src/metrics/config.rs:12][E: codex-rs/otel/src/metrics/config.rs:38][E: codex-rs/otel/src/metrics/config.rs:43][E: codex-rs/otel/src/metrics/client.rs:126][E: codex-rs/otel/src/metrics/client.rs:129][E: codex-rs/otel/src/metrics/client.rs:237][E: codex-rs/otel/src/metrics/client.rs:238]
 
 Extension API 新增 host-provided `ExtensionMetrics` histogram capability；core adapter 委托 `SessionTelemetry`。Session telemetry 先接收 extension tags，再追加 host metadata tags，使同名 session attribution 由 host 值覆盖；底层 metrics client 的 caller tags 又覆盖 exporter default tags，这两个 merge 层级不可混写。[E: codex-rs/ext/extension-api/src/capabilities/metrics.rs:7][E: codex-rs/ext/extension-api/src/capabilities/metrics.rs:10][E: codex-rs/core/src/session/extension_metrics.rs:6][E: codex-rs/core/src/session/extension_metrics.rs:15][E: codex-rs/otel/src/events/session_telemetry.rs:444][E: codex-rs/otel/src/events/session_telemetry.rs:448][E: codex-rs/otel/src/events/session_telemetry.rs:449][E: codex-rs/otel/src/metrics/client.rs:272][E: codex-rs/otel/src/metrics/client.rs:275]
 
-logs 和 traces 各自构造 Resource；Resource attributes 包含 service version 和 env，logs resource 在 host name 可用时额外加入 `host.name`。[E: codex-rs/otel/src/provider.rs:132][E: codex-rs/otel/src/provider.rs:132][E: codex-rs/otel/src/provider.rs:265][E: codex-rs/otel/src/provider.rs:275][E: codex-rs/otel/src/provider.rs:275][E: codex-rs/otel/src/provider.rs:275][E: codex-rs/otel/src/provider.rs:280][E: codex-rs/otel/src/provider.rs:282][E: codex-rs/otel/src/provider.rs:284] trace exporter 启用时会先验证 span attributes，所有启用 path 都验证 tracestate；trace provider build 会挂 `SpanAttributesProcessor`，并把 configured tracestate 写入 global trace context。[E: codex-rs/otel/src/provider.rs:108][E: codex-rs/otel/src/provider.rs:108][E: codex-rs/otel/src/provider.rs:113][E: codex-rs/otel/src/provider.rs:170][E: codex-rs/otel/src/provider.rs:172][E: codex-rs/otel/src/provider.rs:185][E: codex-rs/otel/src/provider.rs:300][E: codex-rs/otel/src/provider.rs:305][E: codex-rs/otel/src/trace_context.rs:84][E: codex-rs/otel/src/trace_context.rs:87]
+logs 和 traces 各自构造 Resource；Resource attributes 包含 service version 和 env，logs resource 在 host name 可用时额外加入 `host.name`。[E: codex-rs/otel/src/provider.rs:232][E: codex-rs/otel/src/provider.rs:233][E: codex-rs/otel/src/provider.rs:352][E: codex-rs/otel/src/provider.rs:376] trace exporter 启用时会先验证 span attributes，所有启用 path 都验证 tracestate；trace provider build 会挂 `SpanAttributesProcessor`，并把 configured tracestate 写入 global trace context。[E: codex-rs/otel/src/provider.rs:212][E: codex-rs/otel/src/provider.rs:213][E: codex-rs/otel/src/provider.rs:215][E: codex-rs/otel/src/provider.rs:401][E: codex-rs/otel/src/provider.rs:412]
 
 ## OTLP helpers
 
@@ -55,7 +55,7 @@ trace HTTP exporter 检测当前 Tokio runtime 是否 multi-thread；multi-threa
 
 ## 设计动机与权衡
 
-`OtelProvider` 用一个 object 持有 logger/tracer/metrics handles，并用 atomic gate 把显式 shutdown 与 Drop 绑定成一次性 teardown，减少 batch telemetry 丢失和重复关闭 exporter 的风险。[I][E: codex-rs/otel/src/provider.rs:59][E: codex-rs/otel/src/provider.rs:64][E: codex-rs/otel/src/provider.rs:68][E: codex-rs/otel/src/provider.rs:71][E: codex-rs/otel/src/provider.rs:249]
+`OtelProvider` 用一个 object 持有 logger/tracer/metrics handles，并用 atomic gate 把显式 shutdown 绑定成一次性 teardown，减少 batch telemetry 丢失和重复关闭 exporter 的风险。[I][E: codex-rs/otel/src/provider.rs:62][E: codex-rs/otel/src/provider.rs:67][E: codex-rs/otel/src/provider.rs:96]
 
 Statsig 被解析成 OTLP HTTP JSON，而不是独立 transport，说明 Codex 复用 OTEL exporter 管道上报 Statsig 后端。[I] 该结论由 `resolve_exporter` 的 Statsig branch 支撑。[E: codex-rs/otel/src/config.rs:21][E: codex-rs/otel/src/config.rs:27]
 

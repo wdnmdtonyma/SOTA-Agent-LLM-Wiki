@@ -11,7 +11,7 @@ status: verified
 updated: a9519cbcdd
 ---
 
-> Connectors now split across a small `connectors` crate and MCP tool metadata plumbing: directory/workspace listing builds a catalog of discoverable `AppInfo`s, accessible connectors are inferred from Codex Apps tool metadata, and only the reserved Codex Apps MCP server path preserves connector metadata for model-visible tool grouping.[E: codex-rs/connectors/src/lib.rs:169][E: codex-rs/connectors/src/accessible.rs:15][E: codex-rs/codex-mcp/src/rmcp_client.rs:718]
+> Connectors now split across a small `connectors` crate and MCP tool metadata plumbing: directory/workspace listing builds a catalog of discoverable `AppInfo`s, accessible connectors are inferred from Codex Apps tool metadata, and only the reserved Codex Apps MCP server path preserves connector metadata for model-visible tool grouping.[E: codex-rs/connectors/src/lib.rs:169][E: codex-rs/connectors/src/accessible.rs:15][E: codex-rs/codex-mcp/src/rmcp_client.rs:742]
 
 ## 能回答的问题
 
@@ -23,7 +23,7 @@ updated: a9519cbcdd
 
 ## 职责边界
 
-`codex-rs/connectors` 管 catalog、accessible aggregation、merge、filter、display metadata；`rmcp-client` 只从 raw tool `_meta` 提取 connector id/name/description；`codex-mcp` 的 Codex Apps tool path 保留这些 metadata，regular MCP tool path 会去掉不可信 connector meta。[E: codex-rs/connectors/src/lib.rs:11][E: codex-rs/connectors/src/lib.rs:16][E: codex-rs/connectors/src/lib.rs:17][E: codex-rs/connectors/src/lib.rs:18][E: codex-rs/rmcp-client/src/rmcp_client.rs:617][E: codex-rs/codex-mcp/src/rmcp_client.rs:724][E: codex-rs/codex-mcp/src/rmcp_client.rs:784]
+`codex-rs/connectors` 管 catalog、accessible aggregation、merge、filter、display metadata；`rmcp-client` 只从 raw tool `_meta` 提取 connector id/name/description；`codex-mcp` 的 Codex Apps tool path 保留这些 metadata，regular MCP tool path 会去掉不可信 connector meta。[E: codex-rs/connectors/src/lib.rs:11][E: codex-rs/connectors/src/lib.rs:16][E: codex-rs/connectors/src/lib.rs:17][E: codex-rs/connectors/src/lib.rs:18][E: codex-rs/rmcp-client/src/rmcp_client.rs:673][E: codex-rs/codex-mcp/src/rmcp_client.rs:748][E: codex-rs/codex-mcp/src/rmcp_client.rs:809]
 
 ## 关键文件
 
@@ -56,9 +56,9 @@ updated: a9519cbcdd
 
 ## MCP metadata trust boundary
 
-- `RmcpClient::list_tools_with_connector_ids` extracts connector metadata from raw MCP tool `_meta` keys `connector_id`, `connector_name`/`connector_display_name`, and `connector_description`/`connectorDescription`.[E: codex-rs/rmcp-client/src/rmcp_client.rs:617][E: codex-rs/rmcp-client/src/rmcp_client.rs:632][E: codex-rs/rmcp-client/src/rmcp_client.rs:632][E: codex-rs/rmcp-client/src/rmcp_client.rs:632][E: codex-rs/rmcp-client/src/rmcp_client.rs:637]
-- `codex-mcp` routes listed tools through a Codex Apps conversion only for `is_codex_apps_mcp_server`; that path preserves connector id/name/description, while the regular MCP conversion strips untrusted connector metadata and clears connector fields.[E: codex-rs/codex-mcp/src/rmcp_client.rs:718][E: codex-rs/codex-mcp/src/rmcp_client.rs:724][E: codex-rs/codex-mcp/src/rmcp_client.rs:733][E: codex-rs/codex-mcp/src/rmcp_client.rs:739][E: codex-rs/codex-mcp/src/rmcp_client.rs:739][E: codex-rs/codex-mcp/src/rmcp_client.rs:779][E: codex-rs/codex-mcp/src/rmcp_client.rs:784][E: codex-rs/codex-mcp/src/rmcp_client.rs:795]
-- `list_tools_for_client_uncached` obtains tools plus optional connector metadata, then Codex Apps tools use connector metadata to choose `namespace_description`; regular MCP tools fall back to server instructions。该字段会随 `ToolInfo` 写入 connector/tool catalog cache，旧 cache 仍可通过 `connector_description` alias 读回。[E: codex-rs/codex-mcp/src/rmcp_client.rs:779][E: codex-rs/codex-mcp/src/rmcp_client.rs:781][E: codex-rs/codex-mcp/src/rmcp_client.rs:816][E: codex-rs/codex-mcp/src/tools.rs:42][E: codex-rs/codex-mcp/src/tools.rs:43]
+- `RmcpClient::list_tools_with_connector_ids` extracts connector metadata from raw MCP tool `_meta` keys `connector_id`, `connector_name`/`connector_display_name`, and `connector_description`/`connectorDescription`.[E: codex-rs/rmcp-client/src/rmcp_client.rs:673][E: codex-rs/rmcp-client/src/rmcp_client.rs:690][E: codex-rs/rmcp-client/src/rmcp_client.rs:691][E: codex-rs/rmcp-client/src/rmcp_client.rs:693]
+- `codex-mcp` routes listed tools through a Codex Apps conversion only for `is_codex_apps_mcp_server`; that path preserves connector id/name/description, while the regular MCP conversion strips untrusted connector metadata and clears connector fields.[E: codex-rs/codex-mcp/src/rmcp_client.rs:742][E: codex-rs/codex-mcp/src/rmcp_client.rs:748][E: codex-rs/codex-mcp/src/rmcp_client.rs:795][E: codex-rs/codex-mcp/src/rmcp_client.rs:803][E: codex-rs/codex-mcp/src/rmcp_client.rs:809][E: codex-rs/codex-mcp/src/rmcp_client.rs:819]
+- `list_tools_for_client_uncached` obtains tools plus optional connector metadata, then Codex Apps tools use connector metadata to choose `namespace_description`; regular MCP tools fall back to server instructions。该字段会随 `ToolInfo` 写入 connector/tool catalog cache，旧 cache 仍可通过 `connector_description` alias 读回。[E: codex-rs/codex-mcp/src/rmcp_client.rs:622][E: codex-rs/codex-mcp/src/rmcp_client.rs:781][E: codex-rs/codex-mcp/src/rmcp_client.rs:816][E: codex-rs/codex-mcp/src/tools.rs:42][E: codex-rs/codex-mcp/src/tools.rs:43]
 
 ## Discoverability filters
 

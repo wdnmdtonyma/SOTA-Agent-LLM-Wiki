@@ -4,7 +4,7 @@ title: apply_patch 工具
 kind: tool
 tier: T1
 source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/apply_patch_spec.rs, codex-rs/core/assets/tools/apply_patch.lark, codex-rs/core/src/tools/handlers/apply_patch.rs, codex-rs/core/src/apply_patch.rs, codex-rs/core/src/tools/runtimes/apply_patch.rs, codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs, codex-rs/core/src/tools/router.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/apply-patch/src/invocation.rs, codex-rs/apply-patch/src/parser.rs, codex-rs/apply-patch/src/streaming_parser.rs, codex-rs/apply-patch/src/lib.rs]
-symbols: [ApplyPatchHandler, create_apply_patch_freeform_tool, APPLY_PATCH_LARK_GRAMMAR, verify_apply_patch_args_with_mode, intercept_apply_patch, execute_verified_patch, prepare_apply_patch, apply_patch_with_options, apply_patch_file_update_mode]
+symbols: [ApplyPatchHandler, create_apply_patch_freeform_tool, APPLY_PATCH_LARK_GRAMMAR, verify_apply_patch_args_with_mode, intercept_apply_patch, execute_verified_patch, prepare_apply_patch, apply_patch_file_update_mode]
 related: [tool.exec-command, tool.shell-command, subsys.core.tool-system, subsys.core.tool-router, subsys.exec-sandbox.apply-patch-engine]
 evidence: explicit
 status: verified

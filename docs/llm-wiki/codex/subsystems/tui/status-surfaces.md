@@ -58,7 +58,7 @@ usage menu 总是提供 usage 查看入口；只有 ChatGPT account 且可用 re
 
 ## Status Line 与 Terminal Title
 
-`CachedProjectRootName` 用 cwd 缓存 project-root display name，避免 terminal-title refresh 重复向上查找同一 root。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:98][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:99]
+`CachedProjectRootName` 用 cwd 缓存 project-root display name，避免 terminal-title refresh 重复向上查找同一 root。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:99]
 
 `status_surface_selections` 同时收集 status-line items/invalids 和 terminal-title items/invalids；invalid warnings 只在 thread id 已存在、invalid list 非空、对应 atomic flag 首次 compare_exchange 成功时发出一次。[E: codex-rs/tui/src/chatwidget/status_surfaces.rs:105][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:117][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:118]
 

@@ -3,7 +3,7 @@ id: tool.code-mode-wait
 title: wait code-mode 工具
 kind: tool
 tier: T1
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/code_mode/wait_spec.rs, codex-rs/core/src/tools/code_mode/wait_handler.rs, codex-rs/core/src/tools/code_mode/mod.rs, codex-rs/code-mode-protocol/src/lib.rs, codex-rs/code-mode-protocol/src/runtime.rs, codex-rs/code-mode-runtime/src/service.rs, codex-rs/tools/src/tool_executor.rs]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/code_mode/wait_spec.rs, codex-rs/core/src/tools/code_mode/wait_handler.rs, codex-rs/core/src/tools/code_mode/mod.rs, codex-rs/core/src/guardian/tests.rs, codex-rs/code-mode-protocol/src/lib.rs, codex-rs/code-mode-protocol/src/runtime.rs, codex-rs/code-mode-runtime/src/service.rs, codex-rs/tools/src/tool_executor.rs]
 symbols: [create_wait_tool, CodeModeWaitHandler, WAIT_TOOL_NAME, WaitRequest, WaitOutcome]
 related: [tool.code-mode-exec, subsys.core.tool-system]
 evidence: explicit
@@ -25,7 +25,7 @@ updated: a9519cbcdd
 
 `wait` 不单独 gate；`finalize_tool_router` 在 code mode 生效时移除已有 plain `exec`/`wait`，`register_code_mode_executors` 再把 companion `wait` 与 `exec` 一起 prepend 到 registry。[E: codex-rs/core/src/tools/spec_plan.rs:371][E: codex-rs/core/src/tools/spec_plan.rs:373][E: codex-rs/core/src/tools/spec_plan.rs:379][E: codex-rs/core/src/tools/spec_plan.rs:420][E: codex-rs/core/src/tools/spec_plan.rs:904][E: codex-rs/core/src/tools/spec_plan.rs:905]
 
-Guardian reviewer turn 不会进入普通 tool 注册，因此也不会安装 code-mode `wait`。[E: codex-rs/core/src/tools/spec_plan.rs:155][E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1036]
+Guardian reviewer 的 `add_core_tool_sources` 提前返回，不会单独注册一个非 code-mode 的 `wait` handler。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1036] 但 `build_tool_router` 仍走 `finalize_tool_router`；guardian 模型处于 CodeMode/CodeModeOnly 时同样会安装 companion `wait`。集成测试断言 guardian 工具名包含 `exec` 与 `wait`。[E: codex-rs/core/src/tools/spec_plan.rs:199][E: codex-rs/core/src/guardian/tests.rs:2168]
 
 handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 不是 parallel-safe。[E: codex-rs/tools/src/tool_executor.rs:122][E: codex-rs/tools/src/tool_executor.rs:123]
 
@@ -56,7 +56,12 @@ shared formatter 的输出规则与 `exec` 相同：runtime response 转 functio
 - codex-rs/core/src/tools/code_mode/wait_spec.rs
 - codex-rs/core/src/tools/code_mode/wait_handler.rs
 - codex-rs/core/src/tools/code_mode/mod.rs
+- codex-rs/core/src/guardian/tests.rs
 - codex-rs/code-mode-protocol/src/lib.rs
 - codex-rs/code-mode-protocol/src/runtime.rs
 - codex-rs/code-mode-runtime/src/service.rs
 - codex-rs/tools/src/tool_executor.rs
+
+## 相关
+
+- [exec code-mode 工具](code-mode-exec.md) — 启动 JavaScript cell；`wait` 是它的 companion。

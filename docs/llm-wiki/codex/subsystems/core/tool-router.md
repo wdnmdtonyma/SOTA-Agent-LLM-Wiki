@@ -44,7 +44,7 @@ function call 还可携带 `encrypted_function_args`；router 仅对 V2 `spawn_a
 
 `ToolCallRuntime` 只保存 session、`StepContext`、diff tracker 与一个 `RwLock<()>`；它从 `step_context.tool_router` 查询 runtime、parallel/cancellation 策略，先等待 runtime readiness，再让 parallel-safe 调用取 read lock、其余调用取 write lock，最后经同一个 router dispatch。[E: codex-rs/core/src/tools/parallel.rs:42][E: codex-rs/core/src/tools/parallel.rs:115][E: codex-rs/core/src/tools/parallel.rs:149][E: codex-rs/core/src/tools/parallel.rs:155][E: codex-rs/core/src/tools/parallel.rs:166]
 
-hidden runtime 在 registry 查询中强制报告不支持 parallel；cancellation policy 则继续委托底层 runtime。[E: codex-rs/core/src/tools/registry.rs:484][E: codex-rs/core/src/tools/registry.rs:486]
+hidden runtime 在 registry 查询中强制报告不支持 parallel；dispatch 仍把 invocation 的 `cancellation_token` 传给底层 runtime。[E: codex-rs/core/src/tools/registry.rs:484][E: codex-rs/core/src/tools/registry.rs:486][E: codex-rs/core/src/tools/parallel.rs:170]
 
 ## Tool source gates
 
@@ -61,6 +61,8 @@ shell family 首先要求 environment、`Feature::ShellTool` 和未 Disabled 的
 - `codex-rs/core/src/tools/parallel.rs`
 - `codex-rs/core/src/tools/registry.rs`
 - `codex-rs/core/src/session/step_context.rs`
+- `codex-rs/tools/src/tool_spec.rs`
+- `codex-rs/tools/src/tool_payload.rs`
 - `codex-rs/tools/src/tool_executor.rs`
 
 ## 相关

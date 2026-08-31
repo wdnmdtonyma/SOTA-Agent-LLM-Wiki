@@ -4,14 +4,14 @@ title: 存储/遥测/杂项设置
 kind: config
 tier: T1
 source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/config/src/project_root_markers.rs]
-symbols: [History, DebugToml, UriBasedFileOpener, AnalyticsConfigToml, FeedbackConfigToml, AppsConfigToml, OtelConfigToml, WindowsToml, Notice]
+symbols: [History, UriBasedFileOpener, AnalyticsConfigToml, FeedbackConfigToml, AppsConfigToml, OtelConfigToml, WindowsToml, Notice]
 related: [command.config-system, config.ui-tui, config.approval-sandbox, subsys.platform.telemetry-otel, subsys.core.ghost-undo]
 evidence: explicit
 status: verified
 updated: a9519cbcdd
 ---
 
-> 存储/遥测/杂项设置 catalog 覆盖 ConfigToml 中 notifications, deprecated js_repl placeholders, history/state/log/debug, file opener, ghost snapshot, project root markers, update checks, analytics/feedback, apps, desktop, OTEL, Windows and notice state。
+> 存储/遥测/杂项设置 catalog 覆盖 ConfigToml 中 notifications, deprecated js_repl placeholders, history/sqlite/log, file opener, ghost snapshot, project root markers, update checks, analytics/feedback, apps, desktop, OTEL, Windows and notice state。
 
 ## 能回答的问题
 
@@ -24,7 +24,7 @@ updated: a9519cbcdd
 
 当前 `ConfigToml` 有 99 个顶层 `pub` 字段；本节点覆盖其中 17 个。8 个 surface/config catalog 节点合计覆盖全部 99 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:525]
 
-`js_repl_node_path` and `js_repl_node_module_dirs` remain only as deprecated ignored fields with `schemars(skip)`, which keeps config loading explicit without exposing them in schema.[E: codex-rs/config/src/config_toml.rs:302][E: codex-rs/config/src/config_toml.rs:306]
+`js_repl_node_path` and `js_repl_node_module_dirs` remain only as deprecated ignored fields with `schemars(skip)`, which keeps config loading explicit without exposing them in schema.[E: codex-rs/config/src/config_toml.rs:317][E: codex-rs/config/src/config_toml.rs:318][E: codex-rs/config/src/config_toml.rs:321][E: codex-rs/config/src/config_toml.rs:322]
 
 ## 字段 catalog
 

@@ -80,7 +80,7 @@ delegated/local MCP HTTP 与部分 CLI MCP login 路径显式调用 `with_tls_ba
 ## 边界与不确定性
 
 - system proxy 支持受 feature/platform 与 application-resolved policy 控制；存在代码路径不代表所有构建默认启用。[U]
-- PAC resolver 返回 ordered candidates 时，当前 policy 只折叠为一条 route；该 route 连接失败不会继续尝试后续 proxy 或 `DIRECT` candidate。[E: codex-rs/http-client/src/outbound_proxy.rs:377][E: codex-rs/http-client/src/outbound_proxy.rs:388]
+- PAC resolver 返回 ordered candidates 时，当前 policy 只折叠为一条 route；该 route 连接失败不会继续尝试后续 proxy 或 `DIRECT` candidate。[E: codex-rs/http-client/src/outbound_proxy.rs:435]
 - route-aware pool 解决的是 destination→transport route 一致性，不替代 network sandbox/proxy 的 allow/deny/ask policy。[I]
 - backend-client 仍有自己的 typed API/path/auth layer；本节点不把它等同于 provider generic transport。[E: codex-rs/backend-client/src/client.rs:127][I]
 

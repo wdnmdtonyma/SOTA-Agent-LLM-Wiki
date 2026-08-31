@@ -25,7 +25,7 @@ updated: a9519cbcdd
 
 ## 状态边界
 
-结构体字段覆盖 `AppEventSender`、`CodexOpTarget`、`BottomPane`、`TranscriptState`、config/session header/account/model/rate-limit 状态、stream controllers、running commands、turn lifecycle、hook cell、thread id、input queue、keymap、rollout path、cwd 和 `ThreadUsageState`。[E: codex-rs/tui/src/chatwidget.rs:553][E: codex-rs/tui/src/chatwidget.rs:554][E: codex-rs/tui/src/chatwidget.rs:555][E: codex-rs/tui/src/chatwidget.rs:556][E: codex-rs/tui/src/chatwidget.rs:557][E: codex-rs/tui/src/chatwidget.rs:573][E: codex-rs/tui/src/chatwidget.rs:605][E: codex-rs/tui/src/chatwidget.rs:607][E: codex-rs/tui/src/chatwidget.rs:620][E: codex-rs/tui/src/chatwidget.rs:675][E: codex-rs/tui/src/chatwidget.rs:698][E: codex-rs/tui/src/chatwidget.rs:702][E: codex-rs/tui/src/chatwidget.rs:723][E: codex-rs/tui/src/chatwidget.rs:781]
+结构体字段覆盖 `AppEventSender`、`CodexOpTarget`、`BottomPane`、`TranscriptState`、config/session header/account/model/rate-limit 状态、stream controllers、running commands、turn lifecycle、hook cell、thread id、input queue、`chat_keymap`、rollout path、cwd 和 `ThreadUsageState`。[E: codex-rs/tui/src/chatwidget.rs:553][E: codex-rs/tui/src/chatwidget.rs:554][E: codex-rs/tui/src/chatwidget.rs:555][E: codex-rs/tui/src/chatwidget.rs:556][E: codex-rs/tui/src/chatwidget.rs:557][E: codex-rs/tui/src/chatwidget.rs:573][E: codex-rs/tui/src/chatwidget.rs:605][E: codex-rs/tui/src/chatwidget.rs:607][E: codex-rs/tui/src/chatwidget.rs:620][E: codex-rs/tui/src/chatwidget.rs:675][E: codex-rs/tui/src/chatwidget.rs:698][E: codex-rs/tui/src/chatwidget.rs:701][E: codex-rs/tui/src/chatwidget.rs:723][E: codex-rs/tui/src/chatwidget.rs:781]
 
 构造入口 `new_with_app_event` 委托到 `new_with_op_target`；constructor 解包 `ChatWidgetInit`，从 config/model catalog 计算 collaboration mask、header model、service tier 和 keymap，再创建 `BottomPane`、`TranscriptState`、stream/chunking/turn lifecycle 等初始状态。[E: codex-rs/tui/src/chatwidget/constructor.rs:6][E: codex-rs/tui/src/chatwidget/constructor.rs:10][E: codex-rs/tui/src/chatwidget/constructor.rs:14][E: codex-rs/tui/src/chatwidget/constructor.rs:46][E: codex-rs/tui/src/chatwidget/constructor.rs:63][E: codex-rs/tui/src/chatwidget/constructor.rs:66][E: codex-rs/tui/src/chatwidget/constructor.rs:72]
 
@@ -45,7 +45,7 @@ parent-owned subagent thread 会设置 `blocks_direct_input` 并让 bottom pane 
 
 `is_user_turn_pending_or_running` 把 pending start、agent turn、review 和普通 task-running 视为阻塞，但 MCP startup 本身不再假装成 user turn。[E: codex-rs/tui/src/chatwidget/input_flow.rs:231][E: codex-rs/tui/src/chatwidget/input_flow.rs:235]
 
-`InputQueueState` 单独保存 queued user messages/history records、rejected steers/history records、pending steers、pending-start flag 和 autosend/interrupt flags。[E: codex-rs/tui/src/chatwidget/input_queue.rs:22][E: codex-rs/tui/src/chatwidget/input_queue.rs:24][E: codex-rs/tui/src/chatwidget/input_queue.rs:31][E: codex-rs/tui/src/chatwidget/input_queue.rs:40][E: codex-rs/tui/src/chatwidget/input_queue.rs:46]
+`InputQueueState` 单独保存 queued user messages/history records、rejected steers/history records、pending steers、pending-start flag、interrupt 后重提 steers 的 flag、autosend suppress，以及 rate-limit recovery hold。[E: codex-rs/tui/src/chatwidget/input_queue.rs:22][E: codex-rs/tui/src/chatwidget/input_queue.rs:24][E: codex-rs/tui/src/chatwidget/input_queue.rs:31][E: codex-rs/tui/src/chatwidget/input_queue.rs:40][E: codex-rs/tui/src/chatwidget/input_queue.rs:43][E: codex-rs/tui/src/chatwidget/input_queue.rs:44][E: codex-rs/tui/src/chatwidget/input_queue.rs:46]
 
 startup 草稿由 `restore_startup_draft_when_ready` 接管：active view、pending approval、composer 尚未 enable，或 Windows elevated sandbox setup 未完成时都不移交。移交时会合并 initialized composer 里已有的新输入，并恢复 cursor / paste placeholders / startup-local history。[E: codex-rs/tui/src/chatwidget/input_restore.rs:13][E: codex-rs/tui/src/chatwidget/input_restore.rs:97][E: codex-rs/tui/src/chatwidget/input_restore.rs:101][E: codex-rs/tui/src/chatwidget/input_restore.rs:111][E: codex-rs/tui/src/chatwidget/input_restore.rs:81]
 
@@ -63,7 +63,7 @@ app-level retry 会验证当前 active/primary thread，改写原 UserTurn 为 s
 
 ## Rendering 与 Streaming
 
-`as_renderable` 把 transcript、active cell/hook cell、token/rate-limit warnings、bottom pane 等拼成当前 frame 的 renderable surface；这说明 ChatWidget 是 UI state aggregator，而不是 terminal backend。[E: codex-rs/tui/src/chatwidget/rendering.rs:21]
+`as_renderable` 把 transcript、active cell/hook cell、token/rate-limit warnings、bottom pane 等拼成当前 frame 的 renderable surface；这说明 ChatWidget 是 UI state aggregator，而不是 terminal backend。[E: codex-rs/tui/src/chatwidget/rendering.rs:10][E: codex-rs/tui/src/chatwidget/rendering.rs:22][E: codex-rs/tui/src/chatwidget/rendering.rs:47]
 
 agent message deltas 进入 `on_agent_message_delta`；plan deltas 进入 `on_plan_delta`，后者会 lazily 创建 `PlanStreamController`，发送 `StartCommitAnimation` 并立即补一个 catch-up tick。[E: codex-rs/tui/src/chatwidget/streaming.rs:141][E: codex-rs/tui/src/chatwidget/streaming.rs:145][E: codex-rs/tui/src/chatwidget/streaming.rs:158][E: codex-rs/tui/src/chatwidget/streaming.rs:167]
 

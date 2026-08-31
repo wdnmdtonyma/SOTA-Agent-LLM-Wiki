@@ -231,3 +231,74 @@ target: `a9519cbcdd`
 - `omit_app_server_notification_media` 只剥 `ItemStarted` / `ItemCompleted` / `RawResponseItemCompleted` 的 inline media；`LocalImage`/`LocalAudio` 保留。
 - TUI keymap 12 contexts（含 `vim_search` / `agents`）；rate-limit 75/90/95 + backend banner 分层；model picker `on_models_loaded` in-place refresh。
 - Windows private desktop / deny-read walker 在 sandbox crate；PowerShell 版本探测在 `environment.rs`，不在 sandbox crate。
+
+## uncertainty-verify-auth-flows
+
+# Uncertainty — L2 verify `subsys.config-auth.auth-flows`
+
+- [U] pending environment attachment 与 per-environment permission profile snapshot 的完整跨 thread 契约未在本节点逐字段核完。本轮只核到 `CodexAuth` variants（含 `BedrockAccessKeys`）、restriction allow-list 和 refresh/external-auth 路径。
+
+## uncertainty-verify-catalogs
+
+# Uncertainty — L2 verify catalogs (`a9519cbcdd`)
+
+Recounted from source at this SHA. These numbers supersede older staging notes that still say 134 crates / 114 features / 27 Op / 81 EventMsg / 144 client RPC / 74 notifications.
+
+- workspace members **138**
+- `FEATURES` **133**
+- `Op` **29**
+- `EventMsg` **83**
+- `ClientRequest` **157**
+- `ServerNotification` **83** (82 `=> "wire"` plus `AccountLoginCompleted`)
+- `ServerRequest` **11** (9 v2 wire + 2 legacy v1)
+- `SlashCommand` **59**
+- wiki nodes **184**, tool nodes **38**
+
+## uncertainty-verify-coreb
+
+# Uncertainty — L2 verifier CoreB (`a9519cbcdd`)
+
+Pages: `ghost-undo`, `rollout-persistence`, `state-db`, `thread-store`, `trace-bundle`, `code-mode-runtime`, `rollout-budget`, `token-budget`, `turn-metadata`, `approval-guardian-v2`, `rollout-migration`, `thread-queue`, `history-notes`.
+
+## Remaining [U]
+
+- [U] `subsys.core.thread-store`: multi-segment lineage page/materialization still has a strict boundary; the source does not prove that arbitrary incremental item replay of inherited history is supported.
+- [U] `subsys.core.thread-store`: first-party app-server / TUI paths currently have no production call to `reserve_thread_id` + `stage_pending_thread_metadata`; visible usage is in core integration tests.
+
+## Not [U] after verification
+
+- Ghost/undo runtime is retired: `Feature::GhostCommit` key `undo` is `Stage::Removed`; legacy `ghost_snapshot` items deserialize as `ResponseItem::Other`; current rollback is `Op::ThreadRollback` and does not revert disk edits.
+- Guardian V2 source lives under `async_scorer/*` + `sync_reviewer/*` + `guardian-context`; crate-root `config.rs` is gone. `codex-guardian-v2` does not depend on `codex-guardian-context`.
+- History notes expose 9 namespace tools (`history.*` 4 + `notes.*` 5), `ToolExposure::DirectModelOnly`, notes file contract ≤ 1,000,000 UTF-8 bytes.
+- Code Mode is a standalone host/runtime (`code-mode-runtime` / process-owned host). Core installs `ProcessOwnedCodeModeSessionProvider` or `DisabledCodeModeSessionProvider`; there is no in-process V8 fallback and no fallback to shell.
+
+## uncertainty-verify-exec-server
+
+# uncertainty-verify-exec-server
+
+Node: `subsys.exec-sandbox.exec-server`
+
+`Ask` is a third `ExecServerNetworkPolicyDecision` variant in `codex-rs/exec-server-protocol/src/network_policy.rs`. Whether that decision surfaces a UI prompt, auto-approves, or auto-denies is owned by the controller-side decider, not exec-server. The wiki keeps this as `[U]`.
+
+## uncertainty-verify-extension-system
+
+# L2 verify: spine.extension-system
+
+- claim: `codex-rs/ext/guardian-v2` does not depend on `codex-guardian-context`; scorer still uses `async_scorer/transcript.rs`.
+- why [I]: absence of a Cargo dependency is not a single asserted source line. `ext/guardian-v2/Cargo.toml` `[dependencies]` (lines 16–33) lists `codex-api` … `uuid` and does not name `codex-guardian-context`; confirming the scorer still uses crate-local `async_scorer/transcript.rs` requires that module, not the workspace `guardian-context` crate.
+- node: `spine.extension-system`
+
+## uncertainty-verify-request-permissions
+
+# uncertainty-verify-request-permissions
+
+- node: `tool.request-permissions`
+- claim: Guardian V2 `fast_decision` can approve a `request_permissions` action before the V1 child reviewer runs
+- why unprovable here: `Session::request_permissions_for_environment` only shows `ApprovalAction::RequestPermissions` → `request_guardian_approval` → `spawn_approval_request_review` → `run_guardian_review` (`codex-rs/core/src/guardian/review.rs:810`). Whether Guardian V2 `fast_decision` intercepts that review is in the V2 extension, not this handler.
+- marked: `[I]` in `surface/tools/request-permissions.md`
+
+## uncertainty-verify-skills
+
+# Uncertainty — L2 verify `subsys.config-auth.skills`
+
+- [U] dynamic skill selector 仍是 shadow-selection experiment。实现已迁到 `codex-rs/ext/skills/src/shadow_selection_experiment/mod.rs`，文件头注释写明 evaluation 后应删除；selector 集合与 metrics 存在，但没有稳定的用户可见选择协议。

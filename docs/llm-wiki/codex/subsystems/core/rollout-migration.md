@@ -11,7 +11,7 @@ status: verified
 updated: a9519cbcdd
 ---
 
-> Rollout migration 把本地 Legacy JSONL rollout 改写成 Paginated history：先 canonicalize 到 staged 文件，投影进 SQLite，再原子发布。它不是一次性完成的后台任务；`Feature::BackgroundPaginatedRolloutMigration` 默认关闭，CLI 默认 dry-run。[E: codex-rs/thread-store/src/local/rollout_migration.rs:13][E: codex-rs/features/src/lib.rs:1088][E: codex-rs/cli/src/migrate_rollouts.rs:24]
+> Rollout migration 把本地 Legacy JSONL rollout 改写成 Paginated history：先 canonicalize 到 staged 文件，投影进 SQLite，再原子发布。它不是一次性完成的后台任务；`Feature::BackgroundPaginatedRolloutMigration` 默认关闭，CLI 默认 dry-run。[E: codex-rs/thread-store/src/local/rollout_migration.rs:100][E: codex-rs/thread-store/src/local/rollout_migration.rs:103][E: codex-rs/features/src/lib.rs:1087][E: codex-rs/features/src/lib.rs:1091][E: codex-rs/cli/src/migrate_rollouts.rs:25]
 
 ## 能回答的问题
 
@@ -25,9 +25,9 @@ updated: a9519cbcdd
 
 `LocalThreadStore` 拥有 migration 状态机：扫 sessions/archived、拿 maintenance + writer lock、canonicalize、project、publish。[E: codex-rs/thread-store/src/local/rollout_migration.rs:260][E: codex-rs/thread-store/src/local/rollout_migration.rs:318]
 
-`codex_history` 提供 `RolloutItem` / `RolloutLine` payload 模型；migration 经 `codex_rollout` re-export 读写这些类型，不另建 payload crate。[E: codex-rs/history/src/lib.rs:100][E: codex-rs/rollout/src/lib.rs:32]
+`codex_history` 提供 `RolloutItem` / `RolloutLine` payload 模型；migration 经 `codex_rollout` re-export 读写这些类型，不另建 payload crate。[E: codex-rs/history/src/lib.rs:101][E: codex-rs/rollout/src/lib.rs:32]
 
-Feature `background_paginated_rollout_migration` 是 UnderDevelopment、default-off。`thread_store_from_config` 只在 Local store + 有 state DB + feature 开启时 `tokio::spawn(migrate_rollouts_on_startup)`。[E: codex-rs/features/src/lib.rs:1088][E: codex-rs/features/src/lib.rs:976][E: codex-rs/features/src/lib.rs:983][E: codex-rs/core/src/thread_manager.rs:398][E: codex-rs/core/src/thread_manager.rs:404]
+Feature `background_paginated_rollout_migration` 是 UnderDevelopment、default-off。`thread_store_from_config` 只在 Local store + 有 state DB + feature 开启时 `tokio::spawn(migrate_rollouts_on_startup)`。[E: codex-rs/features/src/lib.rs:1087][E: codex-rs/features/src/lib.rs:1089][E: codex-rs/features/src/lib.rs:1091][E: codex-rs/core/src/thread_manager.rs:398][E: codex-rs/core/src/thread_manager.rs:404]
 
 没有 state DB 时 startup helper 直接返回，不迁移。[E: codex-rs/thread-store/src/local/rollout_migration/startup.rs:62]
 
@@ -37,14 +37,14 @@ Feature `background_paginated_rollout_migration` 是 UnderDevelopment、default-
 
 | 文件 | 角色 |
 |---|---|
-| `rollout_migration.rs` | dry-run/apply 编排、rate limit、per-path migrate/recover。[E: codex-rs/thread-store/src/local/rollout_migration.rs:98][E: codex-rs/thread-store/src/local/rollout_migration.rs:600] |
+| `rollout_migration.rs` | dry-run/apply 编排、rate limit、per-path migrate/recover。[E: codex-rs/thread-store/src/local/rollout_migration.rs:100][E: codex-rs/thread-store/src/local/rollout_migration.rs:105] |
 | `canonicalizer.rs` | SessionMeta 置 ordinal 0 并改成 Paginated；把 legacy 记录写成 canonical JSONL。[E: codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs:81][E: codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs:93] |
 | `legacy_event.rs` / `line_parser.rs` | 旧 completion event 与旧 JSON 形状的解析适配。 |
 | `rollback.rs` / `rollback_plan.rs` / `rollback_replay.rs` | `ThreadRolledBack { num_turns }` 按 user-turn 边界裁剪，不是丢最后 N 行。[E: codex-rs/thread-store/src/local/rollout_migration/rollback.rs:11] |
 | `startup.rs` | SQLite cursor `legacy_to_paginated_v1` + skip fingerprint。[E: codex-rs/thread-store/src/local/rollout_migration/startup.rs:39] |
 | `subagent.rs` | reverse-scan 选 bounded model context；证不了安全则回退全量 replay。[E: codex-rs/thread-store/src/local/rollout_migration/subagent.rs:29] |
 | `publish.rs` | staged 路径、`.pending` journal、压缩/解压、目录 sync。[E: codex-rs/thread-store/src/local/rollout_migration/publish.rs:38] |
-| `cli/src/migrate_rollouts.rs` | 手动 CLI。[E: codex-rs/cli/src/migrate_rollouts.rs:22] |
+| `cli/src/migrate_rollouts.rs` | 手动 CLI。[E: codex-rs/cli/src/migrate_rollouts.rs:22][E: codex-rs/cli/src/migrate_rollouts.rs:25] |
 
 ## 数据模型
 
@@ -55,7 +55,7 @@ Feature `background_paginated_rollout_migration` 是 UnderDevelopment、default-
 | `RolloutMigrationStatus` | `Eligible` / `Migrated` / `AlreadyPaginated` / `SkippedEmpty` / `SkippedBusy` / `Failed`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:131] |
 | journal `{codex_home}/rollout-migrations/{thread_id}.pending` | 发布 JSONL 与完成 SQLite 之间的 crash 恢复标记。[E: codex-rs/thread-store/src/local/rollout_migration/publish.rs:36][E: codex-rs/thread-store/src/local/rollout_migration/publish.rs:38] |
 
-CLI 无 `--apply` 时是 DryRun；`--thread` 可重复；`--max-mib-per-second` 必须 ≥1；`--json` 打印完整 report；任一 `Failed` 以非零退出。[E: codex-rs/cli/src/migrate_rollouts.rs:24][E: codex-rs/cli/src/migrate_rollouts.rs:28][E: codex-rs/cli/src/migrate_rollouts.rs:35][E: codex-rs/cli/src/migrate_rollouts.rs:132]
+CLI 无 `--apply` 时是 DryRun；`--thread` 可重复；`--max-mib-per-second` 必须 ≥1；`--json` 打印完整 report；任一 `Failed` 以非零退出。[E: codex-rs/cli/src/migrate_rollouts.rs:25][E: codex-rs/cli/src/migrate_rollouts.rs:29][E: codex-rs/cli/src/migrate_rollouts.rs:37][E: codex-rs/cli/src/migrate_rollouts.rs:132]
 
 ## 控制流：startup
 
@@ -93,7 +93,7 @@ Legacy subagent 曾复制父 rollout；verbatim migrate 会留下巨量重复 hi
 
 ## Gotcha
 
-- 不要把 feature 默认关闭写成“仓库里已经没有 Legacy rollout”。CLI dry-run 与 `Eligible` 状态仍是正式路径。[E: codex-rs/features/src/lib.rs:983][E: codex-rs/thread-store/src/local/rollout_migration.rs:132]
+- 不要把 feature 默认关闭写成“仓库里已经没有 Legacy rollout”。CLI dry-run 与 `Eligible` 状态仍是正式路径。[E: codex-rs/features/src/lib.rs:1091][E: codex-rs/thread-store/src/local/rollout_migration.rs:132]
 - Apply 与 rollout compression 互斥：同一 `codex_home` 上只能有一个 maintenance lock。[E: codex-rs/thread-store/src/local/rollout_migration.rs:324]
 - 缺 SQLite metadata 的 thread 会 `Failed`，不会只改 JSONL。[E: codex-rs/thread-store/src/local/rollout_migration.rs:1114]
 - Memory-consolidation session 按 Ordinary 而不是 Subagent 迁移。[E: codex-rs/thread-store/src/local/rollout_migration.rs:457]

@@ -34,7 +34,7 @@ updated: a9519cbcdd
 
 ## Startup composer
 
-`bottom_pane/startup.rs` 给 provisional composer 提供受保护 handoff：`is_startup_composer_action` 识别 submit/queue/history-search/toggle-shortcuts；`is_safe_startup_editor_key` 只放行 insert-newline 与光标/删除/yank 等 editor bindings。[E: codex-rs/tui/src/bottom_pane/startup.rs:7][E: codex-rs/tui/src/bottom_pane/startup.rs:18][E: codex-rs/tui/src/bottom_pane/startup.rs:32]
+`bottom_pane/startup.rs` 给 provisional composer 提供受保护 handoff：`is_startup_composer_action` 识别 submit/queue/history-search/toggle-shortcuts；`is_safe_startup_editor_key` 只放行 insert-newline 与光标/删除/yank 等 editor bindings。[E: codex-rs/tui/src/bottom_pane/startup.rs:16][E: codex-rs/tui/src/bottom_pane/startup.rs:18][E: codex-rs/tui/src/bottom_pane/startup.rs:32]
 
 handoff 时 `composer_draft_snapshot` 带上 approval-idle timestamp，`restore_startup_composer_state` 恢复 startup-local history，`flush_composer_paste_burst` 在 owner 切换前先落地缓冲文本。[E: codex-rs/tui/src/bottom_pane/startup.rs:70][E: codex-rs/tui/src/bottom_pane/startup.rs:83][E: codex-rs/tui/src/bottom_pane/startup.rs:106]
 
@@ -66,7 +66,7 @@ Vim search 是 textarea 本地状态机：`/` `?` 打开 footer query editor（�
 
 当前 paste-burst 行为在源码状态机里：它把终端把粘贴拆成 key events 的场景建模成时间窗口，避免 paste 里的 Enter 被误当作普通提交。composer 只把 plain/Shift/Windows AltGr 的 text-producing char 送进 burst detector；Ctrl/Alt/Super/Hyper/Meta 会先 flush，再当 shortcut 处理。[E: codex-rs/tui/src/bottom_pane/paste_burst.rs:168][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:3662][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:3671][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:3676][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:12048]
 
-`InputResult` 和 `QueuedInputAction` 由 `chat_composer` 导出到 bottom pane 模块。`set_parent_owned_thread` 只设置 direct-input block 和 placeholder，并不把 textarea 设为不可编辑。[E: codex-rs/tui/src/bottom_pane/mod.rs:205][E: codex-rs/tui/src/bottom_pane/mod.rs:206]
+`InputResult` 和 `QueuedInputAction` 由 `chat_composer` 导出到 bottom pane 模块。`set_parent_owned_thread` 只设置 `blocks_direct_input` 和 placeholder，并不把 textarea 设为不可编辑。[E: codex-rs/tui/src/bottom_pane/mod.rs:205][E: codex-rs/tui/src/bottom_pane/mod.rs:206][E: codex-rs/tui/src/bottom_pane/mod.rs:519][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:1665][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:1667]
 
 `completion_target.rs` 在 cursor 两侧解析 whitespace-delimited `@`/`$` token，把 atomic text element 当硬边界；`DollarQueryKind` 还把 `$HOME`、纯数字 positional parameter 与可补全 skill/plugin query 分开。[E: codex-rs/tui/src/bottom_pane/chat_composer/completion_target.rs:273]
 

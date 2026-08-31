@@ -3,7 +3,7 @@ id: subsys.core.tool-system
 title: 工具系统机制
 kind: subsystem
 tier: T2
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/registry.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/handlers/wait_for_environment.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/state/migrations/0042_drop_agent_jobs.sql]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/registry.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/handlers/wait_for_environment.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/state/migrations/0042_drop_agent_jobs.sql, codex-rs/code-mode-runtime/src/lib.rs]
 symbols: [add_core_tool_sources, add_core_utility_tools, CoreToolRuntime, ToolExposure]
 related: [spine.tool-call-anatomy, subsys.core.tool-router, subsys.core.unified-exec, tool.exec-command, tool.wait-for-environment, tool.current-time, tool.tool-search, tool.web-search, tool.image-generation]
 evidence: explicit
@@ -45,7 +45,7 @@ Guardian reviewer 使用独立受限 source：仅在 Managed permission profile 
 
 `Feature::DeferredExecutor` 打开时注册 `WaitForEnvironmentHandler`；宿主可从 extension data 提供描述，否则使用默认配置。tool 接收 `environment_id`，若该环境已 ready 立即成功；若仍 starting 则等待；既不 ready 也不 starting、或等待失败，返回 model error。[E: codex-rs/core/src/tools/spec_plan.rs:1152][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:40][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:126][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:137]
 
-宿主描述与序列化后的 spec 都有字节上限；超限配置会告警并整体回退默认文案。成功输出是 JSON `{"environment_id": ..., "status": "ready"}`。详见 [wait_for_environment 工具](../../surface/tools/wait-for-environment.md)。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:50]
+宿主描述与序列化后的 spec 都有字节上限；超限配置会告警并整体回退默认文案。成功输出是 JSON `{"environment_id": ..., "status": "ready"}`。详见 [wait_for_environment 工具](../../surface/tools/wait-for-environment.md)。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:50][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:149]
 
 ## 本轮集合变化
 
@@ -61,8 +61,10 @@ Guardian reviewer 使用独立受限 source：仅在 Managed permission profile 
 - `codex-rs/core/src/tools/registry.rs`
 - `codex-rs/core/src/tools/router.rs`
 - `codex-rs/core/src/tools/handlers/wait_for_environment.rs`
+- `codex-rs/tools/src/tool_spec.rs`
 - `codex-rs/tools/src/tool_executor.rs`
 - `codex-rs/state/migrations/0042_drop_agent_jobs.sql`
+- `codex-rs/code-mode-runtime/src/lib.rs`
 
 ## 相关
 

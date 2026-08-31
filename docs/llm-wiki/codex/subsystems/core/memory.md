@@ -3,7 +3,7 @@ id: subsys.core.memory
 title: 长期 Memory
 kind: subsystem
 tier: T2
-source: [codex-rs/memories/write/src/lib.rs, codex-rs/memories/write/src/start.rs, codex-rs/memories/write/src/phase1.rs, codex-rs/memories/write/src/phase2.rs, codex-rs/memories/write/src/runtime.rs, codex-rs/memories/write/src/storage.rs, codex-rs/memories/write/src/workspace.rs, codex-rs/memories/write/src/control.rs, codex-rs/memories/write/src/guard.rs, codex-rs/memories/read/src/lib.rs, codex-rs/memories/read/src/citations.rs, codex-rs/memories/read/src/usage.rs, codex-rs/ext/memories/src/lib.rs, codex-rs/ext/memories/src/extension.rs, codex-rs/ext/memories/src/prompts.rs, codex-rs/app-server/src/extensions.rs, codex-rs/app-server/src/request_processors/turn_processor.rs, codex-rs/core/src/session/session.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/session/mod.rs, codex-rs/config/src/types.rs, codex-rs/state/src/runtime/memories.rs]
+source: [codex-rs/memories/write/src/lib.rs, codex-rs/memories/write/src/start.rs, codex-rs/memories/write/src/phase1.rs, codex-rs/memories/write/src/phase2.rs, codex-rs/memories/write/src/runtime.rs, codex-rs/memories/write/src/storage.rs, codex-rs/memories/write/src/workspace.rs, codex-rs/memories/write/src/control.rs, codex-rs/memories/write/src/guard.rs, codex-rs/memories/read/src/lib.rs, codex-rs/memories/read/src/citations.rs, codex-rs/memories/read/src/usage.rs, codex-rs/ext/memories/src/lib.rs, codex-rs/ext/memories/src/extension.rs, codex-rs/ext/memories/src/prompts.rs, codex-rs/app-server/src/extensions.rs, codex-rs/app-server/src/request_processors/turn_processor.rs, codex-rs/core/src/session/session.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/session/mod.rs, codex-rs/config/src/types.rs, codex-rs/state/src/runtime/memories.rs, codex-rs/ext/history-notes/src/tools.rs]
 symbols: [start_memories_startup_task, MemoriesExtension, build_memory_tool_developer_instructions, MemoriesConfig, memories::phase1::output_schema, sync_rollout_summaries_from_memories]
 related: [spine.extension-system, subsys.core.instruction-assembly, subsys.core.session-lifecycle, subsys.core.turn-engine, subsys.core.unified-exec, subsys.core.history-notes]
 evidence: explicit
@@ -44,7 +44,7 @@ Memory artifact layout：`memory_root(codex_home)` 是 `codex_home/memories`，`
 
 ## Startup/write path
 
-1. App-server turn path 在成功提交有 input 的 turn 后调用 `codex_memories_write::start_memories_startup_task`。[E: codex-rs/memories/write/src/start.rs:24]
+1. App-server turn path 在成功提交有 input 的 turn 后调用 `codex_memories_write::start_memories_startup_task`。[E: codex-rs/app-server/src/request_processors/turn_processor.rs:661][E: codex-rs/memories/write/src/start.rs:24]
 2. Startup gate 跳过 ephemeral session、未开启 `Feature::MemoryTool` 的 session、以及 non-root agent；缺少 state DB 时直接跳过。[E: codex-rs/memories/write/src/start.rs:33][E: codex-rs/memories/write/src/start.rs:49]
 3. Background task 创建 memory root，seed extension instructions，prune stale stage-one outputs，检查 Codex rate limits，之后依次运行 Phase 1 和 Phase 2。[E: codex-rs/memories/write/src/start.rs:56][E: codex-rs/memories/write/src/start.rs:66][E: codex-rs/memories/write/src/start.rs:68][E: codex-rs/memories/write/src/start.rs:78]
 
@@ -108,6 +108,7 @@ Memory 生成被放在 turn 提交后的 background startup task，而不是同�
 - `codex-rs/core/src/session/mod.rs`
 - `codex-rs/config/src/types.rs`
 - `codex-rs/state/src/runtime/memories.rs`
+- `codex-rs/ext/history-notes/src/tools.rs`
 
 ## 相关
 

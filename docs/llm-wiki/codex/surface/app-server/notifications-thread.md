@@ -81,15 +81,15 @@ updated: a9519cbcdd
 | `ThreadRealtimeError` | `thread/realtime/error` | `v2::ThreadRealtimeErrorNotification` | experimental: thread/realtime/error | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1945] |
 | `ThreadRealtimeClosed` | `thread/realtime/closed` | `v2::ThreadRealtimeClosedNotification` | experimental: thread/realtime/closed | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1947] |
 
-`thread/reverted` 只带 `thread_id`，在 paginated revert 成功并 reload 后发出。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1850][E: codex-rs/app-server/src/request_processors/thread_processor.rs:582]
+`thread/reverted` 只带 `thread_id`，在 paginated revert 成功并 reload 后发出。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1969][E: codex-rs/app-server/src/request_processors/thread_processor.rs:591]
 
-`thread/queue/changed` 只带 `thread_id`；客户端必须再 `thread/queue/list`。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1882]
+`thread/queue/changed` 只带 `thread_id`；客户端必须再 `thread/queue/list`。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:2001][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:2002]
 
-`turn/completed` 的成功通知现在可在 `turn.items` 中携带最终 agent message，并把 `itemsView` 标为 `summary`；没有 final item（包括失败路径）时 items 为空、view 为 `notLoaded`。客户端不能再假设 completed notification 的 items 恒为空。[E: codex-rs/app-server/src/bespoke_event_handling.rs:1261][E: codex-rs/app-server/src/bespoke_event_handling.rs:1296][E: codex-rs/app-server/src/bespoke_event_handling.rs:1470][E: codex-rs/app-server/src/bespoke_event_handling.rs:1489]
+`turn/completed` 的成功通知现在可在 `turn.items` 中携带最终 agent message，并把 `itemsView` 标为 `summary`；没有 final item（包括失败路径）时 items 为空、view 为 `notLoaded`。客户端不能再假设 completed notification 的 items 恒为空。[E: codex-rs/app-server/src/bespoke_event_handling.rs:1364][E: codex-rs/app-server/src/bespoke_event_handling.rs:1365][E: codex-rs/app-server/src/bespoke_event_handling.rs:1366]
 
-`RawResponseCompletedNotification` 带 thread/turn/response ids 和 optional `TokenUsageBreakdown`，面向需要 exact upstream usage 的内部客户端；它与逐 item 的 `rawResponseItem/completed` 是不同粒度。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1590][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1592][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1594]
+`RawResponseCompletedNotification` 带 thread/turn/response ids 和 optional `TokenUsageBreakdown`，面向需要 exact upstream usage 的内部客户端；它与逐 item 的 `rawResponseItem/completed` 是不同粒度。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1845][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1846][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:1849]
 
-`item/started`/`item/completed` 承载的 `ThreadItem::McpToolCall` 新增 nullable `readOnlyHint`，把 MCP tool annotations 的只读意图带到客户端；这不新增 notification method。[E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:308][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:320]
+`item/started`/`item/completed` 承载的 `ThreadItem::McpToolCall` 新增 nullable `readOnlyHint`，把 MCP tool annotations 的只读意图带到客户端；这不新增 notification method。[E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:324][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:336]
 
 ## Sources
 

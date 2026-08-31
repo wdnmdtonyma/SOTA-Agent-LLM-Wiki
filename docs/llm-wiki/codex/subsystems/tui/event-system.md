@@ -25,13 +25,13 @@ updated: a9519cbcdd
 
 `AppEvent` 是 TUI 内部动作总线，覆盖 thread/agent 操作、paginated history refill、transcript export、message history、session lifecycle、exit/logout、Codex op forwarding、file search、rate-limit refresh 和更多 UI actions。[E: codex-rs/tui/src/app_event.rs:269][E: codex-rs/tui/src/app_event.rs:273][E: codex-rs/tui/src/app_event.rs:290][E: codex-rs/tui/src/app_event.rs:311][E: codex-rs/tui/src/app_event.rs:316][E: codex-rs/tui/src/app_event.rs:323][E: codex-rs/tui/src/app_event.rs:326][E: codex-rs/tui/src/app_event.rs:357][E: codex-rs/tui/src/app_event.rs:375][E: codex-rs/tui/src/app_event.rs:449]
 
-rate-limit refresh 有明确 origin：startup prefetch、`/status` command、`/usage` menu、reset picker 和 reset-credit consume；`RateLimitsLoaded` 带 origin、hard-stop generation 与结果，旧 generation 的 response 不会覆盖更新后的 hard-stop snapshot。[E: codex-rs/tui/src/app_event.rs:164][E: codex-rs/tui/src/app_event.rs:166][E: codex-rs/tui/src/app_event.rs:169][E: codex-rs/tui/src/app_event.rs:171][E: codex-rs/tui/src/app_event.rs:173][E: codex-rs/tui/src/app_event.rs:177][E: codex-rs/tui/src/app/event_dispatch.rs:1251][E: codex-rs/tui/src/app/event_dispatch.rs:1253][E: codex-rs/tui/src/app/event_dispatch.rs:1277]
+rate-limit refresh 有明确 origin：startup prefetch、`/status` command、`/usage` menu、reset picker、reset-credit consume，以及 inference-limit 后的 `Recovery`；`RateLimitsLoaded` 带 origin、hard-stop generation 与结果，旧 generation 的 response 不会覆盖更新后的 hard-stop snapshot。[E: codex-rs/tui/src/app_event.rs:164][E: codex-rs/tui/src/app_event.rs:166][E: codex-rs/tui/src/app_event.rs:169][E: codex-rs/tui/src/app_event.rs:171][E: codex-rs/tui/src/app_event.rs:173][E: codex-rs/tui/src/app_event.rs:175][E: codex-rs/tui/src/app_event.rs:177][E: codex-rs/tui/src/app/event_dispatch.rs:1250][E: codex-rs/tui/src/app/event_dispatch.rs:1253][E: codex-rs/tui/src/app/event_dispatch.rs:1270]
 
 `AppEventSender` 只包一层 `UnboundedSender<AppEvent>`；`send` 会记录非 `CodexOp` inbound app event，再发送，失败只 log。它还提供 interrupt/compact/user input answer/approval/MCP elicitation helpers，把 widget 侧调用收敛到 typed helpers。[E: codex-rs/tui/src/app_event_sender.rs:23][E: codex-rs/tui/src/app_event_sender.rs:34][E: codex-rs/tui/src/app_event_sender.rs:37][E: codex-rs/tui/src/app_event_sender.rs:40][E: codex-rs/tui/src/app_event_sender.rs:45][E: codex-rs/tui/src/app_event_sender.rs:49][E: codex-rs/tui/src/app_event_sender.rs:68][E: codex-rs/tui/src/app_event_sender.rs:74][E: codex-rs/tui/src/app_event_sender.rs:86]
 
 ## Dispatch Layer
 
-`app/event_dispatch.rs` 明确定位为 exhaustive `AppEvent` dispatcher；大动作委托到 focused app submodules，central match 保持路由层。[E: codex-rs/tui/src/app/event_dispatch.rs:27][E: codex-rs/tui/src/app/event_dispatch.rs:54]
+`app/event_dispatch.rs` 的 `App::handle_event` 是 exhaustive `AppEvent` dispatcher；大动作委托到 focused app submodules，central match 保持路由层。[E: codex-rs/tui/src/app/event_dispatch.rs:27][E: codex-rs/tui/src/app/event_dispatch.rs:32]
 
 older transcript 由 `RequestOlderScrollbackHistory` / `OlderThreadHistoryLoaded` 驱动：dispatcher 在 overlay 未打开且 `scrollback_has_older_history` 时发起 `request_older_history_page`，后台结果再进 `handle_older_history_page`。[E: codex-rs/tui/src/app/event_dispatch.rs:143][E: codex-rs/tui/src/app/event_dispatch.rs:148][E: codex-rs/tui/src/app/event_dispatch.rs:151][E: codex-rs/tui/src/app/event_dispatch.rs:157][E: codex-rs/tui/src/app/history_pagination.rs:18]
 
@@ -41,7 +41,7 @@ persistent-history batch path 使用 `LookupMessageHistoryBatch { thread_id, cur
 
 关键分支包括 `DiffResult` 切到 alternate-screen static overlay、`StartupThreadStarted` 交给 startup attach、shutdown-first exit 先显示 feedback 再 `handle_exit_mode`。[E: codex-rs/tui/src/app/event_dispatch.rs:103][E: codex-rs/tui/src/app/event_dispatch.rs:809][E: codex-rs/tui/src/app/event_dispatch.rs:816][E: codex-rs/tui/src/app/event_dispatch.rs:822][E: codex-rs/tui/src/app/event_dispatch.rs:3154]
 
-`handle_exit_mode` 的 shutdown-first path 记录 pending shutdown thread，给 `shutdown_current_thread` 一个 2 秒 UI escape-hatch timeout，然后返回 user-requested exit；immediate path 清 pending id 后直接退出。[E: codex-rs/tui/src/app/event_dispatch.rs:24][E: codex-rs/tui/src/app/event_dispatch.rs:3179][E: codex-rs/tui/src/app/event_dispatch.rs:3182][E: codex-rs/tui/src/app/event_dispatch.rs:3190][E: codex-rs/tui/src/app/event_dispatch.rs:3201][E: codex-rs/tui/src/app/event_dispatch.rs:3207][E: codex-rs/tui/src/app/event_dispatch.rs:3209]
+`handle_exit_mode` 的 `ShutdownFirst` / `ShutdownAfterInterrupt` path 记录 pending shutdown thread，给 `shutdown_current_thread` 一个 2 秒 UI escape-hatch timeout；前者返回 `ExitReason::UserRequested`，后者返回 `TurnInterrupted`。immediate path 清 pending id 后直接以 user-requested 退出。[E: codex-rs/tui/src/app/event_dispatch.rs:24][E: codex-rs/tui/src/app/event_dispatch.rs:3179][E: codex-rs/tui/src/app/event_dispatch.rs:3182][E: codex-rs/tui/src/app/event_dispatch.rs:3190][E: codex-rs/tui/src/app/event_dispatch.rs:3201][E: codex-rs/tui/src/app/event_dispatch.rs:3204][E: codex-rs/tui/src/app/event_dispatch.rs:3207][E: codex-rs/tui/src/app/event_dispatch.rs:3209]
 
 ## App-Server Events
 
@@ -49,7 +49,7 @@ persistent-history batch path 使用 `LookupMessageHistoryBatch { thread_id, cur
 
 ## Terminal Event Stream
 
-`TuiEvent` 有 key、paste、resize、draw 和 resume；`EventBroker` 维护 subscriber channel 和 paused/running stream state，`pause` drop underlying stream，`resume` 按需重建。[E: codex-rs/tui/src/tui.rs:562][E: codex-rs/tui/src/tui.rs:564][E: codex-rs/tui/src/tui.rs:573][E: codex-rs/tui/src/tui.rs:582][E: codex-rs/tui/src/tui/event_stream.rs:51][E: codex-rs/tui/src/tui/event_stream.rs:58][E: codex-rs/tui/src/tui.rs:696][E: codex-rs/tui/src/tui.rs:702]
+`TuiEvent` 有 key、paste、resize、draw、resume、`FocusGained` 和 `FocusLost`；`EventBroker` 维护 subscriber channel 和 paused/running stream state，`pause` drop underlying stream，`resume` 按需重建。[E: codex-rs/tui/src/tui.rs:562][E: codex-rs/tui/src/tui.rs:564][E: codex-rs/tui/src/tui.rs:566][E: codex-rs/tui/src/tui.rs:571][E: codex-rs/tui/src/tui.rs:573][E: codex-rs/tui/src/tui.rs:578][E: codex-rs/tui/src/tui.rs:580][E: codex-rs/tui/src/tui.rs:582][E: codex-rs/tui/src/tui/event_stream.rs:51][E: codex-rs/tui/src/tui/event_stream.rs:58][E: codex-rs/tui/src/tui.rs:696][E: codex-rs/tui/src/tui.rs:702]
 
 `handle_tui_event` 先为 event 解析 screen size，非 key/paste 事件还会让 pending chord 过期并运行 pre-render reflow。physical key 在 overlay/composer 之前经过 `route_key_chord_event`：pending/cancelled 事件在此被吞掉，completed chord 改写成内部 dispatch key，再进入原有 handler。[E: codex-rs/tui/src/app.rs:784][E: codex-rs/tui/src/app.rs:790][E: codex-rs/tui/src/app.rs:795][E: codex-rs/tui/src/app.rs:799][E: codex-rs/tui/src/app/input.rs:10][E: codex-rs/tui/src/app/input.rs:29][E: codex-rs/tui/src/app/input.rs:44][E: codex-rs/tui/src/app/input.rs:48]
 

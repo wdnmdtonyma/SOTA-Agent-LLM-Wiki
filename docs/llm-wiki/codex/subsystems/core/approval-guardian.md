@@ -3,7 +3,7 @@ id: subsys.core.approval-guardian
 title: Guardian 自动审批审查
 kind: subsystem
 tier: T2
-source: [codex-rs/core/src/tools/approvals.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/guardian/mod.rs, codex-rs/core/src/guardian/approval_request.rs, codex-rs/core/src/guardian/review.rs, codex-rs/core/src/guardian/prompt.rs, codex-rs/core/src/guardian/review_session.rs, codex-rs/core/src/codex_delegate.rs, codex-rs/protocol/src/approvals.rs, codex-rs/features/src/lib.rs]
+source: [codex-rs/core/src/tools/approvals.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/guardian/mod.rs, codex-rs/core/src/guardian/approval_request.rs, codex-rs/core/src/guardian/review.rs, codex-rs/core/src/guardian/prompt.rs, codex-rs/core/src/guardian/review_session.rs, codex-rs/core/src/codex_delegate.rs, codex-rs/protocol/src/approvals.rs, codex-rs/ext/guardian-v2/src/lib.rs]
 symbols: [GuardianApprovalRequest, GuardianAssessment, GuardianAssessmentEvent, GuardianRejectionCircuitBreaker, routes_approval_to_guardian, review_approval_request, build_guardian_prompt_items_with_parent_turn, GuardianReviewSessionManager, GuardianReviewSessionOutcome]
 related: [subsys.core.approval-policy, subsys.core.approval-guardian-v2, subsys.core.review-mode, subsys.core.instruction-assembly, subsys.core.tool-router]
 evidence: explicit
@@ -63,7 +63,7 @@ updated: a9519cbcdd
 5. `build_guardian_review_session_config` 强制 `approval_policy: Never`，把 permission profile 收成 read-only intersection，并 disable `Feature::GuardianV2`（以及 Collab、MultiAgentV2、Apps、Plugins、hooks、web search）。[E: codex-rs/core/src/guardian/review_session.rs:1529][E: codex-rs/core/src/guardian/review_session.rs:1560]
 6. review turn submit 使用 concrete permission snapshot、`AskForApproval::Never`、collaboration mode `Default`。[E: codex-rs/core/src/guardian/review_session.rs:1200][E: codex-rs/core/src/guardian/review_session.rs:1205]
 
-Guardian reviewer 的 model tool surface 也被 planner 单独收紧：`add_core_tool_sources` 识别 guardian source 后，只在全部 environment 都是 `PermissionProfile::Managed` 时注册 `exec_command` / `write_stdin`（需 `Feature::ShellTool` + `Feature::UnifiedExec`）以及 `Feature::ViewImage` 开启时的 `view_image`；随后 `return`。guardian turn 还可以挂只读 `history.*` extension tools。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1009][E: codex-rs/core/src/tools/spec_plan.rs:1036][E: codex-rs/core/src/tools/spec_plan.rs:155][E: codex-rs/features/src/lib.rs:908]
+Guardian reviewer 的 model tool surface 也被 planner 单独收紧：`add_core_tool_sources` 识别 guardian source 后，只在全部 environment 都是 `PermissionProfile::Managed` 时注册 `exec_command` / `write_stdin`（需 `Feature::ShellTool` + `Feature::UnifiedExec`）以及 `Feature::ViewImage` 开启时的 `view_image`；随后 `return`。guardian turn 还可以挂只读 `history.*` extension tools。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1009][E: codex-rs/core/src/tools/spec_plan.rs:1036][E: codex-rs/core/src/tools/spec_plan.rs:155]
 
 `is_basic_session_source` 同时匹配 `SubAgent(Other("guardian"))` 与 `Internal(InternalSessionSource::Guardian)`。[E: codex-rs/core/src/guardian/review.rs:214]
 
@@ -92,7 +92,7 @@ Guardian reviewer 的 model tool surface 也被 planner 单独收紧：`add_core
 - `codex-rs/core/src/guardian/review_session.rs`
 - `codex-rs/core/src/codex_delegate.rs`
 - `codex-rs/protocol/src/approvals.rs`
-- `codex-rs/features/src/lib.rs`
+- `codex-rs/ext/guardian-v2/src/lib.rs`
 
 ## 相关
 

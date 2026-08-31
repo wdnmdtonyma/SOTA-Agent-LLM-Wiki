@@ -27,7 +27,7 @@ updated: a9519cbcdd
 
 `TurnStarted` 的 wire name 保留 v1 `task_started`,同时接受 `turn_started` alias；`TurnComplete` 的 wire name 保留 v1 `task_complete`,同时接受 `turn_complete` alias。[E: codex-rs/protocol/src/protocol.rs:1386][E: codex-rs/protocol/src/protocol.rs:1387][E: codex-rs/protocol/src/protocol.rs:1395][E: codex-rs/protocol/src/protocol.rs:1396]
 
-`TokenUsage` 仍带 provider-reported `codex_rollout_budget_units`。该字段明确 `skip_serializing`、`schemars(skip)`、`ts(skip)`，因此供 core 内部 rollout-budget 计算使用，不扩张 `TokenCount` 的公开 JSON/TS schema。[E: codex-rs/protocol/src/protocol.rs:2192][E: codex-rs/protocol/src/protocol.rs:2281]
+`TokenUsage` 仍带 provider-reported `codex_rollout_budget_units`。该字段明确 `skip_serializing`、`schemars(skip)`、`ts(skip)`，因此供 core 内部 rollout-budget 计算使用，不扩张 `TokenCount` 的公开 JSON/TS schema。[E: codex-rs/protocol/src/protocol.rs:2192][E: codex-rs/protocol/src/protocol.rs:2207][E: codex-rs/protocol/src/protocol.rs:2208][E: codex-rs/protocol/src/protocol.rs:2209][E: codex-rs/protocol/src/protocol.rs:2210][E: codex-rs/protocol/src/protocol.rs:2281]
 
 ## Lifecycle / control EventMsg 表
 

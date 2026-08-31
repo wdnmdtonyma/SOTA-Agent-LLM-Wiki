@@ -26,7 +26,7 @@ updated: a9519cbcdd
 
 `AccountLoginCompleted` 在宏调用中通过 serde/TS/strum rename 固定为 `account/login/completed`，不是默认 camelCase wire name。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1953][E: codex-rs/app-server-protocol/src/protocol/common.rs:1954][E: codex-rs/app-server-protocol/src/protocol/common.rs:1955][E: codex-rs/app-server-protocol/src/protocol/common.rs:1956]
 
-该 notification 的 payload 含 nullable `onboardingEntrypoint`，当前唯一值是 `life_sciences`。browser OAuth callback 只接受原 state 或精确追加 `.onboarding_entrypoint=life_sciences` 的 state，并把解析结果传入完成通知；任意其他 suffix 不应被解释为 onboarding entrypoint。[E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:682][E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:691][E: codex-rs/login/src/callback_params.rs:1][E: codex-rs/login/src/callback_params.rs:13][E: codex-rs/app-server/src/request_processors/account_processor.rs:576][E: codex-rs/app-server/src/request_processors/account_processor.rs:586]
+该 notification 的 payload 含 nullable `onboardingEntrypoint`，当前唯一值是 `life_sciences`。browser OAuth callback 只接受原 state 或精确追加 `.onboarding_entrypoint=life_sciences` 的 state，并把解析结果传入完成通知；任意其他 suffix 不应被解释为 onboarding entrypoint。[E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:718][E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:725][E: codex-rs/login/src/callback_params.rs:1][E: codex-rs/login/src/callback_params.rs:13][E: codex-rs/login/src/callback_params.rs:21][E: codex-rs/app-server/src/request_processors/account_processor.rs:660][E: codex-rs/app-server/src/request_processors/account_processor.rs:681]
 
 ## Notification catalog
 

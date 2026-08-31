@@ -3,7 +3,7 @@ id: subsys.config-auth.skills
 title: Skills 系统
 kind: subsystem
 tier: T2
-source: [codex-rs/ext/skills/src/loader/mod.rs, codex-rs/ext/skills/src/loader/discovery.rs, codex-rs/ext/skills/src/loader/namespace.rs, codex-rs/ext/skills/src/loader/host.rs, codex-rs/ext/skills/src/loader/host_merge.rs, codex-rs/ext/skills/src/host_roots.rs, codex-rs/ext/skills/src/host_outcome.rs, codex-rs/ext/skills/src/host_prompt.rs, codex-rs/ext/skills/src/catalog_prompt.rs, codex-rs/ext/skills/src/extension.rs, codex-rs/ext/skills/src/render.rs, codex-rs/ext/skills/src/render_observability.rs, codex-rs/ext/skills/src/state.rs, codex-rs/ext/skills/src/world_state.rs, codex-rs/ext/skills/src/tools/list.rs, codex-rs/ext/skills/src/tools/read.rs, codex-rs/ext/skills/src/provider/executor.rs, codex-rs/core/src/context/world_state/mod.rs, codex-rs/core-plugins/src/manifest.rs, codex-rs/core-plugins/src/agent_plugin_manifest.rs, codex-rs/utils/plugins/src/plugin_namespace.rs, codex-rs/skills/src/lib.rs, codex-rs/skills/src/model.rs, codex-rs/skills/src/selection.rs, docs/skills.md]
+source: [codex-rs/ext/skills/src/loader/mod.rs, codex-rs/ext/skills/src/loader/discovery.rs, codex-rs/ext/skills/src/loader/namespace.rs, codex-rs/ext/skills/src/loader/host.rs, codex-rs/ext/skills/src/loader/host_merge.rs, codex-rs/ext/skills/src/host_roots.rs, codex-rs/ext/skills/src/host_outcome.rs, codex-rs/ext/skills/src/host_prompt.rs, codex-rs/ext/skills/src/catalog_prompt.rs, codex-rs/ext/skills/src/extension.rs, codex-rs/ext/skills/src/render.rs, codex-rs/ext/skills/src/render_observability.rs, codex-rs/ext/skills/src/state.rs, codex-rs/ext/skills/src/world_state.rs, codex-rs/ext/skills/src/tools/list.rs, codex-rs/ext/skills/src/tools/read.rs, codex-rs/ext/skills/src/provider/executor.rs, codex-rs/ext/skills/src/shadow_selection_experiment/mod.rs, codex-rs/core/src/context/world_state/mod.rs, codex-rs/core-plugins/src/manifest.rs, codex-rs/core-plugins/src/agent_plugin_manifest.rs, codex-rs/utils/plugins/src/plugin_namespace.rs, codex-rs/skills/src/lib.rs, codex-rs/skills/src/model.rs, codex-rs/skills/src/selection.rs, docs/skills.md]
 symbols: [SkillMetadata, HostSkillRoot, SkillLoadOutcome, SkillDiscovery, SkillNamespaceResolver, discover_skills, collect_explicit_skill_mentions, HostSkillsCatalogInWorldState, SkillsExtension, skill_metadata_budget, render_available_skills, render_combined_available_skills, CatalogSurface, ListTool, ReadTool, ExecutorSkillProvider, install_system_skills, ext.skills::SkillInstructions]
 related: [spine.extension-system, subsys.config-auth.plugins, subsys.config-auth.config-loading, subsys.core.instruction-assembly, config.skills-plugins-features]
 evidence: explicit
@@ -30,7 +30,7 @@ Plugin manifest 的 skills root 声明由 `subsys.config-auth.plugins` 覆盖；
 
 ## 数据模型
 
-`SkillMetadata` 位于 `codex-rs/skills`，包含 name、description、short_description、optional model、interface、dependencies、policy、path_to_skills_md、scope、plugin_id 和 remote_plugin_id；`allows_implicit_invocation()` 在 policy field 缺失时默认允许隐式调用。[E: codex-rs/skills/src/model.rs:8][E: codex-rs/skills/src/model.rs:9][E: codex-rs/skills/src/model.rs:10][E: codex-rs/skills/src/model.rs:14][E: codex-rs/skills/src/model.rs:12][E: codex-rs/skills/src/model.rs:13][E: codex-rs/skills/src/model.rs:14][E: codex-rs/skills/src/model.rs:16][E: codex-rs/skills/src/model.rs:17][E: codex-rs/skills/src/model.rs:18][E: codex-rs/skills/src/model.rs:19][E: codex-rs/skills/src/model.rs:23]
+`SkillMetadata` 位于 `codex-rs/skills`，包含 name、description、short_description、interface、dependencies、policy、path_to_skills_md、scope、plugin_id 和 remote_plugin_id；没有独立 `model` field。`allows_implicit_invocation()` 在 policy field 缺失时默认允许隐式调用。[E: codex-rs/skills/src/model.rs:8][E: codex-rs/skills/src/model.rs:9][E: codex-rs/skills/src/model.rs:10][E: codex-rs/skills/src/model.rs:11][E: codex-rs/skills/src/model.rs:12][E: codex-rs/skills/src/model.rs:13][E: codex-rs/skills/src/model.rs:14][E: codex-rs/skills/src/model.rs:16][E: codex-rs/skills/src/model.rs:17][E: codex-rs/skills/src/model.rs:18][E: codex-rs/skills/src/model.rs:19][E: codex-rs/skills/src/model.rs:23]
 
 `SkillPolicy` 支持 `allow_implicit_invocation` 和 product restrictions。host merge 会按当前 product 过滤 skills；`SkillPolicy` 上仍有 TODO，说明 selection/injection 路径不应只依赖 parse-and-store。[E: codex-rs/skills/src/model.rs:63][E: codex-rs/skills/src/model.rs:64][E: codex-rs/skills/src/model.rs:67][E: codex-rs/ext/skills/src/loader/host_merge.rs:152]
 
@@ -70,7 +70,7 @@ host 路径由 `HostSkillsSnapshot::load_skill_prompts` 读取 `SKILL.md` 并输
 
 ## Ext skills catalog、resource tools 与预算
 
-`skill_metadata_budget` 现在直接取 context window 的 2% token budget（没有额外 4,000-token cap）；未知 context window 时回退到 8,000 characters。超预算时先保留每行的 name/locator，再 round-robin 分配 description 空间；连最小行都放不下才省略条目，并生成 truncation/omission report。[E: codex-rs/ext/skills/src/render.rs:18][E: codex-rs/ext/skills/src/render.rs:20][E: codex-rs/ext/skills/src/render.rs:127][E: codex-rs/ext/skills/src/render.rs:150][E: codex-rs/ext/skills/src/render.rs:325][E: codex-rs/ext/skills/src/render.rs:342][E: codex-rs/ext/skills/src/render.rs:423]
+`skill_metadata_budget` 优先使用 caller 提供的 `max_context_tokens`，并 cap 到 10,000 tokens；否则取 context window 的 2%；未知 context window 时回退到 8,000 characters。超预算时先保留每行的 name/locator，再 round-robin 分配 description 空间；连最小行都放不下才省略条目，并生成 truncation/omission report。[E: codex-rs/ext/skills/src/render.rs:17][E: codex-rs/ext/skills/src/render.rs:18][E: codex-rs/ext/skills/src/render.rs:20][E: codex-rs/ext/skills/src/render.rs:127][E: codex-rs/ext/skills/src/render.rs:131][E: codex-rs/ext/skills/src/render.rs:135][E: codex-rs/ext/skills/src/render.rs:150]
 
 当 host 与 executor catalog 同时可见时，`render_combined_available_skills` 用同一个 metadata budget 联合分配，而不是让两边各拿一份 2%；extension 再把 executor 与 host 结果分别放入两个 WorldState sections。`host_skills` section 被 core 特殊插到 permissions section 之前，避免权限说明先打断 skills context。[E: codex-rs/ext/skills/src/render.rs:540][E: codex-rs/ext/skills/src/world_state.rs:12][E: codex-rs/core/src/context/world_state/mod.rs:376][E: codex-rs/core/src/context/world_state/mod.rs:379]
 
@@ -91,7 +91,7 @@ Bundled system skills 用 `include_dir!` 嵌入，安装目标是 `CODEX_HOME/sk
 - 可发现 metadata 与显式正文注入是两条路径：`ext/skills` catalog renderer 不读取每个 `SKILL.md` 全文；host explicit injection 在 `load_skill_prompts` 中读取正文，extension provider path 则通过 `read_main_prompt` 读取 selected entry。[E: codex-rs/ext/skills/src/render.rs:492][E: codex-rs/ext/skills/src/host_prompt.rs:69][E: codex-rs/ext/skills/src/extension.rs:459]
 - Product restriction 过滤不是安装失败；host merge 会从当前 product 的 outcome 中删除不匹配 skills。[E: codex-rs/ext/skills/src/loader/host_merge.rs:149][E: codex-rs/ext/skills/src/loader/host_merge.rs:152][E: codex-rs/skills/src/model.rs:30]
 - Embedded system skills cache root 是 `$CODEX_HOME/skills/.system`，不等同于 project `.codex/skills` root。[E: codex-rs/skills/src/lib.rs:63]
-- dynamic skill selector 仍是 shadow-selection path，不能写成已成为稳定的用户可见选择协议。[U]
+- dynamic skill selector 仍是 shadow-selection experiment：实现已迁到 `ext/skills/src/shadow_selection_experiment/mod.rs`；`ShadowSelectionExperiment` 只用于内部 metrics/selection 对照，不能写成已成为稳定的用户可见选择协议。[E: codex-rs/ext/skills/src/shadow_selection_experiment/mod.rs:50][E: codex-rs/ext/skills/src/shadow_selection_experiment/mod.rs:55][U]
 
 ## Sources
 
@@ -112,6 +112,7 @@ Bundled system skills 用 `include_dir!` 嵌入，安装目标是 `CODEX_HOME/sk
 - `codex-rs/ext/skills/src/tools/list.rs`
 - `codex-rs/ext/skills/src/tools/read.rs`
 - `codex-rs/ext/skills/src/provider/executor.rs`
+- `codex-rs/ext/skills/src/shadow_selection_experiment/mod.rs`
 - `codex-rs/core/src/context/world_state/mod.rs`
 - `codex-rs/core-plugins/src/manifest.rs`
 - `codex-rs/core-plugins/src/agent_plugin_manifest.rs`

@@ -3,7 +3,7 @@ id: tool.request-permissions
 title: request_permissions 工具
 kind: tool
 tier: T1
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/shell_spec.rs, codex-rs/core/src/tools/handlers/request_permissions.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/approvals.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/protocol/src/request_permissions.rs]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/shell_spec.rs, codex-rs/core/src/tools/handlers/request_permissions.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/tools/router.rs, codex-rs/core/src/tools/approvals.rs, codex-rs/core/src/guardian/review.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/protocol/src/request_permissions.rs, codex-rs/features/src/lib.rs]
 symbols: [create_request_permissions_tool, request_permissions_tool_description, RequestPermissionsHandler, RequestPermissionsArgs, RequestPermissionProfile, RequestPermissionsEvent, RequestPermissionsResponse, PermissionGrantScope, Session::request_permissions_for_environment, Session::notify_request_permissions_response]
 related: [spine.tool-call-anatomy, subsys.core.tool-system, subsys.core.approval-policy, subsys.core.approval-guardian, subsys.core.approval-guardian-v2, tool.exec-command, tool.shell-command]
 evidence: explicit
@@ -11,7 +11,7 @@ status: verified
 updated: a9519cbcdd
 ---
 
-> `request_permissions` 是 Codex 暴露给模型的增量权限申请工具：模型提交 filesystem/network permission profile，可选指定 `environment_id`，handler 按选中 environment cwd 解析并规范化请求。Guardian 路径不再单独构造 review request，而是走共享 `ApprovalAction::RequestPermissions` → `Session::request_guardian_approval`，因此 V2 `fast_decision` 与 V1 child review 都能处理同一条 permission request。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:161][E: codex-rs/core/src/tools/handlers/request_permissions.rs:69][E: codex-rs/core/src/session/mod.rs:2667][E: codex-rs/core/src/session/mod.rs:2720][E: codex-rs/core/src/tools/approvals.rs:602]
+> `request_permissions` 是 Codex 暴露给模型的增量权限申请工具：模型提交 filesystem/network permission profile，可选指定 `environment_id`，handler 按选中 environment cwd 解析并规范化请求。Guardian 路径不再单独构造 review request，而是走共享 `ApprovalAction::RequestPermissions` → `Session::request_guardian_approval` → `run_guardian_review`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:161][E: codex-rs/core/src/tools/handlers/request_permissions.rs:69][E: codex-rs/core/src/session/mod.rs:2667][E: codex-rs/core/src/session/mod.rs:2720][E: codex-rs/core/src/tools/approvals.rs:602][E: codex-rs/core/src/guardian/review.rs:810]
 
 ## 能回答的问题
 
@@ -58,7 +58,7 @@ updated: a9519cbcdd
 
 ## 5 注册与门控
 
-`add_core_utility_tools` 只在 `Feature::RequestPermissionsTool` 开启且 current tool environment mode 有 environment 时注册 `RequestPermissionsHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1192]
+`add_core_utility_tools` 只在 `Feature::RequestPermissionsTool` 开启且 current tool environment mode 有 environment 时注册 `RequestPermissionsHandler`。该 feature 当前是 UnderDevelopment，默认关闭。[E: codex-rs/core/src/tools/spec_plan.rs:1192][E: codex-rs/features/src/lib.rs:1136][E: codex-rs/features/src/lib.rs:1138][E: codex-rs/features/src/lib.rs:1139]
 
 visible spec 构建沿用普通 runtime 流程：direct exposure 的 runtime spec 会加入 model-visible specs；本 handler 通过默认 exposure 注册，没有额外 hidden/deferred override。[E: codex-rs/core/src/tools/handlers/request_permissions.rs:125][E: codex-rs/tools/src/tool_executor.rs:114]
 
@@ -73,7 +73,7 @@ visible spec 构建沿用普通 runtime 流程：direct exposure 的 runtime spe
 3. 它用该 cwd 作为 base path 解析完整 `RequestPermissionsArgs`，然后把 `permissions` 规范化回 request profile。[E: codex-rs/core/src/tools/handlers/request_permissions.rs:86][E: codex-rs/core/src/tools/handlers/request_permissions.rs:88]
 4. 空 permission profile 直接向模型报错，不进入 session approval path。[E: codex-rs/core/src/tools/handlers/request_permissions.rs:91]
 5. session 在 approval policy 为 `Never` 或 granular policy 不允许 request permissions 时，立即返回空权限 turn-scope response。[E: codex-rs/core/src/session/mod.rs:2679][E: codex-rs/core/src/session/mod.rs:2687]
-6. Guardian path 检查 `routes_approval_policy_to_guardian`，构造共享 `ApprovalAction::RequestPermissions`，再 `request_guardian_approval`。该入口会进入 V1 `run_guardian_review`，因此 V2 `fast_decision` 可以先于 child reviewer claim 低风险请求。[E: codex-rs/core/src/session/mod.rs:2714][E: codex-rs/core/src/session/mod.rs:2720][E: codex-rs/core/src/session/mod.rs:2739][E: codex-rs/core/src/tools/approvals.rs:602]
+6. Guardian path 检查 `routes_approval_policy_to_guardian`，构造共享 `ApprovalAction::RequestPermissions`，再 `request_guardian_approval`。该入口 spawn `run_guardian_review`。[E: codex-rs/core/src/session/mod.rs:2714][E: codex-rs/core/src/session/mod.rs:2720][E: codex-rs/core/src/session/mod.rs:2739][E: codex-rs/core/src/tools/approvals.rs:602][E: codex-rs/core/src/guardian/review.rs:810] V2 `fast_decision` 是否先于 child reviewer claim 低风险请求，属于 Guardian review 实现，不是本 handler 的独立路径。[I]
 7. review decision 映射成 turn/session 授权或空权限，然后 normalize 并按 environment id 记录。[E: codex-rs/core/src/session/mod.rs:2744][E: codex-rs/core/src/session/mod.rs:2785]
 8. 非 Guardian path 创建 pending request entry，发出 `EventMsg::RequestPermissions`，等待客户端通过 call id 返回 response。[E: codex-rs/core/src/session/mod.rs:2794][E: codex-rs/core/src/session/mod.rs:2817]
 9. 客户端 `Op::RequestPermissionsResponse` 由 helper `request_permissions_response` 转给 `notify_request_permissions_response`；该函数移除 pending entry、normalize response，再发送给等待中的 handler。[E: codex-rs/core/src/session/handlers.rs:224][E: codex-rs/core/src/session/mod.rs:2916][E: codex-rs/core/src/session/mod.rs:2937]
@@ -89,13 +89,15 @@ visible spec 构建沿用普通 runtime 流程：direct exposure 的 runtime spe
 - `codex-rs/core/src/session/handlers.rs`
 - `codex-rs/core/src/tools/router.rs`
 - `codex-rs/core/src/tools/approvals.rs`
+- `codex-rs/core/src/guardian/review.rs`
 - `codex-rs/tools/src/tool_executor.rs`
 - `codex-rs/tools/src/tool_spec.rs`
 - `codex-rs/protocol/src/request_permissions.rs`
+- `codex-rs/features/src/lib.rs`
 
 ## 相关
 
 - [exec_command 工具](exec-command.md) — 后续 shell-like command 会自动看到 turn/session grants。
-- [shell_command 工具](shell-command.md) — legacy shell path 同样使用已授予的 permission profile。
+- [shell_command（已退役）](shell-command.md) — 已不再注册 handler；granted permissions 由后续 `exec_command` 消费。
 - [Guardian V1](../../subsystems/core/approval-guardian.md)
 - [Guardian V2](../../subsystems/core/approval-guardian-v2.md)

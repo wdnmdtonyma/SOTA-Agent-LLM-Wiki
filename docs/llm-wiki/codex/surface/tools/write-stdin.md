@@ -38,7 +38,7 @@ updated: a9519cbcdd
 
 空 `chars` 是 background poll；非空 `chars` 在 manager 成功后会被记录为 terminal interaction。handler 本身不再发 event，而是把 `WriteStdinInteractionEvent` 交给 manager；manager 只在非空输入或 process 仍存活时发送 `TerminalInteraction`。[E: codex-rs/core/src/tools/handlers/unified_exec/write_stdin.rs:95][E: codex-rs/core/src/unified_exec/process_manager.rs:1024][E: codex-rs/core/src/unified_exec/process_manager.rs:1037]
 
-非空 stdin 受 session 形态约束：manager 只有在 TTY process 上执行 `process.write(...)`；非 TTY 时仅 Ctrl-C interrupt 特例会触发 `process.interrupt()`，其它输入返回 `StdinClosed`。因此需要交互式 stdin 的 `exec_command` 应以 `tty: true` 创建，而 `tty` schema 默认是 false。[E: codex-rs/core/src/unified_exec/process_manager.rs:900][E: codex-rs/core/src/unified_exec/process_manager.rs:901][E: codex-rs/core/src/unified_exec/process_manager.rs:904][E: codex-rs/core/src/unified_exec/process_manager.rs:103]
+非空 stdin 受 session 形态约束：manager 只有在 TTY process 上执行 `process.write(...)`；非 TTY 时仅 Ctrl-C interrupt 特例（`INTERRUPT = "\u{3}"`）会触发 `process.interrupt()`，其它输入返回 `StdinClosed`。[E: codex-rs/core/src/unified_exec/process_manager.rs:900][E: codex-rs/core/src/unified_exec/process_manager.rs:901][E: codex-rs/core/src/unified_exec/process_manager.rs:904][E: codex-rs/core/src/unified_exec/process_manager.rs:103] 因此需要交互式 stdin 的 `exec_command` 应以 `tty: true` 创建，而 `tty` serde 默认是 `default_tty() -> false`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:70]
 
 `Feature::WriteStdinApproval` 开启时，非空 stdin 可能在写入前走 `ProcessEntry::stdin_approval`；空输入、非 TTY 上的 `\u{3}`、或 feature 关闭则跳过。[E: codex-rs/core/src/unified_exec/stdin_approval.rs:185][E: codex-rs/core/src/unified_exec/stdin_approval.rs:190][E: codex-rs/features/src/lib.rs:1124]
 

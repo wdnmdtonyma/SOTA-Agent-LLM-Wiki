@@ -66,7 +66,7 @@ handler 对 `message` 做 `trim()`；空字符串返回 `message must not be emp
 
 Guardian reviewer turn 在 `add_core_tool_sources` 提前 `return`，不会走到 `add_core_utility_tools`，因此不会暴露本工具。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1036][E: codex-rs/core/src/tools/spec_plan.rs:1041]
 
-集成测试覆盖：root + 模型声明该 tool 才可见；subagent 即使模型声明也不注册。[E: codex-rs/core/tests/suite/send_user_message_async.rs:34][E: codex-rs/core/tests/suite/send_user_message_async.rs:36]
+集成测试覆盖：root 且模型未声明则不可见；root + 模型声明该 tool 才可见；subagent 即使模型声明也不注册。[E: codex-rs/core/tests/suite/send_user_message_async.rs:34][E: codex-rs/core/tests/suite/send_user_message_async.rs:35][E: codex-rs/core/tests/suite/send_user_message_async.rs:36]
 
 ## 7 parallel-safe
 

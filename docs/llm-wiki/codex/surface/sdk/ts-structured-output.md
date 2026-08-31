@@ -36,7 +36,7 @@ README 和 sample 展示的是调用方通过外部 `zod-to-json-schema` 把 Zod
 
 ## CLI side
 
-Rust exec CLI 把 `--output-schema` 定义为 “Path to a JSON Schema file describing the model's final response shape”；exec runtime 的 `load_output_schema()` 读取该文件并按 JSON 解析，读文件失败或 JSON 无效时打印错误并 exit 1。[E: codex-rs/exec/src/cli.rs:48][E: codex-rs/exec/src/cli.rs:49][E: codex-rs/exec/src/lib.rs:758][E: codex-rs/exec/src/lib.rs:1820][E: codex-rs/exec/src/lib.rs:1822][E: codex-rs/exec/src/lib.rs:1830][E: codex-rs/exec/src/lib.rs:1834][E: codex-rs/exec/src/lib.rs:1841]
+Rust exec CLI 把 `--output-schema` 定义为 “Path to a JSON Schema file describing the model's final response shape”；exec runtime 的 `load_output_schema()` 读取该文件并按 JSON 解析，读文件失败或 JSON 无效时打印错误并 exit 1。[E: codex-rs/exec/src/cli.rs:48][E: codex-rs/exec/src/cli.rs:49][E: codex-rs/exec/src/lib.rs:761][E: codex-rs/exec/src/lib.rs:1946][E: codex-rs/exec/src/lib.rs:1949][E: codex-rs/exec/src/lib.rs:1956][E: codex-rs/exec/src/lib.rs:1960][E: codex-rs/exec/src/lib.rs:1967]
 
 `Thread.run()` 不解析 structured output JSON，它仍从 completed `agent_message` item 的 `text` 字段更新并返回 `finalResponse` string；调用方需要按自身 schema 解析 `finalResponse` 是由该返回类型推导出的使用要求。[E: sdk/typescript/src/thread.ts:125][E: sdk/typescript/src/thread.ts:127][E: sdk/typescript/src/thread.ts:140][I]
 

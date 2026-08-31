@@ -3,7 +3,7 @@ id: tool.code-mode-exec
 title: exec code-mode 工具
 kind: tool
 tier: T1
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/code_mode/execute_spec.rs, codex-rs/core/src/tools/code_mode/execute_handler.rs, codex-rs/core/src/tools/code_mode/mod.rs, codex-rs/code-mode-protocol/src/lib.rs, codex-rs/code-mode-protocol/src/runtime.rs, codex-rs/code-mode-protocol/src/description.rs, codex-rs/code-mode-runtime/src/service.rs, codex-rs/tools/src/tool_executor.rs]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/code_mode/execute_spec.rs, codex-rs/core/src/tools/code_mode/execute_handler.rs, codex-rs/core/src/tools/code_mode/mod.rs, codex-rs/core/src/guardian/tests.rs, codex-rs/code-mode-protocol/src/lib.rs, codex-rs/code-mode-protocol/src/runtime.rs, codex-rs/code-mode-protocol/src/description.rs, codex-rs/code-mode-runtime/src/service.rs, codex-rs/tools/src/tool_executor.rs]
 symbols: [create_code_mode_tool, CodeModeExecuteHandler, PUBLIC_TOOL_NAME, ExecuteRequest]
 related: [tool.code-mode-wait, tool.exec-command, subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
@@ -27,7 +27,7 @@ updated: a9519cbcdd
 
 `create_code_mode_tool` 现在还接收 `ImageDetailVisibility`。`unified_image_budget_enabled` 为真时，code-mode exec description 隐藏 image detail；否则保持 Visible。[E: codex-rs/core/src/tools/spec_plan.rs:895][E: codex-rs/core/src/tools/spec_plan.rs:896][E: codex-rs/core/src/tools/spec_plan.rs:898][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:14][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:34]
 
-Guardian reviewer turn 不会进入普通 tool 注册，因此也不会安装 code-mode `exec`/`wait`。[E: codex-rs/core/src/tools/spec_plan.rs:155][E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1036]
+Guardian reviewer 的 `add_core_tool_sources` 提前返回，core 只可能注册 `exec_command` / `write_stdin` / `view_image`。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1009][E: codex-rs/core/src/tools/spec_plan.rs:1021][E: codex-rs/core/src/tools/spec_plan.rs:1023][E: codex-rs/core/src/tools/spec_plan.rs:1036] 这并不阻止 code-mode：`build_tool_router` 仍调用 `finalize_tool_router`；若 guardian 模型 `effective_tool_mode` 是 `CodeMode` / `CodeModeOnly`，就会 prepend `exec`/`wait`，并把上述受限工具嵌进 `exec` description。[E: codex-rs/core/src/tools/spec_plan.rs:199][E: codex-rs/core/src/tools/spec_plan.rs:372][E: codex-rs/core/src/tools/spec_plan.rs:904][E: codex-rs/core/src/tools/spec_plan.rs:905] 集成测试断言 guardian 可见 `exec`/`wait`，nested 名为 `exec_command` / `view_image` / `write_stdin`。[E: codex-rs/core/src/guardian/tests.rs:2168][E: codex-rs/core/src/guardian/tests.rs:2183]
 
 ## 输入与 pragma
 
@@ -55,8 +55,14 @@ handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 不�
 - codex-rs/core/src/tools/code_mode/execute_spec.rs
 - codex-rs/core/src/tools/code_mode/execute_handler.rs
 - codex-rs/core/src/tools/code_mode/mod.rs
+- codex-rs/core/src/guardian/tests.rs
 - codex-rs/code-mode-protocol/src/lib.rs
 - codex-rs/code-mode-protocol/src/runtime.rs
 - codex-rs/code-mode-protocol/src/description.rs
 - codex-rs/code-mode-runtime/src/service.rs
 - codex-rs/tools/src/tool_executor.rs
+
+## 相关
+
+- [wait code-mode 工具](code-mode-wait.md) — companion `wait`，poll / terminate yielded cell。
+- [exec_command 工具](exec-command.md) — guardian code-mode 下可嵌套的命令执行工具。

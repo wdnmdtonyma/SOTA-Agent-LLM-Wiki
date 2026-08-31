@@ -11,38 +11,38 @@ status: verified
 updated: a9519cbcdd
 ---
 
-> MCP name qualification now lives in `codex-mcp/src/tools.rs`: raw MCP server/tool identities remain available for protocol routing, while `callable_namespace` and `callable_name` are sanitized, deduplicated, optionally legacy-prefixed, and bounded to the Responses API 64-byte model-visible name limit.[E: codex-rs/codex-mcp/src/tools.rs:25]
+> MCP name qualification now lives in `codex-mcp/src/tools.rs`: raw MCP server/tool identities remain available for protocol routing, while `callable_namespace` and `callable_name` are sanitized, deduplicated, optionally legacy-prefixed, and bounded to the 128-byte model-visible name limit.[E: codex-rs/codex-mcp/src/tools.rs:25][E: codex-rs/codex-mcp/src/tools.rs:226]
 
 ## 能回答的问题
 
 - 旧的 `mcp__` prefix 现在何时出现？
 - raw server/tool name 与 model-visible namespace/name 怎样分离？
-- sanitized namespace 冲突、tool name 冲突、最终 64-byte 限制分别怎样处理？
+- sanitized namespace 冲突、tool name 冲突、最终 128-byte 限制分别怎样处理？
 - duplicate raw tool identity 会怎样处理？
 - Codex Apps connector metadata 怎样影响 callable seed？
 - MCP *server* name 的 package-style 字符集与 *tool* name 的 Responses sanitize 有何不同？
 
 ## 职责边界
 
-本节点只覆盖 MCP tool names 从 raw identity 到 model-visible `ToolName(namespace, name)` 的转换；tool 是否启用由 `ToolFilter` 处理，tool 执行由 `McpConnectionManager::call_tool` 调用 raw server/tool name，Responses API tool router 由 core tool spec 层负责。[E: codex-rs/codex-mcp/src/tools.rs:67][E: codex-rs/codex-mcp/src/tools.rs:98][E: codex-rs/codex-mcp/src/connection_manager.rs:645][I]
+本节点只覆盖 MCP tool names 从 raw identity 到 model-visible `ToolName(namespace, name)` 的转换；tool 是否启用由 `ToolFilter` 处理，tool 执行由 `McpConnectionSet::call_tool` 调用 raw server/tool name，Responses API tool router 由 core tool spec 层负责。[E: codex-rs/codex-mcp/src/tools.rs:67][E: codex-rs/codex-mcp/src/tools.rs:98][E: codex-rs/codex-mcp/src/connection_manager.rs:877][I]
 
 当前 canonical implementation 在 `codex-rs/codex-mcp/src/tools.rs`：这里定义 `ToolInfo` 并由 `canonical_tool_name` 组合 callable namespace/name。[E: codex-rs/codex-mcp/src/tools.rs:25][E: codex-rs/codex-mcp/src/tools.rs:58][E: codex-rs/codex-mcp/src/tools.rs:59]
 
-MCP *server* 配置名与 model-visible *tool* 名是两层校验。startup 用 `validate_mcp_server_name` 接受 `a-zA-Z0-9_:@/.-`（package-style，例如 `@scope/server`）；tool/namespace 种子仍走 `sanitize_responses_api_tool_name`，再做 collision hash 与 64-byte fitting。不要把 server 名里的 `/` `@` 当成已经合法的 Responses tool 名。[E: codex-rs/codex-mcp/src/rmcp_client.rs:334][E: codex-rs/codex-mcp/src/rmcp_client.rs:862][E: codex-rs/codex-mcp/src/rmcp_client.rs:863][E: codex-rs/codex-mcp/src/tools.rs:139][E: codex-rs/codex-mcp/src/mcp/mod.rs:541]
+MCP *server* 配置名与 model-visible *tool* 名是两层校验。startup 用 `validate_mcp_server_name` 接受 `a-zA-Z0-9_:@/.-`（package-style，例如 `@scope/server`）；tool/namespace 种子仍走 `sanitize_responses_api_tool_name`，再做 collision hash 与 128-byte fitting。不要把 server 名里的 `/` `@` 当成已经合法的 Responses tool 名。[E: codex-rs/codex-mcp/src/rmcp_client.rs:334][E: codex-rs/codex-mcp/src/rmcp_client.rs:862][E: codex-rs/codex-mcp/src/rmcp_client.rs:863][E: codex-rs/codex-mcp/src/tools.rs:139][E: codex-rs/codex-mcp/src/mcp/mod.rs:541]
 
 ## 关键文件
 
-- `codex-rs/codex-mcp/src/tools.rs`: `ToolInfo`、legacy prefix、name normalization、collision hashing、64-byte fitting；file-schema shaping no longer belongs to this name-only module。[E: codex-rs/codex-mcp/src/tools.rs:25][E: codex-rs/codex-mcp/src/tools.rs:225][E: codex-rs/codex-mcp/src/tools.rs:226]
-- `codex-rs/codex-mcp/src/rmcp_client.rs`: uncached listing creates initial `callable_name` and `callable_namespace` seeds before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:599][E: codex-rs/codex-mcp/src/rmcp_client.rs:742][E: codex-rs/codex-mcp/src/rmcp_client.rs:747][E: codex-rs/codex-mcp/src/rmcp_client.rs:790][E: codex-rs/codex-mcp/src/rmcp_client.rs:791]
-- `codex-rs/codex-mcp/src/mcp/mod.rs`: defines `sanitize_responses_api_tool_name`; `tools.rs` imports and uses it before collision handling.[E: codex-rs/codex-mcp/src/mcp/mod.rs:510][E: codex-rs/codex-mcp/src/tools.rs:20][E: codex-rs/codex-mcp/src/tools.rs:139][E: codex-rs/codex-mcp/src/tools.rs:146]
+- `codex-rs/codex-mcp/src/tools.rs`: `ToolInfo`、legacy prefix、name normalization、collision hashing、128-byte fitting；file-schema shaping no longer belongs to this name-only module。[E: codex-rs/codex-mcp/src/tools.rs:25][E: codex-rs/codex-mcp/src/tools.rs:225][E: codex-rs/codex-mcp/src/tools.rs:226]
+- `codex-rs/codex-mcp/src/rmcp_client.rs`: uncached listing creates initial `callable_name` and `callable_namespace` seeds before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:622][E: codex-rs/codex-mcp/src/rmcp_client.rs:742][E: codex-rs/codex-mcp/src/rmcp_client.rs:748][E: codex-rs/codex-mcp/src/rmcp_client.rs:814][E: codex-rs/codex-mcp/src/rmcp_client.rs:815]
+- `codex-rs/codex-mcp/src/mcp/mod.rs`: defines `sanitize_responses_api_tool_name`; `tools.rs` imports and uses it before collision handling.[E: codex-rs/codex-mcp/src/mcp/mod.rs:541][E: codex-rs/codex-mcp/src/tools.rs:20][E: codex-rs/codex-mcp/src/tools.rs:139][E: codex-rs/codex-mcp/src/tools.rs:146]
 
 ## 数据模型
 
-- `ToolInfo.tool.name` is the raw MCP tool name sent back to the MCP server; `ToolInfo.callable_namespace` and `ToolInfo.callable_name` are the model-visible values after qualification。[E: codex-rs/codex-mcp/src/tools.rs:35][E: codex-rs/codex-mcp/src/tools.rs:36][E: codex-rs/codex-mcp/src/tools.rs:38][E: codex-rs/codex-mcp/src/tools.rs:39][E: codex-rs/codex-mcp/src/tools.rs:45]
+- `ToolInfo.tool.name` is the raw MCP tool name sent back to the MCP server; `ToolInfo.callable_namespace` and `ToolInfo.callable_name` are the model-visible values after qualification。[E: codex-rs/codex-mcp/src/tools.rs:36][E: codex-rs/codex-mcp/src/tools.rs:39][E: codex-rs/codex-mcp/src/tools.rs:45]
 - `ToolInfo.namespace_description` 是 model-visible namespace 说明；serde 用 `alias = "connector_description"` 读取旧 cache，因此磁盘/内存 cache 里的旧字段不会丢描述。[E: codex-rs/codex-mcp/src/tools.rs:42][E: codex-rs/codex-mcp/src/tools.rs:43]
 - `canonical_tool_name` creates a namespaced protocol `ToolName` from `callable_namespace` and `callable_name`, not from the raw MCP `tool.name`.[E: codex-rs/codex-mcp/src/tools.rs:57]
 - `LEGACY_MCP_TOOL_NAME_PREFIX` is the literal `mcp__`; when `prefix_mcp_tool_names` is true, it is added to the namespace unless the namespace already starts with that prefix.[E: codex-rs/codex-mcp/src/tools.rs:22][E: codex-rs/codex-mcp/src/tools.rs:228]
-- The final model-visible concatenation is constrained by `MCP_TOOL_NAME_DELIMITER` (`__`) and `MAX_TOOL_NAME_LENGTH` (`64`); hash suffixes use 12 hex chars plus a leading underscore.[E: codex-rs/codex-mcp/src/tools.rs:225][E: codex-rs/codex-mcp/src/tools.rs:226][E: codex-rs/codex-mcp/src/tools.rs:227][E: codex-rs/codex-mcp/src/tools.rs:243]
+- The final model-visible concatenation is constrained by `MCP_TOOL_NAME_DELIMITER` (`__`) and `MAX_TOOL_NAME_LENGTH` (`128`); hash suffixes use 12 hex chars plus a leading underscore.[E: codex-rs/codex-mcp/src/tools.rs:225][E: codex-rs/codex-mcp/src/tools.rs:226][E: codex-rs/codex-mcp/src/tools.rs:227][E: codex-rs/codex-mcp/src/tools.rs:243]
 
 ## Normalization pipeline
 
@@ -51,12 +51,12 @@ MCP *server* 配置名与 model-visible *tool* 名是两层校验。startup 用 
 3. Namespace and tool seed strings are sanitized with `sanitize_responses_api_tool_name`, and optional legacy prefixing is applied to namespace seeds.[E: codex-rs/codex-mcp/src/tools.rs:139][E: codex-rs/codex-mcp/src/tools.rs:146][E: codex-rs/codex-mcp/src/tools.rs:228]
 4. If multiple raw namespace identities collapse to the same model namespace, the namespace gets a hash suffix based on raw namespace identity.[E: codex-rs/codex-mcp/src/tools.rs:153][E: codex-rs/codex-mcp/src/tools.rs:160][E: codex-rs/codex-mcp/src/tools.rs:164][E: codex-rs/codex-mcp/src/tools.rs:252]
 5. If multiple raw tool identities collapse to the same `(namespace, tool)` pair, the callable tool name gets a hash suffix based on raw tool identity.[E: codex-rs/codex-mcp/src/tools.rs:173][E: codex-rs/codex-mcp/src/tools.rs:183][E: codex-rs/codex-mcp/src/tools.rs:187][E: codex-rs/codex-mcp/src/tools.rs:248]
-6. Candidates are sorted by raw identity, then `unique_callable_parts` enforces final uniqueness and the 64-byte budget, retrying with attempt-numbered hash input if a fitted result is still taken.[E: codex-rs/codex-mcp/src/tools.rs:197][E: codex-rs/codex-mcp/src/tools.rs:202][E: codex-rs/codex-mcp/src/tools.rs:289][E: codex-rs/codex-mcp/src/tools.rs:301]
+6. Candidates are sorted by raw identity, then `unique_callable_parts` enforces final uniqueness and the 128-byte budget, retrying with attempt-numbered hash input if a fitted result is still taken.[E: codex-rs/codex-mcp/src/tools.rs:197][E: codex-rs/codex-mcp/src/tools.rs:202][E: codex-rs/codex-mcp/src/tools.rs:289][E: codex-rs/codex-mcp/src/tools.rs:297]
 
 ## Codex Apps seeds
 
-- `list_tools_for_client_uncached` asks the underlying RMCP client for tools plus optional connector metadata, then dispatches to Codex Apps or regular MCP conversion before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:599][E: codex-rs/codex-mcp/src/rmcp_client.rs:625][E: codex-rs/codex-mcp/src/rmcp_client.rs:718][E: codex-rs/codex-mcp/src/rmcp_client.rs:724][E: codex-rs/codex-mcp/src/rmcp_client.rs:726]
-- Non-Codex-Apps servers cannot smuggle connector metadata into model-visible qualification: the regular MCP conversion strips untrusted connector meta and sets connector id/name to `None`, while preserving raw tool names and server-name namespaces.[E: codex-rs/codex-mcp/src/rmcp_client.rs:779][E: codex-rs/codex-mcp/src/rmcp_client.rs:784][E: codex-rs/codex-mcp/src/rmcp_client.rs:790][E: codex-rs/codex-mcp/src/rmcp_client.rs:791][E: codex-rs/codex-mcp/src/rmcp_client.rs:795][E: codex-rs/codex-mcp/src/rmcp_client.rs:796]
+- `list_tools_for_client_uncached` asks the underlying RMCP client for tools plus optional connector metadata, then dispatches to Codex Apps or regular MCP conversion before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:622][E: codex-rs/codex-mcp/src/rmcp_client.rs:637][E: codex-rs/codex-mcp/src/rmcp_client.rs:649][E: codex-rs/codex-mcp/src/rmcp_client.rs:742][E: codex-rs/codex-mcp/src/rmcp_client.rs:748]
+- Non-Codex-Apps servers cannot smuggle connector metadata into model-visible qualification: the regular MCP conversion strips untrusted connector meta and sets connector id/name to `None`, while preserving raw tool names and server-name namespaces.[E: codex-rs/codex-mcp/src/rmcp_client.rs:803][E: codex-rs/codex-mcp/src/rmcp_client.rs:809][E: codex-rs/codex-mcp/src/rmcp_client.rs:814][E: codex-rs/codex-mcp/src/rmcp_client.rs:815][E: codex-rs/codex-mcp/src/rmcp_client.rs:819][E: codex-rs/codex-mcp/src/rmcp_client.rs:820]
 
 ## Sources
 

@@ -98,7 +98,7 @@ Guardian reviewer 的 model tool surface 由 `add_core_tool_sources` 单独收�
 - V2 把“便宜的 Luna 打分”和“贵的 child Codex 审查”拆开：低风险动作可以跳过 V1 session，高风险仍走 fail-closed 的 V1 assessment。[E: codex-rs/ext/guardian-v2/src/async_scorer/extension.rs:373][E: codex-rs/core/src/guardian/review.rs:352][I]
 - 分类在 `on_tool_start` 异步进行，是为了不把 Luna 延迟加到每条 tool 的关键路径；代价是 approval 可能先于分数到达，此时 V2 不 claim。[E: codex-rs/ext/guardian-v2/src/async_scorer/extension.rs:566][I]
 - 默认 `ComputerUseOnly` 把 fast path 收窄到 browser/computer-use，避免普通 shell 被低阈值自动放行。[E: codex-rs/ext/guardian-v2/src/async_scorer/config.rs:246][I]
-- `guardian-context` 把 Sync/Async 的 section 收集做成可复用 registry，避免两套 truncation 继续分叉；接线尚未完成。[E: codex-rs/guardian-context/src/lib.rs:146][E: codex-rs/ext/guardian-v2/Cargo.toml:16][I]
+- `guardian-context` 把 Sync/Async 的 section 收集做成可复用 registry，避免两套 truncation 继续分叉；接线尚未完成，且 `codex-guardian-v2` 未声明对该 crate 的依赖。[E: codex-rs/guardian-context/src/lib.rs:146][I]
 
 ## Gotcha
 

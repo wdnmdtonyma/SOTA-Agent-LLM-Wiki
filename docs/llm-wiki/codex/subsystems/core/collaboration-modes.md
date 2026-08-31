@@ -3,7 +3,7 @@ id: subsys.core.collaboration-modes
 title: Collaboration modes 状态机
 kind: subsystem
 tier: T2
-source: [codex-rs/collaboration-mode-templates/src/lib.rs, codex-rs/collaboration-mode-templates/templates/default.md, codex-rs/collaboration-mode-templates/templates/plan.md, codex-rs/core/src/context/world_state/mod.rs, codex-rs/core/src/context/world_state/collaboration_mode.rs, codex-rs/core/src/context/world_state/multi_agent_mode.rs, codex-rs/core/src/session/world_state.rs, codex-rs/protocol/src/config_types.rs, codex-rs/protocol/src/protocol.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/thread_settings.rs, codex-rs/core/src/session/step_settings.rs, codex-rs/core/src/tools/handlers/plan.rs, codex-rs/core/src/tools/handlers/request_user_input.rs, codex-rs/tools/src/tool_config.rs, codex-rs/agent-roles/src/lib.rs, codex-rs/agent-roles/src/loader.rs, codex-rs/agent-roles/src/discovery.rs, codex-rs/agent-roles/src/agent_role_config.rs, codex-rs/core/src/agent/role.rs]
+source: [codex-rs/collaboration-mode-templates/src/lib.rs, codex-rs/collaboration-mode-templates/templates/default.md, codex-rs/collaboration-mode-templates/templates/plan.md, codex-rs/core/src/context/world_state/mod.rs, codex-rs/core/src/context/world_state/collaboration_mode.rs, codex-rs/core/src/context/world_state/multi_agent_mode.rs, codex-rs/core/src/session/world_state.rs, codex-rs/protocol/src/config_types.rs, codex-rs/protocol/src/protocol.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/thread_settings.rs, codex-rs/core/src/session/step_settings.rs, codex-rs/core/src/tools/handlers/plan.rs, codex-rs/core/src/tools/handlers/request_user_input.rs, codex-rs/tools/src/tool_config.rs, codex-rs/agent-roles/src/lib.rs, codex-rs/agent-roles/src/loader.rs, codex-rs/agent-roles/src/discovery.rs, codex-rs/agent-roles/src/agent_role_config.rs, codex-rs/core/src/agent/role.rs, codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs]
 symbols: [ModeKind, CollaborationMode, Settings, CollaborationModeMask, CollaborationModeState, MultiAgentModeState, AgentRoleConfig, load_agent_roles, apply_role_to_config]
 related: [tool.request-user-input, tool.update-plan, tool.spawn-agent-v2, config.ui-tui, subsys.core.context-manager]
 evidence: explicit
@@ -133,6 +133,8 @@ custom multi-agent hint 上限是 400 tokens；mode 未变化时不重发。从 
 - `codex-rs/agent-roles/src/discovery.rs`
 - `codex-rs/agent-roles/src/agent_role_config.rs`
 - `codex-rs/core/src/agent/role.rs`
+- `codex-rs/core/src/tools/spec_plan.rs`
+- `codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs`
 
 ## 相关
 

@@ -51,9 +51,9 @@ queue-only message 不会单独创建 child turn；trigger 路径才走 `ensure_
 
 ## Registry 与 compaction
 
-`AgentRegistry` 同时维护 live tree（`agent_tree`）与 canonical `thread_paths`；lookup/sync/migrate/replace 都维护二者一致。[E: codex-rs/core/src/agent/registry.rs:32]
+`AgentRegistry` 同时维护 live tree（`agent_tree`）与 canonical `thread_paths`；lookup/sync/migrate/replace 都维护二者一致。[E: codex-rs/core/src/agent/registry.rs:32][E: codex-rs/core/src/agent/registry.rs:33]
 
-remote compaction V2 对 retained messages 使用 64k token 总预算，单条 AgentMessage 上限 10k，并排除 descendant `MESSAGE` 进度邮件与 `FINAL_ANSWER`。child fork 随后仍会剔除 inherited AgentMessage。[E: codex-rs/core/src/compact_remote_v2.rs:77][E: codex-rs/core/src/compact_remote_v2.rs:538][E: codex-rs/core/src/agent/control/spawn.rs:918]
+remote compaction V2 对 retained messages 使用 64k token 总预算，单条 AgentMessage 上限 10k，并排除 descendant `MESSAGE` 进度邮件与 `FINAL_ANSWER`。child fork 随后仍会剔除 inherited AgentMessage。[E: codex-rs/core/src/compact_remote_v2.rs:77][E: codex-rs/core/src/compact_remote_v2.rs:78][E: codex-rs/core/src/compact_remote_v2.rs:538][E: codex-rs/core/src/agent/control/spawn.rs:918]
 
 ## Sources
 

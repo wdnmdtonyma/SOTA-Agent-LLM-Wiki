@@ -11,7 +11,7 @@ status: verified
 updated: a9519cbcdd
 ---
 
-> `codex_git_utils` 是 Codex 的本地 Git 支持 crate：`lib.rs` 导出 patch apply、baseline diff/reset、merge-base、metadata、fsmonitor policy、symlink helpers，以及拒绝隐式 bare repo 的 `SAFE_BARE_REPOSITORY_CONFIG`。`operations.rs` 仍是 crate-private 的 system-git 执行层。managed worktree 的 Desktop 契约在独立 crate `codex-rs/worktree`，它只消费这条安全 Git config，不复用 apply/baseline API。[E: codex-rs/git-utils/src/lib.rs:15][E: codex-rs/git-utils/src/lib.rs:17][E: codex-rs/worktree/src/git.rs:81]
+> `codex_git_utils` 是 Codex 的本地 Git 支持 crate：`lib.rs` 导出 patch apply、baseline diff/reset、merge-base、metadata、fsmonitor policy、symlink helpers，以及拒绝隐式 bare repo 的 `SAFE_BARE_REPOSITORY_CONFIG`。`operations.rs` 仍是 crate-private 的 system-git 执行层。managed worktree 的 Desktop 契约在独立 crate `codex-rs/worktree`，它只消费这条安全 Git config，不复用 apply/baseline API。[E: codex-rs/git-utils/src/lib.rs:15][E: codex-rs/git-utils/src/lib.rs:17][E: codex-rs/worktree/src/git.rs:83]
 
 ## 能回答的问题
 
@@ -62,7 +62,7 @@ Unix symlink 直接调 `std::os::unix::fs::symlink`；Windows 按 metadata 选 `
 
 ## 与 managed worktree 的边界
 
-`WorktreeManager` 在执行 Git metadata 查询时注入 `SAFE_BARE_REPOSITORY_CONFIG`，并禁用 hooks/fsmonitor。它不调用 `apply_git_patch` 或 baseline reset；thread 绑定走 `codex-thread.json`。[E: codex-rs/worktree/src/git.rs:82][E: codex-rs/worktree/src/metadata.rs:19]
+`WorktreeManager` 在执行 Git metadata 查询时注入 `SAFE_BARE_REPOSITORY_CONFIG`，并禁用 hooks/fsmonitor。它不调用 `apply_git_patch` 或 baseline reset；thread 绑定走 `codex-thread.json`。[E: codex-rs/worktree/src/git.rs:83][E: codex-rs/worktree/src/git.rs:84][E: codex-rs/worktree/src/git.rs:86][E: codex-rs/worktree/src/metadata.rs:19]
 
 ## Gotchas
 

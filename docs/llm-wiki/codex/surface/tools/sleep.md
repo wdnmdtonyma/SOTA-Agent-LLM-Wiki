@@ -55,8 +55,8 @@ handler 使用 `SleepArgs { duration_ms }` 解析参数，并拒绝不在 `1..=M
 
 `add_core_utility_tools` 先计算 `current_time_reminder_enabled` 与 `model_has_clock`（`experimental_supported_tools` 含 `"clock"`）。`curr_time` 在两者任一为真时注册；`sleep` 还要额外满足：[E: codex-rs/core/src/tools/spec_plan.rs:1201][E: codex-rs/core/src/tools/spec_plan.rs:1206][E: codex-rs/core/src/tools/spec_plan.rs:1207]
 
-1. `Feature::SleepTool` 开启（stage Stable，默认 true）。[E: codex-rs/core/src/tools/spec_plan.rs:1210][E: codex-rs/features/src/lib.rs:896]
-2. `SleepToolMode`：`AlwaysOn` 直接注册；默认 `ModelDriven` 则：若 `CurrentTimeReminder` 开，看 `current_time_reminder.sleep_tool`；否则看 `model_has_clock`。[E: codex-rs/core/src/tools/spec_plan.rs:1211][E: codex-rs/features/src/feature_configs.rs:402][E: codex-rs/features/src/feature_configs.rs:405]
+1. `Feature::SleepTool` 开启（stage Stable，默认 true）。[E: codex-rs/core/src/tools/spec_plan.rs:1210][E: codex-rs/features/src/lib.rs:896][E: codex-rs/features/src/lib.rs:898][E: codex-rs/features/src/lib.rs:899]
+2. `SleepToolMode`：`AlwaysOn` 直接注册；默认 `ModelDriven` 则：若 `CurrentTimeReminder` 开，看 `current_time_reminder.sleep_tool`；否则看 `model_has_clock`。[E: codex-rs/core/src/tools/spec_plan.rs:1211][E: codex-rs/features/src/feature_configs.rs:404][E: codex-rs/features/src/feature_configs.rs:405][E: codex-rs/features/src/feature_configs.rs:407]
 
 Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，不会走到 utility 注册，因此不会暴露 `clock.sleep`。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1036]
 

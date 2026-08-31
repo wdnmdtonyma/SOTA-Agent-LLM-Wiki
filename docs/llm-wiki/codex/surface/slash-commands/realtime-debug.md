@@ -11,7 +11,7 @@ status: verified
 updated: a9519cbcdd
 ---
 
-> 实时、子代理与调试 slash commands 是 `SlashCommand` enum 中负责 active agent thread switching、side conversation、approval testing 和 memory debug hooks 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:88]
+> 实时、子代理与调试 slash commands 是 `SlashCommand` enum 中负责 active agent thread switching、side conversation、approval testing 和 memory debug hooks 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:44]
 
 ## 能回答的问题
 
@@ -22,21 +22,21 @@ updated: a9519cbcdd
 
 ## Catalog
 
-`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:150][E: codex-rs/tui/src/slash_command.rs:151][E: codex-rs/tui/src/slash_command.rs:265][E: codex-rs/tui/src/slash_command.rs:265][E: codex-rs/tui/src/slash_command.rs:269]
+`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:158][E: codex-rs/tui/src/slash_command.rs:269][E: codex-rs/tui/src/slash_command.rs:281]
 
-`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations.[E: codex-rs/tui/src/slash_command.rs:152][E: codex-rs/tui/src/slash_command.rs:172][E: codex-rs/tui/src/slash_command.rs:173][E: codex-rs/tui/src/slash_command.rs:180][E: codex-rs/tui/src/slash_command.rs:183]
+`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations.[E: codex-rs/tui/src/slash_command.rs:163][E: codex-rs/tui/src/slash_command.rs:190]
 
-表格的 `is_visible gate` 只覆盖 `SlashCommand::is_visible()` 和 `built_in_slash_commands()`；composer input 与 command popup 还会通过 `builtins_for_input()`、`CommandPopup::new()` 和 empty-filter alias filtering 追加过滤，且 `/side` 与 `/btw` 在 review mode 下还会被 dispatch 层拒绝。[E: codex-rs/tui/src/bottom_pane/slash_commands.rs:70][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:80][E: codex-rs/tui/src/bottom_pane/command_popup.rs:23][E: codex-rs/tui/src/bottom_pane/command_popup.rs:77][E: codex-rs/tui/src/bottom_pane/command_popup.rs:80][E: codex-rs/tui/src/bottom_pane/command_popup.rs:151][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:1183]
+表格的 `is_visible gate` 只覆盖 `SlashCommand::is_visible()` 和 `built_in_slash_commands()`；composer input 与 command popup 还会通过 `builtins_for_input()`、`CommandPopup::new()` 和 empty-filter alias filtering 追加过滤，且 `/side` 与 `/btw` 在 review mode 下还会被 dispatch 层拒绝。[E: codex-rs/tui/src/bottom_pane/slash_commands.rs:70][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:80][E: codex-rs/tui/src/bottom_pane/command_popup.rs:23][E: codex-rs/tui/src/bottom_pane/command_popup.rs:77][E: codex-rs/tui/src/bottom_pane/command_popup.rs:80][E: codex-rs/tui/src/bottom_pane/command_popup.rs:151][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:1236]
 
 | 命令名 | enum variant | description | inline args | available_during_task | side conversation | is_visible gate | 定义证据 |
 |---|---|---|---|---|---|---|---|
 | `/agents` | `Agents` | view and switch between all active agent sessions | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:264] | 是 [E: codex-rs/tui/src/slash_command.rs:194] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:44][E: codex-rs/tui/src/slash_command.rs:132] |
 | `/subagents` | `MultiAgents` | switch between this session's subagents | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:264] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:78][E: codex-rs/tui/src/slash_command.rs:133][E: codex-rs/tui/src/slash_command.rs:77] |
-| `/side` | `Side` | start a side conversation in an ephemeral fork | 是 [E: codex-rs/tui/src/slash_command.rs:182] | 是 [E: codex-rs/tui/src/slash_command.rs:231] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:45][E: codex-rs/tui/src/slash_command.rs:134] |
-| `/btw` | `Btw` | start a side conversation in an ephemeral fork | 是 [E: codex-rs/tui/src/slash_command.rs:183] | 是 [E: codex-rs/tui/src/slash_command.rs:231] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:46][E: codex-rs/tui/src/slash_command.rs:134] |
+| `/side` | `Side` | start a side conversation in an ephemeral fork | 是 [E: codex-rs/tui/src/slash_command.rs:182] | 是 [E: codex-rs/tui/src/slash_command.rs:260] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:45][E: codex-rs/tui/src/slash_command.rs:134] |
+| `/btw` | `Btw` | start a side conversation in an ephemeral fork | 是 [E: codex-rs/tui/src/slash_command.rs:183] | 是 [E: codex-rs/tui/src/slash_command.rs:261] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:46][E: codex-rs/tui/src/slash_command.rs:134] |
 | `/test-approval` | `TestApproval` | test approval request | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:263] | 否 | debug_assertions only [E: codex-rs/tui/src/slash_command.rs:274] | [E: codex-rs/tui/src/slash_command.rs:76][E: codex-rs/tui/src/slash_command.rs:152] |
-| `/debug-m-drop` | `MemoryDrop` | DO NOT USE | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:209] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:81][E: codex-rs/tui/src/slash_command.rs:123][E: codex-rs/tui/src/slash_command.rs:80] |
-| `/debug-m-update` | `MemoryUpdate` | DO NOT USE | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:209] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:83][E: codex-rs/tui/src/slash_command.rs:124][E: codex-rs/tui/src/slash_command.rs:82] |
+| `/debug-m-drop` | `MemoryDrop` | DO NOT USE | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:229] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:81][E: codex-rs/tui/src/slash_command.rs:123][E: codex-rs/tui/src/slash_command.rs:80] |
+| `/debug-m-update` | `MemoryUpdate` | DO NOT USE | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:230] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:83][E: codex-rs/tui/src/slash_command.rs:124][E: codex-rs/tui/src/slash_command.rs:82] |
 
 ## Sources
 

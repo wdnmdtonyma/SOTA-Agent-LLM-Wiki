@@ -11,9 +11,11 @@ source:
   - codex-rs/app-server/src/thread_status.rs
   - codex-rs/app-server/src/request_processors/thread_processor.rs
   - codex-rs/app-server/src/request_processors/thread_lifecycle.rs
+  - codex-rs/app-server/src/request_processors/thread_sections.rs
   - codex-rs/app-server/src/outgoing_message.rs
   - codex-rs/app-server/src/bespoke_event_handling.rs
   - codex-rs/app-server/src/notification_media.rs
+  - codex-rs/features/src/lib.rs
 symbols:
   - run_main_with_transport_options
   - MessageProcessor
@@ -28,12 +30,13 @@ related:
   - subsys.app-server.transport
   - subsys.app-server.client-libs
   - subsys.core.thread-queue
+  - rpc.thread-methods
 evidence: explicit
 status: verified
 updated: a9519cbcdd
 ---
 
-app-server 会话管理分成三层：`lib.rs` 启动 transport、remote-control、outbound router 和 processor loop；`MessageProcessor` 维护 per-connection initialize/session state；`ThreadRequestProcessor`、`ThreadQueueRequestProcessor`、`ThreadStateManager` 与 `ThreadWatchManager` 管 subscription、listener、状态、idle unload 和 durable queue，并把 paginated history 的 turns/items/search-occurrences 与 resume bootstrap 接到 `ThreadStore`。[E: codex-rs/app-server/src/lib.rs:714][E: codex-rs/app-server/src/lib.rs:861][E: codex-rs/app-server/src/message_processor.rs:159][E: codex-rs/app-server/src/message_processor.rs:167][E: codex-rs/app-server/src/message_processor.rs:1199][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3045][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3109][E: codex-rs/app-server/src/thread_state.rs:52][E: codex-rs/app-server/src/thread_status.rs:19]。
+app-server 会话管理分成三层：`lib.rs` 启动 transport、remote-control、outbound router 和 processor loop；`MessageProcessor` 维护 per-connection initialize/session state；`ThreadRequestProcessor`、`ThreadQueueRequestProcessor`、`ThreadStateManager` 与 `ThreadWatchManager` 管 subscription、listener、状态、idle unload 和 durable queue，并把 paginated history 的 turns/items/search-occurrences 与 resume bootstrap 接到 `ThreadStore`。[E: codex-rs/app-server/src/lib.rs:460][E: codex-rs/app-server/src/lib.rs:845][E: codex-rs/app-server/src/message_processor.rs:159][E: codex-rs/app-server/src/message_processor.rs:167][E: codex-rs/app-server/src/message_processor.rs:1199][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3045][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3109][E: codex-rs/app-server/src/thread_state.rs:52][E: codex-rs/app-server/src/thread_status.rs:19]。
 
 ## 能回答的问题
 
@@ -42,13 +45,14 @@ app-server 会话管理分成三层：`lib.rs` 启动 transport、remote-control
 - app-server 如何维护 live connections、thread subscriptions、thread status watchers 和 pending unloads。
 - paginated thread history 如何列 turns/items、搜索 occurrence，并兼容旧客户端的 full hydration。
 - paginated thread resume 如何生成 initial page、合并 active turn 并返回 backwards cursors。
+- thread section CRUD 由谁处理，TUI 有没有对应 UI。
 - connection close、graceful shutdown、thread-created auto attach 分别走哪些 cleanup/attach paths。
 - `omit_app_server_notification_media` 剥离哪些 notification 里的 image/audio。
 
 ## 职责边界
 
-- `run_main_with_transport_options` 根据 transport 启动 stdio、Unix socket、WebSocket 或 `Off`；随后构造 auth manager，并按 policy/state-db/explicit request 启动 remote control [E: codex-rs/app-server/src/lib.rs:714][E: codex-rs/app-server/src/lib.rs:722][E: codex-rs/app-server/src/lib.rs:733]。
-- outbound router task owns `HashMap<ConnectionId, OutboundConnectionState>`; it handles opened/closed/disconnect-all control events and routes `OutgoingEnvelope` to connection writers [E: codex-rs/app-server/src/lib.rs:855][E: codex-rs/app-server/src/lib.rs:861][E: codex-rs/app-server/src/lib.rs:873][E: codex-rs/app-server/src/lib.rs:876]。
+- `run_main_with_transport_options` 根据 transport 启动 stdio、Unix socket、WebSocket 或 `Off`；随后构造 auth manager，并按 policy/state-db/explicit request 启动 remote control [E: codex-rs/app-server/src/lib.rs:460][E: codex-rs/app-server/src/lib.rs:722][E: codex-rs/app-server/src/lib.rs:733]。
+- outbound router task owns `HashMap<ConnectionId, OutboundConnectionState>`; it handles opened/closed/disconnect-all control events and routes `OutgoingEnvelope` to connection writers [E: codex-rs/app-server/src/lib.rs:845][E: codex-rs/app-server/src/lib.rs:854][E: codex-rs/app-server/src/lib.rs:873][E: codex-rs/app-server/src/lib.rs:876]。
 - processor loop owns connection state and `MessageProcessor`; it reacts to `TransportEvent::ConnectionOpened`, `ConnectionClosed`, and `IncomingMessage`, then separately listens for remote-control status and thread-created broadcasts [E: codex-rs/app-server/src/lib.rs:1005][E: codex-rs/app-server/src/lib.rs:1015][E: codex-rs/app-server/src/lib.rs:1039]。
 - app-server-local transport is now a single `transport.rs` glue file; it re-exports `codex_app_server_transport` and defines only connection/outbound state plus outbound filtering/routing glue [E: codex-rs/app-server/src/transport.rs:15][E: codex-rs/app-server/src/transport.rs:27][E: codex-rs/app-server/src/transport.rs:31][E: codex-rs/app-server/src/transport.rs:35][E: codex-rs/app-server/src/transport.rs:39][E: codex-rs/app-server/src/transport.rs:64][E: codex-rs/app-server/src/transport.rs:100][E: codex-rs/app-server/src/transport.rs:200]。
 
@@ -60,6 +64,8 @@ app-server 会话管理分成三层：`lib.rs` 启动 transport、remote-control
 - `codex-rs/app-server/src/thread_state.rs`: live connection to subscribed thread mapping and listener state。
 - `codex-rs/app-server/src/thread_status.rs`: loaded/running/waiting status derivation。
 - `codex-rs/app-server/src/request_processors/thread_lifecycle.rs`: listener attach, idle unload, shutdown/remove/ThreadClosed path。
+- `codex-rs/app-server/src/request_processors/thread_sections.rs`: thread section list/create/update/delete/move。
+- `codex-rs/features/src/lib.rs`: `omit_app_server_notification_media` feature key。
 
 ## 数据模型
 
@@ -68,7 +74,7 @@ app-server 会话管理分成三层：`lib.rs` 启动 transport、remote-control
 - `ThreadState` stores pending interrupt/rollback state, turn summary/history, listener cancel/command channel, raw-events opt-in, listener generation, listener thread weak handle, and watch registration [E: codex-rs/app-server/src/thread_state.rs:102][E: codex-rs/app-server/src/thread_state.rs:103][E: codex-rs/app-server/src/thread_state.rs:104][E: codex-rs/app-server/src/thread_state.rs:110][E: codex-rs/app-server/src/thread_state.rs:111][E: codex-rs/app-server/src/thread_state.rs:115][E: codex-rs/app-server/src/thread_state.rs:117][E: codex-rs/app-server/src/thread_state.rs:118]。
 - running thread 的 pending resume 另存 paginated turns、普通/预留 active slot 的 initial page，以及用于临发送时刷新 backwards cursors 的 `ThreadStore` handle。[E: codex-rs/app-server/src/thread_state.rs:52][E: codex-rs/app-server/src/thread_state.rs:53][E: codex-rs/app-server/src/thread_state.rs:54][E: codex-rs/app-server/src/thread_state.rs:55]
 - `ThreadStateManagerInner` maps live connections, thread entries, and reverse connection-to-thread subscriptions; `ConnectionCapabilities` currently carries request attestation into thread listener state [E: codex-rs/app-server/src/thread_state.rs:328][E: codex-rs/app-server/src/thread_state.rs:329][E: codex-rs/app-server/src/thread_state.rs:331][E: codex-rs/app-server/src/thread_state.rs:335]。
-- `ThreadWatchManager` tracks runtime facts and exposes status/running-turn watchers; `RuntimeFacts` records loaded/running/waiting/error inputs and `loaded_thread_status` maps those facts to protocol `ThreadStatus` [E: codex-rs/app-server/src/thread_status.rs:19][E: codex-rs/app-server/src/thread_status.rs:20][E: codex-rs/app-server/src/thread_status.rs:22][E: codex-rs/app-server/src/thread_status.rs:303][E: codex-rs/app-server/src/thread_status.rs:303][E: codex-rs/app-server/src/thread_status.rs:303][E: codex-rs/app-server/src/thread_status.rs:422][E: codex-rs/app-server/src/thread_status.rs:422][E: codex-rs/app-server/src/thread_status.rs:425][E: codex-rs/app-server/src/thread_status.rs:425][E: codex-rs/app-server/src/thread_status.rs:425][E: codex-rs/app-server/src/thread_status.rs:425][E: codex-rs/app-server/src/thread_status.rs:431]。
+- `ThreadWatchManager` tracks runtime facts and exposes status/running-turn watchers; `RuntimeFacts` records loaded/running/waiting/error inputs and `loaded_thread_status` maps those facts to protocol `ThreadStatus` [E: codex-rs/app-server/src/thread_status.rs:19][E: codex-rs/app-server/src/thread_status.rs:20][E: codex-rs/app-server/src/thread_status.rs:22][E: codex-rs/app-server/src/thread_status.rs:430][E: codex-rs/app-server/src/thread_status.rs:431][E: codex-rs/app-server/src/thread_status.rs:432][E: codex-rs/app-server/src/thread_status.rs:435][E: codex-rs/app-server/src/thread_status.rs:438]。
 
 ## Paginated history 与搜索
 
@@ -76,6 +82,10 @@ app-server 会话管理分成三层：`lib.rs` 启动 transport、remote-control
 - `thread/turns/list` 识别 paginated history 后走 `paginated_thread_turns_list_response`，内部调用 `ThreadStore::list_turns`。[E: codex-rs/app-server/src/request_processors/thread_processor.rs:3045][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3047][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3191]
 - `thread/searchOccurrences` 校验非空 search term，把 cursor/limit 交给 store，并返回 turn/item id、snippet、匹配范围和 turn cursor。[E: codex-rs/app-server/src/message_processor.rs:1323][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3109][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3121][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3132]
 - resume 的兼容层可把所有 turn 分页 materialize 给旧客户端，也可只构造 initial turns page；running resume 会给 active turn 预留一个 page slot。最终 listener 合并 durable page 与 active turn、规范化状态，并在发送前从 store 重新取得 turns/items backwards cursors。[E: codex-rs/app-server/src/request_processors/thread_processor.rs:2984][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3005][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3029][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3047][E: codex-rs/app-server/src/request_processors/thread_lifecycle.rs:621][E: codex-rs/app-server/src/request_processors/thread_lifecycle.rs:631][E: codex-rs/app-server/src/request_processors/thread_lifecycle.rs:648][E: codex-rs/app-server/src/request_processors/thread_lifecycle.rs:657][E: codex-rs/app-server/src/request_processors/thread_lifecycle.rs:662][E: codex-rs/app-server/src/request_processors/thread_lifecycle.rs:723]
+
+## Thread sections
+
+app-server 侧 thread section CRUD 由 `ThreadRequestProcessor` 实现：`threadSection/{list,create,update,delete}` 与 `thread/section/move`。逐方法 schema 与 wire name 见 [`rpc.thread-methods`](../../surface/app-server/thread-methods.md)；本节点不重复 catalog。TUI 仍发 `section_id: None`，没有对应 grouping/move UI。[E: codex-rs/app-server/src/message_processor.rs:1232][E: codex-rs/app-server/src/message_processor.rs:1235][E: codex-rs/app-server/src/request_processors/thread_sections.rs:29][E: codex-rs/app-server/src/request_processors/thread_sections.rs:34]
 
 ## 控制流
 
@@ -101,7 +111,7 @@ app-server 会话管理分成三层：`lib.rs` 启动 transport、remote-control
 
 - Retained `ConnectionOrigin` is currently consumed for stdio close lifecycle, not a general per-origin authorization policy; request authorization must still be inferred from the explicit auth/session gates rather than this field alone [E: codex-rs/app-server/src/transport.rs:39][E: codex-rs/app-server/src/transport.rs:40][E: codex-rs/app-server/src/lib.rs:1019][E: codex-rs/app-server/src/lib.rs:1034][I]。
 - `ensure_conversation_listener` checks `pending_thread_unloads` while subscribing; if a thread is closing, it returns an invalid request asking the caller to retry after close [E: codex-rs/app-server/src/request_processors/thread_lifecycle.rs:146][E: codex-rs/app-server/src/request_processors/thread_lifecycle.rs:165][E: codex-rs/app-server/src/request_processors/thread_lifecycle.rs:167]。
-- `ThreadWatchActiveGuard` 在 `Drop` 里异步释放 pending permission/user-input counters；leaked guards 会让 waiting flags 残留。[E: codex-rs/app-server/src/thread_status.rs:25][E: codex-rs/app-server/src/thread_status.rs:438][I]。
+- `ThreadWatchActiveGuard` 在 `Drop` 里异步释放 pending permission/user-input counters；leaked guards 会让 waiting flags 残留。[E: codex-rs/app-server/src/thread_status.rs:25][E: codex-rs/app-server/src/thread_status.rs:47][E: codex-rs/app-server/src/thread_status.rs:52][I]。
 - `itemsView=full` 和 resume/`thread/read(includeTurns=true)` 仍会分页读完整历史，是明确的旧客户端 slow path；新客户端应使用 turns/items 分页与 initial page bootstrap。[E: codex-rs/app-server/src/request_processors/thread_processor.rs:3280][E: codex-rs/app-server/src/request_processors/thread_processor.rs:3280]
 
 ## Sources
@@ -113,9 +123,11 @@ app-server 会话管理分成三层：`lib.rs` 启动 transport、remote-control
 - `codex-rs/app-server/src/thread_status.rs`
 - `codex-rs/app-server/src/request_processors/thread_processor.rs`
 - `codex-rs/app-server/src/request_processors/thread_lifecycle.rs`
+- `codex-rs/app-server/src/request_processors/thread_sections.rs`
 - `codex-rs/app-server/src/outgoing_message.rs`
 - `codex-rs/app-server/src/bespoke_event_handling.rs`
 - `codex-rs/app-server/src/notification_media.rs`
+- `codex-rs/features/src/lib.rs`
 
 ## 相关
 
@@ -123,3 +135,4 @@ app-server 会话管理分成三层：`lib.rs` 启动 transport、remote-control
 - `subsys.app-server.transport`
 - `subsys.app-server.client-libs`
 - `subsys.core.thread-queue`
+- `rpc.thread-methods`: thread / threadSection client RPC catalog。

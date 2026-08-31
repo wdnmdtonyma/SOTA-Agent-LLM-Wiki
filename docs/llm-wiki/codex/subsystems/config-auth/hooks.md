@@ -29,7 +29,7 @@ updated: a9519cbcdd
 
 ## 数据模型
 
-`HooksFile` 顶层字段为 `hooks: HookEventsToml`；`HooksToml` 则把 hook events flatten 到 TOML 并额外保存 `state` map，用于 per-hook enable/trust state。[E: codex-rs/config/src/hook_config.rs:10][E: codex-rs/config/src/hook_config.rs:16][E: codex-rs/config/src/hook_config.rs:20][E: codex-rs/config/src/hook_config.rs:22][E: codex-rs/config/src/hook_config.rs:24]
+`HooksFile` 顶层字段为 optional `description` 和 `hooks: HookEventsToml`；`HooksToml` 则把 hook events flatten 到 TOML 并额外保存 `state` map，用于 per-hook enable/trust state。[E: codex-rs/config/src/hook_config.rs:12][E: codex-rs/config/src/hook_config.rs:14][E: codex-rs/config/src/hook_config.rs:16][E: codex-rs/config/src/hook_config.rs:20][E: codex-rs/config/src/hook_config.rs:22][E: codex-rs/config/src/hook_config.rs:24]
 
 `HookEventsToml` 当前支持 **12** 个 event keys：`PreToolUse`、`PermissionRequest`、`PostToolUse`、`PreCompact`、`PostCompact`、`SessionStart`、`SessionEnd`、`UserPromptSubmit`、`SubagentStart`、`SubagentStop`、`Stop` 和新增的 `Interrupt`。`matcher_groups_mut()` 也返回这 12 对。[E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/config/src/hook_config.rs:49][E: codex-rs/config/src/hook_config.rs:59][E: codex-rs/config/src/hook_config.rs:133]
 

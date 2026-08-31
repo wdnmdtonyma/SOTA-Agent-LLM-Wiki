@@ -66,7 +66,7 @@ Remote v1/v2 共用 `process_compacted_history`：如果是 `BeforeLastUserMessa
 
 Remote history filter 会丢弃 developer messages、非 real user/hook user messages、reasoning、tool calls、tool outputs、web/image outputs 和 other；保留 assistant messages、agent messages、compaction/context-compaction items，以及能解析成 `TurnItem::UserMessage` 或 `HookPrompt` 的 user messages。[E: codex-rs/core/src/compact_remote.rs:372]
 
-Remote v2 在 prompt input 末尾追加 `ResponseItem::CompactionTrigger`，stream 完成时要求 exactly one `ResponseItem::Compaction`。replacement history 可保留 user/developer/system messages，也保留非 descendant `MESSAGE`、非 `FINAL_ANSWER` 且不超过 10k tokens 的 inter-agent `AgentMessage`；shared filter 后按 64k newest-first retained-message budget 截断，再追加 compaction output。[E: codex-rs/core/src/compact_remote_v2.rs:77][E: codex-rs/core/src/compact_remote_v2.rs:538]
+Remote v2 在 prompt input 末尾追加 `ResponseItem::CompactionTrigger`，stream 完成时要求 exactly one `ResponseItem::Compaction`。replacement history 可保留 user/developer/system messages，也保留非 descendant `MESSAGE`、非 `FINAL_ANSWER` 且不超过 10k tokens 的 inter-agent `AgentMessage`；shared filter 后按 64k newest-first retained-message budget 截断，再追加 compaction output。[E: codex-rs/core/src/compact_remote_v2_attempt.rs:77][E: codex-rs/core/src/compact_remote_v2.rs:466][E: codex-rs/core/src/compact_remote_v2.rs:77][E: codex-rs/core/src/compact_remote_v2.rs:78][E: codex-rs/core/src/compact_remote_v2.rs:538]
 
 ## 设计动机与权衡
 
@@ -74,7 +74,7 @@ Remote v2 在 prompt input 末尾追加 `ResponseItem::CompactionTrigger`，stre
 
 TokenBudget compact 把“压缩”做成 reset：跳过 summarizer，直接装新窗口，但仍复用 compact hooks / `ContextCompaction` 事件，避免 hook 与 analytics 看到另一套生命周期。[E: codex-rs/core/src/compact_token_budget.rs:26][I]
 
-Remote v2 只把 retained prompt messages 和 compaction item 作为 replacement history，是为了让普通 stream 的 compaction output 成为 history 边界，同时避免把 remote path 产生的 stale developer/context wrappers 原样带回。[E: codex-rs/core/src/compact_remote_v2.rs:538][I]
+Remote v2 只把 retained prompt messages 和 compaction item 作为 replacement history，是为了让普通 stream 的 compaction output 成为 history 边界，同时避免把 remote path 产生的 stale developer/context wrappers 原样带回。[E: codex-rs/core/src/compact_remote_v2.rs:466][E: codex-rs/core/src/compact_remote_v2.rs:538][I]
 
 ## gotcha
 

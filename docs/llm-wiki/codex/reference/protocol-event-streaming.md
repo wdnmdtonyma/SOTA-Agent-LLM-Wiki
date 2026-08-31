@@ -3,7 +3,7 @@ id: ref.protocol-event-streaming
 title: Protocol EventMsg 流式内容事件索引
 kind: reference
 tier: T3
-source: [codex-rs/protocol/src/protocol.rs, codex-rs/protocol/src/legacy_events.rs, codex-rs/protocol/src/dynamic_tools.rs, codex-rs/protocol/src/models.rs, codex-rs/protocol/src/models/executed_tool_calls.rs]
+source: [codex-rs/protocol/src/protocol.rs, codex-rs/protocol/src/legacy_events.rs, codex-rs/protocol/src/dynamic_tools.rs, codex-rs/protocol/src/models.rs]
 symbols: [RawResponseItemEvent, RawResponseCompletedEvent, ItemStartedEvent, ItemCompletedEvent, AgentMessageContentDeltaEvent, PlanDeltaEvent, ReasoningContentDeltaEvent, ReasoningRawContentDeltaEvent, ExecCommandBeginEvent, ExecCommandEndEvent, DynamicToolCallResponseEvent, PatchApplyBeginEvent, PatchApplyUpdatedEvent, PatchApplyEndEvent]
 related: [spine.tool-call-anatomy, subsys.providers.sse-streaming, ref.protocol-event-lifecycle, ref.protocol-items]
 evidence: explicit
@@ -73,7 +73,7 @@ updated: a9519cbcdd
 
 ## Raw response item boundary
 
-`RawResponseItemEvent` 包装 `ResponseItem`，而 `ResponseItem` 自身是 `serde(tag = "type", rename_all = "snake_case")` enum。[E: codex-rs/protocol/src/protocol.rs:1517] `FunctionCall` 仍可带 optional `encrypted_function_args`；可携 metadata 的 response items 复用 `internal_chat_message_metadata_passthrough`，其中 `executed_tool_calls` 是 warehouse-only，跳过 deserialize/public schema/TS。[E: codex-rs/protocol/src/models/executed_tool_calls.rs:9]
+`RawResponseItemEvent` 包装 `ResponseItem`，而 `ResponseItem` 自身是 `serde(tag = "type", rename_all = "snake_case")` enum。[E: codex-rs/protocol/src/protocol.rs:1517][E: codex-rs/protocol/src/models.rs:974][E: codex-rs/protocol/src/models.rs:975] `FunctionCall` 仍可带 optional `encrypted_function_args`；可携 metadata 的 response items 复用 `internal_chat_message_metadata_passthrough`，其中 `executed_tool_calls` 是 warehouse-only，跳过 deserialize/public schema/TS。[E: codex-rs/protocol/src/models.rs:1049][E: codex-rs/protocol/src/models.rs:1051][E: codex-rs/protocol/src/models.rs:925][E: codex-rs/protocol/src/models.rs:947][E: codex-rs/protocol/src/models.rs:950]
 
 ## 设计动机速记
 
@@ -87,7 +87,6 @@ updated: a9519cbcdd
 - `codex-rs/protocol/src/legacy_events.rs`
 - `codex-rs/protocol/src/dynamic_tools.rs`
 - `codex-rs/protocol/src/models.rs`
-- `codex-rs/protocol/src/models/executed_tool_calls.rs`
 
 ## 相关
 

@@ -11,7 +11,7 @@ status: verified
 updated: a9519cbcdd
 ---
 
-> Thread queue 是 per-thread、有序、durable 的用户提交队列。app-server 用 6 个 experimental RPC 读写它；`QueuedItemService` 在 thread idle 时把队首 `TurnInput::UserInput` 交给 Core `start_turn_if_idle`，并用 `EventMsg::ThreadQueueChanged` 通知客户端。[E: codex-rs/ext/queue/src/lib.rs:3][E: codex-rs/ext/queue/src/service.rs:41][E: codex-rs/ext/queue/src/service.rs:368]
+> Thread queue 是 per-thread、有序、durable 的用户提交队列。app-server 用 6 个 experimental RPC 读写它；`QueuedItemService` 在 thread idle 时把队首 `TurnInput::UserInput` 交给 Core `start_turn_if_idle`，并用 `EventMsg::ThreadQueueChanged` 通知客户端。[E: codex-rs/ext/queue/src/lib.rs:3][E: codex-rs/ext/queue/src/service.rs:42][E: codex-rs/ext/queue/src/service.rs:368]
 
 ## 能回答的问题
 
@@ -57,7 +57,7 @@ App-server 只有在 `ThreadStoreConfig::Local` 且有 state DB 时才构造 `Qu
 
 ## Queue RPC catalog
 
-六个方法都标 `experimental`，serialization key 是 `thread_id`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:586][E: codex-rs/app-server-protocol/src/protocol/common.rs:578]
+六个方法都标 `experimental`，serialization key 是 `thread_id`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:587][E: codex-rs/app-server-protocol/src/protocol/common.rs:578]
 
 | Variant | Wire method | Params | Response | 行为 |
 |---|---|---|---|---|

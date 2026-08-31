@@ -29,7 +29,7 @@ updated: a9519cbcdd
 
 app-server 按 `CodeModeHostTransport` 选择远程 provider：`Local` 不注入远程 provider（回落到 ThreadManager 的 process-owned/disabled 分支），`Grpc` 构造 `GrpcCodeModeSessionProvider` 并要求 `Feature::CodeModeHost`。WebSocket session provider 已删除。[E: codex-rs/app-server/src/lib.rs:553][E: codex-rs/app-server/src/lib.rs:555][E: codex-rs/app-server/src/lib.rs:556][E: codex-rs/app-server/src/lib.rs:564]
 
-process-owned provider 会定位/启动 `codex-code-mode-host`；host 内部才创建 `InProcessCodeModeSession`。因此“本地 code mode”仍是独立 host process，而不是 core 进程内 V8。[E: codex-rs/code-mode/src/remote_session.rs:58][E: codex-rs/code-mode/src/remote_session.rs:65][E: codex-rs/code-mode-host/src/lib.rs:30]
+process-owned provider 会定位/启动 `codex-code-mode-host`；host 内部才创建 `InProcessCodeModeSession`。因此“本地 code mode”仍是独立 host process，而不是 core 进程内 V8。[E: codex-rs/code-mode/src/remote_session.rs:58][E: codex-rs/code-mode/src/remote_session.rs:65][E: codex-rs/code-mode-host/src/lib.rs:539]
 
 ## Cell 生命周期
 
@@ -43,7 +43,7 @@ nested tool dispatch 会拒绝 `exec` 自调用。[E: codex-rs/core/src/tools/co
 
 session listen URL 只剩两种：`stdio`/`stdio://` 与 `grpc://IP:PORT`。`ws://` 不再是 code-mode session transport。[E: codex-rs/code-mode-host/src/transport.rs:9][E: codex-rs/code-mode-host/src/transport.rs:12][E: codex-rs/code-mode-host/src/transport.rs:17][E: codex-rs/code-mode-host/src/transport.rs:25][E: codex-rs/code-mode-host/src/transport.rs:29][E: codex-rs/code-mode-host/src/transport.rs:39]
 
-可选的 `--otel-trace-listen` WebSocket 只转发 raw OTLP trace batches，与 cell/session RPC 无关。[E: codex-rs/code-mode-host/src/trace_transport.rs:3][E: codex-rs/code-mode-host/src/trace_transport.rs:70]
+可选的 `--otel-trace-listen` WebSocket 只转发 raw OTLP trace batches，与 cell/session RPC 无关。[E: codex-rs/code-mode-host/src/trace_transport.rs:70]
 
 gRPC listener 把 `CodeModeHost` proto service 挂到 tonic/axum router，并额外暴露 HTTP `/healthz`。除 `/healthz` 外，非 HTTP/2 请求会被拒绝。[E: codex-rs/code-mode-host/src/grpc_transport.rs:36][E: codex-rs/code-mode-host/src/grpc_transport.rs:41][E: codex-rs/code-mode-host/src/grpc_transport.rs:44]
 

@@ -37,7 +37,7 @@ planner 调用 `session.services.mcp_handler_cache.append_mcp_tools(...)`：cach
 
 本轮 planner 直接构造同一个 `ToolRegistry`：先加 core tools，再依次追加 MCP、extension 与 dynamic runtimes，最后交给 `finalize_tool_router` 生成 registry 与 model-visible specs。[E: codex-rs/core/src/tools/spec_plan.rs:152][E: codex-rs/core/src/tools/spec_plan.rs:170][E: codex-rs/core/src/tools/spec_plan.rs:185][E: codex-rs/core/src/tools/spec_plan.rs:191][E: codex-rs/core/src/tools/spec_plan.rs:199]
 
-这些 runtime 的 spec 来自 step-scoped `McpBinding`，但 `McpHandler` 只保存 `ToolInfo/spec`。实际调用会在 `handle_mcp_tool_call` 中 `prepare_mcp_call(server, tool)`；所以同名 tool 的 call-time client/metadata 可以随 publication 更新，已删除 tool 则返回 unavailable。[E: codex-rs/core/src/session/step_context.rs:29][E: codex-rs/core/src/tools/handlers/mcp.rs:228][E: codex-rs/core/src/mcp_tool_call.rs:157][E: codex-rs/core/src/mcp_tool_call.rs:166]
+这些 runtime 的 spec 来自 step-scoped `McpBinding`，但 `McpHandler` 只保存 `ToolInfo/spec`。实际调用时 `McpHandler::handle_call` 先 `session.prepare_mcp_call(server, tool)`，再把结果交给 `handle_mcp_tool_call`；所以同名 tool 的 call-time client/metadata 可以随 publication 更新，已删除 tool 则返回 unavailable。[E: codex-rs/core/src/session/step_context.rs:29][E: codex-rs/core/src/tools/handlers/mcp.rs:182][E: codex-rs/core/src/tools/handlers/mcp.rs:228][E: codex-rs/core/src/mcp_tool_call.rs:157][E: codex-rs/core/src/mcp_tool_call.rs:166]
 
 `namespace_tools_enabled` 同时参与 search gate，并在构建 model-visible specs 的最后过滤 `ToolSpec::Namespace`；registry 本身仍保留这些 runtime。[E: codex-rs/core/src/tools/spec_plan.rs:640][E: codex-rs/core/src/tools/spec_plan.rs:651][E: codex-rs/core/src/tools/spec_plan.rs:575][E: codex-rs/core/src/tools/spec_plan.rs:576]
 

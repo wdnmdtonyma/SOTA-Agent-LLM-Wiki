@@ -49,13 +49,13 @@ updated: a9519cbcdd
 | `oss_provider` | `Option<String>` | none | Preferred OSS provider for local models. | [E: codex-rs/config/src/config_toml.rs:525] |
 | `responses_api_metadata` | `Option<BTreeMap<String, String>>` | none | Bounded, product-owned metadata attached to every Responses API request. | [E: codex-rs/config/src/config_toml.rs:384] |
 
-`model_supports_reasoning_summaries` has been removed from the target schema; reasoning-summary capability now comes from the selected model metadata, while `model_reasoning_summary` remains the request-mode override。[E: codex-rs/config/src/config_toml.rs:349][E: codex-rs/config/src/config_toml.rs:353][I]
+`model_supports_reasoning_summaries` has been removed from the target schema; reasoning-summary capability now comes from the selected model metadata, while `model_reasoning_summary` remains the request-mode override。[E: codex-rs/config/src/config_toml.rs:362][I]
 
 ## Model-owned token-budget defaults
 
-Remote/static model metadata can attach a `ModelTokenBudgetConfig` under `ModelMessages.token_budget`，包含 reminder threshold/template、context-window guidance、auto-compact fallback prompt 与 buffer。这些不是新的 top-level `ConfigToml` keys，而是选中模型的 defaults。[E: codex-rs/protocol/src/openai_models.rs:506][E: codex-rs/protocol/src/openai_models.rs:513][E: codex-rs/protocol/src/openai_models.rs:514][E: codex-rs/protocol/src/openai_models.rs:515][E: codex-rs/protocol/src/openai_models.rs:515][E: codex-rs/protocol/src/openai_models.rs:526]
+Remote/static model metadata can attach a `ModelTokenBudgetConfig` under `ModelMessages.token_budget`，包含 reminder threshold/template、context-window guidance、auto-compact fallback prompt 与 buffer。这些不是新的 top-level `ConfigToml` keys，而是选中模型的 defaults。[E: codex-rs/protocol/src/openai_models.rs:596][E: codex-rs/protocol/src/openai_models.rs:597][E: codex-rs/protocol/src/openai_models.rs:598][E: codex-rs/protocol/src/openai_models.rs:599][E: codex-rs/protocol/src/openai_models.rs:600][E: codex-rs/protocol/src/openai_models.rs:601]
 
-Core 只在 `TokenBudget` feature 开启且用户没有任何 explicit token-budget settings 时应用模型 defaults；无效 model defaults 会 warning 后忽略。该逻辑在每次选定 turn model 后重跑，所以 model switch 会切换对应 defaults，显式配置则始终优先。[E: codex-rs/core/src/session/token_budget.rs:10][E: codex-rs/core/src/session/token_budget.rs:23][E: codex-rs/core/src/session/token_budget.rs:24][E: codex-rs/core/src/session/token_budget.rs:25][E: codex-rs/core/src/session/token_budget.rs:44][E: codex-rs/core/src/session/token_budget.rs:55][E: codex-rs/core/src/session/turn_context.rs:513][E: codex-rs/core/src/session/turn_context.rs:518]
+Core 只在 `TokenBudget` feature 开启且用户没有任何 explicit token-budget settings 时应用模型 defaults；无效 model defaults 会 warning 后忽略。该逻辑在每次选定 turn model 后重跑，所以 model switch 会切换对应 defaults，显式配置则始终优先。[E: codex-rs/core/src/session/turn_context.rs:742][E: codex-rs/core/src/session/turn_context.rs:743][E: codex-rs/core/src/session/token_budget.rs:10][E: codex-rs/core/src/session/token_budget.rs:30][E: codex-rs/core/src/session/token_budget.rs:47][E: codex-rs/core/src/session/token_budget.rs:59]
 
 ## Sources
 

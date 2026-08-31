@@ -76,7 +76,7 @@ PowerShell AST subprocess parser 只在 test cfg 下编译，不当作 productio
 
 - `extract_powershell_command` 只提取受限 flag list 中的 `-Command/-c`；不要把它和生产已移除的 Windows safe parser 混为一层。[E: codex-rs/shell-command/src/powershell.rs:9][E: codex-rs/shell-command/src/powershell.rs:61]
 - `sed -n` 的 **metadata** special case 只接受数字 range script（例如 `1,5p`），这只影响 `ParsedCommand` 分类，不再构成 known-safe allow。[E: codex-rs/shell-command/src/parse_command.rs:1567]
-- tokenize helper 会把 `get-content` / `gc` / `type` 归一成 `Get-Content`，但若 POSIX shlex 改写了 Windows path 则放弃 tokenize。[E: codex-rs/shell-command/src/parse_command.rs:23][E: codex-rs/shell-command/src/parse_command.rs:32]
+- tokenize helper 会把 `get-content` / `gc` / `type` 归一成 `Get-Content`，但若 POSIX shlex 改写了 Windows path 则放弃 tokenize。[E: codex-rs/shell-command/src/parse_command.rs:16][E: codex-rs/shell-command/src/parse_command.rs:23][E: codex-rs/shell-command/src/parse_command.rs:33]
 
 ## Sources
 

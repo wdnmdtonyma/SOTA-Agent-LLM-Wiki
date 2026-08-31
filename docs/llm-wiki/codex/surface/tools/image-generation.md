@@ -63,14 +63,14 @@ core publication 还有更严格的 model-visible gate：
 
 1. `handle_call` 解析严格 JSON 参数，按路径或 conversation history 构造 generate/edit request。[E: codex-rs/ext/image-generation/src/tool.rs:146][E: codex-rs/ext/image-generation/src/tool.rs:148]
 2. 执行前发布 extension `ImageGenerationItem { status: in_progress }`，并附带 legacy `ImageGenerationBegin`。[E: codex-rs/ext/image-generation/src/tool.rs:154][E: codex-rs/ext/image-generation/src/tool.rs:162]
-3. generate/edit 走 backend；失败时记录 usage-limit failure（`limit_id == "image_gen"`），成功时保存 PNG 并发布 completed item。[E: codex-rs/ext/image-generation/src/tool.rs:168][E: codex-rs/ext/image-generation/src/tool.rs:250][E: codex-rs/ext/image-generation/src/tool.rs:270]
+3. generate/edit 走 backend；失败时记录 usage-limit failure（`limit_id == "image_gen"`），成功时保存 PNG 并发布 completed item。[E: codex-rs/ext/image-generation/src/tool.rs:168][E: codex-rs/ext/image-generation/src/tool.rs:249][E: codex-rs/ext/image-generation/src/tool.rs:270]
 4. artifact 默认路径为 `generated_images/<sanitized-session>/<sanitized-call>.png`。[E: codex-rs/ext/image-generation/src/artifact.rs:5][E: codex-rs/ext/image-generation/src/artifact.rs:31]
 
 ## 5 输出与事件
 
 direct tool output 是带 `data:image/png;base64,...` 的 `InputImage`，保存成功时再附一段 output hint。hint 最多 1,024 bytes，明确告诉模型图片已直接展示给用户。[E: codex-rs/ext/image-generation/src/artifact.rs:6][E: codex-rs/ext/image-generation/src/artifact.rs:38][E: codex-rs/ext/image-generation/src/artifact.rs:45]
 
-extension-owned item 是 `ImageGenerationItem { id, status, revised_prompt, result, transparent_background, failure, saved_path }`。[E: codex-rs/ext/items/src/image_generation.rs:28][E: codex-rs/ext/items/src/image_generation.rs:29][E: codex-rs/ext/items/src/image_generation.rs:37][E: codex-rs/ext/items/src/image_generation.rs:48]
+extension-owned item 是 `ImageGenerationItem { id, status, revised_prompt, result, transparent_background, failure, saved_path }`。[E: codex-rs/ext/items/src/image_generation.rs:28][E: codex-rs/ext/items/src/image_generation.rs:29][E: codex-rs/ext/items/src/image_generation.rs:37][E: codex-rs/ext/items/src/image_generation.rs:40]
 
 ## Sources
 

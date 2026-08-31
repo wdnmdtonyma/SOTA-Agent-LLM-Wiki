@@ -34,9 +34,9 @@ execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator。已删除�
 
 ## DSL 语法
 
-`PolicyParser::parse` 用 `ExtendedDialect` 解析 policy 文本，并向 Starlark module 注入 `policy_builtins()`。[E: codex-rs/execpolicy/src/parser.rs:57][E: codex-rs/execpolicy/src/parser.rs:64][E: codex-rs/execpolicy/src/parser.rs:75] parser 在执行 policy 后会遍历 pending validations，把 `match` examples 要求为 match，把 `not_match` examples 要求为 non-match。[E: codex-rs/execpolicy/src/parser.rs:133][E: codex-rs/execpolicy/src/parser.rs:140][E: codex-rs/execpolicy/src/parser.rs:146]
+`PolicyParser::parse` 用 `ExtendedDialect` 解析 policy 文本，并向 Starlark module 注入 `policy_builtins()`。[E: codex-rs/execpolicy/src/parser.rs:57][E: codex-rs/execpolicy/src/parser.rs:64][E: codex-rs/execpolicy/src/parser.rs:68] parser 在执行 policy 后会遍历 pending validations，把 `match` examples 要求为 match，把 `not_match` examples 要求为 non-match。[E: codex-rs/execpolicy/src/parser.rs:75][E: codex-rs/execpolicy/src/parser.rs:133][E: codex-rs/execpolicy/src/parser.rs:140][E: codex-rs/execpolicy/src/parser.rs:146]
 
-- `prefix_rule(pattern, decision=None, match=None, not_match=None, justification=None)`: `pattern` 可以是 string token 列表，也可以包含 list alternatives；`decision` 为空时默认 `Allow`；`justification` 为空字符串会报错；如果第一 token 有 alternatives，parser 会展开成多个 `PrefixRule`。[E: codex-rs/execpolicy/src/parser.rs:348][E: codex-rs/execpolicy/src/parser.rs:356][E: codex-rs/execpolicy/src/parser.rs:362][E: codex-rs/execpolicy/src/parser.rs:390][E: codex-rs/execpolicy/src/parser.rs:405]
+- `prefix_rule(pattern, decision=None, match=None, not_match=None, justification=None)`: `pattern` 可以是 string token 列表，也可以包含 list alternatives；`decision` 为空时默认 `Allow`；`justification` 为空字符串会报错；如果第一 token 有 alternatives，parser 会展开成多个 `PrefixRule`。[E: codex-rs/execpolicy/src/parser.rs:349][E: codex-rs/execpolicy/src/parser.rs:357][E: codex-rs/execpolicy/src/parser.rs:359][E: codex-rs/execpolicy/src/parser.rs:362][E: codex-rs/execpolicy/src/parser.rs:390][E: codex-rs/execpolicy/src/parser.rs:405]
 - `network_rule(host, protocol, decision, justification=None)`: `protocol` 解析为 `NetworkRuleProtocol`，`decision` 解析为 `Decision` 或 `deny` alias，`host` 经过 normalization 后存入 rule。[E: codex-rs/execpolicy/src/parser.rs:410][E: codex-rs/execpolicy/src/parser.rs:416][E: codex-rs/execpolicy/src/parser.rs:417][E: codex-rs/execpolicy/src/parser.rs:427]
 - `host_executable(name, paths)`: `name` 必须是 bare executable name；`paths` 必须是 absolute path，basename 必须匹配 `name`；parser 会 dedupe paths 并按 lookup key 保存。[E: codex-rs/execpolicy/src/parser.rs:437][E: codex-rs/execpolicy/src/parser.rs:441][E: codex-rs/execpolicy/src/parser.rs:451][E: codex-rs/execpolicy/src/parser.rs:452][E: codex-rs/execpolicy/src/parser.rs:470]
 
@@ -44,7 +44,7 @@ execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator。已删除�
 
 ## 数据模型
 
-- `Policy`: 保存 `rules_by_program`、`network_rules`、`host_executables` 三类表。[E: codex-rs/execpolicy/src/policy.rs:27][E: codex-rs/execpolicy/src/policy.rs:28][E: codex-rs/execpolicy/src/policy.rs:29][E: codex-rs/execpolicy/src/policy.rs:30]
+- `Policy`: 保存 `rules_by_program`、`network_rules`、`host_executables_by_name` 三类表。[E: codex-rs/execpolicy/src/policy.rs:27][E: codex-rs/execpolicy/src/policy.rs:28][E: codex-rs/execpolicy/src/policy.rs:29][E: codex-rs/execpolicy/src/policy.rs:30][E: codex-rs/execpolicy/src/policy.rs:31]
 - `PrefixPattern`: `first` 是首 token，`rest` 是后续 tokens，`matches_prefix` 要求 command 长度足够、首 token 匹配、后续 tokens 逐个匹配。[E: codex-rs/execpolicy/src/rule.rs:39][E: codex-rs/execpolicy/src/rule.rs:40][E: codex-rs/execpolicy/src/rule.rs:45]
 - `PatternToken`: `Single(String)` 或 `Alts(Vec<String>)`，matching 时 `Single` 做字符串相等，`Alts` 用 alternatives membership。[E: codex-rs/execpolicy/src/rule.rs:15][E: codex-rs/execpolicy/src/rule.rs:16][E: codex-rs/execpolicy/src/rule.rs:24][E: codex-rs/execpolicy/src/rule.rs:29]
 - `RuleMatch`: `PrefixRuleMatch` 记录 matched prefix、decision、resolved program、justification；`HeuristicsRuleMatch` 记录 fallback command 和 fallback decision。[E: codex-rs/execpolicy/src/rule.rs:64][E: codex-rs/execpolicy/src/rule.rs:67][E: codex-rs/execpolicy/src/rule.rs:70][E: codex-rs/execpolicy/src/rule.rs:76][E: codex-rs/execpolicy/src/rule.rs:78]
@@ -52,7 +52,7 @@ execpolicy DSL 节点覆盖 `codex-rs/execpolicy` parser/evaluator。已删除�
 
 ## 控制流
 
-1. `PolicyParser::parse` 解析 policy 文本，执行 builtins，把规则写入 `PolicyBuilder`，再运行 examples validation。[E: codex-rs/execpolicy/src/parser.rs:57][E: codex-rs/execpolicy/src/parser.rs:87][E: codex-rs/execpolicy/src/parser.rs:133]
+1. `PolicyParser::parse` 解析 policy 文本，执行 builtins，把规则写入 `PolicyBuilder`，再运行 examples validation。[E: codex-rs/execpolicy/src/parser.rs:57][E: codex-rs/execpolicy/src/parser.rs:68][E: codex-rs/execpolicy/src/parser.rs:75][E: codex-rs/execpolicy/src/parser.rs:87][E: codex-rs/execpolicy/src/parser.rs:133]
 2. `Policy::add_prefix_rule` 把 `PrefixRule` 按首 token(`first_token`)作为 key 插入 `rules_by_program` map；`add_network_rule` 按 protocol/host/decision 保存 network rule。[E: codex-rs/execpolicy/src/policy.rs:128][E: codex-rs/execpolicy/src/policy.rs:146][E: codex-rs/execpolicy/src/policy.rs:150][E: codex-rs/execpolicy/src/policy.rs:166]
 3. `Policy::merge_overlay` 把 overlay 的 prefix rules、network rules 和 host executable paths 追加或覆盖进 base policy。[E: codex-rs/execpolicy/src/policy.rs:178][E: codex-rs/execpolicy/src/policy.rs:191][E: codex-rs/execpolicy/src/policy.rs:197]
 4. `Policy::check_multiple_with_options` 对候选 command 逐个调用 `matches`，收集所有 matches 后交给 `Evaluation::from_matches`。[E: codex-rs/execpolicy/src/policy.rs:269][E: codex-rs/execpolicy/src/policy.rs:277][E: codex-rs/execpolicy/src/policy.rs:287]

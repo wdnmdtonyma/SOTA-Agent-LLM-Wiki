@@ -26,7 +26,7 @@ updated: a9519cbcdd
 
 `ContextManager` 只管理 history materialization、rewrites、token estimate 和 prompt 前 normalization；model sampling、tool execution、event emission 由 turn/session/tool 子系统负责。[E: codex-rs/core/src/context_manager/history.rs:178][E: codex-rs/core/src/context_manager/history.rs:235][I]
 
-`SessionState` 把 `ContextManager` 作为 session-scoped `history` 字段；session 通过 `record_conversation_items` 写 history/rollout/raw items，通过 `clone_history().for_prompt(...)` 给 turn engine 取 prompt input。[E: codex-rs/core/src/state/session.rs:67][E: codex-rs/core/src/session/mod.rs:3241]
+`SessionState` 把 `ContextManager` 作为 session-scoped `history` 字段；session 通过 `record_conversation_items` 写 history/rollout/raw items，通过 `clone_history().for_prompt(...)` 给 turn engine 取 prompt input。[E: codex-rs/core/src/state/session.rs:32][E: codex-rs/core/src/state/session.rs:67][E: codex-rs/core/src/session/mod.rs:3241]
 
 ## 关键 crate/文件
 
@@ -51,7 +51,7 @@ updated: a9519cbcdd
 
 `MultiAgentModeState` 的 section id 是 `multi_agent_mode`。它保存每个 step 的 effective multi-agent mode；custom hint 在进入 snapshot 前按 400 tokens 截断。相同 mode 不重发；从 `Proactive` 退回无显式配置时会渲染 `ExplicitRequestOnly`，而已知的其它 `None` transition 不产生 diff。[E: codex-rs/core/src/context/world_state/multi_agent_mode.rs:13][E: codex-rs/core/src/context/world_state/multi_agent_mode.rs:76]
 
-`ToolsState` 的 section id 是 `tools`，snapshot 是当前 deferred tool namespace 到 description 的有序映射。description 只取首行、trim 后最多 250 chars；整个 `<tools>` fragment 最多 4 KiB。[E: codex-rs/core/src/context/world_state/tools.rs:12][E: codex-rs/core/src/context/world_state/tools.rs:13]
+`ToolsState` 的 section id 是 `tools`，snapshot 是当前 deferred tool namespace 到 description 的有序映射。description 只取首行、trim 后最多 250 chars；整个 `<tools>` fragment 最多 4 KiB。[E: codex-rs/core/src/context/world_state/tools.rs:12][E: codex-rs/core/src/context/world_state/tools.rs:13][E: codex-rs/core/src/context/world_state/tools.rs:44]
 
 tools section 仅在 `DeferredToolWorldState` feature 开启时加入；extension contributors 的 sections 随后异步聚合，multi-agent section 最后按 effective mode 加入，并可 `with_usage_hint`。[E: codex-rs/core/src/session/world_state.rs:275][E: codex-rs/core/src/session/world_state.rs:313]
 
@@ -86,7 +86,7 @@ History normalization 发生在 prompt materialization 时，而不是每次 rec
 ## gotcha
 
 - `raw_items()` 与 `for_prompt()` 是不同表面：`raw_items()` 返回存储项，`for_prompt()` 消费 snapshot 并 normalize。[E: codex-rs/core/src/context_manager/history.rs:235][E: codex-rs/core/src/context_manager/history.rs:252]
-- `CompactionTrigger` 不记为 API message，而 `Compaction`、`ContextCompaction` 和 `AdditionalTools` 会记。[E: codex-rs/core/src/context_manager/history.rs:561]
+- `CompactionTrigger` 不记为 API message，而 `Compaction`、`ContextCompaction` 和 `AdditionalTools` 会记。[E: codex-rs/core/src/context_manager/history.rs:561][E: codex-rs/core/src/context_manager/history.rs:574][E: codex-rs/core/src/context_manager/history.rs:575]
 - compaction 走 `replace_compacted`，不递增 `user_message_revision`；用户改写/reset 走 `replace_annotated`。[E: codex-rs/core/src/context_manager/history.rs:329]
 - 这不是 History notes 扩展的 backend history/notes store；后者是 private model-only 回读面。
 

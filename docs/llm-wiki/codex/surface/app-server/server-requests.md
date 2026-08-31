@@ -26,11 +26,11 @@ updated: a9519cbcdd
 
 当前宏实例含 11 个 server request：9 个显式 v2 wire method 和 2 个 deprecated v1 camelCase approval request。本轮没有新增或删除 reverse request。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1681][E: codex-rs/app-server-protocol/src/protocol/common.rs:1732][E: codex-rs/app-server-protocol/src/protocol/common.rs:1742][E: codex-rs/app-server-protocol/src/protocol/common.rs:1748]
 
-两个 legacy v1 approval response 复用 core `ReviewDecision`；其 `denied` wire value 带 `{ rejection }` 对象字段，而不是无 payload 的字符串 variant。该变化仅应归因到 legacy v1 approval response，不要误写成 v2 approval response shape。[E: codex-rs/app-server-protocol/src/protocol/v1.rs:155][E: codex-rs/app-server-protocol/src/protocol/v1.rs:175][E: codex-rs/protocol/src/protocol.rs:3882]
+两个 legacy v1 approval response 复用 core `ReviewDecision`；其 `denied` wire value 带 `{ rejection }` 对象字段，而不是无 payload 的字符串 variant。该变化仅应归因到 legacy v1 approval response，不要误写成 v2 approval response shape。[E: codex-rs/app-server-protocol/src/protocol/v1.rs:155][E: codex-rs/app-server-protocol/src/protocol/v1.rs:175][E: codex-rs/protocol/src/protocol.rs:4008][E: codex-rs/protocol/src/protocol.rs:4035]
 
-`ToolRequestUserInputParams` 有显式 `isBlocking`；旧客户端 payload 缺该字段时 deserialize 为 `true`，而 `autoResolutionMs` 已标记 deprecated，只应继续作为兼容字段读取。[E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1643][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1648][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1650][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1677]
+`ToolRequestUserInputParams` 有显式 `isBlocking`；旧客户端 payload 缺该字段时 deserialize 为 `true`，而 `autoResolutionMs` 已标记 deprecated，只应继续作为兼容字段读取。[E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1734][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1738][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1763]
 
-MCP elicitation number schema 的 integer 变体在序列化时会把 integral float 的 minimum/maximum/default 归一成 JSON integer；`McpAuthStatus` 也增加 `Unknown` 兼容值。这些是 payload 变化，不改变 reverse-request 计数。[E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:19][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:381]
+MCP elicitation number schema 的 integer 变体在序列化时会把 integral float 的 minimum/maximum/default 归一成 JSON integer；`McpAuthStatus` 也增加 `Unknown` 兼容值。这些是 payload 变化，不改变 reverse-request 计数。[E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:19][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:438][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:450]
 
 ## Request catalog
 

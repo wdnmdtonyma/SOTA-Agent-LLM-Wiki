@@ -22,7 +22,7 @@ updated: a9519cbcdd
 
 ## Markdown 边界
 
-`MarkdownStreamCollector` 缓冲 token deltas，并只在 newline boundary 暴露 completed prefix；`commit_complete_source` 找最后一个 `\n`，返回新 committed source 的 byte range，而 `committed_source()` 借用完整 newline-safe prefix，避免每个 delta 复制 String。[E: codex-rs/tui/src/markdown_stream.rs:87][E: codex-rs/tui/src/markdown_stream.rs:94]
+`MarkdownStreamCollector` 缓冲 token deltas，并只在 newline boundary 暴露 completed prefix；`commit_complete_source` 找最后一个 `\n`，返回新 committed source 的 byte range，而 `committed_source()` 借用完整 newline-safe prefix，避免每个 delta 复制 String。[E: codex-rs/tui/src/markdown_stream.rs:87][E: codex-rs/tui/src/markdown_stream.rs:94][E: codex-rs/tui/src/markdown_stream.rs:99]
 
 finalize path 的 `finalize_and_take_source` 转移完整 buffer ownership，必要时补 newline 后 clear collector；这只应在 stream 真正完成或 intentionally consolidated interrupted output 时调用。[E: codex-rs/tui/src/markdown_stream.rs:109][E: codex-rs/tui/src/markdown_stream.rs:114]
 
@@ -40,7 +40,7 @@ state API 包括 `step` drain one、`drain_n` bounded multi-line drain、`clear_
 
 进入/退出门槛在代码常量里：enter depth 8 行或 oldest age 120ms，exit depth 2 行且 oldest age 40ms 以下并保持 250ms，catch-up exit 后 250ms re-entry hold，severe depth 64 行或 oldest age 300ms 可绕过 hold。[E: codex-rs/tui/src/streaming/chunking.rs:85][E: codex-rs/tui/src/streaming/chunking.rs:90][E: codex-rs/tui/src/streaming/chunking.rs:95][E: codex-rs/tui/src/streaming/chunking.rs:100][E: codex-rs/tui/src/streaming/chunking.rs:103][E: codex-rs/tui/src/streaming/chunking.rs:108][E: codex-rs/tui/src/streaming/chunking.rs:113][E: codex-rs/tui/src/streaming/chunking.rs:116]
 
-policy output 是 `ChunkingDecision { mode, entered_catch_up, drain_plan }`，drain plan 只有 `Single` 或 `Batch(usize)`；`decide` 对给定 mode/snapshot/now deterministic，空 queue 会 reset 到 smooth。[E: codex-rs/tui/src/streaming/chunking.rs:136][E: codex-rs/tui/src/streaming/chunking.rs:137][E: codex-rs/tui/src/streaming/chunking.rs:141][E: codex-rs/tui/src/streaming/chunking.rs:146][E: codex-rs/tui/src/streaming/chunking.rs:148][E: codex-rs/tui/src/streaming/chunking.rs:152][E: codex-rs/tui/src/streaming/chunking.rs:180][E: codex-rs/tui/src/streaming/chunking.rs:181][E: codex-rs/tui/src/streaming/chunking.rs:183]
+policy output 是 `ChunkingDecision { mode, entered_catch_up, drain_plan }`，drain plan 只有 `Single` 或 `Batch(usize)`；`decide` 对给定 mode/snapshot/now deterministic，空 queue 会 reset 到 smooth。[E: codex-rs/tui/src/streaming/chunking.rs:137][E: codex-rs/tui/src/streaming/chunking.rs:141][E: codex-rs/tui/src/streaming/chunking.rs:146][E: codex-rs/tui/src/streaming/chunking.rs:148][E: codex-rs/tui/src/streaming/chunking.rs:152][E: codex-rs/tui/src/streaming/chunking.rs:180][E: codex-rs/tui/src/streaming/chunking.rs:181][E: codex-rs/tui/src/streaming/chunking.rs:183]
 
 ## Commit Tick
 
@@ -50,7 +50,7 @@ snapshot 会 sum controller queue depth，并取最大 oldest age；plan applica
 
 ## Controllers 与 ChatWidget Glue
 
-`StreamingRender` 保存 source 与 rendered-line 两个 stable prefix boundary，只重新渲染最后一个 top-level Markdown block；width/render-mode change、reference-style link definition 或 inline-visualization rewrite 会退化为 full recompute，因为它们可能影响已稳定的前缀。[E: codex-rs/tui/src/streaming/render.rs:112][E: codex-rs/tui/src/streaming/render.rs:129][E: codex-rs/tui/src/streaming/render.rs:171]
+`StreamingRender` 保存 source 与 rendered-line 两个 stable prefix boundary，只重新渲染最后一个 top-level Markdown block；width/render-mode change、reference-style link definition 或 inline-visualization rewrite 会退化为 full recompute，因为它们可能影响已稳定的前缀。[E: codex-rs/tui/src/streaming/render.rs:117][E: codex-rs/tui/src/streaming/render.rs:129][E: codex-rs/tui/src/streaming/render.rs:164][E: codex-rs/tui/src/streaming/render.rs:172]
 
 `StreamController` 包装 `StreamCore` 并产出 `AgentMessageCell`；`PlanStreamController` 包装同一 core 但带 plan-specific header、indentation 和 background styling。两者都有 new/push/finalize/on_commit_tick/on_commit_tick_batch/queued_lines/oldest_queued_age 等接口。[E: codex-rs/tui/src/streaming/controller.rs:475][E: codex-rs/tui/src/streaming/controller.rs:487][E: codex-rs/tui/src/streaming/controller.rs:508][E: codex-rs/tui/src/streaming/controller.rs:514][E: codex-rs/tui/src/streaming/controller.rs:526][E: codex-rs/tui/src/streaming/controller.rs:531][E: codex-rs/tui/src/streaming/controller.rs:543][E: codex-rs/tui/src/streaming/controller.rs:547][E: codex-rs/tui/src/streaming/controller.rs:579][E: codex-rs/tui/src/streaming/controller.rs:600][E: codex-rs/tui/src/streaming/controller.rs:612][E: codex-rs/tui/src/streaming/controller.rs:625][E: codex-rs/tui/src/streaming/controller.rs:631][E: codex-rs/tui/src/streaming/controller.rs:643][E: codex-rs/tui/src/streaming/controller.rs:651]
 
@@ -66,7 +66,7 @@ pending resize reflow 到期后会按当前宽度从 transcript cells 重建 his
 
 - chunking policy 的 non-responsibilities 明确包括 tick scheduling、line reordering 和 transport-specific semantics；调参时不要把 source 类型塞进 policy。[I]
 - `commit_tick.rs` 不直接 mutate UI state；调用者负责 animation events 和 history insertion side effects。[I]
-- incremental stable-prefix optimization 对 reference definitions 与 inline visualization 主动 fail open 到 full render；不能假设所有 Markdown 都只重绘 tail。[E: codex-rs/tui/src/streaming/render.rs:112][E: codex-rs/tui/src/streaming/render.rs:129]
+- incremental stable-prefix optimization 对 reference definitions 与 inline visualization 主动 fail open 到 full render；不能假设所有 Markdown 都只重绘 tail。[E: codex-rs/tui/src/streaming/render.rs:117][E: codex-rs/tui/src/streaming/render.rs:129]
 
 ## Sources
 

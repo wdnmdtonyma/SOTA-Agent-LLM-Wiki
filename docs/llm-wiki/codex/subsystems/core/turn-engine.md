@@ -11,7 +11,7 @@ status: verified
 updated: a9519cbcdd
 ---
 
-> Turn 引擎是 regular task 内部的 model-turn 状态机：`RegularTask::run` 先发 `TurnStarted`，再循环调用 `run_turn`；`run_turn` 做 pre-sampling compaction、captured step context、skill/plugin 注入、prompt history materialization、sampling request 和 follow-up 判断；真正的 stream/tool 处理在 `run_sampling_request`/`try_run_sampling_request` 中完成。[E: codex-rs/core/src/tasks/regular.rs:49][E: codex-rs/core/src/tasks/regular.rs:76][E: codex-rs/core/src/session/turn.rs:156][E: codex-rs/core/src/session/turn.rs:172][E: codex-rs/core/src/session/turn.rs:253][E: codex-rs/core/src/session/turn.rs:384][E: codex-rs/core/src/session/turn.rs:1362][E: codex-rs/core/src/session/turn.rs:2207]
+> Turn 引擎是 regular task 内部的 model-turn 状态机：`RegularTask::run` 先发 `TurnStarted`，再循环调用 `run_turn`；`run_turn` 做 pre-sampling compaction、captured step context、skill/plugin 注入、prompt history materialization、sampling request 和 follow-up 判断；真正的 stream/tool 处理在 `run_sampling_request`/`try_run_sampling_request` 中完成。[E: codex-rs/core/src/tasks/regular.rs:50][E: codex-rs/core/src/tasks/regular.rs:76][E: codex-rs/core/src/session/turn.rs:156][E: codex-rs/core/src/session/turn.rs:172][E: codex-rs/core/src/session/turn.rs:253][E: codex-rs/core/src/session/turn.rs:384][E: codex-rs/core/src/session/turn.rs:1362][E: codex-rs/core/src/session/turn.rs:2207]
 
 ## 能回答的问题
 
@@ -23,14 +23,14 @@ updated: a9519cbcdd
 
 ## 职责边界
 
-`RegularTask::run` 是 turn engine 的外层 task：它把 startup prewarm 解析成可选 `ModelClientSession`，调用 `run_turn`，如果 active turn 没有 pending input 就返回 `last_agent_message`，否则清空下一轮显式 input 后继续循环。[E: codex-rs/core/src/tasks/regular.rs:63][E: codex-rs/core/src/tasks/regular.rs:71][E: codex-rs/core/src/tasks/regular.rs:76][E: codex-rs/core/src/tasks/regular.rs:85][E: codex-rs/core/src/tasks/regular.rs:89]
+`RegularTask::run` 是 turn engine 的外层 task：它把 startup prewarm 解析成可选 `ModelClientSession`，调用 `run_turn`，如果 active turn 没有 pending input 就返回 `last_agent_message`，否则清空下一轮显式 input 后继续循环。[E: codex-rs/core/src/tasks/regular.rs:64][E: codex-rs/core/src/tasks/regular.rs:71][E: codex-rs/core/src/tasks/regular.rs:76][E: codex-rs/core/src/tasks/regular.rs:77][E: codex-rs/core/src/tasks/regular.rs:91][E: codex-rs/core/src/tasks/regular.rs:94]
 
-`run_turn` 负责一次 regular turn 内部的 sampling/follow-up loop；`Session::spawn`、submission dispatch、task 启动/取消属于 `subsys.core.session-lifecycle`，具体 tool spec 和 handler 分派属于 `subsys.core.tool-router`。[E: codex-rs/core/src/session/turn.rs:292][E: codex-rs/core/src/tasks/mod.rs:266][E: codex-rs/core/src/session/handlers.rs:745][I]
+`run_turn` 负责一次 regular turn 内部的 sampling/follow-up loop；`Session::spawn`、submission dispatch、task 启动/取消属于 `subsys.core.session-lifecycle`，具体 tool spec 和 handler 分派属于 `subsys.core.tool-router`。[E: codex-rs/core/src/session/turn.rs:156][E: codex-rs/core/src/session/turn.rs:304][E: codex-rs/core/src/tasks/mod.rs:271][E: codex-rs/core/src/session/handlers.rs:530][I]
 
 ## 关键 crate/文件
 
 - `codex-rs/core/src/session/turn.rs`: `run_turn`、pre/mid compaction、prompt 构造、Responses stream loop 和 in-flight tool drain。[E: codex-rs/core/src/session/turn.rs:156][E: codex-rs/core/src/session/turn.rs:1033][E: codex-rs/core/src/session/turn.rs:1333][E: codex-rs/core/src/session/turn.rs:2159][E: codex-rs/core/src/session/turn.rs:2207]
-- `codex-rs/core/src/tasks/regular.rs`: regular task 的 `TurnStarted` 发射和 `run_turn` 循环。[E: codex-rs/core/src/tasks/regular.rs:49][E: codex-rs/core/src/tasks/regular.rs:75]
+- `codex-rs/core/src/tasks/regular.rs`: regular task 的 `TurnStarted` 发射和 `run_turn` 循环。[E: codex-rs/core/src/tasks/regular.rs:50][E: codex-rs/core/src/tasks/regular.rs:76]
 - `codex-rs/core/src/tools/parallel.rs`: `ToolCallRuntime` 从 `StepContext.tool_router` 读取本次 request 已 finalize 的 router，在 runtime readiness 后加 parallel policy 锁，再 dispatch。[E: codex-rs/core/src/tools/parallel.rs:42][E: codex-rs/core/src/tools/parallel.rs:115][E: codex-rs/core/src/tools/parallel.rs:149][E: codex-rs/core/src/tools/parallel.rs:166]
 
 ## 数据模型

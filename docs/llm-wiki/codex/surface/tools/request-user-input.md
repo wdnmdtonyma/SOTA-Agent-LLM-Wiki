@@ -3,7 +3,7 @@ id: tool.request-user-input
 title: request_user_input 工具
 kind: tool
 tier: T1
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/request_user_input_spec.rs, codex-rs/core/src/tools/handlers/request_user_input.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/handlers.rs, codex-rs/tools/src/tool_config.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/protocol/src/request_user_input.rs]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/request_user_input_spec.rs, codex-rs/core/src/tools/handlers/request_user_input.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/config/mod.rs, codex-rs/tools/src/tool_config.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/protocol/src/request_user_input.rs]
 symbols: [RequestUserInputToolArgs, RequestUserInputHandler, normalize_request_user_input_tool_args, RequestUserInputArgs, RequestUserInputEvent]
 related: [spine.tool-call-anatomy, subsys.core.tool-system, subsys.core.collaboration-modes]
 evidence: explicit
@@ -19,7 +19,7 @@ wire name 是 plain `request_user_input`，spec 是 non-strict Function tool，`
 
 handler 仅允许 root thread（`session_source.is_non_root_agent()` 为真则拒绝），并检查当前 collaboration mode；默认允许 Plan，feature 可把 Default mode 加入 available modes。它没有覆写 parallel contract，因而默认不并行。[E: codex-rs/core/src/tools/handlers/request_user_input.rs:70][E: codex-rs/core/src/tools/handlers/request_user_input.rs:76][E: codex-rs/tools/src/tool_config.rs:17][E: codex-rs/tools/src/tool_config.rs:22][E: codex-rs/tools/src/tool_executor.rs:122]
 
-`add_core_utility_tools` 只在 `config.experimental_request_user_input_enabled` 为真时注册。[E: codex-rs/core/src/tools/spec_plan.rs:1164]
+`add_core_utility_tools` 只在 `config.experimental_request_user_input_enabled` 为真时注册。`resolve_experimental_request_user_input_enabled` 用 `is_none_or(|config| config.enabled)`：`tools.experimental_request_user_input` 未配置时默认 **true**。[E: codex-rs/core/src/tools/spec_plan.rs:1164][E: codex-rs/core/src/config/mod.rs:2631][E: codex-rs/core/src/config/mod.rs:2636]
 
 ## 模型输入 schema
 
@@ -55,6 +55,7 @@ session 发出 `RequestUserInputEvent` 并等待 pending oneshot；client 用 `O
 - `codex-rs/core/src/tools/handlers/request_user_input.rs`
 - `codex-rs/core/src/session/mod.rs`
 - `codex-rs/core/src/session/handlers.rs`
+- `codex-rs/core/src/config/mod.rs`
 - `codex-rs/tools/src/tool_config.rs`
 - `codex-rs/tools/src/tool_executor.rs`
 - `codex-rs/protocol/src/request_user_input.rs`

@@ -34,7 +34,7 @@ updated: a9519cbcdd
 | `lib.rs` | `WorktreeManager`、`managed_checkout`、`has_managed_layout`、linked-worktree 检查。[E: codex-rs/worktree/src/lib.rs:18][E: codex-rs/worktree/src/lib.rs:72] |
 | `settings.rs` | `[desktop]` 键、`DEFAULT_WORKTREE_KEEP_COUNT`、默认 root `codex_home/worktrees`。[E: codex-rs/worktree/src/settings.rs:14][E: codex-rs/worktree/src/settings.rs:18][E: codex-rs/worktree/src/settings.rs:35] |
 | `metadata.rs` | `codex-thread.json` 读写、`bind_thread` 原子 persist。[E: codex-rs/worktree/src/metadata.rs:19][E: codex-rs/worktree/src/metadata.rs:49] |
-| `git.rs` | 去掉继承的 `GIT_*` 选择器，注入 `SAFE_BARE_REPOSITORY_CONFIG`，禁用 hooks/fsmonitor。[E: codex-rs/worktree/src/git.rs:15][E: codex-rs/worktree/src/git.rs:81] |
+| `git.rs` | 去掉继承的 `GIT_*` 选择器，注入 `SAFE_BARE_REPOSITORY_CONFIG`，禁用 hooks/fsmonitor。[E: codex-rs/worktree/src/git.rs:15][E: codex-rs/worktree/src/git.rs:83] |
 
 ## 数据模型
 
@@ -79,7 +79,7 @@ updated: a9519cbcdd
 
 ## Git 执行面
 
-`git.rs` 的 `base_git_command` 删掉 `GIT_DIR` / `GIT_WORK_TREE` / `GIT_COMMON_DIR` 等继承选择器，从 cwd 选仓库；并加 `codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG`（`safe.bareRepository=explicit`）、`core.hooksPath` 指向 NUL/`/dev/null`、清空 `core.fsmonitor`。[E: codex-rs/worktree/src/git.rs:60][E: codex-rs/worktree/src/git.rs:81][E: codex-rs/git-utils/src/lib.rs:15]
+`git.rs` 的 `base_git_command` 删掉 `GIT_DIR` / `GIT_WORK_TREE` / `GIT_COMMON_DIR` 等继承选择器，从 cwd 选仓库；并加 `codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG`（`safe.bareRepository=explicit`）、`core.hooksPath` 指向 NUL/`/dev/null`、清空 `core.fsmonitor`。[E: codex-rs/worktree/src/git.rs:60][E: codex-rs/worktree/src/git.rs:83][E: codex-rs/worktree/src/git.rs:84][E: codex-rs/worktree/src/git.rs:86][E: codex-rs/git-utils/src/lib.rs:15]
 
 ## 设计动机与权衡
 

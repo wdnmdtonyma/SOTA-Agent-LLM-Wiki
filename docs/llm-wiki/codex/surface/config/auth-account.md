@@ -24,7 +24,7 @@ updated: a9519cbcdd
 
 当前 `ConfigToml` 有 99 个顶层 `pub` 字段；本节点覆盖其中 3 个字段。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:525]
 
-MCP OAuth credential storage remains a separate top-level field named `mcp_oauth_credentials_store`, so this CLI account catalog keeps it under the MCP/tools catalog boundary.[E: codex-rs/config/src/config_toml.rs:270]
+MCP OAuth credential storage remains a separate top-level field named `mcp_oauth_credentials_store`, so this CLI account catalog keeps it under the MCP/tools catalog boundary.[E: codex-rs/config/src/config_toml.rs:278]
 
 ## 字段 catalog
 

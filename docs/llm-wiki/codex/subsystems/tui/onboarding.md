@@ -31,7 +31,7 @@ ChatGPT success message 后有一次 guard：检测 auth step 的 `SignInState::
 
 ## First-login 延迟 composer
 
-`startup_orchestration` 在没有 resume/fork picker、没有 OSS/remote endpoint、且 `should_delay_startup_composer_for_first_login` 为真时，把 `StartupDraftInitialScreen` 设为 `Onboarding`。`StartupDraft::show_initial_screen` 因此不会先画 composer；onboarding 结束后 `StartupDraftPump::show` 才揭示可编辑 composer。[E: codex-rs/tui/src/startup_orchestration.rs:152][E: codex-rs/tui/src/startup_orchestration.rs:158][E: codex-rs/tui/src/startup_orchestration.rs:165][E: codex-rs/tui/src/startup_draft.rs:271][E: codex-rs/tui/src/startup_draft.rs:279]
+`startup_orchestration` 把 `StartupDraftInitialScreen` 设为 `Onboarding` 的条件是：没有 resume/fork/`agents_overview` picker、没有 OSS/remote endpoint、可复用 implicit local daemon 或 search-only override、没有 packaged defaults，且 `should_delay_startup_composer_for_first_login` 为真。`StartupDraft::show_initial_screen` 因此不会先画 composer；onboarding 结束后 `StartupDraftPump::show` 才揭示可编辑 composer。[E: codex-rs/tui/src/startup_orchestration.rs:152][E: codex-rs/tui/src/startup_orchestration.rs:154][E: codex-rs/tui/src/startup_orchestration.rs:156][E: codex-rs/tui/src/startup_orchestration.rs:157][E: codex-rs/tui/src/startup_orchestration.rs:158][E: codex-rs/tui/src/startup_orchestration.rs:165][E: codex-rs/tui/src/startup_draft.rs:271][E: codex-rs/tui/src/startup_draft.rs:279]
 
 `should_delay_startup_composer_for_first_login` 只在默认文件账户尚未能认证时返回 true：环境 token、系统 config、`codex_home` 状态文件、daemon socket 或 managed configuration 任一存在，都会立即显示 composer。[E: codex-rs/tui/src/startup_preflight.rs:22][E: codex-rs/tui/src/startup_preflight.rs:28][E: codex-rs/tui/src/startup_preflight.rs:48][E: codex-rs/tui/src/startup_preflight.rs:69]
 
