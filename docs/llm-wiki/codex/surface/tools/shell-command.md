@@ -1,113 +1,102 @@
 ---
 id: tool.shell-command
-title: shell_command 工具
+title: shell_command（已退役）
 kind: tool
 tier: T1
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/shell_spec.rs, codex-rs/core/src/tools/handlers/shell.rs, codex-rs/core/src/tools/handlers/shell/shell_command.rs, codex-rs/core/src/tools/runtimes/shell.rs, codex-rs/core/src/tools/runtimes/shell/zsh_fork_backend.rs, codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs, codex-rs/tools/src/tool_config.rs, codex-rs/tools/src/tool_executor.rs, codex-rs/tools/src/tool_spec.rs, codex-rs/protocol/src/models.rs, codex-rs/protocol/src/openai_models.rs, codex-rs/features/src/lib.rs]
-symbols: [ShellCommandHandler, ShellCommandHandlerOptions, ShellCommandBackendConfig, ShellCommandToolCallParams, create_shell_command_tool, shell_command_backend_for_features, ShellRuntimeBackend, run_exec_like, ConfigShellToolType::ShellCommand]
-related: [tool.exec-command, tool.write-stdin, subsys.core.tool-system, subsys.exec-sandbox.shell-parsing, subsys.exec-sandbox.shell-escalation]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/registry.rs, codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs, codex-rs/core/src/unified_exec/oneshot.rs, codex-rs/protocol/src/openai_models.rs, codex-rs/core/src/tools/registry_tests.rs]
+symbols: [add_shell_tools, ExecCommandHandler::one_shot, ConfigShellToolType]
+related: [tool.exec-command, tool.write-stdin, subsys.core.tool-system, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 9ded177ce7
+updated: a9519cbcdd
 ---
 
-> `shell_command` 是 Codex 的 legacy shell function surface：模型传 `command: string`，handler 用 turn environment shell 或 session user shell 派生 argv，再走 shared shell runtime 的权限、approval、sandbox 和 output event 流。当前它在 `Default`、`Local` 或 `ShellCommand` shell 类型下通过普通 `add` 注册；`Disabled` 不注册；当 unified-exec 可见时，它以 hidden dispatch-only handler 注册以兼容旧调用。Guardian reviewer turn 不注册该工具。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:157][E: codex-rs/core/src/tools/handlers/shell_spec.rs:213][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:108][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:221][E: codex-rs/core/src/tools/spec_plan.rs:896][E: codex-rs/core/src/tools/spec_plan.rs:930][E: codex-rs/core/src/tools/spec_plan.rs:992][E: codex-rs/core/src/tools/spec_plan.rs:1003][E: codex-rs/core/src/tools/spec_plan.rs:1006]
+> `shell_command` 已退役：`add_shell_tools` 不再注册任何 `ShellCommandHandler`。该名字仍是 reserved name，外部 runtime 不能占用。命令执行只走 `exec_command`；`Feature::UnifiedExec` 关闭时用 `ExecCommandHandler::one_shot`，不是复活 `shell_command`。[E: codex-rs/core/src/tools/spec_plan.rs:1110][E: codex-rs/core/src/tools/registry.rs:362][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:97]
 
 ## 能回答的问题
 
-- `shell_command` 的 wire name、ToolSpec 类型、具体 handler 是什么?
-- 它的 schema 字段和 `ShellCommandToolCallParams` 如何对应?
-- 它在 `spec_plan.rs` 中何时可见、何时 hidden dispatch-only?
-- Windows 默认开启 UnifiedExec 后它通常还可见吗?
-- 它怎样把 shell script 字符串派生为 argv 并运行?
-- zsh-fork backend 在哪里选择和执行?
-- 它是否支持 parallel tool calls，是否等待 runtime cancellation?
+- `shell_command` 现在还有 handler 吗？
+- 为什么 registry 仍把 `shell_command` 当 reserved name？
+- UnifiedExec=off 时模型看到的是什么工具？
+- 模型 `shell_type: "shell_command"` 现在如何反序列化？
+- 旧的 `command: string` schema 还存在吗？
 
 ## 1 Identity
 
 | 项 | 值 |
 |---|---|
-| wire name | `ShellCommandHandler::tool_name()` 返回 plain `"shell_command"`；schema constructor 也把 `ResponsesApiTool.name` 设为 `"shell_command"`。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:154][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:155][E: codex-rs/core/src/tools/handlers/shell_spec.rs:213][E: codex-rs/core/src/tools/handlers/shell_spec.rs:214] |
-| concrete handler | `ShellCommandHandler` 保存 backend 与 options；`ShellCommandHandler::new` 根据 `ShellCommandBackendConfig` 选择 Classic 或 ZshFork。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:47][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:49][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:60][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:61][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:63] |
-| ToolSpec | `create_shell_command_tool` 返回 `ToolSpec::Function(ResponsesApiTool { ... })`，且 `output_schema: None`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:157][E: codex-rs/core/src/tools/handlers/shell_spec.rs:213][E: codex-rs/core/src/tools/handlers/shell_spec.rs:223] |
-| handler contract | handler 实现 `ToolExecutor<ToolInvocation>`，`spec()` 调用 `create_shell_command_tool(...)`，`supports_parallel_tool_calls()` 返回 true。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:154][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:158][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:165][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:166] |
+| wire name | 历史上是 `"shell_command"`。当前 **没有** `ShellCommandHandler`，也没有 `create_shell_command_tool`。`add_shell_tools` 只 `registry.add(ExecCommandHandler::...)`。[E: codex-rs/core/src/tools/spec_plan.rs:1111][E: codex-rs/core/src/tools/spec_plan.rs:1117] |
+| reserved name | `ToolRegistry::register_external` 对 default namespace 下的 `"exec_command" \| "shell_command"` 直接 skip，并 warn `skipping external tool with reserved name`。[E: codex-rs/core/src/tools/registry.rs:361][E: codex-rs/core/src/tools/registry.rs:364] |
+| 测试 | `reserved_command_tools_reject_external_runtimes_without_a_builtin` 同时覆盖 `"exec_command"` 与 `"shell_command"`。[E: codex-rs/core/src/tools/registry_tests.rs:316] |
+| 替代 handler | 模型可见/可 dispatch 的命令工具是 `ExecCommandHandler`，wire name 固定 `"exec_command"`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:107] |
 
 ## 2 用途定位
 
-`shell_command` 的核心输入是一段 shell script 字符串，而不是 argv array。handler 通过 `ShellCommandHandler::base_command(shell, command, use_login_shell)` 调用 `shell.derive_exec_args(...)`，让选中的 shell 解释这段脚本。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:88][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:89][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:108]
+旧 `shell_command` 接收 `command: string`，用 turn/session shell 派生 argv，再走已删除的 `run_exec_like` / `ShellRuntime`。这些类型和文件已不存在。
 
-该工具先构造 `ExecParams`，再进入 `run_exec_like`，由 `ShellRuntime::for_shell_command(...)` 和 `ToolOrchestrator` 执行。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:221][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:234][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:247]
+当前等价能力：
+
+- UnifiedExec **开**：`exec_command` + `write_stdin`，可 resume。[E: codex-rs/core/src/tools/spec_plan.rs:1110]
+- UnifiedExec **关**：`ExecCommandHandler::one_shot`，跑到 completion，不暴露 `session_id` / `write_stdin`。[E: codex-rs/core/src/tools/spec_plan.rs:1117][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:97]
+
+不要把 one-shot `exec_command` 写成 `shell_command` handler。
 
 ## 3 输入 schema 表
 
-| 字段 | 类型 | 必填 | 默认 | 说明 | 校验/运行时 |
-|---|---|---:|---|---|---|
-| `command` | `string` | 是 | 无 | schema properties 固定包含 `command`，required 列表只要求 `command`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:159][E: codex-rs/core/src/tools/handlers/shell_spec.rs:161][E: codex-rs/core/src/tools/handlers/shell_spec.rs:218][E: codex-rs/core/src/tools/handlers/shell_spec.rs:220] | protocol struct `ShellCommandToolCallParams.command` 是 string；handler 解析后用它触发 implicit skill invocation 并派生 argv。[E: codex-rs/protocol/src/models.rs:1884][E: codex-rs/protocol/src/models.rs:1885][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:210][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:214] |
-| `workdir` | `string` | 否 | turn cwd | schema 描述工作目录默认 turn cwd。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:166][E: codex-rs/core/src/tools/handlers/shell_spec.rs:168] | handler 从 primary turn environment 取默认 cwd，再用 `resolve_workdir_base_path` 解析模型传入的 workdir。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:197][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:209][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:210] |
-| `timeout_ms` | `number` | 否 | runtime expiration default | schema 描述最大运行时间默认 10000ms。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:172][E: codex-rs/core/src/tools/handlers/shell_spec.rs:174] | protocol struct 支持 `timeout_ms`，并通过 serde alias 接受 `timeout`；`to_exec_params` 把它转为 `ExecParams.expiration`。[E: codex-rs/protocol/src/models.rs:1892][E: codex-rs/protocol/src/models.rs:1893][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:126] |
-| `login` | `boolean` | 否 | `allow_login_shell` | 只有 `allow_login_shell` 为 true 时 schema 插入 `login`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:178][E: codex-rs/core/src/tools/handlers/shell_spec.rs:180] | `resolve_use_login_shell` 在 config 禁止 login shell 但模型传 `true` 时返回模型错误，否则使用配置默认值。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:79][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:81][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:85] |
-| `sandbox_permissions` | enum string | 否 | `use_default` | approval helper 插入 sandbox override 字段。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:187][E: codex-rs/core/src/tools/handlers/shell_spec.rs:314] | protocol 字段是 optional；`to_exec_params` 统一调用 resolver。若给出 `justification` 却省略本字段，会返回模型错误。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:118][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:120] |
-| `additional_permissions` | object | 否 | 无 | ExecPermissionApprovals 开启时 approval helper 才插入。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:334][E: codex-rs/core/src/tools/handlers/shell_spec.rs:340] | handler 把它传给 `run_exec_like`，后者合并 turn grants 并校验是否允许请求 additional permissions。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:240] |
-| `justification` | `string` | 否 | 无 | approval helper 插入用户可见说明字段。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:321][E: codex-rs/core/src/tools/handlers/shell_spec.rs:323] | 只能与显式 `sandbox_permissions` 一起使用；unsandboxed 请求应使用 `require_escalated`。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:118] |
-| `prefix_rule` | `array<string>` | 否 | 无 | approval helper 插入可复用 approval prefix 字段；当前 schema 文案仍写 `cmd`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:327][E: codex-rs/core/src/tools/handlers/shell_spec.rs:329] | handler 克隆 `prefix_rule` 并传入 shared run path，最后进入 exec approval request。[E: codex-rs/protocol/src/models.rs:1898][E: codex-rs/protocol/src/models.rs:1899][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:220][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:241] |
+`shell_command` **不再发布 schema**。`shell_spec.rs` 只构造 `exec_command` / `write_stdin` / `request_permissions`。
 
-`parameters` 使用 `JsonSchema::object(..., Some(vec!["command"]), Some(false))`，所以 schema 层 required 只有 `command`，并关闭 additional properties。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:218][E: codex-rs/core/src/tools/handlers/shell_spec.rs:220][E: codex-rs/core/src/tools/handlers/shell_spec.rs:221]
+历史字段（`command` / `workdir` / `timeout_ms` / `login` / `sandbox_permissions`）不再有 constructor。one-shot `exec_command` 用 `cmd` + `timeout_ms`，并从 spec 里去掉 `tty` / `yield_time_ms` / output `session_id`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:455][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:465]
+
+| 字段（历史） | 当前去向 |
+|---|---|
+| `command` | 由 `exec_command.cmd` 取代 |
+| `timeout_ms` | one-shot `exec_command` 才插入该字段 |
+| `login` / `sandbox_permissions` / `justification` | 仍在 `exec_command` schema（按 options 插入） |
+| `workdir` | `exec_command.workdir` |
 
 ## 4 输出与截断
 
-`shell_command` 不声明 structured `output_schema`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:223] 它最终返回 `FunctionToolOutput`，body 是单个 `InputText` content item。
+没有 `shell_command` output schema。one-shot `exec_command` 复用 unified-exec output schema，但会从 output properties 删除 `session_id`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:473][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:479]
 
-执行输出的捕获策略在 `to_exec_params` 中是 `ExecCapturePolicy::ShellTool`。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:127]
+超时后 `exec_command_to_completion` 把 `output.process_id = None`，因此不能续写。[E: codex-rs/core/src/unified_exec/oneshot.rs:78]
 
 ## 5 注册与门控
 
-`add_shell_tools` 没有 environment 时直接返回，并额外要求存在恰好一个 local environment 才构造 `shell_command`；remote-only 或 multi-environment turn 不注册该 legacy surface。[E: codex-rs/core/src/tools/spec_plan.rs:961][E: codex-rs/core/src/tools/spec_plan.rs:965][E: codex-rs/core/src/tools/spec_plan.rs:972]
+`add_shell_tools` 的门控是 environment + `Feature::ShellTool` + 模型 `shell_type != Disabled`。[E: codex-rs/core/src/tools/spec_plan.rs:1090]
 
-Guardian reviewer 路径在 `add_core_tool_sources` 提前返回，只暴露 unified-exec 工具，不注册 `shell_command`。[E: codex-rs/core/src/tools/spec_plan.rs:896][E: codex-rs/core/src/tools/spec_plan.rs:930]
+`ConfigShellToolType` 只剩两个变体：`UnifiedExec`（serde alias 包含 `"default"` / `"local"` / `"shell_command"`）和 `Disabled`。模型 JSON 写 `"shell_type": "shell_command"` 会反序列化成 `UnifiedExec`，**不会**注册旧 handler。[E: codex-rs/protocol/src/openai_models.rs:302][E: codex-rs/protocol/src/openai_models.rs:303]
 
-当 shell 类型是 `UnifiedExec` 时，single-local 条件满足才以 `ToolExposure::Hidden` 注册兼容 handler；`Default`、`Local` 或 `ShellCommand` 类型则以默认 Direct exposure 注册。[E: codex-rs/core/src/tools/spec_plan.rs:979][E: codex-rs/core/src/tools/spec_plan.rs:992][E: codex-rs/core/src/tools/spec_plan.rs:997][E: codex-rs/core/src/tools/spec_plan.rs:1003][E: codex-rs/core/src/tools/spec_plan.rs:1006]
-
-`Feature::UnifiedExec` 现在全平台默认 `true`（含 Windows）。因此默认配置下，只要 ConPTY 可用，模型可见面是 `exec_command`/`write_stdin`，`shell_command` 只作为 hidden dispatch-only 兼容 handler 存在。[E: codex-rs/features/src/lib.rs:838][E: codex-rs/features/src/lib.rs:841][E: codex-rs/tools/src/tool_config.rs:105][E: codex-rs/tools/src/tool_config.rs:108][E: codex-rs/tools/src/tool_config.rs:111]
-
-shell 类型由 feature/model 合成：`Default`/`Local` 被映射成 `ShellCommand`；如果模型请求 `UnifiedExec` 但 unified-exec feature mode disabled，也回落到 `ShellCommand`；`ShellZshFork` backend 会把 shell command type 固定为 `ShellCommand`；ShellTool 关闭会 `Disabled`；UnifiedExec 模式还可能因 ConPTY 不支持回落到 `ShellCommand`。[E: codex-rs/tools/src/tool_config.rs:67][E: codex-rs/tools/src/tool_config.rs:68][E: codex-rs/tools/src/tool_config.rs:70][E: codex-rs/tools/src/tool_config.rs:88][E: codex-rs/tools/src/tool_config.rs:93][E: codex-rs/tools/src/tool_config.rs:97][E: codex-rs/tools/src/tool_config.rs:99][E: codex-rs/tools/src/tool_config.rs:102][E: codex-rs/tools/src/tool_config.rs:108][E: codex-rs/tools/src/tool_config.rs:111]
+Guardian reviewer 路径也不注册 `shell_command`；它只可能注册 `exec_command` / `write_stdin` / `view_image`。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1009]
 
 ## 6 parallel support / cancellation wait
 
-`ShellCommandHandler::supports_parallel_tool_calls()` 返回 `true`。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:165][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:166] 它还覆写 `waits_for_runtime_cancellation()`，返回 `true`。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:259][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:260]
+本节点没有独立 handler，因此没有 `supports_parallel_tool_calls` 实现。替代工具 `ExecCommandHandler` 返回 `true`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:126]
+
+one-shot 路径用 child cancellation token；取消时 `terminate_confirmed` 目标进程。[E: codex-rs/core/src/unified_exec/oneshot.rs:37][E: codex-rs/core/src/unified_exec/oneshot.rs:59]
 
 ## 7 handler 走读
 
-1. handler 只接受 `ToolPayload::Function { arguments }`，否则返回 unsupported payload。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:191][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:192][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:193]
-2. 它解析 workdir base 和 `ShellCommandToolCallParams`，触发 implicit skill invocation，并保存 `prefix_rule`。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:209][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:210][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:211][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:220]
-3. `to_exec_params` 用 turn environment shell 或 session user shell、login-shell 规则和 `base_command` 构造 argv，并将 command、cwd、timeout、env policy、network、turn environment id、sandbox permissions、justification 放入 `ExecParams`。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:99][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:103][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:104][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:108][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:123][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:126][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:130]
-4. handler 要求 primary turn environment 存在；`run_exec_like` 使用传入的 turn environment 合并 granted permissions，并校验 explicit escalation 和 additional permissions。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:197][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:198][E: codex-rs/core/src/tools/handlers/shell.rs:130]
-5. shared path 先拦截 `apply_patch`，再发 begin event，建立 exec approval requirement。[E: codex-rs/core/src/tools/handlers/shell.rs:146][E: codex-rs/core/src/tools/handlers/shell.rs:147]
-6. 它构造 `ShellRequest`，创建 `ToolOrchestrator` 和 `ShellRuntime::for_shell_command(...)`，再运行 runtime。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:234][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:247]
-7. runtime 结束后，handler 通过 emitter finish 生成 model content，并包装为 `FunctionToolOutput`。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:250]
+没有 `ShellCommandHandler`。若外部工具试图以 `shell_command` 注册，`register_external` 拒绝并记录 reserved-name collision。[E: codex-rs/core/src/tools/registry.rs:362][E: codex-rs/core/src/tools/registry.rs:364]
 
-## 8 zsh-fork 与 hooks
+模型若仍发出名为 `shell_command` 的 function call，registry 没有对应 builtin，调用会按未知工具失败。[I]
 
-`ShellRuntimeBackend` 只有 `ShellCommandClassic` 和 `ShellCommandZshFork` 两种 shell-command backend；ZshFork shell-command backend 调用 `zsh_fork_backend::maybe_run_shell_command`。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:69][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:70][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:71]
+## 8 设计动机·edge·历史
 
-pre hook 用 Bash hook name 暴露原始 command，hook rewrite 会写回 `command` 字段；post hook 同样用 Bash hook name，并把 tool response 交给 hook runtime。[E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:263][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:264][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:265][E: codex-rs/core/src/tools/handlers/shell/shell_command.rs:266]
+- 删除 `handlers/shell.rs`、`handlers/shell/shell_command.rs`、`runtimes/shell.rs` 后，命令执行只剩 unified-exec 一条路径。
+- UnifiedExec=off 用 one-shot `exec_command` 保留“跑一条命令并返回输出”，同时禁止 resumable process，避免绕过 managed requirements。[E: codex-rs/core/src/tools/spec_plan.rs:1117]
+- reserved name 阻止 MCP/extension 抢占旧模型仍可能吐出的 `shell_command` 名字。[E: codex-rs/core/src/tools/registry.rs:362]
 
 ## Sources
 
 - `codex-rs/core/src/tools/spec_plan.rs`
-- `codex-rs/core/src/tools/handlers/shell_spec.rs`
-- `codex-rs/core/src/tools/handlers/shell.rs`
-- `codex-rs/core/src/tools/handlers/shell/shell_command.rs`
-- `codex-rs/core/src/tools/runtimes/shell.rs`
-- `codex-rs/core/src/tools/runtimes/shell/zsh_fork_backend.rs`
-- `codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs`
-- `codex-rs/tools/src/tool_config.rs`
-- `codex-rs/tools/src/tool_executor.rs`
-- `codex-rs/tools/src/tool_spec.rs`
-- `codex-rs/protocol/src/models.rs`
+- `codex-rs/core/src/tools/registry.rs`
+- `codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs`
+- `codex-rs/core/src/unified_exec/oneshot.rs`
 - `codex-rs/protocol/src/openai_models.rs`
-- `codex-rs/features/src/lib.rs`
+- `codex-rs/core/src/tools/registry_tests.rs`
 
 ## 相关
 
-- [exec_command 工具](exec-command.md) — unified-exec 可见 shell surface 的启动工具。
-- [write_stdin 工具](write-stdin.md) — unified-exec session 的 stdin/poll 续写工具。
+- [exec_command 工具](exec-command.md) — 当前唯一命令执行 handler。
+- [write_stdin 工具](write-stdin.md) — 仅 UnifiedExec=on 时注册。
+- [shell exec flow](../../spine/shell-exec-flow.md)

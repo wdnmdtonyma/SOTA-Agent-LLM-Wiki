@@ -8,10 +8,10 @@ symbols: [parse_patch, parse_patch_text, StreamingPatchParser, Hunk, UpdateFileC
 related: [tool.apply-patch, spine.trace-apply-patch, subsys.exec-sandbox.arg0-dispatch]
 evidence: explicit
 status: verified
-updated: 9ded177ce7
+updated: a9519cbcdd
 ---
 
-> apply_patch engine 把 custom tool 或 shell-heredoc 里的 patch 文本解析成 add/delete/update hunks，再用 filesystem abstraction 计算替换、写文件、移动文件或删除文件。[E: codex-rs/apply-patch/src/parser.rs:145][E: codex-rs/apply-patch/src/lib.rs:319][E: codex-rs/apply-patch/src/lib.rs:450]
+> apply_patch engine 把 custom tool 或 shell-heredoc 里的 patch 文本解析成 add/delete/update hunks，再用 filesystem abstraction 计算替换、写文件、移动文件或删除文件。[E: codex-rs/apply-patch/src/parser.rs:145][E: codex-rs/apply-patch/src/lib.rs:339][E: codex-rs/apply-patch/src/lib.rs:470]
 
 ## 能回答的问题
 
@@ -27,13 +27,13 @@ updated: 9ded177ce7
 
 apply_patch engine 节点覆盖 `codex_apply_patch` crate 的 parser、invocation classifier、patch application 和 replacement algorithm，并记录 core runtime 怎样把 verified patch 接到 permission/sandbox boundary。它不覆盖模型可见 tool schema；tool schema 在 `tool.apply-patch`，shell/unified exec 的完整 interception trace 在 `spine.trace-apply-patch`。[I]
 
-`CODEX_CORE_APPLY_PATCH_ARG1` 是 core 内部 argv1 marker，用来让 arg0 dispatch 直接执行 apply_patch body；它不是用户输入语法的一部分。[E: codex-rs/apply-patch/src/lib.rs:52]
+`CODEX_CORE_APPLY_PATCH_ARG1` 是 core 内部 argv1 marker，用来让 arg0 dispatch 直接执行 apply_patch body；它不是用户输入语法的一部分。[E: codex-rs/apply-patch/src/lib.rs:55]
 
 ## 关键 crate/文件
 
 - `codex-rs/apply-patch/src/parser.rs`: patch 文本 parser、hunk AST、strict/lenient boundary handling 和 parse errors；streaming state lives in `streaming_parser.rs`.[E: codex-rs/apply-patch/src/parser.rs:53][E: codex-rs/apply-patch/src/parser.rs:66][E: codex-rs/apply-patch/src/parser.rs:145][E: codex-rs/apply-patch/src/parser.rs:193]
-- `codex-rs/apply-patch/src/lib.rs`: public API、patch application、filesystem writes/deletes/moves 和 summary printing。[E: codex-rs/apply-patch/src/lib.rs:1][E: codex-rs/apply-patch/src/lib.rs:319][E: codex-rs/apply-patch/src/lib.rs:450][E: codex-rs/apply-patch/src/lib.rs:766]
-- `codex-rs/apply-patch/src/file_update.rs`: update hunk 的 replacement 计算和 `derive_new_contents_from_chunks`。[E: codex-rs/apply-patch/src/file_update.rs:25][E: codex-rs/apply-patch/src/file_update.rs:82]
+- `codex-rs/apply-patch/src/lib.rs`: public API、patch application、filesystem writes/deletes/moves 和 summary printing。[E: codex-rs/apply-patch/src/lib.rs:1][E: codex-rs/apply-patch/src/lib.rs:339][E: codex-rs/apply-patch/src/lib.rs:470][E: codex-rs/apply-patch/src/lib.rs:862]
+- `codex-rs/apply-patch/src/file_update.rs`: update hunk 的 replacement 计算和 `derive_new_contents_from_chunks`。[E: codex-rs/apply-patch/src/file_update.rs:26][E: codex-rs/apply-patch/src/file_update.rs:87]
 - `codex-rs/apply-patch/src/text_file.rs`: `SourceFile` 按 LF/CRLF/CR 拆行并保留每行 terminator。[E: codex-rs/apply-patch/src/text_file.rs:3][E: codex-rs/apply-patch/src/text_file.rs:25][E: codex-rs/apply-patch/src/text_file.rs:35]
 - `codex-rs/apply-patch/src/invocation.rs`: shell command classifier，把 direct `apply_patch` 或 heredoc shell form 解析为 patch body。[E: codex-rs/apply-patch/src/invocation.rs:28]
 - `codex-rs/apply-patch/src/seek_sequence.rs`: update chunk 的 fuzzy line seek helper，并按 update mode 调整 EOF 搜索起点。[E: codex-rs/apply-patch/src/seek_sequence.rs:12][E: codex-rs/apply-patch/src/seek_sequence.rs:32]
@@ -44,9 +44,9 @@ apply_patch engine 节点覆盖 `codex_apply_patch` crate 的 parser、invocatio
 - `Hunk`: `AddFile { path, contents }`、`DeleteFile { path }`、`UpdateFile { path, move_path, chunks }` 三种 patch action。[E: codex-rs/apply-patch/src/parser.rs:66][E: codex-rs/apply-patch/src/parser.rs:68][E: codex-rs/apply-patch/src/parser.rs:72]
 - `Hunk::resolve_path`: add/delete/update 都用 hunk 的原 path 做 filesystem resolution；`Hunk::path` 在 update-with-move 场景会返回 move destination。[E: codex-rs/apply-patch/src/parser.rs:85][E: codex-rs/apply-patch/src/parser.rs:87][E: codex-rs/apply-patch/src/parser.rs:94][E: codex-rs/apply-patch/src/parser.rs:98]
 - `UpdateFileChunk`: 每个 update chunk 包含 optional `change_context`、`old_lines`、`new_lines`、`context_line_indices` 和 `is_end_of_file` 标志。[E: codex-rs/apply-patch/src/parser.rs:115][E: codex-rs/apply-patch/src/parser.rs:118][E: codex-rs/apply-patch/src/parser.rs:122][E: codex-rs/apply-patch/src/parser.rs:127][E: codex-rs/apply-patch/src/parser.rs:131]
-- `ApplyPatchFileUpdateMode`: 默认 `NormalizeToLf`；`PreserveLineEndings` 保留现有行结尾，并用文件首选 ending 写新行。[E: codex-rs/apply-patch/src/lib.rs:61][E: codex-rs/apply-patch/src/lib.rs:64][E: codex-rs/apply-patch/src/lib.rs:66]
-- `ApplyPatchArgs`: parser 输出 `patch` 原文、`hunks` AST、optional `workdir` 和 optional `environment_id`。[E: codex-rs/apply-patch/src/lib.rs:132][E: codex-rs/apply-patch/src/lib.rs:133][E: codex-rs/apply-patch/src/lib.rs:134][E: codex-rs/apply-patch/src/lib.rs:135][E: codex-rs/apply-patch/src/lib.rs:136]
-- `MaybeApplyPatchVerified`: classifier 的结果可能是 `Body`、`ShellParseError`、`CorrectnessError` 或 `NotApplyPatch`。[E: codex-rs/apply-patch/src/lib.rs:156]
+- `ApplyPatchFileUpdateMode`: 默认 `NormalizeToLf`；`PreserveLineEndings` 保留现有行结尾，并用文件首选 ending 写新行。[E: codex-rs/apply-patch/src/lib.rs:64][E: codex-rs/apply-patch/src/lib.rs:67][E: codex-rs/apply-patch/src/lib.rs:69]
+- `ApplyPatchArgs`: parser 输出 `patch` 原文、`hunks` AST、optional `workdir` 和 optional `environment_id`。[E: codex-rs/apply-patch/src/lib.rs:152][E: codex-rs/apply-patch/src/lib.rs:153][E: codex-rs/apply-patch/src/lib.rs:154][E: codex-rs/apply-patch/src/lib.rs:155][E: codex-rs/apply-patch/src/lib.rs:156]
+- `MaybeApplyPatchVerified`: classifier 的结果可能是 `Body`、`ShellParseError`、`CorrectnessError` 或 `NotApplyPatch`。[E: codex-rs/apply-patch/src/lib.rs:176]
 
 ## parser 控制流
 
@@ -61,15 +61,15 @@ apply_patch engine 节点覆盖 `codex_apply_patch` crate 的 parser、invocatio
 
 ## application 控制流
 
-1. `apply_patch` 默认调用 `apply_patch_with_mode(..., NormalizeToLf)`；parse error 会打印 `Invalid patch:`，然后调用 `apply_hunks_with_mode`。[E: codex-rs/apply-patch/src/lib.rs:319][E: codex-rs/apply-patch/src/lib.rs:327][E: codex-rs/apply-patch/src/lib.rs:329][E: codex-rs/apply-patch/src/lib.rs:350][E: codex-rs/apply-patch/src/lib.rs:355][E: codex-rs/apply-patch/src/lib.rs:377]
-2. `apply_hunks_with_mode` 调用 `apply_hunks_to_files`，成功后打印 summary；失败时先把 error 文本写到 stderr，若底层是 `std::io::Error` 则转为 IO error，否则包装为 `ApplyPatchError::IoError`。[E: codex-rs/apply-patch/src/lib.rs:403][E: codex-rs/apply-patch/src/lib.rs:413][E: codex-rs/apply-patch/src/lib.rs:415][E: codex-rs/apply-patch/src/lib.rs:425][E: codex-rs/apply-patch/src/lib.rs:428]
-3. `apply_hunks_to_files` 拒绝空 hunk 列表，然后逐个 hunk 处理并记录 added/modified/deleted path sets。[E: codex-rs/apply-patch/src/lib.rs:450][E: codex-rs/apply-patch/src/lib.rs:458][E: codex-rs/apply-patch/src/lib.rs:480]
-4. Add file 调用 `write_file_with_missing_parent_retry`；如果 parent directory missing，会尝试创建 parent 后再写一次。[E: codex-rs/apply-patch/src/lib.rs:484][E: codex-rs/apply-patch/src/lib.rs:489][E: codex-rs/apply-patch/src/lib.rs:726]
-5. Delete file 先取 metadata，拒绝删除 directory，然后用 `RemoveOptions { recursive: false, force: false }` 删除 file。[E: codex-rs/apply-patch/src/lib.rs:506][E: codex-rs/apply-patch/src/lib.rs:512][E: codex-rs/apply-patch/src/lib.rs:520][E: codex-rs/apply-patch/src/lib.rs:523][E: codex-rs/apply-patch/src/lib.rs:524]
-6. Update file 先 `derive_new_contents_from_chunks`，如果存在 `move_path` 则写 destination 并删除原 path，否则写回原 path。[E: codex-rs/apply-patch/src/lib.rs:561][E: codex-rs/apply-patch/src/lib.rs:569][E: codex-rs/apply-patch/src/lib.rs:575][E: codex-rs/apply-patch/src/lib.rs:636]
-7. `derive_new_contents_from_chunks` 现在按 `ApplyPatchFileUpdateMode` 分叉：`NormalizeToLf` 仍按 `\n` split、去掉 trailing empty line、反向 apply replacements，并确保最终内容以 newline 结尾；`PreserveLineEndings` 用 `SourceFile` 保留每行原 terminator，新行使用文件首选 ending。[E: codex-rs/apply-patch/src/file_update.rs:43][E: codex-rs/apply-patch/src/file_update.rs:45][E: codex-rs/apply-patch/src/file_update.rs:59][E: codex-rs/apply-patch/src/file_update.rs:62][E: codex-rs/apply-patch/src/file_update.rs:64][E: codex-rs/apply-patch/src/file_update.rs:70]
+1. `apply_patch` 默认调用 `apply_patch_with_mode(..., NormalizeToLf)`；parse error 会打印 `Invalid patch:`，然后调用 `apply_hunks_with_mode`。[E: codex-rs/apply-patch/src/lib.rs:339][E: codex-rs/apply-patch/src/lib.rs:347][E: codex-rs/apply-patch/src/lib.rs:349][E: codex-rs/apply-patch/src/lib.rs:370][E: codex-rs/apply-patch/src/lib.rs:375][E: codex-rs/apply-patch/src/lib.rs:397]
+2. `apply_hunks_with_mode` 调用 `apply_hunks_to_files`，成功后打印 summary；失败时先把 error 文本写到 stderr，若底层是 `std::io::Error` 则转为 IO error，否则包装为 `ApplyPatchError::IoError`。[E: codex-rs/apply-patch/src/lib.rs:423][E: codex-rs/apply-patch/src/lib.rs:433][E: codex-rs/apply-patch/src/lib.rs:435][E: codex-rs/apply-patch/src/lib.rs:445][E: codex-rs/apply-patch/src/lib.rs:448]
+3. `apply_hunks_to_files` 拒绝空 hunk 列表，然后逐个 hunk 处理并记录 added/modified/deleted path sets。[E: codex-rs/apply-patch/src/lib.rs:470][E: codex-rs/apply-patch/src/lib.rs:482][E: codex-rs/apply-patch/src/lib.rs:504]
+4. Add file 调用 `write_file_with_missing_parent_retry`；如果 parent directory missing，会尝试创建 parent 后再写一次。[E: codex-rs/apply-patch/src/lib.rs:508][E: codex-rs/apply-patch/src/lib.rs:518][E: codex-rs/apply-patch/src/lib.rs:801]
+5. Delete file 先取 metadata，拒绝删除 directory，然后用 `RemoveOptions { recursive: false, force: false }` 删除 file。[E: codex-rs/apply-patch/src/lib.rs:536][E: codex-rs/apply-patch/src/lib.rs:552][E: codex-rs/apply-patch/src/lib.rs:560][E: codex-rs/apply-patch/src/lib.rs:563][E: codex-rs/apply-patch/src/lib.rs:564]
+6. Update file 先 `derive_new_contents_from_chunks`，如果存在 `move_path` 则写 destination 并删除原 path，否则写回原 path。[E: codex-rs/apply-patch/src/lib.rs:610][E: codex-rs/apply-patch/src/lib.rs:619][E: codex-rs/apply-patch/src/lib.rs:630][E: codex-rs/apply-patch/src/lib.rs:694]
+7. `derive_new_contents_from_chunks` 现在按 `ApplyPatchFileUpdateMode` 分叉：`NormalizeToLf` 仍按 `\n` split、去掉 trailing empty line、反向 apply replacements，并确保最终内容以 newline 结尾；`PreserveLineEndings` 用 `SourceFile` 保留每行原 terminator，新行使用文件首选 ending。[E: codex-rs/apply-patch/src/file_update.rs:48][E: codex-rs/apply-patch/src/file_update.rs:50][E: codex-rs/apply-patch/src/file_update.rs:64][E: codex-rs/apply-patch/src/file_update.rs:67][E: codex-rs/apply-patch/src/file_update.rs:69][E: codex-rs/apply-patch/src/file_update.rs:75]
 8. `SourceFile::parse` 识别 `\r\n`、单独 `\r` 和 `\n`；第一个现有 ending 成为 preferred style，没有 ending 时默认 LF。apply 后每行都会补上 ending，以匹配历史 trailing-newline 行为。[E: codex-rs/apply-patch/src/text_file.rs:42][E: codex-rs/apply-patch/src/text_file.rs:46][E: codex-rs/apply-patch/src/text_file.rs:53][E: codex-rs/apply-patch/src/text_file.rs:71][E: codex-rs/apply-patch/src/text_file.rs:84][E: codex-rs/apply-patch/src/text_file.rs:106]
-9. PreserveLineEndings 的 `compute_replacements` 会按 `context_line_indices` 把 context 行留在原位，只替换真正变更的区间，从而保留 mixed line endings。[E: codex-rs/apply-patch/src/file_update.rs:172][E: codex-rs/apply-patch/src/file_update.rs:178][E: codex-rs/apply-patch/src/file_update.rs:185]
+9. PreserveLineEndings 的 `compute_replacements` 会按 `context_line_indices` 把 context 行留在原位，只替换真正变更的区间，从而保留 mixed line endings。[E: codex-rs/apply-patch/src/file_update.rs:177][E: codex-rs/apply-patch/src/file_update.rs:183][E: codex-rs/apply-patch/src/file_update.rs:190]
 10. `seek_sequence` 先 exact match，再 trim-end、trim-both、Unicode normalize fallback。EOF chunk 在 `NormalizeToLf` 下从文件末尾起搜；`PreserveLineEndings` 则取 `eof_start.max(start)`，避免越过已消费的上下文。[E: codex-rs/apply-patch/src/seek_sequence.rs:32][E: codex-rs/apply-patch/src/seek_sequence.rs:33][E: codex-rs/apply-patch/src/seek_sequence.rs:34][E: codex-rs/apply-patch/src/seek_sequence.rs:40][E: codex-rs/apply-patch/src/seek_sequence.rs:46][E: codex-rs/apply-patch/src/seek_sequence.rs:59]
 
 ## shell invocation classifier
@@ -80,31 +80,31 @@ apply_patch engine 节点覆盖 `codex_apply_patch` crate 的 parser、invocatio
 
 ## Core runtime 与 workspace protection
 
-direct custom-tool handler 和 shell/unified-exec interception 在验证成功后都进入 `execute_verified_patch`；该共用路径计算 effective permissions、运行 safety preparation，再构造 `ApplyPatchRequest` 交给 `ToolOrchestrator` 与 `ApplyPatchRuntime`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:420][E: codex-rs/core/src/tools/handlers/apply_patch.rs:514][E: codex-rs/core/src/tools/handlers/apply_patch.rs:531][E: codex-rs/core/src/tools/handlers/apply_patch.rs:547][E: codex-rs/core/src/tools/handlers/apply_patch.rs:558][E: codex-rs/core/src/tools/handlers/apply_patch.rs:578]
+direct custom-tool handler 和 shell/unified-exec interception 在验证成功后都进入 `execute_verified_patch`；该共用路径计算 effective permissions、运行 safety preparation，再构造 `ApplyPatchRequest` 交给 `ToolOrchestrator` 与 `ApplyPatchRuntime`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:430][E: codex-rs/core/src/tools/handlers/apply_patch.rs:524][E: codex-rs/core/src/tools/handlers/apply_patch.rs:542][E: codex-rs/core/src/tools/handlers/apply_patch.rs:558][E: codex-rs/core/src/tools/handlers/apply_patch.rs:569][E: codex-rs/core/src/tools/handlers/apply_patch.rs:589]
 
-core 通过 `Feature::ApplyPatchPreserveLineEndings` 选择 update mode；feature 当前 under-development 且默认关闭。standalone/arg0 路径则读 `CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS` env。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:60][E: codex-rs/core/src/tools/handlers/apply_patch.rs:64][E: codex-rs/features/src/lib.rs:1006][E: codex-rs/features/src/lib.rs:1009][E: codex-rs/apply-patch/src/lib.rs:56][E: codex-rs/apply-patch/src/lib.rs:71][E: codex-rs/apply-patch/src/lib.rs:73]
+core 通过 `Feature::ApplyPatchPreserveLineEndings` 选择 update mode；feature 当前 under-development 且默认关闭。standalone/arg0 路径则读 `CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS` env。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:61][E: codex-rs/core/src/tools/handlers/apply_patch.rs:65][E: codex-rs/features/src/lib.rs:1112][E: codex-rs/features/src/lib.rs:1115][E: codex-rs/apply-patch/src/lib.rs:59][E: codex-rs/apply-patch/src/lib.rs:91][E: codex-rs/apply-patch/src/lib.rs:93]
 
-runtime 实际写入时调用 `apply_patch_with_mode`，把 request 上的 update mode 传进 crate。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:176][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:178]
+runtime 实际写入时调用 `apply_patch_with_mode`，把 request 上的 update mode 传进 crate。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:179][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:181]
 
-Sandboxed patch runtime 从 executor base `PermissionProfile` 加上本次 patch 的 additional permissions 构造 filesystem context，并把 workspace roots 作为独立边界保留；它不会直接复用已经 materialize workspace roots 的 attempt profile。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:87][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:94][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:98][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:101]
+Sandboxed patch runtime 从 executor base `PermissionProfile` 加上本次 patch 的 additional permissions 构造 filesystem context，并把 workspace roots 作为独立边界保留；它不会直接复用已经 materialize workspace roots 的 attempt profile。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:88][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:95][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:99][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:104]
 
-Restricted filesystem policy 默认保护 writable project roots 下的 `.git`、`.agents`、`.codex`；只有对具体 metadata path 的显式 write entry 才能形成更窄的例外。普通 workspace writable 并不等于这些 metadata children 可写。[E: codex-rs/protocol/src/permissions.rs:22][E: codex-rs/protocol/src/permissions.rs:27][E: codex-rs/protocol/src/permissions.rs:42][E: codex-rs/protocol/src/permissions.rs:57][E: codex-rs/protocol/src/permissions.rs:623][E: codex-rs/protocol/src/permissions.rs:624][E: codex-rs/protocol/src/permissions.rs:625]
+Restricted filesystem policy 默认保护 writable project roots 下的 `.git`、`.agents`、`.codex`；只有对具体 metadata path 的显式 write entry 才能形成更窄的例外。普通 workspace writable 并不等于这些 metadata children 可写。[E: codex-rs/protocol/src/permissions.rs:27][E: codex-rs/protocol/src/permissions.rs:32][E: codex-rs/protocol/src/permissions.rs:47][E: codex-rs/protocol/src/permissions.rs:62][E: codex-rs/protocol/src/permissions.rs:789][E: codex-rs/protocol/src/permissions.rs:790][E: codex-rs/protocol/src/permissions.rs:791]
 
-patch 执行失败且被判断为 sandbox denial 时，runtime 会记录 normalized filesystem violation，再把结果映射成 sandbox-denied error；该记录是 tracing seam，不是新的 protocol event。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:203][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:209][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:213]
+patch 执行失败且被判断为 sandbox denial 时，runtime 会记录 normalized filesystem violation，再把结果映射成 sandbox-denied error；该记录是 tracing seam，不是新的 protocol event。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:216][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:222][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:226]
 
 ## 设计动机与权衡
 
 - parser 默认 lenient mode，说明 engine 更愿意从裸 patch 或有限 heredoc boundary 中恢复 patch，而不是只接受严格裸 patch 文本。[E: codex-rs/apply-patch/src/parser.rs:53][E: codex-rs/apply-patch/src/parser.rs:145][E: codex-rs/apply-patch/src/parser.rs:149][E: codex-rs/apply-patch/src/parser.rs:235][E: codex-rs/apply-patch/src/parser.rs:242]
 - replacement computation 使用 seek/fuzzy matching 而不是直接按行号应用，因为 apply_patch grammar 没有行号字段，chunk 的旧行和 context 是唯一定位信息。[I]
-- PreserveLineEndings 把 context 行留在原位，是为了 mixed line endings 文件不会被整段替换成单一 ending。[E: codex-rs/apply-patch/src/file_update.rs:176][E: codex-rs/apply-patch/src/file_update.rs:176]
+- PreserveLineEndings 把 context 行留在原位，是为了 mixed line endings 文件不会被整段替换成单一 ending。[E: codex-rs/apply-patch/src/file_update.rs:181][E: codex-rs/apply-patch/src/file_update.rs:181]
 
 ## gotcha
 
 - Add File hunk 只消费 `+` 行；遇到新的 hunk header/end marker 会结束 Add File，其他非 `+` 行会报 invalid hunk header，因此空 Add File hunk 在 streaming parser 层可以生成空 contents。[E: codex-rs/apply-patch/src/streaming_parser.rs:198][E: codex-rs/apply-patch/src/streaming_parser.rs:202][E: codex-rs/apply-patch/src/streaming_parser.rs:205][E: codex-rs/apply-patch/src/streaming_parser.rs:209]
-- Delete File 不会递归删除目录；目录 metadata 会导致错误。[E: codex-rs/apply-patch/src/lib.rs:512]
+- Delete File 不会递归删除目录；目录 metadata 会导致错误。[E: codex-rs/apply-patch/src/lib.rs:552]
 - Update hunk 没有任何 chunk 时会被拒绝，不会生成 no-op update。[E: codex-rs/apply-patch/src/streaming_parser.rs:53][E: codex-rs/apply-patch/src/streaming_parser.rs:55]
 - `StreamingPatchParser` is real incremental state: callers can push deltas, inspect `environment_id`, and finish hunks; the non-streaming parser reuses it by pushing the full patch text once.[E: codex-rs/apply-patch/src/streaming_parser.rs:22][E: codex-rs/apply-patch/src/streaming_parser.rs:49][E: codex-rs/apply-patch/src/streaming_parser.rs:139][E: codex-rs/apply-patch/src/streaming_parser.rs:154][E: codex-rs/apply-patch/src/parser.rs:201][E: codex-rs/apply-patch/src/parser.rs:203]
-- 未开 `apply_patch_preserve_line_endings` 时，update 仍会把目标文件归一化成 LF。[E: codex-rs/apply-patch/src/lib.rs:327][E: codex-rs/apply-patch/src/file_update.rs:44][E: codex-rs/apply-patch/src/file_update.rs:62]
+- 未开 `apply_patch_preserve_line_endings` 时，update 仍会把目标文件归一化成 LF。[E: codex-rs/apply-patch/src/lib.rs:347][E: codex-rs/apply-patch/src/file_update.rs:49][E: codex-rs/apply-patch/src/file_update.rs:67]
 
 ## Sources
 

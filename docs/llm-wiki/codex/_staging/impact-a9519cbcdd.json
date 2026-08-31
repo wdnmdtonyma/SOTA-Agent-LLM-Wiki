@@ -1,0 +1,1503 @@
+{
+  "base": "9ded177ce7c1c0bd2047f902936c177612ab3434",
+  "target": "a9519cbcdd2d664530edb2469224ee03c1056799",
+  "counts": {
+    "A-BROKEN": 9,
+    "B-HEAVY": 20,
+    "C-DRIFT": 144,
+    "D-CLEAN": 8
+  },
+  "A_BROKEN": [
+    {
+      "id": "spine.shell-exec-flow",
+      "path": "spine/shell-exec-flow.md",
+      "missing": [
+        "codex-rs/core/src/tools/handlers/shell.rs",
+        "codex-rs/core/src/tools/handlers/shell/shell_command.rs",
+        "codex-rs/core/src/tools/runtimes/shell.rs"
+      ],
+      "source": [
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/core/src/tools/handlers/mod.rs",
+        "codex-rs/core/src/tools/handlers/shell.rs",
+        "codex-rs/core/src/tools/handlers/shell/shell_command.rs",
+        "codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs",
+        "codex-rs/core/src/tools/handlers/apply_patch.rs",
+        "codex-rs/core/src/tools/orchestrator.rs",
+        "codex-rs/core/src/tools/runtimes/shell.rs",
+        "codex-rs/core/src/tools/runtimes/unified_exec.rs",
+        "codex-rs/core/src/unified_exec/process_manager.rs",
+        "codex-rs/core/src/unified_exec/process.rs",
+        "codex-rs/core/src/tools/events.rs",
+        "codex-rs/features/src/lib.rs"
+      ]
+    },
+    {
+      "id": "spine.trace-apply-patch",
+      "path": "spine/trace-apply-patch.md",
+      "missing": [
+        "codex-rs/core/src/tools/handlers/shell.rs"
+      ],
+      "source": [
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/core/src/tools/handlers/apply_patch.rs",
+        "codex-rs/core/src/tools/handlers/shell.rs",
+        "codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs",
+        "codex-rs/core/src/apply_patch.rs",
+        "codex-rs/core/src/tools/runtimes/apply_patch.rs",
+        "codex-rs/core/src/tools/orchestrator.rs",
+        "codex-rs/core/src/tools/events.rs",
+        "codex-rs/apply-patch/src/lib.rs",
+        "codex-rs/apply-patch/src/file_update.rs",
+        "codex-rs/features/src/lib.rs"
+      ]
+    },
+    {
+      "id": "tool.shell-command",
+      "path": "surface/tools/shell-command.md",
+      "missing": [
+        "codex-rs/core/src/tools/handlers/shell.rs",
+        "codex-rs/core/src/tools/handlers/shell/shell_command.rs",
+        "codex-rs/core/src/tools/runtimes/shell.rs",
+        "codex-rs/core/src/tools/runtimes/shell/zsh_fork_backend.rs",
+        "codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs"
+      ],
+      "source": [
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/core/src/tools/handlers/shell_spec.rs",
+        "codex-rs/core/src/tools/handlers/shell.rs",
+        "codex-rs/core/src/tools/handlers/shell/shell_command.rs",
+        "codex-rs/core/src/tools/runtimes/shell.rs",
+        "codex-rs/core/src/tools/runtimes/shell/zsh_fork_backend.rs",
+        "codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs",
+        "codex-rs/tools/src/tool_config.rs",
+        "codex-rs/tools/src/tool_executor.rs",
+        "codex-rs/tools/src/tool_spec.rs",
+        "codex-rs/protocol/src/models.rs",
+        "codex-rs/protocol/src/openai_models.rs",
+        "codex-rs/features/src/lib.rs"
+      ]
+    },
+    {
+      "id": "tool.apply-patch",
+      "path": "surface/tools/apply-patch.md",
+      "missing": [
+        "codex-rs/core/src/tools/handlers/apply_patch.lark",
+        "codex-rs/core/src/tools/handlers/shell.rs"
+      ],
+      "source": [
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/core/src/tools/handlers/apply_patch_spec.rs",
+        "codex-rs/core/src/tools/handlers/apply_patch.lark",
+        "codex-rs/core/src/tools/handlers/apply_patch.rs",
+        "codex-rs/core/src/apply_patch.rs",
+        "codex-rs/core/src/tools/runtimes/apply_patch.rs",
+        "codex-rs/core/src/tools/handlers/shell.rs",
+        "codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs",
+        "codex-rs/core/src/tools/router.rs",
+        "codex-rs/tools/src/tool_executor.rs",
+        "codex-rs/tools/src/tool_spec.rs",
+        "codex-rs/apply-patch/src/invocation.rs",
+        "codex-rs/apply-patch/src/parser.rs",
+        "codex-rs/apply-patch/src/streaming_parser.rs",
+        "codex-rs/apply-patch/src/lib.rs"
+      ]
+    },
+    {
+      "id": "subsys.core.approval-policy",
+      "path": "subsystems/core/approval-policy.md",
+      "missing": [
+        "codex-rs/core/src/tools/runtimes/shell.rs"
+      ],
+      "source": [
+        "codex-rs/utils/approval-presets/src/lib.rs",
+        "codex-rs/protocol/src/protocol.rs",
+        "codex-rs/protocol/src/approvals.rs",
+        "codex-rs/protocol/src/permission_profile_snapshot.rs",
+        "codex-rs/protocol/src/environment.rs",
+        "codex-rs/protocol/src/models.rs",
+        "codex-rs/core/src/exec_policy.rs",
+        "codex-rs/core/src/tools/approvals.rs",
+        "codex-rs/core/src/tools/network_approval.rs",
+        "codex-rs/core/src/tools/runtimes/shell.rs",
+        "codex-rs/core/src/session/mod.rs"
+      ]
+    },
+    {
+      "id": "subsys.exec-sandbox.exec-server",
+      "path": "subsystems/exec-sandbox/exec-server.md",
+      "missing": [
+        "codex-rs/exec-server/testing/run_version_skew.sh",
+        "codex-rs/exec-server/tests/relay/version_skew.rs"
+      ],
+      "source": [
+        "codex-rs/exec-server-protocol/src/lib.rs",
+        "codex-rs/exec-server-protocol/src/protocol.rs",
+        "codex-rs/exec-server-protocol/src/network_policy.rs",
+        "codex-rs/exec-server/src/server",
+        "codex-rs/exec-server/src/server/request_dispatcher.rs",
+        "codex-rs/exec-server/src/local_process.rs",
+        "codex-rs/exec-server/src/process.rs",
+        "codex-rs/exec-server/src/remote_process.rs",
+        "codex-rs/exec-server/src/client.rs",
+        "codex-rs/exec-server/src/client_recovery.rs",
+        "codex-rs/exec-server/src/remote.rs",
+        "codex-rs/exec-server/src/remote_file_system.rs",
+        "codex-rs/exec-server/src/capability_discovery.rs",
+        "codex-rs/exec-server/src/environment.rs",
+        "codex-rs/exec-server/src/environment_config.rs",
+        "codex-rs/exec-server/src/sandboxed_file_open.rs",
+        "codex-rs/exec-server/src/network_policy_decisions.rs",
+        "codex-rs/exec-server/src/process_sandbox.rs",
+        "codex-rs/exec-server/testing/run_version_skew.sh",
+        "codex-rs/exec-server/tests/relay/version_skew.rs",
+        "codex-rs/cli/src/main.rs",
+        "codex-rs/utils/pty/src",
+        "codex-rs/core/src/tools/runtimes/unified_exec.rs",
+        "codex-rs/core/src/unified_exec/process_manager.rs",
+        "codex-rs/core/src/unified_exec/process.rs"
+      ]
+    },
+    {
+      "id": "subsys.exec-sandbox.shell-escalation",
+      "path": "subsystems/exec-sandbox/shell-escalation.md",
+      "missing": [
+        "codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs"
+      ],
+      "source": [
+        "codex-rs/shell-escalation/src/unix",
+        "codex-rs/core/src/tools/runtimes/shell/unix_escalation.rs",
+        "codex-rs/sandboxing/src/violation.rs"
+      ]
+    },
+    {
+      "id": "spine.extension-system",
+      "path": "spine/extension-system.md",
+      "missing": [
+        "codex-rs/ext/guardian/src/lib.rs",
+        "codex-rs/ext/guardian-v2/src/extension.rs",
+        "codex-rs/ext/skills/src/shadow_selection_experiment.rs"
+      ],
+      "source": [
+        "codex-rs/Cargo.toml",
+        "codex-rs/ext/agent/src/lib.rs",
+        "codex-rs/ext/connectors/src/lib.rs",
+        "codex-rs/ext/extension-api/src/lib.rs",
+        "codex-rs/ext/extension-api/src/capabilities/metrics.rs",
+        "codex-rs/ext/extension-api/src/contributors.rs",
+        "codex-rs/ext/extension-api/src/contributors/prompt.rs",
+        "codex-rs/ext/extension-api/src/registry.rs",
+        "codex-rs/ext/extension-api/src/user_instructions.rs",
+        "codex-rs/ext/git-attribution/src/lib.rs",
+        "codex-rs/ext/git-attribution/src/policy.rs",
+        "codex-rs/ext/git-attribution/src/world_state.rs",
+        "codex-rs/ext/items/src/lib.rs",
+        "codex-rs/core/src/session/extension_metrics.rs",
+        "codex-rs/core/src/tools/router.rs",
+        "codex-rs/core/src/session/turn.rs",
+        "codex-rs/core/src/tools/handlers/extension_tools.rs",
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/core-plugins/src/manifest.rs",
+        "codex-rs/utils/plugins/src/plugin_namespace.rs",
+        "codex-rs/app-server/src/extensions.rs",
+        "codex-rs/mcp-server/src/message_processor.rs",
+        "codex-rs/mcp-server/src/extension_event_sink.rs",
+        "codex-rs/ext/goal/src/lib.rs",
+        "codex-rs/ext/goal/src/extension.rs",
+        "codex-rs/ext/guardian/src/lib.rs",
+        "codex-rs/ext/guardian-v2/src/lib.rs",
+        "codex-rs/ext/guardian-v2/src/extension.rs",
+        "codex-rs/ext/image-generation/src/lib.rs",
+        "codex-rs/ext/image-generation/src/extension.rs",
+        "codex-rs/ext/mcp/src/lib.rs",
+        "codex-rs/ext/memories/src/lib.rs",
+        "codex-rs/ext/memories/src/extension.rs",
+        "codex-rs/ext/queue/src/lib.rs",
+        "codex-rs/ext/skills/src/lib.rs",
+        "codex-rs/ext/skills/src/extension.rs",
+        "codex-rs/ext/skills/src/render.rs",
+        "codex-rs/ext/skills/src/render_observability.rs",
+        "codex-rs/ext/skills/src/dynamic_skill_selector.rs",
+        "codex-rs/ext/skills/src/shadow_selection_experiment.rs",
+        "codex-rs/ext/skills/src/tools/mod.rs",
+        "codex-rs/ext/skills/src/provider/orchestrator.rs",
+        "codex-rs/ext/web-search/src/lib.rs",
+        "codex-rs/ext/web-search/src/extension.rs",
+        "codex-rs/ext/web-search/src/history.rs"
+      ]
+    },
+    {
+      "id": "subsys.core.approval-guardian-v2",
+      "path": "subsystems/core/approval-guardian-v2.md",
+      "missing": [
+        "codex-rs/ext/guardian-v2/src/config.rs",
+        "codex-rs/ext/guardian-v2/src/extension.rs",
+        "codex-rs/ext/guardian-v2/src/sampler.rs",
+        "codex-rs/ext/guardian-v2/src/transcript.rs"
+      ],
+      "source": [
+        "codex-rs/ext/guardian-v2/src/lib.rs",
+        "codex-rs/ext/guardian-v2/src/config.rs",
+        "codex-rs/ext/guardian-v2/src/extension.rs",
+        "codex-rs/ext/guardian-v2/src/sampler.rs",
+        "codex-rs/ext/guardian-v2/src/transcript.rs",
+        "codex-rs/features/src/lib.rs",
+        "codex-rs/features/src/feature_configs.rs",
+        "codex-rs/app-server/src/extensions.rs",
+        "codex-rs/protocol/src/security_risk.rs",
+        "codex-rs/core/src/guardian/review.rs",
+        "codex-rs/core/src/guardian/review_session.rs",
+        "codex-rs/core/src/codex_delegate.rs",
+        "codex-rs/core/src/config/mod.rs",
+        "codex-rs/ext/extension-api/src/registry.rs",
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/tui/src/lib.rs",
+        "codex-rs/exec/src/lib.rs",
+        "codex-rs/mcp-server/src/message_processor.rs"
+      ]
+    }
+  ],
+  "B_HEAVY": [
+    {
+      "id": "ref.key-types",
+      "path": "reference/key-types.md",
+      "churn": 5287,
+      "source": [
+        "codex-rs/core/src/session/mod.rs",
+        "codex-rs/core/src/session/turn_context.rs",
+        "codex-rs/core/src/codex_thread.rs",
+        "codex-rs/core/src/client.rs",
+        "codex-rs/core/src/thread_manager.rs",
+        "codex-rs/core/src/state/turn.rs",
+        "codex-rs/core/src/tools/router.rs",
+        "codex-rs/core/src/tools/registry.rs",
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/core/src/config/mod.rs",
+        "codex-rs/tools/src/tool_spec.rs",
+        "codex-rs/tools/src/tool_payload.rs",
+        "codex-rs/tools/src/tool_executor.rs",
+        "codex-rs/protocol/src/config_types.rs",
+        "codex-rs/protocol/src/permissions.rs",
+        "codex-rs/features/src/lib.rs",
+        "codex-rs/model-provider/src/provider.rs",
+        "codex-rs/login/src/auth/manager.rs"
+      ]
+    },
+    {
+      "id": "ref.glossary",
+      "path": "reference/glossary.md",
+      "churn": 5013,
+      "source": [
+        "codex-rs/protocol/src/protocol.rs",
+        "codex-rs/protocol/src/turn_input.rs",
+        "codex-rs/protocol/src/models.rs",
+        "codex-rs/protocol/src/items.rs",
+        "codex-rs/protocol/src/dynamic_tools.rs",
+        "codex-rs/protocol/src/request_permissions.rs",
+        "codex-rs/protocol/src/request_user_input.rs",
+        "codex-rs/protocol/src/config_types.rs",
+        "codex-rs/protocol/src/permissions.rs",
+        "codex-rs/protocol/src/approvals.rs",
+        "codex-rs/ext/items/src/lib.rs",
+        "codex-rs/history/src/lib.rs",
+        "codex-rs/core/src/session/mod.rs",
+        "codex-rs/core/src/session/handlers.rs",
+        "codex-rs/core/src/session/step_context.rs",
+        "codex-rs/core/src/session/turn_context.rs",
+        "codex-rs/core/src/tasks/mod.rs",
+        "codex-rs/core/src/tasks/review.rs",
+        "codex-rs/core/src/sandboxing/mod.rs",
+        "codex-rs/codex-mcp/src/runtime.rs",
+        "codex-rs/codex-mcp/src/binding.rs",
+        "codex-rs/core-plugins/src/manifest.rs",
+        "codex-rs/core-plugins/src/agent_plugin_manifest.rs",
+        "codex-rs/http-client/src/outbound_proxy.rs",
+        "codex-rs/http-client/src/route_aware_client_pool.rs",
+        "codex-rs/utils/path-uri/src/lib.rs",
+        "codex-rs/thread-store/src/local/writer_lock.rs",
+        "codex-rs/thread-store/src/local/live_writer.rs",
+        "codex-rs/app-server-protocol/src/protocol/v2/thread.rs",
+        "codex-rs/state/src/lib.rs",
+        "codex-rs/app-server/src/code_mode_host.rs",
+        "codex-rs/sandboxing/src/lib.rs",
+        "codex-rs/linux-sandbox/README.md",
+        "codex-rs/features/src/lib.rs",
+        "codex-rs/tools/src/tool_spec.rs",
+        "codex-rs/tools/src/tool_payload.rs",
+        "codex-rs/tools/src/tool_executor.rs",
+        "codex-rs/rollout/src/recorder.rs",
+        "codex-rs/rollout/src/policy.rs",
+        "codex-rs/exec-server/src/environment.rs",
+        "codex-rs/network-proxy/src/proxy.rs",
+        "codex-rs/Cargo.toml",
+        "codex-rs/app-server/src/main.rs",
+        "codex-rs/tui/src/session_log.rs"
+      ]
+    },
+    {
+      "id": "subsys.exec-sandbox.sandbox-windows",
+      "path": "subsystems/exec-sandbox/sandbox-windows.md",
+      "churn": 3906,
+      "source": [
+        "codex-rs/windows-sandbox-rs/src",
+        "codex-rs/sandboxing/src/manager.rs",
+        "codex-rs/sandboxing/src/policy_transforms.rs",
+        "codex-rs/sandboxing/src/windows.rs",
+        "codex-rs/protocol/src/permissions.rs",
+        "codex-rs/utils/pty/src/pipe.rs",
+        "codex-rs/utils/pty/src/process.rs",
+        "codex-rs/utils/absolute-path/src/lib.rs",
+        "codex-rs/utils/path-uri/src/lib.rs"
+      ]
+    },
+    {
+      "id": "spine.overview",
+      "path": "spine/overview.md",
+      "churn": 3368,
+      "source": [
+        "codex-rs/Cargo.toml",
+        "codex-rs/cli/src/main.rs",
+        "codex-rs/arg0/src/lib.rs",
+        "codex-rs/core/src/lib.rs",
+        "codex-rs/protocol/src/protocol.rs",
+        "codex-rs/core/src/thread_manager.rs",
+        "codex-rs/core/src/codex_thread.rs",
+        "codex-rs/core/src/session/mod.rs",
+        "codex-rs/core/src/session/handlers.rs",
+        "codex-rs/core/src/session/turn_input.rs",
+        "codex-rs/core/src/tasks/regular.rs",
+        "codex-rs/core/src/session/turn.rs",
+        "codex-rs/core/src/stream_events_utils.rs",
+        "codex-rs/core/src/tools/router.rs",
+        "codex-rs/core/src/tools/spec_plan.rs"
+      ]
+    },
+    {
+      "id": "subsys.config-auth.hooks",
+      "path": "subsystems/config-auth/hooks.md",
+      "churn": 3255,
+      "source": [
+        "codex-rs/config/src/hook_config.rs",
+        "codex-rs/hooks/src/types.rs",
+        "codex-rs/hooks/src/engine/discovery.rs",
+        "codex-rs/hooks/src/engine/dispatcher.rs",
+        "codex-rs/hooks/src/engine/mod.rs",
+        "codex-rs/hooks/src/engine/command_runner.rs",
+        "codex-rs/hooks/src/engine/mcp_runner.rs",
+        "codex-rs/core-plugins/src/manager.rs",
+        "codex-rs/core-plugins/src/loader.rs",
+        "codex-rs/core/src/hook_runtime.rs",
+        "codex-rs/core/src/tools/registry.rs",
+        "codex-rs/core/src/session/mod.rs",
+        "codex-rs/core/src/thread_manager.rs",
+        "codex-rs/app-server/src/effective_plugin_change.rs"
+      ]
+    },
+    {
+      "id": "subsys.exec-sandbox.shell-parsing",
+      "path": "subsystems/exec-sandbox/shell-parsing.md",
+      "churn": 3092,
+      "source": [
+        "codex-rs/shell-command/src"
+      ]
+    },
+    {
+      "id": "spine.trace-subagent",
+      "path": "spine/trace-subagent.md",
+      "churn": 2697,
+      "source": [
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/core/src/tools/router.rs",
+        "codex-rs/core/src/tools/handlers/multi_agents/spawn.rs",
+        "codex-rs/core/src/tools/handlers/multi_agents_v2.rs",
+        "codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs",
+        "codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs",
+        "codex-rs/core/src/tools/handlers/multi_agents_common.rs",
+        "codex-rs/core/src/agent/role.rs",
+        "codex-rs/core/src/agent/control.rs",
+        "codex-rs/core/src/agent/control/spawn.rs",
+        "codex-rs/core/src/agent/registry.rs",
+        "codex-rs/core/src/session/input_queue.rs",
+        "codex-rs/core/src/session/multi_agents.rs",
+        "codex-rs/core/src/tasks/mod.rs",
+        "codex-rs/core/src/compact_remote_v2.rs",
+        "codex-rs/core/src/context/inter_agent_message.rs",
+        "codex-rs/protocol/src/protocol.rs",
+        "codex-rs/protocol/src/openai_models.rs"
+      ]
+    },
+    {
+      "id": "subsys.core.unified-exec",
+      "path": "subsystems/core/unified-exec.md",
+      "churn": 2688,
+      "source": [
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/core/src/tools/handlers/mod.rs",
+        "codex-rs/core/src/tools/handlers/shell_spec.rs",
+        "codex-rs/core/src/tools/handlers/unified_exec.rs",
+        "codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs",
+        "codex-rs/core/src/tools/handlers/unified_exec/write_stdin.rs",
+        "codex-rs/core/src/unified_exec/mod.rs",
+        "codex-rs/core/src/unified_exec/process.rs",
+        "codex-rs/core/src/unified_exec/process_manager.rs",
+        "codex-rs/core/src/unified_exec/errors.rs",
+        "codex-rs/core/src/elicitation.rs",
+        "codex-rs/core/src/tools/runtimes/unified_exec.rs",
+        "codex-rs/core/src/tools/orchestrator.rs",
+        "codex-rs/core/src/unified_exec/head_tail_buffer.rs",
+        "codex-rs/core/src/unified_exec/async_watcher.rs",
+        "codex-rs/core/src/session/session.rs",
+        "codex-rs/core/src/session/handlers.rs",
+        "codex-rs/exec-server/src/remote_process.rs",
+        "codex-rs/exec-server-protocol/src/protocol.rs",
+        "codex-rs/tools/src/tool_executor.rs",
+        "codex-rs/features/src/lib.rs"
+      ]
+    },
+    {
+      "id": "subsys.core.rollout-budget",
+      "path": "subsystems/core/rollout-budget.md",
+      "churn": 2667,
+      "source": [
+        "codex-rs/core/src/rollout_budget.rs",
+        "codex-rs/core/src/session/rollout_budget.rs",
+        "codex-rs/core/src/agent/control.rs",
+        "codex-rs/core/src/thread_manager.rs",
+        "codex-rs/core/src/session/turn.rs",
+        "codex-rs/core/src/session/mod.rs",
+        "codex-rs/core/src/session/handlers.rs",
+        "codex-rs/core/src/compact.rs",
+        "codex-rs/core/src/compact_remote_v2.rs",
+        "codex-rs/core/src/config/mod.rs",
+        "codex-rs/features/src/lib.rs",
+        "codex-rs/features/src/feature_configs.rs",
+        "codex-rs/codex-api/src/sse/responses.rs",
+        "codex-rs/protocol/src/protocol.rs"
+      ]
+    },
+    {
+      "id": "subsys.core.approval-guardian",
+      "path": "subsystems/core/approval-guardian.md",
+      "churn": 2629,
+      "source": [
+        "codex-rs/core/src/tools/approvals.rs",
+        "codex-rs/core/src/tools/spec_plan.rs",
+        "codex-rs/core/src/guardian/mod.rs",
+        "codex-rs/core/src/guardian/approval_request.rs",
+        "codex-rs/core/src/guardian/review.rs",
+        "codex-rs/core/src/guardian/prompt.rs",
+        "codex-rs/core/src/guardian/review_session.rs",
+        "codex-rs/core/src/codex_delegate.rs",
+        "codex-rs/protocol/src/approvals.rs",
+        "codex-rs/features/src/lib.rs"
+      ]
+    },
+    {
+      "id": "subsys.core.session-lifecycle",
+      "path": "subsystems/core/session-lifecycle.md",
+      "churn": 2433,
+      "source": [
+        "codex-rs/core/src/session/mod.rs",
+        "codex-rs/core/src/session/session.rs",
+        "codex-rs/core/src/session/handlers.rs",
+        "codex-rs/core/src/session/turn_input.rs",
+        "codex-rs/core/src/session/thread_settings.rs",
+        "codex-rs/core/src/elicitation.rs",
+        "codex-rs/core/src/tasks/mod.rs",
+        "codex-rs/core/src/tasks/regular.rs",
+        "codex-rs/core/src/tasks/compact.rs",
+        "codex-rs/core/src/tasks/review.rs",
+        "codex-rs/core/src/state/session.rs",
+        "codex-rs/core/src/state/turn.rs",
+        "codex-rs/core/src/state/service.rs",
+        "codex-rs/core/src/thread_manager.rs",
+        "codex-rs/protocol/src/protocol.rs"
+      ]
+    },
+    {
+      "id": "subsys.core.thread-store",
+      "path": "subsystems/core/thread-store.md",
+      "churn": 2314,
+      "source": [
+        "codex-rs/thread-store/src/lib.rs",
+        "codex-rs/thread-store/src/store.rs",
+        "codex-rs/thread-store/src/live_thread.rs",
+        "codex-rs/thread-store/src/types.rs",
+        "codex-rs/thread-store/src/queue_store.rs",
+        "codex-rs/thread-store/src/local/mod.rs",
+        "codex-rs/thread-store/src/local/create_thread.rs",
+        "codex-rs/thread-store/src/local/live_writer.rs",
+        "codex-rs/thread-store/src/local/model_context.rs",
+        "codex-rs/thread-store/src/local/paginated_fork.rs",
+        "codex-rs/thread-store/src/local/rollout_lineage.rs",
+        "codex-rs/thread-store/src/local/writer_lock.rs",
+        "codex-rs/thread-store/src/local/thread_sections.rs",
+        "codex-rs/thread-store/src/local/move_thread_to_section.rs",
+        "codex-rs/thread-store/src/local/thread_history/segment_paging.rs",
+        "codex-rs/thread-store/src/local/thread_history_materialization.rs",
+        "codex-rs/thread-store/src/local/thread_history/read.rs",
+        "codex-rs/thread-store/src/local/thread_history/search.rs",
+        "codex-rs/thread-store/src/local/read_thread.rs",
+        "codex-rs/thread-store/src/local/list_threads.rs",
+        "codex-rs/thread-store/src/local/search_threads.rs",
+        "codex-rs/thread-store/src/local/update_thread_metadata.rs",
+        "codex-rs/thread-store/src/local/pending_thread_metadata.rs",
+        "codex-rs/thread-store/src/local/revert_thread.rs",
+        "codex-rs/core/src/thread_manager.rs",
+        "codex-rs/core/src/session/session.rs",
+        "codex-rs/core/src/thread_rollout_truncation.rs",
+        "codex-rs/history/src/lib.rs",
+        "codex-rs/rollout/src/lib.rs",
+        "codex-rs/exec/src/lib.rs",
+        "codex-rs/protocol/src/protocol.rs",
+        "codex-rs/app-server/src/request_processors/thread_processor.rs"
+      ]
+    },
+    {
+      "id": "subsys.core.token-budget",
+      "path": "subsystems/core/token-budget.md",
+      "churn": 2309,
+      "source": [
+        "codex-rs/core/src/session/token_budget.rs",
+        "codex-rs/core/src/session/context_window.rs",
+        "codex-rs/core/src/session/turn.rs",
+        "codex-rs/core/src/session/turn_context.rs",
+        "codex-rs/core/src/session/world_state.rs",
+        "codex-rs/core/src/state/auto_compact_window.rs",
+        "codex-rs/core/src/state/session.rs",
+        "codex-rs/core/src/context/world_state/context_window_guidance.rs",
+        "codex-rs/core/src/config/mod.rs",
+        "codex-rs/features/src/lib.rs",
+        "codex-rs/features/src/feature_configs.rs",
+        "codex-rs/protocol/src/openai_models.rs",
+        "codex-rs/app-server-protocol/src/protocol/common.rs",
+        "codex-rs/app-server-protocol/src/protocol/v2/account.rs",
+        "codex-rs/app-server-protocol/src/protocol/v2/thread_usage.rs",
+        "codex-rs/app-server/src/request_processors/account_processor.rs",
+        "codex-rs/backend-client/src/client/thread_usage.rs",
+        "codex-rs/tui/src/chatwidget/thread_usage.rs"
+      ]
+    },
+    {
+      "id": "ref.env-vars",
+      "path": "reference/env-vars.md",
+      "churn": 2267,
+      "source": [
+        "codex-rs/login/src/auth/manager.rs",
+        "codex-rs/login/src/auth/workload_identity.rs",
+        "codex-rs/protocol/src/shell_environment.rs",
+        "codex-rs/workload-identity/src/lib.rs",
+        "codex-rs/model-provider-info/src/lib.rs",
+        "codex-rs/model-provider/src/amazon_bedrock/auth.rs",
+        "codex-rs/utils/home-dir/src/lib.rs",
+        "codex-rs/app-server/src/main.rs",
+        "codex-rs/app-server/src/request_processors/account_processor.rs",
+        "codex-rs/cli/src/main.rs",
+        "codex-rs/cloud-tasks/src/lib.rs",
+        "codex-rs/core/src/spawn.rs",
+        "codex-rs/exec-server/src/lib.rs",
+        "codex-rs/exec-server/src/environment.rs",
+        "codex-rs/exec-server/src/environment_provider.rs",
+        "codex-rs/http-client/src/custom_ca.rs",
+        "codex-rs/codex-mcp/src/mcp/mod.rs",
+        "codex-rs/codex-mcp/src/connection_manager.rs",
+        "codex-rs/rmcp-client/src/protocol_mode.rs",
+        "codex-rs/rmcp-client/src/rmcp_client.rs",
+        "codex-rs/network-proxy/src/proxy.rs",
+        "codex-rs/network-proxy/src/runtime.rs",
+        "codex-rs/shell-escalation/src/unix/escalate_protocol.rs",
+        "codex-rs/tui/src/session_log.rs",
+        "codex-rs/tui/src/tui/keyboard_modes.rs",
+        "codex-rs/cloud-tasks/src/ui.rs",
+        "codex-rs/tui/src/external_editor.rs",
+        "codex-rs/tui/src/clipboard_copy.rs",
+        "codex-rs/install-context/src/lib.rs",
+        "codex-rs/state/src/lib.rs",
+        "codex-rs/core/src/config/mod.rs",
+        "codex-rs/config/src/config_toml.rs",
+        "codex-rs/utils/absolute-path/src/lib.rs",
+        "codex-rs/utils/cargo-bin/src/lib.rs",
+        "codex-rs/otel/src/trace_context.rs"
+      ]
+    },
+    {
+      "id": "subsys.tui.overlays-dialogs",
+      "path": "subsystems/tui/overlays-dialogs.md",
+      "churn": 2184,
+      "source": [
+        "codex-rs/tui/src/app.rs",
+        "codex-rs/tui/src/app_event.rs",
+        "codex-rs/tui/src/chatwidget.rs",
+        "codex-rs/tui/src/chatwidget/interaction.rs",
+        "codex-rs/tui/src/pager_overlay.rs",
+        "codex-rs/tui/src/resume_picker.rs",
+        "codex-rs/tui/src/resume_picker/page_loading.rs",
+        "codex-rs/tui/src/resume_picker_transcript_preview.rs",
+        "codex-rs/tui/src/named_session_lookup.rs",
+        "codex-rs/tui/src/app/agent_picker.rs",
+        "codex-rs/tui/src/app/input.rs",
+        "codex-rs/tui/src/app/event_dispatch.rs",
+        "codex-rs/tui/src/app/history_pagination.rs",
+        "codex-rs/tui/src/bottom_pane/bottom_pane_view.rs",
+        "codex-rs/tui/src/bottom_pane/mod.rs",
+        "codex-rs/tui/src/bottom_pane/app_link_view.rs",
+        "codex-rs/tui/src/bottom_pane/approval_overlay.rs",
+        "codex-rs/tui/src/bottom_pane/custom_prompt_view.rs",
+        "codex-rs/tui/src/bottom_pane/experimental_features_view.rs",
+        "codex-rs/tui/src/bottom_pane/feedback_view.rs",
+        "codex-rs/tui/src/bottom_pane/hooks_browser_view.rs",
+        "codex-rs/tui/src/bottom_pane/list_selection_view.rs",
+        "codex-rs/tui/src/bottom_pane/mcp_server_elicitation.rs",
+        "codex-rs/tui/src/bottom_pane/memories_settings_view.rs",
+        "codex-rs/tui/src/bottom_pane/multi_select_picker.rs",
+        "codex-rs/tui/src/bottom_pane/request_user_input/mod.rs",
+        "codex-rs/tui/src/bottom_pane/skills_toggle_view.rs",
+        "codex-rs/tui/src/bottom_pane/status_line_setup.rs",
+        "codex-rs/tui/src/bottom_pane/title_setup.rs"
+      ]
+    },
+    {
+      "id": "subsys.tui.keymap",
+      "path": "subsystems/tui/keymap.md",
+      "churn": 2101,
+      "source": [
+        "codex-rs/config/src/tui_keymap.rs",
+        "codex-rs/tui/src/keymap.rs",
+        "codex-rs/tui/src/keymap/bindings.rs",
+        "codex-rs/tui/src/keymap/chords.rs",
+        "codex-rs/tui/src/keymap_setup.rs",
+        "codex-rs/tui/src/keymap_setup/capture.rs",
+        "codex-rs/tui/src/app/input.rs",
+        "codex-rs/tui/src/app/event_dispatch.rs",
+        "codex-rs/tui/src/chatwidget/keymap_picker.rs"
+      ]
+    },
+    {
+      "id": "sdk.py-overview",
+      "path": "surface/sdk/py-overview.md",
+      "churn": 2087,
+      "source": [
+        "sdk/python/src/openai_codex/api.py",
+        "sdk/python/src/openai_codex/client.py",
+        "sdk/python/src/openai_codex/async_client.py",
+        "sdk/python/src/openai_codex/_run.py",
+        "sdk/python/src/openai_codex/__init__.py",
+        "sdk/python/pyproject.toml",
+        "sdk/python/src/openai_codex/_approval_mode.py",
+        "sdk/python/src/openai_codex/_sandbox.py",
+        "sdk/python/src/openai_codex/_initialize_metadata.py",
+        "sdk/python/src/openai_codex/generated/v2_all.py",
+        "sdk/python/scripts/update_sdk_artifacts.py",
+        "sdk/python/tests/test_client_rpc_methods.py"
+      ]
+    },
+    {
+      "id": "config.approval-sandbox",
+      "path": "surface/config/approval-sandbox.md",
+      "churn": 2072,
+      "source": [
+        "codex-rs/config/src/config_toml.rs",
+        "codex-rs/config/src/types.rs",
+        "codex-rs/config/src/permissions_toml.rs",
+        "codex-rs/protocol/src/config_types.rs",
+        "codex-rs/protocol/src/permissions.rs",
+        "codex-rs/protocol/src/protocol.rs",
+        "codex-rs/utils/cli/src/shared_options.rs",
+        "codex-rs/core/src/config/mod.rs"
+      ]
+    },
+    {
+      "id": "sdk.sdk-architecture",
+      "path": "surface/sdk/sdk-architecture.md",
+      "churn": 2070,
+      "source": [
+        "sdk/typescript/src/codex.ts",
+        "sdk/typescript/src/thread.ts",
+        "sdk/typescript/src/exec.ts",
+        "sdk/typescript/src/events.ts",
+        "sdk/typescript/src/items.ts",
+        "sdk/python/src/openai_codex/api.py",
+        "sdk/python/src/openai_codex/client.py",
+        "sdk/python/src/openai_codex/async_client.py",
+        "sdk/python/src/openai_codex/_message_router.py",
+        "sdk/python/src/openai_codex/_run.py",
+        "sdk/python/src/openai_codex/models.py",
+        "sdk/python/src/openai_codex/generated/v2_all.py",
+        "sdk/python/scripts/update_sdk_artifacts.py"
+      ]
+    },
+    {
+      "id": "spine.turn-end-to-end",
+      "path": "spine/turn-end-to-end.md",
+      "churn": 2051,
+      "source": [
+        "codex-rs/protocol/src/protocol.rs",
+        "codex-rs/core/src/session/handlers.rs",
+        "codex-rs/core/src/session/turn_input.rs",
+        "codex-rs/core/src/session/input_queue.rs",
+        "codex-rs/core/src/tasks/mod.rs",
+        "codex-rs/core/src/tasks/regular.rs",
+        "codex-rs/core/src/session/turn.rs",
+        "codex-rs/core/src/stream_events_utils.rs",
+        "codex-rs/core/src/session/mod.rs",
+        "codex-rs/core/src/context_manager/history.rs"
+      ]
+    }
+  ],
+  "C_DRIFT": [
+    {
+      "id": "subsys.config-auth.plugins",
+      "path": "subsystems/config-auth/plugins.md",
+      "churn": 1952
+    },
+    {
+      "id": "subsys.exec-sandbox.apply-patch-engine",
+      "path": "subsystems/exec-sandbox/apply-patch-engine.md",
+      "churn": 1918
+    },
+    {
+      "id": "subsys.core.memory",
+      "path": "subsystems/core/memory.md",
+      "churn": 1891
+    },
+    {
+      "id": "subsys.tui.architecture",
+      "path": "subsystems/tui/architecture.md",
+      "churn": 1887
+    },
+    {
+      "id": "tool.web-search",
+      "path": "surface/tools/web-search.md",
+      "churn": 1832
+    },
+    {
+      "id": "tool.mcp-namespace-tools",
+      "path": "surface/tools/mcp-namespace-tools.md",
+      "churn": 1811
+    },
+    {
+      "id": "subsys.tui.event-system",
+      "path": "subsystems/tui/event-system.md",
+      "churn": 1796
+    },
+    {
+      "id": "subsys.platform.analytics",
+      "path": "subsystems/platform/analytics.md",
+      "churn": 1769
+    },
+    {
+      "id": "spine.sq-eq-architecture",
+      "path": "spine/sq-eq-architecture.md",
+      "churn": 1751
+    },
+    {
+      "id": "spine.trace-mcp-call",
+      "path": "spine/trace-mcp-call.md",
+      "churn": 1730
+    },
+    {
+      "id": "tool.request-permissions",
+      "path": "surface/tools/request-permissions.md",
+      "churn": 1702
+    },
+    {
+      "id": "subsys.core.review-mode",
+      "path": "subsystems/core/review-mode.md",
+      "churn": 1698
+    },
+    {
+      "id": "subsys.providers.model-catalog",
+      "path": "subsystems/providers/model-catalog.md",
+      "churn": 1682
+    },
+    {
+      "id": "spine.context-and-compaction",
+      "path": "spine/context-and-compaction.md",
+      "churn": 1673
+    },
+    {
+      "id": "rpc.notifications-thread",
+      "path": "surface/app-server/notifications-thread.md",
+      "churn": 1667
+    },
+    {
+      "id": "tool.tool-search",
+      "path": "surface/tools/tool-search.md",
+      "churn": 1653
+    },
+    {
+      "id": "tool.wait-for-environment",
+      "path": "surface/tools/wait-for-environment.md",
+      "churn": 1616
+    },
+    {
+      "id": "spine.process-lifecycle",
+      "path": "spine/process-lifecycle.md",
+      "churn": 1611
+    },
+    {
+      "id": "ref.data-model",
+      "path": "reference/data-model.md",
+      "churn": 1606
+    },
+    {
+      "id": "subsys.tui.bottom-pane",
+      "path": "subsystems/tui/bottom-pane.md",
+      "churn": 1592
+    },
+    {
+      "id": "tool.spawn-agent-v2",
+      "path": "surface/tools/spawn-agent-v2.md",
+      "churn": 1581
+    },
+    {
+      "id": "tool.image-generation",
+      "path": "surface/tools/image-generation.md",
+      "churn": 1575
+    },
+    {
+      "id": "subsys.exec-sandbox.sandbox-linux",
+      "path": "subsystems/exec-sandbox/sandbox-linux.md",
+      "churn": 1570
+    },
+    {
+      "id": "tool.exec-command",
+      "path": "surface/tools/exec-command.md",
+      "churn": 1523
+    },
+    {
+      "id": "subsys.core.collaboration-modes",
+      "path": "subsystems/core/collaboration-modes.md",
+      "churn": 1511
+    },
+    {
+      "id": "rpc.thread-methods",
+      "path": "surface/app-server/thread-methods.md",
+      "churn": 1506
+    },
+    {
+      "id": "tool.view-image",
+      "path": "surface/tools/view-image.md",
+      "churn": 1483
+    },
+    {
+      "id": "subsys.core.instruction-assembly",
+      "path": "subsystems/core/instruction-assembly.md",
+      "churn": 1430
+    },
+    {
+      "id": "subsys.core.ghost-undo",
+      "path": "subsystems/core/ghost-undo.md",
+      "churn": 1429
+    },
+    {
+      "id": "tool.request-user-input",
+      "path": "surface/tools/request-user-input.md",
+      "churn": 1427
+    },
+    {
+      "id": "subsys.core.compaction",
+      "path": "subsystems/core/compaction.md",
+      "churn": 1421
+    },
+    {
+      "id": "tool.request-plugin-install",
+      "path": "surface/tools/request-plugin-install.md",
+      "churn": 1404
+    },
+    {
+      "id": "subsys.core.thread-queue",
+      "path": "subsystems/core/thread-queue.md",
+      "churn": 1399
+    },
+    {
+      "id": "subsys.core.code-mode-runtime",
+      "path": "subsystems/core/code-mode-runtime.md",
+      "churn": 1394
+    },
+    {
+      "id": "subsys.core.rollout-migration",
+      "path": "subsystems/core/rollout-migration.md",
+      "churn": 1355
+    },
+    {
+      "id": "tool.list-available-plugins-to-install",
+      "path": "surface/tools/list-available-plugins-to-install.md",
+      "churn": 1351
+    },
+    {
+      "id": "subsys.app-server.message-processor",
+      "path": "subsystems/app-server/message-processor.md",
+      "churn": 1324
+    },
+    {
+      "id": "subsys.mcp.oauth",
+      "path": "subsystems/mcp/oauth.md",
+      "churn": 1313
+    },
+    {
+      "id": "subsys.tui.rendering-theming",
+      "path": "subsystems/tui/rendering-theming.md",
+      "churn": 1287
+    },
+    {
+      "id": "subsys.providers.http-client",
+      "path": "subsystems/providers/http-client.md",
+      "churn": 1272
+    },
+    {
+      "id": "spine.tool-call-anatomy",
+      "path": "spine/tool-call-anatomy.md",
+      "churn": 1260
+    },
+    {
+      "id": "subsys.mcp.client",
+      "path": "subsystems/mcp/client.md",
+      "churn": 1239
+    },
+    {
+      "id": "subsys.core.turn-metadata",
+      "path": "subsystems/core/turn-metadata.md",
+      "churn": 1208
+    },
+    {
+      "id": "tool.interrupt-agent-v2",
+      "path": "surface/tools/interrupt-agent-v2.md",
+      "churn": 1202
+    },
+    {
+      "id": "subsys.core.context-manager",
+      "path": "subsystems/core/context-manager.md",
+      "churn": 1199
+    },
+    {
+      "id": "tool.current-time",
+      "path": "surface/tools/current-time.md",
+      "churn": 1181
+    },
+    {
+      "id": "tool.write-stdin",
+      "path": "surface/tools/write-stdin.md",
+      "churn": 1178
+    },
+    {
+      "id": "tool.sleep",
+      "path": "surface/tools/sleep.md",
+      "churn": 1174
+    },
+    {
+      "id": "subsys.tui.chatwidget",
+      "path": "subsystems/tui/chatwidget.md",
+      "churn": 1156
+    },
+    {
+      "id": "cli.subcommands",
+      "path": "surface/cli/subcommands.md",
+      "churn": 1052
+    },
+    {
+      "id": "config.model-provider",
+      "path": "surface/config/model-provider.md",
+      "churn": 1041
+    },
+    {
+      "id": "subsys.app-server.session-management",
+      "path": "subsystems/app-server/session-management.md",
+      "churn": 1030
+    },
+    {
+      "id": "subsys.providers.provider-bedrock",
+      "path": "subsystems/providers/provider-bedrock.md",
+      "churn": 1028
+    },
+    {
+      "id": "subsys.core.realtime-conversation",
+      "path": "subsystems/core/realtime-conversation.md",
+      "churn": 927
+    },
+    {
+      "id": "subsys.platform.realtime",
+      "path": "subsystems/platform/realtime.md",
+      "churn": 906
+    },
+    {
+      "id": "ref.session-tasks",
+      "path": "reference/session-tasks.md",
+      "churn": 901
+    },
+    {
+      "id": "subsys.core.tool-router",
+      "path": "subsystems/core/tool-router.md",
+      "churn": 881
+    },
+    {
+      "id": "tool.resume-agent-v1",
+      "path": "surface/tools/resume-agent-v1.md",
+      "churn": 876
+    },
+    {
+      "id": "tool.send-message",
+      "path": "surface/tools/send-message.md",
+      "churn": 839
+    },
+    {
+      "id": "tool.followup-task",
+      "path": "surface/tools/followup-task.md",
+      "churn": 839
+    },
+    {
+      "id": "command.session-thread",
+      "path": "surface/slash-commands/session-thread.md",
+      "churn": 828
+    },
+    {
+      "id": "subsys.config-auth.skills",
+      "path": "subsystems/config-auth/skills.md",
+      "churn": 810
+    },
+    {
+      "id": "tool.wait-agent-v2",
+      "path": "surface/tools/wait-agent-v2.md",
+      "churn": 790
+    },
+    {
+      "id": "subsys.platform.diagnostics",
+      "path": "subsystems/platform/diagnostics.md",
+      "churn": 781
+    },
+    {
+      "id": "ref.protocol-event-streaming",
+      "path": "reference/protocol-event-streaming.md",
+      "churn": 776
+    },
+    {
+      "id": "subsys.config-auth.profiles",
+      "path": "subsystems/config-auth/profiles.md",
+      "churn": 750
+    },
+    {
+      "id": "subsys.config-auth.auth-flows",
+      "path": "subsystems/config-auth/auth-flows.md",
+      "churn": 724
+    },
+    {
+      "id": "tool.test-sync-tool",
+      "path": "surface/tools/test-sync-tool.md",
+      "churn": 720
+    },
+    {
+      "id": "tool.read-mcp-resource",
+      "path": "surface/tools/read-mcp-resource.md",
+      "churn": 719
+    },
+    {
+      "id": "rpc.server-requests",
+      "path": "surface/app-server/server-requests.md",
+      "churn": 708
+    },
+    {
+      "id": "subsys.core.turn-engine",
+      "path": "subsystems/core/turn-engine.md",
+      "churn": 692
+    },
+    {
+      "id": "tool.send-input-v1",
+      "path": "surface/tools/send-input-v1.md",
+      "churn": 670
+    },
+    {
+      "id": "tool.code-mode-exec",
+      "path": "surface/tools/code-mode-exec.md",
+      "churn": 661
+    },
+    {
+      "id": "tool.update-plan",
+      "path": "surface/tools/update-plan.md",
+      "churn": 661
+    },
+    {
+      "id": "tool.list-mcp-resources",
+      "path": "surface/tools/list-mcp-resources.md",
+      "churn": 649
+    },
+    {
+      "id": "tool.list-mcp-resource-templates",
+      "path": "surface/tools/list-mcp-resource-templates.md",
+      "churn": 649
+    },
+    {
+      "id": "tool.code-mode-wait",
+      "path": "surface/tools/code-mode-wait.md",
+      "churn": 647
+    },
+    {
+      "id": "subsys.core.tool-system",
+      "path": "subsystems/core/tool-system.md",
+      "churn": 643
+    },
+    {
+      "id": "cli.global-flags",
+      "path": "surface/cli/global-flags.md",
+      "churn": 633
+    },
+    {
+      "id": "rpc.notifications-system",
+      "path": "surface/app-server/notifications-system.md",
+      "churn": 625
+    },
+    {
+      "id": "subsys.config-auth.config-loading",
+      "path": "subsystems/config-auth/config-loading.md",
+      "churn": 609
+    },
+    {
+      "id": "config.mcp-tools",
+      "path": "surface/config/mcp-tools.md",
+      "churn": 590
+    },
+    {
+      "id": "subsys.mcp.transports",
+      "path": "subsystems/mcp/transports.md",
+      "churn": 582
+    },
+    {
+      "id": "tool.spawn-agent-v1",
+      "path": "surface/tools/spawn-agent-v1.md",
+      "churn": 566
+    },
+    {
+      "id": "tool.list-agents",
+      "path": "surface/tools/list-agents.md",
+      "churn": 558
+    },
+    {
+      "id": "rpc.mcp-skills-plugin-methods",
+      "path": "surface/app-server/mcp-skills-plugin-methods.md",
+      "churn": 547
+    },
+    {
+      "id": "subsys.providers.auth-layer",
+      "path": "subsystems/providers/auth-layer.md",
+      "churn": 531
+    },
+    {
+      "id": "rpc.config-account-methods",
+      "path": "surface/app-server/config-account-methods.md",
+      "churn": 525
+    },
+    {
+      "id": "subsys.tui.status-surfaces",
+      "path": "subsystems/tui/status-surfaces.md",
+      "churn": 485
+    },
+    {
+      "id": "subsys.cloud.cloud-config",
+      "path": "subsystems/cloud/cloud-config.md",
+      "churn": 475
+    },
+    {
+      "id": "subsys.providers.retry-errors",
+      "path": "subsystems/providers/retry-errors.md",
+      "churn": 471
+    },
+    {
+      "id": "subsys.platform.network-proxy",
+      "path": "subsystems/platform/network-proxy.md",
+      "churn": 471
+    },
+    {
+      "id": "subsys.providers.responses-api",
+      "path": "subsystems/providers/responses-api.md",
+      "churn": 468
+    },
+    {
+      "id": "rpc.turn-methods",
+      "path": "surface/app-server/turn-methods.md",
+      "churn": 467
+    },
+    {
+      "id": "subsys.core.state-db",
+      "path": "subsystems/core/state-db.md",
+      "churn": 455
+    },
+    {
+      "id": "subsys.providers.overview",
+      "path": "subsystems/providers/overview.md",
+      "churn": 449
+    },
+    {
+      "id": "tool.wait-agent-v1",
+      "path": "surface/tools/wait-agent-v1.md",
+      "churn": 433
+    },
+    {
+      "id": "tool.close-agent-v1",
+      "path": "surface/tools/close-agent-v1.md",
+      "churn": 433
+    },
+    {
+      "id": "subsys.providers.sse-streaming",
+      "path": "subsystems/providers/sse-streaming.md",
+      "churn": 426
+    },
+    {
+      "id": "tool.get-context-remaining",
+      "path": "surface/tools/get-context-remaining.md",
+      "churn": 413
+    },
+    {
+      "id": "subsys.exec-sandbox.file-system",
+      "path": "subsystems/exec-sandbox/file-system.md",
+      "churn": 412
+    },
+    {
+      "id": "tool.dynamic-tools",
+      "path": "surface/tools/dynamic-tools.md",
+      "churn": 411
+    },
+    {
+      "id": "tool.new-context",
+      "path": "surface/tools/new-context.md",
+      "churn": 411
+    },
+    {
+      "id": "subsys.tui.onboarding",
+      "path": "subsystems/tui/onboarding.md",
+      "churn": 410
+    },
+    {
+      "id": "ref.protocol-items",
+      "path": "reference/protocol-items.md",
+      "churn": 404
+    },
+    {
+      "id": "surface.cli.external-agent-import",
+      "path": "surface/cli/external-agent-import.md",
+      "churn": 387
+    },
+    {
+      "id": "subsys.exec-sandbox.sandbox-seatbelt",
+      "path": "subsystems/exec-sandbox/sandbox-seatbelt.md",
+      "churn": 375
+    },
+    {
+      "id": "subsys.config-auth.credential-storage",
+      "path": "subsystems/config-auth/credential-storage.md",
+      "churn": 368
+    },
+    {
+      "id": "subsys.core.rollout-persistence",
+      "path": "subsystems/core/rollout-persistence.md",
+      "churn": 358
+    },
+    {
+      "id": "subsys.platform.telemetry-otel",
+      "path": "subsystems/platform/telemetry-otel.md",
+      "churn": 336
+    },
+    {
+      "id": "subsys.mcp.name-qualification",
+      "path": "subsystems/mcp/name-qualification.md",
+      "churn": 308
+    },
+    {
+      "id": "ref.protocol-op",
+      "path": "reference/protocol-op.md",
+      "churn": 275
+    },
+    {
+      "id": "subsys.exec-sandbox.arg0-dispatch",
+      "path": "subsystems/exec-sandbox/arg0-dispatch.md",
+      "churn": 253
+    },
+    {
+      "id": "config.skills-plugins-features",
+      "path": "surface/config/skills-plugins-features.md",
+      "churn": 252
+    },
+    {
+      "id": "command.tools-integrations",
+      "path": "surface/slash-commands/tools-integrations.md",
+      "churn": 248
+    },
+    {
+      "id": "subsys.config-auth.features-system",
+      "path": "subsystems/config-auth/features-system.md",
+      "churn": 245
+    },
+    {
+      "id": "ref.protocol-event-lifecycle",
+      "path": "reference/protocol-event-lifecycle.md",
+      "churn": 240
+    },
+    {
+      "id": "subsys.mcp.connectors",
+      "path": "subsystems/mcp/connectors.md",
+      "churn": 211
+    },
+    {
+      "id": "rpc.overview",
+      "path": "surface/app-server/overview.md",
+      "churn": 207
+    },
+    {
+      "id": "rpc.fs-command-methods",
+      "path": "surface/app-server/fs-command-methods.md",
+      "churn": 207
+    },
+    {
+      "id": "subsys.providers.provider-openai",
+      "path": "subsystems/providers/provider-openai.md",
+      "churn": 205
+    },
+    {
+      "id": "subsys.platform.git-utils",
+      "path": "subsystems/platform/git-utils.md",
+      "churn": 180
+    },
+    {
+      "id": "ref.feature-flags",
+      "path": "reference/feature-flags.md",
+      "churn": 180
+    },
+    {
+      "id": "config.agents-memory",
+      "path": "surface/config/agents-memory.md",
+      "churn": 133
+    },
+    {
+      "id": "config.ui-tui",
+      "path": "surface/config/ui-tui.md",
+      "churn": 120
+    },
+    {
+      "id": "command.model-mode",
+      "path": "surface/slash-commands/model-mode.md",
+      "churn": 96
+    },
+    {
+      "id": "command.code-review",
+      "path": "surface/slash-commands/code-review.md",
+      "churn": 96
+    },
+    {
+      "id": "command.realtime-debug",
+      "path": "surface/slash-commands/realtime-debug.md",
+      "churn": 96
+    },
+    {
+      "id": "subsys.providers.provider-oss",
+      "path": "subsystems/providers/provider-oss.md",
+      "churn": 77
+    },
+    {
+      "id": "subsys.cloud.cloud-tasks",
+      "path": "subsystems/cloud/cloud-tasks.md",
+      "churn": 66
+    },
+    {
+      "id": "subsys.exec-sandbox.overview",
+      "path": "subsystems/exec-sandbox/overview.md",
+      "churn": 63
+    },
+    {
+      "id": "subsys.mcp.server",
+      "path": "subsystems/mcp/server.md",
+      "churn": 58
+    },
+    {
+      "id": "subsys.tui.streaming-pipeline",
+      "path": "subsystems/tui/streaming-pipeline.md",
+      "churn": 55
+    },
+    {
+      "id": "subsys.app-server.client-libs",
+      "path": "subsystems/app-server/client-libs.md",
+      "churn": 54
+    },
+    {
+      "id": "cli.exec-mode",
+      "path": "surface/cli/exec-mode.md",
+      "churn": 49
+    },
+    {
+      "id": "config.auth-account",
+      "path": "surface/config/auth-account.md",
+      "churn": 48
+    },
+    {
+      "id": "sdk.ts-structured-output",
+      "path": "surface/sdk/ts-structured-output.md",
+      "churn": 43
+    },
+    {
+      "id": "subsys.exec-sandbox.execpolicy-dsl",
+      "path": "subsystems/exec-sandbox/execpolicy-dsl.md",
+      "churn": 37
+    },
+    {
+      "id": "config.storage-telemetry-misc",
+      "path": "surface/config/storage-telemetry-misc.md",
+      "churn": 28
+    },
+    {
+      "id": "command.config-system",
+      "path": "surface/slash-commands/config-system.md",
+      "churn": 25
+    },
+    {
+      "id": "sdk.ts-overview",
+      "path": "surface/sdk/ts-overview.md",
+      "churn": 19
+    },
+    {
+      "id": "ref.crate-index",
+      "path": "reference/crate-index.md",
+      "churn": 14
+    },
+    {
+      "id": "subsys.cloud.cloud-task-api",
+      "path": "subsystems/cloud/cloud-task-api.md",
+      "churn": 7
+    },
+    {
+      "id": "sdk.ts-events-items",
+      "path": "surface/sdk/ts-events-items.md",
+      "churn": 1
+    }
+  ],
+  "D_CLEAN": [
+    {
+      "id": "sdk.py-inputs-errors",
+      "path": "surface/sdk/py-inputs-errors.md"
+    },
+    {
+      "id": "subsys.core.trace-bundle",
+      "path": "subsystems/core/trace-bundle.md"
+    },
+    {
+      "id": "subsys.exec-sandbox.process-hardening",
+      "path": "subsystems/exec-sandbox/process-hardening.md"
+    },
+    {
+      "id": "subsys.app-server.transport",
+      "path": "subsystems/app-server/transport.md"
+    },
+    {
+      "id": "subsys.platform.file-search",
+      "path": "subsystems/platform/file-search.md"
+    },
+    {
+      "id": "subsys.platform.terminal-detection",
+      "path": "subsystems/platform/terminal-detection.md"
+    },
+    {
+      "id": "subsys.platform.agent-identity",
+      "path": "subsystems/platform/agent-identity.md"
+    },
+    {
+      "id": "ref.uncertainty",
+      "path": "reference/uncertainty.md"
+    }
+  ]
+}

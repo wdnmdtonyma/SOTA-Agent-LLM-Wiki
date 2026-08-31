@@ -3,22 +3,22 @@ id: tool.update-plan
 title: update_plan 工具
 kind: tool
 tier: T1
-source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/handlers/plan_spec.rs, codex-rs/core/src/tools/handlers/plan.rs, codex-rs/protocol/src/plan_tool.rs, codex-rs/protocol/src/protocol.rs, codex-rs/tools/src/tool_executor.rs]
+source: [codex-rs/core/src/tools/spec_plan.rs, codex-rs/core/src/tools/spec_plan_tests.rs, codex-rs/core/src/tools/handlers/plan_spec.rs, codex-rs/core/src/tools/handlers/plan.rs, codex-rs/core/src/config/mod.rs, codex-rs/protocol/src/plan_tool.rs, codex-rs/protocol/src/protocol.rs, codex-rs/tools/src/tool_executor.rs]
 symbols: [create_update_plan_tool, PlanHandler, PlanToolOutput, parse_update_plan_arguments, UpdatePlanArgs, EventMsg::PlanUpdate]
 related: [spine.tool-call-anatomy, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 9ded177ce7
+updated: a9519cbcdd
 ---
 
-> `update_plan` 是 Codex 的本地 checklist/TODO 状态更新 function tool。它让模型提交结构化 plan，handler 把参数转成 `EventMsg::PlanUpdate(args)` 发给客户端，并向模型返回固定的 `Plan updated` 成功文本。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan_spec.rs:43][E: codex-rs/core/src/tools/handlers/plan.rs:22][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92]
+> `update_plan` 是 Codex 的本地 checklist/TODO 状态更新 function tool。它让模型提交结构化 plan，handler 把参数转成 `EventMsg::PlanUpdate(args)` 发给客户端，并向模型返回固定的 `Plan updated` 成功文本。它**不是默认始终开启**：只有 `config.update_plan_enabled` 为 true 时才注册。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan.rs:95][E: codex-rs/core/src/tools/spec_plan.rs:1148][E: codex-rs/core/src/config/mod.rs:2639]
 
 ## 能回答的问题
 
 - `update_plan` 的 wire name、ToolSpec 类型和 handler 是什么？
 - 输入 schema 里哪些字段必填，`status` 有哪些枚举值？
 - 成功输出为什么只有固定文本，真实 plan 如何到达客户端？
-- 它何时注册，是否支持 parallel tool calls？
+- 它何时注册，默认是否开启，是否支持 parallel tool calls？
 - 为什么它在 Plan mode 中不可用？
 
 ## 1 Identity
@@ -34,9 +34,9 @@ updated: 9ded177ce7
 
 工具描述说明它用于更新 task plan，可带可选 explanation，并要求最多一个 step 处于 `in_progress`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:44][E: codex-rs/core/src/tools/handlers/plan_spec.rs:45][E: codex-rs/core/src/tools/handlers/plan_spec.rs:46]
 
-执行层不会把 plan 内容拼进工具输出；`PlanHandler` 解析 arguments 后调用 `session.send_event(turn.as_ref(), EventMsg::PlanUpdate(args)).await`，通过 `EventMsg::PlanUpdate` 暴露给 event surface。[E: codex-rs/core/src/tools/handlers/plan.rs:90][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92][E: codex-rs/protocol/src/protocol.rs:1446]
+执行层不会把 plan 内容拼进工具输出；`PlanHandler` 解析 arguments 后调用 `session.send_event(turn.as_ref(), EventMsg::PlanUpdate(args)).await`，通过 `EventMsg::PlanUpdate` 暴露给 event surface。[E: codex-rs/core/src/tools/handlers/plan.rs:93][E: codex-rs/core/src/tools/handlers/plan.rs:95][E: codex-rs/protocol/src/protocol.rs:1504]
 
-当前源码中，“最多一个 `in_progress`”只出现在工具描述；handler 路径显示它做 JSON 反序列化并发送 event，未见额外 runtime 校验该约束。[E: codex-rs/core/src/tools/handlers/plan.rs:90][E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92][I]
+当前源码中，“最多一个 `in_progress`”只出现在工具描述；handler 路径显示它做 JSON 反序列化并发送 event，未见额外 runtime 校验该约束。[E: codex-rs/core/src/tools/handlers/plan.rs:93][E: codex-rs/core/src/tools/handlers/plan.rs:95][I]
 
 ## 3 输入 schema 表
 
@@ -53,17 +53,17 @@ tool schema 的 plan item object 和顶层 parameters object 都关闭 additiona
 
 ## 4 输出
 
-`PlanToolOutput` 的 log preview 是 `Plan updated`，success 为 true；response item 是 `FunctionCallOutput`，正文同样是 `Plan updated`，`success` 设为 `Some(true)`。[E: codex-rs/core/src/tools/handlers/plan.rs:22][E: codex-rs/core/src/tools/handlers/plan.rs:24][E: codex-rs/core/src/tools/handlers/plan.rs:26][E: codex-rs/core/src/tools/handlers/plan.rs:30][E: codex-rs/core/src/tools/handlers/plan.rs:34][E: codex-rs/core/src/tools/handlers/plan.rs:35][E: codex-rs/core/src/tools/handlers/plan.rs:37]
+`PlanToolOutput` 的 log preview 是 `Plan updated`，success 为 true；response item 是 `FunctionCallOutput`，正文同样是 `Plan updated`，`success` 设为 `Some(true)`。[E: codex-rs/core/src/tools/handlers/plan.rs:20][E: codex-rs/core/src/tools/handlers/plan.rs:22][E: codex-rs/core/src/tools/handlers/plan.rs:24][E: codex-rs/core/src/tools/handlers/plan.rs:26][E: codex-rs/core/src/tools/handlers/plan.rs:34][E: codex-rs/core/src/tools/handlers/plan.rs:35]
 
 code-mode nested result 返回空 JSON object。[E: codex-rs/core/src/tools/handlers/plan.rs:43][E: codex-rs/core/src/tools/handlers/plan.rs:44]
 
 ## 5 注册与门控
 
-`build_tool_router` 经 `add_core_tool_sources` 调用 `add_core_utility_tools`。Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，因此不会注册 `PlanHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:120][E: codex-rs/core/src/tools/spec_plan.rs:145][E: codex-rs/core/src/tools/spec_plan.rs:896][E: codex-rs/core/src/tools/spec_plan.rs:930][E: codex-rs/core/src/tools/spec_plan.rs:935]
+`build_tool_router` 经 `add_core_tool_sources` 调用 `add_core_utility_tools`。Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，因此不会注册 `PlanHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:153][E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1036][E: codex-rs/core/src/tools/spec_plan.rs:1041]
 
-只有 resolved `config.update_plan_enabled` 为 true 时才向 registry 注册 `PlanHandler`；`tools.update_plan.enabled` 未配置时默认 true，因此这是可显式关闭的 config gate，不是 feature flag。[E: codex-rs/core/src/tools/spec_plan.rs:1039][E: codex-rs/core/src/tools/spec_plan.rs:1040][E: codex-rs/core/src/config/mod.rs:2580][E: codex-rs/core/src/config/mod.rs:2585]
+只有 resolved `config.update_plan_enabled` 为 true 时才向 registry 注册 `PlanHandler`。`resolve_update_plan_enabled` 用 `is_some_and(|config| config.enabled)`：`tools.update_plan` 未配置时默认 **false**。这是 opt-in config gate，不是 feature flag。[E: codex-rs/core/src/tools/spec_plan.rs:1148][E: codex-rs/core/src/config/mod.rs:2639][E: codex-rs/core/src/config/mod.rs:2644][E: codex-rs/core/src/tools/spec_plan_tests.rs:857]
 
-runtime gate 在 handler 内：当当前 `turn.mode` 是 `ModeKind::Plan` 时，handler 返回错误 `update_plan is a TODO/checklist tool and is not allowed in Plan mode`。[E: codex-rs/core/src/tools/handlers/plan.rs:84][E: codex-rs/core/src/tools/handlers/plan.rs:85][E: codex-rs/core/src/tools/handlers/plan.rs:86]
+runtime gate 在 handler 内：当当前 `turn.mode()` 是 `ModeKind::Plan` 时，handler 返回错误 `update_plan is a TODO/checklist tool and is not allowed in Plan mode`。[E: codex-rs/core/src/tools/handlers/plan.rs:87][E: codex-rs/core/src/tools/handlers/plan.rs:88][E: codex-rs/core/src/tools/handlers/plan.rs:89]
 
 ## 6 parallel support
 
@@ -71,15 +71,19 @@ runtime gate 在 handler 内：当当前 `turn.mode` 是 `ModeKind::Plan` 时，
 
 ## 7 handler 走读
 
-1. handler 只接受 `ToolPayload::Function { arguments }`；其它 payload 返回 `update_plan handler received unsupported payload`。[E: codex-rs/core/src/tools/handlers/plan.rs:75][E: codex-rs/core/src/tools/handlers/plan.rs:76][E: codex-rs/core/src/tools/handlers/plan.rs:77][E: codex-rs/core/src/tools/handlers/plan.rs:78][E: codex-rs/core/src/tools/handlers/plan.rs:79]
-2. Plan mode 被拒绝后，handler 通过 `parse_update_plan_arguments` 反序列化 `UpdatePlanArgs`。[E: codex-rs/core/src/tools/handlers/plan.rs:84][E: codex-rs/core/src/tools/handlers/plan.rs:90][E: codex-rs/core/src/tools/handlers/plan.rs:101][E: codex-rs/core/src/tools/handlers/plan.rs:102]
-3. 成功解析后发送 `EventMsg::PlanUpdate(args)`，再返回 `PlanToolOutput`。[E: codex-rs/core/src/tools/handlers/plan.rs:91][E: codex-rs/core/src/tools/handlers/plan.rs:92][E: codex-rs/core/src/tools/handlers/plan.rs:95]
+1. handler 只接受 `ToolPayload::Function { arguments }`；其它 payload 返回 `update_plan handler received unsupported payload`。[E: codex-rs/core/src/tools/handlers/plan.rs:78][E: codex-rs/core/src/tools/handlers/plan.rs:82]
+2. Plan mode 被拒绝后，handler 通过 `parse_update_plan_arguments` 反序列化 `UpdatePlanArgs`。[E: codex-rs/core/src/tools/handlers/plan.rs:87][E: codex-rs/core/src/tools/handlers/plan.rs:93][E: codex-rs/core/src/tools/handlers/plan.rs:108]
+3. 成功解析后发送 `EventMsg::PlanUpdate(args)`，再返回 `PlanToolOutput`。[E: codex-rs/core/src/tools/handlers/plan.rs:95][E: codex-rs/core/src/tools/handlers/plan.rs:98]
+
+`CoreToolRuntime::is_builtin_control_tool()` 返回 `true`。[E: codex-rs/core/src/tools/handlers/plan.rs:103]
 
 ## Sources
 
 - `codex-rs/core/src/tools/spec_plan.rs`
+- `codex-rs/core/src/tools/spec_plan_tests.rs`
 - `codex-rs/core/src/tools/handlers/plan_spec.rs`
 - `codex-rs/core/src/tools/handlers/plan.rs`
+- `codex-rs/core/src/config/mod.rs`
 - `codex-rs/protocol/src/plan_tool.rs`
 - `codex-rs/protocol/src/protocol.rs`
 - `codex-rs/tools/src/tool_executor.rs`

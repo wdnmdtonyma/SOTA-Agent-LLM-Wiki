@@ -8,10 +8,10 @@ symbols: [create_list_mcp_resources_tool, ListMcpResourcesHandler, ListResourceA
 related: [tool.list-mcp-resource-templates, tool.read-mcp-resource, subsys.mcp.server, subsys.mcp.client]
 evidence: explicit
 status: verified
-updated: 9ded177ce7
+updated: a9519cbcdd
 ---
 
-> `list_mcp_resources` 是本地 Function 工具，用于列出 MCP server 暴露的 resources；可指定单个 server 与 cursor。wire description 把省略 server 描述为 every configured server，但执行时只汇总本 model step 捕获到的 step-ready clients。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:11][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:24][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:85][E: codex-rs/codex-mcp/src/binding.rs:106][E: codex-rs/codex-mcp/src/binding.rs:110]
+> `list_mcp_resources` 是本地 Function 工具，用于列出 MCP server 暴露的 resources；可指定单个 server 与 cursor。wire description 把省略 server 描述为 every configured server，但执行时只汇总本 model step 捕获到的 step-ready clients。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:11][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:24][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:88][E: codex-rs/codex-mcp/src/binding.rs:116][E: codex-rs/codex-mcp/src/binding.rs:120]
 
 ## 能回答的问题
 
@@ -32,22 +32,22 @@ updated: 9ded177ce7
 
 | 字段 | 类型 | 必填 | 默认 | 说明 |
 |---|---|---:|---|---|
-| `server` | string | 否 | omitted | 指定 server 时只列该 server；省略时 wire 文案称“所有已配置 server”，实际汇总 step-ready servers。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:11][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:85][E: codex-rs/codex-mcp/src/binding.rs:106] |
+| `server` | string | 否 | omitted | 指定 server 时只列该 server；省略时 wire 文案称“所有已配置 server”，实际汇总 step-ready servers。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:11][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:88][E: codex-rs/codex-mcp/src/binding.rs:116] |
 | `cursor` | string | 否 | first page | 单 server 分页 cursor；无 server 时带 cursor 会报错。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:17][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:89][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:90] |
 
 schema 没有 required 字段，并关闭 additional properties。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:28]
 
 ## 3 注册与执行
 
-`add_mcp_resource_tools` 只要当前 step binding `has_servers()` 为 true 就注册 `ListMcpResourcesHandler`、`ListMcpResourceTemplatesHandler` 和 `ReadMcpResourceHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1025][E: codex-rs/core/src/tools/spec_plan.rs:1026][E: codex-rs/core/src/tools/spec_plan.rs:1027][E: codex-rs/core/src/tools/spec_plan.rs:1028][E: codex-rs/core/src/tools/spec_plan.rs:1029]
+`add_mcp_resource_tools` 只要当前 step binding `has_servers()` 为 true 就注册 `ListMcpResourcesHandler`、`ListMcpResourceTemplatesHandler` 和 `ReadMcpResourceHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1134][E: codex-rs/core/src/tools/spec_plan.rs:1135][E: codex-rs/core/src/tools/spec_plan.rs:1136][E: codex-rs/core/src/tools/spec_plan.rs:1137][E: codex-rs/core/src/tools/spec_plan.rs:1138]
 
-handler 只接受 Function payload；参数先 parse 成 optional JSON，再用 default args 处理空 arguments。`server` 和 `cursor` 会 trim，空字符串会变成 `None`。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:53][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:63][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:326][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:328][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:332]
+handler 只接受 Function payload；参数先 parse 成 optional JSON，再用 default args 处理空 arguments。`server` 和 `cursor` 会 trim，空字符串会变成 `None`。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:56][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:66][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:326][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:328][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:332]
 
-执行阶段会按 turn config 过滤 `codex_apps` server：`orchestrator_mcp_enabled` 为 false 时，指定该 server 会返回模型可见错误；汇总 step-ready servers 时也只列出 `model_can_access_mcp_server` 允许访问的 server。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:43][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:44][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:54][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:86][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:87]
+执行阶段会按 turn config 过滤 `codex_apps` server：`orchestrator_mcp_enabled` 为 false 时，指定该 server 会返回模型可见错误；汇总 step-ready servers 时也只列出 `model_can_access_mcp_server` 允许访问的 server。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:43][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:44][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:54][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:89][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:90]
 
-handler 从 `StepContext.mcp` 取本次 sampling request 的 `McpBinding`。单 server 模式优先使用该 step 捕获的 ready client，缺失时回退 binding 持有的 live connection set；all-server 模式只遍历 step-ready clients，不走回退。注册门控 `McpBinding::has_servers()` 检查的是 connection set 是否有 server，不是 ready-client map，所以三件套可能在本步没有 ready client 时仍注册。[E: codex-rs/core/src/session/step_context.rs:42][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:51][E: codex-rs/codex-mcp/src/binding.rs:90][E: codex-rs/codex-mcp/src/binding.rs:99][E: codex-rs/codex-mcp/src/binding.rs:102][E: codex-rs/codex-mcp/src/binding.rs:106][E: codex-rs/core/src/tools/spec_plan.rs:1026]
+handler 从 `StepContext.mcp` 取本次 sampling request 的 `McpBinding`。单 server 模式优先使用该 step 捕获的 ready client，缺失时回退 binding 持有的 live connection set；all-server 模式只遍历 step-ready clients，不走回退。注册门控 `McpBinding::has_servers()` 检查的是 connection set 是否有 server，不是 ready-client map，所以三件套可能在本步没有 ready client 时仍注册。[E: codex-rs/core/src/session/step_context.rs:29][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:54][E: codex-rs/codex-mcp/src/binding.rs:100][E: codex-rs/codex-mcp/src/binding.rs:109][E: codex-rs/codex-mcp/src/binding.rs:112][E: codex-rs/codex-mcp/src/binding.rs:116][E: codex-rs/core/src/tools/spec_plan.rs:1135]
 
-capture 现在允许 startup 尚未完成但 `has_cached_tools()` 的 server 贡献 cached ToolInfo；这不等于 all-server resource list 一定能读到 live client，resource list 仍走 `McpBindingClients`。[E: codex-rs/codex-mcp/src/connection_manager/tool_catalog.rs:196][E: codex-rs/codex-mcp/src/connection_manager/tool_catalog.rs:233][E: codex-rs/codex-mcp/src/connection_manager/tool_catalog.rs:236][I]
+capture 现在允许 startup 尚未完成但 `has_cached_tools()` 的 server 贡献 cached ToolInfo；这不等于 all-server resource list 一定能读到 live client，resource list 仍走 `McpBindingClients`。[E: codex-rs/codex-mcp/src/connection_manager/tool_catalog.rs:198][E: codex-rs/codex-mcp/src/connection_manager/tool_catalog.rs:251][E: codex-rs/codex-mcp/src/connection_manager/tool_catalog.rs:251][I]
 
 三种 resource handler 共享参数/输出包装与 `run_resource_operation` 的 begin/end、JSON 序列化、截断流程。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:60][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:280]
 
@@ -57,7 +57,7 @@ capture 现在允许 startup 尚未完成但 `has_cached_tools()` 的 server 贡
 
 单 server 模式只取调用者指定 cursor 对应的一页并返回 `nextCursor`；all-server 模式会为每个 captured server 连续取完所有页。公共 collector 限制最多 100 页、2,048 项、64 KiB cursor，拒绝重复 cursor，默认整体超时 30 秒。[E: codex-rs/codex-mcp/src/binding_clients.rs:80][E: codex-rs/codex-mcp/src/binding_clients.rs:94][E: codex-rs/codex-mcp/src/pagination.rs:9][E: codex-rs/codex-mcp/src/pagination.rs:10][E: codex-rs/codex-mcp/src/pagination.rs:12][E: codex-rs/codex-mcp/src/pagination.rs:13][E: codex-rs/codex-mcp/src/pagination.rs:44][E: codex-rs/codex-mcp/src/pagination.rs:64][E: codex-rs/codex-mcp/src/pagination.rs:69]
 
-执行由共享 `run_resource_operation` 包装：开始与完成各发 MCP tool-call turn item，payload 经 JSON 序列化并按模型 truncation policy 截断，成功时返回 boxed function output。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:72][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:290][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:293][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:309]
+执行由共享 `run_resource_operation` 包装：开始与完成各发 MCP tool-call turn item，payload 经 JSON 序列化并按模型 truncation policy 截断，成功时返回 boxed function output。[E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:75][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:290][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:293][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:309]
 
 ## 5 parallel support
 

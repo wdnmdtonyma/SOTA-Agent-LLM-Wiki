@@ -8,10 +8,10 @@ symbols: [DynamicToolSpec, DynamicToolFunctionSpec, DynamicToolNamespaceSpec, Dy
 related: [tool.tool-search, tool.mcp-namespace-tools, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 9ded177ce7
+updated: a9519cbcdd
 ---
 
-> Dynamic tools 是 planner 从 `turn_context.dynamic_tools` 遍历出来的运行时工具定义。planner 把 `DynamicToolSpec::Function` 或 namespace 内 function 转成 `DynamicToolHandler`；handler 登记 pending response，通过 `DynamicToolCallItem` 发出 started/completed turn-item 生命周期，并在其间等待 response。[E: codex-rs/protocol/src/dynamic_tools.rs:13][E: codex-rs/protocol/src/dynamic_tools.rs:21][E: codex-rs/core/src/tools/spec_plan.rs:165][E: codex-rs/core/src/tools/spec_plan.rs:1221][E: codex-rs/core/src/tools/spec_plan.rs:1224][E: codex-rs/core/src/tools/handlers/dynamic.rs:187][E: codex-rs/core/src/tools/handlers/dynamic.rs:200][E: codex-rs/core/src/tools/handlers/dynamic.rs:244]
+> Dynamic tools 是 planner 从 `turn_context.dynamic_tools` 遍历出来的运行时工具定义。planner 把 `DynamicToolSpec::Function` 或 namespace 内 function 转成 `DynamicToolHandler`；handler 登记 pending response，通过 `DynamicToolCallItem` 发出 started/completed turn-item 生命周期，并在其间等待 response。[E: codex-rs/protocol/src/dynamic_tools.rs:13][E: codex-rs/protocol/src/dynamic_tools.rs:21][E: codex-rs/core/src/tools/spec_plan.rs:191][E: codex-rs/core/src/tools/spec_plan.rs:1364][E: codex-rs/core/src/tools/spec_plan.rs:1367][E: codex-rs/core/src/tools/handlers/dynamic.rs:190][E: codex-rs/core/src/tools/handlers/dynamic.rs:203][E: codex-rs/core/src/tools/handlers/dynamic.rs:247]
 
 ## 能回答的问题
 
@@ -28,7 +28,7 @@ namespace spec 包含 namespace `name`、`description` 和 `tools: Vec<DynamicTo
 
 ## 2 runtime 构造
 
-`append_dynamic_tool_runtimes` 遍历当前 turn 的 dynamic specs：Function 走 `DynamicToolHandler::new`，Namespace 则遍历 `namespace.tools` 并走 `DynamicToolHandler::new_in_namespace`。[E: codex-rs/core/src/tools/spec_plan.rs:1221][E: codex-rs/core/src/tools/spec_plan.rs:1224][E: codex-rs/core/src/tools/spec_plan.rs:1234][E: codex-rs/core/src/tools/spec_plan.rs:1237]
+`append_dynamic_tool_runtimes` 遍历当前 turn 的 dynamic specs：Function 走 `DynamicToolHandler::new`，Namespace 则遍历 `namespace.tools` 并走 `DynamicToolHandler::new_in_namespace`。[E: codex-rs/core/src/tools/spec_plan.rs:1364][E: codex-rs/core/src/tools/spec_plan.rs:1367][E: codex-rs/core/src/tools/spec_plan.rs:1377][E: codex-rs/core/src/tools/spec_plan.rs:1380]
 
 handler construction 用 namespace/name 生成 `ToolName`，把 protocol spec 转成 `ResponsesApiTool`，再包装为 Function 或 Namespace `ToolSpec`。[E: codex-rs/core/src/tools/handlers/dynamic.rs:54][E: codex-rs/core/src/tools/handlers/dynamic.rs:61][E: codex-rs/core/src/tools/handlers/dynamic.rs:62][E: codex-rs/core/src/tools/handlers/dynamic.rs:69]
 
@@ -40,13 +40,13 @@ handler construction 用 namespace/name 生成 `ToolName`，把 protocol spec �
 
 ## 4 handler 走读
 
-handler 只接受 Function payload，arguments 解析为 JSON `Value`；然后调用 `request_dynamic_tool`。[E: codex-rs/core/src/tools/handlers/dynamic.rs:126][E: codex-rs/core/src/tools/handlers/dynamic.rs:136]
+handler 只接受 Function payload，arguments 解析为 JSON `Value`；然后调用 `request_dynamic_tool`。[E: codex-rs/core/src/tools/handlers/dynamic.rs:129][E: codex-rs/core/src/tools/handlers/dynamic.rs:139]
 
-`request_dynamic_tool` 以 call id 登记 pending dynamic response，然后发出 `DynamicToolCallItem` started：其 `status` 为 `InProgress`，记录 call id、namespace、tool 和 arguments，结果字段暂为空。[E: codex-rs/core/src/tools/handlers/dynamic.rs:187][E: codex-rs/core/src/tools/handlers/dynamic.rs:200][E: codex-rs/core/src/tools/handlers/dynamic.rs:205]
+`request_dynamic_tool` 以 call id 登记 pending dynamic response，然后发出 `DynamicToolCallItem` started：其 `status` 为 `InProgress`，记录 call id、namespace、tool 和 arguments，结果字段暂为空。[E: codex-rs/core/src/tools/handlers/dynamic.rs:190][E: codex-rs/core/src/tools/handlers/dynamic.rs:203][E: codex-rs/core/src/tools/handlers/dynamic.rs:208]
 
-response 到达后，completed item 按 `success` 标为 `Completed` 或 `Failed`，并带上 content items、success 与 duration；channel 取消也会产生 `Failed` item 和错误文本。[E: codex-rs/core/src/tools/handlers/dynamic.rs:221][E: codex-rs/core/src/tools/handlers/dynamic.rs:224][E: codex-rs/core/src/tools/handlers/dynamic.rs:236][E: codex-rs/core/src/tools/handlers/dynamic.rs:244]
+response 到达后，completed item 按 `success` 标为 `Completed` 或 `Failed`，并带上 content items、success 与 duration；channel 取消也会产生 `Failed` item 和错误文本。[E: codex-rs/core/src/tools/handlers/dynamic.rs:224][E: codex-rs/core/src/tools/handlers/dynamic.rs:227][E: codex-rs/core/src/tools/handlers/dynamic.rs:239][E: codex-rs/core/src/tools/handlers/dynamic.rs:247]
 
-响应体是 `DynamicToolResponse { content_items, success }`；handler 把 content items 转成 function-call output content，并把 `success` 传给 `FunctionToolOutput::from_content`。[E: codex-rs/protocol/src/dynamic_tools.rs:60][E: codex-rs/protocol/src/dynamic_tools.rs:62][E: codex-rs/core/src/tools/handlers/dynamic.rs:150][E: codex-rs/core/src/tools/handlers/dynamic.rs:158]
+响应体是 `DynamicToolResponse { content_items, success }`；handler 把 content items 转成 function-call output content，并把 `success` 传给 `FunctionToolOutput::from_content`。[E: codex-rs/protocol/src/dynamic_tools.rs:60][E: codex-rs/protocol/src/dynamic_tools.rs:62][E: codex-rs/core/src/tools/handlers/dynamic.rs:153][E: codex-rs/core/src/tools/handlers/dynamic.rs:161]
 
 ## 5 parallel support
 

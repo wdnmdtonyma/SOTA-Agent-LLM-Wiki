@@ -3,15 +3,15 @@ id: subsys.tui.bottom-pane
 title: Bottom Pane 与 Composer
 kind: subsystem
 tier: T2
-source: [codex-rs/tui/src/bottom_pane/mod.rs, codex-rs/tui/src/bottom_pane/startup.rs, codex-rs/tui/src/bottom_pane/bottom_pane_view.rs, codex-rs/tui/src/bottom_pane/chat_composer.rs, codex-rs/tui/src/bottom_pane/chat_composer/completion_target.rs, codex-rs/tui/src/bottom_pane/chat_composer_history.rs, codex-rs/tui/src/bottom_pane/chat_composer_history/search_batch.rs, codex-rs/tui/src/bottom_pane/paste_burst.rs, codex-rs/tui/src/bottom_pane/textarea.rs, codex-rs/tui/src/bottom_pane/pending_input_preview.rs, codex-rs/tui/src/bottom_pane/pending_thread_approvals.rs, codex-rs/tui/src/bottom_pane/app_link_view.rs, codex-rs/tui/src/bottom_pane/approval_overlay.rs, codex-rs/tui/src/bottom_pane/hooks_browser_view.rs, codex-rs/tui/src/bottom_pane/list_selection_view.rs, codex-rs/tui/src/bottom_pane/mcp_server_elicitation.rs, codex-rs/tui/src/bottom_pane/request_user_input/mod.rs, codex-rs/tui/src/external_editor.rs]
+source: [codex-rs/tui/src/bottom_pane/mod.rs, codex-rs/tui/src/bottom_pane/startup.rs, codex-rs/tui/src/bottom_pane/bottom_pane_view.rs, codex-rs/tui/src/bottom_pane/chat_composer.rs, codex-rs/tui/src/bottom_pane/textarea/vim_search.rs, codex-rs/tui/src/bottom_pane/chat_composer/completion_target.rs, codex-rs/tui/src/bottom_pane/chat_composer_history.rs, codex-rs/tui/src/bottom_pane/chat_composer_history/search_batch.rs, codex-rs/tui/src/bottom_pane/paste_burst.rs, codex-rs/tui/src/bottom_pane/textarea.rs, codex-rs/tui/src/bottom_pane/pending_input_preview.rs, codex-rs/tui/src/bottom_pane/pending_thread_approvals.rs, codex-rs/tui/src/bottom_pane/app_link_view.rs, codex-rs/tui/src/bottom_pane/approval_overlay.rs, codex-rs/tui/src/bottom_pane/hooks_browser_view.rs, codex-rs/tui/src/bottom_pane/list_selection_view.rs, codex-rs/tui/src/bottom_pane/mcp_server_elicitation.rs, codex-rs/tui/src/bottom_pane/request_user_input/mod.rs, codex-rs/tui/src/external_editor.rs]
 symbols: [BottomPane, BottomPaneView, ChatComposer, InputResult, QueuedInputAction, PasteBurst, ChatComposerHistory, HistorySearchResult, DollarQueryKind]
 related: [subsys.tui.chatwidget, subsys.tui.overlays-dialogs, subsys.tui.event-system, subsys.tui.keymap, subsys.tui.onboarding]
 evidence: explicit
 status: verified
-updated: 9ded177ce7
+updated: a9519cbcdd
 ---
 
-> Bottom pane 是聊天屏底部的 owning container：它保留 `ChatComposer`，维护 `BottomPaneView` stack，并把本地输入路由、运行中状态、pending preview 和 approval 提示组织成 footer surface。startup 阶段同一套 composer 只接受 safe editor keys；进程级 quit/interrupt 决策仍归 `ChatWidget`。[E: codex-rs/tui/src/bottom_pane/mod.rs:222][E: codex-rs/tui/src/bottom_pane/mod.rs:225][E: codex-rs/tui/src/bottom_pane/mod.rs:628][E: codex-rs/tui/src/bottom_pane/startup.rs:16]
+> Bottom pane 是聊天屏底部的 owning container：它保留 `ChatComposer`，维护 `BottomPaneView` stack，并把本地输入路由、运行中状态、pending preview 和 approval 提示组织成 footer surface。startup 阶段同一套 composer 只接受 safe editor keys；进程级 quit/interrupt 决策仍归 `ChatWidget`。[E: codex-rs/tui/src/bottom_pane/mod.rs:228][E: codex-rs/tui/src/bottom_pane/mod.rs:231][E: codex-rs/tui/src/bottom_pane/mod.rs:654][E: codex-rs/tui/src/bottom_pane/startup.rs:16]
 
 ## 能回答的问题
 
@@ -26,11 +26,11 @@ updated: 9ded177ce7
 
 ## 容器状态
 
-`BottomPane` 字段明确把 composer、`view_stack`、delayed approval requests、app event sender、frame requester、thread id、focus/enhanced-key/paste-burst flags、running status、pending input preview、pending thread approvals、context window 信息和 runtime keymap 放在同一层。[E: codex-rs/tui/src/bottom_pane/mod.rs:222][E: codex-rs/tui/src/bottom_pane/mod.rs:225][E: codex-rs/tui/src/bottom_pane/mod.rs:228][E: codex-rs/tui/src/bottom_pane/mod.rs:232][E: codex-rs/tui/src/bottom_pane/mod.rs:236][E: codex-rs/tui/src/bottom_pane/mod.rs:244][E: codex-rs/tui/src/bottom_pane/mod.rs:251][E: codex-rs/tui/src/bottom_pane/mod.rs:253][E: codex-rs/tui/src/bottom_pane/mod.rs:256]
+`BottomPane` 字段明确把 composer、`view_stack`、delayed approval requests、app event sender、frame requester、thread id、focus/enhanced-key/paste-burst flags、running status、pending input preview、pending thread approvals、context window 信息和 runtime keymap 放在同一层。[E: codex-rs/tui/src/bottom_pane/mod.rs:228][E: codex-rs/tui/src/bottom_pane/mod.rs:231][E: codex-rs/tui/src/bottom_pane/mod.rs:234][E: codex-rs/tui/src/bottom_pane/mod.rs:238][E: codex-rs/tui/src/bottom_pane/mod.rs:242][E: codex-rs/tui/src/bottom_pane/mod.rs:251][E: codex-rs/tui/src/bottom_pane/mod.rs:258][E: codex-rs/tui/src/bottom_pane/mod.rs:260][E: codex-rs/tui/src/bottom_pane/mod.rs:263]
 
-`BottomPane::new` 用 `BottomPaneParams` 创建 composer，把 frame requester、keymap、skills 注入 composer，并初始化空 view stack、pending preview、pending approvals 和状态行。[E: codex-rs/tui/src/bottom_pane/mod.rs:271][E: codex-rs/tui/src/bottom_pane/mod.rs:276][E: codex-rs/tui/src/bottom_pane/mod.rs:290][E: codex-rs/tui/src/bottom_pane/mod.rs:299][E: codex-rs/tui/src/bottom_pane/mod.rs:300]
+`BottomPane::new` 用 `BottomPaneParams` 创建 composer，把 frame requester、keymap、skills 注入 composer，并初始化空 view stack、pending preview、pending approvals 和状态行。[E: codex-rs/tui/src/bottom_pane/mod.rs:278][E: codex-rs/tui/src/bottom_pane/mod.rs:283][E: codex-rs/tui/src/bottom_pane/mod.rs:297][E: codex-rs/tui/src/bottom_pane/mod.rs:306][E: codex-rs/tui/src/bottom_pane/mod.rs:307]
 
-`set_keymap_bindings` 用同一份 `RuntimeKeymap` 更新 pane、composer、pending-input preview 和 running status 的 interrupt hint，避免 overlays 与 composer 漂移。[E: codex-rs/tui/src/bottom_pane/mod.rs:410][E: codex-rs/tui/src/bottom_pane/mod.rs:410][E: codex-rs/tui/src/bottom_pane/mod.rs:412]
+`set_keymap_bindings` 用同一份 `RuntimeKeymap` 更新 pane、composer、pending-input preview 和 running status 的 interrupt hint，避免 overlays 与 composer 漂移。[E: codex-rs/tui/src/bottom_pane/mod.rs:436][E: codex-rs/tui/src/bottom_pane/mod.rs:436][E: codex-rs/tui/src/bottom_pane/mod.rs:438]
 
 ## Startup composer
 
@@ -40,11 +40,11 @@ handoff 时 `composer_draft_snapshot` 带上 approval-idle timestamp，`restore_
 
 ## View Stack 与输入路由
 
-active view 是 `view_stack.last()`。`handle_key_event` 优先把 key 交给 active view；没有 view 时才检查 running-task interrupt、记录 composer activity，再调用 composer 的 key handler。popup 活跃时不会直接触发 task interrupt。[E: codex-rs/tui/src/bottom_pane/mod.rs:628][E: codex-rs/tui/src/bottom_pane/mod.rs:630][E: codex-rs/tui/src/bottom_pane/mod.rs:650][E: codex-rs/tui/src/bottom_pane/mod.rs:678][E: codex-rs/tui/src/bottom_pane/mod.rs:697]
+active view 是 `view_stack.last()`。`handle_key_event` 优先把 key 交给 active view；没有 view 时才检查 running-task interrupt、记录 composer activity，再调用 composer 的 key handler。popup 活跃时不会直接触发 task interrupt。[E: codex-rs/tui/src/bottom_pane/mod.rs:654][E: codex-rs/tui/src/bottom_pane/mod.rs:656][E: codex-rs/tui/src/bottom_pane/mod.rs:676][E: codex-rs/tui/src/bottom_pane/mod.rs:707][E: codex-rs/tui/src/bottom_pane/mod.rs:726]
 
-Ctrl-C 也是两层：active view 先消费，之后才是 history-search cancel、空 composer 上报未处理、非空 composer 清空草稿；该函数只返回 `CancellationEvent`，不决定进程退出。[E: codex-rs/tui/src/bottom_pane/mod.rs:729][E: codex-rs/tui/src/bottom_pane/mod.rs:730][E: codex-rs/tui/src/bottom_pane/mod.rs:742][E: codex-rs/tui/src/bottom_pane/mod.rs:745]
+Ctrl-C 也是两层：active view 先消费，之后才是 history-search cancel、空 composer 上报未处理、非空 composer 清空草稿；该函数只返回 `CancellationEvent`，不决定进程退出。[E: codex-rs/tui/src/bottom_pane/mod.rs:758][E: codex-rs/tui/src/bottom_pane/mod.rs:759][E: codex-rs/tui/src/bottom_pane/mod.rs:771][E: codex-rs/tui/src/bottom_pane/mod.rs:774]
 
-paste 同样先交给 active view。[E: codex-rs/tui/src/bottom_pane/mod.rs:756][E: codex-rs/tui/src/bottom_pane/mod.rs:758]
+paste 同样先交给 active view。[E: codex-rs/tui/src/bottom_pane/mod.rs:785][E: codex-rs/tui/src/bottom_pane/mod.rs:787]
 
 ### Request-user-input
 
@@ -58,13 +58,15 @@ notes/freeform 复用同一个 `ChatComposer`，构造时调用 `composer.set_ke
 
 ## Composer、editor keymap 与 paste burst
 
-`ChatComposer::set_keymap_bindings` 同时更新 submit/queue/history-search 和 embedded textarea 的 editor bindings，避免 live remap 只改提交键却留下旧光标键。[E: codex-rs/tui/src/bottom_pane/chat_composer.rs:866][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:866][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:874][E: codex-rs/tui/src/bottom_pane/textarea.rs:186]
+`ChatComposer::set_keymap_bindings` 同时更新 submit/queue/history-search 和 embedded textarea 的 editor bindings，避免 live remap 只改提交键却留下旧光标键。[E: codex-rs/tui/src/bottom_pane/chat_composer.rs:907][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:907][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:915][E: codex-rs/tui/src/bottom_pane/textarea.rs:209]
 
-`TextArea::set_keymap_bindings` 只换 keymap cache，不改 Vim mode、cursor 或 kill buffer。[E: codex-rs/tui/src/bottom_pane/textarea.rs:185][E: codex-rs/tui/src/bottom_pane/textarea.rs:186]
+`TextArea::set_keymap_bindings` 只换 keymap cache，不改 Vim mode、cursor 或 kill buffer；它同时写入 `vim_search` / `vim_text_object` bindings。[E: codex-rs/tui/src/bottom_pane/textarea.rs:208][E: codex-rs/tui/src/bottom_pane/textarea.rs:209][E: codex-rs/tui/src/bottom_pane/textarea.rs:212]
 
-当前 paste-burst 行为在源码状态机里：它把终端把粘贴拆成 key events 的场景建模成时间窗口，避免 paste 里的 Enter 被误当作普通提交。composer 只把 plain/Shift/Windows AltGr 的 text-producing char 送进 burst detector；Ctrl/Alt/Super/Hyper/Meta 会先 flush，再当 shortcut 处理。[E: codex-rs/tui/src/bottom_pane/paste_burst.rs:168][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:3556][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:3565][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:3570][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:11913]
+Vim search 是 textarea 本地状态机：`/` `?` 打开 footer query editor（不改 draft），`n`/`N` 按上次 `SearchQuery` 跳转；`KeymapContext::VimSearch` 与 VimNormal/VimOperator 重叠，因此 search 进行中仍要做 chord 冲突校验。[E: codex-rs/tui/src/bottom_pane/textarea/vim_search.rs:27][E: codex-rs/tui/src/keymap/bindings.rs:22][E: codex-rs/tui/src/keymap/bindings.rs:62]
 
-`InputResult` 和 `QueuedInputAction` 由 `chat_composer` 导出到 bottom pane 模块。`set_parent_owned_thread` 只设置 direct-input block 和 placeholder，并不把 textarea 设为不可编辑。[E: codex-rs/tui/src/bottom_pane/mod.rs:199][E: codex-rs/tui/src/bottom_pane/mod.rs:200]
+当前 paste-burst 行为在源码状态机里：它把终端把粘贴拆成 key events 的场景建模成时间窗口，避免 paste 里的 Enter 被误当作普通提交。composer 只把 plain/Shift/Windows AltGr 的 text-producing char 送进 burst detector；Ctrl/Alt/Super/Hyper/Meta 会先 flush，再当 shortcut 处理。[E: codex-rs/tui/src/bottom_pane/paste_burst.rs:168][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:3662][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:3671][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:3676][E: codex-rs/tui/src/bottom_pane/chat_composer.rs:12048]
+
+`InputResult` 和 `QueuedInputAction` 由 `chat_composer` 导出到 bottom pane 模块。`set_parent_owned_thread` 只设置 direct-input block 和 placeholder，并不把 textarea 设为不可编辑。[E: codex-rs/tui/src/bottom_pane/mod.rs:205][E: codex-rs/tui/src/bottom_pane/mod.rs:206]
 
 `completion_target.rs` 在 cursor 两侧解析 whitespace-delimited `@`/`$` token，把 atomic text element 当硬边界；`DollarQueryKind` 还把 `$HOME`、纯数字 positional parameter 与可补全 skill/plugin query 分开。[E: codex-rs/tui/src/bottom_pane/chat_composer/completion_target.rs:273]
 
@@ -76,14 +78,14 @@ notes/freeform 复用同一个 `ChatComposer`，构造时调用 `composer.set_ke
 
 ## 状态与辅助面板
 
-`set_task_running` 在任务开始时创建/显示 `StatusIndicatorWidget`，设置 interrupt hint，并在任务结束时隐藏 status indicator；queue submission 开关直接同步到 composer。[E: codex-rs/tui/src/bottom_pane/mod.rs:1054][E: codex-rs/tui/src/bottom_pane/mod.rs:1057][E: codex-rs/tui/src/bottom_pane/mod.rs:1061][E: codex-rs/tui/src/bottom_pane/mod.rs:1080][E: codex-rs/tui/src/bottom_pane/mod.rs:1084]
+`set_task_running` 在任务开始时创建/显示 `StatusIndicatorWidget`，设置 interrupt hint，并在任务结束时隐藏 status indicator；queue submission 开关直接同步到 composer。[E: codex-rs/tui/src/bottom_pane/mod.rs:1071][E: codex-rs/tui/src/bottom_pane/mod.rs:1074][E: codex-rs/tui/src/bottom_pane/mod.rs:1078][E: codex-rs/tui/src/bottom_pane/mod.rs:1097][E: codex-rs/tui/src/bottom_pane/mod.rs:1101]
 
 `PendingInputPreview` 渲染 pending steers/queued drafts；`PendingThreadApprovals` 记录 inactive threads with pending approvals。[E: codex-rs/tui/src/bottom_pane/pending_input_preview.rs:23][E: codex-rs/tui/src/bottom_pane/pending_thread_approvals.rs:12]
 
 ## Gotchas
 
-- `BottomPaneView` trait 是 modal/popup 的统一接口，不是 alternate-screen pager；view 实例包括 app link、approval、hooks browser、list selection、MCP elicitation、request-user-input 等 overlays。[E: codex-rs/tui/src/bottom_pane/bottom_pane_view.rs:20][E: codex-rs/tui/src/bottom_pane/app_link_view.rs:690][E: codex-rs/tui/src/bottom_pane/approval_overlay.rs:565][E: codex-rs/tui/src/bottom_pane/hooks_browser_view.rs:597][E: codex-rs/tui/src/bottom_pane/list_selection_view.rs:952][E: codex-rs/tui/src/bottom_pane/mcp_server_elicitation.rs:1515][E: codex-rs/tui/src/bottom_pane/request_user_input/mod.rs:1188]
-- Thai 组合标记在 textarea 的 `delete_backward` 里被单独剥一层，而不是按整个 grapheme 删除。[E: codex-rs/tui/src/bottom_pane/textarea.rs:1005][E: codex-rs/tui/src/bottom_pane/textarea.rs:1016]
+- `BottomPaneView` trait 是 modal/popup 的统一接口，不是 alternate-screen pager；view 实例包括 app link、approval、hooks browser、list selection、MCP elicitation、request-user-input 等 overlays。[E: codex-rs/tui/src/bottom_pane/bottom_pane_view.rs:20][E: codex-rs/tui/src/bottom_pane/app_link_view.rs:690][E: codex-rs/tui/src/bottom_pane/approval_overlay.rs:579][E: codex-rs/tui/src/bottom_pane/hooks_browser_view.rs:597][E: codex-rs/tui/src/bottom_pane/list_selection_view.rs:972][E: codex-rs/tui/src/bottom_pane/mcp_server_elicitation.rs:1515][E: codex-rs/tui/src/bottom_pane/request_user_input/mod.rs:1188]
+- Thai 组合标记在 textarea 的 `delete_backward` 里被单独剥一层，而不是按整个 grapheme 删除。[E: codex-rs/tui/src/bottom_pane/textarea.rs:1101][E: codex-rs/tui/src/bottom_pane/textarea.rs:1112]
 
 ## Sources
 
@@ -96,6 +98,7 @@ notes/freeform 复用同一个 `ChatComposer`，构造时调用 `composer.set_ke
 - `codex-rs/tui/src/bottom_pane/chat_composer_history/search_batch.rs`
 - `codex-rs/tui/src/bottom_pane/paste_burst.rs`
 - `codex-rs/tui/src/bottom_pane/textarea.rs`
+- `codex-rs/tui/src/bottom_pane/textarea/vim_search.rs`
 - `codex-rs/tui/src/bottom_pane/pending_input_preview.rs`
 - `codex-rs/tui/src/bottom_pane/pending_thread_approvals.rs`
 - `codex-rs/tui/src/bottom_pane/app_link_view.rs`

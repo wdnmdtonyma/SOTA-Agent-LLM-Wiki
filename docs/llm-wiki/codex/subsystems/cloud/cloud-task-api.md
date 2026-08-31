@@ -8,7 +8,7 @@ symbols: [CloudBackend, cloud_tasks_client::HttpClient, TaskSummary, TaskText, T
 related: [subsys.cloud.cloud-tasks, subsys.platform.git-utils]
 evidence: explicit
 status: verified
-updated: 9ded177ce7
+updated: a9519cbcdd
 ---
 
 > `cloud-tasks-client` 是 Cloud tasks 的 backend abstraction：`CloudBackend` trait 定义 list/status/diff/messages/text/sibling/preflight/apply/create 操作，`HttpClient` 包装 `codex_backend_client::Client` 并把这些 trait 方法映射到 backend API、details parsing 和 local git apply。[E: codex-rs/cloud-tasks-client/src/api.rs:136][E: codex-rs/cloud-tasks-client/src/api.rs:137][E: codex-rs/cloud-tasks-client/src/api.rs:143][E: codex-rs/cloud-tasks-client/src/api.rs:144][E: codex-rs/cloud-tasks-client/src/api.rs:146][E: codex-rs/cloud-tasks-client/src/api.rs:148][E: codex-rs/cloud-tasks-client/src/api.rs:150][E: codex-rs/cloud-tasks-client/src/api.rs:158][E: codex-rs/cloud-tasks-client/src/api.rs:163][E: codex-rs/cloud-tasks-client/src/api.rs:168][E: codex-rs/cloud-tasks-client/src/http.rs:25][E: codex-rs/cloud-tasks-client/src/http.rs:68][E: codex-rs/cloud-tasks-client/src/http.rs:126]
@@ -57,7 +57,7 @@ create task request 写入 message input item、environment_id、branch、qa mod
 
 ## 设计动机与权衡
 
-`CloudBackend` trait 把 CLI/TUI 与 backend implementation 分离，使 production HTTP client、mock client 和 tests 可以共享操作语义。[I] 该结论由 trait object 持有 backend、mock mode 和 trait impl 共同支撑。[E: codex-rs/cloud-tasks/src/lib.rs:42][E: codex-rs/cloud-tasks/src/lib.rs:60][E: codex-rs/cloud-tasks-client/src/api.rs:136][E: codex-rs/cloud-tasks-client/src/http.rs:68]
+`CloudBackend` trait 把 CLI/TUI 与 backend implementation 分离，使 production HTTP client、mock client 和 tests 可以共享操作语义。[I] 该结论由 trait object 持有 backend、mock mode 和 trait impl 共同支撑。[E: codex-rs/cloud-tasks/src/lib.rs:42][E: codex-rs/cloud-tasks/src/lib.rs:61][E: codex-rs/cloud-tasks-client/src/api.rs:136][E: codex-rs/cloud-tasks-client/src/http.rs:68]
 
 ## Gotchas
 

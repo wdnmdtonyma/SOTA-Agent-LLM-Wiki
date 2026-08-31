@@ -6,7 +6,7 @@ kind: reference
 tier: T3
 source: []
 status: verified
-updated: 9ded177ce7
+updated: a9519cbcdd
 evidence: unknown
 ---
 
@@ -30,7 +30,7 @@ evidence: unknown
 ## uncertainty-catalogs
 
 - [U] `network/policyRequest` 的 `Ask` 是协议与 policy engine 的第三种决定，但仅凭 exec-server 层不能断言一定弹出 UI；是否提示、自动批准或拒绝由上层 controller 的 decider、approval policy、permission profile 与连接存活状态共同决定。
-- [U] 研究 brief 记 target `FEATURES` 为 116 条 `FeatureSpec`；对 `codex-rs/features/src/lib.rs` 的 `pub const FEATURES` 数组逐条 brace-parse 得到 114 条，且与 `Feature` enum 变体一一对应。114 是本批 catalog 采用的源码计数。
+- [U] `a9519cbcdd` 上 `FEATURES` 以 `codex-rs/features/src/lib.rs` 为准共 **133** 条；旧 brief 的 114/116 已过期，不要再当当前计数。
 - [U] pending environment attachment / per-environment permission profile snapshot 的完整协议与 session 状态机未在本批逐字段走完；exec-server 测试与 `CodexThread` 有 pending environment API，但不能从本批摘录推出稳定的跨 thread 环境绑定契约。
 - [U] `surface/config/*`、多数 `subsystems/core/*`（tool-system/tool-router/turn-engine/turn-metadata/compaction/memory/trace-bundle）与部分 exec-sandbox 页在本轮主要做了 SHA 对齐与已知失效 claim 修补；大量历史 `[E:]` 行号 仍在文件行数范围内，但不保证每条都仍落在原断言符号上。
 
@@ -169,3 +169,65 @@ Assigned pages have no remaining `[U]`. The items below are `[I]` inferences tha
 - TUI 仍没有 thread-section CRUD UI。resume picker / named lookup / agent picker 都发 `section_id: None`；`ThreadSortKey::SectionPosition` 只当 Updated 处理。
 - `/export` 已存在，不是未实现面。
 - first-login 会 delay composer；非 first-login 的 startup composer 可编辑但不可提交。
+
+## uncertainty-update-guardian
+
+# guardian-tools 批次残留 uncertainty
+
+对照 target `a9519cbcdd`。下列事实已在节点正文写明，但整条链路尚未完全落地，故标为残留 `[U]` / 未接线：
+
+1. **`codex-guardian-context` 尚未被 V2 消费。** crate 已在 workspace（`codex-rs/guardian-context/`），声明 `ContextTarget::{Sync,Async}`、`SectionRegistry`、`collect_transcript`。`ext/guardian-v2` Cargo.toml 未依赖该 crate；`async_scorer` 仍用自己的 `transcript.rs`。wiki 按现状写，不假装已 `use`。
+
+2. **`sync_reviewer::build_review_prompt` 在非 test 构建标 `dead_code`（“wired by a subsequent PR”）。** 完整同步审查仍走 V1 `core/src/guardian`。V2 reviewer 目前只注册 thread context / `prepare_reviewer_options`。
+
+3. **TUI / exec 经 app-server 继承 registry 的具体调用行号本轮未重核。** 生产 `codex_guardian_v2::install` 只在 app-server `thread_extensions`；MCP server 与 `empty_extension_registry()`（含 V1 reviewer）不自己 install V2。TUI/exec 是否仍经 embedded/remote app-server 拿同一份 registry，未在本轮逐行核对。
+
+## uncertainty-update-shell-exec
+
+# uncertainty-update · shell-exec
+
+本批次未改 `reference/uncertainty.md`。下列 `[U]` 只记在本 staging 文件。
+
+## 残留 [U]
+
+1. **`Ask` 是否弹 UI** — `subsys.exec-sandbox.exec-server`
+   - `ExecServerNetworkPolicyDecision::Ask` 是协议第三种决定。
+   - exec-server 层不能断言 controller decider 一定会弹出 UI；也可能自动批准或拒绝。
+   - 证据缺口：需要对照 controller-side `NetworkPolicyDecider` 实现，不在本节点权威范围。
+
+## uncertainty-update-spine-core
+
+# uncertainty-update · spine-core
+
+target: `a9519cbcdd`
+
+这些 `[U]` 仍留在本批次节点里，不要写进 `reference/uncertainty.md`（本轮禁止改该文件）。
+
+## thread-store
+
+- 多 segment lineage 的 page/materialization 仍有严格边界：不能把“可分页读取继承 history”推广成任意 incremental item replay 都受支持。节点：`subsystems/core/thread-store.md`
+- 第一方 app-server / TUI 路径当前没有调用 `reserve_thread_id` + `stage_pending_thread_metadata`；可见用法在 core 集成测试。节点：`subsystems/core/thread-store.md`
+
+本批次其它节点未新增 `[U]`。
+
+## uncertainty-update-tui-mcp-sdk
+
+# Uncertainty — tui-mcp-sdk @ a9519cbcdd
+
+本批次更新已有节点，不写 `reference/uncertainty.md`。
+
+## 残留 `[U]`
+
+- [U] MCP prewarm 是 bounded best-effort 启动优化；step path 的 refresh/capture 才是正确性屏障，不能把 prewarm 完成当成 binding 已冻结。(`subsys.mcp.client`)
+- [U] system proxy 支持受 feature/platform 与 application-resolved policy 控制；存在代码路径不代表所有构建默认启用。(`subsys.providers.http-client`)
+- [U] dynamic skill selector 仍是 shadow-selection path，不能写成已成为稳定的用户可见选择协议。(`subsys.config-auth.skills`)
+- [U] pending environment attachment 与 per-environment permission profile snapshot 的完整跨 thread 契约未在本节点逐字段核完。(`subsys.config-auth.auth-flows`)
+
+`subsys.exec-sandbox.exec-server` 的 Ask/UI `[U]` 不在本批次（shell-exec）。
+
+## 专项已核、不是 `[U]`
+
+- MCP server 名 charset 已放宽为 `^[a-zA-Z0-9_:@/.-]+$`（package-style）；tool 名仍走 `sanitize_responses_api_tool_name`。
+- `omit_app_server_notification_media` 只剥 `ItemStarted` / `ItemCompleted` / `RawResponseItemCompleted` 的 inline media；`LocalImage`/`LocalAudio` 保留。
+- TUI keymap 12 contexts（含 `vim_search` / `agents`）；rate-limit 75/90/95 + backend banner 分层；model picker `on_models_loaded` in-place refresh。
+- Windows private desktop / deny-read walker 在 sandbox crate；PowerShell 版本探测在 `environment.rs`，不在 sandbox crate。
