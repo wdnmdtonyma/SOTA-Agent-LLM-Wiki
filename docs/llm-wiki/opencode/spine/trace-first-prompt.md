@@ -9,7 +9,7 @@ symbols: [SessionV2.create, SessionV2.prompt, SessionInput.admit, SessionExecuti
 related: [spine.v2-admission, spine.v2-provider-turn]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > 这条 trace 走读 V2 新 session 的第一次 prompt:session 已创建后,用户 prompt 先进入 durable inbox,execution wake 触发 runner,runner 初始化 Context Epoch,再执行第一轮 provider turn。
@@ -50,23 +50,23 @@ flowchart TD
 
 6. 在 local execution layer 里,`wake` 映射到 `SessionRunCoordinator.wake`;如果 session idle,coordinator 会创建 entry 并 start owner fiber。[E: packages/core/src/session/execution/local.ts:35][E: packages/core/src/session/run-coordinator.ts:81][E: packages/core/src/session/run-coordinator.ts:89][E: packages/core/src/session/run-coordinator.ts:91]
 
-7. owner fiber 的 drain 是 `SessionExecutionLocal.drain`:它通过 `SessionStore.get` 读取 session,用 `LocationServiceMap.get(session.location)` 取得 location-scoped services,再调用 `SessionRunner.run({ sessionID, force: mode === "run" })`。[E: packages/core/src/session/execution/local.ts:16][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:21]
+7. owner fiber 的 drain 是 `SessionExecutionLocal.drain`:它通过 `SessionStore.get` 读取 session,用 `LocationServiceMap.get(session.location)` 取得 location-scoped services,再调用 `SessionRunner.run({ sessionID, force })`。`force` 来自 coordinator:`resume`/`run` 在 idle 时以 `force=true` 启动,`wake` 在 idle 时以 `force=false` 启动。[E: packages/core/src/session/execution/local.ts:16][E: packages/core/src/session/execution/local.ts:18][E: packages/core/src/session/execution/local.ts:21][E: packages/core/src/session/run-coordinator.ts:77][E: packages/core/src/session/run-coordinator.ts:91]
 
-8. `SessionRunner.run@packages/core/src/session/runner/llm.ts:378` 看到 pending steer 后进入 active loop;第一次 logical turn 的 promotion 值为 `"steer"`。[E: packages/core/src/session/runner/llm.ts:383][E: packages/core/src/session/runner/llm.ts:387][E: packages/core/src/session/runner/llm.ts:391]
+8. `SessionRunner.run@packages/core/src/session/runner/llm.ts:390` 看到 pending steer 后进入 active loop;第一次 logical turn 的 promotion 值为 `"steer"`。[E: packages/core/src/session/runner/llm.ts:390][E: packages/core/src/session/runner/llm.ts:394][E: packages/core/src/session/runner/llm.ts:398]
 
-9. `runTurnAttempt@packages/core/src/session/runner/llm.ts:168` 读取 session,选择 agent,然后在 promotion 之前调用 `SessionContextEpoch.initialize`。[E: packages/core/src/session/runner/llm.ts:173][E: packages/core/src/session/runner/llm.ts:179][E: packages/core/src/session/runner/llm.ts:182][E: packages/core/src/session/runner/llm.ts:183]
+9. `runTurnAttempt@packages/core/src/session/runner/llm.ts:173` 读取 session,选择 agent,然后在 promotion 之前调用 `SessionContextEpoch.initialize`。[E: packages/core/src/session/runner/llm.ts:173][E: packages/core/src/session/runner/llm.ts:179][E: packages/core/src/session/runner/llm.ts:182][E: packages/core/src/session/runner/llm.ts:183]
 
-10. 首次 epoch 不存在时,`initializeOnce` 调 `SystemContext.initialize` 并 insert baseline/snapshot;runner 在 prompt promotion 前调用 initialize,随后把 `system.baseline` 放入 provider request system parts。[E: packages/core/src/session/context-epoch.ts:80][E: packages/core/src/session/context-epoch.ts:85][E: packages/core/src/session/context-epoch.ts:86][E: packages/core/src/session/context-epoch.ts:87][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:208]
+10. 首次 epoch 不存在时,`initializeOnce` 调 `SystemContext.initialize` 并 insert baseline/snapshot;runner 在 prompt promotion 前调用 initialize,随后把 `system.baseline` 放入 provider request system parts。[E: packages/core/src/session/context-epoch.ts:80][E: packages/core/src/session/context-epoch.ts:85][E: packages/core/src/session/context-epoch.ts:86][E: packages/core/src/session/context-epoch.ts:87][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:215]
 
 11. runner 取得 cutoff seq 后调用 `SessionInput.promoteSteers`;promotion publish helper 发布 `Prompted`,projector 再通过 `projectPrompted` 标记 inbox row promoted,并调用通用 projection `run(db,event)` 写入可见 Session message。[E: packages/core/src/session/runner/llm.ts:188][E: packages/core/src/session/runner/llm.ts:190][E: packages/core/src/session/input.ts:245][E: packages/core/src/session/input.ts:251][E: packages/core/src/session/input.ts:258][E: packages/core/src/session/input.ts:265][E: packages/core/src/session/input.ts:225][E: packages/core/src/session/projector.ts:348][E: packages/core/src/session/projector.ts:351][E: packages/core/src/session/projector.ts:359]
 
-12. runner 重新解析 model/history,materialize tools,构造 `LLM.request`,并把 `system.baseline` 放入 provider system parts。[E: packages/core/src/session/runner/llm.ts:199][E: packages/core/src/session/runner/llm.ts:200][E: packages/core/src/session/runner/llm.ts:203][E: packages/core/src/session/runner/llm.ts:205][E: packages/core/src/session/runner/llm.ts:208]
+12. runner 重新解析 model/history,materialize tools,构造 `LLM.request`,并把 `system.baseline` 放入 provider system parts。[E: packages/core/src/session/runner/llm.ts:199][E: packages/core/src/session/runner/llm.ts:200][E: packages/core/src/session/runner/llm.ts:203][E: packages/core/src/session/runner/llm.ts:205][E: packages/core/src/session/runner/llm.ts:215] 该 request 现在还发送 `http.headers`：`x-session-affinity` / `X-Session-Id` 为 `session.id`，有 parent 时附加 `x-parent-session-id`。[E: packages/core/src/session/runner/llm.ts:207][E: packages/core/src/session/runner/llm.ts:209][E: packages/core/src/session/runner/llm.ts:210][E: packages/core/src/session/runner/llm.ts:211]
 
-13. provider turn 在 `llm.stream(request)` 处打开一次 stream;每个 LLM event 经过 `publisher.publish(event)` 投影成 session events。[E: packages/core/src/session/runner/llm.ts:232][E: packages/core/src/session/runner/llm.ts:242]
+13. provider turn 在 `llm.stream(request)` 处打开一次 stream;每个 LLM event 经过 `publisher.publish(event)` 投影成 session events。[E: packages/core/src/session/runner/llm.ts:239][E: packages/core/src/session/runner/llm.ts:249]
 
-14. publisher 在收到 text start/delta/end 时发布 Text events,step finish 时 flush 并记录 settlement;runner 随后发布 `SessionEvent.Step.Ended`。[E: packages/core/src/session/runner/publish-llm-event.ts:246][E: packages/core/src/session/runner/publish-llm-event.ts:248][E: packages/core/src/session/runner/publish-llm-event.ts:255][E: packages/core/src/session/runner/publish-llm-event.ts:265][E: packages/core/src/session/runner/publish-llm-event.ts:396][E: packages/core/src/session/runner/llm.ts:326]
+14. publisher 在收到 text start/delta/end 时发布 Text events,step finish 时 flush 并记录 settlement;runner 随后发布 `SessionEvent.Step.Ended`。[E: packages/core/src/session/runner/publish-llm-event.ts:246][E: packages/core/src/session/runner/publish-llm-event.ts:248][E: packages/core/src/session/runner/publish-llm-event.ts:255][E: packages/core/src/session/runner/publish-llm-event.ts:265][E: packages/core/src/session/runner/publish-llm-event.ts:396][E: packages/core/src/session/runner/llm.ts:333]
 
-15. stream 成功结束且没有 provider error 时,runner 返回 `needsContinuation`;outer loop 若没有 continuation 也没有新的 steer,再检查 queue,没有 queue 就退出 drain。[E: packages/core/src/session/runner/llm.ts:345][E: packages/core/src/session/runner/llm.ts:397][E: packages/core/src/session/runner/llm.ts:401][E: packages/core/src/session/runner/llm.ts:403]
+15. stream 成功结束且没有 provider error 时,runner 返回 `needsContinuation`;outer loop 若没有 continuation 也没有新的 steer,再检查 queue,没有 queue 就退出 drain。[E: packages/core/src/session/runner/llm.ts:352][E: packages/core/src/session/runner/llm.ts:404][E: packages/core/src/session/runner/llm.ts:408][E: packages/core/src/session/runner/llm.ts:410]
 
 ## 关键决策点
 

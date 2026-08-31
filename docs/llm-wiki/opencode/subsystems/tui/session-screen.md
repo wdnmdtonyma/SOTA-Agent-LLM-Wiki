@@ -5,11 +5,11 @@ kind: subsystem
 tier: T2
 v: na
 source: [packages/tui/src/routes/session/index.tsx, packages/tui/src/context/data.tsx]
-symbols: [Session, UserMessage, AssistantMessage]
+symbols: [Session, UserMessage, AssistantMessage, ReasoningPart, ReasoningHeader]
 related: [tui.sync-store, tui.prompt]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > Session screen 是 `session` route 的聊天界面：它从 `SyncProvider` 读取 session/message/part/status/permission/question，渲染 scrollbox transcript、sidebar、permission/question prompts、subagent footer 和可被 plugin replace 的 prompt slot。
@@ -21,12 +21,13 @@ updated: 3fd77ae980
 - 哪些 session commands 在这里注册，哪些走 SDK？
 - permission/question/subagent footer 如何与 prompt 互斥？
 - sidebar 什么时候自动显示，移动端样式如何变化？
+- 空 text + metadata 的 reasoning 如何显示 `Thought` header？
 
 ## 职责边界
 
-`Session()` 使用 `useRouteData("session")` 读取当前 `sessionID`，用 `sync.session.get(route.sessionID)` 得到 session info，用 `sync.data.message[sessionID]` 和 `sync.data.part[message.id]` 渲染 transcript。[E: packages/tui/src/routes/session/index.tsx:186] [E: packages/tui/src/routes/session/index.tsx:196] [E: packages/tui/src/routes/session/index.tsx:213] [E: packages/tui/src/routes/session/index.tsx:1282]
+`Session()` 使用 `useRouteData("session")` 读取当前 `sessionID`，用 `sync.session.get(route.sessionID)` 得到 session info，用 `sync.data.message[sessionID]` 和 `sync.data.part[message.id]` 渲染 transcript。[E: packages/tui/src/routes/session/index.tsx:186] [E: packages/tui/src/routes/session/index.tsx:196] [E: packages/tui/src/routes/session/index.tsx:213] [E: packages/tui/src/routes/session/index.tsx:1287]
 
-这个 screen 是 V1 SDK-shaped transcript 的主消费方：`Session()` 使用 `useSync()`，并从 `sync.data.message`/`sync.data.part` 读取当前 transcript；`DataProvider` 的 V2 `SessionMessage[]` mirror 是独立 store，不在本组件的 transcript render path 中出现。[E: packages/tui/src/routes/session/index.tsx:188] [E: packages/tui/src/routes/session/index.tsx:213] [E: packages/tui/src/routes/session/index.tsx:1282] [E: packages/tui/src/context/data.tsx:37] [I]
+这个 screen 是 V1 SDK-shaped transcript 的主消费方：`Session()` 使用 `useSync()`，并从 `sync.data.message`/`sync.data.part` 读取当前 transcript；`DataProvider` 的 V2 `SessionMessage[]` mirror 是独立 store，不在本组件的 transcript render path 中出现。[E: packages/tui/src/routes/session/index.tsx:188] [E: packages/tui/src/routes/session/index.tsx:213] [E: packages/tui/src/routes/session/index.tsx:1287] [E: packages/tui/src/context/data.tsx:37] [I]
 
 ## 数据模型
 
@@ -52,9 +53,13 @@ Session screen 的 local derived state 包括：
 
 ## Transcript 渲染
 
-Session screen 用 `<scrollbox stickyScroll stickyStart="bottom">` 承载 transcript，开启 scroll acceleration，scrollbar 是否可见来自 KV signal。[E: packages/tui/src/routes/session/index.tsx:266] [E: packages/tui/src/routes/session/index.tsx:1181] [E: packages/tui/src/routes/session/index.tsx:1188] [E: packages/tui/src/routes/session/index.tsx:1194] [E: packages/tui/src/routes/session/index.tsx:1195] [E: packages/tui/src/routes/session/index.tsx:1197] 每条 message 进入 `Switch`：revert boundary 显示“message reverted” block，reverted 之后的 messages 被隐藏，user message 渲染 `UserMessage`，assistant message 渲染 `AssistantMessage`。[E: packages/tui/src/routes/session/index.tsx:1202] [E: packages/tui/src/routes/session/index.tsx:1203] [E: packages/tui/src/routes/session/index.tsx:1237] [E: packages/tui/src/routes/session/index.tsx:1263] [E: packages/tui/src/routes/session/index.tsx:1268] [E: packages/tui/src/routes/session/index.tsx:1286]
+Session screen 用 `<scrollbox stickyScroll stickyStart="bottom">` 承载 transcript，开启 scroll acceleration，scrollbar 是否可见来自 KV signal。[E: packages/tui/src/routes/session/index.tsx:266] [E: packages/tui/src/routes/session/index.tsx:1181] [E: packages/tui/src/routes/session/index.tsx:1188] [E: packages/tui/src/routes/session/index.tsx:1194] [E: packages/tui/src/routes/session/index.tsx:1195] [E: packages/tui/src/routes/session/index.tsx:1197] 每条 message 进入 `Switch`：revert boundary 显示“message reverted” block，reverted 之后的 messages 被隐藏，user message 渲染 `UserMessage`，assistant message 渲染 `AssistantMessage`。[E: packages/tui/src/routes/session/index.tsx:1202] [E: packages/tui/src/routes/session/index.tsx:1203] [E: packages/tui/src/routes/session/index.tsx:1237] [E: packages/tui/src/routes/session/index.tsx:1263] [E: packages/tui/src/routes/session/index.tsx:1268] [E: packages/tui/src/routes/session/index.tsx:1287]
 
-`UserMessage` 从 parts 里只拼接 non-synthetic text parts，并把 file parts 以 MIME badge 展示；queued user message 会显示 `QUEUED`，普通 message 可按 timestamp toggle 显示时间。[E: packages/tui/src/routes/session/index.tsx:1375] [E: packages/tui/src/routes/session/index.tsx:1383] [E: packages/tui/src/routes/session/index.tsx:1385] [E: packages/tui/src/routes/session/index.tsx:1427] [E: packages/tui/src/routes/session/index.tsx:1450]
+`UserMessage` 从 parts 里只拼接 non-synthetic text parts，并把 file parts 以 MIME badge 展示；queued user message 会显示 `QUEUED`，普通 message 可按 timestamp toggle 显示时间。[E: packages/tui/src/routes/session/index.tsx:1365] [E: packages/tui/src/routes/session/index.tsx:1377] [E: packages/tui/src/routes/session/index.tsx:1385] [E: packages/tui/src/routes/session/index.tsx:1429] [E: packages/tui/src/routes/session/index.tsx:1451]
+
+## Opaque / encrypted reasoning
+
+`ReasoningPart` 把 `[REDACTED]` 从 text 去掉再 trim；`opaque` 为「trim 后空 text 且 `part.metadata` 为真」。这类 part 被当成 encrypted/opaque reasoning：header 走 `encrypted` 分支，文案是 `Thought` 或 `Thought · {duration}`，不可 toggle、不渲染 markdown body。[E: packages/tui/src/routes/session/index.tsx:1594] [E: packages/tui/src/routes/session/index.tsx:1596] [E: packages/tui/src/routes/session/index.tsx:1598] [E: packages/tui/src/routes/session/index.tsx:1611] [E: packages/tui/src/routes/session/index.tsx:1626] [E: packages/tui/src/routes/session/index.tsx:1631] [E: packages/tui/src/routes/session/index.tsx:1634] [E: packages/tui/src/routes/session/index.tsx:1666] 有可见 text 的 reasoning 仍用 `Thought: {title} · {duration}`，并可在 hide 模式展开。[E: packages/tui/src/routes/session/index.tsx:1667] [E: packages/tui/src/routes/session/index.tsx:1668]
 
 ## Commands 与 SDK actions
 

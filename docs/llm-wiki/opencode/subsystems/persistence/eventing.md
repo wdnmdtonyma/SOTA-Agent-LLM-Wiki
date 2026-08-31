@@ -13,6 +13,7 @@ source:
   - packages/opencode/src/project/instance-store.ts
   - packages/opencode/src/worktree/index.ts
   - packages/opencode/src/cli/upgrade.ts
+  - packages/opencode/src/server/routes/instance/httpapi/groups/global.ts
   - packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts
 symbols:
   - GlobalBus
@@ -24,7 +25,7 @@ related:
   - ref.events
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > 事件系统节点覆盖两个同时存在的 surface：V1 host 侧只有 `GlobalBus` EventEmitter，V2 core 侧是持久 EventV2 engine，`EventV2Bridge` 把 core events 映射回 GlobalBus 兼容流。
@@ -53,7 +54,9 @@ updated: 3fd77ae980
 
 ### V1 consumers
 
-V1 subsystems 直接使用 GlobalBus：Project update emit、instance dispose emit、worktree failure emit、upgrade notification emit、server SSE handler `GlobalBus.on("event", handler)` 都引用 `GlobalBus`。[E: packages/opencode/src/project/project.ts:164][E: packages/opencode/src/project/instance-store.ts:81][E: packages/opencode/src/worktree/index.ts:257][E: packages/opencode/src/cli/upgrade.ts:16][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:39] 这些 consumers 说明 GlobalBus 是 V1 host 的 cross-cutting notification surface。[I]
+V1 subsystems 直接使用 GlobalBus：Project update emit、instance dispose emit、worktree failure emit、upgrade notification emit、server SSE handler `GlobalBus.on("event", handler)` 都引用 `GlobalBus`。[E: packages/opencode/src/project/project.ts:135][E: packages/opencode/src/project/instance-store.ts:81][E: packages/opencode/src/worktree/index.ts:241][E: packages/opencode/src/worktree/index.ts:256][E: packages/opencode/src/cli/upgrade.ts:16][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:31] 这些 consumers 说明 GlobalBus 是 V1 host 的 cross-cutting notification surface。[I]
+
+`global.upgrade` handler 要求 payload `target` 为合法 semver（schema `GlobalUpgradeInput`），升级成功后 `GlobalBus.emit` `Installation.Event.Updated`，properties 带该 `version: target`。[E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:51][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:53][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:89][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:97][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:108][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:112]
 
 ## V2
 
@@ -133,6 +136,7 @@ V2 session spec 说明 durable event tail wakeups 是 advisory and edge-triggere
 - `packages/opencode/src/project/instance-store.ts`
 - `packages/opencode/src/worktree/index.ts`
 - `packages/opencode/src/cli/upgrade.ts`
+- `packages/opencode/src/server/routes/instance/httpapi/groups/global.ts`
 - `packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts`
 - `packages/core/src/event.ts`
 - `packages/core/src/event/sql.ts`

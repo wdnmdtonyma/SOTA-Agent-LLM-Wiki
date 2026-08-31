@@ -11,7 +11,7 @@ source:
   - packages/core/src/github-copilot/responses/convert-to-openai-responses-input.ts
   - packages/opencode/src/provider/provider.ts
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 evidence: explicit
 symbols:
   - codeInterpreter
@@ -30,7 +30,7 @@ related:
 
 ## V1
 
-V1 provider map 的 `@ai-sdk/github-copilot` bundled loader 实际 import `@opencode-ai/core/github-copilot/copilot-provider` 的 `createOpenaiCompatible`，而不是外部 `@ai-sdk/github-copilot` factory。[E: packages/opencode/src/provider/provider.ts:131] [E: packages/opencode/src/provider/provider.ts:132] V1 `github-copilot` custom loader 对 GPT major >= 5 且非 `gpt-5-mini` 的 model 选择 Responses API，否则走 chat。[E: packages/opencode/src/provider/provider.ts:225] [E: packages/opencode/src/provider/provider.ts:235] [E: packages/opencode/src/provider/provider.ts:236]
+V1 provider map 的 `@ai-sdk/github-copilot` bundled loader 实际 import `@opencode-ai/core/github-copilot/copilot-provider` 的 `createOpenaiCompatible`，而不是外部 `@ai-sdk/github-copilot` factory。[E: packages/opencode/src/provider/provider.ts:137] [E: packages/opencode/src/provider/provider.ts:138] V1 `github-copilot` custom loader 对 GPT major >= 5 且非 `gpt-5-mini` 的 model 选择 Responses API，否则走 chat。[E: packages/opencode/src/provider/provider.ts:231] [E: packages/opencode/src/provider/provider.ts:241] [E: packages/opencode/src/provider/provider.ts:242]
 
 ## V2
 

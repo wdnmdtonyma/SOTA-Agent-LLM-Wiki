@@ -9,7 +9,7 @@ symbols: [SessionTools.resolve, SessionProcessor.process, SessionRunner.run, cre
 related: [spine.v2-provider-turn, subsys.tools.v2]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > Tool call trace 在 V1 与 V2 中不是同一条机制:V1 依赖 AI SDK tool execution wrapper 与 `SessionProcessor` 更新 V1 parts,V2 由 runner 在 durable `Tool.Called` 后 settle local tool 并发布 `Tool.Success/Failed`。
@@ -40,9 +40,9 @@ flowchart TD
 
 ## V1
 
-1. `SessionPrompt.runLoop@packages/opencode/src/session/prompt.ts:1226` 调 `SessionTools.resolve` 生成 AI SDK tools,随后 `handle.process` input 把 `tools` 传给 model runtime。[E: packages/opencode/src/session/prompt.ts:1226][E: packages/opencode/src/session/prompt.ts:1272][E: packages/opencode/src/session/prompt.ts:1283]
+1. `SessionPrompt.runLoop@packages/opencode/src/session/prompt.ts:1081` 内调用 `SessionTools.resolve` 生成 AI SDK tools,随后 `handle.process` input 把 `tools` 传给 model runtime。[E: packages/opencode/src/session/prompt.ts:1081][E: packages/opencode/src/session/prompt.ts:1226][E: packages/opencode/src/session/prompt.ts:1272][E: packages/opencode/src/session/prompt.ts:1283]
 
-2. `SessionTools.resolve@packages/opencode/src/session/tools.ts:39` 构造每个 tool 的 execution context;context 包含 sessionID、messageID、callID、agent、messages、metadata updater 与 `ask` permission helper。[E: packages/opencode/src/session/tools.ts:41][E: packages/opencode/src/session/tools.ts:59][E: packages/opencode/src/session/tools.ts:60][E: packages/opencode/src/session/tools.ts:62][E: packages/opencode/src/session/tools.ts:63][E: packages/opencode/src/session/tools.ts:65][E: packages/opencode/src/session/tools.ts:66][E: packages/opencode/src/session/tools.ts:67][E: packages/opencode/src/session/tools.ts:81]
+2. `SessionTools.resolve@packages/opencode/src/session/tools.ts:41` 构造每个 tool 的 execution context;context 包含 sessionID、messageID、callID、agent、messages、metadata updater 与 `ask` permission helper。[E: packages/opencode/src/session/tools.ts:41][E: packages/opencode/src/session/tools.ts:59][E: packages/opencode/src/session/tools.ts:60][E: packages/opencode/src/session/tools.ts:62][E: packages/opencode/src/session/tools.ts:63][E: packages/opencode/src/session/tools.ts:65][E: packages/opencode/src/session/tools.ts:66][E: packages/opencode/src/session/tools.ts:67][E: packages/opencode/src/session/tools.ts:81]
 
 3. 对 registry tools,`SessionTools.resolve` 调 AI SDK `tool({ description, inputSchema, execute })`;execute 触发 `tool.execute.before`,执行 `item.execute(args, ctx)`,再触发 `tool.execute.after`。[E: packages/opencode/src/session/tools.ts:92][E: packages/opencode/src/session/tools.ts:99][E: packages/opencode/src/session/tools.ts:102][E: packages/opencode/src/session/tools.ts:106][E: packages/opencode/src/session/tools.ts:111][E: packages/opencode/src/session/tools.ts:121]
 
@@ -58,13 +58,13 @@ flowchart TD
 
 1. V2 runner 在构造 request 前调用 `tools.materialize(agent.info?.permissions)`,把当前 location/agent 下可用 tool materialize 成 provider definitions 与 settlement handle。[E: packages/core/src/session/runner/llm.ts:203]
 
-2. provider request 把 `toolMaterialization.definitions` 放进 `LLM.request({ ..., tools })`,随后一次 `llm.stream(request)` 打开 provider stream。[E: packages/core/src/session/runner/llm.ts:205][E: packages/core/src/session/runner/llm.ts:212][E: packages/core/src/session/runner/llm.ts:232]
+2. provider request 把 `toolMaterialization.definitions` 放进 `LLM.request({ ..., tools })`,随后一次 `llm.stream(request)` 打开 provider stream。[E: packages/core/src/session/runner/llm.ts:205][E: packages/core/src/session/runner/llm.ts:219][E: packages/core/src/session/runner/llm.ts:239] 同一 request 现在还发送 `http.headers`：`x-session-affinity` / `X-Session-Id` 为 `session.id`，有 parent 时附加 `x-parent-session-id`。[E: packages/core/src/session/runner/llm.ts:207][E: packages/core/src/session/runner/llm.ts:209][E: packages/core/src/session/runner/llm.ts:210][E: packages/core/src/session/runner/llm.ts:211]
 
 3. `publisher.publish(tool-call)` 会确保 tool input 已 start/end,检查重复 call,记录 `providerExecuted` 与 provider metadata,然后发布 `SessionEvent.Tool.Called`;publisher 返回的 `publish`/`flush`/`failUnsettledTools` 等接口只持久化 provider turn 事件,tool side effect 由 runner 执行。[E: packages/core/src/session/runner/publish-llm-event.ts:313][E: packages/core/src/session/runner/publish-llm-event.ts:316][E: packages/core/src/session/runner/publish-llm-event.ts:319][E: packages/core/src/session/runner/publish-llm-event.ts:321][E: packages/core/src/session/runner/publish-llm-event.ts:323][E: packages/core/src/session/runner/publish-llm-event.ts:413]
 
-4. runner 只对非 provider-executed tool call 启动 local settlement;它先通过 `publisher.assistantMessageID(event.id)` 取得 durable assistant message id,再调用 `toolMaterialization.settle({ sessionID, agent, assistantMessageID, call })`。[E: packages/core/src/session/runner/llm.ts:243][E: packages/core/src/session/runner/llm.ts:249][E: packages/core/src/session/runner/llm.ts:252]
+4. runner 只对非 provider-executed tool call 启动 local settlement;它先通过 `publisher.assistantMessageID(event.id)` 取得 durable assistant message id,再调用 `toolMaterialization.settle({ sessionID, agent, assistantMessageID, call })`。[E: packages/core/src/session/runner/llm.ts:250][E: packages/core/src/session/runner/llm.ts:256][E: packages/core/src/session/runner/llm.ts:259]
 
-5. settlement 成功后,runner 构造 `LLMEvent.toolResult({ id, name, result, output })` 并交回同一个 `publish` 函数;outputPaths 也随 settlement 传入 publisher。[E: packages/core/src/session/runner/llm.ts:260][E: packages/core/src/session/runner/llm.ts:261][E: packages/core/src/session/runner/llm.ts:267]
+5. settlement 成功后,runner 构造 `LLMEvent.toolResult({ id, name, result, output })` 并交回同一个 `publish` 函数;outputPaths 也随 settlement 传入 publisher。[E: packages/core/src/session/runner/llm.ts:267][E: packages/core/src/session/runner/llm.ts:268][E: packages/core/src/session/runner/llm.ts:274]
 
 6. `publisher.publish(tool-result)` 校验 tool 已 called 且未 settled,然后把成功映射为 `SessionEvent.Tool.Success`,把 error result 映射为 `SessionEvent.Tool.Failed`。[E: packages/core/src/session/runner/publish-llm-event.ts:337][E: packages/core/src/session/runner/publish-llm-event.ts:339][E: packages/core/src/session/runner/publish-llm-event.ts:346][E: packages/core/src/session/runner/publish-llm-event.ts:352][E: packages/core/src/session/runner/publish-llm-event.ts:364]
 
@@ -72,8 +72,8 @@ flowchart TD
 
 ## 关键决策点
 
-- V1 tool execution 与 permission ask 包在 AI SDK tool execute wrapper 中;V2 local tool execution 包在 runner 的 `toolMaterialization.settle` 中。[E: packages/opencode/src/session/tools.ts:102][E: packages/opencode/src/session/tools.ts:81][E: packages/core/src/session/runner/llm.ts:252]
-- V2 ordering 是 runner 先 `publisher.publish(tool-call)`,再对 local tool call 执行 `toolMaterialization.settle`,随后把 settlement 转成 `LLMEvent.toolResult` 并交回 publisher;publisher 再发布 `Tool.Success` 或 `Tool.Failed`。[E: packages/core/src/session/runner/llm.ts:242][E: packages/core/src/session/runner/llm.ts:252][E: packages/core/src/session/runner/llm.ts:260][E: packages/core/src/session/runner/llm.ts:261][E: packages/core/src/session/runner/publish-llm-event.ts:352][E: packages/core/src/session/runner/publish-llm-event.ts:364]
+- V1 tool execution 与 permission ask 包在 AI SDK tool execute wrapper 中;V2 local tool execution 包在 runner 的 `toolMaterialization.settle` 中。[E: packages/opencode/src/session/tools.ts:102][E: packages/opencode/src/session/tools.ts:81][E: packages/core/src/session/runner/llm.ts:259]
+- V2 ordering 是 runner 先 `publisher.publish(tool-call)`,再对 local tool call 执行 `toolMaterialization.settle`,随后把 settlement 转成 `LLMEvent.toolResult` 并交回 publisher;publisher 再发布 `Tool.Success` 或 `Tool.Failed`。[E: packages/core/src/session/runner/llm.ts:249][E: packages/core/src/session/runner/llm.ts:259][E: packages/core/src/session/runner/llm.ts:267][E: packages/core/src/session/runner/llm.ts:268][E: packages/core/src/session/runner/publish-llm-event.ts:352][E: packages/core/src/session/runner/publish-llm-event.ts:364]
 - V1 tool call state is V1 part state;V2 Tool events are produced by V2 publisher/runner, so V1 AI SDK tool execution is not equivalent to V2 durable settlement。[E: packages/opencode/src/session/processor.ts:337][E: packages/opencode/src/session/processor.ts:383][E: packages/core/src/session/runner/publish-llm-event.ts:323][E: packages/core/src/session/runner/publish-llm-event.ts:364]
 
 ## Sources

@@ -4,12 +4,12 @@ title: Model Auth
 kind: subsystem
 tier: T2
 v: shared
-source: [packages/opencode/src/auth/index.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/account/account.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts, packages/schema/src/credential.ts, packages/schema/src/integration.ts]
-symbols: [Auth.Service, ProviderAuth.Service, Account.Service, Credential.Service, Integration.Service]
+source: [packages/opencode/src/auth/index.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/provider/provider.ts, packages/opencode/src/account/account.ts, packages/opencode/src/cli/cmd/account.ts, packages/opencode/src/plugin/azure.ts, packages/core/src/plugin/provider/opencode.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts, packages/schema/src/credential.ts, packages/schema/src/integration.ts]
+symbols: [Auth.Service, ProviderAuth.Service, Account.Service, Credential.Service, Integration.Service, AzureAuthPlugin]
 related: [provider.auth-accounts, model-layer.credential-v2, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > Model auth 横跨两代:V1 用 `auth.json` + provider auth hooks + account device flow 给 AI SDK provider registry 提供 key/OAuth token;V2 把 credentials 放进 SQLite `Credential` 表,并用 `Integration` 管 key/OAuth/env connection 与 OAuth attempt。
@@ -25,7 +25,7 @@ updated: 3fd77ae980
 
 ### Auth Storage
 
-V1 auth 文件路径是 global data 下的 `auth.json`。[E: packages/opencode/src/auth/index.ts:10] `Info` union 包含 `oauth`、`api`、`wellknown` 三种 shape:OAuth 有 refresh/access/expires/accountId/enterpriseUrl,API 有 key/metadata,wellknown 有 key/token。[E: packages/opencode/src/auth/index.ts:15][E: packages/opencode/src/auth/index.ts:20][E: packages/opencode/src/auth/index.ts:24][E: packages/opencode/src/auth/index.ts:26][E: packages/opencode/src/auth/index.ts:30][E: packages/opencode/src/auth/index.ts:32][E: packages/opencode/src/auth/index.ts:35]
+V1 auth 文件路径是 global data 下的 `auth.json`。[E: packages/opencode/src/auth/index.ts:10] `Info` union 包含 `oauth`、`api`、`wellknown` 三种 shape:OAuth 有 refresh/access/expires/accountId/enterpriseUrl,API 有 key/metadata,wellknown 有 key/token。[E: packages/opencode/src/auth/index.ts:15][E: packages/opencode/src/auth/index.ts:16][E: packages/opencode/src/auth/index.ts:17][E: packages/opencode/src/auth/index.ts:18][E: packages/opencode/src/auth/index.ts:19][E: packages/opencode/src/auth/index.ts:20][E: packages/opencode/src/auth/index.ts:24][E: packages/opencode/src/auth/index.ts:25][E: packages/opencode/src/auth/index.ts:26][E: packages/opencode/src/auth/index.ts:30][E: packages/opencode/src/auth/index.ts:31][E: packages/opencode/src/auth/index.ts:32][E: packages/opencode/src/auth/index.ts:35]
 
 `Auth.all` 优先读取 `OPENCODE_AUTH_CONTENT` env,否则读 `auth.json` 并按 schema 过滤有效条目。[E: packages/opencode/src/auth/index.ts:59][E: packages/opencode/src/auth/index.ts:65][E: packages/opencode/src/auth/index.ts:66] `set/remove` 会 normalize trailing slash key,并用 `0o600` 权限写回文件。[E: packages/opencode/src/auth/index.ts:74][E: packages/opencode/src/auth/index.ts:79][E: packages/opencode/src/auth/index.ts:84][E: packages/opencode/src/auth/index.ts:88]
 
@@ -39,11 +39,15 @@ layer 初始化时从 V1 plugin list 收集 `x.auth.provider` hooks,并把 provi
 
 `callback` 从 pending map 找 OAuth result,code-mode 没 code 会抛 `OauthCodeMissing`;callback 成功后,如果 result 带 key 就写 `Auth.Api`,如果带 refresh/access/expires 就写 `Auth.Oauth`。[E: packages/opencode/src/provider/auth.ts:191][E: packages/opencode/src/provider/auth.ts:193][E: packages/opencode/src/provider/auth.ts:195][E: packages/opencode/src/provider/auth.ts:198][E: packages/opencode/src/provider/auth.ts:201][E: packages/opencode/src/provider/auth.ts:203][E: packages/opencode/src/provider/auth.ts:205][E: packages/opencode/src/provider/auth.ts:211][E: packages/opencode/src/provider/auth.ts:214][E: packages/opencode/src/provider/auth.ts:218]
 
+### Azure CLI Entra OAuth
+
+`AzureAuthPlugin` 的 oauth method 是 Microsoft Entra ID via Azure CLI,不是 browser OAuth stub。[E: packages/opencode/src/plugin/azure.ts:169][E: packages/opencode/src/plugin/azure.ts:170] 未安装 `az` 时 methods 里只留 API key。[E: packages/opencode/src/plugin/azure.ts:53][E: packages/opencode/src/plugin/azure.ts:199] token 用 `az account get-access-token --scope` 取得;Cognitive Services 用 `https://cognitiveservices.azure.com/.default`,AI Foundry hostname 用 `https://ai.azure.com/.default`。[E: packages/opencode/src/plugin/azure.ts:12][E: packages/opencode/src/plugin/azure.ts:13][E: packages/opencode/src/plugin/azure.ts:82][E: packages/opencode/src/plugin/azure.ts:257][E: packages/opencode/src/plugin/azure.ts:258] authorize 成功后把 resource name 写入 `Auth.Oauth.accountId`;V1 Azure loader 读这个字段当 resource。[E: packages/opencode/src/plugin/azure.ts:190][E: packages/opencode/src/provider/provider.ts:253] oauth 时 `provider.models` hook 用 `az cognitiveservices account deployment list` 发现 Succeeded deployment。[E: packages/opencode/src/plugin/azure.ts:130][E: packages/opencode/src/plugin/azure.ts:219]
+
 ### Account Device Flow
 
 `Account.Service` 是 opencode account/login 层,接口包含 active/list/orgs/config/token/login/poll 等方法。[E: packages/opencode/src/account/account.ts:168][E: packages/opencode/src/account/account.ts:182] 它不等于 generic provider auth。[I]
 
-device login 用 `/auth/device/code` 拿 device/user code 与 verification URL,poll 用 device grant 调 `/auth/device/token`,成功后并发 fetch user/orgs,再把 account、accessToken、refreshToken、expiry、orgID 持久化。[E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:400][E: packages/opencode/src/account/account.ts:405][E: packages/opencode/src/account/account.ts:411][E: packages/opencode/src/account/account.ts:415][E: packages/opencode/src/account/account.ts:433][E: packages/opencode/src/account/account.ts:442][E: packages/opencode/src/account/account.ts:449]
+V1 CLI 默认 Console URL 与 V2 `defaultServer` 都是 `https://opencode.ai/console`。[E: packages/opencode/src/cli/cmd/account.ts:18][E: packages/core/src/plugin/provider/opencode.ts:16] device login 用 `/auth/device/code` 拿 device/user code 与 verification URL,poll 用 device grant 调 `/auth/device/token`,成功后并发 fetch user/orgs,再把 account、accessToken、refreshToken、expiry、orgID 持久化。[E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:400][E: packages/opencode/src/account/account.ts:405][E: packages/opencode/src/account/account.ts:411][E: packages/opencode/src/account/account.ts:419][E: packages/opencode/src/account/account.ts:423][E: packages/opencode/src/account/account.ts:441][E: packages/opencode/src/account/account.ts:450]
 
 refresh token flow 调 `/auth/device/token` 的 refresh_token grant,解析 token 后持久化新的 access/refresh/expiry。[E: packages/opencode/src/account/account.ts:220][E: packages/opencode/src/account/account.ts:224][E: packages/opencode/src/account/account.ts:232][E: packages/opencode/src/account/account.ts:238][E: packages/opencode/src/account/account.ts:242]
 
@@ -68,7 +72,11 @@ V1 auth 是文件与 plugin hook 的组合;V2 credential/integration 把 provide
 ## Sources
 - packages/opencode/src/auth/index.ts
 - packages/opencode/src/provider/auth.ts
+- packages/opencode/src/provider/provider.ts
 - packages/opencode/src/account/account.ts
+- packages/opencode/src/cli/cmd/account.ts
+- packages/opencode/src/plugin/azure.ts
+- packages/core/src/plugin/provider/opencode.ts
 - packages/core/src/credential.ts
 - packages/core/src/credential/sql.ts
 - packages/core/src/integration.ts

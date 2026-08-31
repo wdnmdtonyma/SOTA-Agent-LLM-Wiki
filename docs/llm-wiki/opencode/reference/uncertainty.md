@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 # 不确定项日志([U] 汇总)
@@ -150,4 +150,11 @@ updated: 3fd77ae980
 - `subsystems/tui/theming.md`: OpenTUI palette detection internals are external; wiki can verify `renderer.getPalette()` and TUI's ThemeJson synthesis, not the terminal probing algorithm. [U]
 - `subsystems/tui/keybindings.md`: `@opentui/keymap` parser/resolver/layer internals are external; wiki can verify opencode registration and config mappings, not the library's internal conflict resolution. [U]
 - `subsystems/tui/run-scrollback.md`: OpenTUI retained scrollback and markdown stable-block internals are external; wiki can verify opencode's use of `_stableBlockCount` and commitRows, not the renderer's internal layout algorithm. [U]
+
+## update-console
+
+# uncertainty-update-console
+
+- Google usage normalizer 把 `thoughtsTokenCount` 加进 `outputTokens`，但 trial limiter / Stats `buildTokenCost` 仍做 `outputTokens + reasoningTokens`。对 Google 行可能二次计入 thoughts；是否应改契约未确认。[E: packages/console/app/src/routes/zen/util/provider/google.ts:68][E: packages/console/app/src/routes/zen/util/trialLimiter.ts:31][E: packages/stats/core/src/domain/home.ts:735][U]
+- `providerUsage.test.ts` 仍期待 `candidates=3, thoughts=2` → `outputTokens=3`，实现返回 5。源码/测试张力，不是已验证通过行为。[E: packages/console/app/test/providerUsage.test.ts:27][E: packages/console/app/src/routes/zen/util/provider/google.ts:68][U]
 

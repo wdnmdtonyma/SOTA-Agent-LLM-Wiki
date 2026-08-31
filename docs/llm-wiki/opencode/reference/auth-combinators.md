@@ -9,7 +9,7 @@ source:
   - packages/opencode/src/auth/index.ts
   - packages/opencode/src/provider/provider.ts
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 evidence: explicit
 symbols:
   - Auth
@@ -26,7 +26,7 @@ related:
 
 ## V1
 
-V1 provider registry 从 `Auth.Service` 读取本地凭据并把 provider key 合入 AI SDK options；API auth storage 条目会把 provider source 标成 `api` 并携带 `key`。[E: packages/opencode/src/provider/provider.ts:1337] [E: packages/opencode/src/provider/provider.ts:1536] [E: packages/opencode/src/provider/provider.ts:1542] [E: packages/opencode/src/provider/provider.ts:1543] [E: packages/opencode/src/provider/provider.ts:1720] 本地 auth 文件路径是 `Global.Path.data/auth.json`，并且 `OPENCODE_AUTH_CONTENT` 可覆盖读取来源。[E: packages/opencode/src/auth/index.ts:10] [E: packages/opencode/src/auth/index.ts:59]
+V1 provider registry 从 `Auth.Service` 读取本地凭据并把 provider key 合入 AI SDK options；API auth storage 条目会把 provider source 标成 `api` 并携带 `key`。[E: packages/opencode/src/provider/provider.ts:1390] [E: packages/opencode/src/provider/provider.ts:1592] [E: packages/opencode/src/provider/provider.ts:1596] [E: packages/opencode/src/provider/provider.ts:1598] [E: packages/opencode/src/provider/provider.ts:1599] Azure custom loader 在 oauth 时把 `auth.accountId` 当作 resource name。[E: packages/opencode/src/provider/provider.ts:253] 本地 auth 文件路径是 `Global.Path.data/auth.json`，并且 `OPENCODE_AUTH_CONTENT` 可覆盖读取来源。[E: packages/opencode/src/auth/index.ts:10] [E: packages/opencode/src/auth/index.ts:59]
 
 ### V1 Credential Variants
 

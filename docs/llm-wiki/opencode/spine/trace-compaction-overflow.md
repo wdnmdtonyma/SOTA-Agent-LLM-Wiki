@@ -9,7 +9,7 @@ symbols: [SessionCompaction.compactIfNeeded, SessionCompaction.compactAfterOverf
 related: [session-v2.compaction, session-v1.compaction-overflow]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > Compaction overflow 在 V1 与 V2 中是两套实现:V1 在 `SessionPrompt.runLoop` 内创建 compaction user message，把 head history `serialize` 后复用 V2 `buildPrompt` 生成 summary；V2 在 runner request budget 或 provider overflow recovery 中发布 V2 compaction events 并重建 turn。
@@ -18,7 +18,7 @@ updated: 3fd77ae980
 - V1 是在哪里判断 token overflow 并创建 compaction message?
 - V1 provider context overflow 如何变成 `"compact"` 返回值?
 - V2 request 超预算与 provider overflow 分别走哪条 compaction path?
-- `session.next.compaction.ended.2` 为什么会触发 Context Epoch replacement?
+- `session.next.compaction.ended`（durable version 1, stored type `session.next.compaction.ended.1`）为什么会触发 Context Epoch replacement?
 
 ```mermaid
 flowchart TD
@@ -61,19 +61,19 @@ flowchart TD
 
 ## V2
 
-1. V2 runner 在 provider request 执行前调用 `compaction.compactIfNeeded({ sessionID, entries, model, request })`;如果 compaction 发生,runner die with `continueAfterCompaction(currentStep)` 以重建同一 logical turn。[E: packages/core/src/session/runner/llm.ts:215][E: packages/core/src/session/runner/llm.ts:216]
+1. V2 runner 在 provider request 执行前调用 `compaction.compactIfNeeded({ sessionID, entries, model, request })`;如果 compaction 发生,runner die with `continueAfterCompaction(currentStep)` 以重建同一 logical turn。[E: packages/core/src/session/runner/llm.ts:222][E: packages/core/src/session/runner/llm.ts:223]
 
-2. `compactIfNeeded@packages/core/src/session/compaction.ts:231` 先检查 config auto、model context limit、request estimate;只有估算请求超过 `context - max(output, buffer)` 时才调用 `compactAfterOverflow`。[E: packages/core/src/session/compaction.ts:231][E: packages/core/src/session/compaction.ts:232][E: packages/core/src/session/compaction.ts:233][E: packages/core/src/session/compaction.ts:237][E: packages/core/src/session/compaction.ts:241]
+2. `compactIfNeeded@packages/core/src/session/compaction.ts:232` 先检查 config auto、model context limit、request estimate;只有估算请求超过 `context - max(output, buffer)` 时才调用 `compactAfterOverflow`。[E: packages/core/src/session/compaction.ts:232][E: packages/core/src/session/compaction.ts:233][E: packages/core/src/session/compaction.ts:234][E: packages/core/src/session/compaction.ts:238][E: packages/core/src/session/compaction.ts:242]
 
-3. `compactAfterOverflow@packages/core/src/session/compaction.ts:178` 选择要总结的 transcript head/recent,构造 summary prompt,发布 `SessionEvent.Compaction.Started`,再调用 `dependencies.llm.stream(LLM.request(...))` 生成 summary。[E: packages/core/src/session/compaction.ts:178][E: packages/core/src/session/compaction.ts:182][E: packages/core/src/session/compaction.ts:185][E: packages/core/src/session/compaction.ts:192][E: packages/core/src/session/compaction.ts:202]
+3. `compactAfterOverflow@packages/core/src/session/compaction.ts:178` 选择要总结的 transcript head/recent,构造 summary prompt,发布 `SessionEvent.Compaction.Started`,再调用 `dependencies.llm.stream(LLM.request(...))` 生成 summary。[E: packages/core/src/session/compaction.ts:178][E: packages/core/src/session/compaction.ts:182][E: packages/core/src/session/compaction.ts:185][E: packages/core/src/session/compaction.ts:192][E: packages/core/src/session/compaction.ts:202] 该 summary request 继承 runner 传入的 `http`（含 session affinity / parent session id headers）。[E: packages/core/src/session/compaction.ts:205]
 
-4. V2 compaction summary 成功后发布 `SessionEvent.Compaction.Ended` payload,包含 messageID、reason、text、recent。[E: packages/core/src/session/compaction.ts:221][E: packages/schema/src/session-event.ts:420][E: packages/schema/src/session-event.ts:425][E: packages/schema/src/session-event.ts:426][E: packages/schema/src/session-event.ts:427][E: packages/schema/src/session-event.ts:428]
+4. V2 compaction summary 成功后发布 `SessionEvent.Compaction.Ended` payload,包含 messageID、reason、text、recent。[E: packages/core/src/session/compaction.ts:222][E: packages/schema/src/session-event.ts:420][E: packages/schema/src/session-event.ts:425][E: packages/schema/src/session-event.ts:426][E: packages/schema/src/session-event.ts:427][E: packages/schema/src/session-event.ts:428]
 
-5. provider stream 中如果收到 context overflow provider error 且 assistant 尚未 started,runner 保存 `overflowFailure` 并停止发布该 error;stream closure 后如果 `recoverOverflow` 可用,runner 调 `compactAfterOverflow` 尝试一次恢复。[E: packages/core/src/session/runner/llm.ts:231][E: packages/core/src/session/runner/llm.ts:236][E: packages/core/src/session/runner/llm.ts:237][E: packages/core/src/session/runner/llm.ts:238][E: packages/core/src/session/runner/llm.ts:283][E: packages/core/src/session/runner/llm.ts:286]
+5. provider stream 中如果收到 context overflow provider error 且 assistant 尚未 started,runner 保存 `overflowFailure` 并停止发布该 error;stream closure 后如果 `recoverOverflow` 可用,runner 调 `compactAfterOverflow` 尝试一次恢复。[E: packages/core/src/session/runner/llm.ts:238][E: packages/core/src/session/runner/llm.ts:243][E: packages/core/src/session/runner/llm.ts:244][E: packages/core/src/session/runner/llm.ts:245][E: packages/core/src/session/runner/llm.ts:290][E: packages/core/src/session/runner/llm.ts:293]
 
-6. overflow recovery 成功后,runner die with `continueAfterOverflowCompaction`;外层 `runTurn` 捕获该 transition 并调用 `runAfterOverflowCompaction(sessionID, undefined)` 重新执行 logical turn。[E: packages/core/src/session/runner/llm.ts:288][E: packages/core/src/session/runner/llm.ts:370][E: packages/core/src/session/runner/llm.ts:375][E: packages/core/src/session/runner/llm.ts:376]
+6. overflow recovery 成功后,runner die with `continueAfterOverflowCompaction`;外层 `runTurn` 捕获该 transition 并调用 `runAfterOverflowCompaction(sessionID, undefined)` 重新执行 logical turn。[E: packages/core/src/session/runner/llm.ts:295][E: packages/core/src/session/runner/llm.ts:377][E: packages/core/src/session/runner/llm.ts:382][E: packages/core/src/session/runner/llm.ts:383]
 
-7. 第二次 overflow recovery 被禁止:`runAfterOverflowCompaction` 捕获 `ContinueAfterOverflowCompaction` 时 die with `"Post-compaction provider attempt cannot recover another overflow"`。[E: packages/core/src/session/runner/llm.ts:355][E: packages/core/src/session/runner/llm.ts:360][E: packages/core/src/session/runner/llm.ts:361]
+7. 第二次 overflow recovery 被禁止:`runAfterOverflowCompaction` 捕获 `ContinueAfterOverflowCompaction` 时 die with `"Post-compaction provider attempt cannot recover another overflow"`。[E: packages/core/src/session/runner/llm.ts:362][E: packages/core/src/session/runner/llm.ts:367][E: packages/core/src/session/runner/llm.ts:368]
 
 8. V2 `Compaction.Ended` projector 通过通用 projection 写入 compaction message;后续 Context Epoch prepare 会读取 latest compaction seq,当 compaction seq 晚于 stored baseline 时走 replacement/reconcile 分支,使后续 provider turn 使用新的 baseline boundary。[E: packages/core/src/session/projector.ts:393][E: packages/core/src/session/history.ts:13][E: packages/core/src/session/history.ts:17][E: packages/core/src/session/context-epoch.ts:46][E: packages/core/src/session/context-epoch.ts:59][E: packages/core/src/session/context-epoch.ts:61]
 
@@ -82,7 +82,7 @@ flowchart TD
 - V1 compaction 是 V1 message/part 驱动:创建 user compaction part,serialize head transcript,再用 V1 processor 生成 summary assistant。[E: packages/opencode/src/session/compaction.ts:578][E: packages/opencode/src/session/compaction.ts:380][E: packages/opencode/src/session/compaction.ts:420][E: packages/opencode/src/session/compaction.ts:425]
 - V1 与 V2 现在共享 `buildPrompt` / `SUMMARY_TEMPLATE`,但 V1 仍把 summary 写成 assistant message,V2 则发布 event-sourced checkpoint。[E: packages/opencode/src/session/compaction.ts:23][E: packages/core/src/session/compaction.ts:160][E: packages/schema/src/session-event.ts:420]
 - V2 compaction 是 event-sourced checkpoint:Started/Ended 是 session events,Ended 才携带 final summary 与 recent context。[E: packages/schema/src/session-event.ts:399][E: packages/schema/src/session-event.ts:420][E: packages/schema/src/session-event.ts:427][E: packages/schema/src/session-event.ts:428]
-- V2 overflow recovery 只在 provider overflow 且 publisher 尚未 started assistant 时尝试;若已经有 overflow failure 需要发布,runner 会走普通 provider error 发布路径。[E: packages/core/src/session/runner/llm.ts:237][E: packages/core/src/session/runner/llm.ts:283][E: packages/core/src/session/runner/llm.ts:289]
+- V2 overflow recovery 只在 provider overflow 且 publisher 尚未 started assistant 时尝试;若已经有 overflow failure 需要发布,runner 会走普通 provider error 发布路径。[E: packages/core/src/session/runner/llm.ts:244][E: packages/core/src/session/runner/llm.ts:290][E: packages/core/src/session/runner/llm.ts:296]
 
 ## Sources
 - packages/core/src/session/compaction.ts

@@ -1,0 +1,2562 @@
+{
+  "base": "3fd77ae980c9e68eccd10f1c396f32c6e3965046",
+  "head": "9f69463f1d556af2b5b51d2efa1c04f5f544f911",
+  "counts": {
+    "C-DRIFT": 81,
+    "D-CLEAN": 104,
+    "A-BROKEN": 2,
+    "B-HEAVY": 1
+  },
+  "nodes": [
+    {
+      "id": "spine.overview",
+      "path": "spine/overview.md",
+      "grade": "C-DRIFT",
+      "lines": 32,
+      "add": 22,
+      "del": 10,
+      "files": [
+        "packages/cli/package.json",
+        "packages/codemode/package.json",
+        "packages/core/package.json",
+        "packages/core/src/session/runner/llm.ts",
+        "packages/opencode/package.json",
+        "packages/opencode/src/cli/cmd/run.ts",
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.boot",
+      "path": "spine/boot.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.cli-to-session",
+      "path": "spine/cli-to-session.md",
+      "grade": "C-DRIFT",
+      "lines": 9,
+      "add": 7,
+      "del": 2,
+      "files": [
+        "packages/opencode/src/cli/cmd/run.ts",
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.v1-turn-loop",
+      "path": "spine/v1-turn-loop.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.v1-v2-relationship",
+      "path": "spine/v1-v2-relationship.md",
+      "grade": "C-DRIFT",
+      "lines": 17,
+      "add": 15,
+      "del": 2,
+      "files": [
+        "packages/core/src/session/compaction.ts",
+        "packages/core/src/session/runner/llm.ts",
+        "packages/opencode/src/cli/cmd/run.ts",
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-overview",
+      "path": "spine/v2-overview.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-admission",
+      "path": "spine/v2-admission.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-coordinator",
+      "path": "spine/v2-coordinator.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-provider-turn",
+      "path": "spine/v2-provider-turn.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-context-epoch",
+      "path": "spine/v2-context-epoch.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-event-sourcing",
+      "path": "spine/v2-event-sourcing.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.trace-first-prompt",
+      "path": "spine/trace-first-prompt.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.trace-tool-call",
+      "path": "spine/trace-tool-call.md",
+      "grade": "C-DRIFT",
+      "lines": 9,
+      "add": 8,
+      "del": 1,
+      "files": [
+        "packages/core/src/session/runner/llm.ts",
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.trace-steer-mid-turn",
+      "path": "spine/trace-steer-mid-turn.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.trace-compaction-overflow",
+      "path": "spine/trace-compaction-overflow.md",
+      "grade": "C-DRIFT",
+      "lines": 10,
+      "add": 9,
+      "del": 1,
+      "files": [
+        "packages/core/src/session/compaction.ts",
+        "packages/core/src/session/runner/llm.ts",
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tool.read",
+      "path": "surface/tools/read.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tool.edit",
+      "path": "surface/tools/edit.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.write",
+      "path": "surface/tools/write.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.bash",
+      "path": "surface/tools/bash.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.glob",
+      "path": "surface/tools/glob.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.grep",
+      "path": "surface/tools/grep.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.apply-patch",
+      "path": "surface/tools/apply-patch.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.task",
+      "path": "surface/tools/task.md",
+      "grade": "C-DRIFT",
+      "lines": 13,
+      "add": 12,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/session/prompt.ts",
+        "packages/opencode/src/tool/task.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tool.webfetch",
+      "path": "surface/tools/webfetch.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.websearch",
+      "path": "surface/tools/websearch.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.todowrite",
+      "path": "surface/tools/todowrite.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.skill",
+      "path": "surface/tools/skill.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.question",
+      "path": "surface/tools/question.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.lsp",
+      "path": "surface/tools/lsp.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.plan-exit",
+      "path": "surface/tools/plan-exit.md",
+      "grade": "C-DRIFT",
+      "lines": 16,
+      "add": 7,
+      "del": 9,
+      "files": [
+        "packages/opencode/src/session/session.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tool.invalid",
+      "path": "surface/tools/invalid.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.external-directory",
+      "path": "surface/tools/external-directory.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "agent.builtins",
+      "path": "surface/agents/builtins.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "agent.config",
+      "path": "surface/agents/config.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "prompt.system-prompts",
+      "path": "surface/prompts/system-prompts.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/session/llm/request.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "cli.opencode-yargs",
+      "path": "surface/cli/opencode-yargs.md",
+      "grade": "C-DRIFT",
+      "lines": 26,
+      "add": 19,
+      "del": 7,
+      "files": [
+        "packages/opencode/src/cli/cmd/account.ts",
+        "packages/opencode/src/cli/cmd/github.handler.ts",
+        "packages/opencode/src/cli/cmd/run.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "cli.lildax-framework",
+      "path": "surface/cli/lildax-framework.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "cli.run",
+      "path": "surface/cli/run.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 6,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/cli/cmd/run.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "config.v1-core",
+      "path": "surface/config/v1-core.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.v1-providers-mcp-lsp",
+      "path": "surface/config/v1-providers-mcp-lsp.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.v1-misc",
+      "path": "surface/config/v1-misc.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.v2-schema",
+      "path": "surface/config/v2-schema.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.migration",
+      "path": "surface/config/migration.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.tui",
+      "path": "surface/config/tui.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "provider.resolution",
+      "path": "surface/providers/resolution.md",
+      "grade": "C-DRIFT",
+      "lines": 90,
+      "add": 72,
+      "del": 18,
+      "files": [
+        "packages/opencode/src/provider/provider.ts",
+        "packages/opencode/src/provider/transform.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "provider.auth-accounts",
+      "path": "surface/providers/auth-accounts.md",
+      "grade": "C-DRIFT",
+      "lines": 10,
+      "add": 9,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/account/account.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "provider.catalog",
+      "path": "surface/providers/catalog.md",
+      "grade": "C-DRIFT",
+      "lines": 73,
+      "add": 65,
+      "del": 8,
+      "files": [
+        "packages/opencode/src/provider/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "server-api.overview",
+      "path": "surface/server-api/overview.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server-api.v1-routes",
+      "path": "surface/server-api/v1-routes.md",
+      "grade": "C-DRIFT",
+      "lines": 72,
+      "add": 24,
+      "del": 48,
+      "files": [
+        "packages/opencode/src/server/routes/instance/httpapi/groups/global.ts",
+        "packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts",
+        "packages/opencode/src/server/routes/instance/httpapi/handlers/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "server-api.v2-routes",
+      "path": "surface/server-api/v2-routes.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "sdk.overview",
+      "path": "surface/sdk/overview.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/sdk/js/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "sdk.surface",
+      "path": "surface/sdk/surface.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/sdk/js/src/v2/gen/sdk.gen.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "plugin-api.v1-hooks",
+      "path": "surface/plugin-api/v1-hooks.md",
+      "grade": "C-DRIFT",
+      "lines": 79,
+      "add": 69,
+      "del": 10,
+      "files": [
+        "packages/opencode/src/plugin/index.ts",
+        "packages/opencode/src/provider/provider.ts",
+        "packages/opencode/src/session/llm/request.ts",
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "plugin-api.v2-hooks",
+      "path": "surface/plugin-api/v2-hooks.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "plugin-api.tui",
+      "path": "surface/plugin-api/tui.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "subsys.tools.v1",
+      "path": "subsystems/tools/v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "subsys.tools.v2",
+      "path": "subsystems/tools/v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "subsys.tools.output-bounding",
+      "path": "subsystems/tools/output-bounding.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.inbox",
+      "path": "subsystems/session-v2/inbox.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v2.system-context-algebra",
+      "path": "subsystems/session-v2/system-context-algebra.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v2.system-context-registry",
+      "path": "subsystems/session-v2/system-context-registry.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v2.history-selection",
+      "path": "subsystems/session-v2/history-selection.md",
+      "grade": "C-DRIFT",
+      "lines": 8,
+      "add": 8,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/compaction.ts",
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v2.projector",
+      "path": "subsystems/session-v2/projector.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.llm-event-publisher",
+      "path": "subsystems/session-v2/llm-event-publisher.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v2.message-lowering",
+      "path": "subsystems/session-v2/message-lowering.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v2.model-resolution",
+      "path": "subsystems/session-v2/model-resolution.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.compaction",
+      "path": "subsystems/session-v2/compaction.md",
+      "grade": "C-DRIFT",
+      "lines": 8,
+      "add": 8,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/compaction.ts",
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v2.location-wiring",
+      "path": "subsystems/session-v2/location-wiring.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v1.prompt",
+      "path": "subsystems/session-v1/prompt.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v1.processor",
+      "path": "subsystems/session-v1/processor.md",
+      "grade": "C-DRIFT",
+      "lines": 23,
+      "add": 11,
+      "del": 12,
+      "files": [
+        "packages/opencode/src/session/prompt.ts",
+        "packages/opencode/src/session/retry.ts",
+        "packages/opencode/src/session/session.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v1.llm-runtime",
+      "path": "subsystems/session-v1/llm-runtime.md",
+      "grade": "C-DRIFT",
+      "lines": 5,
+      "add": 4,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/session/llm/ai-sdk.ts",
+        "packages/opencode/src/session/llm/request.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v1.compaction-overflow",
+      "path": "subsystems/session-v1/compaction-overflow.md",
+      "grade": "C-DRIFT",
+      "lines": 3,
+      "add": 2,
+      "del": 1,
+      "files": [
+        "packages/core/src/session/compaction.ts",
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v1.instructions",
+      "path": "subsystems/session-v1/instructions.md",
+      "grade": "C-DRIFT",
+      "lines": 34,
+      "add": 27,
+      "del": 7,
+      "files": [
+        "packages/opencode/src/config/config.ts",
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "session-v1.store",
+      "path": "subsystems/session-v1/store.md",
+      "grade": "C-DRIFT",
+      "lines": 18,
+      "add": 8,
+      "del": 10,
+      "files": [
+        "packages/opencode/src/session/prompt.ts",
+        "packages/opencode/src/session/session.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "model-layer.llm-protocol-engine",
+      "path": "subsystems/model-layer/llm-protocol-engine.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.llm-schema",
+      "path": "subsystems/model-layer/llm-schema.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.llm-protocols",
+      "path": "subsystems/model-layer/llm-protocols.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.llm-tools",
+      "path": "subsystems/model-layer/llm-tools.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.provider-registry-v1",
+      "path": "subsystems/model-layer/provider-registry-v1.md",
+      "grade": "C-DRIFT",
+      "lines": 75,
+      "add": 67,
+      "del": 8,
+      "files": [
+        "packages/opencode/src/plugin/index.ts",
+        "packages/opencode/src/provider/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "model-layer.provider-transforms",
+      "path": "subsystems/model-layer/provider-transforms.md",
+      "grade": "C-DRIFT",
+      "lines": 369,
+      "add": 350,
+      "del": 19,
+      "files": [
+        "packages/opencode/src/provider/provider.ts",
+        "packages/opencode/src/provider/transform.ts",
+        "packages/opencode/test/provider/transform.test.ts",
+        "packages/opencode/test/session/llm.test.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "model-layer.auth",
+      "path": "subsystems/model-layer/auth.md",
+      "grade": "C-DRIFT",
+      "lines": 10,
+      "add": 9,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/account/account.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "model-layer.copilot",
+      "path": "subsystems/model-layer/copilot.md",
+      "grade": "C-DRIFT",
+      "lines": 90,
+      "add": 72,
+      "del": 18,
+      "files": [
+        "packages/opencode/src/provider/provider.ts",
+        "packages/opencode/src/provider/transform.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "model-layer.model-catalog-v2",
+      "path": "subsystems/model-layer/model-catalog-v2.md",
+      "grade": "C-DRIFT",
+      "lines": 94,
+      "add": 83,
+      "del": 11,
+      "files": [
+        "packages/core/src/plugin/provider/cloudflare-ai-gateway.ts",
+        "packages/core/src/plugin/provider/opencode.ts",
+        "packages/opencode/src/provider/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "model-layer.credential-v2",
+      "path": "subsystems/model-layer/credential-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.permissions-v1",
+      "path": "subsystems/execution/permissions-v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.permissions-v2",
+      "path": "subsystems/execution/permissions-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.shell-v1",
+      "path": "subsystems/execution/shell-v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.shell-v2",
+      "path": "subsystems/execution/shell-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.patch-v1",
+      "path": "subsystems/execution/patch-v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.patch-v2",
+      "path": "subsystems/execution/patch-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.snapshots",
+      "path": "subsystems/execution/snapshots.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.git",
+      "path": "subsystems/execution/git.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.worktree",
+      "path": "subsystems/execution/worktree.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.background",
+      "path": "subsystems/execution/background.md",
+      "grade": "C-DRIFT",
+      "lines": 11,
+      "add": 11,
+      "del": 0,
+      "files": [
+        "packages/opencode/src/tool/task.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "execution.pty",
+      "path": "subsystems/execution/pty.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.mcp-client",
+      "path": "subsystems/integrations/mcp-client.md",
+      "grade": "C-DRIFT",
+      "lines": 8,
+      "add": 4,
+      "del": 4,
+      "files": [
+        "packages/opencode/package.json",
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "integrations.lsp",
+      "path": "subsystems/integrations/lsp.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.ide",
+      "path": "subsystems/integrations/ide.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.acp",
+      "path": "subsystems/integrations/acp.md",
+      "grade": "C-DRIFT",
+      "lines": 6,
+      "add": 3,
+      "del": 3,
+      "files": [
+        "packages/opencode/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "integrations.skills",
+      "path": "subsystems/integrations/skills.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.commands",
+      "path": "subsystems/integrations/commands.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "integrations.formatters",
+      "path": "subsystems/integrations/formatters.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.question",
+      "path": "subsystems/integrations/question.md",
+      "grade": "C-DRIFT",
+      "lines": 7,
+      "add": 7,
+      "del": 0,
+      "files": [
+        "packages/core/src/session/runner/llm.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "integrations.image",
+      "path": "subsystems/integrations/image.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/opencode/src/session/prompt.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "persistence.config-loading",
+      "path": "subsystems/persistence/config-loading.md",
+      "grade": "C-DRIFT",
+      "lines": 32,
+      "add": 26,
+      "del": 6,
+      "files": [
+        "packages/opencode/src/config/config.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "persistence.storage-v1",
+      "path": "subsystems/persistence/storage-v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.database",
+      "path": "subsystems/persistence/database.md",
+      "grade": "C-DRIFT",
+      "lines": 44,
+      "add": 37,
+      "del": 7,
+      "files": [
+        "packages/core/src/database/migration.ts",
+        "packages/core/src/database/migration/20260410174513_workspace-name.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "persistence.project-instance-location",
+      "path": "subsystems/persistence/project-instance-location.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.eventing",
+      "path": "subsystems/persistence/eventing.md",
+      "grade": "C-DRIFT",
+      "lines": 56,
+      "add": 13,
+      "del": 43,
+      "files": [
+        "packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "persistence.installation",
+      "path": "subsystems/persistence/installation.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.filesystem-search",
+      "path": "subsystems/persistence/filesystem-search.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.architecture",
+      "path": "subsystems/tui/architecture.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/tui/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tui.routing",
+      "path": "subsystems/tui/routing.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.sync-store",
+      "path": "subsystems/tui/sync-store.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.session-screen",
+      "path": "subsystems/tui/session-screen.md",
+      "grade": "C-DRIFT",
+      "lines": 33,
+      "add": 13,
+      "del": 20,
+      "files": [
+        "packages/tui/src/routes/session/index.tsx"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tui.home-screen",
+      "path": "subsystems/tui/home-screen.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.theming",
+      "path": "subsystems/tui/theming.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.keybindings",
+      "path": "subsystems/tui/keybindings.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.feature-plugins",
+      "path": "subsystems/tui/feature-plugins.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.prompt",
+      "path": "subsystems/tui/prompt.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.dialog-kit",
+      "path": "subsystems/tui/dialog-kit.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.runtime-hosting",
+      "path": "subsystems/tui/runtime-hosting.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/cli/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tui.run-scrollback",
+      "path": "subsystems/tui/run-scrollback.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.http-server",
+      "path": "subsystems/server/http-server.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.embedded-public-api",
+      "path": "subsystems/server/embedded-public-api.md",
+      "grade": "C-DRIFT",
+      "lines": 6,
+      "add": 3,
+      "del": 3,
+      "files": [
+        "packages/core/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "server.sharing",
+      "path": "subsystems/server/sharing.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.control-plane",
+      "path": "subsystems/server/control-plane.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.observability",
+      "path": "subsystems/server/observability.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.plugin-system",
+      "path": "subsystems/server/plugin-system.md",
+      "grade": "C-DRIFT",
+      "lines": 10,
+      "add": 9,
+      "del": 1,
+      "files": [
+        "packages/core/src/plugin/provider/cloudflare-ai-gateway.ts",
+        "packages/opencode/src/plugin/index.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "clients.desktop",
+      "path": "subsystems/clients/desktop.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/desktop/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "clients.app",
+      "path": "subsystems/clients/app.md",
+      "grade": "C-DRIFT",
+      "lines": 20,
+      "add": 17,
+      "del": 3,
+      "files": [
+        "packages/app/package.json",
+        "packages/app/src/pages/home/home-sessions-controller.tsx",
+        "packages/app/src/pages/session/use-session-commands.tsx"
+      ],
+      "missing": []
+    },
+    {
+      "id": "clients.web",
+      "path": "subsystems/clients/web.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/web/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "clients.console",
+      "path": "subsystems/clients/console.md",
+      "grade": "C-DRIFT",
+      "lines": 245,
+      "add": 114,
+      "del": 131,
+      "files": [
+        "packages/console/app/package.json",
+        "packages/console/app/src/routes/stripe/webhook.ts",
+        "packages/console/app/src/routes/zen/util/handler.ts",
+        "packages/console/core/package.json",
+        "packages/console/core/src/billing.ts",
+        "packages/console/core/src/schema/billing.sql.ts",
+        "packages/console/core/src/schema/referral.sql.ts",
+        "packages/console/core/src/schema/workspace.sql.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "clients.ui",
+      "path": "subsystems/clients/ui.md",
+      "grade": "C-DRIFT",
+      "lines": 6,
+      "add": 3,
+      "del": 3,
+      "files": [
+        "packages/session-ui/package.json",
+        "packages/ui/package.json",
+        "packages/ui/src/i18n/en.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "clients.storybook",
+      "path": "subsystems/clients/storybook.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "infra.build-monorepo",
+      "path": "subsystems/infra/build-monorepo.md",
+      "grade": "C-DRIFT",
+      "lines": 9,
+      "add": 6,
+      "del": 3,
+      "files": [
+        "packages/opencode/package.json",
+        "turbo.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "infra.native-binary-release",
+      "path": "subsystems/infra/native-binary-release.md",
+      "grade": "C-DRIFT",
+      "lines": 6,
+      "add": 3,
+      "del": 3,
+      "files": [
+        "packages/opencode/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "infra.sst",
+      "path": "subsystems/infra/sst.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "infra.ci-workflows",
+      "path": "subsystems/infra/ci-workflows.md",
+      "grade": "A-BROKEN",
+      "lines": 89,
+      "add": 52,
+      "del": 37,
+      "files": [
+        ".github/workflows/beta.yml",
+        ".github/workflows/unlock.yml"
+      ],
+      "missing": [
+        ".github/workflows/beta.yml"
+      ]
+    },
+    {
+      "id": "infra.nix",
+      "path": "subsystems/infra/nix.md",
+      "grade": "C-DRIFT",
+      "lines": 8,
+      "add": 4,
+      "del": 4,
+      "files": [
+        "nix/hashes.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "peripheral.slack",
+      "path": "subsystems/peripheral/slack.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/slack/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "peripheral.function",
+      "path": "subsystems/peripheral/function.md",
+      "grade": "C-DRIFT",
+      "lines": 57,
+      "add": 30,
+      "del": 27,
+      "files": [
+        "packages/function/package.json",
+        "packages/function/src/api.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "peripheral.enterprise",
+      "path": "subsystems/peripheral/enterprise.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/enterprise/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "peripheral.stats",
+      "path": "subsystems/peripheral/stats.md",
+      "grade": "A-BROKEN",
+      "lines": 2340,
+      "add": 1347,
+      "del": 993,
+      "files": [
+        "packages/stats/app/package.json",
+        "packages/stats/app/src/component/model-compare-detail.tsx",
+        "packages/stats/app/src/i18n.ts",
+        "packages/stats/app/src/i18n/ar.ts",
+        "packages/stats/app/src/i18n/br.ts",
+        "packages/stats/app/src/i18n/da.ts",
+        "packages/stats/app/src/i18n/de.ts",
+        "packages/stats/app/src/i18n/es.ts",
+        "packages/stats/app/src/i18n/fr.ts",
+        "packages/stats/app/src/i18n/it.ts",
+        "packages/stats/app/src/i18n/ja.ts",
+        "packages/stats/app/src/i18n/ko.ts",
+        "packages/stats/app/src/i18n/no.ts",
+        "packages/stats/app/src/i18n/pl.ts",
+        "packages/stats/app/src/i18n/ru.ts",
+        "packages/stats/app/src/i18n/th.ts",
+        "packages/stats/app/src/i18n/tr.ts",
+        "packages/stats/app/src/i18n/uk.ts",
+        "packages/stats/app/src/i18n/zh.ts",
+        "packages/stats/app/src/i18n/zht.ts",
+        "packages/stats/app/src/routes/[lab]/[model].tsx",
+        "packages/stats/app/src/routes/[lab]/index.tsx",
+        "packages/stats/app/src/routes/geo-map.ts",
+        "packages/stats/app/src/routes/index.css",
+        "packages/stats/app/src/routes/index.tsx",
+        "packages/stats/app/src/routes/model-catalog.ts",
+        "packages/stats/app/src/routes/section-heading.tsx",
+        "packages/stats/app/src/routes/stats-shell.tsx",
+        "packages/stats/core/migrations/20260826000000_model_retention/migration.sql",
+        "packages/stats/core/package.json",
+        "packages/stats/core/src/database/schema.ts",
+        "packages/stats/core/src/domain/geo.ts",
+        "packages/stats/core/src/domain/home.test.ts",
+        "packages/stats/core/src/domain/home.ts",
+        "packages/stats/core/src/domain/inference.test.ts",
+        "packages/stats/core/src/domain/inference.ts",
+        "packages/stats/core/src/domain/model-normalization.ts",
+        "packages/stats/core/src/domain/model.ts",
+        "packages/stats/core/src/domain/provider.ts",
+        "packages/stats/core/src/domain/retention.ts",
+        "packages/stats/core/src/domain/stat.ts",
+        "packages/stats/core/src/honeycomb-backfill.ts",
+        "packages/stats/core/src/index.ts",
+        "packages/stats/core/src/runtime.ts",
+        "packages/stats/core/src/stat-sync.ts",
+        "packages/stats/server/package.json"
+      ],
+      "missing": [
+        "packages/stats/app/src/routes/geo-map.ts"
+      ]
+    },
+    {
+      "id": "peripheral.containers",
+      "path": "subsystems/peripheral/containers.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "peripheral.http-recorder",
+      "path": "subsystems/peripheral/http-recorder.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/http-recorder/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "peripheral.effect-sqlite",
+      "path": "subsystems/peripheral/effect-sqlite.md",
+      "grade": "C-DRIFT",
+      "lines": 43,
+      "add": 35,
+      "del": 8,
+      "files": [
+        "packages/core/src/database/migration.ts",
+        "packages/effect-drizzle-sqlite/package.json",
+        "packages/effect-sqlite-node/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "peripheral.script-identity",
+      "path": "subsystems/peripheral/script-identity.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-interface",
+      "path": "reference/tool-interface.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-schema-conversion",
+      "path": "reference/tool-schema-conversion.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-wire-protocol",
+      "path": "reference/tool-wire-protocol.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-catalog",
+      "path": "reference/tool-catalog.md",
+      "grade": "C-DRIFT",
+      "lines": 11,
+      "add": 11,
+      "del": 0,
+      "files": [
+        "packages/opencode/src/tool/task.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-prompts",
+      "path": "reference/tool-prompts.md",
+      "grade": "C-DRIFT",
+      "lines": 11,
+      "add": 11,
+      "del": 0,
+      "files": [
+        "packages/opencode/src/tool/task.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.llm-protocol-catalog",
+      "path": "reference/llm-protocol-catalog.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.llm-provider-facade-catalog",
+      "path": "reference/llm-provider-facade-catalog.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.ai-sdk-provider-map",
+      "path": "reference/ai-sdk-provider-map.md",
+      "grade": "C-DRIFT",
+      "lines": 73,
+      "add": 65,
+      "del": 8,
+      "files": [
+        "packages/opencode/src/provider/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.llm-event-catalog",
+      "path": "reference/llm-event-catalog.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.auth-combinators",
+      "path": "reference/auth-combinators.md",
+      "grade": "C-DRIFT",
+      "lines": 73,
+      "add": 65,
+      "del": 8,
+      "files": [
+        "packages/opencode/src/provider/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.copilot-tool-catalog",
+      "path": "reference/copilot-tool-catalog.md",
+      "grade": "C-DRIFT",
+      "lines": 73,
+      "add": 65,
+      "del": 8,
+      "files": [
+        "packages/opencode/src/provider/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.reasoning-variant-tables",
+      "path": "reference/reasoning-variant-tables.md",
+      "grade": "C-DRIFT",
+      "lines": 235,
+      "add": 216,
+      "del": 19,
+      "files": [
+        "packages/opencode/src/provider/provider.ts",
+        "packages/opencode/src/provider/transform.ts",
+        "packages/opencode/test/provider/transform.test.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.permission-actions",
+      "path": "reference/permission-actions.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.bash-arity",
+      "path": "reference/bash-arity.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.patch-format",
+      "path": "reference/patch-format.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.config-keys",
+      "path": "reference/config-keys.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.env-vars",
+      "path": "reference/env-vars.md",
+      "grade": "C-DRIFT",
+      "lines": 94,
+      "add": 83,
+      "del": 11,
+      "files": [
+        "packages/core/src/plugin/provider/cloudflare-ai-gateway.ts",
+        "packages/core/src/plugin/provider/opencode.ts",
+        "packages/opencode/src/provider/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.db-schema",
+      "path": "reference/db-schema.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.id-prefixes",
+      "path": "reference/id-prefixes.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.lsp-servers",
+      "path": "reference/lsp-servers.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.formatters",
+      "path": "reference/formatters.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.lsp-language-map",
+      "path": "reference/lsp-language-map.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.themes",
+      "path": "reference/themes.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.keybinds",
+      "path": "reference/keybinds.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tui-slots",
+      "path": "reference/tui-slots.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tui-dialogs",
+      "path": "reference/tui-dialogs.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tui-api",
+      "path": "reference/tui-api.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.events",
+      "path": "reference/events.md",
+      "grade": "C-DRIFT",
+      "lines": 72,
+      "add": 24,
+      "del": 48,
+      "files": [
+        "packages/opencode/src/server/routes/instance/httpapi/groups/global.ts",
+        "packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts",
+        "packages/opencode/src/server/routes/instance/httpapi/handlers/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.glossary",
+      "path": "reference/glossary.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.uncertainty",
+      "path": "reference/uncertainty.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.package-index",
+      "path": "reference/package-index.md",
+      "grade": "B-HEAVY",
+      "lines": 24972,
+      "add": 19170,
+      "del": 5802,
+      "files": [
+        "packages/app/e2e/regression/file-browser-sidebar-tab-switch.spec.ts",
+        "packages/app/e2e/regression/session-rename.spec.ts",
+        "packages/app/e2e/regression/subagent-child-navigation.spec.ts",
+        "packages/app/e2e/utils/mock-server.ts",
+        "packages/app/package.json",
+        "packages/app/src/components/dialog-select-model.tsx",
+        "packages/app/src/components/dialog-select-server.tsx",
+        "packages/app/src/components/titlebar-tab-nav.tsx",
+        "packages/app/src/context/global-sync/home-session-index.test.ts",
+        "packages/app/src/context/global-sync/home-session-index.ts",
+        "packages/app/src/pages/home/home-sessions-controller.tsx",
+        "packages/app/src/pages/layout.tsx",
+        "packages/app/src/pages/session/session-archive.ts",
+        "packages/app/src/pages/session/timeline/message-timeline.tsx",
+        "packages/app/src/pages/session/use-session-commands.tsx",
+        "packages/app/src/pages/session/v2/session-file-browser-tab.tsx",
+        "packages/cli/package.json",
+        "packages/codemode/package.json",
+        "packages/console/app/package.json",
+        "packages/console/app/src/component/limits-graph.tsx",
+        "packages/console/app/src/component/rolling-number.tsx",
+        "packages/console/app/src/i18n/ar.ts",
+        "packages/console/app/src/i18n/br.ts",
+        "packages/console/app/src/i18n/da.ts",
+        "packages/console/app/src/i18n/de.ts",
+        "packages/console/app/src/i18n/en.ts",
+        "packages/console/app/src/i18n/es.ts",
+        "packages/console/app/src/i18n/fr.ts",
+        "packages/console/app/src/i18n/it.ts",
+        "packages/console/app/src/i18n/ja.ts",
+        "packages/console/app/src/i18n/ko.ts",
+        "packages/console/app/src/i18n/no.ts",
+        "packages/console/app/src/i18n/pl.ts",
+        "packages/console/app/src/i18n/ru.ts",
+        "packages/console/app/src/i18n/th.ts",
+        "packages/console/app/src/i18n/tr.ts",
+        "packages/console/app/src/i18n/uk.ts",
+        "packages/console/app/src/i18n/zh.ts",
+        "packages/console/app/src/i18n/zht.ts",
+        "packages/console/app/src/lib/lite-usage.ts",
+        "packages/console/app/src/lib/request-country.ts",
+        "packages/console/app/src/lib/server-action.ts",
+        "packages/console/app/src/middleware.ts",
+        "packages/console/app/src/routes/api/support/actions/unblock-workspace.ts",
+        "packages/console/app/src/routes/black/index.tsx",
+        "packages/console/app/src/routes/black/subscribe/[plan].tsx",
+        "packages/console/app/src/routes/download/[channel]/[platform].ts",
+        "packages/console/app/src/routes/go/index.css",
+        "packages/console/app/src/routes/go/index.tsx",
+        "packages/console/app/src/routes/legal/privacy-policy/index.tsx",
+        "packages/console/app/src/routes/legal/terms-of-service/index.tsx",
+        "packages/console/app/src/routes/stripe/webhook.ts",
+        "packages/console/app/src/routes/workspace/[id]/go/lite-section.module.css",
+        "packages/console/app/src/routes/workspace/[id]/go/lite-section.tsx",
+        "packages/console/app/src/routes/workspace/common.tsx",
+        "packages/console/app/src/routes/zen/util/error.ts",
+        "packages/console/app/src/routes/zen/util/handler.ts",
+        "packages/console/app/src/routes/zen/util/pricing.ts",
+        "packages/console/app/src/routes/zen/util/redis.ts",
+        "packages/console/app/src/routes/zen/util/requestBody.ts",
+        "packages/console/app/test/liteUsage.test.ts",
+        "packages/console/app/test/pricing.test.ts",
+        "packages/console/app/test/requestBody.test.ts",
+        "packages/console/app/test/serverAction.test.ts",
+        "packages/console/core/migrations/20260819012908_flashy_arclight/migration.sql",
+        "packages/console/core/migrations/20260819012908_flashy_arclight/snapshot.json",
+        "packages/console/core/migrations/20260819031011_oval_morlocks/migration.sql",
+        "packages/console/core/migrations/20260819031011_oval_morlocks/snapshot.json",
+        "packages/console/core/package.json",
+        "packages/console/core/src/billing.ts",
+        "packages/console/core/src/schema/billing.sql.ts",
+        "packages/console/core/src/schema/referral.sql.ts",
+        "packages/console/core/src/schema/workspace.sql.ts",
+        "packages/console/core/src/workspace.ts",
+        "packages/console/function/package.json",
+        "packages/console/function/src/auth-redirect.test.ts",
+        "packages/console/function/src/auth-redirect.ts",
+        "packages/console/function/src/auth.ts",
+        "packages/console/function/tsconfig.json",
+        "packages/console/mail/package.json",
+        "packages/console/support/package.json",
+        "packages/core/package.json",
+        "packages/core/src/database/migration.ts",
+        "packages/core/src/database/migration/20260410174513_workspace-name.ts",
+        "packages/core/src/plugin/provider/cloudflare-ai-gateway.ts",
+        "packages/core/src/plugin/provider/opencode.ts",
+        "packages/core/src/session/compaction.ts",
+        "packages/core/src/session/runner/llm.ts",
+        "packages/core/test/database-migration.test.ts",
+        "packages/core/test/plugin/provider-opencode.test.ts",
+        "packages/core/test/session-runner.test.ts",
+        "packages/desktop/package.json",
+        "packages/effect-drizzle-sqlite/package.json",
+        "packages/effect-sqlite-node/package.json",
+        "packages/enterprise/package.json",
+        "packages/function/package.json",
+        "packages/function/src/api.ts",
+        "packages/function/src/github.ts",
+        "packages/function/test/github.test.ts",
+        "packages/http-recorder/package.json",
+        "packages/llm/package.json",
+        "packages/opencode/package.json",
+        "packages/opencode/src/account/account.ts",
+        "packages/opencode/src/cli/cmd/account.ts",
+        "packages/opencode/src/cli/cmd/github.handler.ts",
+        "packages/opencode/src/cli/cmd/run.ts",
+        "packages/opencode/src/config/config.ts",
+        "packages/opencode/src/config/v2-compat.ts",
+        "packages/opencode/src/plugin/azure.ts",
+        "packages/opencode/src/plugin/cerebras.ts",
+        "packages/opencode/src/plugin/cloudflare.ts",
+        "packages/opencode/src/plugin/index.ts",
+        "packages/opencode/src/plugin/openai/codex.ts",
+        "packages/opencode/src/plugin/openai/ws-pool.ts",
+        "packages/opencode/src/plugin/openai/ws.ts",
+        "packages/opencode/src/provider/error.ts",
+        "packages/opencode/src/provider/provider.ts",
+        "packages/opencode/src/provider/transform.ts",
+        "packages/opencode/src/server/routes/instance/httpapi/groups/global.ts",
+        "packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts",
+        "packages/opencode/src/server/routes/instance/httpapi/handlers/provider.ts",
+        "packages/opencode/src/session/llm/ai-sdk.ts",
+        "packages/opencode/src/session/llm/request.ts",
+        "packages/opencode/src/session/prompt.ts",
+        "packages/opencode/src/session/retry.ts",
+        "packages/opencode/src/session/session.ts",
+        "packages/opencode/src/tool/task.ts",
+        "packages/opencode/test/account/service.test.ts",
+        "packages/opencode/test/cli/account.test.ts",
+        "packages/opencode/test/cli/run/run-process.test.ts",
+        "packages/opencode/test/config/config.test.ts",
+        "packages/opencode/test/config/fixtures/v2-compat/README.md",
+        "packages/opencode/test/config/fixtures/v2-compat/read/agents-commands-precedence-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/agents-commands-precedence-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/agents-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/agents-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/commands-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/commands-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/ignored-fields-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/ignored-fields-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/lsp-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/lsp-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-enablement-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-enablement-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-merge-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-merge-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-oauth-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-oauth-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-partial-timeout-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-partial-timeout-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-reserved-enabled-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-reserved-enabled-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-reserved-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-reserved-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-timeouts-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/mcp-timeouts-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/model-object-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/model-object-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/model-string-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/model-string-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/model-variant-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/model-variant-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/settings-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/settings-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/settings-precedence-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/settings-precedence-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/read/skills-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/read/skills-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/clear-shell-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/clear-shell-normalized.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/clear-shell-output.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/clear-shell-patch.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/preserve-v2-json-input.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/preserve-v2-json-normalized.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/preserve-v2-json-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/preserve-v2-json-patch.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/preserve-v2-jsonc-input.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/preserve-v2-jsonc-normalized.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/preserve-v2-jsonc-output.jsonc",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/preserve-v2-jsonc-patch.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/v1-overrides-input.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/v1-overrides-normalized.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/v1-overrides-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-global/v1-overrides-patch.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-project/preserve-v2-input.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-project/preserve-v2-normalized.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-project/preserve-v2-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-project/preserve-v2-patch.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-project/v1-overrides-input.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-project/v1-overrides-normalized.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-project/v1-overrides-output.json",
+        "packages/opencode/test/config/fixtures/v2-compat/update-project/v1-overrides-patch.json",
+        "packages/opencode/test/config/snapshot.ts",
+        "packages/opencode/test/config/v2-compat.test.ts",
+        "packages/opencode/test/plugin/azure.test.ts",
+        "packages/opencode/test/plugin/cerebras.test.ts",
+        "packages/opencode/test/plugin/cloudflare.test.ts",
+        "packages/opencode/test/plugin/codex.test.ts",
+        "packages/opencode/test/plugin/openai-ws.test.ts",
+        "packages/opencode/test/provider/cf-ai-gateway-e2e.test.ts",
+        "packages/opencode/test/provider/error.test.ts",
+        "packages/opencode/test/provider/provider.test.ts",
+        "packages/opencode/test/provider/transform.test.ts",
+        "packages/opencode/test/server/httpapi-global.test.ts",
+        "packages/opencode/test/session/compaction.test.ts",
+        "packages/opencode/test/session/llm.test.ts",
+        "packages/opencode/test/session/processor-effect.test.ts",
+        "packages/opencode/test/session/prompt.test.ts",
+        "packages/opencode/test/session/retry.test.ts",
+        "packages/opencode/test/tool/task.test.ts",
+        "packages/plugin/package.json",
+        "packages/sdk/js/package.json",
+        "packages/sdk/js/src/v2/gen/sdk.gen.ts",
+        "packages/sdk/js/src/v2/gen/types.gen.ts",
+        "packages/sdk/openapi.json",
+        "packages/server/package.json",
+        "packages/session-ui/package.json",
+        "packages/slack/package.json",
+        "packages/stats/app/package.json",
+        "packages/stats/app/src/component/model-compare-detail.tsx",
+        "packages/stats/app/src/i18n.ts",
+        "packages/stats/app/src/i18n/ar.ts",
+        "packages/stats/app/src/i18n/br.ts",
+        "packages/stats/app/src/i18n/da.ts",
+        "packages/stats/app/src/i18n/de.ts",
+        "packages/stats/app/src/i18n/es.ts",
+        "packages/stats/app/src/i18n/fr.ts",
+        "packages/stats/app/src/i18n/it.ts",
+        "packages/stats/app/src/i18n/ja.ts",
+        "packages/stats/app/src/i18n/ko.ts",
+        "packages/stats/app/src/i18n/no.ts",
+        "packages/stats/app/src/i18n/pl.ts",
+        "packages/stats/app/src/i18n/ru.ts",
+        "packages/stats/app/src/i18n/th.ts",
+        "packages/stats/app/src/i18n/tr.ts",
+        "packages/stats/app/src/i18n/uk.ts",
+        "packages/stats/app/src/i18n/zh.ts",
+        "packages/stats/app/src/i18n/zht.ts",
+        "packages/stats/app/src/routes/[lab]/[model].tsx",
+        "packages/stats/app/src/routes/[lab]/index.tsx",
+        "packages/stats/app/src/routes/geo-map.ts",
+        "packages/stats/app/src/routes/index.css",
+        "packages/stats/app/src/routes/index.tsx",
+        "packages/stats/app/src/routes/model-catalog.ts",
+        "packages/stats/app/src/routes/section-heading.tsx",
+        "packages/stats/app/src/routes/stats-shell.tsx",
+        "packages/stats/core/migrations/20260826000000_model_retention/migration.sql",
+        "packages/stats/core/package.json",
+        "packages/stats/core/src/database/schema.ts",
+        "packages/stats/core/src/domain/geo.ts",
+        "packages/stats/core/src/domain/home.test.ts",
+        "packages/stats/core/src/domain/home.ts",
+        "packages/stats/core/src/domain/inference.test.ts",
+        "packages/stats/core/src/domain/inference.ts",
+        "packages/stats/core/src/domain/model-normalization.ts",
+        "packages/stats/core/src/domain/model.ts",
+        "packages/stats/core/src/domain/provider.ts",
+        "packages/stats/core/src/domain/retention.ts",
+        "packages/stats/core/src/domain/stat.ts",
+        "packages/stats/core/src/honeycomb-backfill.ts",
+        "packages/stats/core/src/index.ts",
+        "packages/stats/core/src/runtime.ts",
+        "packages/stats/core/src/stat-sync.ts",
+        "packages/stats/server/package.json",
+        "packages/tui/package.json",
+        "packages/tui/src/routes/session/index.tsx",
+        "packages/ui/package.json",
+        "packages/ui/src/context/dialog.tsx",
+        "packages/ui/src/i18n/am.ts",
+        "packages/ui/src/i18n/ar.ts",
+        "packages/ui/src/i18n/az.ts",
+        "packages/ui/src/i18n/bg.ts",
+        "packages/ui/src/i18n/bn.ts",
+        "packages/ui/src/i18n/br.ts",
+        "packages/ui/src/i18n/bs.ts",
+        "packages/ui/src/i18n/ca.ts",
+        "packages/ui/src/i18n/cs.ts",
+        "packages/ui/src/i18n/da.ts",
+        "packages/ui/src/i18n/de.ts",
+        "packages/ui/src/i18n/dv.ts",
+        "packages/ui/src/i18n/dz.ts",
+        "packages/ui/src/i18n/el.ts",
+        "packages/ui/src/i18n/en.ts",
+        "packages/ui/src/i18n/es.ts",
+        "packages/ui/src/i18n/et.ts",
+        "packages/ui/src/i18n/fa.ts",
+        "packages/ui/src/i18n/fi.ts",
+        "packages/ui/src/i18n/fo.ts",
+        "packages/ui/src/i18n/fr.ts",
+        "packages/ui/src/i18n/hi.ts",
+        "packages/ui/src/i18n/hr.ts",
+        "packages/ui/src/i18n/hu.ts",
+        "packages/ui/src/i18n/hy.ts",
+        "packages/ui/src/i18n/id.ts",
+        "packages/ui/src/i18n/is.ts",
+        "packages/ui/src/i18n/it.ts",
+        "packages/ui/src/i18n/ja.ts",
+        "packages/ui/src/i18n/ka.ts",
+        "packages/ui/src/i18n/km.ts",
+        "packages/ui/src/i18n/ko.ts",
+        "packages/ui/src/i18n/lo.ts",
+        "packages/ui/src/i18n/lt.ts",
+        "packages/ui/src/i18n/lv.ts",
+        "packages/ui/src/i18n/mk.ts",
+        "packages/ui/src/i18n/mn.ts",
+        "packages/ui/src/i18n/ms.ts",
+        "packages/ui/src/i18n/my.ts",
+        "packages/ui/src/i18n/ne.ts",
+        "packages/ui/src/i18n/nl.ts",
+        "packages/ui/src/i18n/no.ts",
+        "packages/ui/src/i18n/pa.ts",
+        "packages/ui/src/i18n/pl.ts",
+        "packages/ui/src/i18n/ro.ts",
+        "packages/ui/src/i18n/ru.ts",
+        "packages/ui/src/i18n/si.ts",
+        "packages/ui/src/i18n/sk.ts",
+        "packages/ui/src/i18n/sl.ts",
+        "packages/ui/src/i18n/sq.ts",
+        "packages/ui/src/i18n/sr.ts",
+        "packages/ui/src/i18n/sv.ts",
+        "packages/ui/src/i18n/tg.ts",
+        "packages/ui/src/i18n/th.ts",
+        "packages/ui/src/i18n/tk.ts",
+        "packages/ui/src/i18n/tr.ts",
+        "packages/ui/src/i18n/uk.ts",
+        "packages/ui/src/i18n/ur.ts",
+        "packages/ui/src/i18n/uz.ts",
+        "packages/ui/src/i18n/vi.ts",
+        "packages/ui/src/i18n/zh.ts",
+        "packages/ui/src/i18n/zht.ts",
+        "packages/web/package.json",
+        "packages/web/src/content/docs/acp.mdx",
+        "packages/web/src/content/docs/ar/acp.mdx",
+        "packages/web/src/content/docs/ar/go.mdx",
+        "packages/web/src/content/docs/ar/zen.mdx",
+        "packages/web/src/content/docs/bs/acp.mdx",
+        "packages/web/src/content/docs/bs/go.mdx",
+        "packages/web/src/content/docs/bs/zen.mdx",
+        "packages/web/src/content/docs/cli.mdx",
+        "packages/web/src/content/docs/da/acp.mdx",
+        "packages/web/src/content/docs/da/go.mdx",
+        "packages/web/src/content/docs/da/zen.mdx",
+        "packages/web/src/content/docs/de/acp.mdx",
+        "packages/web/src/content/docs/de/go.mdx",
+        "packages/web/src/content/docs/de/zen.mdx",
+        "packages/web/src/content/docs/es/acp.mdx",
+        "packages/web/src/content/docs/es/go.mdx",
+        "packages/web/src/content/docs/es/zen.mdx",
+        "packages/web/src/content/docs/fr/acp.mdx",
+        "packages/web/src/content/docs/fr/go.mdx",
+        "packages/web/src/content/docs/fr/zen.mdx",
+        "packages/web/src/content/docs/github.mdx",
+        "packages/web/src/content/docs/go.mdx",
+        "packages/web/src/content/docs/it/acp.mdx",
+        "packages/web/src/content/docs/it/go.mdx",
+        "packages/web/src/content/docs/it/zen.mdx",
+        "packages/web/src/content/docs/ja/acp.mdx",
+        "packages/web/src/content/docs/ja/go.mdx",
+        "packages/web/src/content/docs/ja/zen.mdx",
+        "packages/web/src/content/docs/ko/acp.mdx",
+        "packages/web/src/content/docs/ko/go.mdx",
+        "packages/web/src/content/docs/ko/zen.mdx",
+        "packages/web/src/content/docs/nb/acp.mdx",
+        "packages/web/src/content/docs/nb/go.mdx",
+        "packages/web/src/content/docs/nb/zen.mdx",
+        "packages/web/src/content/docs/pl/acp.mdx",
+        "packages/web/src/content/docs/pl/go.mdx",
+        "packages/web/src/content/docs/pl/zen.mdx",
+        "packages/web/src/content/docs/providers.mdx",
+        "packages/web/src/content/docs/pt-br/acp.mdx",
+        "packages/web/src/content/docs/pt-br/go.mdx",
+        "packages/web/src/content/docs/pt-br/zen.mdx",
+        "packages/web/src/content/docs/ru/acp.mdx",
+        "packages/web/src/content/docs/ru/go.mdx",
+        "packages/web/src/content/docs/ru/zen.mdx",
+        "packages/web/src/content/docs/th/acp.mdx",
+        "packages/web/src/content/docs/th/go.mdx",
+        "packages/web/src/content/docs/th/zen.mdx",
+        "packages/web/src/content/docs/tools.mdx",
+        "packages/web/src/content/docs/tr/acp.mdx",
+        "packages/web/src/content/docs/tr/go.mdx",
+        "packages/web/src/content/docs/tr/zen.mdx",
+        "packages/web/src/content/docs/zen.mdx",
+        "packages/web/src/content/docs/zh-cn/acp.mdx",
+        "packages/web/src/content/docs/zh-cn/go.mdx",
+        "packages/web/src/content/docs/zh-cn/zen.mdx",
+        "packages/web/src/content/docs/zh-tw/acp.mdx",
+        "packages/web/src/content/docs/zh-tw/go.mdx",
+        "packages/web/src/content/docs/zh-tw/zen.mdx"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.data-model",
+      "path": "reference/data-model.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "provider.snowflake-cortex",
+      "path": "surface/providers/snowflake-cortex.md",
+      "grade": "C-DRIFT",
+      "lines": 75,
+      "add": 67,
+      "del": 8,
+      "files": [
+        "packages/opencode/src/plugin/index.ts",
+        "packages/opencode/src/provider/provider.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "execution.core-shell-v2",
+      "path": "subsystems/execution/core-shell-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.integration-v2",
+      "path": "subsystems/integrations/integration-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.project-directories",
+      "path": "subsystems/persistence/project-directories.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.execute",
+      "path": "surface/tools/execute.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "subsys.tools.codemode",
+      "path": "subsystems/tools/codemode.md",
+      "grade": "C-DRIFT",
+      "lines": 2,
+      "add": 1,
+      "del": 1,
+      "files": [
+        "packages/codemode/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "clients.app-compatibility",
+      "path": "subsystems/clients/app-compatibility.md",
+      "grade": "C-DRIFT",
+      "lines": 83,
+      "add": 24,
+      "del": 59,
+      "files": [
+        "packages/app/src/components/dialog-select-server.tsx",
+        "packages/app/src/context/global-sync/home-session-index.ts",
+        "packages/app/src/pages/session/timeline/message-timeline.tsx"
+      ],
+      "missing": []
+    },
+    {
+      "id": "persistence.repository-cache",
+      "path": "subsystems/persistence/repository-cache.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    }
+  ]
+}

@@ -6,6 +6,11 @@ tier: T2
 v: shared
 source:
   - packages/opencode/src/plugin/index.ts
+  - packages/opencode/src/plugin/cerebras.ts
+  - packages/opencode/src/plugin/azure.ts
+  - packages/opencode/src/plugin/openai/codex.ts
+  - packages/opencode/src/plugin/openai/ws.ts
+  - packages/opencode/src/plugin/openai/ws-pool.ts
   - packages/opencode/src/plugin/modal/modal.ts
   - packages/opencode/src/plugin/modal/models.ts
   - packages/opencode/src/plugin/loader.ts
@@ -31,16 +36,19 @@ symbols:
   - PluginInternal
   - PluginHost
   - TuiPluginHost
+  - CerebrasPlugin
+  - AzureAuthPlugin
+  - CodexAuthPlugin
 related:
   - plugin-api.v1-hooks
   - plugin-api.v2-hooks
   - plugin-api.tui
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
-`server.plugin-system` 分成三条线: V1 server callback plugins、V1 TUI plugin host、V2 Effect-native `PluginV2` plus `PluginInternal` boot. V1 server service tag 是 `@opencode/Plugin`，V2 service tag 是 `@opencode/v2/Plugin`。[E: packages/opencode/src/plugin/index.ts:59][E: packages/core/src/plugin.ts:29]
+`server.plugin-system` 分成三条线: V1 server callback plugins、V1 TUI plugin host、V2 Effect-native `PluginV2` plus `PluginInternal` boot. V1 server service tag 是 `@opencode/Plugin`，V2 service tag 是 `@opencode/v2/Plugin`。[E: packages/opencode/src/plugin/index.ts:60][E: packages/core/src/plugin.ts:29]
 
 ## 能回答的问题
 - V1 server plugin hooks 如何 load、trigger、dispose?
@@ -50,17 +58,17 @@ updated: 3fd77ae980
 
 ## V1 server plugins
 
-`Plugin.Interface.trigger` 传 `name`、`input`、`output` 并返回 `Effect<Output>`；`list()` 返回 hooks，`init()` 初始化 plugin state。[E: packages/opencode/src/plugin/index.ts:46][E: packages/opencode/src/plugin/index.ts:56] `experimentalWebSocketsEnabled` 在显式 enabled 或 channel 为 local/dev/beta 时返回 true。[E: packages/opencode/src/plugin/index.ts:61][E: packages/opencode/src/plugin/index.ts:62]
+`Plugin.Interface.trigger` 传 `name`、`input`、`output` 并返回 `Effect<Output>`；`list()` 返回 hooks，`init()` 初始化 plugin state。[E: packages/opencode/src/plugin/index.ts:46][E: packages/opencode/src/plugin/index.ts:56] `experimentalWebSocketsEnabled` 在显式 enabled 或 channel 为 local/dev/beta 时返回 true。[E: packages/opencode/src/plugin/index.ts:62][E: packages/opencode/src/plugin/index.ts:63]
 
-内建 server plugins 在 `internalPlugins(flags)` 中组装，包含 Codex、Copilot、Modal、Gitlab、Poe、Cloudflare Workers、Cloudflare AI Gateway、Azure、DigitalOcean、Snowflake Cortex、Xai；Codex built-in 收到 `experimentalWebSockets` option。[E: packages/opencode/src/plugin/index.ts:66][E: packages/opencode/src/plugin/index.ts:69][E: packages/opencode/src/plugin/index.ts:74][E: packages/opencode/src/plugin/index.ts:81][E: packages/opencode/src/plugin/index.ts:82] Modal built-in 暴露 provider model hook，带 API token 且 catalog 首个 model 有 base URL 时向去掉尾斜杠的 `${baseURL}/models` 发 Bearer 请求，3 秒超时，失败返回空模型集。[E: packages/opencode/src/plugin/modal/modal.ts:4][E: packages/opencode/src/plugin/modal/modal.ts:6][E: packages/opencode/src/plugin/modal/modal.ts:9][E: packages/opencode/src/plugin/modal/modal.ts:10][E: packages/opencode/src/plugin/modal/modal.ts:13][E: packages/opencode/src/plugin/modal/models.ts:51][E: packages/opencode/src/plugin/modal/models.ts:53][E: packages/opencode/src/plugin/modal/models.ts:55]
+内建 server plugins 在 `internalPlugins(flags)` 中组装，包含 Codex、Copilot、Modal、Gitlab、Poe、Cloudflare Workers、Cloudflare AI Gateway、Azure、DigitalOcean、Snowflake Cortex、Xai、Cerebras；Codex built-in 收到 `experimentalWebSockets` option。[E: packages/opencode/src/plugin/index.ts:67][E: packages/opencode/src/plugin/index.ts:71][E: packages/opencode/src/plugin/index.ts:74][E: packages/opencode/src/plugin/index.ts:80][E: packages/opencode/src/plugin/index.ts:84] `CerebrasPlugin` 只挂 `chat.params`：`@ai-sdk/cerebras` 且已设 `max_completion_tokens` 时清掉 `maxOutputTokens`。[E: packages/opencode/src/plugin/cerebras.ts:3][E: packages/opencode/src/plugin/cerebras.ts:5][E: packages/opencode/src/plugin/cerebras.ts:8] `AzureAuthPlugin` 现为 Microsoft Entra ID (Azure CLI)：`az account get-access-token`，未装 `az` 则隐藏 oauth method。[E: packages/opencode/src/plugin/azure.ts:53][E: packages/opencode/src/plugin/azure.ts:82][E: packages/opencode/src/plugin/azure.ts:170][E: packages/opencode/src/plugin/azure.ts:199] Codex oauth loader 从 JWT `chatgpt_compute_residency` 写 header `x-openai-internal-codex-residency`（忽略 `no_constraint`），并把 ChatGPT `gpt-5.5`/`gpt-5.6` 限额设为 400k/272k/128k。[E: packages/opencode/src/plugin/openai/codex.ts:80][E: packages/opencode/src/plugin/openai/codex.ts:84][E: packages/opencode/src/plugin/openai/codex.ts:313][E: packages/opencode/src/plugin/openai/codex.ts:423] oversized websocket close 1009 立刻标 `fallback`，不计入 `streamFailures`。[E: packages/opencode/src/plugin/openai/ws.ts:12][E: packages/opencode/src/plugin/openai/ws-pool.ts:116][E: packages/opencode/src/plugin/openai/ws-pool.ts:117] Modal built-in 暴露 provider model hook，带 API token 且 catalog 首个 model 有 base URL 时向去掉尾斜杠的 `${baseURL}/models` 发 Bearer 请求，3 秒超时，失败返回空模型集。[E: packages/opencode/src/plugin/modal/modal.ts:4][E: packages/opencode/src/plugin/modal/modal.ts:6][E: packages/opencode/src/plugin/modal/modal.ts:9][E: packages/opencode/src/plugin/modal/modal.ts:10][E: packages/opencode/src/plugin/modal/modal.ts:13][E: packages/opencode/src/plugin/modal/models.ts:51][E: packages/opencode/src/plugin/modal/models.ts:53][E: packages/opencode/src/plugin/modal/models.ts:55]
 
-Plugin input 的 `client` 通过 `createOpencodeClient` 构造，base URL 是 `http://localhost:4096`，但 fetch 使用 `Server.Default().app.fetch`，所以 server plugin client 是进程内调用 V1 server handler。[E: packages/opencode/src/plugin/index.ts:144][E: packages/opencode/src/plugin/index.ts:145]
+Plugin input 的 `client` 通过 `createOpencodeClient` 构造，base URL 优先 `Server.url`，否则 `http://localhost:4096`，无 server URL 时 fetch 使用 `Server.Default().app.fetch`，所以 server plugin client 是进程内调用 V1 server handler。[E: packages/opencode/src/plugin/index.ts:146][E: packages/opencode/src/plugin/index.ts:147][E: packages/opencode/src/plugin/index.ts:150]
 
-Internal plugins 直接 `plugin(input)` load，受 `flags.disableDefaultPlugins` 控制。[E: packages/opencode/src/plugin/index.ts:168][E: packages/opencode/src/plugin/index.ts:176] External origins 来自 `cfg.plugin_origins`，但 `flags.pure` 时为空；存在 external plugins 时会先 `config.waitForDependencies()`。[E: packages/opencode/src/plugin/index.ts:179][E: packages/opencode/src/plugin/index.ts:182]
+Internal plugins 直接 `plugin(input)` load，受 `flags.disableDefaultPlugins` 控制。[E: packages/opencode/src/plugin/index.ts:170] External origins 来自 `cfg.plugin_origins`，但 `flags.pure` 时为空；存在 external plugins 时会先 `config.waitForDependencies()`。[E: packages/opencode/src/plugin/index.ts:181][E: packages/opencode/src/plugin/index.ts:184]
 
-External plugin apply 是顺序执行: `for (const load of loaded)` 后逐项 `applyPlugin(load, input, hooks)`。[E: packages/opencode/src/plugin/index.ts:217][E: packages/opencode/src/plugin/index.ts:223] `PluginLoader.loadExternal` 内部并行收集 attempts，`Promise.all(list)` 完成后把成功 item push 到 ready。[E: packages/opencode/src/plugin/loader.ts:209][E: packages/opencode/src/plugin/loader.ts:212][E: packages/opencode/src/plugin/loader.ts:233]
+External plugin apply 是顺序执行: `for (const load of loaded)` 后逐项 `applyPlugin(load, input, hooks)`。[E: packages/opencode/src/plugin/index.ts:219][E: packages/opencode/src/plugin/index.ts:225] `PluginLoader.loadExternal` 内部并行收集 attempts，`Promise.all(list)` 完成后把成功 item push 到 ready。[E: packages/opencode/src/plugin/loader.ts:209][E: packages/opencode/src/plugin/loader.ts:212][E: packages/opencode/src/plugin/loader.ts:233]
 
-`trigger(name, input, output)` 按当前 hooks 顺序执行，hook 上没有该 name 就跳过，最后返回 output。[E: packages/opencode/src/plugin/index.ts:288][E: packages/opencode/src/plugin/index.ts:291][E: packages/opencode/src/plugin/index.ts:294]
+`trigger(name, input, output)` 按当前 hooks 顺序执行，hook 上没有该 name 就跳过，最后返回 output。[E: packages/opencode/src/plugin/index.ts:284][E: packages/opencode/src/plugin/index.ts:291][E: packages/opencode/src/plugin/index.ts:294]
 
 V1 server hook surface 覆盖 dispose/event/config/tool/auth/provider，以及 chat、permission、command、tool execution、shell env、compaction、text completion、tool definition 等 callback hooks。[E: packages/plugin/src/index.ts:222][E: packages/plugin/src/index.ts:334]
 
@@ -90,7 +98,7 @@ V2 plugin package exports an Effect plugin shape: `PluginContext`, `define`, and
 
 Boot order is explicit: config reference, AgentPlugin, CommandPlugin, SkillPlugin, ModelsDevPlugin, config agent/command/skill, ProviderPlugins, ConfigExternalPlugin, ConfigProviderPlugin, VariantPlugin。[E: packages/core/src/plugin/internal.ts:110][E: packages/core/src/plugin/internal.ts:121] The whole boot batch is wrapped in `State.batch(...)` and forked scoped with span `PluginInternal.boot`。[E: packages/core/src/plugin/internal.ts:108][E: packages/core/src/plugin/internal.ts:123]
 
-`ProviderPlugins` now includes Alibaba, Amazon Bedrock, Anthropic, Azure Cognitive Services, Azure, Cerebras, Cloudflare AI Gateway, Cloudflare Workers AI, Cohere, DeepInfra, Gateway, GitHub Copilot, GitLab, Google, Google Vertex, Groq, Kilo, LLMGateway, Mistral, Nvidia, Opencode, Snowflake Cortex, OpenAI-compatible, OpenAI, OpenRouter, Perplexity, SAP AI Core, TogetherAI, Vercel, Venice, XAI, Zenmux and DynamicProviderPlugin。[E: packages/core/src/plugin/provider.ts:36][E: packages/core/src/plugin/provider.ts:70]
+`ProviderPlugins` now includes Alibaba, Amazon Bedrock, Anthropic, Azure Cognitive Services, Azure, Cerebras, Cloudflare AI Gateway, Cloudflare Workers AI, Cohere, DeepInfra, Gateway, GitHub Copilot, GitLab, Google, Google Vertex Anthropic, Google Vertex, Groq, Kilo, LLMGateway, Mistral, Nvidia, Opencode, Snowflake Cortex, OpenAI-compatible, OpenAI, OpenRouter, Perplexity, SAP AI Core, TogetherAI, Vercel, Venice, XAI, Zenmux and DynamicProviderPlugin。[E: packages/core/src/plugin/provider.ts:36][E: packages/core/src/plugin/provider.ts:51][E: packages/core/src/plugin/provider.ts:52][E: packages/core/src/plugin/provider.ts:70]
 
 Provider plugin examples use the new context hooks: GitHub Copilot registers catalog transform, AISDK SDK hook and AISDK language hook; Azure registers catalog transform, SDK hook and language hook; Cloudflare Workers AI registers catalog transform, SDK hook and language hook; Cloudflare AI Gateway registers SDK hook; XAI registers SDK and language hooks。[E: packages/core/src/plugin/provider/github-copilot.ts:9][E: packages/core/src/plugin/provider/github-copilot.ts:20][E: packages/core/src/plugin/provider/github-copilot.ts:27][E: packages/core/src/plugin/provider/azure.ts:16][E: packages/core/src/plugin/provider/azure.ts:31][E: packages/core/src/plugin/provider/azure.ts:49][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:12][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:24][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:40][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:9][E: packages/core/src/plugin/provider/xai.ts:8][E: packages/core/src/plugin/provider/xai.ts:15]
 
@@ -99,12 +107,17 @@ Provider plugin examples use the new context hooks: GitHub Copilot registers cat
 | 维度 | V1 server/TUI plugins | V2 PluginV2 |
 | --- | --- | --- |
 | Hook surface | V1 server callback hooks cover config, auth/provider, chat, permission, command, tools, shell and more; TUI has separate host slots/API。[E: packages/plugin/src/index.ts:222][E: packages/plugin/src/tui.ts:581] | V2 host exposes transform/reload domains plus AISDK sdk/language hooks through `PluginContext`。[E: packages/core/src/plugin/host.ts:31][E: packages/core/src/plugin/host.ts:44][E: packages/core/src/plugin/host.ts:72] |
-| Loading | Built-ins call plugin factory directly; external plugins resolve/load then apply in ready order。[E: packages/opencode/src/plugin/index.ts:168][E: packages/opencode/src/plugin/index.ts:217] | `PluginInternal` adds built-ins/providers/config plugins through `PluginV2.add` and forked scoped boot。[E: packages/core/src/plugin/internal.ts:105][E: packages/core/src/plugin/internal.ts:123] |
-| Lifetime | V1 finalizer unsubscribes event listener and calls dispose hooks; TUI dispose reverse-deactivates plugins。[E: packages/opencode/src/plugin/index.ts:261][E: packages/opencode/src/plugin/index.ts:268][E: packages/opencode/src/plugin/tui/runtime.ts:1037] | V2 add/remove owns plugin lifetime through child scopes and keyed locks。[E: packages/core/src/plugin.ts:58][E: packages/core/src/plugin.ts:94] |
+| Loading | Built-ins call plugin factory directly; external plugins resolve/load then apply in ready order。[E: packages/opencode/src/plugin/index.ts:170][E: packages/opencode/src/plugin/index.ts:219] | `PluginInternal` adds built-ins/providers/config plugins through `PluginV2.add` and forked scoped boot。[E: packages/core/src/plugin/internal.ts:105][E: packages/core/src/plugin/internal.ts:123] |
+| Lifetime | V1 finalizer unsubscribes event listener and calls dispose hooks; TUI dispose reverse-deactivates plugins。[E: packages/opencode/src/plugin/index.ts:263][E: packages/opencode/src/plugin/index.ts:270][E: packages/opencode/src/plugin/tui/runtime.ts:1037] | V2 add/remove owns plugin lifetime through child scopes and keyed locks。[E: packages/core/src/plugin.ts:58][E: packages/core/src/plugin.ts:94] |
 
 ## Sources
 
 - `packages/opencode/src/plugin/index.ts`
+- `packages/opencode/src/plugin/cerebras.ts`
+- `packages/opencode/src/plugin/azure.ts`
+- `packages/opencode/src/plugin/openai/codex.ts`
+- `packages/opencode/src/plugin/openai/ws.ts`
+- `packages/opencode/src/plugin/openai/ws-pool.ts`
 - `packages/opencode/src/plugin/modal/modal.ts`
 - `packages/opencode/src/plugin/modal/models.ts`
 - `packages/opencode/src/plugin/loader.ts`

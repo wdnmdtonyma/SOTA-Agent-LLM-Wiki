@@ -58,12 +58,12 @@ _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
 
 ## 方法 & 状态
 
-逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `3fd77ae980`（官方 `dev`），共 188 个 verified 节点 + 14 个 grouped-catalog 组。本轮没有新增或退役节点；主要增量是 provider reasoning pass-through 与 Muse/Kimi prompt 路由、session compaction/retry/时序边界、ACP drain 与 cache usage、App/Desktop/TUI i18n·RTL·JSON export、Console Go usage，以及 Stats R2 catalog。
+逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `9f69463f1d`（官方 `dev`），共 189 个 verified 节点 + 14 个 grouped-catalog 组。本轮新增 `config.v2-compat`；主要增量是 V2→V1 配置投影、Azure CLI Entra OAuth、Cloudflare AI Gateway 三分路由、Bedrock 不可重放 reasoning 过滤、V1 unknown-finish/retry/子 agent 错误表面化，以及 Console/Stats/App/CI 周边。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱 + worked traces | 15 | verified |
-| T1 surface | tools(18)+ agents/prompts/cli/config/providers/server-api/sdk/plugin-api | 42 | verified |
+| T1 surface | tools(18)+ agents/prompts/cli/config/providers/server-api/sdk/plugin-api | 43 | verified |
 | T2 subsystems | tools(含 Code Mode)+ session/model/execution/integrations/persistence/TUI/server/clients/infra/peripheral | 99 | verified |
 | T3 reference | tool/llm/exec/config/db/lsp/formatter/tui catalog + glossary + package 索引 + uncertainty | 32 | verified |
 

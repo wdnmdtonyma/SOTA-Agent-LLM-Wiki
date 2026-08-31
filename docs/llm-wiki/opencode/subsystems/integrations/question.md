@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 source:
   - packages/opencode/src/question/index.ts
   - packages/opencode/src/question/schema.ts
@@ -96,7 +96,7 @@ V2 `Question.Option`、base question、Info/Prompt/Tool/Request/Answer/Reply 与
 3. V2 tool 执行前做 permission assert，action 是 `question`，resources 是 `*`，并带 sessionID、agent、tool-call source；源码没有在 question permission assert 里传 `save` 字段。[E: packages/core/src/tool/question.ts:63] [E: packages/core/src/tool/question.ts:65] [E: packages/core/src/tool/question.ts:66] [E: packages/core/src/tool/question.ts:65] [E: packages/core/src/tool/question.ts:69]
 4. permission denied 会映射成 tool failure，而不是直接抛普通异常给 runner。[E: packages/core/src/tool/question.ts:71]
 5. V2 LLM runner 现在把 `QuestionV2.RejectedError` 与 `PermissionV2.DeclinedError` 统一归为 `isUserDeclined`；两者都代表用户拒绝一个交互 prompt，不应成为 model-facing tool output。[E: packages/core/src/session/runner/llm.ts:145] [E: packages/core/src/session/runner/llm.ts:146] [E: packages/core/src/session/runner/llm.ts:149]
-6. 当 question rejected（或 permission declined）时，runner 会清理 running tool fibers、失败未 settled tools，并 interrupt。[E: packages/core/src/session/runner/llm.ts:297] [E: packages/core/src/session/runner/llm.ts:298] [E: packages/core/src/session/runner/llm.ts:299] [E: packages/core/src/session/runner/llm.ts:300]
+6. 当 question rejected（或 permission declined）时，runner 会清理 running tool fibers、失败未 settled tools，并 interrupt。[E: packages/core/src/session/runner/llm.ts:304] [E: packages/core/src/session/runner/llm.ts:305] [E: packages/core/src/session/runner/llm.ts:306] [E: packages/core/src/session/runner/llm.ts:307]
 7. V2 默认 agent 插件里，基础默认 permission deny question，但 default agent 和 plan agent 又显式 allow question。[E: packages/core/src/plugin/agent.ts:111] [E: packages/core/src/plugin/agent.ts:126] [E: packages/core/src/plugin/agent.ts:138]
 
 ### Server API
@@ -126,7 +126,7 @@ V2 把 pending prompts 的 pending map 放在 location layer 中，配合 finali
 - V1 `question` tool 不是总是给模型可见；registry 受 client/flag 控制。[E: packages/opencode/src/tool/registry.ts:206]
 - V2 question denied 会变成 tool failure，不是普通 permission exception 泄漏给模型。[E: packages/core/src/tool/question.ts:71]
 - V2 reply/reject 必须匹配 sessionID；handler 会阻止跨 session 操作 pending question。[E: packages/server/src/handlers/question.ts:21]
-- 拒绝 V2 question 会中断 LLM loop，不能把 reject 当作“返回空答案继续执行”；同一分支也处理 permission decline。[E: packages/core/src/session/runner/llm.ts:149] [E: packages/core/src/session/runner/llm.ts:297] [E: packages/core/src/session/runner/llm.ts:300]
+- 拒绝 V2 question 会中断 LLM loop，不能把 reject 当作“返回空答案继续执行”；同一分支也处理 permission decline。[E: packages/core/src/session/runner/llm.ts:149] [E: packages/core/src/session/runner/llm.ts:304] [E: packages/core/src/session/runner/llm.ts:307]
 
 ## Sources
 

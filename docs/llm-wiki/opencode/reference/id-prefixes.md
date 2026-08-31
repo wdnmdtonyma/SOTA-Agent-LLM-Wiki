@@ -22,7 +22,7 @@ symbols:
   - SessionMessageID
   - Integration.AttemptID
 evidence: explicit
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > 这份节点是 ID wire format 的小总账：哪些前缀是 core `Identifier` 管理的，哪些是 domain-specific 本地 ID，以及 project ID 如何由 Git root/remote 派生。

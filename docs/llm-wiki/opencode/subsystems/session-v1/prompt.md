@@ -9,7 +9,7 @@ symbols: [SessionPrompt, SessionPrompt.prompt, SessionPrompt.loop, SessionPrompt
 related: [spine.v1-turn-loop, session-v1.processor]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > `SessionPrompt` 是 V1 当前活跑的 session 编排器:它创建 user message,驱动 assistant `runLoop`,并把 command、subtask、shell 这些入口统一写成 V1 `SessionV1` message/part 历史;旧的 prompt-level V2 mirror gate 已从当前文件移除。
@@ -57,13 +57,13 @@ updated: 3fd77ae980
 
 8. `runLoop` 每轮把 session status 设为 busy,读取 `MessageV2.filterCompactedEffect(sessionID)` 的 active history,再用 `MessageV2.latest` 找 last user、last assistant、last finished assistant 和 queued tasks。[E: packages/opencode/src/session/prompt.ts:1088][E: packages/opencode/src/session/prompt.ts:1089][E: packages/opencode/src/session/prompt.ts:1092][E: packages/opencode/src/session/prompt.ts:1096]
 
-9. `runLoop` 的退出条件是:latest assistant 有 finish,finish 不是 `"tool-calls"`,没有非 provider-executed tool parts(忽略 cleanup-marked interrupted orphans),并且 `lastAssistant.parentID === lastUser.id`。当前比较的是 parent 关系,不再比较 message id 先后。[E: packages/opencode/src/session/prompt.ts:1106][E: packages/opencode/src/session/prompt.ts:1108][E: packages/opencode/src/session/prompt.ts:1112][E: packages/opencode/src/session/prompt.ts:1113][E: packages/opencode/src/session/prompt.ts:1114][E: packages/opencode/src/session/prompt.ts:1115]
+9. `runLoop` 的退出条件是:latest assistant 有 finish,finish 不在 `["tool-calls", "unknown"]` 里,没有非 provider-executed tool parts(忽略 cleanup-marked interrupted orphans),并且 `lastAssistant.parentID === lastUser.id`。`finish: "unknown"` 不再结束 prompt loop。当前比较的是 parent 关系,不再比较 message id 先后。[E: packages/opencode/src/session/prompt.ts:1106][E: packages/opencode/src/session/prompt.ts:1108][E: packages/opencode/src/session/prompt.ts:1112][E: packages/opencode/src/session/prompt.ts:1113][E: packages/opencode/src/session/prompt.ts:1114][E: packages/opencode/src/session/prompt.ts:1115]
 
 10. 每个 step 先解析当前 user message 的 model,再 pop 一个 queued task;如果 task 是 `subtask` 或 `compaction`,run loop 处理后 `continue`,因此只有没有 queued task 被处理时才检查上一个 finished assistant 是否 overflow 并创建 auto compaction。[E: packages/opencode/src/session/prompt.ts:1141][E: packages/opencode/src/session/prompt.ts:1142][E: packages/opencode/src/session/prompt.ts:1144][E: packages/opencode/src/session/prompt.ts:1145][E: packages/opencode/src/session/prompt.ts:1146][E: packages/opencode/src/session/prompt.ts:1149][E: packages/opencode/src/session/prompt.ts:1150][E: packages/opencode/src/session/prompt.ts:1157][E: packages/opencode/src/session/prompt.ts:1161][E: packages/opencode/src/session/prompt.ts:1164][E: packages/opencode/src/session/prompt.ts:1166]
 
 11. 普通 assistant step 创建 assistant message,创建 `SessionProcessor.Handle`,调用 `SessionTools.resolve` 把 ToolRegistry 与 MCP tools 变成 AI SDK tool map,再组装 system/context/model messages 并调用 `handle.process(...)`。[E: packages/opencode/src/session/prompt.ts:1186][E: packages/opencode/src/session/prompt.ts:1201][E: packages/opencode/src/session/prompt.ts:1213][E: packages/opencode/src/session/prompt.ts:1226][E: packages/opencode/src/session/tools.ts:41][E: packages/opencode/src/session/tools.ts:45][E: packages/opencode/src/session/tools.ts:92][E: packages/opencode/src/session/tools.ts:99][E: packages/opencode/src/session/tools.ts:105][E: packages/opencode/src/session/tools.ts:111][E: packages/opencode/src/session/tools.ts:121][E: packages/opencode/src/session/tools.ts:208][E: packages/opencode/src/session/prompt.ts:1257][E: packages/opencode/src/session/prompt.ts:1264][E: packages/opencode/src/session/prompt.ts:1272]
 
-12. `handle.process` 返回 `"stop"` 时 run loop break;返回 `"compact"` 时 run loop 创建 auto compaction user part,其中 `overflow` 取 `!handle.message.finish`;其它返回值继续下一轮。[E: packages/opencode/src/session/prompt.ts:1319][E: packages/opencode/src/session/prompt.ts:1320][E: packages/opencode/src/session/prompt.ts:1321][E: packages/opencode/src/session/prompt.ts:1326][E: packages/opencode/src/session/prompt.ts:1329]
+12. `handle.process` 返回后,`finished` 同样用 `!["tool-calls", "unknown"].includes(handle.message.finish)` 判断;unknown finish 不会在这里被当成普通完成态去走 content-filter / json_schema 收尾。[E: packages/opencode/src/session/prompt.ts:1295] 返回 `"stop"` 时 run loop break;返回 `"compact"` 时 run loop 创建 auto compaction user part,其中 `overflow` 取 `!handle.message.finish`;其它返回值继续下一轮。[E: packages/opencode/src/session/prompt.ts:1319][E: packages/opencode/src/session/prompt.ts:1320][E: packages/opencode/src/session/prompt.ts:1321][E: packages/opencode/src/session/prompt.ts:1326][E: packages/opencode/src/session/prompt.ts:1329]
 
 13. loop 结束后,`runLoop` 后台 fork `compaction.prune({ sessionID })`,然后返回最新 assistant message。[E: packages/opencode/src/session/prompt.ts:1338][E: packages/opencode/src/session/prompt.ts:1339]
 
@@ -84,6 +84,7 @@ updated: 3fd77ae980
 ## gotcha
 
 - `SessionPrompt.command` 中 `cmd.subtask === true` 可以把普通 agent command 强制变成 subtask;`cmd.subtask !== false` 也会让 `agent.mode === "subagent"` 的 command 默认走 subtask。[E: packages/opencode/src/session/prompt.ts:1439]
+- `finish: "unknown"` 同时被 loop 入口退出集与 `handle.process` 之后的 `finished` 检查排除;provider 给出 unknown finish 时 loop 继续,让后续 tool result / 下一 step 有机会回去。[E: packages/opencode/src/session/prompt.ts:1113][E: packages/opencode/src/session/prompt.ts:1295]
 - run loop 在 step > 1 时通过 `SessionReminders.apply` 处理后续用户插入、agent reminders 等 V1 reminder 逻辑,再继续组装 provider request。[E: packages/opencode/src/session/prompt.ts:1178][E: packages/opencode/src/session/prompt.ts:1180][E: packages/opencode/src/session/prompt.ts:1181]
 - shell 旁路直接 spawn child process,把输出流写进 `bash` tool part metadata,完成时写成 completed tool output;该 tool output 后续会由 V1 message conversion 转成 model-facing tool output。[E: packages/opencode/src/session/prompt.ts:559][E: packages/opencode/src/session/prompt.ts:566][E: packages/opencode/src/session/prompt.ts:567][E: packages/opencode/src/session/prompt.ts:572][E: packages/opencode/src/session/prompt.ts:539][E: packages/opencode/src/session/prompt.ts:547][E: packages/opencode/src/session/message-v2.ts:315][E: packages/opencode/src/session/message-v2.ts:326][E: packages/opencode/src/session/message-v2.ts:329]
 

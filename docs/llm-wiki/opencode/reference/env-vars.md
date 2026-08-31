@@ -9,6 +9,7 @@ source:
   - packages/opencode/src/effect/runtime-flags.ts
   - packages/core/src/database/database.ts
   - packages/core/src/plugin/provider/
+  - packages/opencode/src/plugin/azure.ts
   - packages/opencode/src/provider/provider.ts
   - packages/core/src/pty.ts
   - packages/core/src/shell.ts
@@ -21,7 +22,7 @@ symbols:
 evidence: explicit
 related:
   - persistence.repository-cache
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -132,11 +133,11 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `OPENCODE_DISABLE_SHARE` | disables share-next when `true` or `1`。 | [E: packages/opencode/src/share/share-next.ts:23] |
 | `OPENCODE_REPO_CLONE_GITHUB_BASE_URL` | V2 core repository clone URL base override；V1 util repository 也读取同名 override。 | [E: packages/core/src/repository.ts:175][E: packages/opencode/src/util/repository.ts:100] |
 | `OPENCODE_ACP_PROFILE` | ACP profiling flag。 | [E: packages/opencode/src/acp/profile.ts:1] |
-| `OPENCODE_TERMINAL` | spawned terminal marker。 | [E: packages/core/src/pty.ts:204] |
-| `OPENCODE_CALLER` | VS Code caller detection。 | [E: packages/opencode/src/ide/index.ts:40] |
+| `OPENCODE_TERMINAL` | spawned terminal marker。 | [E: packages/core/src/pty.ts:174] |
+| `OPENCODE_CALLER` | VS Code caller detection。 | [E: packages/opencode/src/ide/index.ts:33] |
 | `OPENCODE_WEBSEARCH_PROVIDER` | V2 WebSearch tool 与 V1 websearch tool 都读取同名 provider override。 | [E: packages/core/src/tool/websearch.ts:76][E: packages/opencode/src/tool/websearch.ts:31] |
-| `OPENCODE_LIBC` | watcher native library selection。 | [E: packages/core/src/filesystem/watcher.ts:18][E: packages/core/src/filesystem/watcher.ts:34] |
-| `COMSPEC` | V2 Bash tool 与 core shell helper 的 Windows shell fallback。 | [E: packages/core/src/tool/bash.ts:51][E: packages/core/src/shell.ts:101] |
+| `OPENCODE_LIBC` | watcher native library selection。 | [E: packages/core/src/filesystem/watcher.ts:20][E: packages/core/src/filesystem/watcher.ts:28] |
+| `COMSPEC` | V2 Bash tool 与 core shell helper 的 Windows shell fallback。 | [E: packages/core/src/tool/bash.ts:49][E: packages/core/src/shell.ts:101] |
 | `SHELL` | preferred shell on non-Windows path. | [E: packages/core/src/shell.ts:207] |
 | `PATH` / `Path` | executable lookup path. | [E: packages/core/src/util/which.ts:6] |
 | `PATHEXT` / `PathExt` | Windows executable extension lookup. | [E: packages/core/src/util/which.ts:11] |
@@ -156,14 +157,15 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | `AWS_BEARER_TOKEN_BEDROCK` | Bedrock bearer token. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:88] |
 | `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:92] |
 | `AWS_CONTAINER_CREDENTIALS_FULL_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:92] |
-| `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path. | [E: packages/opencode/src/provider/provider.ts:309] |
-| `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path. | [E: packages/opencode/src/provider/provider.ts:324] |
+| `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path. | [E: packages/opencode/src/provider/provider.ts:316] |
+| `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path. | [E: packages/opencode/src/provider/provider.ts:331] |
 | `AZURE_RESOURCE_NAME` | Azure resource name. | [E: packages/core/src/plugin/provider/azure.ts:23] |
+| `AZURE_RESOURCE_GROUP` | V1 Azure CLI deployment discovery 的 resource group。 | [E: packages/opencode/src/plugin/azure.ts:209] |
 | `AZURE_COGNITIVE_SERVICES_RESOURCE_NAME` | Azure Cognitive Services resource. | [E: packages/core/src/plugin/provider/azure.ts:63] |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:47][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:50] |
-| `CLOUDFLARE_GATEWAY_ID` | Cloudflare AI Gateway id. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:51] |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare AI Gateway token. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:52] |
-| `CF_AIG_TOKEN` | Cloudflare AI Gateway token alias. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:52] |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:53][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:50] |
+| `CLOUDFLARE_GATEWAY_ID` | Cloudflare AI Gateway id. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:57] |
+| `CLOUDFLARE_API_TOKEN` | Cloudflare AI Gateway token. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:58] |
+| `CF_AIG_TOKEN` | Cloudflare AI Gateway token alias. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:58] |
 | `CLOUDFLARE_API_KEY` | Cloudflare Workers AI key. | [E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:65] |
 | `EXA_API_KEY` | V2 WebSearch Exa key；V1 MCP websearch Exa key。 | [E: packages/core/src/tool/websearch.ts:81][E: packages/opencode/src/tool/mcp-websearch.ts:4] |
 | `PARALLEL_API_KEY` | V2 WebSearch Parallel key；V1 websearch Parallel key。 | [E: packages/core/src/tool/websearch.ts:82][E: packages/opencode/src/tool/websearch.ts:56] |
@@ -176,34 +178,34 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | `GOOGLE_VERTEX_LOCATION` | Vertex location. | [E: packages/core/src/plugin/provider/google-vertex.ts:20] |
 | `GOOGLE_CLOUD_LOCATION` | Vertex location fallback. | [E: packages/core/src/plugin/provider/google-vertex.ts:21] |
 | `VERTEX_LOCATION` | Vertex location fallback. | [E: packages/core/src/plugin/provider/google-vertex.ts:22] |
-| `OPENCODE_API_KEY` | opencode provider API key. | [E: packages/core/src/plugin/provider/opencode.ts:167] |
+| `OPENCODE_API_KEY` | opencode provider API key. | [E: packages/core/src/plugin/provider/opencode.ts:176] |
 | `AICORE_SERVICE_KEY` | SAP AI Core service key. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:15] |
 | `AICORE_DEPLOYMENT_ID` | SAP AI Core deployment id. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
 | `AICORE_RESOURCE_GROUP` | SAP AI Core resource group. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
-| `SNOWFLAKE_CORTEX_TOKEN` | Snowflake Cortex token. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/opencode/src/provider/provider.ts:872] |
-| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT alias. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/opencode/src/provider/provider.ts:872] |
-| `SNOWFLAKE_ACCOUNT` | V1 Snowflake account. | [E: packages/opencode/src/provider/provider.ts:867] |
+| `SNOWFLAKE_CORTEX_TOKEN` | Snowflake Cortex token. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/opencode/src/provider/provider.ts:910] |
+| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT alias. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/opencode/src/provider/provider.ts:910] |
+| `SNOWFLAKE_ACCOUNT` | V1 Snowflake account. | [E: packages/opencode/src/provider/provider.ts:905] |
 
 ## GitHub automation env
 
 | Env | 用途 | Evidence |
 |---|---|---|
 | `VARIANT` | GitHub command variant input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:408] |
-| `GITHUB_TOKEN` | GitHub API token when `use_github_token` is enabled. | [E: packages/opencode/src/cli/cmd/github.handler.ts:472][E: packages/opencode/src/cli/cmd/github.handler.ts:473] |
-| `MODEL` | GitHub automation model input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:658] |
-| `GITHUB_RUN_ID` | GitHub run id. | [E: packages/opencode/src/cli/cmd/github.handler.ts:669] |
-| `SHARE` | GitHub automation share input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:675] |
-| `USE_GITHUB_TOKEN` | GitHub token mode input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:683] |
-| `OIDC_BASE_URL` | GitHub OIDC base URL input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:691] |
-| `PROMPT` | GitHub automation custom prompt. | [E: packages/opencode/src/cli/cmd/github.handler.ts:726] |
-| `MENTIONS` | GitHub mention trigger list. | [E: packages/opencode/src/cli/cmd/github.handler.ts:741] |
+| `GITHUB_TOKEN` | GitHub API token when `use_github_token` is enabled. | [E: packages/opencode/src/cli/cmd/github.handler.ts:474] |
+| `MODEL` | GitHub automation model input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:664] |
+| `GITHUB_RUN_ID` | GitHub run id. | [E: packages/opencode/src/cli/cmd/github.handler.ts:675] |
+| `SHARE` | GitHub automation share input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:681] |
+| `USE_GITHUB_TOKEN` | GitHub token mode input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:689] |
+| `OIDC_BASE_URL` | GitHub OIDC base URL input. | [E: packages/opencode/src/cli/cmd/github.handler.ts:697] |
+| `PROMPT` | GitHub automation custom prompt. | [E: packages/opencode/src/cli/cmd/github.handler.ts:732] |
+| `MENTIONS` | GitHub mention trigger list. | [E: packages/opencode/src/cli/cmd/github.handler.ts:747] |
 
 ## 设计动机与坑位
 
 - `OPENCODE_EXPERIMENTAL` 是 umbrella only when a specific experimental flag is absent；设置了具体 env 后，具体 env 的 true/false 优先级更高。[E: packages/core/src/flag/flag.ts:12][E: packages/opencode/src/effect/runtime-flags.ts:13]
 - `OPENCODE_EXPERIMENTAL_CODE_MODE` 开启后，V1 registry 动态加载 wire tool `execute`；若专用 flag 未设置，umbrella `OPENCODE_EXPERIMENTAL` 可使其生效。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:118][E: packages/opencode/src/tool/code-mode.ts:12]
 - 同名 env 可能被 V1 与 V2 双读，例如 `OPENCODE_CLIENT` 同时出现在 core `Flag` 与 V1 `RuntimeFlags`，因此排查 client identity 时要看当前执行路径属于 V1 CLI 还是 V2 embedded core。[E: packages/core/src/flag/flag.ts:75][E: packages/opencode/src/effect/runtime-flags.ts:56]
-- provider env 同时存在 `packages/core/src/plugin/provider/*` 与 `packages/opencode/src/provider/provider.ts` 两套 adapter；这反映 V1/V2 迁移期间 provider 入口并存。[E: packages/core/src/plugin/provider/google-vertex.ts:10][E: packages/opencode/src/provider/provider.ts:504][I]
+- provider env 同时存在 `packages/core/src/plugin/provider/*` 与 `packages/opencode/src/provider/provider.ts` 两套 adapter；这反映 V1/V2 迁移期间 provider 入口并存。[E: packages/core/src/plugin/provider/google-vertex.ts:10][E: packages/opencode/src/provider/provider.ts:505][I]
 
 ## Sources
 
@@ -212,6 +214,7 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 - `packages/core/src/database/database.ts`
 - `packages/core/src/models-dev.ts`
 - `packages/core/src/plugin/provider/`
+- `packages/opencode/src/plugin/azure.ts`
 - `packages/opencode/src/provider/provider.ts`
 - `packages/core/src/pty.ts`
 - `packages/core/src/shell.ts`

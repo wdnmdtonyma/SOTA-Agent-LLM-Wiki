@@ -47,7 +47,7 @@ related:
   - execution.pty
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > App 兼容层让同一套 UI 连接 legacy unprefixed API 或 current `/api/*` server。这里的 “V1” 特指 legacy server API，即使它由名为 `@opencode-ai/sdk/v2` 的生成客户端承载；“V2” 指 current API。[E: packages/app/V1_API_MIGRATION.md:3]
@@ -101,7 +101,7 @@ current server 的消息列表使用 cursor pagination（`order: "desc"`）；�
 
 一个 turn 含多个 assistant messages 时，error row 只看最后一个 assistant 的 error；最后一个是 `MessageAbortedError` 或没有 error 时都不显示旧失败。这样 transient provider failure 后继续 streaming 的 assistant part 会取代旧 error row，回归测试固定结果为 user + assistant part。[E: packages/app/src/pages/session/timeline/rows.ts:118][E: packages/app/src/pages/session/timeline/rows.ts:120][E: packages/app/src/pages/session/timeline/rows.ts:121][E: packages/app/src/pages/session/timeline/rows-current.test.ts:171][E: packages/app/src/pages/session/timeline/rows-current.test.ts:180][E: packages/app/src/pages/session/timeline/rows-current.test.ts:184][E: packages/app/src/pages/session/timeline/rows-current.test.ts:188][E: packages/app/src/pages/session/timeline/rows-current.test.ts:205]
 
-Home session index 的 current `v2.session.list` 也按 creation time `order: "desc"` 拉全表（请求不带 parent/archive/directory filter），客户端再丢掉 parent/archived 并按 persisted `time.updated ?? time.created` 做 recency trim。这是全表扫描适配，不是服务端 recency query。[E: packages/app/src/context/global-sync/home-session-index.ts:38][E: packages/app/src/context/global-sync/home-session-index.ts:41][E: packages/app/src/context/global-sync/home-session-index.ts:133][E: packages/app/src/context/global-sync/home-session-index.ts:135][E: packages/app/src/context/global-sync/home-session-index.ts:140][E: packages/app/src/pages/layout/helpers.ts:12][E: packages/app/src/context/global-sync/session-trim.ts:5]
+Home session index 的 current `v2.session.list` 也按 creation time `order: "desc"` 拉全表（请求不带 parent/archive/directory filter），客户端再丢掉 parent/archived 并按 persisted `time.updated ?? time.created` 做 recency trim。这是全表扫描适配，不是服务端 recency query。[E: packages/app/src/context/global-sync/home-session-index.ts:38][E: packages/app/src/context/global-sync/home-session-index.ts:41][E: packages/app/src/context/global-sync/home-session-index.ts:145][E: packages/app/src/context/global-sync/home-session-index.ts:147][E: packages/app/src/context/global-sync/home-session-index.ts:160][E: packages/app/src/pages/layout/helpers.ts:12][E: packages/app/src/context/global-sync/session-trim.ts:5][E: packages/app/src/context/global-sync/session-trim.ts:41] `parseHomeSessionIndex` 对 `parentID` 或 numeric `time.archived` 返回 `[]`；`applyHomeSessionEvent` 遇到 `session.deleted` / parent / archived 立刻 splice。Home 不会把刚 archive 的 session 留到下次 refetch。[E: packages/app/src/context/global-sync/home-session-index.ts:147][E: packages/app/src/context/global-sync/home-session-index.ts:160]
 
 ## Layout 边界
 

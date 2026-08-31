@@ -7,7 +7,7 @@ v: shared
 source:
   - packages/llm/src/providers/
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 evidence: explicit
 symbols:
   - Provider.configure

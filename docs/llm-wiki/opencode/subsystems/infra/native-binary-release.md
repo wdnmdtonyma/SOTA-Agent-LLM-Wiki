@@ -7,6 +7,7 @@ v: na
 source:
   - packages/opencode/script/build.ts
   - packages/opencode/script/publish.ts
+  - script/publish.ts
   - packages/opencode/package.json
   - install
   - .github/workflows/publish.yml
@@ -20,7 +21,7 @@ related:
   - infra.ci-workflows
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > 原生二进制与发布节点描述 V1 CLI package `packages/opencode` 怎样通过 `Bun.build({ compile })` 产出跨平台 `opencode` 可执行文件, 再发布到 npm optional dependencies、GitHub Releases、Docker、Homebrew 和 AUR。
@@ -52,6 +53,7 @@ V1/V2 关系: 这个发布链路打包的是 V1 CLI package `packages/opencode`�
 | `packages/opencode/script/build.ts` | native binary builder。构造 embedded Web UI，并用 `import.meta.resolve` + `Bun.file(...).text()` 读取 OpenTUI parser worker，随后枚举 targets、安装跨平台 native deps、调用 `Bun.build({ compile })`、smoke test 当前平台并写 package manifest [E: packages/opencode/script/build.ts:26] [E: packages/opencode/script/build.ts:50] [E: packages/opencode/script/build.ts:51] [E: packages/opencode/script/build.ts:53] [E: packages/opencode/script/build.ts:140] [E: packages/opencode/script/build.ts:163] [E: packages/opencode/script/build.ts:205] [E: packages/opencode/script/build.ts:217]。 |
 | `packages/opencode/script/publish.ts` | release publisher。发布平台 binary packages 与 wrapper package, 推 Docker image, 生成 AUR PKGBUILD, 更新 Homebrew formula [E: packages/opencode/script/publish.ts:75] [E: packages/opencode/script/publish.ts:79] [E: packages/opencode/script/publish.ts:88] [E: packages/opencode/script/publish.ts:98] [E: packages/opencode/script/publish.ts:147]。 |
 | `install` | curl installer。解析版本/本地 binary 参数, 检测 OS/arch/musl/AVX2, 下载 GitHub release asset, 解压到 `$HOME/.opencode/bin`, 可写 shell profile [E: install:39] [E: install:48] [E: install:79] [E: install:117] [E: install:130] [E: install:332] [E: install:334] [E: install:337] [E: install:340] [E: install:343] [E: install:403] [E: install:416] [E: install:421] [E: install:424]。 |
+| `script/publish.ts` | root release orchestrator。只跑 `packages/opencode`、`packages/sdk/js`、`packages/plugin`、`packages/ui` 的 publish；**不再**调用 `packages/cli/script/publish.ts`。[E: script/publish.ts:38] [E: script/publish.ts:42] [E: script/publish.ts:45] [E: script/publish.ts:48] |
 | `.github/workflows/publish.yml` | release CI orchestrator。version job 产出版本, build-cli 构建 CLI 与新 `packages/cli`, sign-cli-windows 签 Windows CLI, build-electron 构建 Desktop, publish job 上传 release assets 并运行 `./script/publish.ts` [E: .github/workflows/publish.yml:35] [E: .github/workflows/publish.yml:66] [E: .github/workflows/publish.yml:92] [E: .github/workflows/publish.yml:93] [E: .github/workflows/publish.yml:155] [E: .github/workflows/publish.yml:175] [E: .github/workflows/publish.yml:312] [E: .github/workflows/publish.yml:321] [E: .github/workflows/publish.yml:335] [E: .github/workflows/publish.yml:494] [E: .github/workflows/publish.yml:505] [E: .github/workflows/publish.yml:507]。 |
 
 ## 数据模型
@@ -87,7 +89,7 @@ parser worker 不再依赖 local/root `node_modules` 的真实路径选择；它
 
 ## Gotcha
 
-- `packages/cli` 是独立的新 CLI host, publish workflow 同时跑 `./packages/opencode/script/build.ts` 和 `./packages/cli/script/build.ts`; 本节点覆盖的是 `packages/opencode` native binary 发行链路 [E: .github/workflows/publish.yml:92] [E: .github/workflows/publish.yml:93]。
+- `packages/cli` 是独立的新 CLI host。CI `build-cli` 仍跑 `./packages/cli/script/build.ts` 并上传 `opencode-preview-cli` artifact，但 root `script/publish.ts` 不再 publish legacy preview CLI。[E: .github/workflows/publish.yml:92] [E: .github/workflows/publish.yml:93] [E: script/publish.ts:38] [E: script/publish.ts:39] 本节点覆盖的是 `packages/opencode` native binary 发行链路。
 - Windows CLI release asset 会在单独 job 中签名并重新 zip, build job 产出的 windows artifact 不是最终 release zip [E: .github/workflows/publish.yml:155] [E: .github/workflows/publish.yml:191] [E: .github/workflows/publish.yml:205]。
 - `install` 支持本地 `--binary`, 这条路径会跳过下载和平台检测, 直接复制到 install dir [E: install:72] [E: install:348] [E: install:350]。
 
@@ -95,6 +97,7 @@ parser worker 不再依赖 local/root `node_modules` 的真实路径选择；它
 
 - `packages/opencode/script/build.ts`
 - `packages/opencode/script/publish.ts`
+- `script/publish.ts`
 - `packages/opencode/package.json`
 - `install`
 - `.github/workflows/publish.yml`

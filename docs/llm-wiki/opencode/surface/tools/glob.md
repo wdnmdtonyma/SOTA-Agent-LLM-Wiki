@@ -5,7 +5,7 @@ kind: tool
 tier: T1
 v: shared
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 source:
   - packages/opencode/src/tool/glob.ts
   - packages/core/src/tool/glob.ts

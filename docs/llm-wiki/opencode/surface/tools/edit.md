@@ -9,7 +9,7 @@ symbols: [EditTool, SimpleReplacer, LineTrimmedReplacer, BlockAnchorReplacer, Wh
 related: [execution.patch-v1, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > Edit 工具负责在单个文件内把 `oldString` 替换成 `newString`；V1 是当前活跑的 fuzzy edit 工具，V2 是只做 exact edit 的新内核 leaf。

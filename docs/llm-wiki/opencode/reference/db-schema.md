@@ -25,7 +25,7 @@ symbols:
   - SessionInputTable
   - Migrations
 evidence: explicit
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > 这份节点是 V2 core SQLite/Drizzle schema 的逐表逐迁移总账；V1 当前仍有自己的 legacy 存储路径，本节点只描述 `packages/core/src` 的 V2 durable storage。[I]
@@ -87,7 +87,7 @@ V2 core schema 分散在各 domain 的 `*.sql.ts` 文件中，当前直接定义
 | 8 | `20260309230000_move_org_to_state` | Moves selected org to account_state. | [E: packages/core/src/database/migration/20260309230000_move_org_to_state.ts:8][E: packages/core/src/database/migration/20260309230000_move_org_to_state.ts:12] |
 | 9 | `20260312043431_session_message_cursor` | Reworks message/part indexes. | [E: packages/core/src/database/migration/20260312043431_session_message_cursor.ts:8][E: packages/core/src/database/migration/20260312043431_session_message_cursor.ts:13] |
 | 10 | `20260323234822_events` | Creates event sourcing tables. | [E: packages/core/src/database/migration/20260323234822_events.ts:9][E: packages/core/src/database/migration/20260323234822_events.ts:15] |
-| 11 | `20260410174513_workspace-name` | Rebuilds workspace with `name`. | [E: packages/core/src/database/migration/20260410174513_workspace-name.ts:10][E: packages/core/src/database/migration/20260410174513_workspace-name.ts:25] |
+| 11 | `20260410174513_workspace-name` | Rebuilds workspace with `name`；无 `name` 列时 INSERT 用 `''`。 | [E: packages/core/src/database/migration/20260410174513_workspace-name.ts:9][E: packages/core/src/database/migration/20260410174513_workspace-name.ts:25] |
 | 12 | `20260413175956_chief_energizer` | Creates `session_entry`; migration #14 later drops that table. | [E: packages/core/src/database/migration/20260413175956_chief_energizer.ts:9][E: packages/core/src/database/migration/20260413175956_chief_energizer.ts:21][E: packages/core/src/database/migration/20260427172553_slow_nightmare.ts:27] |
 | 13 | `20260423070820_add_icon_url_override` | Adds `project.icon_url_override`. | [E: packages/core/src/database/migration/20260423070820_add_icon_url_override.ts:9][E: packages/core/src/database/migration/20260423070820_add_icon_url_override.ts:10] |
 | 14 | `20260427172553_slow_nightmare` | Creates `session_message` and drops `session_entry`. | [E: packages/core/src/database/migration/20260427172553_slow_nightmare.ts:9][E: packages/core/src/database/migration/20260427172553_slow_nightmare.ts:27] |

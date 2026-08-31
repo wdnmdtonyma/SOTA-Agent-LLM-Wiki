@@ -29,6 +29,11 @@ source:
   - packages/app/src/pages/home/home-projects-view.tsx
   - packages/app/src/pages/home/home-session-search-controller.ts
   - packages/app/src/pages/home/home-sessions-controller.tsx
+  - packages/app/src/pages/home-session-archive.ts
+  - packages/app/src/pages/session/session-archive.ts
+  - packages/app/src/pages/session/timeline/message-timeline.tsx
+  - packages/app/src/context/global-sync/home-session-index.ts
+  - packages/app/src/context/global-sync/session-trim.ts
   - packages/app/src/pages/home/home-sessions-view.tsx
   - packages/app/src/pages/home/home-scroll-controller.ts
   - packages/app/src/pages/layout/helpers.ts
@@ -61,7 +66,7 @@ related:
   - clients.app-compatibility
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > App UI shell 是 `@opencode-ai/app` SolidJS 前端包: 同一套 `AppInterface` 可以在浏览器直接连 HTTP server, 也可以在 Electron renderer 内通过 desktop `Platform` 连本地 sidecar。
@@ -75,6 +80,8 @@ updated: 3fd77ae980
 - App shell 怎样通过 generated SDK 同步 server state?
 - App locale 如何覆盖、如何判定 RTL、如何做复数?
 - Session export JSON 从哪个命令下载，形状是什么?
+- Home / session 如何 archive，archived session 何时从 home 消失?
+- Session rename 在何时提交，IME 如何被挡住?
 
 ## 职责边界
 
@@ -110,7 +117,17 @@ V1/V2 关系: App shell 同时连接 legacy unprefixed API 与 current `/api/*` 
 
 这不是纯 MVC：views 仍持有 DnD、local UI state、platform helpers 与 session status controller。[E: packages/app/src/pages/home/home-projects-view.tsx:3] [E: packages/app/src/pages/home/home-projects-view.tsx:17] [E: packages/app/src/pages/home/home-projects-view.tsx:63] [E: packages/app/src/pages/home/home-sessions-view.tsx:150] 路由只在 `newLayoutDesigns` 为 false 时挂 `LegacyHome`，为 true 时挂 `NewHome`。[E: packages/app/src/app.tsx:625] [E: packages/app/src/app.tsx:628] [E: packages/app/src/app.tsx:638] [E: packages/app/src/app.tsx:639]
 
-New Home 也不是“只走 current API”：home session index 用 SDK `v2.session.list`，但 archive 目前只允许 protocol V1 并调用 legacy session update。[E: packages/app/src/pages/home/home-sessions-controller.tsx:61] [E: packages/app/src/pages/home/home-sessions-controller.tsx:70] [E: packages/app/src/pages/home/home-sessions-controller.tsx:208] [E: packages/app/src/pages/home/home-sessions-controller.tsx:212] [E: packages/app/src/pages/home/home-sessions-controller.tsx:217]
+New Home 也不是“只走 current API”：home session index 用 SDK `v2.session.list`，但 archive 目前只允许 protocol V1 并调用 legacy session update。[E: packages/app/src/pages/home/home-sessions-controller.tsx:61] [E: packages/app/src/pages/home/home-sessions-controller.tsx:70] [E: packages/app/src/pages/home/home-sessions-controller.tsx:207] [E: packages/app/src/pages/home/home-sessions-controller.tsx:212] [E: packages/app/src/pages/home/home-sessions-controller.tsx:217]
+
+## Session archive 与 home drop
+
+`useSessionArchive()` 只在 protocol 为 V1 时发 `session.update({ time: { archived: Date.now() } })`；成功后立刻从 directory session store splice 掉该 id、`session.evict`、`homeSessions.remove`，再导航到 parent / 相邻 session / draft。[E: packages/app/src/pages/session/session-archive.ts:42][E: packages/app/src/pages/session/session-archive.ts:45][E: packages/app/src/pages/session/session-archive.ts:52][E: packages/app/src/pages/session/session-archive.ts:57][E: packages/app/src/pages/session/session-archive.ts:60][E: packages/app/src/pages/session/session-archive.ts:61] Home 的 archive 走 `archiveHomeSession()`：同样 V1-only update，成功后立刻 `remove()`（child store splice + `homeSessions().remove`）并通知 session tabs。[E: packages/app/src/pages/home-session-archive.ts:17][E: packages/app/src/pages/home-session-archive.ts:19][E: packages/app/src/pages/home/home-sessions-controller.tsx:212][E: packages/app/src/pages/home/home-sessions-controller.tsx:217][E: packages/app/src/pages/home/home-sessions-controller.tsx:222][E: packages/app/src/pages/home/home-sessions-controller.tsx:229]
+
+Home index 不会把 archived session 留在列表里：`parseHomeSessionIndex` 对 `parentID` 或 `typeof time.archived === "number"` 返回空；`applyHomeSessionEvent` 遇到 deleted / parent / archived 立刻 splice；`trimSessions` 再滤掉 `time.archived`。[E: packages/app/src/context/global-sync/home-session-index.ts:147][E: packages/app/src/context/global-sync/home-session-index.ts:160][E: packages/app/src/context/global-sync/session-trim.ts:41] 这是客户端立刻丢掉 archived，不是等下一次全表 refetch。[I]
+
+## Session rename onBlur
+
+Timeline 标题编辑走 `sdk().api.session.rename`。input `onBlur` 调用 `saveTitleEditor`；`onKeyDown` 在 `event.isComposing` 或 `keyCode === 229` 时直接 return，避免 IME 确认键误提交。[E: packages/app/src/pages/session/timeline/message-timeline.tsx:677][E: packages/app/src/pages/session/timeline/message-timeline.tsx:1451][E: packages/app/src/pages/session/timeline/message-timeline.tsx:1462]
 
 Home 左侧是 project picker：`HomeProjectsView` 列出 focused server 的 open projects，点击选中/取消选中，empty 态可从 recently-closed 再注册。[E: packages/app/src/pages/home/home-projects-view.tsx:30] [E: packages/app/src/pages/home/home-projects-view.tsx:105] [E: packages/app/src/pages/home/home-projects-view.tsx:437] [E: packages/app/src/pages/home/home-controller.ts:77] Add 走 directory picker（`multiple: true`），`home.project.add` 对每个新目录先 `file.list`，空目录则 `project.initGit`，再 `project.current` 写入 child store 并 `projects.open`。[E: packages/app/src/pages/home/home-projects-controller.tsx:89] [E: packages/app/src/pages/home/home-projects-controller.tsx:95] [E: packages/app/src/pages/home/home-controller.ts:89] [E: packages/app/src/pages/home/home-controller.ts:96] [E: packages/app/src/pages/home/home-controller.ts:99] [E: packages/app/src/pages/home/home-controller.ts:105] 右键或 dots menu 提供 new session / edit / reveal / clear notifications / close。[E: packages/app/src/pages/home/home-projects-view.tsx:478] [E: packages/app/src/pages/home/home-projects-view.tsx:548] [E: packages/app/src/pages/home/home-projects-view.tsx:551] [E: packages/app/src/pages/home/home-projects-view.tsx:569]
 
@@ -148,7 +165,7 @@ RTL 原语是 locale set `{ar, ur, pa, fa, dv}` 与 `document.documentElement.di
 
 ## Session export
 
-用户可见 export 命令调用 `fetchSessionExport({ sessionID, client })`：并行 `session.get` + `session.messages`，下载 `{ info, messages: [{ info, parts }] }` JSON，文件名来自 title / slug / id 的 slugify。[E: packages/app/src/utils/session-export.ts:4] [E: packages/app/src/utils/session-export.ts:19] [E: packages/app/src/utils/session-export.ts:41] [E: packages/app/src/utils/session-export.ts:50] Session command palette、timeline 菜单和 session context tab 共用这条 helper。[E: packages/app/src/pages/session/use-session-commands.tsx:236] [E: packages/app/src/pages/session/use-session-commands.tsx:240] 这是 legacy SDK `session.messages` 形状，不是 SessionV2 aggregate dump。[I]
+用户可见 export 命令调用 `fetchSessionExport({ sessionID, client })`：并行 `session.get` + `session.messages`，下载 `{ info, messages: [{ info, parts }] }` JSON，文件名来自 title / slug / id 的 slugify。[E: packages/app/src/utils/session-export.ts:4] [E: packages/app/src/utils/session-export.ts:19] [E: packages/app/src/utils/session-export.ts:41] [E: packages/app/src/utils/session-export.ts:50] Session command palette、timeline 菜单和 session context tab 共用这条 helper。[E: packages/app/src/pages/session/use-session-commands.tsx:238] [E: packages/app/src/pages/session/use-session-commands.tsx:242] 这是 legacy SDK `session.messages` 形状，不是 SessionV2 aggregate dump。[I]
 
 ## 控制流
 
@@ -197,6 +214,11 @@ RTL 原语是 locale set `{ar, ur, pa, fa, dv}` 与 `document.documentElement.di
 - `packages/app/src/pages/home/home-projects-view.tsx`
 - `packages/app/src/pages/home/home-session-search-controller.ts`
 - `packages/app/src/pages/home/home-sessions-controller.tsx`
+- `packages/app/src/pages/home-session-archive.ts`
+- `packages/app/src/pages/session/session-archive.ts`
+- `packages/app/src/pages/session/timeline/message-timeline.tsx`
+- `packages/app/src/context/global-sync/home-session-index.ts`
+- `packages/app/src/context/global-sync/session-trim.ts`
 - `packages/app/src/pages/home/home-sessions-view.tsx`
 - `packages/app/src/pages/home/home-scroll-controller.ts`
 - `packages/app/src/pages/layout/helpers.ts`

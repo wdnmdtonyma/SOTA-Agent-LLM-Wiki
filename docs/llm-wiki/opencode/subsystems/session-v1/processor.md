@@ -4,12 +4,12 @@ title: Stream processor 与 part 生命周期(V1)
 kind: subsystem
 tier: T2
 v: v1
-source: [packages/opencode/src/session/processor.ts, packages/opencode/src/session/retry.ts, packages/opencode/src/session/status.ts, packages/opencode/src/session/message-v2.ts, packages/opencode/src/session/session.ts, packages/opencode/src/session/overflow.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/llm.ts, packages/opencode/src/session/tools.ts]
+source: [packages/opencode/src/session/processor.ts, packages/opencode/src/session/retry.ts, packages/opencode/src/session/llm/ai-sdk.ts, packages/opencode/src/provider/error.ts, packages/opencode/src/session/status.ts, packages/opencode/src/session/message-v2.ts, packages/opencode/src/session/session.ts, packages/opencode/src/session/overflow.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/llm.ts, packages/opencode/src/session/tools.ts]
 symbols: [SessionProcessor, SessionProcessor.create, SessionProcessor.Handle, DOOM_LOOP_THRESHOLD, SessionRetry.policy, SessionRetry.retryable, RETRY_MAX_RETRIES, SessionStatus]
 related: [spine.v1-turn-loop, session-v1.llm-runtime]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > `SessionProcessor` 消费 `LLM.stream(...)` 产出的 `LLMEvent`,把 text/reasoning/tool/step/tool-error 等事件落成或更新 V1 message parts;provider/error paths 则更新 assistant/session error state,当前文件已不再包含旧的 V2 mirror dual-write 分支。
@@ -19,6 +19,7 @@ updated: 3fd77ae980
 - tool-call、tool-result、tool-error 怎样更新 V1 tool part?
 - doom-loop guard 为什么阈值是 3,它检查什么?
 - provider overflow 为什么返回 `"compact"` 而不是普通 retry?
+- retry 判定写在 `processor.ts` 还是 `retry.ts` / `ai-sdk.ts` / `provider/error.ts`?
 - 当前 processor 是否还发布 V2 dual-write event?
 
 ## 职责边界
@@ -71,15 +72,21 @@ updated: 3fd77ae980
 
 ## retry 策略
 
-`SessionRetry.policy` 现在硬封顶 `RETRY_MAX_RETRIES = 5`;超过后 `Cause.done` 停止 retry,不再无限 backoff。[E: packages/opencode/src/session/retry.ts:31][E: packages/opencode/src/session/retry.ts:192][E: packages/opencode/src/session/processor.ts:660]
+本 range 的 `processor.ts` 没有 diff。retry 判定与触发分别在 `retry.ts`、`ai-sdk.ts` 和 `provider/error.ts`;processor 只调用 `Effect.retry(SessionRetry.policy(...))`。[E: packages/opencode/src/session/processor.ts:660]
 
-`SessionRetry.retryable` 明确排除 `ContextOverflowError`,所以 overflow recovery 走 compaction 而不是普通 retry。[E: packages/opencode/src/session/retry.ts:86] APIError 在以下任一条件成立时才 retry:provider 标记 `isRetryable`、HTTP 5xx、或 message/responseBody 命中 `RETRYABLE_MESSAGE_PATTERNS`。[E: packages/opencode/src/session/retry.ts:87][E: packages/opencode/src/session/retry.ts:91][E: packages/opencode/src/session/retry.ts:94][E: packages/opencode/src/session/retry.ts:95][E: packages/opencode/src/session/retry.ts:33] retryable/5xx/pattern-matched APIError body 含 `FreeUsageLimitError`/`GoUsageLimitError` 时会产生带 action 的用户可见 retry status。[E: packages/opencode/src/session/retry.ts:98][E: packages/opencode/src/session/retry.ts:111]
+`SessionRetry.policy` 硬封顶 `RETRY_MAX_RETRIES = 5`;超过后 `Cause.done` 停止 retry,不再无限 backoff。[E: packages/opencode/src/session/retry.ts:31][E: packages/opencode/src/session/retry.ts:193]
 
-`RETRYABLE_MESSAGE_PATTERNS` 覆盖 HTTP 429/5xx/524、rate-limit、overloaded/unavailable、connection/socket/DNS 失败、timeout 以及 retry-your-request/resource-exhausted。[E: packages/opencode/src/session/retry.ts:33][E: packages/opencode/src/session/retry.ts:34][E: packages/opencode/src/session/retry.ts:35][E: packages/opencode/src/session/retry.ts:36][E: packages/opencode/src/session/retry.ts:37][E: packages/opencode/src/session/retry.ts:38][E: packages/opencode/src/session/retry.ts:39] 非 APIError 只要 `error.data.message` 命中同样的 pattern,也会被当成 retryable。[E: packages/opencode/src/session/retry.ts:147][E: packages/opencode/src/session/retry.ts:152][E: packages/opencode/src/session/retry.ts:156]
+`SessionRetry.retryable` 明确排除 `ContextOverflowError`,所以 overflow recovery 走 compaction 而不是普通 retry。[E: packages/opencode/src/session/retry.ts:87] APIError 在以下任一条件成立时才 retry:provider 标记 `isRetryable`、HTTP 5xx、或 message/responseBody 命中 `RETRYABLE_MESSAGE_PATTERNS`。[E: packages/opencode/src/session/retry.ts:88][E: packages/opencode/src/session/retry.ts:92][E: packages/opencode/src/session/retry.ts:95][E: packages/opencode/src/session/retry.ts:96][E: packages/opencode/src/session/retry.ts:33] retryable/5xx/pattern-matched APIError body 含 `FreeUsageLimitError`/`GoUsageLimitError` 时会产生带 action 的用户可见 retry status。[E: packages/opencode/src/session/retry.ts:99][E: packages/opencode/src/session/retry.ts:112]
 
-`MessageV2.fromError` 仍把 `ProviderError.ResponseStreamError` 映射成 `isRetryable: true` 的 `APIError`,因此兼容的 stream error 会进入上述 retry path 而不是直接停。[E: packages/opencode/src/session/message-v2.ts:668][E: packages/opencode/src/session/message-v2.ts:671][E: packages/opencode/src/session/message-v2.ts:672]
+`RETRYABLE_MESSAGE_PATTERNS` 覆盖 HTTP 429/5xx/524、rate-limit、overloaded/unavailable、`network[-_\s]error`、connection/socket/DNS 失败、timeout、retry-your-request/resource-exhausted,以及 capacity 短语 `try again later` / `currently|temporarily at capacity`。[E: packages/opencode/src/session/retry.ts:34][E: packages/opencode/src/session/retry.ts:35][E: packages/opencode/src/session/retry.ts:36][E: packages/opencode/src/session/retry.ts:37][E: packages/opencode/src/session/retry.ts:38][E: packages/opencode/src/session/retry.ts:39][E: packages/opencode/src/session/retry.ts:40] 非 APIError 只要 `error.data.message` 命中同样的 pattern,也会被当成 retryable。[E: packages/opencode/src/session/retry.ts:148][E: packages/opencode/src/session/retry.ts:153]
 
-`SessionRetry.delay` 优先解析 `retry-after-ms`,再解析 `retry-after` 秒数或 HTTP date;有 headers 时 delay 用 `cap()` 封到 `RETRY_MAX_DELAY`。[E: packages/opencode/src/session/retry.ts:46][E: packages/opencode/src/session/retry.ts:50][E: packages/opencode/src/session/retry.ts:54][E: packages/opencode/src/session/retry.ts:58][E: packages/opencode/src/session/retry.ts:63][E: packages/opencode/src/session/retry.ts:66][E: packages/opencode/src/session/retry.ts:68] 没有 headers 时使用带 jitter 的 exponential backoff,并额外封到 30 秒:`base + base * 0.25 * random`,其中 `RETRY_INITIAL_DELAY = 2000`、`RETRY_BACKOFF_FACTOR = 2`、`RETRY_JITTER_FACTOR = 0.25`。[E: packages/opencode/src/session/retry.ts:26][E: packages/opencode/src/session/retry.ts:27][E: packages/opencode/src/session/retry.ts:28][E: packages/opencode/src/session/retry.ts:29][E: packages/opencode/src/session/retry.ts:76][E: packages/opencode/src/session/retry.ts:79][E: packages/opencode/src/session/retry.ts:81]
+`FreeUsageLimitError` 的 upsell 文案是 `$10/month`,不再写 `$5/month`。[E: packages/opencode/src/session/retry.ts:106]
+
+AI SDK `finish-step` 若 `rawFinishReason === "network_error"`,adapter 抛 `ProviderError.ResponseStreamError`;`MessageV2.fromError` 把它映射成 `isRetryable: true` 的 `APIError`,因此走 retry 而不是当普通 step-finish。[E: packages/opencode/src/session/llm/ai-sdk.ts:89][E: packages/opencode/src/session/message-v2.ts:668][E: packages/opencode/src/session/message-v2.ts:672]
+
+`parseStreamError` 对未识别的 `error.code` 默认返回 `{ type: "api_error", isRetryable: true }`。[E: packages/opencode/src/provider/error.ts:148][E: packages/opencode/src/provider/error.ts:151]
+
+`SessionRetry.delay` 优先解析 `retry-after-ms`,再解析 `retry-after` 秒数或 HTTP date;有 headers 时 delay 用 `cap()` 封到 `RETRY_MAX_DELAY`。[E: packages/opencode/src/session/retry.ts:47][E: packages/opencode/src/session/retry.ts:51][E: packages/opencode/src/session/retry.ts:55][E: packages/opencode/src/session/retry.ts:59][E: packages/opencode/src/session/retry.ts:64][E: packages/opencode/src/session/retry.ts:67][E: packages/opencode/src/session/retry.ts:69] 没有 headers 时使用带 jitter 的 exponential backoff,并额外封到 30 秒:`base + base * 0.25 * random`,其中 `RETRY_INITIAL_DELAY = 2000`、`RETRY_BACKOFF_FACTOR = 2`、`RETRY_JITTER_FACTOR = 0.25`。[E: packages/opencode/src/session/retry.ts:26][E: packages/opencode/src/session/retry.ts:27][E: packages/opencode/src/session/retry.ts:28][E: packages/opencode/src/session/retry.ts:29][E: packages/opencode/src/session/retry.ts:77][E: packages/opencode/src/session/retry.ts:80][E: packages/opencode/src/session/retry.ts:82]
 
 ## V2 dual-write 移除状态
 
@@ -96,6 +103,8 @@ V2 runner 的 durable event projection 另由 `packages/core/src/session/runner/
 ## Sources
 - packages/opencode/src/session/processor.ts
 - packages/opencode/src/session/retry.ts
+- packages/opencode/src/session/llm/ai-sdk.ts
+- packages/opencode/src/provider/error.ts
 - packages/opencode/src/session/status.ts
 - packages/opencode/src/session/message-v2.ts
 - packages/opencode/src/session/session.ts

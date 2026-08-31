@@ -22,7 +22,7 @@ related:
   - session-v2.system-context-algebra
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > System Context registry 是 Location-scoped contribution registry: built-ins 与 instruction context register keyed producers;runner 在 provider-turn preparation 中调 `load()` 并把 registry context、skill guidance、reference guidance 用 `SystemContext.combine(...)` 合成 deterministic context。[E: packages/core/src/system-context/builtins.ts:42][E: packages/core/src/instruction-context.ts:76][E: packages/core/src/session/runner/llm.ts:168][E: packages/core/src/session/runner/llm.ts:171][E: packages/core/src/system-context/registry.ts:39][E: packages/core/src/system-context/registry.ts:41] Plugin-defined context registration 仍是后续工作。[E: CONTEXT.md:121]
@@ -64,7 +64,7 @@ updated: 3fd77ae980
 8. `SystemContextBuiltIns.node` depends on `SystemContextRegistry.node` and `InstructionContext.node`, so built-ins and instruction context share the same Location service graph。[E: packages/core/src/system-context/builtins.ts:46][E: packages/core/src/system-context/builtins.ts:49]
 9. `InstructionContext.layer` 通过 `FSUtil.Service.resolve` 异步规范化 Location/project/global `AGENTS.md` 路径，除非 `OPENCODE_DISABLE_PROJECT_CONFIG` 禁止 project discovery，否则向上扫描并去重；某个已发现 project instruction 读取失败时返回 `SystemContext.unavailable`，最后注册 `core/instructions`。[E: packages/core/src/instruction-context.ts:20][E: packages/core/src/instruction-context.ts:41][E: packages/core/src/instruction-context.ts:42][E: packages/core/src/instruction-context.ts:46][E: packages/core/src/instruction-context.ts:48][E: packages/core/src/instruction-context.ts:50][E: packages/core/src/instruction-context.ts:55][E: packages/core/src/instruction-context.ts:58][E: packages/core/src/instruction-context.ts:71][E: packages/core/src/instruction-context.ts:72][E: packages/core/src/instruction-context.ts:76]
 10. `locationServices` includes `SystemContextRegistry.node` and `SystemContextBuiltIns.node`;`buildLocationServiceMap` compiles a fresh Location service layer for each `Location.Ref` through `Location.boundNode(ref)`。[E: packages/core/src/location-services.ts:42][E: packages/core/src/location-services.ts:61][E: packages/core/src/location-services.ts:62][E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:98]
-11. Runner loads registry context per provider-turn preparation through `systemContext.load()`, then combines it with selected-agent skill guidance and reference guidance before Context Epoch initialize/prepare。[E: packages/core/src/session/runner/llm.ts:168][E: packages/core/src/session/runner/llm.ts:169][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:198][E: packages/core/src/session/runner/llm.ts:208]
+11. Runner loads registry context per provider-turn preparation through `systemContext.load()`, then combines it with selected-agent skill guidance and reference guidance before Context Epoch initialize/prepare。[E: packages/core/src/session/runner/llm.ts:168][E: packages/core/src/session/runner/llm.ts:169][E: packages/core/src/session/runner/llm.ts:183][E: packages/core/src/session/runner/llm.ts:198][E: packages/core/src/session/runner/llm.ts:215]
 
 ## 设计动机与权衡
 

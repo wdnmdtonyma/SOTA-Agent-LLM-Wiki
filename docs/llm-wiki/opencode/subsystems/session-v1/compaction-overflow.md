@@ -12,6 +12,7 @@ source:
   - packages/opencode/src/session/processor.ts
   - packages/opencode/src/session/message-v2.ts
   - packages/core/src/session/compaction.ts
+  - packages/core/src/session/runner/llm.ts
   - packages/schema/src/v1/session.ts
   - packages/core/src/v1/config/config.ts
   - specs/v2/session.md
@@ -31,7 +32,7 @@ related:
   - session-v2.compaction
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > V1 compaction 是 `SessionPrompt.runLoop` 内的历史缩短机制: overflow 或 queued compaction 会写一个 V1 compaction user part，下一轮用 compaction agent 生成 summary assistant。summary prompt 现在把 head history `serialize` 成 orphaned transcript，再复用 V2 `buildPrompt`；随后由 `MessageV2.filterCompacted` 选择 provider request 的 active history。
@@ -49,7 +50,7 @@ updated: 3fd77ae980
 
 V1 overflow 判断在 `overflow.ts`: `compaction.auto === false` 或 model context 为 0 时不 overflow；token count 使用 `tokens.total`，否则使用 input+output+cache.read+cache.write；最终比较 `count >= usable(input)`。[E: packages/opencode/src/session/overflow.ts:28][E: packages/opencode/src/session/overflow.ts:29][E: packages/opencode/src/session/overflow.ts:31][E: packages/opencode/src/session/overflow.ts:33]
 
-`usable(input)` 对有 `model.limit.input` 的模型从 input limit 扣掉 reserved；reserved 来自 config `compaction.reserved`，否则取 `min(20_000, ProviderTransform.maxOutputTokens(...))`。没有 input limit 时 usable context 是 context 减 max output tokens。[E: packages/opencode/src/session/overflow.ts:14][E: packages/opencode/src/session/overflow.ts:16][E: packages/opencode/src/session/overflow.ts:17][E: packages/opencode/src/session/overflow.ts:19]
+`usable(input)` 对有 `model.limit.input` 的模型从 input limit 扣掉 reserved；reserved 来自 config `compaction.reserved`，否则取 `min(20_000, ProviderTransform.maxOutputTokens(...))`。没有 input limit 时 usable context 是 context 减 max output tokens。[E: packages/opencode/src/session/overflow.ts:14][E: packages/opencode/src/session/overflow.ts:15][E: packages/opencode/src/session/overflow.ts:16][E: packages/opencode/src/session/overflow.ts:17][E: packages/opencode/src/session/overflow.ts:19]
 
 ## 数据模型与常量
 
@@ -128,6 +129,8 @@ V1 compaction 的 durable model representation 仍是 V1 message/part history: q
 
 V1 现在复用 V2 的 `buildPrompt` / `SUMMARY_TEMPLATE`，并且用本地 `serialize` 把 head history 收成 transcript；这只共享 summary 文本结构，不改变 V1 的 message/part 存储，也不等于 SessionV2 已是默认路径。[E: packages/opencode/src/session/compaction.ts:23][E: packages/opencode/src/session/compaction.ts:380][E: packages/core/src/session/compaction.ts:16][E: packages/core/src/session/compaction.ts:160]
 
+V2 `SessionRunner` 请求带 `x-session-affinity` / `X-Session-Id` / optional `x-parent-session-id`；compaction summary 的 `LLM.request` 继承同一份 `http`，因此 parent/affinity header 会跟到 summary call。[E: packages/core/src/session/runner/llm.ts:208][E: packages/core/src/session/runner/llm.ts:210][E: packages/core/src/session/compaction.ts:205] SessionV2 / SessionRunner 仍不是默认执行路径。
+
 V2 spec 的目标则是保持 full transcript durable，但把 active model representation 替换为一个 checkpoint；completed compaction event 才投影模型可见 checkpoint，失败或中断不会切换历史边界。[E: specs/v2/session.md:115][E: specs/v2/session.md:117] 因此本节点描述的是 V1 当前活跑路径，V2 细节属于 `session-v2.compaction`。
 
 ## gotcha
@@ -146,6 +149,7 @@ V2 spec 的目标则是保持 full transcript durable，但把 active model repr
 - `packages/opencode/src/session/processor.ts`
 - `packages/opencode/src/session/message-v2.ts`
 - `packages/core/src/session/compaction.ts`
+- `packages/core/src/session/runner/llm.ts`
 - `packages/schema/src/v1/session.ts`
 - `packages/core/src/v1/config/config.ts`
 - `specs/v2/session.md`

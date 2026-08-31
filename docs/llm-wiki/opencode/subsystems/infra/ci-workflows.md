@@ -12,7 +12,7 @@ source:
   - .github/workflows/deploy.yml
   - .github/workflows/storybook.yml
   - .github/workflows/containers.yml
-  - .github/workflows/beta.yml
+  - .github/workflows/unlock.yml
   - .github/workflows/nix-eval.yml
   - .github/workflows/nix-hashes.yml
 symbols:
@@ -20,23 +20,24 @@ symbols:
   - typecheck
   - publish
   - deploy
+  - unlock
   - nix-eval
   - nix-hashes
 related:
   - infra.native-binary-release
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
-> CI/CD workflows 节点描述 `.github/workflows` 中约 26 个 GitHub Actions workflow 的主要交付路径: tests/typecheck, SST deploy, CLI/Desktop publish, Storybook build, container image build, beta branch sync, Nix evaluation and hash refresh。
+> CI/CD workflows 节点描述 `.github/workflows` 中约 26 个 GitHub Actions workflow 的主要交付路径: tests/typecheck, SST deploy, CLI/Desktop publish, Storybook build, container image build, SST unlock, Nix evaluation and hash refresh。hourly `beta.yml` 已从源树删除。
 
 ## 能回答的问题
 
 - PR 与 dev branch 上跑哪些测试和类型检查?
 - publish workflow 怎样构建 CLI、签 Windows binary、构建 Desktop 并发布?
 - `bun sst deploy` 在哪个 workflow 中运行?
-- Storybook、containers、beta、Nix 的 workflow 边界是什么?
+- Storybook、containers、unlock、Nix 的 workflow 边界是什么?
 - Nix hash workflow 为什么用 native runners?
 
 ## 职责边界
@@ -60,7 +61,7 @@ V1/V2 关系: CI 跑的是整个 monorepo 的 tests/typecheck/build/publish。�
 | `.github/workflows/deploy.yml` | hosted infra deploy。dev/production branch push 或 manual dispatch 触发, job 条件限制仓库和 ref, 通过 AWS OIDC 配置 credentials, 运行 `bun sst deploy --stage=${{ github.ref_name }}` [E: .github/workflows/deploy.yml:3] [E: .github/workflows/deploy.yml:5] [E: .github/workflows/deploy.yml:7] [E: .github/workflows/deploy.yml:18] [E: .github/workflows/deploy.yml:30] [E: .github/workflows/deploy.yml:36]。 |
 | `.github/workflows/storybook.yml` | UI documentation build gate。只在 Storybook/UI/root dependency 相关 paths 变化时触发, command 是 `bun --cwd packages/storybook build` [E: .github/workflows/storybook.yml:6] [E: .github/workflows/storybook.yml:10] [E: .github/workflows/storybook.yml:11] [E: .github/workflows/storybook.yml:39] [E: .github/workflows/storybook.yml:40]。 |
 | `.github/workflows/containers.yml` | container image build。dev branch 上 containers 相关 paths 触发, 登录 GHCR, 运行 `packages/containers/script/build.ts --push` [E: .github/workflows/containers.yml:4] [E: .github/workflows/containers.yml:8] [E: .github/workflows/containers.yml:34] [E: .github/workflows/containers.yml:42]。 |
-| `.github/workflows/beta.yml` | beta sync automation。hourly cron 或 manual dispatch, 安装 `opencode-ai`, 然后运行 `bun script/beta.ts` [E: .github/workflows/beta.yml:4] [E: .github/workflows/beta.yml:6] [E: .github/workflows/beta.yml:30] [E: .github/workflows/beta.yml:37]。 |
+| `.github/workflows/unlock.yml` | SST lock 人工解锁。`workflow_dispatch` 选 `dev` 或 `production` stage，concurrency 与 deploy 共用 `deploy-${{ inputs.stage }}`，AWS OIDC 后跑 `bun sst unlock --stage=...`。[E: .github/workflows/unlock.yml:3] [E: .github/workflows/unlock.yml:6] [E: .github/workflows/unlock.yml:14] [E: .github/workflows/unlock.yml:33] [E: .github/workflows/unlock.yml:39] `.github/workflows/beta.yml` 已不在源树。 |
 | `.github/workflows/nix-eval.yml` / `.github/workflows/nix-hashes.yml` | Nix validation and hash refresh。nix-eval 评估 packages/devShells; nix-hashes 用四个 native runner 计算 node_modules fixed-output hash 并提交 `nix/hashes.json` [E: .github/workflows/nix-eval.yml:28] [E: .github/workflows/nix-eval.yml:40] [E: .github/workflows/nix-eval.yml:81] [E: .github/workflows/nix-hashes.yml:32] [E: .github/workflows/nix-hashes.yml:34] [E: .github/workflows/nix-hashes.yml:120]。 |
 
 ## 数据模型
@@ -98,7 +99,7 @@ test workflow 的 concurrency 对 dev branch 使用 run id, 对 PR/其它 branch
 - `.github/workflows/deploy.yml`
 - `.github/workflows/storybook.yml`
 - `.github/workflows/containers.yml`
-- `.github/workflows/beta.yml`
+- `.github/workflows/unlock.yml`
 - `.github/workflows/nix-eval.yml`
 - `.github/workflows/nix-hashes.yml`
 

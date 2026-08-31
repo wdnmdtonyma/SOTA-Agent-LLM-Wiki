@@ -9,7 +9,7 @@ symbols: [RunCommand, Server.Default, SessionPrompt.prompt, SessionPrompt.loop]
 related: [spine.v1-turn-loop, server.http-server, sdk.overview]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > V1 CLI-to-session 节点描述 `opencode run` 如何解析 directory/session/mode,创建 SDK client,再经 process-local Effect HttpApi server 调到 `SessionPrompt.prompt`。
@@ -36,26 +36,27 @@ flowchart TD
 
 1. `RunCommand@packages/opencode/src/cli/cmd/run.ts:126` 声明 command 名为 `run [message..]`,并把 `instance` 设为 `(args) => !args.attach`;也就是说 attach 模式会避免启动新的 instance。[E: packages/opencode/src/cli/cmd/run.ts:126][E: packages/opencode/src/cli/cmd/run.ts:127][E: packages/opencode/src/cli/cmd/run.ts:131]
 
-2. `RunCommand.handler@packages/opencode/src/cli/cmd/run.ts:263` 进入 Effect generator 后解析服务,包括 `Agent.Service`、`RuntimeFlags.Service`、`InstanceRef.Service`、`ServerAuth.Service`。[E: packages/opencode/src/cli/cmd/run.ts:263][E: packages/opencode/src/cli/cmd/run.ts:264][E: packages/opencode/src/cli/cmd/run.ts:268]
+2. `RunCommand.handler@packages/opencode/src/cli/cmd/run.ts:263` 进入 Effect generator 后动态导入 `Agent`、`RuntimeFlags`、`InstanceRef`、`ServerAuth`,再 yield `Agent.Service`、`RuntimeFlags.Service` 与 `InstanceRef` 引用;`ServerAuth` 没有 `.Service`,后续只调用模块级 `headers`/`header`。[E: packages/opencode/src/cli/cmd/run.ts:263][E: packages/opencode/src/cli/cmd/run.ts:264][E: packages/opencode/src/cli/cmd/run.ts:265][E: packages/opencode/src/cli/cmd/run.ts:266][E: packages/opencode/src/cli/cmd/run.ts:267][E: packages/opencode/src/cli/cmd/run.ts:268][E: packages/opencode/src/cli/cmd/run.ts:269][E: packages/opencode/src/cli/cmd/run.ts:270]
 
-3. `handler@packages/opencode/src/cli/cmd/run.ts:333` 在 `args.dir` 存在时解析目标 root,并在非 attach 路径执行 `process.chdir(root)`;没有 `args.dir` 时非 attach 使用当前工作目录 root,attach 则不传本地 directory。[E: packages/opencode/src/cli/cmd/run.ts:333][E: packages/opencode/src/cli/cmd/run.ts:335][E: packages/opencode/src/cli/cmd/run.ts:336][E: packages/opencode/src/cli/cmd/run.ts:339]
+3. `handler@packages/opencode/src/cli/cmd/run.ts:333` 总是先从 `PWD`/`cwd` 解析 `root`。有 `args.dir` 且非 attach 时,`chdir` 到解析后的 `args.dir` 并以 `process.cwd()` 作为 directory;有 `args.dir` 且 attach 时直接用 `args.dir` 且不 `chdir`;没有 `args.dir` 时非 attach 使用 `root`,attach 则不传本地 directory。[E: packages/opencode/src/cli/cmd/run.ts:333][E: packages/opencode/src/cli/cmd/run.ts:335][E: packages/opencode/src/cli/cmd/run.ts:336][E: packages/opencode/src/cli/cmd/run.ts:339][E: packages/opencode/src/cli/cmd/run.ts:340]
 
-4. attach 模式通过 `attachSDK` 调 `createOpencodeClient({ baseUrl: args.attach!, directory, headers })` 连接已有 server;本地非 attach 模式会构造 `fetchFn` 调 `Server.Default().app.fetch(request)`。[E: packages/opencode/src/cli/cmd/run.ts:349][E: packages/opencode/src/cli/cmd/run.ts:350][E: packages/opencode/src/cli/cmd/run.ts:351][E: packages/opencode/src/cli/cmd/run.ts:943][E: packages/opencode/src/cli/cmd/run.ts:949]
+4. attach 模式通过 `attachSDK` 调 `createOpencodeClient({ baseUrl: args.attach!, directory, headers })` 连接已有 server;本地非 attach 模式会构造 `fetchFn` 调 `Server.Default().app.fetch(request)`。[E: packages/opencode/src/cli/cmd/run.ts:349][E: packages/opencode/src/cli/cmd/run.ts:350][E: packages/opencode/src/cli/cmd/run.ts:351][E: packages/opencode/src/cli/cmd/run.ts:948][E: packages/opencode/src/cli/cmd/run.ts:954]
 
 5. `Server.Default@packages/opencode/src/server/server.ts:56` 返回的 `app.fetch` 调用 `HttpApiApp.webHandler().handler`,因此 CLI 的本地 fetch wrapper 进入同一个 V1 Effect HttpApi handler。[E: packages/opencode/src/server/server.ts:56][E: packages/opencode/src/server/server.ts:57][E: packages/opencode/src/server/server.ts:59]
 
 6. `session(sdk)@packages/opencode/src/cli/cmd/run.ts:456` 根据 `--session`、`--continue`、`--fork` 等参数选择已有 session、fork session、continue 最近 session 或创建新 session。[E: packages/opencode/src/cli/cmd/run.ts:456][E: packages/opencode/src/cli/cmd/run.ts:462][E: packages/opencode/src/cli/cmd/run.ts:492][E: packages/opencode/src/cli/cmd/run.ts:519]
 
-7. `execute@packages/opencode/src/cli/cmd/run.ts:670` 获取 session id;非交互分支订阅 event stream,再调用 `client.session.command` 或 `client.session.prompt`。[E: packages/opencode/src/cli/cmd/run.ts:670][E: packages/opencode/src/cli/cmd/run.ts:828][E: packages/opencode/src/cli/cmd/run.ts:840][E: packages/opencode/src/cli/cmd/run.ts:859]
+7. `execute@packages/opencode/src/cli/cmd/run.ts:670` 获取 session id;非交互分支订阅 event stream,再调用 `client.session.command` 或 `client.session.prompt`。[E: packages/opencode/src/cli/cmd/run.ts:670][E: packages/opencode/src/cli/cmd/run.ts:833][E: packages/opencode/src/cli/cmd/run.ts:846][E: packages/opencode/src/cli/cmd/run.ts:864]
 
-8. `loop@packages/opencode/src/cli/cmd/run.ts:697` 消费 SDK event stream,打印 message part 增量,并在收到当前 session 的 `session.status` 且状态为 `idle` 时结束等待;permission asked 事件在同一 loop 后段处理。[E: packages/opencode/src/cli/cmd/run.ts:697][E: packages/opencode/src/cli/cmd/run.ts:715][E: packages/opencode/src/cli/cmd/run.ts:788][E: packages/opencode/src/cli/cmd/run.ts:796]
+8. `loop@packages/opencode/src/cli/cmd/run.ts:697` 用 `sessions` Set 跟踪 root session,并在 `session.created` 且 `parentID` 已在 set 内时加入 child。它消费 SDK event stream,打印 message part 增量,并在收到当前 session 的 `session.status` 且状态为 `idle` 时结束等待;`permission.asked` 用 `sessions.has(permission.sessionID)` 应答 root 与 child,不再只匹配 root `sessionID`。[E: packages/opencode/src/cli/cmd/run.ts:697][E: packages/opencode/src/cli/cmd/run.ts:699][E: packages/opencode/src/cli/cmd/run.ts:703][E: packages/opencode/src/cli/cmd/run.ts:720][E: packages/opencode/src/cli/cmd/run.ts:793][E: packages/opencode/src/cli/cmd/run.ts:801][E: packages/opencode/src/cli/cmd/run.ts:803]
 
 9. API 进入 `SessionPrompt.prompt@packages/opencode/src/session/prompt.ts:1052` 后会创建 user message、更新 session 时间、记录输入权限;如果 `noReply` 不是 true,最后调用 `loop({ sessionID: input.sessionID })` 进入 V1 turn loop。[E: packages/opencode/src/session/prompt.ts:1052][E: packages/opencode/src/session/prompt.ts:1057][E: packages/opencode/src/session/prompt.ts:1058][E: packages/opencode/src/session/prompt.ts:1061][E: packages/opencode/src/session/prompt.ts:1069][E: packages/opencode/src/session/prompt.ts:1070]
 
 ## 关键决策点
 
 - 非交互模式会要求必须有 message 或 command,否则打印 `You must provide a message or a command` 并 `process.exit(1)`;同一段还把 question/plan permission 默认设为 deny,避免 headless run 卡在用户交互上。[E: packages/opencode/src/cli/cmd/run.ts:420][E: packages/opencode/src/cli/cmd/run.ts:421][E: packages/opencode/src/cli/cmd/run.ts:422][E: packages/opencode/src/cli/cmd/run.ts:430]
-- 本地交互路径也使用同一个 process-local fetch trick:`runInteractiveLocalMode` 收到的 fetch handler 同样调用 `Server.Default().app.fetch(request)`。[E: packages/opencode/src/cli/cmd/run.ts:902][E: packages/opencode/src/cli/cmd/run.ts:905][E: packages/opencode/src/cli/cmd/run.ts:911]
+- 本地交互路径也使用同一个 process-local fetch trick:`runInteractiveLocalMode` 收到的 fetch handler 同样调用 `Server.Default().app.fetch(request)`。[E: packages/opencode/src/cli/cmd/run.ts:907][E: packages/opencode/src/cli/cmd/run.ts:910][E: packages/opencode/src/cli/cmd/run.ts:916]
+- `opencode run` 会应答 child session 的 `permission.asked`;`sessions` Set 从 root 起步,`session.created` 且 parent 已在 set 内时加入 child。[E: packages/opencode/src/cli/cmd/run.ts:699][E: packages/opencode/src/cli/cmd/run.ts:703][E: packages/opencode/src/cli/cmd/run.ts:803]
 - `SessionPrompt.prompt` 的 `noReply` 分支会只写 user input 而不启动 assistant loop,这是 CLI/API 层能注入输入但不立即跑模型的 V1 控制点。[E: packages/opencode/src/session/prompt.ts:1069]
 
 ## 深挖入口

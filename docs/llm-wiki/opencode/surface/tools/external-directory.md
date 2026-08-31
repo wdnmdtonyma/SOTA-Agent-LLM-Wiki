@@ -9,7 +9,7 @@ symbols: [assertExternalDirectoryEffect, assertExternalDirectory, LocationMutati
 related: [execution.permissions-v1, ref.permission-actions]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > External-directory 不是一个普通 model-facing tool；它是文件/搜索/shell 工具在访问当前 project/worktree 或 Location 外部路径前触发的额外 approval guard。

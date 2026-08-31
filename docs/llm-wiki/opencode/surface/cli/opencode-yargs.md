@@ -11,10 +11,13 @@ source:
   - packages/opencode/src/index.ts
   - packages/opencode/src/cli/error.ts
   - packages/opencode/src/cli/cmd/
+  - packages/opencode/src/cli/cmd/account.ts
+  - packages/opencode/src/cli/cmd/github.handler.ts
+  - packages/opencode/src/cli/cmd/run.ts
 symbols:
   - ImportCommand
   - formatImportFileError
-updated: 3fd77ae980
+updated: 9f69463f1d
 evidence: explicit
 ---
 
@@ -42,10 +45,10 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `mcp` | `packages/opencode/src/cli/cmd/mcp.ts` | MCP server management root。[E: packages/opencode/src/cli/cmd/mcp.ts:96] | `list`、`auth`、`logout`、`add`、`debug` |
 | `$0 [project]` | `packages/opencode/src/cli/cmd/tui.ts` | default TUI command。[E: packages/opencode/src/cli/cmd/tui.ts:73] | none |
 | `attach <url>` | `packages/opencode/src/cli/cmd/attach.ts` | attach to an existing server URL。[E: packages/opencode/src/cli/cmd/attach.ts:8] | none |
-| `run [message..]` | `packages/opencode/src/cli/cmd/run.ts` | run prompt in terminal modes。[E: packages/opencode/src/cli/cmd/run.ts:127] | none; modes are flags |
+| `run [message..]` | `packages/opencode/src/cli/cmd/run.ts` | run prompt in terminal modes；event loop 用 `sessions` Set 跟踪 child 并应答它们的 `permission.asked`。[E: packages/opencode/src/cli/cmd/run.ts:127][E: packages/opencode/src/cli/cmd/run.ts:699][E: packages/opencode/src/cli/cmd/run.ts:803] | none; modes are flags |
 | `generate` | `packages/opencode/src/cli/cmd/generate.ts` | generation helpers command。[E: packages/opencode/src/cli/cmd/generate.ts:6] | none |
 | `debug` | `packages/opencode/src/cli/cmd/debug/index.ts` | debug utilities root。[E: packages/opencode/src/cli/cmd/debug/index.ts:20] | `config`、`lsp`、`rg`、`file`、`scrap`、`skill`、`snapshot`、`startup`、`agent`、`v2`、`info`、`paths`、`wait` |
-| `console` | `packages/opencode/src/cli/cmd/account.ts` | opencode Console account root。[E: packages/opencode/src/cli/cmd/account.ts:238] | `login`、`logout`、`switch`、`orgs`、`open` |
+| `console` | `packages/opencode/src/cli/cmd/account.ts` | opencode Console account root；`defaultConsoleUrl` 现为 `https://opencode.ai/console`。[E: packages/opencode/src/cli/cmd/account.ts:18][E: packages/opencode/src/cli/cmd/account.ts:238] | `login`、`logout`、`switch`、`orgs`、`open` |
 | `providers` | `packages/opencode/src/cli/cmd/providers.ts` | manage provider authentication/config。[E: packages/opencode/src/cli/cmd/providers.ts:240] | `list`、`login`、`logout` |
 | `agent` | `packages/opencode/src/cli/cmd/agent.ts` | agent management root。[E: packages/opencode/src/cli/cmd/agent.ts:255] | `create`、`list` |
 | `upgrade [target]` | `packages/opencode/src/cli/cmd/upgrade.ts` | upgrade opencode。[E: packages/opencode/src/cli/cmd/upgrade.ts:8] | none |
@@ -55,7 +58,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `models [provider]` | `packages/opencode/src/cli/cmd/models.ts` | list models。[E: packages/opencode/src/cli/cmd/models.ts:9] | none |
 | `stats` | `packages/opencode/src/cli/cmd/stats.ts` | display usage stats。[E: packages/opencode/src/cli/cmd/stats.ts:50] | none |
 | `export [sessionID]` | `packages/opencode/src/cli/cmd/export.ts` | export session data。[E: packages/opencode/src/cli/cmd/export.ts:223] | none |
-| `import <file>` | `packages/opencode/src/cli/cmd/import.ts` | import session data；本地文件错误区分 not found、permission denied、invalid JSON/其它 read failure。[E: packages/opencode/src/cli/cmd/import.ts:41][E: packages/opencode/src/cli/cmd/import.ts:43][E: packages/opencode/src/cli/cmd/import.ts:44][E: packages/opencode/src/cli/cmd/import.ts:49][E: packages/opencode/src/cli/cmd/import.ts:95] | none |
+| `import <file>` | `packages/opencode/src/cli/cmd/import.ts` | import session data；本地文件错误区分 not found、permission denied、invalid JSON/其它 read failure。[E: packages/opencode/src/cli/cmd/import.ts:41][E: packages/opencode/src/cli/cmd/import.ts:43][E: packages/opencode/src/cli/cmd/import.ts:44][E: packages/opencode/src/cli/cmd/import.ts:45][E: packages/opencode/src/cli/cmd/import.ts:49][E: packages/opencode/src/cli/cmd/import.ts:95] | none |
 | `github` | `packages/opencode/src/cli/cmd/github.ts` | GitHub integration root。[E: packages/opencode/src/cli/cmd/github.ts:38] | `install`、`run` |
 | `pr <number>` | `packages/opencode/src/cli/cmd/pr.ts` | pull request helper command。[E: packages/opencode/src/cli/cmd/pr.ts:9] | none |
 | `session` | `packages/opencode/src/cli/cmd/session.ts` | session management root。[E: packages/opencode/src/cli/cmd/session.ts:45] | `delete`、`list` |
@@ -107,7 +110,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `agent` | `create` | [E: packages/opencode/src/cli/cmd/agent.ts:34] | create agent via generation flow. |
 | `agent` | `list` | [E: packages/opencode/src/cli/cmd/agent.ts:235] | list agents. |
 | `github` | `install` | [E: packages/opencode/src/cli/cmd/github.ts:8] | install GitHub integration. |
-| `github` | `run` | [E: packages/opencode/src/cli/cmd/github.ts:18] | run GitHub integration. |
+| `github` | `run` | [E: packages/opencode/src/cli/cmd/github.ts:18][E: packages/opencode/src/cli/cmd/github.handler.ts:440][E: packages/opencode/src/cli/cmd/github.handler.ts:644][E: packages/opencode/src/cli/cmd/github.handler.ts:1013] | run GitHub integration；失败评论只在 `githubClientReady` 后发送，token exchange 失败读 `response.text()`。 |
 | `session` | `delete <sessionID>` | [E: packages/opencode/src/cli/cmd/session.ts:52] | delete session. |
 | `session` | `list` | [E: packages/opencode/src/cli/cmd/session.ts:71] | list sessions. |
 | `db` | `$0 [query]` | [E: packages/opencode/src/cli/cmd/db.ts:9] | execute DB query/root behavior. |
@@ -116,6 +119,8 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 ## V2 关系
 
 `import` 的本地文件分支不再把所有 `readJson` failure 吞成 “File not found”。它把 filesystem error 交给 `formatImportFileError()`，再作为带不同 message 的 `CliError` 传播；顶层 `FormatError()` 提取 `CliError.message` 并交给 `UI.error()`，所以 permission 与 JSON syntax failure 会给出不同用户可见信息。[E: packages/opencode/src/cli/cmd/import.ts:41][E: packages/opencode/src/cli/cmd/import.ts:48][E: packages/opencode/src/cli/cmd/import.ts:168][E: packages/opencode/src/cli/cmd/import.ts:170][E: packages/opencode/src/cli/error.ts:42][E: packages/opencode/src/cli/error.ts:44][E: packages/opencode/src/index.ts:129][E: packages/opencode/src/index.ts:130]
+
+`console` 的默认 URL 现为 `https://opencode.ai/console`。[E: packages/opencode/src/cli/cmd/account.ts:18] `github run` handler 用 `githubClientReady` 守卫失败评论，避免 token 尚未换到就调 GitHub API；token exchange 失败时读 `response.text()` 而不是假定 JSON `error` 字段。[E: packages/opencode/src/cli/cmd/github.handler.ts:440][E: packages/opencode/src/cli/cmd/github.handler.ts:644][E: packages/opencode/src/cli/cmd/github.handler.ts:1013] `run` 的 event loop 用 `sessions` Set 跟踪 child session 并应答它们的 `permission.asked`。[E: packages/opencode/src/cli/cmd/run.ts:699][E: packages/opencode/src/cli/cmd/run.ts:803]
 
 这个节点是 `v: v1`。V2 preview CLI host 在 `packages/cli/src` 使用 Effect CLI framework 和 daemon service；它不是 `packages/opencode/src/index.ts` 这条 yargs command tree。[I]
 
@@ -142,6 +147,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 - `packages/opencode/src/cli/cmd/export.ts`
 - `packages/opencode/src/cli/cmd/generate.ts`
 - `packages/opencode/src/cli/cmd/github.ts`
+- `packages/opencode/src/cli/cmd/github.handler.ts`
 - `packages/opencode/src/cli/cmd/import.ts`
 - `packages/opencode/src/cli/cmd/mcp.ts`
 - `packages/opencode/src/cli/cmd/models.ts`

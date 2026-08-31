@@ -24,7 +24,7 @@ symbols:
   - GlobalBus
   - EventV2Bridge
 evidence: explicit
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > 这份节点是事件系统总账：V2 durable session events 是存储与 replay 语义，GlobalBus/API event envelope 是传输语义，两者不能混讲。
@@ -106,6 +106,8 @@ Instance event stream maps EventV2 payloads to `{ id, type, properties }`, where
 
 Global event schema wraps routing metadata `{ directory, project?, workspace?, payload }`; `payload` can be a regular `{ id,type,properties }` event, `InstanceDisposed`, or a sync envelope.[E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:37][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:38][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:39][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:42][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:45][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:46] The sync envelope has `type: "sync"`, top-level `id`, and nested `syncEvent` with versioned type, id, seq, aggregateID, and data.[E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:22][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:23][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:24][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:25][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:26][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:27][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:28]
 
+`global.upgrade` 与 event schema 同文件：`GlobalUpgradeInput.target` 必填 semver。handler 成功后 `GlobalBus.emit` `Installation.Event.Updated`，properties 为 `{ version: target }`。[E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:51][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:53][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:31][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:89][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:108][E: packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts:112]
+
 ## V1
 
 V1 no longer has a Bus service in the source areas for this node; the remaining process bus is `GlobalBus`, an EventEmitter that ensures emitted payloads get an ID from `payload.syncEvent.id` or a new `evt` ID when missing.[E: packages/opencode/src/bus/global.ts:11][E: packages/opencode/src/bus/global.ts:15][E: packages/opencode/src/bus/global.ts:16][I] `EventV2Bridge` listens to EventV2 and emits the regular `{ id,type,properties }` payload; for durable events it emits an additional `type: "sync"` payload without top-level `id`, and `GlobalBus.emit` fills that ID.[E: packages/opencode/src/event-v2-bridge.ts:35][E: packages/opencode/src/event-v2-bridge.ts:39][E: packages/opencode/src/event-v2-bridge.ts:43][E: packages/opencode/src/event-v2-bridge.ts:45][E: packages/opencode/src/event-v2-bridge.ts:46][E: packages/opencode/src/event-v2-bridge.ts:51][E: packages/opencode/src/event-v2-bridge.ts:53][E: packages/opencode/src/event-v2-bridge.ts:57][E: packages/opencode/src/bus/global.ts:16]
@@ -126,6 +128,7 @@ V1 no longer has a Bus service in the source areas for this node; the remaining 
 - `packages/opencode/src/event-v2-bridge.ts`
 - `packages/opencode/src/session/message-v2.ts`
 - `packages/opencode/src/server/routes/instance/httpapi/groups/global.ts`
+- `packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts`
 - `packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts`
 
 ## 相关

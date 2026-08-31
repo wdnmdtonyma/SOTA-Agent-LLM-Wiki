@@ -17,7 +17,7 @@ symbols:
   - SystemPrompt.provider
   - SystemPrompt.Service
   - LLMRequestPrep.prepare
-updated: 3fd77ae980
+updated: 9f69463f1d
 evidence: explicit
 ---
 
@@ -56,7 +56,9 @@ evidence: explicit
 
 plugin hook `experimental.chat.system.transform` 可以修改 system 数组。[E: packages/opencode/src/session/llm/request.ts:69] 若 hook 追加了多个 system fragment，且第一个 fragment 没变，源码会把追加内容合并成第二个 system fragment，减少 system message 数量。[E: packages/opencode/src/session/llm/request.ts:74]
 
-OpenAI OAuth 或 workflow 请求不会把 system prompt 放进 AI SDK `messages`，其中 OpenAI OAuth 把 instructions 放到 options 上。[E: packages/opencode/src/session/llm/request.ts:99] 普通请求会把 system 数组映射成 `role: "system"` message 后再接原始 `input.messages`。[E: packages/opencode/src/session/llm/request.ts:101]
+OpenAI OAuth 或 workflow 请求不会把 system prompt 放进 AI SDK `messages`，其中 OpenAI OAuth 把 instructions 放到 options 上。[E: packages/opencode/src/session/llm/request.ts:99] 普通请求会把 system 数组映射成 `role: "system"` message 后再接原始 `input.messages`。[E: packages/opencode/src/session/llm/request.ts:105]
+
+本节点也覆盖 request prep 的 header 拼装:`LLMRequestPrep.prepare` 在 opencode / 第三方两套 header 之外的公共层写入 `x-parent-session-id`,因此所有 provider 只要有 `parentSessionID` 都会带上。[E: packages/opencode/src/session/llm/request.ts:201]
 
 ## Environment 与 Skills
 

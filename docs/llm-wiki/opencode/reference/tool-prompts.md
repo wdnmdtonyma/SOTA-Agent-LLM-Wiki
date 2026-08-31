@@ -8,7 +8,7 @@ source:
   - packages/opencode/src/tool/
   - packages/opencode/src/tool/shell/prompt.ts
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 evidence: explicit
 symbols:
   - ShellPrompt.render

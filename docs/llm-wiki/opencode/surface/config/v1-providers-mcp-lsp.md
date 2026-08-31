@@ -13,7 +13,7 @@ source:
   - packages/core/src/v1/config/mcp.ts
   - packages/core/src/v1/config/lsp.ts
   - packages/core/src/v1/config/formatter.ts
-updated: 3fd77ae980
+updated: 9f69463f1d
 evidence: explicit
 ---
 

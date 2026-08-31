@@ -9,7 +9,7 @@ symbols: [SessionV2, SessionExecution, SessionExecutionLocal, SessionRunCoordina
 related: [spine.v2-admission, spine.v2-provider-turn, spine.v1-v2-relationship]
 evidence: explicit
 status: verified
-updated: 3fd77ae980
+updated: 9f69463f1d
 ---
 
 > V2 Session Core 是 `packages/core` 中的 Effect-native session engine:它把 durable prompt admission、process-local execution coordination、location-scoped runner/provider/tool 服务和 event sourcing 分开。
@@ -53,9 +53,9 @@ flowchart TD
 
 8. `SessionRunCoordinator` 为每个 sessionID 维护一个 active lane;`wake` 在 active 时只设置 `pendingWake = true`,而 `run` 在 idle 时以 `force=true` 启动 owner fiber并等待 done。[E: packages/core/src/session/run-coordinator.ts:28][E: packages/core/src/session/run-coordinator.ts:81][E: packages/core/src/session/run-coordinator.ts:85][E: packages/core/src/session/run-coordinator.ts:67][E: packages/core/src/session/run-coordinator.ts:77][E: packages/core/src/session/run-coordinator.ts:78]
 
-9. `SessionRunner.run` 先判断 pending steer/queue,再失败化已中断 tool,然后在 provider-turn loop 内运行直到没有 immediate continuation 或 pending queue。[E: packages/core/src/session/runner/llm.ts:383][E: packages/core/src/session/runner/llm.ts:387][E: packages/core/src/session/runner/llm.ts:388][E: packages/core/src/session/runner/llm.ts:389][E: packages/core/src/session/runner/llm.ts:390][E: packages/core/src/session/runner/llm.ts:393][E: packages/core/src/session/runner/llm.ts:403]
+9. `SessionRunner.run` 先判断 pending steer/queue,再失败化已中断 tool,然后在 provider-turn loop 内运行直到没有 immediate continuation 或 pending queue。[E: packages/core/src/session/runner/llm.ts:390][E: packages/core/src/session/runner/llm.ts:394][E: packages/core/src/session/runner/llm.ts:395][E: packages/core/src/session/runner/llm.ts:396][E: packages/core/src/session/runner/llm.ts:397][E: packages/core/src/session/runner/llm.ts:400][E: packages/core/src/session/runner/llm.ts:410]
 
-10. 每个 provider turn 由 `runTurnAttempt` 构造 context、materialize tools、创建 `LLM.request`,再在 `llm.stream(request)` 处执行一次 provider stream。[E: packages/core/src/session/runner/llm.ts:173][E: packages/core/src/session/runner/llm.ts:197][E: packages/core/src/session/runner/llm.ts:203][E: packages/core/src/session/runner/llm.ts:205][E: packages/core/src/session/runner/llm.ts:212][E: packages/core/src/session/runner/llm.ts:232]
+10. 每个 provider turn 由 `runTurnAttempt` 构造 context、materialize tools、创建 `LLM.request`,再在 `llm.stream(request)` 处执行一次 provider stream。[E: packages/core/src/session/runner/llm.ts:173][E: packages/core/src/session/runner/llm.ts:197][E: packages/core/src/session/runner/llm.ts:203][E: packages/core/src/session/runner/llm.ts:205][E: packages/core/src/session/runner/llm.ts:219][E: packages/core/src/session/runner/llm.ts:239] 该 `LLM.request` 现在还带 `http.headers`：`x-session-affinity` 与 `X-Session-Id` 都是 `session.id`，存在 `session.parentID` 时再加 `x-parent-session-id`。[E: packages/core/src/session/runner/llm.ts:207][E: packages/core/src/session/runner/llm.ts:209][E: packages/core/src/session/runner/llm.ts:210][E: packages/core/src/session/runner/llm.ts:211]
 
 11. V2 规范也把这条链写成 `SessionExecution.resume(sessionID) -> SessionStore.get -> LocationServiceMap.get(session.location) -> SessionRunner.run`,并要求每个 provider turn 正好一次 `llm.stream(request)`。[E: specs/v2/session.md:39][E: specs/v2/session.md:42][E: specs/v2/session.md:44][E: specs/v2/session.md:45][E: specs/v2/session.md:50]
 
@@ -65,9 +65,9 @@ flowchart TD
 
 ## 关键决策点
 
-- 已删除的 `packages/core/src/public/opencode.ts` 不再是当前 V2 public composition point;current embedded composition 分散在 `packages/server/src/routes.ts` 与 `packages/sdk-next/src/opencode.ts`。[E: packages/server/src/routes.ts:47][E: packages/sdk-next/src/opencode.ts:10]
+- 已删除的 `packages/core/src/public/opencode.ts` 不再是当前 V2 public composition point;current embedded composition 分散在 `packages/server/src/routes.ts` 与 `packages/sdk-next/src/opencode.ts`。这是 V2 HTTP/sdk-next 装配,不是默认 CLI 路径;默认 CLI 仍走 V1 `SessionPrompt`(见 `spine.cli-to-session`)。[E: packages/server/src/routes.ts:47][E: packages/sdk-next/src/opencode.ts:10][I]
 - V2 runner 服务是 location-scoped:根设计约束明确要求 `SessionRunner`、model、tool registry、permissions 和 filesystem Location-scoped。[E: AGENTS.md:156]
-- V2 provider turn 不把 tool continuation 藏到 provider stream 内部:runner 在 stream event 中 settle local tool fibers,再根据 publisher/context 判断是否需要 continuation。[E: packages/core/src/session/runner/llm.ts:243][E: packages/core/src/session/runner/llm.ts:252][E: packages/core/src/session/runner/llm.ts:345]
+- V2 provider turn 不把 tool continuation 藏到 provider stream 内部:runner 在 stream event 中 settle local tool fibers,再根据 publisher/context 判断是否需要 continuation。[E: packages/core/src/session/runner/llm.ts:250][E: packages/core/src/session/runner/llm.ts:259][E: packages/core/src/session/runner/llm.ts:352]
 
 ## 深挖入口
 - Admission 与 delivery: `spine.v2-admission`
