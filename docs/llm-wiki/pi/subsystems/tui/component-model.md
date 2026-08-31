@@ -20,7 +20,7 @@ related:
   - ref.tui.component-types
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > Component 仍以 `render(width): string[]` 为最小契约；本轮新增的 stack/scroll layout 是 fullscreen renderer 可识别的增量协议，不取代 line-oriented component model。
@@ -49,7 +49,7 @@ fullscreen renderer 则读取 layout node，执行 basis/grow/shrink、clip、sc
 
 ## Gotchas
 
-- 依赖 viewport height 的 `visible()` predicate 在 direct render fallback 中拿到的不是实际 terminal height；需要固定 viewport 语义时应通过 `TuiAltScreen.setLayoutRoot()` 渲染。[E: packages/tui/src/components/v-stack.ts:11] [E: packages/tui/src/tui-alt-screen.ts:235]
+- 依赖 viewport height 的 `visible()` predicate 在 direct render fallback 中拿到的不是实际 terminal height；需要固定 viewport 语义时应通过 `TuiAltScreen.setLayoutRoot()` 渲染。[E: packages/tui/src/components/v-stack.ts:11] [E: packages/tui/src/tui-alt-screen.ts:262]
 - `ScrollView` 强制只有一个 child；构造后 `addChild/removeChild/clear` 都会抛错。[E: packages/tui/src/components/scroll-view.ts:195] [E: packages/tui/src/components/scroll-view.ts:199] [E: packages/tui/src/components/scroll-view.ts:203]
 - 公开 concrete component catalog 从 12 增至 15；内部 `Stack` 与 `AltScreenFlashContainer` 不应计入该口径。[I]
 

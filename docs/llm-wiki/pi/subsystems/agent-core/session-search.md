@@ -26,7 +26,7 @@ related:
   - subsys.agent-core.memory-storage
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.agent-core.session-search` 说明 `pi-agent-core` 当前仍导出的 `SessionSearch` 查询契约、包内默认 scanning 实现，以及 SQLite / 外部索引相对该契约的包边界。旧路径 `packages/agent/src/harness/session/search.ts` 已删除。

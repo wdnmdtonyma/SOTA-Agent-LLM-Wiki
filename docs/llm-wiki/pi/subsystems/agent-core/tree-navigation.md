@@ -23,7 +23,7 @@ related:
   - spine.session-state-model
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.agent-core.tree-navigation` 说明 v4 `Session` 如何用 lane view 选择 active branch、做有界 `parentId` 回溯，以及 `context.ts` 如何把一条 path 投影成 `SessionContext`（messages + thinking/model/tools state）。

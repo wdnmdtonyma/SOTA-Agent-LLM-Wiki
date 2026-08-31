@@ -22,7 +22,7 @@ related:
   - subsys.client.remote-session-client
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `surface.sdk.remote-session` 描述 `@earendil-works/pi-coding-agent/client` 的 public client facade：它在 `PiClient`/protocol lease 上封装单个远程 session 的 attach、input、model/thinking control、reconnect、transcript reduction 与 disposal。
@@ -36,7 +36,7 @@ updated: 086c32e745
 
 ## Public export 与状态面
 
-package manifest 把 `./client` 映射到 `dist/client/index.js` 与对应 declaration，并显式依赖 `pi-client`、`pi-protocol`;这与主包 `.` 和 `./rpc-entry` 是并列 public subpath [E: packages/coding-agent/package.json:14] [E: packages/coding-agent/package.json:19] [E: packages/coding-agent/package.json:22] [E: packages/coding-agent/package.json:23] [E: packages/coding-agent/package.json:24] [E: packages/coding-agent/package.json:48] [E: packages/coding-agent/package.json:49]。client index 导出 `RemoteSession`、options/state/lifecycle types 和 transcript reducer helpers [E: packages/coding-agent/src/client/index.ts:1] [E: packages/coding-agent/src/client/index.ts:8] [E: packages/coding-agent/src/client/index.ts:9] [E: packages/coding-agent/src/client/index.ts:15]。
+package manifest 把 `./client` 映射到 `dist/client/index.js` 与对应 declaration，并显式依赖 `pi-client`、`pi-protocol`;这与主包 `.` 和 `./rpc-entry` 是并列 public subpath [E: packages/coding-agent/package.json:14] [E: packages/coding-agent/package.json:19] [E: packages/coding-agent/package.json:22] [E: packages/coding-agent/package.json:23] [E: packages/coding-agent/package.json:24] [E: packages/coding-agent/package.json:49] [E: packages/coding-agent/package.json:50]。client index 导出 `RemoteSession`、options/state/lifecycle types 和 transcript reducer helpers [E: packages/coding-agent/src/client/index.ts:1] [E: packages/coding-agent/src/client/index.ts:8] [E: packages/coding-agent/src/client/index.ts:9] [E: packages/coding-agent/src/client/index.ts:15]。
 
 `RemoteSessionLifecycle` 有 `unbound`、`ready`、携带 operation 的 `busy`、`disposed` 四态；operation union 是 `open/create/submit/abort/setModel/setThinking/reconnect` [E: packages/coding-agent/src/client/remote-session.ts:26] [E: packages/coding-agent/src/client/remote-session.ts:28] [E: packages/coding-agent/src/client/remote-session.ts:32]。public state 同时暴露 lifecycle、optional snapshot 和 reduced transcript；另外 getters 可直接读取 id、phase、current operation、server models、`SessionMetadata[]` sessions 与 connection state [E: packages/coding-agent/src/client/remote-session.ts:34] [E: packages/coding-agent/src/client/remote-session.ts:37] [E: packages/coding-agent/src/client/remote-session.ts:112] [E: packages/coding-agent/src/client/remote-session.ts:116]。`sessions` 来自 `PiClient.snapshot.sessions`,类型是 protocol `SessionMetadata`,不再是旧 list summary [E: packages/coding-agent/src/client/remote-session.ts:12] [E: packages/coding-agent/src/client/remote-session.ts:116] [E: packages/coding-agent/src/client/remote-session.ts:117]。
 

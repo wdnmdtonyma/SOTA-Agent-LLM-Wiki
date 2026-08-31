@@ -9,7 +9,7 @@ symbols: [TUI_KEYBINDINGS, Keybindings]
 related: [subsys.tui.keybinding-matching]
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `TUI_KEYBINDINGS` 是 TUI 包的全局 keybinding action registry:它把每个 `tui.*` action id 映射到默认按键(default keys)和英文描述(description)。
@@ -74,8 +74,8 @@ updated: 086c32e745
 | alternate screen | `tui.altScreen.halfPageDown` | _(unbound)_ | Scroll viewport down half a page | 默认未绑定。 | [E: packages/tui/src/keybindings.ts:172] [E: packages/tui/src/keybindings.ts:173] |
 | alternate screen | `tui.altScreen.lineUp` | _(unbound)_ | Scroll viewport up one line | 默认未绑定的单行上滚。 | [E: packages/tui/src/keybindings.ts:176] [E: packages/tui/src/keybindings.ts:177] |
 | alternate screen | `tui.altScreen.lineDown` | _(unbound)_ | Scroll viewport down one line | 默认未绑定的单行下滚。 | [E: packages/tui/src/keybindings.ts:180] [E: packages/tui/src/keybindings.ts:181] |
-| alternate screen | `tui.altScreen.previousPrompt` | `ctrl+shift+up` | Jump to previous semantic prompt | 跳到前一个 OSC 133 标记的 message boundary。 | [E: packages/tui/src/keybindings.ts:184] [E: packages/tui/src/keybindings.ts:185] |
-| alternate screen | `tui.altScreen.nextPrompt` | `ctrl+shift+down` | Jump to next semantic prompt | 跳到后一个 OSC 133 标记的 message boundary。 | [E: packages/tui/src/keybindings.ts:188] [E: packages/tui/src/keybindings.ts:189] |
+| alternate screen | `tui.altScreen.previousPrompt` | `ctrl+shift+up`, `ctrl+up` | Jump to previous semantic prompt | 跳到前一个 OSC 133 标记的 message boundary。 | [E: packages/tui/src/keybindings.ts:184] [E: packages/tui/src/keybindings.ts:185] |
+| alternate screen | `tui.altScreen.nextPrompt` | `ctrl+shift+down`, `ctrl+down` | Jump to next semantic prompt | 跳到后一个 OSC 133 标记的 message boundary。 | [E: packages/tui/src/keybindings.ts:188] [E: packages/tui/src/keybindings.ts:189] |
 | alternate screen search | `tui.altScreen.search` | `ctrl+shift+f` | Search the primary scroll view | 打开 fullscreen transcript 搜索。 | [E: packages/tui/src/keybindings.ts:192] [E: packages/tui/src/keybindings.ts:193] |
 | alternate screen search | `tui.altScreen.searchNext` | `enter`, `ctrl+g` | Select the next search match | 搜索框 focused 时下一处。 | [E: packages/tui/src/keybindings.ts:196] [E: packages/tui/src/keybindings.ts:197] |
 | alternate screen search | `tui.altScreen.searchPrevious` | `shift+enter`, `ctrl+shift+g` | Select the previous search match | 搜索框 focused 时上一处。 | [E: packages/tui/src/keybindings.ts:200] [E: packages/tui/src/keybindings.ts:201] |

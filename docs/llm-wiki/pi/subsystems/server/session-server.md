@@ -32,7 +32,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `PiServer` 是 `@earendil-works/pi-server` 的 transport-composable remote session core：listener 完成 transport-specific authentication/authorization 后提供 ordered byte connections，server core 负责 protocol version handshake、request dispatch、snapshot publication 与 lifecycle cleanup。[E: packages/server/src/server.ts:39][E: packages/server/src/server.ts:54][E: packages/server/src/listener.ts:4][E: packages/server/src/listener.ts:8][E: packages/server/README.md:36]

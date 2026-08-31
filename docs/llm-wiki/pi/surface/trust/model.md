@@ -18,7 +18,7 @@ related:
   - surface.misc.security
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > 项目信任模型是 pi-coding-agent 在启动或重载资源时使用的输入加载门禁: 它决定当前 cwd 的 project-local settings、resources、packages 和 extensions 是否能进入本次 runtime,但它不是 sandbox,也不限制会话开始后模型可以请求工具做什么。
@@ -36,7 +36,7 @@ updated: 086c32e745
 
 pi 只在当前 cwd 有需要 gate 的 project-local resources 时解析 project trust;没有这些资源时 `resolveProjectTrusted()` 直接返回 trusted [E: packages/coding-agent/src/core/project-trust.ts:50] [E: packages/coding-agent/src/core/project-trust.ts:51]。用户文档列出的触发项是 `.pi/settings.json`,`.pi/extensions`、`.pi/skills`、`.pi/prompts`、`.pi/themes`,`.pi/SYSTEM.md`、`.pi/APPEND_SYSTEM.md`,以及当前目录或 ancestor 目录里的 project `.agents/skills`;空的 `.pi` 目录不算触发项 [E: packages/coding-agent/docs/security.md:9] [E: packages/coding-agent/docs/security.md:11] [E: packages/coding-agent/docs/security.md:16]。
 
-实现上,`.pi` 触发项来自 `TRUST_REQUIRING_PROJECT_CONFIG_RESOURCES`,包含 `settings.json`、`extensions`、`skills`、`prompts`、`themes`、`SYSTEM.md` 和 `APPEND_SYSTEM.md` [E: packages/coding-agent/src/core/trust-manager.ts:29] [E: packages/coding-agent/src/core/trust-manager.ts:36]。`.pi` 只检查当前 cwd 下的 `.pi`,而 `.agents/skills` 会沿 ancestor 上溯,并排除 user/global `~/.agents/skills` [E: packages/coding-agent/src/core/trust-manager.ts:189] [E: packages/coding-agent/src/core/trust-manager.ts:194] [E: packages/coding-agent/src/core/trust-manager.ts:196]。
+实现上,`.pi` 触发项来自 `TRUST_REQUIRING_PROJECT_CONFIG_RESOURCES`,包含 `settings.json`、`extensions`、`skills`、`prompts`、`themes`、`SYSTEM.md` 和 `APPEND_SYSTEM.md` [E: packages/coding-agent/src/core/trust-manager.ts:30] [E: packages/coding-agent/src/core/trust-manager.ts:37]。`.pi` 只检查当前 cwd 下的 `.pi`,而 `.agents/skills` 会沿 ancestor 上溯,并排除 user/global `~/.agents/skills` [E: packages/coding-agent/src/core/trust-manager.ts:190] [E: packages/coding-agent/src/core/trust-manager.ts:195] [E: packages/coding-agent/src/core/trust-manager.ts:197]。
 
 ## 决策顺序
 
@@ -54,9 +54,9 @@ extension 没给 decision 时,`resolveProjectTrusted()` 查询 `ProjectTrustStor
 
 ## 保存的决策与选项
 
-`ProjectTrustStore` 把 trust store 路径固定为传入 agent dir 下的 `trust.json` [E: packages/coding-agent/src/core/trust-manager.ts:211] [E: packages/coding-agent/src/core/trust-manager.ts:212]。store 查询从 normalized cwd 开始逐级向 parent directory 查找最近的 boolean decision;因此 parent folder decision 会被 child cwd 继承,child cwd 也可以保存自己的 decision 来覆盖 parent decision [E: packages/coding-agent/src/core/trust-manager.ts:43] [E: packages/coding-agent/src/core/trust-manager.ts:48] [E: packages/coding-agent/src/core/trust-manager.ts:52] [I]。
+`ProjectTrustStore` 把 trust store 路径固定为传入 agent dir 下的 `trust.json` [E: packages/coding-agent/src/core/trust-manager.ts:212] [E: packages/coding-agent/src/core/trust-manager.ts:213]。store 查询从 normalized cwd 开始逐级向 parent directory 查找最近的 boolean decision;因此 parent folder decision 会被 child cwd 继承,child cwd 也可以保存自己的 decision 来覆盖 parent decision [E: packages/coding-agent/src/core/trust-manager.ts:44] [E: packages/coding-agent/src/core/trust-manager.ts:49] [E: packages/coding-agent/src/core/trust-manager.ts:53] [I]。
 
-startup prompt 的选项来自 `getProjectTrustOptions(cwd, { includeSessionOnly: true })`,所以除持久化的 Trust / Trust parent folder / Do not trust 外,还会有本 session-only 的 trust 或 do-not-trust 选项 [E: packages/coding-agent/src/core/project-trust.ts:32] [E: packages/coding-agent/src/core/project-trust.ts:35] [E: packages/coding-agent/src/core/trust-manager.ts:82] [E: packages/coding-agent/src/core/trust-manager.ts:92]。session-only 选项的 `updates: []`,而保存 helper 只在 `updates.length > 0` 时写 store,所以它只影响当前 `resolveProjectTrusted()` 返回值 [E: packages/coding-agent/src/core/project-trust.ts:40] [E: packages/coding-agent/src/core/project-trust.ts:42] [I]。
+startup prompt 的选项来自 `getProjectTrustOptions(cwd, { includeSessionOnly: true })`,所以除持久化的 Trust / Trust parent folder / Do not trust 外,还会有本 session-only 的 trust 或 do-not-trust 选项 [E: packages/coding-agent/src/core/project-trust.ts:32] [E: packages/coding-agent/src/core/project-trust.ts:35] [E: packages/coding-agent/src/core/trust-manager.ts:83] [E: packages/coding-agent/src/core/trust-manager.ts:93]。session-only 选项的 `updates: []`,而保存 helper 只在 `updates.length > 0` 时写 store,所以它只影响当前 `resolveProjectTrusted()` 返回值 [E: packages/coding-agent/src/core/project-trust.ts:40] [E: packages/coding-agent/src/core/project-trust.ts:42] [I]。
 
 ## 信任后的加载范围
 

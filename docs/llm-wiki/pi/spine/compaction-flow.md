@@ -17,9 +17,10 @@ related:
   - subsys.agent-core.branch-summary
   - ref.agent.compaction-config
   - subsys.coding-agent.usage-accounting
+  - subsys.coding-agent.agent-session
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `spine.compaction-flow` 说明 `pi-agent-core` 的 context compaction 如何从 token threshold 判定,准备 cut point,生成 checkpoint summary,以及 branch navigation 时如何生成 abandoned branch summary。
@@ -124,11 +125,14 @@ branch summary 面向 "离开某个 branch 后未来返回" 的上下文恢复,�
 
 这两个 source 文件提供 compaction 和 branch-summary 的 harness 函数:`prepareCompaction` 接收 `SessionTreeEntry[]` 与 settings 并返回 `Result<CompactionPreparation | undefined, CompactionError>`,`compact` 接收 preparation、`Models`、`Model`、optional instructions/signal/thinking level 并返回 `Result<CompactionResult, CompactionError>`,`generateBranchSummary` 接收 `SessionTreeEntry[]` 与 options 并返回 `Result<BranchSummaryResult, BranchSummaryError>`。[E: packages/agent/src/harness/compaction/compaction.ts:616] [E: packages/agent/src/harness/compaction/compaction.ts:641] [E: packages/agent/src/harness/compaction/compaction.ts:618] [E: packages/agent/src/harness/compaction/compaction.ts:619] [E: packages/agent/src/harness/compaction/compaction.ts:707] [E: packages/agent/src/harness/compaction/compaction.ts:708] [E: packages/agent/src/harness/compaction/compaction.ts:709] [E: packages/agent/src/harness/compaction/compaction.ts:736] [E: packages/agent/src/harness/compaction/compaction.ts:711] [E: packages/agent/src/harness/compaction/compaction.ts:712] [E: packages/agent/src/harness/compaction/compaction.ts:713] [E: packages/agent/src/harness/compaction/branch-summarization.ts:208] [E: packages/agent/src/harness/compaction/branch-summarization.ts:203] [E: packages/agent/src/harness/compaction/branch-summarization.ts:210] [E: packages/agent/src/harness/compaction/branch-summarization.ts:211] `pi-coding-agent` 产品层应负责何时调用 `shouldCompact`、如何把 `CompactionResult` 写成 `compaction` entry、以及 branch navigation 何时持久化 `BranchSummaryResult`;这些持久化调用不在本节点两个 source 文件内出现。[I]
 
+产品层时序（不改变本节点 harness `compact()` API）：coding-agent `AgentSession` 把 threshold auto-compaction 挂在 `prepareNextTurnWithContext` 上，因此同一 run 内 tool 执行与下一轮模型请求之间可以插入 compaction；截断 summary 拒绝落盘与 zero-usage estimate 也在产品层 `packages/coding-agent/src/core/compaction/`，不在 harness `compaction.ts`。[I]
+
 ## 指向 T1/T2 深挖
 
 - `subsys.agent-core.compaction` 应展开 `CompactionSettings`、`CompactionPreparation`、`CompactionResult`、cut point 选择和 split turn edge cases。
 - `subsys.agent-core.branch-summary` 应展开 branch collection、common ancestor、branch summary entry 的持久化路径。
 - `ref.agent.compaction-config` 应枚举 `enabled`、`reserveTokens`、`keepRecentTokens`、custom instructions、thinking level 等配置和默认值。
+- `subsys.coding-agent.agent-session` 应展开 mid-run `prepareNextTurn` compaction、truncated-summary 拒绝落盘、`session_compact_failed`。
 
 ## Sources
 
@@ -141,3 +145,4 @@ branch summary 面向 "离开某个 branch 后未来返回" 的上下文恢复,�
 - subsys.agent-core.branch-summary
 - ref.agent.compaction-config
 - [subsys.coding-agent.usage-accounting](../subsystems/coding-agent/usage-accounting.md)
+- [subsys.coding-agent.agent-session](../subsystems/coding-agent/agent-session.md)

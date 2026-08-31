@@ -20,7 +20,7 @@
 - **★ 分层栈 = 全 wiki 的组织主线**:pi 把"可复用运行时"与"产品"分层:
   - **`pi-ai`** = 多 provider 统一 LLM API(40 built-in runtime provider，其中 39 个有静态模型结构目录；10 wire 协议；auth/oauth)。完整模型值在 generated/gitignored JSON。
   - **`pi-agent-core`** = **可复用** agent 运行时 harness:agent-loop(turn → provider stream → 工具调用 → state)、v4 lane-based `Session`/`SessionRepo`、压缩/分支总结、skills、system-prompt、harness events。任何 app 都能拿它建 agent。
-  - **`pi-coding-agent`** = **产品**:7 个内置工具(bash/read/edit/write/grep/find/ls)、**扩展系统(自扩展招牌)**、skills、slash 命令、三种模式(interactive TUI / RPC / print)、配置/信任/会话管理。
+  - **`pi-coding-agent`** = **产品**:8 个内置工具(bash/read/edit/write/grep/find/ls + 可选 Windows `powershell`)、**扩展系统(自扩展招牌)**、skills、slash 命令、三种模式(interactive TUI / RPC / print)、配置/信任/会话管理。
   - **`pi-tui`** = 独立可复用的差分渲染终端 UI 库(渲染循环、编辑器、键盘协议、LaTeX、fullscreen search)。
   - **`pi-protocol`** = 远程 session 的 TypeBox wire schema + CBOR/framing；**`pi-client`** = transport-neutral client 与 Unix transport。
   - **`pi-server`** = **实验性** composable remote-session server。legacy 多实例 JSONL IPC/supervisor/Radius 已删除。
@@ -63,12 +63,12 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **197 个节点全部 verified 于 pi `086c32e745`**。本轮从 `305c014dcc` 前进 317 commits（v0.84.0–v0.84.2 + Copilot login 修复）：harness v4 session API、storage 改名为 session-backends、抽出 `pi-telemetry`、删除 legacy server、新增 Qwen Token Plan Individual / TUI LaTeX / fullscreen search。审计见 `_UPDATE-SCOPE.md`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **198 个节点全部 verified 于 pi `853a80d26c`**。本轮从 `086c32e745` 覆盖上游 **v0.84.3 / v0.84.4**(可选 Windows `powershell` 工具、managed update 的 stage/verify/atomic activate、extension UI prompt / compaction 失败事件、bundled Node CLI)。审计见 `_UPDATE-SCOPE.md`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱(9)+ worked traces(3) | 12 | ✅ 完成 |
-| T1 surface | tools、CLI、modes、config、providers、extensions 与其它用户可见面 | 34 | ✅ 完成 |
+| T1 surface | tools、CLI、modes、config、providers、extensions 与其它用户可见面 | 35 | ✅ 完成 |
 | T2 subsystems | ai(28)+ agent-core(22)+ protocol(2)+ client(3)+ coding-agent(33)+ tui(22)+ server(4)+ session-backends(1)+ telemetry(1)+ evals(2) | 118 | ✅ 完成 |
 | T3 reference | ai(6)+ agent-core(8)+ coding-agent(13)+ tui(3)+ cross(3) | 33 | ✅ 完成 |
 

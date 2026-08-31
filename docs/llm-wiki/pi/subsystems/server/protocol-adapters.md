@@ -21,7 +21,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `packages/server/src/protocol.ts` 是 `pi-ai` domain objects 与 `pi-protocol` wire DTO 的显式 anti-corruption layer：它验证 identifiers/timestamps/JSON inputs，lossy-sanitize diagnostics，并把 model/message lifecycle 映射成 protocol schemas。[E: packages/server/src/protocol.ts:1][E: packages/server/src/protocol.ts:14][E: packages/server/src/protocol.ts:130][E: packages/server/src/protocol.ts:135][E: packages/server/src/protocol.ts:142][E: packages/server/src/protocol.ts:166]

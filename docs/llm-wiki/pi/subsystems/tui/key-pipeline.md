@@ -9,7 +9,7 @@ symbols: [ProcessTerminal, handleTerminalInput, forwardInputSequence]
 related: [subsys.tui.key-parsing, subsys.tui.stdin-buffer]
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > 键盘事件管道把真实终端的 raw stdin 字节流整理成一个个 input sequence，并交给 `TuiBase.handleTerminalInput()` 做全局过滤、监听器改写、焦点组件分发。
@@ -69,7 +69,7 @@ bracketed paste 在 terminal 层被拆成 `"paste"` 事件，但又重新包回 
 - `forwardInputSequence()` 不是 key parser；它调用 Apple Terminal Shift+Enter normalization，然后把结果交给 TUI [E: packages/tui/src/terminal.ts:336][E: packages/tui/src/terminal.ts:312][E: packages/tui/src/terminal.ts:45][E: packages/tui/src/terminal.ts:50][E: packages/tui/src/terminal.ts:345]。
 - 协议协商响应是输入流的一部分，但被 `handleKeyboardProtocolNegotiationSequence()` 消费后不会传给 focused component [E: packages/tui/src/terminal.ts:214][E: packages/tui/src/terminal.ts:215]。
 - `TuiBase.handleTerminalInput()` 默认丢弃 key release event，除非 focused component 声明 `wantsKeyRelease` [E: packages/tui/src/tui.ts:894][E: packages/tui/src/tui.ts:895]。
-- `drainInput()` 会关闭 Kitty keyboard protocol / modifyOtherKeys 并暂时清空 `inputHandler`；`stop()` 会关闭协议、销毁 `StdinBuffer`、移除 stdin handler 并 pause stdin，避免退出后 late key release 或 buffered input 泄漏到父 shell [E: packages/tui/src/terminal.ts:396][E: packages/tui/src/terminal.ts:402][E: packages/tui/src/terminal.ts:407][E: packages/tui/src/terminal.ts:409][E: packages/tui/src/terminal.ts:410][E: packages/tui/src/terminal.ts:434][E: packages/tui/src/terminal.ts:447][E: packages/tui/src/terminal.ts:452][E: packages/tui/src/terminal.ts:455][E: packages/tui/src/terminal.ts:461][E: packages/tui/src/terminal.ts:474]。
+- `drainInput()` 会关闭 Kitty keyboard protocol / modifyOtherKeys 并暂时清空 `inputHandler`；`stop()` 会关闭协议、销毁 `StdinBuffer`、移除 stdin handler 并 pause stdin，避免退出后 late key release 或 buffered input 泄漏到父 shell [E: packages/tui/src/terminal.ts:390][E: packages/tui/src/terminal.ts:396][E: packages/tui/src/terminal.ts:401][E: packages/tui/src/terminal.ts:403][E: packages/tui/src/terminal.ts:404][E: packages/tui/src/terminal.ts:428][E: packages/tui/src/terminal.ts:441][E: packages/tui/src/terminal.ts:446][E: packages/tui/src/terminal.ts:449][E: packages/tui/src/terminal.ts:455][E: packages/tui/src/terminal.ts:468]。
 
 ## 跨包边界
 

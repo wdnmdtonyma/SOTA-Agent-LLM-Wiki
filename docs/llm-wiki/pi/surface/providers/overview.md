@@ -8,6 +8,7 @@ source:
   - packages/ai/src/providers/all.ts
   - packages/ai/src/providers/baseten.ts
   - packages/ai/src/providers/qwen-token-plan-individual.ts
+  - packages/ai/src/providers/xai.ts
   - packages/ai/src/models.ts
   - packages/ai/src/providers/radius.ts
   - packages/coding-agent/docs/providers.md
@@ -24,7 +25,7 @@ related:
   - ref.ai.provider-catalog
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `surface.providers.overview` 是用户可见的 provider 心智模型：选择 provider/model 后，Pi 从 runtime `Models` collection 检查配置、筛选可用模型、解析 credential，再把请求交给 provider-owned wire implementation。
@@ -50,6 +51,8 @@ generated `MODELS` 是另一套 39-bucket static catalog：`BuiltinProvider` 取
 Baseten 使用 `BASETEN_API_KEY`、固定 `https://inference.baseten.co/v1` 和 `openai-completions` adapter；默认模型解析表选择 `zai-org/GLM-5.2`。[E: packages/ai/src/providers/baseten.ts:6] [E: packages/ai/src/providers/baseten.ts:10] [E: packages/ai/src/providers/baseten.ts:11] [E: packages/ai/src/providers/baseten.ts:13] [E: packages/coding-agent/src/core/model-resolver.ts:48]
 
 Qwen Token Plan Individual 是独立 runtime id `qwen-token-plan-individual`：与国际 Token Plan 共用新加坡 compatible-mode base URL 和 `QWEN_TOKEN_PLAN_API_KEY`，但使用更窄的 `QWEN_TOKEN_PLAN_INDIVIDUAL_MODELS`；coding-agent 默认模型是 `qwen3.8-max`。[E: packages/ai/src/providers/qwen-token-plan-individual.ts:8] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:10] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:11] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:12] [E: packages/coding-agent/src/core/model-resolver.ts:56]
+
+xAI 现在只暴露 `openai-responses`：`xaiProvider()` 的类型是 `Provider<"openai-responses">`，`api` 为 `openAIResponsesApi()`；coding-agent 默认模型是 `grok-4.6`。[E: packages/ai/src/providers/xai.ts:7] [E: packages/ai/src/providers/xai.ts:22] [E: packages/coding-agent/src/core/model-resolver.ts:35]
 
 图片生成 provider 另走 `builtinImagesProviders()`/`builtinImagesModels()`，当前只注册 OpenRouter Images，不进入 chat/text `Models` [E: packages/ai/src/providers/all.ts:144] [E: packages/ai/src/providers/all.ts:145] [E: packages/ai/src/providers/all.ts:149] [E: packages/ai/src/providers/all.ts:154]。
 
@@ -89,6 +92,7 @@ dynamic overlay 会从 `ModelsStore` 恢复，联网 fetch 成功后再替换并
 - packages/ai/src/providers/all.ts
 - packages/ai/src/providers/baseten.ts
 - packages/ai/src/providers/qwen-token-plan-individual.ts
+- packages/ai/src/providers/xai.ts
 - packages/ai/src/models.ts
 - packages/ai/src/providers/radius.ts
 - packages/coding-agent/docs/providers.md

@@ -27,7 +27,7 @@ related:
   - subsys.agent-core.message-model
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `ref.agent.message-types` 是 `AgentMessage` 相关类型与 variant 的目录:覆盖 agent-core 的 `AgentMessage` union、可扩展 `CustomAgentMessages` 接口、harness 默认注入的 4 个 custom message role,以及这些 role 进入 LLM `Message[]` 的默认转换边界。
@@ -42,18 +42,18 @@ updated: 086c32e745
 
 ## 覆盖摘要
 
-本目录覆盖 6 个 agent-core/harness exported message 类型: `CustomAgentMessages`、`AgentMessage`、`BashExecutionMessage`、`CustomMessage<T>`、`BranchSummaryMessage`、`CompactionSummaryMessage`。[E: packages/agent/src/types.ts:316][E: packages/agent/src/types.ts:325][E: packages/agent/src/harness/messages.ts:19][E: packages/agent/src/harness/messages.ts:31][E: packages/agent/src/harness/messages.ts:40][E: packages/agent/src/harness/messages.ts:47] 同时覆盖 `harness/messages.ts` 导出的 9 个 message helper/constant:4 个 summary boundary constants、`bashExecutionToText`、3 个 `create*Message` constructor、`convertToLlm`。[E: packages/agent/src/harness/messages.ts:4][E: packages/agent/src/harness/messages.ts:9][E: packages/agent/src/harness/messages.ts:12][E: packages/agent/src/harness/messages.ts:17][E: packages/agent/src/harness/messages.ts:63][E: packages/agent/src/harness/messages.ts:81][E: packages/agent/src/harness/messages.ts:94][E: packages/agent/src/harness/messages.ts:107][E: packages/agent/src/harness/messages.ts:124]
+本目录覆盖 6 个 agent-core/harness exported message 类型: `CustomAgentMessages`、`AgentMessage`、`BashExecutionMessage`、`CustomMessage<T>`、`BranchSummaryMessage`、`CompactionSummaryMessage`。[E: packages/agent/src/types.ts:317][E: packages/agent/src/types.ts:326][E: packages/agent/src/harness/messages.ts:19][E: packages/agent/src/harness/messages.ts:31][E: packages/agent/src/harness/messages.ts:40][E: packages/agent/src/harness/messages.ts:47] 同时覆盖 `harness/messages.ts` 导出的 9 个 message helper/constant:4 个 summary boundary constants、`bashExecutionToText`、3 个 `create*Message` constructor、`convertToLlm`。[E: packages/agent/src/harness/messages.ts:4][E: packages/agent/src/harness/messages.ts:9][E: packages/agent/src/harness/messages.ts:12][E: packages/agent/src/harness/messages.ts:17][E: packages/agent/src/harness/messages.ts:63][E: packages/agent/src/harness/messages.ts:81][E: packages/agent/src/harness/messages.ts:94][E: packages/agent/src/harness/messages.ts:107][E: packages/agent/src/harness/messages.ts:124]
 
-`AgentMessage` 在本 source 范围内的 custom variant 由 harness module augmentation 注入 4 个 role:`bashExecution`、`custom`、`branchSummary`、`compactionSummary`;default `convertToLlm` 另显式 pass-through `Message` 侧的 `user`、`assistant`、`toolResult` 三个 role。[E: packages/agent/src/types.ts:8][E: packages/agent/src/types.ts:325][E: packages/agent/src/harness/messages.ts:54][E: packages/agent/src/harness/messages.ts:56][E: packages/agent/src/harness/messages.ts:57][E: packages/agent/src/harness/messages.ts:58][E: packages/agent/src/harness/messages.ts:59][E: packages/agent/src/harness/messages.ts:159][E: packages/agent/src/harness/messages.ts:160][E: packages/agent/src/harness/messages.ts:161]
+`AgentMessage` 在本 source 范围内的 custom variant 由 harness module augmentation 注入 4 个 role:`bashExecution`、`custom`、`branchSummary`、`compactionSummary`;default `convertToLlm` 另显式 pass-through `Message` 侧的 `user`、`assistant`、`toolResult` 三个 role。[E: packages/agent/src/types.ts:8][E: packages/agent/src/types.ts:326][E: packages/agent/src/harness/messages.ts:54][E: packages/agent/src/harness/messages.ts:56][E: packages/agent/src/harness/messages.ts:57][E: packages/agent/src/harness/messages.ts:58][E: packages/agent/src/harness/messages.ts:59][E: packages/agent/src/harness/messages.ts:159][E: packages/agent/src/harness/messages.ts:160][E: packages/agent/src/harness/messages.ts:161]
 
 ## AgentMessage Union
 
 | 类型 / variant | 字段 / 签名 | 默认 / 可选 | 含义 | 为什么存在 | 源 path |
 | --- | --- | --- | --- | --- | --- |
-| `CustomAgentMessages` | empty interface | 默认无字段;apps 可通过 declaration merging 添加 key | custom app message 的扩展槽;接口本身声明为 `CustomAgentMessages`。[E: packages/agent/src/types.ts:316] | `AgentMessage` 用 `CustomAgentMessages[keyof CustomAgentMessages]` 读取扩展值,让 app 在不改 core union 的情况下加入自定义消息。[E: packages/agent/src/types.ts:325] | `packages/agent/src/types.ts` |
-| `AgentMessage` | `Message \| CustomAgentMessages[keyof CustomAgentMessages]` | 标准侧来自 imported `Message`;custom 侧来自 declaration merging | agent-core transcript 的顶层 message union。[E: packages/agent/src/types.ts:8][E: packages/agent/src/types.ts:325] | 同一个 transcript 既能保留 provider-visible LLM messages,又能携带 UI/harness-only 或需转换的 custom messages。[E: packages/agent/src/types.ts:325] | `packages/agent/src/types.ts` |
+| `CustomAgentMessages` | empty interface | 默认无字段;apps 可通过 declaration merging 添加 key | custom app message 的扩展槽;接口本身声明为 `CustomAgentMessages`。[E: packages/agent/src/types.ts:317] | `AgentMessage` 用 `CustomAgentMessages[keyof CustomAgentMessages]` 读取扩展值,让 app 在不改 core union 的情况下加入自定义消息。[E: packages/agent/src/types.ts:326] | `packages/agent/src/types.ts` |
+| `AgentMessage` | `Message \| CustomAgentMessages[keyof CustomAgentMessages]` | 标准侧来自 imported `Message`;custom 侧来自 declaration merging | agent-core transcript 的顶层 message union。[E: packages/agent/src/types.ts:8][E: packages/agent/src/types.ts:326] | 同一个 transcript 既能保留 provider-visible LLM messages,又能携带 UI/harness-only 或需转换的 custom messages。[E: packages/agent/src/types.ts:326] | `packages/agent/src/types.ts` |
 | standard `user` | `Message` union 的 `role: "user"` 分支 | 本节点不展开字段;字段级定义归 `ref.ai.core-types` | default converter 对 `user` 直接 pass through。[E: packages/agent/src/harness/messages.ts:159][E: packages/agent/src/harness/messages.ts:162] | `convertToLlm` 的返回类型是 LLM-compatible `Message[]`,该分支直接返回 `m`。[E: packages/agent/src/types.ts:178][E: packages/agent/src/harness/messages.ts:162] | `packages/agent/src/types.ts`, `packages/agent/src/harness/messages.ts` |
-| standard `assistant` | `Message` union 的 `role: "assistant"` 分支 | 本节点不展开字段;字段级定义归 `ref.ai.core-types` | default converter 对 `assistant` 直接 pass through。[E: packages/agent/src/harness/messages.ts:160][E: packages/agent/src/harness/messages.ts:162] | `convertToLlm` 的返回类型是 `Message[]`;streaming update 的增量事件另由 `AssistantMessageEvent` 字段承载,不是新的 `AgentMessage.role`。[E: packages/agent/src/types.ts:3][E: packages/agent/src/types.ts:178][E: packages/agent/src/types.ts:438] | `packages/agent/src/types.ts`, `packages/agent/src/harness/messages.ts` |
+| standard `assistant` | `Message` union 的 `role: "assistant"` 分支 | 本节点不展开字段;字段级定义归 `ref.ai.core-types` | default converter 对 `assistant` 直接 pass through。[E: packages/agent/src/harness/messages.ts:160][E: packages/agent/src/harness/messages.ts:162] | `convertToLlm` 的返回类型是 `Message[]`;streaming update 的增量事件另由 `AssistantMessageEvent` 字段承载,不是新的 `AgentMessage.role`。[E: packages/agent/src/types.ts:3][E: packages/agent/src/types.ts:178][E: packages/agent/src/types.ts:439] | `packages/agent/src/types.ts`, `packages/agent/src/harness/messages.ts` |
 | standard `toolResult` | `Message` union 的 `role: "toolResult"` 分支 | 本节点不展开字段;字段级定义归 `ref.ai.core-types` | default converter 对 `toolResult` 直接 pass through。[E: packages/agent/src/harness/messages.ts:161][E: packages/agent/src/harness/messages.ts:162] | `convertToLlm` 的返回类型是 `Message[]`;turn context 也把 tool results typed as `ToolResultMessage[]`。[E: packages/agent/src/types.ts:13][E: packages/agent/src/types.ts:130][E: packages/agent/src/types.ts:178] | `packages/agent/src/types.ts`, `packages/agent/src/harness/messages.ts` |
 
 ## Harness Custom Variants
@@ -69,7 +69,7 @@ updated: 086c32e745
 
 `harness/messages.ts` 通过 `declare module "../types.ts"` 扩展 `CustomAgentMessages`,逐 key 注入 `bashExecution`、`custom`、`branchSummary`、`compactionSummary` 四个 custom message type。[E: packages/agent/src/harness/messages.ts:54][E: packages/agent/src/harness/messages.ts:55][E: packages/agent/src/harness/messages.ts:56][E: packages/agent/src/harness/messages.ts:57][E: packages/agent/src/harness/messages.ts:58][E: packages/agent/src/harness/messages.ts:59]
 
-因为 `AgentMessage` 读取的是 `CustomAgentMessages[keyof CustomAgentMessages]`,module augmentation 会把这四个 harness interfaces 纳入 `AgentMessage` union。[E: packages/agent/src/types.ts:316][E: packages/agent/src/types.ts:325][E: packages/agent/src/harness/messages.ts:54][I]
+因为 `AgentMessage` 读取的是 `CustomAgentMessages[keyof CustomAgentMessages]`,module augmentation 会把这四个 harness interfaces 纳入 `AgentMessage` union。[E: packages/agent/src/types.ts:317][E: packages/agent/src/types.ts:326][E: packages/agent/src/harness/messages.ts:54][I]
 
 ## Constructors And Conversion Helpers
 
@@ -87,17 +87,17 @@ updated: 086c32e745
 
 `AgentLoopConfig.convertToLlm` 是 core config 里的正式转换边界:签名把 `AgentMessage[]` 映射为 `Message[] | Promise<Message[]>`;default harness converter 通过 `Message | undefined` map + filter 实现 pass-through、降级和过滤。[E: packages/agent/src/types.ts:178][E: packages/agent/src/harness/messages.ts:124][E: packages/agent/src/harness/messages.ts:126][E: packages/agent/src/harness/messages.ts:163][E: packages/agent/src/harness/messages.ts:164][E: packages/agent/src/harness/messages.ts:167]
 
-`AgentLoopConfig.transformContext`、`getSteeringMessages`、`getFollowUpMessages` 都以 `AgentMessage[]` 为输入或输出,所以 custom messages 可以先在 agent-core transcript 层参与上下文管理,再经 `convertToLlm` 降级或过滤。[E: packages/agent/src/types.ts:200][E: packages/agent/src/types.ts:244][E: packages/agent/src/types.ts:257][I]
+`AgentLoopConfig.transformContext`、`getSteeringMessages`、`getFollowUpMessages` 都以 `AgentMessage[]` 为输入或输出,所以 custom messages 可以先在 agent-core transcript 层参与上下文管理,再经 `convertToLlm` 降级或过滤。[E: packages/agent/src/types.ts:200][E: packages/agent/src/types.ts:245][E: packages/agent/src/types.ts:258][I]
 
-`AgentState.messages` 和 `AgentContext.messages` 都保存 `AgentMessage[]`;`AgentState.streamingMessage`、`AgentEvent.agent_end.messages`、`AgentEvent.turn_end.message`、`message_start/message_update/message_end.message` 也使用 `AgentMessage`,因此消息 union 同时覆盖持久 transcript、当前 streaming message 和 UI event payload。[E: packages/agent/src/types.ts:344][E: packages/agent/src/types.ts:345][E: packages/agent/src/types.ts:353][E: packages/agent/src/types.ts:416][E: packages/agent/src/types.ts:431][E: packages/agent/src/types.ts:434][E: packages/agent/src/types.ts:436][E: packages/agent/src/types.ts:438][E: packages/agent/src/types.ts:439]
+`AgentState.messages` 和 `AgentContext.messages` 都保存 `AgentMessage[]`;`AgentState.streamingMessage`、`AgentEvent.agent_end.messages`、`AgentEvent.turn_end.message`、`message_start/message_update/message_end.message` 也使用 `AgentMessage`,因此消息 union 同时覆盖持久 transcript、当前 streaming message 和 UI event payload。[E: packages/agent/src/types.ts:345][E: packages/agent/src/types.ts:346][E: packages/agent/src/types.ts:354][E: packages/agent/src/types.ts:417][E: packages/agent/src/types.ts:432][E: packages/agent/src/types.ts:435][E: packages/agent/src/types.ts:437][E: packages/agent/src/types.ts:439][E: packages/agent/src/types.ts:440]
 
 ## 边界与 Gotcha
 
-在这两个 source 中没有独立 `system` message case;agent-core 把 system prompt 放在 `AgentState.systemPrompt` 和 `AgentContext.systemPrompt` 字段,default harness converter 只处理 message array。[E: packages/agent/src/types.ts:335][E: packages/agent/src/types.ts:414][E: packages/agent/src/harness/messages.ts:124]
+在这两个 source 中没有独立 `system` message case;agent-core 把 system prompt 放在 `AgentState.systemPrompt` 和 `AgentContext.systemPrompt` 字段,default harness converter 只处理 message array。[E: packages/agent/src/types.ts:336][E: packages/agent/src/types.ts:415][E: packages/agent/src/harness/messages.ts:124]
 
 Default `convertToLlm` 的 `default` 分支返回 `undefined`,所以扩展方如果只通过 declaration merging 添加新的 custom role,但没有同步提供 converter 逻辑,该 role 会被过滤出 LLM context。[E: packages/agent/src/harness/messages.ts:163][E: packages/agent/src/harness/messages.ts:164][I]
 
-标准 `user`、`assistant`、`toolResult` 的字段级定义来自 `@earendil-works/pi-ai` 的 `Message` union;本节点只覆盖 agent-core source 中可核到的 union 引用、pass-through 行为和 harness custom variant。[E: packages/agent/src/types.ts:8][E: packages/agent/src/types.ts:325][E: packages/agent/src/harness/messages.ts:159][E: packages/agent/src/harness/messages.ts:160][E: packages/agent/src/harness/messages.ts:161][I]
+标准 `user`、`assistant`、`toolResult` 的字段级定义来自 `@earendil-works/pi-ai` 的 `Message` union;本节点只覆盖 agent-core source 中可核到的 union 引用、pass-through 行为和 harness custom variant。[E: packages/agent/src/types.ts:8][E: packages/agent/src/types.ts:326][E: packages/agent/src/harness/messages.ts:159][E: packages/agent/src/harness/messages.ts:160][E: packages/agent/src/harness/messages.ts:161][I]
 
 ## Sources
 

@@ -41,7 +41,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `spine.session-state-model` 串起 `pi-agent-core` harness v4 的 `SessionRepo` → `SessionStorage` → `Session` → lane-based `Entry` / `LaneRecord` → `buildSessionContext` 流程，并明确它与 `pi-coding-agent` 产品级 `SessionManager`（`CURRENT_SESSION_VERSION = 3`）是两套相邻但独立的状态系统。
@@ -99,9 +99,9 @@ state entry（`thinking_level_change` / `model_change` / `active_tools_change`�
 
 ### 两套 session 系统必须分层
 
-`pi-agent-core` 的 `Session` 是 async、`SessionRepo`-backed 的可复用 harness API，JSONL 格式是 v4 header + mutation log。`pi-coding-agent` 的 `SessionManager` 自己维护 `fileEntries`、`byId`、labels 与 `leafId`，`CURRENT_SESSION_VERSION = 3`，并同步实现 `getBranch()` / `buildSessionContext()`。[E: packages/coding-agent/src/core/session-manager.ts:30] [E: packages/coding-agent/src/core/session-manager.ts:855] [E: packages/coding-agent/src/core/session-manager.ts:862] [E: packages/coding-agent/src/core/session-manager.ts:866] [E: packages/coding-agent/src/core/session-manager.ts:1260] [E: packages/coding-agent/src/core/session-manager.ts:1284] 两层概念相似，但类型、持久化入口与恢复逻辑不是同一个实现。[I]
+`pi-agent-core` 的 `Session` 是 async、`SessionRepo`-backed 的可复用 harness API，JSONL 格式是 v4 header + mutation log。`pi-coding-agent` 的 `SessionManager` 自己维护 `fileEntries`、`byId`、labels 与 `leafId`，`CURRENT_SESSION_VERSION = 3`，并同步实现 `getBranch()` / `buildSessionContext()`。[E: packages/coding-agent/src/core/session-manager.ts:30] [E: packages/coding-agent/src/core/session-manager.ts:856] [E: packages/coding-agent/src/core/session-manager.ts:863] [E: packages/coding-agent/src/core/session-manager.ts:867] [E: packages/coding-agent/src/core/session-manager.ts:1261] [E: packages/coding-agent/src/core/session-manager.ts:1285] 两层概念相似，但类型、持久化入口与恢复逻辑不是同一个实现。[I]
 
-产品 `SessionManager.appendMessage()` 自己把 `parentId` 写成 `this.leafId` 再 `_appendEntry` 推进 leaf；harness 则把 `parentId` 交给 storage，按 lane leaf 赋值。[E: packages/coding-agent/src/core/session-manager.ts:1061] [E: packages/agent/src/harness/session/memory.ts:60]
+产品 `SessionManager.appendMessage()` 自己把 `parentId` 写成 `this.leafId` 再 `_appendEntry` 推进 leaf；harness 则把 `parentId` 交给 storage，按 lane leaf 赋值。[E: packages/coding-agent/src/core/session-manager.ts:1062] [E: packages/agent/src/harness/session/memory.ts:60]
 
 ## Gotcha
 

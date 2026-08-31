@@ -8,16 +8,21 @@ source:
   - packages/coding-agent/src/core/export-html/index.ts
   - packages/coding-agent/src/core/export-html/ansi-to-html.ts
   - packages/coding-agent/src/core/export-html/tool-renderer.ts
+  - packages/coding-agent/src/core/session-export.ts
+  - packages/coding-agent/src/modes/interactive/session-share.ts
+  - packages/coding-agent/src/modes/interactive/interactive-mode.ts
 symbols:
   - exportSessionToHtml
   - exportFromFile
   - ansiToHtml
+  - exportSessionToJsonl
+  - exportSessionForShare
 related:
   - surface.sessions.management
   - subsys.coding-agent.theme-controller
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > 会话 HTML 导出是 pi-coding-agent 把 `SessionManager` 的 JSONL 会话、可选 `AgentState` 元数据、主题色和扩展工具渲染结果打包成单个 standalone HTML 文件的子系统。
@@ -25,6 +30,7 @@ updated: 086c32e745
 ## 能回答的问题
 
 - `/export`、RPC `export_html` 和 CLI `--export` 最终如何生成 HTML?
+- `/export *.jsonl`、`/share` Radius 路径与 HTML export 各走哪条 helper?
 - `exportSessionToHtml()` 和 `exportFromFile()` 的输入、输出路径和错误条件有什么差异?
 - HTML export 怎样把 session data、CSS、template JS、`marked` 和 `highlight.js` 放进一个文件?
 - 扩展工具的 TUI renderer 如何经 ANSI 转成 HTML?
@@ -86,9 +92,15 @@ result 预渲染会分别用 `{ expanded: false, isPartial: false }` 和 `{ expa
 
 `escapeHtml()` escape `&`、`<`、`>`、双引号和单引号;因此 ANSI 转换中的 plain text 不会直接注入 raw HTML [E: packages/coding-agent/src/core/export-html/ansi-to-html.ts:63] [E: packages/coding-agent/src/core/export-html/ansi-to-html.ts:65] [E: packages/coding-agent/src/core/export-html/ansi-to-html.ts:66] [E: packages/coding-agent/src/core/export-html/ansi-to-html.ts:67] [E: packages/coding-agent/src/core/export-html/ansi-to-html.ts:68] [E: packages/coding-agent/src/core/export-html/ansi-to-html.ts:69]。`ansiLinesToHtml(lines)` 把每行包进 `<div class="ansi-line">`,空行用 `&nbsp;` 保持视觉占位 [E: packages/coding-agent/src/core/export-html/ansi-to-html.ts:256] [E: packages/coding-agent/src/core/export-html/ansi-to-html.ts:257]。
 
+## JSONL share 与 HTML export 分流
+
+HTML export 不是 `/share` 的主路径。`exportSessionToJsonl()` 写 current branch 的线性 JSONL,不要求 session 文件已存在,也不嵌入 theme / renderedTools [E: packages/coding-agent/src/core/session-export.ts:7] [E: packages/coding-agent/src/core/session-export.ts:32] [E: packages/coding-agent/src/core/session-export.ts:40]。`exportSessionForShare()` 在该 JSONL 末尾追加 `customType: "pi.share"`(`systemPrompt` + tools schema),供 Radius artifact 使用 [E: packages/coding-agent/src/modes/interactive/session-share.ts:25] [E: packages/coding-agent/src/modes/interactive/session-share.ts:29] [E: packages/coding-agent/src/modes/interactive/session-share.ts:34]。
+
+`exportSessionToHtml()` 仍走另一套 payload:`SessionData` 带 header/entries/leafId,以及可选 `state.systemPrompt`、`state.tools` 摘要和 `renderedTools`;它要求 `getSessionFile()` 存在且文件已落盘 [E: packages/coding-agent/src/core/export-html/index.ts:236] [E: packages/coding-agent/src/core/export-html/index.ts:243] [E: packages/coding-agent/src/core/export-html/index.ts:263] [E: packages/coding-agent/src/core/export-html/index.ts:267]。interactive `/export` 以输出路径是否以 `.jsonl` 结尾分流:`.jsonl` → `exportToJsonl()`,否则 `exportToHtml()` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6019] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6020] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6023]。`/share` 的 gist **回退**才调用 `exportToHtml()`;Radius 成功或失败都不走这份 HTML [E: packages/coding-agent/src/modes/interactive/session-share.ts:57] [E: packages/coding-agent/src/modes/interactive/session-share.ts:72]。
+
 ## 入口与跨包关系
 
-当前会话导出通常经 `AgentSession.exportToHtml()` 进入:它读取 settings 中的 theme name,创建 `createToolHtmlRenderer({ getToolDefinition, theme, cwd })`,再调用 `exportSessionToHtml()`。交互模式 `/export` 在目标路径不是 `.jsonl` 时调用 `session.exportToHtml(outputPath)`,RPC mode 的 `export_html` command 也返回 `{ path }`。这些入口层文件不在本节点 index source 列中,所以这里作为跨包导航信息而非本节点 `[E]` 证据 [I]。
+当前会话 HTML 导出通常经 `AgentSession.exportToHtml()` 进入:它读取 settings 中的 theme name,创建 `createToolHtmlRenderer({ getToolDefinition, theme, cwd })`,再调用 `exportSessionToHtml()`。交互模式 `/export` 在目标路径不是 `.jsonl` 时调用 `session.exportToHtml(outputPath)`,RPC mode 的 `export_html` command 也返回 `{ path }`。RPC/CLI `--export` 入口层文件不在本节点旧 index source 列中,所以 RPC/CLI 细节作为跨包导航信息而非本节点 `[E]` 证据 [I]。
 
 CLI file export 是另一条入口: CLI wiring 不在本节点 index source 列中,本节点只把 `exportFromFile()` 自身作为可核证证据。`exportFromFile()` 这条路径没有 live `AgentState`,所以导出的 HTML 缺少当前 runtime 的 system prompt、tool schema 摘要和 custom tool pre-render [E: packages/coding-agent/src/core/export-html/index.ts:298] [E: packages/coding-agent/src/core/export-html/index.ts:302] [E: packages/coding-agent/src/core/export-html/index.ts:303] [I]。
 
@@ -114,6 +126,9 @@ session data 使用 base64(JSON.stringify(...)) 注入 template;这让 HTML temp
 - `packages/coding-agent/src/core/export-html/index.ts`
 - `packages/coding-agent/src/core/export-html/ansi-to-html.ts`
 - `packages/coding-agent/src/core/export-html/tool-renderer.ts`
+- `packages/coding-agent/src/core/session-export.ts`
+- `packages/coding-agent/src/modes/interactive/session-share.ts`
+- `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
 
 ## 相关
 

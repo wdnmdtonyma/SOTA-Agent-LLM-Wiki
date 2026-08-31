@@ -1,109 +1,88 @@
-# UPDATE SCOPE — Pi Wiki（305c014dcc → 086c32e745）
+# UPDATE SCOPE — Pi Wiki（086c32e745 → 853a80d26c）
 
-> 本文件记录 2026-08-16 的 Pi-only 增量更新。
-> **旧父仓 gitlink / Wiki 基线**：`305c014dcccfe97ebd3f4057ac16c436f1e2c71e`
-> **最终点时快照 target**：`086c32e74530564922d011ade23ff582c9d63116`
-> **冻结时间**：2026-08-16；冻结时已确认 target 是官方 `origin/main`
-> **跨度**：317 commits · 547 files changed · +37,929 / -23,797
+> 本文件记录 2026-08-31 的 Pi-only 增量更新。
+> **旧父仓 gitlink / Wiki 基线**：`086c32e74530564922d011ade23ff582c9d63116`
+> **最终点时快照 target**：`853a80d26c90a14c1886f0ebb8ffaae133ca2185`
+> **冻结时间**：2026-08-31；冻结时已确认 target 是官方 `origin/main`
+> **跨度**：141 commits · 268 files changed · +10,448 / -2,519
 
 复现：
 
 ```bash
 git -C pi fetch origin main
-git -C pi rev-list --count 305c014dcccfe97ebd3f4057ac16c436f1e2c71e..086c32e74530564922d011ade23ff582c9d63116
-git -C pi diff --shortstat 305c014dcccfe97ebd3f4057ac16c436f1e2c71e..086c32e74530564922d011ade23ff582c9d63116
+git -C pi rev-list --count 086c32e74530564922d011ade23ff582c9d63116..853a80d26c90a14c1886f0ebb8ffaae133ca2185
+git -C pi diff --shortstat 086c32e74530564922d011ade23ff582c9d63116..853a80d26c90a14c1886f0ebb8ffaae133ca2185
 ```
 
-上游覆盖 v0.84.0 / v0.84.1 / v0.84.2 与随后的 Copilot login 修复。
+上游覆盖 v0.84.3 / v0.84.4。
 
 ## 1. 影响分类
 
-以基线 202 个节点为总体，按 source 存在性 + 真实 diff 求交：
+以基线 197 个节点为总体，按 source 存在性 + 真实 diff 求交：
 
 | 分类 | 节点数 | 判定 |
 |---|---:|---|
-| A-BROKEN | 20 | 10 个 legacy server 源面删除；harness session 文件拆分；storage 包改名为 session-backends |
-| B-HEAVY | 见下 | harness v4、telemetry 新包、TUI LaTeX/search、catalog 成员变化 |
-| C-DRIFT | 154 | source 命中但多数可 evidence rebase + 局部语义更新 |
-| D-CLEAN | 28 | 无 source 命中 |
-| 退役 | 10 | legacy JSONL IPC / supervisor / Radius 整面删除 |
-| 新增 | 5 | telemetry、harness-events、latex、alt-screen-search、cloudflare-gateway-binding |
+| A-BROKEN | 0 | 无 index source 被删除；仅 `highlight-js-lib-index.d.ts` 改名为 `highlight-js.d.ts`，且不在任何节点 source |
+| B-HEAVY | 见下 | PowerShell 新工具、prepareNextTurn 时序、catalog 成员、TUI capability/copy、Radius share、compaction 产品行为 |
+| C-DRIFT | 145 | source 命中，多数可 evidence rebase + 局部语义更新 |
+| D-CLEAN | 52 | 无 source 命中；仍统一把 `updated` 推到 target SHA |
+| 退役 | 0 | |
+| 新增 | 1 | `surface.tools.powershell` |
 
-## 2. 结构性退役
+新增源文件不单独建节点、并入既有面：
 
-`feat: remove legacy server implementation (#7614)` 删除 `packages/server/src/legacy/**`。下列节点退役（文件删除、index 移除）：
+| 新源文件 | 并入节点 |
+|---|---|
+| `core/session-export.ts`、`modes/interactive/session-share.ts` | `surface.sessions.management`、`subsys.coding-agent.session-manager`、`subsys.coding-agent.interactive-orchestration`、`subsys.coding-agent.html-export` |
+| `core/settings-diagnostics.ts` | `subsys.coding-agent.settings-manager`、`surface.config.settings` |
+| `modes/interactive/components/settings-submenu.ts` | `ref.interactive.components` |
+| `packages/tui/src/native-module-path.ts` | `subsys.tui.native-modifiers` |
+| `packages/ai/scripts/openrouter-reasoning-options.ts` | `subsys.ai.model-discovery` |
+| `scripts/build-coding-agent-bundle.mjs` | `ref.package-index` |
 
-- `subsys.server.supervisor`
-- `subsys.server.rpc-spawner`
-- `subsys.server.ipc-transport`
-- `subsys.server.message-protocol`
-- `subsys.server.request-handler`
-- `subsys.server.storage`
-- `subsys.server.radius`
-- `subsys.server.config`
-- `ref.server.ipc-messages`
-- `ref.server.instance-status`
+## 2. 必须重写 / 逐实例重核的面
 
-`pi-server` 只保留 composable protocol session server：`session-server` / `live-sessions` / `protocol-adapters` / `unix-transport`。
+### 内置工具 7 → 8
 
-## 3. 必须重写的 A/B 面
+- `ToolName` / `allToolNames` / `createAllToolDefinitions` 增加可选 Windows `powershell`。
+- `createCodingToolDefinitions` / `createReadOnlyToolDefinitions` **仍不含** powershell。
+- `bash.ts` 抽出 `createShellToolDefinition` / `createLocalShellOperations`，powershell 复用同一 shell 工厂。
+- 新节点：`surface.tools.powershell`。
+- 所有“七个内置工具”断言必须改准：spine、tools-catalog、tool-wrapper、security、各 tool 节点、README / llms.txt。
 
-### Harness v4 session API
+### Agent loop：`prepareNextTurn` 时序
 
-- 旧 `SessionRepository` / `ArraySessionIndex` / `jsonl-repo.ts` / `memory-repo.ts` / `keyed-operation-queue.ts` 已删除。
-- 新公开面：`JsonlSessionRepo`、`InMemorySessionRepo`、`Session` / `SessionStorage` / lane-based v4 types，文件在 `packages/agent/src/harness/session/{index,jsonl,jsonl/*,memory,session,types,context,state}.ts`。
-- 搜索从 `harness/session/search.ts` 迁到 `packages/agent/src/search/{index,scanning}.ts`。
-- 新增 `harness/events.ts`、`harness/reducer.ts`、`harness/result.ts`、`harness/telemetry.ts`。
+- `prepareNextTurn` / `prepareNextTurnWithContext` 只在 `shouldStopAfterTurn` 与 queued-message 检查决定**还会再开一轮 assistant turn** 之后运行；终局/terminating turn 不再调用。
+- 受影响：`spine.agent-loop`、`subsys.agent-core.turn-control`、`subsys.agent-core.hooks`、`subsys.agent-core.agent-harness-lifecycle`。
+- 产品侧：tool 执行与下一轮模型请求之间可插入 compaction（`#6879`）。
 
-受影响节点：`spine.session-state-model`、`subsys.agent-core.session-storage`、`jsonl-storage`、`memory-storage`、`tree-navigation`、`session-tree`、`session-search`、`agent-harness-lifecycle`、`ref.agent.session-entry-types`、`ref.agent.agent-events`、`ref.agent.error-codes`。
+### Catalog / 产品增量（必须逐实例重核）
 
-### session-backends 包改名
+- slash：新增 `/thinking` → **23**。
+- RPC：新增 `clear_queue` → **33**。
+- extension events：`session_compact_failed`、`ui_prompt_start`、`ui_prompt_end` → 按 `ExtensionAPI.on` overload 重数。
+- config：`fullscreenCopyOnSelect`、terminal capability overrides、`defaultTools` 可含 `powershell`。
+- env：terminal hyperlink / image / truecolor 覆盖变量。
+- keybindings：Windows/WSL 默认避让、Ctrl+S persist model、fullscreen copy。
+- CLI：`--` end-of-options。
+- JSON/RPC：`toolcall_start` 带 tool call id/name。
+- interactive components：`settings-submenu`。
+- provider：runtime 仍为 **40**；xAI 改走 Responses + Grok 4.6 默认。
+- models：重跑 `tools/generate-model-catalog.mjs`。
 
-- `packages/storage/sqlite-node` → `packages/session-backends/sqlite-node`
-- npm 名：`@earendil-works/pi-session-backend-sqlite-node`
-- Wiki 节点从 `subsys.storage.sqlite-node` 迁到 `subsys.session-backends.sqlite-node`（路径 `subsystems/session-backends/sqlite-node.md`），`pkg: session-backends`。
-
-### 新包 `pi-telemetry`
-
-- `@earendil-works/pi-telemetry`：vendor-neutral contracts + memory/noop adapters + testing conformance。
-- 新节点：`subsys.telemetry.contracts`。
-- `pkg` 枚举新增 `telemetry` 与 `session-backends`。
-
-## 4. 新增节点
-
-| id | 路径 | 理由 |
-|---|---|---|
-| `subsys.telemetry.contracts` | `subsystems/telemetry/contracts.md` | 新 workspace 包 |
-| `subsys.agent-core.harness-events` | `subsystems/agent-core/harness-events.md` | `harness/events.ts` 订阅/watch API |
-| `subsys.tui.latex` | `subsystems/tui/latex.md` | `packages/tui/src/latex.ts` Unicode math |
-| `subsys.tui.alt-screen-search` | `subsystems/tui/alt-screen-search.md` | `packages/tui/src/alt-screen-search.ts` fullscreen search |
-| `subsys.ai.cloudflare-gateway-binding` | `subsystems/ai/cloudflare-gateway-binding.md` | `createGatewayBindingFetch()` Workers AI binding |
-
-## 5. Catalog / 产品增量（必须逐实例重核）
-
-- provider：新增 Qwen Token Plan Individual → runtime providers **40**（原 39）。
-- models：重跑 `tools/generate-model-catalog.mjs`，更新 `group.models.instance_count`。
-- config：`defaultTools`、fullscreen exit output、markdown mermaid/latex、`--use-theme` 等。
-- env：`AI_AGENT=pi`、`PI_TUI_ESC_TIMEOUT`、Qwen Individual 共享 `QWEN_TOKEN_PLAN_API_KEY`。
-- keybindings / TUI actions：fullscreen search、half-page scroll、single-line scroll、prompt history。
-- CLI：`--use-theme`、`pi auth check`。
-- slash / extension events：`terminate` on blocked tool_call；`expandPromptTemplates`。
-- JSON/RPC：`message_update` 只发 delta，去掉 cumulative `message` / `partial`。
-- protocol：`SessionMetadata` 取代 list summaries。
-- coding-agent：`AGENTS.override.md`、UI mode 改名 TUI mode、configurable Harness factory、auth preflight。
-
-## 6. 执行与验收
+## 3. 执行与验收
 
 - 只改 `docs/llm-wiki/pi/**` 与父仓 `pi` gitlink。
 - 填充后 `node tools/reconcile.mjs` 两次 + `node tools/lint.mjs` 两次，须 0 error / 0 warning。
-- 全部节点 `updated: 086c32e745`；index / 文件树 / `llms.txt` 同一集合。
+- 全部节点 `updated: 853a80d26c`；index / 文件树 / `llms.txt` 同一集合。
 - 未安装上游 `node_modules`，不宣称 runtime tests 通过。
 
 ## 7. 最终结果
 
-- 节点：202 → **197**（退役 10 个 legacy server，新增 5 个面 + session-backends 迁址）。
-- 197 verified / 0 planned；T0/T1/T2/T3 = 12/34/118/33。
-- catalog：providers **40**，structural model buckets **39**，config **79**，keybindings **89**，env **95**。
-- 两次 reconcile 幂等；两次 lint **0 error / 0 warning**。
-- 冻结后再 fetch：`origin/main` 仍为 `086c32e74530564922d011ade23ff582c9d63116`。
-- L2 记录：`_research/update-305c014dcc-086c32e745-l2.md`。
+- 节点：**198 verified / 0 planned**（+1 `surface.tools.powershell`）；全部 `updated: 853a80d26c`。
+- Catalog：tools 8 · slash 23 · RPC 33 · extension events 36 · config 84 · keybindings 89 · env 98 · CLI 63 · interactive components 43 · providers 40 · model buckets 39。
+- `tools/generate-model-catalog.mjs` 已改为 `flattenModelCatalog` bucket + generator allowlist，不再找旧的逐模型 `Model<"api">` shard。
+- L1：`reconcile` + `lint` 各两轮，**0 error / 0 warning**。
+- L2：见 `_research/update-086c32e745-853a80d26c-l2.md`。
+- 父仓 `pi` gitlink 工作树指向 `853a80d26c90a14c1886f0ebb8ffaae133ca2185`（尚未 commit）。
+- 未跑上游 runtime tests（detached checkout 无 `node_modules`）。

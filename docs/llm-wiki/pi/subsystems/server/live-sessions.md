@@ -21,7 +21,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `LiveSessionManager` 把 durable `PiServerService` 与 protocol connection attachments 组合为 singleton live runtime：service 负责 `listSessions`/`createSession`/`openSession`，runtime 负责 snapshot、phase、mutation、events 与 dispose。[E: packages/server/src/types.ts:42][E: packages/server/src/types.ts:55][E: packages/server/src/types.ts:56][E: packages/server/src/types.ts:58][E: packages/server/src/types.ts:59]

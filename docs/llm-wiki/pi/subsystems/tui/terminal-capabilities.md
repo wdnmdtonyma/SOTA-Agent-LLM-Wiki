@@ -6,10 +6,10 @@ tier: T2
 pkg: tui
 source: [packages/tui/src/terminal.ts]
 symbols: [queryAndEnableKittyProtocol, setKittyProtocolActive]
-related: [subsys.tui.key-parsing]
+related: [subsys.tui.key-parsing, subsys.tui.terminal-image, subsys.tui.native-modifiers]
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `terminal-capabilities` 是 `ProcessTerminal` 在 TUI 启动和退出时协商 keyboard protocol 的能力层: 优先启用 Kitty keyboard protocol, 未收到 Kitty 支持信号时降级到 xterm `modifyOtherKeys`, 并把 active state 同步给 key parsing。
@@ -21,10 +21,13 @@ updated: 086c32e745
 - 什么时候会启用 `modifyOtherKeys` fallback?
 - `setKittyProtocolActive(true/false)` 在终端生命周期中何时被调用?
 - 退出或 drain input 时如何关闭 Kitty protocol, 避免 key release escape sequence 泄漏到 parent shell?
+- hyperlink / image / truecolor 覆盖是本节点还是 `terminal-image`?
 
 ## 职责边界
 
 本节点覆盖 `packages/tui/src/terminal.ts` 里的 terminal capability negotiation: raw mode 之后安装 stdin buffer、发送 Kitty keyboard protocol query、解析 negotiation response、维护 `_kittyProtocolActive` / `_modifyOtherKeysActive` state、退出时关闭 protocol。`subsys.tui.key-parsing` 覆盖 raw key sequence 如何被解析成 `KeyId`; 本节点只说明解析层所依赖的 protocol active state 如何建立和清理。
+
+OSC 8 hyperlink、inline image protocol、truecolor **不是**本文件的 negotiation。它们由 `packages/tui/src/terminal-image.ts` 的 `detectCapabilities()` / `setCapabilityOverrides()` 与 env `PI_HYPERLINKS`、`PI_IMAGE_PROTOCOL`、`PI_TRUE_COLOR` 覆盖;权威节点是 [subsys.tui.terminal-image](terminal-image.md)。`ProcessTerminal.enableWindowsVTInput()` 用同一套 `getNativeModuleCandidates()` 加载 Win32 helper,路径解析见 [subsys.tui.native-modifiers](native-modifiers.md) [E: packages/tui/src/terminal.ts:375] [E: packages/tui/src/terminal.ts:376]。
 
 `Terminal` interface 把 `kittyProtocolActive` 暴露成只读 terminal capability, `ProcessTerminal` 用私有 `_kittyProtocolActive` 保存实际状态并通过 getter 返回 [E: packages/tui/src/terminal.ts:83] [E: packages/tui/src/terminal.ts:130] [E: packages/tui/src/terminal.ts:153]。`ProcessTerminal` 还跟踪 `_modifyOtherKeysActive`; fallback 启用路径会检查该状态、写入 `modifyOtherKeys` enable sequence, 再标记 active [E: packages/tui/src/terminal.ts:131] [E: packages/tui/src/terminal.ts:349] [E: packages/tui/src/terminal.ts:350] [E: packages/tui/src/terminal.ts:351]。
 
@@ -40,14 +43,14 @@ Kitty query 常量由三段组成: 先请求 desired flags `7`, 再查询当前 
 
 ## 控制流
 
-1. `start@packages/tui/src/terminal.ts:134` 保存 input / resize handler, 开启 raw mode, 设置 stdin encoding 并 resume stdin [E: packages/tui/src/terminal.ts:162] [E: packages/tui/src/terminal.ts:163] [E: packages/tui/src/terminal.ts:166] [E: packages/tui/src/terminal.ts:168] [E: packages/tui/src/terminal.ts:170] [E: packages/tui/src/terminal.ts:171]。
+1. `start@packages/tui/src/terminal.ts:161` 保存 input / resize handler, 开启 raw mode, 设置 stdin encoding 并 resume stdin [E: packages/tui/src/terminal.ts:162] [E: packages/tui/src/terminal.ts:163] [E: packages/tui/src/terminal.ts:166] [E: packages/tui/src/terminal.ts:168] [E: packages/tui/src/terminal.ts:170] [E: packages/tui/src/terminal.ts:171]。
 2. `start()` 先启用 bracketed paste mode、注册 resize handler、刷新 terminal dimensions, 再调用 Windows VT input helper, 最后调用 `queryAndEnableKittyProtocol()` [E: packages/tui/src/terminal.ts:174] [E: packages/tui/src/terminal.ts:177] [E: packages/tui/src/terminal.ts:182] [E: packages/tui/src/terminal.ts:189] [E: packages/tui/src/terminal.ts:193]。
-3. `queryAndEnableKittyProtocol@packages/tui/src/terminal.ts:220` 创建 `StdinBuffer`, 把 stdin data 接入 buffer, 标记 `keyboardProtocolPushed = true`, 清空 negotiation buffer, 然后向 stdout 写入 `KITTY_KEYBOARD_PROTOCOL_QUERY` [E: packages/tui/src/terminal.ts:248] [E: packages/tui/src/terminal.ts:249] [E: packages/tui/src/terminal.ts:250] [E: packages/tui/src/terminal.ts:251] [E: packages/tui/src/terminal.ts:252]。
-4. `setupStdinBuffer@packages/tui/src/terminal.ts:177` 创建 `StdinBuffer`, 并让 stdin data 先进入 buffer; 每个 buffer 输出的 sequence 先经过 `readKeyboardProtocolNegotiationSequence()`, pending 时等待后续片段, recognized negotiation sequence 被 `handleKeyboardProtocolNegotiationSequence()` 消费, 其余 sequence 才转发到 normal input handler [E: packages/tui/src/terminal.ts:177] [E: packages/tui/src/terminal.ts:208] [E: packages/tui/src/terminal.ts:209] [E: packages/tui/src/terminal.ts:211] [E: packages/tui/src/terminal.ts:214] [E: packages/tui/src/terminal.ts:218] [E: packages/tui/src/terminal.ts:229] [E: packages/tui/src/terminal.ts:230]。
-5. `readKeyboardProtocolNegotiationSequence@packages/tui/src/terminal.ts:252` 支持 response 被拆包: 已有 buffer 时先拼接再 parse, 仍是 prefix 就继续 pending, 拼不成 negotiation sequence 就把旧 buffer 当普通 input 转发 [E: packages/tui/src/terminal.ts:282] [E: packages/tui/src/terminal.ts:283] [E: packages/tui/src/terminal.ts:284] [E: packages/tui/src/terminal.ts:289] [E: packages/tui/src/terminal.ts:290] [E: packages/tui/src/terminal.ts:293]。pending flush timer 为 150ms, 到时仍未补齐就把 buffer 转回 input [E: packages/tui/src/terminal.ts:16] [E: packages/tui/src/terminal.ts:322] [E: packages/tui/src/terminal.ts:324] [E: packages/tui/src/terminal.ts:326]。
-6. `handleKeyboardProtocolNegotiationSequence@packages/tui/src/terminal.ts:228` 收到 non-zero Kitty flags 时关闭 `modifyOtherKeys`, 设置 `_kittyProtocolActive = true`, 并调用 `setKittyProtocolActive(true)` [E: packages/tui/src/terminal.ts:260] [E: packages/tui/src/terminal.ts:261] [E: packages/tui/src/terminal.ts:262] [E: packages/tui/src/terminal.ts:264] [E: packages/tui/src/terminal.ts:265]。
+3. `queryAndEnableKittyProtocol@packages/tui/src/terminal.ts:247` 创建 `StdinBuffer`, 把 stdin data 接入 buffer, 标记 `keyboardProtocolPushed = true`, 清空 negotiation buffer, 然后向 stdout 写入 `KITTY_KEYBOARD_PROTOCOL_QUERY` [E: packages/tui/src/terminal.ts:248] [E: packages/tui/src/terminal.ts:249] [E: packages/tui/src/terminal.ts:250] [E: packages/tui/src/terminal.ts:251] [E: packages/tui/src/terminal.ts:252]。
+4. `setupStdinBuffer@packages/tui/src/terminal.ts:204` 创建 `StdinBuffer`, 并让 stdin data 先进入 buffer; 每个 buffer 输出的 sequence 先经过 `readKeyboardProtocolNegotiationSequence()`, pending 时等待后续片段, recognized negotiation sequence 被 `handleKeyboardProtocolNegotiationSequence()` 消费, 其余 sequence 才转发到 normal input handler [E: packages/tui/src/terminal.ts:204] [E: packages/tui/src/terminal.ts:205] [E: packages/tui/src/terminal.ts:208] [E: packages/tui/src/terminal.ts:209] [E: packages/tui/src/terminal.ts:211] [E: packages/tui/src/terminal.ts:214] [E: packages/tui/src/terminal.ts:218] [E: packages/tui/src/terminal.ts:229] [E: packages/tui/src/terminal.ts:230]。
+5. `readKeyboardProtocolNegotiationSequence@packages/tui/src/terminal.ts:279` 支持 response 被拆包: 已有 buffer 时先拼接再 parse, 仍是 prefix 就继续 pending, 拼不成 negotiation sequence 就把旧 buffer 当普通 input 转发 [E: packages/tui/src/terminal.ts:282] [E: packages/tui/src/terminal.ts:283] [E: packages/tui/src/terminal.ts:284] [E: packages/tui/src/terminal.ts:289] [E: packages/tui/src/terminal.ts:290] [E: packages/tui/src/terminal.ts:293]。pending flush timer 为 150ms, 到时仍未补齐就把 buffer 转回 input [E: packages/tui/src/terminal.ts:16] [E: packages/tui/src/terminal.ts:322] [E: packages/tui/src/terminal.ts:324] [E: packages/tui/src/terminal.ts:326]。
+6. `handleKeyboardProtocolNegotiationSequence@packages/tui/src/terminal.ts:255` 收到 non-zero Kitty flags 时关闭 `modifyOtherKeys`, 设置 `_kittyProtocolActive = true`, 并调用 `setKittyProtocolActive(true)` [E: packages/tui/src/terminal.ts:260] [E: packages/tui/src/terminal.ts:261] [E: packages/tui/src/terminal.ts:262] [E: packages/tui/src/terminal.ts:264] [E: packages/tui/src/terminal.ts:265]。
 7. 如果 Kitty flags 为 `0`, 或先收到 Device Attributes 且 Kitty 还未 active, `ProcessTerminal` 调用 `enableModifyOtherKeys()` fallback [E: packages/tui/src/terminal.ts:267] [E: packages/tui/src/terminal.ts:268] [E: packages/tui/src/terminal.ts:273] [E: packages/tui/src/terminal.ts:274]。`enableModifyOtherKeys()` 在 Kitty 已 active 或 fallback 已 active 时直接返回, 否则写入 `ESC[>4;2m` 并标记 `_modifyOtherKeysActive = true` [E: packages/tui/src/terminal.ts:349] [E: packages/tui/src/terminal.ts:350] [E: packages/tui/src/terminal.ts:351]。
-8. `drainInput@packages/tui/src/terminal.ts:368` 和 `stop@packages/tui/src/terminal.ts:406` 都会在需要时写入 `ESC[<u` 关闭 Kitty keyboard protocol, 清掉 `_kittyProtocolActive`, 并调用 `setKittyProtocolActive(false)` [E: packages/tui/src/terminal.ts:397] [E: packages/tui/src/terminal.ts:402] [E: packages/tui/src/terminal.ts:404] [E: packages/tui/src/terminal.ts:405] [E: packages/tui/src/terminal.ts:442] [E: packages/tui/src/terminal.ts:447] [E: packages/tui/src/terminal.ts:449] [E: packages/tui/src/terminal.ts:450]。
+8. `drainInput@packages/tui/src/terminal.ts:390` 和 `stop@packages/tui/src/terminal.ts:428` 都会在需要时写入 `ESC[<u` 关闭 Kitty keyboard protocol, 清掉 `_kittyProtocolActive`, 并调用 `setKittyProtocolActive(false)` [E: packages/tui/src/terminal.ts:391] [E: packages/tui/src/terminal.ts:396] [E: packages/tui/src/terminal.ts:398] [E: packages/tui/src/terminal.ts:399] [E: packages/tui/src/terminal.ts:436] [E: packages/tui/src/terminal.ts:441] [E: packages/tui/src/terminal.ts:443] [E: packages/tui/src/terminal.ts:444]。
 
 ## 设计动机与权衡
 
@@ -55,14 +58,14 @@ Kitty negotiation 使用 "request desired flags + query flags + DA sentinel" 的
 
 把 negotiation response 放在 `StdinBuffer` 之后处理, 是为了兼容 response 被拆成多个 input event 的情况;源码在 buffer handler 中专门处理 pending prefix, 并用 150ms timeout 防止不完整 prefix 永久截留用户输入 [E: packages/tui/src/terminal.ts:208] [E: packages/tui/src/terminal.ts:211] [E: packages/tui/src/terminal.ts:298] [E: packages/tui/src/terminal.ts:299] [E: packages/tui/src/terminal.ts:300] [E: packages/tui/src/terminal.ts:322] [E: packages/tui/src/terminal.ts:327] [I]。
 
-`drainInput()` 先写入 Kitty protocol disable sequence 再等待 stdin 空闲;该函数还临时移除 input handler, 用 data listener 更新 `lastDataTime`, idle 达标或超过 max duration 后恢复 handler [E: packages/tui/src/terminal.ts:397] [E: packages/tui/src/terminal.ts:402] [E: packages/tui/src/terminal.ts:409] [E: packages/tui/src/terminal.ts:410] [E: packages/tui/src/terminal.ts:413] [E: packages/tui/src/terminal.ts:414] [E: packages/tui/src/terminal.ts:417] [E: packages/tui/src/terminal.ts:424] [E: packages/tui/src/terminal.ts:425] [E: packages/tui/src/terminal.ts:429] [E: packages/tui/src/terminal.ts:430]。
+`drainInput()` 先写入 Kitty protocol disable sequence 再等待 stdin 空闲;该函数还临时移除 input handler, 用 data listener 更新 `lastDataTime`, idle 达标或超过 max duration 后恢复 handler [E: packages/tui/src/terminal.ts:391] [E: packages/tui/src/terminal.ts:396] [E: packages/tui/src/terminal.ts:403] [E: packages/tui/src/terminal.ts:404] [E: packages/tui/src/terminal.ts:407] [E: packages/tui/src/terminal.ts:408] [E: packages/tui/src/terminal.ts:411] [E: packages/tui/src/terminal.ts:418] [E: packages/tui/src/terminal.ts:419] [E: packages/tui/src/terminal.ts:423] [E: packages/tui/src/terminal.ts:424]。
 
 ## Gotcha
 
 - `queryAndEnableKittyProtocol()` 是 `ProcessTerminal` 的 private method, 不是 package export;索引把它列为 symbol, 是因为它是 capability negotiation 的负载点 [E: packages/tui/src/terminal.ts:247] [I]。
-- `setKittyProtocolActive` 在 `terminal.ts` 中是 import 后调用的同步点, 定义位于 key parsing 相关模块;本节点按用户给定 source 只引用 `terminal.ts` 中的调用位置, 不把定义文件纳入 Sources [E: packages/tui/src/terminal.ts:5] [E: packages/tui/src/terminal.ts:265] [E: packages/tui/src/terminal.ts:405] [E: packages/tui/src/terminal.ts:450] [U]。
+- `setKittyProtocolActive` 在 `terminal.ts` 中是 import 后调用的同步点, 定义位于 key parsing 相关模块;本节点按用户给定 source 只引用 `terminal.ts` 中的调用位置, 不把定义文件纳入 Sources [E: packages/tui/src/terminal.ts:4] [E: packages/tui/src/terminal.ts:265] [E: packages/tui/src/terminal.ts:399] [E: packages/tui/src/terminal.ts:444] [U]。
 - fallback `modifyOtherKeys` 与 Kitty protocol 互斥:启用 fallback 前会检查 `_kittyProtocolActive`, 收到 non-zero Kitty flags 时也会调用 `disableModifyOtherKeys()` [E: packages/tui/src/terminal.ts:262] [E: packages/tui/src/terminal.ts:349]。
-- `stop()` 在关闭 protocol 后还销毁 `StdinBuffer`、移除 stdin/resize handler、pause stdin、恢复 raw mode;因此 terminal capability cleanup 是 terminal lifecycle cleanup 的一部分, 不是 key parsing 层单独完成的 [E: packages/tui/src/terminal.ts:455] [E: packages/tui/src/terminal.ts:456] [E: packages/tui/src/terminal.ts:462] [E: packages/tui/src/terminal.ts:467] [E: packages/tui/src/terminal.ts:474] [E: packages/tui/src/terminal.ts:478] [I]。
+- `stop()` 在关闭 protocol 后还销毁 `StdinBuffer`、移除 stdin/resize handler、pause stdin、恢复 raw mode;因此 terminal capability cleanup 是 terminal lifecycle cleanup 的一部分, 不是 key parsing 层单独完成的 [E: packages/tui/src/terminal.ts:449] [E: packages/tui/src/terminal.ts:450] [E: packages/tui/src/terminal.ts:456] [E: packages/tui/src/terminal.ts:461] [E: packages/tui/src/terminal.ts:468] [E: packages/tui/src/terminal.ts:472] [I]。
 
 ## 跨包边界
 
@@ -75,3 +78,5 @@ Kitty negotiation 使用 "request desired flags + query flags + DA sentinel" 的
 ## 相关
 
 - [subsys.tui.key-parsing](key-parsing.md): 解释 `KeyId`、Kitty CSI-u、xterm `modifyOtherKeys` 和 legacy sequence 如何被解析与匹配。
+- [subsys.tui.terminal-image](terminal-image.md): hyperlink / image / truecolor 检测与 `setCapabilityOverrides()` / `PI_*` env 覆盖。
+- [subsys.tui.native-modifiers](native-modifiers.md): `getNativeModuleCandidates()` 解析 Darwin/Win32 `.node`,供 `enableWindowsVTInput()` 复用。

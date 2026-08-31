@@ -56,7 +56,7 @@ related:
   - subsys.ai.model-catalog-publication
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26
 ---
 
 > `ref.ai.model-catalog` 记录目标 commit 已提交的 generated model **结构**。 [I] 完整模型值（name / cost / context / 逐 id 的 `Model.api`）在 generated、gitignored 的 `src/providers/data/<provider>.json`；本 catalog 只记录 id / provider / api 中源码能证明的结构事实。
@@ -70,13 +70,13 @@ updated: 086c32e745
 
 ## 证据边界
 
-目标 commit 提交了 **39** 个 provider structural shard（本轮新增 `qwen-token-plan-individual.models.ts`）。每个 shard 只保留 `import values from "./data/<provider>.json"` 和 `flattenModelCatalog(provider, values)`；实际 id/api/cost 等值不在 git tree [E: packages/ai/src/providers/qwen-token-plan-individual.models.ts:4] [E: packages/ai/src/providers/qwen-token-plan-individual.models.ts:8] [E: packages/ai/src/providers/amazon-bedrock.models.ts:4] [E: packages/ai/src/providers/amazon-bedrock.models.ts:8] [E: packages/ai/src/model-catalog.ts:22]。
+目标 commit 提交了 **39** 个 provider structural shard。每个 shard 只保留 `import values from "./data/<provider>.json"` 和 `flattenModelCatalog(provider, values)`；实际 id/api/cost 等值不在 git tree [E: packages/ai/src/providers/qwen-token-plan-individual.models.ts:4] [E: packages/ai/src/providers/qwen-token-plan-individual.models.ts:8] [E: packages/ai/src/providers/amazon-bedrock.models.ts:4] [E: packages/ai/src/providers/amazon-bedrock.models.ts:8] [E: packages/ai/src/model-catalog.ts:22]。
 
 `models.generated.ts` 把这 39 个 shard 聚合为 `MODELS`；type 面与 value 面都包含 `qwen-token-plan-individual` [E: packages/ai/src/models.generated.ts:33] [E: packages/ai/src/models.generated.ts:74] [E: packages/ai/src/models.generated.ts:114]。Radius 不在此 object 中。
 
-`generate-models.ts` 先写 structural `.models.ts` 与 gitignored `src/providers/data/*.json`，再写 `models.generated.ts` [E: packages/ai/scripts/generate-models.ts:2861] [E: packages/ai/scripts/generate-models.ts:2863] [E: packages/ai/scripts/generate-models.ts:2867] [E: packages/ai/scripts/generate-models.ts:2875] [E: packages/ai/scripts/generate-models.ts:2877]。因此 checkout 可复现的是 **39 个 bucket 结构**，不是 flattened model 总数。
+`generate-models.ts` 先写 structural `.models.ts` 与 gitignored `src/providers/data/*.json`，再写 `models.generated.ts` [E: packages/ai/scripts/generate-models.ts:2996] [E: packages/ai/scripts/generate-models.ts:2999] [E: packages/ai/scripts/generate-models.ts:3002] [E: packages/ai/scripts/generate-models.ts:3021]。因此 checkout 可复现的是 **39 个 bucket 结构**，不是 flattened model 总数。
 
-`tools/generate-model-catalog.mjs` 仍按旧的逐模型 `Model<"api"> & { id; provider }` shard 形态解析；当前 wrapper 没有那种 key，生成器无法从 checkout 产出逐 id 表。[U]
+`tools/generate-model-catalog.mjs` 按 `flattenModelCatalog` wrapper + `generate-models.ts` 硬编码 allowlist 生成本页；不再寻找旧的逐模型 `Model<"api">` shard key。[I]
 
 ## Provider 覆盖摘要
 
@@ -111,7 +111,7 @@ updated: 086c32e745
 | `openrouter` | `packages/ai/src/providers/openrouter.models.ts` | [E: packages/ai/src/models.generated.ts:111] | gitignored JSON only [I] |
 | `qwen-token-plan` | `packages/ai/src/providers/qwen-token-plan.models.ts` | [E: packages/ai/src/models.generated.ts:112] | gitignored JSON only [I] |
 | `qwen-token-plan-cn` | `packages/ai/src/providers/qwen-token-plan-cn.models.ts` | [E: packages/ai/src/models.generated.ts:113] | gitignored JSON only [I] |
-| `qwen-token-plan-individual` | `packages/ai/src/providers/qwen-token-plan-individual.models.ts` | [E: packages/ai/src/models.generated.ts:114] | generator allowlist 7 ids（见下表） [E: packages/ai/scripts/generate-models.ts:307] |
+| `qwen-token-plan-individual` | `packages/ai/src/providers/qwen-token-plan-individual.models.ts` | [E: packages/ai/src/models.generated.ts:114] | generator allowlist 8 ids（见下表） [E: packages/ai/scripts/generate-models.ts:327] |
 | `together` | `packages/ai/src/providers/together.models.ts` | [E: packages/ai/src/models.generated.ts:115] | gitignored JSON only [I] |
 | `vercel-ai-gateway` | `packages/ai/src/providers/vercel-ai-gateway.models.ts` | [E: packages/ai/src/models.generated.ts:116] | gitignored JSON only [I] |
 | `xai` | `packages/ai/src/providers/xai.models.ts` | [E: packages/ai/src/models.generated.ts:117] | gitignored JSON only [I] |
@@ -126,19 +126,24 @@ updated: 086c32e745
 
 ## 本轮可从源码证明的 model id
 
-`qwen-token-plan-individual` 是国际 Token Plan 源的 allowlist 视图。生成器把 `alibaba-token-plan` 输入过滤到 `QWEN_TOKEN_PLAN_INDIVIDUAL_MODEL_IDS`，并固定 `api: "openai-completions"`、同一新加坡 compatible-mode base URL [E: packages/ai/scripts/generate-models.ts:2207] [E: packages/ai/scripts/generate-models.ts:2210] [E: packages/ai/scripts/generate-models.ts:2228] [E: packages/ai/scripts/generate-models.ts:2234]。最终 JSON 是否包含这 7 个 id 仍取决于生成时的远端 catalog，因此下表是 **generator allowlist**，不是 gitignored JSON 的 membership 证明 [I]。
+`qwen-token-plan-individual` 是国际 Token Plan 源的 allowlist 视图。生成器把 `alibaba-token-plan` 输入过滤到 `QWEN_TOKEN_PLAN_INDIVIDUAL_MODEL_IDS`，并固定 `api: "openai-completions"`、同一新加坡 compatible-mode base URL [E: packages/ai/scripts/generate-models.ts:2323] [E: packages/ai/scripts/generate-models.ts:2325] [E: packages/ai/scripts/generate-models.ts:2349]。最终 JSON 是否包含这 8 个 id 仍取决于生成时的远端 catalog，因此下表是 **generator allowlist**，不是 gitignored JSON 的 membership 证明 [I]。
 
 | id | provider | api/wire | committed evidence |
 |---|---|---|---|
-| `deepseek-v4-flash-0731` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:308] [E: packages/ai/scripts/generate-models.ts:2234] |
-| `deepseek-v4-pro` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:309] [E: packages/ai/scripts/generate-models.ts:2234] |
-| `glm-5.2` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:310] [E: packages/ai/scripts/generate-models.ts:2234] |
-| `qwen3.6-flash` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:311] [E: packages/ai/scripts/generate-models.ts:2234] |
-| `qwen3.7-max` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:312] [E: packages/ai/scripts/generate-models.ts:2234] |
-| `qwen3.7-plus` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:313] [E: packages/ai/scripts/generate-models.ts:2234] |
-| `qwen3.8-max` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:314] [E: packages/ai/scripts/generate-models.ts:2234] |
+| `deepseek-v4-flash-0731` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:328] [E: packages/ai/scripts/generate-models.ts:2325] |
+| `deepseek-v4-pro` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:329] [E: packages/ai/scripts/generate-models.ts:2325] |
+| `deepseek-v4-pro-0813` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:330] [E: packages/ai/scripts/generate-models.ts:2325] |
+| `glm-5.2` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:331] [E: packages/ai/scripts/generate-models.ts:2325] |
+| `qwen3.6-flash` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:332] [E: packages/ai/scripts/generate-models.ts:2325] |
+| `qwen3.7-max` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:333] [E: packages/ai/scripts/generate-models.ts:2325] |
+| `qwen3.7-plus` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:334] [E: packages/ai/scripts/generate-models.ts:2325] |
+| `qwen3.8-max` | `qwen-token-plan-individual` | `openai-completions` | [E: packages/ai/scripts/generate-models.ts:335] [E: packages/ai/scripts/generate-models.ts:2325] |
 
-`qwen3.8-max-preview` 在 `QWEN_TOKEN_PLAN_EXCLUDED_MODEL_IDS` 中，国际 / CN / Individual 三条变体都会跳过 [E: packages/ai/scripts/generate-models.ts:298] [E: packages/ai/scripts/generate-models.ts:2227]。
+`qwen3.8-max-preview` 在 `QWEN_TOKEN_PLAN_EXCLUDED_MODEL_IDS` 中，国际 / CN / Individual 三条变体都会跳过 [E: packages/ai/scripts/generate-models.ts:318] [E: packages/ai/scripts/generate-models.ts:2342]。
+
+DeepSeek 官方 bucket 另有一组 **generator 硬编码** 的 V4 行，不依赖 gitignored JSON。`deepseek-v4-flash-vision-exp` 的 id / `openai-completions` / `input: ["text", "image"]` 写在生成器里 [E: packages/ai/scripts/generate-models.ts:2571] [E: packages/ai/scripts/generate-models.ts:2573] [E: packages/ai/scripts/generate-models.ts:2577]。这不是 Individual allowlist 成员。
+
+`cloudflare-ai-gateway` bucket 的 `workers-ai` upstream 固定 `api: "openai-completions"`、compat base URL，id 为 `workers-ai/${modelId}`；models.dev 漏掉该前缀时，生成器从 `cloudflare-workers-ai` catalog 镜像补行。具体 id 仍在 gitignored JSON，本页只记录此前缀规则 [E: packages/ai/scripts/generate-models.ts:1716] [E: packages/ai/scripts/generate-models.ts:1719] [E: packages/ai/scripts/generate-models.ts:1756] [E: packages/ai/scripts/generate-models.ts:1761] [I]。
 
 ## 设计动机与 gotcha
 

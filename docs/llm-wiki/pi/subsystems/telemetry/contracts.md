@@ -35,7 +35,7 @@ related:
   - spine.provider-stream
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.telemetry.contracts` 是 `@earendil-works/pi-telemetry` 的 vendor-neutral 契约层:显式 callback `TelemetryContext` / `TelemetrySpan`、共享 `NOOP_TELEMETRY_CONTEXT`、进程内 `InMemoryTelemetryContext`、typed schema 工具,以及 runner-independent adapter conformance。本包不包含 exporter、全局 current-span 或 backend SDK。
@@ -153,7 +153,7 @@ Schema 侧:`TelemetrySchemaDefinition` 含 `version` 与 `spans` map;`TelemetryS
 1. **单 schema helper。** `startAiSpan(telemetryContext, name, attributes, callback)` / `startHarnessSpan(...)` 直接 `telemetryContext.startSpan({ name, attributes }, ...)` 并把 span 断言成 schema-scoped 视图。callback **没有** 预绑定的 `startChildSpan`。[E: packages/agent/src/harness/telemetry.ts:138][E: packages/agent/src/harness/telemetry.ts:144][E: packages/agent/src/harness/telemetry.ts:602][E: packages/agent/src/harness/telemetry.ts:612] 因为 `TelemetrySpan extends TelemetryContext`,嵌套时把外层 callback span 当作下一跳的 `telemetryContext` 传入。
 2. **组合 typed starter。** `createTypedSpanStarter(NOOP_TELEMETRY_CONTEXT, AGENT_TELEMETRY_SCHEMAS)` 的 callback 收到 `startChildSpan`,已经 bind 到当前 span。agent 测试用它在 `pi.harness.step` 内再开 `pi.ai.request`。[E: packages/agent/test/harness/telemetry.test.ts:41][E: packages/agent/test/harness/telemetry.test.ts:52]
 
-`pi-ai` 只把 `ProviderRequestOptions.telemetryContext` 抄进 `buildBaseOptions()`;本仓库的 `packages/ai/src` 没有 `startSpan` / `startAiSpan` 调用。[E: packages/ai/src/types.ts:123][E: packages/ai/src/api/simple-options.ts:36][I]
+`pi-ai` 只把 `ProviderRequestOptions.telemetryContext` 抄进 `buildBaseOptions()`;本仓库的 `packages/ai/src` 没有 `startSpan` / `startAiSpan` 调用。[E: packages/ai/src/types.ts:127][E: packages/ai/src/api/simple-options.ts:36][I]
 
 `AgentHarnessOptions` 有可选 `context?: TelemetryContext`,但 `AgentHarness` 构造函数没有读取或保存该字段;当前 `prompt` / `compact` / `navigateTree` 等操作走 `unavailable()` → `HarnessNotImplemented`。[E: packages/agent/src/harness/agent-harness.ts:262][E: packages/agent/src/harness/agent-harness.ts:323][E: packages/agent/src/harness/agent-harness.ts:355] 因此本节点能证明的是 **schema + helper 如何组合**,不能证明 AgentHarness 运行时已经按 schema 发射这些 span。[U]
 
@@ -184,7 +184,7 @@ schema 与 adapter 解耦:低层 API 接受开放 name/attribute bag,让 OpenTel
 
 [subsys.agent-core.agent-harness-lifecycle](../agent-core/agent-harness-lifecycle.md) 应说明 `AgentHarness` 的 operation / shutdown 生命周期。本节点只覆盖它声明的 `context?: TelemetryContext` 以及 schema helpers;构造函数目前不消费该字段。[E: packages/agent/src/harness/agent-harness.ts:262][E: packages/agent/src/harness/agent-harness.ts:323]
 
-[spine.agent-loop](../../spine/agent-loop.md) 与 [spine.provider-stream](../../spine/provider-stream.md) 是 loop / provider stream 走读。`pi.ai.request` 的 schema 在本节点;`pi-ai` 只传播 `telemetryContext`,不拥有该 schema。[E: packages/ai/src/types.ts:123][E: packages/telemetry/README.md:370]
+[spine.agent-loop](../../spine/agent-loop.md) 与 [spine.provider-stream](../../spine/provider-stream.md) 是 loop / provider stream 走读。`pi.ai.request` 的 schema 在本节点;`pi-ai` 只传播 `telemetryContext`,不拥有该 schema。[E: packages/ai/src/types.ts:127][E: packages/telemetry/README.md:370]
 
 ## Sources
 

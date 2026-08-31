@@ -24,7 +24,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `ref.agent.session-entry-types` 是 `packages/agent/src/harness/session/types.ts` 中 v4 `Entry` 导出类型的字段级目录：覆盖 `EntryBase`、全部 7 个 `Entry` variant、union 本身与 `ProvisionedEntry`。

@@ -16,7 +16,7 @@ related:
   - subsys.agent-core.tree-navigation
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.agent-core.memory-storage` 描述进程内 v4 session backend：`InMemorySessionRepo` 用 `Map<id, InMemorySessionStorage>` 保存会话；每个 storage 持有一份 `SessionState`，并通过 `structuredClone` 隔离调用方与内部状态。

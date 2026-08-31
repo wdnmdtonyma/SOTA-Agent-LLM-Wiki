@@ -23,7 +23,7 @@ related:
   - subsys.protocol.cbor-framing
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `@earendil-works/pi-server/unix` 同时提供 composable `createUnixListener()` 与 one-listener `createUnixServer()` preset；它服务 framed-CBOR session protocol，不是 legacy JSONL `startIpcServer()`。[E: packages/server/package.json:17][E: packages/server/package.json:18][E: packages/server/src/transports/unix/index.ts:1][E: packages/server/src/transports/unix/index.ts:2][E: packages/server/src/transports/unix/preset.ts:7][E: packages/server/src/transports/unix/preset.ts:7]

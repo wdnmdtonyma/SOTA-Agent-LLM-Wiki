@@ -10,6 +10,7 @@ source:
   - packages/ai/src/providers/cloudflare-auth.ts
   - packages/ai/src/providers/cloudflare-ai-gateway.ts
   - packages/ai/src/api/cloudflare.ts
+  - packages/ai/scripts/generate-models.ts
 symbols:
   - createGatewayBindingFetch
   - CLOUDFLARE_GATEWAY_BINDING_AUTH_SENTINEL
@@ -26,7 +27,7 @@ related:
   - surface.providers.auth
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.ai.cloudflare-gateway-binding` 覆盖 `createGatewayBindingFetch()`:一个只服务单个 AI Gateway 客户端的 `FetchFunction` shim,把 `gateway.ai.cloudflare.com/v1/{account}/{gateway}/...` 前缀下的 POST JSON 请求翻译成 Workers AI binding 的 `env.AI.gateway(id).run(...)`。它不是新 provider,也不自动免去 HTTPS 路径所需的 Cloudflare API token。
@@ -39,6 +40,7 @@ updated: 086c32e745
 - 前缀外 URL、非 POST、非 JSON、缺 body 时为什么是 throw 而不是回落到 HTTPS?
 - 这个 shim 和 `cloudflareAIGatewayAuth()` / `cloudflare-ai-gateway` provider 的边界在哪?
 - `pi-ai` 默认入口会不会导出或自动装配这个 fetch?
+- `cloudflare-ai-gateway` catalog 如何写入 `workers-ai/*` Completions passthrough，以及 models.dev 漏列时怎样从 Workers AI catalog 镜像？
 
 ## 职责边界
 
@@ -48,7 +50,7 @@ pi 的 Cloudflare AI Gateway 默认运输是 HTTPS:`gateway.ai.cloudflare.com/v1
 
 本模块不依赖 `@cloudflare/workers-types`。[I] `AiGatewayBinding` / `AiGatewayBindingGateway` / `AiGatewayUniversalRequestLike` 是 structural type,真实 `env.AI` 满足即可。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:29][E: packages/ai/src/api/cloudflare-gateway-binding.ts:33][E: packages/ai/src/api/cloudflare-gateway-binding.ts:38]
 
-`createGatewayBindingFetch` **不** 出现在 `packages/ai/src/index.ts`。调用方从 `@earendil-works/pi-ai/api/cloudflare-gateway-binding`(`package.json` 的 `./api/*` export)自行 import,再把它塞进 `ProviderRequestOptions.fetch`。[E: packages/ai/package.json:26][E: packages/ai/src/types.ts:130] `cloudflare-ai-gateway` provider 与 `cloudflareAIGatewayAuth()` 都不引用这个模块。[E: packages/ai/src/providers/cloudflare-ai-gateway.ts:1][E: packages/ai/src/providers/cloudflare-auth.ts:74]
+`createGatewayBindingFetch` **不** 出现在 `packages/ai/src/index.ts`。调用方从 `@earendil-works/pi-ai/api/cloudflare-gateway-binding`(`package.json` 的 `./api/*` export)自行 import,再把它塞进 `ProviderRequestOptions.fetch`。[E: packages/ai/package.json:26][E: packages/ai/src/types.ts:134] `cloudflare-ai-gateway` provider 与 `cloudflareAIGatewayAuth()` 都不引用这个模块。[E: packages/ai/src/providers/cloudflare-ai-gateway.ts:1][E: packages/ai/src/providers/cloudflare-auth.ts:74]
 
 模块注释声称 binding 调用 “pre-authenticated in-account”,本仓库测试只用 fake `binding.gateway().run()`,没有 Cloudflare Workers runtime 证明。[E: packages/ai/test/cloudflare-gateway-binding.test.ts:18][U]
 
@@ -58,7 +60,8 @@ pi 的 Cloudflare AI Gateway 默认运输是 HTTPS:`gateway.ai.cloudflare.com/v1
 - `packages/ai/test/cloudflare-gateway-binding.test.ts`:provider/endpoint 拆分、query string、header 大小写与 init 覆盖、strip 列表、signal、streaming identity、拒绝面、OpenAI Completions SDK 的 null-auth 组合。[E: packages/ai/test/cloudflare-gateway-binding.test.ts:32][E: packages/ai/test/cloudflare-gateway-binding.test.ts:100][E: packages/ai/test/cloudflare-gateway-binding.test.ts:203][E: packages/ai/test/cloudflare-gateway-binding.test.ts:289]
 - `packages/ai/src/api/cloudflare.ts`:Workers AI 与 AI Gateway 的 HTTPS base URL 模板,binding shim 对照的就是这些前缀。[E: packages/ai/src/api/cloudflare.ts:2][E: packages/ai/src/api/cloudflare.ts:6][E: packages/ai/src/api/cloudflare.ts:10]
 - `packages/ai/src/providers/cloudflare-auth.ts`:`cloudflareAIGatewayAuth()` 仍解析 `CLOUDFLARE_API_KEY` + account + gateway id,并写出真实 `cf-aig-authorization: Bearer ${apiKey}`。这是 HTTPS token 路径,不是 binding sentinel 路径。[E: packages/ai/src/providers/cloudflare-auth.ts:74][E: packages/ai/src/providers/cloudflare-auth.ts:88][E: packages/ai/src/providers/cloudflare-auth.ts:93]
-- `packages/ai/src/providers/cloudflare-ai-gateway.ts`:把 Anthropic / OpenAI Completions / OpenAI Responses 三条 wire 包进 `cloudflareStreams()`,用 resolved env 替换 URL 占位符。[E: packages/ai/src/providers/cloudflare-ai-gateway.ts:9][E: packages/ai/src/providers/cloudflare-ai-gateway.ts:17]
+- `packages/ai/src/providers/cloudflare-ai-gateway.ts`:把 Anthropic / OpenAI Completions / OpenAI Responses 三条 wire 包进 `cloudflareStreams()`,用 resolved env 替换 URL 占位符。[E: packages/ai/src/providers/cloudflare-ai-gateway.ts:11][E: packages/ai/src/providers/cloudflare-ai-gateway.ts:17]
+- `packages/ai/scripts/generate-models.ts`: `cloudflare-ai-gateway` catalog 把 `workers-ai` upstream 写成 `openai-completions` + `workers-ai/${modelId}`，并在 models.dev 漏列时从 Workers AI catalog 镜像补行。[E: packages/ai/scripts/generate-models.ts:1716][E: packages/ai/scripts/generate-models.ts:1761]
 
 ## 数据模型
 
@@ -74,7 +77,7 @@ pi 的 Cloudflare AI Gateway 默认运输是 HTTPS:`gateway.ai.cloudflare.com/v1
 
 `AiGatewayUniversalRequestLike` 是 `run()` 的一条入口:`provider`、`endpoint`、`headers: Record<string, string>`、`query: unknown`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:38] 可选第二参只有 `{ signal?: AbortSignal }`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:34]
 
-`CLOUDFLARE_GATEWAY_BINDING_AUTH_SENTINEL` 字面量是 `"cloudflare-gateway-binding"`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:55] 它不是 Cloudflare 平台 token。API 实现在 dispatch 前要求 API key 或可识别 auth header(`authorization` / `x-api-key` / `cf-aig-authorization`);调用方传 `cf-aig-authorization: Bearer ${CLOUDFLARE_GATEWAY_BINDING_AUTH_SENTINEL}` 只为过这道检查。shim 在调用 binding 前剥离 `cf-aig-authorization`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:71][E: packages/ai/src/api/openai-completions.ts:75][E: packages/ai/src/api/anthropic-messages.ts:298]
+`CLOUDFLARE_GATEWAY_BINDING_AUTH_SENTINEL` 字面量是 `"cloudflare-gateway-binding"`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:55] 它不是 Cloudflare 平台 token。API 实现在 dispatch 前要求 API key 或可识别 auth header(`authorization` / `x-api-key` / `cf-aig-authorization`);调用方传 `cf-aig-authorization: Bearer ${CLOUDFLARE_GATEWAY_BINDING_AUTH_SENTINEL}` 只为过这道检查。shim 在调用 binding 前剥离 `cf-aig-authorization`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:71][E: packages/ai/src/api/openai-completions.ts:78][E: packages/ai/src/api/anthropic-messages.ts:297]
 
 `STRIP_HEADERS` 固定为 `content-length`、`host`、`cf-aig-authorization`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:71]
 
@@ -120,7 +123,7 @@ Binding 路径复用同一 header 形状,但 Bearer 换成 sentinel。shim 剥�
 
 `compat.ts` 的 `hasResolvedCloudflareAuth()` 把显式 `apiKey` 或字符串型 `headers["cf-aig-authorization"]` 视为已解析 Cloudflare auth;sentinel header 因此也能让 compat 层认为 auth 已满足。[E: packages/ai/src/compat.ts:232]
 
-`cloudflareStreams()` 只做 URL 占位符替换(`{CLOUDFLARE_ACCOUNT_ID}` / `{CLOUDFLARE_GATEWAY_ID}`),不选择 fetch 实现。[E: packages/ai/src/providers/cloudflare-stream.ts:11][E: packages/ai/src/providers/cloudflare-stream.ts:21] 选 binding 还是 HTTPS,是每个 client 自己把 `fetch` / headers 配好的责任;shim 对前缀外 URL 直接 throw。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:99][E: packages/ai/src/types.ts:130]
+`cloudflareStreams()` 只做 URL 占位符替换(`{CLOUDFLARE_ACCOUNT_ID}` / `{CLOUDFLARE_GATEWAY_ID}`),不选择 fetch 实现。[E: packages/ai/src/providers/cloudflare-stream.ts:11][E: packages/ai/src/providers/cloudflare-stream.ts:21] 选 binding 还是 HTTPS,是每个 client 自己把 `fetch` / headers 配好的责任;shim 对前缀外 URL 直接 throw。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:99][E: packages/ai/src/types.ts:134]
 
 ## 设计动机与权衡
 
@@ -136,16 +139,24 @@ Binding 路径复用同一 header 形状,但 Bearer 换成 sentinel。shim 剥�
 - 只支持 POST + JSON。GET、缺 body、`not json`、只有 `/anthropic` 这种缺 endpoint 的 path,全部 throw,`run()` 次数为 0。[E: packages/ai/test/cloudflare-gateway-binding.test.ts:203]
 - 一次性 stream body 会被 JSON probe 消费掉;非 JSON stream 拒绝后不会 replay。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:159][E: packages/ai/test/cloudflare-gateway-binding.test.ts:258]
 - `init.headers` 整表替换 Request headers,不是 merge。[E: packages/ai/test/cloudflare-gateway-binding.test.ts:83]
-- `pi-coding-agent` 源码没有引用 `createGatewayBindingFetch`。CHANGELOG 写 “inherited”,本仓库看不到 coding-agent 再导出或自动装配。[E: packages/coding-agent/CHANGELOG.md:26][U]
+- `pi-coding-agent` 源码没有引用 `createGatewayBindingFetch`。CHANGELOG 写 “inherited”,本仓库看不到 coding-agent 再导出或自动装配。[E: packages/coding-agent/CHANGELOG.md:147][U]
 - “无需 API token” 仅适用于 **调用方已经在 Worker 里持有 `env.AI` binding** 且自行注入这个 fetch。默认 `cloudflare-ai-gateway` provider 仍走 HTTPS + `CLOUDFLARE_API_KEY`。[E: packages/ai/src/providers/cloudflare-auth.ts:42][E: packages/ai/src/providers/cloudflare-ai-gateway.ts:15]
 
 ## 跨包边界
 
 [subsys.ai.auth-resolution](auth-resolution.md) / [surface.providers.auth](../../surface/providers/auth.md) 覆盖 `cloudflareAIGatewayAuth()` 如何从 credential / env 解析出真实 API key。binding shim 不参与 `resolveProviderAuth()`。
 
-[subsys.ai.openai-completions](openai-completions.md)、[subsys.ai.openai-responses](openai-responses.md)、[subsys.ai.anthropic-messages](anthropic-messages.md) 是被这个 fetch 替换运输的三条 wire。它们继续发自己的 HTTPS 形状 URL;shim 只改运输。`getClientApiKey()` / `assertRequestAuth()` 把 `cf-aig-authorization` 当成 “已有 auth”,于是 sentinel 能让 SDK 用 `"unused"` placeholder key 继续构造请求。[E: packages/ai/src/api/openai-completions.ts:75][E: packages/ai/src/api/anthropic-messages.ts:298]
+[subsys.ai.openai-completions](openai-completions.md)、[subsys.ai.openai-responses](openai-responses.md)、[subsys.ai.anthropic-messages](anthropic-messages.md) 是被这个 fetch 替换运输的三条 wire。它们继续发自己的 HTTPS 形状 URL;shim 只改运输。`getClientApiKey()` / `assertRequestAuth()` 把 `cf-aig-authorization` 当成 “已有 auth”,于是 sentinel 能让 SDK 用 `"unused"` placeholder key 继续构造请求。[E: packages/ai/src/api/openai-completions.ts:78][E: packages/ai/src/api/anthropic-messages.ts:297]
 
 [subsys.ai.provider-registry](provider-registry.md) 的 `cloudflareAIGatewayProvider()` 仍是 HTTPS catalog provider。本节点不增加新的 builtin provider id。
+
+## Catalog `workers-ai/*` passthrough
+
+`cloudflare-ai-gateway` 生成行按 upstream 分流：`openai` / `anthropic` 用 native id 与对应 wire；`workers-ai` 固定 `api: "openai-completions"`、`CLOUDFLARE_AI_GATEWAY_COMPAT_BASE_URL`，并把 id 写成 `workers-ai/${nativeId}`（prefixedId），compat 打开 `sendSessionAffinityHeaders` [E: packages/ai/scripts/generate-models.ts:1716] [E: packages/ai/scripts/generate-models.ts:1717] [E: packages/ai/scripts/generate-models.ts:1718] [E: packages/ai/scripts/generate-models.ts:1719] [E: packages/ai/scripts/generate-models.ts:1727]。
+
+models.dev 的 gateway 列表可能省略 Workers AI passthrough。生成器在 `data["cloudflare-workers-ai"].models` 上再扫一遍：`tool_call === true` 的模型写成 `workers-ai/${modelId}`，已存在则跳过，同样走 Completions + compat base [E: packages/ai/scripts/generate-models.ts:1756] [E: packages/ai/scripts/generate-models.ts:1759] [E: packages/ai/scripts/generate-models.ts:1761] [E: packages/ai/scripts/generate-models.ts:1762] [E: packages/ai/scripts/generate-models.ts:1768] [E: packages/ai/scripts/generate-models.ts:1770]。binding 测试里 `/workers-ai/v1/chat/completions` 拆成 provider `workers-ai`、endpoint `v1/chat/completions`，与这条 catalog 前缀对齐 [E: packages/ai/test/cloudflare-gateway-binding.test.ts:49]。
+
+具体 `workers-ai/*` 成员仍只在 gitignored JSON，本页只记录前缀规则，不枚举模型 [I]。
 
 ## Sources
 
@@ -154,6 +165,7 @@ Binding 路径复用同一 header 形状,但 Bearer 换成 sentinel。shim 剥�
 - packages/ai/src/providers/cloudflare-auth.ts
 - packages/ai/src/providers/cloudflare-ai-gateway.ts
 - packages/ai/src/providers/cloudflare-stream.ts
+- packages/ai/scripts/generate-models.ts
 - packages/ai/src/api/cloudflare.ts
 - packages/ai/src/api/openai-completions.ts
 - packages/ai/src/api/anthropic-messages.ts

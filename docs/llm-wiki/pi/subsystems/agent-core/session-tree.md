@@ -24,7 +24,7 @@ related:
   - ref.agent.session-entry-types
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.agent-core.session-tree` 定义 v4 append-only session tree：每个 `Entry` 都有 `id`、storage-assigned 的 `seq` / `parentId` / `timestamp`，并用 `type` 区分为 7 个变体。字段级 catalog 在 [ref.agent.session-entry-types](../../reference/session-entry-types.md)。

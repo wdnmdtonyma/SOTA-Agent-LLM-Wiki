@@ -70,7 +70,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `@earendil-works/pi-session-backend-sqlite-node` 是 `pi-agent-core` v4 `SessionRepo` 的可选 Node `node:sqlite` 实现：一个 repository 共用一个 SQLite 文件，按 session 行存放 lanes / entries / records / facts，并用 per-session writer lease 做写栅栏；FTS5 搜索是同库独立 façade。
@@ -86,7 +86,7 @@ updated: 086c32e745
 
 ## 包改名与职责边界
 
-0.84.0 把包从 `@earendil-works/pi-storage-sqlite-node` 改名为 `@earendil-works/pi-session-backend-sqlite-node`，并把旧 SQLite schema / repository 换成 v4 lane-based `SessionRepo`；CHANGELOG 写明既有 WIP 数据库不迁移。[E: packages/session-backends/sqlite-node/CHANGELOG.md:21] [E: packages/session-backends/sqlite-node/CHANGELOG.md:22] [E: packages/session-backends/sqlite-node/package.json:2]
+0.84.0 把包从 `@earendil-works/pi-storage-sqlite-node` 改名为 `@earendil-works/pi-session-backend-sqlite-node`，并把旧 SQLite schema / repository 换成 v4 lane-based `SessionRepo`；CHANGELOG 写明既有 WIP 数据库不迁移。[E: packages/session-backends/sqlite-node/CHANGELOG.md:25] [E: packages/session-backends/sqlite-node/CHANGELOG.md:26] [E: packages/session-backends/sqlite-node/package.json:2]
 
 当前发布面是 `0.84.2`，要求 Node `>=22.19.0`，运行时依赖 `@earendil-works/pi-ai` 与 `@earendil-works/pi-agent-core` 均为 `^0.84.2`。根 export 再导出 migration、repository、search、`sql` 模板和 capability types。[E: packages/session-backends/sqlite-node/package.json:3] [E: packages/session-backends/sqlite-node/package.json:34] [E: packages/session-backends/sqlite-node/package.json:37] [E: packages/session-backends/sqlite-node/package.json:38] [E: packages/session-backends/sqlite-node/src/index.ts:114] [E: packages/session-backends/sqlite-node/src/sqlite/index.ts:1] [E: packages/session-backends/sqlite-node/src/sqlite/index.ts:3] [E: packages/session-backends/sqlite-node/src/sqlite/index.ts:7]
 
@@ -94,7 +94,7 @@ updated: 086c32e745
 
 布局不是 one sqlite file per session。`SqliteSessionRepositoryOptions.databasePath` 指向**一个**共享库文件；`sessions` / `entries` / `lanes` 等表用 `session_id` 区分多会话。`SqliteSessionMetadata.path` 就是这个共享文件的绝对路径，不是 per-session 路径。[E: packages/session-backends/sqlite-node/src/sqlite/repo.ts:102] [E: packages/session-backends/sqlite-node/src/sqlite/repo.ts:105] [E: packages/session-backends/sqlite-node/src/sqlite/repo.ts:923] [E: packages/session-backends/sqlite-node/src/sqlite/storage/sessions.ts:119] [E: packages/session-backends/sqlite-node/src/sqlite/storage/sessions.ts:127] [E: packages/session-backends/sqlite-node/test/repository.test.ts:96] [E: packages/session-backends/sqlite-node/src/sqlite/migrations/001_initial.sql:1] [E: packages/session-backends/sqlite-node/src/sqlite/migrations/001_initial.sql:13]
 
-打开旧 v4 之前的 SQLite 文件时，`001_initial.sql` 用 `CREATE TABLE IF NOT EXISTS`，不会改写已有同名表；本包测试只覆盖从空库 apply 当前 schema。打开 pre-v4 文件后新旧表并存或列不匹配时的具体失败形态未固定。[U] [E: packages/session-backends/sqlite-node/CHANGELOG.md:22] [E: packages/session-backends/sqlite-node/src/sqlite/migrations/001_initial.sql:1] [E: packages/session-backends/sqlite-node/test/migrations.test.ts:7]
+打开旧 v4 之前的 SQLite 文件时，`001_initial.sql` 用 `CREATE TABLE IF NOT EXISTS`，不会改写已有同名表；本包测试只覆盖从空库 apply 当前 schema。打开 pre-v4 文件后新旧表并存或列不匹配时的具体失败形态未固定。[U] [E: packages/session-backends/sqlite-node/CHANGELOG.md:26] [E: packages/session-backends/sqlite-node/src/sqlite/migrations/001_initial.sql:1] [E: packages/session-backends/sqlite-node/test/migrations.test.ts:7]
 
 ## Node adapter 与 `sql` 模板
 

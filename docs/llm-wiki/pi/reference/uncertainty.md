@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 # 不确定项日志([U] 汇总)
@@ -1911,6 +1911,102 @@ updated: 086c32e745
 - `tui.editor.yank` / `yankPop` 的 kill-ring 语义仍按 description 归纳，未在本 catalog 展开 editor 实现。
 
 未写入 index.json / llms.txt（按 filler 任务约束）。新节点 `subsys.tui.latex`、`subsys.tui.alt-screen-search` 需后续 reconcile 才能被 lint 认进图。
+
+## update-853a80d26c-ai
+
+# uncertainty-update-853a80d26c-ai
+
+batch: 853a80d26c ai protocol / provider / model
+nodes: ref.ai.model-catalog, subsys.ai.model-discovery, subsys.ai.model-catalog-publication, ref.ai.provider-catalog, surface.providers.overview, subsys.ai.openai-completions, subsys.ai.anthropic-messages, subsys.ai.google-generative-ai, subsys.ai.google-vertex, subsys.ai.openai-responses, subsys.ai.bedrock-converse, subsys.ai.mistral-conversations, subsys.ai.cloudflare-gateway-binding, ref.ai.core-types
+updated: 853a80d26c
+status: draft
+
+本轮只改 AI 协议 / provider / model 节点。下列点本批不能升成 `[E]`。
+
+## [U] checkout 无法给出 flattened model 总数
+
+- 节点: `ref.ai.model-catalog`、`subsys.ai.model-discovery`、`subsys.ai.model-catalog-publication`
+- `*.models.ts` 仍是 `flattenModelCatalog(provider, values)` + gitignored `src/providers/data/*.json`。`MODELS` 仍是 **39** 个 structural bucket。
+- `tools/generate-model-catalog.mjs` 仍按旧的逐模型 `Model<"api"> & { id; provider }` shard 解析，对本 wrapper 抛 `No model shapes found`。本轮按范围未改该脚本。
+- 因此不能从 target SHA checkout 给出完整逐 id / `Model.api` 表或 flattened row 数。可证的是 bucket 结构、`QWEN_TOKEN_PLAN_INDIVIDUAL_MODEL_IDS`（8 个 id，含 `deepseek-v4-pro-0813`）、DeepSeek 硬编码 `deepseek-v4-flash-vision-exp`、以及 `workers-ai/${modelId}` 前缀规则。
+
+## [I] 远端 catalog 重跑会漂
+
+- 节点: 同上
+- `generate-models.ts` 读 models.dev / OpenRouter / Vercel / NVIDIA。同一 commit 重跑 generator 可以得到不同 JSON snapshot。目标模型数必须绑官方 artifact，不能由 39 个 key 推导。
+
+## 本轮已核、不进 uncertainty
+
+- runtime providers 仍 40（含 Radius，无 structural shard）。
+- xAI `api: "openai-responses"`，coding-agent 默认 `grok-4.6`。
+- `GoogleThinkingLevel` → `GoogleApiThinkingLevel` + `ResolvedGoogleThinkingLevel`。
+- Anthropic `allowedFallbackModels` / returned-model 计价；Completions `reasoning_details` 合并/replay、无 tools 时仍可写 `toolChoice`、thinking-token budget；Bedrock redacted replay + raw response headers；Mistral 无 id 碎片按 `index` 拼接；OpenRouter reasoning options 脚本；Cloudflare AI Gateway `workers-ai/*` passthrough；多 adapter `User-Agent: getPiUserAgent()`。
+- 未改 `index.json` / `llms.txt` / `tools/` / `pi` 源码。
+
+## update-853a80d26c-interactive
+
+# uncertainty-update-853a80d26c-interactive
+
+batch: 853a80d26c interactive / sessions / settings-diagnostics
+nodes: surface.modes.interactive, subsys.coding-agent.interactive-orchestration, surface.sessions.management, subsys.coding-agent.session-manager, subsys.coding-agent.html-export
+updated: 853a80d26c
+status: draft
+
+本轮只改 interactive / sessions 面,并把 settings-diagnostics + Ctrl+S persist 写进 interactive 两页(不改 `surface.config.settings` / `settings-manager.md`)。下列 `[U]` 是官方文档或 index source 无法在本批闭合的点。
+
+## [U] 官方 sessions.md 的 `/share` / `/export` 漂移
+
+- 节点: `surface.sessions.management`
+- `packages/coding-agent/docs/sessions.md` 仍写 `/export [file]` = Export session to HTML、`/share` = Upload as private GitHub gist [E: packages/coding-agent/docs/sessions.md:34] [E: packages/coding-agent/docs/sessions.md:35]。
+- 代码:`exportSessionForShare()` 先写带 `customType: "pi.share"` 的 JSONL,`shareSession()` 先 Radius 再 gist;`tryShareViaRadius()` 一旦开始上传失败也不回退 gist;`/export` 以 `.jsonl` 后缀分流 JSONL/HTML。
+- `docs/usage.md` 对 `/thinking` Ctrl+S 更准,但对 `/share` 仍写 gist-only。本批以代码为 ground truth,官方页不当 `[E]` 行为源。
+
+## [U] `docs/keybindings.md` Models and Thinking 表不写 Ctrl+S persist
+
+- 节点: `surface.modes.interactive`、`subsys.coding-agent.interactive-orchestration`
+- CHANGELOG 0.84.3 指向 `packages/coding-agent/docs/keybindings.md` 的 Models and Thinking 节,但该表只有 `app.model.select` / cycle / `app.thinking.cycle` / `app.thinking.toggle`。
+- `/model` 与 `/thinking` selector 的 Ctrl+S 是组件内 `matchesKey(keyData, "ctrl+s")`,不是 `app.models.save`(`app.models.save` 只服务 `/scoped-models`)。
+- 不知道上游是否打算把 persist 提成可配置 keybinding,还是有意保持硬编码。
+
+## [U] CLI `--export` / RPC `export_html` 与 `/share` 的精确 dispatch
+
+- 节点: `subsys.coding-agent.html-export`、`surface.sessions.management`
+- 本批核到 interactive `/export` 的 `.jsonl` 分流和 `/share` 的 Radius/gist 分流。
+- CLI `--export`、RPC `export_html` 是否也走 `exportSessionToJsonl()`,以及 RPC 有没有 share 等价命令,不在本批 interactive/session-export source 的完整 CLI/RPC 文件集内。
+
+## 本轮处理
+
+- settings-diagnostics 与 Ctrl+S persist 只写进 `surface.modes.interactive` 与 `subsys.coding-agent.interactive-orchestration`,避免和 catalog agent 的 settings 页冲突。
+- `pi.share` / `exportSessionToJsonl()` / Radius-then-gist 写入 sessions 三页。
+- llama unloaded presets `if autoload` 写在 interactive `/model` catalog 段,权威过滤在 `extensions/llama/provider.ts`。
+- 未改 `index.json` / `llms.txt` / `settings-manager.md` / `surface/config/settings.md`。
+
+## update-853a80d26c-loop
+
+# uncertainty: 853a80d26c agent-loop / hooks / compaction
+
+- [I] `packages/agent/CHANGELOG.md` 0.84.4 与 `packages/coding-agent/CHANGELOG.md` 都把 mid-run compaction 记为 `#6879`。任务描述里的 `#8782` 在 `853a80d26c` 的两个 CHANGELOG 里都没有出现；wiki 只跟 `#6879`。
+- [I] harness `packages/agent/src/harness/compaction/compaction.ts` 没有 `getSummarizationFailure` / `stopReason === "length"` 拒绝落盘。截断 summary 不落盘是 coding-agent 产品层 `packages/coding-agent/src/core/compaction/compaction.ts` 的行为。`spine.compaction-flow` 只点了一句产品时序，没有改 harness API 描述。
+- [I] `types.ts` 里 `shouldStopAfterTurn` 的 JSDoc 仍写 “runs before prepareNextTurn”。runtime 现在是：`shouldStopAfterTurn` 在 `turn_end` 后立刻跑；`prepareNextTurn` 只在还会再开一轮 assistant turn 的下一轮循环入口跑。两者仍满足 “stop 检查先于 prepare”，但 prepare 不再跟在每个 `turn_end` 后面。
+- [I] mid-run threshold 用 `estimateContextTokens(context.messages)`（会跳过 all-zero usage）；post-run `_checkCompaction` 在 error / zero usage 时也走 estimate。两条路径都能在 provider 省略 streaming usage 时触发 compact，但 token 来源不完全相同。
+- 本批未把 `session_compact_failed` 写进 `ref.coding-agent.session-events` / `surface.extensions.events`（任务禁止改 catalog / index）。
+
+## update-853a80d26c-tui
+
+# uncertainty-update-853a80d26c-tui
+
+batch: TUI capability / copyOnSelect / chunking / native path / autocomplete ranking / word selection
+updated: 853a80d26c
+
+本轮未新增必须升级的 `[U]`。
+
+保留为 `[I]` / 既有 `[U]`:
+
+- 未注入 `copySelection` 时 OSC 52 写入后总是 flash `Copied!`,终端是否真正进剪贴板无法从 tui 源码自证。
+- `darwin-modifiers.node` / `win32-console-mode.node` 内部如何读 OS modifier state 仍不在 TypeScript source 中。
+- `setKittyProtocolActive` 定义在 `keys.ts`;`terminal-capabilities` 按既有约定只核 `terminal.ts` 调用点。
+- coding-agent changelog `#8676` 是 inherited fullscreen word selection;TUI 实现与测试在 `#7746` / `getWordSelection()`。
+- 官方 `docs/terminal-setup.md` 写 settings 优先于 env,是产品接线(`getTerminalCapabilityOverrides` + `setCapabilityOverrides`),不是 TUI `detectCapabilities()` 自己读 settings。
 
 ## update-cee5ff7520
 

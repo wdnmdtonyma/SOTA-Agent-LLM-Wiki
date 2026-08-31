@@ -18,7 +18,7 @@ related:
   - ref.ai.image-models
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.ai.image-generation` 描述 `pi-ai` 的图像生成 provider/model runtime: `ImagesModels` 管 provider 清单、模型清单、refresh 和鉴权包装,底层 `generateImages` 再按 `ImagesModel.api` 分派到已注册的 image API implementation。
@@ -98,7 +98,7 @@ OpenRouter image provider 的 API adapter 来自 `openrouterImagesApi()` lazy wr
 
 ## 本轮 fetch 注入
 
-`ImagesOptions.fetch` 新增 request-scoped HTTP fetch surface；OpenRouter image client 把它传入 SDK，默认仍使用 `globalThis.fetch`。这与 chat/text wire 的 fetch 支持矩阵分开计数。[E: packages/ai/src/types.ts:256] [E: packages/ai/src/types.ts:130] [E: packages/ai/src/api/openrouter-images.ts:59] [E: packages/ai/src/api/openrouter-images.ts:127]
+`ImagesOptions.fetch` 新增 request-scoped HTTP fetch surface；OpenRouter image client 把它传入 SDK，默认仍使用 `globalThis.fetch`。这与 chat/text wire 的 fetch 支持矩阵分开计数。[E: packages/ai/src/types.ts:260] [E: packages/ai/src/types.ts:134] [E: packages/ai/src/api/openrouter-images.ts:59] [E: packages/ai/src/api/openrouter-images.ts:127]
 
 ## Sources
 

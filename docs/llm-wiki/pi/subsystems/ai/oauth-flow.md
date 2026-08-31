@@ -34,7 +34,7 @@ related:
   - subsys.ai.auth-resolution
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.ai.oauth-flow` 描述当前 `pi-ai` OAuth 实现入口：provider 按需加载 flow，standalone Bun 注入静态 flow，公共 `./oauth` subpath 仅保留 coding-agent extension 的类型兼容面。
@@ -58,7 +58,7 @@ provider factory 自己声明 OAuth 能力并绑定 loader。除 Anthropic/OpenA
 
 ## 新增 Kimi 与 OpenRouter flow
 
-Kimi Code 使用 RFC 8628 device authorization：默认 host 为 `https://auth.kimi.com`，可由 provider env 覆盖；授权与 token polling 都使用 JSON/form 请求，成功 credential 携带 access/refresh/expiry。[E: packages/ai/src/auth/oauth/kimi-coding.ts:9] [E: packages/ai/src/auth/oauth/kimi-coding.ts:13] [E: packages/ai/src/auth/oauth/kimi-coding.ts:35] [E: packages/ai/src/auth/oauth/kimi-coding.ts:69] [E: packages/ai/src/auth/oauth/kimi-coding.ts:119] [E: packages/ai/src/auth/oauth/kimi-coding.ts:141]
+Kimi Code 使用 RFC 8628 device authorization：默认 host 为 `https://auth.kimi.com`，可由 provider env 覆盖；授权与 token polling 都使用 JSON/form 请求，成功 credential 携带 access/refresh/expiry。[E: packages/ai/src/auth/oauth/kimi-coding.ts:9] [E: packages/ai/src/auth/oauth/kimi-coding.ts:14] [E: packages/ai/src/auth/oauth/kimi-coding.ts:36] [E: packages/ai/src/auth/oauth/kimi-coding.ts:70] [E: packages/ai/src/auth/oauth/kimi-coding.ts:120] [E: packages/ai/src/auth/oauth/kimi-coding.ts:142]
 
 OpenRouter 使用 PKCE 与单次 loopback HTTP callback；它把 authorization code 换成长期 API key，并保存为 `type: "oauth"`、空 refresh、`Number.MAX_SAFE_INTEGER` expiry。callback host 默认 `127.0.0.1`，可由 `PI_OAUTH_CALLBACK_HOST` 覆盖。[E: packages/ai/src/auth/oauth/openrouter.ts:14] [E: packages/ai/src/auth/oauth/openrouter.ts:20] [E: packages/ai/src/auth/oauth/openrouter.ts:25] [E: packages/ai/src/auth/oauth/openrouter.ts:80] [E: packages/ai/src/auth/oauth/openrouter.ts:123] [E: packages/ai/src/auth/oauth/openrouter.ts:127] [E: packages/ai/src/auth/oauth/openrouter.ts:242]
 
@@ -66,11 +66,11 @@ OpenRouter 登录同时启动 loopback callback 等待与 `manual_code` prompt�
 
 ## GitHub Copilot login
 
-`githubCopilotOAuth.login` 走 GitHub device-code：可选 Enterprise domain，poll 拿到 GitHub access token，再换 Copilot token。成功后先 notify `"Enabling models..."`，再 `enableAllGitHubCopilotModels()`，最后 `fetchAvailableGitHubCopilotModelIds()` 写入 `availableModelIds`。[E: packages/ai/src/auth/oauth/github-copilot.ts:371] [E: packages/ai/src/auth/oauth/github-copilot.ts:394] [E: packages/ai/src/auth/oauth/github-copilot.ts:399] [E: packages/ai/src/auth/oauth/github-copilot.ts:400] [E: packages/ai/src/auth/oauth/github-copilot.ts:403] [E: packages/ai/src/auth/oauth/github-copilot.ts:417]
+`githubCopilotOAuth.login` 走 GitHub device-code：可选 Enterprise domain，poll 拿到 GitHub access token，再换 Copilot token。成功后先 notify `"Enabling models..."`，再 `enableAllGitHubCopilotModels()`，最后 `fetchAvailableGitHubCopilotModelIds()` 写入 `availableModelIds`。[E: packages/ai/src/auth/oauth/github-copilot.ts:434] [E: packages/ai/src/auth/oauth/github-copilot.ts:457] [E: packages/ai/src/auth/oauth/github-copilot.ts:473] [E: packages/ai/src/auth/oauth/github-copilot.ts:475] [E: packages/ai/src/auth/oauth/github-copilot.ts:474] [E: packages/ai/src/auth/oauth/github-copilot.ts:493]
 
-policy enable 是顺序 `for` + `await`：对 `GITHUB_COPILOT_MODELS` 里每个 model 调 `POST ${baseUrl}/models/${modelId}/policy`，body `{state:"enabled"}`。测试断言同一时刻最多一个 in-flight policy 请求。[E: packages/ai/src/auth/oauth/github-copilot.ts:366] [E: packages/ai/src/auth/oauth/github-copilot.ts:367] [E: packages/ai/src/auth/oauth/github-copilot.ts:335] [E: packages/ai/src/auth/oauth/github-copilot.ts:338] [E: packages/ai/src/auth/oauth/github-copilot.ts:347] [E: packages/ai/test/github-copilot-oauth.test.ts:242] [E: packages/ai/test/github-copilot-oauth.test.ts:300] [E: packages/ai/test/github-copilot-oauth.test.ts:301]
+policy enable 是顺序 `for` + `await`：对 `GITHUB_COPILOT_MODELS` 里每个 model 调 `POST ${baseUrl}/models/${modelId}/policy`，body `{state:"enabled"}`。测试断言同一时刻最多一个 in-flight policy 请求。[E: packages/ai/src/auth/oauth/github-copilot.ts:421] [E: packages/ai/src/auth/oauth/github-copilot.ts:423] [E: packages/ai/src/auth/oauth/github-copilot.ts:380] [E: packages/ai/src/auth/oauth/github-copilot.ts:148] [E: packages/ai/src/auth/oauth/github-copilot.ts:395] [E: packages/ai/test/github-copilot-oauth.test.ts:353] [E: packages/ai/test/github-copilot-oauth.test.ts:386] [E: packages/ai/test/github-copilot-oauth.test.ts:386]
 
-login 末尾的 GET `${baseUrl}/models` 若返回 429，会读 `Retry-After`（非法或缺失则默认 1s，上限 10s），`abortableSleep` 后再请求一次；第二次仍失败才抛错。注释写明 login-time policy 更新会打空 Copilot rate-limit bucket。[E: packages/ai/src/auth/oauth/github-copilot.ts:19] [E: packages/ai/src/auth/oauth/github-copilot.ts:20] [E: packages/ai/src/auth/oauth/github-copilot.ts:134] [E: packages/ai/src/auth/oauth/github-copilot.ts:139] [E: packages/ai/src/auth/oauth/github-copilot.ts:140] [E: packages/ai/src/auth/oauth/github-copilot.ts:147] [E: packages/ai/src/auth/oauth/github-copilot.ts:149] [E: packages/ai/test/github-copilot-oauth.test.ts:304] [E: packages/ai/test/github-copilot-oauth.test.ts:359] Individual 端点在 picker catalog 为空时回落到 `policy.state === "enabled"` 的 model id；其它 account 不走这条 fallback。[E: packages/ai/src/auth/oauth/github-copilot.ts:122] [E: packages/ai/src/auth/oauth/github-copilot.ts:125] [E: packages/ai/src/auth/oauth/github-copilot.ts:114]
+login 末尾的 GET `${baseUrl}/models` 若返回 429，会读 `Retry-After`（非法或缺失则默认 1s，上限 10s），`abortableSleep` 后再请求一次；第二次仍失败才抛错。注释写明 login-time policy 更新会打空 Copilot rate-limit bucket。[E: packages/ai/src/auth/oauth/github-copilot.ts:18] [E: packages/ai/src/auth/oauth/github-copilot.ts:18] [E: packages/ai/src/auth/oauth/github-copilot.ts:266] [E: packages/ai/src/auth/oauth/github-copilot.ts:382] [E: packages/ai/src/auth/oauth/github-copilot.ts:404] [E: packages/ai/src/auth/oauth/github-copilot.ts:384] [E: packages/ai/src/auth/oauth/github-copilot.ts:199] [E: packages/ai/test/github-copilot-oauth.test.ts:393] [E: packages/ai/test/github-copilot-oauth.test.ts:450] Individual 端点在 picker catalog 为空时回落到 `policy.state === "enabled"` 的 model id；其它 account 不走这条 fallback。[E: packages/ai/src/auth/oauth/github-copilot.ts:174] [E: packages/ai/src/auth/oauth/github-copilot.ts:177] [E: packages/ai/src/auth/oauth/github-copilot.ts:121]
 
 ## Lazy flow 与 standalone Bun
 

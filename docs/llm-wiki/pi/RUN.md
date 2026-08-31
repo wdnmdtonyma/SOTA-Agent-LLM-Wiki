@@ -16,7 +16,7 @@
 
 ## 2. 顺序(价值优先)
 1. **T0 `spine/`**(12,mermaid 图先行)—— 先立脊柱(分层架构、agent-loop 一次 turn、工具调用解剖、provider stream、会话/压缩、扩展生命周期 + 3 worked traces),后续节点引用它。
-2. **T1 `surface/tools/`**(7)—— 用户核心诉求;`bash`/`edit`/`read`/`write` 大件优先。
+2. **T1 `surface/tools/`**(8)—— 用户核心诉求;`bash`/`edit`/`read`/`write` 大件优先,`powershell` 是可选 Windows shell。
 3. **T2 `subsystems/`**:`coding-agent/` 与 `agent-core/`(脊柱依赖)→ `ai/` → `tui/` → `protocol/` / `client/` / `server/` → `storage/` / `evals/`。
 4. **T1 其它可见面 + T3 `reference/` catalog**:cli/modes/config/extensions/providers/skills/slash/sdk + provider/model/config-keys/slash/keybinding/rpc/extension-event/env catalog。
 5. **cross 引用**:package-index、glossary、uncertainty(uncertainty 由 reconcile 生成,勿手写)。

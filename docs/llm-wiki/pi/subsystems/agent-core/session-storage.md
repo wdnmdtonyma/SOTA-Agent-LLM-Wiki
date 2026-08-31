@@ -27,7 +27,7 @@ related:
   - subsys.agent-core.tree-navigation
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.agent-core.session-storage` 描述 v4 harness session 三层契约：`SessionRepo` 管会话集合与打开/fork，`SessionStorage` 是单会话持久化原语（lane / entry / record / fact / log），`Session` 实现 `SessionTree` 并把 storage-assigned 的 `seq` / `parentId` / `timestamp` 暴露给调用方。

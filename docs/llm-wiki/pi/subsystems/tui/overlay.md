@@ -19,7 +19,7 @@ related:
   - subsys.tui.alternate-screen
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > Overlay 是 `TuiBase` 的 renderer-neutral 能力：共享栈管理位置、可见性和焦点恢复，main-screen 与 alternate-screen 在各自 frame diff 前调用同一合成器。
@@ -42,15 +42,15 @@ overlay line 在按列合成前会被防御性截断；底层 `compositeTuiLine(
 
 ## 与两种 renderer 的关系
 
-main-screen 在生成完整 document 后合成 overlays，再提取 cursor marker和做 scrollback diff。[E: packages/tui/src/tui-main-screen.ts:197] [E: packages/tui/src/tui-main-screen.ts:205] [E: packages/tui/src/tui-main-screen.ts:207]
+main-screen 在生成完整 document 后合成 overlays，再提取 cursor marker和做 scrollback diff。[E: packages/tui/src/tui-main-screen.ts:263] [E: packages/tui/src/tui-main-screen.ts:271] [E: packages/tui/src/tui-main-screen.ts:273]
 
-alternate-screen 在 layout frame 后合成 overlays，再叠加 selection 与 flash；overlay 不属于 layout tree，也不跟随 ScrollView 的 clip/scrollTop。[E: packages/tui/src/tui-alt-screen.ts:1250] [E: packages/tui/src/tui-alt-screen.ts:1257] [E: packages/tui/src/tui-alt-screen.ts:1259] [I]
+alternate-screen 在 layout frame 后合成 overlays，再叠加 selection 与 flash；overlay 不属于 layout tree，也不跟随 ScrollView 的 clip/scrollTop。[E: packages/tui/src/tui-alt-screen.ts:1314] [E: packages/tui/src/tui-alt-screen.ts:1321] [E: packages/tui/src/tui-alt-screen.ts:1323] [I]
 
 ## Gotchas
 
 - `hideOverlay()` 删除数组最后一个 entry，不按 visual `focusOrder` 查找；bring-to-front 后的视觉顶层不一定等于数组尾。[E: packages/tui/src/tui.ts:645] [E: packages/tui/src/tui.ts:646] [E: packages/tui/src/tui.ts:650]
 - `visible()` 使用当前 terminal columns/rows 动态判断；input path 会重新验证 focused overlay，必要时迁移焦点。[E: packages/tui/src/tui.ts:673] [E: packages/tui/src/tui.ts:676] [E: packages/tui/src/tui.ts:864]
-- fullscreen 的 selection/flash 在 overlay 之后合成，不能假设 overlay 永远是最终视觉层。[E: packages/tui/src/tui-alt-screen.ts:1257] [E: packages/tui/src/tui-alt-screen.ts:1259] [E: packages/tui/src/tui-alt-screen.ts:1260]
+- fullscreen 的 selection/flash 在 overlay 之后合成，不能假设 overlay 永远是最终视觉层。[E: packages/tui/src/tui-alt-screen.ts:1321] [E: packages/tui/src/tui-alt-screen.ts:1323] [E: packages/tui/src/tui-alt-screen.ts:1324]
 
 ## Sources
 

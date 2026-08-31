@@ -2,7 +2,7 @@
 
 > **pi**(`pi/`,9 个源码 package workspace + 5 个 extension-example workspace 的 TypeScript monorepo,自扩展编码 agent harness)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 pi git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
 >
-> **状态:已完成 —— 全部 197 节点 verified 于 `086c32e745`,`lint` 0 error / 0 warning。**
+> **状态:已完成 —— 全部 198 节点 verified 于 `853a80d26c`,`lint` 0 error / 0 warning。**
 >
 > **核心组织主线 —— 分层栈 + 复用边界 + 自扩展**:pi 是一条 `pi-ai` → `pi-agent-core` → `pi-coding-agent` + `pi-tui`，并由 `pi-protocol` / `pi-client` / `pi-server` 提供实验性 remote-session 链，旁接 `pi-session-backend-sqlite-node`、`pi-telemetry` 与 private `pi-evals`。每个节点 frontmatter 标 `pkg: ai|agent|protocol|client|coding-agent|tui|server|session-backends|telemetry|evals|cross`。
 
@@ -26,8 +26,9 @@
 - [trace:一次 RPC prompt](spine/trace-rpc-prompt.md) `[coding-agent]`: stdin JSON → runRpcMode → AgentSession → 事件流
 - [trace:扩展贡献一个工具](spine/trace-extension-tool.md) `[coding-agent]`: registerTool → wrapToolDefinition → 进入 turn
 
-## T1 — Surface / Tools(每工具一节点,7;ground truth = core/tools/index.ts)
+## T1 — Surface / Tools(每工具一节点,8;ground truth = core/tools/index.ts)
 - [bash](surface/tools/bash.md) `[coding-agent]`: 执行 shell(流式/超时/取消)— core/tools/bash.ts · bash-executor.ts
+- [powershell](surface/tools/powershell.md) `[coding-agent]`: 可选 Windows PowerShell(复用 bash shell factory)— core/tools/powershell.ts
 - [read](surface/tools/read.md) `[coding-agent]`: 读文件/图片(行范围/截断/路径变体)— core/tools/read.ts
 - [edit](surface/tools/edit.md) `[coding-agent]`: 模糊匹配字符串替换 + diff — core/tools/edit.ts · edit-diff.ts
 - [write](surface/tools/write.md) `[coding-agent]`: 整文件写 — core/tools/write.ts
@@ -48,7 +49,7 @@
 
 ## T2 — Subsystems(内部机制,逐子系统)
 
-### pi-ai（27 节点）
+### pi-ai（28 节点）
 - [provider 注册中心](subsystems/ai/provider-registry.md) `[ai]`: 覆盖 `builtinProviders`、`builtinModels`、`getBuiltinModel` 的实现边界；主源码：`packages/ai/src/providers/all.ts`、`packages/ai/src/models.ts`。
 - [wire 协议调度层](subsystems/ai/wire-protocol-dispatch.md) `[ai]`: 覆盖 `ProviderStreams`、`stream`、`streamSimple` 的实现边界；主源码：`packages/ai/src/models.ts`、`packages/ai/src/api/lazy.ts`。
 - [Anthropic Messages 协议](subsystems/ai/anthropic-messages.md) `[ai]`: 覆盖 `stream`、`AnthropicOptions` 的实现边界；主源码：`packages/ai/src/api/anthropic-messages.ts`、`packages/ai/src/api/openai-prompt-cache.ts`。

@@ -17,7 +17,7 @@ related:
   - subsys.coding-agent.keybindings
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > 键位匹配(keybinding matching)把 terminal raw input data 与 typed `KeyId` chord、再与 namespaced action id 连接起来: `matchesKey(data, keyId)` 判断一个具体 key 是否命中, `KeybindingsManager.matches(data, action)` 判断一个动作的 resolved keys 是否任一命中。
@@ -50,7 +50,7 @@ updated: 086c32e745
 
 `Keybindings` 是可 declaration merging 的 global keybinding registry, TUI 基础动作使用 `tui.editor.*`、`tui.input.*`、`tui.select.*` 与 `tui.altScreen.*` namespace [E: packages/tui/src/keybindings.ts:7] [E: packages/tui/src/keybindings.ts:9] [E: packages/tui/src/keybindings.ts:33] [E: packages/tui/src/keybindings.ts:38] [E: packages/tui/src/keybindings.ts:45] [E: packages/tui/src/keybindings.ts:58]。`KeybindingDefinition.defaultKeys` 支持单个 `KeyId` 或 `KeyId[]`, user config 也支持 action id 到 `KeyId | KeyId[] | undefined` 的映射 [E: packages/tui/src/keybindings.ts:63] [E: packages/tui/src/keybindings.ts:64] [E: packages/tui/src/keybindings.ts:69]。
 
-`TUI_KEYBINDINGS` 是 TUI 层默认 action definitions, 当前源码有 37 个 `tui.*` action, 覆盖 editor navigation/editing、generic input、generic selection 和六个 alternate-screen viewport 动作 [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:72] [E: packages/tui/src/keybindings.ts:143] [E: packages/tui/src/keybindings.ts:147] [E: packages/tui/src/keybindings.ts:160] [E: packages/tui/src/keybindings.ts:210] [I]。该对象用 `as const satisfies KeybindingDefinitions` 约束每项 shape [E: packages/tui/src/keybindings.ts:210]。
+`TUI_KEYBINDINGS` 是 TUI 层默认 action definitions, 当前源码有 47 个 `tui.*` action(23 editor + 4 input + 6 select + 14 altScreen),没有本轮增删 [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:72] [E: packages/tui/src/keybindings.ts:143] [E: packages/tui/src/keybindings.ts:147] [E: packages/tui/src/keybindings.ts:160] [E: packages/tui/src/keybindings.ts:209] [I]。`tui.altScreen.previousPrompt` / `nextPrompt` 的 defaultKeys 现为 `ctrl+shift+up`+`ctrl+up` 与 `ctrl+shift+down`+`ctrl+down` [E: packages/tui/src/keybindings.ts:185] [E: packages/tui/src/keybindings.ts:189]。该对象用 `as const satisfies KeybindingDefinitions` 约束每项 shape [E: packages/tui/src/keybindings.ts:210]。
 
 ## 控制流
 

@@ -22,7 +22,7 @@ related:
   - ref.agent.agent-events
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `subsys.agent-core.harness-events` 说明 `HarnessEventBus` 如何把 `run_start` / `run_end` 同时送给 typed direct listeners 与带 snapshot 的 buffered watches。

@@ -21,7 +21,7 @@ related:
   - ref.coding-agent.session-events
 evidence: explicit
 status: verified
-updated: 086c32e745
+updated: 853a80d26c
 ---
 
 > `ref.agent.agent-events` 是当前 agent-core 事件 catalog：`AgentEvent` 的 10 个 runtime variant，加上 `harness/events.ts` 的 `HarnessEvent`（`run_start` / `run_end`）。旧 `AgentHarnessEvent` / `AgentHarnessOwnEvent` union 已从 `packages/agent/src/harness/types.ts` 删除。
@@ -41,23 +41,23 @@ updated: 086c32e745
 
 ## Core AgentEvent variants
 
-`AgentEvent` 是 10-arm discriminated union，成员覆盖 `agent_*`、`turn_*`、`message_*` 与 `tool_execution_*`。[E: packages/agent/src/types.ts:428] [E: packages/agent/src/types.ts:430] [E: packages/agent/src/types.ts:433] [E: packages/agent/src/types.ts:436] [E: packages/agent/src/types.ts:441]
+`AgentEvent` 是 10-arm discriminated union，成员覆盖 `agent_*`、`turn_*`、`message_*` 与 `tool_execution_*`。[E: packages/agent/src/types.ts:429] [E: packages/agent/src/types.ts:431] [E: packages/agent/src/types.ts:434] [E: packages/agent/src/types.ts:437] [E: packages/agent/src/types.ts:442]
 
 `Agent.subscribe(listener)` 把 listener 放进 set，返回 unsubscribe。[E: packages/agent/src/agent.ts:250] [E: packages/agent/src/agent.ts:251] [E: packages/agent/src/agent.ts:252] `processEvents` 取出 `activeRun.abortController.signal`，再按订阅顺序 `await listener(event, signal)`。[E: packages/agent/src/agent.ts:584] [E: packages/agent/src/agent.ts:588] [E: packages/agent/src/agent.ts:589] `finishRun()` resolve `activeRun` 后 `waitForIdle()` 才完成，因此 idle 晚于 `agent_end` 本身。[E: packages/agent/src/agent.ts:529] [E: packages/agent/src/agent.ts:533] [E: packages/agent/src/agent.ts:328]
 
 | Variant | 字段/签名 | 语义 | 使用边界 | 源码证据 |
 | --- | --- | --- | --- | --- |
-| `AgentEvent` | 10-arm discriminated union | core agent runtime event 总 union。[E: packages/agent/src/types.ts:428] | 不包含 `HarnessEvent`。两套 union 独立。[E: packages/agent/src/harness/events.ts:15] [I] | `packages/agent/src/types.ts:428` |
-| `agent_start` | `{ type: "agent_start" }` | 一次 agent run 开始；无额外 payload。[E: packages/agent/src/types.ts:430] | emit 时机属于 `runLoop` / `Agent`，本表只记静态 shape。[I] | `packages/agent/src/types.ts:430` |
-| `agent_end` | `{ type: "agent_end"; messages: AgentMessage[] }` | 一次 agent run 结束，携带本次 run 的 `messages`。[E: packages/agent/src/types.ts:431] | `Agent` 在失败路径也会发 `agent_end`；`finishRun()` 之后 `waitForIdle()` 才 resolve。[E: packages/agent/src/agent.ts:526] [E: packages/agent/src/agent.ts:529] | `packages/agent/src/types.ts:431` |
-| `turn_start` | `{ type: "turn_start" }` | 一个 turn 开始；无额外 payload。[E: packages/agent/src/types.ts:433] | turn 的 runtime 边界属于 `runLoop`；本表只记静态 shape。[I] | `packages/agent/src/types.ts:433` |
-| `turn_end` | `{ type: "turn_end"; message: AgentMessage; toolResults: ToolResultMessage[] }` | 一个 turn 完成，携带 assistant `message` 与 `toolResults`。[E: packages/agent/src/types.ts:434] | 旧 harness `save_point` 已不存在于类型面。[I] | `packages/agent/src/types.ts:434` |
-| `message_start` | `{ type: "message_start"; message: AgentMessage }` | message 生命周期开始。[E: packages/agent/src/types.ts:436] | `Agent.processEvents` 在 `message_start` 把 `streamingMessage` 设为该 message。[E: packages/agent/src/agent.ts:546] [E: packages/agent/src/agent.ts:547] | `packages/agent/src/types.ts:436` |
-| `message_update` | `{ type: "message_update"; message: AgentMessage; assistantMessageEvent: AssistantMessageEvent }` | streaming 中的 message 更新，带当前 `message` 与 `assistantMessageEvent`。[E: packages/agent/src/types.ts:438] | `processEvents` 用它刷新 `streamingMessage`。[E: packages/agent/src/agent.ts:550] [E: packages/agent/src/agent.ts:551] `AssistantMessageEvent` 来自 `@earendil-works/pi-ai`。[I] | `packages/agent/src/types.ts:438` |
-| `message_end` | `{ type: "message_end"; message: AgentMessage }` | message 生命周期结束，携带最终 message。[E: packages/agent/src/types.ts:439] | `Agent.processEvents` 在 `message_end` 把 message push 进 `state.messages`。[E: packages/agent/src/agent.ts:554] [E: packages/agent/src/agent.ts:556] | `packages/agent/src/types.ts:439` |
-| `tool_execution_start` | `{ type: "tool_execution_start"; toolCallId: string; toolName: string; args: any }` | 一个 tool call 开始执行。[E: packages/agent/src/types.ts:441] | `args` 静态类型是 `any`。[E: packages/agent/src/types.ts:441] | `packages/agent/src/types.ts:441` |
-| `tool_execution_update` | `{ type: "tool_execution_update"; toolCallId: string; toolName: string; args: any; partialResult: any }` | tool 执行中的 partial update。[E: packages/agent/src/types.ts:442] | `partialResult` 静态类型是 `any`。[E: packages/agent/src/types.ts:442] | `packages/agent/src/types.ts:442` |
-| `tool_execution_end` | `{ type: "tool_execution_end"; toolCallId: string; toolName: string; result: any; isError: boolean }` | tool 执行完成。[E: packages/agent/src/types.ts:443] | 并行完成顺序属于 `ToolExecutionMode` 与 loop，本 variant 只声明 payload。[I] | `packages/agent/src/types.ts:443` |
+| `AgentEvent` | 10-arm discriminated union | core agent runtime event 总 union。[E: packages/agent/src/types.ts:429] | 不包含 `HarnessEvent`。两套 union 独立。[E: packages/agent/src/harness/events.ts:15] [I] | `packages/agent/src/types.ts:428` |
+| `agent_start` | `{ type: "agent_start" }` | 一次 agent run 开始；无额外 payload。[E: packages/agent/src/types.ts:431] | emit 时机属于 `runLoop` / `Agent`，本表只记静态 shape。[I] | `packages/agent/src/types.ts:430` |
+| `agent_end` | `{ type: "agent_end"; messages: AgentMessage[] }` | 一次 agent run 结束，携带本次 run 的 `messages`。[E: packages/agent/src/types.ts:432] | `Agent` 在失败路径也会发 `agent_end`；`finishRun()` 之后 `waitForIdle()` 才 resolve。[E: packages/agent/src/agent.ts:526] [E: packages/agent/src/agent.ts:529] | `packages/agent/src/types.ts:431` |
+| `turn_start` | `{ type: "turn_start" }` | 一个 turn 开始；无额外 payload。[E: packages/agent/src/types.ts:434] | turn 的 runtime 边界属于 `runLoop`；本表只记静态 shape。[I] | `packages/agent/src/types.ts:433` |
+| `turn_end` | `{ type: "turn_end"; message: AgentMessage; toolResults: ToolResultMessage[] }` | 一个 turn 完成，携带 assistant `message` 与 `toolResults`。[E: packages/agent/src/types.ts:435] | 旧 harness `save_point` 已不存在于类型面。[I] | `packages/agent/src/types.ts:434` |
+| `message_start` | `{ type: "message_start"; message: AgentMessage }` | message 生命周期开始。[E: packages/agent/src/types.ts:437] | `Agent.processEvents` 在 `message_start` 把 `streamingMessage` 设为该 message。[E: packages/agent/src/agent.ts:546] [E: packages/agent/src/agent.ts:547] | `packages/agent/src/types.ts:436` |
+| `message_update` | `{ type: "message_update"; message: AgentMessage; assistantMessageEvent: AssistantMessageEvent }` | streaming 中的 message 更新，带当前 `message` 与 `assistantMessageEvent`。[E: packages/agent/src/types.ts:439] | `processEvents` 用它刷新 `streamingMessage`。[E: packages/agent/src/agent.ts:550] [E: packages/agent/src/agent.ts:551] `AssistantMessageEvent` 来自 `@earendil-works/pi-ai`。[I] | `packages/agent/src/types.ts:438` |
+| `message_end` | `{ type: "message_end"; message: AgentMessage }` | message 生命周期结束，携带最终 message。[E: packages/agent/src/types.ts:440] | `Agent.processEvents` 在 `message_end` 把 message push 进 `state.messages`。[E: packages/agent/src/agent.ts:554] [E: packages/agent/src/agent.ts:556] | `packages/agent/src/types.ts:439` |
+| `tool_execution_start` | `{ type: "tool_execution_start"; toolCallId: string; toolName: string; args: any }` | 一个 tool call 开始执行。[E: packages/agent/src/types.ts:442] | `args` 静态类型是 `any`。[E: packages/agent/src/types.ts:442] | `packages/agent/src/types.ts:441` |
+| `tool_execution_update` | `{ type: "tool_execution_update"; toolCallId: string; toolName: string; args: any; partialResult: any }` | tool 执行中的 partial update。[E: packages/agent/src/types.ts:443] | `partialResult` 静态类型是 `any`。[E: packages/agent/src/types.ts:443] | `packages/agent/src/types.ts:442` |
+| `tool_execution_end` | `{ type: "tool_execution_end"; toolCallId: string; toolName: string; result: any; isError: boolean }` | tool 执行完成。[E: packages/agent/src/types.ts:444] | 并行完成顺序属于 `ToolExecutionMode` 与 loop，本 variant 只声明 payload。[I] | `packages/agent/src/types.ts:443` |
 
 ## HarnessEvent variants
 
@@ -81,7 +81,7 @@ updated: 086c32e745
 
 ## 关系边界
 
-`subsys.agent-core.turn-control` 解释 `AgentEvent` 的 emit 顺序和 `terminate` 如何结束 run；本节点只声明静态 payload。[E: packages/agent/src/types.ts:428] [I]
+`subsys.agent-core.turn-control` 解释 `AgentEvent` 的 emit 顺序和 `terminate` 如何结束 run；本节点只声明静态 payload。[E: packages/agent/src/types.ts:429] [I]
 
 `subsys.agent-core.harness-events` 解释 `HarnessEventBus` 的 listener / watch 算法；本节点只列 `HarnessEvent` 实例。[E: packages/agent/src/harness/events.ts:15] [I]
 
