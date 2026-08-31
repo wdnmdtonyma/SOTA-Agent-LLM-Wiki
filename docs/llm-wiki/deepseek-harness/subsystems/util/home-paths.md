@@ -29,7 +29,7 @@ related:
   - subsys.composition.app-boot
 evidence: explicit
 status: verified
-updated: 47f943859b
+updated: 0a53fb55be
 ---
 
 > `@deepseek-ai/dsh-home-paths` 是 **纯函数路径工具**：解析唯一产品主目录（显式 configured > 非空白 `$DSH_HOME` > `~/.dsh`）、拼接子路径、给出永不回绝对路径的显示名。它不是 Cordis `Service`，没有 `ctx.home`，也不做 profile / settings / skills 发现。
@@ -48,15 +48,15 @@ updated: 47f943859b
 
 它**不**拥有：
 
-- profile 发现、`$DSH_HOME/profiles/<name>` 的 `loadProfile` / `healProfilesModuleFallback` / `boot` — [`subsys.composition.app-boot`](../composition/app-boot.md)（`subsys.composition.app-boot`）。那些函数的 `home` 默认参数调用 `resolveDshHome()`，本包只给根路径。[E: packages/boot/app-boot/src/profile.ts:104] [E: packages/boot/app-boot/src/profile.ts:223]
-- `ctx.dshHomePath` 这个 **Context 键**。类型扩在 app-boot，值由 `boot` 里 `ctx.provide('dshHomePath', dshHomePath)` 放上去，供 Loader `!!js` 调用；本包不 `provide`。[E: packages/boot/app-boot/src/index.ts:27] [E: packages/boot/app-boot/src/index.ts:770]
+- profile 发现、`$DSH_HOME/profiles/<name>` 的 `loadProfile` / `healProfilesModuleFallback` / `boot` — [`subsys.composition.app-boot`](../composition/app-boot.md)（`subsys.composition.app-boot`）。那些函数的 `home` 默认参数调用 `resolveDshHome()`，本包只给根路径。[E: packages/boot/app-boot/src/profile.ts:127] [E: packages/boot/app-boot/src/profile.ts:580]
+- `ctx.dshHomePath` 这个 **Context 键**。类型扩在 app-boot，值由 `boot` 里 `ctx.provide('dshHomePath', dshHomePath)` 放上去，供 Loader `!!js` 调用；本包不 `provide`。[E: packages/boot/app-boot/src/index.ts:26] [E: packages/boot/app-boot/src/index.ts:785]
 - settings / credentials / session 盘 / user preset 目录里放什么文件 — 各 Persistence / composition Consumer 自己 `join` 或 `dshHomePath(...)`。
 - skills 扫描树、`~/.agents`、项目内 `.dsh/skills` — `skill-filesystem` 把 `dshHome` 与 `agentsHome` 分成两个字段。[E: packages/skill/skill-filesystem/src/index.ts:163] [E: packages/skill/skill-filesystem/src/index.ts:164]
 - T1 产品文案入口 — [`surface.misc.home`](../../surface/misc/home.md)（`surface.misc.home`）尚未写。本页是 T2 权威实现；T1 以后只做产品面入口。
 
 **不是 service，没有 waterfall，没有 isolate。** 解析函数读 `os.homedir` / `process.env` 再 `path.resolve`，不往 `ctx` 注册。companion `home-paths-invariant` 的 `install` 是空函数：值代数由本包单测保证。[E: packages/util/home-paths/src/invariant.ts:13] [E: packages/util/home-paths/src/invariant.ts:21] `package.json` 的 `peerDependencies` 只有 `@deepseek-ai/dsh-invariants` 与 `@deepseek-ai/cordis`，给这份 companion 用。[E: packages/util/home-paths/package.json:35] [E: packages/util/home-paths/package.json:36]
 
-**host 面路径，不是 preset 面配置。** 主目录是进程级用户数据根。默认产品路径仍是本地 Web GUI（`dsh web`）；换 preset 不会换 `$DSH_HOME`。
+**host 面路径，不是 preset 面配置。** 主目录是进程级用户数据根。宿主入口包括 `dsh web` 以及 `dsh --profile web|headless|sdk|sdk-minimal|acp`（以及自定义 profile）；换 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）不会换 `$DSH_HOME`。
 
 ## 关键文件
 
@@ -99,13 +99,13 @@ updated: 47f943859b
 
 6. `dshHomeDisplay@packages/util/home-paths/src/index.ts` 比较的是解析后的绝对路径是否等于默认根：相等标 `~/.dsh`，否则标 `$DSH_HOME`。测试对 `resolve(defaultDshHome())` 与 `'/some/other/root'` 分别钉这两档，没有第三档绝对路径。[E: packages/util/home-paths/src/index.ts:111] [E: packages/util/home-paths/tests/home-paths.spec.ts:55] [E: packages/util/home-paths/tests/home-paths.spec.ts:56]
 
-7. Consumer `resolveProfileDir@packages/boot/app-boot/src/profile.ts`：`home` 默认 `resolveDshHome()`，再 `join(home, 'profiles', name)`。`healProfilesModuleFallback` 与 `loadProfile` 同样默认这个 home；fallback 目录是 `join(home, PROFILES_DIR, 'node_modules')`。[E: packages/boot/app-boot/src/profile.ts:104] [E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:223] [E: packages/boot/app-boot/src/profile.ts:225] [E: packages/boot/app-boot/src/profile.ts:372]
+7. Consumer `resolveProfileDir@packages/boot/app-boot/src/profile.ts`：`home` 默认 `resolveDshHome()`，再 `join(home, PROFILES_DIR, name)`。[E: packages/boot/app-boot/src/profile.ts:127] [E: packages/boot/app-boot/src/profile.ts:133] `healProfilesModuleFallback` 与 `loadProfile` 同样默认这个 home；fallback 目录是 `join(home, PROFILES_DIR, 'node_modules')`。[E: packages/boot/app-boot/src/profile.ts:580] [E: packages/boot/app-boot/src/profile.ts:582] [E: packages/boot/app-boot/src/profile.ts:806]
 
-8. `loadLayeredEnv@packages/boot/app-boot/src/index.ts` 在读任何 `.env` 之前先 `const home = resolveDshHome()`，再 `readEnvLayer(..., home, …)` 找用户层文件（home 等于 cwd 时跳过，避免与项目层重复）。[E: packages/boot/app-boot/src/index.ts:181] [E: packages/boot/app-boot/src/index.ts:185] `DSH_` 是 bootstrap-only 前缀：`isBootstrapOnly` 为真的名字在发现到的文件里会抛，不能靠项目 `.env` 改写本包的解析输入。[E: packages/boot/app-boot/src/index.ts:117] [E: packages/boot/app-boot/src/index.ts:127] [E: packages/boot/app-boot/src/index.ts:157]
+8. `loadLayeredEnv@packages/boot/app-boot/src/index.ts` 在读任何 `.env` 之前先 `const home = resolveDshHome()`，再 `readEnvLayer(..., home, …)` 找用户层文件（home 等于 cwd 时跳过，避免与项目层重复）。[E: packages/boot/app-boot/src/index.ts:184] [E: packages/boot/app-boot/src/index.ts:188] `DSH_` 是 bootstrap-only 前缀：`isBootstrapOnly` 为真的名字在发现到的文件里会抛，不能靠项目 `.env` 改写本包的解析输入。[E: packages/boot/app-boot/src/index.ts:120] [E: packages/boot/app-boot/src/index.ts:130] [E: packages/boot/app-boot/src/index.ts:159]
 
-9. `boot@packages/boot/app-boot/src/index.ts` 在 `ctx.plugin(Loader)` 之前 `ctx.provide('dshHomePath', dshHomePath)`。这是函数，不是 `Service`，也不是 `ctx.home`。[E: packages/boot/app-boot/src/index.ts:770] 测试写 `!!js dshHomePath('sessions')`，断言插值结果是 `join($DSH_HOME, 'sessions')`。[E: packages/boot/app-boot/tests/app-boot.spec.ts:676] [E: packages/boot/app-boot/tests/app-boot.spec.ts:682] shipped `dsh-base` 用同一表达式把 JSONL 根指到 `dshHomePath('sessions')`。[E: packages/bundle/base/cordis.patch.yml:101]
+9. `boot@packages/boot/app-boot/src/index.ts` 在 `ctx.plugin(Loader)` 之前 `ctx.provide('dshHomePath', dshHomePath)`。这是函数，不是 `Service`，也不是 `ctx.home`。[E: packages/boot/app-boot/src/index.ts:785] 测试写 `!!js dshHomePath('sessions')`，断言插值结果是 `join($DSH_HOME, 'sessions')`。[E: packages/boot/app-boot/tests/app-boot.spec.ts:677] [E: packages/boot/app-boot/tests/app-boot.spec.ts:683] shipped `dsh-base` 用同一表达式把 JSONL 根指到 `dshHomePath('sessions')`。[E: packages/bundle/base/cordis.patch.yml:113]
 
-10. `canonicalizeWatchPath@packages/util/home-paths/src/index.ts`：`resolve` 后遇 `ENOENT` 向上收缺失段，对最深已存在祖先 `realpath`；若有缺失后缀还 `opendir` 证明祖先是可枚举目录，再 `join` 回去。非 `ENOENT` 原样抛。测试：经 symlink 的 `alias/later/config.yml` 收到 `realpath(target)/later/config.yml`；文件当父目录则 `ENOTDIR`。[E: packages/util/home-paths/src/index.ts:45] [E: packages/util/home-paths/src/index.ts:47] [E: packages/util/home-paths/tests/home-paths.spec.ts:66] [E: packages/util/home-paths/tests/home-paths.spec.ts:67] [E: packages/util/home-paths/tests/home-paths.spec.ts:71] `settings-file` 把这个结果交给 chokidar，而不是自己 `realpath` 整条路径。[E: packages/settings/settings-file/src/index.ts:238]
+10. `canonicalizeWatchPath@packages/util/home-paths/src/index.ts`：`resolve` 后遇 `ENOENT` 向上收缺失段，对最深已存在祖先 `realpath`；若有缺失后缀还 `opendir` 证明祖先是可枚举目录，再 `join` 回去。非 `ENOENT` 原样抛。测试：经 symlink 的 `alias/later/config.yml` 收到 `realpath(target)/later/config.yml`；文件当父目录则 `ENOTDIR`。[E: packages/util/home-paths/src/index.ts:45] [E: packages/util/home-paths/src/index.ts:47] [E: packages/util/home-paths/tests/home-paths.spec.ts:66] [E: packages/util/home-paths/tests/home-paths.spec.ts:67] [E: packages/util/home-paths/tests/home-paths.spec.ts:71] `settings-file` 把这个结果交给 chokidar，而不是自己 `realpath` 整条路径。[E: packages/settings/settings-file/src/index.ts:239]
 
 ## 设计动机
 
@@ -121,8 +121,8 @@ updated: 47f943859b
 
 - **空白 `$DSH_HOME` 当 unset；空字符串 `configured` 不是。** `??` 只跳过 `null` / `undefined`。`resolveDshHome('')` 会把 `''` 交给 `expandHomePath` 再 `resolve`。覆盖请传绝对路径或 `~/…`。[E: packages/util/home-paths/src/index.ts:89] [E: packages/util/home-paths/src/index.ts:90]
 - **`dshHomeDisplay` 永不回绝对路径。** 自定义根在 UI / 指令里只出现 `$DSH_HOME`，不会打印你设的那条路径。[E: packages/util/home-paths/src/index.ts:111]
-- **`dshHomePath` 看不见 `configured`。** 它永远 `resolveDshHome()`，只读 `process.env`。插件 Config 里的 `dshHome` 必须自己调 `resolveDshHome(config.dshHome)`，例如 settings 默认文件。[E: packages/util/home-paths/src/index.ts:99] [E: packages/settings/settings-file/src/index.ts:56]
-- **没有 `ctx.home`。** 树上能看见的是 app-boot 提供的 `ctx.dshHomePath`（函数），不是本包注册的 `Service`。[E: packages/boot/app-boot/src/index.ts:770]
+- **`dshHomePath` 看不见 `configured`。** 它永远 `resolveDshHome()`，只读 `process.env`。插件 Config 里的 `dshHome` 必须自己调 `resolveDshHome(config.dshHome)`，例如 settings 默认文件。[E: packages/util/home-paths/src/index.ts:99] [E: packages/settings/settings-file/src/index.ts:57]
+- **没有 `ctx.home`。** 树上能看见的是 app-boot 提供的 `ctx.dshHomePath`（函数），不是本包注册的 `Service`。[E: packages/boot/app-boot/src/index.ts:785]
 - **产品主目录不是 `.agents`。** 默认根是 `~/.dsh`。`.agents` 是 skills 的另一条兼容根（`agentsHome` / 项目 `.agents/skills`），不要把 Claude 配置目录当成 `$DSH_HOME`。[E: packages/util/home-paths/tests/home-paths.spec.ts:22] [E: packages/skill/skill-filesystem/src/index.ts:164]
 - **`~other/...` 不展开。** 只有光秃 `~` 与 `~/` / `~\` 前缀。`~user` 风格不是本包合同。[E: packages/util/home-paths/tests/home-paths.spec.ts:32]
 - **本包不是 Loader 插件。** 不要在 `cordis.yml` 里 `name: '@deepseek-ai/dsh-home-paths'`。要挂的是 invariant companion（空 `install`），或什么都不挂、只 import 函数。

@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 47f943859b
+updated: 0a53fb55be
 ---
 
 # 不确定项日志([U] 汇总)
@@ -224,4 +224,51 @@ updated: 47f943859b
 - **code**: `packages/extensions/tool-cordis/src/index.ts` 登记的是 `cordis_inspect_{list,query,self}` / `cordis_define` / `cordis_run` / `cordis_stop` / `cordis_undefine`。全仓 `.ts` / `.yml` 里 `cordis_mount` 只出现在 `apps/cli/config/agent-presets/cordis/agent.cordis.yml` 的 `# TRUST:` 注释。
 - **stance**: TRUST（模型 JS 连真实 runtime，本 preset ≈ shell access）由 `evaluateHostCode` + `CORDIS_SYSTEM_PROMPT` 成立。把当前模型可见动词叫 `cordis_mount` 标 `[U]`。
 - **page**: `surface/presets/cordis.md` 把注释当 `[I]`，把 `tool-cordis` 行与 `evaluateHostCode` 当 `[E]`。
+
+## update-agent-tool-presentation
+
+# uncertainty · subsys.core.agent-tool-presentation
+
+- `inactiveRows` 只读 loader entry 的静态 `fiber.inject`。`mode: ptc`/`both` 对 `codeRuntime` 的 wait 发生在 `apply` 内 `ctx.inject` 子 fiber，因此缺 runtime 时 `presentAs` 不跑、装配回落 native，但 `mountPreset` 不一定因本行失败。与源码注释「激活审计点名本行」意图不一致；代码合同只实现一半。
+
+## update-approval
+
+# uncertainty-update: approval
+
+- `effectiveApprovalPolicy` 从后往前只读 `event.data.policy`，不读 `source`。委派孩子 `append` 的 `source: 'delegation'` 因此只是审计标记。核到：`packages/subagent/subagent/src/child-agent.ts` 的 append 与 `packages/interaction/user-approval/src/index.ts` 的 fold。
+- live `/permission` 走 `ApprovalService.setPolicy`（额外 `inject` 通知）；pin / `set(session)` 走 `setApprovalPolicy`（无通知）。两条写路径并存。
+
+## update-code-mode
+
+# uncertainty-update-code-mode
+
+- `inactiveRows` only inspects static `fiber.inject` (`['tools']` on `tool-presentation`). YAML/JSDoc still claim a missing `codeRuntime` fails the preset at mount and names that row. Tests: `row.await()` succeeds; assemble stays native (`echo`) until `StubRuntime` is plugged. Marked `[U]` on `subsys.core.code-mode`.
+
+## update-config-keys
+
+# uncertainty-update-config-keys
+
+- 本 catalog 在 `0a53fb55be` 对 **已删除包**（apiproxy / client-runtime / web-react / acp-demo）与 **PTC / 五 profile / 四 preset** 做了权威改写。
+- 仍有大量 `packages/*/src/index.ts` 的 `Config` 顶层键未在实例表里逐字段展开（文末名单）。完整机械枚举以各文件 `export const Config` / `static Config` 为准；filler 未把官方 `docs/config-catalog.md` 当 [E]。
+- `dsh-webhook` 运行时无插件 Config；`dsh-acp-app` `apply` 无 config 参数。
+
+## update-retry
+
+# uncertainty-update-retry
+
+- Package README prose claiming retry “closes the failed turn / fresh numbered turn” is not present under `packages/llm/llm-retry/` at `0a53fb55be`. Loop code still `continue`s the same `while` (`agent.ts` 407) and tests see one `step/start`. Left `[U]` on that gotcha so a later README regression is not treated as verified text.
+
+## update-run-code
+
+# uncertainty-update-run-code
+
+- `inactiveRows` 只扫 `fiber.inject`（静态 inject）。`tool-presentation` 静态 `inject = ['tools']`，`codeRuntime` 是 `apply` 里动态 `ctx.inject`。因此缺 runtime 时这条行不会出现在 `inactiveRows` 的 waiting 列表里；装配仍保持 native。JSDoc 写「fails at mount」是设计意图，执行路径未用静态 inject 卡住整棵 fiber。见 `packages/preset/agent-presets/src/mount.ts:316` 与 `packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:111`。
+
+## update-trace-code-mode
+
+# uncertainty-update-trace-code-mode
+
+- node: `spine.trace-code-mode`
+- SHA: `0a53fb55be`
+- `dsh-agent-tool-presentation` JSDoc still says a PTC row against a deployment with no `codeRuntime` “fails at mount, named in the preset's own activation audit”. `inactiveRows` only inspects static `fiber.inject` (the row lists `['tools']`, not `codeRuntime`), so the dynamic `ctx.inject(['codeRuntime'], …)` wait is invisible to that audit. The presentation spec asserts assemble stays native (`echo`) until a runtime plugin arrives. Keep as `[U]` until the JSDoc, mount audit, or wait inject list are aligned.
 

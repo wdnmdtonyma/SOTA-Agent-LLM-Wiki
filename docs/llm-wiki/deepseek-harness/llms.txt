@@ -2,7 +2,7 @@
 
 > **deepseek-harness**(`deepseek-harness/`,Cordis 插件树 TypeScript monorepo,组装运行时)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 deepseek-harness git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
 >
-> **状态:已完成 —— 全部 183 节点 verified 于 `47f943859b`,`lint` 0 error / 0 warning。**
+> **状态:已完成 —— 全部 201 节点 verified 于 `0a53fb55be`(`0.1.2-alpha.2`)。**
 >
 > **核心组织主线 —— 组合运行时**:profile → bundle → agent preset;capability seam = Service Definition / Provider / Consumer;model-visible ⟺ logged。每个节点 frontmatter 标 `pkg: composition|core|llm|execution|orchestration|context|persistence|interaction|host|client|integration|vendor|util|cross`。官方 `docs/` 不是 `[E]`。
 
@@ -23,7 +23,7 @@
 - [trace: Web 第一次提问](spine/trace-web-first-prompt.md) `[cross]`: `dsh web → 宿主 → 会话 → 第一轮 turn`
 - [trace: headless 一轮](spine/trace-headless-turn.md) `[composition]`: `dsh --profile headless 一次任务`
 - [trace: 带审批的工具调用](spine/trace-tool-approval.md) `[interaction]`: `tool/call → approval → sandbox → result`
-- [trace: Code Mode 一轮](spine/trace-code-mode.md) `[core]`: `run_code 是唯一 wire 工具,子调用重入管线`
+- [trace: PTC / Code Mode 一轮](spine/trace-code-mode.md) `[core]`: `run_code 是 PTC wire 工具,子调用重入管线`
 - [trace: 拉起子代理](spine/trace-subagent.md) `[orchestration]`: `spawn/fork 到子 session 再回收`
 
 ## T1 — Surface / Tools(model-visible;同名不同包拆页;家族页须逐名入表)
@@ -37,6 +37,7 @@
 - [bash 一次性执行](surface/tools/bash.md) `[execution]`: `ctx.shell;可 run_in_background → jobs`
 - [bash 持久 PTY](surface/tools/bash-persistent.md) `[execution]`: `同名 bash,包是 tool-bash-persistent;minimal 用它`
 - [pwsh](surface/tools/pwsh.md) `[execution]`: `PowerShell 方言,镜像 bash 减 sandbox 控件`
+- [pwsh 持久 PTY](surface/tools/pwsh-persistent.md) `[execution]`: `同名 pwsh,包是 tool-pwsh-persistent`
 - [terminal_* 六件套](surface/tools/terminal.md) `[execution]`: `opt-in,不在 shipped preset;六个名字必须入表`
 - [job_list / job_output / job_kill](surface/tools/jobs.md) `[orchestration]`: `后台 bash / PTY / subagent 共用控制器`
 - [exit_plan_mode](surface/tools/exit-plan-mode.md) `[orchestration]`: `schema 在 plan 外仍在,execute 拒掉`
@@ -52,23 +53,27 @@
 - [web_fetch](surface/tools/web-fetch.md) `[integration]`: `shipped preset 默认关;SSRF 未完成`
 - [skill](surface/tools/skill.md) `[context]`: `扫描 .dsh/skills 与 .agents/skills`
 - [ask_user_question](surface/tools/ask-user-question.md) `[interaction]`: `停在 tool/call 直到 UI 答`
-- [run_code (Code Mode)](surface/tools/run-code.md) `[core]`: `code preset 唯一 wire 工具`
+- [run_code (PTC)](surface/tools/run-code.md) `[core]`: `ptc preset 的 wire 工具;TS/Python flavor`
 - [lsp](surface/tools/lsp.md) `[execution]`: `四 ops;无 provider 则 LSP_UNAVAILABLE`
 - [session_* 查询五件套](surface/tools/session-query.md) `[persistence]`: `opt-in;五个名字必须入表`
 - [schedule_create / list / delete](surface/tools/schedule.md) `[orchestration]`: `opt-in;只在 live root Agent scope`
 - [cordis_* 自修改套件](surface/tools/cordis.md) `[composition]`: `cordis preset;无 cordis_mount/unmount`
+- [Agent Teams 工具族](surface/tools/agent-team.md) `[orchestration]`: `opt-in;挂 ctx.agentTeams;须逐名入表`
 
 > 工具基础设施见 `subsystems/core/tools` 与 `reference/tools-catalog`。
 
 ## T1 — Surface / 其它可见面
-- [CLI 入口与旗标](surface/cli/overview.md) `[composition]`: `dsh web / headless / plugin / dump-config`
+- [CLI 入口与旗标](surface/cli/overview.md) `[composition]`: `dsh web / headless / sdk / sdk-minimal / acp / dump-config`
 - [dsh plugin 子命令](surface/cli/plugin.md) `[composition]`: `往 profile 装 out-of-tree 插件`
 - [web profile](surface/profiles/web.md) `[composition]`: `默认安装路径;浏览器工作台`
 - [headless profile](surface/profiles/headless.md) `[composition]`: `一次性 runner,无 server`
+- [sdk profile](surface/profiles/sdk.md) `[composition]`: `dsh-base + dsh-sdk-app;JSON-RPC;startup reload`
+- [sdk-minimal profile](surface/profiles/sdk-minimal.md) `[composition]`: `不叠 dsh-base 的独立 SDK 树`
+- [acp profile](surface/profiles/acp.md) `[composition]`: `dsh-base + dsh-acp-app;自动化 ACP`
 - [agent preset 总览](surface/presets/overview.md) `[composition]`: `四份 shipped preset 怎么被发现和挂上`
 - [minimal preset](surface/presets/minimal.md) `[composition]`: `benchmark;无 compaction;persistent bash + str_replace_editor`
 - [standard preset](surface/presets/standard.md) `[composition]`: `Web 默认;全套编码工具`
-- [code preset (PTC)](surface/presets/code.md) `[composition]`: `standard + Code Mode`
+- [PTC preset(原 code)](surface/presets/code.md) `[composition]`: `standard + PTC run_code`
 - [cordis preset](surface/presets/cordis.md) `[composition]`: `standard + 自修改;当 shell 访问`
 - [用户设置与 Config](surface/config/settings.md) `[persistence]`: `defaults → composition base → user document`
 - [人命令 ctx.commands](surface/commands/overview.md) `[interaction]`: `不经模型 turn 的直接调用`
@@ -92,6 +97,9 @@
 - [dsh-base bundle](subsystems/composition/bundle-base.md) `[composition]`: `每个 profile 第一层;当前不含休眠 Codex/Claude 行`
 - [dsh-web-app bundle](subsystems/composition/bundle-web-app.md) `[composition]`: `关掉 base 里给单会话 TUI 留的工具行`
 - [dsh-headless bundle](subsystems/composition/bundle-headless.md) `[composition]`: `一次性 runner 装配`
+- [dsh-sdk-app bundle](subsystems/composition/bundle-sdk-app.md) `[composition]`: `叠在 base 上的 SDK JSON-RPC 服务器`
+- [dsh-sdk-minimal bundle](subsystems/composition/bundle-sdk-minimal.md) `[composition]`: `不叠 base 的独立 SDK 树`
+- [dsh-acp-app bundle](subsystems/composition/bundle-acp-app.md) `[composition]`: `自动化 ACP 服务器装配`
 - [preset 发现与挂载](subsystems/composition/agent-presets.md) `[composition]`: `per-session cordis.yml + isolate`
 - [persona 段](subsystems/composition/persona.md) `[composition]`: `preset 的人设 / 完整 persona`
 
@@ -100,7 +108,7 @@
 - [SessionEvent 日志](subsystems/core/session.md) `[core]`: `append-only 内存店 + 投影`
 - [system-prompt 装配](subsystems/core/system-prompt.md) `[core]`: `sections + tool schema 合作装配`
 - [工具注册表与执行管线](subsystems/core/tools.md) `[core]`: `scoped registry + 守卫管线`
-- [Code Mode 运行时](subsystems/core/code-mode.md) `[core]`: `生成 SDK;子调用重入`
+- [PTC 运行时(原 Code Mode)](subsystems/core/code-mode.md) `[core]`: `ptc.ts;run_code;TS/Python flavor`
 - [Agent 合同与注册表](subsystems/core/agent.md) `[core]`: `loop 可换;插件依赖此缝`
 - [inbox(followup/steer/inject)](subsystems/core/agent-inbox.md) `[core]`: `唤醒 vs 等待下一条`
 - [默认 agent-loop 驱动](subsystems/core/agent-loop.md) `[core]`: `可替换的默认驱动`
@@ -114,6 +122,7 @@
 - [pi-ai adapter](subsystems/llm/pi-ai.md) `[llm]`: `openai-completions / responses / anthropic-messages`
 - [llm retry](subsystems/llm/retry.md) `[llm]`: `请求失败重试与历史`
 - [token-meter](subsystems/llm/token-meter.md) `[llm]`: `不可变标量与位置回放测量`
+- [DeepSeek LLM 扩展与插件清单](subsystems/llm/deepseek-extensions.md) `[llm]`: `API 扩展注册 + 官方插件 inventory`
 
 ### execution
 - [fs 服务缝](subsystems/execution/fs.md) `[execution]`: `FsTarget / 观察 / 错误码`
@@ -128,7 +137,8 @@
 - [sandbox 缝](subsystems/execution/sandbox.md) `[execution]`: `只罩文件副作用;不可用则 SANDBOX_UNAVAILABLE`
 - [sandbox-local 后端](subsystems/execution/sandbox-local.md) `[execution]`: `bwrap→Landlock;macOS Seatbelt;Windows ACL`
 - [sandboxPolicy](subsystems/execution/sandbox-policy.md) `[execution]`: `read-only / workspace-write / danger-full-access`
-- [code-runtime 缝](subsystems/execution/code-runtime.md) `[execution]`: `worker-thread provider + Code Mode consumer`
+- [code-runtime 缝](subsystems/execution/code-runtime.md) `[execution]`: `worker-thread provider + PTC consumer`
+- [Python code-runtime](subsystems/execution/code-runtime-python.md) `[execution]`: `PTC Python flavor 的 runtime provider`
 - [E2B 远程世界](subsystems/execution/e2b.md) `[execution]`: `POC:一次换 fs+subprocess`
 - [lsp 缝](subsystems/execution/lsp.md) `[execution]`: `四 ops;stdio provider`
 
@@ -145,6 +155,7 @@
 - [goal 生命周期](subsystems/orchestration/goal.md) `[orchestration]`: `phase 落盘;activation 不落盘`
 - [plan mode 状态](subsystems/orchestration/plan.md) `[orchestration]`: `log-only plan/mode;工具表不换(KV cache)`
 - [schedule 提醒](subsystems/orchestration/schedule.md) `[orchestration]`: `会话内 after_seconds / at / every_seconds`
+- [experimental Agent Teams](subsystems/orchestration/agent-team.md) `[orchestration]`: `ctx.agentTeams;roster / mailbox / task board`
 
 ### context
 - [compaction 缝](subsystems/context/compaction.md) `[context]`: `replace-only;阈值默认 0.8 / 0.16`
@@ -155,6 +166,7 @@
 - [skills 注册与加载](subsystems/context/skills.md) `[context]`: `provider registry + local impl`
 - [工具超时策略](subsystems/context/timeout-policy.md) `[context]`: `tools/execute 截止`
 - [重复调用提醒](subsystems/context/repeat-reminder.md) `[context]`: `loop hygiene,advisory`
+- [file-reference 缝](subsystems/context/file-reference.md) `[context]`: `文件引用 grammar + local provider`
 
 ### persistence
 - [session persistence 缝](subsystems/persistence/session-persistence.md) `[persistence]`: `JSONL + SQLite 后端协调`
@@ -171,6 +183,7 @@
 - [workspace 实体](subsystems/persistence/workspace.md) `[persistence]`: `cwd 与 workspace id`
 - [settings 缝](subsystems/persistence/settings.md) `[persistence]`: `namespace 注册 + 热提交`
 - [credentials 缝](subsystems/persistence/credentials.md) `[persistence]`: `配置里只放 CredentialRef`
+- [DeepSeek session-log 方言](subsystems/persistence/session-log-deepseek.md) `[persistence]`: `base 挂载;不是第二份日志`
 
 ### interaction
 - [user-approval](subsystems/interaction/approval.md) `[interaction]`: `ask|never;allowed-once;无答者 fail-closed`
@@ -184,19 +197,23 @@
 
 ### host
 - [HTTP 宿主](subsystems/host/webserver.md) `[host]`: `路由匹配与 fallback seat`
-- [API proxy / BFF](subsystems/host/apiproxy.md) `[host]`: `浏览器到 host 的 RPC`
+- [HTTP API controllers(原 apiproxy)](subsystems/host/apiproxy.md) `[host]`: `session/settings/workspace-controller`
 - [前端静态资源](subsystems/host/frontend-static.md) `[host]`: `把 client bundle 挂上`
 - [plugin inventory](subsystems/host/plugin-inventory.md) `[host]`: `已装插件清单给 UI`
 - [directory picker](subsystems/host/directory-picker.md) `[host]`: `工作区选目录`
 
 ### client
-- [client runtime](subsystems/client/runtime.md) `[client]`: `浏览器半边引导`
+- [client runtime](subsystems/client/runtime.md) `[client]`: `浏览器半边引导(现指向 store + controllers)`
+- [client store](subsystems/client/store.md) `[client]`: `浏览器状态家;替换已删 runtime 包`
 - [client modules 表](subsystems/client/modules.md) `[client]`: `dsh.client 声明与 boot graph`
 - [web shell](subsystems/client/web.md) `[client]`: `应用壳`
 - [client connection](subsystems/client/connection.md) `[client]`: `到 host 的连线`
 - [client HMR](subsystems/client/hmr.md) `[client]`: `运行时装 UI 插件`
 - [ui-slots](subsystems/client/ui-slots.md) `[client]`: `插槽装配点`
 - [ui-conversation](subsystems/client/ui-conversation.md) `[client]`: `会话流渲染`
+- [ui-chat](subsystems/client/ui-chat.md) `[client]`: `ConversationNode 装配与 renderer`
+- [ui-session](subsystems/client/ui-session.md) `[client]`: `会话列表 / 选择`
+- [ui-renderer](subsystems/client/ui-renderer.md) `[client]`: `原 web-react;bind / scoped-slots`
 - [ui-layout](subsystems/client/ui-layout.md) `[client]`: `工作台布局`
 
 ### integration
@@ -209,6 +226,7 @@
 - [API gateway](subsystems/integration/api-gateway.md) `[integration]`: `Host Gateway / remotes`
 - [web search providers](subsystems/integration/web-search.md) `[integration]`: `DeepSeek 默认;Exa / Perplexity 可选`
 - [web fetch provider](subsystems/integration/web-fetch.md) `[integration]`: `HTTP fetch;SSRF 未完成`
+- [webhook 运行时](subsystems/integration/webhook.md) `[integration]`: `ctx.webhookRuntime;GitHub adapter`
 
 ### vendor / util
 - [vendored Cordis](subsystems/vendor/cordis.md) `[vendor]`: `可逆 effect / waterfall / fiber`

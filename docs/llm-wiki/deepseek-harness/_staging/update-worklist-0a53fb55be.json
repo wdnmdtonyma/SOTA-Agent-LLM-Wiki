@@ -1,0 +1,1364 @@
+{
+  "batches": {
+    "spine": [
+      {
+        "id": "spine.overview",
+        "path": "spine/overview.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.composition-boot",
+        "path": "spine/composition-boot.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.turn-and-step",
+        "path": "spine/turn-and-step.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.tool-call-anatomy",
+        "path": "spine/tool-call-anatomy.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.session-log",
+        "path": "spine/session-log.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.capability-seams",
+        "path": "spine/capability-seams.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.context-and-compaction",
+        "path": "spine/context-and-compaction.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.trace-web-first-prompt",
+        "path": "spine/trace-web-first-prompt.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.trace-headless-turn",
+        "path": "spine/trace-headless-turn.md",
+        "kind": "flow",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "spine.trace-tool-approval",
+        "path": "spine/trace-tool-approval.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.trace-code-mode",
+        "path": "spine/trace-code-mode.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "spine.trace-subagent",
+        "path": "spine/trace-subagent.md",
+        "kind": "flow",
+        "grade": "A-BROKEN"
+      }
+    ],
+    "tools": [
+      {
+        "id": "surface.tools.read",
+        "path": "surface/tools/read.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.read-image",
+        "path": "surface/tools/read-image.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.write",
+        "path": "surface/tools/write.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.edit",
+        "path": "surface/tools/edit.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.glob",
+        "path": "surface/tools/glob.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.grep",
+        "path": "surface/tools/grep.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.str-replace-editor",
+        "path": "surface/tools/str-replace-editor.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.bash",
+        "path": "surface/tools/bash.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.bash-persistent",
+        "path": "surface/tools/bash-persistent.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.pwsh",
+        "path": "surface/tools/pwsh.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.terminal",
+        "path": "surface/tools/terminal.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.jobs",
+        "path": "surface/tools/jobs.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.exit-plan-mode",
+        "path": "surface/tools/exit-plan-mode.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.todo-write",
+        "path": "surface/tools/todo-write.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.goal",
+        "path": "surface/tools/goal.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.subagent",
+        "path": "surface/tools/subagent.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.subagent-fork",
+        "path": "surface/tools/subagent-fork.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.subagent-control",
+        "path": "surface/tools/subagent-control.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.report",
+        "path": "surface/tools/report.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.workflow",
+        "path": "surface/tools/workflow.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.ralph",
+        "path": "surface/tools/ralph.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.web-search",
+        "path": "surface/tools/web-search.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.web-fetch",
+        "path": "surface/tools/web-fetch.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.skill",
+        "path": "surface/tools/skill.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.ask-user-question",
+        "path": "surface/tools/ask-user-question.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.run-code",
+        "path": "surface/tools/run-code.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.lsp",
+        "path": "surface/tools/lsp.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.session-query",
+        "path": "surface/tools/session-query.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.schedule",
+        "path": "surface/tools/schedule.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.tools.cordis",
+        "path": "surface/tools/cordis.md",
+        "kind": "tool",
+        "grade": "A-BROKEN"
+      }
+    ],
+    "surface_rest": [
+      {
+        "id": "surface.cli.overview",
+        "path": "surface/cli/overview.md",
+        "kind": "surface",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "surface.cli.plugin",
+        "path": "surface/cli/plugin.md",
+        "kind": "surface",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "surface.profiles.web",
+        "path": "surface/profiles/web.md",
+        "kind": "surface",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "surface.profiles.headless",
+        "path": "surface/profiles/headless.md",
+        "kind": "surface",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "surface.presets.overview",
+        "path": "surface/presets/overview.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.presets.minimal",
+        "path": "surface/presets/minimal.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.presets.standard",
+        "path": "surface/presets/standard.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.presets.code",
+        "path": "surface/presets/code.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.presets.cordis",
+        "path": "surface/presets/cordis.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.config.settings",
+        "path": "surface/config/settings.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.commands.overview",
+        "path": "surface/commands/overview.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.skills.system",
+        "path": "surface/skills/system.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.mcp.client",
+        "path": "surface/mcp/client.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.hooks.bridges",
+        "path": "surface/hooks/bridges.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.acp.server",
+        "path": "surface/acp/server.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.sdk.typescript",
+        "path": "surface/sdk/typescript.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.sdk.python",
+        "path": "surface/sdk/python.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.web.workbench",
+        "path": "surface/web/workbench.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.providers.deepseek",
+        "path": "surface/providers/deepseek.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "surface.providers.pi-ai",
+        "path": "surface/providers/pi-ai.md",
+        "kind": "surface",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "surface.misc.home",
+        "path": "surface/misc/home.md",
+        "kind": "surface",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "surface.misc.security",
+        "path": "surface/misc/security.md",
+        "kind": "surface",
+        "grade": "A-BROKEN"
+      }
+    ],
+    "composition_core": [
+      {
+        "id": "subsys.composition.app-boot",
+        "path": "subsystems/composition/app-boot.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.composition.cmdline",
+        "path": "subsystems/composition/cmdline.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.composition.bundle-base",
+        "path": "subsystems/composition/bundle-base.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.composition.bundle-web-app",
+        "path": "subsystems/composition/bundle-web-app.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.composition.bundle-headless",
+        "path": "subsystems/composition/bundle-headless.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.composition.agent-presets",
+        "path": "subsystems/composition/agent-presets.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.composition.persona",
+        "path": "subsystems/composition/persona.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.core.scope",
+        "path": "subsystems/core/scope.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.core.session",
+        "path": "subsystems/core/session.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.core.system-prompt",
+        "path": "subsystems/core/system-prompt.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.core.tools",
+        "path": "subsystems/core/tools.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.core.code-mode",
+        "path": "subsystems/core/code-mode.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.core.agent",
+        "path": "subsystems/core/agent.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.core.agent-inbox",
+        "path": "subsystems/core/agent-inbox.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.core.agent-loop",
+        "path": "subsystems/core/agent-loop.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.core.agent-default-model",
+        "path": "subsystems/core/agent-default-model.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.core.agent-tool-presentation",
+        "path": "subsystems/core/agent-tool-presentation.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.core.invariants",
+        "path": "subsystems/core/invariants.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      }
+    ],
+    "llm_execution": [
+      {
+        "id": "subsys.llm.service",
+        "path": "subsystems/llm/service.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.llm.deepseek",
+        "path": "subsystems/llm/deepseek.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.llm.pi-ai",
+        "path": "subsystems/llm/pi-ai.md",
+        "kind": "subsystem",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "subsys.llm.retry",
+        "path": "subsystems/llm/retry.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.llm.token-meter",
+        "path": "subsystems/llm/token-meter.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.fs",
+        "path": "subsystems/execution/fs.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.fs-local",
+        "path": "subsystems/execution/fs-local.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.fs-observation",
+        "path": "subsystems/execution/fs-observation.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.fs-sandbox",
+        "path": "subsystems/execution/fs-sandbox.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.shell",
+        "path": "subsystems/execution/shell.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.bash-local",
+        "path": "subsystems/execution/bash-local.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.pwsh-local",
+        "path": "subsystems/execution/pwsh-local.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.subprocess",
+        "path": "subsystems/execution/subprocess.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.terminal",
+        "path": "subsystems/execution/terminal.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.sandbox",
+        "path": "subsystems/execution/sandbox.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.execution.sandbox-local",
+        "path": "subsystems/execution/sandbox-local.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.execution.sandbox-policy",
+        "path": "subsystems/execution/sandbox-policy.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.code-runtime",
+        "path": "subsystems/execution/code-runtime.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.e2b",
+        "path": "subsystems/execution/e2b.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.execution.lsp",
+        "path": "subsystems/execution/lsp.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      }
+    ],
+    "orch_context": [
+      {
+        "id": "subsys.orchestration.subagent",
+        "path": "subsystems/orchestration/subagent.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.subagent-in-process",
+        "path": "subsystems/orchestration/subagent-in-process.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.subagent-fork",
+        "path": "subsystems/orchestration/subagent-fork.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.subagent-acp",
+        "path": "subsystems/orchestration/subagent-acp.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.subagent-dsh-sdk",
+        "path": "subsystems/orchestration/subagent-dsh-sdk.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.subagent-codex",
+        "path": "subsystems/orchestration/subagent-codex.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.subagent-claude-code",
+        "path": "subsystems/orchestration/subagent-claude-code.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.workflow",
+        "path": "subsystems/orchestration/workflow.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.jobs",
+        "path": "subsystems/orchestration/jobs.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.goal",
+        "path": "subsystems/orchestration/goal.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.plan",
+        "path": "subsystems/orchestration/plan.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.orchestration.schedule",
+        "path": "subsystems/orchestration/schedule.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.context.compaction",
+        "path": "subsystems/context/compaction.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.context.compaction-basic",
+        "path": "subsystems/context/compaction-basic.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.context.agent-instructions",
+        "path": "subsystems/context/agent-instructions.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.context.time-context",
+        "path": "subsystems/context/time-context.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.context.session-reference",
+        "path": "subsystems/context/session-reference.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.context.skills",
+        "path": "subsystems/context/skills.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.context.timeout-policy",
+        "path": "subsystems/context/timeout-policy.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.context.repeat-reminder",
+        "path": "subsystems/context/repeat-reminder.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      }
+    ],
+    "persist_interaction": [
+      {
+        "id": "subsys.persistence.session-persistence",
+        "path": "subsystems/persistence/session-persistence.md",
+        "kind": "subsystem",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "subsys.persistence.jsonl",
+        "path": "subsystems/persistence/jsonl.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.persistence.sqlite",
+        "path": "subsystems/persistence/sqlite.md",
+        "kind": "subsystem",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "subsys.persistence.checkpoint",
+        "path": "subsystems/persistence/checkpoint.md",
+        "kind": "subsystem",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "subsys.persistence.projection",
+        "path": "subsystems/persistence/projection.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.persistence.title",
+        "path": "subsystems/persistence/title.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.persistence.telemetry",
+        "path": "subsystems/persistence/telemetry.md",
+        "kind": "subsystem",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "subsys.persistence.storage",
+        "path": "subsystems/persistence/storage.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.persistence.spill",
+        "path": "subsystems/persistence/spill.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.persistence.attachment",
+        "path": "subsystems/persistence/attachment.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.persistence.session-query",
+        "path": "subsystems/persistence/session-query.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.persistence.workspace",
+        "path": "subsystems/persistence/workspace.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.persistence.settings",
+        "path": "subsystems/persistence/settings.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.persistence.credentials",
+        "path": "subsystems/persistence/credentials.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.interaction.approval",
+        "path": "subsystems/interaction/approval.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.interaction.user-questions",
+        "path": "subsystems/interaction/user-questions.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.interaction.commands",
+        "path": "subsystems/interaction/commands.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.interaction.permission-presets",
+        "path": "subsystems/interaction/permission-presets.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.interaction.hooks-protocol",
+        "path": "subsystems/interaction/hooks-protocol.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.interaction.hooks-claude",
+        "path": "subsystems/interaction/hooks-claude.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.interaction.hooks-codex",
+        "path": "subsystems/interaction/hooks-codex.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.interaction.feedback",
+        "path": "subsystems/interaction/feedback.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      }
+    ],
+    "host_client_int": [
+      {
+        "id": "subsys.host.webserver",
+        "path": "subsystems/host/webserver.md",
+        "kind": "subsystem",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "subsys.host.apiproxy",
+        "path": "subsystems/host/apiproxy.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.host.frontend-static",
+        "path": "subsystems/host/frontend-static.md",
+        "kind": "subsystem",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "subsys.host.plugin-inventory",
+        "path": "subsystems/host/plugin-inventory.md",
+        "kind": "subsystem",
+        "grade": "B-HEAVY"
+      },
+      {
+        "id": "subsys.host.directory-picker",
+        "path": "subsystems/host/directory-picker.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.client.runtime",
+        "path": "subsystems/client/runtime.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.client.modules",
+        "path": "subsystems/client/modules.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.client.web",
+        "path": "subsystems/client/web.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.client.connection",
+        "path": "subsystems/client/connection.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.client.hmr",
+        "path": "subsystems/client/hmr.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.client.ui-slots",
+        "path": "subsystems/client/ui-slots.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.client.ui-conversation",
+        "path": "subsystems/client/ui-conversation.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.client.ui-layout",
+        "path": "subsystems/client/ui-layout.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.integration.mcp-client",
+        "path": "subsystems/integration/mcp-client.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.integration.acp",
+        "path": "subsystems/integration/acp.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.integration.sdk-protocol",
+        "path": "subsystems/integration/sdk-protocol.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.integration.sdk-server",
+        "path": "subsystems/integration/sdk-server.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.integration.sdk-client",
+        "path": "subsystems/integration/sdk-client.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.integration.typert",
+        "path": "subsystems/integration/typert.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.integration.api-gateway",
+        "path": "subsystems/integration/api-gateway.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.integration.web-search",
+        "path": "subsystems/integration/web-search.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.integration.web-fetch",
+        "path": "subsystems/integration/web-fetch.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.vendor.cordis",
+        "path": "subsystems/vendor/cordis.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.vendor.loader",
+        "path": "subsystems/vendor/loader.md",
+        "kind": "subsystem",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "subsys.util.home-paths",
+        "path": "subsystems/util/home-paths.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "subsys.util.brand",
+        "path": "subsystems/util/brand.md",
+        "kind": "subsystem",
+        "grade": "C-DRIFT"
+      }
+    ],
+    "reference": [
+      {
+        "id": "ref.tools-catalog",
+        "path": "reference/tools-catalog.md",
+        "kind": "catalog",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "ref.session-events",
+        "path": "reference/session-events.md",
+        "kind": "catalog",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "ref.config-keys",
+        "path": "reference/config-keys.md",
+        "kind": "catalog",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "ref.env-vars",
+        "path": "reference/env-vars.md",
+        "kind": "catalog",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "ref.ctx-keys",
+        "path": "reference/ctx-keys.md",
+        "kind": "catalog",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "ref.event-map",
+        "path": "reference/event-map.md",
+        "kind": "catalog",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "ref.cli-flags",
+        "path": "reference/cli-flags.md",
+        "kind": "catalog",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "ref.presets",
+        "path": "reference/presets.md",
+        "kind": "catalog",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "ref.sdk-methods",
+        "path": "reference/sdk-methods.md",
+        "kind": "catalog",
+        "grade": "C-DRIFT"
+      },
+      {
+        "id": "ref.capability-seams",
+        "path": "reference/capability-seams.md",
+        "kind": "catalog",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "ref.package-index",
+        "path": "reference/package-index.md",
+        "kind": "reference",
+        "grade": "A-BROKEN"
+      },
+      {
+        "id": "ref.glossary",
+        "path": "reference/glossary.md",
+        "kind": "reference",
+        "grade": "A-BROKEN"
+      }
+    ]
+  },
+  "new_nodes": [
+    {
+      "id": "surface.tools.pwsh-persistent",
+      "path": "surface/tools/pwsh-persistent.md",
+      "title": "pwsh 持久 PTY",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution",
+      "source": [
+        "packages/shell/tool-pwsh-persistent/src/index.ts",
+        "packages/shell/tool-pwsh-persistent/src/invariant.ts",
+        "packages/terminal/terminal/src/index.ts"
+      ],
+      "why": "new persistent pwsh tool package mirroring bash-persistent"
+    },
+    {
+      "id": "surface.tools.agent-team",
+      "path": "surface/tools/agent-team.md",
+      "title": "Agent Teams 模型可见工具族",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration",
+      "source": [
+        "packages/experimental/tool-agent-team/src/index.ts",
+        "packages/experimental/tool-agent-team/src/invariant.ts",
+        "packages/experimental/agent-team/src/index.ts"
+      ],
+      "why": "opt-in experimental team tools on ctx.agentTeams; family page must enumerate every wire name"
+    },
+    {
+      "id": "surface.profiles.sdk",
+      "path": "surface/profiles/sdk.md",
+      "title": "sdk profile",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition",
+      "source": [
+        "packages/boot/app-boot/src/profile.ts",
+        "packages/bundle/sdk-app/cordis.patch.yml",
+        "packages/bundle/sdk-app/package.json",
+        "apps/cli/src/bin.ts"
+      ],
+      "why": "new shipped PROFILE_TEMPLATES.sdk = dsh-base + dsh-sdk-app, startup reload"
+    },
+    {
+      "id": "surface.profiles.sdk-minimal",
+      "path": "surface/profiles/sdk-minimal.md",
+      "title": "sdk-minimal profile",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition",
+      "source": [
+        "packages/boot/app-boot/src/profile.ts",
+        "packages/bundle/sdk-minimal/cordis.patch.yml",
+        "packages/bundle/sdk-minimal/package.json"
+      ],
+      "why": "only shipped profile that does not stack dsh-base"
+    },
+    {
+      "id": "surface.profiles.acp",
+      "path": "surface/profiles/acp.md",
+      "title": "acp profile",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition",
+      "source": [
+        "packages/boot/app-boot/src/profile.ts",
+        "packages/bundle/acp-app/cordis.patch.yml",
+        "packages/bundle/acp-app/package.json"
+      ],
+      "why": "new shipped PROFILE_TEMPLATES.acp = dsh-base + dsh-acp-app"
+    },
+    {
+      "id": "subsys.composition.bundle-acp-app",
+      "path": "subsystems/composition/bundle-acp-app.md",
+      "title": "dsh-acp-app bundle",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition",
+      "source": [
+        "packages/bundle/acp-app/cordis.patch.yml",
+        "packages/bundle/acp-app/package.json"
+      ],
+      "why": "new mode bundle for ACP automation server"
+    },
+    {
+      "id": "subsys.composition.bundle-sdk-app",
+      "path": "subsystems/composition/bundle-sdk-app.md",
+      "title": "dsh-sdk-app bundle",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition",
+      "source": [
+        "packages/bundle/sdk-app/cordis.patch.yml",
+        "packages/bundle/sdk-app/package.json"
+      ],
+      "why": "new mode bundle for SDK JSON-RPC server stacked on dsh-base"
+    },
+    {
+      "id": "subsys.composition.bundle-sdk-minimal",
+      "path": "subsystems/composition/bundle-sdk-minimal.md",
+      "title": "dsh-sdk-minimal bundle",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition",
+      "source": [
+        "packages/bundle/sdk-minimal/cordis.patch.yml",
+        "packages/bundle/sdk-minimal/package.json"
+      ],
+      "why": "standalone SDK tree; exception to base-first stacking"
+    },
+    {
+      "id": "subsys.orchestration.agent-team",
+      "path": "subsystems/orchestration/agent-team.md",
+      "title": "experimental Agent Teams 缝",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration",
+      "source": [
+        "packages/experimental/agent-team/src/index.ts",
+        "packages/experimental/agent-team-profile/cordis.patch.yml",
+        "packages/experimental/tool-agent-team/src/index.ts"
+      ],
+      "why": "ctx.agentTeams roster/mailbox/task-board over continuable subagents"
+    },
+    {
+      "id": "subsys.integration.webhook",
+      "path": "subsystems/integration/webhook.md",
+      "title": "webhook 运行时",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration",
+      "source": [
+        "packages/webhook/webhook/src/index.ts",
+        "packages/webhook/webhook-github/src",
+        "packages/webhook/webhook/README.md"
+      ],
+      "why": "ctx.webhookRuntime authenticated delivery to Workspace Session; github is the shipped provider"
+    },
+    {
+      "id": "subsys.execution.code-runtime-python",
+      "path": "subsystems/execution/code-runtime-python.md",
+      "title": "Python code-runtime provider",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution",
+      "source": [
+        "packages/code-runtime/code-runtime-python/src",
+        "packages/code-runtime/code-runtime/src",
+        "packages/core/tools/src/py-types.ts",
+        "packages/core/tools/src/ptc.ts"
+      ],
+      "why": "PTC python flavor needs a python runtime provider; do not steal symbols from code-runtime.md"
+    },
+    {
+      "id": "subsys.context.file-reference",
+      "path": "subsystems/context/file-reference.md",
+      "title": "file-reference 缝",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "context",
+      "source": [
+        "packages/context/file-reference/src/index.ts",
+        "packages/context/file-reference-local/src"
+      ],
+      "why": "new context seam for file references (definition + local provider)"
+    },
+    {
+      "id": "subsys.persistence.session-log-deepseek",
+      "path": "subsystems/persistence/session-log-deepseek.md",
+      "title": "DeepSeek session-log 方言",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence",
+      "source": [
+        "packages/session/session-log-deepseek/src/index.ts",
+        "packages/session/session-log-deepseek/src/types.ts",
+        "packages/bundle/base/cordis.patch.yml"
+      ],
+      "why": "base bundle now mounts dsh-session-log-deepseek; dialect projection not a second log"
+    },
+    {
+      "id": "subsys.llm.deepseek-extensions",
+      "path": "subsystems/llm/deepseek-extensions.md",
+      "title": "DeepSeek LLM API 扩展与插件清单",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "llm",
+      "source": [
+        "packages/llm/deepseek-llm-api-extensions/src",
+        "packages/llm/plugin-package-inventory-deepseek/src",
+        "packages/bundle/base/cordis.patch.yml"
+      ],
+      "why": "new base-bundle rows for DeepSeek-specific LLM extensions and plugin inventory"
+    },
+    {
+      "id": "subsys.client.store",
+      "path": "subsystems/client/store.md",
+      "title": "client store",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client",
+      "source": [
+        "packages/client/store/src",
+        "packages/client/store/package.json"
+      ],
+      "why": "replaces much of deleted client/runtime as the browser state home; runtime node must point here rather than duplicate"
+    },
+    {
+      "id": "subsys.client.ui-renderer",
+      "path": "subsystems/client/ui-renderer.md",
+      "title": "ui-renderer (原 web-react)",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client",
+      "source": [
+        "packages/client/ui-renderer/src",
+        "packages/client/ui-renderer/package.json"
+      ],
+      "why": "bind/scoped-slots moved from deleted web-react"
+    },
+    {
+      "id": "subsys.client.ui-chat",
+      "path": "subsystems/client/ui-chat.md",
+      "title": "ui-chat ConversationNode",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client",
+      "source": [
+        "packages/client/ui-chat/src",
+        "packages/client/ui-conversation/src"
+      ],
+      "why": "chat node assembly split out of ui-conversation; ConversationNodeDefinition lives here"
+    },
+    {
+      "id": "subsys.client.ui-session",
+      "path": "subsystems/client/ui-session.md",
+      "title": "ui-session 会话列表",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client",
+      "source": [
+        "packages/client/ui-session/src",
+        "packages/api/session-controller/src"
+      ],
+      "why": "new session list/management UI; keep seam-level, do not spawn extra ui-* pages"
+    }
+  ],
+  "target": "0a53fb55be",
+  "base": "47f943859b"
+}

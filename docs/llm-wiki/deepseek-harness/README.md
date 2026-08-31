@@ -28,15 +28,16 @@ DSH 上游已经有一套人读 + CI 保鲜的文档(architecture / subsystems /
 
 ## DSH 的形态(决定本 wiki 的画像)
 
-- **真源码**:公开 MIT 仓,developer preview(`0.1.0-rc.5` 起)。**staleness 用 deepseek-harness git SHA**,节点 `updated:` 记 fill 时的 10 位短 SHA。`SESSION_FORMAT_VERSION` 现为 `0`,无兼容承诺。
+- **真源码**:公开 MIT 仓,developer preview(`0.1.2-alpha.2`)。**staleness 用 deepseek-harness git SHA**,节点 `updated:` 记 fill 时的 10 位短 SHA。`SESSION_FORMAT_VERSION` 现为 `0`,无兼容承诺。
 - **TypeScript ESM monorepo**:Node `^22.19` 或 `>=24`,pnpm 11。源路径一律相对 `deepseek-harness/`(如 `packages/core/agent-loop/src/agent.ts`)。本 wiki 目录下源码在 `../../../deepseek-harness/`。
 - **★ 组合运行时 = 全 wiki 的组织主线**:没有特权核心可打补丁。
-  - **profile**(`web` / `headless` 模板):进程级组成。bundle 列表 + 用户 `cordis.patch.yml` + `--patch`。
-  - **bundle**(`dsh-base` / `dsh-web-app` / `dsh-headless`):以 patch 层分发的插件行。
-  - **agent preset**(`minimal` / `standard` / `code` / `cordis`):每会话 `agent.cordis.yml`,挂工具与 persona,发布的服务必须 isolate。
+  - **profile**(`web` / `headless` / `sdk` / `sdk-minimal` / `acp` 模板):进程级组成。bundle 列表 + 用户 `cordis.patch.yml` + `--patch`。`web` 为 live patch reload;其余 shipped 模板 startup。
+  - **bundle**(`dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app`):以 patch 层分发的插件行。`sdk-minimal` 不叠 `dsh-base`。
+  - **agent preset**(`minimal` / `standard` / `ptc` / `cordis`):每会话 `agent.cordis.yml`(现位于 `packages/preset/agent-presets/presets/`),挂工具与 persona,发布的服务必须 isolate。旧名 `code` = 现名 **PTC**(`run_code`)。
   - **capability seam** = Service Definition / Provider / Consumer。换 `ctx.fs` + `ctx.subprocess` 会带走 Bash / PTY / LSP。
   - **model-visible ⟺ logged**:进模型请求的东西必须能从 append-only `SessionEvent` 日志重建;`deriveMessages()` 投影历史。
-  - 默认安装路径是本地 Web GUI(`dsh web`),不是 TUI。
+  - 默认安装路径是本地 Web GUI(`dsh web` / `npx @deepseek-ai/dsh web`),不是 TUI。
+  - **webhook**(`ctx.webhookRuntime`)可从已验证投递开 Workspace Session; **experimental Agent Teams**(`ctx.agentTeams`)是 opt-in 协作缝。
 - **`pkg` 字段**(14 档,不是 50 个 package group):`composition` / `core` / `llm` / `execution` / `orchestration` / `context` / `persistence` / `interaction` / `host` / `client` / `integration` / `vendor` / `util` / `cross`。
 - **范围**:**全 monorepo 同深度**——含 host/client Web、ACP、TS/Python SDK、vendor Cordis。填写顺序价值优先:脊柱与工具在前,UI 插件与测试基建在后。
 
@@ -76,11 +77,11 @@ _staging/         并发填充时 uncertainty-<batch>.md 暂存
 
 ## 方法 & 状态
 
-逐节点循环:**读源 → 独立 L2 证伪 → 修复 → reconcile/lint**。冻结 SHA = `47f943859b`(`0.1.0-rc.5`)。**首轮填充完成:183/183 verified**。后续更新以 `RUN.md` 的 L1→L2→L3 流程、`index.json` 与节点 `updated` 为 staleness 门槛。
+逐节点循环:**读源 → 独立 L2 证伪 → 修复 → reconcile/lint**。冻结 SHA = `0a53fb55be`(`0.1.2-alpha.2`;上一轮 `47f943859b` / `0.1.0-rc.5`)。**本轮刷新完成:201/201 verified,`lint` 0 error / 0 warning。**后续更新以 `RUN.md` 的 L1→L2→L3 流程、`index.json` 与节点 `updated` 为 staleness 门槛。
 
 | Tier | 范围 | 节点 | 状态 |
 |---|---|---|---|
 | T0 spine | 组合启动、turn/step、工具管线、会话日志、seam、压缩 + 5 traces | 12 | ✅ 完成 |
-| T1 surface | 工具 30 + preset/CLI/Web/ACP/SDK 等 22 | 52 | ✅ 完成 |
-| T2 subsystems | 按 seam / 控制流(composition/core/llm/execution/…) | 106 | ✅ 完成 |
+| T1 surface | 工具 32 + preset/CLI/Web/ACP/SDK/profile 等 25 | 57 | ✅ 完成 |
+| T2 subsystems | 按 seam / 控制流(composition/core/llm/execution/…) | 119 | ✅ 完成 |
 | T3 reference | catalog + glossary + uncertainty | 13 | ✅ 完成 |

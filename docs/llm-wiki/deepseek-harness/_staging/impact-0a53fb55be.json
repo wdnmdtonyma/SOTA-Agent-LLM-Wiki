@@ -1,0 +1,3105 @@
+{
+  "base": "47f943859bef60e4160492346772ded9b24f765a",
+  "target": "0a53fb55bea101816fa226bb964ae2bed71c343b",
+  "target_short": "0a53fb55be",
+  "grades": {
+    "A-BROKEN": 147,
+    "C-DRIFT": 22,
+    "B-HEAVY": 13,
+    "D-CLEAN": 1
+  },
+  "nodes": [
+    {
+      "id": "spine.overview",
+      "path": "spine/overview.md",
+      "grade": "A-BROKEN",
+      "churn": 3621,
+      "n_hits": 44,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/preset.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/preset.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/preset.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/preset.yml"
+      ],
+      "remapped": [
+        [
+          "apps/cli/config/agent-presets/minimal/preset.yml",
+          "packages/preset/agent-presets/presets/minimal/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/standard/preset.yml",
+          "packages/preset/agent-presets/presets/standard/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/cordis/preset.yml",
+          "packages/preset/agent-presets/presets/cordis/preset.yml"
+        ]
+      ],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "cross"
+    },
+    {
+      "id": "spine.composition-boot",
+      "path": "spine/composition-boot.md",
+      "grade": "A-BROKEN",
+      "churn": 6739,
+      "n_hits": 25,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "composition"
+    },
+    {
+      "id": "spine.turn-and-step",
+      "path": "spine/turn-and-step.md",
+      "grade": "A-BROKEN",
+      "churn": 4456,
+      "n_hits": 18,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "core"
+    },
+    {
+      "id": "spine.tool-call-anatomy",
+      "path": "spine/tool-call-anatomy.md",
+      "grade": "A-BROKEN",
+      "churn": 2006,
+      "n_hits": 22,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "core"
+    },
+    {
+      "id": "spine.session-log",
+      "path": "spine/session-log.md",
+      "grade": "A-BROKEN",
+      "churn": 4762,
+      "n_hits": 17,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/client/runtime/src/client/index.ts"
+      ],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "core"
+    },
+    {
+      "id": "spine.capability-seams",
+      "path": "spine/capability-seams.md",
+      "grade": "A-BROKEN",
+      "churn": 1205,
+      "n_hits": 21,
+      "missing": [
+        "examples/headless-agent/e2b.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "cross"
+    },
+    {
+      "id": "spine.context-and-compaction",
+      "path": "spine/context-and-compaction.md",
+      "grade": "A-BROKEN",
+      "churn": 2337,
+      "n_hits": 21,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "context"
+    },
+    {
+      "id": "spine.trace-web-first-prompt",
+      "path": "spine/trace-web-first-prompt.md",
+      "grade": "A-BROKEN",
+      "churn": 12342,
+      "n_hits": 32,
+      "missing": [
+        "packages/client/runtime/src/client/sessions/manager.ts",
+        "packages/client/runtime/src/client/sessions/session.ts",
+        "packages/client/runtime/src/client/workspaces/service.ts",
+        "packages/client/web/src/boot.tsx",
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/fetch/client.ts",
+        "packages/host/apiproxy/src/fetch/handler.ts",
+        "packages/host/apiproxy/src/index.ts"
+      ],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "cross"
+    },
+    {
+      "id": "spine.trace-headless-turn",
+      "path": "spine/trace-headless-turn.md",
+      "grade": "C-DRIFT",
+      "churn": 1956,
+      "n_hits": 24,
+      "missing": [],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "composition"
+    },
+    {
+      "id": "spine.trace-tool-approval",
+      "path": "spine/trace-tool-approval.md",
+      "grade": "A-BROKEN",
+      "churn": 7157,
+      "n_hits": 25,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/api/approvals.ts",
+        "packages/host/apiproxy/src/fetch/handler.ts",
+        "packages/client/runtime/src/client/sessions/session.ts",
+        "packages/client/runtime/src/client/sessions/pending.ts",
+        "packages/client/ui-conversation/src/client/skeleton/ApprovalPanel.tsx",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "interaction"
+    },
+    {
+      "id": "spine.trace-code-mode",
+      "path": "spine/trace-code-mode.md",
+      "grade": "A-BROKEN",
+      "churn": 7391,
+      "n_hits": 21,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/preset.yml",
+        "packages/core/tools/tests/code-mode.spec.ts",
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/client/runtime/src/client/sessions/tool-call-tree.ts"
+      ],
+      "remapped": [
+        [
+          "packages/client/runtime/src/client/sessions/tool-call-tree.ts",
+          "packages/client/ui-chat/src/client/model/tool-call-tree.ts"
+        ]
+      ],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "core"
+    },
+    {
+      "id": "spine.trace-subagent",
+      "path": "spine/trace-subagent.md",
+      "grade": "A-BROKEN",
+      "churn": 7141,
+      "n_hits": 25,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.read",
+      "path": "surface/tools/read.md",
+      "grade": "A-BROKEN",
+      "churn": 1261,
+      "n_hits": 16,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.read-image",
+      "path": "surface/tools/read-image.md",
+      "grade": "A-BROKEN",
+      "churn": 1864,
+      "n_hits": 16,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.write",
+      "path": "surface/tools/write.md",
+      "grade": "A-BROKEN",
+      "churn": 1276,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.edit",
+      "path": "surface/tools/edit.md",
+      "grade": "A-BROKEN",
+      "churn": 1281,
+      "n_hits": 19,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.glob",
+      "path": "surface/tools/glob.md",
+      "grade": "A-BROKEN",
+      "churn": 1466,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.grep",
+      "path": "surface/tools/grep.md",
+      "grade": "A-BROKEN",
+      "churn": 1119,
+      "n_hits": 15,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.str-replace-editor",
+      "path": "surface/tools/str-replace-editor.md",
+      "grade": "A-BROKEN",
+      "churn": 1793,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/preset.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [
+        [
+          "apps/cli/config/agent-presets/minimal/preset.yml",
+          "packages/preset/agent-presets/presets/minimal/preset.yml"
+        ]
+      ],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.bash",
+      "path": "surface/tools/bash.md",
+      "grade": "A-BROKEN",
+      "churn": 1448,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.bash-persistent",
+      "path": "surface/tools/bash-persistent.md",
+      "grade": "A-BROKEN",
+      "churn": 1405,
+      "n_hits": 12,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.pwsh",
+      "path": "surface/tools/pwsh.md",
+      "grade": "A-BROKEN",
+      "churn": 1466,
+      "n_hits": 21,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.terminal",
+      "path": "surface/tools/terminal.md",
+      "grade": "A-BROKEN",
+      "churn": 1628,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/headless-agent/e2b.cordis.yml",
+        "examples/acp-agent/pty.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.jobs",
+      "path": "surface/tools/jobs.md",
+      "grade": "A-BROKEN",
+      "churn": 1815,
+      "n_hits": 16,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.exit-plan-mode",
+      "path": "surface/tools/exit-plan-mode.md",
+      "grade": "A-BROKEN",
+      "churn": 5577,
+      "n_hits": 16,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.todo-write",
+      "path": "surface/tools/todo-write.md",
+      "grade": "A-BROKEN",
+      "churn": 2649,
+      "n_hits": 25,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.goal",
+      "path": "surface/tools/goal.md",
+      "grade": "A-BROKEN",
+      "churn": 1766,
+      "n_hits": 19,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.subagent",
+      "path": "surface/tools/subagent.md",
+      "grade": "A-BROKEN",
+      "churn": 2822,
+      "n_hits": 21,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.subagent-fork",
+      "path": "surface/tools/subagent-fork.md",
+      "grade": "A-BROKEN",
+      "churn": 2779,
+      "n_hits": 21,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.subagent-control",
+      "path": "surface/tools/subagent-control.md",
+      "grade": "A-BROKEN",
+      "churn": 1899,
+      "n_hits": 18,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.report",
+      "path": "surface/tools/report.md",
+      "grade": "A-BROKEN",
+      "churn": 2130,
+      "n_hits": 18,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.workflow",
+      "path": "surface/tools/workflow.md",
+      "grade": "A-BROKEN",
+      "churn": 1400,
+      "n_hits": 18,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.ralph",
+      "path": "surface/tools/ralph.md",
+      "grade": "A-BROKEN",
+      "churn": 1588,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.web-search",
+      "path": "surface/tools/web-search.md",
+      "grade": "A-BROKEN",
+      "churn": 2229,
+      "n_hits": 21,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "integration"
+    },
+    {
+      "id": "surface.tools.web-fetch",
+      "path": "surface/tools/web-fetch.md",
+      "grade": "A-BROKEN",
+      "churn": 2941,
+      "n_hits": 25,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/acp-agent/web.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "integration"
+    },
+    {
+      "id": "surface.tools.skill",
+      "path": "surface/tools/skill.md",
+      "grade": "A-BROKEN",
+      "churn": 1701,
+      "n_hits": 16,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "context"
+    },
+    {
+      "id": "surface.tools.ask-user-question",
+      "path": "surface/tools/ask-user-question.md",
+      "grade": "A-BROKEN",
+      "churn": 7022,
+      "n_hits": 26,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/index.ts",
+        "packages/host/apiproxy/src/api/events.schema.ts",
+        "packages/host/apiproxy/tests/api-proxy-question.spec.ts",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/acp-agent/child-question.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "interaction"
+    },
+    {
+      "id": "surface.tools.run-code",
+      "path": "surface/tools/run-code.md",
+      "grade": "A-BROKEN",
+      "churn": 4153,
+      "n_hits": 23,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts",
+        "packages/core/tools/tests/code-mode.spec.ts",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/preset.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "core"
+    },
+    {
+      "id": "surface.tools.lsp",
+      "path": "surface/tools/lsp.md",
+      "grade": "A-BROKEN",
+      "churn": 1096,
+      "n_hits": 13,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/acp-agent/tests/lsp.cordis.yml",
+        "examples/headless-agent/e2b.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "surface.tools.session-query",
+      "path": "surface/tools/session-query.md",
+      "grade": "A-BROKEN",
+      "churn": 1751,
+      "n_hits": 22,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/acp-agent/session-query.cordis.yml",
+        "examples/acp-agent/fs.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "persistence"
+    },
+    {
+      "id": "surface.tools.schedule",
+      "path": "surface/tools/schedule.md",
+      "grade": "A-BROKEN",
+      "churn": 1526,
+      "n_hits": 20,
+      "missing": [
+        "examples/web-schedule/cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "surface.tools.cordis",
+      "path": "surface/tools/cordis.md",
+      "grade": "A-BROKEN",
+      "churn": 3465,
+      "n_hits": 16,
+      "missing": [
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.cli.overview",
+      "path": "surface/cli/overview.md",
+      "grade": "B-HEAVY",
+      "churn": 2072,
+      "n_hits": 12,
+      "missing": [],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.cli.plugin",
+      "path": "surface/cli/plugin.md",
+      "grade": "C-DRIFT",
+      "churn": 1855,
+      "n_hits": 11,
+      "missing": [],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.profiles.web",
+      "path": "surface/profiles/web.md",
+      "grade": "B-HEAVY",
+      "churn": 3201,
+      "n_hits": 18,
+      "missing": [],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.profiles.headless",
+      "path": "surface/profiles/headless.md",
+      "grade": "B-HEAVY",
+      "churn": 2278,
+      "n_hits": 15,
+      "missing": [],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.presets.overview",
+      "path": "surface/presets/overview.md",
+      "grade": "A-BROKEN",
+      "churn": 6173,
+      "n_hits": 28,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/preset.yml",
+        "apps/cli/config/agent-presets/minimal/preset.yml",
+        "apps/cli/config/agent-presets/code/preset.yml",
+        "apps/cli/config/agent-presets/cordis/preset.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [
+        [
+          "apps/cli/config/agent-presets/standard/preset.yml",
+          "packages/preset/agent-presets/presets/standard/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/minimal/preset.yml",
+          "packages/preset/agent-presets/presets/minimal/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/cordis/preset.yml",
+          "packages/preset/agent-presets/presets/cordis/preset.yml"
+        ]
+      ],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.presets.minimal",
+      "path": "surface/presets/minimal.md",
+      "grade": "A-BROKEN",
+      "churn": 1853,
+      "n_hits": 22,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/preset.yml",
+        "apps/cli/config/agent-presets/standard/preset.yml",
+        "apps/cli/config/agent-presets/code/preset.yml",
+        "apps/cli/config/agent-presets/cordis/preset.yml"
+      ],
+      "remapped": [
+        [
+          "apps/cli/config/agent-presets/minimal/preset.yml",
+          "packages/preset/agent-presets/presets/minimal/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/standard/preset.yml",
+          "packages/preset/agent-presets/presets/standard/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/cordis/preset.yml",
+          "packages/preset/agent-presets/presets/cordis/preset.yml"
+        ]
+      ],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.presets.standard",
+      "path": "surface/presets/standard.md",
+      "grade": "A-BROKEN",
+      "churn": 6053,
+      "n_hits": 18,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/preset.yml",
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [
+        [
+          "apps/cli/config/agent-presets/standard/preset.yml",
+          "packages/preset/agent-presets/presets/standard/preset.yml"
+        ]
+      ],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.presets.code",
+      "path": "surface/presets/code.md",
+      "grade": "A-BROKEN",
+      "churn": 5781,
+      "n_hits": 16,
+      "missing": [
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/preset.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.presets.cordis",
+      "path": "surface/presets/cordis.md",
+      "grade": "A-BROKEN",
+      "churn": 2233,
+      "n_hits": 23,
+      "missing": [
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/preset.yml",
+        "apps/cli/config/agent-presets/cordis/skills/editing-cordis-compositions/SKILL.md",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/preset.yml",
+        "apps/cli/config/agent-presets/code/preset.yml",
+        "apps/cli/config/agent-presets/minimal/preset.yml"
+      ],
+      "remapped": [
+        [
+          "apps/cli/config/agent-presets/cordis/preset.yml",
+          "packages/preset/agent-presets/presets/cordis/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/standard/preset.yml",
+          "packages/preset/agent-presets/presets/standard/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/minimal/preset.yml",
+          "packages/preset/agent-presets/presets/minimal/preset.yml"
+        ]
+      ],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "composition"
+    },
+    {
+      "id": "surface.config.settings",
+      "path": "surface/config/settings.md",
+      "grade": "A-BROKEN",
+      "churn": 7689,
+      "n_hits": 25,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/api/settings.ts"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "persistence"
+    },
+    {
+      "id": "surface.commands.overview",
+      "path": "surface/commands/overview.md",
+      "grade": "A-BROKEN",
+      "churn": 4404,
+      "n_hits": 33,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "packages/client/runtime/src/client/sessions/session.ts"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "interaction"
+    },
+    {
+      "id": "surface.skills.system",
+      "path": "surface/skills/system.md",
+      "grade": "A-BROKEN",
+      "churn": 1458,
+      "n_hits": 14,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "context"
+    },
+    {
+      "id": "surface.mcp.client",
+      "path": "surface/mcp/client.md",
+      "grade": "A-BROKEN",
+      "churn": 2081,
+      "n_hits": 19,
+      "missing": [
+        "examples/mcp-memory/mcp-reference-memory.cordis.yml",
+        "examples/mcp-memory/engram.cordis.yml",
+        "examples/mcp-memory/memorix.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [
+        [
+          "examples/mcp-memory/mcp-reference-memory.cordis.yml",
+          "apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml"
+        ],
+        [
+          "examples/mcp-memory/engram.cordis.yml",
+          "apps/cli/config/examples/mcp-memory/engram.cordis.yml"
+        ],
+        [
+          "examples/mcp-memory/memorix.cordis.yml",
+          "apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
+        ]
+      ],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "integration"
+    },
+    {
+      "id": "surface.hooks.bridges",
+      "path": "surface/hooks/bridges.md",
+      "grade": "A-BROKEN",
+      "churn": 1912,
+      "n_hits": 24,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "examples/acp-agent/cordis.yml",
+        "examples/acp-agent/tests/hooks.e2e.ts",
+        "examples/package.json"
+      ],
+      "remapped": [
+        [
+          "examples/acp-agent/tests/hooks.e2e.ts",
+          "apps/cli/tests/profiles/acp/tests/hooks.e2e.ts"
+        ]
+      ],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "interaction"
+    },
+    {
+      "id": "surface.acp.server",
+      "path": "surface/acp/server.md",
+      "grade": "A-BROKEN",
+      "churn": 3176,
+      "n_hits": 19,
+      "missing": [
+        "packages/examples/acp-demo/src/index.ts",
+        "packages/examples/acp-demo/src/bin.ts",
+        "packages/examples/acp-demo/package.json",
+        "examples/acp-agent/cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "integration"
+    },
+    {
+      "id": "surface.sdk.typescript",
+      "path": "surface/sdk/typescript.md",
+      "grade": "A-BROKEN",
+      "churn": 2530,
+      "n_hits": 21,
+      "missing": [
+        "packages/examples/jsonrpc-demo/package.json",
+        "packages/examples/jsonrpc-demo/src/runner.ts",
+        "examples/jsonrpc-agent/cordis.yml",
+        "examples/jsonrpc-agent/tests/sdk.snapshot.ts",
+        "python/sdk-runtime/src/deepseek_harness_runtime/runtime/cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "integration"
+    },
+    {
+      "id": "surface.sdk.python",
+      "path": "surface/sdk/python.md",
+      "grade": "A-BROKEN",
+      "churn": 1465,
+      "n_hits": 14,
+      "missing": [
+        "python/sdk-runtime/src/deepseek_harness_runtime/runtime/cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "integration"
+    },
+    {
+      "id": "surface.web.workbench",
+      "path": "surface/web/workbench.md",
+      "grade": "A-BROKEN",
+      "churn": 6798,
+      "n_hits": 35,
+      "missing": [
+        "packages/client/web/src/boot.tsx",
+        "packages/client/web/src/AppRoot.tsx",
+        "packages/client/web/src/app-shell.ts",
+        "packages/client/web/src/app.tsx",
+        "packages/client/web/tests/app-root.client.spec.tsx",
+        "packages/client/runtime/src/index.ts",
+        "packages/client/runtime/src/client/index.ts",
+        "packages/client/runtime/src/client/sessions/session.ts",
+        "packages/client/runtime/src/client/workspaces/service.ts",
+        "packages/client/runtime/src/client/contract/sessions.ts",
+        "packages/client/runtime/package.json"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "client"
+    },
+    {
+      "id": "surface.providers.deepseek",
+      "path": "surface/providers/deepseek.md",
+      "grade": "A-BROKEN",
+      "churn": 6358,
+      "n_hits": 27,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "llm"
+    },
+    {
+      "id": "surface.providers.pi-ai",
+      "path": "surface/providers/pi-ai.md",
+      "grade": "B-HEAVY",
+      "churn": 2998,
+      "n_hits": 19,
+      "missing": [],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "llm"
+    },
+    {
+      "id": "surface.misc.home",
+      "path": "surface/misc/home.md",
+      "grade": "B-HEAVY",
+      "churn": 2083,
+      "n_hits": 13,
+      "missing": [],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "util"
+    },
+    {
+      "id": "surface.misc.security",
+      "path": "surface/misc/security.md",
+      "grade": "A-BROKEN",
+      "churn": 655,
+      "n_hits": 15,
+      "missing": [
+        "packages/host/apiproxy/src/api/approvals.ts"
+      ],
+      "remapped": [],
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.composition.app-boot",
+      "path": "subsystems/composition/app-boot.md",
+      "grade": "A-BROKEN",
+      "churn": 2140,
+      "n_hits": 19,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition"
+    },
+    {
+      "id": "subsys.composition.cmdline",
+      "path": "subsystems/composition/cmdline.md",
+      "grade": "C-DRIFT",
+      "churn": 1397,
+      "n_hits": 19,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition"
+    },
+    {
+      "id": "subsys.composition.bundle-base",
+      "path": "subsystems/composition/bundle-base.md",
+      "grade": "A-BROKEN",
+      "churn": 2635,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition"
+    },
+    {
+      "id": "subsys.composition.bundle-web-app",
+      "path": "subsystems/composition/bundle-web-app.md",
+      "grade": "A-BROKEN",
+      "churn": 6219,
+      "n_hits": 19,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition"
+    },
+    {
+      "id": "subsys.composition.bundle-headless",
+      "path": "subsystems/composition/bundle-headless.md",
+      "grade": "C-DRIFT",
+      "churn": 1870,
+      "n_hits": 23,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition"
+    },
+    {
+      "id": "subsys.composition.agent-presets",
+      "path": "subsystems/composition/agent-presets.md",
+      "grade": "A-BROKEN",
+      "churn": 5907,
+      "n_hits": 26,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition"
+    },
+    {
+      "id": "subsys.composition.persona",
+      "path": "subsystems/composition/persona.md",
+      "grade": "A-BROKEN",
+      "churn": 2353,
+      "n_hits": 20,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "composition"
+    },
+    {
+      "id": "subsys.core.scope",
+      "path": "subsystems/core/scope.md",
+      "grade": "A-BROKEN",
+      "churn": 1164,
+      "n_hits": 14,
+      "missing": [
+        "packages/client/runtime/src/client/agents/scope.ts",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [
+        [
+          "packages/client/runtime/src/client/agents/scope.ts",
+          "packages/api/session-controller/src/client/scope.ts"
+        ]
+      ],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.session",
+      "path": "subsystems/core/session.md",
+      "grade": "C-DRIFT",
+      "churn": 552,
+      "n_hits": 12,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.system-prompt",
+      "path": "subsystems/core/system-prompt.md",
+      "grade": "A-BROKEN",
+      "churn": 1521,
+      "n_hits": 16,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.tools",
+      "path": "subsystems/core/tools.md",
+      "grade": "A-BROKEN",
+      "churn": 3154,
+      "n_hits": 19,
+      "missing": [
+        "packages/core/tools/tests/code-mode.spec.ts",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.code-mode",
+      "path": "subsystems/core/code-mode.md",
+      "grade": "A-BROKEN",
+      "churn": 3295,
+      "n_hits": 16,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts",
+        "packages/core/tools/tests/code-mode.spec.ts",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.agent",
+      "path": "subsystems/core/agent.md",
+      "grade": "A-BROKEN",
+      "churn": 4675,
+      "n_hits": 14,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.agent-inbox",
+      "path": "subsystems/core/agent-inbox.md",
+      "grade": "A-BROKEN",
+      "churn": 4310,
+      "n_hits": 16,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/client/ui-conversation/src/client/conversation-nodes/inbox.ts",
+        "packages/client/runtime/src/client/sessions/steering-history.ts"
+      ],
+      "remapped": [
+        [
+          "packages/client/ui-conversation/src/client/conversation-nodes/inbox.ts",
+          "packages/client/ui-chat/src/client/conversation-nodes/inbox.ts"
+        ],
+        [
+          "packages/client/runtime/src/client/sessions/steering-history.ts",
+          "packages/client/ui-chat/src/client/model/steering-history.ts"
+        ]
+      ],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.agent-loop",
+      "path": "subsystems/core/agent-loop.md",
+      "grade": "C-DRIFT",
+      "churn": 1324,
+      "n_hits": 21,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.agent-default-model",
+      "path": "subsystems/core/agent-default-model.md",
+      "grade": "A-BROKEN",
+      "churn": 4874,
+      "n_hits": 14,
+      "missing": [
+        "packages/host/apiproxy/src/index.ts",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.agent-tool-presentation",
+      "path": "subsystems/core/agent-tool-presentation.md",
+      "grade": "A-BROKEN",
+      "churn": 1798,
+      "n_hits": 13,
+      "missing": [
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.core.invariants",
+      "path": "subsystems/core/invariants.md",
+      "grade": "C-DRIFT",
+      "churn": 451,
+      "n_hits": 10,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "core"
+    },
+    {
+      "id": "subsys.llm.service",
+      "path": "subsystems/llm/service.md",
+      "grade": "C-DRIFT",
+      "churn": 1446,
+      "n_hits": 15,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "llm"
+    },
+    {
+      "id": "subsys.llm.deepseek",
+      "path": "subsystems/llm/deepseek.md",
+      "grade": "A-BROKEN",
+      "churn": 5628,
+      "n_hits": 26,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "llm"
+    },
+    {
+      "id": "subsys.llm.pi-ai",
+      "path": "subsystems/llm/pi-ai.md",
+      "grade": "B-HEAVY",
+      "churn": 2295,
+      "n_hits": 18,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "llm"
+    },
+    {
+      "id": "subsys.llm.retry",
+      "path": "subsystems/llm/retry.md",
+      "grade": "C-DRIFT",
+      "churn": 632,
+      "n_hits": 11,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "llm"
+    },
+    {
+      "id": "subsys.llm.token-meter",
+      "path": "subsystems/llm/token-meter.md",
+      "grade": "A-BROKEN",
+      "churn": 2068,
+      "n_hits": 19,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "llm"
+    },
+    {
+      "id": "subsys.execution.fs",
+      "path": "subsystems/execution/fs.md",
+      "grade": "A-BROKEN",
+      "churn": 1029,
+      "n_hits": 20,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.fs-local",
+      "path": "subsystems/execution/fs-local.md",
+      "grade": "A-BROKEN",
+      "churn": 486,
+      "n_hits": 14,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.fs-observation",
+      "path": "subsystems/execution/fs-observation.md",
+      "grade": "A-BROKEN",
+      "churn": 690,
+      "n_hits": 12,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.fs-sandbox",
+      "path": "subsystems/execution/fs-sandbox.md",
+      "grade": "A-BROKEN",
+      "churn": 364,
+      "n_hits": 12,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.shell",
+      "path": "subsystems/execution/shell.md",
+      "grade": "A-BROKEN",
+      "churn": 1491,
+      "n_hits": 19,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.bash-local",
+      "path": "subsystems/execution/bash-local.md",
+      "grade": "A-BROKEN",
+      "churn": 748,
+      "n_hits": 16,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.pwsh-local",
+      "path": "subsystems/execution/pwsh-local.md",
+      "grade": "A-BROKEN",
+      "churn": 584,
+      "n_hits": 11,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.subprocess",
+      "path": "subsystems/execution/subprocess.md",
+      "grade": "A-BROKEN",
+      "churn": 1469,
+      "n_hits": 14,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.terminal",
+      "path": "subsystems/execution/terminal.md",
+      "grade": "A-BROKEN",
+      "churn": 2188,
+      "n_hits": 22,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/headless-agent/e2b.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.sandbox",
+      "path": "subsystems/execution/sandbox.md",
+      "grade": "C-DRIFT",
+      "churn": 254,
+      "n_hits": 8,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.sandbox-local",
+      "path": "subsystems/execution/sandbox-local.md",
+      "grade": "C-DRIFT",
+      "churn": 539,
+      "n_hits": 11,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.sandbox-policy",
+      "path": "subsystems/execution/sandbox-policy.md",
+      "grade": "A-BROKEN",
+      "churn": 811,
+      "n_hits": 12,
+      "missing": [
+        "examples/headless-agent/e2b.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.code-runtime",
+      "path": "subsystems/execution/code-runtime.md",
+      "grade": "A-BROKEN",
+      "churn": 1382,
+      "n_hits": 13,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.e2b",
+      "path": "subsystems/execution/e2b.md",
+      "grade": "A-BROKEN",
+      "churn": 592,
+      "n_hits": 12,
+      "missing": [
+        "examples/headless-agent/e2b.cordis.yml",
+        "examples/headless-agent/advanced.cordis.yml",
+        "examples/headless-agent/cordis.yml",
+        "examples/headless-agent/tests/fixtures/e2b/e2b/cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.execution.lsp",
+      "path": "subsystems/execution/lsp.md",
+      "grade": "A-BROKEN",
+      "churn": 941,
+      "n_hits": 12,
+      "missing": [
+        "examples/headless-agent/e2b.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "execution"
+    },
+    {
+      "id": "subsys.orchestration.subagent",
+      "path": "subsystems/orchestration/subagent.md",
+      "grade": "A-BROKEN",
+      "churn": 2320,
+      "n_hits": 22,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.subagent-in-process",
+      "path": "subsystems/orchestration/subagent-in-process.md",
+      "grade": "A-BROKEN",
+      "churn": 2188,
+      "n_hits": 24,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.subagent-fork",
+      "path": "subsystems/orchestration/subagent-fork.md",
+      "grade": "A-BROKEN",
+      "churn": 2086,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.subagent-acp",
+      "path": "subsystems/orchestration/subagent-acp.md",
+      "grade": "A-BROKEN",
+      "churn": 1991,
+      "n_hits": 13,
+      "missing": [
+        "examples/acp-agent/tests/fixtures/subagent/subagent-acp/cordis.yml",
+        "examples/package.json",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.subagent-dsh-sdk",
+      "path": "subsystems/orchestration/subagent-dsh-sdk.md",
+      "grade": "A-BROKEN",
+      "churn": 2675,
+      "n_hits": 17,
+      "missing": [
+        "examples/jsonrpc-agent/tests/fixtures/subagent/subagent-dsh-sdk/cordis.yml",
+        "examples/jsonrpc-agent/tests/fixtures/subagent/subagent-dsh-sdk/child.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.subagent-codex",
+      "path": "subsystems/orchestration/subagent-codex.md",
+      "grade": "A-BROKEN",
+      "churn": 4293,
+      "n_hits": 18,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/acp-agent/tests/fixtures/subagent/subagent-codex/cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.subagent-claude-code",
+      "path": "subsystems/orchestration/subagent-claude-code.md",
+      "grade": "A-BROKEN",
+      "churn": 3350,
+      "n_hits": 16,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/acp-agent/tests/fixtures/subagent/subagent-claude-code/cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.workflow",
+      "path": "subsystems/orchestration/workflow.md",
+      "grade": "A-BROKEN",
+      "churn": 1344,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.jobs",
+      "path": "subsystems/orchestration/jobs.md",
+      "grade": "A-BROKEN",
+      "churn": 5647,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.goal",
+      "path": "subsystems/orchestration/goal.md",
+      "grade": "A-BROKEN",
+      "churn": 5894,
+      "n_hits": 21,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.plan",
+      "path": "subsystems/orchestration/plan.md",
+      "grade": "A-BROKEN",
+      "churn": 2596,
+      "n_hits": 24,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.orchestration.schedule",
+      "path": "subsystems/orchestration/schedule.md",
+      "grade": "A-BROKEN",
+      "churn": 1597,
+      "n_hits": 22,
+      "missing": [
+        "examples/web-schedule/cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "orchestration"
+    },
+    {
+      "id": "subsys.context.compaction",
+      "path": "subsystems/context/compaction.md",
+      "grade": "A-BROKEN",
+      "churn": 1276,
+      "n_hits": 14,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "context"
+    },
+    {
+      "id": "subsys.context.compaction-basic",
+      "path": "subsystems/context/compaction-basic.md",
+      "grade": "A-BROKEN",
+      "churn": 1645,
+      "n_hits": 18,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "context"
+    },
+    {
+      "id": "subsys.context.agent-instructions",
+      "path": "subsystems/context/agent-instructions.md",
+      "grade": "A-BROKEN",
+      "churn": 1543,
+      "n_hits": 15,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "context"
+    },
+    {
+      "id": "subsys.context.time-context",
+      "path": "subsystems/context/time-context.md",
+      "grade": "A-BROKEN",
+      "churn": 1538,
+      "n_hits": 19,
+      "missing": [
+        "examples/web-schedule/cordis.yml",
+        "examples/headless-agent/tests/fixtures/time-context.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "context"
+    },
+    {
+      "id": "subsys.context.session-reference",
+      "path": "subsystems/context/session-reference.md",
+      "grade": "A-BROKEN",
+      "churn": 2123,
+      "n_hits": 19,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "packages/examples/acp-demo/tests/acp-agent.spec.ts",
+        "packages/client/runtime/src/client/sessions/context-provenance.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "context"
+    },
+    {
+      "id": "subsys.context.skills",
+      "path": "subsystems/context/skills.md",
+      "grade": "A-BROKEN",
+      "churn": 1525,
+      "n_hits": 12,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "context"
+    },
+    {
+      "id": "subsys.context.timeout-policy",
+      "path": "subsystems/context/timeout-policy.md",
+      "grade": "C-DRIFT",
+      "churn": 618,
+      "n_hits": 8,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "context"
+    },
+    {
+      "id": "subsys.context.repeat-reminder",
+      "path": "subsystems/context/repeat-reminder.md",
+      "grade": "C-DRIFT",
+      "churn": 526,
+      "n_hits": 8,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "context"
+    },
+    {
+      "id": "subsys.persistence.session-persistence",
+      "path": "subsystems/persistence/session-persistence.md",
+      "grade": "B-HEAVY",
+      "churn": 2957,
+      "n_hits": 16,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.jsonl",
+      "path": "subsystems/persistence/jsonl.md",
+      "grade": "C-DRIFT",
+      "churn": 1228,
+      "n_hits": 14,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.sqlite",
+      "path": "subsystems/persistence/sqlite.md",
+      "grade": "B-HEAVY",
+      "churn": 4143,
+      "n_hits": 15,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.checkpoint",
+      "path": "subsystems/persistence/checkpoint.md",
+      "grade": "B-HEAVY",
+      "churn": 2466,
+      "n_hits": 20,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.projection",
+      "path": "subsystems/persistence/projection.md",
+      "grade": "A-BROKEN",
+      "churn": 7284,
+      "n_hits": 19,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.title",
+      "path": "subsystems/persistence/title.md",
+      "grade": "A-BROKEN",
+      "churn": 6591,
+      "n_hits": 24,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.telemetry",
+      "path": "subsystems/persistence/telemetry.md",
+      "grade": "B-HEAVY",
+      "churn": 2428,
+      "n_hits": 16,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.storage",
+      "path": "subsystems/persistence/storage.md",
+      "grade": "A-BROKEN",
+      "churn": 2693,
+      "n_hits": 21,
+      "missing": [
+        "packages/storage/storage-json/src/unit.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.spill",
+      "path": "subsystems/persistence/spill.md",
+      "grade": "A-BROKEN",
+      "churn": 2393,
+      "n_hits": 16,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.attachment",
+      "path": "subsystems/persistence/attachment.md",
+      "grade": "A-BROKEN",
+      "churn": 9356,
+      "n_hits": 33,
+      "missing": [
+        "packages/host/apiproxy/src/index.ts",
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/session-export.ts",
+        "packages/host/apiproxy/tests/api-proxy-models.spec.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.session-query",
+      "path": "subsystems/persistence/session-query.md",
+      "grade": "A-BROKEN",
+      "churn": 3434,
+      "n_hits": 26,
+      "missing": [
+        "packages/session-query/session-log-export/tests/command.client.spec.ts",
+        "examples/acp-agent/session-query.cordis.yml",
+        "packages/host/apiproxy/src/session-export.ts",
+        "packages/host/apiproxy/src/fetch/handler.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.workspace",
+      "path": "subsystems/persistence/workspace.md",
+      "grade": "A-BROKEN",
+      "churn": 6476,
+      "n_hits": 20,
+      "missing": [
+        "packages/host/apiproxy/src/index.ts",
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/api/workspace.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.settings",
+      "path": "subsystems/persistence/settings.md",
+      "grade": "A-BROKEN",
+      "churn": 7080,
+      "n_hits": 24,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.persistence.credentials",
+      "path": "subsystems/persistence/credentials.md",
+      "grade": "A-BROKEN",
+      "churn": 7046,
+      "n_hits": 24,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/api/credentials.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "persistence"
+    },
+    {
+      "id": "subsys.interaction.approval",
+      "path": "subsystems/interaction/approval.md",
+      "grade": "A-BROKEN",
+      "churn": 5421,
+      "n_hits": 15,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/api/approvals.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "interaction"
+    },
+    {
+      "id": "subsys.interaction.user-questions",
+      "path": "subsystems/interaction/user-questions.md",
+      "grade": "A-BROKEN",
+      "churn": 5503,
+      "n_hits": 18,
+      "missing": [
+        "packages/host/apiproxy/src/index.ts",
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/acp-agent/child-question.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "interaction"
+    },
+    {
+      "id": "subsys.interaction.commands",
+      "path": "subsystems/interaction/commands.md",
+      "grade": "A-BROKEN",
+      "churn": 1561,
+      "n_hits": 13,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "interaction"
+    },
+    {
+      "id": "subsys.interaction.permission-presets",
+      "path": "subsystems/interaction/permission-presets.md",
+      "grade": "A-BROKEN",
+      "churn": 4610,
+      "n_hits": 12,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "interaction"
+    },
+    {
+      "id": "subsys.interaction.hooks-protocol",
+      "path": "subsystems/interaction/hooks-protocol.md",
+      "grade": "A-BROKEN",
+      "churn": 248,
+      "n_hits": 5,
+      "missing": [
+        "examples/acp-agent/cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "interaction"
+    },
+    {
+      "id": "subsys.interaction.hooks-claude",
+      "path": "subsystems/interaction/hooks-claude.md",
+      "grade": "A-BROKEN",
+      "churn": 675,
+      "n_hits": 10,
+      "missing": [
+        "examples/acp-agent/cordis.yml",
+        "examples/package.json"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "interaction"
+    },
+    {
+      "id": "subsys.interaction.hooks-codex",
+      "path": "subsystems/interaction/hooks-codex.md",
+      "grade": "A-BROKEN",
+      "churn": 471,
+      "n_hits": 9,
+      "missing": [
+        "examples/acp-agent/cordis.yml",
+        "examples/package.json"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "interaction"
+    },
+    {
+      "id": "subsys.interaction.feedback",
+      "path": "subsystems/interaction/feedback.md",
+      "grade": "C-DRIFT",
+      "churn": 419,
+      "n_hits": 11,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "interaction"
+    },
+    {
+      "id": "subsys.host.webserver",
+      "path": "subsystems/host/webserver.md",
+      "grade": "B-HEAVY",
+      "churn": 2612,
+      "n_hits": 18,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "host"
+    },
+    {
+      "id": "subsys.host.apiproxy",
+      "path": "subsystems/host/apiproxy.md",
+      "grade": "A-BROKEN",
+      "churn": 10232,
+      "n_hits": 28,
+      "missing": [
+        "packages/host/apiproxy/src/index.ts",
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/api/index.ts",
+        "packages/host/apiproxy/src/api/rpc.ts",
+        "packages/host/apiproxy/src/api/rpc-map.ts",
+        "packages/host/apiproxy/src/api/jobs.ts",
+        "packages/host/apiproxy/src/api/events.ts",
+        "packages/host/apiproxy/src/fetch/handler.ts",
+        "packages/host/apiproxy/src/fetch/client.ts",
+        "packages/host/apiproxy/package.json",
+        "packages/host/apiproxy/tests/fetch-carrier.spec.ts",
+        "packages/host/apiproxy/tests/client-handler.spec.ts",
+        "packages/host/apiproxy/tests/api-proxy-agent-preset.spec.ts",
+        "packages/host/apiproxy/tests/api-proxy-workspace.spec.ts",
+        "packages/host/apiproxy/tests/api-proxy-blank.spec.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "host"
+    },
+    {
+      "id": "subsys.host.frontend-static",
+      "path": "subsystems/host/frontend-static.md",
+      "grade": "B-HEAVY",
+      "churn": 2650,
+      "n_hits": 16,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "host"
+    },
+    {
+      "id": "subsys.host.plugin-inventory",
+      "path": "subsystems/host/plugin-inventory.md",
+      "grade": "B-HEAVY",
+      "churn": 2107,
+      "n_hits": 15,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "host"
+    },
+    {
+      "id": "subsys.host.directory-picker",
+      "path": "subsystems/host/directory-picker.md",
+      "grade": "A-BROKEN",
+      "churn": 6019,
+      "n_hits": 20,
+      "missing": [
+        "packages/host/apiproxy/src/index.ts",
+        "packages/host/apiproxy/src/api-proxy.ts",
+        "packages/host/apiproxy/src/api/rpc-map.ts",
+        "packages/host/apiproxy/src/fetch/client.ts",
+        "packages/host/apiproxy/tests/api-proxy-workspace.spec.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "host"
+    },
+    {
+      "id": "subsys.client.runtime",
+      "path": "subsystems/client/runtime.md",
+      "grade": "A-BROKEN",
+      "churn": 9022,
+      "n_hits": 26,
+      "missing": [
+        "packages/client/runtime/src/index.ts",
+        "packages/client/runtime/src/client/index.ts",
+        "packages/client/runtime/src/client/slots.ts",
+        "packages/client/runtime/src/client/sessions/service.ts",
+        "packages/client/runtime/src/client/sessions/manager.ts",
+        "packages/client/runtime/src/client/sessions/session.ts",
+        "packages/client/runtime/src/client/workspaces/service.ts",
+        "packages/client/runtime/src/client/workspaces/manager.ts",
+        "packages/client/runtime/src/client/conversation/event-registry.ts",
+        "packages/client/runtime/src/client/conversation/view-registry.ts",
+        "packages/client/runtime/src/client/contract/sessions.ts",
+        "packages/client/runtime/src/client/contract/sessions-port.ts",
+        "packages/client/runtime/src/client/contract/workspaces.ts",
+        "packages/client/runtime/src/client/contract/session.ts",
+        "packages/client/runtime/src/client/sessions/conversation.ts",
+        "packages/client/runtime/src/client/agents/scope.ts",
+        "packages/client/runtime/package.json",
+        "packages/client/runtime/tests/node-half.client.spec.ts",
+        "packages/client/runtime/tests/client-apply.client.spec.ts",
+        "packages/client/runtime/tests/session.client.spec.ts",
+        "packages/client/runtime/tests/workspaces-service.client.spec.ts",
+        "packages/client/runtime/tests/slots-service.client.spec.ts",
+        "packages/client/runtime/tests/manager.client.spec.ts"
+      ],
+      "remapped": [
+        [
+          "packages/client/runtime/src/client/conversation/event-registry.ts",
+          "packages/client/ui-conversation/src/client/conversation/event-registry.ts"
+        ],
+        [
+          "packages/client/runtime/src/client/agents/scope.ts",
+          "packages/api/session-controller/src/client/scope.ts"
+        ]
+      ],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client"
+    },
+    {
+      "id": "subsys.client.modules",
+      "path": "subsystems/client/modules.md",
+      "grade": "A-BROKEN",
+      "churn": 4174,
+      "n_hits": 21,
+      "missing": [
+        "packages/client/web/src/boot.tsx",
+        "packages/client/runtime/package.json"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client"
+    },
+    {
+      "id": "subsys.client.web",
+      "path": "subsystems/client/web.md",
+      "grade": "A-BROKEN",
+      "churn": 4673,
+      "n_hits": 34,
+      "missing": [
+        "packages/client/web/src/app-shell.ts",
+        "packages/client/web/src/boot.tsx",
+        "packages/client/web/src/AppRoot.tsx",
+        "packages/client/web/src/app.tsx",
+        "packages/client/web/src/DocumentTitle.tsx",
+        "packages/client/web-react/src/index.ts",
+        "packages/client/web-react/src/bind.ts",
+        "packages/client/web-react/src/scoped-slots.tsx",
+        "packages/client/web-react/src/session-provider.tsx",
+        "packages/client/web/tests/app-root.client.spec.tsx",
+        "packages/client/web/tests/app-shell.client.spec.tsx",
+        "packages/client/web/tests/app.client.spec.tsx",
+        "packages/client/runtime/src/client/slots.ts"
+      ],
+      "remapped": [
+        [
+          "packages/client/web-react/src/bind.ts",
+          "packages/client/ui-renderer/src/client/bind.ts"
+        ],
+        [
+          "packages/client/web-react/src/scoped-slots.tsx",
+          "packages/client/ui-renderer/src/client/scoped-slots.tsx"
+        ]
+      ],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client"
+    },
+    {
+      "id": "subsys.client.connection",
+      "path": "subsystems/client/connection.md",
+      "grade": "A-BROKEN",
+      "churn": 5872,
+      "n_hits": 28,
+      "missing": [
+        "packages/client/connection/src/websocket-downlink.ts",
+        "packages/client/connection/src/client/web-api-client.ts",
+        "packages/client/connection/tests/websocket-downlink.host.spec.ts",
+        "packages/host/apiproxy/src/fetch/handler.ts",
+        "packages/host/apiproxy/src/fetch/client.ts",
+        "packages/client/runtime/src/client/index.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client"
+    },
+    {
+      "id": "subsys.client.hmr",
+      "path": "subsystems/client/hmr.md",
+      "grade": "A-BROKEN",
+      "churn": 2487,
+      "n_hits": 18,
+      "missing": [
+        "packages/client/web/src/boot.tsx"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client"
+    },
+    {
+      "id": "subsys.client.ui-slots",
+      "path": "subsystems/client/ui-slots.md",
+      "grade": "A-BROKEN",
+      "churn": 2425,
+      "n_hits": 24,
+      "missing": [
+        "packages/client/runtime/src/index.ts",
+        "packages/client/runtime/src/client/index.ts",
+        "packages/client/runtime/src/client/slots.ts",
+        "packages/client/runtime/tests/slots-service.client.spec.ts",
+        "packages/client/web/src/app-shell.ts",
+        "packages/client/web/src/app.tsx",
+        "packages/client/web-react/src/scoped-slots.tsx"
+      ],
+      "remapped": [
+        [
+          "packages/client/web-react/src/scoped-slots.tsx",
+          "packages/client/ui-renderer/src/client/scoped-slots.tsx"
+        ]
+      ],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client"
+    },
+    {
+      "id": "subsys.client.ui-conversation",
+      "path": "subsystems/client/ui-conversation.md",
+      "grade": "A-BROKEN",
+      "churn": 10330,
+      "n_hits": 31,
+      "missing": [
+        "packages/client/ui-conversation/src/client/skeleton/DetailsPanel.tsx",
+        "packages/client/ui-conversation/src/client/conversation-nodes/register.ts",
+        "packages/client/ui-conversation/src/client/conversation-nodes/message.ts",
+        "packages/client/ui-conversation/src/client/conversation-nodes/chat-snapshot-builder.ts",
+        "packages/client/ui-conversation/src/client/chat/register-node-renderers.ts",
+        "packages/client/ui-conversation/tests/chat-apply.client.spec.tsx",
+        "packages/client/ui-conversation/tests/input-machine.client.spec.ts",
+        "packages/client/runtime/src/client/sessions/session.ts",
+        "packages/client/runtime/src/client/conversation/event-registry.ts",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [
+        [
+          "packages/client/ui-conversation/src/client/conversation-nodes/register.ts",
+          "packages/client/ui-chat/src/client/conversation-nodes/register.ts"
+        ],
+        [
+          "packages/client/ui-conversation/src/client/chat/register-node-renderers.ts",
+          "packages/client/ui-chat/src/client/chat/register-node-renderers.ts"
+        ],
+        [
+          "packages/client/runtime/src/client/conversation/event-registry.ts",
+          "packages/client/ui-conversation/src/client/conversation/event-registry.ts"
+        ]
+      ],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client"
+    },
+    {
+      "id": "subsys.client.ui-layout",
+      "path": "subsystems/client/ui-layout.md",
+      "grade": "A-BROKEN",
+      "churn": 2090,
+      "n_hits": 19,
+      "missing": [
+        "packages/client/runtime/src/client/index.ts",
+        "packages/client/runtime/src/client/slots.ts",
+        "packages/client/web/src/app.tsx",
+        "packages/client/web-react/src/scoped-slots.tsx"
+      ],
+      "remapped": [
+        [
+          "packages/client/web-react/src/scoped-slots.tsx",
+          "packages/client/ui-renderer/src/client/scoped-slots.tsx"
+        ]
+      ],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client"
+    },
+    {
+      "id": "subsys.integration.mcp-client",
+      "path": "subsystems/integration/mcp-client.md",
+      "grade": "A-BROKEN",
+      "churn": 1180,
+      "n_hits": 14,
+      "missing": [
+        "examples/mcp-memory/mcp-reference-memory.cordis.yml",
+        "examples/mcp-memory/engram.cordis.yml",
+        "examples/mcp-memory/memorix.cordis.yml"
+      ],
+      "remapped": [
+        [
+          "examples/mcp-memory/mcp-reference-memory.cordis.yml",
+          "apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml"
+        ],
+        [
+          "examples/mcp-memory/engram.cordis.yml",
+          "apps/cli/config/examples/mcp-memory/engram.cordis.yml"
+        ],
+        [
+          "examples/mcp-memory/memorix.cordis.yml",
+          "apps/cli/config/examples/mcp-memory/memorix.cordis.yml"
+        ]
+      ],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration"
+    },
+    {
+      "id": "subsys.integration.acp",
+      "path": "subsystems/integration/acp.md",
+      "grade": "A-BROKEN",
+      "churn": 2371,
+      "n_hits": 13,
+      "missing": [
+        "packages/examples/acp-demo/src/index.ts",
+        "examples/acp-agent/cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration"
+    },
+    {
+      "id": "subsys.integration.sdk-protocol",
+      "path": "subsystems/integration/sdk-protocol.md",
+      "grade": "C-DRIFT",
+      "churn": 424,
+      "n_hits": 7,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration"
+    },
+    {
+      "id": "subsys.integration.sdk-server",
+      "path": "subsystems/integration/sdk-server.md",
+      "grade": "A-BROKEN",
+      "churn": 992,
+      "n_hits": 14,
+      "missing": [
+        "examples/jsonrpc-agent/cordis.yml",
+        "examples/jsonrpc-agent/tests/fixtures/subagent/subagent-dsh-sdk/child.cordis.yml",
+        "examples/package.json",
+        "python/sdk-runtime/src/deepseek_harness_runtime/runtime/cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration"
+    },
+    {
+      "id": "subsys.integration.sdk-client",
+      "path": "subsystems/integration/sdk-client.md",
+      "grade": "C-DRIFT",
+      "churn": 779,
+      "n_hits": 9,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration"
+    },
+    {
+      "id": "subsys.integration.typert",
+      "path": "subsystems/integration/typert.md",
+      "grade": "A-BROKEN",
+      "churn": 1792,
+      "n_hits": 14,
+      "missing": [
+        "packages/api/remotes/src/agent-lookup.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration"
+    },
+    {
+      "id": "subsys.integration.api-gateway",
+      "path": "subsystems/integration/api-gateway.md",
+      "grade": "A-BROKEN",
+      "churn": 6567,
+      "n_hits": 18,
+      "missing": [
+        "packages/api/remotes/src/agent-lookup.ts",
+        "packages/api/remotes/tests/agent-lookup.spec.ts",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration"
+    },
+    {
+      "id": "subsys.integration.web-search",
+      "path": "subsystems/integration/web-search.md",
+      "grade": "A-BROKEN",
+      "churn": 2190,
+      "n_hits": 22,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration"
+    },
+    {
+      "id": "subsys.integration.web-fetch",
+      "path": "subsystems/integration/web-fetch.md",
+      "grade": "A-BROKEN",
+      "churn": 1795,
+      "n_hits": 17,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/acp-agent/web.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "integration"
+    },
+    {
+      "id": "subsys.vendor.cordis",
+      "path": "subsystems/vendor/cordis.md",
+      "grade": "C-DRIFT",
+      "churn": 17,
+      "n_hits": 4,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "vendor"
+    },
+    {
+      "id": "subsys.vendor.loader",
+      "path": "subsystems/vendor/loader.md",
+      "grade": "A-BROKEN",
+      "churn": 255,
+      "n_hits": 7,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "vendor"
+    },
+    {
+      "id": "subsys.util.home-paths",
+      "path": "subsystems/util/home-paths.md",
+      "grade": "C-DRIFT",
+      "churn": 716,
+      "n_hits": 7,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "util"
+    },
+    {
+      "id": "subsys.util.brand",
+      "path": "subsystems/util/brand.md",
+      "grade": "C-DRIFT",
+      "churn": 162,
+      "n_hits": 7,
+      "missing": [],
+      "remapped": [],
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "util"
+    },
+    {
+      "id": "ref.tools-catalog",
+      "path": "reference/tools-catalog.md",
+      "grade": "A-BROKEN",
+      "churn": 3692,
+      "n_hits": 41,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "core"
+    },
+    {
+      "id": "ref.session-events",
+      "path": "reference/session-events.md",
+      "grade": "A-BROKEN",
+      "churn": 6377,
+      "n_hits": 34,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts",
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "core"
+    },
+    {
+      "id": "ref.config-keys",
+      "path": "reference/config-keys.md",
+      "grade": "A-BROKEN",
+      "churn": 8795,
+      "n_hits": 93,
+      "missing": [
+        "packages/examples/acp-demo/src/index.ts",
+        "packages/host/apiproxy/src/index.ts"
+      ],
+      "remapped": [],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "persistence"
+    },
+    {
+      "id": "ref.env-vars",
+      "path": "reference/env-vars.md",
+      "grade": "A-BROKEN",
+      "churn": 3874,
+      "n_hits": 25,
+      "missing": [
+        "packages/host/apiproxy/src/native-path-opener.ts",
+        "packages/client/runtime/src/client/contract/store.ts",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "packages/examples/jsonrpc-demo/src/runner.ts"
+      ],
+      "remapped": [],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "cross"
+    },
+    {
+      "id": "ref.ctx-keys",
+      "path": "reference/ctx-keys.md",
+      "grade": "A-BROKEN",
+      "churn": 10037,
+      "n_hits": 77,
+      "missing": [
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "packages/host/apiproxy/src/index.ts",
+        "packages/client/runtime/src/client/index.ts",
+        "packages/client/web/src/app-shell.ts"
+      ],
+      "remapped": [],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "cross"
+    },
+    {
+      "id": "ref.event-map",
+      "path": "reference/event-map.md",
+      "grade": "A-BROKEN",
+      "churn": 5601,
+      "n_hits": 26,
+      "missing": [
+        "packages/host/apiproxy/src/api-proxy.ts"
+      ],
+      "remapped": [],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "cross"
+    },
+    {
+      "id": "ref.cli-flags",
+      "path": "reference/cli-flags.md",
+      "grade": "C-DRIFT",
+      "churn": 1306,
+      "n_hits": 14,
+      "missing": [],
+      "remapped": [],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "composition"
+    },
+    {
+      "id": "ref.presets",
+      "path": "reference/presets.md",
+      "grade": "A-BROKEN",
+      "churn": 2259,
+      "n_hits": 18,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/preset.yml",
+        "apps/cli/config/agent-presets/standard/preset.yml",
+        "apps/cli/config/agent-presets/code/preset.yml",
+        "apps/cli/config/agent-presets/cordis/preset.yml"
+      ],
+      "remapped": [
+        [
+          "apps/cli/config/agent-presets/minimal/preset.yml",
+          "packages/preset/agent-presets/presets/minimal/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/standard/preset.yml",
+          "packages/preset/agent-presets/presets/standard/preset.yml"
+        ],
+        [
+          "apps/cli/config/agent-presets/cordis/preset.yml",
+          "packages/preset/agent-presets/presets/cordis/preset.yml"
+        ]
+      ],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "composition"
+    },
+    {
+      "id": "ref.sdk-methods",
+      "path": "reference/sdk-methods.md",
+      "grade": "C-DRIFT",
+      "churn": 722,
+      "n_hits": 10,
+      "missing": [],
+      "remapped": [],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "integration"
+    },
+    {
+      "id": "ref.capability-seams",
+      "path": "reference/capability-seams.md",
+      "grade": "A-BROKEN",
+      "churn": 7285,
+      "n_hits": 55,
+      "missing": [
+        "packages/host/apiproxy/src/index.ts",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "examples/headless-agent/e2b.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "cross"
+    },
+    {
+      "id": "ref.package-index",
+      "path": "reference/package-index.md",
+      "grade": "A-BROKEN",
+      "churn": 4492,
+      "n_hits": 244,
+      "missing": [
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/code/agent.cordis.yml",
+        "apps/cli/config/agent-presets/cordis/agent.cordis.yml",
+        "examples/package.json",
+        "packages/client/runtime/package.json",
+        "packages/client/schema-form/package.json",
+        "packages/client/web-react/package.json",
+        "packages/examples/acp-demo/package.json",
+        "packages/examples/jsonrpc-demo/package.json",
+        "packages/host/apiproxy/package.json",
+        "packages/test-support/acp-snapshot/package.json"
+      ],
+      "remapped": [],
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "cross"
+    },
+    {
+      "id": "ref.glossary",
+      "path": "reference/glossary.md",
+      "grade": "A-BROKEN",
+      "churn": 4134,
+      "n_hits": 35,
+      "missing": [
+        "packages/core/tools/src/code-mode.ts",
+        "apps/cli/config/agent-presets/standard/agent.cordis.yml",
+        "apps/cli/config/agent-presets/minimal/agent.cordis.yml"
+      ],
+      "remapped": [],
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "cross"
+    },
+    {
+      "id": "ref.uncertainty",
+      "path": "reference/uncertainty.md",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "remapped": [],
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "cross"
+    }
+  ]
+}

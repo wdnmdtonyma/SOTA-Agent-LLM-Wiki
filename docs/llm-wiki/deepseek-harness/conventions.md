@@ -154,17 +154,20 @@ frontmatter + 一句话 + 能回答的问题 + **mermaid 图先行** · 端到�
 
 ## 7. DSH 专属 ground-truth 约定(写节点前必核)
 
-- **模型可见工具集** ground truth = `packages/*/tool-*` 以及同样往 `ctx.tools` 注册的 `packages/plan/plan-mode`、`packages/core/tools`(Code Mode `run_code`)、`packages/schedule/schedule`、`packages/extensions/tool-cordis`。完整性:官方生成器 glob `packages/*/tool-*` 并 **boot 真实 context** 读 `ctx.tools.schemas()`(`docs/tool-catalog.md` 是这份清单的生成物,只当查漏,不当 `[E]`)。多退少补。
-- **同名碰撞**:`bash` 同时是 `dsh-tool-bash`(one-shot,`ctx.shell`)和 `dsh-tool-bash-persistent`(`ctx.terminals`)。`subagent` 的 wire 名是 load-time `toolName`;shipped 另有 `subagent_fork`。
-- **Preset 集** = `apps/cli/config/agent-presets/{minimal,standard,code,cordis}/agent.cordis.yml` + `preset.yml`。某工具"在不在默认产品里"以这些文件为准,不以 package 存在为准。
-- **组合层** = `packages/boot/app-boot`(profile 发现与 patch 叠层)+ `packages/bundle/{base,web-app,headless}/cordis.patch.yml` + 用户 `$DSH_HOME/profiles/<name>/cordis.patch.yml` + `--patch`。看真树:`dsh --profile web --dump-config`(源码入口 `apps/cli/src/dump-config.ts`)。
+- **模型可见工具集** ground truth = `packages/*/tool-*` 以及同样往 `ctx.tools` 注册的 `packages/plan/plan-mode`、`packages/core/tools`(PTC `run_code`)、`packages/schedule/schedule`、`packages/extensions/tool-cordis`、`packages/experimental/tool-agent-team`(opt-in)。完整性:官方生成器 glob `packages/*/tool-*` 并 **boot 真实 context** 读 `ctx.tools.schemas()`(`docs/tool-catalog.md` 是这份清单的生成物,只当查漏,不当 `[E]`)。多退少补。
+- **同名碰撞**:`bash` 同时是 `dsh-tool-bash`(one-shot,`ctx.shell`)和 `dsh-tool-bash-persistent`(`ctx.terminals`)。`pwsh` 同样拆 one-shot `dsh-tool-pwsh` 与 persistent `dsh-tool-pwsh-persistent`。`subagent` 的 wire 名是 load-time `toolName`;shipped 另有 `subagent_fork`。
+- **Preset 集** = `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml` + `preset.yml`。旧路径 `apps/cli/config/agent-presets/` 与旧目录名 `code` 已不存在;`code` 预设现为 **PTC**(`presets/ptc/`)。某工具"在不在默认产品里"以这些文件为准,不以 package 存在为准。
+- **组合层** = `packages/boot/app-boot`(profile 发现与 patch 叠层)+ `packages/bundle/{base,web-app,headless,sdk-app,sdk-minimal,acp-app}/cordis.patch.yml` + 用户 `$DSH_HOME/profiles/<name>/cordis.patch.yml` + `--patch`。看真树:`dsh --profile web --dump-config`(源码入口 `apps/cli/src/dump-config.ts`)。
+- **Profile 模板** = `PROFILE_TEMPLATES`:`web`(live)+ `headless` / `sdk` / `sdk-minimal` / `acp`(startup)。`sdk-minimal` 是唯一不叠 `dsh-base` 的 shipped bundle。
 - **Loop** = `packages/core/agent-loop`(默认可替换驱动)+ `packages/core/agent`(合同 / inbox / 事件)。新行为优先挂扩展点,改 loop 必须对照 `docs/architecture.md` 的地图——但 wiki 的 `[E]` 仍只认 loop 源码。
-- **会话日志** = `packages/core/session` 的 `SessionEventMap` + `deriveMessages()`(`src/surface.ts`)。compaction 只有 `surfaceOp: replace`,没有 delete。
+- **会话日志** = `packages/core/session` 的 `SessionEventMap` + `deriveMessages()`(`src/surface.ts`)。compaction 只有 `surfaceOp: replace`,没有 delete。`dsh-session-log-deepseek` 是 DeepSeek 方言投影,不是第二份日志。
 - **Checkpoint** = `packages/session/session-checkpoint-policy`:在 adapter 看到请求之前、以及 top-level tool body 能产生副作用之前落点。
-- **LLM** = `packages/llm/llm`(seam)+ `packages/llm/llm-deepseek`(默认路由 `deepseek-official`)+ `packages/llm/llm-pi-ai`(始终加载,零 route 直到 Settings 加 profile)。
+- **LLM** = `packages/llm/llm`(seam)+ `packages/llm/llm-deepseek`(默认路由 `deepseek-official`)+ `packages/llm/llm-pi-ai`(始终加载,零 route 直到 Settings 加 profile)+ `packages/llm/deepseek-llm-api-extensions`。
 - **人命令** = `packages/interaction/commands`(`ctx.commands`),不经模型 turn。
 - **配置键** ground truth = 各包 `Config` / schemastery 声明;官方 `docs/config-catalog.md` 是生成物。
 - **环境变量** 至少包括 `DSH_HOME`、`DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_SEARCH_BASE_URL`(search 不走 `DEEPSEEK_BASE_URL`)。以源码引用为准枚举。
 - **设计意图(非 [E])**:`docs/architecture.md`、`docs/capability-seams.md`、`docs/agent-lifecycle.md`、各包 README、`.agents/notes/implemented/`。
 - **Cordis 语义**:waterfall 必须 `next()`;注册是 `ctx.effect()` / `ctx.on()` 的可逆 effect。源在 `vendor/cordis/`。
 - **`.dsh` vs `.agents` vs `$DSH_HOME`**:产品主目录是 `$DSH_HOME` 否则 `~/.dsh`;skills 扫描含 `<project>/.dsh/skills` 与 `.agents/skills`。别和 Claude/Pi 的配置目录混。
+- **已退役包(勿再当 source)**:`packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react`、`packages/client/schema-form`。工作树里若还剩仅含 `node_modules` 的空壳目录,忽略。HTTP API 现为 `packages/api/{session,settings,workspace}-controller`;浏览器状态现为 `packages/client/store` + `packages/client/ui-renderer`。
+- **PTC**:旧名 Code Mode。权威源 `packages/core/tools/src/ptc.ts`(不是 `code-mode.ts`);`run_code` 仍是模型可见名;语言 flavor 有 `typescript` 与 `python`。

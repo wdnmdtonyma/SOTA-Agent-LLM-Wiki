@@ -23,7 +23,7 @@ source:
   - packages/skill/skill-filesystem/src/index.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
-  - apps/cli/config/agent-presets/standard/agent.cordis.yml
+  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
   - vendor/cordis/src/events.ts
 symbols:
   - ObservedStateGate
@@ -44,7 +44,7 @@ related:
   - subsys.core.tools
 evidence: explicit
 status: verified
-updated: 47f943859b
+updated: 0a53fb55be
 ---
 
 > `@deepseek-ai/dsh-fs-observation-policy` 是 **host 面**事件门，不是 `ctx.fs` Provider：`apply(ctx)` 不 `inject`、不 `provide`，只占 `fs/write-intent` / `fs/edit-intent` 单槽（不调用 `next()`）并同步记录 `fs/observed`。观察按 `actor.agent.session` 做 `WeakMap` 键；未见/confirmed absent 的 write 走 `createIfAbsent`，confirmed present 走 `replaceIfVersion`；edit 未见抛 `FS_NOT_OBSERVED`，confirmed absent 抛 `FS_NOT_FOUND`。卸掉插件，provider 回到无条件 mutation。不换 `ctx.fs`，也不改 `write` / `edit` schema。
@@ -65,14 +65,14 @@ updated: 47f943859b
 本包**不**拥有：
 
 - `ctx.fs` 的 Definition 与原语（`resolve` / `writeText` / `editText` / `FsTarget`）— [`subsys.execution.fs`](fs.md)（`subsys.execution.fs`）。
-- 默认 host Provider。shipped `dsh-base` 的 `ctx.fs` 仍是 `id: fs-sandbox`，不是本插件。[E: packages/bundle/base/cordis.patch.yml:443]
+- 默认 host Provider。shipped `dsh-base` 的 `ctx.fs` 仍是 `id: fs-sandbox`，不是本插件。[E: packages/bundle/base/cordis.patch.yml:493]
 - 原子发布与 `expected` 的磁盘侧 CAS（`createIfAbsent` 撞到已有文件、`replaceIfVersion` 版本漂移）— `LocalFileSystem.writeText` / `editText`，见 [`subsys.execution.fs-local`](fs-local.md)（`subsys.execution.fs-local`）。
 - `write` / `edit` / `read` 的模型字段与 remedy 文案 — [`surface.tools.write`](../../surface/tools/write.md) / [`surface.tools.edit`](../../surface/tools/edit.md) / [`surface.tools.read`](../../surface/tools/read.md)。
 - 文件副作用围栏（`read-only` / `workspace-write` / `danger-full-access`）— [`subsys.execution.fs-sandbox`](fs-sandbox.md)（`subsys.execution.fs-sandbox`）。沙箱罩 mutation 路径，不罩观察表。
 - `tools/pre-execute` / `tools/execute` — [`subsys.core.tools`](../core/tools.md)（`subsys.core.tools`）。观察门挂在 tool body 里的 `fs/*` 事件，不挂 pre-execute。
 - `glob` / `grep` / `bash`。它们吃 `ctx.subprocess`（Bash 还隔着 `ctx.shell`），不走 `ctx.fs`，本门看不见。
 
-**host 面 vs agent-preset 面。** 本插件是进程级 host 行：`dsh-base` `id: fs-observation-policy`。[E: packages/bundle/base/cordis.patch.yml:221] [E: packages/bundle/base/cordis.patch.yml:222] `dsh-web-app` 把模型可见的 `tool-fs` `disabled: true`，改由 preset 按会话挂回；**没有** disable 本行，Provider / 本事件门留在 host。[E: packages/bundle/web-app/cordis.patch.yml:312] [E: packages/bundle/web-app/cordis.patch.yml:313] 默认产品路径是 `dsh web`（本地 Web GUI），本仓没有 shipped TUI。
+**host 面 vs agent-preset 面。** 本插件是进程级 host 行：`dsh-base` `id: fs-observation-policy`。[E: packages/bundle/base/cordis.patch.yml:263] [E: packages/bundle/base/cordis.patch.yml:264] `dsh-web-app` 把模型可见的 `tool-fs` `disabled: true`，改由 preset 按会话挂回；**没有** disable 本行，Provider / 本事件门留在 host。[E: packages/bundle/web-app/cordis.patch.yml:339] [E: packages/bundle/web-app/cordis.patch.yml:340] 五个 shipped profile 是 `web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）；`dsh web` 只是 web 的别名，不是唯一宿主入口。四个 shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` 即 PTC）。本仓没有 shipped TUI。
 
 ## 关键文件
 
@@ -103,29 +103,29 @@ updated: 47f943859b
 | `fs/write-intent` | `Events`，`@mode waterfall` | 单槽：`(target, actor, next) → Promise<FsWriteIntent \| undefined>`。[E: packages/fs/fs/src/index.ts:58] |
 | `fs/edit-intent` | `Events`，`@mode waterfall` | 单槽：返回 `{ version }` 或 `undefined`。[E: packages/fs/fs/src/index.ts:66] |
 | `fs/observed` | `Events`，`@mode emit` | `(target, observation, actor) => void`。同步记录器。[E: packages/fs/fs/src/index.ts:76] |
-| `FS_NOT_OBSERVED` | `FsErrorCode` | 门在 **edit 未见 / 无 owner** 时抛；provider 在 `createIfAbsent` 撞到已有文件时也抛同一码。[E: packages/fs/fs/src/types.ts:185] [E: packages/fs/fs-observation-policy/src/index.ts:82] [E: packages/fs/fs-local/src/index.ts:186] |
+| `FS_NOT_OBSERVED` | `FsErrorCode` | 门在 **edit 未见 / 无 owner** 时抛；provider 在 `createIfAbsent` 撞到已有文件时也抛同一码。[E: packages/fs/fs/src/types.ts:185] [E: packages/fs/fs-observation-policy/src/index.ts:82] [E: packages/fs/fs-local/src/index.ts:190] |
 | `FS_NOT_FOUND` | 门 | edit 且 prior 为 `absent`。[E: packages/fs/fs-observation-policy/src/index.ts:85] |
-| `FS_STALE_VERSION` | provider | `replaceIfVersion` 时目标已消失或 version 对不上。门不抛这码。[E: packages/fs/fs-local/src/index.ts:180] [E: packages/fs/fs-local/src/index.ts:182] |
+| `FS_STALE_VERSION` | provider | `replaceIfVersion` 时目标已消失或 version 对不上。门不抛这码。[E: packages/fs/fs-local/src/index.ts:184] [E: packages/fs/fs-local/src/index.ts:186] |
 
 ## 控制流
 
-1. **host 组合挂上插件，不换 `ctx.fs`。** `dsh-base` 根 `insert` 写 `id: fs-observation-policy` / `name: '@deepseek-ai/dsh-fs-observation-policy'`，与后面的 `id: fs-sandbox` 并列；没有 `isolate`，进 root realm。[E: packages/bundle/base/cordis.patch.yml:221] [E: packages/bundle/base/cordis.patch.yml:443] 这是 Companion 行，不是第二条 `FileSystem`。
+1. **host 组合挂上插件，不换 `ctx.fs`。** `dsh-base` 根 `insert` 写 `id: fs-observation-policy` / `name: '@deepseek-ai/dsh-fs-observation-policy'`，与后面的 `id: fs-sandbox` 并列；没有 `isolate`，进 root realm。[E: packages/bundle/base/cordis.patch.yml:263] [E: packages/bundle/base/cordis.patch.yml:493] 这是 Companion 行，不是第二条 `FileSystem`。
 
 2. **`apply`@packages/fs/fs-observation-policy/src/index.ts 只登记 effect + 三枚 `ctx.on`。** `const gate = new ObservedStateGate()` 之后：`ctx.effect` 在 dispose 时 `gate.clear()`；`fs/write-intent` / `fs/edit-intent` 用 `Promise.resolve().then(() => gate.*Intent(...))` 包一层，使抛错变成 rejected promise，而不是同步穿透 waterfall；`fs/observed` 直接 `gate.observe`。[E: packages/fs/fs-observation-policy/src/index.ts:107] [E: packages/fs/fs-observation-policy/src/index.ts:113] [E: packages/fs/fs-observation-policy/src/index.ts:119] [E: packages/fs/fs-observation-policy/src/index.ts:122] [E: packages/fs/fs-observation-policy/src/index.ts:128] 两个 intent listener 的形参是 `(target, actor)`，**不接收也不调用 `next`**。
 
 3. **Consumer 不 `inject` 本插件。** `dsh-tool-fs` `export const inject = ['tools', 'fs', 'systemPrompt']`。[E: packages/fs/tool-fs/src/index.ts:22] 工具把 `exec` 当 opaque `actor` 丢进事件；本插件再收窄成 `FsObservationActor`。两边没有方法耦合。
 
-4. **读路径留下观察（写路径不 stat）。** `resolveRegularReadTarget`：`stat === undefined` 时先 `ctx.emit('fs/observed', target, { kind: 'absent' }, exec)` 再抛 `FS_NOT_FOUND`。[E: packages/fs/tool-fs/src/read-target.ts:27] [E: packages/fs/tool-fs/src/read-target.ts:28] 读成功后 `read` emit `{ kind: 'present', version: info.version }`；`read_image` 在附件落盘后同样 emit `present`。[E: packages/fs/tool-fs/src/read.ts:162] [E: packages/fs/tool-fs/src/read-image.ts:200] 窗口读也记 **整文件** version（来自那次 `stat`），不是「模型看过的行」：`limit: 1` 足以授权改窗口外的字面量。[E: packages/fs/tool-fs/tests/integration.spec.ts:164] [E: packages/fs/tool-fs/tests/integration.spec.ts:169] [E: packages/fs/tool-fs/tests/integration.spec.ts:170] 直接 `ctx.fs.readText` **不** emit，后续 model-facing `edit` 仍 `FS_NOT_OBSERVED`。[E: packages/fs/tool-fs/tests/integration.spec.ts:229] [E: packages/fs/tool-fs/tests/integration.spec.ts:233]
+4. **读路径留下观察（写路径不 stat）。** `resolveRegularReadTarget`：`stat === undefined` 时先 `ctx.emit('fs/observed', target, { kind: 'absent' }, exec)` 再抛 `FS_NOT_FOUND`。[E: packages/fs/tool-fs/src/read-target.ts:27] [E: packages/fs/tool-fs/src/read-target.ts:28] 读成功后 `read` emit `{ kind: 'present', version: info.version }`；`read_image` 在附件落盘后同样 emit `present`。[E: packages/fs/tool-fs/src/read.ts:161] [E: packages/fs/tool-fs/src/read-image.ts:257] 窗口读也记 **整文件** version（来自那次 `stat`），不是「模型看过的行」：`limit: 1` 足以授权改窗口外的字面量。[E: packages/fs/tool-fs/tests/integration.spec.ts:164] [E: packages/fs/tool-fs/tests/integration.spec.ts:169] [E: packages/fs/tool-fs/tests/integration.spec.ts:170] 直接 `ctx.fs.readText` **不** emit，后续 model-facing `edit` 仍 `FS_NOT_OBSERVED`。[E: packages/fs/tool-fs/tests/integration.spec.ts:229] [E: packages/fs/tool-fs/tests/integration.spec.ts:233]
 
-5. **write：`waterfall` → `writeText` → `emit`。** `applyWriteTool` 在 sandbox policy 与 `ctx.fs.resolve` 之后：`const intent = await ctx.waterfall('fs/write-intent', target, exec, () => undefined)`，默认 thunk 是 `undefined`（无条件写）。[E: packages/fs/tool-fs/src/write.ts:111] 然后 `ctx.fs.writeText(..., intent, ...)`，成功再 `ctx.emit('fs/observed', target, { kind: 'present', version: outcome.version }, exec)`。[E: packages/fs/tool-fs/src/write.ts:114] [E: packages/fs/tool-fs/src/write.ts:122] `dsh-tool-str-replace-editor` 的 `create` 同样 dispatch `fs/write-intent`，默认 thunk 写成 `createIfAbsent`（本页不写它的字段表）。[E: packages/fs/tool-str-replace-editor/src/index.ts:253] [E: packages/fs/tool-str-replace-editor/src/index.ts:256]
+5. **write：`waterfall` → `writeText` → `emit`。** `applyWriteTool` 在 sandbox policy 与 `ctx.fs.resolve` 之后：`const intent = await ctx.waterfall('fs/write-intent', target, exec, () => undefined)`，默认 thunk 是 `undefined`（无条件写）。[E: packages/fs/tool-fs/src/write.ts:110] 然后 `ctx.fs.writeText(..., intent, ...)`，成功再 `ctx.emit('fs/observed', target, { kind: 'present', version: outcome.version }, exec)`。[E: packages/fs/tool-fs/src/write.ts:113] [E: packages/fs/tool-fs/src/write.ts:120] `dsh-tool-str-replace-editor` 的 `create` 同样 dispatch `fs/write-intent`，默认 thunk 写成 `createIfAbsent`（本页不写它的字段表）。[E: packages/fs/tool-str-replace-editor/src/index.ts:254] [E: packages/fs/tool-str-replace-editor/src/index.ts:257]
 
-6. **edit：intent 放进 try，因为门会抛。** `const intent = await ctx.waterfall('fs/edit-intent', target, exec, () => undefined)`，随即 `ctx.fs.editText`。[E: packages/fs/tool-fs/src/edit.ts:126] [E: packages/fs/tool-fs/src/edit.ts:127] 未见目标由门抛 `FS_NOT_OBSERVED`，与 provider 失败走同一 `remediateFsError`。成功后再 emit `present`。[E: packages/fs/tool-fs/src/edit.ts:141] 一次成功 `write` 留下的 version 足够授权紧接着的 `edit`，不必再 `read`。[E: packages/fs/tool-fs/tests/integration.spec.ts:219]
+6. **edit：intent 放进 try，因为门会抛。** `const intent = await ctx.waterfall('fs/edit-intent', target, exec, () => undefined)`，随即 `ctx.fs.editText`。[E: packages/fs/tool-fs/src/edit.ts:125] [E: packages/fs/tool-fs/src/edit.ts:126] 未见目标由门抛 `FS_NOT_OBSERVED`，与 provider 失败走同一 `remediateFsError`。成功后再 emit `present`。[E: packages/fs/tool-fs/src/edit.ts:139] 一次成功 `write` 留下的 version 足够授权紧接着的 `edit`，不必再 `read`。[E: packages/fs/tool-fs/tests/integration.spec.ts:219]
 
 7. **Waterfall 必须 `next()` 才会 `shift`。** Cordis `waterfall` 把最后一个参数当 innermost `next`；`next()` 才 `cbs.shift()` 或落到 inner。[E: vendor/cordis/src/events.ts:238] 本插件不调 `next()`，测试里默认 thunk 的 `defaultRan` 保持 `false`，后注册的第二 decider 也跑不到。[E: packages/fs/fs-observation-policy/tests/policy.spec.ts:184] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:200] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:211] `register` 默认 `push`，`prepend: true` 才 `unshift`。[E: vendor/cordis/src/events.ts:255] 本插件 `ctx.on` 不 prepend：默认部署里它先挂所以占槽；更早注册或 `prepend` 的 listener 会先跑并同样可以吞掉 `next()`。这是注册顺序约定，不是事件层强制「只能有一个 listener」。
 
 8. **`owner`@ObservedStateGate 只认 `actor.agent.session`。** `owner()` 返回 `(actor as FsObservationActor | undefined)?.agent?.session`。[E: packages/fs/fs-observation-policy/src/index.ts:40] `undefined`、`{}`、`{ agent: {} }` 都没有 owner：write 判 `createIfAbsent`，edit 抛 `FS_NOT_OBSERVED`。[E: packages/fs/fs-observation-policy/tests/policy.spec.ts:55] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:56] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:63] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:89] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:94] 无 owner 的 `fs/observed` 什么都不记。[E: packages/fs/fs-observation-policy/src/index.ts:93] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:135] 读工具本身不查这张表，所以无 owner 的直调仍可 `read`；只是写/edit **不能满足** prior-observation（write 最多盲 create，不能凭观察去 `replaceIfVersion`）。两个不同 session 对象互不授权。[E: packages/fs/fs-observation-policy/tests/policy.spec.ts:160] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:170] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:171]
 
-9. **门只出 intent / 抛错，磁盘检查在 provider。** `writeIntent`：`prior?.kind === 'present'` → `{ kind: 'replaceIfVersion', version: prior.version }`，否则（未见、absent、无 owner）→ `{ kind: 'createIfAbsent' }`。[E: packages/fs/fs-observation-policy/src/index.ts:68] [E: packages/fs/fs-observation-policy/src/index.ts:69] [E: packages/fs/fs-observation-policy/src/index.ts:70] `editIntent`：`!owner || prior === undefined` → `FS_NOT_OBSERVED`；`prior.kind === 'absent'` → `FS_NOT_FOUND`；否则 `{ version: prior.version }`。[E: packages/fs/fs-observation-policy/src/index.ts:81] [E: packages/fs/fs-observation-policy/src/index.ts:82] [E: packages/fs/fs-observation-policy/src/index.ts:85] [E: packages/fs/fs-observation-policy/src/index.ts:87] 有 owner 的未见 write 测成 `createIfAbsent`；present 测成 `replaceIfVersion`；absent write 仍 `createIfAbsent`，absent edit 才 `FS_NOT_FOUND`。[E: packages/fs/fs-observation-policy/tests/policy.spec.ts:50] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:70] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:77] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:108] `LocalFileSystem.writeText` 在锁内执行：`createIfAbsent` 且目标已在 → `FS_NOT_OBSERVED`（「不能没读就覆盖」）；`replaceIfVersion` 对不上 → `FS_STALE_VERSION`。[E: packages/fs/fs-local/src/index.ts:184] [E: packages/fs/fs-local/src/index.ts:186] [E: packages/fs/fs-local/src/index.ts:182] 所以「盲 write 一个已存在文件」的 `FS_NOT_OBSERVED` 来自 **provider**，不是门。tool 层给这两码追加 remedy：`FS_NOT_OBSERVED` → `read the file, then retry`；`FS_STALE_VERSION` → `re-read the file, then retry`。[E: packages/fs/tool-fs/src/error.ts:16] [E: packages/fs/tool-fs/src/error.ts:15]
+9. **门只出 intent / 抛错，磁盘检查在 provider。** `writeIntent`：`prior?.kind === 'present'` → `{ kind: 'replaceIfVersion', version: prior.version }`，否则（未见、absent、无 owner）→ `{ kind: 'createIfAbsent' }`。[E: packages/fs/fs-observation-policy/src/index.ts:68] [E: packages/fs/fs-observation-policy/src/index.ts:69] [E: packages/fs/fs-observation-policy/src/index.ts:70] `editIntent`：`!owner || prior === undefined` → `FS_NOT_OBSERVED`；`prior.kind === 'absent'` → `FS_NOT_FOUND`；否则 `{ version: prior.version }`。[E: packages/fs/fs-observation-policy/src/index.ts:81] [E: packages/fs/fs-observation-policy/src/index.ts:82] [E: packages/fs/fs-observation-policy/src/index.ts:85] [E: packages/fs/fs-observation-policy/src/index.ts:87] 有 owner 的未见 write 测成 `createIfAbsent`；present 测成 `replaceIfVersion`；absent write 仍 `createIfAbsent`，absent edit 才 `FS_NOT_FOUND`。[E: packages/fs/fs-observation-policy/tests/policy.spec.ts:50] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:70] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:77] [E: packages/fs/fs-observation-policy/tests/policy.spec.ts:108] `LocalFileSystem.writeText` 在锁内执行：`createIfAbsent` 且目标已在 → `FS_NOT_OBSERVED`（「不能没读就覆盖」）；`replaceIfVersion` 对不上或文件已消失 → `FS_STALE_VERSION`。[E: packages/fs/fs-local/src/index.ts:188] [E: packages/fs/fs-local/src/index.ts:190] [E: packages/fs/fs-local/src/index.ts:186] 所以「盲 write 一个已存在文件」的 `FS_NOT_OBSERVED` 来自 **provider**，不是门。tool 层给这两码追加 remedy：`FS_NOT_OBSERVED` → `read the file, then retry`；`FS_STALE_VERSION` → `re-read the file, then retry`。[E: packages/fs/tool-fs/src/error.ts:16] [E: packages/fs/tool-fs/src/error.ts:15]
 
 10. **`fs/observed` 是 emit，不是单槽。** `emit` 对 listener 做同步 `.map(cb => cb(...args))`，**不** `await` 返回的 promise。[E: vendor/cordis/src/events.ts:195] 写已经 `writeText` 成功之后才 emit；再挂一个抛错的 listener 会让 tool result 变 `isError`，但磁盘上的字节已经落盘。[E: packages/fs/tool-fs/tests/integration.spec.ts:513] 合同要求 listener 同步且不抛；本插件的 `WeakMap.set` 满足。另一条 host 插件 `dsh-skill-filesystem` 也 `ctx.on('fs/observed', …)` 做 skill 失效，与观察表正交（emit 允许多 listener）。[E: packages/skill/skill-filesystem/src/index.ts:139]
 
@@ -156,9 +156,9 @@ updated: 47f943859b
 | 角 | 包 | ctx 键 / 事件 | bundle / preset 行 |
 |---|---|---|---|
 | Definition | `@deepseek-ai/dsh-fs` 的 `Events`（与 `FileSystem` 同模块） | **没有** `ctx.fsPolicy`。声明 `fs/write-intent`、`fs/edit-intent`（waterfall）、`fs/observed`（emit）。`FileSystem` 仍只 `super(ctx, 'fs')` 占 `ctx.fs`。[E: packages/fs/fs/src/index.ts:58] [E: packages/fs/fs/src/index.ts:88] | Definition 包本身不出现在 shipped insert |
-| Provider | **本页不是。** `apply` 不 `provide`。默认实现仍是 `@deepseek-ai/dsh-fs-sandbox`（`extends LocalFileSystem`） | `ctx.fs` 不因本插件改变 | `dsh-base` `id: fs-sandbox`。[E: packages/bundle/base/cordis.patch.yml:443] |
-| Companion（本页） | `@deepseek-ai/dsh-fs-observation-policy` `apply(ctx)` | 无 `inject`、无 service 键；占两个 intent 单槽且不 `next()`；听 `fs/observed` | `dsh-base` `id: fs-observation-policy`。`dsh-web-app` **不** disable 本行。preset 挂回的是 `tool-fs` Consumer，不是再挂一份本插件。[E: packages/bundle/base/cordis.patch.yml:221] [E: apps/cli/config/agent-presets/standard/agent.cordis.yml:56] |
-| Consumer | `@deepseek-ai/dsh-tool-fs`（`read`/`read_image` emit；`write`/`edit` waterfall + emit）。`@deepseek-ai/dsh-tool-str-replace-editor` 同样 dispatch | `inject = ['tools', 'fs', 'systemPrompt']`；`exec` 当 actor | `dsh-base` `id: tool-fs`；`dsh-web-app` `disabled: true`；`standard` 按会话挂回 `id: tool-fs`。[E: packages/fs/tool-fs/src/index.ts:22] [E: packages/bundle/web-app/cordis.patch.yml:313] [E: apps/cli/config/agent-presets/standard/agent.cordis.yml:56] |
+| Provider | **本页不是。** `apply` 不 `provide`。默认实现仍是 `@deepseek-ai/dsh-fs-sandbox`（`extends LocalFileSystem`） | `ctx.fs` 不因本插件改变 | `dsh-base` `id: fs-sandbox`。[E: packages/bundle/base/cordis.patch.yml:493] |
+| Companion（本页） | `@deepseek-ai/dsh-fs-observation-policy` `apply(ctx)` | 无 `inject`、无 service 键；占两个 intent 单槽且不 `next()`；听 `fs/observed` | `dsh-base` `id: fs-observation-policy`。`dsh-web-app` **不** disable 本行。preset 挂回的是 `tool-fs` Consumer，不是再挂一份本插件。[E: packages/bundle/base/cordis.patch.yml:263] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:56] |
+| Consumer | `@deepseek-ai/dsh-tool-fs`（`read`/`read_image` emit；`write`/`edit` waterfall + emit）。`@deepseek-ai/dsh-tool-str-replace-editor` 同样 dispatch | `inject = ['tools', 'fs', 'systemPrompt']`；`exec` 当 actor | `dsh-base` `id: tool-fs`；`dsh-web-app` `disabled: true`；`standard` 按会话挂回 `id: tool-fs`。[E: packages/fs/tool-fs/src/index.ts:22] [E: packages/bundle/web-app/cordis.patch.yml:340] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:56] |
 
 DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。本页证明 **Companion 事件 ≠ 新 Provider**：换世界可以只卸事件门（mutation 变无条件），或只换 `ctx.fs`（E2B / local；观察表仍按 session 记），两层独立。
 
@@ -182,7 +182,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。本�
 - packages/skill/skill-filesystem/src/index.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
-- apps/cli/config/agent-presets/standard/agent.cordis.yml
+- packages/preset/agent-presets/presets/standard/agent.cordis.yml
 - vendor/cordis/src/events.ts
 
 ## 相关
