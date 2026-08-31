@@ -72,6 +72,7 @@ V1 `decodeConfig` 对 parse 后的对象先 `normalizeLoadedConfig`（删 legacy
 | --- | --- |
 | `plugins` | 顶层 unsupported。[E: packages/opencode/src/config/v2-compat.ts:117] |
 | `providers` | 顶层 unsupported。[E: packages/opencode/src/config/v2-compat.ts:117] |
+| `attachments` | 不投影、也不发 `unsupported` diagnostic。compat 只识别 `media→attachment`；V2 schema 的 `attachments` 随 spread 留下，再被 schema `onExcessProperty: "ignore"` 丢掉。[E: packages/opencode/src/config/v2-compat.ts:139][E: packages/opencode/src/config/parse.ts:42] [I] |
 | `websearch` | 顶层 unsupported。[E: packages/opencode/src/config/v2-compat.ts:117] |
 | `warming` | 顶层 unsupported。[E: packages/opencode/src/config/v2-compat.ts:117] |
 | `experimental.portable_shell_scanner` | unsupported，不映射。[E: packages/opencode/src/config/v2-compat.ts:194] |

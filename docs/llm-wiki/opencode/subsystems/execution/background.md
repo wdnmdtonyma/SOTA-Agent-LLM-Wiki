@@ -8,6 +8,7 @@ source:
   - packages/opencode/src/background/job.ts
   - packages/core/src/background-job.ts
   - packages/opencode/src/tool/task.ts
+  - packages/opencode/src/effect/runtime-flags.ts
   - packages/core/src/tool/builtins.ts
 symbols:
   - BackgroundJob.Service
@@ -34,9 +35,9 @@ updated: 9f69463f1d
 
 V1 wrapper re-export core `BackgroundJob` 类型，并用 `InstanceState.make(() => CoreBackgroundJob.make)` 为每个 instance 创建一个 registry [E: packages/opencode/src/background/job.ts:6] [E: packages/opencode/src/background/job.ts:21]。wrapper 的 service 方法只是把 `list/get/start/extend/wait/waitForPromotion/promote/cancel` 转发到当前 instance 的 core registry [E: packages/opencode/src/background/job.ts:22] [E: packages/opencode/src/background/job.ts:30]。
 
-`TaskTool` 取得 `BackgroundJob.Service`，并只在 `params.background === true` 且 runtime flag `experimentalBackgroundSubagents` 开启时允许真正 background；否则会报 `Background subagents require OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true`。`experimentalBackgroundSubagents` 由 `enabledByExperimental("OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS")` 驱动，当特定变量 `OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true` 或 umbrella `OPENCODE_EXPERIMENTAL=true` 时均为 true。[E: packages/opencode/src/tool/task.ts:85] [E: packages/opencode/src/tool/task.ts:97] [E: packages/opencode/src/tool/task.ts:98] [E: packages/opencode/src/tool/task.ts:100] [E: packages/opencode/src/effect/runtime-flags.ts:11] [E: packages/opencode/src/effect/runtime-flags.ts:43]。tool 参数里的 `background` 字段只有在 `Parameters` schema 中存在，旧 json schema 在未开实验 flag 时退回 `BaseParameters`，避免模型看到 background 字段 [E: packages/opencode/src/tool/task.ts:58] [E: packages/opencode/src/tool/task.ts:362] [E: packages/opencode/src/tool/task.ts:366]。
+`TaskTool` 取得 `BackgroundJob.Service`，并只在 `params.background === true` 且 runtime flag `experimentalBackgroundSubagents` 开启时允许真正 background；否则会报 `Background subagents require OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=true`。`experimentalBackgroundSubagents` 由 `enabledByExperimental("OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS")` 驱动：若该变量已设置，用它的布尔值；未设置时才回落到 umbrella `OPENCODE_EXPERIMENTAL`。因此显式 `OPENCODE_EXPERIMENTAL_BACKGROUND_SUBAGENTS=false` 不会被 umbrella 覆盖。[E: packages/opencode/src/tool/task.ts:85] [E: packages/opencode/src/tool/task.ts:97] [E: packages/opencode/src/tool/task.ts:98] [E: packages/opencode/src/tool/task.ts:100] [E: packages/opencode/src/effect/runtime-flags.ts:11] [E: packages/opencode/src/effect/runtime-flags.ts:12] [E: packages/opencode/src/effect/runtime-flags.ts:13] [E: packages/opencode/src/effect/runtime-flags.ts:43]。tool 参数里的 `background` 字段只有在 `Parameters` schema 中存在，旧 json schema 在未开实验 flag 时退回 `BaseParameters`，避免模型看到 background 字段 [E: packages/opencode/src/tool/task.ts:58] [E: packages/opencode/src/tool/task.ts:362] [E: packages/opencode/src/tool/task.ts:366]。
 
-`job.ts` 本 range 无 diff。`runTask` 在 child assistant `info.error` 或最后一条 error tool part 时 `Effect.fail`，消息含 `task_id`，因此 job 会 settle 成 error，而不是静默完成并返回空串。[E: packages/opencode/src/tool/task.ts:213] [E: packages/opencode/src/tool/task.ts:218] [E: packages/opencode/src/tool/task.ts:222]
+`runTask` 在 child assistant `info.error` 或最后一条 error tool part 时 `Effect.fail`，消息含 `task_id`，因此 job 会 settle 成 error，而不是静默完成并返回空串。[E: packages/opencode/src/tool/task.ts:213] [E: packages/opencode/src/tool/task.ts:218] [E: packages/opencode/src/tool/task.ts:222]
 
 Task 启动时使用 child session id 作为 job id，`background.start({ id: nextSession.id, type: id, ... })`，其中模块常量 `id = "task"` [E: packages/opencode/src/tool/task.ts:24] [E: packages/opencode/src/tool/task.ts:284] [E: packages/opencode/src/tool/task.ts:285] [E: packages/opencode/src/tool/task.ts:286] [E: packages/opencode/src/tool/task.ts:289] [E: packages/opencode/src/tool/task.ts:296]。如果同一 job 仍 running，`background.extend({ id: nextSession.id, run })` 返回 true 后会返回 background updated output；core `extend` 把新 run 接到 previous tail 后执行 [E: packages/opencode/src/tool/task.ts:267] [E: packages/core/src/background-job.ts:263] [E: packages/core/src/background-job.ts:267] [E: packages/core/src/background-job.ts:282] [E: packages/core/src/background-job.ts:283]。
 
@@ -82,6 +83,7 @@ Core background job engine 在 `packages/core/src/background-job.ts`，但它的
 - packages/opencode/src/background/job.ts
 - packages/core/src/background-job.ts
 - packages/opencode/src/tool/task.ts
+- packages/opencode/src/effect/runtime-flags.ts
 - packages/core/src/tool/builtins.ts
 
 ## 相关

@@ -4,7 +4,7 @@ title: opencode 源码总览
 kind: flow
 tier: T0
 v: shared
-source: [packages/opencode/src/index.ts, packages/opencode/src/cli/cmd/run.ts, packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/processor.ts, AGENTS.md, package.json, packages/opencode/package.json, packages/opencode/src/tool/code-mode.ts, packages/codemode/package.json, packages/codemode/src/index.ts, packages/core/package.json, packages/cli/package.json, packages/core/src/session.ts, packages/core/src/effect/app-node-builder.ts, packages/core/src/location-services.ts, packages/core/src/session/runner/llm.ts, packages/llm/AGENTS.md, packages/opencode/src/session/llm.ts, packages/opencode/src/server/server.ts, packages/protocol/src/api.ts, packages/server/src/api.ts, packages/server/src/routes.ts, packages/opencode/src/session/message-v2.ts, packages/core/src/integration.ts, packages/core/src/credential.ts]
+source: [packages/opencode/src/index.ts, packages/opencode/src/cli/cmd/run.ts, packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/session/processor.ts, AGENTS.md, package.json, packages/opencode/package.json, packages/opencode/src/tool/code-mode.ts, packages/opencode/src/tool/registry.ts, packages/opencode/src/effect/runtime-flags.ts, packages/codemode/package.json, packages/codemode/src/index.ts, packages/core/package.json, packages/cli/package.json, packages/core/src/session.ts, packages/core/src/effect/app-node-builder.ts, packages/core/src/location-services.ts, packages/core/src/session/runner/llm.ts, packages/llm/AGENTS.md, packages/opencode/src/session/llm.ts, packages/opencode/src/server/server.ts, packages/protocol/src/api.ts, packages/server/src/api.ts, packages/server/src/routes.ts, packages/opencode/src/session/message-v2.ts, packages/core/src/integration.ts, packages/core/src/credential.ts]
 symbols: [RunCommand, SessionPrompt, SessionProcessor, LLM, CodeModeTool, SessionV2, SessionExecution, SessionRunner, LLMClient, Integration, Credential]
 related: [spine.v1-v2-relationship, ref.package-index, integrations.integration-v2, tool.execute, subsys.tools.codemode]
 evidence: explicit
@@ -53,7 +53,7 @@ V1 CLI 入口是 `packages/opencode/src/index.ts`:它创建 yargs 实例,注册 
 
 V1 的 LLM runtime 默认走 AI SDK: `packages/opencode/src/session/llm.ts` 导入 `streamText` 与 `wrapLanguageModel`,并在默认分支调用 `streamText`。[E: packages/opencode/src/session/llm.ts:9][E: packages/opencode/src/session/llm.ts:280] `OPENCODE_EXPERIMENTAL_NATIVE_LLM` 对应的 native seam 会先尝试 `LLMNativeRuntime.stream`,不支持时回落到默认 runtime。[E: packages/opencode/src/session/llm.ts:226][E: packages/opencode/src/session/llm.ts:278]
 
-V1 还新增了独立 `packages/codemode` package 与 wire tool `execute`。该 package 的 public API 是 confined Effect runtime；V1 adapter 只在 `OPENCODE_EXPERIMENTAL_CODE_MODE` 生效时注册，并把 permission 可见的 MCP tools 映射成程序里的 explicit tool tree。[E: packages/codemode/package.json:3][E: packages/codemode/src/index.ts:1][E: packages/opencode/src/tool/code-mode.ts:12][E: packages/opencode/src/tool/code-mode.ts:209][E: packages/opencode/src/tool/code-mode.ts:239]
+V1 还新增了独立 `packages/codemode` package 与 wire tool `execute`。该 package 的 public API 是 confined Effect runtime；V1 adapter 只在 `OPENCODE_EXPERIMENTAL_CODE_MODE` 生效时注册，并把 permission 可见的 MCP tools 映射成程序里的 explicit tool tree。[E: packages/codemode/package.json:3][E: packages/codemode/src/index.ts:1][E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:118][E: packages/opencode/src/tool/code-mode.ts:12][E: packages/opencode/src/tool/code-mode.ts:210][E: packages/opencode/src/tool/code-mode.ts:239]
 
 ## V2
 
@@ -73,7 +73,7 @@ V2 的设计约束来自根 `AGENTS.md`:prompt admission 必须 durable 且与 e
 
 `packages/opencode/src/session/message-v2.ts` 的名字容易误导:该文件导入 V1 session 类型,同时导入 AI SDK 的 `convertToModelMessages` 和 `ModelMessage`,实际职责是 V1 message 与 AI SDK model message 的转换层,不是 `packages/core` 的 V2 session implementation。[E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:407]
 
-`packages/core/src/integration.ts` 是本地 provider authentication registry:它定义 `Integration.Info`、OAuth/key/env methods、connection/attempt surface，并通过 `Credential` service 写入持久 credential，不是 workspace/cloud connector 控制面。[E: packages/core/src/integration.ts:58][E: packages/core/src/integration.ts:67][E: packages/core/src/integration.ts:73][E: packages/core/src/integration.ts:82][E: packages/core/src/integration.ts:196][E: packages/core/src/integration.ts:205][E: packages/core/src/credential.ts:52]
+`packages/core/src/integration.ts` 是本地 provider authentication registry:它定义 `Integration.Info`、OAuth/key/env methods、connection/attempt surface，并通过 `Credential` service 写入持久 credential，不是 workspace/cloud connector 控制面。[E: packages/core/src/integration.ts:58][E: packages/core/src/integration.ts:67][E: packages/core/src/integration.ts:73][E: packages/core/src/integration.ts:82][E: packages/core/src/integration.ts:196][E: packages/core/src/integration.ts:224][E: packages/core/src/credential.ts:49]
 
 ## 深挖入口
 - V1 默认 turn loop: `spine.v1-turn-loop`
@@ -92,6 +92,8 @@ V2 的设计约束来自根 `AGENTS.md`:prompt admission 必须 durable 且与 e
 - package.json
 - packages/opencode/package.json
 - packages/opencode/src/tool/code-mode.ts
+- packages/opencode/src/tool/registry.ts
+- packages/opencode/src/effect/runtime-flags.ts
 - packages/codemode/package.json
 - packages/codemode/src/index.ts
 - packages/core/package.json

@@ -78,7 +78,7 @@ V2 session spec 明确 compaction 保留 full transcript durable,但 active mode
 
 ## Context Epoch cutoff
 
-Baseline System Context 与 chronological system messages 是两个通道。`CONTEXT.md` 说明 active Baseline System Context remains separate provider-request state,Mid-Conversation System Messages 进入 Session History。[E: CONTEXT.md:90] 因此 `baselineSeq` 之前的 `system` messages 会被过滤;“避免 current epoch baseline 已经涵盖的 context update 再次作为 chronological system message replay”是该过滤与 Context Epoch 关系的设计推断。[E: packages/core/src/session/history.ts:46][I]
+Baseline System Context 与 chronological system messages 是两个通道。`CONTEXT.md` 说明 Session History 含 projected conversational messages 与 admitted Mid-Conversation System Messages，而 active Baseline System Context remains separate provider-request state。[E: CONTEXT.md:91] 因此 `baselineSeq` 之前的 `system` messages 会被过滤;“避免 current epoch baseline 已经涵盖的 context update 再次作为 chronological system message replay”是该过滤与 Context Epoch 关系的设计推断。[E: packages/core/src/session/history.ts:46][I]
 
 `SessionContextEpochTable.baseline_seq` 由 context epoch insert/replace 写入;history selection 只读取该值,不决定 epoch lifecycle。[E: packages/core/src/session/sql.ts:175][E: packages/core/src/session/context-epoch.ts:127][E: packages/core/src/session/context-epoch.ts:152][E: packages/core/src/session/history.ts:70][I]
 

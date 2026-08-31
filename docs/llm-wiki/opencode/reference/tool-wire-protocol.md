@@ -7,6 +7,7 @@ v: shared
 source:
   - packages/core/src/tool/tool.ts
   - packages/llm/src/schema/messages.ts
+  - packages/llm/src/schema/options.ts
   - packages/llm/src/tool-runtime.ts
   - packages/schema/src/llm.ts
 status: verified
@@ -51,15 +52,19 @@ V2 `Tool.make` 产生的 opaque tool 在 registry materialization 时被派生�
 | `ToolCallPart` | `type/id/name/input` | literal `tool-call`, string id/name, unknown input | assistant message 中的 canonical local/provider tool call part。[E: packages/llm/src/schema/messages.ts:122] [E: packages/llm/src/schema/messages.ts:124] [E: packages/llm/src/schema/messages.ts:125] [E: packages/llm/src/schema/messages.ts:126] [E: packages/llm/src/schema/messages.ts:127] |
 | `ToolCallPart` | `providerExecuted?` | boolean | provider-hosted tool call 的标志。[E: packages/llm/src/schema/messages.ts:128] |
 | `ToolCallPart` | `metadata?` | record | opencode/tool runtime metadata。[E: packages/llm/src/schema/messages.ts:129] |
+| `ToolCallPart` | `providerMetadata?` | `ProviderMetadata` | provider-native metadata escape hatch。[E: packages/llm/src/schema/messages.ts:130] |
 | `ToolResultPart` | `type/id/name/result` | literal `tool-result`, string id/name, `ToolResultValue` | tool result part 的 canonical shape。[E: packages/llm/src/schema/messages.ts:138] [E: packages/llm/src/schema/messages.ts:140] [E: packages/llm/src/schema/messages.ts:141] [E: packages/llm/src/schema/messages.ts:142] [E: packages/llm/src/schema/messages.ts:143] |
 | `ToolResultPart` | `providerExecuted?` | boolean | result 属于 provider-hosted tool 时可标 true。[E: packages/llm/src/schema/messages.ts:144] |
+| `ToolResultPart` | `cache?` | `CacheHint` | result 上的 cache breakpoint hint。[E: packages/llm/src/schema/messages.ts:145] |
+| `ToolResultPart` | `metadata?` | record | opencode/tool runtime metadata。[E: packages/llm/src/schema/messages.ts:146] |
+| `ToolResultPart` | `providerMetadata?` | `ProviderMetadata` | provider-native metadata escape hatch。[E: packages/llm/src/schema/messages.ts:147] |
 | `ToolDefinition` | `name` | string | provider-facing tool name。[E: packages/llm/src/schema/messages.ts:224] [E: packages/llm/src/schema/messages.ts:225] |
 | `ToolDefinition` | `description` | string | provider-facing tool description。[E: packages/llm/src/schema/messages.ts:226] |
 | `ToolDefinition` | `inputSchema` | `Record<string, unknown>` | provider-facing input JSON schema。[E: packages/llm/src/schema/messages.ts:227] |
 | `ToolDefinition` | `outputSchema?` | `Record<string, unknown>` | 可选 output JSON schema。[E: packages/llm/src/schema/messages.ts:228] |
-| `ToolDefinition` | `cache?` | boolean | definition cache hint。[E: packages/llm/src/schema/messages.ts:229] |
+| `ToolDefinition` | `cache?` | `CacheHint` (`type: "ephemeral" \| "persistent"`, optional `ttlSeconds`) | definition cache breakpoint hint，不是 boolean。[E: packages/llm/src/schema/messages.ts:229] [E: packages/llm/src/schema/options.ts:245] [E: packages/llm/src/schema/options.ts:247] |
 | `ToolDefinition` | `metadata?` | record | opencode metadata。[E: packages/llm/src/schema/messages.ts:230] |
-| `ToolDefinition` | `native?` | unknown | provider-native hosted tool payload escape hatch。[E: packages/llm/src/schema/messages.ts:231] |
+| `ToolDefinition` | `native?` | `Record<string, unknown>` | provider-native hosted tool payload escape hatch。[E: packages/llm/src/schema/messages.ts:231] |
 | `ToolChoice` | variants | `auto/none/required/tool` | provider request 可表达自动、禁用、必须、指定工具。[E: packages/llm/src/schema/messages.ts:241] [E: packages/llm/src/schema/messages.ts:242] |
 | `LLMRequest` | `tools` | `ToolDefinition[]` | 每个 provider turn 的工具定义数组。[E: packages/llm/src/schema/messages.ts:271] [E: packages/llm/src/schema/messages.ts:276] |
 | `LLMRequest` | `toolChoice?` | `ToolChoice` | 每个 provider turn 的 tool choice。[E: packages/llm/src/schema/messages.ts:277] |
@@ -85,6 +90,7 @@ V2 `Tool.make` 产生的 opaque tool 在 registry materialization 时被派生�
 ## Sources
 
 - packages/llm/src/schema/messages.ts
+- packages/llm/src/schema/options.ts
 - packages/llm/src/tool-runtime.ts
 - packages/core/src/tool/tool.ts
 - packages/schema/src/llm.ts

@@ -123,7 +123,7 @@ V2 把 pending prompts 的 pending map 放在 location layer 中，配合 finali
 
 ## 易踩坑
 
-- V1 `question` tool 不是总是给模型可见；registry 受 client/flag 控制。[E: packages/opencode/src/tool/registry.ts:206]
+- V1 `question` tool 不是总是给模型可见；registry 受 client/flag 控制。[E: packages/opencode/src/tool/registry.ts:207]
 - V2 question denied 会变成 tool failure，不是普通 permission exception 泄漏给模型。[E: packages/core/src/tool/question.ts:71]
 - V2 reply/reject 必须匹配 sessionID；handler 会阻止跨 session 操作 pending question。[E: packages/server/src/handlers/question.ts:21]
 - 拒绝 V2 question 会中断 LLM loop，不能把 reject 当作“返回空答案继续执行”；同一分支也处理 permission decline。[E: packages/core/src/session/runner/llm.ts:149] [E: packages/core/src/session/runner/llm.ts:304] [E: packages/core/src/session/runner/llm.ts:307]

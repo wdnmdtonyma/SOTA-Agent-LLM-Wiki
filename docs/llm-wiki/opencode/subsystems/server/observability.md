@@ -51,7 +51,7 @@ OTLP resource 的 `serviceName` 固定为 `opencode`，`serviceVersion` 来自 `
 
 ## V1 host usage
 
-虽然 implementation 在 core，`packages/opencode` runtime 文件也提供 `Observability.layer`: app runtime、bootstrap runtime、generic `makeRuntime`、HTTP route layer 都引用它。[E: packages/opencode/src/effect/app-runtime.ts:105][E: packages/opencode/src/effect/bootstrap-runtime.ts:17][E: packages/opencode/src/effect/run-service.ts:35][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:263] 因此本节点 frontmatter 标 `v: v2` 表示源码归属 core/V2；实际 runtime 影响跨 V1 host 和 V2 core。[I]
+虽然 implementation 在 core，`packages/opencode` runtime 文件也提供 `Observability.layer`: app runtime、bootstrap runtime、generic `makeRuntime`、HTTP route layer 都引用它。[E: packages/opencode/src/effect/app-runtime.ts:105][E: packages/opencode/src/effect/bootstrap-runtime.ts:17][E: packages/opencode/src/effect/run-service.ts:35][E: packages/opencode/src/server/routes/instance/httpapi/server.ts:311] 因此本节点 frontmatter 标 `v: v2` 表示源码归属 core/V2；实际 runtime 影响跨 V1 host 和 V2 core。[I]
 
 ## Boundary
 

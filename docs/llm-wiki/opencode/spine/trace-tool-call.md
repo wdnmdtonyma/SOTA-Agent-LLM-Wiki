@@ -48,7 +48,7 @@ flowchart TD
 
 4. 对 MCP resource tools,wrapper 会先调用 `ctx.ask({ permission: "read", ... })`,再从 MCP server 读取 resources 并排序/转换为 tool output。[E: packages/opencode/src/session/tools.ts:140][E: packages/opencode/src/session/tools.ts:155][E: packages/opencode/src/session/tools.ts:180][E: packages/opencode/src/session/tools.ts:187][E: packages/opencode/src/session/tools.ts:190]
 
-5. `SessionProcessor.process@packages/opencode/src/session/processor.ts:625` 从 V1 `LLM.stream` 读 LLM events;`tool-call` 分支确保 V1 tool part 存在,并把 tool part 置为 running。[E: packages/opencode/src/session/processor.ts:627][E: packages/opencode/src/session/processor.ts:640][E: packages/opencode/src/session/processor.ts:331][E: packages/opencode/src/session/processor.ts:335][E: packages/opencode/src/session/processor.ts:337][E: packages/opencode/src/session/processor.ts:344]
+5. `SessionProcessor.process@packages/opencode/src/session/processor.ts:627` 从 V1 `LLM.stream` 读 LLM events;`tool-call` 分支确保 V1 tool part 存在,并把 tool part 置为 running。[E: packages/opencode/src/session/processor.ts:627][E: packages/opencode/src/session/processor.ts:640][E: packages/opencode/src/session/processor.ts:331][E: packages/opencode/src/session/processor.ts:335][E: packages/opencode/src/session/processor.ts:337][E: packages/opencode/src/session/processor.ts:344]
 
 6. V1 `tool-result` 分支会按 result error/success 把 V1 tool part fail 或 complete,并对 image attachments 做 normalize。[E: packages/opencode/src/session/processor.ts:383][E: packages/opencode/src/session/processor.ts:386][E: packages/opencode/src/session/processor.ts:387][E: packages/opencode/src/session/processor.ts:390][E: packages/opencode/src/session/processor.ts:391][E: packages/opencode/src/session/processor.ts:412]
 

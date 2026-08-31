@@ -54,7 +54,7 @@ flowchart TD
 
 ## 关键决策点
 
-- 非交互模式会要求必须有 message 或 command,否则打印 `You must provide a message or a command` 并 `process.exit(1)`;同一段还把 question/plan permission 默认设为 deny,避免 headless run 卡在用户交互上。[E: packages/opencode/src/cli/cmd/run.ts:420][E: packages/opencode/src/cli/cmd/run.ts:421][E: packages/opencode/src/cli/cmd/run.ts:422][E: packages/opencode/src/cli/cmd/run.ts:430]
+- 非交互模式会要求必须有 message 或 command,否则打印 `You must provide a message or a command` 并 `process.exit(1)`;同一段还把 `question` / `plan_enter` / `plan_exit` permission 默认设为 deny,避免 headless run 卡在用户交互上。[E: packages/opencode/src/cli/cmd/run.ts:420][E: packages/opencode/src/cli/cmd/run.ts:421][E: packages/opencode/src/cli/cmd/run.ts:422][E: packages/opencode/src/cli/cmd/run.ts:430][E: packages/opencode/src/cli/cmd/run.ts:434][E: packages/opencode/src/cli/cmd/run.ts:439][E: packages/opencode/src/cli/cmd/run.ts:444]
 - 本地交互路径也使用同一个 process-local fetch trick:`runInteractiveLocalMode` 收到的 fetch handler 同样调用 `Server.Default().app.fetch(request)`。[E: packages/opencode/src/cli/cmd/run.ts:907][E: packages/opencode/src/cli/cmd/run.ts:910][E: packages/opencode/src/cli/cmd/run.ts:916]
 - `opencode run` 会应答 child session 的 `permission.asked`;`sessions` Set 从 root 起步,`session.created` 且 parent 已在 set 内时加入 child。[E: packages/opencode/src/cli/cmd/run.ts:699][E: packages/opencode/src/cli/cmd/run.ts:703][E: packages/opencode/src/cli/cmd/run.ts:803]
 - `SessionPrompt.prompt` 的 `noReply` 分支会只写 user input 而不启动 assistant loop,这是 CLI/API 层能注入输入但不立即跑模型的 V1 控制点。[E: packages/opencode/src/session/prompt.ts:1069]

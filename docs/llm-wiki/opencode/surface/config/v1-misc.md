@@ -72,7 +72,7 @@ evidence: explicit
 | `tool_output.max_bytes` | optional positive int；description default 51200 | max bytes before truncation/save-to-disk。[E: packages/core/src/v1/config/config.ts:141] | V2 same field。[E: packages/core/src/config/tool-output.ts:8] |
 | `compaction.auto` | optional boolean；description default true | enable automatic compaction when context full。[E: packages/core/src/v1/config/config.ts:151] | V2 same field。[E: packages/core/src/config/compaction.ts:11] |
 | `compaction.prune` | optional boolean；description default false | prune old tool outputs。[E: packages/core/src/v1/config/config.ts:154] | V2 same field。[E: packages/core/src/config/compaction.ts:12] |
-| `compaction.tail_turns` | optional non-negative int；description default 2 | recent user turns kept verbatim during compaction。[E: packages/core/src/v1/config/config.ts:157] | Current V2 schema does not include `tail_turns`; migration drops it。[I] |
+| `compaction.tail_turns` | optional non-negative int；schema default omitted | 压缩时按最近 user turn 数保留原文；说明写的是默认只受 preserved token budget 限制，没有固定 turn 默认值。[E: packages/core/src/v1/config/config.ts:157] | Current V2 schema does not include `tail_turns`; migration drops it。[I] |
 | `compaction.preserve_recent_tokens` | optional non-negative int | token budget for recent turns after compaction。[E: packages/core/src/v1/config/config.ts:161] | V2 `compaction.keep.tokens`。[E: packages/core/src/v1/config/migrate.ts:58] |
 | `compaction.reserved` | optional non-negative int | token headroom buffer。[E: packages/core/src/v1/config/config.ts:164] | V2 `compaction.buffer`。[E: packages/core/src/v1/config/migrate.ts:60] |
 

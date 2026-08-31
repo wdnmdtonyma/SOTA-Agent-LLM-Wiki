@@ -73,7 +73,7 @@ legacy opencode server 也在 instance HttpApi server layer 中提供 V2 session
 
 ## 迁移阅读规则
 
-- 看到 `packages/opencode/src/session/*` 时,默认先按 V1 live path 理解;其中 `message-v2.ts` 导入 `SessionV1` 与 AI SDK `ModelMessage`,并在 `toModelMessagesEffect` 中调用 `convertToModelMessages`,所以它是 V1 到 AI SDK message 的转换层而不是 V2 core。[E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:417] V1 compaction 现在 import V2 `buildPrompt`,只共享 summary 文本结构,durable history 仍是 V1 message/part。[E: packages/opencode/src/session/compaction.ts:23][E: packages/core/src/session/compaction.ts:160]
+- 看到 `packages/opencode/src/session/*` 时,默认先按 V1 live path 理解;其中 `message-v2.ts` 导入 `SessionV1` 与 AI SDK `ModelMessage`,并在 `toModelMessagesEffect` 中调用 `convertToModelMessages`,所以它是 V1 到 AI SDK message 的转换层而不是 V2 core。[E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:407] V1 compaction 现在 import V2 `buildPrompt`,只共享 summary 文本结构,durable history 仍是 V1 message/part。[E: packages/opencode/src/session/compaction.ts:23][E: packages/core/src/session/compaction.ts:160]
 - 看到 `packages/core/src/session/*` 时,默认按 V2 durable/event-sourced core 理解;是否真的会执行 runner,要检查调用路径有没有把 `SessionExecution.node` 替换成 `SessionExecutionLocal.node`。[E: packages/core/src/session.ts:474][E: packages/core/src/session.ts:481][E: packages/server/src/routes.ts:52]
 - 看到 `packages/llm` 时,在 V1 中它是 experimental native seam,在 V2 中它是 provider engine;同名 `LLM.stream` 不能自动说明 caller 属于哪一代。[E: packages/opencode/src/session/llm.ts:226][E: packages/core/src/session/runner/llm.ts:239]
 

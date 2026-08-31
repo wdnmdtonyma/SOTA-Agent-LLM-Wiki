@@ -8,11 +8,14 @@ source:
   - packages/core/src/v1/config/
   - packages/core/src/config/
   - packages/core/src/v1/config/migrate.ts
+  - packages/opencode/src/config/v2-compat.ts
+  - packages/opencode/src/config/config.ts
 status: verified
 symbols:
   - ConfigV1.Info
   - Config.Info
   - ConfigMigrateV1.migrate
+  - ConfigV2Compat.lower
 evidence: explicit
 updated: 9f69463f1d
 ---
@@ -53,6 +56,7 @@ V1 schema 的主入口是 `ConfigV1.Info`，顶层还定义了 well-known `confi
 | `model` | `provider/model` string | active | [E: packages/core/src/v1/config/config.ts:74] |
 | `small_model` | `provider/model` string | V1-only / migration detector | [E: packages/core/src/v1/config/config.ts:77][E: packages/core/src/v1/config/migrate.ts:20] |
 | `default_agent` | agent name | active | [E: packages/core/src/v1/config/config.ts:80] |
+| `subagent_depth` | non-negative int | V1-only; V1 CLI `ConfigV2Compat.lower` 会把 V2 `experimental.subagent_depth` 降到这个顶层 key | [E: packages/core/src/v1/config/config.ts:84] [E: packages/opencode/src/config/v2-compat.ts:196] [E: packages/opencode/src/config/v2-compat.ts:204] |
 | `username` | string | active | [E: packages/core/src/v1/config/config.ts:87] |
 | `mode` | record of agent config | deprecated alias for `agent`; migrates as primary agents | [E: packages/core/src/v1/config/config.ts:90][E: packages/core/src/v1/config/config.ts:95][E: packages/core/src/v1/config/migrate.ts:100] |
 | `agent` | built-in/custom agent map | active | [E: packages/core/src/v1/config/config.ts:96] |
@@ -151,6 +155,24 @@ V2 schema 的主入口是 `Config.Info` class，而不是 V1 `Schema.Struct` exp
 | `tool_output` | `max_lines`, `max_bytes` | [E: packages/core/src/config/tool-output.ts:7][E: packages/core/src/config/tool-output.ts:8] |
 | `watcher` | `ignore` | [E: packages/core/src/config/watcher.ts:6] |
 
+## V1 CLI `ConfigV2Compat`
+
+V1 活跑 loader 在 decode `ConfigV1.Info` 之前会先跑 `ConfigV2Compat.lower`：把部分 V2 形状的 key 降成 V1 schema，而不是走 `ConfigMigrateV1.migrate` 那条 V1→V2 方向。[E: packages/opencode/src/config/config.ts:36] [E: packages/opencode/src/config/config.ts:189] [E: packages/opencode/src/config/v2-compat.ts:91]
+
+| V2-shaped input | V1 output | Rule |
+|---|---|---|
+| `snapshots` | `snapshot` | Boolean 写入 legacy key。[E: packages/opencode/src/config/v2-compat.ts:135] [E: packages/opencode/src/config/v2-compat.ts:137] |
+| `media` | `attachment` | Media config 降成 V1 attachment。[E: packages/opencode/src/config/v2-compat.ts:139] [E: packages/opencode/src/config/v2-compat.ts:141] |
+| `skills` string array | `skills.paths` + `skills.urls` | http(s) URL 进 urls，其余进 paths。[E: packages/opencode/src/config/v2-compat.ts:155] [E: packages/opencode/src/config/v2-compat.ts:158] |
+| `compaction.keep.tokens` | `compaction.preserve_recent_tokens` | Nested keep 降成 V1 字段。[E: packages/opencode/src/config/v2-compat.ts:172] [E: packages/opencode/src/config/v2-compat.ts:177] |
+| `compaction.buffer` | `compaction.reserved` | Nested buffer 降成 V1 字段。[E: packages/opencode/src/config/v2-compat.ts:180] [E: packages/opencode/src/config/v2-compat.ts:182] |
+| `experimental.subagent_depth` | top-level `subagent_depth` | V2 experimental 字段降到 V1 顶层 key。[E: packages/opencode/src/config/v2-compat.ts:196] [E: packages/opencode/src/config/v2-compat.ts:204] |
+| `agents` | `agent` | V2 agent map 降成 V1 `agent`；`request.headers` 标 unsupported。[E: packages/opencode/src/config/v2-compat.ts:208] [E: packages/opencode/src/config/v2-compat.ts:221] |
+| `commands` | `command` | V2 command map 降成 V1 `command`。[E: packages/opencode/src/config/v2-compat.ts:229] [E: packages/opencode/src/config/v2-compat.ts:241] |
+| `mcp.servers` / `mcp.timeout` | flat `mcp` map + `experimental.mcp_timeout` | Envelope 展平；`lowerTimeout` 只在 `catalog === execution` 且无 `startup` 时写成单一 request timeout。[E: packages/opencode/src/config/v2-compat.ts:248] [E: packages/opencode/src/config/v2-compat.ts:362] [E: packages/opencode/src/config/v2-compat.ts:309] |
+| `permissions` | rejected | 顶层或 agent 上的 V2 `permissions` 直接抛 `InvalidError`，要求改用 V1 `permission` 或跑 opencode2。[E: packages/opencode/src/config/v2-compat.ts:106] [E: packages/opencode/src/config/v2-compat.ts:111] |
+| `plugins` / `providers` / `websearch` / `warming` | unsupported diagnostic | 这些 V2 key 不会降进 V1 schema。[E: packages/opencode/src/config/v2-compat.ts:117] [E: packages/opencode/src/config/v2-compat.ts:118] |
+
 ## Migration ledger
 
 | V1 key/input | V2 output | Rule |
@@ -184,6 +206,8 @@ V2 schema 的主入口是 `Config.Info` class，而不是 V1 `Schema.Struct` exp
 - `packages/core/src/config.ts`
 - `packages/core/src/config/`
 - `packages/core/src/v1/config/migrate.ts`
+- `packages/opencode/src/config/v2-compat.ts`
+- `packages/opencode/src/config/config.ts`
 
 ## 相关
 

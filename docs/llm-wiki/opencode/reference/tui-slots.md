@@ -6,6 +6,11 @@ tier: T3
 v: na
 source:
   - packages/tui/src/plugin/slots.tsx
+  - packages/plugin/src/tui.ts
+  - packages/tui/src/app.tsx
+  - packages/tui/src/routes/home.tsx
+  - packages/tui/src/routes/session/index.tsx
+  - packages/tui/src/routes/session/sidebar.tsx
 symbols:
   - createSlots
   - TuiHostSlotMap
@@ -34,15 +39,15 @@ updated: 9f69463f1d
 
 | Slot | Props | Host mount | Render mode | 用途 |
 | --- | --- | --- | --- | --- |
-| `app` | `{}` [E: packages/plugin/src/tui.ts:456] | `packages/tui/src/app.tsx` [E: packages/tui/src/app.tsx:1108] | default | 顶层 app 挂载点或全局 UI 扩展点。 |
-| `app_bottom` | `{}` [E: packages/plugin/src/tui.ts:457] | `packages/tui/src/app.tsx` [E: packages/tui/src/app.tsx:1106] | default | app 底部区域扩展点。 |
+| `app` | `{}` [E: packages/plugin/src/tui.ts:456] | `packages/tui/src/app.tsx` [E: packages/tui/src/app.tsx:1127] | default | 顶层 app 挂载点或全局 UI 扩展点。 |
+| `app_bottom` | `{}` [E: packages/plugin/src/tui.ts:457] | `packages/tui/src/app.tsx` [E: packages/tui/src/app.tsx:1125] | default | app 底部区域扩展点。 |
 | `home_logo` | `{}` [E: packages/plugin/src/tui.ts:458] | home route [E: packages/tui/src/routes/home.tsx:76] | `replace` | 替换 home logo 区域。 |
 | `home_prompt` | `{ ref?: ... }` [E: packages/plugin/src/tui.ts:460] | home route [E: packages/tui/src/routes/home.tsx:82] | `replace` | 替换 home prompt，并可拿到 prompt ref。 |
 | `home_prompt_right` | `{}` [E: packages/plugin/src/tui.ts:462] | home prompt right prop [E: packages/tui/src/routes/home.tsx:83] | default | home prompt 右侧附加 UI。 |
 | `home_bottom` | `{}` [E: packages/plugin/src/tui.ts:473] | home route [E: packages/tui/src/routes/home.tsx:86] | default | home 页面主体底部扩展点。 |
 | `home_footer` | `{}` [E: packages/plugin/src/tui.ts:474] | home route [E: packages/tui/src/routes/home.tsx:91] | `single_winner` | 替换或竞争 home footer。 |
-| `session_prompt` | `{ session_id, visible?, disabled?, on_submit?, ref? }` [E: packages/plugin/src/tui.ts:464] [E: packages/plugin/src/tui.ts:468] | session route [E: packages/tui/src/routes/session/index.tsx:1318] | `replace` [E: packages/tui/src/routes/session/index.tsx:1319] | 替换 session prompt，并继承可见性、禁用态和提交回调。 |
-| `session_prompt_right` | `{ session_id }` [E: packages/plugin/src/tui.ts:471] | session prompt right prop [E: packages/tui/src/routes/session/index.tsx:1312] | default | session prompt 右侧附加 UI。 |
+| `session_prompt` | `{ session_id, visible?, disabled?, on_submit?, ref? }` [E: packages/plugin/src/tui.ts:464] [E: packages/plugin/src/tui.ts:468] | session route [E: packages/tui/src/routes/session/index.tsx:1314] | `replace` [E: packages/tui/src/routes/session/index.tsx:1316] | 替换 session prompt，并继承可见性、禁用态和提交回调。 |
+| `session_prompt_right` | `{ session_id }` [E: packages/plugin/src/tui.ts:471] | session prompt right prop [E: packages/tui/src/routes/session/index.tsx:1331] | default | session prompt 右侧附加 UI。 |
 | `sidebar_title` | `{ session_id, title, share_url? }` [E: packages/plugin/src/tui.ts:476] [E: packages/plugin/src/tui.ts:478] | sidebar route [E: packages/tui/src/routes/session/sidebar.tsx:50] | `single_winner` [E: packages/tui/src/routes/session/sidebar.tsx:51] | 替换或竞争 session sidebar 标题区。 |
 | `sidebar_content` | `{ session_id }` [E: packages/plugin/src/tui.ts:481] | sidebar route [E: packages/tui/src/routes/session/sidebar.tsx:85] | default | sidebar 中段内容扩展点。 |
 | `sidebar_footer` | `{ session_id }` [E: packages/plugin/src/tui.ts:484] | sidebar route [E: packages/tui/src/routes/session/sidebar.tsx:90] | `single_winner` | 替换或竞争 sidebar footer。 |

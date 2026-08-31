@@ -4,7 +4,7 @@ title: SessionPrompt 编排器(V1)
 kind: subsystem
 tier: T2
 v: v1
-source: [packages/opencode/src/session/prompt.ts, packages/opencode/src/session/run-state.ts, packages/opencode/src/session/tools.ts, packages/opencode/src/session/message-v2.ts, packages/opencode/src/effect/runtime-flags.ts]
+source: [packages/opencode/src/session/prompt.ts, packages/opencode/src/session/run-state.ts, packages/opencode/src/session/tools.ts, packages/opencode/src/session/message-v2.ts, packages/opencode/src/effect/runtime-flags.ts, AGENTS.md]
 symbols: [SessionPrompt, SessionPrompt.prompt, SessionPrompt.loop, SessionPrompt.command, SessionPrompt.shell, SessionPrompt.resolvePromptParts, SessionRunState.ensureRunning, SessionTools.resolve]
 related: [spine.v1-turn-loop, session-v1.processor]
 evidence: explicit
@@ -77,7 +77,7 @@ updated: 9f69463f1d
 
 ## 设计动机与权衡
 
-- V1 仍把 provider turn orchestration 放在 `SessionPrompt.runLoop`,而不是 V2 的 durable `SessionExecution`/`SessionRunner`。根 AGENTS.md 对 V2 的约束明确要求 V2 保持 prompt admission 与 model execution 分离,并且不要桥回 legacy `SessionPrompt.loop(...)`;这反向说明 `SessionPrompt.loop` 是 legacy 活跑路径而非 V2 目标形态。[E: AGENTS.md:151][E: AGENTS.md:153][E: AGENTS.md:157]
+- V1 仍把 provider turn orchestration 放在 `SessionPrompt.runLoop`,而不是 V2 的 durable `SessionExecution`/`SessionRunner`。根 AGENTS.md 对 V2 的约束明确要求 V2 保持 prompt admission 与 model execution 分离,并且不要桥回 legacy `SessionPrompt.loop(...)`;这反向说明 `SessionPrompt.loop` 是 legacy 活跑路径而非 V2 目标形态。[E: AGENTS.md:153][E: AGENTS.md:157]
 - `SessionPrompt` 当前没有 `SessionEvent.Prompted`/`Synthetic`/`Shell.Started`/`Shell.Ended` publish;保留的 EventV2Bridge publish 主要是 error 与 command executed 等路径,因此不要把旧实验 mirror 描述套到当前源码。[E: packages/opencode/src/session/prompt.ts:318][E: packages/opencode/src/session/prompt.ts:466][E: packages/opencode/src/session/prompt.ts:604][E: packages/opencode/src/session/prompt.ts:1175][E: packages/opencode/src/session/prompt.ts:1474][I]
 - `MessageV2.toModelMessagesEffect` 虽然名字带 V2,但在 V1 run loop 中被用来把 V1 `SessionV1.WithParts[]` 转成 AI SDK `ModelMessage[]`;它不是 V2 session core。[E: packages/opencode/src/session/prompt.ts:1262][E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:406][E: packages/opencode/src/session/message-v2.ts:417][I]
 

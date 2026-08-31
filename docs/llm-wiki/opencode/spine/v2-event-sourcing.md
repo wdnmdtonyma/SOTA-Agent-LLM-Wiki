@@ -39,7 +39,7 @@ flowchart TD
 
 1. `Event.Definition` 可带 `durable` 配置;durable 配置指定 `version` 与 aggregate field 名。[E: packages/schema/src/event.ts:15][E: packages/schema/src/event.ts:20][E: packages/schema/src/event.ts:21][E: packages/schema/src/event.ts:22]
 
-2. `Event.Payload` 的公共字段包括 `id/type/data/durable/location/metadata`;其中 `durable.seq` 是 durable event commit 时填充的 aggregate order。[E: packages/schema/src/event.ts:29][E: packages/schema/src/event.ts:30][E: packages/schema/src/event.ts:33][E: packages/schema/src/event.ts:35][E: packages/schema/src/event.ts:38][E: packages/schema/src/event.ts:39]
+2. `Event.Payload` 的公共字段包括 `id/type/data/durable/location/metadata`;其中 `durable.seq` 是 durable event commit 时填充的 aggregate order。[E: packages/schema/src/event.ts:29][E: packages/schema/src/event.ts:30][E: packages/schema/src/event.ts:31][E: packages/schema/src/event.ts:32][E: packages/schema/src/event.ts:33][E: packages/schema/src/event.ts:35][E: packages/schema/src/event.ts:38][E: packages/schema/src/event.ts:39]
 
 3. `Event.define` 根据 input schema 创建 payload schema,并把 static `type/durable/data` 附到 schema 上;`EventV2.define` 当前是 `Event.define` 的 re-export alias。[E: packages/schema/src/event.ts:42][E: packages/schema/src/event.ts:53][E: packages/schema/src/event.ts:54][E: packages/schema/src/event.ts:65][E: packages/schema/src/event.ts:66][E: packages/schema/src/event.ts:67][E: packages/core/src/event.ts:115]
 
@@ -53,7 +53,7 @@ flowchart TD
 
 8. `commitDurableEvent` 先验证 aggregate field 是 string,再取得该 event type 注册的 projectors。[E: packages/core/src/event.ts:205][E: packages/core/src/event.ts:217][E: packages/core/src/event.ts:219][E: packages/core/src/event.ts:220][E: packages/core/src/event.ts:236]
 
-9. durable commit 在 SQLite immediate transaction 中执行:读取 current sequence/owner,处理 strict owner、replay divergence、sequence mismatch 与重复 event id,再按顺序运行 projectors 与 local commit hook。[E: packages/core/src/event.ts:239][E: packages/core/src/event.ts:240][E: packages/core/src/event.ts:243][E: packages/core/src/event.ts:254][E: packages/core/src/event.ts:262][E: packages/core/src/event.ts:284][E: packages/core/src/event.ts:295][E: packages/core/src/event.ts:303][E: packages/core/src/event.ts:320][E: packages/core/src/event.ts:323]
+9. durable commit 在 SQLite immediate transaction 中执行:读取 current sequence/owner,处理 strict owner、replay divergence、sequence mismatch 与重复 event id,再按顺序运行 projectors 与 local commit hook。[E: packages/core/src/event.ts:239][E: packages/core/src/event.ts:240][E: packages/core/src/event.ts:351][E: packages/core/src/event.ts:243][E: packages/core/src/event.ts:254][E: packages/core/src/event.ts:262][E: packages/core/src/event.ts:284][E: packages/core/src/event.ts:295][E: packages/core/src/event.ts:303][E: packages/core/src/event.ts:320][E: packages/core/src/event.ts:323]
 
 10. 同一 transaction 末尾 upsert `EventSequenceTable` 并 insert `EventTable`,因此 projector 或 local commit hook 失败会阻止 event row 落库。[E: packages/core/src/event.ts:324][E: packages/core/src/event.ts:336][E: packages/core/src/event.ts:337][E: packages/core/src/event.ts:347]
 

@@ -4,6 +4,7 @@ title: 工具输出截断与保留(V1 truncate / V2 output-store)
 kind: subsystem
 tier: T2
 v: shared
+evidence: explicit
 status: verified
 updated: 9f69463f1d
 source:
@@ -101,7 +102,7 @@ V2 `ToolOutputStore.Service` 是 core registry settlement 的 model-output bound
 - `read` 工具的 2000 行/50KB 文本分页不是本节点的 generic tool output bounding；`read` 自己在文件读取层分页。[E: packages/opencode/src/tool/read.ts:13][E: packages/opencode/src/tool/read.ts:16][E: packages/opencode/src/tool/read.ts:164][E: packages/core/src/tool/read-filesystem.ts:11][E: packages/core/src/tool/read-filesystem.ts:12][E: packages/core/src/tool/read-filesystem.ts:201][E: packages/core/src/tool/read-filesystem.ts:214]
 - V1 shell 大输出完整文件是 shell/truncate 合作产生的，不能推断所有 V1 工具都一定有 `outputPath` metadata。[E: packages/opencode/src/tool/shell.ts:505][E: packages/opencode/src/tool/shell.ts:515][E: packages/opencode/src/tool/shell.ts:579][E: packages/opencode/src/tool/shell.ts:591][E: packages/opencode/src/tool/tool.ts:131][E: packages/opencode/src/tool/tool.ts:141][E: packages/opencode/src/tool/tool.ts:142]
 - V2 managed output file 是 temporary，bounded Model Tool Output 才是 durable replayable record。[E: CONTEXT.md:55][E: CONTEXT.md:58]
-- Provider-executed tool results 不走 generic Tool Registry bounding；runner 在 `providerExecuted` tool-call 上直接返回,所以 provider-native transcript facts 保持在 provider stream 路径中。[E: packages/core/src/session/runner/llm.ts:243][I]
+- Provider-executed tool results 不走 generic Tool Registry bounding；runner 在 `event.type !== "tool-call" || event.providerExecuted` 时从 stream callback 返回，不调用 materialized `settle`，所以 provider-native transcript facts 保持在 provider stream 路径中。[E: packages/core/src/session/runner/llm.ts:249][E: packages/core/src/session/runner/llm.ts:250][I]
 
 ## Sources
 

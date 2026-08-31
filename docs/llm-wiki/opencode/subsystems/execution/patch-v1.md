@@ -69,7 +69,7 @@ updated: 9f69463f1d
 
 ## `maybeParseApplyPatchVerified`
 
-V1 patch helper 还能从 shell argv 识别 apply_patch：直接形式要求 `argv.length === 2` 且命令是 `apply_patch` 或 `applypatch`；bash heredoc 形式要求 `argv` 是 `["bash", "-lc", script]` 并匹配带引号 delimiter 的 `apply_patch <<"EOF"` 或 `apply_patch <<'EOF'` 形式 [E: packages/opencode/src/patch/index.ts:250] [E: packages/opencode/src/patch/index.ts:253] [E: packages/opencode/src/patch/index.ts:272] [E: packages/opencode/src/patch/index.ts:275]。verified 版本会读取现有文件，预先 derive update 内容，并把 add/delete/update 变成 `ApplyPatchAction.changes` [E: packages/opencode/src/patch/index.ts:609] [E: packages/opencode/src/patch/index.ts:617] [E: packages/opencode/src/patch/index.ts:624] [E: packages/opencode/src/patch/index.ts:647] [E: packages/opencode/src/patch/index.ts:648]。
+`maybeParseApplyPatch` / `maybeParseApplyPatchVerified` 能从 shell argv 识别 apply_patch：直接形式要求 `argv.length === 2` 且命令是 `apply_patch` 或 `applypatch`；bash heredoc 形式要求 `argv` 是 `["bash", "-lc", script]` 并匹配带引号 delimiter 的 `apply_patch <<"EOF"` 或 `apply_patch <<'EOF'` 形式 [E: packages/opencode/src/patch/index.ts:250] [E: packages/opencode/src/patch/index.ts:253] [E: packages/opencode/src/patch/index.ts:272] [E: packages/opencode/src/patch/index.ts:275]。verified 版本会读取现有文件，预先 derive update 内容，并把 add/delete/update 变成 `ApplyPatchAction.changes` [E: packages/opencode/src/patch/index.ts:609] [E: packages/opencode/src/patch/index.ts:617] [E: packages/opencode/src/patch/index.ts:624] [E: packages/opencode/src/patch/index.ts:647] [E: packages/opencode/src/patch/index.ts:648]。这两条 helper 以及 `applyHunksToFiles` / `applyPatch` 目前没有 production caller：活跑路径是 `ApplyPatchTool.execute` 直接 `Patch.parsePatch` + `deriveNewContentsFromChunks`，`applyPatch` 只出现在 `packages/opencode/test/patch/patch.test.ts` [I]。
 
 ## 设计动机与权衡
 
@@ -79,7 +79,7 @@ V1 tool 层把 patch 应用和开发者 UX 紧耦合：permission metadata 带 d
 
 - V1 支持 move：`*** Move to:` 进入 `hunk.move_path`，tool 层 type 会变成 `"move"`。
 - V1 parser 对 update line 的未知行较宽松；`parseUpdateFileChunks` 不认识的行会被跳过到下一行 [E: packages/opencode/src/patch/index.ts:150]。
-- `applyHunksToFiles` 是直接 filesystem helper，不会跑 formatter/LSP；formatter/LSP 只在 tool 层发生。
+- `applyHunksToFiles` 是直接 filesystem helper，不会跑 formatter/LSP；formatter/LSP 只在 tool 层发生。它目前也不是活跑写入路径。
 - `assertExternalDirectoryEffect` 对外部 target 请求 `external_directory`，但主要 mutation approval 仍是 `edit`。
 
 ## Sources

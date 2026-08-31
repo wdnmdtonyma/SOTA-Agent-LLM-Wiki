@@ -30,7 +30,7 @@ Task 是 V1-only 节点。V2 `BuiltInTools.node` 的静态 deps 列表注册 App
 
 ## 2 用途定位
 
-V1 Task 用来把复杂、多步、可自治的工作交给 subagent；tool prompt 明确要求调用方指定 `subagent_type`，并建议在可能时并发启动多个 agent。[E: packages/opencode/src/tool/task.txt:1][E: packages/opencode/src/tool/task.txt:3][E: packages/opencode/src/tool/task.txt:13] registry 在拼接 model-visible available agents 时过滤 `item.mode !== "primary"`，所以可选列表不是 primary agents。[E: packages/opencode/src/tool/registry.ts:267] 新 task 默认新建 child session；传入 `task_id` 时会尝试把该 id 当作既有 session id 续接，查不到既有 session 时回落到 `sessions.create()`。[E: packages/opencode/src/tool/task.ts:47][E: packages/opencode/src/tool/task.ts:49][E: packages/opencode/src/tool/task.ts:136][E: packages/opencode/src/tool/task.ts:137][E: packages/opencode/src/tool/task.ts:156][E: packages/opencode/src/tool/task.ts:158]
+V1 Task 用来把复杂、多步、可自治的工作交给 subagent；tool prompt 明确要求调用方指定 `subagent_type`，并建议在可能时并发启动多个 agent。[E: packages/opencode/src/tool/task.txt:1][E: packages/opencode/src/tool/task.txt:3][E: packages/opencode/src/tool/task.txt:13] registry 在拼接 model-visible available agents 时过滤 `item.mode !== "primary"`，所以可选列表不是 primary agents。[E: packages/opencode/src/tool/registry.ts:266] 新 task 默认新建 child session；传入 `task_id` 时会尝试把该 id 当作既有 session id 续接，查不到既有 session 时回落到 `sessions.create()`。[E: packages/opencode/src/tool/task.ts:47][E: packages/opencode/src/tool/task.ts:49][E: packages/opencode/src/tool/task.ts:136][E: packages/opencode/src/tool/task.ts:137][E: packages/opencode/src/tool/task.ts:156][E: packages/opencode/src/tool/task.ts:158]
 
 ## 3 输入 schema 表
 

@@ -4,8 +4,8 @@ title: Model Auth
 kind: subsystem
 tier: T2
 v: shared
-source: [packages/opencode/src/auth/index.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/provider/provider.ts, packages/opencode/src/account/account.ts, packages/opencode/src/cli/cmd/account.ts, packages/opencode/src/plugin/azure.ts, packages/core/src/plugin/provider/opencode.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts, packages/schema/src/credential.ts, packages/schema/src/integration.ts]
-symbols: [Auth.Service, ProviderAuth.Service, Account.Service, Credential.Service, Integration.Service, AzureAuthPlugin]
+source: [packages/opencode/src/auth/index.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/provider/provider.ts, packages/opencode/src/account/account.ts, packages/opencode/src/cli/cmd/account.ts, packages/opencode/src/plugin/azure.ts, packages/opencode/src/plugin/openai/codex.ts, packages/core/src/plugin/provider/opencode.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts, packages/schema/src/credential.ts, packages/schema/src/integration.ts]
+symbols: [Auth.Service, ProviderAuth.Service, Account.Service, Credential.Service, Integration.Service, AzureAuthPlugin, CodexAuthPlugin, extractResidency]
 related: [provider.auth-accounts, model-layer.credential-v2, integrations.integration-v2]
 evidence: explicit
 status: verified
@@ -19,6 +19,7 @@ updated: 9f69463f1d
 - `ProviderAuth.authorize/callback` 如何通过 plugin hook 写入 auth?
 - opencode account device flow 和 provider auth 是不是同一个东西?
 - V2 credential 如何与 Integration connection 配合?
+- Codex OAuth 怎样写 compute residency header，gpt-5.6 订阅限额是多少?
 - `packages/core/src/integration.ts` 为什么不是 workspace adapter?
 
 ## V1
@@ -43,6 +44,12 @@ layer 初始化时从 V1 plugin list 收集 `x.auth.provider` hooks,并把 provi
 
 `AzureAuthPlugin` 的 oauth method 是 Microsoft Entra ID via Azure CLI,不是 browser OAuth stub。[E: packages/opencode/src/plugin/azure.ts:169][E: packages/opencode/src/plugin/azure.ts:170] 未安装 `az` 时 methods 里只留 API key。[E: packages/opencode/src/plugin/azure.ts:53][E: packages/opencode/src/plugin/azure.ts:199] token 用 `az account get-access-token --scope` 取得;Cognitive Services 用 `https://cognitiveservices.azure.com/.default`,AI Foundry hostname 用 `https://ai.azure.com/.default`。[E: packages/opencode/src/plugin/azure.ts:12][E: packages/opencode/src/plugin/azure.ts:13][E: packages/opencode/src/plugin/azure.ts:82][E: packages/opencode/src/plugin/azure.ts:257][E: packages/opencode/src/plugin/azure.ts:258] authorize 成功后把 resource name 写入 `Auth.Oauth.accountId`;V1 Azure loader 读这个字段当 resource。[E: packages/opencode/src/plugin/azure.ts:190][E: packages/opencode/src/provider/provider.ts:253] oauth 时 `provider.models` hook 用 `az cognitiveservices account deployment list` 发现 Succeeded deployment。[E: packages/opencode/src/plugin/azure.ts:130][E: packages/opencode/src/plugin/azure.ts:219]
 
+### Codex ChatGPT OAuth
+
+`CodexAuthPlugin` 是 ChatGPT Pro/Plus browser OAuth，不是 Azure/opencode account login。[E: packages/opencode/src/plugin/openai/codex.ts:273][E: packages/opencode/src/plugin/openai/codex.ts:438] oauth loader 在把 `/v1/responses` 或 `/chat/completions` rewrite 到 Codex endpoint 时，从 access JWT 抽 `chatgpt_compute_residency`（含 `https://api.openai.com/auth` 嵌套），忽略 `no_constraint`，写成 header `x-openai-internal-codex-residency`。它不读 `chatgpt_data_residency`。[E: packages/opencode/src/plugin/openai/codex.ts:80][E: packages/opencode/src/plugin/openai/codex.ts:83][E: packages/opencode/src/plugin/openai/codex.ts:84][E: packages/opencode/src/plugin/openai/codex.ts:419][E: packages/opencode/src/plugin/openai/codex.ts:422][E: packages/opencode/src/plugin/openai/codex.ts:423]
+
+ChatGPT 订阅模型限额：对 `api.id` 匹配 `gpt-X.Y` 且版本 `> 5.4` 的 model，`id` 含 `gpt-5.5` 或 `gpt-5.6` 的现在同为 context 400k / input 272k / output 128k。[E: packages/opencode/src/plugin/openai/codex.ts:300][E: packages/opencode/src/plugin/openai/codex.ts:301][E: packages/opencode/src/plugin/openai/codex.ts:313][E: packages/opencode/src/plugin/openai/codex.ts:315]
+
 ### Account Device Flow
 
 `Account.Service` 是 opencode account/login 层,接口包含 active/list/orgs/config/token/login/poll 等方法。[E: packages/opencode/src/account/account.ts:168][E: packages/opencode/src/account/account.ts:182] 它不等于 generic provider auth。[I]
@@ -66,7 +73,8 @@ V1 auth 是文件与 plugin hook 的组合;V2 credential/integration 把 provide
 ## 易错点
 
 - V1 `ProviderAuth` 的 method type 名叫 `api`;V2 `Integration.KeyMethod` 的 method type 是 `key`,V2 credential value type 也是 `key`。[E: packages/opencode/src/provider/auth.ts:42][E: packages/schema/src/integration.ts:60][E: packages/schema/src/integration.ts:61][E: packages/schema/src/credential.ts:26][E: packages/schema/src/credential.ts:27]
-- V1 account login 是 opencode server account device flow。[E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:411] 它不是 provider API key login。[I]
+- V1 account login 是 opencode server account device flow。[E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:411] 它不是 provider API key login,也不是 Codex ChatGPT OAuth。[I]
+- Codex residency header 只在 rewrite 到 Codex responses/chat 路径时写入,并且只读 `chatgpt_compute_residency`;`chatgpt_data_residency` 与 `no_constraint` 都不会变成该 header。[E: packages/opencode/src/plugin/openai/codex.ts:83][E: packages/opencode/src/plugin/openai/codex.ts:84][E: packages/opencode/src/plugin/openai/codex.ts:419][E: packages/opencode/src/plugin/openai/codex.ts:423]
 - V2 Integration 的 OAuth attempt 有 oauth/status/complete/cancel 生命周期。[E: packages/core/src/integration.ts:163][E: packages/core/src/integration.ts:183][E: packages/core/src/integration.ts:185][E: packages/core/src/integration.ts:192] 它不是 external SaaS connector abstraction。[I]
 
 ## Sources
@@ -76,6 +84,7 @@ V1 auth 是文件与 plugin hook 的组合;V2 credential/integration 把 provide
 - packages/opencode/src/account/account.ts
 - packages/opencode/src/cli/cmd/account.ts
 - packages/opencode/src/plugin/azure.ts
+- packages/opencode/src/plugin/openai/codex.ts
 - packages/core/src/plugin/provider/opencode.ts
 - packages/core/src/credential.ts
 - packages/core/src/credential/sql.ts

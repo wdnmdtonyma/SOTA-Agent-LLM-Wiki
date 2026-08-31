@@ -25,7 +25,7 @@ flowchart TD
   Create["SessionV2.create"] --> Created["SessionV1.Event.Created projected SessionTable"]
   Created --> Prompt["SessionV2.prompt"]
   Prompt --> Admit["SessionInput.admit -> PromptAdmitted"]
-  Prompt --> Wake["enqueueWake -> SessionExecution.wake"]
+  Prompt --> Wake["SessionExecution.wake"]
   Wake --> Coord["SessionRunCoordinator.wake"]
   Coord --> Drain["SessionExecutionLocal.drain"]
   Drain --> Run["SessionRunner.run"]

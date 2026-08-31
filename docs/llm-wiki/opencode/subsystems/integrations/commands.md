@@ -42,7 +42,7 @@ evidence: explicit
 
 ### 职责
 
-V1 `Command.Service` 聚合四类 command：内建 init/review、config command markdown、MCP prompt、可用 skill。[E: packages/opencode/src/command/index.ts:70] [E: packages/opencode/src/command/index.ts:90] [E: packages/opencode/src/command/index.ts:105] [E: packages/opencode/src/command/index.ts:134] 它只提供 `get` 和 `list`，真正执行在 `packages/opencode/src/session/prompt.ts` 的 `command(input)` 流程里。[E: packages/opencode/src/command/index.ts:51] [E: packages/opencode/src/session/prompt.ts:1356]
+V1 `Command.Service` 聚合四类 command：内建 init/review、config command markdown、MCP prompt、以及 `skill.all()` 返回的全部 skill（不做 permission 过滤）。[E: packages/opencode/src/command/index.ts:70] [E: packages/opencode/src/command/index.ts:90] [E: packages/opencode/src/command/index.ts:105] [E: packages/opencode/src/command/index.ts:134] 它只提供 `get` 和 `list`，真正执行在 `packages/opencode/src/session/prompt.ts` 的 `command(input)` 流程里。[E: packages/opencode/src/command/index.ts:51] [E: packages/opencode/src/session/prompt.ts:1356]
 
 `Command.Event.Executed` 记录 `name`、`sessionID`、`arguments`、`messageID`，用于 V1 event stream 订阅方了解 slash command 何时执行。[E: packages/opencode/src/command/index.ts:18]
 
@@ -61,7 +61,7 @@ config command markdown 由 `packages/opencode/src/config/command.ts` 扫描 `{c
 3. config command 从 `cfg.command` 转成 `Command.Info`，source 设为 `command`。[E: packages/opencode/src/command/index.ts:90] [E: packages/opencode/src/command/index.ts:96]
 4. MCP prompts 被拉成 command：name 来自 `mcp.prompts()` 返回 map 的 key，template 是 getter 返回的 Promise/string，读取时调用 `mcp.getPrompt(prompt.client, prompt.name, args)`。[E: packages/opencode/src/command/index.ts:105] [E: packages/opencode/src/command/index.ts:111] [E: packages/opencode/src/command/index.ts:113]
 5. MCP prompt response 中只有 text content 会被 join 成 template 输出。[E: packages/opencode/src/command/index.ts:123] [E: packages/opencode/src/command/index.ts:125]
-6. skills 会补成 command，但只有在没有同名 command 时才加入，避免覆盖已有 command。[E: packages/opencode/src/command/index.ts:134] [E: packages/opencode/src/command/index.ts:135]
+6. `skill.all()` 会补成 command，但只有在没有同名 command 时才加入，避免覆盖已有 command；这里不走 `skill.available(agent)`。[E: packages/opencode/src/command/index.ts:134] [E: packages/opencode/src/command/index.ts:135]
 7. service 的 `get(name)` 做 name lookup，`list()` 返回 command map values。[E: packages/opencode/src/command/index.ts:161] [E: packages/opencode/src/command/index.ts:166]
 
 ### 执行流程
@@ -73,7 +73,7 @@ config command markdown 由 `packages/opencode/src/config/command.ts` 扫描 `{c
 5. 如果 template 没有 placeholder 且用户传了参数，参数会追加到 message 尾部。[E: packages/opencode/src/session/prompt.ts:1393]
 6. fenced shell block 会按当前 shell 执行，并把 `Process.text(...).text` 结果拼回 message。[E: packages/opencode/src/session/prompt.ts:1397] [E: packages/opencode/src/session/prompt.ts:1401] [E: packages/opencode/src/session/prompt.ts:1407]
 7. task model precedence 是 command model、command agent model、input model、当前 session model。[E: packages/opencode/src/session/prompt.ts:1411]
-8. command agent 会按 command.agent 找 agent，否则使用当前 agent；找不到 hidden agent 时会抛出带提示的错误。[E: packages/opencode/src/session/prompt.ts:1370] [E: packages/opencode/src/session/prompt.ts:1423]
+8. command agent 优先 `cmd.agent`，否则用 input agent；两者都空时用 default agent。`agents.get` 找不到该 name 时抛错，提示列出非 hidden agents；已存在的 hidden agent 仍可被显式选中。[E: packages/opencode/src/session/prompt.ts:1370] [E: packages/opencode/src/session/prompt.ts:1423] [E: packages/opencode/src/session/prompt.ts:1425]
 9. 如果 agent mode 是 `subagent` 且 command 没有显式 `subtask: false`，或者 command 本身 `subtask === true`，会生成 subtask part；否则会把 command 结果作为普通 prompt 输入继续 run loop。[E: packages/opencode/src/session/prompt.ts:1439] [E: packages/opencode/src/session/prompt.ts:1440] [E: packages/opencode/src/session/prompt.ts:1466]
 10. 执行后发布 `Command.Event.Executed`。[E: packages/opencode/src/session/prompt.ts:1474]
 
@@ -108,7 +108,7 @@ V2 protocol `command` group 当前定义 `GET /api/command`，response 是 `Arra
 | command 来源 | built-in、config markdown、MCP prompts、skills。 | built-in plugin、config plugin。 |
 | 执行位置 | `SessionPrompt.command`，接入 V1 run loop。 | 当前源码中 command service/list API 已有；默认 V2 execution path 未在本节点源文件中直接体现。[I] |
 | MCP prompt command | V1 service 直接从 `MCP.prompts()` 生成。 | 本节点源文件未显示 V2 MCP prompt 到 command 的 bridge。[I] |
-| skill command | V1 把可用 skill 补成 command。 | V2 skill guidance/tool 独立；本节点源文件未显示自动补 command。[I] |
+| skill command | V1 把 `skill.all()` 中尚无同名 command 的 skill 补成 command。 | V2 skill guidance/tool 独立；本节点源文件未显示自动补 command。[I] |
 | metadata | 有 `source`、`hints`。 | `Command.Info` 无 `source`、`hints`。 |
 
 ## 设计动机与权衡

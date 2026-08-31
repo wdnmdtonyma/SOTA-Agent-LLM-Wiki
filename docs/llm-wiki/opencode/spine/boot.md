@@ -37,13 +37,13 @@ flowchart TD
 
 1. `bin/opencode` 以 node shebang 启动,保留用户传入的 argv,并定义 `run(target)` 使用 `spawn(target, process.argv.slice(2), { stdio: "inherit" })` 启动解析出的二进制。[E: packages/opencode/bin/opencode:1][E: packages/opencode/bin/opencode:10][E: packages/opencode/bin/opencode:11]
 
-2. `bin/opencode` 为子进程转发 `SIGINT`、`SIGTERM`、`SIGHUP`,并优先读取 `process.env.OPENCODE_BIN_PATH` 作为 resolved binary override。[E: packages/opencode/bin/opencode:20][E: packages/opencode/bin/opencode:46][E: packages/opencode/bin/opencode:189]
+2. `bin/opencode` 为子进程转发 `SIGINT`、`SIGTERM`、`SIGHUP`,并优先读取 `process.env.OPENCODE_BIN_PATH` 作为 resolved binary override。[E: packages/opencode/bin/opencode:8][E: packages/opencode/bin/opencode:20][E: packages/opencode/bin/opencode:21][E: packages/opencode/bin/opencode:46][E: packages/opencode/bin/opencode:189]
 
 3. `bin/opencode` 用 `os.platform()` 与 `os.arch()` 生成平台后缀;Linux x64 会读取 `/proc/cpuinfo` 探测 AVX2,读取失败则 `supportsAvx2()` 返回 false,后续候选名优先 baseline binary。[E: packages/opencode/bin/opencode:54][E: packages/opencode/bin/opencode:76][E: packages/opencode/bin/opencode:81][E: packages/opencode/bin/opencode:83][E: packages/opencode/bin/opencode:158]
 
 4. `bin/opencode` 生成候选 package 名,从 wrapper 目录向上查找 `node_modules/<candidate>/bin/opencode`,用 `fs.existsSync(candidate)` 判定命中;全部失败时打印错误并退出。[E: packages/opencode/bin/opencode:126][E: packages/opencode/bin/opencode:171][E: packages/opencode/bin/opencode:177][E: packages/opencode/bin/opencode:178][E: packages/opencode/bin/opencode:190]
 
-5. `index@packages/opencode/src/index.ts:45` 创建 yargs CLI,设置 parser config、script name、版本号和全局参数,再通过 middleware 设置 `OPENCODE_PRINT_LOGS`、`OPENCODE_LOG_LEVEL`、`OPENCODE_PURE`、`AGENT`、`OPENCODE`、`OPENCODE_PID` 等进程环境。[E: packages/opencode/src/index.ts:45][E: packages/opencode/src/index.ts:51][E: packages/opencode/src/index.ts:66]
+5. `index@packages/opencode/src/index.ts:45` 创建 yargs CLI,设置 parser config、script name、版本号和全局参数,再通过 middleware 设置 `OPENCODE_PRINT_LOGS`、`OPENCODE_LOG_LEVEL`、`OPENCODE_PURE`、`AGENT`、`OPENCODE`、`OPENCODE_PID` 等进程环境。[E: packages/opencode/src/index.ts:45][E: packages/opencode/src/index.ts:51][E: packages/opencode/src/index.ts:66][E: packages/opencode/src/index.ts:67][E: packages/opencode/src/index.ts:68][E: packages/opencode/src/index.ts:70][E: packages/opencode/src/index.ts:75][E: packages/opencode/src/index.ts:76][E: packages/opencode/src/index.ts:77]
 
 6. `index@packages/opencode/src/index.ts:85` 注册 `RunCommand`,并在同一个 yargs chain 中注册 `ServeCommand`。[E: packages/opencode/src/index.ts:85][E: packages/opencode/src/index.ts:93]
 

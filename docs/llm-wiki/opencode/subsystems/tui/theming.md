@@ -17,7 +17,7 @@ updated: 9f69463f1d
 ## 能回答的问题
 
 - `ThemeJson` schema 支持哪些值类型和 fallback？
-- 32 个内建 theme 如何注册，优先级如何覆盖？
+- 33 个内建 theme 如何注册，优先级如何覆盖？
 - `system` theme 如何从 terminal palette 合成？
 - ThemeProvider 如何发现 `.opencode/themes/*.json`、监听 SIGUSR2 与 terminal mode？
 - Plugin theme install 和 custom themes 如何与 active theme 交互？

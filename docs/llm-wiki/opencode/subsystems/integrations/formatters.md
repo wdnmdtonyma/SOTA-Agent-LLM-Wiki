@@ -83,7 +83,7 @@ evidence: explicit
 1. `file(file)` 调用内部 `formatFile(file)`。[E: packages/opencode/src/format/index.ts:188]
 2. `formatFile` 先按 `path.extname(file)` 查找可用 formatter；没有匹配就返回 false。[E: packages/opencode/src/format/index.ts:73]
 3. `getFormatter` 先用 extension 过滤候选 formatter，再并行检查 `getCommand(item)` 是否可用。[E: packages/opencode/src/format/index.ts:57] [E: packages/opencode/src/format/index.ts:61]
-4. `getCommand` 对每个 formatter name 缓存 command 或 false，避免反复检测。[E: packages/opencode/src/format/index.ts:43]
+4. `getCommand` 把结果写入 `commands[name]`；只有缓存到 truthy command array 时才跳过 `enabled()`。缓存为 `false` 或 `undefined` 都会重新跑 `enabled()`，因此 disabled formatter 仍可能被反复检测。[E: packages/opencode/src/format/index.ts:43] [E: packages/opencode/src/format/index.ts:45] [E: packages/opencode/src/format/index.ts:46]
 5. 执行命令时会把 command parts 里的 `$FILE` 替换成当前文件路径。[E: packages/opencode/src/format/index.ts:82]
 6. child process cwd 是 `InstanceState.directory`，环境变量使用 formatter 自己的 environment，开启 `extendEnv: true`，并忽略 stdin/stdout/stderr。[E: packages/opencode/src/format/index.ts:83] [E: packages/opencode/src/format/index.ts:86] [E: packages/opencode/src/format/index.ts:90]
 7. service 会遍历所有匹配 formatter；spawn error 或 non-zero exit 都只写 log，循环结束后只要存在匹配 formatter 就返回 true，只有没有 formatter 时返回 false。[E: packages/opencode/src/format/index.ts:78] [E: packages/opencode/src/format/index.ts:80] [E: packages/opencode/src/format/index.ts:95] [E: packages/opencode/src/format/index.ts:106] [E: packages/opencode/src/format/index.ts:114]

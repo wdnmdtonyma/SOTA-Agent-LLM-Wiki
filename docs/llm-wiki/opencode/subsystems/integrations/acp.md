@@ -71,7 +71,7 @@ ACP SDK 依赖来自 `@agentclientprotocol/sdk`，这是 package dependency，�
 
 ACP session snapshot `Info` 包含 ACP session id、cwd、MCP server list、createdAt、model、variant、modeId、knownParts。[E: packages/opencode/src/acp/session.ts:24] snapshot store 是内存 `Map`，通过 `Ref.make(new Map())` 创建；它不是持久化 database。[E: packages/opencode/src/acp/session.ts:100]
 
-`Directory.Snapshot` 包含 providers、modelOptions、variants、availableModes、defaultModeID、availableCommands、defaultModel。[E: packages/opencode/src/acp/directory.ts:33] 这个 snapshot 是 ACP client 可见的目录能力视图，来自 opencode provider、agent、command、config 组合加载。[E: packages/opencode/src/acp/directory.ts:120]
+`Directory.Snapshot` 包含 directory、providers、modelOptions、`variantsByModel`、availableModes、defaultModeID、availableCommands、optional defaultModel。[E: packages/opencode/src/acp/directory.ts:33] 这个 snapshot 是 ACP client 可见的目录能力视图，来自 opencode provider、agent、command、config 组合加载。[E: packages/opencode/src/acp/directory.ts:120]
 
 ACP service 的初始化响应声明 protocol version 1、loadSession/MCP/prompt/session capabilities、auth methods、agent info。[E: packages/opencode/src/acp/service.ts:113] MCP capabilities 同时声明 `http` 和 `sse`。[E: packages/opencode/src/acp/service.ts:116]
 
@@ -120,7 +120,7 @@ ACP service 的初始化响应声明 protocol version 1、loadSession/MCP/prompt
 2. subscription 读取 `sdk.global.event`，把 payload 交给 `handle` 转成 ACP session update。[E: packages/opencode/src/acp/event.ts:153] [E: packages/opencode/src/acp/event.ts:163]
 3. `runUntilIdle(sessionId, request)` 先 `waitUntilConnected`，再登记 idle waiter，执行 request，然后 await `session.status === "idle"`。`handle` 按序处理 events，idle 只在 `session.status` 到达时 resolve，所以 prompt RPC 会在 updates drain 完后才返回。[E: packages/opencode/src/acp/event.ts:74] [E: packages/opencode/src/acp/event.ts:85] [E: packages/opencode/src/acp/event.ts:93] [E: packages/opencode/src/acp/event.ts:96] [E: packages/opencode/src/acp/event.ts:184]
 4. `message.part.updated` 中 tool part 被交给 `ACPTool`；pending state 生成 `ToolCall`，running/completed/error state 生成 `ToolCallUpdate`。[E: packages/opencode/src/acp/event.ts:191] [E: packages/opencode/src/acp/tool.ts:124] [E: packages/opencode/src/acp/tool.ts:140]
-5. shell tool running 时，event bridge 会发送 shell output snapshot，并用本地 map 去重。[E: packages/opencode/src/acp/event.ts:344] [E: packages/opencode/src/acp/event.ts:346] [E: packages/opencode/src/acp/event.ts:361]
+5. running 的 `bash` tool 才会取 `shellOutputSnapshot`；相同 output 用本地 map 去重后发 `tool_call_update`。`part.tool === "shell"` 不走这条 snapshot 路径。[E: packages/opencode/src/acp/event.ts:344] [E: packages/opencode/src/acp/event.ts:346] [E: packages/opencode/src/acp/event.ts:361]
 6. `UsageService.contextTokens` 把 `tokens.input + cache.read + cache.write` 当作 used context；`usage_update.used` 走这条路径，不再只计 cache read。[E: packages/opencode/src/acp/usage.ts:86] [E: packages/opencode/src/acp/usage.ts:87] [E: packages/opencode/src/acp/usage.ts:214]
 7. `ACPTool.toToolKind` 把 bash/shell 归为 execute，把 webfetch 归为 fetch，把 edit/apply_patch/patch/write 归为 edit，把 grep/glob/context 等归为 search。[E: packages/opencode/src/acp/tool.ts:38] [E: packages/opencode/src/acp/tool.ts:46] [E: packages/opencode/src/acp/tool.ts:49] [E: packages/opencode/src/acp/tool.ts:55]
 

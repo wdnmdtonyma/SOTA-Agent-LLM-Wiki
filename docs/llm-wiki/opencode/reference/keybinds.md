@@ -17,7 +17,7 @@ status: verified
 updated: 9f69463f1d
 ---
 
-> TUI keybind catalog 由 183 个 `Definitions` 和 162 个 `CommandMap` entries 组成；未映射 command 的点号 key 多数是 dialog/prompt 内部绑定。
+> TUI keybind catalog 由 184 个 `Definitions` 和 163 个 `CommandMap` entries 组成；未映射 command 的点号 key 多数是 dialog/prompt 内部绑定。
 
 ## 能回答的问题
 
@@ -71,6 +71,7 @@ updated: 9f69463f1d
 | `sidebar_toggle` | `<leader>b` [E: packages/tui/src/config/keybind.ts:81] | Toggle sidebar | `session.sidebar.toggle` [E: packages/tui/src/config/keybind.ts:289] |
 | `scrollbar_toggle` | `none` [E: packages/tui/src/config/keybind.ts:82] | Toggle session scrollbar | `session.toggle.scrollbar` [E: packages/tui/src/config/keybind.ts:290] |
 | `status_view` | `<leader>s` [E: packages/tui/src/config/keybind.ts:83] | View status | `opencode.status` [E: packages/tui/src/config/keybind.ts:291] |
+| `debug_view` | `none` [E: packages/tui/src/config/keybind.ts:84] | View debug info | `opencode.debug` [E: packages/tui/src/config/keybind.ts:292] |
 | `session_export` | `<leader>x` [E: packages/tui/src/config/keybind.ts:86] | Export session to editor | `session.export` [E: packages/tui/src/config/keybind.ts:293] |
 | `session_copy` | `none` [E: packages/tui/src/config/keybind.ts:87] | Copy session transcript | `session.copy` [E: packages/tui/src/config/keybind.ts:294] |
 | `session_move` | `none` [E: packages/tui/src/config/keybind.ts:88] | Move session | `session.move` [E: packages/tui/src/config/keybind.ts:295] |

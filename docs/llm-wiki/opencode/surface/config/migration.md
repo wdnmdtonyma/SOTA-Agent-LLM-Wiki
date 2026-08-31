@@ -99,7 +99,7 @@ V1 `tools` boolean map is converted first into rules where `enabled` true means 
 
 ## MCP Migration
 
-V1 `mcp` entries without `type` are skipped, so legacy `{ enabled: boolean }` stubs do not become V2 servers。[E: packages/core/src/v1/config/migrate.ts:129] [E: packages/core/src/v1/config/migrate.ts:130] V1 `experimental.mcp_timeout` becomes `mcp.timeout`。[E: packages/core/src/v1/config/migrate.ts:133] [E: packages/core/src/v1/config/migrate.ts:135] V1 `enabled` is inverted into V2 `disabled` only when `enabled` is present。[E: packages/core/src/v1/config/migrate.ts:139]
+V1 `mcp` entries without `type` are skipped, so legacy `{ enabled: boolean }` stubs do not become V2 servers。[E: packages/core/src/v1/config/migrate.ts:129] [E: packages/core/src/v1/config/migrate.ts:130] V1 `experimental.mcp_timeout` becomes `mcp.timeout`。[E: packages/core/src/v1/config/migrate.ts:133] [E: packages/core/src/v1/config/migrate.ts:135] V1 `enabled` is inverted into V2 `disabled` only when `enabled` is present。[E: packages/core/src/v1/config/migrate.ts:139] Local `cwd` is copied through unchanged。[E: packages/core/src/v1/config/migrate.ts:144]
 
 Remote OAuth fields are snake_cased: `clientId` to `client_id`、`clientSecret` to `client_secret`、`callbackPort` to `callback_port`、`redirectUri` to `redirect_uri`。[E: packages/core/src/v1/config/migrate.ts:154] [E: packages/core/src/v1/config/migrate.ts:155] [E: packages/core/src/v1/config/migrate.ts:157] [E: packages/core/src/v1/config/migrate.ts:158]
 
@@ -111,7 +111,7 @@ Model migration builds tiered cost array from V1 `cost` and optional `context_ov
 
 ## Dropped or Compatibility-only Fields
 
-Top-level V1 fields used for detection or partial compatibility but not emitted as same-name V2 fields include: `logLevel`、`server`、`disabled_providers`、`enabled_providers`、`small_model`、`layout`、`compaction.tail_turns`、`experimental.disable_paste_summary`、`experimental.batch_tool`、`experimental.openTelemetry`、`experimental.primary_tools`、`experimental.continue_loop_on_deny`。[I] Nested provider/model fields with no first-class V2 output include provider `id`、`whitelist`、`blacklist` and model `release_date`、`attachment`、`reasoning`、`temperature`、`interleaved`、`experimental`；provider/model `api` is only preserved in the AISDK-package branches described in provider migration。[I]
+Top-level V1 fields used for detection or partial compatibility but not emitted as same-name V2 fields include: `logLevel`、`server`、`disabled_providers`、`enabled_providers`、`small_model`、`layout`、`subagent_depth`、`compaction.tail_turns`、`experimental.disable_paste_summary`、`experimental.batch_tool`、`experimental.openTelemetry`、`experimental.primary_tools`、`experimental.continue_loop_on_deny`。[I] Nested provider/model fields with no first-class V2 output include provider `id`、`whitelist`、`blacklist` and model `release_date`、`attachment`、`reasoning`、`temperature`、`interleaved`、`experimental`；provider/model `api` is only preserved in the AISDK-package branches described in provider migration。[I]
 
 ## Sources
 

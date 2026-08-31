@@ -56,7 +56,7 @@ evidence: explicit
 
 plugin hook `experimental.chat.system.transform` 可以修改 system 数组。[E: packages/opencode/src/session/llm/request.ts:69] 若 hook 追加了多个 system fragment，且第一个 fragment 没变，源码会把追加内容合并成第二个 system fragment，减少 system message 数量。[E: packages/opencode/src/session/llm/request.ts:74]
 
-OpenAI OAuth 或 workflow 请求不会把 system prompt 放进 AI SDK `messages`，其中 OpenAI OAuth 把 instructions 放到 options 上。[E: packages/opencode/src/session/llm/request.ts:99] 普通请求会把 system 数组映射成 `role: "system"` message 后再接原始 `input.messages`。[E: packages/opencode/src/session/llm/request.ts:105]
+OpenAI OAuth 或 workflow 请求不会把 system prompt 放进 AI SDK `messages`；其中 OpenAI OAuth 另外把 instructions 放到 options 上。[E: packages/opencode/src/session/llm/request.ts:99][E: packages/opencode/src/session/llm/request.ts:101][E: packages/opencode/src/session/llm/request.ts:102] 普通请求会把 system 数组映射成 `role: "system"` message 后再接原始 `input.messages`。[E: packages/opencode/src/session/llm/request.ts:105]
 
 本节点也覆盖 request prep 的 header 拼装:`LLMRequestPrep.prepare` 在 opencode / 第三方两套 header 之外的公共层写入 `x-parent-session-id`,因此所有 provider 只要有 `parentSessionID` 都会带上。[E: packages/opencode/src/session/llm/request.ts:201]
 
@@ -72,7 +72,7 @@ skills prompt 先检查 agent permission：如果 `skill` permission disabled，
 
 | 场景 | 注入内容 | 证据 |
 | --- | --- | --- |
-| 未开启 experimental plan mode 且当前 agent 是 `plan` | `plan.txt` | [E: packages/opencode/src/session/reminders.ts:26] |
+| 未开启 experimental plan mode 且当前 agent 是 `plan` | `plan.txt` | [E: packages/opencode/src/session/reminders.ts:26][E: packages/opencode/src/session/reminders.ts:27] |
 | 未开启 experimental plan mode，历史 assistant 有 `plan` 且当前 agent 是 `build` | `build-switch.txt` | [E: packages/opencode/src/session/reminders.ts:37] |
 | 开启 experimental plan mode，从 `plan` 切到非 plan | `build-switch.txt`，若存在 plan file 还附加 plan path | [E: packages/opencode/src/session/reminders.ts:52][E: packages/opencode/src/session/reminders.ts:61] |
 | 开启 experimental plan mode，进入 `plan` 且上一条 assistant 不是 `plan` | `plan-mode.txt`，替换 `${planInfo}` | [E: packages/opencode/src/session/reminders.ts:70][E: packages/opencode/src/session/reminders.ts:81] |

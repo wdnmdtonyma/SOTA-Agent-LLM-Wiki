@@ -49,7 +49,7 @@ facade 再把 web handler 包成 local `fetch`，交给 generated Effect `OpenCo
 
 ## Session service
 
-`SessionV2.Service` 的 tag 是 `@opencode/v2/Session`，接口包含 `create`、`get`、`list`、`messages`、`message`、`context`、`events`、`history`、`switchAgent`、`switchModel`、`prompt`、`shell`、`skill`、`compact`、`wait`、`active`、`resume`、`interrupt` 和 `revert`。[E: packages/core/src/session.ts:120][E: packages/core/src/session.ts:182]
+`SessionV2.Service` 的 tag 是 `@opencode/v2/Session`，接口包含 `create`、`get`、`list`、`messages`、`message`、`context`、`events`、`history`、`switchAgent`、`switchModel`、`prompt`、`shell`、`skill`、`compact`、`wait`、`active`、`resume`、`interrupt` 和 `revert`。[E: packages/core/src/session.ts:113][E: packages/core/src/session.ts:182]
 
 `SessionV2.create` 接受或生成 `sessionID`，解析 `input.location.directory` 对应 project，写入 `ProjectTable`，构造 `SessionV1.SessionInfo`，并把 `SessionV1.Event.Created` 作为 event publish，`input.location` 是 publish options。[E: packages/core/src/session.ts:208][E: packages/core/src/session.ts:212][E: packages/core/src/session.ts:213][E: packages/core/src/session.ts:220][E: packages/core/src/session.ts:242]
 
@@ -71,7 +71,7 @@ facade 再把 web handler 包成 local `fetch`，交给 generated Effect `OpenCo
 
 `buildLocationServiceMap()` 用 `LayerMap.make` 按 `Location.Ref` 构造 layer，给每个 ref 追加 `Location.boundNode(ref)` replacement，compile 后用 `Layer.fresh` 和全局 hoisted layer provide。[E: packages/core/src/location-services.ts:84][E: packages/core/src/location-services.ts:91][E: packages/core/src/location-services.ts:98][E: packages/core/src/location-services.ts:106]
 
-`LocationServiceMap.Service.get(ref)` 只是把 `locations.get(ref)` unwrap 成 `Layer`，service tag 是 `@opencode/example/LocationServiceMap`。[E: packages/core/src/location-service-map.ts:7][E: packages/core/src/location-service-map.ts:12]
+`LocationServiceMap.Service.get(ref)` 只是把 `locations.get(ref)` unwrap 成 `Layer`，service tag 是 `@opencode/example/LocationServiceMap`。[E: packages/core/src/location-service-map.ts:10][E: packages/core/src/location-service-map.ts:12]
 
 ## Design notes
 

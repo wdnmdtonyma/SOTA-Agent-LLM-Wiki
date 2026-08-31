@@ -5,7 +5,7 @@ kind: flow
 tier: T0
 v: v2
 source: [packages/core/src/session/run-coordinator.ts, packages/core/src/session/execution/local.ts, packages/core/src/session/execution.ts, packages/core/src/session/runner/index.ts]
-symbols: [SessionExecutionLocal.layer, SessionRunCoordinator.make, SessionRunCoordinator.Service, SessionExecution.Service]
+symbols: [SessionExecutionLocal.layer, SessionRunCoordinator.make, SessionExecution.Service]
 related: [spine.v2-provider-turn, session-v2.location-wiring]
 evidence: explicit
 status: verified
@@ -43,7 +43,7 @@ flowchart TD
 
 4. `SessionExecutionLocal` 把 `resume` 映射为 `coordinator.run`,把 `wake` 映射为 `coordinator.wake`,把 `interrupt` 映射为 `coordinator.interrupt`。[E: packages/core/src/session/execution/local.ts:31][E: packages/core/src/session/execution/local.ts:33][E: packages/core/src/session/execution/local.ts:34][E: packages/core/src/session/execution/local.ts:35]
 
-5. `SessionRunCoordinator.make` 创建 scoped coordinator,内部 `active` 是 `Map<Key, Entry>`;一个 Entry 保存 `done` deferred、可选 owner fiber、`pendingWake` 与 `stopping`。[E: packages/core/src/session/run-coordinator.ts:24][E: packages/core/src/session/run-coordinator.ts:28][E: packages/core/src/session/run-coordinator.ts:17][E: packages/core/src/session/run-coordinator.ts:20][E: packages/core/src/session/run-coordinator.ts:21]
+5. `SessionRunCoordinator.make` 创建 scoped coordinator,内部 `active` 是 `Map<Key, Entry>`;一个 Entry 保存 `done` deferred、可选 owner fiber、`pendingWake` 与 `stopping`。[E: packages/core/src/session/run-coordinator.ts:24][E: packages/core/src/session/run-coordinator.ts:28][E: packages/core/src/session/run-coordinator.ts:17][E: packages/core/src/session/run-coordinator.ts:18][E: packages/core/src/session/run-coordinator.ts:19][E: packages/core/src/session/run-coordinator.ts:20][E: packages/core/src/session/run-coordinator.ts:21]
 
 6. `start` fork owner fiber 执行 `options.drain(key, force)`,并在 exit 时调用 `settle`。[E: packages/core/src/session/run-coordinator.ts:37][E: packages/core/src/session/run-coordinator.ts:39][E: packages/core/src/session/run-coordinator.ts:41][E: packages/core/src/session/run-coordinator.ts:42]
 

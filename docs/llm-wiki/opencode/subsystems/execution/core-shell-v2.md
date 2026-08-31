@@ -4,7 +4,7 @@ title: V2 Core Shell Helper
 kind: subsystem
 tier: T2
 v: v2
-source: [packages/core/src/shell.ts, packages/core/src/tool/bash.ts, packages/core/src/pty.ts, packages/opencode/src/tool/shell.ts]
+source: [packages/core/src/shell.ts, packages/core/src/tool/bash.ts, packages/core/src/pty.ts, packages/opencode/src/tool/shell.ts, packages/opencode/src/session/prompt.ts, packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts]
 symbols: [Shell.preferred, Shell.acceptable, Shell.args, Shell.list, Shell.killTree, Shell.login]
 related: [execution.shell-v1, execution.shell-v2, execution.pty, tool.bash]
 evidence: explicit
@@ -43,7 +43,7 @@ updated: 9f69463f1d
 
 `args(file, command, cwd)` 为 shell-specific invocation 生成参数：nu/fish 用 `-c command`，zsh/bash 用 login shell 并 source rc file、`cd -- "$1"` 后 eval command，cmd 用 `/c`，PowerShell 用 `-NoProfile -Command`，其它 POSIX shell 用 `-c`。[E: packages/core/src/shell.ts:166][E: packages/core/src/shell.ts:168][E: packages/core/src/shell.ts:169][E: packages/core/src/shell.ts:171][E: packages/core/src/shell.ts:176][E: packages/core/src/shell.ts:177][E: packages/core/src/shell.ts:183][E: packages/core/src/shell.ts:185][E: packages/core/src/shell.ts:190][E: packages/core/src/shell.ts:191][E: packages/core/src/shell.ts:197][E: packages/core/src/shell.ts:198][E: packages/core/src/shell.ts:199]
 
-`killTree(proc)` kills child process groups differently by platform：Windows runs `taskkill /pid <pid> /f /t`; POSIX tries `process.kill(-pid, "SIGTERM")`, waits 200ms, then `SIGKILL` if not exited, with fallback to `proc.kill` when group kill fails。[E: packages/core/src/shell.ts:31][E: packages/core/src/shell.ts:35][E: packages/core/src/shell.ts:37][E: packages/core/src/shell.ts:47][E: packages/core/src/shell.ts:49][E: packages/core/src/shell.ts:51][E: packages/core/src/shell.ts:53][E: packages/core/src/shell.ts:54][E: packages/core/src/shell.ts:57]
+`killTree(proc)` kills child process groups differently by platform：Windows runs `taskkill /pid <pid> /f /t`; POSIX tries `process.kill(-pid, "SIGTERM")`, waits 200ms, then `SIGKILL` if not exited, with fallback to `proc.kill` when group kill fails。当前 checkout 里没有 production caller，只是导出 helper。[E: packages/core/src/shell.ts:31][E: packages/core/src/shell.ts:35][E: packages/core/src/shell.ts:37][E: packages/core/src/shell.ts:47][E: packages/core/src/shell.ts:49][E: packages/core/src/shell.ts:51][E: packages/core/src/shell.ts:53][E: packages/core/src/shell.ts:54][E: packages/core/src/shell.ts:57] [I]
 
 ## Call Sites
 
@@ -53,10 +53,13 @@ V2 bash tool does not use `Shell.args`; it reads config entries, picks configure
 
 V1 `ShellTool` now imports `Shell` from `@opencode-ai/core/shell` and uses `Shell.acceptable(cfg.shell)`, `Shell.name(shell)`, and `Shell.ps(shell)` in its legacy tree-sitter/permission flow。[E: packages/opencode/src/tool/shell.ts:15][E: packages/opencode/src/tool/shell.ts:600][E: packages/opencode/src/tool/shell.ts:601][E: packages/opencode/src/tool/shell.ts:619]
 
+`Shell.args` 的 production caller 是 V1 `session/prompt.ts` 的 command execution：它用 `Shell.preferred(cfg.shell)` 选 shell，再用 `Shell.args(sh, input.command, cwd)` 生成 argv，而不是走 `ShellTool` 的 `cmd()` helper。[E: packages/opencode/src/session/prompt.ts:523][E: packages/opencode/src/session/prompt.ts:524] `Shell.list()` 则被 legacy instance PTY `GET /pty/shells` handler 调用。[E: packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts:61]
+
 ## Gotcha
 
 - `core/src/shell.ts` is not a service layer; it exports plain functions and a few resettable module caches.[E: packages/core/src/shell.ts:202][E: packages/core/src/shell.ts:210][E: packages/core/src/shell.ts:219]
 - `acceptable()` intentionally rejects fish and nu by metadata, while `preferred()` can still select user `SHELL` for interactive PTY behavior.[E: packages/core/src/shell.ts:16][E: packages/core/src/shell.ts:18][E: packages/core/src/shell.ts:205][E: packages/core/src/shell.ts:214]
+- `Shell.killTree` 已导出，但当前 checkout 没有 production caller。[I]
 - The V2 bash tool still documents TODO parity debt for tree-sitter approvals, BashArity, plugin `shell.env`, progress metadata and durable background jobs.[I][I][I][I][I][I]
 
 ## Sources
@@ -64,6 +67,8 @@ V1 `ShellTool` now imports `Shell` from `@opencode-ai/core/shell` and uses `Shel
 - packages/core/src/tool/bash.ts
 - packages/core/src/pty.ts
 - packages/opencode/src/tool/shell.ts
+- packages/opencode/src/session/prompt.ts
+- packages/opencode/src/server/routes/instance/httpapi/handlers/pty.ts
 
 ## 相关
 - [V1 shell 执行](shell-v1.md)

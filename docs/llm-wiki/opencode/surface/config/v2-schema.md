@@ -94,7 +94,7 @@ V2 policy effect 只有 `allow` 和 `deny`。[E: packages/core/src/policy.ts:8] 
 | `lsp` | boolean or record | built-in LSP switch or overrides。[E: packages/core/src/config/lsp.ts:18] | V1 same broad shape。 |
 | `lsp.<id>.command` | string array | language server command。[E: packages/core/src/config/lsp.ts:10] | V1 same field。 |
 | `lsp.<id>.extensions` | optional string array | language server file extensions。[E: packages/core/src/config/lsp.ts:11] | V1 same field。 |
-| `lsp.<id>.disabled` | optional boolean or disabled entry | disable server。[E: packages/core/src/config/lsp.ts:12] | V1 same field。 |
+| `lsp.<id>.disabled` | optional boolean or disabled entry | disable server。[E: packages/core/src/config/lsp.ts:5] [E: packages/core/src/config/lsp.ts:12] | V1 same field。 |
 | `lsp.<id>.env` | optional record string | language server env vars。[E: packages/core/src/config/lsp.ts:13] | V1 same field。 |
 | `lsp.<id>.initialization` | optional record unknown | initialization options。[E: packages/core/src/config/lsp.ts:14] | V1 same field。 |
 | `attachments.image.auto_resize` | optional boolean | image auto resize。[E: packages/core/src/config/attachments.ts:7] | V1 `attachment.image.auto_resize`。 |
@@ -106,6 +106,7 @@ V2 policy effect 只有 `allow` 和 `deny`。[E: packages/core/src/policy.ts:8] 
 | `mcp.timeout` | optional timeout object `{ startup?, request? }` | protocol-wide MCP timeout。[E: packages/core/src/config/mcp.ts:46] | V1 `experimental.mcp_timeout` migrates into `request`。[E: packages/core/src/v1/config/migrate.ts:135] |
 | `mcp.servers.<name>.type` | `local`/`remote` | explicit MCP server type。[E: packages/core/src/config/mcp.ts:43] | V1 `mcp.<name>.type`。 |
 | `mcp.servers.<name>.command` | string array | local MCP command。[E: packages/core/src/config/mcp.ts:17] | V1 same field。 |
+| `mcp.servers.<name>.cwd` | optional string | local MCP working directory。[E: packages/core/src/config/mcp.ts:18] | V1 `mcp.<name>.cwd`。 |
 | `mcp.servers.<name>.environment` | optional record string | local MCP env vars。[E: packages/core/src/config/mcp.ts:21] | V1 same field。 |
 | `mcp.servers.<name>.disabled` | optional boolean | inactive MCP server。[E: packages/core/src/config/mcp.ts:22] | typed V1 MCP server `enabled` is inverted when present；enabled-only stubs are filtered out before migration。[E: packages/core/src/v1/config/migrate.ts:130] [E: packages/core/src/v1/config/migrate.ts:139] |
 | `mcp.servers.<name>.timeout` | optional timeout object `{ startup?, request? }` | server-specific timeout。[E: packages/core/src/config/mcp.ts:23] | V1 positive int migrates into `request` for local and remote servers。[E: packages/core/src/v1/config/migrate.ts:147] [E: packages/core/src/v1/config/migrate.ts:161] |
@@ -144,6 +145,8 @@ V2 policy effect 只有 `allow` 和 `deny`。[E: packages/core/src/policy.ts:8] 
 | `providers.<name>.models.<id>.name` | optional string | model display name。[E: packages/core/src/config/provider.ts:49] | V1 model `name`。 |
 | `providers.<name>.models.<id>.api` | optional model API | upstream model/provider API override。[E: packages/core/src/config/provider.ts:50] | V1 model `id`/`provider`。 |
 | `providers.<name>.models.<id>.capabilities` | optional capabilities | tools/input/output capability metadata。[E: packages/core/src/config/provider.ts:51] | V1 `tool_call` and `modalities`。 |
+| `providers.<name>.models.<id>.request.headers` | optional record string | model-level request headers。[E: packages/core/src/config/provider.ts:8] [E: packages/core/src/config/provider.ts:52] | V1 model `headers`。[E: packages/core/src/v1/config/migrate.ts:233] |
+| `providers.<name>.models.<id>.request.body` | optional record unknown | model-level request body/options。[E: packages/core/src/config/provider.ts:9] [E: packages/core/src/config/provider.ts:52] | V1 model `options` via lowerer。[E: packages/core/src/v1/config/migrate.ts:234] |
 | `providers.<name>.models.<id>.request.variant` | optional string | request variant selector。[E: packages/core/src/config/provider.ts:54] | V2 schema field only; V1 `variants` record migrates to `variants[]` by mapping record entries。 [E: packages/core/src/v1/config/migrate.ts:236] [E: packages/core/src/v1/config/migrate.ts:238] |
 | `providers.<name>.models.<id>.variants[]` | optional array with `id` and request fields | model variants。[E: packages/core/src/config/provider.ts:57] [E: packages/core/src/config/provider.ts:58] [E: packages/core/src/config/provider.ts:59] | V1 variants record migrated to array。[E: packages/core/src/v1/config/migrate.ts:236] [E: packages/core/src/v1/config/migrate.ts:238] |
 | `providers.<name>.models.<id>.cost` | cost object or array | model pricing。[E: packages/core/src/config/provider.ts:60] | V1 cost object plus context tier。 |

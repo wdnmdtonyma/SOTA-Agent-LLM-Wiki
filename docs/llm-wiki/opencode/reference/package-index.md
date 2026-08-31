@@ -33,7 +33,7 @@ V1 当前活跑 CLI/package 是 `packages/opencode`，它的 package 名是 `ope
 
 V2 新内核 package 是 `packages/core`，package 名为 `@opencode-ai/core`，bin 也可导出 `opencode` [E: packages/core/package.json:4] [E: packages/core/package.json:15]。`packages/core` 依赖 `@opencode-ai/llm`、Effect platform、SQLite/Drizzle、provider SDKs 和 filesystem/runtime utilities [E: packages/core/package.json:63]，对应 `@opencode/v2` 的 durable session、事件溯源、location-scoped runner 和 embedded public API 主线 [I]。
 
-`packages/cli` 是独立的新 CLI host，bin 名是 `lildax`，依赖 `@opencode-ai/core`、`@opencode-ai/server`、`@opencode-ai/tui` 和 `@opencode-ai/sdk` [E: packages/cli/package.json:3] [E: packages/cli/package.json:18]。这说明 `packages/cli` 不是 `packages/opencode/src/cli` 的同名替换文件夹，而是和旧 yargs CLI 并存的新 host [I]。
+`packages/cli` 是独立的新 CLI host，bin 名是 `lildax`，依赖 `@opencode-ai/core`、`@opencode-ai/server`、`@opencode-ai/tui` 和 `@opencode-ai/sdk` [E: packages/cli/package.json:3] [E: packages/cli/package.json:8] [E: packages/cli/package.json:18]。这说明 `packages/cli` 不是 `packages/opencode/src/cli` 的同名替换文件夹，而是和旧 yargs CLI 并存的新 host [I]。
 
 ## Workspace 入口
 
@@ -82,7 +82,7 @@ V2 新内核 package 是 `packages/core`，package 名为 `@opencode-ai/core`，
 
 ## TUI 迁移动机
 
-`specs/tui-package.md` 的目标是把 canonical TUI 从旧 `packages/opencode/src/cli/cmd/tui` 移到 `packages/tui`，同时让 legacy CLI 和 new CLI 继续使用同一套 implementation [E: specs/tui-package.md:3] [E: specs/tui-package.md:14]。同一 spec 规定目标 dependency graph 是 `packages/opencode -> @opencode-ai/tui` 和 `packages/cli -> @opencode-ai/tui`，而 `@opencode-ai/tui` 再通过 SDK 边界访问 OpenCode domain [E: specs/tui-package.md:16] [E: specs/tui-package.md:31]。
+`specs/tui-package.md` 的目标是把 canonical TUI 从旧 `packages/opencode/src/cli/cmd/tui` 移到 `packages/tui`，同时让 legacy CLI 和 new CLI 继续使用同一套 implementation [E: specs/tui-package.md:5] [E: specs/tui-package.md:7] [E: specs/tui-package.md:12]。同一 spec 规定目标 dependency graph 是 `packages/opencode -> @opencode-ai/tui` 和 `packages/cli -> @opencode-ai/tui`，而 `@opencode-ai/tui` 再通过 SDK 边界访问 OpenCode domain [E: specs/tui-package.md:18] [E: specs/tui-package.md:20] [E: specs/tui-package.md:29]。
 
 ## Sources
 

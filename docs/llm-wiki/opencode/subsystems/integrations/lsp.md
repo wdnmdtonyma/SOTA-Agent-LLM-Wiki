@@ -12,6 +12,7 @@ source:
   - packages/opencode/src/lsp/server.ts
   - packages/opencode/src/tool/lsp.ts
   - packages/opencode/src/tool/registry.ts
+  - packages/opencode/src/project/instance-context.ts
   - packages/core/src/v1/config/lsp.ts
 symbols:
   - LSP.Service
@@ -49,7 +50,8 @@ V1 `lsp` tool 在执行具体 LSP operation 前会调用 `lsp.touchFile(file, "d
 | `packages/opencode/src/lsp/client.ts` | 单个 LSP process 的 JSON-RPC protocol wrapper。 |
 | `packages/opencode/src/lsp/server.ts` | built-in language server catalog 和 root detection helper。 |
 | `packages/opencode/src/tool/lsp.ts` | 模型可调用的实验性 `lsp` tool。 |
-| `packages/opencode/src/tool/registry.ts` | `experimentalLspTool` gating 和 `LSP.init()` 触发点。 |
+| `packages/opencode/src/tool/registry.ts` | `experimentalLspTool` gating：把已 init 的 `lsp` tool 加入模型可见 builtin 列表。 |
+| `packages/opencode/src/project/instance-context.ts` | `containsPath`：directory 或 worktree 边界。 |
 | `packages/core/src/v1/config/lsp.ts` | V1 LSP config schema 和 builtin server id list。 |
 
 ## 数据模型
@@ -72,7 +74,7 @@ V1 `lsp` tool 在执行具体 LSP operation 前会调用 `lsp.touchFile(file, "d
 
 ### Client pool
 
-1. `getClients(file)` 首先拒绝 instance directory 之外的路径。[E: packages/opencode/src/lsp/lsp.ts:210]
+1. `getClients(file)` 首先调用 `containsPath`：路径必须落在 instance `directory` 或 `worktree` 内（`worktree === "/"` 时只认 directory）；否则返回空 client 列表。[E: packages/opencode/src/lsp/lsp.ts:210] [E: packages/opencode/src/project/instance-context.ts:18] [E: packages/opencode/src/project/instance-context.ts:19] [E: packages/opencode/src/project/instance-context.ts:22]
 2. 文件扩展名来自 `path.parse(file).ext || file`，所以无扩展名文件会把完整路径作为匹配 fallback。[E: packages/opencode/src/lsp/lsp.ts:213]
 3. service 只考虑 extension 匹配的 server，并用 server root 函数计算 root。[E: packages/opencode/src/lsp/lsp.ts:255] [E: packages/opencode/src/lsp/lsp.ts:257]
 4. pool 复用条件是 `client.root === root && client.serverID === server.id`；命中后直接返回 existing client。[E: packages/opencode/src/lsp/lsp.ts:261]
@@ -111,7 +113,7 @@ diagnostics 同时支持 push 和 pull，是为了适配不同 LSP server 能力
 - “40 内建 server”是陈旧批次提示；当前 `builtinServerIds` 源码列表是 38 个条目。[E: packages/core/src/v1/config/lsp.ts:22] [E: packages/core/src/v1/config/lsp.ts:60]
 - custom LSP server 必须声明 extensions；schema transform 会拒绝没有 extensions 的 custom command。[E: packages/core/src/v1/config/lsp.ts:71]
 - `ty` 和 `pyright` 在实验开关下互斥，不会同时从 built-in server map 保留。[E: packages/opencode/src/lsp/lsp.ts:98] [I]
-- `getClients` 只接受 instance directory 内的文件，跨目录文件不会触发 LSP。[E: packages/opencode/src/lsp/lsp.ts:210]
+- `getClients` 用 `containsPath` 限制范围：instance directory 或 worktree 内才启动/复用 client，不是“仅 directory”。[E: packages/opencode/src/lsp/lsp.ts:210] [E: packages/opencode/src/project/instance-context.ts:18]
 - `lsp` tool 的 permission 粒度是全局 `*`，不是按文件路径。[E: packages/opencode/src/tool/lsp.ts:57]
 
 ## Sources
@@ -121,6 +123,7 @@ diagnostics 同时支持 push 和 pull，是为了适配不同 LSP server 能力
 - packages/opencode/src/lsp/server.ts
 - packages/opencode/src/tool/lsp.ts
 - packages/opencode/src/tool/registry.ts
+- packages/opencode/src/project/instance-context.ts
 - packages/core/src/v1/config/lsp.ts
 
 ## 相关

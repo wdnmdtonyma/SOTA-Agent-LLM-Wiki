@@ -35,7 +35,7 @@ flowchart TD
 
 ## 端到端步骤
 
-1. `CONTEXT.md` 把 System Context 定义为呈现给模型的结构化 contextual facts 集合;Context Snapshot 是 model-hidden JSON state,Context Epoch 是 initially rendered System Context 保持 immutable 的时期。[E: CONTEXT.md:8][E: CONTEXT.md:8][E: CONTEXT.md:27][E: CONTEXT.md:27][E: CONTEXT.md:34][E: CONTEXT.md:34]
+1. `CONTEXT.md` 把 System Context 定义为呈现给模型的结构化 contextual facts 集合;Context Snapshot 是 model-hidden JSON state,Context Epoch 是 initially rendered System Context 保持 immutable 的时期。[E: CONTEXT.md:8][E: CONTEXT.md:27][E: CONTEXT.md:34]
 
 2. `SystemContext.Source` 定义每个 source 的 `key/codec/load/baseline/update/removed`;`SystemContext` 本身是 opaque carrier,内部保存 packed sources。[E: packages/core/src/system-context/index.ts:32][E: packages/core/src/system-context/index.ts:32][E: packages/core/src/system-context/index.ts:33][E: packages/core/src/system-context/index.ts:38][E: packages/core/src/system-context/index.ts:44][E: packages/core/src/system-context/index.ts:45]
 

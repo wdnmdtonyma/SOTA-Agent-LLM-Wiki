@@ -7,7 +7,6 @@ v: v1
 source:
   - packages/opencode/src/snapshot/index.ts
   - packages/opencode/src/session/revert.ts
-  - packages/core/src/file-mutation.ts
 symbols:
   - Snapshot.Service
   - Snapshot.track
@@ -66,16 +65,15 @@ shadow git 的设计目标是复用 git tree/index/diff 能力，又不污染用
 
 ## Gotcha
 
-- snapshot `hash` 是 shadow git tree hash，不是 commit hash。
-- ignored file removals 会从 user-facing patch/diff 里隐藏。
-- untracked 大文件可能被 exclude，不保证 snapshot 捕捉所有大文件内容。
-- V2 `FileMutation` 暴露的是 create/write/writeTextPreservingBom/writeIfUnchanged/remove primitives，没有 snapshot/undo primitive；不要把 V1 snapshot 视为 V2 core 已接通 [E: packages/core/src/file-mutation.ts:54] [E: packages/core/src/file-mutation.ts:56] [E: packages/core/src/file-mutation.ts:57] [E: packages/core/src/file-mutation.ts:59] [E: packages/core/src/file-mutation.ts:61] [E: packages/core/src/file-mutation.ts:64] [I]。
+- snapshot `hash` 是 shadow git `write-tree` 的 tree hash，不是 commit hash [E: packages/opencode/src/snapshot/index.ts:341] [E: packages/opencode/src/snapshot/index.ts:342]。
+- ignored file removals 会从 user-facing patch/diff 里隐藏 [E: packages/opencode/src/snapshot/index.ts:370] [E: packages/opencode/src/snapshot/index.ts:375]。
+- untracked 大文件可能被 exclude，不保证 snapshot 捕捉所有大文件内容 [E: packages/opencode/src/snapshot/index.ts:24] [E: packages/opencode/src/snapshot/index.ts:294]。
+- 本节点只覆盖 V1 `packages/opencode/src/snapshot/index.ts` 与 V1 `SessionRevert`。V2 另有 Location-scoped Snapshot service（`packages/core/src/snapshot.ts`，已进 `locationServices`），不在本节点范围 [I]。
 
 ## Sources
 
 - packages/opencode/src/snapshot/index.ts
 - packages/opencode/src/session/revert.ts
-- packages/core/src/file-mutation.ts
 
 ## 相关
 

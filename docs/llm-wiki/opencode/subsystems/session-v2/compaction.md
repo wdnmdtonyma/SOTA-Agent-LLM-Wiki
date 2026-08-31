@@ -87,7 +87,7 @@ V2 session spec 说明 completed compaction 保留 durable full transcript,但�
 
 ## 设计动机与权衡
 
-- V2 spec 定义两路:request estimate 超预算时 pre-turn compaction,provider context overflow 且 durable assistant/tool activity 尚未发生时 overflow-triggered compaction;源码 gate 对应到 `!publisher.hasAssistantStarted()`。[E: specs/v2/session.md:109][E: specs/v2/session.md:117][E: packages/core/src/session/runner/llm.ts:244][E: packages/core/src/session/runner/llm.ts:291]
+- V2 spec 定义两路:request estimate 超预算时 pre-turn compaction,provider context overflow 且 durable assistant/tool activity 尚未发生时 overflow-triggered compaction;源码 gate 对应到 `!publisher.hasAssistantStarted()`。[E: specs/v2/session.md:113][E: specs/v2/session.md:121][E: packages/core/src/session/runner/llm.ts:244][E: packages/core/src/session/runner/llm.ts:291]
 - recovery 不循环:同一 logical provider turn 的 overflow recovery 只有一次 physical retry;源码实现为 retry path 不传 `recoverOverflow`,且第二次 `ContinueAfterOverflowCompaction` transition 会 die。[E: specs/v2/session.md:117][E: packages/core/src/session/runner/llm.ts:290][E: packages/core/src/session/runner/llm.ts:293][E: packages/core/src/session/runner/llm.ts:363][E: packages/core/src/session/runner/llm.ts:368]
 - provider-native assistant/reasoning/tool messages 不跨 compaction boundary 保留,避免 earlier prefix 改变后触发 signature 或 encrypted-reasoning failure。[E: specs/v2/session.md:115]
 

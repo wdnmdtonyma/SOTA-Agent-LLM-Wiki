@@ -54,7 +54,7 @@ updated: 9f69463f1d
 
 V1 使用 `web-tree-sitter`，懒加载 `tree-sitter-bash` 与 `tree-sitter-powershell` wasm，并构造两个 Parser [E: packages/opencode/src/tool/shell.ts:312] [E: packages/opencode/src/tool/shell.ts:322] [E: packages/opencode/src/tool/shell.ts:325] [E: packages/opencode/src/tool/shell.ts:331] [E: packages/opencode/src/tool/shell.ts:333]。每次执行前，`parse(params.command, ps)` 会选 bash 或 PowerShell parser 解析命令 [E: packages/opencode/src/tool/shell.ts:257] [E: packages/opencode/src/tool/shell.ts:258]。
 
-`collect` 遍历 AST 中的 `command` node，取出命令 tokens；对 `rm/cp/mv/mkdir/touch/chmod/chown/cat`、PowerShell file cmdlets 和 cmd.exe file commands，它解析 path args，resolve 到实际路径，并把 instance 外部目录加入 `scan.dirs` [E: packages/opencode/src/tool/shell.ts:392] [E: packages/opencode/src/tool/shell.ts:398] [E: packages/opencode/src/tool/shell.ts:403]。非 `cd`/`pushd` 等目录切换命令会把原始 command source 加入 `scan.patterns`，并把 `BashArity.prefix(tokens).join(" ") + " *"` 加入 `scan.always` [E: packages/opencode/src/tool/shell.ts:407] [E: packages/opencode/src/tool/shell.ts:408] [E: packages/opencode/src/tool/shell.ts:409]。
+`collect` 遍历 AST 中的 `command` node，取出命令 tokens。`FILES` 集合包含 `cd/chdir/popd/pushd` 等目录切换命令以及 `rm/cp/mv/mkdir/touch/chmod/chown/cat` 和 PowerShell file cmdlets；cmd.exe 另有 `CMD_FILES`。命中后解析 path args，resolve 到实际路径，并把 instance 外部目录加入 `scan.dirs` [E: packages/opencode/src/tool/shell.ts:28] [E: packages/opencode/src/tool/shell.ts:29] [E: packages/opencode/src/tool/shell.ts:51] [E: packages/opencode/src/tool/shell.ts:392] [E: packages/opencode/src/tool/shell.ts:397] [E: packages/opencode/src/tool/shell.ts:398] [E: packages/opencode/src/tool/shell.ts:403]。非 `CWD` 集合中的命令才会把原始 command source 加入 `scan.patterns`，并把 `BashArity.prefix(tokens).join(" ") + " *"` 加入 `scan.always` [E: packages/opencode/src/tool/shell.ts:407] [E: packages/opencode/src/tool/shell.ts:408] [E: packages/opencode/src/tool/shell.ts:409]。
 
 `ask` 先对 `scan.dirs` 生成 `external_directory` permission，patterns 和 always 都是目录 glob；再对 `scan.patterns` 生成 `"bash"` permission，patterns 是具体 command source，always 是 arity prefix pattern [E: packages/opencode/src/tool/shell.ts:270] [E: packages/opencode/src/tool/shell.ts:271] [E: packages/opencode/src/tool/shell.ts:273] [E: packages/opencode/src/tool/shell.ts:283] [E: packages/opencode/src/tool/shell.ts:284] [E: packages/opencode/src/tool/shell.ts:286]。`BashArity.prefix` 的算法是从最长 token prefix 向短 prefix查 `ARITY`，命中后返回指定长度，否则返回第一个 token [E: packages/opencode/src/permission/arity.ts:2] [E: packages/opencode/src/permission/arity.ts:4] [E: packages/opencode/src/permission/arity.ts:5] [E: packages/opencode/src/permission/arity.ts:7] [E: packages/opencode/src/permission/arity.ts:8]。
 
@@ -76,7 +76,7 @@ V1 shell 有两层输出控制。第一层是 live metadata preview：`preview` 
 
 ## 设计动机与权衡
 
-V1 shell 的审批不是 shell sandbox。它通过 AST 尽量减少用户要批准的 command pattern，并用 `external_directory` 捕获明显越界的 file command/path argument；真正执行仍是 host shell 和 host user 权限 [I]。V2 spec 对 bash 明确说 shell runs with host user's filesystem/process/network authority，这个 caveat 同样适合理解 V1 执行层 [E: specs/v2/session.md:204]。
+V1 shell 的审批不是 shell sandbox。它通过 AST 尽量减少用户要批准的 command pattern，并用 `external_directory` 捕获明显越界的 file command/path argument [E: packages/opencode/src/tool/shell.ts:270] [E: packages/opencode/src/tool/shell.ts:283]；真正执行仍是 `ChildProcessSpawner.spawn` 启动的 host shell / host user 权限 [E: packages/opencode/src/tool/shell.ts:303] [E: packages/opencode/src/tool/shell.ts:484] [I]。
 
 ## Gotcha
 
@@ -93,7 +93,6 @@ V1 shell 的审批不是 shell sandbox。它通过 AST 尽量减少用户要批�
 - packages/opencode/src/tool/shell/prompt.ts
 - packages/opencode/src/tool/shell/id.ts
 - packages/opencode/src/tool/registry.ts
-- specs/v2/session.md
 
 ## 相关
 

@@ -16,6 +16,8 @@ source:
   - packages/core/src/tool/apply-patch.ts
   - packages/core/src/agent.ts
   - packages/schema/src/agent.ts
+  - specs/v2/tools.md
+  - CONTEXT.md
 symbols:
   - PermissionV2.Service
   - PermissionV2.assert
@@ -90,7 +92,7 @@ V2 session spec 还要求 local tool authorization 保留发起 tool call 时的
 
 ## Gotcha
 
-- `ask` 与 `assert` 都会求值，但 `ask` 不等待用户回复；`assert` 会阻塞到 deferred 被 reply。
+- `ask` 与 `assert` 都会求值，但 `ask` 不等待用户回复；`assert` 会阻塞到 deferred 被 reply [E: packages/core/src/permission.ts:190] [E: packages/core/src/permission.ts:194] [E: packages/core/src/permission.ts:197] [E: packages/core/src/permission.ts:208]。当前 V2 built-in tools（bash/edit/write/apply_patch/read 等）走 `permission.assert`；`PermissionV2.ask` 已实现并有测试，但没有 production tool caller [I]。
 - configured deny 的 typed error 名为 `PermissionV2.BlockedError`；带 feedback 的 reject 是 `CorrectedError`，plain reject 的 `DeclinedError` 在 `assert` 内转成 defect。
 - saved approval 只追加 allow rules，不能覆盖 configured agent deny，因为 configured deny 在合并 saved rules 之前就短路。
 - `write` 与 `apply_patch` 的 `withPermission` tag 是 `"edit"`，实际 `assert.action` 也是 `"edit"`；不要把 wire name `"write"` 或 `"apply_patch"` 当作 mutation policy action。

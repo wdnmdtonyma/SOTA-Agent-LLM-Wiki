@@ -158,3 +158,88 @@ updated: 9f69463f1d
 - Google usage normalizer 把 `thoughtsTokenCount` 加进 `outputTokens`，但 trial limiter / Stats `buildTokenCost` 仍做 `outputTokens + reasoningTokens`。对 Google 行可能二次计入 thoughts；是否应改契约未确认。[E: packages/console/app/src/routes/zen/util/provider/google.ts:68][E: packages/console/app/src/routes/zen/util/trialLimiter.ts:31][E: packages/stats/core/src/domain/home.ts:735][U]
 - `providerUsage.test.ts` 仍期待 `candidates=3, thoughts=2` → `outputTokens=3`，实现返回 5。源码/测试张力，不是已验证通过行为。[E: packages/console/app/test/providerUsage.test.ts:27][E: packages/console/app/src/routes/zen/util/provider/google.ts:68][U]
 
+## verify-app-compatibility
+
+# uncertainty-verify-app-compatibility
+
+- node: `clients.app-compatibility`
+- SHA: `9f69463f1d`
+
+## current source turn order
+
+- claim: current session source turn order is not resorted by timestamp or durable sequence; App layer does not prove that input order equals aggregate seq.
+- status: still `[U]`
+- inspected: `packages/app/src/pages/session/timeline/projection.ts:32-40` feeds `input.sessionMessages()` into `constructSessionMessageRows`, which walks source order (`rows.ts:47`).
+
+## current PTY connect-token
+
+- claim: active `connectToken()` only calls the legacy endpoint on protocol V1; current path returns `undefined` ticket. Source cannot prove ticketless current handshake succeeds.
+- status: still `[U]`
+- inspected:
+  - `packages/app/src/components/terminal.tsx:560-586` V1-only live call; current branch is commented out
+  - `packages/app/src/components/terminal.tsx:611-627` continues WebSocket open with optional ticket
+  - `packages/app/V1_API_MIGRATION.md:193` checklist marks connect-token migrated
+
+## verify-console
+
+# uncertainty-verify-console
+
+- node: `clients.console`
+- SHA: `9f69463f1d`
+
+## Google thoughts double-count
+
+- claim: Google normalizer already folds `thoughtsTokenCount` into `outputTokens`, but trial limiter and Stats `buildTokenCost` still add `outputTokens + reasoningTokens`.
+- status: still `[U]`
+- inspected:
+  - `packages/console/app/src/routes/zen/util/provider/google.ts:68` `outputTokens: outputTokens + reasoningTokens`
+  - `packages/console/app/src/routes/zen/util/trialLimiter.ts:31-34` sums `outputTokens + (reasoningTokens ?? 0)`
+  - `packages/stats/core/src/domain/home.ts:735` `item.outputTokens + item.reasoningTokens`
+- unresolved: whether that double-count is intended contract.
+
+## providerUsage test vs implementation
+
+- claim: test expects Google `candidates=3, thoughts=2` → `outputTokens=3`; implementation returns 5.
+- status: still `[U]`
+- inspected:
+  - `packages/console/app/test/providerUsage.test.ts:27-29`
+  - `packages/console/app/src/routes/zen/util/provider/google.ts:68`
+- unresolved: source/test tension, not verified passing behavior.
+
+## verify-plugin-system
+
+# uncertainty-verify-plugin-system
+
+- node: `server.plugin-system`
+- SHA: `9f69463f1d`
+- claim: 目标源码中没有 `packages/core/src/plugin/boot.ts`；旧 `PluginBoot` 是否有一对一命名 replacement 仍不确定。
+- status: still `[U]`
+- inspected: `packages/core/src/plugin/` has `internal.ts` (`PluginInternal.boot`) but no `boot.ts`. Current built-in boot is `PluginInternal`, not a named `PluginBoot` successor.
+
+## verify-projector
+
+# uncertainty-verify-projector
+
+- node: `session-v2.projector`
+- SHA: `9f69463f1d`
+
+## SessionContextEpoch.reset has no production caller
+
+`SessionContextEpoch.reset` is exported at `packages/core/src/session/context-epoch.ts:111` and deletes the `session_context_epoch` row.
+
+Production packages have no caller. `SessionProjector` `Moved` (`packages/core/src/session/projector.ts:242`) only updates `SessionTable` directory/path/workspace_id/time_updated. `RevertEvent.Committed` (`packages/core/src/session/projector.ts:413`) deletes later `session_message` rows and does not call `reset`.
+
+`CONTEXT.md:118` still says moving a Session clears its active Context Epoch. Whether move/revert should reset epoch is unprovable from current call sites.
+
+Already marked `[U]` in `subsystems/session-v2/projector.md`.
+
+## verify-v1-hooks
+
+# uncertainty-verify-v1-hooks
+
+- node: `plugin-api.v1-hooks`
+- SHA: `9f69463f1d`
+- claim: `permission.ask` is declared on V1 `Hooks`, but no `plugin.trigger("permission.ask", ...)` call site exists in V1 source.
+- status: still `[U]`
+- inspected: `rg 'trigger\(["'\'']permission\.ask' opencode/packages` returned no matches. `packages/plugin/src/index.ts:261` still declares the hook. Nearby `permission.ask({` hits are the permission service, not the plugin hook.
+

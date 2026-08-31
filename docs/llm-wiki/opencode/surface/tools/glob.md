@@ -9,6 +9,9 @@ updated: 9f69463f1d
 source:
   - packages/opencode/src/tool/glob.ts
   - packages/core/src/tool/glob.ts
+symbols:
+  - GlobTool
+evidence: explicit
 related:
   - persistence.filesystem-search
   - ref.tool-catalog
@@ -28,7 +31,7 @@ related:
 | 维度 | V1 | V2 |
 | --- | --- | --- |
 | wire name | `glob`，由 `Tool.define("glob", ...)` 注册。[E: packages/opencode/src/tool/glob.ts:18] | `glob`，由 `export const name = "glob"` 暴露。[E: packages/core/src/tool/glob.ts:16] |
-| provider 可见性 | V1 builtins 包含 `GlobTool`。[E: packages/opencode/src/tool/registry.ts:237] | V2 builtins 合入 `GlobTool.node`。[E: packages/core/src/tool/builtins.ts:38] |
+| provider 可见性 | V1 builtins 包含 `GlobTool`。[E: packages/opencode/src/tool/registry.ts:236] | V2 builtins 合入 `GlobTool.node`。[E: packages/core/src/tool/builtins.ts:38] |
 | permission key | V1 使用 `ctx.ask({ permission: "glob" })`。[E: packages/opencode/src/tool/glob.ts:28] | V2 使用 `permission.assert({ action: "glob" })`。[E: packages/core/src/tool/glob.ts:62][E: packages/core/src/tool/glob.ts:63] |
 | search backend | V1 调用 `Ripgrep.glob`。[E: packages/opencode/src/tool/glob.ts:50] | V2 注入 `Ripgrep.Service` 并调用 `ripgrep.glob`。[E: packages/core/src/tool/glob.ts:41][E: packages/core/src/tool/glob.ts:76] |
 
@@ -106,7 +109,7 @@ V2 使用 action `"glob"`，resources 是 `[input.pattern]`，save 是 `["*"]`�
 ## 8 设计动机·edge·历史
 
 - V1 的 100 条默认是 prompt-era 输出保护：避免 glob 把大型 repo 的完整文件列表塞进模型上下文。[I]
-- V2 把工具返回值 typed 化，符合 V2 tools spec 的 materialize/settle 分层：工具定义可以返回 domain output，settlement 再统一处理 projection 和 output bounding。[E: specs/v2/tools.md:135][E: specs/v2/tools.md:153]
+- V2 把工具返回值 typed 化，符合 V2 tools spec 的 materialize/settle 分层：工具定义可以返回 domain output，settlement 再统一处理 projection 和 output bounding。[E: specs/v2/tools.md:144][E: specs/v2/tools.md:145][E: specs/v2/tools.md:155][E: specs/v2/tools.md:157]
 - 当 `pattern` 本身错误或过宽时，权限系统只知道 action/resource，不会证明 pattern 的语义安全；这是 glob/grep 这类 search tool 的共同边界。[I]
 
 ## Sources

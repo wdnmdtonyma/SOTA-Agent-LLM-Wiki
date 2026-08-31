@@ -74,7 +74,7 @@ V2 Write 是 Location-scoped file-write leaf。description 字段明确：relati
 
 ### 4 输出 & 大小/截断限制
 
-V2 Write structured output 是 `{ operation: "write", target, resource, existed }`。[E: packages/core/src/tool/write.ts:31][E: packages/core/src/tool/write.ts:32][E: packages/core/src/tool/write.ts:33][E: packages/core/src/tool/write.ts:34] `toModelOutput` 输出 `Wrote file successfully` 或 `Created file successfully`，取决于 `existed`。[E: packages/core/src/tool/write.ts:38][E: packages/core/src/tool/write.ts:39] V2 registry settlement 对模型可见输出再走 `ToolOutputStore.bound`。[E: packages/core/src/tool/registry.ts:75][E: packages/core/src/tool/registry.ts:76]
+V2 Write structured output 是 `{ operation: "write", target, resource, existed }`。[E: packages/core/src/tool/write.ts:31][E: packages/core/src/tool/write.ts:32][E: packages/core/src/tool/write.ts:33][E: packages/core/src/tool/write.ts:34] `toModelOutput` 输出 `Wrote file successfully: <resource>` 或 `Created file successfully: <resource>`，取决于 `existed`。[E: packages/core/src/tool/write.ts:38][E: packages/core/src/tool/write.ts:39] V2 registry settlement 对模型可见输出再走 `ToolOutputStore.bound`。[E: packages/core/src/tool/registry.ts:75][E: packages/core/src/tool/registry.ts:76]
 
 ### 5 权限
 

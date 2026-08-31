@@ -14,6 +14,9 @@ source:
   - packages/core/src/pty.ts
   - packages/core/src/shell.ts
   - packages/core/src/repository.ts
+  - packages/opencode/src/config/config.ts
+  - packages/opencode/src/ide/index.ts
+  - packages/opencode/src/lsp/server.ts
 status: verified
 symbols:
   - Flag
@@ -130,11 +133,13 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `OTEL_EXPORTER_OTLP_HEADERS` | OTLP headers flag。 | [E: packages/core/src/flag/flag.ts:17] |
 | `OTEL_RESOURCE_ATTRIBUTES` | OTLP resource attributes。 | [E: packages/core/src/observability/otlp.ts:21] |
 | `OPENCODE_AUTH_CONTENT` | V1 auth JSON injection。 | [E: packages/opencode/src/auth/index.ts:59][E: packages/opencode/src/auth/index.ts:61] |
+| `OPENCODE_CONSOLE_TOKEN` | V1 config loader writes console account token into process env。 | [E: packages/opencode/src/config/config.ts:505] |
 | `OPENCODE_DISABLE_SHARE` | disables share-next when `true` or `1`。 | [E: packages/opencode/src/share/share-next.ts:23] |
 | `OPENCODE_REPO_CLONE_GITHUB_BASE_URL` | V2 core repository clone URL base override；V1 util repository 也读取同名 override。 | [E: packages/core/src/repository.ts:175][E: packages/opencode/src/util/repository.ts:100] |
 | `OPENCODE_ACP_PROFILE` | ACP profiling flag。 | [E: packages/opencode/src/acp/profile.ts:1] |
 | `OPENCODE_TERMINAL` | spawned terminal marker。 | [E: packages/core/src/pty.ts:174] |
 | `OPENCODE_CALLER` | VS Code caller detection。 | [E: packages/opencode/src/ide/index.ts:33] |
+| `GIT_ASKPASS` | VS Code IDE detection via askpass path。 | [E: packages/opencode/src/ide/index.ts:24] |
 | `OPENCODE_WEBSEARCH_PROVIDER` | V2 WebSearch tool 与 V1 websearch tool 都读取同名 provider override。 | [E: packages/core/src/tool/websearch.ts:76][E: packages/opencode/src/tool/websearch.ts:31] |
 | `OPENCODE_LIBC` | watcher native library selection。 | [E: packages/core/src/filesystem/watcher.ts:20][E: packages/core/src/filesystem/watcher.ts:28] |
 | `COMSPEC` | V2 Bash tool 与 core shell helper 的 Windows shell fallback。 | [E: packages/core/src/tool/bash.ts:49][E: packages/core/src/shell.ts:101] |
@@ -144,6 +149,7 @@ V1 runtime flags 也有独立的 `bool`、`positiveInteger` 与 `enabledByExperi
 | `TERM`, `TERM_PROGRAM`, `TERM_PROGRAM_VERSION` | V1 yargs debug command terminal metadata。 | [E: packages/opencode/src/cli/cmd/debug/index.ts:56][E: packages/opencode/src/cli/cmd/debug/index.ts:57][E: packages/opencode/src/cli/cmd/debug/index.ts:59] |
 | `DOTNET_CLI_HOME` | LSP server environment fallback。 | [E: packages/opencode/src/lsp/server.ts:779] |
 | `VSCODE_EXTENSIONS` | LSP server VS Code extension path input。 | [E: packages/opencode/src/lsp/server.ts:789] |
+| `VIRTUAL_ENV` | Python LSP venv discovery。 | [E: packages/opencode/src/lsp/server.ts:445] |
 | `http_proxy` / `https_proxy` / `all_proxy` / `no_proxy` | V1 proxy helper reads lowercase and uppercase forms through `env()` helper。 | [E: packages/opencode/src/util/proxy-env.ts:68][E: packages/opencode/src/util/proxy-env.ts:69] |
 
 ## Provider and integration env
@@ -160,6 +166,7 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path. | [E: packages/opencode/src/provider/provider.ts:316] |
 | `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path. | [E: packages/opencode/src/provider/provider.ts:331] |
 | `AZURE_RESOURCE_NAME` | Azure resource name. | [E: packages/core/src/plugin/provider/azure.ts:23] |
+| `AZURE_CONFIG_DIR` | Azure CLI profile directory override。 | [E: packages/opencode/src/plugin/azure.ts:56] |
 | `AZURE_RESOURCE_GROUP` | V1 Azure CLI deployment discovery 的 resource group。 | [E: packages/opencode/src/plugin/azure.ts:209] |
 | `AZURE_COGNITIVE_SERVICES_RESOURCE_NAME` | Azure Cognitive Services resource. | [E: packages/core/src/plugin/provider/azure.ts:63] |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:53][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:50] |
@@ -220,6 +227,9 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 - `packages/core/src/shell.ts`
 - `packages/core/src/repository.ts`
 - `packages/opencode/src/cli/cmd/github.handler.ts`
+- `packages/opencode/src/config/config.ts`
+- `packages/opencode/src/ide/index.ts`
+- `packages/opencode/src/lsp/server.ts`
 
 ## 相关
 

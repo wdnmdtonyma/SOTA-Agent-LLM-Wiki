@@ -120,7 +120,7 @@ bridge 还注册 `events.listen(...)`，把每个 EventV2 payload 转成 GlobalB
 
 `packages/opencode/src/sync/README.md` 是历史设计说明：它描述目标是单 writer event sourcing，用 sequence number 做 total ordering，并把 sync events 自动 republish 成 bus events 以保持 backwards compatibility。[E: packages/opencode/src/sync/README.md:31][E: packages/opencode/src/sync/README.md:33][E: packages/opencode/src/sync/README.md:35][E: packages/opencode/src/sync/README.md:37][E: packages/opencode/src/sync/README.md:91] 当前 source tree 中真正的 durable implementation 是 `packages/core/src/event.ts` 的 EventV2 engine，compat republish 由 `packages/opencode/src/event-v2-bridge.ts` 执行。[E: packages/core/src/event.ts:174][E: packages/opencode/src/event-v2-bridge.ts:35][I]
 
-V2 session spec 说明 durable event tail wakeups 是 advisory and edge-triggered；每个 active tail 重新查询 SQLite，durable rows 而不是 in-memory notifications 保存完整事件和 sequence。[E: specs/v2/session.md:173] `EventV2.durable` 的 `subscribeDurable + readAfter` 代码实现了这个模型。[E: packages/core/src/event.ts:565][E: packages/core/src/event.ts:588][E: packages/core/src/event.ts:590]
+V2 session spec 说明 durable event tail wakeups 是 advisory and edge-triggered；每个 active tail 重新查询 SQLite，durable rows 而不是 in-memory notifications 保存完整事件和 sequence。[E: specs/v2/session.md:183] `EventV2.durable` 的 `subscribeDurable + readAfter` 代码实现了这个模型。[E: packages/core/src/event.ts:565][E: packages/core/src/event.ts:588][E: packages/core/src/event.ts:590]
 
 ## Gotchas
 

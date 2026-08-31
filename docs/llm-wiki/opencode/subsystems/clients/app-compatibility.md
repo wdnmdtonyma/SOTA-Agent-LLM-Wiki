@@ -119,7 +119,7 @@ connect-token wiring 仍有迁移张力：active `connectToken()` 只在 protoco
 
 ## 未完成边界
 
-兼容层仍是迁移态，不应描述成 current API 已完全替换 legacy API。当前 checklist 明确保留 legacy session events/message events、sharing、file reads/list、部分 worktree 操作、global/directory config、credentials、LSP/reference events，以及 legacy message/type adapters。[E: packages/app/V1_API_MIGRATION.md:12][E: packages/app/V1_API_MIGRATION.md:17][E: packages/app/V1_API_MIGRATION.md:30][E: packages/app/V1_API_MIGRATION.md:70][E: packages/app/V1_API_MIGRATION.md:88][E: packages/app/V1_API_MIGRATION.md:105][E: packages/app/V1_API_MIGRATION.md:111][E: packages/app/V1_API_MIGRATION.md:129][E: packages/app/V1_API_MIGRATION.md:139][E: packages/app/V1_API_MIGRATION.md:174][E: packages/app/V1_API_MIGRATION.md:198]
+兼容层仍是迁移态，不应描述成 current API 已完全替换 legacy API。当前 checklist 明确保留 legacy session events/message events、sharing、file reads/list、部分 worktree 操作、global/directory config、credentials、LSP/reference events，以及 legacy message/type adapters。[E: packages/app/V1_API_MIGRATION.md:12][E: packages/app/V1_API_MIGRATION.md:17][E: packages/app/V1_API_MIGRATION.md:30][E: packages/app/V1_API_MIGRATION.md:70][E: packages/app/V1_API_MIGRATION.md:88][E: packages/app/V1_API_MIGRATION.md:105][E: packages/app/V1_API_MIGRATION.md:111][E: packages/app/V1_API_MIGRATION.md:129][E: packages/app/V1_API_MIGRATION.md:139][E: packages/app/V1_API_MIGRATION.md:174][E: packages/app/V1_API_MIGRATION.md:202]
 
 ## Sources
 

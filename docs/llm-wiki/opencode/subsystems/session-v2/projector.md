@@ -16,7 +16,7 @@ updated: 9f69463f1d
 
 ## 能回答的问题
 - 哪个文件把 `session.next.*` event 变成 `session_message`?
-- `PromptLifecycle.Promoted` 怎样同时标记 inbox row 并插入 user message?
+- `SessionEvent.Prompted` 怎样同时标记 inbox row 并插入 user message?
 - `SessionMessageUpdater` 怎样维护 assistant text/reasoning/tool state?
 - `Moved` 还 reset Context Epoch 吗?`Compaction.Ended` 怎样触发 replacement?
 - live-only delta event 为什么不进入 durable read model?

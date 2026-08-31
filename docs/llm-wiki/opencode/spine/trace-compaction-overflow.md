@@ -55,7 +55,7 @@ flowchart TD
 
 6. V1 summary generation 复用 `SessionProcessor`:它创建 processor 并调用 `processor.process({ tools: {}, system: [], messages: [user nextPrompt] })`。`nextPrompt` 已包含 serialized conversation,不再把 head 作为独立 model messages 传入。[E: packages/opencode/src/session/compaction.ts:420][E: packages/opencode/src/session/compaction.ts:425][E: packages/opencode/src/session/compaction.ts:429][E: packages/opencode/src/session/compaction.ts:431][E: packages/opencode/src/session/compaction.ts:438]
 
-7. 如果 provider/processor 因 context overflow 抛 V1 `ContextOverflowError`,`SessionProcessor.halt` 在 auto compaction 允许时设置 `ctx.needsCompaction = true`;`process` 最后返回 `"compact"`。[E: packages/opencode/src/session/processor.ts:607][E: packages/opencode/src/session/processor.ts:615][E: packages/opencode/src/session/processor.ts:679]
+7. 如果 provider/processor 因 context overflow 抛 V1 `ContextOverflowError`,`SessionProcessor.halt` 在 auto compaction 允许时设置 `ctx.needsCompaction = true`;`process` 最后返回 `"compact"`。[E: packages/opencode/src/session/processor.ts:599][E: packages/opencode/src/session/processor.ts:607][E: packages/opencode/src/session/processor.ts:615][E: packages/opencode/src/session/processor.ts:679]
 
 8. V1 compaction result 为 continue 且 auto 时,`SessionCompaction.process` 可以 replay overflow 前的 user message,或创建 synthetic continue prompt;完成 summary 后发布 V1 `SessionCompaction.Event.Compacted`。[E: packages/opencode/src/session/compaction.ts:469][E: packages/opencode/src/session/compaction.ts:471][E: packages/opencode/src/session/compaction.ts:497][E: packages/opencode/src/session/compaction.ts:540][E: packages/opencode/src/session/compaction.ts:554]
 

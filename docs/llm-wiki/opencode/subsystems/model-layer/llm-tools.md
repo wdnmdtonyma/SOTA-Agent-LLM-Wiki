@@ -4,7 +4,7 @@ title: LLM Tools
 kind: subsystem
 tier: T2
 v: shared
-source: [packages/llm/src/tool.ts, packages/llm/src/tool-runtime.ts]
+source: [packages/llm/src/tool.ts, packages/llm/src/tool-runtime.ts, packages/llm/src/schema/messages.ts]
 symbols: [Tool.make, ToolDefinition, ToolRuntime.dispatch, ToolFailure, ToolOutput]
 related: [ref.tool-wire-protocol, subsys.tools.v2]
 evidence: explicit
@@ -18,7 +18,7 @@ updated: 9f69463f1d
 - typed tool 与 dynamic tool 在 schema/execute/projection 上有什么差异?
 - `ToolDefinition` 的 wire name 从哪里来?
 - 本地 tool call 如何变成 `tool-result` 或 `tool-error` event?
-- `toModelOutput` 与 `toStructuredOutput` 的优先级是什么?
+- `toModelOutput` 与 `toStructuredOutput` 分别填 `ToolOutput` 的哪一槽?
 - V1 与 V2 的工具注册表 ground truth 为什么不能混用?
 
 ## V1
@@ -55,7 +55,7 @@ V2 工具 ground truth 是 `packages/core/src/tool/tools.ts` 与 `packages/core/
 
 3. execute 阶段用 `{ id, name }` 作为 context 调用 handler,然后用 `_encode` 校验 success output;success schema encode 失败会变成 `Tool returned an invalid value for its success schema`。[E: packages/llm/src/tool-runtime.ts:41][E: packages/llm/src/tool-runtime.ts:47]
 
-4. projection 阶段优先 `toStructuredOutput`,其次 `toModelOutput`,最后把 string output 构造成 text `ToolOutput`。[E: packages/llm/src/tool.ts:245][E: packages/llm/src/tool.ts:248]
+4. projection 把成功 output 填进 `ToolOutput` 的两个独立槽，不是同一条 fallback 链：`structured` 用 `toStructuredOutput(output)`，缺省就是 encoded output 本身；`content` 用 `toModelOutput({ callID, parameters, output })`，缺省时 string output 变成单条 text part，非 string 则空 content。[E: packages/llm/src/schema/messages.ts:80][E: packages/llm/src/schema/messages.ts:91][E: packages/llm/src/tool.ts:245][E: packages/llm/src/tool.ts:246][E: packages/llm/src/tool.ts:247][E: packages/llm/src/tool.ts:248]
 
 5. result settlement 会 always 生成 `tool-result`;如果是 error result,会先发 `tool-error`,再发带 error output 的 `tool-result`。[E: packages/llm/src/tool-runtime.ts:69][E: packages/llm/src/tool-runtime.ts:74]
 
@@ -69,11 +69,13 @@ Tool schema 把 provider wire contract 和 local execution 分离:provider defin
 
 - `ToolFailure` 是 tool runtime domain error;dispatch 捕获它并转成 tool-error/tool-result events。[E: packages/llm/src/schema/errors.ts:203][E: packages/llm/src/tool-runtime.ts:31][E: packages/llm/src/tool-runtime.ts:32]
 - `ToolDefinition.name` 来自 record key,不是 `Tool.make` 参数里的某个 name 字段。[E: packages/llm/src/tool.ts:223][E: packages/llm/src/tool.ts:225]
+- `toStructuredOutput` 与 `toModelOutput` 不是优先级链:前者填 `ToolOutput.structured`,后者填 `ToolOutput.content`;两者可以同时生效。[E: packages/llm/src/schema/messages.ts:91][E: packages/llm/src/tool.ts:245][E: packages/llm/src/tool.ts:247]
 - V1/V2 工具 ground truth 不在 `packages/llm/src/tool.ts`;这个文件是 native LLM engine 的 tool abstraction,不是产品级 tool registry。[I]
 
 ## Sources
 - packages/llm/src/tool.ts
 - packages/llm/src/tool-runtime.ts
+- packages/llm/src/schema/messages.ts
 - packages/opencode/src/tool/registry.ts
 - packages/core/src/tool/tools.ts
 - packages/core/src/tool/builtins.ts

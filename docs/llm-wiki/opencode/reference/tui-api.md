@@ -49,13 +49,13 @@ updated: 9f69463f1d
 | --- | --- | --- |
 | `app` | 读取 TUI app metadata，例如 version。 | [E: packages/plugin/src/tui.ts:427] [E: packages/tui/src/plugin/adapters.tsx:167] |
 | `attention` | 调用 `notify(...)`，并访问 soundboard register/activate/current/list。 | [E: packages/plugin/src/tui.ts:269] [E: packages/plugin/src/tui.ts:298] [E: packages/plugin/src/tui.ts:300] |
-| `command` | deprecated command shim，兼容旧插件 command/register/trigger/show。 | [E: packages/plugin/src/tui.ts:113] [E: packages/tui/src/plugin/command-shim.ts:14] |
+| `command` | deprecated command shim，兼容旧插件 command/register/trigger/show。 | [E: packages/plugin/src/tui.ts:113] [E: packages/tui/src/plugin/command-shim.ts:85] |
 | `keys` | 格式化 key sequence 和 binding display。 | [E: packages/plugin/src/tui.ts:74] [E: packages/tui/src/plugin/adapters.tsx:179] |
 | `keymap` | 访问 OpenTUI keymap object。 | [E: packages/plugin/src/tui.ts:79] [E: packages/tui/src/plugin/adapters.tsx:187] |
 | `mode` | 读取当前 mode，并 push 一个 mode；`push` 返回 disposer。 | [E: packages/plugin/src/tui.ts:81] [E: packages/tui/src/plugin/adapters.tsx:188] [E: packages/tui/src/plugin/adapters.tsx:192] |
 | `route` | register/navigate/current plugin route。 | [E: packages/plugin/src/tui.ts:53] [E: packages/tui/src/plugin/adapters.tsx:196] |
 | `ui.Dialog*` | 打开 alert、confirm、prompt、select 和通用 Dialog。 | [E: packages/plugin/src/tui.ts:122] [E: packages/tui/src/plugin/adapters.tsx:207] |
-| `ui.Prompt` | 复用 TUI prompt component 和 prompt ref。 | [E: packages/plugin/src/tui.ts:183] [E: packages/tui/src/plugin/adapters.tsx:242] |
+| `ui.Prompt` | 复用 TUI prompt component 和 prompt ref。 | [E: packages/plugin/src/tui.ts:211] [E: packages/tui/src/plugin/adapters.tsx:242] |
 | `ui.Slot` | 在 plugin render 中声明 slot UI。 | [E: packages/plugin/src/tui.ts:496] [E: packages/tui/src/plugin/adapters.tsx:239] |
 | `ui.toast` | 显示 toast message。 | [E: packages/plugin/src/tui.ts:226] [E: packages/tui/src/plugin/adapters.tsx:257] |
 | `tuiConfig` | 读取 frozen TUI config view。 | [E: packages/plugin/src/tui.ts:419] [E: packages/tui/src/plugin/adapters.tsx:286] |

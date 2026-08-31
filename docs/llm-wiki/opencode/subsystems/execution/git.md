@@ -49,7 +49,7 @@ updated: 9f69463f1d
 7. `stats(cwd, ref)` 使用 `--numstat -z`，binary `-` 统计为 0 additions/deletions [E: packages/opencode/src/git/index.ts:242] [E: packages/opencode/src/git/index.ts:251] [E: packages/opencode/src/git/index.ts:252]。
 8. `patch` 和 `patchAll` 用 `git diff --patch --no-ext-diff --no-renames --unified=<context>`；单文件 patch 若 output truncated 返回空 text 且 `truncated: true` [E: packages/opencode/src/git/index.ts:265] [E: packages/opencode/src/git/index.ts:268] [E: packages/opencode/src/git/index.ts:273] [E: packages/opencode/src/git/index.ts:276]。
 9. `patchUntracked` 用 `git diff --no-index --patch ... /dev/null file` 生成新文件 patch，truncated 时返回空 text [E: packages/opencode/src/git/index.ts:284] [E: packages/opencode/src/git/index.ts:287] [E: packages/opencode/src/git/index.ts:288] [E: packages/opencode/src/git/index.ts:293] [E: packages/opencode/src/git/index.ts:294] [E: packages/opencode/src/git/index.ts:298]。
-10. `applyPatch` 运行 `git apply -`，stdin 是 patch 文本编码 stream [E: packages/opencode/src/git/index.ts:323]।
+10. `applyPatch` 运行 `git apply -`，stdin 是 patch 文本编码 stream [E: packages/opencode/src/git/index.ts:323]。
 
 ## status kind 归类
 
@@ -64,7 +64,7 @@ Git wrapper 把 opencode 内部的 git usage 统一到同一套 flags，减少 f
 - `run` 的错误不会 throw；调用方必须检查 `exitCode`。
 - `show` 检测 stdout 中含 NUL 时返回空字符串，避免 binary 内容进入文本通道 [E: packages/opencode/src/git/index.ts:211]。
 - patch truncation 对单文件返回空 text，调用方要看 `truncated`。
-- 这个 wrapper 是 V1 service；V2 core 没有等价默认 Git service 节点。
+- 这个 wrapper 是 V1 `@opencode/Git`。V2 core 另有 `packages/core/src/git.ts`（`Git.Repository` / worktree / tree capture），由 V2 Snapshot 与 ProjectCopy 使用；本节点不覆盖那套 API [I]。
 
 ## Sources
 

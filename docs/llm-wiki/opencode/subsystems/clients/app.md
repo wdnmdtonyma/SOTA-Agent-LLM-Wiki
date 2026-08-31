@@ -85,14 +85,14 @@ updated: 9f69463f1d
 
 ## 职责边界
 
-`@opencode-ai/app` 暴露 package root、`desktop-menu`、`i18n/desktop-native`、`updater`、`wsl/types`、`vite` plugin 和 CSS 入口 [E: packages/app/package.json:6] [E: packages/app/package.json:7] [E: packages/app/package.json:8] [E: packages/app/package.json:9] [E: packages/app/package.json:10] [E: packages/app/package.json:11] [E: packages/app/package.json:12] [E: packages/app/package.json:13]。这些 exports 支撑 Web 与 Desktop 复用 UI shell 的包装边界 [I]。它依赖 `@opencode-ai/sdk`, `@opencode-ai/ui`, `@opencode-ai/session-ui`, `@opencode-ai/core`, Solid Router 和 TanStack Solid Query [E: packages/app/package.json:57] [E: packages/app/package.json:58] [E: packages/app/package.json:60] [E: packages/app/package.json:61] [E: packages/app/package.json:62] [E: packages/app/package.json:78] [E: packages/app/package.json:79] [E: packages/app/package.json:80]。
+`@opencode-ai/app` 暴露 package root、`desktop-menu`、`i18n/desktop-native`、`updater`、`wsl/types`、`vite` plugin 和 CSS 入口 [E: packages/app/package.json:6] [E: packages/app/package.json:7] [E: packages/app/package.json:8] [E: packages/app/package.json:9] [E: packages/app/package.json:10] [E: packages/app/package.json:11] [E: packages/app/package.json:12] [E: packages/app/package.json:13]。这些 exports 支撑 Web 与 Desktop 复用 UI shell 的包装边界 [I]。它依赖 `@opencode-ai/sdk`, `@opencode-ai/ui`, `@opencode-ai/session-ui`, `@opencode-ai/core`, Solid Router 和 TanStack Solid Query [E: packages/app/package.json:60] [E: packages/app/package.json:62] [E: packages/app/package.json:61] [E: packages/app/package.json:58] [E: packages/app/package.json:79] [E: packages/app/package.json:80]。
 
 V1/V2 关系: App shell 同时连接 legacy unprefixed API 与 current `/api/*` API。它会按 server 探测 protocol、选择兼容 API/event transport，并把 current session state 投影进现有 UI store；详细边界见 `clients.app-compatibility`。[E: packages/app/src/context/server-sync.tsx:227][E: packages/app/src/context/server-sync.tsx:228][E: packages/app/src/context/server-sync.tsx:538]
 
 ## 技术栈
 
 - SolidJS + Vite: package scripts 用 `vite`, `vite.config.ts` 安装 `desktopPlugin` 与 Sentry plugin, dev server 默认 `0.0.0.0:3000` [E: packages/app/package.json:18] [E: packages/app/package.json:19] [E: packages/app/vite.config.ts:22] [E: packages/app/vite.config.ts:23] [E: packages/app/vite.config.ts:25] [E: packages/app/vite.config.ts:27]。
-- Tailwind Vite plugin、Kobalte、Solid primitives、Solid Router、TanStack Solid Query 和 session UI 共同组成 UI runtime [E: packages/app/package.json:38] [E: packages/app/package.json:57] [E: packages/app/package.json:61] [E: packages/app/package.json:66] [E: packages/app/package.json:78] [E: packages/app/package.json:79] [E: packages/app/package.json:80]。
+- Tailwind Vite plugin、Kobalte、Solid primitives、Solid Router、TanStack Solid Query 和 session UI 共同组成 UI runtime [E: packages/app/package.json:38] [E: packages/app/package.json:56] [E: packages/app/package.json:66] [E: packages/app/package.json:79] [E: packages/app/package.json:80] [E: packages/app/package.json:61]。
 - 测试层是 Bun unit、browser-condition Bun tests 和 Playwright e2e, package scripts 明确把 unit/browser/e2e 分开 [E: packages/app/package.json:22] [E: packages/app/package.json:23] [E: packages/app/package.json:24] [E: packages/app/package.json:26]。
 
 ## 关键文件

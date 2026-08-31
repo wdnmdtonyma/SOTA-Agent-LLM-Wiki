@@ -98,7 +98,7 @@ V1 config schema 中 local MCP server 有 `type: "local"`、`command`、`environ
 3. local server 把 config 中的 `command` 数组解构成 `cmd` 和 `args`，再创建 `StdioClientTransport`。[E: packages/opencode/src/mcp/index.ts:344] [E: packages/opencode/src/mcp/index.ts:347]
 4. local stdio transport 会继承并扩展环境变量；当命令本体是 `opencode` 时，额外设置 `BUN_BE_BUN=1`。[E: packages/opencode/src/mcp/index.ts:354]
 5. remote server 先 parse URL，再构造 `StreamableHTTPClientTransport` 和 `SSEClientTransport` 两个候选 transport，尝试顺序是 StreamableHTTP 再 SSE。[E: packages/opencode/src/mcp/index.ts:242] [E: packages/opencode/src/mcp/index.ts:269] [E: packages/opencode/src/mcp/index.ts:278]
-6. 所有 transport 都通过 `connectTransport` 创建 MCP SDK `Client`，client name 是 `opencode`，version 来自 `Installation.VERSION`，并用 `withTimeout(client.connect(...), timeout)` 包住连接。[E: packages/opencode/src/mcp/index.ts:75] [E: packages/opencode/src/mcp/index.ts:76] [E: packages/opencode/src/mcp/index.ts:218] [E: packages/opencode/src/mcp/index.ts:226]
+6. 所有 transport 都通过 `connectTransport` 创建 MCP SDK `Client`，client name 是 `opencode`，version 来自 `InstallationVersion`，并用 `withTimeout(client.connect(...), timeout)` 包住连接。[E: packages/opencode/src/mcp/index.ts:75] [E: packages/opencode/src/mcp/index.ts:76] [E: packages/opencode/src/mcp/index.ts:218] [E: packages/opencode/src/mcp/index.ts:226]
 7. server 连接成功后，如果 server capability 包含 tools，service 只拉取 `McpCatalog.defs` 作为 cached tool defs；prompts/resources 由 `MCP.prompts()` 和 `MCP.resources()` 后续按 connected clients 懒收集。[E: packages/opencode/src/mcp/index.ts:391] [E: packages/opencode/src/mcp/index.ts:521] [E: packages/opencode/src/mcp/index.ts:716] [E: packages/opencode/src/mcp/index.ts:720]
 8. finalizer 关闭所有 MCP clients；如果 transport 是 stdio，还会杀掉 stdio 进程的 descendant processes。[E: packages/opencode/src/mcp/index.ts:531] [E: packages/opencode/src/mcp/index.ts:541] [E: packages/opencode/src/mcp/index.ts:550]
 
@@ -107,7 +107,7 @@ V1 config schema 中 local MCP server 有 `type: "local"`、`command`、`environ
 1. `McpCatalog.defs` 先调用 `client.listTools`，如果标准 SDK schema 因 `outputSchema` 不兼容而失败，会退回 tolerant request schema。[E: packages/opencode/src/mcp/catalog.ts:38] [E: packages/opencode/src/mcp/catalog.ts:152] [E: packages/opencode/src/mcp/catalog.ts:155]
 2. `McpCatalog.convertTool` 复制 MCP `inputSchema`，覆盖 `type: "object"`、`properties` 和 `additionalProperties: false`，然后交给 `ai.dynamicTool`。[E: packages/opencode/src/mcp/catalog.ts:42] [E: packages/opencode/src/mcp/catalog.ts:45] [E: packages/opencode/src/mcp/catalog.ts:47] [E: packages/opencode/src/mcp/catalog.ts:50]
 3. dynamic tool 执行时调用 `client.callTool`，开启 `resetTimeoutOnProgress: true`，并传入 abort signal 和 timeout。[E: packages/opencode/src/mcp/catalog.ts:54] [E: packages/opencode/src/mcp/catalog.ts:61]
-4. catalog `fetch` helper 对 prompts/resources 这类 named items 使用 `${sanitize(client)}:${sanitize(item.name)}` key，并在返回对象上保留原始 `client` 字段；resource URI key 会 escape `:` 以避免歧义。[E: packages/opencode/src/mcp/catalog.ts:103] [E: packages/opencode/src/mcp/catalog.ts:105] [E: packages/opencode/src/mcp/catalog.ts:108] [E: packages/opencode/src/mcp/catalog.ts:109]
+4. catalog `fetch` helper 对 prompts 这类 named items 使用 `${sanitize(client)}:${sanitize(item.name)}` key；传入 `key` 函数时（resources 用 uri）则用 escape 过 `:`/`%` 的原始 client name + `:` + key(item)。escape 的是 client 名，不是 URI 本身；返回对象保留原始 `client` 字段。[E: packages/opencode/src/mcp/catalog.ts:103] [E: packages/opencode/src/mcp/catalog.ts:105] [E: packages/opencode/src/mcp/catalog.ts:108] [E: packages/opencode/src/mcp/catalog.ts:109]
 5. `MCP.Service.tools()` 使用 `${sanitize(clientName)}_${sanitize(toolName)}` 作为最终 MCP tool key，但 value 只是 `{ def, client, timeout }` native entry，不再在 MCP service 内构造 AI SDK tool。[E: packages/opencode/src/mcp/index.ts:666] [E: packages/opencode/src/mcp/index.ts:667] [E: packages/opencode/src/mcp/index.ts:682] [E: packages/opencode/src/mcp/index.ts:684] [E: packages/opencode/src/mcp/catalog.ts:119]
 6. `sanitize` 只保留 `a-zA-Z0-9_-`，其它字符都替换成 `_`。[E: packages/opencode/src/mcp/catalog.ts:117]
 7. `SessionTools` 在普通模式遍历 native entries，调用 `McpCatalog.convertTool(entry.def, entry.client, entry.timeout)` 才转成 AI SDK dynamic tool；experimental code mode 会在这个直接 MCP 注入点之前返回。[E: packages/opencode/src/session/tools.ts:388] [E: packages/opencode/src/session/tools.ts:390] [E: packages/opencode/src/session/tools.ts:391]
@@ -150,11 +150,11 @@ V1 MCP client 明确偏向“尽量接上”：remote 传输同时支持 Streama
 
 新的 `McpBrowser` 是一个可替换的 Effect service，`MCP.node` 将它列为显式 dependency [E: packages/opencode/src/mcp/index.ts:210] [E: packages/opencode/src/mcp/index.ts:1001]。这把 OAuth 的外部浏览器 side effect 从 transport/auth state machine 分离，同时保留 browser-open failure event [I]。
 
-MCP 工具名同时携带 client name 和 tool name，是为了避免多个 server 暴露同名工具时发生冲突。[I] prompts/resources catalog 用冒号，最终 session tool key 用下划线，说明“内部资源标识”和“模型可见工具名”是两个命名层。[E: packages/opencode/src/mcp/catalog.ts:103] [E: packages/opencode/src/mcp/index.ts:676] [E: packages/opencode/src/mcp/catalog.ts:119]
+MCP 工具名同时携带 client name 和 tool name，是为了避免多个 server 暴露同名工具时发生冲突。[I] prompts/resources catalog 用冒号，最终 session tool key 用下划线，说明“内部资源标识”和“模型可见工具名”是两个命名层。[E: packages/opencode/src/mcp/catalog.ts:103] [E: packages/opencode/src/mcp/index.ts:684] [E: packages/opencode/src/mcp/catalog.ts:119]
 
 ## 易踩坑
 
-- timeout 实现默认值是 `30_000` 毫秒。[E: packages/opencode/src/mcp/index.ts:50] V1 config schema 对 local/remote timeout 的描述仍写 default `5000`。[E: packages/core/src/v1/config/mcp.ts:21] [E: packages/core/src/v1/config/mcp.ts:57] 以当前源码运行行为为准，schema 文案是陈旧说明。[I]
+- timeout 实现默认值是 `30_000` 毫秒。[E: packages/opencode/src/mcp/index.ts:39] V1 config schema 对 local/remote timeout 的描述仍写 default `5000`。[E: packages/core/src/v1/config/mcp.ts:21] [E: packages/core/src/v1/config/mcp.ts:57] 以当前源码运行行为为准，schema 文案是陈旧说明。[I]
 - remote 连接顺序是 StreamableHTTP 然后 SSE fallback，不是只支持 SSE。[E: packages/opencode/src/mcp/index.ts:269] [E: packages/opencode/src/mcp/index.ts:278]
 - `packages/opencode/src/mcp/index.ts` 的 HTTP 管理接口通过 Effect HttpApi route group 暴露，不是 Hono。[E: packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts:4]
 - MCP server notification `ToolListChanged` 会触发重新 fetch defs 并发布 `mcp.tools.changed`，所以工具集合可能在 session 运行期间变化。[E: packages/opencode/src/mcp/index.ts:462] [E: packages/opencode/src/mcp/index.ts:465] [E: packages/opencode/src/mcp/index.ts:470]

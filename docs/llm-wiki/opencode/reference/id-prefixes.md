@@ -65,7 +65,7 @@ core `Identifier` 的 canonical prefix 表包含 10 个条目：`job`、`evt`、
 |---|---|---|---|
 | Credential ID | `cred_` | [E: packages/schema/src/credential.ts:11] | credential table primary key uses local helper, not `id/id.ts` prefix table。 |
 | Saved permission ID | `psv_` | [E: packages/schema/src/permission-saved.ts:10] | saved allow rule ID differs from interactive `per_` permission request ID。 |
-| Integration attempt ID | `con_` | [E: packages/core/src/integration.ts:30][E: packages/schema/src/integration.ts:102][E: packages/schema/src/integration.ts:104] | 命名陷阱：attempt prefix 仍是 `con_`，但 current service is `packages/core/src/integration.ts` 的 local OAuth attempt helper，不是云连接器。[I] |
+| Integration attempt ID | `con_` | [E: packages/schema/src/integration.ts:102][E: packages/schema/src/integration.ts:104][E: packages/core/src/integration.ts:428] | 命名陷阱：attempt prefix 仍是 `con_`，但 current service is `packages/core/src/integration.ts` 的 local OAuth attempt helper，不是云连接器。[I] |
 
 ## Project ID hashing and fallback
 

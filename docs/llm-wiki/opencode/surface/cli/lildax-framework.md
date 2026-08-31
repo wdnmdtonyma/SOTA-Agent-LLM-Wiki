@@ -49,9 +49,9 @@ evidence: explicit
 
 ## Runtime
 
-`Runtime.handlers(spec)` 返回一个递归 typed handlers object，节点可以有 `$` handler，也可以有 child handler。[E: packages/cli/src/framework/runtime.ts:42] `Runtime.provide` 会对每个 command 调用 `Command.withHandler`，执行时 lazy-import 对应 module，然后调用 module default export。[E: packages/cli/src/framework/runtime.ts:62] `Runtime.run` 用 Effect CLI 的 `Command.run` 加 version 运行整个 command graph。[E: packages/cli/src/framework/runtime.ts:58]
+`Runtime.handlers(root, handlers)` 接受递归 typed handlers object（节点可以有 `$` handler 或 child handler），并拍平成 `LazyHandler[]`。[E: packages/cli/src/framework/runtime.ts:42] [E: packages/cli/src/framework/runtime.ts:54] [E: packages/cli/src/framework/runtime.ts:55] `Runtime.provide` 会对每个 command 调用 `Command.withHandler`，执行时 lazy-import 对应 module，然后调用 module default export。[E: packages/cli/src/framework/runtime.ts:62] [E: packages/cli/src/framework/runtime.ts:66] `Runtime.run` 用 Effect CLI 的 `Command.run` 加 version 运行整个 command graph。[E: packages/cli/src/framework/runtime.ts:58] [E: packages/cli/src/framework/runtime.ts:59]
 
-`packages/cli/src/index.ts` 把 `Commands.default` 和 handlers 传给 `Runtime.run`，并提供 `Daemon.layer` 与 `NodeServices.layer` 后 `runMain`。[E: packages/cli/src/index.ts:27] [E: packages/cli/src/index.ts:28] [E: packages/cli/src/index.ts:29] [E: packages/cli/src/index.ts:31]
+`packages/cli/src/index.ts` 把 root spec `Commands` 和 `Handlers` 传给 `Runtime.run`，并提供 `Daemon.layer` 与 `NodeServices.layer` 后 `runMain`。[E: packages/cli/src/index.ts:27] [E: packages/cli/src/index.ts:28] [E: packages/cli/src/index.ts:29] [E: packages/cli/src/index.ts:31]
 
 ## Daemon Service
 
@@ -63,7 +63,7 @@ daemon client 通过 `createOpencodeClient` 创建，header 使用 `ServerAuth.h
 
 ## Serve 与 TUI Host
 
-`serve` handler 调用 `listen`，如果带 `--register` 就执行 daemon registration，然后记录 listening URL 并 `Effect.never` 保持进程。[E: packages/cli/src/commands/handlers/serve.ts:19] [E: packages/cli/src/commands/handlers/serve.ts:20] [E: packages/cli/src/commands/handlers/serve.ts:22] `listen` 有显式 port 时直接 bind；没有 port 时从 `4096` 开始，bind 失败就递增端口直到 `65535`。[E: packages/cli/src/commands/handlers/serve.ts:30] [E: packages/cli/src/commands/handlers/serve.ts:34] [E: packages/cli/src/commands/handlers/serve.ts:36] HTTP app 使用 Effect `HttpRouter.serve(createRoutes(password))` 加 Node HTTP server layer，不是 Hono。[E: packages/cli/src/commands/handlers/serve.ts:41]
+`serve` handler 调用 `listen`，如果带 `--register` 就执行 daemon registration，然后记录 listening URL 并 `Effect.never` 保持进程。[E: packages/cli/src/commands/handlers/serve.ts:22] [E: packages/cli/src/commands/handlers/serve.ts:23] [E: packages/cli/src/commands/handlers/serve.ts:24] `listen` 有显式 port 时直接 bind；没有 port 时从 `4096` 开始，bind 失败就递增端口直到 `65535`。[E: packages/cli/src/commands/handlers/serve.ts:30] [E: packages/cli/src/commands/handlers/serve.ts:34] [E: packages/cli/src/commands/handlers/serve.ts:36] HTTP app 使用 Effect `HttpRouter.serve(createRoutes(password))` 加 Node HTTP server layer，不是 Hono。[E: packages/cli/src/commands/handlers/serve.ts:41]
 
 default handler 获取 daemon transport 后动态导入 `../../tui` 并调用 `runTui(transport)`。[E: packages/cli/src/commands/handlers/default.ts:9] [E: packages/cli/src/commands/handlers/default.ts:10] [E: packages/cli/src/commands/handlers/default.ts:11] `runTui` 使用 `@opencode-ai/tui` 的 `run`，传入 `gracefulFetch`、empty plugin host，并通过 `AppNodeBuilder.build(Global.node)` 提供 host layer。[E: packages/cli/src/tui.ts:8] [E: packages/cli/src/tui.ts:9] [E: packages/cli/src/tui.ts:13] [E: packages/cli/src/tui.ts:14] [E: packages/cli/src/tui.ts:18]
 

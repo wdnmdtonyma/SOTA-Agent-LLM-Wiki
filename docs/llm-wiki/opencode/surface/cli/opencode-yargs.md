@@ -32,7 +32,7 @@ evidence: explicit
 
 ## Entry 与全局 Middleware
 
-V1 CLI entry 使用 `yargs`，`scriptName("opencode")`，并启用 help 和 version。[E: packages/opencode/src/index.ts:45] 全局 options 包括 `--print-logs`、`--log-level` 和 `--pure`。[E: packages/opencode/src/index.ts:53] [E: packages/opencode/src/index.ts:57] [E: packages/opencode/src/index.ts:62] middleware 会把这些 option 写入 `OPENCODE_PRINT_LOGS`、`OPENCODE_LOG_LEVEL`、`OPENCODE_PURE`，并设置 `AGENT=1`、`OPENCODE=1`、`OPENCODE_PID`。[E: packages/opencode/src/index.ts:66]
+V1 CLI entry 使用 `yargs`，`scriptName("opencode")`，并启用 help 和 version。[E: packages/opencode/src/index.ts:45][E: packages/opencode/src/index.ts:47][E: packages/opencode/src/index.ts:49][E: packages/opencode/src/index.ts:51] 全局 options 包括 `--print-logs`、`--log-level` 和 `--pure`。[E: packages/opencode/src/index.ts:53] [E: packages/opencode/src/index.ts:57] [E: packages/opencode/src/index.ts:62] middleware 会把这些 option 写入 `OPENCODE_PRINT_LOGS`、`OPENCODE_LOG_LEVEL`、`OPENCODE_PURE`，并设置 `AGENT=1`、`OPENCODE=1`、`OPENCODE_PID`。[E: packages/opencode/src/index.ts:66][E: packages/opencode/src/index.ts:67][E: packages/opencode/src/index.ts:75]
 
 root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.strict()`。[E: packages/opencode/src/index.ts:104] [E: packages/opencode/src/index.ts:116] 顶层 catch 会调用 `FormatError(e)`；有 formatted message 时走 `UI.error(formatted)`，否则打印 `Unexpected error` 和原始 error message，并把 `process.exitCode` 设为 1。[E: packages/opencode/src/index.ts:128]
 
@@ -46,7 +46,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `$0 [project]` | `packages/opencode/src/cli/cmd/tui.ts` | default TUI command。[E: packages/opencode/src/cli/cmd/tui.ts:73] | none |
 | `attach <url>` | `packages/opencode/src/cli/cmd/attach.ts` | attach to an existing server URL。[E: packages/opencode/src/cli/cmd/attach.ts:8] | none |
 | `run [message..]` | `packages/opencode/src/cli/cmd/run.ts` | run prompt in terminal modes；event loop 用 `sessions` Set 跟踪 child 并应答它们的 `permission.asked`。[E: packages/opencode/src/cli/cmd/run.ts:127][E: packages/opencode/src/cli/cmd/run.ts:699][E: packages/opencode/src/cli/cmd/run.ts:803] | none; modes are flags |
-| `generate` | `packages/opencode/src/cli/cmd/generate.ts` | generation helpers command。[E: packages/opencode/src/cli/cmd/generate.ts:6] | none |
+| `generate` | `packages/opencode/src/cli/cmd/generate.ts` | dump OpenAPI spec with SDK `x-codeSamples`；no yargs `describe`。[E: packages/opencode/src/cli/cmd/generate.ts:5][E: packages/opencode/src/cli/cmd/generate.ts:17] | none |
 | `debug` | `packages/opencode/src/cli/cmd/debug/index.ts` | debug utilities root。[E: packages/opencode/src/cli/cmd/debug/index.ts:20] | `config`、`lsp`、`rg`、`file`、`scrap`、`skill`、`snapshot`、`startup`、`agent`、`v2`、`info`、`paths`、`wait` |
 | `console` | `packages/opencode/src/cli/cmd/account.ts` | opencode Console account root；`defaultConsoleUrl` 现为 `https://opencode.ai/console`。[E: packages/opencode/src/cli/cmd/account.ts:18][E: packages/opencode/src/cli/cmd/account.ts:238] | `login`、`logout`、`switch`、`orgs`、`open` |
 | `providers` | `packages/opencode/src/cli/cmd/providers.ts` | manage provider authentication/config。[E: packages/opencode/src/cli/cmd/providers.ts:240] | `list`、`login`、`logout` |
@@ -62,7 +62,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `github` | `packages/opencode/src/cli/cmd/github.ts` | GitHub integration root。[E: packages/opencode/src/cli/cmd/github.ts:38] | `install`、`run` |
 | `pr <number>` | `packages/opencode/src/cli/cmd/pr.ts` | pull request helper command。[E: packages/opencode/src/cli/cmd/pr.ts:9] | none |
 | `session` | `packages/opencode/src/cli/cmd/session.ts` | session management root。[E: packages/opencode/src/cli/cmd/session.ts:45] | `delete`、`list` |
-| `plugin <module>` | `packages/opencode/src/cli/cmd/plug.ts` | run/load plugin module command。[E: packages/opencode/src/cli/cmd/plug.ts:179] | none |
+| `plugin <module>` | `packages/opencode/src/cli/cmd/plug.ts` | install plugin and update config。[E: packages/opencode/src/cli/cmd/plug.ts:179][E: packages/opencode/src/cli/cmd/plug.ts:181] | none |
 | `db` | `packages/opencode/src/cli/cmd/db.ts` | database helper root。[E: packages/opencode/src/cli/cmd/db.ts:55] | `$0 [query]`、`path` |
 
 ## Nested Command Catalog
@@ -87,7 +87,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `debug file` | `search <query>` | [E: packages/opencode/src/cli/cmd/debug/file.ts:17] | file search. |
 | `debug file` | `read <path>` | [E: packages/opencode/src/cli/cmd/debug/file.ts:32] | read file. |
 | `debug file` | `list <path>` | [E: packages/opencode/src/cli/cmd/debug/file.ts:53] | list path. |
-| `debug` | `scrap` | [E: packages/opencode/src/cli/cmd/debug/scrap.ts:5] | scratch debug command. |
+| `debug` | `scrap` | [E: packages/opencode/src/cli/cmd/debug/scrap.ts:5][E: packages/opencode/src/cli/cmd/debug/scrap.ts:6] | list all known projects. |
 | `debug` | `skill` | [E: packages/opencode/src/cli/cmd/debug/skill.ts:7] | skill debug command. |
 | `debug` | `snapshot` | [E: packages/opencode/src/cli/cmd/debug/snapshot.ts:7] | snapshot root. |
 | `debug snapshot` | `track` | [E: packages/opencode/src/cli/cmd/debug/snapshot.ts:14] | track snapshot. |

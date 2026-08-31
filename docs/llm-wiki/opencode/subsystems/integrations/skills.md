@@ -60,12 +60,13 @@ V1 config `skills` 只有两类入口：`paths` 和 `urls`。[E: packages/core/s
 1. `discoverSkills` 先构造 external dirs：`.claude` 只有在未禁用 Claude Code skills 时加入，`.agents` 在未禁用 external skills 时加入。[E: packages/opencode/src/skill/index.ts:186] [E: packages/opencode/src/skill/index.ts:187] [E: packages/opencode/src/skill/index.ts:188]
 2. 如果 external skills 未禁用，V1 会扫描用户 home 下的 external dirs。[E: packages/opencode/src/skill/index.ts:190]
 3. 对 project/worktree，V1 从当前 directory 向 worktree root 向上遍历，每层扫描 external dirs。[E: packages/opencode/src/skill/index.ts:196]
-4. config `skills.paths` 会先展开 `~/`、absolute、relative 三种路径；只有目录会被扫描，扫描 pattern 是 `**/SKILL.md`。[E: packages/opencode/src/skill/index.ts:212] [E: packages/opencode/src/skill/index.ts:213] [E: packages/opencode/src/skill/index.ts:214] [E: packages/opencode/src/skill/index.ts:219]
-5. config `skills.urls` 通过 discovery service 下载或复用远程 skill cache。[E: packages/opencode/src/skill/index.ts:222]
-6. discovery scan 使用 glob，开启 absolute、symlink、dot；如果遇到 permission/scope error 会记录 warning 而不是让整个服务失败。[E: packages/opencode/src/skill/index.ts:150] [E: packages/opencode/src/skill/index.ts:152] [E: packages/opencode/src/skill/index.ts:154] [E: packages/opencode/src/skill/index.ts:155] [E: packages/opencode/src/skill/index.ts:159] [E: packages/opencode/src/skill/index.ts:161]
-7. skill markdown 缺少 frontmatter 或 frontmatter decode 失败时跳过。[E: packages/opencode/src/skill/index.ts:121]
-8. 重名 skill 会 warning，并用后加入的 skill 覆盖 map 中同名项。[E: packages/opencode/src/skill/index.ts:125] [E: packages/opencode/src/skill/index.ts:126] [E: packages/opencode/src/skill/index.ts:134]
-9. service 初始化时先注册 built-in skill，再加载磁盘/远程 skill，因此用户同名 skill 可以覆盖 built-in。[E: packages/opencode/src/skill/index.ts:278] [E: packages/opencode/src/skill/index.ts:284]
+4. 接着扫描 `config.directories()` 下的 `{skill,skills}/**/SKILL.md`，这是默认 opencode skill 目录，不是 `skills.paths`。[E: packages/opencode/src/skill/index.ts:205] [E: packages/opencode/src/skill/index.ts:207] [E: packages/opencode/src/skill/index.ts:24]
+5. config `skills.paths` 会先展开 `~/`、absolute、relative 三种路径；只有目录会被扫描，扫描 pattern 是 `**/SKILL.md`。[E: packages/opencode/src/skill/index.ts:212] [E: packages/opencode/src/skill/index.ts:213] [E: packages/opencode/src/skill/index.ts:214] [E: packages/opencode/src/skill/index.ts:219]
+6. config `skills.urls` 通过 discovery service 下载或复用远程 skill cache。[E: packages/opencode/src/skill/index.ts:222]
+7. discovery scan 使用 glob，始终开启 absolute 与 symlink；`dot` 只在传入 `opts.dot` 时打开（external 扫描会开，config directories / paths / urls 默认不开）。scope error 会记录 warning 而不是让整个服务失败。[E: packages/opencode/src/skill/index.ts:150] [E: packages/opencode/src/skill/index.ts:152] [E: packages/opencode/src/skill/index.ts:154] [E: packages/opencode/src/skill/index.ts:155] [E: packages/opencode/src/skill/index.ts:159] [E: packages/opencode/src/skill/index.ts:161]
+8. skill markdown 缺少 frontmatter 或 frontmatter decode 失败时跳过。[E: packages/opencode/src/skill/index.ts:121]
+9. 重名 skill 会 warning，并用后加入的 skill 覆盖 map 中同名项。[E: packages/opencode/src/skill/index.ts:125] [E: packages/opencode/src/skill/index.ts:126] [E: packages/opencode/src/skill/index.ts:134]
+10. service 初始化时先注册 built-in skill，再加载磁盘/远程 skill，因此用户同名 skill 可以覆盖 built-in。[E: packages/opencode/src/skill/index.ts:278] [E: packages/opencode/src/skill/index.ts:284]
 
 ### V1 `skill` tool
 
@@ -111,9 +112,9 @@ V2 config 层暴露 `skills` string array，描述是 "Additional paths or URLs 
 1. guidance 要求当前 agent 存在；没有 agent selection info 时直接返回 empty system context。[E: packages/core/src/skill/guidance.ts:47] [E: packages/core/src/skill/guidance.ts:48]
 2. guidance 先用 `SkillV2.available` 按 agent permission 过滤。[E: packages/core/src/skill/guidance.ts:49]
 3. 如果没有可用 skill 且全局 skill permission denied，guidance 返回空，避免鼓励模型调用被禁止的 skill。[E: packages/core/src/skill/guidance.ts:50]
-4. V2 `skill` tool name 是 `skill`，同样最多采样 10 个文件。[E: packages/core/src/tool/skill.ts:14] [E: packages/core/src/tool/skill.ts:15]
+4. V2 `skill` tool name 是 `skill`；文件采样上限是 10，但只有 `skill.location` basename 为 `SKILL.md` 时才 glob 同目录文件，其它 markdown skill 的 files 列表为空。[E: packages/core/src/tool/skill.ts:14] [E: packages/core/src/tool/skill.ts:15] [E: packages/core/src/tool/skill.ts:86] [E: packages/core/src/tool/skill.ts:90] [E: packages/core/src/tool/skill.ts:91]
 5. V2 tool layer 注册 `skill` tool；tool execute 时在 `skills.list()` 中查找 name，找不到会返回 unable-to-load failure。[E: packages/core/src/tool/skill.ts:64] [E: packages/core/src/tool/skill.ts:72] [E: packages/core/src/tool/skill.ts:74]
-6. V2 permission assert 的 action 是 `skill`，resources 包含 skill name、save/session/agent/source。[E: packages/core/src/tool/skill.ts:76] [E: packages/core/src/tool/skill.ts:77] [E: packages/core/src/tool/skill.ts:78] [E: packages/core/src/tool/skill.ts:79] [E: packages/core/src/tool/skill.ts:80] [E: packages/core/src/tool/skill.ts:81] [E: packages/core/src/tool/skill.ts:82]
+6. V2 permission assert 的 action 是 `skill`，`resources` 和 `save` 都是 `[skill.name]`，另外带 sessionID、agent、tool-call source。[E: packages/core/src/tool/skill.ts:76] [E: packages/core/src/tool/skill.ts:77] [E: packages/core/src/tool/skill.ts:78] [E: packages/core/src/tool/skill.ts:79] [E: packages/core/src/tool/skill.ts:80] [E: packages/core/src/tool/skill.ts:81] [E: packages/core/src/tool/skill.ts:82]
 7. V2 built-in tool node 的 deps 包含 `SkillTool.node`；MCP/plugin transforms 是否属于这个 static built-in node 不由本节点源码证明，按 V2 tool 注入设计另行处理。[E: packages/core/src/tool/builtins.ts:31] [E: packages/core/src/tool/builtins.ts:42] [I]
 
 ## V1 / V2 差异表
@@ -138,7 +139,7 @@ V2 source abstraction 是为了让 plugin/config/embedded skill 都能进入同�
 - V2 `available` 使用 `PermissionV2.evaluate("skill", skill.name, agent.permissions)`，permission object 名称和返回字段都不同于 V1。[E: packages/core/src/skill.ts:31]
 - V1 `.claude` skills 会被 `disableClaudeCodeSkills` 控制，`.agents` skills 会被 `disableExternalSkills` 控制。[E: packages/opencode/src/skill/index.ts:186] [E: packages/opencode/src/skill/index.ts:187] [E: packages/opencode/src/skill/index.ts:188]
 - V2 root-level `foo.md` 可以成为 skill；nested file 若没有 frontmatter name 会被跳过，glob pattern 仍只覆盖 root `*.md` 与 nested `SKILL.md`。[E: packages/core/src/skill.ts:78] [E: packages/core/src/skill.ts:88] [E: packages/core/src/skill.ts:94]
-- skill 与 command 有交叉：V1 commands service 会把没有同名 command 的 skill 暴露为 slash command；具体 command bridge 在 `integrations.commands` 节点描述。[E: packages/opencode/src/command/index.ts:134]
+- skill 与 command 有交叉：V1 commands service 会把 `skill.all()` 里没有同名 command 的 skill 暴露为 slash command，不做 agent permission 过滤；具体 command bridge 在 `integrations.commands` 节点描述。[E: packages/opencode/src/command/index.ts:134]
 
 ## Sources
 

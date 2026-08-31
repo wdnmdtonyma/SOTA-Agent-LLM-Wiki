@@ -71,7 +71,7 @@ V2 使用 `LLMEvent` 作为 provider stream 的统一语义输出：protocol sta
 
 ## Response Helpers
 
-`LLMResponse.text` 串联所有 `text-delta`，`LLMResponse.reasoning` 串联所有 `reasoning-delta`，`LLMResponse.toolCalls` 过滤 `tool-call`。[E: packages/llm/src/schema/events.ts:320] [E: packages/llm/src/schema/events.ts:326] [E: packages/llm/src/schema/events.ts:353] namespace helper 也提供 `text/usage/toolCalls/reasoning` 静态函数。[E: packages/llm/src/schema/events.ts:608] [E: packages/llm/src/schema/events.ts:617]
+`LLMResponse.text` 串联所有 `text-delta`，`LLMResponse.reasoning` 串联所有 `reasoning-delta`，`LLMResponse.toolCalls` 过滤 `tool-call`。[E: packages/llm/src/schema/events.ts:320] [E: packages/llm/src/schema/events.ts:326] [E: packages/llm/src/schema/events.ts:614] namespace helper 也提供 `text/usage/toolCalls/reasoning` 静态函数。[E: packages/llm/src/schema/events.ts:608] [E: packages/llm/src/schema/events.ts:611] [E: packages/llm/src/schema/events.ts:614] [E: packages/llm/src/schema/events.ts:617]
 
 ## Error Reasons
 

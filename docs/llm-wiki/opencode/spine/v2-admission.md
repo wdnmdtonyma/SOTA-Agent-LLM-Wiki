@@ -36,7 +36,7 @@ flowchart TD
 
 ## 端到端步骤
 
-1. API-facing `PromptInput.Prompt` 接收必填 `text`、可选 `files` 与 `agents`;input file attachment 不要求 mime,只要求 `uri` 与可选 `name/description/source`。[E: packages/schema/src/prompt-input.ts:21][E: packages/schema/src/prompt-input.ts:22][E: packages/schema/src/prompt-input.ts:24][E: packages/schema/src/prompt-input.ts:25][E: packages/schema/src/prompt-input.ts:8]
+1. API-facing `PromptInput.Prompt` 接收必填 `text`、可选 `files` 与 `agents`;input file attachment 不要求 mime,只要求 `uri` 与可选 `name/description/source`。[E: packages/schema/src/prompt-input.ts:21][E: packages/schema/src/prompt-input.ts:22][E: packages/schema/src/prompt-input.ts:23][E: packages/schema/src/prompt-input.ts:24][E: packages/schema/src/prompt-input.ts:25][E: packages/schema/src/prompt-input.ts:8]
 
 2. Core `Prompt` 保存必填 `text`、可选 `files/agents`;core file attachment 包含 `uri/mime/name/description/source`。[E: packages/schema/src/prompt.ts:41][E: packages/schema/src/prompt.ts:42][E: packages/schema/src/prompt.ts:43][E: packages/schema/src/prompt.ts:44][E: packages/schema/src/prompt.ts:13][E: packages/schema/src/prompt.ts:15]
 
