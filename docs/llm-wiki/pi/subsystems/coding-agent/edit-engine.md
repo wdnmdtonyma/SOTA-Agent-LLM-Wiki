@@ -66,7 +66,7 @@ updated: 853a80d26c
 
 ## 控制流
 
-1. `createEditToolDefinition@packages/coding-agent/src/core/tools/edit.ts:287` 注册 `prepareArguments`, 所以 raw tool-call args 先进 `prepareEditArguments()` 做 legacy folding 和 stringified `edits` 解析 [E: packages/coding-agent/src/core/tools/edit.ts:116] [E: packages/coding-agent/src/core/tools/edit.ts:331]。
+1. `createEditToolDefinition@packages/coding-agent/src/core/tools/edit.ts:316` 注册 `prepareArguments`, 所以 raw tool-call args 先进 `prepareEditArguments()` 做 legacy folding 和 stringified `edits` 解析 [E: packages/coding-agent/src/core/tools/edit.ts:116] [E: packages/coding-agent/src/core/tools/edit.ts:331]。
 2. `execute@packages/coding-agent/src/core/tools/edit.ts:308` 调 `validateEditInput()`, 拒绝空 `edits`, 用 `resolveToCwd(path, cwd)` 得到 `absolutePath`, 再把整个 access/read/compute/write window 包进 `withFileMutationQueue(absolutePath, ...)` [E: packages/coding-agent/src/core/tools/edit.ts:149] [E: packages/coding-agent/src/core/tools/edit.ts:334] [E: packages/coding-agent/src/core/tools/edit.ts:336]。
 3. queue 内 `execute()` 先调用 `ops.access()`（默认实现检查 readable+writable）, 再读取 buffer, strip BOM, detect original line ending, normalize content to LF [E: packages/coding-agent/src/core/tools/edit.ts:108] [E: packages/coding-agent/src/core/tools/edit.ts:349] [E: packages/coding-agent/src/core/tools/edit.ts:359] [E: packages/coding-agent/src/core/tools/edit.ts:364] [E: packages/coding-agent/src/core/tools/edit.ts:366]。
 4. `applyEditsToNormalizedContent@packages/coding-agent/src/core/tools/edit-diff.ts:304` 先把每个 edit 的 `oldText/newText` normalize to LF, 再拒绝空 `oldText` [E: packages/coding-agent/src/core/tools/edit-diff.ts:305] [E: packages/coding-agent/src/core/tools/edit-diff.ts:311]。
@@ -122,7 +122,7 @@ diff preview 和真实写文件共用 `applyEditsToNormalizedContent()`, 因此 
 
 [surface.tools.edit](../../surface/tools/edit.md) 是模型可见工具面的权威节点: 它覆盖 wire name、schema 表、注册装配、renderer 和 execute path。本文只详写 `edit-diff.ts` 的 matching/diff 算法, 并在必要处引用 `edit.ts` 说明入口边界 [I]。
 
-[subsys.coding-agent.file-mutation-queue](file-mutation-queue.md) 是 per-file mutation serialization 的权威节点: `edit` 与 `write` 都把真实 mutation window 包进 `withFileMutationQueue()`, extension 文档也要求自定义 mutating tool 参与同一个 queue, 因为默认并行 tool calls 可能同时读取旧内容并导致 last-write-wins [E: packages/coding-agent/src/core/tools/edit.ts:336] [E: packages/coding-agent/src/core/tools/write.ts:210] [E: packages/coding-agent/docs/extensions.md:1909] [E: packages/coding-agent/docs/extensions.md:1915]。
+[subsys.coding-agent.file-mutation-queue](file-mutation-queue.md) 是 per-file mutation serialization 的权威节点: `edit` 与 `write` 都把真实 mutation window 包进 `withFileMutationQueue()`, extension 文档也要求自定义 mutating tool 参与同一个 queue, 因为默认并行 tool calls 可能同时读取旧内容并导致 last-write-wins [E: packages/coding-agent/src/core/tools/edit.ts:336] [E: packages/coding-agent/src/core/tools/write.ts:210] [E: packages/coding-agent/docs/extensions.md:1923]。
 
 ## Sources
 

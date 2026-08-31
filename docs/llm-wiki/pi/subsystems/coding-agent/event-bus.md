@@ -34,7 +34,7 @@ updated: 853a80d26c
 
 ## 职责边界
 
-`EventBus` 只覆盖 inter-extension communication 的 shared bus, 不覆盖 pi 自身的 extension hooks。extension hooks 是 `pi.on("session_start", handler)` 这类注册, 由 `ExtensionRunner` 按 typed extension events 调用; event bus 是 `pi.events.emit(channel, data)` / `pi.events.on(channel, handler)` 这类任意 channel 的 side channel [E: packages/coding-agent/src/core/extensions/loader.ts:282] [E: packages/coding-agent/src/core/extensions/loader.ts:432] [I]。
+`EventBus` 只覆盖 inter-extension communication 的 shared bus, 不覆盖 pi 自身的 extension hooks。extension hooks 是 `pi.on("session_start", handler)` 这类注册, 由 `ExtensionRunner` 按 typed extension events 调用; event bus 是 `pi.events.emit(channel, data)` / `pi.events.on(channel, handler)` 这类任意 channel 的 side channel [E: packages/coding-agent/src/core/extensions/loader.ts:282] [E: packages/coding-agent/src/core/extensions/loader.ts:448] [I]。
 
 `EventBus` 的 channel 是普通 `string`, payload 是 `unknown`, handler 只收到 payload 而没有 sender、context 或 event object;源码没有 channel registry、payload validation、priority、once listener、wildcard matching 或 replay storage [E: packages/coding-agent/src/core/event-bus.ts:3] [E: packages/coding-agent/src/core/event-bus.ts:4] [E: packages/coding-agent/src/core/event-bus.ts:5] [I]。
 
@@ -44,7 +44,7 @@ updated: 853a80d26c
 
 - `packages/coding-agent/src/core/event-bus.ts`: 定义 `EventBus`、`EventBusController` 和 `createEventBus()` 的完整实现 [E: packages/coding-agent/src/core/event-bus.ts:3] [E: packages/coding-agent/src/core/event-bus.ts:8] [E: packages/coding-agent/src/core/event-bus.ts:12]。
 - `packages/coding-agent/src/core/resource-loader.ts`: `DefaultResourceLoader` 接收 optional `eventBus`, 缺省创建一个 bus, 并把同一个 bus 传入 extension loading path [E: packages/coding-agent/src/core/resource-loader.ts:163] [E: packages/coding-agent/src/core/resource-loader.ts:258] [E: packages/coding-agent/src/core/resource-loader.ts:559] [E: packages/coding-agent/src/core/resource-loader.ts:579] [E: packages/coding-agent/src/core/resource-loader.ts:602]。
-- `packages/coding-agent/src/core/extensions/loader.ts`: extension loader 把 bus 注入 `ExtensionAPI.events`, path extensions 与 inline factories 都走这个注入点 [E: packages/coding-agent/src/core/extensions/loader.ts:254] [E: packages/coding-agent/src/core/extensions/loader.ts:258] [E: packages/coding-agent/src/core/extensions/loader.ts:432] [E: packages/coding-agent/src/core/extensions/loader.ts:554] [E: packages/coding-agent/src/core/extensions/loader.ts:602]。
+- `packages/coding-agent/src/core/extensions/loader.ts`: extension loader 把 bus 注入 `ExtensionAPI.events`, path extensions 与 inline factories 都走这个注入点 [E: packages/coding-agent/src/core/extensions/loader.ts:254] [E: packages/coding-agent/src/core/extensions/loader.ts:258] [E: packages/coding-agent/src/core/extensions/loader.ts:448] [E: packages/coding-agent/src/core/extensions/loader.ts:554] [E: packages/coding-agent/src/core/extensions/loader.ts:602]。
 - `packages/coding-agent/src/core/extensions/types.ts`: public `ExtensionAPI` 类型把 `events` 描述为 shared event bus for extension communication [E: packages/coding-agent/src/core/extensions/types.ts:1499]。
 - `packages/coding-agent/src/index.ts`: package root re-export `createEventBus`, `EventBus` 和 `EventBusController`, 因此外部 embedding/test code 可以显式构造或传入 bus [E: packages/coding-agent/src/index.ts:51] [I]。
 
@@ -65,7 +65,7 @@ updated: 853a80d26c
 5. `on()` 把 `safeHandler` 注册到 `EventEmitter`, 并返回一个 closure;调用该 closure 会用同一个 `safeHandler` 执行 `emitter.off(channel, safeHandler)` [E: packages/coding-agent/src/core/event-bus.ts:26] [E: packages/coding-agent/src/core/event-bus.ts:27]。
 6. `clear()` 调用 `emitter.removeAllListeners()`, 一次性移除所有 channel 的所有 listeners [E: packages/coding-agent/src/core/event-bus.ts:29] [E: packages/coding-agent/src/core/event-bus.ts:30]。
 7. `DefaultResourceLoader.constructor@resource-loader.ts:217` 把调用方传入的 bus 保存到 loader, 没传时使用 `createEventBus()`;后续 `loadExtensionsCached()` 和 `loadExtensionFromFactory()` 都使用该字段, 让同一次 loader/runtime 下的 extensions 共享同一个 bus [E: packages/coding-agent/src/core/resource-loader.ts:254] [E: packages/coding-agent/src/core/resource-loader.ts:258] [E: packages/coding-agent/src/core/resource-loader.ts:559] [E: packages/coding-agent/src/core/resource-loader.ts:958] [I]。
-8. `createExtensionAPI@extensions/loader.ts:212` 把传入 bus 挂到 `api.events`;path extension factory 和 inline extension factory 都收到这个 API object [E: packages/coding-agent/src/core/extensions/loader.ts:254] [E: packages/coding-agent/src/core/extensions/loader.ts:432] [E: packages/coding-agent/src/core/extensions/loader.ts:554] [E: packages/coding-agent/src/core/extensions/loader.ts:595]。
+8. `createExtensionAPI@extensions/loader.ts:254` 把传入 bus 挂到 `api.events`;path extension factory 和 inline extension factory 都收到这个 API object [E: packages/coding-agent/src/core/extensions/loader.ts:254] [E: packages/coding-agent/src/core/extensions/loader.ts:448] [E: packages/coding-agent/src/core/extensions/loader.ts:554] [E: packages/coding-agent/src/core/extensions/loader.ts:595]。
 
 ## 设计动机与权衡
 

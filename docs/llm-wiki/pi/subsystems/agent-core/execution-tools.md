@@ -40,7 +40,7 @@ updated: 853a80d26c
 
 ## 公共边界
 
-`AgentHarnessTool<TContext>` 在标准 `AgentTool` 上增加第五个 `context` 参数；`AgentHarness` 每个 turn 解析一次静态或异步 `toolContext`，只把当前 active tools 绑定成 loop 可执行的 `AgentTool`。[E: packages/agent/src/harness/types.ts:81] [E: packages/agent/src/harness/types.ts:87] [E: packages/agent/src/harness/types.ts:97] [E: packages/agent/src/harness/agent-harness.ts:381] [E: packages/agent/src/harness/agent-harness.ts:388] [E: packages/agent/src/harness/agent-harness.ts:394] [E: packages/agent/src/harness/agent-harness.ts:438]
+当前 `AgentHarness` 存的是 `HarnessTool`（`AgentTool` 加可选 `replay`）。`toolContext` 只出现在 `AgentHarnessOptions` 上，构造后既不存储也不应用到 tool execute。[E: packages/agent/src/harness/agent-harness.ts:237] [E: packages/agent/src/harness/agent-harness.ts:249] [E: packages/agent/src/harness/agent-harness.ts:250] [E: packages/agent/src/harness/agent-harness.ts:314]
 
 内置 execution tools 的最小 context 是 `{ env: ExecutionEnv }`；package index 公开四个 factory 及其输入/详情类型，并从顶层 `src/index.ts` 重导出。[E: packages/agent/src/harness/tools/tool-context.ts:1] [E: packages/agent/src/harness/tools/tool-context.ts:4] [E: packages/agent/src/harness/tools/index.ts:1] [E: packages/agent/src/harness/tools/index.ts:23] [E: packages/agent/src/index.ts:108]
 
@@ -55,7 +55,7 @@ read path resolution 先把 Unicode spaces 归一为空格并移除开头 `@`，
 
 ## L2 证伪与边界
 
-- `harness/tools/index.ts` 只导出四个 factory；`grep`、`find`、`ls` 仍只属于 coding-agent 的产品工具目录，因此不能把这里称为七工具全集。[E: packages/agent/src/harness/tools/index.ts:1] [E: packages/agent/src/harness/tools/index.ts:23]
+- `harness/tools/index.ts` 只导出四个 factory；`grep`、`find`、`ls`、`powershell` 仍只属于 coding-agent 的产品工具目录，因此不能把这里称为八工具全集。[E: packages/agent/src/harness/tools/index.ts:1] [E: packages/agent/src/harness/tools/index.ts:23] [E: packages/coding-agent/src/core/tools/index.ts:95]
 - factory 只是可选构件：`AgentHarness` 从调用方传入的 `options.tools` 建表，源码没有自动安装四个工具。[E: packages/agent/src/harness/agent-harness.ts:211] [E: packages/agent/src/harness/agent-harness.ts:215] [E: packages/agent/src/harness/agent-harness.ts:220]
 - 这些工具只依赖 `ExecutionEnv`，不携带 coding-agent 的 settings、session env、extension wrapper 或 TUI renderer；两套工具实现应分别阅读。[I]
 
@@ -81,4 +81,4 @@ read path resolution 先把 Unicode spaces 归一为空格并移除开头 `@`，
 
 - [subsys.agent-core.exec-env](exec-env.md): `ExecutionEnv` 的进程、文件系统与截断基础设施。
 - [subsys.agent-core.tool-invocation](tool-invocation.md): `AgentTool` 在 agent loop 中的验证与执行。
-- [ref.tools-catalog](../../reference/tools-catalog.md): coding-agent 七工具 registry 与 harness 四工具边界。
+- [ref.tools-catalog](../../reference/tools-catalog.md): coding-agent 八工具 registry 与 harness 四工具边界。

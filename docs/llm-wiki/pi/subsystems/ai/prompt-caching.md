@@ -62,7 +62,7 @@ OAuth token 路径会创建第一段 Claude Code identity system text,并在有 
 
 `convertMessages` 只在转换后的 params 最后一条消息存在且 `role === "user"` 时挂 conversation-history cache point:数组 content 时要求最后一个 block 是 `text`、`image` 或 `tool_result`,然后给这个 block 写 `cache_control`;string content 时会把整条 user content 改成一个 text block array 并写 `cache_control`。[E: packages/ai/src/api/anthropic-messages.ts:1296][E: packages/ai/src/api/anthropic-messages.ts:1298][E: packages/ai/src/api/anthropic-messages.ts:1300][E: packages/ai/src/api/anthropic-messages.ts:1303][E: packages/ai/src/api/anthropic-messages.ts:1305][E: packages/ai/src/api/anthropic-messages.ts:1307][E: packages/ai/src/api/anthropic-messages.ts:1312]
 
-`convertTools` 只把 `cache_control` 写到最后一个 tool definition,同时保留 tool name、description、input schema 和可选 `eager_input_streaming` 字段。[E: packages/ai/src/api/anthropic-messages.ts:1336][E: packages/ai/src/api/anthropic-messages.ts:1354][E: packages/ai/src/api/anthropic-messages.ts:1355][E: packages/ai/src/api/anthropic-messages.ts:1356][E: packages/ai/src/api/anthropic-messages.ts:1358][E: packages/ai/src/api/anthropic-messages.ts:1360]
+`buildParams` 对 immediate tools 和 deferred tools 各调一次 `convertTools`。immediate 那次可传入 `cacheControl`；deferred 那次 `cacheControl` 固定 `undefined`。因此 `params.tools` 的最后一个 tool 常常没有 `cache_control`（真正带 cache point 的是最后一个 immediate tool）。`convertTools` 自身仍只把传入的 `cache_control` 写到该次调用的最后一个 definition。[E: packages/ai/src/api/anthropic-messages.ts:1043][E: packages/ai/src/api/anthropic-messages.ts:1048][E: packages/ai/src/api/anthropic-messages.ts:1050][E: packages/ai/src/api/anthropic-messages.ts:1055][E: packages/ai/src/api/anthropic-messages.ts:1336][E: packages/ai/src/api/anthropic-messages.ts:1360]
 
 ## Session 与 usage 边界
 

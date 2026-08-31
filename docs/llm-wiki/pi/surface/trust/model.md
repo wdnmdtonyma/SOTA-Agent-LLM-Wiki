@@ -60,7 +60,7 @@ startup prompt 的选项来自 `getProjectTrustOptions(cwd, { includeSessionOnly
 
 ## 信任后的加载范围
 
-信任 project 后,pi 允许加载 `.pi/settings.json`、`.pi` resources、missing project packages、project-local extensions 和 project package-managed extensions [E: packages/coding-agent/docs/security.md:20] [E: packages/coding-agent/docs/security.md:25]。拒绝 trust 时,用户文档说这些 protected resources 会被跳过,但 `AGENTS.md` 和 `CLAUDE.md` context files 除非禁用 context loading,否则仍会加载 [E: packages/coding-agent/docs/security.md:27]。
+信任 project 后,pi 允许加载 `.pi/settings.json`、`.pi` resources、missing project packages、project-local extensions 和 project package-managed extensions [E: packages/coding-agent/docs/security.md:20] [E: packages/coding-agent/docs/security.md:25]。拒绝 trust 时,用户文档说这些 protected resources 会被跳过,但 `AGENTS.override.md`、`AGENTS.md` 和 `CLAUDE.md` context files 除非禁用 context loading,否则仍会加载 [E: packages/coding-agent/docs/security.md:27]。
 
 ## 不是安全边界
 

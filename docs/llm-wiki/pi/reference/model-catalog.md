@@ -56,7 +56,7 @@ related:
   - subsys.ai.model-catalog-publication
 evidence: explicit
 status: verified
-updated: 853a80d26
+updated: 853a80d26c
 ---
 
 > `ref.ai.model-catalog` 记录目标 commit 已提交的 generated model **结构**。 [I] 完整模型值（name / cost / context / 逐 id 的 `Model.api`）在 generated、gitignored 的 `src/providers/data/<provider>.json`；本 catalog 只记录 id / provider / api 中源码能证明的结构事实。

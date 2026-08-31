@@ -44,7 +44,7 @@ updated: 853a80d26c
 
 加载出的 `PromptTemplate` 使用 markdown 文件 basename 去掉 `.md` 作为 `name`, 使用解析后的 body 作为 `content`, 并优先使用 string 类型 frontmatter `description` 作为描述 [E: packages/agent/src/harness/prompt-templates.ts:151] [E: packages/agent/src/harness/prompt-templates.ts:153] [E: packages/agent/src/harness/prompt-templates.ts:159] [E: packages/agent/src/harness/prompt-templates.ts:159] [E: packages/agent/src/harness/prompt-templates.ts:161] [E: packages/agent/src/harness/prompt-templates.ts:162]。
 
-当 frontmatter 没有 string description 且 body 有非空首行时, loader 用该首行前 60 个字符作为 fallback description, 首行超过 60 个字符时追加 `...` [E: packages/agent/src/harness/prompt-templates.ts:152] [E: packages/agent/src/harness/prompt-templates.ts:153] [E: packages/agent/src/harness/prompt-templates.ts:154] [E: packages/agent/src/harness/prompt-templates.ts:155] [E: packages/agent/src/harness/prompt-templates.ts:156]。
+当 frontmatter 没有 string description 时, loader 用 `body.split("\\n").find(line => line.trim())` 找第一条非空行，取其前 60 个字符作为 fallback description, 首行超过 60 个字符时追加 `...` [E: packages/agent/src/harness/prompt-templates.ts:152] [E: packages/agent/src/harness/prompt-templates.ts:153] [E: packages/agent/src/harness/prompt-templates.ts:154] [E: packages/agent/src/harness/prompt-templates.ts:155] [E: packages/agent/src/harness/prompt-templates.ts:156]。
 
 ## 控制流
 
@@ -102,7 +102,7 @@ read/list/parse 失败不会 throw 给调用者;这些失败路径都通过 `{ p
 
 - Directory input 只加载 direct `.md` child, 因为 directory loader 只遍历 `listDir(dir)` 返回的 direct entries 并在 entry kind 不是 `file` 时 continue [E: packages/agent/src/harness/prompt-templates.ts:101] [E: packages/agent/src/harness/prompt-templates.ts:113] [E: packages/agent/src/harness/prompt-templates.ts:115]。
 - explicit file input 必须满足 `info.name.endsWith(".md")`;这个判断是大小写敏感的, 而 basename 去除扩展名使用 `/\.md$/i` 是大小写不敏感的 [E: packages/agent/src/harness/prompt-templates.ts:55] [E: packages/agent/src/harness/prompt-templates.ts:159]。
-- `parseFrontmatter()` 只要求 content 以 `---` 开头并查找第一个 `\n---`, 结束分隔符后面的 body 会 `trim()`, 所以前后空白不会保留在 `content` 中 [E: packages/agent/src/harness/prompt-templates.ts:206] [E: packages/agent/src/harness/prompt-templates.ts:207] [E: packages/agent/src/harness/prompt-templates.ts:210]。
+- `parseFrontmatter()` 只在 content 以 `---` 开头且找到结束 `\n---` 时，才把分隔符之后的 body `trim()`。不以 `---` 开头或没有结束分隔符时，body 是完整 normalized 字符串，前后空白会保留。[E: packages/agent/src/harness/prompt-templates.ts:206] [E: packages/agent/src/harness/prompt-templates.ts:207] [E: packages/agent/src/harness/prompt-templates.ts:208] [E: packages/agent/src/harness/prompt-templates.ts:210]。
 - `parseCommandArgs()` 不会把两个连续空白之间的空字段变成参数, 因为空白分支只在 `current` 非空时 push [E: packages/agent/src/harness/prompt-templates.ts:230] [E: packages/agent/src/harness/prompt-templates.ts:231] [E: packages/agent/src/harness/prompt-templates.ts:232]。
 - `substituteArgs()` 的 replacement 是串行作用在同一个 result 上;如果前一个 replacement 产生了后续正则能匹配的文本, 后续 replacement pass 会继续处理该文本 [E: packages/agent/src/harness/prompt-templates.ts:245] [E: packages/agent/src/harness/prompt-templates.ts:246] [E: packages/agent/src/harness/prompt-templates.ts:247] [E: packages/agent/src/harness/prompt-templates.ts:254] [E: packages/agent/src/harness/prompt-templates.ts:255]。
 

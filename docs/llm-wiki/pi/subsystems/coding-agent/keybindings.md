@@ -54,7 +54,7 @@ updated: 853a80d26c
 
 `KEYBINDING_NAME_MIGRATIONS` 是旧 action name 到新 namespaced action id 的迁移表, 覆盖旧 editor/select/input names 与旧 app names [E: packages/coding-agent/src/core/keybindings.ts:235] [E: packages/coding-agent/src/core/keybindings.ts:257] [E: packages/coding-agent/src/core/keybindings.ts:267] [E: packages/coding-agent/src/core/keybindings.ts:294]。这个表只迁移 key 名, 不解析或规范化 key chord 字符串本身 [E: packages/coding-agent/src/core/keybindings.ts:322] [E: packages/coding-agent/src/core/keybindings.ts:331] [I]。
 
-`toKeybindingsConfig(value)` 是 user config sanitizer: 非对象输入返回 `{}`, string binding 被保留为 `KeyId`, 全 string array 被保留为 `KeyId[]`, 其他值被忽略 [E: packages/coding-agent/src/core/keybindings.ts:301] [E: packages/coding-agent/src/core/keybindings.ts:301] [E: packages/coding-agent/src/core/keybindings.ts:304] [E: packages/coding-agent/src/core/keybindings.ts:305] [E: packages/coding-agent/src/core/keybindings.ts:308] [E: packages/coding-agent/src/core/keybindings.ts:309]。
+`toKeybindingsConfig(value)` 接收 `Record<string, unknown>`: string binding 被保留为 `KeyId`, 全 string array 被保留为 `KeyId[]`, 其他 value 被忽略;它从不对非对象输入返回 `{}` [E: packages/coding-agent/src/core/keybindings.ts:301] [E: packages/coding-agent/src/core/keybindings.ts:303] [E: packages/coding-agent/src/core/keybindings.ts:304] [E: packages/coding-agent/src/core/keybindings.ts:308] [E: packages/coding-agent/src/core/keybindings.ts:309]。非对象 JSON 在 `loadRawConfig()` 被丢弃(`undefined`),随后 `loadFromFile()` 才返回 `{}` [E: packages/coding-agent/src/core/keybindings.ts:355] [E: packages/coding-agent/src/core/keybindings.ts:359] [E: packages/coding-agent/src/core/keybindings.ts:389] [E: packages/coding-agent/src/core/keybindings.ts:390] [E: packages/coding-agent/src/core/keybindings.ts:391]。
 
 ## 控制流
 

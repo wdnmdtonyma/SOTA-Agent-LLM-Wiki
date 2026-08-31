@@ -78,7 +78,7 @@ handshake 期间如果全局 server snapshot revision 已变化，server 在 hel
 
 ready state 对每个 request fire-and-forget `handleRequest()`；多个 async operations 可以 out-of-order 完成。response id 仅用于 request/response correlation：server 不保证完成顺序，也不强制 client request id 唯一。[E: packages/server/src/server.ts:209][E: packages/server/src/server.ts:210][E: packages/server/src/server.ts:252][E: packages/server/src/server.ts:254][E: packages/server/src/server.ts:255][E: packages/server/src/server.ts:257][I]
 
-`PiServerError` 的 operation code 只允许 `busy`、`session_locked`、`not_found`、`invalid_request`；未知 internal error 被 server-side `onError` 观察，但 client 只收到 sanitized `invalid_request / Internal server error`。[E: packages/server/src/errors.ts:3][E: packages/server/src/errors.ts:5][E: packages/server/src/errors.ts:12][E: packages/server/src/errors.ts:13][E: packages/server/src/server.ts:351][E: packages/server/src/server.ts:356][E: packages/server/src/server.ts:364][E: packages/server/src/server.ts:367][E: packages/server/src/server.ts:356]
+`PiServerOperationErrorCode` 允许 `busy`、`session_locked`、`not_found`、`invalid_request`、`not_implemented`。未知 internal error 被 server-side `onError` 观察，client 收到 sanitized `internal_error` / `Internal server error`，不是 `invalid_request`。[E: packages/server/src/errors.ts:3][E: packages/server/src/errors.ts:5][E: packages/server/src/errors.ts:8][E: packages/server/src/server.ts:354][E: packages/server/src/server.ts:368]
 
 ## Server snapshot publisher
 

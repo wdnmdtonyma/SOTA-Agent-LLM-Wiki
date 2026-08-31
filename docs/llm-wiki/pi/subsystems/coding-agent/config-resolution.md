@@ -85,7 +85,7 @@ Configured-shell `ENOENT` is special: it returns `{ executed: false }` so Window
 
 ## Config path boundary
 
-`getPackageDir()` allows `PI_PACKAGE_DIR` to override package asset discovery, otherwise it returns the Bun binary directory or walks up from `__dirname` until a `package.json` is found [E: packages/coding-agent/src/config.ts:385] [E: packages/coding-agent/src/config.ts:387] [E: packages/coding-agent/src/config.ts:388] [E: packages/coding-agent/src/config.ts:389] [E: packages/coding-agent/src/config.ts:392] [E: packages/coding-agent/src/config.ts:394] [E: packages/coding-agent/src/config.ts:369] [E: packages/coding-agent/src/config.ts:286] [E: packages/coding-agent/src/config.ts:287]。
+`getPackageDir()` 允许 `PI_PACKAGE_DIR` 覆盖 package asset discovery；否则 Bun binary 返回 exec dir，Node 走 `findNodePackageDir(__dirname)`。`findNodePackageDir` 向上找 `package.json`，若命中目录名是 `dist` 且父目录也有 `package.json` 则返回父目录。它不调用 `getEntrypointPackageDir()`。[E: packages/coding-agent/src/config.ts:385] [E: packages/coding-agent/src/config.ts:387] [E: packages/coding-agent/src/config.ts:392] [E: packages/coding-agent/src/config.ts:396] [E: packages/coding-agent/src/config.ts:369] [E: packages/coding-agent/src/config.ts:375]。
 
 `getAgentDir()` checks `process.env[ENV_AGENT_DIR]` first and otherwise returns `join(homedir(), CONFIG_DIR_NAME, "agent")`; with default `APP_NAME = "pi"` and default `CONFIG_DIR_NAME = ".pi"`, the default is `~/.pi/agent` [E: packages/coding-agent/src/config.ts:498] [E: packages/coding-agent/src/config.ts:500] [E: packages/coding-agent/src/config.ts:524] [E: packages/coding-agent/src/config.ts:525] [E: packages/coding-agent/src/config.ts:526] [E: packages/coding-agent/src/config.ts:527] [E: packages/coding-agent/src/config.ts:529]。
 

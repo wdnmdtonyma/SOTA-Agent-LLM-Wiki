@@ -47,10 +47,12 @@ flowchart TD
   T --> U["assistant message_start/update/end"]
   U --> V{"tool calls?"}
   V -- "yes" --> W["executeToolCalls -> tool_execution_* + toolResult messages"]
-  V -- "no" --> Y["turn_end"]
+  V -- "no" --> Y["turn_end; set lastCompletedTurn"]
   W --> Y
-  Y --> Z["prepareNextTurn / shouldStopAfterTurn / queues"]
-  Z --> AA["agent_end"]
+  Y --> Z{"error/aborted, shouldStopAfterTurn, or no more tools/queues?"}
+  Z -- "yes: emit agent_end, return" --> AA["agent_end"]
+  Z -- "no: next inner iteration" --> PN["prepareNextTurn(lastCompletedTurn) then turn_start"]
+  PN --> T
   R --> AB["AgentSession._handleAgentEvent"]
   U --> AB
   W --> AB
@@ -62,7 +64,7 @@ flowchart TD
 
 1. `InteractiveMode` 是 `coding-agent` 的 TUI server:构造函数保存 `AgentSessionRuntime`,创建 `TUI`,并准备 `chatContainer`、`pendingMessagesContainer`、`statusContainer` 等 UI containers。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:568] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:550] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:592] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:597] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:598]
 
-2. `init()` 阶段把 editor submit handler 和 key handlers 挂到默认 editor,启动 TUI,然后 rebind 当前 session,所以 interactive turn 的输入与 session events 都在 UI 已启动后工作。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1034] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1035] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:957] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1039]
+2. `init()` 先 `ui.start()` 启动 TUI,再 `setupKeyHandlers()` / `setupEditorSubmitHandler()` 挂 editor 输入,然后 `rebindCurrentSession()`,所以 interactive turn 的输入与 session events 都在 UI 已启动后工作。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:957] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1034] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1035] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1039]
 
 3. `InteractiveMode.run()` 是主入口:它先 `await this.init()`,再处理 startup initial messages,最后进入无限循环,每轮 `await this.getUserInput()` 后调用 `this.session.prompt(userInput)`。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1085] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1086] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1162] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1164] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1171] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1174] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1183] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1184] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1186]
 
@@ -92,7 +94,7 @@ flowchart TD
 
 16. assistant stream events 被折叠成 message events:start 会 push partial assistant 并 emit `message_start`,delta 类事件会替换最后一条 context message 并 emit `message_update`,done/error 会取 final message 并 emit `message_end`。[E: packages/agent/src/agent-loop.ts:315] [E: packages/agent/src/agent-loop.ts:318] [E: packages/agent/src/agent-loop.ts:319] [E: packages/agent/src/agent-loop.ts:321] [E: packages/agent/src/agent-loop.ts:333] [E: packages/agent/src/agent-loop.ts:335] [E: packages/agent/src/agent-loop.ts:337] [E: packages/agent/src/agent-loop.ts:346] [E: packages/agent/src/agent-loop.ts:355]
 
-17. assistant message 结束后,`runLoop` 根据 stop reason、tool calls、tool results、`prepareNextTurn`、`shouldStopAfterTurn`、steering queue 和 follow-up queue 决定继续下一次 provider request 还是 emit `agent_end`。[E: packages/agent/src/agent-loop.ts:215] [E: packages/agent/src/agent-loop.ts:222] [E: packages/agent/src/agent-loop.ts:233] [E: packages/agent/src/agent-loop.ts:243] [E: packages/agent/src/agent-loop.ts:261] [E: packages/agent/src/agent-loop.ts:226] [E: packages/agent/src/agent-loop.ts:257] [E: packages/agent/src/agent-loop.ts:261] [E: packages/agent/src/agent-loop.ts:272]
+17. assistant message 结束后,`runLoop` 先 emit `turn_end` 并写入 `lastCompletedTurn`。`prepareNextTurn` 只在内层 loop 下一轮开始、且 `lastCompletedTurn` 已设置、即将再 stream 一次 assistant 时调用;error/aborted、`shouldStopAfterTurn`、以及无更多 tool/queue 的出口会直接 emit `agent_end` 而不调用 `prepareNextTurn`。[E: packages/agent/src/agent-loop.ts:176] [E: packages/agent/src/agent-loop.ts:177] [E: packages/agent/src/agent-loop.ts:215] [E: packages/agent/src/agent-loop.ts:243] [E: packages/agent/src/agent-loop.ts:252] [E: packages/agent/src/agent-loop.ts:253] [E: packages/agent/src/agent-loop.ts:257] [E: packages/agent/src/agent-loop.ts:269] [E: packages/agent/src/agent-loop.ts:272]
 
 18. `AgentSession` 在构造时订阅底层 `agent` events,内部 `_handleAgentEvent` 会先更新 queue display state,再发 extension events,再把事件通知 `AgentSession.subscribe` 的 listeners;`message_end` 时它把 user/assistant/toolResult message append 到 session manager。[E: packages/coding-agent/src/core/agent-session.ts:403] [E: packages/coding-agent/src/core/agent-session.ts:644] [E: packages/coding-agent/src/core/agent-session.ts:647] [E: packages/coding-agent/src/core/agent-session.ts:655] [E: packages/coding-agent/src/core/agent-session.ts:661] [E: packages/coding-agent/src/core/agent-session.ts:668] [E: packages/coding-agent/src/core/agent-session.ts:671] [E: packages/coding-agent/src/core/agent-session.ts:674] [E: packages/coding-agent/src/core/agent-session.ts:690]
 

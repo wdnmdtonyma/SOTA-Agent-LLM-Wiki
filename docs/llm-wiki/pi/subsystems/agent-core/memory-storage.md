@@ -33,7 +33,7 @@ updated: 853a80d26c
 
 `InMemorySessionRepo` 实现无类型参数特化的 `SessionRepo`（默认 `SessionMetadata` / `SessionCreateOptions` / `void` list options）。它只拥有进程内 `Map`，没有文件系统、header 或 disposal 协议。[E: packages/agent/src/harness/session/memory.ts:148] [E: packages/agent/src/harness/session/memory.ts:149]
 
-`InMemorySessionStorage` 实现 `SessionStorage`：所有写操作直接 `SessionState.applyMutation()`；读操作返回 `structuredClone` 副本。[E: packages/agent/src/harness/session/memory.ts:25] [E: packages/agent/src/harness/session/memory.ts:68] [E: packages/agent/src/harness/session/memory.ts:93]
+`InMemorySessionStorage` 实现 `SessionStorage`：所有写操作直接 `SessionState.applyMutation()`。`getMetadata` / `getEntry` / `findEntries` / `findRecords` / `getLog` / `getStats` 返回 `structuredClone` 副本；`getLanes`、`getName`、`getLabel` 直接返回 `SessionState` 读结果，不 clone。[E: packages/agent/src/harness/session/memory.ts:25] [E: packages/agent/src/harness/session/memory.ts:43] [E: packages/agent/src/harness/session/memory.ts:68] [E: packages/agent/src/harness/session/memory.ts:93] [E: packages/agent/src/harness/session/memory.ts:120] [E: packages/agent/src/harness/session/memory.ts:128]
 
 `create` / `open` / `fork` 都 `new Session(storage)`，因此调用方面与 JSONL 相同。[E: packages/agent/src/harness/session/memory.ts:160] [E: packages/agent/src/harness/session/memory.ts:164] [E: packages/agent/src/harness/session/memory.ts:184]
 
@@ -62,13 +62,13 @@ repo 的 `sessions: Map<string, InMemorySessionStorage>` 以 session id 为键�
 3. `list@packages/agent/src/harness/session/memory.ts:167` 对 Map 中每个 storage `getMetadata()`，无过滤、无排序约定写在代码里（遍历顺序即 Map 插入顺序）。[E: packages/agent/src/harness/session/memory.ts:168]
 4. `delete@packages/agent/src/harness/session/memory.ts:171` 直接 `sessions.delete(metadata.id)`，不存在也不报错。[E: packages/agent/src/harness/session/memory.ts:172]
 5. `fork@packages/agent/src/harness/session/memory.ts:175`：目标 id 同样判重；`parentSessionId` 默认 `source.id`；`sourceStorage.fork` 新建空 storage，再对 `createForkMutations(options)` 逐条 `applyMutation`。[E: packages/agent/src/harness/session/memory.ts:177] [E: packages/agent/src/harness/session/memory.ts:180] [E: packages/agent/src/harness/session/memory.ts:33] [E: packages/agent/src/harness/session/memory.ts:35]
-6. `createLane` / `moveLane` / `setName` / `setLabel` 都先 validate，再 apply 一条带 `nextSequence` 的 lane 或 fact mutation。[E: packages/agent/src/harness/session/memory.ts:48] [E: packages/agent/src/harness/session/memory.ts:54] [E: packages/agent/src/harness/session/memory.ts:125] [E: packages/agent/src/harness/session/memory.ts:133]
+6. `createLane` 先 `validateNewLane` / `validateTarget`，`moveLane` 先 `requireLane` / `validateTarget`，`setLabel` 先 `validateTarget`，再 apply 一条带 `nextSequence` 的 lane 或 fact mutation。`setName` 只 `applyMutation({ kind: "fact", fact: "name", name })`，没有 `validateNewLane` / `requireLane` / `validateTarget`。[E: packages/agent/src/harness/session/memory.ts:48] [E: packages/agent/src/harness/session/memory.ts:54] [E: packages/agent/src/harness/session/memory.ts:124] [E: packages/agent/src/harness/session/memory.ts:125] [E: packages/agent/src/harness/session/memory.ts:133]
 
 ## 设计动机与权衡
 
 内存与 JSONL 共用 `SessionState`，因此 branch walk、duplicate id、lane 链接、open-operation 集合、stats 投影与 fork 选择语义一致；差别只在 durable 写入、metadata 形状、以及 JSONL 的文件修复/并发预约。[E: packages/agent/src/harness/session/memory.ts:27] [E: packages/agent/src/harness/session/state.ts:50] [I]
 
-每次读都 `structuredClone`，避免调用方 mutate 返回值污染内部 index。这比共享引用安全，但大 session 上有复制成本。[E: packages/agent/src/harness/session/memory.ts:93] [E: packages/agent/src/harness/session/memory.ts:97] [I]
+entry / record / metadata / log / stats 读路径 `structuredClone`，避免调用方 mutate 返回值污染内部 index。这比共享引用安全，但大 session 上有复制成本；`getLanes` / `getName` / `getLabel` 不走这条 clone。[E: packages/agent/src/harness/session/memory.ts:93] [E: packages/agent/src/harness/session/memory.ts:97] [E: packages/agent/src/harness/session/memory.ts:43] [E: packages/agent/src/harness/session/memory.ts:120] [E: packages/agent/src/harness/session/memory.ts:128] [I]
 
 ## Gotcha
 

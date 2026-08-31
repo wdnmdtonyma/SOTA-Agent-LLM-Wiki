@@ -89,7 +89,7 @@ metadata registry 记录 image cell/pixel size 和 transmission generation，并
 
 ## iTerm2 encoder
 
-`encodeITerm2(base64Data, options)` 生成 OSC 1337 `File=` sequence,默认 `inline=1`;`inline: false` 会写 `inline=0` [E: packages/tui/src/terminal-image.ts:286] [E: packages/tui/src/terminal-image.ts:288] [E: packages/tui/src/terminal-image.ts:311]。可选 `width`、`height` 会直接进入参数列表,`name` 会先用 base64 编码后写成 `name=...`,而 `preserveAspectRatio === false` 会追加 `preserveAspectRatio=0` [E: packages/tui/src/terminal-image.ts:301] [E: packages/tui/src/terminal-image.ts:302] [E: packages/tui/src/terminal-image.ts:303] [E: packages/tui/src/terminal-image.ts:304] [E: packages/tui/src/terminal-image.ts:305] [E: packages/tui/src/terminal-image.ts:307] [E: packages/tui/src/terminal-image.ts:308]。
+`encodeITerm2(base64Data, options)` 生成 OSC 1337 `File=` sequence：先写 `inline=0|1`，再始终写 `size=${Buffer.byteLength(base64Data, "base64")}`，然后才是可选 `width`/`height`/`name`/`preserveAspectRatio=0`。[E: packages/tui/src/terminal-image.ts:296] [E: packages/tui/src/terminal-image.ts:297] [E: packages/tui/src/terminal-image.ts:298] [E: packages/tui/src/terminal-image.ts:301] [E: packages/tui/src/terminal-image.ts:302] [E: packages/tui/src/terminal-image.ts:303] [E: packages/tui/src/terminal-image.ts:307] [E: packages/tui/src/terminal-image.ts:311]
 
 `renderImage()` 的 iTerm2 path 把 calculated `columns` 传给 `width`,把 `height` 固定为 `"auto"`,并把 `preserveAspectRatio` 的默认值设为 `true` [E: packages/tui/src/terminal-image.ts:647] [E: packages/tui/src/terminal-image.ts:648] [E: packages/tui/src/terminal-image.ts:649] [E: packages/tui/src/terminal-image.ts:650] [E: packages/tui/src/terminal-image.ts:651]。因此 `ImageRenderOptions.preserveAspectRatio` 当前只影响 iTerm2 render path,不影响 Kitty path [I]。
 

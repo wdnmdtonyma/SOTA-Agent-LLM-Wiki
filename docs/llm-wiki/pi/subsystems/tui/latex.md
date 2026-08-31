@@ -81,7 +81,7 @@ parser 认命令名或单字符 escape。未命中任何分支就把 `supported`
 
 对齐环境：`aligned`/`align`/`align*`/`alignedat`/`alignat`/`alignat*`/`gather`/`gathered`/`multline`/`multline*`/`split` 把每行编成一行文本。[E: packages/tui/src/latex.ts:1243] `cases`/`cases*` 用 `⎧⎨⎩`，条件前自动加 `if`（已有 if/when/for/otherwise 则不再加）。[E: packages/tui/src/latex.ts:1272] [E: packages/tui/src/latex.ts:1280] `equation`/`equation*`/`displaymath` 只渲染 body。[E: packages/tui/src/latex.ts:1239]
 
-display 分数画 `─` 横线并把分子分母居中；嵌套分数把 `stackFractions` 关掉，内层保持 `a/b`。[E: packages/tui/src/latex.ts:734] [E: packages/tui/src/latex.ts:1146] [E: packages/tui/src/latex.ts:1004] 测试锁定：`\frac{1}{2}` 在 display 是两行，`\tfrac{1}{2}` 与 `e^{\frac{1}{2}}` 仍是线性。[E: packages/tui/test/latex.test.ts:450] [E: packages/tui/test/latex.test.ts:481] [E: packages/tui/test/latex.test.ts:483]
+display 分数画 `─` 横线并把分子分母居中；嵌套分数把 `stackFractions` 关掉，内层保持 `a/b`。[E: packages/tui/src/latex.ts:734] [E: packages/tui/src/latex.ts:1146] [E: packages/tui/src/latex.ts:1004] 测试锁定：stacked display 分数是三行（分子、`─`、分母），例如 `\\frac{1}\\n{2}` → `1\\n─\\n2`，`\\frac{x^2+1}{x-1}` 同样三行；`\\tfrac{1}{2}` 与 `e^{\\frac{1}{2}}` 仍是线性。[E: packages/tui/test/latex.test.ts:450] [E: packages/tui/test/latex.test.ts:457] [E: packages/tui/test/latex.test.ts:458] [E: packages/tui/test/latex.test.ts:481] [E: packages/tui/test/latex.test.ts:483]
 
 display 极限：`\sum_{i=0}^n` 变成三行 `n / ∑ / i=0`；`\int\nolimits` 仍用下标，`\int\limits` 强制竖排。[E: packages/tui/src/latex.ts:1099] [E: packages/tui/test/latex.test.ts:430] [E: packages/tui/test/latex.test.ts:439]
 
@@ -95,7 +95,7 @@ display 极限：`\sum_{i=0}^n` 变成三行 `n / ∑ / i=0`；`\int\nolimits` �
 
 ## 失败回退到原文
 
-`LatexParser.render()` 在 `supported === false` 或输入没吃完时返回 `undefined`。[E: packages/tui/src/latex.ts:811] [E: packages/tui/src/latex.ts:813] 触发包括：未知命令、多余 `}`、未闭合 group、`\begin` 没有匹配 `\end`、悬挂的 `\`。[E: packages/tui/src/latex.ts:828] [E: packages/tui/src/latex.ts:901] [E: packages/tui/src/latex.ts:1084] [E: packages/tui/src/latex.ts:1232] [E: packages/tui/src/latex.ts:916] 测试：`\unknown{y}`、`\frac{1}{x`、`x}`、未闭合 `matrix`、末尾 `x\\` 都返回 `undefined`。[E: packages/tui/test/latex.test.ts:486] [E: packages/tui/test/latex.test.ts:490]
+`LatexParser.render()` 在 `supported === false` 或输入没吃完时返回 `undefined`。[E: packages/tui/src/latex.ts:811] [E: packages/tui/src/latex.ts:813] 触发包括：未知命令、多余 `}`、未闭合 group、`\begin` 没有匹配 `\end`、悬挂的 `\`。[E: packages/tui/src/latex.ts:828] [E: packages/tui/src/latex.ts:901] [E: packages/tui/src/latex.ts:1084] [E: packages/tui/src/latex.ts:1232] [E: packages/tui/src/latex.ts:916] 测试：`\\unknown{y}`、`\\frac{1}{x`、`x}`、未闭合 `matrix`、以及 JS `"x\\\\"`（一个反斜杠的悬挂 `\\`）返回 `undefined`。两个反斜杠的 `x\\\\` 是 `\\\\` newline command，不是这条 malformed 路径。[E: packages/tui/test/latex.test.ts:486] [E: packages/tui/test/latex.test.ts:491] [E: packages/tui/src/latex.ts:916]
 
 Markdown 只在 token 非 `pending` 且 `renderLatex !== false` 时调用 `renderLatex()`。失败用 `??` 回到原文：inline 用 `latexToken.raw`（含 `$`/`\(` 定界符），block 用 `raw.trim()`。[E: packages/tui/src/components/markdown.ts:508] [E: packages/tui/src/components/markdown.ts:509] [E: packages/tui/src/components/markdown.ts:648] [E: packages/tui/src/components/markdown.ts:649] streaming 未闭合的 math 标 `pending: true`，直接输出 raw，避免半截公式闪烁。[E: packages/tui/src/components/markdown.ts:84] [E: packages/tui/src/components/markdown.ts:114] [E: packages/tui/src/components/markdown.ts:508]
 

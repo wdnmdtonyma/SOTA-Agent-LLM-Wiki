@@ -123,7 +123,7 @@ updated: 853a80d26c
 | --- | --- | --- | --- |
 | `syntax` | `is not valid JSON` | `JSON.parse(line)` 抛错。[E: packages/agent/src/harness/session/jsonl/codec.ts:38] | `packages/agent/src/harness/session/jsonl/codec.ts:38` |
 | `schema` | `is not a JSON object` | parse 成功但根值不是非 null 普通对象。[E: packages/agent/src/harness/session/jsonl/codec.ts:40] | `packages/agent/src/harness/session/jsonl/codec.ts:40` |
-| `schema` | `has invalid ${field}` | 必填 string 字段类型不对。`field` 包括 `id`、`cwd`、`lane`、`entry type`、`parentId`、`record type`、`operation kind`、`customType`、`runId`、`targetId`。[E: packages/agent/src/harness/session/jsonl/codec.ts:45] [E: packages/agent/src/harness/session/jsonl/codec.ts:93] [E: packages/agent/src/harness/session/jsonl/codec.ts:95] | `packages/agent/src/harness/session/jsonl/codec.ts:45` |
+| `schema` | `has invalid ${field}` | 必填 string 字段类型不对。`field` 包括 `id`、`cwd`、`lane`、`entry type`、`parentId`、`record type`、`operation kind`、`customType`、`runId`、`targetId`、`leafId`。[E: packages/agent/src/harness/session/jsonl/codec.ts:45] [E: packages/agent/src/harness/session/jsonl/codec.ts:93] [E: packages/agent/src/harness/session/jsonl/codec.ts:95] [E: packages/agent/src/harness/session/jsonl/codec.ts:177] | `packages/agent/src/harness/session/jsonl/codec.ts:45` |
 | `schema` | `has invalid seq` | `seq` 不是正的 safe integer。[E: packages/agent/src/harness/session/jsonl/codec.ts:50] [E: packages/agent/src/harness/session/jsonl/codec.ts:51] | `packages/agent/src/harness/session/jsonl/codec.ts:51` |
 | `schema` | `has invalid timestamp` | timestamp 不是 `>= 0` 的 safe integer。[E: packages/agent/src/harness/session/jsonl/codec.ts:57] [E: packages/agent/src/harness/session/jsonl/codec.ts:58] | `packages/agent/src/harness/session/jsonl/codec.ts:58` |
 | `schema` | `is not a header` | header 行 `kind !== "header"`。[E: packages/agent/src/harness/session/jsonl/codec.ts:72] | `packages/agent/src/harness/session/jsonl/codec.ts:72` |
@@ -171,7 +171,7 @@ updated: 853a80d26c
 
 ## RecordLogCorruptionReason 实例
 
-`RecordLogCorruptionReason` 是 13 元封闭 union。[E: packages/agent/src/harness/reducer.ts:22] [E: packages/agent/src/harness/reducer.ts:33]
+`RecordLogCorruptionReason` 是 12 元封闭 union。[E: packages/agent/src/harness/reducer.ts:22] [E: packages/agent/src/harness/reducer.ts:34]
 
 | reason | 类型 | 含义边界 | 源 path |
 | --- | --- | --- | --- |

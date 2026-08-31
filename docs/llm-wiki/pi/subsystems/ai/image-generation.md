@@ -98,7 +98,7 @@ OpenRouter image provider 的 API adapter 来自 `openrouterImagesApi()` lazy wr
 
 ## 本轮 fetch 注入
 
-`ImagesOptions.fetch` 新增 request-scoped HTTP fetch surface；OpenRouter image client 把它传入 SDK，默认仍使用 `globalThis.fetch`。这与 chat/text wire 的 fetch 支持矩阵分开计数。[E: packages/ai/src/types.ts:260] [E: packages/ai/src/types.ts:134] [E: packages/ai/src/api/openrouter-images.ts:59] [E: packages/ai/src/api/openrouter-images.ts:127]
+`ImagesOptions.fetch` 新增 request-scoped HTTP fetch surface；OpenRouter image client 把它传入 SDK，默认仍使用 `globalThis.fetch`。这与 chat/text wire 的 fetch 支持矩阵分开计数。[E: packages/ai/src/types.ts:297] [E: packages/ai/src/types.ts:134] [E: packages/ai/src/api/openrouter-images.ts:59] [E: packages/ai/src/api/openrouter-images.ts:127]
 
 ## Sources
 

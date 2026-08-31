@@ -49,7 +49,7 @@ updated: 853a80d26c
 
 ### EntryBase：id / seq / parentId / timestamp
 
-`EntryBase` 四个共同字段：`type: string`、`id: string`、`seq: number`、`parentId: string | null`、`timestamp: number`。[E: packages/agent/src/harness/session/types.ts:14] [E: packages/agent/src/harness/session/types.ts:15] [E: packages/agent/src/harness/session/types.ts:16] [E: packages/agent/src/harness/session/types.ts:17] [E: packages/agent/src/harness/session/types.ts:18] [E: packages/agent/src/harness/session/types.ts:19]
+`EntryBase` 五个共同字段：`type: string`、`id: string`、`seq: number`、`parentId: string | null`、`timestamp: number`。[E: packages/agent/src/harness/session/types.ts:14] [E: packages/agent/src/harness/session/types.ts:15] [E: packages/agent/src/harness/session/types.ts:16] [E: packages/agent/src/harness/session/types.ts:17] [E: packages/agent/src/harness/session/types.ts:18] [E: packages/agent/src/harness/session/types.ts:19]
 
 - `seq`：跨 entry / record / lane / fact 的共享序号，storage 在 append 时分配，从 1 起连续递增。[E: packages/agent/src/harness/session/types.ts:17]
 - `parentId`：storage 写成“当时正在 append 的那条 lane 的 leaf”；根为 `null`。[E: packages/agent/src/harness/session/types.ts:18]

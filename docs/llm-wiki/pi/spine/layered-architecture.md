@@ -118,7 +118,7 @@ flowchart TD
 
 `AgentHarness` 持有 durable `Session` 并把它当作 `SessionTree` 暴露；这是 reusable harness 的会话入口，不是 `AgentSession`。[E: packages/agent/src/harness/agent-harness.ts:305] [E: packages/agent/src/harness/agent-harness.ts:307] [E: packages/agent/src/harness/agent-harness.ts:310]
 
-agent-core 也公开依赖 `ExecutionEnv` 的 bash / read / edit / write execution-tool factories，但调用方必须显式安装；coding-agent 仍拥有七工具 registry、产品 settings、extension / TUI integration 等产品语义。[E: packages/agent/src/harness/tools/index.ts:7] [E: packages/agent/src/harness/tools/index.ts:10] [E: packages/agent/src/harness/tools/index.ts:15] [E: packages/agent/src/harness/tools/index.ts:23]
+agent-core 也公开依赖 `ExecutionEnv` 的 bash / read / edit / write execution-tool factories，但调用方必须显式安装；coding-agent 仍拥有八工具 registry（`read`/`bash`/`powershell`/`edit`/`write`/`grep`/`find`/`ls`）、产品 settings、extension / TUI integration 等产品语义。[E: packages/agent/src/harness/tools/index.ts:7] [E: packages/agent/src/harness/tools/index.ts:10] [E: packages/agent/src/harness/tools/index.ts:15] [E: packages/agent/src/harness/tools/index.ts:23] [E: packages/coding-agent/src/core/tools/index.ts:95] [E: packages/coding-agent/src/core/tools/index.ts:182]
 
 `pi-coding-agent` 在配置、session event、状态 getter 和工具切换中直接使用 core 的 `Agent`，说明产品层依赖 core runtime 的状态、事件和工具抽象，而不是把 coding-agent UI 逻辑放回 core 包。[E: packages/coding-agent/src/core/agent-session.ts:202] [E: packages/coding-agent/src/core/agent-session.ts:312]
 
@@ -162,7 +162,7 @@ agent-core 也公开依赖 `ExecutionEnv` 的 bash / read / edit / write executi
 
 - 如果代码只需要 LLM provider / model / auth / stream 能力，应依赖 `pi-ai` 的 `Models` / provider API，而不是依赖 `AgentSession`。[E: packages/ai/src/index.ts:34] [I]
 - 如果代码需要 agent loop、tool abstraction、state / messages 和 reusable harness，应依赖 `pi-agent-core` 的 `Agent` / `AgentHarness` exports，而不是引入 coding-agent 的 settings、extensions 或 CLI modes。[E: packages/agent/src/index.ts:43] [E: packages/agent/src/index.ts:46] [I]
-- 如果代码需要 coding-agent 产品工具语义、七工具 registry、extension commands、resource loading、session files、settings persistence 或 TUI integration，应放在 `pi-coding-agent`；只需要抽象环境上的四个基础 execution tools 时可直接使用 agent-core factories。[E: packages/coding-agent/src/core/agent-session.ts:2772] [E: packages/agent/src/harness/tools/index.ts:23] [I]
+- 如果代码需要 coding-agent 产品工具语义、八工具 registry、extension commands、resource loading、session files、settings persistence 或 TUI integration，应放在 `pi-coding-agent`；只需要抽象环境上的四个基础 execution tools 时可直接使用 agent-core factories。[E: packages/coding-agent/src/core/tools/index.ts:95] [E: packages/coding-agent/src/core/agent-session.ts:2772] [E: packages/agent/src/harness/tools/index.ts:23] [I]
 - 如果代码需要远程会话，应走 `pi-protocol` + `pi-client` + composable `PiServer`；不要把它和本地 RPC mode 或已删除的 legacy JSONL IPC server 混为一谈。[E: packages/server/src/index.ts:4] [E: packages/server/package.json:8] [I]
 - 如果代码需要 durable harness session 且不想用 JSONL，应实现 `SessionRepo` 或使用 `@earendil-works/pi-session-backend-sqlite-node`；coding-agent CLI 默认仍用产品 `SessionManager`。[E: packages/session-backends/sqlite-node/package.json:4] [I]
 

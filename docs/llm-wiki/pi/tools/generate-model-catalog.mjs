@@ -12,7 +12,7 @@ const WIKI = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.resolve(WIKI, "../../../pi");
 const PROVIDERS = path.join(SRC, "packages/ai/src/providers");
 const OUTPUT = path.join(WIKI, "reference/model-catalog.md");
-const SHA = execFileSync("git", ["-C", SRC, "rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim();
+const SHA = execFileSync("git", ["-C", SRC, "rev-parse", "--short=10", "HEAD"], { encoding: "utf8" }).trim();
 
 const aggregatorPath = "packages/ai/src/models.generated.ts";
 const catalogPath = "packages/ai/src/model-catalog.ts";

@@ -34,7 +34,7 @@ updated: 853a80d26c
 
 ## 职责边界
 
-wire 协议调度层的职责是选择并调用一个 `ProviderStreams` implementation;`ProviderStreams` 的 runtime contract 只暴露 `stream` 与 `streamSimple`,二者返回 `AssistantMessageEventStream`。[E: packages/ai/src/types.ts:272][E: packages/ai/src/types.ts:273][E: packages/ai/src/types.ts:274] 因此 provider-specific payload 构造与 event normalization 不属于 dispatch contract 本身,而属于具体 `api/<name>.ts` implementation 的职责边界。[I]
+wire 协议调度层的职责是选择并调用一个 `ProviderStreams` implementation;`ProviderStreams` 的 runtime contract 必选 `stream` 与 `streamSimple`(二者返回 `AssistantMessageEventStream`),并可选 `fetchDeferred` / `cancelDeferred`。[E: packages/ai/src/types.ts:272][E: packages/ai/src/types.ts:273][E: packages/ai/src/types.ts:274][E: packages/ai/src/types.ts:275][E: packages/ai/src/types.ts:280] 因此 provider-specific payload 构造与 event normalization 不属于 dispatch contract 本身,而属于具体 `api/<name>.ts` implementation 的职责边界。[I]
 
 dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议名,`provider` 字段保存 provider id;因此同一个 provider 可以持有多个 API implementation,选择键来自 model metadata 而不是 caller 手写的协议枚举。[E: packages/ai/src/types.ts:821][E: packages/ai/src/types.ts:824][E: packages/ai/src/types.ts:825][E: packages/ai/src/models.ts:753][E: packages/ai/src/models.ts:775][E: packages/ai/src/models.ts:777][E: packages/ai/src/models.ts:779]
 
@@ -50,7 +50,7 @@ dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议�
 
 ## 数据模型
 
-`ProviderStreams` 是调度层的最小可执行值:它只有 `stream(model, context, options?)` 和 `streamSimple(model, context, options?)`,二者都返回 `AssistantMessageEventStream`。[E: packages/ai/src/types.ts:272][E: packages/ai/src/types.ts:273][E: packages/ai/src/types.ts:274]
+`ProviderStreams` 是调度层的最小可执行值:必选 `stream(model, context, options?)` 和 `streamSimple(model, context, options?)`,二者都返回 `AssistantMessageEventStream`;可选 `fetchDeferred` / `cancelDeferred` 由 `createProvider` 在任一 implementation 声明时挂到 provider,并由 `lazyApi` 按 `LazyApiCapabilities` 转发。[E: packages/ai/src/types.ts:272][E: packages/ai/src/types.ts:273][E: packages/ai/src/types.ts:274][E: packages/ai/src/types.ts:275][E: packages/ai/src/types.ts:280][E: packages/ai/src/models.ts:834][E: packages/ai/src/models.ts:835][E: packages/ai/src/models.ts:848][E: packages/ai/src/api/lazy.ts:68][E: packages/ai/src/api/lazy.ts:81][E: packages/ai/src/api/lazy.ts:89]
 
 `StreamFunction<TApi, TOptions>` 是 wire implementation 的函数形状,返回 `AssistantMessageEventStream`;error termination 在事件协议中表现为 `error` event,其 payload 是带 `stopReason` / `errorMessage` 字段的 `AssistantMessage`。[E: packages/ai/src/types.ts:332][E: packages/ai/src/types.ts:336][E: packages/ai/src/types.ts:437][E: packages/ai/src/types.ts:439][E: packages/ai/src/types.ts:551]
 
@@ -58,7 +58,7 @@ dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议�
 
 `ApiStreamOptions<TApi>` 把 known API string 映射到 provider-specific options type;未知自定义 API string 退回到 generic `StreamOptions & Record<string, unknown>`。[E: packages/ai/src/types.ts:243][E: packages/ai/src/types.ts:260][E: packages/ai/src/types.ts:261][E: packages/ai/src/types.ts:262]
 
-`SimpleStreamOptions` 是统一 convenience surface,只额外携带 `reasoning` 与 `thinkingBudgets`;provider-specific conversion 留在具体 wire module 内,例如 OpenAI Responses 与 Anthropic Messages 的 `streamSimple` 都在同文件内转换后调用 `stream`。[E: packages/ai/src/types.ts:314][E: packages/ai/src/types.ts:317][E: packages/ai/src/types.ts:321][E: packages/ai/src/api/openai-responses.ts:212][E: packages/ai/src/api/openai-responses.ts:224][E: packages/ai/src/api/anthropic-messages.ts:825][E: packages/ai/src/api/anthropic-messages.ts:865]
+`SimpleStreamOptions` 是统一 convenience surface,在 `StreamOptions` 上额外携带 `toolChoice`、`reasoning`、`deferred` 与 `thinkingBudgets`;provider-specific conversion 留在具体 wire module 内,例如 OpenAI Responses 与 Anthropic Messages 的 `streamSimple` 都在同文件内转换后调用 `stream`。[E: packages/ai/src/types.ts:314][E: packages/ai/src/types.ts:316][E: packages/ai/src/types.ts:317][E: packages/ai/src/types.ts:319][E: packages/ai/src/types.ts:321][E: packages/ai/src/api/openai-responses.ts:212][E: packages/ai/src/api/openai-responses.ts:224][E: packages/ai/src/api/anthropic-messages.ts:825][E: packages/ai/src/api/anthropic-messages.ts:865]
 
 ## 控制流
 
@@ -68,8 +68,8 @@ dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议�
 4. `createProvider@packages/ai/src/models.ts:323` 先判断 `input.api` 是否有 callable `stream`;有则视作 single `ProviderStreams`,否则视作 by-API map。[E: packages/ai/src/models.ts:762][E: packages/ai/src/models.ts:775][E: packages/ai/src/models.ts:776][E: packages/ai/src/models.ts:777]
 5. `apiFor(model)` 返回 single implementation 或 `byApi?.[model.api]`;这就是 wire 协议按 `Model.api` 派发的核心代码路径。[E: packages/ai/src/models.ts:779]
 6. `dispatch(model, run)` 找不到 implementation 时返回 `lazyStream` 包装的 `ModelsError("stream", ...)`;因此缺失 API implementation 会进入 `lazyStream` 的 async setup failure 路径,而不是从 provider method 同步抛出。[E: packages/ai/src/models.ts:785][E: packages/ai/src/models.ts:786][E: packages/ai/src/models.ts:787][E: packages/ai/src/models.ts:788][E: packages/ai/src/api/lazy.ts:54][E: packages/ai/src/api/lazy.ts:56][E: packages/ai/src/api/lazy.ts:57]
-7. provider 的 `stream` / `streamSimple` method 只把 `model/context/options` 转交给 dispatch 选出的 `ProviderStreams.stream` 或 `ProviderStreams.streamSimple`。[E: packages/ai/src/models.ts:829][E: packages/ai/src/models.ts:831]
-8. `lazyApi(load)` 自身返回 `ProviderStreams`:它的两个方法分别等待 `load()` 后调用目标 module 的 `stream` 或 `streamSimple`。[E: packages/ai/src/api/lazy.ts:68][E: packages/ai/src/api/lazy.ts:75][E: packages/ai/src/api/lazy.ts:76][E: packages/ai/src/api/lazy.ts:77][E: packages/ai/src/api/lazy.ts:78]
+7. provider 的 `stream` / `streamSimple` method 只把 `model/context/options` 转交给 dispatch 选出的 `ProviderStreams.stream` 或 `ProviderStreams.streamSimple`;若任一 implementation 声明了 `fetchDeferred` / `cancelDeferred`,provider 同样转发这些可选方法。[E: packages/ai/src/models.ts:829][E: packages/ai/src/models.ts:831][E: packages/ai/src/models.ts:834][E: packages/ai/src/models.ts:835][E: packages/ai/src/models.ts:848]
+8. `lazyApi(load, capabilities?)` 自身返回 `ProviderStreams`:它的 `stream` / `streamSimple` 等待 `load()` 后调用目标 module;当 capabilities 打开时再转发 `fetchDeferred` / `cancelDeferred`。[E: packages/ai/src/api/lazy.ts:68][E: packages/ai/src/api/lazy.ts:73][E: packages/ai/src/api/lazy.ts:75][E: packages/ai/src/api/lazy.ts:76][E: packages/ai/src/api/lazy.ts:77][E: packages/ai/src/api/lazy.ts:78][E: packages/ai/src/api/lazy.ts:81][E: packages/ai/src/api/lazy.ts:89]
 9. `lazyStream` 的 `setup().catch` 构造 `error` assistant message,向 outer stream push `{ type: "error", reason: "error", error: message }`,再 `end(message)`。[E: packages/ai/src/api/lazy.ts:54][E: packages/ai/src/api/lazy.ts:55][E: packages/ai/src/api/lazy.ts:56][E: packages/ai/src/api/lazy.ts:57]
 
 ## 设计动机与权衡

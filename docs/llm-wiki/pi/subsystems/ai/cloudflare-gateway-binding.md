@@ -77,7 +77,7 @@ pi 的 Cloudflare AI Gateway 默认运输是 HTTPS:`gateway.ai.cloudflare.com/v1
 
 `AiGatewayUniversalRequestLike` 是 `run()` 的一条入口:`provider`、`endpoint`、`headers: Record<string, string>`、`query: unknown`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:38] 可选第二参只有 `{ signal?: AbortSignal }`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:34]
 
-`CLOUDFLARE_GATEWAY_BINDING_AUTH_SENTINEL` 字面量是 `"cloudflare-gateway-binding"`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:55] 它不是 Cloudflare 平台 token。API 实现在 dispatch 前要求 API key 或可识别 auth header(`authorization` / `x-api-key` / `cf-aig-authorization`);调用方传 `cf-aig-authorization: Bearer ${CLOUDFLARE_GATEWAY_BINDING_AUTH_SENTINEL}` 只为过这道检查。shim 在调用 binding 前剥离 `cf-aig-authorization`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:71][E: packages/ai/src/api/openai-completions.ts:78][E: packages/ai/src/api/anthropic-messages.ts:297]
+`CLOUDFLARE_GATEWAY_BINDING_AUTH_SENTINEL` 字面量是 `"cloudflare-gateway-binding"`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:55] 它不是 Cloudflare 平台 token。Completions 的 `getClientApiKey()` 只认 `apiKey`、`authorization` 或 `cf-aig-authorization`；单独的 `x-api-key` 会抛 `No API key`。三 header 列表（含 `x-api-key`）是 Anthropic `assertRequestAuth()` 的规则。调用方传 `cf-aig-authorization: Bearer ${CLOUDFLARE_GATEWAY_BINDING_AUTH_SENTINEL}` 只为过 Completions 这道检查。shim 在调用 binding 前剥离 `cf-aig-authorization`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:71][E: packages/ai/src/api/openai-completions.ts:77][E: packages/ai/src/api/openai-completions.ts:78][E: packages/ai/src/api/openai-completions.ts:79][E: packages/ai/src/api/anthropic-messages.ts:297]
 
 `STRIP_HEADERS` 固定为 `content-length`、`host`、`cf-aig-authorization`。[E: packages/ai/src/api/cloudflare-gateway-binding.ts:71]
 

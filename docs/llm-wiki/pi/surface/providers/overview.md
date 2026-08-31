@@ -84,7 +84,7 @@ dynamic overlay 会从 `ModelsStore` 恢复，联网 fetch 成功后再替换并
 ## Gotcha
 
 - `getBuiltinProviders()` 名字指 generated catalog keys，不是 `builtinProviders()` runtime objects [E: packages/ai/src/providers/all.ts:69] [E: packages/ai/src/providers/all.ts:89]。
-- `getModels()` 是 last-known sync read；未出现模型可能表示未 refresh、未配置或 provider 抛错，不必然表示 provider 不存在 [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:294] [E: packages/ai/src/models.ts:301]。
+- `getModels()` 是 last-known sync catalog:动态 provider 返回上次 `refreshModels()` 的列表(首次前为空);实现不得抛错,`Models.getModels()` 在未知 provider 或实现抛错时返回 `[]`。空列表不等于 provider 未配置;配置与否由 `getAvailable()` / `checkAuth()` 判断 [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [E: packages/ai/src/models.ts:294] [E: packages/ai/src/models.ts:301]。
 - custom provider id 是 collection 的 replace key；`setProvider()` 以 `provider.id` upsert [E: packages/ai/src/models.ts:225] [E: packages/ai/src/models.ts:269] [E: packages/ai/src/models.ts:271]。
 
 ## Sources

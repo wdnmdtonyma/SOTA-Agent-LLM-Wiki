@@ -30,16 +30,16 @@ updated: 853a80d26c
 
 ## 职责边界
 
-`CredentialStore` 是 `pi-ai` 的存储抽象; 从该 interface 的方法面看, 它不承载 provider-specific auth 解析策略 [I]。它只暴露 `read(providerId)`、`modify(providerId, fn)` 和 `delete(providerId)` 三个方法, 且 `modify` 的回调只接收当前 `Credential | undefined` 并返回新的 `Credential | undefined`。[E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:86][E: packages/ai/src/auth/types.ts:88][E: packages/ai/src/auth/types.ts:87]
+`CredentialStore` 是 `pi-ai` 的存储抽象; 从该 interface 的方法面看, 它不承载 provider-specific auth 解析策略 [I]。它暴露 `read(providerId)`、`list(options?)`、`modify(providerId, fn)` 和 `delete(providerId)`，`list` 返回 `Promise<readonly CredentialInfo[]>`，且 `modify` 的回调只接收当前 `Credential | undefined` 并返回新的 `Credential | undefined`。[E: packages/ai/src/auth/types.ts:70][E: packages/ai/src/auth/types.ts:70][E: packages/ai/src/auth/types.ts:76][E: packages/ai/src/auth/types.ts:86][E: packages/ai/src/auth/types.ts:93]
 
 `Credential` 是持久化或内存中保存的 credential shape, 不是单次请求直接使用的 auth shape: `Credential` 只能是 `ApiKeyCredential | OAuthCredential`, 而单次请求 auth 由 `ModelAuth` 的 `apiKey`、`headers`、`baseUrl` 表示。[E: packages/ai/src/auth/types.ts:7][E: packages/ai/src/auth/types.ts:8][E: packages/ai/src/auth/types.ts:9][E: packages/ai/src/auth/types.ts:10][E: packages/ai/src/auth/types.ts:37]
 
-`InMemoryCredentialStore` 是默认内存实现: 它实现 `CredentialStore`, 用 `Map<string, Credential>` 保存 credential, 并用 `Map<string, Promise<unknown>>` 保存每个 provider 的写入链。[E: packages/ai/src/auth/credential-store.ts:9][E: packages/ai/src/auth/credential-store.ts:10][E: packages/ai/src/auth/credential-store.ts:11]
+`InMemoryCredentialStore` 是默认内存实现: 它实现 `CredentialStore`（含 `list()`）, 用 `Map<string, Credential>` 保存 credential, 并用 `Map<string, Promise<unknown>>` 保存每个 provider 的写入链。[E: packages/ai/src/auth/credential-store.ts:9][E: packages/ai/src/auth/credential-store.ts:10][E: packages/ai/src/auth/credential-store.ts:11][E: packages/ai/src/auth/credential-store.ts:35]
 
 ## 关键文件
 
 - `packages/ai/src/auth/types.ts`: 定义 `ModelAuth`、`Credential` union、`CredentialStore` contract、`AuthContext`、`AuthResult`、`ApiKeyAuth`、`OAuthAuth` 和 `ProviderAuth`。[E: packages/ai/src/auth/types.ts:7][E: packages/ai/src/auth/types.ts:37][E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:97][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:170][E: packages/ai/src/auth/types.ts:206][E: packages/ai/src/auth/types.ts:237]
-- `packages/ai/src/auth/credential-store.ts`: 定义 `InMemoryCredentialStore`, 只从 `types.ts` 导入 `Credential` 和 `CredentialStore`, 因此该实现本身不依赖 provider auth handlers。[E: packages/ai/src/auth/credential-store.ts:1][E: packages/ai/src/auth/credential-store.ts:9][I]
+- `packages/ai/src/auth/credential-store.ts`: 定义 `InMemoryCredentialStore`, 从 `types.ts` 导入 `AuthOperationOptions`、`Credential`、`CredentialInfo` 和 `CredentialStore`, 并从 `../utils/abort.ts` 导入 `operationSignal` 与 `raceWithAbortSignal`; 该实现本身不依赖 provider auth handlers。[E: packages/ai/src/auth/credential-store.ts:1][E: packages/ai/src/auth/credential-store.ts:2][E: packages/ai/src/auth/credential-store.ts:9][I]
 
 ## 数据模型
 
@@ -49,11 +49,11 @@ updated: 853a80d26c
 
 `OAuthCredential` 继承 `OAuthCredentials` 并追加 `type: "oauth"`, 所以 `Credential` union 当前只有 api-key credential 与 OAuth credential 两种成员。[E: packages/ai/src/auth/types.ts:1][E: packages/ai/src/auth/types.ts:32][E: packages/ai/src/auth/types.ts:33][E: packages/ai/src/auth/types.ts:37]
 
-`CredentialStore.read(providerId)` 返回 `Promise<Credential | undefined>`, `CredentialStore.modify(providerId, fn)` 返回 `Promise<Credential | undefined>`, `CredentialStore.delete(providerId)` 返回 `Promise<void>`; 调用者必须用 `delete()` 表达 logout/removal, 因为 `modify()` 的返回类型没有单独的 delete sentinel。[E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:86][E: packages/ai/src/auth/types.ts:88][E: packages/ai/src/auth/types.ts:90][E: packages/ai/src/auth/types.ts:87][I]
+`CredentialStore.read(providerId)` 返回 `Promise<Credential | undefined>`, `CredentialStore.list(options?)` 返回 `Promise<readonly CredentialInfo[]>`, `CredentialStore.modify(providerId, fn)` 返回 `Promise<Credential | undefined>`, `CredentialStore.delete(providerId)` 返回 `Promise<void>`; 调用者必须用 `delete()` 表达 logout/removal, 因为 `modify()` 的返回类型没有单独的 delete sentinel。`InMemoryCredentialStore.list()` 把 map 项映射成 `{ providerId, type }`。[E: packages/ai/src/auth/types.ts:70][E: packages/ai/src/auth/types.ts:76][E: packages/ai/src/auth/types.ts:86][E: packages/ai/src/auth/types.ts:93][E: packages/ai/src/auth/credential-store.ts:35][E: packages/ai/src/auth/credential-store.ts:37][I]
 
 `AuthContext` 抽象 ambient context, 只暴露 `env(name)` 与 `fileExists(path)`; `AuthResult` 把解析后的 `ModelAuth` 放在 `auth`, 并可附带 provider-scoped `env` 与人类可读 `source`。[E: packages/ai/src/auth/types.ts:97][E: packages/ai/src/auth/types.ts:98][E: packages/ai/src/auth/types.ts:100][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:105][E: packages/ai/src/auth/types.ts:107][E: packages/ai/src/auth/types.ts:109]
 
-`ApiKeyAuth.resolve()` 接收 `model`、`ctx` 和可选 `credential`, 返回 `AuthResult | undefined`; `OAuthAuth` 把交互登录、刷新 credential、从 credential 派生 `ModelAuth` 拆成 `login()`、`refresh()`、`toAuth()`。[E: packages/ai/src/auth/types.ts:147][E: packages/ai/src/auth/types.ts:147][E: packages/ai/src/auth/types.ts:147][E: packages/ai/src/auth/types.ts:147][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:170][E: packages/ai/src/auth/types.ts:198][E: packages/ai/src/auth/types.ts:229]
+`ApiKeyAuth.resolve()` 接收 `{ ctx, credential?, signal }`, 没有 `model` 字段, 返回 `AuthResult | undefined`; `OAuthAuth` 把交互登录、刷新 credential、从 credential 派生 `ModelAuth` 拆成 `login()`、`refresh()`、`toAuth()`。[E: packages/ai/src/auth/types.ts:194][E: packages/ai/src/auth/types.ts:195][E: packages/ai/src/auth/types.ts:196][E: packages/ai/src/auth/types.ts:197][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:170][E: packages/ai/src/auth/types.ts:216][E: packages/ai/src/auth/types.ts:222]
 
 `ProviderAuth` 只包含可选 `apiKey?: ApiKeyAuth` 与 `oauth?: OAuthAuth`; credential storage 不选择 provider auth handler, handler choice belongs to auth resolution code that consumes both provider auth metadata and `CredentialStore` [I]。[E: packages/ai/src/auth/types.ts:237][E: packages/ai/src/auth/types.ts:238][E: packages/ai/src/auth/types.ts:239]
 

@@ -29,7 +29,7 @@ updated: 853a80d26c
 
 ## AgentSessionEvent 边界
 
-`AgentSessionEvent` 在 `agent-session.ts` 中定义为三段:第一段是 `Exclude<AgentEvent, { type: "agent_end" }>`;第二段是 coding-agent replacement `agent_end` 并额外加入 `willRetry: boolean`;第三段是 `queue_update`、`compaction_start`、`session_info_changed`、`thinking_level_changed`、`compaction_end`、`auto_retry_start` 和 `auto_retry_end` 7 个 session-owned events。[E: packages/coding-agent/src/core/agent-session.ts:144][E: packages/coding-agent/src/core/agent-session.ts:145][E: packages/coding-agent/src/core/agent-session.ts:146][E: packages/coding-agent/src/core/agent-session.ts:153][E: packages/coding-agent/src/core/agent-session.ts:170]
+`AgentSessionEvent` 在 `agent-session.ts` 中定义为三段:第一段是 `Exclude<AgentEvent, { type: "agent_end" }>`;第二段是 coding-agent replacement `agent_end` 并额外加入 `willRetry: boolean`;第三段是 session-owned events,包括 `agent_settled`、`queue_update`、`compaction_start`、`entry_appended`、`session_info_changed`、`thinking_level_changed`、`compaction_end`、`auto_retry_start` / `auto_retry_end`、`summarization_retry_*` 和 `bash_execution_update`。[E: packages/coding-agent/src/core/agent-session.ts:144][E: packages/coding-agent/src/core/agent-session.ts:145][E: packages/coding-agent/src/core/agent-session.ts:151][E: packages/coding-agent/src/core/agent-session.ts:158][E: packages/coding-agent/src/core/agent-session.ts:172][E: packages/coding-agent/src/core/agent-session.ts:186]
 
 `_handleAgentEvent()` 对 core `agent_end` 以 `{ ...event, willRetry: this._willRetryAfterAgentEnd(event) }` 形式转成 session event,对其它 inherited `AgentEvent` 原样转发给 session listeners; inherited payload 的完整静态 union 由 [ref.agent.agent-events](agent-events.md) 覆盖。[E: packages/coding-agent/src/core/agent-session.ts:671][I]
 

@@ -54,7 +54,7 @@ updated: 853a80d26c
 
 ## 2 用途定位
 
-`bash` 用于让模型在当前工作目录运行 shell command, 返回合并后的 stdout 和 stderr; tool description 还明确说明输出会按最后 `DEFAULT_MAX_LINES` 行或 `DEFAULT_MAX_BYTES / 1024` KB 截断, 截断时完整输出保存到临时文件 [E: packages/coding-agent/src/core/tools/bash.ts:523]。默认截断常量是 2000 lines 和 50KB, 两个限制谁先命中谁生效 [E: packages/coding-agent/src/core/tools/truncate.ts:11] [E: packages/coding-agent/src/core/tools/truncate.ts:12]。
+`bash` 用于让模型在当前工作目录运行 shell command, 返回合并后的 stdout 和 stderr; tool description 还明确说明输出会按最后 `DEFAULT_MAX_LINES` 行或 `DEFAULT_MAX_BYTES / 1024` KB 截断, 截断时完整输出保存到临时文件 [E: packages/coding-agent/src/core/tools/bash.ts:350]。默认截断常量是 2000 lines 和 50KB, 两个限制谁先命中谁生效 [E: packages/coding-agent/src/core/tools/truncate.ts:11] [E: packages/coding-agent/src/core/tools/truncate.ts:12]。
 
 这个节点只把 `bash` 作为模型工具详写; `AgentSession.executeBash()` 是会话层可直接调用的命令执行 API, 它复用 `executeBashWithOperations()` 并把结果记入 session, 但它不是模型通过 tool call 进入的 `createBashToolDefinition().execute()` 主路径 [E: packages/coding-agent/src/core/agent-session.ts:2976] [E: packages/coding-agent/src/core/agent-session.ts:2990] [E: packages/coding-agent/src/core/agent-session.ts:3003] [I]。
 
@@ -71,7 +71,7 @@ updated: 853a80d26c
 
 模型 `bash` tool 默认把当前 session/model metadata 暴露给子进程。`resolveSpawnContext()` 先从 shell env 副本中无条件删除 `PI_SESSION_ID`、`PI_SESSION_FILE`、`PI_PROVIDER`、`PI_MODEL`、`PI_REASONING_LEVEL`，避免继承到调用 Pi 进程的陈旧或伪造值 [E: packages/coding-agent/src/core/tools/bash.ts:178] [E: packages/coding-agent/src/core/tools/bash.ts:179] [E: packages/coding-agent/src/core/tools/bash.ts:180] [E: packages/coding-agent/src/core/tools/bash.ts:181] [E: packages/coding-agent/src/core/tools/bash.ts:182]。只有 `exposeSessionEnvironment` 为真且存在 extension context 时，才重新写入当前 session id、可选 session file、当前 model provider/id 与非空 thinking level [E: packages/coding-agent/src/core/tools/bash.ts:183] [E: packages/coding-agent/src/core/tools/bash.ts:185] [E: packages/coding-agent/src/core/tools/bash.ts:192]。
 
-`exposeSessionEnvironment` 默认 `true` [E: packages/coding-agent/src/core/tools/bash.ts:206] [E: packages/coding-agent/src/core/tools/bash.ts:345]；关闭时这些变量保持删除状态，并且 tool prompt 不再提示模型检查 `PI_*` [E: packages/coding-agent/src/core/tools/bash.ts:346] [E: packages/coding-agent/src/core/tools/bash.ts:520]。`spawnHook` 在清理/注入之后收到 `{ command, cwd, env }`，所以调用方仍能最终调整环境 [E: packages/coding-agent/src/core/tools/bash.ts:194] [E: packages/coding-agent/src/core/tools/bash.ts:195]。
+`exposeSessionEnvironment` 默认 `true` [E: packages/coding-agent/src/core/tools/bash.ts:206] [E: packages/coding-agent/src/core/tools/bash.ts:345]；关闭时这些变量保持删除状态，并且 tool prompt 不再提示模型检查 `PI_*` [E: packages/coding-agent/src/core/tools/bash.ts:352]。`spawnHook` 在清理/注入之后收到 `{ command, cwd, env }`，所以调用方仍能最终调整环境 [E: packages/coding-agent/src/core/tools/bash.ts:194] [E: packages/coding-agent/src/core/tools/bash.ts:195]。
 
 L2 反证边界：`AgentSession.executeBash()` 的 direct RPC/interactive helper 直接调用 `executeBashWithOperations()`，没有经过 `resolveSpawnContext()`；不能从模型 tool 的默认注入推断 direct bash command 也收到这五个变量 [E: packages/coding-agent/src/core/agent-session.ts:2976] [E: packages/coding-agent/src/core/agent-session.ts:2990] [E: packages/coding-agent/src/core/agent-session.ts:2986]。
 
