@@ -8,7 +8,7 @@ symbols: [normalize_tools_for_model_with_prefix, CallableToolCandidate, unique_c
 related: [subsys.mcp.client, subsys.mcp.connectors, tool.mcp-namespace-tools, spine.trace-mcp-call]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > MCP name qualification now lives in `codex-mcp/src/tools.rs`: raw MCP server/tool identities remain available for protocol routing, while `callable_namespace` and `callable_name` are sanitized, deduplicated, optionally legacy-prefixed, and bounded to the 128-byte model-visible name limit.[E: codex-rs/codex-mcp/src/tools.rs:25][E: codex-rs/codex-mcp/src/tools.rs:226]
@@ -24,17 +24,17 @@ updated: a9519cbcdd
 
 ## 职责边界
 
-本节点只覆盖 MCP tool names 从 raw identity 到 model-visible `ToolName(namespace, name)` 的转换；tool 是否启用由 `ToolFilter` 处理，tool 执行由 `McpConnectionSet::call_tool` 调用 raw server/tool name，Responses API tool router 由 core tool spec 层负责。[E: codex-rs/codex-mcp/src/tools.rs:67][E: codex-rs/codex-mcp/src/tools.rs:98][E: codex-rs/codex-mcp/src/connection_manager.rs:877][I]
+本节点只覆盖 MCP tool names 从 raw identity 到 model-visible `ToolName(namespace, name)` 的转换；tool 是否启用由 `ToolFilter` 处理，tool 执行由 `McpConnectionSet::call_tool` 调用 raw server/tool name，Responses API tool router 由 core tool spec 层负责。[E: codex-rs/codex-mcp/src/tools.rs:67][E: codex-rs/codex-mcp/src/tools.rs:98][E: codex-rs/codex-mcp/src/connection_manager.rs:892][I]
 
 当前 canonical implementation 在 `codex-rs/codex-mcp/src/tools.rs`：这里定义 `ToolInfo` 并由 `canonical_tool_name` 组合 callable namespace/name。[E: codex-rs/codex-mcp/src/tools.rs:25][E: codex-rs/codex-mcp/src/tools.rs:58][E: codex-rs/codex-mcp/src/tools.rs:59]
 
-MCP *server* 配置名与 model-visible *tool* 名是两层校验。startup 用 `validate_mcp_server_name` 接受 `a-zA-Z0-9_:@/.-`（package-style，例如 `@scope/server`）；tool/namespace 种子仍走 `sanitize_responses_api_tool_name`，再做 collision hash 与 128-byte fitting。不要把 server 名里的 `/` `@` 当成已经合法的 Responses tool 名。[E: codex-rs/codex-mcp/src/rmcp_client.rs:334][E: codex-rs/codex-mcp/src/rmcp_client.rs:862][E: codex-rs/codex-mcp/src/rmcp_client.rs:863][E: codex-rs/codex-mcp/src/tools.rs:139][E: codex-rs/codex-mcp/src/mcp/mod.rs:541]
+MCP *server* 配置名与 model-visible *tool* 名是两层校验。startup 用 `validate_mcp_server_name` 接受 `a-zA-Z0-9_:@/.-`（package-style，例如 `@scope/server`）；tool/namespace 种子仍走 `sanitize_responses_api_tool_name`，再做 collision hash 与 128-byte fitting。不要把 server 名里的 `/` `@` 当成已经合法的 Responses tool 名。[E: codex-rs/codex-mcp/src/rmcp_client.rs:336][E: codex-rs/codex-mcp/src/rmcp_client.rs:871][E: codex-rs/codex-mcp/src/rmcp_client.rs:872][E: codex-rs/codex-mcp/src/tools.rs:139][E: codex-rs/codex-mcp/src/mcp/mod.rs:546]
 
 ## 关键文件
 
 - `codex-rs/codex-mcp/src/tools.rs`: `ToolInfo`、legacy prefix、name normalization、collision hashing、128-byte fitting；file-schema shaping no longer belongs to this name-only module。[E: codex-rs/codex-mcp/src/tools.rs:25][E: codex-rs/codex-mcp/src/tools.rs:225][E: codex-rs/codex-mcp/src/tools.rs:226]
-- `codex-rs/codex-mcp/src/rmcp_client.rs`: uncached listing creates initial `callable_name` and `callable_namespace` seeds before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:622][E: codex-rs/codex-mcp/src/rmcp_client.rs:742][E: codex-rs/codex-mcp/src/rmcp_client.rs:748][E: codex-rs/codex-mcp/src/rmcp_client.rs:814][E: codex-rs/codex-mcp/src/rmcp_client.rs:815]
-- `codex-rs/codex-mcp/src/mcp/mod.rs`: defines `sanitize_responses_api_tool_name`; `tools.rs` imports and uses it before collision handling.[E: codex-rs/codex-mcp/src/mcp/mod.rs:541][E: codex-rs/codex-mcp/src/tools.rs:20][E: codex-rs/codex-mcp/src/tools.rs:139][E: codex-rs/codex-mcp/src/tools.rs:146]
+- `codex-rs/codex-mcp/src/rmcp_client.rs`: uncached listing creates initial `callable_name` and `callable_namespace` seeds before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:631][E: codex-rs/codex-mcp/src/rmcp_client.rs:751][E: codex-rs/codex-mcp/src/rmcp_client.rs:757][E: codex-rs/codex-mcp/src/rmcp_client.rs:823][E: codex-rs/codex-mcp/src/rmcp_client.rs:824]
+- `codex-rs/codex-mcp/src/mcp/mod.rs`: defines `sanitize_responses_api_tool_name`; `tools.rs` imports and uses it before collision handling.[E: codex-rs/codex-mcp/src/mcp/mod.rs:546][E: codex-rs/codex-mcp/src/tools.rs:20][E: codex-rs/codex-mcp/src/tools.rs:139][E: codex-rs/codex-mcp/src/tools.rs:146]
 
 ## 数据模型
 
@@ -55,8 +55,8 @@ MCP *server* 配置名与 model-visible *tool* 名是两层校验。startup 用 
 
 ## Codex Apps seeds
 
-- `list_tools_for_client_uncached` asks the underlying RMCP client for tools plus optional connector metadata, then dispatches to Codex Apps or regular MCP conversion before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:622][E: codex-rs/codex-mcp/src/rmcp_client.rs:637][E: codex-rs/codex-mcp/src/rmcp_client.rs:649][E: codex-rs/codex-mcp/src/rmcp_client.rs:742][E: codex-rs/codex-mcp/src/rmcp_client.rs:748]
-- Non-Codex-Apps servers cannot smuggle connector metadata into model-visible qualification: the regular MCP conversion strips untrusted connector meta and sets connector id/name to `None`, while preserving raw tool names and server-name namespaces.[E: codex-rs/codex-mcp/src/rmcp_client.rs:803][E: codex-rs/codex-mcp/src/rmcp_client.rs:809][E: codex-rs/codex-mcp/src/rmcp_client.rs:814][E: codex-rs/codex-mcp/src/rmcp_client.rs:815][E: codex-rs/codex-mcp/src/rmcp_client.rs:819][E: codex-rs/codex-mcp/src/rmcp_client.rs:820]
+- `list_tools_for_client_uncached` asks the underlying RMCP client for tools plus optional connector metadata, then dispatches to Codex Apps or regular MCP conversion before global normalization.[E: codex-rs/codex-mcp/src/rmcp_client.rs:631][E: codex-rs/codex-mcp/src/rmcp_client.rs:646][E: codex-rs/codex-mcp/src/rmcp_client.rs:658][E: codex-rs/codex-mcp/src/rmcp_client.rs:751][E: codex-rs/codex-mcp/src/rmcp_client.rs:757]
+- Non-Codex-Apps servers cannot smuggle connector metadata into model-visible qualification: the regular MCP conversion strips untrusted connector meta and sets connector id/name to `None`, while preserving raw tool names and server-name namespaces.[E: codex-rs/codex-mcp/src/rmcp_client.rs:812][E: codex-rs/codex-mcp/src/rmcp_client.rs:818][E: codex-rs/codex-mcp/src/rmcp_client.rs:823][E: codex-rs/codex-mcp/src/rmcp_client.rs:824][E: codex-rs/codex-mcp/src/rmcp_client.rs:828][E: codex-rs/codex-mcp/src/rmcp_client.rs:829]
 
 ## Sources
 

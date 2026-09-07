@@ -8,7 +8,7 @@ symbols: [CodexAuth, AuthHeaders, ExternalAuth, AuthManager, LoginCallbackResult
 related: [subsys.config-auth.credential-storage, config.auth-account, subsys.providers.provider-openai, subsys.cloud.cloud-config]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > Codex 认证流程把 API key、ChatGPT OAuth/device code、external auth（包括整组 HTTP headers）、agent identity、personal access token、Bedrock API key 和 Bedrock access keys 都统一为 `CodexAuth` snapshots；`AuthManager` 负责缓存、env/external auth precedence、forced login/workspace restrictions 和 token refresh。[E: codex-rs/login/src/auth/manager.rs:77][E: codex-rs/login/src/auth/manager.rs:85][E: codex-rs/login/src/auth/manager.rs:2345]
@@ -38,7 +38,7 @@ auth-flows 节点覆盖登录、限制、refresh 和 runtime auth snapshot，不
 
 `set_external_auth` 在 workload identity 未占用时走 `install_external_auth`：先 resolve、校验并 commit snapshot；`clear_external_auth` 同时清空 cache。外部 `ChatgptAuthTokens` 还会镜像到 process-local ephemeral store，让 app/connectors 自建的 `AuthManager` 也能读取，而 `Headers` 等其他 external variants 只更新当前 cache。[E: codex-rs/login/src/auth/manager.rs:2592][E: codex-rs/login/src/auth/manager.rs:2604][E: codex-rs/login/src/auth/manager.rs:2608][E: codex-rs/login/src/auth/manager.rs:2620][E: codex-rs/login/src/auth/manager.rs:2976][E: codex-rs/login/src/auth/manager.rs:2986]
 
-Workload identity 不是新的 `CodexAuth` variant。`is_workload_identity_selected()` 只要 process env 出现 federation rule / assertion file / context marker 就选中；部分配置会校验失败而不是回退到其它 credential。[E: codex-rs/login/src/auth/workload_identity.rs:128][E: codex-rs/login/src/auth/workload_identity.rs:137][E: codex-rs/login/src/auth/manager.rs:2721][E: codex-rs/login/src/auth/manager.rs:2723] `AuthManager` 把它安装成 `WorkloadIdentityExternalAuth`，远程 exec-server 注册在 selected 时走 `auth_provider_from_auth_manager`，否则用静态 `auth_provider_from_auth`。[E: codex-rs/cli/src/main.rs:2008][E: codex-rs/cli/src/main.rs:2009][E: codex-rs/cli/src/main.rs:2014]
+Workload identity 不是新的 `CodexAuth` variant。`is_workload_identity_selected()` 只要 process env 出现 federation rule / assertion file / context marker 就选中；部分配置会校验失败而不是回退到其它 credential。[E: codex-rs/login/src/auth/workload_identity.rs:128][E: codex-rs/login/src/auth/workload_identity.rs:137][E: codex-rs/login/src/auth/manager.rs:2721][E: codex-rs/login/src/auth/manager.rs:2723] `AuthManager` 把它安装成 `WorkloadIdentityExternalAuth`，远程 exec-server 注册在 selected 时走 `auth_provider_from_auth_manager`，否则用静态 `auth_provider_from_auth`。[E: codex-rs/cli/src/main.rs:2095][E: codex-rs/cli/src/main.rs:2096][E: codex-rs/cli/src/main.rs:2101]
 
 ## Browser OAuth flow
 

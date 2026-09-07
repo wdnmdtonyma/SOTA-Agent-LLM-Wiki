@@ -3,19 +3,20 @@ id: subsys.platform.worktree
 title: Managed worktree
 kind: subsystem
 tier: T2
-source: [codex-rs/worktree/src/lib.rs, codex-rs/worktree/src/settings.rs, codex-rs/worktree/src/git.rs, codex-rs/worktree/src/metadata.rs, codex-rs/git-utils/src/lib.rs]
-symbols: [WorktreeManager, WorktreeSettings, DEFAULT_WORKTREE_KEEP_COUNT, bind_thread, has_managed_layout]
+source: [codex-rs/worktree/src/lib.rs, codex-rs/worktree/src/settings.rs, codex-rs/worktree/src/git.rs, codex-rs/worktree/src/metadata.rs, codex-rs/git-utils/src/lib.rs, codex-rs/tui/src/slash_command.rs, codex-rs/tui/src/chatwidget/slash_dispatch.rs, codex-rs/tui/src/bottom_pane/slash_commands.rs, codex-rs/features/src/lib.rs]
+symbols: [WorktreeManager, WorktreeSettings, DEFAULT_WORKTREE_KEEP_COUNT, bind_thread, has_managed_layout, Feature::Worktrees]
 related: [subsys.platform.git-utils]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
-> `WorktreeManager` 只操作 Codex Desktop 契约下的 **managed worktree**：checkout 必须落在 managed root 的固定两段布局里，必须是 linked worktree，并能把 thread id 原子绑定到 Git metadata 里的 `codex-thread.json`。[E: codex-rs/worktree/src/lib.rs:18][E: codex-rs/worktree/src/lib.rs:42][E: codex-rs/worktree/src/metadata.rs:19]
+> `WorktreeManager` 按 Codex Desktop 契约 **创建、列出并绑定** managed worktree：checkout 必须落在 managed root 的固定两段布局里，必须是 linked worktree，并能把 thread id 原子绑定到 Git metadata 里的 `codex-thread.json`。TUI `/worktree` 是 `SlashCommand::Worktree`，由 `Feature::Worktrees` 控制可见性。[E: codex-rs/worktree/src/lib.rs:47][E: codex-rs/worktree/src/lib.rs:324][E: codex-rs/worktree/src/lib.rs:273][E: codex-rs/worktree/src/metadata.rs:49][E: codex-rs/tui/src/slash_command.rs:38][E: codex-rs/features/src/lib.rs:193]
 
 ## 能回答的问题
 
 - `WorktreeManager` 允许操作哪些 checkout？
+- `/worktree` slash 与 `Feature::Worktrees` 如何门控？
 - managed layout 的路径形状是什么？
 - `bind_thread` 如何防止两个 thread 抢同一 worktree？
 - `DEFAULT_WORKTREE_KEEP_COUNT` 和 `[desktop]` 哪些键对应？
@@ -23,32 +24,33 @@ updated: a9519cbcdd
 
 ## 职责边界
 
-`codex-rs/worktree` 不创建任意 git worktree，也不替代 `git-utils` 的 patch/baseline/metadata API。它只识别并约束 **already-managed** checkout：canonicalize 后必须在 `WorktreeSettings.root` 下，满足 `has_managed_layout`，并且 `git rev-parse --git-dir` 与 `--git-common-dir` 不同（linked worktree，不是主工作树）。[E: codex-rs/worktree/src/lib.rs:42][E: codex-rs/worktree/src/lib.rs:51][E: codex-rs/worktree/src/lib.rs:66]
+`codex-rs/worktree` 不替代 `git-utils` 的 patch/baseline API。`WorktreeManager::create` 会在 managed root 下 `git worktree add --detach --no-checkout` 再 hard-reset 填充文件；`list` / `bind_thread` / `owner` 仍只接受 **managed layout + linked worktree** checkout。[E: codex-rs/worktree/src/lib.rs:61][E: codex-rs/worktree/src/lib.rs:91][E: codex-rs/worktree/src/lib.rs:167][E: codex-rs/worktree/src/lib.rs:273][E: codex-rs/worktree/src/lib.rs:292][E: codex-rs/worktree/src/lib.rs:327]
 
-设置解析复用现有 `[desktop]` JSON map，不引入另一套 config 格式。[E: codex-rs/worktree/src/settings.rs:30]
+设置解析复用现有 `[desktop]` JSON map，不引入另一套 config 格式。[E: codex-rs/worktree/src/settings.rs:39]
 
 ## 关键 crate/文件
 
 | 文件 | 角色 |
 |---|---|
-| `lib.rs` | `WorktreeManager`、`managed_checkout`、`has_managed_layout`、linked-worktree 检查。[E: codex-rs/worktree/src/lib.rs:18][E: codex-rs/worktree/src/lib.rs:72] |
-| `settings.rs` | `[desktop]` 键、`DEFAULT_WORKTREE_KEEP_COUNT`、默认 root `codex_home/worktrees`。[E: codex-rs/worktree/src/settings.rs:14][E: codex-rs/worktree/src/settings.rs:18][E: codex-rs/worktree/src/settings.rs:35] |
+| `lib.rs` | `WorktreeManager`、`create`/`list`、`managed_checkout`、`has_managed_layout`、linked-worktree 检查。[E: codex-rs/worktree/src/lib.rs:47][E: codex-rs/worktree/src/lib.rs:61][E: codex-rs/worktree/src/lib.rs:335] |
+| `settings.rs` | `[desktop]` 键、`DEFAULT_WORKTREE_KEEP_COUNT`、默认 root `codex_home/worktrees`。[E: codex-rs/worktree/src/settings.rs:12][E: codex-rs/worktree/src/settings.rs:14][E: codex-rs/worktree/src/settings.rs:39] |
 | `metadata.rs` | `codex-thread.json` 读写、`bind_thread` 原子 persist。[E: codex-rs/worktree/src/metadata.rs:19][E: codex-rs/worktree/src/metadata.rs:49] |
-| `git.rs` | 去掉继承的 `GIT_*` 选择器，注入 `SAFE_BARE_REPOSITORY_CONFIG`，禁用 hooks/fsmonitor。[E: codex-rs/worktree/src/git.rs:15][E: codex-rs/worktree/src/git.rs:83] |
+| `git.rs` | 去掉继承的 `GIT_*` 选择器，注入 `SAFE_BARE_REPOSITORY_CONFIG`，禁用 hooks/fsmonitor。[E: codex-rs/worktree/src/git.rs:101][E: codex-rs/worktree/src/git.rs:124] |
+| TUI slash | `SlashCommand::Worktree`；dispatch 打开 managed worktree picker；popup 受 `worktrees_enabled` 过滤。[E: codex-rs/tui/src/slash_command.rs:38][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:253][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:80] |
 
 ## 数据模型
 
-`WorktreeSettings` 三个字段：`root`、`auto_cleanup_enabled`、`keep_count`。[E: codex-rs/worktree/src/settings.rs:22]
+`WorktreeSettings` 三个字段：`root`、`auto_cleanup_enabled`、`keep_count`。[E: codex-rs/worktree/src/settings.rs:20]
 
 `from_desktop_config` 读取：
 
 | desktop 键 | 默认 | 校验 |
 |---|---|---|
-| `git-worktree-root` | `codex_home/worktrees`；空字符串也回落默认 | 若提供必须是绝对路径 [E: codex-rs/worktree/src/settings.rs:14][E: codex-rs/worktree/src/settings.rs:35][E: codex-rs/worktree/src/settings.rs:46] |
-| `worktree-auto-cleanup-enabled` | `true` | 必须是 bool [E: codex-rs/worktree/src/settings.rs:15][E: codex-rs/worktree/src/settings.rs:61] |
-| `worktree-keep-count` | `DEFAULT_WORKTREE_KEEP_COUNT`（**15**） | 必须是正整数，且 `u64 → usize` 不溢出 [E: codex-rs/worktree/src/settings.rs:16][E: codex-rs/worktree/src/settings.rs:18][E: codex-rs/worktree/src/settings.rs:69] |
+| `git-worktree-root` | `codex_home/worktrees`；空字符串也回落默认 | 若提供必须是绝对路径 [E: codex-rs/worktree/src/settings.rs:12][E: codex-rs/worktree/src/settings.rs:44][E: codex-rs/worktree/src/settings.rs:54] |
+| `worktree-auto-cleanup-enabled` | `true` | 必须是 bool [E: codex-rs/worktree/src/settings.rs:13][E: codex-rs/worktree/src/settings.rs:67] |
+| `worktree-keep-count` | `DEFAULT_WORKTREE_KEEP_COUNT`（**15**） | 必须是正整数 [E: codex-rs/worktree/src/settings.rs:12][E: codex-rs/worktree/src/settings.rs:16][E: codex-rs/worktree/src/settings.rs:72] |
 
-`OwnerRecord` 是 versioned camelCase JSON：`version: 1`、`ownerThreadId`。空 thread id 或错误 version 视为 invalid。[E: codex-rs/worktree/src/metadata.rs:19][E: codex-rs/worktree/src/metadata.rs:24][E: codex-rs/worktree/src/metadata.rs:42]
+`OwnerRecord` 是 versioned camelCase JSON：`version: 1`、`ownerThreadId`。空 thread id 或错误 version 视为 invalid。[E: codex-rs/worktree/src/metadata.rs:22][E: codex-rs/worktree/src/metadata.rs:26][E: codex-rs/worktree/src/metadata.rs:42]
 
 ## Managed layout
 
@@ -58,15 +60,15 @@ updated: a9519cbcdd
 2. 第二段是任意 `Normal` 组件（worktree 名）；
 3. 不能再有后续组件。
 
-不在 root 下、只有一段、或 bucket 不是 4 位 hex，都返回 false。[E: codex-rs/worktree/src/lib.rs:72][E: codex-rs/worktree/src/lib.rs:83]
+不在 root 下、只有一段、或 bucket 不是 4 位 hex，都返回 false。[E: codex-rs/worktree/src/lib.rs:335][E: codex-rs/worktree/src/lib.rs:346]
 
-`WorktreeManager::new` 会 `dunce::simplified` settings root；`managed_checkout` 再 canonicalize root 与 checkout 后做 layout + linked-worktree 检查。[E: codex-rs/worktree/src/lib.rs:23][E: codex-rs/worktree/src/lib.rs:43]
+`WorktreeManager::new` 会 `dunce::simplified` settings root；`managed_checkout` 再 canonicalize root 与 checkout 后做 layout + linked-worktree 检查。[E: codex-rs/worktree/src/lib.rs:52][E: codex-rs/worktree/src/lib.rs:283]
 
-`linked_worktree_common_dir` 还要求 checkout 等于 `git rev-parse --show-toplevel`（必须是 worktree root），且 `--git-dir != --git-common-dir`。[E: codex-rs/worktree/src/lib.rs:61][E: codex-rs/worktree/src/lib.rs:66]
+`linked_worktree_common_dir` 还要求 checkout 是 worktree root，且 `--git-dir != --git-common-dir`。[E: codex-rs/worktree/src/lib.rs:323][E: codex-rs/worktree/src/lib.rs:329]
 
 ## bind_thread
 
-`WorktreeManager::bind_thread` 先 `managed_checkout`，再调 `metadata::bind_thread`。[E: codex-rs/worktree/src/lib.rs:32]
+`WorktreeManager::bind_thread` 先 `managed_checkout`，再调 `metadata::bind_thread`。[E: codex-rs/worktree/src/lib.rs:273]
 
 `bind_thread`：
 
@@ -79,21 +81,22 @@ updated: a9519cbcdd
 
 ## Git 执行面
 
-`git.rs` 的 `base_git_command` 删掉 `GIT_DIR` / `GIT_WORK_TREE` / `GIT_COMMON_DIR` 等继承选择器，从 cwd 选仓库；并加 `codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG`（`safe.bareRepository=explicit`）、`core.hooksPath` 指向 NUL/`/dev/null`、清空 `core.fsmonitor`。[E: codex-rs/worktree/src/git.rs:60][E: codex-rs/worktree/src/git.rs:83][E: codex-rs/worktree/src/git.rs:84][E: codex-rs/worktree/src/git.rs:86][E: codex-rs/git-utils/src/lib.rs:15]
+`git.rs` 的 Git 命令删掉 `GIT_DIR` / `GIT_WORK_TREE` / `GIT_COMMON_DIR` 等继承选择器，从 cwd 选仓库；并加 `codex_git_utils::SAFE_BARE_REPOSITORY_CONFIG`（`safe.bareRepository=explicit`）、`core.hooksPath` 指向 NUL/`/dev/null`、清空 `core.fsmonitor`。[E: codex-rs/worktree/src/git.rs:108][E: codex-rs/worktree/src/git.rs:124][E: codex-rs/worktree/src/git.rs:126][E: codex-rs/worktree/src/git.rs:128][E: codex-rs/git-utils/src/lib.rs:16]
 
 ## 设计动机与权衡
 
-Desktop 已经用 `[desktop]` 管 worktree root / cleanup / keep count；crate 只解析这些键，避免再发明配置面。[E: codex-rs/worktree/src/settings.rs:30][I]
+Desktop 已经用 `[desktop]` 管 worktree root / cleanup / keep count；crate 只解析这些键，避免再发明配置面。[E: codex-rs/worktree/src/settings.rs:39][I]
 
 `persist_noclobber` 而不是覆盖写，是为了绑定发布不替换别人的 owner；同 thread 重绑保持原 record。[E: codex-rs/worktree/src/metadata.rs:74][I]
 
-4-hex bucket 布局把大量 worktree 摊到浅目录里，同时让 manager 能用路径形状拒绝“随便一个 checkout”。[E: codex-rs/worktree/src/lib.rs:83][I]
+4-hex bucket 布局把大量 worktree 摊到浅目录里，同时让 manager 能用路径形状拒绝“随便一个 checkout”。[E: codex-rs/worktree/src/lib.rs:346][I]
 
 ## gotcha
 
-- `keep_count` / `auto_cleanup_enabled` 只被 settings 解析；`WorktreeManager` 当前公开 API 只有 `bind_thread` / `owner` / `settings`，cleanup 循环不在这个 crate 里。[E: codex-rs/worktree/src/lib.rs:28][E: codex-rs/worktree/src/lib.rs:32]
-- 主仓库 checkout（`git-dir == git-common-dir`）会被拒绝，即使它碰巧在 managed root 下。[E: codex-rs/worktree/src/lib.rs:66]
-- `git-worktree-root` 相对路径直接 bail，不会相对 `codex_home` 拼接。[E: codex-rs/worktree/src/settings.rs:46]
+- `keep_count` / `auto_cleanup_enabled` 只被 settings 解析；cleanup 循环不在这个 crate 里。公开 API 现在还有 `create` / `list`。[E: codex-rs/worktree/src/lib.rs:57][E: codex-rs/worktree/src/lib.rs:61][E: codex-rs/worktree/src/lib.rs:167]
+- 主仓库 checkout（`git-dir == git-common-dir`）会被拒绝，即使它碰巧在 managed root 下。[E: codex-rs/worktree/src/lib.rs:329]
+- `git-worktree-root` 相对路径直接 bail，不会相对 `codex_home` 拼接。[E: codex-rs/worktree/src/settings.rs:54]
+- `/worktree` 只在 `Feature::Worktrees`（key `worktrees`）启用时进入 slash popup。[E: codex-rs/features/src/lib.rs:1243][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:80][E: codex-rs/tui/src/slash_command.rs:103]
 
 ## Sources
 
@@ -102,6 +105,10 @@ Desktop 已经用 `[desktop]` 管 worktree root / cleanup / keep count；crate �
 - `codex-rs/worktree/src/git.rs`
 - `codex-rs/worktree/src/metadata.rs`
 - `codex-rs/git-utils/src/lib.rs`
+- `codex-rs/tui/src/slash_command.rs`
+- `codex-rs/tui/src/chatwidget/slash_dispatch.rs`
+- `codex-rs/tui/src/bottom_pane/slash_commands.rs`
+- `codex-rs/features/src/lib.rs`
 
 ## 相关
 

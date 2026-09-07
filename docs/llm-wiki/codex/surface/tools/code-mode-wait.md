@@ -8,7 +8,7 @@ symbols: [create_wait_tool, CodeModeWaitHandler, WAIT_TOOL_NAME, WaitRequest, Wa
 related: [tool.code-mode-exec, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > code-mode `wait` 是 `exec` 的 companion function tool：它用 cell id poll yielded JavaScript cell，或终止 running cell，并把 runtime response 交给和 `exec` 相同的 formatter。
@@ -23,9 +23,9 @@ updated: a9519cbcdd
 
 ## 注册与门控
 
-`wait` 不单独 gate；`finalize_tool_router` 在 code mode 生效时移除已有 plain `exec`/`wait`，`register_code_mode_executors` 再把 companion `wait` 与 `exec` 一起 prepend 到 registry。[E: codex-rs/core/src/tools/spec_plan.rs:371][E: codex-rs/core/src/tools/spec_plan.rs:373][E: codex-rs/core/src/tools/spec_plan.rs:379][E: codex-rs/core/src/tools/spec_plan.rs:420][E: codex-rs/core/src/tools/spec_plan.rs:904][E: codex-rs/core/src/tools/spec_plan.rs:905]
+`wait` 不单独 gate；`finalize_tool_router` 在 code mode 生效时移除已有 plain `exec`/`wait`，`register_code_mode_executors` 再把 companion `wait` 与 `exec` 一起 prepend 到 registry。[E: codex-rs/core/src/tools/spec_plan.rs:360][E: codex-rs/core/src/tools/spec_plan.rs:362][E: codex-rs/core/src/tools/spec_plan.rs:368][E: codex-rs/core/src/tools/spec_plan.rs:409][E: codex-rs/core/src/tools/spec_plan.rs:893][E: codex-rs/core/src/tools/spec_plan.rs:894]
 
-Guardian reviewer 的 `add_core_tool_sources` 提前返回，不会单独注册一个非 code-mode 的 `wait` handler。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1036] 但 `build_tool_router` 仍走 `finalize_tool_router`；guardian 模型处于 CodeMode/CodeModeOnly 时同样会安装 companion `wait`。集成测试断言 guardian 工具名包含 `exec` 与 `wait`。[E: codex-rs/core/src/tools/spec_plan.rs:199][E: codex-rs/core/src/guardian/tests.rs:2168]
+Guardian reviewer 的 `add_core_tool_sources` 提前返回，不会单独注册一个非 code-mode 的 `wait` handler。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:1029] 但 `build_tool_router` 仍走 `finalize_tool_router`；guardian 模型处于 CodeMode/CodeModeOnly 时同样会安装 companion `wait`。集成测试断言 guardian 工具名包含 `exec` 与 `wait`。[E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/guardian/tests.rs:2383]
 
 handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 不是 parallel-safe。[E: codex-rs/tools/src/tool_executor.rs:122][E: codex-rs/tools/src/tool_executor.rs:123]
 

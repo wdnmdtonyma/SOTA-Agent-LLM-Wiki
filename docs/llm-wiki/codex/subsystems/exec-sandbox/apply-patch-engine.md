@@ -8,7 +8,7 @@ symbols: [parse_patch, parse_patch_text, StreamingPatchParser, Hunk, UpdateFileC
 related: [tool.apply-patch, spine.trace-apply-patch, subsys.exec-sandbox.arg0-dispatch]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > apply_patch engine 把 custom tool 或 shell-heredoc 里的 patch 文本解析成 add/delete/update hunks，再用 filesystem abstraction 计算替换、写文件、移动文件或删除文件。[E: codex-rs/apply-patch/src/parser.rs:145][E: codex-rs/apply-patch/src/lib.rs:339][E: codex-rs/apply-patch/src/lib.rs:470]
@@ -80,15 +80,15 @@ apply_patch engine 节点覆盖 `codex_apply_patch` crate 的 parser、invocatio
 
 ## Core runtime 与 workspace protection
 
-direct custom-tool handler 和 shell/unified-exec interception 在验证成功后都进入 `execute_verified_patch`；该共用路径计算 effective permissions、运行 safety preparation，再构造 `ApplyPatchRequest` 交给 `ToolOrchestrator` 与 `ApplyPatchRuntime`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:430][E: codex-rs/core/src/tools/handlers/apply_patch.rs:524][E: codex-rs/core/src/tools/handlers/apply_patch.rs:542][E: codex-rs/core/src/tools/handlers/apply_patch.rs:558][E: codex-rs/core/src/tools/handlers/apply_patch.rs:569][E: codex-rs/core/src/tools/handlers/apply_patch.rs:589]
+direct custom-tool handler 和 shell/unified-exec interception 在验证成功后都进入 `execute_verified_patch`；该共用路径计算 effective permissions、运行 safety preparation，再构造 `ApplyPatchRequest` 交给 `ToolOrchestrator` 与 `ApplyPatchRuntime`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:420][E: codex-rs/core/src/tools/handlers/apply_patch.rs:513][E: codex-rs/core/src/tools/handlers/apply_patch.rs:543][E: codex-rs/core/src/tools/handlers/apply_patch.rs:547][E: codex-rs/core/src/tools/handlers/apply_patch.rs:575][E: codex-rs/core/src/tools/handlers/apply_patch.rs:597]
 
-core 通过 `Feature::ApplyPatchPreserveLineEndings` 选择 update mode；feature 当前 under-development 且默认关闭。standalone/arg0 路径则读 `CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS` env。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:61][E: codex-rs/core/src/tools/handlers/apply_patch.rs:65][E: codex-rs/features/src/lib.rs:1112][E: codex-rs/features/src/lib.rs:1115][E: codex-rs/apply-patch/src/lib.rs:59][E: codex-rs/apply-patch/src/lib.rs:91][E: codex-rs/apply-patch/src/lib.rs:93]
+core 通过 `Feature::ApplyPatchPreserveLineEndings` 选择 update mode；feature 当前 under-development 且默认关闭。standalone/arg0 路径则读 `CODEX_APPLY_PATCH_PRESERVE_LINE_ENDINGS` env。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:63][E: codex-rs/core/src/tools/handlers/apply_patch.rs:67][E: codex-rs/features/src/lib.rs:1149][E: codex-rs/features/src/lib.rs:1152][E: codex-rs/apply-patch/src/lib.rs:59][E: codex-rs/apply-patch/src/lib.rs:91][E: codex-rs/apply-patch/src/lib.rs:93]
 
 runtime 实际写入时调用 `apply_patch_with_options`，把 request 上的 update mode 放进 `ApplyPatchOptions`。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:179][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:181]
 
 Sandboxed patch runtime 从 executor base `PermissionProfile` 加上本次 patch 的 additional permissions 构造 filesystem context，并把 workspace roots 作为独立边界保留；它不会直接复用已经 materialize workspace roots 的 attempt profile。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:88][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:95][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:99][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:104]
 
-Restricted filesystem policy 默认保护 writable project roots 下的 `.git`、`.agents`、`.codex`；只有对具体 metadata path 的显式 write entry 才能形成更窄的例外。普通 workspace writable 并不等于这些 metadata children 可写。[E: codex-rs/protocol/src/permissions.rs:27][E: codex-rs/protocol/src/permissions.rs:32][E: codex-rs/protocol/src/permissions.rs:47][E: codex-rs/protocol/src/permissions.rs:62][E: codex-rs/protocol/src/permissions.rs:789][E: codex-rs/protocol/src/permissions.rs:790][E: codex-rs/protocol/src/permissions.rs:791]
+Restricted filesystem policy 默认保护 writable project roots 下的 `.git`、`.agents`、`.codex`；只有对具体 metadata path 的显式 write entry 才能形成更窄的例外。普通 workspace writable 并不等于这些 metadata children 可写。[E: codex-rs/protocol/src/permissions.rs:27][E: codex-rs/protocol/src/permissions.rs:32][E: codex-rs/protocol/src/permissions.rs:47][E: codex-rs/protocol/src/permissions.rs:62][E: codex-rs/protocol/src/permissions.rs:831][E: codex-rs/protocol/src/permissions.rs:832][E: codex-rs/protocol/src/permissions.rs:833]
 
 patch 执行失败且被判断为 sandbox denial 时，runtime 会记录 normalized filesystem violation，再把结果映射成 sandbox-denied error；该记录是 tracing seam，不是新的 protocol event。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:216][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:222][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:226]
 

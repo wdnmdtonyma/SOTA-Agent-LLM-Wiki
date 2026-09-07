@@ -8,7 +8,7 @@ symbols: [start_memories_startup_task, MemoriesExtension, build_memory_tool_deve
 related: [spine.extension-system, subsys.core.instruction-assembly, subsys.core.session-lifecycle, subsys.core.turn-engine, subsys.core.unified-exec, subsys.core.history-notes]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > 长期 Memory 拆成三层：`codex-rs/memories/write` 负责 startup extraction/consolidation 写路径，`codex-rs/memories/read` 负责 citation/usage/read helper，`codex-rs/ext/memories` 通过 extension API 把 `memory_summary.md` 注入 developer prompt 并可选暴露 dedicated memory tools。它不是 History notes 扩展：后者是 backend 私有 `history`/`notes` 回读面，private model-only。[E: codex-rs/memories/write/src/lib.rs:27][E: codex-rs/ext/memories/src/extension.rs:65][E: codex-rs/ext/history-notes/src/tools.rs:26]
@@ -38,13 +38,13 @@ updated: a9519cbcdd
 
 `MemoriesConfig::default` 默认生成和使用 memories，但 dedicated tools 默认关闭。[E: codex-rs/config/src/types.rs:344]
 
-`generate_memories` 决定 thread persistence metadata 的 initial `memory_mode`: 新建时为 true 则 `Enabled`，否则 `Disabled`。[E: codex-rs/core/src/session/session.rs:868]
+`generate_memories` 决定 thread persistence metadata 的 initial `memory_mode`: 新建时为 true 则 `Enabled`，否则 `Disabled`。[E: codex-rs/core/src/session/session.rs:886]
 
 Memory artifact layout：`memory_root(codex_home)` 是 `codex_home/memories`，`rollout_summaries_dir(root)` 是 `root/rollout_summaries`，`memory_extensions_root(root)` 是 `root/extensions`，`raw_memories_file(root)` 是 `root/raw_memories.md`。[E: codex-rs/memories/write/src/lib.rs:116][E: codex-rs/memories/write/src/lib.rs:120][E: codex-rs/memories/write/src/lib.rs:124][E: codex-rs/memories/write/src/lib.rs:128]
 
 ## Startup/write path
 
-1. App-server turn path 在成功提交有 input 的 turn 后调用 `codex_memories_write::start_memories_startup_task`。[E: codex-rs/app-server/src/request_processors/turn_processor.rs:661][E: codex-rs/memories/write/src/start.rs:24]
+1. App-server turn path 在成功提交有 input 的 turn 后调用 `codex_memories_write::start_memories_startup_task`。[E: codex-rs/app-server/src/request_processors/turn_processor.rs:672][E: codex-rs/memories/write/src/start.rs:24]
 2. Startup gate 跳过 ephemeral session、未开启 `Feature::MemoryTool` 的 session、以及 non-root agent；缺少 state DB 时直接跳过。[E: codex-rs/memories/write/src/start.rs:33][E: codex-rs/memories/write/src/start.rs:49]
 3. Background task 创建 memory root，seed extension instructions，prune stale stage-one outputs，检查 Codex rate limits，之后依次运行 Phase 1 和 Phase 2。[E: codex-rs/memories/write/src/start.rs:56][E: codex-rs/memories/write/src/start.rs:66][E: codex-rs/memories/write/src/start.rs:68][E: codex-rs/memories/write/src/start.rs:78]
 
@@ -68,7 +68,7 @@ Dedicated memory tools 只在 extension config enabled 且 `dedicated_tools` 为
 
 ## Thread memory mode 与清理
 
-`set_thread_memory_mode` 只持久化 active session 的 thread-level memory mode metadata。[E: codex-rs/core/src/session/handlers.rs:393]
+`set_thread_memory_mode` 只持久化 active session 的 thread-level memory mode metadata。[E: codex-rs/core/src/session/handlers.rs:387]
 
 `clear_memory_roots_contents` 会清空 `codex_home/memories` 和 legacy `codex_home/memories_extensions` 两个 root。[E: codex-rs/memories/write/src/lib.rs:23]
 

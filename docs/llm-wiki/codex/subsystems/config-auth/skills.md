@@ -8,7 +8,7 @@ symbols: [SkillMetadata, HostSkillRoot, SkillLoadOutcome, SkillDiscovery, SkillN
 related: [spine.extension-system, subsys.config-auth.plugins, subsys.config-auth.config-loading, subsys.core.instruction-assembly, config.skills-plugins-features]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > Codex skills 系统的 ownership 已拆开：`core-skills` crate 已删除。`codex-rs/skills` 持有 metadata model、explicit mention selection、implicit invocation 与 embedded system-skills 安装；`ext/skills` 持有 host root discovery、loader/namespace、provider catalog、model-visible rendering、WorldState/turn-input 投影、resource tools 与预算观测。[E: codex-rs/skills/src/model.rs:8][E: codex-rs/skills/src/selection.rs:42][E: codex-rs/ext/skills/src/host_roots.rs:28][E: codex-rs/ext/skills/src/extension.rs:79][E: codex-rs/ext/skills/src/render.rs:492][E: codex-rs/ext/skills/src/world_state.rs:10]

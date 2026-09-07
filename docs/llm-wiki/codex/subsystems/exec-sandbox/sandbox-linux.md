@@ -8,7 +8,7 @@ symbols: [LandlockCommand, linux_sandbox::run_main, apply_permission_profile_to_
 related: [subsys.exec-sandbox.overview, subsys.exec-sandbox.arg0-dispatch, subsys.exec-sandbox.file-system, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > Linux sandbox backend accepts a serialized `PermissionProfile`, resolves it to runtime filesystem/network policies, then normally uses a two-stage bubblewrap helper: the outer stage builds mount/user/pid/network namespaces, and the inner stage applies seccomp/no_new_privs before exec. Legacy Landlock filesystem enforcement is an explicit fallback path.[E: codex-rs/linux-sandbox/src/linux_run_main.rs:88][E: codex-rs/linux-sandbox/src/linux_run_main.rs:159][E: codex-rs/linux-sandbox/src/linux_run_main.rs:184][E: codex-rs/linux-sandbox/src/linux_run_main.rs:223][E: codex-rs/linux-sandbox/src/linux_run_main.rs:232][E: codex-rs/linux-sandbox/src/linux_run_main.rs:257][E: codex-rs/linux-sandbox/src/linux_run_main.rs:280][E: codex-rs/linux-sandbox/src/linux_run_main.rs:294]
@@ -23,7 +23,7 @@ updated: a9519cbcdd
 
 ## 职责边界
 
-Linux sandbox 节点覆盖 `codex-rs/linux-sandbox/src` helper 的 CLI、bwrap argv、Landlock/seccomp、proxy route activation 和 helper exec path。`SandboxManager::transform` 负责把 helper executable 插到 argv[0]，并给 helper 传入 permission-profile 参数；真正执行 helper 主逻辑的是 `codex_linux_sandbox::run_main()`。[E: codex-rs/sandboxing/src/manager.rs:411][E: codex-rs/sandboxing/src/manager.rs:413][E: codex-rs/sandboxing/src/manager.rs:425][E: codex-rs/sandboxing/src/manager.rs:434][E: codex-rs/sandboxing/src/manager.rs:438][E: codex-rs/linux-sandbox/src/lib.rs:32]
+Linux sandbox 节点覆盖 `codex-rs/linux-sandbox/src` helper 的 CLI、bwrap argv、Landlock/seccomp、proxy route activation 和 helper exec path。`SandboxManager::transform` 负责把 helper executable 插到 argv[0]，并给 helper 传入 permission-profile 参数；真正执行 helper 主逻辑的是 `codex_linux_sandbox::run_main()`。[E: codex-rs/sandboxing/src/manager.rs:435][E: codex-rs/sandboxing/src/manager.rs:437][E: codex-rs/sandboxing/src/manager.rs:449][E: codex-rs/sandboxing/src/manager.rs:458][E: codex-rs/sandboxing/src/manager.rs:462][E: codex-rs/linux-sandbox/src/lib.rs:32]
 
 ## 关键 crate/文件
 
@@ -73,7 +73,7 @@ Linux sandbox 节点覆盖 `codex-rs/linux-sandbox/src` helper 的 CLI、bwrap a
 
 - legacy Landlock 不能表达 restricted read-only policy；`apply_permission_profile_to_current_thread` 在 legacy filesystem path 遇到非 full-disk-read policy 会报 unsupported operation。[E: codex-rs/linux-sandbox/src/landlock.rs:71][E: codex-rs/linux-sandbox/src/landlock.rs:72][E: codex-rs/linux-sandbox/src/landlock.rs:73][E: codex-rs/linux-sandbox/src/landlock.rs:74]
 - managed network 即使 network policy enabled，也会让 `should_install_network_seccomp` 返回 true，因为 `allow_network_for_proxy` 需要 seccomp 配合代理路由语义。[E: codex-rs/linux-sandbox/src/landlock.rs:96][E: codex-rs/linux-sandbox/src/landlock.rs:102]
-- `CODEX_LINUX_SANDBOX_ARG0` 不是 shell 命令；它是 arg0 dispatch 识别 helper re-entry 的名字，`SandboxManager` 会用 `linux_sandbox_arg0_override` 生成这个 override。[E: codex-rs/sandboxing/src/manager.rs:438][E: codex-rs/sandboxing/src/manager.rs:728][E: codex-rs/sandboxing/src/manager.rs:729][E: codex-rs/sandboxing/src/manager.rs:732]
+- `CODEX_LINUX_SANDBOX_ARG0` 不是 shell 命令；它是 arg0 dispatch 识别 helper re-entry 的名字，`SandboxManager` 会用 `linux_sandbox_arg0_override` 生成这个 override。[E: codex-rs/sandboxing/src/manager.rs:462][E: codex-rs/sandboxing/src/manager.rs:765][E: codex-rs/sandboxing/src/manager.rs:766][E: codex-rs/sandboxing/src/manager.rs:769]
 
 ## Sources
 

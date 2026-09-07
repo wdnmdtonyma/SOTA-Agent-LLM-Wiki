@@ -1,6 +1,6 @@
 # RUN — 填充令(codex 源码 LLM Wiki)
 
-你是执行者。把本 wiki(`Best/docs/llm-wiki/codex/`)从"只有骨架"填成完整的、给 agent 检索的 LLM wiki。文档对象是 OpenAI **Codex** 真实源码(`Best/codex/`,相对本目录 `../../../codex/`,138-crate Rust workspace + TS/Py SDK)。要细到每个工具的字段与设计动机。
+你是执行者。把本 wiki(`Best/docs/llm-wiki/codex/`)从"只有骨架"填成完整的、给 agent 检索的 LLM wiki。文档对象是 OpenAI **Codex** 真实源码(`Best/codex/`,相对本目录 `../../../codex/`,145-crate Rust workspace + TS/Py SDK)。要细到每个工具的字段与设计动机。
 
 ## 0. 先读这五个文件(权威规范,必须遵守)
 1. `README.md` —— 形态、四支柱、证据图例、优先级、codex 画像。
@@ -16,7 +16,7 @@
 
 ## 2. 顺序(价值优先)
 1. **T0 `spine/`**(~10,mermaid 图先行)—— 先立脊柱(SQ/EQ 架构、一次 turn、工具调用解剖、沙箱执行流 + worked traces),后续节点引用它。
-2. **T1 `surface/tools/`**(38)—— 用户核心诉求;`exec_command`/`apply_patch`/`spawn_agent`/`sleep`/`send_user_message_async`/`new_context` 等大件优先;`shell_command` 已退役但仍保留映射节点。
+2. **T1 `surface/tools/`**(39)—— 用户核心诉求;`exec_command`/`apply_patch`/`spawn_agent`/`sleep`/`send_message_to_user_async`/`request_user_input_async`/`new_context` 等大件优先;`shell_command` 与 `codex mcp-server` 已退役但仍保留映射节点。
 3. **T2 `subsystems/`**:`core/` → `exec-sandbox/` → `mcp/` → `providers/` → `tui/` → `app-server/` → `config-auth/` → `cloud/` → `platform/`。
 4. 展开 **groups**(slash-commands / cli / config / app-server-rpc / features / 协议 catalog)。
 5. **T3 `reference/`**(协议 Op/Event catalog、数据模型、crate 索引、glossary、env、uncertainty)。

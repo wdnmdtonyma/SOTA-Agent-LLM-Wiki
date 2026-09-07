@@ -8,7 +8,7 @@ symbols: []
 related: [sdk.ts-overview, sdk.ts-events-items, sdk.ts-structured-output, sdk.py-overview, sdk.py-inputs-errors, rpc.overview]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > Codex SDK currently has two different runtime paths: TypeScript is a typed wrapper over `codex exec --experimental-json` JSONL events, while Python `openai_codex` is a typed JSON-RPC client over `codex app-server --listen stdio://` with a reader-thread message router.[E: sdk/typescript/src/exec.ts:92][E: sdk/typescript/src/exec.ts:196][E: sdk/typescript/src/exec.ts:237][E: sdk/python/src/openai_codex/client.py:238][E: sdk/python/src/openai_codex/client.py:252][E: sdk/python/src/openai_codex/_message_router.py:17]

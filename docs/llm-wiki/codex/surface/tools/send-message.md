@@ -8,7 +8,7 @@ symbols: [create_send_message_tool, SendMessageHandlerV2, multi_agents_v2::send_
 related: [tool.spawn-agent-v2, tool.followup-task, tool.wait-agent-v2]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > `send_message` 是 MultiAgentV2 的 queue-only 消息工具：它给已存在 agent 投递纯文本 inter-agent message，但不触发目标 agent 新 turn。
@@ -18,12 +18,12 @@ updated: a9519cbcdd
 | 项 | 当前源码事实 |
 |---|---|
 | wire name | `send_message`，由 handler `tool_name()` 和 spec builder 同时定义。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/send_message.rs:13][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:199] |
-| handler | V2 module re-export `send_message::Handler as SendMessageHandler`；`spec_plan.rs` 用 `SendMessageHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:35][E: codex-rs/core/src/tools/spec_plan.rs:49][E: codex-rs/core/src/tools/spec_plan.rs:1310] |
+| handler | V2 module re-export `send_message::Handler as SendMessageHandler`；`spec_plan.rs` 用 `SendMessageHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:35][E: codex-rs/core/src/tools/spec_plan.rs:50][E: codex-rs/core/src/tools/spec_plan.rs:1320] |
 | spec | `create_send_message_tool` 返回 function tool，`strict: false`、`defer_loading: None`，无 output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:198][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:202][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:209] |
 
 ## 注册与门控
 
-`send_message` 与其他 V2 协作工具一起注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支；exposure 与 namespace override 规则继承同一层 `multi_agent_v2_handler` 包装。子 agent 若当前模型不是 V2 leaf-capable（`model_info.multi_agent_version != Some(V2)`）则不会拿到这组工具。[E: codex-rs/core/src/tools/spec_plan.rs:1275][E: codex-rs/core/src/tools/spec_plan.rs:1278][E: codex-rs/core/src/tools/spec_plan.rs:667][E: codex-rs/core/src/tools/spec_plan.rs:1309]
+`send_message` 与其他 V2 协作工具一起注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支；exposure 与 namespace override 规则继承同一层 `multi_agent_v2_handler` 包装。子 agent 若当前模型不是 V2 leaf-capable（`model_info.multi_agent_version != Some(V2)`）则不会拿到这组工具。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1288][E: codex-rs/core/src/tools/spec_plan.rs:656][E: codex-rs/core/src/tools/spec_plan.rs:1319]
 
 handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 返回 false。[E: codex-rs/tools/src/tool_executor.rs:122]
 
@@ -40,11 +40,11 @@ schema required 为 `target` 和 `message`，additional properties 为 false；r
 
 共享 handler 解析目标、确认 agent 已知、确保 V2 agent loaded，随后构造带 author/recipient 的 `InterAgentCommunication`。QueueOnly 分支还构造 `AgentCommunicationKind::Message` 上下文，一起传给 `agent_control.send_inter_agent_communication`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:68][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:107][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:116]
 
-`QueueOnly` 会把 communication 的 `trigger_turn` 设为 false；这是它区别于 `followup_task` 的核心行为。因此 control 不会为 QueueOnly 做 execution-capacity 检查。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:21][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:104][E: codex-rs/core/src/agent/control.rs:226]
+`QueueOnly` 会把 communication 的 `trigger_turn` 设为 false；这是它区别于 `followup_task` 的核心行为。因此 control 不会为 QueueOnly 做 execution-capacity 检查。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:21][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:104][E: codex-rs/core/src/agent/control.rs:225]
 
 `parent_turn_id` 只在 `TriggerTurn` 时写入 start options；`root_turn_id` 始终从当前 turn metadata 传递。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:112][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:122]
 
-mailbox drain 先取**最后一个** trigger mail 的 `start_options` 作为基线，再把 parent/root turn id reduce 成“所有 trigger mail 都一致”的值；QueueOnly mail 不参与这条 lineage。[E: codex-rs/core/src/session/input_queue.rs:158][E: codex-rs/core/src/session/input_queue.rs:164]
+mailbox drain 先取**最后一个** trigger mail 的 `start_options` 作为基线，再把 parent/root turn id reduce 成“所有 trigger mail 都一致”的值；QueueOnly mail 不参与这条 lineage。[E: codex-rs/core/src/session/input_queue.rs:160][E: codex-rs/core/src/session/input_queue.rs:166]
 
 plaintext envelope 以 assistant role 注入目标 context，而不是 user role。[E: codex-rs/core/src/context/inter_agent_message.rs:51]
 

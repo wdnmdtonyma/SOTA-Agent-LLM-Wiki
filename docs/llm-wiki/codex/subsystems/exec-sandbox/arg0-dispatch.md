@@ -8,7 +8,7 @@ symbols: [arg0_dispatch, arg0_dispatch_or_else, Arg0DispatchPaths, prepare_path_
 related: [spine.process-lifecycle, subsys.exec-sandbox.sandbox-linux, subsys.exec-sandbox.apply-patch-engine, subsys.exec-sandbox.shell-escalation]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > arg0 dispatch 是 Codex 单二进制多入口机制:同一个 executable 可以根据 argv0/argv1 伪装成 `apply_patch`、`codex-linux-sandbox`、`codex-execve-wrapper`、exec-server fs helper、Unix exec helper、Windows sandbox wrapper 或 core apply-patch helper。[E: codex-rs/arg0/src/lib.rs:60][E: codex-rs/arg0/src/lib.rs:70][E: codex-rs/arg0/src/lib.rs:95][E: codex-rs/arg0/src/lib.rs:98][E: codex-rs/arg0/src/lib.rs:104][E: codex-rs/arg0/src/lib.rs:107][E: codex-rs/arg0/src/lib.rs:111][E: codex-rs/arg0/src/lib.rs:114]
@@ -27,7 +27,7 @@ arg0 dispatch 节点覆盖 `codex-rs/arg0/src/lib.rs` 的 alias dispatch、PATH 
 
 ## 关键 crate/文件
 
-- `codex-rs/arg0/src/lib.rs`: 常量、dispatch path struct、argv0/argv1 branch、PATH alias tempdir、dotenv guard、runtime wrapper。[E: codex-rs/arg0/src/lib.rs:12][E: codex-rs/arg0/src/lib.rs:20][E: codex-rs/arg0/src/lib.rs:23][E: codex-rs/arg0/src/lib.rs:60][E: codex-rs/arg0/src/lib.rs:338]
+- `codex-rs/arg0/src/lib.rs`: 常量、dispatch path struct、argv0/argv1 branch、PATH alias tempdir、dotenv guard、runtime wrapper。[E: codex-rs/arg0/src/lib.rs:13][E: codex-rs/arg0/src/lib.rs:21][E: codex-rs/arg0/src/lib.rs:24][E: codex-rs/arg0/src/lib.rs:60][E: codex-rs/arg0/src/lib.rs:338]
 - `codex-rs/linux-sandbox/src/lib.rs`: `codex_linux_sandbox::run_main()` 是 Linux sandbox argv0 branch 的目标函数。[E: codex-rs/linux-sandbox/src/lib.rs:32]
 - `codex-rs/apply-patch/src/lib.rs`: `CODEX_CORE_APPLY_PATCH_ARG1` 是 argv1 branch 的 marker。[E: codex-rs/apply-patch/src/lib.rs:55]
 - `codex-rs/shell-escalation/src/unix/execve_wrapper.rs`: `codex-execve-wrapper` argv0 branch 调用 Unix shell escalation wrapper。[E: codex-rs/arg0/src/lib.rs:70][E: codex-rs/arg0/src/lib.rs:87][E: codex-rs/shell-escalation/src/unix/execve_wrapper.rs:22]
@@ -36,7 +36,7 @@ arg0 dispatch 节点覆盖 `codex-rs/arg0/src/lib.rs` 的 alias dispatch、PATH 
 
 - `Arg0DispatchPaths`: 保存 stable current Codex executable、Linux sandbox helper executable 和 main execve wrapper executable 三个 optional paths。[E: codex-rs/arg0/src/lib.rs:28][E: codex-rs/arg0/src/lib.rs:34][E: codex-rs/arg0/src/lib.rs:35][E: codex-rs/arg0/src/lib.rs:36]
 - `Arg0PathEntryGuard`: 持有 temp dir、lock file 和 `Arg0DispatchPaths`，用于 alias tempdir 生命周期和 path lookup。[E: codex-rs/arg0/src/lib.rs:40][E: codex-rs/arg0/src/lib.rs:41][E: codex-rs/arg0/src/lib.rs:42][E: codex-rs/arg0/src/lib.rs:43]
-- constants: `APPLY_PATCH_ARG0` 是 `apply_patch`，兼容拼写 `MISSPELLED_APPLY_PATCH_ARG0` 是 `applypatch`，Linux sandbox alias 来自 `codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0`，Unix execve wrapper alias 常量是 `EXECVE_WRAPPER_ARG0`。[E: codex-rs/arg0/src/lib.rs:12][E: codex-rs/arg0/src/lib.rs:20][E: codex-rs/arg0/src/lib.rs:21][E: codex-rs/arg0/src/lib.rs:23]
+- constants: `APPLY_PATCH_ARG0` 是 `apply_patch`，兼容拼写 `MISSPELLED_APPLY_PATCH_ARG0` 是 `applypatch`，Linux sandbox alias 来自 `codex_sandboxing::landlock::CODEX_LINUX_SANDBOX_ARG0`，Unix execve wrapper alias 常量是 `EXECVE_WRAPPER_ARG0`。[E: codex-rs/arg0/src/lib.rs:13][E: codex-rs/arg0/src/lib.rs:21][E: codex-rs/arg0/src/lib.rs:22][E: codex-rs/arg0/src/lib.rs:24]
 
 ## 控制流
 

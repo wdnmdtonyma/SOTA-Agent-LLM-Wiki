@@ -8,15 +8,15 @@ symbols: [main, run_exec_server_command, ThreadManagerState::spawn_new_thread_wi
 related: [spine.overview, spine.sq-eq-architecture, spine.turn-end-to-end, cli.subcommands, subsys.core.session-lifecycle]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
-> Codex 进程生命周期先由 CLI `main` 进入 arg0/argv1 helper dispatch，再由 `cli_main` 选择各 surface；standalone `exec-server` surface 可运行 local listener 或注册 remote environment，`codex doctor` 走独立 diagnostics crate。agent runtime 边界仍是 `ThreadManagerState::spawn_thread` 调用 `Session::spawn`，返回 `Session` state 与 `SessionIo` endpoints。[E: codex-rs/cli/src/main.rs:1038][E: codex-rs/cli/src/main.rs:1758][E: codex-rs/cli/src/main.rs:1587][E: codex-rs/core/src/thread_manager.rs:1864][E: codex-rs/core/src/session/mod.rs:481]
+> Codex 进程生命周期先由 CLI `main` 进入 arg0/argv1 helper dispatch，再由 `cli_main` 选择各 surface；standalone `exec-server` surface 可运行 local listener 或注册 remote environment，`codex doctor` 走独立 diagnostics crate。agent runtime 边界仍是 `ThreadManagerState::spawn_thread` 调用 `Session::spawn`，返回 `Session` state 与 `SessionIo` endpoints。[E: codex-rs/cli/src/main.rs:1118][E: codex-rs/cli/src/main.rs:1919][E: codex-rs/cli/src/main.rs:1653][E: codex-rs/core/src/thread_manager.rs:1872][E: codex-rs/core/src/session/mod.rs:494]
 
 ## 能回答的问题
 
 - `codex` 可执行文件如何复用 argv0/argv1 helper 身份？
-- TUI、exec、MCP server、app-server、standalone exec-server、doctor 在 CLI 入口如何分流？
+- TUI、exec、app-server、standalone exec-server、doctor 在 CLI 入口如何分流？`codex mcp-server` 是否还存在？
 - 一个 agent thread 何时从 process lifecycle 进入 session lifecycle？
 - 为什么 `SessionConfigured` 必须作为新 thread 第一条事件？
 
@@ -28,7 +28,6 @@ flowchart TD
     ARG0 --> CLI["cli_main"]
     CLI --> TUI["run_interactive_tui"]
     CLI --> EXEC["codex_exec::run_main"]
-    CLI --> MCP["codex_mcp_server::run_main"]
     CLI --> APP["codex_app_server::run_main_with_transport_options"]
     CLI --> EXECSERVER["run_exec_server_command"]
     CLI --> DOCTOR["doctor::run_doctor"]
@@ -44,23 +43,23 @@ flowchart TD
 
 ## 端到端步骤
 
-1. CLI binary 的 `main` 读取 remote-control env，然后把 `cli_main` closure 交给 `arg0_dispatch_or_else`。[E: codex-rs/cli/src/main.rs:1038][E: codex-rs/cli/src/main.rs:1040][E: codex-rs/cli/src/main.rs:1041]
+1. CLI binary 的 `main` 读取 remote-control env，然后把 `cli_main` closure 交给 `arg0_dispatch_or_else`。[E: codex-rs/cli/src/main.rs:1118][E: codex-rs/cli/src/main.rs:1120][E: codex-rs/cli/src/main.rs:1121]
 2. `arg0_dispatch` 先检查 argv0：`codex-execve-wrapper` 走 shell escalation wrapper，`codex-linux-sandbox` 走 linux sandbox main，`apply_patch`/`applypatch` 走 standalone apply-patch main。[E: codex-rs/arg0/src/lib.rs:60][E: codex-rs/arg0/src/lib.rs:70][E: codex-rs/arg0/src/lib.rs:95][E: codex-rs/arg0/src/lib.rs:98]
 3. `arg0_dispatch` 还检查 argv1：unix exec helper、filesystem helper、Windows sandbox wrapper 和 `CODEX_CORE_APPLY_PATCH_ARG1` 都可以在进入普通 CLI 前被处理。apply-patch helper 读取 `apply_patch_file_update_mode_from_env` 决定是否保留原文件换行。[E: codex-rs/arg0/src/lib.rs:102][E: codex-rs/arg0/src/lib.rs:104][E: codex-rs/arg0/src/lib.rs:107][E: codex-rs/arg0/src/lib.rs:111][E: codex-rs/arg0/src/lib.rs:114][E: codex-rs/arg0/src/lib.rs:132]
 4. 普通路径下，`arg0_dispatch_or_else` 创建 `codex-main` thread，在线程内构建 Tokio runtime 并运行 async main closure；`run_main_with_arg0_guard` 给 main_fn 传入 helper executable paths。[E: codex-rs/arg0/src/lib.rs:219][E: codex-rs/arg0/src/lib.rs:233][E: codex-rs/arg0/src/lib.rs:238][E: codex-rs/arg0/src/lib.rs:250][E: codex-rs/arg0/src/lib.rs:271]
-5. `cli_main` 解析 `MultitoolCli`，把 `--enable/--disable` feature toggles 折叠为 config overrides，然后按 subcommand 分流。[E: codex-rs/cli/src/main.rs:1046][E: codex-rs/cli/src/main.rs:1058][E: codex-rs/cli/src/main.rs:1059][E: codex-rs/cli/src/main.rs:1091]
-6. 没有 subcommand（以及 `codex agents`）时进入 interactive TUI；`exec` 分支调用 `codex_exec::run_main`；MCP server 分支调用 `codex_mcp_server::run_main`；VS Code app-server 分支调用 `codex_app_server`；`doctor` 分支调用 doctor crate。[E: codex-rs/cli/src/main.rs:1092][E: codex-rs/cli/src/main.rs:1135][E: codex-rs/cli/src/main.rs:1144][E: codex-rs/cli/src/main.rs:1158][E: codex-rs/cli/src/main.rs:1181][E: codex-rs/cli/src/main.rs:1245][E: codex-rs/cli/src/main.rs:1587]
-7. `Subcommand::ExecServer` 调用 `run_exec_server_command`：remote 模式加载完整 config/auth 并注册 remote environment，且 `enable_workload_identity` 为 true；local 模式选择 listener URL 后运行 exec-server，workload identity 关闭。`--exit-on-stdin-close` 只在 remote 模式生效，并把 parent lifetime 从独立进程改为 stdin pipe。[E: codex-rs/cli/src/main.rs:1758][E: codex-rs/cli/src/main.rs:1765][E: codex-rs/cli/src/main.rs:1867][E: codex-rs/cli/src/main.rs:1871][E: codex-rs/cli/src/main.rs:1892][E: codex-rs/cli/src/main.rs:1928]
-8. Interactive TUI 的入口是 `run_interactive_tui`，内部再调 `codex_tui::run_main`；本节点不展开各 surface 到 core 的桥接文件，agent runtime 的已证源码边界从下一步的 ThreadManager entry 开始。[E: codex-rs/cli/src/main.rs:2557]
-9. `spawn_new_thread_with_source` / `spawn_thread` 处理 reserved-thread-id 约束、resumed-thread 去重，加载 user instructions/parent trace，再调用 `Session::spawn(SessionSpawnArgs { ... })`。[E: codex-rs/core/src/thread_manager.rs:1740][E: codex-rs/core/src/thread_manager.rs:1864][E: codex-rs/core/src/thread_manager.rs:1900][E: codex-rs/core/src/thread_manager.rs:1942][E: codex-rs/core/src/thread_manager.rs:1990]
-10. `Session::spawn` 包装 parent trace，`spawn_internal` 创建 channels、session state/services 和 background submission loop，返回 `(Arc<Session>, SessionIo)`。[E: codex-rs/core/src/session/mod.rs:481][E: codex-rs/core/src/session/mod.rs:497][E: codex-rs/core/src/session/mod.rs:547][E: codex-rs/core/src/session/mod.rs:807][E: codex-rs/core/src/session/mod.rs:819]
-11. `finalize_thread_spawn` 先通过 `io.next_event()` 读取启动握手，要求第一条是 `SessionConfigured`/`INITIAL_SUBMIT_ID`，然后才把 session+io 组装成 `CodexThread` 插入 map。[E: codex-rs/core/src/thread_manager.rs:2056][E: codex-rs/core/src/thread_manager.rs:2063][E: codex-rs/core/src/thread_manager.rs:2067][E: codex-rs/core/src/thread_manager.rs:2070]
+5. `cli_main` 解析 `MultitoolCli`，把 `--enable/--disable` feature toggles 折叠为 config overrides，然后按 subcommand 分流。`Subcommand` 共 **29** 个变体，没有 `McpServer`。[E: codex-rs/cli/src/main.rs:1127][E: codex-rs/cli/src/main.rs:1137][E: codex-rs/cli/src/main.rs:1140][E: codex-rs/cli/src/main.rs:1173][E: codex-rs/cli/src/main.rs:147]
+6. 没有 subcommand（以及 `codex agents`）时进入 interactive TUI；`exec` 分支调用 `codex_exec::run_main`；VS Code app-server 分支调用 `codex_app_server`；`doctor` 分支调用 doctor crate。stdio MCP **server** 入口已下线；`codex mcp` 只管理外部 MCP servers。[E: codex-rs/cli/src/main.rs:1174][E: codex-rs/cli/src/main.rs:1217][E: codex-rs/cli/src/main.rs:1226][E: codex-rs/cli/src/main.rs:1263][E: codex-rs/cli/src/main.rs:1311][E: codex-rs/cli/src/main.rs:1653]
+7. `Subcommand::ExecServer` 调用 `run_exec_server_command`：remote 模式加载完整 config/auth 并注册 remote environment，且 `enable_workload_identity` 为 true；local 模式选择 listener URL 后运行 exec-server。`--exit-on-stdin-close` 只在 remote 模式生效，并把 parent lifetime 从独立进程改为 stdin pipe。[E: codex-rs/cli/src/main.rs:1824][E: codex-rs/cli/src/main.rs:1919][E: codex-rs/cli/src/main.rs:1932][E: codex-rs/cli/src/main.rs:1939][E: codex-rs/cli/src/main.rs:1972]
+8. Interactive TUI 的入口是 `run_interactive_tui`，内部再调 `codex_tui::run_main`；本节点不展开各 surface 到 core 的桥接文件，agent runtime 的已证源码边界从下一步的 ThreadManager entry 开始。[E: codex-rs/cli/src/main.rs:2686]
+9. `spawn_new_thread_with_source` / `spawn_thread` 处理 reserved-thread-id 约束、resumed-thread 去重，加载 user instructions/parent trace，再调用 `Session::spawn(SessionSpawnArgs { ... })`。[E: codex-rs/core/src/thread_manager.rs:1748][E: codex-rs/core/src/thread_manager.rs:1872][E: codex-rs/core/src/thread_manager.rs:1998]
+10. `Session::spawn` 包装 parent trace，`spawn_internal` 创建 channels、session state/services 和 background submission loop，返回 `(Arc<Session>, SessionIo)`。[E: codex-rs/core/src/session/mod.rs:494][E: codex-rs/core/src/session/mod.rs:513][E: codex-rs/core/src/session/mod.rs:522][E: codex-rs/core/src/session/mod.rs:843][E: codex-rs/core/src/session/mod.rs:855]
+11. `finalize_thread_spawn` 先通过 `io.next_event()` 读取启动握手，要求第一条是 `SessionConfigured`/`INITIAL_SUBMIT_ID`，然后才把 session+io 组装成 `CodexThread` 插入 map。[E: codex-rs/core/src/thread_manager.rs:2065][E: codex-rs/core/src/thread_manager.rs:2072][E: codex-rs/core/src/thread_manager.rs:2076][E: codex-rs/core/src/thread_manager.rs:2079]
 
 ## 关键决策点
 
 - argv0/argv1 helper dispatch 让一个 binary 承担 helper 和普通 CLI 多种身份；普通 Codex runtime 只在 helper dispatch 未接管时启动。[E: codex-rs/arg0/src/lib.rs:60][E: codex-rs/arg0/src/lib.rs:98][E: codex-rs/arg0/src/lib.rs:114][E: codex-rs/arg0/src/lib.rs:219]
-- standalone exec-server 的 remote 与 local 生命周期不同：remote 模式可绑定 parent stdin 并优雅 shutdown，local listener 固定 independent/immediate shutdown；该 stdin 绑定是显式 opt-in，而非 exec-server 的默认退出策略。remote 模式才会打开 workload-identity。[E: codex-rs/cli/src/main.rs:1871][E: codex-rs/cli/src/main.rs:1892][E: codex-rs/cli/src/main.rs:1928]
-- `SessionConfigured` first-event gate 是 thread 注册前的启动握手；不满足该约束时 `finalize_thread_spawn` 返回 `SessionConfiguredNotFirstEvent`。[E: codex-rs/core/src/thread_manager.rs:2067][E: codex-rs/core/src/thread_manager.rs:2070]
+- standalone exec-server 的 remote 与 local 生命周期不同：remote 模式可绑定 parent stdin 并优雅 shutdown；该 stdin 绑定是显式 opt-in。remote 模式才会打开 workload-identity。[E: codex-rs/cli/src/main.rs:1939][E: codex-rs/cli/src/main.rs:1972]
+- `SessionConfigured` first-event gate 是 thread 注册前的启动握手；不满足该约束时 `finalize_thread_spawn` 返回 `SessionConfiguredNotFirstEvent`。[E: codex-rs/core/src/thread_manager.rs:2076][E: codex-rs/core/src/thread_manager.rs:2079]
 - process lifecycle 到 turn lifecycle 的边界是 `Session` 已创建、`SessionIo` 开始接收 submissions；一次 user turn 的细节属于 `spine.turn-end-to-end`。[I]
 
 ## 深挖入口

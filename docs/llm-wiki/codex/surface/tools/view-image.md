@@ -8,7 +8,7 @@ symbols: [create_view_image_tool, ViewImageToolOptions, ViewImageHandler, ViewIm
 related: [subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > `view_image` 是 Codex 的本地图片读取 function tool：模型传本地 `path`，handler 按选中 environment cwd 读 metadata 和 file bytes，处理成 data URL，并把结果作为 Responses API `input_image` content item 返回给模型。[E: codex-rs/core/src/tools/handlers/view_image_spec.rs:42][E: codex-rs/core/src/tools/handlers/view_image_spec.rs:48][E: codex-rs/core/src/tools/handlers/view_image.rs:127][E: codex-rs/core/src/tools/handlers/view_image.rs:160][E: codex-rs/core/src/tools/handlers/view_image.rs:174][E: codex-rs/core/src/tools/handlers/view_image.rs:198][E: codex-rs/core/src/tools/handlers/view_image.rs:238]
@@ -28,7 +28,7 @@ updated: a9519cbcdd
 
 | 项 | 值 |
 |---|---|
-| wire name | `ViewImageHandler::tool_name()` 返回 plain `"view_image"`；schema constructor 使用 `VIEW_IMAGE_TOOL_NAME`，协议常量值也是 `"view_image"`。[E: codex-rs/core/src/tools/handlers/view_image.rs:72][E: codex-rs/core/src/tools/handlers/view_image.rs:73][E: codex-rs/core/src/tools/handlers/view_image_spec.rs:43][E: codex-rs/protocol/src/models.rs:1613] |
+| wire name | `ViewImageHandler::tool_name()` 返回 plain `"view_image"`；schema constructor 使用 `VIEW_IMAGE_TOOL_NAME`，协议常量值也是 `"view_image"`。[E: codex-rs/core/src/tools/handlers/view_image.rs:72][E: codex-rs/core/src/tools/handlers/view_image.rs:73][E: codex-rs/core/src/tools/handlers/view_image_spec.rs:43][E: codex-rs/protocol/src/models.rs:1628] |
 | concrete handler | `ViewImageHandler` 保存 `ViewImageToolOptions`；`spec()` 调用 `create_view_image_tool(self.options)`。[E: codex-rs/core/src/tools/handlers/view_image.rs:30][E: codex-rs/core/src/tools/handlers/view_image.rs:31][E: codex-rs/core/src/tools/handlers/view_image.rs:76][E: codex-rs/core/src/tools/handlers/view_image.rs:77] |
 | ToolSpec | `create_view_image_tool` 返回 `ToolSpec::Function(ResponsesApiTool { ... })`，并声明 `output_schema: Some(view_image_output_schema(options))`。[E: codex-rs/core/src/tools/handlers/view_image_spec.rs:16][E: codex-rs/core/src/tools/handlers/view_image_spec.rs:42][E: codex-rs/core/src/tools/handlers/view_image_spec.rs:49] |
 | handler exposure | handler 未覆盖 `exposure()`，因此使用 `ToolExecutor` 默认 Direct。[E: codex-rs/core/src/tools/handlers/view_image.rs:71][E: codex-rs/tools/src/tool_executor.rs:113][E: codex-rs/tools/src/tool_executor.rs:114] |
@@ -37,7 +37,7 @@ updated: a9519cbcdd
 
 ## 2 用途定位
 
-`view_image` 用于图片已经存在于可访问文件系统上、需要视觉检查的场景。它不是简单返回路径或文本摘要，而是把图片编码进 `FunctionCallOutputContentItem::InputImage`，让下一步模型直接接收视觉输入。[E: codex-rs/core/src/tools/handlers/view_image_spec.rs:44][E: codex-rs/core/src/tools/handlers/view_image.rs:236][E: codex-rs/core/src/tools/handlers/view_image.rs:238][E: codex-rs/protocol/src/models.rs:2046][E: codex-rs/protocol/src/models.rs:2047][E: codex-rs/protocol/src/models.rs:2050]
+`view_image` 用于图片已经存在于可访问文件系统上、需要视觉检查的场景。它不是简单返回路径或文本摘要，而是把图片编码进 `FunctionCallOutputContentItem::InputImage`，让下一步模型直接接收视觉输入。[E: codex-rs/core/src/tools/handlers/view_image_spec.rs:44][E: codex-rs/core/src/tools/handlers/view_image.rs:236][E: codex-rs/core/src/tools/handlers/view_image.rs:238][E: codex-rs/protocol/src/models.rs:2061][E: codex-rs/protocol/src/models.rs:2062][E: codex-rs/protocol/src/models.rs:2065]
 
 ## 3 输入 schema 表
 
@@ -57,15 +57,15 @@ updated: a9519cbcdd
 
 ## 5 注册与门控
 
-`add_core_utility_tools` 只在 turn 有 environment 且 `Feature::ViewImage` 开启时注册 `ViewImageHandler`。`Feature::ViewImage` 是 Stable，默认开启。[E: codex-rs/core/src/tools/spec_plan.rs:1259][E: codex-rs/core/src/tools/spec_plan.rs:1261][E: codex-rs/features/src/lib.rs:890][E: codex-rs/features/src/lib.rs:893]
+`add_core_utility_tools` 只在 turn 有 environment 且 `Feature::ViewImage` 开启时注册 `ViewImageHandler`。`Feature::ViewImage` 是 Stable，默认开启。[E: codex-rs/core/src/tools/spec_plan.rs:1269][E: codex-rs/core/src/tools/spec_plan.rs:1271][E: codex-rs/features/src/lib.rs:921][E: codex-rs/features/src/lib.rs:924]
 
-Guardian reviewer 路径也会在 Managed sandbox、有 environment 且 `Feature::ViewImage` 开启时注册同一个 handler；options 同样携带 `include_environment_id` 和 `unified_image_budget`。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1003][E: codex-rs/core/src/tools/spec_plan.rs:1023][E: codex-rs/core/src/tools/spec_plan.rs:1024][E: codex-rs/core/src/tools/spec_plan.rs:1032]
+Guardian reviewer 路径也会在 Managed sandbox、有 environment 且 `Feature::ViewImage` 开启时注册同一个 handler；options 同样携带 `include_environment_id` 和 `unified_image_budget`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:992][E: codex-rs/core/src/tools/spec_plan.rs:1016][E: codex-rs/core/src/tools/spec_plan.rs:1017][E: codex-rs/core/src/tools/spec_plan.rs:1025]
 
-`include_environment_id` 在 `ToolEnvironmentMode::Multiple` 时为 true。[E: codex-rs/core/src/tools/spec_plan.rs:1004][E: codex-rs/core/src/tools/spec_plan.rs:1260][E: codex-rs/core/src/tools/spec_plan.rs:1269]
+`include_environment_id` 在 `ToolEnvironmentMode::Multiple` 时为 true。[E: codex-rs/core/src/tools/spec_plan.rs:993][E: codex-rs/core/src/tools/spec_plan.rs:1270][E: codex-rs/core/src/tools/spec_plan.rs:1279]
 
-`unified_image_budget` 来自 `unified_image_budget_enabled`：需要 `Feature::UnifiedImageBudget`，并且模型是 responses lite 或支持 original detail。[E: codex-rs/core/src/image_preparation.rs:49][E: codex-rs/core/src/image_preparation.rs:53][E: codex-rs/core/src/image_preparation.rs:54][E: codex-rs/core/src/tools/spec_plan.rs:1265][E: codex-rs/features/src/lib.rs:1416][E: codex-rs/features/src/lib.rs:1419]
+`unified_image_budget` 来自 `unified_image_budget_enabled`：需要 `Feature::UnifiedImageBudget`，并且模型是 responses lite 或支持 original detail。[E: codex-rs/core/src/image_preparation.rs:39][E: codex-rs/core/src/image_preparation.rs:43][E: codex-rs/core/src/image_preparation.rs:44][E: codex-rs/core/src/tools/spec_plan.rs:1275][E: codex-rs/features/src/lib.rs:1475][E: codex-rs/features/src/lib.rs:1478]
 
-original detail 能力来自 `can_request_original_image_detail(&turn_context.model_info)`，该 helper 当前直接读取 `ModelInfo.supports_image_detail_original`。[E: codex-rs/core/src/tools/spec_plan.rs:1262][E: codex-rs/tools/src/image_detail.rs:6][E: codex-rs/tools/src/image_detail.rs:7][E: codex-rs/protocol/src/openai_models.rs:431]
+original detail 能力来自 `can_request_original_image_detail(&turn_context.model_info)`，该 helper 当前直接读取 `ModelInfo.supports_image_detail_original`。[E: codex-rs/core/src/tools/spec_plan.rs:1272][E: codex-rs/tools/src/image_detail.rs:6][E: codex-rs/tools/src/image_detail.rs:7][E: codex-rs/protocol/src/openai_models.rs:444]
 
 handler 还有 runtime gate：当前模型的 `input_modalities` 必须包含 `InputModality::Image`，否则直接拒绝。[E: codex-rs/core/src/tools/handlers/view_image.rs:97][E: codex-rs/core/src/tools/handlers/view_image.rs:101][E: codex-rs/core/src/tools/handlers/view_image.rs:103]
 
@@ -80,7 +80,7 @@ handler 还有 runtime gate：当前模型的 `input_modalities` 必须包含 `I
 3. detail parsing 允许省略、`high` 和 `original`，其它字符串会返回 model-facing error。[E: codex-rs/core/src/tools/handlers/view_image.rs:132][E: codex-rs/core/src/tools/handlers/view_image.rs:134][E: codex-rs/core/src/tools/handlers/view_image.rs:135][E: codex-rs/core/src/tools/handlers/view_image.rs:137]
 4. 它选择 environment，将 `path` 相对 environment cwd 解析为 `PathUri`，构造 sandbox context 后读取 metadata；非文件 path 会被拒绝。[E: codex-rs/core/src/tools/handlers/view_image.rs:143][E: codex-rs/core/src/tools/handlers/view_image.rs:150][E: codex-rs/core/src/tools/handlers/view_image.rs:160][E: codex-rs/core/src/tools/handlers/view_image.rs:169]
 5. 读取 bytes 后，handler 先用 `image::load_from_memory` 拒绝非图片；再生成 `application/octet-stream` data URL。[E: codex-rs/core/src/tools/handlers/view_image.rs:174][E: codex-rs/core/src/tools/handlers/view_image.rs:184][E: codex-rs/core/src/tools/handlers/view_image.rs:198]
-6. default detail 是协议常量 `ImageDetail::High`；unified budget 开启，或 original 能力和请求同时满足时，输出 detail 才是 `ImageDetail::Original`。[E: codex-rs/protocol/src/models.rs:901][E: codex-rs/core/src/tools/handlers/view_image.rs:189][E: codex-rs/core/src/tools/handlers/view_image.rs:191][E: codex-rs/core/src/tools/handlers/view_image.rs:194]
+6. default detail 是协议常量 `ImageDetail::High`；unified budget 开启，或 original 能力和请求同时满足时，输出 detail 才是 `ImageDetail::Original`。[E: codex-rs/protocol/src/models.rs:906][E: codex-rs/core/src/tools/handlers/view_image.rs:189][E: codex-rs/core/src/tools/handlers/view_image.rs:191][E: codex-rs/core/src/tools/handlers/view_image.rs:194]
 7. handler 发出 `ImageViewItem` 的 started/completed events，然后返回 `ViewImageOutput`。[E: codex-rs/core/src/tools/handlers/view_image.rs:200][E: codex-rs/core/src/tools/handlers/view_image.rs:204][E: codex-rs/core/src/tools/handlers/view_image.rs:205][E: codex-rs/core/src/tools/handlers/view_image.rs:207]
 
 ## Sources

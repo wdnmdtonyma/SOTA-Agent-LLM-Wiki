@@ -8,10 +8,10 @@ symbols: [OnboardingScreen, OnboardingScreenArgs, OnboardingResult, run_onboardi
 related: [subsys.config-auth.auth-flows, subsys.config-auth.config-loading, subsys.tui.architecture]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
-> Onboarding 是 TUI 启动前/启动中的一个独立 screen loop：它接收 `OnboardingScreenArgs`、可选 app-server session、和现有 `Tui`，返回是否持久化 trust 以及用户是否选择退出。first-login 时 `StartupDraft` 会把初始 surface 设为 `Onboarding`，先不画 composer。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:91][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:503][E: codex-rs/tui/src/startup_draft.rs:54][E: codex-rs/tui/src/startup_orchestration.rs:165]
+> Onboarding 是 TUI 启动前/启动中的一个独立 screen loop：它接收 `OnboardingScreenArgs`、可选 app-server session、和现有 `Tui`，返回是否持久化 trust 以及用户是否选择退出。first-login 时 `StartupDraft` 会把初始 surface 设为 `Onboarding`，先不画 composer。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:91][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:504][E: codex-rs/tui/src/startup_draft.rs:54][E: codex-rs/tui/src/startup_orchestration.rs:180]
 
 ## 能回答的问题
 
@@ -25,13 +25,13 @@ updated: a9519cbcdd
 
 `OnboardingScreen` 保存 frame requester、steps、done/exit 状态；args 决定是否显示 trust/login screen、登录状态、app-server request handle 和 config。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:83][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:91][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:93][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:95]
 
-`run_onboarding_app` 创建 screen 后先 draw，再 `discard_pending_input_before_interactive_screen`，然后 pin `tui.event_stream()`；select loop 处理 key、paste、draw/resume/resize，key 分支后尝试持久化 trust。trust step 刚激活时也会先渲染再丢掉上一屏残留按键。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:511][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:516][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:520][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:525][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:531][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:628]
+`run_onboarding_app` 创建 screen 后先 draw，再 `discard_pending_input_before_interactive_screen`，然后 pin `tui.event_stream()`；select loop 处理 key、paste、draw/resume/resize，key 分支后尝试持久化 trust。trust step 刚激活时也会先渲染再丢掉上一屏残留按键。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:512][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:517][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:521][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:526][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:532][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:629]
 
-ChatGPT success message 后有一次 guard：检测 auth step 的 `SignInState::ChatGptSuccessMessage`，重置 SGR attributes/colors 并 clear terminal，避免成功消息残留样式污染后续 screen。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:548][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:552][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:575][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:576]
+ChatGPT success message 后有一次 guard：检测 auth step 的 `SignInState::ChatGptSuccessMessage`，重置 SGR attributes/colors 并 clear terminal，避免成功消息残留样式污染后续 screen。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:549][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:553][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:576][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:577]
 
 ## First-login 延迟 composer
 
-`startup_orchestration` 把 `StartupDraftInitialScreen` 设为 `Onboarding` 的条件是：没有 resume/fork/`agents_overview` picker、没有 OSS/remote endpoint、可复用 implicit local daemon 或 search-only override、没有 packaged defaults，且 `should_delay_startup_composer_for_first_login` 为真。`StartupDraft::show_initial_screen` 因此不会先画 composer；onboarding 结束后 `StartupDraftPump::show` 才揭示可编辑 composer。[E: codex-rs/tui/src/startup_orchestration.rs:152][E: codex-rs/tui/src/startup_orchestration.rs:154][E: codex-rs/tui/src/startup_orchestration.rs:156][E: codex-rs/tui/src/startup_orchestration.rs:157][E: codex-rs/tui/src/startup_orchestration.rs:158][E: codex-rs/tui/src/startup_orchestration.rs:165][E: codex-rs/tui/src/startup_draft.rs:271][E: codex-rs/tui/src/startup_draft.rs:279]
+`startup_orchestration` 把 `StartupDraftInitialScreen` 设为 `Onboarding` 的条件是：没有 resume/fork/`agents_overview` picker、没有 OSS/remote endpoint、可复用 implicit local daemon 或 search-only override、没有 packaged defaults，且 `should_delay_startup_composer_for_first_login` 为真。`StartupDraft::show_initial_screen` 因此不会先画 composer；onboarding 结束后 `StartupDraftPump::show` 才揭示可编辑 composer。[E: codex-rs/tui/src/startup_orchestration.rs:167][E: codex-rs/tui/src/startup_orchestration.rs:169][E: codex-rs/tui/src/startup_orchestration.rs:171][E: codex-rs/tui/src/startup_orchestration.rs:172][E: codex-rs/tui/src/startup_orchestration.rs:173][E: codex-rs/tui/src/startup_orchestration.rs:180][E: codex-rs/tui/src/startup_draft.rs:272][E: codex-rs/tui/src/startup_draft.rs:280]
 
 `should_delay_startup_composer_for_first_login` 只在默认文件账户尚未能认证时返回 true：环境 token、系统 config、`codex_home` 状态文件、daemon socket 或 managed configuration 任一存在，都会立即显示 composer。[E: codex-rs/tui/src/startup_preflight.rs:22][E: codex-rs/tui/src/startup_preflight.rs:28][E: codex-rs/tui/src/startup_preflight.rs:48][E: codex-rs/tui/src/startup_preflight.rs:69]
 
@@ -41,7 +41,7 @@ ChatGPT success message 后有一次 guard：检测 auth step 的 `SignInState::
 
 confirm key 调用 `handle_trust` 或 `handle_quit`；trust 会写 selection 并清 error，quit 会设置 `should_quit`。StepState 在 selection 或 quit 后变 complete。[E: codex-rs/tui/src/onboarding/trust_directory.rs:148][E: codex-rs/tui/src/onboarding/trust_directory.rs:150][E: codex-rs/tui/src/onboarding/trust_directory.rs:158][E: codex-rs/tui/src/onboarding/trust_directory.rs:167][E: codex-rs/tui/src/onboarding/trust_directory.rs:173]
 
-持久化 trust 不是 widget 自己写文件；`persist_selected_trust` 在 screen steps 里找到 `TrustDirectorySelection::Trust`，再通过 app-server request handle 调用 `write_trusted_project`，失败时写入 widget error 并 log。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:641][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:651][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:661][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:690]
+持久化 trust 不是 widget 自己写文件；`persist_selected_trust` 在 screen steps 里找到 `TrustDirectorySelection::Trust`，再通过 app-server request handle 调用 `write_trusted_project`，失败时写入 widget error 并 log。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:642][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:652][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:662][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:691]
 
 ## Auth Widget
 
@@ -55,8 +55,8 @@ browser login 现在显式请求非 streamlined 的本地完成页：`app_brand=
 
 ## Gotchas
 
-- onboarding loop 复用同一个 `Tui` 和 `TuiEventStream`，不是 main app loop 的一个 `AppEvent` 分支。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:503][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:521]
-- trust 写入依赖 app-server request handle；没有 handle 时会返回 app server unavailable 错误并留在 widget error path。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:661][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:690]
+- onboarding loop 复用同一个 `Tui` 和 `TuiEventStream`，不是 main app loop 的一个 `AppEvent` 分支。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:504][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:522]
+- trust 写入依赖 app-server request handle；没有 handle 时会返回 app server unavailable 错误并留在 widget error path。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:662][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:691]
 - first-login 延迟 composer 是 conservative check；任何既有 auth/config/daemon 痕迹都会让 composer 立刻出现。[E: codex-rs/tui/src/startup_preflight.rs:22][E: codex-rs/tui/src/startup_preflight.rs:69]
 
 ## Sources

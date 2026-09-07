@@ -8,10 +8,10 @@ symbols: [cloud_config_bundle_loader, cloud_config_bundle_loader_for_storage, Cl
 related: [subsys.config-auth.config-loading, subsys.config-auth.auth-flows, subsys.cloud.cloud-tasks, cli.subcommands]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
-> `cloud-config` 是当前 enterprise cloud-delivered config bundle 的 transport/cache/refresh 层：它从 backend 拉取 config + requirements fragments，验证后写入签名 cache，并把共享 loader 交给 `codex-config` 插入 config layer stack。[E: codex-rs/cloud-config/src/lib.rs:6][E: codex-rs/cloud-config/src/lib.rs:7][E: codex-rs/cloud-config/src/lib.rs:8][E: codex-rs/cloud-config/src/lib.rs:10][E: codex-rs/cloud-config/src/lib.rs:13][E: codex-rs/cloud-config/src/lib.rs:14][E: codex-rs/cloud-config/src/backend.rs:90][E: codex-rs/cloud-config/src/service.rs:304][E: codex-rs/cloud-config/src/cache.rs:151][E: codex-rs/cloud-config/src/cache.rs:152][E: codex-rs/cloud-config/src/cache.rs:220][E: codex-rs/config/src/loader/mod.rs:201]
+> `cloud-config` 是当前 enterprise cloud-delivered config bundle 的 transport/cache/refresh 层：它从 backend 拉取 config + requirements fragments，验证后写入签名 cache，并把共享 loader 交给 `codex-config` 插入 config layer stack。[E: codex-rs/cloud-config/src/lib.rs:6][E: codex-rs/cloud-config/src/lib.rs:7][E: codex-rs/cloud-config/src/lib.rs:8][E: codex-rs/cloud-config/src/lib.rs:10][E: codex-rs/cloud-config/src/lib.rs:13][E: codex-rs/cloud-config/src/lib.rs:14][E: codex-rs/cloud-config/src/backend.rs:90][E: codex-rs/cloud-config/src/service.rs:314][E: codex-rs/cloud-config/src/cache.rs:151][E: codex-rs/cloud-config/src/cache.rs:152][E: codex-rs/cloud-config/src/cache.rs:220][E: codex-rs/config/src/loader/mod.rs:201]
 
 ## 能回答的问题
 
@@ -33,11 +33,11 @@ updated: a9519cbcdd
 
 ## Eligibility / fetch lifecycle
 
-`cloud_config_eligible_auth` 要求 auth 有 plan type、`uses_codex_backend()` 为 true，并且 plan 是 business-like、`is_education_like()` 或 `PlanType::Enterprise`；没有 auth 或不 eligible 时 startup load 返回 `None`。[E: codex-rs/cloud-config/src/service.rs:49][E: codex-rs/cloud-config/src/service.rs:53][E: codex-rs/cloud-config/src/service.rs:54][E: codex-rs/cloud-config/src/service.rs:55][E: codex-rs/cloud-config/src/service.rs:56][E: codex-rs/cloud-config/src/service.rs:178][E: codex-rs/cloud-config/src/service.rs:181]
+`cloud_config_eligible_auth` 要求 auth 有 plan type、`uses_codex_backend()` 为 true，并且 plan 是 business-like、`is_education_like()` 或 `PlanType::Enterprise`；没有 auth 或不 eligible 时 startup load 返回 `None`。[E: codex-rs/cloud-config/src/service.rs:50][E: codex-rs/cloud-config/src/service.rs:54][E: codex-rs/cloud-config/src/service.rs:55][E: codex-rs/cloud-config/src/service.rs:56][E: codex-rs/cloud-config/src/service.rs:57][E: codex-rs/cloud-config/src/service.rs:186][E: codex-rs/cloud-config/src/service.rs:189]
 
-startup load 先按当前 auth identity 查 cache，命中有效 bundle 就返回；miss 后进入 remote fetch + retry。[E: codex-rs/cloud-config/src/service.rs:175][E: codex-rs/cloud-config/src/service.rs:188][E: codex-rs/cloud-config/src/service.rs:192][E: codex-rs/cloud-config/src/service.rs:196] remote fetch 最多 5 次；retryable failure 会记录 attempt metric 并按 backoff retry，unauthorized 会尝试 `UnauthorizedRecovery` 后重试当前或下一次 attempt。[E: codex-rs/cloud-config/src/service.rs:36]
+startup load 先按当前 auth identity 查 cache，命中有效 bundle 就返回；miss 后进入 remote fetch + retry。[E: codex-rs/cloud-config/src/service.rs:183][E: codex-rs/cloud-config/src/service.rs:197][E: codex-rs/cloud-config/src/service.rs:201][E: codex-rs/cloud-config/src/service.rs:206] remote fetch 最多 5 次；retryable failure 会记录 attempt metric 并按 backoff retry，unauthorized 会尝试 `UnauthorizedRecovery` 后重试当前或下一次 attempt。[E: codex-rs/cloud-config/src/service.rs:37]
 
-成功 fetch 后，service 先 `validate_bundle`，再按 auth identity 保存 cache，并返回 empty bundle as `None`。[E: codex-rs/cloud-config/src/service.rs:304][E: codex-rs/cloud-config/src/service.rs:312][E: codex-rs/cloud-config/src/service.rs:327][E: codex-rs/cloud-config/src/service.rs:59][E: codex-rs/cloud-config/src/service.rs:60]
+成功 fetch 后，service 先 `validate_bundle`，再按 auth identity 保存 cache，并返回 empty bundle as `None`。[E: codex-rs/cloud-config/src/service.rs:314][E: codex-rs/cloud-config/src/service.rs:322][E: codex-rs/cloud-config/src/service.rs:338][E: codex-rs/cloud-config/src/service.rs:60][E: codex-rs/cloud-config/src/service.rs:61]
 
 ## Cache 与 metrics
 
@@ -51,7 +51,7 @@ metrics 覆盖 fetch attempt、fetch final 和 load，并用 `bundle_shape_tag` 
 
 `cloud_config_bundle_loader` 构造 `CloudConfigBundleService`，spawn startup fetch task，同时 spawn background refresh task；新的 refresh task 会替换并 abort 旧 task，返回的 `CloudConfigBundleLoader` await startup task 结果。[E: codex-rs/cloud-config/src/bundle_loader.rs:23][E: codex-rs/cloud-config/src/bundle_loader.rs:27][E: codex-rs/cloud-config/src/bundle_loader.rs:38][E: codex-rs/cloud-config/src/bundle_loader.rs:38][E: codex-rs/cloud-config/src/bundle_loader.rs:46][E: codex-rs/cloud-config/src/bundle_loader.rs:47][E: codex-rs/cloud-config/src/bundle_loader.rs:49][E: codex-rs/cloud-config/src/bundle_loader.rs:57] `cloud_config_bundle_loader_for_storage` 先用 storage/auth 参数创建 shared `AuthManager`，再委托 loader。[E: codex-rs/cloud-config/src/bundle_loader.rs:59][E: codex-rs/cloud-config/src/bundle_loader.rs:70][E: codex-rs/cloud-config/src/bundle_loader.rs:72][E: codex-rs/cloud-config/src/bundle_loader.rs:75][E: codex-rs/cloud-config/src/bundle_loader.rs:76][E: codex-rs/cloud-config/src/bundle_loader.rs:75]
 
-background refresh 每 15 分钟执行一次；没有 auth 或不 eligible 时停止 loop，timeout/error 只记录并保留 existing cache。[E: codex-rs/cloud-config/src/service.rs:37][E: codex-rs/cloud-config/src/service.rs:461][E: codex-rs/cloud-config/src/service.rs:463][E: codex-rs/cloud-config/src/service.rs:474][E: codex-rs/cloud-config/src/service.rs:475][E: codex-rs/cloud-config/src/service.rs:479][E: codex-rs/cloud-config/src/service.rs:489][E: codex-rs/cloud-config/src/service.rs:492]
+background refresh 每 15 分钟执行一次；没有 auth 或不 eligible 时停止 loop，timeout/error 只记录并保留 existing cache。[E: codex-rs/cloud-config/src/service.rs:38][E: codex-rs/cloud-config/src/service.rs:472][E: codex-rs/cloud-config/src/service.rs:474][E: codex-rs/cloud-config/src/service.rs:485][E: codex-rs/cloud-config/src/service.rs:486][E: codex-rs/cloud-config/src/service.rs:490][E: codex-rs/cloud-config/src/service.rs:500][E: codex-rs/cloud-config/src/service.rs:503]
 
 ## Config integration
 
@@ -65,7 +65,7 @@ config fragments 被解析为 TOML、解析相对路径，并以 `ConfigLayerSou
 
 `codex sandbox` 的 cloud bootstrap 有显式双门槛：必须同时提供 permissions profile 且选择 include managed requirements；默认路径返回空 loader，不为普通 sandbox debug 命令抓取 cloud bundle。[E: codex-rs/cli/src/debug_sandbox/cloud_config.rs:12][E: codex-rs/cli/src/debug_sandbox/cloud_config.rs:18][E: codex-rs/cli/src/debug_sandbox/cloud_config.rs:24]
 
-MCP CLI 则先在无 cloud bundle 的 bootstrap config 上解析 CODEX_HOME 与 auth，再加载 cloud bundle 并用它构造完整 `Config`。该 helper 已从 `cli/src/mcp_cmd/cloud_config.rs` 迁到 `cli/src/cloud_config.rs`，函数名是 `load_config`。[E: codex-rs/cli/src/cloud_config.rs:16][E: codex-rs/cli/src/cloud_config.rs:24][E: codex-rs/cli/src/cloud_config.rs:36][E: codex-rs/cli/src/cloud_config.rs:44]
+MCP CLI 则先在无 cloud bundle 的 bootstrap config 上解析 CODEX_HOME 与 auth，再加载 cloud bundle 并用它构造完整 `Config`。该 helper 已从 `cli/src/mcp_cmd/cloud_config.rs` 迁到 `cli/src/cloud_config.rs`，函数名是 `load_config`。[E: codex-rs/cli/src/cloud_config.rs:17][E: codex-rs/cli/src/cloud_config.rs:45][E: codex-rs/cli/src/cloud_config.rs:57][E: codex-rs/cli/src/cloud_config.rs:44]
 
 该 full-config path 只用于 `mcp list/get/login/logout`；`add/remove` 仍直接修改 user config，不能概括成所有 MCP CLI 命令都受 cloud-managed config 驱动。[E: codex-rs/cli/src/mcp_cmd.rs:232][E: codex-rs/cli/src/mcp_cmd.rs:236][E: codex-rs/cli/src/mcp_cmd.rs:240][E: codex-rs/cli/src/mcp_cmd.rs:245]
 

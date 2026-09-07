@@ -8,7 +8,7 @@ symbols: [Command, cloud_tasks::run_main, init_backend, run_exec_command, resolv
 related: [subsys.cloud.cloud-task-api, subsys.cloud.cloud-config, subsys.platform.git-utils]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > `codex cloud` 的 Cloud tasks 子系统是 CLI/TUI orchestration 层：它解析 exec/status/list/apply/diff 命令，初始化 ChatGPT-backed cloud backend，选择 environment，提交 task，并把 list/status/diff/apply/create 操作委托给 `cloud-tasks-client` 的 `CloudBackend` trait。[E: codex-rs/cloud-tasks/src/cli.rs:16][E: codex-rs/cloud-tasks/src/cli.rs:18][E: codex-rs/cloud-tasks/src/cli.rs:26][E: codex-rs/cloud-tasks/src/lib.rs:42][E: codex-rs/cloud-tasks/src/lib.rs:48][E: codex-rs/cloud-tasks/src/lib.rs:189][E: codex-rs/cloud-tasks/src/lib.rs:753]

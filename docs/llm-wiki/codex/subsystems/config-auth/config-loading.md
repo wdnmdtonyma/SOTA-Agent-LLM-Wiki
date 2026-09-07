@@ -8,7 +8,7 @@ symbols: [ConfigLayerEntry, ConfigLayerStack, ConfigLayerSource, compose_require
 related: [subsys.config-auth.profiles, subsys.config-auth.features-system, config.approval-sandbox, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > Codex 配置加载现在由 `codex_config::loader::load_config_layers_state` 负责：它收集 packaged/system/cloud/user/profile/project/session/legacy layers，生成 `ConfigLayerStack`，再由 `ConfigLayerStack::effective_config()` 用 `merge_toml_values` 得出 effective TOML。[E: codex-rs/config/src/loader/mod.rs:132][E: codex-rs/config/src/loader/mod.rs:275][E: codex-rs/config/src/loader/mod.rs:457][E: codex-rs/config/src/state.rs:455][E: codex-rs/config/src/merge.rs:58]
@@ -35,14 +35,14 @@ updated: a9519cbcdd
 - `codex-rs/config/src/loader/layer_io.rs`: 负责读取底层 config layer 文件，`load_config_layers_state` 通过 `layer_io::load_config_layers_internal` 获取 managed/user 侧原始层。[E: codex-rs/config/src/loader/mod.rs:240][E: codex-rs/config/src/loader/mod.rs:188]
 - `codex-rs/config/src/requirements_layers/stack.rs` 及其 helpers: requirements 的 field-aware composition 真正在这里执行；regular TOML 低到高 merge，rules/hooks/deny-read 等 domain fields 再按专门策略合并。[E: codex-rs/config/src/requirements_layers/stack.rs:60][E: codex-rs/config/src/requirements_layers/stack.rs:174][E: codex-rs/config/src/requirements_layers/stack.rs:179][E: codex-rs/config/src/requirements_layers/hooks.rs:61][E: codex-rs/config/src/requirements_layers/rules.rs:10][E: codex-rs/config/src/requirements_layers/permissions.rs:20]
 - `codex-rs/config/src/state.rs`: `ConfigLayerEntry`、`ConfigLayerStack`、ordering 校验、effective merge、origins 和 hooks folder metadata。[E: codex-rs/config/src/state.rs:116][E: codex-rs/config/src/state.rs:247][E: codex-rs/config/src/state.rs:455][E: codex-rs/config/src/state.rs:527][E: codex-rs/config/src/state.rs:239]
-- `codex-rs/app-server-protocol/src/protocol/v2/config.rs`: `ConfigLayerSource` 和 `precedence()` 是 layer 排序事实源。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:31][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:113]
+- `codex-rs/app-server-protocol/src/protocol/v2/config.rs`: `ConfigLayerSource` 和 `precedence()` 是 layer 排序事实源。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:32][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:114]
 - `codex-rs/config/src/thread_config.rs`: `SessionThreadConfig` 的非空字段被转成 `ConfigLayerSource::SessionFlags` layer。[E: codex-rs/config/src/thread_config.rs:150][E: codex-rs/config/src/thread_config.rs:159]
 
 ## 数据模型
 
 `ConfigLayerEntry` 保存 source name、parsed TOML、version、disabled reason、raw TOML 和 hook folder override；`new_with_raw_toml` 专门保留 raw TOML，`new_disabled` 保存 disabled reason 但不参与 normal effective merge。[E: codex-rs/config/src/state.rs:116][E: codex-rs/config/src/state.rs:117][E: codex-rs/config/src/state.rs:120][E: codex-rs/config/src/state.rs:122][E: codex-rs/config/src/state.rs:144][E: codex-rs/config/src/state.rs:164]
 
-`ConfigLayerSource::precedence()` 当前数值为：PackagedDefaults -10、MDM 0、System 10、EnterpriseManaged 15、User 20、profile user 21、Project 25、SessionFlags 30、legacy managed file 40、legacy managed MDM 50。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:113][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:115][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:116][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:117][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:118][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:119][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:126][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:127][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:128][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:129]
+`ConfigLayerSource::precedence()` 当前数值为：PackagedDefaults -10、MDM 0、System 10、EnterpriseManaged 15、User 20、profile user 21、Project 25、SessionFlags 30、legacy managed file 40、legacy managed MDM 50。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:114][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:116][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:117][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:118][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:119][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:120][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:127][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:128][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:129][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:130]
 
 Packaged defaults 是独立的最低层：`LoaderOverrides.packaged_defaults_path` 存在时从该文件读 TOML；否则 `include_str!("../../defaults.toml")` 嵌入当前二进制。[E: codex-rs/config/src/loader/mod.rs:145][E: codex-rs/config/src/loader/mod.rs:168][E: codex-rs/config/src/loader/mod.rs:173][E: codex-rs/config/src/loader/mod.rs:174] `LoaderOverrides.ignore_project_config` 为 true 时跳过 project-root discovery 和全部 project layers。[E: codex-rs/config/src/state.rs:56][E: codex-rs/config/src/loader/mod.rs:191][E: codex-rs/config/src/loader/mod.rs:364]
 
@@ -70,8 +70,8 @@ Packaged defaults 是独立的最低层：`LoaderOverrides.packaged_defaults_pat
 
 ## Gotchas
 
-- `ConfigLayerSource::User` 在 profile 字段存在时 precedence 是 21，不是普通 user 的 20；profile-v2 是独立 user layer，不是 legacy `[profiles.<name>]` merge。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:119][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:121][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:123][E: codex-rs/config/src/loader/mod.rs:319]
-- legacy managed config 的 precedence 40/50 高于 SessionFlags 30，所以它仍可能覆盖 runtime overrides；loader 会在 session/thread layers 之后处理 legacy managed config layers。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:127][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:128][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:129][E: codex-rs/config/src/loader/mod.rs:441][E: codex-rs/config/src/loader/mod.rs:457]
+- `ConfigLayerSource::User` 在 profile 字段存在时 precedence 是 21，不是普通 user 的 20；profile-v2 是独立 user layer，不是 legacy `[profiles.<name>]` merge。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:120][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:122][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:124][E: codex-rs/config/src/loader/mod.rs:319]
+- legacy managed config 的 precedence 40/50 高于 SessionFlags 30，所以它仍可能覆盖 runtime overrides；loader 会在 session/thread layers 之后处理 legacy managed config layers。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:128][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:129][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:130][E: codex-rs/config/src/loader/mod.rs:441][E: codex-rs/config/src/loader/mod.rs:457]
 - Hook discovery 优先使用 `hooks_config_folder()`；linked worktree project layer 可把 hooks folder 指到 root checkout 的 `.codex`，而普通 config folder 仍指自身 layer。[E: codex-rs/config/src/state.rs:239][E: codex-rs/config/src/state.rs:240][E: codex-rs/config/src/loader/mod.rs:1832][E: codex-rs/config/src/loader/mod.rs:1738]
 
 ## Sources

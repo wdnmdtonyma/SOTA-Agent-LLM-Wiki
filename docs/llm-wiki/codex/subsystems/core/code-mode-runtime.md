@@ -3,15 +3,15 @@ id: subsys.core.code-mode-runtime
 title: Code Mode runtime 与 remote host
 kind: subsystem
 tier: T2
-source: [codex-rs/app-server/src/lib.rs, codex-rs/core/src/thread_manager.rs, codex-rs/core/src/tools/code_mode/execute_handler.rs, codex-rs/core/src/tools/code_mode/wait_handler.rs, codex-rs/code-mode/src/lib.rs, codex-rs/code-mode/src/remote_session.rs, codex-rs/code-mode-runtime/src/lib.rs, codex-rs/code-mode-runtime/src/service.rs, codex-rs/code-mode-host/src/lib.rs, codex-rs/code-mode-host/src/transport.rs, codex-rs/code-mode-host/src/trace_transport.rs, codex-rs/code-mode-host/src/grpc_transport.rs, codex-rs/code-mode-host/src/grpc/mod.rs, codex-rs/code-mode-host/src/grpc/session.rs, codex-rs/code-mode-protocol/src/grpc/codex.code_mode.v1.proto, codex-rs/analytics/src/facts.rs, codex-rs/analytics/src/reducer.rs]
+source: [codex-rs/app-server/src/lib.rs, codex-rs/core/src/thread_manager.rs, codex-rs/core/src/tools/code_mode/execute_handler.rs, codex-rs/core/src/tools/code_mode/wait_handler.rs, codex-rs/code-mode/src/lib.rs, codex-rs/code-mode/src/remote_session.rs, codex-rs/code-mode-runtime/src/lib.rs, codex-rs/code-mode-runtime/src/service.rs, codex-rs/code-mode-host/src/lib.rs, codex-rs/code-mode-host/src/main.rs, codex-rs/code-mode-host/src/transport.rs, codex-rs/code-mode-host/src/grpc_transport.rs, codex-rs/code-mode-host/src/grpc/mod.rs, codex-rs/code-mode-host/src/grpc/session.rs, codex-rs/code-mode-protocol/src/grpc/codex.code_mode.v1.proto, codex-rs/analytics/src/facts.rs, codex-rs/analytics/src/reducer.rs]
 symbols: [CodeModeSessionProvider, DisabledCodeModeSessionProvider, ProcessOwnedCodeModeSessionProvider, GrpcCodeModeSessionProvider, InProcessCodeModeSession]
 related: [tool.code-mode-exec, tool.code-mode-wait, subsys.app-server.transport, subsys.platform.analytics, ref.feature-flags]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
-> 本地 V8 runtime 已从 `code-mode` 拆到独立 `code-mode-runtime` crate；`code-mode` 现在只公开 protocol 与 disabled/process-owned/gRPC session providers。旧的 `WebSocketCodeModeSessionProvider` 已删除。core 本身不会回退到同进程 V8：启用 host 路径时用 process-owned provider，否则使用 disabled provider。[E: codex-rs/code-mode/src/lib.rs:1][E: codex-rs/code-mode/src/lib.rs:4][E: codex-rs/code-mode/src/lib.rs:5][E: codex-rs/code-mode/src/lib.rs:7][E: codex-rs/core/src/thread_manager.rs:476][E: codex-rs/core/src/thread_manager.rs:482]
+> 本地 V8 runtime 已从 `code-mode` 拆到独立 `code-mode-runtime` crate；`code-mode` 现在只公开 protocol 与 disabled/process-owned/gRPC session providers。旧的 `WebSocketCodeModeSessionProvider` 已删除。core 本身不会回退到同进程 V8：启用 host 路径时用 process-owned provider，否则使用 disabled provider。[E: codex-rs/code-mode/src/lib.rs:4][E: codex-rs/code-mode/src/lib.rs:5][E: codex-rs/code-mode/src/lib.rs:6][E: codex-rs/code-mode/src/lib.rs:8][E: codex-rs/core/src/thread_manager.rs:473][E: codex-rs/core/src/thread_manager.rs:474]
 
 ## Crate 边界
 
@@ -19,17 +19,17 @@ updated: a9519cbcdd
 |---|---|
 | `code-mode-protocol` | cell/session/host wire types、runtime contract，以及 `codex.code_mode.v1` gRPC proto。[E: codex-rs/code-mode-protocol/src/grpc/codex.code_mode.v1.proto:3][E: codex-rs/code-mode-protocol/src/grpc/codex.code_mode.v1.proto:8] |
 | `code-mode-runtime` | `cell_actor`、session runtime、V8 初始化与 `InProcessCodeModeSession`。[E: codex-rs/code-mode-runtime/src/lib.rs:1][E: codex-rs/code-mode-runtime/src/lib.rs:10] |
-| `code-mode-host` | 把 in-process runtime 封装为独立 stdio/gRPC host，并施加 in-flight request 与 active-cell 上限。可选的 `ws://` listener 只转发 OTLP trace，不是 session transport。[E: codex-rs/code-mode-host/src/lib.rs:60][E: codex-rs/code-mode-host/src/lib.rs:61][E: codex-rs/code-mode-host/src/lib.rs:101][E: codex-rs/code-mode-host/src/transport.rs:17][E: codex-rs/code-mode-host/src/trace_transport.rs:3] |
+| `code-mode-host` | 把 in-process runtime 封装为独立 stdio/gRPC host，并施加 in-flight request 与 active-cell 上限。可选的 `ws://` listener 只转发 OTLP trace，不是 session transport。[E: codex-rs/code-mode-host/src/lib.rs:54][E: codex-rs/code-mode-host/src/lib.rs:55][E: codex-rs/code-mode-host/src/lib.rs:100][E: codex-rs/code-mode-host/src/transport.rs:17][E: codex-rs/code-mode-host/src/main.rs:31] |
 | `code-mode` | 远程 session/provider、连接复用与 host process ownership；不再包含 V8 service implementation。[E: codex-rs/code-mode/src/lib.rs:1][E: codex-rs/code-mode/src/lib.rs:4] |
 | core handlers | 构造 execute/wait/terminate request、关联 rollout/analytics，并把 runtime response 转为模型输出。 |
 
 ## Provider 选择
 
-默认 `ThreadManager` 仅在 `Feature::CodeModeHost` 启用或 legacy `disable_in_process_fallback` 为 true 时选择 `ProcessOwnedCodeModeSessionProvider`；否则显式安装 `DisabledCodeModeSessionProvider`。变量名保留兼容语义，但当前分支没有 core 内的 in-process fallback。[E: codex-rs/core/src/thread_manager.rs:476][E: codex-rs/core/src/thread_manager.rs:478][E: codex-rs/core/src/thread_manager.rs:480][E: codex-rs/core/src/thread_manager.rs:482]
+默认 `ThreadManager` 仅在 `Feature::CodeModeHost` 启用或 legacy `disable_in_process_fallback` 为 true 时选择 `ProcessOwnedCodeModeSessionProvider`；否则显式安装 `DisabledCodeModeSessionProvider`。变量名保留兼容语义，但当前分支没有 core 内的 in-process fallback。[E: codex-rs/core/src/thread_manager.rs:473][E: codex-rs/core/src/thread_manager.rs:472][E: codex-rs/core/src/thread_manager.rs:478]
 
-app-server 按 `CodeModeHostTransport` 选择远程 provider：`Local` 不注入远程 provider（回落到 ThreadManager 的 process-owned/disabled 分支），`Grpc` 构造 `GrpcCodeModeSessionProvider` 并要求 `Feature::CodeModeHost`。WebSocket session provider 已删除。[E: codex-rs/app-server/src/lib.rs:553][E: codex-rs/app-server/src/lib.rs:555][E: codex-rs/app-server/src/lib.rs:556][E: codex-rs/app-server/src/lib.rs:564]
+app-server 按 `CodeModeHostTransport` 选择远程 provider：`Local` 不注入远程 provider（回落到 ThreadManager 的 process-owned/disabled 分支），`Grpc` 构造 `GrpcCodeModeSessionProvider` 并要求 `Feature::CodeModeHost`。WebSocket session provider 已删除。[E: codex-rs/app-server/src/lib.rs:566][E: codex-rs/app-server/src/lib.rs:568][E: codex-rs/app-server/src/lib.rs:569][E: codex-rs/app-server/src/lib.rs:570][E: codex-rs/app-server/src/lib.rs:577]
 
-process-owned provider 会定位/启动 `codex-code-mode-host`；host 内部才创建 `InProcessCodeModeSession`。因此“本地 code mode”仍是独立 host process，而不是 core 进程内 V8。[E: codex-rs/code-mode/src/remote_session.rs:58][E: codex-rs/code-mode/src/remote_session.rs:65][E: codex-rs/code-mode-host/src/lib.rs:539]
+process-owned provider 会定位/启动 `codex-code-mode-host`；host 内部才创建 `InProcessCodeModeSession`。因此“本地 code mode”仍是独立 host process，而不是 core 进程内 V8。[E: codex-rs/code-mode/src/remote_session.rs:58][E: codex-rs/code-mode/src/remote_session.rs:65][E: codex-rs/code-mode-host/src/lib.rs:533]
 
 ## Cell 生命周期
 
@@ -43,7 +43,7 @@ nested tool dispatch 会拒绝 `exec` 自调用。[E: codex-rs/core/src/tools/co
 
 session listen URL 只剩两种：`stdio`/`stdio://` 与 `grpc://IP:PORT`。`ws://` 不再是 code-mode session transport。[E: codex-rs/code-mode-host/src/transport.rs:9][E: codex-rs/code-mode-host/src/transport.rs:12][E: codex-rs/code-mode-host/src/transport.rs:17][E: codex-rs/code-mode-host/src/transport.rs:25][E: codex-rs/code-mode-host/src/transport.rs:29][E: codex-rs/code-mode-host/src/transport.rs:39]
 
-可选的 `--otel-trace-listen` WebSocket 只转发 raw OTLP trace batches，与 cell/session RPC 无关。[E: codex-rs/code-mode-host/src/trace_transport.rs:70]
+可选的 `--otel-trace-listen` WebSocket 只转发 raw OTLP trace batches（`codex_otel_trace_websocket::TraceWebSocket`），与 cell/session RPC 无关。[E: codex-rs/code-mode-host/src/main.rs:31][E: codex-rs/code-mode-host/src/main.rs:42]
 
 gRPC listener 把 `CodeModeHost` proto service 挂到 tonic/axum router，并额外暴露 HTTP `/healthz`。除 `/healthz` 外，非 HTTP/2 请求会被拒绝。[E: codex-rs/code-mode-host/src/grpc_transport.rs:36][E: codex-rs/code-mode-host/src/grpc_transport.rs:41][E: codex-rs/code-mode-host/src/grpc_transport.rs:44]
 
@@ -51,13 +51,13 @@ proto `CodeModeHost` 用独立 HTTP/2 stream 拆开 session event、tool subscri
 
 ## Session / description 上限
 
-framed host 的 `open_session` 只拒绝重复 session id、shutdown 中的 host 和已复用过的 session id；它不再按并发 open-session 数或 tool-description 大小拒绝请求。[E: codex-rs/code-mode-host/src/lib.rs:504][E: codex-rs/code-mode-host/src/lib.rs:510][E: codex-rs/code-mode-host/src/lib.rs:515][E: codex-rs/code-mode-host/src/lib.rs:524]
+framed host 的 `open_session` 只拒绝重复 session id、shutdown 中的 host 和已复用过的 session id；它不再按并发 open-session 数或 tool-description 大小拒绝请求。[E: codex-rs/code-mode-host/src/lib.rs:498][E: codex-rs/code-mode-host/src/lib.rs:504][E: codex-rs/code-mode-host/src/lib.rs:509][E: codex-rs/code-mode-host/src/lib.rs:518]
 
-gRPC `open_session` 同样不设 open-session 数量上限：每次请求生成新 UUID 并插入 session map。仍保留的是 request/active-cell/control/delegate semaphore，而不是 session 或 description 配额。[E: codex-rs/code-mode-host/src/grpc/session.rs:106][E: codex-rs/code-mode-host/src/grpc/session.rs:110][E: codex-rs/code-mode-host/src/grpc/session.rs:129][E: codex-rs/code-mode-host/src/grpc/session.rs:101][E: codex-rs/code-mode-host/src/lib.rs:60][E: codex-rs/code-mode-host/src/lib.rs:61]
+gRPC `open_session` 同样不设 open-session 数量上限：每次请求生成新 UUID 并插入 session map。仍保留的是 request/active-cell/control/delegate semaphore，而不是 session 或 description 配额。[E: codex-rs/code-mode-host/src/grpc/session.rs:106][E: codex-rs/code-mode-host/src/grpc/session.rs:110][E: codex-rs/code-mode-host/src/grpc/session.rs:129][E: codex-rs/code-mode-host/src/grpc/session.rs:101][E: codex-rs/code-mode-host/src/lib.rs:54][E: codex-rs/code-mode-host/src/lib.rs:55]
 
 ## Analytics 归并
 
-analytics 接收 `CellStarted`、`ChildStarted`、`CellClosed`、`SamplingResponseCompleted` 和 terminal `Completed` facts。[E: codex-rs/analytics/src/facts.rs:69][E: codex-rs/analytics/src/facts.rs:76][E: codex-rs/analytics/src/facts.rs:82][E: codex-rs/analytics/src/facts.rs:87][E: codex-rs/analytics/src/facts.rs:93]
+analytics 接收 `CellStarted`、`ChildStarted`、`CellClosed`、`SamplingResponseCompleted` 和 terminal `Completed` facts。[E: codex-rs/analytics/src/facts.rs:70][E: codex-rs/analytics/src/facts.rs:77][E: codex-rs/analytics/src/facts.rs:83][E: codex-rs/analytics/src/facts.rs:88][E: codex-rs/analytics/src/facts.rs:94]
 
 ## Sources
 
@@ -70,8 +70,8 @@ analytics 接收 `CellStarted`、`ChildStarted`、`CellClosed`、`SamplingRespon
 - `codex-rs/code-mode-runtime/src/lib.rs`
 - `codex-rs/code-mode-runtime/src/service.rs`
 - `codex-rs/code-mode-host/src/lib.rs`
+- `codex-rs/code-mode-host/src/main.rs`
 - `codex-rs/code-mode-host/src/transport.rs`
-- `codex-rs/code-mode-host/src/trace_transport.rs`
 - `codex-rs/code-mode-host/src/grpc_transport.rs`
 - `codex-rs/code-mode-host/src/grpc/mod.rs`
 - `codex-rs/code-mode-host/src/grpc/session.rs`

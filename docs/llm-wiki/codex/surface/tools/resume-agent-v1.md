@@ -8,7 +8,7 @@ symbols: [create_resume_agent_tool, ResumeAgentHandler, multi_agents::resume_age
 related: [tool.spawn-agent-v1, tool.close-agent-v1, tool.send-input-v1]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > `resume_agent` V1 是 `multi_agent_v1` namespace 下的恢复工具；它按 agent id 尝试从 recorded rollout 重新加载当前 not-live/missing 的 agent，并返回恢复后的 status。
@@ -23,7 +23,7 @@ updated: a9519cbcdd
 
 ## 注册与门控
 
-`resume_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 在 `search_tool_enabled` true 时是 deferred，否则 direct。[E: codex-rs/core/src/tools/spec_plan.rs:1275][E: codex-rs/core/src/tools/spec_plan.rs:1334][E: codex-rs/core/src/tools/spec_plan.rs:1337][E: codex-rs/core/src/tools/spec_plan.rs:1355]
+`resume_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 在 `search_tool_enabled` true 时是 deferred，否则 direct。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1344][E: codex-rs/core/src/tools/spec_plan.rs:1347][E: codex-rs/core/src/tools/spec_plan.rs:1365]
 
 handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:20][E: codex-rs/tools/src/tool_executor.rs:122]
 
@@ -35,7 +35,7 @@ handler 读取目标 metadata，检查当前 spawn depth 是否超过 `agent_max
 
 如果当前 status 是 `NotFound`，handler 调用 `try_resume_closed_agent`；该 helper 用 `build_agent_resume_config` 构造 resume config，`build_agent_resume_config` 先构造 shared config 再把 `config.base_instructions` 置为 `None`，然后调用 `resume_agent_from_rollout`。[E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:90][E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:198][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:187][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:190]
 
-`AgentControl::resume_agent_from_rollout` 会恢复单个 recorded rollout；当配置或恢复出来的版本是 V2 时直接返回，否则继续遍历 persisted open spawn children 并恢复 legacy descendants。[E: codex-rs/core/src/agent/control/spawn.rs:1082][E: codex-rs/core/src/agent/control/spawn.rs:1094]
+`AgentControl::resume_agent_from_rollout` 会恢复单个 recorded rollout；当配置或恢复出来的版本是 V2 时直接返回，否则继续遍历 persisted open spawn children 并恢复 legacy descendants。[E: codex-rs/core/src/agent/control/spawn.rs:1127][E: codex-rs/core/src/agent/control/spawn.rs:1139]
 
 ## 输出
 

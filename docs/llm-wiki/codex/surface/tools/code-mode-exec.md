@@ -8,7 +8,7 @@ symbols: [create_code_mode_tool, CodeModeExecuteHandler, PUBLIC_TOOL_NAME, Execu
 related: [tool.code-mode-wait, tool.exec-command, subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > code-mode `exec` 是 un-namespaced freeform JavaScript tool。`spec_plan.rs` 在 code mode 有效时 prepend `exec` 和 companion `wait`，并把当前可用于 code mode 的 nested tools 放进 `exec` description/runtime。
@@ -23,11 +23,11 @@ updated: a9519cbcdd
 
 ## 注册与门控
 
-`finalize_tool_router` 在 code mode 生效时先移除旧 plain `exec`/`wait`，再调用 `register_code_mode_executors`。注册器遍历最终 registry，过滤不可嵌套 exposure，规范化 nested tool 名称并跳过碰撞，最后依次 prepend `wait` 与 `exec`。[E: codex-rs/core/src/tools/spec_plan.rs:371][E: codex-rs/core/src/tools/spec_plan.rs:373][E: codex-rs/core/src/tools/spec_plan.rs:379][E: codex-rs/core/src/tools/spec_plan.rs:420][E: codex-rs/core/src/tools/spec_plan.rs:802][E: codex-rs/core/src/tools/spec_plan.rs:818][E: codex-rs/core/src/tools/spec_plan.rs:904][E: codex-rs/core/src/tools/spec_plan.rs:905]
+`finalize_tool_router` 在 code mode 生效时先移除旧 plain `exec`/`wait`，再调用 `register_code_mode_executors`。注册器遍历最终 registry，过滤不可嵌套 exposure，规范化 nested tool 名称并跳过碰撞，最后依次 prepend `wait` 与 `exec`。[E: codex-rs/core/src/tools/spec_plan.rs:360][E: codex-rs/core/src/tools/spec_plan.rs:362][E: codex-rs/core/src/tools/spec_plan.rs:368][E: codex-rs/core/src/tools/spec_plan.rs:409][E: codex-rs/core/src/tools/spec_plan.rs:791][E: codex-rs/core/src/tools/spec_plan.rs:807][E: codex-rs/core/src/tools/spec_plan.rs:893][E: codex-rs/core/src/tools/spec_plan.rs:894]
 
-`create_code_mode_tool` 现在还接收 `ImageDetailVisibility`。`unified_image_budget_enabled` 为真时，code-mode exec description 隐藏 image detail；否则保持 Visible。[E: codex-rs/core/src/tools/spec_plan.rs:895][E: codex-rs/core/src/tools/spec_plan.rs:896][E: codex-rs/core/src/tools/spec_plan.rs:898][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:14][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:34]
+`create_code_mode_tool` 现在还接收 `ImageDetailVisibility`。`unified_image_budget_enabled` 为真时，code-mode exec description 隐藏 image detail；否则保持 Visible。[E: codex-rs/core/src/tools/spec_plan.rs:884][E: codex-rs/core/src/tools/spec_plan.rs:885][E: codex-rs/core/src/tools/spec_plan.rs:887][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:14][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:34]
 
-Guardian reviewer 的 `add_core_tool_sources` 提前返回，core 只可能注册 `exec_command` / `write_stdin` / `view_image`。[E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1009][E: codex-rs/core/src/tools/spec_plan.rs:1021][E: codex-rs/core/src/tools/spec_plan.rs:1023][E: codex-rs/core/src/tools/spec_plan.rs:1036] 这并不阻止 code-mode：`build_tool_router` 仍调用 `finalize_tool_router`；若 guardian 模型 `effective_tool_mode` 是 `CodeMode` / `CodeModeOnly`，就会 prepend `exec`/`wait`，并把上述受限工具嵌进 `exec` description。[E: codex-rs/core/src/tools/spec_plan.rs:199][E: codex-rs/core/src/tools/spec_plan.rs:372][E: codex-rs/core/src/tools/spec_plan.rs:904][E: codex-rs/core/src/tools/spec_plan.rs:905] 集成测试断言 guardian 可见 `exec`/`wait`，nested 名为 `exec_command` / `view_image` / `write_stdin`。[E: codex-rs/core/src/guardian/tests.rs:2168][E: codex-rs/core/src/guardian/tests.rs:2183]
+Guardian reviewer 的 `add_core_tool_sources` 提前返回，core 只可能注册 `exec_command` / `write_stdin` / `view_image`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:998][E: codex-rs/core/src/tools/spec_plan.rs:1014][E: codex-rs/core/src/tools/spec_plan.rs:1016][E: codex-rs/core/src/tools/spec_plan.rs:1029] 这并不阻止 code-mode：`build_tool_router` 仍调用 `finalize_tool_router`；若 guardian 模型 `effective_tool_mode` 是 `CodeMode` / `CodeModeOnly`，就会 prepend `exec`/`wait`，并把上述受限工具嵌进 `exec` description。[E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:361][E: codex-rs/core/src/tools/spec_plan.rs:893][E: codex-rs/core/src/tools/spec_plan.rs:894] 集成测试断言 guardian 可见 `exec`/`wait`，nested 名为 `exec_command` / `view_image` / `write_stdin`。[E: codex-rs/core/src/guardian/tests.rs:2383][E: codex-rs/core/src/guardian/tests.rs:2398]
 
 ## 输入与 pragma
 

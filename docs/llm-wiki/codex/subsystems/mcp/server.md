@@ -1,76 +1,44 @@
 ---
 id: subsys.mcp.server
-title: MCP server
+title: MCP server（已退役）
 kind: subsystem
 tier: T2
-source: [codex-rs/mcp-server/src/message_processor.rs, codex-rs/mcp-server/src/active_turn_registry.rs, codex-rs/mcp-server/src/extension_event_sink.rs, codex-rs/mcp-server/src/codex_tool_config.rs, codex-rs/mcp-server/src/codex_tool_runner.rs, codex-rs/ext/skills/src/extension.rs]
-symbols: [MessageProcessor, ActiveTurnRegistry, McpExtensionEventSink, CodexToolCallParam, CodexToolCallReplyParam, create_tool_for_codex_tool_call_param, create_tool_for_codex_tool_call_reply_param, run_codex_tool_session, run_codex_tool_session_reply]
+source: [codex-rs/cli/src/main.rs, codex-rs/Cargo.toml]
+symbols: [mcp-server-removed]
 related: [subsys.mcp.client, subsys.mcp.transports, subsys.core.session-lifecycle, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
-> `codex-rs/mcp-server` is the reverse direction from `subsys.mcp.client`: it lets external MCP clients call Codex itself through two tools, `codex` for starting a session and `codex-reply` for continuing an existing thread.[E: codex-rs/mcp-server/src/message_processor.rs:40][E: codex-rs/mcp-server/src/message_processor.rs:336][E: codex-rs/mcp-server/src/message_processor.rs:350]
+> `codex-rs/mcp-server` 与 CLI 子命令 `codex mcp-server` 已从仓库移除。外部 MCP client 通过 stdio 把 Codex 当 MCP server 调用的路径已下线；Codex **作为 client 连接外部 MCP server** 的方向仍在，由 `codex-mcp` / `rmcp-client` 与 `Subcommand::Mcp` 承担。[E: codex-rs/cli/src/main.rs:147][E: codex-rs/cli/src/main.rs:165][E: codex-rs/Cargo.toml:81][E: codex-rs/Cargo.toml:97]
 
 ## 能回答的问题
 
-- Codex MCP server 初始化时声明哪些 capabilities？
-- `codex` 和 `codex-reply` 的输入 schema、输出 shape 和语义是什么？
-- 外部 MCP client 调用 `codex` 后怎样启动 Codex thread？
-- Codex events 怎样作为 MCP notifications 回传？
-- cancellation notification 怎样映射到 Codex `Op::Interrupt`？
+- `codex mcp-server` 现在还是 CLI 子命令吗？
+- workspace 还包含 `codex-rs/mcp-server` crate 吗？
+- 退役后，外部 MCP client 还能把 Codex 当 stdio server 调吗？
+- `codex mcp` 现在做什么，和已删除的 `mcp-server` 有何不同？
+- MCP **client**（连外部 server）还在哪些 crate？
 
-## 职责边界
+## 退役映射
 
-`MessageProcessor` owns MCP JSON-RPC request/notification dispatch and tool routing; `codex_tool_config.rs` owns tool schemas and config conversion; `codex_tool_runner.rs` owns ThreadManager interaction, event streaming, approvals, and final `CallToolResult` response.[E: codex-rs/mcp-server/src/message_processor.rs:124][E: codex-rs/mcp-server/src/message_processor.rs:230][E: codex-rs/mcp-server/src/message_processor.rs:336][E: codex-rs/mcp-server/src/message_processor.rs:350][E: codex-rs/mcp-server/src/codex_tool_runner.rs:58]
+`enum Subcommand` 从 `Agents` 到 `Features` 共 29 个变体（含 macos/windows 上 cfg 的 `App`），**没有** `McpServer`。[E: codex-rs/cli/src/main.rs:147][E: codex-rs/cli/src/main.rs:178][E: codex-rs/cli/src/main.rs:240]
 
-This crate does not connect to external MCP servers or qualify external tool names; that direction is covered by `subsys.mcp.client` and `subsys.mcp.name-qualification`.[I]
+仍存在的 MCP 相关 CLI 是 `Mcp(McpCli)`，doc comment 是 “Manage external MCP servers for Codex”——管理 Codex 要连接的**外部** MCP server，不是把 Codex 自己暴露成 MCP server。[E: codex-rs/cli/src/main.rs:165][E: codex-rs/cli/src/main.rs:165]
 
-## 关键文件
+workspace `members` 数组从 `aws-auth` 到 `model-provider`（`Cargo.toml` L3–L147），包含 `codex-mcp` 与 `rmcp-client`，**不包含** `mcp-server`。[E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:81][E: codex-rs/Cargo.toml:97][E: codex-rs/Cargo.toml:147]
 
-- `codex-rs/mcp-server/src/message_processor.rs`: server-side request dispatch, initialize, tool list/call, reply handling, cancellation handling.[E: codex-rs/mcp-server/src/message_processor.rs:40][E: codex-rs/mcp-server/src/message_processor.rs:124][E: codex-rs/mcp-server/src/message_processor.rs:230][E: codex-rs/mcp-server/src/message_processor.rs:336][E: codex-rs/mcp-server/src/message_processor.rs:350][E: codex-rs/mcp-server/src/message_processor.rs:534]
-- `codex-rs/mcp-server/src/codex_tool_config.rs`: `codex` and `codex-reply` input structs, enum mappings, schema builders, config conversion.[E: codex-rs/mcp-server/src/codex_tool_config.rs:139][E: codex-rs/mcp-server/src/codex_tool_config.rs:191]
-- `codex-rs/mcp-server/src/codex_tool_runner.rs`: Codex thread start/reply, event notifications, approval forwarding, structured tool result assembly.[E: codex-rs/mcp-server/src/codex_tool_runner.rs:37][E: codex-rs/mcp-server/src/codex_tool_runner.rs:66][E: codex-rs/mcp-server/src/codex_tool_runner.rs:105][E: codex-rs/mcp-server/src/codex_tool_runner.rs:180]
+历史上该 crate 向外部 MCP client 暴露 `codex` / `codex-reply` 两个 tool、把 Codex events 转成 MCP notifications，并把 cancellation 映射到 `Op::Interrupt`。那些源文件已不在树里；本节点不再引用已删除路径。
 
-## Initialize and tools
+## 仍存在的 MCP 方向
 
-- `MessageProcessor::new` creates a `ThreadManager` with `SessionSource::Mcp`, shared auth/config/environment state, models/Apps caches and an active-turn registry；its extension registry installs Git attribution、image generation and the skills extension with a host provider plus global metrics。[E: codex-rs/mcp-server/src/message_processor.rs:68][E: codex-rs/mcp-server/src/message_processor.rs:69][E: codex-rs/mcp-server/src/message_processor.rs:72][E: codex-rs/mcp-server/src/message_processor.rs:78][E: codex-rs/mcp-server/src/message_processor.rs:83][E: codex-rs/mcp-server/src/message_processor.rs:85][E: codex-rs/mcp-server/src/message_processor.rs:99][E: codex-rs/mcp-server/src/message_processor.rs:104]
-- `process_request` dispatches `InitializeRequest`, `ListToolsRequest`, `CallToolRequest`, and other MCP requests to handler methods; unsupported/custom paths are logged or handled separately.[E: codex-rs/mcp-server/src/message_processor.rs:124][E: codex-rs/mcp-server/src/message_processor.rs:129][E: codex-rs/mcp-server/src/message_processor.rs:156][E: codex-rs/mcp-server/src/message_processor.rs:159]
-- `handle_initialize` rejects double initialize, records client info into the Codex user-agent suffix, returns server info for `codex-mcp-server`, enables tools and tool-list-changed capabilities, and preserves the non-spec `serverInfo.user_agent` field.[E: codex-rs/mcp-server/src/message_processor.rs:230][E: codex-rs/mcp-server/src/message_processor.rs:237][E: codex-rs/mcp-server/src/message_processor.rs:245][E: codex-rs/mcp-server/src/message_processor.rs:253][E: codex-rs/mcp-server/src/message_processor.rs:274][E: codex-rs/mcp-server/src/message_processor.rs:299]
-- `handle_list_tools` returns exactly two tools: `codex` and `codex-reply`.[E: codex-rs/mcp-server/src/message_processor.rs:336][E: codex-rs/mcp-server/src/message_processor.rs:343][E: codex-rs/mcp-server/src/message_processor.rs:344]
-
-## Tool schemas
-
-- `CodexToolCallParam` requires `prompt` and accepts optional model, cwd, approval policy, sandbox mode, config overrides, base instructions, developer instructions, and compact prompt.[E: codex-rs/mcp-server/src/codex_tool_config.rs:25][E: codex-rs/mcp-server/src/codex_tool_config.rs:27][E: codex-rs/mcp-server/src/codex_tool_config.rs:31][E: codex-rs/mcp-server/src/codex_tool_config.rs:36][E: codex-rs/mcp-server/src/codex_tool_config.rs:41][E: codex-rs/mcp-server/src/codex_tool_config.rs:45][E: codex-rs/mcp-server/src/codex_tool_config.rs:50][E: codex-rs/mcp-server/src/codex_tool_config.rs:54][E: codex-rs/mcp-server/src/codex_tool_config.rs:58][E: codex-rs/mcp-server/src/codex_tool_config.rs:62]
-- Approval and sandbox enum wrappers map to core `AskForApproval` and `SandboxMode` values.[E: codex-rs/mcp-server/src/codex_tool_config.rs:74][E: codex-rs/mcp-server/src/codex_tool_config.rs:93]
-- `create_tool_for_codex_tool_call_param` builds the `codex` tool with title `Codex` and raw output schema containing `threadId` and `content`.[E: codex-rs/mcp-server/src/codex_tool_config.rs:117][E: codex-rs/mcp-server/src/codex_tool_config.rs:120][E: codex-rs/mcp-server/src/codex_tool_config.rs:124]
-- `CodexToolCallReplyParam` accepts `threadId` and deprecated `conversationId`, and `get_thread_id` accepts either field; `create_tool_for_codex_tool_call_reply_param` builds the `codex-reply` tool with the same output schema.[E: codex-rs/mcp-server/src/codex_tool_config.rs:191][E: codex-rs/mcp-server/src/codex_tool_config.rs:194][E: codex-rs/mcp-server/src/codex_tool_config.rs:200][E: codex-rs/mcp-server/src/codex_tool_config.rs:207][E: codex-rs/mcp-server/src/codex_tool_config.rs:236]
-
-## Execution flow
-
-- `handle_call_tool` routes raw tool name `codex` to session start and `codex-reply` to existing-session reply; unknown tools return an MCP error `CallToolResult`.[E: codex-rs/mcp-server/src/message_processor.rs:350][E: codex-rs/mcp-server/src/message_processor.rs:356][E: codex-rs/mcp-server/src/message_processor.rs:357][E: codex-rs/mcp-server/src/message_processor.rs:358][E: codex-rs/mcp-server/src/message_processor.rs:362]
-- `codex` parses `CodexToolCallParam`, converts it into a Codex `Config`, then spawns `run_codex_tool_session` so the message-processing loop is not blocked.[E: codex-rs/mcp-server/src/message_processor.rs:371][E: codex-rs/mcp-server/src/message_processor.rs:377][E: codex-rs/mcp-server/src/message_processor.rs:415]
-- `run_codex_tool_session` starts a thread through `ThreadManager`, emits a `SessionConfigured` notification with request/thread metadata, submits the initial prompt via `start_turn_if_idle`, then records the MCP request id to thread/turn mapping。[E: codex-rs/mcp-server/src/codex_tool_runner.rs:66][E: codex-rs/mcp-server/src/codex_tool_runner.rs:78][E: codex-rs/mcp-server/src/codex_tool_runner.rs:97][E: codex-rs/mcp-server/src/codex_tool_runner.rs:105][E: codex-rs/mcp-server/src/codex_tool_runner.rs:131]
-- `codex-reply` parses thread id/prompt, looks up the existing thread, and spawns `run_codex_tool_session_reply`; missing threads return a structured result with `is_error=true`.[E: codex-rs/mcp-server/src/message_processor.rs:427][E: codex-rs/mcp-server/src/message_processor.rs:436][E: codex-rs/mcp-server/src/message_processor.rs:460][E: codex-rs/mcp-server/src/message_processor.rs:476][E: codex-rs/mcp-server/src/message_processor.rs:480]
-- The runner streams each Codex event as an MCP notification, handles approval request events specially, returns error events as `CallToolResult` with `is_error=true`, and on `TurnComplete` returns the last agent message plus `threadId`/`content` structured content.[E: codex-rs/mcp-server/src/codex_tool_runner.rs:192][E: codex-rs/mcp-server/src/codex_tool_runner.rs:213][E: codex-rs/mcp-server/src/codex_tool_runner.rs:204][E: codex-rs/mcp-server/src/codex_tool_runner.rs:242][E: codex-rs/mcp-server/src/codex_tool_runner.rs:293][E: codex-rs/mcp-server/src/codex_tool_runner.rs:301]
-
-## Cancellation
-
-`notifications/cancelled` looks up the thread id by request id, fetches the Codex thread, submits `Op::Interrupt`, and unregisters the request-id mapping. `Op::Interrupt` does not carry the MCP request id; that string is only used for logging。[E: codex-rs/mcp-server/src/message_processor.rs:534][E: codex-rs/mcp-server/src/message_processor.rs:543][E: codex-rs/mcp-server/src/message_processor.rs:563][E: codex-rs/mcp-server/src/message_processor.rs:570]
-
-## Extension warning routing
-
-`ActiveTurnRegistry` indexes active work by request id and `(thread, turn)`；warning enqueue and route removal share one lock, so a warning is either queued before the tool response or dropped。`McpExtensionEventSink` only forwards valid、turn-scoped warnings for a matching active request and truncates messages to 256 bytes；generic extension events remain unsupported on this host。[E: codex-rs/mcp-server/src/active_turn_registry.rs:15][E: codex-rs/mcp-server/src/active_turn_registry.rs:30][E: codex-rs/mcp-server/src/active_turn_registry.rs:54][E: codex-rs/mcp-server/src/active_turn_registry.rs:76][E: codex-rs/mcp-server/src/extension_event_sink.rs:14][E: codex-rs/mcp-server/src/extension_event_sink.rs:31][E: codex-rs/mcp-server/src/extension_event_sink.rs:40][E: codex-rs/mcp-server/src/extension_event_sink.rs:50][E: codex-rs/mcp-server/src/extension_event_sink.rs:62]
+MCP **client** runtime（连外部 server、工具/资源聚合、transport）见 [MCP client runtime](client.md) 与 [MCP transports](transports.md)。扩展系统把 hosted/executor plugin MCP server **注入 client 层**，见 [Ext 扩展插件系统](../../spine/extension-system.md)；那不是已删除的 `codex mcp-server` host。
 
 ## Sources
 
-- codex-rs/mcp-server/src/message_processor.rs
-- codex-rs/mcp-server/src/active_turn_registry.rs
-- codex-rs/mcp-server/src/extension_event_sink.rs
-- codex-rs/mcp-server/src/codex_tool_config.rs
-- codex-rs/mcp-server/src/codex_tool_runner.rs
-- codex-rs/ext/skills/src/extension.rs
+- `codex-rs/cli/src/main.rs`
+- `codex-rs/Cargo.toml`
 
 ## 相关
 

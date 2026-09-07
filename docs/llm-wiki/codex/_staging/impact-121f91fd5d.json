@@ -1,0 +1,1162 @@
+{
+  "base": "a9519cbcdd2d664530edb2469224ee03c1056799",
+  "target": "121f91fd5d9dc66017866ce9bdc49f1e182721df",
+  "counts": {
+    "A-BROKEN": 11,
+    "B-HEAVY": 4,
+    "C-DRIFT": 157,
+    "D-CLEAN": 12
+  },
+  "A_BROKEN": [
+    {
+      "id": "subsys.exec-sandbox.exec-server",
+      "path": "subsystems/exec-sandbox/exec-server.md",
+      "missing": [
+        "codex-rs/exec-server/src/server",
+        "codex-rs/utils/pty/src"
+      ],
+      "churn": 1507,
+      "kind": "subsystem",
+      "tier": "T2"
+    },
+    {
+      "id": "subsys.exec-sandbox.sandbox-linux",
+      "path": "subsystems/exec-sandbox/sandbox-linux.md",
+      "missing": [
+        "codex-rs/linux-sandbox/src"
+      ],
+      "churn": 55,
+      "kind": "subsystem",
+      "tier": "T2"
+    },
+    {
+      "id": "subsys.exec-sandbox.sandbox-windows",
+      "path": "subsystems/exec-sandbox/sandbox-windows.md",
+      "missing": [
+        "codex-rs/windows-sandbox-rs/src"
+      ],
+      "churn": 1026,
+      "kind": "subsystem",
+      "tier": "T2"
+    },
+    {
+      "id": "subsys.exec-sandbox.shell-parsing",
+      "path": "subsystems/exec-sandbox/shell-parsing.md",
+      "missing": [
+        "codex-rs/shell-command/src"
+      ],
+      "churn": 82,
+      "kind": "subsystem",
+      "tier": "T2"
+    },
+    {
+      "id": "subsys.exec-sandbox.shell-escalation",
+      "path": "subsystems/exec-sandbox/shell-escalation.md",
+      "missing": [
+        "codex-rs/shell-escalation/src/unix"
+      ],
+      "churn": 6,
+      "kind": "subsystem",
+      "tier": "T2"
+    },
+    {
+      "id": "subsys.mcp.server",
+      "path": "subsystems/mcp/server.md",
+      "missing": [
+        "codex-rs/mcp-server/src/message_processor.rs",
+        "codex-rs/mcp-server/src/active_turn_registry.rs",
+        "codex-rs/mcp-server/src/extension_event_sink.rs",
+        "codex-rs/mcp-server/src/codex_tool_config.rs",
+        "codex-rs/mcp-server/src/codex_tool_runner.rs"
+      ],
+      "churn": 1625,
+      "kind": "subsystem",
+      "tier": "T2"
+    },
+    {
+      "id": "subsys.app-server.client-libs",
+      "path": "subsystems/app-server/client-libs.md",
+      "missing": [
+        "codex-rs/app-server-client/src",
+        "codex-rs/app-server-test-client/src"
+      ],
+      "churn": 0,
+      "kind": "subsystem",
+      "tier": "T2"
+    },
+    {
+      "id": "spine.extension-system",
+      "path": "spine/extension-system.md",
+      "missing": [
+        "codex-rs/mcp-server/src/message_processor.rs",
+        "codex-rs/mcp-server/src/extension_event_sink.rs"
+      ],
+      "churn": 1477,
+      "kind": "flow",
+      "tier": "T0"
+    },
+    {
+      "id": "subsys.core.code-mode-runtime",
+      "path": "subsystems/core/code-mode-runtime.md",
+      "missing": [
+        "codex-rs/code-mode-host/src/trace_transport.rs"
+      ],
+      "churn": 375,
+      "kind": "subsystem",
+      "tier": "T2"
+    },
+    {
+      "id": "subsys.core.approval-guardian-v2",
+      "path": "subsystems/core/approval-guardian-v2.md",
+      "missing": [
+        "codex-rs/mcp-server/src/message_processor.rs"
+      ],
+      "churn": 2241,
+      "kind": "subsystem",
+      "tier": "T2"
+    },
+    {
+      "id": "tool.send-user-message-async",
+      "path": "surface/tools/send-user-message-async.md",
+      "missing": [
+        "codex-rs/core/src/tools/handlers/send_user_message_async.rs -> codex-rs/core/src/tools/handlers/send_message_to_user_async.rs",
+        "codex-rs/core/tests/suite/send_user_message_async.rs"
+      ],
+      "churn": 405,
+      "kind": "tool",
+      "tier": "T1"
+    }
+  ],
+  "B_HEAVY": [
+    {
+      "id": "subsys.tui.architecture",
+      "path": "subsystems/tui/architecture.md",
+      "churn": 2240,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.tui.chatwidget",
+      "path": "subsystems/tui/chatwidget.md",
+      "churn": 2130,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.tui.overlays-dialogs",
+      "path": "subsystems/tui/overlays-dialogs.md",
+      "churn": 3403,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.tui.keymap",
+      "path": "subsystems/tui/keymap.md",
+      "churn": 2090,
+      "kind": "subsystem"
+    }
+  ],
+  "C_DRIFT": [
+    {
+      "id": "spine.overview",
+      "path": "spine/overview.md",
+      "churn": 1197,
+      "kind": "flow"
+    },
+    {
+      "id": "spine.sq-eq-architecture",
+      "path": "spine/sq-eq-architecture.md",
+      "churn": 590,
+      "kind": "flow"
+    },
+    {
+      "id": "spine.process-lifecycle",
+      "path": "spine/process-lifecycle.md",
+      "churn": 770,
+      "kind": "flow"
+    },
+    {
+      "id": "spine.turn-end-to-end",
+      "path": "spine/turn-end-to-end.md",
+      "churn": 930,
+      "kind": "flow"
+    },
+    {
+      "id": "spine.tool-call-anatomy",
+      "path": "spine/tool-call-anatomy.md",
+      "churn": 264,
+      "kind": "flow"
+    },
+    {
+      "id": "spine.context-and-compaction",
+      "path": "spine/context-and-compaction.md",
+      "churn": 806,
+      "kind": "flow"
+    },
+    {
+      "id": "spine.shell-exec-flow",
+      "path": "spine/shell-exec-flow.md",
+      "churn": 428,
+      "kind": "flow"
+    },
+    {
+      "id": "spine.trace-apply-patch",
+      "path": "spine/trace-apply-patch.md",
+      "churn": 340,
+      "kind": "flow"
+    },
+    {
+      "id": "spine.trace-mcp-call",
+      "path": "spine/trace-mcp-call.md",
+      "churn": 756,
+      "kind": "flow"
+    },
+    {
+      "id": "spine.trace-subagent",
+      "path": "spine/trace-subagent.md",
+      "churn": 299,
+      "kind": "flow"
+    },
+    {
+      "id": "tool.exec-command",
+      "path": "surface/tools/exec-command.md",
+      "churn": 232,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.write-stdin",
+      "path": "surface/tools/write-stdin.md",
+      "churn": 190,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.shell-command",
+      "path": "surface/tools/shell-command.md",
+      "churn": 179,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.apply-patch",
+      "path": "surface/tools/apply-patch.md",
+      "churn": 229,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.view-image",
+      "path": "surface/tools/view-image.md",
+      "churn": 231,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.code-mode-exec",
+      "path": "surface/tools/code-mode-exec.md",
+      "churn": 549,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.code-mode-wait",
+      "path": "surface/tools/code-mode-wait.md",
+      "churn": 549,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.update-plan",
+      "path": "surface/tools/update-plan.md",
+      "churn": 185,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.request-user-input",
+      "path": "surface/tools/request-user-input.md",
+      "churn": 536,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.request-permissions",
+      "path": "surface/tools/request-permissions.md",
+      "churn": 909,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.spawn-agent-v2",
+      "path": "surface/tools/spawn-agent-v2.md",
+      "churn": 102,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.send-message",
+      "path": "surface/tools/send-message.md",
+      "churn": 106,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.followup-task",
+      "path": "surface/tools/followup-task.md",
+      "churn": 106,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.wait-agent-v2",
+      "path": "surface/tools/wait-agent-v2.md",
+      "churn": 95,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.list-agents",
+      "path": "surface/tools/list-agents.md",
+      "churn": 43,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.spawn-agent-v1",
+      "path": "surface/tools/spawn-agent-v1.md",
+      "churn": 43,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.send-input-v1",
+      "path": "surface/tools/send-input-v1.md",
+      "churn": 46,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.wait-agent-v1",
+      "path": "surface/tools/wait-agent-v1.md",
+      "churn": 40,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.close-agent-v1",
+      "path": "surface/tools/close-agent-v1.md",
+      "churn": 40,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.resume-agent-v1",
+      "path": "surface/tools/resume-agent-v1.md",
+      "churn": 96,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.list-mcp-resources",
+      "path": "surface/tools/list-mcp-resources.md",
+      "churn": 431,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.list-mcp-resource-templates",
+      "path": "surface/tools/list-mcp-resource-templates.md",
+      "churn": 431,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.read-mcp-resource",
+      "path": "surface/tools/read-mcp-resource.md",
+      "churn": 515,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.tool-search",
+      "path": "surface/tools/tool-search.md",
+      "churn": 174,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.web-search",
+      "path": "surface/tools/web-search.md",
+      "churn": 335,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.image-generation",
+      "path": "surface/tools/image-generation.md",
+      "churn": 239,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.test-sync-tool",
+      "path": "surface/tools/test-sync-tool.md",
+      "churn": 88,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.mcp-namespace-tools",
+      "path": "surface/tools/mcp-namespace-tools.md",
+      "churn": 691,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.dynamic-tools",
+      "path": "surface/tools/dynamic-tools.md",
+      "churn": 40,
+      "kind": "tool"
+    },
+    {
+      "id": "command.session-thread",
+      "path": "surface/slash-commands/session-thread.md",
+      "churn": 630,
+      "kind": "command"
+    },
+    {
+      "id": "command.model-mode",
+      "path": "surface/slash-commands/model-mode.md",
+      "churn": 98,
+      "kind": "command"
+    },
+    {
+      "id": "command.code-review",
+      "path": "surface/slash-commands/code-review.md",
+      "churn": 83,
+      "kind": "command"
+    },
+    {
+      "id": "command.tools-integrations",
+      "path": "surface/slash-commands/tools-integrations.md",
+      "churn": 29,
+      "kind": "command"
+    },
+    {
+      "id": "command.config-system",
+      "path": "surface/slash-commands/config-system.md",
+      "churn": 25,
+      "kind": "command"
+    },
+    {
+      "id": "command.realtime-debug",
+      "path": "surface/slash-commands/realtime-debug.md",
+      "churn": 98,
+      "kind": "command"
+    },
+    {
+      "id": "cli.subcommands",
+      "path": "surface/cli/subcommands.md",
+      "churn": 679,
+      "kind": "cli"
+    },
+    {
+      "id": "cli.global-flags",
+      "path": "surface/cli/global-flags.md",
+      "churn": 606,
+      "kind": "cli"
+    },
+    {
+      "id": "cli.exec-mode",
+      "path": "surface/cli/exec-mode.md",
+      "churn": 222,
+      "kind": "cli"
+    },
+    {
+      "id": "config.model-provider",
+      "path": "surface/config/model-provider.md",
+      "churn": 254,
+      "kind": "config"
+    },
+    {
+      "id": "config.approval-sandbox",
+      "path": "surface/config/approval-sandbox.md",
+      "churn": 730,
+      "kind": "config"
+    },
+    {
+      "id": "config.auth-account",
+      "path": "surface/config/auth-account.md",
+      "churn": 75,
+      "kind": "config"
+    },
+    {
+      "id": "config.mcp-tools",
+      "path": "surface/config/mcp-tools.md",
+      "churn": 217,
+      "kind": "config"
+    },
+    {
+      "id": "config.agents-memory",
+      "path": "surface/config/agents-memory.md",
+      "churn": 101,
+      "kind": "config"
+    },
+    {
+      "id": "config.ui-tui",
+      "path": "surface/config/ui-tui.md",
+      "churn": 89,
+      "kind": "config"
+    },
+    {
+      "id": "config.skills-plugins-features",
+      "path": "surface/config/skills-plugins-features.md",
+      "churn": 162,
+      "kind": "config"
+    },
+    {
+      "id": "config.storage-telemetry-misc",
+      "path": "surface/config/storage-telemetry-misc.md",
+      "churn": 75,
+      "kind": "config"
+    },
+    {
+      "id": "rpc.overview",
+      "path": "surface/app-server/overview.md",
+      "churn": 59,
+      "kind": "rpc"
+    },
+    {
+      "id": "rpc.thread-methods",
+      "path": "surface/app-server/thread-methods.md",
+      "churn": 432,
+      "kind": "rpc"
+    },
+    {
+      "id": "rpc.turn-methods",
+      "path": "surface/app-server/turn-methods.md",
+      "churn": 61,
+      "kind": "rpc"
+    },
+    {
+      "id": "rpc.fs-command-methods",
+      "path": "surface/app-server/fs-command-methods.md",
+      "churn": 55,
+      "kind": "rpc"
+    },
+    {
+      "id": "rpc.config-account-methods",
+      "path": "surface/app-server/config-account-methods.md",
+      "churn": 188,
+      "kind": "rpc"
+    },
+    {
+      "id": "rpc.mcp-skills-plugin-methods",
+      "path": "surface/app-server/mcp-skills-plugin-methods.md",
+      "churn": 433,
+      "kind": "rpc"
+    },
+    {
+      "id": "rpc.notifications-thread",
+      "path": "surface/app-server/notifications-thread.md",
+      "churn": 639,
+      "kind": "rpc"
+    },
+    {
+      "id": "rpc.notifications-system",
+      "path": "surface/app-server/notifications-system.md",
+      "churn": 256,
+      "kind": "rpc"
+    },
+    {
+      "id": "rpc.server-requests",
+      "path": "surface/app-server/server-requests.md",
+      "churn": 189,
+      "kind": "rpc"
+    },
+    {
+      "id": "sdk.ts-structured-output",
+      "path": "surface/sdk/ts-structured-output.md",
+      "churn": 209,
+      "kind": "sdk"
+    },
+    {
+      "id": "subsys.core.tool-system",
+      "path": "subsystems/core/tool-system.md",
+      "churn": 79,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.turn-engine",
+      "path": "subsystems/core/turn-engine.md",
+      "churn": 134,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.session-lifecycle",
+      "path": "subsystems/core/session-lifecycle.md",
+      "churn": 661,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.context-manager",
+      "path": "subsystems/core/context-manager.md",
+      "churn": 636,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.instruction-assembly",
+      "path": "subsystems/core/instruction-assembly.md",
+      "churn": 330,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.compaction",
+      "path": "subsystems/core/compaction.md",
+      "churn": 562,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.memory",
+      "path": "subsystems/core/memory.md",
+      "churn": 510,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.tool-router",
+      "path": "subsystems/core/tool-router.md",
+      "churn": 81,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.unified-exec",
+      "path": "subsystems/core/unified-exec.md",
+      "churn": 394,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.approval-guardian",
+      "path": "subsystems/core/approval-guardian.md",
+      "churn": 1117,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.approval-policy",
+      "path": "subsystems/core/approval-policy.md",
+      "churn": 708,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.review-mode",
+      "path": "subsystems/core/review-mode.md",
+      "churn": 292,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.realtime-conversation",
+      "path": "subsystems/core/realtime-conversation.md",
+      "churn": 125,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.collaboration-modes",
+      "path": "subsystems/core/collaboration-modes.md",
+      "churn": 566,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.ghost-undo",
+      "path": "subsystems/core/ghost-undo.md",
+      "churn": 337,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.rollout-persistence",
+      "path": "subsystems/core/rollout-persistence.md",
+      "churn": 194,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.state-db",
+      "path": "subsystems/core/state-db.md",
+      "churn": 97,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.thread-store",
+      "path": "subsystems/core/thread-store.md",
+      "churn": 985,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.exec-sandbox.overview",
+      "path": "subsystems/exec-sandbox/overview.md",
+      "churn": 414,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.exec-sandbox.apply-patch-engine",
+      "path": "subsystems/exec-sandbox/apply-patch-engine.md",
+      "churn": 708,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.exec-sandbox.sandbox-seatbelt",
+      "path": "subsystems/exec-sandbox/sandbox-seatbelt.md",
+      "churn": 52,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.exec-sandbox.process-hardening",
+      "path": "subsystems/exec-sandbox/process-hardening.md",
+      "churn": 16,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.exec-sandbox.arg0-dispatch",
+      "path": "subsystems/exec-sandbox/arg0-dispatch.md",
+      "churn": 6,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.mcp.client",
+      "path": "subsystems/mcp/client.md",
+      "churn": 1212,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.mcp.transports",
+      "path": "subsystems/mcp/transports.md",
+      "churn": 618,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.mcp.oauth",
+      "path": "subsystems/mcp/oauth.md",
+      "churn": 249,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.mcp.name-qualification",
+      "path": "subsystems/mcp/name-qualification.md",
+      "churn": 136,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.mcp.connectors",
+      "path": "subsystems/mcp/connectors.md",
+      "churn": 217,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.overview",
+      "path": "subsystems/providers/overview.md",
+      "churn": 33,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.http-client",
+      "path": "subsystems/providers/http-client.md",
+      "churn": 210,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.provider-openai",
+      "path": "subsystems/providers/provider-openai.md",
+      "churn": 1,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.provider-bedrock",
+      "path": "subsystems/providers/provider-bedrock.md",
+      "churn": 96,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.provider-oss",
+      "path": "subsystems/providers/provider-oss.md",
+      "churn": 1,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.responses-api",
+      "path": "subsystems/providers/responses-api.md",
+      "churn": 99,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.sse-streaming",
+      "path": "subsystems/providers/sse-streaming.md",
+      "churn": 129,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.retry-errors",
+      "path": "subsystems/providers/retry-errors.md",
+      "churn": 119,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.model-catalog",
+      "path": "subsystems/providers/model-catalog.md",
+      "churn": 330,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.tui.event-system",
+      "path": "subsystems/tui/event-system.md",
+      "churn": 1664,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.tui.streaming-pipeline",
+      "path": "subsystems/tui/streaming-pipeline.md",
+      "churn": 69,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.tui.bottom-pane",
+      "path": "subsystems/tui/bottom-pane.md",
+      "churn": 1076,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.tui.status-surfaces",
+      "path": "subsystems/tui/status-surfaces.md",
+      "churn": 1442,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.tui.onboarding",
+      "path": "subsystems/tui/onboarding.md",
+      "churn": 94,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.tui.rendering-theming",
+      "path": "subsystems/tui/rendering-theming.md",
+      "churn": 301,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.app-server.message-processor",
+      "path": "subsystems/app-server/message-processor.md",
+      "churn": 426,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.app-server.session-management",
+      "path": "subsystems/app-server/session-management.md",
+      "churn": 394,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.app-server.transport",
+      "path": "subsystems/app-server/transport.md",
+      "churn": 40,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.config-auth.config-loading",
+      "path": "subsystems/config-auth/config-loading.md",
+      "churn": 34,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.config-auth.profiles",
+      "path": "subsystems/config-auth/profiles.md",
+      "churn": 80,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.config-auth.auth-flows",
+      "path": "subsystems/config-auth/auth-flows.md",
+      "churn": 384,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.config-auth.credential-storage",
+      "path": "subsystems/config-auth/credential-storage.md",
+      "churn": 105,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.config-auth.hooks",
+      "path": "subsystems/config-auth/hooks.md",
+      "churn": 685,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.config-auth.plugins",
+      "path": "subsystems/config-auth/plugins.md",
+      "churn": 304,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.config-auth.features-system",
+      "path": "subsystems/config-auth/features-system.md",
+      "churn": 423,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.cloud.cloud-tasks",
+      "path": "subsystems/cloud/cloud-tasks.md",
+      "churn": 10,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.cloud.cloud-task-api",
+      "path": "subsystems/cloud/cloud-task-api.md",
+      "churn": 10,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.cloud.cloud-config",
+      "path": "subsystems/cloud/cloud-config.md",
+      "churn": 123,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.git-utils",
+      "path": "subsystems/platform/git-utils.md",
+      "churn": 21,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.telemetry-otel",
+      "path": "subsystems/platform/telemetry-otel.md",
+      "churn": 33,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.analytics",
+      "path": "subsystems/platform/analytics.md",
+      "churn": 571,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.network-proxy",
+      "path": "subsystems/platform/network-proxy.md",
+      "churn": 175,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.terminal-detection",
+      "path": "subsystems/platform/terminal-detection.md",
+      "churn": 348,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.realtime",
+      "path": "subsystems/platform/realtime.md",
+      "churn": 23,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.agent-identity",
+      "path": "subsystems/platform/agent-identity.md",
+      "churn": 35,
+      "kind": "subsystem"
+    },
+    {
+      "id": "ref.protocol-op",
+      "path": "reference/protocol-op.md",
+      "churn": 90,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.protocol-event-lifecycle",
+      "path": "reference/protocol-event-lifecycle.md",
+      "churn": 90,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.protocol-event-streaming",
+      "path": "reference/protocol-event-streaming.md",
+      "churn": 116,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.protocol-items",
+      "path": "reference/protocol-items.md",
+      "churn": 168,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.session-tasks",
+      "path": "reference/session-tasks.md",
+      "churn": 78,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.data-model",
+      "path": "reference/data-model.md",
+      "churn": 524,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.key-types",
+      "path": "reference/key-types.md",
+      "churn": 1346,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.crate-index",
+      "path": "reference/crate-index.md",
+      "churn": 25,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.feature-flags",
+      "path": "reference/feature-flags.md",
+      "churn": 87,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.env-vars",
+      "path": "reference/env-vars.md",
+      "churn": 1099,
+      "kind": "reference"
+    },
+    {
+      "id": "ref.glossary",
+      "path": "reference/glossary.md",
+      "churn": 1661,
+      "kind": "reference"
+    },
+    {
+      "id": "tool.sleep",
+      "path": "surface/tools/sleep.md",
+      "churn": 145,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.new-context",
+      "path": "surface/tools/new-context.md",
+      "churn": 40,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.get-context-remaining",
+      "path": "surface/tools/get-context-remaining.md",
+      "churn": 40,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.interrupt-agent-v2",
+      "path": "surface/tools/interrupt-agent-v2.md",
+      "churn": 40,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.list-available-plugins-to-install",
+      "path": "surface/tools/list-available-plugins-to-install.md",
+      "churn": 135,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.request-plugin-install",
+      "path": "surface/tools/request-plugin-install.md",
+      "churn": 135,
+      "kind": "tool"
+    },
+    {
+      "id": "surface.cli.external-agent-import",
+      "path": "surface/cli/external-agent-import.md",
+      "churn": 117,
+      "kind": "flow"
+    },
+    {
+      "id": "tool.current-time",
+      "path": "surface/tools/current-time.md",
+      "churn": 127,
+      "kind": "tool"
+    },
+    {
+      "id": "tool.wait-for-environment",
+      "path": "surface/tools/wait-for-environment.md",
+      "churn": 192,
+      "kind": "tool"
+    },
+    {
+      "id": "subsys.core.rollout-budget",
+      "path": "subsystems/core/rollout-budget.md",
+      "churn": 870,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.token-budget",
+      "path": "subsystems/core/token-budget.md",
+      "churn": 638,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.turn-metadata",
+      "path": "subsystems/core/turn-metadata.md",
+      "churn": 600,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.rollout-migration",
+      "path": "subsystems/core/rollout-migration.md",
+      "churn": 359,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.thread-queue",
+      "path": "subsystems/core/thread-queue.md",
+      "churn": 250,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.diagnostics",
+      "path": "subsystems/platform/diagnostics.md",
+      "churn": 375,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.core.history-notes",
+      "path": "subsystems/core/history-notes.md",
+      "churn": 105,
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.worktree",
+      "path": "subsystems/platform/worktree.md",
+      "churn": 393,
+      "kind": "subsystem"
+    }
+  ],
+  "D_CLEAN": [
+    {
+      "id": "sdk.ts-overview",
+      "path": "surface/sdk/ts-overview.md",
+      "kind": "sdk"
+    },
+    {
+      "id": "sdk.ts-events-items",
+      "path": "surface/sdk/ts-events-items.md",
+      "kind": "sdk"
+    },
+    {
+      "id": "sdk.py-overview",
+      "path": "surface/sdk/py-overview.md",
+      "kind": "sdk"
+    },
+    {
+      "id": "sdk.py-inputs-errors",
+      "path": "surface/sdk/py-inputs-errors.md",
+      "kind": "sdk"
+    },
+    {
+      "id": "sdk.sdk-architecture",
+      "path": "surface/sdk/sdk-architecture.md",
+      "kind": "sdk"
+    },
+    {
+      "id": "subsys.core.trace-bundle",
+      "path": "subsystems/core/trace-bundle.md",
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.exec-sandbox.file-system",
+      "path": "subsystems/exec-sandbox/file-system.md",
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.exec-sandbox.execpolicy-dsl",
+      "path": "subsystems/exec-sandbox/execpolicy-dsl.md",
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.providers.auth-layer",
+      "path": "subsystems/providers/auth-layer.md",
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.config-auth.skills",
+      "path": "subsystems/config-auth/skills.md",
+      "kind": "subsystem"
+    },
+    {
+      "id": "subsys.platform.file-search",
+      "path": "subsystems/platform/file-search.md",
+      "kind": "subsystem"
+    },
+    {
+      "id": "ref.uncertainty",
+      "path": "reference/uncertainty.md",
+      "kind": "reference"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ symbols: [RequestPluginInstallHandler, create_request_plugin_install_tool, Reque
 related: [tool.list-available-plugins-to-install, tool.tool-search, subsys.config-auth.plugins, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > `request_plugin_install` 向用户发起 plugin/connector 安装确认;用户接受后,connector 会走 accessible connector 刷新验证,remote marketplace plugin 会刷新远程插件缓存并核对关联 connectors,非远程 plugin 会 reload config 后用 plugin manager 验证。
@@ -55,11 +55,11 @@ ListTool 的 data type 是 `RequestPluginInstallArgs { tool_type, action_type, t
 
 ## 6 注册与门控
 
-`tool_suggest_enabled` 要求 `Feature::ToolSuggest`、`Feature::Apps`、`Feature::Plugins` 全部开启。[E: codex-rs/core/src/tools/spec_plan.rs:644] [E: codex-rs/core/src/tools/spec_plan.rs:646] [E: codex-rs/core/src/tools/spec_plan.rs:648]
+`tool_suggest_enabled` 要求 `Feature::ToolSuggest`、`Feature::Apps`、`Feature::Plugins` 全部开启。[E: codex-rs/core/src/tools/spec_plan.rs:633] [E: codex-rs/core/src/tools/spec_plan.rs:635] [E: codex-rs/core/src/tools/spec_plan.rs:637]
 
-`add_core_utility_tools` 要求存在非空 tool suggest candidates,并会注册 `RequestPluginInstallHandler`;只有 `ListTool` presentation 才额外注册 `list_available_plugins_to_install`。[E: codex-rs/core/src/tools/spec_plan.rs:1229] [E: codex-rs/core/src/tools/spec_plan.rs:1233] [E: codex-rs/core/src/tools/spec_plan.rs:1239]
+`add_core_utility_tools` 要求存在非空 tool suggest candidates,并会注册 `RequestPluginInstallHandler`;只有 `ListTool` presentation 才额外注册 `list_available_plugins_to_install`。[E: codex-rs/core/src/tools/spec_plan.rs:1239] [E: codex-rs/core/src/tools/spec_plan.rs:1244] [E: codex-rs/core/src/tools/spec_plan.rs:1249]
 
-presentation 由 turn preparation 决定：endpoint 返回 recommended plugin candidates 时直接使用 `RecommendationContext`，不会注册 legacy list tool；没有 endpoint candidates 才构造传统 discoverable set 与 `ListTool` presentation。[E: codex-rs/core/src/session/turn.rs:1538][E: codex-rs/core/src/session/turn.rs:1542][E: codex-rs/core/src/session/turn.rs:1570]
+presentation 由 turn preparation 决定：endpoint 返回 recommended plugin candidates 时直接使用 `RecommendationContext`，不会注册 legacy list tool；没有 endpoint candidates 才构造传统 discoverable set 与 `ListTool` presentation。[E: codex-rs/core/src/session/turn.rs:1595][E: codex-rs/core/src/session/turn.rs:1599][E: codex-rs/core/src/session/turn.rs:1627]
 
 spec tests 证明即使 `tool_search` 不可见,`request_plugin_install` 仍可见,因为安装请求工具不依赖 search tool capability。[E: codex-rs/core/src/tools/spec_plan_tests.rs:2393] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2396] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2413]
 

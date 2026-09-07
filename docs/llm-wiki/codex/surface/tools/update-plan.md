@@ -8,10 +8,10 @@ symbols: [create_update_plan_tool, PlanHandler, PlanToolOutput, parse_update_pla
 related: [spine.tool-call-anatomy, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
-> `update_plan` 是 Codex 的本地 checklist/TODO 状态更新 function tool。它让模型提交结构化 plan，handler 把参数转成 `EventMsg::PlanUpdate(args)` 发给客户端，并向模型返回固定的 `Plan updated` 成功文本。它**不是默认始终开启**：只有 `config.update_plan_enabled` 为 true 时才注册。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan.rs:95][E: codex-rs/core/src/tools/spec_plan.rs:1148][E: codex-rs/core/src/config/mod.rs:2639]
+> `update_plan` 是 Codex 的本地 checklist/TODO 状态更新 function tool。它让模型提交结构化 plan，handler 把参数转成 `EventMsg::PlanUpdate(args)` 发给客户端，并向模型返回固定的 `Plan updated` 成功文本。它**不是默认始终开启**：只有 `config.update_plan_enabled` 为 true 时才注册。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:42][E: codex-rs/core/src/tools/handlers/plan.rs:95][E: codex-rs/core/src/tools/spec_plan.rs:1142][E: codex-rs/core/src/config/mod.rs:2659]
 
 ## 能回答的问题
 
@@ -34,7 +34,7 @@ updated: a9519cbcdd
 
 工具描述说明它用于更新 task plan，可带可选 explanation，并要求最多一个 step 处于 `in_progress`。[E: codex-rs/core/src/tools/handlers/plan_spec.rs:44][E: codex-rs/core/src/tools/handlers/plan_spec.rs:45][E: codex-rs/core/src/tools/handlers/plan_spec.rs:46]
 
-执行层不会把 plan 内容拼进工具输出；`PlanHandler` 解析 arguments 后调用 `session.send_event(turn.as_ref(), EventMsg::PlanUpdate(args)).await`，通过 `EventMsg::PlanUpdate` 暴露给 event surface。[E: codex-rs/core/src/tools/handlers/plan.rs:93][E: codex-rs/core/src/tools/handlers/plan.rs:95][E: codex-rs/protocol/src/protocol.rs:1504]
+执行层不会把 plan 内容拼进工具输出；`PlanHandler` 解析 arguments 后调用 `session.send_event(turn.as_ref(), EventMsg::PlanUpdate(args)).await`，通过 `EventMsg::PlanUpdate` 暴露给 event surface。[E: codex-rs/core/src/tools/handlers/plan.rs:93][E: codex-rs/core/src/tools/handlers/plan.rs:95][E: codex-rs/protocol/src/protocol.rs:1523]
 
 当前源码中，“最多一个 `in_progress`”只出现在工具描述；handler 路径显示它做 JSON 反序列化并发送 event，未见额外 runtime 校验该约束。[E: codex-rs/core/src/tools/handlers/plan.rs:93][E: codex-rs/core/src/tools/handlers/plan.rs:95][I]
 
@@ -59,9 +59,9 @@ code-mode nested result 返回空 JSON object。[E: codex-rs/core/src/tools/hand
 
 ## 5 注册与门控
 
-`build_tool_router` 经 `add_core_tool_sources` 调用 `add_core_utility_tools`。Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，因此不会注册 `PlanHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:153][E: codex-rs/core/src/tools/spec_plan.rs:989][E: codex-rs/core/src/tools/spec_plan.rs:1036][E: codex-rs/core/src/tools/spec_plan.rs:1041]
+`build_tool_router` 经 `add_core_tool_sources` 调用 `add_core_utility_tools`。Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，因此不会注册 `PlanHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:154][E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:1029][E: codex-rs/core/src/tools/spec_plan.rs:1034]
 
-只有 resolved `config.update_plan_enabled` 为 true 时才向 registry 注册 `PlanHandler`。`resolve_update_plan_enabled` 用 `is_some_and(|config| config.enabled)`：`tools.update_plan` 未配置时默认 **false**。这是 opt-in config gate，不是 feature flag。[E: codex-rs/core/src/tools/spec_plan.rs:1148][E: codex-rs/core/src/config/mod.rs:2639][E: codex-rs/core/src/config/mod.rs:2644][E: codex-rs/core/src/tools/spec_plan_tests.rs:857]
+只有 resolved `config.update_plan_enabled` 为 true 时才向 registry 注册 `PlanHandler`。`resolve_update_plan_enabled` 用 `is_some_and(|config| config.enabled)`：`tools.update_plan` 未配置时默认 **false**。这是 opt-in config gate，不是 feature flag。[E: codex-rs/core/src/tools/spec_plan.rs:1142][E: codex-rs/core/src/config/mod.rs:2659][E: codex-rs/core/src/config/mod.rs:2664][E: codex-rs/core/src/tools/spec_plan_tests.rs:857]
 
 runtime gate 在 handler 内：当当前 `turn.mode()` 是 `ModeKind::Plan` 时，handler 返回错误 `update_plan is a TODO/checklist tool and is not allowed in Plan mode`。[E: codex-rs/core/src/tools/handlers/plan.rs:87][E: codex-rs/core/src/tools/handlers/plan.rs:88][E: codex-rs/core/src/tools/handlers/plan.rs:89]
 

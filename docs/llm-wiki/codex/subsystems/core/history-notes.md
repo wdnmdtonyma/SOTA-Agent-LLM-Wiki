@@ -8,7 +8,7 @@ symbols: [HistoryNotesAction, HistoryNotesTool, HistoryNotesBackend, HistoryNote
 related: [spine.context-and-compaction, subsys.core.context-manager, subsys.core.compaction, subsys.core.token-budget, spine.extension-system]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > `codex-rs/ext/history-notes` 是独立 extension：给模型两套 **private model-only** namespace 工具——`history` 读已持久化的归一化会话历史，`notes` 读写跨 context-window 存活的虚拟笔记。工具存在、路径、存储机制和私有内容都不得向用户披露。[E: codex-rs/ext/history-notes/src/tools.rs:26][E: codex-rs/ext/history-notes/src/tools.rs:27][E: codex-rs/ext/history-notes/src/tools.rs:311]
@@ -23,9 +23,9 @@ updated: a9519cbcdd
 
 ## 职责边界
 
-History notes **不是** `ContextManager` 的 in-memory history，也不是 `codex-rs/memories` 的 `memory_summary.md` 长期记忆。它通过 Codex backend 的 `alpha/history/v2/*` 与 `alpha/notes/v2/*` 读写私有状态；模型用 opaque window/item ID 和虚拟 notes path 恢复被 compaction 截断的上下文。[E: codex-rs/ext/history-notes/src/tools.rs:26][E: codex-rs/ext/history-notes/src/tools.rs:84][E: codex-rs/ext/history-notes/src/extension.rs:163]
+History notes **不是** `ContextManager` 的 in-memory history，也不是 `codex-rs/memories` 的 `memory_summary.md` 长期记忆。它通过 Codex backend 的 `alpha/history/v2/*` 与 `alpha/notes/v2/*` 读写私有状态；模型用 opaque window/item ID 和虚拟 notes path 恢复被 compaction 截断的上下文。[E: codex-rs/ext/history-notes/src/tools.rs:26][E: codex-rs/ext/history-notes/src/tools.rs:84][E: codex-rs/ext/history-notes/src/extension.rs:182]
 
-crate 只导出 `install`；app-server 在组 extension registry 时无条件调用它，真正是否暴露工具由 thread store 里的 config gate 决定。[E: codex-rs/ext/history-notes/src/lib.rs:5][E: codex-rs/app-server/src/extensions.rs:79][E: codex-rs/ext/history-notes/src/extension.rs:141]
+crate 只导出 `install`；app-server 在组 extension registry 时无条件调用它，真正是否暴露工具由 thread store 里的 config gate 决定。[E: codex-rs/ext/history-notes/src/lib.rs:5][E: codex-rs/app-server/src/extensions.rs:79][E: codex-rs/ext/history-notes/src/extension.rs:160]
 
 ## 关键 crate/文件
 
@@ -33,7 +33,7 @@ crate 只导出 `install`；app-server 在组 extension registry 时无条件调
 |---|---|
 | `codex-rs/ext/history-notes/src/lib.rs` | 只 `pub use extension::install`。[E: codex-rs/ext/history-notes/src/lib.rs:5] |
 | `tools.rs` | 9 个 action、两个 namespace 描述、schema、`DirectModelOnly`、parallel 规则、output 加密/图片拆分。[E: codex-rs/ext/history-notes/src/tools.rs:31][E: codex-rs/ext/history-notes/src/tools.rs:44][E: codex-rs/ext/history-notes/src/tools.rs:310] |
-| `extension.rs` | thread start / config changed / thread-hint prompt / 9 个 tool executor。[E: codex-rs/ext/history-notes/src/extension.rs:43][E: codex-rs/ext/history-notes/src/extension.rs:94][E: codex-rs/ext/history-notes/src/extension.rs:135] |
+| `extension.rs` | thread start / config changed / thread-hint prompt / 9 个 tool executor。[E: codex-rs/ext/history-notes/src/extension.rs:46][E: codex-rs/ext/history-notes/src/extension.rs:97][E: codex-rs/ext/history-notes/src/extension.rs:154] |
 | `backend.rs` | POST backend、35s timeout、给 search/write 加 encrypted-args header。[E: codex-rs/ext/history-notes/src/backend.rs:14][E: codex-rs/ext/history-notes/src/backend.rs:68] |
 
 ## 数据模型：9 个 HistoryNotesAction
@@ -84,21 +84,21 @@ code mode 直接返回 `"History tools are unavailable in code mode."`。[E: cod
 2. `config.model_provider.is_openai()`；
 3. `auth_manager.current_auth_uses_codex_backend()`。
 
-否则移除 config，工具列表为空。[E: codex-rs/ext/history-notes/src/extension.rs:44][E: codex-rs/ext/history-notes/src/extension.rs:48][E: codex-rs/ext/history-notes/src/extension.rs:58][E: codex-rs/ext/history-notes/src/extension.rs:141]
+否则移除 config，工具列表为空。[E: codex-rs/ext/history-notes/src/extension.rs:47][E: codex-rs/ext/history-notes/src/extension.rs:51][E: codex-rs/ext/history-notes/src/extension.rs:61][E: codex-rs/ext/history-notes/src/extension.rs:160]
 
-`TokenBudgetConfig` 默认 `use_history_notes_extension: false`。[E: codex-rs/core/src/config/mod.rs:1223]
+`TokenBudgetConfig` 默认 `use_history_notes_extension: false`。[E: codex-rs/core/src/config/mod.rs:1238]
 
-session 在 Responses metadata 里，若该开关打开会设 `history_ingest_requested: Some(true)`，让 backend 有机会 ingest 当前窗口。[E: codex-rs/core/src/session/session.rs:615]
+session 在 Responses metadata 里，若该开关打开会设 `history_ingest_requested: Some(true)`，让 backend 有机会 ingest 当前窗口。[E: codex-rs/core/src/session/session.rs:624]
 
 ## 控制流
 
-1. app-server `thread_extensions` 调用 `codex_history_notes_extension::install`，注册 lifecycle / config / prompt / tool contributor。[E: codex-rs/app-server/src/extensions.rs:79][E: codex-rs/ext/history-notes/src/extension.rs:163]
-2. `on_thread_start` 把 `session_source` 的 agent path（缺省 `/root`）存成 `HistoryNotesAgentIdentity`，再跑 `update_config`。[E: codex-rs/ext/history-notes/src/extension.rs:69][E: codex-rs/ext/history-notes/src/extension.rs:77]
-3. `tools()` 为 `HistoryNotesAction::ALL` 各建一个 `HistoryNotesTool`，带 session id 与当前 agent name。[E: codex-rs/ext/history-notes/src/extension.rs:148]
+1. app-server `thread_extensions` 调用 `codex_history_notes_extension::install`，注册 lifecycle / config / prompt / tool contributor。[E: codex-rs/app-server/src/extensions.rs:79][E: codex-rs/ext/history-notes/src/extension.rs:182]
+2. `on_thread_start` 把 `session_source` 的 agent path（缺省 `/root`）存成 `HistoryNotesAgentIdentity`，再跑 `update_config`。[E: codex-rs/ext/history-notes/src/extension.rs:72][E: codex-rs/ext/history-notes/src/extension.rs:80]
+3. `tools()` 为 `HistoryNotesAction::ALL` 各建一个 `HistoryNotesTool`，带 session id 与当前 agent name。[E: codex-rs/ext/history-notes/src/extension.rs:167]
 4. handler 解析 JSON 对象（空字符串当 `{}`），把 `context.session_id` / `context.current_agent_name` 插入后 POST backend。[E: codex-rs/ext/history-notes/src/tools.rs:266][E: codex-rs/ext/history-notes/src/backend.rs:40]
 5. search / append / write 请求带 `x-openai-encrypted-tool-arguments: true`；所有请求带 truncation policy header，timeout 35s。[E: codex-rs/ext/history-notes/src/backend.rs:14][E: codex-rs/ext/history-notes/src/backend.rs:75][E: codex-rs/ext/history-notes/src/backend.rs:81]
 6. 若 response 有 `encrypted_output`，工具输出用 `EncryptedContent`；另可拆出 `images` 变成 data-URL `InputImage`。[E: codex-rs/ext/history-notes/src/tools.rs:336][E: codex-rs/ext/history-notes/src/tools.rs:369]
-7. prompt contributor 另调 `alpha/notes/v2/thread_hint`，把不超过 `MAX_THREAD_HINT_BYTES`（4_000）的 `text` 注入 `PromptSlot::ContextWindow`，kind 为 `notes.thread_hint`。[E: codex-rs/ext/history-notes/src/extension.rs:28][E: codex-rs/ext/history-notes/src/extension.rs:110][E: codex-rs/ext/history-notes/src/extension.rs:126]
+7. prompt contributor 另调 `alpha/notes/v2/thread_hint`，把不超过 `MAX_THREAD_HINT_BYTES`（4_000）的 `text` 注入 `PromptSlot::ContextWindow`，kind 为 `notes.thread_hint`。[E: codex-rs/ext/history-notes/src/extension.rs:31][E: codex-rs/ext/history-notes/src/extension.rs:122][E: codex-rs/ext/history-notes/src/extension.rs:145]
 
 ## parallel-safe
 
@@ -112,7 +112,7 @@ list/search 做成 eventually consistent，而单文件 read 在成功 write 后
 
 ## gotcha
 
-- 打开开关还不够：必须是 OpenAI provider **且** Codex backend auth，否则 thread store 里没有 config，工具数为 0。[E: codex-rs/ext/history-notes/src/extension.rs:48]
+- 打开开关还不够：必须是 OpenAI provider **且** Codex backend auth，否则 thread store 里没有 config，工具数为 0。[E: codex-rs/ext/history-notes/src/extension.rs:51]
 - 1,000,000 字节上限写在 notes namespace 描述里，crate 本地不另做字节计数。[E: codex-rs/ext/history-notes/src/tools.rs:27]
 - 这不是 `memories` extension 的 `memory_summary.md`；后者走 developer policy，面向用户可感知的长期记忆。
 

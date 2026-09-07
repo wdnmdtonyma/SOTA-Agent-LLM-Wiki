@@ -8,10 +8,10 @@ symbols: [RawResponseItemEvent, RawResponseCompletedEvent, ItemStartedEvent, Ite
 related: [spine.tool-call-anatomy, subsys.providers.sse-streaming, ref.protocol-event-lifecycle, ref.protocol-items]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
-> `Event` 是 agent 发回客户端的 queue entry,用 `id` 关联 submission,用 `msg: EventMsg` 承载 payload；`EventMsg` 是 `serde(tag = "type", rename_all = "snake_case")` 的 agent response event enum，当前共 83 个变体，本页收录其中 31 个 streaming 变体。[E: codex-rs/protocol/src/protocol.rs:1319][E: codex-rs/protocol/src/protocol.rs:1323][E: codex-rs/protocol/src/protocol.rs:1337]
+> `Event` 是 agent 发回客户端的 queue entry,用 `id` 关联 submission,用 `msg: EventMsg` 承载 payload；`EventMsg` 是 `serde(tag = "type", rename_all = "snake_case")` 的 agent response event enum，当前共 83 个变体，本页收录其中 31 个 streaming 变体。[E: codex-rs/protocol/src/protocol.rs:1338][E: codex-rs/protocol/src/protocol.rs:1342][E: codex-rs/protocol/src/protocol.rs:1356]
 
 ## 能回答的问题
 
@@ -29,57 +29,57 @@ updated: a9519cbcdd
 
 | # | Variant | Payload | 流式含义 | 定义锚 |
 |---:|---|---|---|---|
-| 1 | `RealtimeConversationRealtime` | `RealtimeConversationRealtimeEvent` | realtime conversation streaming payload。[E: codex-rs/protocol/src/protocol.rs:1358] | `protocol.rs:1358` |
-| 2 | `RealtimeConversationSdp` | `RealtimeConversationSdpEvent` | realtime session description protocol payload。[E: codex-rs/protocol/src/protocol.rs:1364] | `protocol.rs:1364` |
-| 3 | `AgentMessage` | `AgentMessageEvent` | assistant text output message。[E: codex-rs/protocol/src/protocol.rs:1403] | `protocol.rs:1403` |
-| 4 | `UserMessage` | `UserMessageEvent` | 发送给模型的 user/system input message。[E: codex-rs/protocol/src/protocol.rs:1406] | `protocol.rs:1406` |
-| 5 | `AgentReasoning` | `AgentReasoningEvent` | agent reasoning text event。[E: codex-rs/protocol/src/protocol.rs:1409] | `protocol.rs:1409` |
-| 6 | `AgentReasoningRawContent` | `AgentReasoningRawContentEvent` | raw reasoning content event。[E: codex-rs/protocol/src/protocol.rs:1412] | `protocol.rs:1412` |
-| 7 | `AgentReasoningSectionBreak` | `AgentReasoningSectionBreakEvent` | reasoning summary section boundary。[E: codex-rs/protocol/src/protocol.rs:1415] | `protocol.rs:1415` |
-| 8 | `RawResponseItem` | `RawResponseItemEvent` | 原始 Responses API item wrapper,字段是 `item: ResponseItem`。[E: codex-rs/protocol/src/protocol.rs:1517] | `protocol.rs:1517` |
-| 9 | `RawResponseCompleted` | `RawResponseCompletedEvent` | 一次 provider response 完整结束。[E: codex-rs/protocol/src/protocol.rs:1518] | `protocol.rs:1518` |
-| 10 | `ItemStarted` | `ItemStartedEvent` | v2 turn item start。[E: codex-rs/protocol/src/protocol.rs:1520] | `protocol.rs:1520` |
-| 11 | `ItemCompleted` | `ItemCompletedEvent` | v2 turn item completion。[E: codex-rs/protocol/src/protocol.rs:1521] | `protocol.rs:1521` |
-| 12 | `AgentMessageContentDelta` | `AgentMessageContentDeltaEvent` | assistant message content delta。[E: codex-rs/protocol/src/protocol.rs:1525] | `protocol.rs:1525` |
-| 13 | `PlanDelta` | `PlanDeltaEvent` | plan item delta。[E: codex-rs/protocol/src/protocol.rs:1526] | `protocol.rs:1526` |
-| 14 | `ReasoningContentDelta` | `ReasoningContentDeltaEvent` | reasoning summary/content delta。[E: codex-rs/protocol/src/protocol.rs:1527] | `protocol.rs:1527` |
-| 15 | `ReasoningRawContentDelta` | `ReasoningRawContentDeltaEvent` | raw reasoning content delta。[E: codex-rs/protocol/src/protocol.rs:1528] | `protocol.rs:1528` |
+| 1 | `RealtimeConversationRealtime` | `RealtimeConversationRealtimeEvent` | realtime conversation streaming payload。[E: codex-rs/protocol/src/protocol.rs:1377] | `protocol.rs:1377` |
+| 2 | `RealtimeConversationSdp` | `RealtimeConversationSdpEvent` | realtime session description protocol payload。[E: codex-rs/protocol/src/protocol.rs:1383] | `protocol.rs:1383` |
+| 3 | `AgentMessage` | `AgentMessageEvent` | assistant text output message。[E: codex-rs/protocol/src/protocol.rs:1422] | `protocol.rs:1422` |
+| 4 | `UserMessage` | `UserMessageEvent` | 发送给模型的 user/system input message。[E: codex-rs/protocol/src/protocol.rs:1425] | `protocol.rs:1425` |
+| 5 | `AgentReasoning` | `AgentReasoningEvent` | agent reasoning text event。[E: codex-rs/protocol/src/protocol.rs:1428] | `protocol.rs:1428` |
+| 6 | `AgentReasoningRawContent` | `AgentReasoningRawContentEvent` | raw reasoning content event。[E: codex-rs/protocol/src/protocol.rs:1431] | `protocol.rs:1431` |
+| 7 | `AgentReasoningSectionBreak` | `AgentReasoningSectionBreakEvent` | reasoning summary section boundary。[E: codex-rs/protocol/src/protocol.rs:1434] | `protocol.rs:1434` |
+| 8 | `RawResponseItem` | `RawResponseItemEvent` | 原始 Responses API item wrapper,字段是 `item: ResponseItem`。[E: codex-rs/protocol/src/protocol.rs:1536] | `protocol.rs:1536` |
+| 9 | `RawResponseCompleted` | `RawResponseCompletedEvent` | 一次 provider response 完整结束。[E: codex-rs/protocol/src/protocol.rs:1537] | `protocol.rs:1537` |
+| 10 | `ItemStarted` | `ItemStartedEvent` | v2 turn item start。[E: codex-rs/protocol/src/protocol.rs:1539] | `protocol.rs:1539` |
+| 11 | `ItemCompleted` | `ItemCompletedEvent` | v2 turn item completion。[E: codex-rs/protocol/src/protocol.rs:1540] | `protocol.rs:1540` |
+| 12 | `AgentMessageContentDelta` | `AgentMessageContentDeltaEvent` | assistant message content delta。[E: codex-rs/protocol/src/protocol.rs:1544] | `protocol.rs:1544` |
+| 13 | `PlanDelta` | `PlanDeltaEvent` | plan item delta。[E: codex-rs/protocol/src/protocol.rs:1545] | `protocol.rs:1545` |
+| 14 | `ReasoningContentDelta` | `ReasoningContentDeltaEvent` | reasoning summary/content delta。[E: codex-rs/protocol/src/protocol.rs:1546] | `protocol.rs:1546` |
+| 15 | `ReasoningRawContentDelta` | `ReasoningRawContentDeltaEvent` | raw reasoning content delta。[E: codex-rs/protocol/src/protocol.rs:1547] | `protocol.rs:1547` |
 
 ## Tool execution 与 hosted-tool events
 
 | # | Variant | Payload | 流式含义 | 定义锚 |
 |---:|---|---|---|---|
-| 1 | `McpToolCallBegin` | `McpToolCallBeginEvent` | MCP tool call begin。[E: codex-rs/protocol/src/protocol.rs:1438] | `protocol.rs:1438` |
-| 2 | `McpToolCallEnd` | `McpToolCallEndEvent` | MCP tool call end。[E: codex-rs/protocol/src/protocol.rs:1440] | `protocol.rs:1440` |
-| 3 | `WebSearchBegin` | `WebSearchBeginEvent` | hosted web search begin。[E: codex-rs/protocol/src/protocol.rs:1442] | `protocol.rs:1442` |
-| 4 | `WebSearchEnd` | `WebSearchEndEvent` | web search end。[E: codex-rs/protocol/src/protocol.rs:1444] | `protocol.rs:1444` |
-| 5 | `ImageGenerationBegin` | `ImageGenerationBeginEvent` | hosted image generation begin。[E: codex-rs/protocol/src/protocol.rs:1446] | `protocol.rs:1446` |
-| 6 | `ImageGenerationEnd` | `ImageGenerationEndEvent` | hosted image generation end。[E: codex-rs/protocol/src/protocol.rs:1448] | `protocol.rs:1448` |
-| 7 | `ExecCommandBegin` | `ExecCommandBeginEvent` | command execution begin。[E: codex-rs/protocol/src/protocol.rs:1451] | `protocol.rs:1451` |
-| 8 | `ExecCommandOutputDelta` | `ExecCommandOutputDeltaEvent` | command output delta。[E: codex-rs/protocol/src/protocol.rs:1454] | `protocol.rs:1454` |
-| 9 | `TerminalInteraction` | `TerminalInteractionEvent` | running command 的 terminal interaction。[E: codex-rs/protocol/src/protocol.rs:1457] | `protocol.rs:1457` |
-| 10 | `ExecCommandEnd` | `ExecCommandEndEvent` | command execution end。[E: codex-rs/protocol/src/protocol.rs:1459] | `protocol.rs:1459` |
-| 11 | `ViewImageToolCall` | `ViewImageToolCallEvent` | `view_image` tool 附加 local image。[E: codex-rs/protocol/src/protocol.rs:1462] | `protocol.rs:1462` |
-| 12 | `DynamicToolCallRequest` | `DynamicToolCallRequest` | dynamic tool call request。[E: codex-rs/protocol/src/protocol.rs:1470] | `protocol.rs:1470` |
-| 13 | `DynamicToolCallResponse` | `DynamicToolCallResponseEvent` | dynamic tool call response。[E: codex-rs/protocol/src/protocol.rs:1472] | `protocol.rs:1472` |
+| 1 | `McpToolCallBegin` | `McpToolCallBeginEvent` | MCP tool call begin。[E: codex-rs/protocol/src/protocol.rs:1476] | `protocol.rs:1457` |
+| 2 | `McpToolCallEnd` | `McpToolCallEndEvent` | MCP tool call end。[E: codex-rs/protocol/src/protocol.rs:1478] | `protocol.rs:1459` |
+| 3 | `WebSearchBegin` | `WebSearchBeginEvent` | hosted web search begin。[E: codex-rs/protocol/src/protocol.rs:1461] | `protocol.rs:1461` |
+| 4 | `WebSearchEnd` | `WebSearchEndEvent` | web search end。[E: codex-rs/protocol/src/protocol.rs:1463] | `protocol.rs:1463` |
+| 5 | `ImageGenerationBegin` | `ImageGenerationBeginEvent` | hosted image generation begin。[E: codex-rs/protocol/src/protocol.rs:1465] | `protocol.rs:1465` |
+| 6 | `ImageGenerationEnd` | `ImageGenerationEndEvent` | hosted image generation end。[E: codex-rs/protocol/src/protocol.rs:1467] | `protocol.rs:1467` |
+| 7 | `ExecCommandBegin` | `ExecCommandBeginEvent` | command execution begin。[E: codex-rs/protocol/src/protocol.rs:1489] | `protocol.rs:1470` |
+| 8 | `ExecCommandOutputDelta` | `ExecCommandOutputDeltaEvent` | command output delta。[E: codex-rs/protocol/src/protocol.rs:1473] | `protocol.rs:1473` |
+| 9 | `TerminalInteraction` | `TerminalInteractionEvent` | running command 的 terminal interaction。[E: codex-rs/protocol/src/protocol.rs:1476] | `protocol.rs:1476` |
+| 10 | `ExecCommandEnd` | `ExecCommandEndEvent` | command execution end。[E: codex-rs/protocol/src/protocol.rs:1478] | `protocol.rs:1478` |
+| 11 | `ViewImageToolCall` | `ViewImageToolCallEvent` | `view_image` tool 附加 local image。[E: codex-rs/protocol/src/protocol.rs:1481] | `protocol.rs:1481` |
+| 12 | `DynamicToolCallRequest` | `DynamicToolCallRequest` | dynamic tool call request。[E: codex-rs/protocol/src/protocol.rs:1489] | `protocol.rs:1489` |
+| 13 | `DynamicToolCallResponse` | `DynamicToolCallResponseEvent` | dynamic tool call response。[E: codex-rs/protocol/src/protocol.rs:1510] | `protocol.rs:1491` |
 
 ## Patch apply progress
 
 | # | Variant | Payload | 流式含义 | 定义锚 |
 |---:|---|---|---|---|
-| 1 | `PatchApplyBegin` | `PatchApplyBeginEvent` | apply code patch 的 begin progress event。[E: codex-rs/protocol/src/protocol.rs:1491] | `protocol.rs:1491` |
-| 2 | `PatchApplyUpdated` | `PatchApplyUpdatedEvent` | apply_patch input 生成过程中最新 structured file changes。[E: codex-rs/protocol/src/protocol.rs:1494] | `protocol.rs:1494` |
-| 3 | `PatchApplyEnd` | `PatchApplyEndEvent` | patch application finished。[E: codex-rs/protocol/src/protocol.rs:1497] | `protocol.rs:1497` |
+| 1 | `PatchApplyBegin` | `PatchApplyBeginEvent` | apply code patch 的 begin progress event。[E: codex-rs/protocol/src/protocol.rs:1510] | `protocol.rs:1510` |
+| 2 | `PatchApplyUpdated` | `PatchApplyUpdatedEvent` | apply_patch input 生成过程中最新 structured file changes。[E: codex-rs/protocol/src/protocol.rs:1513] | `protocol.rs:1513` |
+| 3 | `PatchApplyEnd` | `PatchApplyEndEvent` | patch application finished。[E: codex-rs/protocol/src/protocol.rs:1516] | `protocol.rs:1516` |
 
 ## Raw response item boundary
 
-`RawResponseItemEvent` 包装 `ResponseItem`，而 `ResponseItem` 自身是 `serde(tag = "type", rename_all = "snake_case")` enum。[E: codex-rs/protocol/src/protocol.rs:1517][E: codex-rs/protocol/src/models.rs:974][E: codex-rs/protocol/src/models.rs:975] `FunctionCall` 仍可带 optional `encrypted_function_args`；可携 metadata 的 response items 复用 `internal_chat_message_metadata_passthrough`，其中 `executed_tool_calls` 是 warehouse-only，跳过 deserialize/public schema/TS。[E: codex-rs/protocol/src/models.rs:1049][E: codex-rs/protocol/src/models.rs:1051][E: codex-rs/protocol/src/models.rs:925][E: codex-rs/protocol/src/models.rs:947][E: codex-rs/protocol/src/models.rs:950]
+`RawResponseItemEvent` 包装 `ResponseItem`，而 `ResponseItem` 自身是 `serde(tag = "type", rename_all = "snake_case")` enum。[E: codex-rs/protocol/src/protocol.rs:1536][E: codex-rs/protocol/src/models.rs:978] `FunctionCall` 仍可带 optional `encrypted_function_args`；可携 metadata 的 response items 复用 `InternalChatMessageMetadataPassthrough`，其中 `executed_tool_calls` 是 warehouse-only，跳过 deserialize/public schema/TS。[E: codex-rs/protocol/src/models.rs:1056][E: codex-rs/protocol/src/models.rs:930][E: codex-rs/protocol/src/models.rs:952]
 
 ## 设计动机速记
 
-- v2 item stream (`ItemStarted` / `ItemCompleted` / delta events) 与 legacy hosted/tool begin/end events 并存；兼容转换已集中到 `legacy_events.rs` 的 `HasLegacyEvent`。[E: codex-rs/protocol/src/protocol.rs:1520][E: codex-rs/protocol/src/protocol.rs:1521][E: codex-rs/protocol/src/legacy_events.rs:67]
-- command execution 流拆成 begin、output delta、terminal interaction 与 end。[E: codex-rs/protocol/src/protocol.rs:1451][E: codex-rs/protocol/src/protocol.rs:1454][E: codex-rs/protocol/src/protocol.rs:1457][E: codex-rs/protocol/src/protocol.rs:1459]
-- dynamic tool request 与 response 是 protocol event,而客户端对 dynamic tool 的 answer 回到 submission side 的 `Op::DynamicToolResponse`。[E: codex-rs/protocol/src/protocol.rs:1470][E: codex-rs/protocol/src/protocol.rs:1472][E: codex-rs/protocol/src/protocol.rs:692]
+- v2 item stream (`ItemStarted` / `ItemCompleted` / delta events) 与 legacy hosted/tool begin/end events 并存；兼容转换已集中到 `legacy_events.rs` 的 `HasLegacyEvent`。[E: codex-rs/protocol/src/protocol.rs:1539][E: codex-rs/protocol/src/protocol.rs:1540][E: codex-rs/protocol/src/legacy_events.rs:67]
+- command execution 流拆成 begin、output delta、terminal interaction 与 end。[E: codex-rs/protocol/src/protocol.rs:1489][E: codex-rs/protocol/src/protocol.rs:1473][E: codex-rs/protocol/src/protocol.rs:1476][E: codex-rs/protocol/src/protocol.rs:1478]
+- dynamic tool request 与 response 是 protocol event,而客户端对 dynamic tool 的 answer 回到 submission side 的 `Op::DynamicToolResponse`。[E: codex-rs/protocol/src/protocol.rs:1489][E: codex-rs/protocol/src/protocol.rs:1491][E: codex-rs/protocol/src/protocol.rs:711]
 
 ## Sources
 

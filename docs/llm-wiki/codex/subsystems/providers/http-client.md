@@ -8,7 +8,7 @@ symbols: [HttpClient, HttpClientBuilder, HttpClientFactory, OutboundProxyPolicy,
 related: [subsys.providers.overview, subsys.providers.responses-api, subsys.providers.retry-errors, subsys.providers.auth-layer, subsys.platform.network-proxy, subsys.core.code-mode-runtime]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > `codex-http-client` 不再只有一个默认 reqwest wrapper。应用先解析 `OutboundProxyPolicy`，固定目标可由 `HttpClientFactory` 构建 client；目标或 redirect 会变化的调用方必须走 `RouteAwareClientPool`，让每个 URL/hop 都按自己的 system/PAC/env route 选择或复用 transport client。
@@ -59,7 +59,7 @@ pool 在发送前解析当前 URL，按 resolved route 复用/新建 client；ro
 
 ## OpenAI file upload consumer
 
-MCP Apps 的 `openai/fileParams` 路径使用 session-owned、关闭 request logging 的 `RouteAwareClientPool`；该 pool 跨 turn 复用，并显式保留 transport-default route 的 legacy custom-CA fallback。[E: codex-rs/core/src/state/service.rs:62][E: codex-rs/core/src/session/session.rs:1225][E: codex-rs/core/src/session/session.rs:1229][E: codex-rs/core/src/mcp_openai_file.rs:47][E: codex-rs/core/src/mcp_openai_file.rs:49]
+MCP Apps 的 `openai/fileParams` 路径使用 session-owned、关闭 request logging 的 `RouteAwareClientPool`；该 pool 跨 turn 复用，并显式保留 transport-default route 的 legacy custom-CA fallback。[E: codex-rs/core/src/state/service.rs:63][E: codex-rs/core/src/session/session.rs:1243][E: codex-rs/core/src/session/session.rs:1247][E: codex-rs/core/src/mcp_openai_file.rs:47][E: codex-rs/core/src/mcp_openai_file.rs:49]
 
 `upload_openai_file` 是三阶段协议：先对 OpenAI `/files` 创建上传，再以 streaming body `PUT` 到服务端返回的 blob URL，最后轮询 `/files/{id}/uploaded` 完成 finalize。blob transport failure 只记录 host/request IDs/分类与耗时，向上错误会移除可能含凭据的完整 URL。[E: codex-rs/codex-api/src/files.rs:112][E: codex-rs/codex-api/src/files.rs:128][E: codex-rs/codex-api/src/files.rs:162][E: codex-rs/codex-api/src/files.rs:168][E: codex-rs/codex-api/src/files.rs:173][E: codex-rs/codex-api/src/files.rs:187][E: codex-rs/codex-api/src/files.rs:201][E: codex-rs/codex-api/src/files.rs:233][E: codex-rs/codex-api/src/files.rs:240]
 
@@ -73,16 +73,16 @@ legacy custom-CA fallback 不是 system-proxy route 的通用兜底：只有显�
 
 成功回退后 pool 记录 `codex.http_client.tls_backend_fallback` 并复用该 route 的 rustls client；其它 destination 仍用 transport-default backend。[E: codex-rs/http-client/src/route_aware_client_pool.rs:705][E: codex-rs/http-client/src/route_aware_client_pool.rs:707]
 
-`Feature::Psp`（key `psp`，UnderDevelopment，默认关）让 `Config::http_client_factory()` 给 factory 加上 `oai-chat-psp=true` cookie；只有打开该 feature 的 ChatGPT cookie-store clients 才会带这条 PSP routing cookie。[E: codex-rs/features/src/lib.rs:1236][E: codex-rs/core/src/config/mod.rs:1629][E: codex-rs/core/src/config/mod.rs:1630]
+`Feature::Psp`（key `psp`，UnderDevelopment，默认关）让 `Config::http_client_factory()` 给 factory 加上 `oai-chat-psp=true` cookie；只有打开该 feature 的 ChatGPT cookie-store clients 才会带这条 PSP routing cookie。[E: codex-rs/features/src/lib.rs:1289][E: codex-rs/core/src/config/mod.rs:1644][E: codex-rs/core/src/config/mod.rs:1645]
 
-delegated/local MCP HTTP 与部分 CLI MCP login 路径显式调用 `with_tls_backend_fallback()`，因此这些任意目标请求保留 rustls 协议协商回退，而不是只给固定 OpenAI endpoint 用。[E: codex-rs/codex-mcp/src/runtime.rs:652][E: codex-rs/cli/src/mcp_cmd.rs:490]
+delegated/local MCP HTTP 与部分 CLI MCP login 路径显式调用 `with_tls_backend_fallback()`，因此这些任意目标请求保留 rustls 协议协商回退，而不是只给固定 OpenAI endpoint 用。[E: codex-rs/codex-mcp/src/runtime.rs:754][E: codex-rs/cli/src/mcp_cmd.rs:490]
 
 ## 边界与不确定性
 
 - system proxy 支持受 feature/platform 与 application-resolved policy 控制；存在代码路径不代表所有构建默认启用。[U]
 - PAC resolver 返回 ordered candidates 时，当前 policy 只折叠为一条 route；该 route 连接失败不会继续尝试后续 proxy 或 `DIRECT` candidate。[E: codex-rs/http-client/src/outbound_proxy.rs:435]
 - route-aware pool 解决的是 destination→transport route 一致性，不替代 network sandbox/proxy 的 allow/deny/ask policy。[I]
-- backend-client 仍有自己的 typed API/path/auth layer；本节点不把它等同于 provider generic transport。[E: codex-rs/backend-client/src/client.rs:127][I]
+- backend-client 仍有自己的 typed API/path/auth layer；本节点不把它等同于 provider generic transport。[E: codex-rs/backend-client/src/client.rs:130][I]
 
 ## Sources
 

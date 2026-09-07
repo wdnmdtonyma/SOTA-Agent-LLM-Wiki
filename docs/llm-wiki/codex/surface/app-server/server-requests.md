@@ -8,7 +8,7 @@ symbols: [ServerRequestPayload, CommandExecutionRequestApprovalParams, FileChang
 related: [rpc.overview, rpc.notifications-system, rpc.notifications-thread, subsys.app-server.message-processor, subsys.core.approval-policy]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > server->client requests 是 app-server 在 turn/tool/approval/auth 场景中反向向客户端发出的 typed request catalog，客户端必须返回对应 `ServerResponse`。
@@ -22,33 +22,33 @@ updated: a9519cbcdd
 
 ## 共性机制
 
-`server_request_definitions!` 生成 `ServerRequest`、`ServerResponse` 和 `ServerRequestPayload`；variant 可选择显式 wire string，省略时由 serde `rename_all = "camelCase"` 派生。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1417][E: codex-rs/app-server-protocol/src/protocol/common.rs:1431][E: codex-rs/app-server-protocol/src/protocol/common.rs:1681]
+`server_request_definitions!` 生成 `ServerRequest`、`ServerResponse` 和 `ServerRequestPayload`；variant 可选择显式 wire string，省略时由 serde `rename_all = "camelCase"` 派生。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1460][E: codex-rs/app-server-protocol/src/protocol/common.rs:1474][E: codex-rs/app-server-protocol/src/protocol/common.rs:1724]
 
-当前宏实例含 11 个 server request：9 个显式 v2 wire method 和 2 个 deprecated v1 camelCase approval request。本轮没有新增或删除 reverse request。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1681][E: codex-rs/app-server-protocol/src/protocol/common.rs:1732][E: codex-rs/app-server-protocol/src/protocol/common.rs:1742][E: codex-rs/app-server-protocol/src/protocol/common.rs:1748]
+当前宏实例含 11 个 server request：9 个显式 v2 wire method 和 2 个 deprecated v1 camelCase approval request。本轮没有新增或删除 reverse request。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1724][E: codex-rs/app-server-protocol/src/protocol/common.rs:1775][E: codex-rs/app-server-protocol/src/protocol/common.rs:1785][E: codex-rs/app-server-protocol/src/protocol/common.rs:1791]
 
-两个 legacy v1 approval response 复用 core `ReviewDecision`；其 `denied` wire value 带 `{ rejection }` 对象字段，而不是无 payload 的字符串 variant。该变化仅应归因到 legacy v1 approval response，不要误写成 v2 approval response shape。[E: codex-rs/app-server-protocol/src/protocol/v1.rs:155][E: codex-rs/app-server-protocol/src/protocol/v1.rs:175][E: codex-rs/protocol/src/protocol.rs:4008][E: codex-rs/protocol/src/protocol.rs:4035]
+两个 legacy v1 approval response 复用 core `ReviewDecision`；其 `denied` wire value 带 `{ rejection }` 对象字段，而不是无 payload 的字符串 variant。该变化仅应归因到 legacy v1 approval response，不要误写成 v2 approval response shape。[E: codex-rs/app-server-protocol/src/protocol/v1.rs:155][E: codex-rs/app-server-protocol/src/protocol/v1.rs:175][E: codex-rs/protocol/src/protocol.rs:4056][E: codex-rs/protocol/src/protocol.rs:4083]
 
-`ToolRequestUserInputParams` 有显式 `isBlocking`；旧客户端 payload 缺该字段时 deserialize 为 `true`，而 `autoResolutionMs` 已标记 deprecated，只应继续作为兼容字段读取。[E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1734][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1738][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1763]
+`ToolRequestUserInputParams` 有显式 `isBlocking`；旧客户端 payload 缺该字段时 deserialize 为 `true`，而 `autoResolutionMs` 已标记 deprecated，只应继续作为兼容字段读取。[E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1738][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1742][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:1767]
 
-MCP elicitation number schema 的 integer 变体在序列化时会把 integral float 的 minimum/maximum/default 归一成 JSON integer；`McpAuthStatus` 也增加 `Unknown` 兼容值。这些是 payload 变化，不改变 reverse-request 计数。[E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:19][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:438][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:450]
+MCP elicitation number schema 的 integer 变体在序列化时会把 integral float 的 minimum/maximum/default 归一成 JSON integer；`McpAuthStatus` 也增加 `Unknown` 兼容值。这些是 payload 变化，不改变 reverse-request 计数。[E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:19][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:441][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:453]
 
 ## Request catalog
 
 | Variant | Wire method | Params type | Response type | Evidence |
 |---|---|---|---|---|
-| `CommandExecutionRequestApproval` | `item/commandExecution/requestApproval` | `v2::CommandExecutionRequestApprovalParams` | `v2::CommandExecutionRequestApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1685][E: codex-rs/app-server-protocol/src/protocol/common.rs:1685] |
-| `FileChangeRequestApproval` | `item/fileChange/requestApproval` | `v2::FileChangeRequestApprovalParams` | `v2::FileChangeRequestApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1692][E: codex-rs/app-server-protocol/src/protocol/common.rs:1692] |
-| `ToolRequestUserInput` | `item/tool/requestUserInput` | `v2::ToolRequestUserInputParams` | `v2::ToolRequestUserInputResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1698][E: codex-rs/app-server-protocol/src/protocol/common.rs:1698] |
-| `McpServerElicitationRequest` | `mcpServer/elicitation/request` | `v2::McpServerElicitationRequestParams` | `v2::McpServerElicitationRequestResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1704][E: codex-rs/app-server-protocol/src/protocol/common.rs:1704] |
-| `PermissionsRequestApproval` | `item/permissions/requestApproval` | `v2::PermissionsRequestApprovalParams` | `v2::PermissionsRequestApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1710][E: codex-rs/app-server-protocol/src/protocol/common.rs:1710] |
-| `DynamicToolCall` | `item/tool/call` | `v2::DynamicToolCallParams` | `v2::DynamicToolCallResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1716][E: codex-rs/app-server-protocol/src/protocol/common.rs:1716] |
-| `ChatgptAuthTokensRefresh` | `account/chatgptAuthTokens/refresh` | `v2::ChatgptAuthTokensRefreshParams` | `v2::ChatgptAuthTokensRefreshResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1721][E: codex-rs/app-server-protocol/src/protocol/common.rs:1721] |
-| `AttestationGenerate` | `attestation/generate` | `v2::AttestationGenerateParams` | `v2::AttestationGenerateResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1727][E: codex-rs/app-server-protocol/src/protocol/common.rs:1727] |
-| `CurrentTimeRead` | `currentTime/read` | `v2::CurrentTimeReadParams` | `v2::CurrentTimeReadResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1734][E: codex-rs/app-server-protocol/src/protocol/common.rs:1734] |
-| `ApplyPatchApproval` | `applyPatchApproval` | `v1::ApplyPatchApprovalParams` | `v1::ApplyPatchApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1742][E: codex-rs/app-server-protocol/src/protocol/common.rs:1742] |
-| `ExecCommandApproval` | `execCommandApproval` | `v1::ExecCommandApprovalParams` | `v1::ExecCommandApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1748][E: codex-rs/app-server-protocol/src/protocol/common.rs:1748] |
+| `CommandExecutionRequestApproval` | `item/commandExecution/requestApproval` | `v2::CommandExecutionRequestApprovalParams` | `v2::CommandExecutionRequestApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1728][E: codex-rs/app-server-protocol/src/protocol/common.rs:1728] |
+| `FileChangeRequestApproval` | `item/fileChange/requestApproval` | `v2::FileChangeRequestApprovalParams` | `v2::FileChangeRequestApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1735][E: codex-rs/app-server-protocol/src/protocol/common.rs:1735] |
+| `ToolRequestUserInput` | `item/tool/requestUserInput` | `v2::ToolRequestUserInputParams` | `v2::ToolRequestUserInputResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1741][E: codex-rs/app-server-protocol/src/protocol/common.rs:1741] |
+| `McpServerElicitationRequest` | `mcpServer/elicitation/request` | `v2::McpServerElicitationRequestParams` | `v2::McpServerElicitationRequestResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1747][E: codex-rs/app-server-protocol/src/protocol/common.rs:1747] |
+| `PermissionsRequestApproval` | `item/permissions/requestApproval` | `v2::PermissionsRequestApprovalParams` | `v2::PermissionsRequestApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1753][E: codex-rs/app-server-protocol/src/protocol/common.rs:1753] |
+| `DynamicToolCall` | `item/tool/call` | `v2::DynamicToolCallParams` | `v2::DynamicToolCallResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1759][E: codex-rs/app-server-protocol/src/protocol/common.rs:1759] |
+| `ChatgptAuthTokensRefresh` | `account/chatgptAuthTokens/refresh` | `v2::ChatgptAuthTokensRefreshParams` | `v2::ChatgptAuthTokensRefreshResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1764][E: codex-rs/app-server-protocol/src/protocol/common.rs:1764] |
+| `AttestationGenerate` | `attestation/generate` | `v2::AttestationGenerateParams` | `v2::AttestationGenerateResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1770][E: codex-rs/app-server-protocol/src/protocol/common.rs:1770] |
+| `CurrentTimeRead` | `currentTime/read` | `v2::CurrentTimeReadParams` | `v2::CurrentTimeReadResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1777][E: codex-rs/app-server-protocol/src/protocol/common.rs:1777] |
+| `ApplyPatchApproval` | `applyPatchApproval` | `v1::ApplyPatchApprovalParams` | `v1::ApplyPatchApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1785][E: codex-rs/app-server-protocol/src/protocol/common.rs:1785] |
+| `ExecCommandApproval` | `execCommandApproval` | `v1::ExecCommandApprovalParams` | `v1::ExecCommandApprovalResponse` | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1791][E: codex-rs/app-server-protocol/src/protocol/common.rs:1791] |
 
-`CurrentTimeRead` 是本 catalog 中显式标记为 experimental 的 server request，gate 名为 `currentTime/read`；其余表项不能由此推断为 experimental。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1732][E: codex-rs/app-server-protocol/src/protocol/common.rs:1734]
+`CurrentTimeRead` 是本 catalog 中显式标记为 experimental 的 server request，gate 名为 `currentTime/read`；其余表项不能由此推断为 experimental。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1775][E: codex-rs/app-server-protocol/src/protocol/common.rs:1777]
 
 ## Sources
 

@@ -8,7 +8,7 @@ symbols: [MarkdownStreamCollector, StreamingMarkdownRender, StreamingRender, Str
 related: [subsys.tui.chatwidget, subsys.tui.rendering-theming, subsys.tui.event-system]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/chatwidget/streaming.rs:141][I]
@@ -26,7 +26,7 @@ updated: a9519cbcdd
 
 finalize path 的 `finalize_and_take_source` 转移完整 buffer ownership，必要时补 newline 后 clear collector；这只应在 stream 真正完成或 intentionally consolidated interrupted output 时调用。[E: codex-rs/tui/src/markdown_stream.rs:109][E: codex-rs/tui/src/markdown_stream.rs:114]
 
-`render_streaming_markdown_lines_with_width_and_cwd` 在同一次 pulldown-cmark parse 中同时产出 styled lines、最后一个 top-level block 的 source offset、reference-link-definition flag 和首 block 是否 raw HTML；offset 永远针对传入的原字符串。[E: codex-rs/tui/src/markdown_render/streaming.rs:41][E: codex-rs/tui/src/markdown_render/streaming.rs:50][E: codex-rs/tui/src/markdown_render/streaming.rs:52]
+`render_streaming_markdown_lines_with_width_and_cwd` 在同一次 pulldown-cmark parse 中同时产出 styled lines、最后一个 top-level block 的 source offset、reference-link-definition flag 和首 block 是否 raw HTML；offset 永远针对传入的原字符串。[E: codex-rs/tui/src/markdown_render/streaming.rs:41][E: codex-rs/tui/src/markdown_render/streaming.rs:52][E: codex-rs/tui/src/markdown_render/streaming.rs:54]
 
 ## Queue State
 
@@ -60,7 +60,7 @@ command execution 的 live cell 另有独立内存边界：`LiveCommandOutput` �
 
 ## Resize Reflow
 
-pending resize reflow 到期后会按当前宽度从 transcript cells 重建 history。`handle_draw_pre_render` 先判断是否需要 rebuild，再调用 `maybe_run_resize_reflow`；overlay 活跃时不重画 transcript，因为 overlay 拥有当前 draw surface。[E: codex-rs/tui/src/app/resize_reflow.rs:392][E: codex-rs/tui/src/app/resize_reflow.rs:408][E: codex-rs/tui/src/app/resize_reflow.rs:418][E: codex-rs/tui/src/app/resize_reflow.rs:423]
+pending resize reflow 到期后会按当前宽度从 transcript cells 重建 history。`handle_draw_pre_render` 先判断是否需要 rebuild，再调用 `maybe_run_resize_reflow`；overlay 活跃时不重画 transcript，因为 overlay 拥有当前 draw surface。[E: codex-rs/tui/src/app/resize_reflow.rs:395][E: codex-rs/tui/src/app/resize_reflow.rs:411][E: codex-rs/tui/src/app/resize_reflow.rs:421][E: codex-rs/tui/src/app/resize_reflow.rs:426]
 
 ## Gotchas
 

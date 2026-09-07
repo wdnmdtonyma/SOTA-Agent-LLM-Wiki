@@ -8,7 +8,7 @@ symbols: [AutoCompactTokenLimitScope, ReasoningEffort, ReasoningSummary, Verbosi
 related: [command.model-mode, config.auth-account, subsys.providers.model-catalog, subsys.core.token-budget, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > 模型与 provider 设置 catalog 覆盖 ConfigToml 中选择模型、provider、context/compaction limits、reasoning/verbosity、model catalog、service tier、OpenAI/ChatGPT endpoint 和 OSS provider 的顶层键。
@@ -22,7 +22,7 @@ updated: a9519cbcdd
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 99 个顶层 `pub` 字段；本节点覆盖其中 18 个字段。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:525]
+当前 `ConfigToml` 有 99 个顶层 `pub` 字段；本节点覆盖其中 18 个字段。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:534]
 
 `ConfigProfile` repeats model/provider/reasoning fields that can be scoped to named profiles, while `ConfigToml` is the top-level schema loaded from config.toml.[E: codex-rs/config/src/profile_toml.rs:24][E: codex-rs/config/src/profile_toml.rs:25][E: codex-rs/config/src/profile_toml.rs:31][E: codex-rs/config/src/profile_toml.rs:35][E: codex-rs/config/src/profile_toml.rs:38][E: codex-rs/config/src/config_toml.rs:155]
 
@@ -36,26 +36,26 @@ updated: a9519cbcdd
 | `model_context_window` | `Option<i64>` | none | Model context-window size. | [E: codex-rs/config/src/config_toml.rs:165] |
 | `model_auto_compact_token_limit` | `Option<i64>` | none | Auto-compaction token threshold. | [E: codex-rs/config/src/config_toml.rs:168] |
 | `model_auto_compact_token_limit_scope` | `Option<AutoCompactTokenLimitScope>` | none | Auto-compaction limit scope. | [E: codex-rs/config/src/config_toml.rs:172] |
-| `model_providers` | `HashMap<String, ModelProviderInfo>` | `#[serde(default, deserialize_with = "deserialize_model_providers")]` | User-defined provider entries map. | [E: codex-rs/config/src/config_toml.rs:299] |
-| `model_reasoning_effort` | `Option<ReasoningEffort>` | none | Reasoning effort override. | [E: codex-rs/config/src/config_toml.rs:360] |
-| `plan_mode_reasoning_effort` | `Option<ReasoningEffort>` | none | Plan-mode reasoning effort override. | [E: codex-rs/config/src/config_toml.rs:361] |
-| `model_reasoning_summary` | `Option<ReasoningSummary>` | none | Reasoning summary mode override. | [E: codex-rs/config/src/config_toml.rs:362] |
-| `model_verbosity` | `Option<Verbosity>` | none | GPT-5 Responses API text verbosity override. | [E: codex-rs/config/src/config_toml.rs:364] |
-| `model_catalog_json` | `Option<AbsolutePathBuf>` | none | Model catalog JSON path. | [E: codex-rs/config/src/config_toml.rs:368] |
-| `personality` | `Option<Personality>` | none | Model personality selector. | [E: codex-rs/config/src/config_toml.rs:371] |
-| `service_tier` | `Option<String>` | none | Explicit service tier request id. | [E: codex-rs/config/src/config_toml.rs:375] |
-| `chatgpt_base_url` | `Option<String>` | none | ChatGPT request base URL. | [E: codex-rs/config/src/config_toml.rs:378] |
-| `openai_base_url` | `Option<String>` | none | Built-in OpenAI provider base URL override. | [E: codex-rs/config/src/config_toml.rs:390] |
-| `oss_provider` | `Option<String>` | none | Preferred OSS provider for local models. | [E: codex-rs/config/src/config_toml.rs:525] |
-| `responses_api_metadata` | `Option<BTreeMap<String, String>>` | none | Bounded, product-owned metadata attached to every Responses API request. | [E: codex-rs/config/src/config_toml.rs:384] |
+| `model_providers` | `HashMap<String, ModelProviderInfo>` | `#[serde(default, deserialize_with = "deserialize_model_providers")]` | User-defined provider entries map. | [E: codex-rs/config/src/config_toml.rs:306] |
+| `model_reasoning_effort` | `Option<ReasoningEffort>` | none | Reasoning effort override. | [E: codex-rs/config/src/config_toml.rs:371] |
+| `plan_mode_reasoning_effort` | `Option<ReasoningEffort>` | none | Plan-mode reasoning effort override. | [E: codex-rs/config/src/config_toml.rs:372] |
+| `model_reasoning_summary` | `Option<ReasoningSummary>` | none | Reasoning summary mode override. | [E: codex-rs/config/src/config_toml.rs:373] |
+| `model_verbosity` | `Option<Verbosity>` | none | GPT-5 Responses API text verbosity override. | [E: codex-rs/config/src/config_toml.rs:375] |
+| `model_catalog_json` | `Option<AbsolutePathBuf>` | none | Model catalog JSON path. | [E: codex-rs/config/src/config_toml.rs:379] |
+| `personality` | `Option<Personality>` | none | Model personality selector. | [E: codex-rs/config/src/config_toml.rs:382] |
+| `service_tier` | `Option<String>` | none | Explicit service tier request id. | [E: codex-rs/config/src/config_toml.rs:386] |
+| `chatgpt_base_url` | `Option<String>` | none | ChatGPT request base URL. | [E: codex-rs/config/src/config_toml.rs:389] |
+| `openai_base_url` | `Option<String>` | none | Built-in OpenAI provider base URL override. | [E: codex-rs/config/src/config_toml.rs:401] |
+| `oss_provider` | `Option<String>` | none | Preferred OSS provider for local models. | [E: codex-rs/config/src/config_toml.rs:534] |
+| `responses_api_metadata` | `Option<BTreeMap<String, String>>` | none | Bounded, product-owned metadata attached to every Responses API request. | [E: codex-rs/config/src/config_toml.rs:395] |
 
-`model_supports_reasoning_summaries` has been removed from the target schema; reasoning-summary capability now comes from the selected model metadata, while `model_reasoning_summary` remains the request-mode override。[E: codex-rs/config/src/config_toml.rs:362][I]
+`model_supports_reasoning_summaries` has been removed from the target schema; reasoning-summary capability now comes from the selected model metadata, while `model_reasoning_summary` remains the request-mode override。[E: codex-rs/config/src/config_toml.rs:373][I]
 
 ## Model-owned token-budget defaults
 
-Remote/static model metadata can attach a `ModelTokenBudgetConfig` under `ModelMessages.token_budget`，包含 reminder threshold/template、context-window guidance、auto-compact fallback prompt 与 buffer。这些不是新的 top-level `ConfigToml` keys，而是选中模型的 defaults。[E: codex-rs/protocol/src/openai_models.rs:596][E: codex-rs/protocol/src/openai_models.rs:597][E: codex-rs/protocol/src/openai_models.rs:598][E: codex-rs/protocol/src/openai_models.rs:599][E: codex-rs/protocol/src/openai_models.rs:600][E: codex-rs/protocol/src/openai_models.rs:601]
+Remote/static model metadata can attach a `ModelTokenBudgetConfig` under `ModelMessages.token_budget`，包含 reminder threshold/template、context-window guidance、auto-compact fallback prompt 与 buffer。这些不是新的 top-level `ConfigToml` keys，而是选中模型的 defaults。[E: codex-rs/protocol/src/openai_models.rs:612][E: codex-rs/protocol/src/openai_models.rs:617][E: codex-rs/protocol/src/openai_models.rs:618][E: codex-rs/protocol/src/openai_models.rs:619][E: codex-rs/protocol/src/openai_models.rs:620][E: codex-rs/protocol/src/openai_models.rs:621]
 
-Core 只在 `TokenBudget` feature 开启且用户没有任何 explicit token-budget settings 时应用模型 defaults；无效 model defaults 会 warning 后忽略。该逻辑在每次选定 turn model 后重跑，所以 model switch 会切换对应 defaults，显式配置则始终优先。[E: codex-rs/core/src/session/turn_context.rs:742][E: codex-rs/core/src/session/turn_context.rs:743][E: codex-rs/core/src/session/token_budget.rs:10][E: codex-rs/core/src/session/token_budget.rs:30][E: codex-rs/core/src/session/token_budget.rs:47][E: codex-rs/core/src/session/token_budget.rs:59]
+Core 只在 `TokenBudget` feature 开启且用户没有任何 explicit token-budget settings 时应用模型 defaults；无效 model defaults 会 warning 后忽略。该逻辑在每次选定 turn model 后重跑，所以 model switch 会切换对应 defaults，显式配置则始终优先。[E: codex-rs/core/src/session/turn_context.rs:743][E: codex-rs/core/src/session/turn_context.rs:744][E: codex-rs/core/src/session/token_budget.rs:61][E: codex-rs/core/src/session/token_budget.rs:81][E: codex-rs/core/src/session/token_budget.rs:98][E: codex-rs/core/src/session/token_budget.rs:110]
 
 ## Sources
 

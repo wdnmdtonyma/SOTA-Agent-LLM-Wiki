@@ -8,7 +8,7 @@ symbols: [create_spawn_agent_tool_v2, SpawnAgentHandlerV2, multi_agents_v2::spaw
 related: [spine.trace-subagent, subsys.core.tool-system, subsys.core.collaboration-modes]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
 > `spawn_agent` V2 是 MultiAgentV2 协作工具集中创建子 agent 的 function tool；它用 `task_name` 生成 canonical task path，并在 `collab_tools_enabled && multi_agent_v2_enabled` 的注册分支出现。角色文件由 `codex-rs/agent-roles` 加载，spawn 时经 `apply_spawn_agent_role` 收紧 child config。
@@ -19,18 +19,18 @@ updated: a9519cbcdd
 |---|---|
 | wire name | `spawn_agent`，由 V2 handler 的 `tool_name()` 返回。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:33] |
 | spec builder | `create_spawn_agent_tool_v2` 返回 `ToolSpec::Function(ResponsesApiTool)`，工具名同样是 `spawn_agent`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:123][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:124] |
-| handler | `multi_agents_v2.rs` re-export `spawn::Handler as SpawnAgentHandler`，`spec_plan.rs` 用别名 `SpawnAgentHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:36][E: codex-rs/core/src/tools/spec_plan.rs:50][E: codex-rs/core/src/tools/spec_plan.rs:1293] |
+| handler | `multi_agents_v2.rs` re-export `spawn::Handler as SpawnAgentHandler`，`spec_plan.rs` 用别名 `SpawnAgentHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:36][E: codex-rs/core/src/tools/spec_plan.rs:51][E: codex-rs/core/src/tools/spec_plan.rs:1303] |
 | payload kind | handler 只匹配 `ToolPayload::Function`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:274] |
 
 ## 注册与门控
 
-`add_collaboration_tools` 先检查 `collab_tools_enabled(turn_context, model_info)`，再在 `multi_agent_v2_enabled` 分支注册 V2 工具；`spawn_agent`、`send_message`、`followup_task`、条件性 `wait_agent`、`interrupt_agent`、`list_agents` 同批加入。[E: codex-rs/core/src/tools/spec_plan.rs:1275][E: codex-rs/core/src/tools/spec_plan.rs:1278][E: codex-rs/core/src/tools/spec_plan.rs:1291][E: codex-rs/core/src/tools/spec_plan.rs:1309][E: codex-rs/core/src/tools/spec_plan.rs:1313][E: codex-rs/core/src/tools/spec_plan.rs:1317][E: codex-rs/core/src/tools/spec_plan.rs:1326][E: codex-rs/core/src/tools/spec_plan.rs:1330]
+`add_collaboration_tools` 先检查 `collab_tools_enabled(turn_context, model_info)`，再在 `multi_agent_v2_enabled` 分支注册 V2 工具；`spawn_agent`、`send_message`、`followup_task`、条件性 `wait_agent`、`interrupt_agent`、`list_agents` 同批加入。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1288][E: codex-rs/core/src/tools/spec_plan.rs:1301][E: codex-rs/core/src/tools/spec_plan.rs:1319][E: codex-rs/core/src/tools/spec_plan.rs:1323][E: codex-rs/core/src/tools/spec_plan.rs:1327][E: codex-rs/core/src/tools/spec_plan.rs:1336][E: codex-rs/core/src/tools/spec_plan.rs:1340]
 
-V2 的 `collab_tools_enabled` 不是“有 agent path 就开”。子 agent（`session_source.get_agent_path()` 有值）只有在当前 `model_info.multi_agent_version == Some(MultiAgentVersion::V2)` 时才继续暴露协作工具；否则该 child 是 leaf worker，不会注册 `spawn_agent` 等 V2 工具。[E: codex-rs/core/src/tools/spec_plan.rs:666][E: codex-rs/core/src/tools/spec_plan.rs:667][E: codex-rs/core/src/tools/spec_plan.rs:668]
+V2 的 `collab_tools_enabled` 不是“有 agent path 就开”。子 agent（`session_source.get_agent_path()` 有值）只有在当前 `model_info.multi_agent_version == Some(MultiAgentVersion::V2)` 时才继续暴露协作工具；否则该 child 是 leaf worker，不会注册 `spawn_agent` 等 V2 工具。[E: codex-rs/core/src/tools/spec_plan.rs:655][E: codex-rs/core/src/tools/spec_plan.rs:656][E: codex-rs/core/src/tools/spec_plan.rs:657]
 
-V2 协作工具的 exposure 取决于 `multi_agent_v2.non_code_mode_only`：true 时是 `DirectModelOnly`，否则是 `Direct`。默认 config 把 `non_code_mode_only` 设为 true。[E: codex-rs/core/src/tools/spec_plan.rs:1279][E: codex-rs/core/src/config/mod.rs:1295]
+V2 协作工具的 exposure 取决于 `multi_agent_v2.non_code_mode_only`：true 时是 `DirectModelOnly`，否则是 `Direct`。默认 config 把 `non_code_mode_only` 设为 true。[E: codex-rs/core/src/tools/spec_plan.rs:1289][E: codex-rs/core/src/config/mod.rs:1310]
 
-如果 namespace tools 开启并配置了 `multi_agent_v2.tool_namespace`，`multi_agent_v2_handler` 会把 function spec 包进 namespace spec，并把工具名改成 namespaced name；否则直接使用原 handler。默认 namespace 是 `collaboration`。[E: codex-rs/core/src/tools/spec_plan.rs:1284][E: codex-rs/core/src/tools/spec_plan.rs:1445][E: codex-rs/core/src/config/mod.rs:236][E: codex-rs/core/src/config/mod.rs:1291]
+如果 namespace tools 开启并配置了 `multi_agent_v2.tool_namespace`，`multi_agent_v2_handler` 会把 function spec 包进 namespace spec，并把工具名改成 namespaced name；否则直接使用原 handler。默认 namespace 是 `collaboration`。[E: codex-rs/core/src/tools/spec_plan.rs:1294][E: codex-rs/core/src/tools/spec_plan.rs:1455][E: codex-rs/core/src/config/mod.rs:239][E: codex-rs/core/src/config/mod.rs:1306]
 
 ## 输入与 schema
 
@@ -44,7 +44,7 @@ V2 协作工具的 exposure 取决于 `multi_agent_v2.non_code_mode_only`：true
 
 `create_spawn_agent_tool_v2` 的 required 字段只有 `task_name` 和 `message`，additional properties 为 false；`SpawnAgentArgs` 也用 `#[serde(deny_unknown_fields)]` 收紧运行时解析。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:134][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:279]
 
-schema 暴露是可配的：没有 agent roles 时移除 `agent_type`；`expose_spawn_agent_model_overrides` 为 false 时移除 `model` / `reasoning_effort`；`hide_spawn_agent_metadata` 映射成 `hide_agent_type_model_reasoning`，用来简化输出 schema（只留 `task_name`）并抑制 inherited-model guidance。默认 config 是 `hide_spawn_agent_metadata = true`、`expose_spawn_agent_model_overrides = true`。[E: codex-rs/core/src/tools/spec_plan.rs:1296][E: codex-rs/core/src/tools/spec_plan.rs:1297][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:108][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:111][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:137][E: codex-rs/core/src/config/mod.rs:1292][E: codex-rs/core/src/config/mod.rs:1293]
+schema 暴露是可配的：没有 agent roles 时移除 `agent_type`；`expose_spawn_agent_model_overrides` 为 false 时移除 `model` / `reasoning_effort`；`hide_spawn_agent_metadata` 映射成 `hide_agent_type_model_reasoning`，用来简化输出 schema（只留 `task_name`）并抑制 inherited-model guidance。默认 config 是 `hide_spawn_agent_metadata = true`、`expose_spawn_agent_model_overrides = true`。[E: codex-rs/core/src/tools/spec_plan.rs:1306][E: codex-rs/core/src/tools/spec_plan.rs:1307][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:108][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:111][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:137][E: codex-rs/core/src/config/mod.rs:1307][E: codex-rs/core/src/config/mod.rs:1308]
 
 `expose_spawn_agent_model_overrides` 为 true 时，schema description 会列出 picker-visible 且支持当前 multi-agent backend 的模型 override（最多 `MAX_SPAWN_AGENT_MODEL_OVERRIDES`）。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:101][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:771][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:33]
 
@@ -56,7 +56,7 @@ catalog 命中时这段文字被标成 `MultiAgentRoleInstructions::catalog`；w
 
 full-history fork 且当前 turn 是 V2 时，handler 才解析 child usage hints 并放进 `SpawnAgentOptions.multi_agent_v2_usage_hints`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:181][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:223]
 
-角色文件 discovery/loader 在 `codex-rs/agent-roles`，spawn 经 `apply_spawn_agent_role` 应用；角色只能收紧 parent，不能替换 parent 权威。细节在 [Collaboration modes](../../subsystems/core/collaboration-modes.md)。[E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:352]
+角色文件 discovery/loader 在 `codex-rs/agent-roles`，spawn 经 `apply_spawn_agent_role` 应用；角色只能收紧 parent，不能替换 parent 权威。细节在 [Collaboration modes](../../subsystems/core/collaboration-modes.md)。[E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:355]
 
 ## Handler 流程
 
@@ -70,7 +70,7 @@ full-history fork 且当前 turn 是 V2 时，handler 才解析 child usage hint
 
 ## 输出与 parallel
 
-默认输出 schema 是 `{ task_name, nickname }`；如果 `hide_spawn_agent_metadata` 为 true，schema 和 handler 输出都只保留 `task_name`。默认 config 就是隐藏 nickname。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:405][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:414][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:261][E: codex-rs/core/src/config/mod.rs:1292]
+默认输出 schema 是 `{ task_name, nickname }`；如果 `hide_spawn_agent_metadata` 为 true，schema 和 handler 输出都只保留 `task_name`。默认 config 就是隐藏 nickname。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:405][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:414][E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:261][E: codex-rs/core/src/config/mod.rs:1307]
 
 `spawn_agent` handler 没有覆写 `supports_parallel_tool_calls`；按 `ToolExecutor` 默认实现，它不是 parallel-safe。[E: codex-rs/tools/src/tool_executor.rs:122]
 

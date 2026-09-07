@@ -3,15 +3,15 @@ id: subsys.platform.git-utils
 title: Git utils
 kind: subsystem
 tier: T2
-source: [codex-rs/git-utils/src/lib.rs, codex-rs/git-utils/src/info.rs, codex-rs/git-utils/src/branch.rs, codex-rs/git-utils/src/apply.rs, codex-rs/git-utils/src/baseline.rs, codex-rs/git-utils/src/fsmonitor.rs, codex-rs/git-utils/src/operations.rs, codex-rs/git-utils/src/errors.rs, codex-rs/git-utils/src/platform.rs, codex-rs/ext/git-attribution/src/lib.rs, codex-rs/ext/git-attribution/src/policy.rs, codex-rs/ext/git-attribution/src/world_state.rs]
-symbols: [GitInfo, collect_git_info, ApplyGitRequest, apply_git_patch, SAFE_BARE_REPOSITORY_CONFIG, merge_base_with_head, GitBaselineDiff, detect_fsmonitor_override]
+source: [codex-rs/git-utils/src/lib.rs, codex-rs/git-utils/src/info.rs, codex-rs/git-utils/src/branch.rs, codex-rs/git-utils/src/apply.rs, codex-rs/git-utils/src/baseline.rs, codex-rs/git-utils/src/fsmonitor.rs, codex-rs/git-utils/src/operations.rs, codex-rs/git-utils/src/errors.rs, codex-rs/git-utils/src/platform.rs, codex-rs/git-utils/src/worktree.rs, codex-rs/utils/git-discovery/src/lib.rs, codex-rs/ext/git-attribution/src/lib.rs, codex-rs/ext/git-attribution/src/policy.rs, codex-rs/ext/git-attribution/src/world_state.rs]
+symbols: [GitInfo, collect_git_info, ApplyGitRequest, apply_git_patch, SAFE_BARE_REPOSITORY_CONFIG, merge_base_with_head, GitBaselineDiff, detect_fsmonitor_override, RepositoryIdentity, GitRootDiscovery]
 related: [subsys.cloud.cloud-tasks, subsys.cloud.cloud-task-api, config.storage-telemetry-misc, spine.extension-system, subsys.platform.worktree]
 evidence: explicit
 status: verified
-updated: a9519cbcdd
+updated: 121f91fd5d
 ---
 
-> `codex_git_utils` 是 Codex 的本地 Git 支持 crate：`lib.rs` 导出 patch apply、baseline diff/reset、merge-base、metadata、fsmonitor policy、symlink helpers，以及拒绝隐式 bare repo 的 `SAFE_BARE_REPOSITORY_CONFIG`。`operations.rs` 仍是 crate-private 的 system-git 执行层。managed worktree 的 Desktop 契约在独立 crate `codex-rs/worktree`，它只消费这条安全 Git config，不复用 apply/baseline API。[E: codex-rs/git-utils/src/lib.rs:15][E: codex-rs/git-utils/src/lib.rs:17][E: codex-rs/worktree/src/git.rs:83]
+> `codex_git_utils` 是 Codex 的本地 Git 支持 crate：`lib.rs` 导出 patch apply、baseline diff/reset、merge-base、metadata、fsmonitor policy、symlink helpers、`RepositoryIdentity`，以及拒绝隐式 bare repo 的 `SAFE_BARE_REPOSITORY_CONFIG`。`codex-utils-git-discovery` 在其上提供有界共享 `GitRootDiscovery`。managed worktree 的 Desktop 契约在独立 crate `codex-rs/worktree`，它只消费这条安全 Git config，不复用 apply/baseline API。[E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:55][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/worktree/src/git.rs:124]
 
 ## 能回答的问题
 
@@ -24,21 +24,21 @@ updated: a9519cbcdd
 
 ## 职责边界
 
-git-utils 节点覆盖 `codex-rs/git-utils` crate 的 public API 与支撑性 crate-private helpers。`operations.rs` 的 helper 都是 `pub(crate)`，供 branch/baseline 等模块内部复用，不是 crate 外部 API。managed worktree 的 layout / `bind_thread` / keep-count 属于 `subsys.platform.worktree`。[E: codex-rs/git-utils/src/lib.rs:17][E: codex-rs/worktree/src/lib.rs:32]
+git-utils 节点覆盖 `codex-rs/git-utils` crate 的 public API 与支撑性 crate-private helpers。`operations.rs` 的 helper 都是 `pub(crate)`，供 branch/baseline 等模块内部复用，不是 crate 外部 API。managed worktree 的 layout / `bind_thread` / keep-count 属于 `subsys.platform.worktree`。[E: codex-rs/git-utils/src/lib.rs:18][E: codex-rs/worktree/src/lib.rs:273]
 
 ## Public exports
 
-`lib.rs` 先声明 `SAFE_BARE_REPOSITORY_CONFIG = "safe.bareRepository=explicit"`：拒绝隐式发现的 bare repository，但保留经 `GIT_DIR` / `--git-dir` 显式选中的仓库。[E: codex-rs/git-utils/src/lib.rs:15]
+`lib.rs` 先声明 `SAFE_BARE_REPOSITORY_CONFIG = "safe.bareRepository=explicit"`：拒绝隐式发现的 bare repository，但保留经 `GIT_DIR` / `--git-dir` 显式选中的仓库。[E: codex-rs/git-utils/src/lib.rs:16]
 
-随后 re-export apply（`ApplyGitRequest` / `apply_git_patch` / `extract_paths_from_patch` / `stage_paths`）、baseline（`GitBaselineDiff` / `diff_since_latest_init` / `ensure_git_baseline_repository` / `reset_git_repository`）、`merge_base_with_head`、fsmonitor（`FsmonitorOverride` / `detect_fsmonitor_override`）、info（`GitInfo` / `collect_git_info` / branch/remote helpers）、`create_symlink`、`get_has_changes_in_repo`、`resolve_root_git_project_for_trust`。[E: codex-rs/git-utils/src/lib.rs:17][E: codex-rs/git-utils/src/lib.rs:36][E: codex-rs/git-utils/src/lib.rs:51]
+随后 re-export apply、baseline、`merge_base_with_head`、fsmonitor、info、`create_symlink`、`get_has_changes_in_repo`、`resolve_root_git_project_for_trust`、以及 `worktree::RepositoryIdentity`。[E: codex-rs/git-utils/src/lib.rs:18][E: codex-rs/git-utils/src/lib.rs:53][E: codex-rs/git-utils/src/lib.rs:55]
 
-新增内部模块 `git_process`、`status`、`trust`；`status::get_has_changes_in_repo` 与 `trust::resolve_root_git_project_for_trust` 对外导出。[E: codex-rs/git-utils/src/lib.rs:6][E: codex-rs/git-utils/src/lib.rs:51]
+内部模块含 `git_process`、`status`、`trust`、`worktree`。[E: codex-rs/git-utils/src/lib.rs:6][E: codex-rs/git-utils/src/lib.rs:12]
 
 ## Git metadata
 
-`GitInfo` 只含 `commit_hash`、`branch` 和 `repository_url` 三个 optional 字段；working-tree dirty state、recent commits、remote diff、branches 是独立 helper。[E: codex-rs/git-utils/src/info.rs:44]
+`GitInfo` 只含 `commit_hash`、`branch` 和 `repository_url` 三个 optional 字段；working-tree dirty state、recent commits、remote diff、branches 是独立 helper。[E: codex-rs/git-utils/src/info.rs:46]
 
-`collect_git_info` 先检查 `git rev-parse --git-dir`；成功后并行跑 `git rev-parse HEAD`、`git rev-parse --abbrev-ref HEAD` 和 `git remote get-url origin`。[E: codex-rs/git-utils/src/info.rs:66]
+`collect_git_info` 先检查 `git rev-parse --git-dir`；成功后并行跑 HEAD / branch / origin URL。[E: codex-rs/git-utils/src/info.rs:66]
 
 ## Patch apply
 
@@ -60,13 +60,20 @@ Unix symlink 直接调 `std::os::unix::fs::symlink`；Windows 按 metadata 选 `
 
 `ext/git-attribution` 是与 `git-utils` 相邻但不同的 production extension：`install` 把它注册成 prompt contributor。enabled world-state 要求 commit message 保留并唯一追加 `Co-authored-by: Codex <noreply@openai.com>`。[E: codex-rs/ext/git-attribution/src/lib.rs:98][E: codex-rs/ext/git-attribution/src/world_state.rs:19]
 
+## Git-root discovery crate
+
+`codex-utils-git-discovery` 的 `GitRootDiscovery` 按 cwd 共享 in-flight probe，最多 8 个并发，完成后不缓存结果；finder 默认调用 `get_git_repo_root`。[E: codex-rs/utils/git-discovery/src/lib.rs:24][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/utils/git-discovery/src/lib.rs:43][E: codex-rs/utils/git-discovery/src/lib.rs:52] `ThreadManagerState` 持有一份 `Arc<GitRootDiscovery>`。[E: codex-rs/core/src/thread_manager.rs:89][E: codex-rs/core/src/thread_manager.rs:351]
+
+`RepositoryIdentity` 用 canonical common dir / relative cwd / primary root 描述同一仓库的主 checkout 与 linked worktrees，不执行 Git。[E: codex-rs/git-utils/src/worktree.rs:16][E: codex-rs/git-utils/src/worktree.rs:34]
+
 ## 与 managed worktree 的边界
 
-`WorktreeManager` 在执行 Git metadata 查询时注入 `SAFE_BARE_REPOSITORY_CONFIG`，并禁用 hooks/fsmonitor。它不调用 `apply_git_patch` 或 baseline reset；thread 绑定走 `codex-thread.json`。[E: codex-rs/worktree/src/git.rs:83][E: codex-rs/worktree/src/git.rs:84][E: codex-rs/worktree/src/git.rs:86][E: codex-rs/worktree/src/metadata.rs:19]
+`WorktreeManager` 在执行 Git metadata 查询时注入 `SAFE_BARE_REPOSITORY_CONFIG`，并禁用 hooks/fsmonitor。它不调用 `apply_git_patch` 或 baseline reset；thread 绑定走 `codex-thread.json`。[E: codex-rs/worktree/src/git.rs:124][E: codex-rs/worktree/src/git.rs:126][E: codex-rs/worktree/src/git.rs:128][E: codex-rs/worktree/src/metadata.rs:19]
 
 ## Gotchas
 
-- `git-utils` crate 模块清单是 apply/baseline/branch/errors/fsmonitor/git_process/info/operations/platform/status/trust，没有 ghost commit 模块；internal snapshot 走 baseline repository diff/reset。[E: codex-rs/git-utils/src/lib.rs:1][E: codex-rs/git-utils/src/lib.rs:11]
+- `git-utils` crate 模块清单含 apply/baseline/branch/errors/fsmonitor/git_process/info/operations/platform/status/trust/worktree，没有 ghost commit 模块；internal snapshot 走 baseline repository diff/reset。[E: codex-rs/git-utils/src/lib.rs:1][E: codex-rs/git-utils/src/lib.rs:12]
+- 不要为 `git-discovery` 另建 wiki 节点。[I]
 - `operations.rs` 的 crate-private git command wrapper 没有 timeout；5 秒 timeout 和 fsmonitor policy 在 `info.rs` 的 async helper 里。[E: codex-rs/git-utils/src/info.rs:40]
 - Baseline reset 对 `root/.git` 是破坏性的，文档面向 internal directories，不是用户仓库。[I]
 
@@ -81,6 +88,8 @@ Unix symlink 直接调 `std::os::unix::fs::symlink`；Windows 按 metadata 选 `
 - codex-rs/git-utils/src/operations.rs
 - codex-rs/git-utils/src/errors.rs
 - codex-rs/git-utils/src/platform.rs
+- codex-rs/git-utils/src/worktree.rs
+- codex-rs/utils/git-discovery/src/lib.rs
 - codex-rs/ext/git-attribution/src/lib.rs
 - codex-rs/ext/git-attribution/src/policy.rs
 - codex-rs/ext/git-attribution/src/world_state.rs
