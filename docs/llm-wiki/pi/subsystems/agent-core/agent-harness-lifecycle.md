@@ -1,13 +1,17 @@
 ---
 id: subsys.agent-core.agent-harness-lifecycle
-title: AgentHarness 默认导出与生命周期门闩
+title: AgentHarness 默认导出与 runtime 生命周期
 kind: subsystem
 tier: T2
 pkg: agent
 source:
   - packages/agent/src/harness/agent-harness.ts
+  - packages/agent/src/harness/runtime/harness.ts
+  - packages/agent/src/harness/runtime/lane.ts
+  - packages/agent/src/harness/runtime/drive.ts
+  - packages/agent/src/harness/runtime/restore.ts
+  - packages/agent/src/harness/runtime/reducer.ts
   - packages/agent/src/harness/result.ts
-  - packages/agent/src/harness/reducer.ts
   - packages/agent/src/harness/types.ts
   - packages/agent/src/index.ts
   - packages/agent/package.json
@@ -15,18 +19,19 @@ source:
   - packages/agent/src/types.ts
   - packages/agent/src/agent-loop.ts
   - packages/coding-agent/src/core/agent-session.ts
-  - packages/agent/CHANGELOG.md
-  - packages/agent/test/agent.test.ts
 symbols:
   - AgentHarness
   - AgentLane
   - AgentHarness.create
-  - HarnessNotImplemented
+  - createAgentHarness
+  - Harness
+  - Lane
+  - reduceLaneSnapshot
   - HarnessClosed
+  - HarnessFault
+  - SliceNotImplemented
   - TaggedError
-  - reduceLaneState
   - Agent.reset
-  - BeforeToolCallResult.terminate
 related:
   - spine.agent-loop
   - subsys.agent-core.turn-control
@@ -37,73 +42,82 @@ related:
   - ref.agent.error-codes
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
-> `subsys.agent-core.agent-harness-lifecycle` 说明已提升到包默认入口的 `AgentHarness` v2 scaffold、它用 `Result` / `TaggedError` 表达的拒绝面、尚未接线的 `reduceLaneState` restore，以及相邻的 `Agent.reset()`、blocked tool `terminate` 与 coding-agent `expandPromptTemplates` 边界。
+> `subsys.agent-core.agent-harness-lifecycle` 说明 `AgentHarness` 仍从 `harness/agent-harness.ts` 以 `{ create }` 导出；运行时实现是 `harness/runtime/harness.ts` 的 `Harness` 类，加上 `runtime/lane.ts` 的 `Lane` 与 `runtime/drive/*` 的 durable procedure。旧顶层 `harness/reducer.ts` 已迁到 `runtime/reducer.ts`（`reduceLaneSnapshot`）。
 
 ## 能回答的问题
 
-- `AgentHarness` 现在从哪个包入口导出，experimental subpath 还在吗？
-- `AgentHarness.create()` 对已有 durable records 做什么？
-- 哪些 lane API 已实现，哪些仍抛 `HarnessNotImplemented` / `HarnessClosed`？
+- `AgentHarness` 现在从哪个包入口导出，它是 class 还是 `{ create }`?
+- `AgentHarness.create()` 对已有 durable lane 做什么？返回什么？
+- `accept` / `drive` / `prompt` 如何接成一次 run？
+- 哪些 API 仍抛 `SliceNotImplemented`？
 - `reset()` 拒绝 active run 的是 `Agent` 还是 `AgentHarness`？
-- blocked `beforeToolCall` 如何参与 batch `terminate`？
 - `expandPromptTemplates` 属于哪一层，harness 有没有等价开关？
 
 ## 职责边界
 
-`AgentHarness` 是 `pi-agent-core` 的 lane 门面：它实现 `AgentLane`，持有一份 durable `Session`，并声明 prompt / compact / navigate / queue / watch 等操作的 `Result` 返回型。[E: packages/agent/src/harness/agent-harness.ts:271] [E: packages/agent/src/harness/agent-harness.ts:305] [E: packages/agent/src/harness/agent-harness.ts:310]
+`AgentHarness` 是 `pi-agent-core` 的 session 门面：它管理多条 `AgentLane`，但 **自己不是 lane**。[E: packages/agent/src/harness/runtime/harness.ts:29] 公开合同写在 `harness/agent-harness.ts`：`AgentHarness` / `AgentLane` 接口、`AgentHarnessOptions`、`Result` 别名、`HarnessEvent`、`HookMap`。[E: packages/agent/src/harness/agent-harness.ts:586] [E: packages/agent/src/harness/agent-harness.ts:538]
 
-当前类是 compile-complete scaffold，不是旧版会真正跑 turn 的 harness。`prompt`、`abort`、`watch` 等主路径走 `unavailable()`，在未 close 时 reject `HarnessNotImplemented`。[E: packages/agent/src/harness/agent-harness.ts:74] [E: packages/agent/src/harness/agent-harness.ts:355] [E: packages/agent/src/harness/agent-harness.ts:366] `packages/agent/CHANGELOG.md` 把这称为 “Added a compile-complete AgentHarness v2 scaffold”。[E: packages/agent/CHANGELOG.md:51]
+运行时实现：
 
-旧节点描述的 `AgentHarnessPhase`、`startOperation()`、`requestShutdown()`、`AgentHarnessError` 已不在 `packages/agent/src/harness/types.ts` 与 `agent-harness.ts`。本节点只写当前源码能证明的门闩。
+- `createAgentHarness` + `Harness`：`packages/agent/src/harness/runtime/harness.ts` [E: packages/agent/src/harness/runtime/harness.ts:29] [E: packages/agent/src/harness/runtime/harness.ts:375]
+- `Lane`：`packages/agent/src/harness/runtime/lane.ts`，实现 `AgentLane`（`accept` / `drive` / `prompt` / `watch`）[E: packages/agent/src/harness/runtime/lane.ts:480] [E: packages/agent/src/harness/runtime/lane.ts:921] [E: packages/agent/src/harness/runtime/lane.ts:1133]
+- `driveOperation`：`runtime/drive.ts` 按 durable `OperationState.at` 派到 `runtime/drive/*` [E: packages/agent/src/harness/runtime/drive.ts:29] [E: packages/agent/src/harness/runtime/drive.ts:56]
+- `restoreSession` / `restoreLaneState`：`runtime/restore.ts` [E: packages/agent/src/harness/runtime/restore.ts:92]
+- `reduceLaneSnapshot`：`runtime/reducer.ts`，给 watch 客户端投影，不是 restore 入口 [E: packages/agent/src/harness/runtime/reducer.ts:22]
+
+旧 `AgentHarnessPhase`、`startOperation()`、`requestShutdown()`、`AgentHarnessError`、`HarnessNotImplemented`、`reduceLaneState` 已不在当前源码。本节点只写现行门闩。
 
 ## 默认包导出
 
-`packages/agent/src/index.ts` 对 `./harness/agent-harness.ts` 做 `export *`，因此 `AgentHarness`、`AgentLane` 与全部 TaggedError / Result 别名都从包根出来。[E: packages/agent/src/index.ts:45]
+`packages/agent/src/index.ts` 对 `./harness/agent-harness.ts` 做 `export *`，因此 `AgentHarness`、`AgentLane` 与 TaggedError / Result 别名都从包根出来。[E: packages/agent/src/index.ts:43]
 
-`packages/agent/package.json` 的 `exports` 只有 `"."`、`"./node"`、`"./session/testing"`，没有 experimental subpath。[E: packages/agent/package.json:8] [E: packages/agent/package.json:13] [E: packages/agent/package.json:17] CHANGELOG 0.84.0 写明：v2 session 与 `AgentHarness` 已从 experimental entrypoint 提升到 default package export，并删除 experimental subpaths。[E: packages/agent/CHANGELOG.md:43]
+`packages/agent/package.json` 的 `exports` 含 `"."`、`"./node"`、`"./harness/runtime/reducer"` 等，没有 experimental subpath。[E: packages/agent/package.json:8] [E: packages/agent/package.json:25]
 
-这是包入口提升，不是 `export default AgentHarness`。源码里 `AgentHarness` 是 named class export。[E: packages/agent/src/harness/agent-harness.ts:305]
+这不是 `export default AgentHarness`。源码里 `AgentHarness` 是满足 `AgentHarnessConstructor` 的对象字面量：`{ create: createAgentHarness }`。[E: packages/agent/src/harness/agent-harness.ts:614] [E: packages/agent/src/harness/agent-harness.ts:622] 测试用 `created.harness instanceof Harness` 锁 runtime 类。[E: packages/agent/test/harness/runtime/harness.test.ts:36] [E: packages/agent/test/harness/runtime/harness.test.ts:37]
 
 ## 数据模型
 
-`Result` 是 `{ ok: true; value } | { ok: false; error }`。`TaggedError(tag)` 生成带稳定 `_tag` 的 Error 子类，并提供 `is()`。[E: packages/agent/src/harness/result.ts:1] [E: packages/agent/src/harness/result.ts:28] [E: packages/agent/src/harness/result.ts:30] [E: packages/agent/src/harness/result.ts:46]
+`Result` 是 `{ ok: true; value } | { ok: false; error }`。`TaggedError(tag)` 生成带稳定 `_tag` 的 Error 子类，并提供 `is()`。[E: packages/agent/src/harness/result.ts:1] [E: packages/agent/src/harness/result.ts:28] [E: packages/agent/src/harness/result.ts:46]
 
 公开操作把成功 outcome 与拒绝 error 拆开：
 
 | 结果类型 | 成功 value | 拒绝 error union |
 | --- | --- | --- |
-| `RunResult` | `{ runId } & RunOutcome` | `LaneBusy \| InvalidMessage \| UnknownSkill \| UnknownTemplate \| Closed` [E: packages/agent/src/harness/agent-harness.ts:105] [E: packages/agent/src/harness/agent-harness.ts:113] |
-| `CompactionResult` | `{ runId } & CompactionOutcome` | `LaneBusy \| NothingToCompact \| Closed` [E: packages/agent/src/harness/agent-harness.ts:106] [E: packages/agent/src/harness/agent-harness.ts:114] |
-| `NavigationResult` | `{ runId } & NavigationOutcome` | `LaneBusy \| UnknownTarget \| Closed` [E: packages/agent/src/harness/agent-harness.ts:107] [E: packages/agent/src/harness/agent-harness.ts:115] |
-| `ResumeResult` | `ResumeOutcome` | `LaneBusy \| NothingToResume \| MissingIdentities \| Closed` [E: packages/agent/src/harness/agent-harness.ts:108] [E: packages/agent/src/harness/agent-harness.ts:131] |
-| `QueueResult` | `{ entryId }` | `NoActiveRun \| InvalidMessage \| Closed` [E: packages/agent/src/harness/agent-harness.ts:109] [E: packages/agent/src/harness/agent-harness.ts:116] |
-| `AbortResult` | `{ runId; steer; followUp }` | `NoActiveOperation \| Closed` [E: packages/agent/src/harness/agent-harness.ts:111] [E: packages/agent/src/harness/agent-harness.ts:122] |
+| `RunResult` | `OperationResultRecord \| SuspendedRun` | `LaneBusy \| InvalidMessage \| UnknownSkill \| UnknownTemplate \| Closed` [E: packages/agent/src/harness/agent-harness.ts:84] |
+| `CompactionResult` | `{ compaction; run? }` | `LaneBusy \| NothingToCompact \| Closed` [E: packages/agent/src/harness/agent-harness.ts:88] |
+| `NavigationResult` | `{ navigation; run? }` | `LaneBusy \| InvalidNavigation \| UnknownTarget \| Closed` [E: packages/agent/src/harness/agent-harness.ts:112] |
+| `ResumeResult` | `OperationResultRecord \| SuspendedRun` | `NothingToResume \| Closed` [E: packages/agent/src/harness/agent-harness.ts:96] |
+| `QueueResult` | `{ entryId }` | `InvalidMessage \| Closed` [E: packages/agent/src/harness/agent-harness.ts:97] |
+| `AbortResult` | `{ operationId; steer; followUp }` | `NoActiveOperation \| Closed` [E: packages/agent/src/harness/agent-harness.ts:99] |
+| `DriveResult` | `DriveOutcome` | `OperationMismatch \| Closed` [E: packages/agent/src/harness/agent-harness.ts:169] |
 
-`RunOutcome` 可以是 `completed` / `aborted` / `failed` / `suspended`。[E: packages/agent/src/harness/agent-harness.ts:89] [E: packages/agent/src/harness/agent-harness.ts:90] [E: packages/agent/src/harness/agent-harness.ts:92] [E: packages/agent/src/harness/agent-harness.ts:93] 这些是类型合同。scaffold 的 `prompt()` 目前不会返回这些 value，只 reject `HarnessNotImplemented`。[E: packages/agent/src/harness/agent-harness.ts:366]
+`DriveOutcome` 可以是 `settled`、`waiting`+`retry`、`waiting`+`deferred`。[E: packages/agent/src/harness/agent-harness.ts:165] [E: packages/agent/src/harness/agent-harness.ts:167] [E: packages/agent/src/harness/agent-harness.ts:168] `SuspendedRun` 是 convenience observation：`status: "suspended"` + `DeferredHandle`。[E: packages/agent/src/harness/agent-harness.ts:78]
 
-`AgentHarnessOptions` 仍接收 `session`、`models`、`model`、tools/resources/stream/retry/compaction/queue mode 等构造参数。[E: packages/agent/src/harness/agent-harness.ts:243] [E: packages/agent/src/harness/agent-harness.ts:244] [E: packages/agent/src/harness/agent-harness.ts:246] constructor 把它们拷进实例字段，默认 thinking `"off"`、compaction `enabled: true`、两种 queue mode `"one-at-a-time"`。[E: packages/agent/src/harness/agent-harness.ts:329] [E: packages/agent/src/harness/agent-harness.ts:338] [E: packages/agent/src/harness/agent-harness.ts:343]
+`AgentHarnessOptions` 接收 `session`、`models`、`model`、tools/resources/stream/retry/compaction/queue mode、`toolContext`、`systemPrompt`、`entryProjectors`。[E: packages/agent/src/harness/agent-harness.ts:518] constructor 把它们拷进 `Config`：thinking 默认 `"off"`、compaction 用 `DEFAULT_COMPACTION_SETTINGS`、两种 queue mode 默认 `"all"`、`toolExecution` 默认 `"parallel"`。[E: packages/agent/src/harness/runtime/harness.ts:64] [E: packages/agent/src/harness/runtime/harness.ts:66] [E: packages/agent/src/harness/runtime/harness.ts:68] [E: packages/agent/src/harness/runtime/harness.ts:385]
 
-`packages/agent/src/harness/types.ts` 仍导出 `AgentHarnessResources`、`AgentHarnessTool`、`AgentHarnessStreamOptions` 等支撑类型，不再导出 `AgentHarnessPhase` 或 `AgentHarnessError`。[E: packages/agent/src/harness/types.ts:70] [E: packages/agent/src/harness/types.ts:81] [E: packages/agent/src/harness/types.ts:102]
+`packages/agent/src/harness/types.ts` 仍导出 `AgentHarnessResources`、`AgentHarnessTool`、`AgentHarnessStreamOptions` 等支撑类型。[E: packages/agent/src/harness/types.ts:73] [E: packages/agent/src/harness/types.ts:108]
 
 ## 控制流
 
-1. `AgentHarness.create(options)` 读 `options.session.findRecords({ limit: 1 })`。只要存在任意 record，就 throw `HarnessNotImplemented("create.restore")`，不构造实例。[E: packages/agent/src/harness/agent-harness.ts:347] [E: packages/agent/src/harness/agent-harness.ts:350] [E: packages/agent/src/harness/agent-harness.ts:351]
-2. 空 session 才 `new AgentHarness(options)`，并返回 `{ harness, suspended: [] }`。private constructor，不能直接 `new`。[E: packages/agent/src/harness/agent-harness.ts:352] [E: packages/agent/src/harness/agent-harness.ts:323]
-3. constructor 把 `hooks` / `events` 设成 `UnavailableRegistry`。调用 `hooks.on` / `events.on` 在未 close 时 throw `HarnessNotImplemented("hooks.on"|"events.on")`。[E: packages/agent/src/harness/agent-harness.ts:326] [E: packages/agent/src/harness/agent-harness.ts:327] [E: packages/agent/src/harness/agent-harness.ts:233]
-4. 已实现的同步状态门：`getLeafId()` 转调 `session.getLeafId()`；model / thinking / tools / resources / stream / retry / compaction / steering / follow-up 的 getter/setter 只改内存字段。[E: packages/agent/src/harness/agent-harness.ts:359] [E: packages/agent/src/harness/agent-harness.ts:422] [E: packages/agent/src/harness/agent-harness.ts:425] [E: packages/agent/src/harness/agent-harness.ts:456]
-5. 未实现的 operation 一律 `unavailable(name)`：`prompt`、`skill`、`promptFromTemplate`、`compact`、`navigateTree`、`resume`、`abort`、`steer`、`followUp`、`nextRun`、`cancelQueued`、`recordUsage`、`waitForIdle`、`runWhenIdle`、`peekAction`、`executeAction`、`runToCompletion`、`watch`、`lane`、`createLane`、`lanes`、`watchSession`。[E: packages/agent/src/harness/agent-harness.ts:366] [E: packages/agent/src/harness/agent-harness.ts:383] [E: packages/agent/src/harness/agent-harness.ts:407] [E: packages/agent/src/harness/agent-harness.ts:440]
-6. `close()` 只把 `closed` 置 true。之后 `unavailable()` 改为 reject `HarnessClosed`，`hooks.on` / `events.on` 也改为 throw `HarnessClosed`。[E: packages/agent/src/harness/agent-harness.ts:505] [E: packages/agent/src/harness/agent-harness.ts:506] [E: packages/agent/src/harness/agent-harness.ts:356] [E: packages/agent/src/harness/agent-harness.ts:233] `close()` 不 delete/dispose session。[E: packages/agent/src/harness/agent-harness.ts:505] [I]
+1. `AgentHarness.create(options, context)` 转调 `createAgentHarness`。先 `validateToolNames` / retry / compaction，再从 `options.model` 建 `LaneConfiguration` seed（thinking 默认 `"off"`，`activeToolNames` 默认全部 tool name）。[E: packages/agent/src/harness/agent-harness.ts:622] [E: packages/agent/src/harness/runtime/harness.ts:379] [E: packages/agent/src/harness/runtime/harness.ts:383]
+2. `restoreSession(options.session, context)` 扫全部 `pi.branch.tip` / `pi.lane.config` / `pi.lane.state`。完整配置的 lane 进入 `restored` map；只有 tip、没有 config/state 的 branch 跳过；缺字段的部分 lane 抛 `SessionInvariantError`，外层包成 `HarnessFault`。[E: packages/agent/src/harness/runtime/restore.ts:92] [E: packages/agent/src/harness/runtime/restore.ts:110] [E: packages/agent/src/harness/runtime/harness.ts:389] [E: packages/agent/src/harness/runtime/harness.ts:406] [E: packages/agent/test/harness/runtime/harness.test.ts:332]
+3. 返回 `{ harness: new Harness(options, seed, restored), open }`。`open` 列出每条已恢复且仍有 current operation 的 `OpenOperation`（可带 `aborting: true`）。空 session 得到空 map 与 `open: []`。[E: packages/agent/src/harness/runtime/harness.ts:390] [E: packages/agent/src/harness/runtime/harness.ts:404] [E: packages/agent/test/harness/runtime/harness.test.ts:315]
+4. `Harness` constructor 创建真实 `HarnessEventBus` 与 `HookRegistry`（hook 错误发 `handler_error`）。[E: packages/agent/src/harness/runtime/harness.ts:45] [E: packages/agent/src/harness/runtime/harness.ts:46]
+5. `lane(name, context)` / `lane(name, { createAt }, context)`：已缓存则返回；否则读 storage。完整 lane 走 `restoreLaneState`；absent/branch 则 commit tip+config+state 并 emit `lane_created`。空名或含 `\u0000` 抛 `InvalidLane`；`createAt` 指向不存在的 entry 抛 `UnknownTarget`。[E: packages/agent/src/harness/runtime/harness.ts:86] [E: packages/agent/src/harness/runtime/harness.ts:105] [E: packages/agent/src/harness/runtime/harness.ts:118]
+6. 一次 run：`Lane.prompt` → `accept` 写出 operation meta/state → `drive({ operationId, waitForRetry: true })` → `driveOperation` 按 `state.at` 循环（`starting` / `checkpoint` / `assistant.*` / `tools` / `deferred.*` / `summary.*` / `navigation.ready_to_commit`），直到 `settled` 或 durable wait。[E: packages/agent/src/harness/runtime/lane.ts:1139] [E: packages/agent/src/harness/runtime/lane.ts:1162] [E: packages/agent/src/harness/runtime/lane.ts:1178] [E: packages/agent/src/harness/runtime/drive.ts:56] [E: packages/agent/src/harness/runtime/drive.ts:99]
+7. `watchSession` 仍抛 `SliceNotImplemented("watchSession")`。lane 级 `watch` 已实现。[E: packages/agent/src/harness/runtime/harness.ts:305] [E: packages/agent/src/harness/runtime/types.ts:18] [E: packages/agent/src/harness/runtime/lane.ts:1705]
+8. `close(context)` 设 `HarnessClosed`，seal 每条 lane、关闭 hooks/events，并 `session.close(context)`。之后 getter/setter 与 `lane()` 抛同一个 closed/fault 错误。[E: packages/agent/src/harness/runtime/harness.ts:322] [E: packages/agent/src/harness/runtime/harness.ts:329] [E: packages/agent/src/harness/runtime/harness.ts:368]
 
-## reducer 与 restore 缺口
+## reducer 与 restore
 
-`reduceLaneState()` 是纯函数：从一份 bounded `LaneReductionInput`（open operations、lane records、own entries、configuration entries、defaults）重建 `LaneState`、effective configuration 与 optional `terminalFailure`。[E: packages/agent/src/harness/reducer.ts:506] [E: packages/agent/src/harness/reducer.ts:121] [E: packages/agent/src/harness/reducer.ts:79]
+`reduceLaneSnapshot(snapshot, event)` 是纯函数：把一条 `HarnessEvent` / `LaneWatchEvent` 应用到可变 `LaneSnapshot`。`navigation_end` 返回 `"rebase"`，要求调用方重拍 snapshot；其它 case 就地改 operation / transcript / queues / config。[E: packages/agent/src/harness/runtime/reducer.ts:22] [E: packages/agent/src/harness/runtime/reducer.ts:220]
 
-单 writer record 协议若出现自相矛盾，reducer throw `RecordLogCorruption`，reason 是封闭字面量 union；函数注释要求 restore 拒绝而不是修复。[E: packages/agent/src/harness/reducer.ts:36] [E: packages/agent/src/harness/reducer.ts:22] [E: packages/agent/src/harness/reducer.ts:131]
+`createAgentHarness` **不** 调用 `reduceLaneSnapshot`。restore 读的是 session values（`pi.lane.*` / `pi.op.*`），不是事件日志回放。[E: packages/agent/src/harness/runtime/harness.ts:389] [E: packages/agent/src/harness/runtime/restore.ts:137] reducer 给 remote/UI watch 投影，包入口单独导出。[E: packages/agent/src/index.ts:77]
 
-`AgentHarness.create()` 并不调用 `reduceLaneState`。它在发现任何 record 时直接 `HarnessNotImplemented("create.restore")`。[E: packages/agent/src/harness/agent-harness.ts:351] reducer 目前只被 `packages/agent/test/harness/reducer.test.ts` 引用，没有被 harness 运行时 import。[I]
+旧 `reduceLaneState` / `RecordLogCorruption` / 顶层 `harness/reducer.ts` 已删除。
 
 ## `Agent.reset()` 拒绝 active run
 
@@ -111,67 +125,76 @@ updated: 853a80d26c
 
 若 `this.activeRun` 存在，`reset()` throw `"Agent is already processing. Wait for completion before resetting."`，不改 messages / streaming / queues。[E: packages/agent/src/agent.ts:334] [E: packages/agent/src/agent.ts:335] idle 时才清空 transcript、runtime flags 与两类 queue。[E: packages/agent/src/agent.ts:338] [E: packages/agent/src/agent.ts:343] 测试断言 streaming 期间 reset 抛错且 user message 仍在。[E: packages/agent/test/agent.test.ts:530] [E: packages/agent/test/agent.test.ts:532]
 
-`Agent.waitForIdle()` 等的是 `activeRun.promise`，该 promise 在 `agent_end` listeners settle 之后由 `finishRun()` resolve。[E: packages/agent/src/agent.ts:328] [E: packages/agent/src/agent.ts:329] [E: packages/agent/src/agent.ts:529]
+`Agent.waitForIdle()` 等的是 `activeRun.promise`，该 promise 在 `agent_end` listeners settle 之后由 `finishRun()` resolve。[E: packages/agent/src/agent.ts:328] [E: packages/agent/src/agent.ts:529]
 
-`Agent.prepareNextTurn` / `prepareNextTurnWithContext` 只在 `shouldStopAfterTurn` 与 queued-message 检查决定还会再开一轮 assistant turn 之后运行；终局 turn 不再调用，end-of-run 工作应放到 `agent_end`。`AgentHarness.prompt` 仍是 `unavailable()`，这条时序今天只对低层 `Agent` / `runLoop` 与 coding-agent `AgentSession` 生效。[E: packages/agent/src/agent.ts:200] [E: packages/agent/src/agent.ts:463] [E: packages/agent/src/harness/agent-harness.ts:366] [E: packages/agent/CHANGELOG.md:9]
+`Agent.prepareNextTurn` / `prepareNextTurnWithContext` 只在 `shouldStopAfterTurn` 与 queued-message 检查决定还会再开一轮 assistant turn 之后运行；终局 turn 不再调用。`AgentLane.prompt` 走 harness drive，不再经过低层 `Agent.prompt`。[E: packages/agent/src/agent.ts:200] [E: packages/agent/src/agent.ts:463] [E: packages/agent/src/harness/runtime/lane.ts:1133]
 
 ## Blocked tool terminate
 
-`BeforeToolCallResult` 在 `block` / `reason` 之外增加 `terminate?: boolean`。[E: packages/agent/src/types.ts:61] [E: packages/agent/src/types.ts:62] [E: packages/agent/src/types.ts:63] [E: packages/agent/src/types.ts:68] blocked call 把该 hint 写进 error tool result 后，只有当前 batch 每个 finalized result 都为 true 才会 early-stop。[E: packages/agent/src/agent-loop.ts:636] [E: packages/agent/src/agent-loop.ts:581]
+低层 `BeforeToolCallResult.terminate` 仍属于 `Agent` / `runLoop`：blocked call 把 hint 写进 error tool result 后，只有当前 batch 每个 finalized result 都为 true 才会 early-stop。[E: packages/agent/src/types.ts:61] [E: packages/agent/src/types.ts:68] [E: packages/agent/src/agent-loop.ts:589] [E: packages/agent/src/agent-loop.ts:643]
 
-`agent-loop` 在 `beforeResult?.block` 时用 `reason` 或默认 `"Tool execution was blocked"` 生成 error tool result；仅当 `beforeResult.terminate === true` 才把 `result.terminate = true`。[E: packages/agent/src/agent-loop.ts:634] [E: packages/agent/src/agent-loop.ts:635] [E: packages/agent/src/agent-loop.ts:636] [E: packages/agent/src/agent-loop.ts:637]
+harness 路径用 `HookMap.before_tool`：result 是 `{ args?; block?: { reason; terminate? } }`。`HookRegistry.beforeTool` 聚合 handlers；`applyBeforeToolDecision` 在 `decision.block` 时用 `block.reason` 与 `block.terminate === true` 生成 immediate error。[E: packages/agent/src/harness/agent-harness.ts:464] [E: packages/agent/src/harness/hooks.ts:161] [E: packages/agent/src/harness/execution/tools.ts:105] [E: packages/agent/src/harness/runtime/drive/tools.ts:452]
 
-batch 级判定是 `shouldTerminateToolBatch()`：`finalizedCalls.length > 0` 且每个 `result.terminate === true`。[E: packages/agent/src/agent-loop.ts:580] [E: packages/agent/src/agent-loop.ts:581]
-
-`reduceLaneState` 重建 tool batch 时，若对应 tool-result entry 带 `terminate === true`，会把该 call 标成 `terminate: true`。这是 durable 恢复投影，不是 loop 执行器。[E: packages/agent/src/harness/reducer.ts:73] [E: packages/agent/src/harness/reducer.ts:493]
-
-`AgentHarness` 的 `before_tool` hook 名写在 `HookName` 里，但 `hooks.on` 仍是 `HarnessNotImplemented`。blocked terminate 今天只对 `Agent` / `runLoop` 生效。[E: packages/agent/src/harness/agent-harness.ts:207] [E: packages/agent/src/harness/agent-harness.ts:233] [I]
+batch 完成后 `tool-placement` 用 `completedCalls.every(call => call.status === "completed" && call.terminate)` 决定 checkpoint 是 `may_finish` 还是 `need_assistant`。[E: packages/agent/src/harness/runtime/drive/tool-placement.ts:221]
 
 ## `expandPromptTemplates` 跨包边界
 
-`AgentHarness.promptFromTemplate()` 仍是 `unavailable("promptFromTemplate")`，没有 expand 开关。[E: packages/agent/src/harness/agent-harness.ts:371] [E: packages/agent/src/harness/agent-harness.ts:372]
+`AgentLane.promptFromTemplate()` 已实现：它 `accept` 一条 `prompt_template` request，再 `drive`。没有 coding-agent 那种 expand 开关。[E: packages/agent/src/harness/runtime/lane.ts:1154] [E: packages/agent/src/harness/runtime/lane.ts:1155]
 
-`expandPromptTemplates` 是 `coding-agent` 的 `PromptOptions` 字段：`AgentSession.prompt()` 默认 `true`，为真时先拦截 `/` 扩展命令，再展开 skill command 与 prompt template。[E: packages/coding-agent/src/core/agent-session.ts:243] [E: packages/coding-agent/src/core/agent-session.ts:245] [E: packages/coding-agent/src/core/agent-session.ts:1161] [E: packages/coding-agent/src/core/agent-session.ts:1168] [E: packages/coding-agent/src/core/agent-session.ts:1205]
+`expandPromptTemplates` 是 `coding-agent` 的 `PromptOptions` 字段：`AgentSession.prompt()` 默认 `true`，为真时先拦截 `/` 扩展命令，再展开 skill command 与 prompt template。[E: packages/coding-agent/src/core/agent-session.ts:244] [E: packages/coding-agent/src/core/agent-session.ts:1160] [E: packages/coding-agent/src/core/agent-session.ts:1167] [E: packages/coding-agent/src/core/agent-session.ts:1204]
 
-`AgentSession.sendUserMessage()` 把同一字段默认成 `false`，再转调 `prompt()`。[E: packages/coding-agent/src/core/agent-session.ts:1551] [E: packages/coding-agent/src/core/agent-session.ts:1576] 这不是 `AgentHarness` API。
+`AgentSession.sendUserMessage()` 把同一字段默认成 `false`，再转调 `prompt()`。[E: packages/coding-agent/src/core/agent-session.ts:1552] [E: packages/coding-agent/src/core/agent-session.ts:1575] 这不是 `AgentHarness` API。
 
 ## 设计动机与权衡
 
-scaffold 先钉死 `AgentLane` 签名、`Result` 拒绝面和 `create()` restore 缺口，让调用方按最终合同编译，同时未完成路径显式失败。[E: packages/agent/src/harness/agent-harness.ts:271] [E: packages/agent/src/harness/agent-harness.ts:351] [E: packages/agent/src/harness/agent-harness.ts:355] [I]
+公开面留在 `agent-harness.ts`，实现拆到 `runtime/`：调用方只依赖 `{ create }` 与接口，测试可以直接 `instanceof Harness`。[E: packages/agent/src/harness/agent-harness.ts:622] [E: packages/agent/src/harness/runtime/harness.ts:29] [I]
 
-`TaggedError` + `Result` 取代旧 `AgentHarnessErrorCode` 字符串：预期拒绝走 `ok: false`，编程错误 / 未实现走 throw。[E: packages/agent/src/harness/result.ts:1] [E: packages/agent/src/harness/agent-harness.ts:113] [E: packages/agent/src/harness/agent-harness.ts:356] [I]
+`TaggedError` + `Result` 表达预期拒绝（`LaneBusy` / `Closed` / `NothingToResume`）；存储/不变量失败走 `HarnessFault` 并 seal 全部 lane。[E: packages/agent/src/harness/result.ts:28] [E: packages/agent/src/harness/runtime/harness.ts:309] [E: packages/agent/src/harness/runtime/harness.ts:315]
+
+`create()` 只 restore、不启动 provider/tool/hook/timer effects。未完成的 operation 出现在 `open`，由调用方再 `drive`。[E: packages/agent/src/harness/runtime/harness.ts:375] [E: packages/agent/src/harness/runtime/restore.ts:118]
 
 ## Gotcha
 
-- `AgentHarness.events` 的 `Events` 接口与 `packages/agent/src/harness/events.ts` 的 `HarnessEventBus` 不是同一个对象。harness 实例上的 `events.on` 现在会 throw。[E: packages/agent/src/harness/agent-harness.ts:215] [E: packages/agent/src/harness/agent-harness.ts:327] 订阅/watch 实现见 [subsys.agent-core.harness-events](harness-events.md)。
-- `close()` 之后 getter/setter 仍可改内存字段；`closed` 只挡住 `unavailable()` 路径和 registry `on()`。[E: packages/agent/src/harness/agent-harness.ts:425] [E: packages/agent/src/harness/agent-harness.ts:356] [I]
-- `create()` 对“有任何 record”一刀切拒绝 restore，包括只写了一条非 operation record 的 session。[E: packages/agent/src/harness/agent-harness.ts:350] [E: packages/agent/src/harness/agent-harness.ts:351]
+- `AgentHarness` 不是 class，不能 `new AgentHarness()`。`create` 的第二参是 `Context`（常用 `BACKGROUND_CONTEXT`）。[E: packages/agent/src/harness/agent-harness.ts:615] [E: packages/agent/test/harness/runtime/harness.test.ts:36]
+- `watchSession` 仍未实现；需要 session 级快照的调用方只能自己组合 `lanes()`。[E: packages/agent/src/harness/runtime/harness.ts:305]
+- 部分 durable lane（有 tip+config 但缺 `pi.lane.state`）会让整个 `create()` 以 `HarnessFault` 失败，而不是跳过该 lane。[E: packages/agent/test/harness/runtime/harness.test.ts:321] [E: packages/agent/src/harness/runtime/restore.ts:74]
+- `close()` 会 `session.close()`，与旧 scaffold 只翻 `closed` 标志不同。[E: packages/agent/src/harness/runtime/harness.ts:329]
+- 低层 `Agent` / `runLoop` 仍独立存在，coding-agent `AgentSession` 今天主要走那条路；不要把 `AgentLane.prompt` 与 `Agent.prompt` 当成同一个入口。[I]
 
 ## 跨包边界
 
-`AgentHarness` 属于 `pi-agent-core`。`Agent.reset()` 与 blocked `terminate` 属于同一包的 `Agent` / `runLoop`。`expandPromptTemplates` 属于 `coding-agent` 的 `AgentSession`。[E: packages/agent/src/index.ts:45] [E: packages/agent/src/agent.ts:333] [E: packages/coding-agent/src/core/agent-session.ts:245]
+`AgentHarness` 属于 `pi-agent-core`。`Agent.reset()` 与 `runLoop` 的 `BeforeToolCallResult.terminate` 属于同一包的低层 `Agent`。`expandPromptTemplates` 属于 `coding-agent` 的 `AgentSession`。[E: packages/agent/src/index.ts:43] [E: packages/agent/src/agent.ts:333] [E: packages/coding-agent/src/core/agent-session.ts:244]
 
 ## Sources
 
 - packages/agent/src/harness/agent-harness.ts
+- packages/agent/src/harness/runtime/harness.ts
+- packages/agent/src/harness/runtime/lane.ts
+- packages/agent/src/harness/runtime/drive.ts
+- packages/agent/src/harness/runtime/restore.ts
+- packages/agent/src/harness/runtime/reducer.ts
+- packages/agent/src/harness/runtime/types.ts
 - packages/agent/src/harness/result.ts
-- packages/agent/src/harness/reducer.ts
 - packages/agent/src/harness/types.ts
+- packages/agent/src/harness/hooks.ts
+- packages/agent/src/harness/execution/tools.ts
+- packages/agent/src/harness/runtime/drive/tools.ts
+- packages/agent/src/harness/runtime/drive/tool-placement.ts
 - packages/agent/src/index.ts
 - packages/agent/package.json
-- packages/agent/CHANGELOG.md
 - packages/agent/src/agent.ts
 - packages/agent/src/types.ts
 - packages/agent/src/agent-loop.ts
 - packages/agent/test/agent.test.ts
+- packages/agent/test/harness/runtime/harness.test.ts
 - packages/coding-agent/src/core/agent-session.ts
 
 ## 相关
 
-- [spine.agent-loop](../../spine/agent-loop.md)：`Agent` / `runLoop` 仍是实际 turn 执行器。
-- [subsys.agent-core.turn-control](turn-control.md)：batch `terminate` 如何停止下一轮 provider request；`prepareNextTurn` 只在还会再开一轮时运行。
-- [subsys.agent-core.hooks](hooks.md)：`beforeToolCall` / `afterToolCall` / `prepareNextTurn` 类型合同。
+- [spine.agent-loop](../../spine/agent-loop.md)：低层 `Agent` / `runLoop` 仍是 coding-agent 的 turn 执行器。
+- [subsys.agent-core.turn-control](turn-control.md)：batch `terminate` 如何停止下一轮 provider request。
+- [subsys.agent-core.hooks](hooks.md)：`HookMap` / `before_tool` / `after_tool` 类型合同。
 - [subsys.agent-core.harness-events](harness-events.md)：`HarnessEventBus` 的 direct listener 与 buffered watch。
 - [subsys.agent-core.prompt-templates](prompt-templates.md)：harness 侧模板加载与占位符，不含 `expandPromptTemplates`。
 - [ref.agent.agent-events](../../reference/agent-events.md)：`AgentEvent` 与 `HarnessEvent` 目录。
-- [ref.agent.error-codes](../../reference/error-codes.md)：File/Exec/Session/JSONL/`TaggedError` 错误面。
+- [ref.agent.error-codes](../../reference/error-codes.md)：File/Exec/Session/`TaggedError` 错误面。

@@ -25,7 +25,7 @@ related:
   - ref.ai.provider-catalog
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `surface.providers.overview` 是用户可见的 provider 心智模型：选择 provider/model 后，Pi 从 runtime `Models` collection 检查配置、筛选可用模型、解析 credential，再把请求交给 provider-owned wire implementation。
@@ -62,19 +62,19 @@ provider 必须给 id/name、auth、同步 last-known `getModels()` 与 stream/s
 
 `Models` 提供 lookup、全体 refresh、auth check、available model filtering、login/logout 与 streaming [E: packages/ai/src/models.ts:156] [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [E: packages/ai/src/models.ts:194] [E: packages/ai/src/models.ts:198] [E: packages/ai/src/models.ts:170] [E: packages/ai/src/models.ts:203]。用户界面应把 `getAvailable()` 视为“已配置 provider 的可选模型”，而不是只看所有 provider 的 raw `getModels()` [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [I]。
 
-`Models.refresh({ allowNetwork, force, signal, providers })` 并行处理动态 provider，把 per-provider errors 收集进 `ModelsRefreshResult`；它不是旧的 `refresh(providerId)` API [E: packages/ai/src/models.ts:64] [E: packages/ai/src/models.ts:67] [E: packages/ai/src/models.ts:73] [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:386] [E: packages/ai/src/models.ts:445]。每个 refresh 先 restore stored catalog，再在允许联网时 fetch [E: packages/ai/src/models.ts:375] [E: packages/ai/src/models.ts:376] [E: packages/ai/src/models.ts:411] [E: packages/ai/src/models.ts:417]。
+`Models.refresh({ allowNetwork, force, signal, providers })` 并行处理动态 provider，把 per-provider errors 收集进 `ModelsRefreshResult`；它不是旧的 `refresh(providerId)` API [E: packages/ai/src/models.ts:64] [E: packages/ai/src/models.ts:67] [E: packages/ai/src/models.ts:73] [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:391] [E: packages/ai/src/models.ts:450]。每个 refresh 先 restore stored catalog，再在允许联网时 fetch [E: packages/ai/src/models.ts:380] [E: packages/ai/src/models.ts:381] [E: packages/ai/src/models.ts:416] [E: packages/ai/src/models.ts:422]。
 
 ## Request auth 与委派
 
-stream 先按 `model.provider` require provider，调用 `getAuth()`；request options 的 apiKey/headers/env 覆盖 resolved auth，`transformHeaders` 最后运行 [E: packages/ai/src/models.ts:628] [E: packages/ai/src/models.ts:643] [E: packages/ai/src/models.ts:644] [E: packages/ai/src/models.ts:655] [E: packages/ai/src/models.ts:657]。之后 `stream()`/`streamSimple()` 才委派给 provider object [E: packages/ai/src/models.ts:667] [E: packages/ai/src/models.ts:678] [E: packages/ai/src/models.ts:690] [E: packages/ai/src/models.ts:694]。
+stream 先按 `model.provider` require provider，调用 `getAuth()`；request options 的 apiKey/headers/env 覆盖 resolved auth，`transformHeaders` 最后运行 [E: packages/ai/src/models.ts:633] [E: packages/ai/src/models.ts:648] [E: packages/ai/src/models.ts:649] [E: packages/ai/src/models.ts:660] [E: packages/ai/src/models.ts:662]。之后 `stream()`/`streamSimple()` 才委派给 provider object [E: packages/ai/src/models.ts:672] [E: packages/ai/src/models.ts:683] [E: packages/ai/src/models.ts:695] [E: packages/ai/src/models.ts:699]。
 
 Docs 给出的用户可见 credential precedence 是 CLI `--api-key`、`auth.json`、环境变量、`models.json` provider key [E: packages/coding-agent/docs/providers.md:310] [E: packages/coding-agent/docs/providers.md:317]。Provider-scoped credential env 能覆盖进程环境，并承载 Cloudflare、Azure、Vertex、Bedrock 等附加配置 [E: packages/coding-agent/docs/providers.md:139] [E: packages/coding-agent/docs/providers.md:157]。
 
 ## Custom provider 的两条路
 
-`models.json` 适合复用现有 wire protocol 的 base URL、headers、auth 与 model list；extension 适合新 stream implementation、OAuth 或自定义生命周期 [E: packages/coding-agent/docs/providers.md:304] [I]。`createProvider()` 支持 static baseline `models`、可选 `fetchModels()` dynamic overlay、credential filter，以及单一 API 或按 `model.api` 的 map [E: packages/ai/src/models.ts:739] [E: packages/ai/src/models.ts:748] [E: packages/ai/src/models.ts:750] [E: packages/ai/src/models.ts:751] [E: packages/ai/src/models.ts:753]。
+`models.json` 适合复用现有 wire protocol 的 base URL、headers、auth 与 model list；extension 适合新 stream implementation、OAuth 或自定义生命周期 [E: packages/coding-agent/docs/providers.md:304] [I]。`createProvider()` 支持 static baseline `models`、可选 `fetchModels()` dynamic overlay、credential filter，以及单一 API 或按 `model.api` 的 map [E: packages/ai/src/models.ts:752] [E: packages/ai/src/models.ts:761] [E: packages/ai/src/models.ts:763] [E: packages/ai/src/models.ts:764] [E: packages/ai/src/models.ts:766]。
 
-dynamic overlay 会从 `ModelsStore` 恢复，联网 fetch 成功后再替换并持久化；相同 model id 覆盖 baseline [E: packages/ai/src/models.ts:766] [E: packages/ai/src/models.ts:770] [E: packages/ai/src/models.ts:600] [E: packages/ai/src/models.ts:818] [E: packages/ai/src/models.ts:610]。缺少对应 API implementation 时，stream path 返回 `ModelsError("stream", ...)` [E: packages/ai/src/models.ts:779] [E: packages/ai/src/models.ts:785] [E: packages/ai/src/models.ts:788]。
+dynamic overlay 会从 `ModelsStore` 恢复，联网 fetch 成功后再替换并持久化；相同 model id 覆盖 baseline [E: packages/ai/src/models.ts:779] [E: packages/ai/src/models.ts:783] [E: packages/ai/src/models.ts:605] [E: packages/ai/src/models.ts:831] [E: packages/ai/src/models.ts:615]。缺少对应 API implementation 时，stream path 返回 `ModelsError("stream", ...)` [E: packages/ai/src/models.ts:792] [E: packages/ai/src/models.ts:798] [E: packages/ai/src/models.ts:801]。
 
 ## 两个动态特例
 
@@ -84,8 +84,8 @@ dynamic overlay 会从 `ModelsStore` 恢复，联网 fetch 成功后再替换并
 ## Gotcha
 
 - `getBuiltinProviders()` 名字指 generated catalog keys，不是 `builtinProviders()` runtime objects [E: packages/ai/src/providers/all.ts:69] [E: packages/ai/src/providers/all.ts:89]。
-- `getModels()` 是 last-known sync catalog:动态 provider 返回上次 `refreshModels()` 的列表(首次前为空);实现不得抛错,`Models.getModels()` 在未知 provider 或实现抛错时返回 `[]`。空列表不等于 provider 未配置;配置与否由 `getAvailable()` / `checkAuth()` 判断 [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [E: packages/ai/src/models.ts:294] [E: packages/ai/src/models.ts:301]。
-- custom provider id 是 collection 的 replace key；`setProvider()` 以 `provider.id` upsert [E: packages/ai/src/models.ts:225] [E: packages/ai/src/models.ts:269] [E: packages/ai/src/models.ts:271]。
+- `getModels()` 是 last-known sync catalog:动态 provider 返回上次 `refreshModels()` 的列表(首次前为空);实现不得抛错,`Models.getModels()` 在未知 provider 或实现抛错时返回 `[]`。空列表不等于 provider 未配置;配置与否由 `getAvailable()` / `checkAuth()` 判断 [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [E: packages/ai/src/models.ts:299] [E: packages/ai/src/models.ts:306]。
+- custom provider id 是 collection 的 replace key；`setProvider()` 以 `provider.id` upsert [E: packages/ai/src/models.ts:230] [E: packages/ai/src/models.ts:274] [E: packages/ai/src/models.ts:276]。
 
 ## Sources
 

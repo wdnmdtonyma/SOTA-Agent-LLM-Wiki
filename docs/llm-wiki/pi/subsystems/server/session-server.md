@@ -1,6 +1,6 @@
 ---
 id: subsys.server.session-server
-title: Composable protocol session server
+title: Composable routed-envelope Server
 kind: subsystem
 tier: T2
 pkg: server
@@ -11,20 +11,18 @@ source:
   - packages/server/src/listener.ts
   - packages/server/src/connection.ts
   - packages/server/src/server.ts
-  - packages/server/src/snapshots.ts
   - packages/server/src/types.ts
   - packages/server/src/errors.ts
   - packages/server/src/testing/index.ts
-  - packages/server/src/testing/client.ts
+  - packages/server/src/testing/host.ts
   - packages/server/src/testing/server.ts
-  - packages/server/src/testing/service.ts
   - packages/server/test/conformance.test.ts
 symbols:
-  - PiServer
-  - PiServerListener
-  - PiServerOptions
-  - PiServerService
-  - PiSessionRuntime
+  - Server
+  - ServerListener
+  - ServerOptions
+  - ServerHost
+  - SessionRouter
 related:
   - subsys.server.live-sessions
   - subsys.server.unix-transport
@@ -32,66 +30,62 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
-> `PiServer` 是 `@earendil-works/pi-server` 的 transport-composable remote session core：listener 完成 transport-specific authentication/authorization 后提供 ordered byte connections，server core 负责 protocol version handshake、request dispatch、snapshot publication 与 lifecycle cleanup。[E: packages/server/src/server.ts:39][E: packages/server/src/server.ts:54][E: packages/server/src/listener.ts:4][E: packages/server/src/listener.ts:8][E: packages/server/README.md:36]
+> `Server` 是 `@earendil-works/pi-server` 的 transport-composable remote session core：listener 完成 transport-specific authentication 后提供 ordered byte connections，server core 负责 protocol version handshake、Chord service dispatch、out-of-band attachment 与 lifecycle cleanup。公开类名不再是 `PiServer` [E: packages/server/src/server.ts:46] [E: packages/server/src/listener.ts:4] [E: packages/server/README.md:3]。
 
 ## 能回答的问题
 
-- custom transport 如何接入 `PiServer`？
+- custom transport 如何接入 `Server`？
 - transport authentication、protocol version 与 handshake timeout 的责任如何划分？
 - listener startup/rollback 与 server close 如何收敛？
-- request 是否保证按到达顺序完成？
-- server snapshot revision、`SessionMetadata` 列表与 model list 如何发布？
-- `PiServerService` 与 `PiSessionRuntime` 各自承担什么?
+- request 是否保证按到达顺序完成？duplicate request id 怎么办？
+- hello 还携带 session list / server snapshot 吗？
+- testing helper 现在叫什么？
 
 ## 公开 API
 
-package root 只 re-export errors/listener/protocol adapters/`PiServer`/service types；export subpath 是 `.`、`./testing` 与 `./unix`。没有 `./legacy`、CLI bin 或 supervisor。[E: packages/server/src/index.ts:1][E: packages/server/src/index.ts:5][E: packages/server/package.json:8][E: packages/server/package.json:13][E: packages/server/package.json:17]
+package root re-export errors、`ServerListener`、`Server`、`ServerHost` 等 types；export subpath 是 `.`、`./testing`、`./unix`。没有 CLI bin 或 supervisor [E: packages/server/src/index.ts:1] [E: packages/server/package.json:8] [E: packages/server/package.json:13] [E: packages/server/package.json:17]。
 
-README 把该包定位为 composable `PiServer`:应用提供 `PiServerService` 实现,Unix preset 是 `createUnixServer(service, { path })`。本包不提供 standalone CLI 或 coding-agent service。[E: packages/server/README.md:9][E: packages/server/README.md:12][E: packages/server/README.md:30][E: packages/server/README.md:36][E: packages/server/README.md:38]
-
-`PiServer` 构造函数第一个参数就是 `PiServerService`;它把 service 交给 `LiveSessionManager` 与 `ServerSnapshotPublisher`。[E: packages/server/src/server.ts:54][E: packages/server/src/server.ts:61][E: packages/server/src/server.ts:70][E: packages/server/src/types.ts:55]
+README 把该包定位为 composable `Server`：应用提供 `ServerHost`，Unix preset 是 `createUnixServer(host, { serverId, path })`。本包不提供 standalone CLI 或 coding-agent service [E: packages/server/README.md:34] [E: packages/server/README.md:64]。构造函数第一个参数是 `ServerHost`，内部创建 `SessionRouter`，用 `publishAttachment` 发 `{ type: "attachment" }` [E: packages/server/src/server.ts:67] [E: packages/server/src/server.ts:76] [E: packages/server/src/server.ts:80]。`ServerOptions` 要求 `listeners` 与 canonical `serverId`，可选 `maxFrameLength` / `handshakeTimeoutMs` / `onConnectionCountChanged` / `onError` [E: packages/server/src/types.ts:5] [E: packages/server/src/server.ts:559]。
 
 ## Listener 与 connection contract
 
-`PiServerListener.start(accept)` 只向 server 交付已经建立并授权的 `ByteConnection`；connection 必须公开 `closed`、ordered async `send()` 与可携 final frame 的 `close()`，handler 接收 data/close/error。WebSocket listener 可在 HTTP upgrade 校验凭据，Unix listener 则依赖 socket filesystem permissions。[E: packages/server/src/listener.ts:4][E: packages/server/src/listener.ts:8][E: packages/server/src/connection.ts:6][E: packages/server/src/connection.ts:7][E: packages/server/src/connection.ts:8][E: packages/server/src/connection.ts:9][E: packages/server/src/connection.ts:12][E: packages/server/src/connection.ts:13][E: packages/server/src/connection.ts:14][E: packages/server/src/connection.ts:15][E: packages/server/README.md:36]
+`ServerListener.start(accept)` 只向 server 交付已经建立并授权的 `ByteConnection`；connection 必须公开 `closed`、ordered async `send()` 与可携 final frame 的 `close()` [E: packages/server/src/listener.ts:4] [E: packages/server/src/connection.ts:8]。WebSocket listener 可在 HTTP upgrade 校验凭据，Unix listener 依赖 socket filesystem permissions [E: packages/server/README.md:77]。
 
-connection stage 是 `awaitingHello | handshaking | ready | closing | closed`，state 同时追踪 decoder、attached session ids、handshake Promise/timeout 与 disconnect flags。[E: packages/server/src/connection.ts:20][E: packages/server/src/connection.ts:22][E: packages/server/src/connection.ts:23][E: packages/server/src/connection.ts:25][E: packages/server/src/connection.ts:26][E: packages/server/src/connection.ts:27][E: packages/server/src/connection.ts:28][E: packages/server/src/connection.ts:30][E: packages/server/src/connection.ts:31]
+connection stage 是 `awaitingHello | handshaking | ready | closing | closed`。state 同时追踪 decoder、per-subscription `ServiceStateEncoder`、handshake timeout、`serverServices` 与 `activeRequests`（id → AbortController + target）[E: packages/server/src/connection.ts:21] [E: packages/server/src/connection.ts:26]。
 
 ## Start 与 close
 
-`start()` 逐个启动 configured listeners；任一 start 失败时关闭已经启动的 listeners 和 server state。server 拒绝重复/concurrent start 与 close 后 start。[E: packages/server/src/server.ts:85][E: packages/server/src/server.ts:86][E: packages/server/src/server.ts:87][E: packages/server/src/server.ts:88][E: packages/server/src/server.ts:93][E: packages/server/src/server.ts:96][E: packages/server/src/server.ts:97][E: packages/server/src/server.ts:102][E: packages/server/src/server.ts:104][E: packages/server/src/server.ts:105]
+`start()` 逐个启动 configured listeners；任一 start 失败时关闭已启动 listeners 并 `closeServerState`。cleanup 也失败才抛 `AggregateError`；cleanup 成功则抛原始 error [E: packages/server/src/server.ts:106] [E: packages/server/src/server.ts:112] [E: packages/server/src/server.ts:115] [E: packages/server/src/server.ts:120] [E: packages/server/src/server.ts:124] [E: packages/server/src/server.ts:125] [E: packages/server/src/server.ts:130]。server 拒绝重复/concurrent start 与 close 后 start [E: packages/server/src/server.ts:96] [E: packages/server/src/server.ts:97] [E: packages/server/src/server.ts:98]。
 
-`close()` 幂等：先禁止新 accept，关闭全部 listeners/connections，再断开 session attachments 并 dispose live runtimes。[E: packages/server/src/server.ts:152][E: packages/server/src/server.ts:153][E: packages/server/src/server.ts:154][E: packages/server/src/server.ts:159][E: packages/server/src/server.ts:163][E: packages/server/src/server.ts:165][E: packages/server/src/server.ts:330][E: packages/server/src/server.ts:336][E: packages/server/src/server.ts:337][E: packages/server/src/server.ts:339]
+`close()` 幂等：标 `closing`、关 listeners、关 connections、`sessions.close()` [E: packages/server/src/server.ts:176] [E: packages/server/src/server.ts:178] [E: packages/server/src/server.ts:489]。`accept()` 在 closing 时丢弃新 connection [E: packages/server/src/server.ts:137]。
 
 ## Handshake
 
-accept 时创建 `ClientMessageDecoder` 与默认 5-second timeout；first client message 必须是 hello。[E: packages/server/src/server.ts:35][E: packages/server/src/server.ts:122][E: packages/server/src/server.ts:123][E: packages/server/src/server.ts:128][E: packages/server/src/server.ts:133][E: packages/server/src/server.ts:135][E: packages/server/src/server.ts:185][E: packages/server/src/server.ts:186][E: packages/server/src/server.ts:187][E: packages/server/src/server.ts:190]
+accept 时创建 `ClientMessageDecoder` 与默认 5-second timeout（`unref`）；first client message 必须是 hello [E: packages/server/src/server.ts:42] [E: packages/server/src/server.ts:147] [E: packages/server/src/server.ts:266] [E: packages/server/test/protocol.test.ts:51]。`ServerOptions` 没有 credential field。version 必须被 `isSupportedProtocolVersion()` 接受，否则 final `hello_error` code `version` [E: packages/server/src/server.ts:263] [E: packages/server/test/protocol.test.ts:66]。
 
-server core 不再读取 token；`PiServerOptions` 也没有 credential field。它只要求 version 由 protocol helper 接受；version/invalid handshake 失败时编码 final `hello_error` frame、close 并 disconnect，成功 hello 携 connection id 与 connection-relative server snapshot。[E: packages/server/src/types.ts:14][E: packages/server/src/types.ts:15][E: packages/server/src/types.ts:16][E: packages/server/src/types.ts:18][E: packages/server/src/server.ts:221][E: packages/server/src/server.ts:222][E: packages/server/src/server.ts:223][E: packages/server/src/server.ts:224][E: packages/server/src/server.ts:225][E: packages/server/src/server.ts:225][E: packages/server/src/server.ts:232][E: packages/server/src/server.ts:233][E: packages/server/src/server.ts:234][E: packages/server/src/server.ts:235][E: packages/server/src/server.ts:236][E: packages/server/src/server.ts:315][E: packages/server/src/server.ts:319][E: packages/server/src/server.ts:322][E: packages/server/src/server.ts:326][E: packages/server/src/server.ts:327][E: packages/server/test/conformance.test.ts:53][E: packages/server/test/conformance.test.ts:57][E: packages/server/test/conformance.test.ts:59]
+成功路径：`host.serverServices.attachClient(presentation)` 得到 connection-scoped server endpoint，再发送 `{ type: "hello", version: 8, serverId }` 并进入 `ready` [E: packages/server/src/server.ts:272] [E: packages/server/src/server.ts:287]。hello **不**带 session list 或 server snapshot；conformance 断言 handshake 后 harness 数仍为 0 [E: packages/server/test/conformance.test.ts:81] [E: packages/server/test/conformance.test.ts:87]。handshaking 期间到达的 request/cancel 会等 handshake Promise 后再处理 [E: packages/server/src/server.ts:306] [E: packages/server/src/server.ts:320]。
 
-handshake 期间如果全局 server snapshot revision 已变化，server 在 hello 后再发 current `server_snapshot` event，避免新 client 固化过时 snapshot。[E: packages/server/src/server.ts:238][E: packages/server/src/server.ts:240][E: packages/server/src/server.ts:242][E: packages/server/src/server.ts:238][E: packages/server/src/server.ts:244][E: packages/server/src/server.ts:246]
+## Request、cancel 与 error
 
-## Request 与 error
+ready 对每个 request `void handleRequest()`，完成顺序不保证。同一 connection 上重复的 active request id 立即 `invalid_request` / `Request ID is already active` [E: packages/server/src/server.ts:249] [E: packages/server/src/server.ts:307]。`cancel` 仅当 target 与 active request 的 target 全等时 abort 该 AbortController [E: packages/server/src/server.ts:298] [E: packages/server/src/server.ts:301]。
 
-ready state 对每个 request fire-and-forget `handleRequest()`；多个 async operations 可以 out-of-order 完成。response id 仅用于 request/response correlation：server 不保证完成顺序，也不强制 client request id 唯一。[E: packages/server/src/server.ts:209][E: packages/server/src/server.ts:210][E: packages/server/src/server.ts:252][E: packages/server/src/server.ts:254][E: packages/server/src/server.ts:255][E: packages/server/src/server.ts:257][I]
+target `serverId` 不匹配抛 `WrongServerError`。带 `sessionId` 的 target 走 `SessionRouter.executeServiceCall`；否则走 `state.serverServices.invokeService` [E: packages/server/src/server.ts:346] [E: packages/server/src/server.ts:351] [E: packages/server/src/server.ts:353]。未知内部错误经 `onError` 观察后，client 收到 sanitized `internal_error` [E: packages/server/src/server.ts:519] [E: packages/server/src/errors.ts:11]。
 
-`PiServerOperationErrorCode` 允许 `busy`、`session_locked`、`not_found`、`invalid_request`、`not_implemented`。未知 internal error 被 server-side `onError` 观察，client 收到 sanitized `internal_error` / `Internal server error`，不是 `invalid_request`。[E: packages/server/src/errors.ts:3][E: packages/server/src/errors.ts:5][E: packages/server/src/errors.ts:8][E: packages/server/src/server.ts:354][E: packages/server/src/server.ts:368]
+disconnect 会 abort 该 connection 的 active requests、clear encoders、`sessions.disconnect` + `serverServices.release` [E: packages/server/src/server.ts:422] [E: packages/server/src/server.ts:430]。
 
-## Server snapshot publisher
+## Testing helpers
 
-publisher snapshot 包含 server id、protocol version、当前 revision、`SessionMetadata[]` sessions 与 model list；`sessions` 来自 `listSessions()` 回调(live manager 的 `listMetadata()`)。broadcast 通过 Promise tail 串行化，每次有 ready connections 时才 increment revision。[E: packages/server/src/snapshots.ts:16][E: packages/server/src/snapshots.ts:34][E: packages/server/src/snapshots.ts:39][E: packages/server/src/snapshots.ts:40][E: packages/server/src/snapshots.ts:44][E: packages/server/src/snapshots.ts:55]
+`@earendil-works/pi-server/testing` 从 `testing/host.ts` 导出 `TestServerHost` / `TestHarness` / `createTestServerServices` / `Deferred`，从 `testing/server.ts` 导出 `createTestServer`，从 `testing/client.ts` 导出 `ProtocolTestClient`。旧名 `testing/service.ts` / `TestServerService` 已删除 [E: packages/server/src/testing/index.ts:2] [E: packages/server/src/testing/index.ts:3] [E: packages/server/src/testing/server.ts:16]。
 
 ## Gotcha
 
-- listener 数组允许为空；`PiServer` 不会自己选择 transport，常见 Unix preset 由 `subsys.server.unix-transport` 提供。[E: packages/server/src/types.ts:14][E: packages/server/src/types.ts:15][E: packages/server/src/server.ts:380][E: packages/server/src/server.ts:381]
-- transport authorization 是进入 `PiServer.accept()` 前的前置条件，不是 server core 的可选第二层；如果 custom listener 未认证 network peer，protocol hello 不会补救这一缺口。[E: packages/server/README.md:36][E: packages/server/src/types.ts:14][E: packages/server/src/types.ts:15][I]
-- 这个 authorization contract 由 listener 实现者负责，签名本身没有 runtime proof：`accept()` 是 public method，收到任何 `ByteConnection` 都会直接建立 decoder/handshake state。旧 custom listener 可能仍可编译但不再受 core token check 保护。[E: packages/server/src/server.ts:112][E: packages/server/src/server.ts:122][E: packages/server/src/server.ts:130][E: packages/server/src/server.ts:133][I]
-- testing helper 已 rename:`@earendil-works/pi-server/testing` 导出 `TestServerService` / `TestSessionRuntime`(文件是 `testing/service.ts`),不再叫 backend。[E: packages/server/src/testing/index.ts:5][E: packages/server/src/testing/service.ts:198][E: packages/server/README.md:44]
-- `PiServerService.listSessions()` 返回 protocol `SessionMetadata`,不是 acquired runtime state;可省略 `updatedAt`、`parentSessionId`、`sessionName`、`cwd`。[E: packages/server/src/types.ts:56][E: packages/server/README.md:40]
-- runtime terminal error 不映射成 per-session protocol error event；server 记录错误并关闭所有 attached connections。[I]
+- listeners 允许为空；`Server` 不会自己选择 transport。常见 Unix preset 由 `subsys.server.unix-transport` 提供 [E: packages/server/src/types.ts:6] [E: packages/server/src/server.ts:559]。
+- transport authorization 是进入 `accept()` 前的前置条件。`accept()` 是 public method，收到任何 `ByteConnection` 都会建 decoder/handshake；旧 custom listener 若不再认证 peer，core 不会补 token check [E: packages/server/src/server.ts:136] [E: packages/server/README.md:77] [I]。
+- 没有 `ServerSnapshotPublisher`。session 目录与模型列表是应用服务，不是 hello payload [E: packages/server/test/conformance.test.ts:81] [I]。
+- runtime/host 抛出的普通 Error 不映射成 per-session protocol event；server 记录并返回 sanitized `internal_error`，严重时断开连接 [E: packages/server/src/server.ts:387] [E: packages/server/test/conformance.test.ts:277]。
 
 ## Sources
 
@@ -101,18 +95,18 @@ publisher snapshot 包含 server id、protocol version、当前 revision、`Sess
 - packages/server/src/listener.ts
 - packages/server/src/connection.ts
 - packages/server/src/server.ts
-- packages/server/src/snapshots.ts
 - packages/server/src/types.ts
 - packages/server/src/errors.ts
 - packages/server/src/testing/index.ts
-- packages/server/src/testing/client.ts
+- packages/server/src/testing/host.ts
 - packages/server/src/testing/server.ts
-- packages/server/src/testing/service.ts
+- packages/server/src/testing/client.ts
 - packages/server/test/conformance.test.ts
+- packages/server/test/protocol.test.ts
 
 ## 相关
 
-- [subsys.server.live-sessions](live-sessions.md) - `PiServerService`/runtime acquisition、attachment 与 disposal。
+- [subsys.server.live-sessions](live-sessions.md) - `ServerHost` / `SessionRouter` acquisition、attachment 与 disposal。
 - [subsys.server.unix-transport](unix-transport.md) - Unix listener 与 preset。
-- [subsys.server.protocol-adapters](protocol-adapters.md) - `pi-ai` domain object 到 wire DTO。
-- [subsys.protocol.wire-protocol](../protocol/wire-protocol.md) - `SessionMetadata`、snapshot 与 command schema。
+- [subsys.server.protocol-adapters](protocol-adapters.md) - envelope / Chord 载荷边界；pi-ai DTO mapper 已删。
+- [subsys.protocol.wire-protocol](../protocol/wire-protocol.md) - hello / request / cancel / attachment / service_update schema。

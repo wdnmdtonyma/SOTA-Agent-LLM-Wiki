@@ -21,7 +21,7 @@ related:
   - subsys.coding-agent.agent-session
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `subsys.agent-core.hooks` 是 `pi-agent-core` 暴露给上层 runtime 的 hook contract: 它允许调用方在 provider request 前改写 `AgentMessage[]`, 在工具执行前阻断调用, 在工具执行后覆盖结果, 并在 loop **决定还会再开一轮 assistant turn** 之后替换下一轮 runtime state。
@@ -49,7 +49,7 @@ updated: 853a80d26c
 | `beforeToolCall` | `AgentLoopConfig.beforeToolCall` | `BeforeToolCallContext`, optional `AbortSignal` | `Promise<BeforeToolCallResult \| undefined>` | 工具执行前、参数验证后 [E: packages/agent/src/types.ts:278] [I] |
 | `afterToolCall` | `AgentLoopConfig.afterToolCall` | `AfterToolCallContext`, optional `AbortSignal` | `Promise<AfterToolCallResult \| undefined>` | 工具完成后、`tool_execution_end` 和 tool-result message events 发出前 [E: packages/agent/src/types.ts:293] [I] |
 | `shouldStopAfterTurn` | `AgentLoopConfig.shouldStopAfterTurn` | `ShouldStopAfterTurnContext` | `boolean \| Promise<boolean>` | `turn_end` 之后; 返回 true 则发 `agent_end` 并退出, 不再 poll 队列, 也不再调用 `prepareNextTurn` [E: packages/agent/src/types.ts:223] [I] |
-| `prepareNextTurn` | `AgentLoopConfig.prepareNextTurn` | `PrepareNextTurnContext` | `AgentLoopTurnUpdate \| undefined \| Promise<...>` | 只在 loop 决定还会再开一轮 assistant turn 之后、下一轮 `turn_start` 之前 [E: packages/agent/src/types.ts:230] [E: packages/agent/CHANGELOG.md:9] [I] |
+| `prepareNextTurn` | `AgentLoopConfig.prepareNextTurn` | `PrepareNextTurnContext` | `AgentLoopTurnUpdate \| undefined \| Promise<...>` | 只在 loop 决定还会再开一轮 assistant turn 之后、下一轮 `turn_start` 之前 [E: packages/agent/src/types.ts:230] [E: packages/agent/CHANGELOG.md:18] [I] |
 | `prepareNextTurnWithContext` | `Agent.prepareNextTurnWithContext` | `PrepareNextTurnContext`, optional `AbortSignal` | 与 `prepareNextTurn` 相同 | `Agent.createLoopConfig` 优先于无 context 的 `Agent.prepareNextTurn(signal)` 包装成 config hook [E: packages/agent/src/agent.ts:200] [E: packages/agent/src/agent.ts:463] [E: packages/agent/src/agent.ts:466] |
 
 ## transformContext
@@ -84,7 +84,7 @@ updated: 853a80d26c
 
 `prepareNextTurn` 返回 `AgentLoopTurnUpdate | undefined`;非空 update 可以替换下一次 provider request 使用的 `context`、`model` 和 `thinkingLevel` [E: packages/agent/src/types.ts:138] [E: packages/agent/src/types.ts:140] [E: packages/agent/src/types.ts:142] [E: packages/agent/src/types.ts:144] [E: packages/agent/src/types.ts:230] [I]。
 
-0.84.4 breaking: `prepareNextTurn` 与 `prepareNextTurnWithContext` 只在 `shouldStopAfterTurn` 和 queued-message 检查决定**还会再开一轮 assistant turn** 之后运行;终局 / terminating turn 不再调用。end-of-run 工作应放到 `agent_end` 处理, 不要再写进 `prepareNextTurn` [E: packages/agent/CHANGELOG.md:9] [E: packages/agent/src/types.ts:223] [E: packages/agent/src/types.ts:230]。
+0.84.4 breaking: `prepareNextTurn` 与 `prepareNextTurnWithContext` 只在 `shouldStopAfterTurn` 和 queued-message 检查决定**还会再开一轮 assistant turn** 之后运行;终局 / terminating turn 不再调用。end-of-run 工作应放到 `agent_end` 处理, 不要再写进 `prepareNextTurn` [E: packages/agent/CHANGELOG.md:18] [E: packages/agent/src/types.ts:223] [E: packages/agent/src/types.ts:230]。
 
 `Agent` 上有两套入口: `prepareNextTurn(signal)` 不接收 turn context; `prepareNextTurnWithContext(context, signal)` 接收 `PrepareNextTurnContext`。`createLoopConfig` 优先走 `prepareNextTurnWithContext` [E: packages/agent/src/agent.ts:197] [E: packages/agent/src/agent.ts:200] [E: packages/agent/src/agent.ts:463] [E: packages/agent/src/agent.ts:466] [E: packages/agent/src/agent.ts:469]。coding-agent 用后者在同一 run 内、下一轮模型请求前插入 threshold compaction;产品装配见 `subsys.coding-agent.agent-session` [I]。
 
@@ -96,7 +96,7 @@ updated: 853a80d26c
 - `beforeToolCall` 能 block, 但它不能返回替换后的 tool result content/details;要改写结果必须使用 `afterToolCall` [E: packages/agent/src/types.ts:61] [E: packages/agent/src/types.ts:84] [I]。
 - `afterToolCall` 能改写执行结果, 但类型层没有给它重新执行工具、重跑 schema validation 或改变 tool name 的能力 [E: packages/agent/src/types.ts:84] [E: packages/agent/src/types.ts:85] [E: packages/agent/src/types.ts:86] [E: packages/agent/src/types.ts:87] [E: packages/agent/src/types.ts:94] [E: packages/agent/src/types.ts:110] [I]。
 - `transformContext` 影响 provider request 前的 message list, 但不直接写回 `AgentContext.messages`;是否持久化取决于 agent loop 实现, 需要读 `spine.agent-loop` 核对 [I]。
-- `prepareNextTurn` 只影响**下一轮** provider request 的 context/model/thinking state;终局 turn 不会再调用它, 因此不能用它做 end-of-run 清理 [E: packages/agent/src/types.ts:138] [E: packages/agent/src/types.ts:140] [E: packages/agent/src/types.ts:142] [E: packages/agent/src/types.ts:144] [E: packages/agent/CHANGELOG.md:9] [I]。
+- `prepareNextTurn` 只影响**下一轮** provider request 的 context/model/thinking state;终局 turn 不会再调用它, 因此不能用它做 end-of-run 清理 [E: packages/agent/src/types.ts:138] [E: packages/agent/src/types.ts:140] [E: packages/agent/src/types.ts:142] [E: packages/agent/src/types.ts:144] [E: packages/agent/CHANGELOG.md:18] [I]。
 
 ## 跨包边界
 

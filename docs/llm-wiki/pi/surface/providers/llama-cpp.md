@@ -25,7 +25,7 @@ related:
   - subsys.coding-agent.model-registry
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `surface.providers.llama-cpp` 描述 coding-agent 新增的内置、隐藏扩展：它注册动态 `llama.cpp` provider 和交互式 `/llama` 命令，把 llama.cpp router 的模型目录、装载状态与 Hugging Face GGUF 搜索/下载接入 Pi。
@@ -40,7 +40,7 @@ updated: 853a80d26c
 
 ## 装配与入口
 
-`extensions/index.ts` 把 `llamaExtension` 登记为名为 `llama.cpp` 的 hidden built-in extension [E: packages/coding-agent/src/extensions/index.ts:2] [E: packages/coding-agent/src/extensions/index.ts:4]。`main()` 在用户 extension factories 之前展开 `builtInExtensions`，所以它不需要用户写 extension 配置即可装载 [E: packages/coding-agent/src/main.ts:64] [E: packages/coding-agent/src/main.ts:563]。
+`extensions/index.ts` 把 `llamaExtension` 登记为名为 `llama.cpp` 的 hidden built-in extension [E: packages/coding-agent/src/extensions/index.ts:2] [E: packages/coding-agent/src/extensions/index.ts:4]。`main()` 在用户 extension factories 之前展开 `builtInExtensions`，所以它不需要用户写 extension 配置即可装载 [E: packages/coding-agent/src/main.ts:64] [E: packages/coding-agent/src/main.ts:564]。
 
 扩展启动时调用 `createLlamaProvider()` 并以 `pi.registerProvider()` 注册 provider，再注册 `/llama` 命令 [E: packages/coding-agent/src/extensions/llama/index.ts:42] [E: packages/coding-agent/src/extensions/llama/index.ts:44] [E: packages/coding-agent/src/extensions/llama/index.ts:183]。该命令只在 TUI 模式运行；其它模式会提示它仅在 interactive mode 可用 [E: packages/coding-agent/src/extensions/llama/index.ts:185] [E: packages/coding-agent/src/extensions/llama/index.ts:186] [E: packages/coding-agent/src/extensions/llama/index.ts:187]。
 

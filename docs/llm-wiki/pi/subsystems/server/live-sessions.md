@@ -1,87 +1,87 @@
 ---
 id: subsys.server.live-sessions
-title: Live session runtime 管理
+title: SessionRouter 与 presentation attachment
 kind: subsystem
 tier: T2
 pkg: server
 source:
   - packages/server/src/types.ts
-  - packages/server/src/sessions.ts
-  - packages/server/src/snapshots.ts
+  - packages/server/src/session-router.ts
   - packages/server/src/errors.ts
-  - packages/server/test/sessions.test.ts
+  - packages/server/src/testing/host.ts
+  - packages/server/test/conformance.test.ts
 symbols:
-  - PiServerService
-  - PiSessionRuntime
-  - PiSessionRuntimeEvent
-  - LiveSessionManager
+  - SessionRouter
+  - ServerHost
+  - RoutedSessionHandle
+  - RoutedSessionAttachment
+  - RoutedServerPresentation
 related:
   - subsys.server.session-server
   - subsys.client.session-leases
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
-> `LiveSessionManager` 把 durable `PiServerService` 与 protocol connection attachments 组合为 singleton live runtime：service 负责 `listSessions`/`createSession`/`openSession`，runtime 负责 snapshot、phase、mutation、events 与 dispose。[E: packages/server/src/types.ts:42][E: packages/server/src/types.ts:55][E: packages/server/src/types.ts:56][E: packages/server/src/types.ts:58][E: packages/server/src/types.ts:59]
+> `SessionRouter` 把应用 `ServerHost` 与 protocol connection 组合成 hosted Session：`resolveSession` / `openSession` 拿到 process-local `RoutedSessionHandle`，每个 connection 再 `attachClient()` 得到 presentation-scoped `RoutedSessionAttachment`。旧 `LiveSessionManager` / `sessions.ts` / `snapshots.ts` 已删除 [E: packages/server/src/types.ts:51] [E: packages/server/src/types.ts:62] [E: packages/server/src/session-router.ts:34]。
 
 ## 能回答的问题
 
-- server-assigned session id 如何传给 service？
-- 一个 durable session 是否会为每个 client 打开独立 runtime？
-- 多 connection attachment 如何影响 `attached`/`locked`？
-- prompt、steer、abort 为什么可以并发到达但 service 不应排队 conflict？
-- detached busy runtime 何时 dispose？
-- progress、snapshot、runtime error 分别广播什么？
-- `listSessions()` 返回的是 `SessionMetadata` 还是 live snapshot？
+- `ServerHost` 与 `RoutedSessionHandle` 各自承担什么？
+- 一个 durable session 是否会为每个 client 打开独立 handle？
+- 多 connection attachment 如何共存？重复 attach 是否幂等？
+- stale `{ sessionId, attachmentId }` 为什么被拒？
+- disconnect 后未完成的 service call 何时 release attachment？
+- router 还负责任何 snapshot / list / phase 吗？
 
-## Service/runtime contract
+## Service / runtime contract
 
-`PiServerService.createSession()` 接收 server 生成的 collision-resistant id，service 必须持久化 exact id；`openSession()` 返回 exclusively acquired durable runtime；`listSessions()` 返回 `SessionMetadata[]`。[E: packages/server/src/types.ts:27][E: packages/server/src/types.ts:27][E: packages/server/src/types.ts:55][E: packages/server/src/types.ts:56][E: packages/server/src/types.ts:58][E: packages/server/src/types.ts:59]
+`ServerHost.serverServices` 是 host 级 `RoutedServerServiceHost`，不是 per-connection endpoint；每条 connection 的 server endpoint 来自 `serverServices.attachClient(presentation)` [E: packages/server/src/types.ts:46] [E: packages/server/src/types.ts:47] [E: packages/server/src/types.ts:60]。`resolveSession(sessionId)` 返回 durable metadata 或抛 bounded routing error，`openSession(metadata)` 返回 `RoutedSessionHandle` [E: packages/server/src/types.ts:62] [E: packages/server/src/types.ts:63]。host 不在 router 里 list sessions；目录投影是应用 Chord service [E: packages/server/README.md:8]。
 
-runtime mutation contract 明确要求 conflicting operations reject rather than queue；phase vocabulary 直接复用 protocol `SessionPhase`。[E: packages/server/src/types.ts:42][E: packages/server/src/types.ts:44][E: packages/server/src/types.ts:45][E: packages/server/src/types.ts:46][E: packages/server/src/types.ts:47][E: packages/server/src/types.ts:48][E: packages/server/src/types.ts:49]
+`RoutedSessionHandle.attachClient()` 返回 `RoutedSessionAttachment`：`invokeService(call, publish, context)` 把 opaque Chord call 转到 Session endpoint，`release()` 释放该 presentation。optional `terminated` Promise 报告意外终止 [E: packages/server/src/types.ts:18] [E: packages/server/src/types.ts:52] [E: packages/server/src/types.ts:54]。`RoutedServerPresentation` 把 `attachSession` / `detachSession` / `prepareSessionRemoval` 交给 router [E: packages/server/src/types.ts:29]。
 
-runtime event 有 `snapshot`、`progress`、`error` 三类；error 必须是安全跨 protocol boundary 的 `PiServerError`。[E: packages/server/src/types.ts:36][E: packages/server/src/types.ts:37][E: packages/server/src/types.ts:38][E: packages/server/src/types.ts:39]
+测试 host `TestServerHost` 用 `MemorySessionRepo` 实现 resolve/open；`createTestServerServices()` 把 `pi.session-management.attach/detach` 转成 presentation 调用 [E: packages/server/src/testing/host.ts:151] [E: packages/server/src/testing/host.ts:119] [E: packages/server/src/testing/host.ts:126]。
 
-## Command dispatch
+## Attachment 生命周期
 
-`executeCommand()` 对 9 个 protocol command 做 exhaustive switch。create 使用 `randomUUID()` 生成 id 并 `service.createSession()`；attach lazy-open persisted runtime；prompt/steer/abort/model/thinking mutation 都要求 requesting connection 已 attach。[E: packages/server/src/sessions.ts:47][E: packages/server/src/sessions.ts:52][E: packages/server/src/sessions.ts:60][E: packages/server/src/sessions.ts:67][E: packages/server/src/sessions.ts:90][E: packages/server/src/sessions.ts:98][E: packages/server/src/sessions.ts:103][E: packages/server/src/sessions.ts:108][E: packages/server/src/sessions.ts:113]
+`attachClient(client, sessionId)` 在 server closing 时拒绝 `ServerDrainingError`，并按 connection 串行化 [E: packages/server/src/session-router.ts:60] [E: packages/server/src/session-router.ts:146]。`attachClientNow`：已 attach 同一 session 则直接 return（幂等）；否则 `acquire()` hosted session，release 旧 attachment，新建 `ClientAttachment`（`id: randomUUID()`），`handle.attachClient()`，再 `publishAttachment({ serverId, sessionId, attachmentId })` [E: packages/server/src/session-router.ts:163] [E: packages/server/src/session-router.ts:168] [E: packages/server/src/session-router.ts:175] [E: packages/server/src/session-router.ts:192]。
 
-`acquire()` 对同 id 的 concurrent opens 用 `openingSessions` deduplicate；已有 live runtime 被所有 attachments 共享，而不是每 connection 重新 open。[E: packages/server/src/sessions.ts:38][E: packages/server/src/sessions.ts:40][E: packages/server/src/sessions.ts:41][E: packages/server/src/sessions.ts:186][E: packages/server/src/sessions.ts:188][E: packages/server/src/sessions.ts:195][E: packages/server/src/sessions.ts:197][E: packages/server/src/sessions.ts:198][E: packages/server/src/sessions.ts:199][E: packages/server/src/sessions.ts:200]
+`acquire()` 对同 id 的 concurrent open 用 `openingSessions` deduplicate；已有 `HostedSession` 被所有 attachments 共享，而不是每 connection 重新 `openSession` [E: packages/server/src/session-router.ts:262] [E: packages/server/src/session-router.ts:265] [E: packages/server/src/session-router.ts:276]。`open()` 先 `resolveSession` 再 `openSession`；drain 中途若 `handle.close()` 成功则抛 `ServerDrainingError`，`close()` 自己失败才抛 `SessionCleanupError` [E: packages/server/src/session-router.ts:277] [E: packages/server/src/session-router.ts:278] [E: packages/server/src/session-router.ts:279] [E: packages/server/src/session-router.ts:281] [E: packages/server/src/session-router.ts:284] [E: packages/server/src/session-router.ts:289]。若 handle 暴露 `terminated`，resolve 后 `invalidate()` 删 hosted 并 release 剩余 attachments [E: packages/server/src/session-router.ts:293] [E: packages/server/src/session-router.ts:302]。
 
-service 返回 runtime 后，manager 先读取 snapshot 并验证 snapshot id 等于 server-assigned id；不匹配会 dispose runtime 并返回 `invalid_request`(`Service returned session ...`)。[E: packages/server/src/sessions.ts:210][E: packages/server/src/sessions.ts:217][E: packages/server/src/sessions.ts:221]
+conformance：同一 connection 重复 attach 同一 session 不增加 `attachedClients`；两个 connection 共享一个 harness 实例且 `attachedClients === 2` [E: packages/server/test/conformance.test.ts:182] [E: packages/server/test/conformance.test.ts:191]。
 
-## Attachment 与 snapshot 视角
+## Service call 与 stale route
 
-attach 同时写入 `connection.sessionIds` 与 `live.connections`；同一 live runtime 可以有多个 connections。[E: packages/server/src/sessions.ts:300][E: packages/server/src/sessions.ts:301][E: packages/server/src/sessions.ts:305][E: packages/server/src/sessions.ts:306] `requireAttached()` 拒绝未 attach connection，即使目标 runtime 已被其它 connection 打开。[E: packages/server/src/sessions.ts:309][E: packages/server/src/sessions.ts:310][E: packages/server/src/sessions.ts:311][E: packages/server/src/sessions.ts:313][E: packages/server/src/sessions.ts:315]
+`executeServiceCall` 先 `runForClient` 做 admission，再返回尚未完成的 `invokeService` Promise，因此 attach/detach 与 admission 串行，实际 call 可并发 [E: packages/server/src/session-router.ts:47] [E: packages/server/src/session-router.ts:207] [E: packages/server/test/conformance.test.ts:284]。`requireAttachment()` 在 closing/disconnected 时抛 `ServerDrainingError`；target 必须是 SessionTarget，且 `sessionId`/`attachmentId` 等于该 connection 当前 attachment [E: packages/server/src/session-router.ts:225] [E: packages/server/src/session-router.ts:226] [E: packages/server/src/session-router.ts:228]。
 
-normalized live snapshot 强制 phase 来自 runtime getter、`locked: true`，全局 attached 由 live connection count 得出；response 再把 attached 改成相对 requesting connection 的值。[E: packages/server/src/sessions.ts:276][E: packages/server/src/sessions.ts:277][E: packages/server/src/sessions.ts:281][E: packages/server/src/sessions.ts:283][E: packages/server/src/sessions.ts:284][E: packages/server/src/sessions.ts:285][E: packages/server/src/sessions.ts:289][E: packages/server/src/sessions.ts:290]
+未 attach、attach 了另一 session、或切换后仍用旧 `attachmentId`，wire 上都是 `session_not_attached` [E: packages/server/test/conformance.test.ts:223] [E: packages/server/test/conformance.test.ts:246] [E: packages/server/src/errors.ts:45]。
 
-server-wide list 先读 `service.listSessions()` 的 `SessionMetadata[]`,再用 live snapshot 的 durable 字段覆盖同 id 项;`toMetadata()` 只保留 `id`/`createdAt`/`updatedAt`/`sessionName`/`cwd`,不把 phase/model/lock 写进 list。[E: packages/server/src/sessions.ts:28][E: packages/server/src/sessions.ts:134][E: packages/server/src/sessions.ts:135][E: packages/server/src/sessions.ts:142][E: packages/server/src/sessions.ts:146][E: packages/server/src/sessions.ts:148]
+## Release 与 shutdown
 
-## Events 与 disposal
+`detachClient` / `removeSession` / `disconnect` / `close` 都走 `releaseAttachment`：等待 `attachment.operations` settle，再 `lease.release()`，最后 `clearAttachment` [E: packages/server/src/session-router.ts:234] [E: packages/server/src/session-router.ts:238] [E: packages/server/src/session-router.ts:254]。disconnect 传 `publish=false`；显式 detach/remove 会 `publishAttachment(undefined)` [E: packages/server/src/session-router.ts:96] [E: packages/server/src/session-router.ts:258]。`removeSession` 先 release 全部 attachments，再 `handle.close()` [E: packages/server/src/session-router.ts:72] [E: packages/server/src/session-router.ts:82]。
 
-runtime progress 只发给 attached connections；snapshot signal 触发 full `session_snapshot` broadcast。runtime error 标记 terminal，报告 server error，关闭并 disconnect 所有 attached connections，然后 dispose。[E: packages/server/src/sessions.ts:248][E: packages/server/src/sessions.ts:249][E: packages/server/src/sessions.ts:253][E: packages/server/src/sessions.ts:256][E: packages/server/src/sessions.ts:258][E: packages/server/src/sessions.ts:260][E: packages/server/src/sessions.ts:265][E: packages/server/src/sessions.ts:267][E: packages/server/src/sessions.ts:268][E: packages/server/src/sessions.ts:271][E: packages/server/src/sessions.ts:272][E: packages/server/src/sessions.ts:273]
-
-runtime 只有在没有 connections、没有 active operation，且 terminal 或 phase=`idle` 时才 dispose；因此 client disconnect 后仍在运行的 prompt 被保留，下一次回到 idle 才释放 service lock。[E: packages/server/src/sessions.ts:324][E: packages/server/src/sessions.ts:329][E: packages/server/src/sessions.ts:330][E: packages/server/src/sessions.ts:331][E: packages/server/src/sessions.ts:335][E: packages/server/src/sessions.ts:338][E: packages/server/src/sessions.ts:340]
+server `close()` 等 client operations 与 opening 结束后，release 全部 attachment 并 close 每个 hosted handle [E: packages/server/src/session-router.ts:108] [E: packages/server/src/session-router.ts:129]。router 不生产 `session_snapshot` / `session_progress` / phase/locked 字段。
 
 ## Gotcha
 
-- client-side exclusive lease 不是 server-wide mutex；源码和 tests 都允许每个 attached client control 同一个 singleton runtime，conflict 由 runtime phase/error policy 拒绝。[E: packages/server/test/sessions.test.ts:257][E: packages/server/src/types.ts:42][I]
-- operation count 只保护 runtime disposal，不串行化 commands；prompt 未完成时 steer/abort 可以被并发 dispatch。[E: packages/server/src/sessions.ts:171][E: packages/server/src/sessions.ts:176][E: packages/server/src/sessions.ts:178][E: packages/server/src/sessions.ts:181][E: packages/server/test/sessions.test.ts:300][I]
-- protocol 定义 `session_removed`，但 `LiveSessionManager` 没有 delete/remove command 或该 event producer。[I]
+- client-side `Client.attachment` 不是 server-wide mutex；源码和 tests 都允许每个 attached presentation 调用同一 hosted handle [E: packages/server/test/conformance.test.ts:182] [I]。
+- `runForClient` 只串行化每个 connection 的 attach/detach/admission，不把 Session invoke 排成单队列 [E: packages/server/src/session-router.ts:146] [E: packages/server/test/conformance.test.ts:284]。
+- attachment release 失败仍会 `clearAttachment`（`finally`），connection 不再拥有该 route；错误上报给 `reportError` [E: packages/server/src/session-router.ts:248] [E: packages/server/test/conformance.test.ts:202]。
+- 不要在本节点寻找 `PiServerService.listSessions` 或 live snapshot merge；那些 API 已随 `sessions.ts` 删除 [I]。
 
 ## Sources
 
 - packages/server/src/types.ts
-- packages/server/src/sessions.ts
-- packages/server/src/snapshots.ts
+- packages/server/src/session-router.ts
 - packages/server/src/errors.ts
-- packages/server/test/sessions.test.ts
+- packages/server/src/testing/host.ts
+- packages/server/README.md
+- packages/server/test/conformance.test.ts
 
 ## 相关
 
 - [subsys.server.session-server](session-server.md) - handshake、request envelope 与 connection lifecycle。
-- [subsys.client.session-leases](../client/session-leases.md) - client 端 local attachment ownership。
-- [subsys.protocol.wire-protocol](../protocol/wire-protocol.md) - session snapshot、phase 与 progress schemas。
+- [subsys.client.session-leases](../client/session-leases.md) - client 端 `SessionTarget` 与 `ServiceSubscription`。
+- [subsys.protocol.wire-protocol](../protocol/wire-protocol.md) - attachment envelope 与 opaque service payloads。

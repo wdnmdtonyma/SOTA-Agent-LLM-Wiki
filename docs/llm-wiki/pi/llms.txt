@@ -1,18 +1,18 @@
 # pi 源码 LLM Wiki — 入口索引
 
-> **pi**(`pi/`,9 个源码 package workspace + 5 个 extension-example workspace 的 TypeScript monorepo,自扩展编码 agent harness)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 pi git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
+> **pi**(`pi/`,10 个源码 package workspace + 5 个 extension-example workspace 的 TypeScript monorepo,自扩展编码 agent harness)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 pi git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
 >
-> **状态:已完成 —— 全部 198 节点 verified 于 `853a80d26c`,`lint` 0 error / 0 warning。**
+> **状态:已完成 —— 全部 200 节点 verified 于 `9767ba275f`（v0.85.0 / v0.85.1）。**
 >
-> **核心组织主线 —— 分层栈 + 复用边界 + 自扩展**:pi 是一条 `pi-ai` → `pi-agent-core` → `pi-coding-agent` + `pi-tui`，并由 `pi-protocol` / `pi-client` / `pi-server` 提供实验性 remote-session 链，旁接 `pi-session-backend-sqlite-node`、`pi-telemetry` 与 private `pi-evals`。每个节点 frontmatter 标 `pkg: ai|agent|protocol|client|coding-agent|tui|server|session-backends|telemetry|evals|cross`。
+> **核心组织主线 —— 分层栈 + 复用边界 + 自扩展**:pi 是一条独立 `@earendil-works/chord` → `pi-ai` → `pi-agent-core` → `pi-coding-agent` + `pi-tui`，并由 `pi-protocol` / Chord 风格 `pi-client` `Client` / `pi-server` 提供实验性 remote-session 链，旁接 `pi-session-backend-sqlite-node`、`pi-telemetry` 与 private `pi-evals`。每个节点 frontmatter 标 `pkg: chord|ai|agent|protocol|client|coding-agent|tui|server|session-backends|telemetry|evals|cross`。
 
 ## 怎么用
 - **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
 - **人**:先读 `spine/overview` 与 `spine/layered-architecture`,再按需深入 T1/T2。
 
 ## T0 — Spine(端到端脊柱,mermaid 先行)
-- [pi 源码总览](spine/overview.md) `[cross]`: 是什么 + 9-package 分层栈全景 — README.md · main.ts · agent-loop.ts · models.ts
-- [分层架构与包边界](spine/layered-architecture.md) `[cross]`: agent(可复用)vs coding-agent(产品)边界 + 包依赖 — agent/index.ts · core/agent-session.ts
+- [pi 源码总览](spine/overview.md) `[cross]`: 是什么 + 10-package 分层栈全景（含独立 chord）— README.md · main.ts · agent-loop.ts · models.ts
+- [分层架构与包边界](spine/layered-architecture.md) `[cross]`: chord → ai → agent(可复用) vs coding-agent(产品)边界 + 包依赖 — chord/index.ts · agent-session.ts
 - [进程生命周期](spine/process-lifecycle.md) `[coding-agent]`: argv → mode dispatch → services/session(Node vs Bun)— main.ts · cli/args.ts · bun/cli.ts
 - [agent 回合循环](spine/agent-loop.md) `[agent]`: runAgentLoop → provider stream → 工具调用 → state append → 续跑 — agent-loop.ts · agent.ts
 - [工具调用解剖](spine/tool-call-anatomy.md) `[agent]`: assistant toolcall → prepare/validate → execute(seq/parallel)→ toolResult — agent-loop.ts · tools/index.ts
@@ -44,10 +44,14 @@
 - 配置:[settings](surface/config/settings.md) · [配置值解析](surface/config/resolution.md) · [键位](surface/config/keybindings.md)
 - provider:[选择与配置](surface/providers/overview.md) · [认证/登录](surface/providers/auth.md) · [自定义 provider](surface/providers/custom-provider.md) · [llama.cpp Router](surface/providers/llama-cpp.md)
 - 扩展(marquee):[扩展 API](surface/extensions/api.md) · [贡献点](surface/extensions/contribution-points.md) · [UI 上下文](surface/extensions/context-ui.md) · [事件](surface/extensions/events.md)
-- 其它:[skills](surface/skills/system.md) · [prompt 模板](surface/prompts/system.md) · [slash 命令](surface/commands/overview.md) · [SDK 嵌入](surface/sdk/embedding.md) · [RemoteSession SDK](surface/sdk/remote-session.md) · [会话管理](surface/sessions/management.md) · [项目信任](surface/trust/model.md)
+- 其它:[skills](surface/skills/system.md) · [prompt 模板](surface/prompts/system.md) · [slash 命令](surface/commands/overview.md) · [SDK 嵌入](surface/sdk/embedding.md) · [RemoteSession SDK(退役)](surface/sdk/remote-session.md) · [会话管理](surface/sessions/management.md) · [项目信任](surface/trust/model.md)
 - 杂项:[图像](surface/misc/images.md) · [容器化](surface/misc/containerization.md) · [安全](surface/misc/security.md) · [资源包](surface/misc/packages.md)
 
 ## T2 — Subsystems(内部机制,逐子系统)
+
+### chord（2 节点）
+- [Chord facets / services / host](subsystems/chord/runtime.md) `[chord]`: 覆盖 `defineFacet`、`defineService`、`createFacetHost` 的实现边界；主源码：`packages/chord/src/api.ts`、`packages/chord/src/facets/host.ts`。
+- [Chord replicated state and delta](subsystems/chord/delta.md) `[chord]`: 覆盖 `replicatedState`、`track`/`apply`、`Op`/`WireOp` 的实现边界；主源码：`packages/chord/src/delta/`、`packages/chord/src/services/state.ts`。
 
 ### pi-ai（28 节点）
 - [provider 注册中心](subsystems/ai/provider-registry.md) `[ai]`: 覆盖 `builtinProviders`、`builtinModels`、`getBuiltinModel` 的实现边界；主源码：`packages/ai/src/providers/all.ts`、`packages/ai/src/models.ts`。
@@ -76,10 +80,10 @@
 - [模型目录生成与发布管线](subsystems/ai/model-catalog-publication.md) `[ai]`: 覆盖 `validateBundle`、`buildIndex`、`CATALOG_SCHEMA_VERSION` 的实现边界；主源码：`packages/ai/scripts/generate-models.ts`、`packages/ai/scripts/model-data.ts`。
 - [Pi Messages 协议](subsystems/ai/pi-messages.md) `[ai]`: 覆盖 `stream`、`streamSimple`、`PiMessagesEvent` 的实现边界；主源码：`packages/ai/src/api/pi-messages.ts`、`packages/ai/src/api/pi-messages.lazy.ts`。
 - [工具约束采样](subsystems/ai/constrained-sampling.md) `[ai]`: 覆盖 `resolveJsonSchemaStrictSampling`、`resolveGrammarConstrainedSampling`、`appendGrammarToolInputJsonDelta` 的实现边界；主源码：`packages/ai/src/api/constrained-sampling.ts`、`packages/ai/src/types.ts`。
-- [Cloudflare AI Gateway Workers binding](subsystems/ai/cloudflare-gateway-binding.md) `[ai]`: `createGatewayBindingFetch()`；主源码：`packages/ai/src/api/cloudflare-gateway-binding.ts`。
+- [Cloudflare AI Gateway Workers binding](subsystems/ai/cloudflare-gateway-binding.md) `[ai]`: `createAiBindingFetch()`（节点 id 保留旧名）；主源码：`packages/ai/src/api/cloudflare-ai-binding.ts`。
 - [Provider 请求重试](subsystems/ai/provider-retry.md) `[ai]`: 覆盖 `retryProviderRequest`、`retryAssistantCall`、`isRetryableAssistantError` 的实现边界；主源码：`packages/ai/src/utils/provider-retry.ts`、`packages/ai/src/utils/retry.ts`。
 
-### pi-agent-core（21 节点）
+### pi-agent-core（22 节点）
 - [轮次控制循环](subsystems/agent-core/turn-control.md) `[agent]`: 覆盖 `runLoop` 的实现边界；主源码：`packages/agent/src/agent-loop.ts`。
 - [消息队列与操舵(steering/follow-up)](subsystems/agent-core/message-queue.md) `[agent]`: 覆盖 `PendingMessageQueue`、`steer`、`followUp` 的实现边界；主源码：`packages/agent/src/agent.ts`。
 - [工具调用与分派](subsystems/agent-core/tool-invocation.md) `[agent]`: 覆盖 `executeToolCallsSequential`、`executeToolCallsParallel`、`prepareToolCall` 的实现边界；主源码：`packages/agent/src/agent-loop.ts`、`packages/agent/src/types.ts`。
@@ -87,8 +91,8 @@
 - [对话消息模型](subsystems/agent-core/message-model.md) `[agent]`: 覆盖 `AgentMessage`、`AgentToolCall`、`AgentToolResult` 的实现边界；主源码：`packages/agent/src/types.ts`、`packages/agent/src/harness/messages.ts`。
 - [消息转换管线(convertToLlm)](subsystems/agent-core/message-conversion.md) `[agent]`: 覆盖 `convertToLlm`、`bashExecutionToText` 的实现边界；主源码：`packages/agent/src/harness/messages.ts`。
 - [会话存储接口(SessionStorage/SessionRepo)](subsystems/agent-core/session-storage.md) `[agent]`: 覆盖 `SessionStorage`、`SessionRepo` 的实现边界；主源码：`packages/agent/src/harness/types.ts`、`packages/agent/src/harness/session/repo-utils.ts`。
-- [JSONL 会话存储](subsystems/agent-core/jsonl-storage.md) `[agent]`: 覆盖 `JsonlSessionStorage`、`JsonlSessionRepo`、`SessionHeader` 的实现边界；主源码：`packages/agent/src/harness/session/jsonl-storage.ts`、`packages/agent/src/harness/session/jsonl-repo.ts`。
-- [内存会话存储](subsystems/agent-core/memory-storage.md) `[agent]`: 覆盖 `InMemorySessionStorage`、`InMemorySessionRepo` 的实现边界；主源码：`packages/agent/src/harness/session/memory-storage.ts`、`packages/agent/src/harness/session/memory-repo.ts`。
+- [JSONL 会话存储](subsystems/agent-core/jsonl-storage.md) `[agent]`: 覆盖 `JsonlSessionRepo`、`JsonlStorage`、`JsonlStorageHeader` 的实现边界；主源码：`packages/agent/src/harness/session/jsonl/index.ts`、`packages/agent/src/harness/session/jsonl/repo.ts`。
+- [内存会话存储](subsystems/agent-core/memory-storage.md) `[agent]`: 覆盖 `MemorySessionRepo`、`MemoryStorage` 的实现边界；主源码：`packages/agent/src/harness/session/memory.ts`、`packages/agent/src/harness/session/in-memory-storage-state.ts`。
 - [会话树模型](subsystems/agent-core/session-tree.md) `[agent]`: 覆盖 `SessionTreeEntry`、`MessageEntry`、`LeafEntry` 的实现边界；主源码：`packages/agent/src/harness/types.ts`、`packages/ai/src/utils/uuid.ts`。
 - [树导航与上下文构建](subsystems/agent-core/tree-navigation.md) `[agent]`: 覆盖 `Session`、`buildSessionContext`、`getPathToRootOrCompaction` 的实现边界；主源码：`packages/agent/src/harness/session/session.ts`。
 - [压缩子系统](subsystems/agent-core/compaction.md) `[agent]`: 覆盖 `shouldCompact`、`prepareCompaction`、`compact` 的实现边界；主源码：`packages/agent/src/harness/compaction/compaction.ts`、`packages/agent/src/harness/compaction/utils.ts`。
@@ -101,15 +105,15 @@
 - [Harness 执行工具](subsystems/agent-core/execution-tools.md) `[agent]`: 覆盖 `AgentHarnessTool`、`ExecutionToolContext`、`createBashTool` 的实现边界；主源码：`packages/agent/src/harness/tools/index.ts`、`packages/agent/src/harness/tools/bash.ts`。
 - [AgentHarness 生命周期](subsystems/agent-core/agent-harness-lifecycle.md) `[agent]`: 覆盖 harness phase、save point、settled 与 retry lifecycle；主源码：`packages/agent/src/harness/agent-harness.ts`、`packages/agent/src/harness/types.ts`。
 - [Harness 事件订阅与 watch](subsystems/agent-core/harness-events.md) `[agent]`: `HarnessEventBus` on/watch；主源码：`packages/agent/src/harness/events.ts`。
-- [跨会话全文搜索](subsystems/agent-core/session-search.md) `[agent]`: 覆盖 `SessionSearch` query contract 与 JSONL/SQLite projection；主源码：`packages/agent/src/search/index.ts`、`packages/agent/src/search/scanning.ts`。
+- [跨会话全文搜索](subsystems/agent-core/session-search.md) `[agent]`: 退役实现；只剩 `SessionSearchService` 接口；主源码：`packages/agent/src/search/index.ts`。
 
 ### pi-protocol（2 节点）
-- [Wire protocol](subsystems/protocol/wire-protocol.md) `[protocol]`: 覆盖 remote-session command/event DTO、strict validation 与 authoritative snapshot；主源码：`packages/protocol/src/schemas.ts`、`packages/protocol/src/codec.ts`。
+- [Wire protocol](subsystems/protocol/wire-protocol.md) `[protocol]`: 覆盖 remote-session envelope、`PROTOCOL_VERSION=8`、strict validation；主源码：`packages/protocol/src/protocol.ts`、`packages/protocol/src/codec.ts`。
 - [CBOR 与 length framing](subsystems/protocol/cbor-framing.md) `[protocol]`: 覆盖受限 CBOR subset、资源上限与增量 frame decoder；主源码：`packages/protocol/src/cbor/`、`packages/protocol/src/framing.ts`。
 
 ### pi-client（3 节点）
-- [Remote session client](subsystems/client/remote-session-client.md) `[client]`: 覆盖 handshake、reconnect、correlation 与 authoritative cache；主源码：`packages/client/src/client.ts`、`packages/client/src/connection.ts`。
-- [Session lease](subsystems/client/session-leases.md) `[client]`: 覆盖 local shared/exclusive lease 与 replacement；主源码：`packages/client/src/client.ts`、`packages/client/src/session-lease.ts`。
+- [Remote session client](subsystems/client/remote-session-client.md) `[client]`: Chord 风格 `Client` + `createClientServiceTransport`；主源码：`packages/client/src/client.ts`、`packages/client/src/index.ts`。
+- [Session lease](subsystems/client/session-leases.md) `[client]`: `SessionTarget` attachment 与 `subscribeService()`，不是 `PiSessionHandle`；主源码：`packages/client/src/client.ts`、`packages/client/src/types.ts`。
 - [Unix transport](subsystems/client/unix-transport.md) `[client]`: 覆盖显式 Node Unix-domain socket transport；主源码：`packages/client/src/unix.ts`。
 
 ### pi-coding-agent（33 节点）
@@ -145,9 +149,9 @@
 - [主题引擎与自动检测](subsystems/coding-agent/theme-controller.md) `[coding-agent]`: 覆盖 `InteractiveThemeController`、`detectTerminalThemeForAuto` 的实现边界；主源码：`packages/coding-agent/src/modes/interactive/theme/theme-controller.ts`、`packages/coding-agent/src/modes/interactive/theme/theme.ts`。
 - [交互式 TUI 状态与事件循环](subsystems/coding-agent/interactive-orchestration.md) `[coding-agent]`: 覆盖 `InteractiveMode`、`component wiring` 的实现边界；主源码：`packages/coding-agent/src/modes/interactive/interactive-mode.ts`、`packages/coding-agent/src/modes/interactive/external-editor.ts`。
 - [会话用量与成本归集](subsystems/coding-agent/usage-accounting.md) `[coding-agent]`: 覆盖 `UsageTotals`、`getUsageCostBreakdown`、`getSessionStats` 的实现边界；主源码：`packages/coding-agent/src/core/usage-totals.ts`、`packages/coding-agent/src/core/agent-session.ts`。
-- [实验性 server/client CLI](subsystems/coding-agent/experimental-cli.md) `[coding-agent]`: 覆盖尚未接入发布入口的 `--listen` / `--connect` CLI；主源码：`packages/coding-agent/src/cli/experimental/cli.ts`。
+- [实验性 server/client CLI](subsystems/coding-agent/experimental-cli.md) `[coding-agent]`: source-only `server`/`client`（`pi-test.sh`），发布 CLI 不接线；主源码：`packages/coding-agent/src/experimental/cli.ts`、`packages/coding-agent/src/cli/experimental/cli.ts`。
 
-### pi-tui（20 节点）
+### pi-tui（22 节点）
 - [TUI 运行时与渲染循环](subsystems/tui/runtime.md) `[tui]`: 覆盖 `TUI`、`Container`、`requestRender` 的实现边界；主源码：`packages/tui/src/tui.ts`、`packages/coding-agent/docs/tui.md`。
 - [差分渲染引擎](subsystems/tui/diff-engine.md) `[tui]`: 覆盖 `doRender`、`compositeLineAt`、`normalizeTerminalOutput` 的实现边界；主源码：`packages/tui/src/tui.ts`、`packages/tui/src/terminal.ts`。
 - [Component 渲染模型](subsystems/tui/component-model.md) `[tui]`: 覆盖 `Component`、`Focusable`、`Container` 的实现边界；主源码：`packages/tui/src/tui.ts`、`packages/tui/src/index.ts`。
@@ -172,13 +176,13 @@
 - [Alternate-screen renderer](subsystems/tui/alternate-screen.md) `[tui]`: 覆盖 fullscreen input、selection、viewport 与 Kitty image placement cache；主源码：`packages/tui/src/tui-alt-screen.ts`。
 
 ### pi-server（4 节点）
-- [Composable session server](subsystems/server/session-server.md) `[server]`: handshake、request dispatch、snapshot publisher 与 sanitized errors；主源码：`packages/server/src/server.ts`。
-- [Live session ownership](subsystems/server/live-sessions.md) `[server]`: `PiServerService` acquisition、attachment 与 locked operation；主源码：`packages/server/src/sessions.ts`、`packages/server/src/types.ts`。
-- [Protocol adapters](subsystems/server/protocol-adapters.md) `[server]`: ai/session object 到 wire DTO 的显式映射与 diagnostic sanitization；主源码：`packages/server/src/protocol.ts`。
+- [Composable session server](subsystems/server/session-server.md) `[server]`: handshake、request dispatch、Chord service catalogue 与 sanitized errors；主源码：`packages/server/src/server.ts`。
+- [Live session ownership](subsystems/server/live-sessions.md) `[server]`: `SessionRouter` acquisition 与 presentation attachment；主源码：`packages/server/src/session-router.ts`、`packages/server/src/types.ts`。
+- [Protocol adapters](subsystems/server/protocol-adapters.md) `[server]`: Chord 服务载荷与 envelope 边界（旧 DTO adapter 已删）；主源码：`packages/server/src/server.ts`、`packages/protocol/src/protocol.ts`。
 - [Unix listener transport](subsystems/server/unix-transport.md) `[server]`: socket ownership、backpressure、permissions 与 cleanup；主源码：`packages/server/src/transports/unix/`。
 
 ### pi-session-backend-sqlite-node（1 节点）
-- [Node SQLite 会话后端](subsystems/session-backends/sqlite-node.md) `[session-backends]`: v4 `SessionRepo`、lanes/facts/records、writer-leases、FTS5；主源码：`packages/session-backends/sqlite-node/`。
+- [Node SQLite 会话后端](subsystems/session-backends/sqlite-node.md) `[session-backends]`: v4 `SessionRepo`、lanes/facts/records、writer-leases；FTS search backend 已删除；主源码：`packages/session-backends/sqlite-node/src/sqlite/`。
 
 ### pi-telemetry（1 节点）
 - [telemetry 契约与适配器](subsystems/telemetry/contracts.md) `[telemetry]`: vendor-neutral contracts、memory/noop adapters、testing conformance；主源码：`packages/telemetry/src/`。

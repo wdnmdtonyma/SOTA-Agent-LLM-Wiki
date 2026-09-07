@@ -34,7 +34,7 @@ related:
   - subsys.ai.auth-resolution
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `subsys.ai.oauth-flow` 描述当前 `pi-ai` OAuth 实现入口：provider 按需加载 flow，standalone Bun 注入静态 flow，公共 `./oauth` subpath 仅保留 coding-agent extension 的类型兼容面。
@@ -52,9 +52,9 @@ updated: 853a80d26c
 
 旧 `packages/ai/src/utils/oauth/index.ts` 的全局 registry、`getOAuthProvider()` 与 deprecated token wrapper 已删除；当前 OAuth 实现没有新的同形 `index.ts`。内部实现入口是 `packages/ai/src/auth/oauth/load.ts`：它定义 Anthropic、OpenAI Codex、GitHub Copilot、OpenRouter、Kimi Coding、xAI 与 Radius 的 lazy loader，并统一返回 `OAuthAuth` contract [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:21] [E: packages/ai/src/auth/oauth/load.ts:33] [E: packages/ai/src/auth/oauth/load.ts:67]。
 
-公共 package subpath `./oauth` 仍存在于 exports map [E: packages/ai/package.json:30]，但对应 `src/oauth.ts` 只 `export type` coding-agent extension compatibility declarations；它不再重导出 OAuth flow 实现、registry 或 helpers [E: packages/ai/src/oauth.ts:2] [E: packages/ai/src/oauth.ts:10]。因此“被删 `index.ts` 的新入口”要分成两层理解：应用内部 flow 加载走 `auth/oauth/load.ts`，外部 `@earendil-works/pi-ai/oauth` 只是 type-only compatibility entry。
+公共 package subpath `./oauth` 仍存在于 exports map [E: packages/ai/package.json:34]，但对应 `src/oauth.ts` 只 `export type` coding-agent extension compatibility declarations；它不再重导出 OAuth flow 实现、registry 或 helpers [E: packages/ai/src/oauth.ts:2] [E: packages/ai/src/oauth.ts:10]。因此“被删 `index.ts` 的新入口”要分成两层理解：应用内部 flow 加载走 `auth/oauth/load.ts`，外部 `@earendil-works/pi-ai/oauth` 只是 type-only compatibility entry。
 
-provider factory 自己声明 OAuth 能力并绑定 loader。除 Anthropic/OpenAI Codex 外，Kimi 与 OpenRouter 现在也同时提供 API-key 与 lazy OAuth method。[E: packages/ai/src/providers/kimi-coding.ts:12] [E: packages/ai/src/providers/kimi-coding.ts:14] [E: packages/ai/src/providers/openrouter.ts:12] [E: packages/ai/src/providers/openrouter.ts:14]
+provider factory 自己声明 OAuth 能力并绑定 loader。除 Anthropic/OpenAI Codex 外，Kimi 与 OpenRouter 现在也同时提供 API-key 与 lazy OAuth method。[E: packages/ai/src/providers/kimi-coding.ts:12] [E: packages/ai/src/providers/kimi-coding.ts:14] [E: packages/ai/src/providers/openrouter.ts:13] [E: packages/ai/src/providers/openrouter.ts:15]
 
 ## 新增 Kimi 与 OpenRouter flow
 
@@ -68,7 +68,7 @@ OpenRouter 登录同时启动 loopback callback 等待与 `manual_code` prompt�
 
 `githubCopilotOAuth.login` 走 GitHub device-code：可选 Enterprise domain，poll 拿到 GitHub access token，再换 Copilot token。login 不调用 `enableAllGitHubCopilotModels` 或 `fetchAvailableGitHubCopilotModelIds`。token exchange 后用 `fetchGitHubCopilotModels` 拉 catalog；仅当 `policyModelIds.length > 0` 时 notify `"Enabling models..."` 并 `enableGitHubCopilotModels` 于这些 id；最后 `availableModelIds` 是 catalog 可用 id 与成功 enable 的 id 的 union。[E: packages/ai/src/auth/oauth/github-copilot.ts:434] [E: packages/ai/src/auth/oauth/github-copilot.ts:462] [E: packages/ai/src/auth/oauth/github-copilot.ts:472] [E: packages/ai/src/auth/oauth/github-copilot.ts:473] [E: packages/ai/src/auth/oauth/github-copilot.ts:474] [E: packages/ai/src/auth/oauth/github-copilot.ts:483]
 
-policy enable 是顺序 `for` + `await`：只对 login 时 `fetchGitHubCopilotModels` 算出的 `policyModelIds` POST `${baseUrl}/models/${modelId}/policy`，body `{state:"enabled"}`。这些 id 是 catalog 中 `policyState === "unconfigured"` 且存在于 `GITHUB_COPILOT_MODELS` 的模型，不是对每个 catalog 条目都 POST。测试断言同一时刻最多一个 in-flight policy 请求。[E: packages/ai/src/auth/oauth/github-copilot.ts:124] [E: packages/ai/src/auth/oauth/github-copilot.ts:421] [E: packages/ai/src/auth/oauth/github-copilot.ts:423] [E: packages/ai/src/auth/oauth/github-copilot.ts:380] [E: packages/ai/src/auth/oauth/github-copilot.ts:395] [E: packages/ai/src/auth/oauth/github-copilot.ts:474] [E: packages/ai/src/auth/oauth/github-copilot.ts:476] [E: packages/ai/test/github-copilot-oauth.test.ts:353]
+policy enable 是顺序 `for` + `await`：只对 login 时 `fetchGitHubCopilotModels` 算出的 `policyModelIds` POST `${baseUrl}/models/${modelId}/policy`，body `{state:"enabled"}`。这些 id 是 catalog 中 `policyState === "unconfigured"` 且存在于 `GITHUB_COPILOT_MODELS` 的模型，不是对每个 catalog 条目都 POST。测试断言同一时刻最多一个 in-flight policy 请求。[E: packages/ai/src/auth/oauth/github-copilot.ts:124] [E: packages/ai/src/auth/oauth/github-copilot.ts:421] [E: packages/ai/src/auth/oauth/github-copilot.ts:423] [E: packages/ai/src/auth/oauth/github-copilot.ts:380] [E: packages/ai/src/auth/oauth/github-copilot.ts:395] [E: packages/ai/src/auth/oauth/github-copilot.ts:474] [E: packages/ai/src/auth/oauth/github-copilot.ts:476] [E: packages/ai/test/github-copilot-oauth.test.ts:371]
 
 GET `${baseUrl}/models` 的 429 走 `fetchWithRateLimitRetry`（login 传 `maxRetries: 2`、`maxElapsedMs: 5000`）：默认 delay `500 * 2^retry`；`Retry-After` 可解析为秒或 HTTP-date；等待用 `sleep` 而不是 `abortableSleep`。Individual 端点在 picker catalog 为空时回落到 `policy.state === "enabled"` 的 model id；其它 account 不走这条 fallback。[E: packages/ai/src/auth/oauth/github-copilot.ts:135] [E: packages/ai/src/auth/oauth/github-copilot.ts:152] [E: packages/ai/src/auth/oauth/github-copilot.ts:155] [E: packages/ai/src/auth/oauth/github-copilot.ts:164] [E: packages/ai/src/auth/oauth/github-copilot.ts:178] [E: packages/ai/src/auth/oauth/github-copilot.ts:467] [E: packages/ai/src/auth/oauth/github-copilot.ts:177] [E: packages/ai/src/auth/oauth/github-copilot.ts:119]
 
@@ -78,7 +78,7 @@ GET `${baseUrl}/models` 的 429 走 `fetchWithRateLimitRetry`（login 传 `maxRe
 
 每个 `load*OAuth()` 先检查 module-local `bundledLoaders`：存在时调用已注册函数，否则动态 import 对应实现并取出 `OAuthAuth` object [E: packages/ai/src/auth/oauth/load.ts:24] [E: packages/ai/src/auth/oauth/load.ts:27] [E: packages/ai/src/auth/oauth/load.ts:32] [E: packages/ai/src/auth/oauth/load.ts:31] [E: packages/ai/src/auth/oauth/load.ts:37] [E: packages/ai/src/auth/oauth/load.ts:38]。
 
-standalone Bun 不能依赖这些 flow 在运行时仍是可发现 chunk，所以 `registerBunOAuthFlows()` 静态导入七组实现并调用 `registerBundledOAuthFlowLoaders()`；Radius 以 factory 接受 `{name, gateway}`，其余 loader 返回固定 `OAuthAuth` object [E: packages/ai/src/bun-oauth.ts:1] [E: packages/ai/src/bun-oauth.ts:8] [E: packages/ai/src/bun-oauth.ts:11] [E: packages/ai/src/bun-oauth.ts:19]。package exports 为该 bundle bridge 提供独立 `./bun-oauth` subpath [E: packages/ai/package.json:38]。
+standalone Bun 不能依赖这些 flow 在运行时仍是可发现 chunk，所以 `registerBunOAuthFlows()` 静态导入七组实现并调用 `registerBundledOAuthFlowLoaders()`；Radius 以 factory 接受 `{name, gateway}`，其余 loader 返回固定 `OAuthAuth` object [E: packages/ai/src/bun-oauth.ts:1] [E: packages/ai/src/bun-oauth.ts:8] [E: packages/ai/src/bun-oauth.ts:11] [E: packages/ai/src/bun-oauth.ts:19]。package exports 为该 bundle bridge 提供独立 `./bun-oauth` subpath [E: packages/ai/package.json:42]。
 
 ## Device-code polling
 

@@ -9,7 +9,7 @@ symbols: [runLoop, prepareNextTurn, prepareNextTurnWithContext, shouldStopAfterT
 related: [spine.agent-loop, subsys.agent-core.message-queue, subsys.agent-core.hooks, subsys.coding-agent.agent-session]
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `subsys.agent-core.turn-control` 聚焦 `runLoop` 如何在一次 agent run 中决定何时开始下一轮 provider request、何时注入 queued messages、何时停止，以及 `prepareNextTurn` 只在还会再开一轮 assistant turn 之后运行。
@@ -57,13 +57,13 @@ updated: 853a80d26c
 
 6. 正常 assistant message 会筛出 `toolCall` content；`stopReason === "length"` 时整批失败而不执行工具，否则执行 `executeToolCalls@packages/agent/src/agent-loop.ts:409`，并把返回的 tool result messages 追加到 context 与 `newMessages`。[E: packages/agent/src/agent-loop.ts:222] [E: packages/agent/src/agent-loop.ts:230] [E: packages/agent/src/agent-loop.ts:233] [E: packages/agent/src/agent-loop.ts:237] [E: packages/agent/src/agent-loop.ts:238] [E: packages/agent/src/agent-loop.ts:239]
 
-7. `executeToolCalls` 的 `terminate` 只控制是否因当前 tool batch 自动继续下一次 assistant response；`shouldTerminateToolBatch()` 在全部 finalized result 都带 `terminate === true` 时返回 true,loop 再写成 `hasMoreToolCalls = !executedToolBatch.terminate`。[E: packages/agent/src/agent-loop.ts:235] [E: packages/agent/src/agent-loop.ts:483] [E: packages/agent/src/agent-loop.ts:550] [E: packages/agent/src/agent-loop.ts:580] [E: packages/agent/src/agent-loop.ts:581] steering 或 follow-up messages 仍能通过内外层循环条件让 run 继续。[E: packages/agent/src/agent-loop.ts:175] [E: packages/agent/src/agent-loop.ts:261] [E: packages/agent/src/agent-loop.ts:262] [E: packages/agent/src/agent-loop.ts:264]
+7. `executeToolCalls` 的 `terminate` 只控制是否因当前 tool batch 自动继续下一次 assistant response；`shouldTerminateToolBatch()` 在全部 finalized result 都带 `terminate === true` 时返回 true,loop 再写成 `hasMoreToolCalls = !executedToolBatch.terminate`。[E: packages/agent/src/agent-loop.ts:235] [E: packages/agent/src/agent-loop.ts:483] [E: packages/agent/src/agent-loop.ts:559] [E: packages/agent/src/agent-loop.ts:589] [E: packages/agent/src/agent-loop.ts:590] steering 或 follow-up messages 仍能通过内外层循环条件让 run 继续。[E: packages/agent/src/agent-loop.ts:175] [E: packages/agent/src/agent-loop.ts:261] [E: packages/agent/src/agent-loop.ts:262] [E: packages/agent/src/agent-loop.ts:264]
 
-8. 非 error/aborted 路径下，每轮 assistant/tool 阶段结束后 `runLoop` 发 `turn_end`，把 assistant、toolResults、当前 context 和 `newMessages` 写入 `lastCompletedTurn`，**先**检查 `shouldStopAfterTurn`。[E: packages/agent/src/agent-loop.ts:243] [E: packages/agent/src/agent-loop.ts:245] [E: packages/agent/src/agent-loop.ts:252] 如果它返回 true，`runLoop` 发 `agent_end` 并退出，不再 polling steering / follow-up，也**不**调用 `prepareNextTurn`。[E: packages/agent/src/agent-loop.ts:253] [E: packages/agent/src/agent-loop.ts:254] [E: packages/agent/CHANGELOG.md:9]
+8. 非 error/aborted 路径下，每轮 assistant/tool 阶段结束后 `runLoop` 发 `turn_end`，把 assistant、toolResults、当前 context 和 `newMessages` 写入 `lastCompletedTurn`，**先**检查 `shouldStopAfterTurn`。[E: packages/agent/src/agent-loop.ts:243] [E: packages/agent/src/agent-loop.ts:245] [E: packages/agent/src/agent-loop.ts:252] 如果它返回 true，`runLoop` 发 `agent_end` 并退出，不再 polling steering / follow-up，也**不**调用 `prepareNextTurn`。[E: packages/agent/src/agent-loop.ts:253] [E: packages/agent/src/agent-loop.ts:254] [E: packages/agent/CHANGELOG.md:18]
 
 9. 如果没有 graceful stop，`runLoop` 再读取 steering messages 并回到内层条件。只有内层或 follow-up 决定还会再开一轮 assistant turn 时，下一轮循环入口才调用 `prepareNextTurn(lastCompletedTurn)`，允许替换 context、model 和 reasoning。[E: packages/agent/src/agent-loop.ts:257] [E: packages/agent/src/agent-loop.ts:176] [E: packages/agent/src/agent-loop.ts:177] [E: packages/agent/src/agent-loop.ts:179] [E: packages/agent/src/agent-loop.ts:182] `prepareNextTurn` 可以是长任务（例如 compaction）；完成后若 pending 仍为空会再 poll 一次 steering，避免 one-at-a-time 模式在长准备期间漏掉一条、或把两条塞进同一 turn。[E: packages/agent/src/agent-loop.ts:194] [E: packages/agent/src/agent-loop.ts:195]
 
-10. 如果内层循环和 follow-up 检查都没有更多工作，最终在函数末尾发 `agent_end`，此时同样不调用 `prepareNextTurn`。[E: packages/agent/src/agent-loop.ts:269] [E: packages/agent/src/agent-loop.ts:272] [E: packages/agent/CHANGELOG.md:9]
+10. 如果内层循环和 follow-up 检查都没有更多工作，最终在函数末尾发 `agent_end`，此时同样不调用 `prepareNextTurn`。[E: packages/agent/src/agent-loop.ts:269] [E: packages/agent/src/agent-loop.ts:272] [E: packages/agent/CHANGELOG.md:18]
 
 ## 设计动机与 gotcha
 
@@ -71,7 +71,7 @@ updated: 853a80d26c
 
 `prepareNextTurn` 的 `thinkingLevel: "off"` 不会把 config.reasoning 写成字符串 `"off"`，而是映射成 `undefined`；其他 thinking level 会直接成为下一轮 config.reasoning。[E: packages/agent/src/agent-loop.ts:183] [E: packages/agent/src/agent-loop.ts:184] [E: packages/agent/src/agent-loop.ts:186] [E: packages/agent/src/agent-loop.ts:187] [E: packages/agent/src/agent-loop.ts:188]
 
-`shouldStopAfterTurn` 是 graceful stop gate，不会打断当前 assistant response 或当前 tool batch；它的检查点在 `turn_end` 之后、`prepareNextTurn` 之前。0.84.4 起 `prepareNextTurn` / `prepareNextTurnWithContext` 只在决定还会再开一轮 assistant turn 之后运行；终局 / terminating turn 不再调用，end-of-run 工作应放到 `agent_end`。[E: packages/agent/src/agent-loop.ts:243] [E: packages/agent/src/agent-loop.ts:252] [E: packages/agent/src/agent-loop.ts:176] [E: packages/agent/src/agent.ts:463] [E: packages/agent/CHANGELOG.md:9]
+`shouldStopAfterTurn` 是 graceful stop gate，不会打断当前 assistant response 或当前 tool batch；它的检查点在 `turn_end` 之后、`prepareNextTurn` 之前。0.84.4 起 `prepareNextTurn` / `prepareNextTurnWithContext` 只在决定还会再开一轮 assistant turn 之后运行；终局 / terminating turn 不再调用，end-of-run 工作应放到 `agent_end`。[E: packages/agent/src/agent-loop.ts:243] [E: packages/agent/src/agent-loop.ts:252] [E: packages/agent/src/agent-loop.ts:176] [E: packages/agent/src/agent.ts:463] [E: packages/agent/CHANGELOG.md:18]
 
 `stopReason === "error"` 或 `"aborted"` 是 hard-stop path：它在 tool-call 检查和 turn hooks 之前返回，只发一个空 toolResults 的 `turn_end`，随后发 `agent_end`。[E: packages/agent/src/agent-loop.ts:215] [E: packages/agent/src/agent-loop.ts:216] [E: packages/agent/src/agent-loop.ts:217] [E: packages/agent/src/agent-loop.ts:218]
 

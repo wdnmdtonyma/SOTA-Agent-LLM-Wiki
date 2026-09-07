@@ -21,7 +21,7 @@ related:
   - subsys.ai.google-vertex
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `subsys.ai.google-generative-ai` 描述 `pi-ai` 如何把统一 `Context` 和 `GoogleOptions` 转成 Gemini Developer API `generateContentStream` 请求,并把 Google SDK stream 归一回 `AssistantMessageEventStream`。
@@ -42,7 +42,7 @@ updated: 853a80d26c
 
 内置 `google` provider 把 provider id 设为 `google`,默认 base URL 设为 `https://generativelanguage.googleapis.com/v1beta`,认证来源设为 `GEMINI_API_KEY`,并把 `api` 接到 `googleGenerativeAIApi()` lazy wrapper。[E: packages/ai/src/providers/google.ts:8][E: packages/ai/src/providers/google.ts:10][E: packages/ai/src/providers/google.ts:11][E: packages/ai/src/providers/google.ts:13] lazy wrapper 只做 dynamic import,实际协议代码仍在 `google-generative-ai.ts`。[E: packages/ai/src/api/google-generative-ai.lazy.ts:4]
 
-`GoogleOptions` 扩展通用 `StreamOptions`,只增加 `toolChoice?: "auto" | "none" | "any"` 和 `thinking` 配置;`thinking.budgetTokens` 可传 token budget,`thinking.level` 使用 `GoogleApiThinkingLevel` 字符串类型。[E: packages/ai/src/api/google-generative-ai.ts:41][E: packages/ai/src/api/google-generative-ai.ts:42][E: packages/ai/src/api/google-generative-ai.ts:43][E: packages/ai/src/api/google-generative-ai.ts:45][E: packages/ai/src/api/google-generative-ai.ts:46][E: packages/ai/src/api/google-shared.ts:28] `GoogleThinkingLevel` 已改名为 `GoogleApiThinkingLevel`；`ResolvedGoogleThinkingLevel` 是 Pi `ThinkingLevel` 去掉 `xhigh`/`max` 的子集，由 `resolveGoogleThinkingLevel()` 经 `model.thinkingLevelMap` 解析 [E: packages/ai/src/api/google-shared.ts:29] [E: packages/ai/src/api/google-shared.ts:32] [E: packages/ai/src/api/google-shared.ts:38] [E: packages/ai/src/index.ts:13]。
+`GoogleOptions` 扩展通用 `StreamOptions`,只增加 `toolChoice?: "auto" | "none" | "any"` 和 `thinking` 配置;`thinking.budgetTokens` 可传 token budget,`thinking.level` 使用 `GoogleApiThinkingLevel` 字符串类型。[E: packages/ai/src/api/google-generative-ai.ts:41][E: packages/ai/src/api/google-generative-ai.ts:42][E: packages/ai/src/api/google-generative-ai.ts:43][E: packages/ai/src/api/google-generative-ai.ts:45][E: packages/ai/src/api/google-generative-ai.ts:46][E: packages/ai/src/api/google-shared.ts:28] `GoogleThinkingLevel` 已改名为 `GoogleApiThinkingLevel`；`ResolvedGoogleThinkingLevel` 是 Pi `ThinkingLevel` 去掉 `xhigh`/`max` 的子集。`resolveGoogleThinkingLevel()` 在查 `thinkingLevelMap` 之前若 `level === "off"` 直接返回 `"high"`，否则再经 map 解析 [E: packages/ai/src/api/google-shared.ts:29] [E: packages/ai/src/api/google-shared.ts:32] [E: packages/ai/src/api/google-shared.ts:36] [E: packages/ai/src/api/google-shared.ts:38] [E: packages/ai/src/index.ts:13]。
 
 ## request 构造
 

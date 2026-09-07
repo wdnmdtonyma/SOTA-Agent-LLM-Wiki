@@ -21,19 +21,19 @@ status: draft
 - 当前 `SessionMetadata` / `Session` / `SessionRepo` 在 `types.ts` 里没有这些符号。
 - 本批不以 harness.md 为 ground truth。若后续代码补上这些 API，节点需要再填。
 
-## [U] `sourceFormat: 3 | 4` 但从不见 3
+## [U] `sourceFormat` 已删除
 
 - 节点: `subsys.agent-core.jsonl-storage`
-- `JsonlSessionMetadata.sourceFormat` 类型是 `3 | 4`。[E: packages/agent/src/harness/session/jsonl/types.ts:31]
-- `metadataFromHeader()` 写死 `sourceFormat: 4`。[E: packages/agent/src/harness/session/jsonl/codec.ts:122]
-- 本包 `packages/agent/src/harness/session/**` 没有把 v3 文件转成 v4 或写出 `sourceFormat: 3` 的路径。
-- 不知道 `3` 是预留给 coding-agent 迁移层、外部 importer，还是未完成的类型残留。
+- `JsonlSessionMetadata` 已不再有 `sourceFormat`；现行字段是 `cwd` / `path` / `modifiedAt`。[E: packages/agent/src/harness/session/jsonl/types.ts:26]
+- `metadataFromHeader()` 现位于 `jsonl/repo.ts`，复制 header 的 id / createdAt / storageVersion / cwd 与可选 parent 字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:25]
+- 本条不再把已删除的 `sourceFormat: 3 | 4` 当未决项。
 
 ## [U] `legacyParentSessionPath` 的写入者
 
 - 节点: `subsys.agent-core.jsonl-storage`
-- header 允许 `legacyParentSessionPath`，且与 `parentSessionId` 互斥。[E: packages/agent/src/harness/session/jsonl/types.ts:55] [E: packages/agent/src/harness/session/jsonl/codec.ts:82]
-- `JsonlSessionRepo.prepareCreate` 只写 `parentSessionId`。[E: packages/agent/src/harness/session/jsonl/repo.ts:215]
+- header 允许可选 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/types.ts:15] [E: packages/agent/src/harness/session/jsonl/codec.ts:45]
+- `metadataFromHeader` 原样拷贝该字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:34]
+- `JsonlSessionRepo.create` 只写 `parentSessionId`，不写 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/repo.ts:78]
 - 谁在什么时候把无法解析的 v3 parent path 写进该字段，本批 source 看不到。
 
 ## [U] InMemorySessionStorage 并发

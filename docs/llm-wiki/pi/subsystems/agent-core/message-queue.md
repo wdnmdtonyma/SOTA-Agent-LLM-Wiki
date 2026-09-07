@@ -15,7 +15,7 @@ related:
   - ref.agent.queue-modes
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `subsys.agent-core.message-queue` 是 `pi-agent-core` 的运行中消息注入层: `Agent` 持有 steering 与 follow-up 两个 `PendingMessageQueue`, 让调用方在 active run 期间排队用户消息, 再由 loop config 暴露给底层回合循环。

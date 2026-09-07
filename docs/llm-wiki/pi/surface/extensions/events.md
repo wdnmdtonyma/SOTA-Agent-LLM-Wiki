@@ -23,7 +23,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > 扩展事件是 pi-coding-agent 暴露给 extension 作者的 hook 面:extension 通过 `pi.on(event, handler)` 订阅生命周期、输入、agent、provider、工具、模型和会话事件,并在少数事件上返回 block、transform、cancel 或 replacement。
@@ -90,7 +90,7 @@ session replacement 类事件分两段:替换前的 `session_before_switch`、`s
 
 `tool_call` 在工具真正执行前触发,可 block,且 `event.input` 是 mutable;后续 `tool_call` handler 会看到前面 handler 对 input 的修改,修改后不会再次 re-validation [E: packages/coding-agent/docs/extensions.md:780] [E: packages/coding-agent/docs/extensions.md:786] [E: packages/coding-agent/docs/extensions.md:792]。类型层把 `tool_call` result 限定为 `block`/`reason`/`terminate`;参数补丁走 input mutation [E: packages/coding-agent/src/core/extensions/types.ts:1125] [E: packages/coding-agent/src/core/extensions/types.ts:1133]。`terminate` 只对 blocked call 生效,并且 agent 仅在当前 tool batch 的每个 finalized result 都 terminating 时才跳过自动 follow-up LLM call [E: packages/coding-agent/docs/extensions.md:792] [E: packages/coding-agent/docs/extensions.md:793]。runner 的 `emitToolCall()` 保存最后一个 truthy result,但只要 result 带 `block` 就短路返回该 result(含 `terminate`) [E: packages/coding-agent/src/core/extensions/runner.ts:982] [E: packages/coding-agent/src/core/extensions/runner.ts:993] [E: packages/coding-agent/src/core/extensions/runner.ts:995] [E: packages/coding-agent/src/core/extensions/runner.ts:996]。这个设计让安全 gate extension 能阻止危险 tool call,并可选结束本轮,而参数补丁 extension 可通过 mutate input 继续执行 [I]。
 
-`pi.sendUserMessage(content, options?)` 始终触发一个 turn。`options.expandPromptTemplates` 为 true 时会先走 extension command,再展开 skill command 与 prompt template;API 默认是 `false`,而普通 `prompt()` 默认是 `true` [E: packages/coding-agent/src/core/extensions/types.ts:1368] [E: packages/coding-agent/src/core/extensions/types.ts:1375] [E: packages/coding-agent/src/core/extensions/types.ts:1377] [E: packages/coding-agent/src/core/agent-session.ts:1551] [E: packages/coding-agent/src/core/agent-session.ts:1575] [E: packages/coding-agent/src/core/agent-session.ts:1161]。
+`pi.sendUserMessage(content, options?)` 始终触发一个 turn。`options.expandPromptTemplates` 为 true 时会先走 extension command,再展开 skill command 与 prompt template;API 默认是 `false`,而普通 `prompt()` 默认是 `true` [E: packages/coding-agent/src/core/extensions/types.ts:1368] [E: packages/coding-agent/src/core/extensions/types.ts:1375] [E: packages/coding-agent/src/core/extensions/types.ts:1377] [E: packages/coding-agent/src/core/agent-session.ts:1550] [E: packages/coding-agent/src/core/agent-session.ts:1574] [E: packages/coding-agent/src/core/agent-session.ts:1160]。
 
 `tool_result` 在工具执行完成后触发；event 与 handler result 都可携带工具自身的 `Usage`，handler 还可修改 `content`、`details` 或 `isError` [E: packages/coding-agent/src/core/extensions/types.ts:956] [E: packages/coding-agent/src/core/extensions/types.ts:963] [E: packages/coding-agent/src/core/extensions/types.ts:1144] [E: packages/coding-agent/src/core/extensions/types.ts:1148]。runner 创建 `currentEvent` 并把每个 patch 链式合并；没有字段被改时返回 `undefined`，有修改时返回 content/details/isError/usage 的完整当前值 [E: packages/coding-agent/src/core/extensions/runner.ts:927] [E: packages/coding-agent/src/core/extensions/runner.ts:941] [E: packages/coding-agent/src/core/extensions/runner.ts:953] [E: packages/coding-agent/src/core/extensions/runner.ts:970] [E: packages/coding-agent/src/core/extensions/runner.ts:974]。
 

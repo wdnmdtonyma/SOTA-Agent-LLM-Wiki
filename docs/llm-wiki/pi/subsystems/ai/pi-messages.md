@@ -21,7 +21,7 @@ related:
   - ref.ai.wire-protocol-catalog
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `subsys.ai.pi-messages` 描述 Pi 自有的 HTTP/SSE wire protocol：client 向 `<baseUrl>/messages` POST 统一的 model/context/options，再把服务端序列化事件还原为标准 `AssistantMessageEventStream`。Radius gateway 和 `models.json` custom provider 都能使用它。
@@ -39,21 +39,21 @@ updated: 853a80d26c
 
 ## Request
 
-`stream()` 要求 API key，把 URL 规范成 `<model.baseUrl>/messages`；debug option 添加 `?debug=1` [E: packages/ai/src/api/pi-messages.ts:345] [E: packages/ai/src/api/pi-messages.ts:355] [E: packages/ai/src/api/pi-messages.ts:360] [E: packages/ai/src/api/pi-messages.ts:361]。POST body 是 `{ model, context, options }`，options 只投影 temperature、maxTokens、reasoning、cacheRetention、sessionId 与 toolChoice，并允许 `onPayload` 替换完整 payload [E: packages/ai/src/api/pi-messages.ts:365] [E: packages/ai/src/api/pi-messages.ts:374] [E: packages/ai/src/api/pi-messages.ts:377]。
+`stream()` 要求 API key，把 URL 规范成 `<model.baseUrl>/messages`；debug option 添加 `?debug=1` [E: packages/ai/src/api/pi-messages.ts:353] [E: packages/ai/src/api/pi-messages.ts:363] [E: packages/ai/src/api/pi-messages.ts:368] [E: packages/ai/src/api/pi-messages.ts:369]。POST body 是 `{ model, context, options }`，options 只投影 temperature、maxTokens、reasoning、cacheRetention、sessionId 与 toolChoice，并允许 `onPayload` 替换完整 payload [E: packages/ai/src/api/pi-messages.ts:373] [E: packages/ai/src/api/pi-messages.ts:382] [E: packages/ai/src/api/pi-messages.ts:385]。
 
-请求使用 bearer auth、SSE accept、JSON content type 和 provider headers，透传 abort signal；`onResponse` 在 HTTP status 检查前收到 status/headers [E: packages/ai/src/api/pi-messages.ts:382] [E: packages/ai/src/api/pi-messages.ts:391] [E: packages/ai/src/api/pi-messages.ts:394]。未显式给 cache retention 时只把 legacy `PI_CACHE_RETENTION=long` 映射为 `long`，其它情况交给 backend default [E: packages/ai/src/api/pi-messages.ts:337] [E: packages/ai/src/api/pi-messages.ts:342]。
+请求使用 bearer auth、SSE accept、JSON content type 和 provider headers，透传 abort signal；`onResponse` 在 HTTP status 检查前收到 status/headers [E: packages/ai/src/api/pi-messages.ts:390] [E: packages/ai/src/api/pi-messages.ts:399] [E: packages/ai/src/api/pi-messages.ts:402]。未显式给 cache retention 时只把 legacy `PI_CACHE_RETENTION=long` 映射为 `long`，其它情况交给 backend default [E: packages/ai/src/api/pi-messages.ts:345] [E: packages/ai/src/api/pi-messages.ts:350]。
 
 ## SSE 与事件还原
 
-client 按空行切分 SSE frame，读取 `data:` 行，忽略 `[DONE]` [E: packages/ai/src/api/pi-messages.ts:266] [E: packages/ai/src/api/pi-messages.ts:277] [E: packages/ai/src/api/pi-messages.ts:303] [E: packages/ai/src/api/pi-messages.ts:310]。`PiMessagesEvent` 覆盖 text、thinking、tool-call start/delta/end，以及 terminal `done`/`error`；terminal event 可携带 usage、response id 和 server rewrite impact [E: packages/ai/src/api/pi-messages.ts:52] [E: packages/ai/src/api/pi-messages.ts:70] [E: packages/ai/src/api/pi-messages.ts:77] [E: packages/ai/src/api/pi-messages.ts:82]。
+client 按空行切分 SSE frame，读取 `data:` 行，忽略 `[DONE]` [E: packages/ai/src/api/pi-messages.ts:274] [E: packages/ai/src/api/pi-messages.ts:285] [E: packages/ai/src/api/pi-messages.ts:311] [E: packages/ai/src/api/pi-messages.ts:318]。`PiMessagesEvent` 覆盖 text、thinking、tool-call start/delta/end，以及 terminal `done`/`error`；terminal event 可携带 usage、response id 和 server rewrite impact [E: packages/ai/src/api/pi-messages.ts:52] [E: packages/ai/src/api/pi-messages.ts:70] [E: packages/ai/src/api/pi-messages.ts:78] [E: packages/ai/src/api/pi-messages.ts:84]。
 
-converter 按 `contentIndex` 累积 text/thinking/tool JSON；tool delta 通过 streaming JSON parser 形成 partial arguments，terminal event 更新 stop reason/usage 并附加 rewrite diagnostic [E: packages/ai/src/api/pi-messages.ts:176] [E: packages/ai/src/api/pi-messages.ts:189] [E: packages/ai/src/api/pi-messages.ts:197] [E: packages/ai/src/api/pi-messages.ts:206] [E: packages/ai/src/api/pi-messages.ts:235] [E: packages/ai/src/api/pi-messages.ts:248]。
+converter 按 `contentIndex` 累积 text/thinking/tool JSON；tool delta 通过 streaming JSON parser 形成 partial arguments，terminal event 更新 stop reason/usage 并附加 rewrite diagnostic [E: packages/ai/src/api/pi-messages.ts:178] [E: packages/ai/src/api/pi-messages.ts:191] [E: packages/ai/src/api/pi-messages.ts:202] [E: packages/ai/src/api/pi-messages.ts:214] [E: packages/ai/src/api/pi-messages.ts:243] [E: packages/ai/src/api/pi-messages.ts:256]。
 
 ## 错误语义
 
-非 2xx response 会读取 structured error body，生成带 provider/model/url/status/body metadata 的 `PiMessagesResponseError` [E: packages/ai/src/api/pi-messages.ts:133] [E: packages/ai/src/api/pi-messages.ts:141] [E: packages/ai/src/api/pi-messages.ts:396] [E: packages/ai/src/api/pi-messages.ts:398]。这类失败会附加 `pi_messages_response_failure` diagnostic；abort 则使用 `aborted` reason，不附加 response-failure diagnostic [E: packages/ai/src/api/pi-messages.ts:313] [E: packages/ai/src/api/pi-messages.ts:327] [E: packages/ai/src/api/pi-messages.ts:330]。
+非 2xx response 会读取 structured error body，生成带 provider/model/url/status/body metadata 的 `PiMessagesResponseError` [E: packages/ai/src/api/pi-messages.ts:135] [E: packages/ai/src/api/pi-messages.ts:143] [E: packages/ai/src/api/pi-messages.ts:404] [E: packages/ai/src/api/pi-messages.ts:406]。这类失败会附加 `pi_messages_response_failure` diagnostic；abort 则使用 `aborted` reason，不附加 response-failure diagnostic [E: packages/ai/src/api/pi-messages.ts:321] [E: packages/ai/src/api/pi-messages.ts:335] [E: packages/ai/src/api/pi-messages.ts:338]。
 
-流必须以 `done` 或 `error` 结束；SSE EOF 没有 terminal event 会转成 error event [E: packages/ai/src/api/pi-messages.ts:404] [E: packages/ai/src/api/pi-messages.ts:407] [E: packages/ai/src/api/pi-messages.ts:412] [E: packages/ai/src/api/pi-messages.ts:414]。`streamSimple()` 复用 `stream()`，保留 reasoning，并从扩展 options 透传 toolChoice/debug [E: packages/ai/src/api/pi-messages.ts:421] [E: packages/ai/src/api/pi-messages.ts:426] [E: packages/ai/src/api/pi-messages.ts:427] [E: packages/ai/src/api/pi-messages.ts:431]。
+流必须以 `done` 或 `error` 结束；SSE EOF 没有 terminal event 会转成 error event [E: packages/ai/src/api/pi-messages.ts:412] [E: packages/ai/src/api/pi-messages.ts:415] [E: packages/ai/src/api/pi-messages.ts:420] [E: packages/ai/src/api/pi-messages.ts:422]。`streamSimple()` 复用 `stream()`，保留 reasoning，并从扩展 options 透传 toolChoice/debug [E: packages/ai/src/api/pi-messages.ts:429] [E: packages/ai/src/api/pi-messages.ts:434] [E: packages/ai/src/api/pi-messages.ts:435] [E: packages/ai/src/api/pi-messages.ts:439]。
 
 ## Radius binding
 
@@ -64,12 +64,12 @@ gateway config 把每个 model 固定成 `api: "pi-messages"` 并注入 provider
 ## Gotcha
 
 - `pi-messages` 是 Pi client/backend 之间的协议，不等于 session JSONL 或 RPC stdin/stdout protocol。[I]
-- bearer key 是必需的；即使后端不检查 secret，provider auth 也必须向 request path 提供非空 key [E: packages/ai/src/api/pi-messages.ts:355] [E: packages/ai/src/api/pi-messages.ts:357]。
-- rewrite metadata 只作为 diagnostic 附加，不会重写 client 侧已经还原的 transcript content [E: packages/ai/src/api/pi-messages.ts:165] [E: packages/ai/src/api/pi-messages.ts:172] [I]。
+- bearer key 是必需的；即使后端不检查 secret，provider auth 也必须向 request path 提供非空 key [E: packages/ai/src/api/pi-messages.ts:363] [E: packages/ai/src/api/pi-messages.ts:365]。
+- rewrite metadata 只作为 diagnostic 附加，不会重写 client 侧已经还原的 transcript content [E: packages/ai/src/api/pi-messages.ts:167] [E: packages/ai/src/api/pi-messages.ts:174] [I]。
 
 ## 本轮 stream 状态与 fetch 变化
 
-Pi-native SSE partial message 从 `stopReason: "pending"` 开始；协议的 `done`/`error` event 仍只允许 terminal reason，因此 event variant 没有新增。HTTP POST 现在用 `options.fetch ?? globalThis.fetch`，支持 request-scoped custom fetch。[E: packages/ai/src/api/pi-messages.ts:69] [E: packages/ai/src/api/pi-messages.ts:82] [E: packages/ai/src/api/pi-messages.ts:176] [E: packages/ai/src/api/pi-messages.ts:185] [E: packages/ai/src/api/pi-messages.ts:382] [E: packages/ai/src/api/pi-messages.ts:391]
+Pi-native SSE partial message 从 `stopReason: "pending"` 开始；协议的 `done`/`error` event 仍只允许 terminal reason，因此 event variant 没有新增。HTTP POST 现在用 `options.fetch ?? globalThis.fetch`，支持 request-scoped custom fetch。[E: packages/ai/src/api/pi-messages.ts:69] [E: packages/ai/src/api/pi-messages.ts:84] [E: packages/ai/src/api/pi-messages.ts:178] [E: packages/ai/src/api/pi-messages.ts:187] [E: packages/ai/src/api/pi-messages.ts:390] [E: packages/ai/src/api/pi-messages.ts:399]
 
 ## Sources
 

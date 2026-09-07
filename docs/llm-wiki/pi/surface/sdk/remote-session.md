@@ -1,83 +1,72 @@
 ---
 id: surface.sdk.remote-session
-title: RemoteSession 远程会话客户端
+title: RemoteSession 已退役（re-export pi-client）
 kind: surface
 tier: T1
 pkg: coding-agent
 source:
   - packages/coding-agent/package.json
   - packages/coding-agent/src/client/index.ts
-  - packages/coding-agent/src/client/remote-session.ts
-  - packages/coding-agent/src/client/transcript.ts
+  - packages/coding-agent/test/package-distribution.test.ts
+  - packages/client/src/index.ts
+  - packages/client/src/client.ts
 symbols:
-  - RemoteSession
-  - RemoteSessionState
-  - RemoteSessionLifecycle
-  - applyTranscriptSnapshot
-  - applyTranscriptProgress
-  - selectTranscript
+  - Client
+  - createClientServiceTransport
 related:
   - surface.sdk.embedding
   - subsys.protocol.wire-protocol
   - subsys.client.remote-session-client
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
-> `surface.sdk.remote-session` 描述 `@earendil-works/pi-coding-agent/client` 的 public client facade：它在 `PiClient`/protocol lease 上封装单个远程 session 的 attach、input、model/thinking control、reconnect、transcript reduction 与 disposal。
+> `surface.sdk.remote-session` 记录 `@earendil-works/pi-coding-agent/client` 的退役：`RemoteSession` / transcript reducer 已删除；该 subpath 只 source-only re-export `@earendil-works/pi-client` 的 Chord 风格 `Client`。
 
 ## 能回答的问题
 
-- coding-agent 的远程 session SDK 从哪个 package subpath 导入？
-- `RemoteSession` 能 open/create/submit/abort 哪些操作，何时拒绝并发或非 idle mutation？
-- snapshot 与 streaming progress 如何合并成调用方可直接渲染的 transcript？
-- reconnect、session removal 与 dispose 如何改变 lifecycle 和 attachment？
+- coding-agent 的 `./client` subpath 现在导出什么？还存在 `RemoteSession` 吗？
+- 远程会话 SDK 应该从哪个 package 导入？
+- `./client` 为什么不是 shipped npm runtime export？
+- 旧的 attach / prompt / transcript reducer 语义去哪了？
 
-## Public export 与状态面
+## 退役面
 
-package manifest 把 `./client` 映射到 `dist/client/index.js` 与对应 declaration，并显式依赖 `pi-client`、`pi-protocol`;这与主包 `.` 和 `./rpc-entry` 是并列 public subpath [E: packages/coding-agent/package.json:14] [E: packages/coding-agent/package.json:19] [E: packages/coding-agent/package.json:22] [E: packages/coding-agent/package.json:23] [E: packages/coding-agent/package.json:24] [E: packages/coding-agent/package.json:49] [E: packages/coding-agent/package.json:50]。client index 导出 `RemoteSession`、options/state/lifecycle types 和 transcript reducer helpers [E: packages/coding-agent/src/client/index.ts:1] [E: packages/coding-agent/src/client/index.ts:8] [E: packages/coding-agent/src/client/index.ts:9] [E: packages/coding-agent/src/client/index.ts:15]。
+`packages/coding-agent/src/client/` 只剩 `index.ts`，整文件是 `export * from "@earendil-works/pi-client"` [E: packages/coding-agent/src/client/index.ts:1]。不再存在 `remote-session.ts` / `transcript.ts`，因此没有 `RemoteSession`、`RemoteSessionLifecycle`、`applyTranscriptSnapshot` 或 `selectTranscript`。
 
-`RemoteSessionLifecycle` 有 `unbound`、`ready`、携带 operation 的 `busy`、`disposed` 四态；operation union 是 `open/create/submit/abort/setModel/setThinking/reconnect` [E: packages/coding-agent/src/client/remote-session.ts:26] [E: packages/coding-agent/src/client/remote-session.ts:28] [E: packages/coding-agent/src/client/remote-session.ts:32]。public state 同时暴露 lifecycle、optional snapshot 和 reduced transcript；另外 getters 可直接读取 id、phase、current operation、server models、`SessionMetadata[]` sessions 与 connection state [E: packages/coding-agent/src/client/remote-session.ts:34] [E: packages/coding-agent/src/client/remote-session.ts:37] [E: packages/coding-agent/src/client/remote-session.ts:112] [E: packages/coding-agent/src/client/remote-session.ts:116]。`sessions` 来自 `PiClient.snapshot.sessions`,类型是 protocol `SessionMetadata`,不再是旧 list summary [E: packages/coding-agent/src/client/remote-session.ts:12] [E: packages/coding-agent/src/client/remote-session.ts:116] [E: packages/coding-agent/src/client/remote-session.ts:117]。
+package manifest 把 `./client` 标成 `{ source: "./src/client/index.ts" }`，与 `./experimental/plugin` 一样是 source-only 条件；`files` 显式排除 `dist/client` [E: packages/coding-agent/package.json:22] [E: packages/coding-agent/package.json:25] [E: packages/coding-agent/package.json:31]。发布回归测试锁住这两条 export 不得变成 runtime `import` [E: packages/coding-agent/test/package-distribution.test.ts:28] [E: packages/coding-agent/test/package-distribution.test.ts:29]。`pi-client` / `pi-protocol` / `pi-server` 只出现在 coding-agent 的 `devDependencies`，不在 shipped `dependencies` [E: packages/coding-agent/package.json:80] [E: packages/coding-agent/package.json:81] [E: packages/coding-agent/package.json:82] [I]。
 
-`subscribe()` 会先注册 listener 并立即用 current state 回调；listener error 交给 optional `onListenerError`,而 diagnostics callback 自己的异常也不会影响 session/transport state [E: packages/coding-agent/src/client/remote-session.ts:128] [E: packages/coding-agent/src/client/remote-session.ts:131] [E: packages/coding-agent/src/client/remote-session.ts:371] [E: packages/coding-agent/src/client/remote-session.ts:375] [E: packages/coding-agent/src/client/remote-session.ts:379] [E: packages/coding-agent/src/client/remote-session.ts:382]。
+调用远程协议应直接依赖 `@earendil-works/pi-client`。其 root export 是 `Client`、`createClientServiceTransport` 与 `ServerError` / `DisconnectedError` / `ClientDisposedError` [E: packages/client/src/index.ts:1] [E: packages/client/src/index.ts:2]。
 
-## Attachment 与命令语义
+## 现行公开面（re-export 的真实符号）
 
-`open()` 通过 `PiClient.acquireSession(sessionId, { mode: "exclusive" })` 获取 lease；`create()` 则把 cwd、optional model/thinking level 交给 `PiClient.createSession()` [E: packages/coding-agent/src/client/remote-session.ts:140] [E: packages/coding-agent/src/client/remote-session.ts:151] [E: packages/coding-agent/src/client/remote-session.ts:153] [E: packages/coding-agent/src/client/remote-session.ts:156] [E: packages/coding-agent/src/client/remote-session.ts:171] [E: packages/coding-agent/src/client/remote-session.ts:172]。替换 attachment 前要求当前 session idle；新 lease 必须先有 snapshot，旧 lease detach 失败时会清理新 lease，成功后才 bind 新 handle [E: packages/coding-agent/src/client/remote-session.ts:246] [E: packages/coding-agent/src/client/remote-session.ts:248] [E: packages/coding-agent/src/client/remote-session.ts:266] [E: packages/coding-agent/src/client/remote-session.ts:270] [E: packages/coding-agent/src/client/remote-session.ts:275] [E: packages/coding-agent/src/client/remote-session.ts:279] [E: packages/coding-agent/src/client/remote-session.ts:292]。
+`Client` 是 transport-neutral Chord client：构造时校验 canonical lowercase UUIDv4 `serverId`，再通过 `ByteTransportFactory` 建连 [E: packages/client/src/client.ts:62] [E: packages/client/src/client.ts:77] [E: packages/client/src/client.ts:78]。公开操作是 `connect` / `reconnect` / `request` / `serviceCatalogue` / `subscribeService`，以及 `onAttachmentChange`；没有 `acquireSession` / `createSession` / `prompt` [E: packages/client/src/client.ts:117] [E: packages/client/src/client.ts:155] [E: packages/client/src/client.ts:159] [E: packages/client/src/client.ts:172] [E: packages/client/src/client.ts:148]。
 
-`submit(text)` trim 后忽略空输入，只允许 server phase 为 `idle` 或 `turn`;idle 用 `prompt()`,turn 用 `steer()` [E: packages/coding-agent/src/client/remote-session.ts:175] [E: packages/coding-agent/src/client/remote-session.ts:177] [E: packages/coding-agent/src/client/remote-session.ts:180] [E: packages/coding-agent/src/client/remote-session.ts:183] [E: packages/coding-agent/src/client/remote-session.ts:184]。`abort()` 是唯一可 preempt 正在进行的 submit 的 operation；idle 且没有 submit 时是 no-op [E: packages/coding-agent/src/client/remote-session.ts:188] [E: packages/coding-agent/src/client/remote-session.ts:190] [E: packages/coding-agent/src/client/remote-session.ts:193] [E: packages/coding-agent/src/client/remote-session.ts:194]。`setModel()` 与 `setThinking()` 只在 phase idle 时允许 [E: packages/coding-agent/src/client/remote-session.ts:197] [E: packages/coding-agent/src/client/remote-session.ts:205] [E: packages/coding-agent/src/client/remote-session.ts:295] [E: packages/coding-agent/src/client/remote-session.ts:302] [E: packages/coding-agent/src/client/remote-session.ts:305]。
+`createClientServiceTransport(client, getTarget)` 把懒解析的 `RpcTarget` 适配成 Chord `RemoteServiceTransport`（`invoke` + `subscribe`）[E: packages/client/src/client.ts:448] [E: packages/client/src/client.ts:458] [E: packages/client/src/client.ts:459]。Transcript / models / session directory 是应用层 Chord service，不在 coding-agent `./client` 里做 snapshot reducer [I]。
 
-同一时间普通 operation 必须独占 busy state；`#runOperation()` 用 dispose signal 与实际 operation 竞速，结束时只在当前 busy marker 仍有效且未 disposed 时恢复 `ready`/`unbound` [E: packages/coding-agent/src/client/remote-session.ts:308] [E: packages/coding-agent/src/client/remote-session.ts:310] [E: packages/coding-agent/src/client/remote-session.ts:312] [E: packages/coding-agent/src/client/remote-session.ts:318] [E: packages/coding-agent/src/client/remote-session.ts:320] [E: packages/coding-agent/src/client/remote-session.ts:326] [E: packages/coding-agent/src/client/remote-session.ts:333]。
+## 装配与门控
 
-## Transcript reducer
-
-`TranscriptState` 保存 latest snapshot、progress item map/order 和每个 tool call content part 的 JSON fragment buffer [E: packages/coding-agent/src/client/transcript.ts:3] [E: packages/coding-agent/src/client/transcript.ts:7]。同一 session 的旧 revision snapshot 会被忽略，接受新 snapshot 时会清空 progress overlay [E: packages/coding-agent/src/client/transcript.ts:37] [E: packages/coding-agent/src/client/transcript.ts:39]。
-
-progress 的 started/updated/finished 事件更新 overlay；finished 同时清理该 item 的 tool buffers。delta 只应用到已存在的 assistant item，text/thinking 直接 append，tool-call input 则累积字符串，形成合法 JSON 后转成 JSON value，否则保留 raw prefix [E: packages/coding-agent/src/client/transcript.ts:42] [E: packages/coding-agent/src/client/transcript.ts:46] [E: packages/coding-agent/src/client/transcript.ts:49] [E: packages/coding-agent/src/client/transcript.ts:54] [E: packages/coding-agent/src/client/transcript.ts:57] [E: packages/coding-agent/src/client/transcript.ts:61] [E: packages/coding-agent/src/client/transcript.ts:65] [E: packages/coding-agent/src/client/transcript.ts:70] [E: packages/coding-agent/src/client/transcript.ts:18] [E: packages/coding-agent/src/client/transcript.ts:25]。
-
-`selectTranscript()` 先用 progress item 覆盖 snapshot 同 id item，再按首次 progress order 追加新 item，最后追加尚未出现的 `queuedSteer`;id set 防止重复 [E: packages/coding-agent/src/client/transcript.ts:77] [E: packages/coding-agent/src/client/transcript.ts:80] [E: packages/coding-agent/src/client/transcript.ts:88] [E: packages/coding-agent/src/client/transcript.ts:88] [E: packages/coding-agent/src/client/transcript.ts:93]。
-
-## Reconnect、移除与清理
-
-`reconnect()` 先让底层 client reconnect，再以 exclusive mode 重新获取同一 session id 并 bind 新 lease [E: packages/coding-agent/src/client/remote-session.ts:213] [E: packages/coding-agent/src/client/remote-session.ts:218] [E: packages/coding-agent/src/client/remote-session.ts:219] [E: packages/coding-agent/src/client/remote-session.ts:221]。bind 同时订阅 snapshot 和 server event；`session_progress` 进入 transcript reducer，而 `session_removed` 会清空 subscriptions、handle、transcript；仅当当前 lifecycle **不是** `busy` 时才回到 `unbound`。busy 中的 operation 结束后 `#runOperation` 才会再收敛状态。[E: packages/coding-agent/src/client/remote-session.ts:353] [E: packages/coding-agent/src/client/remote-session.ts:354] [E: packages/coding-agent/src/client/remote-session.ts:355] [E: packages/coding-agent/src/client/remote-session.ts:356] [E: packages/coding-agent/src/client/remote-session.ts:357]。
-
-`dispose()` 幂等缓存 promise，先同步标记 disposed、触发 dispose signal、清 subscription/state，再等待 pending attachment operations 与 lease dispose；多个 cleanup error 会聚合为 `AggregateError` [E: packages/coding-agent/src/client/remote-session.ts:226] [E: packages/coding-agent/src/client/remote-session.ts:229] [E: packages/coding-agent/src/client/remote-session.ts:230] [E: packages/coding-agent/src/client/remote-session.ts:231] [E: packages/coding-agent/src/client/remote-session.ts:234] [E: packages/coding-agent/src/client/remote-session.ts:236] [E: packages/coding-agent/src/client/remote-session.ts:57] [E: packages/coding-agent/src/client/remote-session.ts:63]。
+发布 CLI entry `packages/coding-agent/src/cli.ts` 只调用 `main()`，不 import `src/client` 或 experimental 树 [E: packages/coding-agent/src/cli.ts:6]。`tsconfig.build.json` 排除 `src/client`、`src/experimental`、`src/cli/experimental`，这些树不会进 shipped `dist` [E: packages/coding-agent/tsconfig.build.json:19]。workspace / `pi-test.sh` 开发入口才能解析 source export。
 
 ## Gotcha
 
-- `RemoteSession` 是基于 `PiClient`/server protocol 的 remote facade，不等同于主入口导出的 local `AgentSession`;前者通过 `./client` subpath 导入并持有 exclusive lease [E: packages/coding-agent/package.json:22] [E: packages/coding-agent/src/client/remote-session.ts:66] [E: packages/coding-agent/src/client/remote-session.ts:153] [I]。
-- transcript reducer 是 server snapshot/progress 的 client-side view；它不写 coding-agent JSONL session file，也不自行执行 model/provider 请求 [I]。
+- 不要把 `@earendil-works/pi-coding-agent/client` 当成 npm tarball 的稳定 runtime API；它与 experimental plugin 一样是 source-only [E: packages/coding-agent/test/package-distribution.test.ts:28] [E: packages/coding-agent/package.json:22]。
+- 本地产品会话仍是主包导出的 `AgentSession`（`surface.sdk.embedding`）。`Client` 只搬运 routed envelope 与 Chord service 调用，不执行模型请求 [I]。
+- 旧文档里的 exclusive `PiSessionHandle` lease、`submit()`/`steer()` 门控、client-side transcript overlay 都已删除；现行 attachment / subscription 写在 `subsys.client.session-leases` [I]。
 
 ## Sources
 
 - packages/coding-agent/package.json
 - packages/coding-agent/src/client/index.ts
-- packages/coding-agent/src/client/remote-session.ts
-- packages/coding-agent/src/client/transcript.ts
+- packages/coding-agent/src/cli.ts
+- packages/coding-agent/tsconfig.build.json
+- packages/coding-agent/test/package-distribution.test.ts
+- packages/client/src/index.ts
+- packages/client/src/client.ts
 
 ## 相关
 
-- [surface.sdk.embedding](embedding.md): local `AgentSession` embedding API 与 runtime factory。
-- [subsys.protocol.wire-protocol](../../subsystems/protocol/wire-protocol.md): remote session 的 wire schema,包括 `SessionMetadata` 与 snapshot/progress。
-- [subsys.client.remote-session-client](../../subsystems/client/remote-session-client.md): transport-neutral `PiClient` 与 exclusive lease。
+- [surface.sdk.embedding](embedding.md): 本地 `AgentSession` embedding API，不是远程 `Client`。
+- [subsys.protocol.wire-protocol](../../subsystems/protocol/wire-protocol.md): version-8 routed envelope（hello / request / cancel / attachment / service_update）。
+- [subsys.client.remote-session-client](../../subsystems/client/remote-session-client.md): `@earendil-works/pi-client` 的 `Client` 与 `createClientServiceTransport`。

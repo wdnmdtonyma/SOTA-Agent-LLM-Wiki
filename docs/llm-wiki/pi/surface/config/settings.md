@@ -12,6 +12,7 @@ source:
   - packages/coding-agent/src/modes/interactive/interactive-mode.ts
   - packages/coding-agent/src/modes/interactive/components/model-selector.ts
   - packages/coding-agent/src/modes/interactive/components/thinking-selector.ts
+  - packages/coding-agent/src/core/keybindings.ts
   - packages/coding-agent/docs/settings.md
 symbols:
   - SettingsManager
@@ -23,7 +24,7 @@ related:
   - ref.coding-agent.config-keys
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `surface.config.settings` 描述 pi-coding-agent 用户可见的 settings 配置面:JSON 文件位置、global/project scope、project trust 门控、schema key families、project-over-global 合并和常见默认值边界。
@@ -51,7 +52,7 @@ TUI family 使用 `tuiMode: "regular" | "fullscreen"`(旧名 `uiMode` 已删除)
 
 `modelThinkingLevels` 是按 `"provider/modelId"` 覆盖启动 thinking level 的 object;可从 `/settings` → Default thinking level per model 写入 [E: packages/coding-agent/src/core/settings-manager.ts:99] [E: packages/coding-agent/src/core/settings-manager.ts:793] [E: packages/coding-agent/docs/settings.md:33]。
 
-`/model` 与 `/thinking` 选择器默认只改当前 session:Enter 走 `persist: false`;只有选择器内硬编码的 `ctrl+s`(不是 `app.models.save` keybinding)才 `persist: true` 写回 global startup default。用户文档同一句写的是 `/model`/`/thinking` + Ctrl+S [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4811] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4816] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4996] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5002] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:140] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:401] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:94] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:122] [E: packages/coding-agent/docs/settings.md:10]。带搜索词的 `/model <id>` 精确匹配也是 `persist: false` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4832]。
+`/model` 与 `/thinking` 选择器默认只改当前 session:Enter 走 `persist: false`;只有 `app.models.save` / `app.thinking.save`(默认都是 `ctrl+s`)才 `persist: true` 写回 global startup default。用户文档同一句写的是 `/model`/`/thinking` + Ctrl+S [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4828] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4833] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5013] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5019] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:142] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:399] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:97] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:131] [E: packages/coding-agent/src/core/keybindings.ts:104] [E: packages/coding-agent/src/core/keybindings.ts:186] [E: packages/coding-agent/docs/settings.md:10]。带搜索词的 `/model <id>` 精确匹配也是 `persist: false` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4849]。
 
 `terminal.hyperlinks` / `terminal.images` / `terminal.trueColor` 是 advanced JSON-only capability overrides,默认 `"auto"`。`getTerminalCapabilityOverrides()` 只在值为 concrete boolean、`kitty`/`iterm2` 或 `images: false`(写成 `null`)时覆盖检测;`auto` 不覆盖 [E: packages/coding-agent/src/core/settings-manager.ts:45] [E: packages/coding-agent/src/core/settings-manager.ts:46] [E: packages/coding-agent/src/core/settings-manager.ts:47] [E: packages/coding-agent/src/core/settings-manager.ts:1132] [E: packages/coding-agent/src/core/settings-manager.ts:1136] [E: packages/coding-agent/docs/settings.md:186] [E: packages/coding-agent/docs/settings.md:187] [E: packages/coding-agent/docs/settings.md:188]。
 
@@ -93,7 +94,7 @@ TUI family 使用 `tuiMode: "regular" | "fullscreen"`(旧名 `uiMode` 已删除)
 
 `collectSettingsDiagnostics(settingsManager)` 调用 `drainErrors()`,把每条 settings error 转成 `type: "warning"` diagnostic;有 path 时 message 为 `Invalid settings file ${path}: ...`,否则 `Invalid ${scope} settings: ...` [E: packages/coding-agent/src/core/settings-diagnostics.ts:4] [E: packages/coding-agent/src/core/settings-diagnostics.ts:7]。`deduplicateDiagnostics()` 按 `type\0message` 去重,保留首次出现 [E: packages/coding-agent/src/core/settings-diagnostics.ts:15] [E: packages/coding-agent/src/core/settings-diagnostics.ts:20]。
 
-`main()` 启动时对 startup settings manager 收集一次,runtime 再收集一次,interactive 路径用 `deduplicateDiagnostics` 合并后交给 `InteractiveMode` 的 `startupDiagnostics`;TUI 对 warning 走 `showWarning`,因此 invalid settings 会在 TUI 内显示带 path 的提示,而不是只打到 stderr [E: packages/coding-agent/src/main.ts:60] [E: packages/coding-agent/src/main.ts:652] [E: packages/coding-agent/src/main.ts:780] [E: packages/coding-agent/src/main.ts:893] [E: packages/coding-agent/src/main.ts:933] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1136] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1140]。非 interactive 或存在 runtime error 时仍 `reportDiagnostics` 打到控制台 [E: packages/coding-agent/src/main.ts:895] [E: packages/coding-agent/src/main.ts:896]。
+`main()` 启动时对 startup settings manager 收集一次,runtime 再收集一次,interactive 路径用 `deduplicateDiagnostics` 合并后交给 `InteractiveMode` 的 `startupDiagnostics`;TUI 对 warning 走 `showWarning`,因此 invalid settings 会在 TUI 内显示带 path 的提示,而不是只打到 stderr [E: packages/coding-agent/src/main.ts:60] [E: packages/coding-agent/src/main.ts:653] [E: packages/coding-agent/src/main.ts:781] [E: packages/coding-agent/src/main.ts:899] [E: packages/coding-agent/src/main.ts:936] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1085] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1089]。非 interactive 或存在 runtime error 时仍 `reportDiagnostics` 打到控制台 [E: packages/coding-agent/src/main.ts:898] [E: packages/coding-agent/src/main.ts:899]。
 
 ## 写回与修改语义
 
@@ -120,6 +121,7 @@ TUI family 使用 `tuiMode: "regular" | "fullscreen"`(旧名 `uiMode` 已删除)
 - packages/coding-agent/src/modes/interactive/interactive-mode.ts
 - packages/coding-agent/src/modes/interactive/components/model-selector.ts
 - packages/coding-agent/src/modes/interactive/components/thinking-selector.ts
+- packages/coding-agent/src/core/keybindings.ts
 - packages/coding-agent/docs/settings.md
 
 ## 相关

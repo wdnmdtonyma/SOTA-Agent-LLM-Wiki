@@ -15,7 +15,7 @@ related:
   - subsys.coding-agent.settings-manager
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `config-resolution` 是 pi-coding-agent 的 config value resolver: 它把 secret/config 字符串解析成 literal、environment template 或 `!command` command-backed value, 再给 API key、headers 等调用点返回 resolved string 或明确失败。
@@ -33,14 +33,14 @@ updated: 853a80d26c
 
 `packages/coding-agent/src/core/resolve-config-value.ts` 只负责 string-level resolution: 对外 resolver API 接收一段 config string 和可选 provider-scoped `env`, 返回 resolved value 或 `undefined` [E: packages/coding-agent/src/core/resolve-config-value.ts:145] [E: packages/coding-agent/src/core/resolve-config-value.ts:221]; 本文件未承载 `settings.json`、`models.json` 或 `auth.json` 的读取逻辑 [I]。
 
-`packages/coding-agent/src/config.ts` 在本节点中只作为 config path boundary: 它从 package `piConfig` 得到 `APP_NAME`、`CONFIG_DIR_NAME`, 生成 `PI_CODING_AGENT_DIR` / `PI_CODING_AGENT_SESSION_DIR` 这类 runtime env var 名, 并把默认用户配置目录定位到 `~/.pi/agent` [E: packages/coding-agent/src/config.ts:496] [E: packages/coding-agent/src/config.ts:498] [E: packages/coding-agent/src/config.ts:500] [E: packages/coding-agent/src/config.ts:504] [E: packages/coding-agent/src/config.ts:505] [E: packages/coding-agent/src/config.ts:524] [E: packages/coding-agent/src/config.ts:529]。
+`packages/coding-agent/src/config.ts` 在本节点中只作为 config path boundary: 它从 package `piConfig` 得到 `APP_NAME`、`CONFIG_DIR_NAME`, 生成 `PI_CODING_AGENT_DIR` / `PI_CODING_AGENT_SESSION_DIR` 这类 runtime env var 名, 并把默认用户配置目录定位到 `~/.pi/agent` [E: packages/coding-agent/src/config.ts:500] [E: packages/coding-agent/src/config.ts:502] [E: packages/coding-agent/src/config.ts:504] [E: packages/coding-agent/src/config.ts:508] [E: packages/coding-agent/src/config.ts:509] [E: packages/coding-agent/src/config.ts:528] [E: packages/coding-agent/src/config.ts:533]。
 
 这个节点不枚举所有 settings keys 或 environment variables; `surface.config.resolution` 应解释用户可见的 `$ENV` / `${ENV}` / `!cmd` 表面语法, `subsys.coding-agent.settings-manager` 应解释 settings load/merge/lock, 本节点聚焦 resolver implementation 与路径边界 [I]。
 
 ## 关键文件
 
 - `packages/coding-agent/src/core/resolve-config-value.ts`: parser、env lookup、template resolver、command execution/cache、strict throwing API 和 headers resolver 都在这个文件里 [E: packages/coding-agent/src/core/resolve-config-value.ts:28] [E: packages/coding-agent/src/core/resolve-config-value.ts:88] [E: packages/coding-agent/src/core/resolve-config-value.ts:101] [E: packages/coding-agent/src/core/resolve-config-value.ts:208] [E: packages/coding-agent/src/core/resolve-config-value.ts:229] [E: packages/coding-agent/src/core/resolve-config-value.ts:271]。
-- `packages/coding-agent/src/config.ts`: package asset path、app name/config dir、agent config dir 和具体 user config file paths 的来源; resolver 源文件只导入 child-process 与 shell helper, 不导入这个 config path 模块 [E: packages/coding-agent/src/core/resolve-config-value.ts:6] [E: packages/coding-agent/src/core/resolve-config-value.ts:7] [E: packages/coding-agent/src/config.ts:385] [E: packages/coding-agent/src/config.ts:496] [E: packages/coding-agent/src/config.ts:524] [E: packages/coding-agent/src/config.ts:538] [E: packages/coding-agent/src/config.ts:543] [E: packages/coding-agent/src/config.ts:548]。
+- `packages/coding-agent/src/config.ts`: package asset path、app name/config dir、agent config dir 和具体 user config file paths 的来源; resolver 源文件只导入 child-process 与 shell helper, 不导入这个 config path 模块 [E: packages/coding-agent/src/core/resolve-config-value.ts:6] [E: packages/coding-agent/src/core/resolve-config-value.ts:7] [E: packages/coding-agent/src/config.ts:389] [E: packages/coding-agent/src/config.ts:500] [E: packages/coding-agent/src/config.ts:528] [E: packages/coding-agent/src/config.ts:542] [E: packages/coding-agent/src/config.ts:547] [E: packages/coding-agent/src/config.ts:552]。
 
 ## 数据模型
 
@@ -85,11 +85,11 @@ Configured-shell `ENOENT` is special: it returns `{ executed: false }` so Window
 
 ## Config path boundary
 
-`getPackageDir()` 允许 `PI_PACKAGE_DIR` 覆盖 package asset discovery；否则 Bun binary 返回 exec dir，Node 走 `findNodePackageDir(__dirname)`。`findNodePackageDir` 向上找 `package.json`，若命中目录名是 `dist` 且父目录也有 `package.json` 则返回父目录。它不调用 `getEntrypointPackageDir()`。[E: packages/coding-agent/src/config.ts:385] [E: packages/coding-agent/src/config.ts:387] [E: packages/coding-agent/src/config.ts:392] [E: packages/coding-agent/src/config.ts:396] [E: packages/coding-agent/src/config.ts:369] [E: packages/coding-agent/src/config.ts:375]。
+`getPackageDir()` 允许 `PI_PACKAGE_DIR` 覆盖 package asset discovery；否则 Bun binary 返回 exec dir，Node 走 `findNodePackageDir(__dirname)`。`findNodePackageDir` 向上找 `package.json`，若命中目录名是 `dist` 且父目录也有 `package.json` 则返回父目录。它不调用 `getEntrypointPackageDir()`。[E: packages/coding-agent/src/config.ts:389] [E: packages/coding-agent/src/config.ts:391] [E: packages/coding-agent/src/config.ts:396] [E: packages/coding-agent/src/config.ts:400] [E: packages/coding-agent/src/config.ts:373] [E: packages/coding-agent/src/config.ts:379]。
 
-`getAgentDir()` checks `process.env[ENV_AGENT_DIR]` first and otherwise returns `join(homedir(), CONFIG_DIR_NAME, "agent")`; with default `APP_NAME = "pi"` and default `CONFIG_DIR_NAME = ".pi"`, the default is `~/.pi/agent` [E: packages/coding-agent/src/config.ts:498] [E: packages/coding-agent/src/config.ts:500] [E: packages/coding-agent/src/config.ts:524] [E: packages/coding-agent/src/config.ts:525] [E: packages/coding-agent/src/config.ts:526] [E: packages/coding-agent/src/config.ts:527] [E: packages/coding-agent/src/config.ts:529]。
+`getAgentDir()` checks `process.env[ENV_AGENT_DIR]` first and otherwise returns `join(homedir(), CONFIG_DIR_NAME, "agent")`; with default `APP_NAME = "pi"` and default `CONFIG_DIR_NAME = ".pi"`, the default is `~/.pi/agent` [E: packages/coding-agent/src/config.ts:502] [E: packages/coding-agent/src/config.ts:504] [E: packages/coding-agent/src/config.ts:528] [E: packages/coding-agent/src/config.ts:529] [E: packages/coding-agent/src/config.ts:530] [E: packages/coding-agent/src/config.ts:531] [E: packages/coding-agent/src/config.ts:533]。
 
-The user-facing config files are path helpers under the agent dir: `getModelsPath()` returns `models.json`, `getAuthPath()` returns `auth.json`, `getSettingsPath()` returns `settings.json`, and `getToolsDir()` returns the custom tools directory [E: packages/coding-agent/src/config.ts:538] [E: packages/coding-agent/src/config.ts:539] [E: packages/coding-agent/src/config.ts:543] [E: packages/coding-agent/src/config.ts:544] [E: packages/coding-agent/src/config.ts:548] [E: packages/coding-agent/src/config.ts:549] [E: packages/coding-agent/src/config.ts:553] [E: packages/coding-agent/src/config.ts:554]。
+The user-facing config files are path helpers under the agent dir: `getModelsPath()` returns `models.json`, `getAuthPath()` returns `auth.json`, `getSettingsPath()` returns `settings.json`, and `getToolsDir()` returns the custom tools directory [E: packages/coding-agent/src/config.ts:542] [E: packages/coding-agent/src/config.ts:543] [E: packages/coding-agent/src/config.ts:547] [E: packages/coding-agent/src/config.ts:548] [E: packages/coding-agent/src/config.ts:552] [E: packages/coding-agent/src/config.ts:553] [E: packages/coding-agent/src/config.ts:557] [E: packages/coding-agent/src/config.ts:558]。
 
 ## 设计动机与权衡
 

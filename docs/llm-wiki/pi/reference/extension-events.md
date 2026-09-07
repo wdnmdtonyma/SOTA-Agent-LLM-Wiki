@@ -14,7 +14,7 @@ related:
   - subsys.coding-agent.extension-runner
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `ref.coding-agent.extension-events` 是 pi-coding-agent extension hook 的逐实例 catalog:以 `ExtensionEvent` union 和 `ExtensionAPI.on(...)` overload 为准,列出每个事件名、payload 字段、handler 返回值语义和文档化触发场景。
@@ -31,7 +31,7 @@ updated: 853a80d26c
 
 `ExtensionEvent` 是 extension 事件 payload 的总 union,源码把 startup/resource、`SessionEvent`(含 `SessionCompactFailedEvent`)、agent/message/tool execution、`UIPromptStartEvent` / `UIPromptEndEvent`、model、`user_bash`、`input`、`tool_call` 和 `tool_result` 分支全部列入同一个类型 [E: packages/coding-agent/src/core/extensions/types.ts:671] [E: packages/coding-agent/src/core/extensions/types.ts:678] [E: packages/coding-agent/src/core/extensions/types.ts:1086] [E: packages/coding-agent/src/core/extensions/types.ts:1098] [E: packages/coding-agent/src/core/extensions/types.ts:1099] [E: packages/coding-agent/src/core/extensions/types.ts:1113]。`ExtensionAPI.on(...)` 为这些事件名提供 overload,从 `project_trust` 到 `input` 共 36 个可订阅事件名 [E: packages/coding-agent/src/core/extensions/types.ts:1257] [E: packages/coding-agent/src/core/extensions/types.ts:1271] [E: packages/coding-agent/src/core/extensions/types.ts:1286] [E: packages/coding-agent/src/core/extensions/types.ts:1287] [E: packages/coding-agent/src/core/extensions/types.ts:1301]。
 
-用户文档的 lifecycle overview 把这些事件放进启动、用户输入、agent turn、工具调用、session replacement、fork/clone、compact、tree navigation、model selection 和退出流程 [E: packages/coding-agent/docs/extensions.md:277] [E: packages/coding-agent/docs/extensions.md:345]。当前源码 catalog、正文表与 `index.json` 统一按 36 个事件名计数 [I]。
+用户文档的 lifecycle overview 把这些事件放进启动、用户输入、agent turn、工具调用、session replacement、fork/clone、compact、tree navigation、model selection 和退出流程 [E: packages/coding-agent/docs/extensions.md:277] [E: packages/coding-agent/docs/extensions.md:345]。本轮按 `ExtensionAPI.on` overload 从 `project_trust` 到 `input` 重数，源码仍是 **36** 个具名事件，不是 33 [E: packages/coding-agent/src/core/extensions/types.ts:1257] [E: packages/coding-agent/src/core/extensions/types.ts:1301] [I]。
 
 ## Startup / Resource Events
 

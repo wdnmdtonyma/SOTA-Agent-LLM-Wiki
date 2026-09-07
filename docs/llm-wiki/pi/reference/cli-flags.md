@@ -18,7 +18,7 @@ symbols:
   - parseAuthCommand
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 related:
   - surface.cli.overview
 ---
@@ -116,7 +116,7 @@ related:
 
 `printHelp()` 的 Commands 区展示 `install <source> [-l]`、`remove <source> [-l]`、`uninstall <source> [-l]`、`update [source|self|pi]`、`list`、`config [-l]` 与 `auth <command>`；这些 subcommand 参数不进入全局 `Args` schema，因此不计入本页 63 个固定 parser 实例 [E: packages/coding-agent/src/cli/args.ts:267] [E: packages/coding-agent/src/cli/args.ts:268] [E: packages/coding-agent/src/cli/args.ts:272] [E: packages/coding-agent/src/cli/args.ts:273] [E: packages/coding-agent/src/cli/args.ts:274] [I]。
 
-`pi auth` 由 `main.ts` 的 `runAuthCommand()` 在 package/config 之前先跑:先 `parseAuthCommand()`,命中后再对 `command.args` 调 `parseArgs()` 检查 unknown flags。当前子命令是 `print-api-key`、`print-bearer-token` 和 `auth check`(`--json` / `--credentials` / `--no-refresh`)。[E: packages/coding-agent/src/main.ts:131] [E: packages/coding-agent/src/main.ts:139] [E: packages/coding-agent/src/main.ts:148] [E: packages/coding-agent/src/cli/auth-command.ts:18] [E: packages/coding-agent/src/cli/auth-command.ts:48] [E: packages/coding-agent/src/cli/auth-command.ts:52] [E: packages/coding-agent/src/cli/args.ts:274] [E: packages/coding-agent/src/cli/args.ts:327]
+`pi auth` 由 `main.ts` 的 `runAuthCommand()` 在 package/config 之前先跑:先 `parseAuthCommand()`,命中后再对 `command.args` 调 `parseArgs()` 检查 unknown flags。当前子命令是 `print-api-key`、`print-bearer-token` 和 `auth check`(`--json` / `--credentials` / `--no-refresh`)。[E: packages/coding-agent/src/main.ts:132] [E: packages/coding-agent/src/main.ts:140] [E: packages/coding-agent/src/main.ts:149] [E: packages/coding-agent/src/cli/auth-command.ts:18] [E: packages/coding-agent/src/cli/auth-command.ts:48] [E: packages/coding-agent/src/cli/auth-command.ts:52] [E: packages/coding-agent/src/cli/args.ts:274] [E: packages/coding-agent/src/cli/args.ts:327]
 
 Extension flags 是 runtime-loaded 动态 surface:`printHelp(extensionFlags)` 对 `flag.type === "string"` 的 flag 追加 ` <value>`,description 优先使用 `flag.description`,否则显示 registering extension path [E: packages/coding-agent/src/cli/args.ts:252] [E: packages/coding-agent/src/cli/args.ts:256] [E: packages/coding-agent/src/cli/args.ts:257] [E: packages/coding-agent/src/cli/args.ts:258]。这些动态 flags 在 `parseArgs()` 视角只会先进入 `unknownFlags`,具体名字和含义由 extension 注册时决定,不是本固定 catalog 的可枚举实例 [E: packages/coding-agent/src/cli/args.ts:227] [E: packages/coding-agent/src/cli/args.ts:230] [E: packages/coding-agent/src/cli/args.ts:235] [E: packages/coding-agent/src/cli/args.ts:238] [I]。
 

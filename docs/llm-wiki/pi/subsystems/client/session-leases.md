@@ -1,81 +1,93 @@
 ---
 id: subsys.client.session-leases
-title: Session lease 与 attachment 生命周期
+title: Session attachment 与 service subscription
 kind: subsystem
 tier: T2
 pkg: client
 source:
   - packages/client/src/client.ts
-  - packages/client/src/session-handle.ts
-  - packages/client/src/state.ts
+  - packages/client/src/types.ts
   - packages/client/src/errors.ts
-  - packages/client/test/sessions.test.ts
+  - packages/client/test/client.test.ts
+  - packages/protocol/src/protocol.ts
+  - packages/server/src/session-router.ts
 symbols:
-  - SessionLease
-  - PiSessionHandle
-  - SessionLeaseMode
-  - acquireSession
+  - Client
+  - ServiceSubscription
+  - createClientServiceTransport
+  - AttachmentChangeListener
+  - SessionTarget
 related:
   - subsys.client.remote-session-client
   - subsys.server.live-sessions
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
-> `SessionLease` 是 `PiClient` 的本地 attachment ownership token：shared leases 可并存，exclusive lease 与任意其它本地 lease 互斥；最后一个 lease release 才发送 protocol `detach`。[E: packages/client/src/session-handle.ts:13][E: packages/client/src/session-handle.ts:15][E: packages/client/src/session-handle.ts:19][E: packages/client/src/client.ts:381][E: packages/client/src/client.ts:383][E: packages/client/src/client.ts:386][E: packages/client/src/client.ts:390][E: packages/client/src/client.ts:391]
+> `Client` 不再持有 `PiSessionHandle` / shared-exclusive lease。现行 attachment 是 server 发布的 `SessionTarget`（`{ serverId, sessionId, attachmentId }`）；服务观察走 `subscribeService()` 返回的 `ServiceSubscription`。`session-handle.ts` 与 `state.ts` 已删除 [E: packages/client/src/client.ts:113] [E: packages/protocol/src/protocol.ts:40] [E: packages/client/src/types.ts:16]。
 
 ## 能回答的问题
 
-- `createSession()`、`attachSession()`、`acquireSession()` 分别返回什么 ownership mode？
-- shared/exclusive 是否是跨 process 的 server lock？
-- `detach()` 与 cleanup-oriented `dispose()` 失败时为何不同？
-- disconnect、server removal 与 reacquire 如何 invalidate stale handles？
-- 多个 shared handles 何时真正发 protocol detach？
+- attach / detach 是 protocol command 还是 application service？
+- `Client.attachment` 如何更新？`attachmentId` 防什么？
+- `subscribeService()` 的 snapshot、`start()`、buffered update、`dispose()` 顺序是什么？
+- disconnect / dispose 如何作废 pending request 与 subscription？
+- 一个 `Client` 能否同时持有多个 Session attachment？
 
-## 公开 handle
+## 数据模型
 
-`SessionLease` 暴露 id、active/attached、authoritative snapshot、snapshot/event subscription，以及 prompt、steer、abort、setModel、setThinking、detach/dispose；它实现 `AsyncDisposable`。[E: packages/client/src/session-handle.ts:19][E: packages/client/src/session-handle.ts:20][E: packages/client/src/session-handle.ts:21][E: packages/client/src/session-handle.ts:22][E: packages/client/src/session-handle.ts:23][E: packages/client/src/session-handle.ts:24][E: packages/client/src/session-handle.ts:25][E: packages/client/src/session-handle.ts:26][E: packages/client/src/session-handle.ts:27][E: packages/client/src/session-handle.ts:28][E: packages/client/src/session-handle.ts:29][E: packages/client/src/session-handle.ts:30][E: packages/client/src/session-handle.ts:31][E: packages/client/src/session-handle.ts:32]
+`SessionTarget` 是 session 调用的完整路由：logical `serverId` + durable `sessionId` + live `attachmentId` [E: packages/protocol/src/protocol.ts:40] [E: packages/protocol/src/protocol.ts:42] [E: packages/protocol/src/protocol.ts:43]。server-wide 调用只用 `{ serverId }` [E: packages/protocol/src/protocol.ts:36]。`Client` 只缓存当前一条 `#attachment`，没有 per-session handle map [E: packages/client/src/client.ts:73] [E: packages/client/src/client.ts:113]。
 
-`SessionHandle` 本身只是 callbacks facade；每个 mutation 组装带 `sessionId` 的 protocol command，并从 result 提取 session snapshot。[E: packages/client/src/session-handle.ts:47][E: packages/client/src/session-handle.ts:51][E: packages/client/src/session-handle.ts:88][E: packages/client/src/session-handle.ts:89][E: packages/client/src/session-handle.ts:92][E: packages/client/src/session-handle.ts:93][E: packages/client/src/session-handle.ts:96][E: packages/client/src/session-handle.ts:100][E: packages/client/src/session-handle.ts:104]
+`ServiceSubscription` 暴露 `id`、`target`、hydrate 完成的 `snapshot`、`start()` 与 `dispose()`。`start()` 在调用方装好 snapshot 之后才释放 hydration 期间缓冲的 update [E: packages/client/src/types.ts:16] [E: packages/client/src/types.ts:21] [E: packages/client/src/types.ts:22]。
 
-## Acquisition
+server 侧 `SessionRouter` 为每个 connection 最多保留一条 `ClientAttachment`（`attachmentsByClient`），`attachment.id` 是 `randomUUID()`；同一 durable session 可以有多个 connection attachment [E: packages/server/src/session-router.ts:38] [E: packages/server/src/session-router.ts:168] [E: packages/server/src/session-router.ts:173]。
 
-`createSession()` 在 server create 成功后直接 reserve exclusive lease；`attachSession()` 是 shared acquisition convenience；`acquireSession()` 先 reserve ownership，再等待 in-flight detachment/cleanup reconciliation，必要时只发一次 deduplicated attach request。[E: packages/client/src/client.ts:141][E: packages/client/src/client.ts:143][E: packages/client/src/client.ts:147][E: packages/client/src/client.ts:148][E: packages/client/src/client.ts:151][E: packages/client/src/client.ts:153][E: packages/client/src/client.ts:155][E: packages/client/src/client.ts:157][E: packages/client/src/client.ts:160][E: packages/client/src/client.ts:162][E: packages/client/src/client.ts:163][E: packages/client/src/client.ts:167][E: packages/client/src/client.ts:172]
+## Acquisition（应用服务 + OOB attachment）
 
-exclusive/shared 只由当前 `PiClient` 的 maps/counts 实现，不会写入 protocol command；另一个 `PiClient`/connection 仍可 attach 同一 server live runtime。[E: packages/client/src/client.ts:56][E: packages/client/src/client.ts:57][E: packages/client/src/client.ts:381][E: packages/client/src/client.ts:389][I]
+protocol 没有 `attach` / `detach` / `create` command。测试与 README 约定的路径是：对 `{ serverId }` 发 Chord call `pi.session-management.attach(sessionId)`，业务 result 不带 routing id；server 另发 `{ type: "attachment", attachment: SessionTarget | null }` [E: packages/client/test/client.test.ts:28] [E: packages/client/test/client.test.ts:36] [E: packages/protocol/src/protocol.ts:94]。
 
-## Release state machine
+`Client.#handleMessage` 遇到 `attachment` 时校验 `serverId`，再 `#setAttachment`；相同 `serverId`/`sessionId`/`attachmentId` 不重复通知 [E: packages/client/src/client.ts:305] [E: packages/client/src/client.ts:310] [E: packages/client/src/client.ts:400]。`onAttachmentChange` 把新 `SessionTarget | undefined` 交给调用方 [E: packages/client/src/client.ts:175] [E: packages/client/src/types.ts:14]。
 
-每个 handle 的 local state 是 `active | releasing | released | invalidated`；generation mismatch 会把 active/releasing handle 变为 invalidated。[E: packages/client/src/client.ts:39][E: packages/client/src/client.ts:209][E: packages/client/src/client.ts:210][E: packages/client/src/client.ts:212][E: packages/client/src/client.ts:214][E: packages/client/src/client.ts:216][E: packages/client/src/client.ts:219]
+切换 session 后，旧 `{ sessionId, attachmentId }` 在 server 上变成 stale：`SessionRouter.requireAttachment()` 要求 connection 当前 attachment 的 session id 与 attachment id 都匹配，否则 `session_not_attached` [E: packages/server/src/session-router.ts:226] [E: packages/server/src/session-router.ts:228]。
 
-release 开始后 command/subscription 立即通过 `assertActive()` 拒绝；当 lease count 是 1 时发送 detach，大于 1 时只减少本地 count。[E: packages/client/src/client.ts:226][E: packages/client/src/client.ts:228][E: packages/client/src/client.ts:229][E: packages/client/src/client.ts:231][E: packages/client/src/client.ts:236][E: packages/client/src/client.ts:238][E: packages/client/src/client.ts:239][E: packages/client/src/client.ts:240][E: packages/client/src/client.ts:250][E: packages/client/src/client.ts:251]
+不要把这套路由当成跨 process exclusive lock：多个 presentation 可以同时 attach 同一 hosted session；冲突由应用 / worker 拒绝，而不是 client lease mode [I]。
 
-explicit `detach()` 使用 `relinquishOnFailure=false`：失败会恢复 `active` 以便 retry。cleanup-oriented `dispose()` 使用 `true`：失败仍 relinquish ownership，记录 cleanup-required；下一次 acquisition 先补发 detach reconciliation。[E: packages/client/src/client.ts:254][E: packages/client/src/client.ts:257][E: packages/client/src/client.ts:258][E: packages/client/src/client.ts:259][E: packages/client/src/client.ts:260][E: packages/client/src/client.ts:262][E: packages/client/src/client.ts:263][E: packages/client/src/client.ts:284][E: packages/client/src/client.ts:285][E: packages/client/src/client.ts:363][E: packages/client/src/client.ts:367][E: packages/client/src/client.ts:370]
+## Service subscription
 
-## Invalidation
+`subscribeService()` 分配 `service-N` subscription id，登记 `ActiveServiceListener`（Chord `createServiceStateDecoder()` + wire/update 队列），再发 `createServiceSubscribeCall` [E: packages/client/src/client.ts:243] [E: packages/client/src/client.ts:183] [E: packages/client/src/client.ts:195]。snapshot 尚未 decode 完时到达的 `service_update` 进 `queuedWireUpdates`；hydrate 后、`start()` 前的 decoded update 进 `queued` [E: packages/client/src/client.ts:313] [E: packages/client/src/client.ts:317] [E: packages/client/src/client.ts:330]。
 
-`session_removed` event invalidates该 session 的全部 leases；disconnect/dispose invalidate all lease generations。invalidated/released handle 的 dispose 是 no-op，不再发送 protocol cleanup。[E: packages/client/src/client.ts:233][E: packages/client/src/client.ts:294][E: packages/client/src/client.ts:296][E: packages/client/src/client.ts:321][E: packages/client/src/client.ts:324][E: packages/client/src/client.ts:402][E: packages/client/src/client.ts:406][E: packages/client/src/client.ts:409][E: packages/client/src/client.ts:410]
+`start()` 幂等：标 `ready` 并按序 `#deliverServiceUpdate`。`dispose()` 从 map 删除 listener；若仍 `connected` 且 `#targetIsCurrent(target)`，再发 unsubscribe；最后等待 `deliveryTail` [E: packages/client/src/client.ts:315] [E: packages/client/src/client.ts:221] [E: packages/client/src/client.ts:314]。session target 的 “current” 要求 attachment 三元组全等；server target 只比 `hello.serverId` [E: packages/client/src/client.ts:423] [E: packages/client/src/client.ts:427]。
 
-attach 前暂时移除旧 snapshot；attach 失败时恢复，成功 reacquire 可以接受新 runtime 的较低 revision，而不是让旧 snapshot revision guard 阻塞。[E: packages/client/src/client.ts:179][E: packages/client/src/client.ts:180][E: packages/client/src/client.ts:182][E: packages/client/src/client.ts:184][E: packages/client/src/state.ts:49][E: packages/client/src/state.ts:50][E: packages/client/src/state.ts:55][E: packages/client/src/state.ts:56][E: packages/client/test/sessions.test.ts:227]
+`createClientServiceTransport()` 把 `subscribeService` 映射为 Chord transport 的 `activate` / `close` [E: packages/client/src/client.ts:459] [E: packages/client/src/client.ts:469]。测试锁住：snapshot 到达前的 update 不投递；`activate()` 之后才释放 buffer [E: packages/client/test/client.test.ts:81] [E: packages/client/test/client.test.ts:112]。
+
+## Release 与 invalidation
+
+disconnect 时 hello/attachment 清空、pending request reject、`#serviceListeners.clear()`——不再补发 unsubscribe [E: packages/client/src/client.ts:346] [E: packages/client/src/client.ts:348] [E: packages/client/src/client.ts:350]。`dispose()` 同样清 attachment 与 listeners，后续 `request` 得 `ClientDisposedError` [E: packages/client/src/client.ts:463] [E: packages/client/src/client.ts:387] [E: packages/client/test/client.test.ts:241]。
+
+server disconnect 会等该 connection 已 admitted 的 invoke settle，再 `release()` attachment；`publish=false`，避免对已死连接再发 attachment event [E: packages/server/src/session-router.ts:91] [E: packages/server/src/session-router.ts:96] [E: packages/server/src/session-router.ts:238]。client README 明确：本地 reject 不等于远程工作立刻停止 [E: packages/client/README.md:34]。
 
 ## Gotcha
 
-- `active` getter 与 `attached` 等价，不表示 server-wide exclusive ownership。[E: packages/client/src/session-handle.ts:56][E: packages/client/src/session-handle.ts:60][E: packages/client/src/session-handle.ts:61]
-- handle snapshot 只在 active 且 client state 仍标 attached 时可见；release/invalidation 后返回 `undefined`。[E: packages/client/src/client.ts:222][E: packages/client/src/client.ts:224][E: packages/client/src/client.ts:271]
-- server `session_removed` schema 已存在，但当前 composable server 没有 delete command；该 invalidation path 是 forward-compatible consumer behavior。[I]
+- 不存在 `PiSessionHandle`、`SessionLeaseMode`、`acquireSession()`。不要在 wiki 或调用代码里发明这些符号 [E: packages/client/src/index.ts:1]。
+- `Client.attachment` 是当前 presentation route，不是 durable session 列表，也不是 authoritative transcript snapshot [E: packages/client/src/client.ts:113]。
+- 一个 `Client` 同时只跟踪一条 attachment。要观察另一 session，需经应用 `attach` 让 server 发布新 route [E: packages/client/src/client.ts:73] [I]。
+- subscription id 是 client 生成的 `service-N`；server 用它关联 `service_update`。未知 `subscriptionId` 的 update 被忽略，不 fail connection [E: packages/client/src/client.ts:314] [E: packages/client/src/client.ts:315]。
 
 ## Sources
 
 - packages/client/src/client.ts
-- packages/client/src/session-handle.ts
-- packages/client/src/state.ts
+- packages/client/src/types.ts
 - packages/client/src/errors.ts
-- packages/client/test/sessions.test.ts
+- packages/client/src/index.ts
+- packages/client/README.md
+- packages/client/test/client.test.ts
+- packages/protocol/src/protocol.ts
+- packages/server/src/session-router.ts
 
 ## 相关
 
-- [subsys.client.remote-session-client](remote-session-client.md) - connection、request 与 authoritative cache。
-- [subsys.server.live-sessions](../server/live-sessions.md) - server 端多 connection attachment 与 runtime disposal。
-- [subsys.protocol.wire-protocol](../protocol/wire-protocol.md) - attach/detach command 与 snapshot schema。
+- [subsys.client.remote-session-client](remote-session-client.md) - `Client` 连接、request correlation 与 Chord transport adapter。
+- [subsys.server.live-sessions](../server/live-sessions.md) - `SessionRouter` 多 connection attachment、stale route 与 disposal。
+- [subsys.protocol.wire-protocol](../protocol/wire-protocol.md) - `SessionTarget` 与 out-of-band `attachment` envelope。

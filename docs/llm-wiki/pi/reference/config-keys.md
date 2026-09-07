@@ -16,7 +16,7 @@ symbols:
   - MermaidRenderingMode
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 related:
   - surface.config.settings
   - subsys.coding-agent.settings-manager
@@ -37,7 +37,7 @@ related:
 
 全局配置文件位于 `~/.pi/agent/settings.json`,项目配置文件位于 `.pi/settings.json`,且项目设置覆盖全局设置 [E: packages/coding-agent/docs/settings.md:3] [E: packages/coding-agent/docs/settings.md:7] [E: packages/coding-agent/docs/settings.md:8]。`SettingsManager` 构造时把 global 与 project settings 通过 `deepMergeSettings` 合并 [E: packages/coding-agent/src/core/settings-manager.ts:333];该 merge 对 nested object **递归**合并,primitive 与 array 由 override 覆盖 [E: packages/coding-agent/src/core/settings-manager.ts:152] [E: packages/coding-agent/src/core/settings-manager.ts:163] [E: packages/coding-agent/src/core/settings-manager.ts:164] [E: packages/coding-agent/src/core/settings-manager.ts:172]。
 
-本表把 `Settings` top-level 字段、嵌套 settings leaf 字段、以及 `PackageSource` 对象形态字段都作为可 grep 的配置实例列出 [E: packages/coding-agent/src/core/settings-manager.ts:83] [E: packages/coding-agent/src/core/settings-manager.ts:94]。按当前 `Settings` 51 个 top-level 字段、27 个嵌套 leaf 字段和 6 个 `PackageSource` object 字段逐 key 展开，本页采用 84 个实例的 catalog 口径 [I]。
+本表把 `Settings` top-level 字段、嵌套 settings leaf 字段、以及 `PackageSource` 对象形态字段都作为可 grep 的配置实例列出 [E: packages/coding-agent/src/core/settings-manager.ts:83] [E: packages/coding-agent/src/core/settings-manager.ts:94]。本轮重数 `Settings` 仍是 51 个 top-level 字段（含 `fullscreenCopyOnSelect`）、27 个嵌套 leaf 字段和 6 个 `PackageSource` object 字段，catalog 口径仍是 84 [E: packages/coding-agent/src/core/settings-manager.ts:94] [E: packages/coding-agent/src/core/settings-manager.ts:145] [I]。`defaults.ts` 只导出 `DEFAULT_THINKING_LEVEL = "medium"` 与 `THINKING_LEVEL_OPTIONS` [E: packages/coding-agent/src/core/defaults.ts:3] [E: packages/coding-agent/src/core/defaults.ts:4]。
 
 相对上一版 catalog:补入已有但未入表的 `modelThinkingLevels`;新增 `fullscreenCopyOnSelect` 与 `terminal.hyperlinks` / `terminal.images` / `terminal.trueColor`。TUI markdown 的 LaTeX 渲染由 `@earendil-works/pi-tui` 的 `renderLatex` option 负责,不是 `Settings` 键 [U]。
 
@@ -78,7 +78,7 @@ related:
 | `terminal` | `TerminalSettings` object | see leaf defaults | terminal display 复合配置;leaf key 见下表。 | [E: packages/coding-agent/src/core/settings-manager.ts:40] [E: packages/coding-agent/src/core/settings-manager.ts:125] |
 | `images` | `ImageSettings` object | see leaf defaults | image sending/resize 复合配置;leaf key 见下表。 | [E: packages/coding-agent/src/core/settings-manager.ts:50] [E: packages/coding-agent/src/core/settings-manager.ts:126] |
 | `enabledModels` | `string[]` | unset | Ctrl+P model cycling patterns,格式同 `--models` CLI flag。 | [E: packages/coding-agent/src/core/settings-manager.ts:127] [E: packages/coding-agent/src/core/settings-manager.ts:1269] [E: packages/coding-agent/docs/settings.md:262] |
-| `defaultTools` | `string[]` | unset; omitted 时产品默认 `["read", "bash", "edit", "write"]` | 初始 built-in tool 选择;可用 built-in 为 `read`、`bash`、`powershell`、`edit`、`write`、`grep`、`find`、`ls`。Windows 可用 `powershell` 替代或并列 `bash`。空数组关闭全部 built-in,但保留 extension/SDK custom tools。项目 array 整段替换全局 array。 | [E: packages/coding-agent/src/core/settings-manager.ts:128] [E: packages/coding-agent/src/core/settings-manager.ts:1273] [E: packages/coding-agent/src/core/agent-session.ts:2803] [E: packages/coding-agent/docs/settings.md:226] [E: packages/coding-agent/docs/settings.md:228] [E: packages/coding-agent/docs/settings.md:236] [E: packages/coding-agent/docs/settings.md:240] [E: packages/coding-agent/docs/settings.md:244] |
+| `defaultTools` | `string[]` | unset; omitted 时产品默认 `["read", "bash", "edit", "write"]` | 初始 built-in tool 选择;可用 built-in 为 `read`、`bash`、`powershell`、`edit`、`write`、`grep`、`find`、`ls`。Windows 可用 `powershell` 替代或并列 `bash`。空数组关闭全部 built-in,但保留 extension/SDK custom tools。项目 array 整段替换全局 array。 | [E: packages/coding-agent/src/core/settings-manager.ts:128] [E: packages/coding-agent/src/core/settings-manager.ts:1273] [E: packages/coding-agent/src/core/agent-session.ts:2810] [E: packages/coding-agent/docs/settings.md:226] [E: packages/coding-agent/docs/settings.md:228] [E: packages/coding-agent/docs/settings.md:236] [E: packages/coding-agent/docs/settings.md:240] [E: packages/coding-agent/docs/settings.md:244] |
 | `doubleEscapeAction` | `"fork" \| "tree" \| "none"` | `"tree"` | empty editor 下 double-escape 动作。 | [E: packages/coding-agent/src/core/settings-manager.ts:129] [E: packages/coding-agent/src/core/settings-manager.ts:1284] [E: packages/coding-agent/docs/settings.md:63] |
 | `treeFilterMode` | `"default" \| "no-tools" \| "user-only" \| "labeled-only" \| "all"` | `"default"` | `/tree` 默认过滤模式;getter 会拒绝 invalid value。 | [E: packages/coding-agent/src/core/settings-manager.ts:130] [E: packages/coding-agent/src/core/settings-manager.ts:1294] [E: packages/coding-agent/docs/settings.md:64] |
 | `thinkingBudgets` | `ThinkingBudgetsSettings` object | unset | thinking level token budget 复合配置;leaf key 见下表。 | [E: packages/coding-agent/src/core/settings-manager.ts:55] [E: packages/coding-agent/src/core/settings-manager.ts:131] [E: packages/coding-agent/src/core/settings-manager.ts:1128] [E: packages/coding-agent/docs/settings.md:36] |

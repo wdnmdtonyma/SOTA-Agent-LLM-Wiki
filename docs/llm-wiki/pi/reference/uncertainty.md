@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 # 不确定项日志([U] 汇总)
@@ -1865,19 +1865,19 @@ status: draft
 - 当前 `SessionMetadata` / `Session` / `SessionRepo` 在 `types.ts` 里没有这些符号。
 - 本批不以 harness.md 为 ground truth。若后续代码补上这些 API，节点需要再填。
 
-## [U] `sourceFormat: 3 | 4` 但从不见 3
+## [U] `sourceFormat` 已删除
 
 - 节点: `subsys.agent-core.jsonl-storage`
-- `JsonlSessionMetadata.sourceFormat` 类型是 `3 | 4`。[E: packages/agent/src/harness/session/jsonl/types.ts:31]
-- `metadataFromHeader()` 写死 `sourceFormat: 4`。[E: packages/agent/src/harness/session/jsonl/codec.ts:122]
-- 本包 `packages/agent/src/harness/session/**` 没有把 v3 文件转成 v4 或写出 `sourceFormat: 3` 的路径。
-- 不知道 `3` 是预留给 coding-agent 迁移层、外部 importer，还是未完成的类型残留。
+- `JsonlSessionMetadata` 已不再有 `sourceFormat`；现行字段是 `cwd` / `path` / `modifiedAt`。[E: packages/agent/src/harness/session/jsonl/types.ts:26]
+- `metadataFromHeader()` 现位于 `jsonl/repo.ts`，复制 header 的 id / createdAt / storageVersion / cwd 与可选 parent 字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:25]
+- 本条不再把已删除的 `sourceFormat: 3 | 4` 当未决项。
 
 ## [U] `legacyParentSessionPath` 的写入者
 
 - 节点: `subsys.agent-core.jsonl-storage`
-- header 允许 `legacyParentSessionPath`，且与 `parentSessionId` 互斥。[E: packages/agent/src/harness/session/jsonl/types.ts:55] [E: packages/agent/src/harness/session/jsonl/codec.ts:82]
-- `JsonlSessionRepo.prepareCreate` 只写 `parentSessionId`。[E: packages/agent/src/harness/session/jsonl/repo.ts:215]
+- header 允许可选 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/types.ts:15] [E: packages/agent/src/harness/session/jsonl/codec.ts:45]
+- `metadataFromHeader` 原样拷贝该字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:34]
+- `JsonlSessionRepo.create` 只写 `parentSessionId`，不写 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/repo.ts:78]
 - 谁在什么时候把无法解析的 v3 parent path 写进该字段，本批 source 看不到。
 
 ## [U] InMemorySessionStorage 并发
@@ -2007,6 +2007,41 @@ updated: 853a80d26c
 - `setKittyProtocolActive` 定义在 `keys.ts`;`terminal-capabilities` 按既有约定只核 `terminal.ts` 调用点。
 - coding-agent changelog `#8676` 是 inherited fullscreen word selection;TUI 实现与测试在 `#7746` / `getWordSelection()`。
 - 官方 `docs/terminal-setup.md` 写 settings 优先于 env,是产品接线(`getTerminalCapabilityOverrides` + `setCapabilityOverrides`),不是 TUI `detectCapabilities()` 自己读 settings。
+
+## update-9767ba275f-broken-ai-harness
+
+# uncertainty · broken-ai-harness · 9767ba275f
+
+- `subsys.ai.cloudflare-gateway-binding`: 模块注释写 binding 调用 “pre-authenticated in-account”，本仓库测试只用 fake `binding.fetch()`，没有 Cloudflare Workers runtime 证明。
+- `subsys.ai.cloudflare-gateway-binding`: `pi-coding-agent` 源码没有引用 `createAiBindingFetch`。CHANGELOG 仍写旧名 `createGatewayBindingFetch` “inherited”，看不到 coding-agent 再导出或自动装配。
+
+## update-9767ba275f-broken-session
+
+# uncertainty · broken-session · 9767ba275f
+
+- `JsonlSessionRepo.close()` 只把 repo 标成 closed，不关闭已打开的 session handles。源码有 TODO：ownership 未定。见 `packages/agent/src/harness/session/jsonl/repo.ts`。
+- sqlite-node `001_initial.sql` 用 `CREATE TABLE IF NOT EXISTS`，没有从 0.84 lane/FTS schema 升级的 migration。打开 pre-0.85 文件后的具体失败形态未固定。
+- `packages/agent/docs/harness.md` 仍有一份与当前 `SessionSearchService` 不完全一致的 S3 设计稿。本批次不以该文档为 ground truth。
+
+## update-9767ba275f-chord
+
+# uncertainty-update-9767ba275f-chord
+
+- **invoke 不做递归 JSON 校验**（`subsys.chord.runtime` / `subsys.chord.delta`）：`RemoteServiceProvider.invoke` 把 `call.args` 原样交给 method，返回值只断言成 `JsonValue | undefined`，源码里没有 `isJsonValue()` 调用。PLANNING.md 也写 runtime 把深度校验留给 serializer。页内标 `[I]`。若后续在 invoke 路径加上 runtime 检查，应升为 `[E]` 并改 gotcha。
+- **对称 RPC peer 未落地**（`subsys.chord.runtime`）：README 写 “Symmetric RPC peers are planned”。当前公开面是 `RemoteServiceTransport` + `createRemoteServiceEndpoint`，不是双向 RPC 会话。未当 shipped API 写。
+- **Context 不过业务 JSON 线**（`subsys.chord.runtime`）：consumer 把 trailing `Context` 从 args 剥掉，provider 在接收端再拼上本地 context。没有看到把 `Context` 编进 `ServiceCall.args` 的代码。标 `[I]`：这是调用约定，不是单独的 wire schema 字段。
+
+## update-9767ba275f-extension-events
+
+# uncertainty: ref.coding-agent.extension-events @ 9767ba275f
+
+Lead expected `ExtensionAPI.on` named events = 33 (NOT the old 36).
+
+Source at `packages/coding-agent/src/core/extensions/types.ts` `on()` overloads (L1257–1301) still lists **36** named events:
+
+project_trust, resources_discover, session_start, session_info_changed, session_before_switch, session_before_fork, session_before_compact, session_compact, session_compact_failed, session_shutdown, session_before_tree, session_tree, context, before_provider_request, before_provider_headers, after_provider_response, before_agent_start, agent_start, agent_end, agent_settled, ui_prompt_start, ui_prompt_end, turn_start, turn_end, message_start, message_update, message_end, tool_execution_start, tool_execution_update, tool_execution_end, model_select, thinking_level_select, tool_call, tool_result, user_bash, input.
+
+Catalog title and enumeration follow source (36). Did not drop events to match the lead count.
 
 ## update-cee5ff7520
 

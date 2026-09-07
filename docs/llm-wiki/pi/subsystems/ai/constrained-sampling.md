@@ -28,14 +28,14 @@ source:
   - packages/coding-agent/src/core/tools/bash.ts
   - packages/coding-agent/src/core/tools/edit.ts
   - packages/coding-agent/src/core/tools/write.ts
-  - packages/coding-agent/src/server/create-harness.ts
-  - packages/coding-agent/test/experimental-tool-strict-mode.test.ts
+  - packages/coding-agent/src/core/tools/powershell.ts
+  - packages/coding-agent/test/builtin-tool-strict-mode.test.ts
 symbols:
   - resolveJsonSchemaStrictSampling
   - resolveGrammarConstrainedSampling
   - appendGrammarToolInputJsonDelta
   - makeStrictJsonSchema
-  - getExperimentalToolSampling
+  - areExperimentalFeaturesEnabled
 related:
   - subsys.ai.openai-responses
   - subsys.ai.openai-completions
@@ -44,10 +44,10 @@ related:
   - subsys.coding-agent.tool-wrapper
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
-> 约束采样把工具声明中的 JSON Schema strict 或 grammar 配置翻译成 provider wire 能力，并维护 grammar tool call 的增量 JSON 参数。`PI_EXPERIMENTAL=1` 时，coding-agent 默认 `read`/`bash`/`powershell`/`edit`/`write` 会带上 prefer-strict JSON schema。
+> 约束采样把工具声明中的 JSON Schema strict 或 grammar 配置翻译成 provider wire 能力，并维护 grammar tool call 的增量 JSON 参数。coding-agent 默认 `read` / `bash` / `powershell` / `edit` / `write` 带 `constrainedSampling: { type: "json_schema", strict: "prefer" }`，不再要求 `PI_EXPERIMENTAL`。
 
 ## 两种约束
 
@@ -57,24 +57,32 @@ updated: 853a80d26c
 
 `resolveGrammarConstrainedSampling()` 只在 provider 宣告 OpenAI grammar-tool 支持时生效，优先选择非空 Lark，后退到 regex。grammar 工具必须是 object schema，且恰好有一个 required string property。[E: packages/ai/src/api/constrained-sampling.ts:189] [E: packages/ai/src/api/constrained-sampling.ts:194] [E: packages/ai/src/api/constrained-sampling.ts:202] [E: packages/ai/src/api/constrained-sampling.ts:230] [E: packages/ai/src/api/constrained-sampling.ts:239] [E: packages/ai/src/api/constrained-sampling.ts:243] [E: packages/ai/src/api/constrained-sampling.ts:253]
 
-配置从公共 `Tool.constrainedSampling` 进入 provider context [E: packages/ai/src/types.ts:504] [E: packages/ai/src/types.ts:518]。coding-agent extension `ToolDefinition` 暴露同一字段，正反 wrapper 都原样保留它，因此 extension tool 与 plain `AgentTool` 不会在 registry 适配时丢失约束 [E: packages/coding-agent/src/core/extensions/types.ts:465] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:14] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:42]。
+配置从公共 `Tool.constrainedSampling` 进入 provider context [E: packages/ai/src/types.ts:521]。coding-agent extension `ToolDefinition` 暴露同一字段，正反 wrapper 都原样保留它，因此 extension tool 与 plain `AgentTool` 不会在 registry 适配时丢失约束 [E: packages/coding-agent/src/core/extensions/types.ts:465] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:14] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:42]。
 
-## 实验门控的默认工具
+## 默认内置工具的 prefer-strict
 
-`PI_EXPERIMENTAL=1` 时，`getExperimentalToolSampling()` 返回 `{ type: "json_schema", strict: "prefer" }`，否则返回 `undefined`。[E: packages/coding-agent/src/core/experimental.ts:1] [E: packages/coding-agent/src/core/experimental.ts:3] [E: packages/coding-agent/src/core/experimental.ts:7] [E: packages/coding-agent/src/core/experimental.ts:8] 默认 `read` / `bash` / `powershell` / `edit` / `write` 的 factory 把该值写进 `constrainedSampling`（`powershell` 走与 bash 相同的 `createShellToolDefinition`）。schema 本身不变，只多了 prefer-strict 标记。测试锁定：关实验门时这些 tool 的 `constrainedSampling` 为 `undefined`。[E: packages/coding-agent/src/core/tools/powershell.ts:53][E: packages/coding-agent/src/core/tools/read.ts:222] [E: packages/coding-agent/src/core/tools/bash.ts:354] [E: packages/coding-agent/src/core/tools/edit.ts:329] [E: packages/coding-agent/src/core/tools/write.ts:200] [E: packages/coding-agent/test/experimental-tool-strict-mode.test.ts:28] [E: packages/coding-agent/test/experimental-tool-strict-mode.test.ts:35] [E: packages/coding-agent/test/experimental-tool-strict-mode.test.ts:36] [E: packages/coding-agent/test/experimental-tool-strict-mode.test.ts:37] 远程 session harness factory 在包装默认工具时再次套同一 helper，因此 server 侧默认工具也受同一 env gate。[E: packages/coding-agent/src/server/create-harness.ts:34] `prefer` 意味着：provider 支持且 schema 能改成 strict 子集时 wire 写 `strict: true` 并发送 `makeStrictJsonSchema()` 产物；否则降级为普通 function schema，不在请求构造期失败。[E: packages/ai/src/api/constrained-sampling.ts:212] [E: packages/ai/src/api/constrained-sampling.ts:218] [E: packages/ai/src/api/openai-responses-shared.ts:380] [E: packages/ai/src/api/openai-responses-shared.ts:388]
+`read` / `bash` / `powershell` / `edit` / `write` 的 factory 把字面量 `{ type: "json_schema", strict: "prefer" }` 写进 `constrainedSampling`。`powershell` 走与 bash 相同的 `createShellToolDefinition`，因此也带同一标记。schema 本身不变，只多了 prefer-strict 标记。[E: packages/coding-agent/src/core/tools/read.ts:77] [E: packages/coding-agent/src/core/tools/bash.ts:238] [E: packages/coding-agent/src/core/tools/edit.ts:156] [E: packages/coding-agent/src/core/tools/write.ts:57] [E: packages/coding-agent/src/core/tools/powershell.ts:53]
+
+这条默认值 **不再** 经过 `PI_EXPERIMENTAL`。`getExperimentalToolSampling()` 已删除；`packages/coding-agent/src/core/experimental.ts` 只剩 `areExperimentalFeaturesEnabled()`，读 `process.env.PI_EXPERIMENTAL === "1"`。[E: packages/coding-agent/src/core/experimental.ts:1] [E: packages/coding-agent/src/core/experimental.ts:2] 旧 `packages/coding-agent/src/server/create-harness.ts` 已删除，不再有远程 harness factory 二次套实验 helper。
+
+测试锁在 `builtin-tool-strict-mode.test.ts`：`PI_EXPERIMENTAL` 为 `undefined` / `"0"` / `"1"` 时，五个工具的 definition 与 wrapped tool 都是 `{ type: "json_schema", strict: "prefer" }`；`grep` / `find` / `ls` 仍为 `undefined`；`required` 字段不因 strict 标记而改。[E: packages/coding-agent/test/builtin-tool-strict-mode.test.ts:13] [E: packages/coding-agent/test/builtin-tool-strict-mode.test.ts:18] [E: packages/coding-agent/test/builtin-tool-strict-mode.test.ts:23] [E: packages/coding-agent/test/builtin-tool-strict-mode.test.ts:27] [E: packages/coding-agent/test/builtin-tool-strict-mode.test.ts:30]
+
+扩展可 `constrainedSampling: false` 显式关掉。`wrapToolDefinition` 原样保留 `false`；`session_start` 里 `pi.registerTool({ ...definitions[name], constrainedSampling: false })` 后，session 上的 definition 与 `agent.state.tools` 都是 `false`。[E: packages/coding-agent/src/core/extensions/types.ts:465] [E: packages/coding-agent/test/builtin-tool-strict-mode.test.ts:38] [E: packages/coding-agent/test/builtin-tool-strict-mode.test.ts:68] [E: packages/coding-agent/test/builtin-tool-strict-mode.test.ts:91]
+
+`prefer` 意味着：provider 支持且 schema 能改成 strict 子集时 wire 写 `strict: true` 并发送 `makeStrictJsonSchema()` 产物；否则降级为普通 function schema，不在请求构造期失败。[E: packages/ai/src/api/constrained-sampling.ts:212] [E: packages/ai/src/api/constrained-sampling.ts:218] [E: packages/ai/src/api/openai-responses-shared.ts:380] [E: packages/ai/src/api/openai-responses-shared.ts:388]
 
 ## Provider / wire 映射
 
-grammar 当前只映射到 OpenAI-family wire：Responses adapter 在 capability `supportsOpenAIGrammarTools` 为 true 时生成 `type: "custom"` + grammar format，Completions adapter 生成 custom grammar tool；两者都优先 Lark、再选 regex。[E: packages/ai/src/api/openai-responses-shared.ts:359] [E: packages/ai/src/api/openai-responses-shared.ts:362] [E: packages/ai/src/api/openai-responses-shared.ts:365] [E: packages/ai/src/api/openai-responses-shared.ts:368] [E: packages/ai/src/api/openai-responses-shared.ts:372] [E: packages/ai/src/api/openai-completions.ts:1461] [E: packages/ai/src/api/openai-completions.ts:1466] [E: packages/ai/src/api/openai-completions.ts:1469] [E: packages/ai/src/api/openai-completions.ts:1474] 当 capability 为 false 时 resolver 返回 `undefined`，两个 adapter 会把同一 tool 降级为普通 function tool，而不是本地执行 grammar；测试锁定了 function fallback 且不写 strict 字段的 Responses 形态。[E: packages/ai/src/api/constrained-sampling.ts:239] [E: packages/ai/src/api/constrained-sampling.ts:240] [E: packages/ai/src/api/openai-responses-shared.ts:380] [E: packages/ai/src/api/openai-responses-shared.ts:385] [E: packages/ai/src/api/openai-completions.ts:1484] [E: packages/ai/src/api/openai-completions.ts:1486] [E: packages/ai/test/constrained-sampling.test.ts:109] [E: packages/ai/test/constrained-sampling.test.ts:113] [E: packages/ai/test/constrained-sampling.test.ts:114]。
+grammar 当前只映射到 OpenAI-family wire：Responses adapter 在 capability `supportsOpenAIGrammarTools` 为 true 时生成 `type: "custom"` + grammar format，Completions adapter 生成 custom grammar tool；两者都优先 Lark、再选 regex。[E: packages/ai/src/api/openai-responses-shared.ts:359] [E: packages/ai/src/api/openai-responses-shared.ts:362] [E: packages/ai/src/api/openai-responses-shared.ts:365] [E: packages/ai/src/api/openai-responses-shared.ts:368] [E: packages/ai/src/api/openai-completions.ts:1475] [E: packages/ai/src/api/openai-completions.ts:1478] [E: packages/ai/src/api/openai-completions.ts:1483] [E: packages/ai/src/api/openai-completions.ts:1495] 当 capability 为 false 时 resolver 返回 `undefined`，两个 adapter 会把同一 tool 降级为普通 function tool，而不是本地执行 grammar；测试锁定了 function fallback 且不写 strict 字段的 Responses 形态。[E: packages/ai/src/api/constrained-sampling.ts:239] [E: packages/ai/src/api/constrained-sampling.ts:240] [E: packages/ai/src/api/openai-responses-shared.ts:380] [E: packages/ai/src/api/openai-responses-shared.ts:385] [E: packages/ai/src/api/openai-completions.ts:1493] [E: packages/ai/src/api/openai-completions.ts:1501] [E: packages/ai/test/constrained-sampling.test.ts:116] [E: packages/ai/test/constrained-sampling.test.ts:120] [E: packages/ai/test/constrained-sampling.test.ts:121]
 
-Azure Responses 与 OpenAI Codex Responses 是独立 adapter，但也把 `supportsOpenAIGrammarTools` 传入 grammar property map 与共享 Responses tool conversion；两者同时把自身 `supportsStrictMode` capability 传给工具转换，所以不是只由标准 OpenAI Responses 入口消费约束配置。[E: packages/ai/src/api/azure-openai-responses.ts:106] [E: packages/ai/src/api/azure-openai-responses.ts:108] [E: packages/ai/src/api/azure-openai-responses.ts:280] [E: packages/ai/src/api/azure-openai-responses.ts:282] [E: packages/ai/src/api/azure-openai-responses.ts:306] [E: packages/ai/src/api/azure-openai-responses.ts:308] [E: packages/ai/src/api/openai-codex-responses.ts:263] [E: packages/ai/src/api/openai-codex-responses.ts:265] [E: packages/ai/src/api/openai-codex-responses.ts:524] [E: packages/ai/src/api/openai-codex-responses.ts:530] [E: packages/ai/src/api/openai-codex-responses.ts:537] [E: packages/ai/src/api/openai-codex-responses.ts:545]
+Azure Responses 与 OpenAI Codex Responses 是独立 adapter，但也把 `supportsOpenAIGrammarTools` 传入 grammar property map 与共享 Responses tool conversion；两者同时把自身 `supportsStrictMode` capability 传给工具转换，所以不是只由标准 OpenAI Responses 入口消费约束配置。[E: packages/ai/src/api/azure-openai-responses.ts:106] [E: packages/ai/src/api/azure-openai-responses.ts:108] [E: packages/ai/src/api/azure-openai-responses.ts:280] [E: packages/ai/src/api/azure-openai-responses.ts:282] [E: packages/ai/src/api/azure-openai-responses.ts:306] [E: packages/ai/src/api/azure-openai-responses.ts:308] [E: packages/ai/src/api/openai-codex-responses.ts:524] [E: packages/ai/src/api/openai-codex-responses.ts:526] [E: packages/ai/src/api/openai-codex-responses.ts:529] [E: packages/ai/src/api/openai-codex-responses.ts:544]
 
 JSON-schema strict 的 wire 支持分散在多类 adapter：
 
-- OpenAI Responses / Completions 把 compat 的 strict capability 传给 resolver；支持时写 `strict`,不支持时 `prefer` 走普通 function schema、`require` 在构造请求时抛错。[E: packages/ai/src/api/openai-responses-shared.ts:360] [E: packages/ai/src/api/openai-responses-shared.ts:361] [E: packages/ai/src/api/openai-responses-shared.ts:380] [E: packages/ai/src/api/openai-responses-shared.ts:391] [E: packages/ai/src/api/openai-completions.ts:1484] [E: packages/ai/src/api/openai-completions.ts:1492]
-- Anthropic 只在 `model.compat.supportsStrictTools` 打开时保留完整 schema 并写 `strict: true`;默认 capability 为 false。[E: packages/ai/src/api/anthropic-messages.ts:193] [E: packages/ai/src/api/anthropic-messages.ts:1337] [E: packages/ai/src/api/anthropic-messages.ts:1346] [E: packages/ai/src/api/anthropic-messages.ts:1357]
-- Google Generative AI / Vertex 只把 Gemini major version 3+ 判为 strict-capable，并将有 strict tool 的自动 function-calling mode 提升到 `VALIDATED`。[E: packages/ai/src/api/google-shared.ts:342] [E: packages/ai/src/api/google-shared.ts:344] [E: packages/ai/src/api/google-shared.ts:366] [E: packages/ai/src/api/google-shared.ts:370] [E: packages/ai/src/api/google-shared.ts:371] [E: packages/ai/src/api/google-generative-ai.ts:375] [E: packages/ai/src/api/google-generative-ai.ts:375] [E: packages/ai/src/api/google-vertex.ts:474] [E: packages/ai/src/api/google-vertex.ts:474]
-- Mistral 固定以 supported=true 解析 strict，并写到 function tool；Bedrock 则由 `model.compat.supportsStrictMode ?? false` 决定是否在 `toolSpec` 写 strict。[E: packages/ai/src/api/mistral-conversations.ts:500] [E: packages/ai/src/api/mistral-conversations.ts:755] [E: packages/ai/src/api/mistral-conversations.ts:762] [E: packages/ai/src/api/bedrock-converse-stream.ts:257] [E: packages/ai/src/api/bedrock-converse-stream.ts:1105] [E: packages/ai/src/api/bedrock-converse-stream.ts:1111] [E: packages/ai/src/api/bedrock-converse-stream.ts:1117]
+- OpenAI Responses / Completions 把 compat 的 strict capability 传给 resolver；支持时写 `strict`,不支持时 `prefer` 走普通 function schema、`require` 在构造请求时抛错。[E: packages/ai/src/api/openai-responses-shared.ts:361] [E: packages/ai/src/api/openai-responses-shared.ts:380] [E: packages/ai/src/api/openai-responses-shared.ts:391] [E: packages/ai/src/api/openai-completions.ts:1493] [E: packages/ai/src/api/openai-completions.ts:1501]
+- Anthropic 只在 `model.compat.supportsStrictTools` 打开时保留完整 schema 并写 `strict: true`;默认 capability 为 false。[E: packages/ai/src/api/anthropic-messages.ts:197] [E: packages/ai/src/api/anthropic-messages.ts:1435] [E: packages/ai/src/api/anthropic-messages.ts:1444] [E: packages/ai/src/api/anthropic-messages.ts:1455]
+- Google Generative AI / Vertex 只把 Gemini major version 3+ 判为 strict-capable，并将有 strict tool 的自动 function-calling mode 提升到 `VALIDATED`。[E: packages/ai/src/api/google-shared.ts:342] [E: packages/ai/src/api/google-shared.ts:344] [E: packages/ai/src/api/google-shared.ts:366] [E: packages/ai/src/api/google-shared.ts:370] [E: packages/ai/src/api/google-shared.ts:371] [E: packages/ai/src/api/google-generative-ai.ts:374] [E: packages/ai/src/api/google-vertex.ts:473]
+- Mistral 固定以 supported=true 解析 strict，并写到 function tool；Bedrock 则由 `model.compat.supportsStrictMode ?? false` 决定是否在 `toolSpec` 写 strict。[E: packages/ai/src/api/mistral-conversations.ts:755] [E: packages/ai/src/api/mistral-conversations.ts:762] [E: packages/ai/src/api/bedrock-converse-stream.ts:237] [E: packages/ai/src/api/bedrock-converse-stream.ts:1105] [E: packages/ai/src/api/bedrock-converse-stream.ts:1111] [E: packages/ai/src/api/bedrock-converse-stream.ts:1117]
 
 ## 增量参数
 
@@ -85,8 +93,9 @@ grammar provider 可能发送逐步增长的原始字符串。`appendGrammarTool
 - grammar 配置存在并不保证生效：provider capability 为 false 时函数直接返回 `undefined`，而不是本地执行 grammar validator。[E: packages/ai/src/api/constrained-sampling.ts:230] [E: packages/ai/src/api/constrained-sampling.ts:239]
 - 缺少 grammar 变体或 schema 不满足单一 string 输入时会在请求构造阶段失败；这不是模型返回后的 validation。[E: packages/ai/src/api/constrained-sampling.ts:247] [E: packages/ai/src/api/constrained-sampling.ts:259]
 - grammar 与 JSON strict 不是全 provider 通用能力：grammar 只在 OpenAI-family compat 开关打开时成为 custom grammar tool；JSON strict 也分别受 OpenAI/Anthropic/Google/Bedrock capability 或 Mistral adapter 行为约束。[I]
+- `PI_EXPERIMENTAL` 不再门控这五个内置工具的 `constrainedSampling`。`areExperimentalFeaturesEnabled()` 仍读该 env，但本节点覆盖的默认 strict 路径不调用它。[E: packages/coding-agent/src/core/experimental.ts:2] [E: packages/coding-agent/test/builtin-tool-strict-mode.test.ts:18]
 
-本节点的 request-side constrained sampling 与 response-side tool argument validation 是两个边界。`validateToolArguments()` 会 clone arguments、执行 TypeBox conversion，再按 schema validate；对 `anyOf`/`oneOf` union，coercion 现在先检查原值是否已匹配任一 arm，只有完全不匹配才逐 arm 尝试转换，避免 nullable union 中的 `null` 被错误强转为 primitive。[E: packages/ai/src/utils/validation.ts:175] [E: packages/ai/src/utils/validation.ts:179] [E: packages/ai/src/utils/validation.ts:183] [E: packages/ai/src/utils/validation.ts:191] [E: packages/ai/src/utils/validation.ts:317] [E: packages/ai/src/utils/validation.ts:324]
+本节点的 request-side constrained sampling 与 response-side tool argument validation 是两个边界。`validateToolArguments()` 会 clone arguments、执行 TypeBox conversion，再按 schema validate；对 `anyOf`/`oneOf` union，coercion 现在先检查原值是否已匹配任一 arm，只有完全不匹配才逐 arm 尝试转换，避免越界强转。[E: packages/ai/src/utils/validation.ts:175] [E: packages/ai/src/utils/validation.ts:179] [E: packages/ai/src/utils/validation.ts:183] [E: packages/ai/src/utils/validation.ts:191] [E: packages/ai/src/utils/validation.ts:317] [E: packages/ai/src/utils/validation.ts:320]
 
 ## Sources
 
@@ -113,8 +122,8 @@ grammar provider 可能发送逐步增长的原始字符串。`appendGrammarTool
 - packages/coding-agent/src/core/tools/bash.ts
 - packages/coding-agent/src/core/tools/edit.ts
 - packages/coding-agent/src/core/tools/write.ts
-- packages/coding-agent/src/server/create-harness.ts
-- packages/coding-agent/test/experimental-tool-strict-mode.test.ts
+- packages/coding-agent/src/core/tools/powershell.ts
+- packages/coding-agent/test/builtin-tool-strict-mode.test.ts
 
 ## 相关
 

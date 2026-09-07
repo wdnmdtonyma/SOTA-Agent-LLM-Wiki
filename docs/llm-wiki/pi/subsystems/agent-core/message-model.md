@@ -16,7 +16,7 @@ related:
   - ref.agent.message-types
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `subsys.agent-core.message-model` 描述 `pi-agent-core` 在 agent loop 与 harness conversion 之间使用的消息 union、tool call/result envelope,以及标准 LLM 消息与 custom harness 消息的转换边界。
@@ -41,7 +41,7 @@ updated: 853a80d26c
 
 `AgentMessage` 的标准侧来自 `@earendil-works/pi-ai` 的 imported `Message`;本节点不展开 `Message` 的字段级定义,只记录 agent-core 对它的使用边界:default converter 对 `user`、`assistant`、`toolResult` 直接返回原消息。[E: packages/agent/src/types.ts:8][E: packages/agent/src/types.ts:326][E: packages/agent/src/harness/messages.ts:159][E: packages/agent/src/harness/messages.ts:160][E: packages/agent/src/harness/messages.ts:161][E: packages/agent/src/harness/messages.ts:162]
 
-`AgentContext.messages` 和 `AgentState.messages` 都使用 `AgentMessage[]`;`AgentState` 同时暴露 setter/getter,所以 public state 与 low-level request context 使用同一个 message union。[E: packages/agent/src/types.ts:334][E: packages/agent/src/types.ts:345][E: packages/agent/src/types.ts:346][E: packages/agent/src/types.ts:413][E: packages/agent/src/types.ts:417]
+`AgentContext.messages` 和 `AgentState.messages` 都使用 `AgentMessage[]`;`AgentState` 同时暴露 setter/getter,所以 public state 与 low-level request context 使用同一个 message union。[E: packages/agent/src/types.ts:334][E: packages/agent/src/types.ts:345][E: packages/agent/src/types.ts:346][E: packages/agent/src/types.ts:415][E: packages/agent/src/types.ts:419]
 
 `BashExecutionMessage` 是一条 custom harness 消息,字段包含 `role: "bashExecution"`、command、output、exitCode、cancelled、truncated、可选 fullOutputPath、timestamp 和可选 `excludeFromContext`。[E: packages/agent/src/harness/messages.ts:19][E: packages/agent/src/harness/messages.ts:20][E: packages/agent/src/harness/messages.ts:21][E: packages/agent/src/harness/messages.ts:22][E: packages/agent/src/harness/messages.ts:23][E: packages/agent/src/harness/messages.ts:24][E: packages/agent/src/harness/messages.ts:25][E: packages/agent/src/harness/messages.ts:26][E: packages/agent/src/harness/messages.ts:27][E: packages/agent/src/harness/messages.ts:28]
 
@@ -55,7 +55,7 @@ Default `convertToLlm` 对 `user`、`assistant`、`toolResult` 三种标准 LLM 
 
 Harness custom 消息在进入 LLM context 时统一降级成 `role: "user"`:非排除的 `bashExecution` 变成一个 text content part,`custom` 变成 user message,`branchSummary` 和 `compactionSummary` 也变成包裹 summary 文本的 user message。[E: packages/agent/src/harness/messages.ts:128][E: packages/agent/src/harness/messages.ts:129][E: packages/agent/src/harness/messages.ts:132][E: packages/agent/src/harness/messages.ts:133][E: packages/agent/src/harness/messages.ts:134][E: packages/agent/src/harness/messages.ts:137][E: packages/agent/src/harness/messages.ts:138][E: packages/agent/src/harness/messages.ts:139][E: packages/agent/src/harness/messages.ts:140][E: packages/agent/src/harness/messages.ts:145][E: packages/agent/src/harness/messages.ts:147][E: packages/agent/src/harness/messages.ts:148][E: packages/agent/src/harness/messages.ts:151][E: packages/agent/src/harness/messages.ts:153][E: packages/agent/src/harness/messages.ts:155]
 
-System prompt 在 agent-core public state 与 request context 中是独立字段:`AgentState.systemPrompt` 和 `AgentContext.systemPrompt` 都是 `string`;default harness converter 的 switch 处理 message roles,没有单独的 `system` case,未匹配分支会返回 `undefined`。[E: packages/agent/src/types.ts:336][E: packages/agent/src/types.ts:415][E: packages/agent/src/harness/messages.ts:127][E: packages/agent/src/harness/messages.ts:159][E: packages/agent/src/harness/messages.ts:160][E: packages/agent/src/harness/messages.ts:161][E: packages/agent/src/harness/messages.ts:163][E: packages/agent/src/harness/messages.ts:164]
+System prompt 在 agent-core public state 与 request context 中是独立字段:`AgentState.systemPrompt` 和 `AgentContext.systemPrompt` 都是 `string`;default harness converter 的 switch 处理 message roles,没有单独的 `system` case,未匹配分支会返回 `undefined`。[E: packages/agent/src/types.ts:336][E: packages/agent/src/types.ts:417][E: packages/agent/src/harness/messages.ts:127][E: packages/agent/src/harness/messages.ts:159][E: packages/agent/src/harness/messages.ts:160][E: packages/agent/src/harness/messages.ts:161][E: packages/agent/src/harness/messages.ts:163][E: packages/agent/src/harness/messages.ts:164]
 
 ## tool call / result 模型
 
@@ -67,7 +67,7 @@ System prompt 在 agent-core public state 与 request context 中是独立字段
 
 `AgentTool.execute` 接收 `toolCallId`、validated params、可选 abort signal、可选 partial update callback,并返回 `Promise<AgentToolResult<TDetails>>`。[E: packages/agent/src/types.ts:387][E: packages/agent/src/types.ts:396][E: packages/agent/src/types.ts:397][E: packages/agent/src/types.ts:398][E: packages/agent/src/types.ts:399][E: packages/agent/src/types.ts:400][E: packages/agent/src/types.ts:401]
 
-`AgentToolResult` 自身不包含 `isError`;本 source 范围内的 local error flag 出现在 `AfterToolCallResult.isError` 和 `tool_execution_end.isError` 上。[E: packages/agent/src/types.ts:84][E: packages/agent/src/types.ts:87][E: packages/agent/src/types.ts:362][E: packages/agent/src/types.ts:364][E: packages/agent/src/types.ts:366][E: packages/agent/src/types.ts:375][E: packages/agent/src/types.ts:444] Turn contexts 携带 provider-visible `ToolResultMessage[]`,但 `ToolResultMessage` 的字段级定义来自 `@earendil-works/pi-ai`,不在本节点 source 范围内展开。[E: packages/agent/src/types.ts:13][E: packages/agent/src/types.ts:130]
+`AgentToolResult` 自身不包含 `isError`;本 source 范围内的 local error flag 出现在 `AfterToolCallResult.isError` 和 `tool_execution_end.isError` 上。[E: packages/agent/src/types.ts:84][E: packages/agent/src/types.ts:87][E: packages/agent/src/types.ts:362][E: packages/agent/src/types.ts:364][E: packages/agent/src/types.ts:366][E: packages/agent/src/types.ts:375][E: packages/agent/src/types.ts:446] Turn contexts 携带 provider-visible `ToolResultMessage[]`,但 `ToolResultMessage` 的字段级定义来自 `@earendil-works/pi-ai`,不在本节点 source 范围内展开。[E: packages/agent/src/types.ts:13][E: packages/agent/src/types.ts:130]
 
 ## conversion 边界
 

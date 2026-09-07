@@ -21,7 +21,7 @@ related:
   - subsys.ai.pi-messages
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `subsys.ai.provider-registry` 描述 `pi-ai` 当前的 provider 装配与 runtime collection：40 个 fresh built-in provider 进入 `ModelsImpl`，其中 Radius 是没有 structural model shard 的动态 provider；generated `MODELS` 负责其余 39 个静态 catalog buckets，包括本轮新增的 Qwen Token Plan Individual。
@@ -49,27 +49,27 @@ Qwen Token Plan Individual 也是普通 static builtin：`qwenTokenPlanIndividua
 
 `Provider` 必须提供 id/name、auth、同步 `getModels()`、stream 和 streamSimple；动态 provider 可提供 `refreshModels(context)`，并应保留 last-known list、遵守 shared abort signal [E: packages/ai/src/models.ts:97] [E: packages/ai/src/models.ts:111] [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:127] [E: packages/ai/src/models.ts:136] [E: packages/ai/src/models.ts:142]。
 
-`Models` 暴露同步 provider/model lookup、全体动态 provider refresh、auth check、available model 过滤、login/logout，以及 stream/complete convenience [E: packages/ai/src/models.ts:156] [E: packages/ai/src/models.ts:164] [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [E: packages/ai/src/models.ts:194] [E: packages/ai/src/models.ts:198] [E: packages/ai/src/models.ts:170] [E: packages/ai/src/models.ts:203] [E: packages/ai/src/models.ts:216]。`MutableModels` 只增加按 provider id 的 set/delete/clear [E: packages/ai/src/models.ts:225] [E: packages/ai/src/models.ts:229]。
+`Models` 暴露同步 provider/model lookup、全体动态 provider refresh、auth check、available model 过滤、login/logout，以及 stream/complete convenience [E: packages/ai/src/models.ts:156] [E: packages/ai/src/models.ts:164] [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [E: packages/ai/src/models.ts:194] [E: packages/ai/src/models.ts:198] [E: packages/ai/src/models.ts:170] [E: packages/ai/src/models.ts:203] [E: packages/ai/src/models.ts:216]。`MutableModels` 只增加按 provider id 的 set/delete/clear [E: packages/ai/src/models.ts:230] [E: packages/ai/src/models.ts:234]。
 
-`ModelsImpl` 内部维护 provider map、credential store、models store 与 auth context；默认分别使用 in-memory stores 和 default auth context [E: packages/ai/src/models.ts:254] [E: packages/ai/src/models.ts:266]。同步 model listing 是 best-effort：未知 provider 或 provider `getModels()` 抛错都会产出空结果 [E: packages/ai/src/models.ts:294] [E: packages/ai/src/models.ts:301] [E: packages/ai/src/models.ts:305] [E: packages/ai/src/models.ts:313]。
+`ModelsImpl` 内部维护 provider map、credential store、models store 与 auth context；默认分别使用 in-memory stores 和 default auth context [E: packages/ai/src/models.ts:259] [E: packages/ai/src/models.ts:271]。同步 model listing 是 best-effort：未知 provider 或 provider `getModels()` 抛错都会产出空结果 [E: packages/ai/src/models.ts:299] [E: packages/ai/src/models.ts:306] [E: packages/ai/src/models.ts:310] [E: packages/ai/src/models.ts:318]。
 
 ## 动态目录 refresh
 
-`Models.refresh(options)` 并发刷新具有 `refreshModels` 的 provider；可用 `options.providers` 限制 id，并支持 `allowNetwork`、`force` 与 shared signal [E: packages/ai/src/models.ts:64] [E: packages/ai/src/models.ts:67] [E: packages/ai/src/models.ts:386] [E: packages/ai/src/models.ts:391] [E: packages/ai/src/models.ts:392]。每个 refresh 先用 `allowNetwork: false` 恢复 stored catalog，再在允许联网且 credential 就绪时做 network refresh [E: packages/ai/src/models.ts:375] [E: packages/ai/src/models.ts:376] [E: packages/ai/src/models.ts:411] [E: packages/ai/src/models.ts:417]。
+`Models.refresh(options)` 并发刷新具有 `refreshModels` 的 provider；可用 `options.providers` 限制 id，并支持 `allowNetwork`、`force` 与 shared signal [E: packages/ai/src/models.ts:64] [E: packages/ai/src/models.ts:67] [E: packages/ai/src/models.ts:391] [E: packages/ai/src/models.ts:396] [E: packages/ai/src/models.ts:397]。每个 refresh 先用 `allowNetwork: false` 恢复 stored catalog，再在允许联网且 credential 就绪时做 network refresh [E: packages/ai/src/models.ts:380] [E: packages/ai/src/models.ts:381] [E: packages/ai/src/models.ts:416] [E: packages/ai/src/models.ts:422]。
 
-失败不会 reject 整批 refresh：错误进入 `ModelsRefreshResult.errors`，返回值还带 `aborted` [E: packages/ai/src/models.ts:422] [E: packages/ai/src/models.ts:424] [E: packages/ai/src/models.ts:445]。过期 OAuth 通过 credential store `modify()` 刷新，API-key provider 则调用自己的 `resolve()` 形成 refresh credential [E: packages/ai/src/models.ts:448] [E: packages/ai/src/models.ts:453] [E: packages/ai/src/models.ts:469] [E: packages/ai/src/models.ts:474]。
+失败不会 reject 整批 refresh：错误进入 `ModelsRefreshResult.errors`，返回值还带 `aborted` [E: packages/ai/src/models.ts:427] [E: packages/ai/src/models.ts:429] [E: packages/ai/src/models.ts:450]。过期 OAuth 通过 credential store `modify()` 刷新，API-key provider 则调用自己的 `resolve()` 形成 refresh credential [E: packages/ai/src/models.ts:453] [E: packages/ai/src/models.ts:458] [E: packages/ai/src/models.ts:474] [E: packages/ai/src/models.ts:479]。
 
 ## `createProvider()` overlay
 
-`CreateProviderOptions` 当前要求 static `models` 与 auth/api，可选 `fetchModels(context)` 和 credential-specific `filterModels()`；旧的 input-level `refreshModels` 已被 `fetchModels` 取代 [E: packages/ai/src/models.ts:739] [E: packages/ai/src/models.ts:746] [E: packages/ai/src/models.ts:748] [E: packages/ai/src/models.ts:750] [E: packages/ai/src/models.ts:751] [E: packages/ai/src/models.ts:753]。
+`CreateProviderOptions` 当前要求 static `models` 与 auth/api，可选 `fetchModels(context)` 和 credential-specific `filterModels()`；旧的 input-level `refreshModels` 已被 `fetchModels` 取代 [E: packages/ai/src/models.ts:752] [E: packages/ai/src/models.ts:759] [E: packages/ai/src/models.ts:761] [E: packages/ai/src/models.ts:763] [E: packages/ai/src/models.ts:764] [E: packages/ai/src/models.ts:766]。
 
-factory 保存 immutable baseline 与 dynamic overlay；同 id dynamic model 替换 baseline，其它 dynamic model 追加 [E: packages/ai/src/models.ts:762] [E: packages/ai/src/models.ts:763] [E: packages/ai/src/models.ts:766] [E: packages/ai/src/models.ts:773]。如果存在 `fetchModels`，生成的 provider refresh 会先恢复 stored overlay，再在允许 network 时 fetch、替换并持久化新目录；`publishProviderModels` 用 per-provider `publicationChains` 串行化同一 provider 的 publication [E: packages/ai/src/models.ts:801] [E: packages/ai/src/models.ts:803] [E: packages/ai/src/models.ts:817] [E: packages/ai/src/models.ts:818] [E: packages/ai/src/models.ts:820] [E: packages/ai/src/models.ts:338] [E: packages/ai/src/models.ts:344]。
+factory 保存 immutable baseline 与 dynamic overlay；同 id dynamic model 替换 baseline，其它 dynamic model 追加 [E: packages/ai/src/models.ts:775] [E: packages/ai/src/models.ts:776] [E: packages/ai/src/models.ts:779] [E: packages/ai/src/models.ts:786]。如果存在 `fetchModels`，生成的 provider refresh 会先恢复 stored overlay，再在允许 network 时 fetch、替换并持久化新目录；`publishProviderModels` 用 per-provider `publicationChains` 串行化同一 provider 的 publication [E: packages/ai/src/models.ts:814] [E: packages/ai/src/models.ts:816] [E: packages/ai/src/models.ts:830] [E: packages/ai/src/models.ts:831] [E: packages/ai/src/models.ts:833] [E: packages/ai/src/models.ts:343] [E: packages/ai/src/models.ts:349]。
 
-API 可以是单一 `ProviderStreams`，也可以按 `model.api` 映射。缺失 implementation 会生成 `ModelsError("stream", ...)`；成功路径把 stream/streamSimple 委派给选中的 implementation [E: packages/ai/src/models.ts:775] [E: packages/ai/src/models.ts:779] [E: packages/ai/src/models.ts:785] [E: packages/ai/src/models.ts:788] [E: packages/ai/src/models.ts:829] [E: packages/ai/src/models.ts:831]。
+API 可以是单一 `ProviderStreams`，也可以按 `model.api` 映射。缺失 implementation 会生成 `ModelsError("stream", ...)`；成功路径把 stream/streamSimple 委派给选中的 implementation [E: packages/ai/src/models.ts:788] [E: packages/ai/src/models.ts:792] [E: packages/ai/src/models.ts:798] [E: packages/ai/src/models.ts:801] [E: packages/ai/src/models.ts:842] [E: packages/ai/src/models.ts:844]。
 
 ## Request auth 与 stream
 
-stream path 先按 `model.provider` require provider，再用 `getAuth()` 解析 credential；explicit request apiKey/headers/env 覆盖 resolved auth，同步应用可选 header transform [E: packages/ai/src/models.ts:628] [E: packages/ai/src/models.ts:643] [E: packages/ai/src/models.ts:644] [E: packages/ai/src/models.ts:655] [E: packages/ai/src/models.ts:657]。`stream()` 和 `streamSimple()` 都通过 `lazyStream` 包住 async auth/setup，然后调用 provider-owned stream implementation [E: packages/ai/src/models.ts:667] [E: packages/ai/src/models.ts:672] [E: packages/ai/src/models.ts:678] [E: packages/ai/src/models.ts:690] [E: packages/ai/src/models.ts:694]。
+stream path 先按 `model.provider` require provider，再用 `getAuth()` 解析 credential；explicit request apiKey/headers/env 覆盖 resolved auth，同步应用可选 header transform [E: packages/ai/src/models.ts:633] [E: packages/ai/src/models.ts:648] [E: packages/ai/src/models.ts:649] [E: packages/ai/src/models.ts:660] [E: packages/ai/src/models.ts:662]。`stream()` 和 `streamSimple()` 都通过 `lazyStream` 包住 async auth/setup，然后调用 provider-owned stream implementation [E: packages/ai/src/models.ts:672] [E: packages/ai/src/models.ts:677] [E: packages/ai/src/models.ts:683] [E: packages/ai/src/models.ts:695] [E: packages/ai/src/models.ts:699]。
 
 ## Radius 的特殊位置
 
@@ -78,7 +78,7 @@ stream path 先按 `model.provider` require provider，再用 `getAuth()` 解析
 ## Gotcha
 
 - `getBuiltinProviders()` 的 39 个 generated keys 不是 runtime `builtinProviders()` 的 40 个 objects；名字相近但 universe 不同 [E: packages/ai/src/providers/all.ts:53] [E: packages/ai/src/providers/all.ts:69] [E: packages/ai/src/providers/all.ts:89] [I]。
-- `Models.refresh()` 默认刷新全部动态 provider，可用 `options.providers` 限制集合；失败集中返回，不是旧版的 `refresh(provider)` throw-on-one-provider contract [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:386] [E: packages/ai/src/models.ts:391] [E: packages/ai/src/models.ts:445]。
+- `Models.refresh()` 默认刷新全部动态 provider，可用 `options.providers` 限制集合；失败集中返回，不是旧版的 `refresh(provider)` throw-on-one-provider contract [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:391] [E: packages/ai/src/models.ts:396] [E: packages/ai/src/models.ts:450]。
 - `getModels()` 是 last-known synchronous read；是否 configured/available 要看 `checkAuth()`/`getAvailable()` [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:127] [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183]。
 
 ## Sources

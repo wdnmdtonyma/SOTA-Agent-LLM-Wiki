@@ -1,6 +1,6 @@
 # pi 源码 LLM Wiki
 
-一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 **pi**(`pi/`)的真实源码——一个含 **9 个源码 package workspace + 5 个 extension-example workspace** 的 TypeScript monorepo,一个**自扩展的编码 agent harness**:多 provider LLM 引擎 + 可复用 agent 运行时 + 交互式编码 agent CLI + 差分渲染 TUI + 远程 session protocol/client/server + 可选 SQLite backend + private eval harness。细到每个工具的字段与设计动机。
+一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 **pi**(`pi/`)的真实源码——一个含 **10 个源码 package workspace + 5 个 extension-example workspace** 的 TypeScript monorepo,一个**自扩展的编码 agent harness**:独立 application-composition runtime（chord）+ 多 provider LLM 引擎 + 可复用 agent 运行时 + 交互式编码 agent CLI + 差分渲染 TUI + 远程 session protocol/client/server + 可选 SQLite backend + private eval harness。细到每个工具的字段与设计动机。
 
 ## 这是 LLM wiki,不是书
 
@@ -18,15 +18,16 @@
 - **真源码**:pi 是公开真实工程,**git 仓 + 各包测试(`./test.sh`)+ 完整 `packages/coding-agent/docs/`(30 篇)**。证据以 `[E]` 为主;**staleness 用 pi git SHA**,节点 `updated:` 记 fill 时的 pi HEAD 10 位短 SHA。
 - **TypeScript monorepo**:Node ≥22 / Bun 双运行时,Biome + TypeScript native(tsgo)。源路径一律相对 `pi/`(如 `packages/coding-agent/src/...`)。
 - **★ 分层栈 = 全 wiki 的组织主线**:pi 把"可复用运行时"与"产品"分层:
+  - **`@earendil-works/chord`** = 独立 application-composition runtime（facets / services / replicated state / delta）。**不依赖**其它 Pi workspace 包。
   - **`pi-ai`** = 多 provider 统一 LLM API(40 built-in runtime provider，其中 39 个有静态模型结构目录；10 wire 协议；auth/oauth)。完整模型值在 generated/gitignored JSON。
-  - **`pi-agent-core`** = **可复用** agent 运行时 harness:agent-loop(turn → provider stream → 工具调用 → state)、v4 lane-based `Session`/`SessionRepo`、压缩/分支总结、skills、system-prompt、harness events。任何 app 都能拿它建 agent。
-  - **`pi-coding-agent`** = **产品**:8 个内置工具(bash/read/edit/write/grep/find/ls + 可选 Windows `powershell`)、**扩展系统(自扩展招牌)**、skills、slash 命令、三种模式(interactive TUI / RPC / print)、配置/信任/会话管理。
+  - **`pi-agent-core`** = **可复用** agent 运行时 harness:agent-loop(turn → provider stream → 工具调用 → state)、v4 lane-based `Session`/`SessionRepo`、压缩/分支总结、skills、system-prompt、harness events。任何 app 都能拿它建 agent。会话搜索只剩 `SessionSearchService` 接口，scanning / FTS 实现已删除。
+  - **`pi-coding-agent`** = **产品**:8 个内置工具(bash/read/edit/write/grep/find/ls + 可选 Windows `powershell`)、**扩展系统(自扩展招牌)**、skills、slash 命令、三种模式(interactive TUI / RPC / print)、配置/信任/会话管理。内置 `read`/`bash`/`powershell`/`edit`/`write` 默认 `constrainedSampling: { type: "json_schema", strict: "prefer" }`。
   - **`pi-tui`** = 独立可复用的差分渲染终端 UI 库(渲染循环、编辑器、键盘协议、LaTeX、fullscreen search)。
-  - **`pi-protocol`** = 远程 session 的 TypeBox wire schema + CBOR/framing；**`pi-client`** = transport-neutral client 与 Unix transport。
-  - **`pi-server`** = **实验性** composable remote-session server。legacy 多实例 JSONL IPC/supervisor/Radius 已删除。
+  - **`pi-protocol`** = 远程 session 的 TypeBox wire schema + CBOR/framing（`PROTOCOL_VERSION=8`）；**`pi-client`** = Chord 风格 `Client` + `createClientServiceTransport`，不是已删除的 `PiClient` / `PiSessionHandle`。
+  - **`pi-server`** = **实验性** composable remote-session server（`SessionRouter` + Chord 服务载荷）。legacy 多实例 JSONL IPC/supervisor/Radius 已删除。
   - **`pi-session-backend-sqlite-node`** = 可选的 Node SQLite v4 session backend；**`pi-telemetry`** = vendor-neutral telemetry contracts；**`pi-evals`** = private 行为评测 consumer。
-  - 根 build 顺序为 tui → telemetry → ai → agent → session-backends/sqlite-node → protocol → client → server → coding-agent。
-  - 每个节点 frontmatter 带 `pkg: ai | agent | protocol | client | coding-agent | tui | server | session-backends | telemetry | evals | cross`,使分层可 grep。**`agent`(可复用)↔ `coding-agent`(产品)的边界、扩展系统与远程 session 链是 pi 的画像主线**。
+  - 根 build 顺序为 **chord → tui → telemetry → ai → agent → sqlite-node → protocol → client → server → coding-agent**。
+  - 每个节点 frontmatter 带 `pkg: chord | ai | agent | protocol | client | coding-agent | tui | server | session-backends | telemetry | evals | cross`,使分层可 grep。**`agent`(可复用)↔ `coding-agent`(产品)的边界、扩展系统与远程 session 链是 pi 的画像主线**。
 - **范围**:**全 monorepo 同深度**——含 TUI 渲染细节、实验性 server,均逐子系统覆盖。
 
 ## 结构
@@ -39,7 +40,7 @@ conventions.md    节点模板 + frontmatter schema(含 pkg)+ 证据分级 + L1 
 RUN.md            填充令(给 codex 执行者):读序 / 填序 / L1→L2→L3 循环 / 工具与 provider ground truth
 spine/            T0 端到端"怎么跑"(mermaid 先行,自包含)+ worked traces
 surface/          T1 可见面:tools/ cli/ modes/ config/ providers/ extensions/ skills/ prompts/ commands/ sdk/ sessions/ trust/ misc/
-subsystems/       T2 内部子系统:ai/ agent-core/ protocol/ client/ coding-agent/ tui/ server/ storage/ evals/
+subsystems/       T2 内部子系统:chord/ ai/ agent-core/ protocol/ client/ coding-agent/ tui/ server/ session-backends/ telemetry/ evals/
 reference/        T3 符号·类型·catalog(provider/model/wire/config/slash/keybinding/rpc/extension-event/env…)· glossary · 不确定项 · package 索引
 tools/            lint/reconcile + 默认 dry-run 的 evidence rebase 工具
 _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
@@ -63,13 +64,13 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **198 个节点全部 verified 于 pi `853a80d26c`**。本轮从 `086c32e745` 覆盖上游 **v0.84.3 / v0.84.4**(可选 Windows `powershell` 工具、managed update 的 stage/verify/atomic activate、extension UI prompt / compaction 失败事件、bundled Node CLI)。审计见 `_UPDATE-SCOPE.md`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **200 个节点全部 verified 于 pi `9767ba275f`**。本轮从 `853a80d26c` 覆盖上游 **v0.85.0 / v0.85.1**（独立 `@earendil-works/chord`、Chord 风格 `pi-client` `Client`、内置工具默认 constrained sampling、会话搜索实现抽空）。审计见 `_UPDATE-SCOPE.md`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱(9)+ worked traces(3) | 12 | ✅ 完成 |
 | T1 surface | tools、CLI、modes、config、providers、extensions 与其它用户可见面 | 35 | ✅ 完成 |
-| T2 subsystems | ai(28)+ agent-core(22)+ protocol(2)+ client(3)+ coding-agent(33)+ tui(22)+ server(4)+ session-backends(1)+ telemetry(1)+ evals(2) | 118 | ✅ 完成 |
+| T2 subsystems | chord(2)+ ai(28)+ agent-core(22)+ protocol(2)+ client(3)+ coding-agent(33)+ tui(22)+ server(4)+ session-backends(1)+ telemetry(1)+ evals(2) | 120 | ✅ 完成 |
 | T3 reference | ai(6)+ agent-core(8)+ coding-agent(13)+ tui(3)+ cross(3) | 33 | ✅ 完成 |
 
 后续更新以 `RUN.md` 的 L1→L2→L3 流程、`index.json.updated` 与节点 `updated` 为 staleness 门槛。

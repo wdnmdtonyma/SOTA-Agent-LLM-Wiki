@@ -19,7 +19,7 @@ related:
   - subsys.coding-agent.resource-loader
 evidence: explicit
 status: verified
-updated: 853a80d26c
+updated: 9767ba275f
 ---
 
 > `surface.misc.packages` 描述 pi-coding-agent 的资源包可见面:用户可以用 npm、git 或本地路径安装包含 extensions、skills、prompt templates、themes 的 package,再由 package-manager 解析成资源路径。
@@ -69,7 +69,7 @@ settings 的 object form 可以对一个 package 做资源过滤:文档示例里
 
 `autoload: false` 改变 object form 的基线：它从“默认加载全部”切到“默认全关、只应用显式 patterns”；project entry 与同 identity global entry 并存时，它还作为 global package 的 delta，而不是整包替换 [E: packages/coding-agent/src/core/settings-manager.ts:87] [E: packages/coding-agent/src/core/package-manager.ts:194] [E: packages/coding-agent/src/core/package-manager.ts:1258] [E: packages/coding-agent/src/core/package-manager.ts:2163] [E: packages/coding-agent/src/core/package-manager.ts:2164] [E: packages/coding-agent/docs/packages.md:224]。
 
-源码把 filter object 按 resource type 应用:设置了该 type patterns 时调用 `applyPackageFilter()`,未设置时调用 `collectDefaultResources()`;空 patterns array 会把该 type 的所有候选资源以 disabled 状态加入,而不是完全不可见 [E: packages/coding-agent/src/core/package-manager.ts:2159] [E: packages/coding-agent/src/core/package-manager.ts:2161] [E: packages/coding-agent/src/core/package-manager.ts:2121] [E: packages/coding-agent/src/core/package-manager.ts:2166] [E: packages/coding-agent/src/core/package-manager.ts:2168] [E: packages/coding-agent/src/core/package-manager.ts:2235] [E: packages/coding-agent/src/core/package-manager.ts:2238]。这解释了为什么 `ResolvedResource` 有 `enabled` boolean:resource-loader 可以看到 path 与启用状态,再决定是否加载或展示配置开关 [E: packages/coding-agent/src/core/package-manager.ts:74] [E: packages/coding-agent/src/core/package-manager.ts:76] [I]。
+源码把 filter object 按 resource type 应用:`autoload === false` 时走 `applyPackageDeltaFilter()`,否则设置了该 type patterns 时调用 `applyPackageFilter()`,未设置时调用 `collectDefaultResources()`;空 patterns array 会把该 type 的所有候选资源以 disabled 状态加入,而不是完全不可见 [E: packages/coding-agent/src/core/package-manager.ts:2159] [E: packages/coding-agent/src/core/package-manager.ts:2161] [E: packages/coding-agent/src/core/package-manager.ts:2163] [E: packages/coding-agent/src/core/package-manager.ts:2164] [E: packages/coding-agent/src/core/package-manager.ts:2166] [E: packages/coding-agent/src/core/package-manager.ts:2168] [E: packages/coding-agent/src/core/package-manager.ts:2235] [E: packages/coding-agent/src/core/package-manager.ts:2238]。这解释了为什么 `ResolvedResource` 有 `enabled` boolean:resource-loader 可以看到 path 与启用状态,再决定是否加载或展示配置开关 [E: packages/coding-agent/src/core/package-manager.ts:74] [E: packages/coding-agent/src/core/package-manager.ts:76] [I]。
 
 `pi config` 是用户启用/禁用 installed packages 和 local directories 中资源的可见入口：默认打开 global `~/.pi/agent/settings.json`，Tab 可切 global/project，`pi config -l` 直接从 project override 开始并把 inherited global resources dimmed；写 project config 前必须通过 trust gate [E: packages/coding-agent/docs/packages.md:220] [E: packages/coding-agent/src/package-manager-cli.ts:796] [E: packages/coding-agent/src/package-manager-cli.ts:808] [E: packages/coding-agent/src/package-manager-cli.ts:836] [E: packages/coding-agent/src/package-manager-cli.ts:837] [E: packages/coding-agent/src/package-manager-cli.ts:848] [E: packages/coding-agent/src/cli/config-selector.ts:20]。
 
