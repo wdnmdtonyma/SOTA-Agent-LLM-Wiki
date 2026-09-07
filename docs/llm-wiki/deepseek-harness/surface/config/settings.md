@@ -41,7 +41,7 @@ symbols:
 related: []
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.settings` 是 **host 面**按 namespace 切段的用户设置文档：`SettingsProvider.resolve` 的优先级是 schema defaults → composition `base`（插件 entry `Config`）→ 用户文档 section。叠 `dsh-base` 的 shipped profile 挂 `FileSettingsProvider`（默认 `$DSH_HOME/settings.yaml`，hot-reload）。这是 Cordis 组合运行时的用户覆盖面，不是 session log，也不是生成物 `docs/config-catalog.md` 那种 T3 部署键表。
@@ -68,7 +68,7 @@ DeepSeek Harness 是 **Cordis 组合运行时**（`profile → bundle → agent 
 
 生成物 `docs/config-catalog.md` 是各包 **部署轴** `Config` 声明的粘贴表，只当查漏线索，本页不当 `[E]`。本页也不展开 session event / JSONL / checkpoint：那些是 [spine.session-log](../../spine/session-log.md) 的盘，不是 `settings.yaml`。
 
-`dsh-web-app` 另 insert 的 `id: ui-settings` / `ui-settings-models` 是 **浏览器**设置页插件，消费 Typert Remote，不替代 `ctx.settings`。[E: packages/bundle/web-app/cordis.patch.yml:190] [E: packages/bundle/web-app/cordis.patch.yml:196] Host Remote 所有者是 `@deepseek-ai/dsh-api-settings-controller`（`ctx.settingsController`，namespace `'settings'`），并旁挂 `CredentialsController`。[E: packages/api/settings-controller/package.json:2] [E: packages/api/settings-controller/src/index.ts:102] [E: packages/api/settings-controller/src/index.ts:107]
+`dsh-web-app` 另 insert 的 `id: ui-settings` / `ui-settings-models` 是 **浏览器**设置页插件，消费 Typert Remote，不替代 `ctx.settings`。[E: packages/bundle/web-app/cordis.patch.yml:191] [E: packages/bundle/web-app/cordis.patch.yml:197] Host Remote 所有者是 `@deepseek-ai/dsh-api-settings-controller`（`ctx.settingsController`，namespace `'settings'`），并旁挂 `CredentialsController`。[E: packages/api/settings-controller/package.json:2] [E: packages/api/settings-controller/src/index.ts:102] [E: packages/api/settings-controller/src/index.ts:107]
 
 ## 入口
 
@@ -96,7 +96,7 @@ wire 的 `hasDocument` 只报 `documentPath !== undefined`，不把 Host 绝对�
 
 `parseSettingsNamespace` 把字符串品牌化为 `SettingsNamespace`，必须匹配 `^[a-z][a-z0-9-]*$`。重复 `register` 立刻抛 `already registered`。[E: packages/settings/settings/src/index.ts:20] [E: packages/settings/settings/src/index.ts:40] [E: packages/settings/settings/src/index.ts:426] 顶层 section 必须是 object；标量 / 数组在 `section()` 里抛 `must be an object of keys`。[E: packages/settings/settings/src/index.ts:734]
 
-产品里常见的用户可见段（不是 Config 键表）：`llm-deepseek`、`llm-pi-ai`（Models）。[E: packages/llm/llm-deepseek/src/index.ts:87] [E: packages/llm/llm-pi-ai/src/index.ts:92] `agent-presets` 也直接 `register` 进同一份文档。[E: packages/preset/agent-presets/src/index.ts:189]
+产品里常见的用户可见段（不是 Config 键表）：`llm-deepseek`、`llm-pi-ai`（Models）。[E: packages/llm/llm-deepseek/src/index.ts:87] [E: packages/llm/llm-pi-ai/src/index.ts:93] `agent-presets` 也直接 `register` 进同一份文档。[E: packages/preset/agent-presets/src/index.ts:189]
 
 **Remote 不再维护 `exposedNamespaces` 白名单。** `SettingsController.describe` 对 **每一个已注册 namespace** 调 `describe({ redactSecrets: true })`，再投影成 `SettingsNamespaceView`。[E: packages/api/settings-controller/src/index.ts:122] 写路径只校验 `ns` 非空字符串，不查产品名单。[E: packages/api/settings-controller/src/index.ts:33] [E: packages/api/settings-controller/src/index.ts:266]
 

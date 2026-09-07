@@ -41,7 +41,7 @@ related:
   - surface.sdk.typescript
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-acp` 是 **automation-only** 的 Agent Client Protocol JSON-RPC stdio server：插件名 `acp`，`inject = ['agents', 'llm', 'sessionPersistence', 'sessions']`。它实现 `initialize` / `authenticate` / `session/new` / `session/list` / `session/resume` / `session/close` / `session/setConfigOption` / `session/prompt` / `session/cancel`。产品入口是 shipped profile `acp`（`dsh --profile acp`）叠 `dsh-base` + `dsh-acp-app`。它不是 `dsh-subagent-acp` 那条进程外 Provider。
@@ -58,9 +58,9 @@ updated: 0a53fb55be
 
 DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent preset`。capability seam 是 Definition / Provider / Consumer。**host 面**是进程级插件树（bundle `cordis.patch.yml` 里的行）；**agent-preset 面**是每会话 `mountPreset` 的 tools / persona / isolate。`PROFILE_TEMPLATES` 有五个 shipped 名：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`，没有 TUI。[E: packages/boot/app-boot/src/profile.ts:137] `acp` 模板 bundles 是 `@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-acp-app`，`patchReload: 'startup'`。[E: packages/boot/app-boot/src/profile.ts:138] [E: packages/boot/app-boot/src/profile.ts:139]
 
-`@deepseek-ai/dsh-acp` 是 ACP **Agent 侧**桥：named export `name` / `inject` / `Config` / `apply`。[E: packages/acp/acp/package.json:2] [E: packages/acp/acp/src/index.ts:60] [E: packages/acp/acp/src/index.ts:62] [E: packages/acp/acp/src/index.ts:86] [E: packages/acp/acp/src/index.ts:97] `apply` 在 load 时抓 `ctx.sessionPersistence`，再用 `createAcpAgentApp` + `ndJsonStream` 占住 stdout / stdin。[E: packages/acp/acp/src/index.ts:100] [E: packages/acp/acp/src/index.ts:377] [E: packages/acp/acp/src/index.ts:373]
+`@deepseek-ai/dsh-acp` 是 ACP **Agent 侧**桥：named export `name` / `inject` / `Config` / `apply`。[E: packages/acp/acp/package.json:2] [E: packages/acp/acp/src/index.ts:60] [E: packages/acp/acp/src/index.ts:62] [E: packages/acp/acp/src/index.ts:86] [E: packages/acp/acp/src/index.ts:97] `apply` 在 load 时抓 `ctx.sessionPersistence`，再用 `createAcpAgentApp` + `ndJsonStream` 占住 stdout / stdin。[E: packages/acp/acp/src/index.ts:100] [E: packages/acp/acp/src/index.ts:378] [E: packages/acp/acp/src/index.ts:374]
 
-`implementation` 注册的 handler：`initialize` / `authenticate` / `newSession` / `resumeSession` / `listSessions` / `setSessionConfigOption` / `closeSession` / `prompt` / `cancel`。[E: packages/acp/acp/src/index.ts:176] [E: packages/acp/acp/src/index.ts:192] [E: packages/acp/acp/src/index.ts:196] [E: packages/acp/acp/src/index.ts:238] [E: packages/acp/acp/src/index.ts:291] [E: packages/acp/acp/src/index.ts:332] [E: packages/acp/acp/src/index.ts:346] [E: packages/acp/acp/src/index.ts:360] [E: packages/acp/acp/src/index.ts:366] wire 上对应 `methods.agent.session.{new,list,resume,close,setConfigOption,prompt}` 与 `session.cancel`。[E: packages/acp/acp/src/index.ts:383] [E: packages/acp/acp/src/index.ts:389] 源里没有 `loadSession`、没有 fork。`newSession` 一律 `SessionId(randomUUID())` 再 `AcpSession.create` → `agents.create`。[E: packages/acp/acp/src/index.ts:199] [E: packages/acp/acp/src/index.ts:206] [E: packages/acp/acp/src/session.ts:128]
+`implementation` 注册的 handler：`initialize` / `authenticate` / `newSession` / `resumeSession` / `listSessions` / `setSessionConfigOption` / `closeSession` / `prompt` / `cancel`。[E: packages/acp/acp/src/index.ts:176] [E: packages/acp/acp/src/index.ts:192] [E: packages/acp/acp/src/index.ts:196] [E: packages/acp/acp/src/index.ts:239] [E: packages/acp/acp/src/index.ts:292] [E: packages/acp/acp/src/index.ts:333] [E: packages/acp/acp/src/index.ts:347] [E: packages/acp/acp/src/index.ts:361] [E: packages/acp/acp/src/index.ts:367] wire 上对应 `methods.agent.session.{new,list,resume,close,setConfigOption,prompt}` 与 `session.cancel`。[E: packages/acp/acp/src/index.ts:384] [E: packages/acp/acp/src/index.ts:389] 源里没有 `loadSession`、没有 fork。`newSession` 一律 `SessionId(randomUUID())` 再 `AcpSession.create` → `agents.create`。[E: packages/acp/acp/src/index.ts:199] [E: packages/acp/acp/src/index.ts:206] [E: packages/acp/acp/src/session.ts:128]
 
 它**不是**：
 
@@ -80,12 +80,12 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 | `dsh --profile acp` | `PROFILE_TEMPLATES.acp` 叠 `dsh-base` + `dsh-acp-app`。[E: packages/boot/app-boot/src/profile.ts:138] commander 程序名是 `dsh --profile acp`。[E: packages/bundle/acp-app/src/index.ts:27] |
 | `acp-app-startup.apply` | 解析成功后 `exitOnStdinEnd` + `ctx.provide('acpAppStartup', { accepted: true })`；help 不 claim stdio。[E: packages/bundle/acp-app/src/index.ts:44] [E: packages/bundle/acp-app/src/index.ts:45] |
 | overlay `id: acp` | 等 `acpAppStartup` 再 load `@deepseek-ai/dsh-acp`。[E: packages/bundle/acp-app/cordis.patch.yml:15] [E: packages/bundle/acp-app/cordis.patch.yml:17] |
-| 生产 transport | `config.stream` 缺省时 `ndJsonStream(process.stdout, process.stdin)`。[E: packages/acp/acp/src/index.ts:373] |
+| 生产 transport | `config.stream` 缺省时 `ndJsonStream(process.stdout, process.stdin)`。[E: packages/acp/acp/src/index.ts:374] |
 | 测试 transport | 运行时字段 `AcpConfig.stream?`；`Config` Schema 只声明 `provider` / `model` / `sessionListPageSize`。[E: packages/acp/acp/src/index.ts:83] [E: packages/acp/acp/src/index.ts:86] [E: packages/acp/acp/src/index.ts:89] |
 
 `dsh web` / `dsh --profile web` / `dsh --profile headless` / `sdk` / `sdk-minimal` **不会**叠 `dsh-acp-app`。`web` 是 `dsh-base` + `dsh-web-app`；`headless` 是 `dsh-base` + `dsh-headless`。[E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:146] `@deepseek-ai/dsh-web-app` / `@deepseek-ai/dsh-headless` 各自声明 `dsh.bundle.patch`。[E: packages/bundle/web-app/package.json:2] [E: packages/bundle/web-app/package.json:43] [E: packages/bundle/headless/package.json:2] [E: packages/bundle/headless/package.json:43]
 
-stdout 是协议帧。连接寿命挂在 `ctx.effect(() => quiesce, 'acp.connection')`；拆 fiber 会 `AcpSession.close` 并把 in-flight prompt 结成 `cancelled`。[E: packages/acp/acp/src/index.ts:435] [E: packages/acp/acp/src/index.ts:401]
+stdout 是协议帧。连接寿命挂在 `ctx.effect(() => quiesce, 'acp.connection')`；拆 fiber 会 `AcpSession.close` 并把 in-flight prompt 结成 `cancelled`。[E: packages/acp/acp/src/index.ts:436] [E: packages/acp/acp/src/index.ts:401]
 
 ## 关键字段
 
@@ -106,8 +106,8 @@ stdout 是协议帧。连接寿命挂在 `ctx.effect(() => quiesce, 'acp.connect
 | `initialize` | 回 `PROTOCOL_VERSION`、`agentInfo`、`mcpCapabilities.http: true`、`promptCapabilities`（`image` 由 `supportsAcpImagePrompts` 决定，`audio`/`embeddedContext` 为 `false`）、`sessionCapabilities: { close, list, resume }`、`authMethods: []`。[E: packages/acp/acp/src/index.ts:184] [E: packages/acp/acp/src/index.ts:185] [E: packages/acp/acp/src/index.ts:186] [E: packages/acp/acp/tests/bridge.spec.ts:42] |
 | `authenticate` | no-op：`Promise.resolve()`。[E: packages/acp/acp/src/index.ts:193] |
 | `newSession` | `validateWorkspaceParams` → `SessionId(randomUUID())` → `AcpSession.create` → `sessions.set` → `{ sessionId, configOptions }`。[E: packages/acp/acp/src/index.ts:198] [E: packages/acp/acp/src/index.ts:230] |
-| `resumeSession` | 已 live / 正在 activating / `ctx.sessions` 已有则拒；只 resume 非 `subagent`、无 `parentSession` 的持久 header，且 cwd 物理相同。[E: packages/acp/acp/src/index.ts:242] [E: packages/acp/acp/src/index.ts:248] [E: packages/acp/acp/src/index.ts:251] |
-| `listSessions` | 从 persistence 列出可 resume 的根会话；按 `createdAt` 降序分页，默认页大小 `100`。[E: packages/acp/acp/src/index.ts:302] [E: packages/acp/acp/src/index.ts:320] [E: packages/acp/acp/src/index.ts:324] |
+| `resumeSession` | 已 live / 正在 activating / `ctx.sessions` 已有则拒；只 resume 非 `subagent`、无 `parentSession` 的持久 header，且 cwd 物理相同。[E: packages/acp/acp/src/index.ts:242] [E: packages/acp/acp/src/index.ts:248] [E: packages/acp/acp/src/index.ts:252] |
+| `listSessions` | 从 persistence 列出可 resume 的根会话；按 `createdAt` 降序分页，默认页大小 `100`。[E: packages/acp/acp/src/index.ts:303] [E: packages/acp/acp/src/index.ts:320] [E: packages/acp/acp/src/index.ts:324] |
 | `setSessionConfigOption` | 转给 `AcpSession.setConfig`；`AcpModelConfigError` 变 `invalidParams`。[E: packages/acp/acp/src/index.ts:339] [E: packages/acp/acp/src/index.ts:341] |
 | `closeSession` | `record.close` 后从 registry 删掉。[E: packages/acp/acp/src/index.ts:351] [E: packages/acp/acp/src/index.ts:355] |
 | `prompt` | 单槽。未知 session 拒。通过后 `admitAcpPrompt` + `followup`。[E: packages/acp/acp/src/index.ts:362] [E: packages/acp/acp/src/session.ts:252] [E: packages/acp/acp/src/session.ts:302] |

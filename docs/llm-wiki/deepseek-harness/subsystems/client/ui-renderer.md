@@ -52,7 +52,7 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-client-ui-renderer` 是已删除 `dsh-client-web-react` 的 live 去处：浏览器半边把 `SlotCore`（[`subsys.client.ui-slots`](ui-slots.md)）接到 Cordis fiber、`slots/changed`、React outlet 与 **唯一** uSES 构造器 `bindSnapshotSelector`；`ctx.reflect.provide('uiRenderer')` 的 `mount` 把 `buildRenderApp` 的 `renderSlot('root')` 挂进 DOM。Host 半边 `apply()` 空操作。服务名 `ctx.slots` / `ctx.uiRenderer` 与 `SlotRegistry` 的对象层摘要见 [`subsys.client.runtime`](runtime.md)（节点 id 稳定别名）。client 不执行模型 turn。
@@ -74,7 +74,7 @@ updated: 0a53fb55be
 
 - 浏览器 `apply`：`new SlotRegistry(ctx)`、`slots.install(createSlotRenderer())`、`ctx.reflect.provide('uiRenderer')`。[E: packages/client/ui-renderer/src/client/index.ts:89] [E: packages/client/ui-renderer/src/client/index.ts:90] [E: packages/client/ui-renderer/src/client/index.ts:91]
 - `bindSnapshotSelector`：裸 `HostObservable` → 稳定 `useSelector`。[E: packages/client/ui-renderer/src/client/bind.ts:21]
-- `createSlotRenderer` / `SlotOutlet` / 授权绑定 / election overlay。[E: packages/client/ui-renderer/src/client/scoped-slots.tsx:933]
+- `createSlotRenderer` / `SlotOutlet` / 授权绑定 / election overlay。[E: packages/client/ui-renderer/src/client/scoped-slots.tsx:929]
 - `buildRenderApp`：全程序只调一次 `ctx.slots.renderSlot('root', {})`。[E: packages/client/ui-renderer/src/client/app.tsx:21]
 - Hydration：`BootHandoff` 保住 `data-dsh-boot` DOM 再切应用。[E: packages/client/ui-renderer/src/client/index.ts:59] [E: packages/client/ui-renderer/src/client/index.ts:73]
 - Companion `client-ui-renderer-invariant`：`slots/changed` 必须发生在 `getVersion(key) !== 0` 之后。[E: packages/client/ui-renderer/src/invariant.ts:34] [E: packages/client/ui-renderer/src/invariant.ts:35]
@@ -89,7 +89,7 @@ updated: 0a53fb55be
 
 DSH 是 Cordis 组合运行时（profile → bundle → preset）。五个 shipped profile：`web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）。`dsh web` 是唯一硬编码 profile 子命令；其余 `dsh --profile sdk|sdk-minimal|acp|headless`。web-app launcher 在 `provide('webStartup')` 之前拒绝 `--host 0.0.0.0`。[E: packages/bundle/web-app/src/startup.ts:74] 四个 shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`（旧 `code` = PTC），与本渲染缝无关。
 
-组合：`dsh-web-app` insert 含 `id: ui-renderer` / `name: '@deepseek-ai/dsh-client-ui-renderer'`。[E: packages/bundle/web-app/cordis.patch.yml:181] [E: packages/bundle/web-app/cordis.patch.yml:182] `dsh-base` insert 从 `timer` / `hmr` 起，没有浏览器 roster。[E: packages/bundle/base/cordis.patch.yml:16] `dsh-headless` 只插 `code-runtime` / `headless-startup` / `headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] `package.json` `dsh.client.immediately: true`。[E: packages/client/ui-renderer/package.json:35] host 入口 `apply` 无行为。[E: packages/client/ui-renderer/src/index.ts:4]
+组合：`dsh-web-app` insert 含 `id: ui-renderer` / `name: '@deepseek-ai/dsh-client-ui-renderer'`。[E: packages/bundle/web-app/cordis.patch.yml:182] [E: packages/bundle/web-app/cordis.patch.yml:182] `dsh-base` insert 从 `timer` / `hmr` 起，没有浏览器 roster。[E: packages/bundle/base/cordis.patch.yml:16] `dsh-headless` 只插 `code-runtime` / `headless-startup` / `headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] `package.json` `dsh.client.immediately: true`。[E: packages/client/ui-renderer/package.json:35] host 入口 `apply` 无行为。[E: packages/client/ui-renderer/src/index.ts:4]
 
 ## 关键文件
 
@@ -114,7 +114,7 @@ DSH 是 Cordis 组合运行时（profile → bundle → preset）。五个 shipp
 | `SlotRegistry` | Cordis `Service`，名 `'slots'`。[E: packages/client/ui-renderer/src/client/registry.ts:95] [E: packages/client/ui-renderer/src/client/registry.ts:134] 内含 `SlotCore`；register 必须在 prototype，使 `this.ctx` 绑到调用方 fiber。[E: packages/client/ui-renderer/src/client/registry.ts:606] [E: packages/client/ui-renderer/src/client/registry.ts:612] |
 | `bindSnapshotSelector` | 捕获一次 `subscribe` / `getSnapshot` 闭包，默认 `Object.is`。[E: packages/client/ui-renderer/src/client/bind.ts:22] [E: packages/client/ui-renderer/src/client/bind.ts:23] 无 SSR snapshot（第三参 `undefined`）。[E: packages/client/ui-renderer/src/client/bind.ts:25] |
 | `observableHook` | WeakMap 缓存，同一 source 不重建 hook。[E: packages/client/ui-renderer/src/client/bindings.tsx:57] [E: packages/client/ui-renderer/src/client/bindings.tsx:66] |
-| `createSlotRenderer` | 只实现 `{ renderRoot }`。[E: packages/client/ui-renderer/src/client/scoped-slots.tsx:933] 树：`HostContext` → `RootStandardProvider` → `ScopeProvider scope="session-maybe"` → `RootOutlet`。[E: packages/client/ui-renderer/src/client/scoped-slots.tsx:937] |
+| `createSlotRenderer` | 只实现 `{ renderRoot }`。[E: packages/client/ui-renderer/src/client/scoped-slots.tsx:929] 树：`HostContext` → `RootStandardProvider` → `ScopeProvider scope="session-maybe"` → `RootOutlet`。[E: packages/client/ui-renderer/src/client/scoped-slots.tsx:939] |
 | `SlotAssemblyError` | 缺 host / 缺 binding / `'root'` 尚无登记。[E: packages/client/ui-renderer/src/client/bindings.tsx:14] [E: packages/client/ui-renderer/src/client/scoped-slots.tsx:903] |
 | `RootOwnerProps` | `'root'` 的 owner share：`children?: never`。[E: packages/client/ui-renderer/src/client/registry.ts:48] |
 
@@ -122,7 +122,7 @@ DSH 是 Cordis 组合运行时（profile → bundle → preset）。五个 shipp
 
 ## 控制流
 
-1. **web-app 插入本行。** `id: ui-renderer`。[E: packages/bundle/web-app/cordis.patch.yml:181] 非 GUI profile 不装。
+1. **web-app 插入本行。** `id: ui-renderer`。[E: packages/bundle/web-app/cordis.patch.yml:182] 非 GUI profile 不装。
 
 2. **Host 空；浏览器 `provide`。** host `apply` 空。[E: packages/client/ui-renderer/src/index.ts:4] client `inject: []`。[E: packages/client/ui-renderer/src/client/index.ts:51] `apply` 构造 registry、立刻 `install(createSlotRenderer())`、再 `ctx.reflect.provide('uiRenderer')`。[E: packages/client/ui-renderer/src/client/index.ts:89] [E: packages/client/ui-renderer/src/client/index.ts:90] [E: packages/client/ui-renderer/src/client/index.ts:91]
 
@@ -159,7 +159,7 @@ DSH 是 Cordis 组合运行时（profile → bundle → preset）。五个 shipp
 | 角色 | 位置 |
 |---|---|
 | **Definition** | ui-slots：`SlotRenderer` / `SlotRendererHost` / `HostObservable` / `SnapshotSelectorHook`（合同）。本包声明 Cordis `Context.slots` / `uiRenderer` 与 Events `'slots/changed'`。[E: packages/client/ui-renderer/src/client/index.ts:44] [E: packages/client/ui-renderer/src/client/index.ts:46] |
-| **Provider** | 本包 client `apply`：`SlotRegistry` + `createSlotRenderer` + `UiRendererService.mount`。[E: packages/client/ui-renderer/src/client/index.ts:88] [E: packages/client/ui-renderer/src/client/index.ts:91] 组合层：`dsh-web-app` `id: ui-renderer`。[E: packages/bundle/web-app/cordis.patch.yml:181] |
+| **Provider** | 本包 client `apply`：`SlotRegistry` + `createSlotRenderer` + `UiRendererService.mount`。[E: packages/client/ui-renderer/src/client/index.ts:88] [E: packages/client/ui-renderer/src/client/index.ts:91] 组合层：`dsh-web-app` `id: ui-renderer`。[E: packages/bundle/web-app/cordis.patch.yml:182] |
 | **Consumer** | `packages/client/web` boot `inject(['uiRenderer'])`。[E: packages/client/web/src/boot.ts:97] 各 `ui-*` `ctx.slots.register`；ui-layout 占 `'root'`。动态包经 cordis-client-runner 代理 `register`。 |
 
 换 renderer 实现必须仍满足 `install` + `renderRoot`；换 `bindSnapshotSelector` 会带走全部 selector hook 身份稳定性。

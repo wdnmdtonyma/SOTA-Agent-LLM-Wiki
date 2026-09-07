@@ -70,7 +70,7 @@ related:
   - subsys.host.apiproxy
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > Cordis `Events` 是进程内运行时总线：`ctx.emit` / `ctx.waterfall` / `ctx.serial` / `ctx.parallel`（以及若干包自己的 `events.dispatch` 容纳发射）。它不是 `SessionEvent` 日志词表。本页实例表收录 harness `interface Events` merge **65** 条（不含 client 面与 vendor loader/HMR）；`session/flush` 是 **parallel**；waterfall 监听者必须调用传入的 `next()`。
@@ -88,7 +88,7 @@ updated: 0a53fb55be
 
 本页枚举 **Cordis 运行时事件**（`declare module '@deepseek-ai/cordis' { interface Events { ... } }`）。实例完整性以生成表 `docs/event-producer-consumer.md` **查漏**（本页主表 **65** 行 + Non-harness `internal/*` 4 行字符串），`[E]` 落到各事件**声明行**，不把该 md 或其它 `docs/**` 当证据。
 
-**不是** `SessionEvent` 日志。`turn/start` / `user/message` / `tool/result` 是 append-only 信封的 `type`，词表在 [ref.session-events](session-events.md)。提交一条 log 之后，store 才 fire-and-forget 广播 Cordis `session/event`；两者名字空间碰巧都能带 `/`，但合同、持久化、surface 折叠都不一样。[E: packages/core/session/src/index.ts:74]
+**不是** `SessionEvent` 日志。`turn/start` / `user/message` / `tool/result` 是 append-only 信封的 `type`，词表在 [ref.session-events](session-events.md)。提交一条 log 之后，store 才 fire-and-forget 广播 Cordis `session/event`；两者名字空间碰巧都能带 `/`，但合同、持久化、surface 折叠都不一样。[E: packages/core/session/src/index.ts:73]
 
 认哪份源：
 
@@ -117,7 +117,7 @@ updated: 0a53fb55be
 
 若干包不用裸 `ctx.emit`，而用 `events.dispatch` 拿 callback 快照再逐个 contain（`agentEvents.emit`、`SessionStore`、`emitWorkflowEvent`、`agent-loop/config-start-failed`、subagent lifecycle）。agent 主语事件走 `agentEvents` / `emitAgentEvent`：carrier 与 payload.`agent` 由 dispatcher 焊死。[E: packages/core/agent/src/dispatch.ts:118][E: packages/core/agent/src/dispatch.ts:125][E: packages/core/agent/src/dispatch.ts:158]
 
-`session/flush` 声明 `@mode parallel`。`SessionStore.flush` 经 `collectSessionCallbacks` → `events.dispatch('emit')` 取快照，再 `Promise.allSettled` 等全部 listener；调用方必须走 `sessions.flush(session)`，不要自己 `ctx.parallel('session/flush', …)`。[E: packages/core/session/src/index.ts:83][E: packages/core/session/src/index.ts:376][E: packages/core/session/src/index.ts:1020][E: packages/core/session/src/index.ts:1023][E: packages/core/session/src/index.ts:1024]
+`session/flush` 声明 `@mode parallel`。`SessionStore.flush` 经 `collectSessionCallbacks` → `events.dispatch('emit')` 取快照，再 `Promise.allSettled` 等全部 listener；调用方必须走 `sessions.flush(session)`，不要自己 `ctx.parallel('session/flush', …)`。[E: packages/core/session/src/index.ts:82][E: packages/core/session/src/index.ts:376][E: packages/core/session/src/index.ts:1020][E: packages/core/session/src/index.ts:1023][E: packages/core/session/src/index.ts:1024]
 
 ## 实例表
 
@@ -127,19 +127,19 @@ updated: 0a53fb55be
 
 | 事件名 | 模式 | 声明包 | dispatch | listen `[I]` | 源 path |
 |---|---|---|---|---|---|
-| `agent/created` | emit | `agent` | `agent`（`events.dispatch`） | `agent-presets`、`file-reference-local`、`goal-round-driver`、`schedule`、`tool-agent-team`、`tool-subagent` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:166] |
-| `agent/disposed` | emit | `agent` | `agent`（`events.dispatch`） | `agent-loop`、`file-reference-local`、`goal-round-driver`、`subagent`、`tool-agent-team`、`tool-subagent` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:175] |
-| `agent/status` | emit | `agent` | `agent-loop`（`emit`） | `agent`、`agent-team`、`compaction-basic`、`goal-round-driver`、`schedule`、`server`、`session-controller` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:185] |
-| `agent/inbox/inserted` | emit | `agent` | `agent-loop`（`emit`） | `goal-round-driver` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:193] |
+| `agent/created` | emit | `agent` | `agent`（`events.dispatch`） | `agent-presets`、`file-reference-local`、`goal-round-driver`、`schedule`、`tool-agent-team`、`tool-subagent` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:168] |
+| `agent/disposed` | emit | `agent` | `agent`（`events.dispatch`） | `agent-loop`、`file-reference-local`、`goal-round-driver`、`subagent`、`tool-agent-team`、`tool-subagent` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:177] |
+| `agent/status` | emit | `agent` | `agent-loop`（`emit`） | `agent`、`agent-team`、`compaction-basic`、`goal-round-driver`、`schedule`、`server`、`session-controller` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:187] |
+| `agent/inbox/inserted` | emit | `agent` | `agent-loop`（`emit`） | `goal-round-driver` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:192] |
 | `agent/inbox/claimed` | emit | `agent` | `agent-loop`（`emit`） | `acp`、`goal-round-driver`、`subagent`、`tool-jobs` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:204] |
-| `agent/inbox/discarded` | emit | `agent` | `agent-loop`（`emit`） | `goal-round-driver`、`subagent` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:212] |
-| `agent/session-start` | emit | `agent` | `agent-loop`（`emitAgentEvent`） | `agent-team`、`goal`、`goal-round-driver`、`hooks-claude-code`、`hooks-codex` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:224] |
-| `agent/pre-step` | waterfall（监听者要 `next()`） | `agent` | `agent-loop`（`waterfall`） | `agent-instructions`、`compaction-basic`、`goal-round-driver`、`hooks-claude-code`、`hooks-codex`、`plan-mode`、`repeat-tool-reminder`、`session-checkpoint-policy`、`session-reference`、`subagent-in-process-driver`、`time-context`、`tmux-context`、`tool-cordis`、`tool-skill`、`tool-subagent` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:238] |
-| `agent/request` | waterfall（监听者要 `next()`） | `agent` | `agent-loop`（`waterfall`） | `agent`、`webhook` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:251] |
-| `agent/request-error` | waterfall（监听者要 `next()`） | `agent` | `agent-loop`（`waterfall`） | `compaction-basic`、`llm-retry` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:267] |
-| `agent/turn-stopping` | serial | `agent` | `agent-loop`（`serial`） | `hooks-claude-code`、`hooks-codex` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:285] |
-| `agent/error` | emit | `agent` | `agent-loop`（`emit`） | `acp`、`goal-round-driver`、`session-controller`、`session-telemetry` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:297] |
-| `agent-loop/config-start-failed` | emit | `agent-loop` | `agent-loop`（`events.dispatch`） | 无产品 listen | `packages/core/agent-loop/src/index.ts` [E: packages/core/agent-loop/src/index.ts:239] |
+| `agent/inbox/discarded` | emit | `agent` | `agent-loop`（`emit`） | `goal-round-driver`、`subagent` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:213] |
+| `agent/session-start` | emit | `agent` | `agent-loop`（`emitAgentEvent`） | `agent-team`、`goal`、`goal-round-driver`、`hooks-claude-code`、`hooks-codex` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:223] |
+| `agent/pre-step` | waterfall（监听者要 `next()`） | `agent` | `agent-loop`（`waterfall`） | `agent-instructions`、`compaction-basic`、`goal-round-driver`、`hooks-claude-code`、`hooks-codex`、`plan-mode`、`repeat-tool-reminder`、`session-checkpoint-policy`、`session-reference`、`subagent-in-process-driver`、`time-context`、`tmux-context`、`tool-cordis`、`tool-skill`、`tool-subagent` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:242] |
+| `agent/request` | waterfall（监听者要 `next()`） | `agent` | `agent-loop`（`waterfall`） | `agent`、`webhook` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:250] |
+| `agent/request-error` | waterfall（监听者要 `next()`） | `agent` | `agent-loop`（`waterfall`） | `compaction-basic`、`llm-retry` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:262] |
+| `agent/turn-stopping` | serial | `agent` | `agent-loop`（`serial`） | `hooks-claude-code`、`hooks-codex` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:289] |
+| `agent/error` | emit | `agent` | `agent-loop`（`emit`） | `acp`、`goal-round-driver`、`session-controller`、`session-telemetry` | `packages/core/agent/src/runtime-types.ts` [E: packages/core/agent/src/runtime-types.ts:305] |
+| `agent-loop/config-start-failed` | emit | `agent-loop` | `agent-loop`（`events.dispatch`） | 无产品 listen | `packages/core/agent-loop/src/index.ts` [E: packages/core/agent-loop/src/index.ts:236] |
 
 `agent/pre-step` 的 inner `next` 默认 `{ kind: 'enter', messages }`（可夹 runtime context）。不调用 `next()` 等于自己当 innermost，下游 hooks / checkpoint 看不到这次提案。[E: packages/core/agent-loop/src/agent.ts:243][E: packages/core/agent-loop/src/agent.ts:246]
 
@@ -149,15 +149,15 @@ updated: 0a53fb55be
 
 | 事件名 | 模式 | 声明包 | dispatch | listen `[I]` | 源 path |
 |---|---|---|---|---|---|
-| `session/created` | emit | `session` | `session`（`events.dispatch`） | `compaction`、`goal`、`hook-protocol`、`llm-retry`、`permission-presets`、`plan-mode`、`schedule`、`server`、`session`、`session-controller`、`session-log-deepseek`、`session-persistence`、`session-projection`、`session-projection-cache`、`session-telemetry`、`time-context`、`tool-todo`、`tool-workflow`、`tools`、`user-approval` | `packages/core/session/src/index.ts` [E: packages/core/session/src/index.ts:52] |
-| `session/disposed` | emit | `session` | `session`（`events.dispatch`） | `agent-loop`、`agent-team`、`session-controller`、`session-persistence`、`session-projection-cache`、`session-telemetry`、`session-title` | `packages/core/session/src/index.ts` [E: packages/core/session/src/index.ts:62] |
-| `session/event` | emit | `session` | `session`（`events.dispatch`） | `acp`、`agent-instructions`、`agent-loop`、`agent-presets`、`agent-team`、`compaction`、`compaction-basic`、`file-reference-local`、`goal`、`goal-round-driver`、`headless`、`hook-protocol`、`loader-smoke`、`server`、`session`、`session-controller`、`session-persistence`、`session-projection`、`session-projection-cache`、`session-telemetry`、`session-telemetry-otel`、`session-title`、`token-meter`、`tool-todo`、`tool-workflow`、`tools`、`user-approval` | `packages/core/session/src/index.ts` [E: packages/core/session/src/index.ts:74] |
-| `session/flush` | **parallel** | `session` | `session`（`events.dispatch` + `Promise.allSettled`） | `session-persistence`、`session-telemetry` | `packages/core/session/src/index.ts` [E: packages/core/session/src/index.ts:83] |
+| `session/created` | emit | `session` | `session`（`events.dispatch`） | `compaction`、`goal`、`hook-protocol`、`llm-retry`、`permission-presets`、`plan-mode`、`schedule`、`server`、`session`、`session-controller`、`session-log-deepseek`、`session-persistence`、`session-projection`、`session-projection-cache`、`session-telemetry`、`time-context`、`tool-todo`、`tool-workflow`、`tools`、`user-approval` | `packages/core/session/src/index.ts` [E: packages/core/session/src/index.ts:51] |
+| `session/disposed` | emit | `session` | `session`（`events.dispatch`） | `agent-loop`、`agent-team`、`session-controller`、`session-persistence`、`session-projection-cache`、`session-telemetry`、`session-title` | `packages/core/session/src/index.ts` [E: packages/core/session/src/index.ts:61] |
+| `session/event` | emit | `session` | `session`（`events.dispatch`） | `acp`、`agent-instructions`、`agent-loop`、`agent-presets`、`agent-team`、`compaction`、`compaction-basic`、`file-reference-local`、`goal`、`goal-round-driver`、`headless`、`hook-protocol`、`loader-smoke`、`server`、`session`、`session-controller`、`session-persistence`、`session-projection`、`session-projection-cache`、`session-telemetry`、`session-telemetry-otel`、`session-title`、`token-meter`、`tool-todo`、`tool-workflow`、`tools`、`user-approval` | `packages/core/session/src/index.ts` [E: packages/core/session/src/index.ts:73] |
+| `session/flush` | **parallel** | `session` | `session`（`events.dispatch` + `Promise.allSettled`） | `session-persistence`、`session-telemetry` | `packages/core/session/src/index.ts` [E: packages/core/session/src/index.ts:82] |
 | `session-telemetry/record` | waterfall（监听者要 `next()`） | `session-telemetry` | `session-telemetry`（`waterfall`） | 无产品 listen（redaction 扩展点；无 listener 则原样出站） | `packages/session/session-telemetry/src/index.ts` [E: packages/session/session-telemetry/src/index.ts:43] |
 | `api-session/added` | emit | `session-controller` | `session-controller`（`emit`） | `remotes` | `packages/api/session-controller/src/types.ts` [E: packages/api/session-controller/src/types.ts:503] |
-| `api-session/removed` | emit | `session-controller` | `session-controller`（`emit`） | `remotes` | `packages/api/session-controller/src/types.ts` [E: packages/api/session-controller/src/types.ts:509] |
+| `api-session/removed` | emit | `session-controller` | `session-controller`（`emit`） | `remotes` | `packages/api/session-controller/src/types.ts` [E: packages/api/session-controller/src/types.ts:510] |
 | `api-session/status` | emit | `session-controller` | `session-controller`（`emit`） | `remotes` | `packages/api/session-controller/src/types.ts` [E: packages/api/session-controller/src/types.ts:516] |
-| `api-session/activity` | emit | `session-controller` | `session-controller`（`emit`） | `remotes` | `packages/api/session-controller/src/types.ts` [E: packages/api/session-controller/src/types.ts:523] |
+| `api-session/activity` | emit | `session-controller` | `session-controller`（`emit`） | `remotes` | `packages/api/session-controller/src/types.ts` [E: packages/api/session-controller/src/types.ts:522] |
 | `api-session/error` | emit | `session-controller` | `session-controller`（`emit`） | `remotes` | `packages/api/session-controller/src/types.ts` [E: packages/api/session-controller/src/types.ts:530] |
 
 `session/event` 的第三参是已经 commit 的 `SessionEvent` 信封。把 `event.type === 'agent-preset/selected'` 再 `ctx.emit('agent-preset/selected', ...)` 的是 `agent-presets`：日志 type 与 Cordis 事件同名但分两跳。[E: packages/preset/agent-presets/src/index.ts:228][E: packages/preset/agent-presets/src/index.ts:229]
@@ -183,7 +183,7 @@ updated: 0a53fb55be
 
 | 事件名 | 模式 | 声明包 | dispatch | listen `[I]` | 源 path |
 |---|---|---|---|---|---|
-| `llm/stream` | waterfall（监听者要 `next()`） | `llm` | `llm`（`waterfall`） | `agent-loop`、`llm`、`llm-replay`、`session-checkpoint-policy`、`session-title` | `packages/llm/llm/src/index.ts` [E: packages/llm/llm/src/index.ts:67] |
+| `llm/stream` | waterfall（监听者要 `next()`） | `llm` | `llm`（`waterfall`） | `agent-loop`、`llm`、`llm-replay`、`session-checkpoint-policy`、`session-title` | `packages/llm/llm/src/index.ts` [E: packages/llm/llm/src/index.ts:71] |
 | `llm/adapters-updated` | emit | `llm` | `llm`（`events.dispatch`） | `acp`、`llm`、`remotes` | `packages/llm/llm/src/types.ts` [E: packages/llm/llm/src/types.ts:23] |
 | `fs/write-intent` | waterfall（监听者要 `next()`） | `fs` | `tool-fs`、`tool-str-replace-editor`（`waterfall`） | `fs-observation-policy` | `packages/fs/fs/src/index.ts` [E: packages/fs/fs/src/index.ts:58] |
 | `fs/edit-intent` | waterfall（监听者要 `next()`） | `fs` | `tool-fs`、`tool-str-replace-editor`（`waterfall`） | `fs-observation-policy` | `packages/fs/fs/src/index.ts` [E: packages/fs/fs/src/index.ts:66] |
@@ -193,9 +193,9 @@ updated: 0a53fb55be
 | `commands/change` | emit | `commands` | `commands`（`events.dispatch`） | `remotes` | `packages/interaction/commands/src/types.ts` [E: packages/interaction/commands/src/types.ts:80] |
 | `webserver/index-inject` | emit | `webserver` | `webserver`（`emit`） | `inspector`、`modules` | `packages/host/webserver/src/index.ts` [E: packages/host/webserver/src/index.ts:34] |
 
-`llm/stream` 声明：loop 建的 request 带 `markAgentLoopRequest` 且深冻，listener 只读不改消息。[E: packages/llm/llm/src/index.ts:67][E: packages/llm/llm/src/call-config.ts:66]
+`llm/stream` 声明：loop 建的 request 带 `markAgentLoopRequest` 且深冻，listener 只读不改消息。[E: packages/llm/llm/src/index.ts:71][E: packages/llm/llm/src/call-config.ts:66]
 
-`approval/request` inner 默认 `'unavailable'`（fail-closed）。`'never'` 策略在 dispatch **之前**由 service 自己短路为 `'rejected'`。[E: packages/interaction/user-approval/src/index.ts:277][E: packages/interaction/user-approval/src/index.ts:283][E: packages/interaction/user-approval/src/index.ts:285]
+`approval/request` inner 默认 `'unavailable'`（fail-closed）。`'never'` 策略在 dispatch **之前**由 service 自己短路为 `'rejected'`。[E: packages/interaction/user-approval/src/index.ts:276][E: packages/interaction/user-approval/src/index.ts:284][E: packages/interaction/user-approval/src/index.ts:285]
 
 ### goal / subagent / workflow / skill / preset
 
@@ -203,9 +203,9 @@ updated: 0a53fb55be
 |---|---|---|---|---|---|
 | `goal/changed` | emit | `goal` | `goal`（`emit`） | `goal-round-driver` | `packages/goal/goal/src/domain.ts` [E: packages/goal/goal/src/domain.ts:114] |
 | `subagent/provider-added` | emit | `subagent` | `subagent`（`emit`） | `subagent`、`tool-subagent` | `packages/subagent/subagent/src/index.ts` [E: packages/subagent/subagent/src/index.ts:152] |
-| `subagent/provider-removed` | emit | `subagent` | `subagent`（`events.dispatch` / lifecycle） | `subagent`、`tool-subagent` | `packages/subagent/subagent/src/index.ts` [E: packages/subagent/subagent/src/index.ts:158] |
-| `subagent/start` | emit | `subagent` | `subagent`（`events.dispatch` / lifecycle） | `hooks-claude-code`、`subagent` | `packages/subagent/subagent/src/index.ts` [E: packages/subagent/subagent/src/index.ts:169] |
-| `subagent/end` | emit | `subagent` | `subagent`（`events.dispatch` / lifecycle） | `hooks-claude-code`、`server`、`subagent` | `packages/subagent/subagent/src/index.ts` [E: packages/subagent/subagent/src/index.ts:178] |
+| `subagent/provider-removed` | emit | `subagent` | `subagent`（`events.dispatch` / lifecycle） | `subagent`、`tool-subagent` | `packages/subagent/subagent/src/index.ts` [E: packages/subagent/subagent/src/index.ts:163] |
+| `subagent/start` | emit | `subagent` | `subagent`（`events.dispatch` / lifecycle） | `hooks-claude-code`、`subagent` | `packages/subagent/subagent/src/index.ts` [E: packages/subagent/subagent/src/index.ts:172] |
+| `subagent/end` | emit | `subagent` | `subagent`（`events.dispatch` / lifecycle） | `hooks-claude-code`、`server`、`subagent` | `packages/subagent/subagent/src/index.ts` [E: packages/subagent/subagent/src/index.ts:183] |
 | `workflow/start` | emit | `workflow` | `workflow`（`events.dispatch`；worker 调 `emitWorkflowEvent`） | `workflow` | `packages/workflow/workflow/src/index.ts` [E: packages/workflow/workflow/src/index.ts:43] |
 | `workflow/phase` | emit | `workflow` | `workflow`（`events.dispatch`） | 无产品 listen | `packages/workflow/workflow/src/index.ts` [E: packages/workflow/workflow/src/index.ts:51] |
 | `workflow/log` | emit | `workflow` | `workflow`（`events.dispatch`） | 无产品 listen | `packages/workflow/workflow/src/index.ts` [E: packages/workflow/workflow/src/index.ts:58] |
@@ -215,7 +215,7 @@ updated: 0a53fb55be
 | `skills/change` | emit | `skill` | `skill`（`events.dispatch`） | 无产品 listen | `packages/skill/skill/src/index.ts` [E: packages/skill/skill/src/index.ts:298] |
 | `agent-preset/selected` | emit | `agent-presets` | `agent-presets`（`emit`） | `remotes` | `packages/preset/agent-presets/src/types.ts` [E: packages/preset/agent-presets/src/types.ts:80] |
 
-`subagent/start` 与 `subagent/end` 由 `createLifecycleEmitter` 容纳发射：有 parent 则带 scope carrier。[E: packages/subagent/subagent/src/lifecycle.ts:112][E: packages/subagent/subagent/src/lifecycle.ts:160]
+`subagent/start` 与 `subagent/end` 由 `createLifecycleEmitter` 容纳发射：有 parent 则带 scope carrier。[E: packages/subagent/subagent/src/lifecycle.ts:112][E: packages/subagent/subagent/src/lifecycle.ts:161]
 
 `workflow/*` 的生产发射在 `workflow-worker-thread` 调 `emitWorkflowEvent`；引擎基类对每个 callback contain。[E: packages/workflow/workflow/src/index.ts:175][E: packages/workflow/workflow-worker-thread/src/index.ts:190]
 
@@ -251,7 +251,7 @@ updated: 0a53fb55be
 | `internal/service` | emit | `vendor/cordis` | `reflect`（`events.emit`） | `agent-presets`、`gateway` | `vendor/cordis/src/events.ts` [E: vendor/cordis/src/events.ts:341] |
 | `internal/dispatch` | emit | `vendor/cordis` | `EventsService.dispatch`（非 internal 事件） | `agent-team`、`commands`、`compaction`、`fs`、`goal`、`goal-round-driver`、`hook-protocol`、`llm-retry`、`permission-presets`、`plan-mode`、`sandbox-policy`、`schedule`、`scope`、`session`、`session-log-deepseek`、`session-title`、`subagent`、`terminal-bash`、`time-context`、`tool-todo`、`tool-workflow`、`tools`、`user-approval`、`webhook`、`workflow` | `vendor/cordis/src/events.ts` [E: vendor/cordis/src/events.ts:351] |
 
-`internal/status` 的 `agent` listen 用来在 ancestor fiber `UNLOADING` 时关掉 initiator。[E: packages/core/agent/src/index.ts:281]
+`internal/status` 的 `agent` listen 用来在 ancestor fiber `UNLOADING` 时关掉 initiator。[E: packages/core/agent/src/index.ts:283]
 
 `internal/dispatch` 的 listen 几乎全是各包 `invariant.ts`：核对 scope carrier 与 payload 主语是否同一对象。client 面另有 `internal/*` listen，host 扫描不列它们。[I]
 

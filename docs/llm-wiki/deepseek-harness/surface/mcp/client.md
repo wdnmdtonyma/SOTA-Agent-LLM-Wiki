@@ -35,7 +35,7 @@ symbols:
 related: []
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-mcp-client` 是 **host 面 opt-in** 的 MCP 工具桥：每个插件实例连一台外部 MCP server，只把 `tools/list` 登记进 `ctx.tools`。模型看见的名字是 `mcp__<serverName>__<rawName>`（`publicToolName`）。五个 shipped profile（`web` / `headless` / `sdk` / `sdk-minimal` / `acp`）与四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）默认都没有 MCP server 行；`apps/cli` 把包装进 `dependencies` 只为 overlay / example 能解析到包。ACP session 可通过 `mountAcpMcpServers` 在 Agent 作用域动态挂本包。
@@ -105,7 +105,7 @@ CLI 测试把三份 example overlay 钉在 `apps/cli/config/examples/mcp-memory`
 
 必填 `command`。`args` 默认 `[]`（不经 shell 插值），`env` 默认 `{}`，`cwd` 默认 `''`。[E: packages/mcp/mcp-client/src/index.ts:117] [E: packages/mcp/mcp-client/src/index.ts:118]
 
-孩子由 MCP SDK `StdioClientTransport` 拉起，**不**走 `ctx.subprocess.spawn`。`inject` 只有 `['tools']`。[E: packages/mcp/mcp-client/src/index.ts:32] [E: packages/mcp/mcp-client/src/transport.ts:34] 环境是 `{ ...scrubbedParentEnv(), ...config.env }`：先丢掉 credential 形名字和 `DSH_*`，再叠显式 `env`（可以把孩子自己的密钥写回来）。[E: packages/mcp/mcp-client/src/transport.ts:22] [E: packages/subprocess/subprocess/src/index.ts:60]
+孩子由 MCP SDK `StdioClientTransport` 拉起，**不**走 `ctx.subprocess.spawn`。`inject` 只有 `['tools']`。[E: packages/mcp/mcp-client/src/index.ts:32] [E: packages/mcp/mcp-client/src/transport.ts:34] 环境是 `{ ...scrubbedParentEnv(), ...config.env }`：先丢掉 credential 形名字和 `DSH_*`，再叠显式 `env`（可以把孩子自己的密钥写回来）。[E: packages/mcp/mcp-client/src/transport.ts:22] [E: packages/subprocess/subprocess/src/index.ts:64]
 
 example overlay：`command: mcp-server-memory` / `engram` / `memorix`，`cwd: !!js process.cwd()`。[E: apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml:9] [E: apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml:10] [E: apps/cli/config/examples/mcp-memory/engram.cordis.yml:9]
 

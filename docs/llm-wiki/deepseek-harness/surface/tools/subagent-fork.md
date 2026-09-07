@@ -19,7 +19,7 @@ source:
   - packages/subagent/subagent/src/types.ts
   - packages/subagent/subagent/src/child-agent.ts
   - packages/subagent/subagent/src/continuation.ts
-  - packages/subagent/subagent/src/descriptor-seed.ts
+  - packages/subagent/subagent/src/descriptor.ts
   - packages/core/tools/src/index.ts
   - packages/core/tools/src/schema.ts
   - packages/guard/timeout-policy/src/index.ts
@@ -49,7 +49,7 @@ related:
   - subsys.orchestration.subagent-fork
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 模型可见名 `subagent_fork`；实现包 `@deepseek-ai/dsh-tool-subagent`（Cordis 插件名 `tool-subagent`，preset 行 `id: tool-subagent-fork`）。`provider: fork` 走 host 上的 `@deepseek-ai/dsh-subagent-fork-in-process`，把父 session 已完成 turn 的前缀种进子 agent。
@@ -69,15 +69,15 @@ updated: 0a53fb55be
 |---|---|---|
 | `subagent_fork` | `Config.toolName`（本页 shipped 行显式写出） | `fork`（`Config.provider`） |
 
-实现包是 `@deepseek-ai/dsh-tool-subagent`。 [E: packages/subagent/tool-subagent/package.json:2] Cordis 插件导出名是 `tool-subagent`，`inject` 是 `['tools', 'subagents', 'systemPrompt', 'sessionProjections']`。 [E: packages/subagent/tool-subagent/src/index.ts:42] [E: packages/subagent/tool-subagent/src/index.ts:43] 工厂是 `apply(ctx, config)`：算出 `toolName` / `continuable` / `backgroundEnabled`，等名为 `config.provider` 的 provider 出现后 `runtimeCtx.tools.register(defineTool({ name: toolName, ... }))`。 [E: packages/subagent/tool-subagent/src/index.ts:316] [E: packages/subagent/tool-subagent/src/index.ts:317] [E: packages/subagent/tool-subagent/src/index.ts:373] [E: packages/subagent/tool-subagent/src/index.ts:374]
+实现包是 `@deepseek-ai/dsh-tool-subagent`。 [E: packages/subagent/tool-subagent/package.json:2] Cordis 插件导出名是 `tool-subagent`，`inject` 是 `['tools', 'subagents', 'systemPrompt', 'sessionProjections']`。 [E: packages/subagent/tool-subagent/src/index.ts:43] [E: packages/subagent/tool-subagent/src/index.ts:43] 工厂是 `apply(ctx, config)`：算出 `toolName` / `continuable` / `backgroundEnabled`，等名为 `config.provider` 的 provider 出现后 `runtimeCtx.tools.register(defineTool({ name: toolName, ... }))`。 [E: packages/subagent/tool-subagent/src/index.ts:316] [E: packages/subagent/tool-subagent/src/index.ts:318] [E: packages/subagent/tool-subagent/src/index.ts:372] [E: packages/subagent/tool-subagent/src/index.ts:373]
 
-插件 schema 里 `toolName` 默认是 `'subagent'`，`provider` 必填、没有默认。 [E: packages/subagent/tool-subagent/src/index.ts:105] [E: packages/subagent/tool-subagent/src/index.ts:106] 本页的 wire 名不是这个默认值。`standard` / `ptc` / `cordis` 各有一行 `id: tool-subagent-fork`，同一包再 load 一次，把 `provider` 写成 `fork`、`toolName` 写成 `subagent_fork`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:198] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:201] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:202]
+插件 schema 里 `toolName` 默认是 `'subagent'`，`provider` 必填、没有默认。 [E: packages/subagent/tool-subagent/src/index.ts:105] [E: packages/subagent/tool-subagent/src/index.ts:106] 本页的 wire 名不是这个默认值。`standard` / `ptc` / `cordis` 各有一行 `id: tool-subagent-fork`，同一包再 load 一次，把 `provider` 写成 `fork`、`toolName` 写成 `subagent_fork`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:192] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:195] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:196]
 
-`fork` provider 本身不是这个工具包。`@deepseek-ai/dsh-subagent-fork-in-process`（插件名 `subagent-fork-in-process`）`inject` 只有 `['subagents']`，`apply` 里 `ctx.subagents.registerProvider(new ForkInProcessProvider(config.providerName))`，`providerName` 默认 `'fork'`。 [E: packages/subagent/subagent-fork-in-process/package.json:2] [E: packages/subagent/subagent-fork-in-process/src/index.ts:23] [E: packages/subagent/subagent-fork-in-process/src/index.ts:28] [E: packages/subagent/subagent-fork-in-process/src/index.ts:37] [E: packages/subagent/subagent-fork-in-process/src/index.ts:100] host `dsh-base` 装这一行，preset **不**再装 backend。 [E: packages/bundle/base/cordis.patch.yml:342] [E: packages/bundle/base/cordis.patch.yml:343]
+`fork` provider 本身不是这个工具包。`@deepseek-ai/dsh-subagent-fork-in-process`（插件名 `subagent-fork-in-process`）`inject` 只有 `['subagents']`，`apply` 里 `ctx.subagents.registerProvider(new ForkInProcessProvider(config.providerName))`，`providerName` 默认 `'fork'`。 [E: packages/subagent/subagent-fork-in-process/package.json:2] [E: packages/subagent/subagent-fork-in-process/src/index.ts:23] [E: packages/subagent/subagent-fork-in-process/src/index.ts:28] [E: packages/subagent/subagent-fork-in-process/src/index.ts:37] [E: packages/subagent/subagent-fork-in-process/src/index.ts:94] host `dsh-base` 装这一行，preset **不**再装 backend。 [E: packages/bundle/base/cordis.patch.yml:342] [E: packages/bundle/base/cordis.patch.yml:343]
 
-同包还有 shipped 的 `toolName: subagent` + `provider: spawn` 行，那是 [subagent.md](subagent.md)，不在本页展开 execute。测试钉死：两个 `toolName` 可以共存，各自打到各自的 provider。 [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:192] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:206]
+同包还有 shipped 的 `toolName: subagent` + `provider: spawn` 行，那是 [subagent.md](subagent.md)，不在本页展开 execute。测试钉死：两个 `toolName` 可以共存，各自打到各自的 provider。 [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:193] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:206]
 
-`backgroundMode: continuable` 且 `enableRunInBackground` 为真时，`install()` 还往 `ctx.systemPrompt` 登记 section `tool:${toolName}`（`order: getSectionOrder('TOOL_SUBAGENT')`）。provider 未出现、或当前 scope 看不见该工具时，section 文本是空串。 [E: packages/subagent/tool-subagent/src/index.ts:316] [E: packages/subagent/tool-subagent/src/index.ts:354] [E: packages/subagent/tool-subagent/src/index.ts:588] [E: packages/subagent/tool-subagent/src/index.ts:592] [E: packages/subagent/tool-subagent/src/index.ts:595]
+`backgroundMode: continuable` 且 `enableRunInBackground` 为真时，`install()` 还往 `ctx.systemPrompt` 登记 section `tool:${toolName}`（`order: getSectionOrder('TOOL_SUBAGENT')`）。provider 未出现、或当前 scope 看不见该工具时，section 文本是空串。 [E: packages/subagent/tool-subagent/src/index.ts:316] [E: packages/subagent/tool-subagent/src/index.ts:353] [E: packages/subagent/tool-subagent/src/index.ts:587] [E: packages/subagent/tool-subagent/src/index.ts:591] [E: packages/subagent/tool-subagent/src/index.ts:594]
 
 ## 用途定位
 
@@ -87,11 +87,11 @@ updated: 0a53fb55be
 
 `providerWording` 只吃一个 boolean，在 inherit / fresh 两套**对话**文案之间选择；工具、服务、scope、authority 不在这个函数的输入里。 [E: packages/subagent/tool-subagent/src/index.ts:251] persona / `toolFilter` 是工具 `Config` 的可选项，要显式配置才会进 start request。 [E: packages/subagent/tool-subagent/src/index.ts:514] [E: packages/subagent/tool-subagent/src/index.ts:515]
 
-shipped fork 行**不**开 `modelSelectionSettings`（注释写明保持与父相同的 provider/model 以便 KV Cache）。因此模型 schema **没有** `provider` / `model` / `reasoning_effort` 字段。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:194] [E: packages/subagent/tool-subagent/tests/model-selection.spec.ts:138]
+shipped fork 行**不**开 `modelSelectionSettings`（注释写明保持与父相同的 provider/model 以便 KV Cache）。因此模型 schema **没有** `provider` / `model` / `reasoning_effort` 字段。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:188] [E: packages/subagent/tool-subagent/tests/model-selection.spec.ts:138]
 
 ## 输入 schema
 
-模型参数由 `defineTool.parameters` 广告。`Config.provider` / `toolName` / `backgroundMode` / `persona` / `toolFilter` / `maxDepth` **不是**模型字段。未开 model selection 时 properties 只有 `description`、`prompt`、`run_in_background`。 [E: packages/subagent/tool-subagent/tests/model-selection.spec.ts:138] `defineTool` 先按 ParameterSchemaSpec 做类型 / required 校验。 [E: packages/core/tools/src/schema.ts:586]
+模型参数由 `defineTool.parameters` 广告。`Config.provider` / `toolName` / `backgroundMode` / `persona` / `toolFilter` / `maxDepth` **不是**模型字段。未开 model selection 时 properties 只有 `description`、`prompt`、`run_in_background`。 [E: packages/subagent/tool-subagent/tests/model-selection.spec.ts:138] `defineTool` 先按 ParameterSchemaSpec 做类型 / required 校验。 [E: packages/core/tools/src/schema.ts:588]
 
 插件 **默认 Config**（`toolName` 默认 `subagent`，`enableRunInBackground` 默认 `true`，`backgroundMode` 默认 `one-shot`）boot、且 provider 的 `inheritsParentContext === true`（fork 就是这样）时：
 
@@ -99,7 +99,7 @@ shipped fork 行**不**开 `modelSelectionSettings`（注释写明保持与父�
 |---|---|---|---|---|---|
 | `description` | `string` | 是 | 无 | 广告文案：3–5 词 | 展示用短标签，进 `request.label`，不进子模型 prompt。 [E: packages/subagent/tool-subagent/src/index.ts:384] [E: packages/subagent/tool-subagent/src/index.ts:510] |
 | `prompt` | `string` | 是 | 无 | inherit 文案：子代理已看见 completed turns，只写新的 | 包成一个 `text` ContentBlock 交给子代理。 [E: packages/subagent/tool-subagent/src/index.ts:389] [E: packages/subagent/tool-subagent/src/index.ts:511] |
-| `run_in_background` | `boolean` | 否 | **不传 = `false`**（one-shot） | 仅当 `enableRunInBackground` 为真时广告 | one-shot 文案：默认前台；`true` 回 job id，用 `job_output` / `job_kill`。 [E: packages/subagent/tool-subagent/src/index.ts:109] [E: packages/subagent/tool-subagent/src/index.ts:303] [E: packages/subagent/tool-subagent/src/index.ts:415] |
+| `run_in_background` | `boolean` | 否 | **不传 = `false`**（one-shot） | 仅当 `enableRunInBackground` 为真时广告 | one-shot 文案：默认前台；`true` 回 job id，用 `job_output` / `job_kill`。 [E: packages/subagent/tool-subagent/src/index.ts:109] [E: packages/subagent/tool-subagent/src/index.ts:302] [E: packages/subagent/tool-subagent/src/index.ts:415] |
 
 `prompt` 的 inherit 描述来自 `providerWording(true)`：`It already sees this conversation's completed turns`。 [E: packages/subagent/tool-subagent/src/index.ts:261] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:389]
 
@@ -107,13 +107,13 @@ shipped fork 行**不**开 `modelSelectionSettings`（注释写明保持与父�
 
 | Config | 对模型 schema 的影响 |
 |---|---|
-| `toolName` | 改注册名。默认 `'subagent'`；本页 shipped 行写成 `subagent_fork`。 [E: packages/subagent/tool-subagent/src/index.ts:106] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:202] |
+| `toolName` | 改注册名。默认 `'subagent'`；本页 shipped 行写成 `subagent_fork`。 [E: packages/subagent/tool-subagent/src/index.ts:106] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:196] |
 | `enableRunInBackground: false` | properties 只剩 `description` + `prompt`；execute 再拒一次 `run_in_background: true`。 [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:95] [E: packages/subagent/tool-subagent/src/index.ts:294] |
-| `backgroundMode: continuable` | `run_in_background` 不传时默认 **`true`**；描述改成「默认后台、立刻回 durable id、结算后 runtime 发 notice、`send_message` 开后续 turn」。 [E: packages/subagent/tool-subagent/src/index.ts:303] [E: packages/subagent/tool-subagent/src/index.ts:380] [E: packages/subagent/tool-subagent/src/index.ts:418] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1224] |
-| `backgroundMode: continuable` 但 provider 没有 `prepareContinuable` | **mount 失败**，工具不会注册。fork 实现了该方法。 [E: packages/subagent/tool-subagent/src/index.ts:339] [E: packages/subagent/subagent-fork-in-process/src/index.ts:90] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:52] |
+| `backgroundMode: continuable` | `run_in_background` 不传时默认 **`true`**；描述改成「默认后台、立刻回 durable id、结算后 runtime 发 notice、`send_message` 开后续 turn」。 [E: packages/subagent/tool-subagent/src/index.ts:302] [E: packages/subagent/tool-subagent/src/index.ts:380] [E: packages/subagent/tool-subagent/src/index.ts:418] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1224] |
+| `backgroundMode: continuable` 但 provider 没有 `prepareContinuable` | **mount 失败**，工具不会注册。fork 实现了该方法。 [E: packages/subagent/tool-subagent/src/index.ts:338] [E: packages/subagent/subagent-fork-in-process/src/index.ts:84] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:52] |
 | `modelSelectionSettings: true` | 广告 `provider` / `model` / `reasoning_effort`；fork shipped 行**不开**此项。 [E: packages/subagent/tool-subagent/src/index.ts:394] |
 
-四个 shipped preset 里，`standard` / `ptc` / `cordis` 的 fork 行都是 `backgroundMode: continuable`（**不要**把 host `one-shot` 抄进这张产品表）。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:203] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:204] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:191] 该配置下模型实际看见的是 continuable 那一列：省略 `run_in_background` 即后台。
+四个 shipped preset 里，`standard` / `ptc` / `cordis` 的 fork 行都是 `backgroundMode: continuable`（**不要**把 host `one-shot` 抄进这张产品表）。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:197] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:204] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:185] 该配置下模型实际看见的是 continuable 那一列：省略 `run_in_background` 即后台。
 
 **插件 Config（不是模型参数）** 还会改子代理怎么被组成：
 
@@ -123,7 +123,7 @@ shipped fork 行**不**开 `modelSelectionSettings`（注释写明保持与父�
 | `agentOptions` | 省略则不进 request | 覆盖子 agent 的 provider / model / maxTokens。 [E: packages/subagent/tool-subagent/src/index.ts:513] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:262] |
 | `persona` | 省略 | 要求 provider `persona` 能力；in-process 在子 scope 登记 `deployment:persona`，shadow 部署 persona。 [E: packages/subagent/subagent-fork-in-process/src/index.ts:68] [E: packages/subagent/subagent/src/child-agent.ts:212] |
 | `toolFilter.allow` / `deny` | 省略整个对象 | 要求 `toolFilter` 能力；空对象（两个键都没有）在 `apply()` 就抛。 [E: packages/subagent/tool-subagent/src/index.ts:312] |
-| `maxDepth` | `3` | 数字 cap 转进 start request；`'provider-managed'` 则不传 `maxDepth`。fork 有 `depthLimit`。 [E: packages/subagent/tool-subagent/src/index.ts:129] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1417] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1463] |
+| `maxDepth` | `3` | 数字 cap 转进 start request；`'provider-managed'` 则不传 `maxDepth`。fork 有 `depthLimit`。 [E: packages/subagent/tool-subagent/src/index.ts:128] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1417] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1462] |
 
 ## 输出 & 截断 / spill
 
@@ -131,22 +131,22 @@ shipped fork 行**不**开 `modelSelectionSettings`（注释写明保持与父�
 
 | `kind` | 字段 | 何时出现 |
 |---|---|---|
-| `continuable` | `subagentId` | `backgroundMode: continuable` 且调度到后台。 [E: packages/subagent/tool-subagent/src/index.ts:530] |
+| `continuable` | `subagentId` | `backgroundMode: continuable` 且调度到后台。 [E: packages/subagent/tool-subagent/src/index.ts:531] |
 | `background` | `jobId` | one-shot 且调度到后台；`jobs.start({ kind: 'subagent' })`，id 前缀因此是 `subagent-N`。 [E: packages/subagent/tool-subagent/src/index.ts:538] [E: packages/jobs/jobs/src/types.ts:25] |
 | `foreground` | `runId` + `output` | 等到 `SubagentRun.result`；`output` 是子代理选中的 ContentBlock JSON。 [E: packages/subagent/tool-subagent/src/index.ts:217] |
 
 `output.render`：`background` → `started background subagent job ${jobId}`；`continuable` → `started subagent ${subagentId}`；`foreground` → 只拼接 `type: 'text'` 的块。 [E: packages/subagent/tool-subagent/src/index.ts:456] [E: packages/subagent/tool-subagent/src/index.ts:133] 测试钉死 continuable ack 形如 `started subagent <id>`，且 **不** 建 Job。 [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1236] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1240]
 
-本工具**没有**自己的 byte cap / spill 路径。前台成功把子代理最终文本原样交给父模型；中间 tool 步骤不回传。非 `completed` 的 `stopReason` 走 `isError`，但 `withDiagnosticAndPartialText` 会把子代理已写出的 text 附在错误后面。 [E: packages/subagent/tool-subagent/src/index.ts:156] [E: packages/subagent/tool-subagent/src/index.ts:183] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:173]
+本工具**没有**自己的 byte cap / spill 路径。前台成功把子代理最终文本原样交给父模型；中间 tool 步骤不回传。非 `completed` 的 `stopReason` 走 `isError`，但 `withDiagnosticAndPartialText` 会把子代理已写出的 text 附在错误后面。 [E: packages/subagent/tool-subagent/src/index.ts:156] [E: packages/subagent/tool-subagent/src/index.ts:183] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:174]
 
-one-shot 读结果时，`readResult` 只扫 seed **之后** 的子自有事件：子代理自己没产出 assistant 消息时，返回空 `output`，不会把父日志里的旧回答当成子结果。 [E: packages/subagent/subagent-in-process-driver/src/index.ts:215] [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:194]
+one-shot 读结果时，`readResult` 只扫 seed **之后** 的子自有事件：子代理自己没产出 assistant 消息时，返回空 `output`，不会把父日志里的旧回答当成子结果。 [E: packages/subagent/subagent-in-process-driver/src/index.ts:211] [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:195]
 
 ## 背后的 seam
 
 | 角色 | 实体 | 本工具怎么用 |
 |---|---|---|
-| Definition | `ctx.subagents` / `SubagentRuntime` | `super(ctx, 'subagents')`。`start` 发 one-shot run；`startContinuable` 建 durable 子会话。 [E: packages/subagent/subagent/src/index.ts:209] [E: packages/subagent/subagent/src/index.ts:553] [E: packages/subagent/subagent/src/index.ts:237] |
-| Provider（本页） | `ForkInProcessProvider`（名默认 `fork`） | `inheritsParentContext = true`；`start` / `prepareContinuable` 都切 `completedTurnPrefix`。能力：`outputSchema` / `depthLimit` / `toolFilter` / `persona`。 [E: packages/subagent/subagent-fork-in-process/src/index.ts:71] [E: packages/subagent/subagent-fork-in-process/src/index.ts:76] [E: packages/subagent/subagent-fork-in-process/src/index.ts:90] |
+| Definition | `ctx.subagents` / `SubagentRuntime` | `super(ctx, 'subagents')`。`start` 发 one-shot run；`startContinuable` 建 durable 子会话。 [E: packages/subagent/subagent/src/index.ts:201] [E: packages/subagent/subagent/src/index.ts:554] [E: packages/subagent/subagent/src/index.ts:229] |
+| Provider（本页） | `ForkInProcessProvider`（名默认 `fork`） | `inheritsParentContext = true`；`start` / `prepareContinuable` 都切 `completedTurnPrefix`。能力：`outputSchema` / `depthLimit` / `toolFilter` / `persona`。 [E: packages/subagent/subagent-fork-in-process/src/index.ts:71] [E: packages/subagent/subagent-fork-in-process/src/index.ts:75] [E: packages/subagent/subagent-fork-in-process/src/index.ts:84] |
 | Provider（对照） | `SpawnInProcessProvider`（名默认 `spawn`） | 不 seed；`inheritsParentContext = false`。 [E: packages/subagent/subagent-spawn-in-process/src/index.ts:50] |
 | Consumer | `@deepseek-ai/dsh-tool-subagent` 的 `subagent_fork` 实例 | `config.provider` 选人；不自己 `agents.create`。 |
 
@@ -157,7 +157,7 @@ one-shot 读结果时，`readResult` 只扫 seed **之后** 的子自有事件�
 - `ctx.tools`：注册与 `get(toolName, scope)`（continuable section 用它判断当前 agent 能不能看见工具）。 [E: packages/subagent/tool-subagent/src/index.ts:595]
 - `ctx.systemPrompt`：continuable 实例的 `tool:subagent_fork` section。 [E: packages/subagent/tool-subagent/src/index.ts:592]
 - `ctx.get('jobs')`：只在 **one-shot 后台** 取。缺服务就失败，不静默改前台。 [E: packages/subagent/tool-subagent/src/index.ts:532] shipped preset 的 fork 行是 continuable，默认路径**不**碰 jobs。
-- `ctx.agents` / session persistence：continuable 由 `SubagentContinuationManager` 物化；`prepareContinuable` 返回的 seed 经 `seedDescriptorTurn` 再追加一条 `subagent/descriptor`。 [E: packages/subagent/subagent/src/continuation.ts:448] [E: packages/subagent/subagent/src/descriptor-seed.ts:29]
+- `ctx.agents` / session persistence：continuable 由 `SubagentContinuationManager` 物化；创建窗口 `session.append('subagent/descriptor', create.descriptor)`（`descriptor.ts`，无 `surfaceOp`）。 [E: packages/subagent/subagent/src/continuation.ts:1229] [E: packages/subagent/subagent/src/descriptor.ts:38]
 - 子创建窗口：`applyChildComposition` 先 `composeFrom` 父 preset，再写 `subagent:delegation` context；可选 persona / `tools.restrict`。 [E: packages/subagent/subagent/src/child-agent.ts:204] [E: packages/subagent/subagent/src/child-agent.ts:205]
 - 审批：`captureDelegatedPolicyOverrides` 在有 `ctx.approval` 时把子 session 的 `approvalPolicy` 钉成 `'never'`。 [E: packages/subagent/subagent/src/child-agent.ts:245]
 
@@ -165,16 +165,16 @@ one-shot 读结果时，`readResult` 只扫 seed **之后** 的子自有事件�
 
 ## 执行管线
 
-`ctx.tools.execute` 走 `tools/pre-execute` →（可选 `serviceAsk`）→ 单调 guard → `tools/execute` waterfall（叶子 `ToolDefinition.execute`）→ `tools/post-execute`。 [E: packages/core/tools/src/index.ts:1333] [E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1564] [E: packages/core/tools/src/index.ts:1734] 本工具**不**自己挂 pre-execute listener，也**不**在 body 里 `ask`。
+`ctx.tools.execute` 走 `tools/pre-execute` →（可选 `serviceAsk`）→ 单调 guard → `tools/execute` waterfall（叶子 `ToolDefinition.execute`）→ `tools/post-execute`。 [E: packages/core/tools/src/index.ts:1333] [E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1565] [E: packages/core/tools/src/index.ts:1735] 本工具**不**自己挂 pre-execute listener，也**不**在 body 里 `ask`。
 
 对本工具的挂点：
 
-- **timeout：** `defineTool` **没有**设 `timeoutMs`。`dsh-tool-call-timeout-policy` 读 `ctx.tools.get(...).timeoutMs`，`undefined` 就原样 `next()`。 [E: packages/guard/timeout-policy/src/index.ts:57] [E: packages/guard/timeout-policy/src/index.ts:59] 取消靠 `exec.signal` 传进 `start` / `startContinuable`。 [E: packages/subagent/tool-subagent/src/index.ts:528]
+- **timeout：** `defineTool` **没有**设 `timeoutMs`。`dsh-tool-call-timeout-policy` 读 `ctx.tools.get(...).timeoutMs`，`undefined` 就原样 `next()`。 [E: packages/guard/timeout-policy/src/index.ts:57] [E: packages/guard/timeout-policy/src/index.ts:59] 取消靠 `exec.signal` 传进 `start` / `startContinuable`。 [E: packages/subagent/tool-subagent/src/index.ts:529]
 - **approval：** 父调用不走 `ask`。子代理若组成了 approval 服务，delegation 把子政策钉成 `never`。 [E: packages/subagent/subagent/src/child-agent.ts:245]
 - **sandbox：** 本工具不 confine。子代理通过 `applyChildComposition` 加入父 preset；`captureDelegatedPolicyOverrides` 只带走父 session 上显式的 sandbox override。 [E: packages/subagent/subagent/src/child-agent.ts:204] [E: packages/subagent/subagent/src/child-agent.ts:244]
 - **并行：** `isConcurrencySafe: () => true`，`executionMode` 是 `parallel`。 [E: packages/subagent/tool-subagent/src/index.ts:464] [E: packages/core/tools/src/index.ts:1267] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:130]
-- **PTC：** `ptc` preset 仍装本行，但另挂 `tool-presentation` `mode: ptc`。无 `parent` 的模型直调 `subagent_fork` 在进 waterfall 前 `collapses`（名字不是 `run_code`），必须从 `run_code` 程序里调。 [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/core/tools/src/index.ts:1315]
-- **lifecycle：** 工具注册镜像 `subagent/provider-added` / `provider-removed`。provider 未到时 catalog 里没有 `subagent_fork`，只打一条 info。 [E: packages/subagent/tool-subagent/src/index.ts:573] [E: packages/subagent/tool-subagent/src/index.ts:586]
+- **PTC：** `ptc` preset 仍装本行，但另挂 `tool-presentation` `mode: ptc`。无 `parent` 的模型直调 `subagent_fork` 在进 waterfall 前 `collapses`（名字不是 `run_code`），必须从 `run_code` 程序里调。 [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:271] [E: packages/core/tools/src/index.ts:1315]
+- **lifecycle：** 工具注册镜像 `subagent/provider-added` / `provider-removed`。provider 未到时 catalog 里没有 `subagent_fork`，只打一条 info。 [E: packages/subagent/tool-subagent/src/index.ts:573] [E: packages/subagent/tool-subagent/src/index.ts:587]
 
 ## Preset 装配
 
@@ -183,29 +183,29 @@ one-shot 读结果时，`readResult` 只扫 seed **之后** 的子自有事件�
 | preset | 装 `id: tool-subagent-fork`？ | `disabled` | isolate | 关键 Config |
 |---|---|---|---|---|
 | `minimal` | **否**。yml 无 `@deepseek-ai/dsh-tool-subagent`。该 preset 只挂 persona + persistent bash/pwsh + `str_replace_editor` | — | 本包未出现 [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:24] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:77] | — |
-| `standard` | 是 | 无 | 行在 `delegation` group；group 只 `isolate.workflowEngine: true`，**不** isolate `subagents` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:174] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:178] | `provider: fork`、`toolName: subagent_fork`、`backgroundMode: continuable` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:201] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:203] |
-| `ptc` | 是 | 无 | 同 standard（`delegation` / `workflowEngine`） [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:175] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179] | 同 standard [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:202] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:204] |
-| `cordis` | 是 | 无 | 同 standard [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:162] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:166] | 同 standard [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:189] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:191] |
+| `standard` | 是 | 无 | 行在 `delegation` group；group 只 `isolate.workflowEngine: true`，**不** isolate `subagents` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:171] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:172] | `provider: fork`、`toolName: subagent_fork`、`backgroundMode: continuable` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:195] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:197] |
+| `ptc` | 是 | 无 | 同 standard（`delegation` / `workflowEngine`） [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:176] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179] | 同 standard [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:202] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:204] |
+| `cordis` | 是 | 无 | 同 standard [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:159] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:160] | 同 standard [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:183] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:185] |
 
 组合旁注（不是 preset 成员资格）：
 
 - `dsh-base` 装 `@deepseek-ai/dsh-subagent-fork-in-process`（`providerName: fork`），以及一行 `tool-subagent-fork`：`provider: fork`、`toolName: subagent_fork`、**`backgroundMode: one-shot`**。 [E: packages/bundle/base/cordis.patch.yml:345] [E: packages/bundle/base/cordis.patch.yml:368] [E: packages/bundle/base/cordis.patch.yml:373] 这是 host 默认，**不要**当成 shipped preset 行为。headless / sdk / sdk-minimal / acp 不 disable 这行，因此那些 profile 的 fork 工具是 **one-shot**。
-- `dsh-web-app` overlay 把 host `tool-subagent-fork` 设 `disabled: true`，改由每个 session 的 preset remount（preset 行是 `continuable`）。 [E: packages/bundle/web-app/cordis.patch.yml:407] [E: packages/bundle/web-app/cordis.patch.yml:408]
+- `dsh-web-app` overlay 把 host `tool-subagent-fork` 设 `disabled: true`，改由每个 session 的 preset remount（preset 行是 `continuable`）。 [E: packages/bundle/web-app/cordis.patch.yml:408] [E: packages/bundle/web-app/cordis.patch.yml:408]
 - fork backend **不被** web-app disable；registry 留在 host。
-- 四个 shipped preset **都不**再挂 `@deepseek-ai/dsh-tool-subagent-report`。continuable 子代理上的 `report` 来自 host-plane setup，见 [report.md](report.md)。
+- 四个 shipped preset **都不**挂已删除的 `@deepseek-ai/dsh-tool-subagent-report`。见退役页 [report.md](report.md)。
 
 ## execute() 走读
 
-1. `defineTool` 包装的 `execute` 先 `validate` 广告过的参数，再进用户 `execute`。 [E: packages/core/tools/src/schema.ts:586]
-2. `execute@packages/subagent/tool-subagent/src/index.ts` 读 `exec.agent`。没有 calling agent 直接抛 `subagent tool requires a calling agent`。 [E: packages/subagent/tool-subagent/src/index.ts:467] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:337]
+1. `defineTool` 包装的 `execute` 先 `validate` 广告过的参数，再进用户 `execute`。 [E: packages/core/tools/src/schema.ts:588]
+2. `execute@packages/subagent/tool-subagent/src/index.ts` 读 `exec.agent`。没有 calling agent 直接抛 `subagent tool requires a calling agent`。 [E: packages/subagent/tool-subagent/src/index.ts:468] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:337]
 3. 组 `request`：`label = args.description`，`prompt = [{ type: 'text', text: args.prompt }]`，`parent`，再按 Config 可选带上 `agentOptions` / `persona` / `toolFilter` / 数字 `maxDepth`。 [E: packages/subagent/tool-subagent/src/index.ts:509]
-4. `resolveDelegationRun@packages/subagent/tool-subagent/src/index.ts`：`enableRunInBackground === false` 时若模型仍传 `run_in_background: true` 则抛；否则 `runInBackground = args.run_in_background ?? continuable`。 [E: packages/subagent/tool-subagent/src/index.ts:303] [E: packages/subagent/tool-subagent/src/index.ts:519]
-5. **continuable 后台**（web shipped fork 默认）：`ctx.subagents.startContinuable({ provider: config.provider, label, request, signal: exec.signal })`。manager 在 admission 完成后立刻 `return { childId, messageId }`，**不** `whenIdle`。工具返回 `{ kind: 'continuable', subagentId }`。 [E: packages/subagent/tool-subagent/src/index.ts:524] [E: packages/subagent/subagent/src/index.ts:237] [E: packages/subagent/subagent/src/continuation.ts:410] [E: packages/subagent/subagent/src/continuation.ts:479]
-6. continuable 物化：manager 调 `provider.prepareContinuable`。fork 在这一刻切一次 `completedTurnPrefix`；有 completed turn 就带 `seed`，否则 `{}`。 [E: packages/subagent/subagent/src/continuation.ts:439] [E: packages/subagent/subagent-fork-in-process/src/index.ts:94] [E: packages/subagent/subagent-fork-in-process/src/index.ts:95] 前缀写进子自己的 durable transcript，冷恢复重放这份前缀，不会按父后来的新历史再 fork 一次。测试钉死：无 completed turn 时 `seed` 为 `undefined`；有则最后一项是 `turn/end` 且 seq 连续。 [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:232] [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:245]
-7. **one-shot 后台**（host `dsh-base` fork 行；shipped preset 不是这条）：要 `ctx.jobs`；`jobs.start({ kind: 'subagent', owner: parent, run })` 立刻回 `{ kind: 'background', jobId }`。`run()` 里才 `ctx.subagents.start`。缺 jobs 失败；job preflight 失败则 `starts === 0`。 [E: packages/subagent/tool-subagent/src/index.ts:538] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:862] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1383]
-8. **前台**（continuable 且显式 `run_in_background: false`，或 one-shot 默认）：`ctx.subagents.start(config.provider, { ...request, signal })`，再 `settleForegroundRun`：等 `run.result`，然后 `run.dispose()`。失败 stopReason 变 `Error`；dispose 失败与结果失败合成 `AggregateError`。 [E: packages/subagent/tool-subagent/src/index.ts:557] [E: packages/subagent/tool-subagent/src/index.ts:207] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1269]
-9. **fork `start`（one-shot）**：`completedTurnPrefix(parent)` = 父 `session.events` 切到**最后一条** `turn/end`（含）。没有 `turn/end` 则 `[]`，`startInProcessRun` 不传 `seed`，子 session 当 fresh。 [E: packages/subagent/subagent-fork-in-process/src/index.ts:50] [E: packages/subagent/subagent-fork-in-process/src/index.ts:80] [E: packages/subagent/subagent-in-process-driver/src/index.ts:103] 父正在飞的未完成 turn 不进 seed；测试在 hanging 第二轮 fork 仍能通过 invariant replay。 [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:148]
-10. 共享驱动 `startInProcessRun@packages/subagent/subagent-in-process-driver/src/index.ts`：算 `childDepth`、`childSessionMeta`、`applyChildComposition`、可选 structured runtime，然后 `parent.ctx.agents.create`。 [E: packages/subagent/subagent-in-process-driver/src/index.ts:110] [E: packages/subagent/subagent/src/child-agent.ts:199] 子 header 的 `seedLength` 等于种进去的父前缀长度。 [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:132]
+4. `resolveDelegationRun@packages/subagent/tool-subagent/src/index.ts`：`enableRunInBackground === false` 时若模型仍传 `run_in_background: true` 则抛；否则 `runInBackground = args.run_in_background ?? continuable`。 [E: packages/subagent/tool-subagent/src/index.ts:302] [E: packages/subagent/tool-subagent/src/index.ts:519]
+5. **continuable 后台**（web shipped fork 默认）：`ctx.subagents.startContinuable({ provider: config.provider, label, request, signal: exec.signal })`。manager 在 admission 完成后立刻 `return { childId, messageId }`，**不** `whenIdle`。工具返回 `{ kind: 'continuable', subagentId }`。 [E: packages/subagent/tool-subagent/src/index.ts:523] [E: packages/subagent/subagent/src/index.ts:229] [E: packages/subagent/subagent/src/continuation.ts:438] [E: packages/subagent/subagent/src/continuation.ts:474]
+6. continuable 物化：manager 调 `provider.prepareContinuable`。fork 在这一刻切一次 `completedTurnPrefix`；有 completed turn 就带 `seed`，否则 `{}`。 [E: packages/subagent/subagent/src/continuation.ts:474] [E: packages/subagent/subagent-fork-in-process/src/index.ts:88] [E: packages/subagent/subagent-fork-in-process/src/index.ts:89] 前缀写进子自己的 durable transcript，冷恢复重放这份前缀，不会按父后来的新历史再 fork 一次。测试钉死：无 completed turn 时 `seed` 为 `undefined`；有则最后一项是 `turn/end` 且 seq 连续。 [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:232] [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:245]
+7. **one-shot 后台**（host `dsh-base` fork 行；shipped preset 不是这条）：要 `ctx.jobs`；`jobs.start({ kind: 'subagent', owner: parent, run })` 立刻回 `{ kind: 'background', jobId }`。`run()` 里才 `ctx.subagents.start`。缺 jobs 失败；job preflight 失败则 `starts === 0`。 [E: packages/subagent/tool-subagent/src/index.ts:538] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:863] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1383]
+8. **前台**（continuable 且显式 `run_in_background: false`，或 one-shot 默认）：`ctx.subagents.start(config.provider, { ...request, signal })`，再 `settleForegroundRun`：等 `run.result`，然后 `run.dispose()`。失败 stopReason 变 `Error`；dispose 失败与结果失败合成 `AggregateError`。 [E: packages/subagent/tool-subagent/src/index.ts:557] [E: packages/subagent/tool-subagent/src/index.ts:207] [E: packages/subagent/tool-subagent/tests/tool-subagent.spec.ts:1270]
+9. **fork `start`（one-shot）**：`completedTurnPrefix(parent)` = 父 `session.snapshotEvents()` 切到**最后一条** `turn/end`（含）。没有 `turn/end` 则 `[]`，`startInProcessRun` 不传 `seed`，子 session 当 fresh。 [E: packages/subagent/subagent-fork-in-process/src/index.ts:49] [E: packages/subagent/subagent-fork-in-process/src/index.ts:80] [E: packages/subagent/subagent-in-process-driver/src/index.ts:104] 父正在飞的未完成 turn 不进 seed；测试在 hanging 第二轮 fork 仍能通过 invariant replay。 [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:147]
+10. 共享驱动 `startInProcessRun@packages/subagent/subagent-in-process-driver/src/index.ts`：算 `childDepth`、`childSessionMeta`、`applyChildComposition`、可选 structured runtime，然后 `parent.ctx.agents.create`。 [E: packages/subagent/subagent-in-process-driver/src/index.ts:111] [E: packages/subagent/subagent/src/child-agent.ts:199] 子 header 的 `seedLength` 等于种进去的父前缀长度。 [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:133]
 
 ## 设计动机·edge
 
@@ -213,7 +213,7 @@ one-shot 读结果时，`readResult` 只扫 seed **之后** 的子自有事件�
 - **对话 seed ≠ persona。** fork 继承的是父日志的 completed-turn 前缀。`Config.persona` 另走 `deployment:persona` section。shipped fork 行**没有**写 `persona`，子代理沿用它 join 的父 preset / 部署 persona。 [E: packages/subagent/subagent/src/child-agent.ts:212]
 - **空前缀就是 spawn 形。** 父还没有任何 `turn/end` 时 fork 省略 seed，`seedLength` 不出现。 [E: packages/subagent/subagent-fork-in-process/tests/subagent-fork-in-process.spec.ts:89]
 - **当前 in-flight turn 不可 replay。** seed 停在最后一个 `turn/end`。把未闭合的 `turn/start` 种进去会在子 session 创建时炸掉 invariant。
-- **host `one-shot` vs preset `continuable`。** 插件 schema 与 `dsh-base` host 行默认 `one-shot`（注释：continuable 子代理上的 `report` / prompt section 会破坏 fork 前缀，妨碍 KV Cache）。web 三个 shipped preset 覆盖成 `continuable`，并接受 prefix 失效（issue #2124）。fork 源码 TODO 仍讨论 cache-preserving continuable。 [E: packages/bundle/base/cordis.patch.yml:373] [E: packages/subagent/subagent-fork-in-process/src/index.ts:80] 本页 Preset 表只认四个 `agent.cordis.yml`。
+- **host `one-shot` vs preset `continuable`。** 插件 schema 与 `dsh-base` host 行默认 `one-shot`（注释：preset 可改 continuable，且不要在 inherited history 前插 child-only schema）。web 三个 shipped preset 覆盖成 `continuable`。 [E: packages/bundle/base/cordis.patch.yml:373] [E: packages/subagent/subagent-fork-in-process/src/index.ts:84] 本页 Preset 表只认四个 `agent.cordis.yml`。
 - **continuable 默认后台。** web shipped 实例省略 `run_in_background` 就立刻回 `subagentId`。父要阻塞等结果必须显式 `false`。后续 turn 走 [subagent-control.md](subagent-control.md) 的 `send_message`，不是再调一次 `subagent_fork`。
 - **`subagent_codex` / `subagent_claude_code`。** 同包另两行，shipped preset `disabled: true`。它们不是 fork，细节留在 [subagent.md](subagent.md) 的 edge。
 - **深度。** 默认 cap `3`；`0` 禁止再委托。数字 cap 要求 provider `depthLimit`，否则 mount 失败。fork 有该能力。 [E: packages/subagent/tool-subagent/src/index.ts:323]
@@ -235,7 +235,7 @@ one-shot 读结果时，`readResult` 只扫 seed **之后** 的子自有事件�
 - packages/subagent/subagent/src/types.ts
 - packages/subagent/subagent/src/child-agent.ts
 - packages/subagent/subagent/src/continuation.ts
-- packages/subagent/subagent/src/descriptor-seed.ts
+- packages/subagent/subagent/src/descriptor.ts
 - packages/core/tools/src/index.ts
 - packages/core/tools/src/schema.ts
 - packages/guard/timeout-policy/src/index.ts
@@ -254,7 +254,7 @@ one-shot 读结果时，`readResult` 只扫 seed **之后** 的子自有事件�
 - [subagent](subagent.md)（`surface.tools.subagent`）：同包、`toolName: subagent`、`provider: spawn`、fresh 子会话。
 - [send_message / interrupt_agent / list_agents](subagent-control.md)（`surface.tools.subagent-control`）：continuable 子代理的后续 turn 与列举。
 - [job_list / job_output / job_kill](jobs.md)（`surface.tools.jobs`）：one-shot 后台 `kind: 'subagent'` 的收集与杀死。
-- [report](report.md)（`surface.tools.report`）：continuable in-process 子代理上的回报工具，preset 不挂。
+- [report](report.md)（`surface.tools.report`）：已退役；孩子结果走 settlement notice。
 - [trace: 拉起子代理](../../spine/trace-subagent.md)（`spine.trace-subagent`）：从工具调用走到 child Agent 的端到端走读。
 - [subagent 缝](../../subsystems/orchestration/subagent.md)（`subsys.orchestration.subagent`）：`ctx.subagents` Definition，不是本页的模型 schema。
 - [in-process fork](../../subsystems/orchestration/subagent-fork.md)（`subsys.orchestration.subagent-fork`）：`ForkInProcessProvider` 子系统页。

@@ -45,7 +45,7 @@ related:
   - subsys.integration.sdk-server
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-sdk-client` 是 **进程外** TypeScript JSON-RPC 客户端：`HarnessClient` 用 `node:child_process.spawn` 拉一份同版本 `dsh --profile sdk`（或调用方指定的 profile），在孩子 stdio 上讲 `@deepseek-ai/dsh-sdk-protocol`。它不是 `dsh web` 的 GUI 面，也不进 `dsh-base` / shipped agent preset。
@@ -96,7 +96,7 @@ DSH 主线是 `profile → bundle → agent preset`。`PROFILE_TEMPLATES` 有五
 | 孩子可执行文件 | 默认 `command = process.execPath`，argv 是同版本 `dsh` bin（或源码 `src/bin.ts` + tsx）+ `--profile` + 可选 `--patch`。[E: packages/sdk/client/src/launch.ts:142] [E: packages/sdk/client/src/launch.ts:143] `dshBin` 省略则 `installedDshNodeLaunch()`，并核对 `@deepseek-ai/dsh` 与本包 **version 相同**。[E: packages/sdk/client/src/launch.ts:133] [E: packages/sdk/client/src/launch.ts:58] |
 | 孩子组合 | 默认 profile 名 `'sdk'`。[E: packages/sdk/client/src/launch.ts:132] shipped `sdk` 叠 `dsh-base` + `dsh-sdk-app`；`sdk-minimal` 只叠 `dsh-sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:151] [E: packages/boot/app-boot/src/profile.ts:155] 两份 bundle 都 `insert` `id: sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:17] [E: packages/bundle/sdk-minimal/cordis.patch.yml:11] `dsh-sdk-app` 的 CLI 帮助名是 `dsh --profile ${profile}`，零额外旗标，解析成功后 `ctx.provide(SDK_APP_STARTUP_SERVICE, …)`（常量 `'sdkAppStartup'`）。[E: packages/bundle/sdk-app/src/index.ts:20] [E: packages/bundle/sdk-app/src/index.ts:40] [E: packages/bundle/sdk-app/src/index.ts:59] |
 
-`dsh web` / `dsh --profile web` / `dsh --profile headless` / `dsh --profile acp` **不会**作为本客户端的默认孩子。`@deepseek-ai/dsh-base` 包名是 `@deepseek-ai/dsh-base`，其 `package.json` **没有** `@deepseek-ai/dsh-sdk-client` / `@deepseek-ai/dsh-sdk-jsonrpc-server` 依赖。[E: packages/bundle/base/package.json:2] 四个 shipped preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`：`SHIPPED_PRESET_ROOT` 指向包内 `presets/`；测试枚举 tool-bearing 三件为 `cordis` / `ptc` / `standard`（另加 `minimal` 目录）。preset 树里没有 `sdk-jsonrpc-server` 行。[E: packages/preset/agent-presets/src/discovery.ts:60] [E: packages/preset/agent-presets/tests/shipped-root.spec.ts:101]
+`dsh web` / `dsh --profile web` / `dsh --profile headless` / `dsh --profile acp` **不会**作为本客户端的默认孩子。`@deepseek-ai/dsh-base` 包名是 `@deepseek-ai/dsh-base`，其 `package.json` **没有** `@deepseek-ai/dsh-sdk-client` / `@deepseek-ai/dsh-sdk-jsonrpc-server` 依赖。[E: packages/bundle/base/package.json:2] 四个 shipped preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`：`SHIPPED_PRESET_ROOT` 指向包内 `presets/`；测试枚举 tool-bearing 三件为 `cordis` / `ptc` / `standard`（另加 `minimal` 目录）。preset 树里没有 `sdk-jsonrpc-server` 行。[E: packages/preset/agent-presets/src/discovery.ts:60] [E: packages/preset/agent-presets/tests/shipped-root.spec.ts:100]
 
 孩子 stdout 专给协议帧。`JsonRpcLineTransport` 写出时末尾 `\n`。[E: packages/sdk/protocol/src/transport.ts:261] 同树再挂 stdout logger 会把日志和 NDJSON 搅在一起。
 
@@ -161,7 +161,7 @@ wire 合同在 `HarnessSdkRequestMap` / `HarnessSdkNotificationMap`。客户端�
 - [`subsys.integration.sdk-client`](../../subsystems/integration/sdk-client.md)（`subsys.integration.sdk-client`）：同一客户端的 T2 控制流 / 错误路径 / session 树裁剪。
 - [`subsys.integration.sdk-server`](../../subsystems/integration/sdk-server.md)（`subsys.integration.sdk-server`）：孩子进程里的 `sdk-jsonrpc-server`；懒创建 session；`shutdown` 后 `exit(0)`。
 - [`surface.sdk.python`](python.md)（`surface.sdk.python`）：Python `HarnessClient` 发同一组 `initialize` / `session/prompt` / `shutdown`，用 `subprocess.Popen` + 自写 NDJSON（`json.dumps(...) + "\\n"`），**不** import `JsonRpcLineTransport`。[E: python/sdk/src/deepseek_harness/client.py:80] [E: python/sdk/src/deepseek_harness/client.py:153] [E: python/sdk/src/deepseek_harness/client.py:182] [E: python/sdk/src/deepseek_harness/client.py:337] 拆卸是 stdin close → `terminate` → `kill`，不是本库那份 `disposeRuntimeProcess`。[E: python/sdk/src/deepseek_harness/client.py:107] [E: python/sdk/src/deepseek_harness/client.py:117] [E: python/sdk/src/deepseek_harness/client.py:124]
-- [`surface.acp.server`](../acp/server.md)（`surface.acp.server`）：ACP Agent 侧。handler 含 `initialize` / `authenticate` / `session/new` / `session/prompt` / `session/resume`；`newSession` 铸造 `SessionId(randomUUID())`。[E: packages/acp/acp/src/index.ts:192] [E: packages/acp/acp/src/index.ts:196] [E: packages/acp/acp/src/index.ts:199] [E: packages/acp/acp/src/index.ts:378] [E: packages/acp/acp/src/index.ts:383] [E: packages/acp/acp/src/index.ts:388] 不要和本面的 `session/prompt` + 懒创建混成一张方法表。
+- [`surface.acp.server`](../acp/server.md)（`surface.acp.server`）：ACP Agent 侧。handler 含 `initialize` / `authenticate` / `session/new` / `session/prompt` / `session/resume`；`newSession` 铸造 `SessionId(randomUUID())`。[E: packages/acp/acp/src/index.ts:192] [E: packages/acp/acp/src/index.ts:196] [E: packages/acp/acp/src/index.ts:199] [E: packages/acp/acp/src/index.ts:378] [E: packages/acp/acp/src/index.ts:384] [E: packages/acp/acp/src/index.ts:388] 不要和本面的 `session/prompt` + 懒创建混成一张方法表。
 
 ## Sources
 

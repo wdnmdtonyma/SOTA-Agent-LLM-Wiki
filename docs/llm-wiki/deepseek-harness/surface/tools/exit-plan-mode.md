@@ -41,7 +41,7 @@ related:
   - surface.presets.code
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 模型可见名 `exit_plan_mode`（常量 `EXIT_PLAN_MODE`）；实现包 `@deepseek-ai/dsh-plan-mode`。把完整 markdown 计划交给人审阅，只有选 `Approve` 才排队退出 plan mode。
@@ -81,7 +81,7 @@ companion `@deepseek-ai/dsh-plan-mode/invariant` 才 `export const apply`，插�
 
 ## 输入 schema
 
-以插件默认 boot 为准：`PlanModeConfig` 必须自带非空 `section`（测试用常量 `TEST_PLAN_SECTION`），schema 与是否已 `plan/mode { active: true }` **无关**。`ctx.tools.schemas()` 里本工具只有一个必填字段 `plan`。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:818] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:823]
+以插件默认 boot 为准：`PlanModeConfig` 必须自带非空 `section`（测试用常量 `TEST_PLAN_SECTION`），schema 与是否已 `plan/mode { active: true }` **无关**。`ctx.tools.schemas()` 里本工具只有一个必填字段 `plan`。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:820] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:824]
 
 | 字段 | 类型 | 必填 | 默认 | 约束 | 说明 |
 |---|---|---|---|---|---|
@@ -97,11 +97,11 @@ companion `@deepseek-ai/dsh-plan-mode/invariant` 才 `export const apply`，插�
 
 `output.schema` 是封闭对象：唯一成功值 `{ approved: true }`（`const: true`）。[E: packages/plan/plan-mode/src/index.ts:282] `output.render` **忽略** value，固定返回一句：`Plan approved — plan mode exited; carry out the plan starting with your next step.` [E: packages/plan/plan-mode/src/index.ts:285]
 
-成功路径：`result.value === { approved: true }`，`isError === false`，`content` 即该固定句。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:894] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:896] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:897]
+成功路径：`result.value === { approved: true }`，`isError === false`，`content` 即该固定句。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:894] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:896] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:898]
 
 失败路径全部是 `throw`，由 registry 收成 `Error: <message>` + `isError: true`。[E: packages/core/tools/src/index.ts:1865] 计划正文**不会**出现在成功 tool result 里；它只作为 `userQuestions.ask` 的 `detail` 给人看。Keep-planning 时若带了 `custom`，模型在错误文本里读到 `The user chose to keep planning; their feedback: …`。[E: packages/plan/plan-mode/src/index.ts:340]
 
-本工具**没有** spill、没有 `maxOutputBytes`、没有按字节截断。`presentCall` / `presentResult` 只服务 UI：call 卡 `card: 'generic'`，标题取 `firstHeading(plan)`（任意 ATX 1–6 级、任一源行）否则 `'Plan'`；result 卡标题 `'Plan review'`。[E: packages/plan/plan-mode/src/index.ts:86] [E: packages/plan/plan-mode/src/index.ts:349] [E: packages/plan/plan-mode/src/index.ts:356] `firstHeading` 能从 `## Fix the flake` 抽出标题 `Fix the flake`，但同一字符串过不了 execute 的 `/^#\s+\S/`。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1137] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1139]
+本工具**没有** spill、没有 `maxOutputBytes`、没有按字节截断。`presentCall` / `presentResult` 只服务 UI：call 卡 `card: 'generic'`，标题取 `firstHeading(plan)`（任意 ATX 1–6 级、任一源行）否则 `'Plan'`；result 卡标题 `'Plan review'`。[E: packages/plan/plan-mode/src/index.ts:86] [E: packages/plan/plan-mode/src/index.ts:349] [E: packages/plan/plan-mode/src/index.ts:356] `firstHeading` 能从 `## Fix the flake` 抽出标题 `Fix the flake`，但同一字符串过不了 execute 的 `/^#\s+\S/`。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1137] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1138]
 
 ## 背后的 seam
 
@@ -145,18 +145,18 @@ companion `@deepseek-ai/dsh-plan-mode/invariant` 才 `export const apply`，插�
 
 三份 shipped `section` 都写：留在 plan mode 直到 `exit_plan_mode` 成功或用户切 session mode；catalog 跨模式保持不变；**不要**用 `todo_write` 跟踪规划阶段（那是实施清单）；提交时让 `exit_plan_mode` 做该 assistant 回复里唯一且最后的 tool call；不要用散文或 `ask_user_question` 问 “should I proceed?”。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:118] 这是 prompt 政策，**不是** schema 门，也不是 `todo_write` 的执行拦截。
 
-组合旁注（不是 preset 成员资格）：`dsh-base` 在 host 平面 insert 了同一包，其 `section` 写「listed only to keep the request shape stable」（preset 写的是 keep the tool catalog unchanged）。[E: packages/bundle/base/cordis.patch.yml:307] [E: packages/bundle/base/cordis.patch.yml:308] [E: packages/bundle/base/cordis.patch.yml:315] `dsh-web-app` overlay 把 host `plan-mode` 设 `disabled: true`，改由每个 session 的 preset 在 `planning` realm 再挂。[E: packages/bundle/web-app/cordis.patch.yml:372] [E: packages/bundle/web-app/cordis.patch.yml:373] shipped profile 还有 `headless` / `sdk` / `sdk-minimal` / `acp`（`web` 是 live）；本工具是否出现取决于该 profile 叠上的 preset，不是 profile 名本身。
+组合旁注（不是 preset 成员资格）：`dsh-base` 在 host 平面 insert 了同一包，其 `section` 写「listed only to keep the request shape stable」（preset 写的是 keep the tool catalog unchanged）。[E: packages/bundle/base/cordis.patch.yml:307] [E: packages/bundle/base/cordis.patch.yml:308] [E: packages/bundle/base/cordis.patch.yml:315] `dsh-web-app` overlay 把 host `plan-mode` 设 `disabled: true`，改由每个 session 的 preset 在 `planning` realm 再挂。[E: packages/bundle/web-app/cordis.patch.yml:373] [E: packages/bundle/web-app/cordis.patch.yml:373] shipped profile 还有 `headless` / `sdk` / `sdk-minimal` / `acp`（`web` 是 live）；本工具是否出现取决于该 profile 叠上的 preset，不是 profile 名本身。
 
 ## execute() 走读
 
 1. `defineTool` 包装的 `execute` 先 `validateJsonSchemaValue`，再进用户 body。[E: packages/core/tools/src/schema.ts:586]
-2. `exec.agent` 必须存在，否则抛 `exit_plan_mode requires a calling agent (no session to switch)`。[E: packages/plan/plan-mode/src/index.ts:289] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:831]
+2. `exec.agent` 必须存在，否则抛 `exit_plan_mode requires a calling agent (no session to switch)`。[E: packages/plan/plan-mode/src/index.ts:289] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:830]
 3. `loggedActive(agent.session)` 必须为 `true`。空 log 或最后一条 `plan/mode` 为 `active: false` 时抛 `exit_plan_mode is only available in plan mode`；工具仍留在 `schemas()`。[E: packages/plan/plan-mode/src/index.ts:290] [E: packages/plan/plan-mode/src/index.ts:291] 这里读的是 **projection `active`**，不是 `pendingIntents`。
 4. `args.plan.trim()` 必须匹配 `/^#\s+\S/`，否则在 `ask` 之前抛 heading 错。测试钉死 `''` 与 `'do things'` 都是这条，且 `asked.length === 0`。[E: packages/plan/plan-mode/src/index.ts:293] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:850]
 5. `ctx.get('userQuestions')`：`undefined` → 降级文案，让用户手动切 session mode，fold 不变。[E: packages/plan/plan-mode/src/index.ts:297] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:859]
 6. `interaction.ask({ questions: [{ id: 'plan-review', header: 'Plan review', question: 'Approve this plan and leave plan mode?', detail: args.plan, options: [Approve, Keep planning], intent: { kind: 'plan-review', approve: 'Approve' } }], agent, signal: exec.signal })`。[E: packages/plan/plan-mode/src/index.ts:72] [E: packages/plan/plan-mode/src/index.ts:75] [E: packages/plan/plan-mode/src/index.ts:300] [E: packages/plan/plan-mode/src/index.ts:313] `AskUserQuestionIntent` 的唯一 `kind` 就是 `'plan-review'`。[E: packages/interaction/user-questions/src/types.ts:23]
-7. `UserQuestionService.ask` 在转给 answerer 之前：`agent` 必须是 `ctx.agents` 里那份 live 实例，且必须在 `roots()`；owned child → `DELEGATED_CALLER`（本工具不改写这条，测试期望原文）。[E: packages/interaction/user-questions/src/index.ts:102] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:885] `intent.approve` 必须是本题 options 之一，且必须带 `detail`，否则 `BAD_INTENT`。[E: packages/interaction/user-questions/src/index.ts:118]
-8. dismiss：`UserQuestionError` + `ASK_CANCELLED` 被改写成「The user dismissed the plan review to speak instead; stay in plan mode, stop here, and wait for their message.」——避免模型看到它没调用过的 `ask_user_question` 名字。[E: packages/plan/plan-mode/src/index.ts:323] Web 宿主里人取消 pending question 时，`ui-user-questions` 的 `PendingQuestion.cancel()` 抛带 `ASK_CANCELLED` 的错误。[E: packages/client/ui-user-questions/src/client/contract/slots.ts:186] `ASK_ABORTED` 与其它错误原样 `throw cause`。[E: packages/plan/plan-mode/src/index.ts:327] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1081]
+7. `UserQuestionService.ask` 在转给 answerer 之前：`agent` 必须是 `ctx.agents` 里那份 live 实例，且必须在 `roots()`；owned child → `DELEGATED_CALLER`（本工具不改写这条，测试期望原文）。[E: packages/interaction/user-questions/src/index.ts:102] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:884] `intent.approve` 必须是本题 options 之一，且必须带 `detail`，否则 `BAD_INTENT`。[E: packages/interaction/user-questions/src/index.ts:118]
+8. dismiss：`UserQuestionError` + `ASK_CANCELLED` 被改写成「The user dismissed the plan review to speak instead; stay in plan mode, stop here, and wait for their message.」——避免模型看到它没调用过的 `ask_user_question` 名字。[E: packages/plan/plan-mode/src/index.ts:323] Web 宿主里人取消 pending question 时，`ui-user-questions` 的 `PendingQuestion.cancel()` 抛带 `ASK_CANCELLED` 的错误。[E: packages/client/ui-user-questions/src/client/contract/slots.ts:186] `ASK_ABORTED` 与其它错误原样 `throw cause`。[E: packages/plan/plan-mode/src/index.ts:327] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1080]
 9. `ask` 返回后若 plugin fiber 已 dispose（HMR），抛「the plan-mode service was reloaded… present the plan again」，避免宣称一次永远 flush 不了的退出。[E: packages/plan/plan-mode/src/index.ts:331] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1121]
 10. 同意条件：恰好一条 `id === 'plan-review'` 的答案，`selected.length === 1` 且 `selected[0] === 'Approve'`，并且 `custom === undefined`。缺项、双选、`Approve`+custom、纯 custom、`Keep planning` 一律当 keep-planning。[E: packages/plan/plan-mode/src/index.ts:336] 无 feedback 用通用句；有 `custom` 则原文拼进错误。[E: packages/plan/plan-mode/src/index.ts:338] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:992]
 11. 通过后 **不**立刻 `session.append('plan/mode')`。`pendingIntents.set(session, { active: false, narrate: false })`，返回 `{ approved: true }`。[E: packages/plan/plan-mode/src/index.ts:345] [E: packages/plan/plan-mode/src/index.ts:346] `narrate: false`：下一次 `agent/pre-step` flush 时不注入「The user switched this session back to the default mode.」——工具结果本身就是叙述。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:985]
@@ -172,7 +172,7 @@ companion `@deepseek-ai/dsh-plan-mode/invariant` 才 `export const apply`，插�
 - **Dismiss ≠ 失败通道名。** `ASK_CANCELLED` 改写成「人要说话，停在 plan mode」；abort / provider 抛错保留原消息。
 - **子代理没有人。** owned child 调本工具时，`userQuestions.ask` 在 answerer 之前就 `DELEGATED_CALLER`。计划审阅回不了子会话。
 - **人可以绕过本工具。** `/plan off` 走 `PlanModeController.set`；idle 时立刻 append，open turn 时 queued。那是 commands 面，不是本工具 schema。
-- **PTC 绑定仍在。** `mode: 'ptc'` 的 wire catalog 只剩 `run_code`，但 SDK 仍声明 `exit_plan_mode: { approved: true }`；嵌套 dispatch 会打 `tool/code-dispatch`。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:167] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:953]
+- **PTC 绑定仍在。** `mode: 'ptc'` 的 wire catalog 只剩 `run_code`，但 SDK 仍声明 `exit_plan_mode: { approved: true }`；嵌套 dispatch 会打 `tool/code-dispatch`。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:167] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:954]
 - **没有 `apply_patch` 方言。** 计划是给人看的 markdown，不是可执行补丁。实施发生在 Approve 之后的后续 step，用当时 catalog 里的 `edit` / `write` / `bash` 等。
 
 ## Sources

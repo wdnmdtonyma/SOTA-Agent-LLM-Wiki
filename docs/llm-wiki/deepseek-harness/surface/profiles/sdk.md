@@ -35,7 +35,7 @@ related:
   - subsys.composition.app-boot
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `sdk` 是 shipped **stdio JSON-RPC 宿主 profile**：`PROFILE_TEMPLATES.sdk` 把 `@deepseek-ai/dsh-base` 叠上 `@deepseek-ai/dsh-sdk-app`，`patchReload: 'startup'`。overlay 插入 `sdk-app-startup`（解析零 extra-flag 的 commander、stdin EOF 触发 bounded exit）和 `sdk-jsonrpc-server`（stdout 专属 NDJSON）。**不**挂 `agent-presets` roster、**不** bind HTTP。入口是 `dsh --profile sdk`，没有 `dsh sdk` 子命令。协议客户端面见 [`surface.sdk.typescript`](../sdk/typescript.md)。
@@ -52,7 +52,7 @@ updated: 0a53fb55be
 
 DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。capability seam 仍是 Definition / Provider / Consumer。**profile** 是进程级目录 `$DSH_HOME/profiles/<name>`：`package.json` 的 `dsh.profile.bundles` 排 bundle 层，`dsh.profile.patchReload` 决定用户 patch 是 boot 一次还是 live watch。**bundle** 声明 `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }`。**agent preset** 只认 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/`，必须由组合树里的 `agent-presets` 行挂 roster。[E: packages/preset/agent-presets/src/discovery.ts:60]
 
-五个 shipped 模板键在 `PROFILE_TEMPLATES`：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:137] `sdk` 是 `bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-sdk-app']`，`patchReload: 'startup'`。[E: packages/boot/app-boot/src/profile.ts:150] [E: packages/boot/app-boot/src/profile.ts:151] [E: packages/boot/app-boot/src/profile.ts:152] 测试断言同一形状。[E: packages/boot/app-boot/tests/profile.spec.ts:199] `web` 是唯一 `live`。[E: packages/boot/app-boot/src/profile.ts:144] `sdk-minimal` **只**叠 `@deepseek-ai/dsh-sdk-minimal`，不叠 `dsh-base`。[E: packages/boot/app-boot/src/profile.ts:155]
+五个 shipped 模板键在 `PROFILE_TEMPLATES`：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:137] `sdk` 是 `bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-sdk-app']`，`patchReload: 'startup'`。[E: packages/boot/app-boot/src/profile.ts:150] [E: packages/boot/app-boot/src/profile.ts:151] [E: packages/boot/app-boot/src/profile.ts:152] 测试断言同一形状。[E: packages/boot/app-boot/tests/profile.spec.ts:201] `web` 是唯一 `live`。[E: packages/boot/app-boot/src/profile.ts:144] `sdk-minimal` **只**叠 `@deepseek-ai/dsh-sdk-minimal`，不叠 `dsh-base`。[E: packages/boot/app-boot/src/profile.ts:155]
 
 `@deepseek-ai/dsh-sdk-app` 的 manifest 把 patch 指到本包 `./cordis.patch.yml`。[E: packages/bundle/sdk-app/package.json:38] 描述是「stdio JSON-RPC serving and process lifecycle **over dsh-base**」。[E: packages/bundle/sdk-app/package.json:3]
 
@@ -103,7 +103,7 @@ patch 文件头写明：**Stdout belongs exclusively to JSON-RPC**。[E: package
 | `sdk-app-startup` | insert | `name: '@deepseek-ai/dsh-sdk-app'`；`config.profile: sdk` | 解析 cmdline、provide `sdkAppStartup`。[E: packages/bundle/sdk-app/cordis.patch.yml:13] [E: packages/bundle/sdk-app/cordis.patch.yml:15] |
 | `sdk-jsonrpc-server` | insert | `name: '@deepseek-ai/dsh-sdk-jsonrpc-server'`；`inject: [sdkAppStartup, loader]`；`maxTokensAsSuccess` 从 `DSH_MAX_TOKENS_AS_SUCCESS` | 等 startup + loader 再占 stdio。[E: packages/bundle/sdk-app/cordis.patch.yml:17] [E: packages/bundle/sdk-app/cordis.patch.yml:19] [E: packages/bundle/sdk-app/cordis.patch.yml:21] |
 
-没有 `agent-presets`、没有 `webserver` / `ui-*`。`patchReload: 'startup'` 让 `runProfile` 跳过 live watcher。[E: apps/cli/src/profile-boot.ts:270]
+没有 `agent-presets`、没有 `webserver` / `ui-*`。`patchReload: 'startup'` 让 `runProfile` 跳过 live watcher。[E: apps/cli/src/profile-boot.ts:271]
 
 ### 插件符号（本节点权威）
 
@@ -129,7 +129,7 @@ JSON-RPC 插件名 `sdk-jsonrpc-server`、`inject = ['agents']` 的权威在 ser
 
 **cmdline 门控**：`apply` 调 `parseCmdline`。[E: packages/bundle/sdk-app/src/index.ts:61] 成功 action 才 provide 服务并绑 stdin EOF。[E: packages/bundle/sdk-app/src/index.ts:58] `--help`：stdout 含 `dsh --profile sdk`，服务未提供，exit `[0]`；之后 stdin.end **不再**追加 exit。[E: packages/bundle/sdk-app/tests/startup.spec.ts:57] [E: packages/bundle/sdk-app/tests/startup.spec.ts:60] [E: packages/bundle/sdk-app/tests/startup.spec.ts:63] 空 argv 则 `ctx.get(SDK_APP_STARTUP_SERVICE) === { accepted: true }`，stdin.end → exit `0`。[E: packages/bundle/sdk-app/tests/startup.spec.ts:51] [E: packages/bundle/sdk-app/tests/startup.spec.ts:53]
 
-**HMR**：模板 `startup`。`runProfile` **只在** `patchReload === 'live'` 时装 watcher。[E: apps/cli/src/profile-boot.ts:270] 默认 sdk **不**装 profile/home 文件 watcher；用户层仍在 boot 时叠一次。[E: apps/cli/src/profile-boot.ts:137]
+**HMR**：模板 `startup`。`runProfile` **只在** `patchReload === 'live'` 时装 watcher。[E: apps/cli/src/profile-boot.ts:271] 默认 sdk **不**装 profile/home 文件 watcher；用户层仍在 boot 时叠一次。[E: apps/cli/src/profile-boot.ts:137]
 
 **isolate**：默认不 mount preset，没有 preset isolate / `leakedServices`。host 面上的 registry 与 `tool-*` 同树。JSON-RPC server 用 `ctx.agents` 在 root realm 建会话（细节在 [`surface.sdk.typescript`](../sdk/typescript.md) / sdk-server 子系统）。
 

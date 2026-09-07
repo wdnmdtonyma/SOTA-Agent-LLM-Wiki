@@ -11,7 +11,6 @@ source:
   - packages/sdk/client/src/launch.ts
   - packages/sdk/client/src/index.ts
   - packages/sdk/client/src/types.ts
-  - packages/sdk/client/src/invariant.ts
   - packages/sdk/client/package.json
   - packages/sdk/client/tests/sdk-client.spec.ts
   - packages/sdk/client/tests/dispose.spec.ts
@@ -39,7 +38,7 @@ related:
   - subsys.execution.subprocess
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-sdk-client` 是跑在 **harness 进程外** 的 TypeScript JSON-RPC 客户端库：`HarnessClient` 通过 `resolveDshLaunch` 把选项收成 `process.execPath` + 同版本 `@deepseek-ai/dsh` 的 `--profile`（默认 `sdk`）argv，再 `node:child_process.spawn` 拉起一份完整 runtime，在孩子 stdio 上讲 `@deepseek-ai/dsh-sdk-protocol`。它不登记任何 `ctx.*`，也 **不** 走 `ctx.subprocess`——这是 subprocess 缝对 SDK 托管传输的文档化例外。高层包装是 `DeepSeekHarness` / `HarnessSession`。设计孪生是 `python/sdk` 的 `HarnessClient`（本页不展开 Python）。
@@ -73,7 +72,7 @@ updated: 0a53fb55be
 
 **不是 Cordis 插件，不进 shipped 树。** 产品宿主入口是 `dsh web` **以及** `dsh --profile sdk|sdk-minimal|acp|headless`（五个 shipped profile：`web` live，其余 startup）。默认 GUI 路径仍是 `dsh web`；本仓没有 shipped TUI。`dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` 与四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）都不把本库挂成 Cordis 行。[I] 包存在 ≠ 产品默认装。被 spawn 的孩子是另一份完整 harness：默认 `profile: 'sdk'`，叠 `dsh-base` + `dsh-sdk-app`（不是 `sdk-minimal`，后者不叠 base）。那是孩子进程的 host / preset，不是本库。
 
-唯一带 Cordis `name` / `inject` 的出口是 `./invariant`：`name = 'sdk-client-invariant'`，`inject = ['invariants']`，installer 是空函数——客户端跑在任何 harness context 之外，runtime 自己的包才拥有事件流不变量。[E: packages/sdk/client/src/invariant.ts:13] [E: packages/sdk/client/src/invariant.ts:15] [E: packages/sdk/client/src/invariant.ts:22] 仓库里没有任何 yml 挂这一行。[I]
+客户端跑在任何 harness context 之外，runtime 自己的包才拥有事件流不变量。仓库里没有任何 yml 把本包当 Loader 行挂上。[I]
 
 **没有 waterfall，没有 isolate。** 本库不往 `Events.waterfall` 挂 listener，也不 `provide` 服务。父进程若本身是一份 harness（例如 overlay 了 `dsh-subagent-dsh-sdk` 的 host），父 turn 的 `tools/pre-execute` 仍是 waterfall：`Events.waterfall` 把最后一个参数当 innermost `next`，监听器必须调用传入的 `next()` 才会 `cbs.shift()`；不调用就停在本层，到不了 tool `execute`。[E: vendor/cordis/src/events.ts:238] 本库不参与那条链。浏览器 client 不执行 `HarnessClient.start`。
 
@@ -86,9 +85,8 @@ updated: 0a53fb55be
 | `packages/sdk/client/src/api.ts` | `DeepSeekHarness` / `HarnessSession`：握手 memo、相对 cwd 先 `resolve`、跑到 idle |
 | `packages/sdk/client/src/dispose.ts` | `disposeRuntimeProcess`：EOF / SIGTERM / SIGKILL |
 | `packages/sdk/client/src/types.ts` | `HarnessClientOptions` / `DeepSeekHarnessOptions` / `RunResult` |
-| `packages/sdk/client/src/invariant.ts` | 空 `sdk-client-invariant` companion；仓库零 yml 挂载 |
 | `packages/sdk/client/src/index.ts` | 包根再导出；`JsonRpcResponseError` 从 protocol 转出 |
-| `packages/sdk/client/package.json` | 包名 `@deepseek-ai/dsh-sdk-client`；`exports` 含 `.` 与 `./invariant`；runtime 依赖 `@deepseek-ai/dsh` |
+| `packages/sdk/client/package.json` | 包名 `@deepseek-ai/dsh-sdk-client`；runtime 依赖 `@deepseek-ai/dsh` |
 | `packages/sdk/client/tests/sdk-client.spec.ts` | 真子进程 + fake runtime：握手、超时、stderr tail、session 树、阶梯 |
 | `packages/sdk/client/tests/dispose.spec.ts` | 可脚本 fake child：三档时机与 Windows 跳档 |
 | `packages/subagent/subagent-dsh-sdk/src/index.ts` | Consumer 插件：`name` / `inject = ['subagents']` / `startSdkRun` |
@@ -122,15 +120,15 @@ updated: 0a53fb55be
 
 4. `request@packages/sdk/client/src/client.ts` 会先 `start()`。孩子已经 `exit` / spawn 失败则等最多 `STREAM_SETTLE_MS = 100` 收齐 stderr，再抛带 exit code + tail 的 `TransportClosedError`，不往已毁的 pipe 里写。[E: packages/sdk/client/src/client.ts:313] [E: packages/sdk/client/src/client.ts:32] 省略 `params` 时线上送 `{}`。[E: packages/sdk/client/src/client.ts:322]
 
-5. 超时是**本侧放弃**，不是 wire cancel。有 `timeoutMs`（或 options 上的 `requestTimeoutMs`）时建 `AbortController`，到期 `abort(new RequestTimeoutError(…))`；`JsonRpcLineTransport.request` 在 abort 时 `pending.delete(id)`，重复对挂住的 method 发有界请求不会堆积 pending。[E: packages/sdk/client/src/client.ts:327] [E: packages/sdk/protocol/src/transport.ts:132] 测试连打三次 50ms 超时后 `transport.pending.size === 0`。[E: packages/sdk/client/tests/sdk-client.spec.ts:344] 服务器侧那次 `session/prompt` 仍会跑到 runtime 被 `close`。`JsonRpcResponseError` 与 `RequestTimeoutError` 原样再抛；其余传输失败改写成带进程上下文的 `TransportClosedError`。[E: packages/sdk/client/src/client.ts:337]
+5. 超时是**本侧放弃**，不是 wire cancel。有 `timeoutMs`（或 options 上的 `requestTimeoutMs`）时建 `AbortController`，到期 `abort(new RequestTimeoutError(…))`；`JsonRpcLineTransport.request` 在 abort 时 `pending.delete(id)`，重复对挂住的 method 发有界请求不会堆积 pending。[E: packages/sdk/client/src/client.ts:327] [E: packages/sdk/protocol/src/transport.ts:132] 测试连打三次 50ms 超时后 `transport.pending.size === 0`。[E: packages/sdk/client/tests/sdk-client.spec.ts:343] 服务器侧那次 `session/prompt` 仍会跑到 runtime 被 `close`。`JsonRpcResponseError` 与 `RequestTimeoutError` 原样再抛；其余传输失败改写成带进程上下文的 `TransportClosedError`。[E: packages/sdk/client/src/client.ts:337]
 
-6. `initialize` 用 `runtime.initializeTimeoutMs`（默认 10s）调 `request('initialize', { …params })`，校验 `serverInfo.name/version` 后只回这两个字段。[E: packages/sdk/client/src/client.ts:277] [E: packages/sdk/client/src/launch.ts:12] `prompt` 调 `request('session/prompt', { sessionId, contentBlocks })`，必须拿到 string `messageId`，否则 `SdkProtocolError`。[E: packages/sdk/client/src/client.ts:293] [E: packages/sdk/client/src/client.ts:295] 测试里一次 `request('initialize')` 看到 fake runtime 的 `serverInfo.name === 'deepseek-harness-sdk-runtime'`。[E: packages/sdk/client/tests/sdk-client.spec.ts:458]
+6. `initialize` 用 `runtime.initializeTimeoutMs`（默认 10s）调 `request('initialize', { …params })`，校验 `serverInfo.name/version` 后只回这两个字段。[E: packages/sdk/client/src/client.ts:277] [E: packages/sdk/client/src/launch.ts:12] `prompt` 调 `request('session/prompt', { sessionId, contentBlocks })`，必须拿到 string `messageId`，否则 `SdkProtocolError`。[E: packages/sdk/client/src/client.ts:293] [E: packages/sdk/client/src/client.ts:295] 测试里一次 `request('initialize')` 看到 fake runtime 的 `serverInfo.name === 'deepseek-harness-sdk-runtime'`。[E: packages/sdk/client/tests/sdk-client.spec.ts:459]
 
-7. `subscribe` 给每个通知流一个递增 id。filter 抛错只 fail **这一条**订阅（非 `Error` 会 `new Error(String(error))`），兄弟订阅和 read loop 不受影响。[E: packages/sdk/client/src/client.ts:157] [E: packages/sdk/client/tests/sdk-client.spec.ts:479] `close()` 之后或进程已死后新建的订阅生来就是 failed，`next()` 立刻 reject，不会永久挂起。[E: packages/sdk/client/src/client.ts:355]
+7. `subscribe` 给每个通知流一个递增 id。filter 抛错只 fail **这一条**订阅（非 `Error` 会 `new Error(String(error))`），兄弟订阅和 read loop 不受影响。[E: packages/sdk/client/src/client.ts:157] [E: packages/sdk/client/tests/sdk-client.spec.ts:480] `close()` 之后或进程已死后新建的订阅生来就是 failed，`next()` 立刻 reject，不会永久挂起。[E: packages/sdk/client/src/client.ts:355]
 
 8. `subscribeSessionTree(rootId)` 在**客户端**按 `subagent.started` 边建 `sessionParents` 图，再过滤通知：`subagent.started` / `subagent.finished` 看 `parentSessionId` 是否是 root 的后代，或 `childSessionId === root`；其余通知看 `params.sessionId`。[E: packages/sdk/client/src/client.ts:373] [E: packages/sdk/client/src/client.ts:418] 空边、自环（`parentId === childId`）不写入 map。[E: packages/sdk/client/src/client.ts:421] runtime 会广播它 context 里每一个 session；裁剪不在 server。
 
-9. `DeepSeekHarness.start` 把 `start` + `initialize({ cwd, provider, model, reasoningEffort?, maxTokens? })` memo 成 `this.initialized`。握手失败：清 memo、`clientInstance.close()`（`HarnessClient.close` 是永久的）。cleanup **也**失败则抛 `AggregateError([error, cleanupError], 'DeepSeek Harness initialization and cleanup failed')` 并 **保留** 失败客户端，避免再 spawn 一个未证明已退出的进程。[E: packages/sdk/client/src/api.ts:85] [E: packages/sdk/client/src/api.ts:90] [E: packages/sdk/client/tests/sdk-client.spec.ts:231] cleanup 成功且 harness 尚未 `close` 才换一个新的 `createClient()`，再把原错误抛出——下次 `start` 会再 spawn。[E: packages/sdk/client/src/api.ts:90] harness 级 `close()` 先把 `closed = true`，失败后不再换新客户端。[E: packages/sdk/client/src/api.ts:123]
+9. `DeepSeekHarness.start` 把 `start` + `initialize({ cwd, provider, model, reasoningEffort?, maxTokens? })` memo 成 `this.initialized`。握手失败：清 memo、`clientInstance.close()`（`HarnessClient.close` 是永久的）。cleanup **也**失败则抛 `AggregateError([error, cleanupError], 'DeepSeek Harness initialization and cleanup failed')` 并 **保留** 失败客户端，避免再 spawn 一个未证明已退出的进程。[E: packages/sdk/client/src/api.ts:85] [E: packages/sdk/client/src/api.ts:90] [E: packages/sdk/client/tests/sdk-client.spec.ts:232] cleanup 成功且 harness 尚未 `close` 才换一个新的 `createClient()`，再把原错误抛出——下次 `start` 会再 spawn。[E: packages/sdk/client/src/api.ts:90] harness 级 `close()` 先把 `closed = true`，失败后不再换新客户端。[E: packages/sdk/client/src/api.ts:123]
 
 10. `HarnessSession.run`：`await harness.start()`，`normalizeInput`（string → 单块 text；块数组原样），`subscribeSessionTree`，`client.prompt`。在看到本 session 上、`inserted` 里带该 `messageId` 的 `agent/inbox/spliced` 之前，所有通知都丢掉。[E: packages/sdk/client/src/api.ts:199] [E: packages/sdk/client/src/api.ts:206] 回执之后 `collect`：只有根 session 的 `session.event` 进入 typed `events`（`assistant/message` 必须带 kind-tagged content 数组，否则 `SdkProtocolError`）；树里其它通知只进 `notifications` / `onNotification`。直到根 session `session.status === 'idle'` 才返回。[E: packages/sdk/client/src/api.ts:185] [E: packages/sdk/client/src/api.ts:212] `finally` 里 `subscription.close()`。
 
@@ -194,7 +192,6 @@ session 树裁剪放在客户端，是因为 runtime 通知它 context 里每一
 - packages/sdk/client/src/launch.ts
 - packages/sdk/client/src/index.ts
 - packages/sdk/client/src/types.ts
-- packages/sdk/client/src/invariant.ts
 - packages/sdk/client/package.json
 - packages/sdk/client/tests/sdk-client.spec.ts
 - packages/sdk/client/tests/dispose.spec.ts

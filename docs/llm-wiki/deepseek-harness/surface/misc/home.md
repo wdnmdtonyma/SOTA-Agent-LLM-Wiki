@@ -6,7 +6,6 @@ tier: T1
 pkg: util
 source:
   - packages/util/home-paths/src/index.ts
-  - packages/util/home-paths/src/invariant.ts
   - packages/util/home-paths/package.json
   - packages/util/home-paths/tests/home-paths.spec.ts
   - packages/boot/app-boot/src/profile.ts
@@ -39,7 +38,7 @@ related:
   - subsys.util.home-paths
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 产品主目录是**一根**用户数据根：环境变量 `$DSH_HOME`（非空、非纯空白）否则 `~/.dsh`。解析函数在 `@deepseek-ai/dsh-home-paths`。它**不是** Claude / Pi 的 `~/.agents`，也**不是** Cordis `Service`，没有 `ctx.home`。`ctx.dshHomePath` 由 `app-boot` 的 `boot` 挂上。DSH 是组合运行时；换 agent preset 或换 shipped profile 不换这根目录。默认 GUI 入口是 `dsh web`；宿主还可以是 `dsh --profile headless|sdk|sdk-minimal|acp`。
@@ -57,7 +56,7 @@ updated: 0a53fb55be
 
 DeepSeek Harness 是 **Cordis 组合运行时**（`profile → bundle → agent preset`），不是「又一个把配置塞进 `~/.agents` 的 coding agent」。进程级 **host 面**（webserver / persistence / sandbox）和每会话 **agent-preset 面**（tools / persona / isolate）共用**同一根**用户数据目录。capability seam 仍是 Definition / Provider / Consumer；模型看得见的 preset 必须能从 session 日志重建（`model-visible ⟺ logged`）。本仓没有 shipped TUI。`dsh web` 是 `--profile web` 的硬编码 alias；bare `dsh` 要求 `--profile <name>`。[E: apps/cli/src/args.ts:156] [E: apps/cli/src/args.ts:140] shipped `PROFILE_TEMPLATES` 五个名字：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:137]
 
-这根目录由 `@deepseek-ai/dsh-home-paths` 解析。[E: packages/util/home-paths/package.json:2] 导出常量 `DSH_HOME_ENV = 'DSH_HOME'`、默认目录名 `DSH_HOME_DIR_NAME = '.dsh'`，以及纯函数 `resolveDshHome` / `defaultDshHome` / `dshHomePath` / `dshHomeDisplay`。[E: packages/util/home-paths/src/index.ts:12] [E: packages/util/home-paths/src/index.ts:18] [E: packages/util/home-paths/src/index.ts:61] [E: packages/util/home-paths/src/index.ts:87] [E: packages/util/home-paths/src/index.ts:98] [E: packages/util/home-paths/src/index.ts:110] 包本身不注册 Cordis `Service`，companion `home-paths-invariant` 的 `install` 是空函数。[E: packages/util/home-paths/src/invariant.ts:21] 没有 `ctx.home` 这个键。[I] 树上能看见的是可选键 `ctx.dshHomePath`，类型扩在 `app-boot`，值由 `boot` `provide`。[E: packages/boot/app-boot/src/index.ts:26] [E: packages/boot/app-boot/src/index.ts:785]
+这根目录由 `@deepseek-ai/dsh-home-paths` 解析。[E: packages/util/home-paths/package.json:2] 导出常量 `DSH_HOME_ENV = 'DSH_HOME'`、默认目录名 `DSH_HOME_DIR_NAME = '.dsh'`，以及纯函数 `resolveDshHome` / `defaultDshHome` / `dshHomePath` / `dshHomeDisplay`。[E: packages/util/home-paths/src/index.ts:12] [E: packages/util/home-paths/src/index.ts:18] [E: packages/util/home-paths/src/index.ts:61] [E: packages/util/home-paths/src/index.ts:87] [E: packages/util/home-paths/src/index.ts:98] [E: packages/util/home-paths/src/index.ts:110] 包本身不注册 Cordis `Service`。没有 `ctx.home` 这个键。[I] 树上能看见的是可选键 `ctx.dshHomePath`，类型扩在 `app-boot`，值由 `boot` `provide`。[E: packages/boot/app-boot/src/index.ts:26] [E: packages/boot/app-boot/src/index.ts:790]
 
 **不是 `~/.agents`。** 默认绝对根是 `join(homedir(), '.dsh')`。[E: packages/util/home-paths/src/index.ts:62] [E: packages/util/home-paths/tests/home-paths.spec.ts:22] `~/.agents` 是 `skill-filesystem` 的另一条兼容根（`agentsHome`，可被 `DSH_AGENTS_HOME` 改），与 `resolveDshHome(config.dshHome)` 并列。[E: packages/skill/skill-filesystem/src/index.ts:163] [E: packages/skill/skill-filesystem/src/index.ts:164] 项目内同时扫 `<project>/.dsh/skills` 与 `<project>/.agents/skills`——那是 [`surface.skills.system`](../skills/system.md) 的扫描树，不是「`$DSH_HOME` 等于 `.agents`」。[E: packages/skill/skill-filesystem/src/index.ts:246] [E: packages/skill/skill-filesystem/src/index.ts:247]
 
@@ -72,8 +71,8 @@ DeepSeek Harness 是 **Cordis 组合运行时**（`profile → bundle → agent 
 | 插件 Config `dshHome` | settings / credentials / skill-filesystem / shell-env 等自己调 `resolveDshHome(config.dshHome)`。显式 `configured` 经 `??` 压过环境变量。[E: packages/util/home-paths/src/index.ts:89] [E: packages/settings/settings-file/src/index.ts:57] |
 | `dsh web` / `dsh --profile <name>` | profile 目录在 `$DSH_HOME/profiles/<name>`。目录里没有 `package.json` 且名字命中 `PROFILE_TEMPLATES` 时 `loadProfile` 调 `initProfile`。[E: packages/boot/app-boot/src/profile.ts:133] [E: packages/boot/app-boot/src/profile.ts:810] [E: packages/boot/app-boot/src/profile.ts:817] |
 | `$DSH_HOME/cordis.patch.yml` | 机器级用户 patch，叠在每个 profile 自己的 `cordis.patch.yml` **之后**。`composeEntries` 顺序是 bundle → profile.patches → homePatches → overlays。[E: apps/cli/src/profile-boot.ts:70] [E: apps/cli/src/profile-boot.ts:166] |
-| Loader `!!js dshHomePath('sessions')` | `boot` 先 `ctx.provide('dshHomePath', dshHomePath)`，表达式才能插值。[E: packages/boot/app-boot/src/index.ts:785] [E: packages/bundle/base/cordis.patch.yml:113] |
-| 模型 bash / pwsh 里的 `$DSH_HOME` | `shell-env` 把**已解析的绝对路径**注入每次调用；这和 `dshHomeDisplay` 的符号名不是同一条通道。[E: packages/shell/shell-env/src/index.ts:101] [E: packages/shell/shell-env/src/index.ts:154] |
+| Loader `!!js dshHomePath('sessions')` | `boot` 先 `ctx.provide('dshHomePath', dshHomePath)`，表达式才能插值。[E: packages/boot/app-boot/src/index.ts:790] [E: packages/bundle/base/cordis.patch.yml:113] |
+| 模型 bash / pwsh 里的 `$DSH_HOME` | `shell-env` 把**已解析的绝对路径**注入每次调用；这和 `dshHomeDisplay` 的符号名不是同一条通道。[E: packages/shell/shell-env/src/index.ts:99] [E: packages/shell/shell-env/src/index.ts:155] |
 
 launcher 没有 `--home` 旗标。[I] 改根的产品手段是非空白环境变量 `DSH_HOME`，或给 `resolveDshHome` 传 `configured`。
 
@@ -111,7 +110,7 @@ launcher 没有 `--home` 旗标。[I] 改根的产品手段是非空白环境变
 
 **解析门。** 空白或只含空白的 `$DSH_HOME` 当未设置，避免 `resolve('')` 落到 cwd。[E: packages/util/home-paths/src/index.ts:89] `??` 只跳过 `null` / `undefined`：调用方若传入空字符串 `configured`，空串会进入 `expandHomePath` 再 `resolve`，不会回落到默认根。[E: packages/util/home-paths/src/index.ts:90] 产品覆盖请传绝对路径或 `~/…`。
 
-**不是 Service，没有 isolate。** 不要在 `cordis.yml` 里 `name: '@deepseek-ai/dsh-home-paths'`。函数在 import 时读 `os.homedir` / `process.env`。要给 Loader 用的是 `boot` 提供的函数 `dshHomePath`，不是 `ctx.home`。[E: packages/boot/app-boot/src/index.ts:785]
+**不是 Service，没有 isolate。** 不要在 `cordis.yml` 里 `name: '@deepseek-ai/dsh-home-paths'`。函数在 import 时读 `os.homedir` / `process.env`。要给 Loader 用的是 `boot` 提供的函数 `dshHomePath`，不是 `ctx.home`。[E: packages/boot/app-boot/src/index.ts:790]
 
 **host 面路径，不是 preset 面配置。** `web` 模板 bundles 是 `@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`；web 再 `insert` `agent-presets` 且 `default: standard`。[E: packages/boot/app-boot/src/profile.ts:143] [E: packages/bundle/web-app/cordis.patch.yml:441] [E: packages/bundle/web-app/cordis.patch.yml:445] 会话换 `minimal` / `standard` / `ptc` / `cordis` 只改模型看见的 tools / persona / isolate；`$DSH_HOME` 仍是进程启动时那根。用户自写 preset 落在同一根下的 `.agent-presets`，不会另起一个 home。旧 wiki 名 `code` 现为 PTC（目录 `presets/ptc/`）。
 
@@ -119,7 +118,7 @@ launcher 没有 `--home` 旗标。[I] 改根的产品手段是非空白环境变
 
 **`dshHomePath` 看不见插件 Config。** `!!js dshHomePath('sessions')` 只读 `process.env`。插件自己的 `config.dshHome` 必须调用 `resolveDshHome(config.dshHome)`，settings 默认文件就是这样。[E: packages/util/home-paths/src/index.ts:99] [E: packages/settings/settings-file/src/index.ts:57]
 
-**分层 `.env` 不能回写 home。** `DSH_` 是 `BOOTSTRAP_PREFIXES` 之一；home 在读任何 `.env` 之前已经定死。[E: packages/boot/app-boot/src/index.ts:120] [E: packages/boot/app-boot/src/index.ts:184] home 等于调用 cwd 时跳过用户层 `.env`，避免与项目层重复。[E: packages/boot/app-boot/src/index.ts:188]
+**分层 `.env` 不能回写 home。** `DSH_` 是 `BOOTSTRAP_PREFIXES` 之一；home 在读任何 `.env` 之前已经定死。[E: packages/boot/app-boot/src/index.ts:120] [E: packages/boot/app-boot/src/index.ts:184] home 等于调用 cwd 时跳过用户层 `.env`，避免与项目层重复。[E: packages/boot/app-boot/src/index.ts:184]
 
 **显示通道。** UI / 工作区指令里的符号名走 `dshHomeDisplay`（`~/.dsh` 或 `$DSH_HOME`）。模型 shell 里的 `$DSH_HOME` 是绝对路径。两套不要混读。
 
@@ -135,7 +134,6 @@ launcher 没有 `--home` 旗标。[I] 改根的产品手段是非空白环境变
 ## Sources
 
 - packages/util/home-paths/src/index.ts
-- packages/util/home-paths/src/invariant.ts
 - packages/util/home-paths/package.json
 - packages/util/home-paths/tests/home-paths.spec.ts
 - packages/boot/app-boot/src/profile.ts

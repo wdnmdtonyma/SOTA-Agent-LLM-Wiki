@@ -37,7 +37,7 @@ related:
   - subsys.composition.agent-presets
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/cordis-plugin-loader` 是 **vendored** Cordis 插件加载器（`vendor/loader/`，npm 名见 package.json），不是 `packages/` 里的 DSH 包，也不是 profile 发现器。[E: vendor/loader/package.json:2] `Loader extends EntryTree`，构造时 `ctx.reflect.provide('loader', this)`；它拥有 entry 树、group、isolate realm、`!!js` interpolate 与按 specifier import 插件。[E: vendor/loader/src/index.ts:65] [E: vendor/loader/src/index.ts:90] profile / bundle 叠层是 Consumer [`subsys.composition.app-boot`](../composition/app-boot.md)，本页只写 loader 机制。
@@ -57,7 +57,7 @@ updated: 0a53fb55be
 它**不**拥有：
 
 - vendored Cordis 内核（`Context` proxy、`Fiber`、`Events.waterfall` 的 `next = () => { const cb = cbs.shift() ?? inner }`）— [`subsys.vendor.cordis`](cordis.md)（`subsys.vendor.cordis`）。[E: vendor/cordis/src/events.ts:238]
-- profile 发现、空根 `cordis.yml`、`composeEntries` / bundle 叠层、`boot()` 胶 — [`subsys.composition.app-boot`](../composition/app-boot.md)（`subsys.composition.app-boot`）。app-boot 是本页的 Consumer：`await ctx.plugin(Loader)` 再 `mountRootInclude`。[E: packages/boot/app-boot/src/index.ts:786]
+- profile 发现、空根 `cordis.yml`、`composeEntries` / bundle 叠层、`boot()` 胶 — [`subsys.composition.app-boot`](../composition/app-boot.md)（`subsys.composition.app-boot`）。app-boot 是本页的 Consumer：`await ctx.plugin(Loader)` 再 `mountRootInclude`。[E: packages/boot/app-boot/src/index.ts:790]
 - `dsh-base` 插进空根的那条 host 行表 — [`subsys.composition.bundle-base`](../composition/bundle-base.md)（`subsys.composition.bundle-base`）。那些行是 Loader 要 `import` 的 `name`，不是 loader 自己的名单。
 - YAML `!!js` 方言与 `applyEntryPatches` — `@deepseek-ai/cordis-plugin-include` 把 `tag:yaml.org,2002:js` 建成 `{ __jsExpr }`。[E: vendor/include/src/index.ts:9] [E: vendor/include/src/index.ts:12] Loader 只认已经建成的 `JsExpr` 节点。
 - preset 发现、`mountPreset`、`leakedServices` 审计 — [`subsys.composition.agent-presets`](../composition/agent-presets.md)（`subsys.composition.agent-presets`）。本页只写 isolate 机制；preset 用 `isolate.fs: true` 一类防泄漏。
@@ -99,17 +99,17 @@ updated: 0a53fb55be
 | `evaluate` | `new Function('ctx', 'expr', 'with (ctx) { return eval(expr) }')`。[E: vendor/loader/src/config/utils.ts:5] |
 | `LocalRealm` | `isolate[name] === true`：每条 entry 一份，suffix `#<options.id>`。[E: vendor/loader/src/config/isolate.ts:81] [E: vendor/loader/src/config/isolate.ts:55] |
 | `GlobalRealm` | `isolate[name] === '<label>'`：同 label 共享，suffix `@<label>`。[E: vendor/loader/src/config/isolate.ts:84] [E: vendor/loader/src/config/isolate.ts:66] |
-| `builtins` | `cordis:<key>` → `ctx.loader.builtins[key]`。app-boot 填 `include` 与 `group`。[E: vendor/loader/src/config/tree.ts:147] [E: packages/boot/app-boot/src/index.ts:507] [E: packages/boot/app-boot/src/index.ts:525] |
+| `builtins` | `cordis:<key>` → `ctx.loader.builtins[key]`。app-boot 填 `include` 与 `group`。[E: vendor/loader/src/config/tree.ts:147] [E: packages/boot/app-boot/src/index.ts:505] [E: packages/boot/app-boot/src/index.ts:525] |
 
 `dsh-base` 用同一套 `disabled: !!js` 互斥两套 shell（win32 关 bash 栈，非 win32 关 pwsh 栈）。[E: packages/bundle/base/cordis.patch.yml:222] [E: packages/bundle/base/cordis.patch.yml:228] `evaluate` 被 windows-shell 测试直接 import，用假 `process.platform` 钉死两边结果。[E: apps/cli/tests/windows-shell.spec.ts:20] [E: apps/cli/tests/windows-shell.spec.ts:31]
 
 ## 控制流
 
-1. Consumer `boot@packages/boot/app-boot/src/index.ts`：`new Context()` → `ctx.provide('dshHomePath', dshHomePath)` → `await ctx.plugin(Loader)`。[E: packages/boot/app-boot/src/index.ts:785] [E: packages/boot/app-boot/src/index.ts:786] `dshHomePath` 不是 loader 的 API；它只是随后 `interpolate` 的 `with (ctx)` 作用域里能看见的一个键。
+1. Consumer `boot@packages/boot/app-boot/src/index.ts`：`new Context()` → `ctx.provide('dshHomePath', dshHomePath)` → `await ctx.plugin(Loader)`。[E: packages/boot/app-boot/src/index.ts:790] [E: packages/boot/app-boot/src/index.ts:790] `dshHomePath` 不是 loader 的 API；它只是随后 `interpolate` 的 `with (ctx)` 作用域里能看见的一个键。
 
 2. `Loader` 构造@`vendor/loader/src/index.ts`：`super(ctx)` 建根 `EntryGroup`，可选写 `baseUrl`，`defineProperty(..., Service.tracker)`，然后 `ctx.reflect.provide('loader', this, this[Service.check])`。[E: vendor/loader/src/index.ts:78] [E: vendor/loader/src/index.ts:90] `provide` 把实现存进 `reflect.store[ctx[Context.isolate]['loader']]`；同 realm 再注册同名会抛。[E: vendor/cordis/src/reflect.ts:289] [E: vendor/cordis/src/reflect.ts:290] 末尾 `ctx.plugin(isolate)` 装 isolate 钩子。[E: vendor/loader/src/index.ts:159]
 
-3. `mountRootInclude` 钉死根行 `id: 'include'` / `name: 'cordis:include'`，并 `ctx.loader.builtins.include = Include`（或带 `bareModuleBaseUrl` 的 `HostResolvedRootInclude` 子类）与 `ctx.loader.builtins.group = Group`，让 `cordis:include` / `cordis:group` 不依赖 included 树自己的 specifier 解析。[E: packages/boot/app-boot/src/index.ts:507] [E: packages/boot/app-boot/src/index.ts:525] [E: packages/boot/app-boot/src/index.ts:534] [E: packages/boot/app-boot/src/index.ts:535] `EntryTree.import`：`cordis:` 前缀查 `builtins`，否则走 Node internal loader 或动态 `import()`。[E: vendor/loader/src/config/tree.ts:147] [E: vendor/loader/src/config/tree.ts:155]
+3. `mountRootInclude` 钉死根行 `id: 'include'` / `name: 'cordis:include'`，并 `ctx.loader.builtins.include = Include`（或带 `bareModuleBaseUrl` 的 `HostResolvedRootInclude` 子类）与 `ctx.loader.builtins.group = Group`，让 `cordis:include` / `cordis:group` 不依赖 included 树自己的 specifier 解析。[E: packages/boot/app-boot/src/index.ts:505] [E: packages/boot/app-boot/src/index.ts:525] [E: packages/boot/app-boot/src/index.ts:534] [E: packages/boot/app-boot/src/index.ts:535] `EntryTree.import`：`cordis:` 前缀查 `builtins`，否则走 Node internal loader 或动态 `import()`。[E: vendor/loader/src/config/tree.ts:147] [E: vendor/loader/src/config/tree.ts:155]
 
 4. `EntryTree.create` → `EntryGroup.create@vendor/loader/src/config/group.ts`：`ensureId`，`new Entry(loader)`，`entry.update(options, true, true)`。[E: vendor/loader/src/config/tree.ts:99] [E: vendor/loader/src/config/group.ts:30] 新 `Entry` 立刻 `emit('loader/entry-init')`；isolate 插件给该 ctx 一份自己的 `Context.isolate` / `Context.intercept` 原型链。[E: vendor/loader/src/config/entry.ts:68] [E: vendor/loader/src/config/isolate.ts:93]
 

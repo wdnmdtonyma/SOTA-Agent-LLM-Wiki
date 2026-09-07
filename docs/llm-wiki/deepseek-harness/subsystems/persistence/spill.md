@@ -39,7 +39,7 @@ related:
   - subsys.core.session
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.spillStore` 是 **host 面** spill 存储缝：Definition 只声明 `saveText`；shipped Provider 是 `LocalSpillStore`（默认 `mkdtemp` 私有根，启动时一次 age sweep）；`spill-policy` 是挂在 `tools/post-execute` 与 `tools/ptc-dispatch-log` 上的 Consumer，先 `next()` 再把超 `maxInlineBytes` 的纯文本换成 preview + locator。fail-open：没 store / `saveText` 抛 / replacement 超 cap 都保留原文，绝不把成功 tool 改成 `isError`。这是 Cordis 组合运行时（`profile → bundle → agent preset`）把 oversized 输出卸出模型上下文的一层，不是 bash / pwsh 自己的 `spillPath`。
@@ -110,7 +110,7 @@ updated: 0a53fb55be
 
 ## 控制流
 
-1. **host 面挂 Provider + policy，preset 不重挂。** `dsh-base` 插入 `id: spill-local` / `name: '@deepseek-ai/dsh-spill-local'`（**没有** `config`，因此走 `privateRoot()` 且 sweep 用默认 30 天），再插 `id: spill-policy` / `name: '@deepseek-ai/dsh-spill-policy'`，`maxInlineBytes: 50000`。 [E: packages/bundle/base/cordis.patch.yml:390] [E: packages/bundle/base/cordis.patch.yml:391] [E: packages/bundle/base/cordis.patch.yml:393] [E: packages/bundle/base/cordis.patch.yml:394] [E: packages/bundle/base/cordis.patch.yml:396] `dsh-base` 的 `package.json` 依赖这两包。 [E: packages/bundle/base/package.json:89] [E: packages/bundle/base/package.json:90] `PROFILE_TEMPLATES` 里 `web` / `headless` / `sdk` / `acp` 都先叠 `@deepseek-ai/dsh-base`。 [E: packages/boot/app-boot/src/profile.ts:138] [E: packages/boot/app-boot/src/profile.ts:143] [E: packages/boot/app-boot/src/profile.ts:147] [E: packages/boot/app-boot/src/profile.ts:151] `dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`；`dsh-web-app` 另插 workspace / code-runtime 等，两边都**不再**写 `spill-local` / `spill-policy`。 [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] [E: packages/bundle/web-app/cordis.patch.yml:49] [E: packages/bundle/web-app/cordis.patch.yml:62]
+1. **host 面挂 Provider + policy，preset 不重挂。** `dsh-base` 插入 `id: spill-local` / `name: '@deepseek-ai/dsh-spill-local'`（**没有** `config`，因此走 `privateRoot()` 且 sweep 用默认 30 天），再插 `id: spill-policy` / `name: '@deepseek-ai/dsh-spill-policy'`，`maxInlineBytes: 50000`。 [E: packages/bundle/base/cordis.patch.yml:390] [E: packages/bundle/base/cordis.patch.yml:391] [E: packages/bundle/base/cordis.patch.yml:394] [E: packages/bundle/base/cordis.patch.yml:394] [E: packages/bundle/base/cordis.patch.yml:396] `dsh-base` 的 `package.json` 依赖这两包。 [E: packages/bundle/base/package.json:89] [E: packages/bundle/base/package.json:90] `PROFILE_TEMPLATES` 里 `web` / `headless` / `sdk` / `acp` 都先叠 `@deepseek-ai/dsh-base`。 [E: packages/boot/app-boot/src/profile.ts:138] [E: packages/boot/app-boot/src/profile.ts:143] [E: packages/boot/app-boot/src/profile.ts:147] [E: packages/boot/app-boot/src/profile.ts:151] `dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`；`dsh-web-app` 另插 workspace / code-runtime 等，两边都**不再**写 `spill-local` / `spill-policy`。 [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] [E: packages/bundle/web-app/cordis.patch.yml:49] [E: packages/bundle/web-app/cordis.patch.yml:62]
 
 2. **Definition 不是 shipped 行。** `SpillStore` 构造 `super(ctx, 'spillStore')`，由 `Service` 去 `reflect.provide`。`@deepseek-ai/dsh-spill` 本身不出现在任何 bundle `insert`。`LocalSpillStore` 继承后 `super(ctx)`，再按 config 钉死 `this.root`。 [E: packages/spill/spill/src/index.ts:47] [E: packages/spill/spill-local/src/index.ts:84] [E: vendor/cordis/src/service.ts:57]
 
@@ -132,7 +132,7 @@ updated: 0a53fb55be
 
 11. **HMR / dispose。** listener 登记走 `fiber.effect`；卸掉 `spill-policy` fiber 后 oversized 结果原样通过，不再多一次 `saveText`。 [E: vendor/cordis/src/events.ts:256] [E: packages/spill/spill-policy/tests/spill-policy.spec.ts:601]
 
-这些事件**不是** `session/flush`（那是 **parallel**，没有 `next()`），也不是 emit。`tools/result` 才是 post-execute 之后的 emit，policy 不听它。 [E: packages/core/session/src/index.ts:83] [E: packages/core/tools/src/index.ts:189]
+这些事件**不是** `session/flush`（那是 **parallel**，没有 `next()`），也不是 emit。`tools/result` 才是 post-execute 之后的 emit，policy 不听它。 [E: packages/core/session/src/index.ts:82] [E: packages/core/tools/src/index.ts:189]
 
 ## 设计动机
 
@@ -161,7 +161,7 @@ local 默认不写 `$DSH_HOME`：`mkdtemp` + `0700`/`0600` + 随机前缀 + `'wx
 - **bash / pwsh 的 `spillPath` 不是本缝。** 那是执行器按 `maxOutputBytes` 切流时自己写的文件。`spill-policy` 看到的是已经 render 完的纯文本 result。
 - **没有检索 API；sweep 不是按 id 删除。** `SpillStore` 只有 `saveText`。owner 永远是当前 `exec` 的 `header.id`；fork 之后新写入落在子会话目录。seed 日志里已经写出的 locator 字符串不会被本缝改写。本地 `cleanupPeriodDays` 启动 sweep 按 mtime 收旧文件。 [E: packages/spill/spill-local/src/index.ts:68] [I]
 - **`privateRoot()` 是进程单例。** 两次调用共用同一 `mkdtemp` 目录；省略 `root` 的 `LocalSpillStore` 钉到这份根。要可预测路径必须显式配 `root`。 [E: packages/spill/spill-local/src/store.ts:37] [E: packages/spill/spill-local/tests/spill-local.spec.ts:135] [E: packages/spill/spill-local/tests/spill-local.spec.ts:161]
-- **compaction 不靠本缝删 log。** 模型历史要再缩短，走 `surfaceOp: { op: 'replace', start, end }`（`SurfaceOp` 只有 `'append'` 与该 replace 变体，没有 delete）。`Session` 的 `this.log` 只 `push`。 [E: packages/core/session/src/types.ts:359] [E: packages/core/session/src/types.ts:360] [E: packages/core/session/src/index.ts:534] [E: packages/core/session/src/index.ts:641]
+- **compaction 不靠本缝删 log。** 模型历史要再缩短，走 `surfaceOp: { op: 'replace', start, end }`（`SurfaceOp` 只有 `'append'` 与该 replace 变体，没有 delete）。`Session` 的 `this.log` 只 `push`。 [E: packages/core/session/src/types.ts:352] [E: packages/core/session/src/types.ts:352] [E: packages/core/session/src/index.ts:534] [E: packages/core/session/src/index.ts:638]
 - **`sdk-minimal` 不叠 `dsh-base`。** 没有 shipped spill-local / spill-policy 行；工具仍跑，只是不自动裁。 [E: packages/boot/app-boot/src/profile.ts:155]
 
 ## Seam 三角

@@ -6,7 +6,6 @@ tier: T1
 pkg: execution
 source:
   - packages/fs/tool-str-replace-editor/src/index.ts
-  - packages/fs/tool-str-replace-editor/src/invariant.ts
   - packages/fs/tool-str-replace-editor/tests/tools.spec.ts
   - packages/fs/tool-str-replace-editor/package.json
   - packages/fs/fs/src/index.ts
@@ -41,7 +40,7 @@ related:
   - subsys.execution.fs-observation
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `str_replace_editor` 是 `@deepseek-ai/dsh-tool-str-replace-editor` 面向模型的 **一条** 编辑器工具：用 `command` 分发 `view` / `create` / `str_replace` / `insert`，全部经 `ctx.fs` 读写，不经 `ctx.shell` / `ctx.terminals`。
@@ -59,9 +58,9 @@ updated: 0a53fb55be
 
 实现包 `@deepseek-ai/dsh-tool-str-replace-editor`。[E: packages/fs/tool-str-replace-editor/package.json:2] Cordis 插件导出 `name = 'tool-str-replace-editor'`，`inject = ['tools', 'fs']`，入口是 `apply(ctx, config)`。[E: packages/fs/tool-str-replace-editor/src/index.ts:501] [E: packages/fs/tool-str-replace-editor/src/index.ts:502] [E: packages/fs/tool-str-replace-editor/src/index.ts:519]
 
-`apply` 校验完 `Config` 后调用 `registerStrReplaceEditor`，用 `ctx.tools.register(defineTool({ ... }))` 挂上 **模型可见名** `str_replace_editor`。[E: packages/fs/tool-str-replace-editor/src/index.ts:428] [E: packages/fs/tool-str-replace-editor/src/index.ts:429] [E: packages/fs/tool-str-replace-editor/src/index.ts:530] 测试里 `ctx.tools.schemas()` 只出现这一条名字；`fiber.dispose()` 后 schema 清空。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:95] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:191]
+`apply` 校验完 `Config` 后调用 `registerStrReplaceEditor`，用 `ctx.tools.register(defineTool({ ... }))` 挂上 **模型可见名** `str_replace_editor`。[E: packages/fs/tool-str-replace-editor/src/index.ts:428] [E: packages/fs/tool-str-replace-editor/src/index.ts:429] [E: packages/fs/tool-str-replace-editor/src/index.ts:530] 测试里 `ctx.tools.schemas()` 只出现这一条名字；`fiber.dispose()` 后 schema 清空。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:95] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:192]
 
-这不是 CLI 命令。模型 turn 里点名 `str_replace_editor`，由 `dsh-tools` 注册表执行。companion `@deepseek-ai/dsh-tool-str-replace-editor/invariant` 的 installer 是空函数：适配器自己不持有可持久化状态，文件真相在 `ctx.fs` provider 与 observation / sandbox 插件上。[E: packages/fs/tool-str-replace-editor/src/invariant.ts:21]
+这不是 CLI 命令。模型 turn 里点名 `str_replace_editor`，由 `dsh-tools` 注册表执行。
 
 ## 用途定位
 
@@ -73,7 +72,7 @@ updated: 0a53fb55be
 
 shipped **agent-preset 面**里它是 `minimal`（极简模式）的文件系统面：POSIX 上和持久 PTY 的 `bash`（包 `dsh-tool-bash-persistent`），win32 上和持久 `pwsh`（包 `dsh-tool-pwsh-persistent`）组成双工具 agent。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:6] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:36] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:59] `standard` / `ptc` / `cordis` 走的是另一套方言：`dsh-tool-fs` 的 `read` / `write` / `edit`。
 
-`dsh-base` 在 host 平面也 insert 了 `tool-str-replace-editor` 行（给非 web、仍吃 base 工具行的 profile 用）。[E: packages/bundle/base/cordis.patch.yml:428] Web profile 把该 host 行 `disabled: true`，改由 preset 重挂。[E: packages/bundle/web-app/cordis.patch.yml:345] `sdk-minimal` 不叠 base，自己 insert 一份。[E: packages/bundle/sdk-minimal/cordis.patch.yml:114]
+`dsh-base` 在 host 平面也 insert 了 `tool-str-replace-editor` 行（给非 web、仍吃 base 工具行的 profile 用）。[E: packages/bundle/base/cordis.patch.yml:429] Web profile 把该 host 行 `disabled: true`，改由 preset 重挂。[E: packages/bundle/web-app/cordis.patch.yml:346] `sdk-minimal` 不叠 base，自己 insert 一份。[E: packages/bundle/sdk-minimal/cordis.patch.yml:114]
 
 ## 输入 schema
 
@@ -135,7 +134,7 @@ Cordis `EventsService.dispatch` 把 listener 放在 **一份** `_hooks` 表里�
 
 ## 执行管线
 
-模型 step 若含 `tool-call`，`ReactLoopAgent` 调 `executeToolCalls`。[E: packages/core/agent-loop/src/agent.ts:432] 调度器用 `ctx.tools[TOOL_RUNTIME_SCHEDULER].prepare` →（允许的话）`dispatch`。[E: packages/core/agent-loop/src/tool-calls.ts:170] [E: packages/core/agent-loop/src/tool-calls.ts:174] 单测 / 直接调用走 `ctx.tools.execute`，内部是同一条 `prepareExecution` → `completeScheduledExecution`。[E: packages/core/tools/src/index.ts:1333] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:57]
+模型 step 若含 `tool-call`，`ReactLoopAgent` 调 `executeToolCalls`。[E: packages/core/agent-loop/src/agent.ts:432] 调度器用 `ctx.tools[TOOL_RUNTIME_SCHEDULER].prepare` →（允许的话）`dispatch`。[E: packages/core/agent-loop/src/tool-calls.ts:170] [E: packages/core/agent-loop/src/tool-calls.ts:174] 单测 / 直接调用走 `ctx.tools.execute`，内部是同一条 `prepareExecution` → `completeScheduledExecution`。[E: packages/core/tools/src/index.ts:1333] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:58]
 
 对本工具：
 
@@ -155,14 +154,14 @@ Cordis `EventsService.dispatch` 把 listener 放在 **一份** `_hooks` 表里�
 |---|---|---|---|---|
 | `minimal` | 是。组 id `filesystem` 内 id `str-replace-editor`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:86] | 无 | 与 `dsh-fs-local` 同组，`isolate.fs: true`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:77] | `maxOutputChars: 16000`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:88] |
 | `standard` | 否。filesystem 段只挂 `dsh-tool-fs` / `dsh-tool-fs-search`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:56] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:59] | — | — | — |
-| `ptc` | 否。同样只挂 `dsh-tool-fs` / `dsh-tool-fs-search`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:63] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:66] | — | — | `tool-presentation` `mode: ptc`；assemble 给模型的 wire 工具是 `['run_code']`；SDK 段不含 `str_replace_editor`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: apps/cli/tests/web-agent-presets.e2e.ts:366] [E: apps/cli/tests/web-agent-presets.e2e.ts:370] |
-| `cordis` | 否。filesystem 段同 `standard`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:57] | — | — | e2e 断言 catalog 有 `edit` 且 **没有** `str_replace_editor`。[E: apps/cli/tests/web-agent-presets.e2e.ts:338] [E: apps/cli/tests/web-agent-presets.e2e.ts:339] |
+| `ptc` | 否。同样只挂 `dsh-tool-fs` / `dsh-tool-fs-search`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:63] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:66] | — | — | `tool-presentation` `mode: ptc`；assemble 给模型的 wire 工具是 `['run_code']`；SDK 段不含 `str_replace_editor`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: apps/cli/tests/web-agent-presets.e2e.ts:366] [E: apps/cli/tests/web-agent-presets.e2e.ts:372] |
+| `cordis` | 否。filesystem 段同 `standard`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:57] | — | — | e2e 断言 catalog 有 `edit` 且 **没有** `str_replace_editor`。[E: apps/cli/tests/web-agent-presets.e2e.ts:338] [E: apps/cli/tests/web-agent-presets.e2e.ts:340] |
 
 `minimal` 的 `preset.yml` 把该 preset 标成「仅提供持久 bash 与 str_replace_editor 的双工具编码 Agent。」[E: packages/preset/agent-presets/presets/minimal/preset.yml:2] e2e：`minimal` assemble 出的 tool 名恰好 `['bash', 'str_replace_editor']`（POSIX 主机），且 parameters JSON 含 `Absolute path`。[E: apps/cli/tests/web-agent-presets.e2e.ts:290] [E: apps/cli/tests/web-agent-presets.e2e.ts:293]
 
-Web host 把 `dsh-base` 里那行 host 级 `tool-str-replace-editor` 设成 `disabled: true`，避免进程全局再注册一份；真正露出给模型的是 `minimal` 在 agent scope 里的重挂。[E: packages/bundle/web-app/cordis.patch.yml:345] [E: packages/bundle/web-app/cordis.patch.yml:346]
+Web host 把 `dsh-base` 里那行 host 级 `tool-str-replace-editor` 设成 `disabled: true`，避免进程全局再注册一份；真正露出给模型的是 `minimal` 在 agent scope 里的重挂。[E: packages/bundle/web-app/cordis.patch.yml:346] [E: packages/bundle/web-app/cordis.patch.yml:346]
 
-五个 shipped profile 里，`web` 把工具面挪到 preset；`headless` / `sdk` / `acp` 叠 `dsh-base`，因此仍挂着 host 平面那行 `tool-str-replace-editor`（与 `tool-fs` 并存）。`sdk-minimal` 不叠 base，自己 insert `str-replace-editor`。[E: packages/bundle/sdk-minimal/cordis.patch.yml:115] 入口除 `dsh web` 外还有 `dsh --profile sdk|sdk-minimal|acp|headless`。
+五个 shipped profile 里，`web` 把工具面挪到 preset；`headless` / `sdk` / `acp` 叠 `dsh-base`，因此仍挂着 host 平面那行 `tool-str-replace-editor`（与 `tool-fs` 并存）。`sdk-minimal` 不叠 base，自己 insert `str-replace-editor`。[E: packages/bundle/sdk-minimal/cordis.patch.yml:116] 入口除 `dsh web` 外还有 `dsh --profile sdk|sdk-minimal|acp|headless`。
 
 ## execute() 走读
 
@@ -170,7 +169,7 @@ Web host 把 `dsh-base` 里那行 host 级 `tool-str-replace-editor` 设成 `dis
 
 1. **共同：解析 `path`。** `resolveTarget` 拒空串；`!isAbsolute(path)` 抛 `The path ${path} is not an absolute path, it should start with \`/\`. Maybe you meant /${path}?`，然后才 `ctx.fs.resolve`。[E: packages/fs/tool-str-replace-editor/src/index.ts:94] [E: packages/fs/tool-str-replace-editor/src/index.ts:95] `isAbsolute` 来自 `node:path`（平台相关）；报错文案按 POSIX 写。相对路径测试：`view` `ambiguous.txt` → `isError`，正文含 `is not an absolute path`。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:438] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:440]
 
-2. **`view` → `viewPath`。** `statExisting(..., 'view')`：不存在则 `emit` `absent` 并 `FS_NOT_FOUND`。[E: packages/fs/tool-str-replace-editor/src/index.ts:109] [E: packages/fs/tool-str-replace-editor/src/index.ts:112] 目录禁止 `view_range`，否则抛 “not allowed when path points to a directory”。[E: packages/fs/tool-str-replace-editor/src/index.ts:228] 目录走 `listDirectory`：跳过 `.` 前缀、`node_modules`、`__pycache__`，递归 `depth < 2`，类型标 `d`/`f`/`?`，按 displayPath codepoint 排序。[E: packages/fs/tool-str-replace-editor/src/index.ts:196] [E: packages/fs/tool-str-replace-editor/src/index.ts:201] 文件则 `readText`，`emit` `present`，`formatFileView` 做成 6 宽行号 + 两空格 + 原文（`cat -n` 风格）。[E: packages/fs/tool-str-replace-editor/src/index.ts:181] `view_range` 必须两整数；首元在 `[1, 行数]`；次元 `> 行数` 非法；次元不是 `-1` 且 `<` 首元非法；`-1` 表示切到末尾。[E: packages/fs/tool-str-replace-editor/src/index.ts:151] [E: packages/fs/tool-str-replace-editor/src/index.ts:175] 空文件 `split('\n')` 得到 1 行空串，测试断言 `total of 1 lines`。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:357]
+2. **`view` → `viewPath`。** `statExisting(..., 'view')`：不存在则 `emit` `absent` 并 `FS_NOT_FOUND`。[E: packages/fs/tool-str-replace-editor/src/index.ts:109] [E: packages/fs/tool-str-replace-editor/src/index.ts:112] 目录禁止 `view_range`，否则抛 “not allowed when path points to a directory”。[E: packages/fs/tool-str-replace-editor/src/index.ts:228] 目录走 `listDirectory`：跳过 `.` 前缀、`node_modules`、`__pycache__`，递归 `depth < 2`，类型标 `d`/`f`/`?`，按 displayPath codepoint 排序。[E: packages/fs/tool-str-replace-editor/src/index.ts:196] [E: packages/fs/tool-str-replace-editor/src/index.ts:201] 文件则 `readText`，`emit` `present`，`formatFileView` 做成 6 宽行号 + 两空格 + 原文（`cat -n` 风格）。[E: packages/fs/tool-str-replace-editor/src/index.ts:181] `view_range` 必须两整数；首元在 `[1, 行数]`；次元 `> 行数` 非法；次元不是 `-1` 且 `<` 首元非法；`-1` 表示切到末尾。[E: packages/fs/tool-str-replace-editor/src/index.ts:151] [E: packages/fs/tool-str-replace-editor/src/index.ts:175] 空文件 `split('\n')` 得到 1 行空串，测试断言 `total of 1 lines`。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:358]
 
 3. **`create` → `createFile`。** `file_text` 缺失抛 `Parameter \`file_text\` is required for command: create`（空串合法）。[E: packages/fs/tool-str-replace-editor/src/index.ts:130] [E: packages/fs/tool-str-replace-editor/src/index.ts:247] `stat !== undefined` 则 **拒绝覆盖**：`Cannot overwrite files using command \`create\``。[E: packages/fs/tool-str-replace-editor/src/index.ts:250] [E: packages/fs/tool-str-replace-editor/src/index.ts:251] 然后 `waterfall('fs/write-intent', …, () => ({ kind: 'createIfAbsent' }))`，`writeText`，成功 `emit` `present`。[E: packages/fs/tool-str-replace-editor/src/index.ts:253] [E: packages/fs/tool-str-replace-editor/src/index.ts:261]
 
@@ -204,14 +203,13 @@ DSH **没有** first-class `apply_patch`。产品默认编码面是 `dsh-tool-fs
 
 - `\r\n` 不归一化。`old_str` 写成 `alpha\r\nbeta` 才能匹配含 CRLF 的那段；测试据此只替换第一段。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:436]
 - Makefile 风格的 tab 必须写进 `old_str` / `new_str`；未匹配区域的 tab 原样留下。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:589]
-- `node_modules_old` / `__pycache__backup` 会进 listing，精确名 `node_modules` / `__pycache__` 不会。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:335]
+- `node_modules_old` / `__pycache__backup` 会进 listing，精确名 `node_modules` / `__pycache__` 不会。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:334]
 - 非 file/directory 的 `stat` 类型（测试里的 `'other'`）→ `FS_NOT_REGULAR_FILE`。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:492]
 - 非法 `maxOutputChars`（`0`）或空白 `description` 在 `apply` 期失败，工具不会注册。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:637]
 
 ## Sources
 
 - packages/fs/tool-str-replace-editor/src/index.ts
-- packages/fs/tool-str-replace-editor/src/invariant.ts
 - packages/fs/tool-str-replace-editor/tests/tools.spec.ts
 - packages/fs/tool-str-replace-editor/package.json
 - packages/fs/fs/src/index.ts

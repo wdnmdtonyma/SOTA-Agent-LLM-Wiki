@@ -51,7 +51,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ralph` 是 `@deepseek-ai/dsh-tool-ralph` 向模型注册的前台 fresh-agent 循环：wire 名 `ralph`；模型只提交不可变 `objective` 与可选 `maxRounds`。实现包用编译期固定的 `RALPH_SCRIPT` 调用 `ctx.workflowEngine.start`，每一轮拉起一个不继承父会话、且必须支持 `outputSchema` 的子 agent。
@@ -115,7 +115,7 @@ fiber `dispose` 后 `ctx.tools.get('ralph')` 与 `tool:ralph` section 一起消�
 
 直接 `apply` 非法 Config（`' '` provider、`maxRounds: 0`、非整 `maxHandoffChars`）在碰到 `inject` 服务之前就抛 `TypeError`。[E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:330]
 
-shipped `standard` / `ptc` / `cordis` 把 `subagentProvider` 写成 `spawn`（与插件默认相同），把 `maxRounds` **改成 64**（覆盖插件默认 256）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:238][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:239]
+shipped `standard` / `ptc` / `cordis` 把 `subagentProvider` 写成 `spawn`（与插件默认相同），把 `maxRounds` **改成 64**（覆盖插件默认 256）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:238][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:240]
 
 ## 输出 & 截断 / spill
 
@@ -151,7 +151,7 @@ UI：`presentCall` 是 `{ card: 'generic', title: 'ralph', rawInput: args.object
 | Provider | 默认引擎 `@deepseek-ai/dsh-workflow-worker-thread`（`WorkerThreadWorkflowEngine`，服务名 `workflowEngine`）。默认 child 路由 `@deepseek-ai/dsh-subagent-spawn-in-process` 登记名 `spawn`：`outputSchema: true`，`inheritsParentContext = false`。[E: packages/workflow/workflow-worker-thread/src/index.ts:143][E: packages/subagent/subagent-spawn-in-process/src/index.ts:44][E: packages/subagent/subagent-spawn-in-process/src/index.ts:50] |
 | Consumer | `@deepseek-ai/dsh-tool-ralph`：`requireFreshProvider` 后把**固定** `RALPH_SCRIPT` 交给 `ctx.workflowEngine.start`。同组的 `tool-workflow` 是另一条 Consumer，模型在那边才提交脚本。[E: packages/workflow/tool-ralph/src/index.ts:445] |
 
-`requireFreshProvider(ctx, name)` 经 `ctx.subagents.getProvider` 取路由，三道门：未注册、`!capabilities.outputSchema`、`inheritsParentContext`。任一道失败都在 `start` 之前抛错。[E: packages/workflow/tool-ralph/src/index.ts:218][E: packages/workflow/tool-ralph/src/index.ts:220][E: packages/workflow/tool-ralph/src/index.ts:223][E: packages/workflow/tool-ralph/src/index.ts:226][E: packages/subagent/subagent/src/index.ts:531]
+`requireFreshProvider(ctx, name)` 经 `ctx.subagents.getProvider` 取路由，三道门：未注册、`!capabilities.outputSchema`、`inheritsParentContext`。任一道失败都在 `start` 之前抛错。[E: packages/workflow/tool-ralph/src/index.ts:218][E: packages/workflow/tool-ralph/src/index.ts:220][E: packages/workflow/tool-ralph/src/index.ts:223][E: packages/workflow/tool-ralph/src/index.ts:226][E: packages/subagent/subagent/src/index.ts:532]
 
 因此 shipped 里两条常见「别的委托路由」都不能当 Ralph provider：
 
@@ -186,13 +186,13 @@ PTC（shipped `ptc` preset 的 `tool-presentation` `mode: ptc`；wiki 节点 id 
 | preset | 装 `@deepseek-ai/dsh-tool-ralph`？ | `disabled` | isolate | shipped Config |
 |---|---|---|---|---|
 | `minimal` | **否** | — | 无 `delegation` 组 | yml 只有 `persona` + `persistent-shell` + `filesystem`；最后一行工具是 `str-replace-editor`，没有 `id: tool-ralph`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] |
-| `standard` | **是** | 无 | `delegation` 组 `isolate.workflowEngine: true` | `subagentProvider: spawn`，`maxRounds: 64`（覆盖插件默认 256）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:174][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:178][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:235][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:239] |
+| `standard` | **是** | 无 | `delegation` 组 `isolate.workflowEngine: true` | `subagentProvider: spawn`，`maxRounds: 64`（覆盖插件默认 256）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:174][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:178][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:235][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:240] |
 | `ptc` | **是** | 无 | 同 `delegation` / `workflowEngine` | 与 `standard` 同键同值。PTC 只换呈现（模型直调只剩 `run_code`），本行仍注册。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:175][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:236][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:240] |
-| `cordis` | **是** | 无 | 同 `delegation` / `workflowEngine` | 与 `standard` 同键同值。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:162][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:166][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:223][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:227] |
+| `cordis` | **是** | 无 | 同 `delegation` / `workflowEngine` | 与 `standard` 同键同值。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:162][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:166][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:223][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:228] |
 
 `tool-ralph` 的 `inject` 含 `workflowEngine`。preset 把引擎行 `workflow-worker-thread` 和本工具放进**同一个** `isolate.workflowEngine` 组，避免消费者落到 host 上一个本 preset 并未填充的 registry。组内还有 `tool-workflow`、`tool-subagent*`；`subagents` **registry** 本身在 host，本行只消费它。
 
-host `dsh-base` 也有一行 `tool-ralph`（同样 `spawn` + `maxRounds: 64`）。`dsh-web-app` 把 host 行 `disabled: true`，改由每会话 preset remount——所以 web 上 `minimal` 会话看不到 `ralph`。headless / sdk / acp 叠 `dsh-base` 时仍走 host 行（那些 overlay 不 disable `tool-ralph`）。`sdk-minimal` 不叠 `dsh-base`。[E: packages/bundle/base/cordis.patch.yml:422][E: packages/bundle/base/cordis.patch.yml:426][E: packages/bundle/web-app/cordis.patch.yml:422][E: packages/bundle/web-app/cordis.patch.yml:423]
+host `dsh-base` 也有一行 `tool-ralph`（同样 `spawn` + `maxRounds: 64`）。`dsh-web-app` 把 host 行 `disabled: true`，改由每会话 preset remount——所以 web 上 `minimal` 会话看不到 `ralph`。headless / sdk / acp 叠 `dsh-base` 时仍走 host 行（那些 overlay 不 disable `tool-ralph`）。`sdk-minimal` 不叠 `dsh-base`。[E: packages/bundle/base/cordis.patch.yml:422][E: packages/bundle/base/cordis.patch.yml:426][E: packages/bundle/web-app/cordis.patch.yml:423][E: packages/bundle/web-app/cordis.patch.yml:423]
 
 ## execute() 走读
 
@@ -208,7 +208,7 @@ host `dsh-base` 也有一行 `tool-ralph`（同样 `spawn` + `maxRounds: 64`）�
 
 5. **引擎侧同步校验。** shipped `WorkerThreadWorkflowEngine.start` 先 `validateMeta`、`assertBodyParses`，再解析 provider 与 `maxTotalAgents`，然后 `new WorkerRun`。脚本解析失败会同步抛 `WorkflowError`；单测里 `startError` 路径 `disposed === 0`（还没有 live run）。[E: packages/workflow/workflow-worker-thread/src/index.ts:143][E: packages/workflow/workflow-worker-thread/src/index.ts:145][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:377]
 
-6. **把父 abort 桥到 run。** `exec.signal` 加 `{ once: true }` 的 `abort` listener，回调 `run.cancel('parent step aborted')`；若进入 body 时已经 aborted，立刻再 cancel 一次。单测：中途 abort → tool `isError`；预先 aborted 的第二次调用根本不 `start`（`TOOL_ABORTED_BEFORE_DISPATCH`）。[E: packages/workflow/tool-ralph/src/index.ts:454][E: packages/workflow/tool-ralph/src/index.ts:456][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:278][E: packages/workflow/tool-ralph/tests/integration.spec.ts:265]
+6. **把父 abort 桥到 run。** `exec.signal` 加 `{ once: true }` 的 `abort` listener，回调 `run.cancel('parent step aborted')`；若进入 body 时已经 aborted，立刻再 cancel 一次。单测：中途 abort → tool `isError`；预先 aborted 的第二次调用根本不 `start`（`TOOL_ABORTED_BEFORE_DISPATCH`）。[E: packages/workflow/tool-ralph/src/index.ts:454][E: packages/workflow/tool-ralph/src/index.ts:456][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:278][E: packages/workflow/tool-ralph/tests/integration.spec.ts:266]
 
 7. **脚本里的一轮。** `RALPH_SCRIPT` 调 `phase('Fresh-agent rounds')`，然后 `for (round = 1; round <= args.maxRounds)`。每轮拼一份 prompt：禁止再调 `ralph`、打印不可变 `objective`、轮次 `N of max`、工作区是 source of truth、上一份 handoff（首轮是 `(none — this is the first round)`）。然后 `await agent(prompt, { label, phase, schema: reportSchema })`。[E: packages/workflow/tool-ralph/src/index.ts:150][E: packages/workflow/tool-ralph/src/index.ts:161][E: packages/workflow/tool-ralph/src/index.ts:99]
 

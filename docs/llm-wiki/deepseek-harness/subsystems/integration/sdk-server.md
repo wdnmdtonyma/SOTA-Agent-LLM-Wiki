@@ -7,7 +7,6 @@ pkg: integration
 source:
   - packages/sdk/server/src/index.ts
   - packages/sdk/server/src/server.ts
-  - packages/sdk/server/src/invariant.ts
   - packages/sdk/server/package.json
   - packages/sdk/server/tests/plugin-apply.spec.ts
   - packages/sdk/server/tests/server.spec.ts
@@ -44,7 +43,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-sdk-jsonrpc-server` 是 stdio JSON-RPC 服务插件：插件名 `sdk-jsonrpc-server`，源码 `inject = ['agents']`。它把已经 boot 好的 Cordis 树接到 `dsh-sdk-protocol` 的 NDJSON 帧上。Shipped 入口是 `dsh --profile sdk`（叠 `dsh-base` + `dsh-sdk-app`）与 `dsh --profile sdk-minimal`（只叠 `dsh-sdk-minimal`）；**不进** `dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-acp-app`、也不进四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`），也不是 `dsh web` 的默认面。
@@ -76,7 +75,7 @@ updated: 0a53fb55be
 
 **host 面 vs agent-preset 面。** 本插件一旦加载就占整棵 runtime 的 stdout，是 **host 单例**，不是 preset `isolate` remount。`createSession` 调 `ctx.agents.create` 时只带 `sessionId`、`meta.cwd` 与 route `agentOptions`，没有 `agentPreset` / `seed`，因此读的是 host 平面已经挂上的模型可见行。[E: packages/sdk/server/src/server.ts:279] [E: packages/sdk/server/src/server.ts:281] [E: packages/sdk/server/src/server.ts:282] 五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；`dsh web` 仍是 Web GUI 别名，SDK 面走 `dsh --profile sdk|sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:137]
 
-**没有 waterfall。** 本包不往 `Events.waterfall` 挂 listener。组合失败是 `inject` 等到 `agents`（以及 bundle 行上的 `sdkAppStartup` / `loader`）、named export 元数据丢失、或 `initialize` 找不到 adapter。Cordis 全局规则仍是：waterfall 必须调用传入的 `next()` 才会 `cbs.shift()`；不调用就停在本层。[E: vendor/cordis/src/events.ts:238] 事件订阅是可逆 `ctx.on`（构造时推进 `disposers`，`performShutdown` 逐个弹出执行）。[E: packages/sdk/server/src/server.ts:95] [E: packages/sdk/server/src/server.ts:219] 服务生命周期是 `ctx.effect(..., 'jsonrpc.serve')`。[E: packages/sdk/server/src/index.ts:101] 伴随 invariant 插件名 `sdk-jsonrpc-server-invariant`，`inject = ['invariants']`，无 runtime 不变量。[E: packages/sdk/server/src/invariant.ts:13] [E: packages/sdk/server/src/invariant.ts:15]
+**没有 waterfall。** 本包不往 `Events.waterfall` 挂 listener。组合失败是 `inject` 等到 `agents`（以及 bundle 行上的 `sdkAppStartup` / `loader`）、named export 元数据丢失、或 `initialize` 找不到 adapter。Cordis 全局规则仍是：waterfall 必须调用传入的 `next()` 才会 `cbs.shift()`；不调用就停在本层。[E: vendor/cordis/src/events.ts:238] 事件订阅是可逆 `ctx.on`（构造时推进 `disposers`，`performShutdown` 逐个弹出执行）。[E: packages/sdk/server/src/server.ts:95] [E: packages/sdk/server/src/server.ts:219] 服务生命周期是 `ctx.effect(..., 'jsonrpc.serve')`。[E: packages/sdk/server/src/index.ts:101]
 
 ## 关键文件
 
@@ -84,7 +83,6 @@ updated: 0a53fb55be
 |---|---|
 | `packages/sdk/server/src/index.ts` | named export 插件：`name` / `inject` / `Config` / `apply`；stdio 接线、`initialize` 等 Loader、`shutdown`→exit |
 | `packages/sdk/server/src/server.ts` | `HarnessSdkJsonRpcServer`：三方法 dispatch、握手门、懒创建 session、通知扇出、图片 admission |
-| `packages/sdk/server/src/invariant.ts` | 空 runtime invariant 伴随 |
 | `packages/sdk/protocol/src/types.ts` | `HarnessSdkRequestMap`（恰好三个请求）与四条通知 payload |
 | `packages/sdk/protocol/src/transport.ts` | `JsonRpcLineTransport`：NDJSON、`onRequest`、空字节 `flush` |
 | `packages/sdk/server/package.json` | 包名 `@deepseek-ai/dsh-sdk-jsonrpc-server` |
@@ -118,17 +116,17 @@ updated: 0a53fb55be
 
 2. `apply@packages/sdk/server/src/index.ts` 记下 `ctx.root.fiber`，解析 `input`/`output`/`exit`（缺省即进程 stdio 与 `process.exit`），`new JsonRpcLineTransport` + `new HarnessSdkJsonRpcServer`。[E: packages/sdk/server/src/index.ts:51] [E: packages/sdk/server/src/index.ts:59] [E: packages/sdk/server/src/index.ts:60] 生产输出默认 `process.stdout`：协议帧独占这根流，同树再挂 stdout logger 会把日志行和 NDJSON 搅在一起。[E: packages/sdk/server/src/index.ts:55]
 
-3. `transport.onRequest`：若 `method === 'initialize'`，先 `await ctx.get('loader')?.await()`，等当前 Loader 树（含异步 sibling 条目）settle，再 `await server.handleRequest`。[E: packages/sdk/server/src/index.ts:84] [E: packages/sdk/server/src/index.ts:85] [E: packages/sdk/server/src/index.ts:87] 无 Loader 的手建 context 立即可用。result 交回 transport 写成带 `id` 的响应帧。[E: packages/sdk/protocol/src/transport.ts:234] 未知方法在 server 里 `throw`，transport 捕获后回 `-32603`（不是「没装 handler」的 `-32601`），文案 `unknown DeepSeek Harness SDK runtime method: …`。[E: packages/sdk/server/src/server.ts:255] [E: packages/sdk/server/tests/plugin-apply.spec.ts:362]
+3. `transport.onRequest`：若 `method === 'initialize'`，先 `await ctx.get('loader')?.await()`，等当前 Loader 树（含异步 sibling 条目）settle，再 `await server.handleRequest`。[E: packages/sdk/server/src/index.ts:84] [E: packages/sdk/server/src/index.ts:85] [E: packages/sdk/server/src/index.ts:87] 无 Loader 的手建 context 立即可用。result 交回 transport 写成带 `id` 的响应帧。[E: packages/sdk/protocol/src/transport.ts:234] 未知方法在 server 里 `throw`，transport 捕获后回 `-32603`（不是「没装 handler」的 `-32601`），文案 `unknown DeepSeek Harness SDK runtime method: …`。[E: packages/sdk/server/src/server.ts:255] [E: packages/sdk/server/tests/plugin-apply.spec.ts:363]
 
 4. `handleRequest@packages/sdk/server/src/server.ts` 的 `switch` 只有三支：`initialize` / `session/prompt` / `shutdown`。[E: packages/sdk/server/src/server.ts:248] [E: packages/sdk/server/src/server.ts:250] [E: packages/sdk/server/src/server.ts:252] 没有 ACP 那套 `authenticate` / `newSession` / `cancel`，也没有 `loadSession`。
 
-5. `initialize@packages/sdk/server/src/server.ts`：校验 `reasoningEffort` 与 `maxTokens`，`resolve(params.cwd)` 收成绝对路径，记下 `provider`/`model`/`reasoningEffort`。[E: packages/sdk/server/src/server.ts:144] 若 `hasAdapterFor(provider)` 为假：非 `deepseek-official` 直接抛 `no adapter registered for provider "…"`；`deepseek-official` 则 `ctx.plugin(LlmDeepSeek, {})` 挂一份 fallback，句柄留在 `llmFiber`。[E: packages/sdk/server/src/server.ts:151] [E: packages/sdk/server/src/server.ts:152] 随后 `llm.resolveCallConfig` 校验 route。[E: packages/sdk/server/src/server.ts:156] 已有 owner 时不重复注册。[E: packages/sdk/server/tests/server.spec.ts:886] 返回的 `serverInfo.name` 恒为 `deepseek-harness-sdk-runtime`。[E: packages/sdk/server/src/server.ts:168] 置 `initialized = true`。[E: packages/sdk/server/src/server.ts:167] 类注释写 reinitialization unsupported；实现仍会覆盖这几个字段，已在 `sessions` 里的 `SessionRecord` 不会重建。
+5. `initialize@packages/sdk/server/src/server.ts`：校验 `reasoningEffort` 与 `maxTokens`，`resolve(params.cwd)` 收成绝对路径，记下 `provider`/`model`/`reasoningEffort`。[E: packages/sdk/server/src/server.ts:144] 若 `hasAdapterFor(provider)` 为假：非 `deepseek-official` 直接抛 `no adapter registered for provider "…"`；`deepseek-official` 则 `ctx.plugin(LlmDeepSeek, {})` 挂一份 fallback，句柄留在 `llmFiber`。[E: packages/sdk/server/src/server.ts:151] [E: packages/sdk/server/src/server.ts:152] 随后 `llm.resolveCallConfig` 校验 route。[E: packages/sdk/server/src/server.ts:156] 已有 owner 时不重复注册。[E: packages/sdk/server/tests/server.spec.ts:888] 返回的 `serverInfo.name` 恒为 `deepseek-harness-sdk-runtime`。[E: packages/sdk/server/src/server.ts:168] 置 `initialized = true`。[E: packages/sdk/server/src/server.ts:167] 类注释写 reinitialization unsupported；实现仍会覆盖这几个字段，已在 `sessions` 里的 `SessionRecord` 不会重建。
 
 6. `prompt@packages/sdk/server/src/server.ts` **必须先握手**：`!this.initialized` 抛 `SDK server is not initialized`。[E: packages/sdk/server/src/server.ts:177] 再 `getOrCreateSession`。`shuttingDown` 则抛 `SDK server is shutting down`。[E: packages/sdk/server/src/server.ts:260] Map 命中直接复用；创建中的同一 `sessionId` 共用一条 Promise；无论成败都从 `sessionCreations` 删掉以便失败后重试。[E: packages/sdk/server/src/server.ts:261] [E: packages/sdk/server/src/server.ts:264] [E: packages/sdk/server/src/server.ts:268] 未命中则 `createSession`：`ctx.agents.create({ sessionId, meta: { cwd }, agentOptions: { provider, model, reasoningEffort?, maxTokens? } })`。[E: packages/sdk/server/src/server.ts:279] [E: packages/sdk/server/src/server.ts:280] 客户端给的字符串就是 session id。`SessionPromptParams.sessionId` 只是这条字符串。[E: packages/sdk/protocol/src/types.ts:38]
 
-7. 投递前 `assertLiveAgent`：`ctx.agents.get(rec.handle.agent.id) === rec.handle.agent`。不相等说明 agent-loop-only reload 之类把 registry 里的活体换掉了，server 的 `SessionRecord` 还指着旧句柄——此时抛 `session agent was disposed outside the server: …`，**不**再 `followup`。[E: packages/sdk/server/src/server.ts:196] [E: packages/sdk/server/tests/server.spec.ts:318] 含 image 块时先 `admitEncodedImages`（无 `ctx.attachments` 则抛 `SDK image prompt requires an attachment store`），跨异步边界后再 assert 一次。[E: packages/sdk/server/src/server.ts:43] [E: packages/sdk/server/src/server.ts:186] 活着则 `createUserMessage({ content, source: { kind: 'user' } })` + `agent.followup(message)`，立刻返回 `{ messageId }`。[E: packages/sdk/server/src/server.ts:187] [E: packages/sdk/server/src/server.ts:191] 同一 session 的重叠 prompt 连续 `followup`，不互相阻塞；不同 session 的 `create` 彼此独立。[E: packages/sdk/server/tests/server.spec.ts:184]
+7. 投递前 `assertLiveAgent`：`ctx.agents.get(rec.handle.agent.id) === rec.handle.agent`。不相等说明 agent-loop-only reload 之类把 registry 里的活体换掉了，server 的 `SessionRecord` 还指着旧句柄——此时抛 `session agent was disposed outside the server: …`，**不**再 `followup`。[E: packages/sdk/server/src/server.ts:196] [E: packages/sdk/server/tests/server.spec.ts:317] 含 image 块时先 `admitEncodedImages`（无 `ctx.attachments` 则抛 `SDK image prompt requires an attachment store`），跨异步边界后再 assert 一次。[E: packages/sdk/server/src/server.ts:43] [E: packages/sdk/server/src/server.ts:186] 活着则 `createUserMessage({ content, source: { kind: 'user' } })` + `agent.followup(message)`，立刻返回 `{ messageId }`。[E: packages/sdk/server/src/server.ts:187] [E: packages/sdk/server/src/server.ts:191] 同一 session 的重叠 prompt 连续 `followup`，不互相阻塞；不同 session 的 `create` 彼此独立。[E: packages/sdk/server/tests/server.spec.ts:186]
 
-8. 构造期四条 `ctx.on` 把进程内事件打成服务器→客户端通知（无 `id` 的帧）：`session/event` → `session.event`（**所有** session，不限本 Map）；`agent/status` → `session.status`（`idle` / `running`，不解释 turn 成败）；`session/created` 且 `header.parentSession` 有值 → `subagent.started`；`subagent/end` 且 `info.local` → `subagent.finished`。[E: packages/sdk/server/src/server.ts:95] [E: packages/sdk/server/src/server.ts:99] [E: packages/sdk/server/src/server.ts:104] [E: packages/sdk/server/src/server.ts:116] `!info.local` 直接 return：id 撞车或仅凭 parent 血统都不能把远程 run 报成本 runtime 的 child。[E: packages/sdk/server/tests/server.spec.ts:500] `lastAssistantMessage` 仅在有值时展开，不发空数组。[E: packages/sdk/server/src/server.ts:124]
+8. 构造期四条 `ctx.on` 把进程内事件打成服务器→客户端通知（无 `id` 的帧）：`session/event` → `session.event`（**所有** session，不限本 Map）；`agent/status` → `session.status`（`idle` / `running`，不解释 turn 成败）；`session/created` 且 `header.parentSession` 有值 → `subagent.started`；`subagent/end` 且 `info.local` → `subagent.finished`。[E: packages/sdk/server/src/server.ts:95] [E: packages/sdk/server/src/server.ts:99] [E: packages/sdk/server/src/server.ts:104] [E: packages/sdk/server/src/server.ts:116] `!info.local` 直接 return：id 撞车或仅凭 parent 血统都不能把远程 run 报成本 runtime 的 child。[E: packages/sdk/server/tests/server.spec.ts:502] `lastAssistantMessage` 仅在有值时展开，不发空数组。[E: packages/sdk/server/src/server.ts:124]
 
 9. `shutdown` **先**跑完 `performShutdown`（置 `shuttingDown`、等完 in-flight create、卸 `disposers`、`handle.dispose()` 每个 SDK session、卸 `llmFiber`），把 `{}` 交给 transport 写成响应。[E: packages/sdk/server/src/server.ts:207] [E: packages/sdk/server/src/server.ts:212] 多个 teardown 失败聚成 `AggregateError('SDK server teardown failed')`。[E: packages/sdk/server/src/server.ts:235] [E: packages/sdk/server/tests/server.spec.ts:1173] `apply` 看见 `method === 'shutdown'` 后 `setImmediate(disposeAndExit)`：先 `transport.flush()`（往 output 写空字节等回调），再 `rootFiber.dispose()`，最后 `exit(0)`。[E: packages/sdk/server/src/index.ts:88] [E: packages/sdk/server/src/index.ts:69] [E: packages/sdk/server/src/index.ts:70] [E: packages/sdk/server/src/index.ts:71] [E: packages/sdk/protocol/src/transport.ts:166] `exitTask` 与 `shutdownTask` 都只建一次，并发第二条 `shutdown` 也只 exit 一次。[E: packages/sdk/server/tests/plugin-apply.spec.ts:289] 观测顺序：两条响应帧 → 各自 write-complete → 空 flush → `root-disposed` → `exit(0)`。[E: packages/sdk/server/tests/plugin-apply.spec.ts:315] flush 回调失败仍 dispose + exit 一次。[E: packages/sdk/server/tests/plugin-apply.spec.ts:332]
 
@@ -180,7 +178,6 @@ named export only：与 ACP / subagent-acp 同一条 Loader 陷阱。测试用�
 
 - packages/sdk/server/src/index.ts
 - packages/sdk/server/src/server.ts
-- packages/sdk/server/src/invariant.ts
 - packages/sdk/server/package.json
 - packages/sdk/server/tests/plugin-apply.spec.ts
 - packages/sdk/server/tests/server.spec.ts

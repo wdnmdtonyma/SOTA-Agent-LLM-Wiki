@@ -36,7 +36,7 @@ related:
   - surface.presets.overview
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `headless` 是 DSH 的 **one-shot 进程 profile**：模板把 `@deepseek-ai/dsh-base` 与 `@deepseek-ai/dsh-headless` 叠成一棵 **无 Host / 无 HTTP / 无 browser / 无 `agent-presets` roster** 的 Cordis 树；`patchReload` 是 `startup`；`headless-startup` 把 task positional 做成 `headlessStartup` 服务，`headless-runner` 在 host 面上 `agents.create` 一次、`followup` 一次、把 reasoning 流到 stderr、打印最后一条 assistant text，再按 `turn/end` reason 经 `ctx.appExit` 退出。
@@ -60,7 +60,7 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`），
 
 相对其它入口：`dsh web` 是唯一硬编码 profile 子命令 alias；headless / sdk / sdk-minimal / acp 都走 `dsh --profile <name>`。[E: apps/cli/src/args.ts:156] 本仓没有 shipped TUI 包；help 里的 `tui` 只是自定义 profile 示例。[E: apps/cli/src/args.ts:68] `headless` 是 **无 UI 的一次性任务进程**——不 bind 端口、不挂 browser roster。`dsh --profile headless --dump-default-config` 的验收断言：树里有 `@deepseek-ai/dsh-headless`，没有 `dsh-host-*`、没有 `@deepseek-ai/dsh-web-app`、没有 `dsh-client-*`。[E: apps/cli/tests/built-bin.e2e.ts:931] [E: apps/cli/tests/built-bin.e2e.ts:932] [E: apps/cli/tests/built-bin.e2e.ts:933] [E: apps/cli/tests/built-bin.e2e.ts:934]
 
-本 bundle **不挂 preset roster**。`packages/bundle/headless/cordis.patch.yml` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner` 三行，没有 `id: agent-presets`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] CLI `composeProfile` **不再**按 `rows.has('agent-presets')` 补 shipped root；roster 只在 web overlay 自己 insert。[E: packages/bundle/web-app/cordis.patch.yml:442] 因此 **不要** 把 `minimal` / `standard` / `ptc` / `cordis` 说成 headless 的默认装配。模型可见工具留在 **host 面**：`dsh-base` 已经 insert 的 `tool-*` 行，runner 在 root realm 上 `agents.create`，`setup` 只装 `installModelSelection`，没有 `bindScopeParent`。[E: packages/bundle/headless/src/index.ts:178] [E: packages/bundle/headless/src/index.ts:184]
+本 bundle **不挂 preset roster**。`packages/bundle/headless/cordis.patch.yml` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner` 三行，没有 `id: agent-presets`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] CLI `composeProfile` **不再**按 `rows.has('agent-presets')` 补 shipped root；roster 只在 web overlay 自己 insert。[E: packages/bundle/web-app/cordis.patch.yml:442] 因此 **不要** 把 `minimal` / `standard` / `ptc` / `cordis` 说成 headless 的默认装配。模型可见工具留在 **host 面**：`dsh-base` 已经 insert 的 `tool-*` 行，runner 在 root realm 上 `agents.create`，`setup` 只装 `installModelSelection`，没有 `bindScopeParent`。[E: packages/bundle/headless/src/index.ts:179] [E: packages/bundle/headless/src/index.ts:184]
 
 ## 入口
 
@@ -108,7 +108,7 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`），
 | `headless-startup` | insert | `name: '@deepseek-ai/dsh-headless/startup'` | 解析 task / `--help`，provide `headlessStartup`。[E: packages/bundle/headless/cordis.patch.yml:22] |
 | `headless-runner` | insert | `name: '@deepseek-ai/dsh-headless'`；`inject: [headlessStartup]`；`config.task: !!js ctx.headlessStartup.task` | 等服务就绪后把 task 写进 runner `Config`。[E: packages/bundle/headless/cordis.patch.yml:27] [E: packages/bundle/headless/cordis.patch.yml:30] |
 
-没有 `agent-presets` 行，也没有 `webserver` / `web-runtime` / `ui-*` insert。本 overlay **不再** disable `hmr`：headless 靠模板 `patchReload: 'startup'` 让 `runProfile` 跳过 live watcher。[E: packages/boot/app-boot/src/profile.ts:148] [E: apps/cli/src/profile-boot.ts:270]
+没有 `agent-presets` 行，也没有 `webserver` / `web-runtime` / `ui-*` insert。本 overlay **不再** disable `hmr`：headless 靠模板 `patchReload: 'startup'` 让 `runProfile` 跳过 live watcher。[E: packages/boot/app-boot/src/profile.ts:148] [E: apps/cli/src/profile-boot.ts:271]
 
 ### 插件符号
 
@@ -118,10 +118,10 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`），
 | `inject`（startup） | `startup.ts` | `['cmdlineArgs']` [E: packages/bundle/headless/src/startup.ts:16] |
 | `HEADLESS_STARTUP_SERVICE` | `startup.ts` | `'headlessStartup'` [E: packages/bundle/headless/src/startup.ts:19] |
 | `HeadlessStartupValues.task` | `startup.ts` | 非空任务字符串 |
-| `name`（runner） | `index.ts` | `'headless-runner'` [E: packages/bundle/headless/src/index.ts:27] |
-| `inject`（runner 插件） | `index.ts` | `['agentDefaultModel', 'agents', 'sessions']` [E: packages/bundle/headless/src/index.ts:30] |
+| `name`（runner） | `index.ts` | `'headless-runner'` [E: packages/bundle/headless/src/index.ts:28] |
+| `inject`（runner 插件） | `index.ts` | `['agentDefaultModel', 'agents', 'sessions']` [E: packages/bundle/headless/src/index.ts:31] |
 | `Config.task` | `index.ts` | `z.string().required()` [E: packages/bundle/headless/src/index.ts:39] |
-| `internals.stdout` / `stderr` | `index.ts` | 默认真 `process` 流；测试替换 [E: packages/bundle/headless/src/index.ts:57] |
+| `internals.stdout` / `stderr` | `index.ts` | 默认真 `process` 流；测试替换 [E: packages/bundle/headless/src/index.ts:58] |
 
 ### Host 面仍在的模型可见工具（来自 `dsh-base`，本 overlay **不** disable）
 
@@ -139,12 +139,11 @@ headless **不**像 web 那样把 base 的 `tool-*` 整表 `disabled: true` 再�
 | `tool-subagent-list-agents` | `@deepseek-ai/dsh-tool-subagent-control/list-agents` | [E: packages/bundle/base/cordis.patch.yml:352] |
 | `tool-subagent` | `toolName: subagent`，`backgroundMode: continuable` | [E: packages/bundle/base/cordis.patch.yml:359] [E: packages/bundle/base/cordis.patch.yml:360] |
 | `tool-subagent-fork` | `toolName: subagent_fork`，`backgroundMode: one-shot` | [E: packages/bundle/base/cordis.patch.yml:372] [E: packages/bundle/base/cordis.patch.yml:373] |
-| `tool-subagent-report` | `@deepseek-ai/dsh-tool-subagent-report` | [E: packages/bundle/base/cordis.patch.yml:376] |
-| `tool-workflow` | `@deepseek-ai/dsh-tool-workflow` | [E: packages/bundle/base/cordis.patch.yml:384] |
-| `tool-todo` | `@deepseek-ai/dsh-tool-todo` | [E: packages/bundle/base/cordis.patch.yml:411] |
+| `tool-workflow` | `@deepseek-ai/dsh-tool-workflow` | [E: packages/bundle/base/cordis.patch.yml:380] |
+| `tool-todo` | `@deepseek-ai/dsh-tool-todo` | [E: packages/bundle/base/cordis.patch.yml:412] |
 | `tool-goal` | `@deepseek-ai/dsh-tool-goal` | [E: packages/bundle/base/cordis.patch.yml:418] |
 | `tool-ralph` | `@deepseek-ai/dsh-tool-ralph` | [E: packages/bundle/base/cordis.patch.yml:422] |
-| `tool-str-replace-editor` | `@deepseek-ai/dsh-tool-str-replace-editor` | [E: packages/bundle/base/cordis.patch.yml:428] |
+| `tool-str-replace-editor` | `@deepseek-ai/dsh-tool-str-replace-editor` | [E: packages/bundle/base/cordis.patch.yml:429] |
 | `tool-web` | `fetch: false` | [E: packages/bundle/base/cordis.patch.yml:464] [E: packages/bundle/base/cordis.patch.yml:467] |
 
 `plan-mode`、`skill` / `skill-filesystem`、jobs registry、`token-meter`、`subagent` registry 同样留在 host 面（base insert，headless 未 disable）。默认模型仍是 `provider: deepseek-official` / `model: deepseek-v4-flash`。[E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:79] 成员资格仍只看这些 yml 行，不看 `apps/cli/package.json` 是否依赖了某个工具包。`dsh-experimental-tool-agent-team` 与 `tool-pwsh-persistent` **不**在这份 base insert 里。
@@ -159,15 +158,15 @@ headless **不**像 web 那样把 base 的 `tool-*` 整表 `disabled: true` 再�
 
 **runner 门控**：
 
-1. 缺 `ctx.appExit` 时 `apply` 同步抛 `headless-runner: the launcher must provide ctx.appExit before the tree mounts`。[E: packages/bundle/headless/src/index.ts:218] [E: packages/bundle/headless/tests/headless.spec.ts:377]
-2. `run` 先 `await ctx.get('loader')?.await()`，避免并发 mount 时工具 / adapter 半组成。[E: packages/bundle/headless/src/index.ts:166] 若 settlement 期间树已被 dispose，三个核心服务缺失则直接 `return`，**不**再 `appExit`。[E: packages/bundle/headless/src/index.ts:171]
-3. `agents.create` 新 `SessionId('session-' + uuid)`，`meta.cwd = process.cwd()`，模型取 `agentDefaultModel.currentSelection()`。[E: packages/bundle/headless/src/index.ts:178] [E: packages/bundle/headless/src/index.ts:179]
-4. `await agent.whenIdle()` → 记下 `firstSeq` → 挂 `streamReasoning`（`assistant/chunk` 的 `reasoning-delta` 写 stderr）→ **一次** `followup(createUserMessage({ content: [{ type: 'text', text: task }], source: { kind: 'user' } }))` → 再 `whenIdle`。[E: packages/bundle/headless/src/index.ts:191]
+1. 缺 `ctx.appExit` 时 `apply` 同步抛 `headless-runner: the launcher must provide ctx.appExit before the tree mounts`。[E: packages/bundle/headless/src/index.ts:219] [E: packages/bundle/headless/tests/headless.spec.ts:378]
+2. `run` 先 `await ctx.get('loader')?.await()`，避免并发 mount 时工具 / adapter 半组成。[E: packages/bundle/headless/src/index.ts:169] 若 settlement 期间树已被 dispose，三个核心服务缺失则直接 `return`，**不**再 `appExit`。[E: packages/bundle/headless/src/index.ts:172]
+3. `agents.create` 新 `SessionId('session-' + uuid)`，`meta.cwd = process.cwd()`，模型取 `agentDefaultModel.currentSelection()`。[E: packages/bundle/headless/src/index.ts:179] [E: packages/bundle/headless/src/index.ts:179]
+4. `await agent.whenIdle()` → 记下 `firstSeq` → 挂 `streamReasoning`（`assistant/chunk` 的 `reasoning-delta` 写 stderr）→ **一次** `followup(createUserMessage({ content: [{ type: 'text', text: task }], source: { kind: 'user' } }))` → 再 `whenIdle`。[E: packages/bundle/headless/src/index.ts:190]
 5. `sessions.flush` 之后才读 `summarize`：从 `firstSeq` 起，忽略 create 前的噪声 turn；每个非空 `assistant/message` 文本覆盖 `text`，最后一个 `turn/end` 的 `reason` 留下。[E: packages/bundle/headless/src/index.ts:199] [E: packages/bundle/headless/src/index.ts:79]
 6. `stdout` 写 `text + '\n'`。`reason.kind === 'error'` 时 stderr 再写 `dsh: ${code}: ${message}`。`appExit(reason?.kind === 'completed' ? 0 : 1)`——无 turn、`aborted`、error 都是 `1`。[E: packages/bundle/headless/src/index.ts:201] [E: packages/bundle/headless/src/index.ts:205] 测试：跨两个 turn 只打印 `final answer`，顺序 `flush` 然后 `exit`；error reason 退出 `1` 且 stderr 为 `dsh: SERVER: provider unavailable`。[E: packages/bundle/headless/tests/headless.spec.ts:128] [E: packages/bundle/headless/tests/headless.spec.ts:276]
-7. `run` 抛错（含 `agents.create` reject）走 `fail`：stderr `dsh: <message>`，`exit(1)`。[E: packages/bundle/headless/src/index.ts:153] [E: packages/bundle/headless/src/index.ts:221]
+7. `run` 抛错（含 `agents.create` reject）走 `fail`：stderr `dsh: <message>`，`exit(1)`。[E: packages/bundle/headless/src/index.ts:153] [E: packages/bundle/headless/src/index.ts:222]
 
-**HMR / patchReload**：模板是 `startup`。`runProfile` **只在** `composed.profile.patchReload === 'live'` 时补 watch-only HMR 并 `watchUserPatches`。[E: apps/cli/src/profile-boot.ts:270] 默认 headless 因此 **不**装 profile/home 文件 watcher；用户层仍在 boot 时 `allPatches` 叠一次。[E: apps/cli/src/profile-boot.ts:137] 若用户手改 manifest 把 `patchReload` 写成 `live`（或省略后 loader 回落到 custom 默认 `'live'`），才会走 watcher 路径。[E: packages/boot/app-boot/src/profile.ts:828]
+**HMR / patchReload**：模板是 `startup`。`runProfile` **只在** `composed.profile.patchReload === 'live'` 时补 watch-only HMR 并 `watchUserPatches`。[E: apps/cli/src/profile-boot.ts:271] 默认 headless 因此 **不**装 profile/home 文件 watcher；用户层仍在 boot 时 `allPatches` 叠一次。[E: apps/cli/src/profile-boot.ts:137] 若用户手改 manifest 把 `patchReload` 写成 `live`（或省略后 loader 回落到 custom 默认 `'live'`），才会走 watcher 路径。[E: packages/boot/app-boot/src/profile.ts:828]
 
 **isolate**：headless 默认不 mount preset，也就没有 preset isolate 域、没有 `leakedServices` 检查。host 面上的 registry（`jobs` / `skill` / `subagent` / `token-meter` / `goal`）与 `tool-*` 同树。若部署自己在后续 patch 里 insert `agent-presets`，必须在 runner 的 `setup` 里 `bindScopeParent` 才能让 Agent 进 preset 面——默认 shipped 代码不做这一步。[E: packages/bundle/headless/src/index.ts:184]
 

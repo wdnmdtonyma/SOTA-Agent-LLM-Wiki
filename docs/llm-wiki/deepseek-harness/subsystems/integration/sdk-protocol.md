@@ -32,7 +32,7 @@ related:
   - surface.sdk.python
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-sdk-protocol` 是进程外 SDK runtime 的 **wire 形状 + NDJSON JSON-RPC transport**：类型侧钉死三请求 / 四通知，运行时侧只提供 `JsonRpcLineTransport`。它不拥有子进程、不拥有 agent、不是 `dsh web` 的默认面，也不进 `dsh-base` 或四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）。协议由 `dsh --profile sdk` / `sdk-minimal` 上的 `sdk-jsonrpc-server` 真正说话。

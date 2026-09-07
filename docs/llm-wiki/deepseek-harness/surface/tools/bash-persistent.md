@@ -38,7 +38,7 @@ related:
   - subsys.execution.terminal
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 模型可见名是 `bash`（不是 `bash_persistent`），实现包是 `@deepseek-ai/dsh-tool-bash-persistent`：按 owning `Agent` 复用一条 `ctx.terminals` PTY，cwd 与 exported 环境跨调用持久。它与 one-shot 包 `@deepseek-ai/dsh-tool-bash` 共享 wire 名、不是后者的 Config 开关。win32 上 shipped `minimal` 关掉本包、改挂 `@deepseek-ai/dsh-tool-pwsh-persistent`（wire 名 `pwsh`）。
@@ -58,13 +58,13 @@ updated: 0a53fb55be
 
 `apply(ctx, config)` 校验 Config 后调用 `registerPersistentBash`。[E: packages/shell/tool-bash-persistent/src/index.ts:452] [E: packages/shell/tool-bash-persistent/src/index.ts:471] 注册点是 `ctx.tools.register(defineTool({ name: 'bash', ... }))`：模型 catalog / `ctx.tools.execute({ name: 'bash' })` 用的 wire 名是 `bash`。[E: packages/shell/tool-bash-persistent/src/index.ts:401] [E: packages/shell/tool-bash-persistent/src/index.ts:402] 默认 description 常量 `DEFAULT_DESCRIPTION` 写明 state（含 cwd 与 exported env）对本 agent 跨调用持久。[E: packages/shell/tool-bash-persistent/src/index.ts:24]
 
-stub 与真实 Loader 组合都断言 `ctx.tools.schemas()` 只有一项且 `name === 'bash'`。[E: packages/shell/tool-bash-persistent/tests/tools.spec.ts:320] [E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:139] `presentCall` 产出 `{ card: 'terminal', title: args.command }`。[E: packages/shell/tool-bash-persistent/src/index.ts:424]
+stub 与真实 Loader 组合都断言 `ctx.tools.schemas()` 只有一项且 `name === 'bash'`。[E: packages/shell/tool-bash-persistent/tests/tools.spec.ts:320] [E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:138] `presentCall` 产出 `{ card: 'terminal', title: args.command }`。[E: packages/shell/tool-bash-persistent/src/index.ts:424]
 
 同名不同包：`standard` / `ptc` / `cordis` 装的是 `@deepseek-ai/dsh-tool-bash`（one-shot，`ctx.shell`），见 [bash 一次性执行](bash.md)。本页只描述 persistent 这一包。对标的持久 PowerShell 是 `@deepseek-ai/dsh-tool-pwsh-persistent`（wire 名 `pwsh`）。
 
 ## 用途定位
 
-本工具把「一次 bash 调用」映射成对**同一条** owner-scoped PTY 的一次 `startSend`。第一次调用按 `owner.session.header.cwd` spawn；Loader 组合测试钉死随后的 `cd` 与 `export KEEP` 仍在下一次 `bash` 里可见。[E: packages/shell/tool-bash-persistent/src/index.ts:252] [E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:140]
+本工具把「一次 bash 调用」映射成对**同一条** owner-scoped PTY 的一次 `startSend`。第一次调用按 `owner.session.header.cwd` spawn；Loader 组合测试钉死随后的 `cd` 与 `export KEEP` 仍在下一次 `bash` 里可见。[E: packages/shell/tool-bash-persistent/src/index.ts:252] [E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:141]
 
 它**不是** one-shot `bash -c`：没有模型可见的 `workdir` / `run_in_background` / `sandbox_permissions`，也不走 `ctx.jobs`。长命令若要脱离这次 tool-call 的墙钟，只能在 bash 里 `&`——`minimal` 用 `description: |-` 覆盖默认文案，其中写明用 background 跑长命令。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:51]
 
@@ -103,7 +103,7 @@ canonical output 是 `string`；`render` 变成单块 `{ type: 'text', text: val
 4. PTY 在报出命令 status 前死掉：`respondToSessionExit` 用 `[shell exited: code N]` / `[shell killed by signal: SIG]` / `[shell exited]`，再追加 `SHELL_RESET_MESSAGE`。[E: packages/shell/tool-bash-persistent/src/index.ts:181] [E: packages/shell/tool-bash-persistent/src/index.ts:17]
 5. 墙钟超时：三行拼起来——timeout 文案（含 “or experienced an OOM error” 字面）、bounded 部分输出、`SHELL_RESET_MESSAGE`。[E: packages/shell/tool-bash-persistent/src/index.ts:345]
 
-旧 scrollback 页上的 `truncated` 旗标**不会**算到一条已经拿齐 start/end 标记的当前命令上。[E: packages/shell/tool-bash-persistent/tests/tools.spec.ts:480] Loader 组合里 `seq 1 12050` 以 `'1\n2\n3\n'` 开头并含 `<response clipped>`，不含 “beginning of this command output was dropped”。[E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:164]
+旧 scrollback 页上的 `truncated` 旗标**不会**算到一条已经拿齐 start/end 标记的当前命令上。[E: packages/shell/tool-bash-persistent/tests/tools.spec.ts:481] Loader 组合里 `seq 1 12050` 以 `'1\n2\n3\n'` 开头并含 `<response clipped>`，不含 “beginning of this command output was dropped”。[E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:164]
 
 诊断字符串（clip note、lost-prefix、`[exit code:]`、timeout 头、reset 句）加在 `maxOutputChars` 切完之后，结果可以比 16000 更长。[I]
 
@@ -178,7 +178,7 @@ Top-level（无 `parent`）调用仍会撞上 host `dsh-session-checkpoint-polic
 
 12. `sessionStatus.kind === 'exited'`：`respondToSessionExit`（partial + `renderShellExitStatus` + `SHELL_RESET_MESSAGE`）。下一次从 workspace cwd 新壳开始；Loader 测试里 `exit` 后再 `printf "$PWD"` 等于当初的 root。[E: packages/shell/tool-bash-persistent/src/index.ts:360] [E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:177]
 
-13. `waitReason === 'stdin_read'`（语法错误、`exec` 换壳、交互子进程重新读 stdin，且没打出 end marker）：按 `partialOutput` 出结果，**不** reset；backend 自有 prompt 会原样留在 fallback 里。[E: packages/shell/tool-bash-persistent/src/index.ts:369] [E: packages/shell/tool-bash-persistent/tests/tools.spec.ts:466]
+13. `waitReason === 'stdin_read'`（语法错误、`exec` 换壳、交互子进程重新读 stdin，且没打出 end marker）：按 `partialOutput` 出结果，**不** reset；backend 自有 prompt 会原样留在 fallback 里。[E: packages/shell/tool-bash-persistent/src/index.ts:369] [E: packages/shell/tool-bash-persistent/tests/tools.spec.ts:467]
 
 14. 若仍未 settle 则 `pause()` 25ms 再 poll。[E: packages/shell/tool-bash-persistent/src/index.ts:22] 插件 `ctx.effect` dispose 会 `lifecycle.abort`、等 in-flight create、对 `live` 里仍列在 `terminals.list` 的 session `kill(..., 'tool-bash-persistent disposed')`。[E: packages/shell/tool-bash-persistent/src/index.ts:232] [E: packages/shell/tool-bash-persistent/src/index.ts:234]
 
@@ -192,9 +192,9 @@ DSH **没有** first-class `apply_patch`；本工具也不是 editor，只是 pe
 
 - **同名碰撞。** catalog 里都叫 `bash`。看 preset 行是 `@deepseek-ai/dsh-tool-bash-persistent` 还是 `@deepseek-ai/dsh-tool-bash`，不能只看 wire 名。
 - **只在 `minimal`（agent-preset）与 `sdk-minimal`（host insert）。** `standard` / `ptc` / `cordis` 的 `bash` 是 one-shot `ctx.shell`，每次新进程、无 cwd 记忆。
-- **win32 关掉本包。** shipped `minimal` 对本行 `disabled: !!js process.platform === 'win32'`，改挂 `dsh-tool-pwsh-persistent`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:38] Loader 集成套件在非 `linux`/`darwin` 上 `describe.skip`。[E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:67] 默认 backend 的 bash `shellPath` 是 `/bin/bash`。[E: packages/terminal/terminal-bash/src/config.ts:54]
+- **win32 关掉本包。** shipped `minimal` 对本行 `disabled: !!js process.platform === 'win32'`，改挂 `dsh-tool-pwsh-persistent`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:38] Loader 集成套件在非 `linux`/`darwin` 上 `describe.skip`。[E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:66] 默认 backend 的 bash `shellPath` 是 `/bin/bash`。[E: packages/terminal/terminal-bash/src/config.ts:54]
 - **超时会拆壳。** Config `timeoutMs` 到期会 kill 当前 PTY 并告诉模型「next bash call starts from the workspace」。timeout 文案带 “or experienced an OOM error”，进入该分支的条件只有 `timeoutOf(..., 'PERSISTENT_BASH_TIMEOUT')`，没有单独的 OOM 探测器。[E: packages/shell/tool-bash-persistent/src/index.ts:337] [I]
-- **abort 同样拆壳。** 即使 abort 瞬间 end marker 已经出现（`end-on-abort` stub），实现仍 reset，结果走 isError，不把那次输出交给模型。[E: packages/shell/tool-bash-persistent/tests/tools.spec.ts:501]
+- **abort 同样拆壳。** 即使 abort 瞬间 end marker 已经出现（`end-on-abort` stub），实现仍 reset，结果走 isError，不把那次输出交给模型。[E: packages/shell/tool-bash-persistent/tests/tools.spec.ts:502]
 - **截断留前缀。** 对比 one-shot bash（常见是 tail + spill 路径），这里是 head clip、无 spill。
 - **包装必须单行。** 多行用户命令被 `$'…\n…'` 引用后仍是一条 wrapper；heredoc / 内嵌引号由 `quoteForBash` 处理。Loader 测试覆盖 `value="line one"\nprintf…` 与 `cat <<'EOF'`。[E: packages/shell/tool-bash-persistent/tests/loader-composition.spec.ts:145]
 - **两口钟。** 工具 Config `timeoutMs`（默认 300s）管整条命令；同组 `dsh-terminal-bash` 的 `timeoutMs` 管单次 `startSend` 等待。命令循环不把 backend `waitReason === 'timeout'` 当完成，只在 init 把它当失败。

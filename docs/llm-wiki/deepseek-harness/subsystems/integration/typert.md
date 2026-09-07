@@ -41,7 +41,7 @@ related:
   - subsys.host.apiproxy
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > Typert 是 **host↔client 远程方法的类型图 + 运行时注册表 + 生成器 + Loader 扫描器**：`@deepseek-ai/dsh-typert-protocol` 持 decorator / Remote 段语法 / `RemoteError`，`TypertRegistry` 提供 `ctx.typert`，`dsh-typert-generator` 在编译期做严格反射，`typert-loader` 的 `apply` 把各包 `./typert` 产物登记进注册表。它不是 HTTP 路由表，不是 MCP，也不是三个 `packages/api/*-controller` 的业务面。
@@ -130,7 +130,7 @@ updated: 0a53fb55be
 
 9. **Remote 贡献与 lookup / Context。** Client 程序选的 Host-for-Client 描述符走 `ctx.typert.remotes.register`：按 `contribution.package` 互斥，同样是 `ctx.effect`。[E: packages/typert/registry/src/service.ts:196] `lookups.register` / `contexts.registerHost` / `registerClient` 也是 effect；`configure` / `configureHost` **可以先于** provider，但没有 live provider 时 `get()` 仍是 `undefined`。[E: packages/typert/registry/src/service.ts:250] [E: packages/typert/registry/tests/typert.spec.ts:395] 同一 lookup key 在本 Service 生命周期内改 `parameter` / `wire` / type symbol 会抛 `changed its wire declaration`。[E: packages/typert/registry/src/service.ts:306]
 
-10. **Consumer 读表，不拥有表。** `dsh-api-gateway` 用 `local.get` / `hasSeen` 认领端点。[E: packages/api/gateway/src/index.ts:270] Context / lookup `resolve` 若抛出 `RemoteError`（`remoteErrorOf` 命中）则原样再抛；其它 throw 才收成 `TypertGatewayError`（`gateway/context-failed` / `gateway/lookup-failed`）。[E: packages/api/gateway/src/index.ts:796] [E: packages/api/gateway/src/index.ts:859] [E: packages/api/gateway/src/index.ts:861] 细节在 [`subsys.integration.api-gateway`](api-gateway.md)。`SessionController` 侧的 `ApiSessionAgentController` 在构造里 `lookups.configure('agent' | 'session')` 与 `contexts.configureHost('agent')`；找不到时 `throw found.error`（`RemoteError`，如 `'session/not-found'`）。[E: packages/api/session-controller/src/agent.ts:143] [E: packages/api/session-controller/src/agent.ts:148] [E: packages/api/session-controller/src/agent.ts:153] [E: packages/api/session-controller/src/agent.ts:198]
+10. **Consumer 读表，不拥有表。** `dsh-api-gateway` 用 `local.get` / `hasSeen` 认领端点。[E: packages/api/gateway/src/index.ts:270] Context / lookup `resolve` 若抛出 `RemoteError`（`remoteErrorOf` 命中）则原样再抛；其它 throw 才收成 `TypertGatewayError`（`gateway/context-failed` / `gateway/lookup-failed`）。[E: packages/api/gateway/src/index.ts:796] [E: packages/api/gateway/src/index.ts:859] [E: packages/api/gateway/src/index.ts:861] 细节在 [`subsys.integration.api-gateway`](api-gateway.md)。`SessionController` 侧的 `ApiSessionAgentController` 在构造里 `lookups.configure('agent' | 'session')` 与 `contexts.configureHost('agent')`；找不到时 `throw found.error`（`RemoteError`，如 `'session/not-found'`）。[E: packages/api/session-controller/src/agent.ts:143] [E: packages/api/session-controller/src/agent.ts:148] [E: packages/api/session-controller/src/agent.ts:153] [E: packages/api/session-controller/src/agent.ts:199]
 
 11. **校验边界（registry 比 loader 宽）。** registry 允许 `codec.mode === 'src-json'`（无 schema）；loader 强制 strict zod。[E: packages/typert/registry/src/service.ts:715] [E: packages/typert/loader/src/index.ts:266] wire 名走与 protocol 相同的段字符；`#` 不能出现在 package / schema / lookup key 里。[E: packages/typert/registry/src/service.ts:723] [E: packages/typert/registry/src/service.ts:729] `scope` 必须指向 **唯一** lookup 参数，且 receiver 必须是 `direct`。[E: packages/typert/registry/src/service.ts:690]
 

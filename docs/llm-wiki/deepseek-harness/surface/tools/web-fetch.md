@@ -57,7 +57,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `web_fetch` 是 `@deepseek-ai/dsh-tool-web` 向模型注册的按 URL 取页工具：wire 名 `web_fetch`，经 `ctx.web.fetch` 取一份解码后的正文，HTML 再经 turndown + GFM 收成 markdown。插件 Config 默认登记它；`dsh-base` 的 host 行仍写 `fetch: false`，而 shipped `standard` / `ptc` / `cordis` 在每会话 `tool-web` 上写 `fetch: true`，并依赖 host 已挂的 `web-fetch-http`。`minimal` 没有 `tool-web`。
@@ -87,7 +87,7 @@ updated: 0a53fb55be
 
 ## 用途定位
 
-`web_fetch` 只取**一个**调用方给出的 HTTP(S) URL，返回解码后的文本。它不是浏览器：不带 cookie、不发 ambient 凭据、不执行页面脚本。本地 provider 的请求是 `GET` + `redirect: 'manual'`，headers 只有 `user-agent` 与 `accept`。它也不走 DeepSeek chat / search API，不读 `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_SEARCH_BASE_URL`。[E: packages/web/web-fetch-http/src/network.ts:185][E: packages/web/web-fetch-http/src/provider.ts:120]
+`web_fetch` 只取**一个**调用方给出的 HTTP(S) URL，返回解码后的文本。它不是浏览器：不带 cookie、不发 ambient 凭据、不执行页面脚本。本地 provider 的请求是 `GET` + `redirect: 'manual'`，headers 只有 `user-agent` 与 `accept`。它也不走 DeepSeek chat / search API，不读 `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_SEARCH_BASE_URL`。[E: packages/web/web-fetch-http/src/network.ts:191][E: packages/web/web-fetch-http/src/provider.ts:120]
 
 HTML 正文由工具层用共享的 `TurndownService`（`headingStyle: 'atx'`、`codeBlockStyle: 'fenced'`、`bulletListMarker: '-'`）加上 `@joplin/turndown-plugin-gfm` 收成 markdown，并过滤 script/style/noscript/template/iframe 等非可见节点。纯文本 / JSON / XML 一类 `kind: 'text'` 原样通过。[E: packages/web/tool-web/src/fetch.ts:25][E: packages/web/tool-web/src/fetch.ts:30][E: packages/web/tool-web/src/fetch.ts:31][E: packages/web/tool-web/src/fetch.ts:249][E: packages/web/tool-web/tests/tool-web.spec.ts:260]
 
@@ -116,7 +116,7 @@ HTML 正文由工具层用共享的 `TurndownService`（`headingStyle: 'atx'`、
 
 非正或非整的 `fetchTimeoutMs` / `fetchMaxOutputChars` 在 `apply()` 里 `assertPositiveInteger` 直接让插件 load 失败。[E: packages/web/tool-web/src/index.ts:88][E: packages/web/tool-web/src/index.ts:90][E: packages/web/tool-web/tests/tool-web.spec.ts:912][E: packages/web/tool-web/tests/tool-web.spec.ts:944]
 
-shipped `standard` / `ptc` / `cordis` 把 `fetch` 写成 `true`，并把 `searchTimeoutMs` 写成 `60000`；它们**没有**覆盖 `fetchTimeoutMs` / `fetchMaxOutputChars`。超时默认仍是 30s，不是 search 那条 60s。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:257]
+shipped `standard` / `ptc` / `cordis` 把 `fetch` 写成 `true`，并把 `searchTimeoutMs` 写成 `60000`；它们**没有**覆盖 `fetchTimeoutMs` / `fetchMaxOutputChars`。超时默认仍是 30s，不是 search 那条 60s。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]
 
 ## 输出 & 截断 / spill
 
@@ -147,7 +147,7 @@ HTML 转换失败（词法嵌套超过 `MAX_CONVERSION_DEPTH`（512）或 turndo
 | 角色 | 落点 |
 |---|---|
 | Definition | `@deepseek-ai/dsh-web` 的 `WebRuntime`（`ctx.web`）：`registerFetchProvider` / `fetch(request, signal)`。请求类型 `WebFetchRequest` 只有 `url`；结果 `WebFetchResult` 带最终 URL、status、封闭 union `WebFetchBody`、provider `truncated`。[E: packages/web/web/src/index.ts:157][E: packages/web/web/src/types.ts:64][E: packages/web/web/src/types.ts:94] |
-| Provider | `@deepseek-ai/dsh-web-fetch-http`：插件名 `web-fetch-http`，`inject = ['web']`，`apply` 里 `ctx.web.registerFetchProvider(new HttpFetchProvider(limits))`，稳定 id `LOCAL_FETCH_PROVIDER_ID = 'http'`。[E: packages/web/web-fetch-http/package.json:2][E: packages/web/web-fetch-http/src/index.ts:26][E: packages/web/web-fetch-http/src/index.ts:29][E: packages/web/web-fetch-http/src/index.ts:93][E: packages/web/web-fetch-http/src/provider.ts:35] |
+| Provider | `@deepseek-ai/dsh-web-fetch-http`：插件名 `web-fetch-http`，`inject = ['web']`，`apply` 里 `ctx.web.registerFetchProvider(new HttpFetchProvider(limits))`，稳定 id `LOCAL_FETCH_PROVIDER_ID = 'http'`。[E: packages/web/web-fetch-http/package.json:2][E: packages/web/web-fetch-http/src/index.ts:26][E: packages/web/web-fetch-http/src/index.ts:29][E: packages/web/web-fetch-http/src/index.ts:93][E: packages/web/web-fetch-http/src/provider.ts:36] |
 | Consumer | `@deepseek-ai/dsh-tool-web` 的 `applyWebFetchTool`：只传 `{ url }` 和 `exec.signal`，自己做 schema、prompt、turndown、输出帽。[E: packages/web/tool-web/src/fetch.ts:499] |
 
 `ctx.web.fetch` 在**调用时**解析 provider，不按注册顺序：[E: packages/web/web/src/index.ts:157]
@@ -167,11 +167,11 @@ HTML 转换失败（词法嵌套超过 `MAX_CONVERSION_DEPTH`（512）或 turndo
 
 `parseFetchUrl` 只允许 `http:` / `https:`；内嵌 username/password 抛 `WEB_BLOCKED_URL`（不是 `WEB_INVALID_URL`）。`validateFetchUrl` 先拒超长再调用 `parseFetchUrl`。[E: packages/web/web-fetch-http/src/policy.ts:32][E: packages/web/web-fetch-http/src/policy.ts:36][E: packages/web/web-fetch-http/src/policy.ts:50][E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:61]
 
-解析阶段还有公网地址策略：`isPublicIpAddress` 只接受 `ipaddr` 判定为 `unicast` 的地址；loopback / RFC1918 / link-local / multicast / metadata 一类会被拒。`HttpFetchProvider` 默认 `resolveAddresses = publicHttpNetwork.resolve`，再把解析结果 pin 到 Undici `lookup`。[E: packages/web/web-fetch-http/src/network.ts:53][E: packages/web/web-fetch-http/src/provider.ts:48][E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:98]
+解析阶段还有公网地址策略：`isPublicIpAddress` 只接受 `ipaddr` 判定为 `unicast` 的地址；loopback / RFC1918 / link-local / multicast / metadata 一类会被拒。`HttpFetchProvider` 默认 `resolveAddresses = publicHttpNetwork.resolve`，再把解析结果 pin 到 Undici `lookup`。[E: packages/web/web-fetch-http/src/network.ts:54][E: packages/web/web-fetch-http/src/provider.ts:48][E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:98]
 
-请求是 `GET`、`redirect: 'manual'`。同 origin（scheme + hostname + port）redirect 最多 `maxRedirects` 跳；跨源抛 `WEB_REDIRECT_BLOCKED`，模型必须对那个 origin 再发一次 `web_fetch`。[E: packages/web/web-fetch-http/src/network.ts:185][E: packages/web/web-fetch-http/src/policy.ts:65][E: packages/web/tool-web/tests/integration.spec.ts:90]
+请求是 `GET`、`redirect: 'manual'`。同 origin（scheme + hostname + port）redirect 最多 `maxRedirects` 跳；跨源抛 `WEB_REDIRECT_BLOCKED`，模型必须对那个 origin 再发一次 `web_fetch`。[E: packages/web/web-fetch-http/src/network.ts:191][E: packages/web/web-fetch-http/src/policy.ts:65][E: packages/web/tool-web/tests/integration.spec.ts:90]
 
-`classifyContentType`：`text/html` 与 `application/xhtml+xml` → `html`；其它 `text/*` 以及 `application/json` / `application/xml` / `+json` / `+xml` → `text`；`image/png` 一类返回 `undefined`。[E: packages/web/web-fetch-http/src/policy.ts:80][E: packages/web/web-fetch-http/src/policy.ts:82][E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:73] `HttpFetchProvider.readBody` 在 `kind === undefined` 时才抛 `WEB_UNSUPPORTED_CONTENT_TYPE`。[E: packages/web/web-fetch-http/src/provider.ts:133]
+`classifyContentType`：`text/html` 与 `application/xhtml+xml` → `html`；其它 `text/*` 以及 `application/json` / `application/xml` / `+json` / `+xml` → `text`；`image/png` 一类返回 `undefined`。[E: packages/web/web-fetch-http/src/policy.ts:80][E: packages/web/web-fetch-http/src/policy.ts:82][E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:73] `HttpFetchProvider.readBody` 在 `kind === undefined` 时才抛 `WEB_UNSUPPORTED_CONTENT_TYPE`。[E: packages/web/web-fetch-http/src/provider.ts:134]
 
 **`dsh-base` 已挂这个 Provider。** web 段是 `web`（`searchProvider: deepseek-official`，`fetchProvider: http`）+ `web-search-deepseek` + `web-fetch-http` + `tool-web`（host 行 `fetch: false`）。[E: packages/bundle/base/cordis.patch.yml:454][E: packages/bundle/base/cordis.patch.yml:461][E: packages/bundle/base/cordis.patch.yml:467] shipped Web 会话靠 preset 把 `fetch` 改回 `true`，不再需要仓外 example 才能挂 provider。
 
@@ -199,14 +199,14 @@ PTC 下模型不能直呼 `web_fetch`：非嵌套且 `modeFor(scope) === 'ptc'` 
 | preset | 装 `@deepseek-ai/dsh-tool-web`？ | `disabled` | isolate | shipped Config | `web_fetch` 进 catalog？ |
 |---|---|---|---|---|---|
 | `minimal` | **否** | — | 无 `tool-web` 行 | 成员停在 `persistent-shell` + `filesystem`（`bash`/`pwsh` / `str_replace_editor`） | 否。文件中没有 `id: tool-web`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:74] |
-| `standard` | **是** | 无 | 无 | `fetch: true`，`searchTimeoutMs: 60000` | 是（还依赖 host 的 `web` + `web-fetch-http`）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256] |
-| `ptc` | **是** | 无 | 无 | 与 `standard` 同值 `fetch: true` | 登记了，但 PTC 的 **wire** 只剩 `run_code`；SDK 子分发仍能调 `web_fetch`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:254][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:257][E: packages/core/tools/src/index.ts:986] |
+| `standard` | **是** | 无 | 无 | `fetch: true`，`searchTimeoutMs: 60000` | 是（还依赖 host 的 `web` + `web-fetch-http`）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] |
+| `ptc` | **是** | 无 | 无 | 与 `standard` 同值 `fetch: true` | 登记了，但 PTC 的 **wire** 只剩 `run_code`；SDK 子分发仍能调 `web_fetch`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:255][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:257][E: packages/core/tools/src/index.ts:986] |
 | `cordis` | **是** | 无 | 无 | 与 `standard` 同值 | 是。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:241][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:244] |
 
 host 面：
 
 - `dsh-base` 有 `web-fetch-http` 行，并把 `web.fetchProvider` 钉成 `http`；同一文件的 `tool-web` 仍是 `fetch: false` + `searchTimeoutMs: 60000`，给不用 per-session preset、且叠 `dsh-base` 的 profile（`headless` / `sdk` / `acp`）默认只开 search。`sdk-minimal` **不**叠 base，因此也不带这条 host `tool-web`。[E: packages/bundle/base/cordis.patch.yml:454][E: packages/bundle/base/cordis.patch.yml:461][E: packages/bundle/base/cordis.patch.yml:467][E: packages/boot/app-boot/src/profile.ts:154]
-- `dsh-web-app` 把 host 这行 `tool-web` `disabled: true`，改由每会话 preset 再挂（`standard`/`ptc`/`cordis` 现为 `fetch: true`）。[E: packages/bundle/web-app/cordis.patch.yml:431][E: packages/bundle/web-app/cordis.patch.yml:432]
+- `dsh-web-app` 把 host 这行 `tool-web` `disabled: true`，改由每会话 preset 再挂（`standard`/`ptc`/`cordis` 现为 `fetch: true`）。[E: packages/bundle/web-app/cordis.patch.yml:432][E: packages/bundle/web-app/cordis.patch.yml:432]
 - `dsh-headless` 的 insert 只有 `code-runtime` / `headless-startup` / `headless-runner`，不重写 `tool-web`，因此沿用 base 的 `fetch: false`。[E: packages/bundle/headless/cordis.patch.yml:19][E: packages/bundle/headless/cordis.patch.yml:27]
 
 要把 `web_fetch` 真正交给模型，composition 必须同时：(1) 某条生效的 `tool-web` 的 `fetch` 为 `true`（preset 覆盖，或省略以吃包默认）；(2) 挂上 `@deepseek-ai/dsh-web-fetch-http`（或另一个 `WebFetchProvider`）。只做 (1) 会让工具出现在 catalog，execute 报 `WEB_PROVIDER_UNAVAILABLE`。[E: packages/web/tool-web/tests/tool-web.spec.ts:485]
@@ -223,11 +223,11 @@ host 面：
 
 4. **选 provider。** `resolveProvider` 按配置 id / 唯一可用者选择。缺 provider 抛 `WEB_PROVIDER_UNAVAILABLE`；多个未配置抛 `WEB_PROVIDER_AMBIGUOUS`。[E: packages/web/web/src/index.ts:157][E: packages/web/web/src/index.ts:187]
 
-5. **本地 HTTP provider（shipped `dsh-base` 已挂）。** `HttpFetchProvider.fetch`：已 abort 则 `WEB_ABORTED`；否则 `deadline(signal, limits.timeoutMs, 'WEB_FETCH_TIMEOUT')` 作为 backstop，再 `followAndRead`。[E: packages/web/web-fetch-http/src/provider.ts:56][E: packages/web/web-fetch-http/src/provider.ts:60]
+5. **本地 HTTP provider（shipped `dsh-base` 已挂）。** `HttpFetchProvider.fetch`：已 abort 则 `WEB_ABORTED`；否则 `deadline(signal, limits.timeoutMs, 'WEB_FETCH_TIMEOUT')` 作为 backstop，再 `followAndRead`。[E: packages/web/web-fetch-http/src/provider.ts:56][E: packages/web/web-fetch-http/src/provider.ts:61]
 
-6. **URL 卫生 + 公网解析 + 同 origin redirect。** `validateFetchUrl` 拒非 http(s)、内嵌凭据、超长；每次 hop 再验一次。跨源 / 超过 `maxRedirects` → `WEB_REDIRECT_BLOCKED`。无 `Location` 的 3xx → `WEB_PROVIDER_ERROR`。hostname 解析后非公网 unicast → 解析层拒绝，不会去连私网 / metadata。[E: packages/web/web-fetch-http/src/provider.ts:66][E: packages/web/web-fetch-http/src/policy.ts:49][E: packages/web/tool-web/tests/integration.spec.ts:90][E: packages/web/web-fetch-http/src/network.ts:53]
+6. **URL 卫生 + 公网解析 + 同 origin redirect。** `validateFetchUrl` 拒非 http(s)、内嵌凭据、超长；每次 hop 再验一次。跨源 / 超过 `maxRedirects` → `WEB_REDIRECT_BLOCKED`。无 `Location` 的 3xx → `WEB_PROVIDER_ERROR`。hostname 解析后非公网 unicast → 解析层拒绝，不会去连私网 / metadata。[E: packages/web/web-fetch-http/src/provider.ts:66][E: packages/web/web-fetch-http/src/policy.ts:49][E: packages/web/tool-web/tests/integration.spec.ts:90][E: packages/web/web-fetch-http/src/network.ts:54]
 
-7. **读 body。** `requestOnce` 发匿名 GET。`classifyContentType` 失败或 charset 不被 `TextDecoder` 认识 → `WEB_UNSUPPORTED_CONTENT_TYPE`，并 `cancel` 未读 stream。`Content-Length` 超过 `maxResponseBytes` → `WEB_FETCH_TOO_LARGE`；stream 涨过帽则截断并 `truncated: true`。解码后再按 `maxBodyChars` 切字符。[E: packages/web/web-fetch-http/src/provider.ts:130][E: packages/web/web-fetch-http/src/provider.ts:174][E: packages/web/web-fetch-http/src/provider.ts:150]
+7. **读 body。** `requestOnce` 发匿名 GET。`classifyContentType` 失败或 charset 不被 `TextDecoder` 认识 → `WEB_UNSUPPORTED_CONTENT_TYPE`，并 `cancel` 未读 stream。`Content-Length` 超过 `maxResponseBytes` → `WEB_FETCH_TOO_LARGE`；stream 涨过帽则截断并 `truncated: true`。解码后再按 `maxBodyChars` 切字符。[E: packages/web/web-fetch-http/src/provider.ts:134][E: packages/web/web-fetch-http/src/provider.ts:174][E: packages/web/web-fetch-http/src/provider.ts:150]
 
 8. **返回规范值。** 工具把 `result.url` / `statusCode` / `{ kind, content }` / `result.truncated` 原样交回。404 仍是成功值。[E: packages/web/tool-web/src/fetch.ts:503][E: packages/web/tool-web/tests/integration.spec.ts:80]
 
@@ -237,9 +237,9 @@ host 面：
 
 ## 设计动机·edge
 
-- **不要写成「产品永远不开」或「包默认即产品默认」。** 包 Config `fetch: true` 表示裸 mount 时两件套都登记。`dsh-base` 的 host `tool-web` 仍是 `fetch: false`；Web 工作台用 shipped `standard`/`ptc`/`cordis` 覆盖成 `true`，e2e catalog 含 `web_fetch`。[E: packages/web/tool-web/src/index.ts:56][E: packages/bundle/base/cordis.patch.yml:467][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256][E: apps/web/tests/shipped-composition.e2e.ts:57]
+- **不要写成「产品永远不开」或「包默认即产品默认」。** 包 Config `fetch: true` 表示裸 mount 时两件套都登记。`dsh-base` 的 host `tool-web` 仍是 `fetch: false`；Web 工作台用 shipped `standard`/`ptc`/`cordis` 覆盖成 `true`，e2e catalog 含 `web_fetch`。[E: packages/web/tool-web/src/index.ts:56][E: packages/bundle/base/cordis.patch.yml:467][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: apps/web/tests/shipped-composition.e2e.ts:57]
 - **timeout 是部署政策，不是模型参数。** `WebFetchRequest` 只有 `url`；cooperative 预算挂在 `ToolDefinition.timeoutMs` 上。这和 Claude 部分 `WebFetch` 方言把 timeout 暴露给模型不同。[E: packages/web/web/src/types.ts:64][E: packages/web/tool-web/tests/integration.spec.ts:115]
-- **模型自选 URL，但本地 provider 会 pin 公网。** `validateFetchUrl` 仍只做 scheme / 凭据 / 长度；私网拦截发生在 `isPublicIpAddress` + DNS 解析之后、真实 connect 之前。[E: packages/web/web-fetch-http/src/policy.ts:49][E: packages/web/web-fetch-http/src/network.ts:53]
+- **模型自选 URL，但本地 provider 会 pin 公网。** `validateFetchUrl` 仍只做 scheme / 凭据 / 长度；私网拦截发生在 `isPublicIpAddress` + DNS 解析之后、真实 connect 之前。[E: packages/web/web-fetch-http/src/policy.ts:49][E: packages/web/web-fetch-http/src/network.ts:54]
 - **HTML 转换必须让出事件循环。** 深度预检避免 unclosed-tag 把同步 turndown 做成秒级工作（测试用 20_000 层，要求快速返回省略 marker）。`colspan="1000000"` 也不展开。[E: packages/web/tool-web/src/fetch.ts:120][E: packages/web/tool-web/tests/tool-web.spec.ts:273]
 - **非 2xx 是资源状态，不是工具失败。** 只有「取不到 / 不能安全表示」才走 `WebError`。
 - **redirect 不自动换 origin。** 每一次新 origin 都是一次新的 tool-call（也是一次新的 provider / 公网解析）。

@@ -50,10 +50,10 @@ related:
   - subsys.client.runtime
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
-> monorepo 包索引把每个 workspace 包钉成一行：npm name、目录、seam 角色（Definition / Provider / Consumer / bundle / app / library）、以及它是否出现在 shipped composition。DSH 是 **Cordis 组合运行时**，主线 `profile → bundle → agent preset`；有 `package.json` 不等于进了产品树。已删除包 `packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react` 不再成行。
+> monorepo 包索引把每个 workspace 包钉成一行：npm name、目录、seam 角色（Definition / Provider / Consumer / bundle / app / library）、以及它是否出现在 shipped composition。DSH 是 **Cordis 组合运行时**，主线 `profile → bundle → agent preset`；有 `package.json` 不等于进了产品树。已删除包 `packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react`、`packages/session/session-persistence-sqlite`、`packages/subagent/tool-subagent-report`、`packages/examples/agent-spine-demo`、`packages/code-runtime/code-runtime-python` 不再成行。叶 `packages/**/package.json`（排除 `@fixture/*`）在本 SHA **255**。产品版本 `0.1.3-alpha.1`。
 
 ## 能回答的问题
 
@@ -207,13 +207,14 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 | `@deepseek-ai/dsh-terminal-bash` | `packages/terminal/terminal-bash` | Provider | preset-only + sdk-minimal | PTY backend | min / sdk-minimal | `packages/terminal/terminal-bash/package.json` |
 | `@deepseek-ai/dsh-tool-terminal` | `packages/terminal/tool-terminal` | Consumer | 仓库有但不 shipped | 六件 `terminal_*` | shipped composition 未点名 | `packages/terminal/tool-terminal/package.json` |
 
-### code-runtime/（3）
+### code-runtime/（2）
+
+Python 实现已迁到 `packages/experimental/code-runtime-python`。
 
 | npm name | 目录 | 角色 | shipped | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|
 | `@deepseek-ai/dsh-code-runtime` | `packages/code-runtime/code-runtime` | Definition | 仓库有但不 shipped | `ctx.codeRuntime` 合同 | 合同包 | `packages/code-runtime/code-runtime/package.json` |
 | `@deepseek-ai/dsh-code-runtime-worker-thread` | `packages/code-runtime/code-runtime-worker-thread` | Provider | web-app + headless | TypeScript worker-thread 实现 | overlay insert | `packages/code-runtime/code-runtime-worker-thread/package.json` |
-| `@deepseek-ai/dsh-code-runtime-python` | `packages/code-runtime/code-runtime-python` | Provider | 仓库有但不 shipped | CPython subprocess 实现 | PTC Python flavor 可选后端 | `packages/code-runtime/code-runtime-python/package.json` |
 
 ### lsp/（3）
 
@@ -259,7 +260,7 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 | `@deepseek-ai/dsh-repeat-tool-reminder` | `packages/guard/repeat-tool-reminder` | Consumer | base | 重复调用提醒 | host 面 | `packages/guard/repeat-tool-reminder/package.json` |
 | `@deepseek-ai/dsh-tool-call-timeout-policy` | `packages/guard/timeout-policy` | Consumer | base | tool deadline | host 面 | `packages/guard/timeout-policy/package.json` |
 
-### subagent/（11）
+### subagent/（10）
 
 | npm name | 目录 | 角色 | shipped | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|
@@ -273,7 +274,6 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 | `@deepseek-ai/dsh-subagent-spawn-in-process` | `packages/subagent/subagent-spawn-in-process` | Provider | base | in-process spawn | host 面 | `packages/subagent/subagent-spawn-in-process/package.json` |
 | `@deepseek-ai/dsh-tool-subagent` | `packages/subagent/tool-subagent` | Consumer | base | 模型可见委托 | remount | `packages/subagent/tool-subagent/package.json` |
 | `@deepseek-ai/dsh-tool-subagent-control` | `packages/subagent/tool-subagent-control` | Consumer | base | send_message / interrupt / list_agents | remount | `packages/subagent/tool-subagent-control/package.json` |
-| `@deepseek-ai/dsh-tool-subagent-report` | `packages/subagent/tool-subagent-report` | Consumer | base | 子代理 report | host 面 | `packages/subagent/tool-subagent-report/package.json` |
 
 ### jobs/（3）· workflow/（4）· goal/（4）· plan/（1）· schedule/（1）· todo/（1）
 
@@ -316,11 +316,15 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 | `@deepseek-ai/dsh-spill-policy` | `packages/spill/spill-policy` | Consumer | base | 超大 tool 文本外溢 | host 面 | `packages/spill/spill-policy/package.json` |
 | `@deepseek-ai/dsh-session-checkpoint-policy` | `packages/session/session-checkpoint-policy` | Consumer | base | 请求/副作用前 checkpoint | host 面 | `packages/session/session-checkpoint-policy/package.json` |
 | `@deepseek-ai/dsh-session-persistence` | `packages/session/session-persistence` | Definition | 仓库有但不 shipped | 持久化 seam | 合同包 | `packages/session/session-persistence/package.json` |
-| `@deepseek-ai/dsh-session-persistence-jsonl` | `packages/session/session-persistence-jsonl` | Provider | base + sdk-minimal | JSONL | host / sdk-minimal | `packages/session/session-persistence-jsonl/package.json` |
-| `@deepseek-ai/dsh-session-persistence-sqlite` | `packages/session/session-persistence-sqlite` | Provider | 仓库有但不 shipped | SQLite 日志 | 可选 | `packages/session/session-persistence-sqlite/package.json` |
+| `@deepseek-ai/dsh-session-persistence-jsonl` | `packages/session/session-persistence-jsonl` | Provider | base + sdk-minimal | JSONL + write lease | host / sdk-minimal | `packages/session/session-persistence-jsonl/package.json` |
+| `@deepseek-ai/dsh-session-format` | `packages/session/session-format` | library | 仓库有但不 shipped | adjacent 迁移规划器 | 被 catalog / jsonl 依赖 | `packages/session/session-format/package.json` |
+| `@deepseek-ai/dsh-session-format-v0-to-v1` | `packages/session/session-format-v0-to-v1` | library | 仓库有但不 shipped | v0→v1 adjacent migrator | catalog 边 | `packages/session/session-format-v0-to-v1/package.json` |
+| `@deepseek-ai/dsh-session-format-v1-to-v2` | `packages/session/session-format-v1-to-v2` | library | 仓库有但不 shipped | v1→v2 adjacent migrator | catalog 边 | `packages/session/session-format-v1-to-v2/package.json` |
+| `@deepseek-ai/dsh-session-format-catalog` | `packages/session/session-format-catalog` | library | 仓库有但不 shipped | `currentVersion: 2` 已安装 catalog | jsonl load 导入 | `packages/session/session-format-catalog/package.json` |
 | `@deepseek-ai/dsh-session-projection` | `packages/session/session-projection` | Definition | base + sdk-minimal | 投影注册表 | host / sdk-minimal | `packages/session/session-projection/package.json` |
 | `@deepseek-ai/dsh-session-projection-cache` | `packages/session/session-projection-cache` | Provider | base | 投影缓存 | 现已在 base insert | `packages/session/session-projection-cache/package.json` |
 | `@deepseek-ai/dsh-session-stats` | `packages/session/session-stats` | Provider | web-app | conversation 计数投影 | web-app | `packages/session/session-stats/package.json` |
+| `@deepseek-ai/dsh-session-turn-outline` | `packages/session/session-turn-outline` | Consumer | web-app | `turnOutline` 投影单元 | web-app insert | `packages/session/session-turn-outline/package.json` |
 | `@deepseek-ai/dsh-session-telemetry` | `packages/session/session-telemetry` | Definition | 仓库有但不 shipped | telemetry seam | 合同包 | `packages/session/session-telemetry/package.json` |
 | `@deepseek-ai/dsh-session-telemetry-otel` | `packages/session/session-telemetry-otel` | Provider | base | OTel backend | host 面 | `packages/session/session-telemetry-otel/package.json` |
 | `@deepseek-ai/dsh-session-title` | `packages/session/session-title` | Definition | base | 标题服务 | host 面 | `packages/session/session-title/package.json` |
@@ -392,6 +396,7 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 
 | npm name | 目录 | 角色 | shipped | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|
+| `@deepseek-ai/dsh-client-file-upload` | `packages/client/file-upload` | Provider | web-app | 浏览器 staged 上传；非模型工具 | web-app | `packages/client/file-upload/package.json` |
 | `@deepseek-ai/dsh-client-connection` | `packages/client/connection` | Provider | web-app | HTTP-up / WS-down | web-app | `packages/client/connection/package.json` |
 | `@deepseek-ai/dsh-client-hmr` | `packages/client/hmr` | Provider | web-app | 客户端 HMR | web-app | `packages/client/hmr/package.json` |
 | `@deepseek-ai/dsh-client-locale` | `packages/client/locale` | Provider | web-app | zh/en | web-app | `packages/client/locale/package.json` |
@@ -454,7 +459,7 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 | `@deepseek-ai/dsh-fs-e2b` | `packages/e2b/fs-e2b` | Provider | 仓库有但不 shipped | E2B fs | 可选 | `packages/e2b/fs-e2b/package.json` |
 | `@deepseek-ai/dsh-subprocess-e2b` | `packages/e2b/subprocess-e2b` | Provider | 仓库有但不 shipped | E2B subprocess | 可选 | `packages/e2b/subprocess-e2b/package.json` |
 
-### webhook/（2）· experimental/（8）
+### webhook/（2）· experimental/（9）
 
 均不在六个 shipped bundle 的默认 yml 里（experimental profile 是 opt-in 叠加）。
 
@@ -470,6 +475,7 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 | `@deepseek-ai/dsh-experimental-inspector` | `packages/experimental/inspector` | Provider | 仓库有但不 shipped | CDP hub | experimental | `packages/experimental/inspector/package.json` |
 | `@deepseek-ai/dsh-experimental-webworker-packer` | `packages/experimental/webworker-packer` | library | 仓库有但不 shipped | browser VFS packer | experimental | `packages/experimental/webworker-packer/package.json` |
 | `@deepseek-ai/dsh-experimental-webworker-runtime` | `packages/experimental/webworker-runtime` | Provider | 仓库有但不 shipped | 浏览器内 harness | experimental | `packages/experimental/webworker-runtime/package.json` |
+| `@deepseek-ai/dsh-experimental-code-runtime-python` | `packages/experimental/code-runtime-python` | Provider | 仓库有但不 shipped | CPython `CodeRuntime`（fd-3 JSON-lines） | 实验 Python flavor | `packages/experimental/code-runtime-python/package.json` |
 
 ### identity / runtime-diagnostics / util / examples / test-support
 
@@ -480,6 +486,7 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 | `@deepseek-ai/dsh-atomic-write` | `packages/util/atomic-write` | library | 仓库有但不 shipped | 原子写 | 库 | `packages/util/atomic-write/package.json` |
 | `@deepseek-ai/dsh-brand` | `packages/util/brand` | library | 仓库有但不 shipped | Branded 类型 | 库 | `packages/util/brand/package.json` |
 | `@deepseek-ai/dsh-home-paths` | `packages/util/home-paths` | library | 仓库有但不 shipped | 路径助手 | 库 | `packages/util/home-paths/package.json` |
+| `@deepseek-ai/dsh-http-proxy` | `packages/util/http-proxy` | library | 仓库有但不 shipped | 进程级 undici dispatcher；不是 Cordis 插件 | CLI `profile-boot` 调用 | `packages/util/http-proxy/package.json` |
 | `@deepseek-ai/dsh-launch-environment` | `packages/util/launch-environment` | library | 仓库有但不 shipped | 启动环境记录 | 库 | `packages/util/launch-environment/package.json` |
 | `@deepseek-ai/dsh-native-command` | `packages/util/native-command` | library | 仓库有但不 shipped | execFile runner | 库 | `packages/util/native-command/package.json` |
 | `@deepseek-ai/dsh-output-retention` | `packages/util/output-retention` | library | 仓库有但不 shipped | 有界保留 | 库 | `packages/util/output-retention/package.json` |
@@ -489,8 +496,6 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 | `@deepseek-ai/dsh-util-time` | `packages/util/time` | library | 仓库有但不 shipped | 时间工具 | 库 | `packages/util/time/package.json` |
 | `@deepseek-ai/dsh-deque` | `packages/util/deque` | library | 仓库有但不 shipped | deque | 库 | `packages/util/deque/package.json` |
 | `@deepseek-ai/dsh-util-workspace-path` | `packages/util/workspace-path` | library | 仓库有但不 shipped | workspace 路径 | 库 | `packages/util/workspace-path/package.json` |
-| `@deepseek-ai/dsh-agent-spine-demo` | `packages/examples/agent-spine-demo` | app | sdk-minimal | 无 UI agent spine | sdk-minimal insert；不是 web 默认树 | `packages/examples/agent-spine-demo/package.json` |
-
 | `@deepseek-ai/dsh-session-snapshot` | `packages/test-support/session-snapshot` | library | 仓库有但不 shipped | session-log snapshot + ACP adapter | testkit | `packages/test-support/session-snapshot/package.json` |
 | `@deepseek-ai/dsh-agent-loop-testkit` | `packages/test-support/agent-loop-testkit` | library | 仓库有但不 shipped | loop 测试前置 | testkit | `packages/test-support/agent-loop-testkit/package.json` |
 | `@deepseek-ai/dsh-client-test-runtime` | `packages/test-support/client-runtime` | library | 仓库有但不 shipped | jsdom slot 测试运行时 | 勿与已删 `dsh-client-runtime` 混淆 | `packages/test-support/client-runtime/package.json` |
@@ -525,7 +530,7 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 
 ## 对照 / 分家 / 装配
 
-- **host 面 vs agent-preset 面**：base 行是进程级。web 默认产品把模型可见 Consumer 挪到 preset；headless / sdk / acp 没有 roster，同一批 Consumer 仍挂在 base。sdk-minimal 自带完整 insert，用 `agent-spine-demo` 而不是 roster。
+- **host 面 vs agent-preset 面**：base 行是进程级。web 默认产品把模型可见 Consumer 挪到 preset；headless / sdk / acp 没有 roster，同一批 Consumer 仍挂在 base。sdk-minimal 自带完整 insert，**没有** `agent-spine-demo`。
 - **两个 `bash` / 两个 `pwsh`**：one-shot 在 base；persistent 在 `minimal` 与 `sdk-minimal`。
 - **无 shipped TUI 包**：`tui` 只是自定义 profile 名。
 - **六个 bundle**：`dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app`。

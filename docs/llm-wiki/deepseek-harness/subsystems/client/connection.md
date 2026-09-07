@@ -53,7 +53,7 @@ related:
   - subsys.integration.api-gateway
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-client-connection`（Cordis `name: 'client-connection'`）是 **client 面传输双面**：node 半边把 `/api` 挂到 `ctx.webServer`（Host/Origin 篱笆 → `BrowserAuth` cookie → WHATWG `bridge` → 共享 interceptor / exact Fetch）；浏览器半边提供 `ctx.connection`（无 `?fixture` 时 `createWebConnectionRpc` 走 `POST /<channel>/<endpoint>`）。本包**不**执行模型 turn；WebSocket mux 由 API Gateway 登记。
@@ -110,13 +110,13 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 
 | 符号 | 要点 |
 |---|---|
-| `name` | 字面量 `'client-connection'`。[E: packages/client/connection/src/index.ts:47] |
+| `name` | 字面量 `'client-connection'`。[E: packages/client/connection/src/index.ts:48] |
 | `API_PATH` | `'/api'`。prefix 路由吃 `/api` 与 `/api/<anything>`。[E: packages/client/connection/src/api-path.ts:7] |
-| `inject`（host） | `['webServer', 'credentials']`。[E: packages/client/connection/src/index.ts:67] |
+| `inject`（host） | `['webServer', 'credentials']`。[E: packages/client/connection/src/index.ts:68] |
 | `ConnectionConfig`（host） | `trustedHosts?: string[]`（缺省 `[]`）；`cookieMaxAgeDays` 缺省 `30`；`maxRequestBodyBytes` 缺省 `DEFAULT_MAX_REQUEST_BODY_BYTES`。[E: packages/client/connection/src/index.ts:87] |
 | `isTrustedApiRequest` | 读 `Host`（必有、可解析、loopback 或 `trustedHosts`）+ 拒 `sec-fetch-site: cross-site` + 若有 `Origin` 则必须与 Host 同 authority（字面量 `null` 拒）。[E: packages/client/connection/src/api-request-trust.ts:106] [E: packages/client/connection/src/api-request-trust.ts:111] |
 | `isLoopbackHostname` | `localhost`、`[::1]`、IPv4 `127/8`（四段且每段 ≤ 255）。[E: packages/client/connection/src/loopback-hostname.ts:13] |
-| `DEFAULT_MAX_REQUEST_BODY_BYTES` | `300 * 1024 * 1024`。按默认聚合图像 200 MiB 的 base64 膨胀（×4/3）加约 1 MiB 信封余量取整。[E: packages/client/connection/src/http-bridge.ts:12] [E: packages/attachment/attachment-local/src/index.ts:32] |
+| `DEFAULT_MAX_REQUEST_BODY_BYTES` | `300 * 1024 * 1024`。按默认聚合图像 200 MiB 的 base64 膨胀（×4/3）加约 1 MiB 信封余量取整。[E: packages/client/connection/src/http-bridge.ts:14] [E: packages/attachment/attachment-local/src/index.ts:31] |
 | `requestRejection` | 先 `isTrustedApiRequest` → `403`；再 `browserAuth.isAuthenticated` 失败 → `401`。[E: packages/client/connection/src/rpc-host.ts:97] [E: packages/client/connection/src/rpc-host.ts:98] |
 | `HostConnectionHandle` | `rpc.handle` / `rpc.intercept` / `fetch.register` / `createSharedFetchHandler` / `requestRejection` / `authorizeIndex` / `authenticatedUrl`。[E: packages/client/connection/src/rpc.ts:160] |
 | `ConnectionHandle`（browser） | `isLoopback` / `generation` / `state` / `rpc` / `reconnect` / `registerGenerationSource` / `start`。第二次 `start` 抛「already owned」。[E: packages/client/connection/src/client/index.ts:260] |
@@ -127,9 +127,9 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 
 ## 控制流
 
-1. **只有 web-app 叠 `id: connection`。** `PROFILE_TEMPLATES.web` 是 `dsh-base` 再 `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:143] web overlay insert 写 `id: connection` / `name: '@deepseek-ai/dsh-client-connection'` / `inject: [webRuntime]` / `trustedHosts: !!js ctx.webRuntime.trustedHosts`。[E: packages/bundle/web-app/cordis.patch.yml:157] [E: packages/bundle/web-app/cordis.patch.yml:159] [E: packages/bundle/web-app/cordis.patch.yml:164] `dsh-base` 的 insert 有 `typert-gateway`（`@deepseek-ai/dsh-api-gateway`），**没有** `connection` / `webserver`。[E: packages/bundle/base/cordis.patch.yml:45] `dsh-headless` 的 insert 是 `code-runtime` / `headless-startup` / `headless-runner`，同样没有 HTTP 宿主。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] `sdk` / `sdk-minimal` / `acp` 也不叠本行（无 webserver carrier）。本仓没有 shipped TUI。
+1. **只有 web-app 叠 `id: connection`。** `PROFILE_TEMPLATES.web` 是 `dsh-base` 再 `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:143] web overlay insert 写 `id: connection` / `name: '@deepseek-ai/dsh-client-connection'` / `inject: [webRuntime]` / `trustedHosts: !!js ctx.webRuntime.trustedHosts`。[E: packages/bundle/web-app/cordis.patch.yml:157] [E: packages/bundle/web-app/cordis.patch.yml:160] [E: packages/bundle/web-app/cordis.patch.yml:164] `dsh-base` 的 insert 有 `typert-gateway`（`@deepseek-ai/dsh-api-gateway`），**没有** `connection` / `webserver`。[E: packages/bundle/base/cordis.patch.yml:45] `dsh-headless` 的 insert 是 `code-runtime` / `headless-startup` / `headless-runner`，同样没有 HTTP 宿主。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] `sdk` / `sdk-minimal` / `acp` 也不叠本行（无 webserver carrier）。本仓没有 shipped TUI。
 
-2. **Loader `inject` 是挂载门，yml 往插件声明上合并。** 插件导出 `inject = ['webServer', 'credentials']`。[E: packages/client/connection/src/index.ts:67] Loader 在 `internal/plugin` 里 `Inject.resolve(fiber.entry.options.inject, fiber.inject)`，把 yml 的 `webRuntime` **加进**同一张 map，不是整表替换。[E: vendor/loader/src/index.ts:122] 因此 web 树上本行等 `webServer`、`credentials` **和** `webRuntime` 都 provide 才 `apply`。`--help` 不 `provide('webStartup')`，`webserver` 行 pending，本行也不挂 `/api`。
+2. **Loader `inject` 是挂载门，yml 往插件声明上合并。** 插件导出 `inject = ['webServer', 'credentials']`。[E: packages/client/connection/src/index.ts:68] Loader 在 `internal/plugin` 里 `Inject.resolve(fiber.entry.options.inject, fiber.inject)`，把 yml 的 `webRuntime` **加进**同一张 map，不是整表替换。[E: vendor/loader/src/index.ts:122] 因此 web 树上本行等 `webServer`、`credentials` **和** `webRuntime` 都 provide 才 `apply`。`--help` 不 `provide('webStartup')`，`webserver` 行 pending，本行也不挂 `/api`。
 
 3. **`trustedHosts` 来自 `webRuntime` 快照，不是认证名单。** `resolveLanTrust`：只有 bind 字面量 `'0.0.0.0'` 才采非 internal IPv4；loopback bind 的 `lanAddresses` 是 `[]`，`trustedHosts` = LAN 字面量后接 `--trusted-host`。[E: packages/bundle/web-app/src/index.ts:135] [E: packages/bundle/web-app/src/index.ts:140] [E: packages/bundle/web-app/tests/trusted-hosts.spec.ts:30] 默认旗标路径 bind `127.0.0.1`，篱笆只认 loopback，除非用户另加 `--trusted-host`。`--host 0.0.0.0` 在 `web-startup` action 里 `program.error(…intentionally not supported yet for safety…)`，**不** `provide('webStartup')`。[E: packages/bundle/web-app/src/startup.ts:75] `WebServer.Config.host` 仍承认 `'0.0.0.0'`：一条整行改写 `webserver.config` 的 overlay 仍可能绑 all-interfaces，那时才靠本包的 `trustedHosts` 放行 LAN IP。
 
@@ -137,9 +137,9 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 
 5. **host `ctx.connection` 是 `HostConnectionService`。** 构造 `super(ctx, 'connection')`，传入 `trustedHosts` 与 `BrowserAuth.create(ctx.root, ctx.credentials, cookieMaxAgeDays)`。[E: packages/client/connection/src/index.ts:108] [E: packages/client/connection/src/rpc-host.ts:74] 然后 `createSharedFetchHandler(API_PATH)`：pathname 命中 `fetchRoutes` 且 method 匹配则走 exact Fetch；否则从 `/api/` 切 endpoint，interceptor `matches(endpoint)` 为真才 dispatch；否则 `404 not found`。[E: packages/client/connection/src/rpc-host.ts:123] [E: packages/client/connection/src/rpc-host.ts:127]
 
-6. **`/api` HTTP 路由：篱笆 + cookie 先于 bridge。** `ctx.webServer.register` 一条 `kind: 'prefix'`、`path: API_PATH`。[E: packages/client/connection/src/index.ts:115] handler 先 `connection.requestRejection(req)`：失败立刻 `writeHead(rejection)` + `'unauthorized'`/`'forbidden'`，**不**读 body。[E: packages/client/connection/src/index.ts:118] [E: packages/client/connection/tests/node-half.host.spec.ts:164] 通过才 `bridge(req, res, fetchHandler, maxRequestBodyBytes)`。[E: packages/client/connection/src/index.ts:124]
+6. **`/api` HTTP 路由：篱笆 + cookie 先于 bridge。** `ctx.webServer.register` 一条 `kind: 'prefix'`、`path: API_PATH`。[E: packages/client/connection/src/index.ts:115] handler 先 `connection.requestRejection(req)`：失败立刻 `writeHead(rejection)` + `'unauthorized'`/`'forbidden'`，**不**读 body。[E: packages/client/connection/src/index.ts:118] [E: packages/client/connection/tests/node-half.host.spec.ts:164] 通过才 `bridge(req, res, fetchHandler, maxRequestBodyBytes)`。[E: packages/client/connection/src/index.ts:125]
 
-7. **`bridge` 把 node:http 收成 WHATWG `Request`。** `content-length` 或累计 chunk 超过 cap → `413` + `connection: close` + `req.destroy()`，handler 不跑。[E: packages/client/connection/src/http-bridge.ts:49] [E: packages/client/connection/tests/http-bridge.host.spec.ts:31] 断开检测挂在 `ServerResponse` 的 `close`（不是 `IncomingMessage`）。合成 `Request` 的 origin 是 `http://dsh.internal`。[E: packages/client/connection/src/http-bridge.ts:69]
+7. **`bridge` 把 node:http 收成 WHATWG `Request`。** `content-length` 或累计 chunk 超过 cap → `413` + `connection: close` + `req.destroy()`，handler 不跑。[E: packages/client/connection/src/http-bridge.ts:49] [E: packages/client/connection/tests/http-bridge.host.spec.ts:32] 断开检测挂在 `ServerResponse` 的 `close`（不是 `IncomingMessage`）。合成 `Request` 的 origin 是 `http://dsh.internal`。[E: packages/client/connection/src/http-bridge.ts:69]
 
 8. **认证：进程 token 换 cookie，不是特权方法名单。** `BrowserAuth.authenticatedUrl` 给干净 origin 加上 `?token=`（进程内存 `WeakMap` 里 32 字节 launch token）。[E: packages/client/connection/src/browser-auth.ts:228] `authorizeIndex`：GET `/` 且 token 匹配 → `303` + `Set-Cookie`（`HttpOnly; SameSite=Strict`，名 `dsh-auth-` + authority 的 sha256 base64url）。[E: packages/client/connection/src/browser-auth.ts:256] 后续 `/api` 用 `isAuthenticated` 验 cookie：签名、audience=`Host`、未过期。[E: packages/client/connection/src/browser-auth.ts:289] 测试钉：trusted Host 无 cookie → `401 unauthorized`；untrusted Host → `403 forbidden`。[E: packages/client/connection/tests/node-half.host.spec.ts:178] [E: packages/client/connection/tests/node-half.host.spec.ts:164]
 
@@ -147,9 +147,9 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 
 10. **无 interceptor → 404；有则 Typert `dispatchRpc`。** HTTP `/api` 路由在 gateway 出现之前就能挂。共享 interceptor 的 `fetch` 要求 `POST` + `application/json`，否则 404/415。[E: packages/client/connection/src/rpc-host.ts:210] 业务错误是 200 + `server-response` 里 `RpcResult`，不是本包的 403。Session 动词在 [`subsys.host.apiproxy`](../host/apiproxy.md)（`ctx.sessionController` 等）。
 
-11. **Typert 先 intercept 同一 `/api`。** `TypertGatewayService` `inject(['connection'], …)` 后 `rpc.intercept('/api', endpoint => this.claimsEndpoint(endpoint), dispatchRpc)`。[E: packages/api/gateway/src/index.ts:199] 共享 channel 同时只允许一个 interceptor。[E: packages/client/connection/src/rpc-host.ts:193] `rpc.handle('/api')` 非法（`/api` 保留给共享 channel）。[E: packages/client/connection/src/rpc-host.ts:280]
+11. **Typert 先 intercept 同一 `/api`。** `TypertGatewayService` `inject(['connection'], …)` 后 `rpc.intercept('/api', endpoint => this.claimsEndpoint(endpoint), dispatchRpc)`。[E: packages/api/gateway/src/index.ts:199] 共享 channel 同时只允许一个 interceptor。[E: packages/client/connection/src/rpc-host.ts:193] `rpc.handle('/api')` 非法（`/api` 保留给共享 channel）。[E: packages/client/connection/src/rpc-host.ts:281]
 
-12. **浏览器半边：无 `?fixture` 用 HTTP RPC。** `apply` 的 `inject` 是 `[]`。`location.search` 带 `fixture` 键 → `createFixtureConnectionRpc`；否则 `createWebConnectionRpc(transport?.fetch, transport?.openStream)`，再 `ctx.provide('connection', handle)`。[E: packages/client/connection/src/client/index.ts:186] [E: packages/client/connection/src/client/index.ts:189] [E: packages/client/connection/src/client/index.ts:290] 无 `location` 也走 Web RPC，`isLoopback` 为 true。`?fixture` 下 `rpc.call('/api', 'settings/describe', …)` 直接成功。[E: packages/client/connection/tests/client-apply.client.spec.ts:88] `__DSH_TRANSPORT__.ownsHost` 可把 `isLoopback` 强制为 true（worker preview）。[E: packages/client/connection/src/client/index.ts:228]
+12. **浏览器半边：无 `?fixture` 用 HTTP RPC。** `apply` 的 `inject` 是 `[]`。`location.search` 带 `fixture` 键 → `createFixtureConnectionRpc`；否则 `createWebConnectionRpc(transport?.fetch, transport?.openStream)`，再 `ctx.provide('connection', handle)`。[E: packages/client/connection/src/client/index.ts:186] [E: packages/client/connection/src/client/index.ts:189] [E: packages/client/connection/src/client/index.ts:286] 无 `location` 也走 Web RPC，`isLoopback` 为 true。`?fixture` 下 `rpc.call('/api', 'settings/describe', …)` 直接成功。[E: packages/client/connection/tests/client-apply.client.spec.ts:88] `__DSH_TRANSPORT__.ownsHost` 可把 `isLoopback` 强制为 true（worker preview）。[E: packages/client/connection/src/client/index.ts:228]
 
 13. **unary 是 `POST ${channel}/${endpoint}`。** `createWebConnectionRpc.call` 组 `ClientRequest`，`content-type: application/json`，相对 `location.origin`（无则 `http://dsh.internal`）。[E: packages/client/connection/src/client/rpc.ts:46] 浏览器默认**没有** `rpc.open`；Gateway 客户端自建 `RemoteStreamMuxClient`。[E: packages/client/connection/src/client/rpc.ts:61] [E: packages/api/gateway/src/client/index.ts:148]
 
@@ -174,7 +174,7 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 - **web-app yml 注释仍写「fetch/SSE client」，浏览器 unary 是 fetch；mux 是 Gateway WebSocket。** [E: packages/bundle/web-app/cordis.patch.yml:156]
 - **本包不登记 `/api/events.mux`。** 现行 path 是 `/api/remote.mux`，由 gateway 登记。[E: packages/api/gateway/src/stream-protocol.ts:6]
 - **`maxRequestBodyBytes` 过小会让整插件 load 失败**（有 `attachments` 时）。[E: packages/client/connection/src/index.ts:58]
-- **`rpc.handle('/api')` 非法。** 专用 channel 形如 `/rpc`。[E: packages/client/connection/src/rpc-host.ts:280]
+- **`rpc.handle('/api')` 非法。** 专用 channel 形如 `/rpc`。[E: packages/client/connection/src/rpc-host.ts:281]
 - **共享 `/api` 只能有一个 interceptor。** 第二个 `intercept` 抛 `already has an interceptor`。[E: packages/client/connection/src/rpc-host.ts:193]
 - **`start()` 单消费者且必须先 `registerGenerationSource`。** Gateway 客户端拥有回路。
 - **`?fixture` 整页脱离 HTTP。** 生产 URL 不要带这个 query。

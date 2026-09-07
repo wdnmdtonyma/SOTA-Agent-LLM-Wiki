@@ -7,7 +7,6 @@ pkg: interaction
 source:
   - packages/interaction/user-questions/src/index.ts
   - packages/interaction/user-questions/src/types.ts
-  - packages/interaction/user-questions/src/invariant.ts
   - packages/interaction/user-questions/package.json
   - packages/interaction/user-questions/tests/user-questions.spec.ts
   - packages/interaction/tool-ask-user/src/index.ts
@@ -44,7 +43,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.userQuestions` 是 **host 面** `UserQuestionService`：`ask()` 做 fail-closed 门控后，把请求丢进 Cordis waterfall `user-questions/request`。它不是 model-visible 工具，也不是 `ctx.approval` 那条 `ask | never` 审批缝。DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）；shipped profile 是 `web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）。本仓没有 shipped TUI。
@@ -71,9 +70,9 @@ updated: 0a53fb55be
 
 - `ask_user_question` 的 model schema / `defineTool` 注册 —— [`surface.tools.ask-user-question`](../../surface/tools/ask-user-question.md)。本页只把它当 Consumer。
 - `ctx.approval`、`approval/request` waterfall、`allowed-once` —— [`subsys.interaction.approval`](./approval.md)。问卷和审批是两条缝。
-- Web mux 帧、composer 组件。shipped Web answerer 挂在 client 行 `id: ui-user-questions`，经 `ctx.remote.$on('user-questions/request')` 接到 Host 转发的 waterfall。本页不写 UI 控件细节。 [E: packages/bundle/web-app/cordis.patch.yml:297] [E: packages/client/ui-user-questions/src/client/index.ts:104]
+- Web mux 帧、composer 组件。shipped Web answerer 挂在 client 行 `id: ui-user-questions`，经 `ctx.remote.$on('user-questions/request')` 接到 Host 转发的 waterfall。本页不写 UI 控件细节。 [E: packages/bundle/web-app/cordis.patch.yml:298] [E: packages/client/ui-user-questions/src/client/index.ts:104]
 - 答案是否匹配选项、`id` 是否唯一：`ask()` 把门过完就把 request 交给 waterfall，不校验 `AskUserQuestionAnswer`。 [E: packages/interaction/user-questions/src/index.ts:135]
-- 独立的 request/answer 审计流。companion installer 是空函数，注释写明 seam 不 publish 这类事件。 [E: packages/interaction/user-questions/src/invariant.ts:21]
+- 独立的 request/answer 审计流。
 
 官方包 README 还可能把「permission plugin」写成调用方；shipped 源码里 `permission-presets` 不读 `ctx.userQuestions`。wiki 跟代码：生产 Consumer 是 `tool-ask-user` 与 `plan-mode`。[I]
 
@@ -87,8 +86,7 @@ updated: 0a53fb55be
 |---|---|
 | `packages/interaction/user-questions/src/index.ts` | `UserQuestionService` / `UserQuestionError` / `AskUserQuestionRequest` / waterfall 调度 |
 | `packages/interaction/user-questions/src/types.ts` | 无 Cordis runtime 的问卷 / 答案 / `plan-review` intent / Events |
-| `packages/interaction/user-questions/src/invariant.ts` | 空 installer；无独立审计流 |
-| `packages/interaction/user-questions/package.json` | 包名 `@deepseek-ai/dsh-user-questions`；导出 `.` / `./types` / `./invariant` |
+| `packages/interaction/user-questions/package.json` | 包名 `@deepseek-ai/dsh-user-questions`；导出 `.` / `./types` |
 | `packages/interaction/user-questions/tests/user-questions.spec.ts` | 无 answerer、dispose、abort、空批、live-root、stale 对象、`BAD_INTENT`、组合 `next()`、远程错误还原 |
 | `packages/interaction/tool-ask-user/src/index.ts` | Consumer：`inject = ['tools', 'userQuestions']`，注册 `ask_user_question` |
 | `packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts` | 投影、signal、`NO_PROVIDER` / `DELEGATED_CALLER` / 空批 |
@@ -117,9 +115,9 @@ updated: 0a53fb55be
 
 ## 控制流
 
-1. **host 面挂 Definition。** `dsh-base` 根 `insert` 写 `id: user-questions` / `name: '@deepseek-ai/dsh-user-questions'`，无 `config`。 [E: packages/bundle/base/cordis.patch.yml:64] [E: packages/bundle/base/cordis.patch.yml:65] manifest 依赖同名包。 [E: packages/bundle/base/package.json:121] 插件是 class default export：`export default UserQuestionService`。 [E: packages/interaction/user-questions/src/index.ts:154] 这一行提供 `ctx.userQuestions`，**不**注册 `ask_user_question`。`sdk-minimal` 不叠 `dsh-base`，因此默认没有这条 Definition，除非自己 insert。[I]
+1. **host 面挂 Definition。** `dsh-base` 根 `insert` 写 `id: user-questions` / `name: '@deepseek-ai/dsh-user-questions'`，无 `config`。 [E: packages/bundle/base/cordis.patch.yml:64] [E: packages/bundle/base/cordis.patch.yml:65] manifest 依赖同名包。 [E: packages/bundle/base/package.json:122] 插件是 class default export：`export default UserQuestionService`。 [E: packages/interaction/user-questions/src/index.ts:154] 这一行提供 `ctx.userQuestions`，**不**注册 `ask_user_question`。`sdk-minimal` 不叠 `dsh-base`，因此默认没有这条 Definition，除非自己 insert。[I]
 
-2. **`dsh-web-app` 不 disable；preset 不 remount 服务。** web overlay 会把若干 host 行标 `disabled: true`，但同一份文件里**没有** `id: user-questions` 行，因此不会关掉 base 挂上的服务。[I] overlay 另插 client 行 `id: ui-user-questions` / `name: '@deepseek-ai/dsh-client-ui-user-questions'`，这是呈现 + Remote Event listener，不是第二份 `UserQuestionService`。 [E: packages/bundle/web-app/cordis.patch.yml:297] [E: packages/bundle/web-app/cordis.patch.yml:298] `dsh-headless` 的 patch 没有 `user-questions` / `ui-user-questions` 行：Definition 从 base 继承，**没有** shipped headless answerer。[I] 四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）都不插 `id: user-questions`。[I]
+2. **`dsh-web-app` 不 disable；preset 不 remount 服务。** web overlay 会把若干 host 行标 `disabled: true`，但同一份文件里**没有** `id: user-questions` 行，因此不会关掉 base 挂上的服务。[I] overlay 另插 client 行 `id: ui-user-questions` / `name: '@deepseek-ai/dsh-client-ui-user-questions'`，这是呈现 + Remote Event listener，不是第二份 `UserQuestionService`。 [E: packages/bundle/web-app/cordis.patch.yml:298] [E: packages/bundle/web-app/cordis.patch.yml:298] `dsh-headless` 的 patch 没有 `user-questions` / `ui-user-questions` 行：Definition 从 base 继承，**没有** shipped headless answerer。[I] 四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）都不插 `id: user-questions`。[I]
 
 3. **answerer 是 waterfall，不是单槽 provider。** 测试用 `ctx.on('user-questions/request', request => answerer.ask(request))` 注册。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:15] 第一个 listener 可以 `next()`，第二个再给答案。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:78] [E: packages/interaction/user-questions/tests/user-questions.spec.ts:80] listener dispose 之后 `ask()` 仍是 `NO_PROVIDER`。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:71] 没有 `DUPLICATE_PROVIDER`：多个 listener 是合法组合，不是互斥替换。
 
@@ -129,13 +127,13 @@ updated: 0a53fb55be
 
 6. **工具 body 投影成 seam 请求。** `execute` 调 `ctx.userQuestions.ask`：每题只拷 `id` / `question`，有则拷 `header` / `options`，把 wire 的 `multi_select` 改名为 `multiSelect`。 [E: packages/interaction/tool-ask-user/src/index.ts:81] [E: packages/interaction/tool-ask-user/src/index.ts:87] 模型即使塞进 `detail` / `intent`，本工具也不转发——那两个字段给 `exit_plan_mode` 这类调用方。有 `exec.agent` 才写入 `agent`；始终带 `signal: exec.signal`。 [E: packages/interaction/tool-ask-user/src/index.ts:89] [E: packages/interaction/tool-ask-user/src/index.ts:90]
 
-7. **preset 才装工具。** `standard` / `ptc` / `cordis` 的 `agent.cordis.yml` 有 `- id: tool-ask-user` / `name: '@deepseek-ai/dsh-tool-ask-user'`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:244] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:244] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:231] `minimal` 没有这一行，因此 minimal catalog 没有 `ask_user_question`。[I] `dsh-base` **不**插入 `tool-ask-user`。旧 preset 目录名 `code` 现为 **PTC**（`presets/ptc/`）。
+7. **preset 才装工具。** `standard` / `ptc` / `cordis` 的 `agent.cordis.yml` 有 `- id: tool-ask-user` / `name: '@deepseek-ai/dsh-tool-ask-user'`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:245] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:245] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:231] `minimal` 没有这一行，因此 minimal catalog 没有 `ask_user_question`。[I] `dsh-base` **不**插入 `tool-ask-user`。旧 preset 目录名 `code` 现为 **PTC**（`presets/ptc/`）。
 
 8. **`ask()` 先看 signal，再看空批。** `request.signal?.aborted` → `ASK_ABORTED`（`ask_user_question was aborted before the user answered`），此时 **不会**进 waterfall。 [E: packages/interaction/user-questions/src/index.ts:87] [E: packages/interaction/user-questions/src/index.ts:88] [E: packages/interaction/user-questions/tests/user-questions.spec.ts:100] `questions.length === 0` → `EMPTY_QUESTIONS`（`ask_user_question requires at least one question`），同样不到 answerer。 [E: packages/interaction/user-questions/src/index.ts:90] [E: packages/interaction/user-questions/src/index.ts:91] [E: packages/interaction/user-questions/tests/user-questions.spec.ts:191] 等待中途 abort：waterfall 抛错后若 `signal.aborted` 且不是已还原的 `UserQuestionError`，再包一层 `ASK_ABORTED`。 [E: packages/interaction/user-questions/src/index.ts:146] [E: packages/interaction/user-questions/tests/user-questions.spec.ts:119] 若 answerer 自己抛了 `ASK_CANCELLED` 同时 abort signal，**保留** domain 错误。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:141]
 
-9. **带 `agent`：exact live 实例。** `agent !== undefined` 时 `this.ctx.get('agents')`。registry 缺失，或 `agents.get(agent.id) !== agent`（同 id 的旧对象也算），抛 `CALLER_NOT_LIVE`。 [E: packages/interaction/user-questions/src/index.ts:94] [E: packages/interaction/user-questions/src/index.ts:96] [E: packages/interaction/user-questions/src/index.ts:99] `AgentRegistry.get` 返回 `this.store.get(id)?.agent`，比较的是对象身份。 [E: packages/core/agent/src/index.ts:575] [E: packages/core/agent/src/index.ts:576] 测试：没有 `agents` 插件、以及 `enter` 了 live 却传入另一个同 id stub，都是 `CALLER_NOT_LIVE`，且 answerer 未被调用。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:243] [E: packages/interaction/user-questions/tests/user-questions.spec.ts:259] **不带** `agent` 的请求跳过这一段：服务允许 programmatic 无 agent 调用，waterfall 也不走 `scopeTarget`。 [E: packages/interaction/user-questions/src/index.ts:135]
+9. **带 `agent`：exact live 实例。** `agent !== undefined` 时 `this.ctx.get('agents')`。registry 缺失，或 `agents.get(agent.id) !== agent`（同 id 的旧对象也算），抛 `CALLER_NOT_LIVE`。 [E: packages/interaction/user-questions/src/index.ts:94] [E: packages/interaction/user-questions/src/index.ts:96] [E: packages/interaction/user-questions/src/index.ts:99] `AgentRegistry.get` 返回 `this.store.get(id)?.agent`，比较的是对象身份。 [E: packages/core/agent/src/index.ts:578] [E: packages/core/agent/src/index.ts:578] 测试：没有 `agents` 插件、以及 `enter` 了 live 却传入另一个同 id stub，都是 `CALLER_NOT_LIVE`，且 answerer 未被调用。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:243] [E: packages/interaction/user-questions/tests/user-questions.spec.ts:259] **不带** `agent` 的请求跳过这一段：服务允许 programmatic 无 agent 调用，waterfall 也不走 `scopeTarget`。 [E: packages/interaction/user-questions/src/index.ts:135]
 
-10. **live 还不够：必须是 runtime root。** `!agents.roots().includes(agent)` → `DELEGATED_CALLER`。文案要求把未决问题写进 child 的最终结果。 [E: packages/interaction/user-questions/src/index.ts:101] [E: packages/interaction/user-questions/src/index.ts:105] `roots()` 是 `entry.owner === undefined` 的 live agent，**不**看 `session.header.delegationDepth`。 [E: packages/core/agent/src/index.ts:605] [E: packages/core/agent/src/index.ts:607] `enter(agent, owner)` 把 `owner` 写进 entry；`enter(child, root)` 的 child 不是 root。 [E: packages/core/agent/src/index.ts:466] [E: packages/core/agent/src/index.ts:478] 测试：`delegationDepth = 1` 但 `enter(agent, undefined)` 的 resumed 会话可以问到 answerer；`enter(child, root)` 的 child 在碰到 UI 之前就被拒。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:223] [E: packages/interaction/user-questions/tests/user-questions.spec.ts:209] [E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:294] **子代理不能问人。**
+10. **live 还不够：必须是 runtime root。** `!agents.roots().includes(agent)` → `DELEGATED_CALLER`。文案要求把未决问题写进 child 的最终结果。 [E: packages/interaction/user-questions/src/index.ts:101] [E: packages/interaction/user-questions/src/index.ts:105] `roots()` 是 `entry.owner === undefined` 的 live agent，**不**看 `session.header.delegationDepth`。 [E: packages/core/agent/src/index.ts:608] [E: packages/core/agent/src/index.ts:608] `enter(agent, owner)` 把 `owner` 写进 entry；`enter(child, root)` 的 child 不是 root。 [E: packages/core/agent/src/index.ts:469] [E: packages/core/agent/src/index.ts:478] 测试：`delegationDepth = 1` 但 `enter(agent, undefined)` 的 resumed 会话可以问到 answerer；`enter(child, root)` 的 child 在碰到 UI 之前就被拒。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:223] [E: packages/interaction/user-questions/tests/user-questions.spec.ts:209] [E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:294] **子代理不能问人。**
 
 11. **`intent` 在 asker 侧钉死，不靠每个 UI。** 某题带了 `intent`：`approve` 必须等于本题某个 `options[].label`（`options` 缺省当 `[]`），且必须带 `detail`。任一缺口 → `BAD_INTENT`。 [E: packages/interaction/user-questions/src/index.ts:118] [E: packages/interaction/user-questions/src/index.ts:122] [E: packages/interaction/user-questions/src/index.ts:124] [E: packages/interaction/user-questions/src/index.ts:127] 测试：错误 label、完全没有 options、有 label 但没有 `detail`，都到不了 answerer。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:308] [E: packages/interaction/user-questions/tests/user-questions.spec.ts:328] 合法的 `plan-review` 原样出现在 answerer 收到的 request 里。 [E: packages/interaction/user-questions/tests/user-questions.spec.ts:352]
 
@@ -174,7 +172,7 @@ updated: 0a53fb55be
 - **`ask_user_question` 不转发 `detail` / `intent`。** plan-review 必须走 `exit_plan_mode` 自己的 `ask()`。 [E: packages/interaction/tool-ask-user/src/index.ts:82]
 - **headless / sdk / acp 有服务、通常没有人。** base 挂了 Definition（`sdk-minimal` 除外），这些 overlay 不挂 `ui-user-questions`；一旦有 Consumer 调用 `ask()`，就是 `NO_PROVIDER`。[I]
 - **服务不校验答案。** answerer 可以返回对不上选项的 `selected`，或漏题。调用方（工具 / plan-mode）自己解释。
-- **没有问卷审计事件。** 不要去 log 里找 `user-question/asked`。模型下一轮看见的是 Consumer 写下的 `tool/result`。 [E: packages/interaction/user-questions/src/invariant.ts:21]
+- **没有问卷审计事件。** 不要去 log 里找 `user-question/asked`。模型下一轮看见的是 Consumer 写下的 `tool/result`。
 - **scoped dispatch。** 带 `agent` 的 ask 只发给对该 agent 注册的 listener；无 agent 的 ask 走未 scoped 的 waterfall。 [E: packages/interaction/user-questions/src/index.ts:138]
 
 ## Seam 三角
@@ -191,7 +189,7 @@ updated: 0a53fb55be
 
 - packages/interaction/user-questions/src/index.ts
 - packages/interaction/user-questions/src/types.ts
-- packages/interaction/user-questions/src/invariant.ts
+
 - packages/interaction/user-questions/package.json
 - packages/interaction/user-questions/tests/user-questions.spec.ts
 - packages/interaction/tool-ask-user/src/index.ts

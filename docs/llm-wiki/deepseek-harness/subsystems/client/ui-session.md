@@ -8,7 +8,6 @@ source:
   - packages/client/ui-session/src/index.ts
   - packages/client/ui-session/src/client/index.ts
   - packages/client/ui-session/src/client/session-provider.tsx
-  - packages/client/ui-session/src/invariant.ts
   - packages/client/ui-session/package.json
   - packages/client/ui-session/tests/ui-session.client.spec.ts
   - packages/api/session-controller/src/client/index.ts
@@ -41,7 +40,7 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-client-ui-session` 是浏览器里的 **Session 根源适配器**：host `apply` 为空；client 把 `ctx.sessions.list` 接到全局 `useSessions`，把 `session` / `session-maybe` 槽接到 `UiSession.adapter`，并把 `ctx.uiSession` 交给会话面装配。它不画侧栏列表、不发 list RPC、不执行模型 turn。列表行与 `current` 的权威在 Session Controller 客户端（[`subsys.client.runtime`](runtime.md)）；host 冷列表投影在 `ApiSessionList`（[`subsys.host.apiproxy`](../host/apiproxy.md)）。
@@ -63,14 +62,13 @@ updated: 0a53fb55be
 
 - node 半边：空 `apply()`（Loader 仍需要 host 入口）。
 - 浏览器半边：`UiSession`（服务名 `'uiSession'`）、`renderSessionArea`、pending-interaction 聚合、`slots.provideRoot` 的 `sessions` / `sessionPendingInteraction` hooks、`slots.installScope('session', adapter)`。
-- invariant companion：`client-ui-session-invariant`，`install` 为空（一致性由 materialize 路径强制）。
 
 **不拥有**
 
 - `ctx.sessions` / `ISessions` / `ClientSessions` / `Session` / `SessionListState` 写入：[`subsys.client.runtime`](runtime.md)。本页只消费 `list` 与 `binding(id)`。
 - HTTP / WS mux、`session.list` Remote、host `ApiSessionList`：[`subsys.host.apiproxy`](../host/apiproxy.md)。
 - `ctx.slots` Provider：[`subsys.client.ui-slots`](ui-slots.md) + ui-renderer。
-- 三栏壳与 `sidebar` 座位：[`subsys.client.ui-layout`](ui-layout.md)。**侧栏会话列表像素**在 `@deepseek-ai/dsh-client-ui-sidebar`（web-app 下一行 `id: ui-sidebar`），本 wiki **不另开 ui-* 页**；侧栏是 `useSessions` 的 Consumer。 [E: packages/bundle/web-app/cordis.patch.yml:187]
+- 三栏壳与 `sidebar` 座位：[`subsys.client.ui-layout`](ui-layout.md)。**侧栏会话列表像素**在 `@deepseek-ai/dsh-client-ui-sidebar`（web-app 下一行 `id: ui-sidebar`），本 wiki **不另开 ui-* 页**；侧栏是 `useSessions` 的 Consumer。 [E: packages/bundle/web-app/cordis.patch.yml:188]
 - composer / `sendSession`：[`subsys.client.ui-conversation`](ui-conversation.md)（client `inject` 含 `uiSession`）。
 
 `package.json` 的 `dsh.client` 把本包标成 `platform: "web"`，inject `@deepseek-ai/dsh-api-session-controller` 与 `@deepseek-ai/dsh-client-ui-renderer`。 [E: packages/client/ui-session/package.json:34] [E: packages/client/ui-session/package.json:38]
@@ -82,7 +80,6 @@ updated: 0a53fb55be
 | `packages/client/ui-session/src/index.ts` | host `apply`：空函数 |
 | `packages/client/ui-session/src/client/index.ts` | `UiSession`、`inject`、`apply`、pending domain |
 | `packages/client/ui-session/src/client/session-provider.tsx` | `renderSessionArea`：无 key → empty；有 key → `Fragment key={sessionId}` |
-| `packages/client/ui-session/src/invariant.ts` | `ctx.invariants.register('@deepseek-ai/dsh-client-ui-session', noop)` |
 | `packages/client/ui-session/tests/ui-session.client.spec.ts` | 绑定缓存、provide fail-loud、pending precedence、apply 安装 |
 | `packages/api/session-controller/src/client/contract/sessions.ts` | `ISessions` 合同（权威在 runtime 节点） |
 | `packages/api/session-controller/src/client/sessions/service.ts` | `SessionListState` / `SessionSummary` / `ClientSessions` |
@@ -105,9 +102,9 @@ updated: 0a53fb55be
 
 ## 控制流
 
-1. **只有 web-app 把本包插进 Loader 表。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` 再叠 `dsh-web-app`。web patch insert 含 `id: ui-session` / `name: '@deepseek-ai/dsh-client-ui-session'`。`dsh-base` insert 从 `timer` / `hmr` / `llm` 起，没有浏览器 roster。`dsh-headless` insert 是 `code-runtime` + `headless-startup` + `headless-runner`。sdk / sdk-minimal / acp overlay 也不插入本包。 [E: packages/bundle/web-app/cordis.patch.yml:184] [E: packages/bundle/web-app/cordis.patch.yml:185] [E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/headless/cordis.patch.yml:19]
+1. **只有 web-app 把本包插进 Loader 表。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` 再叠 `dsh-web-app`。web patch insert 含 `id: ui-session` / `name: '@deepseek-ai/dsh-client-ui-session'`。`dsh-base` insert 从 `timer` / `hmr` / `llm` 起，没有浏览器 roster。`dsh-headless` insert 是 `code-runtime` + `headless-startup` + `headless-runner`。sdk / sdk-minimal / acp overlay 也不插入本包。 [E: packages/bundle/web-app/cordis.patch.yml:185] [E: packages/bundle/web-app/cordis.patch.yml:185] [E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/headless/cordis.patch.yml:19]
 
-2. **host `apply` 是空函数。** Loader 仍加载 `packages/client/ui-session/src/index.ts`，但 node 半边不登记 settings、不碰 `ctx.sessions`。测试钉死 `nodeApply()` 不抛。 [E: packages/client/ui-session/src/index.ts:4] [E: packages/client/ui-session/tests/ui-session.client.spec.ts:552]
+2. **host `apply` 是空函数。** Loader 仍加载 `packages/client/ui-session/src/index.ts`，但 node 半边不登记 settings、不碰 `ctx.sessions`。测试钉死 `nodeApply()` 不抛。 [E: packages/client/ui-session/src/index.ts:4] [E: packages/client/ui-session/tests/ui-session.client.spec.ts:550]
 
 3. **client `inject` 是两条服务名。** `export const inject` = `'sessions'` / `'slots'`。缺任一条，插件 fiber 保持 pending。 [E: packages/client/ui-session/src/client/index.ts:499]
 
@@ -156,7 +153,6 @@ updated: 0a53fb55be
 - `packages/client/ui-session/src/index.ts`
 - `packages/client/ui-session/src/client/index.ts`
 - `packages/client/ui-session/src/client/session-provider.tsx`
-- `packages/client/ui-session/src/invariant.ts`
 - `packages/client/ui-session/package.json`
 - `packages/client/ui-session/tests/ui-session.client.spec.ts`
 - `packages/api/session-controller/src/client/index.ts`

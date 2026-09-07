@@ -48,7 +48,7 @@ related:
   - subsys.execution.shell
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 模型可见名 `bash`；实现包 `@deepseek-ai/dsh-tool-bash`（Cordis 插件名 `tool-bash`）。每次调用新开 `bash -c`，走 `ctx.shell` 的 one-shot 执行器，**不**记忆 cwd / 变量 / 函数。
@@ -92,11 +92,11 @@ Wire 名是 `bash`，写在 `defineTool({ name: 'bash', ... })`。[E: packages/s
 | `workdir` | `string` | 否 | session workspace（见 `resolveWorkdir`） | 相对路径相对 session cwd / policy root | 本调用工作目录。[E: packages/shell/tool-bash/src/index.ts:254] |
 | `run_in_background` | `boolean` | 否 | 不传 = 前台 | 仅当 `enableRunInBackground` 为真时广告 | `true` 立刻回 job id；描述写 No timeout applies。[E: packages/shell/tool-bash/src/index.ts:256] |
 
-`defineTool` 先按 ParameterSchemaSpec 校验类型 / required；空串、`timeoutMs <= 0` 这类值约束在 `validateBashArgs`。[E: packages/core/tools/src/schema.ts:586] [E: packages/shell/tool-bash/tests/tools.spec.ts:351]
+`defineTool` 先按 ParameterSchemaSpec 校验类型 / required；空串、`timeoutMs <= 0` 这类值约束在 `validateBashArgs`。[E: packages/core/tools/src/schema.ts:586] [E: packages/shell/tool-bash/tests/tools.spec.ts:353]
 
 **Config 改广告：** `enableRunInBackground: false` 时 properties 只剩 `command` / `description` / `timeoutMs` / `workdir`；描述改成「Background execution is not available」。schema 省略不够，execute 里再拒一次 `run_in_background: true`。[E: packages/shell/tool-bash/tests/tools.spec.ts:567] [E: packages/shell/tool-bash/src/index.ts:351]
 
-**`ctx.shell.sandboxMode` 改广告：** getter 有值（shipped `SandboxBashExecutor` 读 `ctx.sandboxPolicy.defaultMode`）时，schema 追加 `sandbox_permissions`（`enum` = `ESCALATION_TARGETS` = `workspace-write` \| `danger-full-access`）和 `justification`。两个字段必须成对且 justification trim 非空。[E: packages/shell/tool-bash/src/index.ts:192] [E: packages/shell/bash-sandbox/src/index.ts:75] [E: packages/sandbox/sandbox/src/escalation.ts:41] [E: packages/shell/tool-bash/tests/tools.spec.ts:604] [E: packages/sandbox/sandbox/src/escalation.ts:52]
+**`ctx.shell.sandboxMode` 改广告：** getter 有值（shipped `SandboxBashExecutor` 读 `ctx.sandboxPolicy.defaultMode`）时，schema 追加 `sandbox_permissions`（`enum` = `ESCALATION_TARGETS` = `workspace-write` \| `danger-full-access`）和 `justification`。两个字段必须成对且 justification trim 非空。[E: packages/shell/tool-bash/src/index.ts:192] [E: packages/shell/bash-sandbox/src/index.ts:75] [E: packages/sandbox/sandbox/src/escalation.ts:41] [E: packages/shell/tool-bash/tests/tools.spec.ts:605] [E: packages/sandbox/sandbox/src/escalation.ts:52]
 
 无沙箱执行器时这两个键不广告；schema 只校验已广告键，所以模型仍可能塞进来，execute 会抛「sandbox_permissions is not available in this composition」。[E: packages/shell/tool-bash/src/index.ts:219]
 
@@ -108,7 +108,7 @@ Wire 名是 `bash`，写在 `defineTool({ name: 'bash', ... })`。[E: packages/s
 
 `output.schema` 是 `oneOf`：后台 `{ kind: 'background', jobId }`，或前台 `{ kind: 'foreground', exitCode, signal, timedOut, aborted, timeoutMs, stdout, stderr, sandbox? }`。[E: packages/shell/tool-bash/src/index.ts:185] [E: packages/shell/tool-bash/src/index.ts:272]
 
-`output.render`：后台渲染 `started background job ${jobId}`；前台走 `renderResult`。[E: packages/shell/tool-bash/src/index.ts:324] [E: packages/shell/tool-bash/src/index.ts:326] 集成测试钉死前台成功文本是 `integration-ok\n`，后台 ack 是 `started background job bash-1`。[E: packages/shell/tool-bash/tests/integration.spec.ts:149] [E: packages/shell/tool-bash/tests/integration.spec.ts:210]
+`output.render`：后台渲染 `started background job ${jobId}`；前台走 `renderResult`。[E: packages/shell/tool-bash/src/index.ts:324] [E: packages/shell/tool-bash/src/index.ts:326] 集成测试钉死前台成功文本是 `integration-ok\n`，后台 ack 是 `started background job bash-1`。[E: packages/shell/tool-bash/tests/integration.spec.ts:149] [E: packages/shell/tool-bash/tests/integration.spec.ts:212]
 
 `renderResult` 把 stdout 与带 `[stderr]` 标记的 stderr 拼成 body；全空则 `(no output)`。截断流在尾部追加 `[output truncated; full output: <spillPath|(unavailable)>]`。[E: packages/shell/tool-bash/src/render.ts:14] [E: packages/shell/tool-bash/src/render.ts:41] 标记顺序：沙箱拒绝（可选 escalation hint）→ `[timed out after Nms]` → `[killed by signal: X]` 或非零 `[exit code: N]`。[E: packages/shell/tool-bash/src/render.ts:53] [E: packages/shell/tool-bash/src/render.ts:56] 非零退出**不是** `isError`；spawn / abort 才是。[E: packages/shell/tool-bash/tests/tools.spec.ts:259] [E: packages/shell/tool-bash/tests/integration.spec.ts:164]
 
@@ -143,7 +143,7 @@ Wire 名是 `bash`，写在 `defineTool({ name: 'bash', ... })`。[E: packages/s
 对本工具的挂点：
 
 - **timeout（工具定义）：** `defineTool` **没有**设 `timeoutMs`。`dsh-tool-call-timeout-policy` 读到 `undefined` 就原样 `next()`。[E: packages/guard/timeout-policy/src/index.ts:57] [E: packages/guard/timeout-policy/src/index.ts:59] 真正的前台超时在 `LocalBashExecutor.runArgv` 的 `deadline(..., spec.timeoutMs, 'BASH_TIMEOUT')`。[E: packages/shell/bash-local/src/index.ts:227]
-- **approval：** 普通调用不 `ask`。升权在 body 开头 `approveEscalation`；唯一放行值 `'allowed-once'`。[E: packages/sandbox/sandbox/src/escalation.ts:183] host `ApprovalPolicy` 是 `'ask' | 'never'`。[E: packages/interaction/user-approval/src/index.ts:59]
+- **approval：** 普通调用不 `ask`。升权在 body 开头 `approveEscalation`；唯一放行值 `'allowed-once'`。[E: packages/sandbox/sandbox/src/escalation.ts:183] host `ApprovalPolicy` 是 `'ask' | 'never'`。[E: packages/interaction/user-approval/src/index.ts:60]
 - **sandbox：** 不挂 pre-execute。policy 在 body 里 `sandboxPolicy.resolve({ session })`；confine 在 `SandboxBashExecutor`。runner 不可用抛 `SandboxUnavailableError`（`code: SANDBOX_UNAVAILABLE`），拒绝裸跑。[E: packages/sandbox/sandbox/src/index.ts:124] [E: packages/sandbox/sandbox/src/index.ts:131] [E: packages/shell/bash-sandbox/src/index.ts:103]
 - **并行：** 未声明 `isConcurrencySafe`，`executionMode` fail-closed 为 exclusive。[E: packages/core/tools/src/index.ts:1269]
 - **PTC：** `ptc` preset 仍装本包，但 `mode: ptc` 时无 `parent` 的模型直调 `bash` 在进 waterfall 前 `collapses`，必须从 `run_code` 程序里调。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/core/tools/src/index.ts:1316]
@@ -171,7 +171,7 @@ win32 上本包 disabled；同预设改挂 `@deepseek-ai/dsh-tool-pwsh`（`disab
 4. 两个 escalation 字段都在时，**任何 spawn 之前** `approveBashEscalation` → `approveEscalation({ subject: 'command' }, { toolName: 'bash', ... })`。无沙箱执行器、非严格更宽、无 approval、无 agent、`rejected` / `cancelled` / `unavailable` 都抛，body 尚未跑。[E: packages/shell/tool-bash/src/index.ts:223] [E: packages/sandbox/sandbox/src/escalation.ts:157] [E: packages/sandbox/sandbox/src/escalation.ts:163]
 5. 批准后只覆盖 `policy.mode`；`resolveWorkdir` 仍用 **standing** `workspaceRoot`（不是升权后的根）。相对 `workdir` 拼在 session cwd / policy root 上；绝对路径原样用。[E: packages/shell/tool-bash/src/index.ts:336] [E: packages/shell/tool-bash/src/index.ts:149]
 6. `dshEnv = ctx.shellEnv.collect(exec)`，request 只带 `command` / 可选 `workdir` / 可选 `timeoutMs` / `dshEnv` / 可选 `sandboxPolicy`。[E: packages/shell/tool-bash/src/index.ts:340]
-7. **后台** `run_in_background === true`：检查开关与 `ctx.jobs`；`exec.signal.aborted` 则 `TOOL_ABORTED`（升权之后、spawn 之前也能拦住）。`jobs.start` 的 `run()` 里才 `ctx.shell.start(ctx.shell.resolve(request))`；preflight 失败则 `starts === 0`。[E: packages/shell/tool-bash/src/index.ts:358] [E: packages/shell/tool-bash/src/index.ts:369] [E: packages/shell/tool-bash/tests/tools.spec.ts:553] `processOutcome`：`killed` 带 signal 细节，其它（含非零退出）是 `completed`。[E: packages/shell/tool-bash/src/background.ts:23] [E: packages/shell/tool-bash/src/background.ts:26]
+7. **后台** `run_in_background === true`：检查开关与 `ctx.jobs`；`exec.signal.aborted` 则 `TOOL_ABORTED`（升权之后、spawn 之前也能拦住）。`jobs.start` 的 `run()` 里才 `ctx.shell.start(ctx.shell.resolve(request))`；preflight 失败则 `starts === 0`。[E: packages/shell/tool-bash/src/index.ts:358] [E: packages/shell/tool-bash/src/index.ts:369] [E: packages/shell/tool-bash/tests/tools.spec.ts:554] `processOutcome`：`killed` 带 signal 细节，其它（含非零退出）是 `completed`。[E: packages/shell/tool-bash/src/background.ts:23] [E: packages/shell/tool-bash/src/background.ts:26]
 8. **前台** `ctx.shell.run(ctx.shell.resolve({ ...request, signal: exec.signal }))`。[E: packages/shell/tool-bash/src/index.ts:379] `result.aborted` 转 `TOOL_ABORTED`；否则 `kind: 'foreground'` + `canonicalBashResult`。[E: packages/shell/tool-bash/src/index.ts:383] [E: packages/shell/tool-bash/src/index.ts:388]
 9. 执行器：`resolve` 填 cwd（`request.workdir ?? config.cwd ?? process.cwd()`）并 `clampTimeout`。[E: packages/shell/bash-local/src/index.ts:159] 前台 `deadline` + `bash -c`；后台 `startArgv` 不把 `timeoutMs` 送进 timer，靠 `kill()` / `spec.signal` 停。[E: packages/shell/bash-local/src/index.ts:214] [E: packages/shell/tool-bash/src/index.ts:256]
 10. confine 路径：`danger-full-access` 不 wrap；其它模式 `ctx.sandbox.confine`。前台 runner spawn 失败抛 `SandboxUnavailableError`；后台 stamp `sandbox.runnerFailed`。[E: packages/shell/bash-sandbox/src/index.ts:91] [E: packages/shell/bash-sandbox/src/index.ts:103]
@@ -185,7 +185,7 @@ win32 上本包 disabled；同预设改挂 `@deepseek-ai/dsh-tool-pwsh`（`disab
 - **请求形状是白名单。** 模型就算塞 `env` / `stdin` / `stdoutMaxBytes` 也不会进 `ShellExecRequest`；shell 语法自己能设环境或 heredoc。
 - **session cwd ≠ 进程 cwd。** 有 `session.header.cwd` 时默认在那里跑；相对 `workdir` 相对它解析。测试：`/usr` + `bin` → `/usr/bin`。[E: packages/shell/tool-bash/tests/tools.spec.ts:833]
 - **后台所有权。** job 挂 `owner: exec.agent`；别的 session 读会「belongs to another session」。[E: packages/shell/tool-bash/tests/tools.spec.ts:496]
-- **超时陷阱。** 命令 trap SIGTERM 后 exit 0，前台仍报 `[timed out after Nms]`，不装成干净成功。[E: packages/shell/tool-bash/tests/tools.spec.ts:281]
+- **超时陷阱。** 命令 trap SIGTERM 后 exit 0，前台仍报 `[timed out after Nms]`，不装成干净成功。[E: packages/shell/tool-bash/tests/tools.spec.ts:283]
 - **PTC collapse：** `presets/ptc/` 把 `dsh-agent-tool-presentation` 配成 `mode: ptc`；模型直调 `bash` 在 policy 之前变成 `UNKNOWN_TOOL`，须从 `run_code` 子调度进入。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/core/tools/src/index.ts:1430]
 
 ## Sources

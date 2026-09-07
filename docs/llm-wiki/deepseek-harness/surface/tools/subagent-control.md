@@ -7,7 +7,7 @@ pkg: orchestration
 source:
   - packages/subagent/tool-subagent-control/src/index.ts
   - packages/subagent/tool-subagent-control/src/list-agents.ts
-  - packages/subagent/tool-subagent-control/src/invariant.ts
+
   - packages/subagent/tool-subagent-control/package.json
   - packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts
   - packages/subagent/tool-subagent-control/tests/list-agents.spec.ts
@@ -48,17 +48,17 @@ related:
   - subsys.orchestration.subagent
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
-> 模型可见名 `send_message` / `interrupt_agent` / `list_agents`；实现包 `@deepseek-ai/dsh-tool-subagent-control`。前两个由插件 `tool-subagent-control` 注册，第三个由**另一入口** `@deepseek-ai/dsh-tool-subagent-control/list-agents`（插件名 `tool-subagent-list-agents`）单独注册。三者都是 `ctx.subagents` 上 continuable 子代理的薄 adapter：投递下一轮、打断当前轮、列出可续跑孩子。
+> 模型可见名 `send_message` / `interrupt_agent` / `list_agents`；实现包 `@deepseek-ai/dsh-tool-subagent-control`。前两个由插件 `tool-subagent-control` 注册，第三个由**另一入口** `@deepseek-ai/dsh-tool-subagent-control/list-agents`（插件名 `tool-subagent-list-agents`）单独注册。三者都是 `ctx.subagents` 上 continuable 子代理的薄 adapter：邻接 `sendMessage`、打断当前轮、列出可续跑孩子。
 
 ## 能回答的问题
 
 - `send_message`、`interrupt_agent`、`list_agents` 分别是哪个 Cordis 插件、哪个 package export 装上的？
 - 默认 Config 下三个 wire 名各有哪些参数？`list_agents` 省略 `scope` 时列出谁、会不会露出 one-shot 孩子？
 - `send_message` 回的是子代理答案还是投递回执？失败是不是「没送到」？
-- `ctx.subagents.followup` / `interrupt` / `listChildren` 各自要求什么 authority？换掉 spawn/fork provider 会不会改这三个工具？
+- `ctx.subagents.sendMessage` / `interrupt` / `listChildren` 各自要求什么 authority？换掉 spawn/fork provider 会不会改这三个工具？
 - `minimal` / `standard` / `ptc` / `cordis` 谁装这两行？`delegation` group 的 isolate 挡的是 `subagents` 还是 `workflowEngine`？
 - 无 `exec.agent`、非直接父、深祖先、已 settle 的 id，三个工具各自怎样失败或 no-op？
 
@@ -68,35 +68,33 @@ updated: 0a53fb55be
 
 | wire `name` | 插件 `export const name` | 装入口 | `inject` | 工厂 |
 |---|---|---|---|---|
-| `send_message` | `tool-subagent-control` | `@deepseek-ai/dsh-tool-subagent-control`（`exports["."]`） | `['tools', 'subagents']` | `apply(ctx)` 里第一次 `ctx.tools.register(defineTool({ name: 'send_message', ... }))` [E: packages/subagent/tool-subagent-control/src/index.ts:19] [E: packages/subagent/tool-subagent-control/src/index.ts:20] [E: packages/subagent/tool-subagent-control/src/index.ts:27] [E: packages/subagent/tool-subagent-control/src/index.ts:28] |
-| `interrupt_agent` | `tool-subagent-control`（与 `send_message` 同一个 `apply()` 的第二次 `register`） | `@deepseek-ai/dsh-tool-subagent-control`（`exports["."]`） | `['tools', 'subagents']` | `defineTool({ name: 'interrupt_agent', ... })` [E: packages/subagent/tool-subagent-control/src/index.ts:81] [E: packages/subagent/tool-subagent-control/src/index.ts:80] |
+| `send_message` | `tool-subagent-control` | `@deepseek-ai/dsh-tool-subagent-control`（`exports["."]`） | `['tools', 'subagents']` | `apply(ctx)` 里第一次 `ctx.tools.register(defineTool({ name: 'send_message', ... }))` [E: packages/subagent/tool-subagent-control/src/index.ts:20] [E: packages/subagent/tool-subagent-control/src/index.ts:21] [E: packages/subagent/tool-subagent-control/src/index.ts:27] [E: packages/subagent/tool-subagent-control/src/index.ts:29] |
+| `interrupt_agent` | `tool-subagent-control`（与 `send_message` 同一个 `apply()` 的第二次 `register`） | `@deepseek-ai/dsh-tool-subagent-control`（`exports["."]`） | `['tools', 'subagents']` | `defineTool({ name: 'interrupt_agent', ... })` [E: packages/subagent/tool-subagent-control/src/index.ts:76] [E: packages/subagent/tool-subagent-control/src/index.ts:77] |
 | `list_agents` | `tool-subagent-list-agents` | `@deepseek-ai/dsh-tool-subagent-control/list-agents`（`exports["./list-agents"]`） | `['tools', 'subagents', 'agents']` | 独立 `apply(ctx)` → `defineTool({ name: 'list_agents', ... })` [E: packages/subagent/tool-subagent-control/src/list-agents.ts:17] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:18] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:92] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:93] [E: packages/subagent/tool-subagent-control/package.json:25] |
 
-两个 `apply` **都没有** `Config` 参数：签名是 `apply(ctx: Context): void`，boot 时没有改名 / 改参旋钮。[E: packages/subagent/tool-subagent-control/src/index.ts:26] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:91]
+两个 `apply` **都没有** `Config` 参数：签名是 `apply(ctx: Context): void`，boot 时没有改名 / 改参旋钮。[E: packages/subagent/tool-subagent-control/src/index.ts:27] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:91]
 
 `inject` 缺 `ctx.tools` 或 `ctx.subagents` 时插件挂起，catalog 里不会出现对应名字。`list_agents` 额外要求 `ctx.agents`，因为投影状态要读 live `Agent` 表。[E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:225] [E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:263]
 
-测试钉死命名空间插件形态：无 `default` export；`tool.name` / `tool.inject` / `typeof tool.apply` 就是 Cordis 插件合同。[E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:223] [E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:261]
+测试钉死命名空间插件形态：无 `default` export；`tool.name` / `tool.inject` / `typeof tool.apply` 就是 Cordis 插件合同。[E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:223] [E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:262]
 
 `ctx.tools.register` 走 layer `effect`，fiber `dispose()` 会卸掉这两个（或一个）名字——测试分别卸 `send_message`+`interrupt_agent` 与单独卸 `list_agents`。[E: packages/core/tools/src/index.ts:1048] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:217] [E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:256]
 
-同包还有 invariant companion `@deepseek-ai/dsh-tool-subagent-control/invariant`（插件名 `tool-subagent-control-invariant`）：`install` 是空函数，声明「没有独立 lifecycle stream」。[E: packages/subagent/tool-subagent-control/src/invariant.ts:13] [E: packages/subagent/tool-subagent-control/src/invariant.ts:21]
-
-这三个名字**不是** [subagent.md](subagent.md) / [subagent-fork.md](subagent-fork.md) 那两个 `dsh-tool-subagent` 实例。spawn/fork 负责拉起孩子；本页只做后续控制，好让多个 delegation 工具共用一套 control API。
+本包 **没有** `src/invariant.ts` companion。这三个名字**不是** [subagent.md](subagent.md) / [subagent-fork.md](subagent-fork.md) 那两个 `dsh-tool-subagent` 实例。spawn/fork 负责拉起孩子；本页只做后续控制，好让多个 delegation 工具共用一套 control API。
 
 ## 用途定位
 
 | 工具 | 模型该用它做什么 | 明确不做什么 |
 |---|---|---|
-| `send_message` | 按 durable `subagent_id` 给 **continuable** 后台子代理塞一条 **下一轮** user 消息 | 不返回子代理答案；不能改写正在跑的那一轮；不是 `job_output` / job id 通道 [E: packages/subagent/tool-subagent-control/src/index.ts:32] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:112] |
+| `send_message` | 按 durable `agent_id` 给 **直接 continuable 孩子**（或驻留孩子给直接父）投递一条邻接消息 | 不返回子代理答案；运行中目标走 steer（最近 step），idle 开 turn；不是 `job_output` [E: packages/subagent/tool-subagent-control/src/index.ts:31] [E: packages/subagent/tool-subagent-control/src/index.ts:32] |
 | `interrupt_agent` | 按 `agent_id` 请求取消目标 **当前轮**；目标可以是直接孩子或更深后代 | 不拆 Activation、不丢已入队但未 claim 的 inbox、不连带停掉目标自己拉起的后代；已结束的 id 是 accepted no-op [E: packages/subagent/tool-subagent-control/src/index.ts:83] [E: packages/subagent/tool-subagent-control/src/index.ts:88] |
 | `list_agents` | 按 durable id + label 回忆「我还开着哪些可续跑后台子代理」 | 不是 completion 轮询（结束会另有 notice）；快照不是 `send_message` 投递承诺 [E: packages/subagent/tool-subagent-control/src/list-agents.ts:95] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:101] |
 
-`send_message` 的描述写明：子代理若仍在工作，消息等到当前轮结束才成为下一 turn；调用只确认 **delivered**，失败等于 **NOT delivered**。[E: packages/subagent/tool-subagent-control/src/index.ts:31] [E: packages/subagent/tool-subagent-control/src/index.ts:34]
+`send_message` 的描述写明：目标仍在工作时 **steer 最近 step**；idle 则开 turn；调用只确认 **delivered**，失败等于 **NOT delivered**。[E: packages/subagent/tool-subagent-control/src/index.ts:32] [E: packages/subagent/tool-subagent-control/src/index.ts:34]
 
 `list_agents` 的描述写明：`scope: descendants` 用稳定 pre-order 走完整子树，并标 durable 直接父 id 与 depth；模型只许对 **depth-1** 调 `send_message`，更深条目只做 `interrupt_agent` 候选。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:104] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:105]
 
-孩子的创建走 [subagent.md](subagent.md)（`toolName: subagent` + `provider: spawn`）或 [subagent-fork.md](subagent-fork.md)（`toolName: subagent_fork` + `provider: fork`）。孩子主动回父会话是 [report.md](report.md) 的 `report`，不在本页 catalog。
+孩子的创建走 [subagent.md](subagent.md)（`toolName: subagent` + `provider: spawn`）或 [subagent-fork.md](subagent-fork.md)（`toolName: subagent_fork` + `provider: fork`）。孩子主动回父可用本页 `send_message`（邻接父 id）；[report.md](report.md) 的 `report` 工具已退役。
 
 ## 输入 schema
 
@@ -104,11 +102,11 @@ updated: 0a53fb55be
 
 ### `send_message`
 
-测试：全局只注册一次；properties 排序后恰好 `['message', 'subagent_id']`；描述含 `next turn`，不含 `job_output` / `job id`。[E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:108] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:110] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:115]
+测试：全局只注册一次；properties 含 `agent_id` 与 `message`。描述不再用 `subagent_id` 字段名。[E: packages/subagent/tool-subagent-control/src/index.ts:36] [E: packages/subagent/tool-subagent-control/src/index.ts:41]
 
 | 字段 | 类型 | 必填 | 默认 | 约束 | 说明 |
 |---|---|---|---|---|---|
-| `subagent_id` | `string` | 是 | 无 | schema 必填 | 后台子代理启动时返回的 durable id。execute 里 `brandString<SessionId>(...)` 只做 brand，无运行时格式检查。[E: packages/subagent/tool-subagent-control/src/index.ts:36] [E: packages/subagent/tool-subagent-control/src/index.ts:38] [E: packages/subagent/tool-subagent-control/src/index.ts:69] |
+| `agent_id` | `string` | 是 | 无 | schema 必填 | 直接 continuable 孩子、或驻留孩子的直接父。execute 里 `brandString<SessionId>(...)` 只做 brand。[E: packages/subagent/tool-subagent-control/src/index.ts:36] [E: packages/subagent/tool-subagent-control/src/index.ts:38] [E: packages/subagent/tool-subagent-control/src/index.ts:68] |
 | `message` | `string` | 是 | 无 | schema 必填 | 投给子代理的纯文本；body 包成单块 `{ type: 'text', text }`。[E: packages/subagent/tool-subagent-control/src/index.ts:41] [E: packages/subagent/tool-subagent-control/src/index.ts:66] |
 
 没有 `run_in_background`、没有 timeout 字段、没有 Config 改广告。
@@ -119,7 +117,7 @@ updated: 0a53fb55be
 
 | 字段 | 类型 | 必填 | 默认 | 约束 | 说明 |
 |---|---|---|---|---|---|
-| `agent_id` | `string` | 是 | 无 | schema 必填 | 要打断的 agent / 子代理 session id。同样 `brandString<SessionId>`。[E: packages/subagent/tool-subagent-control/src/index.ts:90] [E: packages/subagent/tool-subagent-control/src/index.ts:92] [E: packages/subagent/tool-subagent-control/src/index.ts:117] |
+| `agent_id` | `string` | 是 | 无 | schema 必填 | 要打断的 agent / 子代理 session id。同样 `brandString<SessionId>`。[E: packages/subagent/tool-subagent-control/src/index.ts:86] [E: packages/subagent/tool-subagent-control/src/index.ts:88] [E: packages/subagent/tool-subagent-control/src/index.ts:113] |
 
 ### `list_agents`
 
@@ -137,8 +135,8 @@ updated: 0a53fb55be
 
 | 工具 | `output.schema` | 成功 `value` | 模型看到的 render |
 |---|---|---|---|
-| `send_message` | 对象，`additionalProperties: false`，必填 `messageId: string` | `{ messageId }`（inbox 接受后的 id） | `message queued as the next turn for subagent ${subagent_id}` [E: packages/subagent/tool-subagent-control/src/index.ts:52] [E: packages/subagent/tool-subagent-control/src/index.ts:57] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:134] |
-| `interrupt_agent` | 对象，必填 `accepted: boolean` | 未抛则 **恒** `{ accepted: true }` | `interrupt requested for agent ${agent_id}` [E: packages/subagent/tool-subagent-control/src/index.ts:101] [E: packages/subagent/tool-subagent-control/src/index.ts:106] [E: packages/subagent/tool-subagent-control/src/index.ts:118] |
+| `send_message` | 对象，`additionalProperties: false`，必填 `messageId: string` | `{ messageId }`（inbox 接受后的 id） | `message delivered to agent ${agent_id}` [E: packages/subagent/tool-subagent-control/src/index.ts:52] [E: packages/subagent/tool-subagent-control/src/index.ts:57] |
+| `interrupt_agent` | 对象，必填 `accepted: boolean` | 未抛则 **恒** `{ accepted: true }` | `interrupt requested for agent ${agent_id}` [E: packages/subagent/tool-subagent-control/src/index.ts:97] [E: packages/subagent/tool-subagent-control/src/index.ts:102] [E: packages/subagent/tool-subagent-control/src/index.ts:114] |
 | `list_agents` | `array`，item 为 `child` 或 `diagnostic` 的 `oneOf` | 过滤 one-shot 后的投影数组 | 空数组 → `(no subagents)`；否则一行一个条目 [E: packages/subagent/tool-subagent-control/src/list-agents.ts:116] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:149] [E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:126] |
 
 `list_agents` 的 `child` 行：`kind: 'child'`、`id`、`label`、`status` ∈ `{running, idle, ready}`，以及仅 descendants 才有意义的可选 `parent` / `depth`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:122] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:125] `diagnostic` 行：`reason` ∈ `{corrupt, unsupported, unavailable}`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:136]
@@ -154,18 +152,18 @@ render 文本：
 
 | 角色 | 实体 | 本家族怎么用 |
 |---|---|---|
-| Definition | `ctx.subagents` / `SubagentRuntime`（`super(ctx, 'subagents')`） | `followup` / `interrupt` / `listChildren` / `listDescendants`。[E: packages/subagent/subagent/src/index.ts:209] [E: packages/subagent/subagent/src/index.ts:256] [E: packages/subagent/subagent/src/index.ts:280] [E: packages/subagent/subagent/src/index.ts:369] [E: packages/subagent/subagent/src/index.ts:388] |
-| Provider（续跑运行时） | `SubagentContinuationManager`，仅当 `ctx.inject(['agents'])` 绑上 | `followup` 经 `requireContinuations()`；缺 `agents` 抛 `CONTINUATION_UNAVAILABLE`。`interrupt` 用可选链：没有 manager 就静默 return。[E: packages/subagent/subagent/src/index.ts:211] [E: packages/subagent/subagent/src/index.ts:597] [E: packages/subagent/subagent/src/index.ts:281] |
-| Provider（发现） | `list-children.ts` 的 live-preferred corpus | `SubagentRuntime.listChildren` 只转给 `listSubagentChildren` 等价实现 `listChildren(this.ctx, ...)`，读 session corpus，不经过 continuation manager。[E: packages/subagent/subagent/src/list-children.ts:81] [E: packages/subagent/subagent/src/index.ts:370] |
-| Consumer | `@deepseek-ai/dsh-tool-subagent-control` 与 `/list-agents` | 工具自己不做 residency / 授权路由，只把 `exec.agent` 交给服务。[E: packages/subagent/tool-subagent-control/src/index.ts:67] [E: packages/subagent/tool-subagent-control/src/index.ts:117] |
+| Definition | `ctx.subagents` / `SubagentRuntime`（`super(ctx, 'subagents')`） | `sendMessage` / `interrupt` / `listChildren` / `listDescendants`。[E: packages/subagent/subagent/src/index.ts:201] [E: packages/subagent/subagent/src/index.ts:247] [E: packages/subagent/subagent/src/index.ts:296] [E: packages/subagent/subagent/src/index.ts:350] [E: packages/subagent/subagent/src/index.ts:369] |
+| Provider（续跑运行时） | `SubagentContinuationManager`，仅当 `ctx.inject(['agents'])` 绑上 | `sendMessage` 经 `requireContinuations()`；缺 `agents` 抛 `CONTINUATION_UNAVAILABLE`。`interrupt` 用可选链：没有 manager 就静默 return。[E: packages/subagent/subagent/src/index.ts:203] [E: packages/subagent/subagent/src/index.ts:598] [E: packages/subagent/subagent/src/index.ts:296] |
+| Provider（发现） | `list-children.ts` 的 live-preferred corpus | `SubagentRuntime.listChildren` 转给 `listSubagentChildren` / `listChildren(this.ctx, ...)`，读 session corpus，不经过 continuation manager。[E: packages/subagent/subagent/src/list-children.ts:83] [E: packages/subagent/subagent/src/index.ts:351] |
+| Consumer | `@deepseek-ai/dsh-tool-subagent-control` 与 `/list-agents` | 工具自己不做 residency / 授权路由，只把 `exec.agent` 交给服务。[E: packages/subagent/tool-subagent-control/src/index.ts:66] [E: packages/subagent/tool-subagent-control/src/index.ts:113] |
 
-换掉 `spawn` / `fork` **provider** 不会改这三个工具的 schema 或 authority：它们不按 provider 名分发。换掉或卸掉 `ctx.subagents` 会让两个插件因 `inject` 挂起。卸掉 `ctx.agents` 会：让 `list_agents` 挂起；让 `followup` 因 `requireContinuations()` 失败；让 `interrupt` 在无 manager 时变成 no-op。
+换掉 `spawn` / `fork` **provider** 不会改这三个工具的 schema 或 authority：它们不按 provider 名分发。换掉或卸掉 `ctx.subagents` 会让两个插件因 `inject` 挂起。卸掉 `ctx.agents` 会：让 `list_agents` 挂起；让 `sendMessage` 因 `requireContinuations()` 失败；让 `interrupt` 在无 manager 时变成 no-op。
 
-`list_agents` 另外消费 `ctx.agents.get(id)`：没有 live `Agent` → `ready`；`agent.status === 'running'` → `running`；其余 live 状态 → `idle`。`AgentStatus` 本身只有 `'idle' | 'running'`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:61] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:62] [E: packages/core/agent/src/runtime-types.ts:53]
+`list_agents` 另外消费 `ctx.agents.get(id)`：没有 live `Agent` → `ready`；`agent.status === 'running'` → `running`；其余 live 状态 → `idle`。`AgentStatus` 本身只有 `'idle' | 'running'`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:61] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:62] [E: packages/core/agent/src/runtime-types.ts:55]
 
-`send_message` 写入的 durable `source` 是 `{ kind: 'coordinator', form: 'relay', senderSessionId: parent.id }`——记录发送方，**不**授予 authority。真正的门在 `authorizeLineage`：调用者必须是 **exact live direct parent**。[E: packages/subagent/tool-subagent-control/src/index.ts:72] [E: packages/subagent/subagent/src/continuation.ts:1289] [E: packages/subagent/subagent/src/continuation.ts:1295]
+`send_message` 把 `exec.agent` 当 exact live sender 交给 `sendMessage`；服务核邻接（直接孩子或驻留孩子的直接父）。[E: packages/subagent/tool-subagent-control/src/index.ts:66] [E: packages/subagent/subagent/src/continuation.ts:583] [E: packages/subagent/subagent/src/continuation.ts:589]
 
-`interrupt_agent` 交给服务的 authority 是 `{ kind: 'ancestor', agent: caller }`。服务核：caller 仍是 `ctx.agents` 里那一个对象、caller.id ≠ target、target 的 live `activation.ancestry` 含 caller。缺 Activation 直接 return（no-op，不 cold-resume）。[E: packages/subagent/subagent/src/continuation.ts:563] [E: packages/subagent/subagent/src/continuation.ts:569] [E: packages/subagent/subagent/src/continuation.ts:577] [E: packages/subagent/subagent/src/continuation.ts:585]
+`interrupt_agent` 交给服务的 authority 是 `{ kind: 'ancestor', agent: caller }`。服务核：caller 仍是 `ctx.agents` 里那一个对象、caller.id ≠ target、target 的 live `activation.ancestry` 含 caller。缺 Activation 直接 return（no-op，不 cold-resume）。[E: packages/subagent/subagent/src/continuation.ts:737] [E: packages/subagent/subagent/src/continuation.ts:742] [E: packages/subagent/subagent/src/continuation.ts:755] [E: packages/subagent/subagent/src/continuation.ts:764]
 
 ## 执行管线
 
@@ -178,8 +176,8 @@ render 文本：
 - **sandbox：** 不 confine、不读 `sandboxPolicy`。
 - **checkpoint：** host `session-checkpoint-policy` 在 `tools/execute` 上：有 `exec.agent` 且无 `exec.parent` 时先 `ctx.sessions.flush`，再 `next()`。嵌套（PTC `run_code` 的 `parent`）跳过。[E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
 - **并行：** 未声明 `isConcurrencySafe`，`executionMode` fail-closed 为 exclusive。[E: packages/core/tools/src/index.ts:1269]
-- **PTC：** `ptc` preset 仍装这两行，但 `mode: ptc` 时无 `parent` 的模型直调原生名在进 waterfall 前 `collapses`，必须从 `run_code` 程序里调。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/core/tools/src/index.ts:1316]
-- **信号：** `send_message` / `list_agents` 把 `exec.signal` 交给服务（lookup / persist / 扫描）。`interrupt_agent` 同步授权并 `cancel`，不传 tool signal。[E: packages/subagent/tool-subagent-control/src/index.ts:73] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:175] [E: packages/subagent/tool-subagent-control/src/index.ts:117]
+- **PTC：** `ptc` preset 仍装这两行，但 `mode: ptc` 时无 `parent` 的模型直调原生名在进 waterfall 前 `collapses`，必须从 `run_code` 程序里调。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:271] [E: packages/core/tools/src/index.ts:1315]
+- **信号：** `send_message` / `list_agents` 把 `exec.signal` 交给服务（lookup / persist / 扫描）。`interrupt_agent` 同步授权并 `cancel`，不传 tool signal。[E: packages/subagent/tool-subagent-control/src/index.ts:70] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:176] [E: packages/subagent/tool-subagent-control/src/index.ts:113]
 
 ## Preset 装配
 
@@ -192,43 +190,40 @@ render 文本：
 | `ptc` | 是。`id: tool-subagent-control` | 是。`id: tool-subagent-list-agents` | 无 | 在 `delegation` group；只 `isolate.workflowEngine: true` [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:175] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:181] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:184] |
 | `cordis` | 是。`id: tool-subagent-control` | 是。`id: tool-subagent-list-agents` | 无 | 在 `delegation` group；只 `isolate.workflowEngine: true` [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:162] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:166] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:168] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:171] |
 
-组合旁注（**不是** preset 成员资格）：`dsh-base` 也 insert 了 host 行 `tool-subagent-control` 与 `tool-subagent-list-agents`。[E: packages/bundle/base/cordis.patch.yml:349] [E: packages/bundle/base/cordis.patch.yml:352] `dsh-web-app` overlay 把这两行 `disabled: true`，改由每个 session 的 preset 再挂。[E: packages/bundle/web-app/cordis.patch.yml:398] [E: packages/bundle/web-app/cordis.patch.yml:399] [E: packages/bundle/web-app/cordis.patch.yml:401] host 上的 `dsh-subagent` + spawn/fork **backends** 仍留在 process singleton；preset 只贡献 model-facing 工具。
+组合旁注（**不是** preset 成员资格）：`dsh-base` 也 insert 了 host 行 `tool-subagent-control` 与 `tool-subagent-list-agents`。[E: packages/bundle/base/cordis.patch.yml:349] [E: packages/bundle/base/cordis.patch.yml:352] `dsh-web-app` overlay 把这两行 `disabled: true`，改由每个 session 的 preset 再挂。[E: packages/bundle/web-app/cordis.patch.yml:408] [E: packages/bundle/web-app/cordis.patch.yml:409] [E: packages/bundle/web-app/cordis.patch.yml:411] host 上的 `dsh-subagent` + spawn/fork **backends** 仍留在 process singleton；preset 只贡献 model-facing 工具。
 
-opt-in 的 `@deepseek-ai/dsh-experimental-agent-team-profile` 同样 `disabled: true` 全局 `tool-subagent-control` 与 `tool-subagent-list-agents`（以及 `tool-subagent-report`），避免与 Team 工具的 `send_message` / `list_agents` / `interrupt_agent` 撞名；one-shot `subagent` / `subagent_fork` 仍保留。[E: packages/experimental/agent-team-profile/cordis.patch.yml:5] [E: packages/experimental/agent-team-profile/cordis.patch.yml:8]
+opt-in 的 `@deepseek-ai/dsh-experimental-agent-team-profile` 同样 `disabled: true` 全局 `tool-subagent-control` 与 `tool-subagent-list-agents`，避免与 Team 工具的 `send_message` / `list_agents` / `interrupt_agent` 撞名；并把 spawn/fork 改成 one-shot。[E: packages/experimental/agent-team-profile/cordis.patch.yml:5] [E: packages/experimental/agent-team-profile/cordis.patch.yml:8]
 
 ## execute() 走读
 
-公共前置：`defineTool` 包装的 `execute` 先 `validateJsonSchemaValue`，违规抛 `ToolArgsError`。[E: packages/core/tools/src/schema.ts:586] [E: packages/core/tools/src/schema.ts:587]
+公共前置：`defineTool` 包装的 `execute` 先 `validate`，违规抛 `ToolArgsError`。[E: packages/core/tools/src/schema.ts:587] [E: packages/core/tools/src/schema.ts:588]
 
 ### `send_message`
 
-1. `execute@packages/subagent/tool-subagent-control/src/index.ts`：取 `exec.agent`。没有 calling agent 就抛 `send_message requires a calling agent (exec.agent was undefined)`。[E: packages/subagent/tool-subagent-control/src/index.ts:61] [E: packages/subagent/tool-subagent-control/src/index.ts:64]
-2. 把 `args.message` 收成 `ContentBlock[]` 单 text 块。[E: packages/subagent/tool-subagent-control/src/index.ts:66]
-3. `ctx.subagents.followup(parent, brandString<SessionId>(args.subagent_id), message, { source: { kind: 'coordinator', form: 'relay', senderSessionId: parent.id }, signal: exec.signal })`。[E: packages/subagent/tool-subagent-control/src/index.ts:67] [E: packages/subagent/tool-subagent-control/src/index.ts:72] [E: packages/subagent/tool-subagent-control/src/index.ts:73]
-4. `SubagentRuntime.followup@packages/subagent/subagent/src/index.ts` 转给 `requireContinuations().followup(...)`。[E: packages/subagent/subagent/src/index.ts:262]
-5. `SubagentContinuationManager.followup@packages/subagent/subagent/src/continuation.ts`：`assertAdmitting(parent)` 后按 childId 加锁。无 Activation → `coldResume`；有 disposal 中的 Activation → 等释放再重试；否则 `submitAdmitted`。[E: packages/subagent/subagent/src/continuation.ts:512] [E: packages/subagent/subagent/src/continuation.ts:516]
-6. `coldResume`：observe/query 失败 → `SubagentError(..., 'NOT_RESUMABLE')` 文案 `subagent "…" is unavailable`。折出的 descriptor 不是 `continuable` → 同样 `NOT_RESUMABLE`，并写「do not retry send_message with this id」。observe 成功后先 `authorizeLineage`。[E: packages/subagent/subagent/src/continuation.ts:963] [E: packages/subagent/subagent/src/continuation.ts:969] [E: packages/subagent/subagent/src/continuation.ts:976]
-7. `authorizeLineage`：`ctx.agents.get(parent.id) !== parent` → 要 exact live parent；`parentSession !== parent.id` → `belongs to another parent session`（`UNAUTHORIZED`）。祖先 / sibling / stranger 都过不了这扇门。[E: packages/subagent/subagent/src/continuation.ts:1289] [E: packages/subagent/subagent/src/continuation.ts:1295] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:198]
-8. 入队是 **下一 FIFO turn**，不会并进正在跑的那一轮。测试：open turn 期间再 `send_message`，持久化 user 文本是 `['long work', 'also consider Y']` 两条。[E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:169]
-9. 返回 `{ messageId }`。render **不**回传 messageId 文本，只说 queued。[E: packages/subagent/tool-subagent-control/src/index.ts:76]
+1. `execute@packages/subagent/tool-subagent-control/src/index.ts`：取 `exec.agent`。没有 calling agent 就抛 `send_message requires a calling agent (exec.agent was undefined)`。[E: packages/subagent/tool-subagent-control/src/index.ts:61] [E: packages/subagent/tool-subagent-control/src/index.ts:63]
+2. 把 `args.message` 收成 `ContentBlock[]` 单 text 块。[E: packages/subagent/tool-subagent-control/src/index.ts:65]
+3. `ctx.subagents.sendMessage(sender, brandString<SessionId>(args.agent_id), message, { signal: exec.signal })`。[E: packages/subagent/tool-subagent-control/src/index.ts:66] [E: packages/subagent/tool-subagent-control/src/index.ts:70]
+4. `SubagentRuntime.sendMessage@packages/subagent/subagent/src/index.ts` 转给 `requireContinuations().sendMessage(...)`。[E: packages/subagent/subagent/src/index.ts:253]
+5. `SubagentContinuationManager.sendMessage@packages/subagent/subagent/src/continuation.ts`：exact live sender；若 target 是驻留孩子的直接父则 `sendToParent`；否则 `deliverToChild`（含 cold resume）。运行中目标 **Steer** 最近 step，idle 开 turn。[E: packages/subagent/subagent/src/continuation.ts:583] [E: packages/subagent/subagent/src/continuation.ts:589] [E: packages/subagent/subagent/src/continuation.ts:601]
+6. 返回 `{ messageId }`。render 说 `message delivered to agent ${agent_id}`。[E: packages/subagent/tool-subagent-control/src/index.ts:72] [E: packages/subagent/tool-subagent-control/src/index.ts:57]
 
 ### `interrupt_agent`
 
-1. 取 `exec.agent`；缺失则抛 `interrupt_agent requires a calling agent (exec.agent was undefined)`。[E: packages/subagent/tool-subagent-control/src/index.ts:110] [E: packages/subagent/tool-subagent-control/src/index.ts:113]
-2. `ctx.subagents.interrupt(brandString<SessionId>(args.agent_id), { kind: 'ancestor', agent: caller })`。工具不加第二层授权。[E: packages/subagent/tool-subagent-control/src/index.ts:117]
-3. `SubagentRuntime.interrupt` 是 `this.continuations?.interrupt(...)`：无 continuation manager 则什么都不做。[E: packages/subagent/subagent/src/index.ts:281]
-4. `SubagentContinuationManager.interrupt@packages/subagent/subagent/src/continuation.ts`：ancestor 必须仍是 `ctx.agents` 里的同一对象；`caller.id === targetSessionId` → `cannot interrupt itself`。[E: packages/subagent/subagent/src/continuation.ts:563] [E: packages/subagent/subagent/src/continuation.ts:571]
-5. `activations.get` 为 `undefined` → **直接 return**（已结束、未知 id、one-shot 一律 accepted no-op，且不 cold-resume）。测试：settled 孩子与 `'no-such-agent'` 都 `isError === false`，且 settled id 不会重新 `ctx.agents.get`。[E: packages/subagent/subagent/src/continuation.ts:577] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:379] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:384]
-6. live 但不在 `activation.ancestry`（sibling / stranger）→ `not a live descendant`，且 `cancel` 不会被调用。[E: packages/subagent/subagent/src/continuation.ts:587] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:356] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:360]
-7. 深祖先 **可以** 打断非直接创建的后代：测试里 root parent 对 grandchild 调 `interrupt_agent`，`cancel` 以 `{ kind: 'parent' }` + `{ keepInbox: true }` 打上。[E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:317] [E: packages/subagent/subagent/src/continuation.ts:595]
-8. `keepInbox: true`：已 queued 的 `send_message` 停在 inbox，等下一次 waking `send_message` 才跑。测试：打断后 `adapter.requests` 仍为 1，`inbox.nextTurn` 长度为 1。[E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:272] [E: packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts:273]
-9. 工具立刻 `Promise.resolve({ accepted: true })`，不等目标观察到 signal。[E: packages/subagent/tool-subagent-control/src/index.ts:118]
+1. 取 `exec.agent`；缺失则抛 `interrupt_agent requires a calling agent (exec.agent was undefined)`。[E: packages/subagent/tool-subagent-control/src/index.ts:106] [E: packages/subagent/tool-subagent-control/src/index.ts:109]
+2. `ctx.subagents.interrupt(brandString<SessionId>(args.agent_id), { kind: 'ancestor', agent: caller })`。工具不加第二层授权。[E: packages/subagent/tool-subagent-control/src/index.ts:113]
+3. `SubagentRuntime.interrupt` 是 `this.continuations?.interrupt(...)`：无 continuation manager 则什么都不做。[E: packages/subagent/subagent/src/index.ts:296]
+4. `SubagentContinuationManager.interrupt@packages/subagent/subagent/src/continuation.ts`：ancestor 必须仍是 `ctx.agents` 里的同一对象；`caller.id === targetSessionId` → `cannot interrupt itself`。[E: packages/subagent/subagent/src/continuation.ts:742] [E: packages/subagent/subagent/src/continuation.ts:748]
+5. `activations.get` 为 `undefined` → **直接 return**（已结束、未知 id、one-shot 一律 accepted no-op，且不 cold-resume）。[E: packages/subagent/subagent/src/continuation.ts:755]
+6. live 但不在 `activation.ancestry`（sibling / stranger）→ `not a live descendant`。[E: packages/subagent/subagent/src/continuation.ts:764]
+7. 深祖先 **可以** 打断非直接创建的后代：`cancel` 以 `{ kind: 'parent' }` + `{ keepInbox: true }` 打上。[E: packages/subagent/subagent/src/continuation.ts:773]
+8. `keepInbox: true`：已 queued 的消息停在 inbox，等下一次 waking `send_message` 才跑。[E: packages/subagent/subagent/src/continuation.ts:775]
+9. 工具立刻 `Promise.resolve({ accepted: true })`，不等目标观察到 signal。[E: packages/subagent/tool-subagent-control/src/index.ts:114]
 
 ### `list_agents`
 
-1. 取 `exec.agent`；缺失则抛 `list_agents requires a calling agent (exec.agent was undefined)`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:165] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:168]
+1. 取 `exec.agent`；缺失则抛 `list_agents requires a calling agent (exec.agent was undefined)`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:165] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:169]
 2. `resolveListAgentsRequest`：`scope` 缺省 `'children'`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:49]
-3. `children`：`ctx.subagents.listChildren(parent.id, exec.signal)`，再 `project(ctx.agents, entry)`（不带 position）。测试钉死转发的就是 tool 的 `signal`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:175] [E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:202]
+3. `children`：`ctx.subagents.listChildren(parent.id, exec.signal)`，再 `project(ctx.agents, entry)`（不带 position）。测试钉死转发的就是 tool 的 `signal`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:175] [E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:203]
 4. `descendants`：`listDescendants(parent.id, exec.signal)`，`project(ctx.agents, entry, entry)` 把 `parentId` / `depth` 抄到模型字段。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:181] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:183]
 5. `project@packages/subagent/tool-subagent-control/src/list-agents.ts`：diagnostic 原样保留；`mode !== 'continuable'` 丢掉；continuable 填 `statusOf`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:72] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:77] [E: packages/subagent/tool-subagent-control/src/list-agents.ts:82]
 6. 真实 one-shot sibling 不会出现在结果里；settled continuable 以 `[ready]` 列出。[E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:224]
@@ -240,8 +235,8 @@ opt-in 的 `@deepseek-ai/dsh-experimental-agent-team-profile` 同样 `disabled: 
 - **控制面与创建面拆包。** `@deepseek-ai/dsh-tool-subagent` 按 `toolName`/`provider` 可以装多次（`subagent`、`subagent_fork`、以及 shipped 里 `disabled: true` 的 `subagent_codex` / `subagent_claude_code`）。control 三件套全局各一个名字，避免每个 provider 再发明一套 follow-up API。
 - **`list_agents` 可单独不装。** 模块注释写明：部署可以只挂 `send_message` 做 continuation delivery，不把发现面暴露给模型。shipped `standard` / `ptc` / `cordis` 两行都装。
 - **发现默认只投影 continuable。** one-shot 不能被 `send_message` 续跑，所以不会出现在列表里；descendants 遍历仍会穿过它们，以免漏掉更深处的 continuable。
-- **`ready` ≠ 终态结果。** 没有 live `Agent` 只表示当前不驻留、仍可 `send_message` 冷启动。描述禁止模型把 listing 当成「去收结果」。完成靠 settlement notice，不是靠轮询本工具。[E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:232]
-- **`send_message` 只认直接父。** `authorizeLineage` 比 `list_agents` 的 descendants 视图更严：depth-2 的 id 能列出来、能 `interrupt_agent`，但不能 follow-up。
+- **`ready` ≠ 终态结果。** 没有 live `Agent` 只表示当前不驻留、仍可 `send_message` 冷启动。描述禁止模型把 listing 当成「去收结果」。完成靠 settlement notice，不是靠轮询本工具。[E: packages/subagent/tool-subagent-control/tests/list-agents.spec.ts:231]
+- **`send_message` 只认邻接。** depth-2 的 id 能列出来、能 `interrupt_agent`，但不能 `sendMessage`。驻留 continuable 孩子也可以给直接父发。
 - **打断保留 inbox。** `cancel(..., { keepInbox: true })` 停的是当前轮，不是整段对话。已经 queued 的 follow-up 要再发一条 waking `send_message` 才会跑。
 - **缺席目标对 interrupt 是成功。** 与 `send_message` 相反：后者对坏 id / 非 continuable 是 `isError`。interrupt 把完成竞态、重复请求、one-shot、未知 id 收成同一种 accepted no-op，避免模型为「已经停了」再重试出错误。
 - **不是 jobs。** continuable 路径没有 Task；`send_message` schema 刻意不提 `job_output`。读输出、杀进程是 [jobs.md](jobs.md) 的 `job_*`，对象是 bash/pwsh 后台 job，不是子代理会话。
@@ -252,7 +247,7 @@ opt-in 的 `@deepseek-ai/dsh-experimental-agent-team-profile` 同样 `disabled: 
 
 - packages/subagent/tool-subagent-control/src/index.ts
 - packages/subagent/tool-subagent-control/src/list-agents.ts
-- packages/subagent/tool-subagent-control/src/invariant.ts
+
 - packages/subagent/tool-subagent-control/package.json
 - packages/subagent/tool-subagent-control/tests/tool-subagent-control.spec.ts
 - packages/subagent/tool-subagent-control/tests/list-agents.spec.ts
@@ -280,6 +275,6 @@ opt-in 的 `@deepseek-ai/dsh-experimental-agent-team-profile` 同样 `disabled: 
 - [模型可见工具目录](../../reference/tools-catalog.md)（`ref.tools-catalog`）：boot 后 `ctx.tools.schemas()` 名录。
 - [subagent](subagent.md)（`surface.tools.subagent`）：shipped `toolName: subagent` + `provider: spawn` + `backgroundMode: continuable`，产出本页 `subagent_id` 的创建面。
 - [subagent_fork](subagent-fork.md)（`surface.tools.subagent-fork`）：同一 `dsh-tool-subagent` 包的 `provider: fork` 实例；控制面仍是本页三件套。
-- [report](report.md)（`surface.tools.report`）：continuable 孩子 `childCtx.tools` 上的回父工具，不是父 catalog 的第四个 control 名。
+- [report](report.md)（`surface.tools.report`）：已退役；邻接回父走本页 `send_message`。
 - [trace: 拉起子代理](../../spine/trace-subagent.md)（`spine.trace-subagent`）：从 `subagent` / `subagent_fork` 工具进 `ctx.subagents` 的端到端走读。
 - [subagent 缝](../../subsystems/orchestration/subagent.md)（`subsys.orchestration.subagent`）：`ctx.subagents` Definition / continuation manager / listing，不是本页的模型 schema。

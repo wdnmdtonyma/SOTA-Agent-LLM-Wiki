@@ -47,7 +47,7 @@ related:
   - subsys.core.tools
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.lsp`（`Lsp`）是 **provider 注册表 + 按文件最终扩展名选路** 的 capability 缝：恰好四个操作 `goToDefinition` / `findReferences` / `goToImplementation` / `hover`，没有 JSON-RPC 逃生舱。本仓唯一 shipped 后端是 namespace 插件 `lsp-stdio`（`inject = ['fs', 'lsp', 'subprocess']`），同时吃 `ctx.fs` 与 `ctx.subprocess`。四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）与 `dsh-base` **不挂** `dsh-lsp` / `dsh-lsp-stdio` / `dsh-tool-lsp`；E2B 测试夹具与 session snapshot 才插入 LSP 行。
@@ -150,7 +150,7 @@ updated: 0a53fb55be
 - `foo.d.ts` → `.ts`，不是 `.d.ts`。把 `.d.ts` 写进 `extensionToLanguage` 会因 `EXTENSION_PATTERN` 在注册期 `LSP_INVALID_PROVIDER`。[E: packages/lsp/lsp/src/index.ts:66] [E: packages/lsp/lsp/src/index.ts:111] [E: packages/lsp/lsp/tests/lsp.spec.ts:48]
 - `Makefile`、`.bashrc`、`dir.d/file` 的 `finalExtension` 是 `''`，查询直接 `LSP_UNAVAILABLE`，不会「猜语言」。[E: packages/lsp/lsp/tests/lsp.spec.ts:54] [E: packages/lsp/lsp/tests/lsp.spec.ts:55] [E: packages/lsp/lsp/tests/lsp.spec.ts:56]
 - `lsp-stdio` **不是**第二份 `ctx.lsp`。漏挂 `dsh-lsp` 时它卡在 `inject: lsp`；挂了缝但没有任何 `registerProvider` 时，工具看得到，查询 `LSP_UNAVAILABLE`。
-- 四个 shipped preset 的 top-level 行里没有 `lsp` / `lsp-stdio` / `tool-lsp`。`minimal` 是 `persona` / `persistent-shell` / `filesystem`；`standard` 收束 `tool-web`；`ptc` 增量是 `tool-presentation`（`mode: ptc`）；`cordis` 收束 `tool-cordis` / `skill-filesystem`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:74] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:261]
+- 四个 shipped preset 的 top-level 行里没有 `lsp` / `lsp-stdio` / `tool-lsp`。`minimal` 是 `persona` / `persistent-shell` / `filesystem`；`standard` 收束 `tool-web`；`ptc` 增量是 `tool-presentation`（`mode: ptc`）；`cordis` 收束 `tool-cordis` / `skill-filesystem`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:74] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:261]
 - E2B 夹具 `packages/e2b/e2b/tests/fixtures/composition/cordis.yml` 不是 shipped preset。它挂 `lsp` + `lsp-stdio`（`node` + `fixture-lsp.mjs`，`.ts`）。[E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:46] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:49] 模型工具行在 snapshot：`id: tool-lsp`。[E: snapshots/session/lsp-definition/cordis.yml:15]
 - 语言服务器进程 **不受** `ctx.sandbox.confine`。文件围栏是 `ctx.fs.contains` 拒绝 workspace 外的**查询源**；返回的 location URI 可以指向 workspace 外。
 - `findReferences` 没有 include-declaration 开关。想排除定义处，换工具或自己滤文本。[E: packages/lsp/lsp-stdio/src/instance.ts:203]

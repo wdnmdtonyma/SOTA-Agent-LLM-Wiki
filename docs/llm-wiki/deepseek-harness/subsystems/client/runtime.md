@@ -64,7 +64,7 @@ related:
   - subsys.client.ui-layout
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 已删除的 `@deepseek-ai/dsh-client-runtime` 不再是浏览器对象层。当前切分：`@deepseek-ai/dsh-client-store` 是无 React 的 snapshot 引擎；`@deepseek-ai/dsh-client-ui-renderer` 的 **client** 半边提供 `ctx.slots` / `ctx.uiRenderer.mount`；Session / Agent scope / control stream 在 `packages/api/session-controller/src/client/`（`ctx.sessions`）；Workspace 对象层在 `packages/api/workspace-controller/src/client/`（`ctx.workspaces`）；壳启动是 `packages/client/web/src/boot.ts` 的 `AppWebEntry`。节点 id `subsys.client.runtime` 保持稳定别名。client 不执行模型 turn，也不实现 `ctx.fs` / agent-loop。
@@ -117,12 +117,12 @@ client **不**执行模型 turn：`Session.prompt` 只发 unary Remote。浏览�
 |---|---|
 | `StoreInstance` | snapshot 源 + baked `actions`。engine store 是框架/测试 API，组件不直接看见。[E: packages/client/store/src/contract.ts:70] [E: packages/client/store/src/index.ts:179] |
 | `defineStore` | 声明 init / persist / actions，返回带 `create(scopeKey?)` 的 handle。[E: packages/client/store/src/index.ts:217] |
-| `SlotRegistry` | Cordis `Service`，名 `'slots'`。[E: packages/client/ui-renderer/src/client/registry.ts:134] 内层 `SlotCore` 构造时播种 `'root'`（`kind: 'single'` / `scope: 'root'`，`declaredBy: '(built-in)'`）。[E: packages/client/ui-slots/src/index.ts:698] [E: packages/client/ui-slots/src/index.ts:699] [E: packages/client/ui-slots/src/index.ts:700] |
+| `SlotRegistry` | Cordis `Service`，名 `'slots'`。[E: packages/client/ui-renderer/src/client/registry.ts:134] 内层 `SlotCore` 构造时播种 `'root'`（`kind: 'single'` / `scope: 'root'`，`declaredBy: '(built-in)'`）。[E: packages/client/ui-slots/src/index.ts:690] [E: packages/client/ui-slots/src/index.ts:690] [E: packages/client/ui-slots/src/index.ts:709] |
 | `ISessions` / `ctx.sessions` | 外向面含 `list`、`create`、`open` / `clear` / `fork` / `search` / `binding` / `scope`。[E: packages/api/session-controller/src/client/contract/sessions.ts:21] [E: packages/api/session-controller/src/client/contract/sessions.ts:35] 相对旧 runtime，`create` **在**此接口上。 |
 | `ClientSessions` | 实现 `ISessions`；选择持久化键 `dsh.sessions.current`；`reflect.provide('sessions', this)`。[E: packages/api/session-controller/src/client/sessions/service.ts:227] [E: packages/api/session-controller/src/client/sessions/service.ts:263] |
 | `SessionListState` | `ids` / `byId` / `current` / `phase` / `subagentsByParent` / `jobsBySession` / `currentAddress`。[E: packages/api/session-controller/src/client/sessions/service.ts:69] |
 | `SessionSummary.blank` | Host 空日志位镜像；store 保留全部行，供 `connectWorkspace` 复用。[E: packages/api/session-controller/src/client/sessions/service.ts:58] |
-| `Session` | `promptAttempted` 粘性：写成 `true` 后不复位。[E: packages/api/session-controller/src/client/sessions/session.ts:91] [E: packages/api/session-controller/src/client/sessions/session.ts:218] |
+| `Session` | `promptAttempted` 粘性：写成 `true` 后不复位。[E: packages/api/session-controller/src/client/sessions/session.ts:91] [E: packages/api/session-controller/src/client/sessions/session.ts:219] |
 | `ConversationPhase` | `'blank' \| 'engaging' \| 'active'`，由 **ui-conversation** `conversationPhase(session, conversation)` 派生，不在 Session snapshot 上。[E: packages/client/ui-conversation/src/client/contract/snapshot.ts:18] [E: packages/client/ui-conversation/src/client/contract/snapshot.ts:26] |
 | `IWorkspaces` / `ctx.workspaces` | Workspace 行、顺序、归档与命令；**没有** `connectWorkspace` / `startSession`。[E: packages/api/workspace-controller/src/client/service.ts:33] |
 | `UiWorkspace` | 导航策略：blank 复用 + `sessions.create`。[E: packages/client/ui-workspace/src/client/navigation.ts:21] |
@@ -131,7 +131,7 @@ host 面另有 `ctx.sessions`（core `SessionStore`，[`subsys.core.session`](..
 
 ## 控制流
 
-1. **web overlay 才插入浏览器对象层。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` 再叠 `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:142] web-app 插入 host `id: session-controller` / `workspace-controller`，以及 client `id: ui-renderer`（`@deepseek-ai/dsh-client-ui-renderer`）。[E: packages/bundle/web-app/cordis.patch.yml:86] [E: packages/bundle/web-app/cordis.patch.yml:95] [E: packages/bundle/web-app/cordis.patch.yml:181] [E: packages/bundle/web-app/cordis.patch.yml:182] `dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`，没有 ui-renderer。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:26] `sdk` / `sdk-minimal` / `acp` 同样不是浏览器对象层。
+1. **web overlay 才插入浏览器对象层。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` 再叠 `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:142] web-app 插入 host `id: session-controller` / `workspace-controller`，以及 client `id: ui-renderer`（`@deepseek-ai/dsh-client-ui-renderer`）。[E: packages/bundle/web-app/cordis.patch.yml:86] [E: packages/bundle/web-app/cordis.patch.yml:95] [E: packages/bundle/web-app/cordis.patch.yml:182] [E: packages/bundle/web-app/cordis.patch.yml:182] `dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`，没有 ui-renderer。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:26] `sdk` / `sdk-minimal` / `acp` 同样不是浏览器对象层。
 
 2. **ui-renderer host 半边是空 `apply`。** 组合仍扫 `package.json` 的 `dsh.client`（`platform: web`、`immediately: true`）。[E: packages/client/ui-renderer/package.json:34] [E: packages/client/ui-renderer/package.json:35] host 进程不提供 slots。[E: packages/client/ui-renderer/src/index.ts:4]
 
@@ -139,7 +139,7 @@ host 面另有 `ctx.sessions`（core `SessionStore`，[`subsys.core.session`](..
 
 4. **`AppWebEntry` 等 loader 静止后才 mount。** `run()` 建 Cordis `Context`、跑 Loader，然后 `ctx.inject(['uiRenderer'], (scope) => scope.effect(() => scope.uiRenderer.mount(container), …))`。[E: packages/client/web/src/boot.ts:46] [E: packages/client/web/src/boot.ts:97] [E: packages/client/web/src/boot.ts:98]
 
-5. **Session 客户端 `apply` 等 Remote。** `inject = ['typert', 'remote', 'remote.commands', 'remote.session', 'remote.subagents']`（服务名，不是 npm 包名）。[E: packages/api/session-controller/src/client/index.ts:76] `new ClientSessions` 后订阅 `api-session/added|removed|status|activity|error`，再 `createSessionControlStream` 并 `start()`。[E: packages/api/session-controller/src/client/index.ts:88] [E: packages/api/session-controller/src/client/index.ts:91] [E: packages/api/session-controller/src/client/index.ts:103] [E: packages/api/session-controller/src/client/index.ts:107] Typert `'agent'` identity 接到 `sessions.scopeOf`。[E: packages/api/session-controller/src/client/index.ts:110] Remote Event 选择在 `remote-events.ts`。[E: packages/api/session-controller/src/remote-events.ts:2] control 流走 `remote.session.control`。[E: packages/api/session-controller/src/client/transport.ts:119]
+5. **Session 客户端 `apply` 等 Remote。** `inject = ['typert', 'remote', 'remote.commands', 'remote.session', 'remote.subagents']`（服务名，不是 npm 包名）。[E: packages/api/session-controller/src/client/index.ts:77] `new ClientSessions` 后订阅 `api-session/added|removed|status|activity|error`，再 `createSessionControlStream` 并 `start()`。[E: packages/api/session-controller/src/client/index.ts:88] [E: packages/api/session-controller/src/client/index.ts:91] [E: packages/api/session-controller/src/client/index.ts:103] [E: packages/api/session-controller/src/client/index.ts:107] Typert `'agent'` identity 接到 `sessions.scopeOf`。[E: packages/api/session-controller/src/client/index.ts:110] Remote Event 选择在 `remote-events.ts`。[E: packages/api/session-controller/src/remote-events.ts:2] control 流走 `remote.session.control`。[E: packages/api/session-controller/src/client/transport.ts:119]
 
 6. **Workspace 客户端 `apply`。** `inject = ['remote', 'remote.workspace']`。[E: packages/api/workspace-controller/src/client/index.ts:38] `new WorkspaceController(ctx, model)` 服务名 `'workspaces'`，并启动 `follow` snapshot stream。[E: packages/api/workspace-controller/src/client/index.ts:46] [E: packages/api/workspace-controller/src/client/service.ts:88] [E: packages/api/workspace-controller/src/client/index.ts:81]
 
@@ -151,13 +151,13 @@ host 面另有 `ctx.sessions`（core `SessionStore`，[`subsys.core.session`](..
 
 10. **staging 打开 history 窗口。** `list.current` 变化时 `followCurrent` 调 `resolve`（`createScope` + `bindScope`），再 `session.open()`（幂等）。[E: packages/api/session-controller/src/client/sessions/service.ts:520] [E: packages/api/session-controller/src/client/sessions/service.ts:529] [E: packages/api/session-controller/src/client/sessions/service.ts:534] [E: packages/api/session-controller/src/client/sessions/session.ts:339] eligibility = 当前 staged 或在 host `ids`。[E: packages/api/session-controller/src/client/sessions/service.ts:571]
 
-11. **`Session.prompt` 在第一个 await 前同步置 `promptAttempted`。** 清 `promptError` / `lastAgentError`；若仍 `blankBit` 则 `firstPromptPendingTurn = true`，立刻 `markDirty()`。[E: packages/api/session-controller/src/client/sessions/session.ts:218] [E: packages/api/session-controller/src/client/sessions/session.ts:219] 普通会话 `remote.session.prompt({ requestId, sessionId, mode, content, clientTimeZone })`（时区现场采样）。[E: packages/api/session-controller/src/client/sessions/session.ts:224] `!result.ok` 早退，不碰 `blankBit`。[E: packages/api/session-controller/src/client/sessions/session.ts:242] 接受后才 `blankBit = false` 并 `onEngaged`。[E: packages/api/session-controller/src/client/sessions/session.ts:256] `conversationPhase`：尚无权威内容时 `promptAttempted` → `'engaging'`，否则 `'blank'`。[E: packages/client/ui-conversation/src/client/contract/snapshot.ts:33]
+11. **`Session.prompt` 在第一个 await 前同步置 `promptAttempted`。** 清 `promptError` / `lastAgentError`；若仍 `blankBit` 则 `firstPromptPendingTurn = true`，立刻 `markDirty()`。[E: packages/api/session-controller/src/client/sessions/session.ts:219] [E: packages/api/session-controller/src/client/sessions/session.ts:219] 普通会话 `remote.session.prompt({ requestId, sessionId, mode, content, clientTimeZone })`（时区现场采样）。[E: packages/api/session-controller/src/client/sessions/session.ts:221] `!result.ok` 早退，不碰 `blankBit`。[E: packages/api/session-controller/src/client/sessions/session.ts:243] 接受后才 `blankBit = false` 并 `onEngaged`。[E: packages/api/session-controller/src/client/sessions/session.ts:256] `conversationPhase`：尚无权威内容时 `promptAttempted` → `'engaging'`，否则 `'blank'`。[E: packages/client/ui-conversation/src/client/contract/snapshot.ts:33]
 
 12. **live 事件走 control + journal stream，不再走旧 mux `session/event`。** `createSessionControlStream` 把 Host-wide control 帧交给 `sessions.handleControlFrame`。[E: packages/api/session-controller/src/client/index.ts:104] 打开的 `Session` 用 journal `follow` 填窗口（`SessionEventStream`）。未打开的 session 不懒建对象；list 行靠 Remote Event 更新。
 
 13. **composer 提交链停在本层的 Remote 边界。** UI `InputBar` → `InputHub` → `session.prompt`（[`subsys.client.ui-conversation`](ui-conversation.md)）。slash 走 `remote.commands.execute`；`Session.command` 只做 admission。[E: packages/api/session-controller/src/client/sessions/session.ts:333] client 从不 `kick()` loop。
 
-14. **Conversation registry 不在本切分层。** `UiConversation` 构造 `ConversationEventRegistry` / `ConversationViewRegistry`。[E: packages/client/ui-conversation/src/client/conversation/assembly.ts:154] [E: packages/client/ui-conversation/src/client/conversation/assembly.ts:155]
+14. **Conversation registry 不在本切分层。** `UiConversation` 构造 `ConversationEventRegistry` / `ConversationViewRegistry`。[E: packages/client/ui-conversation/src/client/conversation/assembly.ts:154] [E: packages/client/ui-conversation/src/client/conversation/assembly.ts:154]
 
 ## 设计动机
 
@@ -170,12 +170,12 @@ host 面另有 `ctx.sessions`（core `SessionStore`，[`subsys.core.session`](..
 ## Gotcha
 
 - 没有 `packages/client/runtime`。wiki id 仍叫 `subsys.client.runtime`。
-- ui-renderer host `apply` 为空不等于「没装」。web-app 仍 insert `ui-renderer`。[E: packages/client/ui-renderer/src/index.ts:4] [E: packages/bundle/web-app/cordis.patch.yml:181]
-- session-controller 的 `dsh.client.inject` 是包名；browser `export const inject` 是服务名。两套表不要对一行。[E: packages/api/session-controller/package.json:54] [E: packages/api/session-controller/src/client/index.ts:76]
+- ui-renderer host `apply` 为空不等于「没装」。web-app 仍 insert `ui-renderer`。[E: packages/client/ui-renderer/src/index.ts:4] [E: packages/bundle/web-app/cordis.patch.yml:182]
+- session-controller 的 `dsh.client.inject` 是包名；browser `export const inject` 是服务名。两套表不要对一行。[E: packages/api/session-controller/package.json:55] [E: packages/api/session-controller/src/client/index.ts:77]
 - 浏览器 `ctx.sessions` ≠ host `SessionStore`。同名、不同包、不同进程。
 - `ISessions` **现在有** `create`。feature 仍应走 `uiWorkspace.connectWorkspace` 才能复用 blank。[E: packages/api/session-controller/src/client/contract/sessions.ts:35]
 - 初始选择见到已有 `current` 或没有 recent workspace 就结束；用户后来 `clear()` 不会被启动策略再次填上。[E: packages/client/ui-workspace/src/client/navigation.ts:167]
-- 第一句被拒：`conversationPhase` 停在 `engaging`；`blankBit` 仍 true。[E: packages/api/session-controller/src/client/sessions/session.ts:242] [E: packages/client/ui-conversation/src/client/contract/snapshot.ts:33]
+- 第一句被拒：`conversationPhase` 停在 `engaging`；`blankBit` 仍 true。[E: packages/api/session-controller/src/client/sessions/session.ts:243] [E: packages/client/ui-conversation/src/client/contract/snapshot.ts:33]
 - `'root'` 是 `single`。加法面用 `shell.overlay`。[E: packages/client/ui-renderer/src/client/registry.ts:28]
 - `register` 必须是 prototype 方法。[E: packages/client/ui-renderer/src/client/registry.ts:612]
 - `--host 0.0.0.0` 的拒绝发生在 `web-startup`，与本层无关。[E: packages/bundle/web-app/src/startup.ts:74]

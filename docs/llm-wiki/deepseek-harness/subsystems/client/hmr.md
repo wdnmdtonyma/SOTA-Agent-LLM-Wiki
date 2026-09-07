@@ -45,7 +45,7 @@ related:
   - subsys.vendor.loader
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-client-hmr`（组合行 `id: client-hmr`）是 **运行时装 UI 插件** 的双面驱动：node 半边用 `setInterval` + `statSync` 轮询每个 `dsh.client` graph 行的 client bundle，变化走 `ctx.clientModules.rebuilt(id)`，再经 SSE `GET /plugins/events` 广播；浏览器半边收 `rebuilt` 帧，按 `invalidate → prefetch → registry-first teardown → entry.refresh()` 热换 Loader fiber。它和 `id: hmr`（`@deepseek-ai/cordis-plugin-hmr`，给 live profile / home `cordis.patch.yml` 热更新）**不是同一条链**。
@@ -78,7 +78,7 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → preset`；seam = De
 - 共享模块 / 配置文件 HMR（`ctx.hmr`，`@deepseek-ai/cordis-plugin-hmr`）以及 `watchUserPatches` — 见本页「三条 HMR」。
 - `/api`、会话、模型 turn。client **不**执行 agent loop。第一次提问走 [`spine.trace-web-first-prompt`](../../spine/trace-web-first-prompt.md)。浏览器状态层见 [`subsys.client.runtime`](runtime.md)（`packages/client/store` + session-controller 客户端 + ui-renderer）。
 
-`dsh-web-app` **无条件 insert** `id: client-hmr`（无 `disabled`、无 `config`）。[E: packages/bundle/web-app/cordis.patch.yml:143] [E: packages/bundle/web-app/cordis.patch.yml:144] `pollWatches` 在 `!dirty` 且 mtime/size 与 baseline 相同时 `continue`，不调 `rebuilt`。[E: packages/client/hmr/src/index.ts:119] 改写各包 `lib/client.js` 的是 `pnpm run dev:web`（tsdown `watch: true`）。[E: scripts/dev-web.ts:134] [E: package.json:157] 没有这条 rebuild watcher 时 poll 看不到变化，链空闲。[I]
+`dsh-web-app` **无条件 insert** `id: client-hmr`（无 `disabled`、无 `config`）。[E: packages/bundle/web-app/cordis.patch.yml:144] [E: packages/bundle/web-app/cordis.patch.yml:144] `pollWatches` 在 `!dirty` 且 mtime/size 与 baseline 相同时 `continue`，不调 `rebuilt`。[E: packages/client/hmr/src/index.ts:119] 改写各包 `lib/client.js` 的是 `pnpm run dev:web`（tsdown `watch: true`）。[E: scripts/dev-web.ts:134] [E: package.json:157] 没有这条 rebuild watcher 时 poll 看不到变化，链空闲。[I]
 
 ## 关键文件
 
@@ -115,11 +115,11 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → preset`；seam = De
 
 ## 控制流
 
-1. **`dsh-web-app` 叠在 `dsh-base` 上，无条件插入本行。** shipped `web` profile 的 bundles 是 `dsh-base` 然后 `dsh-web-app`。web overlay `insert` `id: client-hmr` / `name: '@deepseek-ai/dsh-client-hmr'`（无 `disabled`、无 `config`，吃 schema 缺省）。[E: packages/bundle/web-app/cordis.patch.yml:143] [E: packages/bundle/web-app/cordis.patch.yml:144]
+1. **`dsh-web-app` 叠在 `dsh-base` 上，无条件插入本行。** shipped `web` profile 的 bundles 是 `dsh-base` 然后 `dsh-web-app`。web overlay `insert` `id: client-hmr` / `name: '@deepseek-ai/dsh-client-hmr'`（无 `disabled`、无 `config`，吃 schema 缺省）。[E: packages/bundle/web-app/cordis.patch.yml:144] [E: packages/bundle/web-app/cordis.patch.yml:144]
 
 2. **共享 `hmr` 与本行拆开。** base 插入 `@deepseek-ai/cordis-plugin-hmr`，`disabled: true`，`config.root: ['.']`；服务名 `'hmr'`（启用时用 chokidar 看模块根并 `registerConfig` 看单个配置文件）。[E: packages/bundle/base/cordis.patch.yml:21] [E: packages/bundle/base/cordis.patch.yml:23] [E: packages/bundle/base/cordis.patch.yml:25] [E: vendor/hmr/src/index.ts:119] `dsh-headless` 不覆盖该行，因此仍保持 disabled；**也不** insert `client-hmr`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26]
 
-3. **launcher 补 watch-only，不是补 client-hmr，且只在 `patchReload: live`。** `runProfile@apps/cli/src/profile-boot.ts` 当 `composed.profile.patchReload === 'live'`、树 ACTIVE、且有 loader 时：若 `ctx.get('hmr') === undefined`，必要时先挂 `timer`，再 `loader.create({ name: '@deepseek-ai/cordis-plugin-hmr', config: { root: [] } })`。[E: apps/cli/src/profile-boot.ts:270] [E: apps/cli/src/profile-boot.ts:281] [E: apps/cli/src/profile-boot.ts:285] `root.length === 0` 时 vendor HMR 立刻 `ready`，不扫模块树。[E: vendor/hmr/src/index.ts:277] `watchUserPatches` 在 `ctx.get('hmr')` 为空时抛错，否则对 profile / home 的 `cordis.patch.yml` 调 `hmr.registerConfig`。[E: packages/boot/app-boot/src/index.ts:240] [E: packages/boot/app-boot/src/index.ts:241] [E: packages/boot/app-boot/src/index.ts:244] shipped 里只有 `web` 是 live；`headless` / `sdk` / `sdk-minimal` / `acp` 是 startup，启动时仍叠用户 patch，但**不**装 watchers。[I]
+3. **launcher 补 watch-only，不是补 client-hmr，且只在 `patchReload: live`。** `runProfile@apps/cli/src/profile-boot.ts` 当 `composed.profile.patchReload === 'live'`、树 ACTIVE、且有 loader 时：若 `ctx.get('hmr') === undefined`，必要时先挂 `timer`，再 `loader.create({ name: '@deepseek-ai/cordis-plugin-hmr', config: { root: [] } })`。[E: apps/cli/src/profile-boot.ts:271] [E: apps/cli/src/profile-boot.ts:283] [E: apps/cli/src/profile-boot.ts:285] `root.length === 0` 时 vendor HMR 立刻 `ready`，不扫模块树。[E: vendor/hmr/src/index.ts:277] `watchUserPatches` 在 `ctx.get('hmr')` 为空时抛错，否则对 profile / home 的 `cordis.patch.yml` 调 `hmr.registerConfig`。[E: packages/boot/app-boot/src/index.ts:243] [E: packages/boot/app-boot/src/index.ts:243] [E: packages/boot/app-boot/src/index.ts:243] shipped 里只有 `web` 是 live；`headless` / `sdk` / `sdk-minimal` / `acp` 是 startup，启动时仍叠用户 patch，但**不**装 watchers。[I]
 
 4. **`client-hmr` 的 node `apply` 等 `clientModules` 与 `webServer`。** `modules` 行先提供 `ctx.clientModules` 并登记 `/plugins` 前缀。本行随后激活。headless **没有** `webserver` / `modules` / `client-hmr`，insert 只有 `code-runtime`、`headless-startup`、`headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] `sdk` / `sdk-minimal` / `acp` 同样不叠 `dsh-web-app`，因此没有本行。[I]
 

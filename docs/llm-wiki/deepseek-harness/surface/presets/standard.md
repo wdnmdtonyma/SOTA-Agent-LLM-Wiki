@@ -40,7 +40,7 @@ related:
   - spine.composition-boot
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `standard` 是 shipped **agent-preset 面**的默认全套编码组合：目录名即 id，成员资格只认 `packages/preset/agent-presets/presets/standard/agent.cordis.yml` 的行（含 `disabled:`）。它不是 host 进程本身——五个 shipped profile 里，**只有 `web`** 在 overlay 里 `insert` `agent-presets` 且 `default: standard`；每个会话在 Agent factory `setup` 里 `mount` 这份 standing 组合。`preset.yml` 只提供 picker 文案与 `order`，不决定装哪些包。
@@ -75,7 +75,7 @@ DSH 的主线是 `profile → bundle → agent preset`。`standard` 是四个 sh
 
 `packages/bundle/headless/cordis.patch.yml` 的 insert 只有 `code-runtime` / `headless-startup` / `headless-runner`，没有 `agent-presets` 行。 [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] headless（以及 `sdk` / `acp` overlay、不叠 base 的 `sdk-minimal`）的模型可见工具留在各自 bundle / `dsh-base` 的 host 行，**不是** shipped `standard`。
 
-web e2e 钉死：system 根只供应 `cordis` / `minimal` / `ptc` / `standard`，且 `defaultId === 'standard'`。 [E: apps/cli/tests/web-agent-presets.e2e.ts:218] [E: apps/cli/tests/web-agent-presets.e2e.ts:220]
+web e2e 钉死：system 根只供应 `cordis` / `minimal` / `ptc` / `standard`，且 `defaultId === 'standard'`。 [E: apps/cli/tests/web-agent-presets.e2e.ts:218] [E: apps/cli/tests/web-agent-presets.e2e.ts:222]
 
 ## 入口
 
@@ -86,7 +86,7 @@ web e2e 钉死：system 根只供应 `cordis` / `minimal` / `ptc` / `standard`�
 3. `includeUserRoot` 默认 `true`，在配置 roots 之后再追加 `$DSH_HOME/.agent-presets`（`USER_PRESET_DIR`）。 [E: packages/preset/agent-presets/src/index.ts:111] [E: packages/preset/agent-presets/src/index.ts:181] [E: packages/preset/agent-presets/src/discovery.ts:51] `discoverPresets` 先到先得：已占用的 id 跳过后根。 [E: packages/preset/agent-presets/src/discovery.ts:338] shipped `standard` 因此挡住用户目录里的同名文件夹。
 4. 浏览器创建会话不传 `agentPreset` 时，`SessionController.composeAgent(undefined)` 走 `presets.resolve(presetId)`；`resolve` 用 `id ?? this.defaultId`。 [E: packages/api/session-controller/src/agent.ts:375] [E: packages/preset/agent-presets/src/index.ts:344] 没有 roster 时 `composeAgent` 只返回 `installSelection` setup，不 mount preset。 [E: packages/api/session-controller/src/agent.ts:374]
 5. `defaultId` = settings 命名空间里的 `default`，否则 composition 的 `config.default`。未写 settings 时回落到 `standard`。 [E: packages/preset/agent-presets/src/index.ts:241] [E: packages/preset/agent-presets/tests/settings.spec.ts:64]
-6. 真正的 Include 发生在 factory `setup`：`presets.mount(agentCtx, resolvedId)`。 [E: packages/api/session-controller/src/agent.ts:380] `setupAndPublish` 在 `setup` 抛错时 `prepared.dispose()` 再把 error 抛出，Agent 不会 publish。 [E: packages/core/agent-loop/src/index.ts:705] [E: packages/core/agent-loop/src/index.ts:706]
+6. 真正的 Include 发生在 factory `setup`：`presets.mount(agentCtx, resolvedId)`。 [E: packages/api/session-controller/src/agent.ts:380] `setupAndPublish` 在 `setup` 抛错时 `prepared.dispose()` 再把 error 抛出，Agent 不会 publish。 [E: packages/core/agent-loop/src/index.ts:705] [E: packages/core/agent-loop/src/index.ts:705]
 
 ## 关键字段
 
@@ -120,7 +120,7 @@ web e2e 钉死：system 根只供应 `cordis` / `minimal` / `ptc` / `standard`�
 | `delegation` | `cordis:group` | `isolate.workflowEngine: true` | subagent **registry** / spawn·fork backends 在 host；本 isolate 只覆盖 `workflows` 与同组消费者。子行：`tool-subagent-*` / `workflow-worker-thread` / `tool-workflow` / `tool-ralph`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:174] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:178] | `subagent` 一族 + `workflow` / `ralph` |
 | `tool-ask-user` | `@deepseek-ai/dsh-tool-ask-user` | 无 | 无 config。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243] | `ask_user_question` |
 | `tool-todo` | `@deepseek-ai/dsh-tool-todo` | 无 | `allowParallelInProgress: true`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:246] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:249] | `todo_write` |
-| `tool-web` | `@deepseek-ai/dsh-tool-web` | 无 | `fetch: true`，`searchTimeoutMs: 60000`。web **service** / search provider 在 host。插件默认 `fetch: true`；本行显式打开 `web_fetch`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:257] [E: packages/web/tool-web/src/index.ts:56] | `web_search` **与** `web_fetch` |
+| `tool-web` | `@deepseek-ai/dsh-tool-web` | 无 | `fetch: true`，`searchTimeoutMs: 60000`。web **service** / search provider 在 host。插件默认 `fetch: true`；本行显式打开 `web_fetch`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] [E: packages/web/tool-web/src/index.ts:56] | `web_search` **与** `web_fetch` |
 
 ### isolate 组的子行
 
@@ -133,9 +133,9 @@ web e2e 钉死：system 根只供应 `cordis` / `minimal` / `ptc` / `standard`�
 | `delegation` | `tool-subagent-control` | `@deepseek-ai/dsh-tool-subagent-control` | 无行内 config。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:180] | `send_message` / `interrupt_agent` |
 | `delegation` | `tool-subagent-list-agents` | `@deepseek-ai/dsh-tool-subagent-control/list-agents` | 无行内 config。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:183] | `list_agents` |
 | `delegation` | `tool-subagent` | `@deepseek-ai/dsh-tool-subagent` | `provider: spawn`，`toolName: subagent`，`modelSelectionSettings: true`，`backgroundMode: continuable`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:186] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:191] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:192] | `subagent` |
-| `delegation` | `tool-subagent-fork` | `@deepseek-ai/dsh-tool-subagent` | `provider: fork`，`toolName: subagent_fork`，`backgroundMode: continuable`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:198] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:203] | `subagent_fork` |
-| `delegation` | `tool-subagent-codex` | `@deepseek-ai/dsh-tool-subagent` | **`disabled: true`**。`provider: codex`，`toolName: subagent_codex`，`backgroundMode: one-shot`，`maxDepth: provider-managed`。行在、工具不进 catalog。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:209] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:211] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:215] | （关闭） |
-| `delegation` | `tool-subagent-claude-code` | `@deepseek-ai/dsh-tool-subagent` | **`disabled: true`**。`provider: claude-code`，`toolName: subagent_claude_code`，同样 `backgroundMode: one-shot` / `maxDepth: provider-managed`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:218] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:220] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:224] | （关闭） |
+| `delegation` | `tool-subagent-fork` | `@deepseek-ai/dsh-tool-subagent` | `provider: fork`，`toolName: subagent_fork`，`backgroundMode: continuable`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:199] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:203] | `subagent_fork` |
+| `delegation` | `tool-subagent-codex` | `@deepseek-ai/dsh-tool-subagent` | **`disabled: true`**。`provider: codex`，`toolName: subagent_codex`，`backgroundMode: one-shot`，`maxDepth: provider-managed`。行在、工具不进 catalog。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:209] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:212] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:215] | （关闭） |
+| `delegation` | `tool-subagent-claude-code` | `@deepseek-ai/dsh-tool-subagent` | **`disabled: true`**。`provider: claude-code`，`toolName: subagent_claude_code`，同样 `backgroundMode: one-shot` / `maxDepth: provider-managed`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:218] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:221] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:224] | （关闭） |
 | `delegation` | `workflow-worker-thread` | `@deepseek-ai/dsh-workflow-worker-thread` | `provider: spawn`。给同组 `workflowEngine` 提供 worker，不是模型 tool。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:227] | 无 |
 | `delegation` | `tool-workflow` | `@deepseek-ai/dsh-tool-workflow` | 无行内 config。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:232] | `workflow` |
 | `delegation` | `tool-ralph` | `@deepseek-ai/dsh-tool-ralph` | `subagentProvider: spawn`，`maxRounds: 64`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:235] | `ralph` |
@@ -146,7 +146,7 @@ web e2e 钉死：system 根只供应 `cordis` / `minimal` / `ptc` / `standard`�
 
 `dsh-base` 同一 `id` 写的是 `backgroundMode: one-shot`。 [E: packages/bundle/base/cordis.patch.yml:368] [E: packages/bundle/base/cordis.patch.yml:373]
 
-web 已把 host 上的 `tool-subagent-fork` `disabled: true`，所以 web 会话实际吃到的是 preset 这份 `continuable`，不是 base 的 `one-shot`。 [E: packages/bundle/web-app/cordis.patch.yml:407] [E: packages/bundle/web-app/cordis.patch.yml:408]
+web 已把 host 上的 `tool-subagent-fork` `disabled: true`，所以 web 会话实际吃到的是 preset 这份 `continuable`，不是 base 的 `one-shot`。 [E: packages/bundle/web-app/cordis.patch.yml:408] [E: packages/bundle/web-app/cordis.patch.yml:408]
 
 ### 本文件没有的行
 
@@ -154,20 +154,20 @@ web 已把 host 上的 `tool-subagent-fork` `disabled: true`，所以 web 会话
 
 | 缺的 id | 谁才有 | 证据 |
 |---|---|---|
-| `str-replace-editor` / `tool-str-replace-editor` | `minimal` 的 `filesystem` isolate（子 id `str-replace-editor`）；web 把 host 行 `tool-str-replace-editor` `disabled: true` | [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] [E: packages/bundle/web-app/cordis.patch.yml:345] |
+| `str-replace-editor` / `tool-str-replace-editor` | `minimal` 的 `filesystem` isolate（子 id `str-replace-editor`）；web 把 host 行 `tool-str-replace-editor` `disabled: true` | [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] [E: packages/bundle/web-app/cordis.patch.yml:346] |
 | `persistent-shell` / `persistent-bash` / `persistent-pwsh` | 只有 `minimal` 的 `persistent-shell` isolate | [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:36] |
 | `tool-cordis` | 只有 `cordis` | [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251] web e2e：`standard` catalog 不含 `cordis_define` [E: apps/cli/tests/web-agent-presets.e2e.ts:392] |
 | `tool-presentation` | 只有 `ptc`（`mode: ptc` → 模型侧 `run_code`）。wiki 节点 id 仍是 `surface.presets.code` | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
 
 unix web e2e 对 `standard` 的 **精确** catalog（故意滤掉 `glob`/`grep`，因那条测试按机器是否带 ripgrep 排除它们）是：
 
-`ask_user_question`, `bash`, `create_goal`, `edit`, `exit_plan_mode`, `get_goal`, `interrupt_agent`, `job_kill`, `job_list`, `job_output`, `list_agents`, `ralph`, `read`, `read_image`, `send_message`, `skill`, `subagent`, `subagent_fork`, `todo_write`, `update_goal`, `web_fetch`, `web_search`, `workflow`, `write`。 [E: apps/cli/tests/web-agent-presets.e2e.ts:234] [E: apps/cli/tests/web-agent-presets.e2e.ts:237] 同一用例还断言人命令 `goal` 存在。 [E: apps/cli/tests/web-agent-presets.e2e.ts:240]
+`ask_user_question`, `bash`, `create_goal`, `edit`, `exit_plan_mode`, `get_goal`, `interrupt_agent`, `job_kill`, `job_list`, `job_output`, `list_agents`, `ralph`, `read`, `read_image`, `send_message`, `skill`, `subagent`, `subagent_fork`, `todo_write`, `update_goal`, `web_fetch`, `web_search`, `workflow`, `write`。 [E: apps/cli/tests/web-agent-presets.e2e.ts:235] [E: apps/cli/tests/web-agent-presets.e2e.ts:235] 同一用例还断言人命令 `goal` 存在。 [E: apps/cli/tests/web-agent-presets.e2e.ts:241]
 
 该表没有 `str_replace_editor`、`run_code`、`subagent_codex`、`subagent_claude_code`、任何 `cordis_*`。**有** `web_fetch`（`fetch: true`）。
 
 ## 装配与门控
 
-**何时 init。** roster 行在 web host 面进程级 settle；每个 preset id **standing mount 一次**：`ensureStanding` 用 `{ agentPreset: preset.id }` 调 `createScope`，再 `mountPreset`。 [E: packages/preset/agent-presets/src/index.ts:770] [E: packages/preset/agent-presets/src/index.ts:771] [E: packages/preset/agent-presets/src/mount.ts:378] 之后会话只 `bindScopeParent` join。 [E: packages/preset/agent-presets/src/index.ts:425] `AgentPresets.mount` 必须在 factory `setup` 里调用：`setupAndPublish` 先 `await setup`，成功才 `publish`；抛错则 `prepared.dispose()`。 [E: packages/preset/agent-presets/src/index.ts:414] [E: packages/core/agent-loop/src/index.ts:701] [E: packages/core/agent-loop/src/index.ts:703] [E: packages/core/agent-loop/src/index.ts:705]
+**何时 init。** roster 行在 web host 面进程级 settle；每个 preset id **standing mount 一次**：`ensureStanding` 用 `{ agentPreset: preset.id }` 调 `createScope`，再 `mountPreset`。 [E: packages/preset/agent-presets/src/index.ts:770] [E: packages/preset/agent-presets/src/index.ts:771] [E: packages/preset/agent-presets/src/mount.ts:378] 之后会话只 `bindScopeParent` join。 [E: packages/preset/agent-presets/src/index.ts:425] `AgentPresets.mount` 必须在 factory `setup` 里调用：`setupAndPublish` 先 `await setup`，成功才 `publish`；抛错则 `prepared.dispose()`。 [E: packages/preset/agent-presets/src/index.ts:414] [E: packages/core/agent-loop/src/index.ts:701] [E: packages/core/agent-loop/src/index.ts:704] [E: packages/core/agent-loop/src/index.ts:705]
 
 **默认 id。** `AgentPresets.Config.default` 必填。 [E: packages/preset/agent-presets/src/index.ts:105] web patch 写成 `standard`。用户 settings 的 `agent-presets.default` 可以改成别的 id，只影响**之后**新建的会话；已经 join 的 session 仍停在当初那份 standing 组合。 [E: packages/preset/agent-presets/src/index.ts:240] [E: packages/preset/agent-presets/src/index.ts:241]
 
@@ -175,9 +175,9 @@ unix web e2e 对 `standard` 的 **精确** catalog（故意滤掉 `glob`/`grep`�
 
 **平台门。** `tool-bash` 在 `win32` disable，`tool-pwsh` 在非 `win32` disable。同一时刻只有一条 one-shot shell tool 进 catalog。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:46] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:50]
 
-**产品后端门。** `tool-subagent-codex` / `tool-subagent-claude-code` 行在但 `disabled: true`。host 即便另外 insert 了 backends，`standard` 会话也看不到 `subagent_codex` / `subagent_claude_code`；要暴露必须 copy 出用户 preset 再去掉 `disabled`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:211] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:220]
+**产品后端门。** `tool-subagent-codex` / `tool-subagent-claude-code` 行在但 `disabled: true`。host 即便另外 insert 了 backends，`standard` 会话也看不到 `subagent_codex` / `subagent_claude_code`；要暴露必须 copy 出用户 preset 再去掉 `disabled`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:212] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:221]
 
-**fetch 门。** `tool-web` 的 `fetch: true` 让 catalog 同时有 `web_search` 与 `web_fetch`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256]
+**fetch 门。** `tool-web` 的 `fetch: true` 让 catalog 同时有 `web_search` 与 `web_fetch`。 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]
 
 **失败怎么响。** 未知 id → `resolve` 抛 `RemoteError` `agent-preset/not-found`。 [E: packages/preset/agent-presets/src/index.ts:349] 泄漏 root service → `mountPreset` 抛错，detail 点名 leaked 服务名。 [E: packages/preset/agent-presets/src/mount.ts:411] `composeAgent` 先 `resolve` 出 id；`setup` 才 `mount`。`setup` 抛错时 `setupAndPublish` 会 `dispose` 未 publish 的 Agent。 [E: packages/api/session-controller/src/agent.ts:375] [E: packages/core/agent-loop/src/index.ts:705]
 

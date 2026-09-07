@@ -7,7 +7,6 @@ pkg: composition
 source:
   - packages/bundle/sdk-app/cordis.patch.yml
   - packages/bundle/sdk-app/src/index.ts
-  - packages/bundle/sdk-app/src/invariant.ts
   - packages/bundle/sdk-app/package.json
   - packages/bundle/sdk-app/tests/sdk-app.spec.ts
   - packages/bundle/sdk-app/tests/startup.spec.ts
@@ -34,7 +33,7 @@ related:
   - surface.cli.overview
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-sdk-app` 是叠在 `dsh-base` 上的 **stdio JSON-RPC host overlay**：改 host persona、关掉 `session-title-llm`，再 `insert` `sdk-app-startup`（提供 `sdkAppStartup`）与 `sdk-jsonrpc-server`。stdout 专给协议帧。五个 shipped profile 里 `sdk` 用本 bundle；`sdk-minimal` 复用同一 startup 插件但不叠 `dsh-base`。
@@ -51,7 +50,7 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。
 
 ## 职责边界
 
-本包 `@deepseek-ai/dsh-sdk-app` 拥有：mode overlay `cordis.patch.yml`、cmdline Provider `sdk-app-startup`（`SDK_APP_STARTUP_SERVICE = 'sdkAppStartup'`）、空 invariant companion。manifest 把 bundle patch 钉在 `./cordis.patch.yml`。[E: packages/bundle/sdk-app/package.json:2] [E: packages/bundle/sdk-app/package.json:38] [E: packages/bundle/sdk-app/src/index.ts:14] [E: packages/bundle/sdk-app/src/index.ts:20]
+本包 `@deepseek-ai/dsh-sdk-app` 拥有：mode overlay `cordis.patch.yml`、cmdline Provider `sdk-app-startup`（`SDK_APP_STARTUP_SERVICE = 'sdkAppStartup'`）。manifest 把 bundle patch 钉在 `./cordis.patch.yml`。[E: packages/bundle/sdk-app/package.json:2] [E: packages/bundle/sdk-app/package.json:33] [E: packages/bundle/sdk-app/src/index.ts:14] [E: packages/bundle/sdk-app/src/index.ts:20]
 
 明确**不**拥有：
 
@@ -70,7 +69,6 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。
 | `packages/bundle/sdk-app/package.json` | `@deepseek-ai/dsh-sdk-app`；`dsh.bundle.patch = ./cordis.patch.yml`；依赖 `dsh-sdk-jsonrpc-server`。 |
 | `packages/bundle/sdk-app/cordis.patch.yml` | 叠在 base 之后：persona、`session-title-llm` disable、两行 insert。不改 `hmr`。 |
 | `packages/bundle/sdk-app/src/index.ts` | Provider：`inject: ['cmdlineArgs']`，成功 parse 才 `provide('sdkAppStartup')` 并绑 stdin EOF。 |
-| `packages/bundle/sdk-app/src/invariant.ts` | companion：空 installer。 |
 | `packages/bundle/sdk-app/tests/startup.spec.ts` | 空 argv 发布 `{ accepted: true }`；`--help` 不 provide、不绑 EOF。 |
 | `packages/bundle/sdk-app/tests/sdk-app.spec.ts` | 无 `id: hmr` overlay；`session-title-llm` disabled；server 行 inject。 |
 | `packages/sdk/server/src/index.ts` | Consumer 插件：源码 `inject = ['agents']`；yaml 再要求 `sdkAppStartup` + `loader`。 |
@@ -161,7 +159,6 @@ flowchart TD
 
 - packages/bundle/sdk-app/cordis.patch.yml
 - packages/bundle/sdk-app/src/index.ts
-- packages/bundle/sdk-app/src/invariant.ts
 - packages/bundle/sdk-app/package.json
 - packages/bundle/sdk-app/tests/sdk-app.spec.ts
 - packages/bundle/sdk-app/tests/startup.spec.ts

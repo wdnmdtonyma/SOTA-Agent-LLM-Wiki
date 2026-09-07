@@ -52,7 +52,7 @@ related:
   - subsys.persistence.telemetry
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 本页枚举 DSH **进程级**环境变量：产品运行时每个被读取或由 shipped 组合插值的名字一行，测试 / CI / fixture 另表。这是 Cordis 组合运行时（`profile → bundle → agent preset`）的 host 面输入，不是 agent-preset 的 tools / persona / isolate 配置。宿主入口是 `dsh web` 以及 `dsh --profile web|headless|sdk|sdk-minimal|acp`（无 shipped TUI 模板）。
@@ -72,13 +72,13 @@ Ground truth 是 `packages/**/src`、`apps/**/src`、`vendor/**/src` 以及 ship
 
 `apps/cli/src/bin.ts` 自己不点名读 env；`profile` 模式调用 `loadLayeredEnv('dsh')`，把 inherited `process.env` 与发现到的 `.env` 冻成 `LaunchEnvironmentSnapshot`。 [E: apps/cli/src/bin.ts:30] [E: packages/boot/app-boot/src/index.ts:180]
 
-分层：inherited process 层最可信，再叠 invoking-directory `.env`，再叠 `$DSH_HOME/.env`；文件层不能覆盖已继承的名字。 [E: packages/boot/app-boot/src/index.ts:193] `DEEPSEEK_BASE_URL` 与 `DEEPSEEK_SEARCH_BASE_URL` 都在 bootstrap-only 名单里，项目 / home `.env` 写它们会抛错。 [E: packages/boot/app-boot/src/index.ts:112] 前缀 `DSH_` 同样 bootstrap-only，所以 `$DSH_HOME` 只能从 launching process 进来，不能靠 `.env` 改。 [E: packages/boot/app-boot/src/index.ts:120]
+分层：inherited process 层最可信，再叠 invoking-directory `.env`，再叠 `$DSH_HOME/.env`；文件层不能覆盖已继承的名字。 [E: packages/boot/app-boot/src/index.ts:198] `DEEPSEEK_BASE_URL` 与 `DEEPSEEK_SEARCH_BASE_URL` 都在 bootstrap-only 名单里，项目 / home `.env` 写它们会抛错。 [E: packages/boot/app-boot/src/index.ts:112] 前缀 `DSH_` 同样 bootstrap-only，所以 `$DSH_HOME` 只能从 launching process 进来，不能靠 `.env` 改。 [E: packages/boot/app-boot/src/index.ts:120]
 
 `@deepseek-ai/dsh-session-telemetry-otel` 的 `src` 不读 `process.env`：`mode` / `exporter.url` 由 `dsh-base` 的 `!!js` 插值写进 Config。 [E: packages/bundle/base/cordis.patch.yml:193] [E: packages/bundle/base/cordis.patch.yml:196]
 
-`@deepseek-ai/dsh-llm-pi-ai` 的 `src` 没有写死的 env 名：`resolveApiKey` 读的是 profile 上的 `apiKeyEnv` credential-ref。 [E: packages/llm/llm-pi-ai/src/index.ts:183]
+`@deepseek-ai/dsh-llm-pi-ai` 的 `src` 没有写死的 env 名：`resolveApiKey` 读的是 profile 上的 `apiKeyEnv` credential-ref。 [E: packages/llm/llm-pi-ai/src/index.ts:184]
 
-`packages/sandbox/**/src` 不读 landlock 专用 env。子进程默认环境走 `scrubbedParentEnv()`：剥掉形似凭据的名字和所有 ambient `DSH_*`，不是再读一张名单。 [E: packages/subprocess/subprocess/src/index.ts:63]
+`packages/sandbox/**/src` 不读 landlock 专用 env。子进程默认环境走 `scrubbedParentEnv()`：剥掉形似凭据的名字和所有 ambient `DSH_*`，不是再读一张名单。 [E: packages/subprocess/subprocess/src/index.ts:64]
 
 T1 [`surface.misc.home`](../surface/misc/home.md) 写产品路径文案；T2 [`subsys.util.home-paths`](../subsystems/util/home-paths.md) / [`subsys.llm.deepseek`](../subsystems/llm/deepseek.md) / [`subsys.integration.web-search`](../subsystems/integration/web-search.md) 写控制流。本页只做名字目录与 BASE_URL 分家。
 

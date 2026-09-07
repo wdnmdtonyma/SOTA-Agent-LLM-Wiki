@@ -51,7 +51,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 模型可见名 `job_list` / `job_output` / `job_kill`；实现包 `@deepseek-ai/dsh-tool-jobs`（Cordis 插件名 `tool-jobs`）。三个工具只控制已登记的后台 job，不自己 `start()`；加载时给 `ctx.jobs` 挂上 controller，并把未汇报的结算投递给 owning agent。
@@ -147,7 +147,7 @@ updated: 0a53fb55be
 | Definition | `JobRegistry` / `ctx.jobs` | 抽象 Service，`super(ctx, 'jobs')`。直接加载 `@deepseek-ai/dsh-jobs` 会抛，必须换实现。[E: packages/jobs/jobs/src/index.ts:31] [E: packages/jobs/jobs/src/index.ts:70] [E: packages/jobs/jobs/src/index.ts:68] |
 | Provider（shipped） | `LocalJobRegistry`（`@deepseek-ai/dsh-jobs-local`） | 进程内 Map；id 形如 `` `${kind}-${count}` ``；按 session 篱笆授权。[E: packages/jobs/jobs-local/package.json:2] [E: packages/jobs/jobs-local/src/index.ts:91] [E: packages/jobs/jobs-local/src/index.ts:153] |
 | Consumer（本页） | `@deepseek-ai/dsh-tool-jobs` | `attachController` + `list` / `read` / `wait` / `kill` / `get` + `onJobDone`。 |
-| Consumer（producer） | `tool-bash` / `tool-subagent` / `tool-terminal` | 只 `start()`。缺 `ctx.jobs` 时 bash / subagent 自己抛 `load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs`。[E: packages/shell/tool-bash/src/index.ts:355] [E: packages/subagent/tool-subagent/src/index.ts:534] |
+| Consumer（producer） | `tool-bash` / `tool-subagent` / `tool-terminal` | 只 `start()`。缺 `ctx.jobs` 时 bash / subagent 自己抛 `load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs`。[E: packages/shell/tool-bash/src/index.ts:355] [E: packages/subagent/tool-subagent/src/index.ts:533] |
 
 换掉 `ctx.jobs` provider 会带走：id 分配、session 篱笆、`maxConcurrentJobsPerOwner`（本地默认 10）、wait 的 `TASK_WAIT_TIMEOUT` 语义、controller / listener 的 scope 分层。三个 `defineTool` 不选存储实现。[E: packages/jobs/jobs-local/src/index.ts:28] [E: packages/jobs/jobs-local/src/index.ts:144]
 

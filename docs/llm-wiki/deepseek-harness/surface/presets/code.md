@@ -46,7 +46,7 @@ related:
   - surface.profiles.headless
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 节点 id `surface.presets.code` 是 **PTC** shipped preset 的稳定别名。目录名 / roster id 是 **`ptc`**（不再存在 `presets/code/`）。picker 显示名 **PTC 模式**。成员资格只认 `packages/preset/agent-presets/presets/ptc/agent.cordis.yml`；相对 `standard` 的唯一可加载增量是末尾 `tool-presentation`（`@deepseek-ai/dsh-agent-tool-presentation`，`mode: ptc`），把本会话模型看见的工具投影成 `run_code` + 生成 SDK，而不是从 yml 删掉 native 工具行。
@@ -65,7 +65,7 @@ DSH 的主线是 **profile → bundle → agent preset**。`SHIPPED_PRESET_ROOT`
 
 **agent-preset 面**（本文件）：standing mount 上的 persona、model-facing 工具行、以及带 `isolate` 的 per-preset 服务组；agent 通过 `bindScopeParent` join [E: packages/preset/agent-presets/src/index.ts:425]。Session Controller 的 `composeAgent` 在 factory `setup` 里调用 `presets.mount(agentCtx, resolvedId)` [E: packages/api/session-controller/src/agent.ts:380]。没有 `agentPresets` 服务时只 `installSelection`，不挂 preset [E: packages/api/session-controller/src/agent.ts:374]。
 
-**host 面**（本 preset 不拥有）：`tools` / `skills` / `tasks` / `goals` / `subagents` 等 registry、sandbox 与 approval、persistence、model route，以及 TypeScript `codeRuntime`。五个 shipped profile 在 `PROFILE_TEMPLATES`：`web`(live) / `headless` / `sdk` / `sdk-minimal` / `acp`(startup) [E: packages/boot/app-boot/src/profile.ts:137]。**只有 web** 在五个模板对应的 bundle patch 里 insert `agent-presets` 行、`default: standard` [E: packages/bundle/web-app/cordis.patch.yml:442] [E: packages/bundle/web-app/cordis.patch.yml:445]。web 把 base 上的模型可见工具行 `disabled: true`（例如 `tool-bash`）[E: packages/bundle/web-app/cordis.patch.yml:321]，改由每会话 preset 再挂。web 与 headless 都在 host 上 `insert` `@deepseek-ai/dsh-code-runtime-worker-thread` [E: packages/bundle/web-app/cordis.patch.yml:50] [E: packages/bundle/headless/cordis.patch.yml:20]。headless overlay 没有 `agent-presets` 行。sdk / acp 叠 base 工具行，也不挂 roster。`sdk-minimal` 不叠 `dsh-base`，用 `agent-spine-demo`。
+**host 面**（本 preset 不拥有）：`tools` / `skills` / `tasks` / `goals` / `subagents` 等 registry、sandbox 与 approval、persistence、model route，以及 TypeScript `codeRuntime`。五个 shipped profile 在 `PROFILE_TEMPLATES`：`web`(live) / `headless` / `sdk` / `sdk-minimal` / `acp`(startup) [E: packages/boot/app-boot/src/profile.ts:137]。**只有 web** 在五个模板对应的 bundle patch 里 insert `agent-presets` 行、`default: standard` [E: packages/bundle/web-app/cordis.patch.yml:442] [E: packages/bundle/web-app/cordis.patch.yml:445]。web 把 base 上的模型可见工具行 `disabled: true`（例如 `tool-bash`）[E: packages/bundle/web-app/cordis.patch.yml:321]，改由每会话 preset 再挂。web 与 headless 都在 host 上 `insert` `@deepseek-ai/dsh-code-runtime-worker-thread` [E: packages/bundle/web-app/cordis.patch.yml:50] [E: packages/bundle/headless/cordis.patch.yml:20]。headless overlay 没有 `agent-presets` 行。sdk / acp 叠 base 工具行，也不挂 roster。`sdk-minimal` 不叠 `dsh-base`，自己挂 kernel 行（含 `id: sessions` JSONL），**没有**已删除的 `agent-spine-demo`。
 
 PTC 的含义是 **presentation**，不是另一套成员表。`mode === 'ptc'` 时 `wireSchemas` 只保留 `schema.name === RUN_CODE_NAME`（`run_code`）[E: packages/core/tools/src/index.ts:986] [E: packages/core/tools/src/ptc.ts:20]。native 工具仍在 composition 里注册，供 SDK 子调度调用。权威实现是 `packages/core/tools/src/ptc.ts`，不是已删除的 `code-mode.ts`。
 
@@ -86,7 +86,7 @@ PTC 的含义是 **presentation**，不是另一套成员表。`mode === 'ptc'` 
 | 键 | 值 | 作用 |
 |---|---|---|
 | `name` | `PTC 模式` | picker 显示名；缺省回退到 id `ptc` [E: packages/preset/agent-presets/presets/ptc/preset.yml:1] |
-| `description` | `具备标准模式的全部能力，并通过 PTC 模式 SDK 呈现工具，让模型用一个 TypeScript 程序组合多步操作。` | 一句话说明 [E: packages/preset/agent-presets/presets/ptc/preset.yml:2] |
+| `description` | `功能完整的编码 Agent，但默认不提供 workflow 工具；其他工具通过 PTC 模式 SDK 呈现，让模型用一个 TypeScript 程序组合多步操作。` | 一句话说明 [E: packages/preset/agent-presets/presets/ptc/preset.yml:2] |
 | `order` | `2` | 有 `order` 的 preset 按数值升序；`standard` 是 `1`，本 preset 排第二 [E: packages/preset/agent-presets/presets/ptc/preset.yml:3] [E: packages/preset/agent-presets/presets/standard/preset.yml:3] |
 
 `readPresetMetadata` 文件缺失返回 `{}` [E: packages/preset/agent-presets/src/metadata.ts:63]，YAML 解析失败同样返回 `{}` [E: packages/preset/agent-presets/src/metadata.ts:71]，composition 仍可 mount。
@@ -95,8 +95,8 @@ PTC 的含义是 **presentation**，不是另一套成员表。`mode === 'ptc'` 
 
 逐 `id` 对照 `presets/standard/agent.cordis.yml` 与 `presets/ptc/agent.cordis.yml`：
 
-- **唯一可加载增量**：`ptc` 在 `tool-web` 之后多出 `id: tool-presentation` / `name: '@deepseek-ai/dsh-agent-tool-presentation'` / `config.mode: ptc` [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:264] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268]。`standard` 以 `tool-web` 收束（`fetch: true`，`searchTimeoutMs: 60000`），没有 `tool-presentation` 行 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253]。
-- **其余可加载字段相同**：`persona` 英文句、`agent-instructions.maxBytes`、`command-goal`、平台 `disabled` 的 `tool-bash`/`tool-pwsh`、`tool-fs-search.sampleOverCapGlobResults`、`planning`/`compaction`/`delegation` 的 `isolate` 键、`tool-subagent*` 的 `provider`/`toolName`/`backgroundMode`/`modelSelectionSettings`、两条 product provider 的 `disabled: true`、`tool-todo.allowParallelInProgress`、`tool-web.fetch`。`tool-subagent-fork` 两边都是 `backgroundMode: continuable` [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:204]；这与 host `dsh-base` 里同一 id 的 `backgroundMode: one-shot` 不同 [E: packages/bundle/base/cordis.patch.yml:373]。
+- **可加载增量**：`ptc` 在 `tool-web` 之后多出 `id: tool-presentation` / `name: '@deepseek-ai/dsh-agent-tool-presentation'` / `config.mode: ptc` [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:267] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268]。另：`tool-workflow` 在 PTC 上 **`disabled: true`**（engine 留给 `ralph`，不向模型发布 `workflow`）[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:233] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:237]；`standard` 的同一行没有 `disabled` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:226]。`standard` 以 `tool-web` 收束（`fetch: true`，`searchTimeoutMs: 60000`），没有 `tool-presentation` 行 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]。
+- **其余可加载字段相同**：`persona` 英文句、`agent-instructions.maxBytes`、`command-goal`、平台 `disabled` 的 `tool-bash`/`tool-pwsh`、`tool-fs-search.sampleOverCapGlobResults`、`planning`/`compaction`/`delegation` 的 `isolate` 键、`tool-subagent*` 的 `provider`/`toolName`/`backgroundMode`/`modelSelectionSettings`、两条 product provider 的 `disabled: true`、`tool-ralph` 仍启用、`tool-todo.allowParallelInProgress`、`tool-web.fetch`。`tool-subagent-fork` 两边都是 `backgroundMode: continuable` [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:204]；这与 host `dsh-base` 里同一 id 的 `backgroundMode: one-shot` 不同 [E: packages/bundle/base/cordis.patch.yml:373]。
 - **注释不同，不是成员资格**：YAML `#` 注释不能当成员，也不能当 `[E]`。
 - **本文件没有**（完整成员表即反证）：`tool-str-replace-editor`、`tool-bash-persistent` / `persistent-shell`、`tool-cordis`、`skill-filesystem.customSkillDirs`。这些出现在 `minimal` 或 `cordis` 的 `agent.cordis.yml`，不在 `ptc` 里。
 
@@ -131,12 +131,12 @@ PTC 的含义是 **presentation**，不是另一套成员表。`mode === 'ptc'` 
 | `tool-subagent-codex` | `@deepseek-ai/dsh-tool-subagent` | 组内 | `disabled: true`；`provider: codex`，`toolName: subagent_codex`，`backgroundMode: one-shot`，`maxDepth: provider-managed` | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:210] |
 | `tool-subagent-claude-code` | `@deepseek-ai/dsh-tool-subagent` | 组内 | `disabled: true`；`provider: claude-code`，`toolName: subagent_claude_code`，`backgroundMode: one-shot`，`maxDepth: provider-managed` | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:219] |
 | `workflow-worker-thread` | `@deepseek-ai/dsh-workflow-worker-thread` | 组内 | `provider: spawn` | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:228] |
-| `tool-workflow` | `@deepseek-ai/dsh-tool-workflow` | 组内 | （无 config） | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:233] |
-| `tool-ralph` | `@deepseek-ai/dsh-tool-ralph` | 组内 | `subagentProvider: spawn`，`maxRounds: 64` | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:236] |
-| `tool-ask-user` | `@deepseek-ai/dsh-tool-ask-user` | 无 | （无 config） | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:244] |
+| `tool-workflow` | `@deepseek-ai/dsh-tool-workflow` | 组内 | **`disabled: true`**（注释：engine 留给 `ralph`） | **相对 standard 关掉模型面 `workflow`** | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:233] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:237] |
+| `tool-ralph` | `@deepseek-ai/dsh-tool-ralph` | 组内 | `subagentProvider: spawn`，`maxRounds: 64` | 同（仍启用） | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:239] |
+| `tool-ask-user` | `@deepseek-ai/dsh-tool-ask-user` | 无 | （无 config） | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:245] |
 | `tool-todo` | `@deepseek-ai/dsh-tool-todo` | 无 | `allowParallelInProgress: true` | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:247] |
-| `tool-web` | `@deepseek-ai/dsh-tool-web` | 无 | `fetch: true`，`searchTimeoutMs: 60000` | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:254] |
-| `tool-presentation` | `@deepseek-ai/dsh-agent-tool-presentation` | 无 | **`mode: ptc`（必填，无默认）** | **本 preset 独有** | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:264] |
+| `tool-web` | `@deepseek-ai/dsh-tool-web` | 无 | `fetch: true`，`searchTimeoutMs: 60000` | 同 | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:255] |
+| `tool-presentation` | `@deepseek-ai/dsh-agent-tool-presentation` | 无 | **`mode: ptc`（必填，无默认）** | **本 preset 独有** | [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:267] |
 
 ### `tool-presentation` / `mode: ptc`
 

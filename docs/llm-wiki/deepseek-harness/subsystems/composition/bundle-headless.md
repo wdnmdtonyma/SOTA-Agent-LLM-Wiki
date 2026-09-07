@@ -8,7 +8,6 @@ source:
   - packages/bundle/headless/cordis.patch.yml
   - packages/bundle/headless/src/startup.ts
   - packages/bundle/headless/src/index.ts
-  - packages/bundle/headless/src/invariant.ts
   - packages/bundle/headless/package.json
   - packages/bundle/headless/tests/headless.spec.ts
   - packages/bundle/headless/tests/startup.spec.ts
@@ -53,7 +52,7 @@ related:
   - surface.cli.overview
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-headless` 是叠在 `dsh-base` 上的 **one-shot host 面 overlay**：`insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`，**没有** `agent-presets`、**没有** `webserver`。`headless-startup` 把 argv task 做成 `ctx.headlessStartup`，`headless-runner` 在 root realm `agents.create` → `followup` → `whenIdle`，reasoning 写 stderr、最后一条 assistant text 写 stdout，再按 `turn/end` reason 经 `ctx.appExit` 退出。模型可见 `tool-*` 留在 host 全局层。
@@ -91,11 +90,10 @@ argv 到进程退出的端到端走读在 [`spine.trace-headless-turn`](../../sp
 
 | 路径 | 角色 |
 |---|---|
-| `packages/bundle/headless/package.json` | 包名 `@deepseek-ai/dsh-headless`；`dsh.bundle.patch = ./cordis.patch.yml`；exports `.` / `./startup` / `./invariant` / `./cordis.patch.yml`。 |
+| `packages/bundle/headless/package.json` | 包名 `@deepseek-ai/dsh-headless`；`dsh.bundle.patch = ./cordis.patch.yml`；exports `.` / `./startup` / `./cordis.patch.yml`。 |
 | `packages/bundle/headless/cordis.patch.yml` | 叠在 base 之后：覆盖 `system-prompt.persona`、`tools.mode` 读 `DSH_TOOLS_MODE`；`insert` 三行。**不**改 `hmr`。 |
 | `packages/bundle/headless/src/startup.ts` | Provider：`inject: ['cmdlineArgs']`，解析 `[task...]`，`provide('headlessStartup', { task })`。 |
 | `packages/bundle/headless/src/index.ts` | Consumer：`inject: ['agentDefaultModel', 'agents', 'sessions']`；`Config.task` 必填；stderr 流 reasoning；`apply` 里 `void run(...)`。 |
-| `packages/bundle/headless/src/invariant.ts` | companion `headless-invariant`：`invariants.register` 一个空 installer，不审计树内可变关系。 |
 | `packages/bundle/headless/tests/startup.spec.ts` | Loader 真树：多词 join、空 task / `--help` 不 provide、runner 保持 pending。 |
 | `packages/bundle/headless/tests/headless.spec.ts` | scripted factory：`firstSeq` 窗口、flush 先于 exit、reasoning stderr、非 `completed` / create 失败的退出码。 |
 
@@ -107,12 +105,12 @@ argv 到进程退出的端到端走读在 [`spine.trace-headless-turn`](../../sp
 | `HeadlessStartupValues` | `startup.ts` | `{ task: string }`。非空任务正文。 |
 | `name`（startup） | `startup.ts` | `'headless-startup'`。[E: packages/bundle/headless/src/startup.ts:13] |
 | `inject`（startup） | `startup.ts` | `['cmdlineArgs']`。[E: packages/bundle/headless/src/startup.ts:16] |
-| `name`（runner） | `index.ts` | `'headless-runner'`。[E: packages/bundle/headless/src/index.ts:27] |
-| `inject`（runner 插件） | `index.ts` | `['agentDefaultModel', 'agents', 'sessions']`。行级另有 `inject: [headlessStartup]`。[E: packages/bundle/headless/src/index.ts:30] |
+| `name`（runner） | `index.ts` | `'headless-runner'`。[E: packages/bundle/headless/src/index.ts:28] |
+| `inject`（runner 插件） | `index.ts` | `['agentDefaultModel', 'agents', 'sessions']`。行级另有 `inject: [headlessStartup]`。[E: packages/bundle/headless/src/index.ts:31] |
 | `Config.task` | `index.ts` | `z.string().required()`。缺键构造即抛。[E: packages/bundle/headless/src/index.ts:39] [E: packages/bundle/headless/tests/headless.spec.ts:381] |
 | `RunOutcome` | `index.ts`（未导出） | `{ text, reason }`。`text` = `firstSeq` 之后最后一条非空 `assistant/message` 文本；`reason` = 最后一条 `turn/end`。 |
 | `internals.stdout` / `stderr` | `index.ts` | 默认真 `process` 流；测试替换。 |
-| `ctx.appExit` | launcher `provideCmdline` | 可选 host 值，**不是** runner 的 `inject`。缺了 `apply` 同步抛。[E: packages/bundle/headless/src/index.ts:218] |
+| `ctx.appExit` | launcher `provideCmdline` | 可选 host 值，**不是** runner 的 `inject`。缺了 `apply` 同步抛。[E: packages/bundle/headless/src/index.ts:219] |
 
 `composeEntries` 从空数组一次 `applyEntryPatches`：同 id 的 `config` **整键覆盖**（`target[key] = value`，不是 deep-merge）。本 overlay 重写 `system-prompt` / `tools` 时只带自己那几个键，schema 默认补其余项。[E: packages/boot/app-boot/src/profile.ts:858] [E: vendor/include/src/index.ts:123]
 
@@ -149,26 +147,26 @@ flowchart TD
 
 5. CLI `composeProfile` **不再**按 `rows.has('agent-presets')` 注入 shipped root：它只 `prepareProfile`、叠 home / `--patch` overlay、再拼 `profile.layers` 的 bundle patches。roster 根目录由 `dsh-agent-presets` 包内 `presets/{minimal,standard,ptc,cordis}/` 在 **web 行 mount 时**发现。默认 headless 没有该行，因此不要把四个 shipped preset 说成 headless 的默认装配。[E: apps/cli/src/profile-boot.ts:160] [E: apps/cli/src/profile-boot.ts:164]
 
-6. `runProfile` 在任何 config-tree 行 mount 之前 `provideCmdline`：冻 `ctx.cmdlineArgs`，并把 `shutdown.shutdown` 做成 `ctx.appExit`。[E: apps/cli/src/profile-boot.ts:258] [E: packages/boot/cmdline/src/index.ts:86] [E: packages/boot/cmdline/src/index.ts:87] `headless` 的 `patchReload === 'startup'`，不进 live watcher 分支。[E: apps/cli/src/profile-boot.ts:270]
+6. `runProfile` 在任何 config-tree 行 mount 之前 `provideCmdline`：冻 `ctx.cmdlineArgs`，并把 `shutdown.shutdown` 做成 `ctx.appExit`。[E: apps/cli/src/profile-boot.ts:258] [E: packages/boot/cmdline/src/index.ts:86] [E: packages/boot/cmdline/src/index.ts:87] `headless` 的 `patchReload === 'startup'`，不进 live watcher 分支。[E: apps/cli/src/profile-boot.ts:271]
 
-7. `headless-startup.apply@packages/bundle/headless/src/startup.ts` 建 commander，程序名 `dsh --profile headless`，位置参数 `[task...]`。action 里 `program.args.join(' ')`；`task.trim() === ''` 走 `program.error(...)`，**不** `provide`。[E: packages/bundle/headless/src/startup.ts:33] [E: packages/bundle/headless/src/startup.ts:52] [E: packages/bundle/headless/src/startup.ts:53] 然后 `parseCmdline`：help / 用法错误收成 `ctx.appExit`。[E: packages/bundle/headless/src/startup.ts:56] [E: packages/boot/cmdline/src/index.ts:184] 测试：`['run','the','tests']` 得到 `{ task: 'run the tests' }` 且 runner config 同步；空 / 空白退出 `1` 且 runner 未配置；`--help` 退出 `0` 且不 provide。[E: packages/bundle/headless/tests/startup.spec.ts:86] [E: packages/bundle/headless/tests/startup.spec.ts:96] [E: packages/bundle/headless/tests/startup.spec.ts:105]
+7. `headless-startup.apply@packages/bundle/headless/src/startup.ts` 建 commander，程序名 `dsh --profile headless`，位置参数 `[task...]`。action 里 `program.args.join(' ')`；`task.trim() === ''` 走 `program.error(...)`，**不** `provide`。[E: packages/bundle/headless/src/startup.ts:33] [E: packages/bundle/headless/src/startup.ts:52] [E: packages/bundle/headless/src/startup.ts:53] 然后 `parseCmdline`：help / 用法错误收成 `ctx.appExit`。[E: packages/bundle/headless/src/startup.ts:56] [E: packages/boot/cmdline/src/index.ts:184] 测试：`['run','the','tests']` 得到 `{ task: 'run the tests' }` 且 runner config 同步；空 / 空白退出 `1` 且 runner 未配置；`--help` 退出 `0` 且不 provide。[E: packages/bundle/headless/tests/startup.spec.ts:88] [E: packages/bundle/headless/tests/startup.spec.ts:96] [E: packages/bundle/headless/tests/startup.spec.ts:105]
 
 8. 非空 task 才 `ctx.provide('headlessStartup', { task })`。Loader 这时才满足 runner 行的 `inject: [headlessStartup]`，`!!js` 把 `ctx.headlessStartup.task` 写进 `Config.task`。[E: packages/bundle/headless/src/startup.ts:54] 空 task / `--help` 不 provide，runner 行保持 pending，进程只靠 `parseCmdline` 的 `appExit` 退。
 
-9. `headless-runner.apply@packages/bundle/headless/src/index.ts` 用 `ctx.get('appExit')` 读 launcher 出口；缺了同步抛 `the launcher must provide ctx.appExit before the tree mounts`。然后 `void run(...)`：**不**阻塞 `apply`，也不阻塞随后 `runProfile` 返回。进程靠仍挂着的 Cordis 树与 in-flight `run` 活着。[E: packages/bundle/headless/src/index.ts:216] [E: packages/bundle/headless/src/index.ts:218] [E: packages/bundle/headless/src/index.ts:221] [E: packages/bundle/headless/tests/headless.spec.ts:377]
+9. `headless-runner.apply@packages/bundle/headless/src/index.ts` 用 `ctx.get('appExit')` 读 launcher 出口；缺了同步抛 `the launcher must provide ctx.appExit before the tree mounts`。然后 `void run(...)`：**不**阻塞 `apply`，也不阻塞随后 `runProfile` 返回。进程靠仍挂着的 Cordis 树与 in-flight `run` 活着。[E: packages/bundle/headless/src/index.ts:219] [E: packages/bundle/headless/src/index.ts:219] [E: packages/bundle/headless/src/index.ts:222] [E: packages/bundle/headless/tests/headless.spec.ts:378]
 
-10. `run` 先 `await ctx.get('loader')?.await()`，避免并发 mount 时工具 / adapter 半组成。settlement 期间树被 dispose、三个核心服务缺失则直接 `return`，不再 `appExit`。[E: packages/bundle/headless/src/index.ts:166] [E: packages/bundle/headless/src/index.ts:171] 否则 `agentDefaultModel.currentSelection()`；base 组合默认 `provider: deepseek-official` / `model: deepseek-v4-flash`（Settings 可覆盖）。[E: packages/bundle/headless/src/index.ts:173] [E: packages/core/agent-default-model/src/index.ts:90] [E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:79]
+10. `run` 先 `await ctx.get('loader')?.await()`，避免并发 mount 时工具 / adapter 半组成。settlement 期间树被 dispose、三个核心服务缺失则直接 `return`，不再 `appExit`。[E: packages/bundle/headless/src/index.ts:169] [E: packages/bundle/headless/src/index.ts:172] 否则 `agentDefaultModel.currentSelection()`；base 组合默认 `provider: deepseek-official` / `model: deepseek-v4-flash`（Settings 可覆盖）。[E: packages/bundle/headless/src/index.ts:173] [E: packages/core/agent-default-model/src/index.ts:90] [E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:79]
 
-11. `ctx.agents.create` 转到已登记 factory。`AgentLoop` 构造时 `setFactory(this)`；base 行 `agents: []`，boot **不**在进程级造 Agent，由 runner 运行时创建。[E: packages/core/agent/src/index.ts:397] [E: packages/core/agent-loop/src/index.ts:413] [E: packages/bundle/base/cordis.patch.yml:489] runner 传入 `sessionId: SessionId("session-" + randomUUID())`、`meta.cwd = process.cwd()`、`agentOptions: { provider, model }`。`setup` **只** `installModelSelection`：没有 preset child realm 可 join，也就没有 `isolate` 组。[E: packages/bundle/headless/src/index.ts:178] [E: packages/bundle/headless/src/index.ts:184]
+11. `ctx.agents.create` 转到已登记 factory。`AgentLoop` 构造时 `setFactory(this)`；base 行 `agents: []`，boot **不**在进程级造 Agent，由 runner 运行时创建。[E: packages/core/agent/src/index.ts:400] [E: packages/core/agent-loop/src/index.ts:413] [E: packages/bundle/base/cordis.patch.yml:489] runner 传入 `sessionId: SessionId("session-" + randomUUID())`、`meta.cwd = process.cwd()`、`agentOptions: { provider, model }`。`setup` **只** `installModelSelection`：没有 preset child realm 可 join，也就没有 `isolate` 组。[E: packages/bundle/headless/src/index.ts:179] [E: packages/bundle/headless/src/index.ts:184]
 
-12. 新 Agent 先 `whenIdle`（create 后的 idle），记下 `firstSeq = agent.session.seq`（下一条事件序号 = 当前 log 长度），装 `streamReasoning`（`assistant/chunk` 的 `reasoning-delta` 写 stderr，前缀 `dsh: reasoning:\n`），再 **一次** `followup(createUserMessage({ content: [{ type: 'text', text: task }], source: { kind: 'user' } }))`。[E: packages/bundle/headless/src/index.ts:187] [E: packages/bundle/headless/src/index.ts:188] [E: packages/bundle/headless/src/index.ts:189] [E: packages/bundle/headless/src/index.ts:191] [E: packages/core/session/src/index.ts:563] [E: packages/llm/llm/src/message.ts:194] `ReactLoopAgent.followup` = `send(input, 'next-turn', true)`：进 inbox 并 `wakeDriver`。[E: packages/core/agent-loop/src/agent.ts:131] [E: packages/core/agent-loop/src/agent.ts:132] `firstSeq` 把 create 前已经在 log 里的噪声 turn 排除在打印窗口外。[E: packages/bundle/headless/tests/headless.spec.ts:119]
+12. 新 Agent 先 `whenIdle`（create 后的 idle），记下 `firstSeq = agent.session.seq`（下一条事件序号 = 当前 log 长度），装 `streamReasoning`（`assistant/chunk` 的 `reasoning-delta` 写 stderr，前缀 `dsh: reasoning:\n`），再 **一次** `followup(createUserMessage({ content: [{ type: 'text', text: task }], source: { kind: 'user' } }))`。[E: packages/bundle/headless/src/index.ts:187] [E: packages/bundle/headless/src/index.ts:188] [E: packages/bundle/headless/src/index.ts:189] [E: packages/bundle/headless/src/index.ts:190] [E: packages/core/session/src/index.ts:563] [E: packages/llm/llm/src/message.ts:194] `ReactLoopAgent.followup` = `send(input, 'next-turn', true)`：进 inbox 并 `wakeDriver`。[E: packages/core/agent-loop/src/agent.ts:131] [E: packages/core/agent-loop/src/agent.ts:131] `firstSeq` 把 create 前已经在 log 里的噪声 turn 排除在打印窗口外。[E: packages/bundle/headless/tests/headless.spec.ts:120]
 
 13. **Waterfall 必须 `next()`。** Cordis `Events.waterfall` 把最后一个参数 `pop` 成 innermost `next`：监听器必须调用传入的 `next()` 才会 `cbs.shift()` 到下一层；不调用就停在本层，内置行为也不跑。[E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] [E: vendor/cordis/src/events.ts:239] 本 bundle 自己不是 waterfall 插件，但 runner 打开的那一次 turn 会穿过三条必须 `next()` 的链：
     - `installModelSelection` 挂在 `system-prompt/assemble` 上：先 `await next()` 再把 `provider` / `model` 写进 `variables`。不调用 `next()`，assemble 停在这一层，`{{model}}` / `{{cwd}}` 插值拿不到完整 assembly。[E: packages/core/agent/src/model-selection.ts:40] [E: packages/core/agent/src/model-selection.ts:42] `SystemPrompt.assemble` 自己也是 waterfall，返回值权威。[E: packages/core/system-prompt/src/index.ts:536]
     - `ReactLoopAgent.preStep` 的 `agent/pre-step`：innermost `next` 默认 `{ kind: 'enter', messages }`。listener 不 `next()` 就不会走到这个 enter；`reject` 把 turn 收成 `blocked`，第一步空 claim 则以 `completed`、0 个 step 结束。[E: packages/core/agent-loop/src/agent.ts:243] [E: packages/core/agent-loop/src/agent.ts:246] [E: packages/core/agent-loop/src/agent.ts:276] [E: packages/core/agent-loop/src/agent.ts:283]
     - 模型若带 `tool-call`，`tools/pre-execute` 的 innermost 默认 `{ kind: 'allow' }`。不 `next()` 等于否决 allow，body 进不去。[E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1468]
 
-14. `whenIdle` 等到 `activityDone` 不再被替换（driver 收敛）。runner 再 `sessions.flush(agent.session)`，然后 `summarize`：从 `firstSeq` 起，见到 `turn/start` 才开始；每个非空 `assistant/message` 文本覆盖 `text`；最后一条 `turn/end.reason` 留下。[E: packages/core/agent-loop/src/agent.ts:204] [E: packages/bundle/headless/src/index.ts:199] [E: packages/core/session/src/index.ts:1020] [E: packages/bundle/headless/src/index.ts:69] [E: packages/bundle/headless/src/index.ts:79] [E: packages/bundle/headless/src/index.ts:81] stdout 写 `text + '\n'`；`reason.kind === 'error'` 时 stderr 再写 `dsh: ${code}: ${message}`；`appExit(reason?.kind === 'completed' ? 0 : 1)`——无 turn、`aborted`、error 都是 `1`。[E: packages/bundle/headless/src/index.ts:201] [E: packages/bundle/headless/src/index.ts:205] 测试钉死 flush 在 exit 之前、跨两个 scripted turn 只打印 `final answer`、error reason 退出 `1`、无完成 turn 退出 `1`、`agents.create` reject 走 `fail`。[E: packages/bundle/headless/tests/headless.spec.ts:129] [E: packages/bundle/headless/tests/headless.spec.ts:132] [E: packages/bundle/headless/tests/headless.spec.ts:256] [E: packages/bundle/headless/tests/headless.spec.ts:274] [E: packages/bundle/headless/tests/headless.spec.ts:347]
+14. `whenIdle` 等到 `activityDone` 不再被替换（driver 收敛）。runner 再 `sessions.flush(agent.session)`，然后 `summarize`：从 `firstSeq` 起，见到 `turn/start` 才开始；每个非空 `assistant/message` 文本覆盖 `text`；最后一条 `turn/end.reason` 留下。[E: packages/core/agent-loop/src/agent.ts:204] [E: packages/bundle/headless/src/index.ts:199] [E: packages/core/session/src/index.ts:1020] [E: packages/bundle/headless/src/index.ts:69] [E: packages/bundle/headless/src/index.ts:79] [E: packages/bundle/headless/src/index.ts:81] stdout 写 `text + '\n'`；`reason.kind === 'error'` 时 stderr 再写 `dsh: ${code}: ${message}`；`appExit(reason?.kind === 'completed' ? 0 : 1)`——无 turn、`aborted`、error 都是 `1`。[E: packages/bundle/headless/src/index.ts:201] [E: packages/bundle/headless/src/index.ts:205] 测试钉死 flush 在 exit 之前、跨两个 scripted turn 只打印 `final answer`、error reason 退出 `1`、无完成 turn 退出 `1`、`agents.create` reject 走 `fail`。[E: packages/bundle/headless/tests/headless.spec.ts:130] [E: packages/bundle/headless/tests/headless.spec.ts:131] [E: packages/bundle/headless/tests/headless.spec.ts:256] [E: packages/bundle/headless/tests/headless.spec.ts:275] [E: packages/bundle/headless/tests/headless.spec.ts:347]
 
 15. **isolate / `leakedServices` 不在默认路径上。** `mountPreset` 若发现子树把 service publish 进 **root realm**，抛 `published process-global service(s)`，要求 `isolate: { …: true }` 或把该行搬到 host。[E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:410] 默认 headless 没有 `agent-presets` 行，runner `setup` 也不 join standing mount，所以 **不会**走到 `leakedServices`。host 全局 `tool-*` publish 进 root realm 是本 mode 的设计，不是泄漏。若部署后来用 `--patch` 自己 `insert` 了 roster，必须在 **这个** `setup` 里先 join 那一代 standing mount；本仓库的 runner **没有**写这一步。
 
@@ -211,7 +209,7 @@ flowchart TD
 - packages/bundle/headless/cordis.patch.yml
 - packages/bundle/headless/src/startup.ts
 - packages/bundle/headless/src/index.ts
-- packages/bundle/headless/src/invariant.ts
+
 - packages/bundle/headless/package.json
 - packages/bundle/headless/tests/headless.spec.ts
 - packages/bundle/headless/tests/startup.spec.ts

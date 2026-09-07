@@ -50,7 +50,7 @@ related:
   - subsys.integration.api-gateway
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 旧包 `@deepseek-ai/dsh-host-apiproxy` / `packages/host/apiproxy` **已删除**。Host HTTP API 现为三个 Typert Remote 所有者（`session` / `settings` / `workspace`）加上 `dsh-api-gateway` 的 `/api` mux 与 `dsh-host-webserver` 的 `node:http` 登记。本节点 id `subsys.host.apiproxy` 是稳定别名，**不要**再写 `ctx.apiProxy` 或 `ApiProxy`。
@@ -80,7 +80,7 @@ DSH 是 **Cordis 组合运行时**（profile → bundle → agent preset）。Ho
 
 - `ApiProxy` / `RpcMethodMap` / `toFetchHandler`：包已删除，路径 `packages/host/apiproxy/**` 不得再当 source。
 - 信任篱笆、`/api` prefix 绑定：[`subsys.client.connection`](../client/connection.md)。`API_PATH = '/api'`。[E: packages/client/connection/src/api-path.ts:7]
-- preset roster / `leakedServices`：[`subsys.composition.agent-presets`](../composition/agent-presets.md)。Session Controller 只 `get('agentPresets')` 后 `resolve` + unpublished `setup` 里 `mount`。[E: packages/api/session-controller/src/agent.ts:373] [E: packages/api/session-controller/src/agent.ts:380]
+- preset roster / `leakedServices`：[`subsys.composition.agent-presets`](../composition/agent-presets.md)。Session Controller 只 `get('agentPresets')` 后 `resolve` + unpublished `setup` 里 `mount`。[E: packages/api/session-controller/src/agent.ts:374] [E: packages/api/session-controller/src/agent.ts:380]
 - 浏览器半边 object layer：`packages/api/session-controller/src/client/` 装 `ctx.sessions`。[E: packages/api/session-controller/src/client/index.ts:71]
 - SPA dist：[`@deepseek-ai/dsh-host-frontend-static`](webserver.md) 占 fallback 座。[E: packages/host/frontend-static/src/index.ts:27] [E: packages/host/frontend-static/src/index.ts:124]
 
@@ -108,7 +108,7 @@ DSH 是 **Cordis 组合运行时**（profile → bundle → agent preset）。Ho
 | 符号 | 要点 |
 |---|---|
 | `SessionController` | `TypertRemoteService`，服务名 `'sessionController'`，namespace `'session'`。[E: packages/api/session-controller/src/index.ts:115] |
-| Session Remote 动词 | unary：`list` `search` `create` `selectModel` `modelCatalog` `canOpenWorkspacePath` `openWorkspacePath` `rename` `fork` `prompt` `attachment` `updateQueue` `cancel` `page`；stream：`follow` `control`。[E: packages/api/session-controller/src/index.ts:208] [E: packages/api/session-controller/src/index.ts:374] [E: packages/api/session-controller/src/index.ts:384] |
+| Session Remote 动词 | unary：`list` `search` `create` `selectModel` `modelCatalog` `canOpenWorkspacePath` `openWorkspacePath` `rename` `fork` `prompt` `attachment` `updateQueue` `cancel` `page`；stream：`follow` `control`。[E: packages/api/session-controller/src/index.ts:206] [E: packages/api/session-controller/src/index.ts:372] [E: packages/api/session-controller/src/index.ts:384] |
 | Remote Event | `api-session/added` `removed` `status` `error` `activity`。[E: packages/api/session-controller/src/remote-events.ts:2] [E: packages/api/session-controller/src/index.ts:137] |
 | `SettingsController` | namespace `'settings'`；`describe` 始终 `redactSecrets: true`。[E: packages/api/settings-controller/src/index.ts:107] [E: packages/api/settings-controller/src/index.ts:122] |
 | Settings 动词 | `describe` `canOpenAgentPresetDirectory` `update` `replace` `mutate` `openSettingsDocument` `openAgentPresetDirectory`。[E: packages/api/settings-controller/src/index.ts:118] [E: packages/api/settings-controller/src/index.ts:131] |
@@ -129,11 +129,11 @@ DSH 是 **Cordis 组合运行时**（profile → bundle → agent preset）。Ho
 
 4. **`SessionController` 立刻 `super(..., { namespace: 'session' })`。** 再装 model-selection projection、list/history/control、`SessionFileReferences` / `SessionSkillCatalog`。[E: packages/api/session-controller/src/index.ts:115] 会话生命周期事件映射到 `api-session/*`。[E: packages/api/session-controller/src/index.ts:137]
 
-5. **`session.create`。** `workspaceId` 与 `cwd` 互斥 → `gateway/bad-request`。[E: packages/api/session-controller/src/commands.ts:74] `sessionId = request.sessionId ?? session-${randomUUID()}`。[E: packages/api/session-controller/src/commands.ts:76] workspace 缺失 → `workspace/not-found`。[E: packages/api/session-controller/src/commands.ts:81] cwd = `workspace.path ?? request.cwd ?? defaultCwd`（控制器构造传入 `process.cwd()`）。[E: packages/api/session-controller/src/commands.ts:86] [E: packages/api/session-controller/src/index.ts:117] `ensureSession` 之后才 `attachSession`；附着失败抛 `session/workspace-attach-failed`，会话已经创建。[E: packages/api/session-controller/src/commands.ts:100] [E: packages/api/session-controller/src/commands.ts:103]
+5. **`session.create`。** `workspaceId` 与 `cwd` 互斥 → `gateway/bad-request`。[E: packages/api/session-controller/src/commands.ts:71] `sessionId = request.sessionId ?? session-${randomUUID()}`。[E: packages/api/session-controller/src/commands.ts:78] workspace 缺失 → `workspace/not-found`。[E: packages/api/session-controller/src/commands.ts:82] cwd = `workspace.path ?? request.cwd ?? defaultCwd`（控制器构造传入 `process.cwd()`）。[E: packages/api/session-controller/src/commands.ts:86] [E: packages/api/session-controller/src/index.ts:117] `ensureSession` 之后才 `attachSession`；附着失败抛 `session/workspace-attach-failed`，会话已经创建。[E: packages/api/session-controller/src/commands.ts:101] [E: packages/api/session-controller/src/commands.ts:104]
 
 6. **`composeAgent`。** 无 `ctx.agentPresets` 时 setup 只 `installSelection`。[E: packages/api/session-controller/src/agent.ts:374] 有 roster 则 `presets.resolve(presetId)`，`mount` 放进 unpublished `setup`。[E: packages/api/session-controller/src/agent.ts:375] [E: packages/api/session-controller/src/agent.ts:380]
 
-7. **`session.prompt`。** 可选 `clientTimeZone` 必须是 UTC 或合法 IANA，否则 `session/invalid-time-zone`。[E: packages/api/session-controller/src/commands.ts:288] 当前 selection 的 provider 无 adapter → `session/model-unavailable`。[E: packages/api/session-controller/src/commands.ts:298] 图像还要过 `llm.resolveModelInfo` 的 `inputModalities`。[E: packages/api/session-controller/src/commands.ts:313] `request.mode === 'steer'` 则 `agent.steer`，否则 `agent.followup`。[E: packages/api/session-controller/src/commands.ts:324]
+7. **`session.prompt`。** 可选 `clientTimeZone` 必须是 UTC 或合法 IANA，否则 `session/invalid-time-zone`。[E: packages/api/session-controller/src/commands.ts:285] 当前 selection 的 provider 无 adapter → `session/model-unavailable`。[E: packages/api/session-controller/src/commands.ts:298] 图像还要过 `llm.resolveModelInfo` 的 `inputModalities`。[E: packages/api/session-controller/src/commands.ts:314] `request.mode === 'steer'` 则 `agent.steer`，否则 `agent.followup`。[E: packages/api/session-controller/src/commands.ts:324]
 
 8. **Settings 读永远打码。** `describe()` 调 `settings.describe({ redactSecrets: true })`。[E: packages/api/settings-controller/src/index.ts:122] 写路径 `update` / `replace` / `mutate`。[E: packages/api/settings-controller/src/index.ts:144] [E: packages/api/settings-controller/src/index.ts:180]
 
@@ -141,7 +141,7 @@ DSH 是 **Cordis 组合运行时**（profile → bundle → agent preset）。Ho
 
 10. **SPA fallback。** `frontend-static` `inject = ['webServer', 'connection']`，`registerFallback`。[E: packages/host/frontend-static/src/index.ts:27] [E: packages/host/frontend-static/src/index.ts:124]
 
-11. **浏览器 Session 层。** client `inject` 要求 `typert`、`remote`、`remote.commands`、`remote.session`、`remote.subagents`；`apply` 装 `ClientSessions`。[E: packages/api/session-controller/src/client/index.ts:76] [E: packages/api/session-controller/src/client/index.ts:88]
+11. **浏览器 Session 层。** client `inject` 要求 `typert`、`remote`、`remote.commands`、`remote.session`、`remote.subagents`；`apply` 装 `ClientSessions`。[E: packages/api/session-controller/src/client/index.ts:77] [E: packages/api/session-controller/src/client/index.ts:88]
 
 ## 设计动机
 
@@ -155,7 +155,7 @@ DSH 是 **Cordis 组合运行时**（profile → bundle → agent preset）。Ho
 - yml **没有**再写 `id: api-gateway` → `dsh-host-apiproxy`。`id: typert-gateway` 加载 `@deepseek-ai/dsh-api-gateway`。[E: packages/bundle/base/cordis.patch.yml:45] 三个 controller 的 id 就是 `session-controller` 等。[E: packages/bundle/web-app/cordis.patch.yml:86]
 - 不要在正文或 `source:` 写 `packages/host/apiproxy`、`ctx.apiProxy`、`createApiProxy`、`toFetchHandler`。
 - `dsh web` 不是唯一宿主入口：`dsh --profile sdk|sdk-minimal|acp|headless` 也是 shipped profile。
-- workspace 附着失败时会话已 publish：错误码 `session/workspace-attach-failed`。[E: packages/api/session-controller/src/commands.ts:103]
+- workspace 附着失败时会话已 publish：错误码 `session/workspace-attach-failed`。[E: packages/api/session-controller/src/commands.ts:104]
 - Gateway 当前 intercept 调用**没有**旧文档里的 `{ authority: 'trusted-host' }` 第三选项对象；信任在 `connection.requestRejection`。[E: packages/api/gateway/src/index.ts:199] [E: packages/client/connection/src/rpc-host.ts:97]
 - `WebServer.Config.host` 仍承认 `'0.0.0.0'`；产品旗标拒绝在 web-startup。一条替换 `webserver.config` 的 overlay 仍可能绑 all-interfaces。[E: packages/host/webserver/src/index.ts:61]
 

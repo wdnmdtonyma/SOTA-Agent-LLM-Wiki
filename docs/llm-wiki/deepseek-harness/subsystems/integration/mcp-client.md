@@ -44,7 +44,7 @@ related:
   - subsys.execution.subprocess
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-mcp-client` 是 **opt-in** 的 MCP 工具桥：每个插件实例连一台外部 MCP server，只把 `tools/list` 登记进 `ctx.tools`，模型看见的名字是 `mcp__<serverName>__<rawName>`。它不进 `dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` / 任一 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）；`apps/cli` 把包装进 `dependencies` 只是给 overlay / example / ACP 解析。默认产品树零 MCP server。
@@ -121,7 +121,7 @@ stdio 另有 `args` 默认 `[]`、`env` 默认 `{}`（scrub 之后合并，可�
 
 5. `apply` **await** `connection.ready`，所以 Loader 看到的激活发生在首次 connect+`tools/list` 之后。`failOnStartupError` 且 `outcome.error` 有值则抛，fiber 回滚（预留与连接 effect 一起卸）。[E: packages/mcp/mcp-client/src/index.ts:184] [E: packages/mcp/mcp-client/src/index.ts:186] 默认 `false` 时首次失败也激活：零工具，supervisor 已在排 retry。
 
-6. `connectGeneration` 建 `@modelcontextprotocol/sdk` 的 `Client({ name: 'dsh-mcp-client', version: '0.0.1' }, { capabilities: {} })`——客户端不广告 fs / sampling / resources。[E: packages/mcp/mcp-client/src/connection.ts:239] [E: packages/mcp/mcp-client/src/connection.ts:240] `createTransport(config)` 后 `generation.connect`。[E: packages/mcp/mcp-client/src/connection.ts:272] stdio：`StdioClientTransport({ command, args, env: { ...scrubbedParentEnv(), ...extra }, cwd })`。[E: packages/mcp/mcp-client/src/transport.ts:22] [E: packages/mcp/mcp-client/src/transport.ts:34] streamable-http：`StreamableHTTPClientTransport(new URL(url), { requestInit: { headers } })`。[E: packages/mcp/mcp-client/src/transport.ts:46] `scrubbedParentEnv` 丢掉 credential 形名字和 `DSH_*`；显式 `env` 后写，可把密钥再塞回去。[E: packages/subprocess/subprocess/src/index.ts:60] 本包**不**调用 `ctx.subprocess.spawn`。
+6. `connectGeneration` 建 `@modelcontextprotocol/sdk` 的 `Client({ name: 'dsh-mcp-client', version: '0.0.1' }, { capabilities: {} })`——客户端不广告 fs / sampling / resources。[E: packages/mcp/mcp-client/src/connection.ts:239] [E: packages/mcp/mcp-client/src/connection.ts:240] `createTransport(config)` 后 `generation.connect`。[E: packages/mcp/mcp-client/src/connection.ts:272] stdio：`StdioClientTransport({ command, args, env: { ...scrubbedParentEnv(), ...extra }, cwd })`。[E: packages/mcp/mcp-client/src/transport.ts:22] [E: packages/mcp/mcp-client/src/transport.ts:34] streamable-http：`StreamableHTTPClientTransport(new URL(url), { requestInit: { headers } })`。[E: packages/mcp/mcp-client/src/transport.ts:46] `scrubbedParentEnv` 丢掉 credential 形名字和 `DSH_*`；显式 `env` 后写，可把密钥再塞回去。[E: packages/subprocess/subprocess/src/index.ts:64] 本包**不**调用 `ctx.subprocess.spawn`。
 
 7. 连上之后 `enqueueSync` 串行跑 `syncTools`（两代 swap 不能交错）。[E: packages/mcp/mcp-client/src/connection.ts:162] Phase 1：分页 `tools/list`（`listToolsUncached`，不碰 SDK 的 per-page output 缓存），按 `publicToolName(serverName, tool.name)` 建 `ToolDefinition`。[E: packages/mcp/mcp-client/src/tools.ts:73] [E: packages/mcp/mcp-client/src/tools.ts:156] 同一 raw name 在一份 list 里出现两次 → 抛，**上一世代仍注册**。[E: packages/mcp/mcp-client/src/tools.ts:158] Phase 2：先 dispose 上一世代，再 `ctx.tools.register`。[E: packages/mcp/mcp-client/src/tools.ts:178] [E: packages/mcp/mcp-client/src/tools.ts:182] 同层重名 `NamedEntries` 抛 `already registered`；本包回滚本代已挂上的名字，`'throw'` 时把冲突送回 startup，`'contain'` 返回空 Map。[E: packages/core/tools/src/index.ts:720] [E: packages/mcp/mcp-client/src/tools.ts:188] [E: packages/mcp/mcp-client/src/tools.ts:190] 源码里没有 `listResources` / `listPrompts` / `resources/list` / `prompts/list`——只桥 tools。
 

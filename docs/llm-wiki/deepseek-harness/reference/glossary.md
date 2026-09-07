@@ -6,6 +6,9 @@ tier: T3
 pkg: cross
 source:
   - packages/core/session/src/types.ts
+  - packages/session/session-format-catalog/src/generated.ts
+  - packages/util/http-proxy/src/index.ts
+  - packages/client/file-upload/src/index.ts
   - packages/core/session/src/surface.ts
   - packages/core/session/src/index.ts
   - packages/core/agent-loop/src/agent.ts
@@ -91,7 +94,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > DSH 词表钉在 **Cordis 组合运行时** 上：`profile → bundle → agent preset`，capability **seam** = Definition / Provider / Consumer，模型下一轮能看见的东西必须能从 session log 重建（**model-visible ⟺ logged**）。本页一行一词，落到源码行为；官方 `docs/glossary.md` 只当查漏，不当证据。
@@ -134,28 +137,28 @@ updated: 0a53fb55be
 
 | 术语 | 类型/所属层 | 默认/别名 | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|
-| scope | core / registration | — | 一次 per-agent 注册的归属：全局（每个 Agent 都看见）或挂在某一个 scope key 上。`createScope` 铸出带 tag 的 Cordis context；loop 用 **Agent 自己**当 key。 [E: packages/core/scope/src/index.ts:137] [E: packages/core/agent-loop/src/agent.ts:103] | 和 lineage 不同：scope 管「谁看得见、谁活多久」；parent/child 会话事实另放 header。 | `packages/core/scope/src/index.ts:137` |
+| scope | core / registration | — | 一次 per-agent 注册的归属：全局（每个 Agent 都看见）或挂在某一个 scope key 上。`createScope` 铸出带 tag 的 Cordis context；loop 用 **Agent 自己**当 key。 [E: packages/core/scope/src/index.ts:137] [E: packages/core/agent-loop/src/agent.ts:104] | 和 lineage 不同：scope 管「谁看得见、谁活多久」；parent/child 会话事实另放 header。 | `packages/core/scope/src/index.ts:137` |
 | scope key | core / identity | `ScopeKey` | 不透明 `object`，按**对象身份**比，不当字符串。约定：活着的 Agent 就是自己 scope 的 key；preset standing mount 另造 `{ agentPreset: id }`。 [E: packages/core/scope/src/index.ts:15] | 和 session id 不同：key 只做路由，不进 log。 | `packages/core/scope/src/index.ts:15` |
 | agent.ctx | core / context | agent context | Agent 的 scoped context。经它做的 register / restrict / listener 既是 scope-visible 也是 scope-lifetime。`ctx.extend({ agent: this })`。 [E: packages/core/agent-loop/src/agent.ts:104] | 和 host `ctx` 不同：host 上的 register 是全局层。 | `packages/core/agent-loop/src/agent.ts:104` |
 | scope carrier | core / dispatch | `Scoped<T>` | `scopeTarget(base, key)` 做出的路由-only `thisArg`。filter 放行：无 tag 的 listener，以及 tag 等于 key 或其 **ancestor** 的 listener。无 key 的 carrier 只放行未打 tag 的 listener。 [E: packages/core/scope/src/index.ts:170] | 和把 Agent 当 event payload 不同：carrier 不暴露 subject 字段。 | `packages/core/scope/src/index.ts:170` |
 | scoped dispatch | core / events | — | 「关于某个 Agent 的活动」用该 Agent 的 carrier 派发；「关于 registry 本身」（工具被登记）保持 unfiltered。 | 和 lineage 不同：过滤的是 listener，不是子会话能不能看见父历史。 | `packages/core/scope/src/index.ts:159` |
 | shadowing | core / resolution | most-specific-wins | 同名时：更近一层盖住更远一层；全局层最远，scope 自己的 register 最后写入且不受 restriction 过滤。tool / command / persona / skill 都走这套。scope-local 写入发生在 restrict 过滤之后。 [E: packages/core/tools/src/index.ts:1170] | 和 `restrict` 不同：shadow 是加一条同名；restrict 是从全局集里抠掉。 | `packages/core/tools/src/index.ts:1170` |
 | restriction | core / filter | `tools.restrict` | 对**全局**工具集做 allow/deny 交集；scope-local 登记在过滤之后仍可见。必须在 scoped context 上调用。不能点名保留的 `run_code`。 [E: packages/core/tools/src/index.ts:1062] [E: packages/core/tools/src/index.ts:1065] | 和「没登记」对外不可分：被滤掉的全局名在 prompt 和 execute 里都像不存在。 | `packages/core/tools/src/index.ts:1062` |
-| setup window | core / create | `CreateAgentOptions.setup` | Agent 与 session 已铸出、尚未 publish、尚未 `agent/session-start`、尚未组第一轮 prompt 的组合槽。setup 只 register；throw 则整次 create 回滚。 [E: packages/core/agent/src/index.ts:123] | 和 turn 不同：setup 不 `followup`、不开模型。 | `packages/core/agent/src/index.ts:123` |
-| lineage | persistence / session | `parentSession` / `delegationDepth` / `seedLength` | header 上的亲子事实：子会话写下父 id、委托深度、继承了多少 prefix。**不**改变 scope 可见性。 [E: packages/subagent/subagent/src/child-agent.ts:148] [E: packages/core/session/src/types.ts:70] | 和 scope parent 不同：lineage 是 log/header 数据，好让 resume 还认得深度；scope parent 是活对象路由。 | `packages/subagent/subagent/src/child-agent.ts:138` |
+| setup window | core / create | `CreateAgentOptions.setup` | Agent 与 session 已铸出、尚未 publish、尚未 `agent/session-start`、尚未组第一轮 prompt 的组合槽。setup 只 register；throw 则整次 create 回滚。 [E: packages/core/agent/src/index.ts:125] | 和 turn 不同：setup 不 `followup`、不开模型。 | `packages/core/agent/src/index.ts:123` |
+| lineage | persistence / session | `parentSession` / `delegationDepth` / `seedLength` | header 上的亲子事实：子会话写下父 id、委托深度、继承了多少 prefix。**不**改变 scope 可见性。 [E: packages/subagent/subagent/src/child-agent.ts:148] [E: packages/core/session/src/types.ts:62] | 和 scope parent 不同：lineage 是 log/header 数据，好让 resume 还认得深度；scope parent 是活对象路由。 | `packages/subagent/subagent/src/child-agent.ts:138` |
 
 ### 循环、goal、人命令
 
 | 术语 | 类型/所属层 | 默认/别名 | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|
 | turn | core / loop | `turn/start` · `turn/end` | 一次把已准入输入排干：先 `append('turn/start')`，再在内部循环开 step；模型与工具停、或策略把 turn 标终结时关。可以 0 个 step。 [E: packages/core/agent-loop/src/agent.ts:264] [E: packages/core/session/src/types.ts:223] | 和 step 不同：turn 是一次 drain；和 round 不同：round 是外层策略计数，不统计会话里每一发。 | `packages/core/agent-loop/src/agent.ts:255` |
-| step | core / loop | `step/start` · `step/end` | 一次模型请求加上这次响应触发的 tool 执行。turn 内 `phase.step + 1`。 [E: packages/core/agent-loop/src/agent.ts:274] [E: packages/core/session/src/types.ts:234] | 和 turn 不同：step 必有一次模型调用边界；和 tool call 不同：一步可含多次 tool。 | `packages/core/agent-loop/src/agent.ts:274` |
+| step | core / loop | `step/start` · `step/end` | 一次模型请求加上这次响应触发的 tool 执行。turn 内 `phase.step + 1`。 [E: packages/core/agent-loop/src/agent.ts:274] [E: packages/core/session/src/types.ts:235] | 和 turn 不同：step 必有一次模型调用边界；和 tool call 不同：一步可含多次 tool。 | `packages/core/agent-loop/src/agent.ts:274` |
 | round | orchestration / policy | — | 包住一次 turn 的外层策略迭代。计数器属于该策略，不是 session 里每个 turn 都 +1。实例：goal round、Ralph round。 [E: packages/goal/goal/src/types.ts:76] [E: packages/workflow/tool-ralph/src/index.ts:151] | 和 turn 不同：人在同一会话里随便再聊一发，不消耗 goal-round cap。 | `packages/goal/goal/src/types.ts:76` |
 | goal | orchestration / state | `ctx.goals`；phase `active`/`paused`/`blocked`/`complete` | 挂在**已有会话**上的一份可修订完成目标，不是另一条对话、也不是调度器。真相是 `goal/change` 整值快照。 [E: packages/goal/goal/src/types.ts:45] [E: packages/goal/goal/src/domain.ts:25] | 和 Ralph 不同：goal 同会话续跑；Ralph 每 round 新开 fresh child。 | `packages/goal/goal/src/types.ts:58` |
 | goal round | orchestration / policy | `GoalMessageSource.round` | 当前 goal 被准入的一次续跑：驱动器把它落成一条 goal-sourced `user/message`（`source.kind === 'goal'`，`source.round` 为正整数）。`roundsStarted` 是已准入最高号；触顶 `maxGoalRounds` 则 `resume` 拒绝。 [E: packages/goal/goal/src/domain.ts:52] [E: packages/goal/goal/src/types.ts:76] [E: packages/goal/goal/src/index.ts:368] | 和 session turn 不同：只有 goal 驱动的那次 continuation 计 cap。 | `packages/goal/goal/src/types.ts:76` |
 | goal activation | orchestration / process-local | `armed` / `disarmed` | 本进程还许不许自动再开一个 goal round。刻意**不**进 durable 投影；resume / fork 之后要人经 `/goal` 或 `update_goal` 再武装。 [E: packages/goal/goal/src/types.ts:71] | 和 `phase` 不同：`active` 仍可能 `disarmed`。 | `packages/goal/goal/src/types.ts:70` |
-| human command | interaction / UI | slash command；`ctx.commands` | `/` 打头、UI adapter 经 `parseCommand` + `ctx.commands` 执行的指令。handler 直接打在接收 Agent 上，**不**变成模型消息。 [E: packages/interaction/commands/src/index.ts:107] [E: packages/interaction/commands/src/index.ts:117] | 和 model-visible tool 不同：不进 `ctx.tools.schemas()`；和 `ctx.shell` 不同：不是 bash。 | `packages/interaction/commands/src/index.ts:117` |
-| command plane | interaction / UI | — | 发现、解析、dispatch、取消、把 `CommandResult` 画成 UI。输出默认是 UI 状态；要进 log 得 handler 另写 domain 事件。 [E: packages/interaction/commands/src/index.ts:251] | 和 tool pipeline（`tools/pre-execute`）不是一条路。 | `packages/interaction/commands/src/index.ts:251` |
+| human command | interaction / UI | slash command；`ctx.commands` | `/` 打头、UI adapter 经 `parseCommand` + `ctx.commands` 执行的指令。handler 直接打在接收 Agent 上，**不**变成模型消息。 [E: packages/interaction/commands/src/index.ts:106] [E: packages/interaction/commands/src/index.ts:122] | 和 model-visible tool 不同：不进 `ctx.tools.schemas()`；和 `ctx.shell` 不同：不是 bash。 | `packages/interaction/commands/src/index.ts:117` |
+| command plane | interaction / UI | — | 发现、解析、dispatch、取消、把 `CommandResult` 画成 UI。输出默认是 UI 状态；要进 log 得 handler 另写 domain 事件。 [E: packages/interaction/commands/src/index.ts:250] | 和 tool pipeline（`tools/pre-execute`）不是一条路。 | `packages/interaction/commands/src/index.ts:251` |
 | goal command | interaction / `/goal` | `dsh-command-goal` | 人命令面的 `/goal`：观察或改当前 goal。durable、模型可见的记录仍归 goal 域（`goal/change`）。 [E: packages/goal/command-goal/src/index.ts:191] | 和 `create_goal` 工具不同：`/goal` 不经模型 turn。 | `packages/goal/command-goal/src/index.ts:191` |
 | model-visible tool | core / tools | `defineTool` → `ctx.tools.register` | 登记进 `ctx.tools`、出现在 `schemas()` / `wireSchemas`、由模型 `tool/call` 触发的函数。wire 名是 `definition.name`（`subagent` 可被 Config `toolName` 改）。 [E: packages/core/tools/src/schema.ts:546] [E: packages/core/tools/src/index.ts:1028] | 和 human command 不同：它走模型 turn 与 session surface。 | `packages/core/tools/src/index.ts:1028` |
 
@@ -171,11 +174,12 @@ updated: 0a53fb55be
 
 | 术语 | 类型/所属层 | 默认/别名 | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|
+| SESSION_FORMAT_VERSION | persistence / header | `2` | 当前逻辑盘格式。adjacent 链 v0→v1→v2 由 `dsh-session-format` + catalog 规划，JSONL load 时执行。比 2 新的盘拒。 [E: packages/core/session/src/types.ts:86] [E: packages/session/session-format-catalog/src/generated.ts:14] | 不是「version 0 / 无 migration」。 | `packages/core/session/src/types.ts:86` |
 | model-visible ⟺ logged | core / contract | — | 模型下一请求能看见的消息，必须能从同一条 append-only `SessionEvent` log 经 surface 折回来。preset 决定 tools/prompt，所以实际 preset 也要落 log（header `agentPreset` 或后来的 `agent-preset/selected`）。 [E: packages/preset/agent-presets/src/session.ts:28] | 和「内存里改一份 chat 数组」不同：没有第二条权威历史。 | `packages/preset/agent-presets/src/session.ts:28` · `packages/core/session/src/index.ts:724` |
-| deriveMessages | core / projection | `Session.deriveMessages` | 对当前 `surface.nodes` 逐 seq 调 `deriveEventMessage`：`user/message` / 非空 `assistant/message` / `tool/result` 进数组；chunk、turn 边界、空 assistant 用法记录进不了。`replace` 会重建缓存。 [E: packages/core/session/src/index.ts:724] [E: packages/core/session/src/surface.ts:83] | 和「把整段 log 当 messages」不同：只有带 `surfaceOp` 的三类事件能投影。 | `packages/core/session/src/index.ts:724` |
-| surfaceOp | core / surface | `SurfaceOp` | 只有 `user/message` / `assistant/message` / `tool/result` 能带。取值只有 `'append'` 与 `{ op: 'replace', start, end }`，**没有 delete**。compaction 用 replace 盖住一段 surface。 [E: packages/core/session/src/types.ts:330] [E: packages/core/session/src/types.ts:359] | 和「从数组 splice 掉一条」不同：旧节点仍在 log 里，只是派生历史不再引用。 | `packages/core/session/src/types.ts:359` |
+| deriveMessages | core / projection | `Session.deriveMessages` | 对当前 `surface.nodes` 逐 seq 调 `deriveEventMessage`：`user/message` / 非空 `assistant/message` / `tool/result` 进数组；chunk、turn 边界、空 assistant 用法记录进不了。`replace` 会重建缓存。 [E: packages/core/session/src/index.ts:724] [E: packages/core/session/src/surface.ts:90] | 和「把整段 log 当 messages」不同：只有带 `surfaceOp` 的三类事件能投影。 | `packages/core/session/src/index.ts:724` |
+| surfaceOp | core / surface | `SurfaceOp` | 只有 `user/message` / `assistant/message` / `tool/result` 能带。取值只有 `'append'` 与 `{ op: 'replace', start, end }`，**没有 delete**。compaction 用 replace 盖住一段 surface。 [E: packages/core/session/src/types.ts:331] [E: packages/core/session/src/types.ts:352] | 和「从数组 splice 掉一条」不同：旧节点仍在 log 里，只是派生历史不再引用。 | `packages/core/session/src/types.ts:359` |
 | waterfall | vendor / events | `DispatchMode` | 监听者包在最终 `next` 外面；不调用 `next()` 就否决后半链（含内建行为）。`fs/write-intent` 这类单槽决策走它。 [E: vendor/cordis/src/events.ts:234] | 和 `emit` 不同：必须把链传下去才有默认行为。 | `vendor/cordis/src/events.ts:234` |
-| session/flush | persistence / events | `@mode parallel` | 持久化检查点：每个 listener 都跑，调用方 `Promise.allSettled` 等齐，**没有** waterfall 否决。入口是 `SessionStore.flush`，不要自己 `ctx.parallel('session/flush')`。 [E: packages/core/session/src/index.ts:83] [E: packages/core/session/src/index.ts:1020] | 和 waterfall 不同：一个 persistence 插件失败不能靠不调 `next()` 吞掉别人。 | `packages/core/session/src/index.ts:1020` |
+| session/flush | persistence / events | `@mode parallel` | 持久化检查点：每个 listener 都跑，调用方 `Promise.allSettled` 等齐，**没有** waterfall 否决。入口是 `SessionStore.flush`，不要自己 `ctx.parallel('session/flush')`。 [E: packages/core/session/src/index.ts:82] [E: packages/core/session/src/index.ts:1020] | 和 waterfall 不同：一个 persistence 插件失败不能靠不调 `next()` 吞掉别人。 | `packages/core/session/src/index.ts:1020` |
 
 ### 路径与家目录
 
@@ -208,7 +212,7 @@ updated: 0a53fb55be
 
 ## 对照 / 分家
 
-**profile vs bundle vs agent preset。** profile 是 `$DSH_HOME/profiles/<name>` 这份进程栈；bundle 是被推进空入口表的 npm 补丁层；agent preset 是会话 join 的 standing `agent.cordis.yml`。`dsh web` = profile `web` = `@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`，再由 web-app 挂 roster、默认 preset `standard`。headless / sdk / acp 叠 base 但不 `mount` preset roster；`sdk-minimal` 只叠自己、用 `agent-spine-demo`。
+**profile vs bundle vs agent preset。** profile 是 `$DSH_HOME/profiles/<name>` 这份进程栈；bundle 是被推进空入口表的 npm 补丁层；agent preset 是会话 join 的 standing `agent.cordis.yml`。`dsh web` = profile `web` = `@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-web-app`，再由 web-app 挂 roster、默认 preset `standard`。headless / sdk / acp 叠 base 但不 `mount` preset roster；`sdk-minimal` 只叠自己（`agent-spine-demo` 已删除）。
 
 **host 面 vs agent-preset 面。** Provider 与 registry 留在 host（`inject` 发生在任何 session 之前）。preset 只挂 Consumer 与必须 isolate 的 per-mount 服务。漏 isolate 会在 `mountPreset` 被 `leakedServices` 拒绝。
 
@@ -220,7 +224,7 @@ updated: 0a53fb55be
 
 **`subagent` vs `subagent_fork`。** 同一个 `dsh-tool-subagent` 包 load 两次，靠 `toolName` 分 wire 名。spawn 新鲜、fork 继承已完成父 turn。minimal 两行都不装。
 
-**PTC vs native。** `mode: native` 把整张 tool 表发给模型；`ptc` 只发 `run_code`；`both` 两者都发。子调用仍走原生并发调度。wiki 仍用 id `surface.presets.code` / `subsys.core.code-mode` 指 `presets/ptc/` 与 `ptc.ts`。
+**PTC vs native。** `mode: native` 把整张 tool 表发给模型；`ptc` 只发 `run_code`；`both` 两者都发。PTC preset 把 `tool-workflow` `disabled: true`，engine 留给 `ralph`。子调用仍走原生并发调度。wiki 仍用 id `surface.presets.code` / `subsys.core.code-mode` 指 `presets/ptc/` 与 `ptc.ts`。
 
 **waterfall vs `session/flush`。** 意图类事件必须 `next()`，否则内建写入不发生。`session/flush` 是 parallel 耐久点，所有 listener 一起 settle。
 
@@ -229,6 +233,9 @@ updated: 0a53fb55be
 ## Sources
 
 - packages/core/session/src/types.ts
+- packages/session/session-format-catalog/src/generated.ts
+- packages/util/http-proxy/src/index.ts
+- packages/client/file-upload/src/index.ts
 - packages/core/session/src/surface.ts
 - packages/core/session/src/index.ts
 - packages/core/agent-loop/src/agent.ts

@@ -125,7 +125,7 @@ frontmatter + 一句话 + `## 能回答的问题` +
 4. **输出 & 截断 / spill**
 5. **背后的 seam** — 消费的 `ctx.*`(如 `ctx.shell` / `ctx.fs`),换 provider 会带走什么
 6. **执行管线** — 如何进入 `tools/pre-execute → execute → post-execute`;approval / sandbox / timeout 是否挂上
-7. **Preset 装配** — `minimal` / `standard` / `code` / `cordis` 是否装、是否 `disabled`、isolate 域
+7. **Preset 装配** — `minimal` / `standard` / `ptc` / `cordis` 是否装、是否 `disabled`、isolate 域
 8. **execute() 走读**
 9. **设计动机·edge** — 与 Codex `apply_patch` / Claude Edit / Pi edit 的方言差异写在这里
 10. `## Sources` · `## 相关`
@@ -160,7 +160,7 @@ frontmatter + 一句话 + 能回答的问题 + **mermaid 图先行** · 端到�
 - **组合层** = `packages/boot/app-boot`(profile 发现与 patch 叠层)+ `packages/bundle/{base,web-app,headless,sdk-app,sdk-minimal,acp-app}/cordis.patch.yml` + 用户 `$DSH_HOME/profiles/<name>/cordis.patch.yml` + `--patch`。看真树:`dsh --profile web --dump-config`(源码入口 `apps/cli/src/dump-config.ts`)。
 - **Profile 模板** = `PROFILE_TEMPLATES`:`web`(live)+ `headless` / `sdk` / `sdk-minimal` / `acp`(startup)。`sdk-minimal` 是唯一不叠 `dsh-base` 的 shipped bundle。
 - **Loop** = `packages/core/agent-loop`(默认可替换驱动)+ `packages/core/agent`(合同 / inbox / 事件)。新行为优先挂扩展点,改 loop 必须对照 `docs/architecture.md` 的地图——但 wiki 的 `[E]` 仍只认 loop 源码。
-- **会话日志** = `packages/core/session` 的 `SessionEventMap` + `deriveMessages()`(`src/surface.ts`)。compaction 只有 `surfaceOp: replace`,没有 delete。`dsh-session-log-deepseek` 是 DeepSeek 方言投影,不是第二份日志。
+- **会话日志** = `packages/core/session` 的 `SessionEventMap` + `deriveMessages()`(`src/surface.ts`)。compaction 只有 `surfaceOp: replace`,没有 delete。`SESSION_FORMAT_VERSION` 现为 `2`;v0→v1→v2 由 `dsh-session-format` + catalog + 两个 adjacent migrator 在 JSONL load 时执行。`dsh-session-log-deepseek` 是 DeepSeek 方言投影,不是第二份日志。session 盘 shipped 只有 JSONL(`dsh-session-persistence-jsonl`);`dsh-session-persistence-sqlite` 已删除。
 - **Checkpoint** = `packages/session/session-checkpoint-policy`:在 adapter 看到请求之前、以及 top-level tool body 能产生副作用之前落点。
 - **LLM** = `packages/llm/llm`(seam)+ `packages/llm/llm-deepseek`(默认路由 `deepseek-official`)+ `packages/llm/llm-pi-ai`(始终加载,零 route 直到 Settings 加 profile)+ `packages/llm/deepseek-llm-api-extensions`。
 - **人命令** = `packages/interaction/commands`(`ctx.commands`),不经模型 turn。
@@ -169,5 +169,6 @@ frontmatter + 一句话 + 能回答的问题 + **mermaid 图先行** · 端到�
 - **设计意图(非 [E])**:`docs/architecture.md`、`docs/capability-seams.md`、`docs/agent-lifecycle.md`、各包 README、`.agents/notes/implemented/`。
 - **Cordis 语义**:waterfall 必须 `next()`;注册是 `ctx.effect()` / `ctx.on()` 的可逆 effect。源在 `vendor/cordis/`。
 - **`.dsh` vs `.agents` vs `$DSH_HOME`**:产品主目录是 `$DSH_HOME` 否则 `~/.dsh`;skills 扫描含 `<project>/.dsh/skills` 与 `.agents/skills`。别和 Claude/Pi 的配置目录混。
-- **已退役包(勿再当 source)**:`packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react`、`packages/client/schema-form`。工作树里若还剩仅含 `node_modules` 的空壳目录,忽略。HTTP API 现为 `packages/api/{session,settings,workspace}-controller`;浏览器状态现为 `packages/client/store` + `packages/client/ui-renderer`。
-- **PTC**:旧名 Code Mode。权威源 `packages/core/tools/src/ptc.ts`(不是 `code-mode.ts`);`run_code` 仍是模型可见名;语言 flavor 有 `typescript` 与 `python`。
+- **已退役包(勿再当 source)**:`packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react`、`packages/client/schema-form`、`packages/session/session-persistence-sqlite`、`packages/subagent/tool-subagent-report`、`packages/examples/agent-spine-demo`、`packages/code-runtime/code-runtime-python`。工作树里若还剩仅含 `node_modules` 的空壳目录,忽略。HTTP API 现为 `packages/api/{session,settings,workspace}-controller`;浏览器状态现为 `packages/client/store` + `packages/client/ui-renderer`。Python code-runtime 现为 `packages/experimental/code-runtime-python`。
+- **PTC**:旧名 Code Mode。权威源 `packages/core/tools/src/ptc.ts`(不是 `code-mode.ts`);`run_code` 仍是模型可见名;语言 flavor 有 `typescript` 与 `python`。PTC preset 里 `tool-workflow` 为 `disabled: true`(engine 留给 `ralph`)。
+- **http-proxy**:`@deepseek-ai/dsh-http-proxy` 是进程级库,不是 Cordis 插件;从 `apps/cli/src/profile-boot.ts` 安装。

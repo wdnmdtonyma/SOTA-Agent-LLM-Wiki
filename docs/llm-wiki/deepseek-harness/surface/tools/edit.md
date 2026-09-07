@@ -44,7 +44,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `edit` 是 `@deepseek-ai/dsh-tool-fs` 注册的 model-visible 工具：对**已有** UTF-8 文本文件做字面 `old_string` → `new_string` 替换，默认要求唯一匹配。DSH 没有 first-class `apply_patch`。
@@ -110,7 +110,7 @@ shipped host 挂 `@deepseek-ai/dsh-fs-sandbox`，该 backend 覆盖 `sandboxMode
 | `sandbox_permissions` | `string` | 否 | 无 | enum：`workspace-write`、`danger-full-access` | 一次性更宽 sandbox mode。必须与 `justification` 成对；只作为刚被拒绝后的 retry。[E: packages/fs/tool-fs/src/sandbox.ts:61][E: packages/sandbox/sandbox/src/escalation.ts:41] |
 | `justification` | `string` | 否 | 无 | 与 `sandbox_permissions` 成对；trim 后非空 | 给用户看的一句理由。单独出现或空句都会在 `validateEscalationArgs` 被拒。[E: packages/fs/tool-fs/src/sandbox.ts:67][E: packages/sandbox/sandbox/src/escalation.ts:52] |
 
-测试钉死：非 confined backend 的 schema 没有这两字段；confined 时 enum 正好是 `['workspace-write', 'danger-full-access']`。[E: packages/fs/tool-fs/tests/tools.spec.ts:838][E: packages/fs/tool-fs/tests/tools.spec.ts:847]
+测试钉死：非 confined backend 的 schema 没有这两字段；confined 时 enum 正好是 `['workspace-write', 'danger-full-access']`。[E: packages/fs/tool-fs/tests/tools.spec.ts:838][E: packages/fs/tool-fs/tests/tools.spec.ts:846]
 
 `read-only` 不是 escalation 目标（`ESCALATION_TARGETS` 只有 `workspace-write` 与 `danger-full-access`）。严格更宽检查发生在 execute，不写进 schema enum。[E: packages/sandbox/sandbox/src/escalation.ts:41]
 
@@ -129,11 +129,11 @@ shipped host 挂 `@deepseek-ai/dsh-fs-sandbox`，该 backend 覆盖 `sandboxMode
 
 `edit` 自己没有 spill、没有 maxOutputChars、没有行/字节截断。host `spill-policy`（`maxInlineBytes: 50000`）罩的是通用 inline 结果；本工具模型面是一句确认，不会走出 tool-owned overflow 路径。[E: packages/bundle/base/cordis.patch.yml:396]
 
-失败时 registry 把 throw 收成 `isError`。`FS_NOT_OBSERVED` / `FS_STALE_VERSION` 会经 `remediateFsError` 在原文后追加 `read the file, then retry` / `re-read the file, then retry`，`FsError.code` 保留给 retry/UI。[E: packages/fs/tool-fs/src/error.ts:16][E: packages/fs/tool-fs/src/error.ts:15][E: packages/fs/tool-fs/tests/error.spec.ts:21]
+失败时 registry 把 throw 收成 `isError`。`FS_NOT_OBSERVED` / `FS_STALE_VERSION` 会经 `remediateFsError` 在原文后追加 `read the file, then retry` / `re-read the file, then retry`，`FsError.code` 保留给 retry/UI。[E: packages/fs/tool-fs/src/error.ts:21][E: packages/fs/tool-fs/src/error.ts:21][E: packages/fs/tool-fs/tests/error.spec.ts:21]
 
 `FS_EDIT_NOT_FOUND` / `FS_AMBIGUOUS_EDIT` 不追加 remedy。[E: packages/fs/tool-fs/tests/error.spec.ts:27]
 
-调用期 UI：`presentCall` 用 args 画 `card: 'diff'`。replay 时若 logged `old_string` 为空，`oldText` 变成 `null`（execute 路径到不了这里，因为 `parseEditArgs` 已拒空串）。[E: packages/fs/tool-fs/src/edit.ts:153][E: packages/fs/tool-fs/tests/tools.spec.ts:593]
+调用期 UI：`presentCall` 用 args 画 `card: 'diff'`。replay 时若 logged `old_string` 为空，`oldText` 变成 `null`（execute 路径到不了这里，因为 `parseEditArgs` 已拒空串）。[E: packages/fs/tool-fs/src/edit.ts:153][E: packages/fs/tool-fs/tests/tools.spec.ts:594]
 
 ## 背后的 seam
 
@@ -232,7 +232,7 @@ DSH 没有 `apply_patch`。`edit` 是精确字面替换，不是 Codex 的 hunk 
 - **匹配在 LF 归一化后做**，再按原文件主换行写回。CRLF 文件可以按 LF 风格的 `old_string` 命中。[E: packages/fs/fs-local/src/fsio.ts:767]
 - **缺失目标与 stale 共用 `FS_STALE_VERSION`**，包括 bare 无 guard 路径。模型收到的是「re-read then retry」，不是「not found」。[E: packages/fs/fs-local/src/index.ts:236]
 - **ambiguous 必须模型改口**：加长 `old_string` 或设 `replace_all`。工具不会自行挑第一处。[E: packages/fs/fs-local/src/fsio.ts:776]
-- **escalation 字段只在 confined fs 广告**；未广告时字段仍可能到达 `execute`，由 `resolvePolicy` 以「not available in this composition」fail-closed（`edit.ts` 注释写「validator 先拒」与测试不一致，以测试与 schema 编译为准）。[E: packages/fs/tool-fs/src/sandbox.ts:94][E: packages/fs/tool-fs/tests/tools.spec.ts:927]
+- **escalation 字段只在 confined fs 广告**；未广告时字段仍可能到达 `execute`，由 `resolvePolicy` 以「not available in this composition」fail-closed（`edit.ts` 注释写「validator 先拒」与测试不一致，以测试与 schema 编译为准）。[E: packages/fs/tool-fs/src/sandbox.ts:94][E: packages/fs/tool-fs/tests/tools.spec.ts:928]
 - **grant 是 `allowed-once`**，只盖这一次 mutation，不是 session 永久升权。[E: packages/sandbox/sandbox/src/escalation.ts:183]
 - **无 `timeoutMs`**，与 search/web 不同；取消只靠调用方 `exec.signal` 传到 `resolve` / `editText`。[E: packages/guard/timeout-policy/src/index.ts:59]
 - **`exclusive`**：并行组里的 `edit` 单独成障，避免同文件交叉写。[E: packages/fs/tool-fs/tests/tools.spec.ts:168]

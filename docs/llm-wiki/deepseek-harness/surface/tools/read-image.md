@@ -35,7 +35,7 @@ symbols:
 related: [spine.tool-call-anatomy, ref.tools-catalog, surface.presets.code, subsys.core.code-mode]
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `read_image` 是 `@deepseek-ai/dsh-tool-fs` 上的 model-visible 工具：把一张 PNG/JPEG/WebP/GIF 读进 durable `ctx.attachments`，再把 image block 送回模型上下文。没有挂上 attachment store 时，这个名字根本不会出现在 catalog。
@@ -51,7 +51,7 @@ updated: 0a53fb55be
 
 ## Identity
 
-模型看见的名字是 `read_image`，在 `applyReadImageTool` 里传给 `defineTool`。[E: packages/fs/tool-fs/src/read-image.ts:171]
+模型看见的名字是 `read_image`，在 `applyReadImageTool` 里传给 `defineTool`。[E: packages/fs/tool-fs/src/read-image.ts:170]
 
 实现包是 `@deepseek-ai/dsh-tool-fs`。[E: packages/fs/tool-fs/package.json:2] Cordis 插件名是 `export const name = 'tool-fs'`，和 wire 名不是同一个字符串。[E: packages/fs/tool-fs/src/index.ts:19]
 
@@ -59,13 +59,13 @@ updated: 0a53fb55be
 
 `applyReadImageTool` 通过 `ctx.tools.register(defineTool({ … }))` 登记定义；`defineTool` 来自 `@deepseek-ai/dsh-tools`。[E: packages/fs/tool-fs/src/read-image.ts:170]
 
-测试钉死这层门：不挂 attachment store 时 `ctx.tools.get('read_image')` 是 `undefined`，`schemas()` 也不含这个名字；此时走 `tools.execute` 得到 `unknown tool "read_image"`。[E: packages/fs/tool-fs/tests/read-image.spec.ts:318][E: packages/fs/tool-fs/tests/read-image.spec.ts:322] 若跳过 `inject`、直接 `applyReadImageTool(ctx)`，工具会进 catalog，但 `execute` 仍会因 `ctx.get('attachments') === undefined` 拒绝。[E: packages/fs/tool-fs/tests/read-image.spec.ts:328][E: packages/fs/tool-fs/src/read-image.ts:202]
+测试钉死这层门：不挂 attachment store 时 `ctx.tools.get('read_image')` 是 `undefined`，`schemas()` 也不含这个名字；此时走 `tools.execute` 得到 `unknown tool "read_image"`。[E: packages/fs/tool-fs/tests/read-image.spec.ts:318][E: packages/fs/tool-fs/tests/read-image.spec.ts:324] 若跳过 `inject`、直接 `applyReadImageTool(ctx)`，工具会进 catalog，但 `execute` 仍会因 `ctx.get('attachments') === undefined` 拒绝。[E: packages/fs/tool-fs/tests/read-image.spec.ts:327][E: packages/fs/tool-fs/src/read-image.ts:208]
 
 卸掉 attachment store 会拆掉那条 `inject` fiber：`read_image` 撤回，`read` / `write` / `edit` 留着；再挂上 store 会重新登记。[E: packages/fs/tool-fs/tests/read-image.spec.ts:574][E: packages/fs/tool-fs/tests/read-image.spec.ts:575]
 
 ## 用途定位
 
-`read_image` 只做一件事：把工作区里的一张受支持栅格图经 `attachments.saveImage` 落成 durable `ImageAttachmentRef`，再作为 `type: 'image'` 的 content block 进入后续请求。描述里声明 harness 会校验并 downscale 过大的图，因此模型应直接调本工具，而不是自己装图像库做缩略图。[E: packages/fs/tool-fs/src/read-image.ts:172]
+`read_image` 只做一件事：把工作区里的一张受支持栅格图经 `attachments.saveImage` 落成 durable `ImageAttachmentRef`，再作为 `type: 'image'` 的 content block 进入后续请求。描述里声明 harness 会校验并 downscale 过大的图，因此模型应直接调本工具，而不是自己装图像库做缩略图。[E: packages/fs/tool-fs/src/read-image.ts:173]
 
 它不是 `read` 的图片模式。同包 `read` 走 UTF-8 文本路径；本地 backend 在文本读取里遇到 NUL 样本会抛 `FS_NOT_TEXT` / `binary file`。同一张 PNG，`read` 失败，`read_image` 才是入口。[E: packages/fs/fs-local/src/fsio.ts:380]
 
@@ -81,27 +81,27 @@ updated: 0a53fb55be
 |---|---|---|---|---|---|
 | `file_path` | `string` | 是 | 无 | 去空白后非空；扩展名必须是 `.png` / `.jpg` / `.jpeg` / `.webp` / `.gif`（大小写不敏感） | 交由 `ctx.fs.resolve` 解析；相对路径相对 calling agent 的 session cwd。[E: packages/fs/tool-fs/src/read-image.ts:176][E: packages/fs/tool-fs/src/read-image.ts:193][E: packages/fs/tool-fs/src/read-target.ts:24] |
 
-扩展名到 MIME 的映射在 `IMAGE_EXTENSIONS`：`.png` → `image/png`，`.jpg` / `.jpeg` → `image/jpeg`，`.webp` → `image/webp`，`.gif` → `image/gif`。[E: packages/fs/tool-fs/src/read-image.ts:23][E: packages/fs/tool-fs/src/read-image.ts:24][E: packages/fs/tool-fs/src/read-image.ts:26][E: packages/fs/tool-fs/src/read-image.ts:27] `imageMediaTypeForPath` 用 `extname(filePath).toLowerCase()` 查表，对不上返回 `undefined`。[E: packages/fs/tool-fs/src/read-image.ts:76]
+扩展名到 MIME 的映射在 `IMAGE_EXTENSIONS`：`.png` → `image/png`，`.jpg` / `.jpeg` → `image/jpeg`，`.webp` → `image/webp`，`.gif` → `image/gif`。[E: packages/fs/tool-fs/src/read-image.ts:22][E: packages/fs/tool-fs/src/read-image.ts:25][E: packages/fs/tool-fs/src/read-image.ts:26][E: packages/fs/tool-fs/src/read-image.ts:27] `imageMediaTypeForPath` 用 `extname(filePath).toLowerCase()` 查表，对不上返回 `undefined`。[E: packages/fs/tool-fs/src/read-image.ts:76]
 
 这张表是工具侧的声明路由。真正认不认字节，是 attachment store 全量 decode 之后的事：声明类型和探测类型不一致时抛 `IMAGE_TYPE_MISMATCH`。[E: packages/attachment/attachment-local/src/store.ts:63]
 
 ## 输出 & 截断 / spill
 
-`read_image` 没有 spill，也没有 `output.presentationMeta`。成功 body 必须符合 output schema，再由 `output.render` 投影成模型可见 blocks。[E: packages/fs/tool-fs/src/read-image.ts:187][E: packages/core/tools/src/index.ts:1791]
+`read_image` 没有 spill，也没有 `output.presentationMeta`。成功 body 必须符合 output schema，再由 `output.render` 投影成模型可见 blocks。[E: packages/fs/tool-fs/src/read-image.ts:184][E: packages/core/tools/src/index.ts:1791]
 
 Canonical 值是 `ImageReadValue`：`path`（backend `displayPath`）加上 `image` 对象。
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `path` | `string` | 是 | 解析后的显示路径。[E: packages/fs/tool-fs/src/read-image.ts:259] |
-| `image.attachmentId` | `string` | 是 | store 给出的不透明 id；本地实现是 `sha256:<64 hex>`。[E: packages/fs/tool-fs/src/read-image.ts:261][E: packages/attachment/attachment-local/src/store.ts:115] |
+| `path` | `string` | 是 | 解析后的显示路径。[E: packages/fs/tool-fs/src/read-image.ts:260] |
+| `image.attachmentId` | `string` | 是 | store 给出的不透明 id；本地实现是 `sha256:<64 hex>`。[E: packages/fs/tool-fs/src/read-image.ts:260][E: packages/attachment/attachment-local/src/store.ts:115] |
 | `image.mediaType` | enum | 是 | `image/png` \| `image/jpeg` \| `image/webp` \| `image/gif`。[E: packages/fs/tool-fs/src/read-image.ts:36] |
 | `image.bytes` | integer | 是 | 编码后字节数（归一化后）。[E: packages/fs/tool-fs/src/read-image.ts:37] |
-| `image.width` / `image.height` | integer | 是 | 归一化后像素尺寸。[E: packages/fs/tool-fs/src/read-image.ts:38][E: packages/fs/tool-fs/src/read-image.ts:39] |
-| `image.name` | `string` | 否 | 来自 `basename(displayPath)`；store 也可以剥掉名字。[E: packages/fs/tool-fs/src/read-image.ts:40][E: packages/fs/tool-fs/src/read-image.ts:220] |
+| `image.width` / `image.height` | integer | 是 | 归一化后像素尺寸。[E: packages/fs/tool-fs/src/read-image.ts:38][E: packages/fs/tool-fs/src/read-image.ts:38] |
+| `image.name` | `string` | 否 | 来自 `basename(displayPath)`；store 也可以剥掉名字。[E: packages/fs/tool-fs/src/read-image.ts:41][E: packages/fs/tool-fs/src/read-image.ts:220] |
 | `image.originalDimensions` | `{ width, height }` | 否 | 仅当存储侧 downscale 时出现：方向校正后的原始宽高。[E: packages/fs/tool-fs/src/read-image.ts:63][E: packages/attachment/attachment-local/src/store.ts:121] |
 
-`render` 调 `imageReadContent`：一块 text envelope，一块 `{ type: 'image', attachment: ImageAttachmentRef }`。[E: packages/fs/tool-fs/src/read-image.ts:155][E: packages/fs/tool-fs/src/read-image.ts:156] envelope 由 `formatImageReadOutput` 写成：
+`render` 调 `imageReadContent`：一块 text envelope，一块 `{ type: 'image', attachment: ImageAttachmentRef }`。[E: packages/fs/tool-fs/src/read-image.ts:155][E: packages/fs/tool-fs/src/read-image.ts:155] envelope 由 `formatImageReadOutput` 写成：
 
 ```
 <path>…</path>
@@ -111,13 +111,13 @@ image/png image, 1x1 px, 69 bytes
 </content>
 ```
 
-若存在 `originalDimensions`，`<content>` 会追加 `(downscaled from WxH px; multiply coordinates by …)`，两轴倍率相同用一个乘数，不同则分 x/y。[E: packages/fs/tool-fs/src/read-image.ts:141][E: packages/fs/tool-fs/src/read-image.ts:136]
+若存在 `originalDimensions`，`<content>` 会追加 `(downscaled from WxH px; multiply coordinates by …)`，两轴倍率相同用一个乘数，不同则分 x/y。[E: packages/fs/tool-fs/src/read-image.ts:146][E: packages/fs/tool-fs/src/read-image.ts:136]
 
 Native 顶层调用：registry 把这两块放进 `ToolExecutionResult.content`。Happy-path 测试要求 `content` 长度为 2，第二块是带 `attachmentId` / 尺寸 / 名字的 image。[E: packages/fs/tool-fs/tests/read-image.spec.ts:185][E: packages/fs/tool-fs/tests/read-image.spec.ts:187]
 
-嵌套 PTC（`run_code` 子调用）：`read_image.execute` **不再**自己 `deferContext`，只 `return value`。[E: packages/fs/tool-fs/src/read-image.ts:272] 外层 `ptc.ts` 在 nested commit 时若 content 含 image block，则 `exec.deferContext(createUserMessage({ content, source: { kind: 'plugin', plugin: 'tools-code-mode' } }))`（legacy plugin 字符串；权威文件是 `ptc.ts`）。[E: packages/core/tools/src/ptc.ts:561][E: packages/core/tools/src/ptc.ts:564] 测试里外层 `run_code` 的 `content` 全是 text，`additionalContexts[0].content` 才是 envelope + image。[E: packages/fs/tool-fs/tests/read-image.spec.ts:244][E: packages/fs/tool-fs/tests/read-image.spec.ts:246]
+嵌套 PTC（`run_code` 子调用）：`read_image.execute` **不再**自己 `deferContext`，只 `return value`。[E: packages/fs/tool-fs/src/read-image.ts:273] 外层 `ptc.ts` 在 nested commit 时若 content 含 image block，则 `exec.deferContext(createUserMessage({ content, source: { kind: 'plugin', plugin: 'tools-code-mode' } }))`（legacy plugin 字符串；权威文件是 `ptc.ts`）。[E: packages/core/tools/src/ptc.ts:561][E: packages/core/tools/src/ptc.ts:564] 测试里外层 `run_code` 的 `content` 全是 text，`additionalContexts[0].content` 才是 envelope + image。[E: packages/fs/tool-fs/tests/read-image.spec.ts:244][E: packages/fs/tool-fs/tests/read-image.spec.ts:245]
 
-截断策略是失败而不是预览。读盘上限是 `Math.min(attachments.imageLimits.maxImageBytes, attachments.imageLimits.maxMessageImageBytes)`，交给必填 `maxBytes` 的 `ctx.fs.readBytes`；本地 backend 在 stat size 已超限时抛 `FS_TOO_LARGE`，不截断返回。[E: packages/fs/tool-fs/src/read-image.ts:214][E: packages/fs/fs/src/index.ts:212][E: packages/fs/fs-local/src/fsio.ts:404] shipped `@deepseek-ai/dsh-attachment-local` 默认 `maxImageBytes = 20 * 1024 * 1024`、`maxMessageImageBytes = 200 * 1024 * 1024`，所以默认 cap 是 20 MiB。[E: packages/attachment/attachment-local/src/index.ts:28][E: packages/attachment/attachment-local/src/index.ts:32] 像素上限默认 `64_000_000`，单边默认 `8192`；归一化目标另有 `DEFAULT_NORMALIZED_IMAGE_MAX_PIXELS = 2048 * 2048`。[E: packages/attachment/attachment-local/src/index.ts:34][E: packages/attachment/attachment-local/src/index.ts:36][E: packages/attachment/attachment-local/src/index.ts:44]
+截断策略是失败而不是预览。读盘上限是 `Math.min(attachments.imageLimits.maxImageBytes, attachments.imageLimits.maxMessageImageBytes)`，交给必填 `maxBytes` 的 `ctx.fs.readBytes`；本地 backend 在 stat size 已超限时抛 `FS_TOO_LARGE`，不截断返回。[E: packages/fs/tool-fs/src/read-image.ts:214][E: packages/fs/fs/src/index.ts:212][E: packages/fs/fs-local/src/fsio.ts:404] shipped `@deepseek-ai/dsh-attachment-local` 默认 `maxImageBytes = 20 * 1024 * 1024`、`maxMessageImageBytes = 200 * 1024 * 1024`，所以默认 cap 是 20 MiB。[E: packages/attachment/attachment-local/src/index.ts:28][E: packages/attachment/attachment-local/src/index.ts:31] 像素上限默认 `64_000_000`，单边默认 `8192`；归一化目标另有 `DEFAULT_NORMALIZED_IMAGE_MAX_PIXELS = 2048 * 2048`。[E: packages/attachment/attachment-local/src/index.ts:34][E: packages/attachment/attachment-local/src/index.ts:36][E: packages/attachment/attachment-local/src/index.ts:42]
 
 失败由 registry 收成 `Error: <message>` 文本。[E: packages/core/tools/src/index.ts:1865]
 
@@ -127,7 +127,7 @@ Native 顶层调用：registry 把这两块放进 `ToolExecutionResult.content`�
 |---|---|---|
 | Definition | `@deepseek-ai/dsh-attachment` 的 `AttachmentStore`；`Context.attachments` | 抽象服务名是 `'attachments'`。[E: packages/attachment/attachment/src/index.ts:33][E: packages/attachment/attachment/src/index.ts:40] |
 | Provider | shipped `@deepseek-ai/dsh-attachment-local`（host `dsh-base` bundle 的 `attachment-local` 行） | 内容寻址写到 `$DSH_HOME/attachments/v1`；默认接受四种 MIME。[E: packages/bundle/base/cordis.patch.yml:118][E: packages/bundle/base/cordis.patch.yml:119][E: packages/attachment/attachment-local/src/index.ts:170] |
-| Consumer | `applyReadImageTool` / `read_image.execute` | `ctx.get('attachments')`、`imageLimits`、`saveImage`。[E: packages/fs/tool-fs/src/read-image.ts:201][E: packages/fs/tool-fs/src/read-image.ts:220] |
+| Consumer | `applyReadImageTool` / `read_image.execute` | `ctx.get('attachments')`、`imageLimits`、`saveImage`。[E: packages/fs/tool-fs/src/read-image.ts:195][E: packages/fs/tool-fs/src/read-image.ts:220] |
 
 换掉 attachment provider，会带走：durable 根目录、`imageLimits`（单图字节、单消息聚合字节、像素、单边、`mediaTypes`）、归一化 / downscale 策略、`saveImage` 的 magic-byte 校验和 id 格式。工具自己的扩展名表和 output schema 不变。
 
@@ -153,10 +153,10 @@ Native 顶层调用：registry 把这两块放进 `ToolExecutionResult.content`�
 | `tools/pre-execute` / approval | 定义不返回 `ask`。缺省 gate 是 `allow`。没有模型可见的 approval 字段。[E: packages/core/tools/src/index.ts:1468] |
 | sandbox 升权 | 不经过 `FsSandboxController`。schema 永不广告 `sandbox_permissions` / `justification`。[E: packages/fs/tool-fs/src/index.ts:71][E: packages/fs/tool-fs/src/index.ts:77] |
 | `timeoutMs` | `defineTool` 未传该字段；registry 只在有值时才写到定义上。取消只跟 `exec.signal`。[E: packages/core/tools/src/schema.ts:584] |
-| `isConcurrencySafe` | `() => true`。内容寻址写入可并发；`executionMode` 因此给出 `{ kind: 'parallel' }`。[E: packages/fs/tool-fs/src/read-image.ts:191][E: packages/fs/tool-fs/tests/read-image.spec.ts:591] |
+| `isConcurrencySafe` | `() => true`。内容寻址写入可并发；`executionMode` 因此给出 `{ kind: 'parallel' }`。[E: packages/fs/tool-fs/src/read-image.ts:192][E: packages/fs/tool-fs/tests/read-image.spec.ts:591] |
 | `tools/post-execute` | 无本工具专用 listener。render 发生在 body 返回之后的 `createSuccessResult`。[E: packages/core/tools/src/index.ts:1791] |
 
-`presentCall` 给 UI 一张 `card: 'generic'`、`kind: 'read'`、title `Read image ${file_path}`、location 指向该路径。这不是模型可见 schema。[E: packages/fs/tool-fs/src/read-image.ts:278][E: packages/fs/tool-fs/src/read-image.ts:280]
+`presentCall` 给 UI 一张 `card: 'generic'`、`kind: 'read'`、title `Read image ${file_path}`、location 指向该路径。这不是模型可见 schema。[E: packages/fs/tool-fs/src/read-image.ts:277][E: packages/fs/tool-fs/src/read-image.ts:281]
 
 ## Preset 装配
 
@@ -178,14 +178,14 @@ shipped host `packages/bundle/base/cordis.patch.yml` 有 `attachment-local`，�
 `applyReadImageTool@packages/fs/tool-fs/src/read-image.ts` 登记的 `execute`：
 
 1. **空路径。** `args.file_path.trim().length === 0` → `file_path must be a non-empty string`。[E: packages/fs/tool-fs/src/read-image.ts:193]
-2. **扩展名门（读盘前）。** `imageMediaTypeForPath` 得不到 MIME → `read_image only accepts PNG/JPEG/WebP/GIF paths`。[E: packages/fs/tool-fs/src/read-image.ts:197][E: packages/fs/tool-fs/src/read-image.ts:199]
-3. **attachment 再检查。** `ctx.get('attachments')` 为空 → `no attachment service is mounted`。这是给直接调用 `applyReadImageTool` 的防御；正常 composition 在登记阶段就已经把工具拿掉。[E: packages/fs/tool-fs/src/read-image.ts:201][E: packages/fs/tool-fs/src/read-image.ts:203]
-4. **部署 MIME 白名单。** `attachments.imageLimits.mediaTypes` 不含该类型 → `… images are not accepted by this deployment`。本地默认四者都收；测试里 JPEG-only store 会拒 `.png`。[E: packages/fs/tool-fs/src/read-image.ts:205][E: packages/fs/tool-fs/tests/read-image.spec.ts:362]
+2. **扩展名门（读盘前）。** `imageMediaTypeForPath` 得不到 MIME → `read_image only accepts PNG/JPEG/WebP/GIF paths`。[E: packages/fs/tool-fs/src/read-image.ts:195][E: packages/fs/tool-fs/src/read-image.ts:195]
+3. **attachment 再检查。** `ctx.get('attachments')` 为空 → `no attachment service is mounted`。这是给直接调用 `applyReadImageTool` 的防御；正常 composition 在登记阶段就已经把工具拿掉。[E: packages/fs/tool-fs/src/read-image.ts:195][E: packages/fs/tool-fs/src/read-image.ts:208]
+4. **部署 MIME 白名单。** `attachments.imageLimits.mediaTypes` 不含该类型 → `… images are not accepted by this deployment`。本地默认四者都收；测试里 JPEG-only store 会拒 `.png`。[E: packages/fs/tool-fs/src/read-image.ts:208][E: packages/fs/tool-fs/tests/read-image.spec.ts:362]
 5. **路由图像能力（仍在 I/O 前）。** `assertImageCapableRoute`：`provider` / `model` 先取 `exec.agent.session.requestHeader()?.config`，否则 `exec.agent.options`；再 `ctx.get('llm')`。[E: packages/fs/tool-fs/src/read-image.ts:88][E: packages/fs/tool-fs/src/read-image.ts:89][E: packages/fs/tool-fs/src/read-image.ts:90] 三者缺一 → `the current model route could not be resolved`。[E: packages/fs/tool-fs/src/read-image.ts:92][E: packages/fs/tool-fs/src/read-image.ts:93] 解析到的 `inputModalities` 为 `undefined` 或不含 `'image'` → `model "…" does not declare image input`。[E: packages/fs/tool-fs/src/read-image.ts:96][E: packages/fs/tool-fs/src/read-image.ts:97] 未知能力按拒绝处理，不把 image block 写进不能承载它的会话历史。
 6. **解析普通文件。** `resolveRegularReadTarget`：`ctx.fs.resolve(path, sessionResolveOptions)` + `stat`。没有 stat → emit `absent` 再抛 `FS_NOT_FOUND`；`info.type !== 'file'` → `FS_NOT_REGULAR_FILE`（目录即使名叫 `folder.png` 也一样）。[E: packages/fs/tool-fs/src/read-target.ts:24][E: packages/fs/tool-fs/src/read-target.ts:28][E: packages/fs/tool-fs/src/read-target.ts:31]
 7. **有界读字节。** `byteCap = min(maxImageBytes, maxMessageImageBytes)`，然后 `ctx.fs.readBytes(target, exec.signal, byteCap)`。本地 backend 在 stat size 已超限时直接 `FS_TOO_LARGE`。[E: packages/fs/tool-fs/src/read-image.ts:214][E: packages/fs/tool-fs/src/read-image.ts:215][E: packages/fs/fs-local/src/fsio.ts:404]
-8. **durable commit。** `attachments.saveImage({ data, mediaType, name: basename(displayPath) })`。`AttachmentError` 按码改写：`IMAGE_DIMENSION_TOO_LARGE` / `IMAGE_TOO_MANY_PIXELS` / `IMAGE_TOO_LARGE` 都叫模型 downscale 后再读；`ATTACHMENT_WRITE_FAILED` 且消息匹配 `16-bit PNG` 则提示转 8-bit；`IMAGE_TYPE_MISMATCH` 写成「扩展名声明了 A、字节是别的格式」；其它错误原样抛出。[E: packages/fs/tool-fs/src/read-image.ts:220][E: packages/fs/tool-fs/src/read-image.ts:226][E: packages/fs/tool-fs/src/read-image.ts:250]
-9. **观察 + 返回。** `ctx.emit('fs/observed', target, { kind: 'present', version: info.version }, exec)`，组装 `ImageReadValue`（含可选 `originalDimensions`），然后 `return value`。嵌套 image 转发不在本函数。[E: packages/fs/tool-fs/src/read-image.ts:257][E: packages/fs/tool-fs/src/read-image.ts:272]
+8. **durable commit。** `attachments.saveImage({ data, mediaType, name: basename(displayPath) })`。`AttachmentError` 按码改写：`IMAGE_DIMENSION_TOO_LARGE` / `IMAGE_TOO_MANY_PIXELS` / `IMAGE_TOO_LARGE` 都叫模型 downscale 后再读；`ATTACHMENT_WRITE_FAILED` 且消息匹配 `16-bit PNG` 则提示转 8-bit；`IMAGE_TYPE_MISMATCH` 写成「扩展名声明了 A、字节是别的格式」；其它错误原样抛出。[E: packages/fs/tool-fs/src/read-image.ts:220][E: packages/fs/tool-fs/src/read-image.ts:227][E: packages/fs/tool-fs/src/read-image.ts:250]
+9. **观察 + 返回。** `ctx.emit('fs/observed', target, { kind: 'present', version: info.version }, exec)`，组装 `ImageReadValue`（含可选 `originalDimensions`），然后 `return value`。嵌套 image 转发不在本函数。[E: packages/fs/tool-fs/src/read-image.ts:257][E: packages/fs/tool-fs/src/read-image.ts:273]
 10. **registry 投影。** `createSuccessResult` 用 `tool.output.schema` 校验 canonical value，再 `output.render` → text envelope + image block。[E: packages/core/tools/src/index.ts:1786][E: packages/core/tools/src/index.ts:1791]
 
 ## 设计动机·edge
@@ -194,12 +194,12 @@ Claude / Codex / Pi 常把图片塞进同一个 Read。DSH 把 UTF-8 文本留�
 
 独有 edge：
 
-- **登记是 composition-conditional，执行再防一层。** 没 store 就不进 catalog；强行登记也会在 `ctx.get('attachments')` 处失败。[E: packages/fs/tool-fs/src/index.ts:70][E: packages/fs/tool-fs/src/read-image.ts:202]
+- **登记是 composition-conditional，执行再防一层。** 没 store 就不进 catalog；强行登记也会在 `ctx.get('attachments')` 处失败。[E: packages/fs/tool-fs/src/index.ts:70][E: packages/fs/tool-fs/src/read-image.ts:208]
 - **路由门比「先写进去再让 adapter 拒」更严。** `inputModalities` 缺失视为不能读图，避免 text-only 历史里留下 image block。[E: packages/fs/tool-fs/src/read-image.ts:96]
 - **扩展名是声明，magic byte 是权威。** `.jpg` 里放 PNG 字节会在 `saveImage` 变成可操作的 mismatch 消息，而不是含糊的 invalid image。[E: packages/fs/tool-fs/src/read-image.ts:250][E: packages/attachment/attachment-local/src/store.ts:63]
-- **过大图可归一化 / downscale，而不是一律拒绝。** store 可能返回更小的 `width`/`height` 并附 `originalDimensions`；envelope 告诉模型如何把坐标乘回原图。[E: packages/fs/tool-fs/src/read-image.ts:131][E: packages/attachment/attachment-local/src/store.ts:111]
-- **并发安全是因为 content-addressed，不是因为只读。** 两次 `read_image` 同一文件会幂等落到同一个 digest 对象（digest 针对归一化后的字节）。[E: packages/fs/tool-fs/src/read-image.ts:191][E: packages/attachment/attachment-local/src/store.ts:109]
-- **门全在 I/O 前。** 扩展名 / store / MIME 白名单 / 路由失败都不会留下半截 `readBytes` 或 attachment 写。[E: packages/fs/tool-fs/src/read-image.ts:197]
+- **过大图可归一化 / downscale，而不是一律拒绝。** store 可能返回更小的 `width`/`height` 并附 `originalDimensions`；envelope 告诉模型如何把坐标乘回原图。[E: packages/fs/tool-fs/src/read-image.ts:129][E: packages/attachment/attachment-local/src/store.ts:111]
+- **并发安全是因为 content-addressed，不是因为只读。** 两次 `read_image` 同一文件会幂等落到同一个 digest 对象（digest 针对归一化后的字节）。[E: packages/fs/tool-fs/src/read-image.ts:192][E: packages/attachment/attachment-local/src/store.ts:109]
+- **门全在 I/O 前。** 扩展名 / store / MIME 白名单 / 路由失败都不会留下半截 `readBytes` 或 attachment 写。[E: packages/fs/tool-fs/src/read-image.ts:195]
 - **检查发生在 execute 当下的路由。** 检查通过之后、下一轮请求之前如果切到 text-only 模型，历史里可能已经有 image block。工具本身不锁模型。
 - **PTC 嵌套转发是 registry / `run_code` 的责任。** `read_image` 只返回 canonical value；image block 由 `ptc.ts` 的 nested commit 抽进 `additionalContexts`，source plugin 仍叫 `'tools-code-mode'`。[E: packages/core/tools/src/ptc.ts:564]
 

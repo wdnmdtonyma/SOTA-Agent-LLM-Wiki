@@ -32,7 +32,7 @@ source:
   - packages/webhook/webhook-github/src/index.ts
   - packages/webhook/webhook-github/src/handler.ts
   - packages/core/session/src/types.ts
-  - packages/session/session-persistence-sqlite/src/schema.ts
+  - packages/session/session-persistence/src/storage-contract.ts
   - packages/session/session-checkpoint-policy/src/index.ts
   - packages/preset/agent-presets/src/mount.ts
 symbols:
@@ -54,7 +54,7 @@ related:
   - subsys.host.apiproxy
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.credentials` 是 **host 面** credential 缝：组合 / settings 只携带 `CredentialRef`（POSIX 环境变量名）或 `CredentialKey`（`<scope>/<id>` 记录地址），secret **值** 由 Provider 拥有。shipped 唯一实现是 `LocalCredentialProvider`（`$DSH_HOME/.credentials.yaml`，`DOCUMENT_VERSION = 1`），不是 keyring。这是 Cordis 组合运行时（`profile → bundle → agent preset`）把密钥从配置面拆出去的能力缝，不是又一个 coding agent 往 `process.env` 里灌明文。
@@ -77,15 +77,15 @@ updated: 0a53fb55be
 
 正交、写错会污染邻页的事实（本页只点名）：
 
-- 新 header 的 `version` 必须等于 `SESSION_FORMAT_VERSION`（现为 `0`）。跨 version **没有**自动 migration。 [E: packages/core/session/src/types.ts:51]
-- SQLite **session 盘** `SCHEMA_VERSION = 20`：`user_version` 非 0 且不等于 20 → 拒开，原地不迁。 [E: packages/session/session-persistence-sqlite/src/schema.ts:19] [E: packages/session/session-persistence-sqlite/src/schema.ts:125] 该 backend **不**在任何 shipped bundle（base / web-app / headless / sdk / acp 都没有 `session-persistence-sqlite` 行）。 [I]
+- 新 header 的 `version` 必须等于 `SESSION_FORMAT_VERSION`（现为 `2`）。JSONL catalog 有 adjacent v0→v1→v2；比 2 新仍拒。 [E: packages/core/session/src/types.ts:86] [E: packages/session/session-persistence/src/storage-contract.ts:50]
+- `dsh-session-persistence-sqlite` 已删除。shipped session 盘只有 JSONL。 [E: packages/bundle/base/cordis.patch.yml:110]
 - shipped JSONL 后端挂在 base：`id: session-persistence-jsonl`，`root: dshHomePath('sessions')`。叠 `dsh-base` 的 profile 继承这一行。 [E: packages/bundle/base/cordis.patch.yml:110] [E: packages/bundle/base/cordis.patch.yml:111] [E: packages/bundle/base/cordis.patch.yml:113]
 - shipped `session-query-sqlite` 写出 `openAt: never`（base 挂载；web-app 用同一键重述仍是 `never`）。search 默认关，不 import/open sqlite。 [E: packages/bundle/base/cordis.patch.yml:129] [E: packages/bundle/base/cordis.patch.yml:133] [E: packages/bundle/web-app/cordis.patch.yml:29]
 - `storage` + `storage-json` + `storage-domain` 与 `session-projection-cache` **挂在 base**（不是只 web-app）。 [E: packages/bundle/base/cordis.patch.yml:145] [E: packages/bundle/base/cordis.patch.yml:148] [E: packages/bundle/base/cordis.patch.yml:153] [E: packages/bundle/base/cordis.patch.yml:162] `workspace` 仍在 web-app insert。 [E: packages/bundle/web-app/cordis.patch.yml:61]
 - headless insert 只有 `code-runtime` / `headless-startup` / `headless-runner`，不重挂 `credentials`。 [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26]
 - `session/flush` 是 **parallel**（`Promise.allSettled`，没有 `next`），不是 waterfall。 [E: packages/core/session/src/index.ts:1024]
 - checkpoint 在 `llm/stream` 进 adapter **之前**、以及 top-level `tools/execute` 进 tool body **之前** `sessions.flush`。嵌套 `exec.parent` 不再刷。`agent/pre-step` 另有一条耐久刷盘，不是副作用门。那些 waterfall **必须** `next()`。 [E: packages/session/session-checkpoint-policy/src/index.ts:35] [E: packages/session/session-checkpoint-policy/src/index.ts:36] [E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:72] [E: packages/session/session-checkpoint-policy/src/index.ts:80] [E: packages/session/session-checkpoint-policy/src/index.ts:81]
-- compaction 用 `surfaceOp: { op: 'replace', start, end }`；`SurfaceOp` 另有 `'append'`，没有 delete。 [E: packages/core/session/src/types.ts:360] [E: packages/core/session/src/types.ts:361]
+- compaction 用 `surfaceOp: { op: 'replace', start, end }`；`SurfaceOp` 另有 `'append'`，没有 delete。 [E: packages/core/session/src/types.ts:416] [E: packages/core/session/src/types.ts:418]
 - settings 分层：schema defaults → composition `base` → 用户文档 section。`SettingsScope.get` 读已 resolve 的快照；私有 `resolve` 先 `mergeLayers(base, section)` 再走 schema。 [E: packages/settings/settings/src/index.ts:447] [E: packages/settings/settings/src/index.ts:748]
 - 组合 / adapter Config 里放 `CredentialRef`（`role('credential-ref')` / `apiKeyEnv`）。secret **值**在 `$DSH_HOME/.credentials.yaml`。 [E: packages/llm/llm-deepseek/src/index.ts:178] [E: packages/credentials/credentials-local/src/index.ts:61]
 
@@ -152,7 +152,7 @@ updated: 0a53fb55be
 
 9. **Consumer 每次操作向缝要一次值。** `dsh-llm-deepseek` 的 `Config.apiKeyEnv` 默认 `DEEPSEEK_API_KEY`，schema 标 `role('credential-ref')`；`resolveAdapterOptions` 把它收成 `credentialRef(...)`。`DeepSeekAdapter.stream` / `streamWithConnection` 每个请求用冻结的 connection 快照再 `resolveApiKey`：有 `ctx.credentials` 就 `credentials.resolve(ref)`，否则读 `launchEnvironmentOf(ctx).get(ref)`。两边都空 → `LlmError('MISSING_CREDENTIAL')`，路由仍注册。密钥与 endpoint 来自**同一份** connection 快照。 [E: packages/llm/llm-deepseek/src/index.ts:90] [E: packages/llm/llm-deepseek/src/index.ts:178] [E: packages/llm/llm-deepseek/src/index.ts:377] [E: packages/llm/llm-deepseek/src/index.ts:430] [E: packages/llm/llm-deepseek/src/adapter.ts:440] [E: packages/llm/llm-deepseek/src/adapter.ts:471] [E: packages/llm/llm-deepseek/src/index.ts:446]
 
-10. **pi-ai：点了 ref 就不能退回环境发现。** `profile.apiKeyEnv === undefined` 才把 `undefined` 交给 pi-ai 自己的 ambient discovery。一旦写了 `apiKeyEnv`，miss 必须 `MISSING_CREDENTIAL`。把 `undefined` 交下去会让 pi-ai 捡到无关的 `OPENAI_API_KEY`。 [E: packages/llm/llm-pi-ai/src/index.ts:178] [E: packages/llm/llm-pi-ai/src/index.ts:185]
+10. **pi-ai：点了 ref 就不能退回环境发现。** `profile.apiKeyEnv === undefined` 才把 `undefined` 交给 pi-ai 自己的 ambient discovery。一旦写了 `apiKeyEnv`，miss 必须 `MISSING_CREDENTIAL`。把 `undefined` 交下去会让 pi-ai 捡到无关的 `OPENAI_API_KEY`。 [E: packages/llm/llm-pi-ai/src/index.ts:179] [E: packages/llm/llm-pi-ai/src/index.ts:185]
 
 11. **Web Models 页只打 managed 文件。** `SettingsController` 在构造里 `ctx.plugin(CredentialsController)`，Remote namespace `'credentials'`、服务键 `credentialsController`。`credentials.set` = `credentials.set(credentialRef(ref), value)`；`describe` 批量最多 `MAX_DESCRIBE_REFS = 64`，每条只回 `{ configured, source?, writable }`。没有 list-all refs：客户端从 settings schema 的 `apiKeyEnv` 字段学习有哪些 ref。组合测试钉死：UI `set` 之后重启，同一把钥匙仍是 `source: 'file'` 且 `writable: true`——没有被 hoist 成只读 `env`。缺缝时报 `gateway/internal`。写失败映射 `credential/rejected`。 [E: packages/api/settings-controller/src/index.ts:107] [E: packages/api/settings-controller/src/credentials.ts:20] [E: packages/api/settings-controller/src/credentials.ts:70] [E: packages/api/settings-controller/src/credentials.ts:83] [E: packages/api/settings-controller/src/credentials.ts:100] [E: packages/api/settings-controller/src/credentials.ts:125] [E: packages/api/settings-controller/src/credentials.ts:146] [E: packages/llm/llm-deepseek/tests/loader-composition.spec.ts:230] [E: packages/llm/llm-deepseek/tests/loader-composition.spec.ts:241]
 
@@ -226,7 +226,7 @@ DSH 把密钥从组合 / settings 里拆出去，是为了让 `profile → bundl
 - packages/webhook/webhook-github/src/index.ts
 - packages/webhook/webhook-github/src/handler.ts
 - packages/core/session/src/types.ts
-- packages/session/session-persistence-sqlite/src/schema.ts
+- packages/session/session-persistence/src/storage-contract.ts
 - packages/session/session-checkpoint-policy/src/index.ts
 - packages/preset/agent-presets/src/mount.ts
 

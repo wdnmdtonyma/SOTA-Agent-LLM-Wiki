@@ -42,7 +42,7 @@ related:
   - surface.hooks.bridges
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-hook-protocol` 是 Claude Code / Codex **两座桥共用的非插件库**：matcher、command 执行与 decode、restrictive merge、`hook/invoked` + `hook/result` 耐久事件、detached 停稳。主入口只 re-export 函数与类型，**不** `apply`、**不** publish `ctx.*`，也不进 shipped `dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app`。它不是 Claude 那 27 个 HookEvent 的再实现；`point` 是自由字符串，扩展点映射属于两座桥。
@@ -115,7 +115,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。五�
 
 4. **桥在 load 期拒非法 regex。** Claude 解析器对消费 matcher 的事件调 `matcherDiagnostic(matcher, 'claude-code')`，非空则 `throw new SyntaxError`。Codex 同样，mode 换成 `'codex'`。UserPromptSubmit / Stop 的 matcher 在 parse 时被丢掉（传入 `undefined`）。谁当 mode、哪些事件丢掉 matcher，是桥的方言，本库只提供谓词。 [E: packages/hooks/hooks-claude-code/src/config.ts:112] [E: packages/hooks/hooks-codex/src/config.ts:78]
 
-5. **一次 point：先 match，再逐条 `runHook`，最后 `mergeHookOutputs`。** Claude 桥 `runPoint` 对每个 group 调 `matchesMatcher(..., 'claude-code')`，命中则 `appendHookInvoked`（仅当有 session 且 `opts.turn` 有值）→ `runHook(ctx.shell, …)` → `appendHookResult` → 全部输出交给 `mergeHookOutputs`。Codex 桥同一骨架，mode 是 `'codex'`，`trailingNewline: false`。本库不注册 `tools/pre-execute` 等 listener；waterfall 必须 `next()` 是桥的事。 [E: packages/hooks/hooks-claude-code/src/index.ts:154] [E: packages/hooks/hooks-claude-code/src/index.ts:187] [E: packages/hooks/hooks-codex/src/index.ts:132] [E: packages/hooks/hooks-codex/src/index.ts:170]
+5. **一次 point：先 match，再逐条 `runHook`，最后 `mergeHookOutputs`。** Claude 桥 `runPoint` 对每个 group 调 `matchesMatcher(..., 'claude-code')`，命中则 `appendHookInvoked`（仅当有 session 且 `opts.turn` 有值）→ `runHook(ctx.shell, …)` → `appendHookResult` → 全部输出交给 `mergeHookOutputs`。Codex 桥同一骨架，mode 是 `'codex'`，`trailingNewline: false`。本库不注册 `tools/pre-execute` 等 listener；waterfall 必须 `next()` 是桥的事。 [E: packages/hooks/hooks-claude-code/src/index.ts:154] [E: packages/hooks/hooks-claude-code/src/index.ts:186] [E: packages/hooks/hooks-codex/src/index.ts:132] [E: packages/hooks/hooks-codex/src/index.ts:169]
 
 6. **`runHook@runner.ts` 永不抛。** 必填 `options.signal`。超时：有 `hook.timeoutSec` 则 `* 1000`，否则 `options.defaultTimeoutMs`。stdin = `JSON.stringify(payload)`，仅当 `trailingNewline` 才加 `'\n'`。然后 `bash.run(bash.resolve(request))`。`exitCode === null`（信号死）折成 `undefined`。executor reject（坏 workdir / 缺 shell）变成 `parseHookOutput(undefined, '', message)`，turn 继续。 [E: packages/hooks/hook-protocol/src/runner.ts:31] [E: packages/hooks/hook-protocol/src/runner.ts:67] [E: packages/hooks/hook-protocol/src/runner.ts:74] [E: packages/hooks/hook-protocol/src/runner.ts:75] [E: packages/hooks/hook-protocol/src/runner.ts:87] [E: packages/hooks/hook-protocol/src/runner.ts:91] [E: packages/hooks/hook-protocol/src/runner.ts:102] [E: packages/hooks/hook-protocol/tests/runner.spec.ts:130]
 
@@ -127,7 +127,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。五�
 
 10. **配对不变量是可选 companion，不是主入口。** `@deepseek-ai/dsh-hook-protocol/invariant` 才有 `name = 'hook-protocol-invariant'`、`inject = ['invariants']`、`apply`。它要求 `hook/*` 落在开 turn、`data.turn` 等于当前 turn、dialect 只能是那两个值；result 必须有匹配的 invoked（键是 `turn + point + handlerId`），`durationMs` 非负有限。测试用 `ctx.plugin` 显式挂上。shipped bundle 没有这条 companion 行。 [E: packages/hooks/hook-protocol/src/invariant.ts:11] [E: packages/hooks/hook-protocol/src/invariant.ts:37] [E: packages/hooks/hook-protocol/src/invariant.ts:46] [E: packages/hooks/hook-protocol/tests/invariant.spec.ts:93]
 
-11. **detached 停稳。** `createDetachedRuns()` 给每个桥一份 tracker：`track` 登记整条 Promise 链（hook + continuation），settled 后从 Set 删掉。`drain` 先 `abort(new Error('hook bridge disposed'))`，再 `while (inflight.size > 0)` `allSettled`——drain 过程中新 track 的链也要等完。拒绝的链被 bookkeeping 吞掉，调用方仍须自己 `.catch`。Claude / Codex 桥把 `drain` 注册成 effect disposer，并把 `detached.signal` 传进不 await 的 `runPoint`（再进 `runHook`）。 [E: packages/hooks/hook-protocol/src/detached.ts:48] [E: packages/hooks/hook-protocol/src/detached.ts:54] [E: packages/hooks/hook-protocol/src/detached.ts:57] [E: packages/hooks/hook-protocol/tests/detached.spec.ts:18] [E: packages/hooks/hooks-claude-code/src/index.ts:127] [E: packages/hooks/hooks-claude-code/src/index.ts:208]
+11. **detached 停稳。** `createDetachedRuns()` 给每个桥一份 tracker：`track` 登记整条 Promise 链（hook + continuation），settled 后从 Set 删掉。`drain` 先 `abort(new Error('hook bridge disposed'))`，再 `while (inflight.size > 0)` `allSettled`——drain 过程中新 track 的链也要等完。拒绝的链被 bookkeeping 吞掉，调用方仍须自己 `.catch`。Claude / Codex 桥把 `drain` 注册成 effect disposer，并把 `detached.signal` 传进不 await 的 `runPoint`（再进 `runHook`）。 [E: packages/hooks/hook-protocol/src/detached.ts:48] [E: packages/hooks/hook-protocol/src/detached.ts:54] [E: packages/hooks/hook-protocol/src/detached.ts:57] [E: packages/hooks/hook-protocol/tests/detached.spec.ts:18] [E: packages/hooks/hooks-claude-code/src/index.ts:126] [E: packages/hooks/hooks-claude-code/src/index.ts:208]
 
 ## 设计动机
 
@@ -144,7 +144,7 @@ restrictive merge 是安全取向：多条 hook 同时说话时，禁止压过�
 - **不是插件，没有 `ctx.hooks`。** 在 `dsh-base` 里找 `id: hook-protocol` 会落空。要跑 Claude / Codex 命令 hook，装的是桥，不是本库。 [E: packages/hooks/hook-protocol/src/index.ts:18]
 - **不是 27 个 HookEvent。** `point` 是 string。本库不实现、不枚举 Claude 那张事件表。
 - **`timeoutSec` 是秒，`defaultTimeoutMs` 是毫秒。** `timeoutSec: 3` → `timeoutMs: 3000`。忘了换算会把默认 10 分钟当成 600 秒或 600 ms。 [E: packages/hooks/hook-protocol/src/runner.ts:74] [E: packages/hooks/hook-protocol/tests/runner.spec.ts:93]
-- **`trailingNewline` 由桥决定。** Claude 传 `true`，Codex 传 `false`。本库不猜方言。 [E: packages/hooks/hook-protocol/src/runner.ts:75] [E: packages/hooks/hooks-codex/src/index.ts:147]
+- **`trailingNewline` 由桥决定。** Claude 传 `true`，Codex 传 `false`。本库不猜方言。 [E: packages/hooks/hook-protocol/src/runner.ts:75] [E: packages/hooks/hooks-codex/src/index.ts:148]
 - **顶层 `{"decision":"deny"}` 是无效的，会被丢掉。** `allow`/`deny`/`ask` 只能来自 `permissionDecision`。 [E: packages/hooks/hook-protocol/tests/codec.spec.ts:58]
 - **`'Bash'` 在两种 mode 下不是同一谓词。** Claude 字面量精确匹配；Codex 当 `/Bash/`，会打中 `BashOutput`。 [E: packages/hooks/hook-protocol/tests/matcher.spec.ts:18] [E: packages/hooks/hook-protocol/tests/matcher.spec.ts:41]
 - **merge 是 deny 赢，不是先到先得。** 空列表是 `none`，不是 `allow`。allow 的 reason 根本不会进桶。 [E: packages/hooks/hook-protocol/tests/merge.spec.ts:11] [E: packages/hooks/hook-protocol/src/merge.ts:74]
@@ -152,7 +152,7 @@ restrictive merge 是安全取向：多条 hook 同时说话时，禁止压过�
 - **信号死 = 非阻塞。** `exitCode: null` → `undefined`，没有 `decision: 'block'`。只有数值 2 才 block。 [E: packages/hooks/hook-protocol/src/runner.ts:91] [E: packages/hooks/hook-protocol/tests/runner.spec.ts:125]
 - **`updatedInput` 解析了也不应用。** 它只是 `HookOutput` 上的字段。Claude 桥打 warn 后忽略；本库没有 rewrite API。 [E: packages/hooks/hook-protocol/src/types.ts:136]
 - **`drain` 必须 track 整条链。** 只 track `runHook`、把 inject/warn 放在未登记的 `.then` 里，dispose 会在副作用跑完前返回。拒绝必须由调用方 `.catch`，tracker 只做结算记账。 [E: packages/hooks/hook-protocol/src/detached.ts:48] [E: packages/hooks/hook-protocol/tests/detached.spec.ts:57]
-- **桥的 `inject` 不止 `shell`。** 两座桥都是 `['shell', 'sessionProjections']`：shell 跑命令，projection 给 turn 号。 [E: packages/hooks/hooks-claude-code/src/index.ts:43] [E: packages/hooks/hooks-codex/src/index.ts:42]
+- **桥的 `inject` 不止 `shell`。** 两座桥都是 `['shell', 'sessionProjections']`：shell 跑命令，projection 给 turn 号。 [E: packages/hooks/hooks-claude-code/src/index.ts:42] [E: packages/hooks/hooks-codex/src/index.ts:41]
 
 ## Seam 三角
 

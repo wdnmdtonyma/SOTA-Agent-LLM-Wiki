@@ -1,141 +1,121 @@
-# UPDATE SCOPE — deepseek-harness wiki（47f943859b → 0a53fb55be）
+# UPDATE SCOPE — deepseek-harness wiki（0a53fb55be → d347e70390）
 
-> 完成日期：2026-08-31
+> 完成日期：2026-09-07
 >
-> **base**（上一轮 verified / 父仓旧 gitlink）：`47f943859bef60e4160492346772ded9b24f765a`（`0.1.0-rc.5`）
+> **base**（上一轮 verified / 父仓旧 gitlink）：`0a53fb55bea101816fa226bb964ae2bed71c343b`（`0.1.2-alpha.2`）
 >
-> **target**（官方 `deepseek-ai/deepseek-harness` `origin/master`）：`0a53fb55bea101816fa226bb964ae2bed71c343b`（`0.1.2-alpha.2`）
+> **target**（官方 `deepseek-ai/deepseek-harness` `origin/master`）：`d347e703908d0406b7a7ef80e3a0e594d86b2215`（`0.1.3-alpha.1`）
 >
-> 最终 submodule checkout：detached `0a53fb55be`
-
-方法约束仍以 `RUN.md` 和 `conventions.md` 为准。本轮执行：workflow `dsh-wiki-update-2`（fill + 独立 L2）→ lead reconcile ×2 → 证据行号重落 → `llms.txt` 登记新节点 → `lint` 0/0。
+> 最终 submodule checkout：detached `d347e70390`
+>
+> 方法约束仍以 `RUN.md` 和 `conventions.md` 为准。本轮执行：workflow `dsh-wiki-update`（**9 个批次 filler，无逐节点 L2**；用户明确要求控并发、不过度 verify）→ lead SHA bump + 证据行号重落 → `llms.txt` 登记新节点 → reconcile ×2 → lint。
 
 ## 1. 上游与源码跨度
 
 已确认 submodule `origin` 为 `https://github.com/deepseek-ai/deepseek-harness`，默认分支 `master`，base 是 target 的祖先。
 
 ```text
-2167 commits
-7673 files changed
-420613 insertions(+)
-141776 deletions(-)
+750 commits
+3995 files changed
+98213 insertions(+)
+55700 deletions(-)
 ```
 
 复现：
 
 ```bash
-git -C deepseek-harness rev-list --count 47f943859b..0a53fb55be
-git -C deepseek-harness diff --shortstat 47f943859b..0a53fb55be
+git -C deepseek-harness rev-list --count 0a53fb55be..d347e70390
+git -C deepseek-harness diff --shortstat 0a53fb55be..d347e70390
 ```
 
-## 2. 183 个基线节点的影响分级
+中间 tag：`dsh-v0.1.2-alpha.3` → `alpha.4` → `alpha.5` → `dsh-v0.1.2-rc.1` → `dsh-v0.1.3-alpha.1`。
 
-分级把基线 `index.json` 的 `source[]` 与 target diff 交叉：
+## 2. 201 个基线节点的影响分级
+
+分级把基线 `index.json` 的 `source[]` 与 target diff 交叉（见 `_staging/impact-d347e70390.json`）：
 
 | 分级 | 数量 | 处理 |
 |---|---:|---|
-| A-BROKEN | 147 | source 删除/移动，必须重定位 |
-| B-HEAVY | 13 | 已登记 source churn ≥ 2,000 |
-| C-DRIFT | 22 | source 有改动，逐 claim 核对 |
-| D-CLEAN | 1 | `ref.uncertainty`（reconcile 重生） |
+| A-BROKEN | 63 | source 删除/移动。其中大半是本轮删掉的 `invariant.ts` 与 `cordis.yml` fixture，remap 即可；真正语义断裂集中在 persistence / report / python runtime |
+| B-HEAVY | 32 | source churn 大，refresh 行号与假话 |
+| C-DRIFT | 104 | source 有改动；lead 机械 SHA bump + `[E:]` 重落；已知假话（format v0、sqlite 盘、report 活行）在 rewrite/catalog 批次清掉 |
+| D-CLEAN | 2 | 只 bump SHA |
 
 最大机械断裂：
 
-- preset 根 `apps/cli/config/agent-presets/` → `packages/preset/agent-presets/presets/`，目录名 `code` → `ptc`
-- `packages/core/tools/src/code-mode.ts` → `packages/core/tools/src/ptc.ts`
-- 删除 `packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react`、`packages/client/schema-form`
-
-D-CLEAN 只允许省略语义重写，不允许跳过 target SHA。uncertainty 由 reconcile 从 `_staging/uncertainty-*.md` 重生。
+- `SESSION_FORMAT_VERSION` 0 → **2**，新增 adjacent migration 链（不再是「无 migration」）
+- `packages/session/session-persistence/src/coordinator.ts` 等编排文件删除，缝改为 `SessionHandle`
+- 删除 `packages/session/session-persistence-sqlite`（session 盘只剩 JSONL；`session-query-sqlite` / `storage-sqlite` 仍在）
+- 删除 `packages/subagent/tool-subagent-report`
+- `packages/code-runtime/code-runtime-python` → `packages/experimental/code-runtime-python`（现为真正的 `CodeRuntime` Provider）
+- 绝大多数包级 `src/invariant.ts` 删除（251 → 39）
+- 测试 fixture `cordis.yml` → `*.patch.yml`
 
 ## 3. Inventory 变化
 
-### 退役节点
-
-无。下列 id 保持稳定别名，正文与 source 跟新实现：
+### 退役节点（保留 id）
 
 | 节点 | 现语义 |
 |---|---|
-| `surface.presets.code` | PTC preset，`presets/ptc/` |
-| `subsys.core.code-mode` | `ptc.ts`；`run_code`；TS/Python flavor |
-| `subsys.host.apiproxy` | `packages/api/{session,settings,workspace}-controller` |
-| `subsys.client.runtime` | `packages/client/store` + session-controller 客户端 |
+| `surface.tools.report` | 工具包已删除；退役映射 |
+| `subsys.persistence.sqlite` | session-persistence-sqlite 已删除；页改为退役 + 指向仍活的 query/storage sqlite |
 
-### 新增节点（18）
+### 新增节点（3）
 
 | 节点 | 判定 |
 |---|---|
-| `surface.tools.pwsh-persistent` | 新持久 `pwsh` 包，对标 bash-persistent |
-| `surface.tools.agent-team` | experimental Agent Teams 模型可见工具族 |
-| `surface.profiles.sdk` | `PROFILE_TEMPLATES.sdk` = base + sdk-app |
-| `surface.profiles.sdk-minimal` | 唯一不叠 `dsh-base` 的 shipped profile |
-| `surface.profiles.acp` | `PROFILE_TEMPLATES.acp` = base + acp-app |
-| `subsys.composition.bundle-sdk-app` | SDK JSON-RPC 模式 bundle |
-| `subsys.composition.bundle-sdk-minimal` | 独立 SDK 树 |
-| `subsys.composition.bundle-acp-app` | ACP 自动化 bundle |
-| `subsys.orchestration.agent-team` | `ctx.agentTeams` roster/mailbox/task board |
-| `subsys.integration.webhook` | `ctx.webhookRuntime` + GitHub adapter |
-| `subsys.execution.code-runtime-python` | PTC Python flavor provider |
-| `subsys.context.file-reference` | file-reference 缝 + local provider |
-| `subsys.persistence.session-log-deepseek` | base 挂载的 DeepSeek 日志方言 |
-| `subsys.llm.deepseek-extensions` | LLM API 扩展 + 官方插件 inventory |
-| `subsys.client.store` | 浏览器状态家 |
-| `subsys.client.ui-renderer` | 原 `web-react` bind/scoped-slots |
-| `subsys.client.ui-chat` | ConversationNode 装配 |
-| `subsys.client.ui-session` | 会话列表 / 选择 |
+| `subsys.persistence.session-format` | v0→v1→v2 adjacent 链 + catalog；jsonl load 走这条 |
+| `subsys.client.file-upload` | web-app 挂载的浏览器上传服务 |
+| `subsys.util.http-proxy` | 进程级出站代理库，不是 Cordis 插件 |
 
-最终 **201 个 verified nodes**：
+未为 `session-turn-outline` 另建节点：它是 web-app 上的 projection unit，写入 `subsys.persistence.projection`。
 
-| Tier | 数量 |
-|---|---:|
-| T0 | 12 |
-| T1 | 57 |
-| T2 | 119 |
-| T3 | 13 |
-
-其中 tool nodes 32；shipped profile 5；shipped bundle 6；shipped preset 4（`minimal` / `standard` / `ptc` / `cordis`）。
-
-叶 package 219 → 251。
+最终节点数：**204**（201 − 0 + 3；T0 12 / T1 57 / T2 122 / T3 13）。叶 package 251 → ~265（package-index 排除 `@fixture/*` 后记 255）。
 
 ## 4. 必须覆盖的新架构与对外行为
 
 | 主题 | 结论与承载节点 |
 |---|---|
-| Profiles | `web`(live)、`headless` / `sdk` / `sdk-minimal` / `acp`(startup)。`sdk-minimal` 不叠 base。`spine.composition-boot`、三个新 profile 页、三个新 bundle 页。 |
-| PTC | 旧 Code Mode。权威 `packages/core/tools/src/ptc.ts`；`run_code`；TS 与 Python flavor。`surface.presets.code`、`subsys.core.code-mode`、`surface.tools.run-code`。 |
-| HTTP API | apiproxy 删除；session/settings/workspace controller。`subsys.host.apiproxy` 就地改写。 |
-| Client | runtime/web-react 删除；store + ui-renderer + ui-chat + ui-session。 |
-| Agent Teams | experimental opt-in，`ctx.agentTeams`。工具族页须逐名入表。 |
-| webhook | `ctx.webhookRuntime`；GitHub 是 shipped provider。 |
-| pwsh-persistent | 与 bash-persistent 对称的持久 PTY 工具。 |
+| Session format v2 | `SESSION_FORMAT_VERSION = 2`；v0→v1→v2 在 JSONL load 时走 catalog。`spine.session-log`、`subsys.core.session`、`subsys.persistence.session-format`、`ref.session-events` |
+| Handle 缝 | `create`/`open` → `SessionHandle`。`subsys.persistence.session-persistence` / `jsonl`（含 write lease） |
+| SQLite session 盘 | 包删除。`subsys.persistence.sqlite` 退役页 |
+| report 工具 | 包删除。`surface.tools.report` 退役；catalog 去活行 |
+| PTC `workflow` | preset 里 `tool-workflow` `disabled: true`，engine 留给 `ralph`。`surface.presets.code`、`ref.presets` |
+| Python runtime | experimental Provider，spawn `python3`。`subsys.execution.code-runtime-python` |
+| http-proxy | `profile-boot.ts` 安装 undici dispatcher。`subsys.util.http-proxy` |
+| file-upload | web-app 行。`subsys.client.file-upload` |
 
-## 5. L2 独立证伪
+## 5. 证伪策略（本轮刻意收窄）
 
-workflow `dsh-wiki-update-2` 对 182 个既有节点 + 18 个新节点各派独立 verifier（`effort: low`），报告 201/201 verified。Survey 事实写在 `_staging/update-facts-0a53fb55be.md`。
+用户要求控并发、不过度 verify。因此：
 
-Lead 后处理纠正了 lint 能抓到、L2 漏掉的机械问题：179 条 `[E:]` 落在注释/空行，统一挪到最近的非注释代码行；18 条新节点补进 `llms.txt`。括号行警告一并清掉。
+- **没有**对 200+ 节点各派独立 L2 verifier。
+- 9 个批次 filler（每波最多 3 并行）：rewrite 语义断裂面，remap invariant 缺失，refresh 重 churn，create 3 个新节点。
+- filler 被要求每页抽检至少 3 条 `[E:]`。
+- lead 用 lint 抓机械漂移（缺失路径、空行/注释行号），并跑证据重落脚本。
+
+残余风险：C-DRIFT 页可能仍有未改的过时叙述，但 format v0 / sqlite 盘 / report 活行这类跨页假话已作为批次硬约束。
 
 ## 6. 不确定项
 
-`reference/uncertainty.md` 由 reconcile 从 35 个 `_staging/uncertainty-*.md`（含 7 个本轮 `uncertainty-update-*`）重生。继续保留的 `[U]` 见该页，主要包括 PTC/Code Mode 边界、approval、retry、config-keys 等未在源码钉死的契约。
-
-未为 inspector / webworker preview 另建节点：它们是 experimental 私有预览，不是 Harness 应用入口（`docs/architecture.md` Application launch）。
+`reference/uncertainty.md` 由 reconcile 从 `_staging/uncertainty-*.md` 重生。本轮 filler 若写下 `uncertainty-update-*`，会并进去。
 
 ## 7. 元数据与引用收敛
 
-- 全部 201 个 verified node frontmatter：`updated: 0a53fb55be`
-- `index.json.updated` 与所有 `index.nodes[].updated`：`0a53fb55be`
-- `README.md`、`llms.txt`、`index.json` 的节点计数一致（T0 12 / T1 57 / T2 119 / T3 13）
-- `conventions.md` §7 与 `RUN.md` 的 preset/profile/PTC/退役包约定已改到 target
-- 失效 source 均已重定位；submodule 源码工作树 clean（detached `0a53fb55be`）
+- 全部 verified node frontmatter：`updated: d347e70390`
+- `index.json.updated` 与所有 `index.nodes[].updated`：`d347e70390`
+- `README.md`、`llms.txt`、`index.json` 的节点计数一致
+- `conventions.md` §7 已改到 format v2 / 退役包 / experimental python / PTC workflow disabled
+- submodule 源码工作树 clean（detached `d347e70390`）
 
 ## 8. 最终验证
 
 ```bash
-git -C deepseek-harness rev-parse --short=10 HEAD   # 0a53fb55be
+git -C deepseek-harness rev-parse --short=10 HEAD   # d347e70390
 git -C deepseek-harness status --short              # empty
 node docs/llm-wiki/deepseek-harness/tools/reconcile.mjs
 node docs/llm-wiki/deepseek-harness/tools/reconcile.mjs
-node docs/llm-wiki/deepseek-harness/tools/lint.mjs   # 0 error(s), 0 warning(s) · 201 nodes
+node docs/llm-wiki/deepseek-harness/tools/lint.mjs   # 0 error(s), 0 warning(s) · 204 nodes
 ```
 
-完成条件：201 verified / 0 planned；`lint` 0/0；二次 reconcile 幂等。
+完成条件已满足：204 verified / 0 planned；`lint` 0/0；二次 reconcile 幂等。父仓 gitlink 仍显示 `+d347e70390`（工作树已 checkout，待与 wiki 一起提交）。

@@ -37,7 +37,7 @@ symbols: [persona, persistent-shell, pty, terminal-bash, persistent-bash, termin
 related: [surface.presets.overview, ref.presets]
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `minimal` 是 shipped **agent preset** 目录 `packages/preset/agent-presets/presets/minimal/`：固定英文 persona 当完整 system prompt，再在两个 `isolate` group 里挂持久 shell（POSIX 上模型名 `bash` / `@deepseek-ai/dsh-tool-bash-persistent`；win32 上模型名 `pwsh` / `@deepseek-ai/dsh-tool-pwsh-persistent`）与 `str_replace_editor`（裸 `fs-local`）。它改的是 **agent-preset 面**（每会话 tools / persona / isolate），不是 host 面（webserver / persistence / sandbox 策略 / subagent backends）。DSH 主线是 `profile → bundle → agent preset`；capability seam = Definition / Provider / Consumer；model-visible ⟺ logged。
@@ -68,7 +68,7 @@ Web 装配下，host 全局工具层为空，模型可见工具改由每会话 p
 3. `scanRoot` 扫子目录名；`minimal/` + `agent.cordis.yml` 成为 roster 行。`preset.yml` 的 `name: 极简模式`、`order: 3` 只影响显示排序。[E: packages/preset/agent-presets/presets/minimal/preset.yml:1][E: packages/preset/agent-presets/presets/minimal/preset.yml:3][E: packages/preset/agent-presets/src/discovery.ts:320]
 4. 会话 factory 的 `setup(agentCtx)` 调用 `agentPresets.mount(agentCtx, 'minimal')`：`ensureStanding` 把 composition standing mount 一次，再 `bindScopeParent` 让该 agent 的 scope key 接到 mount 上。失败会从 `standing` map 删掉 pending、`dispose` 刚建的 scope，再把错误抛回 `setup`。[E: packages/preset/agent-presets/src/index.ts:420][E: packages/preset/agent-presets/src/index.ts:425][E: packages/preset/agent-presets/src/index.ts:788]
 
-`AgentPresets.defaultId` 读 settings 的 `default`，否则用 composition `config.default`。Web 出厂 default 是 `standard`；要把新会话切到 `minimal`，靠 picker / `agent-preset/selected` / settings。[E: packages/preset/agent-presets/src/index.ts:241][E: apps/cli/tests/web-agent-presets.e2e.ts:220]
+`AgentPresets.defaultId` 读 settings 的 `default`，否则用 composition `config.default`。Web 出厂 default 是 `standard`；要把新会话切到 `minimal`，靠 picker / `agent-preset/selected` / settings。[E: packages/preset/agent-presets/src/index.ts:241][E: apps/cli/tests/web-agent-presets.e2e.ts:222]
 
 **headless / sdk / acp 不挂 preset roster。** headless insert 只有 `code-runtime` / `headless-startup` / `headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:19][E: packages/bundle/headless/cordis.patch.yml:22][E: packages/bundle/headless/cordis.patch.yml:26] sdk overlay 是 `sdk-app-startup` + `sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:12][E: packages/bundle/sdk-app/cordis.patch.yml:17] acp overlay 是 `acp-app-startup` + `acp`。[E: packages/bundle/acp-app/cordis.patch.yml:12][E: packages/bundle/acp-app/cordis.patch.yml:15] 这些 profile 的模型可见工具留在 host 面的 `dsh-base` 行上，**不是** 本目录这份 `minimal` composition。`sdk-minimal` 的 `bundles` 只有 `@deepseek-ai/dsh-sdk-minimal`，不叠 base，也不挂 roster。[E: packages/boot/app-boot/src/profile.ts:155]
 
@@ -101,7 +101,7 @@ Web 装配下，host 全局工具层为空，模型可见工具改由每会话 p
 | `fs-local` | `@deepseek-ai/dsh-fs-local` | `cwd: !!js process.env.DSH_CWD ?? process.cwd()` | Provider：`LocalFileSystem` 继承 `FileSystem`，基类 `super(ctx, 'fs')`。`cwd` 只是相对路径解析基准。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:83][E: packages/fs/fs/src/index.ts:88][E: packages/fs/fs-local/src/index.ts:64] |
 | `str-replace-editor` | `@deepseek-ai/dsh-tool-str-replace-editor` | `maxOutputChars: 16000` | Consumer：注册 **model-visible** 名 `str_replace_editor`。`inject = ['tools', 'fs']`，因此吃到的是本 realm 的裸 `fs-local`。`path` 必须是绝对路径。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:88][E: packages/fs/tool-str-replace-editor/src/index.ts:429][E: packages/fs/tool-str-replace-editor/src/index.ts:502][E: packages/fs/tool-str-replace-editor/src/index.ts:95] |
 
-`persistent-bash` 的 `description` 与 e2e 常量 `MINIMAL_BASH_DESCRIPTION` 逐字相同；persona `text` 与 `MINIMAL_PROMPT` 相同。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:42][E: apps/cli/tests/web-agent-presets.e2e.ts:32][E: apps/cli/tests/web-agent-presets.e2e.ts:291]
+`persistent-bash` 的 `description` 与 e2e 常量 `MINIMAL_BASH_DESCRIPTION` 逐字相同；persona `text` 与 `MINIMAL_PROMPT` 相同。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:42][E: apps/cli/tests/web-agent-presets.e2e.ts:32][E: apps/cli/tests/web-agent-presets.e2e.ts:292]
 
 ### 本文件没有的 shipped 行（不要因为仓库有包就当成成员）
 
@@ -116,7 +116,7 @@ Web 装配下，host 全局工具层为空，模型可见工具改由每会话 p
 | `skill-filesystem` / `tool-skill` | 不装 skill 加载器。host 全局 skill 层仍可读，但工具表没有 `skill`。[E: apps/cli/tests/web-agent-presets.e2e.ts:462] |
 | `tool-goal` | 没有 `create_goal` / `get_goal` / `update_goal`。 |
 | `planning` / `plan-mode` | 没有 plan mode，没有 `exit_plan_mode`。 |
-| `compaction` / `compaction-basic` / `command-compact` / `tool-result-pruner` | 无 compaction Service；`serviceFor(agent, 'compaction')` 与 `agent.ctx.get('compaction')` 都是 `undefined`。[E: apps/cli/tests/web-agent-presets.e2e.ts:295][E: apps/cli/tests/web-agent-presets.e2e.ts:296] |
+| `compaction` / `compaction-basic` / `command-compact` / `tool-result-pruner` | 无 compaction Service；`serviceFor(agent, 'compaction')` 与 `agent.ctx.get('compaction')` 都是 `undefined`。[E: apps/cli/tests/web-agent-presets.e2e.ts:295][E: apps/cli/tests/web-agent-presets.e2e.ts:297] |
 | `delegation` 整组 | 没有 `subagent` / `subagent_fork` / `workflow` / `ralph`。 |
 | `tool-ask-user` / `tool-todo` / `tool-web` | 没有 `ask_user_question` / `todo_write` / `web_search`。 |
 | `tool-cordis` / `tool-presentation` | 不是 cordis / PTC preset。`surface.presets.code` 是 PTC 的稳定 wiki id，源目录是 `presets/ptc/`。 |
@@ -151,17 +151,17 @@ host / `dsh-base` 在进程级挂 `@deepseek-ai/dsh-fs-sandbox`（`id: fs-sandbo
 
 `minimal` 在 `isolate.fs: true` 的 group 里再挂 `@deepseek-ai/dsh-fs-local`。`FileSystem.sandboxMode` getter 返回 `undefined`（不 confine）。同 group 的 `str_replace_editor` 构造 `MutationPolicy` 时看到 `ctx.fs.sandboxMode === undefined`，就不去要 `sandboxPolicy`，编辑走裸本地文件系统。[E: packages/fs/fs/src/index.ts:103][E: packages/fs/tool-str-replace-editor/src/index.ts:70]
 
-这个影子**只对 `filesystem` group 里解析 `fs` 的 Consumer 有效**。host 行、其它 preset、浏览器 RPC 走 host 的 `fs-sandbox` 不变。Web 还把 base 上的 `tool-str-replace-editor`（host 目录 id，同样的包）`disabled: true`；`minimal` 用的是 preset 自己的 `id: str-replace-editor`。[E: packages/bundle/web-app/cordis.patch.yml:345][E: packages/bundle/base/cordis.patch.yml:428]
+这个影子**只对 `filesystem` group 里解析 `fs` 的 Consumer 有效**。host 行、其它 preset、浏览器 RPC 走 host 的 `fs-sandbox` 不变。Web 还把 base 上的 `tool-str-replace-editor`（host 目录 id，同样的包）`disabled: true`；`minimal` 用的是 preset 自己的 `id: str-replace-editor`。[E: packages/bundle/web-app/cordis.patch.yml:346][E: packages/bundle/base/cordis.patch.yml:429]
 
 `cwd: !!js process.env.DSH_CWD ?? process.cwd()` 在 loader 读 yml 时求值。`LocalFileSystem.resolve` 用 `this.config.cwd` 解析相对路径；编辑器则在进 `ctx.fs.resolve` 之前就拒绝非绝对 `path`。[E: packages/fs/fs-local/src/index.ts:108][E: packages/fs/tool-str-replace-editor/src/index.ts:95]
 
 ### Web host 面 vs 本 preset 面
 
-`dsh-web-app` 把 base 上的模型可见工具行设为 `disabled: true`（例如 `tool-bash`、`tool-str-replace-editor`）。boot 后无 agent 时 `ctx.tools.schemas()` 为空；每个会话只看见自己 join 的 preset。[E: packages/bundle/web-app/cordis.patch.yml:320][E: packages/bundle/web-app/cordis.patch.yml:345][E: apps/cli/tests/web-agent-presets.e2e.ts:185]
+`dsh-web-app` 把 base 上的模型可见工具行设为 `disabled: true`（例如 `tool-bash`、`tool-str-replace-editor`）。boot 后无 agent 时 `ctx.tools.schemas()` 为空；每个会话只看见自己 join 的 preset。[E: packages/bundle/web-app/cordis.patch.yml:320][E: packages/bundle/web-app/cordis.patch.yml:346][E: apps/cli/tests/web-agent-presets.e2e.ts:185]
 
-host 留下的是 registries 与策略：`tools`、`systemPrompt`、`skills`、`sandboxPolicy`、`subprocess`、`fs-sandbox`、`tokenMeter`、subagent backends。`minimal` 不搬走它们，只是不挂对应的 model-facing 行。因此：全局 skill 层对 `minimal` agent 仍可读，但没有 `skill` 工具；`tokenMeter` 在挂 `minimal` 之前就能 `ctx.get` 到，且该会话的 projection 仍含 `contextBreakdown` / `contextPressure` / `tokenUsage`。[E: apps/cli/tests/web-agent-presets.e2e.ts:198][E: apps/cli/tests/web-agent-presets.e2e.ts:209][E: apps/cli/tests/web-agent-presets.e2e.ts:462]
+host 留下的是 registries 与策略：`tools`、`systemPrompt`、`skills`、`sandboxPolicy`、`subprocess`、`fs-sandbox`、`tokenMeter`、subagent backends。`minimal` 不搬走它们，只是不挂对应的 model-facing 行。因此：全局 skill 层对 `minimal` agent 仍可读，但没有 `skill` 工具；`tokenMeter` 在挂 `minimal` 之前就能 `ctx.get` 到，且该会话的 projection 仍含 `contextBreakdown` / `contextPressure` / `tokenUsage`。[E: apps/cli/tests/web-agent-presets.e2e.ts:195][E: apps/cli/tests/web-agent-presets.e2e.ts:209][E: apps/cli/tests/web-agent-presets.e2e.ts:462]
 
-同进程里一个 `standard` 会话与一个 `minimal` 会话工具表独立：拆掉 `minimal` 之后 `standard` 的工具数仍 `> 10`，全局层仍为空。[E: apps/cli/tests/web-agent-presets.e2e.ts:313][E: apps/cli/tests/web-agent-presets.e2e.ts:318][E: apps/cli/tests/web-agent-presets.e2e.ts:319]
+同进程里一个 `standard` 会话与一个 `minimal` 会话工具表独立：拆掉 `minimal` 之后 `standard` 的工具数仍 `> 10`，全局层仍为空。[E: apps/cli/tests/web-agent-presets.e2e.ts:314][E: apps/cli/tests/web-agent-presets.e2e.ts:318][E: apps/cli/tests/web-agent-presets.e2e.ts:319]
 
 ### 失败怎么响
 

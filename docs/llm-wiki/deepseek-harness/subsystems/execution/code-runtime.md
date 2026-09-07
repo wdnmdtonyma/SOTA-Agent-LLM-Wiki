@@ -7,7 +7,6 @@ pkg: execution
 source:
   - packages/code-runtime/code-runtime/src/index.ts
   - packages/code-runtime/code-runtime/src/types.ts
-  - packages/code-runtime/code-runtime/src/invariant.ts
   - packages/code-runtime/code-runtime/tests/service.spec.ts
   - packages/code-runtime/code-runtime/tests/reserved.spec.ts
   - packages/code-runtime/code-runtime-worker-thread/src/index.ts
@@ -41,9 +40,10 @@ related:
   - subsys.core.code-mode
   - subsys.core.agent-tool-presentation
   - surface.tools.run-code
+  - subsys.execution.code-runtime-python
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.codeRuntime`（`CodeRuntime`）是 **host 面**程序执行缝：跑一段模型写的程序，对接 host 侧异步 `bindings`。runtime **不知道** tools / sessions / approval / sandbox；那些由 Consumer 绑进 `CodeRunRequest`。默认 Provider 是 `WorkerThreadCodeRuntime`（`@deepseek-ai/dsh-code-runtime-worker-thread`），挂在 **`dsh-web-app` 与 `dsh-headless`** 的 `id: code-runtime`，**不在 `dsh-base`**，也不在 shipped `sdk` / `sdk-minimal` / `acp` overlay。PTC（旧名 Code Mode；wiki 节点 `subsys.core.code-mode`）是这条缝的执行面 Consumer。
@@ -77,7 +77,7 @@ updated: 0a53fb55be
 
 浏览器 client 不实现 `CodeRuntime`，不跑 worker。
 
-**没有 `codeRuntime/*` 事件。** Definition 不声明 waterfall / emit。companion `code-runtime-invariant` 的 installer 是空函数。[E: packages/code-runtime/code-runtime/src/invariant.ts:21] 组合失败是「同 realm 第二份 service 抛」和「Consumer `inject` 等到服务」。
+**没有 `codeRuntime/*` 事件。** Definition 不声明 waterfall / emit。组合失败是「同 realm 第二份 service 抛」和「Consumer `inject` 等到服务」。
 
 ## 关键文件
 
@@ -101,11 +101,11 @@ updated: 0a53fb55be
 
 | 符号 | 要点 |
 |---|---|
-| `CodeRuntime` | `Service` 子类；键名 `'codeRuntime'`。两个只读描述符 `language` / `isolation` + 一个抽象 `run`。[E: packages/code-runtime/code-runtime/src/index.ts:111] [E: packages/code-runtime/code-runtime/src/index.ts:119] [E: packages/code-runtime/code-runtime/src/index.ts:134] |
+| `CodeRuntime` | `Service` 子类；键名 `'codeRuntime'`。两个只读描述符 `language` / `isolation` + 一个抽象 `run`。[E: packages/code-runtime/code-runtime/src/index.ts:112] [E: packages/code-runtime/code-runtime/src/index.ts:120] [E: packages/code-runtime/code-runtime/src/index.ts:135] |
 | `CodeRunRequest` | `{ program, bindings, signal? }`。没有预算旋钮；时间 / 输出 / heap 是 Provider 的 `Config`，请求里没有 `??` 可填的隐藏字段。[E: packages/code-runtime/code-runtime/src/types.ts:80] [E: packages/code-runtime/code-runtime/src/types.ts:82] [E: packages/code-runtime/code-runtime/src/types.ts:88] |
 | `CodeBindingNamespace` | 程序看见的一个全局对象（例如 `tools`）。`global` 必须是 portable 标识符 `[A-Za-z_][A-Za-z0-9_]*`，且不在 reserved 集合里。函数名是任意字符串，按 own property 处理。 |
 | `CodeBindingErrorClass` | 可选：往程序注入一个真实 Error 子类；host 拒答时程序 `catch` 到它，并通过 `memberNameProperty` 读成员名。 |
-| `CodeRunResult` | `{ value?, logs, error? }`。程序失败是字段，不是 `run()` 的 rejection。[E: packages/code-runtime/code-runtime/src/types.ts:122] [E: packages/code-runtime/code-runtime/src/types.ts:124] [E: packages/code-runtime/code-runtime/src/types.ts:126] |
+| `CodeRunResult` | `{ value?, logs, error? }`。程序失败是字段，不是 `run()` 的 rejection。[E: packages/code-runtime/code-runtime/src/types.ts:122] [E: packages/code-runtime/code-runtime/src/types.ts:122] [E: packages/code-runtime/code-runtime/src/types.ts:128] |
 | `CodeRunFailure.kind` | `'exception'` \| `'timeout'` \| `'abort'` \| `'worker-exit'` \| `'invalid-output'` \| `'output-limit'`。正交：预算到期不是 exception，abort 不是 timeout，substrate 死不是这两者。[E: packages/code-runtime/code-runtime/src/types.ts:105] |
 | `RESERVED_BINDING_GLOBALS` | `console`、`__dsh_main__`、`__builtins__`、`__name__`、`__debug__`。`tools` 不在集合里。[E: packages/code-runtime/code-runtime/src/index.ts:40] [E: packages/code-runtime/code-runtime/tests/reserved.spec.ts:17] [E: packages/code-runtime/code-runtime/tests/reserved.spec.ts:22] |
 | `RESERVED_ERROR_MEMBERS` | JS `Error` 的 `name`/`message`/`stack` 与 Python 异常协议的 `args`/`with_traceback`/`add_note`；另加 `DUNDER_MEMBER`（`/^__.+__$/`）整类拒绝。[E: packages/code-runtime/code-runtime/src/index.ts:55] [E: packages/code-runtime/code-runtime/src/index.ts:64] |
@@ -113,7 +113,7 @@ updated: 0a53fb55be
 | `WorkerThreadCodeRuntime.Config` | 填完默认后：`computeMs: 60_000`、`maxWallMs: 600_000`、`maxOutputBytes: 67_108_864`、`maxOldGenerationSizeMb: 512`。[E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:240] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:241] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:242] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:243] |
 | `language` / `isolation`（shipped） | `'typescript'` / `'worker-thread'`。[E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:246] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:247] |
 
-本仓 **没有** published Python `CodeRuntime` 实现。PTC 的 SDK flavor 有 `'typescript' | 'python'`，那是 `dsh-tools` 的投影表，不是第二条 runtime。`PORTABLE_RESERVED_WORDS` 仍并入 Python 关键字，是为了「一份 namespace 列表在所有后端都合法」：`lambda` 在本 TypeScript worker 上也会当合同误用被拒。[E: packages/code-runtime/code-runtime-worker-thread/tests/runtime.spec.ts:799]
+shipped overlay **没有**第二条 `id: code-runtime`。experimental `PythonCodeRuntime` 在 `packages/experimental/code-runtime-python`（`language: 'python'`，`isolation: 'process'`），不进 web/headless 默认行。PTC 的 SDK flavor `'typescript' | 'python'` 是 `dsh-tools` 投影表。`PORTABLE_RESERVED_WORDS` 仍并入 Python 关键字：`lambda` 在本 TypeScript worker 上也会当合同误用被拒。[E: packages/code-runtime/code-runtime-worker-thread/tests/runtime.spec.ts:799]
 
 ## 控制流
 
@@ -121,7 +121,7 @@ updated: 0a53fb55be
 2. 同一 isolate realm 再挂第二个同名 service 会抛 `registered`。fiber `dispose` 后 `ctx.get('codeRuntime')` 变为 `undefined`。[E: packages/code-runtime/code-runtime/tests/service.spec.ts:85] [E: packages/code-runtime/code-runtime/tests/service.spec.ts:80]
 3. `dsh-web-app` / `dsh-headless` 在 **host** 插默认 Provider：`id: code-runtime` → `@deepseek-ai/dsh-code-runtime-worker-thread`。这是进程级一行，不是 per-session 副本。web 另 insert `agent-presets` 且 `default: standard`：不选 PTC preset、也不把 host `tools.mode` 打成非 native，模型就看不到 `run_code`，但 runtime 已经在树上。[E: packages/bundle/web-app/cordis.patch.yml:49] [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/web-app/cordis.patch.yml:442] [E: packages/bundle/web-app/cordis.patch.yml:445]
 4. `WorkerThreadCodeRuntime`@packages/code-runtime/code-runtime-worker-thread/src/index.ts `extends CodeRuntime`，`super(ctx)` 继承键名。构造校验每个预算都是正有限数；`maxOutputBytes` 至少 `MIN_OUTPUT_BYTES`（4）；`maxWallMs` 不得超过 `MAX_TIMER_DELAY_MS`（更长会被 Node `setTimeout` clamp 成 1 ms）。`ctx.effect` 登记 `teardown`。[E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:254] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:259] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:66] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:262] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:268] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:270]
-5. shipped PTC preset（目录 `presets/ptc/`，wiki 别名 `surface.presets.code`）挂 `id: tool-presentation`，`config.mode: ptc`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:264] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] `apply@packages/core/agent-tool-presentation/src/index.ts` 的静态 `inject` 只有 `['tools']`；`ptc` / `both` 另开子 fiber：`ctx.inject(['codeRuntime'], runtimeCtx => runtimeCtx.tools.presentAs(config.mode))`。[E: packages/core/agent-tool-presentation/src/index.ts:35] [E: packages/core/agent-tool-presentation/src/index.ts:69] [E: packages/core/agent-tool-presentation/src/index.ts:70]
+5. shipped PTC preset（目录 `presets/ptc/`，wiki 别名 `surface.presets.code`）挂 `id: tool-presentation`，`config.mode: ptc`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:267] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] `apply@packages/core/agent-tool-presentation/src/index.ts` 的静态 `inject` 只有 `['tools']`；`ptc` / `both` 另开子 fiber：`ctx.inject(['codeRuntime'], runtimeCtx => runtimeCtx.tools.presentAs(config.mode))`。[E: packages/core/agent-tool-presentation/src/index.ts:35] [E: packages/core/agent-tool-presentation/src/index.ts:69] [E: packages/core/agent-tool-presentation/src/index.ts:70]
 6. 缺 runtime 时：`row.ctx.get('codeRuntime')` 为 `undefined`，`presentAs('ptc')` 不跑，`assemble` 仍是部署默认 native 名（测试里是 `echo`）。后来 `ctx.plugin(StubRuntime)` 才切到 `[run_code]`。[E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:109] [E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:111] [E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:118] [E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:121] yml / `apply` 旁注释写「mount 失败并点名本 id」；`inactiveRows` 只读静态 `inject: ['tools']`，可执行断言是 pending + native 回落。[U]
 7. 执行面 Consumer 是 `createRunCodeTool`@packages/core/tools/src/ptc.ts：`requireRuntime()` 取 `ctx.codeRuntime`，再 `runtime.run({ program: args.code, bindings: [{ global: 'tools', functions, errorClass: { name: 'ToolCallError', memberNameProperty: 'toolName' } }], signal })`。请求里没有 tool schema、没有 session。[E: packages/core/tools/src/ptc.ts:331] [E: packages/core/tools/src/ptc.ts:619] [E: packages/core/tools/src/ptc.ts:620] [E: packages/core/tools/src/ptc.ts:622] 装配期另一条读路径是 `requireCodeRuntime`：`ctx.get('codeRuntime')` 为空则抛，文案点名要加载 `@deepseek-ai/dsh-code-runtime-worker-thread`。[E: packages/core/tools/src/index.ts:1010] [E: packages/core/tools/src/index.ts:1013]
 8. `run`@packages/code-runtime/code-runtime-worker-thread/src/index.ts：已 dispose 则 **reject**（合同误用）。然后 `validateBindings`：`global` / error-class 名必须匹配 `IDENTIFIER` 且不在 `PORTABLE_RESERVED_WORDS` / `RESERVED_BINDING_GLOBALS`；重复名抛；`memberNameProperty` 空串、落在 `RESERVED_ERROR_MEMBERS`、或匹配 `DUNDER_MEMBER` 也抛。这些 throw 都是 `run()` 的 rejection，不是 `CodeRunResult.error`。[E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:294] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:323] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:332] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:355]
@@ -153,7 +153,7 @@ updated: 0a53fb55be
 - **剥类型包装名是 `__dsh_program__`，reserved 集合里是 `__dsh_main__`。** 前者只存在于 host 侧 `stripTypeScriptTypes` 的临时包装，slice 之后不进 worker 全局。不要把两个 dunder 写成同一个槽。[E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:84]
 - **OOM 是 `worker-exit`，host 继续活。** 把 `maxOldGenerationSizeMb` 调到 32 再分配到爆，下一次 `run` 仍能 `return "alive"`。[E: packages/code-runtime/code-runtime-worker-thread/tests/runtime.spec.ts:267]
 - **in-flight binding 的结算是 Caller 的责任。** `signal` 只让 runtime 停止再问；`createRunCodeTool` 用自己的 `AbortController` 去掐子调用。本缝不认识 `parent` token。
-- **`language` / `isolation` 不是门。** 本缝不因 `language === 'python'` 拒跑。门控在 Consumer：`dsh-tools` 的 `SDK_RENDERERS` 认不认这个 `language`。本仓 published 实现只有 `'typescript'`。
+- **`language` / `isolation` 不是门。** 本缝不因 `language === 'python'` 拒跑。门控在 Consumer：`dsh-tools` 的 `SDK_RENDERERS` 认不认这个 `language`。shipped Provider 仍是 `'typescript'`；换 Python 要换 `id: code-runtime` 行到 experimental 包。
 - **同 realm 不能挂两份。** 要换 backend 就换 bundle / `--patch` 行，不要在已提供 `codeRuntime` 的 realm 再 `plugin` 一个。
 - **四个 shipped preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`。** 旧目录 `code` 已不存在；节点 id `surface.presets.code` 仍指向 PTC。
 
@@ -163,7 +163,7 @@ updated: 0a53fb55be
 |---|---|---|
 | **Definition** | `@deepseek-ai/dsh-code-runtime` 的 `CodeRuntime` + `RESERVED_*` + `PORTABLE_RESERVED_WORDS`。抽象类，**不是** bundle 插件行 | `ctx.codeRuntime`。host 只挂 Provider 行 `id: code-runtime` |
 | **Provider（默认 shipped）** | `@deepseek-ai/dsh-code-runtime-worker-thread` 的 `WorkerThreadCodeRuntime` | **host**：`dsh-web-app` 与 `dsh-headless` 的 `id: code-runtime`。**不在** `dsh-base`，也不在 `sdk` / `sdk-minimal` / `acp` overlay。无 `static inject` |
-| **Provider（其它 substrate）** | 本仓无第二份 published 实现 | shipped 只有 `language = 'typescript'` / `isolation = 'worker-thread'`。换 backend = 换 `id: code-runtime` 行 |
+| **Provider（其它 substrate）** | experimental `@deepseek-ai/dsh-experimental-code-runtime-python` 的 `PythonCodeRuntime`（见 [subsys.execution.code-runtime-python](code-runtime-python.md)） | **不**在 shipped overlay。换 backend = 换 `id: code-runtime` 行 |
 | **Consumer（呈现）** | `dsh-agent-tool-presentation` | 静态 `inject = ['tools']`；`mode: ptc` / `both` 时 `ctx.inject(['codeRuntime'], …)`。shipped 仅 `packages/preset/agent-presets/presets/ptc/agent.cordis.yml` 的 `id: tool-presentation` |
 | **Consumer（执行 / 装配）** | `dsh-tools` 的 `createRunCodeTool`（`ptc.ts`）与 `requireCodeRuntime` | 不静态 `inject` 本缝（避免 native 部署被绑住）。执行时 `runtime.run`；装配非 native 时 `ctx.get('codeRuntime')` |
 | **不是 Consumer** | `tool-fs` / `tool-bash` / `fs-sandbox` / `subprocess-local` | 它们不 `inject` `codeRuntime`。换本缝不会改 `ctx.fs` / `ctx.subprocess` 的世界 |
@@ -174,7 +174,6 @@ updated: 0a53fb55be
 
 - packages/code-runtime/code-runtime/src/index.ts
 - packages/code-runtime/code-runtime/src/types.ts
-- packages/code-runtime/code-runtime/src/invariant.ts
 - packages/code-runtime/code-runtime/tests/service.spec.ts
 - packages/code-runtime/code-runtime/tests/reserved.spec.ts
 - packages/code-runtime/code-runtime-worker-thread/src/index.ts

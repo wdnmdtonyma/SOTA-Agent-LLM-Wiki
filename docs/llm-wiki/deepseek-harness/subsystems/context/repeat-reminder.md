@@ -6,7 +6,6 @@ tier: T2
 pkg: context
 source:
   - packages/guard/repeat-tool-reminder/src/index.ts
-  - packages/guard/repeat-tool-reminder/src/invariant.ts
   - packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts
   - packages/guard/repeat-tool-reminder/package.json
   - packages/bundle/base/cordis.patch.yml
@@ -32,7 +31,7 @@ related:
   - subsys.context.timeout-policy
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-repeat-tool-reminder` 是 **host 面** advisory Consumer：在 `tools/post-execute` 上观察「同一 agent、同一工具名、同一份完整 canonical arguments」的连续次数，命中 `thresholds` 时把一条 `user/message`（`source.kind === 'plugin'`、`plugin: 'repeat-tool-reminder'`）折进 `PostToolDecision.additionalContexts`。它**不否决、不改写调用**，也不 `ctx.provide` 任何服务。
@@ -55,8 +54,6 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。本�
 - function plugin `name = 'repeat-tool-reminder'` 与 `apply(ctx, config)`。没有 `inject`，不 publish `ctx.*`。 [E: packages/guard/repeat-tool-reminder/src/index.ts:17] [E: packages/guard/repeat-tool-reminder/src/index.ts:162]
 - `Config`：`thresholds` / `include` / `exclude` / `argumentsPreviewChars`，schemastery 默认值再加 `apply` 里的 fail-loud 校验。 [E: packages/guard/repeat-tool-reminder/src/index.ts:45]
 - 进程内 `WeakMap<Agent, { key, count }>` 连续链；命中阈值时产出带 `form: 'notice'` 的 plugin `UserMessage`。 [E: packages/guard/repeat-tool-reminder/src/index.ts:173] [E: packages/guard/repeat-tool-reminder/src/index.ts:57]
-- companion `./invariant`（`name = 'repeat-tool-reminder-invariant'`）只 `invariants.register`，`install` 是空函数：链是 listener 私有状态，没有可独立观察的事件。 [E: packages/guard/repeat-tool-reminder/src/invariant.ts:13] [E: packages/guard/repeat-tool-reminder/src/invariant.ts:21]
-
 本包**不**拥有：
 
 - `tools/pre-execute` / `tools/execute` / `PostToolDecision` 合同与 `ctx.tools` 注册表 —— [`subsys.core.tools`](../core/tools.md)。
@@ -70,7 +67,6 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。本�
 | 路径 | 角色 |
 |---|---|
 | `packages/guard/repeat-tool-reminder/src/index.ts` | `name` / `Config` / `apply`；canonical / wildcard / 链 / 两档文案 |
-| `packages/guard/repeat-tool-reminder/src/invariant.ts` | 空 companion：没有可观察的 package-owned 事件 |
 | `packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts` | 档位、透明 exclude、wildcard、canonical、per-agent、user 重置、deny 也计数、fold 到 block、fail-loud |
 | `packages/guard/repeat-tool-reminder/package.json` | 包名 `@deepseek-ai/dsh-repeat-tool-reminder` |
 | `packages/bundle/base/cordis.patch.yml` | host 组合行 `id: repeat-tool-reminder` 与默认 config |
@@ -113,7 +109,7 @@ flowchart TD
   Append --> Derive["deriveMessages verbatim"]
 ```
 
-1. **host 面挂上 Consumer。** `dsh-base` 插入 `id: repeat-tool-reminder` / `name: '@deepseek-ai/dsh-repeat-tool-reminder'`，config 写死 `thresholds: [3, 5, 8]` 与 `argumentsPreviewChars: 500`（与 schema 默认相同）。这是进程级行，不是 per-session preset。 [E: packages/bundle/base/cordis.patch.yml:434] [E: packages/bundle/base/cordis.patch.yml:435] [E: packages/bundle/base/cordis.patch.yml:437] [E: packages/bundle/base/cordis.patch.yml:438]
+1. **host 面挂上 Consumer。** `dsh-base` 插入 `id: repeat-tool-reminder` / `name: '@deepseek-ai/dsh-repeat-tool-reminder'`，config 写死 `thresholds: [3, 5, 8]` 与 `argumentsPreviewChars: 500`（与 schema 默认相同）。这是进程级行，不是 per-session preset。 [E: packages/bundle/base/cordis.patch.yml:434] [E: packages/bundle/base/cordis.patch.yml:436] [E: packages/bundle/base/cordis.patch.yml:437] [E: packages/bundle/base/cordis.patch.yml:438]
 
 2. **`dsh-web-app` 不 disable；preset 不重挂。** `packages/bundle/web-app/cordis.patch.yml` 的 disable 名单含 `compaction-basic` / `agent-instructions` / 各 `tool-*` 等，**没有** `id: repeat-tool-reminder`，host 行继续生效。[I] 四个 shipped `agent.cordis.yml`（`minimal` / `standard` / `ptc` / `cordis`）也没有这一行，不 isolate、不 remount。[I] 没有 isolate 组：链是模块内 `WeakMap`，按 `Agent` 对象身份分桶。`sdk-minimal` 的完整 insert 不含本包，因此该 profile 默认不装。[I] [E: packages/guard/repeat-tool-reminder/src/index.ts:173] [E: packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts:213]
 
@@ -131,9 +127,9 @@ flowchart TD
 
 9. **denied 调用也走这条 waterfall。** `prepare` 在 `deny` / guard 拒绝时交出 `{ kind: 'post-result', ... }`，loop 设 `needsPost: true`，`finalize` 再调 `postExecute`。所以模型对着被拒工具连砸，仍会在第 N 次拿到提醒。`final-result`（例如 pre-execute **抛错**）`needsPost: false`，本插件看不见。 [E: packages/core/tools/src/index.ts:1481] [E: packages/core/tools/src/index.ts:1482] [E: packages/core/agent-loop/src/tool-calls.ts:187] [E: packages/core/agent-loop/src/tool-calls.ts:188] [E: packages/core/tools/src/index.ts:1600] [E: packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts:281]
 
-10. **提醒怎么变成模型看得见的 `user/message`。** `executeToolCalls` 对 `needsPost` 的 slot 调 `finalize`，然后把 `result.additionalContexts` 逐条交给 `acceptContext`。`ReactLoopAgent` 的 `acceptContext` 是 `inbox.splice('next-step', ...)`。下一步 `preStep` claim 这批消息，`agent/pre-step` 必须 `next()` 才会落到内建 `{ kind: 'enter', messages }`；随后 loop `append('user/message', message, { surfaceOp: 'append' })`。`deriveEventMessage` 对 `user/message` **原样**返回 `event.data`。 [E: packages/core/agent-loop/src/tool-calls.ts:153] [E: packages/core/agent-loop/src/tool-calls.ts:157] [E: packages/core/agent-loop/src/agent.ts:434] [E: packages/core/agent-loop/src/agent.ts:243] [E: packages/core/agent-loop/src/agent.ts:292] [E: packages/core/session/src/surface.ts:97]
+10. **提醒怎么变成模型看得见的 `user/message`。** `executeToolCalls` 对 `needsPost` 的 slot 调 `finalize`，然后把 `result.additionalContexts` 逐条交给 `acceptContext`。`ReactLoopAgent` 的 `acceptContext` 是 `inbox.splice('next-step', ...)`。下一步 `preStep` claim 这批消息，`agent/pre-step` 必须 `next()` 才会落到内建 `{ kind: 'enter', messages }`；随后 loop `append('user/message', message, { surfaceOp: 'append' })`。`deriveEventMessage` 对 `user/message` **原样**返回 `event.data`。 [E: packages/core/agent-loop/src/tool-calls.ts:153] [E: packages/core/agent-loop/src/tool-calls.ts:157] [E: packages/core/agent-loop/src/agent.ts:434] [E: packages/core/agent-loop/src/agent.ts:243] [E: packages/core/agent-loop/src/agent.ts:292] [E: packages/core/session/src/surface.ts:94]
 
-11. **`agent/pre-step` 只复位，不注入。** 若本步 claim 的 `messages` 里存在 `source.kind === 'user'`，`chains.delete(agent)`，然后 **必须** `return next()`。人的新 followup 会清链（测试：两轮各两次相同调用，中间夹一条 user 消息，零 reminder）。reminder 自己的 source 是 `plugin`，不会把自己清掉。省略 `next()` = 内建 `enter` 与 runtime-context 追加都不跑。 [E: packages/guard/repeat-tool-reminder/src/index.ts:229] [E: packages/guard/repeat-tool-reminder/src/index.ts:230] [E: packages/guard/repeat-tool-reminder/src/index.ts:231] [E: packages/core/agent/src/runtime-types.ts:238] [E: packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts:236]
+11. **`agent/pre-step` 只复位，不注入。** 若本步 claim 的 `messages` 里存在 `source.kind === 'user'`，`chains.delete(agent)`，然后 **必须** `return next()`。人的新 followup 会清链（测试：两轮各两次相同调用，中间夹一条 user 消息，零 reminder）。reminder 自己的 source 是 `plugin`，不会把自己清掉。省略 `next()` = 内建 `enter` 与 runtime-context 追加都不跑。 [E: packages/guard/repeat-tool-reminder/src/index.ts:229] [E: packages/guard/repeat-tool-reminder/src/index.ts:230] [E: packages/guard/repeat-tool-reminder/src/index.ts:231] [E: packages/core/agent/src/runtime-types.ts:242] [E: packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts:236]
 
 12. **wildcard 与 include。** `wildcardToRegExp` 先把 `|\\{}()[]^$+?.` 转义，再把 `*` 换成 `.*` 并锚定。测试：`include: ['pro*']` 只跟踪 `probe`；`exclude: ['pr.be']` **不能**当成正则点号吃掉 `probe`。 [E: packages/guard/repeat-tool-reminder/src/index.ts:109] [E: packages/guard/repeat-tool-reminder/src/index.ts:110] [E: packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts:162] [E: packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts:183]
 
@@ -157,7 +153,7 @@ Fail-loud：空 `thresholds` 或 `1` 若被默默改成 `[3, 5, 8]`，运维会�
 - **链按 `Agent` 对象，不按 session id。** 同一 `SessionId` 上新造的 agent 从 1 开始。直接 `tools.execute`（无 `exec.agent`）既不崩也不推进任何桶。 [E: packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts:255] [E: packages/guard/repeat-tool-reminder/src/index.ts:192]
 - **`observe` 不看 `exec.parent`。** 门只拒「没有 agent」。带 `parent` 的 PTC `run_code` 子调度若带着同一个 `exec.agent` 走进 post-execute，会计入同一条链。[I]
 - **block 决策丢掉工具 body 自己 defer 的 contexts。** `postExecute` 在 `kind === 'block'` 时只保留 **决策** 上的 `additionalContexts`。本插件把 reminder 写在决策上，所以 block 仍能带走提醒；工具 execute 里塞的 contexts 不会。 [E: packages/core/tools/src/index.ts:1739] [E: packages/core/tools/src/index.ts:1745]
-- **文案不是 `<system-reminder>`。** `createUserMessage` 的 text 就是 GENTLE / detailed 原文；`deriveEventMessage` 对 `user/message` 不做信封。和 `agent-instructions` 那种包进 `<system-reminder>` 的 user 角色指令不是同一条路径。 [E: packages/guard/repeat-tool-reminder/src/index.ts:203] [E: packages/core/session/src/surface.ts:97]
+- **文案不是 `<system-reminder>`。** `createUserMessage` 的 text 就是 GENTLE / detailed 原文；`deriveEventMessage` 对 `user/message` 不做信封。和 `agent-instructions` 那种包进 `<system-reminder>` 的 user 角色指令不是同一条路径。 [E: packages/guard/repeat-tool-reminder/src/index.ts:203] [E: packages/core/session/src/surface.ts:94]
 - **配置写错会让整个 host 插件 load 失败**，不是「退回默认继续跑」。 [E: packages/guard/repeat-tool-reminder/src/index.ts:130]
 - **`sdk-minimal` 不叠 `dsh-base`。** 本插件只出现在 base patch；不叠 base 的 profile 默认没有重复调用提醒。[I]
 
@@ -165,14 +161,14 @@ Fail-loud：空 `thresholds` 或 `1` 若被默默改成 `[3, 5, 8]`，运维会�
 
 | 角 | 落点 |
 |---|---|
-| **Definition** | 无本包服务名。消费的合同是 host `ctx.tools` 声明的 `tools/post-execute`（`PostToolDecision`）以及 `dsh-agent` 的 `agent/pre-step`。 [E: packages/core/tools/src/index.ts:167] [E: packages/core/agent/src/runtime-types.ts:238] |
+| **Definition** | 无本包服务名。消费的合同是 host `ctx.tools` 声明的 `tools/post-execute`（`PostToolDecision`）以及 `dsh-agent` 的 `agent/pre-step`。 [E: packages/core/tools/src/index.ts:167] [E: packages/core/agent/src/runtime-types.ts:242] |
 | **Provider** | 无。`apply` 不 `ctx.provide`，preset `leakedServices` 检查不到这个键。 |
 | **Consumer** | `@deepseek-ai/dsh-repeat-tool-reminder` 的 `apply` 挂两条 waterfall。组合行在 **host** `dsh-base`：`id: repeat-tool-reminder`。`dsh-web-app` 不 disable；四个 shipped preset 不重挂、不 isolate。 [E: packages/bundle/base/cordis.patch.yml:434] |
 
 ## Sources
 
 - packages/guard/repeat-tool-reminder/src/index.ts
-- packages/guard/repeat-tool-reminder/src/invariant.ts
+
 - packages/guard/repeat-tool-reminder/tests/repeat-tool-reminder.spec.ts
 - packages/guard/repeat-tool-reminder/package.json
 - packages/bundle/base/cordis.patch.yml

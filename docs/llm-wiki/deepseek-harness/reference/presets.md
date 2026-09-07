@@ -48,7 +48,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > shipped **agent preset** 是目录名 = id 的四份 composition：`packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/`。旧目录名 `code` 现为 **PTC**（`presets/ptc/`）；wiki 节点 id `surface.presets.code` / `subsys.core.code-mode` 是稳定别名。每份必有 `COMPOSITION_FILE`（`agent.cordis.yml`），可选 `METADATA_FILE`（`preset.yml`，只供 picker 文案与 `order`）。成员资格只认那四个 `agent.cordis.yml` 里的插件 `id:`（含 `cordis:group` 与 `disabled` 行，以及 group 子行）。DSH 主线是 `profile → bundle → agent preset`；本表管 **agent-preset 面**（每会话 tools / persona / isolate），不管 host 面。五个 shipped profile：`web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）。只有 **web** 挂 `@deepseek-ai/dsh-agent-presets` 且 `default: standard`。
@@ -91,7 +91,7 @@ updated: 0a53fb55be
 | `minimal` | 目录 id；`name: 极简模式` `order: 3` | 非 default | 固定英文 persona + 持久 shell（POSIX `bash` / win32 `pwsh`）+ `str_replace_editor`。无 compaction / skill / subagent / web / plan / todo / jobs。 | 双工具面；`order: 3` 只影响 shipped 集合排序。 | `packages/preset/agent-presets/presets/minimal/preset.yml` [E: packages/preset/agent-presets/presets/minimal/preset.yml:1][E: packages/preset/agent-presets/presets/minimal/preset.yml:3] |
 | `cordis` | 目录 id；`name: 创造模式` `order: 4` | 非 default | 同构于 `standard` 再加 `tool-cordis`，且 `skill-filesystem.customSkillDirs` 指向本目录 `skills/`。 | 用来 copy / 创作用户 preset；出厂不默认打开自修改工具。 | `packages/preset/agent-presets/presets/cordis/preset.yml` [E: packages/preset/agent-presets/presets/cordis/preset.yml:1][E: packages/preset/agent-presets/presets/cordis/preset.yml:3] |
 
-web e2e：system 根只供应这四个 id，全部 `trust === 'system'`，`defaultId === 'standard'`。[E: apps/cli/tests/web-agent-presets.e2e.ts:218][E: apps/cli/tests/web-agent-presets.e2e.ts:219][E: apps/cli/tests/web-agent-presets.e2e.ts:220]
+web e2e：system 根只供应这四个 id，全部 `trust === 'system'`，`defaultId === 'standard'`。[E: apps/cli/tests/web-agent-presets.e2e.ts:218][E: apps/cli/tests/web-agent-presets.e2e.ts:218][E: apps/cli/tests/web-agent-presets.e2e.ts:222]
 
 `scanRoot` 排序：声明了 `order` 的按数值升序，其余按 id。shipped 读起来是 `standard` → `ptc` → `minimal` → `cordis`。[E: packages/preset/agent-presets/src/discovery.ts:319][E: packages/preset/agent-presets/src/discovery.ts:320]
 
@@ -118,7 +118,7 @@ web e2e：system 根只供应这四个 id，全部 `trust === 'system'`，`defau
 | `fs-local` | `@deepseek-ai/dsh-fs-local`（组内） | 装 | — | — | — | `cwd: !!js process.env.DSH_CWD ?? process.cwd()`。 | 给 editor 一条不经 host sandbox provider 的 local fs。 | [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:80][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:83] |
 | `str-replace-editor` | `@deepseek-ai/dsh-tool-str-replace-editor`（组内） | 装 | — | — | — | `maxOutputChars: 16000`。模型看见 `str_replace_editor`。 | min 的文件工具；std 用 `tool-fs` 的 `read`/`write`/`edit` 代替。 | [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:88] |
 
-unix web e2e：mount `minimal` 后 assembly tools 恰好 `bash` + `str_replace_editor`，且 `compaction` 对本 agent 不存在。[E: apps/cli/tests/web-agent-presets.e2e.ts:290][E: apps/cli/tests/web-agent-presets.e2e.ts:296]
+unix web e2e：mount `minimal` 后 assembly tools 恰好 `bash` + `str_replace_editor`，且 `compaction` 对本 agent 不存在。[E: apps/cli/tests/web-agent-presets.e2e.ts:290][E: apps/cli/tests/web-agent-presets.e2e.ts:297]
 
 ### shell / filesystem / jobs（标准面）
 
@@ -138,8 +138,8 @@ unix web e2e：mount `minimal` 后 assembly tools 恰好 `bash` + `str_replace_e
 
 | 名 | 类型/签名 | min | std | ptc | cordis | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|---|---|
-| `skill-filesystem` | `@deepseek-ai/dsh-skill-filesystem` | — | 装 | 装 | 装（带 `customSkillDirs`） | std / ptc：无 `customSkillDirs`。cordis：`customSkillDirs` 一条 `!!js`，把 `new URL('skills/', baseUrl)` 解析成本 preset 目录下的 `skills/`。skill **registry** 在 host；本行写入该 preset 的层。 | cordis 要把 `editing-cordis-compositions` 跟着 preset 走。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:83]；cordis [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:261][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:264][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:265] |
-| `tool-skill` | `@deepseek-ai/dsh-tool-skill` | — | 装 | 装 | 装 | 无 config。模型看见 `skill`。 | 给该 Agent 目录与 loader。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:86]；cordis [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:267] |
+| `skill-filesystem` | `@deepseek-ai/dsh-skill-filesystem` | — | 装 | 装 | 装（带 `customSkillDirs`） | std / ptc：无 `customSkillDirs`。cordis：`customSkillDirs` 一条 `!!js`，把 `new URL('skills/', baseUrl)` 解析成本 preset 目录下的 `skills/`。skill **registry** 在 host；本行写入该 preset 的层。 | cordis 要把 `editing-cordis-compositions` 跟着 preset 走。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:83]；cordis [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:261][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262] |
+| `tool-skill` | `@deepseek-ai/dsh-tool-skill` | — | 装 | 装 | 装 | 无 config。模型看见 `skill`。 | 给该 Agent 目录与 loader。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:86]；cordis [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262] |
 | `command-goal` | `@deepseek-ai/dsh-command-goal` | — | 装 | 装 | 装 | 人命令 `/goal`，不进模型 tool catalog。 | 与 `tool-goal` 同属 preset 层；min 不要。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:94] |
 | `tool-goal` | `@deepseek-ai/dsh-tool-goal` | — | 装 | 装 | 装 | 无 config。`create_goal` / `get_goal` / `update_goal`。goals **service** 在 host。 | 只决定模型能不能调 goal 工具。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:97]；cordis [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:85] |
 
@@ -173,14 +173,14 @@ cordis e2e：scoped skill list 含 `editing-cordis-compositions`，无 scope 的
 | `tool-subagent-control` | `@deepseek-ai/dsh-tool-subagent-control`（组内） | — | 装 | 装 | 装 | 无行内 config。`send_message` / `interrupt_agent`。 | 模型侧控制面。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:180] |
 | `tool-subagent-list-agents` | `@deepseek-ai/dsh-tool-subagent-control/list-agents`（组内） | — | 装 | 装 | 装 | 无行内 config。`list_agents`。 | 与 control 拆行，同一包的另一入口。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:183] |
 | `tool-subagent` | `@deepseek-ai/dsh-tool-subagent`（组内） | — | 装 | 装 | 装 | `provider: spawn`，`toolName: subagent`，`modelSelectionSettings: true`，`backgroundMode: continuable`。 | shipped spawn 工具；wire 名由 `toolName` 决定。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:186][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:190][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:192] |
-| `tool-subagent-fork` | `@deepseek-ai/dsh-tool-subagent`（组内） | — | 装 | 装 | 装 | `provider: fork`，`toolName: subagent_fork`，`backgroundMode: continuable`。 | 与 host `dsh-base` 同行的 `one-shot` 不同：preset 写成 continuable。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:198][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:202][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:203]；base [E: packages/bundle/base/cordis.patch.yml:373] |
-| `tool-subagent-codex` | `@deepseek-ai/dsh-tool-subagent`（组内） | — | 禁 | 禁 | 禁 | **`disabled: true`**。`provider: codex`，`toolName: subagent_codex`，`backgroundMode: one-shot`，`maxDepth: provider-managed`。 | 行在、工具不进 catalog。host 即便有 codex backend，也不等于本 preset 装了这个工具。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:209][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:211][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:213][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:214][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:215] |
-| `tool-subagent-claude-code` | `@deepseek-ai/dsh-tool-subagent`（组内） | — | 禁 | 禁 | 禁 | **`disabled: true`**。`provider: claude-code`，`toolName: subagent_claude_code`，`backgroundMode: one-shot`，`maxDepth: provider-managed`。 | 与 `tool-subagent-codex` 对称的产品后端门。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:218][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:220][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:222][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:223][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:224] |
+| `tool-subagent-fork` | `@deepseek-ai/dsh-tool-subagent`（组内） | — | 装 | 装 | 装 | `provider: fork`，`toolName: subagent_fork`，`backgroundMode: continuable`。 | 与 host `dsh-base` 同行的 `one-shot` 不同：preset 写成 continuable。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:199][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:202][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:203]；base [E: packages/bundle/base/cordis.patch.yml:373] |
+| `tool-subagent-codex` | `@deepseek-ai/dsh-tool-subagent`（组内） | — | 禁 | 禁 | 禁 | **`disabled: true`**。`provider: codex`，`toolName: subagent_codex`，`backgroundMode: one-shot`，`maxDepth: provider-managed`。 | 行在、工具不进 catalog。host 即便有 codex backend，也不等于本 preset 装了这个工具。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:209][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:212][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:213][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:214][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:215] |
+| `tool-subagent-claude-code` | `@deepseek-ai/dsh-tool-subagent`（组内） | — | 禁 | 禁 | 禁 | **`disabled: true`**。`provider: claude-code`，`toolName: subagent_claude_code`，`backgroundMode: one-shot`，`maxDepth: provider-managed`。 | 与 `tool-subagent-codex` 对称的产品后端门。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:218][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:221][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:222][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:223][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:224] |
 | `workflow-worker-thread` | `@deepseek-ai/dsh-workflow-worker-thread`（组内） | — | 装 | 装 | 装 | `provider: spawn`。给同组 `workflowEngine` 提供 worker，不是模型 tool。 | 必须与 `tool-workflow` 同 realm。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:227][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:230] |
-| `tool-workflow` | `@deepseek-ai/dsh-tool-workflow`（组内） | — | 装 | 装 | 装 | 无行内 config。`workflow`。 | 模型侧工作流入口。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:232] |
+| `tool-workflow` | `@deepseek-ai/dsh-tool-workflow`（组内） | — | 装 | 禁 | 装 | std/cordis 无行内 config。`workflow`。ptc 行在但 `disabled: true`：engine 留给 `ralph`，不向模型发第二套编排面。 | PTC 的模型编排面是 `run_code`。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:232]；ptc [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:233][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:237] |
 | `tool-ralph` | `@deepseek-ai/dsh-tool-ralph`（组内） | — | 装 | 装 | 装 | `subagentProvider: spawn`，`maxRounds: 64`。`ralph`。 | Ralph 迭代上限写在 preset。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:235][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:238] |
 
-`tool-subagent-report` **不是**任何一份 shipped preset 的成员：它留在 host。四份 `agent.cordis.yml` 都没有这个 `id:`。host 行在 base。[E: packages/bundle/base/cordis.patch.yml:376]
+`tool-subagent-report` **不是**任何一份 shipped preset 的成员，包也已删除：`dsh-base` 不再 insert 该行。
 
 ### 其余模型可见行
 
@@ -188,9 +188,9 @@ cordis e2e：scoped skill list 含 `editing-cordis-compositions`，无 scope 的
 |---|---|---|---|---|---|---|---|---|
 | `tool-ask-user` | `@deepseek-ai/dsh-tool-ask-user` | — | 装 | 装 | 装 | 无 config。`ask_user_question`。 | 标准面对人提问；min 不要。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243] |
 | `tool-todo` | `@deepseek-ai/dsh-tool-todo` | — | 装 | 装 | 装 | `allowParallelInProgress: true`。`todo_write`。 | 并行 in-progress 写在 preset。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:246][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:249] |
-| `tool-web` | `@deepseek-ai/dsh-tool-web` | — | 装 | 装 | 装 | `fetch: true`，`searchTimeoutMs: 60000`。catalog 同时有 `web_search` 与 `web_fetch`。`web` service / search provider 在 host。 | shipped 完整面打开 fetch。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:257] |
+| `tool-web` | `@deepseek-ai/dsh-tool-web` | — | 装 | 装 | 装 | `fetch: true`，`searchTimeoutMs: 60000`。catalog 同时有 `web_search` 与 `web_fetch`。`web` service / search provider 在 host。 | shipped 完整面打开 fetch。 | std [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] |
 
-unix web e2e 对 `standard` 的精确 catalog（测试滤掉 `glob`/`grep`）是：`ask_user_question` `bash` `create_goal` `edit` `exit_plan_mode` `get_goal` `interrupt_agent` `job_kill` `job_list` `job_output` `list_agents` `ralph` `read` `read_image` `send_message` `skill` `subagent` `subagent_fork` `todo_write` `update_goal` `web_fetch` `web_search` `workflow` `write`。[E: apps/cli/tests/web-agent-presets.e2e.ts:234] 该清单没有 `str_replace_editor`、`run_code`、`subagent_codex`、`subagent_claude_code`、任何 `cordis_*`。
+unix web e2e 对 `standard` 的精确 catalog（测试滤掉 `glob`/`grep`）含 `workflow` 与 `ralph` 等；`ptc` 装配 native 目录塌成 `run_code`，且 **不** 发布 `workflow`。[E: apps/cli/tests/web-agent-presets.e2e.ts:235] 该清单没有 `str_replace_editor`、`run_code`（standard）、`subagent_codex`、`subagent_claude_code`、任何 `cordis_*`。
 
 ### 仅某 preset 的增量
 
@@ -215,7 +215,7 @@ unix web e2e 对 `standard` 的精确 catalog（测试滤掉 `glob`/`grep`）是
 
 **没有 shipped TUI。** help 例子里的 `tui` 只是自定义 profile 名，不是 `PROFILE_TEMPLATES` 键。[I]
 
-**四份 yml 都没有、但容易被误认成成员的东西（不是本表实例）：** `tool-lsp` / `schedule_*` / `terminal_open` 一族 / `run_code`（那是 `ptc` 的 presentation，不是 yml `id:`）/ `tool-subagent-report` / `subagent_codex`（行在但 `disabled: true`）。仓库有包 ≠ preset 成员。`web_fetch` **是** std/ptc/cordis 成员（`fetch: true`）。
+**四份 yml 都没有、但容易被误认成成员的东西（不是本表实例）：** `tool-lsp` / `schedule_*` / `terminal_open` 一族 / `run_code`（那是 `ptc` 的 presentation，不是 yml `id:`）/ 已删的 `tool-subagent-report` / `subagent_codex`（行在但 `disabled: true`）。仓库有包 ≠ preset 成员。`web_fetch` **是** std/ptc/cordis 成员（`fetch: true`）。ptc 的 `tool-workflow` **是** yml 成员但 `disabled: true`。
 
 ## Sources
 

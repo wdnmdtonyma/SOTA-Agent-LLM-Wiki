@@ -46,7 +46,7 @@ related:
   - ref.session-events
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 模型可见名 `todo_write`；实现包 `@deepseek-ai/dsh-tool-todo`（Cordis 插件名 `tool-todo`）。每次调用提交**整表** `todos[]`，append 一条 `todo/write` 快照到调用 agent 的 session；不是增量 patch，也没有 per-item 编辑。
@@ -91,7 +91,7 @@ Loader 认 namespace 导出：`name` / `inject` / `apply`，**没有** `default`
 
 ## 输入 schema
 
-以插件 **`Config.allowParallelInProgress: true`**（四个 shipped 里装了本包的三份 yml 都这么写）boot 后的 `ctx.tools.schemas()` 为准。properties **只有** `todos`。[E: packages/todo/tool-todo/tests/tool-todo.spec.ts:61] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:249]
+以插件 **`Config.allowParallelInProgress: true`**（四个 shipped 里装了本包的三份 yml 都这么写）boot 后的 `ctx.tools.schemas()` 为准。properties **只有** `todos`。[E: packages/todo/tool-todo/tests/tool-todo.spec.ts:61] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243]
 
 | 字段 | 类型 | 必填 | 默认 | 约束 | 说明 |
 |---|---|---|---|---|---|
@@ -110,7 +110,7 @@ Loader 认 namespace 导出：`name` / `inject` / `apply`，**没有** `default`
 
 `status` 的 enum **不会**随 Config 缩小。单活约束是 execute 值约束，不是 schema `enum`。
 
-`defineTool` 先把 ParameterSchemaSpec 编成 JSON Schema，再在包装 `execute` 里 `validateJsonSchemaValue`；通过后才进用户 body。[E: packages/core/tools/src/schema.ts:586]
+`defineTool` 先把 ParameterSchemaSpec 编成 JSON Schema，再在包装 `execute` 里 `validateJsonSchemaValue`；通过后才进用户 body。[E: packages/core/tools/src/schema.ts:568]
 
 ## 输出 & 截断 / spill
 
@@ -123,7 +123,7 @@ Loader 认 namespace 导出：`name` / `inject` / `apply`，**没有** `default`
 
 `output.render` 把模型可见文本收成一句：`Updated todo list: ${pending} pending, ${inProgress} in progress, ${completed} completed.` [E: packages/todo/tool-todo/src/index.ts:200] 单元测试钉死成功路径 `isError === false`，渲染含 `1 pending, 1 in progress, 0 completed`。[E: packages/todo/tool-todo/tests/tool-todo.spec.ts:77]
 
-没有字节预算、没有 spill 文件、没有截断标记。返回值就是整表 + 三个计数；registry 成功路径会再按 `output.schema` 校验一遍。[E: packages/core/tools/src/index.ts:1786]
+没有字节预算、没有 spill 文件、没有截断标记。返回值就是整表 + 三个计数；registry 成功路径会再按 `output.schema` 校验一遍。[E: packages/core/tools/src/index.ts:1784]
 
 `presentCall` 只服务 UI：`{ card: 'generic', title: 'Update todo list', kind: 'other', rawInput: args.todos }`。`rawInput` 是模型原始数组，不是 trim 后的 snapshot。[E: packages/todo/tool-todo/src/index.ts:221] [E: packages/todo/tool-todo/tests/tool-todo.spec.ts:211] 没有 `presentResult`。
 
@@ -135,14 +135,14 @@ Loader 认 namespace 导出：`name` / `inject` / `apply`，**没有** `default`
 |---|---|---|
 | Definition（工具注册表） | `ctx.tools` / `ToolRuntime` | `inject` 含 `tools`；`register(defineTool(...))`。[E: packages/todo/tool-todo/src/index.ts:23] |
 | Consumer | `@deepseek-ai/dsh-tool-todo` | `toTodoList` 之后 `exec.agent.session.append('todo/write', { todos })`。[E: packages/todo/tool-todo/src/index.ts:210] |
-| Provider（日志） | `Session.append` | 快照 JSON、freeze、push；`todo/write` 不是 surface-eligible，不能带 `surfaceOp`。[E: packages/core/session/src/index.ts:612] [E: packages/todo/tool-todo/src/types.ts:31] |
-| Provider（投影） | `ctx.sessionProjections` | 登记 `todos` unit。unit `apply` 折叠：`todo/write` → `event.data.todos`（整表）；`turn/start` → `null`；其它事件 `return state`（同一引用）。[E: packages/todo/tool-todo/src/index.ts:139] [E: packages/todo/tool-todo/src/index.ts:140] [E: packages/todo/tool-todo/src/index.ts:141] `ProjectionDefinition.apply` 只是通用 `(state, event) => S` 签名，不编码这三分支。[E: packages/session/session-projection/src/index.ts:64] `drive` 用 `Object.is(next, cell.state)` 判断有无变更。[E: packages/session/session-projection/src/index.ts:628] |
+| Provider（日志） | `Session.append` | 快照 JSON、freeze、push；`todo/write` 不是 surface-eligible，不能带 `surfaceOp`。[E: packages/core/session/src/index.ts:699] [E: packages/todo/tool-todo/src/types.ts:31] |
+| Provider（投影） | `ctx.sessionProjections` | 登记 `todos` unit。unit `apply` 折叠：`todo/write` → `event.data.todos`（整表）；`turn/start` → `null`；其它事件 `return state`（同一引用）。[E: packages/todo/tool-todo/src/index.ts:139] [E: packages/todo/tool-todo/src/index.ts:140] [E: packages/todo/tool-todo/src/index.ts:141] `ProjectionDefinition.apply` 只是通用 `(state, event) => S` 签名，不编码这三分支。[E: packages/session/session-projection/src/index.ts:62] `drive` 用 `Object.is(next, cell.state)` 判断有无变更。[E: packages/session/session-projection/src/index.ts:645] |
 
 换掉 session / projection 实现会带走：事件能否 append、`todo/write` 是否仍是 known type、history tail 上有没有 `todos` 键。工具代码自己不选存储后端。
 
 `SessionEventMap['todo/write']` 的载荷是 `{ todos: TodoItem[] }`，声明在本包 `src/types.ts`（augmentation），不在 `packages/core/session/src/types.ts`。[E: packages/todo/tool-todo/src/types.ts:31] `TodoItem` 只有 `content` + 三态 `status` 两个字段。[E: packages/todo/tool-todo/src/types.ts:23] [E: packages/todo/tool-todo/src/types.ts:25] `KNOWN_SESSION_EVENT_TYPES` 含 `'todo/write'`。[E: packages/core/session/src/known-event-types.ts:61]
 
-`todo/write` **不是** surface 事件：`SURFACE_EVENT_TYPES` 只有 `user/message` / `assistant/message` / `tool/result`；`deriveEventMessage` 对非这三类走 `default` 返回 `null`。[E: packages/core/session/src/surface.ts:15] [E: packages/core/session/src/surface.ts:109]
+`todo/write` **不是** surface 事件：`SURFACE_EVENT_TYPES` 只有 `user/message` / `assistant/message` / `tool/result`；`deriveEventMessage` 对非这三类走 `default` 返回 `null`。[E: packages/core/session/src/surface.ts:22] [E: packages/core/session/src/surface.ts:116]
 
 包配套 `@deepseek-ai/dsh-tool-todo/invariant`（插件名 `tool-todo-invariant`）校验 `todo/write`：必须是已 trim、非空、content 唯一、status 属于三态，且必须落在 open turn 内。它**故意不**数 `in_progress`——并行策略是当时部署的 `Config`，收紧策略后仍要能 replay 旧 log。[E: packages/todo/tool-todo/src/invariant.ts:11] [E: packages/todo/tool-todo/src/invariant.ts:24] [E: packages/todo/tool-todo/src/invariant.ts:57] [E: packages/todo/tool-todo/tests/invariant.spec.ts:18] 四个 shipped `agent.cordis.yml` **没有**挂这个 companion [I]；它不是 model-visible 工具。
 
@@ -157,9 +157,9 @@ Loader 认 namespace 导出：`name` / `inject` / `apply`，**没有** `default`
 - **approval：** `defineTool` 没有声明会触发 `ask` 的策略。普通调用不经过 `ctx.approval.request`。[I]
 - **sandbox：** 不读 `ctx.sandbox` / `ctx.sandboxPolicy`。body 只碰 session 日志。[I]
 - **timeout：** `defineTool` **没有**设 `timeoutMs`。`dsh-tool-call-timeout-policy` 读到 `undefined` 就原样 `next()`。[E: packages/guard/timeout-policy/src/index.ts:57] [E: packages/guard/timeout-policy/src/index.ts:59]
-- **checkpoint：** host `dsh-session-checkpoint-policy` 在 top-level（有 `exec.agent` 且无 `parent`）`tools/execute` 里先 `flush` 再 `next()`。本工具的副作用是 append `todo/write`，发生在 flush **之后**的 body 里。[E: packages/session/session-checkpoint-policy/src/index.ts:71]
+- **checkpoint：** host `dsh-session-checkpoint-policy` 在 top-level（有 `exec.agent` 且无 `parent`）`tools/execute` 里先 `flush` 再 `next()`。本工具的副作用是 append `todo/write`，发生在 flush **之后**的 body 里。[E: packages/session/session-checkpoint-policy/src/index.ts:72]
 - **并行：** 未声明 `isConcurrencySafe`，`executionMode` fail-closed 为 exclusive。[E: packages/core/tools/src/index.ts:1269]
-- **PTC：** `ptc` preset 仍装本包，但 `mode: ptc` 时无 `parent` 的模型直调 `todo_write` 在进 waterfall 前 `collapses`（名字不是 `run_code`），必须从 `run_code` 程序里子调度。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/core/tools/src/index.ts:1316]
+- **PTC：** `ptc` preset 仍装本包，但 `mode: ptc` 时无 `parent` 的模型直调 `todo_write` 在进 waterfall 前 `collapses`（名字不是 `run_code`），必须从 `run_code` 程序里子调度。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:271] [E: packages/core/tools/src/index.ts:1315]
 - **plan mode：** catalog 跨 mode 保持同一份；`todo_write` 不会被摘掉。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:483]
 
 ## Preset 装配
@@ -169,23 +169,23 @@ Loader 认 namespace 导出：`name` / `inject` / `apply`，**没有** `default`
 | preset | 装 `@deepseek-ai/dsh-tool-todo`？ | `disabled` | isolate | 关键 Config |
 |---|---|---|---|---|
 | `minimal` | **否**。装配后模型工具只有 persistent `bash`/`pwsh` + `str_replace_editor` | — | 本包未出现。文件里的 model-facing 行是 `dsh-tool-bash-persistent` / `dsh-tool-pwsh-persistent` 与 `dsh-tool-str-replace-editor` [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:37] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:59] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:86] | — |
-| `standard` | 是 | 无 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:246] | 无。不在 `planning` / `delegation` realm | `allowParallelInProgress: true` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:249] |
-| `ptc` | 是 | 无 [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:247] | 无 | 同 standard [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:250] |
-| `cordis` | 是 | 无 [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:234] | 无 | 同 standard [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:237] |
+| `standard` | 是 | 无 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:240] | 无。不在 `planning` / `delegation` realm | `allowParallelInProgress: true` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243] |
+| `ptc` | 是 | 无 [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:250] | 无 | 同 standard [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:253] |
+| `cordis` | 是 | 无 [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:228] | 无 | 同 standard [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:231] |
 
-`standard` 的 e2e 精确 catalog（去掉依赖本机 ripgrep 的 `glob`/`grep`）含 `todo_write`。[E: apps/cli/tests/web-agent-presets.e2e.ts:237]
+`standard` 的 e2e 精确 catalog（去掉依赖本机 ripgrep 的 `glob`/`grep`）含 `todo_write`。[E: apps/cli/tests/web-agent-presets.e2e.ts:244]
 
 `planning` realm（`isolate.planMode: true`）只装 `@deepseek-ai/dsh-plan-mode`。本工具行在 “remaining model-facing rows”，与 plan-mode 插件不是同一 isolate 域；禁止用本工具跟踪规划阶段的句子写在 plan-mode 的 `section:` 字符串里，不是本插件 Config。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:118]
 
-组合旁注（**不是** preset 成员资格）：`dsh-base` 也 insert 了 host 行 `tool-todo`（同样 `allowParallelInProgress: true`）。[E: packages/bundle/base/cordis.patch.yml:411] `dsh-web-app` overlay 把 host `tool-todo` 设 `disabled: true`，改由每个 session 的 preset remount。[E: packages/bundle/web-app/cordis.patch.yml:428] [E: packages/bundle/web-app/cordis.patch.yml:429] headless / sdk / acp 不叠 web overlay，仍吃 `dsh-base` 的 host 行 [I]（以各 bundle 的 patch 为准；本页未再核 sdk-minimal 的完整 insert）。web 是 shipped profiles 里把 agent-plane 工具移到 preset 的那一个。
+组合旁注（**不是** preset 成员资格）：`dsh-base` 也 insert 了 host 行 `tool-todo`（同样 `allowParallelInProgress: true`）。[E: packages/bundle/base/cordis.patch.yml:407] `dsh-web-app` overlay 把 host `tool-todo` 设 `disabled: true`，改由每个 session 的 preset remount。[E: packages/bundle/web-app/cordis.patch.yml:432] [E: packages/bundle/web-app/cordis.patch.yml:433] headless / sdk / acp 不叠 web overlay，仍吃 `dsh-base` 的 host 行 [I]（以各 bundle 的 patch 为准；本页未再核 sdk-minimal 的完整 insert）。web 是 shipped profiles 里把 agent-plane 工具移到 preset 的那一个。
 
 ## execute() 走读
 
-1. `defineTool` 包装的 `execute` 先 `validateJsonSchemaValue`：非数组 `todos`、非法 `status`、条目未知键在这里变成 `ToolArgsError`，用户 body 未跑。[E: packages/core/tools/src/schema.ts:586] [E: packages/todo/tool-todo/tests/tool-todo.spec.ts:115]
+1. `defineTool` 包装的 `execute` 先 `validateJsonSchemaValue`：非数组 `todos`、非法 `status`、条目未知键在这里变成 `ToolArgsError`，用户 body 未跑。[E: packages/core/tools/src/schema.ts:568] [E: packages/todo/tool-todo/tests/tool-todo.spec.ts:115]
 2. `toTodoList@packages/todo/tool-todo/src/index.ts`：逐项 `content.trim()`；trim 后长度为 0 → `invalid todo: \`content\` must be a non-empty string`；`seen` 命中 → `invalid todos: duplicate content ...`；`status === 'in_progress'` 时累加 `active`。[E: packages/todo/tool-todo/src/index.ts:96] [E: packages/todo/tool-todo/src/index.ts:100] [E: packages/todo/tool-todo/src/index.ts:104]
 3. `!allowParallel && active > 1` → throw；测试确认拒绝**不会**写出 `todo/write`。[E: packages/todo/tool-todo/src/index.ts:107] [E: packages/todo/tool-todo/tests/tool-todo.spec.ts:158]
 4. `if (!exec.agent)` throw `todo_write requires an owning agent session`。[E: packages/todo/tool-todo/src/index.ts:208] [E: packages/todo/tool-todo/tests/tool-todo.spec.ts:204]
-5. `exec.agent.session.append('todo/write', { todos })`。`Session.append` 对 `data` 做 JSON snapshot + `deepFreeze`，调用方事后改数组改不了 log。[E: packages/todo/tool-todo/src/index.ts:210] [E: packages/core/session/src/index.ts:612] [E: packages/core/session/src/index.ts:625]
+5. `exec.agent.session.append('todo/write', { todos })`。`Session.append` 对 `data` 做 JSON snapshot + `deepFreeze`，调用方事后改数组改不了 log。[E: packages/todo/tool-todo/src/index.ts:210] [E: packages/core/session/src/index.ts:699] [E: packages/core/session/src/index.ts:721]
 6. 按规范化表数 `pending` / `in_progress` / `completed`，`Promise.resolve` 返回 `{ todos, counts }`。`inProgress` 计数键是 camelCase，status 字面量仍是 `in_progress`。[E: packages/todo/tool-todo/src/index.ts:216]
 7. 第二次成功调用再 append 一条新的 `todo/write`。当前列表 = `findLast(type === 'todo/write')`，last-write-wins；旧事件仍留在 log。[E: packages/todo/tool-todo/tests/tool-todo.spec.ts:108] [E: packages/todo/tool-todo/tests/integration.spec.ts:96]
 8. 有 `sessionProjections` 时，unit `apply` 把最新 `event.data.todos` 收成 standing 值；随后一条 `turn/start` 把投影清成 `null`，`turn/end` 不改（完成清单还能给 UI 看）。[E: packages/todo/tool-todo/src/index.ts:140] [E: packages/todo/tool-todo/tests/projection.spec.ts:93] [E: packages/todo/tool-todo/tests/projection.spec.ts:96]
@@ -194,7 +194,7 @@ Loader 认 namespace 导出：`name` / `inject` / `apply`，**没有** `default`
 ## 设计动机·edge
 
 - **整表替换，不是 patch。** 模型漏发旧条目等于删掉它们。`TodoItem` 只有 `content` + `status`，没有 `id` 字段。[E: packages/todo/tool-todo/src/types.ts:23] [E: packages/todo/tool-todo/src/types.ts:25]
-- **并行是部署选择，不是 schema 方言。** shipped `standard`/`ptc`/`cordis` 把 `allowParallelInProgress` 设为 `true`。把 Config 改成 `false` 只收紧**新**调用；旧 log 里的双 active 快照 invariant 仍接受。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:249] [E: packages/todo/tool-todo/tests/invariant.spec.ts:35]
+- **并行是部署选择，不是 schema 方言。** shipped `standard`/`ptc`/`cordis` 把 `allowParallelInProgress` 设为 `true`。把 Config 改成 `false` 只收紧**新**调用；旧 log 里的双 active 快照 invariant 仍接受。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243] [E: packages/todo/tool-todo/tests/invariant.spec.ts:35]
 - **需要 owning agent。** agentless / 裸 `ctx.tools.execute` 没有 session 可写。这与 bash 不同：bash 可以在无 agent 时仍走 `ctx.shell`。
 - **log-only UI 状态。** `todo/write` 不进下一轮模型 history。模型下一轮看见的是 `tool/call` + `tool/result` 那句 counts 摘要，不是整表回放。UI 从事件或 `todos` projection 读 standing 清单。[E: packages/todo/tool-todo/src/types.ts:31] [E: packages/todo/tool-todo/tests/projection.spec.ts:93]
 - **trim 是存储键。** `'  plan the work  '` 落成 `'plan the work'`；两条只差空白的 content 算 duplicate。[E: packages/todo/tool-todo/tests/tool-todo.spec.ts:96]

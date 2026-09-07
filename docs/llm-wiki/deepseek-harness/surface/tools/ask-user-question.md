@@ -53,7 +53,7 @@ related:
   - subsys.interaction.user-questions
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ask_user_question` 是 `@deepseek-ai/dsh-tool-ask-user` 向模型注册的 **model-visible 工具**：暂停当前 tool-call，等 UI 通过 `ctx.userQuestions.ask` 收回人类答案，再把结构化 `{ answers }` 当成普通 `tool/result` 喂回 agent loop。它不是 slash command，也不是 `ctx.approval` 那条工具审批缝。
@@ -112,7 +112,7 @@ updated: 0a53fb55be
 
 `options` 数组是整段原样转发（`options: question.options`）。schema 故意不广告 `value` / `recommended` / `preview`；推荐标签测试把 `pnpm (Recommended)` 当作普通 `label` 传下去。[E: packages/interaction/tool-ask-user/src/index.ts:86][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:125]
 
-shipped 三个装了它的 preset 的 `tool-ask-user` 行都没有 `config:`，因此产品默认就是这张表。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:244]
+shipped 三个装了它的 preset 的 `tool-ask-user` 行都没有 `config:`，因此产品默认就是这张表。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:245]
 
 ## 输出 & 截断 / spill
 
@@ -137,7 +137,7 @@ shipped 三个装了它的 preset 的 `tool-ask-user` 行都没有 `config:`，�
 | `EMPTY_QUESTIONS` | `UserQuestionService.ask` | `questions: []`。[E: packages/interaction/user-questions/src/index.ts:91][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:315] |
 | `ASK_ABORTED` | service（进入时 signal 已 aborted，或等待中 abort 且原因不是 `UserQuestionError`）或 Web composer（`PendingQuestion.abort`） | 「ask_user_question was aborted before the user answered」。[E: packages/interaction/user-questions/src/index.ts:43][E: packages/client/ui-user-questions/src/client/contract/slots.ts:150] |
 | `CALLER_NOT_LIVE` | service | 传入了 `agent`，但 `ctx.agents.get(id)` 不是**同一个** live 实例。[E: packages/interaction/user-questions/src/index.ts:97] |
-| `DELEGATED_CALLER` | service | live agent 不是 `agents.roots()` 成员（被另一个 live agent 拥有）。[E: packages/interaction/user-questions/src/index.ts:105][E: packages/core/agent/src/index.ts:605] |
+| `DELEGATED_CALLER` | service | live agent 不是 `agents.roots()` 成员（被另一个 live agent 拥有）。[E: packages/interaction/user-questions/src/index.ts:105][E: packages/core/agent/src/index.ts:608] |
 | `NO_PROVIDER` | service waterfall 的 `next` 底 | 没有任何 answerer `return` 答案（消息：`no user-questions answerer accepted the request`）。[E: packages/interaction/user-questions/src/index.ts:132][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:266] |
 | `ASK_CANCELLED` | Web `PendingQuestion.cancel`（人关掉整组问卷） | 文案是 `the user cancelled ask_user_question`；Typert 把带 `name`/`code` 的 Error 送回 host，service `restoreUserQuestionError` 还原成 `UserQuestionError`。[E: packages/client/ui-user-questions/src/client/contract/slots.ts:186][E: packages/interaction/user-questions/src/index.ts:59] |
 | `BAD_INTENT` | service | 请求带了 `intent` 但 approve label 对不上 option，或缺 `detail`。本工具的 map **不会**发出 `intent`，正常路径碰不到。[E: packages/interaction/user-questions/src/index.ts:122] |
@@ -151,7 +151,7 @@ Web 卡片：`AskQuestionRow` 把 `ASK_CANCELLED` 显示成 cancelled（`state =
 | 角色 | 落点 |
 |---|---|
 | Definition | `@deepseek-ai/dsh-user-questions`：`ctx.userQuestions`（`UserQuestionService`），服务名字面量 `'userQuestions'`。[E: packages/interaction/user-questions/package.json:2][E: packages/interaction/user-questions/src/index.ts:67] |
-| Answerer | Cordis waterfall `'user-questions/request'`。监听者 return 答案即认领，或 `next()` 委托；全部放过则 `NO_PROVIDER`。[E: packages/interaction/user-questions/src/types.ts:85][E: packages/interaction/user-questions/src/index.ts:136] 有 `agent` 时走 `scopeTarget(agent, agent)`，只打到该 Agent 作用域。[E: packages/interaction/user-questions/src/index.ts:138] shipped Web：client 半边 `ctx.remote.$on('user-questions/request', …)` 建 `PendingQuestion`，composer 作答。[E: packages/client/ui-user-questions/src/client/index.ts:104] host 面 `@deepseek-ai/dsh-client-ui-user-questions` 的 node `apply()` 是空函数——工具行不在这个包。[E: packages/client/ui-user-questions/src/index.ts:14][E: packages/bundle/web-app/cordis.patch.yml:297] |
+| Answerer | Cordis waterfall `'user-questions/request'`。监听者 return 答案即认领，或 `next()` 委托；全部放过则 `NO_PROVIDER`。[E: packages/interaction/user-questions/src/types.ts:85][E: packages/interaction/user-questions/src/index.ts:136] 有 `agent` 时走 `scopeTarget(agent, agent)`，只打到该 Agent 作用域。[E: packages/interaction/user-questions/src/index.ts:138] shipped Web：client 半边 `ctx.remote.$on('user-questions/request', …)` 建 `PendingQuestion`，composer 作答。[E: packages/client/ui-user-questions/src/client/index.ts:104] host 面 `@deepseek-ai/dsh-client-ui-user-questions` 的 node `apply()` 是空函数——工具行不在这个包。[E: packages/client/ui-user-questions/src/index.ts:14][E: packages/bundle/web-app/cordis.patch.yml:298] |
 | Consumer | `@deepseek-ai/dsh-tool-ask-user` 的 `ask_user_question`；另有 `exit_plan_mode` 走同一 `ask()`，带 `intent` / `detail`。[E: packages/plan/plan-mode/src/index.ts:300] |
 
 `dsh-base` 在 **host 面**插入服务行 `id: user-questions` / `name: '@deepseek-ai/dsh-user-questions'`，**不**插入 `tool-ask-user`。模型可见工具属于 preset remount（web profile 的 `agent-presets` 行）。其它 shipped profile（`headless` / `sdk` / `sdk-minimal` / `acp`）不叠 web 的 preset roster，host 面是否出现这支工具取决于那条 composition 有没有自己 insert `tool-ask-user`。[E: packages/bundle/base/cordis.patch.yml:64][E: packages/bundle/base/cordis.patch.yml:65]
@@ -184,9 +184,9 @@ Typert 把 host 上的 `'user-questions/request'` 标成 `mode: 'waterfall'`，�
 | preset | 装 `@deepseek-ai/dsh-tool-ask-user`？ | `disabled` | isolate | shipped Config | 说明 |
 |---|---|---|---|---|---|
 | `minimal` | **否** | — | 无此行 | — | yml 不 insert 该行。装配后模型工具是 `['bash', 'str_replace_editor']`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:7][E: apps/cli/tests/web-agent-presets.e2e.ts:290] |
-| `standard` | **是** | 无 | 无（只往 host `tools` 注册） | 无 `config` | `- id: tool-ask-user` / `name: '@deepseek-ai/dsh-tool-ask-user'`。Web e2e 的 standard catalog 以 `ask_user_question` 打头。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:244][E: apps/cli/tests/web-agent-presets.e2e.ts:235] |
-| `ptc` | **是** | 无 | 无 | 无 `config` | 与 standard 同一行。PTC 只换呈现（唯一 wire = `run_code`），工具行仍在；另有 `tool-presentation` `mode: ptc`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:244][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:245][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
-| `cordis` | **是** | 无 | 无 | 无 `config` | 同样 remount。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:231][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:232] |
+| `standard` | **是** | 无 | 无（只往 host `tools` 注册） | 无 `config` | `- id: tool-ask-user` / `name: '@deepseek-ai/dsh-tool-ask-user'`。Web e2e 的 standard catalog 以 `ask_user_question` 打头。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:245][E: apps/cli/tests/web-agent-presets.e2e.ts:235] |
+| `ptc` | **是** | 无 | 无 | 无 `config` | 与 standard 同一行。PTC 只换呈现（唯一 wire = `run_code`），工具行仍在；另有 `tool-presentation` `mode: ptc`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:245][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:245][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
+| `cordis` | **是** | 无 | 无 | 无 `config` | 同样 remount。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:231][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:233] |
 
 Web 组合把模型可见工具全部赶到 per-session preset：全局层 `toolNames(ctx)` 为空，`ask_user_question` 也包括在内。[E: apps/cli/tests/web-agent-presets.e2e.ts:185]
 

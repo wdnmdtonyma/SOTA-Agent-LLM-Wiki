@@ -6,7 +6,6 @@ tier: T2
 pkg: context
 source:
   - packages/guard/timeout-policy/src/index.ts
-  - packages/guard/timeout-policy/src/invariant.ts
   - packages/guard/timeout-policy/tests/timeout-policy.spec.ts
   - packages/guard/timeout-policy/package.json
   - packages/util/timeout/src/index.ts
@@ -31,7 +30,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-tool-call-timeout-policy` 是 **host 面** Consumer：`inject = ['tools']`，挂 `tools/execute` waterfall，读 `ctx.tools.get(name, agent)?.timeoutMs`。`undefined` 则原样 `next()`；有预算则 `deadline(exec.signal, timeoutMs, TOOL_TIMEOUT)` 暂时换 `exec.signal`，`await next()`，**仅当自己的 timer 响了**（`timeoutOf(..., TOOL_TIMEOUT)`）才把结果换成 `TOOL_TIMEOUT`。它不是 Definition，不 `provide` 任何 `ctx.*`，`timeoutMs` 从不进模型 schema。
@@ -54,8 +53,6 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），能�
 - function plugin 入口 `name = 'timeout-policy'`、`inject = ['tools']`、`apply`。 [E: packages/guard/timeout-policy/src/index.ts:28] [E: packages/guard/timeout-policy/src/index.ts:31] [E: packages/guard/timeout-policy/src/index.ts:55]
 - 本插件拥有的分类码 `TOOL_TIMEOUT`（同时是 `deadline` 的 `code` 和替换 result 的 `error.info.code`）。 [E: packages/guard/timeout-policy/src/index.ts:25] [E: packages/guard/timeout-policy/src/index.ts:46]
 - 在 `tools/execute` 上武装 / 拆除 per-call deadline，并在**自己的** timer 获胜后替换 `ToolExecutionResult`。 [E: packages/guard/timeout-policy/src/index.ts:56] [E: packages/guard/timeout-policy/src/index.ts:73]
-- companion `timeout-policy-invariant`：`inject = ['invariants']`，installer 是空函数——本插件没有包内可变历史。 [E: packages/guard/timeout-policy/src/invariant.ts:15] [E: packages/guard/timeout-policy/src/invariant.ts:21]
-
 本包**不**拥有：
 
 - `ctx.tools` 注册表、`tools/pre-execute` / `tools/post-execute` 合同、`schemaOf` 白名单 —— [`subsys.core.tools`](../core/tools.md)。
@@ -71,7 +68,6 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），能�
 | 路径 | 角色 |
 |---|---|
 | `packages/guard/timeout-policy/src/index.ts` | `TOOL_TIMEOUT` / `name` / `inject` / `apply`；`tools/execute` wrapper |
-| `packages/guard/timeout-policy/src/invariant.ts` | 空 installer 的 companion |
 | `packages/guard/timeout-policy/tests/timeout-policy.spec.ts` | 无预算放行、快路径保结果、换 signal、post-execute 恢复、本 timer 替换、upstream cancel 不替换、fiber dispose |
 | `packages/guard/timeout-policy/package.json` | 包名 `@deepseek-ai/dsh-tool-call-timeout-policy` |
 | `packages/util/timeout/src/index.ts` | `deadline` / `timeoutOf` / `TimeoutReason` |
@@ -99,7 +95,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），能�
 
 ## 控制流
 
-1. **host 面插入 Consumer，不是第二份注册表。** `dsh-base` 的根 `insert` 写 `id: timeout-policy` / `name: '@deepseek-ai/dsh-tool-call-timeout-policy'`，无 `config`。 [E: packages/bundle/base/cordis.patch.yml:387] [E: packages/bundle/base/cordis.patch.yml:388] manifest 依赖同名包。 [E: packages/bundle/base/package.json:100] Loader 先满足 `inject = ['tools']`，再跑 `apply`。 [E: packages/guard/timeout-policy/src/index.ts:31] `apply` 只 `ctx.on('tools/execute', …)`，不 `super` / 不 `provide`。 [E: packages/guard/timeout-policy/src/index.ts:56]
+1. **host 面插入 Consumer，不是第二份注册表。** `dsh-base` 的根 `insert` 写 `id: timeout-policy` / `name: '@deepseek-ai/dsh-tool-call-timeout-policy'`，无 `config`。 [E: packages/bundle/base/cordis.patch.yml:387] [E: packages/bundle/base/cordis.patch.yml:389] manifest 依赖同名包。 [E: packages/bundle/base/package.json:100] Loader 先满足 `inject = ['tools']`，再跑 `apply`。 [E: packages/guard/timeout-policy/src/index.ts:31] `apply` 只 `ctx.on('tools/execute', …)`，不 `super` / 不 `provide`。 [E: packages/guard/timeout-policy/src/index.ts:56]
 
 2. **`dsh-web-app` 不 disable；preset 不重挂；无 isolate。** web overlay 会把部分 host 行标 `disabled: true`，例如 `id: compaction-basic`。 [E: packages/bundle/web-app/cordis.patch.yml:382] [E: packages/bundle/web-app/cordis.patch.yml:383] 同一份 `cordis.patch.yml` **没有** `id: timeout-policy` 行，因此不会关掉 base 挂上的 Consumer。[I] `dsh-headless` / `dsh-sdk-app` / `dsh-acp-app` 与四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）的 yml 同样没有 `timeout-policy` 行——既不 remount 也不 disable。[I] `dsh-sdk-minimal` 不叠 `dsh-base`，其完整 insert 也不含本 id。[I] 本插件不 publish 服务，`leakedServices` 不会因为它而要求 `isolate`。`dsh web` 与 `dsh --profile web|headless|sdk|acp` 仍走 host 上这一条 listener。
 
@@ -155,7 +151,7 @@ wrapper 只通知、不 hard-kill：`deadline` 的 signal 只 abort，工具自�
 ## Sources
 
 - packages/guard/timeout-policy/src/index.ts
-- packages/guard/timeout-policy/src/invariant.ts
+
 - packages/guard/timeout-policy/tests/timeout-policy.spec.ts
 - packages/guard/timeout-policy/package.json
 - packages/util/timeout/src/index.ts

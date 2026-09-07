@@ -51,7 +51,7 @@ related:
   - subsys.orchestration.jobs
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 六个模型可见名 `terminal_open` / `terminal_send` / `terminal_read` / `terminal_signal` / `terminal_close` / `terminal_list`；实现包 `@deepseek-ai/dsh-tool-terminal`（Cordis 插件名 `tool-terminal`）。按 owning `Agent` 操作 `ctx.terminals` 上的持久 PTY；后台 send 的 id 走 `ctx.jobs`，kind 是 `pty-send`。四个 shipped preset **都不装**本包。

@@ -43,7 +43,7 @@ related:
   - surface.misc.security
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.sandbox`（`SandboxProvider`）是 **host 面**进程围栏缝：把精确 argv 包成 enforcing runner，执行 **per-call 文件政策**（`SandboxMode` = `read-only` / `workspace-write` / `danger-full-access`）。同一包还拥有升权合同 `approveEscalation` 与共用可写根 `writableRoots`。没有 usable backend 时抛 `SANDBOX_UNAVAILABLE`，禁止静默裸跑。

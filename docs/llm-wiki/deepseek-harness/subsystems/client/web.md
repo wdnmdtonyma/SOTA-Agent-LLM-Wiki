@@ -53,7 +53,7 @@ related:
   - subsys.host.frontend-static
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-client-web` 的产品是无框架 boot 内核 `AppWebEntry`：等待可选的 `__DSH_BOOT_READY__`，用 host 注入的 `window.__ModuleLoader__` 建 `ClientModuleSystem`，先画 `BootPage`（HARNESS），prefetch `immediately` 行，把 vendored Cordis `Loader.internal` 接到模块表，等全部 plugin fiber `ACTIVE` 后 `ctx.inject(['uiRenderer'])` 把 mount 点交给 `@deepseek-ai/dsh-client-ui-renderer`。`apps/web` 只找 `#root`。client **不**执行模型 turn。Web 是默认 GUI 安装路径；本仓没有 shipped TUI。其它宿主入口是 `dsh --profile headless|sdk|sdk-minimal|acp`。
@@ -121,7 +121,7 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 ## 控制流
 
-1. **只有 `web` profile 叠 browser roster。** `PROFILE_TEMPLATES.web` 是 `dsh-base` 然后 `dsh-web-app`，`patchReload: 'live'`。`headless` / `sdk` / `acp` 叠对应 app bundle 且 `startup`；`sdk-minimal` **只**叠 `dsh-sdk-minimal`。`PROFILE_TEMPLATES.headless` 的 bundle 是 `dsh-base` + `dsh-headless`。headless **patch** 才挂 `headless-startup` / `headless-runner`，**没有** `webserver`、**没有** browser roster。本仓没有 shipped TUI。 [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:154] [E: packages/bundle/web-app/cordis.patch.yml:152] [E: packages/bundle/headless/cordis.patch.yml:22]
+1. **只有 `web` profile 叠 browser roster。** `PROFILE_TEMPLATES.web` 是 `dsh-base` 然后 `dsh-web-app`，`patchReload: 'live'`。`headless` / `sdk` / `acp` 叠对应 app bundle 且 `startup`；`sdk-minimal` **只**叠 `dsh-sdk-minimal`。`PROFILE_TEMPLATES.headless` 的 bundle 是 `dsh-base` + `dsh-headless`。headless **patch** 才挂 `headless-startup` / `headless-runner`，**没有** `webserver`、**没有** browser roster。本仓没有 shipped TUI。 [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:154] [E: packages/bundle/web-app/cordis.patch.yml:153] [E: packages/bundle/headless/cordis.patch.yml:22]
 
 2. **`--host 0.0.0.0` 在 `provide('webStartup')` 之前被拒。** 字面量等于 `'0.0.0.0'` 则 `program.error`；`webserver` `inject: [webStartup]` 保持 pending。缺省 bind 是 `127.0.0.1:3080`。 [E: packages/bundle/web-app/src/startup.ts:75] [E: packages/bundle/web-app/cordis.patch.yml:115]
 

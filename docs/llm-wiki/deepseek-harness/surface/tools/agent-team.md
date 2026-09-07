@@ -6,7 +6,6 @@ tier: T1
 pkg: orchestration
 source:
   - packages/experimental/tool-agent-team/src/index.ts
-  - packages/experimental/tool-agent-team/src/invariant.ts
   - packages/experimental/tool-agent-team/package.json
   - packages/experimental/tool-agent-team/tests/tool-team.spec.ts
   - packages/experimental/agent-team/src/index.ts
@@ -42,7 +41,7 @@ related:
   - subsys.orchestration.subagent
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > opt-in experimental 家族：插件 `tool-agent-team`（包 `@deepseek-ai/dsh-experimental-tool-agent-team`）在**每个 Team 成员的 `agent.ctx`** 上注册十个 model-visible 名，全部转发 `ctx.agentTeams`。不是 shipped `minimal` / `standard` / `ptc` / `cordis` 的默认 catalog；也不是全局 `dsh-tool-subagent-control` 那套同名 control。
@@ -61,9 +60,9 @@ updated: 0a53fb55be
 
 无 `default` export；测试钉死 `name` / `inject`。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:439] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:440] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:441]
 
-`Config`（Loader + `apply` 第二参）：`freshProvider` 默认 `'spawn'`，`forkProvider` 默认 `'fork'`。只影响 `spawn_teammate` 选 continuable provider，**不改 wire 名**。[E: packages/experimental/tool-agent-team/src/index.ts:25] [E: packages/experimental/tool-agent-team/src/index.ts:26] [E: packages/experimental/tool-agent-team/src/index.ts:27] [E: packages/experimental/tool-agent-team/src/index.ts:399] [E: packages/experimental/tool-agent-team/src/index.ts:400] [E: packages/experimental/tool-agent-team/src/index.ts:401]
+`Config`（Loader + `apply` 第二参）：`freshProvider` 默认 `'spawn'`，`forkProvider` 默认 `'fork'`。只影响 `spawn_teammate` 选 continuable provider，**不改 wire 名**。[E: packages/experimental/tool-agent-team/src/index.ts:25] [E: packages/experimental/tool-agent-team/src/index.ts:26] [E: packages/experimental/tool-agent-team/src/index.ts:27] [E: packages/experimental/tool-agent-team/src/index.ts:399] [E: packages/experimental/tool-agent-team/src/index.ts:401] [E: packages/experimental/tool-agent-team/src/index.ts:401]
 
-`apply` 对 `ctx.agents.list()` 与后续 `agent/created` 调用 `maybeInstall`：仅当 `ctx.agentTeams.tryMembership(agent)` 有值才 `install`；`agent/disposed` 卸 scoped 注册；fiber `effect` 清全部。[E: packages/experimental/tool-agent-team/src/index.ts:398] [E: packages/experimental/tool-agent-team/src/index.ts:405] [E: packages/experimental/tool-agent-team/src/index.ts:408] [E: packages/experimental/tool-agent-team/src/index.ts:409] [E: packages/experimental/tool-agent-team/src/index.ts:414]
+`apply` 对 `ctx.agents.list()` 与后续 `agent/created` 调用 `maybeInstall`：仅当 `ctx.agentTeams.tryMembership(agent)` 有值才 `install`；`agent/disposed` 卸 scoped 注册；fiber `effect` 清全部。[E: packages/experimental/tool-agent-team/src/index.ts:398] [E: packages/experimental/tool-agent-team/src/index.ts:405] [E: packages/experimental/tool-agent-team/src/index.ts:408] [E: packages/experimental/tool-agent-team/src/index.ts:409] [E: packages/experimental/tool-agent-team/src/index.ts:410]
 
 `install` 用 `agent.ctx`（`scoped`）注册 prompt section 与全部工具，**不是** root registry。[E: packages/experimental/tool-agent-team/src/index.ts:159] [E: packages/experimental/tool-agent-team/src/index.ts:160]
 
@@ -74,37 +73,37 @@ updated: 0a53fb55be
 | `spawn_teammate` | Lead 拉起一名 durable teammate | `defineTool({ name: 'spawn_teammate', ... })` [E: packages/experimental/tool-agent-team/src/index.ts:174] |
 | `send_message` | quiet 投递，不唤醒 idle | `messageTool('send_message', 'quiet')` [E: packages/experimental/tool-agent-team/src/index.ts:222] |
 | `followup_task` | wakeup 投递，必要时开一轮 | `messageTool('followup_task', 'wakeup')` [E: packages/experimental/tool-agent-team/src/index.ts:223] |
-| `list_agents` | 列 Lead + 全体 teammate | `name: 'list_agents'` [E: packages/experimental/tool-agent-team/src/index.ts:226] |
-| `wait_agent` | 等下一次 Team 域变化 | `name: 'wait_agent'` [E: packages/experimental/tool-agent-team/src/index.ts:236] |
+| `list_agents` | 列 Lead + 全体 teammate | `name: 'list_agents'` [E: packages/experimental/tool-agent-team/src/index.ts:228] |
+| `wait_agent` | 等下一次 Team 域变化 | `name: 'wait_agent'` [E: packages/experimental/tool-agent-team/src/index.ts:237] |
 | `interrupt_agent` | Lead 打断一名 teammate 当前轮 | `name: 'interrupt_agent'` [E: packages/experimental/tool-agent-team/src/index.ts:271] |
 | `team_task_create` | 共享任务板上建未认领 pending | `name: 'team_task_create'` [E: packages/experimental/tool-agent-team/src/index.ts:286] |
-| `team_task_list` | 过滤 + cursor 分页列出任务 | `name: 'team_task_list'` [E: packages/experimental/tool-agent-team/src/index.ts:310] |
+| `team_task_list` | 过滤 + cursor 分页列出任务 | `name: 'team_task_list'` [E: packages/experimental/tool-agent-team/src/index.ts:311] |
 | `team_task_get` | 读单任务最新视图 | `name: 'team_task_get'` [E: packages/experimental/tool-agent-team/src/index.ts:342] |
 | `team_task_update` | CAS 状态机 | `name: 'team_task_update'` [E: packages/experimental/tool-agent-team/src/index.ts:357] |
 
-同包 invariant companion `@deepseek-ai/dsh-experimental-tool-agent-team/invariant`（插件名 `tool-team-invariant`）：`install` 空函数，durable / 授权关系归 Team **服务**。[E: packages/experimental/tool-agent-team/src/invariant.ts:6] [E: packages/experimental/tool-agent-team/src/invariant.ts:9] [E: packages/experimental/tool-agent-team/src/invariant.ts:14] [E: packages/experimental/tool-agent-team/src/invariant.ts:18]
+durable / 授权关系归 Team **服务**。
 
-`send_message` / `list_agents` / `interrupt_agent` **名字**与 [subagent-control.md](subagent-control.md) 重叠。Team 版本只在 member scope 可见；测试：装 Team 时 schema 含 `target`、不含 `subagent_id`；卸 Team fiber 后全局 control 仍是 `subagent_id`。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:369] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:372] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:373] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:377]
+`send_message` / `list_agents` / `interrupt_agent` **名字**与 [subagent-control.md](subagent-control.md) 重叠。Team 版本只在 member scope 可见；测试：装 Team 时 schema 含 `target`、不含 `subagent_id`；卸 Team fiber 后全局 control 仍是 `subagent_id`。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:369] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:373] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:373] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:377]
 
-无 calling Agent 时 root 上没有这些名字：`list_agents` → `unknown tool "list_agents"`。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:436] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:438] `callingAgent` 仍是 scoped execute 的硬门。[E: packages/experimental/tool-agent-team/src/index.ts:154]
+无 calling Agent 时 root 上没有这些名字：`list_agents` → `unknown tool "list_agents"`。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:437] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:438] `callingAgent` 仍是 scoped execute 的硬门。[E: packages/experimental/tool-agent-team/src/index.ts:154]
 
-同 scope 撞名会回滚已装 section/工具：测试先占 `spawn_teammate`，再 `plugin(toolTeam)` 抛 `already registered`，prompt 不含 `Your Team role is lead`。[E: packages/experimental/tool-agent-team/src/index.ts:389] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:390] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:394]
+同 scope 撞名会回滚已装 section/工具：测试先占 `spawn_teammate`，再 `plugin(toolTeam)` 抛 `already registered`，prompt 不含 `Your Team role is lead`。[E: packages/experimental/tool-agent-team/src/index.ts:391] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:390] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:394]
 
 ## 用途定位
 
-系统段 `team:policy`（order `TEAM_POLICY` = 600）注入共享协作政策，并追加 `Your Team role is …; your Team name is …; Team id is …`。[E: packages/experimental/tool-agent-team/src/index.ts:164] [E: packages/experimental/tool-agent-team/src/index.ts:166] [E: packages/experimental/tool-agent-team/src/index.ts:169] [E: packages/core/system-prompt/src/index.ts:127] 测试钉政策含「用户明确要求才建队友」、`FS_STALE_VERSION`、`noProgress`、Lead/teammate 角色句。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:136] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:140] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:153]
+系统段 `team:policy`（order `TEAM_POLICY` = 600）注入共享协作政策，并追加 `Your Team role is …; your Team name is …; Team id is …`。[E: packages/experimental/tool-agent-team/src/index.ts:164] [E: packages/experimental/tool-agent-team/src/index.ts:166] [E: packages/experimental/tool-agent-team/src/index.ts:169] [E: packages/core/system-prompt/src/index.ts:127] 测试钉政策含「用户明确要求才建队友」、`FS_STALE_VERSION`、`noProgress`、Lead/teammate 角色句。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:136] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:141] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:153]
 
 | 工具 | 模型该用它做什么 | 明确不做什么 |
 |---|---|---|
 | `spawn_teammate` | 仅 Lead：按 unique kebab-case 名建 continuable 队友 | teammate 调会失败（文案含 `only the Team Lead`）[E: packages/experimental/tool-agent-team/src/index.ts:175] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:159] |
 | `send_message` | 给另一成员投 durable 信息，**不**启动 idle | 不是 subagent-control 的 `subagent_id` 通道 [E: packages/experimental/tool-agent-team/src/index.ts:205] |
 | `followup_task` | 投 follow-up 并在需要时开一轮 | 不是 quiet 通道 [E: packages/experimental/tool-agent-team/src/index.ts:206] |
-| `list_agents` | 列 Lead + durable teammate 的 runtime 状态 | 不是 subagent `listChildren`；无 `scope` 参数 [E: packages/experimental/tool-agent-team/src/index.ts:227] [E: packages/experimental/tool-agent-team/src/index.ts:228] |
+| `list_agents` | 列 Lead + durable teammate 的 runtime 状态 | 不是 subagent `listChildren`；无 `scope` 参数 [E: packages/experimental/tool-agent-team/src/index.ts:228] [E: packages/experimental/tool-agent-team/src/index.ts:228] |
 | `wait_agent` | 等本调用**开始之后**的状态/邮箱/任务变化 | **从不**唤醒 inactive；无活跃 peer 立刻 `noProgress` [E: packages/experimental/tool-agent-team/src/index.ts:237] |
-| `interrupt_agent` | 仅 Lead：打断一名 teammate 当前轮，保留 inbox | 不能对 Lead 自己；参数是 **name** 不是 session id [E: packages/experimental/tool-agent-team/src/index.ts:272] [E: packages/experimental/tool-agent-team/src/index.ts:274] |
+| `interrupt_agent` | 仅 Lead：打断一名 teammate 当前轮，保留 inbox | 不能对 Lead 自己；参数是 **name** 不是 session id [E: packages/experimental/tool-agent-team/src/index.ts:272] [E: packages/experimental/tool-agent-team/src/index.ts:273] |
 | `team_task_*` | 共享任务板：建 / 列 / 读 / CAS | `ready` 不会自动启动 owner（政策句）[E: packages/experimental/tool-agent-team/src/index.ts:31] |
 
-创建队友走 `ctx.agentTeams.spawnTeammate`，底层仍是 continuable `ctx.subagents`（provider 名由 Config 选）。服务合同权威在 [subsys.orchestration.agent-team](../../subsystems/orchestration/agent-team.md)。one-shot `subagent` / `subagent_fork` 在 Team profile 里仍可装，但不进本页十名。[E: packages/experimental/agent-team-profile/cordis.patch.yml:16] [E: packages/experimental/agent-team-profile/cordis.patch.yml:21]
+创建队友走 `ctx.agentTeams.spawnTeammate`，底层仍是 continuable `ctx.subagents`（provider 名由 Config 选）。服务合同权威在 [subsys.orchestration.agent-team](../../subsystems/orchestration/agent-team.md)。one-shot `subagent` / `subagent_fork` 在 Team profile 里仍可装，但不进本页十名。[E: packages/experimental/agent-team-profile/cordis.patch.yml:17] [E: packages/experimental/agent-team-profile/cordis.patch.yml:21]
 
 ## 输入 schema
 
@@ -136,20 +135,20 @@ updated: 0a53fb55be
 
 | 字段 | 类型 | 必填 | 默认 | 约束 |
 |---|---|---|---|---|
-| `timeout_ms` | `integer` | 否 | `30_000` | 合法窗口 10000–3600000；非法值**不**走 no-progress 捷径，交给 `waitForChange` 抛错 [E: packages/experimental/tool-agent-team/src/index.ts:239] [E: packages/experimental/tool-agent-team/src/index.ts:247] [E: packages/experimental/tool-agent-team/src/index.ts:250] |
+| `timeout_ms` | `integer` | 否 | `30_000` | 合法窗口 10000–3600000；非法值**不**走 no-progress 捷径，交给 `waitForChange` 抛错 [E: packages/experimental/tool-agent-team/src/index.ts:239] [E: packages/experimental/tool-agent-team/src/index.ts:248] [E: packages/experimental/tool-agent-team/src/index.ts:250] |
 
 ### `interrupt_agent`
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `target` | `string` | 是 | **Teammate name** [E: packages/experimental/tool-agent-team/src/index.ts:274] |
+| `target` | `string` | 是 | **Teammate name** [E: packages/experimental/tool-agent-team/src/index.ts:273] |
 
 ### `team_task_create`
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `subject` | `string` | 是 | 标题 [E: packages/experimental/tool-agent-team/src/index.ts:289] |
-| `description` | `string` | 是 | 细节与验收 [E: packages/experimental/tool-agent-team/src/index.ts:290] |
+| `subject` | `string` | 是 | 标题 [E: packages/experimental/tool-agent-team/src/index.ts:288] |
+| `description` | `string` | 是 | 细节与验收 [E: packages/experimental/tool-agent-team/src/index.ts:291] |
 | `blocked_by` | `string[]` | 否 | 先完成的 task id；map `TeamTaskId` [E: packages/experimental/tool-agent-team/src/index.ts:291] [E: packages/experimental/tool-agent-team/src/index.ts:303] |
 | `write_scopes` | `string[]` | 否 | 建议写前缀，非锁 [E: packages/experimental/tool-agent-team/src/index.ts:292] |
 
@@ -160,8 +159,8 @@ updated: 0a53fb55be
 | `status` | `string` | 否 | 不过滤 | enum `pending` \| `in_progress` \| `completed`（无 `deleted`）[E: packages/experimental/tool-agent-team/src/index.ts:313] |
 | `owner` | `string` | 否 | 不过滤 | 成员名；字面量 `unowned` 表示无 owner [E: packages/experimental/tool-agent-team/src/index.ts:318] [E: packages/experimental/tool-agent-team/src/index.ts:328] |
 | `ready` | `boolean` | 否 | 不过滤 | [E: packages/experimental/tool-agent-team/src/index.ts:319] |
-| `cursor` | `integer` | 否 | `0` | 非负 safe integer，否则抛错 [E: packages/experimental/tool-agent-team/src/index.ts:320] [E: packages/experimental/tool-agent-team/src/index.ts:332] |
-| `limit` | `integer` | 否 | `50` | 1–100 [E: packages/experimental/tool-agent-team/src/index.ts:321] [E: packages/experimental/tool-agent-team/src/index.ts:333] |
+| `cursor` | `integer` | 否 | `0` | 非负 safe integer，否则抛错 [E: packages/experimental/tool-agent-team/src/index.ts:320] [E: packages/experimental/tool-agent-team/src/index.ts:334] |
+| `limit` | `integer` | 否 | `50` | 1–100 [E: packages/experimental/tool-agent-team/src/index.ts:321] [E: packages/experimental/tool-agent-team/src/index.ts:334] |
 
 测试：`cursor: -1` / `limit: 101` → `isError`。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:304] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:305]
 
@@ -169,13 +168,13 @@ updated: 0a53fb55be
 
 | 字段 | 类型 | 必填 |
 |---|---|---|
-| `task_id` | `string` | 是 [E: packages/experimental/tool-agent-team/src/index.ts:345] |
+| `task_id` | `string` | 是 [E: packages/experimental/tool-agent-team/src/index.ts:344] |
 
 ### `team_task_update`
 
 | 字段 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| `task_id` | `string` | 是 | [E: packages/experimental/tool-agent-team/src/index.ts:360] |
+| `task_id` | `string` | 是 | [E: packages/experimental/tool-agent-team/src/index.ts:361] |
 | `expected_revision` | `integer` | 是 | CAS 前置 [E: packages/experimental/tool-agent-team/src/index.ts:361] |
 | `action` | `string` | 是 | enum `claim` \| `release` \| `edit` \| `set_dependencies` \| `complete` \| `reopen` \| `reassign` \| `delete` [E: packages/experimental/tool-agent-team/src/index.ts:362] |
 | `subject` / `description` / `write_scopes` | | 否 | `edit` 用 [E: packages/experimental/tool-agent-team/src/index.ts:368] |
@@ -191,7 +190,7 @@ updated: 0a53fb55be
 | 工具 | `output.schema` 要点 | 成功 `value` |
 |---|---|---|
 | `spawn_teammate` | `{ member: MEMBER_VIEW }` | `{ member }` [E: packages/experimental/tool-agent-team/src/index.ts:81] |
-| `send_message` / `followup_task` | `messageId` + `status` ∈ `{accepted, queued}` | 测试 quiet/wakeup 均可 `accepted` [E: packages/experimental/tool-agent-team/src/index.ts:91] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:221] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:224] |
+| `send_message` / `followup_task` | `messageId` + `status` ∈ `{accepted, queued}` | 测试 quiet/wakeup 均可 `accepted` [E: packages/experimental/tool-agent-team/src/index.ts:91] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:222] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:224] |
 | `list_agents` | `MEMBER_VIEW` 数组 | Lead + teammates [E: packages/experimental/tool-agent-team/src/index.ts:89] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:212] |
 | `wait_agent` | `timedOut`；可选 `noProgress.reason = no-active-peer` | 无活跃 peer 时 `timedOut: false` + 固定 message [E: packages/experimental/tool-agent-team/src/index.ts:101] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:173] |
 | `interrupt_agent` | `previousStatus` ∈ `{running, idle, inactive}` | [E: packages/experimental/tool-agent-team/src/index.ts:117] |
@@ -219,7 +218,7 @@ updated: 0a53fb55be
 - `listMembers` [E: packages/experimental/tool-agent-team/src/index.ts:231]
 - `waitForChange` [E: packages/experimental/tool-agent-team/src/index.ts:266]
 - `interrupt` [E: packages/experimental/tool-agent-team/src/index.ts:278]
-- `createTask` / `listTasks` / `getTask` / `updateTask` [E: packages/experimental/tool-agent-team/src/index.ts:300] [E: packages/experimental/tool-agent-team/src/index.ts:326] [E: packages/experimental/tool-agent-team/src/index.ts:349] [E: packages/experimental/tool-agent-team/src/index.ts:376]
+- `createTask` / `listTasks` / `getTask` / `updateTask` [E: packages/experimental/tool-agent-team/src/index.ts:302] [E: packages/experimental/tool-agent-team/src/index.ts:326] [E: packages/experimental/tool-agent-team/src/index.ts:349] [E: packages/experimental/tool-agent-team/src/index.ts:376]
 
 ## 执行管线
 
@@ -230,7 +229,7 @@ updated: 0a53fb55be
 - **checkpoint：** host `session-checkpoint-policy` 在有 `exec.agent` 且无 `exec.parent` 时 `flush`。[E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
 - **并行：** 未声明 `isConcurrencySafe` → exclusive。[E: packages/core/tools/src/index.ts:1269]
 - **PTC：** 本包不进四个 shipped preset。若某 session `mode: ptc` 且模型直调这些原生名，`collapses` 仍会挡（`name !== run_code`）。[E: packages/core/tools/src/index.ts:1316]
-- **信号：** `spawn_teammate` / `sendMessage` / `waitForChange` 传 `exec.signal`。`list_agents` / `interrupt` / 任务读写不把 signal 交给服务。[E: packages/experimental/tool-agent-team/src/index.ts:196] [E: packages/experimental/tool-agent-team/src/index.ts:217] [E: packages/experimental/tool-agent-team/src/index.ts:266]
+- **信号：** `spawn_teammate` / `sendMessage` / `waitForChange` 传 `exec.signal`。`list_agents` / `interrupt` / 任务读写不把 signal 交给服务。[E: packages/experimental/tool-agent-team/src/index.ts:196] [E: packages/experimental/tool-agent-team/src/index.ts:218] [E: packages/experimental/tool-agent-team/src/index.ts:266]
 - **注册层：** `ctx.tools.register` 走 layer `effect`。[E: packages/core/tools/src/index.ts:1048]
 
 ## Preset 装配
@@ -239,9 +238,9 @@ updated: 0a53fb55be
 
 opt-in 层 `@deepseek-ai/dsh-experimental-agent-team-profile` 的 `cordis.patch.yml`：
 
-1. `disabled: true` 全局 `tool-subagent-control` / `tool-subagent-list-agents` / `tool-subagent-report`，避免与 Team 的 `send_message` / `list_agents` / `interrupt_agent` 撞名。[E: packages/experimental/agent-team-profile/cordis.patch.yml:5] [E: packages/experimental/agent-team-profile/cordis.patch.yml:8] [E: packages/experimental/agent-team-profile/cordis.patch.yml:11]
-2. 把 `tool-subagent` / `tool-subagent-fork` 改成 `backgroundMode: one-shot`。[E: packages/experimental/agent-team-profile/cordis.patch.yml:18] [E: packages/experimental/agent-team-profile/cordis.patch.yml:24]
-3. insert `agent-team` 服务 + `tool-agent-team`（`freshProvider: spawn` / `forkProvider: fork`）。[E: packages/experimental/agent-team-profile/cordis.patch.yml:27] [E: packages/experimental/agent-team-profile/cordis.patch.yml:36] [E: packages/experimental/agent-team-profile/cordis.patch.yml:39]
+1. `disabled: true` 全局 `tool-subagent-control` / `tool-subagent-list-agents`（`report` 包已删除，profile 不再 disable 那一行），避免与 Team 的 `send_message` / `list_agents` / `interrupt_agent` 撞名。[E: packages/experimental/agent-team-profile/cordis.patch.yml:5] [E: packages/experimental/agent-team-profile/cordis.patch.yml:8]
+2. 把 `tool-subagent` / `tool-subagent-fork` 改成 `backgroundMode: one-shot`。[E: packages/experimental/agent-team-profile/cordis.patch.yml:15] [E: packages/experimental/agent-team-profile/cordis.patch.yml:21]
+3. insert `agent-team` 服务 + `tool-agent-team`（`freshProvider: spawn` / `forkProvider: fork`）。[E: packages/experimental/agent-team-profile/cordis.patch.yml:24] [E: packages/experimental/agent-team-profile/cordis.patch.yml:33] [E: packages/experimental/agent-team-profile/cordis.patch.yml:36]
 
 注释写明：必须在 `dsh-base` 之后 overlay，先卸全局 continuable control 再挂 scoped Team 名。[E: packages/experimental/agent-team-profile/cordis.patch.yml:3]
 
@@ -265,10 +264,10 @@ opt-in 层 `@deepseek-ai/dsh-experimental-agent-team-profile` 的 `cordis.patch.
 
 ### `wait_agent`
 
-1. `timeoutMs = args.timeout_ms ?? 30_000`。[E: packages/experimental/tool-agent-team/src/index.ts:247]
-2. 非 safe integer 或越界 → **仍** `waitForChange`（让服务抛权威错误）。测试：`9999` / `3600001` / 超 MAX_SAFE 含 `timeoutMs must be an integer from 10000 through 3600000`。[E: packages/experimental/tool-agent-team/src/index.ts:250] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:183]
+1. `timeoutMs = args.timeout_ms ?? 30_000`。[E: packages/experimental/tool-agent-team/src/index.ts:248]
+2. 非 safe integer 或越界 → **仍** `waitForChange`（让服务抛权威错误）。测试：`9999` / `3600001` / 超 MAX_SAFE 含 `timeoutMs must be an integer from 10000 through 3600000`。[E: packages/experimental/tool-agent-team/src/index.ts:250] [E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:184]
 3. 合法窗口内：同步读 `listMembers`，排除 caller，看 status ∈ `{running, provisioning}`。[E: packages/experimental/tool-agent-team/src/index.ts:39] [E: packages/experimental/tool-agent-team/src/index.ts:255]
-4. 无活跃 peer → 立刻 `{ timedOut: false, noProgress: { reason: 'no-active-peer', message: NO_ACTIVE_PEER_MESSAGE } }`，不进入 wait。[E: packages/experimental/tool-agent-team/src/index.ts:257] [E: packages/experimental/tool-agent-team/src/index.ts:40]
+4. 无活跃 peer → 立刻 `{ timedOut: false, noProgress: { reason: 'no-active-peer', message: NO_ACTIVE_PEER_MESSAGE } }`，不进入 wait。[E: packages/experimental/tool-agent-team/src/index.ts:259] [E: packages/experimental/tool-agent-team/src/index.ts:40]
 5. 有活跃 peer → `waitForChange`。abort 测试：`Error: wait_agent aborted: { kind: 'user' }`。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:198]
 
 ### `interrupt_agent`
@@ -277,12 +276,12 @@ opt-in 层 `@deepseek-ai/dsh-experimental-agent-team-profile` 的 `cordis.patch.
 
 ### 任务四件套
 
-- create：可选 `blocked_by` / `write_scopes` 才展开进 request。[E: packages/experimental/tool-agent-team/src/index.ts:300]
+- create：可选 `blocked_by` / `write_scopes` 才展开进 request。[E: packages/experimental/tool-agent-team/src/index.ts:302]
 - list：内存 filter → slice；未完列表才设 `nextCursor`。[E: packages/experimental/tool-agent-team/src/index.ts:326] [E: packages/experimental/tool-agent-team/src/index.ts:334]
 - get：`TeamTaskId(args.task_id)`。[E: packages/experimental/tool-agent-team/src/index.ts:351]
 - update：同样展开可选字段。[E: packages/experimental/tool-agent-team/src/index.ts:376]
 
-冷恢复：teammate Agent 再 publish 时 `maybeInstall` 会重挂十名 + 政策段。测试 `reinstalls Team scope before a cold-resumed teammate request`。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:428] [E: packages/experimental/tool-agent-team/src/index.ts:409]
+冷恢复：teammate Agent 再 publish 时 `maybeInstall` 会重挂十名 + 政策段。测试 `reinstalls Team scope before a cold-resumed teammate request`。[E: packages/experimental/tool-agent-team/tests/tool-team.spec.ts:429] [E: packages/experimental/tool-agent-team/src/index.ts:409]
 
 ## 设计动机·edge
 
@@ -298,7 +297,6 @@ opt-in 层 `@deepseek-ai/dsh-experimental-agent-team-profile` 的 `cordis.patch.
 ## Sources
 
 - packages/experimental/tool-agent-team/src/index.ts
-- packages/experimental/tool-agent-team/src/invariant.ts
 - packages/experimental/tool-agent-team/package.json
 - packages/experimental/tool-agent-team/tests/tool-team.spec.ts
 - packages/experimental/agent-team/src/index.ts

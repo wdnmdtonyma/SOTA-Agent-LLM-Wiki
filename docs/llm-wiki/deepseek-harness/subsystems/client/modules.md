@@ -50,7 +50,7 @@ related:
   - subsys.vendor.loader
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-client-modules` 是 `dsh.client` **双面**包：node 半边把 host Loader 里声明 `dsh.client.platform: 'web'` 的包扫成 `window.__DSH_BOOT__` 图、登记 `/plugins` combo 路由，并用 `webserver/index-inject` 把队列脚本、combo preload、bootstrap 与图插进 index；浏览器半边由 HTML 安装的 `__ModuleLoader__` 门面物化本包 bootstrap combo，再 `createClientModuleSystem` 建成 lazy-CJS 表。`dsh web` 是唯一 shipped live Web 入口；`dsh --profile sdk|sdk-minimal|acp` 与 `headless` 不叠 `dsh-web-app`，因此不 insert `id: modules`。client **不**执行模型 turn。
@@ -112,7 +112,7 @@ updated: 0a53fb55be
 
 ## 控制流
 
-1. **只有 web overlay insert `id: modules`。** `PROFILE_TEMPLATES` 五个名字：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。只有 `web` 叠 `@deepseek-ai/dsh-web-app`（`patchReload: live`）。web-app 浏览器 roster 段 `insert` 含 `id: modules` `name: '@deepseek-ai/dsh-client-modules'`。`dsh-base` 的 insert 从 `timer` / `hmr` 起，没有 modules 行。`dsh-headless` 的 insert 是 `code-runtime` + `headless-startup` + `headless-runner`，没有 webserver，也没有 modules。本仓没有 shipped TUI 包。[E: packages/boot/app-boot/src/profile.ts:137] [E: packages/bundle/web-app/cordis.patch.yml:152] [E: packages/bundle/web-app/cordis.patch.yml:153] [E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/headless/cordis.patch.yml:22]
+1. **只有 web overlay insert `id: modules`。** `PROFILE_TEMPLATES` 五个名字：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。只有 `web` 叠 `@deepseek-ai/dsh-web-app`（`patchReload: live`）。web-app 浏览器 roster 段 `insert` 含 `id: modules` `name: '@deepseek-ai/dsh-client-modules'`。`dsh-base` 的 insert 从 `timer` / `hmr` 起，没有 modules 行。`dsh-headless` 的 insert 是 `code-runtime` + `headless-startup` + `headless-runner`，没有 webserver，也没有 modules。本仓没有 shipped TUI 包。[E: packages/boot/app-boot/src/profile.ts:137] [E: packages/bundle/web-app/cordis.patch.yml:153] [E: packages/bundle/web-app/cordis.patch.yml:153] [E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/headless/cordis.patch.yml:22]
 
 2. **`modules` 行的激活门是 `webServer` + `loader`，不是 yml 行序。** `ClientModuleRegistry.static inject = ['webServer', 'loader']`。`WebServer` 自身无 Cordis `inject`，constructor `super(ctx, 'webServer')`。CLI 有意不支持 `dsh web --host 0.0.0.0`（安全用法错误），但那是 launcher 层，不是本包 inject 门。`client-hmr` 在 patch 里可写在 `modules` 之前，但它 `inject: ['clientModules', 'webServer']`，仍等本服务 provide。[E: packages/client/modules/src/index.ts:534] [E: packages/host/webserver/src/index.ts:144] [E: packages/client/hmr/src/index.ts:28]
 

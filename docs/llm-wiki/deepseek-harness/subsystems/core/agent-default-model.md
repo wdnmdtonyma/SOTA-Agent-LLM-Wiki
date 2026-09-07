@@ -6,7 +6,6 @@ tier: T2
 pkg: core
 source:
   - packages/core/agent-default-model/src/index.ts
-  - packages/core/agent-default-model/src/invariant.ts
   - packages/core/agent-default-model/tests/agent-default-model.spec.ts
   - packages/core/agent-default-model/package.json
   - packages/core/agent/src/model-selection.ts
@@ -46,7 +45,7 @@ related:
   - subsys.host.apiproxy
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.agentDefaultModel` 是 **host 面** 的进程级默认 `ModelSelection`：入口在「还没有会话专属选择」时用它给 **未来新 Agent** 填 `provider` / `model`。它不改已经 running 的 `Agent.options`，也不实现 adapter / retry。
@@ -83,14 +82,11 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 - preset 成员资格、standing mount、`leakedServices` 审计实现 — [subsys.composition.bundle-base](../composition/bundle-base.md) / agent-presets。
 - Codex / Claude 子代理后端。`dsh-base` **没有** `subagent-codex` / `subagent-claude-code` 行，也不是「装了但 dormant」：`base.spec.ts` 要求这两行长度为 0，且 manifest 不依赖对应包。 [E: packages/bundle/base/tests/base.spec.ts:42] [E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:47] [E: packages/bundle/base/tests/base.spec.ts:48]
 
-companion `./invariant` 的 installer 是空函数：可变值已经由 settings schema 在 `currentSelection()` 能读到之前校验。 [E: packages/core/agent-default-model/src/invariant.ts:22]
-
 ## 关键文件
 
 | 路径 | 角色 |
 |---|---|
 | `packages/core/agent-default-model/src/index.ts` | `AgentDefaultModelConfig`：publish `agentDefaultModel`，叠 composition / settings |
-| `packages/core/agent-default-model/src/invariant.ts` | 空 invariant companion，占名 |
 | `packages/core/agent-default-model/tests/agent-default-model.spec.ts` | 有/无 settings、partial overlay、detach、清 effort |
 | `packages/core/agent-default-model/package.json` | 包名 `@deepseek-ai/dsh-agent-default-model` |
 | `packages/bundle/base/cordis.patch.yml` | host 行 `id: agent-default-model` 的默认 `provider` / `model` |
@@ -151,19 +147,19 @@ flowchart TD
 
 5. `saveSelection()@packages/core/agent-default-model/src/index.ts` 走 `this.ctx.get('settings')?.replace(AGENT_DEFAULT_MODEL_SETTINGS_NAMESPACE, { provider, model, reasoningEffort? })`。没有 settings 时 optional call 是 no-op，composition 不变。有 settings 时 `replace` 整段替换用户层：再存一份不带 effort 的 selection，会清掉上次的 effort（缺键退回没有 effort 的 `base`）。settings fiber `dispose` 后 `installSection` 的 disposer 把 `source` 扳回 `entry`。 [E: packages/core/agent-default-model/src/index.ts:101] [E: packages/core/agent-default-model/tests/agent-default-model.spec.ts:95] [E: packages/core/agent-default-model/tests/agent-default-model.spec.ts:65] [E: packages/settings/settings/src/index.ts:488] [E: packages/core/agent-default-model/tests/agent-default-model.spec.ts:84] [E: packages/core/agent-default-model/tests/agent-default-model.spec.ts:86]
 
-6. **headless 入口** `run@packages/bundle/headless/src/index.ts`：`inject = ['agentDefaultModel', 'agents', 'sessions']`。`currentSelection()` 读一次，写入 `agents.create({ agentOptions: { provider, model } })`，并在 `setup` 里 `installModelSelection(agentCtx, { current: selection, assembled: undefined })`。`inject` 不含 `agentPresets`，setup 只装 model selection；这份 selection 在该进程的这一次 create 之后不再重读。headless 是 shipped profile 之一（`dsh --profile headless`），不是唯一非 Web 入口。 [E: packages/bundle/headless/src/index.ts:30] [E: packages/bundle/headless/src/index.ts:173] [E: packages/bundle/headless/src/index.ts:184]
+6. **headless 入口** `run@packages/bundle/headless/src/index.ts`：`inject = ['agentDefaultModel', 'agents', 'sessions']`。`currentSelection()` 读一次，写入 `agents.create({ agentOptions: { provider, model } })`，并在 `setup` 里 `installModelSelection(agentCtx, { current: selection, assembled: undefined })`。`inject` 不含 `agentPresets`，setup 只装 model selection；这份 selection 在该进程的这一次 create 之后不再重读。headless 是 shipped profile 之一（`dsh --profile headless`），不是唯一非 Web 入口。 [E: packages/bundle/headless/src/index.ts:31] [E: packages/bundle/headless/src/index.ts:173] [E: packages/bundle/headless/src/index.ts:184]
 
-7. **Host HTTP / Web 入口** 不再走已删除的 `packages/host/apiproxy`。`SessionController@packages/api/session-controller/src/index.ts` 的 `static inject` 含 `'agentDefaultModel'`。`agentOptions()` 每次 create **现读**默认，只取 `provider` / `model` 填 `AgentOptions`（effort 不进这次 create 的 `agentOptions`）。`modelCatalog` 默认参数同样现读 `currentSelection()`，作为「下一个新会话会用的默认」。 [E: packages/api/session-controller/src/index.ts:85] [E: packages/api/session-controller/src/agent.ts:484] [E: packages/api/session-controller/src/catalog.ts:18] [E: packages/api/session-controller/src/index.ts:250]
+7. **Host HTTP / Web 入口** 不再走已删除的 `packages/host/apiproxy`。`SessionController@packages/api/session-controller/src/index.ts` 的 `static inject` 含 `'agentDefaultModel'`。`agentOptions()` 每次 create **现读**默认，只取 `provider` / `model` 填 `AgentOptions`（effort 不进这次 create 的 `agentOptions`）。`modelCatalog` 默认参数同样现读 `currentSelection()`，作为「下一个新会话会用的默认」。 [E: packages/api/session-controller/src/index.ts:85] [E: packages/api/session-controller/src/agent.ts:484] [E: packages/api/session-controller/src/catalog.ts:18] [E: packages/api/session-controller/src/index.ts:248]
 
 8. `selectionFor@packages/api/session-controller/src/agent.ts` 给每个 live `Agent` 装一份 `InstalledSelection`（WeakMap + `modelSelection` projection）。**每次**读 `current`：进程内 `picked` → 否则 `session.requestHeader()?.config`（过滤 adapter-default 的 effort）→ 否则再调 `agentDefaultModel.currentSelection()`。还没有 `request/header` 的会话因此会吃到 create **之后**才 `saveSelection` 的值；已经打过 header 的会话跟 log，不跟默认。`composeAgent` 在无 roster 与有 roster 两条路上都先 `installSelection`。 [E: packages/api/session-controller/src/agent.ts:283] [E: packages/api/session-controller/src/agent.ts:286] [E: packages/api/session-controller/src/agent.ts:374] [E: packages/api/session-controller/src/agent.ts:379]
 
-9. `SessionCommandController.selectModel` 先 `llm.resolveCallConfig`，再 `selectForNextRequest`（append `model/selection` 并把 `selectionFor(agent).current` 设成这份值），然后 `agentDefaultModel.saveSelection(selected)`（改 **未来** Agent 的默认）。save 失败只 `logger.warn`，本会话切换仍然生效。这不是改 `Agent.options`。 [E: packages/api/session-controller/src/commands.ts:122] [E: packages/api/session-controller/src/agent.ts:322] [E: packages/api/session-controller/src/commands.ts:136] [E: packages/api/session-controller/src/commands.ts:138]
+9. `SessionCommandController.selectModel` 先 `llm.resolveCallConfig`，再 `selectForNextRequest`（append `model/selection` 并把 `selectionFor(agent).current` 设成这份值），然后 `agentDefaultModel.saveSelection(selected)`（改 **未来** Agent 的默认）。save 失败只 `logger.warn`，本会话切换仍然生效。这不是改 `Agent.options`。 [E: packages/api/session-controller/src/commands.ts:124] [E: packages/api/session-controller/src/agent.ts:326] [E: packages/api/session-controller/src/commands.ts:136] [E: packages/api/session-controller/src/commands.ts:138]
 
 10. **webhook** `@deepseek-ai/dsh-webhook` 的 `static inject` 含 `'agentDefaultModel'`。会话请求省略 `model` 时用 `currentSelection()` 填 `agentOptions`。 [E: packages/webhook/webhook/src/index.ts:61] [E: packages/webhook/webhook/src/session.ts:64]
 
 11. **waterfall 必须 `next()`。** `Events.waterfall@vendor/cordis/src/events.ts` 把最后一个参数当 innermost `next`：listener 不调用传入的 `next()` 就不会 `cbs.shift()`，内层 listener 和 inner seed 全部停住。`installModelSelection` 在 **agent 作用域** 上挂两条：`system-prompt/assemble` 先 `const selected = selection.current`，再 `await next()`，然后才写 `selection.assembled = selected` 并覆盖 `variables.provider/model`；`agent/request` 先 `await next()` 拿到 seed `LlmCallConfig`，再用 **`assembled`**（不是此时的 `current`）覆盖 `provider` / `model`，并在缺 effort 时拆掉继承来的 `reasoningEffort`。并发切模型不会把「prompt 变量」和「请求路由」撕成两半。测试：assemble 后把 `current` 改成 `beta`，紧接着的 `agent/request` 仍走 assemble 时的 `alpha`。 [E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] [E: packages/core/agent/src/model-selection.ts:41] [E: packages/core/agent/src/model-selection.ts:57] [E: packages/core/agent/src/model-selection.ts:58] [E: packages/core/agent/tests/model-selection.spec.ts:32] [E: packages/core/agent/tests/model-selection.spec.ts:37]
 
-12. `ReactLoopAgent.buildRequest@packages/core/agent-loop/src/agent.ts` 先用 `this.options.provider/model`（create 时写入的 `AgentOptions`）组成 `route`。`seedConfig` 不是永远这份 create 快照：本实例还没 append 过 `request/header` 时，seed 是 `route`（可加同 route 才继承的 effort 与 `options.maxTokens`）；`requestHeaderLogged` 之后则 `requestProposal(persistedHeader)`，从已 logged 的 header 去掉 adapter-derived 的 effort / maxTokens，不再读 `this.options`。`deepFreeze(structuredClone(…))` 冻住 seed，再 `dispatch.waterfall('agent/request', …, () => seedConfig)`。没有 `installModelSelection` 时，请求停在这条 seed。loop 还往 `ctx.systemPrompt` 注册变量 `provider` / `model`，读的是 `context.agent?.options`（create 快照）；Host / headless 靠 assemble waterfall 用 `ModelSelectionRef` 覆盖同名变量。缺 `provider`/`model` 时 loop 抛 `has no provider/model`。 [E: packages/core/agent-loop/src/agent.ts:460] [E: packages/core/agent-loop/src/agent.ts:469] [E: packages/core/agent-loop/src/agent.ts:471] [E: packages/core/agent-loop/src/agent.ts:61] [E: packages/core/agent-loop/src/agent.ts:478] [E: packages/core/agent-loop/src/agent.ts:484] [E: packages/core/agent-loop/src/index.ts:414] [E: packages/core/agent-loop/src/index.ts:415]
+12. `ReactLoopAgent.buildRequest@packages/core/agent-loop/src/agent.ts` 先用 `this.options.provider/model`（create 时写入的 `AgentOptions`）组成 `route`。`seedConfig` 不是永远这份 create 快照：本实例还没 append 过 `request/header` 时，seed 是 `route`（可加同 route 才继承的 effort 与 `options.maxTokens`）；`requestHeaderLogged` 之后则 `requestProposal(persistedHeader)`，从已 logged 的 header 去掉 adapter-derived 的 effort / maxTokens，不再读 `this.options`。`deepFreeze(structuredClone(…))` 冻住 seed，再 `dispatch.waterfall('agent/request', …, () => seedConfig)`。没有 `installModelSelection` 时，请求停在这条 seed。loop 还往 `ctx.systemPrompt` 注册变量 `provider` / `model`，读的是 `context.agent?.options`（create 快照）；Host / headless 靠 assemble waterfall 用 `ModelSelectionRef` 覆盖同名变量。缺 `provider`/`model` 时 loop 抛 `has no provider/model`。 [E: packages/core/agent-loop/src/agent.ts:460] [E: packages/core/agent-loop/src/agent.ts:470] [E: packages/core/agent-loop/src/agent.ts:471] [E: packages/core/agent-loop/src/agent.ts:61] [E: packages/core/agent-loop/src/agent.ts:478] [E: packages/core/agent-loop/src/agent.ts:488] [E: packages/core/agent-loop/src/index.ts:413] [E: packages/core/agent-loop/src/index.ts:416]
 
 13. **isolate / `leakedServices`。** 本行是 host 服务，yml 不写 `isolate`。preset 再挂 `@deepseek-ai/dsh-agent-default-model` 且不 `isolate: { agentDefaultModel: true }`：host 已占用 root 符号时，步骤 2 的 `provide` 先抛 already registered；若 root 上还没有这键、preset 子树却写进 `rootIsolate[name]`，`leakedServices@packages/preset/agent-presets/src/mount.ts` 会扫到该 name 并抛 `row(s) published process-global service(s) […]; a preset service must sit behind an isolate realm or move to the host composition`。shipped `minimal` / `standard` / `ptc` / `cordis` 的 `agent.cordis.yml` **没有** 这行（旧目录名 `code` 现为 `presets/ptc/`）。需要进程级一份默认，就留在 host；不要为了「每会话一份」去 isolate 它。 [E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:411]
 
@@ -203,7 +199,7 @@ flowchart TD
 ## Sources
 
 - packages/core/agent-default-model/src/index.ts
-- packages/core/agent-default-model/src/invariant.ts
+
 - packages/core/agent-default-model/tests/agent-default-model.spec.ts
 - packages/core/agent-default-model/package.json
 - packages/core/agent/src/model-selection.ts

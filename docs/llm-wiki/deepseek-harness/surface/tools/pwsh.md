@@ -51,7 +51,7 @@ related:
   - subsys.execution.shell
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `pwsh` 是模型可见的**一次性** PowerShell 工具：实现包 `@deepseek-ai/dsh-tool-pwsh`，经 `ctx.shell` 每次拉起新的 `pwsh -NoLogo -NoProfile -NonInteractive -Command` 进程。它与 one-shot `bash`（`@deepseek-ai/dsh-tool-bash`）共享 `ctx.shell` 缝，wire 名是 `pwsh`。同名碰撞：`@deepseek-ai/dsh-tool-pwsh-persistent` 也把模型可见名登记为 `pwsh`，但走 `ctx.terminals`，**不是本页**。
@@ -84,7 +84,7 @@ updated: 0a53fb55be
 
 它镜像 one-shot `bash` 的前台 / `run_in_background` / `ctx.jobs` / sandbox escalation 管线，不是 persistent PTY。`minimal` 装的是 `@deepseek-ai/dsh-tool-pwsh-persistent`（win32）与 `@deepseek-ai/dsh-tool-bash-persistent`（POSIX），**不**装本包。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:59][E: apps/cli/tests/windows-shell.spec.ts:132]
 
-非零退出、超时杀进程，都渲染成标记，**不是** `isError`。只有 abort、参数非法、escalation 失败、spawn / `SANDBOX_UNAVAILABLE` 这类基础设施失败才走错误通道。[E: packages/shell/tool-pwsh/tests/integration.spec.ts:90][E: packages/shell/tool-pwsh/tests/tools.spec.ts:505]
+非零退出、超时杀进程，都渲染成标记，**不是** `isError`。只有 abort、参数非法、escalation 失败、spawn / `SANDBOX_UNAVAILABLE` 这类基础设施失败才走错误通道。[E: packages/shell/tool-pwsh/tests/integration.spec.ts:90][E: packages/shell/tool-pwsh/tests/tools.spec.ts:506]
 
 ## 输入 schema
 
@@ -113,7 +113,7 @@ updated: 0a53fb55be
 
 schema 校验只检查**已广告**键。无沙箱组合里模型仍可能塞进 `sandbox_permissions`；execute 会抛 `sandbox_permissions is not available in this composition`。[E: packages/shell/tool-pwsh/src/index.ts:227][E: packages/shell/tool-pwsh/tests/tools.spec.ts:595]
 
-官方 catalog 采集挂的是**无沙箱**的 `PwshLocalExecutor`，所以生成文案写 “mirrors the bash tool call-for-call minus sandbox controls”。那是采集组合，不是 `apply()` 在禁闭执行器下的 schema。[E: scripts/gen-tool-catalog.ts:257][E: scripts/gen-tool-catalog.ts:261]
+官方 catalog 采集挂的是**无沙箱**的 `PwshLocalExecutor`，所以生成文案写 “mirrors the bash tool call-for-call minus sandbox controls”。那是采集组合，不是 `apply()` 在禁闭执行器下的 schema。[E: scripts/gen-tool-catalog.ts:257][E: scripts/gen-tool-catalog.ts:260]
 
 `ToolDefinition.timeoutMs` 是可选的定义级字段；`pwsh` 的 `defineTool({ name: 'pwsh', ... })` 未传入它，登记表因此不会给这件工具挂调用预算。前台期限只走参数 `timeoutMs` → `ctx.shell.resolve`。[E: packages/shell/tool-pwsh/src/index.ts:250]
 
@@ -123,7 +123,7 @@ schema 校验只检查**已广告**键。无沙箱组合里模型仍可能塞进
 
 `output.render`：后台渲染 `started background job ${jobId}`；前台走 `renderPwshResult`。[E: packages/shell/tool-pwsh/src/index.ts:340] 登记表 `createSuccessResult` 在 body 返回后调用 `tool.output.render`。[E: packages/core/tools/src/index.ts:1791]
 
-`renderPwshResult` 拼：stdout 文本 → 非空 stderr 前加 `[stderr]` → 空 body 写成 `(no output)` → 标记行（sandbox 拒绝、escalation hint、`[timed out after Nms]`、`[killed by signal: X]` 或 `[exit code: N]`）。干净退出 0 且无 signal **不加**退出标记。[E: packages/shell/tool-pwsh/src/render.ts:59][E: packages/shell/tool-pwsh/src/render.ts:75][E: packages/shell/tool-pwsh/tests/tools.spec.ts:442]
+`renderPwshResult` 拼：stdout 文本 → 非空 stderr 前加 `[stderr]` → 空 body 写成 `(no output)` → 标记行（sandbox 拒绝、escalation hint、`[timed out after Nms]`、`[killed by signal: X]` 或 `[exit code: N]`）。干净退出 0 且无 signal **不加**退出标记。[E: packages/shell/tool-pwsh/src/render.ts:59][E: packages/shell/tool-pwsh/src/render.ts:75][E: packages/shell/tool-pwsh/tests/tools.spec.ts:443]
 
 截断：`truncated === true` 时在该流文本后追加 `[output truncated; full output: <spillPath|(unavailable)>]`。[E: packages/shell/tool-pwsh/src/render.ts:22] 执行器默认每流内存帽 `maxOutputBytes = 64_000`，spill 文件帽 `maxSpillBytes = 64 * 1024 * 1024`；溢出后内存只留尾巴，全量在 spill 文件。[E: packages/shell/pwsh-local/src/index.ts:135][E: packages/shell/pwsh-local/src/index.ts:55]
 
@@ -160,7 +160,7 @@ agent-loop 把助手 step 里的 tool call 编成 `ToolExecutionInput`（`name` 
 2. **定义级 `timeoutMs` / 登记表 deadline**：`pwsh` 的 `defineTool({ name: 'pwsh', ... })` 未传定义级 `timeoutMs`，登记表不会给这件工具套一层调用预算。前台期限是参数 → 执行器 `clampTimeout`。[E: packages/shell/tool-pwsh/src/index.ts:250][E: packages/shell/pwsh-local/src/index.ts:192]
 3. **`tools/execute` waterfall → `tool.execute`**：真正的 `validatePwshArgs` / escalation / `ctx.shell.run|start` 发生在这里。[E: packages/core/tools/src/index.ts:1565][E: packages/core/tools/src/index.ts:1540]
 4. **approval**：普通调用不经 `serviceAsk`。只有模型带了成对的 `sandbox_permissions` + `justification` 时，`execute()` **在 spawn 之前**调用 `approveEscalation` → `ctx.approval.request({ toolName: 'pwsh', ... })`。非加宽请求永不弹窗。[E: packages/shell/tool-pwsh/src/index.ts:350][E: packages/sandbox/sandbox/src/escalation.ts:173]
-5. **sandbox**：站立 policy 来自 `ctx.sandboxPolicy.resolve({ session })`，stamp 到 `request.sandboxPolicy`。无禁闭执行器则整字段省略。[E: packages/shell/tool-pwsh/src/index.ts:205][E: packages/shell/tool-pwsh/tests/tools.spec.ts:521]
+5. **sandbox**：站立 policy 来自 `ctx.sandboxPolicy.resolve({ session })`，stamp 到 `request.sandboxPolicy`。无禁闭执行器则整字段省略。[E: packages/shell/tool-pwsh/src/index.ts:205][E: packages/shell/tool-pwsh/tests/tools.spec.ts:522]
 6. **`tools/post-execute`**：本包不注册 post-execute 监听器。成功路径随后 `output.render`。[E: packages/core/tools/src/index.ts:1735]
 
 `isConcurrencySafe` 未声明：默认与兄弟调用互斥，本页不展开并行调度。
@@ -203,7 +203,7 @@ DSH 没有 first-class `apply_patch`。一次性 `pwsh` 是 shell 执行，不�
 真正少掉、或与 bash 分叉的控件：
 
 1. **workdir 不与 sandbox root 对齐。** `dsh-tool-bash` 的 `resolveWorkdir` 吃 `standingPolicy?.workspaceRoot`，否则 `canonicalPath(headerCwd)`，让 workdir 与禁闭根同一身份。[E: packages/shell/tool-bash/src/index.ts:149] `pwsh` 只用原始 `session.header.cwd`。[E: packages/shell/tool-pwsh/src/index.ts:150]
-2. **catalog / 无沙箱采集看不到 escalation 字段。** `gen-tool-catalog.ts` 挂 `PwshLocalExecutor`，`sandboxMode` 为 `undefined`，于是生成说明写成 “minus sandbox controls”。shipped win32 的 `ctx.shell` 是 `pwsh-sandbox`，live schema **有**这两字段。[E: scripts/gen-tool-catalog.ts:261][E: packages/bundle/base/cordis.patch.yml:226]
+2. **catalog / 无沙箱采集看不到 escalation 字段。** `gen-tool-catalog.ts` 挂 `PwshLocalExecutor`，`sandboxMode` 为 `undefined`，于是生成说明写成 “minus sandbox controls”。shipped win32 的 `ctx.shell` 是 `pwsh-sandbox`，live schema **有**这两字段。[E: scripts/gen-tool-catalog.ts:260][E: packages/bundle/base/cordis.patch.yml:226]
 3. **禁闭后端是 Windows ACL restricted-token，不是 bwrap / landlock / seatbelt。** `read-only` 下 PowerShell 进 ConstrainedLanguage（`.NET` 静态调用 / `Add-Type` / COM / 反射失败）；`workspace-write` 默认 FullLanguage。两种禁闭 mode 里孙进程 `stdio: 'pipe'` 的 named pipe 打开会 EPERM。这些句子写在工具 description 里，但门控是「`escalationModes` 非空」而不是 `process.platform === 'win32'`。[E: packages/shell/tool-pwsh/src/index.ts:122]
 4. **host timeout 默认不同。** `bash-sandbox` 行写死 `timeoutMs: 60000`；`pwsh-sandbox` 行不写，落到 `120_000`。[E: packages/bundle/base/cordis.patch.yml:224][E: packages/shell/pwsh-local/src/index.ts:133]
 5. **win32 强杀没有 POSIX signal。** description 与 prompt 都要求把裸 `[exit code: 1]` 当成中断，不当命令逻辑失败。[E: packages/shell/tool-pwsh/src/index.ts:113][E: packages/shell/tool-pwsh/src/index.ts:247]

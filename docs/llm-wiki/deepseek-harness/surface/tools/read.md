@@ -56,7 +56,7 @@ related:
   - subsys.execution.fs
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `read` 是 `@deepseek-ai/dsh-tool-fs` 向模型注册的 UTF-8 文本读工具：wire 名 `read`，经 `ctx.fs` 取一份行号窗口，并在成功或缺文件时发出 `fs/observed`。
@@ -74,7 +74,7 @@ updated: 0a53fb55be
 
 模型看见的工具名是字面量 `'read'`，由 `applyReadTool` 交给 `ctx.tools.register(defineTool({ name: 'read', … }))`。[E: packages/fs/tool-fs/src/read.ts:76][E: packages/fs/tool-fs/src/read.ts:77]
 
-实现包是 `@deepseek-ai/dsh-tool-fs`。Cordis 插件名 `export const name = 'tool-fs'`，`inject = ['tools', 'fs', 'systemPrompt']`：没有挂上 `ctx.fs` 时插件保持 pending，catalog 里不会出现 `read`。[E: packages/fs/tool-fs/package.json:2][E: packages/fs/tool-fs/src/index.ts:19][E: packages/fs/tool-fs/src/index.ts:22][E: packages/fs/tool-fs/tests/tools.spec.ts:179][E: packages/fs/tool-fs/tests/tools.spec.ts:184]
+实现包是 `@deepseek-ai/dsh-tool-fs`。Cordis 插件名 `export const name = 'tool-fs'`，`inject = ['tools', 'fs', 'systemPrompt']`：没有挂上 `ctx.fs` 时插件保持 pending，catalog 里不会出现 `read`。[E: packages/fs/tool-fs/package.json:2][E: packages/fs/tool-fs/src/index.ts:19][E: packages/fs/tool-fs/src/index.ts:22][E: packages/fs/tool-fs/tests/tools.spec.ts:180][E: packages/fs/tool-fs/tests/tools.spec.ts:184]
 
 `apply(ctx, config)` 在 schemastery 填完默认值后，把 `readLimit` / `readMaxLineLength` / `readMaxBytes` / `readStreamMinSize` 传给 `applyReadTool`。同一 `apply` 还会无条件注册 `write`/`edit`，并用 `ctx.inject(['attachments'], …)` 有条件注册 `read_image`——那是另一条 composition-conditional 工具，本页不展开。[E: packages/fs/tool-fs/src/index.ts:61][E: packages/fs/tool-fs/src/index.ts:70]
 
@@ -149,7 +149,7 @@ shipped 四个 preset 的 `tool-fs` 行都没有 `config:`，因此产品默认�
 
 `buildWindow` 会扫完整份文件以得到精确 `totalLines`，但当前行缓冲只留 `maxLineLength + 1` 个字符，避免无换行巨行把内存撑爆。[E: packages/fs/tool-fs/src/read-render.ts:118][E: packages/fs/tool-fs/src/read-render.ts:78]
 
-顶层成功调用还会把窗口写进 `output.presentationMeta`（`path` / `offset` / `lines` / `totalLines` / 可选 `lang`），随 `tool/result` 落盘；`presentResult` 再收成 UI 的 `card: 'read'`。规范值本身不进 session 回放。[E: packages/fs/tool-fs/src/read.ts:122][E: packages/core/tools/src/index.ts:1797][E: packages/fs/tool-fs/tests/tools.spec.ts:344]
+顶层成功调用还会把窗口写进 `output.presentationMeta`（`path` / `offset` / `lines` / `totalLines` / 可选 `lang`），随 `tool/result` 落盘；`presentResult` 再收成 UI 的 `card: 'read'`。规范值本身不进 session 回放。[E: packages/fs/tool-fs/src/read.ts:122][E: packages/core/tools/src/index.ts:1797][E: packages/fs/tool-fs/tests/tools.spec.ts:345]
 
 `read` **没有**自己的 spill 路径：不读 `ctx.spillStore`，也不把正文卸到磁盘。截断全部发生在窗口算术里。`standard`/`ptc`/`cordis` 的 compaction `tool-result-pruner` 可能在事后把过长的 `tool/result` 内容换成 head/tail，那是 compaction 层，不是本工具的输出合同。
 

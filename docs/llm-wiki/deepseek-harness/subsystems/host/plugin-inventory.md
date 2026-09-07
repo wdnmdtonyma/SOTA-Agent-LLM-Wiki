@@ -7,10 +7,8 @@ pkg: host
 source:
   - packages/host/plugin-inventory/src/index.ts
   - packages/host/plugin-inventory/src/types.ts
-  - packages/host/plugin-inventory/src/invariant.ts
   - packages/host/plugin-inventory/package.json
   - packages/host/plugin-inventory/tests/inventory.spec.ts
-  - packages/host/plugin-inventory/tests/invariant.spec.ts
   - packages/bundle/web-app/cordis.patch.yml
   - packages/bundle/web-app/package.json
   - packages/bundle/web-app/src/startup.ts
@@ -43,7 +41,7 @@ related:
   - subsys.client.connection
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-host-plugin-inventory` 的 `PluginInventoryGateway` 是 **host 面**只读 Typert Remote：把当前 Cordis Loader 的**非 group**行投影成 `PluginInventorySnapshot`；若进程里 `ctx.get('agentPresets')` 有值，再附上每个 preset 的 composition 行。`@Remote('list')` 每次遍历 `ctx.loader.entries()`，没有第二份 cache。它不注册 HTTP 路由，也不进三个 Host HTTP controller。
@@ -65,7 +63,6 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 - 进程级 Service / Remote：`PluginInventoryGateway extends TypertRemoteService`，`super(ctx, 'pluginInventory')`，`static inject = ['loader']`。 [E: packages/host/plugin-inventory/src/index.ts:47] [E: packages/host/plugin-inventory/src/index.ts:49] [E: packages/host/plugin-inventory/src/index.ts:50]
 - 点时刻投影合同：`PluginInventorySnapshot` / `PluginInventoryEntry` / `PluginFiberPhase` / branded `PluginEntryId`，以及可选的 `AgentPresetPluginGroup`。 [E: packages/host/plugin-inventory/src/types.ts:64]
-- 空 invariant companion（`install` 是 no-op）：Loader 已经是唯一生命周期真源。 [E: packages/host/plugin-inventory/src/invariant.ts:15]
 
 本包**不**拥有：
 
@@ -85,9 +82,7 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 |---|---|
 | `packages/host/plugin-inventory/src/index.ts` | `PluginInventoryGateway`、`FIBER_PHASE`、`@Remote('list')`、Loader 遍历 + 可选 roster |
 | `packages/host/plugin-inventory/src/types.ts` | `PluginInventorySnapshot`、`PluginInventoryEntry`、`AgentPresetPluginGroup` |
-| `packages/host/plugin-inventory/src/invariant.ts` | 空 installer |
 | `packages/host/plugin-inventory/tests/inventory.spec.ts` | 单方法 `list`、跳过 group、disable/remove 立刻反映、preset 映射 |
-| `packages/host/plugin-inventory/tests/invariant.spec.ts` | companion 可重复挂上 |
 | `packages/host/plugin-inventory/package.json` | 导出 `.` / `./types` / `./typert` / `./remote` |
 | `packages/bundle/web-app/cordis.patch.yml` | 唯一 shipped `id: plugin-inventory`；同树 `api-remotes` 与 `ui-settings-plugin-inventory` |
 | `packages/bundle/base/cordis.patch.yml` | 有 `typert-gateway`，**无** `plugin-inventory` |
@@ -120,7 +115,7 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 1. **web profile 叠上本行。** `PROFILE_TEMPLATES.web` 是 `dsh-base` 然后 `dsh-web-app`。 [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:143] `dsh-web-app` insert `id: plugin-inventory`、`name: '@deepseek-ai/dsh-host-plugin-inventory'`，并把该包装进 web-app `package.json` 依赖。 [E: packages/bundle/web-app/cordis.patch.yml:82] [E: packages/bundle/web-app/cordis.patch.yml:83] [E: packages/bundle/web-app/package.json:101] `dsh-base` 有 `typert-gateway`，没有 `plugin-inventory`。 [E: packages/bundle/base/cordis.patch.yml:45] `dsh-headless` 的 insert 只有 `code-runtime` / `headless-startup` / `headless-runner`。 [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] sdk / sdk-minimal / acp 的 overlay 同样不 insert 本行（web-app 是唯一 shipped Consumer 树）。
 
-2. **同树放下分发与 Consumer 行，但它们不是本包。** web-app 另 insert `id: api-remotes`（`@deepseek-ai/dsh-api-remotes`）和 `id: ui-settings-plugin-inventory`。 [E: packages/bundle/web-app/cordis.patch.yml:166] [E: packages/bundle/web-app/cordis.patch.yml:199] base 已经有 `id: typert-gateway`（`@deepseek-ai/dsh-api-gateway`，`ctx.typertGateway`）。 [E: packages/bundle/base/cordis.patch.yml:46] web-app 的 HTTP 命令面是 `session-controller` / `settings-controller` / `workspace-controller`，**不**承载 `pluginInventory/list`。 [E: packages/bundle/web-app/cordis.patch.yml:86] [E: packages/bundle/web-app/cordis.patch.yml:91] [E: packages/bundle/web-app/cordis.patch.yml:95]
+2. **同树放下分发与 Consumer 行，但它们不是本包。** web-app 另 insert `id: api-remotes`（`@deepseek-ai/dsh-api-remotes`）和 `id: ui-settings-plugin-inventory`。 [E: packages/bundle/web-app/cordis.patch.yml:166] [E: packages/bundle/web-app/cordis.patch.yml:200] base 已经有 `id: typert-gateway`（`@deepseek-ai/dsh-api-gateway`，`ctx.typertGateway`）。 [E: packages/bundle/base/cordis.patch.yml:46] web-app 的 HTTP 命令面是 `session-controller` / `settings-controller` / `workspace-controller`，**不**承载 `pluginInventory/list`。 [E: packages/bundle/web-app/cordis.patch.yml:86] [E: packages/bundle/web-app/cordis.patch.yml:91] [E: packages/bundle/web-app/cordis.patch.yml:95]
 
 3. **Loader 激活 class plugin。** `PluginInventoryGateway.static inject = ['loader']`。构造只做 `super(ctx, 'pluginInventory')`：`TypertRemoteService` 先 `Service` `provide` 服务键，再 `bindTypertRemote(this, this.name)`，得到可被 Gateway 扫到的 `typertRemote`。本包**没有** `apply` 函数、没有 `listen`、没有 `register` 路由。 [E: packages/typert/protocol/src/index.ts:165] [E: packages/typert/protocol/src/index.ts:167]
 
@@ -132,7 +127,7 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 7. **`list()` 每次从 Loader 现读。** `list` 是 `async`：新建本地数组，`for (const entry of this.ctx.loader.entries())`：`entry.options.group` 为真则 `continue`；否则 push `{ entryId, moduleName, enabled, fiberPhase }`。 [E: packages/host/plugin-inventory/src/index.ts:66] [E: packages/host/plugin-inventory/src/index.ts:69] 类上没有 snapshot 实例字段。无 roster 时直接 `{ entries }`。测试标题是 `without a second cache`：`loader.update(..., { disabled: true })` 与 `loader.remove` 之后下一次 `list()` 立刻变。 [E: packages/host/plugin-inventory/tests/inventory.spec.ts:46] [E: packages/host/plugin-inventory/tests/inventory.spec.ts:81]
 
-8. **可选 `agentPresets`。** `const presets = this.ctx.get('agentPresets')`；`undefined` 则 snapshot 不含该字段（测试断言 `agentPresets` 为 `undefined`）。 [E: packages/host/plugin-inventory/src/index.ts:77] [E: packages/host/plugin-inventory/tests/inventory.spec.ts:58] 有值则 `await presets.compositionInventory()`，把每行 `fiberState` 映射成 `fiberPhase`（缺省 `undefined` → `null`）。 [E: packages/host/plugin-inventory/src/index.ts:82] [E: packages/host/plugin-inventory/src/index.ts:84] `AgentPresets.compositionInventory`：roster 顺序；本 runtime 上 live standing mount 用 Loader 树；从未 mount 的 preset 读 composition 文件；broken 则 `rows: []`。 [E: packages/preset/agent-presets/src/index.ts:293] [E: packages/preset/agent-presets/src/index.ts:316] web 是五个 shipped profile 里唯一 insert `id: agent-presets` 的；headless/sdk/acp 跑 base 工具行，sdk-minimal 用 `agent-spine-demo`。因此默认 GUI 进程会带 `agentPresets`，无 roster 的 profile 即使 overlay 插了 inventory 也只返回 `entries`。
+8. **可选 `agentPresets`。** `const presets = this.ctx.get('agentPresets')`；`undefined` 则 snapshot 不含该字段（测试断言 `agentPresets` 为 `undefined`）。 [E: packages/host/plugin-inventory/src/index.ts:77] [E: packages/host/plugin-inventory/tests/inventory.spec.ts:58] 有值则 `await presets.compositionInventory()`，把每行 `fiberState` 映射成 `fiberPhase`（缺省 `undefined` → `null`）。 [E: packages/host/plugin-inventory/src/index.ts:82] [E: packages/host/plugin-inventory/src/index.ts:84] `AgentPresets.compositionInventory`：roster 顺序；本 runtime 上 live standing mount 用 Loader 树；从未 mount 的 preset 读 composition 文件；broken 则 `rows: []`。 [E: packages/preset/agent-presets/src/index.ts:293] [E: packages/preset/agent-presets/src/index.ts:316] web 是五个 shipped profile 里唯一 insert `id: agent-presets` 的；headless/sdk/acp 跑 base 工具行，sdk-minimal 在 host 面直挂 kernel + tools、无 roster。因此默认 GUI 进程会带 `agentPresets`，无 roster 的 profile 即使 overlay 插了 inventory 也只返回 `entries`。
 
 9. **`fiberPhase` 两条路都可能是 `null`。** 无 root Fiber（`entry.fiber === undefined`）直接 `null`。有 fiber 则查 `FIBER_PHASE[entry.fiber.state]`：`DISPOSED` 的值是 `null`。 [E: packages/host/plugin-inventory/src/index.ts:74] Loader `_dispose` 先把 `this.fiber = undefined` 再 `fiber.dispose()`，所以 disable / remove 之后的下一次 `list()` 通常走「无 fiber」分支。 [E: vendor/loader/src/config/entry.ts:132] `FiberState.DISPOSED` 是枚举成员 `4`。 [E: vendor/cordis/src/fiber.ts:152]
 
@@ -142,7 +137,7 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 ## 设计动机
 
-Loader 已经用内部 plugin/status 事件维护 `Entry.fiber` 与 `Fiber.state`。再做一份 inventory cache 就是第二份生命周期真源。`list()` 选择现读，用空 invariant 把这句话钉死。 [E: packages/host/plugin-inventory/src/invariant.ts:15]
+Loader 已经用内部 plugin/status 事件维护 `Entry.fiber` 与 `Fiber.state`。再做一份 inventory cache 就是第二份生命周期真源。`list()` 选择现读。
 
 group 行是树的结构容器，不是可安装插件。Loader 对 group 的 `disabled` 计算直接返回 `false`。跳过 `entry.options.group` 避免 Settings 把容器当成活模块。 [E: vendor/loader/src/config/entry.ts:90]
 
@@ -172,7 +167,7 @@ group 行是树的结构容器，不是可安装插件。Loader 对 group 的 `d
 |---|---|---|---|---|---|
 | Definition | `@deepseek-ai/dsh-host-plugin-inventory`（`./types` + `@Remote`） | `PluginInventoryGateway`、`PluginInventorySnapshot`；wire namespace `'pluginInventory'`；方法 `'list'` | 不是 Loader 行 | 定义仍在该 npm 包 | 定义仍在该 npm 包 |
 | Provider | `@deepseek-ai/dsh-host-plugin-inventory` | `provide('pluginInventory')`；`inject: ['loader']` | **不 insert** | `id: plugin-inventory` [E: packages/bundle/web-app/cordis.patch.yml:82] | **不 insert**（headless 止于 headless-runner） [E: packages/bundle/headless/cordis.patch.yml:26] |
-| Consumer | `@deepseek-ai/dsh-api-remotes`（client `$mount`）+ `@deepseek-ai/dsh-client-ui-settings-plugin-inventory` | `ctx.remote.pluginInventory`；`inject` 含 `'remote.pluginInventory'` | **不 insert** | `id: api-remotes`、`id: ui-settings-plugin-inventory` [E: packages/bundle/web-app/cordis.patch.yml:166] [E: packages/bundle/web-app/cordis.patch.yml:199] | **不 insert** |
+| Consumer | `@deepseek-ai/dsh-api-remotes`（client `$mount`）+ `@deepseek-ai/dsh-client-ui-settings-plugin-inventory` | `ctx.remote.pluginInventory`；`inject` 含 `'remote.pluginInventory'` | **不 insert** | `id: api-remotes`、`id: ui-settings-plugin-inventory` [E: packages/bundle/web-app/cordis.patch.yml:166] [E: packages/bundle/web-app/cordis.patch.yml:200] | **不 insert** |
 | 分发（相邻缝） | `@deepseek-ai/dsh-api-gateway` | `ctx.typertGateway`；intercept `/api` | `id: typert-gateway` [E: packages/bundle/base/cordis.patch.yml:45] | 继承 base 行 | 继承 base 的 profile（sdk-minimal 不叠 base，默认没有 gateway 行） |
 | Roster 输入（可选） | `@deepseek-ai/dsh-agent-presets` | `ctx.agentPresets.compositionInventory` | 无 roster 行 | web 另 insert `agent-presets` | headless/sdk/acp 无该 insert |
 
@@ -182,10 +177,8 @@ group 行是树的结构容器，不是可安装插件。Loader 对 group 的 `d
 
 - packages/host/plugin-inventory/src/index.ts
 - packages/host/plugin-inventory/src/types.ts
-- packages/host/plugin-inventory/src/invariant.ts
 - packages/host/plugin-inventory/package.json
 - packages/host/plugin-inventory/tests/inventory.spec.ts
-- packages/host/plugin-inventory/tests/invariant.spec.ts
 - packages/bundle/web-app/cordis.patch.yml
 - packages/bundle/web-app/package.json
 - packages/bundle/web-app/src/startup.ts

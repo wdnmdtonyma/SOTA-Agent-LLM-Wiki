@@ -53,7 +53,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 模型可见三件套 `get_goal` / `create_goal` / `update_goal`；实现包 `@deepseek-ai/dsh-tool-goal`（Cordis 插件名 `tool-goal`）。在同一 session 上读写一条 persisted completion goal，状态机在 host 的 `ctx.goals`（`@deepseek-ai/dsh-goal`），本包做 schema、authority、wrap-up，并依赖 `ctx.sessionProjections` 的 `turnBoundary`。
@@ -77,11 +77,11 @@ updated: 0a53fb55be
 | `create_goal` | `name: 'create_goal'` | 新建一条 active goal 并 arm |
 | `update_goal` | `name: 'update_goal'` | 用 exact `goal_id` + `revision` 做 compare-and-set |
 
-实现包是 `@deepseek-ai/dsh-tool-goal`。Cordis 插件导出名是 `tool-goal`。`inject` 是 `['agents', 'goals', 'tools', 'systemPrompt', 'sessionProjections']`：缺 `ctx.goals` 时插件挂起，catalog 里不会出现这三件套。[E: packages/goal/tool-goal/package.json:2] [E: packages/goal/tool-goal/src/index.ts:21] [E: packages/goal/tool-goal/src/index.ts:22] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:171]
+实现包是 `@deepseek-ai/dsh-tool-goal`。Cordis 插件导出名是 `tool-goal`。`inject` 是 `['agents', 'goals', 'tools', 'systemPrompt', 'sessionProjections']`：缺 `ctx.goals` 时插件挂起，catalog 里不会出现这三件套。[E: packages/goal/tool-goal/package.json:2] [E: packages/goal/tool-goal/src/index.ts:21] [E: packages/goal/tool-goal/src/index.ts:22] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:170]
 
 工厂是 `apply(ctx, config)`：`resolveConfig` 之后登记 system-prompt section `tool:goal`，`order` 来自 `ctx.systemPrompt.getSectionOrder('TOOL_GOAL')`（slot 表默认 `2400`），再三次 `ctx.tools.register(defineTool(...))`。Loader 直调 `apply(ctx, {})` 时 `blockedAfterConsecutiveRounds` 回退为 `3`。[E: packages/goal/tool-goal/src/index.ts:186] [E: packages/goal/tool-goal/src/index.ts:189] [E: packages/goal/tool-goal/src/index.ts:190] [E: packages/core/system-prompt/src/index.ts:143] [E: packages/goal/tool-goal/src/index.ts:126] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:198]
 
-测试钉死 boot 后 `ctx.tools.get` 恰好这三个名字；fiber dispose 后工具与 `tool:goal` section 一并撤掉。三个定义都没有 `isConcurrencySafe`，`executionMode` fail-closed 为 `{ kind: 'exclusive' }`。[E: packages/goal/tool-goal/tests/tool-goal.spec.ts:127] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:131] [E: packages/core/tools/src/index.ts:1268]
+测试钉死 boot 后 `ctx.tools.get` 恰好这三个名字；fiber dispose 后工具与 `tool:goal` section 一并撤掉。三个定义都没有 `isConcurrencySafe`，`executionMode` fail-closed 为 `{ kind: 'exclusive' }`。[E: packages/goal/tool-goal/tests/tool-goal.spec.ts:126] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:131] [E: packages/core/tools/src/index.ts:1268]
 
 这三件套**不是**人命令。host 另装 `@deepseek-ai/dsh-command-goal`，`ctx.commands.register({ name: 'goal', ... })` 给 `/goal`，不进 `ctx.tools.schemas()`。[E: packages/goal/command-goal/src/index.ts:190] [E: packages/goal/command-goal/src/index.ts:191]
 
@@ -89,7 +89,7 @@ updated: 0a53fb55be
 
 本工具让模型把「当前 session 里一条要跨多个 autonomous goal-round 才能做完的目标」写成 durable 状态，并在后续 turn 用 compare-and-set 更新。`create_goal` 描述写明：可以从 direct human 请求里推断 intent，不必用户说出 “create a goal”；trivial 单轮工作不要建；非人类与 subagent authority 会被拒。[E: packages/goal/tool-goal/src/index.ts:47] [E: packages/goal/tool-goal/src/index.ts:48]
 
-同一时刻一个 session 只有一条 current goal。`GoalService.create` 在已有 goal 且 `phase !== 'complete'` 时抛 `GOAL_ALREADY_EXISTS`；已 `complete` 的可以再 create 替换。id 形如 `goal-${randomUUID()}`，首条 revision 为 `1`，phase 为 `active`，activation 为 `armed`。[E: packages/goal/goal/src/index.ts:300] [E: packages/goal/goal/src/index.ts:305] [E: packages/goal/goal/src/index.ts:311]
+同一时刻一个 session 只有一条 current goal。`GoalService.create` 在已有 goal 且 `phase !== 'complete'` 时抛 `GOAL_ALREADY_EXISTS`；已 `complete` 的可以再 create 替换。id 形如 `goal-${randomUUID()}`，首条 revision 为 `1`，phase 为 `active`，activation 为 `armed`。[E: packages/goal/goal/src/index.ts:301] [E: packages/goal/goal/src/index.ts:305] [E: packages/goal/goal/src/index.ts:311]
 
 它**不是** `todo_write` 的任务清单，也**不是** plan-mode 的规划稿。人侧对照入口是 `/goal`（show / create / edit / pause / resume / clear），没有模型侧的 `complete` / `blocked` / `clear` 命令。[E: packages/goal/command-goal/src/index.ts:15] [E: packages/goal/command-goal/src/index.ts:170]
 
@@ -97,7 +97,7 @@ updated: 0a53fb55be
 
 ## 输入 schema
 
-以插件默认 Config（`blockedAfterConsecutiveRounds: 3`）boot 为准。三个名字的参数表不同；`Config` **不**增删字段、**不**改 wire 名。`defineTool` 把 ParameterSchemaSpec 编成隐式 open object（根上不写 `additionalProperties: false`），多出来的键能过 schema，`execute` 只读具名字段。[E: packages/goal/tool-goal/src/index.ts:32] [E: packages/core/tools/src/schema.ts:451] [E: packages/core/tools/src/schema.ts:586]
+以插件默认 Config（`blockedAfterConsecutiveRounds: 3`）boot 为准。三个名字的参数表不同；`Config` **不**增删字段、**不**改 wire 名。`defineTool` 把 ParameterSchemaSpec 编成隐式 open object（根上不写 `additionalProperties: false`），多出来的键能过 schema，`execute` 只读具名字段。[E: packages/goal/tool-goal/src/index.ts:32] [E: packages/core/tools/src/schema.ts:451] [E: packages/core/tools/src/schema.ts:568]
 
 ### `get_goal`
 
@@ -107,10 +107,10 @@ updated: 0a53fb55be
 
 | 字段 | 类型 | 必填 | 默认 | 约束 | 说明 |
 |---|---|---|---|---|---|
-| `objective` | `string` | 是 | 无 | schema 只要求 string；域边界 `trim()` 后非空 | 从 direct human 请求推断出的完成目标。[E: packages/goal/tool-goal/src/index.ts:210] [E: packages/goal/goal/src/index.ts:204] |
+| `objective` | `string` | 是 | 无 | schema 只要求 string；域边界 `trim()` 后非空 | 从 direct human 请求推断出的完成目标。[E: packages/goal/tool-goal/src/index.ts:210] [E: packages/goal/goal/src/index.ts:203] |
 | `max_goal_rounds` | `number` | 否 | 省略则走 `GoalService` 的 `defaultMaxGoalRounds`（schema 默认 `256`） | 有值则必须是正 safe integer；`0` **不会**被本工具当 filler 丢掉 | 自动续跑轮次上限。[E: packages/goal/tool-goal/src/index.ts:215] [E: packages/goal/goal/src/index.ts:240] [E: packages/goal/goal/tests/goal.spec.ts:130] |
 
-`create` 把 `args.max_goal_rounds === undefined` 才省略；模型若传 `0` / `1.5`，服务抛 `GOAL_INVALID_MAX_ROUNDS`。空白 `objective` 抛 `GOAL_INVALID_OBJECTIVE`。[E: packages/goal/tool-goal/src/index.ts:226] [E: packages/goal/goal/tests/goal.spec.ts:127] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:426]
+`create` 把 `args.max_goal_rounds === undefined` 才省略；模型若传 `0` / `1.5`，服务抛 `GOAL_INVALID_MAX_ROUNDS`。空白 `objective` 抛 `GOAL_INVALID_OBJECTIVE`。[E: packages/goal/tool-goal/src/index.ts:226] [E: packages/goal/goal/tests/goal.spec.ts:127] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:427]
 
 ### `update_goal`
 
@@ -143,15 +143,15 @@ updated: 0a53fb55be
 
 三个工具共用 `GOAL_OUTPUT`。canonical value 是 `oneOf`：`{ goal: null }`，或 `{ goal: { id, revision, objective, phase, roundsStarted, maxGoalRounds, blockedReason? }, activation }`。`phase` 枚举 `active` \| `paused` \| `blocked` \| `complete`；`activation` 枚举 `armed` \| `disarmed`。`blockedReason` 只在服务视图带了它时展开，形状是 `{ code, message }`。[E: packages/goal/tool-goal/src/index.ts:72] [E: packages/goal/tool-goal/src/index.ts:92] [E: packages/goal/tool-goal/src/index.ts:156]
 
-`output.render` 把整个 value `JSON.stringify` 成一块 text。没有字节预算、没有 spill 文件、没有截断标记。registry `createSuccessResult` 先按 `output.schema` 校验 value，再调用这个 render；模型看到的 `content[0].text` 与 `result.value` 同构。[E: packages/goal/tool-goal/src/index.ts:177] [E: packages/core/tools/src/index.ts:1791] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:339]
+`output.render` 把整个 value `JSON.stringify` 成一块 text。没有字节预算、没有 spill 文件、没有截断标记。registry `createSuccessResult` 先按 `output.schema` 校验 value，再调用这个 render；模型看到的 `content[0].text` 与 `result.value` 同构。[E: packages/goal/tool-goal/src/index.ts:177] [E: packages/core/tools/src/index.ts:1791] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:340]
 
-`activation` 是 process-local 观察值，**不**进 `goal` projection。`GoalView` 带 `activation`；`GoalProjection` 与 `applyGoalProjection` 写出的对象只有 `goal` / `roundsStarted` / `createdAt` / `updatedAt`。[E: packages/goal/goal/src/types.ts:82] [E: packages/goal/goal/src/types.ts:91] [E: packages/goal/goal/src/index.ts:145]
+`activation` 是 process-local 观察值，**不**进 `goal` projection。`GoalView` 带 `activation`；`GoalProjection` 与 `applyGoalProjection` 写出的对象只有 `goal` / `roundsStarted` / `createdAt` / `updatedAt`。[E: packages/goal/goal/src/types.ts:82] [E: packages/goal/goal/src/types.ts:91] [E: packages/goal/goal/src/index.ts:146]
 
-没有 current goal 时 `get_goal` 成功返回 `{ goal: null }`（不是 `isError`）。域错误（`GoalError` / `HarnessError`）才变成工具失败；测试覆盖的 code 包括 `GOAL_TOOL_AGENT_REQUIRED`、`GOAL_TOOL_DRIVER_REQUIRED`、`GOAL_TOOL_AUTHORITY_REQUIRED`、`GOAL_TOOL_INVALID_UPDATE`、`GOAL_TOOL_BLOCK_THRESHOLD`、`GOAL_INVALID_OBJECTIVE`。[E: packages/goal/tool-goal/tests/tool-goal.spec.ts:339] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:219] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:570]
+没有 current goal 时 `get_goal` 成功返回 `{ goal: null }`（不是 `isError`）。域错误（`GoalError` / `HarnessError`）才变成工具失败；测试覆盖的 code 包括 `GOAL_TOOL_AGENT_REQUIRED`、`GOAL_TOOL_DRIVER_REQUIRED`、`GOAL_TOOL_AUTHORITY_REQUIRED`、`GOAL_TOOL_INVALID_UPDATE`、`GOAL_TOOL_BLOCK_THRESHOLD`、`GOAL_INVALID_OBJECTIVE`。[E: packages/goal/tool-goal/tests/tool-goal.spec.ts:340] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:218] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:570]
 
 `presentCall` 只服务 UI：`card: 'generic'`。`get_goal` 标题 `Read current goal`、`kind: 'read'`；`create_goal` / `update_goal` 是 `kind: 'other'`。replay 参数过不了 schema 时 `presentCall` 回 `undefined`，不抛。[E: packages/goal/tool-goal/tests/tool-goal.spec.ts:144] [E: packages/core/tools/src/schema.ts:600]
 
-autonomous `complete` / `blocked` 会在结果上挂 `additionalContexts`（一条 plugin notice），**不**设 `concludesTurn`。human 权威下的同一 action 不挂 wrap-up。[E: packages/goal/tool-goal/tests/tool-goal.spec.ts:378] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:402]
+autonomous `complete` / `blocked` 会在结果上挂 `additionalContexts`（一条 plugin notice），**不**设 `concludesTurn`。human 权威下的同一 action 不挂 wrap-up。[E: packages/goal/tool-goal/tests/tool-goal.spec.ts:379] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:402]
 
 ## 背后的 seam
 
@@ -163,13 +163,13 @@ autonomous `complete` / `blocked` 会在结果上挂 `additionalContexts`（一�
 | 邻接 Provider | `@deepseek-ai/dsh-goal-round-driver` | 读 `ctx.goals.get`，在 armed+active 时投 goal-sourced followup；耗尽轮次时自己 `block(..., { code: 'round-limit' })`。[E: packages/goal/goal-round-driver/src/index.ts:19] [E: packages/goal/goal-round-driver/src/index.ts:167] |
 | 邻接 Consumer | `@deepseek-ai/dsh-command-goal` | 人命令 `/goal`，同一 `ctx.goals`。[E: packages/goal/command-goal/src/index.ts:13] |
 
-`GoalService.inject = ['agents', 'sessionProjections']`。每个 mutation 先 `assertLive`：`ctx.agents.get(agent.id) === agent`，拒绝「同 id 但不是 registry 里那份 live 对象」。[E: packages/goal/goal/src/index.ts:237] [E: packages/goal/goal/src/index.ts:463]
+`GoalService.inject = ['agents', 'sessionProjections']`。每个 mutation 先 `assertLive`：`ctx.agents.get(agent.id) === agent`，拒绝「同 id 但不是 registry 里那份 live 对象」。[E: packages/goal/goal/src/index.ts:236] [E: packages/goal/goal/src/index.ts:463]
 
 换掉 `ctx.goals` provider 会带走：默认 `maxGoalRounds`、CAS / phase 转移表、`goal/change` 落盘形状、process-local `activation`、以及 `agent/session-start` 时强制 `disarmed`。工具代码不自己 fold 日志。[E: packages/goal/goal/src/index.ts:251] [E: packages/goal/goal/src/index.ts:240]
 
 其它消费：
 
-- `ctx.agents`：`goalToolExecution` 要求 `exec.agent` 存在、就是 registry 里那份、`status === 'running'`、并且 `ctx.agents.currentInitiator() === agent`。`requireDirectHuman` 还要求 `ctx.agents.roots()` 包含该 agent（owner 为空的 runtime root；resumed fork 可以是 root）。[E: packages/goal/tool-goal/src/authority.ts:52] [E: packages/goal/tool-goal/src/authority.ts:53] [E: packages/goal/tool-goal/src/authority.ts:80] [E: packages/core/agent/src/index.ts:301] [E: packages/core/agent/src/index.ts:605]
+- `ctx.agents`：`goalToolExecution` 要求 `exec.agent` 存在、就是 registry 里那份、`status === 'running'`、并且 `ctx.agents.currentInitiator() === agent`。`requireDirectHuman` 还要求 `ctx.agents.roots()` 包含该 agent（owner 为空的 runtime root；resumed fork 可以是 root）。[E: packages/goal/tool-goal/src/authority.ts:52] [E: packages/goal/tool-goal/src/authority.ts:53] [E: packages/goal/tool-goal/src/authority.ts:80] [E: packages/core/agent/src/index.ts:304] [E: packages/core/agent/src/index.ts:608]
 - `ctx.sessionProjections`：`openTurnEvents` 读 `stateOf(session, 'turnBoundary')`；没有 open turn（`openTurnStartSeq === null`）→ `GOAL_TOOL_DRIVER_REQUIRED`。不再靠扫描 `turn/start` / `turn/end` 事件。[E: packages/goal/tool-goal/src/authority.ts:34] [E: packages/goal/tool-goal/src/authority.ts:36]
 - `ctx.tools`：注册与 `execute` 管线。
 - `ctx.systemPrompt`：section `tool:goal`。
@@ -184,10 +184,10 @@ durable 计数 `roundsStarted` **不是**本工具改的。fold 只在 `user/mes
 
 - **timeout：** 三个 `defineTool` 都**没有** `timeoutMs`。`dsh-tool-call-timeout-policy` 读到 `undefined` 就原样 `next()`。body 也没有自己的 deadline。[E: packages/guard/timeout-policy/src/index.ts:59]
 - **approval：** 不声明 ask，也不在 body 里 `approveEscalation`。authority 是 session 事件检查，不是 `ctx.approval`。
-- **sandbox：** 不碰 `ctx.sandbox` / `ctx.fs`。副作用是 `agent.session.append('goal/change', ...)`。[E: packages/goal/goal/src/index.ts:584]
-- **checkpoint：** host `session-checkpoint-policy` 对 top-level（`exec.parent === undefined`）在 `tools/execute` 里先 `ctx.sessions.flush`，再 `next()` 进 body。nested PTC `run_code` 子分发跳过这层。[E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
+- **sandbox：** 不碰 `ctx.sandbox` / `ctx.fs`。副作用是 `agent.session.append('goal/change', ...)`。[E: packages/goal/goal/src/index.ts:585]
+- **checkpoint：** host `session-checkpoint-policy` 对 top-level（`exec.parent === undefined`）在 `tools/execute` 里先 `ctx.sessions.flush`，再 `next()` 进 body。nested PTC `run_code` 子分发跳过这层。[E: packages/session/session-checkpoint-policy/src/index.ts:70] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
 - **并行：** 未声明 `isConcurrencySafe`，exclusive。[E: packages/goal/tool-goal/tests/tool-goal.spec.ts:131]
-- **PTC：** `ptc` preset 仍装本包，但 `mode: ptc` 时无 `parent` 的模型直调会在进 waterfall 前 `collapses`（`name !== run_code`）。要从 `run_code` 程序里调这三个名字。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/core/tools/src/index.ts:1316]
+- **PTC：** `ptc` preset 仍装本包，但 `mode: ptc` 时无 `parent` 的模型直调会在进 waterfall 前 `collapses`（`name !== run_code`）。要从 `run_code` 程序里调这三个名字。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:271] [E: packages/core/tools/src/index.ts:1315]
 
 ## Preset 装配
 
@@ -200,7 +200,7 @@ durable 计数 `roundsStarted` **不是**本工具改的。fold 只在 `user/mes
 | `ptc`（旧名 `code`；wiki id `surface.presets.code` 仍是稳定别名） | 是 | 无 | 无。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:104] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:105] | 无 extra；另有 `tool-presentation.mode: ptc` |
 | `cordis` | 是 | 无 | 无。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:85] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:86] | 无 extra |
 
-组合旁注（不是 preset 成员资格）：`dsh-base` insert `id: goal`（`@deepseek-ai/dsh-goal`）、`goal-round-driver`、`command-goal`，并另有一行 host `tool-goal`。[E: packages/bundle/base/cordis.patch.yml:298] [E: packages/bundle/base/cordis.patch.yml:301] [E: packages/bundle/base/cordis.patch.yml:417] `dsh-web-app` overlay 把 host `command-goal` 与 `tool-goal` 设 `disabled: true`，SERVICE / driver 留在 host，改由每个 session 的 preset remount 人命令与模型工具。[E: packages/bundle/web-app/cordis.patch.yml:366] [E: packages/bundle/web-app/cordis.patch.yml:369]
+组合旁注（不是 preset 成员资格）：`dsh-base` insert `id: goal`（`@deepseek-ai/dsh-goal`）、`goal-round-driver`、`command-goal`，并另有一行 host `tool-goal`。[E: packages/bundle/base/cordis.patch.yml:298] [E: packages/bundle/base/cordis.patch.yml:301] [E: packages/bundle/base/cordis.patch.yml:414] `dsh-web-app` overlay 把 host `command-goal` 与 `tool-goal` 设 `disabled: true`，SERVICE / driver 留在 host，改由每个 session 的 preset remount 人命令与模型工具。[E: packages/bundle/web-app/cordis.patch.yml:376] [E: packages/bundle/web-app/cordis.patch.yml:379]
 
 `web` / `headless` / `sdk` / `sdk-minimal` / `acp` 五个 shipped profile 里，goal 工具是否出现仍取决于该进程叠了哪份 bundle + 哪个 agent preset，而不是 profile 名本身。
 
@@ -208,13 +208,13 @@ durable 计数 `roundsStarted` **不是**本工具改的。fold 只在 `user/mes
 
 共享前缀对三个名字都成立。
 
-1. `defineTool` 包装的 `execute` 先 `validateJsonSchemaValue`，违规抛 `ToolArgsError`（`INVALID_ARGS`），再进用户 body。[E: packages/core/tools/src/schema.ts:586]
+1. `defineTool` 包装的 `execute` 先 `validateJsonSchemaValue`，违规抛 `ToolArgsError`（`INVALID_ARGS`），再进用户 body。[E: packages/core/tools/src/schema.ts:568]
 2. `goalToolExecution@packages/goal/tool-goal/src/authority.ts`：没有 `exec.agent` → `GOAL_TOOL_AGENT_REQUIRED`。live 对象对不上、`status !== 'running'`、或 `currentInitiator() !== agent` → `GOAL_TOOL_DRIVER_REQUIRED`。`turnBoundary` 没有 open turn 同样 `GOAL_TOOL_DRIVER_REQUIRED`。[E: packages/goal/tool-goal/src/authority.ts:50] [E: packages/goal/tool-goal/src/authority.ts:54] [E: packages/goal/tool-goal/src/authority.ts:36] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:229]
 3. `hasDirectHumanInput`：agent 必须在 `ctx.agents.roots()` 里，且当前 open-turn 窗口存在 `user/message` 且 `source.kind === 'user'`。plugin / goal-sourced 消息不算 human。live child（`enter` 之后有 owner）即使带着 `kind: 'user'` 也被拒。[E: packages/goal/tool-goal/src/authority.ts:80] [E: packages/goal/tool-goal/src/authority.ts:82] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:234] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:242]
 
 ### `get_goal`
 
-4. 不做 human / goal-round 检查。`ctx.goals.get(execution.agent)`，经 `goalValue` 返回。无 current → `{ goal: null }`。[E: packages/goal/tool-goal/src/index.ts:201] [E: packages/goal/goal/src/index.ts:270]
+4. 不做 human / goal-round 检查。`ctx.goals.get(execution.agent)`，经 `goalValue` 返回。无 current → `{ goal: null }`。[E: packages/goal/tool-goal/src/index.ts:201] [E: packages/goal/goal/src/index.ts:275]
 
 ### `create_goal`
 
@@ -224,10 +224,10 @@ durable 计数 `roundsStarted` **不是**本工具改的。fold 只在 `user/mes
 
 6. `goalRef(goal_id, revision)` 做成 `GoalRef`。再按 `action` 分支。[E: packages/goal/tool-goal/src/index.ts:258]
 7. **`edit`：** `requireDirectHuman`；拒 `blocked_reason` 文本；`ctx.goals.edit`。两边都空（只有 filler）会落到服务的 `GOAL_INVALID_EDIT`。phase 不变，revision + 1，activation 保持 cache 里的值。[E: packages/goal/tool-goal/src/index.ts:264] [E: packages/goal/goal/src/index.ts:327] [E: packages/goal/goal/src/index.ts:335]
-8. **`pause` / `resume`：** `requireDirectHuman`；拒任何实质 objective / cap / reason。`pause` → `ctx.goals.pause`（只从 `active`，结果 `paused` + `disarmed`）。`resume` → `ctx.goals.resume`（`active`/`paused`/`blocked`；已 armed 的 active 抛 `GOAL_INVALID_TRANSITION`；`roundsStarted >= maxGoalRounds` 也拒；结果 `active` + `armed`）。[E: packages/goal/tool-goal/src/index.ts:271] [E: packages/goal/goal/src/index.ts:346] [E: packages/goal/goal/src/index.ts:365] [E: packages/goal/goal/src/index.ts:368]
+8. **`pause` / `resume`：** `requireDirectHuman`；拒任何实质 objective / cap / reason。`pause` → `ctx.goals.pause`（只从 `active`，结果 `paused` + `disarmed`）。`resume` → `ctx.goals.resume`（`active`/`paused`/`blocked`；已 armed 的 active 抛 `GOAL_INVALID_TRANSITION`；`roundsStarted >= maxGoalRounds` 也拒；结果 `active` + `armed`）。[E: packages/goal/tool-goal/src/index.ts:271] [E: packages/goal/goal/src/index.ts:349] [E: packages/goal/goal/src/index.ts:365] [E: packages/goal/goal/src/index.ts:368]
 9. **`complete` / `blocked`：** `completionAuthority`。human 输入直接 `{ kind: 'direct-human' }`；否则要求 `ctx.goals.get` 非空，且当前 turn 有一条 `source.kind === 'goal'`、id/revision/round 全等于 current view 的消息，才给 `{ kind: 'goal-round', goal }`。两者都没有 → `GOAL_TOOL_AUTHORITY_REQUIRED`。goal-round **不能** `edit` / `pause` / `resume`。[E: packages/goal/tool-goal/src/authority.ts:111] [E: packages/goal/tool-goal/src/authority.ts:80] [E: packages/goal/tool-goal/src/authority.ts:116] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:548]
 10. `blocked` + `kind === 'goal-round'` + `roundsStarted < blockedAfterConsecutiveRounds`（默认 3）→ `GOAL_TOOL_BLOCK_THRESHOLD`。human 权威可以立刻 `blocked`，此时 `roundsStarted` 仍可以是 `0`。[E: packages/goal/tool-goal/src/index.ts:298] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:570] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:611]
-11. `complete` → `ctx.goals.complete`（从 `active`/`paused`/`blocked` 到 `complete` + `disarmed`）。`blocked` → `ctx.goals.block`（只从 `active`），reason `{ code: 'model-reported', message: blocked_reason }`。[E: packages/goal/tool-goal/src/index.ts:306] [E: packages/goal/goal/src/index.ts:384] [E: packages/goal/goal/src/index.ts:402]
+11. `complete` → `ctx.goals.complete`（从 `active`/`paused`/`blocked` 到 `complete` + `disarmed`）。`blocked` → `ctx.goals.block`（只从 `active`），reason `{ code: 'model-reported', message: blocked_reason }`。[E: packages/goal/tool-goal/src/index.ts:306] [E: packages/goal/goal/src/index.ts:388] [E: packages/goal/goal/src/index.ts:407]
 12. 仅当 `authority.kind === 'goal-round'`：`exec.deferContext(createUserMessage({ source: { kind: 'plugin', plugin: 'tool-goal', form: 'notice', summary } }))`。`complete` 用 `renderWrapupContext(objective)`（`<goal_complete>`）；`blocked` 再传入 reason（`<goal_blocked>`）。两段文案都要求模型直接对用户写收尾，并且不要在这一 run 再调工具。registry 把 deferred 消息拼进 `additionalContexts`。[E: packages/goal/tool-goal/src/index.ts:313] [E: packages/goal/tool-goal/src/wrapup.ts:20] [E: packages/goal/tool-goal/src/wrapup.ts:29] [E: packages/core/tools/src/index.ts:1572]
 
 session resume / fork 后，`agent/session-start` 把 cache `activation` 设成 `disarmed`。active 但仍 disarmed 的 goal 要靠 human `update_goal action resume` 再 arm；测试用中文「继续」打开 human turn 即可。[E: packages/goal/goal/src/index.ts:252] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:412] [E: packages/goal/tool-goal/tests/tool-goal.spec.ts:413]

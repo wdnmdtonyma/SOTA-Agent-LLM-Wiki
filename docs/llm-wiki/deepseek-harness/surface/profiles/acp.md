@@ -10,7 +10,6 @@ source:
   - packages/bundle/acp-app/cordis.patch.yml
   - packages/bundle/acp-app/package.json
   - packages/bundle/acp-app/src/index.ts
-  - packages/bundle/acp-app/src/invariant.ts
   - packages/bundle/acp-app/tests/acp-app.spec.ts
   - packages/bundle/acp-app/tests/startup.spec.ts
   - packages/boot/cmdline/src/index.ts
@@ -31,7 +30,7 @@ related:
   - surface.presets.overview
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `acp` 是 shipped **stdio 宿主 profile**：`PROFILE_TEMPLATES.acp` 把 `@deepseek-ai/dsh-base` 叠上 `@deepseek-ai/dsh-acp-app`，`patchReload: 'startup'`。overlay 只改 host 面 persona、关掉 `session-title-llm`，再 insert 零 extra-flag 的 `acp-app-startup` 与 `inject: [acpAppStartup]` 的 `dsh-acp` 桥。stdout 归 ACP JSON-RPC；`--help` 不 provide 服务、不占 stdio。没有 `dsh acp` 子命令 alias，没有 `agent-presets` roster。
@@ -57,7 +56,7 @@ acp: {
 
 [E: packages/boot/app-boot/src/profile.ts:138] [E: packages/boot/app-boot/src/profile.ts:139] [E: packages/boot/app-boot/src/profile.ts:140] 测试按对象相等锁死这张表。[E: packages/boot/app-boot/tests/profile.spec.ts:195]
 
-`@deepseek-ai/dsh-acp-app` 的 manifest 把 bundle patch 指到本包 `./cordis.patch.yml`。[E: packages/bundle/acp-app/package.json:2] [E: packages/bundle/acp-app/package.json:38] 描述是 automation-only JSON-RPC stdio + 进程生命周期，叠在 `dsh-base` 上。[E: packages/bundle/acp-app/package.json:3]
+`@deepseek-ai/dsh-acp-app` 的 manifest 把 bundle patch 指到本包 `./cordis.patch.yml`。[E: packages/bundle/acp-app/package.json:2] [E: packages/bundle/acp-app/package.json:33] 描述是 automation-only JSON-RPC stdio + 进程生命周期，叠在 `dsh-base` 上。[E: packages/bundle/acp-app/package.json:3]
 
 本 overlay **不** insert `agent-presets`，**不** disable base 的 `tool-*`。模型可见工具留在 **host 面**（与 headless 同类）；协议桥 `agents.create` 的权威走读在 [`surface.acp.server`](../acp/server.md)，本页不复述 ACP 方法表。`sdk-minimal` 是唯一不叠 `dsh-base` 的 shipped bundle；`acp` 叠 base。
 
@@ -84,7 +83,6 @@ acp: {
 | `inject` | `['cmdlineArgs']` | [E: packages/bundle/acp-app/src/index.ts:16] |
 | `ACP_APP_STARTUP_SERVICE` | `'acpAppStartup'` | [E: packages/bundle/acp-app/src/index.ts:19] |
 | provide 值 | `{ accepted: true }` | [E: packages/bundle/acp-app/src/index.ts:45] |
-| invariant companion `name` | `'acp-app-invariant'` | [E: packages/bundle/acp-app/src/invariant.ts:12] |
 
 `apply` 成功 parse 后先 `exitOnStdinEnd(ctx, 'acp-app.stdin')`，再 provide 服务。[E: packages/bundle/acp-app/src/index.ts:44] [E: packages/bundle/acp-app/src/index.ts:45] 然后 `parseCmdline`。[E: packages/bundle/acp-app/src/index.ts:47] `--help` 不跑 action：服务 `undefined`，stdin `end` 也不再追加 exit。[E: packages/bundle/acp-app/tests/startup.spec.ts:60] [E: packages/bundle/acp-app/tests/startup.spec.ts:63] 无参启动：EOF 请求 `exit(0)`。[E: packages/bundle/acp-app/tests/startup.spec.ts:51] [E: packages/bundle/acp-app/tests/startup.spec.ts:53] `exitOnStdinEnd` 要求 launcher 已 provide `appExit` 与 `appReady`。[E: packages/boot/cmdline/src/index.ts:123] [E: packages/boot/cmdline/src/index.ts:129]
 
@@ -107,7 +105,7 @@ ACP 桥插件本身的 `name` / `inject` / `Config` 权威在 [`surface.acp.serv
 
 叠层（CLI 文件内 `composeProfile`）：bundle（先 `dsh-base` 再 `dsh-acp-app`）→ profile `cordis.patch.yml` → home → `--patch`。[E: apps/cli/src/profile-boot.ts:166] `DSH_TELEMETRY_DISABLED` 非空且树里有 `session-telemetry-otel` 时再 disable 该行。[E: apps/cli/src/profile-boot.ts:170]
 
-`runProfile` **只在** `composed.profile.patchReload === 'live'` 时装用户层 watcher。[E: apps/cli/src/profile-boot.ts:270] 模板是 `startup`，默认 **不** 装 live HMR。用户手改 manifest 写成 `live` 才会走 watcher。
+`runProfile` **只在** `composed.profile.patchReload === 'live'` 时装用户层 watcher。[E: apps/cli/src/profile-boot.ts:271] 模板是 `startup`，默认 **不** 装 live HMR。用户手改 manifest 写成 `live` 才会走 watcher。
 
 **help 不挂桥**：`acp` 行 `inject: [acpAppStartup]`；help 不 provide 服务，桥不激活，stdout 只打 usage。
 
@@ -131,7 +129,6 @@ ACP 桥插件本身的 `name` / `inject` / `Config` 权威在 [`surface.acp.serv
 - packages/bundle/acp-app/cordis.patch.yml
 - packages/bundle/acp-app/package.json
 - packages/bundle/acp-app/src/index.ts
-- packages/bundle/acp-app/src/invariant.ts
 - packages/bundle/acp-app/tests/acp-app.spec.ts
 - packages/bundle/acp-app/tests/startup.spec.ts
 - packages/boot/cmdline/src/index.ts

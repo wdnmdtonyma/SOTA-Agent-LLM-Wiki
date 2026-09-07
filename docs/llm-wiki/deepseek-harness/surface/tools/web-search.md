@@ -57,7 +57,7 @@ related:
   - subsys.integration.web-search
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `web_search` 是 `@deepseek-ai/dsh-tool-web` 向模型注册的联网检索工具：wire 名 `web_search`，参数是必填数组 `queries`（1–N 条非空查询，部署默认 N=`WEB_SEARCH_MAX_QUERIES`=4），经 `ctx.web.search` 交给默认 Provider `@deepseek-ai/dsh-web-search-deepseek`（`id: deepseek-official`），返回可选摘要与来源 URL 列表。
@@ -91,7 +91,7 @@ updated: 0a53fb55be
 
 `web_search` 只做**当前信息的网页检索**。模型给 1–N 条 `queries`；返回多少条、允许多少条查询、等多久、要不要同场挂 `web_fetch`，全是部署 Config，不是模型参数。工具包自己不选 Provider、不发 HTTP：网络与凭证都在 `ctx.web` 背后。[E: packages/web/web/src/types.ts:16][E: packages/web/tool-web/src/search.ts:365]
 
-它不是浏览器。全文读取是同插件的 `web_fetch`（`applyWebFetchTool`）。插件 Config 默认 `fetch: true` 会登记 `web_fetch`。`dsh-base` 的 host 行写成 `fetch: false`；四个 shipped preset 里 `standard` / `ptc` / `cordis` 的 `tool-web` 行写成 `fetch: true`（web profile 关掉 host 行后由 preset 再挂），因此 **web 产品面上这些 preset 的 catalog 含 `web_search` 与 `web_fetch`**。[E: packages/web/tool-web/src/index.ts:56][E: packages/web/tool-web/src/fetch.ts:447][E: packages/bundle/base/cordis.patch.yml:467][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256][E: apps/cli/tests/web-agent-presets.e2e.ts:237]
+它不是浏览器。全文读取是同插件的 `web_fetch`（`applyWebFetchTool`）。插件 Config 默认 `fetch: true` 会登记 `web_fetch`。`dsh-base` 的 host 行写成 `fetch: false`；四个 shipped preset 里 `standard` / `ptc` / `cordis` 的 `tool-web` 行写成 `fetch: true`（web profile 关掉 host 行后由 preset 再挂），因此 **web 产品面上这些 preset 的 catalog 含 `web_search` 与 `web_fetch`**。[E: packages/web/tool-web/src/index.ts:56][E: packages/web/tool-web/src/fetch.ts:447][E: packages/bundle/base/cordis.patch.yml:467][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: apps/cli/tests/web-agent-presets.e2e.ts:235]
 
 `dsh-base` **同时**挂 `@deepseek-ai/dsh-web-fetch-http`（`id: web-fetch-http`）以及 `ctx.web` 的 `fetchProvider: http`，但 host `tool-web` 仍 `fetch: false`：host 面上不把 `web_fetch` 交给模型，除非 overlay / preset 打开。[E: packages/bundle/base/cordis.patch.yml:454][E: packages/bundle/base/cordis.patch.yml:461][E: packages/bundle/base/cordis.patch.yml:467]
 
@@ -125,7 +125,7 @@ updated: 0a53fb55be
 
 `web_search` **从不**广告 `sandbox_permissions` / `justification`。它不挂 sandbox，也不 `ask`。
 
-shipped `standard` / `ptc` / `cordis` 的 `tool-web` 行覆盖两项：`fetch: true`、`searchTimeoutMs: 60000`。`search` / `searchMaxResults` / `searchMaxQueries` 不写，因此 web 产品面上是「登记 search+fetch、8 条、最多 4 query、60s」。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:257]
+shipped `standard` / `ptc` / `cordis` 的 `tool-web` 行覆盖两项：`fetch: true`、`searchTimeoutMs: 60000`。`search` / `searchMaxResults` / `searchMaxQueries` 不写，因此 web 产品面上是「登记 search+fetch、8 条、最多 4 query、60s」。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]
 
 ## 输出 & 截断 / spill
 
@@ -187,7 +187,7 @@ DeepSeek 这条路**不走** `ctx.llm`。它用原生 `fetch` POST Anthropic 兼
 - **`tools/post-execute`**：`web_search` 不注册 listener，默认 `accept`。规范值由 registry `createSuccessResult` 冻结后 `render`。[E: packages/core/tools/src/index.ts:1738][E: packages/core/tools/src/index.ts:1784]
 - **sandbox / approval**：不挂。Sandbox 只罩文件副作用。
 
-PTC（`ptc` preset 的 `tool-presentation` `mode: ptc`）下，模型不能直呼 `web_search`：非嵌套且 `modeFor(scope) === 'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse；`if (collapsed)` 直接返回 `final-result`（`UNKNOWN_TOOL` 文案指向从 `run_code` 里调），不进 `tools/pre-execute`。SDK 子分发带 `parent`（`nested === true`），`collapses` 为假，仍走完整管线。`ptc` 的 **wire 工具只有** `run_code`；`web_search` 仍登记，并出现在 `tools:sdk` 段。[E: packages/core/tools/src/index.ts:1316][E: packages/core/tools/src/index.ts:1430][E: packages/core/tools/src/index.ts:986][E: apps/cli/tests/web-agent-presets.e2e.ts:366][E: apps/cli/tests/web-agent-presets.e2e.ts:371]
+PTC（`ptc` preset 的 `tool-presentation` `mode: ptc`）下，模型不能直呼 `web_search`：非嵌套且 `modeFor(scope) === 'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse；`if (collapsed)` 直接返回 `final-result`（`UNKNOWN_TOOL` 文案指向从 `run_code` 里调），不进 `tools/pre-execute`。SDK 子分发带 `parent`（`nested === true`），`collapses` 为假，仍走完整管线。`ptc` 的 **wire 工具只有** `run_code`；`web_search` 仍登记，并出现在 `tools:sdk` 段。[E: packages/core/tools/src/index.ts:1316][E: packages/core/tools/src/index.ts:1430][E: packages/core/tools/src/index.ts:986][E: apps/cli/tests/web-agent-presets.e2e.ts:366][E: apps/cli/tests/web-agent-presets.e2e.ts:372]
 
 ## Preset 装配
 
@@ -196,13 +196,13 @@ PTC（`ptc` preset 的 `tool-presentation` `mode: ptc`）下，模型不能直�
 | preset | 装 `@deepseek-ai/dsh-tool-web`？ | `disabled` | isolate | shipped Config |
 |---|---|---|---|---|
 | `minimal` | **否** | — | 无 `tool-web` 行（isolate 只罩 `terminals` / `fs`） | yml 没有 `id: tool-web`。web profile 下 host 行也被关掉，e2e catalog 只有 `bash` 与 `str_replace_editor`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:74][E: apps/cli/tests/web-agent-presets.e2e.ts:290] |
-| `standard` | **是** | 无 | 无（顶层 remount 进 host `tools` registry） | `- id: tool-web` / `name: '@deepseek-ai/dsh-tool-web'`，`fetch: true`，`searchTimeoutMs: 60000`。e2e 精确 catalog 含 `web_search` **和** `web_fetch`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256][E: apps/cli/tests/web-agent-presets.e2e.ts:237] |
-| `ptc` | **是** | 无 | 无 | 与 standard 同一 `tool-web` 行。改变的是呈现：`assembly.tools === ['run_code']`，SDK 文本仍含 `web_search`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:254][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:257][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268][E: apps/cli/tests/web-agent-presets.e2e.ts:366] |
+| `standard` | **是** | 无 | 无（顶层 remount 进 host `tools` registry） | `- id: tool-web` / `name: '@deepseek-ai/dsh-tool-web'`，`fetch: true`，`searchTimeoutMs: 60000`。e2e 精确 catalog 含 `web_search` **和** `web_fetch`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: apps/cli/tests/web-agent-presets.e2e.ts:235] |
+| `ptc` | **是** | 无 | 无 | 与 standard 同一 `tool-web` 行。改变的是呈现：`assembly.tools === ['run_code']`，SDK 文本仍含 `web_search`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:255][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:257][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268][E: apps/cli/tests/web-agent-presets.e2e.ts:366] |
 | `cordis` | **是** | 无 | 无 | 同样 remount，同样 `fetch: true` / `60000`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:241][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:244] |
 
 host `dsh-base` 自己也有一行 `tool-web`（`fetch: false`、`searchTimeoutMs: 60000`），并且挂 `web` + `web-search-deepseek` + `web-fetch-http`。[E: packages/bundle/base/cordis.patch.yml:464][E: packages/bundle/base/cordis.patch.yml:467][E: packages/bundle/base/cordis.patch.yml:450]
 
-`web` profile 的 `dsh-web-app` 把 host 面 `tool-web` 设成 `disabled: true`，改由每会话 preset 再挂。因此 `minimal` 在产品 web 面上没有 `web_search`；`standard` / `ptc` / `cordis` 靠自己的那一行把它（以及 `web_fetch`）加回来。[E: packages/bundle/web-app/cordis.patch.yml:431][E: packages/bundle/web-app/cordis.patch.yml:432]
+`web` profile 的 `dsh-web-app` 把 host 面 `tool-web` 设成 `disabled: true`，改由每会话 preset 再挂。因此 `minimal` 在产品 web 面上没有 `web_search`；`standard` / `ptc` / `cordis` 靠自己的那一行把它（以及 `web_fetch`）加回来。[E: packages/bundle/web-app/cordis.patch.yml:432][E: packages/bundle/web-app/cordis.patch.yml:432]
 
 `search: false` 可以只留 `web_fetch`。四个 shipped yml 都不写 `search: false`，测试覆盖这条分支，但那不是产品默认。[E: packages/web/tool-web/tests/tool-web.spec.ts:472]
 
@@ -235,7 +235,7 @@ host `dsh-base` 自己也有一行 `tool-web`（`fetch: false`、`searchTimeoutM
 - **模型只问问题，产品控上下文。** `searchMaxResults` 默认 8；`searchMaxQueries` 默认 4。模型不能把 cap 开大来灌 context。[E: packages/web/tool-web/src/search.ts:19][E: packages/web/tool-web/src/search.ts:22]
 - **密钥共用、基址拆开。** search 说的是 Anthropic 兼容 Messages + 原生 `web_search_20250305`，chat 说的是另一条 completions 基址。复用 `DEEPSEEK_API_KEY`，禁止复用 `DEEPSEEK_BASE_URL`。override 只能是 `DEEPSEEK_SEARCH_BASE_URL` 或 `web-search-deepseek` 的 `baseURL`。[E: packages/web/web-search-deepseek/src/index.ts:82][E: packages/web/web-search-deepseek/src/index.ts:112]
 - **enablement ≠ availability。** 关掉 `search` 才从 catalog 消失。Provider 没挂、key 没写、多个 Provider 打架，模型仍然看见 `web_search`，execute 给带 `code` 的 `WebError`。[E: packages/web/tool-web/tests/tool-web.spec.ts:479]
-- **host 默认没有模型可见 `web_fetch`；web shipped preset 打开。** 插件 Config 默认 `fetch: true`。`dsh-base` `fetch: false`；`standard`/`ptc`/`cordis` 写成 `fetch: true`。search prompt 随 `fetchEnabled` 决定要不要教 `web_fetch`。[E: packages/bundle/base/cordis.patch.yml:467][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256][E: packages/web/tool-web/tests/tool-web.spec.ts:503]
+- **host 默认没有模型可见 `web_fetch`；web shipped preset 打开。** 插件 Config 默认 `fetch: true`。`dsh-base` `fetch: false`；`standard`/`ptc`/`cordis` 写成 `fetch: true`。search prompt 随 `fetchEnabled` 决定要不要教 `web_fetch`。[E: packages/bundle/base/cordis.patch.yml:467][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/web/tool-web/tests/tool-web.spec.ts:503]
 - **`max_uses` ≠ `maxResults`。** DeepSeek 请求里的 `max_uses`（默认 5）限制 server tool 调用次数；条数帽是 consumer 的 `searchMaxResults`，由 seam 切片。官方映射按 URL 去重，因为 `max_uses > 1` 可能重复同一 URL。[E: packages/web/web-search-deepseek/src/provider.ts:215][E: packages/web/web/src/index.ts:199]
 - **无 result block 就是错。** 不把模型散文当搜索结果刮下来。[E: packages/web/web-search-deepseek/src/provider.ts:151]
 - **每次 search 现解析密钥。** Models 页写入或轮换 `DEEPSEEK_API_KEY` 后，下一次调用就能用到，不必重启进程。[E: packages/web/web-search-deepseek/tests/deepseek.spec.ts:505]

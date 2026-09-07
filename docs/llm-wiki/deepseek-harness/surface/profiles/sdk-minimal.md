@@ -10,7 +10,6 @@ source:
   - packages/bundle/sdk-minimal/cordis.patch.yml
   - packages/bundle/sdk-minimal/package.json
   - packages/bundle/sdk-minimal/src/index.ts
-  - packages/bundle/sdk-minimal/src/invariant.ts
   - packages/bundle/sdk-minimal/tests/sdk-minimal.spec.ts
   - packages/bundle/sdk-app/src/index.ts
   - packages/bundle/sdk-app/package.json
@@ -33,7 +32,7 @@ related:
   - surface.presets.overview
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `sdk-minimal` 是五个 shipped profile 里**唯一不叠 `@deepseek-ai/dsh-base`** 的模板：`PROFILE_TEMPLATES['sdk-minimal']` 的 `bundles` 只有 `@deepseek-ai/dsh-sdk-minimal`，`patchReload: 'startup'`。bundle 的 `cordis.patch.yml` 是**完整** Cordis 树（stdio JSON-RPC + 一份 DeepSeek adapter + persistent shell + editor + JSONL sessions），不是 overlay。入口是 `dsh --profile sdk-minimal`，没有 `dsh sdk-minimal` 子命令。
@@ -54,7 +53,7 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。
 
 对照：`sdk` 叠 `dsh-base` + `dsh-sdk-app`。[E: packages/boot/app-boot/src/profile.ts:150] `web` 是唯一 `live`。[E: packages/boot/app-boot/src/profile.ts:144] `INSTALLATION_OWNED_PROFILE_TUPLES` **没有** `sdk-minimal` 条目，`normalizeShippedProfile` 不会改它的 bundle 列表。[E: packages/boot/app-boot/src/profile.ts:161]
 
-`@deepseek-ai/dsh-sdk-minimal` 的 `dsh.bundle.patch` 是 `./cordis.patch.yml`。[E: packages/bundle/sdk-minimal/package.json:38] 包描述写明 standalone：JSON-RPC、一份 DeepSeek adapter、persistent shell、editor、JSONL sessions。[E: packages/bundle/sdk-minimal/package.json:3] TypeScript 入口 `src/index.ts` **没有**运行时接口，只 `export {}`。[E: packages/bundle/sdk-minimal/src/index.ts:9] 物质全在 patch 列表。
+`@deepseek-ai/dsh-sdk-minimal` 的 `dsh.bundle.patch` 是 `./cordis.patch.yml`。[E: packages/bundle/sdk-minimal/package.json:33] 包描述写明 standalone：JSON-RPC、一份 DeepSeek adapter、persistent shell、editor、JSONL sessions。[E: packages/bundle/sdk-minimal/package.json:3] TypeScript 入口 `src/index.ts` **没有**运行时接口，只 `export {}`。[E: packages/bundle/sdk-minimal/src/index.ts:9] 物质全在 patch 列表。
 
 `dsh web` 是唯一硬编码 profile alias；sdk-minimal 必须 `--profile`。[E: apps/cli/src/args.ts:156] 本仓没有 shipped TUI；help 里的 `tui` 只是自定义名。[E: apps/cli/src/args.ts:68]
 
@@ -76,13 +75,13 @@ built-bin：`--dump-default-config` 打印的 `id`/`name` 表与 bundle 测试�
 |---|---|
 | `PROFILE_TEMPLATES['sdk-minimal']` | `bundles: ['@deepseek-ai/dsh-sdk-minimal']`，`patchReload: 'startup'` [E: packages/boot/app-boot/src/profile.ts:154] |
 | `PROFILE_TEMPLATES.sdk`（对照） | `dsh-base` + `dsh-sdk-app`，`startup` [E: packages/boot/app-boot/src/profile.ts:150] |
-| `@deepseek-ai/dsh-sdk-app` `dsh.bundle.patch` | 另一份 overlay，叠在 base 上 [E: packages/bundle/sdk-app/package.json:38] |
+| `@deepseek-ai/dsh-sdk-app` `dsh.bundle.patch` | 另一份 overlay，叠在 base 上 [E: packages/bundle/sdk-app/package.json:33] |
 
 `sdk-app-startup` 的 Cordis 插件 `name` 是 `'sdk-app-startup'`；`SDK_APP_STARTUP_SERVICE` 字面量 `'sdkAppStartup'`。本页不占有这些符号，只消费 Config `profile`。[E: packages/bundle/sdk-app/src/index.ts:14] [E: packages/bundle/sdk-app/src/index.ts:20]
 
 ### 完整 insert 树（每一行）
 
-`packages/bundle/sdk-minimal/cordis.patch.yml` 顶部注释：unlike ordinary SDK，本 bundle **不** layer over `dsh-base`；这一份 insert 就是完整树；用户 profile / home / `--patch` 仍叠在上面。[E: packages/bundle/sdk-minimal/cordis.patch.yml:2] 测试要求 `patches` 长度 1，且 `id`/`name` 序如下。[E: packages/bundle/sdk-minimal/tests/sdk-minimal.spec.ts:22] [E: packages/bundle/sdk-minimal/tests/sdk-minimal.spec.ts:24] `package.json` `dependencies` 的集合等于这些行的 `name`。[E: packages/bundle/sdk-minimal/tests/sdk-minimal.spec.ts:70]
+`packages/bundle/sdk-minimal/cordis.patch.yml` 顶部注释：unlike ordinary SDK，本 bundle **不** layer over `dsh-base`；这一份 insert 就是完整树；用户 profile / home / `--patch` 仍叠在上面。[E: packages/bundle/sdk-minimal/cordis.patch.yml:2] 测试要求 `patches` 长度 1，且 `id`/`name` 序如下。[E: packages/bundle/sdk-minimal/tests/sdk-minimal.spec.ts:22] [E: packages/bundle/sdk-minimal/tests/sdk-minimal.spec.ts:24] `package.json` `dependencies` 的集合等于这些行的 `name`。[E: packages/bundle/sdk-minimal/tests/sdk-minimal.spec.ts:86]
 
 | id | name | 要点 |
 |---|---|---|
@@ -100,27 +99,23 @@ built-bin：`--dump-default-config` 打印的 `id`/`name` 表与 bundle 测试�
 | `terminal-bash` | `@deepseek-ai/dsh-terminal-bash` | `disabled` 当 `win32`；`timeoutMs: 300000` [E: packages/bundle/sdk-minimal/cordis.patch.yml:55] |
 | `terminal-pwsh` | `@deepseek-ai/dsh-terminal-bash` | `disabled` 当非 `win32`；`shellDialect: pwsh` [E: packages/bundle/sdk-minimal/cordis.patch.yml:61] [E: packages/bundle/sdk-minimal/cordis.patch.yml:63] |
 | `fs-local` | `@deepseek-ai/dsh-fs-local` | `cwd: !!js process.cwd()` [E: packages/bundle/sdk-minimal/cordis.patch.yml:71] |
-| `agent-spine` | `@deepseek-ai/dsh-agent-spine-demo` | 见下表 |
-| `persistent-bash` | `@deepseek-ai/dsh-tool-bash-persistent` | `disabled` 当 `win32`；`timeoutMs: 300000` [E: packages/bundle/sdk-minimal/cordis.patch.yml:87] |
-| `persistent-pwsh` | `@deepseek-ai/dsh-tool-pwsh-persistent` | `disabled` 当非 `win32` [E: packages/bundle/sdk-minimal/cordis.patch.yml:102] |
-| `str-replace-editor` | `@deepseek-ai/dsh-tool-str-replace-editor` | `maxOutputChars: 16000` [E: packages/bundle/sdk-minimal/cordis.patch.yml:117] |
-| `sessions` | `@deepseek-ai/dsh-session-persistence-jsonl` | `root: !!js dshHomePath('sessions')`；`compression: none` [E: packages/bundle/sdk-minimal/cordis.patch.yml:122] [E: packages/bundle/sdk-minimal/cordis.patch.yml:123] |
+| `timer` / `llm` / `session` / `system-prompt` / `tools` / `agent` / `agent-loop` | kernel 行 | 本树自己 insert Definition；`system-prompt` 关 identity / runtime context [E: packages/bundle/sdk-minimal/cordis.patch.yml:91] |
+| `persistent-bash` | `@deepseek-ai/dsh-tool-bash-persistent` | `disabled` 当 `win32`；`timeoutMs: 300000` [E: packages/bundle/sdk-minimal/cordis.patch.yml:130] |
+| `persistent-pwsh` | `@deepseek-ai/dsh-tool-pwsh-persistent` | `disabled` 当非 `win32` [E: packages/bundle/sdk-minimal/cordis.patch.yml:145] |
+| `str-replace-editor` | `@deepseek-ai/dsh-tool-str-replace-editor` | `maxOutputChars: 16000` [E: packages/bundle/sdk-minimal/cordis.patch.yml:162] |
+| `sessions` | `@deepseek-ai/dsh-session-persistence-jsonl` | `root: !!js dshHomePath('sessions')`；`compression: none` [E: packages/bundle/sdk-minimal/cordis.patch.yml:167] [E: packages/bundle/sdk-minimal/cordis.patch.yml:168] |
 
 没有 `id: hmr`。`composeEntries` 只叠 sdk-minimal 时找不到 `hmr`。[E: apps/cli/tests/profile-hmr.spec.ts:44]
 
-### `agent-spine` Config
+### `system-prompt` Config
 
 | 键 | 值 | 源 |
 |---|---|---|
-| `includeHarnessIdentity` | `false` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:76] |
-| `includeRuntimeContext` | `false` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:77] |
-| `persona` | `!!js process.env.DSH_SYSTEM_PROMPT ?? 'You are a helpful software engineer assistant.'` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:78] |
-| `workspaceContext` | `false` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:79] |
-| `skills.enabled` | `false` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:81] |
-| `toolBash` | `false` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:82] |
-| `toolJobs` | `false` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:83] |
+| `includeHarnessIdentity` | `false` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:94] |
+| `includeRuntimeContext` | `false` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:95] |
+| `persona` | `!!js process.env.DSH_SYSTEM_PROMPT ?? 'You are a helpful software engineer assistant.'` | [E: packages/bundle/sdk-minimal/cordis.patch.yml:96] |
 
-这棵树 **没有** `plan-mode` / `run_code` / `agent-presets` / SQLite query / one-shot `dsh-tool-bash`。`agent-spine` 显式关掉 one-shot bash 与 jobs 开关。默认模型 **不**来自 `dsh-base` 的 `agent-default-model` 行（那一行不在本树）。LLM 路由来自本树的 `llm-deepseek`。
+这棵树 **没有** `plan-mode` / `run_code` / `agent-presets` / SQLite query / one-shot `dsh-tool-bash`。默认模型 **不**来自 `dsh-base` 的 `agent-default-model` 行（那一行不在本树）。LLM 路由来自本树的 `llm-deepseek`。`dsh-agent-spine-demo` 已删除。
 
 ### 模型可见工具名（host 面直挂）
 
@@ -134,25 +129,17 @@ built-bin：`--dump-default-config` 打印的 `id`/`name` 表与 bundle 测试�
 
 `dsh-experimental-tool-agent-team` **不**在这棵 insert 里。
 
-### invariant 插件
-
-| 符号 | 值 |
-|---|---|
-| `name`（本包 companion） | `'sdk-minimal-bundle-invariant'` [E: packages/bundle/sdk-minimal/src/invariant.ts:12] |
-| `inject` | `['invariants']` [E: packages/bundle/sdk-minimal/src/invariant.ts:14] |
-| `install` | 空：patch 行自己管运行时关系 [E: packages/bundle/sdk-minimal/src/invariant.ts:18] |
-
 ## 装配与门控
 
 **叠层**：`allPatches` 按 bundle（只有 sdk-minimal）→ profile `$DSH_HOME/profiles/sdk-minimal/cordis.patch.yml` → home `$DSH_HOME/cordis.patch.yml` → `--patch` overlays。[E: apps/cli/src/profile-boot.ts:138] [E: apps/cli/src/profile-boot.ts:139] [E: apps/cli/src/profile-boot.ts:140] [E: apps/cli/src/profile-boot.ts:141] `DSH_TELEMETRY_DISABLED` 仅当树里已有 `session-telemetry-otel` 才再 disable；本树默认 **没有** 该行，开关无目标。[E: apps/cli/src/profile-boot.ts:170]
 
-**HMR**：模板 `startup`。`runProfile` **只在** `patchReload === 'live'` 时装 watcher。[E: apps/cli/src/profile-boot.ts:270] 用户层仍在 boot 时叠一次。本 bundle 自己也不 insert `hmr`。
+**HMR**：模板 `startup`。`runProfile` **只在** `patchReload === 'live'` 时装 watcher。[E: apps/cli/src/profile-boot.ts:271] 用户层仍在 boot 时叠一次。本 bundle 自己也不 insert `hmr`。
 
 **stdio 门控**：JSON-RPC 行 `inject: [sdkAppStartup, loader]`，help 路径不 provide 服务，transport 不占 stdio。无 `--host` / `--port` / `[task...]`。
 
 **权限**：`sandbox-policy.mode` 钉死 `danger-full-access`；树里没有 approval / permission-settings 服务行。[E: packages/bundle/sdk-minimal/cordis.patch.yml:44]
 
-**isolate / preset**：没有 `agent-presets`，也就没有 shipped `minimal` / `standard` / `ptc` / `cordis` roster。工具与 spine 同在 host 面。
+**isolate / preset**：没有 `agent-presets`，也就没有 shipped `minimal` / `standard` / `ptc` / `cordis` roster。工具与 kernel 同在 host 面。
 
 ## 跨包关系
 
@@ -170,7 +157,6 @@ built-bin：`--dump-default-config` 打印的 `id`/`name` 表与 bundle 测试�
 - packages/bundle/sdk-minimal/cordis.patch.yml
 - packages/bundle/sdk-minimal/package.json
 - packages/bundle/sdk-minimal/src/index.ts
-- packages/bundle/sdk-minimal/src/invariant.ts
 - packages/bundle/sdk-minimal/tests/sdk-minimal.spec.ts
 - packages/bundle/sdk-app/src/index.ts
 - packages/bundle/sdk-app/package.json

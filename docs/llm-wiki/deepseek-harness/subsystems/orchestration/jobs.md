@@ -54,7 +54,7 @@ related:
   - subsys.host.apiproxy
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.jobs`（`JobRegistry`）是 **host 面**后台任务注册表缝：进程内一份 RAM registry，发 `<kind>-N` id、按 owner session 隔离、等结算、取消、completion listener。`@deepseek-ai/dsh-jobs` 只是合同，**不能当 plugin 加载**；shipped Provider 是 `dsh-jobs-local`（base 行 `id: jobs`）。模型面 Consumer 是 `dsh-tool-jobs`（`attachController` + `job_*`），不是又一套 coding-agent 任务队列。

@@ -58,7 +58,7 @@ related:
   - surface.commands.overview
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 工作台是用户打开的**本地 Web GUI**：`dsh web`（≡ `--profile web`）在 **host 面** `listen` 一个只做路由登记的 `ctx.webServer`，浏览器半边用 `AppWebEntry` 读 `window.__DSH_BOOT__`，Loader 静默后把 mount 点交给 `ctx.uiRenderer`。client **不**执行模型 turn。DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）；本仓没有 shipped TUI。`dsh web` **不是**唯一宿主入口：还可用 `dsh --profile headless|sdk|sdk-minimal|acp`。
@@ -145,7 +145,7 @@ web 旗标：`--host`、`--no-open`、`--port`、`--trusted-host`。Commander �
 |---|---|---|---|
 | `'root'` | `single` / 内建 | `ui-layout` → `AppFrame` [E: packages/client/ui-layout/src/client/index.ts:124] | 三列壳 |
 | `'sidebar'` | `single` / `root` | `ui-sidebar` [E: packages/client/ui-sidebar/src/client/index.ts:51] | 会话树、Workspace、设置入口。`AppFrame` `renderSlot('sidebar', …)` [E: packages/client/ui-layout/src/client/AppFrame.tsx:194] |
-| `'conversation'` | `single` / `session-maybe` | `ui-conversation` [E: packages/client/ui-conversation/src/client/apply.ts:173] | Hero / 对话流 / composer。`renderSlot('conversation', {})` [E: packages/client/ui-layout/src/client/AppFrame.tsx:205] |
+| `'conversation'` | `single` / `session-maybe` | `ui-conversation` [E: packages/client/ui-conversation/src/client/apply.ts:174] | Hero / 对话流 / composer。`renderSlot('conversation', {})` [E: packages/client/ui-layout/src/client/AppFrame.tsx:205] |
 | `'details'` | `single` / `session` | `ui-chat` [E: packages/client/ui-chat/src/client/apply.ts:161] | 工具细节列。`renderSlot('details', {})` [E: packages/client/ui-layout/src/client/AppFrame.tsx:207] |
 | `'shell.overlay'` | `list` / `root` | 设置面板、popupSelect 等加法面 | 浮在整框上。`renderSlot('shell.overlay', {})` [E: packages/client/ui-layout/src/client/index.ts:130] [E: packages/client/ui-layout/src/client/AppFrame.tsx:211] |
 
@@ -195,7 +195,7 @@ web-app 浏览器 chrome。**不要**把每一行当成独立子系统。下表�
 | `ui-user-questions` | `@deepseek-ai/dsh-client-ui-user-questions` | `ask_user_question` 接管 composer |
 | `ui-trajectory` | `@deepseek-ai/dsh-client-ui-trajectory` | 轨迹事件账本（conversation ViewMap） |
 
-同表里还有非 `ui-*` 但进 `__DSH_BOOT__` 的装配行：`locale`、`modules`、`connection`、`api-remotes`、`cordis-client-runner`、`client-hmr`。 [E: packages/bundle/web-app/cordis.patch.yml:152] [E: packages/bundle/web-app/cordis.patch.yml:169]
+同表里还有非 `ui-*` 但进 `__DSH_BOOT__` 的装配行：`locale`、`modules`、`connection`、`api-remotes`、`cordis-client-runner`、`client-hmr`。 [E: packages/bundle/web-app/cordis.patch.yml:153] [E: packages/bundle/web-app/cordis.patch.yml:169]
 
 `ui-slots` 是库，**不是** Loader 行。`ui-directory-picker-*` 不在这份 shipped insert 里。
 
@@ -207,7 +207,7 @@ web-app 浏览器 chrome。**不要**把每一行当成独立子系统。下表�
 | 空闲 Enter | `keyboard.submit(g.resolveSubmitMode(...))` [E: packages/client/ui-conversation/src/client/skeleton/InputBar.tsx:275] | 同上，会开 turn。 |
 | 行首 `/name …` 被 command 认领 | `ui-commands` 走 `remote.commands.execute` [E: packages/client/ui-commands/src/client/service.ts:405] | **不会**。人命令不经 `session.prompt`。产品面见 [`surface.commands.overview`](../commands/overview.md)。 |
 
-`Session.prompt` 在第一个 `await` 之前同步置 `promptAttempted = true`。 [E: packages/api/session-controller/src/client/sessions/session.ts:218]
+`Session.prompt` 在第一个 `await` 之前同步置 `promptAttempted = true`。 [E: packages/api/session-controller/src/client/sessions/session.ts:219]
 
 外向面 `ISessions` **有** `create`。 [E: packages/api/session-controller/src/client/contract/sessions.ts:35] New Session 走 `ctx.uiWorkspace.startSession`（sidebar 注入）。 [E: packages/client/ui-sidebar/src/client/index.ts:46] [E: packages/client/ui-workspace/src/client/navigation.ts:114] 没有 current / recent Workspace 时只 `sessions.clear()`，**不** mint。 [E: packages/client/ui-workspace/src/client/navigation.ts:126] 有 Workspace 时 `sessions.create({ workspaceId })`。 [E: packages/client/ui-workspace/src/client/navigation.ts:108]
 
@@ -223,7 +223,7 @@ web-app 浏览器 chrome。**不要**把每一行当成独立子系统。下表�
 
 5. **壳两阶段。** `AppWebEntry.run`：等 `__DSH_BOOT_READY__` → 建 module system → prefetch `immediately` → Loader create 全部行 → `loader.await()` → 审计 ACTIVE → `uiRenderer.mount`。 [E: packages/client/web/src/boot.ts:54] [E: packages/client/web/src/boot.ts:133] [E: packages/client/web/src/boot.ts:97] 失败走 `BootPage.fail`，不是独立 React `AppRoot`。 [E: packages/client/web/src/boot.ts:83] [E: packages/client/web/src/boot-page.ts:72]
 
-6. **对象层。** Session client `apply` 需要 `typert` / `remote` / `remote.commands` / `remote.session` / `remote.subagents`，并 `createSessionControlStream`。 [E: packages/api/session-controller/src/client/index.ts:76] [E: packages/api/session-controller/src/client/index.ts:103] client 从不 `kick()` loop。
+6. **对象层。** Session client `apply` 需要 `typert` / `remote` / `remote.commands` / `remote.session` / `remote.subagents`，并 `createSessionControlStream`。 [E: packages/api/session-controller/src/client/index.ts:77] [E: packages/api/session-controller/src/client/index.ts:103] client 从不 `kick()` loop。
 
 7. **Workspace 门。** `UiWorkspaceService.startSession`：三个候选都没有时只 `sessions.clear()`。 [E: packages/client/ui-workspace/src/client/navigation.ts:125]
 

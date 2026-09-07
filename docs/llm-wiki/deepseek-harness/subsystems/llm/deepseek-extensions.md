@@ -7,12 +7,10 @@ pkg: llm
 source:
   - packages/llm/deepseek-llm-api-extensions/src/index.ts
   - packages/llm/deepseek-llm-api-extensions/src/types.ts
-  - packages/llm/deepseek-llm-api-extensions/src/invariant.ts
   - packages/llm/deepseek-llm-api-extensions/package.json
   - packages/llm/deepseek-llm-api-extensions/tests/registry.spec.ts
   - packages/llm/plugin-package-inventory-deepseek/src/index.ts
   - packages/llm/plugin-package-inventory-deepseek/src/types.ts
-  - packages/llm/plugin-package-inventory-deepseek/src/invariant.ts
   - packages/llm/plugin-package-inventory-deepseek/package.json
   - packages/llm/plugin-package-inventory-deepseek/tests/inventory.spec.ts
   - packages/bundle/base/cordis.patch.yml
@@ -41,7 +39,7 @@ related:
   - ref.ctx-keys
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-deepseek-llm-api-extensions` 是 **host 面**登记式 seam `ctx.deepseekLlmApiExtensions`：各插件独占一个官方 DeepSeek **顶层请求字段**；`@deepseek-ai/dsh-plugin-package-inventory-deepseek` 是其中一个默认开启的 field provider，把 Loader 上 **ACTIVE** 的 npm 包身份写成 `dsh_plugin_packages`。这不是 `ctx.llm`，也不是 Web 设置页的 `ctx.pluginInventory`。
@@ -73,7 +71,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。五�
 - `dsh_session_log` 水位线与 `session-log-deepseek/delivery-accepted` — [`subsys.persistence.session-log-deepseek`](../persistence/session-log-deepseek.md)。本页只把它当成第二个 field provider。
 - Web 只读 Remote `ctx.pluginInventory`（`pluginInventory/list`）— [`subsys.host.plugin-inventory`](../host/plugin-inventory.md)。那是 Typert snapshot，**不**进官方 chat body。
 
-两包的 invariant companion 都是 no-op `install`：所有权 / 冻结输出 / 一次 `accept` 在 registry 操作里强制；inventory 每次从 Loader fiber 与 `package.json` 现读。 [E: packages/llm/deepseek-llm-api-extensions/src/invariant.ts:18] [E: packages/llm/plugin-package-inventory-deepseek/src/invariant.ts:18]
+所有权 / 冻结输出 / 一次 `accept` 在 registry 操作里强制；inventory 每次从 Loader fiber 与 `package.json` 现读。
 
 ## 关键文件
 
@@ -165,12 +163,10 @@ Inventory 插件 dispose / reload 会撤回字段（effect-scoped `register`）�
 
 - `packages/llm/deepseek-llm-api-extensions/src/index.ts`
 - `packages/llm/deepseek-llm-api-extensions/src/types.ts`
-- `packages/llm/deepseek-llm-api-extensions/src/invariant.ts`
 - `packages/llm/deepseek-llm-api-extensions/package.json`
 - `packages/llm/deepseek-llm-api-extensions/tests/registry.spec.ts`
 - `packages/llm/plugin-package-inventory-deepseek/src/index.ts`
 - `packages/llm/plugin-package-inventory-deepseek/src/types.ts`
-- `packages/llm/plugin-package-inventory-deepseek/src/invariant.ts`
 - `packages/llm/plugin-package-inventory-deepseek/package.json`
 - `packages/llm/plugin-package-inventory-deepseek/tests/inventory.spec.ts`
 - `packages/bundle/base/cordis.patch.yml`

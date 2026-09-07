@@ -50,7 +50,7 @@ related:
   - subsys.execution.subprocess
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > wire 名 `grep` 由包 `@deepseek-ai/dsh-tool-fs-search` 注册：用打包的 `@vscode/ripgrep` 经 `ctx.subprocess.spawn()` 搜文件内容，返回按文件分组的匹配行。不是宿主 `rg`，不是 `ctx.fs`，不是 `ctx.shell`。
@@ -147,13 +147,13 @@ Pending 卡：`presentGrepCall` → `{ card: 'generic', kind: 'search', title: '
 
 机会性 Consumer：`ctx.spillStore`（`ctx.get`，不是 inject）。换掉或卸掉 spill backend 只会让超 cap 页脚变成 “could not be saved”，不会让搜索变 `isError`。[E: packages/fs/tool-fs-search/src/search-core.ts:390]
 
-父环境经 seam 的 `scrubbedParentEnv` 去掉 credential 形名字和 `DSH_*`；`grep` 自己不传 `env`。[E: packages/subprocess/subprocess/src/index.ts:60][I]
+父环境经 seam 的 `scrubbedParentEnv` 去掉 credential 形名字和 `DSH_*`；`grep` 自己不传 `env`。[E: packages/subprocess/subprocess/src/index.ts:64][I]
 
 ## 执行管线
 
 `grep` 没有自己的 `tools/pre-execute` 监听器。registry 的 waterfall 默认 `allow`，本工具也不广告 escalation 字段，因此 **approval 不由 grep 挂上**。[E: packages/core/tools/src/index.ts:1468]
 
-超时挂在定义上：`timeoutMs: caps.timeoutMs`（默认 30s）。[E: packages/fs/tool-fs-search/src/grep.ts:291][E: packages/fs/tool-fs-search/tests/tools.spec.ts:277] 宿主 bundle `dsh-base` 装 `@deepseek-ai/dsh-tool-call-timeout-policy`，它包 `tools/execute`：读 `ctx.tools.get(name).timeoutMs`，用 `deadline(..., TOOL_TIMEOUT)` 换掉 `exec.signal`；自己的 timer 赢了就把结果换成 `TOOL_TIMEOUT`。[E: packages/bundle/base/cordis.patch.yml:388][E: packages/guard/timeout-policy/src/index.ts:56][E: packages/guard/timeout-policy/src/index.ts:61][E: packages/guard/timeout-policy/src/index.ts:74] `timeoutMs` 不进模型 schema。[E: packages/core/tools/src/index.ts:1253]
+超时挂在定义上：`timeoutMs: caps.timeoutMs`（默认 30s）。[E: packages/fs/tool-fs-search/src/grep.ts:291][E: packages/fs/tool-fs-search/tests/tools.spec.ts:277] 宿主 bundle `dsh-base` 装 `@deepseek-ai/dsh-tool-call-timeout-policy`，它包 `tools/execute`：读 `ctx.tools.get(name).timeoutMs`，用 `deadline(..., TOOL_TIMEOUT)` 换掉 `exec.signal`；自己的 timer 赢了就把结果换成 `TOOL_TIMEOUT`。[E: packages/bundle/base/cordis.patch.yml:389][E: packages/guard/timeout-policy/src/index.ts:56][E: packages/guard/timeout-policy/src/index.ts:61][E: packages/guard/timeout-policy/src/index.ts:74] `timeoutMs` 不进模型 schema。[E: packages/core/tools/src/index.ts:1253]
 
 `runRipgrep` 把 `exec.signal` 交给 spawn；预 abort / 运行中 abort 分类为 `SEARCH_ABORTED`。[E: packages/fs/tool-fs-search/src/search-core.ts:243][E: packages/fs/tool-fs-search/src/search-core.ts:227][E: packages/fs/tool-fs-search/src/search-core.ts:271] 测试套件不装 timeout-policy 时，abort 以 `SEARCH_ABORTED` 出现。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:447] 装了 timeout-policy 且是该插件自己的 deadline 触发时，waterfall 返回值会被换成 `TOOL_TIMEOUT`。[I]
 

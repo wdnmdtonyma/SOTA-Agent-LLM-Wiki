@@ -7,7 +7,6 @@ pkg: host
 source:
   - packages/host/webserver/src/index.ts
   - packages/host/webserver/src/injections.ts
-  - packages/host/webserver/src/invariant.ts
   - packages/host/webserver/package.json
   - packages/host/webserver/tests/webserver.spec.ts
   - packages/bundle/web-app/cordis.patch.yml
@@ -53,7 +52,7 @@ related:
   - subsys.client.hmr
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-host-webserver` 的 `WebServer` 是 **host 面** HTTP **route-registration carrier**：`node:http` + Cordis service `ctx.webServer`。`[Service.init]` **立刻** `listen(config.port, config.host)`。本包不懂 harness、不发文件、不打印 URL。gzip / index inject / 唯一 fallback 座都在本包；dist 由组成应用拥有。[E: packages/host/webserver/package.json:2] [E: packages/host/webserver/src/index.ts:144] [E: packages/host/webserver/src/index.ts:294]
@@ -91,8 +90,7 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 |---|---|
 | `packages/host/webserver/src/index.ts` | `WebServer`：schema、gzip、`register*`、`match`、`listen`、index render、teardown |
 | `packages/host/webserver/src/injections.ts` | `IndexInjection` 行与 `renderIndexInjections` |
-| `packages/host/webserver/src/invariant.ts` | 包级 companion：fiber teardown 上探测 `register` / `registerUpgrade` disposer 对称 |
-| `packages/host/webserver/package.json` | npm 名 `@deepseek-ai/dsh-host-webserver`；export `.` 与 `./invariant` |
+| `packages/host/webserver/package.json` | npm 名 `@deepseek-ai/dsh-host-webserver`；export `.` |
 | `packages/host/webserver/tests/webserver.spec.ts` | 真 Loader：exact 胜 prefix、最长前缀、404/400、重复抛错、gzip、upgrade、EADDRINUSE、teardown |
 | `packages/bundle/web-app/cordis.patch.yml` | `id: webserver`：`inject: [webStartup]`，`host` / `port` / gzip 表达式 |
 | `packages/bundle/web-app/src/startup.ts` | `provide('webStartup')`；`--host 0.0.0.0` 在 provide **之前** `program.error` |
@@ -129,15 +127,15 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 1. **模板把本包叠进 web，不叠进 base / headless / sdk / acp。** `PROFILE_TEMPLATES.web` 是 `['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app']`，`patchReload: 'live'`。`headless` / `sdk` / `acp` 叠 base + 各自 app；`sdk-minimal` **只**叠 `@deepseek-ai/dsh-sdk-minimal`。没有 TUI 模板。[E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:143] [E: packages/boot/app-boot/src/profile.ts:146] [E: packages/boot/app-boot/src/profile.ts:154]
 
-2. **web-app 真树插入 `id: webserver`。** 行名 `@deepseek-ai/dsh-host-webserver`，`inject: [webStartup]`，`config.host` / `config.port` 写 `!!js ctx.webStartup.host ?? '127.0.0.1'` 与 `ctx.webStartup.port ?? 3080`，并打开 gzip。缺省 bind 是表达式回退，不是 `WebServer.Config` 的 schema default。[E: packages/bundle/web-app/cordis.patch.yml:111] [E: packages/bundle/web-app/cordis.patch.yml:112] [E: packages/bundle/web-app/cordis.patch.yml:113] [E: packages/bundle/web-app/cordis.patch.yml:115] [E: packages/bundle/web-app/cordis.patch.yml:116]
+2. **web-app 真树插入 `id: webserver`。** 行名 `@deepseek-ai/dsh-host-webserver`，`inject: [webStartup]`，`config.host` / `config.port` 写 `!!js ctx.webStartup.host ?? '127.0.0.1'` 与 `ctx.webStartup.port ?? 3080`，并打开 gzip。缺省 bind 是表达式回退，不是 `WebServer.Config` 的 schema default。[E: packages/bundle/web-app/cordis.patch.yml:111] [E: packages/bundle/web-app/cordis.patch.yml:113] [E: packages/bundle/web-app/cordis.patch.yml:113] [E: packages/bundle/web-app/cordis.patch.yml:115] [E: packages/bundle/web-app/cordis.patch.yml:116]
 
 3. **base / headless 不 insert 这一行。** `dsh-base` 的 `insert` 从 `timer` / `hmr` 起铺共享 core，文件里没有 `id: webserver`。[E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/base/cordis.patch.yml:21] `dsh-headless` 的 `insert` 只有 `code-runtime`、`headless-startup`、`headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] sdk / acp overlay 同样没有 webserver 行。
 
 4. **`--host 0.0.0.0` 在 `provide('webStartup')` 之前 fail-closed。** `apply@packages/bundle/web-app/src/startup.ts` 声明 `inject: ['cmdlineArgs']`。commander 登记 `--host` / `--no-open` / `--port` / `--trusted-host`。action 里若 `options.host === '0.0.0.0'` 则 `program.error(…intentionally not supported yet for safety…)`，**不会**执行后面的 `ctx.provide(WEB_STARTUP_SERVICE, …)`。非 `/^\d+$/` 的 `--port` 同样 error。[E: packages/bundle/web-app/src/startup.ts:17] [E: packages/bundle/web-app/src/startup.ts:51] [E: packages/bundle/web-app/src/startup.ts:74] [E: packages/bundle/web-app/src/startup.ts:80]
 
-5. **`parseCmdline` 把 `program.error` 收成 `appExit`，action 不再往下跑。** `parseCmdline` 捕获 Commander 形状错误后 `exit(error.exitCode)`。`--help` 也不跑 action。测试钉死：`--host 0.0.0.0` 时 `webStartup === undefined`、`inject` consumer 的 `readerConfig` 不出现、`appExit(1)`。[E: packages/boot/cmdline/src/index.ts:184] [E: packages/bundle/web-app/tests/startup.spec.ts:137] [E: packages/bundle/web-app/tests/startup.spec.ts:140] [E: packages/bundle/web-app/tests/startup.spec.ts:141] [E: packages/bundle/web-app/tests/startup.spec.ts:142]
+5. **`parseCmdline` 把 `program.error` 收成 `appExit`，action 不再往下跑。** `parseCmdline` 捕获 Commander 形状错误后 `exit(error.exitCode)`。`--help` 也不跑 action。测试钉死：`--host 0.0.0.0` 时 `webStartup === undefined`、`inject` consumer 的 `readerConfig` 不出现、`appExit(1)`。[E: packages/boot/cmdline/src/index.ts:184] [E: packages/bundle/web-app/tests/startup.spec.ts:137] [E: packages/bundle/web-app/tests/startup.spec.ts:139] [E: packages/bundle/web-app/tests/startup.spec.ts:142] [E: packages/bundle/web-app/tests/startup.spec.ts:142]
 
-6. **无旗标时服务值不含 host/port。** `bootProvider([])` 得到 `{ openBrowser: true, trustedHosts: [] }`；fixture consumer 用与 shipped yml 相同的 `??` 读成 `127.0.0.1:3080`。`inject: [webStartup]` 的行在服务缺失时 pending：`--help` 不 bind 端口。[E: packages/bundle/web-app/tests/startup.spec.ts:108] [E: packages/bundle/web-app/tests/startup.spec.ts:110] [E: packages/bundle/web-app/tests/startup.spec.ts:111] [E: packages/bundle/web-app/tests/startup.spec.ts:114]
+6. **无旗标时服务值不含 host/port。** `bootProvider([])` 得到 `{ openBrowser: true, trustedHosts: [] }`；fixture consumer 用与 shipped yml 相同的 `??` 读成 `127.0.0.1:3080`。`inject: [webStartup]` 的行在服务缺失时 pending：`--help` 不 bind 端口。[E: packages/bundle/web-app/tests/startup.spec.ts:109] [E: packages/bundle/web-app/tests/startup.spec.ts:110] [E: packages/bundle/web-app/tests/startup.spec.ts:110] [E: packages/bundle/web-app/tests/startup.spec.ts:114]
 
 7. **构造立刻 `provide('webServer')`，`[Service.init]` 立刻 `listen`。** `WebServer` 构造调用 `super(ctx, 'webServer')`；`Service` 构造里 `ctx.reflect.provide(name, self, …)`。Loader 对 class plugin `new callback` 之后立刻 `instance[symbols.init]()`。`[Service.init]` 里 `this.server.listen(this.config.port, this.config.host, …)`，成功后把 `listenedPort` 写成 `address().port`。listen 失败（端口占用）reject init；测试匹配 `EADDRINUSE`。[E: packages/host/webserver/src/index.ts:144] [E: vendor/cordis/src/service.ts:57] [E: vendor/cordis/src/fiber.ts:257] [E: packages/host/webserver/src/index.ts:294] [E: packages/host/webserver/tests/webserver.spec.ts:373]
 
@@ -153,15 +151,13 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 13. **index 渲染两层：结构化行再 raw tap。** `tapIndex` `push` 纯函数并返回 splice disposer。`collectIndexInjections` 发 `webserver/index-inject`。`renderIndex` = `applyIndexTaps(renderIndexInjections(html, collect…))`。`frontend-static` 的 `renderIndex` 闭包读 `index.html` 后立刻 `ctx.webServer.renderIndex(...)`。modules / ui-theme 订阅 `webserver/index-inject` 推 boot 图 / theme 行，不再靠 `tapIndex`。没有人调 `renderIndex` / `applyIndexTaps`，tap 对线上响应为零效果。[E: packages/host/webserver/src/index.ts:211] [E: packages/host/webserver/src/index.ts:359] [E: packages/host/frontend-static/src/index.ts:121] [E: packages/client/modules/src/index.ts:589] [E: packages/client/ui-theme/src/index.ts:40]
 
-14. **shipped named Consumer 挂在 host 树上，不是本包写死的路由。** `client-connection` `inject = ['webServer', 'credentials']`，`register` prefix `API_PATH`（`'/api'`）。`TypertGatewayService` 在 `inject(['connection', 'webServer'])` 后 `registerUpgrade` `REMOTE_STREAM_MUX_PATH`（`'/api/remote.mux'`），升级前再跑 `connection.requestRejection`。`ClientModuleRegistry` `register` prefix `'/plugins'`。`client-hmr` `register` exact `EVENTS_ENDPOINT`（`'/plugins/events'`）。GitHub webhook 另登记一条 exact path。[E: packages/client/connection/src/index.ts:67] [E: packages/client/connection/src/index.ts:116] [E: packages/client/connection/src/index.ts:127] [E: packages/client/connection/src/api-path.ts:7] [E: packages/api/gateway/src/stream-protocol.ts:6] [E: packages/api/gateway/src/index.ts:223] [E: packages/client/modules/src/index.ts:586] [E: packages/client/hmr/src/events.ts:44] [E: packages/client/hmr/src/index.ts:176] [E: packages/webhook/webhook-github/src/index.ts:50]
+14. **shipped named Consumer 挂在 host 树上，不是本包写死的路由。** `client-connection` `inject = ['webServer', 'credentials']`，`register` prefix `API_PATH`（`'/api'`）。`TypertGatewayService` 在 `inject(['connection', 'webServer'])` 后 `registerUpgrade` `REMOTE_STREAM_MUX_PATH`（`'/api/remote.mux'`），升级前再跑 `connection.requestRejection`。`ClientModuleRegistry` `register` prefix `'/plugins'`。`client-hmr` `register` exact `EVENTS_ENDPOINT`（`'/plugins/events'`）。GitHub webhook 另登记一条 exact path。[E: packages/client/connection/src/index.ts:68] [E: packages/client/connection/src/index.ts:116] [E: packages/client/connection/src/index.ts:128] [E: packages/client/connection/src/api-path.ts:7] [E: packages/api/gateway/src/stream-protocol.ts:6] [E: packages/api/gateway/src/index.ts:223] [E: packages/client/modules/src/index.ts:586] [E: packages/client/hmr/src/events.ts:44] [E: packages/client/hmr/src/index.ts:176] [E: packages/webhook/webhook-github/src/index.ts:50]
 
 15. **fallback 座由 `web-app` 代码挂上，不是 yml 行。** `web-app` `export const inject = ['webServer']`。`apply` 在 `provide('webRuntime')` 之后 `ctx.plugin(FrontendStatic, { distIndex: internals.resolveDistIndex() })`。`frontend-static` `inject = ['webServer', 'connection']`，`registerFallback` 占唯一座。Loader `await()` 成功后才 `console.log(\`dsh web: ${authenticatedUrl}…\`)`——URL 行属于 `web-app`，不属于 `webserver`。[E: packages/bundle/web-app/src/index.ts:41] [E: packages/bundle/web-app/src/index.ts:240] [E: packages/bundle/web-app/src/index.ts:241] [E: packages/bundle/web-app/src/index.ts:280] [E: packages/host/frontend-static/src/index.ts:27] [E: packages/host/frontend-static/src/index.ts:124]
 
 16. **teardown：`closeAllConnections` + 显式 destroy 已 upgrade 的 sockets。** `ctx.effect(..., 'webServer.listen')` 在 fiber dispose 时 `server.close`、`closeAllConnections`，并对 `upgradedSockets` 逐个 `destroy` 后等 `close`。Node 的 `closeAllConnections` **不含** 已 upgrade 的 socket。测试在仍挂着的 upgrade 上 `fiber.dispose()`，断言 server-side socket 关闭且后续 `fetch` reject。[E: packages/host/webserver/src/index.ts:308] [E: packages/host/webserver/src/index.ts:311] [E: packages/host/webserver/tests/webserver.spec.ts:300] [E: packages/host/webserver/tests/webserver.spec.ts:301] [E: packages/host/webserver/tests/webserver.spec.ts:303]
 
 17. **schema 仍承认 all-interfaces。** `Config.host` 是 `'127.0.0.1' | '0.0.0.0'`。旗标路径拒的是 `web-startup` 字面量 `'0.0.0.0'`，**不是** schema。一条替换整行 `webserver.config` 的 overlay 仍可写出 `host: '0.0.0.0'` 并成功 listen。`--host 1.2.3.4` 能过 `web-startup`（只拦那一个字面量），会在本包 schema 上失败。`port` 的 `0` 合法：`Schema.natural` 是 `number().step(1).min(0)`。[E: packages/host/webserver/src/index.ts:61] [E: packages/host/webserver/src/index.ts:126] [E: vendor/schemastery/src/index.ts:530]
-
-18. **invariant companion 探测 disposer 对称，不是第二份路由表。** `@deepseek-ai/dsh-host-webserver/invariant` 在 `internal/plugin` 上对保留 path 做两次 `register(probe)()` / `registerUpgrade(probe)()`；第二次再抛 duplicate 就 `fail(...)`。它不改变 listen 行为，也不出现在 web-app yml。[E: packages/host/webserver/src/invariant.ts:41] [E: packages/host/webserver/src/invariant.ts:44] [E: packages/host/webserver/src/invariant.ts:49]
 
 本包没有 Cordis `Events.waterfall`。注册 API 返回的是表项 disposer（通常再包进 `ctx.effect`）。waterfall 必须 `next()` 的规则属于 tools / prompt 等事件链，不要套到 `match` 上。
 
@@ -205,7 +201,7 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 - packages/host/webserver/src/index.ts
 - packages/host/webserver/src/injections.ts
-- packages/host/webserver/src/invariant.ts
+
 - packages/host/webserver/package.json
 - packages/host/webserver/tests/webserver.spec.ts
 - packages/bundle/web-app/cordis.patch.yml

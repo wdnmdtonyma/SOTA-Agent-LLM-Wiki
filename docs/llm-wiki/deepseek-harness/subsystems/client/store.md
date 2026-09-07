@@ -8,9 +8,7 @@ source:
   - packages/client/store/package.json
   - packages/client/store/src/index.ts
   - packages/client/store/src/contract.ts
-  - packages/client/store/src/invariant.ts
   - packages/client/store/tests/store.client.spec.ts
-  - packages/client/store/tests/invariant.client.spec.ts
   - packages/client/ui-slots/src/store.ts
   - packages/client/ui-renderer/src/client/scoped-slots.tsx
   - packages/client/ui-renderer/src/client/registry.ts
@@ -30,7 +28,6 @@ symbols:
   - PropsStore
   - notifySubscribers
   - shallowEqual
-  - client-store-invariant
 related:
   - spine.overview
   - spine.trace-web-first-prompt
@@ -43,7 +40,7 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-client-store` 是浏览器半边的 **React-free snapshot 引擎**：zustand vanilla + immer + `subscribeWithSelector` + 可选 `raf` 批刷 + 手写 `localStorage` JSON persist。`defineStore` 把 `init` / `persist` / `actions` 烤成 `StoreHandle`；live 产物只有 `getSnapshot` / `subscribe` / baked `actions`（外加测试用的 `store.update`/`set`）。`useStore` 选择器 hook **不**在本包合成，由 [`subsys.client.runtime`](runtime.md) 指向的 ui-renderer 在装配时绑。本包**不是** Loader 行：没有 `dsh.client`、没有 `ctx.store`。已删除的 `packages/client/runtime` 的状态家现在就是这里。client 不执行模型 turn。
@@ -65,7 +62,6 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 
 - 合同面 `ObservableSnapshot` / `StoreSpec` / `StoreHandle` / `StoreInstance` / `StoreDecl` / `PropsStore`（`packages/client/store/src/contract.ts`）。
 - 引擎面 `createSnapshotStore`、`defineStore`、`SnapshotStore`、`EngineStoreInstance`、`notifySubscribers`、`shallowEqual`（`packages/client/store/src/index.ts`）。
-- 空 invariant companion `name: 'client-store-invariant'`：库不占进程全局态，installer 是空函数。[E: packages/client/store/src/invariant.ts:13] [E: packages/client/store/src/invariant.ts:21]
 
 本包**不**拥有：`ctx.slots` / `SlotRegistry`（ui-renderer；权威走读在 [`subsys.client.runtime`](runtime.md) 与 [`subsys.client.ui-slots`](ui-slots.md)）；`useStore` hook（ui-renderer `observableHook`）；Session / Workspace 对象层（`packages/api/session-controller/src/client/`、`packages/api/workspace-controller/src/client/`）；host `SessionStore`；模型 turn。
 
@@ -78,7 +74,6 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 | `packages/client/store/package.json` | npm `@deepseek-ai/dsh-client-store`；deps `immer` + `zustand`；无 `dsh.client` |
 | `packages/client/store/src/contract.ts` | 框架中性合同：snapshot / handle / baked actions / `PropsStore` |
 | `packages/client/store/src/index.ts` | 引擎实现：`createSnapshotStore`、`defineStore`、persist、raf |
-| `packages/client/store/src/invariant.ts` | Cordis companion；空 installer |
 | `packages/client/store/tests/store.client.spec.ts` | sync/raf、primitive persist、scope 后缀、`clearPersisted` |
 | `packages/client/ui-slots/src/store.ts` | 座位核再导出合同类型 |
 | `packages/client/ui-renderer/src/client/scoped-slots.tsx` | 把 instance 绑成 `kit.useStore` + `kit.actions` |
@@ -99,7 +94,7 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 | `PropsStore<H>` | 组件看见的份额：`{ useStore, actions }`。组件永远不拿 instance。[E: packages/client/store/src/contract.ts:135] |
 | `DefineStore` | 合同类型；实现是旁边的 `defineStore` 函数。[E: packages/client/store/src/contract.ts:144] |
 
-依赖：`zustand ~4.4.7`、`immer ^10.1.1`；`cordis` 是 peer（invariant companion 用）。[E: packages/client/store/package.json:30] [E: packages/client/store/package.json:31]
+依赖：`zustand ~4.4.7`、`immer ^10.1.1`；`cordis` 是 peer。[E: packages/client/store/package.json:26] [E: packages/client/store/package.json:27] [E: packages/client/store/package.json:30]
 
 ## 控制流
 
@@ -129,7 +124,7 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 - **写集是审计面。** 组件没有 `set`/`update`；所有副作用必须是声明过的 action。
 - **手写 persist。** 保护 string 等 primitive 根；storage 失败不得拆 live store。
 - **handle 身份，不是模块单例。** `create()` 每次新 instance；共享由框架按 handle 引用缓存。
-- **空 invariant。** 没有进程全局可变表可声明；每个 instance 由拥有者测试覆盖。
+- **没有进程全局可变表。** 每个 instance 由拥有者测试覆盖。
 
 ## Gotcha
 
@@ -152,16 +147,13 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 | 座位 store 座 | `StoreDecl` / `PropsStore`（ui-slots 再导出） | **browser** `SlotRegistry` 缓存 `handle.create` | `kit.useStore` / `kit.actions` | 无 | 有（经 ui-renderer） | 无 |
 | `useStore` hook | `SnapshotSelectorHook` 合同 | **browser** ui-renderer `observableHook` | 座位组件 | 无 | 有 | 无 |
 | persist 键 | `StoreSpec.persist` + `scopeKey` 后缀 | `defineStore.create` | `clearStoreScope` 在 session 死时 `clearPersisted` | 无 | 有 | 无 |
-| invariant companion | `ctx.invariants.register('@deepseek-ai/dsh-client-store')` | `client-store-invariant` 空 installer | 测试 `ctx.plugin(StoreInvariant)` | 随 invariants 组合 | 随 | 随 |
 
 ## Sources
 
 - packages/client/store/package.json
 - packages/client/store/src/index.ts
 - packages/client/store/src/contract.ts
-- packages/client/store/src/invariant.ts
 - packages/client/store/tests/store.client.spec.ts
-- packages/client/store/tests/invariant.client.spec.ts
 - packages/client/ui-slots/src/store.ts
 - packages/client/ui-renderer/src/client/scoped-slots.tsx
 - packages/client/ui-renderer/src/client/registry.ts

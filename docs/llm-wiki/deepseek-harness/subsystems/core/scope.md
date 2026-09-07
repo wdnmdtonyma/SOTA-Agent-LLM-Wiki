@@ -48,7 +48,7 @@ related:
   - surface.presets.overview
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-scope` 是 Cordis 组合运行时里的 **scope 作用域原语**：用 no-op plugin fiber 铸带 `kScope` 标签的 context，同一条 `scopeParents` 链同时管 **注册视图向下继承**（`ScopedLayers`）和 **事件准入向上扩展**（`scopeTarget`）。它不是 `ctx.scope` 服务，也不是 coding-agent 沙箱。
@@ -120,7 +120,7 @@ updated: 0a53fb55be
 
 4. `isolate` 是 vendor Cordis 的服务 realm，不是 `dsh-scope` 的 parent 链。`Context.isolate(name)` 给该服务名换一个 realm-private symbol；yml 组上写 `isolate: { planMode: true }` 就是这条缝。测试钉死：同一 provider 不带 isolate 被 `leakedServices` 拒绝；带 realm 则 root 解析不到，但 `serviceFor(agent, name)` 能按 standing fiber 读到（同一 preset 的两个 Agent 读到**同一**实例）。[E: vendor/cordis/src/context.ts:121] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:107] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108] [E: packages/preset/agent-presets/tests/mount.spec.ts:281] [E: packages/preset/agent-presets/tests/mount.spec.ts:298] shipped `minimal` / `standard` / `ptc` / `cordis` 的 isolate 图写在 [subsys.composition.agent-presets](../composition/agent-presets.md)；旧目录名 `code` 现为 PTC（`presets/ptc/`），wiki id `surface.presets.code` 仍是稳定别名。
 
-5. **会话 Agent scope** 由默认 loop 铸：`ReactLoopAgent` 构造里 `this.scope = createScope(loopCtx, this)`，live `Agent` 对象自己当 `ScopeKey`，再 `this.ctx = this.scope.ctx.extend({ agent: this })`。[E: packages/core/agent-loop/src/agent.ts:103] [E: packages/core/agent-loop/src/agent.ts:104]
+5. **会话 Agent scope** 由默认 loop 铸：`ReactLoopAgent` 构造里 `this.scope = createScope(loopCtx, this)`，live `Agent` 对象自己当 `ScopeKey`，再 `this.ctx = this.scope.ctx.extend({ agent: this })`。[E: packages/core/agent-loop/src/agent.ts:104] [E: packages/core/agent-loop/src/agent.ts:104]
 
 6. `AgentPresets.mount@packages/preset/agent-presets/src/index.ts` 在 `setup` 里做**唯一一次** `bindScopeParent(agentKey, standing.key)`，binding 放进 roster 私有 `WeakMap`。再调 `bindScopeParent` 抛 `scope key is already bound to a parent`。成环（含自指）抛 `scope parent link would form a cycle`。`scopeChainOf(agent)` 近到远是 `[agent, standingKey]`。[E: packages/preset/agent-presets/src/index.ts:425] [E: packages/core/scope/src/index.ts:73] [E: packages/core/scope/src/index.ts:56] [E: packages/core/scope/tests/scope.spec.ts:184]
 

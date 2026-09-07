@@ -48,7 +48,7 @@ related:
   - subsys.llm.token-meter
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.compaction` 是 compaction **Definition** 缝：抽象类 `CompactionEngine` 在构造里 `super(ctx, 'compaction')`，把实现登记为 Cordis 服务。没有单独的空 Definition 插件行；shipped Provider `BasicCompactionEngine` 自己继承该类。成功落地只追加 log-only `compaction/*`，再写一条带 `surfaceOp: { op: 'replace', start, end }` 的 `user/message`（或 pruner 对单条 `tool/result` 的同形 replace）。`SurfaceOp` 没有 delete。DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；`dsh web` 是唯一硬编码 profile 别名，其它用 `dsh --profile sdk|sdk-minimal|acp|headless`。本仓没有 shipped TUI。
@@ -113,14 +113,14 @@ updated: 0a53fb55be
 | `compactRegion` | 按 **surface 位置** 的闭区间 `[start, end]`，不是数值 seq 序。两端必须 pairing 平衡。 [E: packages/compaction/compaction/src/index.ts:164] |
 | `ManualCompactionError.code` | 封闭联合：`busy` / `cancelled` / `changed` / `summary` / `commit` / `persistence`。`busy` 也可从自动入口抛出。 [E: packages/compaction/compaction/src/index.ts:28] [E: packages/compaction/compaction/src/index.ts:41] |
 | `CompactionId` | 一次 start / summary / checkpoint / end 共用的 branded 字符串。 [E: packages/compaction/compaction/src/brand.ts:4] |
-| `CompactionResult` | `compactionId`、三条 lifecycle seq、`summary`、`shadowedRange` / `shadowedSeqs` / `shadowedTokenCount`。`shadowedRange` 是位置跨度：先前 replace 之后，作为数字的 `start` 可以大于 `end`；权威集合是 `shadowedSeqs`。 [E: packages/compaction/compaction/src/types.ts:93] [E: packages/compaction/compaction/src/types.ts:114] |
-| `compaction/start` | log-only 锁。`turn: number` 必须包在该开 turn 内；`turn: null` 是 turn 之间的手动事务。 [E: packages/compaction/compaction/src/types.ts:23] |
-| `compaction/summary` | log-only。`data.summary` 是摘要正文；真正上 surface 的是紧随其后的那条 `user/message`。 [E: packages/compaction/compaction/src/types.ts:33] |
-| `compaction/end` | log-only，释放锁。失败可带 `error`。 [E: packages/compaction/compaction/src/types.ts:71] |
-| `compaction/prune` | log-only 影子价。紧邻的下一条必须是对同一区间的 surface replace。 [E: packages/compaction/compaction/src/types.ts:81] |
+| `CompactionResult` | `compactionId`、三条 lifecycle seq、`summary`、`shadowedRange` / `shadowedSeqs` / `shadowedTokenCount`。`shadowedRange` 是位置跨度：先前 replace 之后，作为数字的 `start` 可以大于 `end`；权威集合是 `shadowedSeqs`。 [E: packages/compaction/compaction/src/types.ts:94] [E: packages/compaction/compaction/src/types.ts:115] |
+| `compaction/start` | log-only 锁。`turn: number` 必须包在该开 turn 内；`turn: null` 是 turn 之间的手动事务。 [E: packages/compaction/compaction/src/types.ts:24] |
+| `compaction/summary` | log-only。`data.summary` 是摘要正文；真正上 surface 的是紧随其后的那条 `user/message`。 [E: packages/compaction/compaction/src/types.ts:34] |
+| `compaction/end` | log-only，释放锁。失败可带 `error`。 [E: packages/compaction/compaction/src/types.ts:72] |
+| `compaction/prune` | log-only 影子价。紧邻的下一条必须是对同一区间的 surface replace。 [E: packages/compaction/compaction/src/types.ts:82] |
 | `compactCheckpointSource` | `{ kind: 'plugin', plugin: 'compact', compactionId, sourceCommandId? }`。plugin 名是 `compact`，不是 `compaction`。 [E: packages/compaction/compaction/src/checkpoint.ts:19] [E: packages/compaction/compaction/src/checkpoint.ts:33] |
-| `SurfaceEventType` | 只有 `user/message` / `assistant/message` / `tool/result` 可以带 `surfaceOp`。 [E: packages/core/session/src/types.ts:330] [E: packages/core/session/src/types.ts:331] [E: packages/core/session/src/types.ts:332] [E: packages/core/session/src/types.ts:333] |
-| `SurfaceOp` | `'append'`，或 `{ op: 'replace', start, end }`（闭区间）。**没有 delete。** [E: packages/core/session/src/types.ts:359] [E: packages/core/session/src/types.ts:360] [E: packages/core/session/src/types.ts:361] |
+| `SurfaceEventType` | 只有 `user/message` / `assistant/message` / `tool/result` 可以带 `surfaceOp`。 [E: packages/core/session/src/types.ts:331] [E: packages/core/session/src/types.ts:331] [E: packages/core/session/src/types.ts:332] [E: packages/core/session/src/types.ts:333] |
+| `SurfaceOp` | `'append'`，或 `{ op: 'replace', start, end }`（闭区间）。**没有 delete。** [E: packages/core/session/src/types.ts:352] [E: packages/core/session/src/types.ts:352] [E: packages/core/session/src/types.ts:352] |
 | `CompactionAgentContext` | 缝不依赖 agent 包：只要 `session` 与 `options.provider/model`。 |
 | `ManualCompactAgentContext` | 另要 `runMaintenance`。非 idle 时实现应同步失败。 |
 
@@ -140,11 +140,11 @@ updated: 0a53fb55be
 
 6. **`/compact` 是人命令 Consumer，不经模型 turn。** `command-compact` 的 `inject = ['commands', 'compaction']`。`apply` 在 effect 里先 yield drain、再 `ctx.commands.register({ name: 'compact', … })`。`executeCompact` 拒绝任何非空 `rawInput`；否则 `ctx.compaction.compactNow(invocation.agent, invocation.signal, invocation.commandId)`。`null` → 「No compactable history yet.»；成功用 `shadowedSeqs.length` / `shadowedTokenCount` 拼文案，并把 `sourceEventSeq` 指到 `summarySeq`。`ManualCompactionError` 六码各映射一条 human-only `kind: 'error'`；其它异常原样抛。 [E: packages/compaction/command-compact/src/index.ts:11] [E: packages/compaction/command-compact/src/index.ts:66] [E: packages/compaction/command-compact/src/index.ts:67] [E: packages/compaction/command-compact/src/index.ts:101] [E: packages/compaction/command-compact/tests/command-compact.spec.ts:160]
 
-7. **`compactNow` 先抢 idle maintenance。** 合同要求实现同步启动 idle 任务，再做任何异步工作。`ReactLoopAgent.runMaintenance` 在 `phase.kind !== 'idle'` 时立刻抛 `already has active work`。`BasicCompactionEngine.compactNow` 把这次同步抛包装成 `ManualCompactionError('busy')`；任务体内 `owner: null`、只要求选中 span 稳定，成功后 `sessions.flush`。选段与 flush 细节在 Provider 页。 [E: packages/core/agent-loop/src/agent.ts:151] [E: packages/core/agent-loop/src/agent.ts:152] [E: packages/compaction/compaction-basic/src/index.ts:376] [E: packages/compaction/compaction-basic/src/index.ts:415] [E: packages/compaction/compaction-basic/src/index.ts:416]
+7. **`compactNow` 先抢 idle maintenance。** 合同要求实现同步启动 idle 任务，再做任何异步工作。`ReactLoopAgent.runMaintenance` 在 `phase.kind !== 'idle'` 时立刻抛 `already has active work`。`BasicCompactionEngine.compactNow` 把这次同步抛包装成 `ManualCompactionError('busy')`；任务体内 `owner: null`、只要求选中 span 稳定，成功后 `sessions.flush`。选段与 flush 细节在 Provider 页。 [E: packages/core/agent-loop/src/agent.ts:151] [E: packages/core/agent-loop/src/agent.ts:151] [E: packages/compaction/compaction-basic/src/index.ts:376] [E: packages/compaction/compaction-basic/src/index.ts:415] [E: packages/compaction/compaction-basic/src/index.ts:416]
 
 8. **`compactRegion` 用 surface 下标，不用 seq 数值序。** 实现先 `nodes.indexOf(start)` / `indexOf(end)`：缺席、或 start 的位置在 end **之后**，抛错。然后 `toolPairingBalancedBefore(session, start)` 与 `toolPairingBalancedAfter(session, end)` 必须为真，否则会切断 assistant tool-call 与 `tool/result`。 [E: packages/compaction/compaction-basic/src/region.ts:319] [E: packages/compaction/compaction-basic/src/region.ts:320] [E: packages/compaction/compaction-basic/src/region.ts:329] [E: packages/compaction/compaction-basic/src/region.ts:333]
 
-9. **pairing 按当前 surface 折叠，不按 step 标记。** `eventDelta`：`assistant/message` 里每个 `tool-call` 块 +1，`tool/result` −1，其它 0。`toolPairingBalancedBefore(seq)` 看该节点**前**切口；`After` 看**后**切口。闭步：assistant 之后不平衡，配对 result 之后才平衡。replace 换代后按新 `nodes` 重建；已裁掉的 seq 再查会抛 `not found`。 [E: packages/compaction/compaction/src/tool-pairing.ts:32] [E: packages/compaction/compaction/src/tool-pairing.ts:34] [E: packages/compaction/compaction/src/tool-pairing.ts:117] [E: packages/compaction/compaction/src/tool-pairing.ts:129] [E: packages/compaction/compaction/tests/tool-pairing.spec.ts:63] [E: packages/compaction/compaction/tests/tool-pairing.spec.ts:64]
+9. **pairing 按当前 surface 折叠，不按 step 标记。** `eventDelta`：`assistant/message` 里每个 `tool-call` 块 +1，`tool/result` −1，其它 0。`toolPairingBalancedBefore(seq)` 看该节点**前**切口；`After` 看**后**切口。闭步：assistant 之后不平衡，配对 result 之后才平衡。replace 换代后按新 `nodes` 重建；已裁掉的 seq 再查会抛 `not found`。 [E: packages/compaction/compaction/src/tool-pairing.ts:32] [E: packages/compaction/compaction/src/tool-pairing.ts:34] [E: packages/compaction/compaction/src/tool-pairing.ts:112] [E: packages/compaction/compaction/src/tool-pairing.ts:124] [E: packages/compaction/compaction/tests/tool-pairing.spec.ts:63] [E: packages/compaction/compaction/tests/tool-pairing.spec.ts:64]
 
 10. **唯一摘要 surface 变更是随后那条 `user/message`。** 校验过后同步 `append('compaction/start')`（这把锁）→ summarizer → `append('compaction/summary')` → `append('user/message', checkpoint, { surfaceOp: { op: 'replace', start, end }, sourceEventSeqs })` → `compaction/end`。`checkpoint` 的 `source` 必须是 `compactCheckpointSource(compactionId, sourceCommandId?)`。缝测试把同一顺序钉死，并断言 `compaction/start` 运行时没有 `surfaceOp`。 [E: packages/compaction/compaction-basic/src/region.ts:191] [E: packages/compaction/compaction-basic/src/region.ts:457] [E: packages/compaction/compaction-basic/src/region.ts:472] [E: packages/compaction/compaction-basic/src/region.ts:473] [E: packages/compaction/compaction/src/checkpoint.ts:38] [E: packages/compaction/compaction/tests/compaction.spec.ts:72] [E: packages/compaction/compaction/tests/compaction.spec.ts:138] [E: packages/compaction/compaction/tests/compaction.spec.ts:151]
 
@@ -152,7 +152,7 @@ updated: 0a53fb55be
 
 12. **pruner 共用「前一条 log-only + 后一条 replace」协议。** `ToolResultPruner` 先 `append('compaction/prune', …)`，再对同一 `seq` 写 `tool/result` 且 `surfaceOp: { op: 'replace', start: seq, end: seq }`。字符预算与默认阈值在 Provider 页。 [E: packages/compaction/compaction-tool-result-pruner/src/index.ts:162] [E: packages/compaction/compaction-tool-result-pruner/src/index.ts:171]
 
-13. **锁与 turn 不能交叉。** invariant 在仍有未闭合 `compaction/start` 时再 `start` 会 fail；不带 `error` 的 `compaction/end` 必须已经见过一条 `summary`。编号 owner 必须等于当前开 turn；`turn: null` 的手动括号禁止在开 turn 内出现。 [E: packages/compaction/compaction/src/invariant.ts:131] [E: packages/compaction/compaction/src/invariant.ts:135] [E: packages/compaction/compaction/src/invariant.ts:162] [E: packages/compaction/compaction/src/invariant.ts:215]
+13. **锁与 turn 不能交叉。** invariant 在仍有未闭合 `compaction/start` 时再 `start` 会 fail；不带 `error` 的 `compaction/end` 必须已经见过一条 `summary`。编号 owner 必须等于当前开 turn；`turn: null` 的手动括号禁止在开 turn 内出现。 [E: packages/compaction/compaction/src/invariant.ts:132] [E: packages/compaction/compaction/src/invariant.ts:136] [E: packages/compaction/compaction/src/invariant.ts:161] [E: packages/compaction/compaction/src/invariant.ts:215]
 
 ## 设计动机
 

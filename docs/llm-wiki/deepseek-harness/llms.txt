@@ -2,7 +2,7 @@
 
 > **deepseek-harness**(`deepseek-harness/`,Cordis 插件树 TypeScript monorepo,组装运行时)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 deepseek-harness git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
 >
-> **状态:已完成 —— 全部 201 节点 verified 于 `0a53fb55be`(`0.1.2-alpha.2`)。**
+> **状态:已完成 —— 全部 204 节点 verified 于 `d347e70390`(`0.1.3-alpha.1`)。**
 >
 > **核心组织主线 —— 组合运行时**:profile → bundle → agent preset;capability seam = Service Definition / Provider / Consumer;model-visible ⟺ logged。每个节点 frontmatter 标 `pkg: composition|core|llm|execution|orchestration|context|persistence|interaction|host|client|integration|vendor|util|cross`。官方 `docs/` 不是 `[E]`。
 
@@ -169,9 +169,10 @@
 - [file-reference 缝](subsystems/context/file-reference.md) `[context]`: `文件引用 grammar + local provider`
 
 ### persistence
-- [session persistence 缝](subsystems/persistence/session-persistence.md) `[persistence]`: `JSONL + SQLite 后端协调`
-- [JSONL 后端](subsystems/persistence/jsonl.md) `[persistence]`: `SESSION_FORMAT_VERSION = 0`
-- [SQLite 后端](subsystems/persistence/sqlite.md) `[persistence]`: `单调 SCHEMA_VERSION;拒旧盘`
+- [session persistence 缝](subsystems/persistence/session-persistence.md) `[persistence]`: `SessionHandle; shipped 盘只有 JSONL`
+- [JSONL 后端](subsystems/persistence/jsonl.md) `[persistence]`: `format v2 + write lease`
+- [SQLite 后端](subsystems/persistence/sqlite.md) `[persistence]`: `session-persistence-sqlite 已退役;query/storage sqlite 仍在`
+- [Session format v2](subsystems/persistence/session-format.md) `[persistence]`: `SESSION_FORMAT_VERSION=2; v0→v1→v2 adjacent`
 - [checkpoint 策略](subsystems/persistence/checkpoint.md) `[persistence]`: `llm/stream 前 + tool body 前`
 - [session projection](subsystems/persistence/projection.md) `[persistence]`: `纯 ProjectionDefinition + 一致切面`
 - [会话标题](subsystems/persistence/title.md) `[persistence]`: `异步 provider;引用源 message seq`
@@ -215,6 +216,7 @@
 - [ui-session](subsystems/client/ui-session.md) `[client]`: `会话列表 / 选择`
 - [ui-renderer](subsystems/client/ui-renderer.md) `[client]`: `原 web-react;bind / scoped-slots`
 - [ui-layout](subsystems/client/ui-layout.md) `[client]`: `工作台布局`
+- [client file-upload](subsystems/client/file-upload.md) `[client]`: `web-app 浏览器上传;staged receipt;不是工具`
 
 ### integration
 - [mcp-client 实现](subsystems/integration/mcp-client.md) `[integration]`: `名字 mcp__<server>__<raw>`
@@ -233,6 +235,7 @@
 - [cordis plugin loader](subsystems/vendor/loader.md) `[vendor]`: `cordis.yml 装载与 !!js`
 - [home-paths](subsystems/util/home-paths.md) `[util]`: `Harness home 解析`
 - [Branded ids](subsystems/util/brand.md) `[util]`: `跨边界不透明 id`
+- [http-proxy](subsystems/util/http-proxy.md) `[util]`: `进程级 undici dispatcher;不是插件`
 
 ## T3 — Reference / catalog
 - [模型可见工具目录](reference/tools-catalog.md) `[core]`: `按 boot schemas 逐名覆盖;官方 catalog 只当查漏`

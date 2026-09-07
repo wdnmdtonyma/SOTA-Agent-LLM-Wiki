@@ -7,7 +7,6 @@ pkg: interaction
 source:
   - packages/hooks/hooks-codex/src/index.ts
   - packages/hooks/hooks-codex/src/config.ts
-  - packages/hooks/hooks-codex/src/invariant.ts
   - packages/hooks/hooks-codex/package.json
   - packages/hooks/hooks-codex/tests/bridge.spec.ts
   - packages/hooks/hooks-codex/tests/config.spec.ts
@@ -38,7 +37,7 @@ related:
   - surface.hooks.bridges
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-hooks-codex` 是一座 **host 面桥**：把一份未改过的 Codex `hooks.json` 里 **5 个** 命令 hook 点（`PreToolUse` / `PostToolUse` / `SessionStart` / `UserPromptSubmit` / `Stop`）接到 Cordis 监听点。它 **不是** Codex 全量 HookEvent 再实现，**没有** `SubagentStart` / `SubagentStop`，**不在** shipped `dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` / 任一 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）。执行、decode、restrictive merge 在共享库 [subsys.interaction.hooks-protocol](./hooks-protocol.md)；本包只拥有方言。
@@ -54,9 +53,9 @@ updated: 0a53fb55be
 
 ## 职责边界
 
-本包拥有：插件名 `hooks-codex`、`inject = ['shell', 'sessionProjections']`、进程级 `Config.configPath` 的一次读入、`parseCodexConfig` / `CODEX_EVENTS` 五事件子集、snake_case payload、regex-only matcher 方言、以及把 merge 后的 **blocking**（`decision === 'deny'`）映射到 Cordis 决策。 [E: packages/hooks/hooks-codex/src/index.ts:41] [E: packages/hooks/hooks-codex/src/index.ts:42] [E: packages/hooks/hooks-codex/src/config.ts:11]
+本包拥有：插件名 `hooks-codex`、`inject = ['shell', 'sessionProjections']`、进程级 `Config.configPath` 的一次读入、`parseCodexConfig` / `CODEX_EVENTS` 五事件子集、snake_case payload、regex-only matcher 方言、以及把 merge 后的 **blocking**（`decision === 'deny'`）映射到 Cordis 决策。 [E: packages/hooks/hooks-codex/src/index.ts:41] [E: packages/hooks/hooks-codex/src/index.ts:41] [E: packages/hooks/hooks-codex/src/config.ts:11]
 
-本包 **不** publish `ctx.*`。不拥有：`runHook` / `mergeHookOutputs` / `hook/invoked`+`hook/result` / detached quiescence（[subsys.interaction.hooks-protocol](./hooks-protocol.md)）；Claude 七事件方言、hook env、`${CLAUDE_*}` 替换、`PreToolUse` 的 `ask`（[subsys.interaction.hooks-claude](./hooks-claude.md)）；`ctx.shell` 实现（[subsys.execution.shell](../execution/shell.md)）；`tools/pre-execute` 末端默认 `{ kind: 'allow' }` 与 `serviceAsk`（[spine.tool-call-anatomy](../../spine/tool-call-anatomy.md)）。companion `hooks-codex-invariant` 是空 installer：桥只写 hook-protocol 的 session 事件，配对不变量归协议库。 [E: packages/hooks/hooks-codex/src/invariant.ts:21]
+本包 **不** publish `ctx.*`。不拥有：`runHook` / `mergeHookOutputs` / `hook/invoked`+`hook/result` / detached quiescence（[subsys.interaction.hooks-protocol](./hooks-protocol.md)）；Claude 七事件方言、hook env、`${CLAUDE_*}` 替换、`PreToolUse` 的 `ask`（[subsys.interaction.hooks-claude](./hooks-claude.md)）；`ctx.shell` 实现（[subsys.execution.shell](../execution/shell.md)）；`tools/pre-execute` 末端默认 `{ kind: 'allow' }` 与 `serviceAsk`（[spine.tool-call-anatomy](../../spine/tool-call-anatomy.md)）。桥只写 hook-protocol 的 session 事件，配对不变量归协议库。
 
 **不在 shipped 产品树。** `dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` 的 `cordis.patch.yml`、以及全部 shipped `agent.cordis.yml`（`presets/{minimal,standard,ptc,cordis}`），都没有 `id: hooks-codex`（本页不给不存在的行伪造 `[E]`）。仓库里能核到的组合行是 ACP snapshot overlay：`id: hooks-codex` / `name: '@deepseek-ai/dsh-hooks-codex'`，`configPath: ./codex-hooks.json`。 [E: snapshots/acp/escalation-approved/cordis.yml:87] [E: snapshots/acp/escalation-approved/cordis.yml:88] [E: snapshots/acp/escalation-approved/cordis.yml:90] 包名写在自己的 manifest 上。 [E: packages/hooks/hooks-codex/package.json:2] CLI 与 Python deploy 闭包把该包列进 `dependencies`，只为 overlay / 自定义 patch 能 resolve，**不等于** 默认 `dsh web` 或 `dsh --profile sdk|sdk-minimal|acp` 已挂桥。 [E: apps/cli/package.json:55] [E: python/sdk-runtime/package.json:46]
 
@@ -68,7 +67,6 @@ updated: 0a53fb55be
 |---|---|
 | `packages/hooks/hooks-codex/src/index.ts` | `name` / `inject` / `Config` / `apply`；五条监听；`runPoint`；snake_case payload |
 | `packages/hooks/hooks-codex/src/config.ts` | `CODEX_EVENTS`、`parseCodexConfig`、`SkippedHook` |
-| `packages/hooks/hooks-codex/src/invariant.ts` | 空 companion：`hooks-codex-invariant` |
 | `packages/hooks/hooks-codex/package.json` | `@deepseek-ai/dsh-hooks-codex` |
 | `packages/hooks/hooks-codex/tests/bridge.spec.ts` | 五事件子集、regex 子串 deny、Stop 续跑、dispose drain |
 | `packages/hooks/hooks-codex/tests/config.spec.ts` | 丢 `SubagentStop`、无 substitution、`async: true` → skipped |
@@ -91,14 +89,14 @@ updated: 0a53fb55be
 | `parseCodexConfig` | 接受 `{ hooks: … }` 包装或裸 event map。非 `command` type → `skipped`（`unsupported "<type>" hook`）；`async: true` → `skipped`（`async hook`）；缺 `type` 当 command。`timeout` 与别名 `timeoutSec` 都收成 `timeoutSec`。 [E: packages/hooks/hooks-codex/src/config.ts:65] [E: packages/hooks/hooks-codex/src/config.ts:67] [E: packages/hooks/hooks-codex/src/config.ts:70] [E: packages/hooks/hooks-codex/src/config.ts:71] |
 | `SkippedHook` | `{ event, reason }`。`apply` 对每条 `ctx.logger.warn`，不注册。 |
 | 无 matcher 主体 | `UserPromptSubmit` / `Stop` 的 `matcher` 在校验 **之前** 丢弃（非法正则也不会炸）。其余三点把 `matcher` 交给 `matcherDiagnostic(…, 'codex')`；无效正则抛 `SyntaxError`，整份 config 作废。 [E: packages/hooks/hooks-codex/src/config.ts:75] [E: packages/hooks/hooks-codex/src/config.ts:79] [E: packages/hooks/hooks-codex/tests/config.spec.ts:72] |
-| `Config` | 必填 `configPath`；`model` 默认 `''`（打进每条 payload）；`defaultTimeoutMs` 默认 `DEFAULT_HOOK_TIMEOUT_MS`（`600_000`）；`stderrSummaryMaxChars` 默认 `DEFAULT_STDERR_SUMMARY_MAX_CHARS`（`500`），必须正整数。 [E: packages/hooks/hooks-codex/src/index.ts:62] [E: packages/hooks/hooks-codex/src/index.ts:63] [E: packages/hooks/hooks-codex/src/index.ts:64] [E: packages/hooks/hooks-codex/src/index.ts:65] [E: packages/hooks/hook-protocol/src/runner.ts:20] [E: packages/hooks/hook-protocol/src/events.ts:53] |
-| Codex payload | 每条都是 **snake_case**，**无** 尾换行：`session_id` / `transcript_path` / `cwd` / `hook_event_name` / `model` / `permission_mode: 'default'`。turn 作用域再加 `turn_id`。`transcript_path` 来自机会主义 `ctx.get('sessionPersistence')?.locate(…)`，没有 persistence 则为 `null`。 [E: packages/hooks/hooks-codex/src/index.ts:294] [E: packages/hooks/hooks-codex/src/index.ts:301] [E: packages/hooks/hooks-codex/src/index.ts:147] |
-| 工具 payload | `tool_name` = **真实** `exec.name`（与 matcher 主体一致）；`tool_input` 固定 `{ command }`，从 args 里抽 string `command`，否则 `''`；`tool_use_id` = `exec.callId`。Post 再加 `tool_response`（result 文本块拼接）。 [E: packages/hooks/hooks-codex/src/index.ts:324] [E: packages/hooks/hooks-codex/src/index.ts:328] |
-| Stop payload | `stop_hook_active: false`（恒为假）、`last_assistant_message: null`。 [E: packages/hooks/hooks-codex/src/index.ts:262] |
+| `Config` | 必填 `configPath`；`model` 默认 `''`（打进每条 payload）；`defaultTimeoutMs` 默认 `DEFAULT_HOOK_TIMEOUT_MS`（`600_000`）；`stderrSummaryMaxChars` 默认 `DEFAULT_STDERR_SUMMARY_MAX_CHARS`（`500`），必须正整数。 [E: packages/hooks/hooks-codex/src/index.ts:62] [E: packages/hooks/hooks-codex/src/index.ts:63] [E: packages/hooks/hooks-codex/src/index.ts:64] [E: packages/hooks/hooks-codex/src/index.ts:64] [E: packages/hooks/hook-protocol/src/runner.ts:20] [E: packages/hooks/hook-protocol/src/events.ts:53] |
+| Codex payload | 每条都是 **snake_case**，**无** 尾换行：`session_id` / `transcript_path` / `cwd` / `hook_event_name` / `model` / `permission_mode: 'default'`。turn 作用域再加 `turn_id`。`transcript_path` 来自机会主义 `ctx.get('sessionPersistence')?.locate(…)`，没有 persistence 则为 `null`。 [E: packages/hooks/hooks-codex/src/index.ts:293] [E: packages/hooks/hooks-codex/src/index.ts:300] [E: packages/hooks/hooks-codex/src/index.ts:148] |
+| 工具 payload | `tool_name` = **真实** `exec.name`（与 matcher 主体一致）；`tool_input` 固定 `{ command }`，从 args 里抽 string `command`，否则 `''`；`tool_use_id` = `exec.callId`。Post 再加 `tool_response`（result 文本块拼接）。 [E: packages/hooks/hooks-codex/src/index.ts:323] [E: packages/hooks/hooks-codex/src/index.ts:327] |
+| Stop payload | `stop_hook_active: false`（恒为假）、`last_assistant_message: null`。 [E: packages/hooks/hooks-codex/src/index.ts:263] |
 | 本桥 honoring | merge 结果只有 `decision === 'deny'` 改控制流。`allow` / `ask` / `none` 都走 `next()`（或 Stop 不续跑）。`continue:false` 只写进 `hook/result.decision === 'stop'`，**不停** turn。 [E: packages/hooks/hooks-codex/src/index.ts:230] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:413] |
 | `hook/*` 事件 | 仅当 `agent` 在场 **且** `turn !== undefined` 才 `appendHookInvoked` / `appendHookResult`。`dialect: 'codex'`。SessionStart 是 detached、不带 turn，不写这对事件。 [E: packages/hooks/hooks-codex/src/index.ts:136] [E: packages/hooks/hooks-codex/src/index.ts:138] [E: packages/hooks/hooks-codex/src/index.ts:165] |
-| `PLUGIN_SOURCE` | `{ kind: 'plugin', plugin: 'hooks-codex' }`，给 `inject` / `steer` 的 user message。 [E: packages/hooks/hooks-codex/src/index.ts:73] |
-| `lastTurn` | 无 agent 返回 `0`；有 agent 则读 `ctx.sessionProjections.stateOf(…, 'turnBoundary')?.lastTurn`。 [E: packages/hooks/hooks-codex/src/index.ts:281] [E: packages/hooks/hooks-codex/src/index.ts:283] |
+| `PLUGIN_SOURCE` | `{ kind: 'plugin', plugin: 'hooks-codex' }`，给 `inject` / `steer` 的 user message。 [E: packages/hooks/hooks-codex/src/index.ts:72] |
+| `lastTurn` | 无 agent 返回 `0`；有 agent 则读 `ctx.sessionProjections.stateOf(…, 'turnBoundary')?.lastTurn`。 [E: packages/hooks/hooks-codex/src/index.ts:282] [E: packages/hooks/hooks-codex/src/index.ts:282] |
 
 映射（本桥只这五条；**没有** `subagent/start` / `subagent/end`）：
 
@@ -118,21 +116,21 @@ updated: 0a53fb55be
 
 3. **解析只认五事件、只收同步 command。** `parseCodexConfig` 对 `CODEX_EVENTS` 做 `for`，其它键（含测试里写进 json 的 `SubagentStop`）直接消失。`async: true` 记 `skipped`，命令字符串原样保留——**无** `${…}` 替换。非法 regex 在「会被用到的 matcher」上抛 `SyntaxError`，整桥不挂。 [E: packages/hooks/hooks-codex/src/config.ts:50] [E: packages/hooks/hooks-codex/src/config.ts:67] [E: packages/hooks/hooks-codex/tests/config.spec.ts:13] [E: packages/hooks/hooks-codex/tests/config.spec.ts:22]
 
-4. **SessionStart 是唯一 detached / emit 点。** `createDetachedRuns@detached.ts` 建一份 tracker；`ctx.effect` 的 disposer 调 `detached.drain()`。`ctx.on('agent/session-start')` **没有** `next`（事件合同是 emit）。`runPoint('SessionStart', source, …)` 用 `detached.signal`，`plainStdoutAsContext: true`；resolve 后 `agent.inject(context)`，失败只 warn。慢 hook 可能赶不上第一次请求（没有 startup gate）。卸 fiber 必须杀掉仍在跑的 hook 进程并等到 chain settle。 [E: packages/hooks/hooks-codex/src/index.ts:105] [E: packages/hooks/hooks-codex/src/index.ts:106] [E: packages/hooks/hooks-codex/src/index.ts:189] [E: packages/hooks/hooks-codex/src/index.ts:193] [E: packages/core/agent/src/runtime-types.ts:224] [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:222]
+4. **SessionStart 是唯一 detached / emit 点。** `createDetachedRuns@detached.ts` 建一份 tracker；`ctx.effect` 的 disposer 调 `detached.drain()`。`ctx.on('agent/session-start')` **没有** `next`（事件合同是 emit）。`runPoint('SessionStart', source, …)` 用 `detached.signal`，`plainStdoutAsContext: true`；resolve 后 `agent.inject(context)`，失败只 warn。慢 hook 可能赶不上第一次请求（没有 startup gate）。卸 fiber 必须杀掉仍在跑的 hook 进程并等到 chain settle。 [E: packages/hooks/hooks-codex/src/index.ts:105] [E: packages/hooks/hooks-codex/src/index.ts:105] [E: packages/hooks/hooks-codex/src/index.ts:189] [E: packages/hooks/hooks-codex/src/index.ts:194] [E: packages/core/agent/src/runtime-types.ts:223] [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:222]
 
-5. **`runPoint@index.ts`：regex 选组，stdin 无换行、无 env。** 对每个 group 调 `matchesMatcher(group.matcher, matchQuery, 'codex')`——Codex **没有** Claude 那种 `[A-Za-z0-9_|]+` literal 快路径，`"Bash"` 是 `/Bash/`，会匹配 `BashOutput`。命中则 `runHook(ctx.shell, hook, { payload, cwd: session.header.cwd, signal, trailingNewline: false, expectedEventName: point })`。不传 `env`；共享 runner 只有调用方给了 `options.env` 才写进 `ShellExecRequest`。workdir 是 **session cwd**，不是 server 启动目录。 [E: packages/hooks/hooks-codex/src/index.ts:132] [E: packages/hooks/hook-protocol/src/matcher.ts:64] [E: packages/hooks/hook-protocol/tests/matcher.spec.ts:41] [E: packages/hooks/hooks-codex/src/index.ts:147] [E: packages/hooks/hook-protocol/src/runner.ts:75] [E: packages/hooks/hook-protocol/src/runner.ts:83]
+5. **`runPoint@index.ts`：regex 选组，stdin 无换行、无 env。** 对每个 group 调 `matchesMatcher(group.matcher, matchQuery, 'codex')`——Codex **没有** Claude 那种 `[A-Za-z0-9_|]+` literal 快路径，`"Bash"` 是 `/Bash/`，会匹配 `BashOutput`。命中则 `runHook(ctx.shell, hook, { payload, cwd: session.header.cwd, signal, trailingNewline: false, expectedEventName: point })`。不传 `env`；共享 runner 只有调用方给了 `options.env` 才写进 `ShellExecRequest`。workdir 是 **session cwd**，不是 server 启动目录。 [E: packages/hooks/hooks-codex/src/index.ts:132] [E: packages/hooks/hook-protocol/src/matcher.ts:64] [E: packages/hooks/hook-protocol/tests/matcher.spec.ts:41] [E: packages/hooks/hooks-codex/src/index.ts:148] [E: packages/hooks/hook-protocol/src/runner.ts:75] [E: packages/hooks/hook-protocol/src/runner.ts:83]
 
-6. **decode + merge 在协议库；本桥再过滤。** exit 2 → `decision: 'block'`（stderr 当 reason）；exit 0 才解析 JSON；其它 exit / 基础设施 reject 是非阻塞错误（无 exitCode）。`mergeHookOutputs` 按 deny > ask > allow 折叠。本桥随后 **只看** `merged.decision === 'deny'`。`systemMessage` 只 warn「not yet surfaced」。clean exit + 非 JSON stdout 仅在 `plainStdoutAsContext` 为真时升成 `additionalContext`（JSON 开头 `{` 的 stdout 不当散文）。 [E: packages/hooks/hook-protocol/src/codec.ts:67] [E: packages/hooks/hooks-codex/src/index.ts:170] [E: packages/hooks/hooks-codex/src/index.ts:163] [E: packages/hooks/hooks-codex/src/index.ts:153]
+6. **decode + merge 在协议库；本桥再过滤。** exit 2 → `decision: 'block'`（stderr 当 reason）；exit 0 才解析 JSON；其它 exit / 基础设施 reject 是非阻塞错误（无 exitCode）。`mergeHookOutputs` 按 deny > ask > allow 折叠。本桥随后 **只看** `merged.decision === 'deny'`。`systemMessage` 只 warn「not yet surfaced」。clean exit + 非 JSON stdout 仅在 `plainStdoutAsContext` 为真时升成 `additionalContext`（JSON 开头 `{` 的 stdout 不当散文）。 [E: packages/hooks/hook-protocol/src/codec.ts:67] [E: packages/hooks/hooks-codex/src/index.ts:169] [E: packages/hooks/hooks-codex/src/index.ts:164] [E: packages/hooks/hooks-codex/src/index.ts:153]
 
-7. **UserPromptSubmit → `agent/pre-step`。** 空 `messages` 直接 `return next()`，不跑 hook。否则 payload 带 `turn_id` 与拼起来的 `prompt`。`deny` → `{ kind: 'reject' }`（**不** `next()`，本 turn 无 step、模型 0 次请求）。非 deny **必须** `await next()`，再把本桥 context 追加到下游 `kind: 'enter'` 的 `messages` 尾；下游 `reject` / `rewrite` 仍生效。本桥自己不 rewrite、不 ask。 [E: packages/hooks/hooks-codex/src/index.ts:201] [E: packages/hooks/hooks-codex/src/index.ts:204] [E: packages/hooks/hooks-codex/src/index.ts:211] [E: packages/hooks/hooks-codex/src/index.ts:216] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:93] [E: packages/core/agent/src/runtime-types.ts:238]
+7. **UserPromptSubmit → `agent/pre-step`。** 空 `messages` 直接 `return next()`，不跑 hook。否则 payload 带 `turn_id` 与拼起来的 `prompt`。`deny` → `{ kind: 'reject' }`（**不** `next()`，本 turn 无 step、模型 0 次请求）。非 deny **必须** `await next()`，再把本桥 context 追加到下游 `kind: 'enter'` 的 `messages` 尾；下游 `reject` / `rewrite` 仍生效。本桥自己不 rewrite、不 ask。 [E: packages/hooks/hooks-codex/src/index.ts:201] [E: packages/hooks/hooks-codex/src/index.ts:204] [E: packages/hooks/hooks-codex/src/index.ts:211] [E: packages/hooks/hooks-codex/src/index.ts:216] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:93] [E: packages/core/agent/src/runtime-types.ts:242]
 
-8. **PreToolUse → `tools/pre-execute`：只 block，无 approval、无 rewrite。** `deny` 返回 `{ kind: 'deny', reason }`（默认文案 `blocked by PreToolUse hook`），工具 `execute` 不跑。其它决策（含 merge 出来的 `ask` / `allow`）一律 `return next()`。对照：Claude 桥在同一缝上把 `ask` 映射成 `{ kind: 'ask' }`。本桥不读 `updatedInput`。 [E: packages/hooks/hooks-codex/src/index.ts:226] [E: packages/hooks/hooks-codex/src/index.ts:230] [E: packages/hooks/hooks-codex/src/index.ts:231] [E: packages/hooks/hooks-claude-code/src/index.ts:243] [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:85]
+8. **PreToolUse → `tools/pre-execute`：只 block，无 approval、无 rewrite。** `deny` 返回 `{ kind: 'deny', reason }`（默认文案 `blocked by PreToolUse hook`），工具 `execute` 不跑。其它决策（含 merge 出来的 `ask` / `allow`）一律 `return next()`。对照：Claude 桥在同一缝上把 `ask` 映射成 `{ kind: 'ask' }`。本桥不读 `updatedInput`。 [E: packages/hooks/hooks-codex/src/index.ts:226] [E: packages/hooks/hooks-codex/src/index.ts:230] [E: packages/hooks/hooks-codex/src/index.ts:230] [E: packages/hooks/hooks-claude-code/src/index.ts:243] [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:85]
 
 9. **PostToolUse → `tools/post-execute`。** 工具 body **已经**跑完。`deny` 返回 `{ kind: 'block', feedback }`（可附带 context），结果进模型时是 `isError`。非 deny 先 `await next()`，再 `prependContext` 把本桥 context 叠到下游 `accept` **或** `block` 上。 [E: packages/hooks/hooks-codex/src/index.ts:235] [E: packages/hooks/hooks-codex/src/index.ts:240] [E: packages/hooks/hooks-codex/src/index.ts:245] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:231]
 
-10. **Stop → `agent/turn-stopping`（serial，不是 waterfall）。** 合同没有 `next`。`deny`（含 exit 2 且 stderr 空）`agent.steer` 一条 user message，机器看见 pending input 再跑一步；默认文案 `continue: blocked by Stop hook`。`stop_hook_active` 恒 `false`：一条永远 block 的 Stop hook 会逼每个 step 续跑，直到 hook 自己限流（测试用 marker 文件只 block 一次）。 [E: packages/hooks/hooks-codex/src/index.ts:261] [E: packages/hooks/hooks-codex/src/index.ts:269] [E: packages/core/agent/src/runtime-types.ts:285] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:506]
+10. **Stop → `agent/turn-stopping`（serial，不是 waterfall）。** 合同没有 `next`。`deny`（含 exit 2 且 stderr 空）`agent.steer` 一条 user message，机器看见 pending input 再跑一步；默认文案 `continue: blocked by Stop hook`。`stop_hook_active` 恒 `false`：一条永远 block 的 Stop hook 会逼每个 step 续跑，直到 hook 自己限流（测试用 marker 文件只 block 一次）。 [E: packages/hooks/hooks-codex/src/index.ts:261] [E: packages/hooks/hooks-codex/src/index.ts:268] [E: packages/core/agent/src/runtime-types.ts:289] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:506]
 
-11. **waterfall 必须 `next()`。** Cordis `Events.waterfall` 靠传入的 `next()` 才 `shift` 到下一层。UserPromptSubmit / PreToolUse / PostToolUse 在非 deny 路径上都调用 `next()`；漏掉等于停掉 pre-step / 工具执行 / post-execute 链。SessionStart 与 Stop 不是 waterfall，没有 `next` 可漏。 [E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] [E: packages/hooks/hooks-codex/src/index.ts:216] [E: packages/hooks/hooks-codex/src/index.ts:231]
+11. **waterfall 必须 `next()`。** Cordis `Events.waterfall` 靠传入的 `next()` 才 `shift` 到下一层。UserPromptSubmit / PreToolUse / PostToolUse 在非 deny 路径上都调用 `next()`；漏掉等于停掉 pre-step / 工具执行 / post-execute 链。SessionStart 与 Stop 不是 waterfall，没有 `next` 可漏。 [E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] [E: packages/hooks/hooks-codex/src/index.ts:216] [E: packages/hooks/hooks-codex/src/index.ts:230]
 
 12. **dispose 卸 listener + drain detached。** `fiber.dispose()` 之后同一份 `hooks.json` 的 blocking UserPromptSubmit **不再**否决 prompt；仍在跑的 SessionStart hook 被 abort，且 **不会** 打 `SessionStart hook failed`（aborted run 是非阻塞 error）。turn cancel 同样经 `signal` 杀掉正在跑的 UserPromptSubmit 进程。 [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:197] [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:228] [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:128]
 
@@ -151,17 +149,17 @@ SessionStart 走 emit + detached，是因为 `agent/session-start` 的合同不�
 - **包在仓库里 ≠ 产品在跑。** shipped bundle / preset 没有这一行。写成「默认 `dsh web` 跑 Codex hooks」整页作废。snapshot overlay 与 CLI / Python 闭包里的 dependency 只保证 **能 load**。 [E: snapshots/acp/escalation-approved/cordis.yml:87] [E: python/sdk-runtime/package.json:46]
 - **没有 SubagentStart / SubagentStop。** 写进 json 会被 `parseCodexConfig` 静默丢掉，loop 当没这回事。 [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:135]
 - **`"Bash"` 是子串正则。** 要精确匹配必须写 `^Bash$`。Claude 桥对纯字面量是 exact-match，两份同一 matcher 字符串语义不同。 [E: packages/hooks/hook-protocol/tests/matcher.spec.ts:41]
-- **只 honoring `deny`。** PreToolUse 的 `ask` **不会** 进 `ctx.approval.request`。`allow` / `updatedInput` 不改工具入参。`continue:false` 的 `hook/result.decision` 是 `'stop'`，工具照跑。 [E: packages/hooks/hooks-codex/src/index.ts:231] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:413]
-- **`async: true` 进 skipped，不是后台跑。** warn 里写 `only sync command hooks run`。 [E: packages/hooks/hooks-codex/src/index.ts:93]
+- **只 honoring `deny`。** PreToolUse 的 `ask` **不会** 进 `ctx.approval.request`。`allow` / `updatedInput` 不改工具入参。`continue:false` 的 `hook/result.decision` 是 `'stop'`，工具照跑。 [E: packages/hooks/hooks-codex/src/index.ts:230] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:413]
+- **`async: true` 进 skipped，不是后台跑。** warn 里写 `only sync command hooks run`。 [E: packages/hooks/hooks-codex/src/index.ts:94]
 - **一份非法 regex 毁掉整桥。** `UserPromptSubmit` 合法、`PreToolUse` matcher 为 `[` → load 失败、**两个点都不注册**。 [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:170]
 - **`configPath` 相对启动 cwd，hook 命令相对 session cwd。** 缺文件 = 零 hook，不崩。 [E: packages/hooks/hooks-codex/src/index.ts:89] [E: packages/hooks/hooks-codex/src/index.ts:129] [E: packages/hooks/hooks-codex/tests/bridge.spec.ts:155]
-- **SessionStart 赶不上第一轮。** 没有 gate；测试要 `waitFor` inbox / marker。exit 2 的 stdout **不会** 变成 context。 [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:532]
-- **`stop_hook_active` 永远 false。** 无条件 block 的 Stop hook 会逼 turn 一直续，直到 hook 自己停。 [E: packages/hooks/hooks-codex/src/index.ts:262]
-- **`systemMessage` 被忽略。** warn 一句，不进模型。 [E: packages/hooks/hooks-codex/src/index.ts:163]
+- **SessionStart 赶不上第一轮。** 没有 gate；测试要 `waitFor` inbox / marker。exit 2 的 stdout **不会** 变成 context。 [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:534]
+- **`stop_hook_active` 永远 false。** 无条件 block 的 Stop hook 会逼 turn 一直续，直到 hook 自己停。 [E: packages/hooks/hooks-codex/src/index.ts:263]
+- **`systemMessage` 被忽略。** warn 一句，不进模型。 [E: packages/hooks/hooks-codex/src/index.ts:164]
 - **PostToolUse deny 发生在 body 之后。** 副作用已经产生，模型只看到 `isError` feedback。要拦副作用必须用 PreToolUse。 [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:231]
 - **waterfall 漏 `next()` = 整条链停。** 非 deny 路径都要 `next()`。 [E: vendor/cordis/src/events.ts:238]
-- **无 agent 的 `ctx.tools.execute` 仍跑 hook。** `lastTurn` 无 agent 返回 `0`；`cwd` 退回 `process.cwd()`；没有 session 就不写 `hook/*`。测试：直接 `execute` 仍被 PreToolUse deny。 [E: packages/hooks/hooks-codex/src/index.ts:281] [E: packages/hooks/hooks-codex/src/index.ts:298] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:466]
-- **`inject` 含 `sessionProjections`。** `lastTurn` 读 turnBoundary 投影，不再是纯常量回退。 [E: packages/hooks/hooks-codex/src/index.ts:42] [E: packages/hooks/hooks-codex/src/index.ts:283]
+- **无 agent 的 `ctx.tools.execute` 仍跑 hook。** `lastTurn` 无 agent 返回 `0`；`cwd` 退回 `process.cwd()`；没有 session 就不写 `hook/*`。测试：直接 `execute` 仍被 PreToolUse deny。 [E: packages/hooks/hooks-codex/src/index.ts:282] [E: packages/hooks/hooks-codex/src/index.ts:298] [E: packages/hooks/hooks-codex/tests/coverage-cases.ts:466]
+- **`inject` 含 `sessionProjections`。** `lastTurn` 读 turnBoundary 投影，不再是纯常量回退。 [E: packages/hooks/hooks-codex/src/index.ts:41] [E: packages/hooks/hooks-codex/src/index.ts:282]
 
 ## Seam 三角
 
@@ -177,7 +175,7 @@ SessionStart 走 emit + detached，是因为 `agent/session-start` 的合同不�
 
 - packages/hooks/hooks-codex/src/index.ts
 - packages/hooks/hooks-codex/src/config.ts
-- packages/hooks/hooks-codex/src/invariant.ts
+
 - packages/hooks/hooks-codex/package.json
 - packages/hooks/hooks-codex/tests/bridge.spec.ts
 - packages/hooks/hooks-codex/tests/config.spec.ts

@@ -31,7 +31,6 @@ source:
   - packages/subagent/tool-subagent/src/list-models.ts
   - packages/subagent/tool-subagent-control/src/index.ts
   - packages/subagent/tool-subagent-control/src/list-agents.ts
-  - packages/subagent/tool-subagent-report/src/index.ts
   - packages/workflow/tool-workflow/src/index.ts
   - packages/workflow/tool-ralph/src/index.ts
   - packages/web/tool-web/src/index.ts
@@ -70,7 +69,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 模型可见工具是登记进 `ctx.tools` 的 **wire 名**（`defineTool({ name })`、load-time `Config.toolName`、或保留名 `run_code`）。这是 **agent-preset 面**（每会话 tools / persona / isolate），不是 host 面（webserver / persistence / sandbox）。DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不是固定工具清单的「又一个 coding agent」。五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；默认 GUI 入口是 `dsh` 的 `web` profile，也可用 `dsh --profile sdk|sdk-minimal|acp`。Web 出厂 preset 是 `standard`。四个 shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` = PTC；节点 id `surface.presets.code` / `subsys.core.code-mode` 仍是稳定别名）。[E: packages/boot/app-boot/src/profile.ts:137]
@@ -81,7 +80,7 @@ updated: 0a53fb55be
 - 四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）里谁装了它？`disabled`、平台门、`Config.fetch` 分别是什么意思？
 - 名字能不能改？`subagent` / `workflow` 的 `toolName` 和保留名 `run_code` 差在哪？
 - `ptc` preset 下模型请求头还看不看得见 `read` / `bash`？`run_code` 怎么进 wire？
-- `terminal_*` / `lsp` / `session_*` / `schedule_*` / `report` / Agent Teams 工具在不在四个 `agent.cordis.yml` 里？
+- `terminal_*` / `lsp` / `session_*` / `schedule_*` / Agent Teams 工具在不在四个 `agent.cordis.yml` 里？已删的 `report` 还算不算活工具？
 - 官方 `docs/tool-catalog.md` 和冻结源码有什么漂移？跟哪一边？
 
 ## 范围与 ground truth
@@ -117,7 +116,7 @@ T1 `surface/tools/*` 写单工具 schema / execute；T2 [`subsys.core.tools`](..
 | wire 名 | 实现包 | 默认名/可改名 | 背后 seam | min/std/ptc/cordis | 用途 | 源 path |
 |---|---|---|---|---|---|---|
 | `read` | `@deepseek-ai/dsh-tool-fs` | 固定 `read` | `ctx.fs` | — / 装 / 装 / 装 | 读 UTF-8 文本（行号窗口） | `packages/fs/tool-fs/src/read.ts` [E: packages/fs/tool-fs/src/read.ts:76] |
-| `read_image` | `@deepseek-ai/dsh-tool-fs` | 固定 `read_image`；无 `ctx.attachments` 则不登记 | `ctx.fs` + `ctx.attachments` | — / 装 / 装 / 装 | 读图为附件；host `base` 挂了 `attachment-local` | `packages/fs/tool-fs/src/read-image.ts` [E: packages/fs/tool-fs/src/index.ts:70][E: packages/fs/tool-fs/src/read-image.ts:171][E: packages/bundle/base/cordis.patch.yml:119] |
+| `read_image` | `@deepseek-ai/dsh-tool-fs` | 固定 `read_image`；无 `ctx.attachments` 则不登记 | `ctx.fs` + `ctx.attachments` | — / 装 / 装 / 装 | 读图为附件；host `base` 挂了 `attachment-local` | `packages/fs/tool-fs/src/read-image.ts` [E: packages/fs/tool-fs/src/index.ts:70][E: packages/fs/tool-fs/src/read-image.ts:170][E: packages/bundle/base/cordis.patch.yml:119] |
 | `write` | `@deepseek-ai/dsh-tool-fs` | 固定 `write` | `ctx.fs` | — / 装 / 装 / 装 | 整文件创建/覆盖 | `packages/fs/tool-fs/src/write.ts` [E: packages/fs/tool-fs/src/write.ts:69] |
 | `edit` | `@deepseek-ai/dsh-tool-fs` | 固定 `edit` | `ctx.fs` | — / 装 / 装 / 装 | 字面量替换 | `packages/fs/tool-fs/src/edit.ts` [E: packages/fs/tool-fs/src/edit.ts:83] |
 | `glob` | `@deepseek-ai/dsh-tool-fs-search` | 固定 `glob` | `ctx.subprocess`（打包 ripgrep） | — / 装 / 装 / 装 | 按路径模式找文件 | `packages/fs/tool-fs-search/src/glob.ts` [E: packages/fs/tool-fs-search/src/glob.ts:311] |
@@ -179,32 +178,30 @@ job **registry** 在 host 面；preset 只决定模型能不能调用这三件�
 
 ### subagent
 
-`@deepseek-ai/dsh-tool-subagent` 每装一次登记 **一个** 名 = load-time `toolName`（默认 `subagent`）。shipped `standard`/`ptc`/`cordis` 装两行活的：`toolName: subagent`（`provider: spawn`）与 `toolName: subagent_fork`（`provider: fork`）；另两行 `subagent_codex` / `subagent_claude_code` 写在 yml 里但 `disabled: true`。spawn 行 `modelSelectionSettings: true` 时额外登记固定名 `list_subagent_models`。[E: packages/subagent/tool-subagent/src/index.ts:319][E: packages/subagent/tool-subagent/src/index.ts:356][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:190][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:202][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:214]
+`@deepseek-ai/dsh-tool-subagent` 每装一次登记 **一个** 名 = load-time `toolName`（默认 `subagent`）。shipped `standard`/`ptc`/`cordis` 装两行活的：`toolName: subagent`（`provider: spawn`）与 `toolName: subagent_fork`（`provider: fork`）；另两行 `subagent_codex` / `subagent_claude_code` 写在 yml 里但 `disabled: true`。spawn 行 `modelSelectionSettings: true` 时额外登记固定名 `list_subagent_models`。[E: packages/subagent/tool-subagent/src/index.ts:319][E: packages/subagent/tool-subagent/src/index.ts:355][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:190][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:202][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:214]
 
 | wire 名 | 实现包 | 默认名/可改名 | 背后 seam | min/std/ptc/cordis | 用途 | 源 path |
 |---|---|---|---|---|---|---|
 | `subagent` | `@deepseek-ai/dsh-tool-subagent` | 默认 `subagent`；`Config.toolName` 可改 | `ctx.subagents` | — / 装 / 装 / 装 | 委派 spawn 子 agent | `packages/subagent/tool-subagent/src/index.ts` [E: packages/subagent/tool-subagent/src/index.ts:374] |
 | `subagent_fork` | `@deepseek-ai/dsh-tool-subagent`（第二行） | shipped `toolName: subagent_fork` | `ctx.subagents` | — / 装 / 装 / 装 | 委派 fork 子 agent | `packages/subagent/tool-subagent/src/index.ts` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:202] |
 | `list_subagent_models` | `@deepseek-ai/dsh-tool-subagent` | 固定；仅 `modelSelectionSettings: true` 且 policy 装上时登记 | `ctx.llm` 目录 | — / 装 / 装 / 装 | 发现子 agent 可用 provider/model | `packages/subagent/tool-subagent/src/list-models.ts` [E: packages/subagent/tool-subagent/src/list-models.ts:88] |
-| `subagent_codex` | `@deepseek-ai/dsh-tool-subagent` | shipped `toolName: subagent_codex` | `ctx.subagents` | — / 禁 / 禁 / 禁 | 产品 Codex backend；复制 preset 后去掉 `disabled` 才进 wire | `packages/preset/agent-presets/presets/standard/agent.cordis.yml` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:211] |
-| `subagent_claude_code` | `@deepseek-ai/dsh-tool-subagent` | shipped `toolName: subagent_claude_code` | `ctx.subagents` | — / 禁 / 禁 / 禁 | 产品 claude-code backend；复制 preset 后去掉 `disabled` 才进 wire | `packages/preset/agent-presets/presets/standard/agent.cordis.yml` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:220] |
+| `subagent_codex` | `@deepseek-ai/dsh-tool-subagent` | shipped `toolName: subagent_codex` | `ctx.subagents` | — / 禁 / 禁 / 禁 | 产品 Codex backend；复制 preset 后去掉 `disabled` 才进 wire | `packages/preset/agent-presets/presets/standard/agent.cordis.yml` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:212] |
+| `subagent_claude_code` | `@deepseek-ai/dsh-tool-subagent` | shipped `toolName: subagent_claude_code` | `ctx.subagents` | — / 禁 / 禁 / 禁 | 产品 claude-code backend；复制 preset 后去掉 `disabled` 才进 wire | `packages/preset/agent-presets/presets/standard/agent.cordis.yml` [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:221] |
 | `send_message` | `@deepseek-ai/dsh-tool-subagent-control` | 固定 | `ctx.subagents` | — / 装 / 装 / 装 | 给 continuable 子会话排队下一 turn | `packages/subagent/tool-subagent-control/src/index.ts` [E: packages/subagent/tool-subagent-control/src/index.ts:28] |
 | `interrupt_agent` | `@deepseek-ai/dsh-tool-subagent-control` | 固定 | `ctx.subagents` | — / 装 / 装 / 装 | 取消子 agent 当前 turn | `packages/subagent/tool-subagent-control/src/index.ts` [E: packages/subagent/tool-subagent-control/src/index.ts:81] |
 | `list_agents` | `@deepseek-ai/dsh-tool-subagent-control/list-agents` | 固定 | `ctx.subagents` + `ctx.agents` | — / 装 / 装 / 装 | 列出 continuable 子 agent | `packages/subagent/tool-subagent-control/src/list-agents.ts` [E: packages/subagent/tool-subagent-control/src/list-agents.ts:93] |
-| `report` | `@deepseek-ai/dsh-tool-subagent-report` | 固定 `report` | `ctx.subagents`（装进 **子** scope） | — / — / — / — | 子 agent 向直接父投递结果；四个 yml 都没有这行 | `packages/subagent/tool-subagent-report/src/index.ts` [E: packages/subagent/tool-subagent-report/src/index.ts:65] |
-
-`report` 的插件在 **host** `base`：`registerContinuableSetup`，只出现在 continuable in-process 子会话，根 / one-shot / 远程 provider 看不见。[E: packages/subagent/tool-subagent-report/src/index.ts:138][E: packages/bundle/base/cordis.patch.yml:377]
+`report` **不是活的模型可见工具**。包 `packages/subagent/tool-subagent-report` 已删除，`dsh-base` 不再挂该行。wiki id [`surface.tools.report`](../surface/tools/report.md) 仍是退役页，本表不占活行。
 
 ### workflow
 
 | wire 名 | 实现包 | 默认名/可改名 | 背后 seam | min/std/ptc/cordis | 用途 | 源 path |
 |---|---|---|---|---|---|---|
-| `workflow` | `@deepseek-ai/dsh-tool-workflow` | 默认 `workflow`；`Config.toolName` 可改 | `ctx.workflowEngine` | — / 装 / 装 / 装 | 用 JS 脚本编排多 subagent | `packages/workflow/tool-workflow/src/index.ts` [E: packages/workflow/tool-workflow/src/index.ts:218] |
+| `workflow` | `@deepseek-ai/dsh-tool-workflow` | 默认 `workflow`；`Config.toolName` 可改 | `ctx.workflowEngine` | — / 装 / 禁 / 装 | 用 JS 脚本编排多 subagent。PTC 行在但 `disabled: true`，engine 留给 `ralph` | `packages/workflow/tool-workflow/src/index.ts` [E: packages/workflow/tool-workflow/src/index.ts:218][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:233][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:237] |
 | `ralph` | `@deepseek-ai/dsh-tool-ralph` | 固定 `ralph` | `ctx.workflowEngine` + `ctx.subagents` | — / 装 / 装 / 装 | 每轮全新子 agent 的 Ralph loop | `packages/workflow/tool-ralph/src/index.ts` [E: packages/workflow/tool-ralph/src/index.ts:411] |
 
 ### web
 
-包默认 `search`/`fetch` 都是 `true`。三个非 minimal preset 显式写 `fetch: true`，因此 **shipped 产品同时登记 `web_search` 与 `web_fetch`**。[E: packages/web/tool-web/src/index.ts:55][E: packages/web/tool-web/src/index.ts:56][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256]
+包默认 `search`/`fetch` 都是 `true`。三个非 minimal preset 显式写 `fetch: true`，因此 **shipped 产品同时登记 `web_search` 与 `web_fetch`**。[E: packages/web/tool-web/src/index.ts:55][E: packages/web/tool-web/src/index.ts:56][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]
 
 | wire 名 | 实现包 | 默认名/可改名 | 背后 seam | min/std/ptc/cordis | 用途 | 源 path |
 |---|---|---|---|---|---|---|
@@ -220,7 +217,7 @@ job **registry** 在 host 面；preset 只决定模型能不能调用这三件�
 | `run_code` | `@deepseek-ai/dsh-tools` | 保留 `RUN_CODE_NAME`；不可登记/restrict | `ctx.codeRuntime`（执行时）；registry 运输 | — / — / 仅ptc / — | PTC 唯一 model-direct 调用；程序内再调其它工具；flavor `typescript` \| `python` | `packages/core/tools/src/ptc.ts` [E: packages/core/tools/src/ptc.ts:296] |
 | `lsp` | `@deepseek-ai/dsh-tool-lsp` | 固定 `lsp` | `ctx.lsp` | — / — / — / — | 语言服务器导航；四个 yml 都没有 | `packages/lsp/tool-lsp/src/index.ts` [E: packages/lsp/tool-lsp/src/index.ts:110] |
 
-`cordis` preset 同样装 `tool-skill`（另给 `skill-filesystem` 加 preset 自带 skill 目录）；`minimal` 不装。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:268]
+`cordis` preset 同样装 `tool-skill`（另给 `skill-filesystem` 加 preset 自带 skill 目录）；`minimal` 不装。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262]
 
 ### `session_*`
 
@@ -260,18 +257,18 @@ job **registry** 在 host 面；preset 只决定模型能不能调用这三件�
 
 ### Agent Teams（experimental，opt-in）
 
-包 `@deepseek-ai/dsh-experimental-tool-agent-team` **不在**四个 shipped `agent.cordis.yml`。实验 profile `@deepseek-ai/dsh-experimental-agent-team-profile` 会 `disabled` 全局 `tool-subagent-control` / `list-agents` / `tool-subagent-report`（与 Team 工具名重叠），并插入 `agent-team` + `tool-agent-team`。插件只在有 Team membership 的 Agent scope 上 `agent/created` 安装。[E: packages/experimental/agent-team-profile/cordis.patch.yml:5][E: packages/experimental/tool-agent-team/src/index.ts:409]
+包 `@deepseek-ai/dsh-experimental-tool-agent-team` **不在**四个 shipped `agent.cordis.yml`。实验 profile `@deepseek-ai/dsh-experimental-agent-team-profile` 会 `disabled` 全局 `tool-subagent-control` / `list-agents`（与 Team 工具名重叠），并插入 `agent-team` + `tool-agent-team`。不再 disable 已删除的 `tool-subagent-report`。插件只在有 Team membership 的 Agent scope 上 `agent/created` 安装。[E: packages/experimental/agent-team-profile/cordis.patch.yml:5][E: packages/experimental/tool-agent-team/src/index.ts:409]
 
 | wire 名 | 实现包 | 默认名/可改名 | 背后 seam | min/std/ptc/cordis | 用途 | 源 path |
 |---|---|---|---|---|---|---|
 | `spawn_teammate` | `@deepseek-ai/dsh-experimental-tool-agent-team` | 固定 | `ctx.agentTeams` | — / — / — / — | Lead 生成 teammate | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:174] |
 | `send_message` | 同上（与 subagent-control **同名**） | 固定 | `ctx.agentTeams` | — / — / — / — | quiet 投递，不唤醒 idle | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:222] |
 | `followup_task` | 同上 | 固定 | `ctx.agentTeams` | — / — / — / — | wakeup 投递 | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:223] |
-| `list_agents` | 同上（与 list-agents **同名**） | 固定 | `ctx.agentTeams` | — / — / — / — | 列出 Lead + teammates | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:226] |
-| `wait_agent` | 同上 | 固定 | `ctx.agentTeams` | — / — / — / — | 等变化；可 `noProgress` | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:236] |
+| `list_agents` | 同上（与 list-agents **同名**） | 固定 | `ctx.agentTeams` | — / — / — / — | 列出 Lead + teammates | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:228] |
+| `wait_agent` | 同上 | 固定 | `ctx.agentTeams` | — / — / — / — | 等变化；可 `noProgress` | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:237] |
 | `interrupt_agent` | 同上（与 subagent-control **同名**） | 固定 | `ctx.agentTeams` | — / — / — / — | Lead 打断 teammate | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:271] |
 | `team_task_create` | 同上 | 固定 | `ctx.agentTeams` | — / — / — / — | 建未认领任务 | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:286] |
-| `team_task_list` | 同上 | 固定 | `ctx.agentTeams` | — / — / — / — | 列任务板 | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:310] |
+| `team_task_list` | 同上 | 固定 | `ctx.agentTeams` | — / — / — / — | 列任务板 | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:311] |
 | `team_task_get` | 同上 | 固定 | `ctx.agentTeams` | — / — / — / — | 读一条任务 | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:342] |
 | `team_task_update` | 同上 | 固定 | `ctx.agentTeams` | — / — / — / — | CAS 更新 | `packages/experimental/tool-agent-team/src/index.ts` [E: packages/experimental/tool-agent-team/src/index.ts:357] |
 
@@ -281,9 +278,9 @@ job **registry** 在 host 面；preset 只决定模型能不能调用这三件�
 
 **`ptc` 的 wire 塌缩。** 能力插件与 `standard` 同装；`tool-presentation` `mode: ptc` 之后，模型 **native 目录**只剩 `run_code`。其它 wire 名仍在 registry，经 SDK 从程序里调用，再走完整 `tools/pre-execute → execute`。executor 对 **model-direct** 调用在 `modeFor(scope) === 'ptc'` 时只允许 `run_code`。`both` 会把 `run_code` **加**进 native 目录而不是替换。[E: packages/core/tools/src/index.ts:986][E: packages/core/tools/src/index.ts:992][E: packages/core/tools/src/index.ts:1316]
 
-**`web_fetch`。** 三个非 minimal shipped preset 写 `fetch: true`，出厂 Web 产品模型看得到 `web_fetch`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256]
+**`web_fetch`。** 三个非 minimal shipped preset 写 `fetch: true`，出厂 Web 产品模型看得到 `web_fetch`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]
 
-**`report` 是 host 面 setup，不是 preset 工具行。** 子会话看得到 `report`，是因为 `dsh-base` bundle 装了它。
+**`report` 已退役。** 不是 preset 行，也不是 `dsh-base` 行；本 catalog 不列活 wire 名。
 
 **官方 `list_agents` 行若写 `ctx.sessionProjections`。** 冻结源的 `inject` 是 `['tools', 'subagents', 'agents']`。跟 `inject`。[E: packages/subagent/tool-subagent-control/src/list-agents.ts:18][I]
 
@@ -319,8 +316,7 @@ job **registry** 在 host 面；preset 只决定模型能不能调用这三件�
 - `packages/subagent/tool-subagent/src/list-models.ts`
 - `packages/subagent/tool-subagent-control/src/index.ts`
 - `packages/subagent/tool-subagent-control/src/list-agents.ts`
-- `packages/subagent/tool-subagent-report/src/index.ts`
-- `packages/workflow/tool-workflow/src/index.ts`
+- `packages/workflow/tool-workflow/src/index.ts
 - `packages/workflow/tool-ralph/src/index.ts`
 - `packages/web/tool-web/src/index.ts`
 - `packages/web/tool-web/src/search.ts`

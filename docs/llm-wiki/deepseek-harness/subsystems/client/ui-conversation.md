@@ -59,7 +59,7 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-client-ui-conversation` 是 Web 工作台的 **会话装配点**：node 半边在存在 `settings` 时登记 `CONVERSATION_SETTINGS_NAMESPACE`；浏览器半边占住 `conversation` 槽，把未被 `/` command claim 的草稿经 `InputHub.sink` → `ConversationController.sendSession` → `Session.prompt` 交给 Session Controller。client 不执行模型 turn。Chat 节点渲染与 `details` 栏已迁到 `@deepseek-ai/dsh-client-ui-chat`。导航态在 `ctx.sessions` / `ctx.uiWorkspace`。
@@ -90,7 +90,7 @@ updated: 0a53fb55be
 - HTTP / WS mux、信任篱笆：[`subsys.client.connection`](connection.md)。
 - 会话列表、`current`、`sessions.create` / `open` / `fork`、`promptAttempted`：[`subsys.client.runtime`](runtime.md)（现为 `packages/client/store` + `packages/api/session-controller/src/client/`）。
 - 三栏骨架与 `sidebar` / `shell.overlay`：[`subsys.client.ui-layout`](ui-layout.md)。
-- **`details` 栏与 Chat 节点渲染器**：`@deepseek-ai/dsh-client-ui-chat`（web-app 下一行 `id: ui-chat`）。 [E: packages/bundle/web-app/cordis.patch.yml:208]
+- **`details` 栏与 Chat 节点渲染器**：`@deepseek-ai/dsh-client-ui-chat`（web-app 下一行 `id: ui-chat`）。 [E: packages/bundle/web-app/cordis.patch.yml:209]
 - slash 目录与 `remote.commands.execute`：`ui-commands`。
 - 模型 turn / inbox `followup|steer`：host Session Controller + Agent loop。client 只发 Remote。
 
@@ -121,7 +121,7 @@ updated: 0a53fb55be
 | 符号 | 要点 |
 |---|---|
 | `CONVERSATION_SETTINGS_NAMESPACE` | 字面量 `'ui-conversation'`。字段 `busyEnter`: `'queue' \| 'steer'`，默认 `'queue'`。 [E: packages/client/ui-conversation/src/submission-settings.ts:6] [E: packages/client/ui-conversation/src/submission-settings.ts:18] |
-| `IConversation` | `ctx.conversation` 对外合同：`input`、`blocks`、`send`、`updateQueue`、`cancel`、`loadOlder`。必须经 `sessions.scope(id)` 寻址；根 context 调用 fail-loud。 [E: packages/client/ui-conversation/src/client/service.ts:34] |
+| `IConversation` | `ctx.conversation` 对外合同：`input`、`blocks`、`send`、`updateQueue`、`cancel`、`loadOlder`。必须经 `sessions.scope(id)` 寻址；根 context 调用 fail-loud。 [E: packages/client/ui-conversation/src/client/service.ts:32] |
 | `ConversationController` | 实现 `IConversation`；额外提供 `sendSession` / 草稿图 registry。服务名 `'conversation'`。 [E: packages/client/ui-conversation/src/client/service.ts:162] |
 | `UiConversation` | 服务名 `'uiConversation'`；`events` / `views` registry + 每会话 `binding(snapshot)`。 [E: packages/client/ui-conversation/src/client/conversation/assembly.ts:153] |
 | `InputSubmitMode` | 与 `BusyEnterBehavior` 同形：`'queue' \| 'steer'`。 [E: packages/client/ui-conversation/src/client/contract/composer-submission.ts:8] |
@@ -131,15 +131,15 @@ updated: 0a53fb55be
 
 ## 控制流
 
-1. **只有 web-app 把本包插进 Loader 表。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` 再叠 `dsh-web-app`。web patch insert 含 `id: ui-conversation` / `name: '@deepseek-ai/dsh-client-ui-conversation'`，无额外 `config`。`dsh-base` 的 insert 从 `timer` / `hmr` / `llm` 起，没有浏览器 roster。`dsh-headless` 的 insert 是 `code-runtime` + `headless-startup` + `headless-runner`，同样没有本行。sdk / sdk-minimal / acp overlay 也不插入本包。本仓没有 shipped TUI 包。 [E: packages/bundle/web-app/cordis.patch.yml:202] [E: packages/bundle/web-app/cordis.patch.yml:203] [E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/headless/cordis.patch.yml:19]
+1. **只有 web-app 把本包插进 Loader 表。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` 再叠 `dsh-web-app`。web patch insert 含 `id: ui-conversation` / `name: '@deepseek-ai/dsh-client-ui-conversation'`，无额外 `config`。`dsh-base` 的 insert 从 `timer` / `hmr` / `llm` 起，没有浏览器 roster。`dsh-headless` 的 insert 是 `code-runtime` + `headless-startup` + `headless-runner`，同样没有本行。sdk / sdk-minimal / acp overlay 也不插入本包。本仓没有 shipped TUI 包。 [E: packages/bundle/web-app/cordis.patch.yml:203] [E: packages/bundle/web-app/cordis.patch.yml:203] [E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/headless/cordis.patch.yml:19]
 
 2. **node 半边 `apply` 只碰 settings。** host 入口 `apply@packages/client/ui-conversation/src/index.ts` 用 `ctx.inject(['settings'], …)`：没有 `settings` 服务则整段不跑；有则 `settings.register(CONVERSATION_SETTINGS_NAMESPACE, ConversationSettingsSchema)`。测试钉死默认 `{ busyEnter: 'queue' }`，非法值拒绝，fiber dispose 后段消失。 [E: packages/client/ui-conversation/src/index.ts:17] [E: packages/client/ui-conversation/src/index.ts:18] [E: packages/client/ui-conversation/tests/host.client.spec.ts:23]
 
-3. **浏览器半边 `inject` 是六条服务名，不是 yml 行。** `export const inject@packages/client/ui-conversation/src/client/apply.ts` = `slots` / `sessions` / `uiSession` / `uiWorkspace` / `locale` / `settingsScope`。`sessions` 来自 Session Controller client；`slots` 来自 ui-renderer；`uiSession` / `uiWorkspace` 来自对应 ui-* 包。缺任一条，本插件 fiber 保持 pending。 [E: packages/client/ui-conversation/src/client/apply.ts:44] [E: packages/client/ui-conversation/src/client/apply.ts:45]
+3. **浏览器半边 `inject` 是六条服务名，不是 yml 行。** `export const inject@packages/client/ui-conversation/src/client/apply.ts` = `slots` / `sessions` / `uiSession` / `uiWorkspace` / `locale` / `settingsScope`。`sessions` 来自 Session Controller client；`slots` 来自 ui-renderer；`uiSession` / `uiWorkspace` 来自对应 ui-* 包。缺任一条，本插件 fiber 保持 pending。 [E: packages/client/ui-conversation/src/client/apply.ts:46] [E: packages/client/ui-conversation/src/client/apply.ts:46]
 
-4. **`apply@client/apply.ts` 先建 registry 与政策，再占座位。** `new UiConversation(ctx, sessions)` 提供 `ctx.uiConversation`。登记 locale、`createConversationStore()`、用 `settingsScope.bind({ namespace: CONVERSATION_SETTINGS_NAMESPACE })` 构造 `ComposerSubmissionPolicy`，并往 `settings.general.item` 挂 `id: 'composer-enter'`。Chat 业务 Definition（user / assistant 等）由 **ui-chat** 写入 `uiConversation.events` / `views`，不在本包 `apply`。 [E: packages/client/ui-conversation/src/client/apply.ts:100] [E: packages/client/ui-conversation/src/client/apply.ts:109] [E: packages/client/ui-conversation/src/client/apply.ts:111]
+4. **`apply@client/apply.ts` 先建 registry 与政策，再占座位。** `new UiConversation(ctx, sessions)` 提供 `ctx.uiConversation`。登记 locale、`createConversationStore()`、用 `settingsScope.bind({ namespace: CONVERSATION_SETTINGS_NAMESPACE })` 构造 `ComposerSubmissionPolicy`，并往 `settings.general.item` 挂 `id: 'composer-enter'`。Chat 业务 Definition（user / assistant 等）由 **ui-chat** 写入 `uiConversation.events` / `views`，不在本包 `apply`。 [E: packages/client/ui-conversation/src/client/apply.ts:100] [E: packages/client/ui-conversation/src/client/apply.ts:107] [E: packages/client/ui-conversation/src/client/apply.ts:114]
 
-5. **ui-layout 先声明座位；本包只占 `conversation`。** `AppFrame` 占 `'root'` 时声明 `'conversation': { kind: 'single', scope: 'session-maybe' }` 与 `'details': { kind: 'single', scope: 'session' }`。本包 `slots.register({ name: 'conversation', children: {…} }, ConversationRoot)` 占中栏。`details` 由 ui-chat 占用。在 `'conversation'` 上再 `register` 会阴影整棵中栏子树（加法面是内部 list / `shell.overlay`）。 [E: packages/client/ui-layout/src/client/index.ts:128] [E: packages/client/ui-layout/src/client/index.ts:129] [E: packages/client/ui-conversation/src/client/apply.ts:173] [E: packages/client/ui-conversation/src/client/apply.ts:326]
+5. **ui-layout 先声明座位；本包只占 `conversation`。** `AppFrame` 占 `'root'` 时声明 `'conversation': { kind: 'single', scope: 'session-maybe' }` 与 `'details': { kind: 'single', scope: 'session' }`。本包 `slots.register({ name: 'conversation', children: {…} }, ConversationRoot)` 占中栏。`details` 由 ui-chat 占用。在 `'conversation'` 上再 `register` 会阴影整棵中栏子树（加法面是内部 list / `shell.overlay`）。 [E: packages/client/ui-layout/src/client/index.ts:128] [E: packages/client/ui-layout/src/client/index.ts:129] [E: packages/client/ui-conversation/src/client/apply.ts:174] [E: packages/client/ui-conversation/src/client/apply.ts:327]
 
    | 槽 | kind / scope | occupant | 装配意图 |
    |---|---|---|---|
@@ -159,17 +159,17 @@ updated: 0a53fb55be
 
 8. **`SessionInputShell.submit` 进纯机，再分 slash / 普通稿。** 纯空白（无图）`enter` 被机丢掉。仅有图、draft trim 为空时，facade 在 `plain` 直接 `defaultSink('', imageIds, mode)`，不经 `enter`。否则 `dispatch({ type: 'enter', mode })`：`claimed` → `begin-submit`（`claim.submit`）；trim 以 `/` 开头 → `adjudicating` + `adjudicate`；其余 → `default-sink`。无 `inputTriggers` 时 `adjudicate` 立刻 miss，落到 `default-sink`，把整行当普通消息。 [E: packages/client/ui-conversation/src/client/input/facade.ts:361] [E: packages/client/ui-conversation/src/client/input/machine.ts:148] [E: packages/client/ui-conversation/src/client/input/machine.ts:150] [E: packages/client/ui-conversation/tests/submit-machine.client.spec.ts:75]
 
-9. **slash 走 `ui-commands` / `remote.commands.execute`，不开模型 turn。** `beginSubmit` 调 `claim.submit(args, actx, images)`。`ui-commands` 的 leading claim 把 token `/${name} ` 接到 `this.execute` → `this.ctx.remote.commands.execute(sessionId, line, images)`。`Session.command` 是同一条 Remote，给 `PermissionSelect` 的 `/permission <id>` 用，同样不调 `session.prompt`。host 把命令生命周期记成 `command/run` / `command/done`，client 只等 admission。 [E: packages/client/ui-conversation/src/client/input/facade.ts:870] [E: packages/client/ui-commands/src/client/service.ts:385] [E: packages/api/session-controller/src/client/sessions/session.ts:332] [E: packages/client/ui-conversation/src/client/skeleton/PermissionSelect.tsx:121]
+9. **slash 走 `ui-commands` / `remote.commands.execute`，不开模型 turn。** `beginSubmit` 调 `claim.submit(args, actx, images)`。`ui-commands` 的 leading claim 把 token `/${name} ` 接到 `this.execute` → `this.ctx.remote.commands.execute(sessionId, line, images)`。`Session.command` 是同一条 Remote，给 `PermissionSelect` 的 `/permission <id>` 用，同样不调 `session.prompt`。host 把命令生命周期记成 `command/run` / `command/done`，client 只等 admission。 [E: packages/client/ui-conversation/src/client/input/facade.ts:870] [E: packages/client/ui-commands/src/client/service.ts:387] [E: packages/api/session-controller/src/client/sessions/session.ts:332] [E: packages/client/ui-conversation/src/client/skeleton/PermissionSelect.tsx:121]
 
-10. **未被 claim 的草稿：`InputHub.sink` → `sendSession`。** `sink` 空文本且无图直接 `{ kind: 'success' }`。否则 `conversation.sendSession(session, text, imageIds, mode, signal)`。facade 在发送前 `commitSend`（清草稿且切断 undo）。失败路径还原图片；飞行中新键入不被覆盖。 [E: packages/client/ui-conversation/src/client/input/hub.ts:182] [E: packages/client/ui-conversation/src/client/input/hub.ts:183] [E: packages/client/ui-conversation/src/client/input/facade.ts:324]
+10. **未被 claim 的草稿：`InputHub.sink` → `sendSession`。** `sink` 空文本且无图直接 `{ kind: 'success' }`。否则 `conversation.sendSession(session, text, imageIds, mode, signal)`。facade 在发送前 `commitSend`（清草稿且切断 undo）。失败路径还原图片；飞行中新键入不被覆盖。 [E: packages/client/ui-conversation/src/client/input/hub.ts:182] [E: packages/client/ui-conversation/src/client/input/hub.ts:183] [E: packages/client/ui-conversation/src/client/input/facade.ts:325]
 
 11. **`sendSession` 把图编成 base64 parts，再 `session.prompt`。** 缺草稿图 id 抛错。`content` = 图像 parts +（非空文本才追加 text part）。普通会话可走 `beginSubmission` 乐观 echo；subagent 会话跳过 echo 直接 `prompt`。`IConversation.send(text)` 是跨插件捷径：固定 `[{ type: 'text', text }]` + `'queue'`。二者都不跑 loop。 [E: packages/client/ui-conversation/src/client/service.ts:208] [E: packages/client/ui-conversation/src/client/service.ts:181] [E: packages/client/ui-conversation/tests/service-orchestration.client.spec.ts:46]
 
-12. **`Session.prompt` 在第一个 await 前同步置 `promptAttempted`，然后调 Remote `session.prompt`。** 普通会话（无 subagent `address`）走 `remote.session.prompt({ sessionId, mode, content, clientTimeZone, requestId })`。blank → engaging 必须出现在当帧；这是 Session Controller 对象层，不是本包伪造的「本地已发送」。 [E: packages/api/session-controller/src/client/sessions/session.ts:218] [E: packages/api/session-controller/src/client/sessions/session.ts:224]
+12. **`Session.prompt` 在第一个 await 前同步置 `promptAttempted`，然后调 Remote `session.prompt`。** 普通会话（无 subagent `address`）走 `remote.session.prompt({ sessionId, mode, content, clientTimeZone, requestId })`。blank → engaging 必须出现在当帧；这是 Session Controller 对象层，不是本包伪造的「本地已发送」。 [E: packages/api/session-controller/src/client/sessions/session.ts:219] [E: packages/api/session-controller/src/client/sessions/session.ts:221]
 
 13. **host 把 `queue` 写成 `followup`，`steer` 写成 `steer`。** Session Controller `prompt` 命令在选到 adapter 之后 `createUserMessage`，然后 `request.mode === 'steer' ? agent.steer(message) : agent.followup(message)`。第一次空闲提问是 `queue` → `followup`。GUI 历史来自 log 投影 + `uiConversation.events` Definition（Chat 包登记），不是 composer 本地数组。 [E: packages/api/session-controller/src/commands.ts:324] [E: packages/api/session-controller/src/commands.ts:325]
 
-14. **换 Workspace 走 ui-workspace，本包只搬运草稿。** `ConversationRoot` inject 的 `selectWorkspace` 调 `uiWorkspace.connectWorkspace(workspaceId)`；若得到另一 `sessionId`，把当前 shell 的 draft / imageIds 搬到目标 shell，再 `sessions.open(nextId)`。`ctx.conversation` 没有 `open` / `create`。Stop 调 `scopedConversation(…).cancel()`；失败吞掉，展示走 `snapshot.promptError`。 [E: packages/client/ui-conversation/src/client/apply.ts:194] [E: packages/client/ui-conversation/src/client/apply.ts:210] [E: packages/client/ui-conversation/src/client/apply.ts:307]
+14. **换 Workspace 走 ui-workspace，本包只搬运草稿。** `ConversationRoot` inject 的 `selectWorkspace` 调 `uiWorkspace.connectWorkspace(workspaceId)`；若得到另一 `sessionId`，把当前 shell 的 draft / imageIds 搬到目标 shell，再 `sessions.open(nextId)`。`ctx.conversation` 没有 `open` / `create`。Stop 调 `scopedConversation(…).cancel()`；失败吞掉，展示走 `snapshot.promptError`。 [E: packages/client/ui-conversation/src/client/apply.ts:194] [E: packages/client/ui-conversation/src/client/apply.ts:211] [E: packages/client/ui-conversation/src/client/apply.ts:307]
 
 ## 设计动机
 
@@ -185,7 +185,7 @@ updated: 0a53fb55be
 - 空闲会话 `resolve(..., running=false, …)` 恒为 `'queue'`。把 settings 改成 `steer` 不会改变第一问。 [E: packages/client/ui-conversation/src/client/input/submission-policy.ts:54]
 - 以 `/` 开头但 **没有** `inputTriggers`、或 adjudication miss，会当普通 `session.prompt` 发出去。slash 短路只发生在 claim 命中之后。
 - 仅图片、draft 为空白：facade 绕过 `enter`，空文本加图仍会 `sendSession`。 [E: packages/client/ui-conversation/src/client/input/facade.ts:361]
-- `commitSend` 切断 undo。命令成功路径的 `submit-settled` 同样清 log。Ctrl/Z 不得复活已提交内容。 [E: packages/client/ui-conversation/src/client/input/facade.ts:324]
+- `commitSend` 切断 undo。命令成功路径的 `submit-settled` 同样清 log。Ctrl/Z 不得复活已提交内容。 [E: packages/client/ui-conversation/src/client/input/facade.ts:325]
 - `updateQueue` 的 `session/steer-unavailable` / `session/queue-item-not-found` 被当成收敛，不抛。空草稿加速 Enter 对整列 Queue 做同样的静默收敛。 [E: packages/client/ui-conversation/src/client/input/hub.ts:204]
 - 在 `'conversation'` 上第二次 `register`（`single` 覆盖）拆掉 Hero / composer / session 整树。加法用内部 list 或 layout 的 `shell.overlay`。
 - client **不** 执行 Agent loop。Web boot 是 `packages/client/web/src/boot.ts` 的 `AppWebEntry`，loader 静默后 `uiRenderer.mount`。

@@ -54,7 +54,7 @@ related:
   - subsys.execution.lsp
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `lsp` 是 `@deepseek-ai/dsh-tool-lsp` 向模型注册的**只读**导航工具：单一 wire 名 `lsp`，四个 `operation`（`goToDefinition` / `findReferences` / `goToImplementation` / `hover`），经 `ctx.lsp` 查 language server。坐标是模型侧 **one-based UTF-16**，工具在 execute 里减 1 交给缝的 zero-based 位置。四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）**都不装**；包存在不等于产品默认 catalog 里有它。
@@ -181,9 +181,9 @@ stdio provider 收到查询后：`canonicalizeWorkspace` 要求 `workspaceRoot` 
 | preset | 装 `@deepseek-ai/dsh-tool-lsp`？ | `disabled` | isolate | 说明 |
 |---|---|---|---|---|
 | `minimal` | **否** | — | — | top-level 只有 `persona` / `persistent-shell` / `filesystem`。文本读写是 `str_replace_editor`，不是 `lsp`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:74] |
-| `standard` | **否** | — | — | 以 `tool-web` 收束（`fetch: true`，`searchTimeoutMs: 60000`）。top-level `id` 无 `tool-lsp`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:256] |
+| `standard` | **否** | — | — | 以 `tool-web` 收束（`fetch: true`，`searchTimeoutMs: 60000`）。top-level `id` 无 `tool-lsp`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] |
 | `ptc`（wiki id `surface.presets.code`） | **否** | — | — | 相对 `standard` 的增量是末尾 `tool-presentation` `mode: ptc`，模型直调只剩 `run_code`。没有 `tool-lsp` 行。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
-| `cordis` | **否** | — | — | 增量是 `tool-cordis` + 带 `customSkillDirs` 的 skill 两行。收束 `id` 是 `tool-skill`，不是 `tool-lsp`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:267] |
+| `cordis` | **否** | — | — | 增量是 `tool-cordis` + 带 `customSkillDirs` 的 skill 两行。收束 `id` 是 `tool-skill`，不是 `tool-lsp`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262] |
 
 opt-in 出现在 **snapshot / 测试 composition**，以及用户自己的 preset / `--patch`，不是 shipped roster：
 

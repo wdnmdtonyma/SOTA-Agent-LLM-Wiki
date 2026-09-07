@@ -6,33 +6,40 @@ tier: T2
 pkg: persistence
 source:
   - packages/session/session-persistence-jsonl/src/index.ts
+  - packages/session/session-persistence-jsonl/src/storage.ts
+  - packages/session/session-persistence-jsonl/src/lease.ts
   - packages/session/session-persistence-jsonl/src/format.ts
+  - packages/session/session-persistence-jsonl/src/generation.ts
   - packages/session/session-persistence-jsonl/src/zstd.ts
   - packages/session/session-persistence-jsonl/src/win32.ts
   - packages/session/session-persistence-jsonl/tests/jsonl.spec.ts
   - packages/session/session-persistence-jsonl/tests/zstd.spec.ts
-  - packages/session/session-persistence-jsonl/tests/win32.spec.ts
+  - packages/session/session-persistence-jsonl/tests/lease.spec.ts
   - packages/session/session-persistence-jsonl/package.json
-  - packages/bundle/base/cordis.patch.yml
-  - packages/bundle/headless/cordis.patch.yml
-  - packages/bundle/web-app/cordis.patch.yml
-  - packages/bundle/sdk-minimal/cordis.patch.yml
-  - packages/boot/app-boot/src/profile.ts
+  - packages/session/session-format-catalog/src/generated.ts
+  - packages/session/session-format/src/filename.ts
+  - packages/session/session-format/src/chain.ts
+  - packages/session/session-format-v0-to-v1/src/migration.ts
+  - packages/session/session-format-v1-to-v2/src/migration.ts
   - packages/session/session-persistence/src/index.ts
-  - packages/session/session-persistence/src/coordinator.ts
-  - packages/session/session-persistence/src/write-behind.ts
-  - packages/session/session-persistence/src/preparations.ts
-  - packages/session/session-persistence/tests/coordinator-contract.ts
+  - packages/session/session-persistence/src/handle.ts
+  - packages/session/session-persistence/src/errors.ts
+  - packages/session/session-persistence/src/storage-contract.ts
   - packages/core/session/src/types.ts
   - packages/core/session/src/index.ts
+  - packages/bundle/base/cordis.patch.yml
+  - packages/bundle/sdk-minimal/cordis.patch.yml
+  - packages/bundle/headless/cordis.patch.yml
+  - packages/bundle/web-app/cordis.patch.yml
+  - packages/boot/app-boot/src/profile.ts
   - packages/util/home-paths/src/index.ts
   - packages/session/session-checkpoint-policy/src/index.ts
-  - packages/session/session-persistence-sqlite/src/schema.ts
-  - packages/session/session-persistence-sqlite/src/index.ts
 symbols:
   - JsonlSessionPersistence
-  - refuseForeignFormatVersion
-  - HeaderLine
+  - JsonlSessionHandle
+  - SessionWriteLease
+  - generationLogFilename
+  - sessionFormatCatalog
 related:
   - spine.session-log
   - subsys.persistence.session-persistence
@@ -42,157 +49,163 @@ related:
   - subsys.persistence.checkpoint
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
-> `@deepseek-ai/dsh-session-persistence-jsonl` 是 **host 面** shipped 默认的 `PersistenceBackend`：每个 session 一份 append-only `session.jsonl[.zstd]`，由 `PersistenceCoordinator` 订阅 `session/event`（emit 入队）与 `session/flush`（parallel 耐久屏障）。它实现 `ctx.sessionPersistence`，不是又一份可就地改写的 chat 数组，也不是仓库里那个未 bundled 的 SQLite persistence。
+> `@deepseek-ai/dsh-session-persistence-jsonl` 是 **host 面** shipped **唯一** 的 `SessionPersistence` Provider：每个 session 一个目录，里面按 format generation 放不可变 `session.jsonl` / `session.vN.jsonl[.zstd]`，跨进程 write ownership 靠 `session.lock`。`create` / `open` 返回 `SessionHandle`。load 时走 `sessionFormatCatalog` 的 v0→v1→v2 adjacent 链。这不是第二份可就地改写的 chat 数组，也不是已删除的 SQLite session persistence。
 
 ## 能回答的问题
 
 - shipped 默认 session 盘是 JSONL 还是 SQLite？`web` / `headless` / `sdk` / `sdk-minimal` / `acp` 各自有没有再挂一行？
-- 盘上路径怎么拼：`dshHomePath('sessions')`、`projectKey(cwd)` / `_no-cwd`、`encodeSegment(id)`、`.jsonl` vs `.jsonl.zstd`？
-- `session/event` 与 `session/flush` 分别是 emit 还是 parallel？谁必须 `next()`？JSONL 自己听不听 waterfall？
-- `locate` / `create` / 第一次 `append` 谁碰盘？`supportsRawArtifacts` 为什么是 `true`？
-- 读 header 时为什么必须先 `refuseForeignFormatVersion` 再 `isHeaderLine`？`SESSION_FORMAT_VERSION = 0` 有没有跨 version migration？
-- 明文截断末行和 zstd 截断末帧怎么修？`commitRepair` 是不是单事务？POSIX `link()` 和 Win32 `MoveFileExW` 差在哪？
+- 盘上路径怎么拼：`dshHomePath('sessions')`、`projectKey(cwd)` / `_no-cwd`、`encodeSegment(id)`、`session.jsonl` vs `session.v2.jsonl[.zstd]`？
+- `session/event` 与 `session/flush` 分别是 emit 还是 parallel？JSONL 自己听不听 waterfall？
+- `create` / 第一次 `append` / `handle.flush` 谁碰盘？write lease 何时拿、何时放？
+- `SESSION_FORMAT_VERSION = 2` 时，v0 文件怎么变成可读的 v2？比 2 新的盘呢？
+- 明文截断末行和 zstd 截断末帧怎么修？POSIX `link()` 和 Win32 `MoveFileExW` 差在哪？
 
 ## 职责边界
 
-本包拥有：JSONL 物理编码（明文 / checksummed Zstandard 帧）、每会话一份 artifact 的路径合同（`logPath` / `locate` / `readRaw`）、首写物化（POSIX `link()+unlink()` 或 Win32 `MoveFileExW(WRITE_THROUGH)`）、后续 `append`+`fsync` 与失败回滚、torn-tail 的 `JsonlTornMarker`（`truncateTo` + `recoveredEvents`）、根上禁止混用两种 suffix、拒绝旧版扁平 `*.jsonl` 文件。
+本包拥有：JSONL 物理编码（明文 / checksummed Zstandard 帧）、generation 文件名与不可变发表（`ensureJsonlGenerationCurrent`）、每会话目录合同、跨进程 `SessionWriteLease`、handle 实现（`JsonlSessionHandle`：200ms live 合批、torn-tail truncate、per-handle 串行链）、首写物化（POSIX `link()+unlink()` 或 Win32 `MoveFileExW(WRITE_THROUGH)`）、后续 `append`+`fsync` 与失败回滚。
 
-本包**不**拥有：`ctx.sessionPersistence` 的 Service Definition 与 write-behind / inspect-vs-load 编排（[subsys.persistence.session-persistence](session-persistence.md) 的 `SessionPersistence` + `PersistenceCoordinator`）；`Session.append` / `deriveMessages` / `SurfaceOp`（[subsys.core.session](../core/session.md)）；在 adapter / top-level tool body **之前**调用 `sessions.flush` 的胶水（[subsys.persistence.checkpoint](checkpoint.md)）；`$DSH_HOME` 解析（[subsys.util.home-paths](../util/home-paths.md)）；仓库里未 bundled 的 SQLite persistence（[subsys.persistence.sqlite](sqlite.md)）。
+本包**不**拥有：`SessionPersistence` / `SessionHandle` 的 Service Definition（[subsys.persistence.session-persistence](session-persistence.md)）；`Session.append` / `deriveMessages` / `SurfaceOp`（[subsys.core.session](../core/session.md)）；在 adapter / top-level tool body **之前**调用 `sessions.flush` 的胶水（[subsys.persistence.checkpoint](checkpoint.md)）；`$DSH_HOME` 解析（[subsys.util.home-paths](../util/home-paths.md)）；adjacent migrator 的语义（`dsh-session-format-v0-to-v1` / `v1-to-v2`，本包只当 catalog adapter 调用）；已删除的 SQLite session persistence（[subsys.persistence.sqlite](sqlite.md)）。
 
-JSONL 是 **host 面**进程级 provider。agent-preset 面（`minimal` / `standard` / `ptc` / `cordis`）只把 `agentPreset` 写进 `SessionHeader` / `agent-preset/selected`，不另造一份盘。宿主入口是 `dsh --profile web`（live）以及 `dsh --profile headless|sdk|sdk-minimal|acp`（startup）；本仓没有 shipped TUI 包。Client 半边不持有 `ctx.sessionPersistence`。
+JSONL 是 **host 面**进程级 provider。agent-preset 面不另造一份盘。Client 半边不持有 `ctx.sessionPersistence`。
 
 ## 关键文件
 
 | 路径 | 角色 |
 |---|---|
-| `packages/session/session-persistence-jsonl/src/index.ts` | `JsonlSessionPersistence`：`locate` / `loadStored` / `appendBatch` / `commitRepair` / `readRaw` |
-| `packages/session/session-persistence-jsonl/src/format.ts` | `HeaderLine`、`logPath`、`encodeSegment`、`refuseForeignFormatVersion`、`SessionLogScanner` |
-| `packages/session/session-persistence-jsonl/src/zstd.ts` | `scanZstdFrames` / `compressZstdFrame` / torn-prefix 解码 |
-| `packages/session/session-persistence-jsonl/src/win32.ts` | `publishNewFileWin32` / `ensureDurableDirectoryWin32` |
-| `packages/session/session-persistence/src/index.ts` | Definition：`SessionPersistence` 占住 `ctx.sessionPersistence` |
-| `packages/session/session-persistence/src/coordinator.ts` | `PersistenceCoordinator`：`session/created\|event\|flush\|disposed`、`assertVersion` |
-| `packages/session/session-persistence/src/write-behind.ts` | 默认 200ms 合批；`flush()` 取消等待并排空 |
+| `packages/session/session-persistence-jsonl/src/index.ts` | `JsonlSessionPersistence`：`create` / `open` / `stat` / `list`、catalog 适配、物化 / append / torn truncate |
+| `packages/session/session-persistence-jsonl/src/storage.ts` | `JsonlSessionHandle`、`JsonlBackendTracker`、`LIVE_WRITE_BATCH_MAX_DELAY_MS = 200` |
+| `packages/session/session-persistence-jsonl/src/lease.ts` | `SessionWriteLease`：POSIX `flock` / Win32 named semaphore |
+| `packages/session/session-persistence-jsonl/src/format.ts` | `HeaderLine`、`logPath`、`generationLogFilename`、`refuseForeignFormatVersion`、`SessionLogScanner` |
+| `packages/session/session-persistence-jsonl/src/generation.ts` | 把历史 generation 发表成当前不可变文件 |
+| `packages/session/session-format-catalog/src/generated.ts` | `sessionFormatCatalog`：`currentVersion: 2` + 两条 adjacent migration |
 | `packages/bundle/base/cordis.patch.yml` | shipped 行 `id: session-persistence-jsonl` |
-| `packages/bundle/sdk-minimal/cordis.patch.yml` | 唯一不叠 base 的 bundle：自己挂 JSONL，`id: sessions`，`compression: none` |
-| `packages/core/session/src/types.ts` | `SESSION_FORMAT_VERSION = 0`、`SurfaceOp`（无 delete） |
-| `packages/core/session/src/index.ts` | `session/event` emit、`session/flush` parallel |
-| `packages/util/home-paths/src/index.ts` | `dshHomePath('sessions')` |
-| `packages/session/session-checkpoint-policy/src/index.ts` | 在 waterfall 里 `flush` 后再 `next()` |
+| `packages/bundle/sdk-minimal/cordis.patch.yml` | 不叠 base：`id: sessions`，`compression: none` |
 
 ## 数据模型
 
 | 符号 | 要点 |
 |---|---|
-| `SESSION_FORMAT_VERSION` | 现为 `0`。新 header 必须等于该值。跨 version **没有**自动 migration：更新的盘叫人升级 harness，更旧的盘「本 build 无升级路径」。 [E: packages/core/session/src/types.ts:51] [E: packages/session/session-persistence/src/coordinator.ts:79] [E: packages/session/session-persistence/src/coordinator.ts:81] v0 内部仍有若干同版本事件形状迁移（coordinator 读路径上的 `migrateLegacyTurnStartEvent` 等），不是 format bump。 [E: packages/session/session-persistence/src/coordinator.ts:376] [E: packages/session/session-persistence/src/coordinator.ts:386] |
-| `HeaderLine` | 文件第一行：`type: 'session'` + `SessionHeader` 字段（`delegationDepth` 缺省写成 `0`）。它不进 `SessionEvent` log。 [E: packages/session/session-persistence-jsonl/src/format.ts:35] [E: packages/session/session-persistence-jsonl/src/format.ts:53] [E: packages/session/session-persistence-jsonl/src/format.ts:63] |
-| `JsonlCompression` | `'zstd'` \| `'none'`。默认 `'zstd'` → 文件名 `session.jsonl.zstd`；`'none'` → `session.jsonl`。 [E: packages/session/session-persistence-jsonl/src/index.ts:40] [E: packages/session/session-persistence-jsonl/src/format.ts:19] [E: packages/session/session-persistence-jsonl/src/format.ts:27] |
-| `Config` | `root` 必填 [E: packages/session/session-persistence-jsonl/src/index.ts:129]（构造时 `resolve`，避免后来 `process.cwd()` 把盘拆开 [E: packages/session/session-persistence-jsonl/src/index.ts:153]）。`packChunks` 默认 `true` [E: packages/session/session-persistence-jsonl/src/index.ts:39]；`compression` 默认 `'zstd'` [E: packages/session/session-persistence-jsonl/src/index.ts:40]；`preparedSessionCacheSize` 默认 5（`DEFAULT_PREPARED_SESSION_CACHE_SIZE`）[E: packages/session/session-persistence/src/coordinator.ts:28]；`writeBatchMaxDelayMs` 默认 200（`DEFAULT_WRITE_BATCH_MAX_DELAY_MS`）[E: packages/session/session-persistence/src/coordinator.ts:31]。 |
-| `SessionLocation` | `locate` 返回 `{ kind: 'jsonl', path }`，绝对路径，**不**创建文件。 [E: packages/session/session-persistence-jsonl/src/index.ts:175] |
-| `JsonlTornMarker` | `{ truncateTo, recoveredEvents }`。coordinator 当不透明 token 交回 `commitRepair`。 [E: packages/session/session-persistence-jsonl/src/index.ts:88] |
-| `supportsRawArtifacts` | JSONL 为 `true`。 [E: packages/session/session-persistence-jsonl/src/index.ts:124] `readRaw` 解出逻辑名恒为 `session.jsonl` 的原文（保留 packed 行）。 [E: packages/session/session-persistence-jsonl/src/index.ts:291] 明文 `readRaw` 返回整文件（含可能的无换行末碎片）； [E: packages/session/session-persistence-jsonl/src/index.ts:283] zstd `readRaw` 只拼 `scanZstdFrames` 给出的完整帧明文，torn 末帧不进 `content`。 [E: packages/session/session-persistence-jsonl/src/index.ts:271] |
-| `SurfaceOp` | `'append'` 或 `{ op: 'replace', start, end }`。**没有 delete。** compaction 只再 append 一条 replace；JSONL 文件不删已提交行。 [E: packages/core/session/src/types.ts:360] [E: packages/core/session/src/types.ts:361] |
+| `SESSION_FORMAT_VERSION` | **2**。当前逻辑 header 与当前 generation 文件都钉这个数。 [E: packages/core/session/src/types.ts:86] |
+| `sessionFormatCatalog` | `currentVersion: 2`；codecs v0/v1/v2；migrations `sessionFormatV0ToV1`（`fromVersion: 0`）→ `sessionFormatV1ToV2`（`fromVersion: 1`）。 [E: packages/session/session-format-catalog/src/generated.ts:14] [E: packages/session/session-format-v0-to-v1/src/migration.ts:26] [E: packages/session/session-format-v1-to-v2/src/migration.ts:36] adjacent 链要求 `to === from + 1`。 [E: packages/session/session-format/src/chain.ts:27] |
+| `generationLogFilename` | v0 文件名是 `session.jsonl`（可加 `.zstd`）；vN（N≥1）是 `session.vN.jsonl`。 [E: packages/session/session-format/src/filename.ts:16] [E: packages/session/session-persistence-jsonl/src/format.ts:53] |
+| `logPath` | 当前 generation：`generationLogPath(..., SESSION_FORMAT_VERSION, compression)` → 默认 `session.v2.jsonl.zstd`。 [E: packages/session/session-persistence-jsonl/src/format.ts:301] [E: packages/session/session-persistence-jsonl/src/format.ts:307] |
+| `HeaderLine` | 文件第一行：`type: 'session'` + 当前 header 字段（`isSeeded` 必填；`delegationDepth` 缺省写成 `0`）。v2 的精确 inherited cut 不在 header 行里，而在最后一条 `session/end-seed { inherited: true }`。 [E: packages/session/session-persistence-jsonl/src/format.ts:78] [E: packages/session/session-persistence-jsonl/src/format.ts:114] [E: packages/session/session-persistence-jsonl/src/format.ts:359] |
+| `JsonlCompression` | `'zstd'` \| `'none'`。默认 `'zstd'`。 [E: packages/session/session-persistence-jsonl/src/index.ts:64] [E: packages/session/session-persistence-jsonl/src/index.ts:80] |
+| `Config` | `root` 必填（构造时 `resolve`，避免后来 `process.cwd()` 把盘拆开）。 [E: packages/session/session-persistence-jsonl/src/index.ts:147] [E: packages/session/session-persistence-jsonl/src/index.ts:179] `compression` 默认 `'zstd'`。没有 `packChunks` / `writeBatchMaxDelayMs` / `preparedSessionCacheSize`——合批在 handle 上。 |
+| `LIVE_WRITE_BATCH_MAX_DELAY_MS` | `200`。只合批 **routed live** `session/event`，不是 Definition 包里的 write-behind 模块。 [E: packages/session/session-persistence-jsonl/src/storage.ts:35] |
+| `LEASE_FILENAME` | `'session.lock'`，放在 session 目录里。 [E: packages/session/session-persistence-jsonl/src/lease.ts:40] |
+| `SessionLocation` | 拒读诊断用 `{ kind: 'jsonl', path }`。不是面向消费者的 `locate()` API——读日志走 handle `read`。 [E: packages/session/session-persistence/src/errors.ts:85] [E: packages/session/session-persistence-jsonl/src/index.ts:204] |
+| `SurfaceOp` | `'append'` 或 `{ op: 'replace', start, end }`。**没有 delete。** JSONL 文件不删已提交行。 [E: packages/core/session/src/types.ts:416] [E: packages/core/session/src/types.ts:418] |
 
-盘布局：`<root>/<projectKey(cwd)|_no-cwd>/<encodeSegment(id)>/session.jsonl[.zstd]`。`cwd === undefined` 用 `_no-cwd`。 [E: packages/session/session-persistence-jsonl/src/format.ts:179] `logPath` 拼 `session` + suffix。 [E: packages/session/session-persistence-jsonl/src/format.ts:209] `projectKey` 把分隔符收成 `-`，有意有损；slug 截到 251 再包成 `--…--`（整段最长 255）。 [E: packages/session/session-persistence-jsonl/src/format.ts:157] [E: packages/session/session-persistence-jsonl/src/format.ts:168] `encodeSegment` 对任意 UTF-16（含 lone surrogate）单射，空串抛错。 [E: packages/session/session-persistence-jsonl/src/format.ts:124]
+盘布局：`<root>/<projectKey(cwd)|_no-cwd>/<encodeSegment(id)>/session[.vN].jsonl[.zstd]`。`cwd === undefined` 用 `_no-cwd`。 [E: packages/session/session-persistence-jsonl/src/format.ts:258] [E: packages/session/session-persistence-jsonl/src/format.ts:270] `projectKey` 把分隔符收成 `-`，有意有损；slug 截到 251 再包成 `--…--`（整段最长 255）。 [E: packages/session/session-persistence-jsonl/src/format.ts:228] [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:387] `encodeSegment` 对任意 UTF-16（含 lone surrogate）单射，空串抛错。 [E: packages/session/session-persistence-jsonl/src/format.ts:202]
 
-`SCHEMA_VERSION = 20` 属于未 bundled 的 SQLite persistence 表布局，跟 `HeaderLine.version` / `SESSION_FORMAT_VERSION` 正交。 [E: packages/session/session-persistence-sqlite/src/schema.ts:19]
+同一目录里可以同时存在历史 generation（`session.jsonl`）和当前 generation（`session.v2.jsonl`）。resolver 取 **数字最大** 的 canonical 文件名。 [E: packages/session/session-persistence-jsonl/src/index.ts:1119] [E: packages/session/session-persistence-jsonl/src/index.ts:1145]
+
+v2 的 `eventLines` 一行一事；Assistant 流嵌在 `assistant/message` / `assistant/attempt` 的 `stream` 里，不再打 `text-chunks` packed 行。 [E: packages/session/session-persistence-jsonl/src/format.ts:316]
 
 ## 控制流
 
-1. **组合真树挂 JSONL，不挂 SQLite persistence。** `dsh-base` 插入 `id: session-persistence-jsonl` / `name: '@deepseek-ai/dsh-session-persistence-jsonl'`，`root: !!js dshHomePath('sessions')`。 [E: packages/bundle/base/cordis.patch.yml:110] [E: packages/bundle/base/cordis.patch.yml:111] [E: packages/bundle/base/cordis.patch.yml:113] `dshHomePath` 把段接到 `resolveDshHome()`：非空 `$DSH_HOME` 赢，否则 `defaultDshHome()` = `join(homedir(), '.dsh')`。 [E: packages/util/home-paths/src/index.ts:98] [E: packages/util/home-paths/src/index.ts:87] [E: packages/util/home-paths/src/index.ts:89] [E: packages/util/home-paths/src/index.ts:62] `PROFILE_TEMPLATES`：`web`（live）与 `headless` / `sdk` / `acp`（startup）都先叠 `@deepseek-ai/dsh-base`；`sdk-minimal` 是唯一不叠 base 的 shipped bundle。 [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:154] `dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`；`dsh-web-app` 另插 host 行，两边都**不再**写 `session-persistence-jsonl`。 [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] [E: packages/bundle/web-app/cordis.patch.yml:49] `dsh-sdk-minimal` 自己挂同一 JSONL 包，但 loader `id` 写成 `sessions`，且 `compression: none`。 [E: packages/bundle/sdk-minimal/cordis.patch.yml:119] [E: packages/bundle/sdk-minimal/cordis.patch.yml:120] [E: packages/bundle/sdk-minimal/cordis.patch.yml:123] 仓库有 `@deepseek-ai/dsh-session-persistence-sqlite`，任何 shipped bundle 都没有它的行。[I]
+1. **组合真树挂 JSONL，不挂 SQLite persistence。** `dsh-base` 插入 `id: session-persistence-jsonl`，`root: !!js dshHomePath('sessions')`。 [E: packages/bundle/base/cordis.patch.yml:110] [E: packages/bundle/base/cordis.patch.yml:113] `dshHomePath` 接到 `resolveDshHome()`：非空 `$DSH_HOME` 赢，否则 `join(homedir(), '.dsh')`。 [E: packages/util/home-paths/src/index.ts:98] [E: packages/util/home-paths/src/index.ts:87] [E: packages/util/home-paths/src/index.ts:61] `PROFILE_TEMPLATES`：`web` 与 `headless` / `sdk` / `acp` 先叠 `dsh-base`；`sdk-minimal` 是唯一不叠 base 的 shipped bundle。 [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:154] `dsh-headless` insert 只有 `code-runtime` / `headless-startup` / `headless-runner`；`dsh-web-app` 另插 host 行，两边都**不再**写 jsonl。 [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] [E: packages/bundle/web-app/cordis.patch.yml:61] `dsh-sdk-minimal` 自己挂同一包，`id: sessions`，`compression: none`。 [E: packages/bundle/sdk-minimal/cordis.patch.yml:164] [E: packages/bundle/sdk-minimal/cordis.patch.yml:168]
 
-2. **插件占 `ctx.sessionPersistence`，再构造 coordinator。** `SessionPersistence` 构造函数 `super(ctx, 'sessionPersistence')`。 [E: packages/session/session-persistence/src/index.ts:107] `JsonlSessionPersistence` `static inject = ['sessions']`，`name` 覆盖成 `session-persistence-jsonl` 但不改 service 键。 [E: packages/session/session-persistence-jsonl/src/index.ts:126] [E: packages/session/session-persistence-jsonl/src/index.ts:142] 构造里 `new PersistenceCoordinator(...)`，coordinator 立刻 `installWritePath()`。 [E: packages/session/session-persistence-jsonl/src/index.ts:162] [E: packages/session/session-persistence/src/coordinator.ts:628] Definition 包本身**不是** shipped Cordis 行。
+2. **插件占 `ctx.sessionPersistence`，构造时核对 catalog 版本。** `JsonlSessionPersistence` `name = 'session-persistence-jsonl'`，service 键仍是 `sessionPersistence`。 [E: packages/session/session-persistence-jsonl/src/index.ts:153] catalog `currentVersion` 必须等于 `SESSION_FORMAT_VERSION`。 [E: packages/session/session-persistence-jsonl/src/index.ts:172] 然后 `tracker.install(ctx)`。Definition 包本身**不是** shipped Cordis 行。
 
-3. **热路径只入队；耐久屏障是 `session/flush`。** `session/event` 是 emit：listener 没有 `next`，`initFor` 之后 `live.writes.enqueue(event)`（`structuredClone` 进 write-behind）。 [E: packages/core/session/src/index.ts:74] [E: packages/session/session-persistence/src/coordinator.ts:1207] [E: packages/session/session-persistence/src/write-behind.ts:47] `session/flush` 是 parallel：`SessionStore.flush` `Promise.allSettled` 全部 listener，**不是** waterfall。 [E: packages/core/session/src/index.ts:83] [E: packages/core/session/src/index.ts:1024] coordinator 的 listener 是 `session => this.flush(session)`。 [E: packages/session/session-persistence/src/coordinator.ts:1211] `session/created` emit → `initFor`（构造期 seed 不会再发 `session/event`，所以 `onCreated` 自己 `appendCore` 种子）。 [E: packages/session/session-persistence/src/coordinator.ts:1374] `session/disposed` emit → `retire` 再 flush。JSONL / coordinator **没有**任何必须调用的 `next()`。
+3. **热路径只入队；耐久屏障是 `session/flush`。** `session/event` emit：tracker 找到该 id 的 write handle 就 `enqueueLive`（`structuredClone`）。 [E: packages/core/session/src/index.ts:73] [E: packages/session/session-persistence-jsonl/src/storage.ts:501] `session/flush` parallel：`drainLive()` 再 `handle.flush()`。 [E: packages/session/session-persistence-jsonl/src/storage.ts:506] JSONL listener **没有** `next()`。无 live writer 时 flush listener 直接 return。
 
-4. **谁在 waterfall 里 `next()`。** 副作用门不在 JSONL 包。`session-checkpoint-policy` `inject = ['llm', 'sessionPersistence', 'sessions', 'tools']`： [E: packages/session/session-checkpoint-policy/src/index.ts:18] `llm/stream` 有 live session 时 `await ctx.sessions.flush(session)` **再** `yield* next()`； [E: packages/session/session-checkpoint-policy/src/index.ts:35] [E: packages/session/session-checkpoint-policy/src/index.ts:36] `tools/execute` 仅 `exec.agent` 存在且 `exec.parent === undefined` 才 flush，再 `return next()`； [E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:74] `agent/pre-step` flush 后 `return next()`（耐久刷盘，不是副作用门）。 [E: packages/session/session-checkpoint-policy/src/index.ts:80] [E: packages/session/session-checkpoint-policy/src/index.ts:81] 省略 `next()` = adapter / tool body / 下一步都不跑。`session/flush` 本身不能靠「不调用 next」否决别人。
+4. **谁在 waterfall 里 `next()`。** 副作用门不在 JSONL 包。checkpoint `inject = ['llm', 'sessionPersistence', 'sessions', 'tools']`：有 live session 时 `await ctx.sessions.flush(session)` **再** `yield* next()`。 [E: packages/session/session-checkpoint-policy/src/index.ts:18] [E: packages/session/session-checkpoint-policy/src/index.ts:35] [E: packages/session/session-checkpoint-policy/src/index.ts:36]
 
-5. **`create` 懒物化；`locate` 不算 I/O。** `createCore` 只把 `{ meta, cursor: 0, materialized: false }` 放进内存；盘上已有同 id 则拒。 [E: packages/session/session-persistence/src/coordinator.ts:681] [E: packages/session/session-persistence/src/coordinator.ts:677] `locate` 用 `logPath` 算出绝对目标，create 之后、首笔 append 之前 `list()` 仍看不到该 id。测试钉死：`create()` 不建文件。 [E: packages/session/session-persistence-jsonl/src/index.ts:175] [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:270] [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:280]
+5. **`create` 懒物化；lease 也懒。** `create` 校验 header、`toHeaderLine`（seeded 必须带 inherited cut），若本进程 pending 或盘上已有同 id 则 `SessionAlreadyExistsError`。然后 `tracker.registerCreated`，**不**拿 kernel lock——未物化会话没有文件系统足迹。 [E: packages/session/session-persistence-jsonl/src/index.ts:219] [E: packages/session/session-persistence-jsonl/src/index.ts:228] [E: packages/session/session-persistence-jsonl/src/index.ts:236] 测试：`create()` 不建文件，但 `list()` 含该 id。 [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:939] [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:946] 第一次 `persistBatch` / `persistHeader` 才 `ensureLease` → `SessionWriteLease.acquire`。 [E: packages/session/session-persistence-jsonl/src/storage.ts:318] [E: packages/session/session-persistence-jsonl/src/index.ts:629] 已存在 artifact 的 `open(..., 'write')` 在构造 handle **之前**就拿 lease。 [E: packages/session/session-persistence-jsonl/src/index.ts:270]
 
-6. **首笔 `appendBatch` 原子物化 header+第一批。** `isMaterialized === false` 走 `materialize`：`encodeMaterialization` 在 zstd 下把 header 与 event 写成**两帧**（第一帧必须恰好一行 header）。 [E: packages/session/session-persistence-jsonl/src/index.ts:530] [E: packages/session/session-persistence-jsonl/src/index.ts:642] POSIX：`mkdir` `0o700` → 写 `0o600` temp → `sync` → `link(tmp, finalPath)` → `syncDirPosix` → `unlink` temp。 [E: packages/session/session-persistence-jsonl/src/index.ts:552] [E: packages/session/session-persistence-jsonl/src/index.ts:565] `link` 遇已存在目标 `EEXIST`，两个进程不能互相 `rename` 覆盖。Win32：`ensureDurableDirectoryWin32` 后 `publishNewFileWin32` = `MoveFileExW(..., MOVEFILE_WRITE_THROUGH)`，无替换、无跨卷 copy。 [E: packages/session/session-persistence-jsonl/src/win32.ts:30] [E: packages/session/session-persistence-jsonl/src/win32.ts:118]
+6. **lease 是 kernel 锁，不是过期租约。** POSIX：对 `session.lock` 非阻塞 `flock(exnb)`，再核对 locked inode 仍是路径上的那个文件。Win32：named semaphore。争用映射为 `SessionAlreadyOwnedError`。进程死则 kernel 放锁；没有 expiry 去剥夺卡住的活 writer。读者从不碰锁。 [E: packages/session/session-persistence-jsonl/src/lease.ts:80] [E: packages/session/session-persistence-jsonl/src/lease.ts:106] [E: packages/session/session-persistence-jsonl/tests/lease.spec.ts:172] `release` 不删除 POSIX lock 文件，好留下稳定 inode。 [E: packages/session/session-persistence-jsonl/src/lease.ts:134]
 
-7. **已物化后的 append：写完 `fsync`，失败则截回。** `appendLines` 记下 `before` size，`writeFile`+`sync`；任一步失败就 `truncate(before)` 再 `sync`，避免半行留下重复 seq。这不是 compaction，只回滚本批。 [E: packages/session/session-persistence-jsonl/src/index.ts:670] [E: packages/session/session-persistence-jsonl/src/index.ts:685]
+7. **首笔物化：header+第一批原子发表。** `encodeMaterialization` 在 zstd 下把 header 与 event 写成**两帧**（第一帧必须恰好一行 header）。 [E: packages/session/session-persistence-jsonl/src/index.ts:848] [E: packages/session/session-persistence-jsonl/src/index.ts:968] POSIX：`mkdir` `0o700` → 写 `0o600` temp → `sync` → `link(tmp, finalPath)` → `syncDirPosix` → `unlink` temp。 [E: packages/session/session-persistence-jsonl/src/index.ts:887] `link` 遇已存在目标 `EEXIST`，两个进程不能互相 `rename` 覆盖。Win32：`ensureDurableDirectoryWin32` 后 `publishNewFileWin32` = `MoveFileExW(..., MOVEFILE_WRITE_THROUGH)`，无替换、无跨卷 copy。 [E: packages/session/session-persistence-jsonl/src/win32.ts:183] [E: packages/session/session-persistence-jsonl/src/win32.ts:134] [E: packages/session/session-persistence-jsonl/src/win32.ts:39] 空会话要显式 `handle.flush()` 才会写出只有 header 的文件。 [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:956]
 
-8. **读路径：先拒外国 version，再认 header。** `SessionLogScanner` / `scanLog` 经 `parseHeaderRecord`：JSON 解析后先 `refuseForeignFormatVersion(parsed)`，再 `isHeaderLine`。 [E: packages/session/session-persistence-jsonl/src/format.ts:292] [E: packages/session/session-persistence-jsonl/src/format.ts:293] `version` 是 number 且 `!== SESSION_FORMAT_VERSION` 时抛 `SessionFormatUnsupportedError`（文案走 `sessionFormatVersionRefusal`），并在 JSONL 侧附上 `(raw log: <path>)`。 [E: packages/session/session-persistence-jsonl/src/format.ts:277] [E: packages/session/session-persistence-jsonl/src/index.ts:347] 未来格式不必满足今天的 `createdAt` / `delegationDepth` 形状，用户必须看见「升级 harness」，不能看见「corrupt session log」。非 object 的第一行没有 version，继续当 corrupt。coordinator 的 `assertVersion` 是第二道门。 [E: packages/session/session-persistence/src/coordinator.ts:1128] 测试：`version: 42` 且缺 `createdAt` → `SessionFormatUnsupportedError`；`version: -1` 的形状合法 header → `older than the supported v0` / `no upgrade path`。 [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:200] [E: packages/session/session-persistence/tests/coordinator-contract.ts:1353]
+8. **已物化后的 append：写完 `fsync`，失败则截回。** `appendLines` 记下 `before` size，`writeFile`+`sync`；任一步失败就 `truncate(before)` 再 `sync`，避免半行留下重复 seq。 [E: packages/session/session-persistence-jsonl/src/index.ts:996] [E: packages/session/session-persistence-jsonl/src/index.ts:1010] handle 上 `persistContiguous` 要求 `assertContiguous`，并在第一笔新 append 前先 `truncateTornTail`、再把 zstd 末帧捞回的 `recoveredTail` 写回去。 [E: packages/session/session-persistence-jsonl/src/storage.ts:289] [E: packages/session/session-persistence-jsonl/src/storage.ts:294]
 
-9. **`inspect` 不落修复；`load` / `prepare` 才 `commitRepair`。** `inspect` 只 `preparations.inspect` → `prepareCore`：内存里跑 `interruptedTurnClosers`，**不**调 `commitPrepared`。 [E: packages/session/session-persistence/src/coordinator.ts:811] [E: packages/session/session-persistence/src/preparations.ts:60] `load` / `prepare` 经 `reserve` → `commitPrepared`：`tornMarker` 或 `closers.length > 0` 时 `backend.commitRepair`，然后因 revision 变了返回 `undefined` 再读一轮。 [E: packages/session/session-persistence/src/coordinator.ts:785] [E: packages/session/session-persistence/src/coordinator.ts:1026] [E: packages/session/session-persistence/src/coordinator.ts:1027] JSONL `commitRepair` 分两步、各自 fsync，**不是**单事务：先 `repair(tornMarker.truncateTo)`（`truncate`+`fsync`，只丢掉 torn 尾），再把内存里的 `recoveredEvents` 与 `closers` 拼进 `appendLines`。 [E: packages/session/session-persistence-jsonl/src/index.ts:456] [E: packages/session/session-persistence-jsonl/src/index.ts:458] `repair()` 不回写。明文 `readPrefix` 的 `recoveredEvents` 恒为 `[]`；zstd 末帧捞出的完整记录只活在这次 `load` 的内存 marker。 [E: packages/session/session-persistence-jsonl/src/index.ts:338] [E: packages/session/session-persistence-jsonl/src/index.ts:713] truncate 已落盘、rewrite 尚未写出时 crash，下次 `load` **不会**从已截掉的尾再解 `recoveredEvents`。coordinator 仍可能对「截完后仍开着的 turn」再合成 closers。live adopt（HMR）只 truncate torn，`closers = []`，不把开着的 turn 合成 `interrupted`。 [E: packages/session/session-persistence/src/coordinator.ts:197] [E: packages/session/session-persistence/src/coordinator.ts:1361]
+9. **读路径：选 generation → 必要时发表当前文件 → 再解码。** `open`/`read` 经 `findLog` 选最高 version 文件。若 `sourceVersion === 2` 走当前解码；否则 `ensureJsonlGenerationCurrent` 调 catalog `migrate`，把 v2 字节 **link 发表** 到 `session.v2.jsonl[.zstd]`，**不改**源 generation。 [E: packages/session/session-persistence-jsonl/src/index.ts:181] [E: packages/session/session-persistence-jsonl/src/generation.ts:769] [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:601] 测试：读完 v0 之后源文件字节不变，当前路径新出现。比当前新的 generation → `JsonlGenerationNewerVersionError` 再包成 `SessionFormatUnsupportedError`（upgrade-harness + raw log 路径）。 [E: packages/session/session-persistence-jsonl/src/index.ts:437] [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:447] 当前明文扫描：JSON 解析后先 `refuseForeignFormatVersion`，再 `isHeaderLine`。 [E: packages/session/session-persistence-jsonl/src/format.ts:380] [E: packages/session/session-persistence-jsonl/src/format.ts:400] 非 object 的第一行没有 version，继续当 corrupt。 [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:477] catalog 拒迁（未知历史 type 等）留下 v0 不动。 [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:872]
 
-10. **明文 torn vs zstd torn。** 明文：`scanLog` 把无换行的末碎片留在 `committedBytes` 之外，`readPrefix` 设 `tornMarker: { truncateTo: committedBytes, recoveredEvents: [] }`。 [E: packages/session/session-persistence-jsonl/src/index.ts:338] zstd：`scanZstdFrames` 给出完整帧 + 可选 `tornStart`；完整帧里若还有半行 JSONL，直接抛 `complete frame contains a torn JSONL record`（不可修）。 [E: packages/session/session-persistence-jsonl/src/zstd.ts:48] [E: packages/session/session-persistence-jsonl/src/index.ts:393] 末帧不完整则 `decompressZstdPrefix`（`ZSTD_e_flush`）尽量取出已有明文，完整记录进 `recoveredEvents`，`truncateTo = tornStart`。 [E: packages/session/session-persistence-jsonl/src/zstd.ts:154] [E: packages/session/session-persistence-jsonl/src/zstd.ts:22] 第一帧必须恰好一行 header。 [E: packages/session/session-persistence-jsonl/src/index.ts:49] 默认写出 `.jsonl.zstd`，`locate` 仍是 `{ kind: 'jsonl', path }`。 [E: packages/session/session-persistence-jsonl/tests/zstd.spec.ts:348]
+10. **明文 torn vs zstd torn。** 明文：`scanLog` 把无换行的末碎片留在 `committedBytes` 之外，`recoveredTail` 恒为 `[]`。 [E: packages/session/session-persistence-jsonl/src/index.ts:507] [E: packages/session/session-persistence-jsonl/src/format.ts:540] zstd：`scanZstdFrames` 给出完整帧 + 可选 `tornStart`；完整帧里若还有半行 JSONL，直接抛 `complete frame contains a torn JSONL record`（不可修）。 [E: packages/session/session-persistence-jsonl/src/zstd.ts:48] [E: packages/session/session-persistence-jsonl/src/index.ts:687] 末帧不完整则 `decompressZstdPrefix` 尽量取出已有明文，完整记录进 `recoveredTail`，`tornTruncateTo = tornStart`。 [E: packages/session/session-persistence-jsonl/src/zstd.ts:154] [E: packages/session/session-persistence-jsonl/src/index.ts:719] 第一帧必须恰好一行 header。 [E: packages/session/session-persistence-jsonl/src/index.ts:74]
 
-11. **读 packed 行与写开关无关；未知 type 只在读时拒。** 写侧 `eventLines`：`packChunks` 为 true 走 `packChunkRuns`，false 则一行一事。 [E: packages/session/session-persistence-jsonl/src/format.ts:223] 读侧 `SessionLogScanner.consumeEventLine` 对每一完整行无条件调用 `decodeStorageRecord`，函数体不读 `packChunks`，所以旧的 unpacked 文件仍能被默认 writer 接着 append。 [E: packages/session/session-persistence-jsonl/src/format.ts:384] `appendCore` 只拦已退役的 v0 形状（`request/header-delta`、`mode/set`、`reason: 'fallback'`）；未知 `type` 除非 `ignorable`，在 `assertEventsSupported`（load / prepare / readFrom）拒，append 不拒。 [E: packages/session/session-persistence/src/coordinator.ts:279] [E: packages/session/session-persistence/src/coordinator.ts:715] [E: packages/session/session-persistence/src/coordinator.ts:1143] JSONL 没有 `loadStoredFrom`：`readFrom` 走整本 `loadStored` 再 `slice(fromSeq)`。 [E: packages/session/session-persistence-jsonl/src/index.ts:208]
+11. **`stat` / `list` 走 catalog `readHeader`，可以跳过外国 format。** listing 遇到 `SessionFormatUnsupportedError` 时 **skip 该 id**，整棵 list 不失败；真正拒绝发生在 `open`。 [E: packages/session/session-persistence-jsonl/src/index.ts:749] [E: packages/session/session-persistence-jsonl/src/index.ts:788] 形状仍像今天的 header 但 `version === 42` 的行，`open` 拒、`list` 为空。 [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:452]
 
-12. **发现与编码门。** `findLog` / `list` 扫每个 project 目录下的 session 目录。同一 id 出现在两个 project → 抛 duplicate。 [E: packages/session/session-persistence-jsonl/src/index.ts:810] 目录里若存在对面 suffix（`.jsonl` vs `.jsonl.zstd`）→ encoding mismatch，要求换 root 或换 `compression`。 [E: packages/session/session-persistence-jsonl/src/index.ts:934] project 根上若还有 `*.jsonl` / `*.jsonl.zstd` 扁平文件 → `unsupported flat-file layout`。 [E: packages/session/session-persistence-jsonl/src/index.ts:943] header 的 `(id, cwd)` 必须指回正在读的那条 path（允许大小写不敏感盘上的 `realpath` 别名）。 [E: packages/session/session-persistence-jsonl/src/index.ts:843]
+12. **发现与编码门。** 同一 id 出现在两个 project → 抛 duplicate。 [E: packages/session/session-persistence-jsonl/src/index.ts:1169] 目录里若存在对面 suffix（`.jsonl` vs `.jsonl.zstd`）→ encoding mismatch，要求换 root 或换 `compression`。 [E: packages/session/session-persistence-jsonl/src/index.ts:1336] [E: packages/session/session-persistence-jsonl/tests/zstd.spec.ts:843] project 根上若还有扁平 `*.jsonl` 文件 → `unsupported flat-file layout`。 [E: packages/session/session-persistence-jsonl/src/index.ts:1343] header 的 `(id, cwd)` 必须指回正在读的那条 path（允许大小写不敏感盘上的 `realpath` 别名）。 [E: packages/session/session-persistence-jsonl/src/index.ts:1209]
 
 ## 设计动机
 
-DSH 是 Cordis 组合运行时：`profile → bundle → agent preset`，`model-visible ⟺ logged`。模型下一轮看见的 `messages` 只能从 append-only log 的 `surfaceOp` 折叠出来。要把这条合同撑到 crash 之后，host 必须有一份按 session 可定位的耐久介质，并且在 adapter 花钱、top-level tool 对外产生副作用**之前**把已提交前缀 `flush` 下去。Peer harness 常见的「内存 messages + 事后整包写盘」在这里是不变量违规。
+DSH 是 Cordis 组合运行时：`profile → bundle → agent preset`，`model-visible ⟺ logged`。要把这条合同撑到 crash 与跨进程之后，host 必须有一份按 session 可定位的耐久介质，并且在 adapter 花钱、top-level tool 对外产生副作用**之前**把已提交前缀 `flush` 下去。
 
-选「每会话一个 JSONL 文件」而不是默认 SQLite，是为了 `locate` / `readRaw` / 人能打开的原文：packed 行、键序、换行都按写时字节保留。Zstandard **按帧**拼接，才能在不重写已提交前缀的前提下追加一批、并从截断末帧里捞回完整 JSONL 记录。第一帧独占 header，list 才只需解一帧。
+选「每会话一个目录 + 不可变 generation 文件」：v0 源盘可以原样留下，v2 作为新文件发表，迁移失败不会毁掉可读的历史 generation。Zstandard **按帧**拼接，才能在不重写已提交前缀的前提下追加一批、并从截断末帧里捞回完整 JSONL 记录。第一帧独占 header，list / stat 才只需解一帧。
 
 `link()` 而不是 `rename()`，是为了两个进程同时物化同一 id 时失败可见。`refuseForeignFormatVersion` 放在 `isHeaderLine` 前面，是为了 format bump 之后旧 binary 仍能说出「升级 harness」，而不是把未来字段判成 corrupt。
 
-`create` 懒到第一笔 append：建了又弃的会话不留空文件。`encodeSegment` 把未校验的 `SessionId` 收成单段，避免 `../` 逃出 root。
+kernel lease 没有超时：宁可让活着但卡住的 writer 占着锁，也不让后到者往同一文件上撕。未物化会话不占锁、不留空文件。
 
 ## Gotcha
 
-- **SQLite persistence 不是默认，也不在 shipped bundle。** 默认是本页的 JSONL。`SCHEMA_VERSION = 20` 是另一份未挂行后端的表布局，不要跟 `SESSION_FORMAT_VERSION` 或 session-query 的 schema 混。 [E: packages/bundle/base/cordis.patch.yml:110] [E: packages/session/session-persistence-sqlite/src/schema.ts:19]
-- **没有跨 version migration。** `version === 0` 才能读。更新 → 升级 harness；更旧 → 本 build 无升级路径。 [E: packages/session/session-persistence/src/coordinator.ts:79] [E: packages/session/session-persistence/src/coordinator.ts:81] coordinator 仍会改写若干 **v0 内部** 旧事件形状：`migrateLegacyTurnStartEvent` 丢掉 `turn/start.trigger`，只留 `{ turn }`。那不是 v0→v1。 [E: packages/session/session-persistence/src/coordinator.ts:376] [E: packages/session/session-persistence/src/coordinator.ts:386]
-- **`list` / `readRaw` 走 `parseHeaderMeta`，不调用 `refuseForeignFormatVersion`。** 缺 `createdAt` 的未来 header 会被 `list` 当成「不是 header」跳过；形状仍像今天的 `HeaderLine` 但 `version !== 0` 的行会进 list，真正拒绝发生在 `load` / `scanLog`。 [E: packages/session/session-persistence-jsonl/src/format.ts:438]
-- **JSONL repair 不是单事务，torn 尾截掉就不会再从盘上捞回。** `commitRepair` 先 `repair(truncateTo)`（只 `truncate`+`fsync`，丢掉 torn 尾），再 `appendLines(recoveredEvents + closers)`。明文 `readPrefix` 的 `recoveredEvents` 恒为 `[]`；zstd 末帧里的完整记录只在这次 `load` 的内存 marker。truncate 与 rewrite 之间 crash，下次 `load` 看见的是已截短的前缀，**不会**重建被丢掉的 `recoveredEvents`。coordinator 仍可能对截完后仍开着的 turn 再合成 closers。 [E: packages/session/session-persistence-jsonl/src/index.ts:456] [E: packages/session/session-persistence-jsonl/src/index.ts:458] [E: packages/session/session-persistence-jsonl/src/index.ts:338] [E: packages/session/session-persistence-jsonl/src/index.ts:713]
-- **完整 zstd 帧里的半行 JSONL 是 corrupt，不是 torn。** 只有结构不完整的**末帧**才进 `tornStart`。 [E: packages/session/session-persistence-jsonl/src/index.ts:393]
-- **同一 root 不能混 `.jsonl` 与 `.jsonl.zstd`。** 换编码换 root，或把 `compression` 改成跟盘上一致。 [E: packages/session/session-persistence-jsonl/src/index.ts:934]
-- **旧扁平布局直接拒。** `<project>/<encodeSegment(id)>.jsonl[.zstd]` 不再被当成会话。 [E: packages/session/session-persistence-jsonl/src/index.ts:943]
-- **`session/flush` 没有 `next()`。** 把它当 waterfall、指望不调用 next 就挡住别人，是错的。否决发生在 `llm/stream` / `tools/execute` 那些必须 `next()` 的链上。 [E: packages/core/session/src/index.ts:83]
-- **`packChunks` 只影响新写入。** 写侧开关是 `eventLines` 的 `packChunks ? packChunkRuns : events`。读侧每行都走 `decodeStorageRecord`，关掉开关也不会把已有 `text-chunks` 行读坏。 [E: packages/session/session-persistence-jsonl/src/format.ts:223] [E: packages/session/session-persistence-jsonl/src/format.ts:384]
-- **`projectKey` 有损。** `/a/b-c` 与 `/a-b/c` 进同一个 project 目录；id 仍靠 `encodeSegment` 分开。 [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:164]
-- **write-behind 的 200ms 不是完成时限。** 它是合批窗口；checkpoint 走的是立刻 `flush()`：取消等待定时器并排空同一 barrier。 [E: packages/session/session-persistence/src/coordinator.ts:31] [E: packages/session/session-persistence/src/write-behind.ts:63]
-- **compaction 不删 JSONL 行。** 模型历史靠 `surfaceOp: { op: 'replace', start, end }` 阴影；文件只在 crash-tail truncate / 失败 append 回滚时变短。 [E: packages/core/session/src/types.ts:361]
-- **`sdk-minimal` 的 JSONL 默认明文。** 它不叠 `dsh-base`，自己挂 `@deepseek-ai/dsh-session-persistence-jsonl` 且 `compression: none`；其它叠 base 的 profile 继承 base 默认 `zstd`。 [E: packages/bundle/sdk-minimal/cordis.patch.yml:123] [E: packages/boot/app-boot/src/profile.ts:155]
+- **SQLite session persistence 已删除。** 默认就是本页的 JSONL。query-sqlite / storage-sqlite 是别的库，见 [subsys.persistence.sqlite](sqlite.md)。 [E: packages/bundle/base/cordis.patch.yml:110]
+- **当前文件名带 `v2`。** 不要再假设活日志永远叫 `session.jsonl`。v0 历史文件仍用无版本后缀；当前 writer 写 `session.v2.jsonl[.zstd]`。 [E: packages/session/session-format/src/filename.ts:16]
+- **v0/v1 会迁；比 2 新的盘不会。** catalog 是 adjacent 链。缺环、未知历史 type、或 `version > 2` 都拒，源 generation 不变。 [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:601] [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:872]
+- **`list` 会跳过外国 format；`open` 不会。** 缺字段的未来 header 可能被 list 当成「不是 header」或 skip；真正拒绝在 `open`。 [E: packages/session/session-persistence-jsonl/src/index.ts:749]
+- **JSONL torn 修复分两步，且只在 write 路径落地。** reader 永不返回 torn 尾。下一次 `persistContiguous` 才 truncate + 重写 recovered 记录。明文没有 recovered 记录可捞。
+- **完整 zstd 帧里的半行 JSONL 是 corrupt，不是 torn。** 只有结构不完整的**末帧**才进 `tornStart`。 [E: packages/session/session-persistence-jsonl/src/index.ts:687]
+- **同一 root 不能混 `.jsonl` 与 `.jsonl.zstd`。** 换编码换 root，或把 `compression` 改成跟盘上一致。 [E: packages/session/session-persistence-jsonl/src/index.ts:1336]
+- **旧扁平布局直接拒。** `<project>/<encodeSegment(id)>.jsonl[.zstd]` 不再被当成会话。 [E: packages/session/session-persistence-jsonl/src/index.ts:1343]
+- **`session/flush` 没有 `next()`。** 否决发生在 `llm/stream` / `tools/execute` 那些必须 `next()` 的链上。 [E: packages/core/session/src/index.ts:82]
+- **`projectKey` 有损。** `/a/b-c` 与 `/a-b/c` 进同一个 project 目录；id 仍靠 `encodeSegment` 分开。 [E: packages/session/session-persistence-jsonl/tests/jsonl.spec.ts:387]
+- **200ms 不是完成时限。** 它是 live 合批窗口；checkpoint 走立刻 `drainLive`。显式 `handle.append` 不进这个窗。
+- **compaction 不删 JSONL 行。** 模型历史靠 `surfaceOp: replace` 阴影。 [E: packages/core/session/src/types.ts:418]
+- **`sdk-minimal` 的 JSONL 默认明文。** 它不叠 `dsh-base`，自己挂包且 `compression: none`。 [E: packages/bundle/sdk-minimal/cordis.patch.yml:168] [E: packages/boot/app-boot/src/profile.ts:154]
+- **没有公开 `locate` / `readRaw`。** 拒读错误里的 `SessionLocation` 只给诊断。读正文用 `handle.read`。
 
 ## Seam 三角
 
 | 角色 | 包 / 符号 | ctx 键 / 合同 | base | web-app / headless / sdk / acp | sdk-minimal |
 |---|---|---|---|---|---|
-| Definition | `@deepseek-ai/dsh-session-persistence` 的 `SessionPersistence` / `PersistenceBackend` / `SessionLocation` | `ctx.sessionPersistence`；`locate` / `create` / `append` / `load` / `inspect` / `prepare` | **无**独立 Cordis 行 | 无 | 无 |
-| Provider | `@deepseek-ai/dsh-session-persistence-jsonl` 的 `JsonlSessionPersistence` | 同一 `ctx.sessionPersistence`；`supportsRawArtifacts = true`；`locate → { kind:'jsonl', path }` | `id: session-persistence-jsonl`，`root: dshHomePath('sessions')`，默认 `compression: 'zstd'`、`packChunks: true` | **继承** base，不重挂 | `id: sessions`，同包，`compression: none` |
-| Consumer | 同进程 `PersistenceCoordinator`（jsonl 构造时安装）；`session-checkpoint-policy`；`SessionStore.flush` 的调用方；web 上的 workspace / session-query / export | `session/event` **emit** 入队；`session/flush` **parallel** 刷盘。coordinator listener **无** `next()`。checkpoint 在 `llm/stream` / `tools/execute` / `agent/pre-step` **waterfall** 里先 flush 再 `next()` | `id: session-checkpoint-policy` 与 `id: session` 同在 base | web 另加只读消费者（`workspace`、`session-log-download`、projection cache），不换 backend；headless-runner / sdk / acp 经同一 `ctx.sessions` + JSONL | 同一 JSONL provider，明文盘 |
+| Definition | `@deepseek-ai/dsh-session-persistence` 的 `SessionPersistence` / `SessionHandle` | `ctx.sessionPersistence`；`create` / `open` / `flush` / `stat` / `list` | **无**独立 Cordis 行 | 无 | 无 |
+| Provider | `@deepseek-ai/dsh-session-persistence-jsonl` 的 `JsonlSessionPersistence` + `JsonlSessionHandle` + `SessionWriteLease` | 同一键；generation 文件 + kernel lock | `id: session-persistence-jsonl`，`root: dshHomePath('sessions')`，默认 `compression: 'zstd'` | **继承** base，不重挂 | `id: sessions`，同包，`compression: none` |
+| Consumer | `JsonlBackendTracker`（jsonl 构造时安装）；`session-checkpoint-policy`；`AgentLoop` create/resume；web 上的 workspace / session-query / export | `session/event` **emit** 入队；`session/flush` **parallel** 刷盘。tracker listener **无** `next()`。checkpoint 在 waterfall 里先 `sessions.flush` 再 `next()` | `id: session-checkpoint-policy` 与 `id: session` 同在 base | web 另加只读消费者，不换 backend | 同一 JSONL provider，明文盘；**无** checkpoint 行 |
 
-换 Persistence Provider（例如未 shipped 的 SQLite）只换 `session/event` + `session/flush` 的落盘实现与 `locate`/`readRaw` 能力；不能换掉 `SessionEvent` / `surfaceOp` 合同。preset 若再 `provide` 一份 `sessionPersistence` 且不 `isolate`，按 host 面服务泄漏处理。SQLite 的 `locate` 返回 `undefined`、`supportsRawArtifacts = false`，不能 silently 顶替本页的 raw artifact 假设。 [E: packages/session/session-persistence-sqlite/src/index.ts:96] [E: packages/session/session-persistence-sqlite/src/index.ts:55]
+换 Persistence Provider 只换 `SessionHandle` 的落盘实现。不能换掉 `SessionEvent` / `surfaceOp` 合同。preset 若再 `provide` 一份 `sessionPersistence` 且不 `isolate`，按 host 面服务泄漏处理。已删除的 sqlite persistence 不能 silently 顶替本页。
 
 ## Sources
 
 - packages/session/session-persistence-jsonl/src/index.ts
+- packages/session/session-persistence-jsonl/src/storage.ts
+- packages/session/session-persistence-jsonl/src/lease.ts
 - packages/session/session-persistence-jsonl/src/format.ts
+- packages/session/session-persistence-jsonl/src/generation.ts
 - packages/session/session-persistence-jsonl/src/zstd.ts
 - packages/session/session-persistence-jsonl/src/win32.ts
 - packages/session/session-persistence-jsonl/tests/jsonl.spec.ts
 - packages/session/session-persistence-jsonl/tests/zstd.spec.ts
-- packages/session/session-persistence-jsonl/tests/win32.spec.ts
+- packages/session/session-persistence-jsonl/tests/lease.spec.ts
 - packages/session/session-persistence-jsonl/package.json
-- packages/bundle/base/cordis.patch.yml
-- packages/bundle/headless/cordis.patch.yml
-- packages/bundle/web-app/cordis.patch.yml
-- packages/bundle/sdk-minimal/cordis.patch.yml
-- packages/boot/app-boot/src/profile.ts
+- packages/session/session-format-catalog/src/generated.ts
+- packages/session/session-format/src/filename.ts
+- packages/session/session-format/src/chain.ts
+- packages/session/session-format-v0-to-v1/src/migration.ts
+- packages/session/session-format-v1-to-v2/src/migration.ts
 - packages/session/session-persistence/src/index.ts
-- packages/session/session-persistence/src/coordinator.ts
-- packages/session/session-persistence/src/write-behind.ts
-- packages/session/session-persistence/src/preparations.ts
-- packages/session/session-persistence/tests/coordinator-contract.ts
+- packages/session/session-persistence/src/handle.ts
+- packages/session/session-persistence/src/errors.ts
+- packages/session/session-persistence/src/storage-contract.ts
 - packages/core/session/src/types.ts
 - packages/core/session/src/index.ts
+- packages/bundle/base/cordis.patch.yml
+- packages/bundle/sdk-minimal/cordis.patch.yml
+- packages/bundle/headless/cordis.patch.yml
+- packages/bundle/web-app/cordis.patch.yml
+- packages/boot/app-boot/src/profile.ts
 - packages/util/home-paths/src/index.ts
 - packages/session/session-checkpoint-policy/src/index.ts
-- packages/session/session-persistence-sqlite/src/schema.ts
-- packages/session/session-persistence-sqlite/src/index.ts
 
 ## 相关
 
 - [spine.session-log](../../spine/session-log.md)：append-only `SessionEvent`、`deriveMessages`、`surfaceOp` 只有 replace 没有 delete、checkpoint 两个副作用落点。
-- [subsys.persistence.session-persistence](session-persistence.md)：`ctx.sessionPersistence` Definition、`PersistenceCoordinator` 的 write-behind / prepared cache / inspect 与 load 分界。
-- [subsys.persistence.sqlite](sqlite.md)：仓库有、bundle 没有的另一 Provider；`SCHEMA_VERSION = 20` 与本页 `HeaderLine.version` 正交。
+- [subsys.persistence.session-persistence](session-persistence.md)：`ctx.sessionPersistence` Definition 与 `SessionHandle`。
+- [subsys.persistence.sqlite](sqlite.md)：session-persistence-sqlite 已删除；query / storage sqlite 仍在。
 - [subsys.util.home-paths](../util/home-paths.md)：`dshHomePath('sessions')` 与 `$DSH_HOME` / `~/.dsh`。
 - [subsys.core.session](../core/session.md)：`Session` / `SessionStore`、`session/event` emit、`session/flush` parallel。
 - [subsys.persistence.checkpoint](checkpoint.md)：`llm/stream` 与 top-level `tools/execute` 在 `next()` 之前 `sessions.flush`。

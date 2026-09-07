@@ -44,7 +44,7 @@ related:
   - spine.overview
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `deepseek-official` 是 DSH **host 面**默认对话路由：`@deepseek-ai/dsh-llm-deepseek` 的 `apply` 始终 `registerAdapter(['deepseek-official'], …)`。用户 / 模型看见的默认 `provider` 是这个字符串，**不是** pi-ai catalog 名 `deepseek`。缺 `DEEPSEEK_API_KEY` **不**拒载插件；第一次请求才 `MISSING_CREDENTIAL`。
@@ -66,14 +66,14 @@ DeepSeek Harness 是 **Cordis 组合运行时**（`profile → bundle → agent 
 
 | 名字 | 是什么 |
 |---|---|
-| yml `id: llm-deepseek` | `dsh-base` 的 host 行（`sdk-minimal` 自己也 insert 同 id）[E: packages/bundle/base/cordis.patch.yml:500] |
+| yml `id: llm-deepseek` | `dsh-base` 的 host 行（`sdk-minimal` 自己也 insert 同 id）[E: packages/bundle/base/cordis.patch.yml:498] |
 | 包 `@deepseek-ai/dsh-llm-deepseek` | Cordis 插件，`name = 'llm-deepseek'`，`inject = ['llm']` [E: packages/llm/llm-deepseek/package.json:2] [E: packages/llm/llm-deepseek/src/index.ts:84] [E: packages/llm/llm-deepseek/src/index.ts:85] |
 | settings ns `llm-deepseek` | 用户文档整段 = 一个 profile（directory `settingsPath: []`）[E: packages/llm/llm-deepseek/src/index.ts:87] [E: packages/llm/llm-deepseek/src/index.ts:472] |
 | route 键 `deepseek-official` | `ctx.llm` 私有 `adapters` map 的 provider 字符串；`GenerateOptions.provider` 必须写这个才命中 [E: packages/llm/llm-deepseek/src/index.ts:90] [E: packages/llm/llm-deepseek/src/index.ts:476] |
 
 `DeepSeekAdapter` 是这条路由的实现：`fetch` `POST {baseURL}/chat/completions`，SSE 流。显示名 `DeepSeek`。[E: packages/llm/llm-deepseek/src/adapter.ts:643] [E: packages/llm/llm-deepseek/src/adapter.ts:644] [E: packages/llm/llm-deepseek/src/index.ts:472]
 
-这是 **host 面** 服务，和 `ctx.llm` / `ctx.settings` / `ctx.credentials` 同一层。四个 shipped preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` 就是 PTC）。末条分别是 `str-replace-editor` / `tool-web` / `tool-presentation` / `tool-skill`，**没有** `id: llm-deepseek`，也没有给本包 `isolate:`。换 preset 不换这条官方路由。[E: packages/bundle/base/cordis.patch.yml:500] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:86] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:267]
+这是 **host 面** 服务，和 `ctx.llm` / `ctx.settings` / `ctx.credentials` 同一层。四个 shipped preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` 就是 PTC）。末条分别是 `str-replace-editor` / `tool-web` / `tool-presentation` / `tool-skill`，**没有** `id: llm-deepseek`，也没有给本包 `isolate:`。换 preset 不换这条官方路由。[E: packages/bundle/base/cordis.patch.yml:498] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:86] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262]
 
 **不是** pi-ai catalog 的 `deepseek`。`dsh-base` 始终挂 `@deepseek-ai/dsh-llm-pi-ai`，但 `Config.providers` 缺省 `{}`；`routes.length === 0` 时不 `registerAdapter`，零活 route，直到 Settings 写出 `llm-pi-ai.providers.<id>`。catalog 里的 `deepseek` 在 directory 上 `declared: false`（shipped 名，不是已声明的自定义路由）。[E: packages/bundle/base/cordis.patch.yml:107] [E: packages/llm/llm-pi-ai/src/config.ts:341] [E: packages/llm/llm-pi-ai/src/index.ts:284] [E: packages/llm/llm-pi-ai/tests/catalog.spec.ts:153] 细节见 [surface.providers.pi-ai](../providers/pi-ai.md)。
 
@@ -88,7 +88,7 @@ DeepSeek Harness 是 **Cordis 组合运行时**（`profile → bundle → agent 
 | `$DSH_HOME/settings.yaml` 的 `llm-deepseek:` | 叠在组合 entry 上；hot-reload 后下一请求生效。见 [surface.config.settings](../config/settings.md)。[E: packages/llm/llm-deepseek/src/index.ts:490] |
 | `$DSH_HOME/.credentials.yaml` / 启动环境 | 配置只带引用 `apiKeyEnv`（默认 `DEEPSEEK_API_KEY`），不带字面 key。[E: packages/llm/llm-deepseek/src/index.ts:178] |
 | `DEEPSEEK_BASE_URL` | 缺 `config.baseURL` 时，从启动环境层取；再缺则 `https://api.deepseek.com`。[E: packages/llm/llm-deepseek/src/index.ts:378] [E: packages/llm/llm-deepseek/src/index.ts:200] [E: packages/llm/llm-deepseek/src/index.ts:203] |
-| `GenerateOptions.provider` | 调用方必须写 `'deepseek-official'`。测试 helper 默认就是这个键。[E: packages/llm/llm-deepseek/tests/assemble.ts:20] 写成 `'deepseek'` 在默认树上是 `NO_ADAPTER`（那条 route 要等 pi-ai Settings profile）。[E: packages/llm/llm/src/index.ts:939] |
+| `GenerateOptions.provider` | 调用方必须写 `'deepseek-official'`。测试 helper 默认就是这个键。[E: packages/llm/llm-deepseek/tests/assemble.ts:20] 写成 `'deepseek'` 在默认树上是 `NO_ADAPTER`（那条 route 要等 pi-ai Settings profile）。[E: packages/llm/llm/src/index.ts:940] |
 
 ## 关键字段
 
@@ -114,7 +114,7 @@ catalog **只是广告**。`listModels('deepseek-official')` 给 Models / ACP �
 
 ## 装配与门控
 
-1. **`dsh-base` 无条件 insert。** `id: llm-deepseek` / `name: '@deepseek-ai/dsh-llm-deepseek'`，**没有**内联 `config:`，也没有 `isolate:`。manifest 依赖本包。`dsh-base` 同时 insert `id: llm-pi-ai`（dormant）和 `id: agent-default-model`（默认对准本路由）。[E: packages/bundle/base/cordis.patch.yml:500] [E: packages/bundle/base/cordis.patch.yml:501] [E: packages/bundle/base/package.json:66] [E: packages/bundle/base/cordis.patch.yml:107] [E: packages/bundle/base/cordis.patch.yml:75]
+1. **`dsh-base` 无条件 insert。** `id: llm-deepseek` / `name: '@deepseek-ai/dsh-llm-deepseek'`，**没有**内联 `config:`，也没有 `isolate:`。manifest 依赖本包。`dsh-base` 同时 insert `id: llm-pi-ai`（dormant）和 `id: agent-default-model`（默认对准本路由）。[E: packages/bundle/base/cordis.patch.yml:498] [E: packages/bundle/base/cordis.patch.yml:498] [E: packages/bundle/base/package.json:66] [E: packages/bundle/base/cordis.patch.yml:107] [E: packages/bundle/base/cordis.patch.yml:75]
 
 2. **boot 就注册活 route。** `apply` 先 `options()` 校验连接事实（坏 catalog / `thinking: disabled` 配 `low`/`high`/`max` → **load 抛错、不注册**），再 `registerConfigurableProviders` + **无条件** `registerAdapter([PROVIDER], adapter)`。没有「零 route」分支。[E: packages/llm/llm-deepseek/src/index.ts:428] [E: packages/llm/llm-deepseek/src/index.ts:471] [E: packages/llm/llm-deepseek/src/index.ts:476] [E: packages/llm/llm-deepseek/tests/adapter.spec.ts:1796]
 
@@ -122,7 +122,7 @@ catalog **只是广告**。`listModels('deepseek-official')` 给 Models / ACP �
 
 4. **Settings 是 overlay，不是开关。** `installSection` 把组合 entry 当 `base`。没挂 `ctx.settings` 时 entry 自己就是权威（环境里的 `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL` 仍解析）。改 `baseURL` / `models` / key **不**重注册；只有 `retryPolicy` 变了才 `replace([PROVIDER])`，观察者看不到空窗口。[E: packages/llm/llm-deepseek/src/index.ts:490] [E: packages/llm/llm-deepseek/src/index.ts:486] [E: packages/llm/llm-deepseek/tests/dynamic-config.spec.ts:152] [E: packages/llm/llm-deepseek/tests/dynamic-config.spec.ts:232]
 
-5. **preset 不挂、不 isolate。** 本行是进程级 host 服务。四个 shipped preset 只贡献 tools / persona / isolate；末条分别是 `str-replace-editor` / `tool-web` / `tool-presentation` / `tool-skill`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:86] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:267]
+5. **preset 不挂、不 isolate。** 本行是进程级 host 服务。四个 shipped preset 只贡献 tools / persona / isolate；末条分别是 `str-replace-editor` / `tool-web` / `tool-presentation` / `tool-skill`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:86] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262]
 
 6. **和 pi-ai 并排。** 官方路由始终在；pi-ai 加 `providers.deepseek` 之后 `listProviders` 才会出现 `'deepseek'`。两家 route 键不同，默认可共存。若有人给 pi-ai 写 `providers.deepseek-official`，directory `replace` 被拒，旧 `settingsNs: 'llm-deepseek'` 条目继续服务。[E: packages/llm/llm-pi-ai/tests/dynamic-config.spec.ts:89] [E: packages/llm/llm-pi-ai/tests/catalog.spec.ts:1156] [E: packages/llm/llm-pi-ai/tests/catalog.spec.ts:1168]
 

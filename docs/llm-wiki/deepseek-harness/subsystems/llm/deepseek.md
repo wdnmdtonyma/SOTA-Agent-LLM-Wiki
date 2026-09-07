@@ -52,7 +52,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-llm-deepseek` 是 **host 面** 的 DeepSeek chat-completions Provider：`apply` 始终 `registerAdapter(['deepseek-official'], adapter)`。这是 shipped 默认对话路由，不是 pi-ai catalog 里的 `deepseek`，也不是 `ctx.llm` 本身。
@@ -73,7 +73,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 本包 `@deepseek-ai/dsh-llm-deepseek` 拥有： [E: packages/llm/llm-deepseek/package.json:2]
 
 - Cordis plugin 名 `llm-deepseek`，`inject = ['llm']`。 [E: packages/llm/llm-deepseek/src/index.ts:84] [E: packages/llm/llm-deepseek/src/index.ts:85]
-- 唯一 provider 字符串 `deepseek-official`。`apply` 把它写进 `LlmRuntime` 私有 `adapters` map；没有 `ctx.llm.route`。 [E: packages/llm/llm-deepseek/src/index.ts:90] [E: packages/llm/llm-deepseek/src/index.ts:476] [E: packages/llm/llm/src/index.ts:327]
+- 唯一 provider 字符串 `deepseek-official`。`apply` 把它写进 `LlmRuntime` 私有 `adapters` map；没有 `ctx.llm.route`。 [E: packages/llm/llm-deepseek/src/index.ts:90] [E: packages/llm/llm-deepseek/src/index.ts:476] [E: packages/llm/llm/src/index.ts:330]
 - `DeepSeekAdapter`：`fetch` + SSE 的 chat-completions 实现。 [E: packages/llm/llm-deepseek/src/adapter.ts:353]
 - 连接事实解析 `resolveAdapterOptions`（endpoint / catalog / thinking 默认 / 已 resolve 的 `retryPolicy`）。配置只带 credential **引用** `apiKeyEnv`，不带字面 key。 [E: packages/llm/llm-deepseek/src/index.ts:294] [E: packages/llm/llm-deepseek/src/adapter.ts:83]
 - settings 命名空间 `llm-deepseek`：整段 = 一个 profile（directory 的 `settingsPath: []`）。 [E: packages/llm/llm-deepseek/src/index.ts:87] [E: packages/llm/llm-deepseek/src/index.ts:472]
@@ -90,7 +90,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 - session `request/header`、`deriveMessages()`、turn/step — [spine.turn-and-step](../../spine/turn-and-step.md)。
 - Models 页字段表与用户可见文案 — [surface.providers.deepseek](../../surface/providers/deepseek.md)（T1，planned）。
 
-preset **不**挂本包。四个 shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` 即 PTC）。各自 `agent.cordis.yml` 末条分别是 `str-replace-editor` / `tool-web` / `tool-presentation` / `tool-skill`，没有 `id: llm-deepseek`。`dsh-base` 无条件 insert `id: llm-deepseek`；`sdk-minimal` 作为不叠 base 的完整 insert 也自挂本包。 [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:267] [E: packages/bundle/base/cordis.patch.yml:500] [E: packages/bundle/base/package.json:66] [E: packages/bundle/sdk-minimal/cordis.patch.yml:26]
+preset **不**挂本包。四个 shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` 即 PTC）。各自 `agent.cordis.yml` 末条分别是 `str-replace-editor` / `tool-web` / `tool-presentation` / `tool-skill`，没有 `id: llm-deepseek`。`dsh-base` 无条件 insert `id: llm-deepseek`；`sdk-minimal` 作为不叠 base 的完整 insert 也自挂本包。 [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262] [E: packages/bundle/base/cordis.patch.yml:498] [E: packages/bundle/base/package.json:66] [E: packages/bundle/sdk-minimal/cordis.patch.yml:26]
 
 ## 关键文件
 
@@ -147,7 +147,7 @@ flowchart TD
   Fetch --> SSE["parseSse then translate"]
 ```
 
-1. `dsh-base` 在 host 根 insert `id: llm-deepseek`，`name: '@deepseek-ai/dsh-llm-deepseek'`，**没有** `config:` 块，也没有 `isolate:`。同一次 insert 里 `id: agent-default-model` 写 `provider: deepseek-official`、`model: deepseek-v4-flash`。`dsh-web-app` 末条是 `id: agent-presets`，`dsh-headless` overlay 末条是 `id: headless-runner`，四个 shipped preset 末条是 tool 行，都**不**再挂本包。`sdk-minimal` 自己 insert 本包（可带 `apiKeyEnv` 等 config）。 [E: packages/bundle/base/cordis.patch.yml:75] [E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:500] [E: packages/bundle/web-app/cordis.patch.yml:442] [E: packages/bundle/headless/cordis.patch.yml:26] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253]
+1. `dsh-base` 在 host 根 insert `id: llm-deepseek`，`name: '@deepseek-ai/dsh-llm-deepseek'`，**没有** `config:` 块，也没有 `isolate:`。同一次 insert 里 `id: agent-default-model` 写 `provider: deepseek-official`、`model: deepseek-v4-flash`。`dsh-web-app` 末条是 `id: agent-presets`，`dsh-headless` overlay 末条是 `id: headless-runner`，四个 shipped preset 末条是 tool 行，都**不**再挂本包。`sdk-minimal` 自己 insert 本包（可带 `apiKeyEnv` 等 config）。 [E: packages/bundle/base/cordis.patch.yml:75] [E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:498] [E: packages/bundle/web-app/cordis.patch.yml:442] [E: packages/bundle/headless/cordis.patch.yml:26] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]
 
 2. Loader 调 `apply@packages/llm/llm-deepseek/src/index.ts`。构造时立刻 `options()` 一次：`resolveAdapterOptions` 校验 catalog / thinking / bounds，失败则 **load 抛错、不注册**。这一步只解析连接事实，不读 API key。 [E: packages/llm/llm-deepseek/src/index.ts:428] [E: packages/llm/llm-deepseek/src/index.ts:413] [E: packages/llm/llm-deepseek/src/index.ts:295]
 
@@ -161,7 +161,7 @@ flowchart TD
 
 7. **waterfall 必须 `next()`。** `LlmRuntime.streamWithRegistration` 把 innermost 设成 `adapterStream`。`Events.waterfall@vendor/cordis/src/events.ts` 把最后一个参数当 innermost `next`：listener 不调用传入的 `next()` 就不会 `cbs.shift()`，内层和 `adapterStream` 全部停住，`DeepSeekAdapter.stream` 一次都不会跑。本包 **不** 自己挂 `llm/stream`。 [E: packages/llm/llm/src/index.ts:1059] [E: packages/llm/llm/src/index.ts:1063] [E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238]
 
-8. `adapterStream@packages/llm/llm/src/index.ts` 用 `options.provider` 查私有 `adapters` map（缺键 → `NO_ADAPTER`）。未 `prepareCall` 的裸 `stream` 会先走 registration 解析；loop 路径则用 `prepareCall` 冻住的那份（含 `defaultMaxTokens` / 默认 `reasoningEffort`）。 [E: packages/llm/llm/src/index.ts:938] [E: packages/llm/llm/src/index.ts:939] [E: packages/llm/llm/src/index.ts:850]
+8. `adapterStream@packages/llm/llm/src/index.ts` 用 `options.provider` 查私有 `adapters` map（缺键 → `NO_ADAPTER`）。未 `prepareCall` 的裸 `stream` 会先走 registration 解析；loop 路径则用 `prepareCall` 冻住的那份（含 `defaultMaxTokens` / 默认 `reasoningEffort`）。 [E: packages/llm/llm/src/index.ts:937] [E: packages/llm/llm/src/index.ts:940] [E: packages/llm/llm/src/index.ts:850]
 
 9. `DeepSeekAdapter.stream@packages/llm/llm-deepseek/src/adapter.ts` **每个 stream 调用解析一次**：`options()` 出连接快照（`streamWithConnection` 吃这次 snapshot），再 `resolveApiKey(connection)` 解同一代的 bearer。进行中的流不再读 settings。有 `ctx.credentials` 就 `credentials.resolve(apiKeyEnv)`；否则读启动环境里同名变量。两边都空 → `LlmError` `MISSING_CREDENTIAL`，**不是** load 失败。 [E: packages/llm/llm-deepseek/src/adapter.ts:440] [E: packages/llm/llm-deepseek/src/adapter.ts:471] [E: packages/llm/llm-deepseek/src/index.ts:446] [E: packages/llm/llm-deepseek/tests/adapter.spec.ts:2133] [E: packages/llm/llm-deepseek/tests/adapter.spec.ts:2143]
 

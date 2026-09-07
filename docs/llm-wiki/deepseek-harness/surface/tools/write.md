@@ -33,7 +33,7 @@ symbols: [applyWriteTool, parseWriteArgs, formatWriteOutput]
 related: [spine.tool-call-anatomy, ref.tools-catalog]
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `write` 是 `@deepseek-ai/dsh-tool-fs` 注册的 model-visible 整文件写入工具：一次调用按 `file_path` + `content` 做 UTF-8 **create-or-overwrite**，经 `ctx.fs.writeText` 与单槽 `fs/write-intent` 落地；DSH 没有 first-class `apply_patch`。
@@ -51,7 +51,7 @@ updated: 0a53fb55be
 
 模型看见的工具名是 **`write`**，写在 `defineTool({ name: 'write' })`。[E: packages/fs/tool-fs/src/write.ts:69] Cordis 插件名是 **`tool-fs`**，实现包是 **`@deepseek-ai/dsh-tool-fs`**。[E: packages/fs/tool-fs/src/index.ts:19][E: packages/fs/tool-fs/package.json:2]
 
-`export const inject = ['tools', 'fs', 'systemPrompt']`：没有挂上 `ctx.fs` 时插件保持 pending，catalog 里不会出现 `write`。[E: packages/fs/tool-fs/src/index.ts:22][E: packages/fs/tool-fs/tests/tools.spec.ts:179] `read_image` 另走 `ctx.inject(['attachments'])`，与 `write` 无关；`apply()` 在 attachments 条件块之后无条件调用 `applyWriteTool(ctx, sandbox)`。[E: packages/fs/tool-fs/src/index.ts:77]
+`export const inject = ['tools', 'fs', 'systemPrompt']`：没有挂上 `ctx.fs` 时插件保持 pending，catalog 里不会出现 `write`。[E: packages/fs/tool-fs/src/index.ts:22][E: packages/fs/tool-fs/tests/tools.spec.ts:180] `read_image` 另走 `ctx.inject(['attachments'])`，与 `write` 无关；`apply()` 在 attachments 条件块之后无条件调用 `applyWriteTool(ctx, sandbox)`。[E: packages/fs/tool-fs/src/index.ts:77]
 
 工厂是 `applyWriteTool`：先挂 system-prompt section `tool:write`（order 来自 `getSectionOrder('TOOL_WRITE')`），再 `ctx.tools.register(defineTool({...}))`。[E: packages/fs/tool-fs/src/write.ts:63][E: packages/fs/tool-fs/src/write.ts:64][E: packages/fs/tool-fs/src/write.ts:68] 同一 `apply()` 还构造 **一份** `FsSandboxController`，供 `write` 与 `edit` 共用 escalation 广告 / 决议 / denial 映射。[E: packages/fs/tool-fs/src/index.ts:76]
 
@@ -76,7 +76,7 @@ updated: 0a53fb55be
 | `sandbox_permissions` | `string` | 否 | 不广告则字段不存在 | 仅 confining `ctx.fs` 时进入 schema；`enum` = `ESCALATION_TARGETS`（`workspace-write`、`danger-full-access`） | 一次性加宽 sandbox 的目标 mode。必须与 `justification` 成对；execute 时还要 **严格宽于** 当前有效 mode。[E: packages/fs/tool-fs/src/sandbox.ts:63][E: packages/sandbox/sandbox/src/escalation.ts:41] |
 | `justification` | `string` | 否 | 不广告则字段不存在 | 与 `sandbox_permissions` 成对；trim 后非空 | 给用户看的一句理由，进入 `ctx.approval.request` 的 `reason`。[E: packages/fs/tool-fs/src/sandbox.ts:67] |
 
-非 confining backend（基类 `FileSystem.sandboxMode` 默认 `undefined`；`dsh-fs-local` 源码里没有覆盖该 getter [I]）时，schema **没有** 这两字段。[E: packages/fs/fs/src/index.ts:103][E: packages/fs/tool-fs/tests/tools.spec.ts:838] confining 时测试钉死 `sandbox_permissions.enum === ['workspace-write', 'danger-full-access']`。[E: packages/fs/tool-fs/tests/tools.spec.ts:847]
+非 confining backend（基类 `FileSystem.sandboxMode` 默认 `undefined`；`dsh-fs-local` 源码里没有覆盖该 getter [I]）时，schema **没有** 这两字段。[E: packages/fs/fs/src/index.ts:103][E: packages/fs/tool-fs/tests/tools.spec.ts:838] confining 时测试钉死 `sandbox_permissions.enum === ['workspace-write', 'danger-full-access']`。[E: packages/fs/tool-fs/tests/tools.spec.ts:846]
 
 未广告字段若仍被塞进 arguments（例如测试直接 `execute`），`resolvePolicy` 在 `escalationModes.length === 0` 时抛 `sandbox_permissions is not available in this composition`。[E: packages/fs/tool-fs/src/sandbox.ts:94] 只给其中一个 escalation 字段会在 `validateEscalationArgs` 失败。[E: packages/sandbox/sandbox/src/escalation.ts:52]
 
@@ -90,7 +90,7 @@ updated: 0a53fb55be
 
 provider 侧 `before` 可能为 `null`：create、或旧文件 / 新 `content` 触及 `diffBasisMaxBytes`（local backend 的展示上限，不是模型输出 cap）。[E: packages/fs/fs-local/src/index.ts:200][E: packages/fs/fs/src/types.ts:141]
 
-失败走 `isError`。`FS_STALE_VERSION` / `FS_NOT_OBSERVED` 在模型边界被 `remediateFsError` 追加 `— re-read the file, then retry` / `— read the file, then retry`，**保留** 原 `FsError` code。[E: packages/fs/tool-fs/src/error.ts:15][E: packages/fs/tool-fs/src/error.ts:33] `FS_SANDBOX_DENIED` 先被 `FsSandboxController.mapError` 换成共享 `[sandbox: file access denied under <mode> mode]` + `escalationHintMarker('operation')`。[E: packages/fs/tool-fs/src/sandbox.ts:129][E: packages/sandbox/sandbox/src/escalation.ts:72]
+失败走 `isError`。`FS_STALE_VERSION` / `FS_NOT_OBSERVED` 在模型边界被 `remediateFsError` 追加 `— re-read the file, then retry` / `— read the file, then retry`，**保留** 原 `FsError` code。[E: packages/fs/tool-fs/src/error.ts:21][E: packages/fs/tool-fs/src/error.ts:33] `FS_SANDBOX_DENIED` 先被 `FsSandboxController.mapError` 换成共享 `[sandbox: file access denied under <mode> mode]` + `escalationHintMarker('operation')`。[E: packages/fs/tool-fs/src/sandbox.ts:129][E: packages/sandbox/sandbox/src/escalation.ts:72]
 
 ## 背后的 seam
 
@@ -154,7 +154,7 @@ escalation 还消费 `ctx.sandboxPolicy`（confining 时构造 `FsSandboxControl
 
 5. **`ctx.fs.writeText(target, content, intent, exec.signal, sandboxPolicy)`** — 仍不 stat。local provider 在锁内：`replaceIfVersion` 缺失或 version 不符 → `FS_STALE_VERSION`；`createIfAbsent` 且目标已存在 → `FS_NOT_OBSERVED`（`cannot overwrite existing "…" without reading it first`）；无 intent 则原子覆盖。[E: packages/fs/tool-fs/src/write.ts:113][E: packages/fs/fs-local/src/index.ts:182][E: packages/fs/fs-local/src/index.ts:190] sandbox provider 在委托前先 `checkedTarget`。[E: packages/fs/fs-sandbox/src/index.ts:87]
 
-6. **catch** — `throw remediateFsError(sandbox.mapError(error, sandboxPolicy))`。sandbox denial 先改成共享 marker + operation 升级 hint；再给 stale / not-observed 追加 remedy。[E: packages/fs/tool-fs/src/write.ts:118][E: packages/fs/tool-fs/tests/tools.spec.ts:419][E: packages/fs/tool-fs/tests/tools.spec.ts:865]
+6. **catch** — `throw remediateFsError(sandbox.mapError(error, sandboxPolicy))`。sandbox denial 先改成共享 marker + operation 升级 hint；再给 stale / not-observed 追加 remedy。[E: packages/fs/tool-fs/src/write.ts:118][E: packages/fs/tool-fs/tests/tools.spec.ts:419][E: packages/fs/tool-fs/tests/tools.spec.ts:866]
 
 7. **`ctx.emit('fs/observed', target, { kind: 'present', version: outcome.version }, exec)`** — 成功后记下新 version。policy 用它授权同 session 的下一次 `edit`/`write`，不必再 `read`。emit 不 await；抛错的 listener **回滚不了** 已经提交的写，只会把这次 tool result 变成 `isError`。[E: packages/fs/tool-fs/src/write.ts:120][E: packages/fs/fs-observation-policy/src/index.ts:127]
 

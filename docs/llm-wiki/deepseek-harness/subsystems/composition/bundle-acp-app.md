@@ -8,7 +8,6 @@ source:
   - packages/bundle/acp-app/cordis.patch.yml
   - packages/bundle/acp-app/package.json
   - packages/bundle/acp-app/src/index.ts
-  - packages/bundle/acp-app/src/invariant.ts
   - packages/bundle/acp-app/tests/acp-app.spec.ts
   - packages/bundle/acp-app/tests/startup.spec.ts
   - packages/boot/app-boot/src/profile.ts
@@ -26,7 +25,6 @@ symbols:
   - dsh-acp-app
   - acp-app-startup
   - ACP_APP_STARTUP_SERVICE
-  - acp-app-invariant
 related:
   - spine.composition-boot
   - subsys.composition.app-boot
@@ -43,7 +41,7 @@ related:
   - subsys.core.tools
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-acp-app` 是叠在 `dsh-base` 上的 **ACP automation overlay**：覆盖 host `system-prompt.persona`、把 `session-title-llm` `disabled: true`，再 `insert` `acp-app-startup` + `acp`。stdout 属于 ACP JSON-RPC。成功 parse 才 `provide('acpAppStartup')`；`--help` 不 provide，桥行 pending，不占 stdio。五个 shipped profile 里只有 `acp` 用这份 bundle。
@@ -61,7 +59,7 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。
 
 ## 职责边界
 
-本包 `@deepseek-ai/dsh-acp-app` 拥有：**mode overlay** `cordis.patch.yml`、cmdline Provider 插件 `acp-app-startup`（`ACP_APP_STARTUP_SERVICE = 'acpAppStartup'`）、companion `acp-app-invariant`。manifest 把 bundle patch 钉在 `./cordis.patch.yml`，并依赖 `@deepseek-ai/dsh-acp`。[E: packages/bundle/acp-app/package.json:2] [E: packages/bundle/acp-app/package.json:38] [E: packages/bundle/acp-app/package.json:42] [E: packages/bundle/acp-app/src/index.ts:13] [E: packages/bundle/acp-app/src/index.ts:19]
+本包 `@deepseek-ai/dsh-acp-app` 拥有：**mode overlay** `cordis.patch.yml`、cmdline Provider 插件 `acp-app-startup`（`ACP_APP_STARTUP_SERVICE = 'acpAppStartup'`）。manifest 把 bundle patch 钉在 `./cordis.patch.yml`，并依赖 `@deepseek-ai/dsh-acp`。[E: packages/bundle/acp-app/package.json:2] [E: packages/bundle/acp-app/package.json:33] [E: packages/bundle/acp-app/package.json:37] [E: packages/bundle/acp-app/src/index.ts:13] [E: packages/bundle/acp-app/src/index.ts:19]
 
 明确**不**拥有：
 
@@ -79,10 +77,9 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。
 
 | 路径 | 角色 |
 |---|---|
-| `packages/bundle/acp-app/package.json` | 包名 `@deepseek-ai/dsh-acp-app`；`dsh.bundle.patch = ./cordis.patch.yml`；exports `.` / `./invariant` / `./cordis.patch.yml`。 |
+| `packages/bundle/acp-app/package.json` | 包名 `@deepseek-ai/dsh-acp-app`；`dsh.bundle.patch = ./cordis.patch.yml`。 |
 | `packages/bundle/acp-app/cordis.patch.yml` | 叠在 base 之后：persona、disable `session-title-llm`、insert startup + `acp`。**不**改 `hmr`。 |
 | `packages/bundle/acp-app/src/index.ts` | Provider：`inject: ['cmdlineArgs']`，零 option commander，`exitOnStdinEnd` + `provide('acpAppStartup')`。 |
-| `packages/bundle/acp-app/src/invariant.ts` | companion `acp-app-invariant`：空 installer。 |
 | `packages/bundle/acp-app/tests/startup.spec.ts` | 空 argv 才 provide；`--help` 打印 `dsh --profile acp`、不 provide、stdin end 不再二次 exit。 |
 | `packages/bundle/acp-app/tests/acp-app.spec.ts` | patch 契约：无 `hmr` overlay、title-llm disabled、`acp` inject + 默认模型。 |
 
@@ -126,7 +123,7 @@ flowchart TD
 
 4. 对照 `dsh-web-app`：web 把 base 上模型可见行 `disabled: true`，再 `insert` `agent-presets` `default: standard`。acp 不做这两刀，工具留在 **host 全局层**。[E: packages/bundle/web-app/cordis.patch.yml:432] [E: packages/bundle/web-app/cordis.patch.yml:445] 五个 shipped profile 里只有 `web` 挂 roster。对照 `dsh-sdk-app`：同样 disable `session-title-llm`、同样 startup latch；协议行是 `sdk-jsonrpc-server` 而不是 `acp`。[E: packages/bundle/sdk-app/cordis.patch.yml:8] [E: packages/bundle/sdk-app/cordis.patch.yml:17] 对照 `dsh-headless`：headless insert `code-runtime` / startup / runner，一次性 argv task，不是长寿命 stdio 桥。[E: packages/bundle/headless/cordis.patch.yml:19]
 
-5. `runProfile` 在任何 config-tree 行 mount 之前 `provideCmdline`：冻 `ctx.cmdlineArgs`，并把 shutdown 做成 `ctx.appExit`，同时提供 `appReady`。[E: apps/cli/src/profile-boot.ts:258] [E: packages/boot/cmdline/src/index.ts:86] [E: packages/boot/cmdline/src/index.ts:87] [E: packages/boot/cmdline/src/index.ts:88] `acp` 的 `patchReload === 'startup'`，不进 live watcher 分支。[E: apps/cli/src/profile-boot.ts:270]
+5. `runProfile` 在任何 config-tree 行 mount 之前 `provideCmdline`：冻 `ctx.cmdlineArgs`，并把 shutdown 做成 `ctx.appExit`，同时提供 `appReady`。[E: apps/cli/src/profile-boot.ts:258] [E: packages/boot/cmdline/src/index.ts:86] [E: packages/boot/cmdline/src/index.ts:87] [E: packages/boot/cmdline/src/index.ts:88] `acp` 的 `patchReload === 'startup'`，不进 live watcher 分支。[E: apps/cli/src/profile-boot.ts:271]
 
 6. `acp-app-startup.apply@packages/bundle/acp-app/src/index.ts` 建 commander，程序名 `dsh --profile acp`，只登记 `-h/--help`，没有位置参数。action 里先 `exitOnStdinEnd(ctx, 'acp-app.stdin')`，再 `ctx.provide(ACP_APP_STARTUP_SERVICE, { accepted: true })`，然后 `parseCmdline`。[E: packages/bundle/acp-app/src/index.ts:27] [E: packages/bundle/acp-app/src/index.ts:43] [E: packages/bundle/acp-app/src/index.ts:44] [E: packages/bundle/acp-app/src/index.ts:45] [E: packages/bundle/acp-app/src/index.ts:47]
 
@@ -134,7 +131,7 @@ flowchart TD
 
 8. `exitOnStdinEnd` 要求 launcher 已提供 `appExit` **和** `appReady`。EOF 后在 `onReady` 里 `exit(0)`，避免 boot 失败时把 EOF 当成成功退出。listener **不**读 stdin 字节：传输归 `dsh-acp`。[E: packages/boot/cmdline/src/index.ts:123] [E: packages/boot/cmdline/src/index.ts:127] [E: packages/boot/cmdline/src/index.ts:136]
 
-9. Loader 满足 `inject: [acpAppStartup]` 后才 mount `@deepseek-ai/dsh-acp`。该包 `inject = ['agents', 'llm', 'sessionPersistence', 'sessions']`（**不含** `acpAppStartup`：门在 yml 行上）。`apply` 用 `ndJsonStream(process.stdout, process.stdin)` 占 stdio。[E: packages/acp/acp/src/index.ts:62] [E: packages/acp/acp/src/index.ts:97] [E: packages/acp/acp/src/index.ts:373]
+9. Loader 满足 `inject: [acpAppStartup]` 后才 mount `@deepseek-ai/dsh-acp`。该包 `inject = ['agents', 'llm', 'sessionPersistence', 'sessions']`（**不含** `acpAppStartup`：门在 yml 行上）。`apply` 用 `ndJsonStream(process.stdout, process.stdin)` 占 stdio。[E: packages/acp/acp/src/index.ts:62] [E: packages/acp/acp/src/index.ts:97] [E: packages/acp/acp/src/index.ts:374]
 
 10. overlay 上 `acp.config` 的默认模型与 base `agent-default-model` 同字面量 `deepseek-official` / `deepseek-v4-flash`，但是 **ACP 创建 Agent 时读的是桥 Config**，不是 Settings 热路径上那一行的权威替换。[E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:79] [E: packages/acp/acp/src/index.ts:454]
 
@@ -177,7 +174,6 @@ flowchart TD
 - packages/bundle/acp-app/cordis.patch.yml
 - packages/bundle/acp-app/package.json
 - packages/bundle/acp-app/src/index.ts
-- packages/bundle/acp-app/src/invariant.ts
 - packages/bundle/acp-app/tests/acp-app.spec.ts
 - packages/bundle/acp-app/tests/startup.spec.ts
 - packages/boot/app-boot/src/profile.ts

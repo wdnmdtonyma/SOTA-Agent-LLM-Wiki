@@ -52,7 +52,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > wire 名 `glob` 由 `@deepseek-ai/dsh-tool-fs-search` 注册：用打包的 `@vscode/ripgrep` 经 `ctx.subprocess` 做 `rg --files` 路径发现，**不**走 `ctx.fs`、**不**走 `ctx.shell`、**不**调用宿主 `rg`。
@@ -137,7 +137,7 @@ UI：`presentGlobCall` 给 pending 卡 `card: 'generic', kind: 'search'`，标�
 
 `resolveRgPath` 惰性 `import('@vscode/ripgrep')` 取 `rgPath`，按进程 memoize。缺平台包时失败落在**第一次** search 调用，分类为 `SEARCH_FAILED`，不会在 Loader 组合期炸掉。 [E: packages/fs/tool-fs-search/src/search-core.ts:171] [E: packages/fs/tool-fs-search/src/search-core.ts:178] [E: packages/fs/tool-fs-search/tests/rg-path.spec.ts:30] 依赖声明在 `@vscode/ripgrep`. [E: packages/fs/tool-fs-search/package.json:35]
 
-换 subprocess provider 会带走 spawn 的执行世界。环境 scrub（credential 形名字和 `DSH_*`）落在 seam 导出的 `scrubbedParentEnv`。 [E: packages/subprocess/subprocess/src/index.ts:60] cwd / SIGTERM→grace→SIGKILL / collect 由各 provider 兑现 `SubprocessSpawnSpec` 与 `SubprocessRuntime` 合同，不在 `scrubbedParentEnv` 里。 [I] `glob` **不**读 `ctx.fs`、**不**读 `ctx.shell`、**不** `ctx.shell.start()`、**不**建 background job。每调用一个 foreground spawn，返回前 `handle.done` 已 settle。 [E: packages/fs/tool-fs-search/tests/tools.spec.ts:1102]
+换 subprocess provider 会带走 spawn 的执行世界。环境 scrub（credential 形名字和 `DSH_*`）落在 seam 导出的 `scrubbedParentEnv`。 [E: packages/subprocess/subprocess/src/index.ts:64] cwd / SIGTERM→grace→SIGKILL / collect 由各 provider 兑现 `SubprocessSpawnSpec` 与 `SubprocessRuntime` 合同，不在 `scrubbedParentEnv` 里。 [I] `glob` **不**读 `ctx.fs`、**不**读 `ctx.shell`、**不** `ctx.shell.start()`、**不**建 background job。每调用一个 foreground spawn，返回前 `handle.done` 已 settle。 [E: packages/fs/tool-fs-search/tests/tools.spec.ts:1102]
 
 `ctx.spillStore` 用 `ctx.get('spillStore')` 机会读取，**不**在 `inject` 里。 [E: packages/fs/tool-fs-search/src/search-core.ts:389] spawn 是 unconfined 的 plain `ctx.subprocess` 调用，所以 argv 预置 `--no-config`，防止宿主 `RIPGREP_CONFIG_PATH` / 旁路 `rg.conf` 注入 `--pre`。 [E: packages/fs/tool-fs-search/src/search-core.ts:235]
 

@@ -41,7 +41,7 @@ related:
   - subsys.persistence.title
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-webhook` 在 Host 上提供 `ctx.webhookRuntime`：可信规则 `register` / 已认证 delivery `dispatch`，唯一内建动作是在 Web Workspace 里创建普通根 Session。GitHub 是 shipped provider：`@deepseek-ai/dsh-webhook-github` 在 `ctx.webServer` 上挂精确 POST 路由，验签后 `dispatch` 并立刻 `202`。两个包都不进六个 shipped bundle 的 patch；`apps/cli` 的 dependency 只给 overlay 解析。
@@ -132,7 +132,7 @@ Fire-and-forget：HTTP 成功只表示「已认证并已入内存队列」。规
 - 同一 `kind` 的多条规则会**全部**启动；匹配只比 `kind` 字符串，不比 `source`。过滤 `source` / repo / event name 是规则自己的事。
 - `run` 抛错只 warn；HTTP 已经 `202`。
 - GitHub `source` 是 adapter 实例名（example 用 `primary-github`），不是 GitHub org。
-- invariant companion：`agent/inbox/spliced` 里 webhook 消息要求 Session 恰好属于一个 Workspace 且 path == `header.cwd`。[E: packages/webhook/webhook/src/invariant.ts:30] GitHub invariant 是空 installer。[E: packages/webhook/webhook-github/src/invariant.ts:17]
+- invariant companion：`agent/inbox/spliced` 里 webhook 消息要求 Session 恰好属于一个 Workspace 且 path == `header.cwd`。[E: packages/webhook/webhook/src/invariant.ts:30]
 
 ## Sources
 

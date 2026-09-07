@@ -55,7 +55,7 @@ related:
   - subsys.composition.agent-presets
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `cordis_*` 是 `@deepseek-ai/dsh-tool-cordis` 向模型登记的七个自修改工具：`cordis_inspect_list` / `cordis_inspect_query` / `cordis_inspect_self` 只读运行时与本会话动态 Plugin；`cordis_define` 把不可变 Package 写入进程内 registry；`cordis_run` 才对 Host 半求值并可选地等 Client 审批；`cordis_stop` 停当前 Run 但保留定义；`cordis_undefine` 永久删除。四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）里只有 `cordis` 装这组名字。没有 `cordis_mount` / `cordis_unmount`。
@@ -122,7 +122,7 @@ shipped `cordis` yml 的 `tool-cordis` 行没有 `config:`，因此产品默认�
 | `platform` | `string` | 是 | 无 | enum `host` / `client` | Provider 所在平面。[E: packages/extensions/tool-cordis/src/index.ts:76] |
 | `provider` | `string` | 是 | 无 | 必须来自 list 的 id | 例如 Host 侧 `Service` / `Event` / `Builtin` / `Tool`。[E: packages/extensions/tool-cordis/src/index.ts:77] |
 | `method` | `string` | 是 | 无 | 必须是该 Provider 声明的方法名 | Host 侧分别是 `listService` / `listEvents` / `listBuiltins` / `listTools`。[E: packages/extensions/tool-cordis/src/index.ts:78][E: packages/extensions/tool-cordis/src/providers.ts:31] |
-| `input` | `json` | 否 | 省略 | 必须满足该方法 input schema | schema 只声明可选 `json`。[E: packages/extensions/tool-cordis/src/index.ts:79] `Service.listService` 无 key 时 `queryServiceApi` 返回 `mode: 'catalog'` 紧凑目录。[E: packages/extensions/tool-cordis/src/api-catalog.ts:6224] 工具 description 也写了无 input 先逛目录。[E: packages/extensions/tool-cordis/src/index.ts:71] |
+| `input` | `json` | 否 | 省略 | 必须满足该方法 input schema | schema 只声明可选 `json`。[E: packages/extensions/tool-cordis/src/index.ts:79] `Service.listService` 无 key 时 `queryServiceApi` 返回 `mode: 'catalog'` 紧凑目录。[E: packages/extensions/tool-cordis/src/api-catalog.ts:6225] 工具 description 也写了无 input 先逛目录。[E: packages/extensions/tool-cordis/src/index.ts:71] |
 
 ### `cordis_inspect_self`
 
@@ -192,7 +192,7 @@ registry 对成功值做 `output.schema` 校验，再调 `render`（以及可选
 | Provider | host 面 `@deepseek-ai/dsh-cordis-host-runner`：`DynamicCordisRunnerService` 以服务名 `dynamicCordisRunner` 发布，构造时再 `new CordisInspectRegistryService(ctx)` 发布 `cordisInspect`。`static inject = ['tools']`。`Config.vmTimeoutMs` 默认 `5000`。[E: packages/extensions/cordis-host-runner/package.json:2][E: packages/extensions/cordis-host-runner/src/index.ts:140][E: packages/extensions/cordis-host-runner/src/inspect-registry.ts:53][E: packages/extensions/cordis-host-runner/src/index.ts:125][E: packages/extensions/cordis-host-runner/src/index.ts:128] |
 | Consumer | 七个 `cordis_*` 工具。`tool-cordis` 自己不 `provide`，所以不必进 preset `isolate` realm。 |
 
-shipped 组合里，只有 `dsh-web-app` 在 host 面 insert `id: cordis-host-runner`。[E: packages/bundle/web-app/cordis.patch.yml:98][E: packages/bundle/web-app/cordis.patch.yml:99] `dsh-base` 与 `dsh-headless` 的 patch **没有**这一行；缺 Provider 时 `tool-cordis` 的 `inject` 不会满足，七个名字进不了 catalog。web profile 才叠 `dsh-web-app`；`headless` / `sdk` / `sdk-minimal` / `acp` 默认不带这条 host 行。
+shipped 组合里，只有 `dsh-web-app` 在 host 面 insert `id: cordis-host-runner`。[E: packages/bundle/web-app/cordis.patch.yml:99][E: packages/bundle/web-app/cordis.patch.yml:99] `dsh-base` 与 `dsh-headless` 的 patch **没有**这一行；缺 Provider 时 `tool-cordis` 的 `inject` 不会满足，七个名字进不了 catalog。web profile 才叠 `dsh-web-app`；`headless` / `sdk` / `sdk-minimal` / `acp` 默认不带这条 host 行。
 
 换 / 卸掉 `dynamicCordisRunner` 会带走：进程内 Plugin/Package 身份铸造、session 所有权、`define`/`run`/`stop`/`undefine`、Host 半 `node:vm` 求值、Client 审批请求、`@pluginId` 解析。换 / 卸掉 `cordisInspect` 会带走：Host+Client Provider 目录、`query` 路由、Client 查询的 pending 表。不会带走：`ctx.tools` 注册表本身、approval/sandbox 的文件/shell 政策、四个 shipped preset 里其它 native 工具。
 
@@ -213,7 +213,7 @@ shipped 组合里，只有 `dsh-web-app` 在 host 面 insert `id: cordis-host-ru
   - `timeout-policy` 读 `definition.timeoutMs`；七个工具都未声明，包装器直接 `next()`。Host 半同步求值另有 runner `vmTimeoutMs`（默认 5000），作为 `runInContext` 的 `timeout`，不是 tool-call deadline。async body 能逃出该同步超时 [I]（`node:vm` 只约束同步段）。[E: packages/guard/timeout-policy/src/index.ts:59][E: packages/guard/timeout-policy/src/index.ts:59][E: packages/extensions/cordis-host-runner/src/sandbox.ts:259]
 - **`tools/post-execute`**：不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1736]
 - **sandbox**：不挂 `ctx.sandbox` / `sandbox_permissions`。文件副作用沙箱只罩 fs/shell 类工具。Host 半的 `node:vm` 是合作式隔离，不是 containment。
-- **PTC**：shipped `ptc` preset **不装** `tool-cordis`，模型在 PTC 会话里既没有这七个 native 名，`run_code` SDK 里也不会出现它们。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:264]
+- **PTC**：shipped `ptc` preset **不装** `tool-cordis`，模型在 PTC 会话里既没有这七个 native 名，`run_code` SDK 里也不会出现它们。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265]
 
 ## Preset 装配
 
@@ -222,8 +222,8 @@ shipped 组合里，只有 `dsh-web-app` 在 host 面 insert `id: cordis-host-ru
 | preset | 装 `@deepseek-ai/dsh-tool-cordis`？ | `disabled` | isolate | shipped Config |
 |---|---|---|---|---|
 | `minimal` | **否** | — | — | 文件无 `id: tool-cordis`。成员停在 `filesystem` 组的 `str-replace-editor`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] |
-| `standard` | **否** | — | — | 成员停在 `tool-web`。mount `standard` 后 catalog **不含** `cordis_define`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253][E: apps/cli/tests/web-agent-presets.e2e.ts:392] |
-| `ptc` | **否** | — | — | 相对 `standard` 的可加载增量是末尾 `tool-presentation` `mode: ptc`，不是 `tool-cordis`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:264][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
+| `standard` | **否** | — | — | 成员停在 `tool-web`。mount `standard` 后 catalog **不含** `cordis_define`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: apps/cli/tests/web-agent-presets.e2e.ts:392] |
+| `ptc` | **否** | — | — | 相对 `standard` 的可加载增量是末尾 `tool-presentation` `mode: ptc`，不是 `tool-cordis`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
 | `cordis` | **是** | 无 | 无 | `- id: tool-cordis` / `name: '@deepseek-ai/dsh-tool-cordis'`，无 `config`。e2e 断言 catalog 含全部七个名字，并仍含 `bash` / `read` / `edit` / `skill`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251][E: apps/cli/tests/web-agent-presets.e2e.ts:334][E: apps/cli/tests/web-agent-presets.e2e.ts:338] |
 
 `tool-cordis` 行不进 `planning` / `compaction` / `delegation` isolate 组：它只往 host 已有的 `tools` / `systemPrompt` / `dynamicCordisRunner` / `cordisInspect` 注册，不 `provide` 新服务。

@@ -64,7 +64,7 @@ related:
   - surface.misc.security
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-fs` 的 `FileSystem` 是 **host 面** filesystem capability 的 **Definition**：抽象类构造里 `super(ctx, 'fs')` 把自身登记为 Cordis service `ctx.fs`，augmentation 声明 `Context.fs` 与三个事件 `fs/write-intent` / `fs/edit-intent`（waterfall）/ `fs/observed`（emit）。本包是 TypeScript 库，不是 shipped Loader 行；默认 Provider 是 `dsh-base` 的 `id: fs-sandbox`。模型面主 Consumer 是 `dsh-tool-fs`（`inject = ['tools', 'fs', 'systemPrompt']`）。
@@ -185,7 +185,7 @@ companion `@deepseek-ai/dsh-fs/invariant` 在 `internal/dispatch` 上检查三�
 
 13. **`glob` / `grep` 不走本缝。** `tool-fs-search` 的 `inject = ['tools', 'systemPrompt', 'subprocess']`，注释与代码都故意不含 `fs`。[E: packages/fs/tool-fs-search/src/index.ts:70] 换 `ctx.fs` 带不走它们。
 
-14. 其它 Consumer（点到为止）：`lsp-stdio` `inject = ['fs', 'lsp', 'subprocess']`，每个 provider 持有 `ctx.fs`。[E: packages/lsp/lsp-stdio/src/index.ts:47] [E: packages/lsp/lsp-stdio/src/index.ts:154] `agent-instructions` **没有** static `inject` 指向 `fs`（`inject = ['sessionProjections']`），用 `ctx.get('fs')`，缺 Provider 时该次 compose 直接 `return undefined`。[E: packages/context/agent-instructions/src/index.ts:34] [E: packages/context/agent-instructions/src/index.ts:118] [E: packages/context/agent-instructions/src/index.ts:119] [E: packages/context/agent-instructions/tests/agent-instructions.spec.ts:1008] `skill-filesystem` 同样 `ctx.get('fs')`；`fs !== undefined && !trustedHost` 才走缝，否则退回 host `readFile`。[E: packages/skill/skill-filesystem/src/index.ts:838] [E: packages/skill/skill-filesystem/src/index.ts:844] [E: packages/skill/skill-filesystem/src/index.ts:848] 远程替换是 `E2BFileSystem extends FileSystem` 且 `static inject = ['e2b']`，必须与 `subprocess-e2b` 成对换，细节在 [`subsys.execution.e2b`](e2b.md)。[E: packages/e2b/fs-e2b/src/index.ts:171] [E: packages/e2b/fs-e2b/src/index.ts:172]
+14. 其它 Consumer（点到为止）：`lsp-stdio` `inject = ['fs', 'lsp', 'subprocess']`，每个 provider 持有 `ctx.fs`。[E: packages/lsp/lsp-stdio/src/index.ts:47] [E: packages/lsp/lsp-stdio/src/index.ts:154] `agent-instructions` **没有** static `inject` 指向 `fs`（`inject = ['sessionProjections']`），用 `ctx.get('fs')`，缺 Provider 时该次 compose 直接 `return undefined`。[E: packages/context/agent-instructions/src/index.ts:34] [E: packages/context/agent-instructions/src/index.ts:118] [E: packages/context/agent-instructions/src/index.ts:119] [E: packages/context/agent-instructions/tests/agent-instructions.spec.ts:1010] `skill-filesystem` 同样 `ctx.get('fs')`；`fs !== undefined && !trustedHost` 才走缝，否则退回 host `readFile`。[E: packages/skill/skill-filesystem/src/index.ts:838] [E: packages/skill/skill-filesystem/src/index.ts:844] [E: packages/skill/skill-filesystem/src/index.ts:848] 远程替换是 `E2BFileSystem extends FileSystem` 且 `static inject = ['e2b']`，必须与 `subprocess-e2b` 成对换，细节在 [`subsys.execution.e2b`](e2b.md)。[E: packages/e2b/fs-e2b/src/index.ts:171] [E: packages/e2b/fs-e2b/src/index.ts:172]
 
 ## 设计动机
 

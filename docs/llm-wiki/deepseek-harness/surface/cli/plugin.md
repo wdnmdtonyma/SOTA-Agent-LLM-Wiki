@@ -35,7 +35,7 @@ related:
   - surface.presets.overview
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `dsh plugin --profile <name> <pnpm args...>` 是 `@deepseek-ai/dsh` launcher 的 `mode: 'plugin'`：在 `$DSH_HOME/profiles/<name>` 里把 pnpm 当 thin forwarder，成功后再按**已安装状态** reconcile `dsh.profile.bundles`。它改的是 **host 面**（进程级 profile → bundle 层列表），不改 agent-preset 成员资格，也不 boot Cordis 树。
@@ -66,7 +66,7 @@ DeepSeek Harness 是 **Cordis 组合运行时**：`profile → bundle → agent 
 | `@deepseek-ai/dsh-sdk-minimal` | `./cordis.patch.yml` [E: packages/bundle/sdk-minimal/package.json:38] |
 | `@deepseek-ai/dsh-acp-app` | `./cordis.patch.yml` [E: packages/bundle/acp-app/package.json:38] |
 
-`exportsPatch` 的判定就是 `manifest.dsh?.bundle?.patch !== undefined` [E: apps/cli/src/plugin.ts:44]。解析目录时先走安装锚点 `INSTALL_ANCHOR`（`apps/cli/package.json`），再走 profile 自己的 `package.json` [E: apps/cli/src/plugin.ts:39] [E: apps/cli/src/profile-boot.ts:74] [E: packages/boot/app-boot/src/profile.ts:781]。inbox 模板 bundle 因此始终来自当前 dsh 安装，而不是 profile 里可能被 pnpm 拷进去的副本。
+`exportsPatch` 的判定就是 `manifest.dsh?.bundle?.patch !== undefined` [E: apps/cli/src/plugin.ts:44]。解析目录时先走安装锚点 `INSTALL_ANCHOR`（`apps/cli/package.json`），再走 profile 自己的 `package.json` [E: apps/cli/src/plugin.ts:39] [E: apps/cli/src/profile-boot.ts:75] [E: packages/boot/app-boot/src/profile.ts:781]。inbox 模板 bundle 因此始终来自当前 dsh 安装，而不是 profile 里可能被 pnpm 拷进去的副本。
 
 ## 入口
 
@@ -143,7 +143,7 @@ profile 目录是 `$DSH_HOME/profiles/<name>`（未设或空白 `DSH_HOME` 时�
 | `cordis.patch.yml` | 用户自己的 patch 层（缺则写入空数组模板）；是 profile 目录文件，不是 bundle 包 [E: packages/boot/app-boot/src/profile.ts:214] |
 | `pnpm-workspace.yaml` | `packages: [.]`、`nodeLinker: hoisted`、`autoInstallPeers: false` [E: packages/boot/app-boot/src/profile.ts:182] [E: packages/boot/app-boot/src/profile.ts:185] [E: packages/boot/app-boot/src/profile.ts:186] |
 
-模板 bundle 写进 `dsh.profile.bundles`，**同时** `dependencies` 是空对象 [E: packages/boot/app-boot/src/profile.ts:208]。这是 reconcile「不碰 inbox 模板」的前提。单测核过 `initProfile(..., ['@deepseek-ai/dsh-base'])` 后 `bundles` 就是这一项且 `patchReload` 为 `live` [E: packages/boot/app-boot/tests/profile.spec.ts:98] [E: packages/boot/app-boot/tests/profile.spec.ts:99]；再传入 `['other']` 也不会改已有 manifest 或用户改过的 patch [E: packages/boot/app-boot/tests/profile.spec.ts:105] [E: packages/boot/app-boot/tests/profile.spec.ts:107]。
+模板 bundle 写进 `dsh.profile.bundles`，**同时** `dependencies` 是空对象 [E: packages/boot/app-boot/src/profile.ts:208]。这是 reconcile「不碰 inbox 模板」的前提。单测核过 `initProfile(..., ['@deepseek-ai/dsh-base'])` 后 `bundles` 就是这一项且 `patchReload` 为 `live` [E: packages/boot/app-boot/tests/profile.spec.ts:96] [E: packages/boot/app-boot/tests/profile.spec.ts:101]；再传入 `['other']` 也不会改已有 manifest 或用户改过的 patch [E: packages/boot/app-boot/tests/profile.spec.ts:105] [E: packages/boot/app-boot/tests/profile.spec.ts:107]。
 
 ### `reconcilePlugins` 读写的字段
 

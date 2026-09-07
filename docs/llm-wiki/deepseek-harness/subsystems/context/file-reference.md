@@ -8,12 +8,10 @@ source:
   - packages/context/file-reference/src/index.ts
   - packages/context/file-reference/src/types.ts
   - packages/context/file-reference/src/grammar.ts
-  - packages/context/file-reference/src/invariant.ts
   - packages/context/file-reference/tests/service.spec.ts
   - packages/context/file-reference/package.json
   - packages/context/file-reference-local/src/index.ts
   - packages/context/file-reference-local/src/search.ts
-  - packages/context/file-reference-local/src/invariant.ts
   - packages/context/file-reference-local/tests/service.spec.ts
   - packages/context/file-reference-local/tests/search.spec.ts
   - packages/context/file-reference-local/package.json
@@ -47,7 +45,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.fileReferences` 是 **path-only `@file` 发现缝**：Definition 包 `@deepseek-ai/dsh-file-reference` 声明抽象 `FileReferenceService.list()` 与浏览器安全的 `@` 语法；shipped Provider 是 `@deepseek-ai/dsh-file-reference-local`（`LocalFileReferenceService`），**只挂在 `dsh-web-app`**。候选不含文件内容；模型要读盘仍走 [`surface.tools.read`](../../surface/tools/read.md)。Host 再经 `SessionFileReferences` 把同一 `list` 暴露成 Remote namespace `'fileReferences'`。
@@ -83,7 +81,6 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。五�
 | `packages/context/file-reference/src/index.ts` | 抽象 `FileReferenceService`、`FILE_REFERENCE_PROMPT`、`ctx.fileReferences` |
 | `packages/context/file-reference/src/types.ts` | `FileReferenceCandidate`（Remote 客户端可单独 import） |
 | `packages/context/file-reference/src/grammar.ts` | `activeAtToken` / `formatFileMention` |
-| `packages/context/file-reference/src/invariant.ts` | companion `file-reference-invariant`；installer 为空 |
 | `packages/context/file-reference-local/src/index.ts` | `LocalFileReferenceService`：config、per-agent index、prompt 段 |
 | `packages/context/file-reference-local/src/search.ts` | `WorkspaceFileSearch` 与默认预算 / 排除表 |
 | `packages/bundle/web-app/cordis.patch.yml` | shipped **host** 插入 `id: file-reference-local` |
@@ -126,7 +123,7 @@ flowchart TD
   Local --> Prompt["systemPrompt section context:file-reference if tools.get read"]
 ```
 
-1. **Definition 包不 shipped 成独立 cordis 行。** `@deepseek-ai/dsh-file-reference` 声明 `ctx.fileReferences` 与抽象 `list`；companion `apply` 只 `invariants.register`，runtime installer 为空。 [E: packages/context/file-reference/package.json:2] [E: packages/context/file-reference/src/index.ts:26] [E: packages/context/file-reference/src/invariant.ts:13] [E: packages/context/file-reference/src/invariant.ts:21]
+1. **Definition 包不 shipped 成独立 cordis 行。** `@deepseek-ai/dsh-file-reference` 声明 `ctx.fileReferences` 与抽象 `list`。 [E: packages/context/file-reference/package.json:2] [E: packages/context/file-reference/src/index.ts:26]
 
 2. **shipped Provider 只在 `dsh-web-app`。** overlay 插入 `id: file-reference-local` / `name: '@deepseek-ai/dsh-file-reference-local'`；`dsh-web-app` 同时依赖 Definition 与 local 包。`dsh-headless` 的 insert 只有 `code-runtime` / `headless-startup` / `headless-runner`。`standard` 的 `agent.cordis.yml` 挂 `persona` 与 `agent-instructions`，四个 shipped preset 都没有 file-reference 行。 [E: packages/bundle/web-app/cordis.patch.yml:67] [E: packages/bundle/web-app/cordis.patch.yml:68] [E: packages/bundle/web-app/package.json:103] [E: packages/bundle/web-app/package.json:104] [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:24]
 
@@ -136,11 +133,11 @@ flowchart TD
 
 5. **带 `/` 的 query（或空 query）走 live 目录列出。** `list` 把 `\\` 换成 `/`；空串或含 `/` 时切 `directory` + `fragment`，调 `listDirectory`。路径段命中 excluded basename → `[]`。`resolveDisplayDirectory` 拒绝逃出 root（`..`）、跨卷绝对 relative、**目录 symlink**（`lstat` 为 symlink 或非目录则 `undefined`）。点文件：fragment 不以 `.` 开头则跳过 `name.startsWith('.')`。 [E: packages/context/file-reference-local/src/search.ts:117] [E: packages/context/file-reference-local/src/search.ts:119] [E: packages/context/file-reference-local/src/search.ts:239] [E: packages/context/file-reference-local/src/search.ts:265] [E: packages/context/file-reference-local/src/search.ts:275] [E: packages/context/file-reference-local/src/search.ts:245] [E: packages/context/file-reference-local/tests/search.spec.ts:148]
 
-6. **无斜杠的 fuzzy 走有界 BFS 索引。** `scanWorkspace` 最多 `maxEntries`；excluded basename 目录不入队；只收 `isDirectory()` / `isFile()`（文件 symlink 通常不当 regular file）。根 `readdir` 失败会抛（不发表空索引盖住旧条目）；子树失败返回 `[]`。 [E: packages/context/file-reference-local/src/search.ts:204] [E: packages/context/file-reference-local/src/search.ts:222] [E: packages/context/file-reference-local/src/search.ts:215] [E: packages/context/file-reference-local/src/search.ts:298]
+6. **无斜杠的 fuzzy 走有界 BFS 索引。** `scanWorkspace` 最多 `maxEntries`；excluded basename 目录不入队；只收 `isDirectory()` / `isFile()`（文件 symlink 通常不当 regular file）。根 `readdir` 失败会抛（不发表空索引盖住旧条目）；子树失败返回 `[]`。 [E: packages/context/file-reference-local/src/search.ts:204] [E: packages/context/file-reference-local/src/search.ts:222] [E: packages/context/file-reference-local/src/search.ts:215] [E: packages/context/file-reference-local/src/search.ts:299]
 
 7. **失效不挡 caret。** `invalidate` 只加 monotonic 计数。已有 `settled` 时立即返回旧条目，后台 `ensureIndex`；第一次查询才等待遍历。`dispose` 后后续 `list` 返回 `[]`。 [E: packages/context/file-reference-local/src/search.ts:140] [E: packages/context/file-reference-local/src/search.ts:162] [E: packages/context/file-reference-local/src/search.ts:144] [E: packages/context/file-reference-local/tests/search.spec.ts:185]
 
-8. **排序。** 精确 basename `1000`、前缀 `900`、name 包含 `700`、path 包含 `500`、子序列 `300+`；目录 +`25`。同分：目录先于文件，再短 path，再字典序。隐藏路径：query 不以 `.` 且不含 `/.` 时，带 `.` 段的 path 不进全局结果。 [E: packages/context/file-reference-local/src/search.ts:334] [E: packages/context/file-reference-local/src/search.ts:321] [E: packages/context/file-reference-local/src/search.ts:305] [E: packages/context/file-reference-local/tests/search.spec.ts:168]
+8. **排序。** 精确 basename `1000`、前缀 `900`、name 包含 `700`、path 包含 `500`、子序列 `300+`；目录 +`25`。同分：目录先于文件，再短 path，再字典序。隐藏路径：query 不以 `.` 且不含 `/.` 时，带 `.` 段的 path 不进全局结果。 [E: packages/context/file-reference-local/src/search.ts:334] [E: packages/context/file-reference-local/src/search.ts:322] [E: packages/context/file-reference-local/src/search.ts:307] [E: packages/context/file-reference-local/tests/search.spec.ts:168]
 
 9. **语法。** `activeAtToken`：行首或空白后的 `@"`… 或 `@[^\s]*`；email `a@b.test` 不是 trigger。`formatFileMention`：目录追加 `/`；含空白或 `preserveQuote` 用 `@"…"`；目录 quote **不闭合**以便继续下钻；控制字符或 `"` 在 path 里 → `undefined`。 [E: packages/context/file-reference/src/grammar.ts:28] [E: packages/context/file-reference/src/grammar.ts:32] [E: packages/context/file-reference/src/grammar.ts:49] [E: packages/context/file-reference/src/grammar.ts:53] [E: packages/context/file-reference-local/tests/search.spec.ts:81]
 
@@ -148,7 +145,7 @@ flowchart TD
 
 11. **Host Consumer：session-controller。** `SessionController` 构造里 `ctx.plugin(SessionFileReferences)`。适配器 `static inject = ['fileReferences', 'typert']`，`super(ctx, 'sessionFileReferences', { namespace: 'fileReferences' })`，`@Remote list` 原样转发。 [E: packages/api/session-controller/src/index.ts:133] [E: packages/api/session-controller/src/file-references.ts:18] [E: packages/api/session-controller/src/file-references.ts:22] [E: packages/api/session-controller/src/file-references.ts:38]
 
-12. **Client Consumer。** `dsh-api-remotes` 再导出 `FileReferenceCandidate`。`ui-input-trigger` 对 `@` 先跑 `activeAtToken`。`ui-reference` inject `remote.fileReferences`，`candidates` 里 `list(sessionId, query, signal)`；quoted 查询仍拉文件、跳过 session 域。接受候选时 `formatFileMention`。 [E: packages/api/remotes/src/client/index.ts:116] [E: packages/client/ui-input-trigger/src/core/detect.ts:50] [E: packages/client/ui-reference/src/client/index.ts:32] [E: packages/client/ui-reference/src/client/index.ts:49] [E: packages/client/ui-reference/src/client/index.ts:24]
+12. **Client Consumer。** `dsh-api-remotes` 再导出 `FileReferenceCandidate`。`ui-input-trigger` 对 `@` 先跑 `activeAtToken`。`ui-reference` inject `remote.fileReferences`，`candidates` 里 `list(sessionId, query, signal)`；quoted 查询仍拉文件、跳过 session 域。接受候选时 `formatFileMention`。 [E: packages/api/remotes/src/client/index.ts:115] [E: packages/client/ui-input-trigger/src/core/detect.ts:50] [E: packages/client/ui-reference/src/client/index.ts:32] [E: packages/client/ui-reference/src/client/index.ts:49] [E: packages/client/ui-reference/src/client/index.ts:24]
 
 ## 设计动机
 
@@ -184,12 +181,10 @@ flowchart TD
 - packages/context/file-reference/src/index.ts
 - packages/context/file-reference/src/types.ts
 - packages/context/file-reference/src/grammar.ts
-- packages/context/file-reference/src/invariant.ts
 - packages/context/file-reference/tests/service.spec.ts
 - packages/context/file-reference/package.json
 - packages/context/file-reference-local/src/index.ts
 - packages/context/file-reference-local/src/search.ts
-- packages/context/file-reference-local/src/invariant.ts
 - packages/context/file-reference-local/tests/service.spec.ts
 - packages/context/file-reference-local/tests/search.spec.ts
 - packages/context/file-reference-local/package.json

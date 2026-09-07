@@ -8,7 +8,6 @@ source:
   - packages/host/frontend-static/src/index.ts
   - packages/host/frontend-static/tests/frontend-static.spec.ts
   - packages/host/frontend-static/package.json
-  - packages/host/frontend-static/src/invariant.ts
   - packages/bundle/web-app/src/index.ts
   - packages/bundle/web-app/src/startup.ts
   - packages/bundle/web-app/cordis.patch.yml
@@ -38,7 +37,7 @@ related:
   - subsys.composition.bundle-headless
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-host-frontend-static` 是 **host 面** SPA dist 服务器：插件名 `frontend-static`，`inject = ['webServer', 'connection']`，占 `ctx.webServer` 的 **唯一 fallback 座**，按 `Config.distIndex` 的目录发已构建前端。显式 index 入口（`/` 与配置的 `index.html`）先过 `connection.authorizeIndex`，再 `webServer.renderIndex`（结构化 injection + `tapIndex`），并在 `<head>` 插入 `<base href="/">`。**磁盘 miss 与 SPA 深层 path 一律 404**，不是回 index 的 200。shipped `dsh --profile web`（别名 `dsh web`）**没有** `id: frontend-static` 的 Loader 行；`web-runtime`（`@deepseek-ai/dsh-web-app`）在 `apply` 里 `ctx.plugin(FrontendStatic, { distIndex })`。本包不 listen、不打印 URL、不注册 `/api`、不执行模型 turn。五个 shipped profile 里只有 `web` 叠 `dsh-web-app`；`headless` / `sdk` / `sdk-minimal` / `acp` 没有这条路径。
@@ -67,7 +66,6 @@ updated: 0a53fb55be
 | `packages/host/frontend-static/src/index.ts` | `name` / `inject` / `Config` / `serveStatic` / `apply`：占座并发 dist |
 | `packages/host/frontend-static/tests/frontend-static.spec.ts` | 真 Loader：MIME、live rebuild、显式 index + taps、401、404 miss、403、405、dispose 释座 |
 | `packages/host/frontend-static/package.json` | npm 名 `@deepseek-ai/dsh-host-frontend-static`；peer `dsh-host-webserver` 与 `dsh-client-connection` |
-| `packages/host/frontend-static/src/invariant.ts` | companion 的 `install` 是空函数：座不能在 teardown 流上探测 |
 | `packages/bundle/web-app/src/index.ts` | `web-app`：`resolveDistIndex` + `ctx.plugin(FrontendStatic, { distIndex })` |
 | `packages/bundle/web-app/src/startup.ts` | `--host 0.0.0.0` 在 `provide('webStartup')` 之前 `program.error`；另有 `--no-open` |
 | `packages/bundle/web-app/cordis.patch.yml` | insert `webserver` / `web-runtime`；**没有** `frontend-static` 行 |
@@ -127,7 +125,7 @@ updated: 0a53fb55be
 
 9. **每个 index 响应：鉴权 → structured inject → taps → `<base>`。** `authorizeIndex`：根路径带合法 launch token 的 GET 写 cookie 并 **303 Location: `/`**；带有效 cookie 才允许读 index；其余 **401** 明文提示 reopen 打印的 URL。未鉴权的 `/` 在测试里是 401，不是壳 HTML。[E: packages/client/connection/src/browser-auth.ts:240] [E: packages/host/frontend-static/tests/frontend-static.spec.ts:121] `WebServer.renderIndex` = `applyIndexTaps(renderIndexInjections(html, collectIndexInjections()))`。[E: packages/host/webserver/src/index.ts:359] `ClientModuleRegistry` 与 `ui-theme` 的 node 半边订阅 `webserver/index-inject`（boot manifest / 初始 theme），不再用 `tapIndex` 写主内容；测试仍用 `tapIndex` 打标验证折换顺序。[E: packages/client/modules/src/index.ts:589] [E: packages/client/ui-theme/src/index.ts:40] [E: packages/host/frontend-static/tests/frontend-static.spec.ts:145] 本包只保证 **调用点**：`/`、`/index.html`（及 `/?…` 查询，pathname 仍是 `/`）走 `renderIndex`；`/no/such/route` **不**回壳。
 
-10. **释座是 HMR / 热替换安全阀。** 测试 dispose `id: frontend` 那一行的 fiber 后，`/no/such/route` 仍是未占座 404，且 `registerFallback` 可以再登记。companion `host-frontend-static-invariant` 的 `install` 是空函数：`internal/plugin` 在 disposing fiber 的 effect 跑完之前触发，此时合法 owner 仍占座，探测第二次 `registerFallback` 会对正确 teardown 误报。[E: packages/host/frontend-static/tests/frontend-static.spec.ts:205] [E: packages/host/frontend-static/tests/frontend-static.spec.ts:206] [E: packages/host/frontend-static/src/invariant.ts:26]
+10. **释座是 HMR / 热替换安全阀。** 测试 dispose `id: frontend` 那一行的 fiber 后，`/no/such/route` 仍是未占座 404，且 `registerFallback` 可以再登记。[E: packages/host/frontend-static/tests/frontend-static.spec.ts:205] [E: packages/host/frontend-static/tests/frontend-static.spec.ts:206]
 
 11. **非 web profile 没有这条链。** `dsh-headless` 的 insert 是 `code-runtime` + `headless-startup` + `headless-runner`，没有 `webserver`，因此没有 fallback 座，也没有人 `plugin(FrontendStatic)`。`sdk` / `sdk-minimal` / `acp` 的 shipped overlay 同样不叠 `dsh-web-app`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] [E: packages/boot/app-boot/src/profile.ts:146]
 
@@ -174,7 +172,6 @@ updated: 0a53fb55be
 - packages/host/frontend-static/src/index.ts
 - packages/host/frontend-static/tests/frontend-static.spec.ts
 - packages/host/frontend-static/package.json
-- packages/host/frontend-static/src/invariant.ts
 - packages/bundle/web-app/src/index.ts
 - packages/bundle/web-app/src/startup.ts
 - packages/bundle/web-app/cordis.patch.yml

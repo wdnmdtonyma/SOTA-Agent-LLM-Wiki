@@ -30,7 +30,7 @@ source:
   - packages/preset/agent-presets/src/index.ts
   - packages/core/agent-loop/src/index.ts
   - packages/core/session/src/types.ts
-  - packages/session/session-persistence-sqlite/src/schema.ts
+  - packages/session/session-persistence/src/storage-contract.ts
   - packages/session/session-checkpoint-policy/src/index.ts
   - packages/shell/shell/src/index.ts
 symbols:
@@ -53,7 +53,7 @@ related:
   - subsys.core.session
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `ctx.settings` 是 **host 面**用户设置缝：一份按 namespace 切段的 raw 文档，`SettingsScope.get` / 内部 `resolve` 的优先级是 schema defaults → composition `base`（entry Config）→ 用户文档 section。叠 `dsh-base` 的 shipped profile 挂 `FileSettingsProvider`（默认 `$DSH_HOME/settings.yaml`，hot-reload）。这是 Cordis 组合运行时的配置面，不是 session log，也不是另一套 coding agent 的内存 `SettingsManager`。
@@ -77,10 +77,10 @@ updated: 0a53fb55be
 
 正交、写错会污染邻页的事实（本页只点名）：
 
-- 新 header 的 `version` 必须等于 `SESSION_FORMAT_VERSION`（现为 `0`）。跨 version **没有**自动 migration。 [E: packages/core/session/src/types.ts:51]
-- SQLite **session 盘** `SCHEMA_VERSION = 20`：`user_version` 非 0 且不等于 20 → 拒开，原地不迁。该 backend **不**在任何 shipped bundle。 [E: packages/session/session-persistence-sqlite/src/schema.ts:19]
+- 新 header 的 `version` 必须等于 `SESSION_FORMAT_VERSION`（现为 `2`）。JSONL catalog 有 adjacent v0→v1→v2；比 2 新仍拒。 [E: packages/core/session/src/types.ts:86] [E: packages/session/session-persistence/src/storage-contract.ts:50]
+- session persistence SQLite 包已删除。settings 文档不走那条盘。
 - checkpoint 在 `llm/stream` 进 adapter **之前**、以及 top-level `tools/execute` 进 tool body **之前** `sessions.flush`。嵌套 `exec.parent` 不再刷。`agent/pre-step` 另有一条耐久刷盘，不是副作用门。那些 waterfall **必须** `next()`。 [E: packages/session/session-checkpoint-policy/src/index.ts:35] [E: packages/session/session-checkpoint-policy/src/index.ts:36] [E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:72] [E: packages/session/session-checkpoint-policy/src/index.ts:80] [E: packages/session/session-checkpoint-policy/src/index.ts:81]
-- compaction 的 `SurfaceOp` 只有 `'append'` 或 `{ op: 'replace'; start; end }`，没有 delete。 [E: packages/core/session/src/types.ts:360] [E: packages/core/session/src/types.ts:361]
+- compaction 的 `SurfaceOp` 只有 `'append'` 或 `{ op: 'replace'; start; end }`，没有 delete。 [E: packages/core/session/src/types.ts:416] [E: packages/core/session/src/types.ts:418]
 - settings 分层：schema defaults → composition `base` → 用户文档 section。`SettingsProvider.resolve` 先 `mergeLayers(base, section)` 再走 schema。 [E: packages/settings/settings/src/index.ts:748]
 - 组合 / adapter Config 里放 `CredentialRef`（`role('credential-ref')` / `apiKeyEnv`）。secret **值**在 `$DSH_HOME/.credentials.yaml`。 [E: packages/llm/llm-deepseek/src/index.ts:178] [E: packages/credentials/credentials-local/src/index.ts:61]
 
@@ -120,7 +120,7 @@ updated: 0a53fb55be
 
 ## 控制流
 
-1. **host 面挂 Provider。** `dsh-base` 用组合行 `id: settings` / `name: '@deepseek-ai/dsh-settings-file'` 插入叠 base 的 profile 第一层。`FileSettingsProvider` 继承 `SettingsProvider`，构造里 `super(ctx)`，服务键是 `ctx.settings`。这是进程级服务，不是 preset isolate 里的私有实例。`PROFILE_TEMPLATES` 五个名字：`acp` / `web` / `headless` / `sdk` 都是 `dsh-base` + 对应 app；`sdk-minimal` **只**叠 `@deepseek-ai/dsh-sdk-minimal`，其 `cordis.patch.yml` **没有** `id: settings` 行。`dsh-web-app` 另插 `id: settings-controller`（Host Remote）与 client 行 `id: ui-settings`，不是本缝的第二份 Provider。`dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`。 [E: packages/bundle/base/cordis.patch.yml:90] [E: packages/bundle/base/cordis.patch.yml:91] [E: packages/settings/settings/src/index.ts:350] [E: packages/settings/settings-file/src/index.ts:137] [E: packages/boot/app-boot/src/profile.ts:137] [E: packages/boot/app-boot/src/profile.ts:154] [E: packages/boot/app-boot/src/profile.ts:155] [E: packages/bundle/web-app/cordis.patch.yml:91] [E: packages/bundle/web-app/cordis.patch.yml:190] [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/sdk-minimal/cordis.patch.yml:2]
+1. **host 面挂 Provider。** `dsh-base` 用组合行 `id: settings` / `name: '@deepseek-ai/dsh-settings-file'` 插入叠 base 的 profile 第一层。`FileSettingsProvider` 继承 `SettingsProvider`，构造里 `super(ctx)`，服务键是 `ctx.settings`。这是进程级服务，不是 preset isolate 里的私有实例。`PROFILE_TEMPLATES` 五个名字：`acp` / `web` / `headless` / `sdk` 都是 `dsh-base` + 对应 app；`sdk-minimal` **只**叠 `@deepseek-ai/dsh-sdk-minimal`，其 `cordis.patch.yml` **没有** `id: settings` 行。`dsh-web-app` 另插 `id: settings-controller`（Host Remote）与 client 行 `id: ui-settings`，不是本缝的第二份 Provider。`dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`。 [E: packages/bundle/base/cordis.patch.yml:90] [E: packages/bundle/base/cordis.patch.yml:91] [E: packages/settings/settings/src/index.ts:350] [E: packages/settings/settings-file/src/index.ts:137] [E: packages/boot/app-boot/src/profile.ts:137] [E: packages/boot/app-boot/src/profile.ts:154] [E: packages/boot/app-boot/src/profile.ts:155] [E: packages/bundle/web-app/cordis.patch.yml:91] [E: packages/bundle/web-app/cordis.patch.yml:191] [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/sdk-minimal/cordis.patch.yml:2]
 
 2. **默认盘与 watch。** `resolveSpec`：显式 `path` 赢，否则 `join(resolveDshHome(dshHome), 'settings.yaml')`。`resolveDshHome` 优先级是配置路径 → 非空 `$DSH_HOME` → `~/.dsh`。扩展名只认 `.yaml` / `.yml` / `.json`。`watch` 默认 `true`，`debounceMs` 默认 `100`。`writable === true`。测试：只传 `dshHome` 时 `documentPath` 就是 `<home>/settings.yaml`。 [E: packages/settings/settings-file/src/index.ts:57] [E: packages/settings/settings-file/src/index.ts:65] [E: packages/util/home-paths/src/index.ts:90] [E: packages/settings/settings-file/tests/local.spec.ts:105]
 
@@ -146,7 +146,7 @@ updated: 0a53fb55be
 
 13. **产品约定：adapter 配置放 `CredentialRef`，secret 值放 credentials 文档。** `llm-deepseek` 的 `Config.apiKeyEnv` 是 `z.string().role('credential-ref').default('DEEPSEEK_API_KEY')`，`apply` 里 `installSection(ctx, 'llm-deepseek', Config, config, …)`；每请求用 `credentialRef(...)` 去 `ctx.credentials.resolve`。`CredentialRef` 是 POSIX 环境变量名品牌。`.credentials.yaml`（`CREDENTIALS_FILENAME`）存的是 **非空 secret 字符串**，不是 ref。schema **允许** `role('secret')`（`web-search-deepseek` 的字面 `apiKey`），所以 `settings.yaml` **可以**含明文 secret。 [E: packages/llm/llm-deepseek/src/index.ts:178] [E: packages/llm/llm-deepseek/src/index.ts:491] [E: packages/credentials/credentials/src/types.ts:14] [E: packages/credentials/credentials-local/src/index.ts:61] [E: packages/web/web-search-deepseek/src/index.ts:64]
 
-14. **其它 shipped consumer（点到即可）。** `llm-pi-ai` 同样 `installSection`，空 profiles 时 route 休眠。`agent-loop` / `agent-default-model` / `bash-local` / `pwsh-local` / `permission-presets` / `web-search-deepseek` 走同一 helper。`dsh-agent-presets` **故意不用** helper：`defaultId` 每次现读，hooks 会是空转；它直接 `register(SETTINGS_NAMESPACE, …, { base: { default: config.default } })`，`SETTINGS_NAMESPACE` 是 `'agent-presets'`。wire 不再有 ApiProxy 白名单；Host Remote 由 `SettingsController` 描述全部已注册 namespace。 [E: packages/llm/llm-pi-ai/src/index.ts:297] [E: packages/preset/agent-presets/src/index.ts:181] [E: packages/preset/agent-presets/src/index.ts:55] [E: packages/core/agent-loop/src/index.ts:394] [E: packages/api/settings-controller/src/index.ts:117]
+14. **其它 shipped consumer（点到即可）。** `llm-pi-ai` 同样 `installSection`，空 profiles 时 route 休眠。`agent-loop` / `agent-default-model` / `bash-local` / `pwsh-local` / `permission-presets` / `web-search-deepseek` 走同一 helper。`dsh-agent-presets` **故意不用** helper：`defaultId` 每次现读，hooks 会是空转；它直接 `register(SETTINGS_NAMESPACE, …, { base: { default: config.default } })`，`SETTINGS_NAMESPACE` 是 `'agent-presets'`。wire 不再有 ApiProxy 白名单；Host Remote 由 `SettingsController` 描述全部已注册 namespace。 [E: packages/llm/llm-pi-ai/src/index.ts:297] [E: packages/preset/agent-presets/src/index.ts:181] [E: packages/preset/agent-presets/src/index.ts:55] [E: packages/core/agent-loop/src/index.ts:396] [E: packages/api/settings-controller/src/index.ts:117]
 
 ## 设计动机
 
@@ -170,7 +170,7 @@ DSH 把「组合时写进 `cordis.yml` / bundle 行的 entry」和「用户事�
 - **`applies: 'restart'` 只是标签。** 缝本身 live commit；要不要重启是 owner / UI 的事。
 - **union / transform 里的 secret 走不到 walker。** `redactSecrets` 对未建模的节点原样返回。secret 必须挂在 object/dict/array 能直接走到的字段上。 [E: packages/settings/settings/src/redact.ts:90]
 - **`sdk-minimal` 不挂本缝。** 其 insert 是完整树，不含 `settings-file`；消费者回退 composition entry。 [E: packages/bundle/sdk-minimal/cordis.patch.yml:2]
-- **本缝与 session 盘版本正交。** `SESSION_FORMAT_VERSION = 0`、SQLite session `SCHEMA_VERSION = 20` 管的是 session log，不迁 settings 文档。checkpoint 在 `llm/stream` / 顶层 `tools/execute` 前 `sessions.flush`，不读 `ctx.settings`。 [E: packages/core/session/src/types.ts:51] [E: packages/session/session-persistence-sqlite/src/schema.ts:19] [E: packages/session/session-checkpoint-policy/src/index.ts:35]
+- **本缝与 session 盘版本正交。** `SESSION_FORMAT_VERSION = 2` 管的是 session log，不迁 settings 文档。checkpoint 在 `llm/stream` / 顶层 `tools/execute` 前 `sessions.flush`，不读 `ctx.settings`。 [E: packages/core/session/src/types.ts:86] [E: packages/session/session-checkpoint-policy/src/index.ts:35]
 
 ## Seam 三角
 
@@ -209,7 +209,7 @@ DSH 把「组合时写进 `cordis.yml` / bundle 行的 entry」和「用户事�
 - packages/preset/agent-presets/src/index.ts
 - packages/core/agent-loop/src/index.ts
 - packages/core/session/src/types.ts
-- packages/session/session-persistence-sqlite/src/schema.ts
+- packages/session/session-persistence/src/storage-contract.ts
 - packages/session/session-checkpoint-policy/src/index.ts
 - packages/shell/shell/src/index.ts
 

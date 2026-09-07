@@ -57,7 +57,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > 模型可见名默认 `workflow`（load-time `Config.toolName`）；实现包 `@deepseek-ai/dsh-tool-workflow`（Cordis 插件名 `tool-workflow`）。模型交一份纯 JavaScript 编排脚本 + JSON `meta`，工具经 `ctx.workflowEngine.start` 前台跑完全程，把脚本的 JSON 返回值交回。
@@ -145,7 +145,7 @@ Wire 名是 load-time `Config.toolName`，schemastery 默认 `'workflow'`；`app
 | 角色 | 实体 | 本工具怎么用 |
 |---|---|---|
 | Definition | `WorkflowEngine` / `ctx.workflowEngine` | `super(ctx, 'workflowEngine')`；抽象 `start(request): WorkflowRun`。`WorkflowRun.result` 按合同永不 reject。[E: packages/workflow/workflow/src/index.ts:159] [E: packages/workflow/workflow/src/index.ts:168] [E: packages/workflow/workflow/src/runtime-types.ts:44] |
-| Provider（shipped） | `WorkerThreadWorkflowEngine`（包 `@deepseek-ai/dsh-workflow-worker-thread`） | `static inject = ['subagents']`。`start`：`validateMeta` → `assertBodyParses` → 解析 provider / cap → 开 worker，把 `agent()` 桥回 `ctx.subagents.start`。[E: packages/workflow/workflow-worker-thread/src/index.ts:113] [E: packages/workflow/workflow-worker-thread/src/index.ts:144] [E: packages/workflow/workflow-worker-thread/src/host.ts:351] |
+| Provider（shipped） | `WorkerThreadWorkflowEngine`（包 `@deepseek-ai/dsh-workflow-worker-thread`） | `static inject = ['subagents']`。`start`：`validateMeta` → `assertBodyParses` → 解析 provider / cap → 开 worker，把 `agent()` 桥回 `ctx.subagents.start`。[E: packages/workflow/workflow-worker-thread/src/index.ts:113] [E: packages/workflow/workflow-worker-thread/src/index.ts:144] [E: packages/workflow/workflow-worker-thread/src/host.ts:352] |
 | Consumer | `@deepseek-ai/dsh-tool-workflow` | 只调 `ctx.workflowEngine.start`，再等 `result` / `dispose` / `cancel`。不自己 parse 脚本、不加 cap。 |
 
 换掉 `ctx.workflowEngine` provider 会带走：`META_INVALID` / `SCRIPT_PARSE` 的同步检查、`export const meta` 诊断、`maxConcurrentAgents` / `maxTotalAgents` / `maxItemsPerCall` / `syncTimeoutMs` / `disposeGraceMs`、子代理默认 provider、worker 隔离与强制终止。工具代码不选 runner。
@@ -188,7 +188,7 @@ worker 引擎把脚本放进可逃逸的 `vm` + 新线程：测试夹具 `ESCAPE
 | `ptc` | 是（工具行仍在；呈现改成 PTC `mode: ptc`） | 无 | 同 standard 的 isolate + worker 行；另有 `tool-presentation`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:228] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:233] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
 | `cordis` | 是 | 无 | 同 standard。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:166] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:215] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:220] |
 
-组合旁注（不是 preset 成员资格）：`dsh-base` 也 insert 了 host 行 `workflow-worker-thread`（`provider: spawn`）和 `tool-workflow`。[E: packages/bundle/base/cordis.patch.yml:379] [E: packages/bundle/base/cordis.patch.yml:384] `dsh-web-app` overlay 把这两行设 `disabled: true`，改由每个 session 的 preset 在 isolate realm 再挂。[E: packages/bundle/web-app/cordis.patch.yml:416] [E: packages/bundle/web-app/cordis.patch.yml:419] shipped profile 里只有 `web` 叠 web-app 并挂 agent-presets roster；`headless` / `sdk` / `acp` 叠 base（不 disable 这两行），`sdk-minimal` 不叠 base。[I]
+组合旁注（不是 preset 成员资格）：`dsh-base` 也 insert 了 host 行 `workflow-worker-thread`（`provider: spawn`）和 `tool-workflow`。[E: packages/bundle/base/cordis.patch.yml:380] [E: packages/bundle/base/cordis.patch.yml:384] `dsh-web-app` overlay 把这两行设 `disabled: true`，改由每个 session 的 preset 在 isolate realm 再挂。[E: packages/bundle/web-app/cordis.patch.yml:417] [E: packages/bundle/web-app/cordis.patch.yml:420] shipped profile 里只有 `web` 叠 web-app 并挂 agent-presets roster；`headless` / `sdk` / `acp` 叠 base（不 disable 这两行），`sdk-minimal` 不叠 base。[I]
 
 ## execute() 走读
 
@@ -201,7 +201,7 @@ worker 引擎把脚本放进可逃逸的 `vm` + 新线程：测试夹具 `ESCAPE
 7. `result = await run.result`。`stopReason !== 'completed'` → `throw new Error(stopReasonError(...))`，不返回部分 `value`。[E: packages/workflow/tool-workflow/src/index.ts:303] [E: packages/workflow/tool-workflow/src/index.ts:308]
 8. 成功返回 `{ runId: run.id, agentsStarted, result: result.value }`。[E: packages/workflow/tool-workflow/src/index.ts:311]
 9. `finally`：摘掉 abort listener；`await run.dispose()`（保持 member listener 直到静默，引擎可能在收尾时补 `cancelled` member end）；顶层再 `recorder.finish` / `recorder.abandon`。[E: packages/workflow/tool-workflow/src/index.ts:320] [E: packages/workflow/tool-workflow/src/index.ts:324] [E: packages/workflow/tool-workflow/src/index.ts:327]
-10. 脚本里每次 `agent()`：撞 `maxTotalAgents` → `AGENT_CAP`；拿到并发槽后 `children.startAgent`；host `subagents.start(this.provider, { prompt, parent, signal, outputSchema?, agentOptions? })`。[E: packages/workflow/workflow-worker-thread/src/runtime.ts:258] [E: packages/workflow/workflow-worker-thread/src/host.ts:351] 孩子 `stopReason === 'completed'` 才回文本或 `structured`；孩子自己失败回 `null`；run 已取消则抛 `CANCELLED`。[E: packages/workflow/workflow-worker-thread/src/runtime.ts:318] [E: packages/workflow/workflow-worker-thread/src/runtime.ts:339] `opts.schema` 走 `assertObjectJsonSchema`（必须 object 根；subset = `type` / `properties` / `required` / `additionalProperties` / `items` / `enum` / `const` / `oneOf` + 注解；`pattern` / `format` / 数值上下界等关键字被拒）。[E: packages/workflow/workflow-worker-thread/src/runtime.ts:384] [E: packages/core/tools/src/json-schema.ts:267] [E: packages/core/tools/src/json-schema.ts:402]
+10. 脚本里每次 `agent()`：撞 `maxTotalAgents` → `AGENT_CAP`；拿到并发槽后 `children.startAgent`；host `subagents.start(this.provider, { prompt, parent, signal, outputSchema?, agentOptions? })`。[E: packages/workflow/workflow-worker-thread/src/runtime.ts:258] [E: packages/workflow/workflow-worker-thread/src/host.ts:352] 孩子 `stopReason === 'completed'` 才回文本或 `structured`；孩子自己失败回 `null`；run 已取消则抛 `CANCELLED`。[E: packages/workflow/workflow-worker-thread/src/runtime.ts:318] [E: packages/workflow/workflow-worker-thread/src/runtime.ts:339] `opts.schema` 走 `assertObjectJsonSchema`（必须 object 根；subset = `type` / `properties` / `required` / `additionalProperties` / `items` / `enum` / `const` / `oneOf` + 注解；`pattern` / `format` / 数值上下界等关键字被拒）。[E: packages/workflow/workflow-worker-thread/src/runtime.ts:384] [E: packages/core/tools/src/json-schema.ts:267] [E: packages/core/tools/src/json-schema.ts:402]
 
 ## 设计动机·edge
 

@@ -58,7 +58,7 @@ related:
   - subsys.composition.agent-presets
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-plan-mode` 把 **plan mode** 做成按 session 投影折叠的协作状态：`PlanModeController` 发布 `ctx.planMode`，用 `plan/mode` 事件（last-wins）记住是否激活，用 `plan:policy` section 把部署文案送进 system prompt，并用始终登记的 wire 名 `exit_plan_mode`（`EXIT_PLAN_MODE`）给人审阅后退出。换模式只改 section 与 log，**不**改 `ctx.tools` catalog。它是 Cordis 组合运行时（`profile → bundle → agent preset`）里的一条可 isolate 服务。
@@ -133,14 +133,14 @@ companion `@deepseek-ai/dsh-plan-mode/invariant` 只校验 `plan/mode.data.activ
 - 运行时 flush 只读 `pendingIntents`。`exit_plan_mode` 批准写 `{ active: false, narrate: false }`，不写 `command/run`。[E: packages/plan/plan-mode/src/index.ts:345]
 - 投影 `pending`：`command/run` 且 `name === 'plan'` 记下 `running`；配对 `command/done` 成功且目标不同于当前 `active` 才把 `wanted` 留下；随后的 `plan/mode` 清掉 `wanted`。[E: packages/plan/plan-mode/src/index.ts:137] [E: packages/plan/plan-mode/src/index.ts:142] [E: packages/plan/plan-mode/src/index.ts:148] [E: packages/plan/plan-mode/src/types.ts:23]
 
-`CommandRuntime.execute` 在 handler **之前** append `command/run`。[E: packages/interaction/commands/src/index.ts:342] 所以 UI 冷读能从 log 恢复「有一次尚未 commit 的 `/plan`」；那不等于 `onBoundary` 会在新进程里自动 flush——flush 仍要有 WeakMap 里的 intent。
+`CommandRuntime.execute` 在 handler **之前** append `command/run`。[E: packages/interaction/commands/src/index.ts:355] 所以 UI 冷读能从 log 恢复「有一次尚未 commit 的 `/plan`」；那不等于 `onBoundary` 会在新进程里自动 flush——flush 仍要有 WeakMap 里的 intent。
 
 ## 控制流
 
 ### 1. 组合：host 装着，web disable，preset isolate remount
 
 1. `dsh-base` 在根 insert 里挂 `id: plan-mode` / `@deepseek-ai/dsh-plan-mode`，并把部署 `section` 写进 `config`。这是 **host 面** 一行；`headless` / `sdk` / `acp` 等叠 base 且 overlay 不 disable 该行的 profile 默认就用这份进程级 `ctx.planMode`。[E: packages/bundle/base/cordis.patch.yml:307] [E: packages/bundle/base/cordis.patch.yml:308] [E: packages/bundle/base/package.json:70]
-2. `dsh-web-app` 把同一 `id: plan-mode` 标 `disabled: true`，把模型可见的 plan 从进程根挪走，留给 preset 面 remount。[E: packages/bundle/web-app/cordis.patch.yml:372] [E: packages/bundle/web-app/cordis.patch.yml:373]
+2. `dsh-web-app` 把同一 `id: plan-mode` 标 `disabled: true`，把模型可见的 plan 从进程根挪走，留给 preset 面 remount。[E: packages/bundle/web-app/cordis.patch.yml:373] [E: packages/bundle/web-app/cordis.patch.yml:373]
 3. shipped `standard` / `ptc`（wiki 节点 id `surface.presets.code` 仍是稳定别名）/ `cordis` 各有一组 `id: planning`（`cordis:group`），`isolate: { planMode: true }`，组内再 insert `id: plan-mode`。`minimal` 的 `agent.cordis.yml` 没有这组；Web e2e 里 `minimal` 的 assemble 工具名是 `['bash', 'str_replace_editor']`，没有 `exit_plan_mode`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:104] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:110] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:111] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:92] [E: apps/cli/tests/web-agent-presets.e2e.ts:290] [E: apps/cli/tests/web-agent-presets.e2e.ts:312]
 4. Loader 见 `isolate.planMode === true` 时为该 entry 建 `LocalRealm`，服务实现挂在 realm-private symbol 上，而不是 root 的 `planMode` 槽。[E: vendor/loader/src/config/isolate.ts:81]
 5. `mountPreset` 拒绝无 scope 的 context；settle 后跑 `leakedServices`：子树 fiber 提供的实现若 store key 等于 root isolate 槽，整次 mount 抛错并要求 sit behind `isolate` 或挪到 host。[E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:382] [E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:411]
@@ -165,7 +165,7 @@ companion `@deepseek-ai/dsh-plan-mode/invariant` 只校验 `plan/mode.data.activ
 ### 4. `agent/pre-step` waterfall：先 `next()`，再 append
 
 17. Cordis `Events.waterfall` 把最后一个参数当 innermost `next`：监听者必须调用传入的 `next()`，内部才会 `cbs.shift()` 走到下一层。不调用就停在本层。[E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238]
-18. 事件合同是 waterfall，payload 带 `agent` / `signal`，`next` 返回 `PreStepDecision`。[E: packages/core/agent/src/runtime-types.ts:238] loop 的 fused dispatcher 把这次 dispatch 绑到该 Agent 的 scope。[E: packages/core/agent/src/dispatch.ts:146] [E: packages/core/agent-loop/src/agent.ts:243]
+18. 事件合同是 waterfall，payload 带 `agent` / `signal`，`next` 返回 `PreStepDecision`。[E: packages/core/agent/src/runtime-types.ts:242] loop 的 fused dispatcher 把这次 dispatch 绑到该 Agent 的 scope。[E: packages/core/agent/src/dispatch.ts:146] [E: packages/core/agent-loop/src/agent.ts:243]
 19. `PlanModeController` **先** `const decision = await next()`，再看 pending。本包没有「故意不 `next` 的 reject 路径」。不调用 `next()` 会吞掉 loop 默认的 `{ kind: 'enter', messages }`。[E: packages/plan/plan-mode/src/index.ts:195] [E: packages/core/agent-loop/src/agent.ts:246]
 20. `decision.kind === 'reject'`、`signal.aborted`、或没有 pending：原样返回 `decision`，不 append。[E: packages/plan/plan-mode/src/index.ts:197]
 21. 否则 `onBoundary(session)`：目标已等于 logged 则只清 WeakMap；否则 `session.append('plan/mode', { active: target })`，**成功之后**再 `delete`。append 抛错时 `warn` 并留下 pending，step 照样 `enter`。[E: packages/plan/plan-mode/src/index.ts:443] [E: packages/plan/plan-mode/src/index.ts:446] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:450]
@@ -185,10 +185,10 @@ companion `@deepseek-ai/dsh-plan-mode/invariant` 只校验 `plan/mode.data.activ
 
 30. `exit_plan_mode` execute：无 `exec.agent`、logged 为 inactive、plan 不是以 `#` + 非空白开头、或 `ctx.get('userQuestions')` 缺失，都在 **ask 之前** 失败。审阅走 `userQuestions.ask`，不是 `ctx.approval`。[E: packages/plan/plan-mode/src/index.ts:289] [E: packages/plan/plan-mode/src/index.ts:293]
 31. 唯一同意条件：恰好一条 `id === 'plan-review'` 的答案、`selected` 单元素且等于 `Approve`、没有 `custom`。否则当 keep-planning。`ASK_CANCELLED` 改写成「用户把 turn 拿回去说话」；其它错误原样抛。[E: packages/plan/plan-mode/src/index.ts:336] [E: packages/plan/plan-mode/src/index.ts:323]
-32. 批准成功只 `pendingIntents.set(..., { active: false, narrate: false })` 并返回 `{ approved: true }`。**当时** logged 仍是 `true`，好让同一 assistant batch 里剩余的 tool-call 还吃 plan 段。[E: packages/plan/plan-mode/src/index.ts:345] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:968]
-33. 下一拍被接受的 `agent/pre-step` 才 append `{ active: false }`。此后 assemble 的 `plan:policy` 变空，**工具名表仍与批准前相同**。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:975]
+32. 批准成功只 `pendingIntents.set(..., { active: false, narrate: false })` 并返回 `{ approved: true }`。**当时** logged 仍是 `true`，好让同一 assistant batch 里剩余的 tool-call 还吃 plan 段。[E: packages/plan/plan-mode/src/index.ts:345] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:969]
+33. 下一拍被接受的 `agent/pre-step` 才 append `{ active: false }`。此后 assemble 的 `plan:policy` 变空，**工具名表仍与批准前相同**。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:974]
 34. 审阅等待期间插件 fiber dispose（HMR）：回来即使人选 Approve，execute 也失败并保持 plan。[E: packages/plan/plan-mode/src/index.ts:331] [E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1120]
-35. 子 fiber dispose 会卸掉服务、`exit_plan_mode` 登记和 `plan:policy` section；已排队、尚未 append 的 intent 就此消失。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1177]
+35. 子 fiber dispose 会卸掉服务、`exit_plan_mode` 登记和 `plan:policy` section；已排队、尚未 append 的 intent 就此消失。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:1179]
 
 ## 设计动机
 
@@ -205,7 +205,7 @@ DSH 是 `profile → bundle → agent preset` 叠出来的组合运行时。plan
 ## Gotcha
 
 - **catalog 稳定 ≠ 随时能调。** 未激活时 `exit_plan_mode` 仍出现在 schema / SDK 里；execute 按 `loggedActive` 拒绝。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:837]
-- **PTC 不能按 wire 名直调 exit。** `mode: 'ptc'` 时直调非 `run_code` 在 registry 层 collapse；测试里的合法路径是 `run_code` 程序 `await tools.exit_plan_mode(...)`。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:938] [E: packages/core/tools/src/index.ts:1316]
+- **PTC 不能按 wire 名直调 exit。** `mode: 'ptc'` 时直调非 `run_code` 在 registry 层 collapse；测试里的合法路径是 `run_code` 程序 `await tools.exit_plan_mode(...)`。[E: packages/plan/plan-mode/tests/plan-mode.spec.ts:938] [E: packages/core/tools/src/index.ts:1315]
 - **批准当下 logged 不变。** 同一 assistant 回复里排在 exit 后面的 tool-call 仍处于 plan。要等下一 accepted `pre-step`。
 - **两套 pending。** `get().pending` 来自 WeakMap；投影 `pending` 来自 `/plan` 的 `command/run`/`command/done`。exit 批准只动前者。进程重启后 WeakMap 空了，投影仍可能显示 pending，直到新的 `plan/mode` 或用户再选一次。[I]
 - **`hasOpenTurn` ≠ `status === 'running'`。** 用 `turnBoundary` 投影的 `openTurnStartSeq`。

@@ -6,7 +6,6 @@ tier: T2
 pkg: core
 source:
   - packages/core/agent-tool-presentation/src/index.ts
-  - packages/core/agent-tool-presentation/src/invariant.ts
   - packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts
   - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
   - packages/preset/agent-presets/presets/standard/agent.cordis.yml
@@ -36,7 +35,7 @@ related:
   - subsys.execution.code-runtime
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-agent-tool-presentation` 是 **agent-preset 面的一行**：host 面 `ctx.tools` 注册表、调度器、API presenter 仍坐在进程级；preset 只在 standing scope 上调用 `ctx.tools.presentAs(mode)`，声明「这个 composition 覆盖的 Agent 模型看见哪种工具形」。它不是又一个 `dsh-tool-*`，也不实现 `run_code`。DSH 主线是 `profile → bundle → agent preset`；本行只改 preset 面投影，不换 host 面 Definition。
@@ -61,7 +60,7 @@ updated: 0a53fb55be
 - `ctx.codeRuntime` 的 Provider（web / headless 插入的 `@deepseek-ai/dsh-code-runtime-worker-thread`）—— [`subsys.execution.code-runtime`](../execution/code-runtime.md)。
 - preset 发现、standing mount、`bindScopeParent`、`inactiveRows`、`leakedServices` —— [`subsys.composition.agent-presets`](../composition/agent-presets.md)。
 - shipped PTC preset 的完整成员表（persona / isolate 组 / 各 `dsh-tool-*` 行）—— [`surface.presets.code`](../../surface/presets/code.md)（稳定节点 id；目录是 `presets/ptc/`）。
-- 不实现 agent-loop，不往 `SessionEventMap` 写事件。companion installer 是空函数：呈现关系由 `dsh-tools` 持有。[E: packages/core/agent-tool-presentation/src/invariant.ts:23]
+- 不实现 agent-loop，不往 `SessionEventMap` 写事件。
 
 ## 关键文件
 
@@ -150,7 +149,7 @@ updated: 0a53fb55be
 ## Gotcha
 
 - **省略本行 ≠ `mode: native` 行。** 省略 = 继承 host `defaultMode`。web/headless 若设了 `DSH_TOOLS_MODE=ptc`，没挂本行的 preset 也会进程级进 PTC。不要把环境变量写成「选了 shipped `ptc` preset」。[E: packages/bundle/web-app/cordis.patch.yml:37]
-- **shipped 只有 `ptc` preset 挂本行**，且 `mode: ptc`。`standard` 以 `id: tool-web` 收束；`minimal` / `cordis` 的 `agent.cordis.yml` 也没有 `tool-presentation`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253]
+- **shipped 只有 `ptc` preset 挂本行**，且 `mode: ptc`。`standard` 以 `id: tool-web` 收束；`minimal` / `cordis` 的 `agent.cordis.yml` 也没有 `tool-presentation`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]
 - **web 默认仍是 `standard`。** 要跑 PTC 必须显式选 `ptc`，或改 `agent-presets.default`。[E: packages/bundle/web-app/cordis.patch.yml:445]
 - **不要把本插件挂到未 scoped 的 host 行。** `presentAs` 会抛 `requires a scoped context`。headless 没有 roster，进程级 PTC 只走 host `tools.mode`。[E: packages/core/tools/src/index.ts:941]
 - **同一 standing scope 只能 `presentAs` 一次。** 两行抢同一 scope 是组成错误，不是后者覆盖。[E: packages/core/tools/src/index.ts:948]
@@ -174,7 +173,7 @@ updated: 0a53fb55be
 ## Sources
 
 - `packages/core/agent-tool-presentation/src/index.ts`
-- `packages/core/agent-tool-presentation/src/invariant.ts`
+
 - `packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts`
 - `packages/preset/agent-presets/presets/ptc/agent.cordis.yml`
 - `packages/preset/agent-presets/presets/standard/agent.cordis.yml`

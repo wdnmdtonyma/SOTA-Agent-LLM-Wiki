@@ -6,14 +6,12 @@ tier: T2
 pkg: core
 source:
   - packages/runtime-diagnostics/invariants/src/index.ts
-  - packages/runtime-diagnostics/invariants/src/invariant.ts
   - packages/runtime-diagnostics/invariants/package.json
   - packages/runtime-diagnostics/invariants/tests/service.spec.ts
   - packages/core/agent-loop/src/invariant.ts
   - packages/core/agent-loop/tests/invariant.spec.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/base/package.json
-  - packages/bundle/base/src/invariant.ts
   - packages/bundle/base/tests/base.spec.ts
   - packages/preset/agent-presets/src/mount.ts
   - packages/llm/llm/src/index.ts
@@ -24,7 +22,6 @@ source:
   - vendor/loader/src/config/isolate.ts
   - scripts/test-invariants.ts
   - scripts/package-invariants.ts
-  - packages/examples/agent-spine-demo/src/index.ts
 symbols:
   - ctx.invariants
   - InvariantRegistry
@@ -41,7 +38,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-invariants` 是 **host 面**可配置注册表：`ctx.invariants.register(packageName, installer)` 按完整 npm 包名占位；过滤选中时才在 child fiber 里跑该包 `./invariant` companion 的 installer。它是 Cordis 组合运行时的 diagnostics 缝，不是又一个 coding-agent 断言套件，也不实现 session log 的 `model-visible ⟺ logged`——那条检查是 `dsh-agent-loop` companion 挂在 `llm/stream` waterfall 上的 Consumer。
@@ -73,18 +70,16 @@ updated: 0a53fb55be
 
 | 路径 | 角色 |
 |---|---|
-| `packages/runtime-diagnostics/invariants/src/index.ts` | `InvariantRegistry` / `InvariantError` / `ctx.invariants` |
-| `packages/runtime-diagnostics/invariants/src/invariant.ts` | 本包自己的 companion：空 installer，只占 `@deepseek-ai/dsh-invariants` 这个名 |
+| `packages/runtime-diagnostics/invariants/src/index.ts` | `InvariantRegistry` / `InvariantError` / `ctx.invariants`；本包不发 `./invariant` companion |
 | `packages/runtime-diagnostics/invariants/tests/service.spec.ts` | 过滤、占名、`InvariantError`、回滚、HMR 再注册 |
 | `packages/core/agent-loop/src/invariant.ts` | Consumer 例子：`llm/stream` 上的 request-reconstruction |
 | `packages/core/agent-loop/tests/invariant.spec.ts` | 手动拓扑：`InvariantRegistry` + loop companion |
 | `packages/bundle/base/cordis.patch.yml` | 组合真树：**没有** `id: invariants` 行 |
-| `packages/bundle/base/package.json` | `@deepseek-ai/dsh-invariants` 只在 peer/dev，不在 `dependencies` |
-| `packages/bundle/base/src/invariant.ts` | base 自己的空 companion（patch 列表载体，无运行时关系可核） |
+| `packages/bundle/base/package.json` | **不含** `@deepseek-ai/dsh-invariants` |
 | `packages/preset/agent-presets/src/mount.ts` | `inactiveRows` / `leakedServices`：缺 `invariants` 或把服务漏进 root realm 都会拒 |
 | `scripts/test-invariants.ts` | 普通 Vitest 根：强制 `plugin(InvariantRegistry, { enabled: true })` 再挂当前包 companion |
-| `scripts/package-invariants.ts` | 结构门：每包必须导出 `./invariant`，且不得 default-export |
-| `packages/examples/agent-spine-demo/src/index.ts` | 显式 composition：registry + session / agent / scope / agent-loop 四个 companion |
+| `scripts/package-invariants.ts` | 结构门：已发布 companion 必须 named-export、禁止 default-export |
+
 
 ## 数据模型
 
@@ -104,11 +99,11 @@ updated: 0a53fb55be
 
 1. **挂上 Definition。** `new InvariantRegistry(ctx, config)` 调 `super(ctx, 'invariants')`，Cordis `Service` 立刻 `reflect.provide(name, self, …)`，于是 `ctx.invariants` 可用。[E: packages/runtime-diagnostics/invariants/src/index.ts:113] [E: vendor/cordis/src/service.ts:58] 构造把 `enabled` 缺省成 `true`，并把两份 regex 列表 `compilePatterns`。[E: packages/runtime-diagnostics/invariants/src/index.ts:115] [E: packages/runtime-diagnostics/invariants/src/index.ts:116]
 
-2. **组合真树默认不走这一步。** `dsh-base` 一条根 `insert` 从 `id: timer` 起放下 host 核心，含 `id: llm` / `id: agent-loop`（`agents: []`），**没有** `id: invariants`，也没有 `name: '@deepseek-ai/dsh-invariants'`。[E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/base/cordis.patch.yml:27] [E: packages/bundle/base/cordis.patch.yml:486] `@deepseek-ai/dsh-invariants` 只出现在 base 的 `peerDependencies` / `devDependencies`，不在 `dependencies`——这是 companion 类型依赖，不是把服务插进树。[E: packages/bundle/base/package.json:129] 六个 shipped bundle 的 `cordis.patch.yml` 同样没有该行。因此默认 `dsh web` 以及 `dsh --profile sdk|sdk-minimal|acp|headless` **不**提供 `ctx.invariants`，各包 companion 若被误插进树会停在 `inject: ['invariants']` 上。
+2. **组合真树默认不走这一步。** `dsh-base` 一条根 `insert` 从 `id: timer` 起放下 host 核心，含 `id: llm` / `id: agent-loop`（`agents: []`），**没有** `id: invariants`，也没有 `name: '@deepseek-ai/dsh-invariants'`。[E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/base/cordis.patch.yml:27] [E: packages/bundle/base/cordis.patch.yml:483] `dsh-base` 的 `package.json` **也不**依赖 `@deepseek-ai/dsh-invariants`。六个 shipped bundle 的 `cordis.patch.yml` 同样没有该行。因此默认 `dsh web` 以及 `dsh --profile sdk|sdk-minimal|acp|headless` **不**提供 `ctx.invariants`，各包 companion 若被误插进树会停在 `inject: ['invariants']` 上。
 
-3. **谁在真树里挂 Provider。** 要把检查跑起来，组合必须显式 `ctx.plugin(InvariantRegistry, …)`。`agent-spine-demo` 在 host 面挂 registry，再挂 session / agent / scope / agent-loop 四个 companion。[E: packages/examples/agent-spine-demo/src/index.ts:248] [E: packages/examples/agent-spine-demo/src/index.ts:249] [E: packages/examples/agent-spine-demo/src/index.ts:252] 普通 Vitest 根由 `scripts/test-invariants.ts` 拦截：先 `mount(InvariantRegistry, { enabled: true })`，再按测试路径加载当前包 `src/invariant.ts`。[E: scripts/test-invariants.ts:178] 路径匹配 `tests/*invariant*.spec.ts` 的聚焦套件（以及例外名单里的本包 `service.spec.ts`）关掉这个 host，自己搭拓扑。[E: scripts/test-invariants.ts:107] [E: scripts/test-invariants.ts:50]
+3. **谁在真树里挂 Provider。** 要把检查跑起来，组合必须显式 `ctx.plugin(InvariantRegistry, …)`。`packages/examples/agent-spine-demo` **已删除**，不要再当 composition 样例。普通 Vitest 根由 `scripts/test-invariants.ts` 拦截：先 `mount(InvariantRegistry, { enabled: true })`，再按测试路径加载当前包 companion。[E: scripts/test-invariants.ts:144] 路径匹配 `tests/*invariant*.spec.ts` 的聚焦套件关掉这个 host，自己搭拓扑。[E: scripts/test-invariants.ts:100]
 
-4. **Companion 占名。** 每包 `apply` 是 `Promise.resolve(ctx.invariants.register(PACKAGE_NAME, install))`。companion 插件自身 `inject = ['invariants']`，没有服务时 fiber 保持 PENDING，不会偷偷改入口行为。[E: packages/core/agent-loop/src/invariant.ts:16] [E: packages/core/agent-loop/src/invariant.ts:63] 入口文件（`dsh-agent-loop` 的 `src/index.ts` 等）不 import `@deepseek-ai/dsh-invariants`。结构门要求 named-export `name` / `inject` / `apply`，并禁止 default-export，好让 Loader 保住 namespace。[E: scripts/package-invariants.ts:237] [E: scripts/package-invariants.ts:243]
+4. **Companion 占名。** 每包 `apply` 是 `Promise.resolve(ctx.invariants.register(PACKAGE_NAME, install))`。companion 插件自身 `inject = ['invariants']`，没有服务时 fiber 保持 PENDING，不会偷偷改入口行为。[E: packages/core/agent-loop/src/invariant.ts:16] [E: packages/core/agent-loop/src/invariant.ts:63] 入口文件（`dsh-agent-loop` 的 `src/index.ts` 等）不 import `@deepseek-ai/dsh-invariants`。结构门要求 named-export `name` / `inject` / `apply`，并禁止 default-export，好让 Loader 保住 namespace。[E: scripts/package-invariants.ts:237] [E: scripts/package-invariants.ts:242]
 
 5. **`register` 先占名，再决定是否跑 installer。** 空白 / 含空白的 `packageName` 立刻抛。[E: packages/runtime-diagnostics/invariants/src/index.ts:137] 名字已在 `registrations` 里则抛 `already registered`。[E: packages/runtime-diagnostics/invariants/src/index.ts:141] 通过后**先** `registrations.add`，再 `ownerCtx.effect(...)`（不用调用方被 tracing 换掉的 `this.ctx`）。[E: packages/runtime-diagnostics/invariants/src/index.ts:147] [E: packages/runtime-diagnostics/invariants/src/index.ts:149] [E: packages/runtime-diagnostics/invariants/src/index.ts:153] 登记本身是可逆 `ctx.effect`：卸掉 companion 或卸掉 registry，都会跑返回的 disposer。[E: vendor/cordis/src/fiber.ts:418]
 
@@ -118,7 +113,7 @@ updated: 0a53fb55be
 
 8. **卸掉是双向的。** 成功路径的 disposer 先 `await child.dispose()`，`finally` 才释放占名；异步 teardown 完成前，同名 `register` 仍是 `already registered`。[E: packages/runtime-diagnostics/invariants/src/index.ts:181] [E: packages/runtime-diagnostics/invariants/tests/service.spec.ts:237] 卸干净之后可以再注册——HMR / 测试重载靠这条，而不是改过滤器（过滤器跟服务实例同寿命）。[E: packages/runtime-diagnostics/invariants/tests/service.spec.ts:220]
 
-9. **Consumer 例子：`dsh-agent-loop` 的 `llm/stream` waterfall。** installer 用 `ctx.on('llm/stream', …, { global: true, prepend: true })` 挂在 child 上。[E: packages/core/agent-loop/src/invariant.ts:21] [E: packages/core/agent-loop/src/invariant.ts:54] `LlmRuntime.streamWithRegistration` 的实现是 `this.ctx.waterfall(this, 'llm/stream', options, () => this.adapterStream(...))`。[E: packages/llm/llm/src/index.ts:1059] [E: packages/llm/llm/src/index.ts:1063] Cordis waterfall 把最后一个参数当 innermost `next`：listener 必须调用传入的 `next()`，`cbs.shift()` 才会走到下一层；不调用就停在本层，内建 adapter 永远收不到流。[E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] `Events.register` 在 `options.prepend` 为真时选 `unshift`，否则 `push`：新 listener 插到 hooks 数组头，包住**当时已经登记**的 hooks。[E: vendor/cordis/src/events.ts:255] 后挂且默认 `push` 的层落在检查内侧，它们短路也挡不住已经执行的外层。真正会让检查「根本没跑」的，是**先** `push`、且不调用 `next()` 的短路 listener——检查若也 `push`，waterfall 先 `shift` 到短路层。`invariant.spec.ts` 的 `prepends ahead of a short-circuiting stream listener` 先 `ctx.on('llm/stream', …)`，再 `plugin(AgentLoopInvariant)`，divergent 请求仍抛 `diverges from the dispatch-time durable derivation`。[E: packages/core/agent-loop/tests/invariant.spec.ts:125] [E: packages/core/agent-loop/tests/invariant.spec.ts:127] [E: packages/core/agent-loop/tests/invariant.spec.ts:140]
+9. **Consumer 例子：`dsh-agent-loop` 的 `llm/stream` waterfall。** installer 用 `ctx.on('llm/stream', …, { global: true, prepend: true })` 挂在 child 上。[E: packages/core/agent-loop/src/invariant.ts:21] [E: packages/core/agent-loop/src/invariant.ts:54] `LlmRuntime.streamWithRegistration` 的实现是 `this.ctx.waterfall(this, 'llm/stream', options, () => this.adapterStream(...))`。[E: packages/llm/llm/src/index.ts:1101] [E: packages/llm/llm/src/index.ts:1105] Cordis waterfall 把最后一个参数当 innermost `next`：listener 必须调用传入的 `next()`，`cbs.shift()` 才会走到下一层；不调用就停在本层，内建 adapter 永远收不到流。[E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] `Events.register` 在 `options.prepend` 为真时选 `unshift`，否则 `push`：新 listener 插到 hooks 数组头，包住**当时已经登记**的 hooks。[E: vendor/cordis/src/events.ts:255] 后挂且默认 `push` 的层落在检查内侧，它们短路也挡不住已经执行的外层。真正会让检查「根本没跑」的，是**先** `push`、且不调用 `next()` 的短路 listener——检查若也 `push`，waterfall 先 `shift` 到短路层。`invariant.spec.ts` 的 `prepends ahead of a short-circuiting stream listener` 先 `ctx.on('llm/stream', …)`，再 `plugin(AgentLoopInvariant)`，divergent 请求仍抛 `diverges from the dispatch-time durable derivation`。[E: packages/core/agent-loop/tests/invariant.spec.ts:125] [E: packages/core/agent-loop/tests/invariant.spec.ts:127] [E: packages/core/agent-loop/tests/invariant.spec.ts:140]
 
 10. **检查内容（仍是 companion 的事，不是 registry 的事）。** 没有 `isAgentLoopRequest(options)` 标记的请求直接 `return next()`——title / summarizer / 手搓 one-shot 不走这条合同。[E: packages/core/agent-loop/src/invariant.ts:22] [E: packages/llm/llm/src/call-config.ts:76] 带标记的请求必须：整个 `options` 冻结、带活的 `sessionId`、`messages` 数组冻结、log 里已有 `step/start` 与可折叠的 `request/header`，并且 `JSON.stringify(options.messages) === JSON.stringify(session.deriveMessages())`，model / system / tools / sampling 与 folded header 一致。[E: packages/core/agent-loop/src/invariant.ts:23] [E: packages/core/agent-loop/src/invariant.ts:40] 任一失败走 `fail(...)`，抛 `InvariantError`，**不会** `next()`。通过则 `return next()`。[E: packages/core/agent-loop/src/invariant.ts:53] 手动拓扑测试：多塞一条未入 log 的 user message 会炸 `diverges from the dispatch-time durable derivation`；没带 loop 标记的请求不炸。[E: packages/core/agent-loop/tests/invariant.spec.ts:64] [E: packages/core/agent-loop/tests/invariant.spec.ts:92]
 
@@ -141,7 +136,7 @@ DSH 是 `profile → bundle → agent preset` 叠出来的组合运行时。检�
 - **`prepend: true` 包住的是已经登记的 hooks，不是「挡后挂短路」。** `Events.register` 对 `prepend` 走 `unshift`。[E: vendor/cordis/src/events.ts:255] 短路 replay 先 `ctx.on('llm/stream')`、检查再默认 `push`，检查不跑；loop 测试按这个顺序挂 listener，再用 `{ prepend: true }` 证明 divergent 请求仍炸。[E: packages/core/agent-loop/tests/invariant.spec.ts:125] [E: packages/core/agent-loop/tests/invariant.spec.ts:140] 后挂且 `push` 的层落在检查内侧，不会让外层检查没跑。
 - **这不是 session 合同本身。** `deriveMessages()` / `surfaceOp: replace`（没有 delete）活在 `dsh-session`。本页的 registry 只负责把 companion 接到事件上。
 - **preset 里 publish `invariants` 必炸。** 需要每会话一份 registry 才写 `isolate: { invariants: true }`；产品意图是进程级一份。Companion 行在缺服务时是 `waiting for invariants`，不是静默跳过。
-- **空 installer 不是漏写。** 没有可观察事件或可变数据关系的包把 `install` 写成 `() => {}`。[E: packages/bundle/base/src/invariant.ts:20] [E: packages/runtime-diagnostics/invariants/src/invariant.ts:21] 结构门要求这段声明文本含 `No runtime invariant:`，否则 `verify-package-invariants` 记一条 violation。[E: scripts/package-invariants.ts:276]
+- **空 companion 可以不发。** `dsh-base` 与 `dsh-invariants` 自己都**不**发布 `./invariant` 文件。结构门不再要求每包都有 companion 文本。
 - **异步 dispose 仍占名。** 在 `child.dispose()` 的 barrier 解开前抢着 `register` 同名，会看到 `already registered`，不是服务坏了。
 - **base 没有 dormant Codex / Claude 后端。** 不要把「standard / ptc preset 里某 tool 行 `disabled: true`」读成「base 已经装了但休眠」。invariants 行也一样：**没有行就是没装**，不是 dormant。
 
@@ -150,22 +145,20 @@ DSH 是 `profile → bundle → agent preset` 叠出来的组合运行时。检�
 | 角色 | 落点 | ctx 键 / bundle / preset 行 |
 |---|---|---|
 | **Definition** | `@deepseek-ai/dsh-invariants`：`InvariantRegistry`、`Config`、`InvariantInstaller`、`InvariantError`；`Context.invariants` 模块扩增 | `ctx.invariants`。这是 diagnostics 注册表，不是 `fs` / `shell` 那种业务能力缝。要进真树，得有人写 Loader 行 `name: '@deepseek-ai/dsh-invariants'`，或代码里 `ctx.plugin(InvariantRegistry)`。[E: packages/runtime-diagnostics/invariants/src/index.ts:70] |
-| **Provider** | 同一包的默认导出 `InvariantRegistry`：过滤、占名、child fiber、把 `fail` 绑成 `InvariantError` | **不**在六个 shipped bundle 的 `cordis.patch.yml`。测试 Provider 是 `scripts/test-invariants.ts` 的 `{ enabled: true }`；示例 Provider 是 `agent-spine-demo` 的 `config.invariants ?? {}`。[E: scripts/test-invariants.ts:178] [E: packages/examples/agent-spine-demo/src/index.ts:248] |
-| **Consumer** | 每包 `./invariant` companion 的 `apply` → `register(ownPackageName, install)`。可执行例子：`dsh-agent-loop` 在 `llm/stream` 上核 request-reconstruction（`model-visible ⟺ logged`） | companion 行若出现在组合里，名字是 `@deepseek-ai/<pkg>/invariant`，`inject: ['invariants']`。preset 面不应 publish `invariants`；loop 行本身在 host：`dsh-base` 的 `id: agent-loop`。[E: packages/core/agent-loop/src/invariant.ts:63] [E: packages/bundle/base/cordis.patch.yml:486] |
+| **Provider** | 同一包的默认导出 `InvariantRegistry`：过滤、占名、child fiber、把 `fail` 绑成 `InvariantError` | **不**在六个 shipped bundle 的 `cordis.patch.yml`。测试 Provider 是 `scripts/test-invariants.ts` 的 `{ enabled: true }`。[E: scripts/test-invariants.ts:144] |
+| **Consumer** | 各包可选 `./invariant` companion 的 `apply` → `register(ownPackageName, install)`。可执行例子：`dsh-agent-loop` 在 `llm/stream` 上核 request-reconstruction（`model-visible ⟺ logged`） | companion 行若出现在组合里，`inject: ['invariants']`。preset 面不应 publish `invariants`；loop 行本身在 host：`dsh-base` 的 `id: agent-loop`。[E: packages/core/agent-loop/src/invariant.ts:63] [E: packages/bundle/base/cordis.patch.yml:483] |
 
 换过滤 = 重载这份 Provider（改 config 或 `enabled`），不必改各包入口。换检查 = 改那个包的 companion。卸掉 Provider，所有 child listener 随 effect 倒序卸掉。[E: vendor/cordis/src/fiber.ts:431]
 
 ## Sources
 
 - packages/runtime-diagnostics/invariants/src/index.ts
-- packages/runtime-diagnostics/invariants/src/invariant.ts
 - packages/runtime-diagnostics/invariants/package.json
 - packages/runtime-diagnostics/invariants/tests/service.spec.ts
 - packages/core/agent-loop/src/invariant.ts
 - packages/core/agent-loop/tests/invariant.spec.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/base/package.json
-- packages/bundle/base/src/invariant.ts
 - packages/bundle/base/tests/base.spec.ts
 - packages/preset/agent-presets/src/mount.ts
 - packages/llm/llm/src/index.ts
@@ -176,7 +169,6 @@ DSH 是 `profile → bundle → agent preset` 叠出来的组合运行时。检�
 - vendor/loader/src/config/isolate.ts
 - scripts/test-invariants.ts
 - scripts/package-invariants.ts
-- packages/examples/agent-spine-demo/src/index.ts
 
 ## 相关
 

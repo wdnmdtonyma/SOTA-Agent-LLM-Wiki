@@ -41,7 +41,7 @@ related:
   - spine.trace-web-first-prompt
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `web` 是 shipped **Cordis 组合**模板：`PROFILE_TEMPLATES.web` 把 `@deepseek-ai/dsh-base` 叠上 `@deepseek-ai/dsh-web-app`，`patchReload: 'live'`（五个 shipped 模板里唯一 live）。进程级 **host 面**挂 webserver / 三个 API controller / 浏览器 roster，并把 base 上的模型可见工具行 `disabled: true`，改由每会话 **agent-preset 面**（默认 `standard`）再挂。`dsh web` 是 `--profile web` 的 alias；其它宿主入口是 `dsh --profile headless|sdk|sdk-minimal|acp`。本仓没有 shipped TUI 模板。
@@ -102,7 +102,7 @@ Launcher 只吃 `--profile` / `--patch` / `--dump-config` / `--dump-default-conf
 | `--trusted-host <authority...>` | 可重复；拼进 `trustedHosts: string[]` | `[]` [E: packages/bundle/web-app/src/startup.ts:84] | 作为 `/api` browser-trust 的额外 authority（`host` 或 `host:port`） |
 | `--no-open` | `openBrowser: options.open` | 缺省打开浏览器 [E: packages/bundle/web-app/src/startup.ts:52] | `web-runtime` 读 `openBrowser: !!js ctx.webStartup.openBrowser` [E: packages/bundle/web-app/cordis.patch.yml:134] |
 
-无旗标 boot 时服务值是 `{ openBrowser: true, trustedHosts: [] }` [E: packages/bundle/web-app/tests/startup.spec.ts:110]；fixture consumer 的 `??` 把 bind 读成 `host: '127.0.0.1'`、`port: 3080` [E: packages/bundle/web-app/tests/startup.spec.ts:112]。`--help` 走 commander help：action 不跑，`webStartup` 为 `undefined` [E: packages/bundle/web-app/tests/startup.spec.ts:124]，consumer 的 `readerConfig` 也不出现 [E: packages/bundle/web-app/tests/startup.spec.ts:125]。
+无旗标 boot 时服务值是 `{ openBrowser: true, trustedHosts: [] }` [E: packages/bundle/web-app/tests/startup.spec.ts:110]；fixture consumer 的 `??` 把 bind 读成 `host: '127.0.0.1'`、`port: 3080` [E: packages/bundle/web-app/tests/startup.spec.ts:113]。`--help` 走 commander help：action 不跑，`webStartup` 为 `undefined` [E: packages/bundle/web-app/tests/startup.spec.ts:124]，consumer 的 `readerConfig` 也不出现 [E: packages/bundle/web-app/tests/startup.spec.ts:125]。
 
 `WebServer.Config.host` 只接受 `'127.0.0.1' | '0.0.0.0'` [E: packages/host/webserver/src/index.ts:61]。所以 `--host 1.2.3.4` 能过 `web-startup`，但会在 `webserver` 行的 schema 校验上失败。旗标路径上真正能用的 bind host 是省略（回退 loopback）或显式 `127.0.0.1`。后续 `--patch` 若整行改写 `webserver.config.host`，schema 仍允许 `0.0.0.0`——那是 composition overlay，不是 `--host` 旗标。
 
@@ -119,7 +119,7 @@ web: {
 
 [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:144]
 
-同表还有 `headless` / `sdk` / `sdk-minimal` / `acp` [E: packages/boot/app-boot/src/profile.ts:137]。测试断言 `PROFILE_TEMPLATES.web.bundles` 含 `dsh-base` 且 `patchReload` 为 `'live'` [E: packages/boot/app-boot/tests/profile.spec.ts:192] [E: packages/boot/app-boot/tests/profile.spec.ts:193]。bundle 解析安装锚点优先于 profile 目录，保证 in-box 的 `@deepseek-ai/dsh-base` / `@deepseek-ai/dsh-web-app` 来自当前 dsh 安装。
+同表还有 `headless` / `sdk` / `sdk-minimal` / `acp` [E: packages/boot/app-boot/src/profile.ts:137]。测试断言 `PROFILE_TEMPLATES.web.bundles` 含 `dsh-base` 且 `patchReload` 为 `'live'` [E: packages/boot/app-boot/tests/profile.spec.ts:193] [E: packages/boot/app-boot/tests/profile.spec.ts:193]。bundle 解析安装锚点优先于 profile 目录，保证 in-box 的 `@deepseek-ai/dsh-base` / `@deepseek-ai/dsh-web-app` 来自当前 dsh 安装。
 
 ### Overlay：改写已有 id
 
@@ -252,7 +252,7 @@ web patch **没有**对下列 base `id` 写 `disabled: true`。它们继续作�
 | `skill` | [E: packages/bundle/base/cordis.patch.yml:279] | `skill-filesystem`、`tool-skill`（preset 再挂自己的 `skill-filesystem` 进 per-scope 层） |
 | `goal` | [E: packages/bundle/base/cordis.patch.yml:298] | `tool-goal` / `command-goal`。`goal-round-driver` 未 disable |
 | `token-meter` | [E: packages/bundle/base/cordis.patch.yml:323] | `compaction-basic`、`command-compact`、`tool-result-pruner` |
-| `subagent` | [E: packages/bundle/base/cordis.patch.yml:334] | `tool-subagent*`、`tool-workflow`、`tool-ralph`、`workflow-worker-thread`。`subagent-spawn-in-process` / `subagent-fork-in-process` / `tool-subagent-report` 未 disable——registry 与 continuable setup 是跨会话单例 |
+| `subagent` | [E: packages/bundle/base/cordis.patch.yml:334] | `tool-subagent*`、`tool-workflow`、`tool-ralph`、`workflow-worker-thread`。`subagent-spawn-in-process` / `subagent-fork-in-process` 未 disable——registry 是跨会话单例。`tool-subagent-report` 已删除 |
 
 `apps/cli/src/` 当下没有 `web.ts`。`DSH_WEB_URL` 的真实注册点是 `web-runtime`（`@deepseek-ai/dsh-web-app`）对 host 面 `shell-env` 的 `register` [E: packages/bundle/web-app/src/index.ts:252]。就绪行是 `console.log(\`dsh web: ${authenticatedUrl}…\`)` [E: packages/bundle/web-app/src/index.ts:280]。默认模型仍来自 base：`provider: deepseek-official` / `model: deepseek-v4-flash` [E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:79]。
 
@@ -271,7 +271,7 @@ web patch **没有**对下列 base `id` 写 `disabled: true`。它们继续作�
 
 `web-startup` 是普通 plugin：`inject: ['cmdlineArgs']`，成功 parse 才 `provide('webStartup')`。失败与 `--help` 都走 `parseCmdline` 的 `ctx.appExit`，服务不出现。`webserver` / `web-runtime` 因 `inject: [webStartup]` 不会激活，进程不 bind。这就是「help 不挂服务器」。
 
-`runProfile` 只在 `composed.profile.patchReload === 'live'` 时安装用户层 watcher [E: apps/cli/src/profile-boot.ts:270]。web 模板正是 live。此时若 `ctx.get('hmr') === undefined` [E: apps/cli/src/profile-boot.ts:281]（base 把共享 `hmr` 行 disable [E: packages/bundle/base/cordis.patch.yml:23]），会再 `loader.create` 一个 `config: { root: [] }` 的 `@deepseek-ai/cordis-plugin-hmr` [E: apps/cli/src/profile-boot.ts:285]，然后 `watchUserPatches` 同时盯 profile `cordis.patch.yml` 与 `$DSH_HOME/cordis.patch.yml` [E: apps/cli/src/profile-boot.ts:287] [E: apps/cli/src/profile-boot.ts:292]。client 插件热更新走另一条已 insert 的 `client-hmr`。live 重组合顺序与 boot 的 `allPatches` 相同：bundle → 用户两文件 → overlays [E: apps/cli/src/profile-boot.ts:243]。
+`runProfile` 只在 `composed.profile.patchReload === 'live'` 时安装用户层 watcher [E: apps/cli/src/profile-boot.ts:271]。web 模板正是 live。此时若 `ctx.get('hmr') === undefined` [E: apps/cli/src/profile-boot.ts:283]（base 把共享 `hmr` 行 disable [E: packages/bundle/base/cordis.patch.yml:23]），会再 `loader.create` 一个 `config: { root: [] }` 的 `@deepseek-ai/cordis-plugin-hmr` [E: apps/cli/src/profile-boot.ts:285]，然后 `watchUserPatches` 同时盯 profile `cordis.patch.yml` 与 `$DSH_HOME/cordis.patch.yml` [E: apps/cli/src/profile-boot.ts:287] [E: apps/cli/src/profile-boot.ts:294]。client 插件热更新走另一条已 insert 的 `client-hmr`。live 重组合顺序与 boot 的 `allPatches` 相同：bundle → 用户两文件 → overlays [E: apps/cli/src/profile-boot.ts:243]。
 
 Preset 挂载门控：`mountPreset` 拒绝无 scope 的 context [E: packages/preset/agent-presets/src/mount.ts:382]；`leakedServices` 非空则抛错 [E: packages/preset/agent-presets/src/mount.ts:407]，要求该服务放进 `isolate` realm 或搬回 host composition [E: packages/preset/agent-presets/src/mount.ts:411]。这就是 web 把 `jobs` / `skill` / `goal` / `subagent` / `token-meter` / `shell-env` 留在 host 的组合原因：Host Remote 与跨会话查询要从 host 解析这些名字；搬进 per-session realm 会变成 `service-unavailable` 或第二次会话撞名。
 

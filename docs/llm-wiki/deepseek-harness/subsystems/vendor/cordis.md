@@ -29,7 +29,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/cordis` 是 **vendored** 组合运行时（`vendor/cordis/`），npm 名写在该包 `package.json`，不是 `packages/` 里的 DSH 包。`Context` 是 `Proxy`：`provide` / `inject` / `plugin` / `on` / `emit` / `waterfall` 都是 mixin 到 `ctx` 上的方法。`Service` 构造调用 `ctx.reflect.provide`；注册是可逆 effect，fiber unload 后该键变 `undefined`。`waterfall` 必须调用传入的 `next()`，否则链停在本层（含内置 `inner`）。

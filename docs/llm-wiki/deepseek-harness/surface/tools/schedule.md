@@ -54,7 +54,7 @@ related:
   - subsys.orchestration.schedule
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `schedule_create` / `schedule_list` / `schedule_delete` 是 `@deepseek-ai/dsh-schedule` 向 **root** agent 注册的三条 session-local 提醒管理工具：模型用互斥选择器创建一条提醒、按创建顺序列出、按 id 删除；到期后由同包 `ScheduleRuntime` 把 framing 文本 `followup` 进同一会话，而不是再走一条 tool call。
@@ -80,9 +80,9 @@ updated: 0a53fb55be
 
 实现包是 `@deepseek-ai/dsh-schedule`，**不是** `dsh-tool-schedule`。仓库里没有 `@deepseek-ai/dsh-tool-schedule`。CLI 把 schedule 包当作可解析依赖挂上，不等于默认装进会话。[E: packages/schedule/schedule/package.json:2] [E: apps/cli/package.json:63]
 
-Cordis function-plugin 名是字面量 `'schedule'`。`inject = ['agents', 'sessions', 'tools', 'sessionPersistence']`：四个服务缺一，插件保持 pending，catalog 里不会出现这三条名字。插件**没有** `Config` / schemastery，yml 不能改名、不能关某一个名字、不能改 `every` 下限。[E: packages/schedule/schedule/src/index.ts:36] [E: packages/schedule/schedule/src/index.ts:38] [E: packages/schedule/schedule/tests/plugin.spec.ts:35] [E: packages/schedule/schedule/tests/plugin.spec.ts:36]
+Cordis function-plugin 名是字面量 `'schedule'`。`inject = ['agents', 'sessions', 'tools', 'sessionPersistence']`：四个服务缺一，插件保持 pending，catalog 里不会出现这三条名字。插件**没有** `Config` / schemastery，yml 不能改名、不能关某一个名字、不能改 `every` 下限。[E: packages/schedule/schedule/src/index.ts:36] [E: packages/schedule/schedule/src/index.ts:38] [E: packages/schedule/schedule/tests/plugin.spec.ts:35] [E: packages/schedule/schedule/tests/plugin.spec.ts:37]
 
-`apply(ctx)` 在全局 `ctx` 上 `ctx.on('agent/created')`。listener 只给 **未来的 root** 装 runtime：已经在跑的 agent、非 `ctx.agents.roots()` 的 child、以及插件正在拆的窗口，一律跳过。注册发生在 `agent.ctx`（scope-local 层），所以无 agent 的 `ctx.tools.get('schedule_create')` 是 `undefined`。[E: packages/schedule/schedule/src/index.ts:52] [E: packages/schedule/schedule/src/index.ts:53] [E: packages/schedule/schedule/src/index.ts:56] [E: packages/schedule/schedule/tests/plugin.spec.ts:45] [E: packages/schedule/schedule/tests/plugin.spec.ts:48] [E: packages/schedule/schedule/tests/plugin.spec.ts:52] [E: packages/core/agent/src/index.ts:605]
+`apply(ctx)` 在全局 `ctx` 上 `ctx.on('agent/created')`。listener 只给 **未来的 root** 装 runtime：已经在跑的 agent、非 `ctx.agents.roots()` 的 child、以及插件正在拆的窗口，一律跳过。注册发生在 `agent.ctx`（scope-local 层），所以无 agent 的 `ctx.tools.get('schedule_create')` 是 `undefined`。[E: packages/schedule/schedule/src/index.ts:52] [E: packages/schedule/schedule/src/index.ts:53] [E: packages/schedule/schedule/src/index.ts:56] [E: packages/schedule/schedule/tests/plugin.spec.ts:45] [E: packages/schedule/schedule/tests/plugin.spec.ts:48] [E: packages/schedule/schedule/tests/plugin.spec.ts:52] [E: packages/core/agent/src/index.ts:608]
 
 child agent 即使在已装 Schedule 的 root 底下 `create`，也拿不到这三条工具。[E: packages/schedule/schedule/tests/plugin.spec.ts:69]
 
@@ -92,9 +92,9 @@ child agent 即使在已装 Schedule 的 root 底下 `create`，也拿不到这�
 
 ## 用途定位
 
-三条工具管的是**当前 session 里的提醒记录**，不是 cron、不是日历、不是 OS / 邮件 / SMS 推送。创建时模型必须给非空 `prompt`，再从三种选择器里**恰好挑一个**：相对延迟 `after_seconds`、绝对时刻 `at`、固定频率 `every_seconds`（下限 `MIN_EVERY_INTERVAL_SECONDS = 300`）。[E: packages/schedule/schedule/src/domain.ts:24] [E: packages/schedule/schedule/src/tools.ts:268]
+三条工具管的是**当前 session 里的提醒记录**，不是 cron、不是日历、不是 OS / 邮件 / SMS 推送。创建时模型必须给非空 `prompt`，再从三种选择器里**恰好挑一个**：相对延迟 `after_seconds`、绝对时刻 `at`、固定频率 `every_seconds`（下限 `MIN_EVERY_INTERVAL_SECONDS = 300`）。[E: packages/schedule/schedule/src/domain.ts:25] [E: packages/schedule/schedule/src/tools.ts:268]
 
-投递边界写死为 `deliveryMode: 'session-local'`：只有这条 session 的 **live root** 在跑，到期才会 `followup`；进程关掉或 session 变冷，内存 timer 停，记录仍留在日志里，下次 resume 同一 session 会把已到期的当成 overdue 再投一次。冷读历史不会激活 timer。fork 只 fold `seedLength` 之后的后缀，不继承父会话的 active 提醒。[E: packages/schedule/schedule/src/domain.ts:794] [E: packages/schedule/schedule/src/domain.ts:640] [E: packages/schedule/schedule/tests/jsonl-restart.spec.ts:103]
+投递边界写死为 `deliveryMode: 'session-local'`：只有这条 session 的 **live root** 在跑，到期才会 `followup`；进程关掉或 session 变冷，内存 timer 停，记录仍留在日志里，下次 resume 同一 session 会把已到期的当成 overdue 再投一次。冷读历史不会激活 timer。fork 只 fold `seedLength` 之后的后缀，不继承父会话的 active 提醒。[E: packages/schedule/schedule/src/domain.ts:797] [E: packages/schedule/schedule/src/domain.ts:640] [E: packages/schedule/schedule/tests/jsonl-restart.spec.ts:103]
 
 `every` 对齐创建时刻，不枚举漏掉的 occurrence：一次 idle 决策只取每条 overdue 规则的**最新**一次，多条 overdue `every` 合成一条 `[SCHEDULE REMINDER BATCH]`。到期的 one-shot 永远排在这批 fixed-rate 前面。[E: packages/schedule/schedule/src/runtime.ts:47] [E: packages/schedule/schedule/tests/runtime.spec.ts:288] [E: packages/schedule/schedule/tests/runtime.spec.ts:331]
 
@@ -128,7 +128,7 @@ child agent 即使在已装 Schedule 的 root 底下 `create`，也拿不到这�
 | `after_seconds` 非正整数 / `every_seconds` 非整数 | `invalid_rule` | 否 [E: packages/schedule/schedule/tests/tools.spec.ts:148] |
 | `every_seconds < 300`（含 `299`） | `frequency_too_high` | 否 [E: packages/schedule/schedule/tests/tools.spec.ts:159] |
 | `at` 字符串缺 offset（无 `Z` / 数值 offset） | `invalid_rule` | 是（过了 `validateCreateArgs` 才进 preflight）[E: packages/schedule/schedule/tests/tools.spec.ts:287] |
-| 本地墙钟落在 DST gap（`createAtScheduleRecord` 找不到 candidate 且非 out-of-range） | `invalid_rule` | 是 [E: packages/schedule/schedule/src/domain.ts:379] [E: packages/schedule/schedule/tests/domain.spec.ts:421] |
+| 本地墙钟落在 DST gap（`createAtScheduleRecord` 找不到 candidate 且非 out-of-range） | `invalid_rule` | 是 [E: packages/schedule/schedule/src/domain.ts:380] [E: packages/schedule/schedule/tests/domain.spec.ts:421] |
 | `time_zone` 不是 `UTC` / IANA | `invalid_time_zone` | 是 [E: packages/schedule/schedule/tests/tools.spec.ts:293] |
 | 目标 `<= now` | `not_future` | 是 [E: packages/schedule/schedule/tests/tools.spec.ts:299] |
 | 算出来的瞬间超出四位年份 RFC 3339 UTC | `time_out_of_range` | 是 [E: packages/schedule/schedule/tests/tools.spec.ts:311] |
@@ -157,18 +157,18 @@ child agent 即使在已装 Schedule 的 root 底下 `create`，也拿不到这�
 
 ### 成功 view（create 单条 / list 数组元素）
 
-`scheduleView(record, now)` 在 durable 记录上加两个字段：[E: packages/schedule/schedule/src/domain.ts:790]
+`scheduleView(record, now)` 在 durable 记录上加两个字段：[E: packages/schedule/schedule/src/domain.ts:793]
 
 | 字段 | 含义 |
 |---|---|
-| `id` | session-local，创建后永不复用（删掉 `schedule-1` 再创建是 `schedule-2`）[E: packages/schedule/schedule/src/domain.ts:654] [E: packages/schedule/schedule/tests/tools.spec.ts:196] |
+| `id` | session-local，创建后永不复用（删掉 `schedule-1` 再创建是 `schedule-2`）[E: packages/schedule/schedule/src/domain.ts:655] [E: packages/schedule/schedule/tests/tools.spec.ts:196] |
 | `kind` | `'after'` / `'at'` / `'every'` |
 | `prompt` | 已 trim |
 | `scheduledAt` | 规范四位年份 UTC instant（`…Z`） |
 | `afterSeconds` | 仅 `kind: 'after'` |
 | `everySeconds` | 仅 `kind: 'every'` |
 | `state` | `now >= scheduledAt` → `'overdue'`，否则 `'scheduled'` [E: packages/schedule/schedule/src/domain.ts:793] |
-| `deliveryMode` | 常量 `'session-local'` [E: packages/schedule/schedule/src/domain.ts:794] |
+| `deliveryMode` | 常量 `'session-local'` [E: packages/schedule/schedule/src/domain.ts:797] |
 
 `at` 记录**没有** `date` / `time` / `time_zone` / 原始 offset 字符串。`+08:00` 输入会变成 UTC `scheduledAt` 再落盘。[E: packages/schedule/schedule/tests/tools.spec.ts:219]
 
@@ -194,15 +194,15 @@ child agent 即使在已装 Schedule 的 root 底下 `create`，也拿不到这�
 
 | 角色 | 落点 |
 |---|---|
-| Definition | 本包把 `SessionEventMap['schedule/change']` 扩成 v1 `ScheduleChange`（`create` / `delete` / `dispatch`），并定义三条 tool schema。协议版本常量 `SCHEDULE_CHANGE_VERSION = 1`。[E: packages/schedule/schedule/src/types.ts:219] [E: packages/schedule/schedule/src/domain.ts:21] |
-| Provider | persistence 后端加上 `ctx.sessions.flush` 这条共享 barrier。Schedule **不**自己写磁盘。[E: packages/core/session/src/index.ts:1020] |
+| Definition | 本包把 `SessionEventMap['schedule/change']` 扩成 v1 `ScheduleChange`（`create` / `delete` / `dispatch`），并定义三条 tool schema。协议版本常量 `SCHEDULE_CHANGE_VERSION = 1`。[E: packages/schedule/schedule/src/types.ts:219] [E: packages/schedule/schedule/src/domain.ts:22] |
+| Provider | persistence 后端加上 `ctx.sessions.flush` 这条共享 barrier。Schedule **不**自己写磁盘。[E: packages/core/session/src/index.ts:1117] |
 | Consumer | `registerScheduleTools`（管理面）和 `ScheduleRuntime`（投递面）。两者都通过 `flushSchedulePersistence` 要求「至少一名 `session/flush` listener 成功返回」。 |
 
 `apply` 的 `inject` 决定插件能不能 load。换掉 persistence 后端会带走：flush 是否真的落盘、进程重启后能否 `agents.resume` 找回 overdue。不会带走：三条 wire 名、选择器形状、`MIN_EVERY_INTERVAL_SECONDS`、session-local 投递、`schedule/change` 的严格 decode。
 
 消费的 `ctx.*` / agent API：
 
-- `ctx.agents`：`agent/created`、`roots()`、`withoutInitiator`、`get`（runtime 用来确认自己还是活着的 root）。[E: packages/schedule/schedule/src/index.ts:53] [E: packages/core/agent/src/index.ts:605]
+- `ctx.agents`：`agent/created`、`roots()`、`withoutInitiator`、`get`（runtime 用来确认自己还是活着的 root）。[E: packages/schedule/schedule/src/index.ts:53] [E: packages/core/agent/src/index.ts:608]
 - `ctx.sessions.flush`：管理工具的 preflight / post-append barrier，以及 runtime 的 wake / dispatch barrier。[E: packages/schedule/schedule/src/persistence.ts:26]
 - `ctx.tools.register`：在 **`agent.ctx`** 上注册，属于该 root 的 scope-local 层。[E: packages/core/tools/src/index.ts:1028] [E: packages/schedule/schedule/src/index.ts:56]
 - `ctx.sessionPersistence`：只出现在 `inject` 里，用来等 Provider 就位；工具 body 不直接调它。
@@ -224,14 +224,14 @@ child agent 即使在已装 Schedule 的 root 底下 `create`，也拿不到这�
 - **调度模式**：三条 `defineTool` 都没声明 `isConcurrencySafe`。registry `executionMode` 只把精确 `true` 当成 `parallel`，否则 `exclusive`。测试对三个名字都断言 `{ kind: 'exclusive' }`。[E: packages/core/tools/src/index.ts:1269] [E: packages/schedule/schedule/tests/tools.spec.ts:115]
 - **包内 FIFO**：body 还包一层 `runScheduleTransaction(agent, …)`，按 agent 串行化 create/list/delete，避免两个 mutation 交错 fold。[E: packages/schedule/schedule/src/transaction.ts:13]
 - **`tools/execute` 包装**：
-  - `session-checkpoint-policy` 在「有 `exec.agent` 且 `exec.parent === undefined`」时先 `flush` 再 `next()`；这是通用 checkpoint，不是 Schedule 自己的 `flushSchedulePersistence`。[E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
+  - `session-checkpoint-policy` 在「有 `exec.agent` 且 `exec.parent === undefined`」时先 `flush` 再 `next()`；这是通用 checkpoint，不是 Schedule 自己的 `flushSchedulePersistence`。[E: packages/session/session-checkpoint-policy/src/index.ts:70] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
   - `timeout-policy` 读 `definition.timeoutMs`。三条工具都没声明该字段，包装器直接 `next()`。[E: packages/guard/timeout-policy/src/index.ts:57] [E: packages/guard/timeout-policy/src/index.ts:59]
 - **`tools/post-execute`**：Schedule 不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1735]
 - **sandbox / approval**：不挂。
 
 到期投递**不**经过 `tools/pre-execute → execute → post-execute`。`ScheduleRuntime.driveOnce` 在 idle maintenance 里 `followup` + `append('schedule/change', { operation: 'dispatch' })`。
 
-若同一会话又开了 PTC（`tools.presentAs('ptc')` 或 preset `mode: ptc`），非嵌套且有效模式为 `'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse，**进不了** `tools/pre-execute`。SDK 子分发带 `parent` 则不 collapse，仍走完整管线。[E: packages/core/tools/src/index.ts:1316] [E: packages/core/tools/src/index.ts:1430]
+若同一会话又开了 PTC（`tools.presentAs('ptc')` 或 preset `mode: ptc`），非嵌套且有效模式为 `'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse，**进不了** `tools/pre-execute`。SDK 子分发带 `parent` 则不 collapse，仍走完整管线。[E: packages/core/tools/src/index.ts:1315] [E: packages/core/tools/src/index.ts:1430]
 
 ## Preset 装配
 
@@ -242,16 +242,16 @@ child agent 即使在已装 Schedule 的 root 底下 `create`，也拿不到这�
 | preset | 装 `@deepseek-ai/dsh-schedule`？ | `disabled` | isolate | 反证（该文件实际末条） |
 |---|---|---|---|---|
 | `minimal` | **否** | — | — | 末条是 isolate `fs` 组里的 `str-replace-editor` → `@deepseek-ai/dsh-tool-str-replace-editor`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:86] |
-| `standard` | **否** | — | — | 末条是 `tool-web` → `@deepseek-ai/dsh-tool-web`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:253] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:254] |
-| `ptc`（稳定 wiki 别名仍是 `surface.presets.code`） | **否** | — | — | 相对 `standard` 的增量是末尾 `tool-presentation` `mode: ptc`，仍然没有 schedule 行。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
-| `cordis` | **否** | — | — | 增量是 `tool-cordis`；文件末条是 `tool-skill`。没有 schedule 行。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:267] |
+| `standard` | **否** | — | — | 末条是 `tool-web` → `@deepseek-ai/dsh-tool-web`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:247] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:248] |
+| `ptc`（稳定 wiki 别名仍是 `surface.presets.code`） | **否** | — | — | 相对 `standard` 的增量是末尾 `tool-presentation` `mode: ptc`，仍然没有 schedule 行。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:271] |
+| `cordis` | **否** | — | — | 增量是 `tool-cordis`；文件末条是 `tool-skill`。没有 schedule 行。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:255] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:261] |
 
 `dsh-base` / `dsh-web-app` / `dsh-headless` 的 `cordis.patch.yml` 同样没有 `dsh-schedule` 行。产品默认 Web / headless / sdk / sdk-minimal / acp catalog 因此不含 `schedule_*`，除非用户 patch 或 example overlay。
 
 它出现在**用户 / example composition**，不是 shipped preset：
 
 - `apps/cli/config/examples/schedule/cordis.yml` 在 host 面 `insert` `id: time-context` 与 `id: schedule` / `name: '@deepseek-ai/dsh-schedule'`，并把 `ui-schedule` 的 `disabled: false`。[E: apps/cli/config/examples/schedule/cordis.yml:8] [E: apps/cli/config/examples/schedule/cordis.yml:9] [E: apps/cli/config/examples/schedule/cordis.yml:11]
-- Web e2e 用 `launchWebScaffold({ extraOverlayPath: OVERLAY })` 加载这份 overlay（`OVERLAY` 指向上述 yml），再断言请求里出现 `schedule_create`。[E: apps/web/tests/schedule-after.e2e.ts:37] [E: apps/web/tests/schedule-after.e2e.ts:267] [E: apps/web/tests/schedule-after.e2e.ts:535]
+- Web e2e 用 `launchWebScaffold({ extraOverlayPath: OVERLAY })` 加载这份 overlay（`OVERLAY` 指向上述 yml），再断言请求里出现 `schedule_create`。[E: apps/web/tests/schedule-after.e2e.ts:38] [E: apps/web/tests/schedule-after.e2e.ts:267] [E: apps/web/tests/schedule-after.e2e.ts:536]
 - 用户自己的 `$DSH_HOME/profiles/<name>/cordis.patch.yml` 或 `dsh --profile web|headless|sdk|sdk-minimal|acp --patch …` 也可以同样 insert。插件只观察**加载之后新发布的 root**；已经活着的 root 不会补注册。[E: packages/schedule/schedule/tests/plugin.spec.ts:45]
 
 ## execute() 走读
@@ -268,7 +268,7 @@ child agent 即使在已装 Schedule 的 root 底下 `create`，也拿不到这�
 
 ### 2. `schedule_create`
 
-6. **分配 id。** `allocateScheduleId(folded)` 从 `schedule-${seen.size+1}` 往上找第一个未见过的 `schedule-N`。已删除的 id 仍在 `seenIds` 里。[E: packages/schedule/schedule/src/domain.ts:654]
+6. **分配 id。** `allocateScheduleId(folded)` 从 `schedule-${seen.size+1}` 往上找第一个未见过的 `schedule-N`。已删除的 id 仍在 `seenIds` 里。[E: packages/schedule/schedule/src/domain.ts:655]
 7. **造 record。** `args.at` 优先，否则 `after_seconds`，否则 `every_seconds`。每个分支各自再调一次 `Date.now()`。`ScheduleInputError` 变成对应 `code`；其它异常变成 `internal_error`。[E: packages/schedule/schedule/src/tools.ts:364] [E: packages/schedule/schedule/src/tools.ts:366] [E: packages/schedule/schedule/src/tools.ts:369] [E: packages/schedule/schedule/src/tools.ts:377] [E: packages/schedule/schedule/tests/tools.spec.ts:320]
 8. **append 前再看一眼 abort。** 已算出 record 但还没写日志时取消，不 persist。[E: packages/schedule/schedule/src/tools.ts:379]
 9. **append `schedule/change`。** payload 是 `{ version: 1, operation: 'create', schedule: record }`。`append` 抛错 → `internal_error`。[E: packages/schedule/schedule/src/tools.ts:382]
@@ -289,16 +289,16 @@ child agent 即使在已装 Schedule 的 root 底下 `create`，也拿不到这�
 ### 5. `ScheduleRuntime` 投递（不是 tool body）
 
 15. **何时 drive。** `runtime.start()`、每次成功的 durable-change observer、以及 root 回到 `status === 'idle'` 且日志里已有 `schedule/change`。[E: packages/schedule/schedule/src/index.ts:62] [E: packages/schedule/schedule/src/runtime.ts:99]
-16. **wake。** `driveOnce` 先 flush，再 fold，再 `dueDecision(now)`。没有任何 due → 若有未来 `scheduledAt` 就 `setTimeout`（单段不超过 `MAX_TIMER_DELAY_MS = 2_147_483_647`），到点只重新 `requestDrive`，以墙上时钟为准，避免 timer 漂移早射。[E: packages/schedule/schedule/src/runtime.ts:179] [E: packages/schedule/schedule/src/runtime.ts:250] [E: packages/schedule/schedule/src/runtime.ts:22] [E: packages/schedule/schedule/tests/runtime.spec.ts:191]
+16. **wake。** `driveOnce` 先 flush，再 fold，再 `dueDecision(now)`。没有任何 due → 若有未来 `scheduledAt` 就 `setTimeout`（单段不超过 `MAX_TIMER_DELAY_MS = 2_147_483_647`），到点只重新 `requestDrive`，以墙上时钟为准，避免 timer 漂移早射。[E: packages/schedule/schedule/src/runtime.ts:179] [E: packages/schedule/schedule/src/runtime.ts:251] [E: packages/schedule/schedule/src/runtime.ts:22] [E: packages/schedule/schedule/tests/runtime.spec.ts:191]
 17. **准入。** 有 due 就 `agent.runMaintenance`。同步扔 busy → `whenIdle()`，**不**把记录标成已 dispatch。[E: packages/schedule/schedule/src/runtime.ts:309] [E: packages/schedule/schedule/tests/runtime.spec.ts:224]
 18. **maintenance 内再采样一次 `Date.now()`。** 墙上时钟回拨则改回 wait。确认 due 后：
-    - one-shot：`renderReminderFraming` → `[SCHEDULE REMINDER]`。`schedule_id_json` 与 `reminder_prompt_json` 走 `JSON.stringify`；`occurrence_at` 是裸插值 `record.scheduledAt`，不 stringify。prompt 里伪造的 `occurrence_at:` 因此只会落在 JSON 字符串字段里。[E: packages/schedule/schedule/src/domain.ts:805] [E: packages/schedule/schedule/src/domain.ts:807] [E: packages/schedule/schedule/src/domain.ts:808] [E: packages/schedule/schedule/tests/runtime.spec.ts:252]
+    - one-shot：`renderReminderFraming` → `[SCHEDULE REMINDER]`。`schedule_id_json` 与 `reminder_prompt_json` 走 `JSON.stringify`；`occurrence_at` 是裸插值 `record.scheduledAt`，不 stringify。prompt 里伪造的 `occurrence_at:` 因此只会落在 JSON 字符串字段里。[E: packages/schedule/schedule/src/domain.ts:806] [E: packages/schedule/schedule/src/domain.ts:807] [E: packages/schedule/schedule/src/domain.ts:808] [E: packages/schedule/schedule/tests/runtime.spec.ts:252]
     - 全部 overdue `every`：`.sort(byTargetThenCreate)` 后再合成 `[SCHEDULE REMINDER BATCH]` + `reminders_json`。[E: packages/schedule/schedule/src/domain.ts:827] [E: packages/schedule/schedule/src/runtime.ts:52]
 19. **`followup` 先于 dispatch append。** 顺序测试固定为 `flush → maintenance → followup → dispatch → release → flush`。`followup` 失败则**不**写 dispatch，下次 idle 会重试同一条。[E: packages/schedule/schedule/src/runtime.ts:275] [E: packages/schedule/schedule/tests/runtime.spec.ts:248]
 20. **dispatch 形状。** one-shot 是 `{ version: 1, operation: 'dispatch', id }`（fold 后从 active 消失）。`every` 是同结构外加 `acceptedAt`；`dispatchedRecord` 调 `resolveEveryOccurrence` 把 `scheduledAt` 推到下一档，若下一档超出四位年份则 `nextScheduledAt` 缺失、规则结束。[E: packages/schedule/schedule/src/runtime.ts:284] [E: packages/schedule/schedule/src/domain.ts:544] [E: packages/schedule/schedule/src/domain.ts:563] [E: packages/schedule/schedule/src/domain.ts:564]
-21. **resume。** JSONL 重启：第一条 overdue create 在新进程 `agents.resume` 后恰好 dispatch 一次；再 resume 一次不会二次 followup。[E: packages/schedule/schedule/tests/jsonl-restart.spec.ts:115] [E: packages/schedule/schedule/tests/jsonl-restart.spec.ts:131]
+21. **resume。** JSONL 重启：第一条 overdue create 在新进程 `agents.resume` 后恰好 dispatch 一次；再 resume 一次不会二次 followup。[E: packages/schedule/schedule/tests/jsonl-restart.spec.ts:115] [E: packages/schedule/schedule/tests/jsonl-restart.spec.ts:132]
 
-到期进模型的是 **user-role** 消息，`source.plugin === 'schedule'`，正文含 `untrusted reminder content` framing，不是模型 tool result。[E: apps/web/tests/schedule-after.e2e.ts:194] [E: apps/web/tests/schedule-after.e2e.ts:196] Web overlay 另开 `ui-schedule` 做 active catalog（`Active reminders` list），那是宿主 UI，不是第三条 wire 名。[E: apps/cli/config/examples/schedule/cordis.yml:11] [E: apps/web/tests/schedule-after.e2e.ts:513]
+到期进模型的是 **user-role** 消息，`source.plugin === 'schedule'`，正文含 `untrusted reminder content` framing，不是模型 tool result。[E: apps/web/tests/schedule-after.e2e.ts:195] [E: apps/web/tests/schedule-after.e2e.ts:196] Web overlay 另开 `ui-schedule` 做 active catalog（`Active reminders` list），那是宿主 UI，不是第三条 wire 名。[E: apps/cli/config/examples/schedule/cordis.yml:11] [E: apps/web/tests/schedule-after.e2e.ts:513]
 
 ## 设计动机·edge
 

@@ -32,7 +32,7 @@ symbols: [parseDshArgs, DshInvocation, runProfile, runDumpConfig, PROFILE_TEMPLA
 related: [ref.cli-flags, spine.composition-boot]
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh` 的 `dsh` 可执行文件是 Cordis **组合运行时**的进程 launcher:只解析自己拥有的旗标,解析出三种 `DshInvocation` mode(`profile` / `plugin` / `dump-config`),再动态 import 对应 runner;`dsh web` 只是 `--profile web` 的 alias,仍然是 `mode: 'profile'`。没有 `dsh sdk` / `dsh acp` / `dsh headless` 子命令。
@@ -161,9 +161,9 @@ profile 目录在 `$DSH_HOME/profiles/<name>`(`PROFILES_DIR = 'profiles'`)。`$D
 
 preset roster **不**由这一栈注入:web 的 bundle patch 自己 insert `agent-presets`;headless / sdk / acp overlay 不挂 roster,模型可见工具留在 host 面 `dsh-base` 行。preset 里有哪些工具,只看 `packages/preset/agent-presets/presets/<id>/agent.cordis.yml`(节点 [`surface.presets.overview`](../presets/overview.md)),不看 `apps/cli/package.json` 的 dependencies。
 
-`runProfile` 然后 `boot('dsh', rootConfig, allPatches, prepare)`:prepare 里先 `provide` 启动环境快照,再 `provideCmdline`。[E: apps/cli/src/profile-boot.ts:251][E: apps/cli/src/profile-boot.ts:258] 启动窗就挂 `SIGTERM` → `interrupt(0)`、`SIGINT` → `interrupt(130)`,以及 `installFailLoud`。[E: apps/cli/src/profile-boot.ts:224][E: apps/cli/src/profile-boot.ts:225] 优雅退出宽限 `PROCESS_SHUTDOWN_TIMEOUT_MS = 5_000`。[E: apps/cli/src/process-shutdown.ts:4]
+`runProfile` 然后 `boot('dsh', rootConfig, allPatches, prepare)`:prepare 里先 `provide` 启动环境快照,再 `provideCmdline`。[E: apps/cli/src/profile-boot.ts:256][E: apps/cli/src/profile-boot.ts:258] 启动窗就挂 `SIGTERM` → `interrupt(0)`、`SIGINT` → `interrupt(130)`,以及 `installFailLoud`。[E: apps/cli/src/profile-boot.ts:224][E: apps/cli/src/profile-boot.ts:225] 优雅退出宽限 `PROCESS_SHUTDOWN_TIMEOUT_MS = 5_000`。[E: apps/cli/src/process-shutdown.ts:4]
 
-**只有** `composed.profile.patchReload === 'live'` 才装 watcher:若无 `hmr` 服务,launcher 会补 `root: []` 的 watch-only HMR(必要时先装 timer),并 `watchUserPatches` 监视 profile 层与 home 层。[E: apps/cli/src/profile-boot.ts:270][E: apps/cli/src/profile-boot.ts:285][E: apps/cli/src/profile-boot.ts:287][E: apps/cli/src/profile-boot.ts:292] `startup` 模板仍在 boot 时应用这两层用户文件,但不装 watch。live 重组成序与 boot 相同:bundle → profile `cordis.patch.yml` → home `cordis.patch.yml` → overlays。[E: apps/cli/src/profile-boot.ts:243]
+**只有** `composed.profile.patchReload === 'live'` 才装 watcher:若无 `hmr` 服务,launcher 会补 `root: []` 的 watch-only HMR(必要时先装 timer),并 `watchUserPatches` 监视 profile 层与 home 层。[E: apps/cli/src/profile-boot.ts:271][E: apps/cli/src/profile-boot.ts:285][E: apps/cli/src/profile-boot.ts:287][E: apps/cli/src/profile-boot.ts:294] `startup` 模板仍在 boot 时应用这两层用户文件,但不装 watch。live 重组成序与 boot 相同:bundle → profile `cordis.patch.yml` → home `cordis.patch.yml` → overlays。[E: apps/cli/src/profile-boot.ts:243]
 
 ### dump 不 boot,叠层也更窄
 
@@ -178,7 +178,7 @@ preset roster **不**由这一栈注入:web 的 bundle patch 自己 insert `agen
 - [`surface.profiles.headless`](../profiles/headless.md) — `dsh-base` + `dsh-headless`,`startup`;无 HTTP / browser;不挂 `agent-presets`;task positional 在 app 侧解析。
 - [`surface.presets.overview`](../presets/overview.md) — shipped preset 发现 / `mountPreset` / isolate;`SHIPPED_PRESET_ROOT` 在 agent-presets 包内。
 - `@deepseek-ai/dsh-cmdline` — `provideCmdline` / `parseCmdline` 是 app 旗标的 seam:Definition 是 `ctx.cmdlineArgs` + `ctx.appExit`,Provider 是 launcher 的 `runProfile`,Consumer 是各 bundle 的 `*-startup` 插件。[E: packages/boot/cmdline/src/index.ts:84]
-- `@deepseek-ai/dsh-app-boot` — `loadProfile` / `initProfile` / `PROFILE_TEMPLATES` / `boot` / `loadLayeredEnv` / `renderConfigDump`;组合真树的算法在这边,CLI 是调用方。[E: packages/boot/app-boot/src/index.ts:394][E: packages/boot/app-boot/src/index.ts:772]
+- `@deepseek-ai/dsh-app-boot` — `loadProfile` / `initProfile` / `PROFILE_TEMPLATES` / `boot` / `loadLayeredEnv` / `renderConfigDump`;组合真树的算法在这边,CLI 是调用方。[E: packages/boot/app-boot/src/index.ts:378][E: packages/boot/app-boot/src/index.ts:756]
 
 ## Sources
 

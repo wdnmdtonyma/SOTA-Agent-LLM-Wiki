@@ -42,7 +42,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: 0a53fb55be
+updated: d347e70390
 ---
 
 > `@deepseek-ai/dsh-fs-local` 的 `LocalFileSystem` 是 `ctx.fs` 的 **本地磁盘 Provider**：继承 `FileSystem`，用 realpath 当 `targetKey`，按 key 串行锁，经同目录私有 staging 原子发布。`Config.cwd` 只是相对路径解析默认，**不是** containment。shipped `dsh-base` **不**把本包挂成 host `ctx.fs`（默认是 extends 本类的 `fs-sandbox`）；`minimal` preset 用 `isolate.fs: true` 再挂一份，只影子该会话。`dsh-sdk-minimal` 是例外：host 面直接挂 `id: fs-local`。
