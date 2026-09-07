@@ -5,7 +5,7 @@ kind: tool
 tier: T1
 v: shared
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 evidence: explicit
 source:
   - packages/opencode/src/tool/apply_patch.ts
@@ -54,7 +54,7 @@ V2 `apply_patch` 是 core 内核的 typed patch tool。description 明确限定 
 
 ### V1
 
-- 成功输出以 `Success. Updated the following files:` 开头，摘要行只输出 `A|D|M <relative path>`；additions/deletions 存在于 `metadata.files`，不是摘要文本的一部分。[E: packages/opencode/src/tool/apply_patch.ts:274][E: packages/opencode/src/tool/apply_patch.ts:284][E: packages/opencode/src/tool/apply_patch.ts:194][E: packages/opencode/src/tool/apply_patch.ts:199][E: packages/opencode/src/tool/apply_patch.ts:200]
+- 成功输出以 `Success. Updated the following files:` 开头，摘要行只输出 `A|D|M <relative path>`；additions/deletions 存在于 `metadata.files`，不是摘要文本的一部分；`movePath` 仅在 truthy 时写入 files 对象。[E: packages/opencode/src/tool/apply_patch.ts:274][E: packages/opencode/src/tool/apply_patch.ts:284][E: packages/opencode/src/tool/apply_patch.ts:194][E: packages/opencode/src/tool/apply_patch.ts:199][E: packages/opencode/src/tool/apply_patch.ts:200][E: packages/opencode/src/tool/apply_patch.ts:201]
 - metadata 包含 `diff`, `files`, `diagnostics` 等；diff/files 也用于权限请求展示。[E: packages/opencode/src/tool/apply_patch.ts:210][E: packages/opencode/src/tool/apply_patch.ts:213][E: packages/opencode/src/tool/apply_patch.ts:297]
 - V1 通用 `Tool.wrap` 会对最终 output 做 truncation，除非工具 metadata 已经标记 truncated。[E: packages/opencode/src/tool/tool.ts:131][E: packages/opencode/src/tool/tool.ts:135][E: packages/opencode/src/tool/tool.ts:141]
 

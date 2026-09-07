@@ -9,7 +9,7 @@ symbols: [RuntimeFlags.experimentalEventSystem, EventV2Bridge, SessionV2, Sessio
 related: [spine.v1-turn-loop, spine.v2-overview]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > V1/V2 迁移边界是:默认 opencode CLI/server 仍保留 V1 session prompt loop,但 V1 durable events 与 V2 durable events 共享 EventV2/manifest/projector 基础设施;current V2 embedded API 通过 server routes 与 sdk-next 接入,不再通过已删除的 `packages/core/src/public/opencode.ts`。
@@ -41,7 +41,7 @@ flowchart TD
 
 ## V1
 
-默认 CLI 非 attach 路径创建带 in-process fetch 的 SDK client,非交互 prompt 调 `client.session.prompt`;server session handler 取 `SessionPrompt.Service` 并在 prompt handler 中调用 `promptSvc.prompt`;V1 prompt 随后进入 `state.ensureRunning(... runLoop(...))`,processor 的 `process` 方法在 `llm.stream(streamInput)` 处打开模型流。[E: packages/opencode/src/cli/cmd/run.ts:948][E: packages/opencode/src/cli/cmd/run.ts:956][E: packages/opencode/src/cli/cmd/run.ts:864][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:52][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:300][E: packages/opencode/src/session/prompt.ts:1346][E: packages/opencode/src/session/processor.ts:627][E: packages/opencode/src/session/processor.ts:640]
+默认 CLI 非 attach 路径创建带 in-process fetch 的 SDK client,非交互 prompt 调 `client.session.prompt`;server session handler 取 `SessionPrompt.Service` 并在 prompt handler 中调用 `promptSvc.prompt`;V1 prompt 随后进入 `state.ensureRunning(... runLoop(...))`,processor 的 `process` 方法在 `llm.stream(streamInput)` 处打开模型流。[E: packages/opencode/src/cli/cmd/run.ts:948][E: packages/opencode/src/cli/cmd/run.ts:956][E: packages/opencode/src/cli/cmd/run.ts:864][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:52][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:300][E: packages/opencode/src/session/prompt.ts:1346][E: packages/opencode/src/session/processor.ts:641][E: packages/opencode/src/session/processor.ts:654]
 
 V1 prompt/processor 当前通过 `EventV2Bridge.Service` 取得 event service;`EventV2Bridge` 包装 `EventV2.Service.publish`,没有 location 时从 `InstanceRef`/`WorkspaceRef` 补 location,并监听 EventV2 后 fan-out 到 `GlobalBus`。[E: packages/opencode/src/session/prompt.ts:140][E: packages/opencode/src/session/processor.ts:95][E: packages/opencode/src/event-v2-bridge.ts:12][E: packages/opencode/src/event-v2-bridge.ts:19][E: packages/opencode/src/event-v2-bridge.ts:22][E: packages/opencode/src/event-v2-bridge.ts:24][E: packages/opencode/src/event-v2-bridge.ts:25][E: packages/opencode/src/event-v2-bridge.ts:39]
 

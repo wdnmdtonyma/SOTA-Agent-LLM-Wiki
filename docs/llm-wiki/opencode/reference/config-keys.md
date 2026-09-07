@@ -17,7 +17,7 @@ symbols:
   - ConfigMigrateV1.migrate
   - ConfigV2Compat.lower
 evidence: explicit
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > 这份节点是机器可读的 config key 总账：V1 是当前 V1 CLI/agent surface 的配置 schema，V2 是 `@opencode/v2` core 的 `Config.Info` schema。
@@ -97,7 +97,7 @@ V1 schema 的主入口是 `ConfigV1.Info`，顶层还定义了 well-known `confi
 | `mcp` | local, OAuth, and remote server shapes | [E: packages/core/src/v1/config/mcp.ts:6][E: packages/core/src/v1/config/mcp.ts:26][E: packages/core/src/v1/config/mcp.ts:44] |
 | `permission` | `read/edit/glob/grep/list/bash/task/external_directory/todowrite/question/webfetch/websearch/lsp/doom_loop/skill` plus unknown string keys | [E: packages/core/src/v1/config/permission.ts:19][E: packages/core/src/v1/config/permission.ts:20][E: packages/core/src/v1/config/permission.ts:21][E: packages/core/src/v1/config/permission.ts:22][E: packages/core/src/v1/config/permission.ts:23][E: packages/core/src/v1/config/permission.ts:24][E: packages/core/src/v1/config/permission.ts:25][E: packages/core/src/v1/config/permission.ts:26][E: packages/core/src/v1/config/permission.ts:27][E: packages/core/src/v1/config/permission.ts:28][E: packages/core/src/v1/config/permission.ts:29][E: packages/core/src/v1/config/permission.ts:30][E: packages/core/src/v1/config/permission.ts:31][E: packages/core/src/v1/config/permission.ts:32][E: packages/core/src/v1/config/permission.ts:33][E: packages/core/src/v1/config/permission.ts:35] |
 | `plugin` | string package or tuple with options | [E: packages/core/src/v1/config/plugin.ts:5][E: packages/core/src/v1/config/plugin.ts:8] |
-| `provider.<id>` | `api`, `name`, `env`, `id`, `npm`, `whitelist`, `blacklist`, `options`, `models` | [E: packages/core/src/v1/config/provider.ts:83][E: packages/core/src/v1/config/provider.ts:84][E: packages/core/src/v1/config/provider.ts:85][E: packages/core/src/v1/config/provider.ts:86][E: packages/core/src/v1/config/provider.ts:87][E: packages/core/src/v1/config/provider.ts:88][E: packages/core/src/v1/config/provider.ts:89][E: packages/core/src/v1/config/provider.ts:90][E: packages/core/src/v1/config/provider.ts:125] |
+| `provider.<id>` | `api`, `name`, `env`, `id`, `npm`, `whitelist`, `blacklist`, `options`（含 `timeout` / `headerTimeout` / `chunkTimeout`，后两者是 `PositiveInt \| false`，文档 default 300000）, `models` | [E: packages/core/src/v1/config/provider.ts:83][E: packages/core/src/v1/config/provider.ts:84][E: packages/core/src/v1/config/provider.ts:85][E: packages/core/src/v1/config/provider.ts:86][E: packages/core/src/v1/config/provider.ts:87][E: packages/core/src/v1/config/provider.ts:88][E: packages/core/src/v1/config/provider.ts:89][E: packages/core/src/v1/config/provider.ts:101][E: packages/core/src/v1/config/provider.ts:108][E: packages/core/src/v1/config/provider.ts:117][E: packages/core/src/v1/config/provider.ts:130] |
 | `provider.<id>.models.<model>` | `id`, `name`, `family`, `release_date`, `attachment`, `reasoning`, `temperature`, `tool_call`, `interleaved`, `cost`, `limit`, `modalities`, `experimental`, `status`, `provider`, `options`, `headers`, `variants` | [E: packages/core/src/v1/config/provider.ts:14][E: packages/core/src/v1/config/provider.ts:15][E: packages/core/src/v1/config/provider.ts:16][E: packages/core/src/v1/config/provider.ts:17][E: packages/core/src/v1/config/provider.ts:18][E: packages/core/src/v1/config/provider.ts:19][E: packages/core/src/v1/config/provider.ts:20][E: packages/core/src/v1/config/provider.ts:21][E: packages/core/src/v1/config/provider.ts:22][E: packages/core/src/v1/config/provider.ts:31][E: packages/core/src/v1/config/provider.ts:47][E: packages/core/src/v1/config/provider.ts:54][E: packages/core/src/v1/config/provider.ts:62][E: packages/core/src/v1/config/provider.ts:63][E: packages/core/src/v1/config/provider.ts:64][E: packages/core/src/v1/config/provider.ts:67][E: packages/core/src/v1/config/provider.ts:68][E: packages/core/src/v1/config/provider.ts:69] |
 | `server` | `port`, `hostname`, `mdns`, `mdnsDomain`, `cors` | [E: packages/core/src/v1/config/server.ts:6][E: packages/core/src/v1/config/server.ts:7][E: packages/core/src/v1/config/server.ts:10][E: packages/core/src/v1/config/server.ts:11][E: packages/core/src/v1/config/server.ts:12][E: packages/core/src/v1/config/server.ts:15] |
 | `skills` | `paths` and `urls` arrays | [E: packages/core/src/v1/config/skills.ts:5][E: packages/core/src/v1/config/skills.ts:6][E: packages/core/src/v1/config/skills.ts:9] |
@@ -157,7 +157,7 @@ V2 schema 的主入口是 `Config.Info` class，而不是 V1 `Schema.Struct` exp
 
 ## V1 CLI `ConfigV2Compat`
 
-V1 活跑 loader 在 decode `ConfigV1.Info` 之前会先跑 `ConfigV2Compat.lower`：把部分 V2 形状的 key 降成 V1 schema，而不是走 `ConfigMigrateV1.migrate` 那条 V1→V2 方向。[E: packages/opencode/src/config/config.ts:36] [E: packages/opencode/src/config/config.ts:189] [E: packages/opencode/src/config/v2-compat.ts:91]
+V1 活跑 loader 在 decode `ConfigV1.Info` 之前会先跑 `ConfigV2Compat.lower`：把部分 V2 形状的 key 降成 V1 schema，而不是走 `ConfigMigrateV1.migrate` 那条 V1→V2 方向。[E: packages/opencode/src/config/config.ts:189] [E: packages/opencode/src/config/v2-compat.ts:91]
 
 | V2-shaped input | V1 output | Rule |
 |---|---|---|

@@ -11,7 +11,7 @@ source:
   - packages/core/src/github-copilot/responses/convert-to-openai-responses-input.ts
   - packages/opencode/src/provider/provider.ts
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 evidence: explicit
 symbols:
   - codeInterpreter

@@ -23,7 +23,7 @@ related:
   - integrations.integration-v2
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > opencode glossary 把 V1 当前活跑路径、V2 新内核、shared package 和容易误读的 codename 分开定义，避免把迁移期同名概念混讲。
@@ -40,7 +40,7 @@ updated: 9f69463f1d
 | --- | --- |
 | V1 current runtime | 当前活跑路径主要在 `packages/opencode/src`。`SessionPrompt.run` 定义 `runLoop`，循环中读取 V1 message stream、降到 model messages，并继续 provider/tool turn [E: packages/opencode/src/session/prompt.ts:1081] [E: packages/opencode/src/session/prompt.ts:1092] [E: packages/opencode/src/session/prompt.ts:1262] [E: packages/opencode/src/session/prompt.ts:1272]。 |
 | `SessionPrompt.loop(...)` | V1 对外 loop 入口，使用 `state.ensureRunning(..., runLoop(sessionID))` 保证同一 session 的 loop 运行被协调 [E: packages/opencode/src/session/prompt.ts:1343] [E: packages/opencode/src/session/prompt.ts:1346]。 |
-| `SessionProcessor` | V1 stream event processor。`SessionProcessor.process` 在开始处理前把 session status 设为 busy，并调用 `llm.stream(streamInput)` 消费 LLM stream [E: packages/opencode/src/session/processor.ts:627] [E: packages/opencode/src/session/processor.ts:639] [E: packages/opencode/src/session/processor.ts:640]。 |
+| `SessionProcessor` | V1 stream event processor。`SessionProcessor.process` 在开始处理前把 session status 设为 busy，并调用 `llm.stream(streamInput)` 消费 LLM stream [E: packages/opencode/src/session/processor.ts:641] [E: packages/opencode/src/session/processor.ts:653] [E: packages/opencode/src/session/processor.ts:654]。 |
 | Vercel AI SDK path | V1 `LLM` seam 中仍包含 AI SDK 兼容路径；native LLM adapter 是 `experimentalNativeLlm` 打开时的 opt-in branch，未选中 native 时会返回 `type: "ai-sdk"` 并调用 `streamText(...)` [E: packages/opencode/src/session/llm.ts:226] [E: packages/opencode/src/session/llm.ts:243] [E: packages/opencode/src/session/llm.ts:271] [E: packages/opencode/src/session/llm.ts:279] [E: packages/opencode/src/session/llm.ts:280]。 |
 | `packages/opencode/src/session/message-v2.ts` | 名字带 `v2`，但该文件导入 `ai` 的 `convertToModelMessages`/`UIMessage`，同时导入 `SessionV1` 和 core session SQL tables，因此它是 V1 与 AI-SDK/current session projection 的消息转换层，不是 V2 core runner [E: packages/opencode/src/session/message-v2.ts:2] [E: packages/opencode/src/session/message-v2.ts:20] [E: packages/opencode/src/session/message-v2.ts:30] [E: packages/opencode/src/session/message-v2.ts:131] [E: packages/opencode/src/session/message-v2.ts:407] [E: packages/opencode/src/session/message-v2.ts:417]。 |
 | `GlobalBus` | V1 side 的 global event emitter 位于 `packages/opencode/src/bus/global.ts`，只定义 `event` channel，并给缺少 id 的 payload 补事件 id [E: packages/opencode/src/bus/global.ts:12] [E: packages/opencode/src/bus/global.ts:15] [E: packages/opencode/src/bus/global.ts:16] [E: packages/opencode/src/bus/global.ts:22]。 |

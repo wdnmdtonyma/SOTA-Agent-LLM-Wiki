@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 source:
   - packages/opencode/src/mcp/index.ts
   - packages/opencode/src/mcp/browser.ts
@@ -112,7 +112,7 @@ V1 config schema 中 local MCP server 有 `type: "local"`、`command`、`environ
 6. `sanitize` 只保留 `a-zA-Z0-9_-`，其它字符都替换成 `_`。[E: packages/opencode/src/mcp/catalog.ts:117]
 7. `SessionTools` 在普通模式遍历 native entries，调用 `McpCatalog.convertTool(entry.def, entry.client, entry.timeout)` 才转成 AI SDK dynamic tool；experimental code mode 会在这个直接 MCP 注入点之前返回。[E: packages/opencode/src/session/tools.ts:388] [E: packages/opencode/src/session/tools.ts:390] [E: packages/opencode/src/session/tools.ts:391]
 8. MCP tool 的 permission key 是最终 tool key，permission pattern 固定是 `*`。[E: packages/opencode/src/session/tools.ts:408]
-9. MCP result content 中 text 进入 output，`image` 与带 `blob` 的 `resource` 转成 file attachments；text output 的截断结果写入 metadata 的 `truncated` 和可选 `outputPath`。[E: packages/opencode/src/session/tools.ts:429] [E: packages/opencode/src/session/tools.ts:430] [E: packages/opencode/src/session/tools.ts:436] [E: packages/opencode/src/session/tools.ts:464] [E: packages/opencode/src/session/tools.ts:467] [E: packages/opencode/src/session/tools.ts:468]
+9. MCP result content 中 text 进入 output，`image` 转成 file attachment；带 `blob` 的 `resource` 只有 mime 属于 pdf/gif/jpeg/png/webp 且不超过 10 MiB 才进 attachments，否则写成 omitted text；text output 的截断结果写入 metadata 的 `truncated` 和可选 `outputPath`。[E: packages/opencode/src/session/tools.ts:33] [E: packages/opencode/src/session/tools.ts:429] [E: packages/opencode/src/session/tools.ts:430] [E: packages/opencode/src/session/tools.ts:436] [E: packages/opencode/src/session/tools.ts:442] [E: packages/opencode/src/session/tools.ts:448] [E: packages/opencode/src/session/tools.ts:464] [E: packages/opencode/src/session/tools.ts:467] [E: packages/opencode/src/session/tools.ts:468]
 
 ### OAuth
 

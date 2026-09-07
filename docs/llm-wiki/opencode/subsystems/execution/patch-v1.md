@@ -20,7 +20,7 @@ related:
   - ref.patch-format
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > V1 apply_patch 是活跑路径里的多文件 patch engine + tool：parser 支持 add/delete/update/move，update 匹配使用 exact/rstrip/trim/Unicode-normalized 四轮 fuzzy seek，工具层先生成 diff 和 permission metadata，再写文件、format、publish watcher/LSP 事件并返回 diagnostics。
@@ -62,7 +62,7 @@ updated: 9f69463f1d
 5. update hunk 先 stat 目标，目录或缺失时报错；读取 BOM-aware source 后调用 `Patch.deriveNewContentsFromChunks` [E: packages/opencode/src/tool/apply_patch.ts:108] [E: packages/opencode/src/tool/apply_patch.ts:115] [E: packages/opencode/src/tool/apply_patch.ts:122]。
 6. update hunk 若有 `move_path`，tool 解析 move target 并对 move target 也做 external directory check [E: packages/opencode/src/tool/apply_patch.ts:142] [E: packages/opencode/src/tool/apply_patch.ts:143]。
 7. delete hunk 读取待删文件，生成 delete diff，并把 type 设为 `"delete"` [E: packages/opencode/src/tool/apply_patch.ts:162] [E: packages/opencode/src/tool/apply_patch.ts:172] [E: packages/opencode/src/tool/apply_patch.ts:180]。
-8. tool 汇总 `files` metadata 与 `totalDiff`，通过 `ctx.ask({ permission: "edit", patterns: relativePaths, always: ["*"], metadata: { filepath, diff, files } })` 请求一次 edit batch approval [E: packages/opencode/src/tool/apply_patch.ts:194] [E: packages/opencode/src/tool/apply_patch.ts:205] [E: packages/opencode/src/tool/apply_patch.ts:206] [E: packages/opencode/src/tool/apply_patch.ts:207] [E: packages/opencode/src/tool/apply_patch.ts:208] [E: packages/opencode/src/tool/apply_patch.ts:209] [E: packages/opencode/src/tool/apply_patch.ts:211] [E: packages/opencode/src/tool/apply_patch.ts:212] [E: packages/opencode/src/tool/apply_patch.ts:213]。
+8. tool 汇总 `files` metadata 与 `totalDiff`，通过 `ctx.ask({ permission: "edit", patterns: relativePaths, always: ["*"], metadata: { filepath, diff, files } })` 请求一次 edit batch approval；`files` 对象的 `movePath` 仅在 truthy 时写入 [E: packages/opencode/src/tool/apply_patch.ts:194] [E: packages/opencode/src/tool/apply_patch.ts:201] [E: packages/opencode/src/tool/apply_patch.ts:205] [E: packages/opencode/src/tool/apply_patch.ts:206] [E: packages/opencode/src/tool/apply_patch.ts:207] [E: packages/opencode/src/tool/apply_patch.ts:208] [E: packages/opencode/src/tool/apply_patch.ts:209] [E: packages/opencode/src/tool/apply_patch.ts:211] [E: packages/opencode/src/tool/apply_patch.ts:212] [E: packages/opencode/src/tool/apply_patch.ts:213]。
 9. 写入阶段遍历 `fileChanges`：add/update 写文件，move 写 movePath 后 remove 原路径，delete remove 文件 [E: packages/opencode/src/tool/apply_patch.ts:220] [E: packages/opencode/src/tool/apply_patch.ts:226] [E: packages/opencode/src/tool/apply_patch.ts:231] [E: packages/opencode/src/tool/apply_patch.ts:239] [E: packages/opencode/src/tool/apply_patch.ts:240] [E: packages/opencode/src/tool/apply_patch.ts:247]。
 10. 对 add/update/move target，tool 调用 formatter，随后 publish `FileSystem.Event.Edited` [E: packages/opencode/src/tool/apply_patch.ts:253] [E: packages/opencode/src/tool/apply_patch.ts:256]。
 11. 所有 updates 会 publish `Watcher.Event.Updated`，非 delete 文件会 `lsp.touchFile` 并收集 `lsp.diagnostics()` [E: packages/opencode/src/tool/apply_patch.ts:262] [E: packages/opencode/src/tool/apply_patch.ts:269] [E: packages/opencode/src/tool/apply_patch.ts:271]。

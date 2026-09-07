@@ -10,7 +10,7 @@ source:
   - packages/codemode/src/
   - packages/core/src/tool/
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 evidence: explicit
 symbols:
   - ReadTool

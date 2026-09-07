@@ -19,7 +19,7 @@ related:
   - infra.native-binary-release
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > 构建与 monorepo 节点描述 opencode 仓库的 root-level 包管理、脚本入口、Turbo task graph 和 Bun install 策略；它是终端 AI agent、Web/Desktop/Console 客户端与发布脚本共用的工程地基。
@@ -62,7 +62,7 @@ V1/V2 关系: monorepo build 是 `v: na`。V1 当前活跑代码在 `packages/op
 
 ## 控制流
 
-1. 开发 CLI 时, root `dev` 进入 `packages/opencode` 并带 `--conditions=browser` 运行 `src/index.ts` [E: package.json:9]。
+1. 开发 CLI 时, root `dev` 进入 `packages/opencode` 并运行 `src/index.ts` [E: package.json:9]。
 2. 开发 Desktop/Web/Console/Storybook 时, root scripts 分别进入 `packages/desktop`, `packages/app`, `packages/console/app`, `packages/storybook` [E: package.json:10] [E: package.json:11] [E: package.json:12] [E: package.json:14]。
 3. 类型检查从 root 触发 `bun turbo typecheck`, Turbo 把 `typecheck` 作为无额外 outputs 的任务执行 [E: package.json:16] [E: turbo.json:6]。
 4. 构建任务写 `dist/**`, 后续 package-specific test 可以声明依赖 `^build` [E: turbo.json:7] [E: turbo.json:11]。

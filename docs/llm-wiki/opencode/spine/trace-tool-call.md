@@ -9,7 +9,7 @@ symbols: [SessionTools.resolve, SessionProcessor.process, SessionRunner.run, cre
 related: [spine.v2-provider-turn, subsys.tools.v2]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > Tool call trace 在 V1 与 V2 中不是同一条机制:V1 依赖 AI SDK tool execution wrapper 与 `SessionProcessor` 更新 V1 parts,V2 由 runner 在 durable `Tool.Called` 后 settle local tool 并发布 `Tool.Success/Failed`。
@@ -42,17 +42,17 @@ flowchart TD
 
 1. `SessionPrompt.runLoop@packages/opencode/src/session/prompt.ts:1081` 内调用 `SessionTools.resolve` 生成 AI SDK tools,随后 `handle.process` input 把 `tools` 传给 model runtime。[E: packages/opencode/src/session/prompt.ts:1081][E: packages/opencode/src/session/prompt.ts:1226][E: packages/opencode/src/session/prompt.ts:1272][E: packages/opencode/src/session/prompt.ts:1283]
 
-2. `SessionTools.resolve@packages/opencode/src/session/tools.ts:41` 构造每个 tool 的 execution context;context 包含 sessionID、messageID、callID、agent、messages、metadata updater 与 `ask` permission helper。[E: packages/opencode/src/session/tools.ts:41][E: packages/opencode/src/session/tools.ts:59][E: packages/opencode/src/session/tools.ts:60][E: packages/opencode/src/session/tools.ts:62][E: packages/opencode/src/session/tools.ts:63][E: packages/opencode/src/session/tools.ts:65][E: packages/opencode/src/session/tools.ts:66][E: packages/opencode/src/session/tools.ts:67][E: packages/opencode/src/session/tools.ts:81]
+2. `SessionTools.resolve@packages/opencode/src/session/tools.ts:41` 构造每个 tool 的 execution context;context 包含 sessionID、messageID、callID、agent、messages、metadata updater 与 `ask` permission helper。metadata updater 在 `match.state.status === "running"` 时复用 `match.state.time`,否则才写 `{ start: Date.now() }`。[E: packages/opencode/src/session/tools.ts:41][E: packages/opencode/src/session/tools.ts:59][E: packages/opencode/src/session/tools.ts:60][E: packages/opencode/src/session/tools.ts:62][E: packages/opencode/src/session/tools.ts:63][E: packages/opencode/src/session/tools.ts:65][E: packages/opencode/src/session/tools.ts:66][E: packages/opencode/src/session/tools.ts:67][E: packages/opencode/src/session/tools.ts:77][E: packages/opencode/src/session/tools.ts:81]
 
 3. 对 registry tools,`SessionTools.resolve` 调 AI SDK `tool({ description, inputSchema, execute })`;execute 触发 `tool.execute.before`,执行 `item.execute(args, ctx)`,再触发 `tool.execute.after`。[E: packages/opencode/src/session/tools.ts:92][E: packages/opencode/src/session/tools.ts:99][E: packages/opencode/src/session/tools.ts:102][E: packages/opencode/src/session/tools.ts:106][E: packages/opencode/src/session/tools.ts:111][E: packages/opencode/src/session/tools.ts:121]
 
 4. 对 MCP resource tools,wrapper 会先调用 `ctx.ask({ permission: "read", ... })`,再从 MCP server 读取 resources 并排序/转换为 tool output。[E: packages/opencode/src/session/tools.ts:140][E: packages/opencode/src/session/tools.ts:155][E: packages/opencode/src/session/tools.ts:180][E: packages/opencode/src/session/tools.ts:187][E: packages/opencode/src/session/tools.ts:190]
 
-5. `SessionProcessor.process@packages/opencode/src/session/processor.ts:627` 从 V1 `LLM.stream` 读 LLM events;`tool-call` 分支确保 V1 tool part 存在,并把 tool part 置为 running。[E: packages/opencode/src/session/processor.ts:627][E: packages/opencode/src/session/processor.ts:640][E: packages/opencode/src/session/processor.ts:331][E: packages/opencode/src/session/processor.ts:335][E: packages/opencode/src/session/processor.ts:337][E: packages/opencode/src/session/processor.ts:344]
+5. `SessionProcessor.process@packages/opencode/src/session/processor.ts:641` 从 V1 `LLM.stream` 读 LLM events;`tool-call` 分支确保 V1 tool part 存在,并把 tool part 置为 running。[E: packages/opencode/src/session/processor.ts:641][E: packages/opencode/src/session/processor.ts:654][E: packages/opencode/src/session/processor.ts:331][E: packages/opencode/src/session/processor.ts:335][E: packages/opencode/src/session/processor.ts:337][E: packages/opencode/src/session/processor.ts:344]
 
 6. V1 `tool-result` 分支会按 result error/success 把 V1 tool part fail 或 complete,并对 image attachments 做 normalize。[E: packages/opencode/src/session/processor.ts:383][E: packages/opencode/src/session/processor.ts:386][E: packages/opencode/src/session/processor.ts:387][E: packages/opencode/src/session/processor.ts:390][E: packages/opencode/src/session/processor.ts:391][E: packages/opencode/src/session/processor.ts:412]
 
-7. V1 cleanup 会在 processor 结束时等待短暂 tool call settle,并把剩余 running tool 标成 interrupted/error,避免悬挂 part 留在 assistant message 中。[E: packages/opencode/src/session/processor.ts:539][E: packages/opencode/src/session/processor.ts:571][E: packages/opencode/src/session/processor.ts:573][E: packages/opencode/src/session/processor.ts:577][E: packages/opencode/src/session/processor.ts:583][E: packages/opencode/src/session/processor.ts:587][E: packages/opencode/src/session/processor.ts:588]
+7. V1 cleanup 会在 processor 结束时等待短暂 tool call settle,并把剩余 running tool 标成 interrupted/error,避免悬挂 part 留在 assistant message 中。[E: packages/opencode/src/session/processor.ts:553][E: packages/opencode/src/session/processor.ts:585][E: packages/opencode/src/session/processor.ts:587][E: packages/opencode/src/session/processor.ts:591][E: packages/opencode/src/session/processor.ts:597][E: packages/opencode/src/session/processor.ts:601][E: packages/opencode/src/session/processor.ts:602]
 
 ## V2
 

@@ -44,6 +44,7 @@ source:
   - packages/app/src/pages/session/use-session-commands.tsx
   - packages/app/src/pages/session/composer/prompt-model-selection.ts
   - packages/app/src/components/prompt-project-selector.tsx
+  - packages/app/src/components/dialog-connect-provider.tsx
   - packages/ui/src/context/i18n.tsx
   - packages/desktop/src/renderer/index.tsx
 symbols:
@@ -66,7 +67,7 @@ related:
   - clients.app-compatibility
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > App UI shell 是 `@opencode-ai/app` SolidJS 前端包: 同一套 `AppInterface` 可以在浏览器直接连 HTTP server, 也可以在 Electron renderer 内通过 desktop `Platform` 连本地 sidecar。
@@ -76,6 +77,7 @@ updated: 9f69463f1d
 - `packages/app` 和 `packages/desktop` 的 UI 边界在哪里?
 - Web browser entry 如何决定默认 opencode server URL?
 - `Platform` 抽象有哪些 browser/desktop 差异?
+- Desktop 连 `opencode` provider 时 OAuth URL 如何带 `client_id`?
 - `AppInterface` 里有哪些 provider 和 routes?
 - App shell 怎样通过 generated SDK 同步 server state?
 - App locale 如何覆盖、如何判定 RTL、如何做复数?
@@ -146,6 +148,8 @@ draft controller 从 search param 消费一次性 `prompt`，并把 composer con
 ## 数据模型
 
 `Platform` 是 host capability carrier。基础能力包括 `openExternal`, `restart`, notification, optional storage/fetch/default-server, 以及 desktop-only open/reveal path、attachment picker、save picker、updater、WSL、display backend、markdown parser、zoom/menu/clipboard/logging/force-focus 能力 [E: packages/app/src/context/platform.tsx:31] [E: packages/app/src/context/platform.tsx:36] [E: packages/app/src/context/platform.tsx:39] [E: packages/app/src/context/platform.tsx:45] [E: packages/app/src/context/platform.tsx:48] [E: packages/app/src/context/platform.tsx:51] [E: packages/app/src/context/platform.tsx:54] [E: packages/app/src/context/platform.tsx:63] [E: packages/app/src/context/platform.tsx:66] [E: packages/app/src/context/platform.tsx:78] [E: packages/app/src/context/platform.tsx:81] [E: packages/app/src/context/platform.tsx:87] [E: packages/app/src/context/platform.tsx:90] [E: packages/app/src/context/platform.tsx:96] [E: packages/app/src/context/platform.tsx:108] [E: packages/app/src/context/platform.tsx:114] [E: packages/app/src/context/platform.tsx:117] [E: packages/app/src/context/platform.tsx:120] [E: packages/app/src/context/platform.tsx:123]。
+
+Desktop 连 hosted `opencode` provider 时，`dialog-connect-provider` 在 `oauth.connect` 返回 authorization URL 后，若 `platform.platform === "desktop"`，给该 URL 加上 `client_id=opencode-desktop`；web 路径不加。[E: packages/app/src/components/dialog-connect-provider.tsx:565][E: packages/app/src/components/dialog-connect-provider.tsx:567]
 
 `ServerConnection` 是 UI 连接 server 的 union。`Http` 用 URL 和 optional auth, `Sidecar` 表示 Desktop server 或 WSL server, `Ssh` 表示 desktop 通过 SSH 暴露的 HTTP proxy [E: packages/app/src/context/server.tsx:184] [E: packages/app/src/context/server.tsx:191] [E: packages/app/src/context/server.tsx:197] [E: packages/app/src/context/server.tsx:212]。`ServerConnection.key` 把 HTTP URL、sidecar、WSL distro、SSH host 统一成 stable key [E: packages/app/src/context/server.tsx:224]。
 
@@ -229,6 +233,7 @@ RTL 原语是 locale set `{ar, ur, pa, fa, dv}` 与 `document.documentElement.di
 - `packages/app/src/pages/session/use-session-commands.tsx`
 - `packages/app/src/pages/session/composer/prompt-model-selection.ts`
 - `packages/app/src/components/prompt-project-selector.tsx`
+- `packages/app/src/components/dialog-connect-provider.tsx`
 - `packages/ui/src/context/i18n.tsx`
 - `packages/desktop/src/renderer/index.tsx`
 

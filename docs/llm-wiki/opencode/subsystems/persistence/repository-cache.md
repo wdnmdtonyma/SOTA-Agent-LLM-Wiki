@@ -23,7 +23,7 @@ related:
   - ref.env-vars
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > V2 repository cache 把 remote Git reference materialize 到全局 checkout。cache identity 由 remote 与可选 branch 共同决定；同一 checkout 在 refresh 时按 “newest wins” fetch、checkout remote branch 并 hard reset。

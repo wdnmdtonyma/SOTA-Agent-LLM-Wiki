@@ -58,7 +58,7 @@ _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
 
 ## 方法 & 状态
 
-逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `9f69463f1d`（官方 `dev`），共 189 个 verified 节点 + 14 个 grouped-catalog 组。本轮新增 `config.v2-compat`；主要增量是 V2→V1 配置投影、Azure CLI Entra OAuth、Cloudflare AI Gateway 三分路由、Bedrock 不可重放 reasoning 过滤、V1 unknown-finish/retry/子 agent 错误表面化，以及 Console/Stats/App/CI 周边。
+逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `e207624c48`（官方 `dev`，发布 `1.18.29`），共 189 个 verified 节点 + 14 个 grouped-catalog 组。本轮主要增量是 Anthropic thinking `blockBinding`、全局 300s SSE timeout、Azure 去掉 deployment discovery、Codex 整数版本过滤、Copilot `X-Interaction-Id`、Console `migrated_at` / inference proxy / `Quota.reset`、Stats stealth 与 country 扁平化，以及 Desktop OAuth `client_id=opencode-desktop`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

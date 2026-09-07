@@ -9,7 +9,7 @@ symbols: [RunCommand, SessionPrompt, SessionProcessor, LLM, CodeModeTool, Sessio
 related: [spine.v1-v2-relationship, ref.package-index, integrations.integration-v2, tool.execute, subsys.tools.codemode]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > opencode 是一个 Bun/TypeScript/Effect 多包 monorepo,当前默认用户路径仍由 `packages/opencode` 的 V1 CLI 与 V1 session loop 承担,V2 `packages/core` 是 Effect-native durable/event-sourced 新内核。
@@ -45,11 +45,11 @@ flowchart TD
 
 ## V1
 
-当前发布版本是 `1.18.25`（`packages/opencode`、`packages/core`、`packages/cli` 的 `version` 一致），根 workspace 使用 `bun@1.3.14`，workspace globs 展开为 36 个 package。[E: packages/opencode/package.json:3][E: packages/core/package.json:3][E: packages/cli/package.json:4][E: package.json:7][E: package.json:26][E: package.json:30]
+当前发布版本是 `1.18.29`（`packages/opencode`、`packages/core`、`packages/cli` 的 `version` 一致），根 workspace 使用 `bun@1.3.14`，workspace globs 展开为 36 个 package。[E: packages/opencode/package.json:3][E: packages/core/package.json:3][E: packages/cli/package.json:4][E: package.json:7][E: package.json:26][E: package.json:30]
 
 `packages/opencode` 的 package 名称是 `opencode`,当前 package manifest 标记为 `private: true`,其 `bin` 字段声明 `opencode` 指向 `./bin/opencode`。[E: packages/opencode/package.json:4][E: packages/opencode/package.json:7][E: packages/opencode/package.json:19] 这个包依赖 `@opencode-ai/codemode`、`@opencode-ai/llm`、`@opencode-ai/sdk`、`@opencode-ai/server`、`@opencode-ai/tui`,并且仍直接依赖 Vercel AI SDK 的 `ai` 包。[E: packages/opencode/package.json:87][E: packages/opencode/package.json:88][E: packages/opencode/package.json:93][E: packages/opencode/package.json:94][E: packages/opencode/package.json:95][E: packages/opencode/package.json:113]
 
-V1 CLI 入口是 `packages/opencode/src/index.ts`:它创建 yargs 实例,注册 `RunCommand`、`ServeCommand`、`AgentCommand` 等命令,最后调用 `cli.parse(...)` 或 `cli.parse()`。[E: packages/opencode/src/index.ts:45][E: packages/opencode/src/index.ts:85][E: packages/opencode/src/index.ts:90][E: packages/opencode/src/index.ts:93][E: packages/opencode/src/index.ts:120][E: packages/opencode/src/index.ts:126] V1 非 attach prompt 链可核为 `RunCommand -> process-local fetch SDK client -> session handler -> SessionPrompt.prompt -> SessionProcessor.process -> LLM.stream`:RunCommand 本地路径创建带 fetch wrapper 的 SDK client,非交互 prompt 调 `client.session.prompt`,session handler 调 `promptSvc.prompt`,SessionPrompt 再进入 `state.ensureRunning(... runLoop(...))`,processor 在 `llm.stream(streamInput)` 打开模型流。[E: packages/opencode/src/cli/cmd/run.ts:948][E: packages/opencode/src/cli/cmd/run.ts:956][E: packages/opencode/src/cli/cmd/run.ts:864][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:300][E: packages/opencode/src/session/prompt.ts:1346][E: packages/opencode/src/session/processor.ts:640]
+V1 CLI 入口是 `packages/opencode/src/index.ts`:它创建 yargs 实例,注册 `RunCommand`、`ServeCommand`、`AgentCommand` 等命令,最后调用 `cli.parse(...)` 或 `cli.parse()`。[E: packages/opencode/src/index.ts:45][E: packages/opencode/src/index.ts:85][E: packages/opencode/src/index.ts:90][E: packages/opencode/src/index.ts:93][E: packages/opencode/src/index.ts:120][E: packages/opencode/src/index.ts:126] V1 非 attach prompt 链可核为 `RunCommand -> process-local fetch SDK client -> session handler -> SessionPrompt.prompt -> SessionProcessor.process -> LLM.stream`:RunCommand 本地路径创建带 fetch wrapper 的 SDK client,非交互 prompt 调 `client.session.prompt`,session handler 调 `promptSvc.prompt`,SessionPrompt 再进入 `state.ensureRunning(... runLoop(...))`,processor 在 `llm.stream(streamInput)` 打开模型流。[E: packages/opencode/src/cli/cmd/run.ts:948][E: packages/opencode/src/cli/cmd/run.ts:956][E: packages/opencode/src/cli/cmd/run.ts:864][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:300][E: packages/opencode/src/session/prompt.ts:1346][E: packages/opencode/src/session/processor.ts:641][E: packages/opencode/src/session/processor.ts:654]
 
 V1 的 LLM runtime 默认走 AI SDK: `packages/opencode/src/session/llm.ts` 导入 `streamText` 与 `wrapLanguageModel`,并在默认分支调用 `streamText`。[E: packages/opencode/src/session/llm.ts:9][E: packages/opencode/src/session/llm.ts:280] `OPENCODE_EXPERIMENTAL_NATIVE_LLM` 对应的 native seam 会先尝试 `LLMNativeRuntime.stream`,不支持时回落到默认 runtime。[E: packages/opencode/src/session/llm.ts:226][E: packages/opencode/src/session/llm.ts:278]
 

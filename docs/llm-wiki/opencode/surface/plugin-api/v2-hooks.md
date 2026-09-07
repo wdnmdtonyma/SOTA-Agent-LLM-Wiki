@@ -21,7 +21,7 @@ symbols: [PluginV2, PluginV2.Service, PluginHost, PluginInternal]
 related: [server.plugin-system, model-layer.model-catalog-v2]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > V2 plugin hooks are Effect-native registration functions exposed through `@opencode-ai/plugin/v2/effect` `PluginContext`; the current context groups hook-like APIs under `agent`, `aisdk`, `catalog`, `command`, `integration`, `reference`, and `skill`, plus a `plugin` domain for loading and unloading plugins。[E: packages/plugin/src/v2/effect/context.ts:12][E: packages/plugin/src/v2/effect/context.ts:14][E: packages/plugin/src/v2/effect/context.ts:15][E: packages/plugin/src/v2/effect/context.ts:16][E: packages/plugin/src/v2/effect/context.ts:17][E: packages/plugin/src/v2/effect/context.ts:18][E: packages/plugin/src/v2/effect/context.ts:19][E: packages/plugin/src/v2/effect/context.ts:20][E: packages/plugin/src/v2/effect/context.ts:21]
@@ -55,7 +55,7 @@ Effect plugins are defined as `{ id, effect }`, where `effect(context)` returns 
 
 ## Trigger Paths
 
-`AISDK.Service` stores registered `sdk` and `language` callbacks in arrays, exposes `runSDK` and `runLanguage`, and calls `runSDK` during `AISDK.language()` when no cached SDK exists for the provider/model/options key.[E: packages/core/src/aisdk.ts:152][E: packages/core/src/aisdk.ts:153][E: packages/core/src/aisdk.ts:185][E: packages/core/src/aisdk.ts:196][E: packages/core/src/aisdk.ts:214][E: packages/core/src/aisdk.ts:216] After an SDK exists, `AISDK.language()` calls `runLanguage`, falls back to `sdk.languageModel(model.api.id)` if the hook leaves `language` empty, and caches the resulting language model.[E: packages/core/src/aisdk.ts:223][E: packages/core/src/aisdk.ts:224][E: packages/core/src/aisdk.ts:227]
+`AISDK.Service` stores registered `sdk` and `language` callbacks in arrays, exposes `runSDK` and `runLanguage`, and calls `runSDK` during `AISDK.language()` when no cached SDK exists for the `{providerID, api, options}` key.[E: packages/core/src/aisdk.ts:152][E: packages/core/src/aisdk.ts:153][E: packages/core/src/aisdk.ts:185][E: packages/core/src/aisdk.ts:196][E: packages/core/src/aisdk.ts:209][E: packages/core/src/aisdk.ts:214][E: packages/core/src/aisdk.ts:216] After an SDK exists, `AISDK.language()` calls `runLanguage`, falls back to `sdk.languageModel(model.api.id)` if the hook leaves `language` empty, and caches the resulting language model by `providerID/model.id/variant`.[E: packages/core/src/aisdk.ts:199][E: packages/core/src/aisdk.ts:223][E: packages/core/src/aisdk.ts:224][E: packages/core/src/aisdk.ts:227]
 
 `Catalog.Service` is `State.Transformable<Catalog.Draft>`, so `catalog.transform()` registers a scoped transform and `catalog.reload()` rematerializes state.[E: packages/core/src/catalog.ts:47][E: packages/core/src/state.ts:24][E: packages/core/src/state.ts:25][E: packages/core/src/state.ts:26] `State.create()` applies active transforms during materialization, commits the rebuilt state, and removes a transform when its owning scope finalizes.[E: packages/core/src/state.ts:78][E: packages/core/src/state.ts:81][E: packages/core/src/state.ts:82][E: packages/core/src/state.ts:117]
 

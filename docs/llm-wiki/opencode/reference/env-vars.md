@@ -25,7 +25,7 @@ symbols:
 evidence: explicit
 related:
   - persistence.repository-cache
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -165,9 +165,7 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | `AWS_CONTAINER_CREDENTIALS_FULL_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:92] |
 | `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path. | [E: packages/opencode/src/provider/provider.ts:316] |
 | `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path. | [E: packages/opencode/src/provider/provider.ts:331] |
-| `AZURE_RESOURCE_NAME` | Azure resource name. | [E: packages/core/src/plugin/provider/azure.ts:23] |
-| `AZURE_CONFIG_DIR` | Azure CLI profile directory override。 | [E: packages/opencode/src/plugin/azure.ts:56] |
-| `AZURE_RESOURCE_GROUP` | V1 Azure CLI deployment discovery 的 resource group。 | [E: packages/opencode/src/plugin/azure.ts:209] |
+| `AZURE_RESOURCE_NAME` | V1 Azure OAuth/loader 与 V2 Core Azure plugin 都读的 resource name。V1 OAuth 缺此 env 时才弹出 `resourceName` text prompt；成功后写入 stored auth `accountId`。Azure plugin **不再**用它做 Cognitive Services account / deployment discovery。 | [E: packages/core/src/plugin/provider/azure.ts:23][E: packages/opencode/src/plugin/azure.ts:46][E: packages/opencode/src/plugin/azure.ts:89][E: packages/opencode/src/provider/provider.ts:254] |
 | `AZURE_COGNITIVE_SERVICES_RESOURCE_NAME` | Azure Cognitive Services resource. | [E: packages/core/src/plugin/provider/azure.ts:63] |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:53][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:50] |
 | `CLOUDFLARE_GATEWAY_ID` | Cloudflare AI Gateway id. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:57] |
@@ -213,6 +211,7 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 - `OPENCODE_EXPERIMENTAL_CODE_MODE` 开启后，V1 registry 动态加载 wire tool `execute`；若专用 flag 未设置，umbrella `OPENCODE_EXPERIMENTAL` 可使其生效。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:118][E: packages/opencode/src/tool/code-mode.ts:12]
 - 同名 env 可能被 V1 与 V2 双读，例如 `OPENCODE_CLIENT` 同时出现在 core `Flag` 与 V1 `RuntimeFlags`，因此排查 client identity 时要看当前执行路径属于 V1 CLI 还是 V2 embedded core。[E: packages/core/src/flag/flag.ts:75][E: packages/opencode/src/effect/runtime-flags.ts:56]
 - provider env 同时存在 `packages/core/src/plugin/provider/*` 与 `packages/opencode/src/provider/provider.ts` 两套 adapter；这反映 V1/V2 迁移期间 provider 入口并存。[E: packages/core/src/plugin/provider/google-vertex.ts:10][E: packages/opencode/src/provider/provider.ts:505][I]
+- V1 Azure plugin 不再读 `AZURE_CONFIG_DIR` / `AZURE_RESOURCE_GROUP`，也不再做 Cognitive Services account / deployment discovery。OAuth 只认手动 `resourceName` 或 `AZURE_RESOURCE_NAME`。[E: packages/opencode/src/plugin/azure.ts:46][E: packages/opencode/src/plugin/azure.ts:89][E: packages/opencode/src/plugin/azure.ts:107]
 
 ## Sources
 

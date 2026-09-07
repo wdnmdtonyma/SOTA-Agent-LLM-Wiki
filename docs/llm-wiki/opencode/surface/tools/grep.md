@@ -23,7 +23,7 @@ related:
   - ref.tool-catalog
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > `grep` 按正则搜索文件内容；V1 固定最多 100 个 match 并返回 grouped text，输出会保留用户请求路径中的目录 symlink alias；V2 返回 typed `FileSystem.Match[]` 并允许调用方提供 `limit`。

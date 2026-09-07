@@ -17,7 +17,7 @@ symbols:
   - deriveNewContentsFromChunks
   - ApplyPatch.execute
 evidence: explicit
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > 这份节点描述 opencode apply_patch 的 wire grammar、chunk 语义与四段 fuzzy match 顺序；V1/V2 parser 很像，但工具行为有关键差异。
@@ -66,7 +66,7 @@ V1 `seekSequence` 使用同样的 pass 顺序：`exact`、`rstrip`、`trim`、`n
 
 V1 `apply_patch` 工具的 input 字段名是 `patchText`，描述为 complete patch text。[E: packages/opencode/src/tool/apply_patch.ts:18] 工具执行时先调用 parser；没有 hunk 时，规范空 patch 报 `patch rejected: empty patch`，非规范空结果报 `no hunks found`。[E: packages/opencode/src/tool/apply_patch.ts:41][E: packages/opencode/src/tool/apply_patch.ts:47][E: packages/opencode/src/tool/apply_patch.ts:50][E: packages/opencode/src/tool/apply_patch.ts:52]
 
-V1 会为每个受影响路径检查 external directory 守卫，然后用 `permission: "edit"`、受影响 paths 触发权限审批。[E: packages/opencode/src/tool/apply_patch.ts:74][E: packages/opencode/src/tool/apply_patch.ts:206][E: packages/opencode/src/tool/apply_patch.ts:207] update hunk 会调用 `deriveNewContentsFromChunks` 并可携带 `movePath`，最终 move 的实现是写入目标路径再删除旧路径。[E: packages/opencode/src/tool/apply_patch.ts:122][E: packages/opencode/src/tool/apply_patch.ts:142][E: packages/opencode/src/tool/apply_patch.ts:239][E: packages/opencode/src/tool/apply_patch.ts:240]
+V1 会为每个受影响路径检查 external directory 守卫，然后用 `permission: "edit"`、受影响 paths 触发权限审批。[E: packages/opencode/src/tool/apply_patch.ts:74][E: packages/opencode/src/tool/apply_patch.ts:206][E: packages/opencode/src/tool/apply_patch.ts:207] update hunk 会调用 `deriveNewContentsFromChunks` 并可携带 `movePath`，最终 move 的实现是写入目标路径再删除旧路径；输出 `files` 对象只在 `movePath` truthy 时写入该字段。[E: packages/opencode/src/tool/apply_patch.ts:122][E: packages/opencode/src/tool/apply_patch.ts:142][E: packages/opencode/src/tool/apply_patch.ts:201][E: packages/opencode/src/tool/apply_patch.ts:239][E: packages/opencode/src/tool/apply_patch.ts:240]
 
 V1 工具结束时会发布文件变更事件，并对变更文件尝试拉取 LSP diagnostics。[E: packages/opencode/src/tool/apply_patch.ts:262][E: packages/opencode/src/tool/apply_patch.ts:266][E: packages/opencode/src/tool/apply_patch.ts:271]
 

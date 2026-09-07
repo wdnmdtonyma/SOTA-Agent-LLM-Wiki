@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 # 不确定项日志([U] 汇总)
@@ -53,13 +53,7 @@ updated: 9f69463f1d
   - [E: packages/console/app/src/routes/zen/util/trialLimiter.ts:31]
   - [E: packages/console/app/src/routes/zen/util/trialLimiter.ts:33]
   - [E: packages/console/app/src/routes/zen/util/trialLimiter.ts:34]
-  - [E: packages/stats/core/src/domain/home.ts:647]
-- `clients.console`: `packages/console/app/test/providerUsage.test.ts` 仍期待 Google `candidates=3, thoughts=2` 得到 `outputTokens=3`，而 `google.normalizeUsage` 返回 5。测试与实现哪个才是 intended contract 未确认。[U]
-  - [E: packages/console/app/test/providerUsage.test.ts:21]
-  - [E: packages/console/app/test/providerUsage.test.ts:22]
-  - [E: packages/console/app/test/providerUsage.test.ts:27]
-  - [E: packages/console/app/test/providerUsage.test.ts:29]
-  - [E: packages/console/app/src/routes/zen/util/provider/google.ts:68]
+  - [E: packages/stats/core/src/domain/home.ts:743]
 
 ## batch-session
 
@@ -155,8 +149,16 @@ updated: 9f69463f1d
 
 # uncertainty-update-console
 
-- Google usage normalizer 把 `thoughtsTokenCount` 加进 `outputTokens`，但 trial limiter / Stats `buildTokenCost` 仍做 `outputTokens + reasoningTokens`。对 Google 行可能二次计入 thoughts；是否应改契约未确认。[E: packages/console/app/src/routes/zen/util/provider/google.ts:68][E: packages/console/app/src/routes/zen/util/trialLimiter.ts:31][E: packages/stats/core/src/domain/home.ts:735][U]
-- `providerUsage.test.ts` 仍期待 `candidates=3, thoughts=2` → `outputTokens=3`，实现返回 5。源码/测试张力，不是已验证通过行为。[E: packages/console/app/test/providerUsage.test.ts:27][E: packages/console/app/src/routes/zen/util/provider/google.ts:68][U]
+- SHA: `e207624c48`
+- node: `clients.console`
+
+## 仍 [U]
+
+Google normalizer 已把 `thoughtsTokenCount` 加进 `outputTokens`，但 trial limiter / Stats `buildTokenCost` 仍做 `outputTokens + reasoningTokens`。对 Google 行可能二次计入 thoughts；是否应改契约未确认。详见 `uncertainty-batch-hosted`。[E: packages/stats/core/src/domain/home.ts:743]
+
+## 已关闭
+
+- `providerUsage.test.ts` 现期待 `candidates=3, thoughts=2` → `outputTokens=5`，与 `google.ts:68` 一致；上一轮“测试期待 3 / 实现返回 5”张力已消失。[E: packages/console/app/test/providerUsage.test.ts:29]
 
 ## verify-app-compatibility
 
@@ -185,7 +187,7 @@ updated: 9f69463f1d
 # uncertainty-verify-console
 
 - node: `clients.console`
-- SHA: `9f69463f1d`
+- SHA: `e207624c48`
 
 ## Google thoughts double-count
 
@@ -194,17 +196,39 @@ updated: 9f69463f1d
 - inspected:
   - `packages/console/app/src/routes/zen/util/provider/google.ts:68` `outputTokens: outputTokens + reasoningTokens`
   - `packages/console/app/src/routes/zen/util/trialLimiter.ts:31-34` sums `outputTokens + (reasoningTokens ?? 0)`
-  - `packages/stats/core/src/domain/home.ts:735` `item.outputTokens + item.reasoningTokens`
+  - `packages/stats/core/src/domain/home.ts:743` `item.outputTokens + item.reasoningTokens`
 - unresolved: whether that double-count is intended contract.
 
 ## providerUsage test vs implementation
 
 - claim: test expects Google `candidates=3, thoughts=2` → `outputTokens=3`; implementation returns 5.
-- status: still `[U]`
-- inspected:
-  - `packages/console/app/test/providerUsage.test.ts:27-29`
-  - `packages/console/app/src/routes/zen/util/provider/google.ts:68`
-- unresolved: source/test tension, not verified passing behavior.
+- status: **closed @ e207624c48** — 测试现期待 `outputTokens=5`，与 `google.ts:68` 一致。[E: packages/console/app/test/providerUsage.test.ts:29]
+
+## verify-light
+
+# L2-light verify notes — e207624c48
+
+抽核 `opencode/` `e207624c48`，不信任 filler 转述。
+
+## 拒绝项
+
+- 这批节点没有把 SessionV2 写成默认活跑路径；`embedded-public-api` 只描述 V2 embedding surface。
+- 没有残留 `1.18.25`。
+- V1/V2 model-visible tool wire name 无增删改名；`execute` 仍是 experimental Code Mode。
+- 没有 Azure `provider.models` / deployment auto-discover 说法。
+- 没有把 opencode 两个 HTTP server 写成 Hono；`function` / `enterprise` 的 Hono 明确是外围 Worker / SolidStart。
+
+## 已就地修正
+
+- `tool.read`：`SessionTools.resolve` 转 AI SDK tool 的 [E] 从 `tools.ts:81`（`ask`）改到 `:92`/`:99`。
+- `tool.execute`：去掉落到 `registry.ts:328`（`.join`）的假 [E]；移除逻辑在 `:308`。
+- `plugin-api.v2-hooks`：SDK cache key 是 `{providerID, api, options}`，language cache 是 `providerID/model.id/variant`，不是混成一个 provider/model/options key。
+- `integrations.mcp-client`：SessionTools 路径下 `resource` blob 不是无条件 attachment，受 mime allowlist 与 10 MiB 限制。
+- `peripheral.script-identity`：TEAM_MEMBERS 名单仍在，但本 range 未改该文件；去掉“本 SHA 新增”措辞。
+
+## 未扩写
+
+- `apply_patch` 省略空 `movePath`、`tools.ts` 复用 running `time.start`、processor thinking-dropped log：这批节点原先没有对应假话，按规则不扩写。
 
 ## verify-plugin-system
 
@@ -232,6 +256,26 @@ Production packages have no caller. `SessionProjector` `Moved` (`packages/core/s
 `CONTEXT.md:118` still says moving a Session clears its active Context Epoch. Whether move/revert should reset epoch is unprovable from current call sites.
 
 Already marked `[U]` in `subsystems/session-v2/projector.md`.
+
+## verify-session
+
+# L2 verify — L2-session-tools @ e207624c48
+
+Mandatory claims (refute attempt; all confirmed against `opencode/` HEAD):
+
+- `step-finish` logs `thinking blocks dropped by provider` only when `providerMetadata.anthropic` is a record **and** `inputTransformations` is a non-empty array. [E: packages/opencode/src/session/processor.ts:441][E: packages/opencode/src/session/processor.ts:444][E: packages/opencode/src/session/processor.ts:445]
+- SessionTools running state reuses `match.state.time`; `Date.now()` only when status is not already `running`. [E: packages/opencode/src/session/tools.ts:77]
+- `apply_patch` writes `movePath` only when truthy. [E: packages/opencode/src/tool/apply_patch.ts:201]
+- SessionV2 / SessionRunner is still not the default CLI/kernel path (`client.session.prompt` → `SessionPrompt`). [E: packages/opencode/src/cli/cmd/run.ts:864][E: packages/opencode/src/server/routes/instance/httpapi/handlers/session.ts:300]
+- No new/deleted/renamed model-visible tool wire names in 9f69463f1d..e207624c48 (`Tool.define` / V2 `export const name` lists identical).
+
+Line-number fixes applied (claims were true, `[E]` pointed at the wrong line):
+
+- `session-v1.prompt` step 1 cited `prompt.ts:141/144/154` (flags / ops / cancel). Now `157/160/175/177/181/183` (`resolvePromptParts`).
+- `session-v1.store` MessageTable cited `sql.ts:18` (`SessionMessageData` V2). Now `19` (`V1MessageData`).
+- `session-v1.processor` step-finish patch-part claim now also cites `processor.ts:474`.
+
+No remaining `[U]` for this batch.
 
 ## verify-v1-hooks
 

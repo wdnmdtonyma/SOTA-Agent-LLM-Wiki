@@ -9,7 +9,7 @@ symbols: [SessionPrompt, SessionPrompt.prompt, SessionPrompt.loop, SessionPrompt
 related: [spine.v1-turn-loop, session-v1.processor]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > `SessionPrompt` 是 V1 当前活跑的 session 编排器:它创建 user message,驱动 assistant `runLoop`,并把 command、subtask、shell 这些入口统一写成 V1 `SessionV1` message/part 历史;旧的 prompt-level V2 mirror gate 已从当前文件移除。
@@ -41,7 +41,7 @@ updated: 9f69463f1d
 
 ## 控制流
 
-1. `resolvePromptParts` 从模板中提取 markdown file references;如果目标路径不存在但 agent 名存在,会产生 `{ type: "agent" }` part,否则会把命中的文件转成 `file:` URL part。[E: packages/opencode/src/session/prompt.ts:141][E: packages/opencode/src/session/prompt.ts:144][E: packages/opencode/src/session/prompt.ts:154][E: packages/opencode/src/session/prompt.ts:158][E: packages/opencode/src/session/prompt.ts:159][E: packages/opencode/src/session/prompt.ts:160][E: packages/opencode/src/session/prompt.ts:161][E: packages/opencode/src/session/prompt.ts:166][E: packages/opencode/src/session/prompt.ts:167][E: packages/opencode/src/session/prompt.ts:168]
+1. `resolvePromptParts` 从模板中提取 markdown file references;如果目标路径不存在但 agent 名存在,会产生 `{ type: "agent" }` part,否则会把命中的文件转成 `file:` URL part。[E: packages/opencode/src/session/prompt.ts:157][E: packages/opencode/src/session/prompt.ts:160][E: packages/opencode/src/session/prompt.ts:175][E: packages/opencode/src/session/prompt.ts:177][E: packages/opencode/src/session/prompt.ts:181][E: packages/opencode/src/session/prompt.ts:183]
 
 2. `createUserMessage` 解析 agent 与当前模型:显式 `input.model` 优先,其次 agent model,最后 `currentModel(sessionID)`;agent variant 只在同一 agent model 且 provider catalog 中存在该 variant 时生效。[E: packages/opencode/src/session/prompt.ts:636][E: packages/opencode/src/session/prompt.ts:638][E: packages/opencode/src/session/prompt.ts:653][E: packages/opencode/src/session/prompt.ts:654][E: packages/opencode/src/session/prompt.ts:656][E: packages/opencode/src/session/prompt.ts:657][E: packages/opencode/src/session/prompt.ts:658][E: packages/opencode/src/session/prompt.ts:659][E: packages/opencode/src/session/prompt.ts:661]
 

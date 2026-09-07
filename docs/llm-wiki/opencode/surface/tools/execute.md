@@ -17,7 +17,7 @@ symbols: [CodeModeTool, CODE_MODE_TOOL, describeCatalog]
 related: [subsys.tools.codemode, subsys.tools.v1, integrations.mcp-client, ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > Execute 是 V1 的 experimental Code Mode 工具：模型提交一段受限 JavaScript orchestration code，运行时只把当前 permission 可见的 MCP tools 暴露给程序。
@@ -46,7 +46,7 @@ Execute 用一段程序在单次 model tool call 内编排多个 MCP 调用、�
 |---|---|---:|---|---|---|
 | `code` | `string` | 是 | 无 | `Schema.String`；package runtime 还会拒绝 trim 后为空的程序 | 在 confined interpreter 中执行的 script body。[E: packages/opencode/src/tool/code-mode.ts:16][E: packages/opencode/src/tool/code-mode.ts:17][E: packages/opencode/src/tool/code-mode.ts:18][E: packages/codemode/src/interpreter/runtime.ts:3358][E: packages/codemode/src/interpreter/runtime.ts:3361] |
 
-模型看到的 tool description 不只是一句静态文本：registry 会从 permission 可见的 MCP tools 构造 budgeted Code Mode catalog；没有任何可见 MCP tool 时，`execute` 会从本回合的 `visible` tools 中移除。[E: packages/opencode/src/tool/registry.ts:280][E: packages/opencode/src/tool/registry.ts:285][E: packages/opencode/src/tool/registry.ts:286][E: packages/opencode/src/tool/registry.ts:287][E: packages/opencode/src/tool/registry.ts:305][E: packages/opencode/src/tool/registry.ts:308][E: packages/opencode/src/tool/registry.ts:328]
+模型看到的 tool description 不只是一句静态文本：registry 会从 permission 可见的 MCP tools 构造 budgeted Code Mode catalog；没有任何可见 MCP tool 时，`execute` 会从本回合的 `visible` tools 中移除。[E: packages/opencode/src/tool/registry.ts:280][E: packages/opencode/src/tool/registry.ts:285][E: packages/opencode/src/tool/registry.ts:286][E: packages/opencode/src/tool/registry.ts:287][E: packages/opencode/src/tool/registry.ts:305][E: packages/opencode/src/tool/registry.ts:308]
 
 ## 4 输出 & 大小/截断限制
 

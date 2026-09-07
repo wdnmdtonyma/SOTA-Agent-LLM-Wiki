@@ -9,7 +9,7 @@ symbols: [Auth, Account, ProviderAuth, Credential, Integration, IntegrationConne
 related: [model-layer.auth, model-layer.credential-v2, integrations.integration-v2, ref.auth-combinators]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > Provider auth/accounts 横跨两代：V1 用 `auth.json`、Console device-code account login 和 plugin `auth` hook；V2 用 `Credential` durable table 与 `Integration` 本地 authentication registry。旧 connector module 已被 `packages/core/src/integration.ts` 取代。
@@ -44,17 +44,17 @@ V1 plugin `AuthHook` 绑定一个 provider id，可以有 `loader(auth, provider
 
 ### Azure Microsoft Entra ID (Azure CLI)
 
-`AzureAuthPlugin` 的 oauth method label 是 `Microsoft Entra ID (Azure CLI)`，不再是 API key stub。[E: packages/opencode/src/plugin/azure.ts:169][E: packages/opencode/src/plugin/azure.ts:170] 启动时 `which("az")` 判断 Azure CLI 是否安装；未安装则从 methods 滤掉 oauth，只留 API key。[E: packages/opencode/src/plugin/azure.ts:53][E: packages/opencode/src/plugin/azure.ts:199]
+`AzureAuthPlugin` 只挂 `auth` hook，oauth method label 是 `Microsoft Entra ID (Azure CLI)`，不再是 API key stub，也没有 `provider.models` / `azureProfile.json` / `az cognitiveservices account list` / `account deployment list`。[E: packages/opencode/src/plugin/azure.ts:20][E: packages/opencode/src/plugin/azure.ts:55][E: packages/opencode/src/plugin/azure.ts:80][E: packages/opencode/src/plugin/azure.ts:81] 启动时 `which("az")` 判断 Azure CLI 是否安装；未安装则从 methods 滤掉 oauth，只留 API key。[E: packages/opencode/src/plugin/azure.ts:21][E: packages/opencode/src/plugin/azure.ts:107]
 
-token 通过 `az account get-access-token --scope <scope> --output json` 取得，缓存在 process 内 Map，过期前 60s 刷新。[E: packages/opencode/src/plugin/azure.ts:14][E: packages/opencode/src/plugin/azure.ts:79][E: packages/opencode/src/plugin/azure.ts:82] scope 默认 `https://cognitiveservices.azure.com/.default`；hostname 以 `.services.ai.azure.com` 结尾且 path 不以 `/models` 开头时改用 AI Foundry `https://ai.azure.com/.default`。[E: packages/opencode/src/plugin/azure.ts:12][E: packages/opencode/src/plugin/azure.ts:13][E: packages/opencode/src/plugin/azure.ts:257][E: packages/opencode/src/plugin/azure.ts:258][E: packages/opencode/src/plugin/azure.ts:260]
+token 通过 `az account get-access-token --scope <scope> --output json` 取得，缓存在 process 内 Map，过期前 60s 刷新。[E: packages/opencode/src/plugin/azure.ts:10][E: packages/opencode/src/plugin/azure.ts:33][E: packages/opencode/src/plugin/azure.ts:36] scope 默认 `https://cognitiveservices.azure.com/.default`；hostname 以 `.services.ai.azure.com` 结尾且 path 不以 `/models` 开头时改用 AI Foundry `https://ai.azure.com/.default`。[E: packages/opencode/src/plugin/azure.ts:8][E: packages/opencode/src/plugin/azure.ts:9][E: packages/opencode/src/plugin/azure.ts:118][E: packages/opencode/src/plugin/azure.ts:119]
 
-authorize 不打开 browser：instructions 是先 `az login`，callback 用 Cognitive Services scope 探活 token，成功后写入 dummy OAuth key，并把 Azure resource name 存进 `accountId`。[E: packages/opencode/src/plugin/azure.ts:175][E: packages/opencode/src/plugin/azure.ts:184][E: packages/opencode/src/plugin/azure.ts:187][E: packages/opencode/src/plugin/azure.ts:188][E: packages/opencode/src/plugin/azure.ts:190] V1 Azure custom loader 在 oauth 时读 `auth.accountId` 当 resource。[E: packages/opencode/src/provider/provider.ts:253] `provider.models` hook 仅在 oauth 时跑 `az cognitiveservices account deployment list`，把 `provisioningState === "Succeeded"` 的 deployment 投影成 catalog model（`api.id` = deployment name）。[E: packages/opencode/src/plugin/azure.ts:130][E: packages/opencode/src/plugin/azure.ts:219][E: packages/opencode/src/plugin/azure.ts:236][E: packages/opencode/src/plugin/azure.ts:248]
+authorize 不打开 browser：instructions 是先 `az login`，callback 用 Cognitive Services scope 探活 token，成功后写入 dummy OAuth key，并把 Azure resource name 存进 `accountId`。resource name 来自 text prompt `resourceName` 或 `AZURE_RESOURCE_NAME`。[E: packages/opencode/src/plugin/azure.ts:86][E: packages/opencode/src/plugin/azure.ts:89][E: packages/opencode/src/plugin/azure.ts:92][E: packages/opencode/src/plugin/azure.ts:95][E: packages/opencode/src/plugin/azure.ts:98] V1 Azure custom loader 在 oauth 时读 `auth.accountId` 当 resource。[E: packages/opencode/src/provider/provider.ts:253]
 
 ### OpenAI ChatGPT / Codex OAuth
 
-`CodexAuthPlugin` 的 oauth loader 在 rewrite 到 Codex endpoint 时，从 access JWT 抽 `chatgpt_compute_residency`（含 `https://api.openai.com/auth` 嵌套），忽略 `no_constraint`，写成 header `x-openai-internal-codex-residency`。不读 `chatgpt_data_residency`。[E: packages/opencode/src/plugin/openai/codex.ts:80][E: packages/opencode/src/plugin/openai/codex.ts:83][E: packages/opencode/src/plugin/openai/codex.ts:84][E: packages/opencode/src/plugin/openai/codex.ts:422][E: packages/opencode/src/plugin/openai/codex.ts:423]
+`CodexAuthPlugin` 的 oauth loader 在 rewrite 到 Codex endpoint 时，从 access JWT 抽 `chatgpt_compute_residency`（含 `https://api.openai.com/auth` 嵌套），忽略 `no_constraint`，写成 header `x-openai-internal-codex-residency`。不读 `chatgpt_data_residency`。[E: packages/opencode/src/plugin/openai/codex.ts:80][E: packages/opencode/src/plugin/openai/codex.ts:83][E: packages/opencode/src/plugin/openai/codex.ts:84][E: packages/opencode/src/plugin/openai/codex.ts:422][E: packages/opencode/src/plugin/openai/codex.ts:426]
 
-ChatGPT 订阅模型限额：id 含 `gpt-5.5` 或 `gpt-5.6` 的 model 现在同为 context 400k / input 272k / output 128k。[E: packages/opencode/src/plugin/openai/codex.ts:313][E: packages/opencode/src/plugin/openai/codex.ts:315]
+ChatGPT 订阅模型过滤用 `/^gpt-(\d+)(?:\.(\d+))?/`，整数版本合法（缺省 minor=0）；比较 `major > 5 || (major === 5 && minor > 4)`。`gpt-5.6` 在 regex 前单独 DISALLOW。`ALLOWED_MODELS` 仍放行 `gpt-5.4` / `gpt-5.3-codex-spark`。[E: packages/opencode/src/plugin/openai/codex.ts:15][E: packages/opencode/src/plugin/openai/codex.ts:299][E: packages/opencode/src/plugin/openai/codex.ts:300][E: packages/opencode/src/plugin/openai/codex.ts:304] 通过过滤后，id 含 `gpt-5.5` 或 `gpt-5.6` 的限额同为 context 400k / input 272k / output 128k。[E: packages/opencode/src/plugin/openai/codex.ts:316][E: packages/opencode/src/plugin/openai/codex.ts:318]
 
 oversized websocket close 1009（`MESSAGE_TOO_BIG_CLOSE_CODE`）会立刻把该 session 标 `fallback`，不走 `recordStreamFailure` 计数。[E: packages/opencode/src/plugin/openai/ws.ts:12][E: packages/opencode/src/plugin/openai/ws-pool.ts:116][E: packages/opencode/src/plugin/openai/ws-pool.ts:117]
 

@@ -9,7 +9,7 @@ symbols: [TuiThreadCommand, createWorkerFetch, createEventSource, rpc, createLeg
 related: [tui.architecture, tui.feature-plugins, tui.sync-store]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > V1 runtime hosting 是 `packages/opencode/src/cli/cmd/tui.ts` 的 `$0 [project]` command：它 spawn worker 托管 in-process V1 server，通过 RPC fetch/event bridge 给 `@opencode-ai/tui`，并注入 legacy plugin host。
@@ -30,7 +30,7 @@ updated: 9f69463f1d
 
 ## CLI command 输入
 
-Builder 支持 positional `project`，以及 `--model/-m`、`--continue/-c`、`--session/-s`、`--fork`、`--prompt`、`--agent`、`--auto`（另有 hidden `--yolo` / `--dangerously-skip-permissions`）；network options 由 `withNetworkOptions(yargs)` 注入。[E: packages/opencode/src/cli/cmd/tui.ts:76] [E: packages/opencode/src/cli/cmd/tui.ts:77] [E: packages/opencode/src/cli/cmd/tui.ts:81] [E: packages/opencode/src/cli/cmd/tui.ts:83] [E: packages/opencode/src/cli/cmd/tui.ts:86] [E: packages/opencode/src/cli/cmd/tui.ts:87] [E: packages/opencode/src/cli/cmd/tui.ts:91] [E: packages/opencode/src/cli/cmd/tui.ts:92] [E: packages/opencode/src/cli/cmd/tui.ts:96] [E: packages/opencode/src/cli/cmd/tui.ts:100] [E: packages/opencode/src/cli/cmd/tui.ts:104] [E: packages/opencode/src/cli/cmd/tui.ts:108] [E: packages/opencode/src/cli/cmd/tui.ts:113] `--mini` 会改走 `runMini`，不 spawn worker、也不进入 `@opencode-ai/tui` `run()`。[E: packages/opencode/src/cli/cmd/tui.ts:123] [E: packages/opencode/src/cli/cmd/tui.ts:152] [E: packages/opencode/src/cli/cmd/tui.ts:162]
+Builder 支持 positional `project`，以及 `--model/-m`、`--continue/-c`、`--session/-s`、`--fork`、`--prompt`、`--agent`、`--auto`（另有 hidden `--yolo` / `--dangerously-skip-permissions`）；network options 由 `withNetworkOptions(yargs)` 注入。[E: packages/opencode/src/cli/cmd/tui.ts:76] [E: packages/opencode/src/cli/cmd/tui.ts:77] [E: packages/opencode/src/cli/cmd/tui.ts:81] [E: packages/opencode/src/cli/cmd/tui.ts:83] [E: packages/opencode/src/cli/cmd/tui.ts:86] [E: packages/opencode/src/cli/cmd/tui.ts:87] [E: packages/opencode/src/cli/cmd/tui.ts:91] [E: packages/opencode/src/cli/cmd/tui.ts:92] [E: packages/opencode/src/cli/cmd/tui.ts:96] [E: packages/opencode/src/cli/cmd/tui.ts:100] [E: packages/opencode/src/cli/cmd/tui.ts:104] [E: packages/opencode/src/cli/cmd/tui.ts:108] [E: packages/opencode/src/cli/cmd/tui.ts:113] [E: packages/opencode/src/cli/cmd/tui.ts:118] `--mini` 会改走 `runMini`，不 spawn worker、也不进入 `@opencode-ai/tui` `run()`。[E: packages/opencode/src/cli/cmd/tui.ts:123] [E: packages/opencode/src/cli/cmd/tui.ts:152] [E: packages/opencode/src/cli/cmd/tui.ts:162]
 
 `--fork` 必须与 `--continue` 或 `--session` 同用，否则打印 error 并设置 exitCode。[E: packages/opencode/src/cli/cmd/tui.ts:192] [E: packages/opencode/src/cli/cmd/tui.ts:193] [E: packages/opencode/src/cli/cmd/tui.ts:194] prompt input 会合并 piped stdin 和 `--prompt`：stdin 非 TTY 时读取 Bun.stdin.text，二者都存在时用换行拼接。[E: packages/opencode/src/cli/cmd/tui.ts:59] [E: packages/opencode/src/cli/cmd/tui.ts:60] [E: packages/opencode/src/cli/cmd/tui.ts:63] [E: packages/opencode/src/cli/cmd/tui.ts:230]
 

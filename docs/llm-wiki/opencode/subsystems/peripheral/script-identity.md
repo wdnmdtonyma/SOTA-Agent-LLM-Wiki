@@ -13,7 +13,7 @@ symbols: [Script]
 related: [infra.native-binary-release]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > `packages/script` 提供发布脚本共享的 channel/version/team identity，`packages/identity` 保存 opencode mark 的 SVG/PNG 品牌资源。
@@ -57,7 +57,7 @@ updated: 9f69463f1d
 
 ## Team identity
 
-`Script.team` 从 `.github/TEAM_MEMBERS` 读取非空、非注释行，再追加 `actions-user`、`opencode`、`opencode-agent[bot]` 三个 bot id [E: packages/script/src/index.ts:50] [E: packages/script/src/index.ts:51] [E: packages/script/src/index.ts:53] [E: packages/script/src/index.ts:56] [E: packages/script/src/index.ts:57]。目标 SHA 的 team list 新增 `arvsrn`、`ludvigrask`、`Slickstef11`、`usrnk1`，并把末项规范为 `StarpTech` [E: .github/TEAM_MEMBERS:2] [E: .github/TEAM_MEMBERS:11] [E: .github/TEAM_MEMBERS:19] [E: .github/TEAM_MEMBERS:20] [E: .github/TEAM_MEMBERS:22]。
+`Script.team` 从 `.github/TEAM_MEMBERS` 读取非空、非注释行，再追加 `actions-user`、`opencode`、`opencode-agent[bot]` 三个 bot id [E: packages/script/src/index.ts:50] [E: packages/script/src/index.ts:51] [E: packages/script/src/index.ts:53] [E: packages/script/src/index.ts:56] [E: packages/script/src/index.ts:57]。目标 SHA 的 team list 含 `arvsrn`、`ludvigrask`、`Slickstef11`、`usrnk1`，末项是 `StarpTech` [E: .github/TEAM_MEMBERS:2] [E: .github/TEAM_MEMBERS:11] [E: .github/TEAM_MEMBERS:19] [E: .github/TEAM_MEMBERS:20] [E: .github/TEAM_MEMBERS:22]。
 
 ## 被主仓使用的位置
 

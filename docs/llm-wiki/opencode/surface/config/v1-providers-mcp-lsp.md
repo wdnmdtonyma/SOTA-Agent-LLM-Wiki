@@ -13,7 +13,8 @@ source:
   - packages/core/src/v1/config/mcp.ts
   - packages/core/src/v1/config/lsp.ts
   - packages/core/src/v1/config/formatter.ts
-updated: 9f69463f1d
+  - packages/opencode/src/provider/provider.ts
+updated: e207624c48
 evidence: explicit
 ---
 
@@ -53,10 +54,10 @@ evidence: explicit
 | `provider.<name>.options.enterpriseUrl` | optional string | GitHub Enterprise URL for copilot auth。[E: packages/core/src/v1/config/provider.ts:95] | V2 通过 lowerer 转入 provider request/settings。[I] |
 | `provider.<name>.options.setCacheKey` | optional boolean | enable prompt cache key。[E: packages/core/src/v1/config/provider.ts:98] | V2 通过 request body/options 表达。[I] |
 | `provider.<name>.options.timeout` | optional positive int or false | full request timeout。[E: packages/core/src/v1/config/provider.ts:101] | V2 通过 request body/options 表达。[I] |
-| `provider.<name>.options.headerTimeout` | optional positive int or false | response header timeout。[E: packages/core/src/v1/config/provider.ts:108] | V2 通过 request body/options 表达。[I] |
-| `provider.<name>.options.chunkTimeout` | optional positive int | streamed SSE chunk timeout。[E: packages/core/src/v1/config/provider.ts:117] | V2 通过 request body/options 表达。[I] |
+| `provider.<name>.options.headerTimeout` | optional `PositiveInt` or `false`；schema 文档 default `300000` | wait for response headers。`false` 关闭 header timeout。V1 `resolveSDK` fetch wrapper 用 `headerTimeout ?? 300_000`。[E: packages/core/src/v1/config/provider.ts:108][E: packages/opencode/src/provider/provider.ts:1796][E: packages/opencode/src/provider/provider.ts:1804] | V2 通过 request body/options 表达。[I] |
+| `provider.<name>.options.chunkTimeout` | optional `PositiveInt` or `false`；schema 文档 default `300000` | streamed SSE chunk timeout。`false` 或非正数不 wrap SSE。V1 `resolveSDK` fetch wrapper 用 `chunkTimeout ?? 300_000`。[E: packages/core/src/v1/config/provider.ts:117][E: packages/opencode/src/provider/provider.ts:1795][E: packages/opencode/src/provider/provider.ts:1803] | V2 通过 request body/options 表达。[I] |
 | `provider.<name>.options.<unknown>` | rest record any | provider-specific AI SDK options。[E: packages/core/src/v1/config/provider.ts:122] | V2 `ConfigProvider.Request.body` 是 unknown record。[E: packages/core/src/config/provider.ts:9] |
-| `provider.<name>.models` | optional record model | provider-local model overrides。[E: packages/core/src/v1/config/provider.ts:125] | V2 `providers.<name>.models`。[E: packages/core/src/config/provider.ts:70] |
+| `provider.<name>.models` | optional record model | provider-local model overrides。[E: packages/core/src/v1/config/provider.ts:130] | V2 `providers.<name>.models`。[E: packages/core/src/config/provider.ts:70] |
 
 ## Provider Model Catalog
 
@@ -134,6 +135,7 @@ evidence: explicit
 - `packages/core/src/v1/config/lsp.ts`
 - `packages/core/src/v1/config/formatter.ts`
 - `packages/core/src/v1/config/migrate.ts`
+- `packages/opencode/src/provider/provider.ts`
 - `packages/core/src/config/provider.ts`
 - `packages/core/src/config/mcp.ts`
 - `packages/core/src/config/lsp.ts`

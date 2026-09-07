@@ -32,7 +32,7 @@ related:
   - session-v2.compaction
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > V1 compaction 是 `SessionPrompt.runLoop` 内的历史缩短机制: overflow 或 queued compaction 会写一个 V1 compaction user part，下一轮用 compaction agent 生成 summary assistant。summary prompt 现在把 head history `serialize` 成 orphaned transcript，再复用 V2 `buildPrompt`；随后由 `MessageV2.filterCompacted` 选择 provider request 的 active history。
@@ -67,11 +67,11 @@ V1 overflow 判断在 `overflow.ts`: `compaction.auto === false` 或 model conte
 
 ## 控制流
 
-1. provider stream 的 `step-finish` 事件会计算 usage，写 step-finish part，更新 assistant tokens；如果 assistant 不是 summary 且 `isOverflow(...)` 命中，`ctx.needsCompaction = true`。[E: packages/opencode/src/session/processor.ts:435][E: packages/opencode/src/session/processor.ts:438][E: packages/opencode/src/session/processor.ts:446][E: packages/opencode/src/session/processor.ts:478][E: packages/opencode/src/session/processor.ts:479][E: packages/opencode/src/session/processor.ts:481]
+1. provider stream 的 `step-finish` 事件会计算 usage，写 step-finish part，更新 assistant tokens；如果 assistant 不是 summary 且 `isOverflow(...)` 命中，`ctx.needsCompaction = true`。[E: packages/opencode/src/session/processor.ts:435][E: packages/opencode/src/session/processor.ts:452][E: packages/opencode/src/session/processor.ts:460][E: packages/opencode/src/session/processor.ts:492][E: packages/opencode/src/session/processor.ts:493][E: packages/opencode/src/session/processor.ts:495]
 
-2. provider/adapter 抛 context overflow 时，`SessionProcessor.halt` 用 `MessageV2.fromError(...)` parse error。若 `compaction.auto === false` 且 assistant 不是 summary，它把 assistant 置为 terminal error 并设 idle；否则设置 `ctx.needsCompaction = true` 并发布 session error。[E: packages/opencode/src/session/processor.ts:117][E: packages/opencode/src/session/processor.ts:606][E: packages/opencode/src/session/processor.ts:607][E: packages/opencode/src/session/processor.ts:608][E: packages/opencode/src/session/processor.ts:609][E: packages/opencode/src/session/processor.ts:615][E: packages/opencode/src/session/processor.ts:616]
+2. provider/adapter 抛 context overflow 时，`SessionProcessor.halt` 用 `MessageV2.fromError(...)` parse error。若 `compaction.auto === false` 且 assistant 不是 summary，它把 assistant 置为 terminal error 并设 idle；否则设置 `ctx.needsCompaction = true` 并发布 session error。[E: packages/opencode/src/session/processor.ts:117][E: packages/opencode/src/session/processor.ts:620][E: packages/opencode/src/session/processor.ts:621][E: packages/opencode/src/session/processor.ts:622][E: packages/opencode/src/session/processor.ts:623][E: packages/opencode/src/session/processor.ts:629][E: packages/opencode/src/session/processor.ts:630]
 
-3. `SessionProcessor.process` stream drain 会 `Stream.takeUntil(() => ctx.needsCompaction)`；drain 后若 `ctx.needsCompaction` 为真返回 `"compact"`。[E: packages/opencode/src/session/processor.ts:642][E: packages/opencode/src/session/processor.ts:644][E: packages/opencode/src/session/processor.ts:679]
+3. `SessionProcessor.process` stream drain 会 `Stream.takeUntil(() => ctx.needsCompaction)`；drain 后若 `ctx.needsCompaction` 为真返回 `"compact"`。[E: packages/opencode/src/session/processor.ts:656][E: packages/opencode/src/session/processor.ts:658][E: packages/opencode/src/session/processor.ts:693]
 
 4. `SessionPrompt.runLoop` 收到 processor result `"compact"` 后调用 `compaction.create({ auto: true, overflow: !handle.message.finish })`，然后继续下一轮。[E: packages/opencode/src/session/prompt.ts:1320][E: packages/opencode/src/session/prompt.ts:1321][E: packages/opencode/src/session/prompt.ts:1326][E: packages/opencode/src/session/prompt.ts:1329]
 

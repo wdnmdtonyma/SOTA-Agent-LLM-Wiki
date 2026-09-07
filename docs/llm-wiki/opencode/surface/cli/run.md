@@ -10,7 +10,7 @@ schema: node
 source:
   - packages/opencode/src/cli/cmd/run.ts
   - packages/opencode/src/cli/cmd/run/
-updated: 9f69463f1d
+updated: e207624c48
 evidence: explicit
 symbols: [RunCommand]
 related: [cli.opencode-yargs, prompt.system-prompts, agent.config]

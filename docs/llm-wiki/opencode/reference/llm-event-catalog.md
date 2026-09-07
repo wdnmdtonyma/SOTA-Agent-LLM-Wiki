@@ -9,7 +9,7 @@ source:
   - packages/llm/src/schema/errors.ts
   - packages/llm/src/route/protocol.ts
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 evidence: explicit
 symbols:
   - LLMEvent

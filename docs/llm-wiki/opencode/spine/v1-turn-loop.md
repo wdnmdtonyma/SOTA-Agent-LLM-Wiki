@@ -9,7 +9,7 @@ symbols: [SessionPrompt.prompt, SessionPrompt.loop, runLoop, SessionProcessor.cr
 related: [session-v1.prompt, session-v1.processor, session-v1.llm-runtime]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > V1 turn loop 是 `packages/opencode/src/session/prompt.ts` 内部的 assistant loop:它从 V1 user message 组装模型输入,调用 `SessionProcessor`,再由 `LLM.stream` 把 AI SDK/native seam event 转成 V1 message part。
@@ -60,19 +60,19 @@ flowchart TD
 
 11. `handle.process@packages/opencode/src/session/prompt.ts:1272` 把 `system`、`messages`、`tools`、`model`、`toolChoice` 交给 `SessionProcessor`。[E: packages/opencode/src/session/prompt.ts:1272]
 
-12. `SessionProcessor.process@packages/opencode/src/session/processor.ts:627` 设置 session busy,然后在 `llm.stream(streamInput)` 处真正打开模型 event stream。[E: packages/opencode/src/session/processor.ts:627][E: packages/opencode/src/session/processor.ts:639][E: packages/opencode/src/session/processor.ts:640]
+12. `SessionProcessor.process@packages/opencode/src/session/processor.ts:641` 设置 session busy,然后在 `llm.stream(streamInput)` 处真正打开模型 event stream。[E: packages/opencode/src/session/processor.ts:641][E: packages/opencode/src/session/processor.ts:653][E: packages/opencode/src/session/processor.ts:654]
 
 13. `LLM.stream@packages/opencode/src/session/llm.ts:357` 创建 abort controller 并调用 `run`;默认 `run` 分支调用 AI SDK `streamText`,experimental native 分支则尝试 `LLMNativeRuntime.stream`。[E: packages/opencode/src/session/llm.ts:357][E: packages/opencode/src/session/llm.ts:361][E: packages/opencode/src/session/llm.ts:362][E: packages/opencode/src/session/llm.ts:366][E: packages/opencode/src/session/llm.ts:226][E: packages/opencode/src/session/llm.ts:280]
 
-14. `SessionProcessor` 逐个处理 LLM event:text-start/text-delta/text-end 更新 V1 text part,tool-call/tool-result 更新 V1 tool part,step-finish 写 usage 与 finish 状态。[E: packages/opencode/src/session/processor.ts:486][E: packages/opencode/src/session/processor.ts:499][E: packages/opencode/src/session/processor.ts:512][E: packages/opencode/src/session/processor.ts:331][E: packages/opencode/src/session/processor.ts:383][E: packages/opencode/src/session/processor.ts:435]
+14. `SessionProcessor` 逐个处理 LLM event:text-start/text-delta/text-end 更新 V1 text part,tool-call/tool-result 更新 V1 tool part,step-finish 写 usage 与 finish 状态。[E: packages/opencode/src/session/processor.ts:500][E: packages/opencode/src/session/processor.ts:513][E: packages/opencode/src/session/processor.ts:526][E: packages/opencode/src/session/processor.ts:331][E: packages/opencode/src/session/processor.ts:383][E: packages/opencode/src/session/processor.ts:435]
 
-15. `handle.process` 返回后,`finished` 同样排除 `"tool-calls"` 与 `"unknown"`,因此 unknown finish 不会在这里被当成普通完成态。[E: packages/opencode/src/session/prompt.ts:1295] `SessionProcessor.process` 的返回值把下游结果压成 `"compact" | "stop" | "continue"`:`ctx.needsCompaction` 为 true 时返回 `compact`,`ctx.blocked` 或 assistant message error 时返回 `stop`,其余返回 `continue` 让 `runLoop` 判断是否进入下一 step。[E: packages/opencode/src/session/processor.ts:679][E: packages/opencode/src/session/processor.ts:680][E: packages/opencode/src/session/processor.ts:681]
+15. `handle.process` 返回后,`finished` 同样排除 `"tool-calls"` 与 `"unknown"`,因此 unknown finish 不会在这里被当成普通完成态。[E: packages/opencode/src/session/prompt.ts:1295] `SessionProcessor.process` 的返回值把下游结果压成 `"compact" | "stop" | "continue"`:`ctx.needsCompaction` 为 true 时返回 `compact`,`ctx.blocked` 或 assistant message error 时返回 `stop`,其余返回 `continue` 让 `runLoop` 判断是否进入下一 step。[E: packages/opencode/src/session/processor.ts:693][E: packages/opencode/src/session/processor.ts:694][E: packages/opencode/src/session/processor.ts:695]
 
 ## 关键决策点
 
 - `finish: "unknown"` 同时被 loop 入口退出集与 `handle.process` 之后的 `finished` 检查排除;unknown 不再结束 V1 prompt loop。[E: packages/opencode/src/session/prompt.ts:1113][E: packages/opencode/src/session/prompt.ts:1295]
-- V1 loop 的 compaction 有两条入口:step-finish overflow 会在 processor 中设置 `ctx.needsCompaction`,而 `handle.process()` 返回 `"compact"` 后由 `SessionPrompt.runLoop` 调 `compaction.create({ auto: true, overflow: !handle.message.finish })`。[E: packages/opencode/src/session/processor.ts:477][E: packages/opencode/src/session/processor.ts:481][E: packages/opencode/src/session/prompt.ts:1319][E: packages/opencode/src/session/prompt.ts:1320][E: packages/opencode/src/session/prompt.ts:1321][E: packages/opencode/src/session/prompt.ts:1326]
-- V1 `SessionProcessor` 当前依赖 `EventV2Bridge` 发布 error 类事件,但 Text/Tool/Step 的主状态仍写入 V1 message parts。[E: packages/opencode/src/session/processor.ts:25][E: packages/opencode/src/session/processor.ts:95][E: packages/opencode/src/session/processor.ts:426][E: packages/opencode/src/session/processor.ts:446][E: packages/opencode/src/session/processor.ts:496]
+- V1 loop 的 compaction 有两条入口:step-finish overflow 会在 processor 中设置 `ctx.needsCompaction`,而 `handle.process()` 返回 `"compact"` 后由 `SessionPrompt.runLoop` 调 `compaction.create({ auto: true, overflow: !handle.message.finish })`。[E: packages/opencode/src/session/processor.ts:491][E: packages/opencode/src/session/processor.ts:495][E: packages/opencode/src/session/prompt.ts:1319][E: packages/opencode/src/session/prompt.ts:1320][E: packages/opencode/src/session/prompt.ts:1321][E: packages/opencode/src/session/prompt.ts:1326]
+- V1 `SessionProcessor` 当前依赖 `EventV2Bridge` 发布 error 类事件,但 Text/Tool/Step 的主状态仍写入 V1 message parts。[E: packages/opencode/src/session/processor.ts:25][E: packages/opencode/src/session/processor.ts:95][E: packages/opencode/src/session/processor.ts:426][E: packages/opencode/src/session/processor.ts:460][E: packages/opencode/src/session/processor.ts:510]
 - V1 默认模型 runtime 仍是 AI SDK;native provider engine 是 `experimentalNativeLlm` flag 下的可选 seam。[E: packages/opencode/src/effect/runtime-flags.ts:54][E: packages/opencode/src/session/llm.ts:280]
 
 ## 深挖入口

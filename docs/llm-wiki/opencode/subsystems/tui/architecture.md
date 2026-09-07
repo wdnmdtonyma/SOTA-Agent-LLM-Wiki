@@ -9,7 +9,7 @@ symbols: [run, TuiInput, App]
 related: [tui.routing, tui.sync-store, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > TUI 架构是 `@opencode-ai/tui` 里的 OpenTUI `CliRenderer` + SolidJS reactive tree；OpenCode domain 边界主要是 `@opencode-ai/sdk/v2` client/event stream，V1 legacy CLI 只是 host/transport/plugin adapter。
@@ -35,7 +35,7 @@ updated: 9f69463f1d
 | 文件 | 角色 |
 |---|---|
 | `packages/tui/src/index.tsx` | package root，只 re-export `run` 和 `TuiInput`。[E: packages/tui/src/index.tsx:1] |
-| `packages/tui/src/app.tsx` | `Effect.fn("Tui.run")`、OpenTUI renderer lifecycle、Solid provider stack、global command palette、route switch。[E: packages/tui/src/app.tsx:189] [E: packages/tui/src/app.tsx:245] [E: packages/tui/src/app.tsx:559] [E: packages/tui/src/app.tsx:1113] |
+| `packages/tui/src/app.tsx` | `Effect.fn("Tui.run")`、OpenTUI renderer lifecycle、Solid provider stack、global command palette、route switch。[E: packages/tui/src/app.tsx:186] [E: packages/tui/src/app.tsx:189] [E: packages/tui/src/app.tsx:245] [E: packages/tui/src/app.tsx:559] [E: packages/tui/src/app.tsx:1113] |
 | `packages/tui/src/context/route.tsx` | route discriminated union 存在 Solid store 中，`navigate()` 直接 reconcile 新 route；没有 URL/history router 的判断来自该文件未接 URL/history adapter。[E: packages/tui/src/context/route.tsx:23] [E: packages/tui/src/context/route.tsx:29] [E: packages/tui/src/context/route.tsx:38] [I] |
 | `packages/tui/src/context/sdk.tsx` | `@opencode-ai/sdk/v2` client + SSE/host event source + 16ms event batching。[E: packages/tui/src/context/sdk.tsx:24] [E: packages/tui/src/context/sdk.tsx:82] [E: packages/tui/src/context/sdk.tsx:120] [E: packages/tui/src/context/sdk.tsx:69] [E: packages/tui/src/context/sdk.tsx:76] |
 | `packages/tui/src/context/sync.tsx` | legacy/current TUI server-state mirror；bootstrap 后进入 `partial`/`complete` 状态。[E: packages/tui/src/context/sync.tsx:70] [E: packages/tui/src/context/sync.tsx:518] [E: packages/tui/src/context/sync.tsx:537] [I] |
@@ -50,7 +50,7 @@ updated: 9f69463f1d
 
 ## 控制流
 
-1. `run` 进入 `Effect.scoped`，通过 `Effect.acquireRelease` 创建 `CliRenderer`；renderer 使用 `externalOutputMode: "passthrough"`、`targetFps: 60`、`exitOnCtrlC: false`、`useKittyKeyboard: {}`、`autoFocus: false`，mouse 由 `Flag.OPENCODE_DISABLE_MOUSE` 和 `input.config.mouse` 共同决定。[E: packages/tui/src/app.tsx:189] [E: packages/tui/src/app.tsx:189] [E: packages/tui/src/app.tsx:195] [E: packages/tui/src/app.tsx:195] [E: packages/tui/src/app.tsx:202]
+1. `run` 进入 `Effect.scoped`，通过 `Effect.acquireRelease` 创建 `CliRenderer`；renderer 使用 `externalOutputMode: "passthrough"`、`targetFps: 60`、`exitOnCtrlC: false`、`useKittyKeyboard: {}`、`autoFocus: false`，mouse 由 `Flag.OPENCODE_DISABLE_MOUSE` 和 `input.config.mouse` 共同决定。[E: packages/tui/src/app.tsx:186] [E: packages/tui/src/app.tsx:189] [E: packages/tui/src/app.tsx:195] [E: packages/tui/src/app.tsx:196] [E: packages/tui/src/app.tsx:198] [E: packages/tui/src/app.tsx:199] [E: packages/tui/src/app.tsx:200] [E: packages/tui/src/app.tsx:202]
 2. renderer release path 调 `destroyRenderer(renderer)`；Windows input guard、OpenTUI default keymap、OpenCode keymap 注册、pluginHost dispose、audio dispose、SIGHUP destroy 都在 scoped finalizer 范围内。[E: packages/tui/src/app.tsx:211] [E: packages/tui/src/app.tsx:214] [E: packages/tui/src/app.tsx:215] [E: packages/tui/src/app.tsx:217] [E: packages/tui/src/app.tsx:223] [E: packages/tui/src/app.tsx:229] [E: packages/tui/src/app.tsx:231]
 3. 首次 render 前预热 terminal palette，等待 theme mode，避免 `system` theme 第一帧 fallback flash。[E: packages/tui/src/app.tsx:241] [E: packages/tui/src/app.tsx:242]
 4. Solid `render()` 把 provider stack 挂到 renderer：`ExitProvider`、`EpilogueProvider`、`ErrorBoundary`、runtime paths/env/startup providers、clipboard、keymap、args、KV、toast、route、config、plugin runtime、SDK、`PermissionProvider`、project、sync、data、theme、local、prompt stash/dialog/frecency/history/ref/editor、`LocationProvider` 都在 root 组合。[E: packages/tui/src/app.tsx:245] [E: packages/tui/src/app.tsx:256] [E: packages/tui/src/app.tsx:281] [E: packages/tui/src/app.tsx:296] [E: packages/tui/src/app.tsx:297] [E: packages/tui/src/app.tsx:298] [E: packages/tui/src/app.tsx:305] [E: packages/tui/src/app.tsx:307] [E: packages/tui/src/app.tsx:309] [E: packages/tui/src/app.tsx:317] [E: packages/tui/src/app.tsx:318]

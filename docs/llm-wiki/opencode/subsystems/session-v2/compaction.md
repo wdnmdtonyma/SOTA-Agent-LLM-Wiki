@@ -9,7 +9,7 @@ symbols: [SessionCompaction, SessionCompaction.make, compactIfNeeded, compactAft
 related: [spine.trace-compaction-overflow, session-v1.compaction-overflow]
 evidence: explicit
 status: verified
-updated: 9f69463f1d
+updated: e207624c48
 ---
 
 > V2 compaction 有两条执行路径:provider request 前的 `compactIfNeeded` 估算触发,以及 provider context overflow 且 assistant 尚未 started 时的 `compactAfterOverflow` recovery。
