@@ -25,7 +25,7 @@ symbols:
 related: [ref.reasoning-variant-tables]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > V1 provider transforms 是 AI SDK request 的 provider-specific normalization 层：它修 message content、cache hints、providerOptions key、Responses item metadata、reasoning variants、default generation/provider options，以及 Claude 5.1+ 的 thinking `blockBinding`，让同一条 V1 session loop 能喂给不同 AI SDK provider。
@@ -49,7 +49,7 @@ registry 在合成 V1 model 时调用 `ProviderTransform.reasoningVariants` / `v
 ## 关键文件
 
 - `packages/opencode/src/provider/transform.ts`：message / sampling / variants / options / providerOptions / catalog 翻译。
-- `packages/opencode/src/provider/provider.ts`：registry 接入 variants，Cloudflare AI Gateway 先把 `openai/*` / `anthropic/*` 映成 native npm。[E: packages/opencode/src/provider/provider.ts:1256][E: packages/opencode/src/provider/provider.ts:1257][E: packages/opencode/src/provider/provider.ts:1310]
+- `packages/opencode/src/provider/provider.ts`：registry 接入 variants，Cloudflare AI Gateway 先把 `openai/*` / `anthropic/*` 映成 native npm。[E: packages/opencode/src/provider/provider.ts:1260][E: packages/opencode/src/provider/provider.ts:1261][E: packages/opencode/src/provider/provider.ts:1314]
 - `packages/opencode/test/provider/transform.test.ts`：Bedrock signature replay、Qwen 无默认 sampling、`textVerbosity`、`blockBinding`、GitLab family 分流。
 - `patches/@ai-sdk%2Fmistral@3.0.51.patch`：Mistral `prompt_cache_key` 与 native thinking metadata。
 - Bedrock catalog effort `"none"` / OpenAI `serviceTier` 的 wire 行为分别在 `@ai-sdk/amazon-bedrock` / `@ai-sdk/openai` 的 AI SDK patch 里，**不是** `transform.ts` 新导出的 TS API。
@@ -149,7 +149,7 @@ OpenRouter heuristic 用 `reasoning.effort`；`ai-gateway-provider` heuristic �
 
 ## 设计动机
 
-V1 provider transforms 存在是因为 AI SDK abstraction 不完全屏蔽 provider wire 差异：不同 provider 对空 content、tool id charset、reasoning control、cache control、store/itemId、thinking 前缀绑定的要求不同。[I] registry 从 models.dev 合成 V1 model 时，Cloudflare AI Gateway 会先把 `openai/*` / `anthropic/*` 映成 native npm，再调用 `ProviderTransform.reasoningVariants(model, base)`，失败才回退 heuristic variants，说明 variants 是 model catalog 的一部分，不是 runtime 临时开关。[E: packages/opencode/src/provider/provider.ts:1254][E: packages/opencode/src/provider/provider.ts:1256][E: packages/opencode/src/provider/provider.ts:1257][E: packages/opencode/src/provider/provider.ts:1271][E: packages/opencode/src/provider/provider.ts:1310] config model 路径不走 `reasoningVariants`，只 merge 已有或 heuristic variants，并用 `disabled` 删除具体档位；但合成 `api.npm` 时仍可能再跑 `cloudflareGatewayNpm()`（config-defined gateway 绕过 `fromModelsDevModel`）。[E: packages/opencode/src/provider/provider.ts:1498][E: packages/opencode/src/provider/provider.ts:1566][E: packages/opencode/src/provider/provider.ts:1568][E: packages/opencode/src/provider/provider.ts:1570]
+V1 provider transforms 存在是因为 AI SDK abstraction 不完全屏蔽 provider wire 差异：不同 provider 对空 content、tool id charset、reasoning control、cache control、store/itemId、thinking 前缀绑定的要求不同。[I] registry 从 models.dev 合成 V1 model 时，Cloudflare AI Gateway 会先把 `openai/*` / `anthropic/*` 映成 native npm，再调用 `ProviderTransform.reasoningVariants(model, base)`，失败才回退 heuristic variants，说明 variants 是 model catalog 的一部分，不是 runtime 临时开关。[E: packages/opencode/src/provider/provider.ts:1258][E: packages/opencode/src/provider/provider.ts:1260][E: packages/opencode/src/provider/provider.ts:1261][E: packages/opencode/src/provider/provider.ts:1275][E: packages/opencode/src/provider/provider.ts:1314] config model 路径不走 `reasoningVariants`，只 merge 已有或 heuristic variants，并用 `disabled` 删除具体档位；但合成 `api.npm` 时仍可能再跑 `cloudflareGatewayNpm()`（config-defined gateway 绕过 `fromModelsDevModel`）。[E: packages/opencode/src/provider/provider.ts:1502][E: packages/opencode/src/provider/provider.ts:1570][E: packages/opencode/src/provider/provider.ts:1572][E: packages/opencode/src/provider/provider.ts:1574]
 
 ## 易错点
 

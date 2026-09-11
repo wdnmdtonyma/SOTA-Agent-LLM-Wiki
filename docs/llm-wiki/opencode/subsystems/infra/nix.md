@@ -23,7 +23,7 @@ related:
   - infra.build-monorepo
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > Nix flake 节点描述 opencode 如何用 `flake.nix`、fixed-output `node_modules` derivation、CLI derivation、Desktop derivation 与 CI hash refresh 流水线提供可复现的 Linux/Darwin 构建入口。

@@ -15,7 +15,7 @@ related:
   - infra.sst
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > Web/文档站是 `@opencode-ai/web` Astro 5 + Starlight 站点, 由 Cloudflare adapter 以 server output 部署, 主要承载 docs、多语言内容、品牌页面和分享页的 Web surface。

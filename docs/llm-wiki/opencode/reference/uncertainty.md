@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 # 不确定项日志([U] 汇总)
@@ -149,7 +149,7 @@ updated: e207624c48
 
 # uncertainty-update-console
 
-- SHA: `e207624c48`
+- SHA: `b3f1a96c6d`
 - node: `clients.console`
 
 ## 仍 [U]
@@ -159,6 +159,7 @@ Google normalizer 已把 `thoughtsTokenCount` 加进 `outputTokens`，但 trial 
 ## 已关闭
 
 - `providerUsage.test.ts` 现期待 `candidates=3, thoughts=2` → `outputTokens=5`，与 `google.ts:68` 一致；上一轮“测试期待 3 / 实现返回 5”张力已消失。[E: packages/console/app/test/providerUsage.test.ts:29]
+- `proxyInference` 只覆盖 full catalog / 不覆盖 Go-lite：已否。handler 在 truthy `model` 时即调用；paths 含 `/zen/go/v1/*` 与 models/usage GET。
 
 ## verify-app-compatibility
 
@@ -186,10 +187,11 @@ Google normalizer 已把 `thoughtsTokenCount` 加进 `outputTokens`，但 trial 
 
 # uncertainty-verify-console
 
-- node: `clients.console`
-- SHA: `e207624c48`
+- batch: `L2-console-sst`
+- nodes: `clients.console`, `infra.sst`
+- SHA: `b3f1a96c6d`
 
-## Google thoughts double-count
+## Still [U]: Google thoughts double-count
 
 - claim: Google normalizer already folds `thoughtsTokenCount` into `outputTokens`, but trial limiter and Stats `buildTokenCost` still add `outputTokens + reasoningTokens`.
 - status: still `[U]`
@@ -199,10 +201,22 @@ Google normalizer 已把 `thoughtsTokenCount` 加进 `outputTokens`，但 trial 
   - `packages/stats/core/src/domain/home.ts:743` `item.outputTokens + item.reasoningTokens`
 - unresolved: whether that double-count is intended contract.
 
-## providerUsage test vs implementation
+## L2-console-sst @ b3f1a96c6d
 
-- claim: test expects Google `candidates=3, thoughts=2` → `outputTokens=3`; implementation returns 5.
-- status: **closed @ e207624c48** — 测试现期待 `outputTokens=5`，与 `google.ts:68` 一致。[E: packages/console/app/test/providerUsage.test.ts:29]
+Must-confirm items held after source read:
+
+- handler `if (model)` → `proxyInference` before validate/rate-limit/auth; BYOK provider/native model only when `modelList === "full"`.
+- `paths` includes Go POST + `GET /zen/v1/models` + `GET /zen/go/v1/{models,usage}`.
+- `/zen/go/` sets `go=true` so ProviderTable join is `sql\`false\``.
+- `generation` optional; GET is `new Request(destination, request)`.
+- `inferenceUnavailable` 503 message is exact: `Inference routing is unavailable. Please retry later.`
+- `proxyModels()` gone from tree.
+- `GET /oauth/opencode/client.json`: `client_id = origin + PATH`, `native`, loopback no port, `token_endpoint_auth_method: none`.
+- `go-models.ts` is UI allowance table, not live zen catalog; `deepseek-flash` / DeepSeek V4.1 Flash / `bonus: 4`; no Omen Alpha.
+- `ZEN_LITE_PRICE` dev hardcodes `prod_U1tUscpmwtV2bG` / `price_1T3phhE7fOCwHSD4zS6w2NPy`; other stages use `zenLiteProduct.id` / `zenLitePrice.id`.
+- `infra/console.ts` migration URLs still at 226/228/230/231 after the preview-branch comment.
+
+Fixed in `clients.console` (wording / [E] only): GET Request init, Google BYOK `/models/${model}` path, `inferenceUnavailable` cite 114, google normalize cite 62, go models proxy cite 11.
 
 ## verify-light
 

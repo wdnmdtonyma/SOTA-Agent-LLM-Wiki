@@ -9,7 +9,7 @@ symbols: [AnthropicMessages, OpenAIResponses, OpenAIChat, OpenAICompatibleChat, 
 related: [ref.llm-protocol-catalog, model-layer.copilot]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > `packages/llm/src/protocols` 当前导出 6 个 provider-native protocol adapter:Anthropic Messages、OpenAI Responses、OpenAI Chat、OpenAI-compatible Chat、Gemini、Bedrock Converse。每个 adapter 把同一个 `LLMRequest` 降成 provider-native body,再把 provider streaming frames 升成统一 `LLMEvent`。

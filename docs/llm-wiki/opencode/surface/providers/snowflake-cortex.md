@@ -9,7 +9,7 @@ symbols: [SnowflakeCortexAuthPlugin, SnowflakeCortexPlugin, cortexFetch, Provide
 related: [provider.resolution, provider.auth-accounts, model-layer.provider-registry-v1]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > Snowflake Cortex provider 同时有 V1 provider/auth plugin surface 和 V2 AISDK provider plugin：V1 provider loader 解析 account/token 并设置 Cortex base URL，内建 `SnowflakeCortexAuthPlugin` 提供 external-browser OAuth；V2 `SnowflakeCortexPlugin` 在 AISDK `sdk` hook 中设置 token、usage 和 Cortex fetch compatibility shim。
@@ -27,21 +27,21 @@ updated: e207624c48
 
 V1 plugin host 把 `SnowflakeCortexAuthPlugin` 作为 internal plugin 装入内建 plugin 列表；这意味着它不需要用户从 npm 安装 plugin。[E: packages/opencode/src/plugin/index.ts:24][E: packages/opencode/src/plugin/index.ts:67][E: packages/opencode/src/plugin/index.ts:82]
 
-provider registry 的 per-provider loader key 是 `"snowflake-cortex"`；它读取 env、V1 auth storage 和 provider config options。[E: packages/opencode/src/provider/provider.ts:900][E: packages/opencode/src/provider/provider.ts:901][E: packages/opencode/src/provider/provider.ts:902]
+provider registry 的 per-provider loader key 是 `"snowflake-cortex"`；它读取 env、V1 auth storage 和 provider config options。[E: packages/opencode/src/provider/provider.ts:904][E: packages/opencode/src/provider/provider.ts:905][E: packages/opencode/src/provider/provider.ts:906]
 
 V2 core plugin registry 把 `SnowflakeCortexPlugin` 放进 `ProviderPlugins`，当前 internal plugin startup 在 `packages/core/src/plugin/internal.ts` 中遍历 `ProviderPlugins` 并 `add()` 每个 provider plugin；AISDK 初始化通过 `ctx.aisdk.sdk(...)` 注册 hook，`AISDK.language()` 会运行 `service.runSDK({ model, package, options })` 取得 plugin 返回的 SDK。[E: packages/core/src/plugin/provider.ts:22][E: packages/core/src/plugin/provider.ts:36][E: packages/core/src/plugin/provider.ts:59][E: packages/core/src/plugin/internal.ts:33][E: packages/core/src/plugin/internal.ts:81][E: packages/core/src/plugin/internal.ts:118][E: packages/core/src/plugin/provider/snowflake-cortex.ts:70][E: packages/core/src/aisdk.ts:216]
 
 ## Credential Precedence
 
-Snowflake account precedence 是 `SNOWFLAKE_ACCOUNT` env、API auth metadata account、OAuth auth accountId、provider option account。[E: packages/opencode/src/provider/provider.ts:904][E: packages/opencode/src/provider/provider.ts:905][E: packages/opencode/src/provider/provider.ts:906][E: packages/opencode/src/provider/provider.ts:907][E: packages/opencode/src/provider/provider.ts:908]
+Snowflake account precedence 是 `SNOWFLAKE_ACCOUNT` env、API auth metadata account、OAuth auth accountId、provider option account。[E: packages/opencode/src/provider/provider.ts:908][E: packages/opencode/src/provider/provider.ts:909][E: packages/opencode/src/provider/provider.ts:910][E: packages/opencode/src/provider/provider.ts:911][E: packages/opencode/src/provider/provider.ts:912]
 
-token precedence 是 `SNOWFLAKE_CORTEX_TOKEN`/`SNOWFLAKE_CORTEX_PAT` env，其次 V1 API auth key，其次 OAuth access token，其次 provider option token/apiKey。[E: packages/opencode/src/provider/provider.ts:910][E: packages/opencode/src/provider/provider.ts:911][E: packages/opencode/src/provider/provider.ts:912][E: packages/opencode/src/provider/provider.ts:913][E: packages/opencode/src/provider/provider.ts:915]
+token precedence 是 `SNOWFLAKE_CORTEX_TOKEN`/`SNOWFLAKE_CORTEX_PAT` env，其次 V1 API auth key，其次 OAuth access token，其次 provider option token/apiKey。[E: packages/opencode/src/provider/provider.ts:914][E: packages/opencode/src/provider/provider.ts:915][E: packages/opencode/src/provider/provider.ts:916][E: packages/opencode/src/provider/provider.ts:917][E: packages/opencode/src/provider/provider.ts:919]
 
 V2 `SnowflakeCortexPlugin` 不解析 account/baseURL；它只在 AISDK `sdk` hook 中给 providerID `snowflake-cortex` 的 model 设置 token。token precedence 是 `SNOWFLAKE_CORTEX_TOKEN`、`SNOWFLAKE_CORTEX_PAT`、`evt.options.token`、`evt.options.apiKey`。[E: packages/core/src/plugin/provider/snowflake-cortex.ts:70][E: packages/core/src/plugin/provider/snowflake-cortex.ts:72][E: packages/core/src/plugin/provider/snowflake-cortex.ts:73][E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/core/src/plugin/provider/snowflake-cortex.ts:76][E: packages/core/src/plugin/provider/snowflake-cortex.ts:77]
 
-如果 account 或 token 缺失，V1 loader 返回 `autoload: false`，并让 `getModel()` 抛带 missing credentials 的错误。[E: packages/opencode/src/provider/provider.ts:917][E: packages/opencode/src/provider/provider.ts:920][E: packages/opencode/src/provider/provider.ts:921][E: packages/opencode/src/provider/provider.ts:922]
+如果 account 或 token 缺失，V1 loader 返回 `autoload: false`，并让 `getModel()` 抛带 missing credentials 的错误。[E: packages/opencode/src/provider/provider.ts:921][E: packages/opencode/src/provider/provider.ts:924][E: packages/opencode/src/provider/provider.ts:925][E: packages/opencode/src/provider/provider.ts:926]
 
-有 account/token 时 base URL 是 `https://${account}.snowflakecomputing.com/api/v2/cortex/v1`，options 至少包含 `baseURL` 和 `apiKey`；config source 会 `autoload: true`。[E: packages/opencode/src/provider/provider.ts:929][E: packages/opencode/src/provider/provider.ts:931][E: packages/opencode/src/provider/provider.ts:996]
+有 account/token 时 base URL 是 `https://${account}.snowflakecomputing.com/api/v2/cortex/v1`，options 至少包含 `baseURL` 和 `apiKey`；config source 会 `autoload: true`。[E: packages/opencode/src/provider/provider.ts:933][E: packages/opencode/src/provider/provider.ts:935][E: packages/opencode/src/provider/provider.ts:1000]
 
 ## External Browser OAuth
 
@@ -57,13 +57,13 @@ callback result stores OAuth auth with refresh token, access token, expiry, and 
 
 ## Refresh 与 Fetch Shim
 
-auth loader only returns custom fetch for OAuth auth; non-OAuth auth returns `{}` and provider loader handles env/config/API tokens。[E: packages/opencode/src/plugin/snowflake-cortex.ts:286][E: packages/opencode/src/plugin/snowflake-cortex.ts:288][E: packages/opencode/src/plugin/snowflake-cortex.ts:320][E: packages/opencode/src/provider/provider.ts:910][E: packages/opencode/src/provider/provider.ts:915]
+auth loader only returns custom fetch for OAuth auth; non-OAuth auth returns `{}` and provider loader handles env/config/API tokens。[E: packages/opencode/src/plugin/snowflake-cortex.ts:286][E: packages/opencode/src/plugin/snowflake-cortex.ts:288][E: packages/opencode/src/plugin/snowflake-cortex.ts:320][E: packages/opencode/src/provider/provider.ts:914][E: packages/opencode/src/provider/provider.ts:919]
 
 expired OAuth auth is refreshed in loader path and fetch path. Fetch path refreshes if token is missing/expires within 120 seconds, and retries once on HTTP 401。[E: packages/opencode/src/plugin/snowflake-cortex.ts:12][E: packages/opencode/src/plugin/snowflake-cortex.ts:300][E: packages/opencode/src/plugin/snowflake-cortex.ts:302][E: packages/opencode/src/plugin/snowflake-cortex.ts:305][E: packages/opencode/src/plugin/snowflake-cortex.ts:440][E: packages/opencode/src/plugin/snowflake-cortex.ts:443][E: packages/opencode/src/plugin/snowflake-cortex.ts:445][E: packages/opencode/src/plugin/snowflake-cortex.ts:449][E: packages/opencode/src/plugin/snowflake-cortex.ts:451]
 
 fetch shim sets bearer authorization and opencode user-agent, rewrites `max_tokens` to `max_completion_tokens`, turns Snowflake "conversation complete" 400 into a 200 empty assistant message, and fixes streaming chunks with empty role to `"assistant"`。[E: packages/opencode/src/plugin/snowflake-cortex.ts:382][E: packages/opencode/src/plugin/snowflake-cortex.ts:383][E: packages/opencode/src/plugin/snowflake-cortex.ts:389][E: packages/opencode/src/plugin/snowflake-cortex.ts:390][E: packages/opencode/src/plugin/snowflake-cortex.ts:404][E: packages/opencode/src/plugin/snowflake-cortex.ts:405][E: packages/opencode/src/plugin/snowflake-cortex.ts:408][E: packages/opencode/src/plugin/snowflake-cortex.ts:428]
 
-provider-level fetch applies the same request/response transforms for env/config/API-key tokens; OAuth-only tokens skip provider-level fetch so plugin fetch owns refresh and transforms together。[E: packages/opencode/src/provider/provider.ts:938][E: packages/opencode/src/provider/provider.ts:940][E: packages/opencode/src/provider/provider.ts:941][E: packages/opencode/src/provider/provider.ts:945][E: packages/opencode/src/provider/provider.ts:946]
+provider-level fetch applies the same request/response transforms for env/config/API-key tokens; OAuth-only tokens skip provider-level fetch so plugin fetch owns refresh and transforms together。[E: packages/opencode/src/provider/provider.ts:942][E: packages/opencode/src/provider/provider.ts:944][E: packages/opencode/src/provider/provider.ts:945][E: packages/opencode/src/provider/provider.ts:949][E: packages/opencode/src/provider/provider.ts:950]
 
 V2 core `cortexFetch(upstream)` implements the same Cortex request/response quirks: rewrite `max_tokens` to `max_completion_tokens`, turn "conversation complete" 400 into a normal stop response, and normalize streaming empty role to `"assistant"`。[E: packages/core/src/plugin/provider/snowflake-cortex.ts:8][E: packages/core/src/plugin/provider/snowflake-cortex.ts:13][E: packages/core/src/plugin/provider/snowflake-cortex.ts:14][E: packages/core/src/plugin/provider/snowflake-cortex.ts:15][E: packages/core/src/plugin/provider/snowflake-cortex.ts:24][E: packages/core/src/plugin/provider/snowflake-cortex.ts:28][E: packages/core/src/plugin/provider/snowflake-cortex.ts:32][E: packages/core/src/plugin/provider/snowflake-cortex.ts:41][E: packages/core/src/plugin/provider/snowflake-cortex.ts:53]
 
@@ -77,7 +77,7 @@ The plugin also exposes an API method labeled `Paste PAT or bearer token manuall
 
 - Snowflake Cortex stored OAuth/API auth is V1 plugin `auth` hook, not V2 `Integration.Service`; the V2 `SnowflakeCortexPlugin` only customizes AISDK SDK initialization/fetch behavior。[E: packages/opencode/src/plugin/snowflake-cortex.ts:284][E: packages/opencode/src/plugin/snowflake-cortex.ts:286][E: packages/core/src/plugin/provider/snowflake-cortex.ts:67][E: packages/core/src/plugin/provider/snowflake-cortex.ts:70]
 - OAuth callback server is process-global module state, so a newer authorize request supersedes any pending Snowflake authorize request。[E: packages/opencode/src/plugin/snowflake-cortex.ts:34][E: packages/opencode/src/plugin/snowflake-cortex.ts:236][E: packages/opencode/src/plugin/snowflake-cortex.ts:238][E: packages/opencode/src/plugin/snowflake-cortex.ts:250]
-- The provider can be configured entirely by env/config/PAT without external browser OAuth; OAuth is only one credential path。[E: packages/opencode/src/provider/provider.ts:910][E: packages/opencode/src/provider/provider.ts:915][E: packages/opencode/src/plugin/snowflake-cortex.ts:500]
+- The provider can be configured entirely by env/config/PAT without external browser OAuth; OAuth is only one credential path。[E: packages/opencode/src/provider/provider.ts:914][E: packages/opencode/src/provider/provider.ts:919][E: packages/opencode/src/plugin/snowflake-cortex.ts:500]
 
 ## Sources
 

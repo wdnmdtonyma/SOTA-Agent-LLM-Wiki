@@ -26,7 +26,7 @@ symbols: [syncStats, Ingest, Routes, getStatsHomeData, getStatsModelData, getSta
 related: [infra.sst]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > `packages/stats` 是 opencode 的用量、成本、market share、weekly retention 与模型比较数据产品：`core` 做 R2 SQL/Drizzle/Effect domain，`server` 做 ingest 与 sync daemon，`app` 做 SolidStart 数据站点。

@@ -14,7 +14,7 @@ related:
   - subsys.tools.codemode
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > opencode monorepo 是 Bun workspace；当前 HEAD 的 workspace globs 展开为 36 个 package，而不是固定 27 个 package。
@@ -37,7 +37,7 @@ V2 新内核 package 是 `packages/core`，package 名为 `@opencode-ai/core`，
 
 ## Workspace 入口
 
-根 package 名为 `opencode`，描述为 “AI-powered development tool”，并使用 `bun@1.3.14` 作为 package manager [E: package.json:3] [E: package.json:7]。`packages/opencode`、`packages/core`、`packages/cli` 的发布 `version` 都是 `1.18.29` [E: packages/opencode/package.json:3] [E: packages/core/package.json:3] [E: packages/cli/package.json:4]。根 scripts 明确禁止从 root 跑测试：`test` 脚本输出 “do not run tests from root” 并 exit 1 [E: package.json:23]。workspace globs 是 `packages/*`、`packages/console/*`、`packages/stats/*`、`packages/sdk/js`、`packages/slack`，展开仍是 36 个 package [E: package.json:25] [E: package.json:27] [E: package.json:28] [E: package.json:29] [E: package.json:30] [E: package.json:31]。
+根 package 名为 `opencode`，描述为 “AI-powered development tool”，并使用 `bun@1.3.14` 作为 package manager [E: package.json:3] [E: package.json:7]。`packages/opencode`、`packages/core`、`packages/cli` 的发布 `version` 都是 `1.18.30` [E: packages/opencode/package.json:3] [E: packages/core/package.json:3] [E: packages/cli/package.json:4]。根 scripts 明确禁止从 root 跑测试：`test` 脚本输出 “do not run tests from root” 并 exit 1 [E: package.json:23]。workspace globs 是 `packages/*`、`packages/console/*`、`packages/stats/*`、`packages/sdk/js`、`packages/slack`，展开仍是 36 个 package [E: package.json:25] [E: package.json:27] [E: package.json:28] [E: package.json:29] [E: package.json:30] [E: package.json:31]。
 
 ## Packages
 
@@ -45,7 +45,7 @@ V2 新内核 package 是 `packages/core`，package 名为 `@opencode-ai/core`，
 | --- | --- | --- | --- |
 | `packages/app` | `@opencode-ai/app` [E: packages/app/package.json:2] | shared UI | Solid web app package，导出 app entry、desktop menu、updater、WSL types、Vite config 和 CSS [E: packages/app/package.json:6]。 |
 | `packages/cli` | `@opencode-ai/cli` [E: packages/cli/package.json:3] | V2 host | 新 CLI host，提供 `lildax` bin，并依赖 core/server/tui/sdk 组合运行 [E: packages/cli/package.json:7] [E: packages/cli/package.json:18]。 |
-| `packages/client` | `@opencode-ai/client` [E: packages/client/package.json:3] | shared client | Effect/HTTP client package，导出 typed client entry 并依赖 `@effect/platform` 与 `@opencode-ai/protocol` [E: packages/client/package.json:7] [E: packages/client/package.json:17]。 |
+| `packages/client` | `@opencode-ai/client` [E: packages/client/package.json:3] | shared client | Effect/HTTP client package，导出 typed client 与 `./effect` entry，runtime 依赖 `@opencode-ai/schema` 与 `@opencode-ai/protocol`，`effect` 是 optional peer [E: packages/client/package.json:7] [E: packages/client/package.json:8] [E: packages/client/package.json:18] [E: packages/client/package.json:19] [E: packages/client/package.json:22]。 |
 | `packages/codemode` | `@opencode-ai/codemode` [E: packages/codemode/package.json:3] | V1 experimental tool support | Effect-native confined code execution over schema-described tools；导出 `CodeMode`、`Tool`、`OpenAPI`，当前由 V1 `execute` adapter 使用。[E: packages/codemode/package.json:5][E: packages/codemode/src/index.ts:1][E: packages/codemode/src/index.ts:3][E: packages/opencode/src/tool/code-mode.ts:4] |
 | `packages/console/app` | `@opencode-ai/console-app` [E: packages/console/app/package.json:2] | shared console | Console web app，依赖 console core/resource/mail、OpenAuth、Stripe、Solid Start 和 Cloudflare/Vite stack [E: packages/console/app/package.json:13]。 |
 | `packages/console/core` | `@opencode-ai/console-core` [E: packages/console/core/package.json:3] | shared console | Console backend/domain core，提供 DB、limits、model promotion 等 scripts，并导出 `src` modules [E: packages/console/core/package.json:25] [E: packages/console/core/package.json:21]。 |
@@ -60,14 +60,14 @@ V2 新内核 package 是 `packages/core`，package 名为 `@opencode-ai/core`，
 | `packages/enterprise` | `@opencode-ai/enterprise` [E: packages/enterprise/package.json:2] | shared enterprise | Enterprise web/backend package，依赖 core、ui、Solid Start、Hono、AWS signing 和 Nitro [E: packages/enterprise/package.json:15]。 |
 | `packages/function` | `@opencode-ai/function` [E: packages/function/package.json:2] | shared cloud | Cloud function helper package，依赖 Octokit、Hono 和 Jose [E: packages/function/package.json:18] [E: packages/function/package.json:20] [E: packages/function/package.json:21]。 |
 | `packages/http-recorder` | `@opencode-ai/http-recorder` [E: packages/http-recorder/package.json:4] | shared test infra | Effect HTTP client record/replay package，description 明确用于 deterministic cassettes [E: packages/http-recorder/package.json:5]。 |
-| `packages/httpapi-codegen` | `@opencode-ai/httpapi-codegen` [E: packages/httpapi-codegen/package.json:3] | shared tooling | HTTP API codegen package，导出 code generation entry 并依赖 Effect、Prettier 和 TypeScript tooling [E: packages/httpapi-codegen/package.json:6] [E: packages/httpapi-codegen/package.json:13]。 |
+| `packages/httpapi-codegen` | `@opencode-ai/httpapi-codegen` [E: packages/httpapi-codegen/package.json:3] | shared tooling | HTTP API codegen package，导出 code generation entry，runtime 依赖 `effect` 与 Prettier [E: packages/httpapi-codegen/package.json:6] [E: packages/httpapi-codegen/package.json:14] [E: packages/httpapi-codegen/package.json:15]。 |
 | `packages/llm` | `@opencode-ai/llm` [E: packages/llm/package.json:4] | shared LLM engine | Native provider/protocol engine，导出 provider、providers、protocols 和 route modules [E: packages/llm/package.json:13]。 |
 | `packages/opencode` | `opencode` [E: packages/opencode/package.json:4] | V1 active | 当前活跑 opencode package，导出 `src/*.ts`，bin 为 `opencode`，同时依赖 AI SDK providers、native `@opencode-ai/llm` seam 和 TUI/server/sdk [E: packages/opencode/package.json:21] [E: packages/opencode/package.json:54]。 |
 | `packages/plugin` | `@opencode-ai/plugin` [E: packages/plugin/package.json:3] | shared plugin API | Plugin API package，导出 root、tool 和 TUI types/APIs [E: packages/plugin/package.json:11]。 |
-| `packages/protocol` | `@opencode-ai/protocol` [E: packages/protocol/package.json:3] | shared protocol | Protocol package，导出 API/event schemas 并依赖 core schema、Effect 和 OpenAPI tooling [E: packages/protocol/package.json:7] [E: packages/protocol/package.json:13]。 |
-| `packages/schema` | `@opencode-ai/schema` [E: packages/schema/package.json:3] | shared schema | Shared schema package，导出 schema entry 并依赖 Effect schemas plus LSP protocol types [E: packages/schema/package.json:7] [E: packages/schema/package.json:14]。 |
+| `packages/protocol` | `@opencode-ai/protocol` [E: packages/protocol/package.json:3] | shared protocol | Protocol package，导出 `src/*.ts`，runtime 只依赖 `@opencode-ai/schema` 与 `effect` [E: packages/protocol/package.json:7] [E: packages/protocol/package.json:14] [E: packages/protocol/package.json:15]。 |
+| `packages/schema` | `@opencode-ai/schema` [E: packages/schema/package.json:3] | shared schema | Shared schema package，导出 schema entry，runtime 只依赖 `effect` [E: packages/schema/package.json:7] [E: packages/schema/package.json:15]。 |
 | `packages/script` | `@opencode-ai/script` [E: packages/script/package.json:3] | shared tooling | Shared script helper package，导出 `src/index.ts` 并依赖 semver [E: packages/script/package.json:12] [E: packages/script/package.json:5]。 |
-| `packages/sdk-next` | `@opencode-ai/sdk-next` [E: packages/sdk-next/package.json:3] | shared SDK | Next-generation SDK package，导出 typed client/server surfaces 并依赖 protocol, client and Effect platform [E: packages/sdk-next/package.json:7] [E: packages/sdk-next/package.json:14]。 |
+| `packages/sdk-next` | `@opencode-ai/sdk-next` [E: packages/sdk-next/package.json:3] | shared SDK | Next-generation SDK package，导出 typed client/server surfaces，依赖 `@opencode-ai/client`、`@opencode-ai/core`、`@opencode-ai/server` 和 `effect` [E: packages/sdk-next/package.json:7] [E: packages/sdk-next/package.json:15] [E: packages/sdk-next/package.json:16] [E: packages/sdk-next/package.json:17] [E: packages/sdk-next/package.json:18]。 |
 | `packages/sdk/js` | `@opencode-ai/sdk` [E: packages/sdk/js/package.json:3] | shared SDK | JS SDK package，导出 v1/v2 client/server/generated client surfaces [E: packages/sdk/js/package.json:12]。 |
 | `packages/server` | `@opencode-ai/server` [E: packages/server/package.json:3] | V2 server | Server package，依赖 core、Effect 和 Drizzle，并导出 `src/*.ts` [E: packages/server/package.json:14] [E: packages/server/package.json:8]。 |
 | `packages/session-ui` | `@opencode-ai/session-ui` [E: packages/session-ui/package.json:2] | shared UI | Session UI package，导出 v2/session UI components and state surfaces，依赖 `@opencode-ai/core`、`@opencode-ai/sdk`、`@opencode-ai/ui` [E: packages/session-ui/package.json:7] [E: packages/session-ui/package.json:42] [E: packages/session-ui/package.json:43] [E: packages/session-ui/package.json:44]。 |

@@ -10,7 +10,7 @@ source:
   - packages/core/src/models-dev.ts
   - packages/opencode/test/provider/transform.test.ts
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 evidence: explicit
 symbols:
   - ProviderTransform.variants
@@ -26,7 +26,7 @@ related:
 
 # Reasoning Variant Tables
 
-本节点只描述 V1 `packages/opencode/src/provider/transform.ts` 的 reasoning variants。Provider registry 从 models.dev 构建 model 时,Cloudflare AI Gateway 会先把 `openai/*` / `anthropic/*` 映成 native npm,再调用 `ProviderTransform.reasoningVariants(model, base)`;只有它返回 `undefined` 时才回退 `ProviderTransform.variants(base)`。[E: packages/opencode/src/provider/provider.ts:1254] [E: packages/opencode/src/provider/provider.ts:1256] [E: packages/opencode/src/provider/provider.ts:1257] [E: packages/opencode/src/provider/provider.ts:1310] config model variants 会 merge 并可通过 `disabled` 删除具体 variant。[E: packages/opencode/src/provider/provider.ts:1568] [E: packages/opencode/src/provider/provider.ts:1570] [E: packages/opencode/src/provider/provider.ts:1571]
+本节点只描述 V1 `packages/opencode/src/provider/transform.ts` 的 reasoning variants。Provider registry 从 models.dev 构建 model 时,Cloudflare AI Gateway 会先把 `openai/*` / `anthropic/*` 映成 native npm,再调用 `ProviderTransform.reasoningVariants(model, base)`;只有它返回 `undefined` 时才回退 `ProviderTransform.variants(base)`。[E: packages/opencode/src/provider/provider.ts:1258] [E: packages/opencode/src/provider/provider.ts:1260] [E: packages/opencode/src/provider/provider.ts:1261] [E: packages/opencode/src/provider/provider.ts:1314] config model variants 会 merge 并可通过 `disabled` 删除具体 variant。[E: packages/opencode/src/provider/provider.ts:1572] [E: packages/opencode/src/provider/provider.ts:1574] [E: packages/opencode/src/provider/provider.ts:1575]
 
 ## Models.dev Reasoning Options
 

@@ -9,7 +9,7 @@ symbols: [TuiThreadCommand, createWorkerFetch, createEventSource, rpc, createLeg
 related: [tui.architecture, tui.feature-plugins, tui.sync-store]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > V1 runtime hosting 是 `packages/opencode/src/cli/cmd/tui.ts` 的 `$0 [project]` command：它 spawn worker 托管 in-process V1 server，通过 RPC fetch/event bridge 给 `@opencode-ai/tui`，并注入 legacy plugin host。

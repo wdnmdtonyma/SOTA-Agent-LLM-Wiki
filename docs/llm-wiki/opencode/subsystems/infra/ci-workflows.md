@@ -27,7 +27,7 @@ related:
   - infra.native-binary-release
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > CI/CD workflows 节点描述 `.github/workflows` 中约 26 个 GitHub Actions workflow 的主要交付路径: tests/typecheck, SST deploy, CLI/Desktop publish, Storybook build, container image build, SST unlock, Nix evaluation and hash refresh。hourly `beta.yml` 已从源树删除。

@@ -15,7 +15,7 @@ related:
   - tui.dialog-kit
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > TUI dialog system 由 `ui/dialog.tsx` 的 modal stack、`ui/dialog-*.tsx` helper 和 `component/dialog-*.tsx` domain dialogs 组成；当前源码还把 command palette 实现为一个 `DialogSelect` wrapper。

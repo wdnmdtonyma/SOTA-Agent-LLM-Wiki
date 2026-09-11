@@ -25,7 +25,7 @@ related:
   - config.migration
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > 配置加载节点覆盖两套并存 loader：V1 `@opencode/Config` 把多来源配置 deep-merge 成一个 `Info`，V2 `@opencode/v2/Config` 暴露从低优先级到高优先级的 ordered `Entry[]`。V1 读路径现在是 `decodeConfig = ConfigV2Compat.lower + ConfigParse.schema`，映射表权威在 `config.v2-compat`。

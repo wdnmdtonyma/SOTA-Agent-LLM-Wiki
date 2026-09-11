@@ -9,7 +9,7 @@ symbols: [RouteProvider, useRoute, Route, HomeRoute, SessionRoute, PluginRoute]
 related: [tui.session-screen, tui.home-screen]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > TUI routing 是一个 Solid store 里的 discriminated union：`home | session | plugin`；它没有 URL、history stack 或 router library，导航就是 `setStore(reconcile(route))`。

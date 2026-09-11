@@ -9,7 +9,7 @@ symbols: [SessionCompaction.compactIfNeeded, SessionCompaction.compactAfterOverf
 related: [session-v2.compaction, session-v1.compaction-overflow]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > Compaction overflow 在 V1 与 V2 中是两套实现:V1 在 `SessionPrompt.runLoop` 内创建 compaction user message，把 head history `serialize` 后复用 V2 `buildPrompt` 生成 summary；V2 在 runner request budget 或 provider overflow recovery 中发布 V2 compaction events 并重建 turn。

@@ -19,7 +19,7 @@ related:
   - config.v1-core
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > `config.v2-compat` 是 V1 `@opencode/Config` 读路径上的 V2-shaped 文件投影层：`ConfigV2Compat.lower` 把能表示的 V2 key 压成 `ConfigV1.Info`，再交给 schema decode。它**不是** `config.migration`（那是 V2 loader 里 V1→V2 的 in-memory migrate，符号在 `packages/core/src/v1/config/migrate.ts`）。

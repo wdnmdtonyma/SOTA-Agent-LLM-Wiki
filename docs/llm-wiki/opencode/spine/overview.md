@@ -9,7 +9,7 @@ symbols: [RunCommand, SessionPrompt, SessionProcessor, LLM, CodeModeTool, Sessio
 related: [spine.v1-v2-relationship, ref.package-index, integrations.integration-v2, tool.execute, subsys.tools.codemode]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > opencode 是一个 Bun/TypeScript/Effect 多包 monorepo,当前默认用户路径仍由 `packages/opencode` 的 V1 CLI 与 V1 session loop 承担,V2 `packages/core` 是 Effect-native durable/event-sourced 新内核。
@@ -45,7 +45,7 @@ flowchart TD
 
 ## V1
 
-当前发布版本是 `1.18.29`（`packages/opencode`、`packages/core`、`packages/cli` 的 `version` 一致），根 workspace 使用 `bun@1.3.14`，workspace globs 展开为 36 个 package。[E: packages/opencode/package.json:3][E: packages/core/package.json:3][E: packages/cli/package.json:4][E: package.json:7][E: package.json:26][E: package.json:30]
+当前发布版本是 `1.18.30`（`packages/opencode`、`packages/core`、`packages/cli` 的 `version` 一致），根 workspace 使用 `bun@1.3.14`，workspace globs 展开为 36 个 package。[E: packages/opencode/package.json:3][E: packages/core/package.json:3][E: packages/cli/package.json:4][E: package.json:7][E: package.json:26][E: package.json:30]
 
 `packages/opencode` 的 package 名称是 `opencode`,当前 package manifest 标记为 `private: true`,其 `bin` 字段声明 `opencode` 指向 `./bin/opencode`。[E: packages/opencode/package.json:4][E: packages/opencode/package.json:7][E: packages/opencode/package.json:19] 这个包依赖 `@opencode-ai/codemode`、`@opencode-ai/llm`、`@opencode-ai/sdk`、`@opencode-ai/server`、`@opencode-ai/tui`,并且仍直接依赖 Vercel AI SDK 的 `ai` 包。[E: packages/opencode/package.json:87][E: packages/opencode/package.json:88][E: packages/opencode/package.json:93][E: packages/opencode/package.json:94][E: packages/opencode/package.json:95][E: packages/opencode/package.json:113]
 

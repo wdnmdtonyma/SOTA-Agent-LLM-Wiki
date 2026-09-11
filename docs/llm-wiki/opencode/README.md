@@ -58,7 +58,7 @@ _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
 
 ## 方法 & 状态
 
-逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `e207624c48`（官方 `dev`，发布 `1.18.29`），共 189 个 verified 节点 + 14 个 grouped-catalog 组。本轮主要增量是 Anthropic thinking `blockBinding`、全局 300s SSE timeout、Azure 去掉 deployment discovery、Codex 整数版本过滤、Copilot `X-Interaction-Id`、Console `migrated_at` / inference proxy / `Quota.reset`、Stats stealth 与 country 扁平化，以及 Desktop OAuth `client_id=opencode-desktop`。
+逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `b3f1a96c6d`（官方 `dev`，发布 `1.18.30`），共 189 个 verified 节点 + 14 个 grouped-catalog 组。本轮主要增量是 V1 `gpt-6` → Astra system prompt、Bedrock 保留 `arn:` / `deepseek.v3.2` 且 US 前缀只认 `deepseek.r1`、Copilot adaptive thinking 一律 `display: summarized`、Console 把 Go inference / models / usage 纳入共享 `proxyInference`，以及 `GET /oauth/opencode/client.json`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

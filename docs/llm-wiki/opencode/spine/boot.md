@@ -9,7 +9,7 @@ symbols: [AppLayer, AppRuntime, Server.Default]
 related: [spine.cli-to-session, persistence.project-instance-location]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > V1 boot 节点描述 `opencode` 可执行文件怎样找到平台二进制、进入 yargs CLI、再把 Effect service graph 装配成 V1 runtime。

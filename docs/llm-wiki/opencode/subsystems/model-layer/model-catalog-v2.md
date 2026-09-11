@@ -4,12 +4,12 @@ title: Model Catalog V2
 kind: subsystem
 tier: T2
 v: v2
-source: [packages/core/src/catalog.ts, packages/core/src/provider.ts, packages/core/src/model.ts, packages/schema/src/provider.ts, packages/schema/src/model.ts, packages/core/src/plugin/provider/, packages/core/src/plugin/provider.ts, packages/core/src/plugin/internal.ts, packages/core/src/plugin.ts, packages/core/src/plugin/models-dev.ts, packages/core/src/config/plugin/provider.ts, packages/core/src/integration.ts, packages/opencode/src/provider/provider.ts, packages/llm/src/schema/ids.ts, specs/v2/provider-model.md, specs/v2/provider-policy.md]
-symbols: [Catalog.Service, ProviderV2.Info, ModelV2.Info, ProviderPlugins, ModelsDevPlugin, ConfigProviderPlugin, ProviderPolicy, Integration.Service, CloudflareAIGatewayPlugin]
+source: [packages/core/src/catalog.ts, packages/core/src/provider.ts, packages/core/src/model.ts, packages/schema/src/provider.ts, packages/schema/src/model.ts, packages/core/src/plugin/provider/, packages/core/src/plugin/provider.ts, packages/core/src/plugin/provider/amazon-bedrock.ts, packages/core/src/plugin/internal.ts, packages/core/src/plugin.ts, packages/core/src/plugin/models-dev.ts, packages/core/src/config/plugin/provider.ts, packages/core/src/integration.ts, packages/opencode/src/provider/provider.ts, packages/llm/src/schema/ids.ts, specs/v2/provider-model.md, specs/v2/provider-policy.md]
+symbols: [Catalog.Service, ProviderV2.Info, ModelV2.Info, ProviderPlugins, ModelsDevPlugin, ConfigProviderPlugin, ProviderPolicy, Integration.Service, CloudflareAIGatewayPlugin, AmazonBedrockPlugin]
 related: [plugin-api.v2-hooks, provider.catalog, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > V2 model catalog 是 plugin-ordered provider/model registry：provider plugins、models.dev、config provider plugin、integration connection availability 和 provider policy 一起构造 `ProviderV2.Info` / `ModelV2.Info`，再由 catalog API 提供 provider/model get/all/available/default/small 查询。`packages/core/src/provider.ts` 与 `packages/core/src/model.ts` 现在 re-export `@opencode-ai/schema` 的 provider/model schema。
@@ -21,6 +21,7 @@ updated: e207624c48
 - models.dev 与 config provider plugin 分别写哪些字段？
 - Integration connection 如何影响 provider availability？
 - V2 Cloudflare AI Gateway plugin 是否 mirror V1 三分路由？
+- V2 AmazonBedrockPlugin 如何处理 `arn:` / `deepseek.r1` / `deepseek.v3.2` model ID？
 
 ## V2 Schema
 
@@ -30,11 +31,13 @@ updated: e207624c48
 
 `ModelV2.Info` 字段覆盖 id/providerID/family/name/api/capabilities/request/variants/time/cost/status/enabled/limit。[E: packages/schema/src/model.ts:60][E: packages/schema/src/model.ts:63][E: packages/schema/src/model.ts:79][E: packages/schema/src/model.ts:80][E: packages/schema/src/model.ts:81][E: packages/schema/src/model.ts:82][E: packages/schema/src/model.ts:84] `ModelV2.Api` 也分 aisdk/native，并带 model-level api id。[E: packages/schema/src/model.ts:45][E: packages/schema/src/model.ts:47][E: packages/schema/src/model.ts:50][E: packages/schema/src/model.ts:55]
 
-命名陷阱：V2 `ProviderV2.Info` / `ModelV2.Info`、V1 `Provider.Info` / `Provider.Model`、`packages/llm` 的 `ProviderID` 是三套 schema/type 命名。[E: packages/schema/src/provider.ts:53][E: packages/schema/src/model.ts:60][E: packages/opencode/src/provider/provider.ts:1074][E: packages/opencode/src/provider/provider.ts:1091][E: packages/llm/src/schema/ids.ts:17] 它们不能混用。[I]
+命名陷阱：V2 `ProviderV2.Info` / `ModelV2.Info`、V1 `Provider.Info` / `Provider.Model`、`packages/llm` 的 `ProviderID` 是三套 schema/type 命名。[E: packages/schema/src/provider.ts:53][E: packages/schema/src/model.ts:60][E: packages/opencode/src/provider/provider.ts:1078][E: packages/opencode/src/provider/provider.ts:1095][E: packages/llm/src/schema/ids.ts:17] 它们不能混用。[I]
 
 ## Plugin Order
 
 `ProviderPlugins` array 在 `packages/core/src/plugin/provider.ts` 中按源码顺序列出 34 个 provider plugin，从 Alibaba/AmazonBedrock/Anthropic 开始，到 XAI/Zenmux/DynamicProvider 结束。数组含 `CloudflareAIGatewayPlugin` 与 `CerebrasPlugin`。[E: packages/core/src/plugin/provider.ts:36][E: packages/core/src/plugin/provider.ts:37][E: packages/core/src/plugin/provider.ts:42][E: packages/core/src/plugin/provider.ts:43][E: packages/core/src/plugin/provider.ts:70]
+
+`AmazonBedrockPlugin` 在 `aisdk.language` hook 里用 `resolveModelID(evt.model.api.id, region)` 再交给 `evt.sdk.languageModel(...)`：`arn:` 原样返回；已有 `global.` / `us.` / `eu.` / `jp.` / `apac.` / `au.` prefix 跳过；US 子串列表含 `"deepseek.r1"` 不含裸 `"deepseek"`，所以 `deepseek.v3.2` 不加 `us.`。[E: packages/core/src/plugin/provider/amazon-bedrock.ts:16][E: packages/core/src/plugin/provider/amazon-bedrock.ts:18][E: packages/core/src/plugin/provider/amazon-bedrock.ts:31][E: packages/core/src/plugin/provider/amazon-bedrock.ts:130]
 
 boot 阶段在 `PluginInternal.boot` span 内批量添加 built-in plugins：ConfigReference、Agent、Command、Skill、ModelsDev、ConfigAgent/ConfigCommand/ConfigSkill、`ProviderPlugins`、ConfigExternal、ConfigProvider、Variant；provider plugins 的相对顺序仍来自 `ProviderPlugins` 数组。[E: packages/core/src/plugin/internal.ts:108][E: packages/core/src/plugin/internal.ts:110][E: packages/core/src/plugin/internal.ts:111][E: packages/core/src/plugin/internal.ts:112][E: packages/core/src/plugin/internal.ts:113][E: packages/core/src/plugin/internal.ts:114][E: packages/core/src/plugin/internal.ts:115][E: packages/core/src/plugin/internal.ts:116][E: packages/core/src/plugin/internal.ts:117][E: packages/core/src/plugin/internal.ts:118][E: packages/core/src/plugin/internal.ts:119][E: packages/core/src/plugin/internal.ts:120][E: packages/core/src/plugin/internal.ts:121][E: packages/core/src/plugin/internal.ts:123]
 
@@ -66,7 +69,7 @@ model resolve 会让 native model 在没有 url/settings 时继承 provider api�
 
 V2 `CloudflareAIGatewayPlugin` 在 `aisdk.sdk` hook 里用官方 `ai-gateway-provider` 包一层 `createAiGateway` + `createUnified`。Workers AI 是唯一把 Cloudflare token 当上游 Authorization 的分支：`workers-ai/` 或 `@cf/` 时 `createUnified({ apiKey: config.apiKey })`，其它模型 `createUnified({})`，依赖 gateway 已存/BYOK key。[E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:17][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:18][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:27][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:34][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:35]
 
-该 plugin **没有** mirror V1 `cloudflare-ai-gateway` custom loader 的三分路由（openai native passthrough / anthropic native + dash slug / REST `cf-aig-gateway-id`）。V1 三分路由与 `cloudflareGatewayNpm()` 写在 `packages/opencode/src/provider/provider.ts`，不属于 V2 catalog plugin。[E: packages/opencode/src/provider/provider.ts:848][E: packages/opencode/src/provider/provider.ts:1254][I]
+该 plugin **没有** mirror V1 `cloudflare-ai-gateway` custom loader 的三分路由（openai native passthrough / anthropic native + dash slug / REST `cf-aig-gateway-id`）。V1 三分路由与 `cloudflareGatewayNpm()` 写在 `packages/opencode/src/provider/provider.ts`，不属于 V2 catalog plugin。[E: packages/opencode/src/provider/provider.ts:852][E: packages/opencode/src/provider/provider.ts:1258][I]
 
 V2 `GoogleVertexPlugin.vertexEndpoint(location)` 也比 V1 窄：只区分 `global` → `aiplatform.googleapis.com` 与其它 `{location}-aiplatform.googleapis.com`，**没有** V1 `googleVertexEndpoint` 的 `eu`/`us` REP 分支。[E: packages/core/src/plugin/provider/google-vertex.ts:27][E: packages/core/src/plugin/provider/google-vertex.ts:28][E: packages/core/src/plugin/provider/google-vertex.ts:29] V1 的 `eu`/`us` → `aiplatform.{location}.rep.googleapis.com` 仍只在 V1 `googleVertexEndpoint`。[E: packages/opencode/src/provider/provider.ts:101][E: packages/opencode/src/provider/provider.ts:103] V2 Anthropic Vertex 才单独为 `eu`/`us` 补 REP publisher baseURL。[E: packages/core/src/plugin/provider/google-vertex.ts:158][E: packages/core/src/plugin/provider/google-vertex.ts:160]
 
@@ -89,7 +92,7 @@ small model 对 Azure / `azure-cognitive-services` 直接返回 undefined；对 
 - provider plugin 顺序来自 `ProviderPlugins` array 与 boot loop。[E: packages/core/src/plugin/provider.ts:36][E: packages/core/src/plugin/internal.ts:118] 这不是按 provider id 字母排序。[I]
 - V2 provider 使用 optional `disabled`，V2 model 使用 boolean `enabled`；不要把两者混成一个 provider-level `enabled` source 字段。[E: packages/schema/src/provider.ts:57][E: packages/schema/src/model.ts:80]
 - V2 catalog query 不再直接投影明文 credential；availability 通过 Integration connection map 判断，credential material 由 downstream model resolution/auth path 处理。[E: packages/core/src/catalog.ts:71][E: packages/core/src/catalog.ts:185][E: packages/core/src/catalog.ts:187][I]
-- 不要把 V1 Cloudflare AI Gateway 三分路由或 `cloudflareGatewayNpm()` 当成 V2 Core plugin 行为。[E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:35][E: packages/opencode/src/provider/provider.ts:848]
+- 不要把 V1 Cloudflare AI Gateway 三分路由或 `cloudflareGatewayNpm()` 当成 V2 Core plugin 行为。[E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:35][E: packages/opencode/src/provider/provider.ts:852]
 - 不要把 V1 `googleVertexEndpoint` 的 `eu`/`us` REP host 当成 V2 `vertexEndpoint` 行为。[E: packages/core/src/plugin/provider/google-vertex.ts:27][E: packages/opencode/src/provider/provider.ts:103]
 
 ## Sources
@@ -101,6 +104,7 @@ small model 对 Azure / `azure-cognitive-services` 直接返回 undefined；对 
 - packages/schema/src/model.ts
 - packages/core/src/plugin/provider/
 - packages/core/src/plugin/provider.ts
+- packages/core/src/plugin/provider/amazon-bedrock.ts
 - packages/core/src/plugin/internal.ts
 - packages/core/src/plugin.ts
 - packages/core/src/plugin/models-dev.ts

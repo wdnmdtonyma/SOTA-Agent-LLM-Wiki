@@ -25,7 +25,7 @@ symbols:
 evidence: explicit
 related:
   - persistence.repository-cache
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -158,13 +158,13 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 
 | Env | Provider/integration | Evidence |
 |---|---|---|
-| `AWS_PROFILE` | Bedrock profile. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:85] |
-| `AWS_REGION` | Bedrock region fallback. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:86] |
-| `AWS_BEARER_TOKEN_BEDROCK` | Bedrock bearer token. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:88] |
-| `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:92] |
-| `AWS_CONTAINER_CREDENTIALS_FULL_URI` | AWS container credentials. | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:92] |
-| `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path. | [E: packages/opencode/src/provider/provider.ts:316] |
-| `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path. | [E: packages/opencode/src/provider/provider.ts:331] |
+| `AWS_PROFILE` | V2 Bedrock profile；V1 amazon-bedrock loader 也读同名 env。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:93][E: packages/opencode/src/provider/provider.ts:313] |
+| `AWS_REGION` | V2 Bedrock region fallback；V1 amazon-bedrock loader 也读同名 env。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:94][E: packages/opencode/src/provider/provider.ts:308] |
+| `AWS_BEARER_TOKEN_BEDROCK` | V2 Bedrock bearer token；V1 也读 `process.env.AWS_BEARER_TOKEN_BEDROCK`。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:96][E: packages/opencode/src/provider/provider.ts:322] |
+| `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` | AWS container credentials；V1/V2 都读。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:100][E: packages/opencode/src/provider/provider.ts:334] |
+| `AWS_CONTAINER_CREDENTIALS_FULL_URI` | AWS container credentials；V1/V2 都读。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:100][E: packages/opencode/src/provider/provider.ts:334] |
+| `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path。 | [E: packages/opencode/src/provider/provider.ts:316] |
+| `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path。 | [E: packages/opencode/src/provider/provider.ts:331] |
 | `AZURE_RESOURCE_NAME` | V1 Azure OAuth/loader 与 V2 Core Azure plugin 都读的 resource name。V1 OAuth 缺此 env 时才弹出 `resourceName` text prompt；成功后写入 stored auth `accountId`。Azure plugin **不再**用它做 Cognitive Services account / deployment discovery。 | [E: packages/core/src/plugin/provider/azure.ts:23][E: packages/opencode/src/plugin/azure.ts:46][E: packages/opencode/src/plugin/azure.ts:89][E: packages/opencode/src/provider/provider.ts:254] |
 | `AZURE_COGNITIVE_SERVICES_RESOURCE_NAME` | Azure Cognitive Services resource. | [E: packages/core/src/plugin/provider/azure.ts:63] |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account. | [E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:53][E: packages/core/src/plugin/provider/cloudflare-workers-ai.ts:50] |
@@ -187,9 +187,9 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | `AICORE_SERVICE_KEY` | SAP AI Core service key. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:15] |
 | `AICORE_DEPLOYMENT_ID` | SAP AI Core deployment id. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
 | `AICORE_RESOURCE_GROUP` | SAP AI Core resource group. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
-| `SNOWFLAKE_CORTEX_TOKEN` | Snowflake Cortex token. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/opencode/src/provider/provider.ts:910] |
-| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT alias. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/opencode/src/provider/provider.ts:910] |
-| `SNOWFLAKE_ACCOUNT` | V1 Snowflake account. | [E: packages/opencode/src/provider/provider.ts:905] |
+| `SNOWFLAKE_CORTEX_TOKEN` | Snowflake Cortex token. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/opencode/src/provider/provider.ts:914] |
+| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT alias. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/opencode/src/provider/provider.ts:914] |
+| `SNOWFLAKE_ACCOUNT` | V1 Snowflake account. | [E: packages/opencode/src/provider/provider.ts:909] |
 
 ## GitHub automation env
 
@@ -210,7 +210,7 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 - `OPENCODE_EXPERIMENTAL` 是 umbrella only when a specific experimental flag is absent；设置了具体 env 后，具体 env 的 true/false 优先级更高。[E: packages/core/src/flag/flag.ts:12][E: packages/opencode/src/effect/runtime-flags.ts:13]
 - `OPENCODE_EXPERIMENTAL_CODE_MODE` 开启后，V1 registry 动态加载 wire tool `execute`；若专用 flag 未设置，umbrella `OPENCODE_EXPERIMENTAL` 可使其生效。[E: packages/opencode/src/effect/runtime-flags.ts:10][E: packages/opencode/src/effect/runtime-flags.ts:48][E: packages/opencode/src/tool/registry.ts:118][E: packages/opencode/src/tool/code-mode.ts:12]
 - 同名 env 可能被 V1 与 V2 双读，例如 `OPENCODE_CLIENT` 同时出现在 core `Flag` 与 V1 `RuntimeFlags`，因此排查 client identity 时要看当前执行路径属于 V1 CLI 还是 V2 embedded core。[E: packages/core/src/flag/flag.ts:75][E: packages/opencode/src/effect/runtime-flags.ts:56]
-- provider env 同时存在 `packages/core/src/plugin/provider/*` 与 `packages/opencode/src/provider/provider.ts` 两套 adapter；这反映 V1/V2 迁移期间 provider 入口并存。[E: packages/core/src/plugin/provider/google-vertex.ts:10][E: packages/opencode/src/provider/provider.ts:505][I]
+- provider env 同时存在 `packages/core/src/plugin/provider/*` 与 `packages/opencode/src/provider/provider.ts` 两套 adapter；这反映 V1/V2 迁移期间 provider 入口并存。[E: packages/core/src/plugin/provider/google-vertex.ts:10][E: packages/opencode/src/provider/provider.ts:509][I]
 - V1 Azure plugin 不再读 `AZURE_CONFIG_DIR` / `AZURE_RESOURCE_GROUP`，也不再做 Cognitive Services account / deployment discovery。OAuth 只认手动 `resourceName` 或 `AZURE_RESOURCE_NAME`。[E: packages/opencode/src/plugin/azure.ts:46][E: packages/opencode/src/plugin/azure.ts:89][E: packages/opencode/src/plugin/azure.ts:107]
 
 ## Sources

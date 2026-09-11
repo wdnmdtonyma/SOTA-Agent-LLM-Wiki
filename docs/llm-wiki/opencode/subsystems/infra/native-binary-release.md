@@ -21,7 +21,7 @@ related:
   - infra.ci-workflows
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > 原生二进制与发布节点描述 V1 CLI package `packages/opencode` 怎样通过 `Bun.build({ compile })` 产出跨平台 `opencode` 可执行文件, 再发布到 npm optional dependencies、GitHub Releases、Docker、Homebrew 和 AUR。

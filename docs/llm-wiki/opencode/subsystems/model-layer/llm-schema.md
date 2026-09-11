@@ -9,7 +9,7 @@ symbols: [LLMRequest, Message, ContentPart, ToolDefinition, LLMEvent, Usage, LLM
 related: [ref.llm-event-catalog]
 evidence: explicit
 status: verified
-updated: e207624c48
+updated: b3f1a96c6d
 ---
 
 > `packages/llm/src/schema` 是 native LLM engine 的公共 wire model:它定义 provider-agnostic `LLMRequest`、message content parts、tool definition/output、16 类 streaming `LLMEvent`、加性 `Usage` 契约,以及 10 类 `LLMErrorReason`。
