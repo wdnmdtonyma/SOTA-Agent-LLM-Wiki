@@ -8,7 +8,7 @@ symbols: [config::Tui, TuiNotificationSettings, RealtimeToml, RealtimeAudioToml,
 related: [command.model-mode, command.realtime-debug, config.storage-telemetry-misc, subsys.core.realtime-conversation, subsys.tui.keymap]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > UI / TUI / 实时设置 catalog 覆盖 ConfigToml 中 terminal UI, reasoning visibility, realtime audio/session/websocket/WebRTC overrides and paste burst detection 的顶层键。
@@ -24,15 +24,15 @@ updated: 121f91fd5d
 
 当前 `ConfigToml` 有 99 个顶层 `pub` 字段；本节点覆盖其中 12 个。8 个 surface/config catalog 节点合计覆盖全部 99 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:534]
 
-`Tui` contains notifications, animations, tooltips, vim/raw output mode, alternate screen, status line, status-line colors, terminal title, theme, pet, pet anchor, session picker view, resume cwd policy, keymap, model availability NUX, and terminal resize-reflow cap settings.[E: codex-rs/config/src/types.rs:725][E: codex-rs/config/src/types.rs:727][E: codex-rs/config/src/types.rs:732][E: codex-rs/config/src/types.rs:742][E: codex-rs/config/src/types.rs:758][E: codex-rs/config/src/types.rs:767][E: codex-rs/config/src/types.rs:775][E: codex-rs/config/src/types.rs:782][E: codex-rs/config/src/types.rs:787][E: codex-rs/config/src/types.rs:796][E: codex-rs/config/src/types.rs:803][E: codex-rs/config/src/types.rs:809][E: codex-rs/config/src/types.rs:815][E: codex-rs/config/src/types.rs:819][E: codex-rs/config/src/types.rs:824][E: codex-rs/config/src/types.rs:831][E: codex-rs/config/src/types.rs:835][E: codex-rs/config/src/types.rs:842]
+`Tui` contains notifications, animations, tooltips, vim/raw output mode, alternate screen, status line, status-line colors, terminal title, theme, pet, pet anchor, session picker view, resume cwd policy, keymap, model availability NUX, and terminal resize-reflow cap settings.[E: codex-rs/config/src/types.rs:737][E: codex-rs/config/src/types.rs:739][E: codex-rs/config/src/types.rs:744][E: codex-rs/config/src/types.rs:754][E: codex-rs/config/src/types.rs:775][E: codex-rs/config/src/types.rs:784][E: codex-rs/config/src/types.rs:792][E: codex-rs/config/src/types.rs:799][E: codex-rs/config/src/types.rs:804][E: codex-rs/config/src/types.rs:813][E: codex-rs/config/src/types.rs:820][E: codex-rs/config/src/types.rs:826][E: codex-rs/config/src/types.rs:832][E: codex-rs/config/src/types.rs:836][E: codex-rs/config/src/types.rs:841][E: codex-rs/config/src/types.rs:848][E: codex-rs/config/src/types.rs:852][E: codex-rs/config/src/types.rs:859]
 
-`ResumeCwdMode` serializes as kebab-case `current` or `session`; when `[tui].resume_cwd` is unset, runtime may prompt if launch cwd differs from the selected session cwd。[E: codex-rs/config/src/types.rs:89][E: codex-rs/config/src/types.rs:92][E: codex-rs/config/src/types.rs:94][E: codex-rs/config/src/types.rs:824]
+`ResumeCwdMode` serializes as kebab-case `current` or `session`; when `[tui].resume_cwd` is unset, runtime may prompt if launch cwd differs from the selected session cwd。[E: codex-rs/config/src/types.rs:89][E: codex-rs/config/src/types.rs:92][E: codex-rs/config/src/types.rs:94][E: codex-rs/config/src/types.rs:841]
 
 ### `[tui.keymap]`
 
-`Tui.keymap` 是非 optional 的 `TuiKeymap`，默认为空 override snapshot；其 global/chat/composer/editor/Vim/pager/list/agents/approval 子表中每个 action 都接受单个 binding string 或 alternatives array。空 array 表示显式 unbind，不继续 fallback 到 global 或 built-in default。[E: codex-rs/config/src/types.rs:831][E: codex-rs/config/src/tui_keymap.rs:70][E: codex-rs/config/src/tui_keymap.rs:72][E: codex-rs/config/src/tui_keymap.rs:74][E: codex-rs/config/src/tui_keymap.rs:486][E: codex-rs/config/src/tui_keymap.rs:508][E: codex-rs/config/src/tui_keymap.rs:510]
+`Tui.keymap` 是非 optional 的 `TuiKeymap`，默认为空 override snapshot；其 global/chat/composer/editor/Vim/pager/list/agents/approval 子表中每个 action 都接受单个 binding string 或 alternatives array。空 array 表示显式 unbind，不继续 fallback 到 global 或 built-in default。[E: codex-rs/config/src/types.rs:848][E: codex-rs/config/src/tui_keymap.rs:70][E: codex-rs/config/src/tui_keymap.rs:72][E: codex-rs/config/src/tui_keymap.rs:74][E: codex-rs/config/src/tui_keymap.rs:492][E: codex-rs/config/src/tui_keymap.rs:514][E: codex-rs/config/src/tui_keymap.rs:516]
 
-binding string 现在可包含一个单键或最多两段的 chord，例如 `ctrl-x ctrl-s`；配置反序列化时分别规范化每个 stroke，超过两段直接拒绝。context precedence、runtime conflict、reserved key 与 `/keymap` capture/persistence 属于 `subsys.tui.keymap`。[E: codex-rs/config/src/tui_keymap.rs:30][E: codex-rs/config/src/tui_keymap.rs:40][E: codex-rs/config/src/tui_keymap.rs:523][E: codex-rs/config/src/tui_keymap.rs:528]
+binding string 现在可包含一个单键或最多两段的 chord，例如 `ctrl-x ctrl-s`；配置反序列化时分别规范化每个 stroke，超过两段直接拒绝。context precedence、runtime conflict、reserved key 与 `/keymap` capture/persistence 属于 `subsys.tui.keymap`。[E: codex-rs/config/src/tui_keymap.rs:30][E: codex-rs/config/src/tui_keymap.rs:40][E: codex-rs/config/src/tui_keymap.rs:529][E: codex-rs/config/src/tui_keymap.rs:534]
 
 ## 字段 catalog
 

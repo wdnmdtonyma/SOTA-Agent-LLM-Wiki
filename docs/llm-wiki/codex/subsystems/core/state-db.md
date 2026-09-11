@@ -8,10 +8,10 @@ symbols: [StateRuntime, RuntimeDbSpec, ThreadMetadata, ThreadMetadataBuilder, Th
 related: [subsys.core.rollout-persistence, subsys.core.thread-store, subsys.core.session-lifecycle, subsys.core.thread-queue, subsys.core.rollout-migration]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> Codex 现在有六个 SQLite path specs：metadata、logs、goals、memories、queue，以及 rebuildable paginated history (`thread_history_1.sqlite`)。`StateRuntime::init` 打开前五个；thread-history DB 仍由 thread store 按需打开。[E: codex-rs/state/src/sqlite.rs:99][E: codex-rs/state/src/runtime.rs:88][E: codex-rs/state/src/runtime.rs:95]
+> Codex 现在有六个 SQLite path specs：metadata、logs、goals、memories、queue，以及 rebuildable paginated history (`thread_history_1.sqlite`)。`StateRuntime::init` 打开前五个；thread-history DB 仍由 thread store 按需打开。[E: codex-rs/state/src/sqlite.rs:99][E: codex-rs/state/src/runtime.rs:90][E: codex-rs/state/src/runtime.rs:98]
 
 ## 能回答的问题
 
@@ -25,8 +25,8 @@ updated: 121f91fd5d
 
 ## 职责边界
 
-- `codex-rs/state` exports local state types and database path helpers; rollout/core code accesses it through `codex-rs/rollout/src/state_db.rs` rather than owning SQLite details in the recorder.[E: codex-rs/state/src/lib.rs:23][E: codex-rs/state/src/lib.rs:100][E: codex-rs/state/src/lib.rs:114][E: codex-rs/rollout/src/state_db.rs:29]
-- `StateRuntime` owns the state pool, logs pool, goal store, memory store, `SqliteQueueStore`，以及 process-local thread timestamp high-water marks。[E: codex-rs/state/src/runtime.rs:88][E: codex-rs/state/src/runtime.rs:91][E: codex-rs/state/src/runtime.rs:95]
+- `codex-rs/state` exports local state types and database path helpers; rollout/core code accesses it through `codex-rs/rollout/src/state_db.rs` rather than owning SQLite details in the recorder.[E: codex-rs/state/src/lib.rs:23][E: codex-rs/state/src/lib.rs:100][E: codex-rs/state/src/lib.rs:129][E: codex-rs/rollout/src/state_db.rs:29]
+- `StateRuntime` owns the state pool, logs pool, goal store, memory store, `SqliteQueueStore`，以及 process-local thread timestamp high-water marks。[E: codex-rs/state/src/runtime.rs:90][E: codex-rs/state/src/runtime.rs:93][E: codex-rs/state/src/runtime.rs:98]
 - `codex-rs/rollout/src/state_db.rs` is the rollout/core-facing wrapper; it initializes or optionally opens the runtime and reconciles rollout files into it.[E: codex-rs/rollout/src/state_db.rs:45][E: codex-rs/rollout/src/state_db.rs:208][E: codex-rs/rollout/src/state_db.rs:519]
 
 ## 关键文件
@@ -35,7 +35,7 @@ updated: 121f91fd5d
 |---|---|
 | `codex-rs/state/src/lib.rs` | Public exports, `MAX_QUEUE_ITEMS`, metrics constants。[E: codex-rs/state/src/lib.rs:100] |
 | `codex-rs/state/src/sqlite.rs` | 六个 `RuntimeDbSpec` 与 filename 常量。[E: codex-rs/state/src/sqlite.rs:29][E: codex-rs/state/src/sqlite.rs:99] |
-| `codex-rs/state/src/runtime.rs` | `StateRuntime` 打开 state/logs/goals/memories/queue。[E: codex-rs/state/src/runtime.rs:88][E: codex-rs/state/src/runtime.rs:182] |
+| `codex-rs/state/src/runtime.rs` | `StateRuntime` 打开 state/logs/goals/memories/queue。[E: codex-rs/state/src/runtime.rs:90][E: codex-rs/state/src/runtime.rs:186] |
 | `codex-rs/state/src/runtime/queued_items.rs` | `queue_1.sqlite` 上的 `queued_items` CRUD。[E: codex-rs/state/src/runtime/queued_items.rs:10] |
 | `codex-rs/state/src/runtime/threads.rs` | Thread metadata reads/lists/upserts and incremental rollout item application.[E: codex-rs/state/src/runtime/threads.rs:435][E: codex-rs/state/src/runtime/threads.rs:471][E: codex-rs/state/src/runtime/threads.rs:1042] |
 | `thread_sections.rs` / `thread_section_order.rs` | Section CRUD、cursor list、thread move、sparse position 与 renumber transaction。[E: codex-rs/state/src/runtime/thread_sections.rs:9][E: codex-rs/state/src/runtime/thread_sections.rs:24][E: codex-rs/state/src/runtime/thread_sections.rs:44][E: codex-rs/state/src/runtime/thread_section_order.rs:64][E: codex-rs/state/src/runtime/thread_section_order.rs:104][E: codex-rs/state/src/runtime/thread_section_order.rs:193] |
@@ -48,17 +48,17 @@ updated: 121f91fd5d
 | 实体 | 字段/状态 | 说明 |
 |---|---|---|
 | runtime DB paths | `state_5.sqlite`, `logs_2.sqlite`, `goals_1.sqlite`, `memories_1.sqlite`, `queue_1.sqlite`, `thread_history_1.sqlite` | Six `RuntimeDbSpec`s in `RUNTIME_DBS`；thread-history 仍不是 `StateRuntime` 字段。[E: codex-rs/state/src/sqlite.rs:32][E: codex-rs/state/src/sqlite.rs:33][E: codex-rs/state/src/sqlite.rs:99] |
-| `StateRuntime` | sqlite config, default provider, pools/stores, `thread_queue`, timestamp counters | 打开五个主库：state/logs/goals/memories/queue。[E: codex-rs/state/src/runtime.rs:88][E: codex-rs/state/src/runtime.rs:95][E: codex-rs/state/src/runtime.rs:251] |
+| `StateRuntime` | sqlite config, default provider, pools/stores, `thread_queue`, timestamp counters | 打开五个主库：state/logs/goals/memories/queue。[E: codex-rs/state/src/runtime.rs:90][E: codex-rs/state/src/runtime.rs:98][E: codex-rs/state/src/runtime.rs:255] |
 | `ThreadMetadata` | id, rollout path, timestamps, source, model, cwd, title/preview, sandbox/approval, tokens, archive, optional section + sparse position + entered-at, git | Canonical SQLite representation combines rollout-derived fields with SQLite-only organization metadata。[E: codex-rs/state/src/model/thread_metadata.rs:125][E: codex-rs/state/src/model/thread_metadata.rs:129][E: codex-rs/state/src/model/thread_metadata.rs:131][E: codex-rs/state/src/model/thread_metadata.rs:139][E: codex-rs/state/src/model/thread_metadata.rs:157][E: codex-rs/state/src/model/thread_metadata.rs:161][E: codex-rs/state/src/model/thread_metadata.rs:165][E: codex-rs/state/src/model/thread_metadata.rs:167][E: codex-rs/state/src/model/thread_metadata.rs:169][E: codex-rs/state/src/model/thread_metadata.rs:175][E: codex-rs/state/src/model/thread_metadata.rs:177][E: codex-rs/state/src/model/thread_metadata.rs:179][E: codex-rs/state/src/model/thread_metadata.rs:181][E: codex-rs/state/src/model/thread_metadata.rs:187] |
 | `ThreadMetadataBuilder` | id, rollout path, timestamps, source, cwd, provider | Builder input used when applying item batches without reparsing filenames.[E: codex-rs/state/src/model/thread_metadata.rs:196][E: codex-rs/state/src/model/thread_metadata.rs:200][E: codex-rs/state/src/model/thread_metadata.rs:202][E: codex-rs/state/src/model/thread_metadata.rs:204][E: codex-rs/state/src/model/thread_metadata.rs:210] |
 | `ThreadsPage` | items, parent ids, next anchor | SQLite listing returns keyset pagination metadata and parent-thread mapping.[E: codex-rs/state/src/model/thread_metadata.rs:101][E: codex-rs/state/src/model/thread_metadata.rs:103][E: codex-rs/state/src/model/thread_metadata.rs:105][E: codex-rs/state/src/model/thread_metadata.rs:107] |
 
 ## 控制流：初始化
 
-1. `StateRuntime::init` 创建 SQLite home，构造 state/logs/goals/memories/queue 五个 migrator 并依次打开；它不主动打开 thread-history DB。[E: codex-rs/state/src/runtime.rs:125][E: codex-rs/state/src/runtime.rs:130][E: codex-rs/state/src/runtime.rs:182]
-2. 任一步失败会关闭已经打开的 pool 再返回错误。[E: codex-rs/state/src/runtime.rs:187]
-3. After DB open, init ensures the backfill row, reads max thread updated/recency timestamps, builds `GoalStore`/`MemoryStore`/`SqliteQueueStore`。[E: codex-rs/state/src/runtime.rs:200][E: codex-rs/state/src/runtime.rs:251]
-4. `thread_queue()` 暴露 durable user-message queue；thread 删除时 `delete_thread_queue`。[E: codex-rs/state/src/runtime.rs:285][E: codex-rs/state/src/runtime/threads.rs:1157]
+1. `StateRuntime::init` 创建 SQLite home，构造 state/logs/goals/memories/queue 五个 migrator 并依次打开；它不主动打开 thread-history DB。[E: codex-rs/state/src/runtime.rs:128][E: codex-rs/state/src/runtime.rs:133][E: codex-rs/state/src/runtime.rs:186]
+2. 任一步失败会关闭已经打开的 pool 再返回错误。[E: codex-rs/state/src/runtime.rs:191]
+3. After DB open, init ensures the backfill row, reads max thread updated/recency timestamps, builds `GoalStore`/`MemoryStore`/`SqliteQueueStore`。[E: codex-rs/state/src/runtime.rs:204][E: codex-rs/state/src/runtime.rs:255]
+4. `thread_queue()` 暴露 durable user-message queue；thread 删除时 `delete_thread_queue`。[E: codex-rs/state/src/runtime.rs:300][E: codex-rs/state/src/runtime/threads.rs:1157]
 
 迁移 0042 会删除旧 `agent_job_items` 与 `agent_jobs` 表；当前 state runtime 不再导出 agent-jobs runtime API。[E: codex-rs/state/migrations/0042_drop_agent_jobs.sql:1][E: codex-rs/state/migrations/0042_drop_agent_jobs.sql:2][I]
 
@@ -83,7 +83,7 @@ updated: 121f91fd5d
 
 ## Gotcha
 
-- 不要把 `RUNTIME_DBS` 的六个 path specs 误写成 `StateRuntime` 同时持有六个 pool：runtime 打开五个主库（含 `queue_1.sqlite`），thread-history SQLite 仍是 thread-store-owned、可重建的 lazy projection。[E: codex-rs/state/src/sqlite.rs:99][E: codex-rs/state/src/runtime.rs:88]
+- 不要把 `RUNTIME_DBS` 的六个 path specs 误写成 `StateRuntime` 同时持有六个 pool：runtime 打开五个主库（含 `queue_1.sqlite`），thread-history SQLite 仍是 thread-store-owned、可重建的 lazy projection。[E: codex-rs/state/src/sqlite.rs:99][E: codex-rs/state/src/runtime.rs:90]
 - `get_state_db` in the rollout wrapper is optional and read-oriented: it requires the DB file to exist, opens the runtime, then requires startup backfill completion.[E: codex-rs/rollout/src/state_db.rs:208][E: codex-rs/rollout/src/state_db.rs:210][E: codex-rs/rollout/src/state_db.rs:218][E: codex-rs/rollout/src/state_db.rs:242]
 - `ResponseItem`s are still accepted by `apply_rollout_item`, but the current response projection function is empty.[E: codex-rs/state/src/extract.rs:24][E: codex-rs/state/src/extract.rs:144]
 

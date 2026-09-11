@@ -8,7 +8,7 @@ symbols: [GetContextRemainingHandler, create_get_context_remaining_tool, GET_CON
 related: [tool.new-context, subsys.core.tool-system, subsys.core.context-manager]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `get_context_remaining` 查询当前 context window 剩余 token 数,在 token-budget feature 下与 `new_context` 同时注册。

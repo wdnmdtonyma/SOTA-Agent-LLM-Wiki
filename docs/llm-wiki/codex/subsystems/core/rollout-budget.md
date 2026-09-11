@@ -3,12 +3,12 @@ id: subsys.core.rollout-budget
 title: Rollout budget
 kind: subsystem
 tier: T2
-source: [codex-rs/core/src/rollout_budget.rs, codex-rs/core/src/session/rollout_budget.rs, codex-rs/core/src/agent/control.rs, codex-rs/core/src/thread_manager.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/compact.rs, codex-rs/core/src/compact_remote_v2.rs, codex-rs/core/src/config/mod.rs, codex-rs/features/src/lib.rs, codex-rs/features/src/feature_configs.rs, codex-rs/codex-api/src/sse/responses.rs, codex-rs/protocol/src/protocol.rs]
+source: [codex-rs/core/src/rollout_budget.rs, codex-rs/core/src/session/rollout_budget.rs, codex-rs/core/src/agent/control.rs, codex-rs/core/src/agent/control/spawn.rs, codex-rs/core/src/thread_manager.rs, codex-rs/core/src/session/turn.rs, codex-rs/core/src/session/mod.rs, codex-rs/core/src/session/handlers.rs, codex-rs/core/src/compact.rs, codex-rs/core/src/compact_remote_v2.rs, codex-rs/core/src/config/mod.rs, codex-rs/features/src/lib.rs, codex-rs/features/src/feature_configs.rs, codex-rs/codex-api/src/sse/responses.rs, codex-rs/protocol/src/protocol.rs]
 symbols: [RolloutBudget, RolloutBudgetReminder, RolloutBudgetConfig, AgentControl::rollout_budget, Session::record_rollout_budget_usage, maybe_record_reminder]
 related: [subsys.config-auth.features-system, subsys.providers.sse-streaming, subsys.core.token-budget, subsys.core.context-manager, spine.trace-subagent]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > Rollout budget 是一个 root thread 与其全部 subagents 共享的 inference accounting 上限。它优先消费 provider 在 `response.completed` 中返回的 budget units；没有该字段时，才按 sampling/prefill token weights 本地估算。它不是单个模型 context window 的剩余 token 计数。[E: codex-rs/core/src/rollout_budget.rs:18][E: codex-rs/core/src/rollout_budget.rs:22][E: codex-rs/core/src/rollout_budget.rs:46][E: codex-rs/core/src/rollout_budget.rs:50][E: codex-rs/core/src/rollout_budget.rs:59]
@@ -23,27 +23,27 @@ updated: 121f91fd5d
 
 ## Config 与 feature gate
 
-`RolloutBudget` 是 under-development、default-off feature。Structured TOML 包含 `limit_tokens`、`reminder_at_remaining_tokens`、`sampling_token_weight` 与 `prefill_token_weight`。[E: codex-rs/features/src/lib.rs:1607][E: codex-rs/features/src/feature_configs.rs:353][E: codex-rs/features/src/feature_configs.rs:358][E: codex-rs/features/src/feature_configs.rs:361]
+`RolloutBudget` 是 under-development、default-off feature。Structured TOML 包含 `limit_tokens`、`reminder_at_remaining_tokens`、`sampling_token_weight` 与 `prefill_token_weight`。[E: codex-rs/features/src/lib.rs:1623][E: codex-rs/features/src/lib.rs:1625][E: codex-rs/features/src/lib.rs:1626][E: codex-rs/features/src/feature_configs.rs:354][E: codex-rs/features/src/feature_configs.rs:359][E: codex-rs/features/src/feature_configs.rs:362]
 
-Feature 开启时 `limit_tokens` 和 reminder thresholds 必填；limit 必须为正，threshold 必须为正且小于 limit，weights 必须 finite/non-negative，默认都为 1.0。校验失败会阻断 config resolve，而不是静默回退。[E: codex-rs/core/src/config/mod.rs:2821][E: codex-rs/core/src/config/mod.rs:2837][E: codex-rs/core/src/config/mod.rs:2840][E: codex-rs/core/src/config/mod.rs:2846][E: codex-rs/core/src/config/mod.rs:2856][E: codex-rs/core/src/config/mod.rs:2865][E: codex-rs/core/src/config/mod.rs:2866][E: codex-rs/core/src/config/mod.rs:2871][E: codex-rs/core/src/config/mod.rs:2878]
+Feature 开启时 `limit_tokens` 和 reminder thresholds 必填；limit 必须为正，threshold 必须为正且小于 limit，weights 必须 finite/non-negative，默认都为 1.0。校验失败会阻断 config resolve，而不是静默回退。[E: codex-rs/core/src/config/mod.rs:2809][E: codex-rs/core/src/config/mod.rs:2822][E: codex-rs/core/src/config/mod.rs:2835][E: codex-rs/core/src/config/mod.rs:2822][E: codex-rs/core/src/config/mod.rs:2844][E: codex-rs/core/src/config/mod.rs:2838][E: codex-rs/core/src/config/mod.rs:2861]
 
 ## Accounting data source
 
-Responses SSE 将 optional `codex_rollout_budget_units` 解析进 `TokenUsage`。这个字段明确跳过 serialization、JSON schema 和 TypeScript export，所以只服务 provider-to-core accounting，不扩展 public token-usage wire schema。[E: codex-rs/codex-api/src/sse/responses.rs:128][E: codex-rs/codex-api/src/sse/responses.rs:135][E: codex-rs/codex-api/src/sse/responses.rs:151][E: codex-rs/protocol/src/protocol.rs:2231][E: codex-rs/protocol/src/protocol.rs:2232][E: codex-rs/protocol/src/protocol.rs:2233][E: codex-rs/protocol/src/protocol.rs:2234]
+Responses SSE 将 optional `codex_rollout_budget_units` 解析进 `TokenUsage`。这个字段明确跳过 serialization、JSON schema 和 TypeScript export，所以只服务 provider-to-core accounting，不扩展 public token-usage wire schema。[E: codex-rs/codex-api/src/sse/responses.rs:128][E: codex-rs/codex-api/src/sse/responses.rs:135][E: codex-rs/codex-api/src/sse/responses.rs:151][E: codex-rs/protocol/src/protocol.rs:2252][E: codex-rs/protocol/src/protocol.rs:2253][E: codex-rs/protocol/src/protocol.rs:2254][E: codex-rs/protocol/src/protocol.rs:2255]
 
 `record_usage` 有 provider units 时先将 JSON number 转为 `f64`；NaN/Infinity/negative 都是 fatal error。没有 units 时使用 `max(output_tokens, 0) * sampling_weight + non_cached_input * prefill_weight`，随后累加到 shared `weighted_tokens_used`。[E: codex-rs/core/src/rollout_budget.rs:46][E: codex-rs/core/src/rollout_budget.rs:50][E: codex-rs/core/src/rollout_budget.rs:52][E: codex-rs/core/src/rollout_budget.rs:53][E: codex-rs/core/src/rollout_budget.rs:59][E: codex-rs/core/src/rollout_budget.rs:60][E: codex-rs/core/src/rollout_budget.rs:63][E: codex-rs/core/src/rollout_budget.rs:64]
 
 ## Root-tree sharing 与执行时机
 
-`AgentControl` 在一个 root session tree 中只创建一次并共享给所有 subagents；它持有同一个 `Arc<RolloutBudget>`。Root thread 由 effective config 初始化 budget，普通无 config handle 则不另建独立 budget。[E: codex-rs/core/src/agent/control.rs:118][E: codex-rs/core/src/agent/control.rs:131][E: codex-rs/core/src/agent/control.rs:163][E: codex-rs/core/src/thread_manager.rs:1419][E: codex-rs/core/src/thread_manager.rs:1420][E: codex-rs/core/src/thread_manager.rs:1427][E: codex-rs/core/src/thread_manager.rs:1431]
+`AgentControl` 在一个 root session tree 中只创建一次并共享给所有 subagents；它持有同一个 `Arc<RolloutBudget>`。Root thread 由 effective config 初始化 budget，普通无 config handle 则不另建独立 budget。[E: codex-rs/core/src/agent/control.rs:124][E: codex-rs/core/src/agent/control.rs:137][E: codex-rs/core/src/agent/control.rs:166][E: codex-rs/core/src/thread_manager.rs:1500][E: codex-rs/core/src/thread_manager.rs:1504][E: codex-rs/core/src/agent/control/spawn.rs:579][E: codex-rs/core/src/thread_manager.rs:1045]
 
-普通 response token usage 在更新 session token info 后记 budget；remote compaction 的 sampling usage 也记入同一 budget。达到上限时 `record_rollout_budget_usage` 返回 `SessionBudgetExceeded`，compaction 对该错误直接 emit/return，不进入 context-window retry trimming。[E: codex-rs/core/src/session/mod.rs:4431][E: codex-rs/core/src/session/rollout_budget.rs:26][E: codex-rs/core/src/session/rollout_budget.rs:33][E: codex-rs/core/src/compact_remote_v2.rs:305][E: codex-rs/core/src/compact.rs:311][E: codex-rs/core/src/compact.rs:315]
+普通 response token usage 在更新 session token info 后记 budget；remote compaction 的 sampling usage 也记入同一 budget。达到上限时 `record_rollout_budget_usage` 返回 `SessionBudgetExceeded`，compaction 对该错误直接 emit/return，不进入 context-window retry trimming。[E: codex-rs/core/src/session/mod.rs:4617][E: codex-rs/core/src/session/rollout_budget.rs:30][E: codex-rs/core/src/session/rollout_budget.rs:37][E: codex-rs/core/src/compact_remote_v2.rs:298][E: codex-rs/core/src/compact.rs:299]
 
 ## Reminder delivery
 
-Remaining units 会和配置 thresholds 比较；delivery state 按 `ThreadId` 保存 `(window_id, reminder_index)`。新 window 首次调用即使尚未跨 threshold 也会产生 index-0 reminder；同一 window 每跨过一个更高 index 还会再次注入，只有相同/更低 index 才去重。空 threshold 数组也保留这次初始 reminder。只有 fragment 成功写入 history 后才 mark delivered，取消发生在写入前会在下一次重试。[E: codex-rs/core/src/rollout_budget.rs:26][E: codex-rs/core/src/rollout_budget.rs:29][E: codex-rs/core/src/rollout_budget.rs:67][E: codex-rs/core/src/rollout_budget.rs:76][E: codex-rs/core/src/rollout_budget.rs:78][E: codex-rs/core/src/rollout_budget.rs:81][E: codex-rs/core/src/rollout_budget.rs:82][E: codex-rs/core/src/rollout_budget.rs:83][E: codex-rs/core/src/rollout_budget.rs:87][E: codex-rs/core/src/rollout_budget.rs:93][E: codex-rs/core/src/rollout_budget.rs:103][E: codex-rs/core/src/session/rollout_budget.rs:8][E: codex-rs/core/src/session/rollout_budget.rs:17][E: codex-rs/core/src/session/rollout_budget.rs:20][E: codex-rs/core/src/session/rollout_budget.rs:22]
+Remaining units 会和配置 thresholds 比较；delivery state 按 `ThreadId` 保存 `(window_id, reminder_index)`。新 window 首次调用即使尚未跨 threshold 也会产生 index-0 reminder；同一 window 每跨过一个更高 index 还会再次注入，只有相同/更低 index 才去重。空 threshold 数组也保留这次初始 reminder。只有 fragment 成功写入 history 后才 mark delivered，取消发生在写入前会在下一次重试。[E: codex-rs/core/src/rollout_budget.rs:26][E: codex-rs/core/src/rollout_budget.rs:29][E: codex-rs/core/src/rollout_budget.rs:67][E: codex-rs/core/src/rollout_budget.rs:76][E: codex-rs/core/src/rollout_budget.rs:78][E: codex-rs/core/src/rollout_budget.rs:81][E: codex-rs/core/src/rollout_budget.rs:82][E: codex-rs/core/src/rollout_budget.rs:83][E: codex-rs/core/src/rollout_budget.rs:87][E: codex-rs/core/src/rollout_budget.rs:93][E: codex-rs/core/src/rollout_budget.rs:103][E: codex-rs/core/src/session/rollout_budget.rs:8][E: codex-rs/core/src/session/rollout_budget.rs:17][E: codex-rs/core/src/session/rollout_budget.rs:20][E: codex-rs/core/src/session/rollout_budget.rs:26]
 
-Turn loop 在每次 sampling 前读取 current window id 并尝试注入 reminder；thread rollback 会 rearm 当前 thread 的 delivery，让恢复后的 prompt 重述当前 remainder，但不会退还已经累计的 shared usage。[E: codex-rs/core/src/session/turn.rs:358][E: codex-rs/core/src/session/turn.rs:359][E: codex-rs/core/src/session/handlers.rs:342][E: codex-rs/core/src/session/handlers.rs:345][E: codex-rs/core/src/rollout_budget.rs:113][E: codex-rs/core/src/rollout_budget.rs:117]
+Turn loop 在每次 sampling 前读取 current window id 并尝试注入 reminder；thread rollback 会 rearm 当前 thread 的 delivery，让恢复后的 prompt 重述当前 remainder，但不会退还已经累计的 shared usage。[E: codex-rs/core/src/session/turn.rs:448][E: codex-rs/core/src/session/turn.rs:449][E: codex-rs/core/src/session/handlers.rs:351][E: codex-rs/core/src/session/handlers.rs:354][E: codex-rs/core/src/rollout_budget.rs:113][E: codex-rs/core/src/rollout_budget.rs:117]
 
 ## Gotchas
 
@@ -56,6 +56,7 @@ Turn loop 在每次 sampling 前读取 current window id 并尝试注入 reminde
 - `codex-rs/core/src/rollout_budget.rs`
 - `codex-rs/core/src/session/rollout_budget.rs`
 - `codex-rs/core/src/agent/control.rs`
+- `codex-rs/core/src/agent/control/spawn.rs`
 - `codex-rs/core/src/thread_manager.rs`
 - `codex-rs/core/src/session/turn.rs`
 - `codex-rs/core/src/session/mod.rs`

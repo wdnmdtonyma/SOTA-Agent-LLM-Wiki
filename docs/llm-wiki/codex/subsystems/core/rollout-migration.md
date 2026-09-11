@@ -8,10 +8,10 @@ symbols: [RolloutMigrationMode, RolloutMigrationOptions, RolloutMigrationStatus,
 related: [subsys.core.thread-store, subsys.core.rollout-persistence, subsys.core.state-db, cli.subcommands]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> Rollout migration 把本地 Legacy JSONL rollout 改写成 Paginated history：先 canonicalize 到 staged 文件，投影进 SQLite，再原子发布。它不是一次性完成的后台任务；`Feature::BackgroundPaginatedRolloutMigration` 默认关闭，CLI 默认 dry-run。[E: codex-rs/thread-store/src/local/rollout_migration.rs:100][E: codex-rs/thread-store/src/local/rollout_migration.rs:103][E: codex-rs/features/src/lib.rs:1124][E: codex-rs/features/src/lib.rs:1128][E: codex-rs/cli/src/migrate_rollouts.rs:25]
+> Rollout migration 把本地 Legacy JSONL rollout 改写成 Paginated history：先 canonicalize 到 staged 文件，投影进 SQLite，再原子发布。它不是一次性完成的后台任务；`Feature::BackgroundPaginatedRolloutMigration` 默认关闭，CLI 默认 dry-run。[E: codex-rs/thread-store/src/local/rollout_migration.rs:100][E: codex-rs/thread-store/src/local/rollout_migration.rs:103][E: codex-rs/features/src/lib.rs:1128][E: codex-rs/features/src/lib.rs:1132][E: codex-rs/cli/src/migrate_rollouts.rs:25]
 
 ## 能回答的问题
 
@@ -25,9 +25,9 @@ updated: 121f91fd5d
 
 `LocalThreadStore` 拥有 migration 状态机：扫 sessions/archived、拿 maintenance + writer lock、canonicalize、project、publish。[E: codex-rs/thread-store/src/local/rollout_migration.rs:260][E: codex-rs/thread-store/src/local/rollout_migration.rs:318]
 
-`codex_history` 提供 `RolloutItem` / `RolloutLine` payload 模型；migration 经 `codex_rollout` re-export 读写这些类型，不另建 payload crate。[E: codex-rs/history/src/lib.rs:118][E: codex-rs/rollout/src/lib.rs:34]
+`codex_history` 提供 `RolloutItem` / `RolloutLine` payload 模型；migration 经 `codex_rollout` re-export 读写这些类型，不另建 payload crate。[E: codex-rs/history/src/lib.rs:122][E: codex-rs/rollout/src/lib.rs:36]
 
-Feature `background_paginated_rollout_migration` 是 UnderDevelopment、default-off。`thread_store_from_config` 只在 Local store + 有 state DB + feature 开启时 `tokio::spawn(migrate_rollouts_on_startup)`。[E: codex-rs/features/src/lib.rs:1124][E: codex-rs/features/src/lib.rs:1126][E: codex-rs/features/src/lib.rs:1128][E: codex-rs/core/src/thread_manager.rs:394][E: codex-rs/core/src/thread_manager.rs:400]
+Feature `background_paginated_rollout_migration` 是 UnderDevelopment、default-off。`thread_store_from_config` 只在 Local store + 有 state DB + feature 开启时 `tokio::spawn(migrate_rollouts_on_startup)`。[E: codex-rs/features/src/lib.rs:1128][E: codex-rs/features/src/lib.rs:1130][E: codex-rs/features/src/lib.rs:1132][E: codex-rs/core/src/thread_manager.rs:426][E: codex-rs/core/src/thread_manager.rs:432]
 
 没有 state DB 时 startup helper 直接返回，不迁移。[E: codex-rs/thread-store/src/local/rollout_migration/startup.rs:62]
 
@@ -93,7 +93,7 @@ Legacy subagent 曾复制父 rollout；verbatim migrate 会留下巨量重复 hi
 
 ## Gotcha
 
-- 不要把 feature 默认关闭写成“仓库里已经没有 Legacy rollout”。CLI dry-run 与 `Eligible` 状态仍是正式路径。[E: codex-rs/features/src/lib.rs:1128][E: codex-rs/thread-store/src/local/rollout_migration.rs:132]
+- 不要把 feature 默认关闭写成“仓库里已经没有 Legacy rollout”。CLI dry-run 与 `Eligible` 状态仍是正式路径。[E: codex-rs/features/src/lib.rs:1132][E: codex-rs/thread-store/src/local/rollout_migration.rs:132]
 - Apply 与 rollout compression 互斥：同一 `codex_home` 上只能有一个 maintenance lock。[E: codex-rs/thread-store/src/local/rollout_migration.rs:324]
 - 缺 SQLite metadata 的 thread 会 `Failed`，不会只改 JSONL。[E: codex-rs/thread-store/src/local/rollout_migration.rs:1114]
 - Memory-consolidation session 按 Ordinary 而不是 Subagent 迁移。[E: codex-rs/thread-store/src/local/rollout_migration.rs:457]

@@ -8,7 +8,7 @@ symbols: [ToolSpec::WebSearch, WebSearchToolOptions, create_web_search_tool, hos
 related: [spine.extension-system, tool.tool-search, tool.image-generation, subsys.providers.responses-api, subsys.core.tool-system, subsys.config-auth.features-system]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `web_search` 是 Codex 发送给模型/provider 的 hosted Responses tool spec；当前源码把 hosted specs 保存在 registry 之外，并在构造 model-visible spec 列表时直接追加，而不是为 `web_search` 建本地 `ToolExecutor` runtime。[E: codex-rs/core/src/tools/spec_plan.rs:181][E: codex-rs/core/src/tools/spec_plan.rs:560][E: codex-rs/core/src/tools/spec_plan.rs:596]
@@ -29,7 +29,7 @@ updated: 121f91fd5d
 | ToolSpec 类型 | hosted `ToolSpec::WebSearch` | 该变体含 `external_web_access`、`indexed_web_access`、`filters`、`user_location`、`search_context_size`、`search_content_types` 字段。[E: codex-rs/tools/src/tool_spec.rs:40][E: codex-rs/core/src/tools/hosted_spec.rs:32][E: codex-rs/core/src/tools/hosted_spec.rs:34] |
 | 创建函数 | `create_web_search_tool(WebSearchToolOptions)` | `WebSearchToolOptions` 携带 mode/config/tool type；创建函数返回 `Option<ToolSpec>`。[E: codex-rs/core/src/tools/hosted_spec.rs:8][E: codex-rs/core/src/tools/hosted_spec.rs:14] |
 | 本地 handler | 无本地 Function handler | `hosted_model_tool_specs` 生成独立 `Vec<ToolSpec>`；该列表与 runtime registry 分开传给 finalizer，随后由 `specs.extend(hosted_specs)` 追加。[E: codex-rs/core/src/tools/spec_plan.rs:181][E: codex-rs/core/src/tools/spec_plan.rs:560][E: codex-rs/core/src/tools/spec_plan.rs:596] |
-| response item | `ResponseItem::WebSearchCall` | protocol model 定义 `WebSearchCall { id, status, action, internal_chat_message_metadata_passthrough }`。[E: codex-rs/protocol/src/models.rs:1159][E: codex-rs/protocol/src/models.rs:1162][E: codex-rs/protocol/src/models.rs:1168][E: codex-rs/protocol/src/models.rs:1171] |
+| response item | `ResponseItem::WebSearchCall` | protocol model 定义 `WebSearchCall { id, status, action, internal_chat_message_metadata_passthrough }`。[E: codex-rs/protocol/src/models.rs:1178][E: codex-rs/protocol/src/models.rs:1181][E: codex-rs/protocol/src/models.rs:1187][E: codex-rs/protocol/src/models.rs:1190] |
 
 ## 2 注册与门控
 
@@ -45,7 +45,7 @@ Hosted `web_search` 的核心 gate 是：
 | mode 为 Disabled 或 None | `create_web_search_tool` 返回 `None` | mode match 中 `Disabled`/`None` 直接返回 `None`。[E: codex-rs/core/src/tools/hosted_spec.rs:19] |
 
 Standalone web search 由 namespace tools 加 `use_responses_lite` 或 `Feature::StandaloneWebSearch` 开启；extension tool 发布阶段还会在 standalone 未开启或 web search mode 为 disabled 时跳过 `web.run`。[E: codex-rs/core/src/tools/spec_plan.rs:1038][E: codex-rs/core/src/tools/spec_plan.rs:1041][E: codex-rs/core/src/tools/spec_plan.rs:1431][E: codex-rs/core/src/tools/spec_plan.rs:1438]
-`Feature::StandaloneWebSearch` 的 key 是 `standalone_web_search`，stage 仍是 UnderDevelopment，默认关闭。[E: codex-rs/features/src/lib.rs:1071][E: codex-rs/features/src/lib.rs:1072][E: codex-rs/features/src/lib.rs:1073][E: codex-rs/features/src/lib.rs:1074]
+`Feature::StandaloneWebSearch` 的 key 是 `standalone_web_search`，stage 仍是 UnderDevelopment，默认关闭。[E: codex-rs/features/src/lib.rs:1075][E: codex-rs/features/src/lib.rs:1076][E: codex-rs/features/src/lib.rs:1077][E: codex-rs/features/src/lib.rs:1078]
 
 ## 3 Tool Spec 字段
 
@@ -61,7 +61,7 @@ Standalone web search 由 namespace tools 加 `use_responses_lite` 或 `Feature:
 
 Provider 返回 hosted `ResponseItem::WebSearchCall` 后，`parse_turn_item` 将它转换为 `TurnItem::WebSearch(WebSearchItem { id, query, action, results: None })`；没有 `action` 时 action 为 `Other`、query 为空字符串。standalone web-search extension 会在自己的 completed item 中填入结果。[E: codex-rs/core/src/event_mapping.rs:228][E: codex-rs/core/src/event_mapping.rs:231][E: codex-rs/core/src/event_mapping.rs:233][E: codex-rs/protocol/src/items.rs:361][E: codex-rs/ext/web-search/src/tool.rs:172][E: codex-rs/ext/web-search/src/tool.rs:176]
 
-legacy event 表面仍有 `WebSearchBegin` 与 `WebSearchEnd`：begin event 只携带 `call_id`，end event 携带 `call_id/query/action` 与 optional `results`；standalone extension 会把 structured results 同步写入 completed item 和 end event。[E: codex-rs/protocol/src/protocol.rs:1461][E: codex-rs/protocol/src/protocol.rs:1463][E: codex-rs/protocol/src/protocol.rs:2692][E: codex-rs/protocol/src/protocol.rs:2697][E: codex-rs/ext/web-search/src/tool.rs:178][E: codex-rs/ext/web-search/src/tool.rs:182]
+legacy event 表面仍有 `WebSearchBegin` 与 `WebSearchEnd`：begin event 只携带 `call_id`，end event 携带 `call_id/query/action` 与 optional `results`；standalone extension 会把 structured results 同步写入 completed item 和 end event。[E: codex-rs/protocol/src/protocol.rs:1469][E: codex-rs/protocol/src/protocol.rs:1471][E: codex-rs/protocol/src/protocol.rs:2713][E: codex-rs/protocol/src/protocol.rs:2718][E: codex-rs/ext/web-search/src/tool.rs:178][E: codex-rs/ext/web-search/src/tool.rs:182]
 
 ## Sources
 

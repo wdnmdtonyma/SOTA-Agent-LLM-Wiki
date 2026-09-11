@@ -8,7 +8,7 @@ symbols: [GitInfo, collect_git_info, ApplyGitRequest, apply_git_patch, SAFE_BARE
 related: [subsys.cloud.cloud-tasks, subsys.cloud.cloud-task-api, config.storage-telemetry-misc, spine.extension-system, subsys.platform.worktree]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `codex_git_utils` 是 Codex 的本地 Git 支持 crate：`lib.rs` 导出 patch apply、baseline diff/reset、merge-base、metadata、fsmonitor policy、symlink helpers、`RepositoryIdentity`，以及拒绝隐式 bare repo 的 `SAFE_BARE_REPOSITORY_CONFIG`。`codex-utils-git-discovery` 在其上提供有界共享 `GitRootDiscovery`。managed worktree 的 Desktop 契约在独立 crate `codex-rs/worktree`，它只消费这条安全 Git config，不复用 apply/baseline API。[E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:55][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/worktree/src/git.rs:124]
@@ -62,7 +62,7 @@ Unix symlink 直接调 `std::os::unix::fs::symlink`；Windows 按 metadata 选 `
 
 ## Git-root discovery crate
 
-`codex-utils-git-discovery` 的 `GitRootDiscovery` 按 cwd 共享 in-flight probe，最多 8 个并发，完成后不缓存结果；finder 默认调用 `get_git_repo_root`。[E: codex-rs/utils/git-discovery/src/lib.rs:24][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/utils/git-discovery/src/lib.rs:43][E: codex-rs/utils/git-discovery/src/lib.rs:52] `ThreadManagerState` 持有一份 `Arc<GitRootDiscovery>`。[E: codex-rs/core/src/thread_manager.rs:89][E: codex-rs/core/src/thread_manager.rs:351]
+`codex-utils-git-discovery` 的 `GitRootDiscovery` 按 cwd 共享 in-flight probe，最多 8 个并发，完成后不缓存结果；finder 默认调用 `get_git_repo_root`。[E: codex-rs/utils/git-discovery/src/lib.rs:24][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/utils/git-discovery/src/lib.rs:43][E: codex-rs/utils/git-discovery/src/lib.rs:52] `ThreadManagerState` 持有一份 `Arc<GitRootDiscovery>`。[E: codex-rs/core/src/thread_manager.rs:91][E: codex-rs/core/src/thread_manager.rs:379]
 
 `RepositoryIdentity` 用 canonical common dir / relative cwd / primary root 描述同一仓库的主 checkout 与 linked worktrees，不执行 Git。[E: codex-rs/git-utils/src/worktree.rs:16][E: codex-rs/git-utils/src/worktree.rs:34]
 

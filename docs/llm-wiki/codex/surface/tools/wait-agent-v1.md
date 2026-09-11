@@ -8,7 +8,7 @@ symbols: [create_wait_agent_tool_v1, WaitAgentHandler, multi_agents::wait::Handl
 related: [tool.spawn-agent-v1, tool.send-input-v1, tool.wait-agent-v2]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `wait_agent` V1 是 `multi_agent_v1` namespace 下的 target-list wait 工具；它等待指定 agent thread id 达到 final status，并返回 status map，runtime key 优先使用 agent path、缺失时回退 thread id。

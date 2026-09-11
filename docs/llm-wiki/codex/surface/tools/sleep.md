@@ -8,7 +8,7 @@ symbols: [SleepHandler, create_sleep_tool, SleepArgs, Feature::SleepTool, SleepT
 related: [tool.current-time, subsys.core.tool-system, subsys.core.tool-router, ref.feature-flags]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `sleep` 是 `clock` namespace 下的 Responses function 工具，让模型在当前 turn 内等待指定毫秒数；如果 active turn 收到新输入，等待会提前结束。注册需要 `Feature::SleepTool`，再按 `SleepToolMode` 与 clock 模型门控决定是否真正加入 registry。
@@ -55,8 +55,8 @@ handler 使用 `SleepArgs { duration_ms }` 解析参数，并拒绝不在 `1..=M
 
 `add_core_utility_tools` 先计算 `current_time_reminder_enabled` 与 `model_has_clock`（`experimental_supported_tools` 含 `"clock"`）。`curr_time` 在两者任一为真时注册；`sleep` 还要额外满足：[E: codex-rs/core/src/tools/spec_plan.rs:1211][E: codex-rs/core/src/tools/spec_plan.rs:1216][E: codex-rs/core/src/tools/spec_plan.rs:1217]
 
-1. `Feature::SleepTool` 开启（stage Stable，默认 true）。[E: codex-rs/core/src/tools/spec_plan.rs:1220][E: codex-rs/features/src/lib.rs:927][E: codex-rs/features/src/lib.rs:929][E: codex-rs/features/src/lib.rs:930]
-2. `SleepToolMode`：`AlwaysOn` 直接注册；默认 `ModelDriven` 则：若 `CurrentTimeReminder` 开，看 `current_time_reminder.sleep_tool`；否则看 `model_has_clock`。[E: codex-rs/core/src/tools/spec_plan.rs:1221][E: codex-rs/features/src/feature_configs.rs:422][E: codex-rs/features/src/feature_configs.rs:423][E: codex-rs/features/src/feature_configs.rs:425]
+1. `Feature::SleepTool` 开启（stage Stable，默认 true）。[E: codex-rs/core/src/tools/spec_plan.rs:1220][E: codex-rs/features/src/lib.rs:931][E: codex-rs/features/src/lib.rs:933][E: codex-rs/features/src/lib.rs:934]
+2. `SleepToolMode`：`AlwaysOn` 直接注册；默认 `ModelDriven` 则：若 `CurrentTimeReminder` 开，看 `current_time_reminder.sleep_tool`；否则看 `model_has_clock`。[E: codex-rs/core/src/tools/spec_plan.rs:1221][E: codex-rs/features/src/feature_configs.rs:423][E: codex-rs/features/src/feature_configs.rs:424][E: codex-rs/features/src/feature_configs.rs:426]
 
 Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，不会走到 utility 注册，因此不会暴露 `clock.sleep`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:1029]
 

@@ -8,7 +8,7 @@ symbols: [create_close_agent_tool_v1, CloseAgentHandler, multi_agents::close_age
 related: [tool.spawn-agent-v1, tool.send-input-v1, tool.resume-agent-v1]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `close_agent` V1 是 `multi_agent_v1` namespace 下的关闭工具；它按 agent thread id 关闭目标 agent 及其 live descendants，并返回关闭前观察到的 status。

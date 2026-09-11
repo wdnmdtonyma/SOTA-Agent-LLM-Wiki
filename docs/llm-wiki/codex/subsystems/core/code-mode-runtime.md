@@ -8,10 +8,10 @@ symbols: [CodeModeSessionProvider, DisabledCodeModeSessionProvider, ProcessOwned
 related: [tool.code-mode-exec, tool.code-mode-wait, subsys.app-server.transport, subsys.platform.analytics, ref.feature-flags]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> 本地 V8 runtime 已从 `code-mode` 拆到独立 `code-mode-runtime` crate；`code-mode` 现在只公开 protocol 与 disabled/process-owned/gRPC session providers。旧的 `WebSocketCodeModeSessionProvider` 已删除。core 本身不会回退到同进程 V8：启用 host 路径时用 process-owned provider，否则使用 disabled provider。[E: codex-rs/code-mode/src/lib.rs:4][E: codex-rs/code-mode/src/lib.rs:5][E: codex-rs/code-mode/src/lib.rs:6][E: codex-rs/code-mode/src/lib.rs:8][E: codex-rs/core/src/thread_manager.rs:473][E: codex-rs/core/src/thread_manager.rs:474]
+> 本地 V8 runtime 已从 `code-mode` 拆到独立 `code-mode-runtime` crate；`code-mode` 现在只公开 protocol 与 disabled/process-owned/gRPC session providers。旧的 `WebSocketCodeModeSessionProvider` 已删除。core 本身不会回退到同进程 V8：启用 host 路径时用 process-owned provider，否则使用 disabled provider。[E: codex-rs/code-mode/src/lib.rs:4][E: codex-rs/code-mode/src/lib.rs:5][E: codex-rs/code-mode/src/lib.rs:6][E: codex-rs/code-mode/src/lib.rs:8][E: codex-rs/core/src/thread_manager.rs:507][E: codex-rs/core/src/thread_manager.rs:508]
 
 ## Crate 边界
 
@@ -25,17 +25,17 @@ updated: 121f91fd5d
 
 ## Provider 选择
 
-默认 `ThreadManager` 仅在 `Feature::CodeModeHost` 启用或 legacy `disable_in_process_fallback` 为 true 时选择 `ProcessOwnedCodeModeSessionProvider`；否则显式安装 `DisabledCodeModeSessionProvider`。变量名保留兼容语义，但当前分支没有 core 内的 in-process fallback。[E: codex-rs/core/src/thread_manager.rs:473][E: codex-rs/core/src/thread_manager.rs:472][E: codex-rs/core/src/thread_manager.rs:478]
+默认 `ThreadManager` 仅在 `Feature::CodeModeHost` 启用或 legacy `disable_in_process_fallback` 为 true 时选择 `ProcessOwnedCodeModeSessionProvider`；否则显式安装 `DisabledCodeModeSessionProvider`。变量名保留兼容语义，但当前分支没有 core 内的 in-process fallback。[E: codex-rs/core/src/thread_manager.rs:507][E: codex-rs/core/src/thread_manager.rs:506][E: codex-rs/core/src/thread_manager.rs:512]
 
-app-server 按 `CodeModeHostTransport` 选择远程 provider：`Local` 不注入远程 provider（回落到 ThreadManager 的 process-owned/disabled 分支），`Grpc` 构造 `GrpcCodeModeSessionProvider` 并要求 `Feature::CodeModeHost`。WebSocket session provider 已删除。[E: codex-rs/app-server/src/lib.rs:566][E: codex-rs/app-server/src/lib.rs:568][E: codex-rs/app-server/src/lib.rs:569][E: codex-rs/app-server/src/lib.rs:570][E: codex-rs/app-server/src/lib.rs:577]
+app-server 按 `CodeModeHostTransport` 选择远程 provider：`Local` 不注入远程 provider（回落到 ThreadManager 的 process-owned/disabled 分支），`Grpc` 构造 `GrpcCodeModeSessionProvider` 并要求 `Feature::CodeModeHost`。WebSocket session provider 已删除。[E: codex-rs/app-server/src/lib.rs:588][E: codex-rs/app-server/src/lib.rs:590][E: codex-rs/app-server/src/lib.rs:591][E: codex-rs/app-server/src/lib.rs:592][E: codex-rs/app-server/src/lib.rs:599]
 
 process-owned provider 会定位/启动 `codex-code-mode-host`；host 内部才创建 `InProcessCodeModeSession`。因此“本地 code mode”仍是独立 host process，而不是 core 进程内 V8。[E: codex-rs/code-mode/src/remote_session.rs:58][E: codex-rs/code-mode/src/remote_session.rs:65][E: codex-rs/code-mode-host/src/lib.rs:533]
 
 ## Cell 生命周期
 
-`exec` handler 解析 JavaScript、收集 nested tool definitions，向 session provider 发送 `ExecuteRequest`。收到 cell id 后，它记录 `CellStarted` fact、注册 tool-call/cell 关系、开启 rollout trace，并在等待 initial response 前标记 cell ready for dispatch。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:43][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:70][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:84][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:98][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:106]
+`exec` handler 解析 JavaScript、收集 nested tool definitions，向 session provider 发送 `ExecuteRequest`。收到 cell id 后，它记录 `CellStarted` fact、注册 tool-call/cell 关系、开启 rollout trace，并在等待 initial response 前标记 cell ready for dispatch。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:44][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:74][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:89][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:104][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:112]
 
-首个 response 若不是 `Yielded`，handler 立即记录 terminal trace、finish dispatch 并发送 `CellClosed`；yielded cell 则由后续 `wait`/terminate 完成同一生命周期。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:121][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:126][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:130]
+首个 response 若不是 `Yielded`，handler 立即记录 terminal trace、finish dispatch 并发送 `CellClosed`；yielded cell 则由后续 `wait`/terminate 完成同一生命周期。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:127][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:132][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:136]
 
 nested tool dispatch 会拒绝 `exec` 自调用。[E: codex-rs/core/src/tools/code_mode/mod.rs:361][E: codex-rs/core/src/tools/code_mode/mod.rs:363]
 

@@ -8,7 +8,7 @@ symbols: [AutoCompactTokenLimitScope, ReasoningEffort, ReasoningSummary, Verbosi
 related: [command.model-mode, config.auth-account, subsys.providers.model-catalog, subsys.core.token-budget, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > 模型与 provider 设置 catalog 覆盖 ConfigToml 中选择模型、provider、context/compaction limits、reasoning/verbosity、model catalog、service tier、OpenAI/ChatGPT endpoint 和 OSS provider 的顶层键。
@@ -55,7 +55,7 @@ updated: 121f91fd5d
 
 Remote/static model metadata can attach a `ModelTokenBudgetConfig` under `ModelMessages.token_budget`，包含 reminder threshold/template、context-window guidance、auto-compact fallback prompt 与 buffer。这些不是新的 top-level `ConfigToml` keys，而是选中模型的 defaults。[E: codex-rs/protocol/src/openai_models.rs:612][E: codex-rs/protocol/src/openai_models.rs:617][E: codex-rs/protocol/src/openai_models.rs:618][E: codex-rs/protocol/src/openai_models.rs:619][E: codex-rs/protocol/src/openai_models.rs:620][E: codex-rs/protocol/src/openai_models.rs:621]
 
-Core 只在 `TokenBudget` feature 开启且用户没有任何 explicit token-budget settings 时应用模型 defaults；无效 model defaults 会 warning 后忽略。该逻辑在每次选定 turn model 后重跑，所以 model switch 会切换对应 defaults，显式配置则始终优先。[E: codex-rs/core/src/session/turn_context.rs:743][E: codex-rs/core/src/session/turn_context.rs:744][E: codex-rs/core/src/session/token_budget.rs:61][E: codex-rs/core/src/session/token_budget.rs:81][E: codex-rs/core/src/session/token_budget.rs:98][E: codex-rs/core/src/session/token_budget.rs:110]
+Core 只在 `TokenBudget` feature 开启且用户没有任何 explicit token-budget settings 时应用模型 defaults；无效 model defaults 会 warning 后忽略。该逻辑在每次选定 turn model 后重跑，所以 model switch 会切换对应 defaults，显式配置则始终优先。[E: codex-rs/core/src/session/turn_context.rs:823][E: codex-rs/core/src/session/turn_context.rs:824][E: codex-rs/core/src/session/token_budget.rs:61][E: codex-rs/core/src/session/token_budget.rs:81][E: codex-rs/core/src/session/token_budget.rs:98][E: codex-rs/core/src/session/token_budget.rs:110]
 
 ## Sources
 

@@ -8,7 +8,7 @@ symbols: [create_followup_task_tool, FollowupTaskHandlerV2, multi_agents_v2::fol
 related: [tool.spawn-agent-v2, tool.send-message, tool.wait-agent-v2]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `followup_task` 是 MultiAgentV2 的 trigger-turn 消息工具：它给现有非 root agent 投递纯文本任务，并让目标 agent 处理该任务。
@@ -40,13 +40,13 @@ schema required 为 `target` 和 `message`，additional properties 为 false；r
 
 共享 handler 在 TriggerTurn 模式下禁止 root agent target；如果目标 path 是 root，会返回 model-facing error `Follow-up tasks can't target the root agent`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:75][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:82]
 
-`TriggerTurn` 会把 communication 的 `trigger_turn` 设为 true，并为投递构造 `AgentCommunicationKind::Followup` 上下文；投递路径与 `send_message` 共用 `send_inter_agent_communication`，且 control 会先做 execution-capacity 检查。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:22][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:108][E: codex-rs/core/src/agent/control.rs:225]
+`TriggerTurn` 会把 communication 的 `trigger_turn` 设为 true，并为投递构造 `AgentCommunicationKind::Followup` 上下文；投递路径与 `send_message` 共用 `send_inter_agent_communication`，且 control 会先做 execution-capacity 检查。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:22][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:108][E: codex-rs/core/src/agent/control.rs:231]
 
 followup submission 携带 parent turn id。mailbox drain 先取最后一个 trigger mail 的 `start_options`，再把 parent/root 收成“所有 trigger mail 都一致”的值，避免混合多个 parent 的消息产生错误 lineage。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:112][E: codex-rs/core/src/session/input_queue.rs:160][E: codex-rs/core/src/session/input_queue.rs:166]
 
 ## 输出与边界
 
-成功投递后会发出 `SubAgentActivityKind::Interacted` completed turn item，再返回空文本 function output，success 为 `Some(true)`；schema 层没有 JSON output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:137][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:142][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:238]
+成功投递后会发出 `SubAgentActivityKind::Interacted` completed turn item，再返回空文本 function output，success 为 `Some(true)`；schema 层没有 JSON output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:138][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:143][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:238]
 
 `send_message` 和 `followup_task` 共用 `handle_message_string_tool` submission path；差异由 `MessageDeliveryMode::trigger_turn` 决定：`QueueOnly` 为 false、`TriggerTurn` 为 true。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:19][E: codex-rs/core/src/tools/handlers/multi_agents_v2/followup_task.rs:43]
 

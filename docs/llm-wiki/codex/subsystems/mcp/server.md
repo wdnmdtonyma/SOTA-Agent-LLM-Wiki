@@ -8,10 +8,10 @@ symbols: [mcp-server-removed]
 related: [subsys.mcp.client, subsys.mcp.transports, subsys.core.session-lifecycle, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> `codex-rs/mcp-server` 与 CLI 子命令 `codex mcp-server` 已从仓库移除。外部 MCP client 通过 stdio 把 Codex 当 MCP server 调用的路径已下线；Codex **作为 client 连接外部 MCP server** 的方向仍在，由 `codex-mcp` / `rmcp-client` 与 `Subcommand::Mcp` 承担。[E: codex-rs/cli/src/main.rs:147][E: codex-rs/cli/src/main.rs:165][E: codex-rs/Cargo.toml:81][E: codex-rs/Cargo.toml:97]
+> `codex-rs/mcp-server` 与 CLI 子命令 `codex mcp-server` 已从仓库移除。外部 MCP client 通过 stdio 把 Codex 当 MCP server 调用的路径已下线；Codex **作为 client 连接外部 MCP server** 的方向仍在，由 `codex-mcp` / `rmcp-client` 与 `Subcommand::Mcp` 承担。[E: codex-rs/cli/src/main.rs:148][E: codex-rs/cli/src/main.rs:166][E: codex-rs/Cargo.toml:82][E: codex-rs/Cargo.toml:97]
 
 ## 能回答的问题
 
@@ -23,11 +23,11 @@ updated: 121f91fd5d
 
 ## 退役映射
 
-`enum Subcommand` 从 `Agents` 到 `Features` 共 29 个变体（含 macos/windows 上 cfg 的 `App`），**没有** `McpServer`。[E: codex-rs/cli/src/main.rs:147][E: codex-rs/cli/src/main.rs:178][E: codex-rs/cli/src/main.rs:240]
+`enum Subcommand` 从 `Agents` 到 `Features` 共 29 个变体（含 macos/windows 上 cfg 的 `App`），**没有** `McpServer`。[E: codex-rs/cli/src/main.rs:148][E: codex-rs/cli/src/main.rs:179][E: codex-rs/cli/src/main.rs:241]
 
-仍存在的 MCP 相关 CLI 是 `Mcp(McpCli)`，doc comment 是 “Manage external MCP servers for Codex”——管理 Codex 要连接的**外部** MCP server，不是把 Codex 自己暴露成 MCP server。[E: codex-rs/cli/src/main.rs:165][E: codex-rs/cli/src/main.rs:165]
+仍存在的 MCP 相关 CLI 是 `Mcp(McpCli)`，doc comment 是 “Manage external MCP servers for Codex”——管理 Codex 要连接的**外部** MCP server，不是把 Codex 自己暴露成 MCP server。[E: codex-rs/cli/src/main.rs:166][E: codex-rs/cli/src/main.rs:166]
 
-workspace `members` 数组从 `aws-auth` 到 `model-provider`（`Cargo.toml` L3–L147），包含 `codex-mcp` 与 `rmcp-client`，**不包含** `mcp-server`。[E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:81][E: codex-rs/Cargo.toml:97][E: codex-rs/Cargo.toml:147]
+workspace `members` 数组从 `aws-auth` 到 `model-provider`（`Cargo.toml` L3–L149，共 147 条），包含 `codex-mcp` 与 `rmcp-client`，**不包含** `mcp-server`。[E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:82][E: codex-rs/Cargo.toml:97][E: codex-rs/Cargo.toml:149]
 
 历史上该 crate 向外部 MCP client 暴露 `codex` / `codex-reply` 两个 tool、把 Codex events 转成 MCP notifications，并把 cancellation 映射到 `Op::Interrupt`。那些源文件已不在树里；本节点不再引用已删除路径。
 

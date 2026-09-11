@@ -8,10 +8,10 @@ symbols: [MarkdownStreamCollector, StreamingMarkdownRender, StreamingRender, Str
 related: [subsys.tui.chatwidget, subsys.tui.rendering-theming, subsys.tui.event-system]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/chatwidget/streaming.rs:141][I]
+> TUI streaming pipeline 现在由 newline-gated markdown collector、FIFO `StreamState`、adaptive chunking policy、commit-tick orchestrator、message/plan stream controllers 和 `ChatWidget` glue 组成；`chunking.rs` 的注释仍保留旧补充 Markdown 路径列表，但当前可验证事实应从 `codex-rs/tui/src/streaming/*` 代码本身取。[E: codex-rs/tui/src/chatwidget/streaming.rs:182][I]
 
 ## 能回答的问题
 
@@ -56,7 +56,7 @@ snapshot 会 sum controller queue depth，并取最大 oldest age；plan applica
 
 command execution 的 live cell 另有独立内存边界：`LiveCommandOutput` 在累计输出超过 1 MiB 后切换为 bounded preview，保留最前与最后各 50 条 completed lines、当前 partial line，并对单条超长行再保留 head/tail。[E: codex-rs/tui/src/exec_cell/live_output.rs:5][E: codex-rs/tui/src/exec_cell/live_output.rs:6][E: codex-rs/tui/src/exec_cell/live_output.rs:19]
 
-`ChatWidget` glue 中，answer stream 进入 `on_agent_message_delta`，plan stream 进入 `on_plan_delta`；后者会 lazily 创建 `PlanStreamController`，发送 `StartCommitAnimation` 并立即补一个 catch-up tick。[E: codex-rs/tui/src/chatwidget/streaming.rs:141][E: codex-rs/tui/src/chatwidget/streaming.rs:145][E: codex-rs/tui/src/chatwidget/streaming.rs:158][E: codex-rs/tui/src/chatwidget/streaming.rs:167]
+`ChatWidget` glue 中，answer stream 进入 `on_agent_message_delta`，plan stream 进入 `on_plan_delta`；后者会 lazily 创建 `PlanStreamController`，发送 `StartCommitAnimation` 并立即补一个 catch-up tick。[E: codex-rs/tui/src/chatwidget/streaming.rs:182][E: codex-rs/tui/src/chatwidget/streaming.rs:186][E: codex-rs/tui/src/chatwidget/streaming.rs:199][E: codex-rs/tui/src/chatwidget/streaming.rs:208]
 
 ## Resize Reflow
 

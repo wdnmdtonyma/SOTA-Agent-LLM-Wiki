@@ -8,7 +8,7 @@ symbols: [AutoReviewToml, ShellEnvironmentPolicyToml, SandboxWorkspaceWrite, Per
 related: [cli.global-flags, cli.exec-mode, command.config-system, subsys.core.approval-policy, subsys.exec-sandbox.overview]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > 审批与沙箱设置 catalog 覆盖 ConfigToml 中 command approval、approval reviewer、Guardian auto-review、browser/computer-use、shell environment、login shell、legacy sandbox 和 named permission profile 的顶层键。
@@ -28,7 +28,7 @@ updated: 121f91fd5d
 
 CLI `--approve-for-me` 不新增 ConfigToml key，而是一次性注入现有 `approvals_reviewer="auto_review"`、`approval_policy="on-request"` 和 `sandbox_mode="workspace-write"`；它与显式 sandbox/dangerous bypass 冲突。Shared CLI 另有 `--worktree`，不新增 ConfigToml key。[E: codex-rs/utils/cli/src/shared_options.rs:45][E: codex-rs/utils/cli/src/shared_options.rs:48][E: codex-rs/utils/cli/src/shared_options.rs:71][E: codex-rs/utils/cli/src/shared_options.rs:84][E: codex-rs/utils/cli/src/shared_options.rs:84]
 
-runtime 以 canonical `PermissionProfile` 作为有效权限事实源，再从它投影 filesystem/network 与 legacy sandbox policy；因此 legacy sandbox fields 仍是兼容输入/投影面，不应被描述成独立于 permission profile 的第二套 runtime 权限。[E: codex-rs/core/src/config/mod.rs:456][E: codex-rs/core/src/config/mod.rs:469][E: codex-rs/core/src/config/mod.rs:474][E: codex-rs/core/src/config/mod.rs:480]
+runtime 以 canonical `PermissionProfile` 作为有效权限事实源，再从它投影 filesystem/network 与 legacy sandbox policy；因此 legacy sandbox fields 仍是兼容输入/投影面，不应被描述成独立于 permission profile 的第二套 runtime 权限。[E: codex-rs/core/src/config/mod.rs:461][E: codex-rs/core/src/config/mod.rs:474][E: codex-rs/core/src/config/mod.rs:479][E: codex-rs/core/src/config/mod.rs:485]
 
 ## 字段 catalog
 

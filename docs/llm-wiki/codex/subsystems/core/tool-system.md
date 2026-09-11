@@ -8,10 +8,10 @@ symbols: [add_core_tool_sources, add_core_utility_tools, CoreToolRuntime, ToolEx
 related: [spine.tool-call-anatomy, subsys.core.tool-router, subsys.core.unified-exec, tool.exec-command, tool.wait-for-environment, tool.current-time, tool.tool-search, tool.web-search, tool.image-generation, tool.send-user-message-async, tool.request-user-input-async]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> 当前工具系统以可变 `ToolRegistry` 为 runtime 装配中心；hosted specs 作为独立列表传入 `finalize_tool_router`，再与 registry 生成的 direct、deferred search 与 code-mode surfaces 汇合。旧的 `PlannedTools` 中间容器已经移除。[E: codex-rs/core/src/tools/spec_plan.rs:126][E: codex-rs/core/src/tools/spec_plan.rs:154][E: codex-rs/core/src/tools/spec_plan.rs:181][E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:352]
+> 当前工具系统以可变 `ToolRegistry` 为 runtime 装配中心；hosted specs 作为独立列表传入 `finalize_tool_router`，再与 registry 生成的 direct、deferred search 与 code-mode surfaces 汇合。旧的 `PlannedTools` 中间容器已经移除。[E: codex-rs/core/src/tools/spec_plan.rs:125][E: codex-rs/core/src/tools/spec_plan.rs:154][E: codex-rs/core/src/tools/spec_plan.rs:181][E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:352]
 
 ## 核心对象
 
@@ -21,7 +21,7 @@ updated: 121f91fd5d
 | `CoreToolRuntime` | core 执行 contract；除 `ToolExecutor` 的 spec/exposure/parallel/handle 外，还提供 readiness、payload、cancellation、hooks 与 telemetry。[E: codex-rs/tools/src/tool_executor.rs:106][E: codex-rs/core/src/tools/registry.rs:55] |
 | `RegisteredTool` | 一个 runtime 加上最终 exposure 等 registry 元数据；model surface 使用其 effective exposure。[E: codex-rs/core/src/tools/registry.rs:281] |
 | `ToolRegistry` | 用 `IndexMap` 保序保存 runtime registrations 与 effective exposure，并处理可信/外部名字冲突；它不保存 hosted specs。[E: codex-rs/core/src/tools/registry.rs:287][E: codex-rs/core/src/tools/registry.rs:364] |
-| `ToolRouter` | 冻结后的 registry + model-visible specs；归一 model output 并执行 dispatch。[E: codex-rs/core/src/tools/router.rs:74][E: codex-rs/core/src/tools/router.rs:137][E: codex-rs/core/src/tools/router.rs:246] |
+| `ToolRouter` | 冻结后的 registry + model-visible specs；归一 model output 并执行 dispatch。[E: codex-rs/core/src/tools/router.rs:74][E: codex-rs/core/src/tools/router.rs:137][E: codex-rs/core/src/tools/router.rs:244] |
 
 ## 装配阶段
 
@@ -49,9 +49,9 @@ Guardian reviewer 使用独立受限 source：仅在 Managed permission profile 
 
 ## `wait_for_environment`
 
-`Feature::DeferredExecutor` 打开时注册 `WaitForEnvironmentHandler`；宿主可从 extension data 提供描述，否则使用默认配置。tool 接收 `environment_id`，若该环境已 ready 立即成功；若仍 starting 则等待；既不 ready 也不 starting、或等待失败，返回 model error。[E: codex-rs/core/src/tools/spec_plan.rs:1146][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:40][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:126][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:137]
+`Feature::DeferredExecutor` 打开时注册 `WaitForEnvironmentHandler`；宿主可从 extension data 提供描述，否则使用默认配置。tool 接收 `environment_id`，若该环境已 ready 立即成功；若仍 starting 则等待；既不 ready 也不 starting、或等待失败，返回 model error。[E: codex-rs/core/src/tools/spec_plan.rs:1146][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:42][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:127][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:154]
 
-宿主描述与序列化后的 spec 都有字节上限；超限配置会告警并整体回退默认文案。成功输出是 JSON `{"environment_id": ..., "status": "ready"}`。详见 [wait_for_environment 工具](../../surface/tools/wait-for-environment.md)。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:50][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:149]
+宿主描述与序列化后的 spec 都有字节上限；超限配置会告警并整体回退默认文案。成功输出是 JSON `{"environment_id": ..., "status": "ready"}`。详见 [wait_for_environment 工具](../../surface/tools/wait-for-environment.md)。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:51][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:165]
 
 ## 本轮集合变化
 

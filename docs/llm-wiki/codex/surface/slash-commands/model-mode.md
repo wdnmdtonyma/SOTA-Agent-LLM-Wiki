@@ -8,7 +8,7 @@ symbols: [SlashCommand::Model, SlashCommand::Ide, SlashCommand::Permissions, Sla
 related: [subsys.core.collaboration-modes, subsys.config-auth.features-system, config.model-provider, config.approval-sandbox, config.ui-tui, subsys.tui.keymap]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > 模型、模式与输入体验 slash commands 是 `SlashCommand` enum 中选择模型、IDE context、权限、keymap、Vim、experimental features、auto-review retry、Plan mode、personality、theme 和 terminal pet 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:15]
@@ -22,29 +22,29 @@ updated: 121f91fd5d
 
 ## Catalog
 
-`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:160][E: codex-rs/tui/src/slash_command.rs:272][E: codex-rs/tui/src/slash_command.rs:284]
+`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:157][E: codex-rs/tui/src/slash_command.rs:269][E: codex-rs/tui/src/slash_command.rs:281]
 
-`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations.[E: codex-rs/tui/src/slash_command.rs:165][E: codex-rs/tui/src/slash_command.rs:192]
+`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations.[E: codex-rs/tui/src/slash_command.rs:162][E: codex-rs/tui/src/slash_command.rs:189]
 
-表格的 `is_visible gate` 只覆盖 `SlashCommand::is_visible()` 和 `built_in_slash_commands()`；composer input 与 command popup 还会通过 `builtins_for_input()`、`CommandPopup::new()` 和 empty-filter alias filtering 追加过滤。[E: codex-rs/tui/src/bottom_pane/slash_commands.rs:71][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:75][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:82][E: codex-rs/tui/src/bottom_pane/command_popup.rs:79][E: codex-rs/tui/src/bottom_pane/command_popup.rs:153]
+表格的 `is_visible gate` 只覆盖 `SlashCommand::is_visible()` 和 `built_in_slash_commands()`；composer input 与 command popup 还会通过 `builtins_for_input()`、`CommandPopup::new()` 和 empty-filter alias filtering 追加过滤。[E: codex-rs/tui/src/bottom_pane/slash_commands.rs:72][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:76][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:84][E: codex-rs/tui/src/bottom_pane/command_popup.rs:81][E: codex-rs/tui/src/bottom_pane/command_popup.rs:155]
 
 | 命令名 | enum variant | description | inline args | available_during_task | side conversation | is_visible gate | 定义证据 |
 |---|---|---|---|---|---|---|---|
-| `/model` | `Model` | choose what model and reasoning effort to use | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:236] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:15][E: codex-rs/tui/src/slash_command.rs:127] |
-| `/ide` | `Ide` | include current selection, open files, and other context from your IDE | 是 [E: codex-rs/tui/src/slash_command.rs:175] | 是 [E: codex-rs/tui/src/slash_command.rs:260] | 是 [E: codex-rs/tui/src/slash_command.rs:204] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:16][E: codex-rs/tui/src/slash_command.rs:128] |
-| `/permissions` | `Permissions` | choose what Codex is allowed to do | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:238] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:17][E: codex-rs/tui/src/slash_command.rs:139] |
-| `/keymap` | `Keymap` | remap TUI shortcuts | 是 [E: codex-rs/tui/src/slash_command.rs:176] | 否 [E: codex-rs/tui/src/slash_command.rs:220] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:18][E: codex-rs/tui/src/slash_command.rs:140] |
-| `/vim` | `Vim` | toggle Vim mode for the composer | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:221] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:19][E: codex-rs/tui/src/slash_command.rs:141] |
-| `/experimental` | `Experimental` | toggle experimental features | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:224] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:24][E: codex-rs/tui/src/slash_command.rs:146] |
-| `/approve` | `AutoReview` | approve one retry of a recent auto-review denial | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:258] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:26][E: codex-rs/tui/src/slash_command.rs:147][E: codex-rs/tui/src/slash_command.rs:25] |
-| `/plan` | `Plan` | switch to Plan mode | 是 [E: codex-rs/tui/src/slash_command.rs:173] | 否 [E: codex-rs/tui/src/slash_command.rs:228] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:43][E: codex-rs/tui/src/slash_command.rs:132] |
-| `/personality` | `Personality` | choose a communication style for Codex | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:237] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:76][E: codex-rs/tui/src/slash_command.rs:131] |
-| `/theme` | `Theme` | choose a syntax highlighting theme | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:268] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:61][E: codex-rs/tui/src/slash_command.rs:121] |
-| `/pets` | `Pets` | choose or hide the terminal pet | 是 [E: codex-rs/tui/src/slash_command.rs:183] | 否 [E: codex-rs/tui/src/slash_command.rs:268] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:278] | [E: codex-rs/tui/src/slash_command.rs:63][E: codex-rs/tui/src/slash_command.rs:122][E: codex-rs/tui/src/slash_command.rs:62] |
+| `/model` | `Model` | choose what model and reasoning effort to use | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:232] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:15][E: codex-rs/tui/src/slash_command.rs:126] |
+| `/ide` | `Ide` | include current selection, open files, and other context from your IDE | 是 [E: codex-rs/tui/src/slash_command.rs:173] | 是 [E: codex-rs/tui/src/slash_command.rs:257] | 是 [E: codex-rs/tui/src/slash_command.rs:201] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:16][E: codex-rs/tui/src/slash_command.rs:127] |
+| `/permissions` | `Permissions` | choose what Codex is allowed to do | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:234] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:17][E: codex-rs/tui/src/slash_command.rs:139] |
+| `/keymap` | `Keymap` | remap TUI shortcuts | 是 [E: codex-rs/tui/src/slash_command.rs:174] | 否 [E: codex-rs/tui/src/slash_command.rs:217] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:18][E: codex-rs/tui/src/slash_command.rs:140] |
+| `/vim` | `Vim` | toggle Vim mode for the composer | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:218] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:19][E: codex-rs/tui/src/slash_command.rs:141] |
+| `/experimental` | `Experimental` | toggle experimental features | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:220] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:22][E: codex-rs/tui/src/slash_command.rs:143] |
+| `/approve` | `AutoReview` | approve one retry of a recent auto-review denial | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:255] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:24][E: codex-rs/tui/src/slash_command.rs:144][E: codex-rs/tui/src/slash_command.rs:23] |
+| `/plan` | `Plan` | switch to Plan mode | 是 [E: codex-rs/tui/src/slash_command.rs:170] | 否 [E: codex-rs/tui/src/slash_command.rs:224] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:41][E: codex-rs/tui/src/slash_command.rs:131] |
+| `/personality` | `Personality` | choose a communication style for Codex | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:233] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:75][E: codex-rs/tui/src/slash_command.rs:130] |
+| `/theme` | `Theme` | choose a syntax highlighting theme | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:265] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:60][E: codex-rs/tui/src/slash_command.rs:120] |
+| `/pets` | `Pets` | choose or hide the terminal pet | 是 [E: codex-rs/tui/src/slash_command.rs:181] | 否 [E: codex-rs/tui/src/slash_command.rs:265] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:62][E: codex-rs/tui/src/slash_command.rs:121][E: codex-rs/tui/src/slash_command.rs:61] |
 
 ## `/keymap` 子命令边界
 
-`/keymap` 无参数时打开交互式 shortcut picker；`/keymap debug` 用当前 `[tui.keymap]` 构建 `RuntimeKeymap` 并打开 debug view；其他参数只显示 `Usage: /keymap [debug]`。单键、两段式 chord、context precedence、conflict validation 和持久化由 `subsys.tui.keymap` 权威覆盖。[E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:767][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:768][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:769][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:780]
+`/keymap` 无参数时打开交互式 shortcut picker；`/keymap debug` 用当前 `[tui.keymap]` 构建 `RuntimeKeymap` 并打开 debug view；其他参数只显示 `Usage: /keymap [debug]`。单键、两段式 chord、context precedence、conflict validation 和持久化由 `subsys.tui.keymap` 权威覆盖。[E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:775][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:776][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:777][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:788]
 
 ## Sources
 

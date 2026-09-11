@@ -8,10 +8,10 @@ symbols: [ConfigProfile, ProfileTui, ProjectConfig, TrustLevel, resolve_profile_
 related: [subsys.config-auth.config-loading, config.approval-sandbox, config.model-provider, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> Current Codex profile handling is split: legacy `ConfigToml.profile`/`ConfigToml.profiles` still deserialize, but runtime config rejects `profile = "..."`; profile-v2 uses `--profile <name>` to load `<name>.config.toml` as an additional User config layer, while project trust still comes from `[projects]` entries and influences default approval/sandbox behavior。[E: codex-rs/config/src/config_toml.rs:336][E: codex-rs/core/src/config/mod.rs:3292][E: codex-rs/core/src/config/mod.rs:1939][E: codex-rs/config/src/config_toml.rs:556][E: codex-rs/core/src/config/mod.rs:3655]
+> Current Codex profile handling is split: legacy `ConfigToml.profile`/`ConfigToml.profiles` still deserialize, but runtime config rejects `profile = "..."`; profile-v2 uses `--profile <name>` to load `<name>.config.toml` as an additional User config layer, while project trust still comes from `[projects]` entries and influences default approval/sandbox behavior。[E: codex-rs/config/src/config_toml.rs:336][E: codex-rs/core/src/config/mod.rs:3276][E: codex-rs/core/src/config/mod.rs:1954][E: codex-rs/config/src/config_toml.rs:556][E: codex-rs/core/src/config/mod.rs:3635]
 
 ## 能回答的问题
 
@@ -31,11 +31,11 @@ updated: 121f91fd5d
 
 `ProfileTui` 当前只暴露 `session_picker_view`，说明 profile-local TUI config 已收窄为 explicit 子结构，而不是任意 TUI config map。[E: codex-rs/config/src/profile_toml.rs:78][E: codex-rs/config/src/profile_toml.rs:81]
 
-`ConfigToml.profile` 和 `ConfigToml.profiles` 仍存在于 TOML schema，但 `ConfigBuilder` 在看到 `cfg.profile` 时直接返回错误，提示使用 `--profile <name>` 和 `<name>.config.toml`。[E: codex-rs/config/src/config_toml.rs:336][E: codex-rs/config/src/config_toml.rs:340][E: codex-rs/core/src/config/mod.rs:3292][E: codex-rs/core/src/config/mod.rs:3296]
+`ConfigToml.profile` 和 `ConfigToml.profiles` 仍存在于 TOML schema，但 `ConfigBuilder` 在看到 `cfg.profile` 时直接返回错误，提示使用 `--profile <name>` 和 `<name>.config.toml`。[E: codex-rs/config/src/config_toml.rs:336][E: codex-rs/config/src/config_toml.rs:340][E: codex-rs/core/src/config/mod.rs:3276][E: codex-rs/core/src/config/mod.rs:3280]
 
-Profile-v2 的路径由 `resolve_profile_v2_config_path(codex_home, profile_name)` 解析为 `codex_home/<profile_name>.config.toml`；loader 先加入 base user config，再在 active profile file 不同于 base file 时加入第二个 User layer。[E: codex-rs/core/src/config/mod.rs:1939][E: codex-rs/core/src/config/mod.rs:1943][E: codex-rs/config/src/loader/mod.rs:319][E: codex-rs/config/src/loader/mod.rs:349][E: codex-rs/config/src/loader/mod.rs:351]
+Profile-v2 的路径由 `resolve_profile_v2_config_path(codex_home, profile_name)` 解析为 `codex_home/<profile_name>.config.toml`；loader 先加入 base user config，再在 active profile file 不同于 base file 时加入第二个 User layer。[E: codex-rs/core/src/config/mod.rs:1954][E: codex-rs/core/src/config/mod.rs:1958][E: codex-rs/config/src/loader/mod.rs:322][E: codex-rs/config/src/loader/mod.rs:352][E: codex-rs/config/src/loader/mod.rs:354]
 
-如果 `--profile <name>` 与 base config 里的 legacy `profile = "<name>"` 或 `[profiles.<name>]` 同时出现，loader 会拒绝启动并要求迁移到独立 profile-v2 file。[E: codex-rs/config/src/loader/mod.rs:327][E: codex-rs/config/src/loader/mod.rs:330][E: codex-rs/config/src/loader/mod.rs:334][E: codex-rs/config/src/loader/mod.rs:338][E: codex-rs/config/src/loader/mod.rs:342]
+如果 `--profile <name>` 与 base config 里的 legacy `profile = "<name>"` 或 `[profiles.<name>]` 同时出现，loader 会拒绝启动并要求迁移到独立 profile-v2 file。[E: codex-rs/config/src/loader/mod.rs:330][E: codex-rs/config/src/loader/mod.rs:333][E: codex-rs/config/src/loader/mod.rs:337][E: codex-rs/config/src/loader/mod.rs:341][E: codex-rs/config/src/loader/mod.rs:345]
 
 ## Project trust
 
@@ -43,25 +43,25 @@ Profile-v2 的路径由 `resolve_profile_v2_config_path(codex_home, profile_name
 
 `get_active_project` 先用 resolved cwd 的 normalized lookup keys 查 `[projects]`，找不到时再用 resolved git repo root lookup keys；仍找不到则返回 None。[E: codex-rs/config/src/config_toml.rs:829][E: codex-rs/config/src/config_toml.rs:836][E: codex-rs/config/src/config_toml.rs:842][E: codex-rs/config/src/config_toml.rs:852]
 
-`ConfigBuilder` 解析 cwd、repo root，然后调用 `cfg.get_active_project(...).unwrap_or(ProjectConfig { trust_level: None })`，所以 runtime 总有 active_project value，但 trust level 可能是 None。[E: codex-rs/core/src/config/mod.rs:3379][E: codex-rs/core/src/config/mod.rs:3381][E: codex-rs/core/src/config/mod.rs:3385]
+`ConfigBuilder` 解析 cwd、repo root，然后调用 `cfg.get_active_project(...).unwrap_or(ProjectConfig { trust_level: None })`，所以 runtime 总有 active_project value，但 trust level 可能是 None。[E: codex-rs/core/src/config/mod.rs:3363][E: codex-rs/core/src/config/mod.rs:3365][E: codex-rs/core/src/config/mod.rs:3369]
 
 ## Approval 与 sandbox default
 
-Approval policy priority 是 CLI override 高于 config `approval_policy`，否则按 active project trust default：trusted project 默认 `OnRequest`，untrusted project 默认 `UnlessTrusted`，unknown project 使用 `AskForApproval::default()`；requirements 可在默认值不允许时强制 fallback。[E: codex-rs/core/src/config/mod.rs:3650][E: codex-rs/core/src/config/mod.rs:3652][E: codex-rs/core/src/config/mod.rs:3655][E: codex-rs/core/src/config/mod.rs:3657][E: codex-rs/core/src/config/mod.rs:3660][E: codex-rs/core/src/config/mod.rs:3663]
+Approval policy priority 是 CLI override 高于 config `approval_policy`，否则按 active project trust default：trusted project 默认 `OnRequest`，untrusted project 默认 `UnlessTrusted`，unknown project 使用 `AskForApproval::default()`；requirements 可在默认值不允许时强制 fallback。[E: codex-rs/core/src/config/mod.rs:3630][E: codex-rs/core/src/config/mod.rs:3632][E: codex-rs/core/src/config/mod.rs:3635][E: codex-rs/core/src/config/mod.rs:3637][E: codex-rs/core/src/config/mod.rs:3640][E: codex-rs/core/src/config/mod.rs:3643]
 
 Legacy sandbox-mode derivation only runs after named `default_permissions` profiles have been ruled out; if no explicit sandbox mode is set but project trust has a known trusted/untrusted decision, it defaults to workspace-write except on unsandboxed Windows where it defaults to read-only。[E: codex-rs/config/src/config_toml.rs:751][E: codex-rs/config/src/config_toml.rs:759][E: codex-rs/config/src/config_toml.rs:765][E: codex-rs/config/src/config_toml.rs:770][E: codex-rs/config/src/config_toml.rs:772]
 
-If permission profiles are not active, `ConfigBuilder` still derives a canonical `PermissionProfile` from old `sandbox_mode` defaults, then projects it back into legacy sandbox policy where required by older code paths。[E: codex-rs/core/src/config/mod.rs:3602][E: codex-rs/core/src/config/mod.rs:3603][E: codex-rs/core/src/config/mod.rs:3623]
+If permission profiles are not active, `ConfigBuilder` still derives a canonical `PermissionProfile` from old `sandbox_mode` defaults, then projects it back into legacy sandbox policy where required by older code paths。[E: codex-rs/core/src/config/mod.rs:3582][E: codex-rs/core/src/config/mod.rs:3583][E: codex-rs/core/src/config/mod.rs:3603]
 
 ## Feature interaction
 
-Because profile-v2 is already materialized as a layer before `ConfigToml` reaches `ConfigBuilder`, runtime feature resolution uses effective `cfg.features` as base and passes an empty profile source to `Features::from_sources`.[E: codex-rs/core/src/config/mod.rs:3306][E: codex-rs/core/src/config/mod.rs:3307][E: codex-rs/core/src/config/mod.rs:3311]
+Because profile-v2 is already materialized as a layer before `ConfigToml` reaches `ConfigBuilder`, runtime feature resolution uses effective `cfg.features` as base and passes an empty profile source to `Features::from_sources`.[E: codex-rs/core/src/config/mod.rs:3290][E: codex-rs/core/src/config/mod.rs:3291][E: codex-rs/core/src/config/mod.rs:3295]
 
 ## Gotchas
 
-- Do not document `ConfigToml.profiles` as the active selection mechanism for current Codex runtime; `profile =` now errors and profile-v2 is file-layer based。[E: codex-rs/core/src/config/mod.rs:3292][E: codex-rs/core/src/config/mod.rs:3296]
+- Do not document `ConfigToml.profiles` as the active selection mechanism for current Codex runtime; `profile =` now errors and profile-v2 is file-layer based。[E: codex-rs/core/src/config/mod.rs:3276][E: codex-rs/core/src/config/mod.rs:3280]
 - `TrustLevel` has no `Unknown` variant; unknown is `None`/missing `[projects]` entry。[E: codex-rs/config/src/config_toml.rs:556][E: codex-rs/protocol/src/config_types.rs:641]
-- Project trust affects defaults, but explicit approval/sandbox/permission-profile settings and requirements constraints can override or constrain those defaults。[E: codex-rs/core/src/config/mod.rs:3650][E: codex-rs/config/src/config_toml.rs:759][E: codex-rs/core/src/config/mod.rs:3663]
+- Project trust affects defaults, but explicit approval/sandbox/permission-profile settings and requirements constraints can override or constrain those defaults。[E: codex-rs/core/src/config/mod.rs:3630][E: codex-rs/config/src/config_toml.rs:759][E: codex-rs/core/src/config/mod.rs:3643]
 
 ## Sources
 

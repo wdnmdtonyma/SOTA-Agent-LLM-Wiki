@@ -8,7 +8,7 @@ symbols: [typescript::Codex, typescript::Thread, Turn, RunResult, StreamedTurn, 
 related: [sdk.ts-events-items, sdk.ts-structured-output, sdk.sdk-architecture]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > TypeScript SDK 是围绕 `Codex`、`Thread` 和 `CodexExec` 的 thin wrapper：它启动或恢复 conversation thread，把 input 转成 prompt/images，再通过 Codex CLI `exec --experimental-json` 流式读取 JSONL events。[E: sdk/typescript/src/codex.ts:11][E: sdk/typescript/src/codex.ts:25][E: sdk/typescript/src/codex.ts:36][E: sdk/typescript/src/thread.ts:77][E: sdk/typescript/src/thread.ts:78][E: sdk/typescript/src/exec.ts:91][E: sdk/typescript/src/exec.ts:92][E: sdk/typescript/src/exec.ts:237]

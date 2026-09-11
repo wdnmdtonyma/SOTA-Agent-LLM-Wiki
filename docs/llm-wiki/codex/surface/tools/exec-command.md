@@ -8,10 +8,10 @@ symbols: [ExecCommandHandler, ExecCommandHandlerOptions, ExecCommandArgs, ExecCo
 related: [tool.write-stdin, tool.shell-command, subsys.core.unified-exec, subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> `exec_command` 是当前唯一注册的命令执行 handler：模型提交 `cmd`，handler 解析环境、工作目录、shell/login/TTY/权限字段，分配 process id 后交给 `UnifiedExecProcessManager`。UnifiedExec=on 时命令未结束可带 `session_id` 给 `write_stdin`；UnifiedExec=off 时走 `ExecCommandHandler::one_shot`，跑到 completion 且不可 resume。`tty` 还受 `Feature::UnifiedExecTty` 门控，不是始终暴露。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:96][E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:104][E: codex-rs/features/src/lib.rs:946]
+> `exec_command` 是当前唯一注册的命令执行 handler：模型提交 `cmd`，handler 解析环境、工作目录、shell/login/TTY/权限字段，分配 process id 后交给 `UnifiedExecProcessManager`。UnifiedExec=on 时命令未结束可带 `session_id` 给 `write_stdin`；UnifiedExec=off 时走 `ExecCommandHandler::one_shot`，跑到 completion 且不可 resume。`tty` 还受 `Feature::UnifiedExecTty` 门控，不是始终暴露。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:96][E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:104][E: codex-rs/features/src/lib.rs:950]
 
 ## 能回答的问题
 
@@ -62,9 +62,9 @@ updated: 121f91fd5d
 
 `exec_command` 声明 `output_schema: Some(unified_exec_output_schema())`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:113] 该 schema 是 object，properties 包含 `chunk_id`、`wall_time_seconds`、`exit_code`、`session_id`、`original_token_count`、`output`，required 是 `wall_time_seconds` 和 `output`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:198][E: codex-rs/core/src/tools/handlers/shell_spec.rs:227]
 
-普通 function-call 输出由 `ExecCommandToolOutput::response_text()` 生成文本：可含 chunk id、wall time、exit code、running session id、original token count 和截断后的 `Output:`。[E: codex-rs/core/src/tools/context.rs:490][E: codex-rs/core/src/tools/context.rs:516]
+普通 function-call 输出由 `ExecCommandToolOutput::response_text()` 生成文本：可含 chunk id、wall time、exit code、running session id、original token count 和截断后的 `Output:`。[E: codex-rs/core/src/tools/context.rs:500][E: codex-rs/core/src/tools/context.rs:526]
 
-code-mode nested result 是结构化 JSON，对齐 `chunk_id`、`wall_time_seconds`、`exit_code`、`session_id`、`original_token_count` 和 `output`。[E: codex-rs/core/src/tools/context.rs:414][E: codex-rs/core/src/tools/context.rs:429]
+code-mode nested result 是结构化 JSON，对齐 `chunk_id`、`wall_time_seconds`、`exit_code`、`session_id`、`original_token_count` 和 `output`。[E: codex-rs/core/src/tools/context.rs:424][E: codex-rs/core/src/tools/context.rs:439]
 
 ## 5 注册与门控
 
@@ -72,7 +72,7 @@ code-mode nested result 是结构化 JSON，对齐 `chunk_id`、`wall_time_secon
 
 普通 turn 走 `add_shell_tools`。没有 environment / ShellTool 关 / 模型 Disabled 时不注册。[E: codex-rs/core/src/tools/spec_plan.rs:1079][E: codex-rs/core/src/tools/spec_plan.rs:1083]
 
-`Feature::UnifiedExec` 全平台默认 `true`。[E: codex-rs/features/src/lib.rs:939][E: codex-rs/features/src/lib.rs:942] 开启时注册 `ExecCommandHandler::new` + `WriteStdinHandler`；关闭时只注册 `ExecCommandHandler::one_shot`，**不再**注册 `ShellCommandHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111] `Feature::UnifiedExecTty` 默认 true，控制 `allow_tty`。[E: codex-rs/features/src/lib.rs:945][E: codex-rs/core/src/tools/spec_plan.rs:1095]
+`Feature::UnifiedExec` 全平台默认 `true`。[E: codex-rs/features/src/lib.rs:943][E: codex-rs/features/src/lib.rs:946] 开启时注册 `ExecCommandHandler::new` + `WriteStdinHandler`；关闭时只注册 `ExecCommandHandler::one_shot`，**不再**注册 `ShellCommandHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111] `Feature::UnifiedExecTty` 默认 true，控制 `allow_tty`。[E: codex-rs/features/src/lib.rs:949][E: codex-rs/core/src/tools/spec_plan.rs:1095]
 
 `ConfigShellToolType` 只剩 `UnifiedExec` 与 `Disabled`；legacy `"shell_command"` alias 反序列化为 `UnifiedExec`。[E: codex-rs/protocol/src/openai_models.rs:310][E: codex-rs/protocol/src/openai_models.rs:311]
 

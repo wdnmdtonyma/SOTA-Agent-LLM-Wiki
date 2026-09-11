@@ -8,7 +8,7 @@ symbols: [create_list_agents_tool, ListAgentsHandlerV2, multi_agents_v2::list_ag
 related: [tool.spawn-agent-v2, tool.wait-agent-v2, tool.interrupt-agent-v2]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `list_agents` 是 MultiAgentV2 的协作树查询工具：它列出当前 root thread tree 中的 live agents，并可按 task-path prefix 过滤。
@@ -31,7 +31,7 @@ handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 返�
 
 | 字段 | 必填 | 说明 |
 |---|---:|---|
-| `path_prefix` | 否 | task-path prefix 过滤器；schema 文案要求不带 trailing slash，runtime 在当前 session source 的 agent path 上 resolve。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:296][E: codex-rs/core/src/agent/control.rs:508] |
+| `path_prefix` | 否 | task-path prefix 过滤器；schema 文案要求不带 trailing slash，runtime 在当前 session source 的 agent path 上 resolve。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:296][E: codex-rs/core/src/agent/control.rs:561] |
 
 parameters 没有 required 字段，additional properties 为 false；runtime args 使用 `#[serde(deny_unknown_fields)]`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:308][E: codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs:66]
 
@@ -41,11 +41,11 @@ parameters 没有 required 字段，additional properties 为 false；runtime ar
 
 handler 解析 arguments，先把当前 thread 在 root 场景注册进 agent control，再调用 `agent_control.list_agents(&turn.session_source, args.path_prefix.as_deref())`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs:47][E: codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs:51]
 
-`AgentControl::register_session_root` 只在当前 turn 没有 parent thread 时登记 root thread。[E: codex-rs/core/src/agent/control.rs:407]
+`AgentControl::register_session_root` 只在当前 turn 没有 parent thread 时登记 root thread。[E: codex-rs/core/src/agent/control.rs:413]
 
-`AgentControl::list_agents` 会 resolve 可选 prefix、读取 live agents、按 path/id 排序；如果 root path 匹配且 root thread 可取，会把 `/root` 与它的当前 status 加入输出。[E: codex-rs/core/src/agent/control.rs:497][E: codex-rs/core/src/agent/control.rs:527][E: codex-rs/core/src/agent/control.rs:536]
+`AgentControl::list_agents` 会 resolve 可选 prefix、读取 live agents、按 path/id 排序；如果 root path 匹配且 root thread 可取，会把 `/root` 与它的当前 status 加入输出。[E: codex-rs/core/src/agent/control.rs:550][E: codex-rs/core/src/agent/control.rs:580][E: codex-rs/core/src/agent/control.rs:589]
 
-对每个 live agent，control 跳过没有 thread id 的 metadata，按 prefix 过滤，拿 thread status，并优先用 agent path 作为 `agent_name`，缺失 path 时回退 thread id。[E: codex-rs/core/src/agent/control.rs:542][E: codex-rs/core/src/agent/control.rs:560]
+对每个 live agent，control 跳过没有 thread id 的 metadata，按 prefix 过滤，拿 thread status，并优先用 agent path 作为 `agent_name`，缺失 path 时回退 thread id。[E: codex-rs/core/src/agent/control.rs:595][E: codex-rs/core/src/agent/control.rs:613]
 
 成功输出由 `ListAgentsResult { agents }` 序列化；`to_response_item` 传入 `Some(true)`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs:55][E: codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs:86]
 

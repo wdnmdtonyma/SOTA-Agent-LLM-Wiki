@@ -8,7 +8,7 @@ symbols: [TurnStartParams, TurnStartResponse, TurnSteerParams, TurnInterruptPara
 related: [rpc.overview, rpc.thread-methods, rpc.notifications-thread, rpc.notifications-system, subsys.core.turn-engine, subsys.core.review-mode, subsys.core.realtime-conversation]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > turn/review/realtime 方法是 app-server 把用户输入送入已有 thread、追加 steering input、中断 active turn、启动 review，以及操作 experimental thread realtime session 的 client request catalog。
@@ -24,7 +24,7 @@ updated: 121f91fd5d
 
 `TurnStartParams`、`TurnStartResponse`、`TurnSteerParams` 和 `TurnInterruptParams` 定义在 `v2/turn.rs`；`ReviewStartParams` 和 `ReviewTarget` 定义在 `v2/review.rs`。[E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:156][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:268][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:277][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:311][E: codex-rs/app-server-protocol/src/protocol/v2/review.rs:17][E: codex-rs/app-server-protocol/src/protocol/v2/review.rs:45]
 
-`turn/start` 和 `turn/steer` 在宏调用中使用 `inspect_params: true`；`turn/settings/update` 与 realtime family 全部带 `#[experimental(...)]`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1012][E: codex-rs/app-server-protocol/src/protocol/common.rs:1016][E: codex-rs/app-server-protocol/src/protocol/common.rs:1024][E: codex-rs/app-server-protocol/src/protocol/common.rs:1033]
+`turn/start` 和 `turn/steer` 在宏调用中使用 `inspect_params: true`；`turn/settings/update` 与 realtime family 全部带 `#[experimental(...)]`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1040][E: codex-rs/app-server-protocol/src/protocol/common.rs:1044][E: codex-rs/app-server-protocol/src/protocol/common.rs:1052][E: codex-rs/app-server-protocol/src/protocol/common.rs:1061]
 
 本 catalog 新增 experimental `turn/settings/update`，对应 core `Op::TurnSettings`。`TurnStartParams` 继续用 field-level experimental gates 覆盖 `responsesapiClientMetadata`、`additionalContext`、`environments`、`runtimeWorkspaceRoots`、`permissions`、`collaborationMode` 与 deprecated `multiAgentMode`。[E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:174][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:178][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:186][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:194][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:210][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:249][E: codex-rs/app-server-protocol/src/protocol/v2/turn.rs:254]
 
@@ -34,17 +34,17 @@ updated: 121f91fd5d
 
 | Variant | Wire method | Params type | Response type | Gate | Evidence |
 |---|---|---|---|---|---|
-| `TurnStart` | `turn/start` | `v2::TurnStartParams` | `v2::TurnStartResponse` | params-inspected | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1010] |
-| `TurnSettingsUpdate` | `turn/settings/update` | `v2::TurnSettingsUpdateParams` | `v2::TurnSettingsUpdateResponse` | experimental: turn/settings/update | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1017] |
-| `TurnSteer` | `turn/steer` | `v2::TurnSteerParams` | `v2::TurnSteerResponse` | params-inspected | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1022] |
-| `TurnInterrupt` | `turn/interrupt` | `v2::TurnInterruptParams` | `v2::TurnInterruptResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1028] |
-| `ThreadRealtimeStart` | `thread/realtime/start` | `v2::ThreadRealtimeStartParams` | `v2::ThreadRealtimeStartResponse` | experimental: thread/realtime/start | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1034] |
-| `ThreadRealtimeAppendAudio` | `thread/realtime/appendAudio` | `v2::ThreadRealtimeAppendAudioParams` | `v2::ThreadRealtimeAppendAudioResponse` | experimental: thread/realtime/appendAudio | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1040] |
-| `ThreadRealtimeAppendText` | `thread/realtime/appendText` | `v2::ThreadRealtimeAppendTextParams` | `v2::ThreadRealtimeAppendTextResponse` | experimental: thread/realtime/appendText | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1046] |
-| `ThreadRealtimeAppendSpeech` | `thread/realtime/appendSpeech` | `v2::ThreadRealtimeAppendSpeechParams` | `v2::ThreadRealtimeAppendSpeechResponse` | experimental: thread/realtime/appendSpeech | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1052] |
-| `ThreadRealtimeStop` | `thread/realtime/stop` | `v2::ThreadRealtimeStopParams` | `v2::ThreadRealtimeStopResponse` | experimental: thread/realtime/stop | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1058] |
-| `ThreadRealtimeListVoices` | `thread/realtime/listVoices` | `v2::ThreadRealtimeListVoicesParams` | `v2::ThreadRealtimeListVoicesResponse` | experimental: thread/realtime/listVoices | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1070] |
-| `ReviewStart` | `review/start` | `v2::ReviewStartParams` | `v2::ReviewStartResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1075] |
+| `TurnStart` | `turn/start` | `v2::TurnStartParams` | `v2::TurnStartResponse` | params-inspected | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1038] |
+| `TurnSettingsUpdate` | `turn/settings/update` | `v2::TurnSettingsUpdateParams` | `v2::TurnSettingsUpdateResponse` | experimental: turn/settings/update | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1045] |
+| `TurnSteer` | `turn/steer` | `v2::TurnSteerParams` | `v2::TurnSteerResponse` | params-inspected | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1050] |
+| `TurnInterrupt` | `turn/interrupt` | `v2::TurnInterruptParams` | `v2::TurnInterruptResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1056] |
+| `ThreadRealtimeStart` | `thread/realtime/start` | `v2::ThreadRealtimeStartParams` | `v2::ThreadRealtimeStartResponse` | experimental: thread/realtime/start | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1062] |
+| `ThreadRealtimeAppendAudio` | `thread/realtime/appendAudio` | `v2::ThreadRealtimeAppendAudioParams` | `v2::ThreadRealtimeAppendAudioResponse` | experimental: thread/realtime/appendAudio | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1068] |
+| `ThreadRealtimeAppendText` | `thread/realtime/appendText` | `v2::ThreadRealtimeAppendTextParams` | `v2::ThreadRealtimeAppendTextResponse` | experimental: thread/realtime/appendText | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1074] |
+| `ThreadRealtimeAppendSpeech` | `thread/realtime/appendSpeech` | `v2::ThreadRealtimeAppendSpeechParams` | `v2::ThreadRealtimeAppendSpeechResponse` | experimental: thread/realtime/appendSpeech | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1080] |
+| `ThreadRealtimeStop` | `thread/realtime/stop` | `v2::ThreadRealtimeStopParams` | `v2::ThreadRealtimeStopResponse` | experimental: thread/realtime/stop | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1086] |
+| `ThreadRealtimeListVoices` | `thread/realtime/listVoices` | `v2::ThreadRealtimeListVoicesParams` | `v2::ThreadRealtimeListVoicesResponse` | experimental: thread/realtime/listVoices | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1098] |
+| `ReviewStart` | `review/start` | `v2::ReviewStartParams` | `v2::ReviewStartResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1103] |
 
 ## Sources
 

@@ -8,7 +8,7 @@ symbols: [McpServerConfig, McpServerAuth, OAuthCredentialsStoreMode, AppToolAppr
 related: [tool.mcp-namespace-tools, tool.web-search, config.skills-plugins-features, subsys.mcp.client]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > MCP 与工具设置 catalog 覆盖 ConfigToml 中 MCP server definitions、MCP OAuth callback/storage、Apps MCP product SKU、tool output/background terminal limits、web search mode、nested tools config、tool suggestions 和 unified exec compatibility flag。
@@ -30,7 +30,7 @@ updated: 121f91fd5d
 
 每个 `McpServerConfig` 还保存 transport、auth mode、effective `environment_id`、enabled/required、parallel opt-in、startup/tool timeout、server/tool approval、allow/deny lists、OAuth scopes/client/resource 和 per-tool overrides；`oauth_credential_name` 对非本地环境编码 environment+server，隔离 executor-owned credentials。[E: codex-rs/config/src/mcp_types.rs:197][E: codex-rs/config/src/mcp_types.rs:199][E: codex-rs/config/src/mcp_types.rs:203][E: codex-rs/config/src/mcp_types.rs:206][E: codex-rs/config/src/mcp_types.rs:210][E: codex-rs/config/src/mcp_types.rs:214][E: codex-rs/config/src/mcp_types.rs:218][E: codex-rs/config/src/mcp_types.rs:235][E: codex-rs/config/src/mcp_types.rs:239][E: codex-rs/config/src/mcp_types.rs:243][E: codex-rs/config/src/mcp_types.rs:247][E: codex-rs/config/src/mcp_types.rs:251][E: codex-rs/config/src/mcp_types.rs:255][E: codex-rs/config/src/mcp_types.rs:259][E: codex-rs/config/src/mcp_types.rs:263][E: codex-rs/config/src/mcp_types.rs:267][E: codex-rs/config/src/mcp_types.rs:276]
 
-2026 protocol support is not a server-table field：`[features].mcp_2026_07_28`（under development，default false）maps to global `McpProtocolMode::V20260728`; otherwise config builds `Legacy`。[E: codex-rs/features/src/lib.rs:1302][E: codex-rs/features/src/lib.rs:1303][E: codex-rs/core/src/config/mod.rs:1809][E: codex-rs/core/src/config/mod.rs:1811]
+2026 protocol support is not a server-table field：`[features].mcp_2026_07_28`（under development，default false）maps to global `McpProtocolMode::V20260728`; otherwise config builds `Legacy`。[E: codex-rs/features/src/lib.rs:1312][E: codex-rs/features/src/lib.rs:1313][E: codex-rs/core/src/config/mod.rs:1824][E: codex-rs/core/src/config/mod.rs:1826]
 
 ## 字段 catalog
 

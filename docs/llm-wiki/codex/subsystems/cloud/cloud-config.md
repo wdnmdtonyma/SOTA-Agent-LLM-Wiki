@@ -8,10 +8,10 @@ symbols: [cloud_config_bundle_loader, cloud_config_bundle_loader_for_storage, Cl
 related: [subsys.config-auth.config-loading, subsys.config-auth.auth-flows, subsys.cloud.cloud-tasks, cli.subcommands]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> `cloud-config` 是当前 enterprise cloud-delivered config bundle 的 transport/cache/refresh 层：它从 backend 拉取 config + requirements fragments，验证后写入签名 cache，并把共享 loader 交给 `codex-config` 插入 config layer stack。[E: codex-rs/cloud-config/src/lib.rs:6][E: codex-rs/cloud-config/src/lib.rs:7][E: codex-rs/cloud-config/src/lib.rs:8][E: codex-rs/cloud-config/src/lib.rs:10][E: codex-rs/cloud-config/src/lib.rs:13][E: codex-rs/cloud-config/src/lib.rs:14][E: codex-rs/cloud-config/src/backend.rs:90][E: codex-rs/cloud-config/src/service.rs:314][E: codex-rs/cloud-config/src/cache.rs:151][E: codex-rs/cloud-config/src/cache.rs:152][E: codex-rs/cloud-config/src/cache.rs:220][E: codex-rs/config/src/loader/mod.rs:201]
+> `cloud-config` 是当前 enterprise cloud-delivered config bundle 的 transport/cache/refresh 层：它从 backend 拉取 config + requirements fragments，验证后写入签名 cache，并把共享 loader 交给 `codex-config` 插入 config layer stack。[E: codex-rs/cloud-config/src/lib.rs:6][E: codex-rs/cloud-config/src/lib.rs:7][E: codex-rs/cloud-config/src/lib.rs:8][E: codex-rs/cloud-config/src/lib.rs:10][E: codex-rs/cloud-config/src/lib.rs:13][E: codex-rs/cloud-config/src/lib.rs:14][E: codex-rs/cloud-config/src/backend.rs:90][E: codex-rs/cloud-config/src/service.rs:314][E: codex-rs/cloud-config/src/cache.rs:151][E: codex-rs/cloud-config/src/cache.rs:152][E: codex-rs/cloud-config/src/cache.rs:220][E: codex-rs/config/src/loader/mod.rs:205]
 
 ## 能回答的问题
 
@@ -59,7 +59,7 @@ background refresh 每 15 分钟执行一次；没有 auth 或不 eligible 时�
 
 config fragments 被解析为 TOML、解析相对路径，并以 `ConfigLayerSource::EnterpriseManaged` 变成 `ConfigLayerEntry`；因为 backend fragments 是高优先级到低优先级，返回前会 reverse 成 config stack 顺序。[E: codex-rs/config/src/cloud_config_layers.rs:27][E: codex-rs/config/src/cloud_config_layers.rs:27][E: codex-rs/config/src/cloud_config_layers.rs:68][E: codex-rs/config/src/cloud_config_layers.rs:82][E: codex-rs/config/src/cloud_config_layers.rs:91][E: codex-rs/config/src/cloud_config_layers.rs:99][E: codex-rs/config/src/cloud_config_layers.rs:106][E: codex-rs/config/src/cloud_config_layers.rs:107][E: codex-rs/config/src/cloud_config_layers.rs:119][E: codex-rs/config/src/cloud_config_layers.rs:119]
 
-`load_config_layers_state` 在未忽略 managed requirements 时 await cloud bundle loader，把 enterprise-managed requirements 保存到 requirements layers，把 enterprise-managed config layers 插入 system layer 之后、user/profile/project/runtime layers 之前。[E: codex-rs/config/src/loader/mod.rs:200][E: codex-rs/config/src/loader/mod.rs:201][E: codex-rs/config/src/loader/mod.rs:209][E: codex-rs/config/src/loader/mod.rs:212]
+`load_config_layers_state` 在未忽略 managed requirements 时 await cloud bundle loader，把 enterprise-managed requirements 保存到 requirements layers，把 enterprise-managed config layers 插入 system layer 之后、user/profile/project/runtime layers 之前。[E: codex-rs/config/src/loader/mod.rs:204][E: codex-rs/config/src/loader/mod.rs:205][E: codex-rs/config/src/loader/mod.rs:213][E: codex-rs/config/src/loader/mod.rs:216]
 
 ## CLI consumers
 
@@ -67,11 +67,11 @@ config fragments 被解析为 TOML、解析相对路径，并以 `ConfigLayerSou
 
 MCP CLI 则先在无 cloud bundle 的 bootstrap config 上解析 CODEX_HOME 与 auth，再加载 cloud bundle 并用它构造完整 `Config`。该 helper 已从 `cli/src/mcp_cmd/cloud_config.rs` 迁到 `cli/src/cloud_config.rs`，函数名是 `load_config`。[E: codex-rs/cli/src/cloud_config.rs:17][E: codex-rs/cli/src/cloud_config.rs:45][E: codex-rs/cli/src/cloud_config.rs:57][E: codex-rs/cli/src/cloud_config.rs:44]
 
-该 full-config path 只用于 `mcp list/get/login/logout`；`add/remove` 仍直接修改 user config，不能概括成所有 MCP CLI 命令都受 cloud-managed config 驱动。[E: codex-rs/cli/src/mcp_cmd.rs:232][E: codex-rs/cli/src/mcp_cmd.rs:236][E: codex-rs/cli/src/mcp_cmd.rs:240][E: codex-rs/cli/src/mcp_cmd.rs:245]
+该 full-config path 只用于 `mcp list/get/login/logout`；`add/remove` 仍直接修改 user config，不能概括成所有 MCP CLI 命令都受 cloud-managed config 驱动。[E: codex-rs/cli/src/mcp_cmd.rs:235][E: codex-rs/cli/src/mcp_cmd.rs:239][E: codex-rs/cli/src/mcp_cmd.rs:243][E: codex-rs/cli/src/mcp_cmd.rs:248]
 
 ## Gotchas
 
-- Cloud bundle load failure is fail-closed for config loading: `cloud_config_bundle.get().await.map_err(io::Error::other)?` propagates loader errors.[E: codex-rs/config/src/loader/mod.rs:201]
+- Cloud bundle load failure is fail-closed for config loading: `cloud_config_bundle.get().await.map_err(io::Error::other)?` propagates loader errors.[E: codex-rs/config/src/loader/mod.rs:205]
 - Strict config mode validates cloud config fragments against ignored/unknown TOML fields before accepting them.[E: codex-rs/config/src/cloud_config_layers.rs:96][E: codex-rs/config/src/cloud_config_layers.rs:123][E: codex-rs/config/src/cloud_config_layers.rs:130][E: codex-rs/config/src/cloud_config_layers.rs:134]
 - cache identity mismatch or expiration is treated as cache miss, not as a usable stale policy source.[E: codex-rs/cloud-config/src/cache.rs:98][E: codex-rs/cloud-config/src/cache.rs:102]
 

@@ -3,15 +3,15 @@ id: config.auth-account
 title: 认证与账户设置
 kind: config
 tier: T1
-source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/protocol/src/config_types.rs]
+source: [codex-rs/config/src/config_toml.rs, codex-rs/config/src/types.rs, codex-rs/protocol/src/config_types.rs, codex-rs/user-verification/src/lib.rs]
 symbols: [ForcedChatgptWorkspaceIds, ForcedLoginMethod, AuthCredentialsStoreMode]
-related: [config.model-provider, config.mcp-tools, subsys.config-auth.auth-flows, subsys.config-auth.credential-storage]
+related: [config.model-provider, config.mcp-tools, subsys.config-auth.auth-flows, subsys.config-auth.credential-storage, rpc.config-account-methods]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> 认证与账户设置 catalog 覆盖 ConfigToml 中限制 ChatGPT workspace、限制 login method 和选择 CLI auth credential storage backend 的顶层键。
+> 认证与账户设置 catalog 覆盖 ConfigToml 中限制 ChatGPT workspace、限制 login method 和选择 CLI auth credential storage backend 的顶层键。本地 user-verification 凭证不在这些键里。
 
 ## 能回答的问题
 
@@ -19,12 +19,15 @@ updated: 121f91fd5d
 - 强制 login method 的 ConfigToml 字段是什么？
 - CLI auth credentials store 支持哪个 enum 类型？
 - MCP OAuth storage 为什么不在本节点而在 MCP/tools 节点？
+- user-verification 是不是 ConfigToml 键？
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 99 个顶层 `pub` 字段；本节点覆盖其中 3 个字段。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:534]
+当前 `ConfigToml` 有 101 个顶层 `pub` 字段；本节点覆盖其中 3 个字段。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:534]
 
-MCP OAuth credential storage remains a separate top-level field named `mcp_oauth_credentials_store`, so this CLI account catalog keeps it under the MCP/tools catalog boundary.[E: codex-rs/config/src/config_toml.rs:285]
+MCP OAuth 凭据存储仍是独立顶层字段 `mcp_oauth_credentials_store`，本 CLI 账户 catalog 把它留给 MCP/tools catalog。[E: codex-rs/config/src/config_toml.rs:285]
+
+`codex-user-verification` 是本地凭证与签名 crate，没有对应 ConfigToml 键；RPC `userVerification/*`（含 `cancel`）的方法表在 `rpc.config-account-methods`。[E: codex-rs/user-verification/src/lib.rs:33]
 
 ## 字段 catalog
 
@@ -39,6 +42,7 @@ MCP OAuth credential storage remains a separate top-level field named `mcp_oauth
 - `codex-rs/config/src/config_toml.rs`
 - `codex-rs/config/src/types.rs`
 - `codex-rs/protocol/src/config_types.rs`
+- `codex-rs/user-verification/src/lib.rs`
 
 ## 相关
 
@@ -46,3 +50,4 @@ MCP OAuth credential storage remains a separate top-level field named `mcp_oauth
 - `config.mcp-tools`
 - `subsys.config-auth.auth-flows`
 - `subsys.config-auth.credential-storage`
+- `rpc.config-account-methods`

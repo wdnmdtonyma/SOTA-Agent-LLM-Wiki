@@ -8,10 +8,10 @@ symbols: [ToolRouter, ToolCall, ToolCallRuntime, ToolRegistry, RegisteredTool, b
 related: [spine.tool-call-anatomy, spine.extension-system, subsys.core.tool-system, subsys.core.turn-engine, subsys.core.unified-exec]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
-> 当前 `build_tool_router` 先把 core、MCP、extension、dynamic runtimes 装进 `ToolRegistry`，同时单独收集 hosted specs；`finalize_tool_router` 再做最终 exposure 覆盖、`tool_search` 与 code-mode 注册，并把 hosted specs 追加到 model-visible surface。最终 router 挂在请求级 `StepContext` 上，执行期不会另存一份 router。[E: codex-rs/core/src/tools/spec_plan.rs:126][E: codex-rs/core/src/tools/spec_plan.rs:154][E: codex-rs/core/src/tools/spec_plan.rs:159][E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:531][E: codex-rs/core/src/session/step_context.rs:15][E: codex-rs/core/src/session/step_context.rs:31][E: codex-rs/core/src/tools/parallel.rs:42]
+> 当前 `build_tool_router` 先把 core、MCP、extension、dynamic runtimes 装进 `ToolRegistry`，同时单独收集 hosted specs；`finalize_tool_router` 再做最终 exposure 覆盖、`tool_search` 与 code-mode 注册，并把 hosted specs 追加到 model-visible surface。最终 router 挂在请求级 `StepContext` 上，执行期不会另存一份 router。[E: codex-rs/core/src/tools/spec_plan.rs:126][E: codex-rs/core/src/tools/spec_plan.rs:154][E: codex-rs/core/src/tools/spec_plan.rs:159][E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:531][E: codex-rs/core/src/session/step_context.rs:18][E: codex-rs/core/src/session/step_context.rs:34][E: codex-rs/core/src/tools/parallel.rs:43]
 
 ## 能回答的问题
 
@@ -39,13 +39,13 @@ code-mode 注册遍历已经 finalize 到此阶段的 registry，把可嵌套 ru
 
 ## 输出归一与执行
 
-`ToolRouter::build_tool_call` 把 function call 转为 canonical `ToolName` + `ToolPayload::Function`，把 client-side tool-search call 转为 plain `tool_search` + `ToolPayload::ToolSearch`，把 custom call 转为 plain name + `ToolPayload::Custom`；server-side tool-search 及无关 response item 不生成本地调用。[E: codex-rs/core/src/tools/router.rs:246][E: codex-rs/core/src/tools/router.rs:256][E: codex-rs/core/src/tools/router.rs:264][E: codex-rs/core/src/tools/router.rs:283][E: codex-rs/core/src/tools/router.rs:290]
+`ToolRouter::build_tool_call` 把 function call 转为 canonical `ToolName` + `ToolPayload::Function`，把 client-side tool-search call 转为 plain `tool_search` + `ToolPayload::ToolSearch`，把 custom call 转为 plain name + `ToolPayload::Custom`；server-side tool-search 及无关 response item 不生成本地调用。[E: codex-rs/core/src/tools/router.rs:244][E: codex-rs/core/src/tools/router.rs:254][E: codex-rs/core/src/tools/router.rs:262][E: codex-rs/core/src/tools/router.rs:281][E: codex-rs/core/src/tools/router.rs:288]
 
 function call 还可携带 `encrypted_function_args`；router 仅对 V2 `spawn_agent`、`send_message`、`followup_task` 标记 direct plaintext source，其他 function arguments 仍按普通来源处理。[E: codex-rs/core/src/tools/router.rs:41][E: codex-rs/core/src/tools/router.rs:46][E: codex-rs/core/src/tools/router.rs:49]
 
-`ToolCallRuntime` 只保存 session、`StepContext`、diff tracker 与一个 `RwLock<()>`；它从 `step_context.tool_router` 查询 runtime、parallel/cancellation 策略，先等待 runtime readiness，再让 parallel-safe 调用取 read lock、其余调用取 write lock，最后经同一个 router dispatch。[E: codex-rs/core/src/tools/parallel.rs:42][E: codex-rs/core/src/tools/parallel.rs:115][E: codex-rs/core/src/tools/parallel.rs:149][E: codex-rs/core/src/tools/parallel.rs:155][E: codex-rs/core/src/tools/parallel.rs:166]
+`ToolCallRuntime` 只保存 session、`StepContext`、diff tracker 与一个 `RwLock<()>`；它从 `step_context.tool_router` 查询 runtime、parallel/cancellation 策略，先等待 runtime readiness，再让 parallel-safe 调用取 read lock、其余调用取 write lock，最后经同一个 router dispatch。[E: codex-rs/core/src/tools/parallel.rs:43][E: codex-rs/core/src/tools/parallel.rs:106][E: codex-rs/core/src/tools/parallel.rs:151][E: codex-rs/core/src/tools/parallel.rs:154][E: codex-rs/core/src/tools/parallel.rs:165]
 
-hidden runtime 在 registry 查询中强制报告不支持 parallel；dispatch 仍把 invocation 的 `cancellation_token` 传给底层 runtime。[E: codex-rs/core/src/tools/registry.rs:488][E: codex-rs/core/src/tools/registry.rs:488][E: codex-rs/core/src/tools/parallel.rs:170]
+hidden runtime 在 registry 查询中强制报告不支持 parallel；dispatch 仍把 invocation 的 `cancellation_token` 传给底层 runtime。[E: codex-rs/core/src/tools/registry.rs:488][E: codex-rs/core/src/tools/registry.rs:488][E: codex-rs/core/src/tools/parallel.rs:172]
 
 ## Tool source gates
 

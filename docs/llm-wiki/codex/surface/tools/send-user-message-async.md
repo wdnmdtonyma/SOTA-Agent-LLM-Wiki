@@ -8,7 +8,7 @@ symbols: [SendMessageToUserAsyncHandler, SendMessageToUserAsyncArgs, AgentMessag
 related: [tool.request-user-input, tool.request-user-input-async, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `send_message_to_user_async` 是 opt-in 的 DirectModelOnly function tool：模型提交一条非空 `message` 后立即返回 `{"accepted":true}`，把文本作为 `AgentMessageDelivery::Async` turn item 发给客户端，**不结束当前 turn**，也不等待用户回复。[E: codex-rs/core/src/tools/handlers/send_message_to_user_async.rs:21][E: codex-rs/core/src/tools/spec_plan.rs:1197][E: codex-rs/core/src/tools/spec_plan.rs:1199][E: codex-rs/core/tests/suite/request_user_input_async.rs:295][E: codex-rs/core/src/tools/handlers/send_message_to_user_async.rs:91]
@@ -61,7 +61,7 @@ handler 对 `message` 做 `trim()`；空字符串返回 `message must not be emp
 
 `add_core_utility_tools` 同时要求：
 
-1. `!turn_context.session_source.is_non_root_agent()`。`is_non_root_agent()` 对 `SessionSource::Internal(_)` 与 `SessionSource::SubAgent(_)` 为真，因此 subagent / internal session 不注册。[E: codex-rs/core/src/tools/spec_plan.rs:1192][E: codex-rs/protocol/src/protocol.rs:2879][E: codex-rs/protocol/src/protocol.rs:2882]
+1. `!turn_context.session_source.is_non_root_agent()`。`is_non_root_agent()` 对 `SessionSource::Internal(_)` 与 `SessionSource::SubAgent(_)` 为真，因此 subagent / internal session 不注册。[E: codex-rs/core/src/tools/spec_plan.rs:1192][E: codex-rs/protocol/src/protocol.rs:2900][E: codex-rs/protocol/src/protocol.rs:2903]
 2. `model_info.experimental_supported_tools` **精确包含**字符串 `"send_message_to_user_async"`。[E: codex-rs/core/src/tools/spec_plan.rs:1197]
 
 两个条件都满足时，`registry.add_with_exposure(SendMessageToUserAsyncHandler, ToolExposure::DirectModelOnly)`。[E: codex-rs/core/src/tools/spec_plan.rs:1199]

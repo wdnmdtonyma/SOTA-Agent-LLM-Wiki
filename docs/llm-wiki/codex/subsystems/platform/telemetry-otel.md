@@ -8,7 +8,7 @@ symbols: [OtelSettings, OtelExporter, OtelProvider, TelemetryAuthMode, MetricsCo
 related: [subsys.platform.analytics, subsys.platform.diagnostics, spine.extension-system, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `codex_otel` 是 Codex 的 OpenTelemetry provider crate：它导出 OTEL settings/exporter types、trace-context validators 和 `OtelProvider`，把 Statsig exporter 解析成 OTLP HTTP JSON 或在 debug build 中禁用，并按 settings 构造 logs/traces/metrics exporters。[E: codex-rs/otel/src/lib.rs:16][E: codex-rs/otel/src/lib.rs:18][E: codex-rs/otel/src/lib.rs:29][E: codex-rs/otel/src/lib.rs:38][E: codex-rs/otel/src/config.rs:13][E: codex-rs/otel/src/config.rs:20][E: codex-rs/otel/src/config.rs:24][E: codex-rs/otel/src/provider.rs:62][E: codex-rs/otel/src/provider.rs:194]
@@ -41,7 +41,7 @@ updated: 121f91fd5d
 
 Statsig metrics config 把 `codex.tool.call` 与 `codex.tool.call.duration_ms` 标为 runtime-only：调用仍先校验并构造 attributes，但在创建 OTEL counter/duration instrument 前返回；显式 OTLP exporter 的排除列表为空，不能概括成全局禁用 tool metrics。[E: codex-rs/otel/src/metrics/config.rs:13][E: codex-rs/otel/src/metrics/config.rs:41][E: codex-rs/otel/src/metrics/config.rs:46][E: codex-rs/otel/src/metrics/client.rs:126][E: codex-rs/otel/src/metrics/client.rs:129][E: codex-rs/otel/src/metrics/client.rs:237][E: codex-rs/otel/src/metrics/client.rs:238]
 
-Extension API 新增 host-provided `ExtensionMetrics` histogram capability；core adapter 委托 `SessionTelemetry`。Session telemetry 先接收 extension tags，再追加 host metadata tags，使同名 session attribution 由 host 值覆盖；底层 metrics client 的 caller tags 又覆盖 exporter default tags，这两个 merge 层级不可混写。[E: codex-rs/ext/extension-api/src/capabilities/metrics.rs:7][E: codex-rs/ext/extension-api/src/capabilities/metrics.rs:10][E: codex-rs/core/src/session/extension_metrics.rs:6][E: codex-rs/core/src/session/extension_metrics.rs:15][E: codex-rs/otel/src/events/session_telemetry.rs:444][E: codex-rs/otel/src/events/session_telemetry.rs:448][E: codex-rs/otel/src/events/session_telemetry.rs:449][E: codex-rs/otel/src/metrics/client.rs:272][E: codex-rs/otel/src/metrics/client.rs:275]
+Extension API 新增 host-provided `ExtensionMetrics` histogram capability；core adapter 委托 `SessionTelemetry`。Session telemetry 先接收 extension tags，再追加 host metadata tags，使同名 session attribution 由 host 值覆盖；底层 metrics client 的 caller tags 又覆盖 exporter default tags，这两个 merge 层级不可混写。[E: codex-rs/ext/extension-api/src/capabilities/metrics.rs:7][E: codex-rs/ext/extension-api/src/capabilities/metrics.rs:10][E: codex-rs/core/src/session/extension_metrics.rs:6][E: codex-rs/core/src/session/extension_metrics.rs:15][E: codex-rs/otel/src/events/session_telemetry.rs:467][E: codex-rs/otel/src/events/session_telemetry.rs:471][E: codex-rs/otel/src/events/session_telemetry.rs:472][E: codex-rs/otel/src/metrics/client.rs:272][E: codex-rs/otel/src/metrics/client.rs:275]
 
 logs 和 traces 各自构造 Resource；Resource attributes 包含 service version 和 env，logs resource 在 host name 可用时额外加入 `host.name`。[E: codex-rs/otel/src/provider.rs:232][E: codex-rs/otel/src/provider.rs:233][E: codex-rs/otel/src/provider.rs:352][E: codex-rs/otel/src/provider.rs:376] trace exporter 启用时会先验证 span attributes，所有启用 path 都验证 tracestate；trace provider build 会挂 `SpanAttributesProcessor`，并把 configured tracestate 写入 global trace context。[E: codex-rs/otel/src/provider.rs:212][E: codex-rs/otel/src/provider.rs:213][E: codex-rs/otel/src/provider.rs:215][E: codex-rs/otel/src/provider.rs:401][E: codex-rs/otel/src/provider.rs:412]
 

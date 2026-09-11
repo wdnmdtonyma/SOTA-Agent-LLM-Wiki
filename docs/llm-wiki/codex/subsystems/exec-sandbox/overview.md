@@ -8,7 +8,7 @@ symbols: [SandboxManager, SandboxType, SandboxCommand, SandboxExecRequest, Sandb
 related: [spine.shell-exec-flow, tool.exec-command, tool.write-stdin]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > exec sandbox 是 Codex 在真正 spawn 进程前，把 permission model、per-OS sandbox backend、managed network、environment id 和 argv wrapper 统一收敛成 `SandboxExecRequest` 的转换层。[E: codex-rs/sandboxing/src/manager.rs:110][E: codex-rs/sandboxing/src/manager.rs:124][E: codex-rs/sandboxing/src/manager.rs:143][E: codex-rs/sandboxing/src/manager.rs:358]
@@ -69,7 +69,7 @@ exec sandbox 总览节点不覆盖 tool schema、approval UI、exec-server JSON-
 
 - `WindowsRestrictedToken` 在 `SandboxManager::transform` 里不是 argv wrapper；不要在 `codex_sandboxing` 的 manager 层寻找 Windows token creation。[E: codex-rs/sandboxing/src/manager.rs:467][E: codex-rs/sandboxing/src/manager.rs:490]
 - `MacosSeatbelt` 在非 macOS 编译目标会返回 `SeatbeltUnavailable`，`LinuxSeccomp` 在缺少 helper exe 时会返回 `MissingLinuxSandboxExecutable`。[E: codex-rs/sandboxing/src/manager.rs:458][E: codex-rs/sandboxing/src/manager.rs:437]
-- Linux helper `arg0` override 不是用户命令 argv[0]，而是为了让 helper 以 `codex-linux-sandbox` 这个 argv0 分支重新进入 arg0 dispatch。[E: codex-rs/sandboxing/src/manager.rs:462][E: codex-rs/sandboxing/src/manager.rs:765]
+- Linux helper `arg0` override 不是用户命令 argv[0]，而是为了让 helper 以 `codex-linux-sandbox` 这个 argv0 分支重新进入 arg0 dispatch。[E: codex-rs/sandboxing/src/manager.rs:462][E: codex-rs/sandboxing/src/manager.rs:766]
 
 ## Sources
 

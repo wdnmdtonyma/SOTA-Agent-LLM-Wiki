@@ -8,7 +8,7 @@ symbols: [ApplyPatchHandler, create_apply_patch_freeform_tool, APPLY_PATCH_LARK_
 related: [tool.exec-command, tool.shell-command, subsys.core.tool-system, subsys.core.tool-router, subsys.exec-sandbox.apply-patch-engine]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `apply_patch` 是当前 Codex 的 freeform custom tool 文件编辑 surface：模型提交完整 patch envelope，handler 只接受 `ToolPayload::Custom`，重新解析、按 turn environment 校验文件系统与 sandbox，再根据 safety/approval 决策直接拒绝或委托 `ApplyPatchRuntime` 写入。Lark grammar 现位于 `core/assets/tools/apply_patch.lark`。[E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:5][E: codex-rs/core/src/tools/handlers/apply_patch.rs:375][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:179]
@@ -48,7 +48,7 @@ updated: 121f91fd5d
 
 ## 4 输出与错误
 
-freeform tool 没有单独的 JSON output schema。AutoApprove 与 AskUser 都生成 runtime invocation，分别携带 `Skip` 或 `NeedsApproval`；Reject 直接返回 model error。orchestrator 完成后 emitter 把 runtime output 转成模型文本，并保留 failure 前已经 committed 的 delta。[E: codex-rs/core/src/apply_patch.rs:40][E: codex-rs/core/src/apply_patch.rs:55][E: codex-rs/core/src/apply_patch.rs:61][E: codex-rs/core/src/tools/handlers/apply_patch.rs:622]
+freeform tool 没有单独的 JSON output schema。AutoApprove 与 AskUser 都生成 runtime invocation，分别携带 `Skip` 或 `NeedsApproval`；Reject 直接返回 model error。orchestrator 完成后 emitter 把 runtime output 转成模型文本，并保留 failure 前已经 committed 的 delta。[E: codex-rs/core/src/apply_patch.rs:40][E: codex-rs/core/src/apply_patch.rs:55][E: codex-rs/core/src/apply_patch.rs:61][E: codex-rs/core/src/tools/handlers/apply_patch.rs:624]
 
 parse/verification 错误面向模型返回明确文本：初始 parse error 是 `apply_patch verification failed: ...`，verified path 的 correctness error 也带同样前缀；shell parse error 与非 apply_patch 输入分别返回 invalid patch input / non-apply_patch input。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:384][E: codex-rs/core/src/tools/handlers/apply_patch.rs:431][E: codex-rs/core/src/tools/handlers/apply_patch.rs:437][E: codex-rs/core/src/tools/handlers/apply_patch.rs:442]
 
@@ -64,17 +64,17 @@ Guardian reviewer turn 提前返回，不会注册 `apply_patch`。[E: codex-rs/
 
 ## 6 parallel support
 
-`ApplyPatchHandler` 的 `ToolExecutor` impl 只定义 `tool_name`、`spec`、`handle`，没有 `supports_parallel_tool_calls()` override；因此使用 trait 默认 false，router 查询不到支持位时也回退 false。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:341][E: codex-rs/tools/src/tool_executor.rs:122][E: codex-rs/core/src/tools/router.rs:238]
+`ApplyPatchHandler` 的 `ToolExecutor` impl 只定义 `tool_name`、`spec`、`handle`，没有 `supports_parallel_tool_calls()` override；因此使用 trait 默认 false，router 查询不到支持位时也回退 false。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:341][E: codex-rs/tools/src/tool_executor.rs:122][E: codex-rs/core/src/tools/router.rs:236]
 
 ## 7 handler 走读
 
 1. handler 只接受 `ToolPayload::Custom { input }`；其它 payload 返回 unsupported payload。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:375]
-2. 它解析 patch，再按 parsed environment id 与 `multi_environment` 调用 `require_environment_id`；不允许 environment selection 时传入 id 会报错。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:380][E: codex-rs/core/src/tools/handlers/apply_patch.rs:389][E: codex-rs/core/src/tools/handlers/apply_patch.rs:631]
+2. 它解析 patch，再按 parsed environment id 与 `multi_environment` 调用 `require_environment_id`；不允许 environment selection 时传入 id 会报错。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:380][E: codex-rs/core/src/tools/handlers/apply_patch.rs:389][E: codex-rs/core/src/tools/handlers/apply_patch.rs:633]
 3. 它解析 selected turn environment，取出该 environment filesystem，然后构造 filesystem sandbox context。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:392][E: codex-rs/core/src/tools/handlers/apply_patch.rs:401]
 4. `verify_apply_patch_args_with_mode` 用 effective cwd 解析 hunk 路径，并按 `apply_patch_file_update_mode` 选择 LF 归一化或保留原文件行结尾。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:403][E: codex-rs/apply-patch/src/invocation.rs:201]
 5. `effective_patch_permissions` 合并 session 与 turn grants，计算 effective filesystem sandbox policy，并为当前 patch 需要但 sandbox 未允许的写路径生成 additional permissions。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:303][E: codex-rs/core/src/tools/handlers/apply_patch.rs:316]
 6. `prepare_apply_patch` 用 safety check 决定 auto approve、ask user 或 reject；AskUser invocation 设置 `ExecApprovalRequirement::NeedsApproval`。[E: codex-rs/core/src/apply_patch.rs:24][E: codex-rs/core/src/apply_patch.rs:55]
-7. shared helper 构造 `ApplyPatchRequest`，用 `ToolOrchestrator` 运行 `ApplyPatchRuntime`，然后用 emitter finish 产出最终文本。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:597][E: codex-rs/core/src/tools/handlers/apply_patch.rs:608][E: codex-rs/core/src/tools/handlers/apply_patch.rs:622]
+7. shared helper 构造 `ApplyPatchRequest`，用 `ToolOrchestrator` 运行 `ApplyPatchRuntime`，然后用 emitter finish 产出最终文本。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:598][E: codex-rs/core/src/tools/handlers/apply_patch.rs:609][E: codex-rs/core/src/tools/handlers/apply_patch.rs:624]
 8. runtime 的 `ApplyPatchApprovalKey` 包含 environment id 与路径；实际 run 从 environment filesystem 取 fs，并带 sandbox context 调用 `codex_apply_patch::apply_patch_with_options`。[E: codex-rs/core/src/tools/runtimes/apply_patch.rs:39][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:175][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:179]
 
 ## 8 shell / unified-exec 拦截

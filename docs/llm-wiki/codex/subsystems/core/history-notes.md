@@ -8,7 +8,7 @@ symbols: [HistoryNotesAction, HistoryNotesTool, HistoryNotesBackend, HistoryNote
 related: [spine.context-and-compaction, subsys.core.context-manager, subsys.core.compaction, subsys.core.token-budget, spine.extension-system]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `codex-rs/ext/history-notes` 是独立 extension：给模型两套 **private model-only** namespace 工具——`history` 读已持久化的归一化会话历史，`notes` 读写跨 context-window 存活的虚拟笔记。工具存在、路径、存储机制和私有内容都不得向用户披露。[E: codex-rs/ext/history-notes/src/tools.rs:26][E: codex-rs/ext/history-notes/src/tools.rs:27][E: codex-rs/ext/history-notes/src/tools.rs:311]
@@ -25,7 +25,7 @@ updated: 121f91fd5d
 
 History notes **不是** `ContextManager` 的 in-memory history，也不是 `codex-rs/memories` 的 `memory_summary.md` 长期记忆。它通过 Codex backend 的 `alpha/history/v2/*` 与 `alpha/notes/v2/*` 读写私有状态；模型用 opaque window/item ID 和虚拟 notes path 恢复被 compaction 截断的上下文。[E: codex-rs/ext/history-notes/src/tools.rs:26][E: codex-rs/ext/history-notes/src/tools.rs:84][E: codex-rs/ext/history-notes/src/extension.rs:182]
 
-crate 只导出 `install`；app-server 在组 extension registry 时无条件调用它，真正是否暴露工具由 thread store 里的 config gate 决定。[E: codex-rs/ext/history-notes/src/lib.rs:5][E: codex-rs/app-server/src/extensions.rs:79][E: codex-rs/ext/history-notes/src/extension.rs:160]
+crate 只导出 `install`；app-server 在组 extension registry 时无条件调用它，真正是否暴露工具由 thread store 里的 config gate 决定。[E: codex-rs/ext/history-notes/src/lib.rs:5][E: codex-rs/app-server/src/extensions.rs:83][E: codex-rs/ext/history-notes/src/extension.rs:160]
 
 ## 关键 crate/文件
 
@@ -86,13 +86,13 @@ code mode 直接返回 `"History tools are unavailable in code mode."`。[E: cod
 
 否则移除 config，工具列表为空。[E: codex-rs/ext/history-notes/src/extension.rs:47][E: codex-rs/ext/history-notes/src/extension.rs:51][E: codex-rs/ext/history-notes/src/extension.rs:61][E: codex-rs/ext/history-notes/src/extension.rs:160]
 
-`TokenBudgetConfig` 默认 `use_history_notes_extension: false`。[E: codex-rs/core/src/config/mod.rs:1238]
+`TokenBudgetConfig` 默认 `use_history_notes_extension: false`。[E: codex-rs/core/src/config/mod.rs:1248]
 
-session 在 Responses metadata 里，若该开关打开会设 `history_ingest_requested: Some(true)`，让 backend 有机会 ingest 当前窗口。[E: codex-rs/core/src/session/session.rs:624]
+session 在 Responses metadata 里，若该开关打开会设 `history_ingest_requested: Some(true)`，让 backend 有机会 ingest 当前窗口。[E: codex-rs/core/src/session/session.rs:652]
 
 ## 控制流
 
-1. app-server `thread_extensions` 调用 `codex_history_notes_extension::install`，注册 lifecycle / config / prompt / tool contributor。[E: codex-rs/app-server/src/extensions.rs:79][E: codex-rs/ext/history-notes/src/extension.rs:182]
+1. app-server `thread_extensions` 调用 `codex_history_notes_extension::install`，注册 lifecycle / config / prompt / tool contributor。[E: codex-rs/app-server/src/extensions.rs:83][E: codex-rs/ext/history-notes/src/extension.rs:182]
 2. `on_thread_start` 把 `session_source` 的 agent path（缺省 `/root`）存成 `HistoryNotesAgentIdentity`，再跑 `update_config`。[E: codex-rs/ext/history-notes/src/extension.rs:72][E: codex-rs/ext/history-notes/src/extension.rs:80]
 3. `tools()` 为 `HistoryNotesAction::ALL` 各建一个 `HistoryNotesTool`，带 session id 与当前 agent name。[E: codex-rs/ext/history-notes/src/extension.rs:167]
 4. handler 解析 JSON 对象（空字符串当 `{}`），把 `context.session_id` / `context.current_agent_name` 插入后 POST backend。[E: codex-rs/ext/history-notes/src/tools.rs:266][E: codex-rs/ext/history-notes/src/backend.rs:40]

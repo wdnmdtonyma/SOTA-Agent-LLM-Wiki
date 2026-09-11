@@ -8,7 +8,7 @@ symbols: [RequestPluginInstallHandler, create_request_plugin_install_tool, Reque
 related: [tool.list-available-plugins-to-install, tool.tool-search, subsys.config-auth.plugins, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `request_plugin_install` 向用户发起 plugin/connector 安装确认;用户接受后,connector 会走 accessible connector 刷新验证,remote marketplace plugin 会刷新远程插件缓存并核对关联 connectors,非远程 plugin 会 reload config 后用 plugin manager 验证。
@@ -47,7 +47,7 @@ ListTool 的 data type 是 `RequestPluginInstallArgs { tool_type, action_type, t
 
 ## 4 输出 schema & 截断
 
-`request_plugin_install` 没有 structured output schema,handler 返回 JSON 文本序列化的 `RequestPluginInstallResult`,字段包含 `completed`、`user_confirmed`、`tool_type`、`action_type`、`tool_id`、`tool_name`、`suggest_reason`。[E: codex-rs/core/src/tools/handlers/request_plugin_install_spec.rs:79] [E: codex-rs/tools/src/request_plugin_install.rs:24] [E: codex-rs/tools/src/request_plugin_install.rs:31] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:296]
+`request_plugin_install` 没有 structured output schema,handler 返回 JSON 文本序列化的 `RequestPluginInstallResult`,字段包含 `completed`、`user_confirmed`、`tool_type`、`action_type`、`tool_id`、`tool_name`、`suggest_reason`。[E: codex-rs/core/src/tools/handlers/request_plugin_install_spec.rs:79] [E: codex-rs/tools/src/request_plugin_install.rs:24] [E: codex-rs/tools/src/request_plugin_install.rs:31] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:298]
 
 ## 5 ToolSpec 类型
 
@@ -59,7 +59,7 @@ ListTool 的 data type 是 `RequestPluginInstallArgs { tool_type, action_type, t
 
 `add_core_utility_tools` 要求存在非空 tool suggest candidates,并会注册 `RequestPluginInstallHandler`;只有 `ListTool` presentation 才额外注册 `list_available_plugins_to_install`。[E: codex-rs/core/src/tools/spec_plan.rs:1239] [E: codex-rs/core/src/tools/spec_plan.rs:1244] [E: codex-rs/core/src/tools/spec_plan.rs:1249]
 
-presentation 由 turn preparation 决定：endpoint 返回 recommended plugin candidates 时直接使用 `RecommendationContext`，不会注册 legacy list tool；没有 endpoint candidates 才构造传统 discoverable set 与 `ListTool` presentation。[E: codex-rs/core/src/session/turn.rs:1595][E: codex-rs/core/src/session/turn.rs:1599][E: codex-rs/core/src/session/turn.rs:1627]
+presentation 由 turn preparation 决定：endpoint 返回 recommended plugin candidates 时直接使用 `RecommendationContext`，不会注册 legacy list tool；没有 endpoint candidates 才构造传统 discoverable set 与 `ListTool` presentation。[E: codex-rs/core/src/session/turn.rs:1725][E: codex-rs/core/src/session/turn.rs:1729][E: codex-rs/core/src/session/turn.rs:1757]
 
 spec tests 证明即使 `tool_search` 不可见,`request_plugin_install` 仍可见,因为安装请求工具不依赖 search tool capability。[E: codex-rs/core/src/tools/spec_plan_tests.rs:2393] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2396] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2413]
 
@@ -75,7 +75,7 @@ handler 解析 presentation-specific 参数,拒绝非 `install` action 和空 `s
 
 这些 analytics 记录的是 install-request 生命周期，不是 `core-plugins` 的 `PluginMetricsSidecar` 脚本度量。sidecar 走独立的 plugin script execution 路径，不由本工具触发。[E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:221][I]
 
-如果用户 decline 且 elicitation meta 的 `persist` 是 `always`,handler 会把该 tool 写入 disabled tool suggestion 配置并 reload user config layer。[E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:254] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:332] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:338] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:342] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:354]
+如果用户 decline 且 elicitation meta 的 `persist` 是 `always`,handler 会把该 tool 写入 disabled tool suggestion 配置并 reload user config layer。[E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:254] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:334] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:340] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:344] [E: codex-rs/core/src/tools/handlers/request_plugin_install.rs:356]
 
 ## 9 设计动机·edge·历史
 

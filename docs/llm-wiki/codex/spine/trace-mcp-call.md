@@ -8,7 +8,7 @@ symbols: [mcp_runtime_for_step, handle_mcp_tool_call, McpBinding::prepare_call, 
 related: [spine.tool-call-anatomy, spine.turn-end-to-end, subsys.mcp.client, tool.list-mcp-resources, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > 一次 MCP tool call 有两个 binding 边界：sampling step 的 binding 决定模型看到的 tool spec；执行前 `Session::prepare_mcp_call` 会再次 refresh，并从 call-time current binding 解析同名 tool 的 approval metadata、config 与 exact client。revision guard 只保护后一个 prepared call 到发送之间的窗口。
@@ -33,19 +33,19 @@ flowchart TD
 
 ## 端到端步骤
 
-1. `mcp_runtime_for_step` 比较 selected capability roots，必要时标记 runtime dirty，等待 refresh 完成后捕获最新 `McpBinding`；这一步发生在 model-visible tools 被构建之前。[E: codex-rs/core/src/session/mcp.rs:342][E: codex-rs/core/src/session/mcp.rs:357]
+1. `mcp_runtime_for_step` 比较 selected capability roots，必要时标记 runtime dirty，等待 refresh 完成后捕获最新 `McpBinding`；这一步发生在 model-visible tools 被构建之前。[E: codex-rs/core/src/session/mcp.rs:340][E: codex-rs/core/src/session/mcp.rs:355]
 2. binding 保存该 step 的冻结 `tools` 与 prepared-call map；planner 用 `tools` 创建 model-visible specs，但后续普通 MCP handler 不携带这个 binding。[E: codex-rs/codex-mcp/src/binding.rs:36][E: codex-rs/codex-mcp/src/binding.rs:37][E: codex-rs/codex-mcp/src/binding.rs:80][E: codex-rs/core/src/tools/handlers/mcp.rs:51]
 3. `add_mcp_resource_tools` 只在 binding 有 server 时注册三种 list/read resource handlers；`build_tool_router` 则通过 `mcp_handler_cache.append_mcp_tools` 把 binding 的 tool catalog 按 search gate 以 direct/deferred `McpHandler` 注册进同一个 registry。Guardian reviewer turn 跳过整段 MCP 注册。[E: codex-rs/core/src/tools/spec_plan.rs:1128][E: codex-rs/core/src/tools/spec_plan.rs:1129][E: codex-rs/core/src/tools/spec_plan.rs:156][E: codex-rs/core/src/tools/spec_plan.rs:159]
-4. 模型返回 namespaced `FunctionCall` 后，router 用 namespace/name 构造 `ToolName` 与 function payload；registry 通过 canonical MCP tool name 命中对应 handler。[E: codex-rs/core/src/tools/router.rs:246][E: codex-rs/core/src/tools/router.rs:256][E: codex-rs/core/src/tools/handlers/mcp.rs:120]
-5. `McpHandler` 只保存 `ToolInfo/spec`；收到 function payload 后先调 `session.prepare_mcp_call(server, tool)`，再把 arguments、server 与 prepared call 交给 `handle_mcp_tool_call`。handler 本身不携带 step binding。[E: codex-rs/core/src/tools/handlers/mcp.rs:51][E: codex-rs/core/src/tools/handlers/mcp.rs:180][E: codex-rs/core/src/tools/handlers/mcp.rs:228]
-6. `Session::prepare_mcp_call` 先 `refresh_mcp_if_dirty()`，再从 runtime 的 `current_binding_for_call` 重新 `prepare_call`。`handle_mcp_tool_call` 若拿到 `None`，在任何 started item 前返回 unavailable result。[E: codex-rs/core/src/session/mcp_runtime.rs:61][E: codex-rs/core/src/session/mcp_runtime.rs:66][E: codex-rs/core/src/mcp_tool_call.rs:159]
+4. 模型返回 namespaced `FunctionCall` 后，router 用 namespace/name 构造 `ToolName` 与 function payload；registry 通过 canonical MCP tool name 命中对应 handler。[E: codex-rs/core/src/tools/router.rs:244][E: codex-rs/core/src/tools/router.rs:254][E: codex-rs/core/src/tools/handlers/mcp.rs:120]
+5. `McpHandler` 只保存 `ToolInfo/spec`；收到 function payload 后先调 `session.prepare_mcp_call(server, tool)`，再把 arguments、server 与 prepared call 交给 `handle_mcp_tool_call`。handler 本身不携带 step binding。[E: codex-rs/core/src/tools/handlers/mcp.rs:51][E: codex-rs/core/src/tools/handlers/mcp.rs:180][E: codex-rs/core/src/tools/handlers/mcp.rs:230]
+6. `Session::prepare_mcp_call` 先 `refresh_mcp_if_dirty()`，再从 runtime 的 `current_binding_for_call` 重新 `prepare_call`。`handle_mcp_tool_call` 若拿到 `None`，在任何 started item 前返回 unavailable result。[E: codex-rs/core/src/session/mcp_runtime.rs:62][E: codex-rs/core/src/session/mcp_runtime.rs:67][E: codex-rs/core/src/mcp_tool_call.rs:159]
 7. 若 call-time lookup 成功，core 使用该 `PreparedMcpCall` 的 Apps policy、approval metadata、permission hooks/guardian/prompt，并准备 OpenAI file inputs、request `_meta` 与可选 sandbox state。[E: codex-rs/core/src/mcp_tool_call.rs:175][E: codex-rs/core/src/mcp_tool_call.rs:219][E: codex-rs/core/src/mcp_tool_call.rs:256][E: codex-rs/core/src/mcp_tool_call.rs:272]
 8. irreversible preparation 与发送进入 call-time `PreparedMcpCall::call_with_preparation`。prepared call 建立后、revision read guard 获取前若 catalog revision 已变化就拒绝；匹配时在 guard 内完成参数准备与 exact `ManagedClient` call，使 replacement 等待发送结束。[E: codex-rs/codex-mcp/src/binding.rs:304][E: codex-rs/codex-mcp/src/binding.rs:328][E: codex-rs/codex-mcp/src/binding.rs:323]
 9. RMCP result 转成 Codex `CallToolResult` 后，core 按模型 image capability sanitize，并为 event copy 做大小截断，再发送 completed item。[E: codex-rs/core/src/mcp_tool_call.rs:547][E: codex-rs/core/src/mcp_tool_call.rs:583][E: codex-rs/core/src/mcp_tool_call.rs:590]
 
 ## 决策点
 
-- approval authority、server metadata、plugin provenance 与 client identity 来自执行前 current binding 生成的 prepared call，而不是广告时 binding。read guard 避免的是 prepare 后的 catalog replacement 穿透，不是整个 sampling step 的 refresh。[E: codex-rs/core/src/session/mcp_runtime.rs:66][E: codex-rs/core/src/tools/handlers/mcp.rs:180][E: codex-rs/codex-mcp/src/binding.rs:328][I]
+- approval authority、server metadata、plugin provenance 与 client identity 来自执行前 current binding 生成的 prepared call，而不是广告时 binding。read guard 避免的是 prepare 后的 catalog replacement 穿透，不是整个 sampling step 的 refresh。[E: codex-rs/core/src/session/mcp_runtime.rs:67][E: codex-rs/core/src/tools/handlers/mcp.rs:180][E: codex-rs/codex-mcp/src/binding.rs:328][I]
 - MCP approval 仍在 `mcp_tool_call.rs` 内实现，没有复用 shell/apply-patch 的 `ToolOrchestrator`。[E: codex-rs/core/src/mcp_tool_call.rs:272][I]
 - resource handlers 以 step binding 为入口，但这是“尽量固定”而非绝对快照：指定 server 若存在 captured client 就使用它，缺失时会回退该 binding 持有的 live connection set；all-server 汇总只遍历 captured clients。普通 MCP call 则执行前 refresh 后取 current binding。[E: codex-rs/codex-mcp/src/binding.rs:103][E: codex-rs/codex-mcp/src/binding.rs:108][I]
 

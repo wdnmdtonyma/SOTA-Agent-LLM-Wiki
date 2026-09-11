@@ -6,7 +6,7 @@ kind: reference
 tier: T3
 source: []
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 evidence: unknown
 ---
 
@@ -49,6 +49,14 @@ evidence: unknown
 - V1 reviewer 用 `empty_extension_registry()` 且 disable `Feature::GuardianV2`。
 - `request_permissions` 走共享 `ApprovalAction::RequestPermissions` → `request_guardian_approval`。
 - `Feature::UnifiedExec` `default_enabled: true`，无 Windows 例外。
+
+## uncertainty-l2-spine-tui-auth
+
+# L2 verify spine-tui-auth (02a8f038b8)
+
+- auth-flows 仍保留既有 [U]：pending environment attachment / per-environment permission profile snapshot 未在本节点逐字段核完。
+- `Subcommand::App` 受 `cfg(macos|windows)` 门控；源码文本仍是 29 个变体（含该臂），Linux 编译后为 28。wiki 按源码文本计 29。
+- `rpc.thread-methods` 也提到 `memory/status`；本批次只确认权威方法表在 `rpc.mcp-skills-plugin-methods`，未改其它 catalog 页。
 
 ## uncertainty-l2
 
@@ -170,6 +178,31 @@ Assigned pages have no remaining `[U]`. The items below are `[I]` inferences tha
 - `/export` 已存在，不是未实现面。
 - first-login 会 delay composer；非 first-login 的 startup composer 可编辑但不可提交。
 
+## uncertainty-update-02a8f038b8-catalogs
+
+# Catalog recount notes — 02a8f038b8
+
+Filler 对照源码重数后，与 UPDATE-INSTRUCTIONS / research 备忘录的两处 expected 不一致。正文已按源码写，不把备忘录当 [E]。
+
+## workspace members：源码 147，不是 148
+
+`codex-rs/Cargo.toml` `members` 第 3–149 行是 147 个 path，第 150 行是闭合 `]`，`resolver` 在 151。
+
+- base `121f91fd5d`：145 members（3–147），`]` 在 148。旧 wiki 已计入 `exec-server/tests/support`。
+- target：只新增 `ext/guardian-reviewer`、`user-verification`。145 + 2 = 147。
+- 备忘录写「148（第 3–150 行）」是把闭合括号行算进 members。
+
+## server notifications：宏内 84 variants，不是 83
+
+`server_notification_definitions!`（`common.rs:1907`）：
+
+- 83 个 `Variant => "wire" (Type)`，含新增 `ThreadAttachmentUpdated => "thread/attachment/updated"`
+- 1 个 `AccountLoginCompleted` 用 serde/TS/strum rename 固定 `account/login/completed`
+
+合计 **84**。旧 wiki 的 83 = 82 `=>` + AccountLoginCompleted；本轮 +1 attachment notification。
+
+client RPC 167、server requests 11（9 v2 `=> "path"` + legacy `ApplyPatchApproval` / `ExecCommandApproval`）与备忘录一致。
+
 ## uncertainty-update-guardian
 
 # guardian-tools 批次残留 uncertainty
@@ -209,6 +242,14 @@ target: `a9519cbcdd`
 - 第一方 app-server / TUI 路径当前没有调用 `reserve_thread_id` + `stage_pending_thread_metadata`；可见用法在 core 集成测试。节点：`subsystems/core/thread-store.md`
 
 本批次其它节点未新增 `[U]`。
+
+## uncertainty-update-spine-tui-auth
+
+# uncertainty-update spine-tui-auth (02a8f038b8)
+
+- workspace member count: L2 recount of live `codex-rs/Cargo.toml` at 02a8f038b8 is **147** (members 第 3–149 行). Not 145/148. Net +2 vs 145: `ext/guardian-reviewer`, `user-verification`.
+- auth-flows still carries the pre-existing [U] on pending environment attachment / per-environment permission profile snapshot (not re-audited this batch).
+- workload-identity selection marker: L2 refuted “context marker 也选中”. `has_marker()` is federation rule OR assertion file only. Fixed in `subsys.config-auth.auth-flows`.
 
 ## uncertainty-update-tui-mcp-sdk
 
@@ -254,6 +295,14 @@ Recounted from source at this SHA. These numbers supersede older staging notes t
 - `SlashCommand` **59**
 - wiki nodes **184**, tool nodes **38**
 
+## uncertainty-verify-core-drift
+
+# L2 verify: core-drift (02a8f038b8)
+
+Out of batch (not edited): `subsys.core.approval-guardian-v2` still says guardian turns can attach read-only `history.*` extension tools. Source `spec_plan.rs` skips `append_extension_tool_executors` for `is_basic_session_source`, and `internal_guardian_sessions_exclude_optional_core_tools` asserts only `exec_command` / `write_stdin` / `view_image`. Fixed in `spine.extension-system` this batch.
+
+No remaining [U] inside the eight core-drift nodes after in-place [E] retargets.
+
 ## uncertainty-verify-coreb
 
 # Uncertainty — L2 verifier CoreB (`a9519cbcdd`)
@@ -287,6 +336,29 @@ Node: `subsys.exec-sandbox.exec-server`
 - claim: `codex-rs/ext/guardian-v2` does not depend on `codex-guardian-context`; scorer still uses `async_scorer/transcript.rs`.
 - why [I]: absence of a Cargo dependency is not a single asserted source line. `ext/guardian-v2/Cargo.toml` `[dependencies]` (lines 16–33) lists `codex-api` … `uuid` and does not name `codex-guardian-context`; confirming the scorer still uses crate-local `async_scorer/transcript.rs` requires that module, not the workspace `guardian-context` crate.
 - node: `spine.extension-system`
+
+## uncertainty-verify-leftover-high-value
+
+# L2 verify: leftover-high-value (02a8f038b8)
+
+Mechanical SHA bump hid stale `[E]` and a few false claims. Fixed in place.
+
+Confirmed against source:
+
+- No live `mcp-server` crate/subcommand. Workspace members = 147 (`Cargo.toml` L3–L149). `rmcp-client` is `:97`.
+- Guardian turns do not attach `history.*` tools: `add_core_tool_sources` returns early; `append_extension_tool_executors` is in the non-guardian branch.
+- These eight nodes do not retain 145 crates / 140 features / 162 client RPC / notifications 83 / shipped `SandboxReadRoot` / live `compact_remote.rs`. `CompactTask` calls `compact_remote_v2`.
+
+Refuted and rewritten:
+
+- `subsys.core.turn-metadata`: attach path moved to `executed_tool_calls/request_metadata.rs`; sampling attach is `turn.rs:1579–1582`, not skill-item helper `:1457`. Type is `ExecutedToolCalls`.
+- `subsys.platform.network-proxy`: `NetworkMode` is `:363+`; blocked observer is `network_approval.rs:1065`; ring buffer is `runtime.rs:721`; builder/public/`remote_policy_decider`/`GIT_SSH` cites were pointing at other functions.
+- `sdk.py-inputs-errors`: omitted public `ExternalMessage` and `RunInput = Input | str | ExternalMessage`.
+- `ref.session-tasks`: `TurnStarted` emit is `regular.rs:49`; `TurnState` was missing MCP-approval / per-model usage / last step; `spawn_task` abort is `:276`.
+- `subsys.tui.event-system`: lede `:1028` was worktree error, not the select arms; `ExitMode` comment is `:581`.
+- `spine.tool-call-anatomy`: dispatch cite `:165` was timing, not `dispatch_tool_call_with_terminal_outcome`.
+
+No remaining [U] inside this batch after retargets.
 
 ## uncertainty-verify-request-permissions
 

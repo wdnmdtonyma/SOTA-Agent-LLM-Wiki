@@ -1,52 +1,66 @@
-# UPDATE SCOPE — Codex Wiki（a9519cbcdd → 121f91fd5d）
+# UPDATE SCOPE — Codex Wiki（121f91fd5d → 02a8f038b8）
 
-> 完成日期：2026-09-07
+> 完成日期：2026-09-11
 >
-> **旧 Wiki 基线**：`a9519cbcdd2d664530edb2469224ee03c1056799`
-> **点时快照 target**：`121f91fd5d9dc66017866ce9bdc49f1e182721df`
-> **冻结时间**：2026-09-07；冻结时已确认 target 是官方 `origin/main`
-> **跨度**：323 commits · 1756 files changed · +120,702 / -23,962
-> 只读审计见 `_RESEARCH-121f91fd5d.md`。方法约束仍以 `RUN.md` 和 `conventions.md` 为准。
+> **旧 Wiki 基线**：`121f91fd5d9dc66017866ce9bdc49f1e182721df`
+> **点时快照 target**：`02a8f038b87ad34d4a1dc5058eda26972ed7aa6c`
+> **冻结时间**：2026-09-11；冻结时已确认 target 是官方 `origin/main`
+> **跨度**：284 commits · 1610 files changed · +134,034 / -33,193
+> 只读审计见 `_RESEARCH-02a8f038b8.md`。方法约束仍以 `RUN.md` 和 `conventions.md` 为准。
 >
-> 本轮执行：workflow `codex-wiki-update`（**6 个批次 filler，无逐节点 L2**；用户明确要求控并发、不过度 verify）→ lead SHA bump + 证据行号重落 → `llms.txt` 登记新节点 → reconcile ×2 → lint。
+> 本轮执行：影响分级 → 6 批 filler rewrite/refresh → SHA bump + safe-only `[E]` rebase → 独立 L2（6 语义批 + 1 leftover 高价值批）→ L3（就地修证伪项）→ reconcile ×2 + lint。
 
 复现：
 
 ```bash
 git -C codex fetch origin main
-git -C codex rev-list --count a9519cbcdd2d664530edb2469224ee03c1056799..121f91fd5d9dc66017866ce9bdc49f1e182721df
-git -C codex diff --shortstat a9519cbcdd2d664530edb2469224ee03c1056799..121f91fd5d9dc66017866ce9bdc49f1e182721df
+git -C codex rev-list --count 121f91fd5d9dc66017866ce9bdc49f1e182721df..02a8f038b87ad34d4a1dc5058eda26972ed7aa6c
+git -C codex diff --shortstat 121f91fd5d9dc66017866ce9bdc49f1e182721df..02a8f038b87ad34d4a1dc5058eda26972ed7aa6c
 ```
 
-HEAD 提交：Enable remote named permission profile selection in the TUI (#43340)。
+HEAD 提交：Check folder consent before creating or resuming TUI tasks (#44755)。
 
 ## 1. 影响分类
 
-以基线 184 个节点为总体，按 source 存在性 + 真实 diff 求交（目录型 source 不算缺失）：
+以基线 185 个节点为总体，按 source 存在性 + 真实 diff 求交（目录型 source 不算缺失）：
 
 | 分类 | 节点数 | 判定 |
 |---|---:|---|
-| A-BROKEN | 5 | mcp-server 删除、send_user_message_async 改名、trace_transport.rs 删除 |
-| B-HEAVY | 4 | TUI 直接 source churn ≥ 2,000 |
-| C-DRIFT | ~163 | 至少一个直接 source 改动；机械 SHA bump + exact `[E]` rebase |
-| D-CLEAN | 12 | 已登记 source 未改；仍 bump SHA |
-| 退役 | 1 | `subsys.mcp.server` 保留 id，改写退役映射 |
-| 新增 | 1 | `tool.request-user-input-async` |
+| A-BROKEN | 5 | compact_remote v1 删除、`writer_lock` 迁到 `rollout`、guardian-v2 sync reviewer 配置/prompt 删除 |
+| B-HEAVY | 5 | shell-parsing / approval-guardian / SDK / request-permissions，直接 source churn ≥ 2,000 |
+| C-DRIFT | 153 | 至少一个直接 source 改动；机械 SHA bump + exact `[E]` rebase |
+| D-CLEAN | 22 | 已登记 source 未改；仍 bump SHA |
+| 退役 / 新增 | 0 | 节点集合仍 185；新 crate / RPC / `/voice` 全部 fold |
 
 ## 2. 必须重写 / 逐实例重核的面
 
-- `codex mcp-server` / `codex-rs/mcp-server` 已删除。
-- `send_message_to_user_async` 取代旧 message 形工具；`request_user_input_async` 是新 questions 形工具；旧 catalog 名 `send_user_message_async` 现在注册后者。
-- Catalog：crates **145**、features **140**、Op **29**、EventMsg **83**、client RPC **162**、notifications **83**、server requests **11**、slash **60**、ConfigToml **101**、CLI subcommands **29**。
-- 新 crate fold：attachment-store / mxc-sandbox / windows-sandbox-service / realtime-webrtc / voice-host / git-discovery / otel-trace-websocket / config-schema。
+- Remote compact v1 已删；活路径是 local `compact.rs` + `compact_remote_v2` + `compact_remote_history`。
+- `writer_lock` 在 `rollout` crate。
+- Guardian 同步 reviewer 下沉 `ext/guardian-reviewer`；v2 `sync_reviewer` 只剩 lifecycle `install`。
+- Catalog：crates **147**、features **142**、Op **29**、EventMsg **83**、client RPC **167**、notifications **84**、server requests **11**、slash **60**、ConfigToml **101**、CLI subcommands **29**。
+- 新 crate fold：`ext/guardian-reviewer`、`user-verification`。
+- 新 RPC fold：`userVerification/cancel`、`thread/attachment/{add,list,remove}`、`memory/status`、`thread/attachment/updated`。
+- Slash：删 `SandboxReadRoot`，加 `Voice`（`/voice`）；合计仍 60。
+- TUI folder consent：picker 解析 destination 之后、create/resume 之前跑 `check_directory_trust`。
 
 ## 3. 执行与验收
 
 - 只改 `docs/llm-wiki/codex/**` 与父仓 `codex` gitlink。
 - 填充后 `node tools/reconcile.mjs` 两次 + `node tools/lint.mjs`，须 0 error。
-- 全部节点 `updated: 121f91fd5d`；index / 文件树 / `llms.txt` 同一集合。
+- 全部节点 `updated: 02a8f038b8`；index / 文件树 / `llms.txt` 同一集合。
 - 本轮是源码证据与 Wiki 验证，不宣称大型 Rust/runtime 测试通过。
 
-## 4. 状态
+## 4. L2 / L3
 
-完成：185 个节点 `updated: 121f91fd5d` / `status: verified`。reconcile 幂等。`node tools/lint.mjs` 0 error。入口 `README.md` / `llms.txt` / `index.json.groups` 已对齐 145 crates、185 节点、catalog 新计数（RPC **256** = 162+83+11）。父仓工作树 `codex` 已 detached checkout 到 target；gitlink 待随 wiki 一并提交。
+独立 L2 覆盖 48 个语义/高价值节点（broken 5 + heavy 5 + catalogs 7 + rpc-slash 7 + spine-tui-auth 8 + core-drift 8 + leftover-high-value 8）。机械 SHA 页未逐页 L2。
+
+L3 回源后就地修复的负载：
+
+- guardian turn **不会**挂 `history.*`（`is_basic_session_source` 整段跳过 MCP / extension / hosted / dynamic）。
+- `notifications-system` 合计从 83 改为 **84**（thread catalog 51 + system 33）。
+- `mcp.server` crate 行号：`rmcp-client` 在 `Cargo.toml:97`，members 是 L3–L149。
+- leftover 机械漂移：turn-metadata attach 路径、network-proxy 若干 cite、Python `ExternalMessage` / `RunInput`。
+
+## 5. 状态
+
+完成：185 个节点 `updated: 02a8f038b8` / `status: verified`。reconcile 幂等。`node tools/lint.mjs` 0 error。入口 `README.md` / `llms.txt` / `index.json.groups` 已对齐 147 crates、142 features、185 节点、catalog 新计数（RPC **262** = 167+84+11）。父仓工作树 `codex` 已 detached checkout 到 target；gitlink 待随 wiki 一并提交。

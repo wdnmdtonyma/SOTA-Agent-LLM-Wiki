@@ -8,7 +8,7 @@ symbols: [create_send_message_tool, SendMessageHandlerV2, multi_agents_v2::send_
 related: [tool.spawn-agent-v2, tool.followup-task, tool.wait-agent-v2]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `send_message` 是 MultiAgentV2 的 queue-only 消息工具：它给已存在 agent 投递纯文本 inter-agent message，但不触发目标 agent 新 turn。
@@ -40,7 +40,7 @@ schema required 为 `target` 和 `message`，additional properties 为 false；r
 
 共享 handler 解析目标、确认 agent 已知、确保 V2 agent loaded，随后构造带 author/recipient 的 `InterAgentCommunication`。QueueOnly 分支还构造 `AgentCommunicationKind::Message` 上下文，一起传给 `agent_control.send_inter_agent_communication`。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:68][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:107][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:116]
 
-`QueueOnly` 会把 communication 的 `trigger_turn` 设为 false；这是它区别于 `followup_task` 的核心行为。因此 control 不会为 QueueOnly 做 execution-capacity 检查。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:21][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:104][E: codex-rs/core/src/agent/control.rs:225]
+`QueueOnly` 会把 communication 的 `trigger_turn` 设为 false；这是它区别于 `followup_task` 的核心行为。因此 control 不会为 QueueOnly 做 execution-capacity 检查。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:21][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:104][E: codex-rs/core/src/agent/control.rs:231]
 
 `parent_turn_id` 只在 `TriggerTurn` 时写入 start options；`root_turn_id` 始终从当前 turn metadata 传递。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:112][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:122]
 
@@ -50,7 +50,7 @@ plaintext envelope 以 assistant role 注入目标 context，而不是 user role
 
 ## 输出与事件
 
-成功投递后，handler 发出 `SubAgentActivityKind::Interacted` completed turn item，并返回空文本 function output，success 为 `Some(true)`；schema 层没有 JSON output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:137][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:142][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:209]
+成功投递后，handler 发出 `SubAgentActivityKind::Interacted` completed turn item，并返回空文本 function output，success 为 `Some(true)`；schema 层没有 JSON output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:138][E: codex-rs/core/src/tools/handlers/multi_agents_v2/message_tool.rs:143][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:209]
 
 ## Sources
 

@@ -8,7 +8,7 @@ symbols: [add_shell_tools, ExecCommandHandler::one_shot, ConfigShellToolType]
 related: [tool.exec-command, tool.write-stdin, subsys.core.tool-system, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `shell_command` 已退役：`add_shell_tools` 不再注册任何 `ShellCommandHandler`。该名字仍是 reserved name，外部 runtime 不能占用。命令执行只走 `exec_command`；`Feature::UnifiedExec` 关闭时用 `ExecCommandHandler::one_shot`，不是复活 `shell_command`。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/registry.rs:364][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:104]

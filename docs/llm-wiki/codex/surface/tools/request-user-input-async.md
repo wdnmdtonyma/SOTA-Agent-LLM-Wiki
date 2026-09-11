@@ -8,7 +8,7 @@ symbols: [RequestUserInputAsyncHandler, RequestUserInputAsyncArgs, AsyncUserInpu
 related: [tool.send-user-message-async, tool.request-user-input, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `request_user_input_async` 是 opt-in 的 DirectModelOnly function tool：模型提交 `{questions: [{title, options?}]}` 后立即返回 `{"accepted":true}`，把问答渲染成 `AgentMessageDelivery::Async` turn item，**不结束当前 turn**，也不等待用户回复。模型 catalog 仍广告旧名 `"send_user_message_async"` 时，planner 注册的也是这个 handler，而不是 `SendMessageToUserAsyncHandler`。[E: codex-rs/core/src/tools/handlers/request_user_input_async.rs:22][E: codex-rs/core/src/tools/spec_plan.rs:1176][E: codex-rs/core/src/tools/spec_plan.rs:1181][E: codex-rs/core/src/tools/handlers/request_user_input_async.rs:130]
@@ -66,7 +66,7 @@ updated: 121f91fd5d
 
 `add_core_utility_tools` 同时要求：
 
-1. `!turn_context.session_source.is_non_root_agent()`。`is_non_root_agent()` 对 `SessionSource::Internal(_)` 与 `SessionSource::SubAgent(_)` 为真。[E: codex-rs/core/src/tools/spec_plan.rs:1167][E: codex-rs/protocol/src/protocol.rs:2879][E: codex-rs/protocol/src/protocol.rs:2882]
+1. `!turn_context.session_source.is_non_root_agent()`。`is_non_root_agent()` 对 `SessionSource::Internal(_)` 与 `SessionSource::SubAgent(_)` 为真。[E: codex-rs/core/src/tools/spec_plan.rs:1167][E: codex-rs/protocol/src/protocol.rs:2900][E: codex-rs/protocol/src/protocol.rs:2903]
 2. `model_info.experimental_supported_tools` 含 `"request_user_input_async"` **或** `"send_user_message_async"`。源码注释写明 existing model catalogs still advertise the previous name。[E: codex-rs/core/src/tools/spec_plan.rs:1176]
 
 两个条件都满足时注册 `RequestUserInputAsyncHandler`，exposure `DirectModelOnly`。description 取 `model_messages.tools.send_user_message_async.description`；`None` 才回退 handler 内置文案，空字符串会原样用空 description。[E: codex-rs/core/src/tools/spec_plan.rs:1181][E: codex-rs/core/src/tools/spec_plan.rs:1185][E: codex-rs/protocol/src/openai_models.rs:598][E: codex-rs/core/src/tools/handlers/request_user_input_async.rs:65][E: codex-rs/core/tests/suite/request_user_input_async.rs:312][E: codex-rs/core/tests/suite/request_user_input_async.rs:317]
@@ -96,7 +96,7 @@ effective exposure 以 `finalize_tool_router` 后的 registry 为准。[E: codex
 
 - 从旧 `send_user_message_async` **拆出 questions 形状**：live wire name 是 `request_user_input_async`；existing catalogs 仍广告 `"send_user_message_async"`，所以门控与 catalog description 都认旧名。[E: codex-rs/core/src/tools/spec_plan.rs:1176][E: codex-rs/core/src/tools/spec_plan.rs:1185]
 - 消息形状的异步工具改名为 `send_message_to_user_async`，见 [send_message_to_user_async 工具](send-user-message-async.md)。不要把旧 catalog 名写成 `SendMessageToUserAsyncHandler` 的 wire name。
-- Persistent-mode 文案插值仍检查 `experimental_supported_tools` 是否含 `"send_user_message_async"`，命中则插入 ` via functions.send_user_message_async`——即使用户可见工具名已经是 `request_user_input_async`。[E: codex-rs/core/src/session/world_state.rs:208][E: codex-rs/core/src/session/world_state.rs:215][E: codex-rs/core/src/context/world_state/persistent_mode.rs:63][E: codex-rs/core/tests/suite/request_user_input_async.rs:108]
+- Persistent-mode 文案插值仍检查 `experimental_supported_tools` 是否含 `"send_user_message_async"`，命中则插入 ` via functions.send_user_message_async`——即使用户可见工具名已经是 `request_user_input_async`。[E: codex-rs/core/src/session/world_state.rs:210][E: codex-rs/core/src/session/world_state.rs:217][E: codex-rs/core/src/context/world_state/persistent_mode.rs:63][E: codex-rs/core/tests/suite/request_user_input_async.rs:108]
 - 禁止 non-root agent 使用，避免子线程把异步提问发到用户主会话。[E: codex-rs/core/src/tools/spec_plan.rs:1167][E: codex-rs/core/tests/suite/request_user_input_async.rs:37][I]
 
 ## Sources

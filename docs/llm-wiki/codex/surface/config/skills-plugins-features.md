@@ -8,7 +8,7 @@ symbols: [SkillsConfig, HooksToml, PluginConfig, MarketplaceConfig]
 related: [config.mcp-tools, config.agents-memory, subsys.config-auth.skills, subsys.config-auth.plugins, ref.feature-flags]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > skills/plugins/features 设置 catalog 覆盖 ConfigToml 中 user-level skills config、hooks、plugins、marketplaces、orchestrator-owned skills/MCP switches、centralized feature flags 和 unstable-feature warning suppression 的顶层键。
@@ -23,11 +23,11 @@ updated: 121f91fd5d
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 99 个顶层 `pub` 字段；本节点覆盖其中 7 个。8 个 surface/config catalog 节点合计覆盖全部 99 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:534]
+当前 `ConfigToml` 有 101 个顶层 `pub` 字段；本节点覆盖其中 7 个。8 个 surface/config catalog 节点合计覆盖全部 101 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:534]
 
-`features` is an optional `FeaturesToml` field with the `features_schema` helper, while `plugins` and `marketplaces` are defaulted top-level maps keyed by name.[E: codex-rs/config/src/config_toml.rs:470][E: codex-rs/config/src/config_toml.rs:471][E: codex-rs/config/src/config_toml.rs:474][E: codex-rs/config/src/config_toml.rs:475][E: codex-rs/config/src/config_toml.rs:480][E: codex-rs/config/src/config_toml.rs:481]
+`features` is an optional `FeaturesToml` field with the `features_schema` helper, while `plugins` and `marketplaces` are defaulted top-level maps keyed by name.[E: codex-rs/config/src/config_toml.rs:471][E: codex-rs/config/src/config_toml.rs:475][E: codex-rs/config/src/config_toml.rs:481]
 
-本轮相关 feature 状态：`plugins`、`remote_plugin`、`plugin_sharing`、`skill_search` 都是 stable 且 default-on；`recommended_plugins` stable 但 default-off；`mcp_2026_07_28` 仍 under-development/default-off；`external_migration` 已 removed/no-op。它们属于 `[features]`，不是 `plugins`/`marketplaces` map 的成员。[E: codex-rs/features/src/lib.rs:1362][E: codex-rs/features/src/lib.rs:1364][E: codex-rs/features/src/lib.rs:1440][E: codex-rs/features/src/lib.rs:1442][E: codex-rs/features/src/lib.rs:1446][E: codex-rs/features/src/lib.rs:1448][E: codex-rs/features/src/lib.rs:1506][E: codex-rs/features/src/lib.rs:1508][E: codex-rs/features/src/lib.rs:1356][E: codex-rs/features/src/lib.rs:1358][E: codex-rs/features/src/lib.rs:1302][E: codex-rs/features/src/lib.rs:1304][E: codex-rs/features/src/lib.rs:1452][E: codex-rs/features/src/lib.rs:1453]
+本轮相关 feature 状态：`plugins`、`remote_plugin`、`plugin_sharing`、`skill_search` 都是 stable 且 default-on；`recommended_plugins` stable 但 default-off；`mcp_2026_07_28` 仍 under-development/default-off；`external_migration` 已 removed/no-op。它们属于 `[features]`，不是 `plugins`/`marketplaces` map 的成员。[E: codex-rs/features/src/lib.rs:1377][E: codex-rs/features/src/lib.rs:1380][E: codex-rs/features/src/lib.rs:1455][E: codex-rs/features/src/lib.rs:1458][E: codex-rs/features/src/lib.rs:1461][E: codex-rs/features/src/lib.rs:1464][E: codex-rs/features/src/lib.rs:1521][E: codex-rs/features/src/lib.rs:1524][E: codex-rs/features/src/lib.rs:1371][E: codex-rs/features/src/lib.rs:1374][E: codex-rs/features/src/lib.rs:1311][E: codex-rs/features/src/lib.rs:1314][E: codex-rs/features/src/lib.rs:1467][E: codex-rs/features/src/lib.rs:1469]
 
 ## 字段 catalog
 

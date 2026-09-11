@@ -8,7 +8,7 @@ symbols: [AgentIdentityKey, ChatGptEnvironment, AgentIdentityJwtClaims, AgentBil
 related: [subsys.config-auth.auth-flows, subsys.config-auth.credential-storage, subsys.cloud.cloud-tasks]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > Agent identity 子系统生成 Ed25519 agent key material，构造 task-scoped `AgentAssertion` authorization header，拉取并验证 agent identity JWT/JWKS，注册 agent/task，解密 encrypted task id，并通过 install context 判断 Codex binary 的安装来源与 bundled `rg` 选择。[E: codex-rs/agent-identity/src/lib.rs:232][E: codex-rs/agent-identity/src/lib.rs:247][E: codex-rs/agent-identity/src/lib.rs:266][E: codex-rs/agent-identity/src/lib.rs:315][E: codex-rs/agent-identity/src/lib.rs:358][E: codex-rs/agent-identity/src/lib.rs:411][E: codex-rs/agent-identity/src/lib.rs:425][E: codex-rs/install-context/src/lib.rs:77][E: codex-rs/install-context/src/lib.rs:135]

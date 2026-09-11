@@ -8,7 +8,7 @@ symbols: [TestSyncHandler, create_test_sync_tool, wait_on_barrier, TestSyncArgs,
 related: [spine.tool-call-anatomy, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `test_sync_tool` 是 Codex integration tests 使用的内部 Function 工具；当前 spec 与 handler 都在 `codex-rs/core/src/tools/handlers/` 下，只有模型 metadata 的 `experimental_supported_tools` 包含 `"test_sync_tool"` 时才注册。[E: codex-rs/core/src/tools/handlers/test_sync_spec.rs:58][E: codex-rs/core/src/tools/handlers/test_sync_spec.rs:60][E: codex-rs/core/src/tools/spec_plan.rs:1260][E: codex-rs/core/src/tools/spec_plan.rs:1264][E: codex-rs/core/src/tools/spec_plan.rs:1266]

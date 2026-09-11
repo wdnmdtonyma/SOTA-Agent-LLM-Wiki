@@ -8,7 +8,7 @@ symbols: [create_code_mode_tool, CodeModeExecuteHandler, PUBLIC_TOOL_NAME, Execu
 related: [tool.code-mode-wait, tool.exec-command, subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > code-mode `exec` 是 un-namespaced freeform JavaScript tool。`spec_plan.rs` 在 code mode 有效时 prepend `exec` 和 companion `wait`，并把当前可用于 code mode 的 nested tools 放进 `exec` description/runtime。
@@ -17,9 +17,9 @@ updated: 121f91fd5d
 
 | 项 | 当前源码事实 |
 |---|---|
-| wire name | `PUBLIC_TOOL_NAME` 是 `exec`；handler 返回 plain `exec`。[E: codex-rs/code-mode-protocol/src/lib.rs:51][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:147][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:148] |
+| wire name | `PUBLIC_TOOL_NAME` 是 `exec`；handler 返回 plain `exec`。[E: codex-rs/code-mode-protocol/src/lib.rs:51][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:158][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:159] |
 | spec | `create_code_mode_tool` 返回 `ToolSpec::Freeform`，format 是 lark grammar，name 是 `exec`。[E: codex-rs/core/src/tools/code_mode/execute_spec.rs:8][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:26][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:27][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:37] |
-| payload | handler 只匹配 `ToolPayload::Custom`，并要求 tool name 是 un-namespaced `exec`。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:187][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:212][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:213] |
+| payload | handler 只匹配 `ToolPayload::Custom`，并要求 tool name 是 un-namespaced `exec`。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:215][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:240][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:241] |
 
 ## 注册与门控
 
@@ -27,7 +27,7 @@ updated: 121f91fd5d
 
 `create_code_mode_tool` 现在还接收 `ImageDetailVisibility`。`unified_image_budget_enabled` 为真时，code-mode exec description 隐藏 image detail；否则保持 Visible。[E: codex-rs/core/src/tools/spec_plan.rs:884][E: codex-rs/core/src/tools/spec_plan.rs:885][E: codex-rs/core/src/tools/spec_plan.rs:887][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:14][E: codex-rs/core/src/tools/code_mode/execute_spec.rs:34]
 
-Guardian reviewer 的 `add_core_tool_sources` 提前返回，core 只可能注册 `exec_command` / `write_stdin` / `view_image`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:998][E: codex-rs/core/src/tools/spec_plan.rs:1014][E: codex-rs/core/src/tools/spec_plan.rs:1016][E: codex-rs/core/src/tools/spec_plan.rs:1029] 这并不阻止 code-mode：`build_tool_router` 仍调用 `finalize_tool_router`；若 guardian 模型 `effective_tool_mode` 是 `CodeMode` / `CodeModeOnly`，就会 prepend `exec`/`wait`，并把上述受限工具嵌进 `exec` description。[E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:361][E: codex-rs/core/src/tools/spec_plan.rs:893][E: codex-rs/core/src/tools/spec_plan.rs:894] 集成测试断言 guardian 可见 `exec`/`wait`，nested 名为 `exec_command` / `view_image` / `write_stdin`。[E: codex-rs/core/src/guardian/tests.rs:2383][E: codex-rs/core/src/guardian/tests.rs:2398]
+Guardian reviewer 的 `add_core_tool_sources` 提前返回，core 只可能注册 `exec_command` / `write_stdin` / `view_image`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:998][E: codex-rs/core/src/tools/spec_plan.rs:1014][E: codex-rs/core/src/tools/spec_plan.rs:1016][E: codex-rs/core/src/tools/spec_plan.rs:1029] 这并不阻止 code-mode：`build_tool_router` 仍调用 `finalize_tool_router`；若 guardian 模型 `effective_tool_mode` 是 `CodeMode` / `CodeModeOnly`，就会 prepend `exec`/`wait`，并把上述受限工具嵌进 `exec` description。[E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:361][E: codex-rs/core/src/tools/spec_plan.rs:893][E: codex-rs/core/src/tools/spec_plan.rs:894] 集成测试断言 guardian 可见 `exec`/`wait`，nested 名为 `exec_command` / `view_image` / `write_stdin`。[E: codex-rs/core/src/guardian/tests.rs:2281][E: codex-rs/core/src/guardian/tests.rs:2296]
 
 ## 输入与 pragma
 
@@ -39,11 +39,11 @@ runtime parser `parse_exec_source` 拒绝空白 input；pragma 必须后接 Java
 
 ## Handler 流程
 
-handler parse raw source，收集 nested tool definitions，并向 session code-mode service 发送 `ExecuteRequest`；service 用 `SessionRuntime::execute` 运行 request，生成 protocol cell id，并返回 `StartedCell`。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:42][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:43][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:66][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:70][E: codex-rs/code-mode-runtime/src/service.rs:77][E: codex-rs/code-mode-runtime/src/service.rs:81][E: codex-rs/code-mode-runtime/src/service.rs:87][E: codex-rs/code-mode-runtime/src/service.rs:98]
+handler parse raw source，收集 nested tool definitions，并向 session code-mode service 发送 `ExecuteRequest`；service 用 `SessionRuntime::execute` 运行 request，生成 protocol cell id，并返回 `StartedCell`。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:43][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:44][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:70][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:74][E: codex-rs/code-mode-runtime/src/service.rs:77][E: codex-rs/code-mode-runtime/src/service.rs:81][E: codex-rs/code-mode-runtime/src/service.rs:87][E: codex-rs/code-mode-runtime/src/service.rs:98]
 
-core 记录 code-cell trace，标记 cell ready for dispatch，等待 initial response；如果 initial response 不是 `Yielded`，会记录 ended 并 finish dispatch。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:98][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:107][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:109][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:118][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:121][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:126]
+core 记录 code-cell trace，标记 cell ready for dispatch，等待 initial response；如果 initial response 不是 `Yielded`，会记录 ended 并 finish dispatch。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:104][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:113][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:115][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:124][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:127][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:132]
 
-`handle_runtime_response` 把 `Yielded`/`Terminated`/`Result` 转成 function output items、sanitize image detail、按 token budget truncate，并 prepends script status；`Result` 的 success 取决于 `error_text.is_none()`。[E: codex-rs/core/src/tools/code_mode/mod.rs:250][E: codex-rs/core/src/tools/code_mode/mod.rs:259][E: codex-rs/core/src/tools/code_mode/mod.rs:261][E: codex-rs/core/src/tools/code_mode/mod.rs:262][E: codex-rs/core/src/tools/code_mode/mod.rs:263][E: codex-rs/core/src/tools/code_mode/mod.rs:264][E: codex-rs/core/src/tools/code_mode/mod.rs:278][E: codex-rs/core/src/tools/code_mode/mod.rs:280]
+`handle_runtime_response` 把 `Yielded`/`Terminated`/`Result` 转成 function output items、sanitize image detail、按 token budget truncate，并 prepends script status；`Result` 的 success 取决于 `error_text.is_none()`。[E: codex-rs/core/src/tools/code_mode/mod.rs:253][E: codex-rs/core/src/tools/code_mode/mod.rs:263][E: codex-rs/core/src/tools/code_mode/mod.rs:262][E: codex-rs/core/src/tools/code_mode/mod.rs:266][E: codex-rs/core/src/tools/code_mode/mod.rs:267][E: codex-rs/core/src/tools/code_mode/mod.rs:268][E: codex-rs/core/src/tools/code_mode/mod.rs:282][E: codex-rs/core/src/tools/code_mode/mod.rs:284]
 
 `exec` cannot invoke itself from code-mode nested tool calls.[E: codex-rs/core/src/tools/code_mode/mod.rs:361][E: codex-rs/core/src/tools/code_mode/mod.rs:362][E: codex-rs/core/src/tools/code_mode/mod.rs:363]
 

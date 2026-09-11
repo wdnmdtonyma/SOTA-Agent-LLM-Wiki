@@ -8,7 +8,7 @@ symbols: [DynamicToolSpec, DynamicToolFunctionSpec, DynamicToolNamespaceSpec, Dy
 related: [tool.tool-search, tool.mcp-namespace-tools, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > Dynamic tools 是 planner 从 `turn_context.dynamic_tools` 遍历出来的运行时工具定义。planner 把 `DynamicToolSpec::Function` 或 namespace 内 function 转成 `DynamicToolHandler`；handler 登记 pending response，通过 `DynamicToolCallItem` 发出 started/completed turn-item 生命周期，并在其间等待 response。[E: codex-rs/protocol/src/dynamic_tools.rs:13][E: codex-rs/protocol/src/dynamic_tools.rs:21][E: codex-rs/core/src/tools/spec_plan.rs:180][E: codex-rs/core/src/tools/spec_plan.rs:1374][E: codex-rs/core/src/tools/spec_plan.rs:1377][E: codex-rs/core/src/tools/handlers/dynamic.rs:190][E: codex-rs/core/src/tools/handlers/dynamic.rs:203][E: codex-rs/core/src/tools/handlers/dynamic.rs:247]

@@ -1,62 +1,59 @@
-# Codex wiki 增量刷新令（a9519cbcdd → 121f91fd5d）
+# Codex wiki 增量刷新令（121f91fd5d → 02a8f038b8）
 
-给 filler 读。规范仍以 `../conventions.md` 与 `../RUN.md` 为准。本文件只补充**这一轮**的路径重映射、架构事实和文件纪律。
+给 filler / L2 verifier 读。规范仍以 `../conventions.md` 与 `../RUN.md` 为准。本文件只补充**这一轮**的路径重映射、架构事实和文件纪律。
 
-本轮 **不跑逐节点独立 L2**。filler 自己核 `[E:]`（每页至少抽 3 条 `read_file` 对行），写完将 `status: verified`。过宽结论宁可降 `[I]/[U]`。
+Filler 自己核 `[E:]`（每页至少抽 3 条 `read_file` 对行），写完将 `status: verified`。过宽结论宁可降 `[I]/[U]`。Lead 填完后会另起独立 L2，再 L3。
 
 ## 冻结点
 
-- **base**(上一轮 verified): `a9519cbcdd` (`a9519cbcdd2d664530edb2469224ee03c1056799`)
-- **target**(必须对照的源码 HEAD): `121f91fd5d` (`121f91fd5d9dc66017866ce9bdc49f1e182721df`)
+- **base**(上一轮 verified): `121f91fd5d` (`121f91fd5d9dc66017866ce9bdc49f1e182721df`)
+- **target**(必须对照的源码 HEAD): `02a8f038b8` (`02a8f038b87ad34d4a1dc5058eda26972ed7aa6c`)
 - 源码根: 仓库 `codex/`（相对本 wiki `../../../codex/`）
-- 节点 `updated:` 一律写成 `121f91fd5d`
+- 节点 `updated:` 一律写成 `02a8f038b8`
 - 源码已 detached checkout 到 target。判断路径是否存在：`test -f` / `test -d` 或看 git 跟踪文件。
+- 未跑大型 Rust/runtime 测试，不要宣称 tests 通过。
 
 ## 路径重映射（frontmatter `source:` 与 `[E:]` 必须改到右边）
 
 | 旧路径 | 新路径 / 处理 |
 |---|---|
-| `codex-rs/mcp-server/**` | **crate 已删除**（`codex mcp-server` 子命令一并移除）。`subsys.mcp.server` **保留 id**，改写成退役页。其它节点删掉对该 crate 的 `source:` / `[E:]` |
-| `codex-rs/core/src/tools/handlers/send_user_message_async.rs` | `codex-rs/core/src/tools/handlers/send_message_to_user_async.rs` |
-| `codex-rs/core/tests/suite/send_user_message_async.rs` | **已删除**。改读 handler 文件 + `spec_plan.rs` |
-| `codex-rs/code-mode-host/src/trace_transport.rs` | **已删除**。改读 `code-mode-host/src/{lib,transport,grpc_transport}.rs` |
-| `codex-rs/core/src/bin/config_schema.rs` | `codex-rs/config-schema/src/main.rs`（若有节点引用） |
-| `codex-rs/app-server/src/realtime_history.rs` | `codex-rs/core/src/realtime_history.rs` |
+| `codex-rs/core/src/compact_remote.rs` | **已删除**。改读 `codex-rs/core/src/compact_remote_v2.rs` + `compact_remote_history.rs`（及 `compact_remote_v2_attempt.rs` 如需要） |
+| `codex-rs/core/src/compact_remote_request.rs` | **已删除**。同上 |
+| `codex-rs/codex-api/src/endpoint/compact.rs` | **已删除**。不要再引用 |
+| `codex-rs/thread-store/src/local/writer_lock.rs` | `codex-rs/rollout/src/writer_lock.rs` |
+| `codex-rs/ext/guardian-v2/src/sync_reviewer/reviewer_config.rs` | **已删除**。改读 `codex-rs/ext/guardian-reviewer/src/{lib,settings,execution,review}.rs` |
+| `codex-rs/ext/guardian-v2/src/sync_reviewer/prompt.rs` | **已删除**。改读 `guardian-reviewer` 的 assessment / completion |
 
 找不到替换文件就从 `source:` 删掉该条。禁止把 `[E:]` 指到已删除路径。
 
 ## 必须写进正文的架构事实（先读源再写，不要照抄本表当 [E]）
 
-1. **`codex-rs/mcp-server` 已删除**。`Subcommand` 不再有 `McpServer`。节点 `subsys.mcp.server` 保留 id，改成退役映射：外部 MCP client 调 Codex 的 stdio server 已下线；MCP **client**（连外部 server）仍在。退役页的 `source:` 只能引用仍存在的文件（`codex-rs/cli/src/main.rs`、`codex-rs/Cargo.toml`）。
-2. **工具改名 + 拆分**：
-   - 新 wire name `send_message_to_user_async`：`SendMessageToUserAsyncHandler`，schema 仍是 `{message: string}`，立即返回、不结束 turn。门控：root agent + 模型 `experimental_supported_tools` 含 `"send_message_to_user_async"`。节点 id 仍是 `tool.send-user-message-async`，标题改成新名字。
-   - 新工具 `request_user_input_async`：`RequestUserInputAsyncHandler`，schema 是 `{questions: [{title, options?}]}`，同样立即返回。门控：root agent + 模型 catalog 含 `"request_user_input_async"` **或旧名** `"send_user_message_async"`（注释写明 existing catalogs still advertise the previous name）。**另建节点** `tool.request-user-input-async`。
-   - 阻塞版 `request_user_input` 仍在，门控 `experimental_request_user_input_enabled`。
-3. **不要写** `send_user_message_async` 仍是 `SendUserMessageAsyncHandler` 的 wire name。旧名现在把 `RequestUserInputAsyncHandler` 注册进去。
-4. **workspace crates 145**（138 − `mcp-server` + 8）：新增 `attachment-store`、`config-schema`、`mxc-sandbox`、`otel-trace-websocket`、`realtime-webrtc`、`utils/git-discovery`、`voice-host`、`windows-sandbox-service`。不要为这些 crate 另建 wiki 节点：分别写入 thread-store / crate-index / sandbox-windows / telemetry / realtime / git-utils。
-5. **Features 140**（+7 key，无删除）：`unified_exec_tty`、`windows_sandbox_service`、`worktrees`、`mcp_oauth_refresh_coordination`、`guardianv2.thread_context`、`context_management`、`reasoning_effort_override`。
-6. **SlashCommand 60**（+ `Worktree`）。写进 `command.session-thread`。
-7. **ConfigToml 顶层 pub 字段 101**（+ `allow_symlinked_codex_home`、`thread_unload_delay_secs`）。
-8. **CLI `Subcommand` 29**（删除 `McpServer`）。group.cli 的 30 top-level 要改。
-9. **App-Server client requests 162**（+ `userVerification/{status,enroll,delete,verify}`、`plugin/reconcile`）。Op **29**、EventMsg **83** 未变。server notifications / server requests **必须从 `common.rs` 宏调用重数**，不要照抄旧 wiki 的 83/11。
-10. 工具节点数 **39**（+ `request_user_input_async`），总节点 **185**。
-11. HEAD 提交是 TUI 远程 named permission profile 选择。`tool.request-permissions` / `config.approval-sandbox` / TUI 相关页不要假装权限面没变。
-12. 正文凡写「138 crates / 133 features / 157 client RPC / 38 tools / 184 节点 / `codex mcp-server` 仍 shipped / `send_user_message_async` 仍是现活 wire name」——全部改掉。
+1. **Remote compact v1 文件已删**。`core/src/lib.rs` 只 `mod compact_remote_history` + `mod compact_remote_v2`。本地 compact 仍是 `compact.rs`。任务入口走 `compact_remote_v2::run_remote_compact_task` / `run_inline_remote_auto_compact_task`。
+2. **`writer_lock` 在 `rollout` crate**，不是 thread-store/local。
+3. **Guardian 同步 reviewer 下沉 `ext/guardian-reviewer`**：crate 自述 owns synchronous review policy；host 提供 attempt、执行决策。`guardian-v2` 的 `sync_reviewer::install` 只注册 `ThreadLifecycleContributor`，把 `GuardianReviewSessionHost` 放进 thread store。不要再写 `reviewer_config.rs` / `prompt.rs` 仍存在。
+4. **`user-verification` 是新 workspace member**：本地凭证与签名，独立于 RPC 路由。RPC 仍是 `userVerification/{status,enroll,delete,verify}`，本轮加 **`userVerification/cancel`**。不要另建节点：写入 `rpc.config-account-methods` / `subsys.config-auth.auth-flows`。
+5. **Thread attachments**：client RPC `thread/attachment/{add,list,remove}` + notification `thread/attachment/updated`。写入 `rpc.thread-methods` / `rpc.notifications-thread` / `subsys.core.thread-store`。
+6. **`memory/status`** 是 `#[experimental]` client RPC。写入 `rpc.mcp-skills-plugin-methods`（或该页已有 memory 分组）+ `subsys.core.memory`。不要新建节点。
+7. **SlashCommand 仍 60**：删 `SandboxReadRoot`（`/sandbox-add-read-dir` 行必须从 `command.config-system` 去掉）；加 `Voice`（`/voice`，`/voice settings` 选音色）到 `command.realtime-debug`。`voice_command_enabled` 为假时 popup 过滤掉 `Voice`。
+8. **TUI folder consent**：创建或 resume TUI task 之前跑 `onboarding::check_directory_trust`。HEAD 就是这件事。`subsys.tui.onboarding` / `spine.process-lifecycle` 不要写成“只在首次 onboarding 问一次”。
+9. **Features 142**：+`api_key_model_discovery`（OpenAI API key 的 opt-in model discovery）+`codex_apps_mcp_2026_07_28`。都是 UnderDevelopment、默认关。
+10. **Catalog 重数（以源码为准，不要抄旧 wiki）**：
+    - workspace members **147**（`Cargo.toml` members 第 3–149 行，含 `exec-server/tests/support`）
+    - Feature keys / enum **142**
+    - Op **29**、EventMsg **83**
+    - SlashCommand **60**
+    - ConfigToml pub 字段 **101**
+    - CLI Subcommand **29**
+    - client RPC **167**
+    - notifications：从 `server_notification_definitions!` 重数（**84** = 83 个 `=> "wire"` + `AccountLoginCompleted`）
+    - server requests：**11** = 宏里 9 个带 `=> "path"` 的 v2 + 2 个 legacy `ApplyPatchApproval` / `ExecCommandApproval`
+    - 工具节点 **39**、wiki 节点 **185**
+11. **不要写**：145 crates / 148 crates / 140 features / 162 client RPC / notifications 仍 83 / `SandboxReadRoot` 仍 shipped / `compact_remote.rs` 仍存在 / sync reviewer 仍用 `reviewer_config.rs`。
+12. **不要新建节点**。不要为 guardian-reviewer / user-verification / attachments / voice 另开文件。
 
-## 本轮新节点（1）
+## 本轮新节点（0）
 
-| 节点 | 路径 | 判定 |
-|---|---|---|
-| `tool.request-user-input-async` | `surface/tools/request-user-input-async.md` | 独立 handler + 独立 schema（questions）+ 旧名 catalog 别名 |
-
-不要为 attachment-store / voice-host / mxc-sandbox / config-schema / git-discovery / otel-trace-websocket / windows-sandbox-service / realtime-webrtc 另建节点。
-
-## 不要退役的节点（就地改 source / 标题）
-
-- `subsys.mcp.server` → 退役映射，不要删文件
-- `tool.send-user-message-async` → 标题改 `send_message_to_user_async`；id/path 保留
-- `subsys.core.code-mode-runtime` → 删 `trace_transport.rs`
-- `spine.extension-system` / `subsys.core.approval-guardian-v2` → 去掉 mcp-server 引用
+无。
 
 ## filler 纪律
 
@@ -69,11 +66,11 @@
 
 步骤：
 
-1. 读本文件 + `../_staging/update-facts-121f91fd5d.md` + `conventions.md` 对应模板。
+1. 读本文件 + `../_staging/update-facts-02a8f038b8.md` + `conventions.md` 对应模板。
 2. 读现有节点 `.md`（remap 批次不要写成空模板；rewrite 批次保留仍成立的问题列表）。
 3. 用 `read_file` / `grep` 读 **target** 源码。`source:` 失效路径先按上表重映射，再核对文件确实存在。
 4. 每个 load-bearing 论断的 `[E: path:line]` 必须落在被断言的那一行代码上（不是空行/注释/纯括号）。
-5. `status: verified`（自己核过至少 3 条 `[E:]`）或 `draft`（核不完），`updated: 121f91fd5d`，`evidence: explicit`。
+5. `status: verified`（自己核过至少 3 条 `[E:]`）或 `draft`（核不完），`updated: 02a8f038b8`，`evidence: explicit`。
 6. 跑 lint 时只处理带自己 `node:<path>` 的报错。
 
 ### 按批次深度
@@ -81,6 +78,6 @@
 - **rewrite**：重写 load-bearing 段与 source/symbols，页结构可留。
 - **remap**：禁止从零重写。删缺失 source、改 `[E:]`、改过时一句；其余不动。
 - **refresh**：对照变更过的 source 修假话、重落行号，不扩写。
-- **create**：按 conventions 模板从零写新文件。
+- **create**：本轮不用。
 
 质量：不要为过 lint 写空话；不要把官方 `docs/**` 当 `[E]`；冲突时跟代码。

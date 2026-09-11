@@ -8,7 +8,7 @@ symbols: [ExecutorFileSystem, FileSystemSandboxContext, ExecPermissionProfile, E
 related: [subsys.exec-sandbox.overview, subsys.exec-sandbox.exec-server, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `file-system` defines the host-neutral filesystem boundary for execution components: callers use `PathUri` plus optional `FileSystemSandboxContext`, and implementations expose async file primitives, chunked reads, and a bounded recursive walk.[E: codex-rs/file-system/src/lib.rs:330][E: codex-rs/file-system/src/lib.rs:477][E: codex-rs/file-system/src/lib.rs:493][E: codex-rs/file-system/src/lib.rs:541]
@@ -45,7 +45,7 @@ updated: 121f91fd5d
 2. `from_permission_profile` and `from_permission_profile_with_cwd` share `from_permissions_and_cwd`，把 native permission profile 转成 exec wire profile；给出 cwd 时，`workspace_roots` 初始就包含该 cwd，Windows sandbox 默认 disabled、private desktop/legacy Landlock 默认 false。[E: codex-rs/file-system/src/lib.rs:372][E: codex-rs/file-system/src/lib.rs:376][E: codex-rs/file-system/src/lib.rs:380][E: codex-rs/file-system/src/lib.rs:381][E: codex-rs/file-system/src/lib.rs:383][E: codex-rs/file-system/src/lib.rs:388][E: codex-rs/file-system/src/lib.rs:389][E: codex-rs/file-system/src/lib.rs:391]
 3. `should_run_in_sandbox` first converts the exec wire profile back to a host `PermissionProfile`; conversion failure selects sandboxed execution, while successful conversion requires a restricted policy without full-disk write access.[E: codex-rs/file-system/src/lib.rs:395][E: codex-rs/file-system/src/lib.rs:396][E: codex-rs/file-system/src/lib.rs:398][E: codex-rs/file-system/src/lib.rs:400][E: codex-rs/file-system/src/lib.rs:401][E: codex-rs/file-system/src/lib.rs:402]
 4. `has_cwd_dependent_permissions` is true for relative glob patterns and project-root special paths; `drop_cwd_if_unused` clears cwd and workspace roots only when those cwd-dependent permissions are absent.[E: codex-rs/file-system/src/lib.rs:417][E: codex-rs/file-system/src/lib.rs:419][E: codex-rs/file-system/src/lib.rs:423][E: codex-rs/file-system/src/lib.rs:424][E: codex-rs/file-system/src/lib.rs:438][E: codex-rs/file-system/src/lib.rs:439][E: codex-rs/file-system/src/lib.rs:440][E: codex-rs/file-system/src/lib.rs:441]
-5. `ExecutorFileSystem::walk` 现在是必实现 trait 方法，**没有** crate 内 `walk_via_directory_reads` 默认实现。本地 unsandboxed 实现是 `DirectFileSystem::sync_walk`：校验 depth/directory/entry 上限，`spawn_blocking` 跑同步 BFS，拒绝 sandbox context，可被 cancellation token 打断；`prune_hidden_directories` 仍返回 `.` 目录但不下降，超 count 或 4 MiB response budget 时设 `truncated`。[E: codex-rs/file-system/src/lib.rs:541][E: codex-rs/exec-server/src/local_file_system.rs:1012][E: codex-rs/exec-server/src/local_file_system.rs:703][E: codex-rs/exec-server/src/local_file_system.rs:709][E: codex-rs/exec-server/src/local_file_system.rs:1019][E: codex-rs/exec-server/src/local_file_system.rs:824][E: codex-rs/exec-server/src/local_file_system.rs:1130]
+5. `ExecutorFileSystem::walk` 现在是必实现 trait 方法，**没有** crate 内 `walk_via_directory_reads` 默认实现。本地 unsandboxed 实现是 `DirectFileSystem::sync_walk`：校验 depth/directory/entry 上限，`spawn_blocking` 跑同步 BFS，拒绝 sandbox context，可被 cancellation token 打断；`prune_hidden_directories` 仍返回 `.` 目录但不下降，超 count 或 4 MiB response budget 时设 `truncated`。[E: codex-rs/file-system/src/lib.rs:541][E: codex-rs/exec-server/src/local_file_system.rs:1022][E: codex-rs/exec-server/src/local_file_system.rs:713][E: codex-rs/exec-server/src/local_file_system.rs:719][E: codex-rs/exec-server/src/local_file_system.rs:1029][E: codex-rs/exec-server/src/local_file_system.rs:834][E: codex-rs/exec-server/src/local_file_system.rs:1140]
 
 ## Trait surface
 
@@ -65,7 +65,7 @@ Capability discovery request 逐 root 携带 sandbox context，metadata、walk �
 
 - A sandbox context for another host intentionally selects sandboxed execution when its `ExecPermissionProfile` cannot be converted to host paths; that branch prevents falling back to an unsandboxed local filesystem by accident.[E: codex-rs/file-system/src/lib.rs:190][E: codex-rs/file-system/src/lib.rs:310][E: codex-rs/file-system/src/lib.rs:396][E: codex-rs/file-system/src/lib.rs:398]
 - `drop_cwd_if_unused` may erase both `cwd` and `workspace_roots`; callers that depend on relative glob patterns or project roots must keep those permissions represented before calling it.[E: codex-rs/file-system/src/lib.rs:417][E: codex-rs/file-system/src/lib.rs:438][E: codex-rs/file-system/src/lib.rs:440][E: codex-rs/file-system/src/lib.rs:441]
-- Walk response 仍受 entry/directory 上限和 4 MiB response byte cap（含 per-item overhead）约束，但执行逻辑在 `exec-server` 的 local/sandboxed/remote backend，不再在 `file-system` trait 默认方法里。[E: codex-rs/file-system/src/lib.rs:43][E: codex-rs/file-system/src/lib.rs:45][E: codex-rs/exec-server/src/local_file_system.rs:1130]
+- Walk response 仍受 entry/directory 上限和 4 MiB response byte cap（含 per-item overhead）约束，但执行逻辑在 `exec-server` 的 local/sandboxed/remote backend，不再在 `file-system` trait 默认方法里。[E: codex-rs/file-system/src/lib.rs:43][E: codex-rs/file-system/src/lib.rs:45][E: codex-rs/exec-server/src/local_file_system.rs:1140]
 
 ## Sources
 

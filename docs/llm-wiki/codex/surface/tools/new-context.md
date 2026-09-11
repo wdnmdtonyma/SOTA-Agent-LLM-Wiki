@@ -8,7 +8,7 @@ symbols: [NewContextWindowHandler, create_new_context_window_tool, NEW_CONTEXT_W
 related: [tool.get-context-remaining, subsys.core.tool-system, subsys.core.context-manager]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > `new_context` 是 token-budget 工具族的一员,用于请求开启新的 context window;当前 tool description 声明不会清除、重置或影响 environment state,handler 的成功文本声明不会总结会话历史。[E: codex-rs/core/src/tools/handlers/new_context_window_spec.rs:11][E: codex-rs/core/src/tools/handlers/new_context_window.rs:13][E: codex-rs/core/src/tools/handlers/new_context_window.rs:14]

@@ -8,7 +8,7 @@ symbols: [run_windows_sandbox_capture, ResolvedWindowsSandboxPermissions, token_
 related: [subsys.exec-sandbox.overview, subsys.exec-sandbox.exec-server, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 121f91fd5d
+updated: 02a8f038b8
 ---
 
 > Windows sandbox backend 用 Windows restricted token、capability SID、ACL allow/deny、可选 private desktop、elevated runner IPC，以及可选的 native MXC process-security probe 与 `windows-sandbox-service` 安装服务来执行 read-only 或 workspace-write policy 下的命令。[I]
@@ -26,28 +26,28 @@ updated: 121f91fd5d
 
 `codex_sandboxing::SandboxManager` 只把 `WindowsRestrictedToken` 带到 `SandboxExecRequest`；它不在 manager 层改写 argv。[E: codex-rs/sandboxing/src/manager.rs:467][E: codex-rs/sandboxing/src/manager.rs:490] Windows token、ACL、runner IPC 和 process creation 都在 `codex-rs/windows-sandbox-rs` 内实现。[I]
 
-Windows policy resolution starts from a managed `PermissionProfile`: `ResolvedWindowsSandboxPermissions::try_from_permission_profile` rejects non-managed profiles and non-restricted filesystem policies, `try_from_permission_profile_for_workspace_roots` materializes workspace-root entries, and `token_mode_for_permission_profile` rejects full-disk write access before choosing read-only or writable-root capability token mode.[E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:39][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:50][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:63][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:70][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:83]
+Windows policy resolution starts from a managed `PermissionProfile`: `ResolvedWindowsSandboxPermissions::try_from_permission_profile` rejects non-managed profiles and non-restricted filesystem policies, `try_from_permission_profile_for_workspace_roots` materializes workspace-root entries, and `token_mode_for_permission_profile` rejects full-disk write access before choosing read-only or writable-root capability token mode.[E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:40][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:51][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:64][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:71][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:84]
 
 Managed deny-read rules 不能走 unelevated restricted-token path：`resolve_windows_deny_read_paths` 得到非空路径时直接拒绝。deny-read 必须用 elevated backend。[E: codex-rs/sandboxing/src/windows.rs:120][E: codex-rs/sandboxing/src/windows.rs:124][E: codex-rs/sandboxing/src/windows.rs:126]
 
-`codex-mxc-sandbox` 是 native Windows process security environment 探测 crate：`is_available()` 在 Windows 上查询 MXC process-security 是否 usable，非 Windows 恒为 false。它不是 argv wrapper。[E: codex-rs/mxc-sandbox/src/lib.rs:18][E: codex-rs/mxc-sandbox/src/lib.rs:23][E: codex-rs/mxc-sandbox/src/lib.rs:25] `SandboxManager::select_initial` 在 Windows 上调用 `windows_mxc::record_availability_once` 上报 `codex.windows_mxc.available`。[E: codex-rs/sandboxing/src/manager.rs:324][E: codex-rs/sandboxing/src/windows_mxc.rs:9][E: codex-rs/sandboxing/src/windows_mxc.rs:12][E: codex-rs/sandboxing/src/windows_mxc.rs:17]
+`codex-mxc-sandbox` 是 native Windows process security environment 探测 crate：`is_available()` 在 Windows 上查询 MXC process-security 是否 usable，非 Windows 恒为 false。它不是 argv wrapper。[E: codex-rs/mxc-sandbox/src/lib.rs:25][E: codex-rs/mxc-sandbox/src/lib.rs:30][E: codex-rs/mxc-sandbox/src/lib.rs:32] `SandboxManager::select_initial` 在 Windows 上调用 `windows_mxc::record_availability_once` 上报 `codex.windows_mxc.available`。[E: codex-rs/sandboxing/src/manager.rs:324][E: codex-rs/sandboxing/src/windows_mxc.rs:9][E: codex-rs/sandboxing/src/windows_mxc.rs:12][E: codex-rs/sandboxing/src/windows_mxc.rs:17]
 
-`windows-sandbox-service` 是独立 Windows 服务 crate：`RunMode::Service`（debug 还有 `Foreground`）走 `codex_windows_sandbox_service::run`；非 Windows 直接 bail。[E: codex-rs/windows-sandbox-service/src/lib.rs:16][E: codex-rs/windows-sandbox-service/src/lib.rs:23][E: codex-rs/windows-sandbox-service/src/lib.rs:27][E: codex-rs/windows-sandbox-service/src/lib.rs:36][E: codex-rs/windows-sandbox-service/src/main.rs:5] `Feature::WindowsSandboxService` 的 key 是 `windows_sandbox_service`，UnderDevelopment，默认关闭。[E: codex-rs/features/src/lib.rs:380][E: codex-rs/features/src/lib.rs:1209][E: codex-rs/features/src/lib.rs:1210][E: codex-rs/features/src/lib.rs:1211] Elevated setup 在 Windows 上且该 feature 开启、且不是 workload identity 时才会尝试经安装服务做 provisioning。[E: codex-rs/app-server/src/request_processors/windows_sandbox_processor.rs:90][E: codex-rs/app-server/src/request_processors/windows_sandbox_processor.rs:91]
+`windows-sandbox-service` 是独立 Windows 服务 crate：`RunMode::Service`（debug 还有 `Foreground`）走 `codex_windows_sandbox_service::run`；非 Windows 直接 bail。[E: codex-rs/windows-sandbox-service/src/lib.rs:16][E: codex-rs/windows-sandbox-service/src/lib.rs:23][E: codex-rs/windows-sandbox-service/src/lib.rs:27][E: codex-rs/windows-sandbox-service/src/lib.rs:36][E: codex-rs/windows-sandbox-service/src/main.rs:5] `Feature::WindowsSandboxService` 的 key 是 `windows_sandbox_service`，UnderDevelopment，默认关闭。[E: codex-rs/features/src/lib.rs:384][E: codex-rs/features/src/lib.rs:1213][E: codex-rs/features/src/lib.rs:1214][E: codex-rs/features/src/lib.rs:1215] Elevated setup 在 Windows 上且该 feature 开启、且不是 workload identity 时才会尝试经安装服务做 provisioning。[E: codex-rs/app-server/src/request_processors/windows_sandbox_processor.rs:90][E: codex-rs/app-server/src/request_processors/windows_sandbox_processor.rs:91]
 
 ## 关键 crate/文件
 
-- `codex-rs/windows-sandbox-rs/src/lib.rs`: Windows sandbox APIs 与 non-Windows stub。[E: codex-rs/windows-sandbox-rs/src/lib.rs:948]
-- `codex-rs/windows-sandbox-rs/src/resolved_permissions.rs`: managed profile → Windows token mode。[E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:39]
-- `codex-rs/mxc-sandbox/src/lib.rs`: MXC process-security availability。[E: codex-rs/mxc-sandbox/src/lib.rs:18]
+- `codex-rs/windows-sandbox-rs/src/lib.rs`: Windows sandbox APIs 与 non-Windows stub。[E: codex-rs/windows-sandbox-rs/src/lib.rs:954]
+- `codex-rs/windows-sandbox-rs/src/resolved_permissions.rs`: managed profile → Windows token mode。[E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:40]
+- `codex-rs/mxc-sandbox/src/lib.rs`: MXC process-security availability。[E: codex-rs/mxc-sandbox/src/lib.rs:25]
 - `codex-rs/windows-sandbox-service/src/lib.rs`: 安装服务入口。[E: codex-rs/windows-sandbox-service/src/lib.rs:23]
 - `codex-rs/sandboxing/src/manager.rs`: `WindowsRestrictedToken` 保持原始 argv。[E: codex-rs/sandboxing/src/manager.rs:490]
 - `codex-rs/sandboxing/src/windows.rs`: unelevated deny-read 拒绝。[E: codex-rs/sandboxing/src/windows.rs:124]
 
 ## 数据模型
 
-- `ResolvedWindowsSandboxPermissions`: managed restricted filesystem + network 的 Windows 解析结果。[E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:62]
-- `WindowsSandboxTokenMode`: `ReadOnlyCapability` 或 `WritableRootsCapability`。[E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:56][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:58]
-- `MxcCommand`: native policy adapter 输入（permissions、cwd、command）。[E: codex-rs/mxc-sandbox/src/lib.rs:10]
+- `ResolvedWindowsSandboxPermissions`: managed restricted filesystem + network 的 Windows 解析结果。[E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:63]
+- `WindowsSandboxTokenMode`: `ReadOnlyCapability` 或 `WritableRootsCapability`。[E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:57][E: codex-rs/windows-sandbox-rs/src/resolved_permissions.rs:59]
+- `MxcCommand`: native policy adapter 输入（permissions、cwd、command）。[E: codex-rs/mxc-sandbox/src/lib.rs:15]
 - `RunMode`: 服务 `Service` / debug `Foreground`。[E: codex-rs/windows-sandbox-service/src/lib.rs:16]
 
 ## 控制流
@@ -61,8 +61,8 @@ Managed deny-read rules 不能走 unelevated restricted-token path：`resolve_wi
 
 ## 设计动机与权衡
 
-- MXC crate 只探测 process-security 是否可用，不替代 restricted-token spawn。[E: codex-rs/mxc-sandbox/src/lib.rs:18][I]
-- 安装服务把 elevated provisioning 从调用进程拆出，feature 默认关闭。[E: codex-rs/features/src/lib.rs:1212][I]
+- MXC crate 只探测 process-security 是否可用，不替代 restricted-token spawn。[E: codex-rs/mxc-sandbox/src/lib.rs:25][I]
+- 安装服务把 elevated provisioning 从调用进程拆出，feature 默认关闭。[E: codex-rs/features/src/lib.rs:1216][I]
 - WRITE_RESTRICTED token 的 capability deny-read ACE 不参与 read check，所以 deny-read 必须 elevated。[E: codex-rs/sandboxing/src/windows.rs:113][E: codex-rs/sandboxing/src/windows.rs:124]
 
 ## Private desktop 与 deny-read walker
@@ -73,15 +73,15 @@ Managed deny-read rules 不能走 unelevated restricted-token path：`resolve_wi
 
 ## Model-visible PowerShell version
 
-Windows sandbox crate **不**探测 PowerShell 版本。`Feature::PowerShellShellVersion` 打开且当前单本地环境是 PowerShell 时，`EnvironmentsState` 才把版本写进 env context `<shell_version>`。[E: codex-rs/features/src/lib.rs:164][E: codex-rs/features/src/lib.rs:969][E: codex-rs/core/src/context/world_state/environment.rs:49][E: codex-rs/core/src/context/world_state/environment.rs:288]
+Windows sandbox crate **不**探测 PowerShell 版本。`Feature::PowerShellShellVersion` 打开且当前单本地环境是 PowerShell 时，`EnvironmentsState` 才把版本写进 env context `<shell_version>`。[E: codex-rs/features/src/lib.rs:166][E: codex-rs/features/src/lib.rs:973][E: codex-rs/core/src/context/world_state/environment.rs:50][E: codex-rs/core/src/context/world_state/environment.rs:290]
 
 ## Windows permission/path portability
 
-Symbolic `FileSystemSpecialPath::SlashTmp` 是 protocol 层 special token，不是字面 `/tmp`。[E: codex-rs/protocol/src/permissions.rs:136] Writable project roots 下默认保护 `.git` / `.agents` / `.codex`。[E: codex-rs/protocol/src/permissions.rs:32]
+Symbolic `FileSystemSpecialPath::SlashTmp` 是 protocol 层 special token，不是字面 `/tmp`。[E: codex-rs/protocol/src/permissions.rs:145] Writable project roots 下默认保护 `.git` / `.agents` / `.codex`。[E: codex-rs/protocol/src/permissions.rs:41]
 
 ## gotcha
 
-- non-Windows target 上 capture/preflight stub 返回 “Windows sandbox is only available on Windows”。[E: codex-rs/windows-sandbox-rs/src/lib.rs:948][E: codex-rs/windows-sandbox-rs/src/lib.rs:958]
+- non-Windows target 上 capture/preflight stub 返回 “Windows sandbox is only available on Windows”。[E: codex-rs/windows-sandbox-rs/src/lib.rs:954][E: codex-rs/windows-sandbox-rs/src/lib.rs:964]
 - `windows-sandbox-service` 非 Windows 同样 bail。[E: codex-rs/windows-sandbox-service/src/lib.rs:36]
 - 不要把 `mxc-sandbox` 写成独立 wiki 节点；它折叠在本页。[I]
 
