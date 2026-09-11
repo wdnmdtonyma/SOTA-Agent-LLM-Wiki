@@ -7,6 +7,8 @@ pkg: coding-agent
 source:
   - packages/coding-agent/src/modes/rpc/rpc-mode.ts
   - packages/coding-agent/src/rpc-entry.ts
+  - packages/coding-agent/src/core/agent-session.ts
+  - packages/coding-agent/src/core/extensions/runner.ts
   - packages/coding-agent/docs/rpc.md
 symbols:
   - runRpcMode
@@ -16,7 +18,7 @@ related:
   - ref.coding-agent.rpc-methods
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `surface.modes.rpc` 是 `pi-coding-agent` 的无头 stdin/stdout JSONL 控制面:host 向 stdin 写 JSON command,从 stdout 读 command response、agent events 和 extension UI request;`runRpcMode(runtimeHost)` 负责把这些协议对象接到当前 `AgentSessionRuntime` 的 session、extension、命令分发和关闭流程上。[E: packages/coding-agent/docs/rpc.md:3][E: packages/coding-agent/docs/rpc.md:20][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:54][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:60][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:61][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:319][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:355][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:355][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:810][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:811]
@@ -48,7 +50,7 @@ framing 采用 strict JSONL:只用 LF (`\n`) 作为 record delimiter,client 应�
 
 `handleCommand` 是实际 dispatch 点:它对 `command.type` 做 switch,按源码 case 覆盖 prompting、state、model、thinking、queue modes、compaction、retry、bash、session、messages、commands,未知 command 返回 `Unknown command` error。[E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:386][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:389][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:394][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:450][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:472][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:499][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:521][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:535][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:549][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:563][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:595][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:674][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:682][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:715][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:717] 逐命令字段和 response payload 的完整目录属于 `ref.coding-agent.rpc-methods`;本节点只按 `runRpcMode` 的 dispatch 区块归纳命令面。[I]
 
-本轮 prompting dispatch 新增 `clear_queue`：`handleCommand` 调用 `session.clearQueue()` 并把 `{ steering, followUp }` 文本数组作为 success `data` 回传;用户文档把 interactive Esc 写成先 `clear_queue` 再 `abort` [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:433] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:434] [E: packages/coding-agent/docs/rpc.md:137] [E: packages/coding-agent/docs/rpc.md:158]。thinking 组仍含 `get_available_thinking_levels`,把当前 session 的可用 thinking levels 回传给 host；它与 `set_thinking_level`、`cycle_thinking_level` 同属无头控制面，不依赖 interactive selector [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:499] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:512] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:514]。
+`steer` / `follow_up` 不再绕过 extension `input` handlers:`handleCommand` 调用 `session.steer` / `session.followUp(..., { source: "rpc" })`,二者都走 `_queueUserInput` → `_runInputHandlers` → `emitInput`。[E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:418] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:419] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:423] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:424] [E: packages/coding-agent/src/core/agent-session.ts:1388] [E: packages/coding-agent/src/core/agent-session.ts:1398] [E: packages/coding-agent/src/core/agent-session.ts:1425] [E: packages/coding-agent/src/core/agent-session.ts:1437] [E: packages/coding-agent/src/core/extensions/runner.ts:1246] prompting dispatch 另有 `clear_queue`：`handleCommand` 调用 `session.clearQueue()` 并把 `{ steering, followUp }` 文本数组作为 success `data` 回传;用户文档把 interactive Esc 写成先 `clear_queue` 再 `abort` [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:433] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:434] [E: packages/coding-agent/docs/rpc.md:137] [E: packages/coding-agent/docs/rpc.md:158]。thinking 组仍含 `get_available_thinking_levels`,把当前 session 的可用 thinking levels 回传给 host；它与 `set_thinking_level`、`cycle_thinking_level` 同属无头控制面，不依赖 interactive selector [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:499] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:512] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:514]。
 
 大多数 command branch 返回 `success(id, command, data?)`,随后 `handleInputLine` 输出 response 并等待 stdout backpressure。[E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:64][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:70][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:72][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:786][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:787][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:788][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:789] `prompt` 是特殊 branch:它 fire-and-catch 调用 `session.prompt(...)`,在 preflight 成功回调中输出 prompt success response,随后 `handleCommand` 返回 `undefined`;文档说明 prompt response 表示 accepted、queued 或 handled immediately,acceptance 后的失败走 normal event/message stream,不会为同一个 request id 再发第二个 response。[E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:394][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:398][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:403][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:406][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:410][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:411][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:412][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:415][E: packages/coding-agent/docs/rpc.md:45][E: packages/coding-agent/docs/rpc.md:76]
 
@@ -82,6 +84,8 @@ stdin `end` 也触发 shutdown;每个 command 处理后会检查 extension shutd
 
 - packages/coding-agent/src/modes/rpc/rpc-mode.ts
 - packages/coding-agent/src/rpc-entry.ts
+- packages/coding-agent/src/core/agent-session.ts
+- packages/coding-agent/src/core/extensions/runner.ts
 - packages/coding-agent/docs/rpc.md
 
 ## 相关

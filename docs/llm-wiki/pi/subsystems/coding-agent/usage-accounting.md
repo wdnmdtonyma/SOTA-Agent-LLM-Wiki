@@ -17,6 +17,7 @@ source:
   - packages/coding-agent/src/core/compaction/branch-summarization.ts
   - packages/coding-agent/test/branch-summarization.test.ts
   - packages/coding-agent/CHANGELOG.md
+  - packages/agent/src/harness/session/jsonl/fork.ts
 symbols:
   - UsageTotals
   - getUsageCostBreakdown
@@ -30,10 +31,10 @@ related:
   - subsys.coding-agent.agent-session
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
-> 会话统计现在归集 assistant、tool result、compaction 和 branch summary 的 usage；交互式 `/session` UI 可按模型与“Tools/summaries”分桶展示成本。开启 cache miss notices 时，compaction / branch-summary 还会在 transcript 里显示 billed tokens 通知。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6211] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6220] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3791] [E: packages/coding-agent/CHANGELOG.md:74]
+> 会话统计现在归集 assistant、tool result、compaction 和 branch summary 的 usage；交互式 `/session` UI 可按模型与“Tools/summaries”分桶展示成本。开启 cache miss notices 时，compaction / branch-summary 还会在 transcript 里显示 billed tokens 通知。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6217] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6226] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3803] [E: packages/coding-agent/CHANGELOG.md:106]
 
 ## 归集模型
 
@@ -41,17 +42,19 @@ updated: 9767ba275f
 
 usage 已进入持久化 entry contract：`CompactionEntry` 与 `BranchSummaryEntry` 都有 optional `usage?: Usage`。[E: packages/agent/src/harness/session/types.ts:39] [E: packages/agent/src/harness/session/types.ts:48]
 
-tool usage 的 carrier chain 是 `AgentToolResult.usage` → `afterToolCall` 保留或覆盖 → `ToolResultMessage.usage` → session message entry；源码不会另行估算缺失的 tool usage。[E: packages/agent/src/types.ts:368] [E: packages/agent/src/types.ts:89] [E: packages/agent/src/agent-loop.ts:749] [E: packages/agent/src/agent-loop.ts:793] [E: packages/coding-agent/src/core/agent-session.ts:686] [E: packages/coding-agent/src/core/agent-session.ts:689]
+tool usage 的 carrier chain 是 `AgentToolResult.usage` → `afterToolCall` 保留或覆盖 → `ToolResultMessage.usage` → session message entry；源码不会另行估算缺失的 tool usage。[E: packages/agent/src/types.ts:368] [E: packages/agent/src/types.ts:89] [E: packages/agent/src/agent-loop.ts:749] [E: packages/agent/src/agent-loop.ts:793] [E: packages/coding-agent/src/core/agent-session.ts:685] [E: packages/coding-agent/src/core/agent-session.ts:515]
 
-branch summarization 的 provider usage 或 extension-supplied usage 会进入随后持久化的 summary entry。[E: packages/coding-agent/src/core/agent-session.ts:3225] [E: packages/coding-agent/src/core/agent-session.ts:3233] [E: packages/coding-agent/src/core/agent-session.ts:3259] [E: packages/coding-agent/src/core/agent-session.ts:3263]
+branch summarization 的 provider usage 或 extension-supplied usage 会进入随后持久化的 summary entry。[E: packages/coding-agent/src/core/agent-session.ts:3228] [E: packages/coding-agent/src/core/agent-session.ts:3261] [E: packages/coding-agent/src/core/agent-session.ts:3253] [E: packages/coding-agent/src/core/agent-session.ts:3261]
 
-coding-agent 的 branch summary 输出 cap 现为 `Math.min(4096, model.maxTokens > 0 ? model.maxTokens : Infinity)`，不再是 2048；CHANGELOG `#8845` 记的是 reasoning 吃掉旧 2048 cap 导致 summary 失败。[E: packages/coding-agent/src/core/compaction/branch-summarization.ts:345] [E: packages/coding-agent/test/branch-summarization.test.ts:64] [E: packages/coding-agent/CHANGELOG.md:74]
+JSONL fork 复制 session writes 时，`kind: "usage"` 一律丢弃：index 阶段不记录 usage seq，project 阶段直接 `return undefined`。因此 fork 出来的会话不会带走源会话的 usage writes。[E: packages/agent/src/harness/session/jsonl/fork.ts:106] [E: packages/agent/src/harness/session/jsonl/fork.ts:202]
 
-`getSessionStats()` 遍历 `sessionManager.getEntries()` 的完整集合，把 summary entries、tool-result messages 与 assistant messages 的 usage 累加；因此 totals 反映整个会话实际记账，包括已从 active context 压缩掉的历史，而不是只统计当前 branch context。[E: packages/coding-agent/src/core/agent-session.ts:3339] [E: packages/coding-agent/src/core/agent-session.ts:3339] [E: packages/coding-agent/src/core/agent-session.ts:3348] [E: packages/coding-agent/src/core/agent-session.ts:3341] [E: packages/coding-agent/src/core/agent-session.ts:3359] [E: packages/coding-agent/src/core/agent-session.ts:3359] [E: packages/coding-agent/src/core/agent-session.ts:3371]
+coding-agent 的 branch summary 输出 cap 现为 `Math.min(4096, model.maxTokens > 0 ? model.maxTokens : Infinity)`，不再是 2048；CHANGELOG `#8845` 记的是 reasoning 吃掉旧 2048 cap 导致 summary 失败。[E: packages/coding-agent/src/core/compaction/branch-summarization.ts:345] [E: packages/coding-agent/test/branch-summarization.test.ts:64] [E: packages/coding-agent/CHANGELOG.md:84]
+
+`getSessionStats()` 遍历 `sessionManager.getEntries()` 的完整集合，把 summary entries、tool-result messages 与 assistant messages 的 usage 累加；因此 totals 反映整个会话实际记账，包括已从 active context 压缩掉的历史，而不是只统计当前 branch context。[E: packages/coding-agent/src/core/agent-session.ts:3387] [E: packages/coding-agent/src/core/agent-session.ts:3367] [E: packages/coding-agent/src/core/agent-session.ts:3368] [E: packages/coding-agent/src/core/agent-session.ts:3378] [E: packages/coding-agent/src/core/agent-session.ts:3387]
 
 ## Transcript usage notices
 
-`showCacheMissNotices` 默认 false；为 true 时 interactive transcript 除 cache-miss 外还会渲染 compaction / branch-summary 的 billed usage。[E: packages/coding-agent/src/core/settings-manager.ts:108] [E: packages/coding-agent/src/core/settings-manager.ts:920] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3804]
+`showCacheMissNotices` 默认 false；为 true 时 interactive transcript 除 cache-miss 外还会渲染 compaction / branch-summary 的 billed usage。[E: packages/coding-agent/src/core/settings-manager.ts:120] [E: packages/coding-agent/src/core/settings-manager.ts:965] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3804]
 
 `CompactionCostNotice` 不是独立 session entry：replay 时若 `compaction` / `branch_summary` entry 带 `usage`，会在对应 summary message 后插入一条 notice；`compaction_end` 若 `event.result.usage` 存在也会当场追加。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:227] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3803] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3431] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3803]
 
@@ -64,7 +67,7 @@ coding-agent 的 branch summary 输出 cap 现为 `Math.min(4096, model.maxToken
 - 只有 entry 实际携带 usage 才会计入；旧 session 与未报告 usage 的 extension/tool 不会被估算补齐。[E: packages/coding-agent/src/core/usage-totals.ts:46] [E: packages/coding-agent/src/core/usage-totals.ts:49] [E: packages/coding-agent/src/core/usage-totals.ts:53]
 - `Tools/summaries` 是展示分桶，不能据此区分某个具体 tool、compaction 或 branch summary 的成本来源。[E: packages/coding-agent/src/core/usage-totals.ts:47] [E: packages/coding-agent/src/core/usage-totals.ts:50]
 - assistant 分桶优先实际 `responseModel`，因此请求 model 与服务端响应 model 不一致时，成本会归到后者。[E: packages/coding-agent/src/core/usage-totals.ts:43] [E: packages/coding-agent/src/core/usage-totals.ts:44]
-- provider 省略 streaming usage 或返回 all-zero usage 时，`_checkCompaction` 仍可用 `estimateContextTokens` 触发 threshold auto-compaction；这改变的是是否 compact，不是把估算 tokens 写入 usage totals。[E: packages/coding-agent/src/core/agent-session.ts:2212] [E: packages/coding-agent/src/core/agent-session.ts:2210] [I]
+- provider 省略 streaming usage 或返回 all-zero usage 时，`_checkCompaction` 仍可用 `estimateContextTokens` 触发 threshold auto-compaction；这改变的是是否 compact，不是把估算 tokens 写入 usage totals。`getCompactionSettings(model)` 的 `reserveTokens` / `keepRecentTokens`（含 `modelOverrides`）只影响何时 compact，不改变本节点的 usage 累加口径。[E: packages/coding-agent/src/core/agent-session.ts:2231] [E: packages/coding-agent/src/core/agent-session.ts:2155] [I]
 - `agent-session-stats` 测试分别锁定 tool-result usage 进入总量，以及 tool/summary usage 聚合成 `Tools/summaries` 桶。[E: packages/coding-agent/test/agent-session-stats.test.ts:211] [E: packages/coding-agent/test/agent-session-stats.test.ts:235]
 
 ## Sources
@@ -81,6 +84,7 @@ coding-agent 的 branch summary 输出 cap 现为 `Math.min(4096, model.maxToken
 - packages/coding-agent/src/core/compaction/branch-summarization.ts
 - packages/coding-agent/test/branch-summarization.test.ts
 - packages/coding-agent/CHANGELOG.md
+- packages/agent/src/harness/session/jsonl/fork.ts
 
 ## 相关
 

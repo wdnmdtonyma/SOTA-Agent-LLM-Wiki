@@ -46,7 +46,7 @@ related:
   - subsys.client.remote-session-client
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `@earendil-works/chord/delta` 在 flush 时从 tracked 的 plain JSON 导出紧凑 `Op[]`；`replicatedState()` 用同一套 tracker，生产者改 `state` 代理再 `publish(context)`，消费者拿到不可变完整值。跨越边界的值必须是 strict JSON；`apply()` / `decoder()` 把 op 当 untrusted 输入校验路径与动词。[E: packages/chord/src/api.ts:88][E: packages/chord/src/services/state.ts:40][E: packages/chord/src/delta/index.ts:435][E: packages/chord/src/delta/index.ts:785][E: packages/chord/src/delta/index.ts:764]

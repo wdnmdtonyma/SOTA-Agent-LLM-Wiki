@@ -19,7 +19,7 @@ related:
   - subsys.client.remote-session-client
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `surface.sdk.remote-session` 记录 `@earendil-works/pi-coding-agent/client` 的退役：`RemoteSession` / transcript reducer 已删除；该 subpath 只 source-only re-export `@earendil-works/pi-client` 的 Chord 风格 `Client`。
@@ -35,7 +35,7 @@ updated: 9767ba275f
 
 `packages/coding-agent/src/client/` 只剩 `index.ts`，整文件是 `export * from "@earendil-works/pi-client"` [E: packages/coding-agent/src/client/index.ts:1]。不再存在 `remote-session.ts` / `transcript.ts`，因此没有 `RemoteSession`、`RemoteSessionLifecycle`、`applyTranscriptSnapshot` 或 `selectTranscript`。
 
-package manifest 把 `./client` 标成 `{ source: "./src/client/index.ts" }`，与 `./experimental/plugin` 一样是 source-only 条件；`files` 显式排除 `dist/client` [E: packages/coding-agent/package.json:22] [E: packages/coding-agent/package.json:25] [E: packages/coding-agent/package.json:31]。发布回归测试锁住这两条 export 不得变成 runtime `import` [E: packages/coding-agent/test/package-distribution.test.ts:28] [E: packages/coding-agent/test/package-distribution.test.ts:29]。`pi-client` / `pi-protocol` / `pi-server` 只出现在 coding-agent 的 `devDependencies`，不在 shipped `dependencies` [E: packages/coding-agent/package.json:80] [E: packages/coding-agent/package.json:81] [E: packages/coding-agent/package.json:82] [I]。
+package manifest 把 `./client` 标成 `{ source: "./src/client/index.ts" }`，与 `./experimental/plugin` 一样是 source-only 条件；`files` 显式排除 `dist/client` [E: packages/coding-agent/package.json:22] [E: packages/coding-agent/package.json:25] [E: packages/coding-agent/package.json:31]。发布回归测试锁住这两条 export 不得变成 runtime `import` [E: packages/coding-agent/test/package-distribution.test.ts:28] [E: packages/coding-agent/test/package-distribution.test.ts:29]。`pi-client` / `pi-protocol` / `pi-server` 只出现在 coding-agent 的 `devDependencies`，不在 shipped `dependencies` [E: packages/coding-agent/package.json:76] [E: packages/coding-agent/package.json:77] [E: packages/coding-agent/package.json:78] [I]。
 
 调用远程协议应直接依赖 `@earendil-works/pi-client`。其 root export 是 `Client`、`createClientServiceTransport` 与 `ServerError` / `DisconnectedError` / `ClientDisposedError` [E: packages/client/src/index.ts:1] [E: packages/client/src/index.ts:2]。
 

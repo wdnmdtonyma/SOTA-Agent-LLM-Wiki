@@ -22,7 +22,7 @@ related:
   - subsys.ai.model-discovery
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.ai.model-catalog-publication` 是独立于 npm package release 的 artifact pipeline：生成完整 JSON model bundle，验证 bundle 内部一致性，以内容 hash 建不可变 revision，并在受控窗口发布到 S3-compatible R2。
@@ -46,7 +46,7 @@ root scripts 把 `generate:model-catalog`、`diff:model-catalog` 和 `check:mode
 
 `generate-models.ts` 的 CLI 明确区分 `strict`、`jsonOnly`、`jsonOutputDir` 与 `pretty`，并拒绝没有 output directory 的 `--json-only` [E: packages/ai/scripts/generate-models.ts:40] [E: packages/ai/scripts/generate-models.ts:55] [E: packages/ai/scripts/generate-models.ts:63] [E: packages/ai/scripts/generate-models.ts:71] [E: packages/ai/scripts/generate-models.ts:80]。
 
-JSON output directory 被重建后包含三层：聚合 `models.json`、排序的 `providers.json`、以及 `providers/<provider>.json` shards [E: packages/ai/scripts/generate-models.ts:3102] [E: packages/ai/scripts/generate-models.ts:3106] [E: packages/ai/scripts/generate-models.ts:3107] [E: packages/ai/scripts/generate-models.ts:3109]。普通 package build 还生成只保留类型结构的 `.models.ts` 与 gitignored adjacent JSON values；两者来自同一 provider data，但输出位置和消费方不同 [E: packages/ai/scripts/generate-models.ts:3049] [E: packages/ai/scripts/generate-models.ts:3052] [E: packages/ai/scripts/generate-models.ts:3074]。
+JSON output directory 被重建后包含三层：聚合 `models.json`、排序的 `providers.json`、以及 `providers/<provider>.json` shards [E: packages/ai/scripts/generate-models.ts:3149] [E: packages/ai/scripts/generate-models.ts:3153] [E: packages/ai/scripts/generate-models.ts:3154] [E: packages/ai/scripts/generate-models.ts:3156]。普通 package build 还生成只保留类型结构的 `.models.ts` 与 gitignored adjacent JSON values；两者来自同一 provider data，但输出位置和消费方不同 [E: packages/ai/scripts/generate-models.ts:3096] [E: packages/ai/scripts/generate-models.ts:3149] [E: packages/ai/scripts/generate-models.ts:3128]。
 
 本地 data 另有 schema-3 manifest：记录 generatedAt、structure hash 与逐文件 SHA-256。validator 对 aggregator/provider shards、data files、manifest filenames/hash、model id/provider/api 和完整 model shape 做一致性检查；缺失或 stale data 会要求运行 `hydrate:model-data`。[E: packages/ai/scripts/model-data.ts:5] [E: packages/ai/scripts/model-data.ts:10] [E: packages/ai/scripts/model-data.ts:73] [E: packages/ai/scripts/model-data.ts:149] [E: packages/ai/scripts/model-data.ts:173] [E: packages/ai/scripts/check-model-data.ts:9] [E: packages/ai/scripts/check-model-data.ts:13]
 
@@ -87,7 +87,7 @@ schedule 在工作日 UTC 8–13 点每小时产生候选 [E: .github/workflows/
 ## Gotcha
 
 - published bundle 是生成时外部 catalog 输入的 snapshot；`sourceCommit` 绑定生成逻辑版本，但不证明未来重新运行同一 commit 会得到相同远端数据。[I]
-- 本轮目标 tree 仍不包含 ignored model JSON；可复现的 membership 证据必须组合 publication/npm artifact 与带时间/hash 的 generator 输入。structural bucket 仍是 39，flattened model count 不能从 checkout 标成 `[E]`。[E: packages/ai/scripts/generate-models.ts:3049] [E: packages/ai/scripts/generate-models.ts:3074] [I]
+- 本轮目标 tree 仍不包含 ignored model JSON；可复现的 membership 证据必须组合 publication/npm artifact 与带时间/hash 的 generator 输入。structural bucket 仍是 39，flattened model count 不能从 checkout 标成 `[E]`。生成器规则变了（Fireworks adaptive-thinking fallback、Copilot 全部 `gpt-*` → `openai-responses`），但 bucket 集合没有增减。[E: packages/ai/src/models.generated.ts:44] [E: packages/ai/src/models.generated.ts:83] [E: packages/ai/scripts/generate-models.ts:293] [E: packages/ai/scripts/generate-models.ts:2146] [I]
 - dry-run 仍会写 `publication.json` 到 input directory，然后在上传前退出 [E: scripts/publish-model-catalog.mjs:255] [E: scripts/publish-model-catalog.mjs:258]。
 - revision objects 先于 index 上传；上传中途失败可能留下不可达 immutable objects，但不会把 index 指向不完整 revision。[I]
 - scheduler 的 cron 只是候选触发器，Europe/Vienna check 才是实际 publication policy [E: .github/workflows/publish-model-catalog.yml:20] [E: .github/workflows/publish-model-catalog.yml:140]。

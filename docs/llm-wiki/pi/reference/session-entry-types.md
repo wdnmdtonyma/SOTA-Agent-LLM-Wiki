@@ -25,7 +25,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `ref.agent.session-entry-types` 是 `packages/agent/src/harness/session/types.ts` 中现行 `Entry` 导出类型的字段级目录：覆盖 `EntryBase`、全部 4 个 `Entry` variant、union 本身与写入形态 `NewEntry`。model / thinking / active tools 已从 entry 挪到 `LaneConfiguration` values。
@@ -42,18 +42,18 @@ updated: 9767ba275f
 
 | 类型名 | 字段 | 语义 | 使用边界 | 源码证据 |
 | --- | --- | --- | --- | --- |
-| `EntryType` | `"message" \| "compaction" \| "branch_summary" \| "custom"` | tree entry 的封闭 discriminator 集合。[E: packages/agent/src/harness/session/types.ts:19] | 扫描 API（`BranchScan` / `EntryScan`）用同一集合过滤。[E: packages/agent/src/harness/session/types.ts:424] | `packages/agent/src/harness/session/types.ts:16` |
+| `EntryType` | `"message" \| "compaction" \| "branch_summary" \| "custom"` | tree entry 的封闭 discriminator 集合。[E: packages/agent/src/harness/session/types.ts:19] | 扫描 API（`BranchScan` / `EntryScan`）用同一集合过滤。[E: packages/agent/src/harness/session/types.ts:425] | `packages/agent/src/harness/session/types.ts:16` |
 | `EntryBase` | `id: string`；`parentId: string \| null`；`seq: number`；`timestamp: number`；`type: EntryType`；`customType?: string` | 所有 tree entry 的共同字段。`seq` 是 storage-assigned 共享序号；`parentId` 是正在 append 的 lane tip；`timestamp` 是 Unix ms。[E: packages/agent/src/harness/session/types.ts:20] [E: packages/agent/src/harness/session/types.ts:20] [E: packages/agent/src/harness/session/types.ts:21] [E: packages/agent/src/harness/session/types.ts:28] | 具体 variant 把 `type` 收窄为字面量。调用方提交 `NewEntry` 时必须省略 `seq` / `timestamp`，但 **要带** `id` 与 `parentId`。[E: packages/agent/src/harness/session/types.ts:59] | `packages/agent/src/harness/session/types.ts:18` |
 
 ## Entry variant 实例
 
 | 类型名 | Discriminator / 字段 | 语义 | 使用边界 | 源码证据 |
 | --- | --- | --- | --- | --- |
-| `MessageEntry` | `type: "message"`；`message: AgentMessage`；`terminate?: true` | 把一条 `AgentMessage` 放进 session tree，同时保留 tree identity。可选 `terminate` 只能是字面量 `true`。[E: packages/agent/src/harness/session/types.ts:27] [E: packages/agent/src/harness/session/types.ts:44] [E: packages/agent/src/harness/session/types.ts:46] | `AgentMessage` 从 `../../types.ts` 导入。消息内部 role/content 由 `ref.agent.message-types` 覆盖。[E: packages/agent/src/harness/session/types.ts:486] [I] | `packages/agent/src/harness/session/types.ts:27` |
-| `CompactionEntry` | `type: "compaction"`；`summary: string`；`retainedTail: AgentMessage[]`；`tokensBefore: number`；`details?: JsonValue`；`usage?: Usage`；`fromHook: boolean` | 压缩摘要 + 压缩前 token 数 + **必填** retained tail + **必填** `fromHook`。[E: packages/agent/src/harness/session/types.ts:33] [E: packages/agent/src/harness/session/types.ts:54] [E: packages/agent/src/harness/session/types.ts:53] | `retainedTail` 可以为空数组，但不能缺字段。`Usage` 来自 `@earendil-works/pi-ai`。`details` 现为 `JsonValue`，不是 `unknown`。[E: packages/agent/src/harness/session/types.ts:486] [E: packages/agent/src/harness/session/types.ts:38] | `packages/agent/src/harness/session/types.ts:33` |
+| `MessageEntry` | `type: "message"`；`message: AgentMessage`；`terminate?: true` | 把一条 `AgentMessage` 放进 session tree，同时保留 tree identity。可选 `terminate` 只能是字面量 `true`。[E: packages/agent/src/harness/session/types.ts:27] [E: packages/agent/src/harness/session/types.ts:44] [E: packages/agent/src/harness/session/types.ts:46] | `AgentMessage` 从 `../../types.ts` 导入。消息内部 role/content 由 `ref.agent.message-types` 覆盖。[E: packages/agent/src/harness/session/types.ts:487] [I] | `packages/agent/src/harness/session/types.ts:27` |
+| `CompactionEntry` | `type: "compaction"`；`summary: string`；`retainedTail: AgentMessage[]`；`tokensBefore: number`；`details?: JsonValue`；`usage?: Usage`；`fromHook: boolean` | 压缩摘要 + 压缩前 token 数 + **必填** retained tail + **必填** `fromHook`。[E: packages/agent/src/harness/session/types.ts:33] [E: packages/agent/src/harness/session/types.ts:54] [E: packages/agent/src/harness/session/types.ts:53] | `retainedTail` 可以为空数组，但不能缺字段。`Usage` 来自 `@earendil-works/pi-ai`。`details` 现为 `JsonValue`，不是 `unknown`。[E: packages/agent/src/harness/session/types.ts:487] [E: packages/agent/src/harness/session/types.ts:38] | `packages/agent/src/harness/session/types.ts:33` |
 | `BranchSummaryEntry` | `type: "branch_summary"`；`fromId: string \| null`；`summary: string`；`details?: JsonValue`；`usage?: Usage`；`fromHook: boolean` | 针对某个起点 `fromId` 的 branch summary；`fromId` 可为 null（未 summarize 的导航可指向 branch root）。[E: packages/agent/src/harness/session/types.ts:43] [E: packages/agent/src/harness/session/types.ts:34] [E: packages/agent/src/harness/session/types.ts:38] | `fromHook` 现为必填 boolean。空字符串 `summary` 在 context 投影中会被跳过，那是 `context.ts` 行为。[I] | `packages/agent/src/harness/session/types.ts:43` |
 | `CustomEntry` | `type: "custom"`；`customType: string`；`data?: JsonValue` | 扩展型非消息 entry。`customType` 区分应用自定义形态，`data` 可选。[E: packages/agent/src/harness/session/types.ts:52] [E: packages/agent/src/harness/session/types.ts:44] [E: packages/agent/src/harness/session/types.ts:45] | `EntryProjector` 把 `CustomEntry` 转成模型消息。[E: packages/agent/src/harness/session/types.ts:59] | `packages/agent/src/harness/session/types.ts:52` |
-| `Entry` | union of 上面 4 个接口 | session tree entry 的 closed set：`MessageEntry` \| `CompactionEntry` \| `BranchSummaryEntry` \| `CustomEntry`。[E: packages/agent/src/harness/session/types.ts:55] | `Storage.getEntries` / `scanBranch` / `scanEntries` 都以 `Entry` 为 contract。`LaneConfiguration`、operation state、usage row **不是** `Entry` 成员。[E: packages/agent/src/harness/session/types.ts:61] [E: packages/agent/src/harness/session/types.ts:456] | `packages/agent/src/harness/session/types.ts:64` |
+| `Entry` | union of 上面 4 个接口 | session tree entry 的 closed set：`MessageEntry` \| `CompactionEntry` \| `BranchSummaryEntry` \| `CustomEntry`。[E: packages/agent/src/harness/session/types.ts:55] | `Storage.getEntries` / `scanBranch` / `scanEntries` 都以 `Entry` 为 contract。`LaneConfiguration`、operation state、usage row **不是** `Entry` 成员。[E: packages/agent/src/harness/session/types.ts:61] [E: packages/agent/src/harness/session/types.ts:457] | `packages/agent/src/harness/session/types.ts:64` |
 
 ## 写入形态
 
@@ -73,10 +73,10 @@ updated: 9767ba275f
 | `ProvisionedEntry` | 改名为 `NewEntry`。省略键从 `parentId\|seq\|timestamp` 变为 `seq\|timestamp`（调用方现在要带 `parentId`）。[E: packages/agent/src/harness/session/types.ts:59] |
 | `SessionTreeEntry` / `SessionTreeEntryBase` | 改名为 `Entry` / `EntryBase`。[E: packages/agent/src/harness/session/types.ts:18] [E: packages/agent/src/harness/session/types.ts:64] |
 | `LeafEntry` (`type: "leaf"`) | 不再是 entry。tip 存在 `pi.branch.tip`。[E: packages/agent/src/harness/session/values.ts:158] |
-| `LabelEntry` (`type: "label"`) | 不再是 entry。改用 `entryLabel` value + `Session.setLabel`。[E: packages/agent/src/harness/session/values.ts:195] [E: packages/agent/src/harness/session/types.ts:552] |
-| `SessionInfoEntry` (`type: "session_info"`) | 不再是 entry。会话名用 `sessionName` value + `Session.setName`。[E: packages/agent/src/harness/session/values.ts:194] [E: packages/agent/src/harness/session/types.ts:551] |
+| `LabelEntry` (`type: "label"`) | 不再是 entry。改用 `entryLabel` value + `Session.setLabel`。[E: packages/agent/src/harness/session/values.ts:195] [E: packages/agent/src/harness/session/types.ts:553] |
+| `SessionInfoEntry` (`type: "session_info"`) | 不再是 entry。会话名用 `sessionName` value + `Session.setName`。[E: packages/agent/src/harness/session/values.ts:194] [E: packages/agent/src/harness/session/types.ts:552] |
 | `CustomMessageEntry` (`type: "custom_message"`) | 已删除。扩展消息走 `CustomEntry` + `EntryProjector`，或直接 `MessageEntry`。[E: packages/agent/src/harness/session/types.ts:52] |
-| `LaneRecord` / `LogItem` | 已删除。durable operation 改成 `Operation` = `{ meta, state }` values（`pi.op.meta` / `pi.op.state`），不是 tree entry。[E: packages/agent/src/harness/session/types.ts:341] [E: packages/agent/src/harness/session/values.ts:164] |
+| `LaneRecord` / `LogItem` | 已删除。durable operation 改成 `Operation` = `{ meta, state }` values（`pi.op.meta` / `pi.op.state`），不是 tree entry。[E: packages/agent/src/harness/session/types.ts:342] [E: packages/agent/src/harness/session/values.ts:164] |
 
 v3 JSONL 里的 `LegacyV3ModelChangeEntry` 只存在于 `jsonl/legacy-v3.ts` 的导入路径，不是现行 `Entry`。[I]
 
@@ -86,7 +86,7 @@ v3 JSONL 里的 `LegacyV3ModelChangeEntry` 只存在于 `jsonl/legacy-v3.ts` 的
 
 `ref.coding-agent.session-format` 覆盖 coding-agent 产品层 JSONL 文件（含历史 `type: "session", version: 3`）。本节点只覆盖 agent harness 的 TypeScript `Entry` 类型。[I]
 
-`Usage` 字段出现在 `CompactionEntry` / `BranchSummaryEntry` 上，是可选的摘要生成用量；会话级 token/cost 统计来自 `UsageRow` / `scanUsage`，不是这些 entry 字段。账本流转见 `subsys.coding-agent.usage-accounting`。[E: packages/agent/src/harness/session/types.ts:52] [E: packages/agent/src/harness/session/types.ts:37] [E: packages/agent/src/harness/session/types.ts:378] [I]
+`Usage` 字段出现在 `CompactionEntry` / `BranchSummaryEntry` 上，是可选的摘要生成用量；会话级 token/cost 统计来自 `UsageRow` / `scanUsage`，不是这些 entry 字段。账本流转见 `subsys.coding-agent.usage-accounting`。[E: packages/agent/src/harness/session/types.ts:52] [E: packages/agent/src/harness/session/types.ts:37] [E: packages/agent/src/harness/session/types.ts:379] [I]
 
 ## Sources
 

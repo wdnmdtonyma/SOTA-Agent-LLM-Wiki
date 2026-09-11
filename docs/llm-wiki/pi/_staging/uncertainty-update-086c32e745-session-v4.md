@@ -32,7 +32,7 @@ status: draft
 
 - 节点: `subsys.agent-core.jsonl-storage`
 - header 允许可选 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/types.ts:15] [E: packages/agent/src/harness/session/jsonl/codec.ts:45]
-- `metadataFromHeader` 原样拷贝该字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:34]
+- `metadataFromHeader` 原样拷贝该字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:32]
 - `JsonlSessionRepo.create` 只写 `parentSessionId`，不写 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/repo.ts:78]
 - 谁在什么时候把无法解析的 v3 parent path 写进该字段，本批 source 看不到。
 

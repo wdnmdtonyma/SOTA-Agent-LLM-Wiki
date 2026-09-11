@@ -7,7 +7,11 @@ pkg: ai
 source:
   - packages/coding-agent/docs/custom-provider.md
   - packages/coding-agent/docs/models.md
+  - packages/coding-agent/docs/settings.md
+  - packages/coding-agent/docs/extensions.md
   - packages/coding-agent/src/core/extensions/types.ts
+  - packages/coding-agent/src/core/model-registry.ts
+  - packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts
 symbols:
   - ProviderConfig
   - registerProvider
@@ -18,7 +22,7 @@ related:
   - ref.ai.wire-protocol-catalog
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `surface.providers.custom-provider` 说明 pi 暴露给使用者的两条自定义 provider 路径:简单兼容端点写 `~/.pi/agent/models.json`,需要扩展生命周期、OAuth/SSO 或自定义 streaming 时用扩展 API `pi.registerProvider()`。
@@ -48,7 +52,7 @@ model config 的文档字段包括必填 `id`,以及可选 `name`、`api`、`rea
 
 覆盖内置 provider 时,只写 `baseUrl` 可保留内置模型并改走 proxy;若提供 `models` 数组,custom models 会按 `id` merge/upsert 到内置 provider,同 id 替换,新 id 追加 [E: packages/coding-agent/docs/models.md:302] [E: packages/coding-agent/docs/models.md:304] [E: packages/coding-agent/docs/models.md:316] [E: packages/coding-agent/docs/models.md:318] [E: packages/coding-agent/docs/models.md:333] [E: packages/coding-agent/docs/models.md:334] [E: packages/coding-agent/docs/models.md:335] [E: packages/coding-agent/docs/models.md:336] [E: packages/coding-agent/docs/models.md:337]。
 
-`modelOverrides` 是内置模型的 per-model override 入口,支持 `name`、`reasoning`、`thinkingLevelMap`、`input`、partial `cost`、`contextWindow`、`maxTokens`、`samplingParams`(按 key merge)、`headers` 和 `compat`;未知 model id 会被忽略,同一 provider 同时定义 `models` 时 custom models 在 built-in overrides 之后合并 [E: packages/coding-agent/docs/models.md:341] [E: packages/coding-agent/docs/models.md:343] [E: packages/coding-agent/docs/models.md:362] [E: packages/coding-agent/docs/models.md:382] [E: packages/coding-agent/docs/models.md:383] [E: packages/coding-agent/docs/models.md:384] [E: packages/coding-agent/docs/models.md:387]。
+`modelOverrides` 是内置模型的 per-model override 入口,支持 `name`、`reasoning`、`thinkingLevelMap`、`input`、partial `cost`、`contextWindow`、`maxTokens`、`samplingParams`(按 key merge)、`headers` 和 `compat`;未知 model id 会被忽略,同一 provider 同时定义 `models` 时 custom models 在 built-in overrides 之后合并 [E: packages/coding-agent/docs/models.md:341] [E: packages/coding-agent/docs/models.md:343] [E: packages/coding-agent/docs/models.md:362] [E: packages/coding-agent/docs/models.md:382] [E: packages/coding-agent/docs/models.md:383] [E: packages/coding-agent/docs/models.md:384] [E: packages/coding-agent/docs/models.md:387]。这是 `models.json` provider 上的 model metadata overlay,键是该 provider 下的 model id;不要和 settings 的 `compaction.modelOverrides` 混淆——后者键是精确 `"provider/modelId"`,只覆盖 compaction 的 `reserveTokens` / `keepRecentTokens`,且 `enabled` 不能 per-model。[E: packages/coding-agent/docs/models.md:143] [E: packages/coding-agent/docs/settings.md:121] [I]
 
 OpenAI-compatible custom models 现在可配置 `thinkingFormat: "baseten"` 与 `chatTemplateArgs`；该格式把 toggle values 放进 `chat_template_args`，并可同时发送 top-level `reasoning_effort`。[E: packages/coding-agent/docs/models.md:474] [E: packages/coding-agent/docs/models.md:476] [E: packages/coding-agent/docs/models.md:489] [E: packages/coding-agent/docs/custom-provider.md:754] [E: packages/coding-agent/docs/custom-provider.md:756] [E: packages/coding-agent/docs/custom-provider.md:775]
 
@@ -78,7 +82,7 @@ OpenAI-compatible custom models 现在可配置 `thinkingFormat: "baseten"` 与 
 
 `api` 字段决定使用哪个 streaming implementation;custom-provider docs 的扩展 API 列出 `anthropic-messages`、`openai-completions`、`openai-responses`、`azure-openai-responses`、`openai-codex-responses`、`mistral-conversations`、`google-generative-ai`、`google-vertex` 和 `bedrock-converse-stream` [E: packages/coding-agent/docs/custom-provider.md:219] [E: packages/coding-agent/docs/custom-provider.md:221] [E: packages/coding-agent/docs/custom-provider.md:225] [E: packages/coding-agent/docs/custom-provider.md:226] [E: packages/coding-agent/docs/custom-provider.md:227] [E: packages/coding-agent/docs/custom-provider.md:228] [E: packages/coding-agent/docs/custom-provider.md:229] [E: packages/coding-agent/docs/custom-provider.md:230] [E: packages/coding-agent/docs/custom-provider.md:231] [E: packages/coding-agent/docs/custom-provider.md:232] [E: packages/coding-agent/docs/custom-provider.md:233]。
 
-非标准 API 可通过 `streamSimple` 实现;docs 要求先学习既有 provider implementations,并给出 `AssistantMessageEventStream` 的 start/content/done-or-error event pattern [E: packages/coding-agent/docs/custom-provider.md:395] [E: packages/coding-agent/docs/custom-provider.md:397] [E: packages/coding-agent/docs/custom-provider.md:407] [E: packages/coding-agent/docs/custom-provider.md:483] [E: packages/coding-agent/docs/custom-provider.md:485] [E: packages/coding-agent/docs/custom-provider.md:487] [E: packages/coding-agent/docs/custom-provider.md:498]。custom streaming provider 如果要让 context overflow 自动恢复生效,需要把 overflow error 规范化为 pi 已知模式;docs 建议在 `message_end` handler 中重写本 provider 的 assistant error message [E: packages/coding-agent/docs/custom-provider.md:567] [E: packages/coding-agent/docs/custom-provider.md:569] [E: packages/coding-agent/docs/custom-provider.md:571] [E: packages/coding-agent/docs/custom-provider.md:576]。
+非标准 API 可通过 `streamSimple` 实现;docs 要求先学习既有 provider implementations,并给出 `AssistantMessageEventStream` 的 start/content/done-or-error event pattern [E: packages/coding-agent/docs/custom-provider.md:395] [E: packages/coding-agent/docs/custom-provider.md:397] [E: packages/coding-agent/docs/custom-provider.md:407] [E: packages/coding-agent/docs/custom-provider.md:483] [E: packages/coding-agent/docs/custom-provider.md:485] [E: packages/coding-agent/docs/custom-provider.md:487] [E: packages/coding-agent/docs/custom-provider.md:498]。扩展自己发请求应走 `ctx.modelRegistry.stream()` / `streamSimple()`,二者委托 `ModelRuntime` 做 request-time auth,能看到 `pi.registerProvider()` 的自定义 provider;不要用 `pi-ai/compat` streaming helpers。[E: packages/coding-agent/docs/extensions.md:1021] [E: packages/coding-agent/src/core/model-registry.ts:106] [E: packages/coding-agent/src/core/model-registry.ts:111] [E: packages/coding-agent/src/core/model-registry.ts:115] [E: packages/coding-agent/src/core/model-registry.ts:116] [E: packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts:7] [E: packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts:36] custom streaming provider 如果要让 context overflow 自动恢复生效,需要把 overflow error 规范化为 pi 已知模式;docs 建议在 `message_end` handler 中重写本 provider 的 assistant error message [E: packages/coding-agent/docs/custom-provider.md:567] [E: packages/coding-agent/docs/custom-provider.md:569] [E: packages/coding-agent/docs/custom-provider.md:571] [E: packages/coding-agent/docs/custom-provider.md:576]。
 
 ## Gotcha
 
@@ -98,7 +102,11 @@ OpenAI-compatible custom models 现在可配置 `thinkingFormat: "baseten"` 与 
 
 - packages/coding-agent/docs/custom-provider.md
 - packages/coding-agent/docs/models.md
+- packages/coding-agent/docs/settings.md
+- packages/coding-agent/docs/extensions.md
 - packages/coding-agent/src/core/extensions/types.ts
+- packages/coding-agent/src/core/model-registry.ts
+- packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts
 
 ## 相关
 

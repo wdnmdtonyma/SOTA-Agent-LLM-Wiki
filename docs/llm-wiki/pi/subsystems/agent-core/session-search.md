@@ -22,7 +22,7 @@ related:
   - subsys.agent-core.memory-storage
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.agent-core.session-search` 保留节点 id，改写成**接口 + 退役实现**：`pi-agent-core` 仍导出 `SessionSearchService` 类型，但 scanning 实现、`docs/search.md`、JSONL/memory search adapter 与 sqlite-node FTS backend 都已删除。
@@ -76,13 +76,13 @@ sqlite-node 的 public barrel 只再导出 repo / sql / storage / capability typ
 
 `@earendil-works/pi-session-backend-sqlite-node` 也不再导出 search façade。该包 README 写明 search 是独立 S3 投影；本 wiki 不以 README 为 `[E]`，只以源码缺失为准。[E: packages/session-backends/sqlite-node/src/sqlite/index.ts:1] [I]
 
-应用若要搜索，必须自建索引并自行实现 `SessionSearchService`。JSONL `list` / 只读 `open`、memory `list` 仍可用作抓取源，但那是 `SessionRepo` 的读面，不是 search 模块。[E: packages/agent/src/harness/session/types.ts:598] [I]
+应用若要搜索，必须自建索引并自行实现 `SessionSearchService`。JSONL `list` / 只读 `open`、memory `list` 仍可用作抓取源，但那是 `SessionRepo` 的读面，不是 search 模块。[E: packages/agent/src/harness/session/types.ts:599] [I]
 
 `packages/agent/docs/harness.md` 仍有一份与当前 `SessionSearchService` 不完全一致的 S3 设计稿。那是内部设计文档，不是 shipped 实现，本节点不以它为 ground truth。[U]
 
 ## 设计动机与权衡
 
-接口留在 `pi-agent-core`，是为了让将来的独立 search store 与 `SessionRepo` 解耦：repository 不暴露 `search()`。[E: packages/agent/src/search/index.ts:20] [E: packages/agent/src/harness/session/types.ts:591] [I]
+接口留在 `pi-agent-core`，是为了让将来的独立 search store 与 `SessionRepo` 解耦：repository 不暴露 `search()`。[E: packages/agent/src/search/index.ts:20] [E: packages/agent/src/harness/session/types.ts:592] [I]
 
 实现抽空避免再维护一套全量扫描与同库 FTS 触发器。代价是 0.85.1 的 agent-core / sqlite-node **没有**可调用的会话搜索。[I]
 

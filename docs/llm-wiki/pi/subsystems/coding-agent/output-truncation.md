@@ -34,7 +34,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > 输出截断子系统把工具输出限制成模型和 TUI 可消费的 preview: 纯函数决定 head/tail/line 裁剪, `OutputAccumulator` 负责 streaming bash 的 tail snapshot 与 temp-file spillover, `details.truncation/fullOutputPath` 把裁剪元数据交给工具结果和 renderer。
@@ -125,7 +125,7 @@ grep 的 `truncateLine()` 是为了避免单个 match/context 行吞掉大量输
 
 `packages/agent` harness 也有 message/full-output 字段和 shell-output helper: `BashExecutionMessage.fullOutputPath` 在 agent-core message converter 中会被追加到 LLM text, `executeShellWithCapture()` 也有自己的 `fullOutputPath` 和 `truncateTail()` 流程 [E: packages/agent/src/harness/messages.ts:26] [E: packages/agent/src/harness/messages.ts:75] [E: packages/agent/src/harness/utils/shell-output.ts:17] [E: packages/agent/src/harness/utils/shell-output.ts:48] [E: packages/agent/src/harness/utils/shell-output.ts:85] [E: packages/agent/src/harness/utils/shell-output.ts:86]。这说明 full-output 语义跨包复用, 但 coding-agent tool `details` 的 shape 和 TUI renderer 仍在 `packages/coding-agent` 内 [I]。
 
-`AgentSession.recordBashResult()` 把 direct bash helper 的 `BashResult.fullOutputPath` 写入 coding-agent history message, `bashExecutionToText()` 只在 `truncated && fullOutputPath` 时把完整输出路径加入 LLM context [E: packages/coding-agent/src/core/agent-session.ts:3010] [E: packages/coding-agent/src/core/agent-session.ts:3021] [E: packages/coding-agent/src/core/messages.ts:82] [E: packages/coding-agent/src/core/messages.ts:94]。
+`AgentSession.recordBashResult()` 把 direct bash helper 的 `BashResult.fullOutputPath` 写入 coding-agent history message, `bashExecutionToText()` 只在 `truncated && fullOutputPath` 时把完整输出路径加入 LLM context [E: packages/coding-agent/src/core/agent-session.ts:3033] [E: packages/coding-agent/src/core/agent-session.ts:3044] [E: packages/coding-agent/src/core/messages.ts:82] [E: packages/coding-agent/src/core/messages.ts:94]。
 
 ## Sources
 

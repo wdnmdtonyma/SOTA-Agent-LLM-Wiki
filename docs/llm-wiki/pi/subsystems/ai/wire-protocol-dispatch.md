@@ -18,7 +18,7 @@ related:
   - subsys.ai.message-transform
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.ai.wire-protocol-dispatch` 说明 `pi-ai` 如何把统一的 `Model` + `Context` streaming request,按 `Model.api` 分派到 `packages/ai/src/api/<name>.ts` 的 `stream` / `streamSimple` wire implementation。
@@ -36,7 +36,7 @@ updated: 9767ba275f
 
 wire 协议调度层的职责是选择并调用一个 `ProviderStreams` implementation;`ProviderStreams` 的 runtime contract 必选 `stream` 与 `streamSimple`(二者返回 `AssistantMessageEventStream`),并可选 `fetchDeferred` / `cancelDeferred`。[E: packages/ai/src/types.ts:272][E: packages/ai/src/types.ts:273][E: packages/ai/src/types.ts:274][E: packages/ai/src/types.ts:275][E: packages/ai/src/types.ts:280] 因此 provider-specific payload 构造与 event normalization 不属于 dispatch contract 本身,而属于具体 `api/<name>.ts` implementation 的职责边界。[I]
 
-dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议名,`provider` 字段保存 provider id;因此同一个 provider 可以持有多个 API implementation,选择键来自 model metadata 而不是 caller 手写的协议枚举。[E: packages/ai/src/types.ts:843][E: packages/ai/src/types.ts:846][E: packages/ai/src/types.ts:847][E: packages/ai/src/models.ts:766][E: packages/ai/src/models.ts:788][E: packages/ai/src/models.ts:790][E: packages/ai/src/models.ts:792]
+dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议名,`provider` 字段保存 provider id;因此同一个 provider 可以持有多个 API implementation,选择键来自 model metadata 而不是 caller 手写的协议枚举。[E: packages/ai/src/types.ts:845][E: packages/ai/src/types.ts:848][E: packages/ai/src/types.ts:849][E: packages/ai/src/models.ts:766][E: packages/ai/src/models.ts:788][E: packages/ai/src/models.ts:790][E: packages/ai/src/models.ts:792]
 
 `Models.stream` / `Models.streamSimple` 是上层统一入口和 auth 边界:它们先返回 `lazyStream` 包装的 `AssistantMessageEventStream`,再在异步 setup 中执行 provider lookup、auth 合并和 provider 调用。[E: packages/ai/src/models.ts:677][E: packages/ai/src/models.ts:678][E: packages/ai/src/models.ts:698][E: packages/ai/src/models.ts:683][E: packages/ai/src/models.ts:696][E: packages/ai/src/models.ts:697][E: packages/ai/src/models.ts:698][E: packages/ai/src/models.ts:699]
 
@@ -46,7 +46,7 @@ dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议�
 - `packages/ai/src/models.ts`:实现 `ModelsImpl.stream` / `streamSimple` 的 provider/auth wrapper,以及 `createProvider` 对单 API 与 per-API map 的 dispatch。[E: packages/ai/src/models.ts:672][E: packages/ai/src/models.ts:394][E: packages/ai/src/models.ts:775][E: packages/ai/src/models.ts:788][E: packages/ai/src/models.ts:792][E: packages/ai/src/models.ts:842]
 - `packages/ai/src/api/lazy.ts`:实现 `lazyStream` 和 `lazyApi`,把 lazy import/auth/setup 的异步失败转为 terminal `error` event。[E: packages/ai/src/api/lazy.ts:46][E: packages/ai/src/api/lazy.ts:50][E: packages/ai/src/api/lazy.ts:54][E: packages/ai/src/api/lazy.ts:56][E: packages/ai/src/api/lazy.ts:57][E: packages/ai/src/api/lazy.ts:68]
 - `packages/ai/src/api/<name>.lazy.ts`:文字模型 wire 协议的常规 lazy wrapper 返回 `ProviderStreams`,并直接 `lazyApi(() => import("./<name>.ts"))`;OpenAI Responses、Anthropic Messages、Google Generative AI 都是这种形态。[E: packages/ai/src/api/openai-responses.lazy.ts:4][E: packages/ai/src/api/anthropic-messages.lazy.ts:4][E: packages/ai/src/api/google-generative-ai.lazy.ts:4]
-- `packages/ai/src/api/<name>.ts`:`KnownApi` 列出文字 wire API 名称集合,`ProviderStreams` interface 要求 `stream` 与 `streamSimple`;OpenAI Responses 与 Anthropic Messages 是这一路径的代表性 implementation。[E: packages/ai/src/types.ts:17][E: packages/ai/src/types.ts:25][E: packages/ai/src/types.ts:272][E: packages/ai/src/types.ts:273][E: packages/ai/src/types.ts:274][E: packages/ai/src/api/openai-responses.ts:127][E: packages/ai/src/api/openai-responses.ts:225][E: packages/ai/src/api/anthropic-messages.ts:505][E: packages/ai/src/api/anthropic-messages.ts:849]
+- `packages/ai/src/api/<name>.ts`:`KnownApi` 列出文字 wire API 名称集合,`ProviderStreams` interface 要求 `stream` 与 `streamSimple`;OpenAI Responses 与 Anthropic Messages 是这一路径的代表性 implementation。[E: packages/ai/src/types.ts:17][E: packages/ai/src/types.ts:25][E: packages/ai/src/types.ts:272][E: packages/ai/src/types.ts:273][E: packages/ai/src/types.ts:274][E: packages/ai/src/api/openai-responses.ts:127][E: packages/ai/src/api/openai-responses.ts:225][E: packages/ai/src/api/anthropic-messages.ts:502][E: packages/ai/src/api/anthropic-messages.ts:846]
 
 ## 数据模型
 
@@ -58,7 +58,7 @@ dispatch 的输入模型是 `Model<TApi>`,其中 `api` 字段保存 wire 协议�
 
 `ApiStreamOptions<TApi>` 把 known API string 映射到 provider-specific options type;未知自定义 API string 退回到 generic `StreamOptions & Record<string, unknown>`。[E: packages/ai/src/types.ts:243][E: packages/ai/src/types.ts:260][E: packages/ai/src/types.ts:261][E: packages/ai/src/types.ts:262]
 
-`SimpleStreamOptions` 是统一 convenience surface,在 `StreamOptions` 上额外携带 `toolChoice`、`reasoning`、`deferred` 与 `thinkingBudgets`;provider-specific conversion 留在具体 wire module 内,例如 OpenAI Responses 与 Anthropic Messages 的 `streamSimple` 都在同文件内转换后调用 `stream`。[E: packages/ai/src/types.ts:314][E: packages/ai/src/types.ts:316][E: packages/ai/src/types.ts:317][E: packages/ai/src/types.ts:319][E: packages/ai/src/types.ts:321][E: packages/ai/src/api/openai-responses.ts:225][E: packages/ai/src/api/openai-responses.ts:237][E: packages/ai/src/api/anthropic-messages.ts:849][E: packages/ai/src/api/anthropic-messages.ts:889]
+`SimpleStreamOptions` 是统一 convenience surface,在 `StreamOptions` 上额外携带 `toolChoice`、`reasoning`、`deferred` 与 `thinkingBudgets`;provider-specific conversion 留在具体 wire module 内,例如 OpenAI Responses 与 Anthropic Messages 的 `streamSimple` 都在同文件内转换后调用 `stream`。[E: packages/ai/src/types.ts:314][E: packages/ai/src/types.ts:316][E: packages/ai/src/types.ts:317][E: packages/ai/src/types.ts:319][E: packages/ai/src/types.ts:321][E: packages/ai/src/api/openai-responses.ts:225][E: packages/ai/src/api/openai-responses.ts:237][E: packages/ai/src/api/anthropic-messages.ts:846][E: packages/ai/src/api/anthropic-messages.ts:886]
 
 ## 控制流
 
@@ -78,11 +78,11 @@ dispatch 以 `ProviderStreams` 为 runtime value,让 provider factory 可以只�
 
 `lazyStream` 把 auth resolution、dynamic import、缺失 API implementation 这些 setup failure 都压进同一个 assistant event protocol;这使 caller 侧可以把 setup failure 当作 stream terminal error 处理。[E: packages/ai/src/api/lazy.ts:46][E: packages/ai/src/api/lazy.ts:52][E: packages/ai/src/api/lazy.ts:54][E: packages/ai/src/api/lazy.ts:56][E: packages/ai/src/api/lazy.ts:57][I]
 
-`streamSimple` 保持统一 caller surface,但 provider options 的具体映射仍在 wire module 内完成;例如 OpenAI Responses 把 `reasoning` clamp 后转成 `reasoningEffort`,Anthropic Messages 在 no-reasoning、adaptive thinking、budget thinking 三种路径间选择 provider-specific options。[E: packages/ai/src/api/openai-responses.ts:232][E: packages/ai/src/api/openai-responses.ts:233][E: packages/ai/src/api/openai-responses.ts:234][E: packages/ai/src/api/openai-responses.ts:237][E: packages/ai/src/api/anthropic-messages.ts:860][E: packages/ai/src/api/anthropic-messages.ts:861][E: packages/ai/src/api/anthropic-messages.ts:869][E: packages/ai/src/api/anthropic-messages.ts:889]
+`streamSimple` 保持统一 caller surface,但 provider options 的具体映射仍在 wire module 内完成;例如 OpenAI Responses 把 `reasoning` clamp 后转成 `reasoningEffort`,Anthropic Messages 在 no-reasoning、adaptive thinking、budget thinking 三种路径间选择 provider-specific options。[E: packages/ai/src/api/openai-responses.ts:232][E: packages/ai/src/api/openai-responses.ts:233][E: packages/ai/src/api/openai-responses.ts:234][E: packages/ai/src/api/openai-responses.ts:237][E: packages/ai/src/api/anthropic-messages.ts:857][E: packages/ai/src/api/anthropic-messages.ts:858][E: packages/ai/src/api/anthropic-messages.ts:866][E: packages/ai/src/api/anthropic-messages.ts:886]
 
 ## gotcha
 
-不要把 README 或 provider 名称当作 wire 协议 ground truth。[I] 文字模型 wire 协议的核验路径是 `Model.api` -> `createProvider` 的 `api` / by-API map -> `api/<name>.lazy.ts` -> `api/<name>.ts` 的 `stream` / `streamSimple`。[E: packages/ai/src/types.ts:846][E: packages/ai/src/models.ts:792][E: packages/ai/src/api/lazy.ts:76][E: packages/ai/src/api/lazy.ts:78]
+不要把 README 或 provider 名称当作 wire 协议 ground truth。[I] 文字模型 wire 协议的核验路径是 `Model.api` -> `createProvider` 的 `api` / by-API map -> `api/<name>.lazy.ts` -> `api/<name>.ts` 的 `stream` / `streamSimple`。[E: packages/ai/src/types.ts:848][E: packages/ai/src/models.ts:792][E: packages/ai/src/api/lazy.ts:76][E: packages/ai/src/api/lazy.ts:78]
 
 Bedrock 的 lazy wrapper 是一个特例:它通过 variable specifier import 加载 Node-only AWS SDK implementation,并允许 Bun binary build 注入 `bedrockModuleOverride`;因此不能把所有 `<name>.lazy.ts` 都机械理解成一行静态 dynamic import。[E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:10][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:11][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:12][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:15][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:22][E: packages/ai/src/api/bedrock-converse-stream.lazy.ts:29]
 
@@ -94,7 +94,7 @@ Bedrock 的 lazy wrapper 是一个特例:它通过 variable specifier import 加
 
 `spine.provider-stream` 描述从 `Models.stream` 到 normalized assistant events 的端到端主路径;本节点只展开其中 `ProviderStreams` selection、lazy loading 与 `model.api` dispatch 这一段。[I]
 
-`subsys.ai.message-transform` 是 wire payload 前的消息归一化边界:dispatch 层只把 `Context` 交给 wire module。[I] `transformMessages(messages, model, ...)` 本身处理 unsupported image downgrade、thinking replay、tool call id normalization 与 orphaned tool result 补齐,并由 provider-specific builders 调用。[E: packages/ai/src/api/transform-messages.ts:64][E: packages/ai/src/api/transform-messages.ts:74][E: packages/ai/src/api/transform-messages.ts:100][E: packages/ai/src/api/transform-messages.ts:136][E: packages/ai/src/api/transform-messages.ts:163][E: packages/ai/src/api/transform-messages.ts:220][E: packages/ai/src/api/openai-responses-shared.ts:172][E: packages/ai/src/api/anthropic-messages.ts:1028]
+`subsys.ai.message-transform` 是 wire payload 前的消息归一化边界:dispatch 层只把 `Context` 交给 wire module。[I] `transformMessages(messages, model, ...)` 本身处理 unsupported image downgrade、thinking replay、tool call id normalization 与 orphaned tool result 补齐,并由 provider-specific builders 调用。[E: packages/ai/src/api/transform-messages.ts:64][E: packages/ai/src/api/transform-messages.ts:74][E: packages/ai/src/api/transform-messages.ts:100][E: packages/ai/src/api/transform-messages.ts:136][E: packages/ai/src/api/transform-messages.ts:163][E: packages/ai/src/api/transform-messages.ts:220][E: packages/ai/src/api/openai-responses-shared.ts:172][E: packages/ai/src/api/anthropic-messages.ts:1029]
 
 `ref.ai.wire-protocol-catalog` 应逐项列出每个 `api/<name>.lazy.ts`、目标 `api/<name>.ts` 与 provider bindings;本节点只保留 dispatch invariant 和 representative evidence,避免把 catalog 表格复制到 subsystem 文档。[I]
 

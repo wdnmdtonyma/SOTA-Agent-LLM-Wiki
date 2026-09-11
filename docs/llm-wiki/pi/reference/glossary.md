@@ -12,7 +12,7 @@ related:
   - spine.overview
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `ref.glossary` 是 Pi agent harness 常用英文术语的中文导览索引；README 能直接证明的公开定位标 `[E]`，更细的内部实现术语标 `[I]` 并指向对应节点。

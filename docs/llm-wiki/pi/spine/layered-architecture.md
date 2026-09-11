@@ -58,10 +58,10 @@ related:
   - ref.package-index
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
-> Pi 0.85.1（wiki target `9767ba275f`）的主线分层从独立 `@earendil-works/chord` 开始：`pi-ai` 提供 provider / model API，`pi-agent-core` 提供可复用 agent runtime，`pi-coding-agent` 把 runtime 装配成 coding-agent CLI 产品；`AgentSession` 是产品层和 core runtime 的主要边界对象。远程 `pi-protocol` / Chord 风格 `pi-client` `Client` / `pi-server` 是 composable remote-session 栈，不等于本地 RPC mode，也不等于已删除的 coding-agent `RemoteSession`。
+> Pi 0.85.1（wiki target `bbb61e34aa`；包版本与根 `build` 顺序未变）的主线分层从独立 `@earendil-works/chord` 开始：`pi-ai` 提供 provider / model API，`pi-agent-core` 提供可复用 agent runtime，`pi-coding-agent` 把 runtime 装配成 coding-agent CLI 产品；`AgentSession` 是产品层和 core runtime 的主要边界对象。远程 `pi-protocol` / Chord 风格 `pi-client` `Client` / `pi-server` 是 composable remote-session 栈，不等于本地 RPC mode，也不等于已删除的 coding-agent `RemoteSession`。
 
 ## 能回答的问题
 
@@ -138,27 +138,27 @@ flowchart TD
 
 agent-core 也公开依赖 `ExecutionEnv` 的 bash / read / edit / write execution-tool factories，但调用方必须显式安装；coding-agent 仍拥有八工具 registry（`read`/`bash`/`powershell`/`edit`/`write`/`grep`/`find`/`ls`）、产品 settings、extension / TUI integration 等产品语义。[E: packages/agent/src/harness/tools/index.ts:7] [E: packages/agent/src/harness/tools/index.ts:10] [E: packages/agent/src/harness/tools/index.ts:15] [E: packages/agent/src/harness/tools/index.ts:23] [E: packages/coding-agent/src/core/tools/index.ts:95] [E: packages/coding-agent/src/core/tools/index.ts:182]
 
-`pi-coding-agent` 在配置、session event、状态 getter 和工具切换中直接使用 core 的 `Agent`，说明产品层依赖 core runtime 的状态、事件和工具抽象，而不是把 coding-agent UI 逻辑放回 core 包。[E: packages/coding-agent/src/core/agent-session.ts:200] [E: packages/coding-agent/src/core/agent-session.ts:311]
+`pi-coding-agent` 在配置、session event、状态 getter 和工具切换中直接使用 core 的 `Agent`，说明产品层依赖 core runtime 的状态、事件和工具抽象，而不是把 coding-agent UI 逻辑放回 core 包。[E: packages/coding-agent/src/core/agent-session.ts:200] [E: packages/coding-agent/src/core/agent-session.ts:307]
 
-`AgentSession` 构造时接收一个已经创建好的 core `Agent`，保存到 `this.agent`，订阅 core agent event，并安装 tool hook；这让 `pi-coding-agent` 可以围绕同一个 reusable `Agent` 增加 session persistence、extensions、auto-compaction 和 retry handling。[E: packages/coding-agent/src/core/agent-session.ts:384] [E: packages/coding-agent/src/core/agent-session.ts:384] [E: packages/coding-agent/src/core/agent-session.ts:402] [E: packages/coding-agent/src/core/agent-session.ts:402]
+`AgentSession` 构造时接收一个已经创建好的 core `Agent`，保存到 `this.agent`，订阅 core agent event，并安装 tool hook；这让 `pi-coding-agent` 可以围绕同一个 reusable `Agent` 增加 session persistence、extensions、auto-compaction 和 retry handling。[E: packages/coding-agent/src/core/agent-session.ts:380] [E: packages/coding-agent/src/core/agent-session.ts:380] [E: packages/coding-agent/src/core/agent-session.ts:398] [E: packages/coding-agent/src/core/agent-session.ts:398]
 
 ## pi-coding-agent 产品边界
 
-`AgentSession` 的产品职责由字段和方法实现体现：它持有 session / settings / resource / model 依赖，暴露 model / thinking state 管理，负责事件持久化、compaction、bash execution、session tree navigation 和工具 / 扩展装配。[E: packages/coding-agent/src/core/agent-session.ts:311] [E: packages/coding-agent/src/core/agent-session.ts:312] [E: packages/coding-agent/src/core/agent-session.ts:371]
+`AgentSession` 的产品职责由字段和方法实现体现：它持有 session / settings / resource / model 依赖，暴露 model / thinking state 管理，负责事件持久化、compaction、bash execution、session tree navigation 和工具 / 扩展装配。[E: packages/coding-agent/src/core/agent-session.ts:307] [E: packages/coding-agent/src/core/agent-session.ts:308] [E: packages/coding-agent/src/core/agent-session.ts:367]
 
-`AgentSession` 把 core event 转成 extension event、listener event 和 session persistence：`message_end` 上的 custom message 走 `appendCustomMessageEntry`，普通 user / assistant / toolResult message 走 `sessionManager.appendMessage`。[E: packages/coding-agent/src/core/agent-session.ts:677] [E: packages/coding-agent/src/core/agent-session.ts:689]
+`AgentSession` 把 core event 转成 extension event、listener event 和 session persistence：`message_end` 上的 custom message 走 `appendCustomMessageEntry`，普通 user / assistant / toolResult message 走 `sessionManager.appendMessage`。[E: packages/coding-agent/src/core/agent-session.ts:673] [E: packages/coding-agent/src/core/agent-session.ts:685]
 
-`AgentSession.prompt()` 先处理 extension command、input hook、skill command、prompt template，然后才把 messages 交给 `_runAgentPrompt()`；这条路径说明用户输入产品语义在 `pi-coding-agent` 层完成，再进入 core `Agent`。[E: packages/coding-agent/src/core/agent-session.ts:1159] [E: packages/coding-agent/src/core/agent-session.ts:1167] [E: packages/coding-agent/src/core/agent-session.ts:1185] [E: packages/coding-agent/src/core/agent-session.ts:1205]
+`AgentSession.prompt()` 先处理 extension command、input hook、skill command、prompt template，然后才把 messages 交给 `_runAgentPrompt()`；这条路径说明用户输入产品语义在 `pi-coding-agent` 层完成，再进入 core `Agent`。[E: packages/coding-agent/src/core/agent-session.ts:1175] [E: packages/coding-agent/src/core/agent-session.ts:1183] [E: packages/coding-agent/src/core/agent-session.ts:1201] [E: packages/coding-agent/src/core/agent-session.ts:1214]
 
-`AgentSession._runAgentPrompt()` 是产品层进入 reusable runtime 的窄口：它调用 `this.agent.prompt(messages)`，在 post-run 需要 retry、compaction 或 queued message 时继续调用 `this.agent.continue()`。[E: packages/coding-agent/src/core/agent-session.ts:1105] [E: packages/coding-agent/src/core/agent-session.ts:1108] [E: packages/coding-agent/src/core/agent-session.ts:1110]
+`AgentSession._runAgentPrompt()` 是产品层进入 reusable runtime 的窄口：它调用 `this.agent.prompt(messages)`，在 post-run 需要 retry、compaction 或 queued message 时继续调用 `this.agent.continue()`。[E: packages/coding-agent/src/core/agent-session.ts:1101] [E: packages/coding-agent/src/core/agent-session.ts:1104] [E: packages/coding-agent/src/core/agent-session.ts:1106]
 
 ## 工具与扩展装配
 
-`AgentSession._buildRuntime()` 在 `pi-coding-agent` 层读取 settings 的 image auto-resize、shell command prefix 和 shell path，然后用这些产品设置创建内置工具定义；当 `baseToolsOverride` 存在时，`AgentSession` 会把外部传入的 `AgentTool` 转成 `ToolDefinition`，否则调用 `createAllToolDefinitions()` 创建 coding-agent 内置工具。[E: packages/coding-agent/src/core/agent-session.ts:2769] [E: packages/coding-agent/src/core/agent-session.ts:2779] [E: packages/coding-agent/src/core/agent-session.ts:2779]
+`AgentSession._buildRuntime()` 在 `pi-coding-agent` 层读取 settings 的 image auto-resize、shell command prefix 和 shell path，然后用这些产品设置创建内置工具定义；当 `baseToolsOverride` 存在时，`AgentSession` 会把外部传入的 `AgentTool` 转成 `ToolDefinition`，否则调用 `createAllToolDefinitions()` 创建 coding-agent 内置工具。[E: packages/coding-agent/src/core/agent-session.ts:2792] [E: packages/coding-agent/src/core/agent-session.ts:2802] [E: packages/coding-agent/src/core/agent-session.ts:2802]
 
-`AgentSession._buildRuntime()` 还创建 `ExtensionRunner`，把扩展绑定到当前 cwd、session manager 和 `ModelRegistry` facade，再刷新 active tool registry；这说明 extension runtime 和工具可见性是 `pi-coding-agent` 产品层的装配责任。[E: packages/coding-agent/src/core/agent-session.ts:2795] [E: packages/coding-agent/src/core/agent-session.ts:2812] [E: packages/coding-agent/src/core/agent-session.ts:2812]
+`AgentSession._buildRuntime()` 还创建 `ExtensionRunner`，把扩展绑定到当前 cwd、session manager 和 `ModelRegistry` facade，再刷新 active tool registry；这说明 extension runtime 和工具可见性是 `pi-coding-agent` 产品层的装配责任。[E: packages/coding-agent/src/core/agent-session.ts:2818] [E: packages/coding-agent/src/core/agent-session.ts:2835] [E: packages/coding-agent/src/core/agent-session.ts:2835]
 
-`AgentSession._refreshToolRegistry()` 把 built-in tools、extension registered tools 和 SDK custom tools 合成 `_toolDefinitions` 与 `_toolRegistry`，再用 `setActiveToolsByName()` 写回 core `Agent` 的 active tools；因此工具定义来源在产品层聚合，工具执行抽象以 `AgentTool` 形式交给 core runtime。[E: packages/coding-agent/src/core/agent-session.ts:2671] [E: packages/coding-agent/src/core/agent-session.ts:2679] [E: packages/coding-agent/src/core/agent-session.ts:2733] [E: packages/coding-agent/src/core/agent-session.ts:2761]
+`AgentSession._refreshToolRegistry()` 把 built-in tools、extension registered tools 和 SDK custom tools 合成 `_toolDefinitions` 与 `_toolRegistry`，再用 `setActiveToolsByName()` 写回 core `Agent` 的 active tools；因此工具定义来源在产品层聚合，工具执行抽象以 `AgentTool` 形式交给 core runtime。[E: packages/coding-agent/src/core/agent-session.ts:2694] [E: packages/coding-agent/src/core/agent-session.ts:2702] [E: packages/coding-agent/src/core/agent-session.ts:2756] [E: packages/coding-agent/src/core/agent-session.ts:2784]
 
 内置全集仍是 8 个：`read`、`bash`、`powershell`、`edit`、`write`、`grep`、`find`、`ls`。`createCodingToolDefinitions()` / `createReadOnlyToolDefinitions()` **仍不含** `powershell`。[E: packages/coding-agent/src/core/tools/index.ts:95] [E: packages/coding-agent/src/core/tools/index.ts:164] [E: packages/coding-agent/src/core/tools/index.ts:173] [E: packages/coding-agent/src/core/tools/index.ts:182]
 
@@ -166,23 +166,23 @@ agent-core 也公开依赖 `ExecutionEnv` 的 bash / read / edit / write executi
 
 `pi-ai` 的 public entrypoint 导出 auth、models、session resources、diagnostics、event stream、overflow、retry 和 validation utilities；这些 exports 是 LLM / provider 基础设施，不包含 `AgentSession`、`ExtensionRunner` 或 coding-agent tool factory。[E: packages/ai/src/index.ts:21] [E: packages/ai/src/index.ts:34] [E: packages/ai/src/index.ts:40] [I]
 
-`AgentSession` 保存 canonical `ModelRuntime`，通过 `_modelRuntime.getAuth()` 做 API key / auth preflight，并用它负责 model / provider / auth / stream 路径。所以 `pi-coding-agent` 选择和校验模型，但 provider stream 语义来自 `pi-ai`。[E: packages/coding-agent/src/core/agent-session.ts:371] [E: packages/coding-agent/src/core/agent-session.ts:392] [E: packages/coding-agent/src/core/agent-session.ts:424]
+`AgentSession` 保存 canonical `ModelRuntime`，通过 `_modelRuntime.getAuth()` 做 API key / auth preflight，并用它负责 model / provider / auth / stream 路径。所以 `pi-coding-agent` 选择和校验模型，但 provider stream 语义来自 `pi-ai`。[E: packages/coding-agent/src/core/agent-session.ts:367] [E: packages/coding-agent/src/core/agent-session.ts:388] [E: packages/coding-agent/src/core/agent-session.ts:420]
 
-`ModelRegistry` 仍在 `_buildRuntime()` 中临时包裹 `ModelRuntime`，但只作为 extension API 的 compatibility facade 传给 `ExtensionRunner`；它不再是 `AgentSessionConfig` 的 canonical model / auth dependency。[E: packages/coding-agent/src/core/agent-session.ts:2800]
+`ModelRegistry` 仍在 `_buildRuntime()` 中临时包裹 `ModelRuntime`，但只作为 extension API 的 compatibility facade 传给 `ExtensionRunner`；它不再是 `AgentSessionConfig` 的 canonical model / auth dependency。[E: packages/coding-agent/src/core/agent-session.ts:2823]
 
 ## 端到端步骤
 
-1. `AgentSessionConfig` 要求外部传入 core `Agent`、`SessionManager`、`SettingsManager`、cwd、`ResourceLoader` 和 `ModelRuntime`，`AgentSession` 构造器再接收这份配置并保存产品依赖。[E: packages/coding-agent/src/core/agent-session.ts:201] [E: packages/coding-agent/src/core/agent-session.ts:384]
-2. `AgentSession` 构造器保存 product dependencies、订阅 core `Agent` event、安装 tool hooks，并立即调用 `_buildRuntime()` 装配工具和扩展运行时。[E: packages/coding-agent/src/core/agent-session.ts:402] [E: packages/coding-agent/src/core/agent-session.ts:402] [E: packages/coding-agent/src/core/agent-session.ts:406]
-3. `_buildRuntime()` 从 settings / resource loader 与 `ModelRuntime` compatibility facade 创建工具定义、`ExtensionRunner` 和 active tool registry，再通过 `setActiveToolsByName()` 更新 core `Agent`。[E: packages/coding-agent/src/core/agent-session.ts:2779] [E: packages/coding-agent/src/core/agent-session.ts:2795] [E: packages/coding-agent/src/core/agent-session.ts:2812]
-4. 用户输入进入 `AgentSession.prompt()`，产品层先处理 extension command、input hook、skill / template expansion。[E: packages/coding-agent/src/core/agent-session.ts:1159] [E: packages/coding-agent/src/core/agent-session.ts:1167] [E: packages/coding-agent/src/core/agent-session.ts:1205]
-5. `_runAgentPrompt()` 调用 core `Agent.prompt()` 和 `Agent.continue()`，core `Agent` event 再回到 `AgentSession` 做 extension dispatch、listener emit 和 session persistence。[E: packages/coding-agent/src/core/agent-session.ts:1108] [E: packages/coding-agent/src/core/agent-session.ts:1110] [E: packages/coding-agent/src/core/agent-session.ts:677]
+1. `AgentSessionConfig` 要求外部传入 core `Agent`、`SessionManager`、`SettingsManager`、cwd、`ResourceLoader` 和 `ModelRuntime`，`AgentSession` 构造器再接收这份配置并保存产品依赖。[E: packages/coding-agent/src/core/agent-session.ts:201] [E: packages/coding-agent/src/core/agent-session.ts:380]
+2. `AgentSession` 构造器保存 product dependencies、订阅 core `Agent` event、安装 tool hooks，并立即调用 `_buildRuntime()` 装配工具和扩展运行时。[E: packages/coding-agent/src/core/agent-session.ts:398] [E: packages/coding-agent/src/core/agent-session.ts:398] [E: packages/coding-agent/src/core/agent-session.ts:398]
+3. `_buildRuntime()` 从 settings / resource loader 与 `ModelRuntime` compatibility facade 创建工具定义、`ExtensionRunner` 和 active tool registry，再通过 `setActiveToolsByName()` 更新 core `Agent`。[E: packages/coding-agent/src/core/agent-session.ts:2802] [E: packages/coding-agent/src/core/agent-session.ts:2818] [E: packages/coding-agent/src/core/agent-session.ts:2835]
+4. 用户输入进入 `AgentSession.prompt()`，产品层先处理 extension command、input hook、skill / template expansion。[E: packages/coding-agent/src/core/agent-session.ts:1175] [E: packages/coding-agent/src/core/agent-session.ts:1183] [E: packages/coding-agent/src/core/agent-session.ts:1214]
+5. `_runAgentPrompt()` 调用 core `Agent.prompt()` 和 `Agent.continue()`，core `Agent` event 再回到 `AgentSession` 做 extension dispatch、listener emit 和 session persistence。[E: packages/coding-agent/src/core/agent-session.ts:1104] [E: packages/coding-agent/src/core/agent-session.ts:1106] [E: packages/coding-agent/src/core/agent-session.ts:673]
 
 ## 关键决策点
 
 - 如果代码只需要 LLM provider / model / auth / stream 能力，应依赖 `pi-ai` 的 `Models` / provider API，而不是依赖 `AgentSession`。[E: packages/ai/src/index.ts:34] [I]
 - 如果代码需要 agent loop、tool abstraction、state / messages 和 reusable harness，应依赖 `pi-agent-core` 的 `Agent` / `AgentHarness.create` exports，而不是引入 coding-agent 的 settings、extensions 或 CLI modes。[E: packages/agent/src/index.ts:41] [E: packages/agent/src/index.ts:41] [I]
-- 如果代码需要 coding-agent 产品工具语义、八工具 registry、extension commands、resource loading、session files、settings persistence 或 TUI integration，应放在 `pi-coding-agent`；只需要抽象环境上的四个基础 execution tools 时可直接使用 agent-core factories。[E: packages/coding-agent/src/core/tools/index.ts:95] [E: packages/coding-agent/src/core/agent-session.ts:2779] [E: packages/agent/src/harness/tools/index.ts:23] [I]
+- 如果代码需要 coding-agent 产品工具语义、八工具 registry、extension commands、resource loading、session files、settings persistence 或 TUI integration，应放在 `pi-coding-agent`；只需要抽象环境上的四个基础 execution tools 时可直接使用 agent-core factories。[E: packages/coding-agent/src/core/tools/index.ts:95] [E: packages/coding-agent/src/core/agent-session.ts:2802] [E: packages/agent/src/harness/tools/index.ts:23] [I]
 - 如果代码需要远程会话，应走 `pi-protocol` + Chord 风格 `Client` + composable `pi-server`；不要把它和本地 RPC mode、已删除的 `PiClient`/`PiSessionHandle`、或已删除的 coding-agent `RemoteSession` 混为一谈。[E: packages/client/src/index.ts:1] [E: packages/server/src/index.ts:3] [E: packages/coding-agent/src/client/index.ts:1] [I]
 - 如果代码需要 application composition（facets / services / replicated state），应依赖独立的 `@earendil-works/chord`，不要从 `pi-coding-agent` 反查。[E: packages/chord/package.json:4] [I]
 - 如果代码需要 durable harness session 且不想用 JSONL，应实现 `SessionRepo` 或使用 `@earendil-works/pi-session-backend-sqlite-node`；coding-agent CLI 默认仍用产品 `SessionManager`。[E: packages/session-backends/sqlite-node/package.json:4] [I]
@@ -190,9 +190,9 @@ agent-core 也公开依赖 `ExecutionEnv` 的 bash / read / edit / write executi
 ## 指向 T1/T2 深挖
 
 - `spine.overview` 应给出整个 Pi repo 的一屏总览，并把 `chord`、`pi-ai`、`pi-agent-core`、`pi-coding-agent`、`pi-tui` 放进同一张地图。[I]
-- `spine.agent-loop` 应沿 core `Agent.prompt()` / `Agent.continue()` 解释 turn、tool call 和 assistant message 的真实执行路径；本节点只说明产品层在哪里进入 core runtime。[E: packages/coding-agent/src/core/agent-session.ts:1108]
+- `spine.agent-loop` 应沿 core `Agent.prompt()` / `Agent.continue()` 解释 turn、tool call 和 assistant message 的真实执行路径；本节点只说明产品层在哪里进入 core runtime。[E: packages/coding-agent/src/core/agent-session.ts:1104]
 - `spine.session-state-model` 应对比 harness v4 `Session` 与 coding-agent `SessionManager`。[I]
-- `subsys.coding-agent.agent-session` 应详写 `AgentSession` 的方法级职责；本节点只钉清 `AgentSession` 位于 `pi-coding-agent` 产品边界。[E: packages/coding-agent/src/core/agent-session.ts:310]
+- `subsys.coding-agent.agent-session` 应详写 `AgentSession` 的方法级职责；本节点只钉清 `AgentSession` 位于 `pi-coding-agent` 产品边界。[E: packages/coding-agent/src/core/agent-session.ts:306]
 - `subsys.client.remote-session-client` 应改写为 Chord 风格 `Client`；本节点只钉清公开面不再是 `PiClient`。[E: packages/client/src/index.ts:1]
 - `subsys.server.session-server` 应详写 composable server；本节点只钉清它不再包含 legacy IPC。[E: packages/server/src/index.ts:3]
 - `subsys.telemetry.contracts` 应详写 `TelemetryContext` / schema helpers。[E: packages/telemetry/src/index.ts:14]

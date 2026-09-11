@@ -19,7 +19,7 @@ related:
   - subsys.coding-agent.resource-loader
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `surface.misc.packages` 描述 pi-coding-agent 的资源包可见面:用户可以用 npm、git 或本地路径安装包含 extensions、skills、prompt templates、themes 的 package,再由 package-manager 解析成资源路径。
@@ -67,7 +67,7 @@ gallery metadata 是 package gallery 的展示信息,文档写 `pi.video` 支持
 
 settings 的 object form 可以对一个 package 做资源过滤:文档示例里 `extensions`、`skills`、`prompts`、`themes` 可以分别给 pattern 数组;省略某个 key 表示该类型全部加载,空数组表示该类型全部不加载,`!pattern` 排除 glob match,`+path` force-include exact path,`-path` force-exclude exact path [E: packages/coding-agent/docs/packages.md:192] [E: packages/coding-agent/docs/packages.md:199] [E: packages/coding-agent/docs/packages.md:200] [E: packages/coding-agent/docs/packages.md:201] [E: packages/coding-agent/docs/packages.md:203] [E: packages/coding-agent/docs/packages.md:209] [E: packages/coding-agent/docs/packages.md:211] [E: packages/coding-agent/docs/packages.md:212] [E: packages/coding-agent/docs/packages.md:213] [E: packages/coding-agent/docs/packages.md:214] [E: packages/coding-agent/docs/packages.md:215]。
 
-`autoload: false` 改变 object form 的基线：它从“默认加载全部”切到“默认全关、只应用显式 patterns”；project entry 与同 identity global entry 并存时，它还作为 global package 的 delta，而不是整包替换 [E: packages/coding-agent/src/core/settings-manager.ts:87] [E: packages/coding-agent/src/core/package-manager.ts:194] [E: packages/coding-agent/src/core/package-manager.ts:1258] [E: packages/coding-agent/src/core/package-manager.ts:2163] [E: packages/coding-agent/src/core/package-manager.ts:2164] [E: packages/coding-agent/docs/packages.md:224]。
+`autoload: false` 改变 object form 的基线：它从“默认加载全部”切到“默认全关、只应用显式 patterns”；project entry 与同 identity global entry 并存时，它还作为 global package 的 delta，而不是整包替换 [E: packages/coding-agent/src/core/settings-manager.ts:99] [E: packages/coding-agent/src/core/package-manager.ts:194] [E: packages/coding-agent/src/core/package-manager.ts:1258] [E: packages/coding-agent/src/core/package-manager.ts:2163] [E: packages/coding-agent/src/core/package-manager.ts:2164] [E: packages/coding-agent/docs/packages.md:224]。
 
 源码把 filter object 按 resource type 应用:`autoload === false` 时走 `applyPackageDeltaFilter()`,否则设置了该 type patterns 时调用 `applyPackageFilter()`,未设置时调用 `collectDefaultResources()`;空 patterns array 会把该 type 的所有候选资源以 disabled 状态加入,而不是完全不可见 [E: packages/coding-agent/src/core/package-manager.ts:2159] [E: packages/coding-agent/src/core/package-manager.ts:2161] [E: packages/coding-agent/src/core/package-manager.ts:2163] [E: packages/coding-agent/src/core/package-manager.ts:2164] [E: packages/coding-agent/src/core/package-manager.ts:2166] [E: packages/coding-agent/src/core/package-manager.ts:2168] [E: packages/coding-agent/src/core/package-manager.ts:2235] [E: packages/coding-agent/src/core/package-manager.ts:2238]。这解释了为什么 `ResolvedResource` 有 `enabled` boolean:resource-loader 可以看到 path 与启用状态,再决定是否加载或展示配置开关 [E: packages/coding-agent/src/core/package-manager.ts:74] [E: packages/coding-agent/src/core/package-manager.ts:76] [I]。
 

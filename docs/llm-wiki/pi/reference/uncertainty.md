@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 # 不确定项日志([U] 汇总)
@@ -1876,7 +1876,7 @@ status: draft
 
 - 节点: `subsys.agent-core.jsonl-storage`
 - header 允许可选 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/types.ts:15] [E: packages/agent/src/harness/session/jsonl/codec.ts:45]
-- `metadataFromHeader` 原样拷贝该字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:34]
+- `metadataFromHeader` 原样拷贝该字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:32]
 - `JsonlSessionRepo.create` 只写 `parentSessionId`，不写 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/repo.ts:78]
 - 谁在什么时候把无法解析的 v3 parent path 写进该字段，本批 source 看不到。
 
@@ -2042,6 +2042,21 @@ Source at `packages/coding-agent/src/core/extensions/types.ts` `on()` overloads 
 project_trust, resources_discover, session_start, session_info_changed, session_before_switch, session_before_fork, session_before_compact, session_compact, session_compact_failed, session_shutdown, session_before_tree, session_tree, context, before_provider_request, before_provider_headers, after_provider_response, before_agent_start, agent_start, agent_end, agent_settled, ui_prompt_start, ui_prompt_end, turn_start, turn_end, message_start, message_update, message_end, tool_execution_start, tool_execution_update, tool_execution_end, model_select, thinking_level_select, tool_call, tool_result, user_bash, input.
 
 Catalog title and enumeration follow source (36). Did not drop events to match the lead count.
+
+## update-bbb61e34aa-jsonl-storage
+
+# uncertainty · bbb61e34aa · jsonl-storage
+
+- `JsonlSessionRepo.close` 把 repo 标成 closed 后 `Promise.resolve()`，不关闭已打开的 session handles。源码有 TODO：ownership 未定。`[U]` 仍在 `subsys.agent-core.jsonl-storage`。
+
+## update-bbb61e34aa-settings-compaction
+
+# uncertainty · bbb61e34aa · settings-compaction
+
+- `CONFIG_DIR_NAME` 的字面值不在本批次 `settings-manager.ts` 证据范围内；用户可见目录名 `.pi` 只从 `docs/settings.md` 确认。`[U]` 在 `surface.config.settings` 与 `subsys.coding-agent.settings-manager`。
+- TUI markdown 的 LaTeX 渲染由 `@earendil-works/pi-tui` 的 `renderLatex` option 负责，不是 `Settings` 键。`[U]` 在 `ref.coding-agent.config-keys` 与 `surface.config.settings`。
+- `terminal.showTerminalProgress` 在 `Settings` / getter 里存在，当前 `docs/settings.md` 未列此 key。`[U]` 在 `ref.coding-agent.config-keys`。
+- `SettingsManager.getDefaultThinkingLevel()` 只返回 `this.settings.defaultThinkingLevel`，不读 `DEFAULT_THINKING_LEVEL`；产品层 `"medium"` fallback 的最终消费点不在本批次 source 列表内。`[U]` 在 `surface.config.settings`。
 
 ## update-cee5ff7520
 

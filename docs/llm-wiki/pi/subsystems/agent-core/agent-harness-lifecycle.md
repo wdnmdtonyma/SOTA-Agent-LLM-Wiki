@@ -42,7 +42,7 @@ related:
   - ref.agent.error-codes
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.agent-core.agent-harness-lifecycle` 说明 `AgentHarness` 仍从 `harness/agent-harness.ts` 以 `{ create }` 导出；运行时实现是 `harness/runtime/harness.ts` 的 `Harness` 类，加上 `runtime/lane.ts` 的 `Lane` 与 `runtime/drive/*` 的 durable procedure。旧顶层 `harness/reducer.ts` 已迁到 `runtime/reducer.ts`（`reduceLaneSnapshot`）。
@@ -141,9 +141,9 @@ batch 完成后 `tool-placement` 用 `completedCalls.every(call => call.status =
 
 `AgentLane.promptFromTemplate()` 已实现：它 `accept` 一条 `prompt_template` request，再 `drive`。没有 coding-agent 那种 expand 开关。[E: packages/agent/src/harness/runtime/lane.ts:1154] [E: packages/agent/src/harness/runtime/lane.ts:1155]
 
-`expandPromptTemplates` 是 `coding-agent` 的 `PromptOptions` 字段：`AgentSession.prompt()` 默认 `true`，为真时先拦截 `/` 扩展命令，再展开 skill command 与 prompt template。[E: packages/coding-agent/src/core/agent-session.ts:244] [E: packages/coding-agent/src/core/agent-session.ts:1160] [E: packages/coding-agent/src/core/agent-session.ts:1167] [E: packages/coding-agent/src/core/agent-session.ts:1204]
+`expandPromptTemplates` 是 `coding-agent` 的 `PromptOptions` 字段：`AgentSession.prompt()` 默认 `true`，为真时先拦截 `/` 扩展命令，再展开 skill command 与 prompt template。[E: packages/coding-agent/src/core/agent-session.ts:244] [E: packages/coding-agent/src/core/agent-session.ts:1176] [E: packages/coding-agent/src/core/agent-session.ts:1183] [E: packages/coding-agent/src/core/agent-session.ts:1213]
 
-`AgentSession.sendUserMessage()` 把同一字段默认成 `false`，再转调 `prompt()`。[E: packages/coding-agent/src/core/agent-session.ts:1552] [E: packages/coding-agent/src/core/agent-session.ts:1575] 这不是 `AgentHarness` API。
+`AgentSession.sendUserMessage()` 把同一字段默认成 `false`，再转调 `prompt()`。[E: packages/coding-agent/src/core/agent-session.ts:1573] [E: packages/coding-agent/src/core/agent-session.ts:1596] 这不是 `AgentHarness` API。
 
 ## 设计动机与权衡
 

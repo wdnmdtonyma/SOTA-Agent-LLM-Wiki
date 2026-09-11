@@ -33,7 +33,7 @@ related:
   - ref.tui.keybinding-actions
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `TuiAltScreen` 是固定 viewport 的 fullscreen renderer，整合 alternate-screen lifecycle、layout、滚动导航、鼠标选择、`copyOnSelect`、链接、flash、jump-to-end 与 Kitty placement cache。
@@ -74,7 +74,7 @@ FOCUS_OUT（`\x1b[O`）只取消正在进行的 press。idle 或零宽选区不 
 
 `hasActiveSelection()` 看当前是否有非空选区文本；`copyActiveSelectionToClipboard()` 用同一条 `copyTextToClipboard()` 路径复制，无选区返回 `false`。[E: packages/tui/src/tui-alt-screen.ts:294] [E: packages/tui/src/tui-alt-screen.ts:299]
 
-coding-agent 把 settings `fullscreenCopyOnSelect`（默认 `true`）传给 `copyOnSelect`，并注入 `copySelection`（`copyToClipboard`）。[E: packages/coding-agent/src/core/settings-manager.ts:145] [E: packages/coding-agent/src/core/settings-manager.ts:1234] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:539] `fullscreenCopyOnSelect=false` 时禁用自动 copy。`app.message.copy` 带 `preferSelection: true` 时，只有 UI 是 `TuiAltScreen`、`getCopyOnSelect()` 为 false 且 `hasActiveSelection()` 为 true 才 `copyActiveSelectionToClipboard()`；默认 `fullscreenCopyOnSelect`/`copyOnSelect` 为 true 时走 last assistant message。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:2896] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6160] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6161] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6162] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6163] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6165]
+coding-agent 把 settings `fullscreenCopyOnSelect`（默认 `true`）传给 `copyOnSelect`，并注入 `copySelection`（`copyToClipboard`）。[E: packages/coding-agent/src/core/settings-manager.ts:157] [E: packages/coding-agent/src/core/settings-manager.ts:1280] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:539] `fullscreenCopyOnSelect=false` 时禁用自动 copy。`app.message.copy` 带 `preferSelection: true` 时，只有 UI 是 `TuiAltScreen`、`getCopyOnSelect()` 为 false 且 `hasActiveSelection()` 为 true 才 `copyActiveSelectionToClipboard()`；默认 `fullscreenCopyOnSelect`/`copyOnSelect` 为 true 时走 last assistant message。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:2896] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6166] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6167] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6168] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6169] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6171]
 
 coding-agent fullscreen 还会注入 `scrollToEndIndicator`（`tui-renderer.ts`），文案带 `tui.altScreen.bottom` shortcut。[I]
 

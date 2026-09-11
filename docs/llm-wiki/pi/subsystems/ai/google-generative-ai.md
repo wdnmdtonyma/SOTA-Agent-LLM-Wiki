@@ -21,7 +21,7 @@ related:
   - subsys.ai.google-vertex
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.ai.google-generative-ai` 描述 `pi-ai` 如何把统一 `Context` 和 `GoogleOptions` 转成 Gemini Developer API `generateContentStream` 请求,并把 Google SDK stream 归一回 `AssistantMessageEventStream`。
@@ -117,7 +117,7 @@ thinking level 的 SDK enum 表达不同:Generative AI 直接把 shared `GoogleA
 
 Accumulator 从 `pending` 开始；candidate finish reason 同时保存在 `rawStopReason` 并映射 unified reason，流结束仍为 pending 会转成 terminal error。[E: packages/ai/src/api/google-generative-ai.ts:61] [E: packages/ai/src/api/google-generative-ai.ts:75] [E: packages/ai/src/api/google-generative-ai.ts:216] [E: packages/ai/src/api/google-generative-ai.ts:220] [E: packages/ai/src/api/google-generative-ai.ts:268] [E: packages/ai/src/api/google-generative-ai.ts:275]
 
-`generateContentStream()` 建流请求现在经 `retryGoogleRequest()` 接入 shared provider retry；它不包后续 `for await` 的中途断流。Google SDK 不能注入任意 fetch，因此非 `globalThis.fetch` 会被显式拒绝。[E: packages/ai/src/api/google-generative-ai.ts:79] [E: packages/ai/src/api/google-generative-ai.ts:81] [E: packages/ai/src/api/google-generative-ai.ts:93] [E: packages/ai/src/api/google-shared.ts:431] [E: packages/ai/src/api/google-shared.ts:435]
+`generateContentStream()` 建流请求现在经 `retryGoogleRequest()` 接入 shared provider retry；它不包后续 `for await` 的中途断流。Google SDK 不能注入任意 fetch，因此非 `globalThis.fetch` 会被显式拒绝。[E: packages/ai/src/api/google-generative-ai.ts:79] [E: packages/ai/src/api/google-generative-ai.ts:81] [E: packages/ai/src/api/google-generative-ai.ts:93] [E: packages/ai/src/api/google-shared.ts:432] [E: packages/ai/src/api/google-shared.ts:436]
 
 Client `httpOptions.headers` 默认先写 `User-Agent: getPiUserAgent()`，再 overlay `model.headers` 与 request headers [E: packages/ai/src/api/google-generative-ai.ts:348] [E: packages/ai/src/utils/pi-user-agent.ts:17]。
 

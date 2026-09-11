@@ -33,7 +33,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > Pi comparative eval 层把 baseline/candidate/repetition 编成稳定 iteration metadata，把每次真实 harness run 绑定到 Vitest task，并输出成对 correctness lift 与独立效率 delta。
@@ -72,7 +72,7 @@ eval-only `afterEach` 从当前 task metadata 取得 harness run，把 `piSessio
 
 `onTestCaseResult` 把每个 completed run 追加到 `runs.jsonl`：包括 test identity/status、harness name、usage、timing、errors、artifact references 与除 raw snapshot/runId 外的 metadata。artifact directory 与 JSONL 使用限制性权限。[E: packages/evals/src/vitest-evals/reporter.ts:14] [E: packages/evals/src/vitest-evals/reporter.ts:23] [E: packages/evals/src/vitest-evals/reporter.ts:26] [E: packages/evals/src/vitest-evals/reporter.ts:29] [E: packages/evals/src/vitest-evals/reporter.ts:36] [E: packages/evals/src/vitest-evals/reporter.ts:37] [E: packages/evals/src/vitest-evals/reporter.ts:40] [E: packages/evals/src/vitest-evals/reporter.ts:43] [E: packages/evals/src/vitest-evals/reporter.ts:44] [E: packages/evals/src/vitest-evals/reporter.ts:47] [E: packages/evals/src/vitest-evals/reporter.ts:94]
 
-artifact 可能含完整 prompts、responses、generated source 与 tool output，不是脱敏摘要。[E: packages/evals/README.md:32] [E: packages/evals/README.md:33]
+artifact 可能含完整 prompts、responses、generated source 与 tool output，不是脱敏摘要。[E: packages/evals/README.md:33] [E: packages/evals/README.md:34]
 
 ## Extension authoring comparative eval
 

@@ -25,7 +25,7 @@ related:
   - subsys.coding-agent.file-mutation-queue
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `edit-engine` 是 pi-coding-agent 的 targeted replacement 子系统: 它把 `oldText -> newText` 编辑转换成一次性匹配、可预览的 diff/patch, 并在必要时用受限 fuzzy normalization 容忍模型容易写错的 Unicode 和行尾差异。
@@ -123,7 +123,7 @@ diff preview 和真实写文件共用 `applyEditsToNormalizedContent()`, 因此 
 
 [surface.tools.edit](../../surface/tools/edit.md) 是模型可见工具面的权威节点: 它覆盖 wire name、schema 表、注册装配、renderer 和 execute path。本文只详写 `edit-diff.ts` 的 matching/diff 算法, 并在必要处引用 `edit.ts` 说明入口边界 [I]。
 
-[subsys.coding-agent.file-mutation-queue](file-mutation-queue.md) 是 per-file mutation serialization 的权威节点: `edit` 与 `write` 都把真实 mutation window 包进 `withFileMutationQueue()`, extension 文档也要求自定义 mutating tool 参与同一个 queue, 因为默认并行 tool calls 可能同时读取旧内容并导致 last-write-wins [E: packages/coding-agent/src/core/tools/edit.ts:163] [E: packages/coding-agent/src/core/tools/write.ts:67] [E: packages/coding-agent/docs/extensions.md:1925]。
+[subsys.coding-agent.file-mutation-queue](file-mutation-queue.md) 是 per-file mutation serialization 的权威节点: `edit` 与 `write` 都把真实 mutation window 包进 `withFileMutationQueue()`, extension 文档也要求自定义 mutating tool 参与同一个 queue, 因为默认并行 tool calls 可能同时读取旧内容并导致 last-write-wins [E: packages/coding-agent/src/core/tools/edit.ts:163] [E: packages/coding-agent/src/core/tools/write.ts:67] [E: packages/coding-agent/docs/extensions.md:1931]。
 
 ## Sources
 

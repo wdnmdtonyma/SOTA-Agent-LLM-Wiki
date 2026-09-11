@@ -1,0 +1,2894 @@
+{
+  "base": "9767ba275f3e9a5ee0f5c5342249b629ab1b2282",
+  "target": "bbb61e34aaf231639fdaaad1adbd757947034eac",
+  "target_short": "bbb61e34aa",
+  "grades": {
+    "A-BROKEN": 0,
+    "B-HEAVY": 54,
+    "C-DRIFT": 53,
+    "D-CLEAN": 93
+  },
+  "changed_files": [
+    ".pi/prompts/cl.md",
+    ".pi/skills/interactive-testing.md",
+    ".pi/skills/release.md",
+    "AGENTS.md",
+    "package-lock.json",
+    "package.json",
+    "packages/agent/docs/harness.md",
+    "packages/agent/docs/pico-v3.md",
+    "packages/agent/docs/pico/pico-usage-guide.md",
+    "packages/agent/docs/pico/pico-v3.md",
+    "packages/agent/docs/pico/pico-work.md",
+    "packages/agent/docs/pico2.md",
+    "packages/agent/docs/work-packages/08-named-branch-streaming-forks.md",
+    "packages/agent/package.json",
+    "packages/agent/src/harness/config.ts",
+    "packages/agent/src/harness/env/nodejs.ts",
+    "packages/agent/src/harness/runtime/drive/boundary.ts",
+    "packages/agent/src/harness/runtime/drive/response.ts",
+    "packages/agent/src/harness/runtime/drive/retry.ts",
+    "packages/agent/src/harness/runtime/drive/structural.ts",
+    "packages/agent/src/harness/session/fork-policy.ts",
+    "packages/agent/src/harness/session/fork.ts",
+    "packages/agent/src/harness/session/in-memory-storage-state.ts",
+    "packages/agent/src/harness/session/index.ts",
+    "packages/agent/src/harness/session/jsonl/fork.ts",
+    "packages/agent/src/harness/session/jsonl/io.ts",
+    "packages/agent/src/harness/session/jsonl/legacy-v3.ts",
+    "packages/agent/src/harness/session/jsonl/repo.ts",
+    "packages/agent/src/harness/session/jsonl/storage.ts",
+    "packages/agent/src/harness/session/memory.ts",
+    "packages/agent/src/harness/session/testing/conformance/session-repo.ts",
+    "packages/agent/src/harness/session/testing/index.ts",
+    "packages/agent/src/harness/session/types.ts",
+    "packages/agent/src/harness/types.ts",
+    "packages/agent/test/harness/jsonl-io.test.ts",
+    "packages/agent/test/harness/jsonl-session-repo-conformance.test.ts",
+    "packages/agent/test/harness/jsonl-storage.test.ts",
+    "packages/agent/test/harness/jsonl-v3-migration.test.ts",
+    "packages/agent/test/harness/jsonl-v3-stream.test.ts",
+    "packages/agent/test/harness/memory-conformance.test.ts",
+    "packages/agent/test/harness/memory-session-repo.test.ts",
+    "packages/agent/test/harness/runtime/drive-generation.test.ts",
+    "packages/agent/test/harness/runtime/drive-reconcile.test.ts",
+    "packages/agent/test/harness/runtime/drive-retry.test.ts",
+    "packages/agent/test/harness/runtime/drive-structural.test.ts",
+    "packages/agent/test/harness/runtime/drive-terminal.test.ts",
+    "packages/agent/test/harness/runtime/progress.test.ts",
+    "packages/agent/test/harness/runtime/watch.test.ts",
+    "packages/agent/test/harness/text-line-reader.test.ts",
+    "packages/agent/test/harness/types.test.ts",
+    "packages/ai/CHANGELOG.md",
+    "packages/ai/README.md",
+    "packages/ai/package.json",
+    "packages/ai/scripts/generate-models.ts",
+    "packages/ai/src/api/anthropic-messages.ts",
+    "packages/ai/src/api/google-shared.ts",
+    "packages/ai/src/api/mistral-conversations.ts",
+    "packages/ai/src/api/openai-codex-responses.ts",
+    "packages/ai/src/api/openai-completions.ts",
+    "packages/ai/src/providers/opencode-go.ts",
+    "packages/ai/src/providers/opencode-headers.ts",
+    "packages/ai/src/providers/opencode.ts",
+    "packages/ai/src/types.ts",
+    "packages/ai/src/utils/event-stream.ts",
+    "packages/ai/src/utils/retry.ts",
+    "packages/ai/test/anthropic-adaptive-thinking-models.test.ts",
+    "packages/ai/test/anthropic-empty-thinking-signature-compat.test.ts",
+    "packages/ai/test/event-stream.test.ts",
+    "packages/ai/test/fireworks-model-generation.test.ts",
+    "packages/ai/test/fireworks-models.test.ts",
+    "packages/ai/test/mistral-reasoning-mode.test.ts",
+    "packages/ai/test/model-catalog-types.test.ts",
+    "packages/ai/test/openai-completions-empty-tools.test.ts",
+    "packages/ai/test/openai-completions-prompt-cache.test.ts",
+    "packages/ai/test/opencode-provider-headers.test.ts",
+    "packages/ai/test/retry.test.ts",
+    "packages/ai/test/tool-call-id-normalization.test.ts",
+    "packages/chord/package.json",
+    "packages/coding-agent/CHANGELOG.md",
+    "packages/coding-agent/README.md",
+    "packages/coding-agent/docs/compaction.md",
+    "packages/coding-agent/docs/custom-provider.md",
+    "packages/coding-agent/docs/development.md",
+    "packages/coding-agent/docs/docs.json",
+    "packages/coding-agent/docs/extensions.md",
+    "packages/coding-agent/docs/json.md",
+    "packages/coding-agent/docs/providers.md",
+    "packages/coding-agent/docs/sdk.md",
+    "packages/coding-agent/docs/security.md",
+    "packages/coding-agent/docs/session-format.md",
+    "packages/coding-agent/docs/settings.md",
+    "packages/coding-agent/docs/tui.md",
+    "packages/coding-agent/install-lock/package-lock.json",
+    "packages/coding-agent/install-lock/package.json",
+    "packages/coding-agent/npm-shrinkwrap.json",
+    "packages/coding-agent/package.json",
+    "packages/coding-agent/src/config.ts",
+    "packages/coding-agent/src/core/agent-session.ts",
+    "packages/coding-agent/src/core/extensions/loader.ts",
+    "packages/coding-agent/src/core/model-registry.ts",
+    "packages/coding-agent/src/core/settings-manager.ts",
+    "packages/coding-agent/src/index.ts",
+    "packages/coding-agent/src/migrations.ts",
+    "packages/coding-agent/src/modes/interactive/chat-viewport.ts",
+    "packages/coding-agent/src/modes/interactive/components/custom-editor.ts",
+    "packages/coding-agent/src/modes/interactive/components/status-indicator.ts",
+    "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+    "packages/coding-agent/src/modes/rpc/rpc-mode.ts",
+    "packages/coding-agent/test/agent-session-concurrent.test.ts",
+    "packages/coding-agent/test/agent-session-retry.test.ts",
+    "packages/coding-agent/test/documentation.test.ts",
+    "packages/coding-agent/test/extensions-runner.test.ts",
+    "packages/coding-agent/test/interactive-mode-tree-navigation.test.ts",
+    "packages/coding-agent/test/interactive-tui.test.ts",
+    "packages/coding-agent/test/mermaid.test.ts",
+    "packages/coding-agent/test/settings-manager-compaction.test.ts",
+    "packages/coding-agent/test/settings-manager.test.ts",
+    "packages/coding-agent/test/status-indicator.test.ts",
+    "packages/coding-agent/test/suite/agent-session-compaction-model-overrides.test.ts",
+    "packages/coding-agent/test/suite/agent-session-compaction.test.ts",
+    "packages/coding-agent/test/suite/agent-session-queue.test.ts",
+    "packages/coding-agent/test/suite/regressions/2791-fswatch-error-crash.test.ts",
+    "packages/coding-agent/test/suite/regressions/3302-find-path-glob.test.ts",
+    "packages/coding-agent/test/suite/regressions/3303-find-nested-gitignore.test.ts",
+    "packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts",
+    "packages/coding-agent/test/suite/regressions/9178-tree-during-compaction.test.ts",
+    "packages/evals/README.md",
+    "packages/evals/src/docs.eval.ts",
+    "packages/evals/src/pi-harness.ts",
+    "packages/protocol/package.json",
+    "packages/tui/package.json",
+    "scripts/build-coding-agent-bundle.mjs",
+    "scripts/generate-coding-agent-install-lock.mjs",
+    "scripts/generate-coding-agent-shrinkwrap.mjs"
+  ],
+  "nodes": [
+    {
+      "id": "subsys.agent-core.jsonl-storage",
+      "path": "subsystems/agent-core/jsonl-storage.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "B-HEAVY",
+      "churn": 880,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/session/jsonl/repo.ts",
+        "packages/agent/src/harness/session/jsonl/storage.ts",
+        "packages/agent/src/harness/session/jsonl/legacy-v3.ts"
+      ]
+    },
+    {
+      "id": "surface.misc.images",
+      "path": "surface/misc/images.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 354,
+      "n_hits": 4,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts"
+      ]
+    },
+    {
+      "id": "ref.agent.error-codes",
+      "path": "reference/error-codes.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "agent",
+      "grade": "B-HEAVY",
+      "churn": 306,
+      "n_hits": 4,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/types.ts",
+        "packages/agent/src/harness/session/jsonl/storage.ts",
+        "packages/agent/src/harness/session/jsonl/repo.ts",
+        "packages/agent/test/harness/types.test.ts"
+      ]
+    },
+    {
+      "id": "spine.session-state-model",
+      "path": "spine/session-state-model.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "cross",
+      "grade": "B-HEAVY",
+      "churn": 260,
+      "n_hits": 5,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/session/types.ts",
+        "packages/agent/src/harness/session/index.ts",
+        "packages/agent/src/harness/session/in-memory-storage-state.ts",
+        "packages/agent/src/harness/session/jsonl/repo.ts",
+        "packages/agent/src/harness/session/memory.ts"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.config-keys",
+      "path": "reference/config-keys.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 234,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/docs/settings.md"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.usage-accounting",
+      "path": "subsystems/coding-agent/usage-accounting.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 231,
+      "n_hits": 5,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/agent/src/harness/session/types.ts",
+        "packages/coding-agent/CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "surface.modes.interactive",
+      "path": "surface/modes/interactive.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 230,
+      "n_hits": 5,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/src/modes/interactive/chat-viewport.ts",
+        "packages/coding-agent/src/modes/interactive/components/custom-editor.ts",
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "surface.skills.system",
+      "path": "surface/skills/system.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 220,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts"
+      ]
+    },
+    {
+      "id": "surface.slash-commands.overview",
+      "path": "surface/commands/overview.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 220,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/core/settings-manager.ts"
+      ]
+    },
+    {
+      "id": "surface.misc.security",
+      "path": "surface/misc/security.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 216,
+      "n_hits": 4,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/security.md",
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/coding-agent/src/core/model-registry.ts",
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "ref.tools-catalog",
+      "path": "reference/tools-catalog.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 214,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/agent/src/harness/types.ts"
+      ]
+    },
+    {
+      "id": "surface.tools.read",
+      "path": "surface/tools/read.md",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 198,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/core/settings-manager.ts"
+      ]
+    },
+    {
+      "id": "spine.layered-architecture",
+      "path": "spine/layered-architecture.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "cross",
+      "grade": "B-HEAVY",
+      "churn": 189,
+      "n_hits": 8,
+      "missing": [],
+      "hit_sources": [
+        "package.json",
+        "packages/chord/package.json",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/ai/package.json",
+        "packages/agent/package.json",
+        "packages/protocol/package.json",
+        "packages/coding-agent/package.json",
+        "packages/tui/package.json"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.json-events",
+      "path": "reference/json-events.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 187,
+      "n_hits": 6,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/json.md",
+        "packages/coding-agent/src/modes/rpc/rpc-mode.ts",
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/ai/src/types.ts",
+        "packages/ai/src/utils/retry.ts"
+      ]
+    },
+    {
+      "id": "spine.overview",
+      "path": "spine/overview.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "cross",
+      "grade": "B-HEAVY",
+      "churn": 185,
+      "n_hits": 6,
+      "missing": [],
+      "hit_sources": [
+        "package.json",
+        "packages/chord/package.json",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/core/model-registry.ts",
+        "packages/coding-agent/src/modes/rpc/rpc-mode.ts",
+        "packages/coding-agent/package.json"
+      ]
+    },
+    {
+      "id": "subsys.agent-core.memory-storage",
+      "path": "subsystems/agent-core/memory-storage.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "B-HEAVY",
+      "churn": 184,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/session/memory.ts",
+        "packages/agent/src/harness/session/in-memory-storage-state.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.extension-loader",
+      "path": "subsystems/coding-agent/extension-loader.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 167,
+      "n_hits": 4,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/extensions/loader.ts",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/docs/extensions.md",
+        "scripts/build-coding-agent-bundle.mjs"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.slash-commands",
+      "path": "reference/slash-commands.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 160,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/modes/rpc/rpc-mode.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.extension-runner",
+      "path": "subsystems/coding-agent/extension-runner.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 160,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/docs/extensions.md"
+      ]
+    },
+    {
+      "id": "surface.extensions.events",
+      "path": "surface/extensions/events.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 160,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/docs/extensions.md"
+      ]
+    },
+    {
+      "id": "subsys.agent-core.session-storage",
+      "path": "subsystems/agent-core/session-storage.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "B-HEAVY",
+      "churn": 158,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/session/types.ts",
+        "packages/agent/src/harness/session/in-memory-storage-state.ts",
+        "packages/agent/src/harness/session/index.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.interactive-orchestration",
+      "path": "subsystems/coding-agent/interactive-orchestration.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 158,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/src/modes/interactive/chat-viewport.ts",
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "surface.sdk.embedding",
+      "path": "surface/sdk/embedding.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 158,
+      "n_hits": 4,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/package.json",
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/index.ts",
+        "packages/coding-agent/docs/sdk.md"
+      ]
+    },
+    {
+      "id": "spine.trace-interactive-turn",
+      "path": "spine/trace-interactive-turn.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "cross",
+      "grade": "B-HEAVY",
+      "churn": 156,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "subsys.agent-core.tree-navigation",
+      "path": "subsystems/agent-core/tree-navigation.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "B-HEAVY",
+      "churn": 156,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/session/types.ts",
+        "packages/agent/src/harness/session/in-memory-storage-state.ts"
+      ]
+    },
+    {
+      "id": "subsys.agent-core.agent-harness-lifecycle",
+      "path": "subsystems/agent-core/agent-harness-lifecycle.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "B-HEAVY",
+      "churn": 154,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/types.ts",
+        "packages/agent/package.json",
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "spine.tool-call-anatomy",
+      "path": "spine/tool-call-anatomy.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "agent",
+      "grade": "B-HEAVY",
+      "churn": 150,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/types.ts",
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.agent-session",
+      "path": "subsystems/coding-agent/agent-session.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 144,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "surface.modes.print",
+      "path": "surface/modes/print.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 142,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/json.md",
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "spine.extension-lifecycle",
+      "path": "spine/extension-lifecycle.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 139,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/extensions/loader.ts",
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "spine.trace-rpc-prompt",
+      "path": "spine/trace-rpc-prompt.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 138,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/rpc/rpc-mode.ts",
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.bash-executor",
+      "path": "subsystems/coding-agent/bash-executor.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 138,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/modes/rpc/rpc-mode.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.output-truncation",
+      "path": "subsystems/coding-agent/output-truncation.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 138,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/modes/rpc/rpc-mode.ts"
+      ]
+    },
+    {
+      "id": "surface.tools.find",
+      "path": "surface/tools/find.md",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 138,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/test/suite/regressions/3302-find-path-glob.test.ts",
+        "packages/coding-agent/test/suite/regressions/3303-find-nested-gitignore.test.ts"
+      ]
+    },
+    {
+      "id": "surface.tools.grep",
+      "path": "surface/tools/grep.md",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 136,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts",
+        "packages/coding-agent/src/config.ts"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.session-events",
+      "path": "reference/session-events.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 134,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.system-prompt",
+      "path": "subsystems/coding-agent/system-prompt.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 134,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "surface.tools.bash",
+      "path": "surface/tools/bash.md",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 134,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "surface.tools.ls",
+      "path": "surface/tools/ls.md",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 134,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "surface.tools.powershell",
+      "path": "surface/tools/powershell.md",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 134,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "surface.tools.write",
+      "path": "surface/tools/write.md",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 134,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/agent-session.ts"
+      ]
+    },
+    {
+      "id": "surface.config.settings",
+      "path": "surface/config/settings.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 122,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/docs/settings.md"
+      ]
+    },
+    {
+      "id": "subsys.agent-core.exec-env",
+      "path": "subsystems/agent-core/exec-env.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "B-HEAVY",
+      "churn": 117,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/env/nodejs.ts"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.env-vars",
+      "path": "reference/env-vars.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 89,
+      "n_hits": 5,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/api/anthropic-messages.ts",
+        "packages/ai/src/api/openai-completions.ts",
+        "packages/coding-agent/src/config.ts",
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/coding-agent/docs/providers.md"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.session-format",
+      "path": "reference/session-format.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 88,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/session-format.md"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.settings-manager",
+      "path": "subsystems/coding-agent/settings-manager.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "B-HEAVY",
+      "churn": 86,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/settings-manager.ts",
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts"
+      ]
+    },
+    {
+      "id": "subsys.tui.alternate-screen",
+      "path": "subsystems/tui/alternate-screen.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "B-HEAVY",
+      "churn": 86,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/src/core/settings-manager.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.model-catalog-publication",
+      "path": "subsystems/ai/model-catalog-publication.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "B-HEAVY",
+      "churn": 81,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/scripts/generate-models.ts",
+        "package.json",
+        "packages/ai/package.json"
+      ]
+    },
+    {
+      "id": "subsys.ai.model-discovery",
+      "path": "subsystems/ai/model-discovery.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "B-HEAVY",
+      "churn": 78,
+      "n_hits": 4,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/types.ts",
+        "packages/ai/src/api/google-shared.ts",
+        "packages/ai/scripts/generate-models.ts",
+        "packages/ai/package.json"
+      ]
+    },
+    {
+      "id": "ref.package-index",
+      "path": "reference/package-index.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "cross",
+      "grade": "B-HEAVY",
+      "churn": 63,
+      "n_hits": 9,
+      "missing": [],
+      "hit_sources": [
+        "package.json",
+        "scripts/build-coding-agent-bundle.mjs",
+        "packages/chord/package.json",
+        "packages/ai/package.json",
+        "packages/agent/package.json",
+        "packages/protocol/package.json",
+        "packages/coding-agent/package.json",
+        "packages/tui/package.json",
+        "packages/coding-agent/install-lock/package.json"
+      ]
+    },
+    {
+      "id": "spine.provider-stream",
+      "path": "spine/provider-stream.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "ai",
+      "grade": "B-HEAVY",
+      "churn": 61,
+      "n_hits": 4,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/types.ts",
+        "packages/ai/src/api/openai-completions.ts",
+        "packages/ai/src/api/anthropic-messages.ts",
+        "packages/ai/src/utils/event-stream.ts"
+      ]
+    },
+    {
+      "id": "surface.providers.auth",
+      "path": "surface/providers/auth.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "cross",
+      "grade": "B-HEAVY",
+      "churn": 46,
+      "n_hits": 5,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/providers.md",
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/src/core/model-registry.ts",
+        "packages/ai/src/types.ts",
+        "packages/ai/src/api/openai-completions.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.provider-retry",
+      "path": "subsystems/ai/provider-retry.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "B-HEAVY",
+      "churn": 37,
+      "n_hits": 4,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/utils/retry.ts",
+        "packages/ai/src/api/openai-completions.ts",
+        "packages/ai/src/api/anthropic-messages.ts",
+        "packages/ai/src/api/google-shared.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.constrained-sampling",
+      "path": "subsystems/ai/constrained-sampling.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "B-HEAVY",
+      "churn": 36,
+      "n_hits": 6,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/types.ts",
+        "packages/ai/src/api/openai-codex-responses.ts",
+        "packages/ai/src/api/openai-completions.ts",
+        "packages/ai/src/api/anthropic-messages.ts",
+        "packages/ai/src/api/google-shared.ts",
+        "packages/ai/src/api/mistral-conversations.ts"
+      ]
+    },
+    {
+      "id": "subsys.tui.terminal-image",
+      "path": "subsystems/tui/terminal-image.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "C-DRIFT",
+      "churn": 64,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/settings-manager.ts"
+      ]
+    },
+    {
+      "id": "surface.misc.packages",
+      "path": "surface/misc/packages.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 64,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/settings-manager.ts"
+      ]
+    },
+    {
+      "id": "ref.ai.model-catalog",
+      "path": "reference/model-catalog.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 63,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/scripts/generate-models.ts",
+        "packages/ai/src/types.ts"
+      ]
+    },
+    {
+      "id": "surface.config.keybindings",
+      "path": "surface/config/keybindings.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 60,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/config.ts",
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/docs/settings.md"
+      ]
+    },
+    {
+      "id": "subsys.ai.cloudflare-gateway-binding",
+      "path": "subsystems/ai/cloudflare-gateway-binding.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 59,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/scripts/generate-models.ts"
+      ]
+    },
+    {
+      "id": "ref.glossary",
+      "path": "reference/glossary.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "cross",
+      "grade": "C-DRIFT",
+      "churn": 53,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "AGENTS.md"
+      ]
+    },
+    {
+      "id": "surface.extensions.context-ui",
+      "path": "surface/extensions/context-ui.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 48,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts",
+        "packages/coding-agent/docs/extensions.md"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.file-mutation-queue",
+      "path": "subsystems/coding-agent/file-mutation-queue.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 37,
+      "n_hits": 3,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/index.ts",
+        "packages/coding-agent/docs/extensions.md",
+        "packages/coding-agent/CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "subsys.ai.event-stream",
+      "path": "subsystems/ai/event-stream.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 36,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/utils/event-stream.ts"
+      ]
+    },
+    {
+      "id": "surface.extensions.api",
+      "path": "surface/extensions/api.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 31,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/extensions.md",
+        "packages/coding-agent/src/core/extensions/loader.ts"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.contribution-points",
+      "path": "reference/contribution-points.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 26,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/extensions.md"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.extension-events",
+      "path": "reference/extension-events.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 26,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/extensions.md"
+      ]
+    },
+    {
+      "id": "ref.interactive.components",
+      "path": "reference/components.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 26,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/components/custom-editor.ts",
+        "packages/coding-agent/src/modes/interactive/components/status-indicator.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.edit-engine",
+      "path": "subsystems/coding-agent/edit-engine.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 26,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/extensions.md"
+      ]
+    },
+    {
+      "id": "subsys.ai.anthropic-messages",
+      "path": "subsystems/ai/anthropic-messages.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 23,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/api/anthropic-messages.ts",
+        "packages/ai/src/types.ts"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.default-keybindings",
+      "path": "reference/default-keybindings.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 22,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.html-export",
+      "path": "subsystems/coding-agent/html-export.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 22,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/interactive/interactive-mode.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.experimental-cli",
+      "path": "subsystems/coding-agent/experimental-cli.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 21,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/package.json"
+      ]
+    },
+    {
+      "id": "surface.sdk.remote-session",
+      "path": "surface/sdk/remote-session.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 21,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/package.json"
+      ]
+    },
+    {
+      "id": "subsys.ai.prompt-caching",
+      "path": "subsystems/ai/prompt-caching.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 19,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/api/anthropic-messages.ts"
+      ]
+    },
+    {
+      "id": "ref.agent.agent-events",
+      "path": "reference/agent-events.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "agent",
+      "grade": "C-DRIFT",
+      "churn": 16,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/types.ts"
+      ]
+    },
+    {
+      "id": "ref.ai.provider-catalog",
+      "path": "reference/provider-catalog.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 16,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/providers/opencode.ts",
+        "packages/ai/src/providers/opencode-go.ts"
+      ]
+    },
+    {
+      "id": "subsys.agent-core.execution-tools",
+      "path": "subsystems/agent-core/execution-tools.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "C-DRIFT",
+      "churn": 16,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/types.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.model-registry",
+      "path": "subsystems/coding-agent/model-registry.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 16,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/model-registry.ts"
+      ]
+    },
+    {
+      "id": "surface.providers.custom-provider",
+      "path": "surface/providers/custom-provider.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 16,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/custom-provider.md"
+      ]
+    },
+    {
+      "id": "subsys.ai.oauth-flow",
+      "path": "subsystems/ai/oauth-flow.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 14,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/package.json"
+      ]
+    },
+    {
+      "id": "subsys.evals.pi-harness",
+      "path": "subsystems/evals/pi-harness.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "evals",
+      "grade": "C-DRIFT",
+      "churn": 13,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/evals/README.md",
+        "packages/evals/src/pi-harness.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.openai-responses",
+      "path": "subsystems/ai/openai-responses.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 10,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/types.ts",
+        "packages/ai/src/api/openai-codex-responses.ts"
+      ]
+    },
+    {
+      "id": "subsys.chord.runtime",
+      "path": "subsystems/chord/runtime.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "chord",
+      "grade": "C-DRIFT",
+      "churn": 10,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/chord/package.json",
+        "package.json"
+      ]
+    },
+    {
+      "id": "subsys.ai.openai-codex-responses",
+      "path": "subsystems/ai/openai-codex-responses.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 6,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/api/openai-codex-responses.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.openai-completions",
+      "path": "subsystems/ai/openai-completions.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 6,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/api/openai-completions.ts",
+        "packages/ai/src/types.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.event-bus",
+      "path": "subsystems/coding-agent/event-bus.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 6,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/core/extensions/loader.ts",
+        "packages/coding-agent/src/index.ts"
+      ]
+    },
+    {
+      "id": "ref.ai.core-types",
+      "path": "reference/core-types.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 5,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/types.ts",
+        "packages/ai/src/api/google-shared.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.migrations",
+      "path": "subsystems/coding-agent/migrations.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 5,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/migrations.ts"
+      ]
+    },
+    {
+      "id": "ref.ai.wire-protocol-catalog",
+      "path": "reference/wire-protocol-catalog.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 4,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/types.ts"
+      ]
+    },
+    {
+      "id": "ref.coding-agent.rpc-methods",
+      "path": "reference/rpc-methods.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 4,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/rpc/rpc-mode.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.mistral-conversations",
+      "path": "subsystems/ai/mistral-conversations.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 4,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/api/mistral-conversations.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.pi-messages",
+      "path": "subsystems/ai/pi-messages.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 4,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/types.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.wire-protocol-dispatch",
+      "path": "subsystems/ai/wire-protocol-dispatch.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 4,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/types.ts"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.model-resolver",
+      "path": "subsystems/coding-agent/model-resolver.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 4,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/types.ts"
+      ]
+    },
+    {
+      "id": "surface.modes.rpc",
+      "path": "surface/modes/rpc.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 4,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/rpc/rpc-mode.ts"
+      ]
+    },
+    {
+      "id": "surface.modes.rpc-protocol",
+      "path": "surface/modes/rpc-protocol.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 4,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/modes/rpc/rpc-mode.ts"
+      ]
+    },
+    {
+      "id": "subsys.agent-core.session-search",
+      "path": "subsystems/agent-core/session-search.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "C-DRIFT",
+      "churn": 3,
+      "n_hits": 2,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/test/harness/types.test.ts",
+        "packages/agent/src/harness/session/types.ts"
+      ]
+    },
+    {
+      "id": "subsys.evals.comparative-harness",
+      "path": "subsystems/evals/comparative-harness.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "evals",
+      "grade": "C-DRIFT",
+      "churn": 3,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/evals/README.md"
+      ]
+    },
+    {
+      "id": "subsys.chord.delta",
+      "path": "subsystems/chord/delta.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "chord",
+      "grade": "C-DRIFT",
+      "churn": 2,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/chord/package.json"
+      ]
+    },
+    {
+      "id": "subsys.coding-agent.config-resolution",
+      "path": "subsystems/coding-agent/config-resolution.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 2,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/src/config.ts"
+      ]
+    },
+    {
+      "id": "subsys.protocol.wire-protocol",
+      "path": "subsystems/protocol/wire-protocol.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "protocol",
+      "grade": "C-DRIFT",
+      "churn": 2,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/protocol/package.json"
+      ]
+    },
+    {
+      "id": "surface.providers.overview",
+      "path": "surface/providers/overview.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 2,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/providers.md"
+      ]
+    },
+    {
+      "id": "surface.trust.model",
+      "path": "surface/trust/model.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "C-DRIFT",
+      "churn": 2,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/coding-agent/docs/security.md"
+      ]
+    },
+    {
+      "id": "ref.agent.session-entry-types",
+      "path": "reference/session-entry-types.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "agent",
+      "grade": "C-DRIFT",
+      "churn": 1,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/session/types.ts"
+      ]
+    },
+    {
+      "id": "subsys.agent-core.session-tree",
+      "path": "subsystems/agent-core/session-tree.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "C-DRIFT",
+      "churn": 1,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/agent/src/harness/session/types.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.google-generative-ai",
+      "path": "subsystems/ai/google-generative-ai.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 1,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/api/google-shared.ts"
+      ]
+    },
+    {
+      "id": "subsys.ai.google-vertex",
+      "path": "subsystems/ai/google-vertex.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "C-DRIFT",
+      "churn": 1,
+      "n_hits": 1,
+      "missing": [],
+      "hit_sources": [
+        "packages/ai/src/api/google-shared.ts"
+      ]
+    },
+    {
+      "id": "ref.agent.compaction-config",
+      "path": "reference/compaction-config.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.agent.message-types",
+      "path": "reference/message-types.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.agent.queue-modes",
+      "path": "reference/queue-modes.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.agent.thinking-levels",
+      "path": "reference/thinking-levels.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.agent.tool-execution-modes",
+      "path": "reference/tool-execution-modes.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.ai.auth-types",
+      "path": "reference/auth-types.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.ai.image-models",
+      "path": "reference/image-models.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.coding-agent.cli-flags",
+      "path": "reference/cli-flags.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.tui.component-types",
+      "path": "reference/component-types.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.tui.key-codes",
+      "path": "reference/key-codes.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.tui.keybinding-actions",
+      "path": "reference/keybinding-actions.md",
+      "kind": "catalog",
+      "tier": "T3",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "ref.uncertainty",
+      "path": "reference/uncertainty.md",
+      "kind": "reference",
+      "tier": "T3",
+      "pkg": "cross",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "spine.agent-loop",
+      "path": "spine/agent-loop.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "spine.compaction-flow",
+      "path": "spine/compaction-flow.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "spine.process-lifecycle",
+      "path": "spine/process-lifecycle.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "spine.trace-extension-tool",
+      "path": "spine/trace-extension-tool.md",
+      "kind": "flow",
+      "tier": "T0",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.branch-summary",
+      "path": "subsystems/agent-core/branch-summary.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.compaction",
+      "path": "subsystems/agent-core/compaction.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.harness-events",
+      "path": "subsystems/agent-core/harness-events.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.hooks",
+      "path": "subsystems/agent-core/hooks.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.message-conversion",
+      "path": "subsystems/agent-core/message-conversion.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.message-model",
+      "path": "subsystems/agent-core/message-model.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.message-queue",
+      "path": "subsystems/agent-core/message-queue.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.prompt-templates",
+      "path": "subsystems/agent-core/prompt-templates.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.skills-loading",
+      "path": "subsystems/agent-core/skills-loading.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.system-prompt",
+      "path": "subsystems/agent-core/system-prompt.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.tool-invocation",
+      "path": "subsystems/agent-core/tool-invocation.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.transport-proxy",
+      "path": "subsystems/agent-core/transport-proxy.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.agent-core.turn-control",
+      "path": "subsystems/agent-core/turn-control.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.auth-resolution",
+      "path": "subsystems/ai/auth-resolution.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.azure-openai-responses",
+      "path": "subsystems/ai/azure-openai-responses.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.bedrock-converse",
+      "path": "subsystems/ai/bedrock-converse.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.compat-legacy",
+      "path": "subsystems/ai/compat-legacy.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.credential-store",
+      "path": "subsystems/ai/credential-store.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.env-api-keys",
+      "path": "subsystems/ai/env-api-keys.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.image-generation",
+      "path": "subsystems/ai/image-generation.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.lazy-loading",
+      "path": "subsystems/ai/lazy-loading.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.message-transform",
+      "path": "subsystems/ai/message-transform.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.provider-registry",
+      "path": "subsystems/ai/provider-registry.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.ai.session-resources",
+      "path": "subsystems/ai/session-resources.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "ai",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.client.remote-session-client",
+      "path": "subsystems/client/remote-session-client.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.client.session-leases",
+      "path": "subsystems/client/session-leases.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.client.unix-transport",
+      "path": "subsystems/client/unix-transport.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "client",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.auth-storage",
+      "path": "subsystems/coding-agent/auth-storage.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.extension-wrapper",
+      "path": "subsystems/coding-agent/extension-wrapper.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.footer-data-provider",
+      "path": "subsystems/coding-agent/footer-data-provider.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.http-dispatcher",
+      "path": "subsystems/coding-agent/http-dispatcher.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.keybindings",
+      "path": "subsystems/coding-agent/keybindings.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.package-manager",
+      "path": "subsystems/coding-agent/package-manager.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.path-resolution",
+      "path": "subsystems/coding-agent/path-resolution.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.resource-loader",
+      "path": "subsystems/coding-agent/resource-loader.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.session-manager",
+      "path": "subsystems/coding-agent/session-manager.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.session-runtime",
+      "path": "subsystems/coding-agent/session-runtime.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.session-services",
+      "path": "subsystems/coding-agent/session-services.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.telemetry",
+      "path": "subsystems/coding-agent/telemetry.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.theme-controller",
+      "path": "subsystems/coding-agent/theme-controller.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.tool-wrapper",
+      "path": "subsystems/coding-agent/tool-wrapper.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.coding-agent.trust-manager",
+      "path": "subsystems/coding-agent/trust-manager.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.protocol.cbor-framing",
+      "path": "subsystems/protocol/cbor-framing.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "protocol",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.server.live-sessions",
+      "path": "subsystems/server/live-sessions.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "server",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.server.protocol-adapters",
+      "path": "subsystems/server/protocol-adapters.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "server",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.server.session-server",
+      "path": "subsystems/server/session-server.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "server",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.server.unix-transport",
+      "path": "subsystems/server/unix-transport.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "server",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.session-backends.sqlite-node",
+      "path": "subsystems/session-backends/sqlite-node.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "session-backends",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.telemetry.contracts",
+      "path": "subsystems/telemetry/contracts.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "telemetry",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.alt-screen-search",
+      "path": "subsystems/tui/alt-screen-search.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.autocomplete",
+      "path": "subsystems/tui/autocomplete.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.component-model",
+      "path": "subsystems/tui/component-model.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.cursor-positioning",
+      "path": "subsystems/tui/cursor-positioning.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.diff-engine",
+      "path": "subsystems/tui/diff-engine.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.editor-component",
+      "path": "subsystems/tui/editor-component.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.editor-mechanics",
+      "path": "subsystems/tui/editor-mechanics.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.fuzzy-match",
+      "path": "subsystems/tui/fuzzy-match.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.key-parsing",
+      "path": "subsystems/tui/key-parsing.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.key-pipeline",
+      "path": "subsystems/tui/key-pipeline.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.keybinding-matching",
+      "path": "subsystems/tui/keybinding-matching.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.latex",
+      "path": "subsystems/tui/latex.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.layout",
+      "path": "subsystems/tui/layout.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.native-modifiers",
+      "path": "subsystems/tui/native-modifiers.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.overlay",
+      "path": "subsystems/tui/overlay.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.runtime",
+      "path": "subsystems/tui/runtime.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.stdin-buffer",
+      "path": "subsystems/tui/stdin-buffer.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.terminal-capabilities",
+      "path": "subsystems/tui/terminal-capabilities.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.terminal-colors",
+      "path": "subsystems/tui/terminal-colors.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "subsys.tui.text-utilities",
+      "path": "subsystems/tui/text-utilities.md",
+      "kind": "subsystem",
+      "tier": "T2",
+      "pkg": "tui",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "surface.cli.overview",
+      "path": "surface/cli/overview.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "surface.config.resolution",
+      "path": "surface/config/resolution.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "surface.extensions.contribution-points",
+      "path": "surface/extensions/contribution-points.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "surface.misc.containerization",
+      "path": "surface/misc/containerization.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "surface.prompt-templates.system",
+      "path": "surface/prompts/system.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "surface.providers.llama-cpp",
+      "path": "surface/providers/llama-cpp.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "surface.sessions.management",
+      "path": "surface/sessions/management.md",
+      "kind": "surface",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    },
+    {
+      "id": "surface.tools.edit",
+      "path": "surface/tools/edit.md",
+      "kind": "tool",
+      "tier": "T1",
+      "pkg": "coding-agent",
+      "grade": "D-CLEAN",
+      "churn": 0,
+      "n_hits": 0,
+      "missing": [],
+      "hit_sources": []
+    }
+  ]
+}

@@ -27,7 +27,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `write` 是 pi-coding-agent 内置的完整文件写入工具:模型给出 `path` 和 `content`,工具把路径解析到当前 `cwd`,创建父目录,覆盖写入文件,并用同文件 file mutation queue 避免并发写互相踩踏。
@@ -87,9 +87,9 @@ updated: 9767ba275f
 
 按 preset 创建时,`createCodingToolDefinitions` 把 `write` 放进 write-capable coding tools (`read`,`bash`,`edit`,`write`),`createAllToolDefinitions` 把 `write` 放进八个 built-ins 的 record [E: packages/coding-agent/src/core/tools/index.ts:164] [E: packages/coding-agent/src/core/tools/index.ts:165] [E: packages/coding-agent/src/core/tools/index.ts:169] [E: packages/coding-agent/src/core/tools/index.ts:182] [E: packages/coding-agent/src/core/tools/index.ts:183] [E: packages/coding-agent/src/core/tools/index.ts:186] [E: packages/coding-agent/src/core/tools/index.ts:188].
 
-`AgentSession._buildRuntime` 在没有 `baseToolsOverride` 时调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix, shellPath } })`;这个调用没有给 `write` 传 custom `WriteToolOptions`,所以默认 session 装配使用 `write.ts` 内的本地 filesystem operations [E: packages/coding-agent/src/core/agent-session.ts:2772] [E: packages/coding-agent/src/core/agent-session.ts:2779] [E: packages/coding-agent/src/core/agent-session.ts:2780] [E: packages/coding-agent/src/core/agent-session.ts:2781] [E: packages/coding-agent/src/core/tools/write.ts:48] [I].
+`AgentSession._buildRuntime` 在没有 `baseToolsOverride` 时调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix, shellPath } })`;这个调用没有给 `write` 传 custom `WriteToolOptions`,所以默认 session 装配使用 `write.ts` 内的本地 filesystem operations [E: packages/coding-agent/src/core/agent-session.ts:2795] [E: packages/coding-agent/src/core/agent-session.ts:2802] [E: packages/coding-agent/src/core/agent-session.ts:2803] [E: packages/coding-agent/src/core/agent-session.ts:2804] [E: packages/coding-agent/src/core/tools/write.ts:48] [I].
 
-`AgentSession._refreshToolRegistry` 把 base tool definitions 和 extension/custom definitions 组成 definition registry,给 built-ins 标 synthetic source `<builtin:${name}>`,再经 runner wrapping 得到 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:2679] [E: packages/coding-agent/src/core/agent-session.ts:2686] [E: packages/coding-agent/src/core/agent-session.ts:2687] [E: packages/coding-agent/src/core/agent-session.ts:2694] [E: packages/coding-agent/src/core/agent-session.ts:2722] [E: packages/coding-agent/src/core/agent-session.ts:2723] [E: packages/coding-agent/src/core/agent-session.ts:2733] [E: packages/coding-agent/src/core/agent-session.ts:2737]. 默认 active built-in tool names 是 `["read", "bash", "edit", "write"]`,除非 caller 提供 `baseToolsOverride` 或 `activeToolNames` [E: packages/coding-agent/src/core/agent-session.ts:2808] [E: packages/coding-agent/src/core/agent-session.ts:2810] [E: packages/coding-agent/src/core/agent-session.ts:2811].
+`AgentSession._refreshToolRegistry` 把 base tool definitions 和 extension/custom definitions 组成 definition registry,给 built-ins 标 synthetic source `<builtin:${name}>`,再经 runner wrapping 得到 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:2702] [E: packages/coding-agent/src/core/agent-session.ts:2709] [E: packages/coding-agent/src/core/agent-session.ts:2710] [E: packages/coding-agent/src/core/agent-session.ts:2717] [E: packages/coding-agent/src/core/agent-session.ts:2745] [E: packages/coding-agent/src/core/agent-session.ts:2746] [E: packages/coding-agent/src/core/agent-session.ts:2756] [E: packages/coding-agent/src/core/agent-session.ts:2760]. 默认 active built-in tool names 是 `["read", "bash", "edit", "write"]`,除非 caller 提供 `baseToolsOverride` 或 `activeToolNames` [E: packages/coding-agent/src/core/agent-session.ts:2831] [E: packages/coding-agent/src/core/agent-session.ts:2833] [E: packages/coding-agent/src/core/agent-session.ts:2834].
 
 ## 7 execute() 走读
 

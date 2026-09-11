@@ -13,7 +13,7 @@ related:
   - ref.ai.core-types
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.ai.message-transform` 描述 `transformMessages` 如何在 provider-specific wire payload 构造前,把历史 `Message[]` 归一成更适合目标 `Model` replay 的 `Message[]`。
@@ -33,7 +33,7 @@ updated: 9767ba275f
 
 这个 subsystem 覆盖 replay normalization,不覆盖 `Context.systemPrompt` 的 provider-specific role 选择;`transformMessages` 只接收 `messages: Message[]`,源码没有读取 system prompt 的参数或分支。[E: packages/ai/src/api/transform-messages.ts:64][E: packages/ai/src/api/transform-messages.ts:65][I]
 
-`transformMessages` 通常由 provider-specific `convertMessages` / `convertResponsesMessages` 在构造 wire payload 前调用;OpenAI Responses、OpenAI Completions、Anthropic Messages、Google shared、Bedrock Converse 和 Mistral Conversations 都在各自 serializer 内调用它。[E: packages/ai/src/api/openai-responses-shared.ts:172][E: packages/ai/src/api/openai-completions.ts:1212][E: packages/ai/src/api/anthropic-messages.ts:1028][E: packages/ai/src/api/google-shared.ts:138][E: packages/ai/src/api/bedrock-converse-stream.ts:935][E: packages/ai/src/api/mistral-conversations.ts:139]
+`transformMessages` 通常由 provider-specific `convertMessages` / `convertResponsesMessages` 在构造 wire payload 前调用;OpenAI Responses、OpenAI Completions、Anthropic Messages、Google shared、Bedrock Converse 和 Mistral Conversations 都在各自 serializer 内调用它。[E: packages/ai/src/api/openai-responses-shared.ts:172][E: packages/ai/src/api/openai-completions.ts:1212][E: packages/ai/src/api/anthropic-messages.ts:1029][E: packages/ai/src/api/google-shared.ts:138][E: packages/ai/src/api/bedrock-converse-stream.ts:935][E: packages/ai/src/api/mistral-conversations.ts:139]
 
 ## 关键文件
 

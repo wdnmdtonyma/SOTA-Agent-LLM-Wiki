@@ -23,7 +23,7 @@ related:
   - ref.agent.agent-events
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.agent-core.harness-events` 说明 `HarnessEventBus` 如何把 typed `HarnessEvent` 同时送给 `on(type)` listeners 与带 snapshot / resnapshot 的 buffered watches。事件 shape 定义在 `agent-harness.ts`；bus 实现在 `events.ts`。`Harness` 构造时创建真实 bus，不再是 `UnavailableRegistry`。

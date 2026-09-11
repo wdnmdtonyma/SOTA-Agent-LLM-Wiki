@@ -52,7 +52,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `@earendil-works/pi-session-backend-sqlite-node` 是 `pi-agent-core` v4 `SessionRepo` / `Storage` 的可选 Node `node:sqlite` 实现：默认每个 session 一个 `.sqlite` 文件，也可经 `databasePath` 共用一个容器；权威状态是 `entries` + `scalar_values` + `list_values` + `usage_ledger`。没有 writer lease，也没有 FTS search。
@@ -157,7 +157,7 @@ stats 也在 `sessions` 行：`message_count` + `usage_payload` JSON。[E: packa
 6. `delete(metadata)`@`repo.ts:287`：共享容器只 `deleteSessionRows`（entries/values/lists/usage/branch/session）；per-file 布局关连接后删 `${path}`、`${path}-wal`、`${path}-shm`。[E: packages/session-backends/sqlite-node/src/sqlite/repo.ts:295] [E: packages/session-backends/sqlite-node/src/sqlite/repo.ts:306] [E: packages/session-backends/sqlite-node/src/sqlite/session/session-row.ts:92]
 7. `close()`@`repo.ts:378`：`Promise.allSettled` 关闭全部 `SqliteOpenSession`；多个失败合成 `AggregateError`。[E: packages/session-backends/sqlite-node/src/sqlite/repo.ts:399]
 
-`create()` **不**建隐式 `main` branch，与 memory/JSONL conformance 一致。[E: packages/session-backends/sqlite-node/src/sqlite/repo.ts:205] [E: packages/agent/src/harness/session/testing/conformance/session-repo.ts:158]
+`create()` **不**建隐式 `main` branch，与 memory/JSONL conformance 一致。[E: packages/session-backends/sqlite-node/src/sqlite/repo.ts:205] [E: packages/agent/src/harness/session/testing/conformance/session-repo.ts:159]
 
 本包通过 `storage-conformance.test.ts` / `repo-conformance.test.ts` 跑 agent-core 的 backend fixture。[E: packages/session-backends/sqlite-node/test/storage-conformance.test.ts:4] [E: packages/session-backends/sqlite-node/test/repo-conformance.test.ts:6]
 

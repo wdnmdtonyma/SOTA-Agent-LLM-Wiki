@@ -34,7 +34,7 @@ related:
   - subsys.ai.constrained-sampling
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > 工具调用(tool call)在 pi 里分成两层: `pi-agent-core` 执行 `AgentTool` 的通用 prepare/validate/execute/finalize 流程, `pi-coding-agent` 负责把产品内置和扩展的 `ToolDefinition` 装配成这些 `AgentTool`。内置 `read` / `bash` / `powershell` / `edit` / `write` 默认带 `constrainedSampling: { type: "json_schema", strict: "prefer" }`，不再要求 `PI_EXPERIMENTAL`。
@@ -94,7 +94,7 @@ flowchart TD
 
 `wrapToolDefinition` 是显式 adapter 边界：它把 `name`、`label`、`description`、`parameters`、`constrainedSampling`、`prepareArguments`、`executionMode` 拷到 `AgentTool`，再用 `ctxFactory?.()` 作为第五个 `ToolDefinition.execute` 参数适配 `execute`。[E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:5] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:10] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:14] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:17]
 
-反向 adapter `createToolDefinitionFromAgentTool` 同样保留 `constrainedSampling`，供 `baseToolsOverride` 使用：它从普通 `AgentTool` 合成最小 `ToolDefinition`，让 `AgentSession` 在调用方直接提供 runtime tools 时仍保持 definition-first registry。[E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:36] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:42] [E: packages/coding-agent/src/core/agent-session.ts:2779] [E: packages/coding-agent/src/core/agent-session.ts:2776]
+反向 adapter `createToolDefinitionFromAgentTool` 同样保留 `constrainedSampling`，供 `baseToolsOverride` 使用：它从普通 `AgentTool` 合成最小 `ToolDefinition`，让 `AgentSession` 在调用方直接提供 runtime tools 时仍保持 definition-first registry。[E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:36] [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:42] [E: packages/coding-agent/src/core/agent-session.ts:2802] [E: packages/coding-agent/src/core/agent-session.ts:2799]
 
 `constrainedSampling` 在执行 loop 前随 provider-facing tool schema 进入请求；它不改变本页的 prepare/execute/finalize 生命周期，provider adapter 的 strict/grammar 判定由 `subsys.ai.constrained-sampling` 覆盖。[I]
 
@@ -108,11 +108,11 @@ flowchart TD
 
 coding-agent 内置工具 ground truth 是 `ToolName = "read" | "bash" | "powershell" | "edit" | "write" | "grep" | "find" | "ls"`，`allToolNames` 含同一组八个名字。[E: packages/coding-agent/src/core/tools/index.ts:95] [E: packages/coding-agent/src/core/tools/index.ts:96] `createAllToolDefinitions` 返回含 `powershell` 的八工具 record；`createCodingToolDefinitions` 仍只返回四个 write-capable coding tools（`read`/`bash`/`edit`/`write`），`createReadOnlyToolDefinitions` 仍只返回四个 read/search/list tools，两个 preset **都不含** `powershell`。[E: packages/coding-agent/src/core/tools/index.ts:164] [E: packages/coding-agent/src/core/tools/index.ts:173] [E: packages/coding-agent/src/core/tools/index.ts:182]
 
-`AgentSession._buildRuntime` 把产品 settings 注入内置工具选项：`read` 用 image auto-resize，`bash` 用 shell command prefix/path，然后在没有 `baseToolsOverride` 时调用 `createAllToolDefinitions`。[E: packages/coding-agent/src/core/agent-session.ts:2776] [E: packages/coding-agent/src/core/agent-session.ts:2770] [E: packages/coding-agent/src/core/agent-session.ts:2771] [E: packages/coding-agent/src/core/agent-session.ts:2772] [E: packages/coding-agent/src/core/agent-session.ts:2779]
+`AgentSession._buildRuntime` 把产品 settings 注入内置工具选项：`read` 用 image auto-resize，`bash` 用 shell command prefix/path，然后在没有 `baseToolsOverride` 时调用 `createAllToolDefinitions`。[E: packages/coding-agent/src/core/agent-session.ts:2799] [E: packages/coding-agent/src/core/agent-session.ts:2793] [E: packages/coding-agent/src/core/agent-session.ts:2794] [E: packages/coding-agent/src/core/agent-session.ts:2795] [E: packages/coding-agent/src/core/agent-session.ts:2802]
 
-`AgentSession._refreshToolRegistry` 合并 built-in definitions、extension-registered tools 和 SDK `customTools`，应用 allowed/excluded filters，保存带 source metadata 的 `ToolDefinition`，把 registered definitions wrap 成 `AgentTool`，最后调用 `setActiveToolsByName`。[E: packages/coding-agent/src/core/agent-session.ts:2671] [E: packages/coding-agent/src/core/agent-session.ts:2686] [E: packages/coding-agent/src/core/agent-session.ts:2723] [E: packages/coding-agent/src/core/agent-session.ts:2733] [E: packages/coding-agent/src/core/agent-session.ts:2761]
+`AgentSession._refreshToolRegistry` 合并 built-in definitions、extension-registered tools 和 SDK `customTools`，应用 allowed/excluded filters，保存带 source metadata 的 `ToolDefinition`，把 registered definitions wrap 成 `AgentTool`，最后调用 `setActiveToolsByName`。[E: packages/coding-agent/src/core/agent-session.ts:2694] [E: packages/coding-agent/src/core/agent-session.ts:2709] [E: packages/coding-agent/src/core/agent-session.ts:2746] [E: packages/coding-agent/src/core/agent-session.ts:2756] [E: packages/coding-agent/src/core/agent-session.ts:2784]
 
-没有 `baseToolsOverride` 时，默认 active tools 只有 `read`、`bash`、`edit`、`write`；`_refreshToolRegistry` 仍把所有 allowed base definitions wrap 进 `_toolRegistry`，`setActiveToolsByName` 只在 registry 里存在的名字上激活。[E: packages/coding-agent/src/core/agent-session.ts:2808] [E: packages/coding-agent/src/core/agent-session.ts:2810] [E: packages/coding-agent/src/core/agent-session.ts:970] [E: packages/coding-agent/src/core/agent-session.ts:974]
+没有 `baseToolsOverride` 时，默认 active tools 只有 `read`、`bash`、`edit`、`write`；`_refreshToolRegistry` 仍把所有 allowed base definitions wrap 进 `_toolRegistry`，`setActiveToolsByName` 只在 registry 里存在的名字上激活。[E: packages/coding-agent/src/core/agent-session.ts:2831] [E: packages/coding-agent/src/core/agent-session.ts:2833] [E: packages/coding-agent/src/core/agent-session.ts:966] [E: packages/coding-agent/src/core/agent-session.ts:970]
 
 ## AgentHarness 的 context 绑定变体
 

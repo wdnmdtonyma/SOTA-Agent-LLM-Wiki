@@ -33,7 +33,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `packages/agent` 提供一组可复用的 harness execution tools：`bash`、`read`、`edit`、`write`。它们依赖抽象 `ExecutionEnv`，不等同于 coding-agent 产品层的八个内置工具(`read`/`bash`/`powershell`/`edit`/`write`/`grep`/`find`/`ls`)。
@@ -53,7 +53,7 @@ updated: 9767ba275f
 
 read path resolution 先把 Unicode spaces 归一为空格并移除开头 `@`，再尝试原 absolute path、macOS AM/PM narrow-space、NFD 和 smart-apostrophe variants；找不到 variant 时仍把原 resolved path 交给 backend，让其返回权威错误。[E: packages/agent/src/harness/tools/path-utils.ts:9] [E: packages/agent/src/harness/tools/path-utils.ts:18] [E: packages/agent/src/harness/tools/path-utils.ts:19] [E: packages/agent/src/harness/tools/path-utils.ts:28] [E: packages/agent/src/harness/tools/path-utils.ts:30]
 - `createEditTool()` 对原文件执行 exact-first、normalized fuzzy fallback 的 replacement：fuzzy view 做 NFKC、行尾空白、智能引号、横线与特殊空格归一，再要求每个目标唯一且 edits 不重叠；写回前把内容归一到 LF 视图，保留未触及行的内容，再恢复 BOM 与检测到的单一换行风格。edit 在 per-`ExecutionEnv` mutation queue 中串行化：能解析 canonical path 时用 canonical key，`not_found` / `not_supported` 时回退 absolute path。[E: packages/agent/src/harness/tools/edit-diff.ts:30] [E: packages/agent/src/harness/tools/edit-diff.ts:203] [E: packages/agent/src/harness/tools/edit-diff.ts:217] [E: packages/agent/src/harness/tools/edit-diff.ts:301] [E: packages/agent/src/harness/tools/file-mutation-queue.ts:22] [E: packages/agent/src/harness/tools/file-mutation-queue.ts:26] [E: packages/agent/src/harness/tools/file-mutation-queue.ts:30] [E: packages/agent/src/harness/tools/edit.ts:90] [E: packages/agent/src/harness/tools/edit.ts:105]
-- `createWriteTool()` 在同一个 per-env mutation queue 中覆盖写入；实际文件创建或覆盖委托给 `ExecutionEnv.writeFile()` backend。[E: packages/agent/src/harness/tools/write.ts:15] [E: packages/agent/src/harness/tools/write.ts:28] [E: packages/agent/src/harness/tools/write.ts:33] [E: packages/agent/src/harness/types.ts:280] [E: packages/agent/src/harness/types.ts:391]
+- `createWriteTool()` 在同一个 per-env mutation queue 中覆盖写入；实际文件创建或覆盖委托给 `ExecutionEnv.writeFile()` backend。[E: packages/agent/src/harness/tools/write.ts:15] [E: packages/agent/src/harness/tools/write.ts:28] [E: packages/agent/src/harness/tools/write.ts:33] [E: packages/agent/src/harness/types.ts:296] [E: packages/agent/src/harness/types.ts:407]
 
 ## L2 证伪与边界
 

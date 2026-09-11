@@ -9,7 +9,7 @@ symbols: [runAgentLoop, runAgentLoopContinue, runLoop, streamAssistantResponse, 
 related: [spine.tool-call-anatomy, spine.provider-stream, spine.compaction-flow, subsys.agent-core.turn-control, subsys.agent-core.hooks, subsys.agent-core.message-queue]
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `spine.agent-loop` 说明 `pi-agent-core` 如何把一次用户输入或 continuation 变成 provider streaming、assistant message、tool calls、tool results，以及何时调用 `prepareNextTurn` / `shouldStopAfterTurn` 来停止或续跑。

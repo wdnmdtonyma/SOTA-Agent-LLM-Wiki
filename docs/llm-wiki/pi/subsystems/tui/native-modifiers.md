@@ -18,7 +18,7 @@ symbols:
 related: [subsys.tui.key-pipeline]
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `native-modifiers.ts` 是 TUI 的 modifier query 薄封装：它调用 `native-platform.ts` 的 `getNativePlatformHelper()`，失败或 helper 无 `isModifierPressed` 时返回 `false`。路径解析仍集中在 `getNativeModuleCandidates()`。

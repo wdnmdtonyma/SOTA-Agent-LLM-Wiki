@@ -63,7 +63,7 @@ related:
   - ref.package-index
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `@earendil-works/chord` 是独立的 application-composition runtime：同步 `defineFacet()` 声明服务依赖与供给，`createFacetHost()` 校验图、按拓扑激活、并在 reload 时替换 singleton 而不断开稳定 handle；服务分 singleton / keyed，可走进程内任意对象或远程 JSON 边界。Chord **不依赖任何其它 Pi workspace 包**。[E: packages/chord/package.json:2][E: packages/chord/package.json:4][E: packages/chord/README.md:5][E: packages/chord/README.md:6][E: packages/chord/package.json:65]

@@ -24,7 +24,7 @@ related:
   - ref.agent.session-entry-types
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.agent-core.session-tree` 定义 v4 append-only session tree：每个 `Entry` 都有 `id`、调用方提供的 `parentId`、storage-assigned 的 `seq` / `timestamp`，并用 `EntryType` 区分为 4 个变体。字段级 catalog 在 [ref.agent.session-entry-types](../../reference/session-entry-types.md)。
@@ -79,7 +79,7 @@ updated: 9767ba275f
 
 `Branch.appendCustomEntry` 在 `data === undefined` 时省略 `data` 字段，否则带上 `data`。[E: packages/agent/src/harness/session/session.ts:214] [E: packages/agent/src/harness/session/session.ts:217]
 
-同一 session 可以有多条 branch 指向不同 tip，因此同一 `parentId` 下可以长出多条物理孩子；“当前分支”由调用方选择的 `Branch` 决定，而不是由 entry 上的某个 current 标志决定。[E: packages/agent/src/harness/session/types.ts:520] [E: packages/agent/src/harness/session/values.ts:158] [I]
+同一 session 可以有多条 branch 指向不同 tip，因此同一 `parentId` 下可以长出多条物理孩子；“当前分支”由调用方选择的 `Branch` 决定，而不是由 entry 上的某个 current 标志决定。[E: packages/agent/src/harness/session/types.ts:521] [E: packages/agent/src/harness/session/values.ts:158] [I]
 
 ## 控制流（写入）
 

@@ -22,7 +22,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > 旧的 `packages/server/src/protocol.ts` pi-ai DTO adapter（`toProtocolJsonValue` / `toProtocolAssistantMessage` 等）已删除。现行 anti-corruption 层是：`pi-protocol` 只校验 routed envelope + strict JSON；server 用 Chord 解析 `$chord.service` 控制词汇并编码 subscription snapshot/update；应用 payload 保持 opaque [E: packages/protocol/src/codec.ts:21] [E: packages/server/src/server.ts:318] [E: packages/server/src/server.ts:332]。

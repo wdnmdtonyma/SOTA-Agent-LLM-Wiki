@@ -22,7 +22,7 @@ related:
   - subsys.ai.constrained-sampling
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `surface.extensions.contribution-points` 描述 pi 扩展作者可以向 `pi-coding-agent` 注入的主要贡献点: LLM 工具、slash 命令、键盘快捷键、模型 provider 和自定义消息渲染器。
@@ -45,7 +45,7 @@ updated: 9767ba275f
 | `registerShortcut(shortcut, options)` | 交互模式键盘输入 | 接收 `KeyId`、描述和 handler | `Extension.shortcuts` 保存 `ExtensionShortcut`, runner 与内置键位表做冲突处理 [E: packages/coding-agent/src/core/extensions/types.ts:1320] [E: packages/coding-agent/src/core/extensions/types.ts:1777] [E: packages/coding-agent/src/core/extensions/runner.ts:544] |
 | `registerProvider` | 模型选择、登录和 provider 调用 | overload:`registerProvider(provider: Provider)` 或 `registerProvider(name, config: ProviderConfig)` | load 阶段分别排队 `pendingProviderRegistrations` 与 `pendingNativeProviderRegistrations`, `bindCore()` flush 后把 `registerProvider` / `registerNativeProvider` 绑成立即调用 [E: packages/coding-agent/src/core/extensions/types.ts:1486] [E: packages/coding-agent/src/core/extensions/types.ts:1487] [E: packages/coding-agent/src/core/extensions/types.ts:1672] [E: packages/coding-agent/src/core/extensions/types.ts:1674] [E: packages/coding-agent/src/core/extensions/runner.ts:357] [E: packages/coding-agent/src/core/extensions/runner.ts:374] [E: packages/coding-agent/src/core/extensions/runner.ts:394] [E: packages/coding-agent/src/core/extensions/runner.ts:401] |
 | `registerMessageRenderer(customType, renderer)` | TUI 自定义消息显示 | 接收 `customType` 和 `MessageRenderer` | `Extension.messageRenderers` 保存 renderer, runner 按 `customType` 查找 renderer [E: packages/coding-agent/src/core/extensions/types.ts:1352] [E: packages/coding-agent/src/core/extensions/types.ts:1772] [E: packages/coding-agent/src/core/extensions/runner.ts:629] |
-| `registerEntryRenderer(customType, renderer)` | TUI 自定义状态显示 | 接收 `customType` 和 `EntryRenderer` | `Extension.entryRenderers` 保存不参与 LLM context 的 `CustomEntry` renderer [E: packages/coding-agent/src/core/extensions/types.ts:1358] [E: packages/coding-agent/src/core/extensions/types.ts:1358] [E: packages/coding-agent/src/core/extensions/types.ts:1774] [E: packages/coding-agent/src/core/extensions/loader.ts:346] |
+| `registerEntryRenderer(customType, renderer)` | TUI 自定义状态显示 | 接收 `customType` 和 `EntryRenderer` | `Extension.entryRenderers` 保存不参与 LLM context 的 `CustomEntry` renderer [E: packages/coding-agent/src/core/extensions/types.ts:1358] [E: packages/coding-agent/src/core/extensions/types.ts:1358] [E: packages/coding-agent/src/core/extensions/types.ts:1774] [E: packages/coding-agent/src/core/extensions/loader.ts:351] |
 
 `ExtensionAPI` 是 extension factory 可调用的主接口,它把事件订阅、注册型贡献点、消息/session/tool/model 动作和共享 event bus 放在同一个 surface 中;本节点只展开 `index.json` 指定的五个注册型贡献点 [E: packages/coding-agent/src/core/extensions/types.ts:1252] [E: packages/coding-agent/src/core/extensions/types.ts:1308] [E: packages/coding-agent/src/core/extensions/types.ts:1317] [E: packages/coding-agent/src/core/extensions/types.ts:1320] [E: packages/coding-agent/src/core/extensions/types.ts:1352] [E: packages/coding-agent/src/core/extensions/types.ts:1487] [I]。
 

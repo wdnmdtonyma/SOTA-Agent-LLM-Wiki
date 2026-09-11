@@ -18,7 +18,7 @@ symbols:
   - useWindowsKeybindings
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 related:
   - surface.config.keybindings
   - subsys.coding-agent.keybindings
@@ -125,7 +125,7 @@ related:
 | `app.thinking.toggle` | `ctrl+t` | Toggle thinking blocks. | [E: packages/coding-agent/src/core/keybindings.ts:118] [E: packages/coding-agent/src/core/keybindings.ts:119] [E: packages/coding-agent/src/core/keybindings.ts:120] |
 | `app.session.toggleNamedFilter` | `ctrl+n` | Toggle named session filter. | [E: packages/coding-agent/src/core/keybindings.ts:122] [E: packages/coding-agent/src/core/keybindings.ts:123] [E: packages/coding-agent/src/core/keybindings.ts:124] |
 | `app.editor.external` | `ctrl+g` | Open external editor. | [E: packages/coding-agent/src/core/keybindings.ts:126] [E: packages/coding-agent/src/core/keybindings.ts:127] [E: packages/coding-agent/src/core/keybindings.ts:128] |
-| `app.message.copy` | `ctrl+x` | `/tree` 复制选中 message;否则复制最后一条 assistant text。fullscreen 且 `fullscreenCopyOnSelect` 关闭时,`preferSelection` 先复制当前 selection。 | [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/core/keybindings.ts:131]; copy path [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:2895] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6160] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6165]; docs [E: packages/coding-agent/docs/keybindings.md:164] |
+| `app.message.copy` | `ctrl+x` | `/tree` 复制选中 message;否则复制最后一条 assistant text。fullscreen 且 `fullscreenCopyOnSelect` 关闭时,`preferSelection` 先复制当前 selection。 | [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/core/keybindings.ts:131]; copy path [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:2895] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6166] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6171]; docs [E: packages/coding-agent/docs/keybindings.md:164] |
 | `app.message.followUp` | Windows/WSL: `ctrl+q`;其它: `alt+enter` | Queue follow-up message. | [E: packages/coding-agent/src/core/keybindings.ts:134] [E: packages/coding-agent/src/core/keybindings.ts:135] [E: packages/coding-agent/docs/keybindings.md:165] |
 | `app.message.dequeue` | Windows/WSL: `alt+q`;其它: `alt+up` | Restore queued messages. | [E: packages/coding-agent/src/core/keybindings.ts:138] [E: packages/coding-agent/src/core/keybindings.ts:139] [E: packages/coding-agent/docs/keybindings.md:166] |
 | `app.clipboard.pasteImage` | Windows/WSL: `alt+v`;其它: `ctrl+v` | Paste image from clipboard (text fallback);现用 `useWindowsKeybindings()`,不再只看 `win32`。 | [E: packages/coding-agent/src/core/keybindings.ts:142] [E: packages/coding-agent/src/core/keybindings.ts:143] [E: packages/coding-agent/docs/keybindings.md:130] |

@@ -29,7 +29,7 @@ related:
   - subsys.server.session-server
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `@earendil-works/pi-client` 的 package root 是 Chord 风格的 `Client`：它只依赖已经连接并完成 transport-specific authentication 的 ordered byte transport，完成 protocol version handshake、`serverId` 校验、routed request correlation、service catalogue/subscribe 与 out-of-band attachment。它不再导出 `PiClient` / `PiSessionHandle` [E: packages/client/package.json:2] [E: packages/client/src/index.ts:1] [E: packages/client/src/transport.ts:18]。

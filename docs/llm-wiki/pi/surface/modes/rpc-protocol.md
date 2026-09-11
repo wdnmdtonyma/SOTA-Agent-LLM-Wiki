@@ -9,6 +9,7 @@ source:
   - packages/coding-agent/src/modes/rpc/jsonl.ts
   - packages/coding-agent/src/modes/rpc/rpc-client.ts
   - packages/coding-agent/src/modes/rpc/rpc-mode.ts
+  - packages/coding-agent/src/core/agent-session.ts
   - packages/coding-agent/src/modes/json-event.ts
   - packages/coding-agent/docs/rpc.md
   - packages/coding-agent/test/rpc-jsonl.test.ts
@@ -26,7 +27,7 @@ related:
   - ref.coding-agent.json-events
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > RPC protocol 是 pi-coding-agent 的无头 JSONL wire surface: client 在 stdin 逐行写 `RpcCommand`, runtime 在 stdout 逐行写 `RpcResponse`、agent events 和 extension UI requests。
@@ -61,6 +62,8 @@ RPC framing 是 strict JSONL: command、response 和 event 都是 JSON object, �
 `RpcCommand` 是 discriminated union, 以 `type` 字段覆盖 prompting、state、model、thinking、queue modes、compaction、retry、bash、session、messages 和 commands 这些命令组 [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:20] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:22] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:30] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:33] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:38] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:43] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:47] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:51] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:55] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:59] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:71] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:74]。每个 union member 都有可选 `id?: string`, 所以 correlation 是通用协议字段, 不是某个 command 的私有字段 [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:22] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:74]。
 
 prompting 命令组新增 `clear_queue`：请求无额外字段，成功 response 的 `data` 是 `{ steering: string[]; followUp: string[] }` [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:26] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:125] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:127]。服务端调用 `session.clearQueue()` 并立刻 success [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:433] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:434]。typed client 暴露 `clearQueue()`,测试固定它发送 `{ type: "clear_queue" }` 并返回 `data` [E: packages/coding-agent/src/modes/rpc/rpc-client.ts:226] [E: packages/coding-agent/src/modes/rpc/rpc-client.ts:227] [E: packages/coding-agent/test/rpc-client-clear-queue.test.ts:26]。用户文档说明 interactive Esc 应先 `clear_queue` 再 `abort`,再把返回文本写回 editor [E: packages/coding-agent/docs/rpc.md:137] [E: packages/coding-agent/docs/rpc.md:158]。
+
+`steer` / `follow_up` 的 wire 仍是独立 command type,成功 response 无 `data`;服务端调用 `session.steer` / `session.followUp(..., { source: "rpc" })`,再经 `_queueUserInput` → `_runInputHandlers` → `emitInput`,不再绕过 extension `input` handlers。[E: packages/coding-agent/src/modes/rpc/rpc-types.ts:23] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:24] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:418] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:419] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:423] [E: packages/coding-agent/src/core/agent-session.ts:1425] [E: packages/coding-agent/src/core/agent-session.ts:1437] [E: packages/coding-agent/src/core/agent-session.ts:1388] [E: packages/coding-agent/src/core/agent-session.ts:1398]
 
 thinking 命令组含 `get_available_thinking_levels`：请求无额外字段，成功 response 的 `data.levels` 是当前模型可选的 `ThinkingLevel[]` [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:40] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:166] [E: packages/coding-agent/src/modes/rpc/rpc-types.ts:171]。服务端直接调用 `session.getAvailableThinkingLevels()` [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:512] [E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:514]，typed client 也暴露同名 camelCase 方法 [E: packages/coding-agent/src/modes/rpc/rpc-client.ts:295] [E: packages/coding-agent/src/modes/rpc/rpc-client.ts:297]。
 
@@ -114,6 +117,7 @@ RPC mode 下部分 TUI 依赖能力是 degraded/no-op: `custom()` 返回 `undefi
 - packages/coding-agent/src/modes/rpc/jsonl.ts
 - packages/coding-agent/src/modes/rpc/rpc-client.ts
 - packages/coding-agent/src/modes/rpc/rpc-mode.ts
+- packages/coding-agent/src/core/agent-session.ts
 - packages/coding-agent/src/modes/json-event.ts
 - packages/coding-agent/docs/rpc.md
 - packages/coding-agent/test/rpc-jsonl.test.ts

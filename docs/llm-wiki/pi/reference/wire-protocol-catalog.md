@@ -15,7 +15,7 @@ related:
   - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `ref.ai.wire-protocol-catalog` 逐实例列出 `pi-ai` chat/text streaming wire protocol key、对应 lazy wrapper、`ProviderStreams` 支持面和本 wiki 的 subsystem 节点映射。

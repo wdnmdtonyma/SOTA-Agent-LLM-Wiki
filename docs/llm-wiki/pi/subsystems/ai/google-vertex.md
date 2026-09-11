@@ -16,7 +16,7 @@ related:
   - subsys.ai.env-api-keys
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.ai.google-vertex` 描述 `pi-ai` 的 `google-vertex` wire 协议入口:它用 `@google/genai` 的 Vertex 模式构造客户端,把 pi 的 `Context` 转成 Gemini `GenerateContentParameters`,并把 Vertex/Gemini stream chunk 归一成 `AssistantMessageEventStream`。
@@ -105,7 +105,7 @@ The Vertex-specific branch is concentrated in auth and endpoint construction: AP
 
 Vertex accumulator 从 `pending` 开始；candidate finish reason 同时写入 `rawStopReason` 与 unified reason，未看到终止状态就进入 error path。[E: packages/ai/src/api/google-vertex.ts:79] [E: packages/ai/src/api/google-vertex.ts:93] [E: packages/ai/src/api/google-vertex.ts:233] [E: packages/ai/src/api/google-vertex.ts:237] [E: packages/ai/src/api/google-vertex.ts:281] [E: packages/ai/src/api/google-vertex.ts:295]
 
-`generateContentStream()` 建流请求经 `retryGoogleRequest()` 接入 shared retry，但不重试后续 iterator 中途失败；Vertex 同样对非 `globalThis.fetch` 显式抛错。[E: packages/ai/src/api/google-vertex.ts:97] [E: packages/ai/src/api/google-vertex.ts:99] [E: packages/ai/src/api/google-vertex.ts:111] [E: packages/ai/src/api/google-shared.ts:431] [E: packages/ai/src/api/google-shared.ts:435]
+`generateContentStream()` 建流请求经 `retryGoogleRequest()` 接入 shared retry，但不重试后续 iterator 中途失败；Vertex 同样对非 `globalThis.fetch` 显式抛错。[E: packages/ai/src/api/google-vertex.ts:97] [E: packages/ai/src/api/google-vertex.ts:99] [E: packages/ai/src/api/google-vertex.ts:111] [E: packages/ai/src/api/google-shared.ts:432] [E: packages/ai/src/api/google-shared.ts:436]
 
 `buildHttpOptions()` 默认先写 `User-Agent: getPiUserAgent()`，再 overlay `model.headers` 与 request headers [E: packages/ai/src/api/google-vertex.ts:395] [E: packages/ai/src/utils/pi-user-agent.ts:17]。
 

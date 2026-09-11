@@ -27,7 +27,7 @@ related:
   - surface.sdk.remote-session
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `subsys.coding-agent.experimental-cli` 描述 source-only 的 experimental 命令面：parser 只组合 `server` / `client`，由 `pi-test.sh` → `src/experimental/cli.ts` 在 `PI_EXPERIMENTAL=1` 时 dispatch。`auth.ts` / `transport-address.ts` / `commands/pi.ts` 已删除；发布 CLI 不接线这些命令。

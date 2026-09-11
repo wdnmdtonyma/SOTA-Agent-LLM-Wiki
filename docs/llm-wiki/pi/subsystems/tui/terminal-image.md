@@ -9,7 +9,7 @@ symbols: [renderImage, encodeKitty, encodeITerm2, setCapabilityOverrides, detect
 related: [surface.misc.images, subsys.tui.terminal-capabilities]
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `terminal-image` 是 `pi-tui` 的 terminal inline image layer:它检测当前 terminal 是否支持 Kitty graphics protocol 或 iTerm2 inline image,把 base64 image payload 编码成 escape sequence,计算图片占用的 cell rows,并在不支持图片时提供 text fallback。环境变量与 `setCapabilityOverrides()` 可覆盖已检测到的 `hyperlinks` / `images` / `trueColor`。
@@ -73,7 +73,7 @@ env 读取点分别是 `process.env.PI_HYPERLINKS`、`process.env.PI_IMAGE_PROTO
 
 precedence:环境检测 → env overlay → programmatic `setCapabilityOverrides()`。后者覆盖前者 [E: packages/tui/src/terminal-image.ts:152] [E: packages/tui/src/terminal-image.ts:163] [E: packages/tui/test/terminal-image.test.ts:257]。
 
-coding-agent 产品层另有 JSON `terminal.hyperlinks` / `terminal.images` / `terminal.trueColor`(`true`/`false`/`"auto"`)。`SettingsManager.getTerminalCapabilityOverrides()` 只把非 `"auto"` 的布尔/`kitty`/`iterm2`/`false` 编进 `Partial<TerminalCapabilities>`,再交给 `setCapabilityOverrides()` [E: packages/coding-agent/src/core/settings-manager.ts:45] [E: packages/coding-agent/src/core/settings-manager.ts:1132] [E: packages/coding-agent/src/main.ts:849]。官方 docs 写 settings 优先于 env,是产品接线,不是 TUI `detectCapabilities()` 自己读 settings [I]。
+coding-agent 产品层另有 JSON `terminal.hyperlinks` / `terminal.images` / `terminal.trueColor`(`true`/`false`/`"auto"`)。`SettingsManager.getTerminalCapabilityOverrides()` 只把非 `"auto"` 的布尔/`kitty`/`iterm2`/`false` 编进 `Partial<TerminalCapabilities>`,再交给 `setCapabilityOverrides()` [E: packages/coding-agent/src/core/settings-manager.ts:57] [E: packages/coding-agent/src/core/settings-manager.ts:1178] [E: packages/coding-agent/src/main.ts:849]。官方 docs 写 settings 优先于 env,是产品接线,不是 TUI `detectCapabilities()` 自己读 settings [I]。
 
 package root 导出 `setCapabilityOverrides` [E: packages/tui/src/index.ts:116]。
 
@@ -123,7 +123,7 @@ dimension sniffing 只读取 header 字段而不进行 raster/pixel decode,使 t
 - `preserveAspectRatio` 在 `ImageRenderOptions` 中存在,但 `renderImage()` 只在 iTerm2 path 传给 `encodeITerm2()`;Kitty path 由 calculated columns/rows 控制显示尺寸 [E: packages/tui/src/terminal-image.ts:634] [E: packages/tui/src/terminal-image.ts:635] [E: packages/tui/src/terminal-image.ts:636] [E: packages/tui/src/terminal-image.ts:644] [E: packages/tui/src/terminal-image.ts:647] [I]。
 - `isImageLine()` 只检查 Kitty/iTerm2 escape prefix 是否存在,不会验证 escape sequence 是否完整或 base64 payload 是否有效 [E: packages/tui/src/terminal-image.ts:196] [E: packages/tui/src/terminal-image.ts:198] [E: packages/tui/src/terminal-image.ts:202] [I]。
 - `getCapabilities()` cache 会冻结第一次 detection+override 合并结果;测试或环境变化后需要调用 `resetCapabilitiesCache()`、`setCapabilities()` 或 `setCapabilityOverrides()` [E: packages/tui/src/terminal-image.ts:160] [E: packages/tui/src/terminal-image.ts:171] [E: packages/tui/src/terminal-image.ts:176] [E: packages/tui/src/terminal-image.ts:189]。
-- TUI env 不把 `auto` 当有效覆盖;`PI_HYPERLINKS=auto` 与未设置等价。coding-agent settings 的 `"auto"` 则是“不要写入 override 对象” [E: packages/tui/src/terminal-image.ts:135] [E: packages/coding-agent/src/core/settings-manager.ts:1138]。
+- TUI env 不把 `auto` 当有效覆盖;`PI_HYPERLINKS=auto` 与未设置等价。coding-agent settings 的 `"auto"` 则是“不要写入 override 对象” [E: packages/tui/src/terminal-image.ts:135] [E: packages/coding-agent/src/core/settings-manager.ts:1184]。
 - 强制打开不存在的 image/hyperlink protocol 会写出终端无法理解的 escape;官方 terminal-setup 要求只覆盖完整通路确实支持的能力 [I]。
 - `getImageDimensions()` 不处理 BMP,即使更上层可能把 BMP 转换成 PNG 后再进入 TUI;本节点只按 `terminal-image.ts` 的 MIME dispatch 列出 PNG/JPEG/GIF/WebP [E: packages/tui/src/terminal-image.ts:594] [E: packages/tui/src/terminal-image.ts:607] [I]。
 

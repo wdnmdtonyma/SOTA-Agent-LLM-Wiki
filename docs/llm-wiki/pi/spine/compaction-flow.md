@@ -7,6 +7,8 @@ pkg: agent
 source:
   - packages/agent/src/harness/compaction/compaction.ts
   - packages/agent/src/harness/compaction/branch-summarization.ts
+  - packages/coding-agent/src/core/agent-session.ts
+  - packages/coding-agent/src/core/settings-manager.ts
 symbols:
   - shouldCompact
   - prepareCompaction
@@ -20,7 +22,7 @@ related:
   - subsys.coding-agent.agent-session
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `spine.compaction-flow` 说明 `pi-agent-core` 的 context compaction 如何从 token threshold 判定,准备 cut point,生成 checkpoint summary,以及 branch navigation 时如何生成 abandoned branch summary。
@@ -95,7 +97,7 @@ flowchart TD
 
 ## 分支总结 flow
 
-`collectEntriesForBranchSummary(session, oldLeafId, targetId)` 接收 old leaf 和 target id，返回 `{ entries, commonAncestorId }`；`generateBranchSummary(entries, options)` 接收 `SessionTreeEntry[]` 和 options，返回 `Promise<Result<BranchSummaryResult, BranchSummaryError>>`。[E: packages/agent/src/harness/compaction/branch-summarization.ts:87] [E: packages/agent/src/harness/compaction/branch-summarization.ts:89] [E: packages/agent/src/harness/compaction/branch-summarization.ts:90] [E: packages/agent/src/harness/compaction/branch-summarization.ts:91] [E: packages/agent/src/harness/compaction/branch-summarization.ts:117] [E: packages/agent/src/harness/compaction/branch-summarization.ts:219] [E: packages/agent/src/harness/compaction/branch-summarization.ts:214] [E: packages/agent/src/harness/compaction/branch-summarization.ts:221] [E: packages/agent/src/harness/compaction/branch-summarization.ts:223] `collectEntriesForBranchSummary` 先求 old leaf path 与 target path 的 deepest common ancestor，再从 old leaf 往父链回收到 common ancestor前并 reverse 成时间顺序。[E: packages/agent/src/harness/compaction/branch-summarization.ts:83] [E: packages/agent/src/harness/compaction/branch-summarization.ts:83] [E: packages/agent/src/harness/compaction/branch-summarization.ts:87] [E: packages/agent/src/harness/compaction/branch-summarization.ts:109] [E: packages/agent/src/harness/compaction/branch-summarization.ts:113] [E: packages/agent/src/harness/compaction/branch-summarization.ts:115]
+`collectEntriesForBranchSummary(branch, session, oldTipId, targetId, context)` 接收 branch/session 与 old tip、target id，返回 `{ entries, commonAncestorId }`；`generateBranchSummary(entries, options, context)` 接收 `Entry[]`、options 与 `context`，返回 `Promise<Result<BranchSummaryResult, BranchSummaryError>>`。[E: packages/agent/src/harness/compaction/branch-summarization.ts:87] [E: packages/agent/src/harness/compaction/branch-summarization.ts:88] [E: packages/agent/src/harness/compaction/branch-summarization.ts:89] [E: packages/agent/src/harness/compaction/branch-summarization.ts:90] [E: packages/agent/src/harness/compaction/branch-summarization.ts:91] [E: packages/agent/src/harness/compaction/branch-summarization.ts:92] [E: packages/agent/src/harness/compaction/branch-summarization.ts:117] [E: packages/agent/src/harness/compaction/branch-summarization.ts:219] [E: packages/agent/src/harness/compaction/branch-summarization.ts:221] [E: packages/agent/src/harness/compaction/branch-summarization.ts:222] [E: packages/agent/src/harness/compaction/branch-summarization.ts:223] `collectEntriesForBranchSummary` 先求 old tip path 与 target path 的 deepest common ancestor，再从 old tip 往父链回收到 common ancestor 前并 reverse 成时间顺序。[E: packages/agent/src/harness/compaction/branch-summarization.ts:97] [E: packages/agent/src/harness/compaction/branch-summarization.ts:98] [E: packages/agent/src/harness/compaction/branch-summarization.ts:101] [E: packages/agent/src/harness/compaction/branch-summarization.ts:109] [E: packages/agent/src/harness/compaction/branch-summarization.ts:113] [E: packages/agent/src/harness/compaction/branch-summarization.ts:115]
 
 `generateBranchSummary` 的 token budget 是 `model.contextWindow || 128000` 减去 `reserveTokens`,其中 `reserveTokens` 参数默认 `16384`;随后交给 `prepareBranchEntries` 从 entries 尾部向前选择可放入 summary prompt 的 messages。[E: packages/agent/src/harness/compaction/branch-summarization.ts:224] [E: packages/agent/src/harness/compaction/branch-summarization.ts:225] [E: packages/agent/src/harness/compaction/branch-summarization.ts:226] [E: packages/agent/src/harness/compaction/branch-summarization.ts:249] [E: packages/agent/src/harness/compaction/branch-summarization.ts:160] [E: packages/agent/src/harness/compaction/branch-summarization.ts:177] `prepareBranchEntries` 会跳过 toolResult message,以及 `getMessageFromEntry` 返回 `undefined` 的 `entry.type === "custom"`;`branch_summary` 和 `compaction` 可 replay 成 summary message。超预算时允许 compaction/branch_summary 这类摘要 entry 在 `totalTokens < tokenBudget * 0.9` 时仍进入 prompt。[E: packages/agent/src/harness/compaction/branch-summarization.ts:107] [E: packages/agent/src/harness/compaction/branch-summarization.ts:121] [E: packages/agent/src/harness/compaction/branch-summarization.ts:122] [E: packages/agent/src/harness/compaction/branch-summarization.ts:113] [E: packages/agent/src/harness/compaction/branch-summarization.ts:125] [E: packages/agent/src/harness/compaction/branch-summarization.ts:128] [E: packages/agent/src/harness/compaction/branch-summarization.ts:167] [E: packages/agent/src/harness/compaction/branch-summarization.ts:168] [E: packages/agent/src/harness/compaction/branch-summarization.ts:169]
 
@@ -123,13 +125,15 @@ branch summary 面向 "离开某个 branch 后未来返回" 的上下文恢复,�
 
 ## 包边界
 
-这两个 source 文件提供 compaction 和 branch-summary 的 harness 函数:`prepareCompaction` 接收 `SessionTreeEntry[]` 与 settings 并返回 `Result<CompactionPreparation | undefined, CompactionError>`,`compact` 接收 preparation、`Models`、`Model`、optional instructions/signal/thinking level 并返回 `Result<CompactionResult, CompactionError>`,`generateBranchSummary` 接收 `SessionTreeEntry[]` 与 options 并返回 `Result<BranchSummaryResult, BranchSummaryError>`。[E: packages/agent/src/harness/compaction/compaction.ts:634] [E: packages/agent/src/harness/compaction/compaction.ts:659] [E: packages/agent/src/harness/compaction/compaction.ts:636] [E: packages/agent/src/harness/compaction/compaction.ts:637] [E: packages/agent/src/harness/compaction/compaction.ts:727] [E: packages/agent/src/harness/compaction/compaction.ts:728] [E: packages/agent/src/harness/compaction/compaction.ts:729] [E: packages/agent/src/harness/compaction/compaction.ts:779] [E: packages/agent/src/harness/compaction/compaction.ts:748] [E: packages/agent/src/harness/compaction/compaction.ts:741] [E: packages/agent/src/harness/compaction/compaction.ts:551] [E: packages/agent/src/harness/compaction/branch-summarization.ts:219] [E: packages/agent/src/harness/compaction/branch-summarization.ts:214] [E: packages/agent/src/harness/compaction/branch-summarization.ts:221] [E: packages/agent/src/harness/compaction/branch-summarization.ts:223] `pi-coding-agent` 产品层应负责何时调用 `shouldCompact`、如何把 `CompactionResult` 写成 `compaction` entry、以及 branch navigation 何时持久化 `BranchSummaryResult`;这些持久化调用不在本节点两个 source 文件内出现。[I]
+这两个 source 文件提供 compaction 和 branch-summary 的 harness 函数:`prepareCompaction` 接收 `Entry[]` 与 settings 并返回 `Result<CompactionPreparation | undefined, CompactionError>`,`compact` 接收 preparation、`Models`、`Model`、`customInstructions`、`thinkingLevel`、`retry`、`callbacks`、`context` 并返回 `Result<CompactResult, CompactionError>`（没有 positional `signal`）,`generateBranchSummary` 接收 `Entry[]`、options 与 `context` 并返回 `Result<BranchSummaryResult, BranchSummaryError>`。[E: packages/agent/src/harness/compaction/compaction.ts:634] [E: packages/agent/src/harness/compaction/compaction.ts:659] [E: packages/agent/src/harness/compaction/compaction.ts:636] [E: packages/agent/src/harness/compaction/compaction.ts:637] [E: packages/agent/src/harness/compaction/compaction.ts:727] [E: packages/agent/src/harness/compaction/compaction.ts:728] [E: packages/agent/src/harness/compaction/compaction.ts:729] [E: packages/agent/src/harness/compaction/compaction.ts:779] [E: packages/agent/src/harness/compaction/compaction.ts:748] [E: packages/agent/src/harness/compaction/compaction.ts:741] [E: packages/agent/src/harness/compaction/compaction.ts:551] [E: packages/agent/src/harness/compaction/branch-summarization.ts:219] [E: packages/agent/src/harness/compaction/branch-summarization.ts:214] [E: packages/agent/src/harness/compaction/branch-summarization.ts:221] [E: packages/agent/src/harness/compaction/branch-summarization.ts:223] `pi-coding-agent` 产品层应负责何时调用 `shouldCompact`、如何把 `CompactResult` 写成 `compaction` entry、以及 branch navigation 何时持久化 `BranchSummaryResult`;这些持久化调用不在 harness 两个 source 文件内出现。[I]
+
+coding-agent `AgentSession` 在调用**产品层** `packages/coding-agent/src/core/compaction/` 的 `shouldCompact` / `prepareCompaction` / `compact`（不是 harness 同名函数）**之前**先跑 `settingsManager.getCompactionSettings(model)`：把 `compaction.modelOverrides["provider/modelId"]` 按字段回退成普通 `enabled`/`reserveTokens`/`keepRecentTokens`。产品层与 harness 的 `CompactionSettings` 都只有这三字段，没有 `modelOverrides`。[E: packages/coding-agent/src/core/agent-session.ts:67] [E: packages/coding-agent/src/core/agent-session.ts:540] [E: packages/coding-agent/src/core/agent-session.ts:1979] [E: packages/coding-agent/src/core/agent-session.ts:2155] [E: packages/coding-agent/src/core/settings-manager.ts:891] [E: packages/coding-agent/src/core/compaction/compaction.ts:126] [E: packages/agent/src/harness/compaction/compaction.ts:147]
 
 产品层时序（不改变本节点 harness `compact()` API）：coding-agent `AgentSession` 把 threshold auto-compaction 挂在 `prepareNextTurnWithContext` 上，因此同一 run 内 tool 执行与下一轮模型请求之间可以插入 compaction；截断 summary 拒绝落盘与 zero-usage estimate 也在产品层 `packages/coding-agent/src/core/compaction/`，不在 harness `compaction.ts`。[I]
 
 ## 指向 T1/T2 深挖
 
-- `subsys.agent-core.compaction` 应展开 `CompactionSettings`、`CompactionPreparation`、`CompactionResult`、cut point 选择和 split turn edge cases。
+- `subsys.agent-core.compaction` 应展开 `CompactionSettings`、`CompactionPreparation`、`CompactResult`、cut point 选择和 split turn edge cases。
 - `subsys.agent-core.branch-summary` 应展开 branch collection、common ancestor、branch summary entry 的持久化路径。
 - `ref.agent.compaction-config` 应枚举 `enabled`、`reserveTokens`、`keepRecentTokens`、custom instructions、thinking level 等配置和默认值。
 - `subsys.coding-agent.agent-session` 应展开 mid-run `prepareNextTurn` compaction、truncated-summary 拒绝落盘、`session_compact_failed`。
@@ -138,6 +142,8 @@ branch summary 面向 "离开某个 branch 后未来返回" 的上下文恢复,�
 
 - packages/agent/src/harness/compaction/compaction.ts
 - packages/agent/src/harness/compaction/branch-summarization.ts
+- packages/coding-agent/src/core/agent-session.ts
+- packages/coding-agent/src/core/settings-manager.ts
 
 ## 相关
 

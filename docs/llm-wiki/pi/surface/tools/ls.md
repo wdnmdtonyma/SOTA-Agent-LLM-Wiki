@@ -27,7 +27,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `ls` 是 pi-coding-agent 暴露给模型的 directory listing tool: 给定目录路径,按字母序返回条目名,目录追加 `/`,包含 dotfiles,并用 entry limit 与 byte truncation 控制输出体积。
@@ -84,7 +84,7 @@ agent-core 的全局默认 `toolExecution` 是 `"parallel"`,并在 agent loop �
 
 `ls` 不在 coding preset 里: `createCodingToolDefinitions()` 只返回 read/bash/edit/write [E: packages/coding-agent/src/core/tools/index.ts:166] [E: packages/coding-agent/src/core/tools/index.ts:167] [E: packages/coding-agent/src/core/tools/index.ts:168] [E: packages/coding-agent/src/core/tools/index.ts:169]。`ls` 在 read-only preset 里: `createReadOnlyToolDefinitions()` 返回 read/grep/find/ls [E: packages/coding-agent/src/core/tools/index.ts:175] [E: packages/coding-agent/src/core/tools/index.ts:176] [E: packages/coding-agent/src/core/tools/index.ts:177] [E: packages/coding-agent/src/core/tools/index.ts:178]。完整 registry 里也有 `ls`: `createAllToolDefinitions()` 的 `ls` key 绑定到 `createLsToolDefinition(cwd, options?.ls)` [E: packages/coding-agent/src/core/tools/index.ts:182] [E: packages/coding-agent/src/core/tools/index.ts:191]。
 
-`AgentSession._buildRuntime()` 默认调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix, shellPath } })`,所以 `ls` 会进入 base tool definitions,但没有专属 options 传入 [E: packages/coding-agent/src/core/agent-session.ts:2779] [E: packages/coding-agent/src/core/agent-session.ts:2779] [E: packages/coding-agent/src/core/agent-session.ts:2780] [E: packages/coding-agent/src/core/agent-session.ts:2781]。随后 `_refreshToolRegistry()` 把 base definitions 标成 builtin source,用 `wrapRegisteredTools()` 包成 `AgentTool`,并写入 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:2694] [E: packages/coding-agent/src/core/agent-session.ts:2723] [E: packages/coding-agent/src/core/agent-session.ts:2733] [E: packages/coding-agent/src/core/agent-session.ts:2737]。`AgentSession` 默认 active built-ins 是 `["read", "bash", "edit", "write"]`,所以 `ls` 是内置可用 registry tool,但不是默认 active tool,除非 active tool names、allowlist、plan/read-only mode 或 extension/runtime 流程启用它 [E: packages/coding-agent/src/core/agent-session.ts:2808] [E: packages/coding-agent/src/core/agent-session.ts:2810] [I]。
+`AgentSession._buildRuntime()` 默认调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix, shellPath } })`,所以 `ls` 会进入 base tool definitions,但没有专属 options 传入 [E: packages/coding-agent/src/core/agent-session.ts:2802] [E: packages/coding-agent/src/core/agent-session.ts:2802] [E: packages/coding-agent/src/core/agent-session.ts:2803] [E: packages/coding-agent/src/core/agent-session.ts:2804]。随后 `_refreshToolRegistry()` 把 base definitions 标成 builtin source,用 `wrapRegisteredTools()` 包成 `AgentTool`,并写入 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:2717] [E: packages/coding-agent/src/core/agent-session.ts:2746] [E: packages/coding-agent/src/core/agent-session.ts:2756] [E: packages/coding-agent/src/core/agent-session.ts:2760]。`AgentSession` 默认 active built-ins 是 `["read", "bash", "edit", "write"]`,所以 `ls` 是内置可用 registry tool,但不是默认 active tool,除非 active tool names、allowlist、plan/read-only mode 或 extension/runtime 流程启用它 [E: packages/coding-agent/src/core/agent-session.ts:2831] [E: packages/coding-agent/src/core/agent-session.ts:2833] [I]。
 
 ## 7 execute() 走读
 

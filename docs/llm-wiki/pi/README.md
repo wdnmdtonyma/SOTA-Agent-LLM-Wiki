@@ -64,7 +64,7 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **200 个节点全部 verified 于 pi `9767ba275f`**。本轮从 `853a80d26c` 覆盖上游 **v0.85.0 / v0.85.1**（独立 `@earendil-works/chord`、Chord 风格 `pi-client` `Client`、内置工具默认 constrained sampling、会话搜索实现抽空）。审计见 `_UPDATE-SCOPE.md`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **200 个节点全部 verified 于 pi `bbb61e34aa`**。本轮从 `9767ba275f` 覆盖上游 **v0.85.1 Unreleased**（流式 JSONL/memory fork、按模型 compaction 预算、OpenCode `x-opencode-session`、OpenRouter `x-session-id`）。审计见 `_UPDATE-SCOPE.md`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

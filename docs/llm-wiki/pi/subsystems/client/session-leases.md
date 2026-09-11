@@ -23,7 +23,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > `Client` 不再持有 `PiSessionHandle` / shared-exclusive lease。现行 attachment 是 server 发布的 `SessionTarget`（`{ serverId, sessionId, attachmentId }`）；服务观察走 `subscribeService()` 返回的 `ServiceSubscription`。`session-handle.ts` 与 `state.ts` 已删除 [E: packages/client/src/client.ts:113] [E: packages/protocol/src/protocol.ts:40] [E: packages/client/src/types.ts:16]。

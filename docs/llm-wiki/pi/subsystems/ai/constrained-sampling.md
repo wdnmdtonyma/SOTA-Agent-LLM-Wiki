@@ -44,7 +44,7 @@ related:
   - subsys.coding-agent.tool-wrapper
 evidence: explicit
 status: verified
-updated: 9767ba275f
+updated: bbb61e34aa
 ---
 
 > 约束采样把工具声明中的 JSON Schema strict 或 grammar 配置翻译成 provider wire 能力，并维护 grammar tool call 的增量 JSON 参数。coding-agent 默认 `read` / `bash` / `powershell` / `edit` / `write` 带 `constrainedSampling: { type: "json_schema", strict: "prefer" }`，不再要求 `PI_EXPERIMENTAL`。
@@ -80,7 +80,7 @@ Azure Responses 与 OpenAI Codex Responses 是独立 adapter，但也把 `suppor
 JSON-schema strict 的 wire 支持分散在多类 adapter：
 
 - OpenAI Responses / Completions 把 compat 的 strict capability 传给 resolver；支持时写 `strict`,不支持时 `prefer` 走普通 function schema、`require` 在构造请求时抛错。[E: packages/ai/src/api/openai-responses-shared.ts:361] [E: packages/ai/src/api/openai-responses-shared.ts:380] [E: packages/ai/src/api/openai-responses-shared.ts:391] [E: packages/ai/src/api/openai-completions.ts:1493] [E: packages/ai/src/api/openai-completions.ts:1501]
-- Anthropic 只在 `model.compat.supportsStrictTools` 打开时保留完整 schema 并写 `strict: true`;默认 capability 为 false。[E: packages/ai/src/api/anthropic-messages.ts:197] [E: packages/ai/src/api/anthropic-messages.ts:1435] [E: packages/ai/src/api/anthropic-messages.ts:1444] [E: packages/ai/src/api/anthropic-messages.ts:1455]
+- Anthropic 只在 `model.compat.supportsStrictTools` 打开时保留完整 schema 并写 `strict: true`;默认 capability 为 false。[E: packages/ai/src/api/anthropic-messages.ts:194] [E: packages/ai/src/api/anthropic-messages.ts:1436] [E: packages/ai/src/api/anthropic-messages.ts:1445] [E: packages/ai/src/api/anthropic-messages.ts:1456]
 - Google Generative AI / Vertex 只把 Gemini major version 3+ 判为 strict-capable，并将有 strict tool 的自动 function-calling mode 提升到 `VALIDATED`。[E: packages/ai/src/api/google-shared.ts:342] [E: packages/ai/src/api/google-shared.ts:344] [E: packages/ai/src/api/google-shared.ts:366] [E: packages/ai/src/api/google-shared.ts:370] [E: packages/ai/src/api/google-shared.ts:371] [E: packages/ai/src/api/google-generative-ai.ts:374] [E: packages/ai/src/api/google-vertex.ts:473]
 - Mistral 固定以 supported=true 解析 strict，并写到 function tool；Bedrock 则由 `model.compat.supportsStrictMode ?? false` 决定是否在 `toolSpec` 写 strict。[E: packages/ai/src/api/mistral-conversations.ts:755] [E: packages/ai/src/api/mistral-conversations.ts:762] [E: packages/ai/src/api/bedrock-converse-stream.ts:237] [E: packages/ai/src/api/bedrock-converse-stream.ts:1105] [E: packages/ai/src/api/bedrock-converse-stream.ts:1111] [E: packages/ai/src/api/bedrock-converse-stream.ts:1117]
 
