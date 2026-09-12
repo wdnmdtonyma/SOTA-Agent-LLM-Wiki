@@ -57,7 +57,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > 模型可见名默认 `workflow`（load-time `Config.toolName`）；实现包 `@deepseek-ai/dsh-tool-workflow`（Cordis 插件名 `tool-workflow`）。模型交一份纯 JavaScript 编排脚本 + JSON `meta`，工具经 `ctx.workflowEngine.start` 前台跑完全程，把脚本的 JSON 返回值交回。
@@ -77,11 +77,11 @@ Wire 名是 load-time `Config.toolName`，schemastery 默认 `'workflow'`；`app
 
 `inject` 是 `['tools', 'workflowEngine', 'systemPrompt']`。没有 `ctx.workflowEngine` 时本插件不会 apply，catalog 里不会出现 `workflow`。[E: packages/workflow/tool-workflow/src/index.ts:29] 测试把 `toolName: 'orchestrate'` 配进去后，catalog 只有 `orchestrate`、没有 `workflow`；fiber dispose 后两者都消失。[E: packages/workflow/tool-workflow/tests/tool-workflow.spec.ts:375] [E: packages/workflow/tool-workflow/tests/tool-workflow.spec.ts:376] [E: packages/workflow/tool-workflow/tests/tool-workflow.spec.ts:388]
 
-四个 shipped preset **都不**改 `toolName` / `maxResultChars`，因此产品里模型看见的名字就是 `workflow`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:232] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:233]
+四个 shipped preset **都不**改 `toolName` / `maxResultChars`，因此产品里模型看见的名字就是 `workflow`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:233] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:234]
 
-`apply()` 还往 `ctx.systemPrompt` 登记 section `tool:${toolName}`，order 走 `getSectionOrder('TOOL_WORKFLOW')`（catalog 默认 `2600`）：只有用户明确要求 workflow 或大规模多代理编排时才用本工具；一两路委派走普通 `subagent`。[E: packages/workflow/tool-workflow/src/index.ts:212] [E: packages/workflow/tool-workflow/src/index.ts:213] [E: packages/core/system-prompt/src/index.ts:145]
+`apply()` 还往 `ctx.systemPrompt` 登记 section `tool:${toolName}`，order 走 `getSectionOrder('TOOL_WORKFLOW')`（catalog 默认 `2600`）：只有用户明确要求 workflow 或大规模多代理编排时才用本工具；一两路委派走普通 `subagent`。[E: packages/workflow/tool-workflow/src/index.ts:212] [E: packages/workflow/tool-workflow/src/index.ts:213] [E: packages/core/system-prompt/src/index.ts:143]
 
-本页只覆盖 wire 名 `workflow`。同 `delegation` 组里另有 `@deepseek-ai/dsh-tool-ralph` 行，那是另一件 model-visible 工具，参数与 execute 不在本页。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:235]
+本页只覆盖 wire 名 `workflow`。同 `delegation` 组里另有 `@deepseek-ai/dsh-tool-ralph` 行，那是另一件 model-visible 工具，参数与 execute 不在本页。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:238]
 
 ## 用途定位
 
@@ -154,7 +154,7 @@ Wire 名是 load-time `Config.toolName`，schemastery 默认 `'workflow'`；`app
 
 - `ctx.tools`：注册与 `ctx.tools.execute` 管线。
 - `ctx.systemPrompt`：section `tool:${toolName}`。
-- `ctx.subagents`：引擎侧，不是工具 `inject`。默认 provider 名 `'spawn'`；preset / host 行都写 `provider: spawn`。[E: packages/workflow/workflow-worker-thread/src/index.ts:116] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:230]
+- `ctx.subagents`：引擎侧，不是工具 `inject`。默认 provider 名 `'spawn'`；preset / host 行都写 `provider: spawn`。[E: packages/workflow/workflow-worker-thread/src/index.ts:116] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:231]
 - 引擎生命周期事件 `workflow/start|phase|log|agent-start|agent-end|end` 由 `emitWorkflowEvent` 发出；listener 抛错被吃掉，不影响 run。[E: packages/workflow/workflow/src/index.ts:175] [E: packages/workflow/workflow/tests/workflow.spec.ts:72]
 
 `isolate.workflowEngine: true` 让引擎落在 preset 组的 entry-local realm：mount 后 `leakedServices` 若看见根 realm 里的 preset 服务会直接抛，要求「sit behind an `isolate` realm」。[E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:411] 根 isolate 符号匹配才算 leak。[E: packages/preset/agent-presets/src/mount.ts:221] 这与 host 上的 `ctx.subagents` 单例相反：registry 仍在 host，引擎按 agent 一份。
@@ -165,7 +165,7 @@ worker 引擎把脚本放进可逃逸的 `vm` + 新线程：测试夹具 `ESCAPE
 
 ## 执行管线
 
-`ctx.tools.execute` 走 `tools/pre-execute` →（可选 `serviceAsk`）→ 单调 guard → `tools/execute` waterfall（叶子 `ToolDefinition.execute`）→ `tools/post-execute`。[E: packages/core/tools/src/index.ts:1466] [E: packages/core/tools/src/index.ts:1565] [E: packages/core/tools/src/index.ts:1735] 本工具**不**自己挂 `tools/pre-execute` listener。
+`ctx.tools.execute` 走 `tools/pre-execute` →（可选 `serviceAsk`）→ 单调 guard → `tools/execute` waterfall（叶子 `ToolDefinition.execute`）→ `tools/post-execute`。[E: packages/core/tools/src/index.ts:1465] [E: packages/core/tools/src/index.ts:1564] [E: packages/core/tools/src/index.ts:1734] 本工具**不**自己挂 `tools/pre-execute` listener。
 
 对本工具的挂点：
 
@@ -173,9 +173,9 @@ worker 引擎把脚本放进可逃逸的 `vm` + 新线程：测试夹具 `ESCAPE
 - **approval：** body 不 `ask`。没有升权字段。只有别的 pre-execute listener 返回 `ask` 才会进 `serviceAsk`。
 - **sandbox：** 不挂。脚本不碰 `ctx.fs` / `ctx.shell`；孩子各自走自己的工具与沙箱。
 - **checkpoint：** host `session-checkpoint-policy` 对**顶层**（有 `exec.agent` 且无 `exec.parent`）在 `tools/execute` 里先 `sessions.flush`，再进 body。[E: packages/session/session-checkpoint-policy/src/index.ts:70] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
-- **并行：** 未声明 `isConcurrencySafe`，`executionMode` fail-closed 为 exclusive。[E: packages/core/tools/src/index.ts:1269]
-- **PTC：** `ptc` preset 仍装本包，但 `mode: ptc` 时无 `parent` 的模型直调 `workflow` 在进 waterfall 前 collapse，必须从 `run_code` 程序里调。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/core/tools/src/index.ts:1316] [E: packages/core/tools/src/index.ts:1430]
-- **已 abort 的 signal：** registry 在 dispatch 前交出 `TOOL_ABORTED_BEFORE_DISPATCH`（code `ABORTED_BEFORE_DISPATCH`），`engine.start` 不会被叫到。[E: packages/workflow/tool-workflow/tests/tool-workflow.spec.ts:349] [E: packages/core/tools/src/index.ts:1931]
+- **并行：** 未声明 `isConcurrencySafe`，`executionMode` fail-closed 为 exclusive。[E: packages/core/tools/src/index.ts:1268]
+- **PTC：** `ptc` preset 仍装本包，但 `mode: ptc` 时无 `parent` 的模型直调 `workflow` 在进 waterfall 前 collapse，必须从 `run_code` 程序里调。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] [E: packages/core/tools/src/index.ts:1315] [E: packages/core/tools/src/index.ts:1429]
+- **已 abort 的 signal：** registry 在 dispatch 前交出 `TOOL_ABORTED_BEFORE_DISPATCH`（code `ABORTED_BEFORE_DISPATCH`），`engine.start` 不会被叫到。[E: packages/workflow/tool-workflow/tests/tool-workflow.spec.ts:349] [E: packages/core/tools/src/index.ts:1930]
 
 ## Preset 装配
 
@@ -183,12 +183,12 @@ worker 引擎把脚本放进可逃逸的 `vm` + 新线程：测试夹具 `ESCAPE
 
 | preset | 装 `@deepseek-ai/dsh-tool-workflow`？ | `disabled` | isolate / 关键 Config |
 |---|---|---|---|
-| `minimal` | **否**。yml 是 persona + persistent bash/pwsh + `str_replace_editor`，无 `dsh-tool-workflow` / `dsh-workflow-worker-thread` | — | 本包未出现。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:86] |
-| `standard` | 是 | 无 | `delegation` 组 `isolate.workflowEngine: true`；旁边 `workflow-worker-thread` 的 `provider: spawn`；`tool-workflow` 无 extra config。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:178] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:227] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:232] |
-| `ptc` | 是（工具行仍在；呈现改成 PTC `mode: ptc`） | 无 | 同 standard 的 isolate + worker 行；另有 `tool-presentation`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:228] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:233] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
-| `cordis` | 是 | 无 | 同 standard。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:166] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:215] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:220] |
+| `minimal` | **否**。yml 是 complete persona（`prefix`）+ persistent bash/pwsh，无 `str_replace_editor` / `dsh-tool-workflow` / `dsh-workflow-worker-thread` | — | 本包未出现。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:12] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] |
+| `standard` | 是 | 无 | `delegation` 组 `isolate.workflowEngine: true`；旁边 `workflow-worker-thread` 的 `provider: spawn`；`tool-workflow` 无 extra config。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:179] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:228] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:233] |
+| `ptc` | 行在 `delegation` 组 | **`disabled: true`**（engine 留给 `ralph`） | 同 standard 的 isolate + worker 行；另有 `tool-presentation`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:180] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:234] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:238] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] |
+| `cordis` | 是 | 无 | 同 standard。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:167] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:216] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:221] |
 
-组合旁注（不是 preset 成员资格）：`dsh-base` 也 insert 了 host 行 `workflow-worker-thread`（`provider: spawn`）和 `tool-workflow`。[E: packages/bundle/base/cordis.patch.yml:380] [E: packages/bundle/base/cordis.patch.yml:384] `dsh-web-app` overlay 把这两行设 `disabled: true`，改由每个 session 的 preset 在 isolate realm 再挂。[E: packages/bundle/web-app/cordis.patch.yml:417] [E: packages/bundle/web-app/cordis.patch.yml:420] shipped profile 里只有 `web` 叠 web-app 并挂 agent-presets roster；`headless` / `sdk` / `acp` 叠 base（不 disable 这两行），`sdk-minimal` 不叠 base。[I]
+组合旁注（不是 preset 成员资格）：`dsh-base` 也 insert 了 host 行 `workflow-worker-thread`（`provider: spawn`）和 `tool-workflow`。[E: packages/bundle/base/cordis.patch.yml:374] [E: packages/bundle/base/cordis.patch.yml:378] `dsh-web-app` overlay 把这两行设 `disabled: true`，改由每个 session 的 preset 在 isolate realm 再挂。[E: packages/bundle/web-app/cordis.patch.yml:455] [E: packages/bundle/web-app/cordis.patch.yml:458] shipped profile 里只有 `web` 叠 web-app 并挂 agent-presets roster；`headless` / `sdk` / `acp` 叠 base（不 disable 这两行），`sdk-minimal` 不叠 base。[I]
 
 ## execute() 走读
 

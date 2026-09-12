@@ -39,7 +39,7 @@ related:
   - subsys.execution.sandbox-policy
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > E2B 是 **POC 远程 one-world**，不是 shipped 默认路径。`E2BRuntime` 占 `ctx.e2b`，创建并销毁**一个**短生命周期远程 Linux sandbox；`E2BFileSystem` 与 `E2BSubprocessRuntime` 都 `static inject = ['e2b']`，分别独占 `ctx.fs` 与 `ctx.subprocess`。成对替换才把 Bash / PTY / `glob`/`grep` / LSP 与 `read`/`write` 放进同一远程世界；只换 `ctx.fs` 不会带走 `bash -c`。
@@ -57,9 +57,9 @@ updated: d347e70390
 
 三个包一起构成这条 POC 路径：
 
-- `@deepseek-ai/dsh-e2b` 的 `E2BRuntime`：**同一类**既是 `ctx.e2b` 的 Definition（augmentation + `super(ctx, 'e2b')`）也是 Provider。[E: packages/e2b/e2b/package.json:2] [E: packages/e2b/e2b/src/index.ts:65] [E: packages/e2b/e2b/src/index.ts:91]
+- `@deepseek-ai/dsh-e2b` 的 `E2BRuntime`：**同一类**既是 `ctx.e2b` 的 Definition（augmentation + `super(ctx, 'e2b')`）也是 Provider。[E: packages/e2b/e2b/package.json:2] [E: packages/e2b/e2b/src/index.ts:67] [E: packages/e2b/e2b/src/index.ts:94]
 - `@deepseek-ai/dsh-fs-e2b` 的 `E2BFileSystem`：`ctx.fs` 的远程 Provider，`inject = ['e2b']`。[E: packages/e2b/fs-e2b/package.json:2] [E: packages/e2b/fs-e2b/src/index.ts:172]
-- `@deepseek-ai/dsh-subprocess-e2b` 的 `E2BSubprocessRuntime`：`ctx.subprocess` 的远程 Provider，同样 `inject = ['e2b']`。[E: packages/e2b/subprocess-e2b/package.json:2] [E: packages/e2b/subprocess-e2b/src/index.ts:53]
+- `@deepseek-ai/dsh-subprocess-e2b` 的 `E2BSubprocessRuntime`：`ctx.subprocess` 的远程 Provider，同样 `inject = ['e2b']`。[E: packages/e2b/subprocess-e2b/package.json:2] [E: packages/e2b/subprocess-e2b/src/index.ts:61]
 
 明确不拥有：
 
@@ -70,7 +70,7 @@ updated: d347e70390
 - `SandboxMode` fold / `sandbox/mode`：[subsys.execution.sandbox-policy](sandbox-policy.md)（`subsys.execution.sandbox-policy`）。本页只写 composition 把 mode 钉成 `danger-full-access`。
 - 模型可见 tool 字段表（`read` / `bash` / `terminal_*` / `lsp`）。
 
-**POC，不是默认产品路径。** shipped 宿主入口包括 `dsh web` 以及 `dsh --profile headless|sdk|sdk-minimal|acp`（没有 shipped TUI 模板）。`dsh-base` 的 host 行仍是 `id: subprocess` → `dsh-subprocess-local`、`id: fs-sandbox` → `dsh-fs-sandbox`。[E: packages/bundle/base/cordis.patch.yml:205] [E: packages/bundle/base/cordis.patch.yml:206] [E: packages/bundle/base/cordis.patch.yml:493] [E: packages/bundle/base/cordis.patch.yml:494] `packages/bundle/` 与四份 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）都没有 `dsh-e2b` / `dsh-fs-e2b` / `dsh-subprocess-e2b` 行。[I]
+**POC，不是默认产品路径。** shipped 宿主入口包括 `dsh web` 以及 `dsh --profile headless|sdk|sdk-minimal|acp`（没有 shipped TUI 模板）。`dsh-base` 的 host 行仍是 `id: subprocess` → `dsh-subprocess-local`、`id: fs-sandbox` → `dsh-fs-sandbox`。[E: packages/bundle/base/cordis.patch.yml:199] [E: packages/bundle/base/cordis.patch.yml:200] [E: packages/bundle/base/cordis.patch.yml:479] [E: packages/bundle/base/cordis.patch.yml:480] `packages/bundle/` 与四份 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）都没有 `dsh-e2b` / `dsh-fs-e2b` / `dsh-subprocess-e2b` 行。[I]
 
 可加载入口是包内 live fixture `packages/e2b/e2b/tests/fixtures/composition/cordis.yml`：直接插入 `e2b` + `subprocess-e2b` + `fs-e2b`，并挂 `bash` / `sandbox-policy` / `terminal-bash` / `lsp-stdio`。[E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:4] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:10] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:18] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:27] 根目录 `examples/headless-agent/**` 已不在 git 树；不要再把 `e2b.cordis.yml` 当 source。
 
@@ -93,13 +93,13 @@ updated: d347e70390
 
 | 符号 | 要点 |
 |---|---|
-| `Context.e2b` | Cordis augmentation。键名 `'e2b'`。[E: packages/e2b/e2b/src/index.ts:65] [E: packages/e2b/e2b/src/index.ts:91] |
+| `Context.e2b` | Cordis augmentation。键名 `'e2b'`。[E: packages/e2b/e2b/src/index.ts:67] [E: packages/e2b/e2b/src/index.ts:94] |
 | `E2BRuntime` | 具体 `Service`，不是抽象类。`getSandbox()`、只读 `cwd` / `runtimeRoot`。 |
-| `Config` | `apiKey?`（省略读 `E2B_API_KEY`）、`cwd` 默认 `'/home/user/workspace'`、`timeoutMs` 默认 `300_000`。[E: packages/e2b/e2b/src/index.ts:77] [E: packages/e2b/e2b/src/index.ts:77] [E: packages/e2b/e2b/src/index.ts:78] [E: packages/e2b/e2b/src/index.ts:94] |
-| `runtimeRoot` | `posix.join(cwd, '.dsh-e2b')`。必须是真实目录（拒 symlink / 普通文件）。进程/PTY 私有状态写在它下面。[E: packages/e2b/e2b/src/index.ts:103] [E: packages/e2b/e2b/src/index.ts:163] |
-| `e2bControlEnvs(overrides)` | `{ ...overrides, HOME: '/.dsh-e2b-control-<uuid>' }`。后写的 `HOME` 盖掉调用方。[E: packages/e2b/e2b/src/index.ts:39] |
-| `E2BFileSystem` | `extends FileSystem`，仍占 `ctx.fs`。`writeText` 签名止于 `signal`，没有 `sandboxPolicy` 第五参。[E: packages/e2b/fs-e2b/src/index.ts:171] [E: packages/e2b/fs-e2b/src/index.ts:376] `FileSystem.sandboxMode` 基类返回 `undefined`。[E: packages/fs/fs/src/index.ts:103] 本类没有 override。[I] |
-| `E2BSubprocessRuntime` | `extends SubprocessRuntime`，`super(ctx)` 占 `ctx.subprocess`。`Config.pollMs` 默认 `20`。[E: packages/e2b/subprocess-e2b/src/index.ts:52] [E: packages/subprocess/subprocess/src/index.ts:114] [E: packages/e2b/subprocess-e2b/src/index.ts:56] |
+| `Config` | `apiKey?`（省略读 `E2B_API_KEY`）、`cwd` 默认 `'/home/user/workspace'`、`timeoutMs` 默认 `300_000`。[E: packages/e2b/e2b/src/index.ts:80] [E: packages/e2b/e2b/src/index.ts:80] [E: packages/e2b/e2b/src/index.ts:81] [E: packages/e2b/e2b/src/index.ts:97] |
+| `runtimeRoot` | `posix.join(cwd, '.dsh-e2b')`。必须是真实目录（拒 symlink / 普通文件）。进程/PTY 私有状态写在它下面。[E: packages/e2b/e2b/src/index.ts:105] [E: packages/e2b/e2b/src/index.ts:172] |
+| `e2bControlEnvs(overrides)` | `{ ...overrides, HOME: '/.dsh-e2b-control-<uuid>' }`。后写的 `HOME` 盖掉调用方。[E: packages/e2b/e2b/src/index.ts:38] |
+| `E2BFileSystem` | `extends FileSystem`，仍占 `ctx.fs`。`writeText` 签名止于 `signal`，没有 `sandboxPolicy` 第五参。[E: packages/e2b/fs-e2b/src/index.ts:422] `FileSystem.sandboxMode` 基类返回 `undefined`。[E: packages/fs/fs/src/index.ts:103] 本类没有 override。[I] |
+| `E2BSubprocessRuntime` | `extends SubprocessRuntime`，`super(ctx)` 占 `ctx.subprocess`。`Config.pollMs` 默认 `20`。[E: packages/e2b/subprocess-e2b/src/index.ts:60] [E: packages/subprocess/subprocess/src/index.ts:115] [E: packages/e2b/subprocess-e2b/src/index.ts:64] |
 | `scrubRemoteEnvironment` | 丢掉 `DSH_*` 与 `SENSITIVE_ENV_PATTERN`（`/KEY\|PASSWORD\|SECRET\|TOKEN/i`）。[E: packages/e2b/subprocess-e2b/src/environment.ts:65] [E: packages/subprocess/subprocess/src/index.ts:45] |
 | `serializeRemoteEnvironment` | 先 `scrubRemoteEnvironment`，再叠显式条目；`undefined` 是 tombstone。[E: packages/e2b/subprocess-e2b/src/environment.ts:94] [E: packages/e2b/subprocess-e2b/src/environment.ts:100] |
 
@@ -107,14 +107,14 @@ updated: d347e70390
 
 ## 控制流
 
-1. `E2BRuntime`@packages/e2b/e2b/src/index.ts 构造调用 `Service` → `ctx.reflect.provide('e2b', self)`。构造当下就开始 `open()`（eager）；`getSandbox()` 等同一份 `ready`。[E: packages/e2b/e2b/src/index.ts:91] [E: vendor/cordis/src/service.ts:57] [E: packages/e2b/e2b/src/index.ts:103] [E: packages/e2b/e2b/src/index.ts:133]
-2. 缺 `config.apiKey` 且 `E2B_API_KEY` 为空则 `validate` 抛 `configure apiKey or set E2B_API_KEY`；空 key 在 `Sandbox.create` 之前失败。[E: packages/e2b/e2b/src/index.ts:142] [E: packages/e2b/e2b/tests/e2b.spec.ts:228] [E: packages/e2b/e2b/tests/e2b.spec.ts:221]
-3. `open` 只把 `apiKey` 交给 `Sandbox.create`（另带 `timeoutMs`、`secure: true`、`lifecycle.onTimeout: 'kill'`）。随后 `makeDir(cwd)`、`makeDir(runtimeRoot)`，确认 runtime root 是真实目录，再 `chmod 700`。[E: packages/e2b/e2b/src/index.ts:154] [E: packages/e2b/e2b/src/index.ts:159] [E: packages/e2b/e2b/src/index.ts:160] [E: packages/e2b/e2b/src/index.ts:163] [E: packages/e2b/e2b/tests/e2b.spec.ts:83]
-4. 控制面命令走 `e2bControlEnvs()`：每次一个新的 `/.dsh-e2b-control-<uuid>` `HOME`，后写覆盖调用方传入的 `HOME`。[E: packages/e2b/e2b/src/index.ts:39] [E: packages/e2b/e2b/tests/e2b.spec.ts:67]
-5. fiber dispose 设 `disposed`，等 `ready` 后 `sandbox.kill()`；`SandboxNotFoundError` 当已删除。dispose 后再 `getSandbox()` 抛 `disposing`。[E: packages/e2b/e2b/src/index.ts:118] [E: packages/e2b/e2b/src/index.ts:120] [E: packages/e2b/e2b/tests/e2b.spec.ts:101]
-6. **成对挂 adapter。** `E2BFileSystem` / `E2BSubprocessRuntime` 都 `static inject = ['e2b']`，分别 `extends` `FileSystem` / `SubprocessRuntime`，独占 `ctx.fs` / `ctx.subprocess`。两边的 I/O 都 `await this.ctx.e2b.getSandbox()`。[E: packages/e2b/fs-e2b/src/index.ts:172] [E: packages/e2b/fs-e2b/src/index.ts:181] [E: packages/e2b/subprocess-e2b/src/index.ts:53] [E: packages/e2b/subprocess-e2b/src/index.ts:110]
+1. `E2BRuntime`@packages/e2b/e2b/src/index.ts 构造调用 `Service` → `ctx.reflect.provide('e2b', self)`。构造当下就开始 `open()`（eager）；`getSandbox()` 等同一份 `ready`。[E: packages/e2b/e2b/src/index.ts:94] [E: vendor/cordis/src/service.ts:57] [E: packages/e2b/e2b/src/index.ts:105] [E: packages/e2b/e2b/src/index.ts:133]
+2. 缺 `config.apiKey` 且 `E2B_API_KEY` 为空则 `validate` 抛 `configure apiKey or set E2B_API_KEY`；空 key 在 `Sandbox.create` 之前失败。[E: packages/e2b/e2b/src/index.ts:143] [E: packages/e2b/e2b/tests/e2b.spec.ts:226] [E: packages/e2b/e2b/tests/e2b.spec.ts:221]
+3. `open` 只把 `apiKey` 交给 `Sandbox.create`（另带 `timeoutMs`、`secure: true`、`lifecycle.onTimeout: 'kill'`）。随后 `makeDir(cwd)`、`makeDir(runtimeRoot)`，确认 runtime root 是真实目录，再 `chmod 700`。[E: packages/e2b/e2b/src/index.ts:160] [E: packages/e2b/e2b/src/index.ts:168] [E: packages/e2b/e2b/src/index.ts:169] [E: packages/e2b/e2b/src/index.ts:172] [E: packages/e2b/e2b/tests/e2b.spec.ts:83]
+4. 控制面命令走 `e2bControlEnvs()`：每次一个新的 `/.dsh-e2b-control-<uuid>` `HOME`，后写覆盖调用方传入的 `HOME`。[E: packages/e2b/e2b/src/index.ts:38] [E: packages/e2b/e2b/tests/e2b.spec.ts:67]
+5. fiber dispose 设 `disposed`，等 `ready` 后 `sandbox.kill()`；`SandboxNotFoundError` 当已删除。dispose 后再 `getSandbox()` 抛 `disposing`。[E: packages/e2b/e2b/src/index.ts:112] [E: packages/e2b/e2b/src/index.ts:121] [E: packages/e2b/e2b/tests/e2b.spec.ts:98]
+6. **成对挂 adapter。** `E2BFileSystem` / `E2BSubprocessRuntime` 都 `static inject = ['e2b']`，分别 `extends` `FileSystem` / `SubprocessRuntime`，独占 `ctx.fs` / `ctx.subprocess`。两边的 I/O 都 `await this.ctx.e2b.getSandbox()`。[E: packages/e2b/fs-e2b/src/index.ts:172] [E: packages/e2b/fs-e2b/src/index.ts:181] [E: packages/e2b/subprocess-e2b/src/index.ts:61] [E: packages/e2b/subprocess-e2b/src/index.ts:118]
 7. **POC composition。** fixture 插入 `e2b`（`cwd: !!js process.cwd()`）+ `subprocess-e2b` + `fs-e2b`，并把 `sandbox-policy` 设 `mode: danger-full-access`、`workspaceRoot: !!js process.cwd()`。[E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:7] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:10] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:18] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:30] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:31] 不插入 `dsh-sandbox-local`。`terminal-bash` 在 `danger-full-access` 下直接返回裸 argv；其它 mode 没有 `ctx.sandbox` 会抛。[E: packages/terminal/terminal-bash/src/index.ts:102] [E: packages/terminal/terminal-bash/src/index.ts:105]
-8. 用户进程环境：`readRemoteEnvironment` → `bootstrapEnvironment` 把敏感名 tombstone 成 `''` 给 SDK login shell → `serializeRemoteEnvironment(ambient, spec.env)` 写入私有 env 文件，远程 `env -i` 启动。ambient 里的 `DSH_*` / `*KEY*` 等被剥；**显式** `spec.env` 可以再放回去。[E: packages/e2b/subprocess-e2b/src/environment.ts:65] [E: packages/e2b/subprocess-e2b/src/environment.ts:79] [E: packages/e2b/subprocess-e2b/src/process.ts:412] [E: packages/e2b/subprocess-e2b/src/process.ts:136] `apiKey` 只出现在 `Sandbox.create`，不进这些 `envs` / env 文件。[I]
+8. 用户进程环境：`readRemoteEnvironment` → `bootstrapEnvironment` 把敏感名 tombstone 成 `''` 给 SDK login shell → `serializeRemoteEnvironment(ambient, spec.env)` 写入私有 env 文件，远程 `env -i` 启动。ambient 里的 `DSH_*` / `*KEY*` 等被剥；**显式** `spec.env` 可以再放回去。[E: packages/e2b/subprocess-e2b/src/environment.ts:65] [E: packages/e2b/subprocess-e2b/src/environment.ts:79] [E: packages/e2b/subprocess-e2b/src/process.ts:136] [E: packages/e2b/subprocess-e2b/src/process.ts:136] `apiKey` 只出现在 `Sandbox.create`，不进这些 `envs` / env 文件。[I]
 9. **只换 `ctx.fs` 带不走 Bash。** `LocalBashExecutor` 的 `inject` 只有 `subprocess`；`tool-fs-search` 同样只 `inject` `subprocess`（另加 `tools` / `systemPrompt`）。`lsp-stdio` 是少数两条都吃的 Consumer：只换一边会让读源与 spawn 分属两个世界。[E: packages/shell/bash-local/src/index.ts:103] [E: packages/fs/tool-fs-search/src/index.ts:70] [E: packages/lsp/lsp-stdio/src/index.ts:47]
 10. **live 组合。** `composition.e2e.ts` 在缺 `E2B_API_KEY` 时 skip；有 key 时 boot 的是 fixture `packages/e2b/e2b/tests/fixtures/composition/cordis.yml`。[E: packages/e2b/e2b/tests/composition.e2e.ts:26] [E: packages/e2b/e2b/tests/composition.e2e.ts:23] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:4]
 11. 同一份 stdout 断言 `bashRead: 'versioned-by-fs\n'`（Bash 读到 fs 写的版本）与 `fsRead: 'written-by-bash\n'`（fs 读到 Bash 写的文件），并断言 `hover` 与 `terminal` 字段。[E: packages/e2b/e2b/tests/composition.e2e.ts:149] [E: packages/e2b/e2b/tests/composition.e2e.ts:150] [E: packages/e2b/e2b/tests/composition.e2e.ts:153] [E: packages/e2b/e2b/tests/composition.e2e.ts:161]
@@ -134,10 +134,10 @@ updated: d347e70390
 
 - **不是 shipped preset 成员。** 在 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml` 里搜 `e2b` 会落空。要远程世界，显式 `--patch` / 加载本包 composition fixture 这类 overlay。
 - **disable 的 id 跟 `dsh-base` 对不上。** 当前 fixture 是**独立瘦树**（没有 disable 行），不是叠在 `dsh-base` 上。把它叠到 `dsh web` **不会**关掉 host `id: fs-sandbox`，同一 realm 再挂 `fs-e2b` 会 duplicate-service。
-- **`cwd` 必须三处同名。** fixture 把 `e2b.cwd` 与 `sandbox-policy.workspaceRoot` 都写成 `process.cwd()`；`bash-local` 缺省 workdir 也是 `process.cwd()`。`open()` 只 `makeDir` `e2b.cwd`。丢掉 `!!js` 行会回落到 `'/home/user/workspace'`，Bash/PTY 仍把 host 路径当远程 `cwd`，spawn 失败。[E: packages/e2b/e2b/src/index.ts:77] [E: packages/e2b/e2b/src/index.ts:159] [E: packages/shell/bash-local/src/index.ts:159] [E: packages/e2b/e2b/tests/e2b.spec.ts:80]
+- **`cwd` 必须三处同名。** fixture 把 `e2b.cwd` 与 `sandbox-policy.workspaceRoot` 都写成 `process.cwd()`；`bash-local` 缺省 workdir 也是 `process.cwd()`。`open()` 只 `makeDir` `e2b.cwd`。丢掉 `!!js` 行会回落到 `'/home/user/workspace'`，Bash/PTY 仍把 host 路径当远程 `cwd`，spawn 失败。[E: packages/e2b/e2b/src/index.ts:80] [E: packages/e2b/e2b/src/index.ts:168] [E: packages/shell/bash-local/src/index.ts:159] [E: packages/e2b/e2b/tests/e2b.spec.ts:80]
 - **只换 `fs-e2b` 是分裂世界。** `read`/`write` 进远程，`bash` / PTY / `glob`/`grep` 仍在 host `subprocess-local`。
 - **`fs-e2b` 不执行 in-process 围栏。** `writeText` 没有 `sandboxPolicy` 参数；`sandboxMode` 保持基类 `undefined`。政策放行靠 composition 的 `danger-full-access` + 远程 VM，不是 `SandboxedFileSystem.checkedTarget`。
-- **相对命令照样拒。** `resolveExecutable` 对含 `/` 的相对路径抛，与 local 一致。[E: packages/e2b/subprocess-e2b/src/index.ts:120]
+- **相对命令照样拒。** `resolveExecutable` 对含 `/` 的相对路径抛，与 local 一致。[E: packages/e2b/subprocess-e2b/src/index.ts:128]
 - **live e2e 默认 skip。** 没有 `E2B_API_KEY` 时整组 `skipIf`；CI 绿不代表打过真沙箱。[E: packages/e2b/e2b/tests/composition.e2e.ts:26]
 - **live e2e 是包内 fixture 瘦树。** 它挂 `tool` 面以外的 `bash` / PTY / LSP；不是 shipped `dsh-base` overlay。
 

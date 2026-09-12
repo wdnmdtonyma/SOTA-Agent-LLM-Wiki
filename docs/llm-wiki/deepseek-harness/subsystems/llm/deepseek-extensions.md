@@ -39,12 +39,12 @@ related:
   - ref.ctx-keys
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-deepseek-llm-api-extensions` 是 **host 面**登记式 seam `ctx.deepseekLlmApiExtensions`：各插件独占一个官方 DeepSeek **顶层请求字段**；`@deepseek-ai/dsh-plugin-package-inventory-deepseek` 是其中一个默认开启的 field provider，把 Loader 上 **ACTIVE** 的 npm 包身份写成 `dsh_plugin_packages`。这不是 `ctx.llm`，也不是 Web 设置页的 `ctx.pluginInventory`。
 
-DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；`sdk-minimal` 是唯一不叠 `dsh-base` 的 bundle，但仍自己 insert 这两行。 [E: packages/boot/app-boot/src/profile.ts:137] [E: packages/bundle/sdk-minimal/cordis.patch.yml:17] [E: packages/bundle/sdk-minimal/cordis.patch.yml:23]
+DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；`sdk-minimal` 是唯一不叠 `dsh-base` 的 bundle，但仍自己 insert 这两行。 [E: packages/boot/app-boot/src/profile.ts:105] [E: packages/bundle/sdk-minimal/cordis.patch.yml:17] [E: packages/bundle/sdk-minimal/cordis.patch.yml:23]
 
 ## 能回答的问题
 
@@ -104,7 +104,7 @@ hub 的 `DeepSeekLlmApiExtensionMap` 初始为空对象；贡献包用 `declare 
 4. **Adapter 接线。** `dsh-llm-deepseek` 的 `apply` 把 `prepareExtensions` 接到 `ctx.get('deepseekLlmApiExtensions')?.prepare`；缺服务时返回空 `fields` 与 no-op `accept`。 [E: packages/llm/llm-deepseek/src/index.ts:465]
 5. **请求前 `prepare`。** `DeepSeekAdapter` 在 `fetch` 之前调用 `prepareExtensions`，把 `sessionId` / `purpose` 从 `GenerateOptions` 抄进 request；prepare 失败变成 `LlmError` code `REQUEST_EXTENSION`。 [E: packages/llm/llm-deepseek/src/adapter.ts:621] [E: packages/llm/llm-deepseek/src/adapter.ts:628]
 6. **并行 prepare。** registry 对当前 map 条目 `Promise.all`；`request.signal` abort 则停止等待（即使 provider Promise 永不 settle）。`undefined` 贡献被跳过。每个 `value` 先 `structuredClone` 再递归 `freeze`。 [E: packages/llm/deepseek-llm-api-extensions/src/index.ts:111] [E: packages/llm/deepseek-llm-api-extensions/src/index.ts:118] [E: packages/llm/deepseek-llm-api-extensions/src/index.ts:119]
-7. **碰撞检查与发出。** adapter 禁止扩展键覆盖 base body 已有键，然后 `JSON.stringify({ ...body, ...extensions.fields })` POST `/chat/completions`。 [E: packages/llm/llm-deepseek/src/adapter.ts:630] [E: packages/llm/llm-deepseek/src/adapter.ts:637]
+7. **碰撞检查与发出。** adapter 禁止扩展键覆盖 base body 已有键，然后 `JSON.stringify({ ...body, ...extensions.fields })` POST `/chat/completions`。 [E: packages/llm/llm-deepseek/src/adapter.ts:630] [E: packages/llm/llm-deepseek/src/adapter.ts:638]
 8. **2xx 后 `accept`。** 非 ok 不 `accept`；ok 后 `await extensions.accept()`，失败同样 `REQUEST_EXTENSION`。registry 用 `allSettled`：单失败原样抛、多失败 `AggregateError`。 [E: packages/llm/llm-deepseek/src/adapter.ts:695] [E: packages/llm/deepseek-llm-api-extensions/src/index.ts:46] [E: packages/llm/deepseek-llm-api-extensions/src/index.ts:47]
 
 ### `dsh_plugin_packages` 收集
@@ -128,7 +128,7 @@ hub 的 `DeepSeekLlmApiExtensionMap` 初始为空对象；贡献包用 `declare 
 
 `dsh-base` 在 `id: llm` 之后 insert `id: deepseek-llm-api-extensions`（无 `config`），在 `id: agent` 之后 insert `id: plugin-package-inventory-deepseek`（无 `config`，因此 `enabled` 走 schema 默认 `true`）。 [E: packages/bundle/base/cordis.patch.yml:30] [E: packages/bundle/base/cordis.patch.yml:70]
 
-同文件还 insert `id: session-log-deepseek`（默认 **不**贡献字段：该包 `enabled` 默认 `false`，必须显式 `true` 才 `register('dsh_session_log')`）。 [E: packages/bundle/base/cordis.patch.yml:36] [E: packages/session/session-log-deepseek/src/index.ts:25] [E: packages/session/session-log-deepseek/src/index.ts:71]
+同文件还 insert `id: session-log-deepseek`（默认 **不**贡献字段：该包 `enabled` 默认 `false`，必须显式 `true` 才 `register('dsh_session_log')`）。 [E: packages/bundle/base/cordis.patch.yml:36] [E: packages/session/session-log-deepseek/src/index.ts:25] [E: packages/session/session-log-deepseek/src/index.ts:72]
 
 `dsh-sdk-minimal` 不叠 base，但同样 insert 扩展 registry、session-log-deepseek、plugin-package-inventory-deepseek。 [E: packages/bundle/sdk-minimal/cordis.patch.yml:17]
 

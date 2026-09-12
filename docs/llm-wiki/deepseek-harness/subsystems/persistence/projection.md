@@ -52,7 +52,7 @@ related:
   - subsys.host.apiproxy
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `ctx.sessionProjections` 是 **host 面** registry：每个 `ProjectionDefinition` unit 用同步的 `init` / `apply` 以及可选 `wire.view` 把已提交的 `SessionEvent` 折成 `SessionProjectionMap` 整值；`session/event` 是 emit（签名没有 `next`），registry 自己推进 cell，调用方不必 `next()`。`SessionProjectionCache`（`ctx.sessionProjectionCache`）挂在 **`dsh-base`** 上，是 domain `session_projcache` version **7** 的 fold shortcut，**不是**权威。web-app 另挂 `session-turn-outline`（`key: 'turnOutline'`），不要另建 wiki 节点。这是 Cordis 组合运行时的 capability seam（Definition / Provider / Consumer），不是又一份可就地改写的 chat 数组。
@@ -73,15 +73,15 @@ updated: d347e70390
 
 正交、写错会污染邻页的事实（本页只点名，不展开实现）：
 
-- 新 header 的 `version` 必须等于 `SESSION_FORMAT_VERSION`（现为 `2`）。JSONL catalog 有 adjacent v0→v1→v2；比 2 新仍拒。 [E: packages/core/session/src/types.ts:86] [E: packages/session/session-persistence/src/storage-contract.ts:50]
+- 新 header 的 `version` 必须等于 `SESSION_FORMAT_VERSION`（现为 `3`）。JSONL catalog 有 adjacent v0→v1→v2→v3；比 3 新仍拒。 [E: packages/core/session/src/types.ts:88] [E: packages/session/session-persistence/src/storage-contract.ts:50]
 - session persistence SQLite 包已删除。这跟 session event `version`、跟 `session_projcache` domain version 7 都正交。
 - checkpoint 在 `llm/stream` 进 adapter **之前**、以及 top-level `tools/execute` 进 tool body **之前** `sessions.flush`。嵌套 `exec.parent` 不再刷。`agent/pre-step` 另有一条耐久刷盘，不是副作用门。cache 的 `write()` 也会 `flush`，但那是「cache 行不得领先 log」的屏障。 [E: packages/session/session-checkpoint-policy/src/index.ts:35] [E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
-- compaction 只有 `surfaceOp: { op: 'replace', start, end }`，没有 delete。projection unit 折的是整本 `SessionEvent` log（含 replace 那条新事件），不是 `deriveMessages()` 的 surface 节点表。 [E: packages/core/session/src/types.ts:416] [E: packages/core/session/src/types.ts:418]
+- compaction 只有 `surfaceOp: { op: 'replace', startSeq, endSeq }`，没有 delete。projection unit 折的是整本 `SessionEvent` log（含 replace 那条新事件），不是 `deriveMessages()` 的 surface 节点表。 [E: packages/core/session/src/types.ts:434] [E: packages/core/session/src/types.ts:436]
 - shipped JSONL 后端挂在 base：`id: session-persistence-jsonl`，`root: dshHomePath('sessions')`。headless / web 继承这一行。 [E: packages/bundle/base/cordis.patch.yml:110] [E: packages/bundle/base/cordis.patch.yml:113]
-- shipped `session-query-sqlite` 写出 `openAt: never`（base 挂载；web-app 用同一键重述）。 [E: packages/bundle/base/cordis.patch.yml:129] [E: packages/bundle/base/cordis.patch.yml:133] [E: packages/bundle/web-app/cordis.patch.yml:26] [E: packages/bundle/web-app/cordis.patch.yml:29]
-- `workspace` **只 web-app**（insert `id: workspace`）。headless insert 只有 `code-runtime` / `headless-startup` / `headless-runner`。 [E: packages/bundle/web-app/cordis.patch.yml:61] [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26]
-- `session-stats` **只 web-app**。 [E: packages/bundle/web-app/cordis.patch.yml:72]
-- `session-turn-outline` **只 web-app**（`key: 'turnOutline'`，`stateVersion: 2`）。 [E: packages/bundle/web-app/cordis.patch.yml:77] [E: packages/session/session-turn-outline/src/projection.ts:86] [E: packages/session/session-turn-outline/src/projection.ts:87]
+- shipped `session-query-sqlite` 写出 `openAt: never`（base 挂载；web-app 用同一键重述）。 [E: packages/bundle/base/cordis.patch.yml:129] [E: packages/bundle/base/cordis.patch.yml:133] [E: packages/bundle/web-app/cordis.patch.yml:27] [E: packages/bundle/web-app/cordis.patch.yml:30]
+- `workspace` **只 web-app**（insert `id: workspace`）。headless insert 只有 `code-runtime` / `headless-startup` / `headless-runner`。 [E: packages/bundle/web-app/cordis.patch.yml:75] [E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27]
+- `session-stats` **只 web-app**。 [E: packages/bundle/web-app/cordis.patch.yml:86]
+- `session-turn-outline` **只 web-app**（`key: 'turnOutline'`，`stateVersion: 2`）。 [E: packages/bundle/web-app/cordis.patch.yml:105] [E: packages/session/session-turn-outline/src/projection.ts:86] [E: packages/session/session-turn-outline/src/projection.ts:87]
 - experimental Agent Teams 的 host-only unit 是 `key: 'agentTeam'`，`stateVersion: 3`。 [E: packages/experimental/agent-team/src/projection.ts:308] [E: packages/experimental/agent-team/src/projection.ts:309]
 
 registry 与 cache 都是 **host 面**进程级服务。agent-preset 面可以 `inject(['sessionProjections'])` 再 `register`（同一 tool 包按会话挂多次），但不得另造一份 store。shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；`dsh web` 不是唯一宿主入口，也可用 `dsh --profile sdk|sdk-minimal|acp|headless`。
@@ -125,15 +125,15 @@ registry 与 cache 都是 **host 面**进程级服务。agent-preset 面可以 `
 
 ## 控制流
 
-1. **host 面挂 registry。** `dsh-base` 插入 `id: session-projection` / `name: '@deepseek-ai/dsh-session-projection'`。`SessionProjectionRegistry` 构造时 `super(ctx, 'sessionProjections')`，空 log 的 `session/created` 会预填 `init` cell。这是进程级服务。headless 继承这一行。`sdk-minimal` 自己 insert 同一 registry 行，但不叠 `dsh-base`。 [E: packages/bundle/base/cordis.patch.yml:138] [E: packages/bundle/base/cordis.patch.yml:139] [E: packages/session/session-projection/src/index.ts:208] [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/sdk-minimal/cordis.patch.yml:38]
+1. **host 面挂 registry。** `dsh-base` 插入 `id: session-projection` / `name: '@deepseek-ai/dsh-session-projection'`。`SessionProjectionRegistry` 构造时 `super(ctx, 'sessionProjections')`，空 log 的 `session/created` 会预填 `init` cell。这是进程级服务。headless 继承这一行。`sdk-minimal` 自己 insert 同一 registry 行，但不叠 `dsh-base`。 [E: packages/bundle/base/cordis.patch.yml:138] [E: packages/bundle/base/cordis.patch.yml:139] [E: packages/session/session-projection/src/index.ts:208] [E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/sdk-minimal/cordis.patch.yml:38]
 
 2. **域包注册 unit，注册是 fiber effect。** `register(definition)` 要求 `stateVersion` 为非负安全整数。同 key 第一次写入 `Map` 并 `refs = 1`；再注册只 `refs += 1`，但 `stateVersion` 不同则抛、拒绝共享 cell。最后一个 disposer 把 key 整行删掉。preset 按会话挂同一 tool 包时，N 次 `register` 共用一个 unit。 [E: packages/session/session-projection/src/index.ts:270] [E: packages/session/session-projection/src/index.ts:277] [E: packages/session/session-projection/src/index.ts:279] [E: packages/session/session-projection/tests/registry.spec.ts:140] [E: packages/session/session-projection/tests/registry.spec.ts:152]
 
-3. **消费者 unit 点名（细节留给对应页）。** `dsh-session-title` 硬 `inject = ['sessions', 'sessionProjections']`，`register(titleProjectionDefinition)`，`key: 'title'`。`dsh-session-stats` 硬 `inject = ['sessionProjections']`，只出现在 web-app。`dsh-session-turn-outline` 同样硬 inject registry，只 web-app，`key: 'turnOutline'`。`SessionController` 硬 inject `sessionProjections`，构造时 `installModelSelectionProjection`（`key: 'modelSelection'`），`ApiSessionList` 注册 `sessionListMetadata` 与可选 `imageLimits`。`todo_write` / plan / goal / subagent / token-meter 同样是 unit 消费者，本页不展开字段。 [E: packages/session/session-title/src/index.ts:296] [E: packages/session/session-title/src/index.ts:263] [E: packages/session/session-stats/src/index.ts:20] [E: packages/session/session-stats/src/index.ts:28] [E: packages/session/session-turn-outline/src/index.ts:20] [E: packages/session/session-turn-outline/src/index.ts:28] [E: packages/bundle/web-app/cordis.patch.yml:77] [E: packages/api/session-controller/src/index.ts:90] [E: packages/api/session-controller/src/list.ts:90] [E: packages/bundle/web-app/cordis.patch.yml:91]
+3. **消费者 unit 点名（细节留给对应页）。** `dsh-session-title` 硬 `inject = ['sessions', 'sessionProjections']`，`register(titleProjectionDefinition)`，`key: 'title'`。`dsh-session-stats` 硬 `inject = ['sessionProjections']`，只出现在 web-app。`dsh-session-turn-outline` 同样硬 inject registry，只 web-app，`key: 'turnOutline'`。`SessionController` 硬 inject `sessionProjections`，构造时 `installModelSelectionProjection`（`key: 'modelSelection'`），`ApiSessionList` 注册 `sessionListMetadata` 与可选 `imageLimits`。`todo_write` / plan / goal / subagent / token-meter 同样是 unit 消费者，本页不展开字段。 [E: packages/session/session-title/src/index.ts:296] [E: packages/session/session-title/src/index.ts:263] [E: packages/session/session-stats/src/index.ts:20] [E: packages/session/session-stats/src/index.ts:28] [E: packages/session/session-turn-outline/src/index.ts:20] [E: packages/session/session-turn-outline/src/index.ts:28] [E: packages/bundle/web-app/cordis.patch.yml:105] [E: packages/api/session-controller/src/index.ts:94] [E: packages/api/session-controller/src/list.ts:90] [E: packages/bundle/web-app/cordis.patch.yml:105]
 
-4. **`Session.append` 先提交再 emit。** `session/event` 声明为 `(session, event) => void`，**没有** `next` 参数，模式是 emit。observer 抛错 / reject 只打 log，不能回滚已提交事件。热路径不碰盘。 [E: packages/core/session/src/index.ts:73]
+4. **`Session.append` 先提交再 emit。** `session/event` 声明为 `(session, event) => void`，**没有** `next` 参数，模式是 emit。observer 抛错 / reject 只打 log，不能回滚已提交事件。热路径不碰盘。 [E: packages/core/session/src/index.ts:72]
 
-5. **cell 同步折每一个 unit。** 没有 cell 则从 `init` 补历史，再 `apply`。`!Object.is(next, cell.state)`——这里的局部变量 `next` 是下一份 state，**不是** waterfall 的 `next()`。引用没变则零 change-feed 工作；变了且该 unit 有 `wire` 才 `viewSchema.parse(view(…))` 并同步调用每个 `onChanged` listener。host-only unit 更新 `stateOf`，不通知 listener。 [E: packages/session/session-projection/src/index.ts:645] [E: packages/session/session-projection/tests/registry.spec.ts:112] [E: packages/session/session-projection/tests/registry.spec.ts:126]
+5. **cell 同步折每一个 unit。** 没有 cell 则从 `init` 补历史，再 `apply`。`!Object.is(next, cell.state)`——这里的局部变量 `next` 是下一份 state，**不是** waterfall 的 `next()`。引用没变则零 change-feed 工作；变了且该 unit 有 `wire` 才 `viewSchema.parse(view(…))` 并同步调用每个 `onChanged` listener。host-only unit 更新 `stateOf`，不通知 listener。 [E: packages/session/session-projection/src/index.ts:647] [E: packages/session/session-projection/tests/registry.spec.ts:112] [E: packages/session/session-projection/tests/registry.spec.ts:126]
 
 6. **同步读切。** `snapshot(session)` 对每个有 `wire` 的 key 走 watermark cache（缺 cell 则折整本 in-memory log）。registry 另有 `cachedSnapshot(session)`：只读已 materialize 的 cell，可能落后 live Session，是 hint。`checkpoint(session)` 交出 `{ ver, seq, val }`，`val` 是 `structuredClone`。 [E: packages/session/session-projection/src/index.ts:338] [E: packages/session/session-projection/src/index.ts:344] [E: packages/session/session-projection/tests/registry.spec.ts:238]
 
@@ -141,7 +141,7 @@ registry 与 cache 都是 **host 面**进程级服务。agent-preset 面可以 `
 
 8. **write-behind 也听 `session/event`（仍然是 emit，无 `next()`）。** `turn/end` 立刻 `flushSoft`（强制点）。其它事件累加 `pending`：到 `writeEveryEvents` 就写；否则第一次变脏时 `setTimeout(writeIntervalMs)`。`session/created` 是第一强制点（fork seed 必须能冷列出）。`session/disposed` 是 live→cold 强制点。插件 unload 清掉所有 timer。 [E: packages/session/session-projection-cache/src/index.ts:305] [E: packages/session/session-projection-cache/src/index.ts:307] [E: packages/session/session-projection-cache/src/index.ts:313] [E: packages/session/session-projection-cache/tests/cache.spec.ts:154]
 
-9. **`write()`：先 checkpoint，若仍 live 则 `sessions.flush`，再 `put`。** `checkpoint(session)` 先冻结当前 cell 切。`SessionStore.flush` 是 **parallel**（签名没有 `next`，`Promise.allSettled` 等全部 listener）。然后整 record 替换进 `session_projcache`。crash 可以让 cache 落后 log，不能让 cache 领先 log。detach 时 store 里已经没有该 session，这步跳过 flush。 [E: packages/session/session-projection-cache/src/index.ts:247] [E: packages/session/session-projection-cache/src/index.ts:256] [E: packages/core/session/src/index.ts:82] [E: packages/core/session/src/index.ts:1121]
+9. **`write()`：先 checkpoint，若仍 live 则 `sessions.flush`，再 `put`。** `checkpoint(session)` 先冻结当前 cell 切。`SessionStore.flush` 是 **parallel**（签名没有 `next`，`Promise.allSettled` 等全部 listener）。然后整 record 替换进 `session_projcache`。crash 可以让 cache 落后 log，不能让 cache 领先 log。detach 时 store 里已经没有该 session，这步跳过 flush。 [E: packages/session/session-projection-cache/src/index.ts:247] [E: packages/session/session-projection-cache/src/index.ts:256] [E: packages/core/session/src/index.ts:81] [E: packages/core/session/src/index.ts:1148]
 
 10. **写失败 fail-soft。** `flushSoft` catch 之后 `logger.warn`，不把异常送回 `session/event` 路径。下一次强制点自愈。非 JSON 的 unit state 在 **直接** `write()` 上会 loud 抛，但 event 路径包在 `flushSoft` 里。 [E: packages/session/session-projection-cache/src/index.ts:359] [E: packages/session/session-projection-cache/tests/cache.spec.ts:220]
 
@@ -149,7 +149,7 @@ registry 与 cache 都是 **host 面**进程级服务。agent-preset 面可以 `
 
 12. **listing 零 log 读。** `ApiSessionList.projectionsFor`：attached → `sessionProjections.cachedSnapshot(session)`（不 fold 历史）；detached 非 seeded → `sessionProjectionCache.cachedSnapshot(header, SessionLogOffset(0))`，否则可退 `cachedPredecessorTitle`。cache 先 identity 对账，再 `viewCheckpoint`。listing 降级为无 projection 列，不炸整表。 [E: packages/api/session-controller/src/list.ts:268] [E: packages/api/session-controller/src/list.ts:274] [E: packages/api/session-controller/src/list.ts:279] [E: packages/session/session-projection-cache/src/index.ts:127]
 
-13. **change feed 到 control stream。** `SessionControlController` 在构造里 `sessionProjections.onChanged`，把 `(session, key, value, seq)` 打成 `type: 'projection'` 的 Host-wide control frame。registry 不持有 wire 词表。 [E: packages/api/session-controller/src/control.ts:27] [E: packages/api/session-controller/src/control.ts:29]
+13. **change feed 到 control stream。** `SessionControlController` 在构造里 `sessionProjections.onChanged`，把 `(session, key, value, seq)` 打成 `type: 'projection'` 的 Host-wide control frame。registry 不持有 wire 词表。 [E: packages/api/session-controller/src/control.ts:26] [E: packages/api/session-controller/src/control.ts:28]
 
 14. **邻接 waterfall 必须 `next()`。** `llm/stream` / `tools/execute` / `agent/pre-step` 是 waterfall：checkpoint policy 先 `flush` 再 `yield* next()` / `return next()`；省略 `next()` = adapter / tool body / 下一步决策都不跑。`session/event` 与 `session/flush` **不是** waterfall，registry 与 cache 的 listener 没有、也不该调用 `next()`。 [E: packages/session/session-checkpoint-policy/src/index.ts:67] [E: packages/session/session-checkpoint-policy/src/index.ts:74] [E: packages/session/session-checkpoint-policy/src/index.ts:81]
 
@@ -166,12 +166,12 @@ cache 永不权威、写路径 fail-soft：丢掉一次写只让下次 cold 多�
 ## Gotcha
 
 - **`session/event` 没有 `next()`。** 把它当 waterfall、指望「不调用 next 就挡住 persistence」是错的。append 已经提交。
-- **cell `apply` 里的 `next` 是下一份 state。** 与 Cordis waterfall 传入的 `next()` 同名不同物。`Object.is` 相同引用 = 该 unit 本事件静默。 [E: packages/session/session-projection/src/index.ts:645]
+- **cell `apply` 里的 `next` 是下一份 state。** 与 Cordis waterfall 传入的 `next()` 同名不同物。`Object.is` 相同引用 = 该 unit 本事件静默。 [E: packages/session/session-projection/src/index.ts:647]
 - **同 key 跨 `stateVersion` 不能共享。** 运行时比得出来的不兼容只有这一条；函数体无法比较。 [E: packages/session/session-projection/src/index.ts:279]
 - **cache 现在是 base 默认，不是「只 web」。** `dsh-base` 挂 `session-projection-cache`；headless / sdk / acp（叠 base）都有。`sdk-minimal` 只有 registry，没有 cache。`session-stats` 与 `session-turn-outline` 仍只 web-app。
 - **registry `cachedSnapshot(session)` ≠ cache `cachedSnapshot(header)`。** 前者读 live cell hint；后者读 durable domain 行。session-controller listing 对 attached 走前者。
 - **`coldSnapshot` 不再 `readFrom`。** 调用方必须自己提供完整 log。
-- **cache 不是权威。** 丢行、`ver` 不匹配、identity 对不上、缩 log，一律当 stale shortcut。域 version **7** 与 event `version` 2 不是同一个旋钮。
+- **cache 不是权威。** 丢行、`ver` 不匹配、identity 对不上、缩 log，一律当 stale shortcut。域 version **7** 与 `SESSION_FORMAT_VERSION` 3 不是同一个旋钮。
 - **写失败不回压 append。** `flushSoft` 吞错。直接调用 `write()` 才可能因非 JSON state loud 失败。 [E: packages/session/session-projection-cache/tests/cache.spec.ts:233]
 - **`restoreFloor` 返回最低可用 watermark 本身。** `-1` 作用在 `need = row.seq + 1` 上（`Math.max(min(need) - 1, 0)`），不是从 watermark 再减 1。 [E: packages/session/session-projection/src/index.ts:434]
 - **session id 复用会换生命周期。** `createdAt` / `cwd` 对不上的 record 整份丢弃。 [E: packages/session/session-projection-cache/tests/cache.spec.ts:313]
@@ -189,7 +189,7 @@ cache 永不权威、写路径 fail-soft：丢掉一次写只让下次 cold 多�
 | Consumer（unit） | `dsh-session-title`、`dsh-session-stats`、`dsh-session-turn-outline`、session-controller、`tool-todo` / plan / goal / subagent / token-meter / opt-in `agentTeam` | `register(...)` | `title` 硬依赖 registry；token-meter / subagent 等随 base | 加上 `session-stats`、`turnOutline`、controller 的 `sessionListMetadata` / `imageLimits` / `modelSelection` | `title` 仍在 base；无 `sessionStats` / `turnOutline` | 有 registry；无 cache / stats / HTTP listing |
 | Consumer（carrier） | `@deepseek-ai/dsh-api-session-controller` | live `cachedSnapshot(session)`；冷 `cache.cachedSnapshot(header)`；`onChanged` → `type: 'projection'` | 无 HTTP 宿主 | web 行 `id: session-controller` | 无 | 无 |
 
-换 persistence backend 只换交给 `restore` / `coldSnapshot` 的 events 与 `session/flush` 的落盘。换 loop 不能绕开 log 合同。preset 需要私有 Provider 时必须 `isolate`；`sessionProjections` 不是那种私有服务。shipped log 介质是 base 行 `session-persistence-jsonl`（`root: dshHomePath('sessions')`）。同层 `session-query-sqlite` 写 `openAt: never`。`workspace` 只出现在 web-app insert。 [E: packages/bundle/base/cordis.patch.yml:110] [E: packages/bundle/base/cordis.patch.yml:113] [E: packages/bundle/base/cordis.patch.yml:133] [E: packages/bundle/web-app/cordis.patch.yml:61]
+换 persistence backend 只换交给 `restore` / `coldSnapshot` 的 events 与 `session/flush` 的落盘。换 loop 不能绕开 log 合同。preset 需要私有 Provider 时必须 `isolate`；`sessionProjections` 不是那种私有服务。shipped log 介质是 base 行 `session-persistence-jsonl`（`root: dshHomePath('sessions')`）。同层 `session-query-sqlite` 写 `openAt: never`。`workspace` 只出现在 web-app insert。 [E: packages/bundle/base/cordis.patch.yml:110] [E: packages/bundle/base/cordis.patch.yml:113] [E: packages/bundle/base/cordis.patch.yml:133] [E: packages/bundle/web-app/cordis.patch.yml:75]
 
 ## Sources
 

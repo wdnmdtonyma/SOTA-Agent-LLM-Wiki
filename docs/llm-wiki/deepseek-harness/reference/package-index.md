@@ -31,7 +31,10 @@ source:
   - vendor/timer/package.json
   - python/sdk-runtime/package.json
   - website/package.json
-  - native/landlock-run/package.json
+  - native/system/package.json
+  - native/system/packages/entry/package.json
+  - apps/desktop/package.json
+  - apps/desktop-host/package.json
 symbols:
   - packages/*/*
   - vendor/*
@@ -50,17 +53,17 @@ related:
   - subsys.client.runtime
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
-> monorepo 包索引把每个 workspace 包钉成一行：npm name、目录、seam 角色（Definition / Provider / Consumer / bundle / app / library）、以及它是否出现在 shipped composition。DSH 是 **Cordis 组合运行时**，主线 `profile → bundle → agent preset`；有 `package.json` 不等于进了产品树。已删除包 `packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react`、`packages/session/session-persistence-sqlite`、`packages/subagent/tool-subagent-report`、`packages/examples/agent-spine-demo`、`packages/code-runtime/code-runtime-python` 不再成行。叶 `packages/**/package.json`（排除 `@fixture/*`）在本 SHA **255**。产品版本 `0.1.3-alpha.1`。
+> monorepo 包索引把每个 workspace 包钉成一行：npm name、目录、seam 角色（Definition / Provider / Consumer / bundle / app / library）、以及它是否出现在 shipped composition。DSH 是 **Cordis 组合运行时**，主线 `profile → bundle → agent preset`；有 `package.json` 不等于进了产品树。已删除包 `packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react`、`packages/session/session-persistence-sqlite`、`packages/subagent/tool-subagent-report`、`packages/examples/agent-spine-demo`、`packages/code-runtime/code-runtime-python` 不再成行。`packages/**/package.json` 共 **275**（含 typert generator 下 **7** 个 `@fixture/*`）；产品叶 `packages/*/*` **268**。产品版本 `0.1.5-rc.2`。
 
 ## 能回答的问题
 
 - `packages/*/*` 冻结树里有哪些包？某个 `@deepseek-ai/dsh-*` 落在哪个目录？
 - 这个包是 Definition、Provider、Consumer，还是 bundle / app / library？
 - 它出现在六个 bundle patch（`dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app`）还是四个 shipped preset，还是仓库里有、yml 都没点名？
-- `apps/cli`、`vendor/*`、`python/sdk-runtime`、`native/landlock-run` 分别是不是 build target？
+- `apps/cli`、`vendor/*`、`python/sdk-runtime`、`native/system`、`apps/desktop` 分别是不是 build target？
 - web 默认装哪一层？headless / sdk / acp 会不会挂 `agent-presets`？`sdk-minimal` 叠不叠 `dsh-base`？本仓有没有 shipped TUI 包？
 
 ## 范围与 ground truth
@@ -72,19 +75,19 @@ updated: d347e70390
 - `packages/bundle/{base,web-app,headless,sdk-app,sdk-minimal,acp-app}/cordis.patch.yml`
 - `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml`
 
-不认「目录里有 package.json」、不认 bundle `dependencies`、不认 README 表格。根 workspace 把 `packages/*/*` 收进 pnpm；那只说明能被解析，不说明进了 `dsh web` / `dsh --profile headless|sdk|sdk-minimal|acp`。[E: package.json:11][E: package.json:13][E: pnpm-workspace.yaml:3]
+不认「目录里有 package.json」、不认 bundle `dependencies`、不认 README 表格。根 workspace 把 `packages/*/*` 与 `native/system` / `native/system/packages/*` 收进 pnpm；那只说明能被解析，不说明进了 `dsh web` / `dsh --profile headless|sdk|sdk-minimal|acp`。[E: package.json:13][E: package.json:14][E: pnpm-workspace.yaml:3][E: pnpm-workspace.yaml:6]
 
-五个 shipped profile 名在 `PROFILE_TEMPLATES`：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。`web` 是唯一 `patchReload: live` 的模板。[E: packages/boot/app-boot/src/profile.ts:137][E: packages/boot/app-boot/src/profile.ts:144]
+五个 shipped profile 名在 `PROFILE_TEMPLATES`：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。`web` 是唯一 `patchReload: live` 的模板。[E: packages/boot/app-boot/src/profile.ts:105][E: packages/boot/app-boot/src/profile.ts:112] `desktop` 不是该表成员。
 
-四个 shipped preset 目录在 `SHIPPED_PRESET_ROOT` 下：`minimal` / `standard` / `ptc` / `cordis`。没有 `presets/code/`；旧 code 预设就是 PTC。wiki id `surface.presets.code` 与 `subsys.core.code-mode` 是稳定别名。[E: packages/preset/agent-presets/src/discovery.ts:60][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:1][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:1][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:1][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:1]
+四个 shipped preset 目录在 `SHIPPED_PRESET_ROOT` 下：`minimal` / `standard` / `ptc` / `cordis`。没有 `presets/code/`；旧 code 预设就是 PTC。wiki id `surface.presets.code` 与 `subsys.core.code-mode` 是稳定别名。[E: packages/preset/agent-presets/src/discovery.ts:60][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:24][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:31][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:17]
 
-`@deepseek-ai/dsh-base` 是 **base-backed** profile 的第一层 patch：`dsh.bundle.patch` 指向那份 yml，`insert` 从 `id: timer` 起铺 host 面。[E: packages/bundle/base/package.json:2][E: packages/bundle/base/package.json:38][E: packages/bundle/base/cordis.patch.yml:17]
+`@deepseek-ai/dsh-base` 是 **base-backed** profile 的第一层 patch：`dsh.bundle.patch` 指向那份 yml，`insert` 从 `id: timer` 起铺 host 面。[E: packages/bundle/base/package.json:2][E: packages/bundle/base/package.json:33][E: packages/bundle/base/cordis.patch.yml:17]
 
-`sdk-minimal` **不**叠 base：模板 `bundles` 只有 `@deepseek-ai/dsh-sdk-minimal`，其 patch 是完整 `insert`。[E: packages/boot/app-boot/src/profile.ts:155][E: packages/bundle/sdk-minimal/package.json:2][E: packages/bundle/sdk-minimal/cordis.patch.yml:2][E: packages/bundle/sdk-minimal/cordis.patch.yml:5]
+`sdk-minimal` **不**叠 base：模板 `bundles` 只有 `@deepseek-ai/dsh-sdk-minimal`，其 patch 是完整 `insert`。[E: packages/boot/app-boot/src/profile.ts:123][E: packages/bundle/sdk-minimal/package.json:2][E: packages/bundle/sdk-minimal/cordis.patch.yml:5]
 
-web-app / headless / sdk-app / acp-app **叠在 base 上**。web-app 把一批 host 面 tool 行 `disabled: true`，再 insert `agent-presets`（`default: standard`），让每会话走 agent-preset 面。headless **不** insert roster，只加 `code-runtime` 与自己的 startup/runner。[E: packages/bundle/web-app/cordis.patch.yml:442][E: packages/bundle/web-app/cordis.patch.yml:443][E: packages/bundle/web-app/cordis.patch.yml:445][E: packages/bundle/headless/cordis.patch.yml:20][E: packages/bundle/headless/cordis.patch.yml:27]
+web-app / headless / sdk-app / acp-app **叠在 base 上**。web-app 把一批 host 面 tool 行 `disabled: true`，再 insert `agent-presets`（`default: standard`），让每会话走 agent-preset 面。headless **不** insert roster，只加 `code-runtime` 与自己的 startup/runner。[E: packages/bundle/web-app/cordis.patch.yml:481][E: packages/bundle/web-app/cordis.patch.yml:482][E: packages/bundle/web-app/cordis.patch.yml:484][E: packages/bundle/headless/cordis.patch.yml:20][E: packages/bundle/headless/cordis.patch.yml:27]
 
-preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-local` / persistent bash+pwsh 在 `minimal`（也在 `sdk-minimal`）；`dsh-agent-tool-presentation` 只在 `ptc`；`dsh-tool-cordis` 只在 `cordis`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:10][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:266][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:252]
+preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；persistent bash+pwsh 在 `minimal`（也在 `sdk-minimal`）；`dsh-tool-present` 在 standard / ptc / cordis；`dsh-agent-tool-presentation` 只在 `ptc`；`dsh-tool-cordis` 只在 `cordis`。`dsh-fs-local` / `dsh-tool-str-replace-editor` 仓库有、出厂 yml **不挂**。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:254]
 
 角色列是 seam 三角加三类非三角包：
 
@@ -95,7 +98,7 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 - **app** — 可执行入口或 demo bin。
 - **library** — 零 plugin 行的工具库、协议纯类型、testkit。
 
-列约定：`shipped` = 十份 yml（六 bundle + 四 preset）的并集标签。`base` 的包会被叠在 base 上的 profile **继承**（除非后来的 patch 把那一行 disabled）。web 禁用后若四个 preset 之一重新 `name:` 了同一包，`为什么` 会写 remount，`shipped` 仍记 `base`。只出现在 `sdk-minimal` 的记 `sdk-minimal`。默认模型仍是 `provider: deepseek-official` / `model: deepseek-v4-flash`。[E: packages/bundle/base/cordis.patch.yml:78][E: packages/bundle/base/cordis.patch.yml:79]
+列约定：`shipped` = 十份 yml（六 bundle + 四 preset）的并集标签。`base` 的包会被叠在 base 上的 profile **继承**（除非后来的 patch 把那一行 disabled）。web 禁用后若四个 preset 之一重新 `name:` 了同一包，`为什么` 会写 remount，`shipped` 仍记 `base`。只出现在 `sdk-minimal` 的记 `sdk-minimal`。base 默认模型是 `provider: deepseek-official` / `model: deepseek-flash`；acp-app 仍硬编码 `deepseek-v4-flash`。[E: packages/bundle/base/cordis.patch.yml:78][E: packages/bundle/base/cordis.patch.yml:79]
 
 官方 `packages/README.md` 只当查漏，**不当 [E]**。T0 组合叙事在 [spine.overview](../spine/overview.md) 与 [spine.composition-boot](../spine/composition-boot.md)；preset 成员对照在 [ref.presets](presets.md)。本页不把 help 例子里的 `tui` 写成 shipped profile。`dsh web` 不是唯一宿主入口：还有 `dsh --profile sdk|sdk-minimal|acp|headless`。
 
@@ -155,17 +158,18 @@ preset-only 的例子：`dsh-persona` 四个 shipped preset 都有；`dsh-fs-loc
 | `@deepseek-ai/dsh-deepseek-llm-api-extensions` | `packages/llm/deepseek-llm-api-extensions` | Provider | base + sdk-minimal | 官方 DeepSeek 请求字段注册表 | host 面 | `packages/llm/deepseek-llm-api-extensions/package.json` |
 | `@deepseek-ai/dsh-plugin-package-inventory-deepseek` | `packages/llm/plugin-package-inventory-deepseek` | Provider | base + sdk-minimal | Loader 插件清单进官方 API 请求 | host 面 | `packages/llm/plugin-package-inventory-deepseek/package.json` |
 
-### fs/（7）
+### fs/（8）
 
 | npm name | 目录 | 角色 | shipped | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|
 | `@deepseek-ai/dsh-fs` | `packages/fs/fs` | Definition | 仓库有但不 shipped | `ctx.fs` 合同 | 合同包 | `packages/fs/fs/package.json` |
-| `@deepseek-ai/dsh-fs-local` | `packages/fs/fs-local` | Provider | preset-only + sdk-minimal | 本地文件系统实现 | min / sdk-minimal | `packages/fs/fs-local/package.json` |
+| `@deepseek-ai/dsh-fs-local` | `packages/fs/fs-local` | Provider | 仓库有但不 shipped | 本地文件系统实现 | 出厂 preset / bundle yml 都不挂 | `packages/fs/fs-local/package.json` |
 | `@deepseek-ai/dsh-fs-observation-policy` | `packages/fs/fs-observation-policy` | Consumer | base | observed-state / read-before-edit | host 面 | `packages/fs/fs-observation-policy/package.json` |
 | `@deepseek-ai/dsh-fs-sandbox` | `packages/fs/fs-sandbox` | Provider | base | 沙箱围栏的 fs 实现 | host 面默认后端 | `packages/fs/fs-sandbox/package.json` |
 | `@deepseek-ai/dsh-tool-fs` | `packages/fs/tool-fs` | Consumer | base | read/write/edit | web 禁用后 preset remount | `packages/fs/tool-fs/package.json` |
 | `@deepseek-ai/dsh-tool-fs-search` | `packages/fs/tool-fs-search` | Consumer | base | glob/grep | web 禁用后 preset remount | `packages/fs/tool-fs-search/package.json` |
-| `@deepseek-ai/dsh-tool-str-replace-editor` | `packages/fs/tool-str-replace-editor` | Consumer | base + sdk-minimal | view/create/replace | min remount；sdk-minimal 直接装 | `packages/fs/tool-str-replace-editor/package.json` |
+| `@deepseek-ai/dsh-tool-str-replace-editor` | `packages/fs/tool-str-replace-editor` | Consumer | 仓库有但不 shipped | view/create/replace；wire `str_replace_editor` | 包在、出厂不挂 | `packages/fs/tool-str-replace-editor/package.json` |
+| `@deepseek-ai/dsh-tool-present` | `packages/fs/tool-present` | Consumer | preset-only | wire `present`；成功后 `deliverables/presented` | standard / ptc / cordis | `packages/fs/tool-present/package.json` |
 
 ### shell/（10）
 
@@ -229,7 +233,7 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | npm name | 目录 | 角色 | shipped | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|
 | `@deepseek-ai/dsh-skill` | `packages/skill/skill` | Definition | base | skill 注册表 | host 面 | `packages/skill/skill/package.json` |
-| `@deepseek-ai/dsh-skill-badge` | `packages/skill/skill-badge` | Provider | base | bundled badge skill | base 有行但 `disabled: true` [E: packages/bundle/base/cordis.patch.yml:286][E: packages/bundle/base/cordis.patch.yml:287] | `packages/skill/skill-badge/package.json` |
+| `@deepseek-ai/dsh-skill-badge` | `packages/skill/skill-badge` | Provider | base | bundled badge skill | base 有行但 `disabled: true` [E: packages/bundle/base/cordis.patch.yml:280][E: packages/bundle/base/cordis.patch.yml:281] | `packages/skill/skill-badge/package.json` |
 | `@deepseek-ai/dsh-skill-filesystem` | `packages/skill/skill-filesystem` | Provider | base | 本地 skill 发现 | web 禁用后 remount | `packages/skill/skill-filesystem/package.json` |
 | `@deepseek-ai/dsh-tool-skill` | `packages/skill/tool-skill` | Consumer | base | 模型可见 `skill` | remount | `packages/skill/tool-skill/package.json` |
 
@@ -305,7 +309,7 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/dsh-web-search-exa` | `packages/web/web-search-exa` | Provider | 仓库有但不 shipped | Exa | 可选 | `packages/web/web-search-exa/package.json` |
 | `@deepseek-ai/dsh-web-search-perplexity` | `packages/web/web-search-perplexity` | Provider | 仓库有但不 shipped | Perplexity | 可选 | `packages/web/web-search-perplexity/package.json` |
 
-### attachment / spill / session / session-query / settings / credentials / storage / workspace
+### attachment / spill / session（19） / session-query / settings / credentials / storage / workspace
 
 | npm name | 目录 | 角色 | shipped | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|
@@ -320,7 +324,8 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/dsh-session-format` | `packages/session/session-format` | library | 仓库有但不 shipped | adjacent 迁移规划器 | 被 catalog / jsonl 依赖 | `packages/session/session-format/package.json` |
 | `@deepseek-ai/dsh-session-format-v0-to-v1` | `packages/session/session-format-v0-to-v1` | library | 仓库有但不 shipped | v0→v1 adjacent migrator | catalog 边 | `packages/session/session-format-v0-to-v1/package.json` |
 | `@deepseek-ai/dsh-session-format-v1-to-v2` | `packages/session/session-format-v1-to-v2` | library | 仓库有但不 shipped | v1→v2 adjacent migrator | catalog 边 | `packages/session/session-format-v1-to-v2/package.json` |
-| `@deepseek-ai/dsh-session-format-catalog` | `packages/session/session-format-catalog` | library | 仓库有但不 shipped | `currentVersion: 2` 已安装 catalog | jsonl load 导入 | `packages/session/session-format-catalog/package.json` |
+| `@deepseek-ai/dsh-session-format-v2-to-v3` | `packages/session/session-format-v2-to-v3` | library | 仓库有但不 shipped | v2→v3 adjacent migrator（`code`→`ptc`、插入 `system/message`） | catalog 边 | `packages/session/session-format-v2-to-v3/package.json` |
+| `@deepseek-ai/dsh-session-format-catalog` | `packages/session/session-format-catalog` | library | 仓库有但不 shipped | `currentVersion: 3` 已安装 catalog | jsonl load 导入 | `packages/session/session-format-catalog/package.json` |
 | `@deepseek-ai/dsh-session-projection` | `packages/session/session-projection` | Definition | base + sdk-minimal | 投影注册表 | host / sdk-minimal | `packages/session/session-projection/package.json` |
 | `@deepseek-ai/dsh-session-projection-cache` | `packages/session/session-projection-cache` | Provider | base | 投影缓存 | 现已在 base insert | `packages/session/session-projection-cache/package.json` |
 | `@deepseek-ai/dsh-session-stats` | `packages/session/session-stats` | Provider | web-app | conversation 计数投影 | web-app | `packages/session/session-stats/package.json` |
@@ -357,12 +362,12 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/dsh-user-approval` | `packages/interaction/user-approval` | Definition | base | `ctx.approval` | host 面 | `packages/interaction/user-approval/package.json` |
 | `@deepseek-ai/dsh-user-questions` | `packages/interaction/user-questions` | Definition | base | `ctx.userQuestions` | host 面 | `packages/interaction/user-questions/package.json` |
 | `@deepseek-ai/dsh-command-feedback` | `packages/feedback/command-feedback` | Consumer | base | `/feedback` | host 面 | `packages/feedback/command-feedback/package.json` |
-| `@deepseek-ai/dsh-message-feedback` | `packages/feedback/message-feedback` | Provider | web-app | 消息评分 sidecar | web-app | `packages/feedback/message-feedback/package.json` |
+| `@deepseek-ai/dsh-message-feedback` | `packages/feedback/message-feedback` | Provider | web-app | 消息评分进 Session log（`feedback/message-put` / `delete`） | web-app | `packages/feedback/message-feedback/package.json` |
 | `@deepseek-ai/dsh-hook-protocol` | `packages/hooks/hook-protocol` | library | 仓库有但不 shipped | Claude/Codex hook 协议 | 库 | `packages/hooks/hook-protocol/package.json` |
 | `@deepseek-ai/dsh-hooks-claude-code` | `packages/hooks/hooks-claude-code` | Consumer | 仓库有但不 shipped | Claude hooks 桥 | 未点名 | `packages/hooks/hooks-claude-code/package.json` |
 | `@deepseek-ai/dsh-hooks-codex` | `packages/hooks/hooks-codex` | Consumer | 仓库有但不 shipped | Codex hooks 桥 | 未点名 | `packages/hooks/hooks-codex/package.json` |
 
-### api/（5）· typert/（4）
+### api/（6）· typert/（4）
 
 旧 BFF `dsh-host-apiproxy` 已删除。HTTP API 是三个 controller + gateway + webserver。
 
@@ -373,12 +378,13 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/dsh-api-session-controller` | `packages/api/session-controller` | Provider | web-app | Session Remote + 客户端 `ctx.sessions` | web-app | `packages/api/session-controller/package.json` |
 | `@deepseek-ai/dsh-api-settings-controller` | `packages/api/settings-controller` | Provider | web-app | Settings + credentials Remote | web-app | `packages/api/settings-controller/package.json` |
 | `@deepseek-ai/dsh-api-workspace-controller` | `packages/api/workspace-controller` | Provider | web-app | Workspace Remote | web-app | `packages/api/workspace-controller/package.json` |
+| `@deepseek-ai/dsh-api-workspace-files` | `packages/api/workspace-files` | Provider | web-app | Host `ctx.workspaceFiles` Remote | web-app [E: packages/bundle/web-app/cordis.patch.yml:111] | `packages/api/workspace-files/package.json` |
 | `@deepseek-ai/dsh-typert-generator` | `packages/typert/generator` | library | 仓库有但不 shipped | Typert 生成器 | 库 | `packages/typert/generator/package.json` |
 | `@deepseek-ai/dsh-typert-loader` | `packages/typert/loader` | Provider | base | 装载生成物 | host 面 | `packages/typert/loader/package.json` |
 | `@deepseek-ai/dsh-typert-protocol` | `packages/typert/protocol` | Definition | 仓库有但不 shipped | Remote 元数据协议 | 合同包 | `packages/typert/protocol/package.json` |
 | `@deepseek-ai/dsh-typert-registry` | `packages/typert/registry` | Provider | base | 运行时反射注册表 | host 面 | `packages/typert/registry/package.json` |
 
-### host/（7）
+### host/（8）
 
 | npm name | 目录 | 角色 | shipped | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|
@@ -389,8 +395,9 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/dsh-host-frontend-static` | `packages/host/frontend-static` | Provider | 仓库有但不 shipped | SPA dist fallback | web-runtime 可消费；patch 未单独点名 | `packages/host/frontend-static/package.json` |
 | `@deepseek-ai/dsh-host-plugin-inventory` | `packages/host/plugin-inventory` | Provider | web-app | Loader 状态 Remote | web-app | `packages/host/plugin-inventory/package.json` |
 | `@deepseek-ai/dsh-host-webserver` | `packages/host/webserver` | Provider | web-app | node:http 路由登记 | web-app | `packages/host/webserver/package.json` |
+| `@deepseek-ai/dsh-host-open-in-app` | `packages/host/open-in-app` | Provider | web-app | 本机应用探测/启动；无 Context merge | web-app [E: packages/bundle/web-app/cordis.patch.yml:66] | `packages/host/open-in-app/package.json` |
 
-### client/
+### client/（51）
 
 旧 `dsh-client-runtime` / `dsh-client-web-react` / `dsh-client-schema-form` 已删除。快照引擎是 `dsh-client-store`；slot 渲染是 `dsh-client-ui-renderer`；Session 对象层在 session-controller 的 `src/client/`。
 
@@ -401,6 +408,9 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/dsh-client-hmr` | `packages/client/hmr` | Provider | web-app | 客户端 HMR | web-app | `packages/client/hmr/package.json` |
 | `@deepseek-ai/dsh-client-locale` | `packages/client/locale` | Provider | web-app | zh/en | web-app | `packages/client/locale/package.json` |
 | `@deepseek-ai/dsh-client-modules` | `packages/client/modules` | Provider | web-app | `__DSH_BOOT__` 模块图 | web-app | `packages/client/modules/package.json` |
+| `@deepseek-ai/dsh-client-resources` | `packages/client/resources` | Provider | web-app | `ctx.resources` 资源模型 | web-app [E: packages/bundle/web-app/cordis.patch.yml:218] | `packages/client/resources/package.json` |
+| `@deepseek-ai/dsh-client-ui-dockkit` | `packages/client/ui-dockkit` | library | 仓库有但不 shipped | 停靠 kit；yml 无独立 `name:` 行 | 被右侧栏注释引用 | `packages/client/ui-dockkit/package.json` |
+| `@deepseek-ai/dsh-client-ui-open-in-app` | `packages/client/ui-open-in-app` | Consumer | web-app | 在本机应用打开 | web-app [E: packages/bundle/web-app/cordis.patch.yml:73] | `packages/client/ui-open-in-app/package.json` |
 | `@deepseek-ai/dsh-client-store` | `packages/client/store` | library | 仓库有但不 shipped | zustand/immer 快照引擎 | 被 UI 依赖，不是 patch 行 | `packages/client/store/package.json` |
 | `@deepseek-ai/dsh-client-ui-renderer` | `packages/client/ui-renderer` | Consumer | web-app | `ctx.uiRenderer.mount` | web-app | `packages/client/ui-renderer/package.json` |
 | `@deepseek-ai/dsh-client-ui-slots` | `packages/client/ui-slots` | library | 仓库有但不 shipped | SlotMap | 库 | `packages/client/ui-slots/package.json` |
@@ -433,6 +443,9 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/dsh-client-ui-settings-plugin-inventory` | `packages/client/ui-settings-plugin-inventory` | Consumer | web-app | inventory tab | web-app | `packages/client/ui-settings-plugin-inventory/package.json` |
 | `@deepseek-ai/dsh-client-ui-settings-plugins` | `packages/client/ui-settings-plugins` | Consumer | web-app | Plugins | web-app | `packages/client/ui-settings-plugins/package.json` |
 | `@deepseek-ai/dsh-client-ui-sidebar` | `packages/client/ui-sidebar` | Consumer | web-app | 侧栏 | web-app | `packages/client/ui-sidebar/package.json` |
+| `@deepseek-ai/dsh-client-ui-sidebar-right` | `packages/client/ui-sidebar-right` | Consumer | web-app | 右侧栏导航 + tab 注册表 | web-app [E: packages/bundle/web-app/cordis.patch.yml:225] | `packages/client/ui-sidebar-right/package.json` |
+| `@deepseek-ai/dsh-client-ui-sidebar-documentpreview` | `packages/client/ui-sidebar-documentpreview` | Consumer | web-app | 文档预览 tab | web-app [E: packages/bundle/web-app/cordis.patch.yml:231] | `packages/client/ui-sidebar-documentpreview/package.json` |
+| `@deepseek-ai/dsh-client-ui-sidebar-files` | `packages/client/ui-sidebar-files` | Consumer | web-app | 文件树 tab | web-app [E: packages/bundle/web-app/cordis.patch.yml:235] | `packages/client/ui-sidebar-files/package.json` |
 | `@deepseek-ai/dsh-client-ui-skill` | `packages/client/ui-skill` | Consumer | web-app | skill UI | web-app | `packages/client/ui-skill/package.json` |
 | `@deepseek-ai/dsh-client-ui-subagent` | `packages/client/ui-subagent` | Consumer | web-app | 子代理 UI | web-app | `packages/client/ui-subagent/package.json` |
 | `@deepseek-ai/dsh-client-ui-theme` | `packages/client/ui-theme` | Consumer | web-app | 主题 | web-app | `packages/client/ui-theme/package.json` |
@@ -477,7 +490,7 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/dsh-experimental-webworker-runtime` | `packages/experimental/webworker-runtime` | Provider | 仓库有但不 shipped | 浏览器内 harness | experimental | `packages/experimental/webworker-runtime/package.json` |
 | `@deepseek-ai/dsh-experimental-code-runtime-python` | `packages/experimental/code-runtime-python` | Provider | 仓库有但不 shipped | CPython `CodeRuntime`（fd-3 JSON-lines） | 实验 Python flavor | `packages/experimental/code-runtime-python/package.json` |
 
-### identity / runtime-diagnostics / util / examples / test-support
+### identity / runtime-diagnostics / util（15） / examples / test-support（7）
 
 | npm name | 目录 | 角色 | shipped | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|
@@ -496,18 +509,21 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/dsh-util-time` | `packages/util/time` | library | 仓库有但不 shipped | 时间工具 | 库 | `packages/util/time/package.json` |
 | `@deepseek-ai/dsh-deque` | `packages/util/deque` | library | 仓库有但不 shipped | deque | 库 | `packages/util/deque/package.json` |
 | `@deepseek-ai/dsh-util-workspace-path` | `packages/util/workspace-path` | library | 仓库有但不 shipped | workspace 路径 | 库 | `packages/util/workspace-path/package.json` |
+| `@deepseek-ai/dsh-chunked-list` | `packages/util/chunked-list` | library | 仓库有但不 shipped | 有界拷贝的 append-only chunked list | 库 | `packages/util/chunked-list/package.json` |
+| `@deepseek-ai/dsh-package-manifest` | `packages/util/package-manifest` | library | 仓库有但不 shipped | `package.json.dsh` 字段类型 | 被 app-boot 消费 | `packages/util/package-manifest/package.json` |
 | `@deepseek-ai/dsh-session-snapshot` | `packages/test-support/session-snapshot` | library | 仓库有但不 shipped | session-log snapshot + ACP adapter | testkit | `packages/test-support/session-snapshot/package.json` |
 | `@deepseek-ai/dsh-agent-loop-testkit` | `packages/test-support/agent-loop-testkit` | library | 仓库有但不 shipped | loop 测试前置 | testkit | `packages/test-support/agent-loop-testkit/package.json` |
 | `@deepseek-ai/dsh-client-test-runtime` | `packages/test-support/client-runtime` | library | 仓库有但不 shipped | jsdom slot 测试运行时 | 勿与已删 `dsh-client-runtime` 混淆 | `packages/test-support/client-runtime/package.json` |
 | `@deepseek-ai/dsh-llm-mock-server` | `packages/test-support/llm-mock-server` | library | 仓库有但不 shipped | mock LLM HTTP | testkit | `packages/test-support/llm-mock-server/package.json` |
 | `@deepseek-ai/dsh-llm-replay` | `packages/test-support/llm-replay` | library | 仓库有但不 shipped | replay LLM | testkit | `packages/test-support/llm-replay/package.json` |
 | `@deepseek-ai/dsh-loader-smoke` | `packages/test-support/loader-smoke` | library | 仓库有但不 shipped | Loader smoke | testkit | `packages/test-support/loader-smoke/package.json` |
+| `@deepseek-ai/dsh-remote-mock` | `packages/test-support/remote-mock` | library | 仓库有但不 shipped | Typert Remote mock | testkit | `packages/test-support/remote-mock/package.json` |
 
 根 `examples/` 伞包与 `packages/examples/{acp-demo,jsonrpc-demo}` 已不在 git 树。
 
 ### 表外 workspace 成员
 
-这些路径在 `pnpm-workspace.yaml` / 根 `workspaces` 里，但**不是** `packages/*/*`。[E: pnpm-workspace.yaml:2][E: pnpm-workspace.yaml:10]
+这些路径在 `pnpm-workspace.yaml` / 根 `workspaces` 里，但**不是** `packages/*/*`。[E: pnpm-workspace.yaml:3][E: pnpm-workspace.yaml:6][E: package.json:13]
 
 | npm name | 目录 | 角色 | shipped | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|---|
@@ -524,17 +540,20 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 | `@deepseek-ai/cordis-plugin-timer` | `vendor/timer` | Provider | base | timer 服务 | base 第一行 [E: packages/bundle/base/cordis.patch.yml:17] | `vendor/timer/package.json` |
 | `@deepseek-ai/website` | `website` | app | 仓库有但不 shipped | VitePress | 文档站 | `website/package.json` |
 | `dsh-python-runtime-closure` | `python/sdk-runtime` | app | 仓库有但不 shipped | 单 exe / Python wheel 依赖闭包 | workspace 成员但不是 plugin 行 [E: python/sdk-runtime/package.json:2] | `python/sdk-runtime/package.json` |
-| `@deepseek-ai/node-addon-landlock-run-workspace` | `native/landlock-run` | library | 仓库有但不 shipped | Landlock 工作区根 | native 依赖 | `native/landlock-run/package.json` |
+| `@deepseek-ai/dsh-desktop` | `apps/desktop` | app | 仓库有但不 shipped | Electron 桌面壳 | 不是 `PROFILE_TEMPLATES` 成员 | `apps/desktop/package.json` |
+| `@deepseek-ai/dsh-desktop-host` | `apps/desktop-host` | app | 仓库有但不 shipped | Electron 上游 Node host | desktop 私有进程 | `apps/desktop-host/package.json` |
+| `@deepseek-ai/node-addon-system-workspace` | `native/system` | library | 仓库有但不 shipped | Landlock / flock 工作区根 | native 依赖 | `native/system/package.json` |
+| `@deepseek-ai/node-addon-system` | `native/system/packages/entry` | library | 仓库有但不 shipped | 预编译 system primitives 入口 | native 依赖 | `native/system/packages/entry/package.json` |
 
-`native/landlock-run/packages/entry` = `@deepseek-ai/node-addon-landlock-run`；`linux-arm64` / `linux-x64` 是预编译二进制包。
+`native/system/packages/{linux-arm64,linux-x64,darwin-arm64,darwin-x64}` 是预编译二进制包。`desktop` 不是 CLI `--profile` 模板。
 
 ## 对照 / 分家 / 装配
 
 - **host 面 vs agent-preset 面**：base 行是进程级。web 默认产品把模型可见 Consumer 挪到 preset；headless / sdk / acp 没有 roster，同一批 Consumer 仍挂在 base。sdk-minimal 自带完整 insert，**没有** `agent-spine-demo`。
-- **两个 `bash` / 两个 `pwsh`**：one-shot 在 base；persistent 在 `minimal` 与 `sdk-minimal`。
-- **无 shipped TUI 包**：`tui` 只是自定义 profile 名。
+- **两个 `bash` / 两个 `pwsh`**：one-shot 在 base；persistent 在 `minimal` 与 `sdk-minimal`。minimal **没有** filesystem / `str_replace_editor`。
+- **无 shipped TUI 包**：`tui` 只是自定义 profile 名。`desktop` 是 Electron 独占目录，不是第六个 CLI profile。
 - **六个 bundle**：`dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app`。
-- **`skill-badge`** 在 base 有 `name:` 但 `disabled: true`，仍算 shipped = base。[E: packages/bundle/base/cordis.patch.yml:286][E: packages/bundle/base/cordis.patch.yml:287]
+- **`skill-badge`** 在 base 有 `name:` 但 `disabled: true`，仍算 shipped = base。[E: packages/bundle/base/cordis.patch.yml:280][E: packages/bundle/base/cordis.patch.yml:281]
 
 ## Sources
 
@@ -564,7 +583,10 @@ Python 实现已迁到 `packages/experimental/code-runtime-python`。
 - `vendor/timer/package.json`
 - `python/sdk-runtime/package.json`
 - `website/package.json`
-- `native/landlock-run/package.json`
+- `native/system/package.json`
+- `native/system/packages/entry/package.json`
+- `apps/desktop/package.json`
+- `apps/desktop-host/package.json`
 
 ## 相关
 

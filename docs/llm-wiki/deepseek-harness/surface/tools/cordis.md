@@ -55,7 +55,7 @@ related:
   - subsys.composition.agent-presets
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `cordis_*` 是 `@deepseek-ai/dsh-tool-cordis` 向模型登记的七个自修改工具：`cordis_inspect_list` / `cordis_inspect_query` / `cordis_inspect_self` 只读运行时与本会话动态 Plugin；`cordis_define` 把不可变 Package 写入进程内 registry；`cordis_run` 才对 Host 半求值并可选地等 Client 审批；`cordis_stop` 停当前 Run 但保留定义；`cordis_undefine` 永久删除。四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）里只有 `cordis` 装这组名字。没有 `cordis_mount` / `cordis_unmount`。
@@ -87,7 +87,7 @@ updated: d347e70390
 
 `apply` **没有**登记 `cordis_mount` 或 `cordis_unmount`。`cordis` preset yml 头注释仍写 mount / unmount，那不是现行 `defineTool` 合同 [U]。
 
-七个 `defineTool` 都没有 `timeoutMs`、没有 `isConcurrencySafe`。registry 对未声明的 classifier 一律 `exclusive`。[E: packages/core/tools/src/index.ts:1269]
+七个 `defineTool` 都没有 `timeoutMs`、没有 `isConcurrencySafe`。registry 对未声明的 classifier 一律 `exclusive`。[E: packages/core/tools/src/index.ts:1268]
 
 `requireAgent(exec)` 在 `cordis_inspect_query` / `inspect_self` / `define` / `run` / `stop` / `undefine` 六个 body 里调用：没有 `exec.agent` 就抛 `Cordis dynamic tools require an Agent-backed session`。[E: packages/extensions/tool-cordis/src/index.ts:29][E: packages/extensions/tool-cordis/src/index.ts:91] `cordis_inspect_list` 的 `execute` 只 `ctx.cordisInspect.list()`，不调 `requireAgent`。[E: packages/extensions/tool-cordis/src/index.ts:58]
 
@@ -107,7 +107,7 @@ updated: d347e70390
 
 以插件默认 `apply(ctx)`（无 Config）boot 后的模型可见参数为准。`defineTool.parameters` 走隐式开放 object：`required: true` 的键进入 JSON Schema `required`；未标 required 的键可省略。[E: packages/core/tools/src/schema.ts:454]
 
-shipped `cordis` yml 的 `tool-cordis` 行没有 `config:`，因此产品默认就是这七张表。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:252]
+shipped `cordis` yml 的 `tool-cordis` 行没有 `config:`，因此产品默认就是这七张表。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:247]
 
 ### `cordis_inspect_list`
 
@@ -122,7 +122,7 @@ shipped `cordis` yml 的 `tool-cordis` 行没有 `config:`，因此产品默认�
 | `platform` | `string` | 是 | 无 | enum `host` / `client` | Provider 所在平面。[E: packages/extensions/tool-cordis/src/index.ts:76] |
 | `provider` | `string` | 是 | 无 | 必须来自 list 的 id | 例如 Host 侧 `Service` / `Event` / `Builtin` / `Tool`。[E: packages/extensions/tool-cordis/src/index.ts:77] |
 | `method` | `string` | 是 | 无 | 必须是该 Provider 声明的方法名 | Host 侧分别是 `listService` / `listEvents` / `listBuiltins` / `listTools`。[E: packages/extensions/tool-cordis/src/index.ts:78][E: packages/extensions/tool-cordis/src/providers.ts:31] |
-| `input` | `json` | 否 | 省略 | 必须满足该方法 input schema | schema 只声明可选 `json`。[E: packages/extensions/tool-cordis/src/index.ts:79] `Service.listService` 无 key 时 `queryServiceApi` 返回 `mode: 'catalog'` 紧凑目录。[E: packages/extensions/tool-cordis/src/api-catalog.ts:6225] 工具 description 也写了无 input 先逛目录。[E: packages/extensions/tool-cordis/src/index.ts:71] |
+| `input` | `json` | 否 | 省略 | 必须满足该方法 input schema | schema 只声明可选 `json`。[E: packages/extensions/tool-cordis/src/index.ts:79] `Service.listService` 无 key 时 `queryServiceApi` 返回 `mode: 'catalog'` 紧凑目录。[E: packages/extensions/tool-cordis/src/api-catalog.ts:6362] 工具 description 也写了无 input 先逛目录。[E: packages/extensions/tool-cordis/src/index.ts:71] |
 
 ### `cordis_inspect_self`
 
@@ -166,7 +166,7 @@ shipped `cordis` yml 的 `tool-cordis` 行没有 `config:`，因此产品默认�
 
 ## 输出 & 截断 / spill
 
-registry 对成功值做 `output.schema` 校验，再调 `render`（以及可选 `presentationMeta`）。这七个工具**没有**自己的 spill 路径：不读 `ctx.spillStore`，不把正文卸到磁盘。[E: packages/core/tools/src/index.ts:1791][E: packages/core/tools/src/index.ts:1800]
+registry 对成功值做 `output.schema` 校验，再调 `render`（以及可选 `presentationMeta`）。这七个工具**没有**自己的 spill 路径：不读 `ctx.spillStore`，不把正文卸到磁盘。[E: packages/core/tools/src/index.ts:1790][E: packages/core/tools/src/index.ts:1799]
 
 | `name` | 规范值 | 模型看见的 `render` | `presentationMeta` |
 |---|---|---|---|
@@ -188,11 +188,11 @@ registry 对成功值做 `output.schema` 校验，再调 `render`（以及可选
 
 | 角色 | 落点 |
 |---|---|
-| Definition | agent-preset 行 `id: tool-cordis` / `name: '@deepseek-ai/dsh-tool-cordis'`，加上七个 `defineTool` 合同。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251] |
+| Definition | agent-preset 行 `id: tool-cordis` / `name: '@deepseek-ai/dsh-tool-cordis'`，加上七个 `defineTool` 合同。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246] |
 | Provider | host 面 `@deepseek-ai/dsh-cordis-host-runner`：`DynamicCordisRunnerService` 以服务名 `dynamicCordisRunner` 发布，构造时再 `new CordisInspectRegistryService(ctx)` 发布 `cordisInspect`。`static inject = ['tools']`。`Config.vmTimeoutMs` 默认 `5000`。[E: packages/extensions/cordis-host-runner/package.json:2][E: packages/extensions/cordis-host-runner/src/index.ts:140][E: packages/extensions/cordis-host-runner/src/inspect-registry.ts:53][E: packages/extensions/cordis-host-runner/src/index.ts:125][E: packages/extensions/cordis-host-runner/src/index.ts:128] |
 | Consumer | 七个 `cordis_*` 工具。`tool-cordis` 自己不 `provide`，所以不必进 preset `isolate` realm。 |
 
-shipped 组合里，只有 `dsh-web-app` 在 host 面 insert `id: cordis-host-runner`。[E: packages/bundle/web-app/cordis.patch.yml:99][E: packages/bundle/web-app/cordis.patch.yml:99] `dsh-base` 与 `dsh-headless` 的 patch **没有**这一行；缺 Provider 时 `tool-cordis` 的 `inject` 不会满足，七个名字进不了 catalog。web profile 才叠 `dsh-web-app`；`headless` / `sdk` / `sdk-minimal` / `acp` 默认不带这条 host 行。
+shipped 组合里，只有 `dsh-web-app` 在 host 面 insert `id: cordis-host-runner`。[E: packages/bundle/web-app/cordis.patch.yml:119][E: packages/bundle/web-app/cordis.patch.yml:119] `dsh-base` 与 `dsh-headless` 的 patch **没有**这一行；缺 Provider 时 `tool-cordis` 的 `inject` 不会满足，七个名字进不了 catalog。web profile 才叠 `dsh-web-app`；`headless` / `sdk` / `sdk-minimal` / `acp` 默认不带这条 host 行。
 
 换 / 卸掉 `dynamicCordisRunner` 会带走：进程内 Plugin/Package 身份铸造、session 所有权、`define`/`run`/`stop`/`undefine`、Host 半 `node:vm` 求值、Client 审批请求、`@pluginId` 解析。换 / 卸掉 `cordisInspect` 会带走：Host+Client Provider 目录、`query` 路由、Client 查询的 pending 表。不会带走：`ctx.tools` 注册表本身、approval/sandbox 的文件/shell 政策、四个 shipped preset 里其它 native 工具。
 
@@ -202,18 +202,18 @@ shipped 组合里，只有 `dsh-web-app` 在 host 面 insert `id: cordis-host-ru
 
 ## 执行管线
 
-模型写出其中一个 `cordis_*` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → 可选 `ask` → monotonic `guard` → `tools/execute`（around-dispatch，含 checkpoint / timeout 包装）→ `ToolDefinition.execute` → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1334][E: packages/core/tools/src/index.ts:1467][E: packages/core/tools/src/index.ts:1565]
+模型写出其中一个 `cordis_*` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → 可选 `ask` → monotonic `guard` → `tools/execute`（around-dispatch，含 checkpoint / timeout 包装）→ `ToolDefinition.execute` → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1333][E: packages/core/tools/src/index.ts:1466][E: packages/core/tools/src/index.ts:1564]
 
 对本套件的挂点：
 
-- **`tools/pre-execute`**：`tool-cordis` 不注册 listener，也不返回 `ask`。waterfall 默认 `{ kind: 'allow' }`。Client 半审批**不是**这条 `ctx.approval.request` 门，而是 `cordis_run` body 里 `DynamicCordisRunnerService.run` 发出的 `cordis/request-run`。[E: packages/core/tools/src/index.ts:1468][E: packages/extensions/cordis-host-runner/src/index.ts:291]
-- **调度**：七个名字都没有 `isConcurrencySafe`，`executionMode` 为 `exclusive`，不会进 parallel 滚动池。[E: packages/core/tools/src/index.ts:1269]
+- **`tools/pre-execute`**：`tool-cordis` 不注册 listener，也不返回 `ask`。waterfall 默认 `{ kind: 'allow' }`。Client 半审批**不是**这条 `ctx.approval.request` 门，而是 `cordis_run` body 里 `DynamicCordisRunnerService.run` 发出的 `cordis/request-run`。[E: packages/core/tools/src/index.ts:1467][E: packages/extensions/cordis-host-runner/src/index.ts:291]
+- **调度**：七个名字都没有 `isConcurrencySafe`，`executionMode` 为 `exclusive`，不会进 parallel 滚动池。[E: packages/core/tools/src/index.ts:1268]
 - **`tools/execute` 包装**：
   - `session-checkpoint-policy` 仅在「有 `exec.agent` 且 `exec.parent === undefined`」时 `flush` session，再 `next()`；flush 后若已 abort，返回 `TOOL_ABORTED_BEFORE_DISPATCH`，body 不跑。除 `cordis_inspect_list` 外的六个工具会 `requireAgent`，顶层调用会撞上这条。[E: packages/session/session-checkpoint-policy/src/index.ts:71][E: packages/session/session-checkpoint-policy/src/index.ts:72][E: packages/extensions/tool-cordis/src/index.ts:58]
   - `timeout-policy` 读 `definition.timeoutMs`；七个工具都未声明，包装器直接 `next()`。Host 半同步求值另有 runner `vmTimeoutMs`（默认 5000），作为 `runInContext` 的 `timeout`，不是 tool-call deadline。async body 能逃出该同步超时 [I]（`node:vm` 只约束同步段）。[E: packages/guard/timeout-policy/src/index.ts:59][E: packages/guard/timeout-policy/src/index.ts:59][E: packages/extensions/cordis-host-runner/src/sandbox.ts:259]
-- **`tools/post-execute`**：不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1736]
+- **`tools/post-execute`**：不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1735]
 - **sandbox**：不挂 `ctx.sandbox` / `sandbox_permissions`。文件副作用沙箱只罩 fs/shell 类工具。Host 半的 `node:vm` 是合作式隔离，不是 containment。
-- **PTC**：shipped `ptc` preset **不装** `tool-cordis`，模型在 PTC 会话里既没有这七个 native 名，`run_code` SDK 里也不会出现它们。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265]
+- **PTC**：shipped `ptc` preset **不装** `tool-cordis`，模型在 PTC 会话里既没有这七个 native 名，`run_code` SDK 里也不会出现它们。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269]
 
 ## Preset 装配
 
@@ -221,10 +221,10 @@ shipped 组合里，只有 `dsh-web-app` 在 host 面 insert `id: cordis-host-ru
 
 | preset | 装 `@deepseek-ai/dsh-tool-cordis`？ | `disabled` | isolate | shipped Config |
 |---|---|---|---|---|
-| `minimal` | **否** | — | — | 文件无 `id: tool-cordis`。成员停在 `filesystem` 组的 `str-replace-editor`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] |
-| `standard` | **否** | — | — | 成员停在 `tool-web`。mount `standard` 后 catalog **不含** `cordis_define`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: apps/cli/tests/web-agent-presets.e2e.ts:392] |
-| `ptc` | **否** | — | — | 相对 `standard` 的可加载增量是末尾 `tool-presentation` `mode: ptc`，不是 `tool-cordis`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
-| `cordis` | **是** | 无 | 无 | `- id: tool-cordis` / `name: '@deepseek-ai/dsh-tool-cordis'`，无 `config`。e2e 断言 catalog 含全部七个名字，并仍含 `bash` / `read` / `edit` / `skill`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251][E: apps/cli/tests/web-agent-presets.e2e.ts:334][E: apps/cli/tests/web-agent-presets.e2e.ts:338] |
+| `minimal` | **否** | — | — | 文件无 `id: tool-cordis`。成员只剩 `persistent-shell`（bash/pwsh），无 fs / 无 `str_replace_editor`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:57] |
+| `standard` | **否** | — | — | 成员停在 `present`（`tool-web` 之后）。mount `standard` 后 catalog **不含** `cordis_define`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:254][E: apps/cli/tests/web-agent-presets.e2e.ts:396] |
+| `ptc` | **否** | — | — | 相对 `standard` 的可加载增量是 `tool-presentation` `mode: ptc`（另有 `present`），不是 `tool-cordis`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:272] |
+| `cordis` | **是** | 无 | 无 | `- id: tool-cordis` / `name: '@deepseek-ai/dsh-tool-cordis'`，无 `config`。e2e 断言 catalog 含全部七个名字，并仍含 `bash` / `read` / `edit` / `skill`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:247][E: apps/cli/tests/web-agent-presets.e2e.ts:338][E: apps/cli/tests/web-agent-presets.e2e.ts:342] |
 
 `tool-cordis` 行不进 `planning` / `compaction` / `delegation` isolate 组：它只往 host 已有的 `tools` / `systemPrompt` / `dynamicCordisRunner` / `cordisInspect` 注册，不 `provide` 新服务。
 
@@ -258,7 +258,7 @@ shipped 组合里，只有 `dsh-web-app` 在 host 面 insert `id: cordis-host-ru
 
 ## 设计动机·edge
 
-DSH 把「改自己正在跑的组合」做成 **opt-in 的 agent-preset 工具集**，而不是进程级光环：`standard` 会话看不到 `cordis_define`。[E: apps/cli/tests/web-agent-presets.e2e.ts:392] 这和 Claude / Codex 把 runtime 自省藏在产品内部、或不暴露给模型的做法不同；也和 Pi 一类「只有静态 skill、没有 live plugin 生命周期」不同。
+DSH 把「改自己正在跑的组合」做成 **opt-in 的 agent-preset 工具集**，而不是进程级光环：`standard` 会话看不到 `cordis_define`。[E: apps/cli/tests/web-agent-presets.e2e.ts:396] 这和 Claude / Codex 把 runtime 自省藏在产品内部、或不暴露给模型的做法不同；也和 Pi 一类「只有静态 skill、没有 live plugin 生命周期」不同。
 
 和常见 peer 的关键差异：
 

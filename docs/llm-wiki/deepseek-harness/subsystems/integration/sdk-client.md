@@ -38,7 +38,7 @@ related:
   - subsys.execution.subprocess
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-sdk-client` 是跑在 **harness 进程外** 的 TypeScript JSON-RPC 客户端库：`HarnessClient` 通过 `resolveDshLaunch` 把选项收成 `process.execPath` + 同版本 `@deepseek-ai/dsh` 的 `--profile`（默认 `sdk`）argv，再 `node:child_process.spawn` 拉起一份完整 runtime，在孩子 stdio 上讲 `@deepseek-ai/dsh-sdk-protocol`。它不登记任何 `ctx.*`，也 **不** 走 `ctx.subprocess`——这是 subprocess 缝对 SDK 托管传输的文档化例外。高层包装是 `DeepSeekHarness` / `HarnessSession`。设计孪生是 `python/sdk` 的 `HarnessClient`（本页不展开 Python）。

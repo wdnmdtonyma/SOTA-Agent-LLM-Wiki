@@ -38,10 +38,10 @@ related:
   - subsys.integration.sdk-server
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
-> `@deepseek-ai/dsh-acp` 是 **automation-only** 的 ACP JSON-RPC stdio server：插件名 `acp`，源码 `inject = ['agents', 'llm', 'sessionPersistence', 'sessions']`。[E: packages/acp/acp/src/index.ts:60] [E: packages/acp/acp/src/index.ts:62] 它实现 `initialize` / `authenticate` / `session/new` / `session/list` / `session/resume` / `session/close` / `session/setConfigOption` / `session/prompt` / `session/cancel`。[E: packages/acp/acp/src/index.ts:378] [E: packages/acp/acp/src/index.ts:389] shipped profile `acp` 叠 `@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-acp-app`；`dsh-acp-app` overlay 再 insert `acp` 行。[E: packages/boot/app-boot/src/profile.ts:137] [E: packages/bundle/acp-app/cordis.patch.yml:15] 它不是 `dsh-subagent-acp` 那条进程外 subagent Provider。
+> `@deepseek-ai/dsh-acp` 是 **automation-only** 的 ACP JSON-RPC stdio server：插件名 `acp`，源码 `inject = ['agents', 'llm', 'sessionPersistence', 'sessions']`。[E: packages/acp/acp/src/index.ts:60] [E: packages/acp/acp/src/index.ts:62] 它实现 `initialize` / `authenticate` / `session/new` / `session/list` / `session/resume` / `session/close` / `session/setConfigOption` / `session/prompt` / `session/cancel`。[E: packages/acp/acp/src/index.ts:378] [E: packages/acp/acp/src/index.ts:389] shipped profile `acp` 叠 `@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-acp-app`；`dsh-acp-app` overlay 再 insert `acp` 行。[E: packages/boot/app-boot/src/profile.ts:105] [E: packages/bundle/acp-app/cordis.patch.yml:16] 它不是 `dsh-subagent-acp` 那条进程外 subagent Provider。
 
 ## 能回答的问题
 
@@ -64,7 +64,7 @@ updated: d347e70390
 - 进程外 subagent Provider（父进程 spawn 一个讲 ACP 的孩子）— [`subsys.orchestration.subagent-acp`](../orchestration/subagent-acp.md)。那包插件名是 `subagent-acp`，`inject = ['subagents', 'subprocess']`，和本包不是同一个 id。[E: packages/subagent/subagent-acp/src/index.ts:23] [E: packages/subagent/subagent-acp/src/index.ts:24]
 - 另一条 automation JSON-RPC（`initialize` / `session/prompt` / `shutdown`，方法表不同）— [`subsys.integration.sdk-server`](sdk-server.md)。
 - CLI 解析与 stdin EOF 寿命。那是 `@deepseek-ai/dsh-acp-app`（插件名 `acp-app-startup`），help 名 `dsh --profile acp`，成功后 `provide('acpAppStartup')`。[E: packages/bundle/acp-app/src/index.ts:13] [E: packages/bundle/acp-app/src/index.ts:27] [E: packages/bundle/acp-app/src/index.ts:45]
-- `dsh-base` 核树。`dsh-acp` **不**出现在 `dsh-base` 的 `package.json` dependencies；进产品靠 `PROFILE_TEMPLATES.acp` 与 `dsh-acp-app` overlay。[E: packages/boot/app-boot/src/profile.ts:138] [E: packages/bundle/acp-app/package.json:42] [E: packages/bundle/acp-app/cordis.patch.yml:16]
+- `dsh-base` 核树。`dsh-acp` **不**出现在 `dsh-base` 的 `package.json` dependencies；进产品靠 `PROFILE_TEMPLATES.acp` 与 `dsh-acp-app` overlay。[E: packages/boot/app-boot/src/profile.ts:107] [E: packages/bundle/acp-app/package.json:42] [E: packages/bundle/acp-app/cordis.patch.yml:17]
 
 **host 面 vs agent-preset 面。** 注释写明 ACP bundle 把 model-facing 行留在 **host 面** 全局层：`agents.create` 只传 `sessionId` / `meta.cwd` / `agentOptions`，不 join preset、不 `isolate`。[E: packages/acp/acp/src/index.ts:199] [E: packages/acp/acp/src/session.ts:128] [E: packages/acp/acp/src/session.ts:130] MCP 客户端在 unpublished Agent 的 `setup` 里 `agentCtx.plugin(McpClient, config)`。[E: packages/acp/acp/src/session.ts:135] [E: packages/acp/acp/src/mcp.ts:32]
 
@@ -90,7 +90,7 @@ updated: d347e70390
 
 | 符号 | 要点 |
 |---|---|
-| `name` / `inject` | `'acp'`；`['agents', 'llm', 'sessionPersistence', 'sessions']`。handlers 跑在 injection 作用域外，`apply` 里先抓服务。[E: packages/acp/acp/src/index.ts:60] [E: packages/acp/acp/src/index.ts:62] [E: packages/acp/acp/src/index.ts:100] `dsh-acp-app` patch 另把 `inject` 写成 `[acpAppStartup]`，让桥等 CLI `provide` 之后再占 stdio。[E: packages/bundle/acp-app/cordis.patch.yml:17] [E: packages/bundle/acp-app/src/index.ts:45] |
+| `name` / `inject` | `'acp'`；`['agents', 'llm', 'sessionPersistence', 'sessions']`。handlers 跑在 injection 作用域外，`apply` 里先抓服务。[E: packages/acp/acp/src/index.ts:60] [E: packages/acp/acp/src/index.ts:62] [E: packages/acp/acp/src/index.ts:100] `dsh-acp-app` patch 另把 `inject` 写成 `[acpAppStartup]`，让桥等 CLI `provide` 之后再占 stdio。[E: packages/bundle/acp-app/cordis.patch.yml:18] [E: packages/bundle/acp-app/src/index.ts:45] |
 | `Config` / `AcpConfig` | Schema：`provider` / `model` / `sessionListPageSize`（默认 100）。接口另有运行时 `stream?`，生产走 stdio，测试注入 transport；Schema **不**声明 `stream`。[E: packages/acp/acp/src/index.ts:86] [E: packages/acp/acp/src/index.ts:89] [E: packages/acp/acp/src/index.ts:83] |
 | `AcpSession` | 每条 ACP session：`agent`、`inflight` 单槽、`outputTail`、`AcpModelControl`、`close()`。[E: packages/acp/acp/src/session.ts:98] |
 | `agentInfo` | wire 钉 `name: 'deepseek-harness-acp'`、`version: '0.0.1'`——和 `package.json` 的 `0.1.2-alpha.2` 不是同一个数。[E: packages/acp/acp/src/index.ts:182] [E: packages/acp/acp/package.json:4] |
@@ -116,19 +116,19 @@ updated: d347e70390
 
 6. `prompt` 委托 `record.prompt`。未知 session → `unknown session`；已有 `inflight` → `a prompt is already in flight`；`admitAcpPrompt` 失败按 `AcpContentError.kind` 变 `invalidParams` / `internalError`。[E: packages/acp/acp/src/index.ts:120] [E: packages/acp/acp/src/session.ts:252] [E: packages/acp/acp/src/session.ts:320] 若 `ctx.agents.get(this.agent.id) !== this.agent`，拒 `prompt was not queued`。[E: packages/acp/acp/src/session.ts:280] [E: packages/acp/acp/src/session.ts:281]
 
-7. 通过校验后 `createUserMessage({ content, source: { kind: 'user' } })`，先武装 `inflight` 再 `this.agent.followup(message)`。[E: packages/acp/acp/src/session.ts:294] [E: packages/acp/acp/src/session.ts:302] 同步 `followup` 失败会清 `messageQueued` 并删 pending selection。[E: packages/acp/acp/src/session.ts:304]
+7. 通过校验后 `createUserMessage({ content, source: { kind: 'user' } })`，先武装 `inflight` 再 `this.agent.followup(message)`。[E: packages/acp/acp/src/session.ts:295] [E: packages/acp/acp/src/session.ts:302] 同步 `followup` 失败会清 `messageQueued` 并删 pending selection。[E: packages/acp/acp/src/session.ts:305]
 
 8. 回程投影已提交 `assistant/message`：`reasoning` → `agent_thought_chunk`；其它经 `assistantBlockToAcp` 变 `agent_message_chunk`；助手 image 读附件后发 ACP `image` base64，不是占位文本。[E: packages/acp/acp/src/updates.ts:23] [E: packages/acp/acp/src/updates.ts:36] [E: packages/acp/acp/src/content.ts:232] `tool/call` / `tool/result` 发 generic `tool_call` / `tool_call_update`。[E: packages/acp/acp/src/session.ts:363] [E: packages/acp/acp/src/session.ts:372]
 
-9. 结算等 `agent.whenIdle()` + `outputTail`，不是单看 `turn/end`。[E: packages/acp/acp/src/session.ts:492] 无 `endReason`（admission 丢掉 prompt）→ `cancelled`；`end.kind === 'error'` → prompt RPC `reject`；其余走 `turnEndToStopReason`（含 `max-tokens`→`max_tokens`）。[E: packages/acp/acp/src/session.ts:511] [E: packages/acp/acp/src/session.ts:513] [E: packages/acp/acp/src/session.ts:516] 测试钉 token-limit 的 `stopReason` 是 `max_tokens` 且已提交文本仍发出。[E: packages/acp/acp/tests/turns.spec.ts:38] hook / 其它 owner 的 `agent.cancel` 走到 `aborted`，codec 映射成 `end_turn`，不是客户端 `session/cancel`。[E: packages/acp/acp/src/codec.ts:24] [E: packages/acp/acp/tests/turns.spec.ts:459]
+9. 结算等 `agent.whenIdle()` + `outputTail`，不是单看 `turn/end`。[E: packages/acp/acp/src/session.ts:493] 无 `endReason`（admission 丢掉 prompt）→ `cancelled`；`end.kind === 'error'` → prompt RPC `reject`；其余走 `turnEndToStopReason`（含 `max-tokens`→`max_tokens`）。[E: packages/acp/acp/src/session.ts:511] [E: packages/acp/acp/src/session.ts:513] [E: packages/acp/acp/src/session.ts:517] 测试钉 token-limit 的 `stopReason` 是 `max_tokens` 且已提交文本仍发出。[E: packages/acp/acp/tests/turns.spec.ts:38] hook / 其它 owner 的 `agent.cancel` 走到 `aborted`，codec 映射成 `end_turn`，不是客户端 `session/cancel`。[E: packages/acp/acp/src/codec.ts:24] [E: packages/acp/acp/tests/turns.spec.ts:459]
 
-10. `cancel`：未知 session 直接成功返回（`?.cancel()`）；已知则 `AcpSession.cancel` → `cancelPrompt` + 必要时 `agent.cancel({ kind: 'user' })`，结算 `'cancelled'`。[E: packages/acp/acp/src/index.ts:367] [E: packages/acp/acp/src/session.ts:337] [E: packages/acp/acp/src/session.ts:498] 同一 session 同时只能一个 prompt。[E: packages/acp/acp/src/session.ts:252]
+10. `cancel`：未知 session 直接成功返回（`?.cancel()`）；已知则 `AcpSession.cancel` → `cancelPrompt` + 必要时 `agent.cancel({ kind: 'user' })`，结算 `'cancelled'`。[E: packages/acp/acp/src/index.ts:367] [E: packages/acp/acp/src/session.ts:337] [E: packages/acp/acp/src/session.ts:499] 同一 session 同时只能一个 prompt。[E: packages/acp/acp/src/session.ts:252]
 
 11. `approval/request` waterfall：`ownedRecord` 失败或没有 `callId` 就 `return next()`。[E: packages/acp/acp/src/index.ts:157] 否则 `conn.request(...requestPermission)` 只带 `allow-once` / `reject-once`。[E: packages/acp/acp/src/index.ts:168] [E: packages/acp/acp/src/index.ts:164] 客户端 `cancelled` → `'cancelled'`；`optionId === 'allow-once'` → `'allowed-once'`；其它（含未知 id）→ `'rejected'`。[E: packages/acp/acp/src/index.ts:170] [E: packages/acp/acp/src/index.ts:171] 测试：未知 `optionId` 是 `rejected`；客户端抛错组合结果是 `unavailable`。[E: packages/acp/acp/tests/approval.spec.ts:58] [E: packages/acp/acp/tests/approval.spec.ts:65] 不调用 `next()` 时，`Events.waterfall` 不会 `shift` 到下一层。[E: vendor/cordis/src/events.ts:239]
 
-12. 拆卸 `quiesce`：`closed = true`，对每条 `AcpSession.close`（cancel、`whenIdle`、`drainContinuableDescendants` 若 `ctx.get('subagents')` 有该方法、`sessions.flush`、`handle.dispose()`）。[E: packages/acp/acp/src/index.ts:396] [E: packages/acp/acp/src/index.ts:401] [E: packages/acp/acp/src/session.ts:447] [E: packages/acp/acp/src/session.ts:453] 测试：`acpFiber.dispose()` 后 in-flight prompt 的 `stopReason` 是 `cancelled`，registry 里不再有该 agent。[E: packages/acp/acp/tests/dispose.spec.ts:26] [E: packages/acp/acp/tests/dispose.spec.ts:27]
+12. 拆卸 `quiesce`：`closed = true`，对每条 `AcpSession.close`（cancel、`whenIdle`、`drainContinuableDescendants` 若 `ctx.get('subagents')` 有该方法、`sessions.flush`、`handle.dispose()`）。[E: packages/acp/acp/src/index.ts:396] [E: packages/acp/acp/src/index.ts:401] [E: packages/acp/acp/src/session.ts:447] [E: packages/acp/acp/src/session.ts:454] 测试：`acpFiber.dispose()` 后 in-flight prompt 的 `stopReason` 是 `cancelled`，registry 里不再有该 agent。[E: packages/acp/acp/tests/dispose.spec.ts:26] [E: packages/acp/acp/tests/dispose.spec.ts:28]
 
-13. **shipped 入口是 `dsh --profile acp`。** `PROFILE_TEMPLATES.acp.bundles` = `dsh-base` + `dsh-acp-app`，`patchReload: 'startup'`。[E: packages/boot/app-boot/src/profile.ts:138] [E: packages/boot/app-boot/src/profile.ts:140] overlay insert `acp-app-startup` 与 `acp`（`provider: deepseek-official` / `model: deepseek-v4-flash`）。[E: packages/bundle/acp-app/cordis.patch.yml:12] [E: packages/bundle/acp-app/cordis.patch.yml:19] [E: packages/bundle/acp-app/cordis.patch.yml:20] 同进程 stdout 被 `ndJsonStream` 占成协议帧。[E: packages/acp/acp/src/index.ts:374] 五个 shipped profile 还有 `web` / `headless` / `sdk` / `sdk-minimal`；没有 `dsh acp` 子命令，只有 `dsh --profile acp`。[E: packages/boot/app-boot/src/profile.ts:137] [E: packages/bundle/acp-app/src/index.ts:27]
+13. **shipped 入口是 `dsh --profile acp`。** `PROFILE_TEMPLATES.acp.bundles` = `dsh-base` + `dsh-acp-app`，`patchReload: 'startup'`。[E: packages/boot/app-boot/src/profile.ts:107] [E: packages/boot/app-boot/src/profile.ts:108] overlay insert `acp-app-startup` 与 `acp`（`provider: deepseek-official` / `model: deepseek-v4-flash`）。[E: packages/bundle/acp-app/cordis.patch.yml:13] [E: packages/bundle/acp-app/cordis.patch.yml:20] [E: packages/bundle/acp-app/cordis.patch.yml:21] 同进程 stdout 被 `ndJsonStream` 占成协议帧。[E: packages/acp/acp/src/index.ts:374] 五个 shipped profile 还有 `web` / `headless` / `sdk` / `sdk-minimal`；没有 `dsh acp` 子命令，只有 `dsh --profile acp`。[E: packages/boot/app-boot/src/profile.ts:105] [E: packages/bundle/acp-app/src/index.ts:27]
 
 ## 设计动机
 
@@ -146,13 +146,13 @@ permission 只有 once：自动化客户端没有人机「永远允许」面；�
 
 ## Gotcha
 
-- **默认 Web GUI 不装本包。** `dsh web` 叠 `dsh-web-app`，不是 `dsh-acp-app`。ACP 产品入口是 `dsh --profile acp`。[E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:137]
-- **`dsh-acp-app` 不是 `acp`。** overlay 两行：`id: acp-app-startup` / `@deepseek-ai/dsh-acp-app` 与 `id: acp` / `@deepseek-ai/dsh-acp`。前者只 parse CLI 并 `provide acpAppStartup`。[E: packages/bundle/acp-app/cordis.patch.yml:12] [E: packages/bundle/acp-app/cordis.patch.yml:15]
+- **默认 Web GUI 不装本包。** `dsh web` 叠 `dsh-web-app`，不是 `dsh-acp-app`。ACP 产品入口是 `dsh --profile acp`。[E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:105]
+- **`dsh-acp-app` 不是 `acp`。** overlay 两行：`id: acp-app-startup` / `@deepseek-ai/dsh-acp-app` 与 `id: acp` / `@deepseek-ai/dsh-acp`。前者只 parse CLI 并 `provide acpAppStartup`。[E: packages/bundle/acp-app/cordis.patch.yml:13] [E: packages/bundle/acp-app/cordis.patch.yml:16]
 - **不要和 `subagent-acp` 混页。** `dsh-subagent-acp` 是父进程里的 Provider，`inject` 含 `subprocess`。本包是孩子进程里的 **server**。[E: packages/subagent/subagent-acp/src/index.ts:23]
 - **有 `resume` / `list` / `close`。** 旧版「只有五门、不广告 persistence」已过时。handler 接线含 `session.resume` / `session.list` / `session.close`。[E: packages/acp/acp/src/index.ts:384] [E: packages/acp/acp/src/index.ts:385] [E: packages/acp/acp/src/index.ts:386]
 - **MCP 已支持。** `mcpServers` 不再一律拒；stdio 的 `command` 必须绝对路径；`type: 'http'` 走 streamable-http；其它 `type` 拒。[E: packages/acp/acp/src/mcp.ts:45] [E: packages/acp/acp/src/mcp.ts:60] [E: packages/acp/acp/src/mcp.ts:72]
 - **image 能力是动态的。** 默认测试 harness `image: false`；一旦 initialize 广告了 image，prompt 才准入 inline 图。助手侧 image 会发真 ACP image 块。[E: packages/acp/acp/tests/bridge.spec.ts:46] [E: packages/acp/acp/src/content.ts:137] [E: packages/acp/acp/src/content.ts:232]
-- **`turnEndToStopReason('max-tokens')` 与 prompt 结算都是 `max_tokens`。** 旧桥曾在 idle 时改报 `end_turn`，现已去掉。[E: packages/acp/acp/src/codec.ts:19] [E: packages/acp/acp/src/session.ts:516] [E: packages/acp/acp/tests/turns.spec.ts:38]
+- **`turnEndToStopReason('max-tokens')` 与 prompt 结算都是 `max_tokens`。** 旧桥曾在 idle 时改报 `end_turn`，现已去掉。[E: packages/acp/acp/src/codec.ts:19] [E: packages/acp/acp/src/session.ts:517] [E: packages/acp/acp/tests/turns.spec.ts:38]
 - **单槽。** 第二个 `prompt` 在第一个 idle / cancel 之前是 `already in flight`。同步 `followup` 失败必须清掉 `inflight`。
 - **`cwd` 必须绝对；不接额外 directory。** 相对路径、非空 `additionalDirectories` 在 `newSession`/`resumeSession` 失败。[E: packages/acp/acp/src/index.ts:516] [E: packages/acp/acp/src/index.ts:522]
 - **stdout 是协议帧。** 同进程不能挂 stdout logger。`agentInfo.version`（`0.0.1`）也不是 npm 包版本。

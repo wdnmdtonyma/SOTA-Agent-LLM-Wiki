@@ -41,7 +41,7 @@ symbols:
 related: []
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `ctx.settings` 是 **host 面**按 namespace 切段的用户设置文档：`SettingsProvider.resolve` 的优先级是 schema defaults → composition `base`（插件 entry `Config`）→ 用户文档 section。叠 `dsh-base` 的 shipped profile 挂 `FileSettingsProvider`（默认 `$DSH_HOME/settings.yaml`，hot-reload）。这是 Cordis 组合运行时的用户覆盖面，不是 session log，也不是生成物 `docs/config-catalog.md` 那种 T3 部署键表。
@@ -57,7 +57,7 @@ updated: d347e70390
 
 ## 是什么
 
-DeepSeek Harness 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。五个 shipped profile 是 `web`（`patchReload: live`）与 `headless` / `sdk` / `sdk-minimal` / `acp`（`startup`）。[E: packages/boot/app-boot/src/profile.ts:137] 默认产品路径含本地 Web GUI（`dsh web` ≡ `--profile web`），以及 `dsh --profile sdk|sdk-minimal|acp|headless`。capability seam 是 Definition / Provider / Consumer。`@deepseek-ai/dsh-settings` 是 `ctx.settings` 的 **Service Definition**（`SettingsProvider`）；物理文档在 `@deepseek-ai/dsh-settings-file` 的 `FileSettingsProvider`。[E: packages/settings/settings/package.json:2] [E: packages/settings/settings-file/package.json:2] [E: packages/settings/settings/src/index.ts:333]
+DeepSeek Harness 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。五个 shipped profile 是 `web`（`patchReload: live`）与 `headless` / `sdk` / `sdk-minimal` / `acp`（`startup`）。[E: packages/boot/app-boot/src/profile.ts:105] 默认产品路径含本地 Web GUI（`dsh web` ≡ `--profile web`），以及 `dsh --profile sdk|sdk-minimal|acp|headless`。capability seam 是 Definition / Provider / Consumer。`@deepseek-ai/dsh-settings` 是 `ctx.settings` 的 **Service Definition**（`SettingsProvider`）；物理文档在 `@deepseek-ai/dsh-settings-file` 的 `FileSettingsProvider`。[E: packages/settings/settings/package.json:2] [E: packages/settings/settings-file/package.json:2] [E: packages/settings/settings/src/index.ts:333]
 
 两份「配置」不要混：
 
@@ -68,7 +68,7 @@ DeepSeek Harness 是 **Cordis 组合运行时**（`profile → bundle → agent 
 
 生成物 `docs/config-catalog.md` 是各包 **部署轴** `Config` 声明的粘贴表，只当查漏线索，本页不当 `[E]`。本页也不展开 session event / JSONL / checkpoint：那些是 [spine.session-log](../../spine/session-log.md) 的盘，不是 `settings.yaml`。
 
-`dsh-web-app` 另 insert 的 `id: ui-settings` / `ui-settings-models` 是 **浏览器**设置页插件，消费 Typert Remote，不替代 `ctx.settings`。[E: packages/bundle/web-app/cordis.patch.yml:191] [E: packages/bundle/web-app/cordis.patch.yml:197] Host Remote 所有者是 `@deepseek-ai/dsh-api-settings-controller`（`ctx.settingsController`，namespace `'settings'`），并旁挂 `CredentialsController`。[E: packages/api/settings-controller/package.json:2] [E: packages/api/settings-controller/src/index.ts:102] [E: packages/api/settings-controller/src/index.ts:107]
+`dsh-web-app` 另 insert 的 `id: ui-settings` / `ui-settings-models` 是 **浏览器**设置页插件，消费 Typert Remote，不替代 `ctx.settings`。[E: packages/bundle/web-app/cordis.patch.yml:210] [E: packages/bundle/web-app/cordis.patch.yml:220] Host Remote 所有者是 `@deepseek-ai/dsh-api-settings-controller`（`ctx.settingsController`，namespace `'settings'`），并旁挂 `CredentialsController`。[E: packages/api/settings-controller/package.json:2] [E: packages/api/settings-controller/src/index.ts:102] [E: packages/api/settings-controller/src/index.ts:107]
 
 ## 入口
 
@@ -88,7 +88,7 @@ DeepSeek Harness 是 **Cordis 组合运行时**（`profile → bundle → agent 
 
 ### 文档路径
 
-`resolveSpec`：显式 `path` 赢，否则 `join(resolveDshHome(dshHome), 'settings.yaml')`。扩展名只认 `.yaml` / `.yml` / `.json`。[E: packages/settings/settings-file/src/index.ts:57] [E: packages/settings/settings-file/src/index.ts:60] `resolveDshHome` 优先级是配置路径 → 非空 `$DSH_HOME` → `~/.dsh`。空串或只含空白的 `DSH_HOME` 当未设置，不会把 home 解析成 cwd。[E: packages/util/home-paths/src/index.ts:89] [E: packages/util/home-paths/tests/home-paths.spec.ts:44] 测试：只传 `dshHome` 时 `documentPath` 就是 `<home>/settings.yaml`。[E: packages/settings/settings-file/tests/local.spec.ts:105] 写出权限 `0600`，父目录 `0700`。[E: packages/settings/settings-file/src/index.ts:215] [E: packages/settings/settings-file/src/index.ts:228] [E: packages/settings/settings-file/tests/local.spec.ts:177]
+`resolveSpec`：显式 `path` 赢，否则 `join(resolveDshHome(dshHome), 'settings.yaml')`。扩展名只认 `.yaml` / `.yml` / `.json`。[E: packages/settings/settings-file/src/index.ts:57] [E: packages/settings/settings-file/src/index.ts:60] `resolveDshHome` 优先级是配置路径 → 非空 `$DSH_HOME` → `~/.dsh`。空串或只含空白的 `DSH_HOME` 当未设置，不会把 home 解析成 cwd。[E: packages/util/home-paths/src/index.ts:89] [E: packages/util/home-paths/tests/home-paths.spec.ts:45] 测试：只传 `dshHome` 时 `documentPath` 就是 `<home>/settings.yaml`。[E: packages/settings/settings-file/tests/local.spec.ts:105] 写出权限 `0600`，父目录 `0700`。[E: packages/settings/settings-file/src/index.ts:215] [E: packages/settings/settings-file/src/index.ts:228] [E: packages/settings/settings-file/tests/local.spec.ts:177]
 
 wire 的 `hasDocument` 只报 `documentPath !== undefined`，不把 Host 绝对路径交给浏览器。[E: packages/api/settings-controller/src/index.ts:121]
 
@@ -96,7 +96,7 @@ wire 的 `hasDocument` 只报 `documentPath !== undefined`，不把 Host 绝对�
 
 `parseSettingsNamespace` 把字符串品牌化为 `SettingsNamespace`，必须匹配 `^[a-z][a-z0-9-]*$`。重复 `register` 立刻抛 `already registered`。[E: packages/settings/settings/src/index.ts:20] [E: packages/settings/settings/src/index.ts:40] [E: packages/settings/settings/src/index.ts:426] 顶层 section 必须是 object；标量 / 数组在 `section()` 里抛 `must be an object of keys`。[E: packages/settings/settings/src/index.ts:734]
 
-产品里常见的用户可见段（不是 Config 键表）：`llm-deepseek`、`llm-pi-ai`（Models）。[E: packages/llm/llm-deepseek/src/index.ts:87] [E: packages/llm/llm-pi-ai/src/index.ts:93] `agent-presets` 也直接 `register` 进同一份文档。[E: packages/preset/agent-presets/src/index.ts:189]
+产品里常见的用户可见段（不是 Config 键表）：`llm-deepseek`、`llm-pi-ai`（Models）。[E: packages/llm/llm-deepseek/src/index.ts:87] [E: packages/llm/llm-pi-ai/src/index.ts:93] `agent-presets` 也直接 `register` 进同一份文档。[E: packages/preset/agent-presets/src/index.ts:192]
 
 **Remote 不再维护 `exposedNamespaces` 白名单。** `SettingsController.describe` 对 **每一个已注册 namespace** 调 `describe({ redactSecrets: true })`，再投影成 `SettingsNamespaceView`。[E: packages/api/settings-controller/src/index.ts:122] 写路径只校验 `ns` 非空字符串，不查产品名单。[E: packages/api/settings-controller/src/index.ts:33] [E: packages/api/settings-controller/src/index.ts:266]
 
@@ -123,23 +123,23 @@ wire 的 `hasDocument` 只报 `documentPath !== undefined`，不把 Host 绝对�
 
 ### CredentialRef 与 `.credentials.yaml`
 
-`CredentialRef` 是 POSIX 环境变量名品牌。[E: packages/credentials/credentials/src/types.ts:14] 组合 / settings 里放 **ref**（`role('credential-ref')`，如 `llm-deepseek` 的 `apiKeyEnv` 默认 `DEEPSEEK_API_KEY`、`llm-pi-ai` profile 的 `apiKeyEnv`）。[E: packages/llm/llm-deepseek/src/index.ts:178] [E: packages/llm/llm-pi-ai/src/config.ts:315] secret **值**在 `$DSH_HOME/.credentials.yaml`（`CREDENTIALS_FILENAME`），不是 settings 文档。[E: packages/credentials/credentials-local/src/index.ts:61]
+`CredentialRef` 是 POSIX 环境变量名品牌。[E: packages/credentials/credentials/src/types.ts:14] 组合 / settings 里放 **ref**（`role('credential-ref')`，如 `llm-deepseek` 的 `apiKeyEnv` 默认 `DEEPSEEK_API_KEY`、`llm-pi-ai` profile 的 `apiKeyEnv`）。[E: packages/llm/llm-deepseek/src/index.ts:188] [E: packages/llm/llm-pi-ai/src/config.ts:323] secret **值**在 `$DSH_HOME/.credentials.yaml`（`CREDENTIALS_FILENAME`），不是 settings 文档。[E: packages/credentials/credentials-local/src/index.ts:61]
 
 schema **允许** `role('secret')`（`web-search-deepseek` 的字面 `apiKey`），所以磁盘上的 `settings.yaml` **可以**含明文；`redactSecrets` 存在就是因为值可能在 section 里。[E: packages/web/web-search-deepseek/src/index.ts:64] [E: packages/settings/settings/src/redact.ts:52] 产品路径禁止把明文交给浏览器：Host `describe()` **始终** `redactSecrets: true`，对 `value` / `base` / `user` 各剥一遍，留下 sidecar `{ path, set }`（`set` 只表示槽里有没有值）。[E: packages/settings/settings/src/index.ts:527] [E: packages/api/settings-controller/src/index.ts:122] 同进程 `describe()` 缺省 **不**剥。持 redacted 视图的写路径是 `mutate`（按 path set/unset），不是把剥过的文档 `replace` 回去。[E: packages/settings/settings/src/index.ts:602] Models 页把键交给 `credentials.set`，不把密钥写入 `settings.yaml`。[E: packages/client/ui-settings-models/src/client/operations.ts:88]
 
 ## 装配与门控
 
-1. **host 面一行，叠在 `dsh-base` 上。** `dsh-base` 插入 `id: settings` / `name: '@deepseek-ai/dsh-settings-file'`。[E: packages/bundle/base/cordis.patch.yml:90] [E: packages/bundle/base/cordis.patch.yml:91] `PROFILE_TEMPLATES`：`web` = `dsh-base` + `dsh-web-app`（live）；`headless` / `sdk` / `acp` 各叠 `dsh-base` + 对应 app（startup）；**`sdk-minimal` 只含 `@deepseek-ai/dsh-sdk-minimal`，不叠 base**。[E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:146] [E: packages/boot/app-boot/src/profile.ts:154] `dsh-web-app` insert `id: settings-controller`，不重插 `id: settings`。[E: packages/bundle/web-app/cordis.patch.yml:91] `dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] `FileSettingsProvider.writable === true`，`watch` 默认 `true`，`debounceMs` 默认 `100`。[E: packages/settings/settings-file/src/index.ts:144] [E: packages/settings/settings-file/src/index.ts:65] [E: packages/settings/settings-file/src/index.ts:66]
+1. **host 面一行，叠在 `dsh-base` 上。** `dsh-base` 插入 `id: settings` / `name: '@deepseek-ai/dsh-settings-file'`。[E: packages/bundle/base/cordis.patch.yml:90] [E: packages/bundle/base/cordis.patch.yml:91] `PROFILE_TEMPLATES`：`web` = `dsh-base` + `dsh-web-app`（live）；`headless` / `sdk` / `acp` 各叠 `dsh-base` + 对应 app（startup）；**`sdk-minimal` 只含 `@deepseek-ai/dsh-sdk-minimal`，不叠 base**。[E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:114] [E: packages/boot/app-boot/src/profile.ts:122] `dsh-web-app` insert `id: settings-controller`，不重插 `id: settings`。[E: packages/bundle/web-app/cordis.patch.yml:105] `dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27] `FileSettingsProvider.writable === true`，`watch` 默认 `true`，`debounceMs` 默认 `100`。[E: packages/settings/settings-file/src/index.ts:144] [E: packages/settings/settings-file/src/index.ts:65] [E: packages/settings/settings-file/src/index.ts:66]
 
 2. **settings 是可选缝。** 没有 `id: settings` 时 `ctx.get('settings')` 为 `undefined`，consumer 停在自己的 entry Config 上。[E: packages/settings/settings-file/tests/loader-composition.spec.ts:138] [E: packages/settings/settings-file/tests/loader-composition.spec.ts:141] Remote 侧缺 provider 抛 `gateway/internal`，文案点名 `dsh-settings-file`。[E: packages/api/settings-controller/src/index.ts:292] Provider 卸掉后 `installSection` 的 disposer 把 source 拨回 `entry`（consumer 自己正在 `UNLOADING`/`DISPOSED` 则沉默）。[E: packages/settings/settings/src/index.ts:488] [E: packages/settings/settings/tests/settings.spec.ts:744]
 
 3. **并发写用 revision。** descriptor `revision` 当 `expectedRevision`，不匹配抛 `SettingsConflictError`（`code: 'SETTINGS_CONFLICT'`）；检查发生在写队列队头，不是调用瞬间。[E: packages/settings/settings/src/index.ts:156] [E: packages/settings/settings/src/index.ts:668] Host 把它映射成 Remote `settings/conflict`。[E: packages/api/settings-controller/src/index.ts:334]
 
-4. **pi-ai：始终加载，零 route 直到 Settings 加 profile。** `dsh-base` 挂 `id: llm-pi-ai`，默认不写 `config.providers`。[E: packages/bundle/base/cordis.patch.yml:107] [E: packages/bundle/base/cordis.patch.yml:108] 插件 `Config.providers` 缺省 `{}`；`apply` 里 `installSection` 把 entry 当 `base`，`profiles()` 读 `current().providers`。[E: packages/llm/llm-pi-ai/src/config.ts:341] [E: packages/llm/llm-pi-ai/src/index.ts:297] [E: packages/llm/llm-pi-ai/src/index.ts:159] `ensureRegistrationFacts`：`routes.length === 0` 时不 `registerAdapter`（dormant）；有 profile 才 `registerAdapter(routes, adapter)`，之后 `replace`。[E: packages/llm/llm-pi-ai/src/index.ts:284] 目录（Models 可选列表）在零 route 时仍 `registerConfigurableProviders`，所以页面能在没有任何 route 之前加 profile。[E: packages/llm/llm-pi-ai/src/index.ts:235] 路由 / 模型 / `apiKeyEnv` 怎样解析进 adapter，见 [surface.providers.pi-ai](../providers/pi-ai.md)。
+4. **pi-ai：始终加载，零 route 直到 Settings 加 profile。** `dsh-base` 挂 `id: llm-pi-ai`，默认不写 `config.providers`。[E: packages/bundle/base/cordis.patch.yml:107] [E: packages/bundle/base/cordis.patch.yml:108] 插件 `Config.providers` 缺省 `{}`；`apply` 里 `installSection` 把 entry 当 `base`，`profiles()` 读 `current().providers`。[E: packages/llm/llm-pi-ai/src/config.ts:349] [E: packages/llm/llm-pi-ai/src/index.ts:297] [E: packages/llm/llm-pi-ai/src/index.ts:158] `ensureRegistrationFacts`：`routes.length === 0` 时不 `registerAdapter`（dormant）；有 profile 才 `registerAdapter(routes, adapter)`，之后 `replace`。[E: packages/llm/llm-pi-ai/src/index.ts:283] 目录（Models 可选列表）在零 route 时仍 `registerConfigurableProviders`，所以页面能在没有任何 route 之前加 profile。[E: packages/llm/llm-pi-ai/src/index.ts:234] 路由 / 模型 / `apiKeyEnv` 怎样解析进 adapter，见 [surface.providers.pi-ai](../providers/pi-ai.md)。
 
-5. **DeepSeek 对照。** `llm-deepseek` 同样 `installSection`，但 boot 就 `registerAdapter(['deepseek-official'], …)`；Settings 只热更新 retry policy 等，不靠「有没有 section」才出现这条官方路由。[E: packages/llm/llm-deepseek/src/index.ts:476] [E: packages/llm/llm-deepseek/src/index.ts:491] 细节链 [surface.providers.deepseek](../providers/deepseek.md)。
+5. **DeepSeek 对照。** `llm-deepseek` 同样 `installSection`，但 boot 就 `registerAdapter(['deepseek-official'], …)`；Settings 只热更新 retry policy 等，不靠「有没有 section」才出现这条官方路由。[E: packages/llm/llm-deepseek/src/index.ts:492] [E: packages/llm/llm-deepseek/src/index.ts:507] 细节链 [surface.providers.deepseek](../providers/deepseek.md)。
 
-6. **`agent-presets` 不走 `installSection`。** 它直接 `register(..., { base: { default: config.default } })`：`defaultId` 每次现读，包一层 helper 只会空转 `onChange`。[E: packages/preset/agent-presets/src/index.ts:181] [E: packages/preset/agent-presets/src/index.ts:189]
+6. **`agent-presets` 不走 `installSection`。** 它直接 `register(..., { base: { default: config.default } })`：`defaultId` 每次现读，包一层 helper 只会空转 `onChange`。[E: packages/preset/agent-presets/src/index.ts:184] [E: packages/preset/agent-presets/src/index.ts:192]
 
 ## 跨包关系
 

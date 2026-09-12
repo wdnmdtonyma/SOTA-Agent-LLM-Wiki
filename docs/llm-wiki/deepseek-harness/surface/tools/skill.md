@@ -42,7 +42,7 @@ related:
   - spine.trace-code-mode
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `skill` 是 `@deepseek-ai/dsh-tool-skill` 向模型注册的 skill 正文加载器：wire 名 `'skill'`，参数只有 `name`；catalog 是 durable `user/message`（`source.kind: 'skill-catalog'`），与 schema **同生共死**。
@@ -64,13 +64,13 @@ updated: d347e70390
 
 插件默认 Config 只有一个部署键 `catalogDescriptionMaxLength`（默认 `500`，下限 `3`）。它裁的是 **session catalog 摘要**，不是工具参数。[E: packages/skill/tool-skill/src/index.ts:27][E: packages/skill/tool-skill/src/index.ts:68][E: packages/skill/tool-skill/src/index.ts:79]
 
-单测钉死：挂上插件后 `ctx.tools.schemas()` 只有 `['skill']`；`dispose` 后 schema 与 catalog 一起消失；`presentCall({ name })` 是 `{ card: 'generic', title: 'Load skill …', kind: 'read', rawInput: name }`。[E: packages/skill/tool-skill/tests/tool-skill.spec.ts:171][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:180][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:173]
+单测钉死：挂上插件后 `ctx.tools.schemas()` 只有 `['skill']`；`dispose` 后 schema 与 catalog 一起消失；`presentCall({ name })` 是 `{ card: 'generic', title: 'Load skill …', kind: 'read', rawInput: name }`。[E: packages/skill/tool-skill/tests/tool-skill.spec.ts:170][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:180][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:173]
 
-`defineTool({ name: 'skill', … })` **没有** `timeoutMs`，也 **没有** `isConcurrencySafe`。host `@deepseek-ai/dsh-tool-call-timeout-policy` 读到 `undefined` 就原样 `next()`；registry `executionMode` 对未声明的分类器走 `exclusive`。[E: packages/guard/timeout-policy/src/index.ts:59][E: packages/core/tools/src/index.ts:1269]
+`defineTool({ name: 'skill', … })` **没有** `timeoutMs`，也 **没有** `isConcurrencySafe`。host `@deepseek-ai/dsh-tool-call-timeout-policy` 读到 `undefined` 就原样 `next()`；registry `executionMode` 对未声明的分类器走 `exclusive`。[E: packages/guard/timeout-policy/src/index.ts:59][E: packages/core/tools/src/index.ts:1268]
 
 ## 用途定位
 
-`skill` 只做一件事：按 **精确 kebab-case 名** 从 `ctx.skills` 取出一份 `isModelInvocable` 的完整定义，把 `content` 包成规范 `<skill_content>` 块还给模型。它不扫描磁盘、不解析 `SKILL.md` frontmatter、不执行 skill 正文里的步骤。[E: packages/skill/tool-skill/src/index.ts:83][E: packages/skill/skill/src/index.ts:128]
+`skill` 只做一件事：按 **精确 kebab-case 名** 从 `ctx.skills` 取出一份 `isModelInvocable` 的完整定义，把 `content` 包成规范 `<skill_content>` 块还给模型。它不扫描磁盘、不解析 `SKILL.md` frontmatter、不执行 skill 正文里的步骤。[E: packages/skill/tool-skill/src/index.ts:83][E: packages/skill/skill/src/index.ts:127]
 
 模型怎么知道有哪些名字？同一插件在 `agent/pre-step` 注入一条 durable `user/message`，`source.kind === 'skill-catalog'`、`form: 'catalog'`，正文是 `<available_skills>` 摘要列表。catalog **不是** `systemPrompt` section：`assemble()` 的 prompt 文本里没有 `<available_skills>`。[E: packages/skill/tool-skill/src/index.ts:35][E: packages/skill/tool-skill/src/index.ts:272][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:302]
 
@@ -96,7 +96,7 @@ catalog 只列 `isModelInvocable` 的摘要：`name` + 归一化后截断的 `de
 |---|---|---|
 | `catalogDescriptionMaxLength` | `DEFAULT_CATALOG_DESCRIPTION_MAX_LENGTH` = `500` | catalog 行里 description 先把空白压成单空格再截断；短于下限 `3` 的整数让 `apply()` 抛错，插件 load 失败。[E: packages/skill/tool-skill/src/index.ts:68][E: packages/skill/tool-skill/src/index.ts:392][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:757] |
 
-四个 shipped preset 里装了 `tool-skill` 的行都没有 `config:`，产品默认就是这张表。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:87]
+四个 shipped preset 里装了 `tool-skill` 的行都没有 `config:`，产品默认就是这张表。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:88]
 
 ## 输出 & 截断 / spill
 
@@ -118,9 +118,9 @@ registry 用 `output.schema`（`additionalProperties: false`）校验后再调�
 
 `resourceBase` 缺省时提示 `Resources for this skill are managed by provider "…"`。未知 `kind` 过不了 output schema / `assertNever`，结果是 `isError` + `INVALID_TOOL_OUTPUT`，不会把 rogue 形状泄漏给模型。[E: packages/skill/skill/src/index.ts:190][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:856]
 
-`skill` **没有** spill：不读 `ctx.spillStore`，也不按字符帽切正文。catalog 的 500 字截断只作用于摘要行，不影响 `content`。body-only 编辑（description 不变）不会重发 catalog，下一次 `skill` 调用会读到最新正文。[E: packages/skill/tool-skill/tests/tool-skill.spec.ts:629][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:638]
+`skill` **没有** spill：不读 `ctx.spillStore`，也不按字符帽切正文。catalog 的 500 字截断只作用于摘要行，不影响 `content`。body-only 编辑（description 不变）不会重发 catalog，下一次 `skill` 调用会读到最新正文。[E: packages/skill/tool-skill/tests/tool-skill.spec.ts:629][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:637]
 
-失败走 registry `toolErrorResult`：`content` 为 `Error: <message>`。[E: packages/core/tools/src/index.ts:1861]
+失败走 registry `toolErrorResult`：`content` 为 `Error: <message>`。[E: packages/core/tools/src/index.ts:1860]
 
 | 条件 | 文案要点 |
 |---|---|
@@ -133,14 +133,14 @@ registry 用 `output.schema`（`additionalProperties: false`）校验后再调�
 | 角色 | 落点 |
 |---|---|
 | Definition | `@deepseek-ai/dsh-skill` 的 `SkillRegistry`（`super(ctx, 'skills')`）：`list` / `snapshot` / `get` / `register` / `registerProvider`，事件 `skills/change`。[E: packages/skill/skill/src/index.ts:376][E: packages/skill/skill/package.json:2] |
-| Provider | 默认本地扫描 `@deepseek-ai/dsh-skill-filesystem`（`ctx.skills.registerProvider`，默认 `providerName: 'filesystem'`）。运行时还可以 `ctx.skills.register(...)` 注入 `provider: 'runtime'`。远程 / 包内 registry 只要实现 `SkillProvider` 就能换掉磁盘扫描，工具 schema 不动。[E: packages/skill/skill-filesystem/src/index.ts:132][E: packages/skill/skill-filesystem/src/index.ts:77] |
+| Provider | 默认本地扫描 `@deepseek-ai/dsh-skill-filesystem`（`ctx.skills.registerProvider`，默认 `providerName: 'filesystem'`）。运行时还可以 `ctx.skills.register(...)` 注入 `provider: 'runtime'`。远程 / 包内 registry 只要实现 `SkillProvider` 就能换掉磁盘扫描，工具 schema 不动。[E: packages/skill/skill-filesystem/src/index.ts:130][E: packages/skill/skill-filesystem/src/index.ts:77] |
 | Consumer | `@deepseek-ai/dsh-tool-skill` 的 `skill` 工具 + 两条 `agent/pre-step` listener（catalog、`/name` 手势）。[E: packages/skill/tool-skill/src/index.ts:25] |
 
 `execute` / catalog 实际调用：
 
-1. `ctx.skills.list(lookup)` / `ctx.skills.snapshot(lookup)` — `lookup = { cwd: exec.agent?.session.header.cwd, signal: exec.signal, scope: exec.agent }`。`scope` 选 layered registry（host 全局层 + 该 agent 的 preset standing 链）；`cwd` 只传给 provider 选 project 根。[E: packages/skill/tool-skill/src/index.ts:133][E: packages/skill/skill/src/index.ts:472]
+1. `ctx.skills.list(lookup)` / `ctx.skills.snapshot(lookup)` — `lookup = { cwd: exec.agent?.session.header.cwd, signal: exec.signal, scope: exec.agent }`。`scope` 选 layered registry（host 全局层 + 该 agent 的 preset standing 链）；`cwd` 只传给 provider 选 project 根。[E: packages/skill/tool-skill/src/index.ts:133][E: packages/skill/skill/src/index.ts:471]
 2. `ctx.skills.get(name, lookup)` — 把 winning candidate 的 opaque `locator` 交回该 provider 的 `get()`。[E: packages/skill/tool-skill/src/index.ts:141][E: packages/skill/skill/src/index.ts:502]
-3. `isModelInvocable` — Consumer 边界，不是 registry 过滤。`list()` 返回 invocation-neutral 摘要；工具和 catalog 自己 `.filter(isModelInvocable)` / 二次检查 loaded definition。[E: packages/skill/skill/src/index.ts:128][E: packages/skill/tool-skill/src/index.ts:226]
+3. `isModelInvocable` — Consumer 边界，不是 registry 过滤。`list()` 返回 invocation-neutral 摘要；工具和 catalog 自己 `.filter(isModelInvocable)` / 二次检查 loaded definition。[E: packages/skill/skill/src/index.ts:127][E: packages/skill/tool-skill/src/index.ts:226]
 
 换 provider 会带走：skill 从哪来、`resourceBase` 形态、frontmatter 方言（`disable-model-invocation` / `user-invocable` 是 filesystem 解析器的键）、watch / 失效。不会带走：wire 名、单字段 schema、`<skill_content>` 形状、catalog 的 `kind: 'skill-catalog'` 合同。
 
@@ -150,22 +150,22 @@ filesystem 扫描根（点到为止，细节在 skills 子系统）：`includeDe
 
 ## 执行管线
 
-模型发出 `skill` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1333][E: packages/core/tools/src/index.ts:1467][E: packages/core/tools/src/index.ts:1565]
+模型发出 `skill` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1332][E: packages/core/tools/src/index.ts:1467][E: packages/core/tools/src/index.ts:1565]
 
 对本工具的挂点：
 
-- **`tools/pre-execute`**：`skill` 自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1468]
-- **调度**：未声明 `isConcurrencySafe` → `exclusive`，不会与另一条 exclusive 调用重叠。[E: packages/core/tools/src/index.ts:1269]
+- **`tools/pre-execute`**：`skill` 自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1467]
+- **调度**：未声明 `isConcurrencySafe` → `exclusive`，不会与另一条 exclusive 调用重叠。[E: packages/core/tools/src/index.ts:1268]
 - **`tools/execute` 包装**：
   - `session-checkpoint-policy` 仅在「有 `exec.agent` 且 `exec.parent === undefined`」时 `flush` session，再 `next()`。[E: packages/session/session-checkpoint-policy/src/index.ts:71][E: packages/session/session-checkpoint-policy/src/index.ts:72]
   - `timeout-policy` 读 `definition.timeoutMs`；`skill` 未声明，直接 `next()`。[E: packages/guard/timeout-policy/src/index.ts:59]
-- **body**：`defineTool` 先 `validate`（缺 `name` → `ToolArgsError` / `INVALID_ARGS`），再进 `apply` 里的 `execute`。取消信号经 `exec.signal` 传给 `list` / `get`。[E: packages/core/tools/src/schema.ts:586][E: packages/skill/tool-skill/src/index.ts:127]
-- **`tools/post-execute`**：本工具不注册 listener，默认 `accept`。规范值由 `createSuccessResult` 冻结后 `render`。[E: packages/core/tools/src/index.ts:1736][E: packages/core/tools/src/index.ts:1784]
+- **body**：`defineTool` 先 `validate`（缺 `name` → `ToolArgsError` / `INVALID_ARGS`），再进 `apply` 里的 `execute`。取消信号经 `exec.signal` 传给 `list` / `get`。[E: packages/core/tools/src/schema.ts:585][E: packages/skill/tool-skill/src/index.ts:127]
+- **`tools/post-execute`**：本工具不注册 listener，默认 `accept`。规范值由 `createSuccessResult` 冻结后 `render`。[E: packages/core/tools/src/index.ts:1735][E: packages/core/tools/src/index.ts:1783]
 - **sandbox / approval**：不挂。
 
 **catalog 不走工具管线。** 它是 `agent/pre-step` waterfall 往 `decision.messages` 追加的 `UserMessage`。`ReactLoopAgent` 在 `step/start` 之后对每条 `decision.messages` 做 `session.append('user/message', …, { surfaceOp: 'append' })`，于是它进入 `SURFACE_EVENT_TYPES`，随后 `deriveMessages()` 看得到。[E: packages/skill/tool-skill/src/index.ts:248][E: packages/core/agent-loop/src/agent.ts:292][E: packages/core/session/src/surface.ts:16]
 
-PTC 下模型不能直呼 `skill`：非嵌套且 `modeFor(scope) === 'ptc'` 时，`collapses()` 为真，`createExecution` 在 `if (collapsed)` 处直接 `final-result` / `UNKNOWN_TOOL`，**不进** `tools/pre-execute`。SDK 子分发带 `parent`（nested）不 collapse，仍走完整守卫；checkpoint 在 `exec.parent !== undefined` 时直接 `next()`。[E: packages/core/tools/src/index.ts:1316][E: packages/core/tools/src/index.ts:1372][E: packages/core/tools/src/index.ts:1430][E: packages/session/session-checkpoint-policy/src/index.ts:71][E: apps/cli/tests/web-agent-presets.e2e.ts:366]
+PTC 下模型不能直呼 `skill`：非嵌套且 `modeFor(scope) === 'ptc'` 时，`collapses()` 为真，`createExecution` 在 `if (collapsed)` 处直接 `final-result` / `UNKNOWN_TOOL`，**不进** `tools/pre-execute`。SDK 子分发带 `parent`（nested）不 collapse，仍走完整守卫；checkpoint 在 `exec.parent !== undefined` 时直接 `next()`。[E: packages/core/tools/src/index.ts:1315][E: packages/core/tools/src/index.ts:1371][E: packages/core/tools/src/index.ts:1429][E: packages/session/session-checkpoint-policy/src/index.ts:71][E: apps/cli/tests/web-agent-presets.e2e.ts:377]
 
 ## Preset 装配
 
@@ -173,26 +173,26 @@ PTC 下模型不能直呼 `skill`：非嵌套且 `modeFor(scope) === 'ptc'` 时�
 
 | preset | 装 `@deepseek-ai/dsh-tool-skill`？ | `disabled` | isolate | shipped Config | 说明 |
 |---|---|---|---|---|---|
-| `minimal` | **否** | — | — | — | yml 没有 `tool-skill` / `skill-filesystem` 行。e2e 装配工具表是 `['bash', 'str_replace_editor']`。全局 `ctx.skills` 层仍可读，只是没有模型可见 loader。[E: apps/cli/tests/web-agent-presets.e2e.ts:312] |
-| `standard` | **是** | 无 | 无 | 无 `config:` | `- id: tool-skill` / `name: '@deepseek-ai/dsh-tool-skill'`，紧跟无 `customSkillDirs` 的 `skill-filesystem`。e2e catalog 含 `'skill'`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:86][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:87][E: apps/cli/tests/web-agent-presets.e2e.ts:235] |
-| `ptc` | **是** | 无 | 无 | 无 `config:` | 与 `standard` 同一对行。`tool-presentation` `mode: ptc` 只改呈现：模型直调的 **唯一** wire 工具是 `run_code`；`skill` 仍注册，供 SDK `await tools.skill({ name })` 重入。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:93][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:94][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268][E: apps/cli/tests/web-agent-presets.e2e.ts:366] |
-| `cordis` | **是** | 无 | 无 | 无 `config:` | `tool-skill` 在文件末尾。配对的 `skill-filesystem` 多了 `customSkillDirs`（`!!js` 解析本 preset 的 `skills/`），所以本会话 catalog 会多出 `editing-cordis-compositions` 这类 preset-local 名；全局 `ctx.skills.list()` 看不到它们。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262][E: apps/cli/tests/web-agent-presets.e2e.ts:345] |
+| `minimal` | **否** | — | — | — | yml 没有 `tool-skill` / `skill-filesystem` 行。e2e 装配工具表是 `['bash']`（POSIX）。全局 `ctx.skills` 层仍可读，只是没有模型可见 loader。[E: apps/cli/tests/web-agent-presets.e2e.ts:299] |
+| `standard` | **是** | 无 | 无 | 无 `config:` | `- id: tool-skill` / `name: '@deepseek-ai/dsh-tool-skill'`，紧跟无 `customSkillDirs` 的 `skill-filesystem`。e2e catalog 含 `'skill'`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:87][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:88][E: apps/cli/tests/web-agent-presets.e2e.ts:243] |
+| `ptc` | **是** | 无 | 无 | 无 `config:` | 与 `standard` 同一对行。`tool-presentation` `mode: ptc` 只改呈现：模型直调的 **唯一** wire 工具是 `run_code`；`skill` 仍注册，供 SDK `await tools.skill({ name })` 重入。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:94][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:95][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269][E: apps/cli/tests/web-agent-presets.e2e.ts:377] |
+| `cordis` | **是** | 无 | 无 | 无 `config:` | `tool-skill` 在文件末尾。配对的 `skill-filesystem` 多了 `customSkillDirs`（`!!js` 解析本 preset 的 `skills/`），所以本会话 catalog 会多出 `editing-cordis-compositions` 这类 preset-local 名；全局 `ctx.skills.list()` 看不到它们。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262][E: apps/cli/tests/web-agent-presets.e2e.ts:355] |
 
 `customSkillDirs` 默认 `[]`；只有 `cordis` 这份 shipped yml 覆盖它。那是 filesystem provider 的 Config，不是 `skill` 工具的 schema。[E: packages/skill/skill-filesystem/src/index.ts:81]
 
-host `dsh-base` 也写了 `id: skill`（registry）和 `id: tool-skill`。web-app 把 host 面 `skill-filesystem` / `tool-skill` 设成 `disabled: true`，改由每会话 preset 再挂；registry 留在 host。因此 web 上的 `minimal` 会话没有 `skill` 工具。headless / sdk / acp / sdk-minimal 不叠 web 这份 disable，仍走 base 行。[E: packages/bundle/base/cordis.patch.yml:279][E: packages/bundle/base/cordis.patch.yml:289][E: packages/bundle/web-app/cordis.patch.yml:358][E: packages/bundle/web-app/cordis.patch.yml:358][E: packages/bundle/web-app/cordis.patch.yml:360][E: packages/bundle/web-app/cordis.patch.yml:361]
+host `dsh-base` 也写了 `id: skill`（registry）和 `id: tool-skill`。web-app 把 host 面 `skill-filesystem` / `tool-skill` 设成 `disabled: true`，改由每会话 preset 再挂；registry 留在 host。因此 web 上的 `minimal` 会话没有 `skill` 工具。headless / sdk / acp 不叠 web 这份 disable，仍走 base 行；`sdk-minimal` 不叠 base。[E: packages/bundle/base/cordis.patch.yml:273][E: packages/bundle/base/cordis.patch.yml:283][E: packages/bundle/web-app/cordis.patch.yml:402][E: packages/bundle/web-app/cordis.patch.yml:402][E: packages/bundle/web-app/cordis.patch.yml:405][E: packages/bundle/web-app/cordis.patch.yml:406]
 
 ## execute() 走读
 
 符号：`apply` @ `packages/skill/tool-skill/src/index.ts`；`isSkillName` / `isModelInvocable` / `renderSkillContent` @ `packages/skill/skill/src/index.ts`。
 
-1. **校验名字。** `defineTool.execute` 先按 schema 要 `name: string`。body 再 `isSkillName(args.name)`；失败立刻 throw，不碰 registry。[E: packages/core/tools/src/schema.ts:586][E: packages/skill/tool-skill/src/index.ts:128]
+1. **校验名字。** `defineTool.execute` 先按 schema 要 `name: string`。body 再 `isSkillName(args.name)`；失败立刻 throw，不碰 registry。[E: packages/core/tools/src/schema.ts:585][E: packages/skill/tool-skill/src/index.ts:128]
 
 2. **按调用 agent 的视野查表。** `lookup = { cwd: exec.agent?.session.header.cwd, signal: exec.signal, scope: exec.agent }`。agent 自己就是 scope key，layered registry 看到的集合与该 agent 的 catalog 一致。preset 层 `register()` 的 skill，外层 agent 加载会 `unknown`。[E: packages/skill/tool-skill/src/index.ts:133][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:676]
 
 3. **list 找 summary，先做模型门。** `(await ctx.skills.list(lookup)).find(skill => skill.name === args.name)`。没有 → `unknown or no longer available`。有但 `!isModelInvocable(summary)` → `not available for model invocation`，此时 **还没** 调 provider `get()`，正文不会进错误通道。[E: packages/skill/tool-skill/src/index.ts:134][E: packages/skill/tool-skill/src/index.ts:138][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:943]
 
-4. **get 再取正文，再查一次门。** `ctx.skills.get(args.name, lookup)` 返回 `undefined`（文件消失、校验失败、name 漂移）→ 同一句 `unknown`。loaded definition 若 `modelInvocable` 已翻成 `false`（list/get 竞态），同样拒，且错误里不含 `content`。[E: packages/skill/tool-skill/src/index.ts:141][E: packages/skill/tool-skill/src/index.ts:145][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:949]
+4. **get 再取正文，再查一次门。** `ctx.skills.get(args.name, lookup)` 返回 `undefined`（文件消失、校验失败、name 漂移）→ 同一句 `unknown`。loaded definition 若 `modelInvocable` 已翻成 `false`（list/get 竞态），同样拒，且错误里不含 `content`。[E: packages/skill/tool-skill/src/index.ts:141][E: packages/skill/tool-skill/src/index.ts:145][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:947]
 
 5. **投影规范值。** `{ name, provider, content }`，有 `resourceBase` 才展开浅拷贝。filesystem 成功路径的 `provider` 默认 `'filesystem'`，`resourceBase.kind === 'directory'`，`path` 是 skill 目录。[E: packages/skill/tool-skill/src/index.ts:148][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:779]
 
@@ -214,7 +214,7 @@ host `dsh-base` 也写了 `id: skill`（registry）和 `id: tool-skill`。web-ap
 - **model-visible ⟺ logged。** catalog 是 `user/message`，不是 prompt section。compaction 若把旧 catalog 的 seq 移出 `session.surface.nodes`，`catalogHistory` 就找不到 `visibleDigest`，listener 会按 durable `entries` 再发一份当前列表。[E: packages/core/session/src/surface.ts:16][E: packages/skill/tool-skill/src/index.ts:374]
 - **调用面分流。** 模型只能加载 `isModelInvocable`。`disable-model-invocation: true` 的 skill 对 `skill` 工具与 catalog 隐形，只留给用户 `/name` 手势（`source.kind === 'user'` 的文本才会被扫；外部 plugin 消息伪造不了）。[E: packages/skill/skill-filesystem/src/index.ts:996][E: packages/skill/tool-skill/src/index.ts:420]
 - **同名 shadow 不能白嫖 catalog。** 比较的是 `=== skillTool`，不是字符串 `'skill'`。[E: packages/skill/tool-skill/src/index.ts:220]
-- **分层视野。** `scope: exec.agent` 让 preset-local runtime skill / `customSkillDirs` 只对 join 了该 standing mount 的 agent 可见；另一个 cwd 的 agent 看不到这份 catalog。[E: packages/skill/tool-skill/tests/tool-skill.spec.ts:656][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:657]
+- **分层视野。** `scope: exec.agent` 让 preset-local runtime skill / `customSkillDirs` 只对 join 了该 standing mount 的 agent 可见；另一个 cwd 的 agent 看不到这份 catalog。[E: packages/skill/tool-skill/tests/tool-skill.spec.ts:655][E: packages/skill/tool-skill/tests/tool-skill.spec.ts:657]
 - **和 Claude / Codex「自动展开 skill」不同。** DSH 的模型路径是显式 tool-call；用户路径是手势注入，不是 slash command registry（命令是另一套 `ctx.commands`，在客户端先解析）。
 - **PTC。** `ptc` preset 仍然装 `tool-skill`，但模型请求里只剩 `run_code`。要从程序里加载 skill，写 `await tools.skill({ name: '…' })`，带着 `parent` token 重入同一套 pre-execute / execute / post-execute。wiki 节点 id `surface.presets.code` / `spine.trace-code-mode` 是稳定别名。
 

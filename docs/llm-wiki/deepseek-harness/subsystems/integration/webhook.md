@@ -41,7 +41,7 @@ related:
   - subsys.persistence.title
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-webhook` 在 Host 上提供 `ctx.webhookRuntime`：可信规则 `register` / 已认证 delivery `dispatch`，唯一内建动作是在 Web Workspace 里创建普通根 Session。GitHub 是 shipped provider：`@deepseek-ai/dsh-webhook-github` 在 `ctx.webServer` 上挂精确 POST 路由，验签后 `dispatch` 并立刻 `202`。两个包都不进六个 shipped bundle 的 patch；`apps/cli` 的 dependency 只给 overlay 解析。
@@ -62,7 +62,7 @@ updated: d347e70390
 
 - `ctx.webServer` 路由表与 HTTP listen — [`subsys.host.webserver`](../host/webserver.md)（`subsys.host.webserver`）。GitHub 只 `register` 一条 `kind: 'exact'` 路由。[E: packages/webhook/webhook-github/src/index.ts:50]
 - Workspace 登记 / attach — [`subsys.persistence.workspace`](../persistence/workspace.md)（`subsys.persistence.workspace`）。本包只 `create` + `attachSession`。[E: packages/webhook/webhook/src/session.ts:133]
-- Agent 生命周期 — [`subsys.core.agent`](../core/agent.md)（`subsys.core.agent`）。prompt 用 `handle.agent.followup`；失败路径才 `handle.dispose`。[E: packages/webhook/webhook/src/session.ts:155] [E: packages/webhook/webhook/src/session.ts:176]
+- Agent 生命周期 — [`subsys.core.agent`](../core/agent.md)（`subsys.core.agent`）。prompt 用 `handle.agent.followup`；失败路径才 `handle.dispose`。[E: packages/webhook/webhook/src/session.ts:155] [E: packages/webhook/webhook/src/session.ts:177]
 - 默认模型 / preset / permission / title / credentials — 对应 [`subsys.core.agent-default-model`](../core/agent-default-model.md)、[`subsys.composition.agent-presets`](../composition/agent-presets.md)、[`subsys.interaction.permission-presets`](../interaction/permission-presets.md)、[`subsys.persistence.title`](../persistence/title.md)、[`subsys.persistence.credentials`](../persistence/credentials.md)。
 
 **默认产品树零 webhook。** `packages/bundle/**` 的 patch / manifest 没有 `dsh-webhook` 行。`apps/cli` 把两包装进 `dependencies`。[E: apps/cli/package.json:94] [E: apps/cli/package.json:95] 真实 overlay：`apps/cli/config/examples/github-review/cordis.yml` 插入 `id: webhook-runtime` 与隔离 `webServer` 的 `github-webhook-ingress` group。[E: apps/cli/config/examples/github-review/cordis.yml:5] [E: apps/cli/config/examples/github-review/cordis.yml:20] 四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）没有 webhook 行。五个 shipped profile（`web` / `headless` / `sdk` / `sdk-minimal` / `acp`）默认不挂本包。

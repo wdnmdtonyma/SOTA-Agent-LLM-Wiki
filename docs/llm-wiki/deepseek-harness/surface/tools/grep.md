@@ -50,7 +50,7 @@ related:
   - subsys.execution.subprocess
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > wire 名 `grep` 由包 `@deepseek-ai/dsh-tool-fs-search` 注册：用打包的 `@vscode/ripgrep` 经 `ctx.subprocess.spawn()` 搜文件内容，返回按文件分组的匹配行。不是宿主 `rg`，不是 `ctx.fs`，不是 `ctx.shell`。
@@ -66,7 +66,7 @@ updated: d347e70390
 
 ## Identity
 
-模型看见的工具名是字符串 `'grep'`，由 `applyGrepTool` 里 `defineTool({ name: 'grep', ... })` 写出，再 `ctx.tools.register(tool)`。[E: packages/fs/tool-fs-search/src/grep.ts:282][E: packages/fs/tool-fs-search/src/grep.ts:338]
+模型看见的工具名是字符串 `'grep'`，由 `applyGrepTool` 里 `defineTool({ name: 'grep', ... })` 写出，再 `ctx.tools.register(tool)`。[E: packages/fs/tool-fs-search/src/grep.ts:285][E: packages/fs/tool-fs-search/src/grep.ts:341]
 
 实现包 npm 名是 `@deepseek-ai/dsh-tool-fs-search`。[E: packages/fs/tool-fs-search/package.json:2] Cordis 插件名是 `export const name = 'tool-fs-search'`（loader 诊断用，不是 wire 名）。[E: packages/fs/tool-fs-search/src/index.ts:67]
 
@@ -80,7 +80,7 @@ updated: d347e70390
 
 `grep` 是 model-visible 的工作区内容搜索：固定 `rg --json` argv，解析 `match` 记录，得到 `{ path, lineNumber, line }` 平坦列表，再按文件分组渲染。[E: packages/fs/tool-fs-search/src/grep.ts:112][E: packages/fs/tool-fs-search/src/grep.ts:145] 它是 discovery，不是编辑器；完整行仍在文件里，工具只保留 UTF-8 预览。[E: packages/fs/tool-fs-search/src/search-core.ts:308]
 
-搜索根默认是 `exec.agent.session.header.cwd`，没有 session cwd 时退回 `process.cwd()`。[E: packages/fs/tool-fs-search/src/search-core.ts:230][E: packages/fs/tool-fs-search/src/search-core.ts:231] 可选 `path` 是文件或目录；可选 `include` 是**一条**正向 glob。[E: packages/fs/tool-fs-search/src/grep.ts:288][E: packages/fs/tool-fs-search/src/grep.ts:289]
+搜索根默认是 `exec.agent.session.header.cwd`，没有 session cwd 时退回 `process.cwd()`。[E: packages/fs/tool-fs-search/src/search-core.ts:229][E: packages/fs/tool-fs-search/src/search-core.ts:231] 可选 `path` 是文件或目录；可选 `include` 是**一条**正向 glob。[E: packages/fs/tool-fs-search/src/grep.ts:288][E: packages/fs/tool-fs-search/src/grep.ts:289]
 
 `grep` 与同包 `glob` 共用 `runRipgrep` / `ctx.subprocess` / 打包 ripgrep，但 argv、解析和 retention 不同。`grep` 也不走 `dsh-tool-bash` / `dsh-tool-bash-persistent` 那条 `ctx.shell` / `ctx.terminals` 路径。
 
@@ -100,22 +100,22 @@ updated: d347e70390
 |---|---|---|
 | `grepMaxMatches` | `GREP_MAX_MATCHES` = `250` | inline 保留的平坦 match 数；描述字符串会插入这个数字。[E: packages/fs/tool-fs-search/src/grep.ts:29][E: packages/fs/tool-fs-search/src/index.ts:100][E: packages/fs/tool-fs-search/src/grep.ts:284] |
 | `grepMaxLineBytes` | `GREP_MAX_LINE_BYTES` = `2000` | 每条匹配行预览的 UTF-8 字节预算。[E: packages/fs/tool-fs-search/src/grep.ts:35][E: packages/fs/tool-fs-search/src/index.ts:101] |
-| `timeoutMs` | `SEARCH_TIMEOUT_MS` = `30_000` | 写到 `ToolDefinition.timeoutMs`，**不**进 `schemas()`：`schemaOf` 只投影 `name` / `description` / `parameters`。[E: packages/fs/tool-fs-search/src/search-core.ts:43][E: packages/fs/tool-fs-search/src/grep.ts:291][E: packages/core/tools/src/index.ts:1253] |
+| `timeoutMs` | `SEARCH_TIMEOUT_MS` = `30_000` | 写到 `ToolDefinition.timeoutMs`，**不**进 `schemas()`：`schemaOf` 只投影 `name` / `description` / `parameters`。[E: packages/fs/tool-fs-search/src/search-core.ts:43][E: packages/fs/tool-fs-search/src/grep.ts:291][E: packages/core/tools/src/index.ts:1246] |
 | `rawOutputMaxBytes` | `20_000_000` | 完整 raw stdout 解析上限；超出 → `SEARCH_RAW_OUTPUT_OVERFLOW`。[E: packages/fs/tool-fs-search/src/search-core.ts:36] |
 | `graceMs` | `3_000` | 交给 subprocess seam 的 terminate 宽限期。[E: packages/fs/tool-fs-search/src/search-core.ts:53] |
 | `stderrMaxBytes` | `64 * 1024` | 失败时嵌入错误消息的 stderr tail。[E: packages/fs/tool-fs-search/src/search-core.ts:50] |
 | `searchMetaMaxBytes` | `65_536` | `presentationMeta` JSON 字节上限。[E: packages/fs/tool-fs-search/src/search-core.ts:65] |
 | `sampleOverCapGlobResults` | **无默认，必填** | 只影响 `glob`。`standard`/`ptc`/`cordis` 写成 `false` 是为了满足插件 Config，不是 grep 开关。[E: packages/fs/tool-fs-search/src/index.ts:98] |
 
-`defineTool` 没有给 `grep` 挂 `isConcurrencySafe`：registry `executionMode` 在缺该函数时返回 `{ kind: 'exclusive' }`。[E: packages/core/tools/src/index.ts:1269]
+`defineTool` 没有给 `grep` 挂 `isConcurrencySafe`：registry `executionMode` 在缺该函数时返回 `{ kind: 'exclusive' }`。[E: packages/core/tools/src/index.ts:1268]
 
 `parseGrepArgs` 测试钉死：空 `pattern`、空白 `path`、空白/`!*.ts`/`*.ts,*.js` 的 `include` 都是普通参数错误；空白 `pattern` `'  '` 与 `include: '*.{ts,tsx}'` 可执行。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:1059][E: packages/fs/tool-fs-search/tests/tools.spec.ts:1069]
 
 ## 输出 & 截断 / spill
 
-`execute` 的**规范值**是 `{ matches: GrepMatch[] }`：每个元素有 `path`、`lineNumber`、`line`（完整行，未预览）。[E: packages/fs/tool-fs-search/src/grep.ts:304][E: packages/fs/tool-fs-search/src/grep.ts:333] exit 1（ripgrep 的零命中）直接 `{ matches: [] }`，`isError: false`。[E: packages/fs/tool-fs-search/src/grep.ts:322][E: packages/fs/tool-fs-search/tests/tools.spec.ts:554]
+`execute` 的**规范值**是 `{ matches: GrepMatch[] }`：每个元素有 `path`、`lineNumber`、`line`（完整行，未预览）。[E: packages/fs/tool-fs-search/src/grep.ts:304][E: packages/fs/tool-fs-search/src/grep.ts:332] exit 1（ripgrep 的零命中）直接 `{ matches: [] }`，`isError: false`。[E: packages/fs/tool-fs-search/src/grep.ts:322][E: packages/fs/tool-fs-search/tests/tools.spec.ts:554]
 
-模型看到的文本来自 `output.render`：先 `retainGrepMatches`（head `maxMatches` + 每行 `previewLine`），再 `formatRetainedGrep`。[E: packages/fs/tool-fs-search/src/grep.ts:314][E: packages/fs/tool-fs-search/src/search-core.ts:340]
+模型看到的文本来自 `output.render`：先 `retainGrepMatches`（head `maxMatches` + 每行 `previewLine`），再 `formatRetainedGrep`。[E: packages/fs/tool-fs-search/src/grep.ts:309][E: packages/fs/tool-fs-search/src/search-core.ts:341]
 
 - 零命中：`No matches found`。[E: packages/fs/tool-fs-search/src/grep.ts:229]
 - 未截断：`Found N match(es)` + 按 first-seen 文件分组的 `Line N: <text>`。[E: packages/fs/tool-fs-search/src/grep.ts:218][E: packages/fs/tool-fs-search/src/grep.ts:200]
@@ -123,9 +123,9 @@ updated: d347e70390
 
 超 cap 时 `tools/post-execute` 才尝试 formatted spill。条件由 `acceptedDirectCallValue` 收紧：必须是 `accept`、下游没替换 `content`/`value`、`exec.parent === undefined`（不是 `run_code` 子调用）、非 error、且 registry 里仍是本 `tool`。[E: packages/fs/tool-fs-search/src/direct-call.ts:25][E: packages/fs/tool-fs-search/src/grep.ts:345] 通过后：每行仍 `previewLine`，但**保留全部 match**，`saveText` 建议名 `grep-results.txt`，正文以 `Found N matches` 开头。[E: packages/fs/tool-fs-search/src/grep.ts:352][E: packages/fs/tool-fs-search/src/grep.ts:353] 成功页脚：`Full grep result stored at: ${locator}. ${retrievalHint}`；失败页脚：`The complete result could not be saved; narrow pattern, path, or include to see more.`[E: packages/fs/tool-fs-search/src/grep.ts:222][E: packages/fs/tool-fs-search/src/grep.ts:223]
 
-`spillStore` 用 `ctx.get('spillStore')` 机会读取：缺 backend、无 session owner、`saveText` 抛错都只 `logger.warn` 并返回 `undefined`，搜索本身仍成功。[E: packages/fs/tool-fs-search/src/search-core.ts:389][E: packages/fs/tool-fs-search/src/search-core.ts:405] 嵌套 PTC/`run_code` 调用保留完整 `value.matches`，但不建 top-level spill。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:1046][E: packages/fs/tool-fs-search/tests/tools.spec.ts:1046]
+`spillStore` 用 `ctx.get('spillStore')` 机会读取：缺 backend、无 session owner、`saveText` 抛错都只 `logger.warn` 并返回 `undefined`，搜索本身仍成功。[E: packages/fs/tool-fs-search/src/search-core.ts:388][E: packages/fs/tool-fs-search/src/search-core.ts:406] 嵌套 PTC/`run_code` 调用保留完整 `value.matches`，但不建 top-level spill。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:1046][E: packages/fs/tool-fs-search/tests/tools.spec.ts:1046]
 
-`presentationMeta` 与 render 共用同一次 `retainGrepMatches`，再 `grepSearchMeta` 按文件分组，带 `total` / `truncated`；`capMetaBytes` 可能再丢掉尾部 file group，使 JSON 不超过 `searchMetaMaxBytes`。[E: packages/fs/tool-fs-search/src/grep.ts:317][E: packages/fs/tool-fs-search/src/presentation.ts:130] 仅 top-level 调用投影 meta；`exec.parent` 有值时 registry 不算 `presentationMeta`。[E: packages/core/tools/src/index.ts:1797] UI 卡是 `{ card: 'search', shape: 'matches', files, truncated, total }`。[E: packages/fs/tool-fs-search/src/presentation.ts:197] 单测钉死超 cap 时 `truncated: true` 且 `total` 是预 cap 计数。[E: packages/fs/tool-fs-search/tests/presentation.spec.ts:60]
+`presentationMeta` 与 render 共用同一次 `retainGrepMatches`，再 `grepSearchMeta` 按文件分组，带 `total` / `truncated`；`capMetaBytes` 可能再丢掉尾部 file group，使 JSON 不超过 `searchMetaMaxBytes`。[E: packages/fs/tool-fs-search/src/grep.ts:317][E: packages/fs/tool-fs-search/src/presentation.ts:130] 仅 top-level 调用投影 meta；`exec.parent` 有值时 registry 不算 `presentationMeta`。[E: packages/core/tools/src/index.ts:1796] UI 卡是 `{ card: 'search', shape: 'matches', files, truncated, total }`。[E: packages/fs/tool-fs-search/src/presentation.ts:197] 单测钉死超 cap 时 `truncated: true` 且 `total` 是预 cap 计数。[E: packages/fs/tool-fs-search/tests/presentation.spec.ts:60]
 
 Pending 卡：`presentGrepCall` → `{ card: 'generic', kind: 'search', title: 'Grep <pattern>[ in <path>][ (<include>)]' }`。[E: packages/fs/tool-fs-search/src/grep.ts:243]
 
@@ -151,41 +151,41 @@ Pending 卡：`presentGrepCall` → `{ card: 'generic', kind: 'search', title: '
 
 ## 执行管线
 
-`grep` 没有自己的 `tools/pre-execute` 监听器。registry 的 waterfall 默认 `allow`，本工具也不广告 escalation 字段，因此 **approval 不由 grep 挂上**。[E: packages/core/tools/src/index.ts:1468]
+`grep` 没有自己的 `tools/pre-execute` 监听器。registry 的 waterfall 默认 `allow`，本工具也不广告 escalation 字段，因此 **approval 不由 grep 挂上**。[E: packages/core/tools/src/index.ts:1467]
 
-超时挂在定义上：`timeoutMs: caps.timeoutMs`（默认 30s）。[E: packages/fs/tool-fs-search/src/grep.ts:291][E: packages/fs/tool-fs-search/tests/tools.spec.ts:277] 宿主 bundle `dsh-base` 装 `@deepseek-ai/dsh-tool-call-timeout-policy`，它包 `tools/execute`：读 `ctx.tools.get(name).timeoutMs`，用 `deadline(..., TOOL_TIMEOUT)` 换掉 `exec.signal`；自己的 timer 赢了就把结果换成 `TOOL_TIMEOUT`。[E: packages/bundle/base/cordis.patch.yml:389][E: packages/guard/timeout-policy/src/index.ts:56][E: packages/guard/timeout-policy/src/index.ts:61][E: packages/guard/timeout-policy/src/index.ts:74] `timeoutMs` 不进模型 schema。[E: packages/core/tools/src/index.ts:1253]
+超时挂在定义上：`timeoutMs: caps.timeoutMs`（默认 30s）。[E: packages/fs/tool-fs-search/src/grep.ts:291][E: packages/fs/tool-fs-search/tests/tools.spec.ts:277] 宿主 bundle `dsh-base` 装 `@deepseek-ai/dsh-tool-call-timeout-policy`，它包 `tools/execute`：读 `ctx.tools.get(name).timeoutMs`，用 `deadline(..., TOOL_TIMEOUT)` 换掉 `exec.signal`；自己的 timer 赢了就把结果换成 `TOOL_TIMEOUT`。[E: packages/bundle/base/cordis.patch.yml:383][E: packages/guard/timeout-policy/src/index.ts:56][E: packages/guard/timeout-policy/src/index.ts:61][E: packages/guard/timeout-policy/src/index.ts:74] `timeoutMs` 不进模型 schema。[E: packages/core/tools/src/index.ts:1246]
 
-`runRipgrep` 把 `exec.signal` 交给 spawn；预 abort / 运行中 abort 分类为 `SEARCH_ABORTED`。[E: packages/fs/tool-fs-search/src/search-core.ts:243][E: packages/fs/tool-fs-search/src/search-core.ts:227][E: packages/fs/tool-fs-search/src/search-core.ts:271] 测试套件不装 timeout-policy 时，abort 以 `SEARCH_ABORTED` 出现。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:447] 装了 timeout-policy 且是该插件自己的 deadline 触发时，waterfall 返回值会被换成 `TOOL_TIMEOUT`。[I]
+`runRipgrep` 把 `exec.signal` 交给 spawn；预 abort / 运行中 abort 分类为 `SEARCH_ABORTED`。[E: packages/fs/tool-fs-search/src/search-core.ts:243][E: packages/fs/tool-fs-search/src/search-core.ts:227][E: packages/fs/tool-fs-search/src/search-core.ts:272] 测试套件不装 timeout-policy 时，abort 以 `SEARCH_ABORTED` 出现。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:447] 装了 timeout-policy 且是该插件自己的 deadline 触发时，waterfall 返回值会被换成 `TOOL_TIMEOUT`。[I]
 
 **sandbox 不挂在 grep 上。** spawn spec 没有 confinement 字段；文件副作用沙箱罩的是 `ctx.fs`，本工具不走那条缝。[E: packages/subprocess/subprocess/src/types.ts:77]
 
-dispatch 之后 registry 跑 `tools/post-execute`。`applyGrepTool` 的监听器 `next()` 之后按 `acceptedDirectCallValue` 决定要不要把超 cap 文本换成带 spill locator 的页脚。[E: packages/fs/tool-fs-search/src/grep.ts:340][E: packages/core/tools/src/index.ts:1734] 每次调用只 await 一个 foreground spawn，不留 background handle，也不进 `ctx.jobs`。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:1102]
+dispatch 之后 registry 跑 `tools/post-execute`。`applyGrepTool` 的监听器 `next()` 之后按 `acceptedDirectCallValue` 决定要不要把超 cap 文本换成带 spill locator 的页脚。[E: packages/fs/tool-fs-search/src/grep.ts:341][E: packages/core/tools/src/index.ts:1734] 每次调用只 await 一个 foreground spawn，不留 background handle，也不进 `ctx.jobs`。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:1103]
 
 ## Preset 装配
 
-成员资格只认 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml`，不以 package 存在为准。`dsh-base` 宿主平面也插同一行 `tool-fs-search`（`sampleOverCapGlobResults: false`）；web profile 把 agent 工具挪到 preset 树后，以各 preset 是否再插该行为准。[E: packages/bundle/base/cordis.patch.yml:269][E: packages/bundle/base/cordis.patch.yml:270]
+成员资格只认 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml`，不以 package 存在为准。`dsh-base` 宿主平面也插同一行 `tool-fs-search`（`sampleOverCapGlobResults: false`）；web profile 把 agent 工具挪到 preset 树后，以各 preset 是否再插该行为准。[E: packages/bundle/base/cordis.patch.yml:263][E: packages/bundle/base/cordis.patch.yml:264]
 
 | Preset | 是否装 `@deepseek-ai/dsh-tool-fs-search` | `disabled` | isolate | Config |
 |---|---|---|---|---|
-| `minimal` | 否。`filesystem` 组只有 `dsh-fs-local` + `dsh-tool-str-replace-editor` | — | `isolate.fs: true` 属于那一组，不是 search | 无 search 行。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:75][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:78][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:81] |
-| `standard` | 是，`id: tool-fs-search` | 无 | 无（注释：只往 host `tools` registry 注册、不 provide 服务） | `sampleOverCapGlobResults: false`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:59][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:60][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:62] |
-| `ptc`（wiki 稳定别名仍是 `surface.presets.code`） | 是（standard 同款工具行 + PTC `run_code` 呈现） | 无 | 无 | 同样 `sampleOverCapGlobResults: false`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:66][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:69] |
-| `cordis` | 是 | 无 | 无 | 同样 `sampleOverCapGlobResults: false`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:60][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:63] |
+| `minimal` | 否。只装 persistent-shell，无 `tool-fs-search` / 无 `str_replace_editor` | — | 只有 `isolate.terminals`，不是 search | 无 search 行。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:25][E: apps/cli/tests/web-agent-presets.e2e.ts:299] |
+| `standard` | 是，`id: tool-fs-search` | 无 | 无（注释：只往 host `tools` registry 注册、不 provide 服务） | `sampleOverCapGlobResults: false`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:60][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:60][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:63] |
+| `ptc`（wiki 稳定别名仍是 `surface.presets.code`） | 是（standard 同款工具行 + PTC `run_code` 呈现） | 无 | 无 | 同样 `sampleOverCapGlobResults: false`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:67][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:69] |
+| `cordis` | 是 | 无 | 无 | 同样 `sampleOverCapGlobResults: false`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:61][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:63] |
 
 四个 shipped preset 都**没有**覆盖 `grepMaxMatches` / `timeoutMs` / `grepMaxLineBytes`，因此装上后走包默认 250 / 30s / 2000。`sampleOverCapGlobResults: false` 只改 `glob` 的超 cap 采样。
 
 ## execute() 走读
 
-1. **registry 校验 schema。** `defineTool` 包一层：`pattern` 必须是 string；非法参数抛 `ToolArgsError`，进不了 body。[E: packages/core/tools/src/schema.ts:587]
+1. **registry 校验 schema。** `defineTool` 包一层：`pattern` 必须是 string；非法参数抛 `ToolArgsError`，进不了 body。[E: packages/core/tools/src/schema.ts:586]
 2. **`parseGrepArgs@grep.ts`。** 拒空 pattern、空白 path、非法 include，返回 `GrepInput`。[E: packages/fs/tool-fs-search/src/grep.ts:320][E: packages/fs/tool-fs-search/src/grep.ts:90]
 3. **`buildGrepCommand@grep.ts`。** `['--json', '--regexp='+pattern, optional '--glob='+include, optional '--', path]`。每个模型值是一个未引用 argv 元素。[E: packages/fs/tool-fs-search/src/grep.ts:112][E: packages/fs/tool-fs-search/tests/tools.spec.ts:361]
 4. **`runRipgrep@search-core.ts`。** 若 `exec.signal.aborted` → `SEARCH_ABORTED`。`workdir = session.header.cwd ?? process.cwd()`。`spawn({ argv: [rgPath, '--no-config', ...], cwd: workdir, stdio: { stdin:'ignore', stdout:{maxBytes: rawOutputMaxBytes}, stderr:{maxBytes: stderrMaxBytes} }, graceMs, signal })`。[E: packages/fs/tool-fs-search/src/search-core.ts:227][E: packages/fs/tool-fs-search/src/search-core.ts:235]
-5. **等待 `handle.done`。** spawn 创建期同步抛 / `done` reject → `SEARCH_FAILED`（若此时已 abort 则 `SEARCH_ABORTED`）。缺 collect reader → `SEARCH_FAILED`。`signal !== null` 或 `exitCode === null` → `SEARCH_FAILED`（killed by signal）。exit 非 0/1：stderr 匹配 `regex parse error|error parsing glob` → `SEARCH_INVALID_PATTERN`，否则 `SEARCH_FAILED`。stdout `lossy` 或 inline 字节超过 cap → `SEARCH_RAW_OUTPUT_OVERFLOW`。[E: packages/fs/tool-fs-search/src/search-core.ts:126][E: packages/fs/tool-fs-search/src/search-core.ts:151][E: packages/fs/tool-fs-search/src/search-core.ts:274]
+5. **等待 `handle.done`。** spawn 创建期同步抛 / `done` reject → `SEARCH_FAILED`（若此时已 abort 则 `SEARCH_ABORTED`）。缺 collect reader → `SEARCH_FAILED`。`signal !== null` 或 `exitCode === null` → `SEARCH_FAILED`（killed by signal）。exit 非 0/1：stderr 匹配 `regex parse error|error parsing glob` → `SEARCH_INVALID_PATTERN`，否则 `SEARCH_FAILED`。stdout `lossy` 或 inline 字节超过 cap → `SEARCH_RAW_OUTPUT_OVERFLOW`。[E: packages/fs/tool-fs-search/src/search-core.ts:126][E: packages/fs/tool-fs-search/src/search-core.ts:151][E: packages/fs/tool-fs-search/src/search-core.ts:273]
 6. **exit 1。** `noMatches: true`，body 返回 `{ matches: [] }`，模型文本 `No matches found`。[E: packages/fs/tool-fs-search/src/search-core.ts:281][E: packages/fs/tool-fs-search/src/grep.ts:322]
 7. **`parseGrepMatches`。** 逐行 JSON；只收 `type === 'match'`；缺 path/line_number/line 内容 → `SEARCH_FAILED`；`lines.bytes` → 占位行。[E: packages/fs/tool-fs-search/src/grep.ts:145][E: packages/fs/tool-fs-search/src/grep.ts:157]
-8. **显示路径。** `toWorkdirRelative(raw.path, workdir)`：workdir 内绝对路径变相对，workdir 外绝对路径原样保留。[E: packages/fs/tool-fs-search/src/grep.ts:327][E: packages/fs/tool-fs-search/src/search-core.ts:296]
-9. **返回完整 `matches`。** 规范值不过 inline cap。registry `createSuccessResult` 校验 output schema、`render` 出保留页、top-level 写 `presentationMeta`。[E: packages/fs/tool-fs-search/src/grep.ts:333][E: packages/core/tools/src/index.ts:1784]
-10. **`tools/post-execute` spill。** `matches.length > maxMatches` 且仍是本工具的 direct top-level accept 时，把完整预览列表存成 `grep-results.txt`，替换模型文本页脚。[E: packages/fs/tool-fs-search/src/grep.ts:345][E: packages/fs/tool-fs-search/src/grep.ts:349]
+8. **显示路径。** `toWorkdirRelative(raw.path, workdir)`：workdir 内绝对路径变相对，workdir 外绝对路径原样保留。[E: packages/fs/tool-fs-search/src/grep.ts:327][E: packages/fs/tool-fs-search/src/search-core.ts:297]
+9. **返回完整 `matches`。** 规范值不过 inline cap。registry `createSuccessResult` 校验 output schema、`render` 出保留页、top-level 写 `presentationMeta`。[E: packages/fs/tool-fs-search/src/grep.ts:332][E: packages/core/tools/src/index.ts:1783]
+10. **`tools/post-execute` spill。** `matches.length > maxMatches` 且仍是本工具的 direct top-level accept 时，把完整预览列表存成 `grep-results.txt`，替换模型文本页脚。[E: packages/fs/tool-fs-search/src/grep.ts:345][E: packages/fs/tool-fs-search/src/grep.ts:351]
 
 集成测试用真 `LocalSubprocessRuntime` + 打包 `rg`：目录树分组命中、单文件 target、`include: '*.ts'`、`$(touch pwned)` 不落盘、`--flag` 当 pattern 而不是 flag、坏正则 → `SEARCH_INVALID_PATTERN`、缺目录 → `SEARCH_FAILED`。[E: packages/fs/tool-fs-search/tests/integration.spec.ts:113][E: packages/fs/tool-fs-search/tests/integration.spec.ts:140][E: packages/fs/tool-fs-search/tests/integration.spec.ts:145][E: packages/fs/tool-fs-search/tests/integration.spec.ts:149][E: packages/fs/tool-fs-search/tests/integration.spec.ts:155]
 
@@ -199,9 +199,9 @@ Claude `GrepTool` 把 `head_limit` 暴露给模型；DSH 把同一默认值 250 
 - **打包二进制 + `--no-config`。** 不依赖 PATH 上的宿主 `rg`；挡住 config 注入 `--pre`。[E: packages/fs/tool-fs-search/src/search-core.ts:235]
 - **raw overflow 宁失败不半解析。** `lossy` stdout 或超 `rawOutputMaxBytes` → `SEARCH_RAW_OUTPUT_OVERFLOW`，提示收窄 pattern/path/include。[E: packages/fs/tool-fs-search/src/search-core.ts:151]
 - **spill 是 formatted 结果，不是 raw rg 流。** 工具从不读 stdout spill path。[E: packages/fs/tool-fs-search/src/grep.ts:353]
-- **PTC `run_code` 子调用。** 完整 `value.matches` 回给程序，但不写 top-level spill、不投影 search card meta。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:1046][E: packages/core/tools/src/index.ts:1797]
+- **PTC `run_code` 子调用。** 完整 `value.matches` 回给程序，但不写 top-level spill、不投影 search card meta。[E: packages/fs/tool-fs-search/tests/tools.spec.ts:1046][E: packages/core/tools/src/index.ts:1796]
 - **`include` 方言。** 一条正向 glob；否定与逗号列表在 `parseGrepArgs` 就被拒，不会变成多条 `--glob`。[E: packages/fs/tool-fs-search/src/grep.ts:69][E: packages/fs/tool-fs-search/src/grep.ts:75]
-- **unconfined spawn。** 可读范围是 ripgrep + session cwd，不是 `ctx.fs` 的 sandbox root。[E: packages/fs/tool-fs-search/src/search-core.ts:234] 返回路径只做显示相对化：workdir 外绝对路径原样保留。[E: packages/fs/tool-fs-search/src/search-core.ts:296] 与 `read` 根是否同一 workspace，本工具不在运行时校验。[I]
+- **unconfined spawn。** 可读范围是 ripgrep + session cwd，不是 `ctx.fs` 的 sandbox root。[E: packages/fs/tool-fs-search/src/search-core.ts:234] 返回路径只做显示相对化：workdir 外绝对路径原样保留。[E: packages/fs/tool-fs-search/src/search-core.ts:297] 与 `read` 根是否同一 workspace，本工具不在运行时校验。[I]
 
 ## Sources
 

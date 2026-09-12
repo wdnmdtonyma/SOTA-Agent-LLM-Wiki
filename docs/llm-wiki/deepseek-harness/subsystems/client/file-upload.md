@@ -27,7 +27,7 @@ related:
   - surface.profiles.web
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-client-file-upload` 是 **web-app 挂载的浏览器上传服务**：host 占 `ctx.fileUploads`，client 占 `ctx.fileUpload`。走 Connection 上的 raw POST（`/api/session/uploadFileBinary`）或 Typert Remote `upload`，得到 Agent-scoped **staged receipt**，不是模型可见工具。

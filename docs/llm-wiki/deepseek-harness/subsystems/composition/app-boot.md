@@ -33,6 +33,7 @@ source:
   - packages/boot/cmdline/src/index.ts
   - packages/util/home-paths/src/index.ts
   - packages/util/launch-environment/src/index.ts
+  - packages/util/package-manifest/src/types.ts
   - packages/preset/agent-presets/src/mount.ts
   - packages/preset/agent-presets/presets/standard/agent.cordis.yml
   - vendor/include/src/index.ts
@@ -42,6 +43,7 @@ source:
 symbols:
   - boot
   - loadProfile
+  - loadProfileDirectory
   - composeEntries
   - initProfile
   - PROFILE_TEMPLATES
@@ -66,7 +68,7 @@ related:
   - subsys.composition.agent-presets
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-app-boot` 是 Cordis 组合运行时的 **profile 发现与 Loader 启动胶**：把 `$DSH_HOME/profiles/<name>` 的 `dsh.profile.bundles` 叠成空根上的入口表，再 `boot` 出进程级 host 面。它不实现 turn、不注册模型可见工具、不 `mountPreset`；主线仍是 `profile → bundle → agent preset`，能力缝是 `Definition / Provider / Consumer`。
@@ -91,13 +93,14 @@ updated: d347e70390
 - 端到端 `profile → bundle → preset` 走读 —— [spine.composition-boot](../../spine/composition-boot.md)
 - Agent / inbox / session log（`model-visible ⟺ logged` 从 `Session.deriveMessages()` 起算，不从 Loader 入口表起算）
 
-**host 面 vs agent-preset 面。** `boot` 只 settle 进程级 host 面：webserver / persistence / sandbox / subagent **backends** / 注册表。agent-preset 面（每会话 tools / persona / isolate）要等组合里已经有 `agent-presets` 行，再由 factory `setup` 去 `mountPreset`。五个 shipped profile 入口是 `dsh web`（硬编码 alias）以及 `dsh --profile web|headless|sdk|sdk-minimal|acp`；`PROFILE_TEMPLATES` 没有 `tui`，本仓也没有 shipped TUI 包。
+**host 面 vs agent-preset 面。** `boot` 只 settle 进程级 host 面：webserver / persistence / sandbox / subagent **backends** / 注册表。agent-preset 面（每会话 tools / persona / isolate）要等组合里已经有 `agent-presets` 行，再由 factory `setup` 去 `mountPreset`。五个 shipped CLI profile 入口是 `dsh web`（硬编码 alias）以及 `dsh --profile web|headless|sdk|sdk-minimal|acp`。**`desktop` 不在 `PROFILE_TEMPLATES`**：Electron 独占 `$DSH_HOME/profiles/desktop`；`dsh --profile desktop` 被 `rejectElectronProfile` 拒绝。`PROFILE_TEMPLATES` 没有 `tui`，本仓也没有 shipped TUI 包。
 
 ## 关键文件
 
 | 路径 | 角色 |
 |---|---|
-| `packages/boot/app-boot/src/profile.ts` | `PROFILE_TEMPLATES` / `DEFAULT_PROFILE_BUNDLES` / `loadProfile` / `composeEntries` / `healProfilesModuleFallback` |
+| `packages/boot/app-boot/src/profile.ts` | `PROFILE_TEMPLATES` / `DEFAULT_PROFILE_BUNDLES` / `loadProfile` / `loadProfileDirectory` / `composeEntries` / `healProfilesModuleFallback` |
+| `packages/util/package-manifest/src/types.ts` | `DshPackageManifest` / `DshBundleManifest.patch` / `DshProfileManifest`；本页 fold，不为它另建节点 |
 | `packages/boot/app-boot/src/index.ts` | `boot` / `mountRootInclude` / `loadLayeredEnv` / `loadOptionalPatches` / `loadOverlayPatches` / `renderConfigDump` / `installFailLoud` / `watchUserPatches` |
 | `apps/cli/src/profile-boot.ts` | launcher 本地 `composeProfile`（未导出）、空根重写、telemetry 开关、`patchReload === 'live'` 时 watch-only HMR |
 | `apps/cli/src/dump-config.ts` | `runDumpConfig`：文件层 dump，不含 telemetry hard-disable |
@@ -111,15 +114,16 @@ updated: d347e70390
 
 | 符号 | 落点 | 含义 |
 |---|---|---|
-| `PROFILE_TEMPLATES` | `profile.ts` | 五个键：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:137] `web` 是唯一 `patchReload: 'live'` 的 shipped 模板。[E: packages/boot/app-boot/src/profile.ts:144] `sdk-minimal` 的 `bundles` 只有 `@deepseek-ai/dsh-sdk-minimal`，不叠 `dsh-base`。[E: packages/boot/app-boot/src/profile.ts:155] |
-| `DEFAULT_PROFILE_BUNDLES` | `profile.ts` | `['@deepseek-ai/dsh-base']`。`dsh plugin` 对无模板名用这份，不会偷偷当成 web。[E: packages/boot/app-boot/src/profile.ts:166] [E: apps/cli/src/plugin.ts:126] `DEFAULT_PROFILE_PATCH_RELOAD` 对自定义名是 `'live'`。[E: packages/boot/app-boot/src/profile.ts:169] |
-| `Profile` / `ProfileLayer` | `loadProfile` 返回值 | `layers` 按 `dsh.profile.bundles` 顺序；`patches` 是 profile 自己的 `cordis.patch.yml`（缺文件 = `[]`）；`patchReload` 为 `'live' \| 'startup'`。[E: packages/boot/app-boot/src/profile.ts:106] [E: packages/boot/app-boot/src/profile.ts:112] |
-| `INSTALLATION_OWNED_PROFILE_TUPLES` | `normalizeShippedProfile` | 仅 `headless` 的旧三元组 `base + web-app + headless` 会被写成现行二元组；带额外 custom bundle 的列表视为用户所有，不动。[E: packages/boot/app-boot/src/profile.ts:162] [E: packages/boot/app-boot/src/profile.ts:726] [E: packages/boot/app-boot/tests/profile.spec.ts:245] |
+| `PROFILE_TEMPLATES` | `profile.ts` | 五个键：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:105] **没有 `desktop`。** `web` 是唯一 `patchReload: 'live'` 的 shipped 模板。[E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:112] `sdk-minimal` 的 `bundles` 只有 `@deepseek-ai/dsh-sdk-minimal`，不叠 `dsh-base`。[E: packages/boot/app-boot/src/profile.ts:122] |
+| `DEFAULT_PROFILE_BUNDLES` | `profile.ts` | `['@deepseek-ai/dsh-base']`。`dsh plugin` 对无模板名用这份，不会偷偷当成 web。[E: packages/boot/app-boot/src/profile.ts:134] `DEFAULT_PROFILE_PATCH_RELOAD` 对自定义名是 `'live'`。[E: packages/boot/app-boot/src/profile.ts:137] |
+| `ProfileManifest` | `profile.ts` | `Partial<DshPackageManifest>`，类型从 `@deepseek-ai/dsh-package-manifest` import。bundle 合同是 `dsh.bundle.patch`；profile 合同是 `dsh.profile.bundles` / `patchReload`。[E: packages/boot/app-boot/src/profile.ts:59] [E: packages/util/package-manifest/src/types.ts:52] [E: packages/util/package-manifest/src/types.ts:58] |
+| `Profile` / `ProfileLayer` | `loadProfile` / `loadProfileDirectory` 返回值 | `layers` 按 `dsh.profile.bundles` 顺序；`patches` 是 profile 自己的 `cordis.patch.yml`（缺文件 = `[]`）；`patchReload` 为 `'live' \| 'startup'`。[E: packages/boot/app-boot/src/profile.ts:74] |
+| `INSTALLATION_OWNED_PROFILE_TUPLES` | `normalizeShippedProfile` | 仅 `headless` 的旧三元组 `base + web-app + headless` 会被写成现行二元组；带额外 custom bundle 的列表视为用户所有，不动。[E: packages/boot/app-boot/src/profile.ts:129] [E: packages/boot/app-boot/src/profile.ts:689] |
 | `PatchOptions` | `vendor/include` | `id` / `insert` / `config` / `disabled` / `isolate` …；`config` 赋值是整键替换。[E: vendor/include/src/index.ts:145] [E: vendor/include/src/index.ts:154] [E: vendor/include/src/index.ts:123] |
-| `PROFILE_ROOT_CONFIG` | launcher | 正文就是空数组 `[]`。Loader 需要真实 include 根来锚定 `baseUrl`，但文件本身不是手写大树。[E: apps/cli/src/profile-boot.ts:83] |
-| `LaunchEnvironmentSnapshot` | `ctx.launchEnvironment` | `loadLayeredEnv` 冻结的 inherited > 调用目录 `.env` > `$DSH_HOME/.env`；bootstrap-only 名禁止出现在发现到的文件里。[E: packages/boot/app-boot/src/index.ts:180] [E: packages/boot/app-boot/src/index.ts:163] [E: packages/util/launch-environment/src/index.ts:106] |
+| `PROFILE_ROOT_CONFIG` | launcher | 正文就是空数组 `[]`。Loader 需要真实 include 根来锚定 `baseUrl`，但文件本身不是手写大树。[E: apps/cli/src/profile-boot.ts:84] |
+| `LaunchEnvironmentSnapshot` | `ctx.launchEnvironment` | `loadLayeredEnv` 冻结的 inherited > 调用目录 `.env` > `$DSH_HOME/.env`；bootstrap-only 名禁止出现在发现到的文件里。[E: packages/boot/app-boot/src/index.ts:195] [E: packages/boot/app-boot/src/index.ts:168] [E: packages/util/launch-environment/src/index.ts:106] |
 
-六个 shipped bundle 的 `dsh.bundle.patch` 都是 `./cordis.patch.yml`。[E: packages/bundle/base/package.json:38] [E: packages/bundle/web-app/package.json:43] [E: packages/bundle/headless/package.json:43] [E: packages/bundle/sdk-app/package.json:38] [E: packages/bundle/sdk-minimal/package.json:38] [E: packages/bundle/acp-app/package.json:38]
+六个 shipped bundle 的 `dsh.bundle.patch` 都是 `./cordis.patch.yml`。[E: packages/bundle/base/package.json:33] [E: packages/bundle/web-app/package.json:38] [E: packages/bundle/headless/package.json:38] [E: packages/bundle/sdk-app/package.json:33] [E: packages/bundle/sdk-minimal/package.json:33] [E: packages/bundle/acp-app/package.json:33]
 
 四个 shipped agent preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` = PTC；wiki id `surface.presets.code` 仍是稳定别名）。本页不把 preset 行表当 boot 产物：launcher **不再**往 `agent-presets` 行注入 shipped `roots`。
 
@@ -127,51 +131,51 @@ updated: d347e70390
 
 ### 1. 入口切到 profile 模式
 
-1. `parseDshArgs@apps/cli/src/args.ts` 只吃 launcher 旗标。`dsh web` 硬编码 `profile: 'web'`，与 `dsh --profile web` 同一条 `mode: 'profile'`。[E: apps/cli/src/args.ts:168] [E: apps/cli/tests/args.spec.ts:28] 没有 `dsh sdk` / `dsh acp` / `dsh headless` 子命令。
-2. `bin` switch@apps/cli/src/bin.ts：`profile` → `runProfile`（先 `loadLayeredEnv('dsh')`）；`dump-config` → `runDumpConfig`（**不** `boot`）；`plugin` → `runPlugin`。[E: apps/cli/src/bin.ts:27] [E: apps/cli/src/bin.ts:42] [E: apps/cli/src/bin.ts:38]
-3. help 里的 `dsh --profile tui` 写的是「boot a custom profile」，不是 shipped 模板。[E: apps/cli/src/args.ts:68] `parse(['--profile', 'tui'])` 只是把任意名字送进 `mode: 'profile'`。[E: apps/cli/tests/args.spec.ts:25]
+1. `parseDshArgs@apps/cli/src/args.ts` 只吃 launcher 旗标。`dsh web` 硬编码成 web 命令，与 `dsh --profile web` 同一条 profile 模式。[E: apps/cli/src/args.ts:175] `--profile desktop`（大小写不敏感）在 parse 时被 `rejectElectronProfile` 拒绝。[E: apps/cli/src/args.ts:68] [E: apps/cli/src/args.ts:159] 没有 `dsh sdk` / `dsh acp` / `dsh headless` 子命令。
+2. `bin` switch@apps/cli/src/bin.ts：`profile` → `runProfile`（先 `loadLayeredEnv('dsh')`）；`dump-config` → `runDumpConfig`（**不** `boot`）；`plugin` → `runPlugin`。[E: apps/cli/src/bin.ts:32] [E: apps/cli/src/bin.ts:43] [E: apps/cli/src/bin.ts:48]
+3. help 里的 `dsh --profile tui` 写的是「boot a custom profile」，不是 shipped 模板。[E: apps/cli/src/args.ts:81]
 
 ### 2. `prepareProfile`：发现、空根重写
 
-4. `prepareProfile@apps/cli/src/profile-boot.ts` 先 `loadProfile('dsh', name, INSTALL_ANCHOR, …)`。[E: apps/cli/src/profile-boot.ts:119]
-5. **每次** `writeFileSync(…, PROFILE_ROOT_CONFIG)`，把 `$DSH_HOME/profiles/<name>/cordis.yml` 重写成空数组。[E: apps/cli/src/profile-boot.ts:120] [E: apps/cli/src/profile-boot.ts:83]
-6. `composeProfile` 再 `healProfilesModuleFallback({ installAnchor, profile })`：把安装树依赖闭包扁平 symlink 到 `$DSH_HOME/profiles/node_modules`，让任意 profile 的 parent-walk 都能 `import` in-box 名。[E: apps/cli/src/profile-boot.ts:161] [E: packages/boot/app-boot/src/profile.ts:579]
+4. `prepareProfile@apps/cli/src/profile-boot.ts` 先 `loadProfile('dsh', name, INSTALL_ANCHOR, …)`。[E: apps/cli/src/profile-boot.ts:189]
+5. **每次** `writeFileSync(…, PROFILE_ROOT_CONFIG)`，把 `$DSH_HOME/profiles/<name>/cordis.yml` 重写成空数组。[E: apps/cli/src/profile-boot.ts:190] [E: apps/cli/src/profile-boot.ts:84]
+6. `composeProfile` 再 `healProfilesModuleFallback({ installAnchor, profile })`：把安装树依赖闭包扁平 symlink 到 `$DSH_HOME/profiles/node_modules`，让任意 profile 的 parent-walk 都能 `import` in-box 名。[E: apps/cli/src/profile-boot.ts:232] [E: packages/boot/app-boot/src/profile.ts:547]
 7. 重写原因在 Loader：插件 `Fiber.update` 走 `internal/update` waterfall，innermost `next` 才是 `restart`。[E: vendor/cordis/src/fiber.ts:748] Loader 的 persist 钩子 `await next()` 之后调用 `this.entry.parent.tree.write()`；自处置路径也会 `tree.write()`。[E: vendor/loader/src/index.ts:105] [E: vendor/loader/src/index.ts:108] [E: vendor/loader/src/index.ts:156] `Include.write` 把 `this.root.data` 烤进那个 `cordis.yml`。[E: vendor/include/src/index.ts:373] 若不每次清空，下次 `boot` 会在已烤进行上再跑一遍 bundle `insert`，根 insert 翻倍。
 
 ### 3. `loadProfile`：installation-first，未知名不自动 init
 
-8. `resolveProfileDir` 拼 `$DSH_HOME/profiles/<name>`；空名、`.` / `..`、带斜杠、名为 `node_modules` 都抛 `invalid profile name`。[E: packages/boot/app-boot/src/profile.ts:128] [E: packages/boot/app-boot/src/profile.ts:131]
-9. 目录里还没有 `package.json` 时：仅当 `name` 落在 `PROFILE_TEMPLATES` 才 `initProfile(dir, template.bundles, template.patchReload)`；否则抛 `does not exist; create it with 'dsh plugin --profile … add'`。[E: packages/boot/app-boot/src/profile.ts:811] [E: packages/boot/app-boot/src/profile.ts:814] [E: packages/boot/app-boot/src/profile.ts:817] 测试钉死 `custom` 不会被创建。[E: packages/boot/app-boot/tests/profile.spec.ts:188] `web` 会按模板写出 bundles。[E: packages/boot/app-boot/tests/profile.spec.ts:213]
-10. 手写 manifest 缺 `patchReload` 时回落到 `DEFAULT_PROFILE_PATCH_RELOAD`（`'live'`），不是模板值。[E: packages/boot/app-boot/src/profile.ts:828] 非法值 fail-loud。[E: packages/boot/app-boot/src/profile.ts:823]
-11. `resolveBundleDir` 的锚点顺序是 `[installAnchor, profileDir/package.json]`：in-box bundle 永远来自正在跑的这份 dsh，不是 profile-local 副本。[E: packages/boot/app-boot/src/profile.ts:781]
-12. 每个 listed bundle 必须在自己的 `package.json` 声明 `dsh.bundle.patch`。`declared === undefined` 抛 `declares no dsh.bundle`——「点了名却不是 bundle」是误配置，不是「无 patch」。[E: packages/boot/app-boot/src/profile.ts:833] [E: packages/boot/app-boot/src/profile.ts:834] [E: packages/boot/app-boot/tests/profile.spec.ts:287]
-13. profile 自己的 `cordis.patch.yml`：`userLayer !== false` 且文件存在才 `loadOverlayPatches`；缺文件得到 `[]`，不抛。[E: packages/boot/app-boot/src/profile.ts:840]
+8. `resolveProfileDir` 拼 `$DSH_HOME/profiles/<name>`。`loadProfile` 在目录还没有 `package.json` 时：仅当 `name` 落在 `PROFILE_TEMPLATES` 才 `initProfile`；否则抛 `does not exist`。`desktop` 不在模板里，CLI 路径不会自动 init 它。[E: packages/boot/app-boot/src/profile.ts:815] [E: packages/boot/app-boot/src/profile.ts:821] [E: packages/boot/app-boot/src/profile.ts:827]
+9. **`loadProfileDirectory`** 给**已经初始化**的绝对目录用：不经 `$DSH_HOME/profiles/<name>` 解析。Electron 独占的 `desktop` profile 走这条，而不是 `dsh --profile desktop`。[E: packages/boot/app-boot/src/profile.ts:769] [E: packages/boot/app-boot/src/profile.ts:774]
+10. `loadProfile` 在 init / `normalizeShippedProfile` 之后 **`return loadProfileDirectory(...)`**。[E: packages/boot/app-boot/src/profile.ts:829] [E: packages/boot/app-boot/src/profile.ts:830]
+11. `resolveBundleDir` 的锚点顺序是 `[installAnchor, profileDir/package.json]`：in-box bundle 永远来自正在跑的这份 dsh。[E: packages/boot/app-boot/src/profile.ts:746]
+12. 每个 listed bundle 必须在自己的 `package.json` 声明 `dsh.bundle.patch`。`declared === undefined` 抛 `declares no dsh.bundle`。[E: packages/boot/app-boot/src/profile.ts:789]
+13. profile 自己的 `cordis.patch.yml`：`userLayer !== false` 且文件存在才 `loadOverlayPatches`；缺文件得到 `[]`，不抛。[E: packages/boot/app-boot/src/profile.ts:795]
 
 ### 4. `composeEntries`：从 `[]` 一次 flatten
 
-14. `composeEntries@packages/boot/app-boot/src/profile.ts` 的第一参是空数组，第二参是 `structuredClone(layers.flat())`，只调用**一次** `applyEntryPatches`。[E: packages/boot/app-boot/src/profile.ts:857] dump / boot 共用这一次调用，避免「按层重建 id 索引」让后层改到 group `config` 替换才出现的孩子——那种树真实 `boot` 挂不上。[E: packages/boot/app-boot/tests/config-dump.spec.ts:109]
+14. `composeEntries@packages/boot/app-boot/src/profile.ts` 的第一参是空数组，第二参是 `structuredClone(layers.flat())`，只调用**一次** `applyEntryPatches`。[E: packages/boot/app-boot/src/profile.ts:841] dump / boot 共用这一次调用，避免「按层重建 id 索引」让后层改到 group `config` 替换才出现的孩子——那种树真实 `boot` 挂不上。
 15. `applyEntryPatches`：无 `id` 的 `insert` 追加到根；刚插入的行立刻 `buildMap`，同一 flattened 列表里后写的 patch 可以改刚插的行；匹配不到只 `warn`，不抛。[E: vendor/include/src/index.ts:94] [E: vendor/include/src/index.ts:101] [E: vendor/include/src/index.ts:112]
-16. 同 id 的 `config` / `disabled` **整键覆盖**（`target[key] = value`），不是 deep-merge。测试：后层 `{ a: 2 }` 赢，缺行 `"missing"` 进 warn。[E: vendor/include/src/index.ts:123] [E: packages/boot/app-boot/tests/profile.spec.ts:300] [E: packages/boot/app-boot/tests/profile.spec.ts:300]
+16. 同 id 的 `config` / `disabled` **整键覆盖**（`target[key] = value`），不是 deep-merge。测试：后层 `{ a: 2 }` 赢，缺行 `"missing"` 进 warn。[E: vendor/include/src/index.ts:123] [E: packages/boot/app-boot/tests/profile.spec.ts:299] [E: packages/boot/app-boot/tests/profile.spec.ts:299]
 
 ### 5. launcher 本地 `composeProfile`（未导出）与 dump 的一刀差
 
-17. `composeProfile@apps/cli/src/profile-boot.ts` 是 `async function`，没有 `export`。`dsh-app-boot` 导出的是 `composeEntries` / `loadProfile` / `initProfile`；launcher 导出的是 `runProfile` / `prepareProfile`。[E: apps/cli/src/profile-boot.ts:157]
-18. 层序：`bundlePatches → profile.patches → homePatches → overlays`。home 层是 `$DSH_HOME/cordis.patch.yml`（`loadOptionalPatches`：缺文件 = 无层）。`--patch` 走 `loadOverlayPatches`：**缺文件抛错**。[E: apps/cli/src/profile-boot.ts:162] [E: apps/cli/src/profile-boot.ts:163] [E: apps/cli/src/profile-boot.ts:166] [E: packages/boot/app-boot/tests/app-boot.spec.ts:536]
-19. 先用这四层 `composeEntries` 建 `rows` 索引。若 `DSH_TELEMETRY_DISABLED` 非空且存在 `session-telemetry-otel` 行，再 push `{ id, disabled: true }`。`'0'` / `'false'` 也关——隐私开关偏 off-by-mistake。[E: apps/cli/src/profile-boot.ts:170] [E: apps/cli/tests/telemetry-switch.spec.ts:12]
-20. `runDumpConfig@apps/cli/src/dump-config.ts` 只把「每个 bundle 一层 +（非 `--dump-default-config` 时）profile 用户层 + home 层 + 每个 `--patch`」交给 `renderConfigDump`，锚在同一份空 `cordis.yml` 上，**不求值 `!!js`**。[E: apps/cli/src/dump-config.ts:30] [E: apps/cli/src/dump-config.ts:51] [E: packages/boot/app-boot/tests/config-dump.spec.ts:86] dump **不含** telemetry hard-disable：它从不调用 `resolveTelemetryPatch`。shipped preset `roots` 也不再由 launcher overlay 注入——web 的 `agent-presets` 行只写 `default: standard`。[E: packages/bundle/web-app/cordis.patch.yml:445]
+17. `composeProfile@apps/cli/src/profile-boot.ts` 是 `async function`，没有 `export`。`dsh-app-boot` 导出的是 `composeEntries` / `loadProfile` / `initProfile`；launcher 导出的是 `runProfile` / `prepareProfile`。[E: apps/cli/src/profile-boot.ts:226]
+18. 层序：`bundlePatches → profile.patches → homePatches → overlays`。home 层是 `$DSH_HOME/cordis.patch.yml`（`loadOptionalPatches`：缺文件 = 无层）。`--patch` 走 `loadOverlayPatches`：**缺文件抛错**。[E: apps/cli/src/profile-boot.ts:206] [E: apps/cli/src/profile-boot.ts:233] [E: apps/cli/src/profile-boot.ts:234] [E: packages/boot/app-boot/tests/app-boot.spec.ts:536]
+19. 先用这四层 `composeEntries` 建 `rows` 索引。若 `DSH_TELEMETRY_DISABLED` 非空且存在 `session-telemetry-otel` 行，再 push `{ id, disabled: true }`。`'0'` / `'false'` 也关——隐私开关偏 off-by-mistake。[E: apps/cli/src/profile-boot.ts:167] [E: apps/cli/src/profile-boot.ts:169] [E: apps/cli/tests/telemetry-switch.spec.ts:12]
+20. `runDumpConfig@apps/cli/src/dump-config.ts` 只把「每个 bundle 一层 +（非 `--dump-default-config` 时）profile 用户层 + home 层 + 每个 `--patch`」交给 `renderConfigDump`，锚在同一份空 `cordis.yml` 上，**不求值 `!!js`**。[E: apps/cli/src/dump-config.ts:31] [E: apps/cli/src/dump-config.ts:53] [E: packages/boot/app-boot/tests/config-dump.spec.ts:86] dump **不含** telemetry hard-disable：它从不调用 `resolveTelemetryPatch`。shipped preset `roots` 也不再由 launcher overlay 注入——web 的 `agent-presets` 行只写 `default: standard`。[E: packages/bundle/web-app/cordis.patch.yml:484]
 
 ### 6. `boot`：空 `cordis.yml` + 整叠 patches
 
-21. `runProfile` 调 `boot(NAME, rootConfig, structuredClone(allPatches(composed)), prepare)`。[E: apps/cli/src/profile-boot.ts:256]
-22. `boot@packages/boot/app-boot/src/index.ts`：`new Context()` → `ctx.provide('dshHomePath', dshHomePath)` → `ctx.plugin(Loader)` → `prepare?.(ctx)` → `mountRootInclude`。[E: packages/boot/app-boot/src/index.ts:790] [E: packages/boot/app-boot/src/index.ts:790] [E: packages/boot/app-boot/src/index.ts:790] [E: packages/boot/app-boot/src/index.ts:790] 测试用 `!!js dshHomePath('sessions')` 钉死这个 provide。[E: packages/boot/app-boot/tests/app-boot.spec.ts:677]
-23. `prepare` 在任何 config 行挂上之前：`provide('launchEnvironment', …)` 与 `provideCmdline`（`ctx.cmdlineArgs` + `ctx.appExit` + 可选 `ctx.appReady`）。[E: apps/cli/src/profile-boot.ts:256] [E: apps/cli/src/profile-boot.ts:258] [E: packages/boot/cmdline/src/index.ts:84] Home 取非空 `$DSH_HOME`，否则 `~/.dsh`。[E: packages/util/home-paths/src/index.ts:88]
-24. `mountRootInclude` 钉死根行 `id: 'include'` / `name: 'cordis:include'`，`config.path` 指向那份空 `cordis.yml`，`config.patches` 是整叠 overlays。[E: packages/boot/app-boot/src/index.ts:534] [E: packages/boot/app-boot/src/index.ts:535] 同时注册 `ctx.loader.builtins.group = Group`，让 `cordis:group` 不依赖 included 树自己的 specifier 解析——isolate realm 靠 group 行把 Provider 与 Consumer 关进同一份私有符号表。[E: packages/boot/app-boot/src/index.ts:525]
-25. 树 settle 后 `assertEntriesActivated`：enabled 且非 `ACTIVE` 的行 fail-closed（`FAILED` 带原 stack；`PENDING` 点名缺的 service）。`prepare` 抛错标 `host preparation failed` 并 `dispose` 半棵树；之后的失败标 `plugin tree failed to load`。[E: packages/boot/app-boot/src/index.ts:709] [E: packages/boot/app-boot/src/index.ts:790] `installFailLoud` 把后续 unhandledRejection 收成一行 stderr + `exit(1)`。[E: packages/boot/app-boot/src/index.ts:611] [E: packages/boot/app-boot/src/index.ts:642]
+21. `runProfile` 调 `boot(NAME, rootConfig, structuredClone(allPatches(composed)), prepare)`。[E: apps/cli/src/profile-boot.ts:336]
+22. `boot@packages/boot/app-boot/src/index.ts`：`new Context()` → `ctx.provide('dshHomePath', dshHomePath)` → `ctx.plugin(Loader)` → `prepare?.(ctx)` → `mountRootInclude`。[E: packages/boot/app-boot/src/index.ts:794] [E: packages/boot/app-boot/src/index.ts:800]
+23. `prepare` 在任何 config 行挂上之前：`provide('launchEnvironment', …)` 与 `provideCmdline`（`ctx.cmdlineArgs` + `ctx.appExit` + 可选 `ctx.appReady`）。[E: apps/cli/src/profile-boot.ts:336] [E: apps/cli/src/profile-boot.ts:340] [E: packages/boot/cmdline/src/index.ts:84] Home 取非空 `$DSH_HOME`，否则 `~/.dsh`。[E: packages/util/home-paths/src/index.ts:88]
+24. `mountRootInclude` 钉死根行 `id: 'include'` / `name: 'cordis:include'`，`config.path` 指向那份空 `cordis.yml`，`config.patches` 是整叠 overlays。[E: packages/boot/app-boot/src/index.ts:549] [E: packages/boot/app-boot/src/index.ts:550] 同时注册 `ctx.loader.builtins.group = Group`，让 `cordis:group` 不依赖 included 树自己的 specifier 解析——isolate realm 靠 group 行把 Provider 与 Consumer 关进同一份私有符号表。[E: packages/boot/app-boot/src/index.ts:540]
+25. 树 settle 后 `assertEntriesActivated`：enabled 且非 `ACTIVE` 的行 fail-closed（`FAILED` 带原 stack；`PENDING` 点名缺的 service）。`prepare` 抛错标 `host preparation failed` 并 `dispose` 半棵树；之后的失败标 `plugin tree failed to load`。[E: packages/boot/app-boot/src/index.ts:722] [E: packages/boot/app-boot/src/index.ts:797] [E: packages/boot/app-boot/src/index.ts:803] `installFailLoud` 把后续 unhandledRejection 收成一行 stderr + `exit(1)`。[E: packages/boot/app-boot/src/index.ts:639]
 
 ### 7. 用户层热更新（仅 `patchReload: live`）
 
-26. `dsh-base` 把共享 `hmr` 行 `disabled: true`。[E: packages/bundle/base/cordis.patch.yml:23] `runProfile` 只在 `composed.profile.patchReload === 'live'` 时装 watcher。[E: apps/cli/src/profile-boot.ts:271] 组合若没留下 HMR，launcher 先保证 `timer`，再 `loader.create({ name: '@deepseek-ai/cordis-plugin-hmr', config: { root: [] } })`——只看文件、不重载模块。[E: apps/cli/src/profile-boot.ts:285] `startup` 模板仍一次应用用户层，不装 watch。
-27. 两个 `watchUserPatches` 分别盯 profile `cordis.patch.yml` 与 home `cordis.patch.yml`。`composeLive` 仍是「bundle 在下、overlays 在上」，用户编辑挤不走 shipped 层；每次 `structuredClone`，避免 include 按引用推进 `insert` 行后把用户覆盖烤进 bundle 内存对象。[E: apps/cli/src/profile-boot.ts:243] [E: packages/boot/app-boot/src/index.ts:235]
+26. `dsh-base` 把共享 `hmr` 行 `disabled: true`。[E: packages/bundle/base/cordis.patch.yml:23] `runProfile` 只在 `composed.profile.patchReload === 'live'` 时装 watcher。[E: apps/cli/src/profile-boot.ts:355] 组合若没留下 HMR，launcher 先保证 `timer`，再 `loader.create({ name: '@deepseek-ai/cordis-plugin-hmr', config: { root: [] } })`——只看文件、不重载模块。[E: apps/cli/src/profile-boot.ts:370] `startup` 模板仍一次应用用户层，不装 watch。
+27. 两个 `watchUserPatches` 分别盯 profile `cordis.patch.yml` 与 home `cordis.patch.yml`。`composeLive` 仍是「bundle 在下、overlays 在上」，用户编辑挤不走 shipped 层；每次 `structuredClone`，避免 include 按引用推进 `insert` 行后把用户覆盖烤进 bundle 内存对象。[E: apps/cli/src/profile-boot.ts:372] [E: packages/boot/app-boot/src/index.ts:250]
 
 ### 8. Waterfall 必须 `next()`
 
@@ -189,9 +193,9 @@ Cordis `Events.waterfall` 把最后一个参数当 innermost `next`：监听器�
 ### 9. isolate / `leakedServices`（boot 之后、preset 之时）
 
 28. `boot` 不跑 `leakedServices`。它只保证 `cordis:group` 能按名加载，让以后的 preset 行可以写 `isolate: { …: true }`。
-29. Web 的 `dsh-web-app` `insert` `id: agent-presets` / `default: standard`；五个 shipped profile 里**只有 web** 挂 roster。[E: packages/bundle/web-app/cordis.patch.yml:442] [E: packages/bundle/web-app/cordis.patch.yml:445] headless 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`，**没有** `agent-presets`，工具留在 host 全局层。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] sdk overlay 是 `sdk-app-startup` + `sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:12] [E: packages/bundle/sdk-app/cordis.patch.yml:17] acp overlay 是 `acp-app-startup` + `acp`。[E: packages/bundle/acp-app/cordis.patch.yml:12] [E: packages/bundle/acp-app/cordis.patch.yml:15]
+29. Web 的 `dsh-web-app` `insert` `id: agent-presets` / `default: standard`；五个 shipped profile 里**只有 web** 挂 roster。[E: packages/bundle/web-app/cordis.patch.yml:481] [E: packages/bundle/web-app/cordis.patch.yml:484] headless 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`，**没有** `agent-presets`，工具留在 host 全局层。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27] sdk overlay 是 `sdk-app-startup` + `sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:13] [E: packages/bundle/sdk-app/cordis.patch.yml:18] acp overlay 是 `acp-app-startup` + `acp`。[E: packages/bundle/acp-app/cordis.patch.yml:13] [E: packages/bundle/acp-app/cordis.patch.yml:16]
 30. 会话 `setup` 里 `mountPreset` 扫 standing 子树：若 preset 行把 service publish 进 **root realm**，`leakedServices` 收集那些名字并抛——必须坐进 `isolate` realm，或把服务搬到 host 组合。[E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:410]
-31. shipped `standard` 对需要每会话私有实例的行就是这样写的，例如 `isolate: { planMode: true }`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:107] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108] 只往 host `ctx.tools` 注册、自己不 `provide` 进 root 的工具行不必 isolate。`dsh-base` **没有** `subagent-codex` / `subagent-claude-code` 行——那不是「装了但 dormant」，而是根本不在这份 host 组合里。
+31. shipped `standard` 对需要每会话私有实例的行就是这样写的，例如 `isolate: { planMode: true }`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:109] 只往 host `ctx.tools` 注册、自己不 `provide` 进 root 的工具行不必 isolate。`dsh-base` **没有** `subagent-codex` / `subagent-claude-code` 行——那不是「装了但 dormant」，而是根本不在这份 host 组合里。
 
 ## 设计动机
 
@@ -205,14 +209,14 @@ dump 看文件真树，boot 看 launcher 真树。`dsh --profile web --dump-conf
 
 ## Gotcha
 
-- **五个 shipped 模板，只有 `web` 是 live。** `PROFILE_TEMPLATES` 的键是 `acp` / `web` / `headless` / `sdk` / `sdk-minimal`。`tui` 是自定义 profile 示例；`dsh plugin --profile tui add …` 只会用 `DEFAULT_PROFILE_BUNDLES` 写出一份只含 `dsh-base` 的 manifest。
+- **五个 shipped CLI 模板，只有 `web` 是 live。** `PROFILE_TEMPLATES` 的键是 `acp` / `web` / `headless` / `sdk` / `sdk-minimal`。**没有 `desktop`。** `tui` 是自定义 profile 示例；`dsh plugin --profile tui add …` 只会用 `DEFAULT_PROFILE_BUNDLES` 写出一份只含 `dsh-base` 的 manifest。
 - **`sdk-minimal` 不叠 `dsh-base`。** 其它四个模板都是 base + mode bundle。
 - **未知名不会 `initProfile`。** `loadProfile('custom')` 在目录不存在时直接抛，不会先建再 fail。
 - **缺 `dsh.bundle.patch` fail-loud。** 把普通 npm 包写进 `dsh.profile.bundles` 会在 load 时炸掉，不是静默空层。
 - **用户层缺文件 ≠ overlay 缺文件。** profile / home 的 `cordis.patch.yml` 走 `loadOptionalPatches`（ENOENT = 无层）；`--patch` 与 bundle 自己的 patch 走 `loadOverlayPatches`（ENOENT 抛）。
 - **dump 少 telemetry 那一刀。** 对齐 boot 真树还得读 `composeProfile` 的 `resolveTelemetryPatch`，不能只信 `--dump-config` 输出。`--dump-config` 本身仍存在（flags + `bin.ts` case + `dump-config.ts`）。
 - **不要手改 `cordis.yml`。** 它每次 boot 被写成 `[]`。用户改动写 `cordis.patch.yml`。Loader persist 钩子若忘了 `next()`，热更新既不 restart 也不按预期 write-back。
-- **整键覆盖。** 后层只写 `{ mode: 'ptc' }` 会抹掉前层同 id 行的其它 `config` 键。web-app 重述 `system-prompt.persona` 就是这个合同。
+- **整键覆盖。** 后层只写 `{ mode: 'ptc' }` 会抹掉前层同 id 行的其它 `config` 键。web-app 重述 `system-prompt` 的 `personaPrefix` / `personaSuffix` 就是这个合同。
 - **`!!js` 在 dump 里是字面量。** `renderConfigDump` 打印 `{ __jsExpr: '…' }` 对应的 `!!js` 标量，不求值。求值发生在 Loader 对**已挂上**的行做 interpolate 时，且能看见 `dshHomePath` / `cmdlineArgs` 等 prepare 提供的键。
 - **isolate 不是 boot 的审计。** 漏写 `isolate` 的 preset 服务会在 `mountPreset` 被拒，表现为 create Agent 失败回滚，而不是 `boot()` 抛错。
 - **分层 `.env` 先校验再物化。** 任一发现到的文件带 `DSH_*` / `PATH` / `HTTPS_PROXY` 等 bootstrap-only 名，整次 launch 抛错，已解析的其它键也不会写进 `process.env`。[E: packages/boot/app-boot/tests/app-boot.spec.ts:144]
@@ -222,9 +226,9 @@ dump 看文件真树，boot 看 launcher 真树。`dsh --profile web --dump-conf
 
 | 角色 | 落点 | ctx 键 / 组合行 |
 |---|---|---|
-| **Definition** | vendored Cordis `Context` / `Loader` / `Include`；`Profile` / `DshBundleManifest`（`dsh.bundle.patch`、`dsh.profile.bundles`） | 根行 `id: include` / `name: cordis:include`；`ctx.dshHomePath`；`ctx.loader` [E: packages/boot/app-boot/src/index.ts:534] |
+| **Definition** | vendored Cordis `Context` / `Loader` / `Include`；`Profile` / `DshBundleManifest`（`dsh.bundle.patch`、`dsh.profile.bundles`） | 根行 `id: include` / `name: cordis:include`；`ctx.dshHomePath`；`ctx.loader` [E: packages/boot/app-boot/src/index.ts:549] |
 | **Provider** | `@deepseek-ai/dsh-app-boot`：`loadProfile` + `composeEntries` + `boot`；launcher 本地 `composeProfile` 补 telemetry | `prepare` 里 `ctx.launchEnvironment`、`ctx.cmdlineArgs`、`ctx.appExit`；HMR 缺席且 `patchReload: live` 时 watch-only `root: []` |
-| **Consumer** | `runProfile` / `runDumpConfig` / `runPlugin`；`dsh-base` 第一条 insert；`dsh-web-app` 的 `agent-presets`；`mountPreset` 消费 `cordis:group` builtin 做 isolate | web：`id: agent-presets` `default: standard` [E: packages/bundle/web-app/cordis.patch.yml:445]；headless / sdk / acp：无 roster，工具留在 host 全局层 |
+| **Consumer** | `runProfile` / `runDumpConfig` / `runPlugin`；`dsh-base` 第一条 insert；`dsh-web-app` 的 `agent-presets`；`mountPreset` 消费 `cordis:group` builtin 做 isolate | web：`id: agent-presets` `default: standard` [E: packages/bundle/web-app/cordis.patch.yml:484]；headless / sdk / acp：无 roster，工具留在 host 全局层 |
 
 换 profile 模板 = 换 `PROFILE_TEMPLATES` 的第二层 bundle（或 `sdk-minimal` 的单层），不是换 `boot`。换 bundle 行表不会改 Definition；Consumer 仍只看见 settle 后的 `ctx`。
 
@@ -258,6 +262,7 @@ dump 看文件真树，boot 看 launcher 真树。`dsh --profile web --dump-conf
 - packages/boot/cmdline/src/index.ts
 - packages/util/home-paths/src/index.ts
 - packages/util/launch-environment/src/index.ts
+- packages/util/package-manifest/src/types.ts
 - packages/preset/agent-presets/src/mount.ts
 - packages/preset/agent-presets/presets/standard/agent.cordis.yml
 - vendor/include/src/index.ts

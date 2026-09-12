@@ -32,7 +32,7 @@ related:
   - surface.sdk.python
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-sdk-protocol` 是进程外 SDK runtime 的 **wire 形状 + NDJSON JSON-RPC transport**：类型侧钉死三请求 / 四通知，运行时侧只提供 `JsonRpcLineTransport`。它不拥有子进程、不拥有 agent、不是 `dsh web` 的默认面，也不进 `dsh-base` 或四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）。协议由 `dsh --profile sdk` / `sdk-minimal` 上的 `sdk-jsonrpc-server` 真正说话。
@@ -57,7 +57,7 @@ updated: d347e70390
 - Python `HarnessClient` 实现 — [`surface.sdk.python`](../../surface/sdk/python.md)（`surface.sdk.python`）。Python 与 TS 讲同一份方法表，本页不展开那一端。
 - ACP JSON-RPC 方法表（`authenticate` / `newSession` / `prompt` / `cancel`）— [`subsys.integration.acp`](acp.md) 不在本页 `related` 最低集里；不要把 ACP 方法抄进本协议。
 
-**host 面 vs agent-preset 面。** 本包不是 `ctx.*` Definition，也没有 preset `isolate` remount。`dsh-base` / `dsh-web-app` / `dsh-headless` 与四个 shipped preset 都没有本包行。五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`。[E: packages/boot/app-boot/src/profile.ts:137] [E: packages/boot/app-boot/src/profile.ts:150] [E: packages/boot/app-boot/src/profile.ts:154] 协议 server 挂在 `dsh-sdk-app` / `dsh-sdk-minimal` 的 patch 行 `sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:17] [E: packages/bundle/sdk-minimal/cordis.patch.yml:11] 默认 GUI 路径仍是 `dsh web`；stdio JSON-RPC 走 `dsh --profile sdk` 或 `sdk-minimal`。
+**host 面 vs agent-preset 面。** 本包不是 `ctx.*` Definition，也没有 preset `isolate` remount。`dsh-base` / `dsh-web-app` / `dsh-headless` 与四个 shipped preset 都没有本包行。五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`。[E: packages/boot/app-boot/src/profile.ts:105] [E: packages/boot/app-boot/src/profile.ts:118] [E: packages/boot/app-boot/src/profile.ts:122] 协议 server 挂在 `dsh-sdk-app` / `dsh-sdk-minimal` 的 patch 行 `sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:18] [E: packages/bundle/sdk-minimal/cordis.patch.yml:11] 默认 GUI 路径仍是 `dsh web`；stdio JSON-RPC 走 `dsh --profile sdk` 或 `sdk-minimal`。
 
 **没有 waterfall。** 本包不往 `Events.waterfall` 挂 listener。组合失败发生在对端：server 插件 `inject = ['agents']` 等不到服务、或 `handleRequest` 对未知方法抛错。[E: packages/sdk/server/src/index.ts:22] Cordis 全局规则仍是：waterfall 必须调用传入的 `next()` 才会 `cbs.shift()`；不调用就停在本层。[E: vendor/cordis/src/events.ts:238]
 

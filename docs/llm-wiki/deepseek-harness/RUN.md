@@ -44,7 +44,7 @@
 - 工具集 = `packages/*/tool-*` + 同样注册到 `ctx.tools` 的 plan-mode / PTC `run_code` / schedule / tool-cordis / opt-in tool-agent-team;以 boot 后 `ctx.tools.schemas()` 为准。
 - `bash` 拆两页。`pwsh` 拆两页(one-shot vs persistent)。`subagent` / `subagent_fork` 拆两页。
 - Preset 成员资格以 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml` 为准。旧 `apps/cli/config/agent-presets/` 与 `code` 目录名已不存在。
-- 组合真树以 `packages/boot/app-boot` 的 `PROFILE_TEMPLATES` + 各 bundle `cordis.patch.yml` 为准。shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`。
+- 组合真树以 `packages/boot/app-boot` 的 `PROFILE_TEMPLATES` + 各 bundle `cordis.patch.yml` 为准。shipped CLI profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`。`desktop` 不是 CLI profile。
 - `[E]` 不得指向 `docs/**` 或 `.agents/notes/**`。不得指向已删除的 `packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react`。
 
 ## 5. 纪律

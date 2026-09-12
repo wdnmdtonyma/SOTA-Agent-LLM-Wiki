@@ -29,7 +29,7 @@ related:
   - spine.trace-code-mode
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-experimental-code-runtime-python` 是 **真正的 `CodeRuntime` Provider**：`PythonCodeRuntime extends CodeRuntime`，每次 `run()` spawn 新鲜 `python3`，控制面走 **fd-3 JSON-lines**。包在 `packages/experimental/code-runtime-python`。它**不是** shipped `id: code-runtime` 行；默认仍是 worker-thread。旧说法「只 re-export protocol、不占缝」已过时。

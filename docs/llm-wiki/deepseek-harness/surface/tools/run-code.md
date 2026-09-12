@@ -54,7 +54,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `run_code` 是 `@deepseek-ai/dsh-tools` 在 **PTC**（旧名 Code Mode；wiki 节点 id `surface.presets.code` / `subsys.core.code-mode` 仍作稳定别名）下留给模型的**唯一** function-calling 运输工具（`RUN_CODE_NAME = 'run_code'`）：模型提交一段 TypeScript 或 Python 程序，host 面 `ctx.codeRuntime` 执行它，程序里用 `await tools.name(args)` 经 `TOOL_RUNTIME_SCHEDULER` 重入同一套工具管线。它**不是** `packages/*/tool-*` 插件行。
@@ -73,11 +73,11 @@ updated: d347e70390
 
 实现包是 `@deepseek-ai/dsh-tools`（工具 **registry** 包，不是 `dsh-tool-*`）。工厂是 `createRunCodeTool(registry, options)`：`defineTool({ name: RUN_CODE_NAME, … })`，由 `ToolRuntime.requireCodeTransport()` 在第一次需要时惰性构造并缓存在 `ptcTransport`，**从不**走进 `ctx.tools.register()`。[E: packages/core/tools/package.json:2][E: packages/core/tools/src/ptc.ts:293][E: packages/core/tools/src/ptc.ts:296][E: packages/core/tools/src/index.ts:914][E: packages/core/tools/src/index.ts:915]
 
-`register()` 无条件拒绝这个名字：任何 agent 都可能给自己选 PTC，部署默认下抢到这个名字会在 preset mount 时变成碰撞。[E: packages/core/tools/src/index.ts:1045][E: packages/core/tools/src/index.ts:1046]
+`register()` 无条件拒绝这个名字：任何 agent 都可能给自己选 PTC，部署默认下抢到这个名字会在 preset mount 时变成碰撞。[E: packages/core/tools/src/index.ts:1045][E: packages/core/tools/src/index.ts:1045]
 
-`restrict({ allow|deny })` 同样不能点名 `run_code`。[E: packages/core/tools/src/index.ts:1076][E: packages/core/tools/src/index.ts:1077]
+`restrict({ allow|deny })` 同样不能点名 `run_code`。[E: packages/core/tools/src/index.ts:1076][E: packages/core/tools/src/index.ts:1076]
 
-可见性插入发生在 `view()` 末尾、capability 过滤之后：`modeFor(scope) !== 'native'` 才把 transport 放进该 scope 的 dispatch 表。同进程里 `native` 会话的 `get('run_code')` 仍是 `undefined`。[E: packages/core/tools/src/index.ts:1180][E: packages/core/tools/src/index.ts:1181][E: packages/core/tools/tests/ptc.spec.ts:1672]
+可见性插入发生在 `view()` 末尾、capability 过滤之后：`modeFor(scope) !== 'native'` 才把 transport 放进该 scope 的 dispatch 表。同进程里 `native` 会话的 `get('run_code')` 仍是 `undefined`。[E: packages/core/tools/src/index.ts:1180][E: packages/core/tools/src/index.ts:1180][E: packages/core/tools/tests/ptc.spec.ts:1672]
 
 产品面上让一个会话进入 PTC 的 **agent-preset 行**是 `@deepseek-ai/dsh-agent-tool-presentation`：插件名 `export const name = 'tool-presentation'`，静态 `inject = ['tools']`（故意不含 `codeRuntime`），`Config.mode` 为必填的 `'native' | 'ptc' | 'both'`。[E: packages/core/agent-tool-presentation/package.json:2][E: packages/core/agent-tool-presentation/src/index.ts:28][E: packages/core/agent-tool-presentation/src/index.ts:35][E: packages/core/agent-tool-presentation/src/index.ts:51]
 
@@ -85,7 +85,7 @@ updated: d347e70390
 
 `presentAs` 必须在 scoped context（preset 的 standing scope）上调用；进程级默认走 host `tools` 行的 `Config.mode`（schema 默认 `'native'`）。[E: packages/core/tools/src/index.ts:938][E: packages/core/tools/src/index.ts:941][E: packages/core/tools/src/index.ts:784]
 
-`createRunCodeTool` **没有**声明 `timeoutMs`，也 **没有** `isConcurrencySafe`。外层 `run_code` 走 exclusive 调度；`timeout-policy` 读到 `undefined` 就原样 `next()`。[E: packages/core/tools/src/index.ts:1268][E: packages/core/tools/src/index.ts:1269][E: packages/guard/timeout-policy/src/index.ts:59]
+`createRunCodeTool` **没有**声明 `timeoutMs`，也 **没有** `isConcurrencySafe`。外层 `run_code` 走 exclusive 调度；`timeout-policy` 读到 `undefined` 就原样 `next()`。[E: packages/core/tools/src/index.ts:1268][E: packages/core/tools/src/index.ts:1268][E: packages/guard/timeout-policy/src/index.ts:59]
 
 ## 用途定位
 
@@ -94,7 +94,7 @@ updated: d347e70390
 1. `code`：一段 **async 函数体**（top-level `await` / `return` 合法；TypeScript 走 type-strip，不可擦除语法如 `enum` 会变成程序失败）。
 2. `description`：5–10 词的 UI 标题（`presentCall.title`），不参与执行。
 
-程序里的能力来自生成 SDK：`await tools.name(args)`。SDK 声明的是**该 agent 可见、且名字不是 `run_code`** 的工具——同一份 `ctx.tools` 注册表的第二套投影，不是第二套实现。shipped `ptc` preset 下，模型请求里的 wire schema **只有** `run_code`。[E: packages/core/tools/src/index.ts:986][E: packages/core/tools/src/index.ts:988][E: apps/cli/tests/web-agent-presets.e2e.ts:366]
+程序里的能力来自生成 SDK：`await tools.name(args)`。SDK 声明的是**该 agent 可见、且名字不是 `run_code`** 的工具——同一份 `ctx.tools` 注册表的第二套投影，不是第二套实现。shipped `ptc` preset 下，模型请求里的 wire schema **只有** `run_code`。[E: packages/core/tools/src/index.ts:986][E: packages/core/tools/src/index.ts:988][E: apps/cli/tests/web-agent-presets.e2e.ts:377]
 
 子调用带着 `parent: exec.token` 重入 `tools/pre-execute → execute → post-execute`（经 `TOOL_RUNTIME_SCHEDULER` 的 `prepare` / `dispatch` / `finalize|finish`）。它们写入 `tool/code-dispatch-start` / `tool/code-dispatch`，不进 `deriveMessages()`；模型下一轮只看见外层 curated `tool/result`。[E: packages/core/tools/src/ptc.ts:476][E: packages/core/session/src/surface.ts:16][E: packages/core/tools/tests/ptc.spec.ts:1649]
 
@@ -109,7 +109,7 @@ updated: d347e70390
 | `code` | `string` | 是 | 无 | schema 只要 string；空串仍过校验 | 程序：async 函数体。TypeScript flavor 文案是 `The program: the body of an async TypeScript function.`。[E: packages/core/tools/src/ptc.ts:305][E: packages/core/tools/src/ptc.ts:51] |
 | `description` | `string` | 是 | 无 | schema 只要 string；`execute` 再拒 `trim().length === 0` | UI 标题，英文合同写 5–10 词、主动语态。空白 / 纯空格变成 `isError`：`invalid description: expected a non-empty string`。[E: packages/core/tools/src/ptc.ts:309][E: packages/core/tools/src/ptc.ts:328][E: packages/core/tools/tests/ptc.spec.ts:1328] |
 
-缺字段或类型不对由 `defineTool` 包装器先 `validate`，抛 `ToolArgsError`（`INVALID_ARGS`），进不了用户 `execute`。[E: packages/core/tools/src/schema.ts:586][E: packages/core/tools/src/schema.ts:587][E: packages/core/tools/src/schema.ts:466]
+缺字段或类型不对由 `defineTool` 包装器先 `validate`，抛 `ToolArgsError`（`INVALID_ARGS`），进不了用户 `execute`。[E: packages/core/tools/src/schema.ts:585][E: packages/core/tools/src/schema.ts:586][E: packages/core/tools/src/schema.ts:466]
 
 **Config 不改这两个字段名。** 相关旋钮在 host `tools` 行，不是 `run_code` 自己的参数：
 
@@ -128,7 +128,7 @@ shipped Provider `WorkerThreadCodeRuntime.language = 'typescript'`，因此产�
 
 ## 输出 & 截断 / spill
 
-`execute` 的规范值是封闭 object：`logs: string[]`（必填）+ 可选 `result`（`type: 'json'`）。registry `createSuccessResult` 校验后再 `output.render`。[E: packages/core/tools/src/ptc.ts:317][E: packages/core/tools/src/ptc.ts:318][E: packages/core/tools/src/index.ts:1784]
+`execute` 的规范值是封闭 object：`logs: string[]`（必填）+ 可选 `result`（`type: 'json'`）。registry `createSuccessResult` 校验后再 `output.render`。[E: packages/core/tools/src/ptc.ts:317][E: packages/core/tools/src/ptc.ts:318][E: packages/core/tools/src/index.ts:1783]
 
 模型看见的是一段 text，不是裸规范值：
 
@@ -157,7 +157,7 @@ shipped Provider `WorkerThreadCodeRuntime.language = 'typescript'`，因此产�
 
 | 角色 | 落点 |
 |---|---|
-| Definition | `@deepseek-ai/dsh-code-runtime` 的抽象 `CodeRuntime`：`ctx.codeRuntime`，`language` / `isolation` 信息字段，`run(CodeRunRequest): Promise<CodeRunResult>`。请求只有 `program` / `bindings` / `signal`；程序失败是 `result.error` 字段，`run()` 本身只在合同误用时 reject。[E: packages/code-runtime/code-runtime/package.json:2][E: packages/code-runtime/code-runtime/src/index.ts:135][E: packages/code-runtime/code-runtime/src/types.ts:80] |
+| Definition | `@deepseek-ai/dsh-code-runtime` 的抽象 `CodeRuntime`：`ctx.codeRuntime`，`language` / `isolation` 信息字段，`run(CodeRunRequest): Promise<CodeRunResult>`。请求只有 `program` / `bindings` / `signal`；程序失败是 `result.error` 字段，`run()` 本身只在合同误用时 reject。[E: packages/code-runtime/code-runtime/package.json:2][E: packages/code-runtime/code-runtime/src/index.ts:134][E: packages/code-runtime/code-runtime/src/types.ts:80] |
 | Provider | 默认 `@deepseek-ai/dsh-code-runtime-worker-thread` 的 `WorkerThreadCodeRuntime`（`language = 'typescript'`，`isolation = 'worker-thread'`）。`web` / `headless` bundle 都在 **host 面** insert 这一行。五个 shipped profile 里 `web` 叠 `dsh-web-app`，`headless` 叠 `dsh-headless`；`sdk` / `sdk-minimal` / `acp` 的 shipped bundle **不** insert 该 worker。experimental `PythonCodeRuntime` 存在但不 shipped。[E: packages/code-runtime/code-runtime-worker-thread/package.json:2][E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:246][E: packages/bundle/web-app/cordis.patch.yml:50][E: packages/bundle/headless/cordis.patch.yml:20] |
 | Consumer | `@deepseek-ai/dsh-tools` 的 `createRunCodeTool`：枚举 `registry.schemas(exec.agent)`、绑 `CodeBindingFunction`、调 `runtime.run`、用 `registry[TOOL_RUNTIME_SCHEDULER]` 调度子调用。agent-preset 面的 `tool-presentation` 只调用 `presentAs`，不执行程序。[E: packages/core/tools/src/ptc.ts:619][E: packages/core/tools/src/ptc.ts:480][E: packages/core/agent-tool-presentation/src/index.ts:70] |
 
@@ -175,15 +175,15 @@ shipped worker 默认预算：`computeMs: 60_000`（worker ELU 忙时）、`maxW
 
 对本运输工具的挂点：
 
-- **collapse 在 policy 之前。** `mode === 'ptc'` 且 **没有** `parent` 时，除 `run_code` 以外的名字在 `createExecution` 里变成 `final-result`：`UNKNOWN_TOOL`，文案指引「从 `run_code` 程序里调」。`tools/pre-execute` / `ask` / guards **看不到**这次直调。[E: packages/core/tools/src/index.ts:1372][E: packages/core/tools/src/index.ts:1414][E: packages/core/tools/src/index.ts:1430][E: packages/core/tools/tests/ptc.spec.ts:1688]
-- **外层 `run_code` 自己**不注册 pre-execute listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。[E: packages/core/tools/src/index.ts:1468]
+- **collapse 在 policy 之前。** `mode === 'ptc'` 且 **没有** `parent` 时，除 `run_code` 以外的名字在 `createExecution` 里变成 `final-result`：`UNKNOWN_TOOL`，文案指引「从 `run_code` 程序里调」。`tools/pre-execute` / `ask` / guards **看不到**这次直调。[E: packages/core/tools/src/index.ts:1371][E: packages/core/tools/src/index.ts:1413][E: packages/core/tools/src/index.ts:1429][E: packages/core/tools/tests/ptc.spec.ts:1688]
+- **外层 `run_code` 自己**不注册 pre-execute listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。[E: packages/core/tools/src/index.ts:1467]
 - **`tools/execute` 包装：**
   - `session-checkpoint-policy`：有 `exec.agent` 且 `exec.parent === undefined` 才 `flush` session；子调用 `parent !== undefined` 直接 `next()`，复用外层已经 flush 的落点。[E: packages/session/session-checkpoint-policy/src/index.ts:71]
   - `timeout-policy`：`run_code` 未声明 `timeoutMs`，包装器 `next()`。程序时限在 worker 的 `computeMs` / `maxWallMs`，不是工具字段。[E: packages/guard/timeout-policy/src/index.ts:59]
-- **调度：** 未声明 `isConcurrencySafe` → `executionMode` 为 `exclusive`。同一步里两个 `run_code` 不会重叠。[E: packages/core/tools/src/index.ts:1269]
+- **调度：** 未声明 `isConcurrencySafe` → `executionMode` 为 `exclusive`。同一步里两个 `run_code` 不会重叠。[E: packages/core/tools/src/index.ts:1268]
 - **sandbox / approval：** 外层不挂文件 sandbox stamp。SDK 子调用重入完整管线，被调工具自己的 approval / sandbox / `timeoutMs` 仍生效。
 
-`collapses` 读 `modeFor(scope)`，不读 `defaultMode`。preset 在 native 部署上 `presentAs('ptc')` 时，直调 `write` 仍会被收掉。[E: packages/core/tools/src/index.ts:1316]
+`collapses` 读 `modeFor(scope)`，不读 `defaultMode`。preset 在 native 部署上 `presentAs('ptc')` 时，直调 `write` 仍会被收掉。[E: packages/core/tools/src/index.ts:1315]
 
 ## Preset 装配
 
@@ -191,14 +191,14 @@ shipped worker 默认预算：`computeMs: 60_000`（worker ELU 忙时）、`maxW
 
 | preset | `tool-presentation` | 模型 wire | isolate | 说明 |
 |---|---|---|---|---|
-| `minimal` | **否** | native（POSIX 上 `bash` + `str_replace_editor`） | persistent-shell `terminals`、filesystem `fs` | 文件无 `tool-presentation`。e2e 断言 `assembly.tools` 为那两个名字。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9][E: apps/cli/tests/web-agent-presets.e2e.ts:290] |
-| `standard` | **否** | native（`bash` / `read` / …，**没有** `run_code`） | 无 | 以 `tool-web` 收束，无 presentation 行。同进程旁的 `ptc` 会话互不影响。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: apps/cli/tests/web-agent-presets.e2e.ts:377] |
-| `ptc`（旧目录名 `code`） | **是** | **只有** `run_code` | 无（presentation 不 `provide`） | 相对 `standard`：末尾 `id: tool-presentation` / `config.mode: ptc`，且 `tool-workflow` `disabled: true`（`ralph` 仍在）。picker 显示名来自 `preset.yml` 的 `PTC 模式`。native 工具行仍在，供 SDK 子调度。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:267][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:237][E: packages/preset/agent-presets/presets/ptc/preset.yml:1][E: apps/cli/tests/web-agent-presets.e2e.ts:366] |
-| `cordis` | **否** | native + 七个 `cordis_*` | 无 | 增量是 `tool-cordis`，不是 presentation。模型直调 `cordis_define` 等，**不**走 `run_code`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251] |
+| `minimal` | **否** | native（POSIX 上只有 `bash`） | persistent-shell `terminals`（无 fs / 无 str_replace） | 文件无 `tool-presentation`。e2e 断言 `assembly.tools === ['bash']`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: apps/cli/tests/web-agent-presets.e2e.ts:299] |
+| `standard` | **否** | native（`bash` / `read` / …，**没有** `run_code`） | 无 | 以 `tool-web` 收束，无 presentation 行。同进程旁的 `ptc` 会话互不影响。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: apps/cli/tests/web-agent-presets.e2e.ts:388] |
+| `ptc`（旧目录名 `code`） | **是** | **只有** `run_code` | 无（presentation 不 `provide`） | 相对 `standard`：末尾 `id: tool-presentation` / `config.mode: ptc`，且 `tool-workflow` `disabled: true`（`ralph` 仍在）。picker 显示名来自 `preset.yml` 的 `PTC 模式`。native 工具行仍在，供 SDK 子调度。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:272][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:238][E: packages/preset/agent-presets/presets/ptc/preset.yml:1][E: apps/cli/tests/web-agent-presets.e2e.ts:377] |
+| `cordis` | **否** | native + 七个 `cordis_*` | 无 | 增量是 `tool-cordis`，不是 presentation。模型直调 `cordis_define` 等，**不**走 `run_code`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246] |
 
-`ptc` 的 `tool-web` 现为 `fetch: true`（与 `standard` 相同）：SDK 里会出现 `web_search`（以及 fetch 配置打开时的 web fetch 名），不会出现 `str_replace_editor`。e2e 钉死 SDK 文本含 `web_search`、不含 `str_replace_editor`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:257][E: apps/cli/tests/web-agent-presets.e2e.ts:372]
+`ptc` 的 `tool-web` 现为 `fetch: true`（与 `standard` 相同）：SDK 里会出现 `web_search`（以及 fetch 配置打开时的 web fetch 名），不会出现 `str_replace_editor`。e2e 钉死 SDK 文本含 `web_search`、不含 `str_replace_editor`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:261][E: apps/cli/tests/web-agent-presets.e2e.ts:382]
 
-web host 的 `tools.mode: !!js process.env.DSH_TOOLS_MODE` 与 headless 同一键，是**整进程** defaultMode，不是「选了 shipped `ptc` preset」。unset 时 schema 默认 `native`。[E: packages/bundle/web-app/cordis.patch.yml:37][E: packages/bundle/headless/cordis.patch.yml:15]
+web host 的 `tools.mode: !!js process.env.DSH_TOOLS_MODE` 与 headless 同一键，是**整进程** defaultMode，不是「选了 shipped `ptc` preset」。unset 时 schema 默认 `native`。[E: packages/bundle/web-app/cordis.patch.yml:38][E: packages/bundle/headless/cordis.patch.yml:16]
 
 缺 host `codeRuntime` 时：`tool-presentation` 的动态 `inject(['codeRuntime'])` 停在 pending；静态 `inject` 只有 `['tools']`，`inactiveRows` 只读 `fiber.inject`，**不会**因为缺 runtime 点名这一行。单测里此时 `assemble` 仍是 native `echo`。[E: packages/preset/agent-presets/src/mount.ts:316][E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:109][E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:111]
 
@@ -206,9 +206,9 @@ web host 的 `tools.mode: !!js process.env.DSH_TOOLS_MODE` 与 headless 同一�
 
 符号：`createRunCodeTool` @ `packages/core/tools/src/ptc.ts`；子调度走 `ToolRuntime[TOOL_RUNTIME_SCHEDULER]` @ `packages/core/tools/src/index.ts`；程序跑在 `CodeRuntime.run`。
 
-1. **校验参数。** `defineTool` 先按 schema 收 `code`/`description`。用户 `execute` 再 `args.description.trim().length === 0` 则抛 `invalid description`。[E: packages/core/tools/src/schema.ts:586][E: packages/core/tools/src/ptc.ts:328]
+1. **校验参数。** `defineTool` 先按 schema 收 `code`/`description`。用户 `execute` 再 `args.description.trim().length === 0` 则抛 `invalid description`。[E: packages/core/tools/src/schema.ts:585][E: packages/core/tools/src/ptc.ts:328]
 
-2. **取 runtime。** `requireRuntime()` → `requireCodeRuntime` → `ctx.get('codeRuntime')`。缺实现时抛错，registry 收成结构化 `isError`（文案含 `requires a code runtime`），不是进程崩溃。[E: packages/core/tools/src/ptc.ts:331][E: packages/core/tools/src/index.ts:1013][E: packages/core/tools/tests/ptc.spec.ts:1308]
+2. **取 runtime。** `requireRuntime()` → `requireCodeRuntime` → `ctx.get('codeRuntime')`。缺实现时抛错，registry 收成结构化 `isError`（文案含 `requires a code runtime`），不是进程崩溃。[E: packages/core/tools/src/ptc.ts:331][E: packages/core/tools/src/index.ts:1012][E: packages/core/tools/tests/ptc.spec.ts:1308]
 
 3. **run-scoped abort。** 新建 `AbortController`；外层 `exec.signal` abort 会链式掐掉未完成子调用。`finally` 里 `abort('run_code settled')` 再 `drainDispatches`。[E: packages/core/tools/src/ptc.ts:337][E: packages/core/tools/src/ptc.ts:632]
 
@@ -232,8 +232,8 @@ DSH 的 PTC 不是把 catalog 换成「一个解释器工具」再删掉 `read`/
 
 和常见 peer 的差异：
 
-- **没有** Claude / Codex 那种模型直调的 `apply_patch` 合一方言。文件副作用仍是 SDK 里的 `read` / `edit` / `write` / `bash`（或 `minimal` 的 `str_replace_editor`），只是到达方式变了。
-- **collapse 在 policy 之前。** 模型直调 `write` 不会误触发 approval；子调用因为 `parent` 才重入守卫。[E: packages/core/tools/src/index.ts:1372]
+- **没有** Claude / Codex 那种模型直调的 `apply_patch` 合一方言。文件副作用仍是 SDK 里的 `read` / `edit` / `write` / `bash`（`minimal` 只有 persistent `bash`），只是到达方式变了。
+- **collapse 在 policy 之前。** 模型直调 `write` 不会误触发 approval；子调用因为 `parent` 才重入守卫。[E: packages/core/tools/src/index.ts:1371]
 - **禁止递归运输。** bindings 跳过 `run_code`；`register` / `restrict` 也不能碰这个名字。程序没有句柄再 `await tools.run_code(...)`。[E: packages/core/tools/src/ptc.ts:612]
 - **SDK 是第二套投影。** `wireSchemas` 给 function calling；`renderToolsSdk` / `renderToolsSdkPy` 给语言对应的 `tools` 声明。TypeScript 调用约定写在 `SDK_INSTRUCTIONS`：`await tools.name(args)`，失败用 `ToolCallError`，独立只读可 `Promise.all`。[E: packages/core/tools/src/ts-types.ts:250][E: packages/core/tools/src/ts-types.ts:257][E: packages/core/tools/src/py-types.ts:734]
 - **runtime 可替换，工具知识不可下沉。** 换 container / process backend 不应改 schema；也不该让 runtime 去 import `dsh-tools`。

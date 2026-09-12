@@ -24,7 +24,7 @@ related:
   - subsys.core.invariants
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-brand` 拥有编译期名义类型 `Branded<B>` 和擦除型 helper `brandString<T>`：跨包 id 的 **primitive**，不是 Cordis service，也没有 `SessionId` / `ToolCallId` / `CommandId` / `JobId` 这些具体 id。具体 type 仍留在 **owning 包**；运行时仍是普通 `string`。
@@ -75,9 +75,9 @@ updated: d347e70390
 | `BRAND` | `declare const BRAND: unique symbol`。只作交叉类型的属性键，运行时不存在。[E: packages/util/brand/src/index.ts:15] |
 | `Branded<B>` | `string & { readonly [BRAND]: B }`，`B extends string`。`Branded<'SessionId'>` 与 `Branded<'ToolCallId'>` 在类型上不可互换；擦除后都是 `string`。[E: packages/util/brand/src/index.ts:18] |
 | `brandString<T>` | `export function brandString<T extends Branded<string>>(value: string \| T): T`，`return value as T`。不校验格式。[E: packages/util/brand/src/index.ts:28] [E: packages/util/brand/src/index.ts:28] |
-| `SessionId` | owning 包 `dsh-session`：`export type SessionId = Branded<'SessionId'>`，`SessionId(id)` 调用 `brandString<SessionId>(id)`。[E: packages/core/session/src/types.ts:17] [E: packages/core/session/src/types.ts:24] [E: packages/core/session/src/types.ts:25] |
+| `SessionId` | owning 包 `dsh-session`：`export type SessionId = Branded<'SessionId'>`，`SessionId(id)` 调用 `brandString<SessionId>(id)`。[E: packages/core/session/src/types.ts:16] [E: packages/core/session/src/types.ts:26] [E: packages/core/session/src/types.ts:26] |
 | `ToolCallId` | owning 包 `dsh-llm`：`export type ToolCallId = Branded<'ToolCallId'>` + 同名 factory，`brandString<ToolCallId>(id)`。同文件还有 `MessageId` / `ProviderRequestId` 等，本页不展开。[E: packages/llm/llm/src/brand.ts:31] [E: packages/llm/llm/src/brand.ts:38] [E: packages/llm/llm/src/brand.ts:39] |
-| `CommandId` | owning 包 `dsh-commands`：`export type CommandId = Branded<'CommandId'>` + 同名 factory，`return id as CommandId`（不经过 `brandString`）。[E: packages/interaction/commands/src/brand.ts:20] [E: packages/interaction/commands/src/brand.ts:27] [E: packages/interaction/commands/src/brand.ts:28] |
+| `CommandId` | owning 包 `dsh-commands`：`export type CommandId = Branded<'CommandId'>` + 同名 factory，`return id as CommandId`（不经过 `brandString`）。[E: packages/interaction/commands/src/brand.ts:22] [E: packages/interaction/commands/src/brand.ts:31] [E: packages/interaction/commands/src/brand.ts:31] |
 | `WorkspaceId` | owning 包 `dsh-workspace`：类型在 `types.ts` 写成 `Branded<'WorkspaceId'>`；factory `WorkspaceId(id)` 在 `index.ts`，仍是 `id as WorkspaceId`。[E: packages/workspace/workspace/src/types.ts:16] [E: packages/workspace/workspace/src/index.ts:37] [E: packages/workspace/workspace/src/index.ts:37] |
 `package.json` 的 `exports["."]` 是类型 primitive + `brandString`。[E: packages/util/brand/package.json:17] `peerDependencies` 只有 `@deepseek-ai/cordis`；主入口不依赖能力包。[E: packages/util/brand/package.json:29] [E: packages/util/brand/package.json:30] manifest **没有** `dependencies` 字段。
 
@@ -87,9 +87,9 @@ updated: d347e70390
 
 1. **类型层。** `Branded@packages/util/brand/src/index.ts` 用文件私有 `unique symbol` 做交叉属性键，再按字面量 `B` 区分品牌。[E: packages/util/brand/src/index.ts:15] [E: packages/util/brand/src/index.ts:18] 编译后属性被擦掉。`brandString` 是唯一可执行语句：裸 `as T`。[E: packages/util/brand/src/index.ts:28]
 
-2. **owning 包 import。** `dsh-session` 写 `import { brandString, type Branded } from '@deepseek-ai/dsh-brand'`，再声明自己的 id。[E: packages/core/session/src/types.ts:1] `dsh-llm` 同样值导入 `brandString`。[E: packages/llm/llm/src/brand.ts:13] `dsh-commands` 仍只 `import type { Branded }`，factory 自己 `as`。[E: packages/interaction/commands/src/brand.ts:13]
+2. **owning 包 import。** `dsh-session` 写 `import { brandString, type Branded } from '@deepseek-ai/dsh-brand'`，再声明自己的 id。[E: packages/core/session/src/types.ts:1] `dsh-llm` 同样值导入 `brandString`。[E: packages/llm/llm/src/brand.ts:13] `dsh-commands` 仍只 `import type { Branded }`，factory 自己 `as`。[E: packages/interaction/commands/src/brand.ts:12]
 
-3. **factory 在 owning 包。** `SessionId@packages/core/session/src/types.ts` 与 `ToolCallId@packages/llm/llm/src/brand.ts` 走 `brandString<X>(id)`；`CommandId@packages/interaction/commands/src/brand.ts` 走 `return id as CommandId`。[E: packages/core/session/src/types.ts:25] [E: packages/llm/llm/src/brand.ts:39] [E: packages/interaction/commands/src/brand.ts:28] 空串、任意字符串都能通过；格式、唯一性、谁来 mint（uuid / 单调计数 / provider 签发）由那个包自己决定。本页不写那些 mint 规则。
+3. **factory 在 owning 包。** `SessionId@packages/core/session/src/types.ts` 与 `ToolCallId@packages/llm/llm/src/brand.ts` 走 `brandString<X>(id)`；`CommandId@packages/interaction/commands/src/brand.ts` 走 `return id as CommandId`。[E: packages/core/session/src/types.ts:26] [E: packages/llm/llm/src/brand.ts:39] [E: packages/interaction/commands/src/brand.ts:31] 空串、任意字符串都能通过；格式、唯一性、谁来 mint（uuid / 单调计数 / provider 签发）由那个包自己决定。本页不写那些 mint 规则。
 
 4. **`WorkspaceId` 拆文件。** 类型在 `types.ts`，factory 在 `WorkspaceId@packages/workspace/workspace/src/index.ts`。[E: packages/workspace/workspace/src/types.ts:16] [E: packages/workspace/workspace/src/index.ts:37] 读 `types.ts` 看不到构造函数。
 

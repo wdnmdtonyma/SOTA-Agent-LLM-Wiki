@@ -54,7 +54,7 @@ related:
   - subsys.execution.lsp
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `lsp` 是 `@deepseek-ai/dsh-tool-lsp` 向模型注册的**只读**导航工具：单一 wire 名 `lsp`，四个 `operation`（`goToDefinition` / `findReferences` / `goToImplementation` / `hover`），经 `ctx.lsp` 查 language server。坐标是模型侧 **one-based UTF-16**，工具在 execute 里减 1 交给缝的 zero-based 位置。四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）**都不装**；包存在不等于产品默认 catalog 里有它。
@@ -159,20 +159,20 @@ stdio provider 收到查询后：`canonicalizeWorkspace` 要求 `workspaceRoot` 
 
 ## 执行管线
 
-模型发出 `lsp` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1467][E: packages/core/tools/src/index.ts:1565][E: packages/core/tools/src/index.ts:1735]
+模型发出 `lsp` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1467][E: packages/core/tools/src/index.ts:1565][E: packages/core/tools/src/index.ts:1734]
 
 对本工具的挂点：
 
-- **`tools/pre-execute`**：`lsp` 自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1468]
+- **`tools/pre-execute`**：`lsp` 自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1466]
 - **并发**：未声明 `isConcurrencySafe` → `exclusive`。stdio 侧每个 workspace 还有自己的查询队列，那是 provider 内部串行，不是 registry 调度。[E: packages/core/tools/src/index.ts:1269][E: packages/lsp/lsp-stdio/src/instance.ts:97]
 - **`tools/execute` 包装**：
   - `session-checkpoint-policy` 仅在「有 `exec.agent` 且 `exec.parent === undefined`」时 `flush` session，再 `next()`。[E: packages/session/session-checkpoint-policy/src/index.ts:71]
   - `timeout-policy` 读 `definition.timeoutMs`（默认 60s）。到期把结果换成 `TOOL_TIMEOUT`（`tool call timed out after Nms`），集成测试用挂起的 definition server + `timeoutMs: 300` 钉死这条。[E: packages/guard/timeout-policy/src/index.ts:59][E: packages/guard/timeout-policy/src/index.ts:25][E: packages/guard/timeout-policy/src/index.ts:42][E: packages/lsp/tool-lsp/tests/integration.spec.ts:97]
 - **body**：`defineTool` 先 `validate`（enum / required），再进 `apply` 里的 `execute`。`exec.signal` 原样传给 `ctx.lsp.query`。[E: packages/core/tools/src/schema.ts:587][E: packages/lsp/tool-lsp/src/index.ts:194]
-- **`tools/post-execute`**：本工具不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1735]
+- **`tools/post-execute`**：本工具不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1734]
 - **sandbox / approval**：不挂。
 
-若某个 composition 同时挂了 `lsp` 和 PTC preset 的 `tool-presentation` `mode: ptc`：模型能直接调的唯一 wire 名仍是 `run_code`。非嵌套且 `modeFor(scope) === 'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse，在 **policy 之前**变成 `UNKNOWN_TOOL`，不进 `tools/pre-execute`。SDK 子分发带 `parent`（`nested === true`），不 collapse，仍走完整管线。[E: packages/core/tools/src/index.ts:1316][E: packages/core/tools/src/index.ts:1372][E: packages/core/tools/src/index.ts:1430]
+若某个 composition 同时挂了 `lsp` 和 PTC preset 的 `tool-presentation` `mode: ptc`：模型能直接调的唯一 wire 名仍是 `run_code`。非嵌套且 `modeFor(scope) === 'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse，在 **policy 之前**变成 `UNKNOWN_TOOL`，不进 `tools/pre-execute`。SDK 子分发带 `parent`（`nested === true`），不 collapse，仍走完整管线。[E: packages/core/tools/src/index.ts:1315][E: packages/core/tools/src/index.ts:1372][E: packages/core/tools/src/index.ts:1430]
 
 ## Preset 装配
 
@@ -180,10 +180,10 @@ stdio provider 收到查询后：`canonicalizeWorkspace` 要求 `workspaceRoot` 
 
 | preset | 装 `@deepseek-ai/dsh-tool-lsp`？ | `disabled` | isolate | 说明 |
 |---|---|---|---|---|
-| `minimal` | **否** | — | — | top-level 只有 `persona` / `persistent-shell` / `filesystem`。文本读写是 `str_replace_editor`，不是 `lsp`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:74] |
+| `minimal` | **否** | — | — | top-level 只有 `persona` / `persistent-shell` / `filesystem`。文本读写是 `str_replace_editor`，不是 `lsp`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:63] |
 | `standard` | **否** | — | — | 以 `tool-web` 收束（`fetch: true`，`searchTimeoutMs: 60000`）。top-level `id` 无 `tool-lsp`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] |
-| `ptc`（wiki id `surface.presets.code`） | **否** | — | — | 相对 `standard` 的增量是末尾 `tool-presentation` `mode: ptc`，模型直调只剩 `run_code`。没有 `tool-lsp` 行。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
-| `cordis` | **否** | — | — | 增量是 `tool-cordis` + 带 `customSkillDirs` 的 skill 两行。收束 `id` 是 `tool-skill`，不是 `tool-lsp`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262] |
+| `ptc`（wiki id `surface.presets.code`） | **否** | — | — | 相对 `standard` 的增量是末尾 `tool-presentation` `mode: ptc`，模型直调只剩 `run_code`。没有 `tool-lsp` 行。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] |
+| `cordis` | **否** | — | — | 增量是 `tool-cordis` + 带 `customSkillDirs` 的 skill 两行。收束 `id` 是 `tool-skill`，不是 `tool-lsp`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262] |
 
 opt-in 出现在 **snapshot / 测试 composition**，以及用户自己的 preset / `--patch`，不是 shipped roster：
 

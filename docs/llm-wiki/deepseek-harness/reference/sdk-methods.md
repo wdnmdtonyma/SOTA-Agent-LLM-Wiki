@@ -30,7 +30,7 @@ related:
   - surface.sdk.python
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-sdk-protocol` 的 wire 合同是 **三请求 + 四通知**；TS `DeepSeekHarness` / `HarnessClient` 与 Python `DeepSeekHarness` / `HarnessClient` 是进程外 Consumer，同表不同签名。`serverInfo.name` 钉死 `deepseek-harness-sdk-runtime`。

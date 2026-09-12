@@ -44,7 +44,7 @@ related:
   - subsys.execution.subprocess
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-mcp-client` 是 **opt-in** 的 MCP 工具桥：每个插件实例连一台外部 MCP server，只把 `tools/list` 登记进 `ctx.tools`，模型看见的名字是 `mcp__<serverName>__<rawName>`。它不进 `dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` / 任一 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）；`apps/cli` 把包装进 `dependencies` 只是给 overlay / example / ACP 解析。默认产品树零 MCP server。
@@ -74,7 +74,7 @@ updated: d347e70390
 
 **host 面 vs agent-preset 面。** 本包一旦加载就在当前 fiber 上连 server、往该作用域的 `ctx.tools` `register`。profile overlay 挂在 host 根；ACP 会话把同一插件 `agentCtx.plugin(McpClient, config)` 挂进未发布的 Agent 作用域。[E: packages/acp/acp/src/mcp.ts:32] 它不是 preset `isolate` remount，也不是 `dsh --profile web|headless|sdk|sdk-minimal|acp` 的默认能力。不要写成「DSH 内置了一堆 MCP server」。
 
-**没有 waterfall，没有 isolate。** 本包不往 `Events.waterfall` 挂 listener。组合失败是 `inject` 等到 `tools`、`serverName` 冲突拒载、reconnect 校验失败、`failOnStartupError` 拒激活。Cordis 全局规则仍是：waterfall 必须调用传入的 `next()` 才会 `cbs.shift()`；不调用就停在本层。[E: vendor/cordis/src/events.ts:238] 模型调用已注册 MCP 工具时，走 `ToolRuntime` 的 `tools/pre-execute`（默认 `next` 是 `allow`）——那是 Consumer / 注册表管线，不在本包。[E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1468]
+**没有 waterfall，没有 isolate。** 本包不往 `Events.waterfall` 挂 listener。组合失败是 `inject` 等到 `tools`、`serverName` 冲突拒载、reconnect 校验失败、`failOnStartupError` 拒激活。Cordis 全局规则仍是：waterfall 必须调用传入的 `next()` 才会 `cbs.shift()`；不调用就停在本层。[E: vendor/cordis/src/events.ts:238] 模型调用已注册 MCP 工具时，走 `ToolRuntime` 的 `tools/pre-execute`（默认 `next` 是 `allow`）——那是 Consumer / 注册表管线，不在本包。[E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1469]
 
 ## 关键文件
 
@@ -125,9 +125,9 @@ stdio 另有 `args` 默认 `[]`、`env` 默认 `{}`（scrub 之后合并，可�
 
 7. 连上之后 `enqueueSync` 串行跑 `syncTools`（两代 swap 不能交错）。[E: packages/mcp/mcp-client/src/connection.ts:162] Phase 1：分页 `tools/list`（`listToolsUncached`，不碰 SDK 的 per-page output 缓存），按 `publicToolName(serverName, tool.name)` 建 `ToolDefinition`。[E: packages/mcp/mcp-client/src/tools.ts:73] [E: packages/mcp/mcp-client/src/tools.ts:156] 同一 raw name 在一份 list 里出现两次 → 抛，**上一世代仍注册**。[E: packages/mcp/mcp-client/src/tools.ts:158] Phase 2：先 dispose 上一世代，再 `ctx.tools.register`。[E: packages/mcp/mcp-client/src/tools.ts:178] [E: packages/mcp/mcp-client/src/tools.ts:182] 同层重名 `NamedEntries` 抛 `already registered`；本包回滚本代已挂上的名字，`'throw'` 时把冲突送回 startup，`'contain'` 返回空 Map。[E: packages/core/tools/src/index.ts:720] [E: packages/mcp/mcp-client/src/tools.ts:188] [E: packages/mcp/mcp-client/src/tools.ts:190] 源码里没有 `listResources` / `listPrompts` / `resources/list` / `prompts/list`——只桥 tools。
 
-8. 在 `connect` 之前就挂 `ToolListChangedNotificationSchema`。通知到来且 generation 仍是 current，就 `enqueueSync`（contain）。fetch 失败保留上一世代。[E: packages/mcp/mcp-client/src/connection.ts:257] [E: packages/mcp/mcp-client/src/connection.ts:263] 测试：`remote` 换成 `updated`；list 抛错时 `mcp__srv__remote` 仍在。[E: packages/mcp/mcp-client/tests/apply.spec.ts:345] [E: packages/mcp/mcp-client/tests/apply.spec.ts:358]
+8. 在 `connect` 之前就挂 `ToolListChangedNotificationSchema`。通知到来且 generation 仍是 current，就 `enqueueSync`（contain）。fetch 失败保留上一世代。[E: packages/mcp/mcp-client/src/connection.ts:257] [E: packages/mcp/mcp-client/src/connection.ts:263] 测试：`remote` 换成 `updated`；list 抛错时 `mcp__srv__remote` 仍在。[E: packages/mcp/mcp-client/tests/apply.spec.ts:345] [E: packages/mcp/mcp-client/tests/apply.spec.ts:359]
 
-9. 模型侧 Consumer 调 `ctx.tools.execute({ name: 'mcp__srv__echo', … })`。定义层 `execute` 是 `createExecutor` 闭包：`taskSupport === 'required'` 直接抛，不发 RPC；否则 `callToolUncached` 的 wire 是 `{ method: 'tools/call', params: { name: rawName, arguments } }`，**从不回解析 public name**。[E: packages/mcp/mcp-client/src/tools.ts:314] [E: packages/mcp/mcp-client/src/tools.ts:89] 测试钉死 mock 收到 `{ name: 'echo', … }`，不是 `mcp__srv__echo`。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:411] `isError: true` 再抛，让 `ToolRuntime` 走 isError 结果。[E: packages/mcp/mcp-client/src/tools.ts:345]
+9. 模型侧 Consumer 调 `ctx.tools.execute({ name: 'mcp__srv__echo', … })`。定义层 `execute` 是 `createExecutor` 闭包：`taskSupport === 'required'` 直接抛，不发 RPC；否则 `callToolUncached` 的 wire 是 `{ method: 'tools/call', params: { name: rawName, arguments } }`，**从不回解析 public name**。[E: packages/mcp/mcp-client/src/tools.ts:314] [E: packages/mcp/mcp-client/src/tools.ts:89] 测试钉死 mock 收到 `{ name: 'echo', … }`，不是 `mcp__srv__echo`。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:411] `isError: true` 再抛，让 `ToolRuntime` 走 isError 结果。[E: packages/mcp/mcp-client/src/tools.ts:343]
 
 10. `onclose` 且 generation 仍是 current → `scheduleReconnect`。`enabled: false` 只打 error，**已登记工具不卸**。[E: packages/mcp/mcp-client/src/connection.ts:194] [E: packages/mcp/mcp-client/tests/reconnect.spec.ts:334] 否则 `failedAttempts += 1`，超过 `maxAttempts` 就在 sync 队列尾部卸光工具并停。[E: packages/mcp/mcp-client/src/connection.ts:206] [E: packages/mcp/mcp-client/src/connection.ts:213] delay 是 `min(maxDelayMs, initialDelayMs * 2^(failedAttempts-1))`。[E: packages/mcp/mcp-client/src/connection.ts:216] 失败 generation 必须先 close（或 `GENERATION_CLOSE_TIMEOUT_MS = 5_000`）；超时则停 reconnect，避免两份 stdio 孩子重叠。[E: packages/mcp/mcp-client/src/connection.ts:50] [E: packages/mcp/mcp-client/src/connection.ts:291]
 
@@ -141,7 +141,7 @@ stdio 另有 `args` 默认 `[]`、`env` 默认 `{}`（scrub 之后合并，可�
 
 `mcp__<serverName>__<rawName>` 让两台 server 的同名 raw tool、以及 native `search` 与 `mcp__srv__search` 并存。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:214] [E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:231] 冲突 fail-loud（重复 `serverName`、list 内重复 raw name、外源抢 `mcp__<serverName>__*`），避免静默覆盖。规范化带 identity hash，是为了 `admin.reset` 与 `admin_reset` 不会塌成同一个 public name。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:177]
 
-executor 闭包持有 raw name，是因为 public name 在超长 / 非法字符时不可逆。`tools/call` 从不把模型看见的字符串拆回去。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:429]
+executor 闭包持有 raw name，是因为 public name 在超长 / 非法字符时不可逆。`tools/call` 从不把模型看见的字符串拆回去。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:428]
 
 stdio 不走 `ctx.subprocess`：MCP SDK 把 Protocol 绑死在自己的 transport 生命周期上。本包只共享 `scrubbedParentEnv` 这份 scrub 定义，避免孩子继承 `DEEPSEEK_API_KEY` / `DSH_*`；要给孩子密钥必须写在 Config `env` 里。这是和 ACP 其它子进程路径（`inject` 含 `subprocess`）相反的 documented exception。
 
@@ -155,7 +155,7 @@ reconnect 用「稳定窗口 = `maxDelayMs`」切 outage：连上够久再断算
 - **default export 会丢掉 `inject`。** `unwrapExports` 先取 `.default`。[E: vendor/loader/src/index.ts:194] 必须 `export const name` / `export const inject` / `export const Config` / `export async function apply`。
 - **一实例一台 server。** 两台 server 写两行 `id:`，各一个 `serverName`。同一 owner 上同一 `serverName` 再 `apply` 立刻抛，不会合并 list。不同 Agent 作用域可以各挂一份同名。
 - **冲突不覆盖。** 外源已经登记 `mcp__srv__taken` 时，本代 `free`+`taken` 全部回滚，模型看到的是「这台 server 零工具」，不是残缺子集。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:278]
-- **public name 不可逆。** `admin.reset` 的模型名带 hash；RPC 仍发 `admin.reset`。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:429]
+- **public name 不可逆。** `admin.reset` 的模型名带 hash；RPC 仍发 `admin.reset`。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:428]
 - **stdio 孩子不进 `ctx.subprocess` 树。** Host dispose 靠本 fiber 的 `connection.dispose` → SDK `client.close()`。不要按 ACP / bash 的 subprocess 清单去找 MCP 孩子。
 - **reconnect 关掉之后，断线工具仍在表里。** 再调用会打到已死的 generation，直到 HMR / 卸插件。[E: packages/mcp/mcp-client/tests/reconnect.spec.ts:334] give-up 才会卸工具。
 - **默认启动失败不拒载。** `failOnStartupError: false` 时 Host 带着零 MCP 工具继续跑；只有显式打开才会让缺 server 变成 fiber 失败。

@@ -53,7 +53,7 @@ related:
   - subsys.interaction.user-questions
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `ask_user_question` 是 `@deepseek-ai/dsh-tool-ask-user` 向模型注册的 **model-visible 工具**：暂停当前 tool-call，等 UI 通过 `ctx.userQuestions.ask` 收回人类答案，再把结构化 `{ answers }` 当成普通 `tool/result` 喂回 agent loop。它不是 slash command，也不是 `ctx.approval` 那条工具审批缝。
@@ -75,7 +75,7 @@ updated: d347e70390
 
 `apply(ctx)` **没有** schemastery `Config`，也没有改名 / 改参的部署旋钮。插件只做一件事：注册这一支工具。fiber `dispose` 后 `ctx.tools.get('ask_user_question')` 变回 `undefined`。[E: packages/interaction/tool-ask-user/src/index.ts:19][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:325][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:329]
 
-`defineTool` **没有** `timeoutMs`、`isConcurrencySafe`、`presentCall` / `presentResult`、`output.presentationMeta`。registry 把未声明并发分类器的调用标成 `exclusive`；Web UI 用 keyed toolview `key: 'ask_user_question'` 画一行摘要，不走 definition 上的 presenter。[E: packages/core/tools/src/index.ts:1269][E: packages/client/ui-tool/src/client/tool/toolviews/ask-question-row.tsx:204]
+`defineTool` **没有** `timeoutMs`、`isConcurrencySafe`、`presentCall` / `presentResult`、`output.presentationMeta`。registry 把未声明并发分类器的调用标成 `exclusive`；Web UI 用 keyed toolview `key: 'ask_user_question'` 画一行摘要，不走 definition 上的 presenter。[E: packages/core/tools/src/index.ts:1268][E: packages/client/ui-tool/src/client/tool/toolviews/ask-question-row.tsx:204]
 
 单测把编译后的 schema 钉成：顶层 `required: ['questions']`；每题有 `id` / `question` / `header` / `options` / `multi_select`；option 只有 `label` / `description`，**没有** `value` / `recommended` / `preview`。[E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:63][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:69][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:73][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:84][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:85][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:86]
 
@@ -88,8 +88,8 @@ updated: d347e70390
 三件不要和它混的东西：
 
 1. **不是 slash command。** 人命令走 `@deepseek-ai/dsh-commands` 的 `ctx.commands`（插件名 `'commands'`），由 UI 直接 `command/run`，不经模型 turn、也不进这支 tool schema。[E: packages/interaction/commands/src/index.ts:27]
-2. **不是 `ctx.approval`。** approval 是 `tools/pre-execute` 上的政策门（grant 是 `allowed-once`），模型看不见一张问卷。`ask_user_question` 自己不返回 `{ kind: 'ask' }`、不读 sandbox stamp。[E: packages/core/tools/src/index.ts:1468]
-3. **不是 plan 终审。** shipped `standard` / `ptc` / `cordis` 的 plan-mode 文案要求：可观察事实自己查，只把用户所有的选择交给 `ask_user_question`；计划本身必须走 `exit_plan_mode`，禁止用这支工具问「要不要开工」。`exit_plan_mode` 会自己调 `ctx.userQuestions.ask`，并带上 `intent: { kind: 'plan-review', … }` —— 那是另一支工具的 body，不是 `ask_user_question` 的 schema。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:120][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:124][E: packages/plan/plan-mode/src/index.ts:300][E: packages/plan/plan-mode/src/index.ts:313]
+2. **不是 `ctx.approval`。** approval 是 `tools/pre-execute` 上的政策门（grant 是 `allowed-once`），模型看不见一张问卷。`ask_user_question` 自己不返回 `{ kind: 'ask' }`、不读 sandbox stamp。[E: packages/core/tools/src/index.ts:1467]
+3. **不是 plan 终审。** shipped `standard` / `ptc` / `cordis` 的 plan-mode 文案要求：可观察事实自己查，只把用户所有的选择交给 `ask_user_question`；计划本身必须走 `exit_plan_mode`，禁止用这支工具问「要不要开工」。`exit_plan_mode` 会自己调 `ctx.userQuestions.ask`，并带上 `intent: { kind: 'plan-review', … }` —— 那是另一支工具的 body，不是 `ask_user_question` 的 schema。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:121][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:125][E: packages/plan/plan-mode/src/index.ts:300][E: packages/plan/plan-mode/src/index.ts:315]
 
 子 agent（runtime 上被另一个 live agent 拥有）禁止等人：service 在碰到 waterfall answerer 之前就抛 `DELEGATED_CALLER`，文案要求把未决问题写进 child 的最终结果，交给 root 再问。[E: packages/interaction/user-questions/src/index.ts:101][E: packages/interaction/user-questions/src/index.ts:105][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:293]
 
@@ -112,11 +112,11 @@ updated: d347e70390
 
 `options` 数组是整段原样转发（`options: question.options`）。schema 故意不广告 `value` / `recommended` / `preview`；推荐标签测试把 `pnpm (Recommended)` 当作普通 `label` 传下去。[E: packages/interaction/tool-ask-user/src/index.ts:86][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:125]
 
-shipped 三个装了它的 preset 的 `tool-ask-user` 行都没有 `config:`，因此产品默认就是这张表。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:245]
+shipped 三个装了它的 preset 的 `tool-ask-user` 行都没有 `config:`，因此产品默认就是这张表。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:238][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:239]
 
 ## 输出 & 截断 / spill
 
-`execute` 返回的规范值是封闭 object：`answers[]`，每项必有 `id`、`selected: string[]`，可选 `custom`。`additionalProperties: false`。registry 校验后再 `render`。[E: packages/interaction/tool-ask-user/src/index.ts:61][E: packages/interaction/tool-ask-user/src/index.ts:70][E: packages/core/tools/src/index.ts:1784][E: packages/core/tools/src/index.ts:1791]
+`execute` 返回的规范值是封闭 object：`answers[]`，每项必有 `id`、`selected: string[]`，可选 `custom`。`additionalProperties: false`。registry 校验后再 `render`。[E: packages/interaction/tool-ask-user/src/index.ts:61][E: packages/interaction/tool-ask-user/src/index.ts:70][E: packages/core/tools/src/index.ts:1783][E: packages/core/tools/src/index.ts:1790]
 
 模型看见的是一整段 JSON 文本，不是信封：
 
@@ -130,14 +130,14 @@ shipped 三个装了它的 preset 的 `tool-ask-user` 行都没有 `config:`，�
 
 本工具 **没有** spill 路径，也没有 `presentationMeta`。截断若发生，只会来自后续 compaction 的 `tool-result-pruner`（`standard` / `ptc` / `cordis` 的 isolate 组），不是这支工具的输出合同。
 
-失败走 registry `toolErrorResult`：`content` 为 `Error: <message>`；`UserQuestionError` 作为 `HarnessError` 会把 `{ name, code }` 放进 `error.info`，并随 `tool/result` 的 `error` 字段落盘。[E: packages/core/tools/src/index.ts:1865][E: packages/core/tools/src/index.ts:637][E: packages/core/agent-loop/src/tool-calls.ts:285][E: packages/interaction/user-questions/src/index.ts:34]
+失败走 registry `toolErrorResult`：`content` 为 `Error: <message>`；`UserQuestionError` 作为 `HarnessError` 会把 `{ name, code }` 放进 `error.info`，并随 `tool/result` 的 `error` 字段落盘。[E: packages/core/tools/src/index.ts:1864][E: packages/core/tools/src/index.ts:637][E: packages/core/agent-loop/src/tool-calls.ts:285][E: packages/interaction/user-questions/src/index.ts:34]
 
 | `UserQuestionError.code` | 谁抛 | 模型看到的要点 |
 |---|---|---|
 | `EMPTY_QUESTIONS` | `UserQuestionService.ask` | `questions: []`。[E: packages/interaction/user-questions/src/index.ts:91][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:315] |
 | `ASK_ABORTED` | service（进入时 signal 已 aborted，或等待中 abort 且原因不是 `UserQuestionError`）或 Web composer（`PendingQuestion.abort`） | 「ask_user_question was aborted before the user answered」。[E: packages/interaction/user-questions/src/index.ts:43][E: packages/client/ui-user-questions/src/client/contract/slots.ts:150] |
 | `CALLER_NOT_LIVE` | service | 传入了 `agent`，但 `ctx.agents.get(id)` 不是**同一个** live 实例。[E: packages/interaction/user-questions/src/index.ts:97] |
-| `DELEGATED_CALLER` | service | live agent 不是 `agents.roots()` 成员（被另一个 live agent 拥有）。[E: packages/interaction/user-questions/src/index.ts:105][E: packages/core/agent/src/index.ts:608] |
+| `DELEGATED_CALLER` | service | live agent 不是 `agents.roots()` 成员（被另一个 live agent 拥有）。[E: packages/interaction/user-questions/src/index.ts:105][E: packages/core/agent/src/index.ts:597] |
 | `NO_PROVIDER` | service waterfall 的 `next` 底 | 没有任何 answerer `return` 答案（消息：`no user-questions answerer accepted the request`）。[E: packages/interaction/user-questions/src/index.ts:132][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:266] |
 | `ASK_CANCELLED` | Web `PendingQuestion.cancel`（人关掉整组问卷） | 文案是 `the user cancelled ask_user_question`；Typert 把带 `name`/`code` 的 Error 送回 host，service `restoreUserQuestionError` 还原成 `UserQuestionError`。[E: packages/client/ui-user-questions/src/client/contract/slots.ts:186][E: packages/interaction/user-questions/src/index.ts:59] |
 | `BAD_INTENT` | service | 请求带了 `intent` 但 approve label 对不上 option，或缺 `detail`。本工具的 map **不会**发出 `intent`，正常路径碰不到。[E: packages/interaction/user-questions/src/index.ts:122] |
@@ -151,7 +151,7 @@ Web 卡片：`AskQuestionRow` 把 `ASK_CANCELLED` 显示成 cancelled（`state =
 | 角色 | 落点 |
 |---|---|
 | Definition | `@deepseek-ai/dsh-user-questions`：`ctx.userQuestions`（`UserQuestionService`），服务名字面量 `'userQuestions'`。[E: packages/interaction/user-questions/package.json:2][E: packages/interaction/user-questions/src/index.ts:67] |
-| Answerer | Cordis waterfall `'user-questions/request'`。监听者 return 答案即认领，或 `next()` 委托；全部放过则 `NO_PROVIDER`。[E: packages/interaction/user-questions/src/types.ts:85][E: packages/interaction/user-questions/src/index.ts:136] 有 `agent` 时走 `scopeTarget(agent, agent)`，只打到该 Agent 作用域。[E: packages/interaction/user-questions/src/index.ts:138] shipped Web：client 半边 `ctx.remote.$on('user-questions/request', …)` 建 `PendingQuestion`，composer 作答。[E: packages/client/ui-user-questions/src/client/index.ts:104] host 面 `@deepseek-ai/dsh-client-ui-user-questions` 的 node `apply()` 是空函数——工具行不在这个包。[E: packages/client/ui-user-questions/src/index.ts:14][E: packages/bundle/web-app/cordis.patch.yml:298] |
+| Answerer | Cordis waterfall `'user-questions/request'`。监听者 return 答案即认领，或 `next()` 委托；全部放过则 `NO_PROVIDER`。[E: packages/interaction/user-questions/src/types.ts:85][E: packages/interaction/user-questions/src/index.ts:136] 有 `agent` 时走 `scopeTarget(agent, agent)`，只打到该 Agent 作用域。[E: packages/interaction/user-questions/src/index.ts:138] shipped Web：client 半边 `ctx.remote.$on('user-questions/request', …)` 建 `PendingQuestion`，composer 作答。[E: packages/client/ui-user-questions/src/client/index.ts:104] host 面 `@deepseek-ai/dsh-client-ui-user-questions` 的 node `apply()` 是空函数——工具行不在这个包。[E: packages/client/ui-user-questions/src/index.ts:11][E: packages/bundle/web-app/cordis.patch.yml:345] |
 | Consumer | `@deepseek-ai/dsh-tool-ask-user` 的 `ask_user_question`；另有 `exit_plan_mode` 走同一 `ask()`，带 `intent` / `detail`。[E: packages/plan/plan-mode/src/index.ts:300] |
 
 `dsh-base` 在 **host 面**插入服务行 `id: user-questions` / `name: '@deepseek-ai/dsh-user-questions'`，**不**插入 `tool-ask-user`。模型可见工具属于 preset remount（web profile 的 `agent-presets` 行）。其它 shipped profile（`headless` / `sdk` / `sdk-minimal` / `acp`）不叠 web 的 preset roster，host 面是否出现这支工具取决于那条 composition 有没有自己 insert `tool-ask-user`。[E: packages/bundle/base/cordis.patch.yml:64][E: packages/bundle/base/cordis.patch.yml:65]
@@ -166,16 +166,16 @@ Typert 把 host 上的 `'user-questions/request'` 标成 `mode: 'waterfall'`，�
 
 对本工具的挂点：
 
-- **`tools/pre-execute`**：本插件不注册 listener，也不返回 `{ kind: 'ask' }`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会进 `ctx.approval`。[E: packages/core/tools/src/index.ts:1468]
-- **调度**：未声明 `isConcurrencySafe`，`executionMode` 直接 `exclusive`。两道问卷不会和别的 exclusive 调用重叠；这与「等人」语义一致。[E: packages/core/tools/src/index.ts:1269]
+- **`tools/pre-execute`**：本插件不注册 listener，也不返回 `{ kind: 'ask' }`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会进 `ctx.approval`。[E: packages/core/tools/src/index.ts:1467]
+- **调度**：未声明 `isConcurrencySafe`，`executionMode` 直接 `exclusive`。两道问卷不会和别的 exclusive 调用重叠；这与「等人」语义一致。[E: packages/core/tools/src/index.ts:1268]
 - **`tools/execute` 包装**：
   - `session-checkpoint-policy` 仅在「有 `exec.agent` 且 `exec.parent === undefined`」时 `flush` session，再 `next()`；flush 后若已 abort，body 不跑。[E: packages/session/session-checkpoint-policy/src/index.ts:71]
   - `timeout-policy` 读 `definition.timeoutMs`；本工具未声明，包装器直接 `next()`，**没有**截止时间。[E: packages/guard/timeout-policy/src/index.ts:59][E: packages/guard/timeout-policy/src/index.ts:61]
-- **body**：`defineTool` 先 `validateArgs`，再进 `apply` 里的 `execute`。`exec.signal` 原样传给 `ask({ signal })`。[E: packages/core/tools/src/schema.ts:586][E: packages/interaction/tool-ask-user/src/index.ts:90][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:209]
-- **`tools/post-execute`**：本插件不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1736]
+- **body**：`defineTool` 先 `validateArgs`，再进 `apply` 里的 `execute`。`exec.signal` 原样传给 `ask({ signal })`。[E: packages/core/tools/src/schema.ts:585][E: packages/interaction/tool-ask-user/src/index.ts:90][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:209]
+- **`tools/post-execute`**：本插件不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1735]
 - **sandbox / approval**：不挂。没有文件副作用，也没有 per-call sandbox stamp。
 
-`ptc` preset（picker **PTC 模式**，节点 id `surface.presets.code` 仍是稳定别名）下，模型能直接调的 **唯一** wire 工具是 `run_code`。`ask_user_question` 仍在 registry / SDK 里：`wireSchemas` 在 `mode === 'ptc'` 时只交出名为 `run_code` 的 schema；`sdkSchemas` 则投影除 `run_code` 以外的可见定义。模型直呼 `ask_user_question` 会在 **policy 之前** collapse（`UNKNOWN_TOOL`，文案要求从 `run_code` 程序里调）；从 `run_code` 程序里 `await tools.ask_user_question(args)` 带着 `parent: exec.token`（`nested === true`），不 collapse，重入 `TOOL_RUNTIME_SCHEDULER`，但 checkpoint 对 `exec.parent !== undefined` 直接 `next()`。[E: packages/core/tools/src/index.ts:986][E: packages/core/tools/src/index.ts:1232][E: packages/core/tools/src/index.ts:1316][E: packages/core/tools/src/index.ts:1432][E: packages/core/tools/src/ptc.ts:476][E: packages/session/session-checkpoint-policy/src/index.ts:71][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268]
+`ptc` preset（picker **PTC 模式**，节点 id `surface.presets.code` 仍是稳定别名）下，模型能直接调的 **唯一** wire 工具是 `run_code`。`ask_user_question` 仍在 registry / SDK 里：`wireSchemas` 在 `mode === 'ptc'` 时只交出名为 `run_code` 的 schema；`sdkSchemas` 则投影除 `run_code` 以外的可见定义。模型直呼 `ask_user_question` 会在 **policy 之前** collapse（`UNKNOWN_TOOL`，文案要求从 `run_code` 程序里调）；从 `run_code` 程序里 `await tools.ask_user_question(args)` 带着 `parent: exec.token`（`nested === true`），不 collapse，重入 `TOOL_RUNTIME_SCHEDULER`，但 checkpoint 对 `exec.parent !== undefined` 直接 `next()`。[E: packages/core/tools/src/index.ts:986][E: packages/core/tools/src/index.ts:1231][E: packages/core/tools/src/index.ts:1315][E: packages/core/tools/src/index.ts:1429][E: packages/core/tools/src/ptc.ts:476][E: packages/session/session-checkpoint-policy/src/index.ts:71][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269]
 
 ## Preset 装配
 
@@ -183,10 +183,10 @@ Typert 把 host 上的 `'user-questions/request'` 标成 `mode: 'waterfall'`，�
 
 | preset | 装 `@deepseek-ai/dsh-tool-ask-user`？ | `disabled` | isolate | shipped Config | 说明 |
 |---|---|---|---|---|---|
-| `minimal` | **否** | — | 无此行 | — | yml 不 insert 该行。装配后模型工具是 `['bash', 'str_replace_editor']`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:7][E: apps/cli/tests/web-agent-presets.e2e.ts:290] |
-| `standard` | **是** | 无 | 无（只往 host `tools` 注册） | 无 `config` | `- id: tool-ask-user` / `name: '@deepseek-ai/dsh-tool-ask-user'`。Web e2e 的 standard catalog 以 `ask_user_question` 打头。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:243][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:245][E: apps/cli/tests/web-agent-presets.e2e.ts:235] |
-| `ptc` | **是** | 无 | 无 | 无 `config` | 与 standard 同一行。PTC 只换呈现（唯一 wire = `run_code`），工具行仍在；另有 `tool-presentation` `mode: ptc`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:245][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:245][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
-| `cordis` | **是** | 无 | 无 | 无 `config` | 同样 remount。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:231][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:233] |
+| `minimal` | **否** | — | 无此行 | — | yml 不 insert 该行。装配后模型工具是 `['bash']`（POSIX）。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: apps/cli/tests/web-agent-presets.e2e.ts:299] |
+| `standard` | **是** | 无 | 无（只往 host `tools` 注册） | 无 `config` | `- id: tool-ask-user` / `name: '@deepseek-ai/dsh-tool-ask-user'`。Web e2e 的 standard catalog 以 `ask_user_question` 打头。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:238][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:239][E: apps/cli/tests/web-agent-presets.e2e.ts:243] |
+| `ptc` | **是** | 无 | 无 | 无 `config` | 与 standard 同一行。PTC 只换呈现（唯一 wire = `run_code`），工具行仍在；另有 `tool-presentation` `mode: ptc`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:248][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:248][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] |
+| `cordis` | **是** | 无 | 无 | 无 `config` | 同样 remount。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:226][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:227] |
 
 Web 组合把模型可见工具全部赶到 per-session preset：全局层 `toolNames(ctx)` 为空，`ask_user_question` 也包括在内。[E: apps/cli/tests/web-agent-presets.e2e.ts:185]
 
@@ -196,7 +196,7 @@ Web 组合把模型可见工具全部赶到 per-session preset：全局层 `tool
 
 符号：`apply` @ `packages/interaction/tool-ask-user/src/index.ts`，`UserQuestionService.ask` @ `packages/interaction/user-questions/src/index.ts`，Web 等待 @ client `PendingQuestion`。
 
-1. **校验参数。** `defineTool` 的 wrapper 对隐式 schema 跑 `validate`；缺 `questions`、题上缺 `id`/`question`、option 缺 `label` 会抛 `ToolArgsError`（`INVALID_ARGS`），到不了 `ask`。[E: packages/core/tools/src/schema.ts:586][E: packages/core/tools/src/schema.ts:466]
+1. **校验参数。** `defineTool` 的 wrapper 对隐式 schema 跑 `validate`；缺 `questions`、题上缺 `id`/`question`、option 缺 `label` 会抛 `ToolArgsError`（`INVALID_ARGS`），到不了 `ask`。[E: packages/core/tools/src/schema.ts:585][E: packages/core/tools/src/schema.ts:466]
 
 2. **投影成 seam 请求。** `execute` 把每题映射为 `AskUserQuestionItem`：拷 `id` / `question`；有则拷 `header` / `options`；把 `multi_select` 改名为 `multiSelect`。有 `exec.agent` 就写入 `agent`；始终带 `signal: exec.signal`。[E: packages/interaction/tool-ask-user/src/index.ts:81][E: packages/interaction/tool-ask-user/src/index.ts:87][E: packages/interaction/tool-ask-user/src/index.ts:89][E: packages/interaction/tool-ask-user/tests/tool-ask-user.spec.ts:251]
 
@@ -215,7 +215,7 @@ Web 组合把模型可见工具全部赶到 per-session preset：全局层 `tool
 
 7. **投影回规范值。** `execute` 把每条 answer 收成 `{ id, selected: [...], custom? }`，去掉 `undefined` 的 `custom`。[E: packages/interaction/tool-ask-user/src/index.ts:92]
 
-8. **registry 投影。** `createSuccessResult` 校验 output schema，再 `JSON.stringify` 成一段 text。loop `append('tool/result')`。turn 取消若发生在 body 已开始之后，registry 只在结果 **还不是** `isError` 时换成 `ABORTED`；工具自己已经结构化失败（例如 `ASK_ABORTED`）会保留原码。[E: packages/core/tools/src/index.ts:1784][E: packages/core/tools/src/index.ts:1791][E: packages/core/tools/src/index.ts:1583][E: packages/core/agent-loop/src/tool-calls.ts:282]
+8. **registry 投影。** `createSuccessResult` 校验 output schema，再 `JSON.stringify` 成一段 text。loop `append('tool/result')`。turn 取消若发生在 body 已开始之后，registry 只在结果 **还不是** `isError` 时换成 `ABORTED`；工具自己已经结构化失败（例如 `ASK_ABORTED`）会保留原码。[E: packages/core/tools/src/index.ts:1783][E: packages/core/tools/src/index.ts:1790][E: packages/core/tools/src/index.ts:1583][E: packages/core/agent-loop/src/tool-calls.ts:282]
 
 ## 设计动机·edge
 

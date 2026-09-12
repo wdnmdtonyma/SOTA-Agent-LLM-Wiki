@@ -1,91 +1,77 @@
-# DSH wiki 增量刷新令（0a53fb55be → d347e70390）
+# UPDATE INSTRUCTIONS — DSH wiki d347e70390 → c291e7961a
 
-给 filler 读。规范仍以 `../conventions.md` 与 `../RUN.md` 为准。本文件只补充**这一轮**的路径重映射、架构事实和文件纪律。
+> 给 filler / L2 verifier 用。事实以 `deepseek-harness/` checkout `c291e7961a` 为准，不以本文件或 update-facts 转述为准。写前必须打开被引用的源文件。
 
-本轮 **不跑逐节点独立 L2**。filler 自己核 `[E:]`（每页至少抽 3 条 `read_file` 对行），写完将 `status: verified`。过宽结论宁可降 `[I]/[U]`。
+## 目标
 
-## 冻结点
+- **base（上一轮 verified）**: `d347e703908d0406b7a7ef80e3a0e594d86b2215`（`0.1.3-alpha.1`）
+- **target（官方 `origin/master`）**: `c291e7961a515f6d7af9304e7fd1d257929aef26`（`0.1.5-rc.2`；describe `dsh-v0.1.5-rc.2-139-gc291e7961a`）
+- **短 SHA**: `c291e7961a`
+- **跨度**: 1301 commits · 6327 files · +165004 / -36468
+- **节点影响**: 11 A-BROKEN / 115 B-HEAVY / 76 C-DRIFT / 2 D-CLEAN
+- **新增节点**: `surface.tools.present`、`surface.profiles.desktop`（lead 会登记 llms.txt / index）
+- **不退役**: `surface.tools.report`、`subsys.persistence.sqlite` 继续当退役页；`surface.tools.str-replace-editor` **保留**，改成「包在、出厂不挂」
 
-- **base**(上一轮 verified): `0a53fb55be` (`0.1.2-alpha.2`)
-- **target**(必须对照的源码 HEAD): `d347e70390` (`0.1.3-alpha.1`；全 SHA `d347e703908d0406b7a7ef80e3a0e594d86b2215`)
-- 源码根: `deepseek-harness/`（相对本 wiki `../../../deepseek-harness/`）
-- 节点 `updated:` 一律写成 `d347e70390`
-- 工作树可能残留已删除包的空壳目录（只有 `node_modules`、没有 `package.json`）。**那些不是源码**。判断路径是否存在：看 git 跟踪的 `package.json` / `.ts` / `.yml`，或 `test -f`。
+## 硬规则
+
+1. 中文讲解，英文标识符。节点自包含。套 `docs/llm-wiki/deepseek-harness/conventions.md` 对应模板。
+2. 每条 load-bearing 论断就近 `[E: relative/path:line]`，相对 `deepseek-harness/`。行号必须落在**被断言的代码行本身**，不是上方注释、空行、或 lone `}`。
+3. frontmatter: `status: verified`、`updated: c291e7961a`、`evidence: explicit`（除非真是 inferred）。`status: verified` 只在你用 Read 抽检至少 3 条 `[E]` 之后。
+4. 只写你被分配的 node `.md`，以及可选 `docs/llm-wiki/deepseek-harness/_staging/uncertainty-update-<id-last-segment>.md`。
+5. **不要**改 `index.json`、`llms.txt`、`reference/uncertainty.md`、`README.md`、`conventions.md`、`RUN.md`、`tools/*`、其它节点、`deepseek-harness/` 源码。
+6. `[E]` 不得指向 `docs/**`、`.agents/notes/**`、已删除包。
+7. 产品版本现为 **0.1.5-rc.2**。Node `^22.19.0 || >=24.0.0`、pnpm `11.7.0` 未变。`packages/**/package.json` = **275**（含 7 个 `@fixture/*`）；产品叶 `packages/*/*` = **268**。
+8. 写完后抽 3 条 `[E]` 用 Read 对一下行号。过宽结论宁可降 `[I]/[U]`。
+
+### 按批次深度
+
+- **rewrite**：重写 load-bearing 段与 source/symbols，页结构可留，保留仍成立的问句。
+- **remap**：禁止从零重写。删缺失 source、改 `[E:]`、改过时一句；其余不动。
+- **refresh**：对照当前 source 修假话、重落行号，不扩写。
+- **create**：按 conventions 模板从零写新文件。父目录已存在。
 
 ## 路径重映射（frontmatter `source:` 与 `[E:]` 必须改到右边）
 
 | 旧路径 | 新路径 / 处理 |
 |---|---|
-| `packages/session/session-persistence/src/coordinator.ts` | **已删除**。缝定义在 `packages/session/session-persistence/src/{index,handle,storage-contract,errors,revision}.ts` |
-| `packages/session/session-persistence/src/preparations.ts` | **已删除**。读 `handle.ts` + jsonl `storage.ts` |
-| `packages/session/session-persistence/src/write-behind.ts` | **已删除**。jsonl 写路径 + `lease.ts` |
-| `packages/session/session-persistence-sqlite/**` | **包已删除**（目录若还在，只有 `node_modules` 空壳）。session 盘只剩 JSONL。`session-query-sqlite` 与 `storage-sqlite` **仍在**，不要一起退役 |
-| `packages/subagent/tool-subagent-report/**` | **包已删除**。`surface.tools.report` 保留 id，改写成退役页 |
-| `packages/subagent/subagent/src/descriptor-seed.ts` | `packages/subagent/subagent/src/descriptor.ts` |
-| `packages/subagent/subagent/src/activation-setup-registry.ts` | **已删除**。改读 `child-agent.ts` / `continuation.ts` / `lifecycle.ts` |
-| `packages/code-runtime/code-runtime-python/**` | `packages/experimental/code-runtime-python/**`；包名 `@deepseek-ai/dsh-experimental-code-runtime-python` |
-| `packages/examples/agent-spine-demo/**` | **已删除**。`subsys.core.invariants` 不要再引用 demo |
-| 绝大多数 `packages/*/src/invariant.ts` | **本轮大批删掉**（251 → 39）。文件不存在就从 `source:` / `[E:]` / Sources 删掉，不要虚构 companion |
-| `packages/*/tests/fixtures/loader/cordis.yml` | 改为同目录 `*.patch.yml`（如 `acp.patch.yml`、`codex.patch.yml`、`dsh-sdk.patch.yml`、`child.patch.yml`） |
-| `packages/context/time-context/tests/fixtures/cordis.yml` | `packages/context/time-context/tests/fixtures/time-context.patch.yml` |
+| `packages/core/agent/src/inbox.ts` | **`packages/core/agent-loop/src/inbox.ts`**（`ReactLoopInbox`） |
+| `packages/feedback/message-feedback/src/spec.ts` | **已删除**。改读 `packages/feedback/message-feedback/src/{index,types}.ts` |
+| `packages/client/ui-chat/src/client/details/DetailsPanel.tsx` | **已删除**。改读 `packages/client/ui-chat/src/client/chat/` 与 conversation-nodes；详情/预览落到右侧栏节点或 `ui-layout` |
+| `native/landlock-run/package.json` | **包 json 已不在此**。native 工作区现为 `native/system`（`@deepseek-ai/node-addon-system-workspace`）。空壳 `native/landlock-run/` 只剩 `node_modules`，**不是源** |
+| 已退役包（仍不存在） | `session-persistence-sqlite`、`tool-subagent-report`、`host/apiproxy`、`client/runtime`、`client/web-react`、`examples/agent-spine-demo`、`packages/code-runtime/code-runtime-python` |
 
-找不到替换文件就从 `source:` 删掉该条。禁止把 `[E:]` 指到已删除路径。禁止把空壳 `node_modules` 当源。
+找不到替换文件就从 `source:` 删掉该条。禁止把 `[E:]` 指到已删除路径或空壳 `node_modules`。
 
 ## 必须写进正文的架构事实（先读源再写，不要照抄本表当 [E]）
 
-1. **`SESSION_FORMAT_VERSION = 2`**（`packages/core/session/src/types.ts`）。不再写「现为 0、没有自动 migration」。当前有 **adjacent** 链：`session-format-v0-to-v1` → `session-format-v1-to-v2`，由 `dsh-session-format` + `dsh-session-format-catalog` 规划，JSONL 后端在 load 时走 catalog。比 2 新的盘仍拒。
-2. **session persistence 是 handle 缝**：`create`/`open` 得到 `SessionHandle`；`coordinator.ts` 不存在。
-3. **shipped session 盘只有 JSONL**。`dsh-base` 仍挂 `session-persistence-jsonl`。jsonl 有跨进程 write-ownership **lease**。SQLite **session persistence** 包已删除；节点 `subsys.persistence.sqlite` **保留 id**，改写成退役 + 指向仍活着的 `session-query-sqlite` / `storage-sqlite`。
-4. **`report` 工具包已删除**。`surface.tools.report` 保留 id，标明退役。tools-catalog / package-index / presets 表里删掉活行。base bundle 不再挂 `tool-subagent-report`。
-5. **PTC 不再向模型发布 `workflow`**：`presets/ptc/agent.cordis.yml` 里 `tool-workflow` 为 `disabled: true`（留下 engine 给 `ralph`）。`run_code` 仍是 PTC 的模型编排面。
-6. **Python code-runtime 现在是真正的 `CodeRuntime` Provider**（CPython subprocess，fd-3 JSON-lines），包在 `packages/experimental/code-runtime-python`。旧页「只 re-export protocol、不占 seam」已经过时，必须重读 `src/index.ts`。
-7. **http-proxy 是库不是插件**：`@deepseek-ai/dsh-http-proxy`，`installProxyFromEnvironment` 在 `apps/cli/src/profile-boot.ts` 安装 undici dispatcher。不要写成 Cordis 行。
-8. **file-upload** 是 web-app 挂载的 client 服务（`dsh-client-file-upload`），不是新的模型可见工具。
-9. **session-turn-outline** 是 web-app 上的 projection unit。写进 `subsys.persistence.projection`，**不要另建节点**。
-10. **五个 profile / 四个 preset / 六个 bundle 名字没变**。默认模型仍是 `deepseek-official` / `deepseek-v4-flash`。
-11. 叶 package 约 **265**（以 `packages/**/package.json` 现数为准，catalog 重数）。产品版本 `0.1.3-alpha.1`。
-12. 正文凡写 `SESSION_FORMAT_VERSION = 0`、`没有 migration`、`session-persistence-sqlite` 仍是可选后端、`tool-subagent-report` 仍 shipped、Python runtime 仍在 `packages/code-runtime/code-runtime-python`、PTC 仍发布 `workflow` 工具——全部改掉。
+1. **`SESSION_FORMAT_VERSION = 3`**（`packages/core/session/src/types.ts`）。catalog `currentVersion: 3`，adjacent 链 **v0→v1→v2→v3**（新增 `session-format-v2-to-v3`）。比 3 新的盘仍拒。禁止再写「现为 2 / 链止于 v2 / 比 2 新拒绝」。
+2. **system prompt 进 derived history**：独立 `system/message` 事件；`request/header` / `EpochHeader` **不再带 `system` 字符串**。v2→v3 迁移会插入 synthetic system messages，并把旧 preset id `code` 重写为 `ptc`。
+3. **同步读 API 弃用**：`eventAt()` / `snapshotEvents()` / `ownEvents()` 禁止新增生产调用（session README）。wiki 叙述以当前源码合同为准，不要把废弃同步读写成推荐路径。
+4. **session persistence 仍是 handle 缝**：`create`/`open` → `SessionHandle`；JSONL + write lease；**无 coordinator**；session 盘 shipped 只有 JSONL。
+5. **base 默认模型** = `deepseek-official` / **`deepseek-flash`**（不是 `deepseek-v4-flash`）。catalog **两者并存**；**acp-app 仍硬编码 `deepseek-v4-flash`**。区分「base 新 Agent 默认」与「acp 专用默认」。
+6. **persona 配置**：bundle `system-prompt` 用 `personaPrefix` / `personaSuffix`；preset `@deepseek-ai/dsh-persona` 用 `prefix` / `suffix`。不要再写旧键 `text` / 单字段 `persona`。
+7. **`present` 是新的模型可见工具**（wire 名 `present`，包 `@deepseek-ai/dsh-tool-present`）。挂在 **standard / ptc / cordis**（不在 minimal）。成功后 append `deliverables/presented`。
+8. **`str_replace_editor` 退出出厂路径**：base / web-app / 四个 preset yml **都不挂**。包仍在。minimal **只剩 persistent shell**（无 fs / 无 str_replace）。
+9. **`tool-workflow` 在 ptc 仍 `disabled: true`**，engine 留给 `ralph`。
+10. **五个 shipped CLI profile 未变**：`web` / `headless` / `sdk` / `sdk-minimal` / `acp`。**`desktop` 不是第六个 CLI profile**：Electron 壳独占 `$DSH_HOME/profiles/desktop`；`dsh --profile desktop` 被 `rejectElectronProfile` 拒绝。
+11. **六个 shipped bundle 名字未变**。web-app 新增 open-in-app / resources / workspace-files / 右侧 sidebar 栈；**不要**为单个 ui-* 另建节点（fold 进 workbench / ui-layout / apiproxy）。
+12. **message-feedback 进 Session log**：`feedback/message-put` / `feedback/message-delete`（另有 `feedback/record` 来自 command-feedback）。不再是 storage-domain sidecar。
+13. **Inbox 实现在 agent-loop**：`packages/core/agent-loop/src/inbox.ts` 的 `ReactLoopInbox`。
+14. **Python runtime** 仍是 `packages/experimental/code-runtime-python`（真正的 CodeRuntime Provider）。http-proxy / file-upload 路径未变。
+15. 正文凡写 `SESSION_FORMAT_VERSION = 2`、默认模型全局 `deepseek-v4-flash`、minimal = persistent shell + str_replace_editor、inbox 在 `agent/src/inbox.ts`、header 仍带 system 字符串、feedback 只写 sidecar——全部改掉。
 
-## 本轮新节点（3）
+## 本轮新节点（2）
 
 | 节点 | 路径 | 判定 |
 |---|---|---|
-| `subsys.persistence.session-format` | `subsystems/persistence/session-format.md` | v0→v1→v2 链、catalog、与 jsonl load 的接缝 |
-| `subsys.client.file-upload` | `subsystems/client/file-upload.md` | web-app 浏览器上传 / staged receipt |
-| `subsys.util.http-proxy` | `subsystems/util/http-proxy.md` | 进程级 outbound proxy 库 |
+| `surface.tools.present` | `surface/tools/present.md` | 新 wire 名；standard/ptc/cordis；`deliverables/presented` |
+| `surface.profiles.desktop` | `surface/profiles/desktop.md` | Electron 无端口壳；**不是** `PROFILE_TEMPLATES` 成员 |
 
-不要为 inspector / webworker preview / 单个 ui-* 控件另建节点。
+不要为 workspace-files / open-in-app / resources / ui-dockkit / ui-sidebar-* / package-manifest / chunked-list / remote-mock / session-format-v2-to-v3 另建节点。v2→v3 fold 进 `subsys.persistence.session-format`；Web 新行 fold 进 `surface.web.workbench`、`subsys.client.ui-layout`、`subsys.host.apiproxy`、`subsys.composition.bundle-web-app`。
 
-## 不要退役的节点（就地改 source / 标题）
+## 不要退役的节点
 
-- `surface.tools.report` → 退役映射，不要删文件
-- `subsys.persistence.sqlite` → 退役 session-persistence-sqlite；讲清 query/storage sqlite 仍在
-- `subsys.execution.code-runtime-python` → 改 experimental 路径与 Provider 身份
+- `surface.tools.report` / `subsys.persistence.sqlite` → 继续退役页
+- `surface.tools.str-replace-editor` → 包在、出厂不挂
 - `surface.presets.code` / `subsys.core.code-mode` → 稳定别名，继续讲 PTC
-
-## filler 纪律
-
-只写两类文件：
-
-1. 自己批次里的节点 `docs/llm-wiki/deepseek-harness/<path>`
-2. 可选 `_staging/uncertainty-update-<slug>.md`
-
-禁止改：`index.json`、`llms.txt`、`reference/uncertainty.md`、`README.md`、`conventions.md`、`RUN.md`、`tools/*`、别人批次的节点、`deepseek-harness/` 源码。
-
-步骤：
-
-1. 读本文件 + `conventions.md` 对应模板。
-2. 读现有节点 `.md`（remap 批次不要写成空模板；rewrite 批次保留仍成立的问题列表）。
-3. 用 `read_file` / `grep` 读 **target** 源码。`source:` 失效路径先按上表重映射，再核对文件确实存在。
-4. 每个 load-bearing 论断的 `[E: path:line]` 必须落在被断言的那一行代码上（不是空行/注释/纯括号）。
-5. `status: verified`（自己核过至少 3 条 `[E:]`）或 `draft`（核不完），`updated: d347e70390`，`evidence: explicit`。
-6. 跑 lint 时只处理带自己 `node:<path>` 的报错。
-
-### 按批次深度
-
-- **rewrite**：重写 load-bearing 段与 source/symbols，页结构可留。
-- **remap**：禁止从零重写。删缺失 source、改 `[E:]`、改过时一句；其余不动。
-- **refresh**：对照变更过的 source 修假话、重落行号，不扩写。
-- **create**：按 conventions 模板从零写新文件。
-
-质量：不要为过 lint 写空话；不要把官方 `docs/**` 当 `[E]`；冲突时跟代码。
+- `subsys.host.apiproxy` → 稳定别名，HTTP 仍是 controllers + gateway；可加 workspace-files 一节

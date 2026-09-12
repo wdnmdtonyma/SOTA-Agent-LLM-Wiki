@@ -45,7 +45,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `ctx.fileReferences` 是 **path-only `@file` 发现缝**：Definition 包 `@deepseek-ai/dsh-file-reference` 声明抽象 `FileReferenceService.list()` 与浏览器安全的 `@` 语法；shipped Provider 是 `@deepseek-ai/dsh-file-reference-local`（`LocalFileReferenceService`），**只挂在 `dsh-web-app`**。候选不含文件内容；模型要读盘仍走 [`surface.tools.read`](../../surface/tools/read.md)。Host 再经 `SessionFileReferences` 把同一 `list` 暴露成 Remote namespace `'fileReferences'`。
@@ -125,7 +125,7 @@ flowchart TD
 
 1. **Definition 包不 shipped 成独立 cordis 行。** `@deepseek-ai/dsh-file-reference` 声明 `ctx.fileReferences` 与抽象 `list`。 [E: packages/context/file-reference/package.json:2] [E: packages/context/file-reference/src/index.ts:26]
 
-2. **shipped Provider 只在 `dsh-web-app`。** overlay 插入 `id: file-reference-local` / `name: '@deepseek-ai/dsh-file-reference-local'`；`dsh-web-app` 同时依赖 Definition 与 local 包。`dsh-headless` 的 insert 只有 `code-runtime` / `headless-startup` / `headless-runner`。`standard` 的 `agent.cordis.yml` 挂 `persona` 与 `agent-instructions`，四个 shipped preset 都没有 file-reference 行。 [E: packages/bundle/web-app/cordis.patch.yml:67] [E: packages/bundle/web-app/cordis.patch.yml:68] [E: packages/bundle/web-app/package.json:103] [E: packages/bundle/web-app/package.json:104] [E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:24]
+2. **shipped Provider 只在 `dsh-web-app`。** overlay 插入 `id: file-reference-local` / `name: '@deepseek-ai/dsh-file-reference-local'`；`dsh-web-app` 同时依赖 Definition 与 local 包。`dsh-headless` 的 insert 只有 `code-runtime` / `headless-startup` / `headless-runner`。`standard` 的 `agent.cordis.yml` 挂 `persona` 与 `agent-instructions`，四个 shipped preset 都没有 file-reference 行。 [E: packages/bundle/web-app/cordis.patch.yml:81] [E: packages/bundle/web-app/cordis.patch.yml:81] [E: packages/bundle/web-app/package.json:103] [E: packages/bundle/web-app/package.json:104] [E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:24]
 
 3. **`LocalFileReferenceService` inject `agents`。** `static inject = ['agents']`。构造时对已有 agent 装 prompt fiber，`agent/created` 再装，`agent/disposed` 时 `WorkspaceFileSearch.dispose()` 并卸 prompt。`session/event` 仅当 `event.type === 'tool/result'` 且能 `agents.get(session.id)` 时 `invalidate()`。 [E: packages/context/file-reference-local/src/index.ts:45] [E: packages/context/file-reference-local/src/index.ts:90] [E: packages/context/file-reference-local/src/index.ts:91] [E: packages/context/file-reference-local/src/index.ts:97] [E: packages/context/file-reference-local/src/index.ts:98] [E: packages/context/file-reference-local/tests/service.spec.ts:91]
 
@@ -157,7 +157,7 @@ flowchart TD
 
 ## Gotcha
 
-- **依赖 ≠ 全产品挂载。** 只有 `dsh-web-app` 有 cordis 行。`dsh --profile headless|sdk|sdk-minimal|acp` 默认没有 `ctx.fileReferences`。 [E: packages/bundle/web-app/cordis.patch.yml:67]
+- **依赖 ≠ 全产品挂载。** 只有 `dsh-web-app` 有 cordis 行。`dsh --profile headless|sdk|sdk-minimal|acp` 默认没有 `ctx.fileReferences`。 [E: packages/bundle/web-app/cordis.patch.yml:81]
 - **本缝不解析用户消息、不注入 additionalContext。** 选中的 `@path` 就是普通 prompt 文本。跨会话 JSON 信封是另一条缝。
 - **没有 `read` 则 prompt 为空**，补全仍可用。 [E: packages/context/file-reference-local/tests/service.spec.ts:69]
 - **`lib` 不在默认排除表**；构建产物在 `lib/` 的仓要自己配 `excludedDirectories`。 [E: packages/context/file-reference-local/src/search.ts:31]

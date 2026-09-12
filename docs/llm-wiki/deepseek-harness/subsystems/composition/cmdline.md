@@ -51,7 +51,7 @@ related:
   - spine.capability-seams
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-cmdline` 是 **host 面**启动胶：launcher 只切开 `--profile` / `--patch` / dump，把其余 argv 冻成 `ctx.cmdlineArgs`；树内 app 用自己的 commander 调 `parseCmdline`，help / version / 语法错走 `ctx.appExit`，不 `process.exit`。stdio 面（sdk / sdk-minimal / acp）另用 `exitOnStdinEnd` + `ctx.appReady`。
@@ -84,9 +84,9 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 - `boot` / `loadProfile` / `composeEntries` / 空 `cordis.yml` — [subsys.composition.app-boot](./app-boot.md)。
 - web `--host` / `--port` / `--trusted-host` / `--no-open` 语义与 bind 安全门 — [surface.profiles.web](../../surface/profiles/web.md)。
 - headless task 空串拒绝、runner 退出码 — [surface.profiles.headless](../../surface/profiles/headless.md)。
-- `createProcessShutdown` 的 5s grace — launcher 把 `shutdown.shutdown` 塞进 `AppExit`。 [E: apps/cli/src/profile-boot.ts:260]
+- `createProcessShutdown` 的 5s grace — launcher 把 `shutdown.shutdown` 塞进 `AppExit`。 [E: apps/cli/src/profile-boot.ts:332]
 - preset 发现、`mountPreset`、`leakedServices` 实现。本页只写：cmdline 是 host 事实；shipped `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml` 没有这行。
-- 模型可见工具字段。`dsh-base` **没有** `subagent-codex` / `subagent-claude-code` 行。 [E: packages/bundle/base/tests/base.spec.ts:42] [E: packages/bundle/base/tests/base.spec.ts:43]
+- 模型可见工具字段。`dsh-base` **没有** `subagent-codex` / `subagent-claude-code` 行。 [E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:44]
 - 任何 `Events.waterfall` listener。
 
 ## 关键文件
@@ -126,7 +126,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 
 `provideCmdline` 做 `Object.freeze([...host.args])`，`get()` 永远返回同一份冻结数组。 [E: packages/boot/cmdline/src/index.ts:85] [E: packages/boot/cmdline/tests/cmdline.spec.ts:223]
 
-`dsh-cmdline` 对 commander 只 `import type { Command }`；运行时 `Command` 实例由 app 传入。web-app 依赖自己的 `commander` 副本。 [E: packages/boot/cmdline/src/index.ts:19] [E: packages/bundle/web-app/package.json:116]
+`dsh-cmdline` 对 commander 只 `import type { Command }`；运行时 `Command` 实例由 app 传入。web-app 依赖自己的 `commander` 副本。 [E: packages/boot/cmdline/src/index.ts:19] [E: packages/bundle/web-app/package.json:123]
 
 ## 控制流
 
@@ -149,23 +149,23 @@ flowchart TD
   AppExit --> Dispose["fiber.dispose 再记 exitCode"]
 ```
 
-1. `parseDshArgs@apps/cli/src/args.ts` 只认识 launcher 自己的 token：`--profile`、可重复非 variadic 的 `--patch`、`--dump-config` / `--dump-default-config`、子命令 `web` / `plugin`、以及根上的 `-V`。`helpOption(false)` + `allowUnknownOption` + `passThroughOptions` + `enablePositionalOptions`：第一个它不认识的 token 起全部进入 leftover，包括 app 的 `-h`。`dsh web` 的 action 把 profile 写成 `'web'`，仍是 `mode: 'profile'`（带 dump 旗标时变成 `mode: 'dump-config'`）。**没有** `dsh sdk` / `dsh acp` / `dsh headless` 子命令。无 `--profile` 且 leftover 也不是 launcher help 则 `program.error`。 [E: apps/cli/src/args.ts:126] [E: apps/cli/src/args.ts:127] [E: apps/cli/src/args.ts:128] [E: apps/cli/src/args.ts:129] [E: apps/cli/src/args.ts:131] [E: apps/cli/src/args.ts:168] [E: apps/cli/src/args.ts:140]
+1. `parseDshArgs@apps/cli/src/args.ts` 只认识 launcher 自己的 token：`--profile`、可重复非 variadic 的 `--patch`、`--dump-config` / `--dump-default-config`、子命令 `web` / `plugin`、以及根上的 `-V`。`helpOption(false)` + `allowUnknownOption` + `passThroughOptions` + `enablePositionalOptions`：第一个它不认识的 token 起全部进入 leftover，包括 app 的 `-h`。`dsh web` 的 action 把 profile 写成 `'web'`，仍是 `mode: 'profile'`（带 dump 旗标时变成 `mode: 'dump-config'`）。**没有** `dsh sdk` / `dsh acp` / `dsh headless` 子命令。无 `--profile` 且 leftover 也不是 launcher help 则 `program.error`。 [E: apps/cli/src/args.ts:140] [E: apps/cli/src/args.ts:141] [E: apps/cli/src/args.ts:142] [E: apps/cli/src/args.ts:143] [E: apps/cli/src/args.ts:145] [E: apps/cli/src/args.ts:187] [E: apps/cli/src/args.ts:155]
 
-2. leftover 原样成为 `ProfileInvocation.args`。测试钉死：`['web', '--host', '127.0.0.1', '--port', '8080', '--no-open', '--future-web-flag']` 的 `args` 含这些 token；`['--profile', 'headless', 'run', 'the', 'tests']` 的 `args` 是 `['run', 'the', 'tests']`；边界之后再出现的 `--patch` 也归 app。`--host` / `--port` / `--no-open` / headless task **不是** launcher 旗标。 [E: apps/cli/src/args.ts:87] [E: apps/cli/tests/args.spec.ts:39] [E: apps/cli/tests/args.spec.ts:40] [E: apps/cli/tests/args.spec.ts:42] [E: apps/cli/tests/args.spec.ts:45]
+2. leftover 原样成为 `ProfileInvocation.args`。测试钉死：`['web', '--host', '127.0.0.1', '--port', '8080', '--no-open', '--future-web-flag']` 的 `args` 含这些 token；`['--profile', 'headless', 'run', 'the', 'tests']` 的 `args` 是 `['run', 'the', 'tests']`；边界之后再出现的 `--patch` 也归 app。`--host` / `--port` / `--no-open` / headless task **不是** launcher 旗标。 [E: apps/cli/src/args.ts:101] [E: apps/cli/tests/args.spec.ts:41] [E: apps/cli/tests/args.spec.ts:42] [E: apps/cli/tests/args.spec.ts:44] [E: apps/cli/tests/args.spec.ts:47]
 
-3. launcher 自己的 help / version / 语法错在树还不存在时发生，所以 `parseDshArgs` 用 `instanceof CommanderError` 然后 `process.exit`。这和树内 `parseCmdline` 的退出路径不是同一条。 [E: apps/cli/src/args.ts:186]
+3. launcher 自己的 help / version / 语法错在树还不存在时发生，所以 `parseDshArgs` 用 `instanceof CommanderError` 然后 `process.exit`。这和树内 `parseCmdline` 的退出路径不是同一条。 [E: apps/cli/src/args.ts:206]
 
-4. `bin.ts` 的 `switch`：`mode: 'profile'` 把 `invocation.args` 传给 `runProfile`；`plugin` 把剩余 argv 转给 pnpm 并 `process.exit`；`dump-config` 调 `runDumpConfig`。`runDumpConfig` 只 `prepareProfile` 再 `renderConfigDump` 写 stdout，函数体没有 `boot` / `provideCmdline`。后两条永远不会挂本胶。 [E: apps/cli/src/bin.ts:27] [E: apps/cli/src/bin.ts:29] [E: apps/cli/src/bin.ts:42] [E: apps/cli/src/dump-config.ts:30] [E: apps/cli/src/dump-config.ts:51]
+4. `bin.ts` 的 `switch`：`mode: 'profile'` 把 `invocation.args` 传给 `runProfile`；`plugin` 把剩余 argv 转给 pnpm 并 `process.exit`；`dump-config` 调 `runDumpConfig`。`runDumpConfig` 只 `prepareProfile` 再 `renderConfigDump` 写 stdout，函数体没有 `boot` / `provideCmdline`。后两条永远不会挂本胶。 [E: apps/cli/src/bin.ts:32] [E: apps/cli/src/bin.ts:34] [E: apps/cli/src/bin.ts:48] [E: apps/cli/src/dump-config.ts:31] [E: apps/cli/src/dump-config.ts:57]
 
-5. `boot@packages/boot/app-boot/src/index.ts`：`new Context` → `provide('dshHomePath')` → `ctx.plugin(Loader)` → **`await prepare?.(ctx)`** → 然后才 `mountRootInclude`。`runProfile` 的 `prepare` 在这一刀里调用 `provideCmdline(hostCtx, { args, exit: code => void shutdown.shutdown(code), ready: appReady.service })`。树行此时还没挂，所以 `inject: ['cmdlineArgs']` 的 startup 行不会 pending 在一个还不存在的服务上。boot 结束后若树仍活着则 `appReady.commit()`。 [E: packages/boot/app-boot/src/index.ts:790] [E: packages/boot/app-boot/src/index.ts:790] [E: apps/cli/src/profile-boot.ts:258] [E: apps/cli/src/profile-boot.ts:305]
+5. `boot@packages/boot/app-boot/src/index.ts`：`new Context` → `provide('dshHomePath')` → `ctx.plugin(Loader)` → **`await prepare?.(ctx)`** → 然后才 `mountRootInclude`。`runProfile` 的 `prepare` 在这一刀里调用 `provideCmdline(hostCtx, { args, exit: code => void shutdown.shutdown(code), ready: appReady.service })`。树行此时还没挂，所以 `inject: ['cmdlineArgs']` 的 startup 行不会 pending 在一个还不存在的服务上。boot 结束后若树仍活着则 `appReady.commit()`。 [E: packages/boot/app-boot/src/index.ts:787] [E: packages/boot/app-boot/src/index.ts:787] [E: apps/cli/src/profile-boot.ts:330] [E: apps/cli/src/profile-boot.ts:372]
 
 6. `provide` 是可逆 `fiber.effect`：在当前 isolate 表占名；host 根上 `root[symbols.isolate][name] ??= Symbol(name)`；同名二次 `provide` 抛 `service "<name>" has been registered at <…>`。`cmdlineArgs` / `appExit` / `appReady` 没有对应的 `cordis.patch.yml` 行，也没有 `isolate:`——它们是 launcher 写进 root realm 的事实。 [E: vendor/cordis/src/reflect.ts:278] [E: vendor/cordis/src/reflect.ts:286] [E: vendor/cordis/src/reflect.ts:290]
 
-7. **host 组合里的 Consumer。** shipped `PROFILE_TEMPLATES` 五个名字：`acp`（startup，base+acp-app）、`web`（**唯一 live**，base+web-app）、`headless`（startup，base+headless）、`sdk`（startup，base+sdk-app）、`sdk-minimal`（startup，**只** `dsh-sdk-minimal`，不叠 base）。 [E: packages/boot/app-boot/src/profile.ts:137] [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:154]
+7. **host 组合里的 Consumer。** shipped `PROFILE_TEMPLATES` 五个名字：`acp`（startup，base+acp-app）、`web`（**唯一 live**，base+web-app）、`headless`（startup，base+headless）、`sdk`（startup，base+sdk-app）、`sdk-minimal`（startup，**只** `dsh-sdk-minimal`，不叠 base）。 [E: packages/boot/app-boot/src/profile.ts:105] [E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:122]
 
-   - `dsh-web-app` insert `id: web-startup`（`name: '@deepseek-ai/dsh-web-app/startup'`），插件 `inject = ['cmdlineArgs']`，action 里 `ctx.provide('webStartup', …)`（含 `openBrowser`），最后 `parseCmdline`。`id: webserver` `inject: [webStartup]`，`config.host` / `config.port` 是 `!!js ctx.webStartup.host ?? '127.0.0.1'` / `ctx.webStartup.port ?? 3080`。`web-runtime` 读 `openBrowser: !!js ctx.webStartup.openBrowser`。 [E: packages/bundle/web-app/src/startup.ts:17] [E: packages/bundle/web-app/src/startup.ts:87] [E: packages/bundle/web-app/src/startup.ts:81] [E: packages/bundle/web-app/cordis.patch.yml:103] [E: packages/bundle/web-app/cordis.patch.yml:113] [E: packages/bundle/web-app/cordis.patch.yml:115] [E: packages/bundle/web-app/cordis.patch.yml:116] [E: packages/bundle/web-app/cordis.patch.yml:134]
-   - `dsh-headless`：`id: headless-startup` inject `cmdlineArgs`；`id: headless-runner` inject `headlessStartup`，`task: !!js ctx.headlessStartup.task`。headless overlay **不** insert `agent-presets`。 [E: packages/bundle/headless/src/startup.ts:16] [E: packages/bundle/headless/src/startup.ts:54] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] [E: packages/bundle/headless/cordis.patch.yml:28]
-   - sdk overlay insert `sdk-app-startup` + `sdk-jsonrpc-server`（inject `sdkAppStartup`）。sdk-minimal 同一 startup 包，config `profile: sdk-minimal`。ACP insert `acp-app-startup` + `acp`（inject `acpAppStartup`）。两者都是零 extra-flag，action 里 `exitOnStdinEnd` 再 `provide`。 [E: packages/bundle/sdk-app/cordis.patch.yml:12] [E: packages/bundle/sdk-app/cordis.patch.yml:17] [E: packages/bundle/sdk-app/src/index.ts:58] [E: packages/bundle/sdk-minimal/cordis.patch.yml:6] [E: packages/bundle/acp-app/cordis.patch.yml:12] [E: packages/bundle/acp-app/src/index.ts:44]
+   - `dsh-web-app` insert `id: web-startup`（`name: '@deepseek-ai/dsh-web-app/startup'`），插件 `inject = ['cmdlineArgs']`，action 里 `ctx.provide('webStartup', …)`（含 `openBrowser`），最后 `parseCmdline`。`id: webserver` `inject: [webStartup]`，`config.host` / `config.port` 是 `!!js ctx.webStartup.host ?? '127.0.0.1'` / `ctx.webStartup.port ?? 3080`。`web-runtime` 读 `openBrowser: !!js ctx.webStartup.openBrowser`。 [E: packages/bundle/web-app/src/startup.ts:17] [E: packages/bundle/web-app/src/startup.ts:87] [E: packages/bundle/web-app/src/startup.ts:81] [E: packages/bundle/web-app/cordis.patch.yml:122] [E: packages/bundle/web-app/cordis.patch.yml:135] [E: packages/bundle/web-app/cordis.patch.yml:135] [E: packages/bundle/web-app/cordis.patch.yml:135] [E: packages/bundle/web-app/cordis.patch.yml:154]
+   - `dsh-headless`：`id: headless-startup` inject `cmdlineArgs`；`id: headless-runner` inject `headlessStartup`，`task: !!js ctx.headlessStartup.task`。headless overlay **不** insert `agent-presets`。 [E: packages/bundle/headless/src/startup.ts:16] [E: packages/bundle/headless/src/startup.ts:54] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27] [E: packages/bundle/headless/cordis.patch.yml:29]
+   - sdk overlay insert `sdk-app-startup` + `sdk-jsonrpc-server`（inject `sdkAppStartup`）。sdk-minimal 同一 startup 包，config `profile: sdk-minimal`。ACP insert `acp-app-startup` + `acp`（inject `acpAppStartup`）。两者都是零 extra-flag，action 里 `exitOnStdinEnd` 再 `provide`。 [E: packages/bundle/sdk-app/cordis.patch.yml:13] [E: packages/bundle/sdk-app/cordis.patch.yml:18] [E: packages/bundle/sdk-app/src/index.ts:58] [E: packages/bundle/sdk-minimal/cordis.patch.yml:6] [E: packages/bundle/acp-app/cordis.patch.yml:13] [E: packages/bundle/acp-app/src/index.ts:44]
 
 8. `parseCmdline@packages/boot/cmdline/src/index.ts` 用 `ctx.get('cmdlineArgs')` / `ctx.get('appExit')`，缺任一就抛 `the launcher must provide ctx.cmdlineArgs and ctx.appExit before the tree mounts`。`appExit` 是 optional host 值，不写进 `export const inject`。然后 `hasAction` 结构性读 `_actionHandler`：程序忘了 action 的话 parse 会「成功」却谁也不 `provide`。`configureExitAndOutput` 对**已经注册的子命令**也套 `exitOverride` + 把输出改到 `internals`——只配 root 的话，子命令拒绝会自己 `process.exit`，绕开 `ctx.appExit`。 [E: packages/boot/cmdline/src/index.ts:168] [E: packages/boot/cmdline/src/index.ts:170] [E: packages/boot/cmdline/src/index.ts:173] [E: packages/boot/cmdline/src/index.ts:176] [E: packages/boot/cmdline/src/index.ts:200] [E: packages/boot/cmdline/src/index.ts:213]
 
@@ -177,7 +177,7 @@ flowchart TD
 
 12. **isolate / `leakedServices`。** `provideCmdline` 写的是 root realm。preset 再 `provide('cmdlineArgs')` 且不 `isolate: { cmdlineArgs: true }`：host 已占 root 符号，二次 `provide` 先抛 already registered。preset 若 `provide` 一个 host 还没有的名字（例如把 `web-startup` 整行搬进 `agent.cordis.yml` 且不 isolate `webStartup`），`leakedServices` 会扫到「实现 fiber 在 mount 子树内、且 store key 等于 `rootIsolate[name]`」，抛 `row(s) published process-global service(s) […]; a preset service must sit behind an isolate realm or move to the host composition`。shipped `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/` 没有 `web-startup` / `headless-startup` / `dsh-cmdline` 行。需要进程级一份 argv 快照，就留在 host。 [E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:221] [E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:410]
 
-用户层 `cordis.patch.yml` 热更新走 `composeLive`（bundle + 两个用户文件 + overlays 的 clone），**不含** argv。inner args 活在 `cmdlineArgs` / `webStartup` 这些服务里，recompose 挤不走。watch 只在 `composed.profile.patchReload === 'live'` 时安装（shipped 模板里只有 `web`）。 [E: apps/cli/src/profile-boot.ts:243] [E: apps/cli/src/profile-boot.ts:271]
+用户层 `cordis.patch.yml` 热更新走 `composeLive`（bundle + 两个用户文件 + overlays 的 clone），**不含** argv。inner args 活在 `cmdlineArgs` / `webStartup` 这些服务里，recompose 挤不走。watch 只在 `composed.profile.patchReload === 'live'` 时安装（shipped 模板里只有 `web`）。 [E: apps/cli/src/profile-boot.ts:315] [E: apps/cli/src/profile-boot.ts:343]
 
 ## 设计动机
 
@@ -190,17 +190,17 @@ flowchart TD
 
 ## Gotcha
 
-- **两层 commander、两种退出。** `parseDshArgs`：`instanceof CommanderError` + `process.exit`。`parseCmdline`：结构检测 + `ctx.appExit`。不要把 launcher 的 `-h`（无 profile）和 `dsh web -h`（inner `['-h']`，web 自己的 help）写成同一条路径。 [E: apps/cli/src/args.ts:186] [E: apps/cli/tests/args.spec.ts:38]
-- **第一未知 token 是硬边界。** `--patch` 必须写在边界前才是 launcher overlay；`dsh --profile tui --resume b --patch late.yml` 里后一个 `--patch` 进 app args。`--patch` collector 故意非 variadic。 [E: apps/cli/src/args.ts:61] [E: apps/cli/tests/args.spec.ts:45]
-- **dump 拒绝任何 app leftover。** `--dump-config --port 8080` 在 launcher 就 exit 1。`--dump-config` / `--dump-default-config` 仍活着，互斥，`--dump-default-config` 拒 `--patch`。dump 不应用 `resolveTelemetryPatch`。 [E: apps/cli/src/args.ts:90] [E: apps/cli/src/args.ts:96] [E: apps/cli/src/args.ts:100]
-- **`appExit` 不能 `inject`。** `Context.appExit?` 是 optional。headless-runner 的 `inject` 只有 `agentDefaultModel` / `agents` / `sessions`，缺 `appExit` 时 `ctx.get` 后自己抛。 [E: packages/bundle/headless/src/index.ts:31] [E: packages/bundle/headless/src/index.ts:219] [E: packages/bundle/headless/src/index.ts:219]
+- **两层 commander、两种退出。** `parseDshArgs`：`instanceof CommanderError` + `process.exit`。`parseCmdline`：结构检测 + `ctx.appExit`。不要把 launcher 的 `-h`（无 profile）和 `dsh web -h`（inner `['-h']`，web 自己的 help）写成同一条路径。 [E: apps/cli/src/args.ts:206] [E: apps/cli/tests/args.spec.ts:40]
+- **第一未知 token 是硬边界。** `--patch` 必须写在边界前才是 launcher overlay；`dsh --profile tui --resume b --patch late.yml` 里后一个 `--patch` 进 app args。`--patch` collector 故意非 variadic。 [E: apps/cli/src/args.ts:66] [E: apps/cli/tests/args.spec.ts:47]
+- **dump 拒绝任何 app leftover。** `--dump-config --port 8080` 在 launcher 就 exit 1。`--dump-config` / `--dump-default-config` 仍活着，互斥，`--dump-default-config` 拒 `--patch`。dump 不应用 `resolveTelemetryPatch`。 [E: apps/cli/src/args.ts:104] [E: apps/cli/src/args.ts:110] [E: apps/cli/src/args.ts:114]
+- **`appExit` 不能 `inject`。** `Context.appExit?` 是 optional。headless-runner 的 `inject` 只有 `agentDefaultModel` / `agents` / `sessions`，缺 `appExit` 时 `ctx.get` 后自己抛。 [E: packages/bundle/headless/src/index.ts:31] [E: packages/bundle/headless/src/index.ts:220] [E: packages/bundle/headless/src/index.ts:220]
 - **action 里 `program.error` 之前的语句已经跑过。** 必须先校验再 `provide`。web 在 publish 前拒绝 `0.0.0.0` 和非数字 port；headless 在 publish 前拒绝空白 task。 [E: packages/bundle/web-app/src/startup.ts:74]
 - **没有 action 的 program 是 load-time 失败，不是 usage 错误。** `hasAction` 为 false 时抛的是 Error，不会 `appExit(1)`。 [E: packages/boot/cmdline/tests/cmdline.spec.ts:228]
-- **help 让下游行保持 pending。** action 没跑，`*Startup` 不存在。`appExit` → `shutdown.shutdown` 会 dispose 整棵树；`boot` 在 `loader.await()` 之后若发现 `ctx.get('loader') === undefined` 就直接返回，**不会**再跑 `assertEntriesActivated`。 [E: packages/boot/app-boot/src/index.ts:797] [E: packages/boot/app-boot/src/index.ts:797]
-- **`tui` 不是 shipped profile，也不是 launcher 子命令。** `HELP_EXAMPLES` 把它写成 custom profile + `--patch` 的例子；裸 `dsh tui` 按缺 `--profile` 退出 1。`PROFILE_TEMPLATES` 是五个键，不是只有 web/headless。 [E: apps/cli/src/args.ts:68] [E: apps/cli/tests/args.spec.ts:75] [E: packages/boot/app-boot/src/profile.ts:137]
+- **help 让下游行保持 pending。** action 没跑，`*Startup` 不存在。`appExit` → `shutdown.shutdown` 会 dispose 整棵树；`boot` 在 `loader.await()` 之后若发现 `ctx.get('loader') === undefined` 就直接返回，**不会**再跑 `assertEntriesActivated`。 [E: packages/boot/app-boot/src/index.ts:794] [E: packages/boot/app-boot/src/index.ts:794]
+- **`tui` 不是 shipped profile，也不是 launcher 子命令。** `HELP_EXAMPLES` 把它写成 custom profile + `--patch` 的例子；裸 `dsh tui` 按缺 `--profile` 退出 1。`PROFILE_TEMPLATES` 是五个键，不是只有 web/headless。 [E: apps/cli/src/args.ts:81] [E: apps/cli/tests/args.spec.ts:94] [E: packages/boot/app-boot/src/profile.ts:105]
 - **不要把 cmdline 搬进 preset。** isolate 一份会让每个 standing mount 看见不同的（或空的）argv；不 isolate 则 already registered 或 `leakedServices`。
-- **`dsh-base` 不 dormant 加载 Codex / Claude 子代理。** 和本胶无关，但同一条 host 启动路径里不要按 README 写成「后端装着、preset 再 disable」。 [E: packages/bundle/base/tests/base.spec.ts:42]
-- **sdk-minimal 不叠 `dsh-base`。** 它的 `bundles` 只有 `@deepseek-ai/dsh-sdk-minimal`，但仍走同一套 `provideCmdline` + `sdk-app-startup`。 [E: packages/boot/app-boot/src/profile.ts:155]
+- **`dsh-base` 不 dormant 加载 Codex / Claude 子代理。** 和本胶无关，但同一条 host 启动路径里不要按 README 写成「后端装着、preset 再 disable」。 [E: packages/bundle/base/tests/base.spec.ts:43]
+- **sdk-minimal 不叠 `dsh-base`。** 它的 `bundles` 只有 `@deepseek-ai/dsh-sdk-minimal`，但仍走同一套 `provideCmdline` + `sdk-app-startup`。 [E: packages/boot/app-boot/src/profile.ts:123]
 
 ## Seam 三角
 

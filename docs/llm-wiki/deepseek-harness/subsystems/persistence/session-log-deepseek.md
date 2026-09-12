@@ -39,7 +39,7 @@ related:
   - subsys.persistence.projection
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-session-log-deepseek` 在 **host 面**把**同一本** canonical session log 投影成官方 DeepSeek 请求顶层字段 `dsh_session_log`。它**不是**第二份日志、也不是 `ctx.sessionProjections` 的 unit。水位线事件 `session-log-deepseek/delivery-accepted` 写回同一本 log，重启后从事件重折 `acceptedThrough`，不另开 store。默认 `enabled: false`：bundle 挂插件，不等于开上传。
@@ -57,9 +57,9 @@ updated: d347e70390
 本包拥有：
 
 - Cordis plugin 名 `session-log-deepseek`，`inject = ['deepseekLlmApiExtensions', 'sessions']`。 [E: packages/session/session-log-deepseek/src/index.ts:18] [E: packages/session/session-log-deepseek/src/index.ts:20]
-- 配置键 `enabled`（boolean，默认 `false`）。`apply` 仅在 `config.enabled === true` 时 `register('dsh_session_log', …)`。 [E: packages/session/session-log-deepseek/src/index.ts:31] [E: packages/session/session-log-deepseek/src/index.ts:71] [E: packages/session/session-log-deepseek/src/index.ts:72]
-- 导出 `acceptedThrough(session)`：扫描本会话 identity 的 acceptance 事件，返回最大 `throughSeq`，从未 accept 为 `-1`。 [E: packages/session/session-log-deepseek/src/index.ts:46] [E: packages/session/session-log-deepseek/src/index.ts:47]
-- 线型 `DeepSeekSessionLogExtension` 与 `SessionEventMap['session-log-deepseek/delivery-accepted']`、`DeepSeekLlmApiExtensionMap.dsh_session_log` 的 declaration merge。 [E: packages/session/session-log-deepseek/src/types.ts:7] [E: packages/session/session-log-deepseek/src/types.ts:21] [E: packages/session/session-log-deepseek/src/types.ts:26]
+- 配置键 `enabled`（boolean，默认 `false`）。`apply` 仅在 `config.enabled === true` 时 `register('dsh_session_log', …)`。 [E: packages/session/session-log-deepseek/src/index.ts:30] [E: packages/session/session-log-deepseek/src/index.ts:72] [E: packages/session/session-log-deepseek/src/index.ts:72]
+- 导出 `acceptedThrough(session)`：扫描本会话 identity 的 acceptance 事件，返回最大 `throughSeq`，从未 accept 为 `-1`。 [E: packages/session/session-log-deepseek/src/index.ts:45] [E: packages/session/session-log-deepseek/src/index.ts:48]
+- 线型 `DeepSeekSessionLogExtension` 与 `SessionEventMap['session-log-deepseek/delivery-accepted']`、`DeepSeekLlmApiExtensionMap.dsh_session_log` 的 declaration merge。 [E: packages/session/session-log-deepseek/src/types.ts:7] [E: packages/session/session-log-deepseek/src/types.ts:21] [E: packages/session/session-log-deepseek/src/types.ts:23]
 - companion `session-log-deepseek-invariant`（`inject = ['invariants']`），包名 `@deepseek-ai/dsh-session-log-deepseek`。 [E: packages/session/session-log-deepseek/src/invariant.ts:9] [E: packages/session/session-log-deepseek/src/invariant.ts:12] [E: packages/session/session-log-deepseek/src/invariant.ts:14]
 
 本包**不**拥有：
@@ -93,9 +93,9 @@ updated: d347e70390
 | 符号 | 要点 |
 |---|---|
 | `DeepSeekSessionLogExtension` | `{ version: 1, session: SessionHeader, afterSeq, throughSeq, events }`。`events` 是 `afterSeq + 1` … `throughSeq` 的**完整** `SessionEvent` 信封，不是 `deriveMessages` 面。 [E: packages/session/session-log-deepseek/src/types.ts:7] [E: packages/session/session-log-deepseek/src/types.ts:14] |
-| `session-log-deepseek/delivery-accepted` | `{ sessionId, throughSeq }`。`throughSeq` 必须是**更早**的 canonical seq。fork seed 里可带父会话 `sessionId`。 [E: packages/session/session-log-deepseek/src/types.ts:26] [E: packages/session/session-log-deepseek/src/types.ts:28] |
+| `session-log-deepseek/delivery-accepted` | `{ sessionId, throughSeq }`。`throughSeq` 必须是**更早**的 canonical seq。fork seed 里可带父会话 `sessionId`。 [E: packages/session/session-log-deepseek/src/types.ts:23] [E: packages/session/session-log-deepseek/src/types.ts:30] |
 | `AcceptanceFold` | 进程内 `WeakMap<Session, { scannedEvents, throughSeq }>`，只加速扫描，**不是**权威。权威是 log 里的 acceptance 事件。 [E: packages/session/session-log-deepseek/src/index.ts:33] [E: packages/session/session-log-deepseek/src/index.ts:38] |
-| `Config.enabled` | 默认 `false`。未 `=== true` 时 `apply` 直接 return，registry 里没有 `dsh_session_log`。 [E: packages/session/session-log-deepseek/src/index.ts:31] [E: packages/session/session-log-deepseek/src/index.ts:71] |
+| `Config.enabled` | 默认 `false`。未 `=== true` 时 `apply` 直接 return，registry 里没有 `dsh_session_log`。 [E: packages/session/session-log-deepseek/src/index.ts:30] [E: packages/session/session-log-deepseek/src/index.ts:72] |
 
 suffix 构造：`afterSeq = acceptedThrough(session)`，`throughSeq = snapshot.length - 1`，空 log（`throughSeq < 0`）不贡献字段；`sessionId` 缺失或 `sessions.get`  miss 也不贡献。 [E: packages/session/session-log-deepseek/src/index.ts:75] [E: packages/session/session-log-deepseek/src/index.ts:79] [E: packages/session/session-log-deepseek/src/index.ts:82] [E: packages/session/session-log-deepseek/src/index.ts:83]
 
@@ -105,9 +105,9 @@ suffix 构造：`afterSeq = acceptedThrough(session)`，`throughSeq = snapshot.l
 
 1. `dsh-base`（或 `sdk-minimal`）insert `deepseek-llm-api-extensions` 再 insert `session-log-deepseek`。 [E: packages/bundle/base/cordis.patch.yml:30] [E: packages/bundle/base/cordis.patch.yml:36]
 2. `apply`：`enabled !== true` → 结束。否则 `ctx.deepseekLlmApiExtensions.register('dsh_session_log', { prepare })`。登记是 `ctx.effect`，卸插件即删字段。 [E: packages/session/session-log-deepseek/src/index.ts:72] [E: packages/llm/deepseek-llm-api-extensions/src/index.ts:89]
-3. `DeepSeekAdapter` 组完 chat body 后 `prepareExtensions({ body, signal, sessionId? })`。 [E: packages/llm/llm-deepseek/src/adapter.ts:621] [E: packages/llm/llm-deepseek/src/index.ts:466]
+3. `DeepSeekAdapter` 组完 chat body 后 `prepareExtensions({ body, signal, sessionId? })`。 [E: packages/llm/llm-deepseek/src/adapter.ts:621] [E: packages/llm/llm-deepseek/src/index.ts:465]
 4. `prepare` 读 canonical `session.events`，切 suffix；registry 用 `freezeJson(structuredClone(result.value))` 写入 `fields.dsh_session_log`。不读 request messages。 [E: packages/session/session-log-deepseek/src/index.ts:83] [E: packages/llm/deepseek-llm-api-extensions/src/index.ts:119] [E: packages/session/session-log-deepseek/tests/upload.spec.ts:154]
-5. `JSON.stringify({ ...body, ...extensions.fields })` POST `/chat/completions`。字段与 base body 撞名 → `REQUEST_EXTENSION`。 [E: packages/llm/llm-deepseek/src/adapter.ts:637] [E: packages/llm/llm-deepseek/src/adapter.ts:632]
+5. `JSON.stringify({ ...body, ...extensions.fields })` POST `/chat/completions`。字段与 base body 撞名 → `REQUEST_EXTENSION`。 [E: packages/llm/llm-deepseek/src/adapter.ts:638] [E: packages/llm/llm-deepseek/src/adapter.ts:632]
 6. `!response.ok` → throw，**不** `accept`。`response.ok` 后 `await extensions.accept()`，才 append 水位线。 [E: packages/llm/llm-deepseek/src/adapter.ts:658] [E: packages/llm/llm-deepseek/src/adapter.ts:695]
 7. `acceptedThrough`：跳过 `sessionId !== session.id` 的事件（fork seed 里的父水位因此为 `-1`）；畸形 `throughSeq`（非安全整数、`< 0`、或 `>= event.seq`）throw。并发乱序 accept 取 `Math.max`。 [E: packages/session/session-log-deepseek/src/index.ts:58] [E: packages/session/session-log-deepseek/src/index.ts:56] [E: packages/session/session-log-deepseek/src/index.ts:59] [E: packages/session/session-log-deepseek/tests/upload.spec.ts:89] [E: packages/session/session-log-deepseek/tests/upload.spec.ts:103]
 
@@ -120,7 +120,7 @@ suffix 构造：`afterSeq = acceptedThrough(session)`，`throughSeq = snapshot.l
 - **不是第二份日志。** 投影读 `session.events`，accept 也 `session.append`。compaction / surface 仍只在 [spine.session-log](../../spine/session-log.md)。
 - **默认不上传。** `dsh-base` 挂插件但无 `config`；Loader 组合断言默认 body 无 `dsh_session_log`。 [E: packages/llm/llm-deepseek/tests/loader-composition.spec.ts:153]
 - **fork：** `acceptedThrough` 忽略父 `sessionId`；invariant 允许 `parentSession` + `seedLength` 且 `event.seq < seedLength` 的 inherited 事件。 [E: packages/session/session-log-deepseek/src/invariant.ts:18] [E: packages/session/session-log-deepseek/src/invariant.ts:21]
-- **direct / stale：** 无 `sessionId`、session 不在 store、空 log → 省略字段。 [E: packages/session/session-log-deepseek/tests/upload.spec.ts:138]
+- **direct / stale：** 无 `sessionId`、session 不在 store、空 log → 省略字段。 [E: packages/session/session-log-deepseek/tests/upload.spec.ts:140]
 - **malformed persist：** `throughSeq >= seq` 等在 `acceptedThrough` throw，fail-closed，不静默从 0 重传。 [E: packages/session/session-log-deepseek/tests/upload.spec.ts:169]
 - **HMR：** dispose contributing plugin 后字段消失。 [E: packages/session/session-log-deepseek/tests/upload.spec.ts:178]
 - **2xx 后、checkpoint 前 crash：** accept 已 append，但 TODO 指出尚未强制 lightweight checkpoint；重复 replay 窗口存在。 [E: packages/session/session-log-deepseek/src/index.ts:95]

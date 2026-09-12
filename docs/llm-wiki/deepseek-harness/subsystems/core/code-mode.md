@@ -42,7 +42,7 @@ related:
   - surface.presets.code
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `run_code` 是 host 面 `ctx.tools` **预留的 PTC presentation transport**（`RUN_CODE_NAME`），不是又一个 `dsh-tool-*` 包：模型写一段程序，`createRunCodeTool` 把 agent 可见工具绑成 `await tools.name(args)`，经 host 面 `ctx.codeRuntime` 执行；子调度走同一套 `TOOL_RUNTIME_SCHEDULER`（`prepare` → `dispatch` → `finalize`/`finish`），带 `parent` token，只有外层 curated 结果进 `deriveMessages()`。本节点 id `subsys.core.code-mode` 是稳定别名；权威源是 `packages/core/tools/src/ptc.ts`。旧名 Code Mode。
@@ -68,7 +68,7 @@ updated: d347e70390
 - `run_code` JSON schema / `presentCall` 卡片 —— [surface.tools.run-code](../../surface/tools/run-code.md)（T1）
 - shipped `ptc` 成员表（节点 id 仍是 `surface.presets.code`）—— [surface.presets.code](../../surface/presets/code.md)
 
-四个 shipped preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`。旧目录名 `code` 就是 PTC。`dsh-base` **不** insert `code-runtime`，也 **没有** `subagent-codex` / `subagent-claude-code` 行：`base.spec.ts` 钉死这两 id 的 patch 行数为 0，且 manifest 不依赖对应包。[E: packages/bundle/base/tests/base.spec.ts:42] [E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:47] [E: packages/bundle/base/tests/base.spec.ts:48] `codeRuntime` 只出现在 `dsh-web-app` / `dsh-headless` 的 host insert；`dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` 不插这一行。进程级 PTC 另有临时 env `DSH_TOOLS_MODE`，与 per-session `presentAs` 正交。五个 shipped profile 是 `web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）；入口除 `dsh web` 外还有 `dsh --profile sdk|sdk-minimal|acp|headless`。
+四个 shipped preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`。旧目录名 `code` 就是 PTC。`dsh-base` **不** insert `code-runtime`，也 **没有** `subagent-codex` / `subagent-claude-code` 行：`base.spec.ts` 钉死这两 id 的 patch 行数为 0，且 manifest 不依赖对应包。[E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:47] [E: packages/bundle/base/tests/base.spec.ts:48] `codeRuntime` 只出现在 `dsh-web-app` / `dsh-headless` 的 host insert；`dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` 不插这一行。进程级 PTC 另有临时 env `DSH_TOOLS_MODE`，与 per-session `presentAs` 正交。五个 shipped profile 是 `web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）；入口除 `dsh web` 外还有 `dsh --profile sdk|sdk-minimal|acp|headless`。
 
 ## 关键文件
 
@@ -106,40 +106,40 @@ updated: d347e70390
 
 ### A. 组合：host 提供 runtime，preset 只改呈现
 
-1. `dsh-web-app` / `dsh-headless` 在 **host 面** insert `id: code-runtime`，插件 `@deepseek-ai/dsh-code-runtime-worker-thread`。[E: packages/bundle/web-app/cordis.patch.yml:49] [E: packages/bundle/headless/cordis.patch.yml:19] Service Definition `CodeRuntime` 构造 `super(ctx, 'codeRuntime')` 发布进程级 `ctx.codeRuntime`。[E: packages/code-runtime/code-runtime/src/index.ts:122] shipped `WorkerThreadCodeRuntime` 以 `super(ctx)` 挂上同一键，`language = 'typescript'`。[E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:254] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:246]
+1. `dsh-web-app` / `dsh-headless` 在 **host 面** insert `id: code-runtime`，插件 `@deepseek-ai/dsh-code-runtime-worker-thread`。[E: packages/bundle/web-app/cordis.patch.yml:50] [E: packages/bundle/headless/cordis.patch.yml:20] Service Definition `CodeRuntime` 构造 `super(ctx, 'codeRuntime')` 发布进程级 `ctx.codeRuntime`。[E: packages/code-runtime/code-runtime/src/index.ts:122] shipped `WorkerThreadCodeRuntime` 以 `super(ctx)` 挂上同一键，`language = 'typescript'`。[E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:254] [E: packages/code-runtime/code-runtime-worker-thread/src/index.ts:246]
 
-2. `dsh-base` 的 `tools` 行默认 `mode: 'native'`（schema default）。[E: packages/core/tools/src/index.ts:784] web / headless 把该行写成 `mode: !!js process.env.DSH_TOOLS_MODE`：未设 env 时仍是 schema 默认 `native`；设了则整进程 `defaultMode` 变成 `ptc`/`both`。这是 workaround，不是 `ptc` preset 路径。[E: packages/bundle/web-app/cordis.patch.yml:37] [E: packages/bundle/headless/cordis.patch.yml:15] web 再把 base 上模型可见行标 `disabled: true`，然后 insert `agent-presets` 且 `default: standard`。headless **不**挂 `agent-presets`，也 **不** disable 这些 tool 行：模型可见工具留在 host 全局层。[E: packages/bundle/web-app/cordis.patch.yml:442] [E: packages/bundle/web-app/cordis.patch.yml:445]
+2. `dsh-base` 的 `tools` 行默认 `mode: 'native'`（schema default）。[E: packages/core/tools/src/index.ts:784] web / headless 把该行写成 `mode: !!js process.env.DSH_TOOLS_MODE`：未设 env 时仍是 schema 默认 `native`；设了则整进程 `defaultMode` 变成 `ptc`/`both`。这是 workaround，不是 `ptc` preset 路径。[E: packages/bundle/web-app/cordis.patch.yml:38] [E: packages/bundle/headless/cordis.patch.yml:16] web 再把 base 上模型可见行标 `disabled: true`，然后 insert `agent-presets` 且 `default: standard`。headless **不**挂 `agent-presets`，也 **不** disable 这些 tool 行：模型可见工具留在 host 全局层。[E: packages/bundle/web-app/cordis.patch.yml:481] [E: packages/bundle/web-app/cordis.patch.yml:484]
 
    `dsh-web-app` 被 `disabled: true` 的模型可见 id（每条 `id:` 下一行是 `disabled: true`）：
 
    | id | 证据 |
    |---|---|
-   | `tool-bash` | [E: packages/bundle/web-app/cordis.patch.yml:320] [E: packages/bundle/web-app/cordis.patch.yml:321] |
-   | `tool-pwsh` | [E: packages/bundle/web-app/cordis.patch.yml:324] [E: packages/bundle/web-app/cordis.patch.yml:324] |
-   | `tool-jobs` | [E: packages/bundle/web-app/cordis.patch.yml:336] [E: packages/bundle/web-app/cordis.patch.yml:337] |
-   | `tool-fs` | [E: packages/bundle/web-app/cordis.patch.yml:339] [E: packages/bundle/web-app/cordis.patch.yml:340] |
-   | `tool-fs-search` | [E: packages/bundle/web-app/cordis.patch.yml:342] [E: packages/bundle/web-app/cordis.patch.yml:343] |
+   | `tool-bash` | [E: packages/bundle/web-app/cordis.patch.yml:368] [E: packages/bundle/web-app/cordis.patch.yml:368] |
+   | `tool-pwsh` | [E: packages/bundle/web-app/cordis.patch.yml:371] [E: packages/bundle/web-app/cordis.patch.yml:371] |
+   | `tool-jobs` | [E: packages/bundle/web-app/cordis.patch.yml:384] [E: packages/bundle/web-app/cordis.patch.yml:384] |
+   | `tool-fs` | [E: packages/bundle/web-app/cordis.patch.yml:387] [E: packages/bundle/web-app/cordis.patch.yml:387] |
+   | `tool-fs-search` | [E: packages/bundle/web-app/cordis.patch.yml:390] [E: packages/bundle/web-app/cordis.patch.yml:390] |
    | `tool-str-replace-editor` | [E: packages/bundle/web-app/cordis.patch.yml:346] [E: packages/bundle/web-app/cordis.patch.yml:346] |
-   | `skill-filesystem` | [E: packages/bundle/web-app/cordis.patch.yml:358] [E: packages/bundle/web-app/cordis.patch.yml:358] |
-   | `tool-skill` | [E: packages/bundle/web-app/cordis.patch.yml:360] [E: packages/bundle/web-app/cordis.patch.yml:361] |
-   | `command-goal` | [E: packages/bundle/web-app/cordis.patch.yml:367] [E: packages/bundle/web-app/cordis.patch.yml:367] |
-   | `tool-goal` | [E: packages/bundle/web-app/cordis.patch.yml:370] [E: packages/bundle/web-app/cordis.patch.yml:370] |
-   | `plan-mode` | [E: packages/bundle/web-app/cordis.patch.yml:373] [E: packages/bundle/web-app/cordis.patch.yml:373] |
-   | `compaction-basic` | [E: packages/bundle/web-app/cordis.patch.yml:382] [E: packages/bundle/web-app/cordis.patch.yml:383] |
-   | `command-compact` | [E: packages/bundle/web-app/cordis.patch.yml:385] [E: packages/bundle/web-app/cordis.patch.yml:386] |
-   | `tool-result-pruner` | [E: packages/bundle/web-app/cordis.patch.yml:388] [E: packages/bundle/web-app/cordis.patch.yml:389] |
-   | `tool-subagent-control` | [E: packages/bundle/web-app/cordis.patch.yml:398] [E: packages/bundle/web-app/cordis.patch.yml:399] |
-   | `tool-subagent-list-agents` | [E: packages/bundle/web-app/cordis.patch.yml:401] [E: packages/bundle/web-app/cordis.patch.yml:402] |
-   | `tool-subagent` | [E: packages/bundle/web-app/cordis.patch.yml:404] [E: packages/bundle/web-app/cordis.patch.yml:405] |
-   | `tool-subagent-fork` | [E: packages/bundle/web-app/cordis.patch.yml:408] [E: packages/bundle/web-app/cordis.patch.yml:408] |
-   | `workflow-worker-thread` | [E: packages/bundle/web-app/cordis.patch.yml:417] [E: packages/bundle/web-app/cordis.patch.yml:417] |
-   | `tool-workflow` | [E: packages/bundle/web-app/cordis.patch.yml:420] [E: packages/bundle/web-app/cordis.patch.yml:420] |
-   | `tool-ralph` | [E: packages/bundle/web-app/cordis.patch.yml:423] [E: packages/bundle/web-app/cordis.patch.yml:423] |
-   | `agent-instructions` | [E: packages/bundle/web-app/cordis.patch.yml:426] [E: packages/bundle/web-app/cordis.patch.yml:426] |
-   | `tool-todo` | [E: packages/bundle/web-app/cordis.patch.yml:429] [E: packages/bundle/web-app/cordis.patch.yml:429] |
-   | `tool-web` | [E: packages/bundle/web-app/cordis.patch.yml:432] [E: packages/bundle/web-app/cordis.patch.yml:432] |
+   | `skill-filesystem` | [E: packages/bundle/web-app/cordis.patch.yml:402] [E: packages/bundle/web-app/cordis.patch.yml:402] |
+   | `tool-skill` | [E: packages/bundle/web-app/cordis.patch.yml:405] [E: packages/bundle/web-app/cordis.patch.yml:405] |
+   | `command-goal` | [E: packages/bundle/web-app/cordis.patch.yml:411] [E: packages/bundle/web-app/cordis.patch.yml:411] |
+   | `tool-goal` | [E: packages/bundle/web-app/cordis.patch.yml:414] [E: packages/bundle/web-app/cordis.patch.yml:414] |
+   | `plan-mode` | [E: packages/bundle/web-app/cordis.patch.yml:417] [E: packages/bundle/web-app/cordis.patch.yml:417] |
+   | `compaction-basic` | [E: packages/bundle/web-app/cordis.patch.yml:427] [E: packages/bundle/web-app/cordis.patch.yml:427] |
+   | `command-compact` | [E: packages/bundle/web-app/cordis.patch.yml:430] [E: packages/bundle/web-app/cordis.patch.yml:430] |
+   | `tool-result-pruner` | [E: packages/bundle/web-app/cordis.patch.yml:433] [E: packages/bundle/web-app/cordis.patch.yml:433] |
+   | `tool-subagent-control` | [E: packages/bundle/web-app/cordis.patch.yml:443] [E: packages/bundle/web-app/cordis.patch.yml:443] |
+   | `tool-subagent-list-agents` | [E: packages/bundle/web-app/cordis.patch.yml:446] [E: packages/bundle/web-app/cordis.patch.yml:446] |
+   | `tool-subagent` | [E: packages/bundle/web-app/cordis.patch.yml:449] [E: packages/bundle/web-app/cordis.patch.yml:449] |
+   | `tool-subagent-fork` | [E: packages/bundle/web-app/cordis.patch.yml:452] [E: packages/bundle/web-app/cordis.patch.yml:452] |
+   | `workflow-worker-thread` | [E: packages/bundle/web-app/cordis.patch.yml:455] [E: packages/bundle/web-app/cordis.patch.yml:455] |
+   | `tool-workflow` | [E: packages/bundle/web-app/cordis.patch.yml:458] [E: packages/bundle/web-app/cordis.patch.yml:458] |
+   | `tool-ralph` | [E: packages/bundle/web-app/cordis.patch.yml:461] [E: packages/bundle/web-app/cordis.patch.yml:461] |
+   | `agent-instructions` | [E: packages/bundle/web-app/cordis.patch.yml:464] [E: packages/bundle/web-app/cordis.patch.yml:464] |
+   | `tool-todo` | [E: packages/bundle/web-app/cordis.patch.yml:467] [E: packages/bundle/web-app/cordis.patch.yml:467] |
+   | `tool-web` | [E: packages/bundle/web-app/cordis.patch.yml:470] [E: packages/bundle/web-app/cordis.patch.yml:470] |
 
-3. shipped `ptc` preset 在 `agent.cordis.yml` 末尾挂 `id: tool-presentation`，`config.mode: ptc`。`bash` / `read` 等工具行仍在 preset 里 `register` 进 **host** 注册表；改变的是呈现，不是删行。`tool-workflow` **`disabled: true`**（engine 留给 `ralph`）。`tool-presentation` **没有** `isolate:` 块——它不 publish 任何 service。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:267] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:237] 展示名 `PTC 模式`、`order: 2`。[E: packages/preset/agent-presets/presets/ptc/preset.yml:1] [E: packages/preset/agent-presets/presets/ptc/preset.yml:3]
+3. shipped `ptc` preset 在 `agent.cordis.yml` 末尾挂 `id: tool-presentation`，`config.mode: ptc`。`bash` / `read` 等工具行仍在 preset 里 `register` 进 **host** 注册表；改变的是呈现，不是删行。`tool-workflow` **`disabled: true`**（engine 留给 `ralph`）。`tool-presentation` **没有** `isolate:` 块——它不 publish 任何 service。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:270] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:238] 展示名 `PTC 模式`、`order: 2`。[E: packages/preset/agent-presets/presets/ptc/preset.yml:1] [E: packages/preset/agent-presets/presets/ptc/preset.yml:3]
 
 4. `apply@packages/core/agent-tool-presentation/src/index.ts`：静态 `inject = ['tools']`（故意不含 `codeRuntime`，否则 `native` 行也会被 runtime 绑住）。`native` 立刻 `ctx.tools.presentAs('native')`；`ptc` / `both` 走 `ctx.inject(['codeRuntime'], runtimeCtx => runtimeCtx.tools.presentAs(config.mode))`。[E: packages/core/agent-tool-presentation/src/index.ts:35] [E: packages/core/agent-tool-presentation/src/index.ts:64] [E: packages/core/agent-tool-presentation/src/index.ts:69]
 
@@ -151,7 +151,7 @@ updated: d347e70390
 
 7. `leakedServices` 比较 `store` 里实现的 symbol 是否等于 `ctx.root[Context.isolate][impl.name]`：无 `isolate` 的 Provider 写进 root 符号，就会被点名；`isolate: { name: true }` 写进 realm-private 符号，则缺席。[E: packages/preset/agent-presets/src/mount.ts:221] [E: packages/preset/agent-presets/src/mount.ts:210]
 
-8. **对本缝的含义：** `codeRuntime` 必须留在 host（web/headless 那一行）。若有人把 `CodeRuntime` 实现挂进 preset 且不写 `isolate`，`leakedServices` 拒绝。`dsh-agent-tool-presentation` 只改 `ToolLayer.mode`，不 `provide` 服务，所以 **不需要** `isolate`，也不会触发泄漏门。同份 `ptc` preset 里 `planning` / `compaction` / `delegation` 组才带 `isolate:`（`planMode` / `compaction`+`toolResultPruner` / `workflowEngine`），与 PTC transport 无关。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:114] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:115] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:147] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:148] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:177] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179]
+8. **对本缝的含义：** `codeRuntime` 必须留在 host（web/headless 那一行）。若有人把 `CodeRuntime` 实现挂进 preset 且不写 `isolate`，`leakedServices` 拒绝。`dsh-agent-tool-presentation` 只改 `ToolLayer.mode`，不 `provide` 服务，所以 **不需要** `isolate`，也不会触发泄漏门。同份 `ptc` preset 里 `planning` / `compaction` / `delegation` 组才带 `isolate:`（`planMode` / `compaction`+`toolResultPruner` / `workflowEngine`），与 PTC transport 无关。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:115] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:115] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:148] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:148] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179]
 
 9. `inactiveRows` **只**读 `entry.fiber.inject`（行的静态 inject）。`tool-presentation` 的静态 inject 是 `['tools']`；等 `codeRuntime` 的是 `apply` 里另开的子 fiber。因此缺 runtime 时：`row.await()` 仍成功，`presentAs('ptc')` 未跑，`modeFor` 仍是部署默认 `native`，`assemble` 继续交出 native 名（测试里是 `echo`）。后来 `ctx.plugin(StubRuntime)` 才切到 `[run_code]`。[E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:63] [E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:109] [E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:111] [E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:121] [U] preset YAML 仍写「缺 runtime 则 mount 失败」；可执行断言与 `inactiveRows` 静态 inject 读法不一致。
 
@@ -173,7 +173,7 @@ updated: d347e70390
 
 16. `session-checkpoint-policy` 挂在 `tools/execute`：`exec.parent !== undefined` 时直接 `next()`，子调用复用外层已 flush 的落点。[E: packages/session/session-checkpoint-policy/src/index.ts:71]
 
-17. `collapses`：`!nested && modeFor(scope) === 'ptc' && name !== RUN_CODE_NAME`。走 `modeFor` 而不是 `defaultMode`，否则 native 部署上的 `ptc` preset 会宣布 `[run_code]` 却仍执行 native 名。模型直调 `write` 在 **policy 之前** 变成 `UNKNOWN_TOOL`（文案指引从程序里调），approval / guard 看不到注定失败的调用。[E: packages/core/tools/src/index.ts:1316] [E: packages/core/tools/src/index.ts:1372] [E: packages/core/tools/src/index.ts:1430]
+17. `collapses`：`!nested && modeFor(scope) === 'ptc' && name !== RUN_CODE_NAME`。走 `modeFor` 而不是 `defaultMode`，否则 native 部署上的 `ptc` preset 会宣布 `[run_code]` 却仍执行 native 名。模型直调 `write` 在 **policy 之前** 变成 `UNKNOWN_TOOL`（文案指引从程序里调），approval / guard 看不到注定失败的调用。[E: packages/core/tools/src/index.ts:1315] [E: packages/core/tools/src/index.ts:1372] [E: packages/core/tools/src/index.ts:1430]
 
 18. `createRunCodeTool.execute@packages/core/tools/src/ptc.ts`：非空 `description`；`requireRuntime()`；为整次 run 建 `AbortController`。`registry.schemas(exec.agent)` 枚举该 agent 可见工具，**跳过** `run_code`，每个名字绑成 `CodeBindingFunction`。`runtime.run({ program: args.code, bindings: [{ global: 'tools', functions, errorClass: { name: 'ToolCallError', memberNameProperty: 'toolName' } }], signal })`。[E: packages/core/tools/src/ptc.ts:328] [E: packages/core/tools/src/ptc.ts:331] [E: packages/core/tools/src/ptc.ts:337] [E: packages/core/tools/src/ptc.ts:612] [E: packages/core/tools/src/ptc.ts:619]
 
@@ -185,9 +185,9 @@ updated: d347e70390
 
 21. `settle` **立刻**把完整 JSON value 还给程序。日志另走 `shapeDispatchLog` → `ctx.waterfall(..., 'tools/ptc-dispatch-log', dispatch, () => Promise.resolve(dispatch.content))`。listener 必须 `next()` 才会 `shift`：不调用则后续 listener 与 innermost「原样返回 `content`」都不跑，本层返回值成为 durable 副本。spill 等 Consumer 先 `await next()` 再把 oversized 文本换成 preview + locator。抛错被 contain，回退原始 `content`。[E: packages/core/tools/src/index.ts:1290] [E: vendor/cordis/src/events.ts:238] [E: packages/core/tools/tests/ptc.spec.ts:969] [E: packages/core/tools/src/index.ts:181]
 
-22. 然后 `session.append('tool/code-dispatch', { rootCallId, parentCallId, subCallId, name, arguments, isError, content })`。`SURFACE_EVENT_TYPES` 只有 `user/message` / `assistant/message` / `tool/result`；`deriveEventMessage` 对 dispatch 事件走 `default` 返回 `null`。测试钉死 dispatch 不派生 model message。外层 `output.render` 把 `logs` + completion 拼成一段 text，loop 再 `append('tool/result')`。这是 **model-visible ⟺ logged** 在 PTC 上的切法：子调用 logged 供 UI / 重建，但不进下一轮 `messages`。[E: packages/core/tools/src/ptc.ts:509] [E: packages/core/session/src/surface.ts:16] [E: packages/core/session/src/surface.ts:17] [E: packages/core/session/src/surface.ts:18] [E: packages/core/session/src/surface.ts:110] [E: packages/core/session/src/surface.ts:113] [E: packages/core/tools/tests/ptc.spec.ts:1635] [E: packages/core/tools/tests/ptc.spec.ts:1649]
+22. 然后 `session.append('tool/code-dispatch', { rootCallId, parentCallId, subCallId, name, arguments, isError, content })`。`SURFACE_EVENT_TYPES` 只有 `user/message` / `assistant/message` / `tool/result`；`deriveEventMessage` 对 dispatch 事件走 `default` 返回 `null`。测试钉死 dispatch 不派生 model message。外层 `output.render` 把 `logs` + completion 拼成一段 text，loop 再 `append('tool/result')`。这是 **model-visible ⟺ logged** 在 PTC 上的切法：子调用 logged 供 UI / 重建，但不进下一轮 `messages`。[E: packages/core/tools/src/ptc.ts:509] [E: packages/core/session/src/surface.ts:22] [E: packages/core/session/src/surface.ts:23] [E: packages/core/session/src/surface.ts:24] [E: packages/core/session/src/surface.ts:115] [E: packages/core/session/src/surface.ts:121] [E: packages/core/tools/tests/ptc.spec.ts:1635] [E: packages/core/tools/tests/ptc.spec.ts:1649]
 
-23. `CodeRuntime.run` 合同：程序失败写在 `CodeRunResult.error`，`run()` 本身只在 Service Definition 误用时 reject。`createRunCodeTool` 见到 `result.error` 抛 `CodeRunFailedError`（`CODE_RUN_FAILED`），注册表把它收成 `isError` 外层结果。[E: packages/code-runtime/code-runtime/src/index.ts:135] [E: packages/code-runtime/code-runtime/src/types.ts:128] [E: packages/core/tools/src/ptc.ts:140] [E: packages/core/tools/src/ptc.ts:638] `presentCall` 用模型写的 `description` 当 UI title。[E: packages/core/tools/src/ptc.ts:650] 含 image 的嵌套结果以 plugin context 推迟，source plugin id 仍是遗留字符串 `'tools-code-mode'`（文件已是 `ptc.ts`）。[E: packages/core/tools/src/ptc.ts:564]
+23. `CodeRuntime.run` 合同：程序失败写在 `CodeRunResult.error`，`run()` 本身只在 Service Definition 误用时 reject。`createRunCodeTool` 见到 `result.error` 抛 `CodeRunFailedError`（`CODE_RUN_FAILED`），注册表把它收成 `isError` 外层结果。[E: packages/code-runtime/code-runtime/src/index.ts:134] [E: packages/code-runtime/code-runtime/src/types.ts:128] [E: packages/core/tools/src/ptc.ts:140] [E: packages/core/tools/src/ptc.ts:638] `presentCall` 用模型写的 `description` 当 UI title。[E: packages/core/tools/src/ptc.ts:650] 含 image 的嵌套结果以 plugin context 推迟，source plugin id 仍是遗留字符串 `'tools-code-mode'`（文件已是 `ptc.ts`）。[E: packages/core/tools/src/ptc.ts:564]
 
 ## 设计动机
 

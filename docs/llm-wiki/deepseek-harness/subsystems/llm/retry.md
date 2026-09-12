@@ -38,7 +38,7 @@ related:
   - spine.session-log
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-llm-retry` 是 **host 面** function plugin：挂在 `agent/request-error` waterfall 上，按 adapter **注册时**冻结进 `AdapterRegistration.retryPolicy` 的 `ResolvedRetryPolicy` 做可取消退避。它**不是** `LlmAdapter`，不调用 `registerAdapter`，也不提供 `ctx.*` 服务；它注册 session projection `llmRetry` 来计次。
@@ -68,10 +68,10 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），capa
 本包 **不** 拥有：
 
 - `ctx.llm`、`registerAdapter`、HTTP、credentials、`llm/stream` waterfall — [`subsys.llm.service`](./service.md)。
-- policy **值**。`LlmAdapter.providerRetryPolicy` 默认返回 `undefined`；`registerAdapter` 在那时调用 `resolveRetryPolicy(undefined, …)` 并把结果冻进 registration。 [E: packages/llm/llm/src/index.ts:212] [E: packages/llm/llm/src/index.ts:429] [E: packages/llm/llm/src/index.ts:430]
+- policy **值**。`LlmAdapter.providerRetryPolicy` 默认返回 `undefined`；`registerAdapter` 在那时调用 `resolveRetryPolicy(undefined, …)` 并把结果冻进 registration。 [E: packages/llm/llm/src/index.ts:215] [E: packages/llm/llm/src/index.ts:432] [E: packages/llm/llm/src/index.ts:433]
 - DeepSeek / pi-ai 的 catalog、key、settings 热替换 — [`subsys.llm.deepseek`](./deepseek.md) / [`subsys.llm.pi-ai`](./pi-ai.md)。pi-ai 把 SDK `maxRetries` 写成 `0`，把可见次数留给本执行器。 [E: packages/llm/llm-pi-ai/src/adapter.ts:130]
 - turn / step 合同、默认「不重试」inner `next`、`{ kind: 'retry' }` 之后如何再 dispatch — [`subsys.core.agent-loop`](../core/agent-loop.md) / [`spine.turn-and-step`](../../spine/turn-and-step.md)。
-- `deriveMessages()` / surface 三类 — [`spine.session-log`](../../spine/session-log.md)。`llm/retry*` 不在 `SURFACE_EVENT_TYPES`。 [E: packages/core/session/src/surface.ts:16]
+- `deriveMessages()` / surface 三类 — [`spine.session-log`](../../spine/session-log.md)。`llm/retry*` 不在 `SURFACE_EVENT_TYPES`。 [E: packages/core/session/src/surface.ts:17]
 - Codex / Claude 子代理后端。`dsh-base` **没有**那两行。
 
 `dsh-base` 用 `id: llm-retry` 无 `config` 地插入本包。 [E: packages/bundle/base/cordis.patch.yml:84] [E: packages/bundle/base/cordis.patch.yml:85] `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` 以及四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）的 yml **没有** `llm-retry` 行（既不 remount 也不 `disabled`）。[I] `apply` 不 `ctx.provide`，因此也没有 isolate realm。
@@ -101,7 +101,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），capa
 | `Config` | 本插件 | 必须是 `{}`。任一自有 key 抛 `llm-retry: unknown key "…"`；`retryPolicy` 另抛 `belongs under each provider`。 [E: packages/llm/llm-retry/src/index.ts:33] [E: packages/llm/llm-retry/src/index.ts:34] [E: packages/llm/llm-retry/src/index.ts:36] |
 | `ResolvedRetryPolicy` | `@deepseek-ai/dsh-llm` | `normal`（`maxRetries` + `retryableCodes` + backoff）或 `always`（只有 backoff）。注册时冻结。 |
 | 默认 policy | `resolveRetryPolicy(undefined, …)` | `mode: 'normal'`，`maxRetries: 5`，`retryableCodes` = `EMPTY_RESPONSE` / `RATE_LIMIT` / `SERVER` / `TIMEOUT` / `TRANSPORT`，backoff `500` / `10000` / `0.1`。 [E: packages/llm/llm/src/retry-policy.ts:14] [E: packages/llm/llm/src/retry-policy.ts:15] [E: packages/llm/llm/src/retry-policy.ts:16] [E: packages/llm/llm/src/retry-policy.ts:17] [E: packages/llm/llm/src/retry-policy.ts:19] [E: packages/llm/llm/src/retry-policy.ts:155] [E: packages/llm/llm/src/retry-policy.ts:156] [E: packages/llm/llm/src/error.ts:39] |
-| `RequestErrorAction` | `dsh-agent` | `{ kind: 'retry' } \| undefined`。`undefined` = 本步失败终结。 [E: packages/core/agent/src/runtime-types.ts:68] |
+| `RequestErrorAction` | `dsh-agent` | `{ kind: 'retry' } \| undefined`。`undefined` = 本步失败终结。 [E: packages/core/agent/src/runtime-types.ts:122] |
 | `RetryId` | 本包 | 一条 provider+`policyKey` 链共用的身份；首记 `randomUUID()`，后续复用 projection 里的值。 [E: packages/llm/llm-retry/src/index.ts:225] |
 | `policyKey` | `retryPolicyKey` | `always`：`JSON.stringify([mode, initialDelayMs, maxDelayMs, jitterRatio])`；`normal` 再插入 `maxRetries` 与排序后的 `retryableCodes`。 [E: packages/llm/llm-retry/src/index.ts:68] |
 | `llmRetry` | session projection | `apply` 在 `llm/retry` 上写入 `{ retry, retryId }`，键是 `JSON.stringify([provider, policyKey])`。 [E: packages/llm/llm-retry/src/index.ts:79] [E: packages/llm/llm-retry/src/index.ts:136] |
@@ -123,16 +123,16 @@ DSH 主线仍是 `profile → bundle → agent preset`。本插件只参与 **ho
 
 ### 2. policy 值从哪来（不是本包）
 
-4. 某 adapter `registerAdapter(providers, adapter)` 时，对每个 route 读 `adapter.providerRetryPolicy(provider)`；`undefined` 就 `resolveRetryPolicy(undefined, …)`，结果放进私有 `adapters` map 的 `AdapterRegistration.retryPolicy`。 [E: packages/llm/llm/src/index.ts:429] [E: packages/llm/llm/src/index.ts:434]
-5. `prepareCall` 把**那一次** registration 的 policy 拷到 `PreparedLlmCall.retryPolicy`。中途 `replace` / dispose 旧 route 不会改已经发出的这次失败所用的 policy。 [E: packages/llm/llm/src/index.ts:910]
-6. `ReactLoopAgent.buildRequest` 调 `llm.prepareCall`；`NO_ADAPTER` 被吞掉后 `preparedCall` 保持 `undefined`。 [E: packages/core/agent-loop/src/agent.ts:489] [E: packages/core/agent-loop/src/agent.ts:493]
+4. 某 adapter `registerAdapter(providers, adapter)` 时，对每个 route 读 `adapter.providerRetryPolicy(provider)`；`undefined` 就 `resolveRetryPolicy(undefined, …)`，结果放进私有 `adapters` map 的 `AdapterRegistration.retryPolicy`。 [E: packages/llm/llm/src/index.ts:432] [E: packages/llm/llm/src/index.ts:437]
+5. `prepareCall` 把**那一次** registration 的 policy 拷到 `PreparedLlmCall.retryPolicy`。中途 `replace` / dispose 旧 route 不会改已经发出的这次失败所用的 policy。 [E: packages/llm/llm/src/index.ts:922]
+6. `ReactLoopAgent.buildRequest` 调 `llm.prepareCall`；`NO_ADAPTER` 被吞掉后 `preparedCall` 保持 `undefined`。 [E: packages/core/agent-loop/src/agent.ts:502] [E: packages/core/agent-loop/src/agent.ts:493]
 
 ### 3. 失败如何进 waterfall
 
-7. `ReactLoopAgent.step` 外层是 `while (true)`。流结束若 `finish.kind === 'error' || finish.kind === 'aborted'`，走 `dispatch.waterfall('agent/request-error', { turn, step, provider, failure, retryPolicy: preparedCall?.retryPolicy, signal }, inner)`。 [E: packages/core/agent-loop/src/agent.ts:348] [E: packages/core/agent-loop/src/agent.ts:391] [E: packages/core/agent-loop/src/agent.ts:392] [E: packages/core/agent-loop/src/agent.ts:397]
+7. `ReactLoopAgent.step` 外层是 `while (true)`。流结束若 `finish.kind === 'error' || finish.kind === 'aborted'`，走 `dispatch.waterfall('agent/request-error', { turn, step, provider, failure, retryPolicy: preparedCall?.retryPolicy, signal }, inner)`。 [E: packages/core/agent-loop/src/agent.ts:356] [E: packages/core/agent-loop/src/agent.ts:407] [E: packages/core/agent-loop/src/agent.ts:408] [E: packages/core/agent-loop/src/agent.ts:413]
 8. `agentEvents.waterfall` 把 `agent` 注入 payload（调用方不能覆盖）。 [E: packages/core/agent/src/dispatch.ts:118] [E: packages/core/agent/src/dispatch.ts:146]
 9. Cordis `Events.waterfall` 把最后一个参数当 innermost `next`：监听器必须调用传入的 `next()` 才会 `cbs.shift()`；不调用就停在本层。 [E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:237]
-10. loop 的 inner `next` 是 `() => Promise.resolve<RequestErrorAction>(undefined)`：整条链若无人返回 `{ kind: 'retry' }`，本步失败终结。 [E: packages/core/agent-loop/src/agent.ts:401] `action?.kind !== 'retry'` 时抛 `LlmError`；相等则 `continue`，**同一** `turn` / `step` 再 `buildRequest`。 [E: packages/core/agent-loop/src/agent.ts:404] [E: packages/core/agent-loop/src/agent.ts:407]
+10. loop 的 inner `next` 是 `() => Promise.resolve<RequestErrorAction>(undefined)`：整条链若无人返回 `{ kind: 'retry' }`，本步失败终结。 [E: packages/core/agent-loop/src/agent.ts:417] `action?.kind !== 'retry'` 时抛 `LlmError`；相等则 `continue`，**同一** `turn` / `step` 再 `buildRequest`。 [E: packages/core/agent-loop/src/agent.ts:420] [E: packages/core/agent-loop/src/agent.ts:423]
 
 ### 4. `recover@packages/llm/llm-retry/src/index.ts`（必须写清 `next()`）
 
@@ -173,9 +173,9 @@ DSH 主线仍是 `profile → bundle → agent preset`。本插件只参与 **ho
 - **默认 `maxRetries` 是 5，不是 2。** 测试里常见 `normalConfig` 自设 `maxRetries: 2`。 [E: packages/llm/llm/src/retry-policy.ts:14]
 - **`maxRetries: 0` 合法**（`resolveRetryPolicy` 允许非负整数）。`previousRetry` 初值 `0`，`0 >= 0` 立刻 `next()`，等于关掉 normal 重试。
 - **`always` 仍会 `next()`。** 漏读成「always 不走 waterfall」是错的。下游 `{ kind: 'retry' }` 会让 always **跳过**自己的 `llm/retry`。 [E: packages/llm/llm-retry/tests/retry.spec.ts:745]
-- **重试不新开 turn / step。** `ReactLoopAgent.step` 在同一 `while` 里 `continue`。测试只看到一条 `step/start`。包内 README 若写「closes the failed turn / fresh numbered turn」与代码冲突，以 loop 为准。 [E: packages/core/agent-loop/src/agent.ts:407] [E: packages/llm/llm-retry/tests/retry.spec.ts:219] [U]
+- **重试不新开 turn / step。** `ReactLoopAgent.step` 在同一 `while` 里 `continue`。测试只看到一条 `step/start`。包内 README 若写「closes the failed turn / fresh numbered turn」与代码冲突，以 loop 为准。 [E: packages/core/agent-loop/src/agent.ts:423] [E: packages/llm/llm-retry/tests/retry.spec.ts:219] [U]
 - **waterfall 发生在开 step 里。** invariant 要求 `llm/retry` 时最近边界是 `step/start` 不是 `step/end`。 [E: packages/llm/llm-retry/src/invariant.ts:96]
-- **忘了 `next()` 又没返回 `retry` = 失败终结。** inner 默认是 `undefined`。 [E: packages/core/agent-loop/src/agent.ts:401]
+- **忘了 `next()` 又没返回 `retry` = 失败终结。** inner 默认是 `undefined`。 [E: packages/core/agent-loop/src/agent.ts:417]
 - **Retry-After 超过 `maxDelayMs`：** `normal` 放弃；`always` 改用本地 jitter，不会因为供应商说「等太久」而停。 [E: packages/llm/llm-retry/src/index.ts:231]
 - **dispose / `cancel` 会熔断等待。** 已写出的 `llm/retry` 留在 log；没有 `llm/retry-started`；`turn/end` 可以是 `aborted`。dispose 会等仍在跑的下游 `next()` 结束。 [E: packages/llm/llm-retry/tests/retry.spec.ts:970]
 - **`providerForOpenStep` 不在热路径。** `recover` 用 payload 上的 `provider` + projection `llmRetry`；`history.ts` 只给 invariant 对 `request/header`。 [E: packages/llm/llm-retry/src/history.ts:14]

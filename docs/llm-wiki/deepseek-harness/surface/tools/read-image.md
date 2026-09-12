@@ -35,7 +35,7 @@ symbols:
 related: [spine.tool-call-anatomy, ref.tools-catalog, surface.presets.code, subsys.core.code-mode]
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `read_image` 是 `@deepseek-ai/dsh-tool-fs` 上的 model-visible 工具：把一张 PNG/JPEG/WebP/GIF 读进 durable `ctx.attachments`，再把 image block 送回模型上下文。没有挂上 attachment store 时，这个名字根本不会出现在 catalog。
@@ -150,7 +150,7 @@ Native 顶层调用：registry 把这两块放进 `ToolExecutionResult.content`�
 
 | 挂点 | `read_image` |
 |---|---|
-| `tools/pre-execute` / approval | 定义不返回 `ask`。缺省 gate 是 `allow`。没有模型可见的 approval 字段。[E: packages/core/tools/src/index.ts:1468] |
+| `tools/pre-execute` / approval | 定义不返回 `ask`。缺省 gate 是 `allow`。没有模型可见的 approval 字段。[E: packages/core/tools/src/index.ts:1469] |
 | sandbox 升权 | 不经过 `FsSandboxController`。schema 永不广告 `sandbox_permissions` / `justification`。[E: packages/fs/tool-fs/src/index.ts:71][E: packages/fs/tool-fs/src/index.ts:77] |
 | `timeoutMs` | `defineTool` 未传该字段；registry 只在有值时才写到定义上。取消只跟 `exec.signal`。[E: packages/core/tools/src/schema.ts:584] |
 | `isConcurrencySafe` | `() => true`。内容寻址写入可并发；`executionMode` 因此给出 `{ kind: 'parallel' }`。[E: packages/fs/tool-fs/src/read-image.ts:192][E: packages/fs/tool-fs/tests/read-image.spec.ts:591] |
@@ -166,10 +166,10 @@ shipped host `packages/bundle/base/cordis.patch.yml` 有 `attachment-local`，�
 
 | Preset | 装 `dsh-tool-fs`？ | `disabled` | isolate | `read_image` 是否可能出现 |
 |---|---|---|---|---|
-| `minimal` | 否。`filesystem` isolate 只装 `dsh-fs-local` + `dsh-tool-str-replace-editor` | 不适用 | `isolate.fs: true` 罩的是那两行，不是 `tool-fs` | 否。没有登记函数。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:74][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:78][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:81] |
-| `standard` | 是，`id: tool-fs` | 无 | 无（该行不在任何 `isolate` 组内） | 是，只要 host `attachments` 在。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:56][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:57] |
-| `ptc`（wiki 稳定别名仍是 `surface.presets.code`） | 是，与 `standard` 同一行；另加 tool-presentation `mode: ptc` | 无 | 无 | 是。嵌套调用由 PTC `run_code` 把 image 转 `additionalContexts`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:63][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:64][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] |
-| `cordis` | 是 | 无 | 无 | 是。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:57][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:58] |
+| `minimal` | 否。yml 只有 complete persona + `persistent-shell`（无 `tool-fs`、无 `isolate.fs`） | 不适用 | 仅 `isolate.terminals: true` | 否。没有登记函数。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:25] |
+| `standard` | 是，`id: tool-fs` | 无 | 无（该行不在任何 `isolate` 组内） | 是，只要 host `attachments` 在。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:57][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:58] |
+| `ptc`（wiki 稳定别名仍是 `surface.presets.code`） | 是，与 `standard` 同一行；另加 tool-presentation `mode: ptc` | 无 | 无 | 是。嵌套调用由 PTC `run_code` 把 image 转 `additionalContexts`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:64][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:65][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] |
+| `cordis` | 是 | 无 | 无 | 是。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:58][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:59] |
 
 四个 yml 都没有单独的 `read_image` 开关，也没有给 `tool-fs` 配 image 相关 Config。
 

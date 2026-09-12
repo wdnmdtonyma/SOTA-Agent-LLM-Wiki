@@ -35,7 +35,7 @@ related:
   - surface.presets.overview
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `dsh plugin --profile <name> <pnpm args...>` 是 `@deepseek-ai/dsh` launcher 的 `mode: 'plugin'`：在 `$DSH_HOME/profiles/<name>` 里把 pnpm 当 thin forwarder，成功后再按**已安装状态** reconcile `dsh.profile.bundles`。它改的是 **host 面**（进程级 profile → bundle 层列表），不改 agent-preset 成员资格，也不 boot Cordis 树。
@@ -60,17 +60,17 @@ DeepSeek Harness 是 **Cordis 组合运行时**：`profile → bundle → agent 
 | 包名 | `dsh.bundle.patch` |
 |---|---|
 | `@deepseek-ai/dsh-base` | `./cordis.patch.yml` [E: packages/bundle/base/package.json:38] |
-| `@deepseek-ai/dsh-web-app` | `./cordis.patch.yml` [E: packages/bundle/web-app/package.json:43] |
+| `@deepseek-ai/dsh-web-app` | `./cordis.patch.yml` [E: packages/bundle/web-app/package.json:116] |
 | `@deepseek-ai/dsh-headless` | `./cordis.patch.yml` [E: packages/bundle/headless/package.json:43] |
 | `@deepseek-ai/dsh-sdk-app` | `./cordis.patch.yml` [E: packages/bundle/sdk-app/package.json:38] |
 | `@deepseek-ai/dsh-sdk-minimal` | `./cordis.patch.yml` [E: packages/bundle/sdk-minimal/package.json:38] |
 | `@deepseek-ai/dsh-acp-app` | `./cordis.patch.yml` [E: packages/bundle/acp-app/package.json:38] |
 
-`exportsPatch` 的判定就是 `manifest.dsh?.bundle?.patch !== undefined` [E: apps/cli/src/plugin.ts:44]。解析目录时先走安装锚点 `INSTALL_ANCHOR`（`apps/cli/package.json`），再走 profile 自己的 `package.json` [E: apps/cli/src/plugin.ts:39] [E: apps/cli/src/profile-boot.ts:75] [E: packages/boot/app-boot/src/profile.ts:781]。inbox 模板 bundle 因此始终来自当前 dsh 安装，而不是 profile 里可能被 pnpm 拷进去的副本。
+`exportsPatch` 的判定就是 `manifest.dsh?.bundle?.patch !== undefined` [E: apps/cli/src/plugin.ts:44]。解析目录时先走安装锚点 `INSTALL_ANCHOR`（`apps/cli/package.json`），再走 profile 自己的 `package.json` [E: apps/cli/src/plugin.ts:39] [E: apps/cli/src/profile-boot.ts:78] [E: packages/boot/app-boot/src/profile.ts:749]。inbox 模板 bundle 因此始终来自当前 dsh 安装，而不是 profile 里可能被 pnpm 拷进去的副本。
 
 ## 入口
 
-包 `@deepseek-ai/dsh` 的 bin 是 `dsh` → `lib/bin.js` [E: apps/cli/package.json:2] [E: apps/cli/package.json:15]。`parseDshArgs` 解析出 `mode: 'plugin'` 后，`bin.ts` **动态 import** `runPlugin`，并用它的返回值 `process.exit` [E: apps/cli/src/bin.ts:37] [E: apps/cli/src/bin.ts:38] [E: apps/cli/src/bin.ts:39]。`mode: 'profile'` 才会 `loadLayeredEnv` + `runProfile` [E: apps/cli/src/bin.ts:27] [E: apps/cli/src/bin.ts:30]；plugin 这条路径既不加载分层 `.env`，也不 compose / boot。`mode: 'dump-config'` 走 `runDumpConfig`，同样不 boot [E: apps/cli/src/bin.ts:42]。
+包 `@deepseek-ai/dsh` 的 bin 是 `dsh` → `lib/bin.js` [E: apps/cli/package.json:2] [E: apps/cli/package.json:15]。`parseDshArgs` 解析出 `mode: 'plugin'` 后，`bin.ts` **动态 import** `runPlugin`，并用它的返回值 `process.exit` [E: apps/cli/src/bin.ts:43] [E: apps/cli/src/bin.ts:44] [E: apps/cli/src/bin.ts:45]。`mode: 'profile'` 才会 `loadLayeredEnv` + `runProfile` [E: apps/cli/src/bin.ts:32] [E: apps/cli/src/bin.ts:35]；plugin 这条路径既不加载分层 `.env`，也不 compose / boot。`mode: 'dump-config'` 走 `runDumpConfig`，同样不 boot [E: apps/cli/src/bin.ts:48]。
 
 用户键入形态：
 
@@ -78,23 +78,23 @@ DeepSeek Harness 是 **Cordis 组合运行时**：`profile → bundle → agent 
 dsh plugin --profile <name> <pnpm args...>
 ```
 
-`plugin` 是 commander 子命令，描述为把剩余参数转发到 profile 目录里的 pnpm [E: apps/cli/src/args.ts:171]。`--profile <name>` 是子命令自己的 **requiredOption**（description 写 initialized on first use）[E: apps/cli/src/args.ts:173]。其余 token 是 `[args...]`，description 写明 `add` / `remove` / `why` 这类 pnpm 动词按原样转发 [E: apps/cli/src/args.ts:175]。子命令开了 `allowUnknownOption()`，所以 `add --save-dev x` 里的 pnpm 旗标会进 `args`，不会被 launcher 吃掉 [E: apps/cli/src/args.ts:174] [E: apps/cli/tests/args.spec.ts:57]。
+`plugin` 是 commander 子命令，描述为把剩余参数转发到 profile 目录里的 pnpm [E: apps/cli/src/args.ts:190]。`--profile <name>` 是子命令自己的 **requiredOption**（description 写 initialized on first use）[E: apps/cli/src/args.ts:192]。其余 token 是 `[args...]`，description 写明 `add` / `remove` / `why` 这类 pnpm 动词按原样转发 [E: apps/cli/src/args.ts:194]。子命令开了 `allowUnknownOption()`，所以 `add --save-dev x` 里的 pnpm 旗标会进 `args`，不会被 launcher 吃掉 [E: apps/cli/src/args.ts:193] [E: apps/cli/tests/args.spec.ts:68]。
 
-解析结果是未导出的 `PluginInvocation`：`mode: 'plugin'` + `profile` + `args`，**没有** `patches` 字段 [E: apps/cli/src/args.ts:41] [E: apps/cli/src/args.ts:180]。测试把 `plugin --profile tui add turtle-ui` 钉成 `{ mode: 'plugin', profile: 'tui', args: ['add', 'turtle-ui'] }` [E: apps/cli/tests/args.spec.ts:50]。`tui` 只是自定义 profile 名（launcher help 例子也这么用）[E: apps/cli/src/args.ts:71]；`PROFILE_TEMPLATES` 里没有这一项。
+解析结果是未导出的 `PluginInvocation`：`mode: 'plugin'` + `profile` + `args`，**没有** `patches` 字段 [E: apps/cli/src/args.ts:45] [E: apps/cli/src/args.ts:200]。测试把 `plugin --profile tui add turtle-ui` 钉成 `{ mode: 'plugin', profile: 'tui', args: ['add', 'turtle-ui'] }` [E: apps/cli/tests/args.spec.ts:61]。`tui` 只是自定义 profile 名（launcher help 例子也这么用）[E: apps/cli/src/args.ts:84]；`PROFILE_TEMPLATES` 里没有这一项。
 
-父级（根 `program`）若已经带了 `--profile` / `--patch` / `--dump-config` / `--dump-default-config`，子命令 action 先 `rejectParentOptions('plugin')` [E: apps/cli/src/args.ts:177]。四个父级字段任一已定义就报错：`plugin takes none of parent --profile, --patch, --dump-config, or --dump-default-config` [E: apps/cli/src/args.ts:150] [E: apps/cli/src/args.ts:152]。因此 `dsh --profile x plugin add y` 退出 1 [E: apps/cli/tests/args.spec.ts:98]。`--profile` 必须写在 `plugin` **后面**。
+父级（根 `program`）若已经带了 `--profile` / `--patch` / `--dump-config` / `--dump-default-config`，子命令 action 先 `rejectParentOptions('plugin')` [E: apps/cli/src/args.ts:196]。四个父级字段任一已定义就报错：`plugin takes none of parent --profile, --patch, --dump-config, or --dump-default-config` [E: apps/cli/src/args.ts:166] [E: apps/cli/src/args.ts:170]。因此 `dsh --profile x plugin add y` 退出 1 [E: apps/cli/tests/args.spec.ts:125]。`--profile` 必须写在 `plugin` **后面**。
 
 缺 `--profile`、空名字、或没有任何 pnpm 参数，都会在 `parseDshArgs` 里 `program.error` 退出，到不了 `runPlugin`：
 
 | argv | 结果 |
 |---|---|
-| `plugin add x` | 缺 required `--profile`，退出 1 [E: apps/cli/tests/args.spec.ts:95] |
-| `plugin --profile ''` | `error: --profile needs a name` [E: apps/cli/src/args.ts:178] |
-| `plugin --profile tui` | `error: plugin needs pnpm arguments to forward (e.g. add <package>)` [E: apps/cli/src/args.ts:179] [E: apps/cli/tests/args.spec.ts:96] |
+| `plugin add x` | 缺 required `--profile`，退出 1 [E: apps/cli/tests/args.spec.ts:116] |
+| `plugin --profile ''` | `error: --profile needs a name` [E: apps/cli/src/args.ts:197] |
+| `plugin --profile tui` | `error: plugin needs pnpm arguments to forward (e.g. add <package>)` [E: apps/cli/src/args.ts:199] [E: apps/cli/tests/args.spec.ts:117] |
 
-profile 目录是 `$DSH_HOME/profiles/<name>`（未设或空白 `DSH_HOME` 时回退 `~/.dsh`）[E: packages/util/home-paths/src/index.ts:12] [E: packages/util/home-paths/src/index.ts:18] [E: packages/util/home-paths/src/index.ts:62] [E: packages/util/home-paths/src/index.ts:89] [E: packages/boot/app-boot/src/profile.ts:41] [E: packages/boot/app-boot/src/profile.ts:133]。`runPlugin` 用无第二参的 `resolveProfileDir(profile)` [E: apps/cli/src/plugin.ts:121]。空串、`.`、`..`、含 `/` 或 `\`、以及保留名 `node_modules` 会抛 `invalid profile name` [E: packages/boot/app-boot/src/profile.ts:128] [E: packages/boot/app-boot/src/profile.ts:130] [E: packages/boot/app-boot/src/profile.ts:131]。
+profile 目录是 `$DSH_HOME/profiles/<name>`（未设或空白 `DSH_HOME` 时回退 `~/.dsh`）[E: packages/util/home-paths/src/index.ts:12] [E: packages/util/home-paths/src/index.ts:18] [E: packages/util/home-paths/src/index.ts:62] [E: packages/util/home-paths/src/index.ts:89] [E: packages/boot/app-boot/src/profile.ts:42] [E: packages/boot/app-boot/src/profile.ts:101]。`runPlugin` 用无第二参的 `resolveProfileDir(profile)` [E: apps/cli/src/plugin.ts:121]。空串、`.`、`..`、含 `/` 或 `\`、以及保留名 `node_modules` 会抛 `invalid profile name` [E: packages/boot/app-boot/src/profile.ts:96] [E: packages/boot/app-boot/src/profile.ts:98] [E: packages/boot/app-boot/src/profile.ts:99]。
 
-没有 `dsh sdk` / `dsh acp` / `dsh headless` 子命令；除 `web` 别名外，其它 shipped profile 一律 `dsh --profile <name>` [E: apps/cli/src/args.ts:156]。
+没有 `dsh sdk` / `dsh acp` / `dsh headless` 子命令；除 `web` 别名外，其它 shipped profile 一律 `dsh --profile <name>` [E: apps/cli/src/args.ts:175]。
 
 ## 关键字段
 
@@ -102,8 +102,8 @@ profile 目录是 `$DSH_HOME/profiles/<name>`（未设或空白 `DSH_HOME` 时�
 
 | 旗标 / 位置 | 类型 | 行为 |
 |---|---|---|
-| `--profile <name>` | plugin `requiredOption` | 目标 profile 名；空串拒绝 [E: apps/cli/src/args.ts:173] [E: apps/cli/src/args.ts:178] |
-| `[args...]` | plugin argument | 转发给 `spawnSync('pnpm', …)` 的 argv；至少 1 个 [E: apps/cli/src/args.ts:175] [E: apps/cli/src/args.ts:179] |
+| `--profile <name>` | plugin `requiredOption` | 目标 profile 名；空串拒绝 [E: apps/cli/src/args.ts:192] [E: apps/cli/src/args.ts:197] |
+| `[args...]` | plugin argument | 转发给 `spawnSync('pnpm', …)` 的 argv；至少 1 个 [E: apps/cli/src/args.ts:194] [E: apps/cli/src/args.ts:199] |
 
 `plugin` **不**声明 `--patch` / `--dump-config` / `--dump-default-config`。那些是 `mode: 'profile'` / `mode: 'dump-config'` 的 launcher 旗标；写在 `plugin` 前面会被 `rejectParentOptions` 拒掉。
 
@@ -111,10 +111,10 @@ profile 目录是 `$DSH_HOME/profiles/<name>`（未设或空白 `DSH_HOME` 时�
 
 | 父级旗标 | 拒绝条件 |
 |---|---|
-| `--profile <name>` | `parent.profile !== undefined` [E: apps/cli/src/args.ts:150] |
-| `--patch <path>`（可重复） | `parent.patch !== undefined` [E: apps/cli/src/args.ts:150] |
-| `--dump-config` | `parent.dumpConfig !== undefined` [E: apps/cli/src/args.ts:151] |
-| `--dump-default-config` | `parent.dumpDefaultConfig !== undefined` [E: apps/cli/src/args.ts:151] |
+| `--profile <name>` | `parent.profile !== undefined` [E: apps/cli/src/args.ts:166] |
+| `--patch <path>`（可重复） | `parent.patch !== undefined` [E: apps/cli/src/args.ts:166] |
+| `--dump-config` | `parent.dumpConfig !== undefined` [E: apps/cli/src/args.ts:167] |
+| `--dump-default-config` | `parent.dumpDefaultConfig !== undefined` [E: apps/cli/src/args.ts:167] |
 
 ### 首次 init 的 shipped bundle 列表
 
@@ -122,28 +122,28 @@ profile 目录是 `$DSH_HOME/profiles/<name>`（未设或空白 `DSH_HOME` 时�
 
 | profile 名 | 初始 `dsh.profile.bundles` | `patchReload` | 来源 |
 |---|---|---|---|
-| `acp` | `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-acp-app` | `startup` | `PROFILE_TEMPLATES.acp` [E: packages/boot/app-boot/src/profile.ts:138] [E: packages/boot/app-boot/src/profile.ts:140] |
-| `web` | `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app` | `live` | `PROFILE_TEMPLATES.web` [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:144] |
-| `headless` | `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-headless` | `startup` | `PROFILE_TEMPLATES.headless` [E: packages/boot/app-boot/src/profile.ts:146] [E: packages/boot/app-boot/src/profile.ts:148] |
-| `sdk` | `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-sdk-app` | `startup` | `PROFILE_TEMPLATES.sdk` [E: packages/boot/app-boot/src/profile.ts:150] [E: packages/boot/app-boot/src/profile.ts:152] |
-| `sdk-minimal` | **仅** `@deepseek-ai/dsh-sdk-minimal`（不叠 `dsh-base`） | `startup` | `PROFILE_TEMPLATES['sdk-minimal']` [E: packages/boot/app-boot/src/profile.ts:154] [E: packages/boot/app-boot/src/profile.ts:155] |
-| 其它名字（含 help 例子 `tui`） | `@deepseek-ai/dsh-base` | `initProfile` 第三参缺省 → `DEFAULT_PROFILE_PATCH_RELOAD` = `live` | `DEFAULT_PROFILE_BUNDLES` [E: packages/boot/app-boot/src/profile.ts:166] [E: packages/boot/app-boot/src/profile.ts:169] [E: packages/boot/app-boot/src/profile.ts:200] |
+| `acp` | `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-acp-app` | `startup` | `PROFILE_TEMPLATES.acp` [E: packages/boot/app-boot/src/profile.ts:106] [E: packages/boot/app-boot/src/profile.ts:108] |
+| `web` | `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app` | `live` | `PROFILE_TEMPLATES.web` [E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:112] |
+| `headless` | `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-headless` | `startup` | `PROFILE_TEMPLATES.headless` [E: packages/boot/app-boot/src/profile.ts:114] [E: packages/boot/app-boot/src/profile.ts:116] |
+| `sdk` | `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-sdk-app` | `startup` | `PROFILE_TEMPLATES.sdk` [E: packages/boot/app-boot/src/profile.ts:118] [E: packages/boot/app-boot/src/profile.ts:120] |
+| `sdk-minimal` | **仅** `@deepseek-ai/dsh-sdk-minimal`（不叠 `dsh-base`） | `startup` | `PROFILE_TEMPLATES['sdk-minimal']` [E: packages/boot/app-boot/src/profile.ts:122] [E: packages/boot/app-boot/src/profile.ts:123] |
+| 其它名字（含 help 例子 `tui`） | `@deepseek-ai/dsh-base` | `initProfile` 第三参缺省 → `DEFAULT_PROFILE_PATCH_RELOAD` = `live` | `DEFAULT_PROFILE_BUNDLES` [E: packages/boot/app-boot/src/profile.ts:134] [E: packages/boot/app-boot/src/profile.ts:137] [E: packages/boot/app-boot/src/profile.ts:168] |
 
-`PROFILE_TEMPLATES` 有五个键：`acp` / `web` / `headless` / `sdk` / `sdk-minimal` [E: packages/boot/app-boot/src/profile.ts:137]。没有 shipped TUI 包；`tui` 不是模板名。五个里只有 `web` 的 `patchReload` 是 `live`。
+`PROFILE_TEMPLATES` 有五个键：`acp` / `web` / `headless` / `sdk` / `sdk-minimal` [E: packages/boot/app-boot/src/profile.ts:105]。没有 shipped TUI 包；`tui` 不是模板名。五个里只有 `web` 的 `patchReload` 是 `live`。
 
-对照：`loadProfile`（`dsh --profile` / `dsh web` 走的加载）对**没有**模板的名字**不会** init，而是抛 `does not exist; create it with 'dsh plugin --profile <name> add <package>'` [E: packages/boot/app-boot/src/profile.ts:812] [E: packages/boot/app-boot/src/profile.ts:814]。内置 bin 测试核过 `dsh --profile nope` 的 stderr 同时含 `profile "nope" does not exist` 和 `dsh plugin --profile nope add` [E: apps/cli/tests/built-bin.e2e.ts:610] [E: apps/cli/tests/built-bin.e2e.ts:611]。有模板的五个名字在首次 boot 时也会 `initProfile`，但那是 `loadProfile` 自己的分支，不是 `runPlugin` [E: packages/boot/app-boot/src/profile.ts:817]。
+对照：`loadProfile`（`dsh --profile` / `dsh web` 走的加载）对**没有**模板的名字**不会** init，而是抛 `does not exist; create it with 'dsh plugin --profile <name> add <package>'` [E: packages/boot/app-boot/src/profile.ts:822] [E: packages/boot/app-boot/src/profile.ts:824]。内置 bin 测试核过 `dsh --profile nope` 的 stderr 同时含 `profile "nope" does not exist` 和 `dsh plugin --profile nope add` [E: apps/cli/tests/built-bin.e2e.ts:644] [E: apps/cli/tests/built-bin.e2e.ts:645]。有模板的五个名字在首次 boot 时也会 `initProfile`，但那是 `loadProfile` 自己的分支，不是 `runPlugin` [E: packages/boot/app-boot/src/profile.ts:827]。
 
 ### `initProfile` 写出的文件
 
-`initProfile` 对已存在的文件一律不覆盖 [E: packages/boot/app-boot/src/profile.ts:204] [E: packages/boot/app-boot/src/profile.ts:214] [E: packages/boot/app-boot/src/profile.ts:216]。`runPlugin` 只在缺 `package.json` 时调用它；目录里已有 manifest 时，即便 `cordis.patch.yml` / `pnpm-workspace.yaml` 被人删掉，plugin 也不会补写。
+`initProfile` 对已存在的文件一律不覆盖 [E: packages/boot/app-boot/src/profile.ts:172] [E: packages/boot/app-boot/src/profile.ts:182] [E: packages/boot/app-boot/src/profile.ts:184]。`runPlugin` 只在缺 `package.json` 时调用它；目录里已有 manifest 时，即便 `cordis.patch.yml` / `pnpm-workspace.yaml` 被人删掉，plugin 也不会补写。
 
 | 文件 | 内容 |
 |---|---|
-| `package.json` | `name: dsh-profile-<basename>`、`private: true`、`dependencies: {}`、`dsh.profile.bundles` 复制传入列表、`dsh.profile.patchReload` 写入传入值 [E: packages/boot/app-boot/src/profile.ts:206] [E: packages/boot/app-boot/src/profile.ts:208] [E: packages/boot/app-boot/src/profile.ts:209] |
-| `cordis.patch.yml` | 用户自己的 patch 层（缺则写入空数组模板）；是 profile 目录文件，不是 bundle 包 [E: packages/boot/app-boot/src/profile.ts:214] |
-| `pnpm-workspace.yaml` | `packages: [.]`、`nodeLinker: hoisted`、`autoInstallPeers: false` [E: packages/boot/app-boot/src/profile.ts:182] [E: packages/boot/app-boot/src/profile.ts:185] [E: packages/boot/app-boot/src/profile.ts:186] |
+| `package.json` | `name: dsh-profile-<basename>`、`private: true`、`dependencies: {}`、`dsh.profile.bundles` 复制传入列表、`dsh.profile.patchReload` 写入传入值 [E: packages/boot/app-boot/src/profile.ts:174] [E: packages/boot/app-boot/src/profile.ts:176] [E: packages/boot/app-boot/src/profile.ts:177] |
+| `cordis.patch.yml` | 用户自己的 patch 层（缺则写入空数组模板）；是 profile 目录文件，不是 bundle 包 [E: packages/boot/app-boot/src/profile.ts:182] |
+| `pnpm-workspace.yaml` | `packages: [.]`、`nodeLinker: hoisted`、`autoInstallPeers: false` [E: packages/boot/app-boot/src/profile.ts:150] [E: packages/boot/app-boot/src/profile.ts:153] [E: packages/boot/app-boot/src/profile.ts:154] |
 
-模板 bundle 写进 `dsh.profile.bundles`，**同时** `dependencies` 是空对象 [E: packages/boot/app-boot/src/profile.ts:208]。这是 reconcile「不碰 inbox 模板」的前提。单测核过 `initProfile(..., ['@deepseek-ai/dsh-base'])` 后 `bundles` 就是这一项且 `patchReload` 为 `live` [E: packages/boot/app-boot/tests/profile.spec.ts:96] [E: packages/boot/app-boot/tests/profile.spec.ts:101]；再传入 `['other']` 也不会改已有 manifest 或用户改过的 patch [E: packages/boot/app-boot/tests/profile.spec.ts:105] [E: packages/boot/app-boot/tests/profile.spec.ts:107]。
+模板 bundle 写进 `dsh.profile.bundles`，**同时** `dependencies` 是空对象 [E: packages/boot/app-boot/src/profile.ts:176]。这是 reconcile「不碰 inbox 模板」的前提。单测核过 `initProfile(..., ['@deepseek-ai/dsh-base'])` 后 `bundles` 就是这一项且 `patchReload` 为 `live` [E: packages/boot/app-boot/tests/profile.spec.ts:97] [E: packages/boot/app-boot/tests/profile.spec.ts:102]；再传入 `['other']` 也不会改已有 manifest 或用户改过的 patch [E: packages/boot/app-boot/tests/profile.spec.ts:106] [E: packages/boot/app-boot/tests/profile.spec.ts:108]。
 
 ### `reconcilePlugins` 读写的字段
 
@@ -162,9 +162,9 @@ profile 目录是 `$DSH_HOME/profiles/<name>`（未设或空白 `DSH_HOME` 时�
 3. 对当前 `bundles` 里每一项：仅当 `wasDependency`（出现在 before 或 after 的 `dependencies`）并且不再 `stillBundle`（仍在 after 依赖里 **且** 仍声明 patch）时才 `splice` 掉 [E: apps/cli/src/plugin.ts:81] [E: apps/cli/src/plugin.ts:82] [E: apps/cli/src/plugin.ts:83] [E: apps/cli/src/plugin.ts:84]。
 4. `changed` 才 `writeProfileManifest` [E: apps/cli/src/plugin.ts:88] [E: apps/cli/src/plugin.ts:90]。
 
-因此：`add` 一个声明了 `dsh.bundle.patch` 的包会入层；`remove` 掉它、或新版本摘掉该声明，会出层。模板写进 bundles、但从未进入 `dependencies` 的 inbox 包（`dsh-base`、各模板第二个 bundle、`sdk-minimal` 的 `dsh-sdk-minimal`）**不会**被第 3 步当成 `wasDependency`，reconcile 不碰。内置 bin 测试用手改已安装包的 manifest 再跑无害的 `pnpm root`：v1 无 `dsh.bundle` 时 bundles 仍是 `['@deepseek-ai/dsh-base']`；v2 加上声明后变成 `['@deepseek-ai/dsh-base', 'late-bundle']` [E: apps/cli/tests/built-bin.e2e.ts:893] [E: apps/cli/tests/built-bin.e2e.ts:902]。这证明 reconcile 看的是**安装后的磁盘状态**，不是这次 argv 的 diff，所以 `update` 也能激活后来才声明 bundle 的包。
+因此：`add` 一个声明了 `dsh.bundle.patch` 的包会入层；`remove` 掉它、或新版本摘掉该声明，会出层。模板写进 bundles、但从未进入 `dependencies` 的 inbox 包（`dsh-base`、各模板第二个 bundle、`sdk-minimal` 的 `dsh-sdk-minimal`）**不会**被第 3 步当成 `wasDependency`，reconcile 不碰。内置 bin 测试用手改已安装包的 manifest 再跑无害的 `pnpm root`：v1 无 `dsh.bundle` 时 bundles 仍是 `['@deepseek-ai/dsh-base']`；v2 加上声明后变成 `['@deepseek-ai/dsh-base', 'late-bundle']` [E: apps/cli/tests/built-bin.e2e.ts:995] [E: apps/cli/tests/built-bin.e2e.ts:1004]。这证明 reconcile 看的是**安装后的磁盘状态**，不是这次 argv 的 diff，所以 `update` 也能激活后来才声明 bundle 的包。
 
-`exportsPatch` 里 `resolveBundleDir` 抛错（pnpm 报成功但包不可解析）时当成普通依赖，返回 `false`，不让 reconcile 炸掉 [E: apps/cli/src/plugin.ts:41]。对照：下一次 `loadProfile` 若 `bundles` 里仍列着一个 `dsh.bundle.patch` 为 `undefined` 的包，会 **fail loud**（`declares no dsh.bundle`）[E: packages/boot/app-boot/src/profile.ts:833] [E: packages/boot/app-boot/src/profile.ts:834]。plugin 宽松、boot 严格。
+`exportsPatch` 里 `resolveBundleDir` 抛错（pnpm 报成功但包不可解析）时当成普通依赖，返回 `false`，不让 reconcile 炸掉 [E: apps/cli/src/plugin.ts:41]。对照：下一次 `loadProfile` 若 `bundles` 里仍列着一个 `dsh.bundle.patch` 为 `undefined` 的包，会 **fail loud**（`declares no dsh.bundle`）[E: packages/boot/app-boot/src/profile.ts:788] [E: packages/boot/app-boot/src/profile.ts:789]。plugin 宽松、boot 严格。
 
 ### 相对路径 spec（`anchorPathSpec`）
 
@@ -178,7 +178,7 @@ pnpm 的 `cwd` 是 profile 目录 [E: apps/cli/src/plugin.ts:135]。若把用户
 | `file:.` / `file:./pkg` / `link:../pkg` | 保留 `file:` / `link:`，只绝对化后面的相对段 |
 | 绝对路径、`some-registry-name`、`--save-dev` | 不改 |
 
-`file:` 与裸目录对 pnpm 是 copy vs link，锚定不得改写用户选的那种语义。内置 bin 测试从插件 checkout 跑 `dsh plugin --profile anchor add .`：`dependencies` 出现 `anchored-bundle`（checkout 的 `name`），且 `bundles` 含该名 [E: apps/cli/tests/built-bin.e2e.ts:848] [E: apps/cli/tests/built-bin.e2e.ts:849]。
+`file:` 与裸目录对 pnpm 是 copy vs link，锚定不得改写用户选的那种语义。内置 bin 测试从插件 checkout 跑 `dsh plugin --profile anchor add .`：`dependencies` 出现 `anchored-bundle`（checkout 的 `name`），且 `bundles` 含该名 [E: apps/cli/tests/built-bin.e2e.ts:950] [E: apps/cli/tests/built-bin.e2e.ts:951]。
 
 ## 装配与门控
 
@@ -194,11 +194,11 @@ pnpm 的 `cwd` 是 profile 目录 [E: apps/cli/src/plugin.ts:135]。若把用户
 6. **pnpm 退出码**取 `result.status ?? 1` [E: apps/cli/src/plugin.ts:147]。
    - `0`：`reconcilePlugins` [E: apps/cli/src/plugin.ts:149]。
    - 非 0：不进入 `reconcilePlugins`（该调用只在 `exitCode === 0` 分支）[E: apps/cli/src/plugin.ts:148] [E: apps/cli/src/plugin.ts:149]。stderr 写 `pnpm failed in profile directory <dir>` [E: apps/cli/src/plugin.ts:154]。若任一原始 arg 匹配 `git+` 前缀、`github:` 前缀、或 `.git` 后接 `#`/结束，再提示：git-hosted 插件靠 `prepare` 构建，pnpm 默认拦住，要把 pnpm 打出的 key 写进该 profile 的 `pnpm-workspace.yaml` 的 `allowBuilds` 再重跑 [E: apps/cli/src/plugin.ts:155]。
-7. **把 pnpm 退出码原样返回**给 `bin.ts` 的 `process.exit` [E: apps/cli/src/plugin.ts:162] [E: apps/cli/src/bin.ts:39]。
+7. **把 pnpm 退出码原样返回**给 `bin.ts` 的 `process.exit` [E: apps/cli/src/plugin.ts:162] [E: apps/cli/src/bin.ts:45]。
 
 **isolate / disable：** 本命令不 mount 插件行，没有 `disabled:`、没有 isolate 组、也不看 `DSH_TELEMETRY_DISABLED`。那些门控发生在之后的 `composeProfile` / `mountPreset`。plugin 唯一的「disable」是：失败的 pnpm 让 bundles 维持 `before` 快照。
 
-**和 boot 叠层的衔接：** 下一次 `dsh --profile <name>` 里，`composeProfile` 把 `profile.layers` 摊成 `bundlePatches` [E: apps/cli/src/profile-boot.ts:164]，再按 `allPatches` 顺序叠 profile 自己的 patches、home `$DSH_HOME/cordis.patch.yml`、以及 overlays（`--patch` 文件，加上可选 telemetry disable）[E: apps/cli/src/profile-boot.ts:137] [E: apps/cli/src/profile-boot.ts:138] [E: apps/cli/src/profile-boot.ts:139] [E: apps/cli/src/profile-boot.ts:140] [E: apps/cli/src/profile-boot.ts:170]。`dsh plugin` 改的就是这棵真树最底下的 bundle 列表。默认产品面是本地 Web GUI（`dsh web` ≡ `--profile web`），但宿主入口还包括 `dsh --profile headless|sdk|sdk-minimal|acp` 以及经 `dsh plugin` 创建的自定义 profile。往默认安装加 host 层，用的是 `dsh plugin --profile web add <package>`。
+**和 boot 叠层的衔接：** 下一次 `dsh --profile <name>` 里，`composeProfile` 把 `profile.layers` 摊成 `bundlePatches` [E: apps/cli/src/profile-boot.ts:234]，再按 `allPatches` 顺序叠 profile 自己的 patches、home `$DSH_HOME/cordis.patch.yml`、以及 overlays（`--patch` 文件，加上可选 telemetry disable）[E: apps/cli/src/profile-boot.ts:206] [E: apps/cli/src/profile-boot.ts:207] [E: apps/cli/src/profile-boot.ts:208] [E: apps/cli/src/profile-boot.ts:209] [E: apps/cli/src/profile-boot.ts:240]。`dsh plugin` 改的就是这棵真树最底下的 bundle 列表。默认产品面是本地 Web GUI（`dsh web` ≡ `--profile web`），但宿主入口还包括 `dsh --profile headless|sdk|sdk-minimal|acp` 以及经 `dsh plugin` 创建的自定义 profile。往默认安装加 host 层，用的是 `dsh plugin --profile web add <package>`。
 
 ## 跨包关系
 

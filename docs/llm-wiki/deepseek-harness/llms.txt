@@ -2,7 +2,7 @@
 
 > **deepseek-harness**(`deepseek-harness/`,Cordis 插件树 TypeScript monorepo,组装运行时)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 deepseek-harness git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
 >
-> **状态:已完成 —— 全部 204 节点 verified 于 `d347e70390`(`0.1.3-alpha.1`)。**
+> **状态:已完成 —— 全部 206 节点 verified 于 `c291e7961a`(`0.1.5-rc.2`)。**
 >
 > **核心组织主线 —— 组合运行时**:profile → bundle → agent preset;capability seam = Service Definition / Provider / Consumer;model-visible ⟺ logged。每个节点 frontmatter 标 `pkg: composition|core|llm|execution|orchestration|context|persistence|interaction|host|client|integration|vendor|util|cross`。官方 `docs/` 不是 `[E]`。
 
@@ -33,7 +33,7 @@
 - [edit 字符串替换](surface/tools/edit.md) `[execution]`: `无 apply_patch;read-before-write 由 observation policy`
 - [glob 找文件](surface/tools/glob.md) `[execution]`: `打包 ripgrep,经 ctx.subprocess`
 - [grep 搜内容](surface/tools/grep.md) `[execution]`: `打包 ripgrep,不是宿主 rg`
-- [str_replace_editor](surface/tools/str-replace-editor.md) `[execution]`: `minimal 用的 Anthropic 风格编辑器`
+- [str_replace_editor](surface/tools/str-replace-editor.md) `[execution]`: `包仍在;出厂 preset/bundle 不挂`
 - [bash 一次性执行](surface/tools/bash.md) `[execution]`: `ctx.shell;可 run_in_background → jobs`
 - [bash 持久 PTY](surface/tools/bash-persistent.md) `[execution]`: `同名 bash,包是 tool-bash-persistent;minimal 用它`
 - [pwsh](surface/tools/pwsh.md) `[execution]`: `PowerShell 方言,镜像 bash 减 sandbox 控件`
@@ -46,7 +46,7 @@
 - [subagent](surface/tools/subagent.md) `[orchestration]`: `wire 名是 load-time toolName;continuable`
 - [subagent_fork](surface/tools/subagent-fork.md) `[orchestration]`: `one-shot fork;与 subagent schema 不同`
 - [send_message / interrupt_agent / list_agents](surface/tools/subagent-control.md) `[orchestration]`: `全局控制件,不是第二个 spawn`
-- [report](surface/tools/report.md) `[orchestration]`: `只装在 continuable 子代理里`
+- [report](surface/tools/report.md) `[orchestration]`: `工具包已删;退役映射`
 - [workflow](surface/tools/workflow.md) `[orchestration]`: `JS 编排器,子调用走完整管线`
 - [ralph](surface/tools/ralph.md) `[orchestration]`: `每轮全新子代理,无对话种子`
 - [web_search](surface/tools/web-search.md) `[integration]`: `辅助 Messages 调 web_search_20250305;密钥走 SEARCH_BASE_URL`
@@ -54,6 +54,7 @@
 - [skill](surface/tools/skill.md) `[context]`: `扫描 .dsh/skills 与 .agents/skills`
 - [ask_user_question](surface/tools/ask-user-question.md) `[interaction]`: `停在 tool/call 直到 UI 答`
 - [run_code (PTC)](surface/tools/run-code.md) `[core]`: `ptc preset 的 wire 工具;TS/Python flavor`
+- [present 交付物声明](surface/tools/present.md) `[execution]`: `standard/ptc/cordis;append deliverables/presented`
 - [lsp](surface/tools/lsp.md) `[execution]`: `四 ops;无 provider 则 LSP_UNAVAILABLE`
 - [session_* 查询五件套](surface/tools/session-query.md) `[persistence]`: `opt-in;五个名字必须入表`
 - [schedule_create / list / delete](surface/tools/schedule.md) `[orchestration]`: `opt-in;只在 live root Agent scope`
@@ -70,8 +71,9 @@
 - [sdk profile](surface/profiles/sdk.md) `[composition]`: `dsh-base + dsh-sdk-app;JSON-RPC;startup reload`
 - [sdk-minimal profile](surface/profiles/sdk-minimal.md) `[composition]`: `不叠 dsh-base 的独立 SDK 树`
 - [acp profile](surface/profiles/acp.md) `[composition]`: `dsh-base + dsh-acp-app;自动化 ACP`
+- [desktop（Electron 壳）](surface/profiles/desktop.md) `[composition]`: `不是 CLI profile;独占 $DSH_HOME/profiles/desktop`
 - [agent preset 总览](surface/presets/overview.md) `[composition]`: `四份 shipped preset 怎么被发现和挂上`
-- [minimal preset](surface/presets/minimal.md) `[composition]`: `benchmark;无 compaction;persistent bash + str_replace_editor`
+- [minimal preset](surface/presets/minimal.md) `[composition]`: `benchmark;无 compaction;仅 persistent shell`
 - [standard preset](surface/presets/standard.md) `[composition]`: `Web 默认;全套编码工具`
 - [PTC preset(原 code)](surface/presets/code.md) `[composition]`: `standard + PTC run_code`
 - [cordis preset](surface/presets/cordis.md) `[composition]`: `standard + 自修改;当 shell 访问`
@@ -84,7 +86,7 @@
 - [TypeScript JSON-RPC SDK](surface/sdk/typescript.md) `[integration]`: `进程外 runtime 客户端`
 - [Python SDK](surface/sdk/python.md) `[integration]`: `bundled runtime + 客户端`
 - [Web 工作台可见面](surface/web/workbench.md) `[client]`: `默认 GUI;拒 --host 0.0.0.0`
-- [DeepSeek 官方路由](surface/providers/deepseek.md) `[llm]`: `默认 deepseek-v4-flash;stream-only`
+- [DeepSeek 官方路由](surface/providers/deepseek.md) `[llm]`: `base 默认 deepseek-flash;catalog 仍有 v4-flash`
 - [pi-ai 多协议路由](surface/providers/pi-ai.md) `[llm]`: `始终加载,零 route 直到 Settings 加 profile`
 - [DSH_HOME 与路径](surface/misc/home.md) `[util]`: `$DSH_HOME 否则 ~/.dsh`
 - [审批与沙箱产品面](surface/misc/security.md) `[execution]`: `文件副作用 only;ask|never;fail-loud`
@@ -170,9 +172,9 @@
 
 ### persistence
 - [session persistence 缝](subsystems/persistence/session-persistence.md) `[persistence]`: `SessionHandle; shipped 盘只有 JSONL`
-- [JSONL 后端](subsystems/persistence/jsonl.md) `[persistence]`: `format v2 + write lease`
+- [JSONL 后端](subsystems/persistence/jsonl.md) `[persistence]`: `format v3 + write lease`
 - [SQLite 后端](subsystems/persistence/sqlite.md) `[persistence]`: `session-persistence-sqlite 已退役;query/storage sqlite 仍在`
-- [Session format v2](subsystems/persistence/session-format.md) `[persistence]`: `SESSION_FORMAT_VERSION=2; v0→v1→v2 adjacent`
+- [Session format v3](subsystems/persistence/session-format.md) `[persistence]`: `SESSION_FORMAT_VERSION=3; v0→v1→v2→v3 adjacent`
 - [checkpoint 策略](subsystems/persistence/checkpoint.md) `[persistence]`: `llm/stream 前 + tool body 前`
 - [session projection](subsystems/persistence/projection.md) `[persistence]`: `纯 ProjectionDefinition + 一致切面`
 - [会话标题](subsystems/persistence/title.md) `[persistence]`: `异步 provider;引用源 message seq`

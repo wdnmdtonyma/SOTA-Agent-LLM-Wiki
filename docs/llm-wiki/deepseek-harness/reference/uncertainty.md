@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 # 不确定项日志([U] 汇总)
@@ -238,6 +238,17 @@ updated: 47f943859b
 - `effectiveApprovalPolicy` 从后往前只读 `event.data.policy`，不读 `source`。委派孩子 `append` 的 `source: 'delegation'` 因此只是审计标记。核到：`packages/subagent/subagent/src/child-agent.ts` 的 append 与 `packages/interaction/user-approval/src/index.ts` 的 fold。
 - live `/permission` 走 `ApprovalService.setPolicy`（额外 `inject` 通知）；pin / `set(session)` 走 `setApprovalPolicy`（无通知）。两条写路径并存。
 
+## update-broken-core
+
+# uncertainty-update — broken-core (c291e7961a)
+
+- **fork 继承父 pending。** 旧合同用 `seedLength` 跳过父队列；现行 `ReactLoopInbox` 投影 fold 继承前缀，`inbox.spec.ts` 钉 `childInbox.nextTurn` 等于父当时未 claim 的消息。不要再写「子 inbox 从空队列开始」。
+- **同步读 API 已弃用。** `eventAt()` / `snapshotEvents()` / `ownEvents()` 源码标 deprecated。生产路径应走 projection / 现行读合同。message-feedback live 核对仍调用 `snapshotEvents()`（标 `[I]`），不要写成推荐路径。
+- **没有 `ctx.agent` DX accessor。** `ReactLoopAgent` 用 `createScope(loopCtx, this)`，不再 `extend({ agent: this })`。分层读 `scopeOf(ctx)`；`setup` 的第二个参数才是子 handle。
+- **message-feedback 不再是 storage-domain 消费者。** `packages/feedback/message-feedback/src/spec.ts` 已删。`inject = ['sessionPersistence', 'sessions']`；事件是 `feedback/message-put` / `feedback/message-delete`。不要在 `$DSH_HOME/storages/` 下找 `message_feedback`。
+- **`DetailsPanel.tsx` 已删。** ui-chat 不占 `details`；`openFile` 走 `sidebarRight.openResource`。右侧栏架构不在本批展开。
+- **`request/header` 不再带 `system` 字符串。** system prompt 走 `system/message`；invariant 断言 `options.system === undefined`。`SESSION_FORMAT_VERSION = 3`。
+
 ## update-code-mode
 
 # uncertainty-update-code-mode
@@ -251,6 +262,20 @@ updated: 47f943859b
 - 本 catalog 在 `0a53fb55be` 对 **已删除包**（apiproxy / client-runtime / web-react / acp-demo）与 **PTC / 五 profile / 四 preset** 做了权威改写。
 - 仍有大量 `packages/*/src/index.ts` 的 `Config` 顶层键未在实例表里逐字段展开（文末名单）。完整机械枚举以各文件 `export const Config` / `static Config` 为准；filler 未把官方 `docs/config-catalog.md` 当 [E]。
 - `dsh-webhook` 运行时无插件 Config；`dsh-acp-app` `apply` 无 config 参数。
+
+## update-package-index
+
+# uncertainty-update-package-index
+
+- `UPDATE-INSTRUCTIONS.md` 写「叶 `packages/**/package.json` = 275（无 `@fixture/*`）」。源码 `find packages -name package.json` 在 `c291e7961a` 确实是 **275**，但其中 **7** 个是 `packages/typert/generator/tests/fixtures/**` 的 `@fixture/*`。产品叶 `packages/<group>/<pkg>/package.json` 是 **268**。本页按源码写清两层计数，不以指令转述为准。
+- `pnpm-workspace.yaml` 另含 `benchmarks`（不是根 `package.json` `workspaces` 成员）。未把 benchmarks 收进实例表。
+
+## update-presets-composition
+
+# uncertainty · presets-composition (c291e7961a)
+
+- `cordis` preset 头注释仍写 `cordis_mount`；可执行登记名是七个 `cordis_*`（`define` / `run` / `stop` / `undefine` + 三条 `inspect_*`），没有 `cordis_mount`。该 TRUST 说法只在注释，标 [I]。
+- `agent-default-model.spec.ts` fixture 仍写 `deepseek-v4-flash`；composition 权威是 `dsh-base` 的 `deepseek-flash`。acp-app 插件行另硬编码 `deepseek-v4-flash`。
 
 ## update-retry
 
@@ -269,6 +294,6 @@ updated: 47f943859b
 # uncertainty-update-trace-code-mode
 
 - node: `spine.trace-code-mode`
-- SHA: `0a53fb55be`
+- SHA: `c291e7961a`
 - `dsh-agent-tool-presentation` JSDoc still says a PTC row against a deployment with no `codeRuntime` “fails at mount, named in the preset's own activation audit”. `inactiveRows` only inspects static `fiber.inject` (the row lists `['tools']`, not `codeRuntime`), so the dynamic `ctx.inject(['codeRuntime'], …)` wait is invisible to that audit. The presentation spec asserts assemble stays native (`echo`) until a runtime plugin arrives. Keep as `[U]` until the JSDoc, mount audit, or wait inject list are aligned.
 

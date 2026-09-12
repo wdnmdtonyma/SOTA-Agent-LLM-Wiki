@@ -51,7 +51,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > 模型可见名 `job_list` / `job_output` / `job_kill`；实现包 `@deepseek-ai/dsh-tool-jobs`（Cordis 插件名 `tool-jobs`）。三个工具只控制已登记的后台 job，不自己 `start()`；加载时给 `ctx.jobs` 挂上 controller，并把未汇报的结算投递给 owning agent。
@@ -85,7 +85,7 @@ updated: d347e70390
 
 ## 用途定位
 
-本页是 **model-facing 控制面**，不是 job registry。模型用这三个工具收集、等待、杀掉已经由别的工具 `ctx.jobs.start` 出去的后台工作。典型 producer：`bash` 的 `run_in_background`（`kind: 'bash'`）、`subagent` 的 one-shot 后台孩子（`kind: 'subagent'`）、`terminal_send` 的后台发送（`kind: 'pty-send'`）。[E: packages/shell/tool-bash/src/index.ts:365] [E: packages/shell/tool-bash/src/index.ts:366] [E: packages/subagent/tool-subagent/src/index.ts:538] [E: packages/subagent/tool-subagent/src/index.ts:539] [E: packages/terminal/tool-terminal/src/index.ts:255] [E: packages/terminal/tool-terminal/src/index.ts:256]
+本页是 **model-facing 控制面**，不是 job registry。模型用这三个工具收集、等待、杀掉已经由别的工具 `ctx.jobs.start` 出去的后台工作。典型 producer：`bash` 的 `run_in_background`（`kind: 'bash'`）、`subagent` 的 one-shot 后台孩子（`kind: 'subagent'`）、`terminal_send` 的后台发送（`kind: 'pty-send'`）。[E: packages/shell/tool-bash/src/index.ts:365] [E: packages/shell/tool-bash/src/index.ts:366] [E: packages/subagent/tool-subagent/src/index.ts:545] [E: packages/subagent/tool-subagent/src/index.ts:546] [E: packages/terminal/tool-terminal/src/index.ts:255] [E: packages/terminal/tool-terminal/src/index.ts:256]
 
 `tool:jobs` section 要求模型：记住自己开出的 id；结算会 in-session 通知，禁止 busy-poll / sleep；交最终答案前用 `job_output` 收齐还相关的 job（只有真正被挡住才 `wait: true`）；不再需要的用 `job_kill`。[E: packages/jobs/tool-jobs/src/index.ts:265]
 
@@ -147,19 +147,19 @@ updated: d347e70390
 | Definition | `JobRegistry` / `ctx.jobs` | 抽象 Service，`super(ctx, 'jobs')`。直接加载 `@deepseek-ai/dsh-jobs` 会抛，必须换实现。[E: packages/jobs/jobs/src/index.ts:31] [E: packages/jobs/jobs/src/index.ts:70] [E: packages/jobs/jobs/src/index.ts:68] |
 | Provider（shipped） | `LocalJobRegistry`（`@deepseek-ai/dsh-jobs-local`） | 进程内 Map；id 形如 `` `${kind}-${count}` ``；按 session 篱笆授权。[E: packages/jobs/jobs-local/package.json:2] [E: packages/jobs/jobs-local/src/index.ts:91] [E: packages/jobs/jobs-local/src/index.ts:153] |
 | Consumer（本页） | `@deepseek-ai/dsh-tool-jobs` | `attachController` + `list` / `read` / `wait` / `kill` / `get` + `onJobDone`。 |
-| Consumer（producer） | `tool-bash` / `tool-subagent` / `tool-terminal` | 只 `start()`。缺 `ctx.jobs` 时 bash / subagent 自己抛 `load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs`。[E: packages/shell/tool-bash/src/index.ts:355] [E: packages/subagent/tool-subagent/src/index.ts:533] |
+| Consumer（producer） | `tool-bash` / `tool-subagent` / `tool-terminal` | 只 `start()`。缺 `ctx.jobs` 时 bash / subagent 自己抛 `load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs`。[E: packages/shell/tool-bash/src/index.ts:355] [E: packages/subagent/tool-subagent/src/index.ts:540] |
 
 换掉 `ctx.jobs` provider 会带走：id 分配、session 篱笆、`maxConcurrentJobsPerOwner`（本地默认 10）、wait 的 `TASK_WAIT_TIMEOUT` 语义、controller / listener 的 scope 分层。三个 `defineTool` 不选存储实现。[E: packages/jobs/jobs-local/src/index.ts:28] [E: packages/jobs/jobs-local/src/index.ts:144]
 
 `JobKindMap` 在 seam 里声明合并：基线是 `bash` 与 `subagent`；`tool-terminal` 并入 `pty-send`。registry 把 kind 当 id 前缀，不解释含义。[E: packages/jobs/jobs/src/types.ts:24] [E: packages/jobs/jobs/src/types.ts:25] [E: packages/terminal/tool-terminal/src/index.ts:20]
 
-授权：`assertAccess` 比较 `job.owner.id` 与 `caller.id`。跨 session 读/等/杀抛 `job ${id} belongs to another session`；未知 id 抛 `unknown job ${id}`。unowned job 对任何调用者开放。[E: packages/jobs/jobs-local/src/index.ts:357] [E: packages/jobs/jobs-local/src/index.ts:347] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:574]
+授权：`assertAccess` 比较 `job.owner.id` 与 `caller.id`。跨 session 读/等/杀抛 `job ${id} belongs to another session`；未知 id 抛 `unknown job ${id}`。unowned job 对任何调用者开放。[E: packages/jobs/jobs-local/src/index.ts:357] [E: packages/jobs/jobs-local/src/index.ts:347] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:575]
 
 controller 与 `onJobDone` 按注册方 scope 分层：未 scoped 的 host 挂载服务所有 owner；preset scope 里挂的只服务该组合下的 agent。两个 preset 共用一个 host registry 时，结算只由 owner 所在那一层投递一次。[E: packages/jobs/jobs-local/src/index.ts:315] [E: packages/jobs/tool-jobs/tests/tool-jobs.spec.ts:549]
 
 ## 执行管线
 
-`ctx.tools.execute` 走 `tools/pre-execute` →（可选 `serviceAsk`）→ 单调 guard → `tools/execute` waterfall（叶子 `ToolDefinition.execute`）→ `tools/post-execute` → 定义上的 `finalizeContent`。[E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1471] [E: packages/core/tools/src/index.ts:1565] [E: packages/core/tools/src/index.ts:1734] [E: packages/core/tools/src/index.ts:1640]
+`ctx.tools.execute` 走 `tools/pre-execute` →（可选 `serviceAsk`）→ 单调 guard → `tools/execute` waterfall（叶子 `ToolDefinition.execute`）→ `tools/post-execute` → 定义上的 `finalizeContent`。[E: packages/core/tools/src/index.ts:1466] [E: packages/core/tools/src/index.ts:1470] [E: packages/core/tools/src/index.ts:1564] [E: packages/core/tools/src/index.ts:1733] [E: packages/core/tools/src/index.ts:1639]
 
 对本家族的挂点：
 
@@ -167,8 +167,8 @@ controller 与 `onJobDone` 按注册方 scope 分层：未 scoped 的 host 挂�
 - **timeout（工具定义）：** 三个 `defineTool` 都没有 `timeoutMs`，timeout-policy 不包一层。`job_output` 的等待在 `LocalJobRegistry.wait`。[E: packages/guard/timeout-policy/src/index.ts:59]
 - **approval：** `inject` 没有 `approval`；没有按 `job_*` 名字特判。普通调用不 `ask`。
 - **sandbox：** 不读 `ctx.sandbox` / `ctx.sandboxPolicy`。confine 是 producer（例如 sandboxed `bash`）的事。
-- **并行：** 未声明 `isConcurrencySafe`，`executionMode` fail-closed 为 exclusive。[E: packages/core/tools/src/index.ts:1269]
-- **PTC：** `ptc` preset 仍装本包，但 scope 有效 `mode === 'ptc'` 且无 `parent` 的模型直调三个名字都会在进 waterfall 前 collapse，必须从 `run_code` 程序里调。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/core/tools/src/index.ts:1316] [E: packages/core/tools/src/index.ts:1432]
+- **并行：** 未声明 `isConcurrencySafe`，`executionMode` fail-closed 为 exclusive。[E: packages/core/tools/src/index.ts:1268]
+- **PTC：** `ptc` preset 仍装本包，但 scope 有效 `mode === 'ptc'` 且无 `parent` 的模型直调三个名字都会在进 waterfall 前 collapse，必须从 `run_code` 程序里调。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] [E: packages/core/tools/src/index.ts:1315] [E: packages/core/tools/src/index.ts:1431]
 
 ## Preset 装配
 
@@ -176,12 +176,12 @@ controller 与 `onJobDone` 按注册方 scope 分层：未 scoped 的 host 挂�
 
 | preset | 装 `@deepseek-ai/dsh-tool-jobs`？ | `disabled` | isolate | 关键 Config |
 |---|---|---|---|---|
-| `minimal` | **否**。yml 是 persona + `persistent-shell` + filesystem，没有 `tool-jobs` 行 | — | 本包未出现 [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] | — |
-| `standard` | 是 | 无 | 无。顶层 consumer 行 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:73] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:74] | 插件默认（30s / 10min / `wakeup` / 3） |
-| `ptc`（wiki id `surface.presets.code`） | 是（呈现改成 PTC `mode: ptc`） | 无 | 无 [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:80] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:81] | 同默认 |
-| `cordis` | 是 | 无 | 无 [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:74] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:75] | 同默认 |
+| `minimal` | **否**。yml 是 complete persona（`prefix`）+ `persistent-shell`，没有 filesystem / `str_replace_editor` / `tool-jobs` | — | 本包未出现 [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:12] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] | — |
+| `standard` | 是 | 无 | 无。顶层 consumer 行 [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:74] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:75] | 插件默认（30s / 10min / `wakeup` / 3） |
+| `ptc`（wiki id `surface.presets.code`） | 是（呈现改成 PTC `mode: ptc`） | 无 | 无 [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:81] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:82] | 同默认 |
+| `cordis` | 是 | 无 | 无 [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:75] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:76] | 同默认 |
 
-组合旁注（不是 preset 成员资格）：`dsh-base` insert 了 host `jobs` = `@deepseek-ai/dsh-jobs-local`，以及 host `tool-jobs` = `@deepseek-ai/dsh-tool-jobs`。[E: packages/bundle/base/cordis.patch.yml:82] [E: packages/bundle/base/cordis.patch.yml:84] [E: packages/bundle/base/cordis.patch.yml:260] [E: packages/bundle/base/cordis.patch.yml:261] `dsh-web-app` overlay 把 host `tool-jobs` 设 `disabled: true`，改由每个 session 的 preset remount；`jobs-local` 行不 disable，registry 留在 host。[E: packages/bundle/web-app/cordis.patch.yml:336] [E: packages/bundle/web-app/cordis.patch.yml:337] shipped profile 里只有 `web` 叠 `dsh-web-app` 并挂 agent-presets；`headless` / `sdk` / `sdk-minimal` / `acp` 不走这套 overlay，host 平面的 `tool-jobs` 行仍可能直接生效（以该 profile 的 bundle patch 为准）。
+组合旁注（不是 preset 成员资格）：`dsh-base` insert 了 host `jobs` = `@deepseek-ai/dsh-jobs-local`，以及 host `tool-jobs` = `@deepseek-ai/dsh-tool-jobs`。[E: packages/bundle/base/cordis.patch.yml:82] [E: packages/bundle/base/cordis.patch.yml:84] [E: packages/bundle/base/cordis.patch.yml:254] [E: packages/bundle/base/cordis.patch.yml:255] `dsh-web-app` overlay 把 host `tool-jobs` 设 `disabled: true`，改由每个 session 的 preset remount；`jobs-local` 行不 disable，registry 留在 host。[E: packages/bundle/web-app/cordis.patch.yml:384] [E: packages/bundle/web-app/cordis.patch.yml:384] shipped profile 里只有 `web` 叠 `dsh-web-app` 并挂 agent-presets；`headless` / `sdk` / `sdk-minimal` / `acp` 不走这套 overlay，host 平面的 `tool-jobs` 行仍可能直接生效（以该 profile 的 bundle patch 为准）。
 
 ## execute() 走读
 

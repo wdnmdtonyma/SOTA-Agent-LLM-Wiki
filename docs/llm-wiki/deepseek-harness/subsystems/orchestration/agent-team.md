@@ -45,7 +45,7 @@ related:
   - ref.session-events
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `ctx.agentTeams`（`TeamService`）是 **opt-in experimental** 的 implicit-root 协作缝：每个 live 顶层 Session 即一个 Team（`TeamId` = Lead Session id），durable roster / mailbox / shared task DAG 全部写在 **Lead Session log**，成员孩子通过 [subsys.orchestration.subagent](subagent.md)（`subsys.orchestration.subagent`）的 `startContinuable` 拉起。不在 `dsh-base`；要叠 `@deepseek-ai/dsh-experimental-agent-team-profile` 的 patch。

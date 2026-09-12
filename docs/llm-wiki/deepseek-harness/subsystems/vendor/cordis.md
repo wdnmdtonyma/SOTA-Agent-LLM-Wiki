@@ -29,7 +29,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/cordis` 是 **vendored** 组合运行时（`vendor/cordis/`），npm 名写在该包 `package.json`，不是 `packages/` 里的 DSH 包。`Context` 是 `Proxy`：`provide` / `inject` / `plugin` / `on` / `emit` / `waterfall` 都是 mixin 到 `ctx` 上的方法。`Service` 构造调用 `ctx.reflect.provide`；注册是可逆 effect，fiber unload 后该键变 `undefined`。`waterfall` 必须调用传入的 `next()`，否则链停在本层（含内置 `inner`）。
@@ -102,7 +102,7 @@ updated: d347e70390
 
 6. `Service` 构造@vendor/cordis/src/service.ts 在 class 插件的 `new` 里跑：`self.ctx.reflect.provide(name, self, this[symbols.check])`。[E: vendor/cordis/src/service.ts:57] DSH 的 `FileSystem` 只做 `super(ctx, 'fs')`，于是 `ctx.fs` 指向该实例。[E: packages/fs/fs/src/index.ts:86] [E: packages/fs/fs/src/index.ts:88]
 
-7. `ReflectService.provide@vendor/cordis/src/reflect.ts` **整段包在 `ctx.fiber.effect` 里**。[E: vendor/cordis/src/reflect.ts:278] 同 isolation key 已有 `Impl` 则抛 `service "<name>" has been registered at <fiber.name>`。[E: vendor/cordis/src/reflect.ts:290] 否则写入 `store[key]`。effect 的 disposer 先 `delete this.store[key]`，再 `notify([name])` 让 inject 了该名的 fiber 重算。[E: vendor/cordis/src/reflect.ts:298] [E: vendor/cordis/src/reflect.ts:299] fs 测试：同一 root 再 `ctx.plugin(FakeFileSystem)` reject；`fiber.dispose()` 之后 `ctx.fs` 是 `undefined`。[E: packages/fs/fs/tests/service.spec.ts:100] [E: packages/fs/fs/tests/service.spec.ts:107] [E: packages/fs/fs/tests/service.spec.ts:109]
+7. `ReflectService.provide@vendor/cordis/src/reflect.ts` **整段包在 `ctx.fiber.effect` 里**。[E: vendor/cordis/src/reflect.ts:278] 同 isolation key 已有 `Impl` 则抛 `service "<name>" has been registered at <fiber.name>`。[E: vendor/cordis/src/reflect.ts:290] 否则写入 `store[key]`。effect 的 disposer 先 `delete this.store[key]`，再 `notify([name])` 让 inject 了该名的 fiber 重算。[E: vendor/cordis/src/reflect.ts:298] [E: vendor/cordis/src/reflect.ts:299] fs 测试：同一 root 再 `ctx.plugin(FakeFileSystem)` reject；`fiber.dispose()` 之后 `ctx.fs` 是 `undefined`。[E: packages/fs/fs/tests/service.spec.ts:101] [E: packages/fs/fs/tests/service.spec.ts:107] [E: packages/fs/fs/tests/service.spec.ts:109]
 
 8. 根 context 读 `ctx.fs`：根 fiber 的 `runtime` 为 `null`，proxy `get` 走 `ctx.reflect.get(prop, false)`，不再要求 inject。[E: vendor/cordis/src/reflect.ts:152] 有 runtime 的子 context 则 `waterfall('internal/get', …, inner)`，`inner` 沿 fiber 链查 `store[prop]`；声明了 inject 但当前 inactive 会改报错文案。[E: vendor/cordis/src/reflect.ts:153] [E: vendor/cordis/src/reflect.ts:157] [E: vendor/cordis/src/reflect.ts:160]
 

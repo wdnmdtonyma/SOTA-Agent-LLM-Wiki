@@ -42,7 +42,7 @@ related:
   - surface.presets.overview
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-base` 是 **base-backed** profile 的第一层 host 组合：一条根 `insert` 把共享核心（`llm` / `session` / `agent` / `agent-loop` `agents: []` / `tools` / sandbox / persistence / subagent **backends** / 模型可见 tool 行）铺进空的 Loader 根。它是 Cordis 组合运行时的 patch 载体，不是 coding-agent 主循环，也没有 runtime API。五个 shipped profile 里只有 `sdk-minimal` **不**叠这一层。
@@ -58,7 +58,7 @@ updated: d347e70390
 
 ## 职责边界
 
-本包拥有：**一条**可被 `dsh.bundle.patch` 解析的根 `insert` 列表，以及把该文件钉死在 manifest 上的合同。`package.json` 的 `name` 是 `@deepseek-ai/dsh-base`；`dsh.bundle.patch` 必须是 `./cordis.patch.yml`。[E: packages/bundle/base/package.json:2] [E: packages/bundle/base/package.json:38] [E: packages/bundle/base/tests/base.spec.ts:23] `src/index.ts` 只写 `export {}`，不导出 boot / factory / 服务。[E: packages/bundle/base/src/index.ts:9]
+本包拥有：**一条**可被 `dsh.bundle.patch` 解析的根 `insert` 列表，以及把该文件钉死在 manifest 上的合同。`package.json` 的 `name` 是 `@deepseek-ai/dsh-base`；`dsh.bundle.patch` 必须是 `./cordis.patch.yml`。[E: packages/bundle/base/package.json:2] [E: packages/bundle/base/package.json:33] [E: packages/bundle/base/tests/base.spec.ts:23] `src/index.ts` 只写 `export {}`，不导出 boot / factory / 服务。[E: packages/bundle/base/src/index.ts:9]
 
 本包**不**拥有：
 
@@ -68,17 +68,17 @@ updated: d347e70390
 - `dsh --profile sdk` / `acp` 的 overlay（`sdk-app-startup` / `sdk-jsonrpc-server`；`acp-app-startup` / `acp`），以及 **不叠 base** 的 `dsh-sdk-minimal` 完整 insert。
 - preset 发现、`mountPreset`、`leakedServices` 实现 — [`subsys.composition.agent-presets`](agent-presets.md)。本页只写：base 行坐在 root realm；同一批 service-publishing 插件若被搬进 preset 且漏 `isolate`，会被拒。
 - `Agent` 合同 / 默认 loop / `ctx.tools` 管线 / `deriveMessages()` — [`subsys.core.agent-loop`](../core/agent-loop.md)。base 只决定这些包以哪一行、哪份 config 进树。
-- Codex / Claude 子代理后端。`dsh-base` **没有** `id: subagent-codex` / `id: subagent-claude-code`，也不是「装了但 dormant」：`base.spec.ts` 要求这两行长度为 0，且 `dependencies` 不含对应包。[E: packages/bundle/base/tests/base.spec.ts:42] [E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:47] [E: packages/bundle/base/tests/base.spec.ts:48]
+- Codex / Claude 子代理后端。`dsh-base` **没有** `id: subagent-codex` / `id: subagent-claude-code`，也不是「装了但 dormant」：`base.spec.ts` 要求这两行长度为 0，且 `dependencies` 不含对应包。[E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:47] [E: packages/bundle/base/tests/base.spec.ts:48]
 
-**host 面 vs agent-preset 面。** host 面是进程级：persistence / sandbox / approval / subagent **backends** / 注册表 / `ctx.llm` / `ctx.agents` / `ctx.agentLoop`。base 把这些全部插进 **root realm**。模型可见 tool 行也先写在 base（headless / sdk / acp 叠层不关掉它们，就留在 host 全局层）；`dsh-web-app` 再把它们 `disabled: true`，改由每会话 preset 挂 tools / persona / isolate。五个 shipped profile：`web`（`patchReload: live`）、`headless` / `sdk` / `sdk-minimal` / `acp`（`startup`）。入口是 `dsh web` **或** `dsh --profile web|headless|sdk|sdk-minimal|acp`；没有 shipped TUI 模板。
+**host 面 vs agent-preset 面。** host 面是进程级：persistence / sandbox / approval / subagent **backends** / 注册表 / `ctx.llm` / `ctx.agents` / `ctx.agentLoop`。base 把这些全部插进 **root realm**。模型可见 tool 行也先写在 base（headless / sdk / acp 叠层不关掉它们，就留在 host 全局层）；`dsh-web-app` 再把它们 `disabled: true`，改由每会话 preset 挂 tools / persona / isolate。五个 shipped CLI profile：`web`（`patchReload: live`）、`headless` / `sdk` / `sdk-minimal` / `acp`（`startup`）。**`desktop` 不在 `PROFILE_TEMPLATES`**：Electron 独占 `$DSH_HOME/profiles/desktop`，不是第六个 CLI profile。入口是 `dsh web` **或** `dsh --profile web|headless|sdk|sdk-minimal|acp`；没有 shipped TUI 模板。
 
-**没有 `invariants` 行。** 整份 insert 从 `id: timer` 起到 `id: llm-deepseek` 止，没有 `name: '@deepseek-ai/dsh-invariants'`。[E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/base/cordis.patch.yml:498] `@deepseek-ai/dsh-invariants` 只出现在 peer / dev，不是树成员。[E: packages/bundle/base/package.json:126]
+**没有 `invariants` 行。** 整份 insert 从 `id: timer` 起到 `id: llm-deepseek` 止，没有 `name: '@deepseek-ai/dsh-invariants'`。[E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/base/cordis.patch.yml:486] `@deepseek-ai/dsh-invariants` 不在 base 的 dependencies / peer / dev 里，也不是树成员。[E: packages/bundle/base/package.json:122]
 
 ## 关键文件
 
 | 路径 | 角色 |
 |---|---|
-| `packages/bundle/base/cordis.patch.yml` | 真树：一条根 `insert`，86 个 `id:` |
+| `packages/bundle/base/cordis.patch.yml` | 真树：一条根 `insert`，84 个 `id:` |
 | `packages/bundle/base/package.json` | `@deepseek-ai/dsh-base`；`dsh.bundle.patch = ./cordis.patch.yml`；依赖闭包 |
 | `packages/bundle/base/src/index.ts` | 无 runtime API（`export {}`） |
 | `packages/bundle/base/tests/base.spec.ts` | 可解析、`>50` 行、无 Codex/Claude、shell 对称门、无 `windows.cordis.patch.yml`；钉 `web-fetch-http` 与 `hmr.disabled: true` |
@@ -97,16 +97,16 @@ updated: d347e70390
 
 | 符号 / 键 | 落点 | 含义 |
 |---|---|---|
-| `@deepseek-ai/dsh-base` | npm `name` | in-box bundle 包名；installation-first 解析永远拿到这份安装，而不是 profile-local 副本。[E: packages/bundle/base/package.json:2] [E: packages/boot/app-boot/src/profile.ts:781] |
-| `dsh.bundle.patch` | manifest | 相对包根的 patch 路径。缺了 `loadProfile` 抛 `declares no dsh.bundle`。[E: packages/bundle/base/package.json:38] [E: packages/boot/app-boot/src/profile.ts:833] [E: packages/boot/app-boot/src/profile.ts:834] |
-| 根 `insert`（无父 `id`） | `cordis.patch.yml` 唯一顶层动作 | `applyEntryPatches` 对无 `id` 的 `insert` 做 `data.push(...insert)`，86 行一次进空根。[E: packages/bundle/base/cordis.patch.yml:15] [E: vendor/include/src/index.ts:94] |
+| `@deepseek-ai/dsh-base` | npm `name` | in-box bundle 包名；installation-first 解析永远拿到这份安装，而不是 profile-local 副本。[E: packages/bundle/base/package.json:2] [E: packages/boot/app-boot/src/profile.ts:746] |
+| `dsh.bundle.patch` | manifest | 相对包根的 patch 路径。缺了 `loadProfileDirectory` 抛 `declares no dsh.bundle`。[E: packages/bundle/base/package.json:33] [E: packages/boot/app-boot/src/profile.ts:789] |
+| 根 `insert`（无父 `id`） | `cordis.patch.yml` 唯一顶层动作 | `applyEntryPatches` 对无 `id` 的 `insert` 做 `data.push(...insert)`，84 行一次进空根。[E: packages/bundle/base/cordis.patch.yml:15] [E: vendor/include/src/index.ts:94] |
 | `id` / `name` / `config` / `disabled` | 每行 | `id` 是后层寻址键；`name` 是 Loader 插件说明符；`config` 后写**整键覆盖**（不是 deep-merge）；`disabled` 可被 `!!js` 求值。[E: vendor/include/src/index.ts:123] |
-| `PROFILE_TEMPLATES` | 五名 | `web` / `acp` / `headless` / `sdk` 都是 `[dsh-base, <mode bundle>]`；`sdk-minimal` **只有** `@deepseek-ai/dsh-sdk-minimal`。无名 `dsh plugin` init 用 `DEFAULT_PROFILE_BUNDLES = [dsh-base]`。[E: packages/boot/app-boot/src/profile.ts:137] [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:154] [E: packages/boot/app-boot/src/profile.ts:166] |
-| `agent-loop` `config.agents` | `[]` | Web 不在进程级造 Agent；会话由 host 在请求时 `ctx.agents.create`。[E: packages/bundle/base/cordis.patch.yml:486] [E: packages/bundle/base/cordis.patch.yml:489] |
-| `agent-default-model` | `provider` / `model` | 未来新 Agent 的默认：`deepseek-official` / `deepseek-v4-flash`。[E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:79] |
+| `PROFILE_TEMPLATES` | 五名 | `web` / `acp` / `headless` / `sdk` 都是 `[dsh-base, <mode bundle>]`；`sdk-minimal` **只有** `@deepseek-ai/dsh-sdk-minimal`。**没有 `desktop`**。无名 `dsh plugin` init 用 `DEFAULT_PROFILE_BUNDLES = [dsh-base]`。[E: packages/boot/app-boot/src/profile.ts:105] [E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:122] [E: packages/boot/app-boot/src/profile.ts:134] |
+| `agent-loop` `config.agents` | `[]` | Web 不在进程级造 Agent；会话由 host 在请求时 `ctx.agents.create`。[E: packages/bundle/base/cordis.patch.yml:472] [E: packages/bundle/base/cordis.patch.yml:475] |
+| `agent-default-model` | `provider` / `model` | 未来新 Agent 的 composition 默认：`deepseek-official` / `deepseek-flash`。不要把 `agent-default-model.spec.ts` 的 fixture `deepseek-v4-flash` 写成 composition 默认。[E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:79] |
 | `isolate` | Loader `EntryOptions` | `true` → 该 entry 的 `LocalRealm`；字符串 → 共享 `GlobalRealm`。base 行**不**写 `isolate`：它们本就该进 root。[E: vendor/loader/src/config/isolate.ts:81] |
 
-测试钉死 insert 行数 `> 50` 且含 `agent-loop`。[E: packages/bundle/base/tests/base.spec.ts:33] [E: packages/bundle/base/tests/base.spec.ts:34] 下面按职责列出**全部** 86 个 `id:`（一个不漏）。「模型可见」在这里只表示该行会往 `ctx.tools` 注册或改模型请求形状；字段表留给 `surface.tools.*`。
+测试钉死 insert 行数 `> 50` 且含 `agent-loop`。[E: packages/bundle/base/tests/base.spec.ts:33] [E: packages/bundle/base/tests/base.spec.ts:34] 下面按职责列出**全部** 84 个 `id:`（一个不漏）。「模型可见」在这里只表示该行会往 `ctx.tools` 注册或改模型请求形状；字段表留给 `surface.tools.*`。
 
 ### Runtime / loader
 
@@ -124,7 +124,7 @@ updated: d347e70390
 | `llm-retry` | `@deepseek-ai/dsh-llm-retry` | 重试策略 |
 | `llm-pi-ai` | `@deepseek-ai/dsh-llm-pi-ai` | 始终挂上；零 route 直到 Settings 写 `llm-pi-ai:` |
 | `llm-deepseek` | `@deepseek-ai/dsh-llm-deepseek` | 原生 DeepSeek adapter（无内联 key） |
-| `agent-default-model` | `@deepseek-ai/dsh-agent-default-model` | 新 Agent 默认 `deepseek-official` / `deepseek-v4-flash` |
+| `agent-default-model` | `@deepseek-ai/dsh-agent-default-model` | 新 Agent 默认 `deepseek-official` / `deepseek-flash` |
 | `token-meter` | `@deepseek-ai/dsh-token-meter` | 进程级 token 计量（web 留下 host） |
 | `plugin-package-inventory-deepseek` | `@deepseek-ai/dsh-plugin-package-inventory-deepseek` | DeepSeek 侧插件包清单 |
 
@@ -144,7 +144,7 @@ updated: d347e70390
 | `storage-json` | `@deepseek-ai/dsh-storage-json` | JSON backend |
 | `storage-domain` | `@deepseek-ai/dsh-storage-domain` | 带 schema 的 domain 层 |
 | `session-projection-cache` | `@deepseek-ai/dsh-session-projection-cache` | 投影缓存走 storage |
-| `session-telemetry-otel` | `@deepseek-ai/dsh-session-telemetry-otel` | `mode` 吃 `DSH_TELEMETRY_MODE`，默认 `FEEDBACK_ONLY` [E: packages/bundle/base/cordis.patch.yml:193] |
+| `session-telemetry-otel` | `@deepseek-ai/dsh-session-telemetry-otel` | `mode` 吃 `DSH_TELEMETRY_MODE`，默认 `FEEDBACK_ONLY` [E: packages/bundle/base/cordis.patch.yml:187] |
 | `session-checkpoint-policy` | `@deepseek-ai/dsh-session-checkpoint-policy` | adapter 前 / top-level tool 前 flush |
 
 ### Settings / credentials
@@ -210,14 +210,13 @@ updated: d347e70390
 | `tool-skill` | `@deepseek-ai/dsh-tool-skill` | 模型可见 skill 调用 |
 | `tool-subagent-control` | `@deepseek-ai/dsh-tool-subagent-control` | `send_message` / `interrupt_agent` |
 | `tool-subagent-list-agents` | `@deepseek-ai/dsh-tool-subagent-control/list-agents` | `list_agents` |
-| `tool-subagent` | `@deepseek-ai/dsh-tool-subagent` | `toolName: subagent`，`provider: spawn`，`backgroundMode: continuable` [E: packages/bundle/base/cordis.patch.yml:359] |
-| `tool-subagent-fork` | `@deepseek-ai/dsh-tool-subagent` | `toolName: subagent_fork`，`provider: fork`，`backgroundMode: one-shot` [E: packages/bundle/base/cordis.patch.yml:372] |
+| `tool-subagent` | `@deepseek-ai/dsh-tool-subagent` | `toolName: subagent`，`provider: spawn`，`backgroundMode: continuable` [E: packages/bundle/base/cordis.patch.yml:349] |
+| `tool-subagent-fork` | `@deepseek-ai/dsh-tool-subagent` | `toolName: subagent_fork`，`provider: fork`，`backgroundMode: one-shot` [E: packages/bundle/base/cordis.patch.yml:362] [E: packages/bundle/base/cordis.patch.yml:367] |
 | `tool-workflow` | `@deepseek-ai/dsh-tool-workflow` | 模型可见 workflow |
 | `tool-todo` | `@deepseek-ai/dsh-tool-todo` | `todo_write` |
 | `tool-goal` | `@deepseek-ai/dsh-tool-goal` | 模型可见 goal 工具（service 留下） |
 | `tool-ralph` | `@deepseek-ai/dsh-tool-ralph` | Ralph 迭代；`subagentProvider: spawn` |
-| `tool-str-replace-editor` | `@deepseek-ai/dsh-tool-str-replace-editor` | 字符串替换编辑器 |
-| `tool-web` | `@deepseek-ai/dsh-tool-web` | `web_search`；`fetch: false` |
+| `tool-web` | `@deepseek-ai/dsh-tool-web` | `web_search` **与** `web_fetch`；`fetch: true`，`searchTimeoutMs: 60000` |
 | `agent-instructions` | `@deepseek-ai/dsh-agent-instructions` | workspace 指令进 prompt |
 | `plan-mode` | `@deepseek-ai/dsh-plan-mode` | plan 段 + `exit_plan_mode` |
 | `skill-filesystem` | `@deepseek-ai/dsh-skill-filesystem` | 部署级 skill 发现 |
@@ -234,7 +233,7 @@ updated: d347e70390
 | `id` | `name` | 角色 |
 |---|---|---|
 | `skill` | `@deepseek-ai/dsh-skill` | skills **registry**（host；web 留下） |
-| `system-prompt` | `@deepseek-ai/dsh-system-prompt` | `ctx.systemPrompt`；`persona: ''`（mode bundle 再写部署人格） |
+| `system-prompt` | `@deepseek-ai/dsh-system-prompt` | `ctx.systemPrompt`；`personaPrefix: ''`（mode bundle 再写 `personaPrefix` / `personaSuffix`） |
 
 ### Subagent **backends**（in-process）
 
@@ -245,52 +244,52 @@ updated: d347e70390
 | `subagent-fork-in-process` | `@deepseek-ai/dsh-subagent-fork-in-process` | `providerName: fork` |
 | `workflow-worker-thread` | `@deepseek-ai/dsh-workflow-worker-thread` | workflow 子执行；`provider: spawn` |
 
-**没有** `subagent-codex` / `subagent-claude-code`。[E: packages/bundle/base/tests/base.spec.ts:42] [E: packages/bundle/base/tests/base.spec.ts:43]
+**没有** `subagent-codex` / `subagent-claude-code`。[E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:43]
 
 ### Web search / fetch 服务（不是 HTTP 宿主）
 
 | `id` | `name` | 角色 |
 |---|---|---|
-| `web` | `@deepseek-ai/dsh-web` | 搜索服务缝；`searchProvider: deepseek-official`，`fetchProvider: http`。**不是** `webserver`。[E: packages/bundle/base/cordis.patch.yml:450] [E: packages/bundle/base/cordis.patch.yml:453] |
+| `web` | `@deepseek-ai/dsh-web` | 搜索服务缝；`searchProvider: deepseek-official`，`fetchProvider: http`。**不是** `webserver`。[E: packages/bundle/base/cordis.patch.yml:436] [E: packages/bundle/base/cordis.patch.yml:439] |
 | `web-search-deepseek` | `@deepseek-ai/dsh-web-search-deepseek` | DeepSeek search；`apiKeyEnv: DEEPSEEK_API_KEY` |
 | `web-fetch-http` | `@deepseek-ai/dsh-web-fetch-http` | 匿名 HTTP fetch Provider [E: packages/bundle/base/tests/base.spec.ts:45] |
-| `tool-web` | `@deepseek-ai/dsh-tool-web` | 模型可见 search；base `fetch: false` [E: packages/bundle/base/cordis.patch.yml:467] |
+| `tool-web` | `@deepseek-ai/dsh-tool-web` | 模型可见 search **与** fetch；base `fetch: true` [E: packages/bundle/base/cordis.patch.yml:450] [E: packages/bundle/base/tests/base.spec.ts:47] |
 
 ## 控制流
 
-1. **模板把 base 放第一层（`sdk-minimal` 除外）。** `PROFILE_TEMPLATES@packages/boot/app-boot/src/profile.ts` ship 五个名字：`web` = base + `dsh-web-app`（`live`）；`headless` = base + `dsh-headless`；`sdk` = base + `dsh-sdk-app`；`acp` = base + `dsh-acp-app`；`sdk-minimal` **只有** `dsh-sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:137] [E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:154] 无名 profile 的 `dsh plugin` init 用 `DEFAULT_PROFILE_BUNDLES = ['@deepseek-ai/dsh-base']`。[E: packages/boot/app-boot/src/profile.ts:166] 测试钉死 `acp` / `sdk` / `sdk-minimal` 模板对象，且旧三元组 headless（`INSTALLATION_OWNED_PROFILE_TUPLES`：base + web-app + headless）在 `normalizeShippedProfile` 里被写成当前模板「base + headless」。[E: packages/boot/app-boot/tests/profile.spec.ts:195] [E: packages/boot/app-boot/tests/profile.spec.ts:203] [E: packages/boot/app-boot/src/profile.ts:162] [E: packages/boot/app-boot/src/profile.ts:726] [E: packages/boot/app-boot/tests/profile.spec.ts:234]
+1. **模板把 base 放第一层（`sdk-minimal` 除外）。** `PROFILE_TEMPLATES@packages/boot/app-boot/src/profile.ts` ship 五个名字：`web` = base + `dsh-web-app`（`live`）；`headless` = base + `dsh-headless`；`sdk` = base + `dsh-sdk-app`；`acp` = base + `dsh-acp-app`；`sdk-minimal` **只有** `dsh-sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:105] [E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:122] **没有 `desktop`。** 无名 profile 的 `dsh plugin` init 用 `DEFAULT_PROFILE_BUNDLES = ['@deepseek-ai/dsh-base']`。[E: packages/boot/app-boot/src/profile.ts:134] 旧三元组 headless（`INSTALLATION_OWNED_PROFILE_TUPLES`：base + web-app + headless）在 `normalizeShippedProfile` 里被写成当前模板「base + headless」。[E: packages/boot/app-boot/src/profile.ts:129] [E: packages/boot/app-boot/src/profile.ts:689]
 
-2. **installation-first 解析 + fail-loud。** `resolveBundleDir@packages/boot/app-boot/src/profile.ts` 先从安装锚点找包，再才看 profile 目录，保证 in-box bundle 永远来自正在跑的这份 dsh。[E: packages/boot/app-boot/src/profile.ts:781] `loadProfile` 读到的 `package.json` 若没有 `dsh.bundle.patch`，抛 `declares no dsh.bundle`，不会当「无补丁」。[E: packages/boot/app-boot/src/profile.ts:833] [E: packages/boot/app-boot/src/profile.ts:834] base 把该字段写成 `./cordis.patch.yml`。[E: packages/bundle/base/package.json:38]
+2. **installation-first 解析 + fail-loud。** `resolveBundleDir@packages/boot/app-boot/src/profile.ts` 先从安装锚点找包，再才看 profile 目录，保证 in-box bundle 永远来自正在跑的这份 dsh。[E: packages/boot/app-boot/src/profile.ts:746] `loadProfileDirectory` 读到的 bundle `package.json` 若没有 `dsh.bundle.patch`，抛 `declares no dsh.bundle`，不会当「无补丁」。[E: packages/boot/app-boot/src/profile.ts:789] `loadProfile` 最后调用 `loadProfileDirectory`。[E: packages/boot/app-boot/src/profile.ts:830] base 把该字段写成 `./cordis.patch.yml`。[E: packages/bundle/base/package.json:33]
 
-3. **空根上一次 `applyEntryPatches`。** `composeEntries@packages/boot/app-boot/src/profile.ts` 从 `[]` 出发，把各层 flatten 成一次 `applyEntryPatches`。[E: packages/boot/app-boot/src/profile.ts:857] base 文件的唯一顶层动作是无父 `id` 的 `- insert:`：`applyEntryPatches` 走 `data.push(...insert)`，86 行进入根表，并立刻 `buildMap`，好让**同一 flattened 列表里后写的 patch** 能按 `id` 改刚插的行。[E: packages/bundle/base/cordis.patch.yml:15] [E: vendor/include/src/index.ts:94] [E: vendor/include/src/index.ts:101] launcher 本地 `composeProfile@apps/cli/src/profile-boot.ts` 的层序是 `bundlePatches → profile.patches → homePatches → overlays`。[E: apps/cli/src/profile-boot.ts:137]
+3. **空根上一次 `applyEntryPatches`。** `composeEntries@packages/boot/app-boot/src/profile.ts` 从 `[]` 出发，把各层 flatten 成一次 `applyEntryPatches`。[E: packages/boot/app-boot/src/profile.ts:841] base 文件的唯一顶层动作是无父 `id` 的 `- insert:`：`applyEntryPatches` 走 `data.push(...insert)`，84 行进入根表，并立刻 `buildMap`，好让**同一 flattened 列表里后写的 patch** 能按 `id` 改刚插的行。[E: packages/bundle/base/cordis.patch.yml:15] [E: vendor/include/src/index.ts:94] [E: vendor/include/src/index.ts:101] launcher 本地 `composeProfile@apps/cli/src/profile-boot.ts` 的层序是 `bundlePatches → profile.patches → homePatches → overlays`。[E: apps/cli/src/profile-boot.ts:206]
 
-4. **`config` 整键覆盖，所以跨 mode 会变的值不准放进 base。** `applyEntryPatches` 对命中的行做 `target[key] = value`，不是 deep-merge。[E: vendor/include/src/index.ts:123] 因此 `system-prompt.persona` 在 base 是空串，由 web / headless / sdk / acp 整段重写；`tools.mode` 在 base 省略，由后层用 `DSH_TOOLS_MODE` 整键盖上。跨 mode 会变的值若写进 base，后层必须复述该行全部键，否则丢掉。
+4. **`config` 整键覆盖，所以跨 mode 会变的值不准放进 base。** `applyEntryPatches` 对命中的行做 `target[key] = value`，不是 deep-merge。[E: vendor/include/src/index.ts:123] 因此 `system-prompt.personaPrefix` 在 base 是空串 [E: packages/bundle/base/cordis.patch.yml:468]，由 web / headless / sdk / acp 整段重写 `personaPrefix` / `personaSuffix`；`tools.mode` 在 base 省略，由后层用 `DSH_TOOLS_MODE` 整键盖上。跨 mode 会变的值若写进 base，后层必须复述该行全部键，否则丢掉。
 
-5. **`boot` 挂空 `cordis.yml` + 整叠 patches。** `boot@packages/boot/app-boot/src/index.ts`：`new Context` → `provide('dshHomePath')` → `ctx.plugin(Loader)` → `mountRootInclude`。[E: packages/boot/app-boot/src/index.ts:790] [E: packages/boot/app-boot/src/index.ts:790] [E: packages/boot/app-boot/src/index.ts:790] 行激活按 inject / 服务可用性，不是 YAML 书写顺序。[I]
+5. **`boot` 挂空 `cordis.yml` + 整叠 patches。** `boot@packages/boot/app-boot/src/index.ts`：`new Context` → `provide('dshHomePath')` → `ctx.plugin(Loader)` → `mountRootInclude`。[E: packages/boot/app-boot/src/index.ts:788] [E: packages/boot/app-boot/src/index.ts:800] 行激活按 inject / 服务可用性，不是 YAML 书写顺序。[I]
 
-6. **host 服务进 root realm；注册是可逆 `ctx.effect`。** 各行 `name` 指向的插件在 Loader fiber 上 `provide`。例如 `AgentLoop` 构造里 `ctx.effect(() => ctx.agents.setFactory(this), 'agentLoop.setFactory()')`：卸掉 `id: agent-loop` 就清空工厂槽。[E: packages/core/agent-loop/src/index.ts:413] [E: packages/bundle/base/cordis.patch.yml:486] `Fiber.effect@vendor/cordis/src/fiber.ts` 把 disposer 推进列表；dispose 时**倒序**执行。[E: vendor/cordis/src/fiber.ts:449] [E: vendor/cordis/src/fiber.ts:431] `Events.register` 本身也是 `this.ctx.fiber.effect(...)`。[E: vendor/cordis/src/events.ts:256]
+6. **host 服务进 root realm；注册是可逆 `ctx.effect`。** 各行 `name` 指向的插件在 Loader fiber 上 `provide`。例如 `AgentLoop` 构造里 `ctx.effect(() => ctx.agents.setFactory(this), 'agentLoop.setFactory()')`：卸掉 `id: agent-loop` 就清空工厂槽。[E: packages/core/agent-loop/src/index.ts:420] [E: packages/bundle/base/cordis.patch.yml:472] `Fiber.effect@vendor/cordis/src/fiber.ts` 把 disposer 推进列表；dispose 时**倒序**执行。[E: vendor/cordis/src/fiber.ts:449] [E: vendor/cordis/src/fiber.ts:431] `Events.register` 本身也是 `this.ctx.fiber.effect(...)`。[E: vendor/cordis/src/events.ts:256]
 
 7. **Waterfall 必须 `next()`，否则链停在本层。** `Events.waterfall@vendor/cordis/src/events.ts` 把最后一个参数当 innermost `next`：`args.pop()` 取出内建行为，每次调用 `next()` 才 `cbs.shift()` 到下一 listener；不调用就否决剩余链。[E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:236] [E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] base 挂上的三处负载：
 
-   - `ToolRuntime` 调度：`this.ctx.waterfall(carrier, 'tools/pre-execute', exec, () => Promise.resolve({ kind: 'allow' }))`。listener 不 `next()`，默认 `allow` 到不了，工具进不了 body。[E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1468]
-   - `systemPrompt.assemble`：`this.ctx.waterfall(..., 'system-prompt/assemble', assembly, context, () => Promise.resolve(assembly))`。不 `next()` 则返回值停在本层，后续 section 装配看不到完整 assembly。[E: packages/core/system-prompt/src/index.ts:601]
+   - `ToolRuntime` 调度：`this.ctx.waterfall(carrier, 'tools/pre-execute', exec, () => Promise.resolve({ kind: 'allow' }))`。listener 不 `next()`，默认 `allow` 到不了，工具进不了 body。[E: packages/core/tools/src/index.ts:1465] [E: packages/core/tools/src/index.ts:1467]
+   - `systemPrompt.assemble`：`this.ctx.waterfall(..., 'system-prompt/assemble', assembly, context, () => Promise.resolve(assembly))`。不 `next()` 则返回值停在本层，后续 section 装配看不到完整 assembly。[E: packages/core/system-prompt/src/index.ts:617]
    - Loader isolate 钩子：`ctx.on('loader/patch-context', async (entry, next) => { ... await next() })`。不 `await next()`，fiber 不会按新 isolate map reload，realm 换了但插件没重挂。[E: vendor/loader/src/config/isolate.ts:96] [E: vendor/loader/src/config/isolate.ts:129]
 
 8. **`llm-pi-ai` 始终挂、零 route。** base 无条件 insert `id: llm-pi-ai`，**没有** `providers` 块。[E: packages/bundle/base/cordis.patch.yml:107] 插件：`routes.length === 0` 时直接 `return`，不 `registerAdapter`。[E: packages/llm/llm-pi-ai/src/index.ts:284] Settings 写出 `llm-pi-ai:` profiles 之后才注册；清空则 drop。这是 settings 驱动的休眠，**不是**「包没进依赖」。对照：Codex / Claude 后端连行都没有。细节在 [`subsys.llm.pi-ai`](../llm/pi-ai.md)。
 
-9. **shell 双栈：同一文件、对称 `disabled`。** `bash-sandbox` / `tool-bash` 写 `disabled: !!js process.platform === 'win32'`；`pwsh-sandbox` / `tool-pwsh` 写倒置的 `!== 'win32'`。[E: packages/bundle/base/cordis.patch.yml:222] [E: packages/bundle/base/cordis.patch.yml:228] [E: packages/bundle/base/cordis.patch.yml:254] [E: packages/bundle/base/cordis.patch.yml:258] `base.spec.ts` 用 `evaluate({ process: { platform } }, expr)` 钉死四行在 win32 / linux 上恰好互斥，并断言仓库里**不存在** `windows.cordis.patch.yml`。[E: packages/bundle/base/tests/base.spec.ts:79] [E: packages/bundle/base/tests/base.spec.ts:80] [E: packages/bundle/base/tests/base.spec.ts:83] 持久 `pwsh`（`dsh-tool-pwsh-persistent`，模型名仍是 `pwsh`）**不**在 base；那是 sdk-minimal 等 overlay 的事。
+9. **shell 双栈：同一文件、对称 `disabled`。** `bash-sandbox` / `tool-bash` 写 `disabled: !!js process.platform === 'win32'`；`pwsh-sandbox` / `tool-pwsh` 写倒置的 `!== 'win32'`。[E: packages/bundle/base/cordis.patch.yml:217] [E: packages/bundle/base/cordis.patch.yml:222] [E: packages/bundle/base/cordis.patch.yml:248] [E: packages/bundle/base/cordis.patch.yml:252] `base.spec.ts` 用 `evaluate({ process: { platform } }, expr)` 钉死四行在 win32 / linux 上恰好互斥，并断言仓库里**不存在** `windows.cordis.patch.yml`。[E: packages/bundle/base/tests/base.spec.ts:80] [E: packages/bundle/base/tests/base.spec.ts:84] 持久 `pwsh`（`dsh-tool-pwsh-persistent`，模型名仍是 `pwsh`）**不**在 base；那是 sdk-minimal 等 overlay 的事。
 
-10. **后一层切开 host / preset。** `dsh-web-app` 对 base 的模型可见 `id` 写 `disabled: true`（例如 `tool-bash`），再 `insert` `agent-presets`（`default: standard`）。[E: packages/bundle/web-app/cordis.patch.yml:320] [E: packages/bundle/web-app/cordis.patch.yml:321] [E: packages/bundle/web-app/cordis.patch.yml:442] [E: packages/bundle/web-app/cordis.patch.yml:445] 权限与执行缝留下：`sandbox` / `approval` / `fs-sandbox` / `subagent` + spawn/fork / `shell-env` / jobs·goals·skills **registry** / `token-meter`。`dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`，**没有** `agent-presets`，也 **不** disable 那些 tool 行。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` = PTC）；roster **只**在 web overlay。完整 disable 名单在 [`subsys.composition.bundle-web-app`](bundle-web-app.md)。
+10. **后一层切开 host / preset。** `dsh-web-app` 对 base 的模型可见 `id` 写 `disabled: true`（例如 `tool-bash`），再 `insert` `agent-presets`（`default: standard`）。[E: packages/bundle/web-app/cordis.patch.yml:368] [E: packages/bundle/web-app/cordis.patch.yml:481] [E: packages/bundle/web-app/cordis.patch.yml:484] 权限与执行缝留下：`sandbox` / `approval` / `fs-sandbox` / `subagent` + spawn/fork / `shell-env` / jobs·goals·skills **registry** / `token-meter`。`dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`，**没有** `agent-presets`，也 **不** disable 那些 tool 行。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27] shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` = PTC）；roster **只**在 web overlay。完整 disable 名单在 [`subsys.composition.bundle-web-app`](bundle-web-app.md)。
 
-11. **isolate / `leakedServices`：base 行进 root 是对的；搬进 preset 必须隔离。** base 的 `plan-mode` / `compaction-basic` / `workflow-worker-thread` 在进程根 `provide`，第二个 session 不会再挂一份。Web 关掉这些行之后，`standard` preset 用 `cordis:group` + `isolate: { planMode: true }` / `{ compaction: true, toolResultPruner: true }` / `{ workflowEngine: true }` 给每份 standing mount 私有实例。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:107] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:140] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:177] Loader 读 `isolate?.[name] === true` 时建 `LocalRealm`。[E: vendor/loader/src/config/isolate.ts:81] `mountPreset` settle 后扫 `leakedServices`：子树 fiber 提供的实现，其 store symbol 若等于 `ctx.root[Context.isolate][name]`，就算泄漏进 root。[E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:221] 非空则抛，要求「sit behind an `isolate` realm or move to the host composition」。[E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:411] 测试用事后 `publish` 钉死这句诊断。[E: packages/preset/agent-presets/tests/invariant.spec.ts:78] 只往 `ctx.tools` 注册、自己不 `provide` 的工具行不必 isolate。
+11. **isolate / `leakedServices`：base 行进 root 是对的；搬进 preset 必须隔离。** base 的 `plan-mode` / `compaction-basic` / `workflow-worker-thread` 在进程根 `provide`，第二个 session 不会再挂一份。Web 关掉这些行之后，`standard` preset 用 `cordis:group` + `isolate: { planMode: true }` / `{ compaction: true, toolResultPruner: true }` / `{ workflowEngine: true }` 给每份 standing mount 私有实例。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:105] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:109] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:138] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:169] Loader 读 `isolate?.[name] === true` 时建 `LocalRealm`。[E: vendor/loader/src/config/isolate.ts:81] `mountPreset` settle 后扫 `leakedServices`：子树 fiber 提供的实现，其 store symbol 若等于 `ctx.root[Context.isolate][name]`，就算泄漏进 root。[E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:221] 非空则抛，要求「sit behind an `isolate` realm or move to the host composition」。[E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:409] 测试用事后 `publish` 钉死这句诊断。[E: packages/preset/agent-presets/tests/invariant.spec.ts:78] 只往 `ctx.tools` 注册、自己不 `provide` 的工具行不必 isolate。
 
-12. **`agents: []`：Web 不在进程级造 Agent。** base 的 `id: agent-loop` 把启动列表留空。[E: packages/bundle/base/cordis.patch.yml:489] 换 loop = 另写一个 `AgentFactory` 占同一 `setFactory` 槽，并在后层 patch 掉这一行，而不是改 `dsh-agent`。[E: packages/core/agent-loop/src/index.ts:413]
+12. **`agents: []`：Web 不在进程级造 Agent。** base 的 `id: agent-loop` 把启动列表留空。[E: packages/bundle/base/cordis.patch.yml:475] 换 loop = 另写一个 `AgentFactory` 占同一 `setFactory` 槽，并在后层 patch 掉这一行，而不是改 `dsh-agent`。[E: packages/core/agent-loop/src/index.ts:420]
 
 ## 设计动机
 
-DSH 的产品单元是 `profile → bundle → agent preset`，不是写死工具清单的 coding agent。每个 **base-backed** shipped profile（`web` / `headless` / `sdk` / `acp`）都要同一套 host 缝（`ctx.llm` / `ctx.sessions` / `ctx.agents` / sandbox / subagent backends），差别只在「谁来 `create` Agent」和「模型看见哪些 tool」。把共享行收成**一层** `dsh-base` insert，后层按 `id` 覆盖，比复制两份树更不容易漂。`sdk-minimal` 故意不叠 base：它自己给出完整 insert（JSON-RPC + DeepSeek adapter + sandbox/pty/fs + `dsh-agent-spine-demo` + 持久 shell），避免把整份 host 面拖进最小 SDK。[E: packages/boot/app-boot/src/profile.ts:155]
+DSH 的产品单元是 `profile → bundle → agent preset`，不是写死工具清单的 coding agent。每个 **base-backed** shipped profile（`web` / `headless` / `sdk` / `acp`）都要同一套 host 缝（`ctx.llm` / `ctx.sessions` / `ctx.agents` / sandbox / subagent backends），差别只在「谁来 `create` Agent」和「模型看见哪些 tool」。把共享行收成**一层** `dsh-base` insert，后层按 `id` 覆盖，比复制两份树更不容易漂。`sdk-minimal` 故意不叠 base：它自己给出完整 insert（JSON-RPC + DeepSeek adapter + sandbox/pty/fs + 持久 shell），避免把整份 host 面拖进最小 SDK。[E: packages/boot/app-boot/src/profile.ts:122]
 
-`config` 整键替换逼着「会随 mode 变的值」离开 base：否则 web 改 `persona` 会把其它键冲掉，或 headless 漏复述。`!!js` 把平台门和 env 门写在行上，省掉第二份 Windows patch，也让 `dsh --dump-config` 仍能看见未求值的表达式。
+`config` 整键替换逼着「会随 mode 变的值」离开 base：否则 web 改 `personaPrefix` 会把其它键冲掉，或 headless 漏复述。`!!js` 把平台门和 env 门写在行上，省掉第二份 Windows patch，也让 `dsh --dump-config` 仍能看见未求值的表达式。
 
 模型可见行先写在 base，是为了 headless / sdk / acp（无 roster）仍有全局工具；web 再 disable + preset remount，把同一批 Consumer 从进程根挪到 standing scope。`leakedServices` 卡住「把 host 单例复制进每会话」这条捷径。
 
@@ -298,26 +297,26 @@ DSH 的产品单元是 `profile → bundle → agent preset`，不是写死工�
 
 ## Gotcha
 
-- **README 不是 ground truth。** `packages/bundle/base/README.md` 写 Codex / Claude「load dormant」。`base.spec.ts` 要求 patch 里这两行长度为 0，且 manifest 不依赖那两个包。[E: packages/bundle/base/tests/base.spec.ts:42] [E: packages/bundle/base/tests/base.spec.ts:47] 没有行 = 没装。standard preset 里 `tool-subagent-codex` 等行 `disabled: true` 是 preset 面的事，后端仍不在 base。
-- **`id: web` 不是 Web GUI。** 它是 `@deepseek-ai/dsh-web` 搜索服务。[E: packages/bundle/base/cordis.patch.yml:450] HTTP 宿主是 `dsh-web-app` 的 `id: webserver`。
+- **README 不是 ground truth。** `packages/bundle/base/README.md` 写 Codex / Claude「load dormant」。`base.spec.ts` 要求 patch 里这两行长度为 0，且 manifest 不依赖那两个包。[E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:47] 没有行 = 没装。standard preset 里 `tool-subagent-codex` 等行 `disabled: true` 是 preset 面的事，后端仍不在 base。
+- **`id: web` 不是 Web GUI。** 它是 `@deepseek-ai/dsh-web` 搜索服务。[E: packages/bundle/base/cordis.patch.yml:436] HTTP 宿主是 `dsh-web-app` 的 `id: webserver`。
 - **base 没有 `invariants` 行。** 各包 `./invariant` companion 在默认 `dsh web` 树上不会跑，除非后层自己挂 `InvariantRegistry`。
-- **`skill-badge` 在 base 就 `disabled: true`。** 不是 web overlay 才关。[E: packages/bundle/base/cordis.patch.yml:285] [E: packages/bundle/base/cordis.patch.yml:287]
+- **`skill-badge` 在 base 就 `disabled: true`。** 不是 web overlay 才关。[E: packages/bundle/base/cordis.patch.yml:279]
 - **`hmr` 在 base 也是 `disabled: true`。** live 用户 patch 靠 launcher 装 watch-only HMR 行，不依赖这一行。[E: packages/bundle/base/cordis.patch.yml:23]
 - **不要并列挂 `dsh-fs-local`。** `fs-sandbox` 已经 `provide` `ctx.fs`；再挂一份本地 fs 会撞名 fail-loud。`sdk-minimal` 可以挂 `dsh-fs-local`，正因为它**不**叠 base。
 - **恢复 POSIX bash 到 Windows 必须四行一起改。** 关 `pwsh-sandbox` / `tool-pwsh` **并且** 打开 `bash-sandbox` / `tool-bash`。两套执行器注册同一 `bash` 服务，改一半会在 load 期炸。
 - **waterfall 忘了 `next()` = 否决下游。** `tools/pre-execute` 默认 `allow` 到不了；`system-prompt/assemble` 停在本层；`loader/patch-context` 不 reload fiber。这不是「安静跳过」。
-- **preset 里再 `provide` 一份 host 单例必炸。** `planMode` / `compaction` / `workflowEngine` 需要 `isolate: { …: true }`；`subagents` / `tokenMeter` / `jobs` / `goals` / `skills` registry 应留在 host。漏 isolate → `leakedServices` 拒整次 `mountPreset`。[E: packages/preset/agent-presets/src/mount.ts:411]
-- **`session-query-sqlite` 的 `openAt: never` 不是没挂服务。** `ctx.sessionQuery` 仍在；搜索调用失败，SQLite 不打开。要开全文搜索得后层改 `openAt`。[E: packages/bundle/base/cordis.patch.yml:133]
+- **preset 里再 `provide` 一份 host 单例必炸。** `planMode` / `compaction` / `workflowEngine` 需要 `isolate: { …: true }`；`subagents` / `tokenMeter` / `jobs` / `goals` / `skills` registry 应留在 host。漏 isolate → `leakedServices` 拒整次 `mountPreset`。[E: packages/preset/agent-presets/src/mount.ts:409]
+- **`session-query-sqlite` 的 `openAt: never` 不是没挂服务。** `ctx.sessionQuery` 仍在；搜索调用失败，SQLite 不打开。要开全文搜索得后层改 `openAt`。[E: packages/bundle/base/cordis.patch.yml:129]
 - **dump 不求值 `!!js`。** `dsh --dump-config` 看到的是表达式对象，不是「这台机器上到底挂了 bash 还是 pwsh」。
-- **telemetry 默认不是 `DISABLED`。** base 行是 `DSH_TELEMETRY_MODE || 'FEEDBACK_ONLY'`。[E: packages/bundle/base/cordis.patch.yml:193]
+- **telemetry 默认不是 `DISABLED`。** base 行是 `DSH_TELEMETRY_MODE || 'FEEDBACK_ONLY'`。[E: packages/bundle/base/cordis.patch.yml:187]
 
 ## Seam 三角
 
 | 角色 | 落点 | ctx 键 / bundle / preset 行 |
 |---|---|---|
 | **Definition** | 各能力的合同包：`dsh-llm` / `dsh-session` / `dsh-agent` / `dsh-tools` / `dsh-system-prompt` / `dsh-sandbox-*` / `dsh-subagent`。它们声明 `ctx.*` 与事件词表，**不**出现为独立 bundle | `ctx.llm`、`ctx.sessions`、`ctx.agents`、`ctx.tools`、`ctx.systemPrompt`、`ctx.sandbox`、`subagents`。base 用 `id: llm` / `session` / `agent` / `tools` / `system-prompt` / `sandbox` / `subagent` 把 Definition 插进 root。[E: packages/bundle/base/cordis.patch.yml:27] [E: packages/bundle/base/cordis.patch.yml:33] [E: packages/bundle/base/cordis.patch.yml:67] [E: packages/bundle/base/cordis.patch.yml:474] |
-| **Provider** | 同一份 insert 里的实现行：`llm-deepseek` + 零 route 的 `llm-pi-ai`；`session-persistence-jsonl`；`agent-loop`（`setFactory`）；`sandbox-local` + 平台互斥的 `bash-sandbox` / `pwsh-sandbox`；`fs-sandbox`；`subagent-spawn-in-process` / `subagent-fork-in-process` | 全部是 **host 面** `dsh-base` 行，无 `isolate`。换 DeepSeek 路由 = patch `id: llm-deepseek`；换 loop = patch 掉 `id: agent-loop` 并另占工厂槽。[E: packages/bundle/base/cordis.patch.yml:107] [E: packages/bundle/base/cordis.patch.yml:337] [E: packages/bundle/base/cordis.patch.yml:342] [E: packages/bundle/base/cordis.patch.yml:498] [E: packages/core/agent-loop/src/index.ts:413] |
-| **Consumer** | 模型可见 tool 行（`tool-*` / `plan-mode` / `compaction-basic` …）以及 loop 的 `assemble` / `execute` / `llm.stream`。headless / sdk / acp：Consumer 留在 host 全局层。web：同一批 `id` 被 `disabled: true`，改由 preset 行消费 host Provider | web 的 `id: tool-bash` `disabled: true` + `id: agent-presets` `default: standard`。[E: packages/bundle/web-app/cordis.patch.yml:321] [E: packages/bundle/web-app/cordis.patch.yml:445] preset 里需要私有实例的 Consumer（`planMode` / `compaction` / `workflowEngine`）必须 `isolate: { …: true }`，否则 `leakedServices` 拒。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108] [E: packages/preset/agent-presets/src/mount.ts:411] |
+| **Provider** | 同一份 insert 里的实现行：`llm-deepseek` + 零 route 的 `llm-pi-ai`；`session-persistence-jsonl`；`agent-loop`（`setFactory`）；`sandbox-local` + 平台互斥的 `bash-sandbox` / `pwsh-sandbox`；`fs-sandbox`；`subagent-spawn-in-process` / `subagent-fork-in-process` | 全部是 **host 面** `dsh-base` 行，无 `isolate`。换 DeepSeek 路由 = patch `id: llm-deepseek`；换 loop = patch 掉 `id: agent-loop` 并另占工厂槽。[E: packages/bundle/base/cordis.patch.yml:107] [E: packages/bundle/base/cordis.patch.yml:331] [E: packages/bundle/base/cordis.patch.yml:336] [E: packages/bundle/base/cordis.patch.yml:486] [E: packages/core/agent-loop/src/index.ts:420] |
+| **Consumer** | 模型可见 tool 行（`tool-*` / `plan-mode` / `compaction-basic` …）以及 loop 的 `assemble` / `execute` / `llm.stream`。headless / sdk / acp：Consumer 留在 host 全局层。web：同一批 `id` 被 `disabled: true`，改由 preset 行消费 host Provider | web 的 `id: tool-bash` `disabled: true` + `id: agent-presets` `default: standard`。[E: packages/bundle/web-app/cordis.patch.yml:368] [E: packages/bundle/web-app/cordis.patch.yml:484] preset 里需要私有实例的 Consumer（`planMode` / `compaction` / `workflowEngine`）必须 `isolate: { …: true }`，否则 `leakedServices` 拒。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:109] [E: packages/preset/agent-presets/src/mount.ts:409] |
 
 换 Provider（例如 spawn → 另一个 `providerName`）会带走其 Consumer 的委派目标，但 Definition 仍在。把 Provider 从 host 挪到 preset 而不写 `isolate`，第二个 session 会在 `mountPreset` 失败，而不是静默共用。
 

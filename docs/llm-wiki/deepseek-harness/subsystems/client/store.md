@@ -40,7 +40,7 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-client-store` 是浏览器半边的 **React-free snapshot 引擎**：zustand vanilla + immer + `subscribeWithSelector` + 可选 `raf` 批刷 + 手写 `localStorage` JSON persist。`defineStore` 把 `init` / `persist` / `actions` 烤成 `StoreHandle`；live 产物只有 `getSnapshot` / `subscribe` / baked `actions`（外加测试用的 `store.update`/`set`）。`useStore` 选择器 hook **不**在本包合成，由 [`subsys.client.runtime`](runtime.md) 指向的 ui-renderer 在装配时绑。本包**不是** Loader 行：没有 `dsh.client`、没有 `ctx.store`。已删除的 `packages/client/runtime` 的状态家现在就是这里。client 不执行模型 turn。
@@ -56,7 +56,7 @@ updated: d347e70390
 
 ## 职责边界
 
-DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset`）。五个 shipped profile：`web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）。[E: packages/boot/app-boot/src/profile.ts:138] `web` 叠 `dsh-base` + `dsh-web-app` 且 `patchReload: 'live'`；其余 startup。[E: packages/boot/app-boot/src/profile.ts:143] 默认 GUI 是 `dsh web`；stdio 面还有 `dsh --profile sdk|sdk-minimal|acp`。本仓没有 shipped TUI。client 不实现 `ctx.fs` / agent-loop。
+DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset`）。五个 shipped profile：`web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）。[E: packages/boot/app-boot/src/profile.ts:105] `web` 叠 `dsh-base` + `dsh-web-app` 且 `patchReload: 'live'`；其余 startup。[E: packages/boot/app-boot/src/profile.ts:112] 默认 GUI 是 `dsh web`；stdio 面还有 `dsh --profile sdk|sdk-minimal|acp`。本仓没有 shipped TUI。client 不实现 `ctx.fs` / agent-loop。
 
 本包拥有：
 
@@ -94,7 +94,7 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 | `PropsStore<H>` | 组件看见的份额：`{ useStore, actions }`。组件永远不拿 instance。[E: packages/client/store/src/contract.ts:135] |
 | `DefineStore` | 合同类型；实现是旁边的 `defineStore` 函数。[E: packages/client/store/src/contract.ts:144] |
 
-依赖：`zustand ~4.4.7`、`immer ^10.1.1`；`cordis` 是 peer。[E: packages/client/store/package.json:26] [E: packages/client/store/package.json:27] [E: packages/client/store/package.json:30]
+依赖：`zustand ~4.4.7`、`immer ^10.1.1`；`cordis` 是 peer。[E: packages/client/store/package.json:26] [E: packages/client/store/package.json:28] [E: packages/client/store/package.json:30]
 
 ## 控制流
 

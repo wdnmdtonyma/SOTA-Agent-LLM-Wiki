@@ -39,7 +39,7 @@ related:
   - subsys.execution.terminal
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > 模型可见名是 `pwsh`（不是 `pwsh_persistent`），实现包是 `@deepseek-ai/dsh-tool-pwsh-persistent`：按 owning `Agent` 复用一条 `ctx.terminals` PTY，cwd 与环境跨调用持久。它是 `@deepseek-ai/dsh-tool-bash-persistent` 的 PowerShell 镜像，与 one-shot `@deepseek-ai/dsh-tool-pwsh` 共享 wire 名、不是后者的 Config 开关。POSIX 上 shipped `minimal` 关掉本包、改挂 persistent `bash`。
@@ -59,7 +59,7 @@ updated: d347e70390
 
 `apply(ctx, config)` 校验 Config 后调用 `registerPersistentPwsh`。[E: packages/shell/tool-pwsh-persistent/src/index.ts:492] [E: packages/shell/tool-pwsh-persistent/src/index.ts:511] 注册点是 `ctx.tools.register(defineTool({ name: 'pwsh', ... }))`：模型 catalog / `ctx.tools.execute({ name: 'pwsh' })` 用的 wire 名是 `pwsh`。[E: packages/shell/tool-pwsh-persistent/src/index.ts:441] [E: packages/shell/tool-pwsh-persistent/src/index.ts:442] 默认 description 常量 `DEFAULT_DESCRIPTION` 写明 state（含 cwd 与 exported env）对本 agent 跨调用持久。[E: packages/shell/tool-pwsh-persistent/src/index.ts:27]
 
-stub 与真实 Loader 组合都断言 `ctx.tools.schemas()` 只有一项且 `name === 'pwsh'`。[E: packages/shell/tool-pwsh-persistent/tests/tools.spec.ts:334] [E: packages/shell/tool-pwsh-persistent/tests/loader-composition.spec.ts:142] `presentCall` 产出 `{ card: 'terminal', title: args.command }`。[E: packages/shell/tool-pwsh-persistent/src/index.ts:464]
+stub 与真实 Loader 组合都断言 `ctx.tools.schemas()` 只有一项且 `name === 'pwsh'`。[E: packages/shell/tool-pwsh-persistent/tests/tools.spec.ts:335] [E: packages/shell/tool-pwsh-persistent/tests/loader-composition.spec.ts:143] `presentCall` 产出 `{ card: 'terminal', title: args.command }`。[E: packages/shell/tool-pwsh-persistent/src/index.ts:464]
 
 
 同名不同包：`standard` / `ptc` / `cordis` 装的是 `@deepseek-ai/dsh-tool-pwsh`（one-shot，`ctx.shell`），见 [pwsh 一次性执行](pwsh.md)。本页只描述 persistent 这一包。POSIX 对标是 [bash 持久 PTY](bash-persistent.md)。
@@ -68,7 +68,7 @@ stub 与真实 Loader 组合都断言 `ctx.tools.schemas()` 只有一项且 `nam
 
 本工具把「一次 pwsh 调用」映射成对**同一条** owner-scoped PTY 的一次 `startSend`。第一次调用按 `owner.session.header.cwd` spawn；Loader 组合测试钉死随后的 `Set-Location` 与 `$env:KEEP` 仍在下一次 `pwsh` 里可见。[E: packages/shell/tool-pwsh-persistent/src/index.ts:298] [E: packages/shell/tool-pwsh-persistent/tests/loader-composition.spec.ts:145]
 
-它**不是** one-shot `pwsh -Command`：没有模型可见的 `workdir` / `run_in_background` / `sandbox_permissions`，也不走 `ctx.jobs`。长命令若要脱离这次 tool-call 的墙钟，只能在 PowerShell 里后台——`minimal` 用 `description: |-` 覆盖默认文案，其中写明 `Start-Job` / `Start-Process`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:74]
+它**不是** one-shot `pwsh -Command`：没有模型可见的 `workdir` / `run_in_background` / `sandbox_permissions`，也不走 `ctx.jobs`。长命令若要脱离这次 tool-call 的墙钟，只能在 PowerShell 里后台——`minimal` 用 `description: |-` 覆盖默认文案，其中写明 `Start-Job` / `Start-Process`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:63]
 
 同一 `Agent` 上的并发 `pwsh` 调用被 `serialized()` 排成单队列；不同 `Agent` 各有自己的 live session。[E: packages/shell/tool-pwsh-persistent/src/index.ts:429] [E: packages/shell/tool-pwsh-persistent/src/index.ts:302]
 
@@ -105,7 +105,7 @@ canonical output 是 `string`；`render` 变成单块 `{ type: 'text', text: val
 4. PTY 在报出命令 status 前死掉：`respondToSessionExit` 用 `[shell exited: code N]` / `[shell killed by signal: SIG]` / `[shell exited]`，再追加 `SHELL_RESET_MESSAGE`。[E: packages/shell/tool-pwsh-persistent/src/index.ts:216] [E: packages/shell/tool-pwsh-persistent/src/index.ts:19]
 5. 墙钟超时：三行拼起来——timeout 文案（含 “or experienced an OOM error” 字面）、bounded 部分输出、`SHELL_RESET_MESSAGE`。[E: packages/shell/tool-pwsh-persistent/src/index.ts:391]
 
-旧 scrollback 页上的 `truncated` 旗标**不会**算到一条已经拿齐 start/end 标记的当前命令上。[E: packages/shell/tool-pwsh-persistent/tests/tools.spec.ts:516] Loader 组合里 `1..12050 | ForEach-Object` 以 `'1\n2\n3\n'` 开头并含 `<response clipped>`，不含 “beginning of this command output was dropped”。[E: packages/shell/tool-pwsh-persistent/tests/loader-composition.spec.ts:162]
+旧 scrollback 页上的 `truncated` 旗标**不会**算到一条已经拿齐 start/end 标记的当前命令上。[E: packages/shell/tool-pwsh-persistent/tests/tools.spec.ts:517] Loader 组合里 `1..12050 | ForEach-Object` 以 `'1\n2\n3\n'` 开头并含 `<response clipped>`，不含 “beginning of this command output was dropped”。[E: packages/shell/tool-pwsh-persistent/tests/loader-composition.spec.ts:163]
 
 诊断字符串（clip note、lost-prefix、`[exit code:]`、timeout 头、reset 句）加在 `maxOutputChars` 切完之后，结果可以比 16000 更长。[I]
 
@@ -128,7 +128,7 @@ canonical output 是 `string`；`render` 变成单块 `{ type: 'text', text: val
 
 模型写出 `name: 'pwsh'` 的 `tool-call` 后，默认 loop 经 `executeToolCalls` 调 `ctx.tools.execute`。`ToolRuntime.execute` 先 `prepare`（`tools/pre-execute` → 可选 `ask` → 单调 guard），再 `dispatch`（`tools/execute` waterfall，叶子 `ToolDefinition.execute`），成功/deny 的 `post-result` 再走 `tools/post-execute`。[E: packages/core/tools/src/index.ts:1333] [E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1565]
 
-本包**不**注册 `tools/pre-execute` / `tools/post-execute` listener，也不在 body 里 `approval.request` / `approveEscalation`。默认 `pre-execute` 的 `next()` 是 `{ kind: 'allow' }`。[E: packages/core/tools/src/index.ts:1468] 没有 listener 返回 `ask` 时，这条 `pwsh` 不经过 `ctx.approval`。
+本包**不**注册 `tools/pre-execute` / `tools/post-execute` listener，也不在 body 里 `approval.request` / `approveEscalation`。默认 `pre-execute` 的 `next()` 是 `{ kind: 'allow' }`。[E: packages/core/tools/src/index.ts:1469] 没有 listener 返回 `ask` 时，这条 `pwsh` 不经过 `ctx.approval`。
 
 `defineTool({...})` **省略** `timeoutMs`。host 上的 `@deepseek-ai/dsh-tool-call-timeout-policy` 读 `ctx.tools.get(name)?.timeoutMs`，为 `undefined` 时原样 `next()`，**不会**套 `TOOL_TIMEOUT`。[E: packages/guard/timeout-policy/src/index.ts:59] 墙钟只在 `executeCommand` 里：`deadline(upstream, config.timeoutMs, 'PERSISTENT_PWSH_TIMEOUT')`。[E: packages/shell/tool-pwsh-persistent/src/index.ts:344] [E: packages/util/timeout/src/index.ts:91]
 
@@ -144,15 +144,15 @@ Top-level（无 `parent`）调用仍会撞上 host `dsh-session-checkpoint-polic
 
 | preset / 组合 | 是否装本包 | `disabled` | isolate | 本包 Config |
 |---|---|---|---|---|
-| `minimal` | 是：`id: persistent-pwsh`，`name: '@deepseek-ai/dsh-tool-pwsh-persistent'` | `!!js process.platform !== 'win32'`（POSIX 关、win32 开） | 外层 group `id: persistent-shell`，`isolate.terminals: true` | `timeoutMs: 300000`；`description: |-` 整段覆盖 [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:58] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:59] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:60] |
+| `minimal` | 是：`id: persistent-pwsh`，`name: '@deepseek-ai/dsh-tool-pwsh-persistent'` | `!!js process.platform !== 'win32'`（POSIX 关、win32 开） | 外层 group `id: persistent-shell`，`isolate.terminals: true` | `timeoutMs: 300000`；`description: |-` 整段覆盖 [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:57] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:59] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:62] |
 | `standard` | 否。shell 行是 `@deepseek-ai/dsh-tool-pwsh` | 不适用本包 | 无 `isolate.terminals` 组 | — [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:49] |
 | `ptc` | 否。同样是 `@deepseek-ai/dsh-tool-pwsh` | 不适用本包 | 无本包组 | — [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:56] |
 | `cordis` | 否。同样是 `@deepseek-ai/dsh-tool-pwsh` | 不适用本包 | 无本包组 | — [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:50] |
-| `sdk-minimal` bundle | 是：host-plane `id: persistent-pwsh`（无 agent-presets roster） | `!!js process.platform !== 'win32'` | **无** `isolate.terminals`（bundle 是完整 insert，PTY 在同一树） | `timeoutMs: 300000` + 与 `minimal` 同风格的 description [E: packages/bundle/sdk-minimal/cordis.patch.yml:101] [E: packages/bundle/sdk-minimal/cordis.patch.yml:102] |
+| `sdk-minimal` bundle | 是：host-plane `id: persistent-pwsh`（无 agent-presets roster） | `!!js process.platform !== 'win32'` | **无** `isolate.terminals`（bundle 是完整 insert，PTY 在同一树） | `timeoutMs: 300000` + 与 `minimal` 同风格的 description [E: packages/bundle/sdk-minimal/cordis.patch.yml:137] [E: packages/bundle/sdk-minimal/cordis.patch.yml:139] |
 
-`minimal` 的 `persistent-shell` group 同一 `isolate.terminals` 域里还有：`@deepseek-ai/dsh-terminal`（`id: pty`）、POSIX 上的 `id: terminal-bash` + `id: persistent-bash`，以及 win32 上的 `id: terminal-pwsh`（仍是 `@deepseek-ai/dsh-terminal-bash`，`shellDialect: pwsh`，`timeoutMs: 300000`，这是 **backend send 等待上限**；该包默认是 `30_000`）。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:27] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:51] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:55] [E: packages/terminal/terminal-bash/src/config.ts:98] 预设若把 service 发到 root realm，`leakedServices` 会把它算进 `root[Context.isolate]` 并让 `mountPreset` 失败，所以 `terminals` 必须留在 `isolate` 域里。[E: packages/preset/agent-presets/src/mount.ts:221] [E: packages/preset/agent-presets/src/mount.ts:408]
+`minimal` 的 `persistent-shell` group 同一 `isolate.terminals` 域里还有：`@deepseek-ai/dsh-terminal`（`id: pty`）、POSIX 上的 `id: terminal-bash` + `id: persistent-bash`，以及 win32 上的 `id: terminal-pwsh`（仍是 `@deepseek-ai/dsh-terminal-bash`，`shellDialect: pwsh`，`timeoutMs: 300000`，这是 **backend send 等待上限**；该包默认是 `30_000`）。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:27] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:50] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:54] [E: packages/terminal/terminal-bash/src/config.ts:98] 预设若把 service 发到 root realm，`leakedServices` 会把它算进 `root[Context.isolate]` 并让 `mountPreset` 失败，所以 `terminals` 必须留在 `isolate` 域里。[E: packages/preset/agent-presets/src/mount.ts:221] [E: packages/preset/agent-presets/src/mount.ts:410]
 
-`minimal` 另有 `isolate.fs` 组给 `str_replace_editor`，与本工具无关。`maxOutputChars` 在 shipped `minimal` **未**覆盖，保持默认 16000。
+`minimal` **没有** `isolate.fs`、**不挂** `str_replace_editor` / `tool-fs`：出厂只剩 complete persona + persistent shell。`maxOutputChars` 在 shipped `minimal` **未**覆盖，保持默认 16000。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21]
 
 ## execute() 走读
 
@@ -188,17 +188,17 @@ Top-level（无 `parent`）调用仍会撞上 host `dsh-session-checkpoint-polic
 
 ## 设计动机·edge
 
-DSH **没有** first-class `apply_patch`；本工具也不是 editor，只是 persistent PTY 上的 `Invoke-Expression`。和 Codex `apply_patch` / Claude `Edit` / Pi edit 无关——`minimal` 的文件面是 `str_replace_editor`，不是这条 `pwsh`。
+DSH **没有** first-class `apply_patch`；本工具也不是 editor，只是 persistent PTY 上的 `Invoke-Expression`。和 Codex `apply_patch` / Claude `Edit` / Pi edit 无关——`minimal` 没有独立文件工具，win32 上读改文件只能走这条 persistent `pwsh`。
 
 独有 / 易踩点：
 
 - **同名碰撞。** catalog 里都叫 `pwsh`。看 preset 行是 `@deepseek-ai/dsh-tool-pwsh-persistent` 还是 `@deepseek-ai/dsh-tool-pwsh`，不能只看 wire 名。
 - **只在 `minimal`（agent-preset）与 `sdk-minimal`（host insert），且仅 win32。** POSIX 上这两处对本行 `disabled: !!js process.platform !== 'win32'`，改挂 `dsh-tool-bash-persistent`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:60] `standard` / `ptc` / `cordis` 的 `pwsh` 是 one-shot `ctx.shell`。
-- **没有单独的 pwsh PTY 包。** `id: terminal-pwsh` 仍加载 `@deepseek-ai/dsh-terminal-bash` + `shellDialect: pwsh`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:52] Loader 套件用 `hasPwsh`（`resolvePwshPath()` 能跑 `$true`）决定 `describe.skipIf`，不按 OS 硬 skip。[E: packages/shell/tool-pwsh-persistent/tests/loader-composition.spec.ts:26]
+- **没有单独的 pwsh PTY 包。** `id: terminal-pwsh` 仍加载 `@deepseek-ai/dsh-terminal-bash` + `shellDialect: pwsh`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:51] Loader 套件用 `hasPwsh`（`resolvePwshPath()` 能跑 `$true`）决定 `describe.skipIf`，不按 OS 硬 skip。[E: packages/shell/tool-pwsh-persistent/tests/loader-composition.spec.ts:27]
 - **初始化覆盖 prompt。** 与 bash-persistent 的 `stty -echo`（不改 PS1）不同，本工具提交 `function prompt { … '__DSH_PERSISTENT_PWSH_PROMPT__ ' }`，早退靠 viewport 是否以该 prompt 结尾。[E: packages/shell/tool-pwsh-persistent/src/index.ts:20]
 - **包装必须单行。** 多行用户命令被 `` `n `` 压成一条 wrapper；heredoc 风格 here-string 由 Loader 测试覆盖 `$h = @'\n…`。[E: packages/shell/tool-pwsh-persistent/tests/loader-composition.spec.ts:155]
 - **超时会拆壳。** Config `timeoutMs` 到期会 kill 当前 PTY 并告诉模型「next pwsh call starts from the workspace」。timeout 文案带 “or experienced an OOM error”，进入该分支的条件只有 `timeoutOf(..., 'PERSISTENT_PWSH_TIMEOUT')`，没有单独的 OOM 探测器。[E: packages/shell/tool-pwsh-persistent/src/index.ts:381] [I]
-- **abort 同样拆壳。** 即使 abort 瞬间 end marker 已经出现（`end-on-abort` stub），实现仍 reset，结果走 isError，不把那次输出交给模型。[E: packages/shell/tool-pwsh-persistent/tests/tools.spec.ts:537]
+- **abort 同样拆壳。** 即使 abort 瞬间 end marker 已经出现（`end-on-abort` stub），实现仍 reset，结果走 isError，不把那次输出交给模型。[E: packages/shell/tool-pwsh-persistent/tests/tools.spec.ts:538]
 - **截断留前缀。** 对比 one-shot pwsh（常见是 tail + spill 路径），这里是 head clip、无 spill。clip 文案建议用 `Select-String` 而不是 `grep`。[E: packages/shell/tool-pwsh-persistent/src/index.ts:17]
 - **两口钟。** 工具 Config `timeoutMs`（默认 300s）管整条命令；同组 `dsh-terminal-bash` 的 `timeoutMs` 管单次 `startSend` 等待。命令循环不把 backend `waitReason === 'timeout'` 当完成，只在 init 把它当失败。
 - **`promptCompleted` 早退。** 语法错误等会在私有 prompt 再现时返回部分输出，而不是等到命令墙钟。

@@ -23,7 +23,7 @@ related:
   - subsys.util.home-paths
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-http-proxy` 是 **进程级出站代理库**，不是 Cordis 插件：launcher 在第一行插件 mount 之前调用 `installProxyFromEnvironment`，把策略装成 undici 全局 dispatcher。Node 自带 `fetch` 忽略 `HTTP_PROXY`，没有这一步则 LLM / search / MCP HTTP / telemetry 全直连。
@@ -65,9 +65,9 @@ updated: d347e70390
 
 ## 控制流
 
-1. **`runProfile` 在 `composeProfile` 之前**调用 `installProxyFromEnvironment(options.environment, …)`。读 launcher snapshot，不是事后的 `process.env`。 [E: apps/cli/src/profile-boot.ts:215] [E: apps/cli/src/profile-boot.ts:221]
+1. **`runProfile` 在 `composeProfile` 之前**调用 `installProxyFromEnvironment(options.environment, …)`。读 launcher snapshot，不是事后的 `process.env`。 [E: apps/cli/src/profile-boot.ts:211] [E: apps/cli/src/profile-boot.ts:226]
 2. 不能用的值 **report 后跳过**，不 throw，以免挡住 boot。 [E: packages/util/http-proxy/src/install.ts:296]
-3. 有政策时 `setGlobalDispatcher(agent)`；shutdown 路径 `await disposeProxy()`。 [E: packages/util/http-proxy/src/install.ts:213] [E: apps/cli/src/profile-boot.ts:225]
+3. 有政策时 `setGlobalDispatcher(agent)`；shutdown 路径 `await disposeProxy()`。 [E: packages/util/http-proxy/src/install.ts:213] [E: apps/cli/src/profile-boot.ts:226]
 4. 无政策时仍可能换成 direct `Agent`，避免下层 install 残留。 [E: packages/util/http-proxy/src/install.ts:197]
 
 ## 设计动机

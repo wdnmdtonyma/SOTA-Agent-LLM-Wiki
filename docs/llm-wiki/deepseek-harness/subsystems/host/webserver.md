@@ -52,7 +52,7 @@ related:
   - subsys.client.hmr
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-host-webserver` 的 `WebServer` 是 **host 面** HTTP **route-registration carrier**：`node:http` + Cordis service `ctx.webServer`。`[Service.init]` **立刻** `listen(config.port, config.host)`。本包不懂 harness、不发文件、不打印 URL。gzip / index inject / 唯一 fallback 座都在本包；dist 由组成应用拥有。[E: packages/host/webserver/package.json:2] [E: packages/host/webserver/src/index.ts:144] [E: packages/host/webserver/src/index.ts:294]
@@ -70,7 +70,7 @@ updated: d347e70390
 
 DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent preset`，capability seam 是 Definition / Provider / Consumer。`webserver` 只属于 **host 面**（进程级 listen 与路由表）。**agent-preset 面**（每会话 tools / persona / isolate）和 **client 面**（浏览器半边，不执行模型 turn）都不在本包。
 
-五个 shipped profile：`web`（`patchReload: live`）以及 `headless` / `sdk` / `sdk-minimal` / `acp`（`startup`）。`dsh web` 是 launcher 上**唯一**硬编码的 profile alias；`sdk` / `sdk-minimal` / `acp` / `headless` 走 `dsh --profile <name>`，没有 `dsh sdk` 子命令。[E: packages/boot/app-boot/src/profile.ts:137] [E: packages/boot/app-boot/src/profile.ts:142] [E: apps/cli/src/args.ts:168] 本仓没有 shipped TUI 包。
+五个 shipped profile：`web`（`patchReload: live`）以及 `headless` / `sdk` / `sdk-minimal` / `acp`（`startup`）。`dsh web` 是 launcher 上**唯一**硬编码的 profile alias；`sdk` / `sdk-minimal` / `acp` / `headless` 走 `dsh --profile <name>`，没有 `dsh sdk` 子命令。[E: packages/boot/app-boot/src/profile.ts:105] [E: packages/boot/app-boot/src/profile.ts:110] [E: apps/cli/src/args.ts:187] 本仓没有 shipped TUI 包。
 
 本包拥有：`node:http` `Server` 的 bind；exact / prefix 两张 HTTP 表与一张 exact upgrade 表；唯一 fallback 座；`indexTaps` 列表与 `webserver/index-inject` 事件；可选 gzip 中间件；已 upgrade socket 的跟踪与销毁；单请求失败时的 log + 400 / `destroy`（不让未捕获 reject 拖垮进程）。
 
@@ -113,7 +113,7 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 | `WebServer` | `Service` 子类。构造 `super(ctx, 'webServer')` 立刻 `provide`。augmentation 把 `Context.webServer` 钉成该实例。[E: packages/host/webserver/src/index.ts:144] |
 | `Config.host` | `'127.0.0.1' \| '0.0.0.0'`。schema `z.union` 两枚 `z.const`，**required**，无第三字面量。[E: packages/host/webserver/src/index.ts:61] [E: packages/host/webserver/src/index.ts:126] |
 | `Config.port` | `z.natural().max(65535)`。`natural` = 整数且 `min(0)`。`0` = OS 选端口；对外 `port` getter 读的是 `listenedPort`（`address().port`）。[E: packages/host/webserver/src/index.ts:127] [E: packages/host/webserver/src/index.ts:150] |
-| `Config.compression` | `'none' \| 'gzip'`，default `'none'`。web-app 行写成 `gzip`。[E: packages/host/webserver/src/index.ts:128] [E: packages/bundle/web-app/cordis.patch.yml:117] |
+| `Config.compression` | `'none' \| 'gzip'`，default `'none'`。web-app 行写成 `gzip`。[E: packages/host/webserver/src/index.ts:128] [E: packages/bundle/web-app/cordis.patch.yml:136] |
 | `WebRoute` | `{ kind: 'exact' \| 'prefix', path, handler }`。`path` 约定绝对 pathname、无尾斜杠。handler 拥有完整 response 生命周期（可挂起，如 SSE）。[E: packages/host/webserver/src/index.ts:42] |
 | `WebUpgradeRoute` | `{ path, handler }`。只走 exact pathname。[E: packages/host/webserver/src/index.ts:51] |
 | 四张内部表 | `exact` / `prefixes`：`Map<path, WebRoute>`。`upgrades`：`Map<path, WebUpgradeRoute>`。`upgradedSockets`：`Set<Duplex>`。[E: packages/host/webserver/src/index.ts:133] |
@@ -125,11 +125,11 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 ## 控制流
 
-1. **模板把本包叠进 web，不叠进 base / headless / sdk / acp。** `PROFILE_TEMPLATES.web` 是 `['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app']`，`patchReload: 'live'`。`headless` / `sdk` / `acp` 叠 base + 各自 app；`sdk-minimal` **只**叠 `@deepseek-ai/dsh-sdk-minimal`。没有 TUI 模板。[E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:143] [E: packages/boot/app-boot/src/profile.ts:146] [E: packages/boot/app-boot/src/profile.ts:154]
+1. **模板把本包叠进 web，不叠进 base / headless / sdk / acp。** `PROFILE_TEMPLATES.web` 是 `['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app']`，`patchReload: 'live'`。`headless` / `sdk` / `acp` 叠 base + 各自 app；`sdk-minimal` **只**叠 `@deepseek-ai/dsh-sdk-minimal`。没有 TUI 模板。[E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:111] [E: packages/boot/app-boot/src/profile.ts:114] [E: packages/boot/app-boot/src/profile.ts:122]
 
-2. **web-app 真树插入 `id: webserver`。** 行名 `@deepseek-ai/dsh-host-webserver`，`inject: [webStartup]`，`config.host` / `config.port` 写 `!!js ctx.webStartup.host ?? '127.0.0.1'` 与 `ctx.webStartup.port ?? 3080`，并打开 gzip。缺省 bind 是表达式回退，不是 `WebServer.Config` 的 schema default。[E: packages/bundle/web-app/cordis.patch.yml:111] [E: packages/bundle/web-app/cordis.patch.yml:113] [E: packages/bundle/web-app/cordis.patch.yml:113] [E: packages/bundle/web-app/cordis.patch.yml:115] [E: packages/bundle/web-app/cordis.patch.yml:116]
+2. **web-app 真树插入 `id: webserver`。** 行名 `@deepseek-ai/dsh-host-webserver`，`inject: [webStartup]`，`config.host` / `config.port` 写 `!!js ctx.webStartup.host ?? '127.0.0.1'` 与 `ctx.webStartup.port ?? 3080`，并打开 gzip。缺省 bind 是表达式回退，不是 `WebServer.Config` 的 schema default。[E: packages/bundle/web-app/cordis.patch.yml:128] [E: packages/bundle/web-app/cordis.patch.yml:135] [E: packages/bundle/web-app/cordis.patch.yml:135] [E: packages/bundle/web-app/cordis.patch.yml:135] [E: packages/bundle/web-app/cordis.patch.yml:135]
 
-3. **base / headless 不 insert 这一行。** `dsh-base` 的 `insert` 从 `timer` / `hmr` 起铺共享 core，文件里没有 `id: webserver`。[E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/base/cordis.patch.yml:21] `dsh-headless` 的 `insert` 只有 `code-runtime`、`headless-startup`、`headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:19] [E: packages/bundle/headless/cordis.patch.yml:22] [E: packages/bundle/headless/cordis.patch.yml:26] sdk / acp overlay 同样没有 webserver 行。
+3. **base / headless 不 insert 这一行。** `dsh-base` 的 `insert` 从 `timer` / `hmr` 起铺共享 core，文件里没有 `id: webserver`。[E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/base/cordis.patch.yml:21] `dsh-headless` 的 `insert` 只有 `code-runtime`、`headless-startup`、`headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27] sdk / acp overlay 同样没有 webserver 行。
 
 4. **`--host 0.0.0.0` 在 `provide('webStartup')` 之前 fail-closed。** `apply@packages/bundle/web-app/src/startup.ts` 声明 `inject: ['cmdlineArgs']`。commander 登记 `--host` / `--no-open` / `--port` / `--trusted-host`。action 里若 `options.host === '0.0.0.0'` 则 `program.error(…intentionally not supported yet for safety…)`，**不会**执行后面的 `ctx.provide(WEB_STARTUP_SERVICE, …)`。非 `/^\d+$/` 的 `--port` 同样 error。[E: packages/bundle/web-app/src/startup.ts:17] [E: packages/bundle/web-app/src/startup.ts:51] [E: packages/bundle/web-app/src/startup.ts:74] [E: packages/bundle/web-app/src/startup.ts:80]
 
@@ -149,11 +149,11 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 12. **重复登记是 composition 错误，抛错而不是 last-wins。** `register`：`(kind, path)` 已在对应表 → `webserver: duplicate ${kind} route "${path}"`。`registerUpgrade`：path 已在 → `duplicate upgrade route`。`registerFallback`：`fallback !== undefined` → `fallback already registered`。各自 disposer 删表项 / 置 `undefined` 后可再登记。[E: packages/host/webserver/src/index.ts:168] [E: packages/host/webserver/src/index.ts:182] [E: packages/host/webserver/src/index.ts:198] [E: packages/host/webserver/tests/webserver.spec.ts:232] [E: packages/host/webserver/tests/webserver.spec.ts:246] [E: packages/host/webserver/tests/webserver.spec.ts:270]
 
-13. **index 渲染两层：结构化行再 raw tap。** `tapIndex` `push` 纯函数并返回 splice disposer。`collectIndexInjections` 发 `webserver/index-inject`。`renderIndex` = `applyIndexTaps(renderIndexInjections(html, collect…))`。`frontend-static` 的 `renderIndex` 闭包读 `index.html` 后立刻 `ctx.webServer.renderIndex(...)`。modules / ui-theme 订阅 `webserver/index-inject` 推 boot 图 / theme 行，不再靠 `tapIndex`。没有人调 `renderIndex` / `applyIndexTaps`，tap 对线上响应为零效果。[E: packages/host/webserver/src/index.ts:211] [E: packages/host/webserver/src/index.ts:359] [E: packages/host/frontend-static/src/index.ts:121] [E: packages/client/modules/src/index.ts:589] [E: packages/client/ui-theme/src/index.ts:40]
+13. **index 渲染两层：结构化行再 raw tap。** `tapIndex` `push` 纯函数并返回 splice disposer。`collectIndexInjections` 发 `webserver/index-inject`。`renderIndex` = `applyIndexTaps(renderIndexInjections(html, collect…))`。`frontend-static` 的 `renderIndex` 闭包读 `index.html` 后立刻 `ctx.webServer.renderIndex(...)`。modules / ui-theme 订阅 `webserver/index-inject` 推 boot 图 / theme 行，不再靠 `tapIndex`。没有人调 `renderIndex` / `applyIndexTaps`，tap 对线上响应为零效果。[E: packages/host/webserver/src/index.ts:211] [E: packages/host/webserver/src/index.ts:359] [E: packages/host/frontend-static/src/index.ts:121] [E: packages/client/modules/src/index.ts:545] [E: packages/client/ui-theme/src/index.ts:40]
 
-14. **shipped named Consumer 挂在 host 树上，不是本包写死的路由。** `client-connection` `inject = ['webServer', 'credentials']`，`register` prefix `API_PATH`（`'/api'`）。`TypertGatewayService` 在 `inject(['connection', 'webServer'])` 后 `registerUpgrade` `REMOTE_STREAM_MUX_PATH`（`'/api/remote.mux'`），升级前再跑 `connection.requestRejection`。`ClientModuleRegistry` `register` prefix `'/plugins'`。`client-hmr` `register` exact `EVENTS_ENDPOINT`（`'/plugins/events'`）。GitHub webhook 另登记一条 exact path。[E: packages/client/connection/src/index.ts:68] [E: packages/client/connection/src/index.ts:116] [E: packages/client/connection/src/index.ts:128] [E: packages/client/connection/src/api-path.ts:7] [E: packages/api/gateway/src/stream-protocol.ts:6] [E: packages/api/gateway/src/index.ts:223] [E: packages/client/modules/src/index.ts:586] [E: packages/client/hmr/src/events.ts:44] [E: packages/client/hmr/src/index.ts:176] [E: packages/webhook/webhook-github/src/index.ts:50]
+14. **shipped named Consumer 挂在 host 树上，不是本包写死的路由。** `client-connection` 硬 `inject = ['credentials']`，`/api` 经 `ctx.inject(['webServer'], …)` 机会主义 `register` prefix `API_PATH`（`'/api'`）。`TypertGatewayService` 在 `inject(['connection', 'webServer'])` 后 `registerUpgrade` `REMOTE_STREAM_MUX_PATH`（`'/api/remote.mux'`），升级前再跑 `connection.requestRejection`。`ClientModuleRegistry` `register` prefix `'/plugins'`。`client-hmr` `register` exact `EVENTS_ENDPOINT`（`'/plugins/events'`）。GitHub webhook 另登记一条 exact path。[E: packages/client/connection/src/index.ts:69] [E: packages/client/connection/src/index.ts:119] [E: packages/client/connection/src/index.ts:126] [E: packages/client/connection/src/api-path.ts:7] [E: packages/api/gateway/src/stream-protocol.ts:6] [E: packages/api/gateway/src/index.ts:223] [E: packages/client/modules/src/index.ts:539] [E: packages/client/hmr/src/events.ts:44] [E: packages/client/hmr/src/index.ts:176] [E: packages/webhook/webhook-github/src/index.ts:50]
 
-15. **fallback 座由 `web-app` 代码挂上，不是 yml 行。** `web-app` `export const inject = ['webServer']`。`apply` 在 `provide('webRuntime')` 之后 `ctx.plugin(FrontendStatic, { distIndex: internals.resolveDistIndex() })`。`frontend-static` `inject = ['webServer', 'connection']`，`registerFallback` 占唯一座。Loader `await()` 成功后才 `console.log(\`dsh web: ${authenticatedUrl}…\`)`——URL 行属于 `web-app`，不属于 `webserver`。[E: packages/bundle/web-app/src/index.ts:41] [E: packages/bundle/web-app/src/index.ts:240] [E: packages/bundle/web-app/src/index.ts:241] [E: packages/bundle/web-app/src/index.ts:280] [E: packages/host/frontend-static/src/index.ts:27] [E: packages/host/frontend-static/src/index.ts:124]
+15. **fallback 座由 `web-app` 代码挂上，不是 yml 行。** `web-app` `export const inject = ['webServer']`。`apply` 在 `provide('webRuntime')` 之后 `ctx.plugin(FrontendStatic, { distIndex: internals.resolveDistIndex() })`。`frontend-static` `inject = ['webServer', 'connection']`，`registerFallback` 占唯一座。Loader `await()` 成功后才 `console.log(\`dsh web: ${authenticatedUrl}…\`)`——URL 行属于 `web-app`，不属于 `webserver`。[E: packages/bundle/web-app/src/index.ts:41] [E: packages/bundle/web-app/src/index.ts:231] [E: packages/bundle/web-app/src/index.ts:232] [E: packages/bundle/web-app/src/index.ts:271] [E: packages/host/frontend-static/src/index.ts:27] [E: packages/host/frontend-static/src/index.ts:124]
 
 16. **teardown：`closeAllConnections` + 显式 destroy 已 upgrade 的 sockets。** `ctx.effect(..., 'webServer.listen')` 在 fiber dispose 时 `server.close`、`closeAllConnections`，并对 `upgradedSockets` 逐个 `destroy` 后等 `close`。Node 的 `closeAllConnections` **不含** 已 upgrade 的 socket。测试在仍挂着的 upgrade 上 `fiber.dispose()`，断言 server-side socket 关闭且后续 `fetch` reject。[E: packages/host/webserver/src/index.ts:308] [E: packages/host/webserver/src/index.ts:311] [E: packages/host/webserver/tests/webserver.spec.ts:300] [E: packages/host/webserver/tests/webserver.spec.ts:301] [E: packages/host/webserver/tests/webserver.spec.ts:303]
 
@@ -180,9 +180,9 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 - **405 / MIME / SPA 回 `index.html` 都是 fallback owner 的事。** named route 自己决定 method；本包只在「无 route 且无 fallback」时写 404。
 - **upgrade 没有 prefix 表。** HTTP `/api` 是 prefix；WS 必须登记完整 exact path（gateway 登记 `/api/remote.mux`）。
 - **`port: 0` 之后读 `ctx.webServer.port`，不要读 config 字面量。** getter 是 OS 分配值。[E: packages/host/webserver/src/index.ts:150]
-- **本包不打印 URL。** 监督进程看到的 `dsh web: http://…` 来自 `web-app`。[E: packages/bundle/web-app/src/index.ts:280]
-- **`frontend-static` 不是 web-app yml 行。** 在 `web-app` `apply` 里 `ctx.plugin`。[E: packages/bundle/web-app/src/index.ts:241]
-- **`dsh web` 不是唯一宿主入口。** 另有 `dsh --profile sdk|sdk-minimal|acp|headless`；那些 profile 不装本包。[E: packages/boot/app-boot/src/profile.ts:137]
+- **本包不打印 URL。** 监督进程看到的 `dsh web: http://…` 来自 `web-app`。[E: packages/bundle/web-app/src/index.ts:271]
+- **`frontend-static` 不是 web-app yml 行。** 在 `web-app` `apply` 里 `ctx.plugin`。[E: packages/bundle/web-app/src/index.ts:232]
+- **`dsh web` 不是唯一宿主入口。** 另有 `dsh --profile sdk|sdk-minimal|acp|headless`；那些 profile 不装本包。[E: packages/boot/app-boot/src/profile.ts:105]
 
 ## Seam 三角
 

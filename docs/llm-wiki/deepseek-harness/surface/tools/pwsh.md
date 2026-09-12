@@ -51,7 +51,7 @@ related:
   - subsys.execution.shell
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `pwsh` 是模型可见的**一次性** PowerShell 工具：实现包 `@deepseek-ai/dsh-tool-pwsh`，经 `ctx.shell` 每次拉起新的 `pwsh -NoLogo -NoProfile -NonInteractive -Command` 进程。它与 one-shot `bash`（`@deepseek-ai/dsh-tool-bash`）共享 `ctx.shell` 缝，wire 名是 `pwsh`。同名碰撞：`@deepseek-ai/dsh-tool-pwsh-persistent` 也把模型可见名登记为 `pwsh`，但走 `ctx.terminals`，**不是本页**。
@@ -113,7 +113,7 @@ updated: d347e70390
 
 schema 校验只检查**已广告**键。无沙箱组合里模型仍可能塞进 `sandbox_permissions`；execute 会抛 `sandbox_permissions is not available in this composition`。[E: packages/shell/tool-pwsh/src/index.ts:227][E: packages/shell/tool-pwsh/tests/tools.spec.ts:595]
 
-官方 catalog 采集挂的是**无沙箱**的 `PwshLocalExecutor`，所以生成文案写 “mirrors the bash tool call-for-call minus sandbox controls”。那是采集组合，不是 `apply()` 在禁闭执行器下的 schema。[E: scripts/gen-tool-catalog.ts:257][E: scripts/gen-tool-catalog.ts:260]
+官方 catalog 采集挂的是**无沙箱**的 `PwshLocalExecutor`，所以生成文案写 “mirrors the bash tool call-for-call minus sandbox controls”。那是采集组合，不是 `apply()` 在禁闭执行器下的 schema。[E: scripts/gen-tool-catalog.ts:258][E: scripts/gen-tool-catalog.ts:260]
 
 `ToolDefinition.timeoutMs` 是可选的定义级字段；`pwsh` 的 `defineTool({ name: 'pwsh', ... })` 未传入它，登记表因此不会给这件工具挂调用预算。前台期限只走参数 `timeoutMs` → `ctx.shell.resolve`。[E: packages/shell/tool-pwsh/src/index.ts:250]
 
@@ -121,7 +121,7 @@ schema 校验只检查**已广告**键。无沙箱组合里模型仍可能塞进
 
 `output.schema` 是 `oneOf`：后台 `{ kind: 'background', jobId }`，或前台 `kind: 'foreground'` 加上 `exitCode` / `signal` / `timedOut` / `aborted` / `timeoutMs` 与两路 `{ text, truncated, spillPath? }`，以及可选 `sandbox: { mode, denied, enforcement?, runnerFailed? }`。[E: packages/shell/tool-pwsh/src/index.ts:287][E: packages/shell/tool-pwsh/src/index.ts:297]
 
-`output.render`：后台渲染 `started background job ${jobId}`；前台走 `renderPwshResult`。[E: packages/shell/tool-pwsh/src/index.ts:340] 登记表 `createSuccessResult` 在 body 返回后调用 `tool.output.render`。[E: packages/core/tools/src/index.ts:1791]
+`output.render`：后台渲染 `started background job ${jobId}`；前台走 `renderPwshResult`。[E: packages/shell/tool-pwsh/src/index.ts:340] 登记表 `createSuccessResult` 在 body 返回后调用 `tool.output.render`。[E: packages/core/tools/src/index.ts:1790]
 
 `renderPwshResult` 拼：stdout 文本 → 非空 stderr 前加 `[stderr]` → 空 body 写成 `(no output)` → 标记行（sandbox 拒绝、escalation hint、`[timed out after Nms]`、`[killed by signal: X]` 或 `[exit code: N]`）。干净退出 0 且无 signal **不加**退出标记。[E: packages/shell/tool-pwsh/src/render.ts:59][E: packages/shell/tool-pwsh/src/render.ts:75][E: packages/shell/tool-pwsh/tests/tools.spec.ts:443]
 
@@ -150,13 +150,13 @@ UI：`presentCall` 前台是 `card: 'terminal'`（title=command，可带 `cwd`�
 
 `ctx.sandbox` / `ctx.sandboxPolicy` 属于禁闭 provider。`danger-full-access` 不 wrap argv；其余 mode 把 `this.argv(spec)` 交给 `ctx.sandbox.confine`。runner 起不来就抛 `SandboxUnavailableError`（code `SANDBOX_UNAVAILABLE`），**不会**裸跑。[E: packages/shell/pwsh-sandbox/src/index.ts:99][E: packages/shell/pwsh-sandbox/src/index.ts:184][E: packages/shell/pwsh-sandbox/src/index.ts:111][E: packages/sandbox/sandbox/src/index.ts:124][E: packages/shell/pwsh-sandbox/tests/sandbox.spec.ts:236]
 
-shipped CLI：`dsh-base` 在 win32 挂 `pwsh-sandbox`、在 POSIX 挂 `bash-sandbox`。`pwsh-sandbox` 行**没有**覆盖 `timeoutMs`，因此沿用 `PwshLocalExecutor` 的 `120_000`；对照 `bash-sandbox` 行显式写了 `timeoutMs: 60000`。[E: packages/bundle/base/cordis.patch.yml:226][E: packages/bundle/base/cordis.patch.yml:224]
+shipped CLI：`dsh-base` 在 win32 挂 `pwsh-sandbox`、在 POSIX 挂 `bash-sandbox`。`pwsh-sandbox` 行**没有**覆盖 `timeoutMs`，因此沿用 `PwshLocalExecutor` 的 `120_000`；对照 `bash-sandbox` 行显式写了 `timeoutMs: 60000`。[E: packages/bundle/base/cordis.patch.yml:220][E: packages/bundle/base/cordis.patch.yml:218]
 
 ## 执行管线
 
-agent-loop 把助手 step 里的 tool call 编成 `ToolExecutionInput`（`name` 来自模型，对这件工具是 `'pwsh'`），再进 `ctx.tools.execute`。[E: packages/core/agent-loop/src/tool-calls.ts:76][E: packages/core/tools/src/index.ts:1333]
+agent-loop 把助手 step 里的 tool call 编成 `ToolExecutionInput`（`name` 来自模型，对这件工具是 `'pwsh'`），再进 `ctx.tools.execute`。[E: packages/core/agent-loop/src/tool-calls.ts:76][E: packages/core/tools/src/index.ts:1332]
 
-1. **`tools/pre-execute`**：waterfall，默认 `{ kind: 'allow' }`。本包**不**注册 pre-execute 监听器，也不把 escalation 做成 `ask` 门。[E: packages/core/tools/src/index.ts:1468]
+1. **`tools/pre-execute`**：waterfall，默认 `{ kind: 'allow' }`。本包**不**注册 pre-execute 监听器，也不把 escalation 做成 `ask` 门。[E: packages/core/tools/src/index.ts:1467]
 2. **定义级 `timeoutMs` / 登记表 deadline**：`pwsh` 的 `defineTool({ name: 'pwsh', ... })` 未传定义级 `timeoutMs`，登记表不会给这件工具套一层调用预算。前台期限是参数 → 执行器 `clampTimeout`。[E: packages/shell/tool-pwsh/src/index.ts:250][E: packages/shell/pwsh-local/src/index.ts:192]
 3. **`tools/execute` waterfall → `tool.execute`**：真正的 `validatePwshArgs` / escalation / `ctx.shell.run|start` 发生在这里。[E: packages/core/tools/src/index.ts:1565][E: packages/core/tools/src/index.ts:1540]
 4. **approval**：普通调用不经 `serviceAsk`。只有模型带了成对的 `sandbox_permissions` + `justification` 时，`execute()` **在 spawn 之前**调用 `approveEscalation` → `ctx.approval.request({ toolName: 'pwsh', ... })`。非加宽请求永不弹窗。[E: packages/shell/tool-pwsh/src/index.ts:350][E: packages/sandbox/sandbox/src/escalation.ts:173]
@@ -169,14 +169,14 @@ agent-loop 把助手 step 里的 tool call 编成 `ToolExecutionInput`（`name` 
 
 成员资格只认 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml`（旧路径 `apps/cli/config/agent-presets/` 与目录名 `code` 已不存在；`code` 现为 **PTC** / `presets/ptc/`）。四份里 `standard` / `ptc` / `cordis` 的 `tool-pwsh` 行都**不**在 `isolate` group 内，注册进 host `tools` 表。
 
-Web profile（`--profile web` 或 `dsh web`）会把 host 平面的 `tool-pwsh` 行改成无条件 `disabled: true`，改由 session 挂上的 preset 行注册工具；`pwsh-sandbox` 仍留在 host，作为 `ctx.shell`。[E: packages/bundle/web-app/cordis.patch.yml:324][E: apps/cli/tests/windows-shell.spec.ts:65] headless / sdk / acp 叠 `dsh-base`，保留 host 平面的 platform-gated `tool-pwsh` 行；`sdk-minimal` 不叠 base，装的是 persistent `pwsh`，不是本包。
+Web profile（`--profile web` 或 `dsh web`）会把 host 平面的 `tool-pwsh` 行改成无条件 `disabled: true`，改由 session 挂上的 preset 行注册工具；`pwsh-sandbox` 仍留在 host，作为 `ctx.shell`。[E: packages/bundle/web-app/cordis.patch.yml:371][E: apps/cli/tests/windows-shell.spec.ts:65] headless / sdk / acp 叠 `dsh-base`，保留 host 平面的 platform-gated `tool-pwsh` 行；`sdk-minimal` 不叠 base，装的是 persistent `pwsh`，不是本包。
 
 | preset | 装 `@deepseek-ai/dsh-tool-pwsh`？ | `disabled` | isolate |
 |---|---|---|---|
 | `minimal` | 否。shell 是 persistent `bash`/`pwsh`（`isolate.terminals`） | 无此行 | 无 one-shot pwsh 行。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: apps/cli/tests/windows-shell.spec.ts:132] |
-| `standard` | 是 | `!!js process.platform !== 'win32'`（非 win32 禁用） | 无。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:48][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:50] |
-| `ptc` | 是（与 standard 同一行；另加 PTC `run_code` 呈现，不删工具行） | 同 standard | 无。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:55][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:57] |
-| `cordis` | 是 | 同 standard | 无。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:49][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:51] |
+| `standard` | 是 | `!!js process.platform !== 'win32'`（非 win32 禁用） | 无。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:49][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:50] |
+| `ptc` | 是（与 standard 同一行；另加 PTC `run_code` 呈现，不删工具行） | 同 standard | 无。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:56][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:57] |
+| `cordis` | 是 | 同 standard | 无。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:50][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:51] |
 
 win32 上 `tool-bash` 的 `disabled` 表达式与 `tool-pwsh` 相反，同一 preset 只亮一只 one-shot shell。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:46][E: apps/cli/tests/windows-shell.spec.ts:113]
 
@@ -203,9 +203,9 @@ DSH 没有 first-class `apply_patch`。一次性 `pwsh` 是 shell 执行，不�
 真正少掉、或与 bash 分叉的控件：
 
 1. **workdir 不与 sandbox root 对齐。** `dsh-tool-bash` 的 `resolveWorkdir` 吃 `standingPolicy?.workspaceRoot`，否则 `canonicalPath(headerCwd)`，让 workdir 与禁闭根同一身份。[E: packages/shell/tool-bash/src/index.ts:149] `pwsh` 只用原始 `session.header.cwd`。[E: packages/shell/tool-pwsh/src/index.ts:150]
-2. **catalog / 无沙箱采集看不到 escalation 字段。** `gen-tool-catalog.ts` 挂 `PwshLocalExecutor`，`sandboxMode` 为 `undefined`，于是生成说明写成 “minus sandbox controls”。shipped win32 的 `ctx.shell` 是 `pwsh-sandbox`，live schema **有**这两字段。[E: scripts/gen-tool-catalog.ts:260][E: packages/bundle/base/cordis.patch.yml:226]
+2. **catalog / 无沙箱采集看不到 escalation 字段。** `gen-tool-catalog.ts` 挂 `PwshLocalExecutor`，`sandboxMode` 为 `undefined`，于是生成说明写成 “minus sandbox controls”。shipped win32 的 `ctx.shell` 是 `pwsh-sandbox`，live schema **有**这两字段。[E: scripts/gen-tool-catalog.ts:260][E: packages/bundle/base/cordis.patch.yml:220]
 3. **禁闭后端是 Windows ACL restricted-token，不是 bwrap / landlock / seatbelt。** `read-only` 下 PowerShell 进 ConstrainedLanguage（`.NET` 静态调用 / `Add-Type` / COM / 反射失败）；`workspace-write` 默认 FullLanguage。两种禁闭 mode 里孙进程 `stdio: 'pipe'` 的 named pipe 打开会 EPERM。这些句子写在工具 description 里，但门控是「`escalationModes` 非空」而不是 `process.platform === 'win32'`。[E: packages/shell/tool-pwsh/src/index.ts:122]
-4. **host timeout 默认不同。** `bash-sandbox` 行写死 `timeoutMs: 60000`；`pwsh-sandbox` 行不写，落到 `120_000`。[E: packages/bundle/base/cordis.patch.yml:224][E: packages/shell/pwsh-local/src/index.ts:133]
+4. **host timeout 默认不同。** `bash-sandbox` 行写死 `timeoutMs: 60000`；`pwsh-sandbox` 行不写，落到 `120_000`。[E: packages/bundle/base/cordis.patch.yml:218][E: packages/shell/pwsh-local/src/index.ts:133]
 5. **win32 强杀没有 POSIX signal。** description 与 prompt 都要求把裸 `[exit code: 1]` 当成中断，不当命令逻辑失败。[E: packages/shell/tool-pwsh/src/index.ts:113][E: packages/shell/tool-pwsh/src/index.ts:247]
 6. **每调用新进程。** 不要和 `dsh-tool-pwsh-persistent`（同 wire 名 `pwsh`、`ctx.terminals`、`minimal` / `sdk-minimal`）或 [bash 持久 PTY](bash-persistent.md) 搞混。
 

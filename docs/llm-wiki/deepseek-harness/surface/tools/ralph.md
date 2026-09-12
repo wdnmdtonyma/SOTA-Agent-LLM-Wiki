@@ -51,7 +51,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `ralph` 是 `@deepseek-ai/dsh-tool-ralph` 向模型注册的前台 fresh-agent 循环：wire 名 `ralph`；模型只提交不可变 `objective` 与可选 `maxRounds`。实现包用编译期固定的 `RALPH_SCRIPT` 调用 `ctx.workflowEngine.start`，每一轮拉起一个不继承父会话、且必须支持 `outputSchema` 的子 agent。
@@ -75,7 +75,7 @@ updated: d347e70390
 
 section 文本要求：只有**直接人类**明确点名 Ralph / fresh-agent 迭代时才用本工具；每轮新开无 conversation seed 的 child，共享工作区当 durable memory；完成与 blocker 是 worker 自报，不是独立评审；普通同会话长任务走 goal 工具，有界委托 / fan-out 走普通 subagent 或 `workflow`。[E: packages/workflow/tool-ralph/src/index.ts:408][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:383]
 
-`defineTool({ name: 'ralph', … })` **没有** `timeoutMs`，也 **没有** `isConcurrencySafe`。registry 把未声明并发分类器的调用标成 `exclusive`；timeout-policy 读到 `undefined` 就原样 `next()`。[E: packages/core/tools/src/index.ts:1269][E: packages/guard/timeout-policy/src/index.ts:59]
+`defineTool({ name: 'ralph', … })` **没有** `timeoutMs`，也 **没有** `isConcurrencySafe`。registry 把未声明并发分类器的调用标成 `exclusive`；timeout-policy 读到 `undefined` 就原样 `next()`。[E: packages/core/tools/src/index.ts:1268][E: packages/guard/timeout-policy/src/index.ts:59]
 
 fiber `dispose` 后 `ctx.tools.get('ralph')` 与 `tool:ralph` section 一起消失。[E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:395][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:396]
 
@@ -83,7 +83,7 @@ fiber `dispose` 后 `ctx.tools.get('ralph')` 与 `tool:ralph` section 一起消�
 
 `ralph` 跑的是**部署拥有的固定编排**，不是模型可改写的 workflow 脚本。模型只提供数据：一条 trim 后的不可变目标，外加可选轮次帽。循环、provider 路由、round report schema、handoff 校验都写在包内常量 `RALPH_SCRIPT` / `RALPH_META` 里。[E: packages/workflow/tool-ralph/src/index.ts:88][E: packages/workflow/tool-ralph/src/index.ts:78]
 
-每一轮 `agent()` 拉起一个**全新** child：没有父会话 transcript，也没有上一轮 child 的 session。跨轮只传递一份有界 JSON report（`status` / `summary` / `evidence` / `nextSteps` / `blocker`）。共享工作区（父 agent 的 `session.header.cwd`）才是长期记忆。[E: packages/workflow/tool-ralph/src/index.ts:154][E: packages/workflow/tool-ralph/tests/integration.spec.ts:102][E: packages/workflow/tool-ralph/tests/integration.spec.ts:103][E: packages/workflow/tool-ralph/tests/integration.spec.ts:104]
+每一轮 `agent()` 拉起一个**全新** child：没有父会话 transcript，也没有上一轮 child 的 session。跨轮只传递一份有界 JSON report（`status` / `summary` / `evidence` / `nextSteps` / `blocker`）。共享工作区（父 agent 的 `session.header.cwd`）才是长期记忆。[E: packages/workflow/tool-ralph/src/index.ts:154][E: packages/workflow/tool-ralph/tests/integration.spec.ts:99][E: packages/workflow/tool-ralph/tests/integration.spec.ts:100][E: packages/workflow/tool-ralph/tests/integration.spec.ts:101]
 
 调用是 **foreground**：`execute` `await run.result`，直到 worker 报 `complete` / `blocked`、撞上轮次帽 `budget-limited`，或 child / 引擎失败。这不是后台 job，也不是 continuable subagent。
 
@@ -115,7 +115,7 @@ fiber `dispose` 后 `ctx.tools.get('ralph')` 与 `tool:ralph` section 一起消�
 
 直接 `apply` 非法 Config（`' '` provider、`maxRounds: 0`、非整 `maxHandoffChars`）在碰到 `inject` 服务之前就抛 `TypeError`。[E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:330]
 
-shipped `standard` / `ptc` / `cordis` 把 `subagentProvider` 写成 `spawn`（与插件默认相同），把 `maxRounds` **改成 64**（覆盖插件默认 256）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:238][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:240]
+shipped `standard` / `ptc` / `cordis` 把 `subagentProvider` 写成 `spawn`（与插件默认相同），把 `maxRounds` **改成 64**（覆盖插件默认 256）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:239][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:241]
 
 ## 输出 & 截断 / spill
 
@@ -155,7 +155,7 @@ UI：`presentCall` 是 `{ card: 'generic', title: 'ralph', rawInput: args.object
 
 因此 shipped 里两条常见「别的委托路由」都不能当 Ralph provider：
 
-- `fork`（`@deepseek-ai/dsh-subagent-fork-in-process`）有 `outputSchema`，但 `inheritsParentContext = true`（seed 父会话已完成 turn 前缀）→ 文案 `inherits parent context; Ralph requires a fresh provider`。[E: packages/subagent/subagent-fork-in-process/src/index.ts:71][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:326]
+- `fork`（`@deepseek-ai/dsh-subagent-fork-in-process`）有 `outputSchema`，但 `inheritsParentContext = true`（seed 父会话已完成 turn 前缀）→ 文案 `inherits parent context; Ralph requires a fresh provider`。[E: packages/subagent/subagent-fork-in-process/src/index.ts:72][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:326]
 - `codex` / `claude-code` / 进程外 SDK 使用 `NO_START_CAPABILITIES`（`outputSchema: false`）→ `does not support structured output`。[E: packages/subagent/subagent/src/out-of-process.ts:57][E: packages/subagent/subagent-codex/src/index.ts:64]
 
 换 `ctx.workflowEngine` provider 会带走：脚本隔离（worker-thread vs 别的后端）、`workflow/*` 事件实现、`maxTotalAgents` 引擎天花板、取消 / `dispose` 宽限。换 `ctx.subagents` 的 `spawn` 实现会带走：child 如何建 session、cwd / lineage / depth 怎么盖、structured output 怎么捕获。**不会**带走：`RALPH_SCRIPT` 的轮次语义、report 形状、host 侧 `readRunResult` 二次校验。
@@ -164,20 +164,20 @@ UI：`presentCall` 是 `{ card: 'generic', title: 'ralph', rawInput: args.object
 
 ## 执行管线
 
-模型发出 `ralph` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1333][E: packages/core/tools/src/index.ts:1466]
+模型发出 `ralph` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1332][E: packages/core/tools/src/index.ts:1465]
 
 对本工具的挂点：
 
-- **`tools/pre-execute`**：`ralph` 自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1468]
-- **并发**：未声明 `isConcurrencySafe`，`executionMode` 直接 `exclusive`，不会与其它 exclusive 调用重叠。[E: packages/core/tools/src/index.ts:1269]
+- **`tools/pre-execute`**：`ralph` 自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1467]
+- **并发**：未声明 `isConcurrencySafe`，`executionMode` 直接 `exclusive`，不会与其它 exclusive 调用重叠。[E: packages/core/tools/src/index.ts:1268]
 - **`tools/execute` 包装**：
   - `session-checkpoint-policy` 仅在「有 `exec.agent` 且 `exec.parent === undefined`」时 `flush` session，再 `next()`；flush 后若已 abort，返回 `ABORTED_BEFORE_DISPATCH`，body 不跑。[E: packages/session/session-checkpoint-policy/src/index.ts:71]
   - `timeout-policy` 读 `definition.timeoutMs`；本工具未声明，包装器直接 `next()`。一轮 Ralph 可以跑很久，取消靠父 `exec.signal`，不靠工具级 deadline。[E: packages/guard/timeout-policy/src/index.ts:57][E: packages/guard/timeout-policy/src/index.ts:59]
 - **body**：`defineTool` 先 `validateArgs`（缺 `objective` → `INVALID_ARGS`），再进 `apply` 里的 `execute`。`exec.signal` abort 时 `run.cancel('parent step aborted')`。[E: packages/core/tools/src/schema.ts:586][E: packages/workflow/tool-ralph/src/index.ts:454]
-- **`tools/post-execute`**：本工具不注册 listener，默认 `accept`。规范值由 registry 冻结后 `render`。[E: packages/core/tools/src/index.ts:1736][E: packages/core/tools/src/index.ts:1791]
+- **`tools/post-execute`**：本工具不注册 listener，默认 `accept`。规范值由 registry 冻结后 `render`。[E: packages/core/tools/src/index.ts:1735][E: packages/core/tools/src/index.ts:1790]
 - **sandbox / approval**：不挂。文件副作用发生在 child 自己的 `write` / `edit` / `bash` 上。
 
-PTC（shipped `ptc` preset 的 `tool-presentation` `mode: ptc`；wiki 节点 id `surface.presets.code` / `subsys.core.code-mode` 是稳定别名）下，模型不能直呼 `ralph`：非嵌套且 `modeFor(scope) === 'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse，返回指引改走 `run_code` 程序，**不进** `tools/pre-execute`。[E: packages/core/tools/src/index.ts:1316][E: packages/core/tools/src/index.ts:1430][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] SDK 子分发带 `parent`（`nested === true`），不 collapse，`await tools.ralph({ objective })` 仍走完整管线；checkpoint 在 `exec.parent !== undefined` 时直接 `next()`。[E: packages/session/session-checkpoint-policy/src/index.ts:71]
+PTC（shipped `ptc` preset 的 `tool-presentation` `mode: ptc`；wiki 节点 id `surface.presets.code` / `subsys.core.code-mode` 是稳定别名）下，模型不能直呼 `ralph`：非嵌套且 `modeFor(scope) === 'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse，返回指引改走 `run_code` 程序，**不进** `tools/pre-execute`。[E: packages/core/tools/src/index.ts:1315][E: packages/core/tools/src/index.ts:1429][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] SDK 子分发带 `parent`（`nested === true`），不 collapse，`await tools.ralph({ objective })` 仍走完整管线；checkpoint 在 `exec.parent !== undefined` 时直接 `next()`。[E: packages/session/session-checkpoint-policy/src/index.ts:71]
 
 ## Preset 装配
 
@@ -185,14 +185,14 @@ PTC（shipped `ptc` preset 的 `tool-presentation` `mode: ptc`；wiki 节点 id 
 
 | preset | 装 `@deepseek-ai/dsh-tool-ralph`？ | `disabled` | isolate | shipped Config |
 |---|---|---|---|---|
-| `minimal` | **否** | — | 无 `delegation` 组 | yml 只有 `persona` + `persistent-shell` + `filesystem`；最后一行工具是 `str-replace-editor`，没有 `id: tool-ralph`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:85] |
-| `standard` | **是** | 无 | `delegation` 组 `isolate.workflowEngine: true` | `subagentProvider: spawn`，`maxRounds: 64`（覆盖插件默认 256）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:174][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:178][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:235][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:240] |
-| `ptc` | **是** | 无 | 同 `delegation` / `workflowEngine` | 与 `standard` 同键同值。PTC 只换呈现（模型直调只剩 `run_code`），本行仍注册。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:175][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:236][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:240] |
-| `cordis` | **是** | 无 | 同 `delegation` / `workflowEngine` | 与 `standard` 同键同值。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:162][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:166][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:223][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:228] |
+| `minimal` | **否** | — | 无 `delegation` 组 | yml 只有 complete persona（`prefix`）+ `persistent-shell`；没有 filesystem / `str-replace-editor` / `id: tool-ralph`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:12] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] |
+| `standard` | **是** | 无 | `delegation` 组 `isolate.workflowEngine: true` | `subagentProvider: spawn`，`maxRounds: 64`（覆盖插件默认 256）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:172][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:173][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:230][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:234] |
+| `ptc` | **是** | 无 | 同 `delegation` / `workflowEngine` | 与 `standard` 同键同值。PTC 只换呈现（模型直调只剩 `run_code`），本行仍注册；同组 `tool-workflow` 仍 `disabled: true`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:180][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:238][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:240] |
+| `cordis` | **是** | 无 | 同 `delegation` / `workflowEngine` | 与 `standard` 同键同值。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:163][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:167][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:226][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:229] |
 
 `tool-ralph` 的 `inject` 含 `workflowEngine`。preset 把引擎行 `workflow-worker-thread` 和本工具放进**同一个** `isolate.workflowEngine` 组，避免消费者落到 host 上一个本 preset 并未填充的 registry。组内还有 `tool-workflow`、`tool-subagent*`；`subagents` **registry** 本身在 host，本行只消费它。
 
-host `dsh-base` 也有一行 `tool-ralph`（同样 `spawn` + `maxRounds: 64`）。`dsh-web-app` 把 host 行 `disabled: true`，改由每会话 preset remount——所以 web 上 `minimal` 会话看不到 `ralph`。headless / sdk / acp 叠 `dsh-base` 时仍走 host 行（那些 overlay 不 disable `tool-ralph`）。`sdk-minimal` 不叠 `dsh-base`。[E: packages/bundle/base/cordis.patch.yml:422][E: packages/bundle/base/cordis.patch.yml:426][E: packages/bundle/web-app/cordis.patch.yml:423][E: packages/bundle/web-app/cordis.patch.yml:423]
+host `dsh-base` 也有一行 `tool-ralph`（同样 `spawn` + `maxRounds: 64`）。`dsh-web-app` 把 host 行 `disabled: true`，改由每会话 preset remount——所以 web 上 `minimal` 会话看不到 `ralph`。headless / sdk / acp 叠 `dsh-base` 时仍走 host 行（那些 overlay 不 disable `tool-ralph`）。`sdk-minimal` 不叠 `dsh-base`。[E: packages/bundle/base/cordis.patch.yml:412][E: packages/bundle/base/cordis.patch.yml:416][E: packages/bundle/web-app/cordis.patch.yml:461][E: packages/bundle/web-app/cordis.patch.yml:462]
 
 ## execute() 走读
 
@@ -208,13 +208,13 @@ host `dsh-base` 也有一行 `tool-ralph`（同样 `spawn` + `maxRounds: 64`）�
 
 5. **引擎侧同步校验。** shipped `WorkerThreadWorkflowEngine.start` 先 `validateMeta`、`assertBodyParses`，再解析 provider 与 `maxTotalAgents`，然后 `new WorkerRun`。脚本解析失败会同步抛 `WorkflowError`；单测里 `startError` 路径 `disposed === 0`（还没有 live run）。[E: packages/workflow/workflow-worker-thread/src/index.ts:143][E: packages/workflow/workflow-worker-thread/src/index.ts:145][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:377]
 
-6. **把父 abort 桥到 run。** `exec.signal` 加 `{ once: true }` 的 `abort` listener，回调 `run.cancel('parent step aborted')`；若进入 body 时已经 aborted，立刻再 cancel 一次。单测：中途 abort → tool `isError`；预先 aborted 的第二次调用根本不 `start`（`TOOL_ABORTED_BEFORE_DISPATCH`）。[E: packages/workflow/tool-ralph/src/index.ts:454][E: packages/workflow/tool-ralph/src/index.ts:456][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:278][E: packages/workflow/tool-ralph/tests/integration.spec.ts:266]
+6. **把父 abort 桥到 run。** `exec.signal` 加 `{ once: true }` 的 `abort` listener，回调 `run.cancel('parent step aborted')`；若进入 body 时已经 aborted，立刻再 cancel 一次。单测：中途 abort → tool `isError`；预先 aborted 的第二次调用根本不 `start`（`TOOL_ABORTED_BEFORE_DISPATCH`）。[E: packages/workflow/tool-ralph/src/index.ts:454][E: packages/workflow/tool-ralph/src/index.ts:456][E: packages/workflow/tool-ralph/tests/tool-ralph.spec.ts:278][E: packages/workflow/tool-ralph/tests/integration.spec.ts:263]
 
 7. **脚本里的一轮。** `RALPH_SCRIPT` 调 `phase('Fresh-agent rounds')`，然后 `for (round = 1; round <= args.maxRounds)`。每轮拼一份 prompt：禁止再调 `ralph`、打印不可变 `objective`、轮次 `N of max`、工作区是 source of truth、上一份 handoff（首轮是 `(none — this is the first round)`）。然后 `await agent(prompt, { label, phase, schema: reportSchema })`。[E: packages/workflow/tool-ralph/src/index.ts:150][E: packages/workflow/tool-ralph/src/index.ts:161][E: packages/workflow/tool-ralph/src/index.ts:99]
 
-8. **child 合同（集成栈）。** 真实 `spawn` + worker-thread 下，每轮 child 的 `session.header.cwd` 等于父 cwd，`parentSession` 指向父 session，`seedLength` 为 `undefined`（无父 transcript）。父历史标记与 `PARENT_PROMPT_MARKER` 不会出现在任何一轮 LLM 请求里；第二轮请求才含上一轮 `summary` 文本。每个 child 在轮末从 `ctx.agents` 卸掉。[E: packages/workflow/tool-ralph/tests/integration.spec.ts:102][E: packages/workflow/tool-ralph/tests/integration.spec.ts:104][E: packages/workflow/tool-ralph/tests/integration.spec.ts:111][E: packages/workflow/tool-ralph/tests/integration.spec.ts:116]
+8. **child 合同（集成栈）。** 真实 `spawn` + worker-thread 下，每轮 child 的 `session.header.cwd` 等于父 cwd，`parentSession` 指向父 session，`seedLength` 为 `undefined`（无父 transcript）。父历史标记与 `PARENT_PROMPT_MARKER` 不会出现在任何一轮 LLM 请求里；第二轮请求才含上一轮 `summary` 文本。每个 child 在轮末从 `ctx.agents` 卸掉。[E: packages/workflow/tool-ralph/tests/integration.spec.ts:99][E: packages/workflow/tool-ralph/tests/integration.spec.ts:101][E: packages/workflow/tool-ralph/tests/integration.spec.ts:108][E: packages/workflow/tool-ralph/tests/integration.spec.ts:113]
 
-9. **脚本内校验 report。** `reportSchema` 要求五键且 `additionalProperties: false`：`status ∈ {continue,complete,blocked}`，`summary` / `evidence` / `nextSteps` / `blocker`。`validateReport` 再要求 trim 后的非空字符串；`continue` 必须有 `nextSteps` 且 `blocker === ''`；`complete` 必须有 `evidence`、空 `nextSteps`、空 `blocker`；`blocked` 必须有具体 `blocker`。超 `args.maxHandoffChars` 抛错，引擎把这次跑成 `stopReason: 'error'`。[E: packages/workflow/tool-ralph/src/index.ts:98][E: packages/workflow/tool-ralph/src/index.ts:99][E: packages/workflow/tool-ralph/src/index.ts:125][E: packages/workflow/tool-ralph/src/index.ts:143][E: packages/workflow/tool-ralph/tests/integration.spec.ts:195]
+9. **脚本内校验 report。** `reportSchema` 要求五键且 `additionalProperties: false`：`status ∈ {continue,complete,blocked}`，`summary` / `evidence` / `nextSteps` / `blocker`。`validateReport` 再要求 trim 后的非空字符串；`continue` 必须有 `nextSteps` 且 `blocker === ''`；`complete` 必须有 `evidence`、空 `nextSteps`、空 `blocker`；`blocked` 必须有具体 `blocker`。超 `args.maxHandoffChars` 抛错，引擎把这次跑成 `stopReason: 'error'`。[E: packages/workflow/tool-ralph/src/index.ts:98][E: packages/workflow/tool-ralph/src/index.ts:99][E: packages/workflow/tool-ralph/src/index.ts:125][E: packages/workflow/tool-ralph/src/index.ts:143][E: packages/workflow/tool-ralph/tests/integration.spec.ts:192]
 
 10. **脚本终态。** `agent()` 返回 `null` → `{ status: 'round-failed', roundsStarted, lastReport }`；`complete` / `blocked` 立刻 `return`；循环走完 → `{ status: 'budget-limited', roundsStarted: args.maxRounds, report: previous }`。[E: packages/workflow/tool-ralph/src/index.ts:167][E: packages/workflow/tool-ralph/src/index.ts:170][E: packages/workflow/tool-ralph/src/index.ts:174]
 
@@ -235,10 +235,10 @@ DSH 把「Ralph 环」做成**固定脚本的专用 Consumer**，而不是让模
 和常见 peer「Ralph loop」（外层 shell / 人工程序反复开新 session）的差异：
 
 - **脚本在部署侧。** 模型不能改循环条件，也不能在 child 里再调 `ralph`（prompt 写明「this round already is its worker」）。[E: packages/workflow/tool-ralph/src/index.ts:154]
-- **handoff 是 typed JSON，不是自由 transcript。** 未规范化的 `summary`（两侧空白）会让脚本抛错，集成测试钉死 `summary must be non-empty and normalized`。[E: packages/workflow/tool-ralph/tests/integration.spec.ts:195]
+- **handoff 是 typed JSON，不是自由 transcript。** 未规范化的 `summary`（两侧空白）会让脚本抛错，集成测试钉死 `summary must be non-empty and normalized`。[E: packages/workflow/tool-ralph/tests/integration.spec.ts:192]
 - **完成是自报。** `complete` 成功返回，但 prompt / section / `render` 都把它标成 worker report，不是第二套评测 agent。
 - **`blocked` 与 `budget-limited` 也是成功。** 它们表示「环按合同停了」，不是引擎故障。`round-failed` 与 `stopReason !== completed` 才是 `isError`。
-- **取消是整 run。** 父 step abort 会 `cancel` worker 与当前 child；集成测试等到 `workflow/agent-end` 的 `cancelled`，且 child 从 registry 消失。[E: packages/workflow/tool-ralph/tests/integration.spec.ts:270]
+- **取消是整 run。** 父 step abort 会 `cancel` worker 与当前 child；集成测试等到 `workflow/agent-end` 的 `cancelled`，且 child 从 registry 消失。[E: packages/workflow/tool-ralph/tests/integration.spec.ts:267]
 
 其它容易踩的边：
 

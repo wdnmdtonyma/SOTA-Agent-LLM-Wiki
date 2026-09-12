@@ -51,7 +51,7 @@ related:
   - subsys.orchestration.jobs
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > 六个模型可见名 `terminal_open` / `terminal_send` / `terminal_read` / `terminal_signal` / `terminal_close` / `terminal_list`；实现包 `@deepseek-ai/dsh-tool-terminal`（Cordis 插件名 `tool-terminal`）。按 owning `Agent` 操作 `ctx.terminals` 上的持久 PTY；后台 send 的 id 走 `ctx.jobs`，kind 是 `pty-send`。四个 shipped preset **都不装**本包。
@@ -86,7 +86,7 @@ updated: d347e70390
 
 `apply()` 还往 `ctx.systemPrompt` 登记 section `tool:pty`。`order` 走 `getSectionOrder('TOOL_PTY')`，catalog 里 `TOOL_PTY` 是 `1700`。[E: packages/terminal/tool-terminal/src/index.ts:157] [E: packages/terminal/tool-terminal/src/index.ts:158] [E: packages/core/system-prompt/src/index.ts:138] 正文要求：只有需要持久终端状态或交互 stdin 时才用这套工具；跟踪每个 session id；不再需要的会话要 close；`inferred_idle` 或 `timeout` **不能**证明前台命令已经退出。[E: packages/terminal/tool-terminal/src/index.ts:159]
 
-它**不是** `minimal` 里那个同缝不同包的 `bash`：`@deepseek-ai/dsh-tool-bash-persistent` 也走 `ctx.terminals`，但只注册一个 wire 名 `bash`，把 spawn / send / 读回包装成一次命令调用。[E: packages/shell/tool-bash-persistent/src/index.ts:402] 本页只写六件套。win32 上同缝还有 persistent `pwsh`（`dsh-tool-pwsh-persistent`），同样不是这六个名字。
+它**不是** `minimal` 里那个同缝不同包的 `bash`：`@deepseek-ai/dsh-tool-bash-persistent` 也走 `ctx.terminals`，但只注册一个 wire 名 `bash`，把 spawn / send / 读回包装成一次命令调用。[E: packages/shell/tool-bash-persistent/src/index.ts:405] 本页只写六件套。win32 上同缝还有 persistent `pwsh`（`dsh-tool-pwsh-persistent`），同样不是这六个名字。
 
 ## 用途定位
 
@@ -96,11 +96,11 @@ updated: d347e70390
 
 `terminal_send` 默认前台：等到 backend 给出 `waitReason` 才返回 viewport。`run_in_background: true` 时立刻回 `{ kind: 'background', jobId }`；模型用 `job_output` / `job_kill` 收增量、停这次 send（不是关整条 PTY）。[E: packages/terminal/tool-terminal/src/index.ts:255] [E: packages/terminal/tool-terminal/src/index.ts:275] [E: packages/terminal/tool-terminal/tests/tools.spec.ts:410]
 
-Loader 组合测试钉死真实 `type: 'shell'` 会话上 `export KEEP=loader; cd /` 之后再 send `printf`，仍能读到 `cwd=/ keep=loader`。[E: packages/terminal/tool-terminal/tests/loader-composition.spec.ts:125] [E: packages/terminal/tool-terminal/tests/loader-composition.spec.ts:130]
+Loader 组合测试钉死真实 `type: 'shell'` 会话上 `export KEEP=loader; cd /` 之后再 send `printf`，仍能读到 `cwd=/ keep=loader`。[E: packages/terminal/tool-terminal/tests/loader-composition.spec.ts:125] [E: packages/terminal/tool-terminal/tests/loader-composition.spec.ts:131]
 
 ## 输入 schema
 
-以插件默认 `Config`（`enableRunInBackground: true`，`maxResultBytes: 262144`）boot 为准。`Config` 数字键**不会**变成模型参数；模型只看见每个 `defineTool` 投影后的 schema。[E: packages/terminal/tool-terminal/src/index.ts:44] [E: packages/core/tools/src/index.ts:1247] `defineTool` 先按 schema 校验类型 / required；空 `type` / 空 `sessionId` 这类值约束在各自 `execute` 里再抛一次。[E: packages/core/tools/src/schema.ts:587] [E: packages/terminal/tool-terminal/src/index.ts:183] [E: packages/terminal/tool-terminal/src/index.ts:123]
+以插件默认 `Config`（`enableRunInBackground: true`，`maxResultBytes: 262144`）boot 为准。`Config` 数字键**不会**变成模型参数；模型只看见每个 `defineTool` 投影后的 schema。[E: packages/terminal/tool-terminal/src/index.ts:44] [E: packages/core/tools/src/index.ts:1247] `defineTool` 先按 schema 校验类型 / required；空 `type` / 空 `sessionId` 这类值约束在各自 `execute` 里再抛一次。[E: packages/core/tools/src/schema.ts:586] [E: packages/terminal/tool-terminal/src/index.ts:183] [E: packages/terminal/tool-terminal/src/index.ts:123]
 
 六个工具**没有**公共参数对象。`maxResultBytes` / `enableRunInBackground` 只在插件 Config。
 
@@ -196,15 +196,15 @@ Loader 组合测试钉死真实 `type: 'shell'` 会话上 `export KEEP=loader; c
 
 ## 执行管线
 
-`ctx.tools.execute` 走 `tools/pre-execute` →（可选 `serviceAsk`）→ 单调 guard → `tools/execute` waterfall（叶子 `ToolDefinition.execute`）→ `tools/post-execute`。[E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1564] [E: packages/core/tools/src/index.ts:1735] 本包**不**自己挂 pre-execute / post-execute listener。测试证明 listener 换掉 / deny / 抛错的文本仍会再走 `finalizeContent` 的 64-byte 帽。[E: packages/terminal/tool-terminal/tests/tools.spec.ts:345]
+`ctx.tools.execute` 走 `tools/pre-execute` →（可选 `serviceAsk`）→ 单调 guard → `tools/execute` waterfall（叶子 `ToolDefinition.execute`）→ `tools/post-execute`。[E: packages/core/tools/src/index.ts:1467] [E: packages/core/tools/src/index.ts:1564] [E: packages/core/tools/src/index.ts:1735] 本包**不**自己挂 pre-execute / post-execute listener。测试证明 listener 换掉 / deny / 抛错的文本仍会再走 `finalizeContent` 的 64-byte 帽。[E: packages/terminal/tool-terminal/tests/tools.spec.ts:343]
 
 对本套工具的挂点：
 
 - **timeout（工具定义）：** 六个 `defineTool` **都没有**设 `timeoutMs`。`dsh-tool-call-timeout-policy` 读到 `undefined` 就原样 `next()`。[E: packages/guard/timeout-policy/src/index.ts:57] [E: packages/guard/timeout-policy/src/index.ts:59] 真正的 send 墙钟在 `LocalPtySession.startSend` 的 `setTimeout`，settle 成 `waitReason: 'timeout'`，**不是** `TOOL_TIMEOUT`。[E: packages/terminal/terminal-bash/src/session.ts:277]
 - **approval：** 普通调用不 `ask`。没有 sandbox escalation 字段。
 - **sandbox：** 不挂 pre-execute。confine 发生在 backend `spawn`，之后的 send / read / signal 复用那条已 confine 的 PTY。owner 仍有 live / pending 会话时，`terminal-bash` 用 `internal/dispatch` 拦住 `sandbox/mode` 变更。[E: packages/terminal/terminal-bash/src/index.ts:51]
-- **并行：** 六个名字都未声明 `isConcurrencySafe`，`executionMode` fail-closed 为 exclusive。[E: packages/core/tools/src/index.ts:1269] registry 层还会在 `SEND_ACTIVE` 上拒绝同一 session 的重叠 send。
-- **PTC：** 四个 shipped preset 都不装本包，所以默认产品 catalog 不会把这六个名字 fold 进 `run_code`。若某组合在 `mode: ptc` 下再挂本包，无 `parent` 的模型直调会在进 waterfall 前 `collapses`（`name !== RUN_CODE_NAME`）。[E: packages/core/tools/src/index.ts:1316]
+- **并行：** 六个名字都未声明 `isConcurrencySafe`，`executionMode` fail-closed 为 exclusive。[E: packages/core/tools/src/index.ts:1268] registry 层还会在 `SEND_ACTIVE` 上拒绝同一 session 的重叠 send。
+- **PTC：** 四个 shipped preset 都不装本包，所以默认产品 catalog 不会把这六个名字 fold 进 `run_code`。若某组合在 `mode: ptc` 下再挂本包，无 `parent` 的模型直调会在进 waterfall 前 `collapses`（`name !== RUN_CODE_NAME`）。[E: packages/core/tools/src/index.ts:1315]
 
 ## Preset 装配
 
@@ -262,7 +262,7 @@ Loader 组合测试钉死真实 `type: 'shell'` 会话上 `export KEEP=loader; c
 
 ## 设计动机·edge
 
-- **六件套 vs 一个 `bash`：** 同一条 `ctx.terminals` 缝上有两套模型 API。本包暴露 session 生命周期，让模型自己 track id、做 REPL / gdb 这类跨调用交互。`dsh-tool-bash-persistent` 把 spawn/send/读回藏进单次 `bash`，是 `minimal` 在 POSIX 上的选择，不是把 `timeoutMs` 调大之后的 six-tool 模式。[E: packages/shell/tool-bash-persistent/src/index.ts:402] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:37]
+- **六件套 vs 一个 `bash`：** 同一条 `ctx.terminals` 缝上有两套模型 API。本包暴露 session 生命周期，让模型自己 track id、做 REPL / gdb 这类跨调用交互。`dsh-tool-bash-persistent` 把 spawn/send/读回藏进单次 `bash`，是 `minimal` 在 POSIX 上的选择，不是把 `timeoutMs` 调大之后的 six-tool 模式。[E: packages/shell/tool-bash-persistent/src/index.ts:405] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:37]
 - **四个 shipped preset 故意不装。** 默认产品里要么 one-shot `bash`/`pwsh`（standard/ptc/cordis），要么 persistent `bash`/`pwsh`（minimal）。要六件套必须像 PTY snapshot 那样自己 insert。
 - **`inferred_idle` / `timeout` ≠ 命令结束。** prompt section 把这句话写给模型；`waitReason` 只说明这次 send 为什么把控制权交回来。长命令、pager、等 stdin 的 REPL 都可能在 `running` 时返回。[E: packages/terminal/tool-terminal/src/index.ts:159]
 - **对着 shell 的硬杀走 `terminal_close`。** schema 仍广告 `SIGKILL`（可以杀前台**子**进程组）；本地 `signalForeground` 拒绝 `processGroupId === this.pid` 的 `SIGKILL`。[E: packages/terminal/tool-terminal/src/index.ts:336] [E: packages/subprocess/subprocess-local/src/terminal.ts:101]

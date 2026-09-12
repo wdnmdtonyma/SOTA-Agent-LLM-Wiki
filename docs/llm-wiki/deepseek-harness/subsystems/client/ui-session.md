@@ -40,7 +40,7 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-client-ui-session` 是浏览器里的 **Session 根源适配器**：host `apply` 为空；client 把 `ctx.sessions.list` 接到全局 `useSessions`，把 `session` / `session-maybe` 槽接到 `UiSession.adapter`，并把 `ctx.uiSession` 交给会话面装配。它不画侧栏列表、不发 list RPC、不执行模型 turn。列表行与 `current` 的权威在 Session Controller 客户端（[`subsys.client.runtime`](runtime.md)）；host 冷列表投影在 `ApiSessionList`（[`subsys.host.apiproxy`](../host/apiproxy.md)）。

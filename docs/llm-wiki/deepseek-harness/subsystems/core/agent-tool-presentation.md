@@ -35,7 +35,7 @@ related:
   - subsys.execution.code-runtime
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-agent-tool-presentation` 是 **agent-preset 面的一行**：host 面 `ctx.tools` 注册表、调度器、API presenter 仍坐在进程级；preset 只在 standing scope 上调用 `ctx.tools.presentAs(mode)`，声明「这个 composition 覆盖的 Agent 模型看见哪种工具形」。它不是又一个 `dsh-tool-*`，也不实现 `run_code`。DSH 主线是 `profile → bundle → agent preset`；本行只改 preset 面投影，不换 host 面 Definition。
@@ -94,11 +94,11 @@ updated: d347e70390
 
 ### 1. host 面先 settle，preset 行后挂
 
-1. `dsh-base` 插入 host `id: tools` / `@deepseek-ai/dsh-tools`，yml **不**写 `mode`，schema 默认 `native`。[E: packages/bundle/base/cordis.patch.yml:474] [E: packages/core/tools/src/index.ts:784]
-2. `dsh-web-app` 与 `dsh-headless` 把同一 `tools` 行的 `mode` 写成 `!!js process.env.DSH_TOOLS_MODE`（未设则仍是 schema 默认），并 `insert` `code-runtime` = `@deepseek-ai/dsh-code-runtime-worker-thread`。[E: packages/bundle/web-app/cordis.patch.yml:37] [E: packages/bundle/web-app/cordis.patch.yml:50] [E: packages/bundle/headless/cordis.patch.yml:15] [E: packages/bundle/headless/cordis.patch.yml:19] shipped profile 还有 `sdk` / `sdk-minimal` / `acp`（startup）；它们的 bundle patch **不**写 `DSH_TOOLS_MODE`。进程级 PTC 入口仍是 host `tools.mode` 或本行。
-3. 只有 web 再 `insert` `agent-presets` 且 `default: standard`。headless **没有** roster，模型可见工具留在 host 全局层；本插件的 shipped 行不会被 headless 自动挂上。[E: packages/bundle/web-app/cordis.patch.yml:442]
-4. 会话选 `ptc`（或任何自写 preset 含本行）时，`AgentPresets.ensureStanding` 用 `{ agentPreset: preset.id }` 建 standing key，`createScope` 后 `mountPreset`。[E: packages/preset/agent-presets/src/index.ts:770] [E: packages/preset/agent-presets/src/index.ts:785]
-5. `AgentPresets.mount` 一次 `bindScopeParent(agentKey, standing.key)`：standing 上的 `presentAs` 沿 scope 链被 join 上来的 Agent 继承。[E: packages/preset/agent-presets/src/index.ts:425] 子代理 `composeFrom` 对同一 `standing.key` 再绑一次，不重挂 composition。[E: packages/preset/agent-presets/src/index.ts:462]
+1. `dsh-base` 插入 host `id: tools` / `@deepseek-ai/dsh-tools`，yml **不**写 `mode`，schema 默认 `native`。[E: packages/bundle/base/cordis.patch.yml:460] [E: packages/core/tools/src/index.ts:784]
+2. `dsh-web-app` 与 `dsh-headless` 把同一 `tools` 行的 `mode` 写成 `!!js process.env.DSH_TOOLS_MODE`（未设则仍是 schema 默认），并 `insert` `code-runtime` = `@deepseek-ai/dsh-code-runtime-worker-thread`。[E: packages/bundle/web-app/cordis.patch.yml:38] [E: packages/bundle/web-app/cordis.patch.yml:50] [E: packages/bundle/headless/cordis.patch.yml:16] [E: packages/bundle/headless/cordis.patch.yml:20] shipped profile 还有 `sdk` / `sdk-minimal` / `acp`（startup）；它们的 bundle patch **不**写 `DSH_TOOLS_MODE`。进程级 PTC 入口仍是 host `tools.mode` 或本行。
+3. 只有 web 再 `insert` `agent-presets` 且 `default: standard`。headless **没有** roster，模型可见工具留在 host 全局层；本插件的 shipped 行不会被 headless 自动挂上。[E: packages/bundle/web-app/cordis.patch.yml:481]
+4. 会话选 `ptc`（或任何自写 preset 含本行）时，`AgentPresets.ensureStanding` 用 `{ agentPreset: preset.id }` 建 standing key，`createScope` 后 `mountPreset`。[E: packages/preset/agent-presets/src/index.ts:770] [E: packages/preset/agent-presets/src/index.ts:788]
+5. `AgentPresets.mount` 一次 `bindScopeParent(agentKey, standing.key)`：standing 上的 `presentAs` 沿 scope 链被 join 上来的 Agent 继承。[E: packages/preset/agent-presets/src/index.ts:421] 子代理 `composeFrom` 对同一 `standing.key` 再绑一次，不重挂 composition。[E: packages/preset/agent-presets/src/index.ts:448]
 
 ### 2. `apply`：声明本身是 effect
 
@@ -125,7 +125,7 @@ updated: d347e70390
 
 ### 5. 执行：collapse 在 `tools/pre-execute` 之前
 
-20. `collapses` 用 `modeFor(scope)`，**不是** `defaultMode`。preset 在 native 部署上选 `ptc` 时，模型直调 native 名仍被塌缩。[E: packages/core/tools/src/index.ts:1316]
+20. `collapses` 用 `modeFor(scope)`，**不是** `defaultMode`。preset 在 native 部署上选 `ptc` 时，模型直调 native 名仍被塌缩。[E: packages/core/tools/src/index.ts:1315]
 21. `createExecution` 在进 `tools/pre-execute` **之前**判定 collapse：被塌缩的调用拿 `UNKNOWN_TOOL`（文案指向「进 `run_code` 再调」），`pre-execute` listener、approval `ask`、guard 都看不见它。[E: packages/core/tools/src/index.ts:1430]
 22. 真正进管线的调用才 `waterfall(..., 'tools/pre-execute', exec, () => allow)`。默认 inner 是 `allow`；listener 不 `next()` 则整条链停在该层，inner `allow` 不执行。[E: packages/core/tools/src/index.ts:1467] [E: vendor/cordis/src/events.ts:237]
 23. 带 `parent` 的 SDK 子调度 `nested === true`，`collapses` 为假，走同一套 `execute`。可见性 resolver 只在 `modeFor !== 'native'` 时插入运输。[E: packages/core/tools/src/index.ts:1180] 子调度细节在 [`subsys.core.code-mode`](code-mode.md)。
@@ -133,7 +133,7 @@ updated: d347e70390
 ### 6. isolate 与 `leakedServices`
 
 24. `mountPreset` 在树 settle 后先 `inactiveRows`，再 `leakedServices`。后者扫描 mount 子树里 publish 进 **root realm** 的服务名；非空则抛，要求 `isolate` 或搬到 host。[E: packages/preset/agent-presets/src/mount.ts:403] [E: packages/preset/agent-presets/src/mount.ts:407]
-25. 本行**不** `provide` 任何服务，只调已有的 `ctx.tools`。shipped `ptc` 文件里 `id: tool-presentation` **没有** `isolate:` 键，审计不应因本行报泄漏。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:265]
+25. 本行**不** `provide` 任何服务，只调已有的 `ctx.tools`。shipped `ptc` 文件里 `id: tool-presentation` **没有** `isolate:` 键，审计不应因本行报泄漏。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269]
 26. 同文件里需要私有实例的是别的组（`planning` 的 `planMode`、`compaction` 的 `compaction`/`toolResultPruner`、`delegation` 的 `workflowEngine`）。那些行漏进 root 会让**整次** `mountPreset` 失败，本行即使 `presentAs` 已跑也会随 subtree dispose 卸掉。
 27. `inactiveRows` 只读 **loader entry** 的 `fiber.inject` 键，缺服务则写成 `id (name): waiting for …`。[E: packages/preset/agent-presets/src/mount.ts:316] [E: packages/preset/agent-presets/src/mount.ts:318]
 28. 本行静态 `inject` 是 `['tools']`。`ptc`/`both` 等 `codeRuntime` 发生在 `apply` 里新建的**子** fiber，不出现在 entry 的 `fiber.inject` 里。因此缺 runtime 时：`presentAs` 不执行（装配回落部署默认）是单测钉死的；`inactiveRows` 会不会点名 `tool-presentation` 并拒绝 mount，按当前实现是**不会** —— 与 `apply` 旁注释的「审计点名」意图不一致。[U] [E: packages/core/agent-tool-presentation/src/index.ts:69]
@@ -148,14 +148,14 @@ updated: d347e70390
 
 ## Gotcha
 
-- **省略本行 ≠ `mode: native` 行。** 省略 = 继承 host `defaultMode`。web/headless 若设了 `DSH_TOOLS_MODE=ptc`，没挂本行的 preset 也会进程级进 PTC。不要把环境变量写成「选了 shipped `ptc` preset」。[E: packages/bundle/web-app/cordis.patch.yml:37]
-- **shipped 只有 `ptc` preset 挂本行**，且 `mode: ptc`。`standard` 以 `id: tool-web` 收束；`minimal` / `cordis` 的 `agent.cordis.yml` 也没有 `tool-presentation`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:268] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]
-- **web 默认仍是 `standard`。** 要跑 PTC 必须显式选 `ptc`，或改 `agent-presets.default`。[E: packages/bundle/web-app/cordis.patch.yml:445]
+- **省略本行 ≠ `mode: native` 行。** 省略 = 继承 host `defaultMode`。web/headless 若设了 `DSH_TOOLS_MODE=ptc`，没挂本行的 preset 也会进程级进 PTC。不要把环境变量写成「选了 shipped `ptc` preset」。[E: packages/bundle/web-app/cordis.patch.yml:38]
+- **shipped 只有 `ptc` preset 挂本行**，且 `mode: ptc`。`standard` 以 `id: tool-web` 收束；`minimal` / `cordis` 的 `agent.cordis.yml` 也没有 `tool-presentation`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251]
+- **web 默认仍是 `standard`。** 要跑 PTC 必须显式选 `ptc`，或改 `agent-presets.default`。[E: packages/bundle/web-app/cordis.patch.yml:484]
 - **不要把本插件挂到未 scoped 的 host 行。** `presentAs` 会抛 `requires a scoped context`。headless 没有 roster，进程级 PTC 只走 host `tools.mode`。[E: packages/core/tools/src/index.ts:941]
 - **同一 standing scope 只能 `presentAs` 一次。** 两行抢同一 scope 是组成错误，不是后者覆盖。[E: packages/core/tools/src/index.ts:948]
 - **`ptc` 不从 composition 删除 native 工具行。** `tool-bash` / `tool-fs` 仍注册，供 SDK 子调度。模型直调那些名字在进 `tools/pre-execute` 之前就被拒绝，approval 看不到注定失败的调用。[E: packages/core/tools/src/index.ts:1430]
 - **waterfall 不 `next()` 就停。** 对 `system-prompt/assemble` 会换掉或扣住已投影的 `tools`；对 `tools/pre-execute` 会扣住 inner `allow`。本行自己不监听这两条事件。[E: vendor/cordis/src/events.ts:237]
-- **`dsh-base` 不 dormant 加载 Codex/Claude 子代理。** `ptc` yml 里 `tool-subagent-codex` / `tool-subagent-claude-code` 是 preset 面 `disabled: true` 行，不是 base 里休眠的后端。`base.spec.ts` 钉死 patch 里 `subagent-codex` / `subagent-claude-code` 行数为 0，manifest 也不依赖那两个包。[E: packages/bundle/base/tests/base.spec.ts:42] [E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:212]
+- **`dsh-base` 不 dormant 加载 Codex/Claude 子代理。** `ptc` yml 里 `tool-subagent-codex` / `tool-subagent-claude-code` 是 preset 面 `disabled: true` 行，不是 base 里休眠的后端。`base.spec.ts` 钉死 patch 里 `subagent-codex` / `subagent-claude-code` 行数为 0，manifest 也不依赖那两个包。[E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:212]
 - **缺 `codeRuntime` 时不要写成「mount 一定失败」。** 单测路径是 pending + native 回落；`inactiveRows` 只读静态 `inject`。[E: packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:109] [U]
 
 ## Seam 三角

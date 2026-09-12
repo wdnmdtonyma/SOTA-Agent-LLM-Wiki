@@ -29,15 +29,15 @@ source:
   - packages/client/ui-chat/src/client/conversation-nodes/chat-snapshot-builder.ts
   - packages/client/ui-chat/src/client/chat/register-node-renderers.ts
   - packages/client/ui-chat/src/client/chat/ChatView.tsx
-  - packages/client/ui-chat/src/client/details/DetailsPanel.tsx
+  - packages/client/ui-chat/src/client/chat/StatsPills.tsx
   - packages/client/ui-chat/src/client/contract/chat-nodes.ts
   - packages/client/ui-chat/src/client/contract/snapshot.ts
   - packages/client/ui-chat/package.json
   - packages/client/ui-chat/tests/conversation-node-definitions.client.spec.ts
   - packages/bundle/web-app/cordis.patch.yml
   - packages/bundle/base/cordis.patch.yml
-  - packages/client/ui-layout/src/client/index.ts
   - packages/client/ui-conversation/src/client/apply.ts
+  - packages/client/ui-conversation/src/client/service.ts
   - packages/client/ui-conversation/src/client/contract/conversation.ts
   - packages/client/ui-conversation/src/client/conversation/event-registry.ts
   - packages/client/ui-conversation/src/client/conversation/assembly.ts
@@ -52,7 +52,7 @@ symbols:
   - ChatSnapshotBuilder
   - chatNode
   - ChatView
-  - DetailsPanel
+  - StatsPills
   - EMPTY_CHAT_SNAPSHOT
   - ChatNodeDataMap
   - messageDefinition
@@ -72,15 +72,15 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
-> `@deepseek-ai/dsh-client-ui-chat` 是 Web 工作台的 **Chat 业务面**：把 session log 铸成 `target: 'chat'` 的视图节点、占 `conversation.view`（`id: chat`）与 `details` 栏、并登记 keyed 渲染器。装配引擎（`UiConversation` / `ConversationNodeAssembler` / `ConversationNodeDefinition` **类型**）权威在 [`subsys.client.ui-conversation`](ui-conversation.md)；本包贡献的是 Chat 的 **Definition 实例**、snapshot builder 与 React 行。client 不执行模型 turn。
+> `@deepseek-ai/dsh-client-ui-chat` 是 Web 工作台的 **Chat 业务面**：把 session log 铸成 `target: 'chat'` 的视图节点、占 `conversation.view`（`id: chat`）、并登记 keyed 渲染器。装配引擎（`UiConversation` / `ConversationNodeAssembler` / `ConversationNodeDefinition` **类型**）权威在 [`subsys.client.ui-conversation`](ui-conversation.md)；本包贡献的是 Chat 的 **Definition 实例**、snapshot builder 与 React 行。client 不执行模型 turn。详情 / 预览不在本包；`openFile` 走 `sidebarRight.openResource`。
 
 ## 能回答的问题
 
 - `id: ui-chat` 出现在哪一层 bundle？headless / sdk / acp 有没有这条行？
-- Chat `apply` 的 `inject` 服务名是哪些？谁占 `details` 与 `conversation.view` `id: chat`？
+- Chat `apply` 的 `inject` 服务名是哪些？谁占 `conversation.view` `id: chat`？详情栏还在本包吗？
 - `ConversationNodeDefinition` 类型在哪、Chat 登记了哪些 `kind`？fallback 走 `register` 还是 `registerFallback`？
 - 渲染器 `conversation.chat.node` 的 `key` 与 Definition `kind` 如何对应？`system-prompt` 从哪条 Definition 产出？
 - `transcriptView` 默认值是什么？compact / normal 存在哪段 settings？
@@ -88,23 +88,23 @@ updated: d347e70390
 
 ## 职责边界
 
-本包装的是 **Chat 节点定义 + 渲染 + details**，不是 composer / `session.prompt`，也不是槽核。五个 shipped profile：`web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）。只有 `dsh-web-app` 插入本包。 [E: packages/bundle/web-app/cordis.patch.yml:209]
+本包装的是 **Chat 节点定义 + 渲染**，不是 composer / `session.prompt`，也不是槽核，也不占右侧栏。五个 shipped profile：`web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）。只有 `dsh-web-app` 插入本包。 [E: packages/bundle/web-app/cordis.patch.yml:255]
 
 **拥有**
 
 - node 半边：有 `settings` 时登记 durable 段 `ui-chat`（`transcriptView`）。 [E: packages/client/ui-chat/src/index.ts:15] [E: packages/client/ui-chat/src/chat-settings.ts:6]
-- 浏览器半边：`registerConversationNodes` → `ctx.uiConversation.events` / `views`；`registerChatNodeRenderers` → keyed `conversation.chat.node`；`ChatView` / `DetailsPanel` / `StatsLine` / `ApprovalCommand` / `TranscriptViewRow`。
-- `ChatSnapshot` / `ChatNodeDataMap` / `createChatStore`（selection + turn process 开合）。
+- 浏览器半边：`registerConversationNodes` → `ctx.uiConversation.events` / `views`；`registerChatNodeRenderers` → keyed `conversation.chat.node`；`ChatView` / `StatsPills` / `ApprovalCommand` / `TranscriptViewRow`。
+- `ChatSnapshot` / `ChatNodeDataMap` / `createChatStore`（只管 turn process 开合）。
 
 **不拥有**
 
-- `ConversationNodeDefinition` / `ConversationViewDefinition` **接口**、`ConversationEventRegistry.register`、`UiConversation`、`ConversationNodeAssembler`：[`subsys.client.ui-conversation`](ui-conversation.md)。 [E: packages/client/ui-conversation/src/client/contract/conversation.ts:168] [E: packages/client/ui-conversation/src/client/conversation/event-registry.ts:13]
-- 中栏骨架、`InputHub`、`sendSession`：ui-conversation 占 `'conversation'`。 [E: packages/client/ui-conversation/src/client/apply.ts:174] [E: packages/client/ui-conversation/src/client/apply.ts:152]
+- `ConversationNodeDefinition` / `ConversationViewDefinition` **接口**、`ConversationEventRegistry.register`、`UiConversation`、`ConversationNodeAssembler`：[`subsys.client.ui-conversation`](ui-conversation.md)。 [E: packages/client/ui-conversation/src/client/contract/conversation.ts:185] [E: packages/client/ui-conversation/src/client/conversation/event-registry.ts:13]
+- 中栏骨架、`InputHub`、`sendSession`：ui-conversation 占 `'main.conversation'`。 [E: packages/client/ui-conversation/src/client/apply.ts:242] [E: packages/client/ui-conversation/src/client/service.ts:228]
 - `ctx.slots` Provider：ui-renderer + store。
 - 会话导航 `sessions.fork` / `open` / `loadOlder`：Session Controller client（本包只调用）。
 - Tool 业务视图（generic fallback 以外的 tool UI）：`id: ui-tool` 挂 `conversation.details.tool`。
 
-`package.json` `dsh.client.platform` 为 `"web"`；模块图依赖 session-controller / conversation / layout / renderer / session / settings / workspace。 [E: packages/client/ui-chat/package.json:45]
+`package.json` `dsh.client.platform` 为 `"web"`；模块图依赖 session-controller / conversation / layout / renderer / session / settings / workspace / sidebar-right。 [E: packages/client/ui-chat/package.json:43]
 
 ## 关键文件
 
@@ -118,8 +118,8 @@ updated: d347e70390
 | `packages/client/ui-chat/src/client/conversation-nodes/chat-snapshot-builder.ts` | `ChatSnapshotBuilder` + `chatViewDefinition` |
 | `packages/client/ui-chat/src/client/chat/register-node-renderers.ts` | keyed 渲染器 |
 | `packages/client/ui-chat/src/client/chat/ChatView.tsx` | transcript 列表 |
-| `packages/client/ui-chat/src/client/details/DetailsPanel.tsx` | 右栏；工具详情 fallback |
-| `packages/client/ui-chat/src/client/stores.ts` | `createChatStore` |
+| `packages/client/ui-chat/src/client/chat/StatsPills.tsx` | composer dock 统计 |
+| `packages/client/ui-chat/src/client/stores.ts` | `createChatStore`（`turnProcesses`） |
 | `packages/bundle/web-app/cordis.patch.yml` | 唯一 shipped `id: ui-chat` |
 | `packages/client/ui-conversation/src/client/contract/conversation.ts` | Definition **类型**权威 |
 
@@ -129,10 +129,10 @@ updated: d347e70390
 |---|---|
 | `CHAT_SETTINGS_NAMESPACE` | 字面量 `'ui-chat'`。字段 `transcriptView`: `'normal' \| 'compact'`，默认 `'compact'`。 [E: packages/client/ui-chat/src/chat-settings.ts:6] [E: packages/client/ui-chat/src/chat-settings.ts:18] |
 | `ChatNode` | `target: 'chat'` + `kind` + `data`；`kind` 来自 merge 的 `ChatNodeDataMap`。 [E: packages/client/ui-chat/src/client/contract/chat-nodes.ts:22] |
-| `EMPTY_CHAT_SNAPSHOT` | builder 尚未产出时的空 `order` / 空 lookup。 [E: packages/client/ui-chat/src/client/contract/snapshot.ts:79] |
-| `createChatStore` | `{ selection, turnProcesses }`；`select` / `setTurnProcessOpen`。ChatView 与 Details 共享同一 handle。 [E: packages/client/ui-chat/src/client/stores.ts:33] |
-| `chatViewDefinition` | `target: 'chat'`，`create: () => new ChatSnapshotBuilder()`。`isActive`：order 里存在非 `command` 节点才算有 Chat 内容。 [E: packages/client/ui-chat/src/client/conversation-nodes/chat-snapshot-builder.ts:723] |
-| `TranscriptViewPolicy` | 读 Host `ui-chat` 段；未到达前默认 compact。 [E: packages/client/ui-chat/src/client/transcript-view.ts:13] |
+| `EMPTY_CHAT_SNAPSHOT` | builder 尚未产出时的空 `order` / 空 lookup。 [E: packages/client/ui-chat/src/client/contract/snapshot.ts:119] |
+| `createChatStore` | `{ turnProcesses }`；`setTurnProcessOpen`。没有 `selection`。 [E: packages/client/ui-chat/src/client/stores.ts:33] |
+| `chatViewDefinition` | `target: 'chat'`，`create: () => new ChatSnapshotBuilder()`。`isActive`：order 里存在非 `command` 节点才算有 Chat 内容。 [E: packages/client/ui-chat/src/client/conversation-nodes/chat-snapshot-builder.ts:1068] [E: packages/client/ui-chat/src/client/conversation-nodes/chat-snapshot-builder.ts:1069] |
+| `TranscriptViewPolicy` | 读 Host `ui-chat` 段；未到达前默认 compact。 [E: packages/client/ui-chat/src/client/transcript-view.ts:11] |
 
 ## Chat ConversationNodeDefinition 实例
 
@@ -140,10 +140,10 @@ updated: d347e70390
 
 | Definition `kind` | 文件导出 | 主要 match 事件 | `buildViewNode` 的渲染 `key` |
 |---|---|---|---|
-| `inbox-next-turn` | `nextTurnInboxDefinition` | `agent/inbox/spliced` target `next-turn` | 无（`publication: 'none'`） |
-| `inbox-next-step` | `nextStepInboxDefinition` | 同上 `next-step`；给 steering 分类 | 无 |
+| `inbox-next-step` | `nextStepInboxDefinition` | `agent/inbox/spliced` target `next-step`；给 steering 分类 | 无（`publication: 'none'`） |
 | `input-message` | `messageDefinition` | append `user/message`（排除 compact checkpoint） | `user` / `steering` / `context` |
-| `request-prompt` | `requestPromptDefinition(inspect)` | `request/header` | `system-prompt`（空 system 则 null） |
+| `system-message` | `systemMessageDefinition(inspect)` | `system/message` | `system-prompt`（空 text 则 null） |
+| `request-prompt` | `requestPromptDefinition(inspect)` | `request/header` | 与 system 卡配合；不独占全部 prompt 卡 |
 | `assistant-step` | `assistantDefinition` | `step/start` + chunk / message | `assistant-step` |
 | `turn-process` | `turnProcessDefinition` | `turn/start` 及同 turn 过程事件 | `turn-process` |
 | `tool-call` | `toolDefinition` | `tool/call` / result / code-dispatch | 工具行（`ChatNodeDataMap` tool 载荷） |
@@ -155,7 +155,7 @@ updated: d347e70390
 | `turn-tail` | `turnTailDefinition` | `turn/start` / `turn/end` | `turn-tail` |
 | `unknown-surface` | `unknownFallbackDefinition` | 无其它 Definition 命中的 append 面 | `unknown`（`registerFallback`） |
 
-inbox 两条故意 **没有** `target: 'chat'`：只累积 pending/claimed，供 `input-message` 把 claimed 用户稿标成 `steering`。 [E: packages/client/ui-chat/src/client/conversation-nodes/inbox.ts:40] [E: packages/client/ui-chat/src/client/conversation-nodes/message.ts:61]
+inbox 只剩 `inbox-next-step`，故意 **没有** `target: 'chat'`：只累积 pending/claimed，供 `input-message` 把 claimed 用户稿标成 `steering`。没有 `inbox-next-turn` Definition。 [E: packages/client/ui-chat/src/client/conversation-nodes/inbox.ts:110] [E: packages/client/ui-chat/src/client/conversation-nodes/message.ts:66]
 
 ## 渲染器 `conversation.chat.node` key
 
@@ -180,38 +180,36 @@ inbox 两条故意 **没有** `target: 'chat'`：只累积 pending/claimed，供
 
 ## 控制流
 
-1. **只有 web-app 插入 Loader 行。** `id: ui-chat` / `name: '@deepseek-ai/dsh-client-ui-chat'` 紧跟 `ui-conversation` 与 `ui-approval`。`dsh-base` insert 从 `timer` / `hmr` 起，没有浏览器 roster。headless / sdk / sdk-minimal / acp 不插本包。 [E: packages/bundle/web-app/cordis.patch.yml:209] [E: packages/bundle/base/cordis.patch.yml:16]
+1. **只有 web-app 插入 Loader 行。** `id: ui-chat` / `name: '@deepseek-ai/dsh-client-ui-chat'` 紧跟 `ui-conversation` 与 `ui-approval`。`dsh-base` insert 从 `timer` / `hmr` 起，没有浏览器 roster。headless / sdk / sdk-minimal / acp 不插本包。 [E: packages/bundle/web-app/cordis.patch.yml:255] [E: packages/bundle/web-app/cordis.patch.yml:256] [E: packages/bundle/base/cordis.patch.yml:16]
 
 2. **node `apply` 只碰 settings。** `ctx.inject(['settings'], …)` 后 `settings.register(CHAT_SETTINGS_NAMESPACE, ChatSettingsSchema)`。无 settings 则整段不跑。 [E: packages/client/ui-chat/src/index.ts:14] [E: packages/client/ui-chat/src/index.ts:16]
 
-3. **浏览器 `inject` 九条服务名。** `slots` / `sessions` / `uiSession` / `uiConversation` / `layout` / `locale` / `settingsScope` / `remote` / `remote.session`。缺任一条 fiber pending。 [E: packages/client/ui-chat/src/client/apply.ts:47]
+3. **浏览器 `inject` 九条服务名。** `slots` / `sessions` / `uiSession` / `uiConversation` / `locale` / `settingsScope` / `remote` / `remote.session` / `sidebarRight`。掉了 `layout`，加了 `sidebarRight`。缺任一条 fiber pending。 [E: packages/client/ui-chat/src/client/apply.ts:48]
 
-4. **先登记 Definition，再挂会话 hook。** `registerConversationNodes(ctx)` 再 `registerChatNodeRenderers(ctx)`。`uiSession.provide({ hooks: ['chat'], … })` 把 `uiConversation.binding(binding).target('chat')` 包成 `useChat`；缺 snapshot 用 `EMPTY_CHAT_SNAPSHOT`。 [E: packages/client/ui-chat/src/client/apply.ts:72] [E: packages/client/ui-chat/src/client/apply.ts:66] [E: packages/client/ui-chat/src/client/conversation-nodes/register.ts:21]
+4. **先登记 Definition，再挂会话 hook。** `registerConversationNodes(ctx)` 再 `registerChatNodeRenderers(ctx)`。`uiSession.provide({ hooks: ['chat'], … })` 把 `uiConversation.binding(binding).target('chat')` 包成 `useChat`；缺 snapshot 用 `EMPTY_CHAT_SNAPSHOT`。 [E: packages/client/ui-chat/src/client/apply.ts:71] [E: packages/client/ui-chat/src/client/apply.ts:64] [E: packages/client/ui-chat/src/client/conversation-nodes/register.ts:21]
 
-5. **占 `conversation.view` `id: chat`。** 声明子座 `conversation.chat.node`（keyed）与 `conversation.message.images`。`openDetails` → store `select` + `layout.openDetails()`。`forkAt` 调 `sessions.fork` 再 `open`；失败吞掉。`loadOlder` 调 session。图片 URL 走 `uiConversation.imageUrl`。 [E: packages/client/ui-chat/src/client/apply.ts:99] [E: packages/client/ui-chat/src/client/apply.ts:101] [E: packages/client/ui-chat/src/client/apply.ts:140]
+5. **占 `conversation.view` `id: chat`。** 声明子座 `conversation.chat.node`（keyed）与 `conversation.message.images`。`openFile` 走 `sidebarRight.openResource`（详情 / 预览不在本包）。`forkAt` 调 `sessions.fork` 再 `open`；失败吞掉。`loadOlder` 调 session。图片 URL 走 `uiConversation.imageUrl`。 [E: packages/client/ui-chat/src/client/apply.ts:99] [E: packages/client/ui-chat/src/client/apply.ts:137] [E: packages/client/ui-chat/src/client/apply.ts:158]
 
-6. **占 `details`。** layout 声明 `'details': { kind: 'single', scope: 'session' }`。本包 `slots.register({ name: 'details', children: { 'conversation.details.tool': … } }, DetailsPanel)`。ui-conversation **不再**占右栏。 [E: packages/client/ui-layout/src/client/index.ts:129] [E: packages/client/ui-chat/src/client/apply.ts:160]
+6. **不占 `details`。** 本包不再登记 `DetailsPanel`，也不声明 `conversation.details.tool`。右侧栏架构在 ui-layout / workbench。
 
-7. **其它洞。** `conversation.composer.dock` `id: stats` → `StatsLine`。`conversation.approval.detail` → `ApprovalCommand`。`settings.general.item` `id: transcript-view` → `TranscriptViewRow`。 [E: packages/client/ui-chat/src/client/apply.ts:152] [E: packages/client/ui-chat/src/client/apply.ts:157] [E: packages/client/ui-chat/src/client/apply.ts:89]
+7. **其它洞。** `conversation.composer.dock` `id: stats` → `StatsPills`。`conversation.approval.detail` → `ApprovalCommand`。`settings.general.item` `id: transcript-view` → `TranscriptViewRow`。 [E: packages/client/ui-chat/src/client/apply.ts:174] [E: packages/client/ui-chat/src/client/apply.ts:177] [E: packages/client/ui-chat/src/client/apply.ts:86]
 
-8. **投影在 assembler，不在 React。** 每条 log 事件由已登记 Definition `match` → `start`/`update` → `buildViewNode`；`ChatSnapshotBuilder` 增量写入 `order` / `nodes`。GUI 历史来自 log + 这些 Definition，不是 composer 本地数组。
-
-9. **details 打开工具。** `DetailsPanel` 用 snapshot 找 `ToolCallBlock`；有 `conversation.details.tool` occupant 时渲染业务视图，否则 JSON pretty 的 fallback。 [E: packages/client/ui-chat/src/client/details/DetailsPanel.tsx:26]
+8. **投影在 assembler，不在 React。** 每条 log 事件由已登记 Definition `match` → `start`/`update` → `buildViewNode`；`ChatSnapshotBuilder` 增量写入 `order` / `nodes`。GUI 历史来自 log + 这些 Definition，不是 composer 本地数组。`system/message` 由 `system-message` Definition 产出 `system-prompt` 卡。 [E: packages/client/ui-chat/src/client/conversation-nodes/request-prompt.ts:64] [E: packages/client/ui-chat/src/client/conversation-nodes/request-prompt.ts:66]
 
 ## 设计动机
 
 - **引擎与业务拆包。** ui-conversation 提供 registry / assembler / composer；Chat kind 与渲染器可独立演进，其它 target（若出现）可并列 `views.register`。
 - **kind ≠ 渲染 key。** 一条 Definition 可产出多种 `ChatNode.kind`（`input-message` → user/steering/context；`command` → command/manual-compaction）。inbox 是无视图状态机。
-- **右栏跟 selection store，不跟第二份 log。** ChatView `select` 与 Details 同 `createChatStore`。
+- **文件打开走右侧栏，不跟本包 selection store。** `createChatStore` 只记 turn process 开合。
 - **默认 compact 过程披露。** `DEFAULT_TRANSCRIPT_VIEW_MODE = 'compact'`，不是 normal。
 
 ## Gotcha
 
 - `ConversationNodeDefinition` **不要**写进本节点 `symbols:`；改链 ui-conversation。本包只权威 **实例** 与 `ChatNodeDataMap` merge。
 - fallback 必须 `registerFallback`；普通 `register('unknown-surface')` 会与「仅未匹配时」语义冲突。 [E: packages/client/ui-chat/src/client/conversation-nodes/fallback.ts:40]
-- `isActive` 把纯 command 时间线当成 Chat 未激活。 [E: packages/client/ui-chat/src/client/conversation-nodes/chat-snapshot-builder.ts:725]
-- `forkAt` 失败静默；视图停在源会话。 [E: packages/client/ui-chat/src/client/apply.ts:142]
-- 在 `'details'` 上第二次 `register`（single 覆盖）拆掉 DetailsPanel 与 `conversation.details.tool` 子树。加法用内部 single 或 ui-tool。
+- `isActive` 把纯 command 时间线当成 Chat 未激活。 [E: packages/client/ui-chat/src/client/conversation-nodes/chat-snapshot-builder.ts:1069]
+- `forkAt` 失败静默；视图停在源会话。 [E: packages/client/ui-chat/src/client/apply.ts:161]
+- 本包不再占 `'details'`。不要在这里找 `DetailsPanel`。
 - client **不**跑 agent-loop。提问入口仍是 ui-conversation `sendSession`。
 
 ## Seam 三角
@@ -220,13 +218,12 @@ inbox 两条故意 **没有** `target: 'chat'`：只累积 pending/claimed，供
 
 | 缝 | Definition | Provider | Consumer · base / web-app / headless |
 |---|---|---|---|
-| Loader 行 `id: ui-chat` | npm `@deepseek-ai/dsh-client-ui-chat`；`dsh.client.platform = web` | **web-app** insert | **web-app**：浏览器半边。**base / headless / sdk / acp / sdk-minimal**：无此行，无 Chat 节点、无 details occupant |
+| Loader 行 `id: ui-chat` | npm `@deepseek-ai/dsh-client-ui-chat`；`dsh.client.platform = web` | **web-app** insert | **web-app**：浏览器半边。**base / headless / sdk / acp / sdk-minimal**：无此行，无 Chat 节点 |
 | node settings | `CHAT_SETTINGS_NAMESPACE` + `ChatSettingsSchema` | host `apply` 在 `ctx.settings` 存在时 `register` | 浏览器 `TranscriptViewPolicy`。无 settings：进程内默认 `compact` |
 | `ctx.uiConversation.events` / `views` | 接口在 ui-conversation；Chat **实例**在本包 | `registerConversationNodes` | assembler 铸 `ChatSnapshot`。**headless** 无 GUI 投影 |
 | 槽 `conversation.view` `id: chat` | ui-conversation 声明 list `conversation.view` | 本包 `ChatView` | `AppFrame` 中栏 session body。**base/headless** 无 `ctx.slots` |
 | 槽 `conversation.chat.node` | keyed，本包声明 | `registerChatNodeRenderers` + 其它插件可加 key | ChatView 按 `node.kind` 选座 |
-| 槽 `details` | layout 声明 single/session | **占用**：本包 `DetailsPanel` | `layout.openDetails`。子座 `conversation.details.tool` 给 ui-tool |
-| `target('chat')` | `ConversationViewSnapshotMap['chat']` | `ChatSnapshotBuilder` | `useChat` / Details。空 = `EMPTY_CHAT_SNAPSHOT` |
+| `target('chat')` | `ConversationViewSnapshotMap['chat']` | `ChatSnapshotBuilder` | `useChat`。空 = `EMPTY_CHAT_SNAPSHOT` |
 
 ## Sources
 
@@ -254,15 +251,15 @@ inbox 两条故意 **没有** `target: 'chat'`：只累积 pending/claimed，供
 - packages/client/ui-chat/src/client/conversation-nodes/chat-snapshot-builder.ts
 - packages/client/ui-chat/src/client/chat/register-node-renderers.ts
 - packages/client/ui-chat/src/client/chat/ChatView.tsx
-- packages/client/ui-chat/src/client/details/DetailsPanel.tsx
+- packages/client/ui-chat/src/client/chat/StatsPills.tsx
 - packages/client/ui-chat/src/client/contract/chat-nodes.ts
 - packages/client/ui-chat/src/client/contract/snapshot.ts
 - packages/client/ui-chat/package.json
 - packages/client/ui-chat/tests/conversation-node-definitions.client.spec.ts
 - packages/bundle/web-app/cordis.patch.yml
 - packages/bundle/base/cordis.patch.yml
-- packages/client/ui-layout/src/client/index.ts
 - packages/client/ui-conversation/src/client/apply.ts
+- packages/client/ui-conversation/src/client/service.ts
 - packages/client/ui-conversation/src/client/contract/conversation.ts
 - packages/client/ui-conversation/src/client/conversation/event-registry.ts
 - packages/client/ui-conversation/src/client/conversation/assembly.ts
@@ -274,7 +271,7 @@ inbox 两条故意 **没有** `target: 'chat'`：只累积 pending/claimed，供
 - [`subsys.client.ui-conversation`](ui-conversation.md) — assembler、composer、`ConversationNodeDefinition` 类型；本页是 Chat Consumer。
 - [`subsys.client.runtime`](runtime.md) — `ctx.slots` / `ctx.sessions`。
 - [`subsys.client.ui-slots`](ui-slots.md) — `register` 覆盖语义。
-- [`subsys.client.ui-layout`](ui-layout.md) — 声明 `details`；本包占用。
+- [`subsys.client.ui-layout`](ui-layout.md) — 工作台骨架与右侧栏；本包不再占 `details`。
 - [`surface.web.workbench`](../../surface/web/workbench.md) — 工作台可见面。
 - [`surface.profiles.web`](../../surface/profiles/web.md) — web roster。
 - [`subsys.composition.bundle-web-app`](../composition/bundle-web-app.md) — 插入 `id: ui-chat` 的 bundle。

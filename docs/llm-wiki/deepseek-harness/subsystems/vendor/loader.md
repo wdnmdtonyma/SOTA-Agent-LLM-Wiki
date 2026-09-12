@@ -37,7 +37,7 @@ related:
   - subsys.composition.agent-presets
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/cordis-plugin-loader` 是 **vendored** Cordis 插件加载器（`vendor/loader/`，npm 名见 package.json），不是 `packages/` 里的 DSH 包，也不是 profile 发现器。[E: vendor/loader/package.json:2] `Loader extends EntryTree`，构造时 `ctx.reflect.provide('loader', this)`；它拥有 entry 树、group、isolate realm、`!!js` interpolate 与按 specifier import 插件。[E: vendor/loader/src/index.ts:65] [E: vendor/loader/src/index.ts:90] profile / bundle 叠层是 Consumer [`subsys.composition.app-boot`](../composition/app-boot.md)，本页只写 loader 机制。
@@ -60,7 +60,7 @@ updated: d347e70390
 - profile 发现、空根 `cordis.yml`、`composeEntries` / bundle 叠层、`boot()` 胶 — [`subsys.composition.app-boot`](../composition/app-boot.md)（`subsys.composition.app-boot`）。app-boot 是本页的 Consumer：`await ctx.plugin(Loader)` 再 `mountRootInclude`。[E: packages/boot/app-boot/src/index.ts:790]
 - `dsh-base` 插进空根的那条 host 行表 — [`subsys.composition.bundle-base`](../composition/bundle-base.md)（`subsys.composition.bundle-base`）。那些行是 Loader 要 `import` 的 `name`，不是 loader 自己的名单。
 - YAML `!!js` 方言与 `applyEntryPatches` — `@deepseek-ai/cordis-plugin-include` 把 `tag:yaml.org,2002:js` 建成 `{ __jsExpr }`。[E: vendor/include/src/index.ts:9] [E: vendor/include/src/index.ts:12] Loader 只认已经建成的 `JsExpr` 节点。
-- preset 发现、`mountPreset`、`leakedServices` 审计 — [`subsys.composition.agent-presets`](../composition/agent-presets.md)（`subsys.composition.agent-presets`）。本页只写 isolate 机制；preset 用 `isolate.fs: true` 一类防泄漏。
+- preset 发现、`mountPreset`、`leakedServices` 审计 — [`subsys.composition.agent-presets`](../composition/agent-presets.md)（`subsys.composition.agent-presets`）。本页只写 isolate 机制；preset 用 `isolate.terminals: true` / `isolate.workflowEngine: true` 一类防泄漏。
 - 端到端 `profile → bundle → preset` 走读 — [`spine.composition-boot`](../../spine/composition-boot.md)（`spine.composition-boot`）。
 
 **host 面 vs agent-preset 面。** `ctx.loader` 是进程级单例。host 组合（`dsh-base` 等）和之后每会话 preset 子树都走同一套 entry / interpolate / isolate。宿主入口是 `dsh web` 以及 `dsh --profile web|headless|sdk|sdk-minimal|acp`（外加自定义 profile）；本仓没有 shipped TUI 模板。
@@ -80,7 +80,7 @@ updated: d347e70390
 | `vendor/include/src/index.ts` | Consumer：`!!js` YAML Type、`Include extends EntryTree` 的文件 `write()`、同样的 `EntryGroup.key` |
 | `packages/boot/app-boot/src/index.ts` | Consumer：`ctx.plugin(Loader)`、`builtins.include` / `builtins.group`、钉死 `id: include` |
 | `packages/bundle/base/cordis.patch.yml` | Consumer：host 行表，含 `disabled: !!js process.platform …` |
-| `packages/preset/agent-presets/presets/minimal/agent.cordis.yml` | Consumer：`isolate: { fs: true }` 的 shipped 形状（四个 shipped preset 为 `minimal` / `standard` / `ptc` / `cordis`） |
+| `packages/preset/agent-presets/presets/minimal/agent.cordis.yml` | Consumer：`isolate: { terminals: true }` 的 shipped 形状（四个 shipped preset 为 `minimal` / `standard` / `ptc` / `cordis`） |
 
 ## 数据模型
 
@@ -99,9 +99,9 @@ updated: d347e70390
 | `evaluate` | `new Function('ctx', 'expr', 'with (ctx) { return eval(expr) }')`。[E: vendor/loader/src/config/utils.ts:5] |
 | `LocalRealm` | `isolate[name] === true`：每条 entry 一份，suffix `#<options.id>`。[E: vendor/loader/src/config/isolate.ts:81] [E: vendor/loader/src/config/isolate.ts:55] |
 | `GlobalRealm` | `isolate[name] === '<label>'`：同 label 共享，suffix `@<label>`。[E: vendor/loader/src/config/isolate.ts:84] [E: vendor/loader/src/config/isolate.ts:66] |
-| `builtins` | `cordis:<key>` → `ctx.loader.builtins[key]`。app-boot 填 `include` 与 `group`。[E: vendor/loader/src/config/tree.ts:147] [E: packages/boot/app-boot/src/index.ts:505] [E: packages/boot/app-boot/src/index.ts:525] |
+| `builtins` | `cordis:<key>` → `ctx.loader.builtins[key]`。app-boot 填 `include` 与 `group`。[E: vendor/loader/src/config/tree.ts:147] [E: packages/boot/app-boot/src/index.ts:502] [E: packages/boot/app-boot/src/index.ts:525] |
 
-`dsh-base` 用同一套 `disabled: !!js` 互斥两套 shell（win32 关 bash 栈，非 win32 关 pwsh 栈）。[E: packages/bundle/base/cordis.patch.yml:222] [E: packages/bundle/base/cordis.patch.yml:228] `evaluate` 被 windows-shell 测试直接 import，用假 `process.platform` 钉死两边结果。[E: apps/cli/tests/windows-shell.spec.ts:20] [E: apps/cli/tests/windows-shell.spec.ts:31]
+`dsh-base` 用同一套 `disabled: !!js` 互斥两套 shell（win32 关 bash 栈，非 win32 关 pwsh 栈）。[E: packages/bundle/base/cordis.patch.yml:216] [E: packages/bundle/base/cordis.patch.yml:222] `evaluate` 被 windows-shell 测试直接 import，用假 `process.platform` 钉死两边结果。[E: apps/cli/tests/windows-shell.spec.ts:20] [E: apps/cli/tests/windows-shell.spec.ts:31]
 
 ## 控制流
 
@@ -109,7 +109,7 @@ updated: d347e70390
 
 2. `Loader` 构造@`vendor/loader/src/index.ts`：`super(ctx)` 建根 `EntryGroup`，可选写 `baseUrl`，`defineProperty(..., Service.tracker)`，然后 `ctx.reflect.provide('loader', this, this[Service.check])`。[E: vendor/loader/src/index.ts:78] [E: vendor/loader/src/index.ts:90] `provide` 把实现存进 `reflect.store[ctx[Context.isolate]['loader']]`；同 realm 再注册同名会抛。[E: vendor/cordis/src/reflect.ts:289] [E: vendor/cordis/src/reflect.ts:290] 末尾 `ctx.plugin(isolate)` 装 isolate 钩子。[E: vendor/loader/src/index.ts:159]
 
-3. `mountRootInclude` 钉死根行 `id: 'include'` / `name: 'cordis:include'`，并 `ctx.loader.builtins.include = Include`（或带 `bareModuleBaseUrl` 的 `HostResolvedRootInclude` 子类）与 `ctx.loader.builtins.group = Group`，让 `cordis:include` / `cordis:group` 不依赖 included 树自己的 specifier 解析。[E: packages/boot/app-boot/src/index.ts:505] [E: packages/boot/app-boot/src/index.ts:525] [E: packages/boot/app-boot/src/index.ts:534] [E: packages/boot/app-boot/src/index.ts:535] `EntryTree.import`：`cordis:` 前缀查 `builtins`，否则走 Node internal loader 或动态 `import()`。[E: vendor/loader/src/config/tree.ts:147] [E: vendor/loader/src/config/tree.ts:155]
+3. `mountRootInclude` 钉死根行 `id: 'include'` / `name: 'cordis:include'`，并 `ctx.loader.builtins.include = Include`（或带 `bareModuleBaseUrl` 的 `HostResolvedRootInclude` 子类）与 `ctx.loader.builtins.group = Group`，让 `cordis:include` / `cordis:group` 不依赖 included 树自己的 specifier 解析。[E: packages/boot/app-boot/src/index.ts:502] [E: packages/boot/app-boot/src/index.ts:525] [E: packages/boot/app-boot/src/index.ts:532] [E: packages/boot/app-boot/src/index.ts:532] `EntryTree.import`：`cordis:` 前缀查 `builtins`，否则走 Node internal loader 或动态 `import()`。[E: vendor/loader/src/config/tree.ts:147] [E: vendor/loader/src/config/tree.ts:155]
 
 4. `EntryTree.create` → `EntryGroup.create@vendor/loader/src/config/group.ts`：`ensureId`，`new Entry(loader)`，`entry.update(options, true, true)`。[E: vendor/loader/src/config/tree.ts:99] [E: vendor/loader/src/config/group.ts:30] 新 `Entry` 立刻 `emit('loader/entry-init')`；isolate 插件给该 ctx 一份自己的 `Context.isolate` / `Context.intercept` 原型链。[E: vendor/loader/src/config/entry.ts:68] [E: vendor/loader/src/config/isolate.ts:93]
 
@@ -136,9 +136,9 @@ updated: d347e70390
 
 12. 自处置：`internal/plugin` 见到 tracked fiber 被 `ctx.fiber.dispose()`（且不是 loader 自己的 `_disposing` / 整棵树 UNLOADING）时 `showLog('unload')`；若 entry 仍 enabled，则写 `options.disabled = true` 并 `tree.write()`。[E: vendor/loader/src/index.ts:155] [E: vendor/loader/src/index.ts:156]
 
-13. `disabled: !!js` 在每次 mount 决策上对 loader ctx 求值，options 里留下 `{ __jsExpr }`。user-patches 测试钉死 write-back 形态与 `entry.disabled === (process.platform === 'win32')`。[E: packages/boot/app-boot/tests/user-patches.spec.ts:262] [E: packages/boot/app-boot/tests/user-patches.spec.ts:263] config 里的 `!!js` 则在步骤 8 的 `interpolate` 之后变成插件真正收到的值：`fiber.config` 等于 `{ value: 'user-value' }`，options 仍是表达式节点。[E: packages/boot/app-boot/tests/user-patches.spec.ts:320]
+13. `disabled: !!js` 在每次 mount 决策上对 loader ctx 求值，options 里留下 `{ __jsExpr }`。user-patches 测试钉死 write-back 形态与 `entry.disabled === (process.platform === 'win32')`。[E: packages/boot/app-boot/tests/user-patches.spec.ts:262] [E: packages/boot/app-boot/tests/user-patches.spec.ts:263] config 里的 `!!js` 则在步骤 8 的 `interpolate` 之后变成插件真正收到的值：`fiber.config` 等于 `{ value: 'user-value' }`，options 仍是表达式节点。[E: packages/boot/app-boot/tests/user-patches.spec.ts:319]
 
-14. isolate 形状：`isolate.fs: true` 一类把 `fs` 放进该 group 行的 `LocalRealm`（suffix `#<id>`），同组孩子的 `Context.isolate.fs` 指向这份私有符号，`provide('fs')` / `ctx.fs` 不再撞 root realm。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:77] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:78] [E: vendor/loader/src/config/isolate.ts:82] 字符串 label 则进 `GlobalRealm`。同 realm 符号下第二次 `provide` 仍抛；label 合并的是 realm，不是「多实例池」。preset 漏写 isolate、把 service publish 进 root 的审计在 [`subsys.composition.agent-presets`](../composition/agent-presets.md)，本页不写 `mountPreset` / `leakedServices` 算法。
+14. isolate 形状：`isolate.terminals: true` 一类把 `terminals` 放进该 group 行的 `LocalRealm`（suffix `#<id>`），同组孩子的 `Context.isolate.terminals` 指向这份私有符号，`provide('terminals')` / `ctx.terminals` 不再撞 root realm。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:24] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:25] [E: vendor/loader/src/config/isolate.ts:82] 字符串 label 则进 `GlobalRealm`。同 realm 符号下第二次 `provide` 仍抛；label 合并的是 realm，不是「多实例池」。preset 漏写 isolate、把 service publish 进 root 的审计在 [`subsys.composition.agent-presets`](../composition/agent-presets.md)，本页不写 `mountPreset` / `leakedServices` 算法。
 
 ## 设计动机
 
@@ -160,7 +160,7 @@ isolate 用换 `Context.isolate[name]` 的 symbol 来换 `reflect.store` 槽位�
 - **树载体整份 config 不 interpolate。** 给 Group / Include 的 `!!js` 不会在载体 fiber 上求值。要把表达式挂在真正消费它的那一行。
 - **`internal/update` 分两层。** Loader 的 global persist / log **必须** `next()`。`Group` / `Include` 的 fiber-local 钩子故意不 `next()` 来 veto 自身 `restart()`。不要给 Loader 的 global 钩子学这个 veto。
 - **default export 会丢掉 loader 元数据。** `unwrapExports` 先取 `.default`。插件要 `export const name` / `export const inject` / `export function apply`。
-- **`isolate: { fs: true }` 不是 host `dsh-base` 的默认。** shipped `minimal` 用它让 preset 的 `fs-local` 遮住 host 沙箱 fs；`standard` / `ptc` / `cordis` 用同一形状隔离 `planMode` / `compaction` / `workflowEngine`。漏写会在 `mountPreset` 被拒，不是 `Loader` 构造抛错。
+- **`isolate: { terminals: true }` 不是 host `dsh-base` 的默认。** shipped `minimal` 用它把 PTY 留在 preset realm；`standard` / `ptc` / `cordis` 用同一形状隔离 `planMode` / `compaction` / `workflowEngine`。`minimal` **不再** `isolate.fs`。漏写会在 `mountPreset` 被拒，不是 `Loader` 构造抛错。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:24] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:172]
 - **根 `tree.write()` 是空的。** persist 钩子仍会调用它；只有 `parent.tree` 是 `Include` 时才会烤回文件。app-boot 每次把 profile `cordis.yml` 重写成 `[]`，就是怕 Include 把已展开的树写回去再叠一层 insert。
 - **`cordis:` builtin 不是 npm 名。** 未注册的 `cordis:foo` 得到 `undefined`，随后 `registry.plugin` 失败。产品树靠 app-boot 预置 `include` / `group`。
 
@@ -171,7 +171,7 @@ isolate 用换 `Context.isolate[name]` 的 symbol 来换 `reflect.store` 槽位�
 | **Definition** | `@deepseek-ai/cordis-plugin-loader` 的 `Loader` / `Entry` / `EntryTree` / `interpolate` | `ctx.loader`。isolate 改的是 `ctx[Context.isolate][service]` 的 symbol，不是第二套 `ctx.*` |
 | **Provider（本页）** | vendored `vendor/loader/`；`Loader` 构造 `provide('loader', this)` | 进程级。根行通常是 Consumer 钉的 `id: include` / `name: cordis:include` |
 | **Consumer（启动胶）** | `@deepseek-ai/dsh-app-boot` 的 `boot` / `mountRootInclude` | `ctx.plugin(Loader)`；`builtins.include` / `builtins.group`；`provide('dshHomePath')` 给 `!!js` 用 |
-| **Consumer（行表）** | `dsh-base` `cordis.patch.yml` 与各 preset `agent.cordis.yml`（`minimal` / `standard` / `ptc` / `cordis`） | `name` 被 `EntryTree.import`；`disabled: !!js` / `isolate: { fs: true }` 被本页机制消费 |
+| **Consumer（行表）** | `dsh-base` `cordis.patch.yml` 与各 preset `agent.cordis.yml`（`minimal` / `standard` / `ptc` / `cordis`） | `name` 被 `EntryTree.import`；`disabled: !!js` / `isolate: { terminals: true }` 一类被本页机制消费 |
 | **Consumer（文件树）** | `@deepseek-ai/cordis-plugin-include` | `Include extends EntryTree`；实现真正的 `write()`；声明 `EntryGroup.key` |
 
 换组合 = 换喂给 Loader 的 entry 列表，不是换 `Loader` 实现。同 realm 再 `provide` 同名服务仍抛。

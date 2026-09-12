@@ -41,7 +41,7 @@ related:
   - surface.sdk.typescript
 evidence: explicit
 status: verified
-updated: d347e70390
+updated: c291e7961a
 ---
 
 > `@deepseek-ai/dsh-acp` 是 **automation-only** 的 Agent Client Protocol JSON-RPC stdio server：插件名 `acp`，`inject = ['agents', 'llm', 'sessionPersistence', 'sessions']`。它实现 `initialize` / `authenticate` / `session/new` / `session/list` / `session/resume` / `session/close` / `session/setConfigOption` / `session/prompt` / `session/cancel`。产品入口是 shipped profile `acp`（`dsh --profile acp`）叠 `dsh-base` + `dsh-acp-app`。它不是 `dsh-subagent-acp` 那条进程外 Provider。
@@ -56,7 +56,7 @@ updated: d347e70390
 
 ## 是什么
 
-DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent preset`。capability seam 是 Definition / Provider / Consumer。**host 面**是进程级插件树（bundle `cordis.patch.yml` 里的行）；**agent-preset 面**是每会话 `mountPreset` 的 tools / persona / isolate。`PROFILE_TEMPLATES` 有五个 shipped 名：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`，没有 TUI。[E: packages/boot/app-boot/src/profile.ts:137] `acp` 模板 bundles 是 `@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-acp-app`，`patchReload: 'startup'`。[E: packages/boot/app-boot/src/profile.ts:138] [E: packages/boot/app-boot/src/profile.ts:139]
+DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent preset`。capability seam 是 Definition / Provider / Consumer。**host 面**是进程级插件树（bundle `cordis.patch.yml` 里的行）；**agent-preset 面**是每会话 `mountPreset` 的 tools / persona / isolate。`PROFILE_TEMPLATES` 有五个 shipped 名：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`，没有 TUI。[E: packages/boot/app-boot/src/profile.ts:105] `acp` 模板 bundles 是 `@deepseek-ai/dsh-base` + `@deepseek-ai/dsh-acp-app`，`patchReload: 'startup'`。[E: packages/boot/app-boot/src/profile.ts:107] [E: packages/boot/app-boot/src/profile.ts:107]
 
 `@deepseek-ai/dsh-acp` 是 ACP **Agent 侧**桥：named export `name` / `inject` / `Config` / `apply`。[E: packages/acp/acp/package.json:2] [E: packages/acp/acp/src/index.ts:60] [E: packages/acp/acp/src/index.ts:62] [E: packages/acp/acp/src/index.ts:86] [E: packages/acp/acp/src/index.ts:97] `apply` 在 load 时抓 `ctx.sessionPersistence`，再用 `createAcpAgentApp` + `ndJsonStream` 占住 stdout / stdin。[E: packages/acp/acp/src/index.ts:100] [E: packages/acp/acp/src/index.ts:378] [E: packages/acp/acp/src/index.ts:374]
 
@@ -67,7 +67,7 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 | 容易混的实体 | 实际是什么 |
 |---|---|
 | `@deepseek-ai/dsh-acp-app` | ACP profile overlay bundle：插件名 `acp-app-startup`，解析 `dsh --profile acp` 后再 `provide('acpAppStartup')`。[E: packages/bundle/acp-app/package.json:2] [E: packages/bundle/acp-app/src/index.ts:13] [E: packages/bundle/acp-app/src/index.ts:45] |
-| `cordis.patch.yml` 的 `id: acp` | `dsh-acp-app` 在 host 面 insert 的本包行，`inject: [acpAppStartup]`，默认 `provider: deepseek-official` / `model: deepseek-v4-flash`。[E: packages/bundle/acp-app/cordis.patch.yml:15] [E: packages/bundle/acp-app/cordis.patch.yml:17] [E: packages/bundle/acp-app/cordis.patch.yml:19] |
+| `cordis.patch.yml` 的 `id: acp` | `dsh-acp-app` 在 host 面 insert 的本包行，`inject: [acpAppStartup]`，默认 `provider: deepseek-official` / `model: deepseek-v4-flash`。[E: packages/bundle/acp-app/cordis.patch.yml:16] [E: packages/bundle/acp-app/cordis.patch.yml:18] [E: packages/bundle/acp-app/cordis.patch.yml:20] |
 | `@deepseek-ai/dsh-subagent-acp` | 父进程里的进程外 subagent Provider，插件名 `subagent-acp`，`inject = ['subagents', 'subprocess']`。[E: packages/subagent/subagent-acp/src/index.ts:23] [E: packages/subagent/subagent-acp/src/index.ts:24] |
 | TypeScript JSON-RPC SDK | 另一条 automation JSON-RPC，方法表不是 ACP。见 [`surface.sdk.typescript`](../sdk/typescript.md) |
 
@@ -77,13 +77,13 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 | 入口 | 行为 |
 |---|---|
-| `dsh --profile acp` | `PROFILE_TEMPLATES.acp` 叠 `dsh-base` + `dsh-acp-app`。[E: packages/boot/app-boot/src/profile.ts:138] commander 程序名是 `dsh --profile acp`。[E: packages/bundle/acp-app/src/index.ts:27] |
+| `dsh --profile acp` | `PROFILE_TEMPLATES.acp` 叠 `dsh-base` + `dsh-acp-app`。[E: packages/boot/app-boot/src/profile.ts:107] commander 程序名是 `dsh --profile acp`。[E: packages/bundle/acp-app/src/index.ts:27] |
 | `acp-app-startup.apply` | 解析成功后 `exitOnStdinEnd` + `ctx.provide('acpAppStartup', { accepted: true })`；help 不 claim stdio。[E: packages/bundle/acp-app/src/index.ts:44] [E: packages/bundle/acp-app/src/index.ts:45] |
-| overlay `id: acp` | 等 `acpAppStartup` 再 load `@deepseek-ai/dsh-acp`。[E: packages/bundle/acp-app/cordis.patch.yml:15] [E: packages/bundle/acp-app/cordis.patch.yml:17] |
+| overlay `id: acp` | 等 `acpAppStartup` 再 load `@deepseek-ai/dsh-acp`。[E: packages/bundle/acp-app/cordis.patch.yml:16] [E: packages/bundle/acp-app/cordis.patch.yml:18] |
 | 生产 transport | `config.stream` 缺省时 `ndJsonStream(process.stdout, process.stdin)`。[E: packages/acp/acp/src/index.ts:374] |
 | 测试 transport | 运行时字段 `AcpConfig.stream?`；`Config` Schema 只声明 `provider` / `model` / `sessionListPageSize`。[E: packages/acp/acp/src/index.ts:83] [E: packages/acp/acp/src/index.ts:86] [E: packages/acp/acp/src/index.ts:89] |
 
-`dsh web` / `dsh --profile web` / `dsh --profile headless` / `sdk` / `sdk-minimal` **不会**叠 `dsh-acp-app`。`web` 是 `dsh-base` + `dsh-web-app`；`headless` 是 `dsh-base` + `dsh-headless`。[E: packages/boot/app-boot/src/profile.ts:142] [E: packages/boot/app-boot/src/profile.ts:146] `@deepseek-ai/dsh-web-app` / `@deepseek-ai/dsh-headless` 各自声明 `dsh.bundle.patch`。[E: packages/bundle/web-app/package.json:2] [E: packages/bundle/web-app/package.json:43] [E: packages/bundle/headless/package.json:2] [E: packages/bundle/headless/package.json:43]
+`dsh web` / `dsh --profile web` / `dsh --profile headless` / `sdk` / `sdk-minimal` **不会**叠 `dsh-acp-app`。`web` 是 `dsh-base` + `dsh-web-app`；`headless` 是 `dsh-base` + `dsh-headless`。[E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:114] `@deepseek-ai/dsh-web-app` / `@deepseek-ai/dsh-headless` 各自声明 `dsh.bundle.patch`。[E: packages/bundle/web-app/package.json:2] [E: packages/bundle/web-app/package.json:43] [E: packages/bundle/headless/package.json:2] [E: packages/bundle/headless/package.json:43]
 
 stdout 是协议帧。连接寿命挂在 `ctx.effect(() => quiesce, 'acp.connection')`；拆 fiber 会 `AcpSession.close` 并把 in-flight prompt 结成 `cancelled`。[E: packages/acp/acp/src/index.ts:436] [E: packages/acp/acp/src/index.ts:401]
 
@@ -95,7 +95,7 @@ stdout 是协议帧。连接寿命挂在 `ctx.effect(() => quiesce, 'acp.connect
 |---|---|---|
 | npm 包 | `@deepseek-ai/dsh-acp` | 不是 `@deepseek-ai/dsh-acp-app`，也不是 `@deepseek-ai/dsh-subagent-acp`。[E: packages/acp/acp/package.json:2] |
 | `name` | `'acp'` | Cordis 插件 id。[E: packages/acp/acp/src/index.ts:60] |
-| `inject` | `['agents', 'llm', 'sessionPersistence', 'sessions']` | handlers 跑在 injection 作用域外，所以 `apply` 先把 persistence 抓进闭包。[E: packages/acp/acp/src/index.ts:62] [E: packages/acp/acp/src/index.ts:100] overlay 再加 `acpAppStartup`。[E: packages/bundle/acp-app/cordis.patch.yml:17] |
+| `inject` | `['agents', 'llm', 'sessionPersistence', 'sessions']` | handlers 跑在 injection 作用域外，所以 `apply` 先把 persistence 抓进闭包。[E: packages/acp/acp/src/index.ts:62] [E: packages/acp/acp/src/index.ts:100] overlay 再加 `acpAppStartup`。[E: packages/bundle/acp-app/cordis.patch.yml:18] |
 | `Config` / `AcpConfig` | Schema：可选 `provider` / `model`，`sessionListPageSize` 默认 `100` | 接口另有运行时 `stream?`；省略的 provider/model **不会**写成 `undefined` 字段。[E: packages/acp/acp/src/index.ts:83] [E: packages/acp/acp/src/index.ts:89] [E: packages/acp/acp/src/index.ts:445] |
 | `agentInfo` | `name: 'deepseek-harness-acp'`，`version: '0.0.1'` | 钉在 wire 上，和 npm `0.1.2-alpha.2` 不是同一个数。[E: packages/acp/acp/src/index.ts:182] [E: packages/acp/acp/package.json:4] |
 
@@ -125,7 +125,7 @@ stdout 是协议帧。连接寿命挂在 `ctx.effect(() => quiesce, 'acp.connect
 
 `turnEndToStopReason`：`completed`→`end_turn`；`max-tokens`→`max_tokens`；`aborted` / `blocked` / `error`→`end_turn`；`interrupted`→`cancelled`。[E: packages/acp/acp/src/codec.ts:17] [E: packages/acp/acp/src/codec.ts:19] [E: packages/acp/acp/src/codec.ts:24] [E: packages/acp/acp/src/codec.ts:26] [E: packages/acp/acp/src/codec.ts:29] [E: packages/acp/acp/tests/codec.spec.ts:8]
 
-prompt RPC 在 whole-agent idle 后结算：`end.kind === 'error'` 变 internal reject；其它走 codec（含 `max_tokens`）。[E: packages/acp/acp/src/session.ts:513] [E: packages/acp/acp/src/session.ts:516] 测试钉 token-limit 的 `stopReason` 是 `max_tokens` 且已提交文本仍发出。[E: packages/acp/acp/tests/turns.spec.ts:38] 客户端 `session/cancel` 报 `cancelled`。[E: packages/acp/acp/tests/turns.spec.ts:263]
+prompt RPC 在 whole-agent idle 后结算：`end.kind === 'error'` 变 internal reject；其它走 codec（含 `max_tokens`）。[E: packages/acp/acp/src/session.ts:513] [E: packages/acp/acp/src/session.ts:517] 测试钉 token-limit 的 `stopReason` 是 `max_tokens` 且已提交文本仍发出。[E: packages/acp/acp/tests/turns.spec.ts:38] 客户端 `session/cancel` 报 `cancelled`。[E: packages/acp/acp/tests/turns.spec.ts:263]
 
 ### permission
 
