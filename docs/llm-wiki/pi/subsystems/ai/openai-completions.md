@@ -19,7 +19,7 @@ related:
   - subsys.ai.openai-responses
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.ai.openai-completions` 是 `pi-ai` 的 OpenAI Chat Completions wire 协议实现:它把统一 `Context`/`Model<"openai-completions">` 转成 `client.chat.completions.create(..., {stream:true})` 请求,再把 `ChatCompletionChunk` 归一成 `AssistantMessageEventStream`。

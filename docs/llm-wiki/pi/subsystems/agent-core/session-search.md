@@ -22,7 +22,7 @@ related:
   - subsys.agent-core.memory-storage
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.agent-core.session-search` 保留节点 id，改写成**接口 + 退役实现**：`pi-agent-core` 仍导出 `SessionSearchService` 类型，但 scanning 实现、`docs/search.md`、JSONL/memory search adapter 与 sqlite-node FTS backend 都已删除。

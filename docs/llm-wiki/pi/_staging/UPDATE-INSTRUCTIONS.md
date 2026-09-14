@@ -1,4 +1,4 @@
-# Pi wiki 增量刷新令（9767ba275f → bbb61e34aa）
+# Pi wiki 增量刷新令（bbb61e34aa → 71dca871bc）
 
 给 filler 读。规范仍以 `../conventions.md` 与 `../RUN.md` 为准。本文件只补充**这一轮**的路径、架构事实和文件纪律。
 
@@ -6,13 +6,13 @@
 
 ## 冻结点
 
-- **base**（上一轮 verified）: `9767ba275f`（`v0.85.1` 周期末）
-- **target**（必须对照的源码 HEAD）: `bbb61e34aa`（全 SHA `bbb61e34aaf231639fdaaad1adbd757947034eac`；官方 `origin/main`；产品版本仍 **0.85.1**，本轮全在 `[Unreleased]`）
+- **base**（上一轮 verified）: `bbb61e34aa`（`v0.85.1` Unreleased 周期，`bbb61e34aaf231639fdaaad1adbd757947034eac`）
+- **target**（必须对照的源码 HEAD）: `71dca871bc`（全 SHA `71dca871bc80b6bc97be37f0ca3189399d651fff`；官方 `origin/main`；产品版本仍 **0.85.1**，本轮全在 `[Unreleased]`）
 - 源码根: `pi/`（相对本 wiki `../../../pi/`）
-- 节点 `updated:` 一律写成 `bbb61e34aa`
+- 节点 `updated:` 一律写成 `71dca871bc`
 - 未安装上游 `node_modules`，不要宣称 runtime tests 通过。
 - **不要**把 `packages/agent/docs/pico*/**`、`packages/agent/docs/work-packages/**` 当 shipped 源。那是内部设计手稿，最多 `[I]`，**不要新建 pico 节点**。
-- **不要**新建 wiki 节点。JSONL fork / compaction overrides / OpenCode headers / docs evals 全部写进现有页。
+- **不要**新建 wiki 节点。Fireworks deferred tools、DeepSeek Flash 更名、Codex 下架 GPT-5.4、Mistral GLM-5.2、evals `--repetitions` / models.eval / providers.eval 全部写进现有页。
 
 ## 路径增补（frontmatter `source:` 与 `[E:]`）
 
@@ -20,41 +20,32 @@
 
 | 节点 | 必须加入 `source:` |
 |---|---|
-| `subsys.agent-core.jsonl-storage` | `packages/agent/src/harness/session/jsonl/fork.ts`、`jsonl/io.ts`、`packages/agent/src/harness/session/fork-policy.ts`、`packages/agent/src/harness/types.ts` |
-| `subsys.agent-core.session-storage` | `fork-policy.ts`、`fork.ts`（`createForkSnapshot` 仍导出但 **repo 生产路径不再用**） |
-| `subsys.agent-core.memory-storage` | 现有 `memory.ts` / `in-memory-storage-state.ts` 即可；symbols 换成 `MemoryStorage.fork` / `InMemoryStorageState.createFork` |
-| `subsys.agent-core.exec-env` | 现有 `nodejs.ts`；补 `TextLineReader` / `openTextLineReader` |
-| `ref.ai.provider-catalog` / OpenCode 相关 | `packages/ai/src/providers/opencode-headers.ts` |
-| `subsys.evals.pi-harness` | `packages/evals/src/docs.eval.ts` |
+| `subsys.evals.pi-harness` | 现有即可；symbols 补 `excludePiDocumentation` |
+| `subsys.evals.comparative-harness` | `packages/evals/src/models.eval.ts`、`packages/evals/src/providers.eval.ts` |
+| `subsys.ai.model-discovery` / `ref.ai.model-catalog` | 现有 `generate-models.ts`；DeepSeek / Codex 硬编码行号必须重落 |
+| `subsys.ai.anthropic-messages` | 可选补 `packages/ai/scripts/generate-models.ts`（Fireworks `supportsToolReferences`）或只在 model-discovery 写 catalog 事实、本页只写 adapter 机制 |
+| `subsys.ai.mistral-conversations` | 现有即可；`usesReasoningEffort` 必须含 `zai-glm-5-2` |
 
-禁止把 `[E:]` 指到已删除符号：`captureForkSource`、`createFromForkSnapshot`、`fromSnapshot`、`snapshotEntriesAndValues`、`classifyForkAddress`、`ForkDisposition`、`normalizeLegacyV3Records`、`parseTransaction`（现名 `parseJsonlTransaction`，在 `io.ts`）。
+禁止把 `[E:]` 指到已删除符号/id：`deepseek-v4-flash`（官方 bucket 硬编码行）、`deepseek-v4-flash-vision-exp`、Codex catalog 的 `gpt-5.4` / `gpt-5.4-mini`、Google `FinishReason.TOO_MANY_TOOL_CALLS`。`qwen-token-plan-individual` allowlist 里的 `deepseek-v4-flash-0731` **仍在**，不要一起删。
 
 ## 必须写进正文的架构事实（先读源再写，不要照抄本表当 [E]）
 
-1. **产品版本仍 `0.85.1`**，wiki target SHA `bbb61e34aa`。changelog 全在 Unreleased。
-2. **JSONL fork 重写为两趟流式**：`JsonlSessionRepo.resolveForkInput` → `runJsonlFork`（index + stream）→ `JsonlStorage.open`。三种 `JsonlForkInput`：`open` / `closed` / `legacy-v3`。原子发布走 `publishJsonl`（`jsonl/io.ts`）。
-3. **Legacy v3 fork 规则**：**已打开**的 v3 **拒绝** fork（须先 commit 升级到 format 4）；**未打开**的 v3 文件 **可以** fork（`LegacyV3Source.read` + 流式 `writes()`）。
-4. **Memory fork** 是 `MemoryStorage.fork` → `InMemoryStorageState.createFork`（直接迭代 maps），不再走 snapshot 数组。与 JSONL **共享** `selectBranchFork` / `projectForkCurrentStateWrite`，**不共享** IO。
-5. **`createForkSnapshot` 仍从 `session/index.ts` 导出**，供测试/其它 backend；`JsonlSessionRepo` / `MemorySessionRepo` 生产 fork **不再调用它**。
-6. **Fork 复制/排除**：始终复制 `pi.session.name`；排除 `pi.result`、`pi.op.*`、`pi.pending.*`、全部 `usage` writes；lane state 复制但重置 operation/inbox。
-7. **`compaction.modelOverrides`**：键是精确 `"provider/modelId"`（区分大小写，不是 glob）。每字段独立回退：override → ordinary `compaction.*` → `reserveTokens=16384` / `keepRecentTokens=20000`。`enabled` **不能** per-model。`getCompactionSettings(model)`。
-8. **`retry.maxAgentDelayMs`**：默认 **60000**。`retryDelayMs` 把 agent-level 指数退避 `min(base*2^(attempt-1), cap)`。与 `retry.provider.maxRetryDelayMs` **分开**。
-9. **配置键 catalog 84 → 86**：只新增 `compaction.modelOverrides` 与 `retry.maxAgentDelayMs` 两条 leaf。top-level Settings 仍 51，PackageSource 仍 6。
-10. **Compaction 期间 `navigateTree()` throw**（不是 cancelled/排队）：`"Wait for the current compaction or tree navigation to finish before navigating the session tree."` `isCompacting` 含 manual/auto compaction **与** branch summarization。
-11. **RPC `steer` / `follow_up` 经 `_queueUserInput` → `_runInputHandlers` → `emitInput`**（`source: "rpc"`），不再绕过 extension `input` handlers。
-12. **`registerTool` 必须有 object parameter schema**（非 null、非 array），load 时 throw。`ctx.modelRegistry.stream` / `streamSimple` 带 request-time auth，可走 `pi.registerProvider()` 的自定义 provider。
-13. **TUI status**：compaction / retry / branchSummary / working spinner 都能嵌进 editor 顶边框（`embedWorkingStatus`）。嵌入成功后 status dock 清空；**fullscreen 不加 IdleStatus**。
-14. **OpenCode / OpenCode Go**：`withOpenCodeSessionHeader` 在有 `sessionId` 时发 `x-opencode-session`（**不**看 cacheRetention）。Zen 四个 API；Go 三个（无 google-generative-ai）。
-15. **OpenRouter session affinity**：provider 或 `baseUrl` 含 `openrouter.ai` 时默认发 `x-session-id`；`cacheRetention === "none"` 则不把 `sessionId` 传给 client。非 OpenRouter 默认 `x-session-affinity`。compat 可 opt-out。
-16. **Codex Off reasoning**：thinking=`off` 时仍发 `thinkingLevelMap.off`（缺省 `"none"`）；`off === null` 才省略 `body.reasoning`。
-17. **Mistral Medium**：`mistral-medium-*` 与 `mistral-small-2603` / `mistral-small-latest` 用 `reasoning_effort`；其余 reasoning 模型仍 `prompt_mode: "reasoning"`。
-18. **Fireworks**：DeepSeek V4 / Qwen3.8 fallback 进 `forceAdaptiveThinking`；GLM 5.2 去掉冗余 low/medium alias；Kimi K3 去掉 medium alias。规则在 `generate-models.ts`。
-19. **GitHub Copilot**：`generate-models.ts` 把 **全部** `gpt-*`（不再只是 `gpt-5*`）路由到 `openai-responses`。
-20. **EventStream**：`Array.shift` 改为双栈 `FifoQueue`，避免 drain 的 O(n²)。
-21. **nodejs exec-env**：新增 `TextLineReader` / `openTextLineReader`（严格 LF，报告 `terminated`）。`readTextLines` 改走它。shell `exec()` 无功能变更。
-22. **docs evals**：`packages/evals/src/docs.eval.ts` 对 `packages/coding-agent/docs/**/*.md` 做实现对照审计。写进 `subsys.evals.pi-harness`，不新建节点。
-23. **Catalog 未变**：runtime providers **40**；`.models.ts` buckets **39**；slash 23；RPC 33；extension events 36；CLI 63；keybindings 90；env 103；tools 8（coding/read-only 仍不含 powershell）。
-24. **不要**把 `packages/agent/docs/pico-v3.md` / `pico2.md` / `pico/**` 写成 shipped 运行时。
+1. **产品版本仍 `0.85.1`**，wiki target SHA `71dca871bc`。changelog 全在 Unreleased。
+2. **Fireworks Messages deferred tools**：`processFireworksModels` 的 Anthropic compat 设 `supportsToolReferences: true`。任意 loader 名都能工作，但 Fireworks **只对** `ToolSearch` / `tool_search` 做 prefix deferral；其它 loader 名仍会把 loaded schema 放进初始 tool prefix，失去 cache 收益。这不改变 API 路由：Fireworks GLM / Kimi K3 仍走 Chat Completions，不是 Messages。
+3. **DeepSeek 官方 bucket 硬编码行**：现为 `deepseek-flash`（显示名 DeepSeek V4.1 Flash，`input: ["text","image"]`，`thinkingLevelMap: DEEPSEEK_V4_FLASH_THINKING_LEVEL_MAP`，cost 0.3/1.2/0.006）与 `deepseek-v4-pro`（text-only，cost 1.32/3.96/0.044）。**不再**硬编码 `deepseek-v4-flash` 或 `deepseek-v4-flash-vision-exp`。
+4. **OpenAI Codex 硬编码 catalog** 删除 `gpt-5.4` 与 `gpt-5.4-mini`（ChatGPT 账号已不可用）。`gpt-6-astra` / `gpt-5.3-codex-spark` / `gpt-5.5` / `gpt-5.6-luna` 仍在。Azure / Copilot **默认模型 id** 仍可以是 `gpt-5.4`（那是 `model-resolver` 默认，不是 Codex catalog 行）。
+5. **Mistral `usesReasoningEffort`**：在 medium/small-2603/small-latest 之外新增精确 id `zai-glm-5-2`。该模型发 `reasoning_effort`，不发被忽略的 `prompt_mode`。
+6. **Google `mapStopReason`**：`FinishReason.TOO_MANY_TOOL_CALLS` 已从 exhaustive switch 删除。不要再把它列进 error 映射。
+7. **Eval harness 隔离**：临时 `isolatedHome` + `agentDir = ~/.pi/agent`（相对该 home）；`SettingsManager.inMemory({ shellCommandPrefix })` 导出 `HOME` 并 unset `PI_CODING_AGENT_DIR` / `PI_EVAL_ARTIFACT_DIR` / `PI_MODEL` / `PI_PROVIDER` / `PI_REASONING_LEVEL` / `PI_SESSION_FILE` / `PI_SESSION_ID`。
+8. **`transformSystemPrompt` 不再 reload**：改为 hidden inline extension `eval-system-prompt-transform`，钩 `before_agent_start`。空 transform 在**第一次 prompt 之后**才抛。extension path 断言允许 `<inline:eval-system-prompt-transform>`。
+9. **`excludePiDocumentation`**：按 `"\nPi documentation (read only"` 与 `"\nCurrent working directory: "` 两个稳定标记切片，不改生产 prompt builder。缺任一标记即 throw。
+10. **output 投影**现在还能看到 `systemPrompt` 与 `agentDir`（不只 `response`/`session`）。
+11. **`--repetitions` / `PI_EVAL_REPETITIONS`**：默认 1，必须是正整数。`evalHarnessTable` 用 `resolveEvalRepetitions(explicit, env)`；suite 显式 `repetitions` 覆盖 CLI/env。不要把 `PI_EVAL_REPETITIONS` 加进产品 `ref.coding-agent.env-vars`（仍 103）。
+12. **比较报告落盘**：reporter 在非 interrupted 结束时写 `.eval/` 下 `report.txt`（去色）与 `report.json`。多 comparative 文件同一次 invocation 合成一份 `Eval Comparisons` 报告。
+13. **新 comparative evals**（不新建节点，写进 `subsys.evals.comparative-harness`）：`models.eval.ts`（Add model to existing provider，`openai/fixture-chat`）与 `providers.eval.ts`（Add OpenAI-compatible provider `acme` + Add custom streaming provider `acme-stream`）。三者与 `extensions.eval.ts` 一样：baseline = `excludePiDocumentation`，candidate = default system prompt。
+14. **extension eval 标题**现为 “creates and uses the extension”；judge 仍要求 `hello({name:"Bob"})` → `Hello, Bob!`，并拒绝 `@mariozechner/` 与 `@sinclair/typebox`。
+15. **Catalog 未变**：runtime providers **40**；`.models.ts` buckets **39**；slash 23；RPC 33；extension events 36；CLI 63；keybindings 90；env 103；config keys 86；tools 8。
+16. **不要**把 pico 手稿写成 shipped 运行时。
 
 ## 本轮新节点
 
@@ -62,30 +53,29 @@
 
 ## 不要退役的节点
 
-全部保留。`surface.sdk.remote-session`、`subsys.agent-core.session-search`、`subsys.ai.cloudflare-gateway-binding` 语义相对上一轮不变。
+全部保留。extension 相关页只因 `docs/extensions.md` 加了 4 行 Fireworks 说明而机械命中——**不要**为这 4 行重写 extension API 页；Fireworks 事实写进 AI/catalog 节点即可。
 
 ## filler 纪律
 
 只写两类文件：
 
 1. 自己批次里的节点 `docs/llm-wiki/pi/<path>`
-2. 可选 `_staging/uncertainty-update-bbb61e34aa-<slug>.md`
+2. 可选 `_staging/uncertainty-update-71dca871bc-<slug>.md`
 
 禁止改：`index.json`、`llms.txt`、`reference/uncertainty.md`、`README.md`、`conventions.md`、`RUN.md`、`tools/*`、别人批次的节点、`pi/` 源码。
 
 步骤：
 
-1. 读本文件 + `conventions.md` 对应模板。
+1. 读本文件 + `conventions.md` 对应模板 + `_staging/update-facts-71dca871bc.md`。
 2. 读现有节点 `.md`（remap 不要写成空模板；rewrite 保留仍成立的问题列表）。
-3. 用 `read_file` / `grep` 读 **target** 源码。`source:` 先按上表增补，再 `test -f`。
+3. 用 `read_file` / `grep` 读 **target** 源码。`source:` 先按上表增补。
 4. 每个 load-bearing 论断的 `[E: path:line]` 必须落在被断言的那一行代码上（不是空行/注释/纯括号）。
-5. `status: verified`（自己核过至少 3 条 `[E:]`）或 `draft`（核不完），`updated: bbb61e34aa`，`evidence: explicit`。
+5. `status: verified`（自己核过至少 3 条 `[E:]`）或 `draft`（核不完），`updated: 71dca871bc`，`evidence: explicit`。
 6. 跑 lint 时只处理带自己 `node:<path>` 的报错。
 
 ### 按批次深度
 
 - **rewrite**：重写 load-bearing 段与 source/symbols，页结构可留。
-- **remap**：禁止从零重写。删缺失 source、改 `[E:]`、改过时一句；其余不动。
 - **refresh**：对照变更过的 source 修假话、重落行号，不扩写。
 - **create**：本轮不用。
 

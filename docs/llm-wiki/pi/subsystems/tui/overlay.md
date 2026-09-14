@@ -21,7 +21,7 @@ related:
   - subsys.tui.alternate-screen
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > Overlay 是 `TuiBase` 的 renderer-neutral 能力：共享栈管理位置、可见性和焦点恢复，main-screen 与 alternate-screen 在各自 frame diff 前调用同一合成器。

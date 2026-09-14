@@ -22,7 +22,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `SessionRouter` 把应用 `ServerHost` 与 protocol connection 组合成 hosted Session：`resolveSession` / `openSession` 拿到 process-local `RoutedSessionHandle`，每个 connection 再 `attachClient()` 得到 presentation-scoped `RoutedSessionAttachment`。旧 `LiveSessionManager` / `sessions.ts` / `snapshots.ts` 已删除 [E: packages/server/src/types.ts:51] [E: packages/server/src/types.ts:62] [E: packages/server/src/session-router.ts:34]。

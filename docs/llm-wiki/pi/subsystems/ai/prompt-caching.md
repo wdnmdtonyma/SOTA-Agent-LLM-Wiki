@@ -14,7 +14,7 @@ related:
   - subsys.ai.openai-responses
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.ai.prompt-caching` 描述 `pi-ai` 的 prompt caching 边界:OpenAI family 侧集中约束 `prompt_cache_key`,Anthropic Messages 侧把统一 cache retention 转成 Anthropic `cache_control` block metadata。

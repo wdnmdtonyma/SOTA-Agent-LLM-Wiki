@@ -14,7 +14,7 @@ related:
   - subsys.tui.key-parsing
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.tui.key-codes` 是 pi-tui 的 key identifier 基础目录:覆盖 `BaseKey` 可接受的 letter、digit、symbol、special key 字面量,以及 `CODEPOINTS` 在 Kitty / CSI-u / modifyOtherKeys 匹配中使用的显式码点。

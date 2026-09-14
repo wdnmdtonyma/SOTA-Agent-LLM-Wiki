@@ -46,7 +46,7 @@ related:
   - ref.ai.auth-types
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `surface.providers.auth` 把 coding-agent 的 `/login`、`/logout`、`pi auth check`、CLI `--api-key`、`auth.json` 与 `ModelRuntime`/`pi-ai Models` 的请求时认证连成一条当前可检索路径。

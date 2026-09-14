@@ -1,0 +1,1708 @@
+{
+  "base": "bbb61e34aaf231639fdaaad1adbd757947034eac",
+  "target": "71dca871bc80b6bc97be37f0ca3189399d651fff",
+  "target_short": "71dca871bc",
+  "grades": {
+    "A-BROKEN": 0,
+    "B-HEAVY": 0,
+    "C-DRIFT": 23,
+    "D-CLEAN": 177
+  },
+  "changed_files": [
+    ".github/APPROVED_CONTRIBUTORS",
+    "packages/agent/docs/pico/pico-handoff.md",
+    "packages/agent/docs/pico/pico-usage-guide.md",
+    "packages/agent/docs/pico/pico-v3.md",
+    "packages/agent/docs/pico/pico-work.md",
+    "packages/ai/CHANGELOG.md",
+    "packages/ai/scripts/generate-models.ts",
+    "packages/ai/src/api/google-shared.ts",
+    "packages/ai/src/api/mistral-conversations.ts",
+    "packages/ai/test/deferred-tools.test.ts",
+    "packages/ai/test/fireworks-deferred-tools.test.ts",
+    "packages/ai/test/fireworks-models.test.ts",
+    "packages/ai/test/mistral-reasoning-mode.test.ts",
+    "packages/ai/test/openai-completions-tool-choice.test.ts",
+    "packages/ai/test/stream.test.ts",
+    "packages/ai/test/supports-xhigh.test.ts",
+    "packages/coding-agent/docs/extensions.md",
+    "packages/evals/README.md",
+    "packages/evals/scripts/run-evals.mjs",
+    "packages/evals/src/docs.eval.ts",
+    "packages/evals/src/extensions.eval.ts",
+    "packages/evals/src/models.eval.ts",
+    "packages/evals/src/pi-harness.ts",
+    "packages/evals/src/providers.eval.ts",
+    "packages/evals/src/smoke.eval.ts",
+    "packages/evals/src/vitest-evals/harness-table.ts",
+    "packages/evals/src/vitest-evals/reporter.ts",
+    "packages/evals/test/vitest-evals/harness-table.test.ts",
+    "vitest.base.ts"
+  ],
+  "added": [
+    "packages/agent/docs/pico/pico-handoff.md",
+    "packages/ai/test/fireworks-deferred-tools.test.ts",
+    "packages/evals/src/models.eval.ts",
+    "packages/evals/src/providers.eval.ts"
+  ],
+  "deleted": [],
+  "nodes": [
+    {
+      "id": "spine.overview",
+      "path": "spine/overview.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.layered-architecture",
+      "path": "spine/layered-architecture.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.process-lifecycle",
+      "path": "spine/process-lifecycle.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.agent-loop",
+      "path": "spine/agent-loop.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.tool-call-anatomy",
+      "path": "spine/tool-call-anatomy.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.provider-stream",
+      "path": "spine/provider-stream.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.session-state-model",
+      "path": "spine/session-state-model.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.compaction-flow",
+      "path": "spine/compaction-flow.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.extension-lifecycle",
+      "path": "spine/extension-lifecycle.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.trace-interactive-turn",
+      "path": "spine/trace-interactive-turn.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.trace-rpc-prompt",
+      "path": "spine/trace-rpc-prompt.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "spine.trace-extension-tool",
+      "path": "spine/trace-extension-tool.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.tools.bash",
+      "path": "surface/tools/bash.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.tools.read",
+      "path": "surface/tools/read.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.tools.edit",
+      "path": "surface/tools/edit.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.tools.write",
+      "path": "surface/tools/write.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.tools.grep",
+      "path": "surface/tools/grep.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.tools.find",
+      "path": "surface/tools/find.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.tools.ls",
+      "path": "surface/tools/ls.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.cli.overview",
+      "path": "surface/cli/overview.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.modes.interactive",
+      "path": "surface/modes/interactive.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.modes.rpc",
+      "path": "surface/modes/rpc.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.modes.rpc-protocol",
+      "path": "surface/modes/rpc-protocol.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.modes.print",
+      "path": "surface/modes/print.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.config.settings",
+      "path": "surface/config/settings.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.config.resolution",
+      "path": "surface/config/resolution.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.config.keybindings",
+      "path": "surface/config/keybindings.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.providers.overview",
+      "path": "surface/providers/overview.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.providers.auth",
+      "path": "surface/providers/auth.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.providers.custom-provider",
+      "path": "surface/providers/custom-provider.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "surface.extensions.api",
+      "path": "surface/extensions/api.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "surface.extensions.contribution-points",
+      "path": "surface/extensions/contribution-points.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.extensions.context-ui",
+      "path": "surface/extensions/context-ui.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "surface.extensions.events",
+      "path": "surface/extensions/events.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "surface.skills.system",
+      "path": "surface/skills/system.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.prompt-templates.system",
+      "path": "surface/prompts/system.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.slash-commands.overview",
+      "path": "surface/commands/overview.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.sdk.embedding",
+      "path": "surface/sdk/embedding.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.sessions.management",
+      "path": "surface/sessions/management.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.trust.model",
+      "path": "surface/trust/model.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.misc.images",
+      "path": "surface/misc/images.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.misc.containerization",
+      "path": "surface/misc/containerization.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.misc.security",
+      "path": "surface/misc/security.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.misc.packages",
+      "path": "surface/misc/packages.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.provider-registry",
+      "path": "subsystems/ai/provider-registry.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.wire-protocol-dispatch",
+      "path": "subsystems/ai/wire-protocol-dispatch.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.anthropic-messages",
+      "path": "subsystems/ai/anthropic-messages.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.openai-responses",
+      "path": "subsystems/ai/openai-responses.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.openai-completions",
+      "path": "subsystems/ai/openai-completions.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.openai-codex-responses",
+      "path": "subsystems/ai/openai-codex-responses.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.azure-openai-responses",
+      "path": "subsystems/ai/azure-openai-responses.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.bedrock-converse",
+      "path": "subsystems/ai/bedrock-converse.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.google-generative-ai",
+      "path": "subsystems/ai/google-generative-ai.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/src/api/google-shared.ts"
+      ],
+      "missing": [],
+      "churn": 1
+    },
+    {
+      "id": "subsys.ai.google-vertex",
+      "path": "subsystems/ai/google-vertex.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/src/api/google-shared.ts"
+      ],
+      "missing": [],
+      "churn": 1
+    },
+    {
+      "id": "subsys.ai.mistral-conversations",
+      "path": "subsystems/ai/mistral-conversations.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/src/api/mistral-conversations.ts",
+        "packages/ai/test/mistral-reasoning-mode.test.ts"
+      ],
+      "missing": [],
+      "churn": 22
+    },
+    {
+      "id": "subsys.ai.message-transform",
+      "path": "subsystems/ai/message-transform.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.event-stream",
+      "path": "subsystems/ai/event-stream.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.auth-resolution",
+      "path": "subsystems/ai/auth-resolution.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.credential-store",
+      "path": "subsystems/ai/credential-store.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.oauth-flow",
+      "path": "subsystems/ai/oauth-flow.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.env-api-keys",
+      "path": "subsystems/ai/env-api-keys.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.model-discovery",
+      "path": "subsystems/ai/model-discovery.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/src/api/google-shared.ts",
+        "packages/ai/scripts/generate-models.ts"
+      ],
+      "missing": [],
+      "churn": 68
+    },
+    {
+      "id": "subsys.ai.prompt-caching",
+      "path": "subsystems/ai/prompt-caching.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.lazy-loading",
+      "path": "subsystems/ai/lazy-loading.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.image-generation",
+      "path": "subsystems/ai/image-generation.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.session-resources",
+      "path": "subsystems/ai/session-resources.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.compat-legacy",
+      "path": "subsystems/ai/compat-legacy.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.turn-control",
+      "path": "subsystems/agent-core/turn-control.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.message-queue",
+      "path": "subsystems/agent-core/message-queue.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.tool-invocation",
+      "path": "subsystems/agent-core/tool-invocation.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.hooks",
+      "path": "subsystems/agent-core/hooks.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.message-model",
+      "path": "subsystems/agent-core/message-model.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.message-conversion",
+      "path": "subsystems/agent-core/message-conversion.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.session-storage",
+      "path": "subsystems/agent-core/session-storage.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.jsonl-storage",
+      "path": "subsystems/agent-core/jsonl-storage.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.memory-storage",
+      "path": "subsystems/agent-core/memory-storage.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.session-tree",
+      "path": "subsystems/agent-core/session-tree.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.tree-navigation",
+      "path": "subsystems/agent-core/tree-navigation.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.compaction",
+      "path": "subsystems/agent-core/compaction.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.branch-summary",
+      "path": "subsystems/agent-core/branch-summary.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.system-prompt",
+      "path": "subsystems/agent-core/system-prompt.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.skills-loading",
+      "path": "subsystems/agent-core/skills-loading.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.prompt-templates",
+      "path": "subsystems/agent-core/prompt-templates.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.transport-proxy",
+      "path": "subsystems/agent-core/transport-proxy.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.exec-env",
+      "path": "subsystems/agent-core/exec-env.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.agent-session",
+      "path": "subsystems/coding-agent/agent-session.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.session-runtime",
+      "path": "subsystems/coding-agent/session-runtime.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.session-services",
+      "path": "subsystems/coding-agent/session-services.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.system-prompt",
+      "path": "subsystems/coding-agent/system-prompt.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.model-registry",
+      "path": "subsystems/coding-agent/model-registry.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "subsys.coding-agent.model-resolver",
+      "path": "subsystems/coding-agent/model-resolver.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.bash-executor",
+      "path": "subsystems/coding-agent/bash-executor.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.output-truncation",
+      "path": "subsystems/coding-agent/output-truncation.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.file-mutation-queue",
+      "path": "subsystems/coding-agent/file-mutation-queue.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "subsys.coding-agent.edit-engine",
+      "path": "subsystems/coding-agent/edit-engine.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "subsys.coding-agent.path-resolution",
+      "path": "subsystems/coding-agent/path-resolution.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.tool-wrapper",
+      "path": "subsystems/coding-agent/tool-wrapper.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.extension-loader",
+      "path": "subsystems/coding-agent/extension-loader.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "subsys.coding-agent.extension-runner",
+      "path": "subsystems/coding-agent/extension-runner.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "subsys.coding-agent.extension-wrapper",
+      "path": "subsystems/coding-agent/extension-wrapper.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.settings-manager",
+      "path": "subsystems/coding-agent/settings-manager.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.config-resolution",
+      "path": "subsystems/coding-agent/config-resolution.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.resource-loader",
+      "path": "subsystems/coding-agent/resource-loader.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.session-manager",
+      "path": "subsystems/coding-agent/session-manager.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.auth-storage",
+      "path": "subsystems/coding-agent/auth-storage.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.trust-manager",
+      "path": "subsystems/coding-agent/trust-manager.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.keybindings",
+      "path": "subsystems/coding-agent/keybindings.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.event-bus",
+      "path": "subsystems/coding-agent/event-bus.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.footer-data-provider",
+      "path": "subsystems/coding-agent/footer-data-provider.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.html-export",
+      "path": "subsystems/coding-agent/html-export.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.migrations",
+      "path": "subsystems/coding-agent/migrations.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.http-dispatcher",
+      "path": "subsystems/coding-agent/http-dispatcher.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.package-manager",
+      "path": "subsystems/coding-agent/package-manager.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.telemetry",
+      "path": "subsystems/coding-agent/telemetry.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.theme-controller",
+      "path": "subsystems/coding-agent/theme-controller.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.interactive-orchestration",
+      "path": "subsystems/coding-agent/interactive-orchestration.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.runtime",
+      "path": "subsystems/tui/runtime.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.diff-engine",
+      "path": "subsystems/tui/diff-engine.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.component-model",
+      "path": "subsystems/tui/component-model.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.overlay",
+      "path": "subsystems/tui/overlay.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.cursor-positioning",
+      "path": "subsystems/tui/cursor-positioning.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.key-pipeline",
+      "path": "subsystems/tui/key-pipeline.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.key-parsing",
+      "path": "subsystems/tui/key-parsing.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.keybinding-matching",
+      "path": "subsystems/tui/keybinding-matching.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.editor-component",
+      "path": "subsystems/tui/editor-component.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.editor-mechanics",
+      "path": "subsystems/tui/editor-mechanics.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.stdin-buffer",
+      "path": "subsystems/tui/stdin-buffer.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.terminal-capabilities",
+      "path": "subsystems/tui/terminal-capabilities.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.native-modifiers",
+      "path": "subsystems/tui/native-modifiers.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.autocomplete",
+      "path": "subsystems/tui/autocomplete.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.fuzzy-match",
+      "path": "subsystems/tui/fuzzy-match.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.text-utilities",
+      "path": "subsystems/tui/text-utilities.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.terminal-colors",
+      "path": "subsystems/tui/terminal-colors.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.terminal-image",
+      "path": "subsystems/tui/terminal-image.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.ai.provider-catalog",
+      "path": "reference/provider-catalog.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.ai.model-catalog",
+      "path": "reference/model-catalog.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/scripts/generate-models.ts"
+      ],
+      "missing": [],
+      "churn": 67
+    },
+    {
+      "id": "ref.ai.wire-protocol-catalog",
+      "path": "reference/wire-protocol-catalog.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.ai.auth-types",
+      "path": "reference/auth-types.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.ai.core-types",
+      "path": "reference/core-types.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/src/api/google-shared.ts"
+      ],
+      "missing": [],
+      "churn": 1
+    },
+    {
+      "id": "ref.ai.image-models",
+      "path": "reference/image-models.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.agent.message-types",
+      "path": "reference/message-types.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.agent.session-entry-types",
+      "path": "reference/session-entry-types.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.agent.agent-events",
+      "path": "reference/agent-events.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.agent.error-codes",
+      "path": "reference/error-codes.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.agent.thinking-levels",
+      "path": "reference/thinking-levels.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.agent.queue-modes",
+      "path": "reference/queue-modes.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.agent.tool-execution-modes",
+      "path": "reference/tool-execution-modes.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.agent.compaction-config",
+      "path": "reference/compaction-config.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.coding-agent.config-keys",
+      "path": "reference/config-keys.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.coding-agent.slash-commands",
+      "path": "reference/slash-commands.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.coding-agent.default-keybindings",
+      "path": "reference/default-keybindings.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.coding-agent.extension-events",
+      "path": "reference/extension-events.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "ref.coding-agent.contribution-points",
+      "path": "reference/contribution-points.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/coding-agent/docs/extensions.md"
+      ],
+      "missing": [],
+      "churn": 4
+    },
+    {
+      "id": "ref.coding-agent.env-vars",
+      "path": "reference/env-vars.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.coding-agent.session-format",
+      "path": "reference/session-format.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.coding-agent.rpc-methods",
+      "path": "reference/rpc-methods.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.coding-agent.cli-flags",
+      "path": "reference/cli-flags.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.coding-agent.session-events",
+      "path": "reference/session-events.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.coding-agent.json-events",
+      "path": "reference/json-events.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.tui.key-codes",
+      "path": "reference/key-codes.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.tui.keybinding-actions",
+      "path": "reference/keybinding-actions.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.tui.component-types",
+      "path": "reference/component-types.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.package-index",
+      "path": "reference/package-index.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.glossary",
+      "path": "reference/glossary.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.uncertainty",
+      "path": "reference/uncertainty.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.tools-catalog",
+      "path": "reference/tools-catalog.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "ref.interactive.components",
+      "path": "reference/components.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.model-catalog-publication",
+      "path": "subsystems/ai/model-catalog-publication.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/scripts/generate-models.ts"
+      ],
+      "missing": [],
+      "churn": 67
+    },
+    {
+      "id": "surface.providers.llama-cpp",
+      "path": "surface/providers/llama-cpp.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.pi-messages",
+      "path": "subsystems/ai/pi-messages.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.execution-tools",
+      "path": "subsystems/agent-core/execution-tools.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.constrained-sampling",
+      "path": "subsystems/ai/constrained-sampling.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/src/api/google-shared.ts",
+        "packages/ai/src/api/mistral-conversations.ts"
+      ],
+      "missing": [],
+      "churn": 6
+    },
+    {
+      "id": "subsys.ai.provider-retry",
+      "path": "subsystems/ai/provider-retry.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/src/api/google-shared.ts"
+      ],
+      "missing": [],
+      "churn": 1
+    },
+    {
+      "id": "subsys.coding-agent.usage-accounting",
+      "path": "subsystems/coding-agent/usage-accounting.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.evals.pi-harness",
+      "path": "subsystems/evals/pi-harness.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/evals/README.md",
+        "packages/evals/scripts/run-evals.mjs",
+        "packages/evals/src/pi-harness.ts",
+        "packages/evals/src/docs.eval.ts",
+        "packages/evals/src/smoke.eval.ts"
+      ],
+      "missing": [],
+      "churn": 151
+    },
+    {
+      "id": "surface.sdk.remote-session",
+      "path": "surface/sdk/remote-session.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.agent-harness-lifecycle",
+      "path": "subsystems/agent-core/agent-harness-lifecycle.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.session-search",
+      "path": "subsystems/agent-core/session-search.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.client.remote-session-client",
+      "path": "subsystems/client/remote-session-client.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.client.session-leases",
+      "path": "subsystems/client/session-leases.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.client.unix-transport",
+      "path": "subsystems/client/unix-transport.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.coding-agent.experimental-cli",
+      "path": "subsystems/coding-agent/experimental-cli.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.evals.comparative-harness",
+      "path": "subsystems/evals/comparative-harness.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/evals/README.md",
+        "packages/evals/src/extensions.eval.ts",
+        "packages/evals/src/vitest-evals/harness-table.ts",
+        "packages/evals/src/vitest-evals/reporter.ts",
+        "packages/evals/test/vitest-evals/harness-table.test.ts"
+      ],
+      "missing": [],
+      "churn": 131
+    },
+    {
+      "id": "subsys.protocol.cbor-framing",
+      "path": "subsystems/protocol/cbor-framing.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.protocol.wire-protocol",
+      "path": "subsystems/protocol/wire-protocol.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.server.live-sessions",
+      "path": "subsystems/server/live-sessions.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.server.protocol-adapters",
+      "path": "subsystems/server/protocol-adapters.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.server.session-server",
+      "path": "subsystems/server/session-server.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.server.unix-transport",
+      "path": "subsystems/server/unix-transport.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.alternate-screen",
+      "path": "subsystems/tui/alternate-screen.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.layout",
+      "path": "subsystems/tui/layout.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.agent-core.harness-events",
+      "path": "subsystems/agent-core/harness-events.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.ai.cloudflare-gateway-binding",
+      "path": "subsystems/ai/cloudflare-gateway-binding.md",
+      "grade": "C-DRIFT",
+      "hits": [
+        "packages/ai/scripts/generate-models.ts"
+      ],
+      "missing": [],
+      "churn": 67
+    },
+    {
+      "id": "subsys.session-backends.sqlite-node",
+      "path": "subsystems/session-backends/sqlite-node.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.telemetry.contracts",
+      "path": "subsystems/telemetry/contracts.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.alt-screen-search",
+      "path": "subsystems/tui/alt-screen-search.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.tui.latex",
+      "path": "subsystems/tui/latex.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "surface.tools.powershell",
+      "path": "surface/tools/powershell.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.chord.delta",
+      "path": "subsystems/chord/delta.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    },
+    {
+      "id": "subsys.chord.runtime",
+      "path": "subsystems/chord/runtime.md",
+      "grade": "D-CLEAN",
+      "hits": [],
+      "missing": [],
+      "churn": 0
+    }
+  ]
+}

@@ -21,7 +21,7 @@ related:
   - subsys.ai.google-vertex
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.ai.google-generative-ai` 描述 `pi-ai` 如何把统一 `Context` 和 `GoogleOptions` 转成 Gemini Developer API `generateContentStream` 请求,并把 Google SDK stream 归一回 `AssistantMessageEventStream`。
@@ -38,7 +38,7 @@ updated: bbb61e34aa
 
 ## 职责边界
 
-`packages/ai/src/api/google-generative-ai.ts` 是 Gemini Developer API 的 wire entry:它导出 `stream` 和 `streamSimple`,用 `new GoogleGenAI({ apiKey, httpOptions })` 创建 client,并调用 `client.models.generateContentStream(params)`。[E: packages/ai/src/api/google-generative-ai.ts:53][E: packages/ai/src/api/google-generative-ai.ts:89][E: packages/ai/src/api/google-generative-ai.ts:297][E: packages/ai/src/api/google-generative-ai.ts:353][E: packages/ai/src/api/google-generative-ai.ts:354][E: packages/ai/src/api/google-generative-ai.ts:355]
+`packages/ai/src/api/google-generative-ai.ts` 是 Gemini Developer API 的 wire entry:它导出 `stream` 和 `streamSimple`,用 `new GoogleGenAI({ apiKey, httpOptions })` 创建 client,并调用 `client.models.generateContentStream(params)`。[E: packages/ai/src/api/google-generative-ai.ts:53][E: packages/ai/src/api/google-generative-ai.ts:93][E: packages/ai/src/api/google-generative-ai.ts:297][E: packages/ai/src/api/google-generative-ai.ts:353][E: packages/ai/src/api/google-generative-ai.ts:354][E: packages/ai/src/api/google-generative-ai.ts:355]
 
 内置 `google` provider 把 provider id 设为 `google`,默认 base URL 设为 `https://generativelanguage.googleapis.com/v1beta`,认证来源设为 `GEMINI_API_KEY`,并把 `api` 接到 `googleGenerativeAIApi()` lazy wrapper。[E: packages/ai/src/providers/google.ts:8][E: packages/ai/src/providers/google.ts:10][E: packages/ai/src/providers/google.ts:11][E: packages/ai/src/providers/google.ts:13] lazy wrapper 只做 dynamic import,实际协议代码仍在 `google-generative-ai.ts`。[E: packages/ai/src/api/google-generative-ai.lazy.ts:4]
 
@@ -46,7 +46,7 @@ updated: bbb61e34aa
 
 ## request 构造
 
-`stream` 先建立一个空的 `AssistantMessage` accumulator,检查 `options.apiKey`,再创建 SDK client、调用 `buildParams(model, context, options)`,允许 `options.onPayload` 替换 payload,最后把 payload 交给 `generateContentStream`。[E: packages/ai/src/api/google-generative-ai.ts:61][E: packages/ai/src/api/google-generative-ai.ts:83][E: packages/ai/src/api/google-generative-ai.ts:87][E: packages/ai/src/api/google-generative-ai.ts:88][E: packages/ai/src/api/google-generative-ai.ts:89][E: packages/ai/src/api/google-generative-ai.ts:89]
+`stream` 先建立一个空的 `AssistantMessage` accumulator,检查 `options.apiKey`,再创建 SDK client、调用 `buildParams(model, context, options)`,允许 `options.onPayload` 替换 payload,最后把 payload 交给 `generateContentStream`。[E: packages/ai/src/api/google-generative-ai.ts:61][E: packages/ai/src/api/google-generative-ai.ts:83][E: packages/ai/src/api/google-generative-ai.ts:87][E: packages/ai/src/api/google-generative-ai.ts:88][E: packages/ai/src/api/google-generative-ai.ts:89][E: packages/ai/src/api/google-generative-ai.ts:93]
 
 `createClient` 把 `model.baseUrl` 写入 SDK `httpOptions.baseUrl`,同时把 `apiVersion` 清空,因为该 base URL 已经包含版本路径;`model.headers` 和 `options.headers` 经 `providerHeadersToRecord` 合并后作为 SDK HTTP headers。[E: packages/ai/src/api/google-generative-ai.ts:338][E: packages/ai/src/api/google-generative-ai.ts:344][E: packages/ai/src/api/google-generative-ai.ts:346][E: packages/ai/src/api/google-generative-ai.ts:348][E: packages/ai/src/api/google-generative-ai.ts:353]
 
@@ -84,7 +84,7 @@ Google SDK chunk 的 `candidate.content.parts` 是 streaming event 的主要输�
 
 当 chunk part 含 `functionCall` 时,当前 text/thinking block 会先结束,然后生成 pi `ToolCall` block;如果 Google 没给 id 或 id 与已有 tool call 重复,代码用 `${name}_${Date.now()}_${++toolCallCounter}` 生成 id,再发 `toolcall_start`、`toolcall_delta`、`toolcall_end`。[E: packages/ai/src/api/google-generative-ai.ts:167][E: packages/ai/src/api/google-generative-ai.ts:184][E: packages/ai/src/api/google-generative-ai.ts:188][E: packages/ai/src/api/google-generative-ai.ts:190][E: packages/ai/src/api/google-generative-ai.ts:192][E: packages/ai/src/api/google-generative-ai.ts:195][E: packages/ai/src/api/google-generative-ai.ts:204][E: packages/ai/src/api/google-generative-ai.ts:205][E: packages/ai/src/api/google-generative-ai.ts:211]
 
-finish reason 先经 shared `mapStopReason` 转成 pi `StopReason`。`MAX_TOKENS` 映射为 `length`，`STOP` 映射为 `stop`。只有 mapped reason 仍是 `stop` 且 content 里已有 `toolCall` 时，才改写成 `toolUse`；`length` 即使夹带 function call 也保持 `length`，不再当普通 tool use。Vertex 用同一判断。测试锁定 `MAX_TOKENS` + tool call → `length`，`STOP` + tool call → `toolUse`。[E: packages/ai/src/api/google-generative-ai.ts:216][E: packages/ai/src/api/google-generative-ai.ts:218][E: packages/ai/src/api/google-generative-ai.ts:219][E: packages/ai/src/api/google-generative-ai.ts:220][E: packages/ai/src/api/google-shared.ts:379][E: packages/ai/src/api/google-shared.ts:381][E: packages/ai/src/api/google-shared.ts:383][E: packages/ai/src/api/google-shared.ts:384][E: packages/ai/src/api/google-vertex.ts:236][E: packages/ai/src/api/google-vertex.ts:237][E: packages/ai/test/google-raw-stop-reason.test.ts:163][E: packages/ai/test/google-raw-stop-reason.test.ts:169][E: packages/ai/test/google-raw-stop-reason.test.ts:174][E: packages/ai/test/google-raw-stop-reason.test.ts:180]
+finish reason 先经 shared `mapStopReason` 转成 pi `StopReason`。`MAX_TOKENS` 映射为 `length`，`STOP` 映射为 `stop`。`MALFORMED_FUNCTION_CALL`、`UNEXPECTED_TOOL_CALL`、`NO_IMAGE` 与其它 listed safety/recitation 原因映射为 `error`。只有 mapped reason 仍是 `stop` 且 content 里已有 `toolCall` 时，才改写成 `toolUse`；`length` 即使夹带 function call 也保持 `length`，不再当普通 tool use。Vertex 用同一判断。测试锁定 `MAX_TOKENS` + tool call → `length`，`STOP` + tool call → `toolUse`。[E: packages/ai/src/api/google-generative-ai.ts:216][E: packages/ai/src/api/google-generative-ai.ts:218][E: packages/ai/src/api/google-generative-ai.ts:219][E: packages/ai/src/api/google-generative-ai.ts:220][E: packages/ai/src/api/google-shared.ts:379][E: packages/ai/src/api/google-shared.ts:381][E: packages/ai/src/api/google-shared.ts:382][E: packages/ai/src/api/google-shared.ts:383][E: packages/ai/src/api/google-shared.ts:384][E: packages/ai/src/api/google-shared.ts:397][E: packages/ai/src/api/google-shared.ts:398][E: packages/ai/src/api/google-shared.ts:399][E: packages/ai/src/api/google-shared.ts:400][E: packages/ai/src/api/google-vertex.ts:236][E: packages/ai/src/api/google-vertex.ts:237][E: packages/ai/test/google-raw-stop-reason.test.ts:163][E: packages/ai/test/google-raw-stop-reason.test.ts:169][E: packages/ai/test/google-raw-stop-reason.test.ts:174][E: packages/ai/test/google-raw-stop-reason.test.ts:180]
 
 usage metadata 被转成 pi `usage`:input 扣除 cache read,candidates token 与 thoughts token 合并为 output,thoughts token 另存为 `reasoning`,然后调用 `calculateCost(model, output.usage)`。[E: packages/ai/src/api/google-generative-ai.ts:224][E: packages/ai/src/api/google-generative-ai.ts:226][E: packages/ai/src/api/google-generative-ai.ts:229][E: packages/ai/src/api/google-generative-ai.ts:230][E: packages/ai/src/api/google-generative-ai.ts:232][E: packages/ai/src/api/google-generative-ai.ts:242]
 
@@ -92,7 +92,7 @@ usage metadata 被转成 pi `usage`:input 扣除 cache read,candidates token 与
 
 ## 与 Vertex 的差异
 
-Google Generative AI 要求 `options.apiKey` 存在,否则直接报 `No API key for provider`;Vertex 先 `resolveApiKey(options)`,有有效 key 时走 API key client,否则走 ADC/project/location client。[E: packages/ai/src/api/google-generative-ai.ts:83][E: packages/ai/src/api/google-generative-ai.ts:84][E: packages/ai/src/api/google-generative-ai.ts:85][E: packages/ai/src/api/google-vertex.ts:101][E: packages/ai/src/api/google-vertex.ts:103][E: packages/ai/src/api/google-vertex.ts:105]
+Google Generative AI 要求 `options.apiKey` 存在,否则直接报 `No API key for provider`;Vertex 先 `resolveApiKey(options)`,有有效 key 时走 API key client,否则走 ADC/project/location client。[E: packages/ai/src/api/google-generative-ai.ts:83][E: packages/ai/src/api/google-generative-ai.ts:84][E: packages/ai/src/api/google-generative-ai.ts:85][E: packages/ai/src/api/google-vertex.ts:101][E: packages/ai/src/api/google-vertex.ts:103] [E: packages/ai/src/api/google-vertex.ts:105]
 
 Google Generative AI client 传的是 `{ apiKey, httpOptions }`;Vertex 的 ADC client 传 `vertexai: true`、project、location 和 `apiVersion: "v1"`,Vertex API-key client 则传 `vertexai: true`、apiKey 和同一 API version。[E: packages/ai/src/api/google-generative-ai.ts:353][E: packages/ai/src/api/google-generative-ai.ts:354][E: packages/ai/src/api/google-vertex.ts:57][E: packages/ai/src/api/google-vertex.ts:361][E: packages/ai/src/api/google-vertex.ts:362][E: packages/ai/src/api/google-vertex.ts:363][E: packages/ai/src/api/google-vertex.ts:364][E: packages/ai/src/api/google-vertex.ts:365][E: packages/ai/src/api/google-vertex.ts:376][E: packages/ai/src/api/google-vertex.ts:377][E: packages/ai/src/api/google-vertex.ts:378][E: packages/ai/src/api/google-vertex.ts:379]
 
@@ -117,7 +117,7 @@ thinking level 的 SDK enum 表达不同:Generative AI 直接把 shared `GoogleA
 
 Accumulator 从 `pending` 开始；candidate finish reason 同时保存在 `rawStopReason` 并映射 unified reason，流结束仍为 pending 会转成 terminal error。[E: packages/ai/src/api/google-generative-ai.ts:61] [E: packages/ai/src/api/google-generative-ai.ts:75] [E: packages/ai/src/api/google-generative-ai.ts:216] [E: packages/ai/src/api/google-generative-ai.ts:220] [E: packages/ai/src/api/google-generative-ai.ts:268] [E: packages/ai/src/api/google-generative-ai.ts:275]
 
-`generateContentStream()` 建流请求现在经 `retryGoogleRequest()` 接入 shared provider retry；它不包后续 `for await` 的中途断流。Google SDK 不能注入任意 fetch，因此非 `globalThis.fetch` 会被显式拒绝。[E: packages/ai/src/api/google-generative-ai.ts:79] [E: packages/ai/src/api/google-generative-ai.ts:81] [E: packages/ai/src/api/google-generative-ai.ts:93] [E: packages/ai/src/api/google-shared.ts:432] [E: packages/ai/src/api/google-shared.ts:436]
+`generateContentStream()` 建流请求现在经 `retryGoogleRequest()` 接入 shared provider retry；它不包后续 `for await` 的中途断流。Google SDK 不能注入任意 fetch，因此非 `globalThis.fetch` 会被显式拒绝。[E: packages/ai/src/api/google-generative-ai.ts:79] [E: packages/ai/src/api/google-generative-ai.ts:81] [E: packages/ai/src/api/google-generative-ai.ts:93] [E: packages/ai/src/api/google-shared.ts:431] [E: packages/ai/src/api/google-shared.ts:435]
 
 Client `httpOptions.headers` 默认先写 `User-Agent: getPiUserAgent()`，再 overlay `model.headers` 与 request headers [E: packages/ai/src/api/google-generative-ai.ts:348] [E: packages/ai/src/utils/pi-user-agent.ts:17]。
 

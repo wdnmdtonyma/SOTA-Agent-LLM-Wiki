@@ -56,7 +56,7 @@ related:
   - subsys.server.session-server
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.package-index` 枚举 Pi monorepo 当前 workspace、公开 npm 包名、build / publish 边界。源码 workspace 仍是 `packages/*`（**10** 个一阶包，含 `@earendil-works/chord`）+ `packages/session-backends/*` + 五个 extension examples，公开包版本仍 **0.85.1**，本轮无新 workspace 包；`packages/storage/*` 已不存在。

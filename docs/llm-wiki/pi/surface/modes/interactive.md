@@ -40,7 +40,7 @@ related:
   - subsys.tui.runtime
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `surface.modes.interactive` 描述 pi-coding-agent 的 terminal interactive mode: `InteractiveMode` 持有当前 `AgentSessionRuntime`, 启动 `pi-tui` UI, 接收用户输入, 把普通 prompt 送入 `AgentSession.prompt()`, 并把 agent events 渲染回 chat/status/tool UI。

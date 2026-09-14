@@ -58,7 +58,7 @@ related:
   - ref.package-index
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > Pi 0.85.1（wiki target `bbb61e34aa`；包版本与根 `build` 顺序未变）的主线分层从独立 `@earendil-works/chord` 开始：`pi-ai` 提供 provider / model API，`pi-agent-core` 提供可复用 agent runtime，`pi-coding-agent` 把 runtime 装配成 coding-agent CLI 产品；`AgentSession` 是产品层和 core runtime 的主要边界对象。远程 `pi-protocol` / Chord 风格 `pi-client` `Client` / `pi-server` 是 composable remote-session 栈，不等于本地 RPC mode，也不等于已删除的 coding-agent `RemoteSession`。

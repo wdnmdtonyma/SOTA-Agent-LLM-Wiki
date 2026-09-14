@@ -39,7 +39,7 @@ related:
   - ref.interactive.components
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `InteractiveMode` 是 pi-coding-agent 的 long-lived TUI host: 它把 terminal rendering、editor input、extension UI、session lifecycle rebinding 和 `AgentSession.prompt()` loop 接在同一个交互式事件编排层里。

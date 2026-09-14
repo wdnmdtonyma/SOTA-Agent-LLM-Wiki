@@ -29,7 +29,7 @@ related:
   - ref.coding-agent.env-vars
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `powershell` 是 pi-coding-agent 暴露给模型的可选 Windows PowerShell command tool: 它是 `bash.ts` shared shell factory 的薄封装, 本地 backend 会给 command 加 UTF-8 `OutputEncoding` prefix, 并复用 bash 的 schema、截断和 renderer。

@@ -101,7 +101,7 @@ related:
   - subsys.coding-agent.interactive-orchestration
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.interactive.components` 是 `pi-coding-agent` 交互式 TUI 组件目录: ground truth 是 `packages/coding-agent/src/modes/interactive/components/` 的 43 个 TypeScript 文件, 包括 chat message renderer、selector/dialog、extension UI primitive、footer、animation、markdown transformer 和 rendering helper。

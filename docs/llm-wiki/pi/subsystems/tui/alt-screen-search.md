@@ -24,7 +24,7 @@ related:
   - subsys.tui.keybinding-matching
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > Fullscreen transcript 搜索是 `TuiAltScreen` 在 primary `ScrollView` 已渲染文本上做的增量查找：`Ctrl+Shift+F` 打开 overlay，边输入边高亮，`Enter`/`Ctrl+G` 下一处、`Shift+Enter` 上一处；手动滚动不会把视口弹回当前 match。

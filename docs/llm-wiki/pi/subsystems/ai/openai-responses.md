@@ -24,7 +24,7 @@ related:
   - subsys.ai.openai-completions
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.ai.openai-responses` 描述 `pi-ai` 的 OpenAI Responses API wire 入口:把统一 `Model + Context + StreamOptions` 转成 `client.responses.create(...stream: true)`,再把 Responses stream events 归一成 `AssistantMessageEventStream`。

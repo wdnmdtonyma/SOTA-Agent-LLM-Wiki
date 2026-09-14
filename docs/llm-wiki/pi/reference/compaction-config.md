@@ -13,7 +13,7 @@ related:
   - subsys.agent-core.compaction
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.agent.compaction-config` 是 `pi-agent-core` compaction settings 的字段级目录:覆盖 `CompactionSettings` 的三个配置字段、`DEFAULT_COMPACTION_SETTINGS` 的默认值,以及这些字段在 threshold gate、cut point 和 summary token budget 中的直接消费点。这是 harness 的 `CompactionSettings`，**不是** coding-agent `settings.json` 的 `compaction.modelOverrides`。

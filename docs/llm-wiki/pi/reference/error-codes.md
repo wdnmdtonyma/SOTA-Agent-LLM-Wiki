@@ -37,7 +37,7 @@ related:
   - subsys.agent-core.jsonl-storage
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.agent.error-codes` 是当前 harness 错误面的逐实例目录：`FileErrorCode` / `ExecutionErrorCode` / `CompactionErrorCode` / `BranchSummaryErrorCode`、session typed Error、JSONL 普通 `Error` 消息，以及 `TaggedError` `_tag` 与 `SliceNotImplemented`。`SessionErrorCode`、`JsonlDecodeError`、`RecordLogCorruptionReason`、`AgentHarnessErrorCode` 已删除。本轮没有新增 typed error code。

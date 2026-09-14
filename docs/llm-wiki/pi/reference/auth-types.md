@@ -31,7 +31,7 @@ related:
   - subsys.ai.credential-store
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.ai.auth-types` 是 `packages/ai/src/auth/types.ts` 中 auth、credential 与 credential store 相关导出类型的字段目录。

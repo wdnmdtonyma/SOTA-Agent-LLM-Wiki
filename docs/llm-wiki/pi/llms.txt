@@ -2,7 +2,7 @@
 
 > **pi**(`pi/`,10 个源码 package workspace + 5 个 extension-example workspace 的 TypeScript monorepo,自扩展编码 agent harness)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 pi git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
 >
-> **状态:已完成 —— 全部 200 节点 verified 于 `bbb61e34aa`（v0.85.1 Unreleased）。**
+> **状态:已完成 —— 全部 200 节点 verified 于 `71dca871bc`（v0.85.1 Unreleased）。**
 >
 > **核心组织主线 —— 分层栈 + 复用边界 + 自扩展**:pi 是一条独立 `@earendil-works/chord` → `pi-ai` → `pi-agent-core` → `pi-coding-agent` + `pi-tui`，并由 `pi-protocol` / Chord 风格 `pi-client` `Client` / `pi-server` 提供实验性 remote-session 链，旁接 `pi-session-backend-sqlite-node`、`pi-telemetry` 与 private `pi-evals`。每个节点 frontmatter 标 `pkg: chord|ai|agent|protocol|client|coding-agent|tui|server|session-backends|telemetry|evals|cross`。
 

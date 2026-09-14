@@ -48,7 +48,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `spine.session-state-model` 串起 `pi-agent-core` 的 `SessionRepo` → `Storage` → `Session` / `Branch` → `commit(Write[])` 流程：tree 只存 `Entry`，branch tip / lane 配置 / 操作态走 `values.ts` 地址；fork 在 JSONL 上是 `resolveForkInput` → `runJsonlFork` → `JsonlStorage.open`，在 memory 上是 `MemoryStorage.fork` / `InMemoryStorageState.createFork`；并明确它与 `pi-coding-agent` 产品级 `SessionManager`（`CURRENT_SESSION_VERSION = 3`）是两套相邻但独立的状态系统。

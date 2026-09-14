@@ -13,6 +13,7 @@ source:
   - .github/workflows/publish-model-catalog.yml
   - package.json
   - packages/ai/package.json
+  - packages/ai/src/models.generated.ts
 symbols:
   - validateBundle
   - buildIndex
@@ -22,7 +23,7 @@ related:
   - subsys.ai.model-discovery
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.ai.model-catalog-publication` 是独立于 npm package release 的 artifact pipeline：生成完整 JSON model bundle，验证 bundle 内部一致性，以内容 hash 建不可变 revision，并在受控窗口发布到 S3-compatible R2。
@@ -46,9 +47,11 @@ root scripts 把 `generate:model-catalog`、`diff:model-catalog` 和 `check:mode
 
 `generate-models.ts` 的 CLI 明确区分 `strict`、`jsonOnly`、`jsonOutputDir` 与 `pretty`，并拒绝没有 output directory 的 `--json-only` [E: packages/ai/scripts/generate-models.ts:40] [E: packages/ai/scripts/generate-models.ts:55] [E: packages/ai/scripts/generate-models.ts:63] [E: packages/ai/scripts/generate-models.ts:71] [E: packages/ai/scripts/generate-models.ts:80]。
 
-JSON output directory 被重建后包含三层：聚合 `models.json`、排序的 `providers.json`、以及 `providers/<provider>.json` shards [E: packages/ai/scripts/generate-models.ts:3149] [E: packages/ai/scripts/generate-models.ts:3153] [E: packages/ai/scripts/generate-models.ts:3154] [E: packages/ai/scripts/generate-models.ts:3156]。普通 package build 还生成只保留类型结构的 `.models.ts` 与 gitignored adjacent JSON values；两者来自同一 provider data，但输出位置和消费方不同 [E: packages/ai/scripts/generate-models.ts:3096] [E: packages/ai/scripts/generate-models.ts:3149] [E: packages/ai/scripts/generate-models.ts:3128]。
+JSON output directory 被重建后包含三层：聚合 `models.json`、排序的 `providers.json`、以及 `providers/<provider>.json` shards [E: packages/ai/scripts/generate-models.ts:3112] [E: packages/ai/scripts/generate-models.ts:3116] [E: packages/ai/scripts/generate-models.ts:3117] [E: packages/ai/scripts/generate-models.ts:3119]。普通 package build 还生成只保留类型结构的 `.models.ts` 与 gitignored adjacent JSON values；两者来自同一 provider data，但输出位置和消费方不同 [E: packages/ai/scripts/generate-models.ts:3059] [E: packages/ai/scripts/generate-models.ts:3112] [E: packages/ai/scripts/generate-models.ts:3091]。
 
-本地 data 另有 schema-3 manifest：记录 generatedAt、structure hash 与逐文件 SHA-256。validator 对 aggregator/provider shards、data files、manifest filenames/hash、model id/provider/api 和完整 model shape 做一致性检查；缺失或 stale data 会要求运行 `hydrate:model-data`。[E: packages/ai/scripts/model-data.ts:5] [E: packages/ai/scripts/model-data.ts:10] [E: packages/ai/scripts/model-data.ts:73] [E: packages/ai/scripts/model-data.ts:149] [E: packages/ai/scripts/model-data.ts:173] [E: packages/ai/scripts/check-model-data.ts:9] [E: packages/ai/scripts/check-model-data.ts:13]
+本地 data 另有 schema-3 manifest：记录 generatedAt、structure hash 与逐文件 SHA-256。validator 对 aggregator/provider shards、data files、manifest filenames/hash、model id/provider/api 和完整 model shape 做一致性检查；缺失或 stale data 会要求运行 `hydrate:model-data`。[E: packages/ai/scripts/model-data.ts:5] [E: packages/ai/scripts/model-data.ts:10] [E: packages/ai/scripts/model-data.ts:152] [E: packages/ai/scripts/model-data.ts:193] [E: packages/ai/scripts/model-data.ts:277] [E: packages/ai/scripts/check-model-data.ts:10] [E: packages/ai/scripts/check-model-data.ts:14]
+
+目标 `71dca871bc` 的 generator 规则变了，但 **structural bucket 仍是 39**、runtime providers 仍是 40：Fireworks Messages 写 `supportsToolReferences: true`；官方 DeepSeek 硬编码是 `deepseek-flash` / `deepseek-v4-pro`；Codex 显式列表以 `gpt-6-astra` 开头、不再硬编码 `gpt-5.4` / `gpt-5.4-mini`。[E: packages/ai/src/models.generated.ts:44] [E: packages/ai/src/models.generated.ts:83] [E: packages/ai/scripts/generate-models.ts:1426] [E: packages/ai/scripts/generate-models.ts:2643] [E: packages/ai/scripts/generate-models.ts:2663] [E: packages/ai/scripts/generate-models.ts:2775] [I]
 
 ## 发布前验证
 
@@ -72,7 +75,7 @@ publisher 若发现 current index 已把同一 revision 同时设为 default 和
 
 ## CI、artifact handoff 与发布时间
 
-workflow 的 generate job checkout `workflow_run.head_sha` / manual ref / event SHA，安装依赖，生成并 dry-run validate JSON，再上传名为 `model-catalog-json` 的 14-day artifact [E: .github/workflows/publish-model-catalog.yml:39] [E: .github/workflows/publish-model-catalog.yml:42] [E: .github/workflows/publish-model-catalog.yml:57] [E: .github/workflows/publish-model-catalog.yml:60] [E: .github/workflows/publish-model-catalog.yml:63] [E: .github/workflows/publish-model-catalog.yml:68] [E: .github/workflows/publish-model-catalog.yml:71]。
+workflow 的 generate job checkout `workflow_run.head_sha` / manual ref / event SHA，安装依赖，生成并 dry-run validate JSON，再上传名为 `model-catalog-json` 的 14-day artifact [E: .github/workflows/publish-model-catalog.yml:42] [E: .github/workflows/publish-model-catalog.yml:47] [E: .github/workflows/publish-model-catalog.yml:57] [E: .github/workflows/publish-model-catalog.yml:60] [E: .github/workflows/publish-model-catalog.yml:63] [E: .github/workflows/publish-model-catalog.yml:68] [E: .github/workflows/publish-model-catalog.yml:71]。
 
 publish job 依赖 generate artifact，运行在 `pi-model-upload` environment，并用 concurrency group 串行化 R2 发布 [E: .github/workflows/publish-model-catalog.yml:73] [E: .github/workflows/publish-model-catalog.yml:75] [E: .github/workflows/publish-model-catalog.yml:77] [E: .github/workflows/publish-model-catalog.yml:79]。R2 credentials 来自 environment secrets；artifact 被下载到与 generator 相同的 `.artifacts/model-catalog` 路径 [E: .github/workflows/publish-model-catalog.yml:83] [E: .github/workflows/publish-model-catalog.yml:87] [E: .github/workflows/publish-model-catalog.yml:101] [E: .github/workflows/publish-model-catalog.yml:104]。
 
@@ -87,7 +90,7 @@ schedule 在工作日 UTC 8–13 点每小时产生候选 [E: .github/workflows/
 ## Gotcha
 
 - published bundle 是生成时外部 catalog 输入的 snapshot；`sourceCommit` 绑定生成逻辑版本，但不证明未来重新运行同一 commit 会得到相同远端数据。[I]
-- 本轮目标 tree 仍不包含 ignored model JSON；可复现的 membership 证据必须组合 publication/npm artifact 与带时间/hash 的 generator 输入。structural bucket 仍是 39，flattened model count 不能从 checkout 标成 `[E]`。生成器规则变了（Fireworks adaptive-thinking fallback、Copilot 全部 `gpt-*` → `openai-responses`），但 bucket 集合没有增减。[E: packages/ai/src/models.generated.ts:44] [E: packages/ai/src/models.generated.ts:83] [E: packages/ai/scripts/generate-models.ts:293] [E: packages/ai/scripts/generate-models.ts:2146] [I]
+- 本轮目标 tree 仍不包含 ignored model JSON；可复现的 membership 证据必须组合 publication/npm artifact 与带时间/hash 的 generator 输入。structural bucket 仍是 39，flattened model count 不能从 checkout 标成 `[E]`。生成器规则变了（Fireworks Messages `supportsToolReferences`、官方 DeepSeek `deepseek-flash`、Codex 去掉 `gpt-5.4`/`gpt-5.4-mini`、Copilot 全部 `gpt-*` → `openai-responses`），但 bucket 集合没有增减。[E: packages/ai/src/models.generated.ts:44] [E: packages/ai/src/models.generated.ts:83] [E: packages/ai/scripts/generate-models.ts:1426] [E: packages/ai/scripts/generate-models.ts:2643] [E: packages/ai/scripts/generate-models.ts:2775] [E: packages/ai/scripts/generate-models.ts:2148] [I]
 - dry-run 仍会写 `publication.json` 到 input directory，然后在上传前退出 [E: scripts/publish-model-catalog.mjs:255] [E: scripts/publish-model-catalog.mjs:258]。
 - revision objects 先于 index 上传；上传中途失败可能留下不可达 immutable objects，但不会把 index 指向不完整 revision。[I]
 - scheduler 的 cron 只是候选触发器，Europe/Vienna check 才是实际 publication policy [E: .github/workflows/publish-model-catalog.yml:20] [E: .github/workflows/publish-model-catalog.yml:140]。
@@ -108,6 +111,7 @@ schedule 在工作日 UTC 8–13 点每小时产生候选 [E: .github/workflows/
 - .github/workflows/publish-model-catalog.yml
 - package.json
 - packages/ai/package.json
+- packages/ai/src/models.generated.ts
 
 ## 相关
 

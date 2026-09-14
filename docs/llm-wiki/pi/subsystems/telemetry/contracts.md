@@ -35,7 +35,7 @@ related:
   - spine.provider-stream
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.telemetry.contracts` 是 `@earendil-works/pi-telemetry` 的 vendor-neutral 契约层:显式 callback `TelemetryContext` / `TelemetrySpan`、共享 `NOOP_TELEMETRY_CONTEXT`、进程内 `InMemoryTelemetryContext`、typed schema 工具,以及 runner-independent adapter conformance。本包不包含 exporter、全局 current-span 或 backend SDK。

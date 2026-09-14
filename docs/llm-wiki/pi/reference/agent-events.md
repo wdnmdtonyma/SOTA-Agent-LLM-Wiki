@@ -22,7 +22,7 @@ related:
   - ref.coding-agent.session-events
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.agent.agent-events` 是当前 agent-core 事件 catalog：低层 `AgentEvent` 的 10 个 runtime variant，加上 `agent-harness.ts` 的 `HarnessEvent` / `HarnessEventPayload`。旧 `AgentHarnessEvent` / `AgentHarnessOwnEvent` 与仅含 `run_start`/`run_end` 的窄 `HarnessEvent` 都已过期。

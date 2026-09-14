@@ -18,7 +18,7 @@ related:
   - ref.coding-agent.json-events
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `print` 单次模式是 pi-coding-agent 的非交互运行面:CLI 创建一个 `AgentSessionRuntime`,把初始 prompt 与后续消息送进 `AgentSession`,在 text 模式只打印最终 assistant 文本,在 json 模式按 JSON Lines 输出 session header 与事件流。

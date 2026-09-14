@@ -20,7 +20,7 @@ related:
   - subsys.agent-core.system-prompt
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.coding-agent.system-prompt` 描述 `pi-coding-agent` 产品层如何把默认 coding assistant 文案、tool snippets、prompt guidelines、project context、skills、日期和 cwd 拼成模型看到的 system prompt。

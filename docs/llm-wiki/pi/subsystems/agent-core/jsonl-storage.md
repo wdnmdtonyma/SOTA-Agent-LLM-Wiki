@@ -35,7 +35,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.agent-core.jsonl-storage` 描述 `pi-agent-core` 的 durable JSONL 实现：公开 `JsonlSessionRepo` 返回 `StorageBackedSession`；每文件由 `JsonlStorage` 维护一份 `InMemoryStorageState`；首行是 `kind: "header", v: 4`，后续每行一条 commit 事务。fork 是两趟流式：`resolveForkInput` → `runJsonlFork` → `JsonlStorage.open`。解析与原子发布在 `jsonl/io.ts`。

@@ -18,7 +18,7 @@ related:
   - subsys.tui.keybinding-matching
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `keybindings.ts` 是 pi-coding-agent 的 product-level keybinding layer: 它把 pi-tui 的默认键位表扩展为 app actions, 从 `keybindings.json` 读取 user bindings, 迁移 legacy action names, 再交给 pi-tui 的 `KeybindingsManager` 做匹配与解析。

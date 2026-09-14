@@ -19,7 +19,7 @@ related:
   - subsys.client.remote-session-client
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `surface.sdk.remote-session` 记录 `@earendil-works/pi-coding-agent/client` 的退役：`RemoteSession` / transcript reducer 已删除；该 subpath 只 source-only re-export `@earendil-works/pi-client` 的 Chord 风格 `Client`。

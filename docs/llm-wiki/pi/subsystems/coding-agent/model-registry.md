@@ -32,7 +32,7 @@ related:
   - subsys.ai.model-discovery
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ModelRuntime` 已取代旧 `ModelRegistry` 成为 coding-agent 的 canonical 模型/auth runtime；`ModelRegistry` 现在只是面向 extension 兼容 API 的同步 facade。

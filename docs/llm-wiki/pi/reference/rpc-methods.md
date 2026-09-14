@@ -16,7 +16,7 @@ symbols:
   - RpcResponse
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 related:
   - surface.modes.rpc
   - surface.modes.rpc-protocol

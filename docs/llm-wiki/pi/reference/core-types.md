@@ -19,7 +19,7 @@ related:
   - subsys.ai.message-transform
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.ai.core-types` 是 `packages/ai/src/types.ts` exported 类型的字段级目录，并收录 `google-shared.ts` 的 `GoogleApiThinkingLevel` / `ResolvedGoogleThinkingLevel`：覆盖模型元数据、请求上下文、消息 union、assistant 流事件、usage/cost 与 image/compat 辅助类型。

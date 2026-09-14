@@ -62,7 +62,7 @@ related:
   - ref.package-index
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `spine.overview` 描述 Pi monorepo（产品版本仍 **0.85.1**，wiki target SHA `bbb61e34aa`；`[Unreleased]` 含 streaming JSONL forks、per-model compaction budgets、OpenCode session header，**不**新增 workspace 包）从 `pi-coding-agent` CLI 产品入口，经 reusable `pi-agent-core` harness，再到 multi-provider `pi-ai` streaming 的端到端主路径；`@earendil-works/chord` 是独立 application-composition runtime，远程 `protocol` / Chord 风格 `pi-client` `Client` / `pi-server` 是另一条 composable session 栈，不等于本地 RPC mode，也不等于已删除的 coding-agent `RemoteSession`。

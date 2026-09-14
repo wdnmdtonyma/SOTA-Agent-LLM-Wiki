@@ -24,7 +24,7 @@ related:
   - subsys.coding-agent.http-dispatcher
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `surface.sdk.embedding` 是 `@earendil-works/pi-coding-agent` 给外部应用嵌入 pi agent 的编程入口:调用方用 `createAgentSession()` 创建一个 `AgentSession`,再通过 `prompt()`、`subscribe()`、模型/工具/会话选项把 pi 接入自定义 UI、自动化流程或测试 harness。

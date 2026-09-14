@@ -13,7 +13,7 @@ related:
   - subsys.ai.openai-codex-responses
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.ai.session-resources` 描述 `pi-ai` 的 session resource cleanup registry: provider 或 wire adapter 注册一个可按 `sessionId` 清理资源的 callback, session 生命周期结束时由调用方触发统一清理。

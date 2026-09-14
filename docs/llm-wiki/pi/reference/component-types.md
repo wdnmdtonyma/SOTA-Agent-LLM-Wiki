@@ -41,7 +41,7 @@ symbols:
   - VStack
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 related:
   - subsys.tui.component-model
 ---

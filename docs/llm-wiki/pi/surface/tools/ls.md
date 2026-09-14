@@ -27,7 +27,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ls` 是 pi-coding-agent 暴露给模型的 directory listing tool: 给定目录路径,按字母序返回条目名,目录追加 `/`,包含 dotfiles,并用 entry limit 与 byte truncation 控制输出体积。

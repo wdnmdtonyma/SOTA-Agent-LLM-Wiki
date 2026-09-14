@@ -14,7 +14,7 @@ related:
   - ref.agent.agent-events
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.coding-agent.session-events` 是 coding-agent 产品层 `AgentSessionEvent` 的逐实例 catalog:以 `packages/coding-agent/src/core/agent-session.ts` 中的 `AgentSessionEvent` union、`_handleAgentEvent()`、`_emitExtensionEvent()` 和 session-owned `_emit()` call site 为 ground truth。

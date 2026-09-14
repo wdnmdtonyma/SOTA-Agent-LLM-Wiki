@@ -20,7 +20,7 @@ symbols:
   - BUILTIN_SLASH_COMMANDS
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 related:
   - surface.slash-commands.overview
 ---

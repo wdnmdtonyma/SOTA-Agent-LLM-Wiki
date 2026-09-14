@@ -21,7 +21,7 @@ related:
   - subsys.ai.pi-messages
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.ai.provider-registry` 描述 `pi-ai` 当前的 provider 装配与 runtime collection：40 个 fresh built-in provider 进入 `ModelsImpl`，其中 Radius 是没有 structural model shard 的动态 provider；generated `MODELS` 负责其余 39 个静态 catalog buckets，包括本轮新增的 Qwen Token Plan Individual。

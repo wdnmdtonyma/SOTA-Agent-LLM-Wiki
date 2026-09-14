@@ -20,7 +20,7 @@ related:
   - ref.agent.error-codes
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.agent-core.exec-env` 描述 `pi-agent-core` 的本地 Node execution environment：`NodeExecutionEnv` 实现 shell/process 执行与文件系统 API；`openTextLineReader` / `NodeTextLineReader` 提供严格 LF、带 `terminated` 的拉式读行；`truncateHead()` / `truncateTail()` 提供 harness 层可复用的输出裁剪语义。

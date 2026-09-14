@@ -18,7 +18,7 @@ related:
   - subsys.ai.message-transform
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.ai.wire-protocol-dispatch` 说明 `pi-ai` 如何把统一的 `Model` + `Context` streaming request,按 `Model.api` 分派到 `packages/ai/src/api/<name>.ts` 的 `stream` / `streamSimple` wire implementation。

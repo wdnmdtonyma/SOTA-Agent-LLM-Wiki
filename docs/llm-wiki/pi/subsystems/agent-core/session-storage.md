@@ -35,7 +35,7 @@ related:
   - subsys.agent-core.tree-navigation
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.agent-core.session-storage` 描述 v4 harness session 三层契约：`SessionRepo` 管会话集合与打开/fork，`Storage` 是单会话 `commit(Write[])` 持久化原语，`Session` / `Branch` 把 branch tip、lane 配置和操作态落到 `values.ts` 地址上。JSONL 与 memory 的生产 fork **共享** `selectBranchFork` / `projectForkCurrentStateWrite`，**不共享** IO。

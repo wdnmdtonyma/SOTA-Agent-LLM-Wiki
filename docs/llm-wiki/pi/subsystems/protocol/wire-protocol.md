@@ -26,7 +26,7 @@ related:
   - subsys.server.session-server
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `@earendil-works/pi-protocol` 定义实验性远程 Pi 的 transport-neutral routed envelope、TypeBox runtime schema 与 validated codec。协议版本固定为 `8`。envelope object schema 拒绝未知字段；`call` / `result` / `update` 只要求 strict JSON，语义由 Chord 与应用解析 [E: packages/protocol/package.json:2] [E: packages/protocol/src/protocol.ts:5] [E: packages/protocol/src/protocol.ts:9] [E: packages/protocol/test/protocol.test.ts:30]。

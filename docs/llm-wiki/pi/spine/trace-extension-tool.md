@@ -18,7 +18,7 @@ related:
   - subsys.coding-agent.extension-wrapper
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `spine.trace-extension-tool` 追踪一个 extension tool 怎样从 `pi-coding-agent` 的 `registerTool` contribution point 进入 `pi-agent-core` 的 `AgentTool.execute` 调用路径。

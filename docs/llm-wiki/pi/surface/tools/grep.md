@@ -28,7 +28,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `grep` 是 pi-coding-agent 的内置文本搜索工具:模型用 `pattern/path/glob` 等结构化参数发起搜索,实现层用 ripgrep(`rg --json`)收集 match 事件,再格式化成带文件路径与行号的文本结果。

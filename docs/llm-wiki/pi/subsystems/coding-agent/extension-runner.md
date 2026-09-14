@@ -21,7 +21,7 @@ related:
   - ref.coding-agent.extension-events
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ExtensionRunner` 是 pi-coding-agent 的扩展执行引擎: 它把 loader 产出的 extensions 和 shared runtime 绑定到当前会话, 构造 `ExtensionContext`, 并按事件类型顺序调用 extension handlers。

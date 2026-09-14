@@ -25,7 +25,7 @@ related:
   - surface.slash-commands.overview
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `surface.skills.system` 描述 pi-coding-agent 暴露给用户的 skills 系统: 从哪些位置加载 skill、如何把 skill 摘要写入 system prompt、何时把 skill 变成 `/skill:name` 命令,以及它和 pi-agent-core harness loader 的边界。

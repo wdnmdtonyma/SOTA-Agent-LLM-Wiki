@@ -19,7 +19,7 @@ related:
   - ref.coding-agent.rpc-methods
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `spine.trace-rpc-prompt` 走读一次 `{type:"prompt"}` RPC command 如何从 JSONL stdin 进入 `runRpcMode`,经 `AgentSession.prompt` preflight 接受后立即返回 prompt acknowledgement,再把同一轮 agent events 继续作为 JSONL stdout events 流给 host。

@@ -58,7 +58,7 @@ symbols: [builtinProviders]
 related: [subsys.ai.provider-registry, surface.providers.overview]
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.ai.provider-catalog` 逐实例列出 `packages/ai/src/providers/all.ts` 中 `builtinProviders()` 当前返回的 40 个 runtime 文本 provider：id、auth/env、api/wire、coding-agent 默认模型、source 文件。

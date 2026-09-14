@@ -9,7 +9,7 @@ symbols: [renderImage, encodeKitty, encodeITerm2, setCapabilityOverrides, detect
 related: [surface.misc.images, subsys.tui.terminal-capabilities]
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `terminal-image` 是 `pi-tui` 的 terminal inline image layer:它检测当前 terminal 是否支持 Kitty graphics protocol 或 iTerm2 inline image,把 base64 image payload 编码成 escape sequence,计算图片占用的 cell rows,并在不支持图片时提供 text fallback。环境变量与 `setCapabilityOverrides()` 可覆盖已检测到的 `hyperlinks` / `images` / `trueColor`。

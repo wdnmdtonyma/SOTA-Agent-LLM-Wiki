@@ -25,7 +25,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `ref.agent.session-entry-types` 是 `packages/agent/src/harness/session/types.ts` 中现行 `Entry` 导出类型的字段级目录：覆盖 `EntryBase`、全部 4 个 `Entry` variant、union 本身与写入形态 `NewEntry`。model / thinking / active tools 已从 entry 挪到 `LaneConfiguration` values。

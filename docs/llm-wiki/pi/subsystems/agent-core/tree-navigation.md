@@ -27,7 +27,7 @@ related:
   - spine.session-state-model
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.agent-core.tree-navigation` 说明 v4 `Session` 如何用命名 `Branch`（`pi.branch.tip`）选择 active path、做有界 `parentId` 回溯，以及 `context.ts` 如何把一条 path 投影成 `AgentMessage[]`。

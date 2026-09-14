@@ -18,7 +18,7 @@ symbols:
   - parseAuthCommand
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 related:
   - surface.cli.overview
 ---

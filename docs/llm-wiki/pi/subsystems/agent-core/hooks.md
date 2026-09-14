@@ -21,7 +21,7 @@ related:
   - subsys.coding-agent.agent-session
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.agent-core.hooks` 是 `pi-agent-core` 暴露给上层 runtime 的 hook contract: 它允许调用方在 provider request 前改写 `AgentMessage[]`, 在工具执行前阻断调用, 在工具执行后覆盖结果, 并在 loop **决定还会再开一轮 assistant turn** 之后替换下一轮 runtime state。

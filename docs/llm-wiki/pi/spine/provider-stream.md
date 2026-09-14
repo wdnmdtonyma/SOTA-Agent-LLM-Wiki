@@ -40,7 +40,7 @@ related:
   - subsys.ai.provider-retry
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `spine.provider-stream` 描述 `pi-ai` 中一次 LLM provider streaming call 如何从统一 `Models.stream` / `streamSimple` 入口,经过 provider/API dispatch 与 lazy loading,转成 provider wire request,再归一为 `AssistantMessageEventStream` 事件协议。产品侧 `ModelRuntime.streamSimple()` 走同一条 spine；`constrainedSampling` 作为 tool metadata 进入 `Context.tools`，不改变本页的 auth / dispatch / normalize 边界。

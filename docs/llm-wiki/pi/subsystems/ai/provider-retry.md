@@ -30,7 +30,7 @@ related:
   - ref.coding-agent.config-keys
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > Pi 有两层重试：provider request 层重建 SDK 请求，assistant 层在一次完整 assistant message 失败后重启生成。两者的错误输入、预算和延迟上限不同。
@@ -62,8 +62,8 @@ updated: bbb61e34aa
 
 ## L2 证伪与边界
 
-- shared provider retry 现在覆盖 7 条 initial-request 路径：OpenAI Responses、Azure Responses、OpenAI Completions、Anthropic、OpenRouter images，加上经 `retryGoogleRequest()` 归一化 SDK error 后接入的 Google Generative AI 与 Google Vertex。[E: packages/ai/src/api/openai-responses.ts:164] [E: packages/ai/src/api/azure-openai-responses.ts:120] [E: packages/ai/src/api/openai-completions.ts:366] [E: packages/ai/src/api/anthropic-messages.ts:576] [E: packages/ai/src/api/openrouter-images.ts:70] [E: packages/ai/src/api/google-generative-ai.ts:93] [E: packages/ai/src/api/google-vertex.ts:111] [E: packages/ai/src/api/google-shared.ts:432] [E: packages/ai/src/api/google-shared.ts:436]
-- Google SDK error 有 `status` 但通常没有 `headers`；wrapper 只在确有 status 且缺少 headers 时补 `headers: undefined`，让 `retryProviderRequest()` 能按相同 408/409/429/5xx policy 分类，并原样传入 retry budget 与 AbortSignal。[E: packages/ai/src/api/google-shared.ts:432] [E: packages/ai/src/api/google-shared.ts:442] [E: packages/ai/src/api/google-shared.ts:442] [E: packages/ai/src/api/google-shared.ts:448] [E: packages/ai/src/api/google-shared.ts:450]
+- shared provider retry 现在覆盖 7 条 initial-request 路径：OpenAI Responses、Azure Responses、OpenAI Completions、Anthropic、OpenRouter images，加上经 `retryGoogleRequest()` 归一化 SDK error 后接入的 Google Generative AI 与 Google Vertex。[E: packages/ai/src/api/openai-responses.ts:164] [E: packages/ai/src/api/azure-openai-responses.ts:120] [E: packages/ai/src/api/openai-completions.ts:366] [E: packages/ai/src/api/anthropic-messages.ts:576] [E: packages/ai/src/api/openrouter-images.ts:70] [E: packages/ai/src/api/google-generative-ai.ts:93] [E: packages/ai/src/api/google-vertex.ts:111] [E: packages/ai/src/api/google-shared.ts:431] [E: packages/ai/src/api/google-shared.ts:435]
+- Google SDK error 有 `status` 但通常没有 `headers`；wrapper 只在确有 status 且缺少 headers 时补 `headers: undefined`，让 `retryProviderRequest()` 能按相同 408/409/429/5xx policy 分类，并原样传入 retry budget 与 AbortSignal。[E: packages/ai/src/api/google-shared.ts:431] [E: packages/ai/src/api/google-shared.ts:441] [E: packages/ai/src/api/google-shared.ts:441] [E: packages/ai/src/api/google-shared.ts:447] [E: packages/ai/src/api/google-shared.ts:449]
 - assistant retry 消费 error message 文本而非 HTTP response；provider request retry 消费 status/headers error。不能把一层的分类表当作另一层的契约。[E: packages/ai/src/utils/provider-retry.ts:14] [E: packages/ai/src/utils/provider-retry.ts:23] [E: packages/ai/src/utils/provider-retry.ts:118] [E: packages/ai/src/utils/retry.ts:235] [E: packages/ai/src/utils/retry.ts:237] [E: packages/ai/src/utils/retry.ts:239]
 - assistant `onRetryFinished` 只会在至少安排过一次 retry 后触发；scheduled callback 在 sleep 前，attempt-start 在 sleep 后。backoff 期间 abort 会先发 finished(false)，再把原 error message 归一成 `stopReason: "aborted"` 且清掉 `errorMessage`。[E: packages/ai/src/utils/retry.ts:188] [E: packages/ai/src/utils/retry.ts:195] [E: packages/ai/src/utils/retry.ts:201] [E: packages/ai/src/utils/retry.ts:207] [E: packages/ai/src/utils/retry.ts:208] [E: packages/ai/src/utils/retry.ts:215] [E: packages/ai/src/utils/retry.ts:217]
 - 两层默认都不会无限重试；provider 层默认零次，assistant 层也受 settings budget 限制。agent 层 delay 另被 `maxAgentDelayMs`（默认 60000）封顶，与 provider 层 `maxRetryDelayMs`（默认同样 60000）分开。[E: packages/ai/src/utils/provider-retry.ts:109] [E: packages/ai/src/utils/retry.ts:114] [E: packages/ai/src/utils/retry.ts:180]

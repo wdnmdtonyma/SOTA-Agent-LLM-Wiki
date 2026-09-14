@@ -31,7 +31,7 @@ related:
   - subsys.coding-agent.agent-session
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > 会话统计现在归集 assistant、tool result、compaction 和 branch summary 的 usage；交互式 `/session` UI 可按模型与“Tools/summaries”分桶展示成本。开启 cache miss notices 时，compaction / branch-summary 还会在 transcript 里显示 billed tokens 通知。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6217] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6226] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3803] [E: packages/coding-agent/CHANGELOG.md:106]

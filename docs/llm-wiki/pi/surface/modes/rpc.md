@@ -18,7 +18,7 @@ related:
   - ref.coding-agent.rpc-methods
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `surface.modes.rpc` 是 `pi-coding-agent` 的无头 stdin/stdout JSONL 控制面:host 向 stdin 写 JSON command,从 stdout 读 command response、agent events 和 extension UI request;`runRpcMode(runtimeHost)` 负责把这些协议对象接到当前 `AgentSessionRuntime` 的 session、extension、命令分发和关闭流程上。[E: packages/coding-agent/docs/rpc.md:3][E: packages/coding-agent/docs/rpc.md:20][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:54][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:60][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:61][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:319][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:355][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:355][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:810][E: packages/coding-agent/src/modes/rpc/rpc-mode.ts:811]

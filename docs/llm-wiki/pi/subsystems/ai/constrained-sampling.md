@@ -44,7 +44,7 @@ related:
   - subsys.coding-agent.tool-wrapper
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > 约束采样把工具声明中的 JSON Schema strict 或 grammar 配置翻译成 provider wire 能力，并维护 grammar tool call 的增量 JSON 参数。coding-agent 默认 `read` / `bash` / `powershell` / `edit` / `write` 带 `constrainedSampling: { type: "json_schema", strict: "prefer" }`，不再要求 `PI_EXPERIMENTAL`。

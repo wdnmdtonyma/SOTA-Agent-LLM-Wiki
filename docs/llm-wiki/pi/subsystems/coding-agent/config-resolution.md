@@ -15,7 +15,7 @@ related:
   - subsys.coding-agent.settings-manager
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `config-resolution` 是 pi-coding-agent 的 config value resolver: 它把 secret/config 字符串解析成 literal、environment template 或 `!command` command-backed value, 再给 API key、headers 等调用点返回 resolved string 或明确失败。

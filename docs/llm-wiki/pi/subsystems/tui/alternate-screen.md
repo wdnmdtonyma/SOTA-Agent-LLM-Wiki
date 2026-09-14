@@ -33,7 +33,7 @@ related:
   - ref.tui.keybinding-actions
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `TuiAltScreen` 是固定 viewport 的 fullscreen renderer，整合 alternate-screen lifecycle、layout、滚动导航、鼠标选择、`copyOnSelect`、链接、flash、jump-to-end 与 Kitty placement cache。

@@ -19,7 +19,7 @@ symbols:
   - RetrySettings
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 related:
   - surface.config.settings
   - subsys.coding-agent.settings-manager

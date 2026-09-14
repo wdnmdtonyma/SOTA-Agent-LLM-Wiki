@@ -64,7 +64,7 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **200 个节点全部 verified 于 pi `bbb61e34aa`**。本轮从 `9767ba275f` 覆盖上游 **v0.85.1 Unreleased**（流式 JSONL/memory fork、按模型 compaction 预算、OpenCode `x-opencode-session`、OpenRouter `x-session-id`）。审计见 `_UPDATE-SCOPE.md`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **200 个节点全部 verified 于 pi `71dca871bc`**。本轮从 `bbb61e34aa` 覆盖上游 **v0.85.1 Unreleased**（Fireworks Messages deferred tools、DeepSeek Flash 更名、Codex 下架 GPT-5.4、Mistral GLM-5.2 `reasoning_effort`、evals `--repetitions` / models+providers comparative）。审计见 `_UPDATE-SCOPE.md`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

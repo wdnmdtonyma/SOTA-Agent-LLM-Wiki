@@ -18,7 +18,7 @@ symbols:
   - useWindowsKeybindings
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 related:
   - surface.config.keybindings
   - subsys.coding-agent.keybindings

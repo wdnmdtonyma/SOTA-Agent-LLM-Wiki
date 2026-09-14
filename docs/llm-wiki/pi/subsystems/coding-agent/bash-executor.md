@@ -21,7 +21,7 @@ related:
   - ref.coding-agent.json-events
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `bash-executor` 是 pi-coding-agent 的命令执行子系统: `executeBashWithOperations()` 负责 bash 风格命令的流式输出、取消和 tail 截断, `execCommand()` 负责扩展/custom tool runtime 里的 argv 进程执行。

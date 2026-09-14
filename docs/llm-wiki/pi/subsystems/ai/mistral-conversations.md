@@ -17,7 +17,7 @@ related:
   - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: bbb61e34aa
+updated: 71dca871bc
 ---
 
 > `subsys.ai.mistral-conversations` 描述 `pi-ai` 的 Mistral Conversations wire implementation：它把统一 `Context` 和 `MistralOptions` 转成 native HTTP `POST {baseUrl}/v1/chat/completions` SSE 请求，再把 Mistral streaming chunk 归一为 `AssistantMessageEventStream`。实现不再创建 Mistral SDK client。
@@ -37,7 +37,7 @@ updated: bbb61e34aa
 
 `MistralOptions` 扩展通用 `StreamOptions`，额外暴露 `toolChoice`、`promptMode?: "reasoning"` 和 `reasoningEffort?: "none" | "high"` [E: packages/ai/src/api/mistral-conversations.ts:34] [E: packages/ai/src/api/mistral-conversations.ts:35] [E: packages/ai/src/api/mistral-conversations.ts:36] [E: packages/ai/src/api/mistral-conversations.ts:37]。
 
-`stream` 的 output accumulator 初始化为 assistant role、当前 `model.api`、`model.provider`、`model.id`、零值 usage、`stopReason: "pending"` 和当前 timestamp [E: packages/ai/src/api/mistral-conversations.ts:207] [E: packages/ai/src/api/mistral-conversations.ts:209] [E: packages/ai/src/api/mistral-conversations.ts:210] [E: packages/ai/src/api/mistral-conversations.ts:211] [E: packages/ai/src/api/mistral-conversations.ts:222]。
+`stream` 的 output accumulator 初始化为 assistant role、当前 `model.api`、`model.provider`、`model.id`、零值 usage、`stopReason: "pending"` 和当前 timestamp [E: packages/ai/src/api/mistral-conversations.ts:209] [E: packages/ai/src/api/mistral-conversations.ts:211] [E: packages/ai/src/api/mistral-conversations.ts:212] [E: packages/ai/src/api/mistral-conversations.ts:213] [E: packages/ai/src/api/mistral-conversations.ts:222] [E: packages/ai/src/api/mistral-conversations.ts:223]。
 
 `subsys.ai.wire-protocol-dispatch` 覆盖 `Models.stream` 如何按 `model.api` 找到 lazy `ProviderStreams`；本节点只覆盖进入 `mistral-conversations.ts` 之后的 request/message/tool/event/usage/error 转换。[I]
 
@@ -73,13 +73,13 @@ message 侧 `toolCalls`/`toolCallId` 变成 `tool_calls`/`tool_call_id`；conten
 
 `streamSimple` 是 `SimpleStreamOptions` 到 `MistralOptions` 的 adapter：它检查 API key，调用 `buildBaseOptions`，用 `clampThinkingLevel` 处理 `options.reasoning`，再把结果转交给同文件的 `stream` [E: packages/ai/src/api/mistral-conversations.ts:181] [E: packages/ai/src/api/mistral-conversations.ts:186] [E: packages/ai/src/api/mistral-conversations.ts:192] [E: packages/ai/src/api/mistral-conversations.ts:195] [E: packages/ai/src/api/mistral-conversations.ts:199]。
 
-`clampedReasoning === "off"` 会被收成 `undefined`；`shouldUseReasoning` 还要求 `model.reasoning` 为真且 reasoning 仍有值。因此 thinking 关闭、或模型本身不标 reasoning 时，两条 reasoning 字段都不会写入 [E: packages/ai/src/api/mistral-conversations.ts:195] [E: packages/ai/src/api/mistral-conversations.ts:196] [E: packages/ai/src/api/mistral-conversations.ts:197] [E: packages/ai/src/api/mistral-conversations.ts:201] [E: packages/ai/src/api/mistral-conversations.ts:203] [E: packages/ai/test/mistral-reasoning-mode.test.ts:63] [E: packages/ai/test/mistral-reasoning-mode.test.ts:95]。
+`clampedReasoning === "off"` 会被收成 `undefined`；`shouldUseReasoning` 还要求 `model.reasoning` 为真且 reasoning 仍有值。因此 thinking 关闭、或模型本身不标 reasoning 时，两条 reasoning 字段都不会写入 [E: packages/ai/src/api/mistral-conversations.ts:195] [E: packages/ai/src/api/mistral-conversations.ts:196] [E: packages/ai/src/api/mistral-conversations.ts:197] [E: packages/ai/src/api/mistral-conversations.ts:201] [E: packages/ai/src/api/mistral-conversations.ts:203] [E: packages/ai/test/mistral-reasoning-mode.test.ts:63] [E: packages/ai/test/mistral-reasoning-mode.test.ts:112]。
 
 当 `shouldUseReasoning` 为真时，`streamSimple` 对 `usesPromptModeReasoning(model)` 的模型设置 `promptMode: "reasoning"`，对 `usesReasoningEffort(model)` 的模型设置 `reasoningEffort`；两条分支互斥 [E: packages/ai/src/api/mistral-conversations.ts:201] [E: packages/ai/src/api/mistral-conversations.ts:202] [E: packages/ai/src/api/mistral-conversations.ts:203]。
 
-`usesReasoningEffort` 匹配 `mistral-small-2603`、`mistral-small-latest`，以及任意 `mistral-medium-*`（`model.id.startsWith("mistral-medium-")`）。`usesPromptModeReasoning` 要求 `model.reasoning` 为真且不走 `usesReasoningEffort`，因此 Magistral 等其余 reasoning 模型仍发 `prompt_mode: "reasoning"` [E: packages/ai/src/api/mistral-conversations.ts:893] [E: packages/ai/src/api/mistral-conversations.ts:895] [E: packages/ai/src/api/mistral-conversations.ts:899] [E: packages/ai/src/api/mistral-conversations.ts:900] [E: packages/ai/test/mistral-reasoning-mode.test.ts:70] [E: packages/ai/test/mistral-reasoning-mode.test.ts:78]。
+`usesReasoningEffort` 精确匹配 `mistral-small-2603`、`mistral-small-latest`、`zai-glm-5-2`，以及任意 `mistral-medium-*`（`model.id.startsWith("mistral-medium-")`）。命中时发 `reasoning_effort`，不发被忽略的 `prompt_mode`。`usesPromptModeReasoning` 要求 `model.reasoning` 为真且不走 `usesReasoningEffort`，因此 Magistral 等其余 reasoning 模型仍发 `prompt_mode: "reasoning"` [E: packages/ai/src/api/mistral-conversations.ts:893] [E: packages/ai/src/api/mistral-conversations.ts:895] [E: packages/ai/src/api/mistral-conversations.ts:898] [E: packages/ai/src/api/mistral-conversations.ts:902] [E: packages/ai/src/api/mistral-conversations.ts:903] [E: packages/ai/test/mistral-reasoning-mode.test.ts:70] [E: packages/ai/test/mistral-reasoning-mode.test.ts:79] [E: packages/ai/test/mistral-reasoning-mode.test.ts:82] [E: packages/ai/test/mistral-reasoning-mode.test.ts:95]。
 
-`mapReasoningEffort` 先查 `model.thinkingLevelMap?.[level]`，没有映射时默认返回 `"high"`；因此该 adapter 不把 `SimpleStreamOptions.thinkingBudgets` 直接传给 Mistral [E: packages/ai/src/api/mistral-conversations.ts:907] [I]。
+`mapReasoningEffort` 先查 `model.thinkingLevelMap?.[level]`，没有映射时默认返回 `"high"`；因此该 adapter 不把 `SimpleStreamOptions.thinkingBudgets` 直接传给 Mistral [E: packages/ai/src/api/mistral-conversations.ts:910] [I]。
 
 ## message 转换
 
@@ -105,7 +105,7 @@ tool result message 会把 text parts 用换行拼接，再由 `buildToolResultT
 
 `stripSymbolKeys` 递归处理数组和普通对象，对象路径只遍历 `Object.entries(value)` 的 string-keyed entries，所以 symbol-keyed metadata 不会进入最终 JSON schema object [E: packages/ai/src/api/mistral-conversations.ts:768] [E: packages/ai/src/api/mistral-conversations.ts:775] [E: packages/ai/src/api/mistral-conversations.ts:776]。
 
-`mapToolChoice` 允许 `"auto" | "none" | "any" | "required"` 原样穿透，函数定向选择则只保留 `{ type: "function", function: { name } }` [E: packages/ai/src/api/mistral-conversations.ts:913] [E: packages/ai/src/api/mistral-conversations.ts:914] [E: packages/ai/src/api/mistral-conversations.ts:917]。
+`mapToolChoice` 允许 `"auto" | "none" | "any" | "required"` 原样穿透，函数定向选择则只保留 `{ type: "function", function: { name } }` [E: packages/ai/src/api/mistral-conversations.ts:916] [E: packages/ai/src/api/mistral-conversations.ts:917] [E: packages/ai/src/api/mistral-conversations.ts:920]。
 
 streaming tool call delta 到来时，当前 text/thinking block 会先结束；如果 Mistral chunk 没给有效 id（缺省或字面 `"null"`），本实现用 `deriveMistralToolCallId(\`toolcall:${toolCall.index ?? 0}\`, 0)` 生成 `callId`。合并同一碎片的 key 是 `toolCall.index ?? callId`，因此同 index、无 id 的后续 delta 会拼到同一个 `toolCall` block [E: packages/ai/src/api/mistral-conversations.ts:688] [E: packages/ai/src/api/mistral-conversations.ts:692] [E: packages/ai/src/api/mistral-conversations.ts:693] [E: packages/ai/src/api/mistral-conversations.ts:695] [E: packages/ai/src/api/mistral-conversations.ts:696]。
 
@@ -115,7 +115,7 @@ Mistral stream 结束后，所有 tool call block 会用最终 `partialArgs` 再
 
 ## SSE、event 与 usage
 
-`readMistralEvents` 用 `ReadableStream` reader + `TextDecoder` 按多种 `\r`/`\n` 边界切 SSE event；`data: [DONE]` 结束迭代，其它 `data:` 行 JSON.parse 后要求存在 `choices` 数组 [E: packages/ai/src/api/mistral-conversations.ts:435] [E: packages/ai/src/api/mistral-conversations.ts:486] [E: packages/ai/src/api/mistral-conversations.ts:494] [E: packages/ai/src/api/mistral-conversations.ts:497] [E: packages/ai/src/api/mistral-conversations.ts:498]。abort 时 cancel reader [E: packages/ai/src/api/mistral-conversations.ts:442] [E: packages/ai/src/api/mistral-conversations.ts:449]。
+`readMistralEvents` 用 `ReadableStream` reader + `TextDecoder` 按多种 `\r`/`\n` 边界切 SSE event；`data: [DONE]` 结束迭代，其它 `data:` 行 JSON.parse 后要求存在 `choices` 数组 [E: packages/ai/src/api/mistral-conversations.ts:435] [E: packages/ai/src/api/mistral-conversations.ts:439] [E: packages/ai/src/api/mistral-conversations.ts:482] [E: packages/ai/src/api/mistral-conversations.ts:494] [E: packages/ai/src/api/mistral-conversations.ts:497]。abort 时 cancel reader [E: packages/ai/src/api/mistral-conversations.ts:442] [E: packages/ai/src/api/mistral-conversations.ts:443]。
 
 `consumeChatStream` 迭代这些 event，取 `event.data` 为 chunk，并把第一个非空 `chunk.id` 记录为 `output.responseId` [E: packages/ai/src/api/mistral-conversations.ts:590] [E: packages/ai/src/api/mistral-conversations.ts:594]。
 
@@ -127,7 +127,7 @@ text delta 支持两种 Mistral content 形态：当 `delta.content` 是 string 
 
 text/thinking block 状态是互斥的：切换 block 类型前会调用 `finishCurrentBlock`，新 block 创建时发送 `text_start` 或 `thinking_start`，追加 delta 时发送 `text_delta` 或 `thinking_delta` [E: packages/ai/src/api/mistral-conversations.ts:628] [E: packages/ai/src/api/mistral-conversations.ts:632] [E: packages/ai/src/api/mistral-conversations.ts:651] [E: packages/ai/src/api/mistral-conversations.ts:655]。
 
-Mistral finish reason 通过 `mapChatStopReason` 转为 pi `StopReason`：null/`stop` 归为 `stop`，`length` 和 `model_length` 归为 `length`，`tool_calls` 归为 `toolUse`，`error` 与未知值归为 `error`（未知值带 `Provider stopped with: ...`） [E: packages/ai/src/api/mistral-conversations.ts:613] [E: packages/ai/src/api/mistral-conversations.ts:923] [E: packages/ai/src/api/mistral-conversations.ts:926] [E: packages/ai/src/api/mistral-conversations.ts:928] [E: packages/ai/src/api/mistral-conversations.ts:931] [E: packages/ai/src/api/mistral-conversations.ts:933] [E: packages/ai/src/api/mistral-conversations.ts:936]。
+Mistral finish reason 通过 `mapChatStopReason` 转为 pi `StopReason`：null/`stop` 归为 `stop`，`length` 和 `model_length` 归为 `length`，`tool_calls` 归为 `toolUse`，`error` 与未知值归为 `error`（未知值带 `Provider stopped with: ...`） [E: packages/ai/src/api/mistral-conversations.ts:613] [E: packages/ai/src/api/mistral-conversations.ts:926] [E: packages/ai/src/api/mistral-conversations.ts:929] [E: packages/ai/src/api/mistral-conversations.ts:931] [E: packages/ai/src/api/mistral-conversations.ts:934] [E: packages/ai/src/api/mistral-conversations.ts:936] [E: packages/ai/src/api/mistral-conversations.ts:939]。
 
 正常路径在消费完 stream 后检查 abort signal 和 terminal stop reason，再发送 `{ type: "done", reason, message }` 并结束 stream；流结束仍 `pending` 时抛 `Mistral stream ended without a finish reason`；如果 output stop reason 已经是 `aborted` 或 `error`，它会转入 catch 的 error event 路径 [E: packages/ai/src/api/mistral-conversations.ts:150] [E: packages/ai/src/api/mistral-conversations.ts:154] [E: packages/ai/src/api/mistral-conversations.ts:155] [E: packages/ai/src/api/mistral-conversations.ts:157] [E: packages/ai/src/api/mistral-conversations.ts:161]。
 
