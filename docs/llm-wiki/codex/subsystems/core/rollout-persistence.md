@@ -8,7 +8,7 @@ symbols: [RolloutRecorder, RolloutRecorderParams, RolloutCmd, RolloutWriterTask,
 related: [subsys.core.state-db, subsys.core.thread-store, subsys.core.rollout-migration, ref.protocol-op, ref.data-model]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Rollout persistence remains the durable JSONL replay layer。`RolloutItem` / `RolloutLine` / `InitialHistory` 的 payload 模型在 `codex-rs/history`，rollout crate re-export 它们。canonical filtering 仍按 `ThreadHistoryMode`：Legacy 记兼容事件，Paginated 记 completed `TurnItem`。[E: codex-rs/history/src/lib.rs:122][E: codex-rs/rollout/src/lib.rs:36]
@@ -65,7 +65,7 @@ updated: 02a8f038b8
 3. Incremental apply requires either an explicit builder or a builder derived from the item batch; missing builder only warns and returns.[E: codex-rs/rollout/src/state_db.rs:679][E: codex-rs/rollout/src/state_db.rs:692][E: codex-rs/rollout/src/state_db.rs:694][E: codex-rs/rollout/src/state_db.rs:701]
 4. `codex_state::StateRuntime::apply_rollout_items` reads or builds `ThreadMetadata`, applies each item via `apply_rollout_item`, preserves existing git info, then upserts metadata and memory mode.[E: codex-rs/state/src/runtime/threads.rs:1042][E: codex-rs/state/src/runtime/threads.rs:1053][E: codex-rs/state/src/runtime/threads.rs:1058][E: codex-rs/state/src/runtime/threads.rs:1061][E: codex-rs/state/src/runtime/threads.rs:1070][E: codex-rs/state/src/runtime/threads.rs:1074][E: codex-rs/state/src/runtime/threads.rs:1077]
 5. read-repair fast path only changes rollout path/cwd normalization/archive state on an existing row；只有 row missing/unreadable 或 direct upsert failed 才从 rollout 重建 metadata。[E: codex-rs/rollout/src/state_db.rs:610][E: codex-rs/rollout/src/state_db.rs:613][E: codex-rs/rollout/src/state_db.rs:613][E: codex-rs/rollout/src/state_db.rs:618][E: codex-rs/rollout/src/state_db.rs:626][E: codex-rs/rollout/src/state_db.rs:645][E: codex-rs/rollout/src/state_db.rs:650]
-6. Thread-goal mutation first verifies that SQLite points to the same plain rollout path, that the file exists, and that `SessionMeta.id` matches；只有这些条件不满足时才 reconcile rollout, preventing needless replacement of SQLite-only metadata。[E: codex-rs/app-server/src/request_processors/thread_goal_processor.rs:375]
+6. Thread-goal mutation first verifies that SQLite points to the same plain rollout path, that the file exists, and that `SessionMeta.id` matches；只有这些条件不满足时才 reconcile rollout, preventing needless replacement of SQLite-only metadata。[E: codex-rs/app-server/src/request_processors/thread_goal_processor.rs:398]
 7. `thread/revert` 创建带新 `rollout_id` 的 Paginated JSONL，再用 CAS 改 SQLite path；旧文件留下。recorder `Create` params 因此允许 `rollout_id` 与 `conversation_id` 不同。[E: codex-rs/thread-store/src/local/revert_thread.rs:111][E: codex-rs/thread-store/src/local/revert_thread.rs:125]
 
 ## Gotcha

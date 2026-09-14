@@ -8,10 +8,10 @@ symbols: [Event, EventMsg, EnvironmentConnectionEvent, TurnStartedEvent, TurnCom
 related: [spine.turn-end-to-end, subsys.core.turn-engine, ref.protocol-event-streaming, ref.protocol-op]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> `Event` 是 agent 到客户端的 queue entry,用 submission correlation `id` 和 `msg: EventMsg` 承载 response payload；`EventMsg` 是 `serde(tag = "type", rename_all = "snake_case")` 的 tagged enum。[E: codex-rs/protocol/src/protocol.rs:1346][E: codex-rs/protocol/src/protocol.rs:1348][E: codex-rs/protocol/src/protocol.rs:1350][E: codex-rs/protocol/src/protocol.rs:1361][E: codex-rs/protocol/src/protocol.rs:1364]
+> `Event` 是 agent 到客户端的 queue entry,用 submission correlation `id` 和 `msg: EventMsg` 承载 response payload；`EventMsg` 是 `serde(tag = "type", rename_all = "snake_case")` 的 tagged enum。[E: codex-rs/protocol/src/protocol.rs:1339][E: codex-rs/protocol/src/protocol.rs:1341][E: codex-rs/protocol/src/protocol.rs:1343][E: codex-rs/protocol/src/protocol.rs:1354][E: codex-rs/protocol/src/protocol.rs:1357]
 
 ## 能回答的问题
 
@@ -23,75 +23,75 @@ updated: 02a8f038b8
 
 ## EventMsg 分区
 
-当前 `EventMsg` enum 有 83 个变体，从 `Error` 到 `SubAgentActivity`。[E: codex-rs/protocol/src/protocol.rs:1364][E: codex-rs/protocol/src/protocol.rs:1366][E: codex-rs/protocol/src/protocol.rs:1373][E: codex-rs/protocol/src/protocol.rs:1376][E: codex-rs/protocol/src/protocol.rs:1579] 其中 31 个内容/item/tool/patch streaming 变体由 `ref.protocol-event-streaming` 收录；本节点收录其余 52 个 lifecycle/control 变体。
+当前 `EventMsg` enum 有 83 个变体，从 `Error` 到 `SubAgentActivity`。[E: codex-rs/protocol/src/protocol.rs:1357][E: codex-rs/protocol/src/protocol.rs:1359][E: codex-rs/protocol/src/protocol.rs:1366][E: codex-rs/protocol/src/protocol.rs:1369][E: codex-rs/protocol/src/protocol.rs:1573] 其中 31 个内容/item/tool/patch streaming 变体由 `ref.protocol-event-streaming` 收录；本节点收录其余 52 个 lifecycle/control 变体。
 
-`TurnStarted` 的 wire name 保留 v1 `task_started`,同时接受 `turn_started` alias；`TurnComplete` 的 wire name 保留 v1 `task_complete`,同时接受 `turn_complete` alias。[E: codex-rs/protocol/src/protocol.rs:1413][E: codex-rs/protocol/src/protocol.rs:1422][E: codex-rs/protocol/src/protocol.rs:1422][E: codex-rs/protocol/src/protocol.rs:1423]
+`TurnStarted` 的 wire name 保留 v1 `task_started`,同时接受 `turn_started` alias；`TurnComplete` 的 wire name 保留 v1 `task_complete`,同时接受 `turn_complete` alias。[E: codex-rs/protocol/src/protocol.rs:1407][E: codex-rs/protocol/src/protocol.rs:1416][E: codex-rs/protocol/src/protocol.rs:1416][E: codex-rs/protocol/src/protocol.rs:1417]
 
-`TokenUsage` 仍带 provider-reported `codex_rollout_budget_units`。该字段明确 `skip_serializing`、`schemars(skip)`、`ts(skip)`，因此供 core 内部 rollout-budget 计算使用，不扩张 `TokenCount` 的公开 JSON/TS schema。[E: codex-rs/protocol/src/protocol.rs:2237][E: codex-rs/protocol/src/protocol.rs:2252][E: codex-rs/protocol/src/protocol.rs:2253][E: codex-rs/protocol/src/protocol.rs:2254][E: codex-rs/protocol/src/protocol.rs:2255][E: codex-rs/protocol/src/protocol.rs:1427]
+`TokenUsage` 仍带 provider-reported `codex_rollout_budget_units`。该字段明确 `skip_serializing`、`schemars(skip)`、`ts(skip)`，因此供 core 内部 rollout-budget 计算使用，不扩张 `TokenCount` 的公开 JSON/TS schema。[E: codex-rs/protocol/src/protocol.rs:2232][E: codex-rs/protocol/src/protocol.rs:2247][E: codex-rs/protocol/src/protocol.rs:2248][E: codex-rs/protocol/src/protocol.rs:2249][E: codex-rs/protocol/src/protocol.rs:2250][E: codex-rs/protocol/src/protocol.rs:1421]
 
 ## Lifecycle / control EventMsg 表
 
 | # | Variant | Payload | 生命周期/control 含义 | 定义锚 |
 |---:|---|---|---|---|
-| 1 | `Error` | `ErrorEvent` | submission 执行失败；payload 含 message 和 optional `codex_error_info`。[E: codex-rs/protocol/src/protocol.rs:1366] | `protocol.rs:1366` |
-| 2 | `Warning` | `WarningEvent` | turn 继续执行但需要通知用户。[E: codex-rs/protocol/src/protocol.rs:1370] | `protocol.rs:1370` |
-| 3 | `AuthRecoveryStarted` | `AuthRecoveryEvent` | provider-owned authentication recovery 已为本 turn 开始；payload 是 `provider` 与 `message`。[E: codex-rs/protocol/src/protocol.rs:1373][E: codex-rs/protocol/src/protocol.rs:2098] | `protocol.rs:1373` |
-| 4 | `AuthRecoveryCompleted` | `AuthRecoveryEvent` | provider-owned authentication recovery 已完成本 turn。[E: codex-rs/protocol/src/protocol.rs:1376][E: codex-rs/protocol/src/protocol.rs:2098] | `protocol.rs:1376` |
-| 5 | `GuardianWarning` | `WarningEvent` | Guardian automatic approval reviewer 发出的 warning。[E: codex-rs/protocol/src/protocol.rs:1379] | `protocol.rs:1379` |
-| 6 | `RealtimeConversationStarted` | `RealtimeConversationStartedEvent` | realtime conversation lifecycle start。[E: codex-rs/protocol/src/protocol.rs:1382] | `protocol.rs:1382` |
-| 7 | `RealtimeConversationClosed` | `RealtimeConversationClosedEvent` | realtime conversation lifecycle close。[E: codex-rs/protocol/src/protocol.rs:1388] | `protocol.rs:1388` |
-| 8 | `ModelReroute` | `ModelRerouteEvent` | backend/model routing 从 requested model 切换到另一个 model。[E: codex-rs/protocol/src/protocol.rs:1394] | `protocol.rs:1394` |
-| 9 | `ModelVerification` | `ModelVerificationEvent` | backend 建议本 turn 需要额外 account verification。[E: codex-rs/protocol/src/protocol.rs:1397] | `protocol.rs:1397` |
-| 10 | `TurnModerationMetadata` | `TurnModerationMetadataEvent` | first-party turn presentation 用 moderation metadata。[E: codex-rs/protocol/src/protocol.rs:1400] | `protocol.rs:1400` |
-| 11 | `SafetyBuffering` | `SafetyBufferingEvent` | backend safety review buffering state。[E: codex-rs/protocol/src/protocol.rs:1403] | `protocol.rs:1403` |
-| 12 | `ContextCompacted` | `ContextCompactedEvent` | conversation history 被自动或手动 compaction。[E: codex-rs/protocol/src/protocol.rs:1406] | `protocol.rs:1406` |
-| 13 | `ThreadRolledBack` | `ThreadRolledBackEvent` | conversation history 丢弃最后 N 个 user turns。[E: codex-rs/protocol/src/protocol.rs:1409] | `protocol.rs:1409` |
-| 14 | `TurnStarted` | `TurnStartedEvent` | agent turn started,带 turn id、trace id、started time、context window、collaboration mode kind。[E: codex-rs/protocol/src/protocol.rs:1414] | `protocol.rs:1414` |
-| 15 | `ThreadSettingsApplied` | `ThreadSettingsAppliedEvent` | correlated submission 的 persistent thread settings 已应用到 session config。[E: codex-rs/protocol/src/protocol.rs:1418] | `protocol.rs:1418` |
-| 16 | `TurnComplete` | `TurnCompleteEvent` | agent 完成所有 actions。[E: codex-rs/protocol/src/protocol.rs:1423] | `protocol.rs:1423` |
-| 17 | `TokenCount` | `TokenCountEvent` | current session usage update,包括 totals 和 last turn；optional 表示 unknown。[E: codex-rs/protocol/src/protocol.rs:1427] | `protocol.rs:1427` |
-| 18 | `SessionConfigured` | `SessionConfiguredEvent` | configure ack,返回 session/thread id、model/provider、approval/permission/settings 等 session snapshot。[E: codex-rs/protocol/src/protocol.rs:1445] | `protocol.rs:1445` |
-| 19 | `EnvironmentConnected` | `EnvironmentConnectionEvent` | selected environment 完成 connection handshake；payload 是 `environment_id`。[E: codex-rs/protocol/src/protocol.rs:1354][E: codex-rs/protocol/src/protocol.rs:1448] | `protocol.rs:1448` |
-| 20 | `EnvironmentDisconnected` | `EnvironmentConnectionEvent` | selected environment 丢失已建立的连接；复用同一个 environment-id payload。[E: codex-rs/protocol/src/protocol.rs:1451] | `protocol.rs:1451` |
-| 21 | `ThreadGoalUpdated` | `ThreadGoalUpdatedEvent` | long-running goal metadata 更新。[E: codex-rs/protocol/src/protocol.rs:1454] | `protocol.rs:1454` |
-| 22 | `ThreadQueueChanged` | `ThreadQueueChangedEvent` | durable thread-scoped user-message queue 发生变化。[E: codex-rs/protocol/src/protocol.rs:1457] | `protocol.rs:1457` |
-| 23 | `McpStartupUpdate` | `McpStartupUpdateEvent` | MCP startup incremental progress。[E: codex-rs/protocol/src/protocol.rs:1460] | `protocol.rs:1460` |
-| 24 | `McpStartupComplete` | `McpStartupCompleteEvent` | MCP startup aggregate completion summary。[E: codex-rs/protocol/src/protocol.rs:1463] | `protocol.rs:1463` |
-| 25 | `ExecApprovalRequest` | `ExecApprovalRequestEvent` | command execution approval prompt。[E: codex-rs/protocol/src/protocol.rs:1491] | `protocol.rs:1491` |
-| 26 | `RequestPermissions` | `RequestPermissionsEvent` | `request_permissions` tool 向客户端发起权限请求。[E: codex-rs/protocol/src/protocol.rs:1493] | `protocol.rs:1493` |
-| 27 | `RequestUserInput` | `RequestUserInputEvent` | `request_user_input` tool 向客户端发起用户输入请求。[E: codex-rs/protocol/src/protocol.rs:1495] | `protocol.rs:1495` |
-| 28 | `ElicitationRequest` | `ElicitationRequestEvent` | MCP elicitation request event。[E: codex-rs/protocol/src/protocol.rs:1501] | `protocol.rs:1501` |
-| 29 | `ApplyPatchApprovalRequest` | `ApplyPatchApprovalRequestEvent` | apply_patch approval prompt。[E: codex-rs/protocol/src/protocol.rs:1503] | `protocol.rs:1503` |
-| 30 | `GuardianAssessment` | `GuardianAssessmentEvent` | Guardian-reviewed approval request 的 structured lifecycle event。[E: codex-rs/protocol/src/protocol.rs:1506] | `protocol.rs:1506` |
-| 31 | `DeprecationNotice` | `DeprecationNoticeEvent` | deprecated feature guidance。[E: codex-rs/protocol/src/protocol.rs:1510] | `protocol.rs:1510` |
-| 32 | `StreamError` | `StreamErrorEvent` | model stream error/disconnect,系统正在处理 retry/backoff 等恢复路径。[E: codex-rs/protocol/src/protocol.rs:1514] | `protocol.rs:1514` |
-| 33 | `TurnDiff` | `TurnDiffEvent` | turn diff payload,字段是 `unified_diff`。[E: codex-rs/protocol/src/protocol.rs:1526] | `protocol.rs:1526` |
-| 34 | `RealtimeConversationListVoicesResponse` | `RealtimeConversationListVoicesResponseEvent` | realtime conversation voices list response。[E: codex-rs/protocol/src/protocol.rs:1529] | `protocol.rs:1529` |
-| 35 | `PlanUpdate` | `UpdatePlanArgs` | update_plan tool/checklist 状态事件。[E: codex-rs/protocol/src/protocol.rs:1531] | `protocol.rs:1531` |
-| 36 | `TurnAborted` | `TurnAbortedEvent` | turn aborted notification。[E: codex-rs/protocol/src/protocol.rs:1533] | `protocol.rs:1533` |
-| 37 | `ShutdownComplete` | unit | agent shutdown complete notification。[E: codex-rs/protocol/src/protocol.rs:1536] | `protocol.rs:1536` |
-| 38 | `EnteredReviewMode` | `EnteredReviewModeEvent` | legacy entered-review notification。[E: codex-rs/protocol/src/protocol.rs:1539] | `protocol.rs:1539` |
-| 39 | `ExitedReviewMode` | `ExitedReviewModeEvent` | exited review mode,可带 optional final review output。[E: codex-rs/protocol/src/protocol.rs:1542] | `protocol.rs:1542` |
-| 40 | `HookStarted` | `HookStartedEvent` | hook run started。[E: codex-rs/protocol/src/protocol.rs:1549] | `protocol.rs:1549` |
-| 41 | `HookCompleted` | `HookCompletedEvent` | hook run completed。[E: codex-rs/protocol/src/protocol.rs:1550] | `protocol.rs:1550` |
-| 42 | `CollabAgentSpawnBegin` | `CollabAgentSpawnBeginEvent` | collab agent spawn begin。[E: codex-rs/protocol/src/protocol.rs:1558] | `protocol.rs:1558` |
-| 43 | `CollabAgentSpawnEnd` | `CollabAgentSpawnEndEvent` | collab agent spawn end。[E: codex-rs/protocol/src/protocol.rs:1560] | `protocol.rs:1560` |
-| 44 | `CollabAgentInteractionBegin` | `CollabAgentInteractionBeginEvent` | collab agent interaction begin。[E: codex-rs/protocol/src/protocol.rs:1562] | `protocol.rs:1562` |
-| 45 | `CollabAgentInteractionEnd` | `CollabAgentInteractionEndEvent` | collab agent interaction end。[E: codex-rs/protocol/src/protocol.rs:1564] | `protocol.rs:1564` |
-| 46 | `CollabWaitingBegin` | `CollabWaitingBeginEvent` | collab waiting begin。[E: codex-rs/protocol/src/protocol.rs:1566] | `protocol.rs:1566` |
-| 47 | `CollabWaitingEnd` | `CollabWaitingEndEvent` | collab waiting end。[E: codex-rs/protocol/src/protocol.rs:1568] | `protocol.rs:1568` |
-| 48 | `CollabCloseBegin` | `CollabCloseBeginEvent` | collab close begin。[E: codex-rs/protocol/src/protocol.rs:1570] | `protocol.rs:1570` |
-| 49 | `CollabCloseEnd` | `CollabCloseEndEvent` | collab close end。[E: codex-rs/protocol/src/protocol.rs:1572] | `protocol.rs:1572` |
-| 50 | `CollabResumeBegin` | `CollabResumeBeginEvent` | collab resume begin。[E: codex-rs/protocol/src/protocol.rs:1574] | `protocol.rs:1574` |
-| 51 | `CollabResumeEnd` | `CollabResumeEndEvent` | collab resume end。[E: codex-rs/protocol/src/protocol.rs:1576] | `protocol.rs:1576` |
-| 52 | `SubAgentActivity` | `SubAgentActivityEvent` | path-based v2 sub-agent activity。[E: codex-rs/protocol/src/protocol.rs:1579] | `protocol.rs:1579` |
+| 1 | `Error` | `ErrorEvent` | submission 执行失败；payload 含 message 和 optional `codex_error_info`。[E: codex-rs/protocol/src/protocol.rs:1359] | `protocol.rs:1366` |
+| 2 | `Warning` | `WarningEvent` | turn 继续执行但需要通知用户。[E: codex-rs/protocol/src/protocol.rs:1363] | `protocol.rs:1370` |
+| 3 | `AuthRecoveryStarted` | `AuthRecoveryEvent` | provider-owned authentication recovery 已为本 turn 开始；payload 是 `provider` 与 `message`。[E: codex-rs/protocol/src/protocol.rs:1366][E: codex-rs/protocol/src/protocol.rs:2093] | `protocol.rs:1373` |
+| 4 | `AuthRecoveryCompleted` | `AuthRecoveryEvent` | provider-owned authentication recovery 已完成本 turn。[E: codex-rs/protocol/src/protocol.rs:1369][E: codex-rs/protocol/src/protocol.rs:2093] | `protocol.rs:1376` |
+| 5 | `GuardianWarning` | `WarningEvent` | Guardian automatic approval reviewer 发出的 warning。[E: codex-rs/protocol/src/protocol.rs:1372] | `protocol.rs:1379` |
+| 6 | `RealtimeConversationStarted` | `RealtimeConversationStartedEvent` | realtime conversation lifecycle start。[E: codex-rs/protocol/src/protocol.rs:1375] | `protocol.rs:1382` |
+| 7 | `RealtimeConversationClosed` | `RealtimeConversationClosedEvent` | realtime conversation lifecycle close。[E: codex-rs/protocol/src/protocol.rs:1381] | `protocol.rs:1388` |
+| 8 | `ModelReroute` | `ModelRerouteEvent` | backend/model routing 从 requested model 切换到另一个 model。[E: codex-rs/protocol/src/protocol.rs:1387] | `protocol.rs:1394` |
+| 9 | `ModelVerification` | `ModelVerificationEvent` | backend 建议本 turn 需要额外 account verification。[E: codex-rs/protocol/src/protocol.rs:1390] | `protocol.rs:1397` |
+| 10 | `TurnModerationMetadata` | `TurnModerationMetadataEvent` | first-party turn presentation 用 moderation metadata。[E: codex-rs/protocol/src/protocol.rs:1393] | `protocol.rs:1400` |
+| 11 | `SafetyBuffering` | `SafetyBufferingEvent` | backend safety review buffering state。[E: codex-rs/protocol/src/protocol.rs:1396] | `protocol.rs:1403` |
+| 12 | `ContextCompacted` | `ContextCompactedEvent` | conversation history 被自动或手动 compaction。[E: codex-rs/protocol/src/protocol.rs:1399] | `protocol.rs:1406` |
+| 13 | `ThreadRolledBack` | `ThreadRolledBackEvent` | conversation history 丢弃最后 N 个 user turns。[E: codex-rs/protocol/src/protocol.rs:1403] | `protocol.rs:1409` |
+| 14 | `TurnStarted` | `TurnStartedEvent` | agent turn started,带 turn id、trace id、started time、context window、collaboration mode kind。[E: codex-rs/protocol/src/protocol.rs:1408] | `protocol.rs:1414` |
+| 15 | `ThreadSettingsApplied` | `ThreadSettingsAppliedEvent` | correlated submission 的 persistent thread settings 已应用到 session config。[E: codex-rs/protocol/src/protocol.rs:1412] | `protocol.rs:1418` |
+| 16 | `TurnComplete` | `TurnCompleteEvent` | agent 完成所有 actions。[E: codex-rs/protocol/src/protocol.rs:1417] | `protocol.rs:1423` |
+| 17 | `TokenCount` | `TokenCountEvent` | current session usage update,包括 totals 和 last turn；optional 表示 unknown。[E: codex-rs/protocol/src/protocol.rs:1421] | `protocol.rs:1427` |
+| 18 | `SessionConfigured` | `SessionConfiguredEvent` | configure ack,返回 session/thread id、model/provider、approval/permission/settings 等 session snapshot。[E: codex-rs/protocol/src/protocol.rs:1439] | `protocol.rs:1445` |
+| 19 | `EnvironmentConnected` | `EnvironmentConnectionEvent` | selected environment 完成 connection handshake；payload 是 `environment_id`。[E: codex-rs/protocol/src/protocol.rs:1347][E: codex-rs/protocol/src/protocol.rs:1442] | `protocol.rs:1448` |
+| 20 | `EnvironmentDisconnected` | `EnvironmentConnectionEvent` | selected environment 丢失已建立的连接；复用同一个 environment-id payload。[E: codex-rs/protocol/src/protocol.rs:1445] | `protocol.rs:1451` |
+| 21 | `ThreadGoalUpdated` | `ThreadGoalUpdatedEvent` | long-running goal metadata 更新。[E: codex-rs/protocol/src/protocol.rs:1448] | `protocol.rs:1454` |
+| 22 | `ThreadQueueChanged` | `ThreadQueueChangedEvent` | durable thread-scoped user-message queue 发生变化。[E: codex-rs/protocol/src/protocol.rs:1451] | `protocol.rs:1457` |
+| 23 | `McpStartupUpdate` | `McpStartupUpdateEvent` | MCP startup incremental progress。[E: codex-rs/protocol/src/protocol.rs:1454] | `protocol.rs:1460` |
+| 24 | `McpStartupComplete` | `McpStartupCompleteEvent` | MCP startup aggregate completion summary。[E: codex-rs/protocol/src/protocol.rs:1457] | `protocol.rs:1463` |
+| 25 | `ExecApprovalRequest` | `ExecApprovalRequestEvent` | command execution approval prompt。[E: codex-rs/protocol/src/protocol.rs:1485] | `protocol.rs:1491` |
+| 26 | `RequestPermissions` | `RequestPermissionsEvent` | `request_permissions` tool 向客户端发起权限请求。[E: codex-rs/protocol/src/protocol.rs:1487] | `protocol.rs:1493` |
+| 27 | `RequestUserInput` | `RequestUserInputEvent` | `request_user_input` tool 向客户端发起用户输入请求。[E: codex-rs/protocol/src/protocol.rs:1489] | `protocol.rs:1495` |
+| 28 | `ElicitationRequest` | `ElicitationRequestEvent` | MCP elicitation request event。[E: codex-rs/protocol/src/protocol.rs:1495] | `protocol.rs:1501` |
+| 29 | `ApplyPatchApprovalRequest` | `ApplyPatchApprovalRequestEvent` | apply_patch approval prompt。[E: codex-rs/protocol/src/protocol.rs:1497] | `protocol.rs:1503` |
+| 30 | `GuardianAssessment` | `GuardianAssessmentEvent` | Guardian-reviewed approval request 的 structured lifecycle event。[E: codex-rs/protocol/src/protocol.rs:1500] | `protocol.rs:1506` |
+| 31 | `DeprecationNotice` | `DeprecationNoticeEvent` | deprecated feature guidance。[E: codex-rs/protocol/src/protocol.rs:1504] | `protocol.rs:1510` |
+| 32 | `StreamError` | `StreamErrorEvent` | model stream error/disconnect,系统正在处理 retry/backoff 等恢复路径。[E: codex-rs/protocol/src/protocol.rs:1508] | `protocol.rs:1514` |
+| 33 | `TurnDiff` | `TurnDiffEvent` | turn diff payload,字段是 `unified_diff`。[E: codex-rs/protocol/src/protocol.rs:1520] | `protocol.rs:1526` |
+| 34 | `RealtimeConversationListVoicesResponse` | `RealtimeConversationListVoicesResponseEvent` | realtime conversation voices list response。[E: codex-rs/protocol/src/protocol.rs:1523] | `protocol.rs:1529` |
+| 35 | `PlanUpdate` | `UpdatePlanArgs` | update_plan tool/checklist 状态事件。[E: codex-rs/protocol/src/protocol.rs:1525] | `protocol.rs:1531` |
+| 36 | `TurnAborted` | `TurnAbortedEvent` | turn aborted notification。[E: codex-rs/protocol/src/protocol.rs:1527] | `protocol.rs:1533` |
+| 37 | `ShutdownComplete` | unit | agent shutdown complete notification。[E: codex-rs/protocol/src/protocol.rs:1530] | `protocol.rs:1536` |
+| 38 | `EnteredReviewMode` | `EnteredReviewModeEvent` | legacy entered-review notification。[E: codex-rs/protocol/src/protocol.rs:1533] | `protocol.rs:1539` |
+| 39 | `ExitedReviewMode` | `ExitedReviewModeEvent` | exited review mode,可带 optional final review output。[E: codex-rs/protocol/src/protocol.rs:1536] | `protocol.rs:1542` |
+| 40 | `HookStarted` | `HookStartedEvent` | hook run started。[E: codex-rs/protocol/src/protocol.rs:1543] | `protocol.rs:1549` |
+| 41 | `HookCompleted` | `HookCompletedEvent` | hook run completed。[E: codex-rs/protocol/src/protocol.rs:1544] | `protocol.rs:1550` |
+| 42 | `CollabAgentSpawnBegin` | `CollabAgentSpawnBeginEvent` | collab agent spawn begin。[E: codex-rs/protocol/src/protocol.rs:1552] | `protocol.rs:1558` |
+| 43 | `CollabAgentSpawnEnd` | `CollabAgentSpawnEndEvent` | collab agent spawn end。[E: codex-rs/protocol/src/protocol.rs:1554] | `protocol.rs:1560` |
+| 44 | `CollabAgentInteractionBegin` | `CollabAgentInteractionBeginEvent` | collab agent interaction begin。[E: codex-rs/protocol/src/protocol.rs:1556] | `protocol.rs:1562` |
+| 45 | `CollabAgentInteractionEnd` | `CollabAgentInteractionEndEvent` | collab agent interaction end。[E: codex-rs/protocol/src/protocol.rs:1558] | `protocol.rs:1564` |
+| 46 | `CollabWaitingBegin` | `CollabWaitingBeginEvent` | collab waiting begin。[E: codex-rs/protocol/src/protocol.rs:1560] | `protocol.rs:1566` |
+| 47 | `CollabWaitingEnd` | `CollabWaitingEndEvent` | collab waiting end。[E: codex-rs/protocol/src/protocol.rs:1562] | `protocol.rs:1568` |
+| 48 | `CollabCloseBegin` | `CollabCloseBeginEvent` | collab close begin。[E: codex-rs/protocol/src/protocol.rs:1564] | `protocol.rs:1570` |
+| 49 | `CollabCloseEnd` | `CollabCloseEndEvent` | collab close end。[E: codex-rs/protocol/src/protocol.rs:1566] | `protocol.rs:1572` |
+| 50 | `CollabResumeBegin` | `CollabResumeBeginEvent` | collab resume begin。[E: codex-rs/protocol/src/protocol.rs:1568] | `protocol.rs:1574` |
+| 51 | `CollabResumeEnd` | `CollabResumeEndEvent` | collab resume end。[E: codex-rs/protocol/src/protocol.rs:1570] | `protocol.rs:1576` |
+| 52 | `SubAgentActivity` | `SubAgentActivityEvent` | path-based v2 sub-agent activity。[E: codex-rs/protocol/src/protocol.rs:1573] | `protocol.rs:1579` |
 
 ## 设计动机速记
 
-- `Event` 的 submission correlation `id` 与 `EventMsg` payload 分离,让同一种 payload 可以在不同 submission 上复用。[E: codex-rs/protocol/src/protocol.rs:1346][E: codex-rs/protocol/src/protocol.rs:1348][E: codex-rs/protocol/src/protocol.rs:1350]
-- lifecycle/control 与 streaming 是文档分区；Rust 源码里它们都是同一个 `EventMsg` enum 的 sibling variants。[E: codex-rs/protocol/src/protocol.rs:1364]
-- v1 wire names `task_started` / `task_complete` 仍是 serialized names,`turn_started` / `turn_complete` 只是 accepted aliases。[E: codex-rs/protocol/src/protocol.rs:1413][E: codex-rs/protocol/src/protocol.rs:1422]
-- `AuthRecoveryStarted` / `AuthRecoveryCompleted` 复用同一个 `AuthRecoveryEvent`，只区分 recovery 阶段。[E: codex-rs/protocol/src/protocol.rs:1373][E: codex-rs/protocol/src/protocol.rs:1376][E: codex-rs/protocol/src/protocol.rs:2098]
+- `Event` 的 submission correlation `id` 与 `EventMsg` payload 分离,让同一种 payload 可以在不同 submission 上复用。[E: codex-rs/protocol/src/protocol.rs:1339][E: codex-rs/protocol/src/protocol.rs:1341][E: codex-rs/protocol/src/protocol.rs:1343]
+- lifecycle/control 与 streaming 是文档分区；Rust 源码里它们都是同一个 `EventMsg` enum 的 sibling variants。[E: codex-rs/protocol/src/protocol.rs:1357]
+- v1 wire names `task_started` / `task_complete` 仍是 serialized names,`turn_started` / `turn_complete` 只是 accepted aliases。[E: codex-rs/protocol/src/protocol.rs:1407][E: codex-rs/protocol/src/protocol.rs:1416]
+- `AuthRecoveryStarted` / `AuthRecoveryCompleted` 复用同一个 `AuthRecoveryEvent`，只区分 recovery 阶段。[E: codex-rs/protocol/src/protocol.rs:1366][E: codex-rs/protocol/src/protocol.rs:1369][E: codex-rs/protocol/src/protocol.rs:2093]
 
 ## Sources
 

@@ -8,7 +8,7 @@ symbols: [CodexAuth, AuthHeaders, ExternalAuth, AuthManager, LoginCallbackResult
 related: [subsys.config-auth.credential-storage, config.auth-account, rpc.config-account-methods, subsys.providers.provider-openai, subsys.cloud.cloud-config]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Codex 认证流程把 API key、ChatGPT OAuth/device code、external auth（包括整组 HTTP headers）、agent identity、personal access token、Bedrock API key 和 Bedrock access keys 都统一为 `CodexAuth` snapshots；`AuthManager` 负责缓存、env/external auth precedence、forced login/workspace restrictions 和 token refresh。本地 user-verification 凭证与签名在独立 crate，不走这套 login/network registration。[E: codex-rs/login/src/auth/manager.rs:80][E: codex-rs/login/src/auth/manager.rs:2049][E: codex-rs/user-verification/src/lib.rs:33]

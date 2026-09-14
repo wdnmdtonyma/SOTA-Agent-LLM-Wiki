@@ -8,7 +8,7 @@ symbols: [WriteStdinHandler, WriteStdinArgs, create_write_stdin_tool, WriteStdin
 related: [tool.exec-command, tool.shell-command, subsys.core.unified-exec, subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `write_stdin` 是 unified-exec 的续写/轮询工具：模型用 `session_id` 指向已有 `exec_command` process，传入 `chars` 可向 TTY session 写 stdin；未传或传空字符串时，它也可作为 poll，等待已有输出或最终完成。它只在 `Feature::UnifiedExec` 开启时与 interactive `ExecCommandHandler` 一起注册；one-shot 路径不暴露该工具。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:117][E: codex-rs/core/src/tools/handlers/unified_exec/write_stdin.rs:90][E: codex-rs/core/src/tools/spec_plan.rs:1104]
@@ -40,7 +40,7 @@ updated: 02a8f038b8
 
 非空 stdin 受 session 形态约束：manager 只有在 TTY process 上执行 `process.write(...)`；非 TTY 时仅 Ctrl-C interrupt 特例（`INTERRUPT = "\u{3}"`）会触发 `process.interrupt()`，其它输入返回 `StdinClosed`。[E: codex-rs/core/src/unified_exec/process_manager.rs:923][E: codex-rs/core/src/unified_exec/process_manager.rs:924][E: codex-rs/core/src/unified_exec/process_manager.rs:927][E: codex-rs/core/src/unified_exec/process_manager.rs:106] 因此需要交互式 stdin 的 `exec_command` 应以 `tty: true` 创建，而 `tty` serde 默认是 `default_tty() -> false`。[E: codex-rs/core/src/tools/handlers/unified_exec.rs:70]
 
-`Feature::WriteStdinApproval` 开启时，非空 stdin 可能在写入前走 `ProcessEntry::stdin_approval`；空输入、非 TTY 上的 `\u{3}`、或 feature 关闭则跳过。[E: codex-rs/core/src/unified_exec/stdin_approval.rs:185][E: codex-rs/core/src/unified_exec/stdin_approval.rs:190][E: codex-rs/features/src/lib.rs:1165]
+`Feature::WriteStdinApproval` 开启时，非空 stdin 可能在写入前走 `ProcessEntry::stdin_approval`；空输入、非 TTY 上的 `\u{3}`、或 feature 关闭则跳过。[E: codex-rs/core/src/unified_exec/stdin_approval.rs:185][E: codex-rs/core/src/unified_exec/stdin_approval.rs:190][E: codex-rs/features/src/lib.rs:1169]
 
 ## 3 输入 schema 表
 
@@ -65,7 +65,7 @@ updated: 02a8f038b8
 
 普通 turn 走 `add_shell_tools`。没有 environment / ShellTool 关 / 模型 Disabled 时不注册。[E: codex-rs/core/src/tools/spec_plan.rs:1083] `Feature::UnifiedExec` 开启时注册 `ExecCommandHandler::new` + `WriteStdinHandler`；关闭时只注册 `ExecCommandHandler::one_shot`，**不**注册 `write_stdin`。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111]
 
-`Feature::WriteStdinApproval` 当前 stage 是 UnderDevelopment，默认 `false`。[E: codex-rs/features/src/lib.rs:1165][E: codex-rs/features/src/lib.rs:1168]
+`Feature::WriteStdinApproval` 当前 stage 是 UnderDevelopment，默认 `false`。[E: codex-rs/features/src/lib.rs:1169][E: codex-rs/features/src/lib.rs:1172]
 
 ## 6 parallel support
 

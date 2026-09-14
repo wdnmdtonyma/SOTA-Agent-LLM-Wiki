@@ -8,7 +8,7 @@ symbols: [create_followup_task_tool, FollowupTaskHandlerV2, multi_agents_v2::fol
 related: [tool.spawn-agent-v2, tool.send-message, tool.wait-agent-v2]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `followup_task` 是 MultiAgentV2 的 trigger-turn 消息工具：它给现有非 root agent 投递纯文本任务，并让目标 agent 处理该任务。
@@ -18,12 +18,12 @@ updated: 02a8f038b8
 | 项 | 当前源码事实 |
 |---|---|
 | wire name | `followup_task`，由 handler 和 spec builder 定义。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/followup_task.rs:13][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:232] |
-| handler | V2 module re-export `followup_task::Handler as FollowupTaskHandler`；`spec_plan.rs` 用 `FollowupTaskHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:32][E: codex-rs/core/src/tools/spec_plan.rs:47][E: codex-rs/core/src/tools/spec_plan.rs:1324] |
+| handler | V2 module re-export `followup_task::Handler as FollowupTaskHandler`；`spec_plan.rs` 用 `FollowupTaskHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:32][E: codex-rs/core/src/tools/spec_plan.rs:47][E: codex-rs/core/src/tools/spec_plan.rs:1325] |
 | spec | function tool，`strict: false`、`defer_loading: None`，无 output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:231][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:235][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:238] |
 
 ## 注册与门控
 
-`followup_task` 与其他 V2 协作工具一起注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支，并经过相同的 exposure/namespace 包装。leaf worker（子 agent 且当前模型 `multi_agent_version` 不是 V2）不会注册该工具。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1288][E: codex-rs/core/src/tools/spec_plan.rs:656][E: codex-rs/core/src/tools/spec_plan.rs:1323]
+`followup_task` 与其他 V2 协作工具一起注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支，并经过相同的 exposure/namespace 包装。leaf worker（子 agent 且当前模型 `multi_agent_version` 不是 V2）不会注册该工具。[E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1289][E: codex-rs/core/src/tools/spec_plan.rs:656][E: codex-rs/core/src/tools/spec_plan.rs:1324]
 
 handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 返回 false。[E: codex-rs/tools/src/tool_executor.rs:122]
 

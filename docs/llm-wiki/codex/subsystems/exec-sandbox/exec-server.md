@@ -8,7 +8,7 @@ symbols: [ExecServerHandler, ConnectionProcessor, RequestDispatcher, SessionRegi
 related: [tool.exec-command, tool.write-stdin, subsys.exec-sandbox.overview, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > exec-server 是 Codex 的 JSON-RPC process/file-system server：本地可监听 `ws://IP:PORT` 或 `stdio`，remote mode 则经 registry/Noise relay 暴露 executor；它管理可 attach/resume 的 sessions、PTY/pipe processes、sandboxed filesystem 与 controller-side network callbacks。version-skew 兼容测试已迁到 Bazel harness，不再使用已删除的 `run_version_skew.sh`。[E: codex-rs/exec-server/src/server/transport.rs:63][E: codex-rs/exec-server/src/server/transport.rs:66][E: codex-rs/exec-server/src/server/transport.rs:70][E: bazel/rules/testing/compat/exec_server_compat_test.rs:48]
@@ -46,7 +46,7 @@ exec-server 节点覆盖 server/session lifecycle、local/remote process backend
 - `SessionRegistry`: 用 `sessions: HashMap<String, SessionEntry>` 存储可 resume 的 detached sessions。[E: codex-rs/exec-server/src/server/session_registry.rs:22]
 - `AttachmentState` 保存 current connection id、detached connection id 和 detached expiration instant。[E: codex-rs/exec-server/src/server/session_registry.rs:33]
 - `RunningProcess` 保存 process session、tty/pipe-stdin flags、accepted stdin write ids、retained output/bytes、sequence/exit/wake/event/open-stream state、metrics、sandbox-denied state，以及与该 process 同生命周期的 optional `NetworkProxyHandle`。[E: codex-rs/exec-server/src/local_process.rs:105][E: codex-rs/exec-server/src/local_process.rs:123]
-- `ExecResponse.sandbox_type` 是 optional：新 peer 显式报告 none/Seatbelt/Linux/Windows backend，旧 peer 缺字段时 controller 不猜 backend。[E: codex-rs/exec-server-protocol/src/protocol.rs:350]
+- `ExecResponse.sandbox_type` 是 optional：新 peer 显式报告 none/Seatbelt/Linux/Windows backend，旧 peer 缺字段时 controller 不猜 backend。[E: codex-rs/exec-server-protocol/src/protocol.rs:354]
 
 ## 控制流
 
@@ -66,21 +66,21 @@ exec-server 节点覆盖 server/session lifecycle、local/remote process backend
 
 executor-local `LocalProcess` 只有在 launch config 提供非零 `policy_decision_timeout_ms` 时才安装反向 decider。[E: codex-rs/exec-server/src/local_process.rs:303][E: codex-rs/exec-server/src/local_process.rs:307]
 
-不支持 remote callback 的 backend 默认返回 protocol error。[E: codex-rs/exec-server/src/process.rs:237][E: codex-rs/exec-server/src/process.rs:243]
+不支持 remote callback 的 backend 默认返回 protocol error。[E: codex-rs/exec-server/src/process.rs:238][E: codex-rs/exec-server/src/process.rs:244]
 
 `Ask` 是协议与 policy engine 的第三种决定，但仅凭 exec-server 层不能断言一定弹出 UI；是否提示、自动批准或拒绝由上层 controller 的 decider 决定。[U]
 
 ## Remote ownership、compatibility 与 filesystem
 
-`ExecResponse.sandbox_type` 是 optional compatibility field：缺字段时 controller 不猜 backend，也就跳过本地 normalized violation attribution。[E: codex-rs/exec-server-protocol/src/protocol.rs:350]
+`ExecResponse.sandbox_type` 是 optional compatibility field：缺字段时 controller 不猜 backend，也就跳过本地 normalized violation attribution。[E: codex-rs/exec-server-protocol/src/protocol.rs:354]
 
 `FileSystemHandler::read_file` 返回 base64 编码 bytes；`write_file` 接收 base64 并 decode，decode 失败映射 invalid request。[E: codex-rs/exec-server/src/server/file_system_handler.rs:178][E: codex-rs/exec-server/src/server/file_system_handler.rs:186]
 
 `FileSystemHandler` 还暴露 `walk`。[E: codex-rs/exec-server/src/server/file_system_handler.rs:287]
 
-Windows 上 `Feature::UnifiedExec` 现在默认 `true`，因此 Windows executor 默认也走 unified exec 路径。[E: codex-rs/features/src/lib.rs:946]
+Windows 上 `Feature::UnifiedExec` 现在默认 `true`，因此 Windows executor 默认也走 unified exec 路径。[E: codex-rs/features/src/lib.rs:950]
 
-protocol crate **不再**声明 0.145.0 runtime 兼容常量。Bazel 兼容测试 pin 当前拉取 0.145.0 与 0.150.1 两份 released archive。[E: MODULE.bazel:444][E: MODULE.bazel:498][E: bazel/rules/testing/compat/exec_server_compat_test.rs:48]
+protocol crate **不再**声明 0.145.0 runtime 兼容常量。Bazel 兼容测试 pin 当前拉取 0.145.0 与 0.150.1 两份 released archive。[E: MODULE.bazel:446][E: MODULE.bazel:500][E: bazel/rules/testing/compat/exec_server_compat_test.rs:48]
 
 ## PTY 与 pipe backend
 

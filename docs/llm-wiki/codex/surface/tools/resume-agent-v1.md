@@ -8,7 +8,7 @@ symbols: [create_resume_agent_tool, ResumeAgentHandler, multi_agents::resume_age
 related: [tool.spawn-agent-v1, tool.close-agent-v1, tool.send-input-v1]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `resume_agent` V1 是 `multi_agent_v1` namespace 下的恢复工具；它按 agent id 尝试从 recorded rollout 重新加载当前 not-live/missing 的 agent，并返回恢复后的 status。
@@ -23,7 +23,7 @@ updated: 02a8f038b8
 
 ## 注册与门控
 
-`resume_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 在 `search_tool_enabled` true 时是 deferred，否则 direct。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1344][E: codex-rs/core/src/tools/spec_plan.rs:1347][E: codex-rs/core/src/tools/spec_plan.rs:1365]
+`resume_agent` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false；V1 exposure 在 `search_tool_enabled` true 时是 deferred，否则 direct。[E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1345][E: codex-rs/core/src/tools/spec_plan.rs:1348][E: codex-rs/core/src/tools/spec_plan.rs:1366]
 
 handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/resume_agent.rs:20][E: codex-rs/tools/src/tool_executor.rs:122]
 

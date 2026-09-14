@@ -8,7 +8,7 @@ symbols: [McpProtocolMode, RmcpClient, TransportRecipe, StdioServerLauncher, Loc
 related: [subsys.mcp.client, subsys.mcp.oauth, subsys.mcp.server]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > MCP transports are owned by `rmcp-client`: stdio can run as a local child process or through the executor process API, while streamable HTTP uses default headers, optional bearer/runtime auth, optional stored OAuth, session-expiry recovery, and active-time timeouts around RMCP service operations.[E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:184][E: codex-rs/rmcp-client/src/stdio_server_launcher.rs:559][E: codex-rs/rmcp-client/src/executor_process_transport.rs:158][E: codex-rs/rmcp-client/src/rmcp_client.rs:394]
@@ -23,7 +23,7 @@ updated: 02a8f038b8
 
 ## 职责边界
 
-`rmcp-client` owns transport construction and RMCP service calls; `codex-mcp/src/rmcp_client.rs::make_rmcp_client` owns config/environment selection and passes the chosen launcher or HTTP client into `RmcpClient`。[E: codex-rs/rmcp-client/src/rmcp_client.rs:394][E: codex-rs/rmcp-client/src/rmcp_client.rs:453][E: codex-rs/codex-mcp/src/rmcp_client.rs:1106]
+`rmcp-client` owns transport construction and RMCP service calls; `codex-mcp/src/rmcp_client.rs::make_rmcp_client` owns config/environment selection and passes the chosen launcher or HTTP client into `RmcpClient`。[E: codex-rs/rmcp-client/src/rmcp_client.rs:394][E: codex-rs/rmcp-client/src/rmcp_client.rs:453][E: codex-rs/codex-mcp/src/rmcp_client.rs:1126]
 
 OAuth behavior is covered in `subsys.mcp.oauth`; this node only covers how OAuth-bearing transports are plugged into RMCP service operations.[E: codex-rs/rmcp-client/src/rmcp_client.rs:1153]
 
@@ -38,9 +38,9 @@ OAuth behavior is covered in `subsys.mcp.oauth`; this node only covers how OAuth
 
 ## Config selection
 
-- `McpRuntimeContext::resolve_server_environment` resolves the configured environment before `make_rmcp_client` receives it as `Result<Option<Arc<Environment>>, String>`。A registered environment is returned for either transport；a missing local stdio environment is an error，missing local HTTP is the ambient-client exception，and an unknown non-local id is an error。`make_rmcp_client` only consumes this pre-resolved result before branching on `Stdio` or `StreamableHttp`。[E: codex-rs/codex-mcp/src/runtime.rs:801][E: codex-rs/codex-mcp/src/runtime.rs:821][E: codex-rs/codex-mcp/src/runtime.rs:823][E: codex-rs/codex-mcp/src/runtime.rs:826][E: codex-rs/codex-mcp/src/runtime.rs:830][E: codex-rs/codex-mcp/src/rmcp_client.rs:1106][E: codex-rs/codex-mcp/src/rmcp_client.rs:1136][E: codex-rs/codex-mcp/src/rmcp_client.rs:1142]
-- Stdio uses `LocalStdioServerLauncher` for a local environment and `ExecutorStdioServerLauncher` backed by the resolved environment for a non-local environment，then constructs `RmcpClient::new_stdio_client_with_protocol_mode` with the session protocol mode。[E: codex-rs/codex-mcp/src/rmcp_client.rs:1157][E: codex-rs/codex-mcp/src/rmcp_client.rs:1161][E: codex-rs/codex-mcp/src/rmcp_client.rs:1170][E: codex-rs/codex-mcp/src/rmcp_client.rs:1176]
-- Streamable HTTP uses the ambient `RouteAwareHttpClient` when the resolution exception returns `None`，otherwise it uses the selected environment HTTP client；local environments own a route-aware client，while remote environments expose the executor RPC client as their HTTP capability。After resolving a bearer token，the path calls `RmcpClient::new_streamable_http_client_with_protocol_mode`。[E: codex-rs/codex-mcp/src/runtime.rs:826][E: codex-rs/codex-mcp/src/runtime.rs:837][E: codex-rs/codex-mcp/src/rmcp_client.rs:1188][E: codex-rs/codex-mcp/src/rmcp_client.rs:1195]
+- `McpRuntimeContext::resolve_server_environment` resolves the configured environment before `make_rmcp_client` receives it as `Result<Option<Arc<Environment>>, String>`。A registered environment is returned for either transport；a missing local stdio environment is an error，missing local HTTP is the ambient-client exception，and an unknown non-local id is an error。`make_rmcp_client` only consumes this pre-resolved result before branching on `Stdio` or `StreamableHttp`。[E: codex-rs/codex-mcp/src/runtime.rs:801][E: codex-rs/codex-mcp/src/runtime.rs:821][E: codex-rs/codex-mcp/src/runtime.rs:823][E: codex-rs/codex-mcp/src/runtime.rs:826][E: codex-rs/codex-mcp/src/runtime.rs:830][E: codex-rs/codex-mcp/src/rmcp_client.rs:1126][E: codex-rs/codex-mcp/src/rmcp_client.rs:1161][E: codex-rs/codex-mcp/src/rmcp_client.rs:1167]
+- Stdio uses `LocalStdioServerLauncher` for a local environment and `ExecutorStdioServerLauncher` backed by the resolved environment for a non-local environment，then constructs `RmcpClient::new_stdio_client_with_protocol_mode` with the session protocol mode。[E: codex-rs/codex-mcp/src/rmcp_client.rs:1182][E: codex-rs/codex-mcp/src/rmcp_client.rs:1186][E: codex-rs/codex-mcp/src/rmcp_client.rs:1195][E: codex-rs/codex-mcp/src/rmcp_client.rs:1201]
+- Streamable HTTP uses the ambient `RouteAwareHttpClient` when the resolution exception returns `None`，otherwise it uses the selected environment HTTP client；local environments own a route-aware client，while remote environments expose the executor RPC client as their HTTP capability。After resolving a bearer token，the path calls `RmcpClient::new_streamable_http_client_with_protocol_mode`。[E: codex-rs/codex-mcp/src/runtime.rs:826][E: codex-rs/codex-mcp/src/runtime.rs:837][E: codex-rs/codex-mcp/src/rmcp_client.rs:1213][E: codex-rs/codex-mcp/src/rmcp_client.rs:1220]
 
 ## Stdio transports
 

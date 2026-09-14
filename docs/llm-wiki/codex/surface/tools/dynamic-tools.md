@@ -8,10 +8,10 @@ symbols: [DynamicToolSpec, DynamicToolFunctionSpec, DynamicToolNamespaceSpec, Dy
 related: [tool.tool-search, tool.mcp-namespace-tools, subsys.core.tool-system]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> Dynamic tools 是 planner 从 `turn_context.dynamic_tools` 遍历出来的运行时工具定义。planner 把 `DynamicToolSpec::Function` 或 namespace 内 function 转成 `DynamicToolHandler`；handler 登记 pending response，通过 `DynamicToolCallItem` 发出 started/completed turn-item 生命周期，并在其间等待 response。[E: codex-rs/protocol/src/dynamic_tools.rs:13][E: codex-rs/protocol/src/dynamic_tools.rs:21][E: codex-rs/core/src/tools/spec_plan.rs:180][E: codex-rs/core/src/tools/spec_plan.rs:1374][E: codex-rs/core/src/tools/spec_plan.rs:1377][E: codex-rs/core/src/tools/handlers/dynamic.rs:190][E: codex-rs/core/src/tools/handlers/dynamic.rs:203][E: codex-rs/core/src/tools/handlers/dynamic.rs:247]
+> Dynamic tools 是 planner 从 `turn_context.dynamic_tools` 遍历出来的运行时工具定义。planner 把 `DynamicToolSpec::Function` 或 namespace 内 function 转成 `DynamicToolHandler`；handler 登记 pending response，通过 `DynamicToolCallItem` 发出 started/completed turn-item 生命周期，并在其间等待 response。[E: codex-rs/protocol/src/dynamic_tools.rs:13][E: codex-rs/protocol/src/dynamic_tools.rs:21][E: codex-rs/core/src/tools/spec_plan.rs:180][E: codex-rs/core/src/tools/spec_plan.rs:1375][E: codex-rs/core/src/tools/spec_plan.rs:1378][E: codex-rs/core/src/tools/handlers/dynamic.rs:190][E: codex-rs/core/src/tools/handlers/dynamic.rs:203][E: codex-rs/core/src/tools/handlers/dynamic.rs:247]
 
 ## 能回答的问题
 
@@ -28,7 +28,7 @@ namespace spec 包含 namespace `name`、`description` 和 `tools: Vec<DynamicTo
 
 ## 2 runtime 构造
 
-`append_dynamic_tool_runtimes` 遍历当前 turn 的 dynamic specs：Function 走 `DynamicToolHandler::new`，Namespace 则遍历 `namespace.tools` 并走 `DynamicToolHandler::new_in_namespace`。[E: codex-rs/core/src/tools/spec_plan.rs:1374][E: codex-rs/core/src/tools/spec_plan.rs:1377][E: codex-rs/core/src/tools/spec_plan.rs:1387][E: codex-rs/core/src/tools/spec_plan.rs:1390]
+`append_dynamic_tool_runtimes` 遍历当前 turn 的 dynamic specs：Function 走 `DynamicToolHandler::new`，Namespace 则遍历 `namespace.tools` 并走 `DynamicToolHandler::new_in_namespace`。[E: codex-rs/core/src/tools/spec_plan.rs:1375][E: codex-rs/core/src/tools/spec_plan.rs:1378][E: codex-rs/core/src/tools/spec_plan.rs:1388][E: codex-rs/core/src/tools/spec_plan.rs:1391]
 
 handler construction 用 namespace/name 生成 `ToolName`，把 protocol spec 转成 `ResponsesApiTool`，再包装为 Function 或 Namespace `ToolSpec`。[E: codex-rs/core/src/tools/handlers/dynamic.rs:54][E: codex-rs/core/src/tools/handlers/dynamic.rs:61][E: codex-rs/core/src/tools/handlers/dynamic.rs:62][E: codex-rs/core/src/tools/handlers/dynamic.rs:69]
 

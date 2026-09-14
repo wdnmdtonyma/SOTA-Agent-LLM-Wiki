@@ -8,10 +8,10 @@ symbols: [StatusHistoryCell, StatusHistoryHandle, StatusRateLimitData, RateLimit
 related: [subsys.tui.chatwidget, subsys.tui.bottom-pane, subsys.config-auth.features-system]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections、rate-limit display shaping 和 demand-driven thread usage。这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`chatwidget/thread_usage.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:226][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:107][E: codex-rs/tui/src/chatwidget/thread_usage.rs:38][E: codex-rs/tui/src/bottom_pane/mod.rs:1207][E: codex-rs/tui/src/chatwidget.rs:811]
+> Status surfaces 包括 `/status` history card、running-task inline status、status line/terminal title selections、rate-limit display shaping 和 demand-driven thread usage。这些状态横跨 `status/*`、`chatwidget/status_surfaces.rs`、`chatwidget/thread_usage.rs`、`BottomPane` 和 `ChatWidget`。[E: codex-rs/tui/src/status/card.rs:226][E: codex-rs/tui/src/chatwidget/status_surfaces.rs:107][E: codex-rs/tui/src/chatwidget/thread_usage.rs:38][E: codex-rs/tui/src/bottom_pane/mod.rs:1202][E: codex-rs/tui/src/chatwidget.rs:813]
 
 ## 能回答的问题
 
@@ -64,7 +64,7 @@ usage menu 总是提供 usage 查看入口；只有 ChatGPT account 且可用 re
 
 ## Running Status
 
-running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1207][E: codex-rs/tui/src/bottom_pane/mod.rs:1210][E: codex-rs/tui/src/bottom_pane/mod.rs:1216][E: codex-rs/tui/src/bottom_pane/mod.rs:1223]
+running-task inline status 属于 bottom pane：`set_task_running` 更新 composer task state，首次 running 时创建 `StatusIndicatorWidget`、显示 interrupt hint、同步 inline message，结束时 hide status indicator。[E: codex-rs/tui/src/bottom_pane/mod.rs:1202][E: codex-rs/tui/src/bottom_pane/mod.rs:1205][E: codex-rs/tui/src/bottom_pane/mod.rs:1211][E: codex-rs/tui/src/bottom_pane/mod.rs:1218]
 
 ## Gotchas
 

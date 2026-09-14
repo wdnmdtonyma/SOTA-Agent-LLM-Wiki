@@ -8,7 +8,7 @@ symbols: [create_spawn_agent_tool_v1, SpawnAgentHandler, multi_agents::spawn::Ha
 related: [tool.spawn-agent-v2, tool.send-input-v1, tool.wait-agent-v1, subsys.core.collaboration-modes]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `spawn_agent` V1 是 `multi_agent_v1` namespace 下的子 agent 创建工具；当 collaboration tools 开启但 MultiAgentV2 分支未启用时注册。
@@ -23,11 +23,11 @@ updated: 02a8f038b8
 
 ## 注册与门控
 
-`add_collaboration_tools` 在 `collab_tools_enabled` 为 true 后分流：`multi_agent_v2_enabled` 为 false 时进入 V1 注册路径，注册 `SpawnAgentHandler`、`SendInputHandler`、`ResumeAgentHandler`、`WaitAgentHandler` 和 `CloseAgentHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1344][E: codex-rs/core/src/tools/spec_plan.rs:1352][E: codex-rs/core/src/tools/spec_plan.rs:1368]
+`add_collaboration_tools` 在 `collab_tools_enabled` 为 true 后分流：`multi_agent_v2_enabled` 为 false 时进入 V1 注册路径，注册 `SpawnAgentHandler`、`SendInputHandler`、`ResumeAgentHandler`、`WaitAgentHandler` 和 `CloseAgentHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1345][E: codex-rs/core/src/tools/spec_plan.rs:1353][E: codex-rs/core/src/tools/spec_plan.rs:1369]
 
-V1 exposure 在 search tool 开启时是 `Deferred`，否则是 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:1347][E: codex-rs/core/src/tools/spec_plan.rs:629]
+V1 exposure 在 search tool 开启时是 `Deferred`，否则是 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:1348][E: codex-rs/core/src/tools/spec_plan.rs:629]
 
-V1 spawn options 硬编码 `hide_agent_type_model_reasoning: false`、`expose_spawn_agent_model_overrides: true`，并仍会把 `multi_agent_v2.usage_hint_text` 写进 V1 tool description。[E: codex-rs/core/src/tools/spec_plan.rs:1357][E: codex-rs/core/src/tools/spec_plan.rs:1358][E: codex-rs/core/src/tools/spec_plan.rs:1360]
+V1 spawn options 硬编码 `hide_agent_type_model_reasoning: false`、`expose_spawn_agent_model_overrides: true`，并仍会把 `multi_agent_v2.usage_hint_text` 写进 V1 tool description。[E: codex-rs/core/src/tools/spec_plan.rs:1358][E: codex-rs/core/src/tools/spec_plan.rs:1359][E: codex-rs/core/src/tools/spec_plan.rs:1361]
 
 handler 提供 `search_info()`，其 source name/description 来自 `multi_agent_tool_search_info`。[E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:32][E: codex-rs/core/src/tools/handlers/multi_agents.rs:67]
 

@@ -8,7 +8,7 @@ symbols: [start_memories_startup_task, MemoriesExtension, build_memory_tool_deve
 related: [spine.extension-system, subsys.core.instruction-assembly, subsys.core.session-lifecycle, subsys.core.turn-engine, subsys.core.unified-exec, subsys.core.history-notes, rpc.mcp-skills-plugin-methods]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > 长期 Memory 拆成三层：`codex-rs/memories/write` 负责 startup extraction/consolidation 写路径，`codex-rs/memories/read` 负责 citation/usage/read helper，`codex-rs/ext/memories` 通过 extension API 把 `memory_summary.md` 注入 developer prompt 并可选暴露 dedicated memory tools。core 侧 `MemoryContextFragment` 是 bounded v2 memory context。它不是 History notes 扩展：后者是 backend 私有 `history`/`notes` 回读面，private model-only。[E: codex-rs/memories/write/src/lib.rs:29][E: codex-rs/ext/memories/src/extension.rs:70][E: codex-rs/core/src/context/memory.rs:9][E: codex-rs/ext/history-notes/src/tools.rs:26]
@@ -41,9 +41,9 @@ experimental client RPC `memory/status` 存在；方法表权威在 `rpc.mcp-ski
 
 ## 数据模型
 
-`MemoriesConfig::default` 默认生成和使用 memories，但 dedicated tools 默认关闭。[E: codex-rs/config/src/types.rs:348][E: codex-rs/config/src/types.rs:354][E: codex-rs/config/src/types.rs:355][E: codex-rs/config/src/types.rs:356]
+`MemoriesConfig::default` 默认生成和使用 memories，但 dedicated tools 默认关闭。[E: codex-rs/config/src/types.rs:350][E: codex-rs/config/src/types.rs:356][E: codex-rs/config/src/types.rs:357][E: codex-rs/config/src/types.rs:358]
 
-`generate_memories` 决定 thread persistence metadata 的 initial `memory_mode`: 新建时为 true 则 `Enabled`，否则 `Disabled`。[E: codex-rs/core/src/session/session.rs:920]
+`generate_memories` 决定 thread persistence metadata 的 initial `memory_mode`: 新建时为 true 则 `Enabled`，否则 `Disabled`。[E: codex-rs/core/src/session/session.rs:996]
 
 `MemoryVersion` 把 artifact namespace 分成 V1 `memories` 与 V2 `memories_v2`。[E: codex-rs/protocol/src/memory_version.rs:9][E: codex-rs/protocol/src/memory_version.rs:17][E: codex-rs/protocol/src/memory_version.rs:19][E: codex-rs/protocol/src/memory_version.rs:20]
 
@@ -53,7 +53,7 @@ experimental client RPC `memory/status` 存在；方法表权威在 `rpc.mcp-ski
 
 ## Startup/write path
 
-1. App-server turn path 在成功提交有 input 的 turn 后调用 `codex_memories_write::start_memories_startup_task`。[E: codex-rs/app-server/src/request_processors/turn_processor.rs:683][E: codex-rs/memories/write/src/start.rs:24]
+1. App-server turn path 在成功提交有 input 的 turn 后调用 `codex_memories_write::start_memories_startup_task`。[E: codex-rs/app-server/src/request_processors/turn_processor.rs:686][E: codex-rs/memories/write/src/start.rs:24]
 2. Startup gate 跳过 ephemeral session、未开启 `Feature::MemoryTool` 的 session、以及 non-root agent；缺少 state DB 时直接跳过。[E: codex-rs/memories/write/src/start.rs:33][E: codex-rs/memories/write/src/start.rs:60]
 3. `dual_write` 为真时同一 startup 会按 V1 再 V2 各跑一遍 pipeline；否则只跑 `config.memories.version`。[E: codex-rs/memories/write/src/start.rs:40][E: codex-rs/memories/write/src/start.rs:43]
 4. Background task 创建 versioned memory root，seed extension instructions，prune stale stage-one outputs，检查 Codex rate limits，之后依次运行 Phase 1 和 Phase 2。[E: codex-rs/memories/write/src/start.rs:64][E: codex-rs/memories/write/src/start.rs:71][E: codex-rs/memories/write/src/start.rs:77][E: codex-rs/memories/write/src/start.rs:89]
@@ -66,7 +66,7 @@ Phase 1 job 按 version 选 base instructions，设置 output schema 且 `output
 
 ## Phase 2
 
-Phase 2 先 claim global phase2 job，再确保 memory workspace git baseline，构建 locked-down consolidation agent config，读取 selected raw memories，同步 workspace，再用 workspace diff 判断是否需要 agent。[E: codex-rs/memories/write/src/phase2.rs:67][E: codex-rs/memories/write/src/phase2.rs:76][E: codex-rs/memories/write/src/phase2.rs:83]
+Phase 2 先 claim global phase2 job，再确保 memory workspace git baseline，构建 locked-down consolidation agent config，读取 selected raw memories，同步 workspace，再用 workspace diff 判断是否需要 agent。[E: codex-rs/memories/write/src/phase2.rs:68][E: codex-rs/memories/write/src/phase2.rs:76][E: codex-rs/memories/write/src/phase2.rs:83]
 
 ## Read path 与 tools
 
@@ -78,13 +78,13 @@ Dedicated memory tools 只在 extension config enabled 且 `dedicated_tools` 为
 
 ## Thread memory mode 与清理
 
-`set_thread_memory_mode` 只持久化 active session 的 thread-level memory mode metadata。[E: codex-rs/core/src/session/handlers.rs:396]
+`set_thread_memory_mode` 只持久化 active session 的 thread-level memory mode metadata。[E: codex-rs/core/src/session/handlers.rs:269]
 
 `clear_memory_roots_contents` 会清空 `codex_home/memories`、`codex_home/memories_v2` 和 legacy `codex_home/memories_extensions`。[E: codex-rs/memories/write/src/control.rs:3][E: codex-rs/memories/write/src/control.rs:5][E: codex-rs/memories/write/src/control.rs:6][E: codex-rs/memories/write/src/control.rs:7]
 
 ## 设计动机与权衡
 
-Memory 生成被放在 turn 提交后的 background startup task，而不是同步塞进当前 turn sampling；Phase 1/Phase 2 还受 state DB、rate-limit guard、lease 和 global lock 约束，这把慢速 extraction/consolidation 从当前交互延迟中隔离出来。[E: codex-rs/memories/write/src/start.rs:24][E: codex-rs/memories/write/src/phase2.rs:67][I]
+Memory 生成被放在 turn 提交后的 background startup task，而不是同步塞进当前 turn sampling；Phase 1/Phase 2 还受 state DB、rate-limit guard、lease 和 global lock 约束，这把慢速 extraction/consolidation 从当前交互延迟中隔离出来。[E: codex-rs/memories/write/src/start.rs:24][E: codex-rs/memories/write/src/phase2.rs:68][I]
 
 `use_memories` 与 `dedicated_tools` 的拆分让 Codex 可以只注入 memory summary 而不暴露 dedicated tools；生成侧 `generate_memories` 又独立控制 future extraction eligibility。[E: codex-rs/ext/memories/src/extension.rs:48][I]
 

@@ -8,7 +8,7 @@ symbols: [append_tool_search_executor, create_tool_search_tool, ToolSearchHandle
 related: [tool.list-available-plugins-to-install, tool.request-plugin-install, tool.mcp-namespace-tools, tool.dynamic-tools, subsys.core.tool-system, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `tool_search` 是 Codex 的 deferred tool discovery runtime。finalizer 在模型支持 search tool、provider 支持 namespace tools 且 registry 存在可搜索 Deferred runtime 时，追加一个 BM25-backed `ToolSearchHandler`，让模型按查询把匹配的 deferred tools 暴露到下一次调用。[E: codex-rs/core/src/tools/spec_plan.rs:373][E: codex-rs/core/src/tools/spec_plan.rs:376][E: codex-rs/core/src/tools/spec_plan.rs:406][E: codex-rs/core/src/tools/spec_plan.rs:629][E: codex-rs/core/src/tools/handlers/tool_search.rs:158]
@@ -32,7 +32,7 @@ updated: 02a8f038b8
 
 ## 2 用途定位
 
-工具描述写明它搜索 deferred tool metadata，并把匹配工具暴露给下一次模型调用；`ToolSearchSourceListing::Include` 时描述还会列出当前可搜索的 sources，空列表时显示 `None currently enabled.`。`DeferredToolWorldState` 开启时 source listing 改为 `Omit`。[E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:48][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:49][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:90][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:94][E: codex-rs/core/src/tools/spec_plan.rs:1412][E: codex-rs/core/src/tools/spec_plan.rs:1417]
+工具描述写明它搜索 deferred tool metadata，并把匹配工具暴露给下一次模型调用；`ToolSearchSourceListing::Include` 时描述还会列出当前可搜索的 sources，空列表时显示 `None currently enabled.`。`DeferredToolWorldState` 开启时 source listing 改为 `Omit`。[E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:48][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:49][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:90][E: codex-rs/core/src/tools/handlers/tool_search_spec.rs:94][E: codex-rs/core/src/tools/spec_plan.rs:1413][E: codex-rs/core/src/tools/spec_plan.rs:1418]
 
 MCP、dynamic、extension adapter、multi-agent v1 handler 等 runtime 通过 `ToolExecutor::search_info()` 进入 search index；默认实现从 function/namespace spec 派生 metadata，具体 handler 也可以覆盖 source info 或 search text。[E: codex-rs/tools/src/tool_executor.rs:117][E: codex-rs/core/src/tools/handlers/dynamic.rs:98][E: codex-rs/core/src/tools/handlers/mcp.rs:141][E: codex-rs/core/src/tools/handlers/multi_agents/spawn.rs:32]
 
@@ -53,11 +53,11 @@ MCP、dynamic、extension adapter、multi-agent v1 handler 等 runtime 通过 `T
 
 `finalize_tool_router` 只有在 `search_tool_enabled(turn_context)` 为 true 且 registry 存在可搜索 Deferred runtime 时才调用 `append_tool_search_executor`；当前 search gate 要求模型支持 search tool 且 provider 支持 namespace tools。[E: codex-rs/core/src/tools/spec_plan.rs:373][E: codex-rs/core/src/tools/spec_plan.rs:376][E: codex-rs/core/src/tools/spec_plan.rs:406][E: codex-rs/core/src/tools/spec_plan.rs:629][E: codex-rs/core/src/tools/spec_plan.rs:640]
 
-`append_tool_search_executor` 按 world-state feature 选择 source listing，再通过 handler cache 构造并以 trusted runtime 注册。cache 对 immutable MCP spec 复用 Weak runtime，对 dynamic spec 比较 `ToolSearchInfo`。[E: codex-rs/core/src/tools/spec_plan.rs:1412][E: codex-rs/core/src/tools/spec_plan.rs:1421][E: codex-rs/core/src/tools/handlers/tool_search.rs:52][E: codex-rs/core/src/tools/handlers/tool_search.rs:61][E: codex-rs/core/src/tools/handlers/tool_search.rs:75]
+`append_tool_search_executor` 按 world-state feature 选择 source listing，再通过 handler cache 构造并以 trusted runtime 注册。cache 对 immutable MCP spec 复用 Weak runtime，对 dynamic spec 比较 `ToolSearchInfo`。[E: codex-rs/core/src/tools/spec_plan.rs:1413][E: codex-rs/core/src/tools/spec_plan.rs:1422][E: codex-rs/core/src/tools/handlers/tool_search.rs:52][E: codex-rs/core/src/tools/handlers/tool_search.rs:61][E: codex-rs/core/src/tools/handlers/tool_search.rs:75]
 
 满足 gate 时，finalizer 会先移除 registry 中已有的 plain `tool_search` 名称，再注册由 cache 构造的 trusted search handler。[E: codex-rs/core/src/tools/spec_plan.rs:372][E: codex-rs/core/src/tools/spec_plan.rs:380][E: codex-rs/core/src/tools/spec_plan.rs:406]
 
-`DeferredToolWorldState` 是相邻但不同的提示面：开启时，每个 step 把当前 deferred namespace 及其 description 首行快照为 `<tools>` section，并在后续只渲染 added/removed diff。description 上限 250 chars，整段上限 4 KiB。[E: codex-rs/core/src/session/world_state.rs:280][E: codex-rs/core/src/session/world_state.rs:282][E: codex-rs/core/src/context/world_state/tools.rs:12][E: codex-rs/core/src/context/world_state/tools.rs:13][E: codex-rs/core/src/context/world_state/tools.rs:34]
+`DeferredToolWorldState` 是相邻但不同的提示面：开启时，每个 step 把当前 deferred namespace 及其 description 首行快照为 `<tools>` section，并在后续只渲染 added/removed diff。description 上限 250 chars，整段上限 4 KiB。[E: codex-rs/core/src/session/world_state.rs:251][E: codex-rs/core/src/session/world_state.rs:253][E: codex-rs/core/src/context/world_state/tools.rs:12][E: codex-rs/core/src/context/world_state/tools.rs:13][E: codex-rs/core/src/context/world_state/tools.rs:34]
 
 Endpoint-recommended plugins 是相邻的 install-discovery 面，不进入 BM25 index 本身：turn preparation 把 endpoint candidates 变成 `RecommendationContext` presentation，并通过 `<recommended_plugins>` contextual section 告知模型；对应 `request_plugin_install` 描述仍要求先耗尽 `tool_search`。[E: codex-rs/core/src/session/turn.rs:1725][E: codex-rs/core/src/session/turn.rs:1729][E: codex-rs/core/src/tools/handlers/request_plugin_install_spec.rs:69]
 

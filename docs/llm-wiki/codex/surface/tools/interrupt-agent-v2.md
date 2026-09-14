@@ -8,7 +8,7 @@ symbols: [InterruptAgentHandler, create_interrupt_agent_tool_v2, InterruptAgentA
 related: [tool.spawn-agent-v2, tool.followup-task, tool.wait-agent-v2, tool.list-agents, spine.trace-subagent]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `interrupt_agent` 是 MultiAgent V2 工具族的中断工具,用于打断已 spawn 子 agent 的当前 turn,但不关闭该 agent。
@@ -46,13 +46,13 @@ runtime result 是 `InterruptAgentResult { previous_status }`,并可转换为 to
 
 ## 5 ToolSpec 类型
 
-`create_interrupt_agent_tool_v2` 生成的 raw spec 是 `ToolSpec::Function(ResponsesApiTool)`;注册时如果配置了 MultiAgent V2 namespace,`multi_agent_v2_handler` 会把 function 包进 `ToolSpec::Namespace`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:343] [E: codex-rs/core/src/tools/spec_plan.rs:1455] [E: codex-rs/core/src/tools/spec_plan.rs:1480]
+`create_interrupt_agent_tool_v2` 生成的 raw spec 是 `ToolSpec::Function(ResponsesApiTool)`;注册时如果配置了 MultiAgent V2 namespace,`multi_agent_v2_handler` 会把 function 包进 `ToolSpec::Namespace`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:343] [E: codex-rs/core/src/tools/spec_plan.rs:1456] [E: codex-rs/core/src/tools/spec_plan.rs:1481]
 
 ## 6 注册与门控
 
-`add_collaboration_tools` 只在 `multi_agent_v2_enabled(turn_context)` 分支里加入 `InterruptAgentHandler`；V1 分支注册 `SpawnAgentHandler`、`SendInputHandler`、`ResumeAgentHandler`、`WaitAgentHandler`、`CloseAgentHandler`，不含 `interrupt_agent`。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1288][E: codex-rs/core/src/tools/spec_plan.rs:1336][E: codex-rs/core/src/tools/spec_plan.rs:1344][E: codex-rs/core/src/tools/spec_plan.rs:1368]
+`add_collaboration_tools` 只在 `multi_agent_v2_enabled(turn_context)` 分支里加入 `InterruptAgentHandler`；V1 分支注册 `SpawnAgentHandler`、`SendInputHandler`、`ResumeAgentHandler`、`WaitAgentHandler`、`CloseAgentHandler`，不含 `interrupt_agent`。[E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1289][E: codex-rs/core/src/tools/spec_plan.rs:1337][E: codex-rs/core/src/tools/spec_plan.rs:1345][E: codex-rs/core/src/tools/spec_plan.rs:1369]
 
-`spec_plan_tests::multi_agent_feature_selects_one_agent_tool_family` 验证 V2 namespace 内可见 `interrupt_agent`,同时不可见 V2 顶层 `close_agent`;V1 namespace 内仍有 `close_agent`。[E: codex-rs/core/src/tools/spec_plan_tests.rs:2666] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2689] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2741] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2748]
+`spec_plan_tests::multi_agent_feature_selects_one_agent_tool_family` 验证 V2 namespace 内可见 `interrupt_agent`,同时不可见 V2 顶层 `close_agent`;V1 namespace 内仍有 `close_agent`。[E: codex-rs/core/src/tools/spec_plan_tests.rs:2652] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2675] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2727] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2734]
 
 ## 7 parallel-safe
 
@@ -66,7 +66,7 @@ handler 从 function arguments 解析 `target`,解析为 agent id,确认 agent �
 
 ## 9 设计动机·edge·历史
 
-当前测试证明 V2 工具面包含 `interrupt_agent` 且不包含 `close_agent`,而 V1 namespace 仍包含 `close_agent`;把这理解为 V2 从“关闭 agent”转向“打断当前 turn 但保留 agent”的控制面是迁移判断。[E: codex-rs/core/src/tools/spec_plan_tests.rs:2741] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2748] [I]
+当前测试证明 V2 工具面包含 `interrupt_agent` 且不包含 `close_agent`,而 V1 namespace 仍包含 `close_agent`;把这理解为 V2 从“关闭 agent”转向“打断当前 turn 但保留 agent”的控制面是迁移判断。[E: codex-rs/core/src/tools/spec_plan_tests.rs:2727] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2734] [I]
 
 ## Sources
 

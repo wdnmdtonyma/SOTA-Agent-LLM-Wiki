@@ -8,7 +8,7 @@ symbols: [LandlockCommand, linux_sandbox::run_main, apply_permission_profile_to_
 related: [subsys.exec-sandbox.overview, subsys.exec-sandbox.arg0-dispatch, subsys.exec-sandbox.file-system, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Linux sandbox backend accepts a serialized `PermissionProfile`, resolves it to runtime filesystem/network policies, then normally uses a two-stage bubblewrap helper: the outer stage builds mount/user/pid/network namespaces, and the inner stage applies seccomp/no_new_privs before exec. Legacy Landlock filesystem enforcement is an explicit fallback path.[E: codex-rs/linux-sandbox/src/linux_run_main.rs:89][E: codex-rs/linux-sandbox/src/linux_run_main.rs:160][E: codex-rs/linux-sandbox/src/linux_run_main.rs:185][E: codex-rs/linux-sandbox/src/linux_run_main.rs:226][E: codex-rs/linux-sandbox/src/linux_run_main.rs:235][E: codex-rs/linux-sandbox/src/linux_run_main.rs:260][E: codex-rs/linux-sandbox/src/linux_run_main.rs:283][E: codex-rs/linux-sandbox/src/linux_run_main.rs:297]
@@ -23,7 +23,7 @@ updated: 02a8f038b8
 
 ## 职责边界
 
-Linux sandbox 节点覆盖 `codex-rs/linux-sandbox/src` helper 的 CLI、bwrap argv、Landlock/seccomp、proxy route activation 和 helper exec path。`SandboxManager::transform` 负责把 helper executable 插到 argv[0]，并给 helper 传入 permission-profile 参数；真正执行 helper 主逻辑的是 `codex_linux_sandbox::run_main()`。[E: codex-rs/sandboxing/src/manager.rs:435][E: codex-rs/sandboxing/src/manager.rs:437][E: codex-rs/sandboxing/src/manager.rs:449][E: codex-rs/sandboxing/src/manager.rs:458][E: codex-rs/sandboxing/src/manager.rs:462][E: codex-rs/linux-sandbox/src/lib.rs:32]
+Linux sandbox 节点覆盖 `codex-rs/linux-sandbox/src` helper 的 CLI、bwrap argv、Landlock/seccomp、proxy route activation 和 helper exec path。`SandboxManager::transform` 的 `LinuxSeccomp` 分支负责把 helper executable 插到 argv[0]，并给 helper 传入 permission-profile 参数；真正执行 helper 主逻辑的是 `codex_linux_sandbox::run_main()`。[E: codex-rs/sandboxing/src/manager.rs:495][E: codex-rs/sandboxing/src/manager.rs:509][E: codex-rs/sandboxing/src/manager.rs:518][E: codex-rs/sandboxing/src/manager.rs:522][E: codex-rs/linux-sandbox/src/lib.rs:32]
 
 ## 关键 crate/文件
 
@@ -38,7 +38,7 @@ Linux sandbox 节点覆盖 `codex-rs/linux-sandbox/src` helper 的 CLI、bwrap a
 ## 数据模型
 
 - `LandlockCommand`: CLI struct，保留 historical type name but carries sandbox-policy cwd, optional command cwd, serialized `--permission-profile`, legacy fallback flag, inner-stage flag, proxy flags, `no_proc`, and trailing command.[E: codex-rs/linux-sandbox/src/linux_run_main.rs:89][E: codex-rs/linux-sandbox/src/linux_run_main.rs:93][E: codex-rs/linux-sandbox/src/linux_run_main.rs:102][E: codex-rs/linux-sandbox/src/linux_run_main.rs:110][E: codex-rs/linux-sandbox/src/linux_run_main.rs:116][E: codex-rs/linux-sandbox/src/linux_run_main.rs:124][E: codex-rs/linux-sandbox/src/linux_run_main.rs:132][E: codex-rs/linux-sandbox/src/linux_run_main.rs:136][E: codex-rs/linux-sandbox/src/linux_run_main.rs:146][E: codex-rs/linux-sandbox/src/linux_run_main.rs:150]
-- `BwrapOptions`: bubblewrap argv builder 的选项结构，仅含 `mount_proc`、`network_mode`、`glob_scan_max_depth`; command、policy cwd、command cwd、filesystem policy 等是 `create_bwrap_command_args` 的独立入参。[E: codex-rs/linux-sandbox/src/bwrap.rs:62][E: codex-rs/linux-sandbox/src/bwrap.rs:67][E: codex-rs/linux-sandbox/src/bwrap.rs:69][E: codex-rs/linux-sandbox/src/bwrap.rs:76][E: codex-rs/linux-sandbox/src/bwrap.rs:239][E: codex-rs/linux-sandbox/src/bwrap.rs:240][E: codex-rs/linux-sandbox/src/bwrap.rs:241][E: codex-rs/linux-sandbox/src/bwrap.rs:242][E: codex-rs/linux-sandbox/src/bwrap.rs:243][E: codex-rs/linux-sandbox/src/bwrap.rs:244]
+- `BwrapOptions`: bubblewrap argv builder 的选项结构，含 `mount_proc`、`network_mode`、`mask_wsl_interop`、`glob_scan_max_depth`; command、policy cwd、command cwd、filesystem policy 等是 `create_bwrap_command_args` 的独立入参。[E: codex-rs/linux-sandbox/src/bwrap.rs:62][E: codex-rs/linux-sandbox/src/bwrap.rs:67][E: codex-rs/linux-sandbox/src/bwrap.rs:69][E: codex-rs/linux-sandbox/src/bwrap.rs:71][E: codex-rs/linux-sandbox/src/bwrap.rs:76][E: codex-rs/linux-sandbox/src/bwrap.rs:239][E: codex-rs/linux-sandbox/src/bwrap.rs:240][E: codex-rs/linux-sandbox/src/bwrap.rs:241][E: codex-rs/linux-sandbox/src/bwrap.rs:242][E: codex-rs/linux-sandbox/src/bwrap.rs:243][E: codex-rs/linux-sandbox/src/bwrap.rs:244]
 - `BwrapNetworkMode`: `FullAccess` 不 unshare network，`Isolated` 和 `ProxyOnly` 都会 unshare network。[E: codex-rs/linux-sandbox/src/bwrap.rs:92][E: codex-rs/linux-sandbox/src/bwrap.rs:95][E: codex-rs/linux-sandbox/src/bwrap.rs:97][E: codex-rs/linux-sandbox/src/bwrap.rs:102][E: codex-rs/linux-sandbox/src/bwrap.rs:106][E: codex-rs/linux-sandbox/src/bwrap.rs:107]
 - `NetworkSeccompMode`: `Restricted` 表示禁网络，`ProxyRouted` 表示只允许 proxy-routed 形态所需 socket 行为。[E: codex-rs/linux-sandbox/src/landlock.rs:98][E: codex-rs/linux-sandbox/src/landlock.rs:100][E: codex-rs/linux-sandbox/src/landlock.rs:101]
 
@@ -73,7 +73,7 @@ Linux sandbox 节点覆盖 `codex-rs/linux-sandbox/src` helper 的 CLI、bwrap a
 
 - legacy Landlock 不能表达 restricted read-only policy；`apply_permission_profile_to_current_thread` 在 legacy filesystem path 遇到非 full-disk-read policy 会报 unsupported operation。[E: codex-rs/linux-sandbox/src/landlock.rs:79][E: codex-rs/linux-sandbox/src/landlock.rs:80][E: codex-rs/linux-sandbox/src/landlock.rs:81][E: codex-rs/linux-sandbox/src/landlock.rs:82]
 - managed network 即使 network policy enabled，也会让 `should_install_network_seccomp` 返回 true，因为 `allow_network_for_proxy` 需要 seccomp 配合代理路由语义。[E: codex-rs/linux-sandbox/src/landlock.rs:105][E: codex-rs/linux-sandbox/src/landlock.rs:111]
-- `CODEX_LINUX_SANDBOX_ARG0` 不是 shell 命令；它是 arg0 dispatch 识别 helper re-entry 的名字，`SandboxManager` 会用 `linux_sandbox_arg0_override` 生成这个 override。[E: codex-rs/sandboxing/src/manager.rs:462][E: codex-rs/sandboxing/src/manager.rs:766][E: codex-rs/sandboxing/src/manager.rs:767][E: codex-rs/sandboxing/src/manager.rs:770]
+- `CODEX_LINUX_SANDBOX_ARG0` 不是 shell 命令；它是 arg0 dispatch 识别 helper re-entry 的名字，`SandboxManager` 会用 `linux_sandbox_arg0_override` 生成这个 override。[E: codex-rs/sandboxing/src/manager.rs:522][E: codex-rs/sandboxing/src/manager.rs:812][E: codex-rs/sandboxing/src/manager.rs:813][E: codex-rs/sandboxing/src/manager.rs:816]
 
 ## Sources
 

@@ -8,10 +8,10 @@ symbols: [OnboardingScreen, OnboardingScreenArgs, OnboardingResult, run_onboardi
 related: [subsys.config-auth.auth-flows, subsys.config-auth.config-loading, subsys.tui.architecture, spine.process-lifecycle]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> Onboarding 是 TUI 启动前/启动中的一个独立 screen loop：它接收 `OnboardingScreenArgs`、可选 app-server session、和现有 `Tui`，返回是否持久化 trust 以及用户是否选择退出。first-login 时 `StartupDraft` 会把初始 surface 设为 `Onboarding`，先不画 composer。创建或 resume TUI task 还会在 picker 解析 destination 之后再跑 `check_directory_trust`，不是只在首次 onboarding 问一次。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:99][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:514][E: codex-rs/tui/src/startup_draft.rs:272][E: codex-rs/tui/src/startup_orchestration.rs:182][E: codex-rs/tui/src/lib.rs:1707][E: codex-rs/tui/src/onboarding/directory_trust.rs:33]
+> Onboarding 是 TUI 启动前/启动中的一个独立 screen loop：它接收 `OnboardingScreenArgs`、可选 app-server session、和现有 `Tui`，返回是否持久化 trust 以及用户是否选择退出。first-login 时 `StartupDraft` 会把初始 surface 设为 `Onboarding`，先不画 composer。创建或 resume TUI task 还会在 picker 解析 destination 之后再跑 `check_directory_trust`，不是只在首次 onboarding 问一次。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:99][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:514][E: codex-rs/tui/src/startup_draft.rs:272][E: codex-rs/tui/src/startup_orchestration.rs:182][E: codex-rs/tui/src/lib.rs:1719][E: codex-rs/tui/src/onboarding/directory_trust.rs:33]
 
 ## 能回答的问题
 
@@ -38,13 +38,13 @@ ChatGPT success message 后有一次 guard：检测 auth step 的 `SignInState::
 
 ## Folder Consent
 
-创建或 resume TUI task 之前，`tui/src/lib.rs` 在 picker 已经解析 `session_selection` 并经 `resolve_startup_resume_or_fork_cwd` / config reload 得到 destination 之后调用 `check_directory_trust`。[E: codex-rs/tui/src/lib.rs:1548][E: codex-rs/tui/src/lib.rs:1596][E: codex-rs/tui/src/lib.rs:1707]
+创建或 resume TUI task 之前，`tui/src/lib.rs` 在 picker 已经解析 `session_selection` 并经 `resolve_startup_resume_or_fork_cwd` / config reload 得到 destination 之后调用 `check_directory_trust`。[E: codex-rs/tui/src/lib.rs:1560][E: codex-rs/tui/src/lib.rs:1608][E: codex-rs/tui/src/lib.rs:1719]
 
 `check_directory_trust` 对当前 cwd（以及 local daemon resume 时 thread 已保存但与当前不同的 cwd）逐个查 trust；未信任则弹出 `TrustDirectoryWidget`。[E: codex-rs/tui/src/onboarding/directory_trust.rs:33][E: codex-rs/tui/src/onboarding/directory_trust.rs:45][E: codex-rs/tui/src/onboarding/directory_trust.rs:105]
 
 Local daemon resume 在用户同意后会 `ThreadRead` 再取最新 thread cwd 并入队重查，因为 consent 期间另一个 client 可能把该 task 开到别的 folder。[E: codex-rs/tui/src/onboarding/directory_trust.rs:138][E: codex-rs/tui/src/onboarding/directory_trust.rs:143][E: codex-rs/tui/src/onboarding/directory_trust.rs:155]
 
-命令中心 / in-app resume 走同一函数：`resume_config_for_target` 先解析 resume cwd，再 `confirm_directory_trust` → `check_directory_trust`。[E: codex-rs/tui/src/app/resume_config.rs:132][E: codex-rs/tui/src/app/resume_config.rs:145][E: codex-rs/tui/src/app/resume_config.rs:163]
+命令中心 / in-app resume 走同一函数：`resume_config_for_target` 先解析 resume cwd，再 `confirm_directory_trust` → `check_directory_trust`。[E: codex-rs/tui/src/app/resume_config.rs:131][E: codex-rs/tui/src/app/resume_config.rs:144][E: codex-rs/tui/src/app/resume_config.rs:162]
 
 ## Trust Directory
 
@@ -65,7 +65,7 @@ browser login 现在显式请求非 streamlined 的本地完成页：`app_brand=
 ## Gotchas
 
 - onboarding loop 复用同一个 `Tui` 和 `TuiEventStream`，不是 main app loop 的一个 `AppEvent` 分支。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:514][E: codex-rs/tui/src/onboarding/onboarding_screen.rs:540]
-- folder consent 会在每次 create/resume destination 解析后再跑；不要把它写成只在 first-login onboarding 出现一次。[E: codex-rs/tui/src/lib.rs:1707][E: codex-rs/tui/src/app/resume_config.rs:163]
+- folder consent 会在每次 create/resume destination 解析后再跑；不要把它写成只在 first-login onboarding 出现一次。[E: codex-rs/tui/src/lib.rs:1719][E: codex-rs/tui/src/app/resume_config.rs:162]
 - trust 写入依赖 app-server request handle；没有 handle 时会返回 app server unavailable 错误并留在 widget error path。[E: codex-rs/tui/src/onboarding/onboarding_screen.rs:710]
 - first-login 延迟 composer 是 conservative check；任何既有 auth/config/daemon 痕迹都会让 composer 立刻出现。[E: codex-rs/tui/src/startup_preflight.rs:22][E: codex-rs/tui/src/startup_preflight.rs:69]
 

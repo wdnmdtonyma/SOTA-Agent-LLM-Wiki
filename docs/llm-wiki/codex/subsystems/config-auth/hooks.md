@@ -8,10 +8,10 @@ symbols: [HooksFile, HookEventsToml, HookHandlerConfig, ClaudeHooksEngine, disco
 related: [subsys.config-auth.config-loading, subsys.core.tool-system, subsys.core.tool-router, subsys.platform.analytics]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> Codex hooks 系统现在把 hook schema 放在 `codex_config::hook_config`，由 `codex_hooks::engine` 从 config layers、managed requirements 和 plugin hook sources 发现 command 与 MCP tool handlers，再由 core session/tool runtime 发起 preview/start/completed flow。plugin 生效后 app-server 会 `refresh_hook_runtimes()`。[E: codex-rs/config/src/hook_config.rs:16][E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/hooks/src/engine/discovery.rs:94][E: codex-rs/hooks/src/engine/mod.rs:229][E: codex-rs/hooks/src/engine/mcp_runner.rs:28][E: codex-rs/core/src/hook_runtime.rs:185][E: codex-rs/core/src/tools/registry.rs:567][E: codex-rs/core/src/thread_manager.rs:762]
+> Codex hooks 系统现在把 hook schema 放在 `codex_config::hook_config`，由 `codex_hooks::engine` 从 config layers、managed requirements 和 plugin hook sources 发现 command 与 MCP tool handlers，再由 core session/tool runtime 发起 preview/start/completed flow。plugin 生效后 app-server 会 `refresh_hook_runtimes()`。[E: codex-rs/config/src/hook_config.rs:16][E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/hooks/src/engine/discovery.rs:94][E: codex-rs/hooks/src/engine/mod.rs:229][E: codex-rs/hooks/src/engine/mcp_runner.rs:28][E: codex-rs/core/src/hook_runtime.rs:186][E: codex-rs/core/src/tools/registry.rs:567][E: codex-rs/core/src/thread_manager.rs:762]
 
 ## 能回答的问题
 
@@ -55,23 +55,23 @@ Discovery 会按 event 计算 matcher pattern、validate matcher 并拒绝空 co
 
 ## Core runtime 触发点
 
-`run_pending_session_start_hooks` 将 root session startup 映射为 `SessionStart`，将 thread-spawn child startup 映射为 `SubagentStart`；其他 synthetic/internal subagents 不运行 start hooks。[E: codex-rs/core/src/hook_runtime.rs:125][E: codex-rs/core/src/hook_runtime.rs:133][E: codex-rs/core/src/hook_runtime.rs:147][E: codex-rs/core/src/hook_runtime.rs:148]
+`run_pending_session_start_hooks` 将 root session startup 映射为 `SessionStart`，将 thread-spawn child startup 映射为 `SubagentStart`；其他 synthetic/internal subagents 不运行 start hooks。[E: codex-rs/core/src/hook_runtime.rs:126][E: codex-rs/core/src/hook_runtime.rs:134][E: codex-rs/core/src/hook_runtime.rs:148][E: codex-rs/core/src/hook_runtime.rs:149]
 
-`run_pre_tool_use_hooks` 构造 stable `PreToolUseRequest`，发出 started/completed events，记录 additional contexts；如果 outcome 要 block，则返回面向模型的 blocked message。[E: codex-rs/core/src/hook_runtime.rs:185][E: codex-rs/core/src/hook_runtime.rs:192][E: codex-rs/core/src/hook_runtime.rs:207][E: codex-rs/core/src/hook_runtime.rs:210]
+`run_pre_tool_use_hooks` 构造 stable `PreToolUseRequest`，发出 started/completed events，记录 additional contexts；如果 outcome 要 block，则返回面向模型的 blocked message。[E: codex-rs/core/src/hook_runtime.rs:186][E: codex-rs/core/src/hook_runtime.rs:194][E: codex-rs/core/src/hook_runtime.rs:209][E: codex-rs/core/src/hook_runtime.rs:212]
 
 `inspect_pending_input` 只对 `TurnInput::UserInput` 构造 `UserPromptSubmitRequest`，先 preview 再运行 `run_user_prompt_submit`，并复用 context-injecting outcome；非用户输入不会触发该 hook。[E: codex-rs/core/src/hook_runtime.rs:670][E: codex-rs/core/src/hook_runtime.rs:676][E: codex-rs/core/src/hook_runtime.rs:689][E: codex-rs/core/src/hook_runtime.rs:694]
 
 `ToolRegistry::dispatch_any_with_terminal_outcome` 在 handler 提供 pre payload 时调用 pre hook；如果被 block，会终止该 tool call 并通知 lifecycle outcome 为 blocked。[E: codex-rs/core/src/tools/registry.rs:495][E: codex-rs/core/src/tools/registry.rs:567][E: codex-rs/core/src/tools/registry.rs:577]
 
-`PostToolUse` 只在 tool handler 成功且产生 post payload 时运行；它拿到 handler 已适配过的 stable tool input/response，而不是内部 raw payload。[E: codex-rs/core/src/tools/registry.rs:682][E: codex-rs/core/src/hook_runtime.rs:286]
+`PostToolUse` 只在 tool handler 成功且产生 post payload 时运行；它拿到 handler 已适配过的 stable tool input/response，而不是内部 raw payload。[E: codex-rs/core/src/tools/registry.rs:682][E: codex-rs/core/src/hook_runtime.rs:289]
 
-Permission request、Stop/SubagentStop、PreCompact/PostCompact hooks 分别有独立 request builders；PermissionRequest 返回 optional decision，compact hooks 可返回 stopped/continue，Stop 会按 root/subagent source 选择 target。[E: codex-rs/core/src/hook_runtime.rs:247][E: codex-rs/core/src/hook_runtime.rs:385][E: codex-rs/core/src/hook_runtime.rs:394][E: codex-rs/core/src/hook_runtime.rs:537][E: codex-rs/core/src/hook_runtime.rs:574]
+Permission request、Stop/SubagentStop、PreCompact/PostCompact hooks 分别有独立 request builders；PermissionRequest 返回 optional decision，compact hooks 可返回 stopped/continue，Stop 会按 root/subagent source 选择 target。[E: codex-rs/core/src/hook_runtime.rs:249][E: codex-rs/core/src/hook_runtime.rs:385][E: codex-rs/core/src/hook_runtime.rs:394][E: codex-rs/core/src/hook_runtime.rs:537][E: codex-rs/core/src/hook_runtime.rs:574]
 
 `run_session_end_hooks` 只运行 root session 的 `SessionEnd`。Thread-spawn 子会话仍由 SubagentStart/SubagentStop 覆盖。[E: codex-rs/core/src/hook_runtime.rs:464][E: codex-rs/core/src/hook_runtime.rs:475]
 
 `run_turn_interrupt_hooks` 同样是 root-only：subagent 直接 return。它在 active turn 已 detach 后复用 last executing step 的 executor hook sources，flush rollout，再跑 `Interrupt`。[E: codex-rs/core/src/hook_runtime.rs:495][E: codex-rs/core/src/hook_runtime.rs:500][E: codex-rs/core/src/hook_runtime.rs:512][E: codex-rs/core/src/hook_runtime.rs:533]
 
-plugin / marketplace / user-config 变更后，app-server 会 `clear_cache` 并 `refresh_hook_runtimes()`；session 用当前 config 重建 `ClaudeHooksEngine`，若 refresh 期间 config 已被更新则丢弃过期结果。[E: codex-rs/app-server/src/effective_plugin_change.rs:31][E: codex-rs/app-server/src/effective_plugin_change.rs:37][E: codex-rs/core/src/thread_manager.rs:762][E: codex-rs/core/src/session/mod.rs:2017][E: codex-rs/core/src/session/mod.rs:2031]
+plugin / marketplace / user-config 变更后，app-server 会 `clear_cache` 并 `refresh_hook_runtimes()`；session 用当前 config 重建 `ClaudeHooksEngine`，若 refresh 期间 config 已被更新则丢弃过期结果。[E: codex-rs/app-server/src/effective_plugin_change.rs:31][E: codex-rs/app-server/src/effective_plugin_change.rs:37][E: codex-rs/core/src/thread_manager.rs:762][E: codex-rs/core/src/session/mod.rs:2027][E: codex-rs/core/src/session/mod.rs:2041]
 
 ## Command 执行
 

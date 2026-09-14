@@ -8,7 +8,7 @@ symbols: [workspace.members, workspace.package, workspace.dependencies]
 related: [spine.overview, ref.key-types, ref.feature-flags, ref.env-vars]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `codex-rs/Cargo.toml` 定义 Rust workspace：当前 `members` 数组含 **147** 个 workspace member path（第 3–149 行），resolver 为 `"2"`，并集中声明 workspace package version / edition / license 与 `[workspace.dependencies]`。[E: codex-rs/Cargo.toml:1][E: codex-rs/Cargo.toml:2][E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:151][E: codex-rs/Cargo.toml:154][E: codex-rs/Cargo.toml:159][E: codex-rs/Cargo.toml:160][E: codex-rs/Cargo.toml:162]
@@ -32,7 +32,7 @@ updated: 02a8f038b8
 | `[workspace.package].license` | `"Apache-2.0"` | Shared workspace package license. | [E: codex-rs/Cargo.toml:160] |
 | `[workspace.dependencies]` | starts at line 162 | Workspace dependency table。 | [E: codex-rs/Cargo.toml:162] |
 
-相对上一轮 verified `121f91fd5d`：无 member 删除，新增 `ext/guardian-reviewer` 与 `user-verification`。[E: codex-rs/Cargo.toml:65][E: codex-rs/Cargo.toml:105]
+相对上一轮 catalog 重数：workspace `members` 仍是 **147** 条（第 3–149 行），本轮无 member 增删。[E: codex-rs/Cargo.toml:3][E: codex-rs/Cargo.toml:149]
 
 `mcp-server` crate 与 `codex mcp-server` 子命令已不在 workspace。MCP **client** crates `codex-mcp` 与 `rmcp-client` 仍是 members。[E: codex-rs/Cargo.toml:82][E: codex-rs/Cargo.toml:97]
 

@@ -8,7 +8,7 @@ symbols: [EscalateServer, EscalationSession, EscalationPolicy, EscalationDecisio
 related: [subsys.exec-sandbox.shell-parsing, subsys.exec-sandbox.execpolicy-dsl, subsys.exec-sandbox.arg0-dispatch, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Unix shell escalation 用 patched shell 的 `EXEC_WRAPPER` 拦截 execve，wrapper 通过 `CODEX_ESCALATE_SOCKET` 向 server 请求决策，server 返回 `Run`、`Escalate` 或 `Deny` 并在需要时 server-side spawn 被拦截命令。core 入口已从旧 `try_run_zsh_fork` / `runtimes/shell/unix_escalation.rs` 迁到 `prepare_unified_exec_zsh_fork`。[E: codex-rs/shell-escalation/src/unix/escalate_protocol.rs:11][E: codex-rs/shell-escalation/src/unix/escalate_protocol.rs:14][E: codex-rs/core/src/tools/runtimes/zsh_fork.rs:69]

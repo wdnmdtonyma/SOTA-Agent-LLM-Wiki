@@ -8,7 +8,7 @@ symbols: [codex_guardian_v2::install, GuardianV2Extension, GuardianV2Config, Lun
 related: [subsys.core.approval-guardian, subsys.core.approval-policy, tool.request-permissions, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Guardian V2 crate `codex-guardian-v2` 拆成 `async_scorer`（Luna 异步风险分类）和 `sync_reviewer`（install-only lifecycle）。`install` 先注册 crate 根上的 thread-lifecycle `GuardianExtension`（写入 fork source thread id），再装 scorer 与 reviewer。`sync_reviewer::install` 只注册 `ThreadLifecycleContributor`：在非 internal session 上 `get_or_init(GuardianReviewSessionHost)`，`on_thread_ready` 调 `mark_ready`。同步 review policy 下沉 `ext/guardian-reviewer`（crate 自述 owns synchronous review policy；host 提供 attempt 与执行决策）。`sync_reviewer/reviewer_config.rs` 与 `prompt.rs` 已删除。共享 transcript/truncation crate 是 `codex-guardian-context`：`codex-guardian-v2` 已依赖它，async scorer transcript 通过 `default_registry` 收集。[E: codex-rs/ext/guardian-v2/src/lib.rs:80][E: codex-rs/ext/guardian-v2/src/lib.rs:89][E: codex-rs/ext/guardian-v2/src/sync_reviewer/mod.rs:55][E: codex-rs/ext/guardian-reviewer/src/lib.rs:4][E: codex-rs/ext/guardian-v2/Cargo.toml:21][E: codex-rs/ext/guardian-v2/src/async_scorer/transcript.rs:22][E: codex-rs/guardian-context/src/lib.rs:245]
@@ -35,7 +35,7 @@ V1 自动审批审查（child Codex、`GuardianAssessment`、circuit breaker）�
 | crate 根 `GuardianExtension` | thread start 时写入 `GuardianThreadContext`（fork source） | 不是旧独立 crate `ext/guardian`（已删除） |
 | app-server `thread_extensions` | 只调一次 `codex_guardian_v2::install` | 不再单独 `codex_guardian::install` |
 
-`Feature::GuardianV2` key 是 `guardianv2`，stage `UnderDevelopment`，默认关闭；`Feature::GuardianApproval` key 是 `guardian_approval`，默认开启。async scorer `on_thread_start` 要求 `GuardianApproval`；`GuardianV2` 关闭时 `scoring_disabled`。[E: codex-rs/features/src/lib.rs:1593][E: codex-rs/features/src/lib.rs:1563][E: codex-rs/ext/guardian-v2/src/async_scorer/extension.rs:109][E: codex-rs/ext/guardian-v2/src/async_scorer/config.rs:74]
+`Feature::GuardianV2` key 是 `guardianv2`，stage `UnderDevelopment`，默认关闭；`Feature::GuardianApproval` key 是 `guardian_approval`，默认开启。async scorer `on_thread_start` 要求 `GuardianApproval`；`GuardianV2` 关闭时 `scoring_disabled`。[E: codex-rs/features/src/lib.rs:1605][E: codex-rs/features/src/lib.rs:1575][E: codex-rs/ext/guardian-v2/src/async_scorer/extension.rs:109][E: codex-rs/ext/guardian-v2/src/async_scorer/config.rs:74]
 
 ## 关键 crate / 文件
 
@@ -86,7 +86,7 @@ V1 自动审批审查（child Codex、`GuardianAssessment`、circuit breaker）�
 
 被 supersede 的请求返回 `LunaSamplerError::Superseded`，不覆盖已有分数。[E: codex-rs/ext/guardian-v2/src/async_scorer/extension.rs:681]
 
-V1 reviewer 另有 `Feature::GuardianReuseParentCompaction`（默认关），那是 child Codex session 的 compaction 复用，不是 Luna hash 比较。[E: codex-rs/features/src/lib.rs:1575][E: codex-rs/core/src/guardian/review_session_context.rs:25]
+V1 reviewer 另有 `Feature::GuardianReuseParentCompaction`（默认关），那是 child Codex session 的 compaction 复用，不是 Luna hash 比较。[E: codex-rs/features/src/lib.rs:1587][E: codex-rs/core/src/guardian/review_session_context.rs:25]
 
 ## 与 V1 reviewer 的隔离
 

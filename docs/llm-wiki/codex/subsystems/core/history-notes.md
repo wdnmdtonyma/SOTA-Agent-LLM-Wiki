@@ -8,7 +8,7 @@ symbols: [HistoryNotesAction, HistoryNotesTool, HistoryNotesBackend, HistoryNote
 related: [spine.context-and-compaction, subsys.core.context-manager, subsys.core.compaction, subsys.core.token-budget, spine.extension-system]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `codex-rs/ext/history-notes` 是独立 extension：给模型两套 **private model-only** namespace 工具——`history` 读已持久化的归一化会话历史，`notes` 读写跨 context-window 存活的虚拟笔记。工具存在、路径、存储机制和私有内容都不得向用户披露。[E: codex-rs/ext/history-notes/src/tools.rs:26][E: codex-rs/ext/history-notes/src/tools.rs:27][E: codex-rs/ext/history-notes/src/tools.rs:311]
@@ -86,9 +86,9 @@ code mode 直接返回 `"History tools are unavailable in code mode."`。[E: cod
 
 否则移除 config，工具列表为空。[E: codex-rs/ext/history-notes/src/extension.rs:47][E: codex-rs/ext/history-notes/src/extension.rs:51][E: codex-rs/ext/history-notes/src/extension.rs:61][E: codex-rs/ext/history-notes/src/extension.rs:160]
 
-`TokenBudgetConfig` 默认 `use_history_notes_extension: false`。[E: codex-rs/core/src/config/mod.rs:1248]
+`TokenBudgetConfig` 默认 `use_history_notes_extension: false`。[E: codex-rs/core/src/config/mod.rs:1237]
 
-session 在 Responses metadata 里，若该开关打开会设 `history_ingest_requested: Some(true)`，让 backend 有机会 ingest 当前窗口。[E: codex-rs/core/src/session/session.rs:652]
+session 在 Responses metadata 里，若该开关打开会设 `history_ingest_requested: Some(true)`，让 backend 有机会 ingest 当前窗口。[E: codex-rs/core/src/session/session.rs:712]
 
 ## 控制流
 

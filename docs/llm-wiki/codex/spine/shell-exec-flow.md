@@ -8,7 +8,7 @@ symbols: [ToolOrchestrator]
 related: [spine.tool-call-anatomy, spine.trace-apply-patch, tool.exec-command, tool.shell-command, tool.write-stdin, subsys.core.unified-exec, subsys.exec-sandbox.overview, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > shell exec flow 是当前命令执行面：`add_shell_tools` 只注册 `ExecCommandHandler`（UnifiedExec 开则加 `WriteStdinHandler`，关则 `ExecCommandHandler::one_shot`）。handler 解析 `cmd`、拦截 apply_patch、再经 `UnifiedExecProcessManager` → `ToolOrchestrator` → `UnifiedExecRuntime` 做 approval/sandbox 并 spawn。`shell_command` 不再注册 handler，只是 reserved name。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111][E: codex-rs/core/src/tools/registry.rs:364][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:385]
@@ -52,7 +52,7 @@ flowchart TD
 8. `open_session_with_sandbox` 组装 env（含 `CODEX_THREAD_ID`）、`ExecServerEnvConfig` 和 exec approval requirement，创建 `UnifiedExecRuntime`，交给 `ToolOrchestrator::run`。[E: codex-rs/core/src/unified_exec/process_manager.rs:1362][E: codex-rs/core/src/unified_exec/process_manager.rs:1373][E: codex-rs/core/src/unified_exec/process_manager.rs:1389]
 9. orchestrator 先处理 approval：`Forbidden` 直接 rejected，`NeedsApproval` 走 `request_approval`；通过后再选 sandbox attempt 并跑 runtime。[E: codex-rs/core/src/tools/orchestrator.rs:122][E: codex-rs/core/src/tools/orchestrator.rs:210][E: codex-rs/core/src/tools/orchestrator.rs:213]
 10. `UnifiedExecRuntime` 的 sandbox preference 是 `Auto`，`escalate_on_failure()` 为 true。`shell_mode` 为 `ZshFork` 时调用 `zsh_fork::maybe_prepare_unified_exec`；条件不满足则回退 Direct spawn。[E: codex-rs/core/src/tools/runtimes/unified_exec.rs:162][E: codex-rs/core/src/tools/runtimes/unified_exec.rs:166][E: codex-rs/core/src/tools/runtimes/unified_exec.rs:611][E: codex-rs/core/src/tools/runtimes/unified_exec.rs:635]
-11. `Feature::UnifiedExec` 是 Stable、`default_enabled: true`（含 Windows）。[E: codex-rs/features/src/lib.rs:943]
+11. `Feature::UnifiedExec` 是 Stable、`default_enabled: true`（含 Windows）。[E: codex-rs/features/src/lib.rs:947]
 
 ## 关键决策点
 

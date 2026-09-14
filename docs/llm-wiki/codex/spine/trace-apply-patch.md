@@ -8,7 +8,7 @@ symbols: [ApplyPatchRuntimeInvocation, ApplyPatchRuntime::run]
 related: [spine.tool-call-anatomy, spine.shell-exec-flow, tool.apply-patch, tool.exec-command, ref.protocol-event-lifecycle]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > direct custom tool 与 `exec_command` interception 都先得到 verified patch，随后汇合到 `execute_verified_patch`。该 helper 计算权限、调用 `prepare_apply_patch`，并把获准 invocation 交给 orchestrator/runtime；底层 crate 用 `apply_patch_with_options` 写文件。`Feature::ApplyPatchPreserveLineEndings` 打开时走 `file_update.rs` 的 PreserveLineEndings 路径，否则仍归一化为 LF。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:420][E: codex-rs/core/src/tools/handlers/apply_patch.rs:499][E: codex-rs/core/src/tools/handlers/apply_patch.rs:547][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:179][E: codex-rs/apply-patch/src/file_update.rs:48]
@@ -32,7 +32,7 @@ flowchart TD
 ## 端到端步骤
 
 1. direct handler 只接受 custom payload，解析 patch、选择 environment、取得 filesystem，并按 cwd/sandbox 验证参数；验证时传入 `apply_patch_file_update_mode(turn)`，随后调用共享 `execute_verified_patch`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:375][E: codex-rs/core/src/tools/handlers/apply_patch.rs:403][E: codex-rs/core/src/tools/handlers/apply_patch.rs:420]
-2. `apply_patch_file_update_mode` 读取 `Feature::ApplyPatchPreserveLineEndings`：开启则为 `PreserveLineEndings`，否则 `NormalizeToLf`。该 feature 当前是 UnderDevelopment、默认关闭。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:63][E: codex-rs/features/src/lib.rs:1153][E: codex-rs/features/src/lib.rs:1155][E: codex-rs/features/src/lib.rs:1156]
+2. `apply_patch_file_update_mode` 读取 `Feature::ApplyPatchPreserveLineEndings`：开启则为 `PreserveLineEndings`，否则 `NormalizeToLf`。该 feature 当前是 UnderDevelopment、默认关闭。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:63][E: codex-rs/features/src/lib.rs:1157][E: codex-rs/features/src/lib.rs:1159][E: codex-rs/features/src/lib.rs:1160]
 3. `exec_command` 在启动 process 前调用同一个 `intercept_apply_patch`；只有 `maybe_parse_apply_patch_verified_with_mode` 返回 verified body 才转入共享 patch path，否则继续普通 command 执行。legacy `shell.rs` / `ShellCommandHandler` 已删除，不再有第二条 shell interception。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:385][E: codex-rs/core/src/tools/handlers/apply_patch.rs:499][E: codex-rs/core/src/tools/handlers/apply_patch.rs:513]
 4. `execute_verified_patch` 先计算 changed paths 与额外文件写权限，再调用 `prepare_apply_patch`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:547][E: codex-rs/core/src/tools/handlers/apply_patch.rs:566][E: codex-rs/core/src/tools/handlers/apply_patch.rs:575]
 5. helper 把 patch action 转成 protocol file changes，创建 environment-aware emitter 并发送 begin event，然后构造 `ApplyPatchRequest` 交给 `ToolOrchestrator::run`。[E: codex-rs/core/src/tools/handlers/apply_patch.rs:583][E: codex-rs/core/src/tools/handlers/apply_patch.rs:596][E: codex-rs/core/src/tools/handlers/apply_patch.rs:598][E: codex-rs/core/src/tools/handlers/apply_patch.rs:607]

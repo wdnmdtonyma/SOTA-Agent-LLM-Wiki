@@ -8,7 +8,7 @@ symbols: [create_send_input_tool_v1, SendInputHandler, multi_agents::send_input:
 related: [tool.spawn-agent-v1, tool.wait-agent-v1, tool.close-agent-v1]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `send_input` V1 是 `multi_agent_v1` namespace 下的消息投递工具；它按 thread id 寻址，支持 plain `message` 或 structured `items`，并可用 `interrupt` 先打断目标 agent。
@@ -23,7 +23,7 @@ updated: 02a8f038b8
 
 ## 注册与门控
 
-`send_input` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false。V1 exposure 在 `search_tool_enabled` true 时为 `Deferred`，否则为 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1344][E: codex-rs/core/src/tools/spec_plan.rs:1347][E: codex-rs/core/src/tools/spec_plan.rs:1364]
+`send_input` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false。V1 exposure 在 `search_tool_enabled` true 时为 `Deferred`，否则为 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1345][E: codex-rs/core/src/tools/spec_plan.rs:1348][E: codex-rs/core/src/tools/spec_plan.rs:1365]
 
 handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:17][E: codex-rs/tools/src/tool_executor.rs:122]
 

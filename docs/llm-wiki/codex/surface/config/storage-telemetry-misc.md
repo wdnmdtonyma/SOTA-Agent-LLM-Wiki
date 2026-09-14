@@ -8,7 +8,7 @@ symbols: [History, UriBasedFileOpener, AnalyticsConfigToml, FeedbackConfigToml, 
 related: [command.config-system, config.ui-tui, config.approval-sandbox, subsys.platform.telemetry-otel, subsys.core.ghost-undo]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > 存储/遥测/杂项设置 catalog 覆盖 ConfigToml 中 notifications, deprecated js_repl placeholders, history/sqlite/log, file opener, ghost snapshot, project root markers, update checks, analytics/feedback, apps, desktop, OTEL, Windows and notice state。
@@ -22,32 +22,32 @@ updated: 02a8f038b8
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 101 个顶层 `pub` 字段；本节点覆盖其中 18 个。8 个 surface/config catalog 节点合计覆盖全部 101 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:534]
+当前 `ConfigToml` 有 101 个顶层 `pub` 字段；本节点覆盖其中 18 个。8 个 surface/config catalog 节点合计覆盖全部 101 个字段且不重复。[E: codex-rs/config/src/config_toml.rs:156][E: codex-rs/config/src/config_toml.rs:539]
 
-`js_repl_node_path` and `js_repl_node_module_dirs` remain only as deprecated ignored fields with `schemars(skip)`, which keeps config loading explicit without exposing them in schema.[E: codex-rs/config/src/config_toml.rs:328][E: codex-rs/config/src/config_toml.rs:329][E: codex-rs/config/src/config_toml.rs:332][E: codex-rs/config/src/config_toml.rs:344]
+`js_repl_node_path` and `js_repl_node_module_dirs` remain only as deprecated ignored fields with `schemars(skip)`, which keeps config loading explicit without exposing them in schema.[E: codex-rs/config/src/config_toml.rs:333][E: codex-rs/config/src/config_toml.rs:334][E: codex-rs/config/src/config_toml.rs:337][E: codex-rs/config/src/config_toml.rs:349]
 
 ## 字段 catalog
 
 | key | Rust type | serde/schema attrs | 字段说明 | Evidence |
 |---|---|---|---|---|
-| `notify` | `Option<Vec<String>>` | `#[serde(default)]` | Optional external command to spawn for end-user notifications. | [E: codex-rs/config/src/config_toml.rs:228] |
-| `thread_unload_delay_secs` | `Option<u64>` | none | Seconds a thread must have no subscribers and no activity before app-server unloads it. Defaults to 60; zero unloads immediately. Changes require a server restart. | [E: codex-rs/config/src/config_toml.rs:325] |
-| `js_repl_node_path` | `Option<AbsolutePathBuf>` | `#[schemars(skip)]` | Deprecated: ignored. | [E: codex-rs/config/src/config_toml.rs:329] |
-| `js_repl_node_module_dirs` | `Option<Vec<AbsolutePathBuf>>` | `#[schemars(skip)]` | Deprecated: ignored. | [E: codex-rs/config/src/config_toml.rs:333] |
-| `history` | `Option<History>` | `#[serde(default = "default_history")]` | Settings that govern if and what will be written to `~/.codex/history.jsonl`. | [E: codex-rs/config/src/config_toml.rs:344] |
-| `sqlite_home` | `Option<AbsolutePathBuf>` | none | Directory where Codex stores the SQLite state DB. Defaults to `$CODEX_SQLITE_HOME` when set. Otherwise uses `$CODEX_HOME`. | [E: codex-rs/config/src/config_toml.rs:348] |
-| `log_dir` | `Option<AbsolutePathBuf>` | none | Directory where Codex writes log files. Setting this value explicitly also enables the TUI text log in this directory. Defaults to `$CODEX_HOME/log`. | [E: codex-rs/config/src/config_toml.rs:353] |
-| `file_opener` | `Option<UriBasedFileOpener>` | none | Optional URI-based file opener. If set, citations to files in the model output will be hyperlinked using the specified URI scheme. | [E: codex-rs/config/src/config_toml.rs:357] |
-| `ghost_snapshot` | `Option<GhostSnapshotToml>` | `#[serde(default)]` | Compatibility-only settings retained so legacy `ghost_snapshot` config still loads. | [E: codex-rs/config/src/config_toml.rs:489] |
-| `project_root_markers` | `Option<Vec<String>>` | `#[serde(default)]` | Markers used to detect the project root when searching parent directories for `.codex` folders. Defaults to [".git"] when unset. | [E: codex-rs/config/src/config_toml.rs:494] |
-| `check_for_update_on_startup` | `Option<bool>` | none | When `true`, checks for Codex updates on startup and surfaces update prompts. Set to `false` only if your Codex updates are centrally managed. Defaults to `true`. | [E: codex-rs/config/src/config_toml.rs:499] |
-| `analytics` | `Option<AnalyticsConfigToml>` | none | When `false`, disables analytics across Codex product surfaces in this machine. Defaults to `true`. | [E: codex-rs/config/src/config_toml.rs:506] |
-| `feedback` | `Option<FeedbackConfigToml>` | none | When `false`, disables feedback collection across Codex product surfaces. Defaults to `true`. | [E: codex-rs/config/src/config_toml.rs:510] |
-| `apps` | `Option<AppsConfigToml>` | `#[serde(default)]` | Settings for app-specific controls. | [E: codex-rs/config/src/config_toml.rs:514] |
-| `desktop` | `Option<HashMap<String, JsonValue>>` | `#[serde(default)]` | Opaque desktop settings stored alongside the rest of config.toml. | [E: codex-rs/config/src/config_toml.rs:518] |
-| `otel` | `Option<OtelConfigToml>` | none | OTEL configuration. | [E: codex-rs/config/src/config_toml.rs:521] |
-| `windows` | `Option<WindowsToml>` | `#[serde(default)]` | Windows-specific configuration. | [E: codex-rs/config/src/config_toml.rs:534] |
-| `notice` | `Option<Notice>` | none | Collection of in-product notices (different from notifications) See [`crate::types::Notice`] for more details | [E: codex-rs/config/src/config_toml.rs:529] |
+| `notify` | `Option<Vec<String>>` | `#[serde(default)]` | Optional external command to spawn for end-user notifications. | [E: codex-rs/config/src/config_toml.rs:229] |
+| `thread_unload_delay_secs` | `Option<u64>` | none | Seconds a thread must have no subscribers and no activity before app-server unloads it. Defaults to 60; zero unloads immediately. Changes require a server restart. | [E: codex-rs/config/src/config_toml.rs:330] |
+| `js_repl_node_path` | `Option<AbsolutePathBuf>` | `#[schemars(skip)]` | Deprecated: ignored. | [E: codex-rs/config/src/config_toml.rs:334] |
+| `js_repl_node_module_dirs` | `Option<Vec<AbsolutePathBuf>>` | `#[schemars(skip)]` | Deprecated: ignored. | [E: codex-rs/config/src/config_toml.rs:338] |
+| `history` | `Option<History>` | `#[serde(default = "default_history")]` | Settings that govern if and what will be written to `~/.codex/history.jsonl`. | [E: codex-rs/config/src/config_toml.rs:349] |
+| `sqlite_home` | `Option<AbsolutePathBuf>` | none | Directory where Codex stores the SQLite state DB. Defaults to `$CODEX_SQLITE_HOME` when set. Otherwise uses `$CODEX_HOME`. | [E: codex-rs/config/src/config_toml.rs:353] |
+| `log_dir` | `Option<AbsolutePathBuf>` | none | Directory where Codex writes log files. Setting this value explicitly also enables the TUI text log in this directory. Defaults to `$CODEX_HOME/log`. | [E: codex-rs/config/src/config_toml.rs:358] |
+| `file_opener` | `Option<UriBasedFileOpener>` | none | Optional URI-based file opener. If set, citations to files in the model output will be hyperlinked using the specified URI scheme. | [E: codex-rs/config/src/config_toml.rs:362] |
+| `ghost_snapshot` | `Option<GhostSnapshotToml>` | `#[serde(default)]` | Compatibility-only settings retained so legacy `ghost_snapshot` config still loads. | [E: codex-rs/config/src/config_toml.rs:494] |
+| `project_root_markers` | `Option<Vec<String>>` | `#[serde(default)]` | Markers used to detect the project root when searching parent directories for `.codex` folders. Defaults to [".git"] when unset. | [E: codex-rs/config/src/config_toml.rs:499] |
+| `check_for_update_on_startup` | `Option<bool>` | none | When `true`, checks for Codex updates on startup and surfaces update prompts. Set to `false` only if your Codex updates are centrally managed. Defaults to `true`. | [E: codex-rs/config/src/config_toml.rs:504] |
+| `analytics` | `Option<AnalyticsConfigToml>` | none | When `false`, disables analytics across Codex product surfaces in this machine. Defaults to `true`. | [E: codex-rs/config/src/config_toml.rs:511] |
+| `feedback` | `Option<FeedbackConfigToml>` | none | When `false`, disables feedback collection across Codex product surfaces. Defaults to `true`. | [E: codex-rs/config/src/config_toml.rs:515] |
+| `apps` | `Option<AppsConfigToml>` | `#[serde(default)]` | Settings for app-specific controls. | [E: codex-rs/config/src/config_toml.rs:519] |
+| `desktop` | `Option<HashMap<String, JsonValue>>` | `#[serde(default)]` | Opaque desktop settings stored alongside the rest of config.toml. | [E: codex-rs/config/src/config_toml.rs:523] |
+| `otel` | `Option<OtelConfigToml>` | none | OTEL configuration. | [E: codex-rs/config/src/config_toml.rs:526] |
+| `windows` | `Option<WindowsToml>` | `#[serde(default)]` | Windows-specific configuration. | [E: codex-rs/config/src/config_toml.rs:539] |
+| `notice` | `Option<Notice>` | none | Collection of in-product notices (different from notifications) See [`crate::types::Notice`] for more details | [E: codex-rs/config/src/config_toml.rs:534] |
 
 ## Sources
 

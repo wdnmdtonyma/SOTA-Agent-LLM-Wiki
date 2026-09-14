@@ -8,10 +8,10 @@ symbols: [ExternalAgentConfigService, ExternalAgentSource, ExternalAgentConfigMi
 related: [cli.subcommands, command.tools-integrations, rpc.config-account-methods, rpc.notifications-system, subsys.config-auth.config-loading, subsys.config-auth.skills, subsys.config-auth.plugins, subsys.mcp.client]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> external-agent migration 把 Claude Code 或 Cursor 的配置、instructions、skills、commands、subagents、hooks、plugins、MCP servers 和 recent JSONL sessions 导入 Codex；Claude Code 还可迁移 memory。TUI 入口是 `/import`，app-server 入口是 `externalAgentConfig/*`。[E: codex-rs/external-agent-migration/src/migration_source.rs:52][E: codex-rs/external-agent-migration/src/migration_source.rs:55][E: codex-rs/external-agent-migration/src/model.rs:53][E: codex-rs/tui/src/slash_command.rs:27][E: codex-rs/app-server-protocol/src/protocol/common.rs:1395]
+> external-agent migration 把 Claude Code 或 Cursor 的配置、instructions、skills、commands、subagents、hooks、plugins、MCP servers 和 recent JSONL sessions 导入 Codex；Claude Code 还可迁移 memory。TUI 入口是 `/import`，app-server 入口是 `externalAgentConfig/*`。[E: codex-rs/external-agent-migration/src/migration_source.rs:52][E: codex-rs/external-agent-migration/src/migration_source.rs:55][E: codex-rs/external-agent-migration/src/model.rs:53][E: codex-rs/tui/src/slash_command.rs:27][E: codex-rs/app-server-protocol/src/protocol/common.rs:1390]
 
 ## 能回答的问题
 
@@ -38,9 +38,9 @@ flowchart TD
 
 ## 入口与协议
 
-`SlashCommand::Import` 的 wire name 是 `import`，popup description 仍写作从 Claude Code 导入；该命令不能在 task 运行期间执行。[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:27][E: codex-rs/tui/src/slash_command.rs:111][E: codex-rs/tui/src/slash_command.rs:222]
+`SlashCommand::Import` 的 wire name 是 `import`，popup description 仍写作从 Claude Code 导入；该命令不能在 task 运行期间执行。[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:27][E: codex-rs/tui/src/slash_command.rs:110][E: codex-rs/tui/src/slash_command.rs:220]
 
-app-server 暴露 `externalAgentConfig/detect`、`externalAgentConfig/import`、`externalAgentConfig/import/recordHistory`、`externalAgentConfig/import/readHistories`；detect 用 `external-agent-detect` 串行，import/recordHistory 按 global `config` 串行，history read 使用 shared-read serialization。服务器发送 `externalAgentConfig/import/progress` 与 `externalAgentConfig/import/completed` 两种 notification。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1395][E: codex-rs/app-server-protocol/src/protocol/common.rs:1400][E: codex-rs/app-server-protocol/src/protocol/common.rs:1405][E: codex-rs/app-server-protocol/src/protocol/common.rs:1410][E: codex-rs/app-server-protocol/src/protocol/common.rs:1977][E: codex-rs/app-server-protocol/src/protocol/common.rs:1978]
+app-server 暴露 `externalAgentConfig/detect`、`externalAgentConfig/import`、`externalAgentConfig/import/recordHistory`、`externalAgentConfig/import/readHistories`；detect 用 `external-agent-detect` 串行，import/recordHistory 按 global `config` 串行，history read 使用 shared-read serialization。服务器发送 `externalAgentConfig/import/progress` 与 `externalAgentConfig/import/completed` 两种 notification。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1390][E: codex-rs/app-server-protocol/src/protocol/common.rs:1395][E: codex-rs/app-server-protocol/src/protocol/common.rs:1400][E: codex-rs/app-server-protocol/src/protocol/common.rs:1405][E: codex-rs/app-server-protocol/src/protocol/common.rs:1972][E: codex-rs/app-server-protocol/src/protocol/common.rs:1973]
 
 migration item 有 `AGENTS_MD`、`CONFIG`、`SKILLS`、`PLUGINS`、`MCP_SERVER_CONFIG`、`SUBAGENTS`、`HOOKS`、`COMMANDS`、`MEMORY`、`SESSIONS` 十类。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:740][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:770] detect 接受 `includeHome`、repo `cwds`、session age/count limits 和 `migrationSource`；协议仍保留但忽略旧 `source` 字段。[E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:877][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:880][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:883][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:886][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:890][E: codex-rs/app-server-protocol/src/protocol/v2/config.rs:893] processor 把新 limits 写入 session import limits，并用 `migrationSource`、`includeHome` 和 `cwds` 构造 service/options。[E: codex-rs/app-server/src/external_agent_migration/processor.rs:125][E: codex-rs/app-server/src/external_agent_migration/processor.rs:131][E: codex-rs/app-server/src/external_agent_migration/processor.rs:144] import 同样用 `migrationSource` 选择 service，并返回新建的 `importId`。[E: codex-rs/app-server/src/external_agent_migration/processor.rs:197][E: codex-rs/app-server/src/external_agent_migration/processor.rs:202]
 

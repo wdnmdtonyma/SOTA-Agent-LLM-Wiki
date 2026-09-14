@@ -8,7 +8,7 @@ symbols: [ForcedChatgptWorkspaceIds, ForcedLoginMethod, AuthCredentialsStoreMode
 related: [config.model-provider, config.mcp-tools, subsys.config-auth.auth-flows, subsys.config-auth.credential-storage, rpc.config-account-methods]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > 认证与账户设置 catalog 覆盖 ConfigToml 中限制 ChatGPT workspace、限制 login method 和选择 CLI auth credential storage backend 的顶层键。本地 user-verification 凭证不在这些键里。
@@ -23,9 +23,9 @@ updated: 02a8f038b8
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 101 个顶层 `pub` 字段；本节点覆盖其中 3 个字段。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:534]
+当前 `ConfigToml` 有 101 个顶层 `pub` 字段；本节点覆盖其中 3 个字段。[E: codex-rs/config/src/config_toml.rs:156][E: codex-rs/config/src/config_toml.rs:539]
 
-MCP OAuth 凭据存储仍是独立顶层字段 `mcp_oauth_credentials_store`，本 CLI 账户 catalog 把它留给 MCP/tools catalog。[E: codex-rs/config/src/config_toml.rs:285]
+MCP OAuth 凭据存储仍是独立顶层字段 `mcp_oauth_credentials_store`，本 CLI 账户 catalog 把它留给 MCP/tools catalog。[E: codex-rs/config/src/config_toml.rs:290]
 
 `codex-user-verification` 是本地凭证与签名 crate，没有对应 ConfigToml 键；RPC `userVerification/*`（含 `cancel`）的方法表在 `rpc.config-account-methods`。[E: codex-rs/user-verification/src/lib.rs:33]
 
@@ -33,9 +33,9 @@ MCP OAuth 凭据存储仍是独立顶层字段 `mcp_oauth_credentials_store`，�
 
 | key | Rust type | serde/schema attrs | 字段说明 | Evidence |
 |---|---|---|---|---|
-| `forced_chatgpt_workspace_id` | `Option<ForcedChatgptWorkspaceIds>` | `#[serde(default)]` | Restricts ChatGPT login to configured workspace identifiers. | [E: codex-rs/config/src/config_toml.rs:260] |
-| `forced_login_method` | `Option<ForcedLoginMethod>` | `#[serde(default)]` | Restricts the allowed login mechanism. | [E: codex-rs/config/src/config_toml.rs:264] |
-| `cli_auth_credentials_store` | `Option<AuthCredentialsStoreMode>` | `#[serde(default)]` | Selects the CLI auth credentials storage backend. | [E: codex-rs/config/src/config_toml.rs:271] |
+| `forced_chatgpt_workspace_id` | `Option<ForcedChatgptWorkspaceIds>` | `#[serde(default)]` | Restricts ChatGPT login to configured workspace identifiers. | [E: codex-rs/config/src/config_toml.rs:261] |
+| `forced_login_method` | `Option<ForcedLoginMethod>` | `#[serde(default)]` | Restricts the allowed login mechanism. | [E: codex-rs/config/src/config_toml.rs:265] |
+| `cli_auth_credentials_store` | `Option<AuthCredentialsStoreMode>` | `#[serde(default)]` | Selects the CLI auth credentials storage backend. | [E: codex-rs/config/src/config_toml.rs:272] |
 
 ## Sources
 

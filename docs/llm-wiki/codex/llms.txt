@@ -2,7 +2,7 @@
 
 > OpenAI Codex 真实源码(`Best/codex/`,147-crate Rust workspace + TS/Py SDK)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/symbol → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
 >
-> **状态:185 个节点均已对照 `02a8f038b8` 复核并标记 verified。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
+> **状态:185 个节点均已对照 `3abbf9fe2c` 复核并标记 verified。** `grouped catalog` 节点逐实例覆盖该组(见每行/groups 的 count)。
 
 ## 怎么用
 - **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
@@ -84,9 +84,9 @@
 
 > 工具系统机制(ToolSpec/CoreToolRuntime/registry/discovery/code-mode)见 `subsystems/core/tool-system.md`。
 
-## T1 — Surface / Slash 命令(按类目 catalog,6 节点,覆盖 60 命令)
+## T1 — Surface / Slash 命令(按类目 catalog,6 节点,覆盖 59 命令)
 - [会话与线程命令](surface/slash-commands/session-thread.md): /new /clear /resume /fork /worktree /compact /rename /rollout /quit /cd /pwd … — tui/src/slash_command.rs
-- [模型与模式命令](surface/slash-commands/model-mode.md): /model /fast /plan /collab /approvals /permissions /experimental /theme /personality … — tui/src/slash_command.rs
+- [模型与模式命令](surface/slash-commands/model-mode.md): /model /fast /plan /collab /approvals /permissions /experimental /theme … — tui/src/slash_command.rs
 - [代码与评审命令](surface/slash-commands/code-review.md): /review /diff /copy /init — tui/src/slash_command.rs
 - [工具与集成命令](surface/slash-commands/tools-integrations.md): /skills /mcp /apps /plugins /mention — tui/src/slash_command.rs
 - [配置与系统命令](surface/slash-commands/config-system.md): /status /debug-config /settings /memories /title /statusline /sandbox-* /logout /feedback /ps /stop — tui/src/slash_command.rs · feedback/
@@ -98,19 +98,19 @@
 - [全局 flag](surface/cli/global-flags.md): --model --profile -c/--config --full-auto --sandbox-mode --approval-policy --add-dir --oss --remote … — cli/src/main.rs · utils/cli/src/shared_options.rs
 - [exec 非交互模式](surface/cli/exec-mode.md): `codex exec` 标志 + --json + event processors — exec/src/cli.rs · exec/src/lib.rs · docs/exec.md
 
-## T1 — Surface / Config(按区 catalog,8 节点,覆盖 ConfigToml 101 个顶层键)
+## T1 — Surface / Config(按区 catalog,8 节点,覆盖 ConfigToml 102 个顶层键)
 - [模型与 provider 设置](surface/config/model-provider.md): model · model_provider · model_providers · context_window · reasoning_effort/summary/verbosity · personality · service_tier · *_base_url — config/src/config_toml.rs
 - [审批与沙箱设置](surface/config/approval-sandbox.md): approval_policy · sandbox_mode · sandbox_workspace_write · permissions · shell_environment_policy · allow_login_shell — config/src/config_toml.rs · docs/sandbox.md
 - [认证与账户设置](surface/config/auth-account.md): forced_chatgpt_workspace_id · forced_login_method · cli_auth_credentials_store · mcp_oauth_* — config/src/config_toml.rs
-- [MCP 与工具设置](surface/config/mcp-tools.md): mcp_servers · tools · tool_search/request_plugin_install · web_search · tool_output_token_limit — config/src/config_toml.rs · docs/config.md
+- [MCP 与工具设置](surface/config/mcp-tools.md): mcp_servers · mcp_enterprise_managed_auth · tools · tool_search/request_plugin_install · web_search · tool_output_token_limit — config/src/config_toml.rs · docs/config.md
 - [agents 与 memory 设置](surface/config/agents-memory.md): agents · memories · compact_prompt · project_doc_* — config/src/config_toml.rs
 - [UI / TUI / 实时设置](surface/config/ui-tui.md): tui · hide_agent_reasoning · file_opener · audio · realtime* — config/src/config_toml.rs
 - [skills/plugins/features 设置](surface/config/skills-plugins-features.md): skills · plugins · marketplaces · features · suppress_unstable_features_warning — config/src/config_toml.rs
 - [存储/遥测/杂项设置](surface/config/storage-telemetry-misc.md): sqlite_home · log_dir · history · analytics · feedback · otel · ghost_snapshot · projects · windows · oss_provider · commit_attribution · instructions — config/src/config_toml.rs
 
-## T1 — Surface / App-Server 协议(集成面 catalog,9 节点,覆盖 262 个 RPC 实例：167 client requests + 84 notifications + 11 server requests)
+## T1 — Surface / App-Server 协议(集成面 catalog,9 节点,覆盖 261 个 RPC 实例：166 client requests + 84 notifications + 11 server requests)
 - [协议总览](surface/app-server/overview.md): JSON-RPC 2.0 · v1/v2 · ClientRequest/Response/ServerRequest/ServerNotification · 传输 — app-server-protocol/src/protocol/common.rs
-- [thread 方法](surface/app-server/thread-methods.md): thread/start|resume|fork|archive|list|read|rollback|compact · thread/attachment/* · project/* · thread/timeline/list — app-server-protocol/src/protocol/v2.rs
+- [thread 方法](surface/app-server/thread-methods.md): thread/start|resume|fork|archive|list|read|revert|compact · thread/attachment/* · project/* · thread/timeline/list — app-server-protocol/src/protocol/v2.rs
 - [turn 方法](surface/app-server/turn-methods.md): turn/start|steer|interrupt · turn/settings/update — app-server-protocol/src/protocol/common.rs
 - [fs 与 command 方法](surface/app-server/fs-command-methods.md): fs/* · command/exec* — app-server-protocol/src/protocol/common.rs
 - [config/account/model 方法](surface/app-server/config-account-methods.md): config/* · account/* · account/bedrock/* · model/* · modelProvider/capabilities/read · userVerification/* · experimentalFeature/* — app-server-protocol/src/protocol/common.rs
@@ -144,7 +144,7 @@
 - [Review mode](subsystems/core/review-mode.md): ReviewTask 生命周期 · review session · ReviewRequest/Output — core/src/tasks/review.rs · guardian/review_session.rs
 - [Realtime 对话状态机](subsystems/core/realtime-conversation.md): realtime 会话 start→active→end · async vs sync turn — core/src/realtime_conversation.rs
 - [Collaboration modes](subsystems/core/collaboration-modes.md): mode settings · typed world-state 指令注入 · 工具 availability — collaboration-mode-templates/ · core/src/context/world_state/collaboration_mode.rs
-- [Ghost/undo 兼容边界](subsystems/core/ghost-undo.md): legacy config/feature/rollout 兼容 + 当前 `ThreadRollback`（不回滚 filesystem）— config/ · features/ · protocol/ · core/src/session/handlers.rs
+- [Ghost/undo 兼容边界](subsystems/core/ghost-undo.md): legacy config/feature/rollout 兼容；`Op::ThreadRollback` 已删，磁盘撤销走 `thread/revert` — config/ · features/ · protocol/ · thread-store/
 - [Rollout 持久化](subsystems/core/rollout-persistence.md): JSONL recorder + thread 索引 — rollout/
 - [State DB(SQLite)](subsystems/core/state-db.md): 元数据镜像 — state/
 - [Thread store](subsystems/core/thread-store.md): local/remote 存储抽象 — thread-store/
@@ -236,7 +236,7 @@
 - [Worktree](subsystems/platform/worktree.md): WorktreeManager · 4 位 hex bucket · bind_thread · DEFAULT_WORKTREE_KEEP_COUNT=15 — worktree/
 
 ## T3 — Reference
-- [协议 Op catalog](reference/protocol-op.md): 29 个 Submission/Op 变体逐一 — protocol/src/protocol.rs
+- [协议 Op catalog](reference/protocol-op.md): 28 个 Submission/Op 变体逐一 — protocol/src/protocol.rs
 - [协议 Event catalog:生命周期/turn/exec/patch](reference/protocol-event-lifecycle.md): EventMsg 约前半 52 个(生命周期/turn/exec/patch/审批)— protocol/src/protocol.rs
 - [协议 Event catalog:streaming/collab/realtime/mcp](reference/protocol-event-streaming.md): EventMsg 约后半 31 个(delta/collab/realtime/mcp)— protocol/src/protocol.rs
 - [协议 items / approvals 类型](reference/protocol-items.md): TurnItem 19 个 · approvals · permissions — protocol/src/items.rs · approvals.rs · permissions.rs
@@ -244,7 +244,7 @@
 - [数据模型](reference/data-model.md): 核心共享类型 — protocol/ · core/
 - [关键类型索引](reference/key-types.md): 各子系统 load-bearing struct/trait 索引 — codex-rs/
 - [Crate 索引](reference/crate-index.md): 147 个 workspace crate 一句话目录 — codex-rs/Cargo.toml
-- [Feature flag 目录](reference/feature-flags.md): 142 个 flag 按 stage 全 catalog — features/src/lib.rs
+- [Feature flag 目录](reference/feature-flags.md): 144 个 flag 按 stage 全 catalog — features/src/lib.rs
 - [环境变量目录](reference/env-vars.md): CODEX_* 等 — codex-rs/
 - [术语表与 codename](reference/glossary.md): SQ/EQ · rollout · ghost commit · seatbelt · landlock · guardian · code-mode …
 - [不确定项日志](reference/uncertainty.md): `[U]` 汇总

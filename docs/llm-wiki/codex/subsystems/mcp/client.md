@@ -3,12 +3,12 @@ id: subsys.mcp.client
 title: MCP client runtime
 kind: subsystem
 tier: T2
-source: [codex-rs/codex-mcp/src/runtime.rs, codex-rs/codex-mcp/src/binding.rs, codex-rs/codex-mcp/src/binding_clients.rs, codex-rs/codex-mcp/src/pagination.rs, codex-rs/codex-mcp/src/connection_manager.rs, codex-rs/codex-mcp/src/connection_manager/tool_catalog.rs, codex-rs/codex-mcp/src/rmcp_client.rs, codex-rs/codex-mcp/src/resource_client.rs, codex-rs/codex-mcp/src/tools.rs, codex-rs/codex-mcp/src/elicitation.rs, codex-rs/rmcp-client/src/protocol_mode.rs, codex-rs/rmcp-client/src/elicitation_client_service.rs, codex-rs/core/src/session/mcp.rs, codex-rs/core/src/session/mcp_refresh.rs, codex-rs/core/src/session/mcp_prewarm.rs, codex-rs/core/src/session/mcp_runtime.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/core/src/mcp_tool_call.rs]
-symbols: [McpRuntime, McpRuntimeInput, PublishedMcpRuntime, McpBinding, PreparedMcpCall, McpConnectionSet, McpResourceClient, McpRefresh, ElicitationRequestRouter, record_protocol_discovery_metrics, validate_mcp_server_name, prepare_mcp_call]
+source: [codex-rs/codex-mcp/src/runtime.rs, codex-rs/codex-mcp/src/binding.rs, codex-rs/codex-mcp/src/binding_clients.rs, codex-rs/codex-mcp/src/pagination.rs, codex-rs/codex-mcp/src/connection_manager.rs, codex-rs/codex-mcp/src/connection_manager/tool_catalog.rs, codex-rs/codex-mcp/src/rmcp_client.rs, codex-rs/codex-mcp/src/resource_client.rs, codex-rs/codex-mcp/src/tools.rs, codex-rs/codex-mcp/src/elicitation.rs, codex-rs/rmcp-client/src/protocol_mode.rs, codex-rs/rmcp-client/src/elicitation_client_service.rs, codex-rs/core/src/session/mcp.rs, codex-rs/core/src/session/mcp_refresh.rs, codex-rs/core/src/session/mcp_prewarm.rs, codex-rs/core/src/session/mcp_runtime.rs, codex-rs/core/src/tools/handlers/mcp.rs, codex-rs/core/src/mcp_tool_call.rs, codex-rs/config/src/mcp_ema.rs, codex-rs/config/src/config_toml.rs, codex-rs/core/src/config/mod.rs]
+symbols: [McpRuntime, McpRuntimeInput, PublishedMcpRuntime, McpBinding, PreparedMcpCall, McpConnectionSet, McpResourceClient, McpRefresh, ElicitationRequestRouter, record_protocol_discovery_metrics, validate_mcp_server_name, prepare_mcp_call, list_available_server_capabilities]
 related: [spine.extension-system, subsys.mcp.transports, subsys.mcp.oauth, subsys.mcp.name-qualification, subsys.mcp.connectors, spine.trace-mcp-call, tool.mcp-namespace-tools, tool.list-mcp-resources, tool.read-mcp-resource]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > MCP client 的线程级 owner 现在是 `McpRuntime`：它原子发布最新 `McpConnectionSet`，每个 model sampling step 捕获不可变 `McpBinding` 来构建广告目录和 resource tools；普通 MCP tool 真正执行前则再次 refresh，并从 call-time current binding 取得 client、metadata 与 approval authority。
@@ -23,6 +23,7 @@ updated: 02a8f038b8
 - MCP initialize 怎样上报 protocol discovery metrics？
 - `ToolInfo.namespace_description` 怎样进入 cache 并被 model-visible namespace 使用？
 - package-style MCP server name（含 `/`、`@`）何时被接受？
+- `mcp_enterprise_managed_auth` 怎样选 IdP，advertised server capabilities 存在哪？
 
 ## 1 三层状态
 
@@ -72,21 +73,29 @@ RMCP client service 同时接受 typed `ElicitRequest`、legacy/custom `elicitat
 
 ## 6 Protocol discovery metrics 与 namespace cache
 
-`start_server_task` 在 `initialize` 完成后立刻调用 `record_protocol_discovery_metrics`：mode 把 `McpProtocolMode::Legacy` 标为 `legacy`、`V20260728` 标为 `auto`；outcome 按协商到的 `ProtocolVersion::V_2026_07_28` 记 `modern`，其它成功记 `legacy`，错误记 `failure`。指标名是 `codex.mcp.protocol_discovery` 与 `codex.mcp.protocol_discovery.duration_ms`，没有 global metrics client 时静默跳过。[E: codex-rs/codex-mcp/src/rmcp_client.rs:930][E: codex-rs/codex-mcp/src/rmcp_client.rs:1024]
+`start_server_task` 在 `initialize` 完成后立刻调用 `record_protocol_discovery_metrics`：mode 把 `McpProtocolMode::Legacy` 标为 `legacy`、`V20260728` 标为 `auto`；outcome 按协商到的 `ProtocolVersion::V_2026_07_28` 记 `modern`，其它成功记 `legacy`，错误记 `failure`。指标名是 `codex.mcp.protocol_discovery` 与 `codex.mcp.protocol_discovery.duration_ms`，没有 global metrics client 时静默跳过。[E: codex-rs/codex-mcp/src/rmcp_client.rs:945][E: codex-rs/codex-mcp/src/rmcp_client.rs:1043]
 
 `ToolInfo.namespace_description` 是 model-visible namespace 说明。serde 用 `alias = "connector_description"` 读取旧 cache 行，新写入走 `namespace_description`。[E: codex-rs/codex-mcp/src/tools.rs:42][E: codex-rs/codex-mcp/src/tools.rs:43]
 
-Codex Apps 转换在存在 connector metadata 时用 `connector_description`，否则回退 server instructions；regular MCP 转换始终用 server instructions，并清掉不可信 connector 字段。[E: codex-rs/codex-mcp/src/rmcp_client.rs:798][E: codex-rs/codex-mcp/src/rmcp_client.rs:800][E: codex-rs/codex-mcp/src/rmcp_client.rs:835][E: codex-rs/codex-mcp/src/rmcp_client.rs:839]
+Codex Apps 转换在存在 connector metadata 时用 `connector_description`，否则回退 server instructions；regular MCP 转换始终用 server instructions，并清掉不可信 connector 字段。[E: codex-rs/codex-mcp/src/rmcp_client.rs:812][E: codex-rs/codex-mcp/src/rmcp_client.rs:814][E: codex-rs/codex-mcp/src/rmcp_client.rs:849][E: codex-rs/codex-mcp/src/rmcp_client.rs:853]
 
-`McpHandler` 把该字段写进 tool-search source description 和 namespace 广告文本；agent-plugin path 会按更严字节上限截断。approval metadata 只在 Codex Apps server 上把 `namespace_description` 回填为 `connector_description`。[E: codex-rs/core/src/tools/handlers/mcp.rs:71][E: codex-rs/core/src/tools/handlers/mcp.rs:153][E: codex-rs/core/src/tools/handlers/mcp.rs:542][E: codex-rs/core/src/mcp_tool_call.rs:1696]
+`McpHandler` 把该字段写进 tool-search source description 和 namespace 广告文本；agent-plugin path 会按更严字节上限截断。approval metadata 只在 Codex Apps server 上把 `namespace_description` 回填为 `connector_description`。[E: codex-rs/core/src/tools/handlers/mcp.rs:71][E: codex-rs/core/src/tools/handlers/mcp.rs:153][E: codex-rs/core/src/tools/handlers/mcp.rs:542][E: codex-rs/core/src/mcp_tool_call.rs:1694]
 
-`ManagedClientStartup::start` 在构造 RMCP client 之前调用 `validate_mcp_server_name`：合法字符集是 `^[a-zA-Z0-9_:@/.-]+$`，因此 npm/pypi 式名字（如 `@scope/pkg`、`org/name`）可通过；旧规则 `^[a-zA-Z0-9_-]+$` 已放宽。校验失败会阻止该 server 启动，而不是等到 tool 名 sanitize 阶段。[E: codex-rs/codex-mcp/src/rmcp_client.rs:342][E: codex-rs/codex-mcp/src/rmcp_client.rs:881]
+`ManagedClientStartup::start` 在构造 RMCP client 之前调用 `validate_mcp_server_name`：合法字符集是 `^[a-zA-Z0-9_:@/.-]+$`，因此 npm/pypi 式名字（如 `@scope/pkg`、`org/name`）可通过；旧规则 `^[a-zA-Z0-9_-]+$` 已放宽。校验失败会阻止该 server 启动，而不是等到 tool 名 sanitize 阶段。[E: codex-rs/codex-mcp/src/rmcp_client.rs:350][E: codex-rs/codex-mcp/src/rmcp_client.rs:895]
 
 本地 HTTP MCP client 由 `McpRuntimeContext::new` 构造 `RouteAwareHttpClient` 并打开 `with_tls_backend_fallback()`，因此 delegated/local HTTP MCP 与 product HTTP 共用 rustls 协议协商回退。[E: codex-rs/codex-mcp/src/runtime.rs:772][E: codex-rs/codex-mcp/src/runtime.rs:774]
 
 MCP hook handler 的注册与 plugin 变更后 refresh hook runtime 由 skills/hooks 批次覆盖；本节点只负责 MCP tool catalog 与 call-time binding。[I]
 
-## 7 边界与 gotcha
+## 7 Enterprise MCP auth 与 advertised capabilities
+
+`ConfigToml.mcp_enterprise_managed_auth` 是可选 `McpEnterpriseManagedAuthConfig { idp }`（issuer + client_id）。config load 调用 `McpEnterpriseManagedAuthConfig::resolve(stack, fallback, servers, xaa_enabled)`：先 `validate_ema_auth_sources`，再 `validate_xaa_opt_in_source`，最后从 **一层** trusted config 选出完整 IdP，不跨层拼 issuer/client。[E: codex-rs/config/src/config_toml.rs:282][E: codex-rs/config/src/mcp_ema.rs:31][E: codex-rs/config/src/mcp_ema.rs:77][E: codex-rs/config/src/mcp_ema.rs:83][E: codex-rs/config/src/mcp_ema.rs:84][E: codex-rs/core/src/config/mod.rs:3294]
+
+IdP 选择优先 MDM / System / EnterpriseManaged / legacy managed；否则取非 `Project` 层。plugin 与 project **不能**重定向 enterprise credential source。若 `xaa_enabled`，`[features].use_xaa = true` 必须来自非 project 层或 requirements。[E: codex-rs/config/src/mcp_ema.rs:108][E: codex-rs/config/src/mcp_ema.rs:116][E: codex-rs/config/src/mcp_ema.rs:320][E: codex-rs/config/src/mcp_ema.rs:345]
+
+`initialize` 成功后把 `initialize_result.capabilities` JSON 写入 per-client `server_capabilities`。`McpConnectionSet::list_available_server_capabilities` 从当前 connection 的这把锁读取，注释写明 capabilities 属于 initialized connection，从不走共享 tool cache。[E: codex-rs/codex-mcp/src/rmcp_client.rs:951][E: codex-rs/codex-mcp/src/rmcp_client.rs:955][E: codex-rs/codex-mcp/src/connection_manager.rs:1004][E: codex-rs/codex-mcp/src/connection_manager.rs:1005]
+
+## 8 边界与 gotcha
 
 - “refresh 成功”表示新 publication 对未来读取可见，不会修改已经捕获的 binding；旧连接会由引用生命周期自然保留。[E: codex-rs/codex-mcp/src/runtime.rs:96][E: codex-rs/codex-mcp/src/runtime.rs:96][I]
 - model-advertised schema 来自 step binding，但 ordinary MCP execution follow call-time current binding；因此 refresh 后同名 tool 的 execution authority 可以变化，删除则得到 unavailable。不要把 revision guard描述成整步冻结。[E: codex-rs/core/src/session/mcp_runtime.rs:67][E: codex-rs/core/src/mcp_tool_call.rs:159][I]
@@ -113,6 +122,9 @@ MCP hook handler 的注册与 plugin 变更后 refresh hook runtime 由 skills/h
 - `codex-rs/core/src/session/mcp_runtime.rs`
 - `codex-rs/core/src/tools/handlers/mcp.rs`
 - `codex-rs/core/src/mcp_tool_call.rs`
+- `codex-rs/config/src/mcp_ema.rs`
+- `codex-rs/config/src/config_toml.rs`
+- `codex-rs/core/src/config/mod.rs`
 
 ## 相关
 

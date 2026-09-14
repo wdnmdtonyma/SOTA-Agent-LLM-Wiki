@@ -8,10 +8,10 @@ symbols: [RealtimeConversationManager, RealtimeModeInstructions, ConversationSta
 related: [ref.protocol-op, ref.protocol-event-lifecycle, subsys.platform.realtime, subsys.core.session-lifecycle, rpc.turn-methods]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> Realtime conversation is a side-channel beside normal turns: protocol `Op` variants start, feed, close and list voices; `session/handlers.rs` dispatches those variants without spawning a regular task; `RealtimeConversationManager` owns the active realtime state. Native WebRTC media lives in `codex-realtime-webrtc` plus the `codex-voice-host` helper, not in the protocol manager.[E: codex-rs/protocol/src/protocol.rs:610][E: codex-rs/protocol/src/protocol.rs:613][E: codex-rs/protocol/src/protocol.rs:616][E: codex-rs/protocol/src/protocol.rs:619][E: codex-rs/protocol/src/protocol.rs:622][E: codex-rs/protocol/src/protocol.rs:625][E: codex-rs/core/src/session/handlers.rs:562][E: codex-rs/core/src/session/handlers.rs:576][E: codex-rs/core/src/realtime_conversation.rs:165][E: codex-rs/realtime-webrtc/src/lib.rs:10][E: codex-rs/voice-host/src/main.rs:48]
+> Realtime conversation is a side-channel beside normal turns: protocol `Op` variants start, feed, close and list voices; `session/handlers.rs` dispatches those variants without spawning a regular task; `RealtimeConversationManager` owns the active realtime state. Native WebRTC media lives in `codex-realtime-webrtc` plus the `codex-voice-host` helper, not in the protocol manager.[E: codex-rs/protocol/src/protocol.rs:610][E: codex-rs/protocol/src/protocol.rs:613][E: codex-rs/protocol/src/protocol.rs:616][E: codex-rs/protocol/src/protocol.rs:619][E: codex-rs/protocol/src/protocol.rs:622][E: codex-rs/protocol/src/protocol.rs:625][E: codex-rs/core/src/session/handlers.rs:435][E: codex-rs/core/src/session/handlers.rs:449][E: codex-rs/core/src/realtime_conversation.rs:165][E: codex-rs/realtime-webrtc/src/lib.rs:10][E: codex-rs/voice-host/src/main.rs:48]
 
 ## 能回答的问题
 
@@ -27,11 +27,11 @@ updated: 02a8f038b8
 
 `ConversationStartTransport` is `Websocket`、`Webrtc { sdp }` or `ExistingCall { call_id, ... }`。[E: codex-rs/protocol/src/protocol.rs:257][E: codex-rs/protocol/src/protocol.rs:258][E: codex-rs/protocol/src/protocol.rs:262]
 
-Realtime outputs use dedicated `EventMsg` variants for lifecycle start, streaming payload, close, SDP and list-voices。[E: codex-rs/protocol/src/protocol.rs:1382][E: codex-rs/protocol/src/protocol.rs:1385][E: codex-rs/protocol/src/protocol.rs:1388][E: codex-rs/protocol/src/protocol.rs:1391][E: codex-rs/protocol/src/protocol.rs:1529]
+Realtime outputs use dedicated `EventMsg` variants for lifecycle start, streaming payload, close, SDP and list-voices。[E: codex-rs/protocol/src/protocol.rs:1375][E: codex-rs/protocol/src/protocol.rs:1378][E: codex-rs/protocol/src/protocol.rs:1381][E: codex-rs/protocol/src/protocol.rs:1384][E: codex-rs/protocol/src/protocol.rs:1523]
 
 ## Start path
 
-The dispatch loop routes realtime start/audio/text/speech/close/list-voices ops to realtime handlers and each branch returns `false`, so these ops do not start a normal `RegularTask`.[E: codex-rs/core/src/session/handlers.rs:562][E: codex-rs/core/src/session/handlers.rs:576][E: codex-rs/core/src/session/handlers.rs:578][E: codex-rs/core/src/session/handlers.rs:582][E: codex-rs/core/src/session/handlers.rs:586][E: codex-rs/core/src/session/handlers.rs:590][E: codex-rs/core/src/session/handlers.rs:594]
+The dispatch loop routes realtime start/audio/text/speech/close/list-voices ops to realtime handlers and each branch returns `false`, so these ops do not start a normal `RegularTask`.[E: codex-rs/core/src/session/handlers.rs:435][E: codex-rs/core/src/session/handlers.rs:449][E: codex-rs/core/src/session/handlers.rs:451][E: codex-rs/core/src/session/handlers.rs:455][E: codex-rs/core/src/session/handlers.rs:459][E: codex-rs/core/src/session/handlers.rs:463][E: codex-rs/core/src/session/handlers.rs:467]
 
 `prepare_realtime_start()` defaults absent transport to websocket and applies experimental realtime WS / WebRTC call base URL overrides。[E: codex-rs/core/src/realtime_conversation.rs:1242][E: codex-rs/core/src/realtime_conversation.rs:1247][E: codex-rs/core/src/realtime_conversation.rs:1260]
 

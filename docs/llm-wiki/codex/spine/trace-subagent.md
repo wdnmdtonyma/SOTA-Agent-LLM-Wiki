@@ -8,7 +8,7 @@ symbols: [InterAgentCommunication, AgentControl, AgentRegistry, InputQueue, pare
 related: [spine.tool-call-anatomy, spine.sq-eq-architecture, tool.spawn-agent-v2, tool.send-message, tool.followup-task, tool.wait-agent-v2, subsys.core.collaboration-modes]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > MultiAgent V2 的关键变化不只在 tool schema：spawn 继承当前 environment selections 与 parent/root turn provenance，并可经 `agent-roles` crate 收紧 child config；direct collaboration tool arguments 以 plaintext assistant-role envelope 进入目标上下文。V2 usage hint / mode policy 优先读 model catalog 的 `model_messages.multi_agent`，再回落到 config 或 bundled 文本。fork/compaction 还会专门清理旧 AgentMessage。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/spawn.rs:216][E: codex-rs/core/src/session/multi_agents.rs:67][E: codex-rs/core/src/agent/control/spawn.rs:962][E: codex-rs/core/src/compact_remote_v2.rs:73]

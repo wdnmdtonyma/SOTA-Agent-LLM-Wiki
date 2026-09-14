@@ -6,7 +6,7 @@ kind: reference
 tier: T3
 source: []
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 evidence: unknown
 ---
 
@@ -316,7 +316,7 @@ Pages: `ghost-undo`, `rollout-persistence`, `state-db`, `thread-store`, `trace-b
 
 ## Not [U] after verification
 
-- Ghost/undo runtime is retired: `Feature::GhostCommit` key `undo` is `Stage::Removed`; legacy `ghost_snapshot` items deserialize as `ResponseItem::Other`; current rollback is `Op::ThreadRollback` and does not revert disk edits.
+- Ghost/undo runtime is retired: `Feature::GhostCommit` key `undo` is `Stage::Removed`; legacy `ghost_snapshot` items deserialize as `ResponseItem::Other`; `Op::ThreadRollback` is deleted. Paginated disk-safe revert is app-server `thread/revert` and does not revert workspace file edits.
 - Guardian V2 source lives under `async_scorer/*` + `sync_reviewer/*` + `guardian-context`; crate-root `config.rs` is gone. `codex-guardian-v2` does not depend on `codex-guardian-context`.
 - History notes expose 9 namespace tools (`history.*` 4 + `notes.*` 5), `ToolExposure::DirectModelOnly`, notes file contract ≤ 1,000,000 UTF-8 bytes.
 - Code Mode is a standalone host/runtime (`code-mode-runtime` / process-owned host). Core installs `ProcessOwnedCodeModeSessionProvider` or `DisabledCodeModeSessionProvider`; there is no in-process V8 fallback and no fallback to shell.

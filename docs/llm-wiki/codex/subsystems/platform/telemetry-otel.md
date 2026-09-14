@@ -8,7 +8,7 @@ symbols: [OtelSettings, OtelExporter, OtelProvider, TelemetryAuthMode, MetricsCo
 related: [subsys.platform.analytics, subsys.platform.diagnostics, spine.extension-system, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `codex_otel` 是 Codex 的 OpenTelemetry provider crate：它导出 OTEL settings/exporter types、trace-context validators 和 `OtelProvider`，把 Statsig exporter 解析成 OTLP HTTP JSON 或在 debug build 中禁用，并按 settings 构造 logs/traces/metrics exporters。[E: codex-rs/otel/src/lib.rs:16][E: codex-rs/otel/src/lib.rs:18][E: codex-rs/otel/src/lib.rs:29][E: codex-rs/otel/src/lib.rs:38][E: codex-rs/otel/src/config.rs:13][E: codex-rs/otel/src/config.rs:20][E: codex-rs/otel/src/config.rs:24][E: codex-rs/otel/src/provider.rs:62][E: codex-rs/otel/src/provider.rs:194]

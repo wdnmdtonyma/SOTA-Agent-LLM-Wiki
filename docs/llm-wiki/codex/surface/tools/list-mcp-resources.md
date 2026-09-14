@@ -8,7 +8,7 @@ symbols: [create_list_mcp_resources_tool, ListMcpResourcesHandler, ListResourceA
 related: [tool.list-mcp-resource-templates, tool.read-mcp-resource, subsys.mcp.server, subsys.mcp.client]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `list_mcp_resources` 是本地 Function 工具，用于列出 MCP server 暴露的 resources；可指定单个 server 与 cursor。wire description 把省略 server 描述为 every configured server，但执行时只汇总本 model step 捕获到的 step-ready clients。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:11][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:24][E: codex-rs/core/src/tools/handlers/mcp_resource/list_mcp_resources.rs:88][E: codex-rs/codex-mcp/src/binding.rs:115][E: codex-rs/codex-mcp/src/binding.rs:119]

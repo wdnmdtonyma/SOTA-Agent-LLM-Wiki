@@ -8,7 +8,7 @@ symbols: [TurnItem, UserMessageItem, FunctionCallOutputItem, AgentMessageItem, I
 related: [ref.protocol-event-streaming, ref.protocol-op, subsys.core.approval-guardian]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `items.rs` 定义 turn-item stream 的 `TurnItem` tagged union；`approvals.rs` 定义 approval、guardian assessment、network policy amendment、MCP elicitation 和 apply-patch approval 的交互 payload。[E: codex-rs/protocol/src/items.rs:45][E: codex-rs/protocol/src/approvals.rs:206][E: codex-rs/protocol/src/approvals.rs:266][E: codex-rs/protocol/src/approvals.rs:183][E: codex-rs/protocol/src/approvals.rs:396][E: codex-rs/protocol/src/approvals.rs:460]
@@ -28,8 +28,8 @@ updated: 02a8f038b8
 | # | Variant | Payload | 字段/含义 | 定义锚 |
 |---:|---|---|---|---|
 | 1 | `UserMessage` | `UserMessageItem` | `id`, optional `client_id`, `content: Vec<UserInput>`。[E: codex-rs/protocol/src/items.rs:46][E: codex-rs/protocol/src/items.rs:80][E: codex-rs/protocol/src/items.rs:84][E: codex-rs/protocol/src/items.rs:85] | `items.rs:46` |
-| 2 | `FunctionCallOutput` | `FunctionCallOutputItem` | `id`, `name`, optional `namespace`, `output: FunctionCallOutputBody`。`FunctionCallOutputBody` 是 untagged union：`Text(String)` 或 `ContentItems`。legacy fanout 不生成事件。[E: codex-rs/protocol/src/items.rs:47][E: codex-rs/protocol/src/items.rs:89][E: codex-rs/protocol/src/items.rs:90][E: codex-rs/protocol/src/items.rs:91][E: codex-rs/protocol/src/items.rs:95][E: codex-rs/protocol/src/models.rs:2162][E: codex-rs/protocol/src/legacy_events.rs:524] | `items.rs:47` |
-| 3 | `HookPrompt` | `HookPromptItem` | `id`, `fragments`；fragment 包含 `text` 与 `hook_run_id`。legacy fanout 不生成事件。[E: codex-rs/protocol/src/items.rs:48][E: codex-rs/protocol/src/items.rs:99][E: codex-rs/protocol/src/items.rs:100][E: codex-rs/protocol/src/items.rs:101][E: codex-rs/protocol/src/items.rs:108][E: codex-rs/protocol/src/items.rs:109][E: codex-rs/protocol/src/legacy_events.rs:524] | `items.rs:48` |
+| 2 | `FunctionCallOutput` | `FunctionCallOutputItem` | `id`, `name`, optional `namespace`, `output: FunctionCallOutputBody`。`FunctionCallOutputBody` 是 untagged union：`Text(String)` 或 `ContentItems`。legacy fanout 不生成事件。[E: codex-rs/protocol/src/items.rs:47][E: codex-rs/protocol/src/items.rs:89][E: codex-rs/protocol/src/items.rs:90][E: codex-rs/protocol/src/items.rs:91][E: codex-rs/protocol/src/items.rs:95][E: codex-rs/protocol/src/models.rs:2164][E: codex-rs/protocol/src/legacy_events.rs:526] | `items.rs:47` |
+| 3 | `HookPrompt` | `HookPromptItem` | `id`, `fragments`；fragment 包含 `text` 与 `hook_run_id`。legacy fanout 不生成事件。[E: codex-rs/protocol/src/items.rs:48][E: codex-rs/protocol/src/items.rs:99][E: codex-rs/protocol/src/items.rs:100][E: codex-rs/protocol/src/items.rs:101][E: codex-rs/protocol/src/items.rs:108][E: codex-rs/protocol/src/items.rs:109][E: codex-rs/protocol/src/legacy_events.rs:526] | `items.rs:48` |
 | 4 | `AgentMessage` | `AgentMessageItem` | `id`, `content`, optional `phase`, optional `memory_citation`, optional `delivery`。[E: codex-rs/protocol/src/items.rs:49][E: codex-rs/protocol/src/items.rs:150][E: codex-rs/protocol/src/items.rs:151][E: codex-rs/protocol/src/items.rs:152][E: codex-rs/protocol/src/items.rs:159][E: codex-rs/protocol/src/items.rs:162][E: codex-rs/protocol/src/items.rs:165] | `items.rs:49` |
 | 5 | `Plan` | `PlanItem` | `id`, `text`。[E: codex-rs/protocol/src/items.rs:50][E: codex-rs/protocol/src/items.rs:185][E: codex-rs/protocol/src/items.rs:186][E: codex-rs/protocol/src/items.rs:187] | `items.rs:50` |
 | 6 | `Reasoning` | `ReasoningItem` | `id`, `summary_text`, defaulted `raw_content`。[E: codex-rs/protocol/src/items.rs:51][E: codex-rs/protocol/src/items.rs:191][E: codex-rs/protocol/src/items.rs:192][E: codex-rs/protocol/src/items.rs:193][E: codex-rs/protocol/src/items.rs:195] | `items.rs:51` |
@@ -52,10 +52,10 @@ updated: 02a8f038b8
 - `AgentMessageContent` 当前只有 `Text { text }`，所以 `AgentMessageItem.content` 是 text content vector。[E: codex-rs/protocol/src/items.rs:124][E: codex-rs/protocol/src/items.rs:125][E: codex-rs/protocol/src/items.rs:152]
 - `AgentMessageItem.phase` 与 `delivery` 都是 optional field；`delivery` 当前只有 `Async`。[E: codex-rs/protocol/src/items.rs:132][E: codex-rs/protocol/src/items.rs:159][E: codex-rs/protocol/src/items.rs:165]
 - `UserMessageItem::as_legacy_event()` flatten text inputs 到 `UserMessageEvent.message`，并保留 remote/local image 与 audio 列表、detail hints 与 text elements。兼容实现在 `legacy_events.rs`。[E: codex-rs/protocol/src/legacy_events.rs:77][E: codex-rs/protocol/src/legacy_events.rs:81][E: codex-rs/protocol/src/legacy_events.rs:83][E: codex-rs/protocol/src/legacy_events.rs:84][E: codex-rs/protocol/src/legacy_events.rs:94]
-- `TurnItem::as_legacy_events()` 对 `FunctionCallOutput` 与 `HookPrompt` 返回空向量，不生成 legacy `EventMsg`。[E: codex-rs/protocol/src/legacy_events.rs:521][E: codex-rs/protocol/src/legacy_events.rs:524]
+- `TurnItem::as_legacy_events()` 对 `FunctionCallOutput` 与 `HookPrompt` 返回空向量，不生成 legacy `EventMsg`。[E: codex-rs/protocol/src/legacy_events.rs:523][E: codex-rs/protocol/src/legacy_events.rs:526]
 - review enter/exit 首先是 canonical `TurnItem`；item completion 再借助 `legacy_events.rs` fan out `EnteredReviewMode` / `ExitedReviewMode`，并补上 turn/item correlation。[E: codex-rs/protocol/src/legacy_events.rs:117][E: codex-rs/protocol/src/legacy_events.rs:118][E: codex-rs/protocol/src/legacy_events.rs:128][E: codex-rs/protocol/src/legacy_events.rs:129]
 - standalone image generation、sleep 与 web search 走 `TurnItem::Extension`；hosted Responses API 的 web/image item 仍保留 core-owned variant。[E: codex-rs/protocol/src/items.rs:66][E: codex-rs/protocol/src/items.rs:71]
-- canonical `CommandExecutionItem`、legacy exec begin/end event 与 app-server v2 `ThreadItem::CommandExecution` 都携带 optional plugin id 和 safe plugin-relative script path；v2 只是把 canonical fields 投影为 `pluginId` / `scriptPath`。[E: codex-rs/protocol/src/items.rs:240][E: codex-rs/protocol/src/items.rs:243][E: codex-rs/protocol/src/protocol.rs:3500][E: codex-rs/protocol/src/protocol.rs:3502][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:293][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:296]
+- canonical `CommandExecutionItem`、legacy exec begin/end event 与 app-server v2 `ThreadItem::CommandExecution` 都携带 optional plugin id 和 safe plugin-relative script path；v2 只是把 canonical fields 投影为 `pluginId` / `scriptPath`。[E: codex-rs/protocol/src/items.rs:240][E: codex-rs/protocol/src/items.rs:243][E: codex-rs/protocol/src/protocol.rs:3501][E: codex-rs/protocol/src/protocol.rs:3503][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:293][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:296]
 - app-server v2 的 `ThreadItem::McpToolCall` 同样投影 `read_only_hint`，因此 canonical core item、legacy MCP begin/end event 与 public v2 item 对这项 annotation 保持一致。[E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:327][E: codex-rs/app-server-protocol/src/protocol/v2/item.rs:339][E: codex-rs/protocol/src/items.rs:444]
 
 ## Approval / guardian / elicitation payload 表
@@ -80,7 +80,7 @@ updated: 02a8f038b8
 
 ## 设计动机速记
 
-- turn-item stream 与 legacy `EventMsg` 并存：`ItemStartedEvent`/`ItemCompletedEvent` 仍能通过 `HasLegacyEvent` 生成兼容事件，但 canonical payload 是 `TurnItem`。[E: codex-rs/protocol/src/protocol.rs:1936][E: codex-rs/protocol/src/protocol.rs:1944][E: codex-rs/protocol/src/legacy_events.rs:552][E: codex-rs/protocol/src/legacy_events.rs:581]
+- turn-item stream 与 legacy `EventMsg` 并存：`ItemStartedEvent`/`ItemCompletedEvent` 仍能通过 `HasLegacyEvent` 生成兼容事件，但 canonical payload 是 `TurnItem`。[E: codex-rs/protocol/src/protocol.rs:1931][E: codex-rs/protocol/src/protocol.rs:1939][E: codex-rs/protocol/src/legacy_events.rs:557][E: codex-rs/protocol/src/legacy_events.rs:586]
 - approval payload 把 prompt 内容和可展示 decision 列表放在事件侧；对应 response 则由 `Op::ExecApproval`、`Op::PatchApproval`、`Op::ResolveElicitation` 回传。[E: codex-rs/protocol/src/approvals.rs:332][E: codex-rs/protocol/src/protocol.rs:671][E: codex-rs/protocol/src/protocol.rs:681][E: codex-rs/protocol/src/protocol.rs:689]
 
 ## Sources

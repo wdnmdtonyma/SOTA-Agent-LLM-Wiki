@@ -8,7 +8,7 @@ symbols: [CurrentTimeHandler, CurrentTimeOutput, CurrentTimeReminder, TimeProvid
 related: [tool.sleep, subsys.core.tool-system, ref.feature-flags]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `clock.curr_time` 是无参数的当前 UTC 时间工具。它从 session 的 `TimeProvider` 读取时间，普通 tool call 返回 reminder 文本，code mode 则返回结构化的 `{"current_time": ...}`。注册是双门控：`Feature::CurrentTimeReminder` **或** 模型 `experimental_supported_tools` 含 `"clock"`。
@@ -31,9 +31,9 @@ updated: 02a8f038b8
 
 handler 只接受 function payload，通过 session service 的 `time_provider.current_time(thread_id)` 取值，再包装为 `CurrentTimeReminder`；provider 失败属于 fatal tool error。[E: codex-rs/core/src/tools/handlers/current_time.rs:88][E: codex-rs/core/src/tools/handlers/current_time.rs:98][E: codex-rs/core/src/tools/handlers/current_time.rs:103]
 
-`add_core_utility_tools` 在 `Feature::CurrentTimeReminder` 启用 **或** `model_info.experimental_supported_tools` 含 `"clock"` 时注册 `CurrentTimeHandler`。`Feature::CurrentTimeReminder` 当前是 UnderDevelopment，默认关闭。[E: codex-rs/core/src/tools/spec_plan.rs:1211][E: codex-rs/core/src/tools/spec_plan.rs:1216][E: codex-rs/core/src/tools/spec_plan.rs:1217][E: codex-rs/features/src/lib.rs:1635][E: codex-rs/features/src/lib.rs:1637][E: codex-rs/features/src/lib.rs:1638]
+`add_core_utility_tools` 在 `Feature::CurrentTimeReminder` 启用 **或** `model_info.experimental_supported_tools` 含 `"clock"` 时注册 `CurrentTimeHandler`。`Feature::CurrentTimeReminder` 当前是 UnderDevelopment，默认关闭。[E: codex-rs/core/src/tools/spec_plan.rs:1212][E: codex-rs/core/src/tools/spec_plan.rs:1217][E: codex-rs/core/src/tools/spec_plan.rs:1218][E: codex-rs/features/src/lib.rs:1647][E: codex-rs/features/src/lib.rs:1649][E: codex-rs/features/src/lib.rs:1650]
 
-同一函数里 `sleep` 另受 `Feature::SleepTool` + `SleepToolMode` 门控，所以启用 `curr_time` 不等于必然暴露 `clock.sleep`。[E: codex-rs/core/src/tools/spec_plan.rs:1220]
+同一函数里 `sleep` 另受 `Feature::SleepTool` + `SleepToolMode` 门控，所以启用 `curr_time` 不等于必然暴露 `clock.sleep`。[E: codex-rs/core/src/tools/spec_plan.rs:1221]
 
 Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，不会注册 `clock.curr_time`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:1029]
 

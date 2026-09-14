@@ -8,10 +8,10 @@ symbols: [ToolRouter, ToolCall, ToolCallRuntime, ToolRegistry, RegisteredTool, b
 related: [spine.tool-call-anatomy, spine.extension-system, subsys.core.tool-system, subsys.core.turn-engine, subsys.core.unified-exec]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> 当前 `build_tool_router` 先把 core、MCP、extension、dynamic runtimes 装进 `ToolRegistry`，同时单独收集 hosted specs；`finalize_tool_router` 再做最终 exposure 覆盖、`tool_search` 与 code-mode 注册，并把 hosted specs 追加到 model-visible surface。最终 router 挂在请求级 `StepContext` 上，执行期不会另存一份 router。[E: codex-rs/core/src/tools/spec_plan.rs:126][E: codex-rs/core/src/tools/spec_plan.rs:154][E: codex-rs/core/src/tools/spec_plan.rs:159][E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:531][E: codex-rs/core/src/session/step_context.rs:18][E: codex-rs/core/src/session/step_context.rs:34][E: codex-rs/core/src/tools/parallel.rs:43]
+> 当前 `build_tool_router` 先把 core、MCP、extension、dynamic runtimes 装进 `ToolRegistry`，同时单独收集 hosted specs；`finalize_tool_router` 再做最终 exposure 覆盖、`tool_search` 与 code-mode 注册，并把 hosted specs 追加到 model-visible surface。最终 router 挂在请求级 `StepContext` 上，执行期不会另存一份 router。[E: codex-rs/core/src/tools/spec_plan.rs:126][E: codex-rs/core/src/tools/spec_plan.rs:154][E: codex-rs/core/src/tools/spec_plan.rs:159][E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:531][E: codex-rs/core/src/session/step_context.rs:18][E: codex-rs/core/src/session/step_context.rs:34][E: codex-rs/core/src/tools/parallel.rs:44]
 
 ## 能回答的问题
 
@@ -43,17 +43,17 @@ code-mode 注册遍历已经 finalize 到此阶段的 registry，把可嵌套 ru
 
 function call 还可携带 `encrypted_function_args`；router 仅对 V2 `spawn_agent`、`send_message`、`followup_task` 标记 direct plaintext source，其他 function arguments 仍按普通来源处理。[E: codex-rs/core/src/tools/router.rs:41][E: codex-rs/core/src/tools/router.rs:46][E: codex-rs/core/src/tools/router.rs:49]
 
-`ToolCallRuntime` 只保存 session、`StepContext`、diff tracker 与一个 `RwLock<()>`；它从 `step_context.tool_router` 查询 runtime、parallel/cancellation 策略，先等待 runtime readiness，再让 parallel-safe 调用取 read lock、其余调用取 write lock，最后经同一个 router dispatch。[E: codex-rs/core/src/tools/parallel.rs:43][E: codex-rs/core/src/tools/parallel.rs:106][E: codex-rs/core/src/tools/parallel.rs:151][E: codex-rs/core/src/tools/parallel.rs:154][E: codex-rs/core/src/tools/parallel.rs:165]
+`ToolCallRuntime` 只保存 session、`StepContext`、diff tracker 与一个 `RwLock<()>`；它从 `step_context.tool_router` 查询 runtime、parallel/cancellation 策略，先等待 runtime readiness，再让 parallel-safe 调用取 read lock、其余调用取 write lock，最后经同一个 router dispatch。[E: codex-rs/core/src/tools/parallel.rs:44][E: codex-rs/core/src/tools/parallel.rs:123][E: codex-rs/core/src/tools/parallel.rs:125][E: codex-rs/core/src/tools/parallel.rs:167][E: codex-rs/core/src/tools/parallel.rs:168][E: codex-rs/core/src/tools/parallel.rs:170][E: codex-rs/core/src/tools/parallel.rs:176][E: codex-rs/core/src/tools/parallel.rs:181]
 
-hidden runtime 在 registry 查询中强制报告不支持 parallel；dispatch 仍把 invocation 的 `cancellation_token` 传给底层 runtime。[E: codex-rs/core/src/tools/registry.rs:488][E: codex-rs/core/src/tools/registry.rs:488][E: codex-rs/core/src/tools/parallel.rs:172]
+hidden runtime 在 registry 查询中强制报告不支持 parallel；dispatch 仍把 invocation 的 `cancellation_token` 传给底层 runtime。[E: codex-rs/core/src/tools/registry.rs:488][E: codex-rs/core/src/tools/registry.rs:488][E: codex-rs/core/src/tools/parallel.rs:188]
 
 ## Tool source gates
 
-`add_core_tool_sources` 对 Guardian reviewer 使用受限分支：Managed permission profile 且有 environment 时只注册 `exec_command`、`write_stdin`、`view_image`，随后立即返回。普通 turn 才加入 shell、MCP resource、core utility 与 collaboration families。[E: codex-rs/core/src/tools/spec_plan.rs:974][E: codex-rs/core/src/tools/spec_plan.rs:998][E: codex-rs/core/src/tools/spec_plan.rs:1032]
+`add_core_tool_sources` 对 Guardian reviewer 使用受限分支：Managed permission profile 且有 environment 时，才可能注册 `exec_command`/`write_stdin`（还要求 `Feature::ShellTool` + `Feature::UnifiedExec` 且 shell 未 Disabled）以及 `Feature::ViewImage` 打开时的 `view_image`，随后立即返回。普通 turn 才加入 shell、MCP resource、core utility 与 collaboration families。[E: codex-rs/core/src/tools/spec_plan.rs:974][E: codex-rs/core/src/tools/spec_plan.rs:994][E: codex-rs/core/src/tools/spec_plan.rs:998][E: codex-rs/core/src/tools/spec_plan.rs:1016][E: codex-rs/core/src/tools/spec_plan.rs:1032]
 
 shell family 首先要求 environment、`Feature::ShellTool` 和未 Disabled 的模型 shell type。**`shell_command` 不再注册**。UnifiedExec 注册 `exec_command`/`write_stdin`；关闭 UnifiedExec 时只注册 `ExecCommandHandler::one_shot`。`shell_command` 仍是 reserved name。[E: codex-rs/core/src/tools/spec_plan.rs:1079][E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111][E: codex-rs/core/src/tools/registry.rs:364]
 
-`update_plan` 仅在 `update_plan_enabled` 时加入。`request_user_input_async` 仅在 root agent + 模型 experimental tool 列表含 `"request_user_input_async"` 或 `"send_user_message_async"` 时以 `DirectModelOnly` 加入（旧 catalog 名映射到 questions handler）。`send_message_to_user_async` 仅在 root agent + 列表含该新名时加入。[E: codex-rs/core/src/tools/spec_plan.rs:1142][E: codex-rs/core/src/tools/spec_plan.rs:1167][E: codex-rs/core/src/tools/spec_plan.rs:1176][E: codex-rs/core/src/tools/spec_plan.rs:1192][E: codex-rs/core/src/tools/spec_plan.rs:1197]
+`update_plan` 仅在 `update_plan_enabled` 时加入。`request_user_input_async` 仅在 root agent + 模型 experimental tool 列表含 `"request_user_input_async"` 或 `"send_user_message_async"` 时以 `DirectModelOnly` 加入（旧 catalog 名映射到 questions handler，**没有**独立 feature 门）。`send_message_to_user_async` 在 root agent 且（`Feature::SendMessageToUserAsync` **或** 列表含该新名）时加入。[E: codex-rs/core/src/tools/spec_plan.rs:1142][E: codex-rs/core/src/tools/spec_plan.rs:1167][E: codex-rs/core/src/tools/spec_plan.rs:1176][E: codex-rs/core/src/tools/spec_plan.rs:1192][E: codex-rs/core/src/tools/spec_plan.rs:1193][E: codex-rs/core/src/tools/spec_plan.rs:1198]
 
 ## Sources
 

@@ -8,7 +8,7 @@ symbols: [MemoryStatusParams, MemoryStatusResponse, SkillsListParams, SkillsList
 related: [rpc.overview, rpc.notifications-system, rpc.thread-methods, subsys.mcp.client, subsys.config-auth.plugins, subsys.config-auth.skills]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > mcp/skills/plugin/app 方法是 app-server 对 MCP server、skills roots/config、marketplace、plugin install/share/read 和 app connector catalog 的 client request catalog。
@@ -23,7 +23,7 @@ updated: 02a8f038b8
 
 ## 字段模型
 
-skills、marketplace 和 plugin 类型集中在 `v2/plugin.rs`；app connector 的 list/read/installed types 在 `v2/apps.rs`；MCP status/resource/tool/OAuth/reload 类型在 `v2/mcp.rs`。[E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:20][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:33][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:128][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:12][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:31][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:176][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:224][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:50][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:104]
+skills、marketplace 和 plugin 类型集中在 `v2/plugin.rs`；app connector 的 list/read/installed types 在 `v2/apps.rs`；MCP status/resource/tool/OAuth/reload 类型在 `v2/mcp.rs`。[E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:20][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:33][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:128][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:12][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:31][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:176][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:224][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:50][E: codex-rs/app-server-protocol/src/protocol/v2/mcp.rs:106]
 
 `app/read` 一次读取最多 100 个 app ids，可选择返回 display-only public tool summaries，并把找不到的 ids 放进 `missing_app_ids`。`app/installed` 读取已提交的 runtime connector snapshot，可按 thread effective config 计算，并可先 force refresh；每项明确 `enabled` 与 model-visible `callable`。[E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:176][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:224][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:31][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:52][E: codex-rs/app-server-protocol/src/protocol/v2/apps.rs:55]
 
@@ -37,7 +37,7 @@ App metadata 当前包含 categories、screenshots、developer/version、install
 
 plugin wire types 仍保留四组字段：`PluginShareSaveResponse` 与 `PluginShareContext` 都有 optional `canPublishToWorkspace`；`SkillInterface` 有 remote `iconSmallUrl`/`iconLargeUrl`；`HookMetadata` 有 optional `additionalContextLimit`，其中 null 使用 2,500 tokens、0 禁用 spill。[E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:297][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:301][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:490][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:500][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:502][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:585][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:595][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:740][E: codex-rs/app-server-protocol/src/protocol/v2/plugin.rs:751]
 
-`skills/list` 使用 shared-read config serialization scope，而 skills config write、marketplace mutation 和 plugin install/uninstall 使用 global config serialization。[E: codex-rs/app-server-protocol/src/protocol/common.rs:875][E: codex-rs/app-server-protocol/src/protocol/common.rs:880][E: codex-rs/app-server-protocol/src/protocol/common.rs:890][E: codex-rs/app-server-protocol/src/protocol/common.rs:1023][E: codex-rs/app-server-protocol/src/protocol/common.rs:1028][E: codex-rs/app-server-protocol/src/protocol/common.rs:1033]
+`skills/list` 使用 shared-read config serialization scope，而 skills config write、marketplace mutation 和 plugin install/uninstall 使用 global config serialization。[E: codex-rs/app-server-protocol/src/protocol/common.rs:870][E: codex-rs/app-server-protocol/src/protocol/common.rs:875][E: codex-rs/app-server-protocol/src/protocol/common.rs:885][E: codex-rs/app-server-protocol/src/protocol/common.rs:1018][E: codex-rs/app-server-protocol/src/protocol/common.rs:1023][E: codex-rs/app-server-protocol/src/protocol/common.rs:1028]
 
 experimental `memory/status` 与 `memory/reset` 同属 memory RPC：`memory/reset` 的权威 catalog 在 thread 方法页；本页是 `MemoryStatusParams` / `MemoryStatusResponse` 的权威行。params 可带 `minConsolidatedThreads`（默认 20，范围 1..=4096），response 只给 `v2ConsolidatedThreads` 与 `v2Ready`，不暴露 memory 正文。[E: codex-rs/app-server-protocol/src/protocol/common.rs:706][E: codex-rs/app-server-protocol/src/protocol/v2/memory.rs:11][E: codex-rs/app-server-protocol/src/protocol/v2/memory.rs:20][E: codex-rs/app-server/src/request_processors/memory_status.rs:9][E: codex-rs/app-server/src/request_processors/memory_status.rs:13]
 
@@ -49,36 +49,36 @@ experimental `memory/status` 与 `memory/reset` 同属 memory RPC：`memory/rese
 | Variant | Wire method | Params type | Response type | Gate | Evidence |
 |---|---|---|---|---|---|
 | `MemoryStatus` | `memory/status` | `v2::MemoryStatusParams` | `v2::MemoryStatusResponse` | experimental: memory/status | [E: codex-rs/app-server-protocol/src/protocol/common.rs:707] |
-| `SkillsList` | `skills/list` | `v2::SkillsListParams` | `v2::SkillsListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:875] |
-| `SkillsExtraRootsSet` | `skills/extraRoots/set` | `v2::SkillsExtraRootsSetParams` | `v2::SkillsExtraRootsSetResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:880] |
-| `HooksList` | `hooks/list` | `v2::HooksListParams` | `v2::HooksListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:885] |
-| `MarketplaceAdd` | `marketplace/add` | `v2::MarketplaceAddParams` | `v2::MarketplaceAddResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:890] |
-| `MarketplaceRemove` | `marketplace/remove` | `v2::MarketplaceRemoveParams` | `v2::MarketplaceRemoveResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:895] |
-| `MarketplaceUpgrade` | `marketplace/upgrade` | `v2::MarketplaceUpgradeParams` | `v2::MarketplaceUpgradeResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:900] |
-| `PluginList` | `plugin/list` | `v2::PluginListParams` | `v2::PluginListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:905] |
-| `PluginSearch` | `plugin/search` | `v2::PluginSearchParams` | `v2::PluginSearchResponse` | experimental: plugin/search | [E: codex-rs/app-server-protocol/src/protocol/common.rs:911] |
-| `PluginInstalled` | `plugin/installed` | `v2::PluginInstalledParams` | `v2::PluginInstalledResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:916] |
-| `PluginReconcile` | `plugin/reconcile` | `v2::PluginReconcileParams` | `v2::PluginReconcileResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:921] |
-| `PluginRead` | `plugin/read` | `v2::PluginReadParams` | `v2::PluginReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:926] |
-| `PluginSkillRead` | `plugin/skill/read` | `v2::PluginSkillReadParams` | `v2::PluginSkillReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:931] |
-| `PluginShareSave` | `plugin/share/save` | `v2::PluginShareSaveParams` | `v2::PluginShareSaveResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:936] |
-| `PluginShareUpdateTargets` | `plugin/share/updateTargets` | `v2::PluginShareUpdateTargetsParams` | `v2::PluginShareUpdateTargetsResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:941] |
-| `PluginShareList` | `plugin/share/list` | `v2::PluginShareListParams` | `v2::PluginShareListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:946] |
-| `PluginShareCheckout` | `plugin/share/checkout` | `v2::PluginShareCheckoutParams` | `v2::PluginShareCheckoutResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:951] |
-| `PluginShareDelete` | `plugin/share/delete` | `v2::PluginShareDeleteParams` | `v2::PluginShareDeleteResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:956] |
-| `AppsRead` | `app/read` | `v2::AppsReadParams` | `v2::AppsReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:961] |
-| `AppsList` | `app/list` | `v2::AppsListParams` | `v2::AppsListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:966] |
-| `AppsInstalled` | `app/installed` | `v2::AppsInstalledParams` | `v2::AppsInstalledResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:971] |
-| `SkillsConfigWrite` | `skills/config/write` | `v2::SkillsConfigWriteParams` | `v2::SkillsConfigWriteResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1023] |
-| `PluginInstall` | `plugin/install` | `v2::PluginInstallParams` | `v2::PluginInstallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1028] |
-| `PluginUninstall` | `plugin/uninstall` | `v2::PluginUninstallParams` | `v2::PluginUninstallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1033] |
-| `McpServerOauthLogin` | `mcpServer/oauth/login` | `v2::McpServerOauthLoginParams` | `v2::McpServerOauthLoginResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1212] |
-| `McpServerRefresh` | `config/mcpServer/reload` | `Option<()>` | `v2::McpServerRefreshResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1218] |
-| `McpServerStatusList` | `mcpServerStatus/list` | `v2::ListMcpServerStatusParams` | `v2::ListMcpServerStatusResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1224] |
-| `McpResourceRead` | `mcpServer/resource/read` | `v2::McpResourceReadParams` | `v2::McpResourceReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1230] |
-| `McpServerEventStreamStart` | `mcpServer/event/stream/start` | `v2::McpServerEventStreamStartParams` | `v2::McpServerEventStreamStartResponse` | experimental: mcpServer/event/stream/start | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1237] |
-| `McpServerEventStreamStop` | `mcpServer/event/stream/stop` | `v2::McpServerEventStreamStopParams` | `v2::McpServerEventStreamStopResponse` | experimental: mcpServer/event/stream/stop | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1244] |
-| `McpServerToolCall` | `mcpServer/tool/call` | `v2::McpServerToolCallParams` | `v2::McpServerToolCallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1250] |
+| `SkillsList` | `skills/list` | `v2::SkillsListParams` | `v2::SkillsListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:870] |
+| `SkillsExtraRootsSet` | `skills/extraRoots/set` | `v2::SkillsExtraRootsSetParams` | `v2::SkillsExtraRootsSetResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:875] |
+| `HooksList` | `hooks/list` | `v2::HooksListParams` | `v2::HooksListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:880] |
+| `MarketplaceAdd` | `marketplace/add` | `v2::MarketplaceAddParams` | `v2::MarketplaceAddResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:885] |
+| `MarketplaceRemove` | `marketplace/remove` | `v2::MarketplaceRemoveParams` | `v2::MarketplaceRemoveResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:890] |
+| `MarketplaceUpgrade` | `marketplace/upgrade` | `v2::MarketplaceUpgradeParams` | `v2::MarketplaceUpgradeResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:895] |
+| `PluginList` | `plugin/list` | `v2::PluginListParams` | `v2::PluginListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:900] |
+| `PluginSearch` | `plugin/search` | `v2::PluginSearchParams` | `v2::PluginSearchResponse` | experimental: plugin/search | [E: codex-rs/app-server-protocol/src/protocol/common.rs:906] |
+| `PluginInstalled` | `plugin/installed` | `v2::PluginInstalledParams` | `v2::PluginInstalledResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:911] |
+| `PluginReconcile` | `plugin/reconcile` | `v2::PluginReconcileParams` | `v2::PluginReconcileResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:916] |
+| `PluginRead` | `plugin/read` | `v2::PluginReadParams` | `v2::PluginReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:921] |
+| `PluginSkillRead` | `plugin/skill/read` | `v2::PluginSkillReadParams` | `v2::PluginSkillReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:926] |
+| `PluginShareSave` | `plugin/share/save` | `v2::PluginShareSaveParams` | `v2::PluginShareSaveResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:931] |
+| `PluginShareUpdateTargets` | `plugin/share/updateTargets` | `v2::PluginShareUpdateTargetsParams` | `v2::PluginShareUpdateTargetsResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:936] |
+| `PluginShareList` | `plugin/share/list` | `v2::PluginShareListParams` | `v2::PluginShareListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:941] |
+| `PluginShareCheckout` | `plugin/share/checkout` | `v2::PluginShareCheckoutParams` | `v2::PluginShareCheckoutResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:946] |
+| `PluginShareDelete` | `plugin/share/delete` | `v2::PluginShareDeleteParams` | `v2::PluginShareDeleteResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:951] |
+| `AppsRead` | `app/read` | `v2::AppsReadParams` | `v2::AppsReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:956] |
+| `AppsList` | `app/list` | `v2::AppsListParams` | `v2::AppsListResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:961] |
+| `AppsInstalled` | `app/installed` | `v2::AppsInstalledParams` | `v2::AppsInstalledResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:966] |
+| `SkillsConfigWrite` | `skills/config/write` | `v2::SkillsConfigWriteParams` | `v2::SkillsConfigWriteResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1018] |
+| `PluginInstall` | `plugin/install` | `v2::PluginInstallParams` | `v2::PluginInstallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1023] |
+| `PluginUninstall` | `plugin/uninstall` | `v2::PluginUninstallParams` | `v2::PluginUninstallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1028] |
+| `McpServerOauthLogin` | `mcpServer/oauth/login` | `v2::McpServerOauthLoginParams` | `v2::McpServerOauthLoginResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1207] |
+| `McpServerRefresh` | `config/mcpServer/reload` | `Option<()>` | `v2::McpServerRefreshResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1213] |
+| `McpServerStatusList` | `mcpServerStatus/list` | `v2::ListMcpServerStatusParams` | `v2::ListMcpServerStatusResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1219] |
+| `McpResourceRead` | `mcpServer/resource/read` | `v2::McpResourceReadParams` | `v2::McpResourceReadResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1225] |
+| `McpServerEventStreamStart` | `mcpServer/event/stream/start` | `v2::McpServerEventStreamStartParams` | `v2::McpServerEventStreamStartResponse` | experimental: mcpServer/event/stream/start | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1232] |
+| `McpServerEventStreamStop` | `mcpServer/event/stream/stop` | `v2::McpServerEventStreamStopParams` | `v2::McpServerEventStreamStopResponse` | experimental: mcpServer/event/stream/stop | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1239] |
+| `McpServerToolCall` | `mcpServer/tool/call` | `v2::McpServerToolCallParams` | `v2::McpServerToolCallResponse` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1245] |
 
 ## Sources
 

@@ -8,7 +8,7 @@ symbols: [ExecutorFileSystem, FileSystemSandboxContext, ExecPermissionProfile, E
 related: [subsys.exec-sandbox.overview, subsys.exec-sandbox.exec-server, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `file-system` defines the host-neutral filesystem boundary for execution components: callers use `PathUri` plus optional `FileSystemSandboxContext`, and implementations expose async file primitives, chunked reads, and a bounded recursive walk.[E: codex-rs/file-system/src/lib.rs:330][E: codex-rs/file-system/src/lib.rs:477][E: codex-rs/file-system/src/lib.rs:493][E: codex-rs/file-system/src/lib.rs:541]

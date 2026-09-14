@@ -8,7 +8,7 @@ symbols: [ThreadStore, LiveThread, LiveThreadInitGuard, LocalThreadStore, LocalT
 related: [subsys.core.rollout-persistence, subsys.core.state-db, subsys.core.realtime-conversation, subsys.core.thread-queue, subsys.core.rollout-migration]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `codex-rs/thread-store` 是 thread persistence 的 storage-neutral boundary。local 实现仍以 JSONL rollout 为 durable source of truth；当 history mode 是 `Paginated` 时，它在 durable write 后把完整 JSONL records 投影进 rebuildable `thread_history_1.sqlite`，供 turn/item pagination、occurrence search 与 bounded model-context resume 使用。[E: codex-rs/thread-store/src/local/live_writer.rs:345][E: codex-rs/thread-store/src/local/live_writer.rs:346][E: codex-rs/thread-store/src/local/thread_history_materialization.rs:22]
@@ -52,7 +52,7 @@ updated: 02a8f038b8
 | `revert_thread.rs` | 对未加载 Paginated thread 写新 immutable rollout，CAS 替换 SQLite path。[E: codex-rs/thread-store/src/local/revert_thread.rs:19][E: codex-rs/thread-store/src/local/revert_thread.rs:125] |
 | `queue_store.rs` | `QueueStore` / `LocalQueueStore` 适配；行为见 `subsys.core.thread-queue`。[E: codex-rs/thread-store/src/queue_store.rs:14] |
 | `codex-rs/attachment-store` | Injectable `AttachmentStore` on `ThreadManager`; not a ThreadStore backend.[E: codex-rs/attachment-store/src/lib.rs:23][E: codex-rs/core/src/thread_manager.rs:388] |
-| `thread_rollout_truncation.rs` | Legacy rollout fork/rollback 边界：按 owned Vec truncation、real user/inter-agent turn boundary、synthetic/rolled-back validation 计算切点。[E: codex-rs/core/src/thread_rollout_truncation.rs:39][E: codex-rs/core/src/thread_rollout_truncation.rs:74][E: codex-rs/core/src/thread_rollout_truncation.rs:137][E: codex-rs/core/src/thread_rollout_truncation.rs:164][E: codex-rs/core/src/thread_rollout_truncation.rs:212] |
+| `thread_rollout_truncation.rs` | Replay 已持久化的 `ThreadRolledBack` marker：按 user/inter-agent turn boundary 计算 fork/truncation 切点。这不是活 `Op::ThreadRollback`。[E: codex-rs/core/src/thread_rollout_truncation.rs:39][E: codex-rs/core/src/thread_rollout_truncation.rs:52][E: codex-rs/core/src/thread_rollout_truncation.rs:74] |
 
 ## 数据模型
 
@@ -114,13 +114,13 @@ Local store 的 section CRUD/move 由 state DB 支持，`StoredThread` 返回 se
 
 ## Thread attachments
 
-`ThreadStore` 默认不支持 attachments；`LocalThreadStore` 仅在 state DB 存在时 override `supports_thread_attachments` / `add` / `list` / `remove`。payload 存在 State DB，不是 JSONL rollout。RPC 入口是 `thread/attachment/{add,list,remove}`，变更后广播 `thread/attachment/updated`。[E: codex-rs/thread-store/src/store.rs:261][E: codex-rs/thread-store/src/local/mod.rs:590][E: codex-rs/thread-store/src/local/thread_attachments.rs:19][E: codex-rs/app-server/src/request_processors/thread_attachments.rs:36][E: codex-rs/app-server-protocol/src/protocol/common.rs:673][E: codex-rs/app-server-protocol/src/protocol/common.rs:1919]
+`ThreadStore` 默认不支持 attachments；`LocalThreadStore` 仅在 state DB 存在时 override `supports_thread_attachments` / `add` / `list` / `remove`。payload 存在 State DB，不是 JSONL rollout。RPC 入口是 `thread/attachment/{add,list,remove}`，变更后广播 `thread/attachment/updated`。[E: codex-rs/thread-store/src/store.rs:261][E: codex-rs/thread-store/src/local/mod.rs:590][E: codex-rs/thread-store/src/local/thread_attachments.rs:19][E: codex-rs/app-server/src/request_processors/thread_attachments.rs:36][E: codex-rs/app-server-protocol/src/protocol/common.rs:673][E: codex-rs/app-server-protocol/src/protocol/common.rs:1914]
 
 这与 `codex-attachment-store` 的 image/data-URL `AttachmentStore` 不是同一条路径：后者挂在 `ThreadManagerState.image_store`，给模型看图；前者是 thread-owned 元数据 attachment。[E: codex-rs/attachment-store/src/lib.rs:23][E: codex-rs/core/src/thread_manager.rs:388]
 
 ## Reserved thread ID 与 pending metadata
 
-`ThreadManager::reserve_thread_id` 在 startup 前分配 id，让 host 先挂自己的状态。`StartThreadOptions.reserved_thread_id` 只能用于 `New` / `Cleared` / `Forked`；`Resumed` 直接 `InvalidRequest`。[E: codex-rs/core/src/thread_manager.rs:1054][E: codex-rs/core/src/session/session.rs:787][E: codex-rs/core/src/thread_manager.rs:1992]
+`ThreadManager::reserve_thread_id` 在 startup 前分配 id，让 host 先挂自己的状态。`StartThreadOptions.reserved_thread_id` 只能用于 `New` / `Cleared` / `Forked`；`Resumed` 直接 `InvalidRequest`。[E: codex-rs/core/src/thread_manager.rs:1054][E: codex-rs/core/src/session/session.rs:847][E: codex-rs/core/src/thread_manager.rs:1980]
 
 `LocalThreadStore::stage_pending_thread_metadata` 要求 state DB，禁止 patch `rollout_path`，空 patch 与重复 stage 都是 `InvalidRequest`。条目只活在内存里，直到第一次成功 metadata update 或 idle shutdown/discard 清掉。[E: codex-rs/thread-store/src/local/mod.rs:470][E: codex-rs/thread-store/src/local/mod.rs:475][E: codex-rs/thread-store/src/local/pending_thread_metadata.rs:33][E: codex-rs/thread-store/src/local/pending_thread_metadata.rs:44][E: codex-rs/thread-store/src/local/live_writer.rs:199][E: codex-rs/thread-store/src/local/live_writer.rs:211]
 
@@ -128,13 +128,15 @@ Local store 的 section CRUD/move 由 state DB 支持，`StoredThread` 返回 se
 
 ## Paginated revert
 
-`revert_thread` 要求 state DB、thread 未 live、history mode 是 Paginated。它 materialize lineage，按 `ForkBoundary::BeforeTurn` 取 retained prefix，创建带新 `rollout_id` 的 replacement JSONL，再用 `replace_rollout_path_if_current` CAS 切换指针。CAS 失败会删掉 replacement 文件并返回 `Conflict`。旧 rollout 文件保留。[E: codex-rs/thread-store/src/local/revert_thread.rs:28][E: codex-rs/thread-store/src/local/revert_thread.rs:36][E: codex-rs/thread-store/src/local/revert_thread.rs:66][E: codex-rs/thread-store/src/local/revert_thread.rs:95][E: codex-rs/thread-store/src/local/revert_thread.rs:125][E: codex-rs/thread-store/src/local/revert_thread.rs:135]
+`Op::ThreadRollback` 已从 protocol `Op` 删除；`ThreadStore` 的磁盘撤销入口是 `revert_thread`。[E: codex-rs/protocol/src/protocol.rs:600][E: codex-rs/thread-store/src/store.rs:185] `LocalThreadStore::revert_thread` 委托 `revert_thread::revert`。[E: codex-rs/thread-store/src/local/mod.rs:537][E: codex-rs/thread-store/src/local/revert_thread.rs:19] 该路径要求 state DB、thread 未 live、history mode 是 Paginated。它 materialize lineage，按 `ForkBoundary::BeforeTurn` 取 retained prefix，创建带新 `rollout_id` 的 replacement JSONL，再用 `replace_rollout_path_if_current` CAS 切换指针。CAS 失败会删掉 replacement 文件并返回 `Conflict`。旧 rollout 文件保留。[E: codex-rs/thread-store/src/local/revert_thread.rs:28][E: codex-rs/thread-store/src/local/revert_thread.rs:36][E: codex-rs/thread-store/src/local/revert_thread.rs:66][E: codex-rs/thread-store/src/local/revert_thread.rs:98][E: codex-rs/thread-store/src/local/revert_thread.rs:126][E: codex-rs/thread-store/src/local/revert_thread.rs:135]
 
-Live `Op::ThreadRollback` 只服务 Legacy in-memory drop；Paginated 客户端应走 `thread/revert`。两者都不回滚磁盘文件改动。[E: codex-rs/protocol/src/protocol.rs:750][E: codex-rs/app-server/src/request_processors/thread_processor.rs:2144]
+app-server `thread/revert` 是这条 store API 的 client RPC：processor 先确认 `ThreadHistoryMode::Paginated`，关停并卸下 live thread，再调用 `thread_store.revert_thread`，然后内部 reload 同一 thread id。[E: codex-rs/app-server-protocol/src/protocol/common.rs:756][E: codex-rs/app-server/src/request_processors/thread_processor.rs:2111][E: codex-rs/app-server/src/request_processors/thread_processor.rs:2141][E: codex-rs/app-server/src/request_processors/thread_processor.rs:2192] 没有 `thread/rollback` RPC。该路径只替换 persisted rollout / SQLite path，不回滚 workspace 文件改动。[I]
+
+已写入 rollout 的 `EventMsg::ThreadRolledBack` 仍由 `user_message_positions_in_rollout` / `fork_turn_positions_in_rollout` 在读 history、fork 与 truncation 时应用，这是 replay，不是活 Op。[E: codex-rs/protocol/src/protocol.rs:1403][E: codex-rs/core/src/thread_rollout_truncation.rs:52]
 
 ## Persistent exec 的 paginated history
 
-非 ephemeral `codex exec` 通过 app-server `thread/start` 时把 `history_mode` 设为 `Paginated`。若服务器拒绝 “paginated threads require thread/turns/list and thread/items/list support”，exec 去掉 `history_mode` 再试一次。resume 默认 `exclude_turns: true`，让客户端用 paginated list 补历史。[E: codex-rs/exec/src/lib.rs:1366][E: codex-rs/exec/src/lib.rs:1334][E: codex-rs/exec/src/lib.rs:1395]
+非 ephemeral `codex exec` 通过 app-server `thread/start` 时把 `history_mode` 设为 `Paginated`。若服务器拒绝 “paginated threads require thread/turns/list and thread/items/list support”，exec 去掉 `history_mode` 再试一次。resume 默认 `exclude_turns: true`，让客户端用 paginated list 补历史。[E: codex-rs/exec/src/lib.rs:1367][E: codex-rs/exec/src/lib.rs:1335][E: codex-rs/exec/src/lib.rs:1396]
 
 ## Gotcha
 

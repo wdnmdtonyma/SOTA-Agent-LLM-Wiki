@@ -8,7 +8,7 @@ symbols: [add_core_tool_sources, add_core_utility_tools, CoreToolRuntime, ToolEx
 related: [spine.tool-call-anatomy, subsys.core.tool-router, subsys.core.unified-exec, tool.exec-command, tool.wait-for-environment, tool.current-time, tool.tool-search, tool.web-search, tool.image-generation, tool.send-user-message-async, tool.request-user-input-async]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > 当前工具系统以可变 `ToolRegistry` 为 runtime 装配中心；hosted specs 作为独立列表传入 `finalize_tool_router`，再与 registry 生成的 direct、deferred search 与 code-mode surfaces 汇合。旧的 `PlannedTools` 中间容器已经移除。[E: codex-rs/core/src/tools/spec_plan.rs:125][E: codex-rs/core/src/tools/spec_plan.rs:154][E: codex-rs/core/src/tools/spec_plan.rs:181][E: codex-rs/core/src/tools/spec_plan.rs:188][E: codex-rs/core/src/tools/spec_plan.rs:352]
@@ -34,16 +34,16 @@ updated: 02a8f038b8
 | family | gate 与行为 |
 |---|---|
 | shell | 无 environment / `Feature::ShellTool` 关 / 模型 `shell_type=Disabled` 则不注册。`shell_command` **不再注册**。`Feature::UnifiedExec` 开则 `ExecCommandHandler` + `WriteStdinHandler`；关则 `ExecCommandHandler::one_shot`。`shell_command` 仍是 reserved name。[E: codex-rs/core/src/tools/spec_plan.rs:1079][E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111][E: codex-rs/core/src/tools/registry.rs:364] |
-| core utility | `update_plan_enabled` opt-in 注册 `PlanHandler`；`request_user_input` 要 `experimental_request_user_input_enabled`；`request_user_input_async` 要 root agent + catalog 含 `"request_user_input_async"` 或 `"send_user_message_async"`；`send_message_to_user_async` 要 root agent + catalog 含该新名。DeferredExecutor、token helpers、clock/sleep、plugin、apply_patch、test 与 image tools 各自有独立 gate。[E: codex-rs/core/src/tools/spec_plan.rs:1142][E: codex-rs/core/src/tools/spec_plan.rs:1146][E: codex-rs/core/src/tools/spec_plan.rs:1158][E: codex-rs/core/src/tools/spec_plan.rs:1176][E: codex-rs/core/src/tools/spec_plan.rs:1197][E: codex-rs/core/src/tools/spec_plan.rs:1217] |
-| collaboration | MultiAgent V2 注册 spawn/send/followup/wait/interrupt/list；否则注册 legacy V1 family。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1287] |
+| core utility | `update_plan_enabled` opt-in 注册 `PlanHandler`；`request_user_input` 要 `experimental_request_user_input_enabled`；`request_user_input_async` 要 root agent + catalog 含 `"request_user_input_async"` 或 `"send_user_message_async"`；`send_message_to_user_async` 要 root agent +（`Feature::SendMessageToUserAsync` **或** catalog 含该新名）。DeferredExecutor、token helpers、clock/sleep、plugin、apply_patch、test 与 image tools 各自有独立 gate。[E: codex-rs/core/src/tools/spec_plan.rs:1142][E: codex-rs/core/src/tools/spec_plan.rs:1146][E: codex-rs/core/src/tools/spec_plan.rs:1158][E: codex-rs/core/src/tools/spec_plan.rs:1176][E: codex-rs/core/src/tools/spec_plan.rs:1193][E: codex-rs/core/src/tools/spec_plan.rs:1198][E: codex-rs/core/src/tools/spec_plan.rs:1218] |
+| collaboration | MultiAgent V2 注册 spawn/send/followup/wait/interrupt/list；否则注册 legacy V1 family。[E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1288] |
 | MCP / extension / dynamic | runtime 直接注册进 registry；deferred MCP 保留 Deferred exposure，extension/dynamic 仍受名字冲突与 exposure 规则约束。[E: codex-rs/core/src/tools/spec_plan.rs:159][E: codex-rs/core/src/tools/spec_plan.rs:174][E: codex-rs/core/src/tools/spec_plan.rs:180] |
 | hosted | `web_search` 等 hosted specs 进入 model surface，但没有本地 runtime dispatch。[E: codex-rs/core/src/tools/spec_plan.rs:181][E: codex-rs/core/src/tools/spec_plan.rs:560] |
 
-Guardian reviewer 使用独立受限 source：仅在 Managed permission profile 且有 environment 时加入 `exec_command`/`write_stdin`/`view_image`，不继承普通 turn 的完整 core/MCP/collaboration surface。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:998][E: codex-rs/core/src/tools/spec_plan.rs:1029]
+Guardian reviewer 使用独立受限 source：仅在 Managed permission profile 且有 environment 时，才可能加入 `exec_command`/`write_stdin`（还要求 `Feature::ShellTool` + `Feature::UnifiedExec` 且 shell 未 Disabled）以及 `Feature::ViewImage` 打开时的 `view_image`。UnifiedExec 关闭时 guardian 路径不会注册 `exec_command`（与普通 turn 的 `one_shot` 不同）。不继承普通 turn 的完整 core/MCP/collaboration surface。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:994][E: codex-rs/core/src/tools/spec_plan.rs:998][E: codex-rs/core/src/tools/spec_plan.rs:1016][E: codex-rs/core/src/tools/spec_plan.rs:1029]
 
 ## 两个 async user 工具
 
-`send_message_to_user_async` 的 handler 文件是 `send_message_to_user_async.rs`，`TOOL_NAME = "send_message_to_user_async"`，args 是非空 `message: String`，立即返回，不结束 turn。[E: codex-rs/core/src/tools/handlers/send_message_to_user_async.rs:21][E: codex-rs/core/src/tools/handlers/send_message_to_user_async.rs:28][E: codex-rs/core/src/tools/spec_plan.rs:1199]
+`send_message_to_user_async` 的 handler 文件是 `send_message_to_user_async.rs`，`TOOL_NAME = "send_message_to_user_async"`，args 是非空 `message: String`，立即返回，不结束 turn。注册门控是 root + feature OR catalog 名。[E: codex-rs/core/src/tools/handlers/send_message_to_user_async.rs:21][E: codex-rs/core/src/tools/handlers/send_message_to_user_async.rs:28][E: codex-rs/core/src/tools/spec_plan.rs:1193][E: codex-rs/core/src/tools/spec_plan.rs:1200]
 
 `request_user_input_async` 的 `TOOL_NAME = "request_user_input_async"`，args 是 `questions: Vec<AsyncUserInputQuestion>`（`title` 必填，`options` 可选）。旧 catalog 名 `send_user_message_async` 只把 **这个** handler 注册进去，不是 message-shaped 工具的 live wire name。[E: codex-rs/core/src/tools/handlers/request_user_input_async.rs:22][E: codex-rs/core/src/tools/handlers/request_user_input_async.rs:31][E: codex-rs/core/src/tools/spec_plan.rs:1173][E: codex-rs/core/src/tools/spec_plan.rs:1180]
 
@@ -57,7 +57,7 @@ Guardian reviewer 使用独立受限 source：仅在 Managed permission profile 
 
 - `shell_command` 不再是可注册 core handler；命令执行只走 `ExecCommandHandler`（unified 或 one-shot）。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111]
 - `update_plan` 改为 `update_plan_enabled` opt-in，不再默认始终开启。[E: codex-rs/core/src/tools/spec_plan.rs:1142]
-- 拆分 async user tools：`send_message_to_user_async` 与 `request_user_input_async`；后者接受旧 catalog 名 `send_user_message_async`。[E: codex-rs/core/src/tools/spec_plan.rs:1176][E: codex-rs/core/src/tools/spec_plan.rs:1197]
+- 拆分 async user tools：`send_message_to_user_async` 与 `request_user_input_async`；后者接受旧 catalog 名 `send_user_message_async`；前者走 `Feature::SendMessageToUserAsync` 或新 catalog 名。[E: codex-rs/core/src/tools/spec_plan.rs:1176][E: codex-rs/core/src/tools/spec_plan.rs:1193][E: codex-rs/core/src/tools/spec_plan.rs:1198]
 - CSV agent-job 的 `spawn_agents_on_csv` / `report_agent_job_result` 已从工具组装移除；迁移 0042 删除对应 state tables。[E: codex-rs/state/migrations/0042_drop_agent_jobs.sql:1]
 - code-mode local V8 实现已拆到独立 `code-mode-runtime` crate；tool planning 仍由 core finalize 阶段决定其 direct/nested surface。[E: codex-rs/core/src/tools/spec_plan.rs:410][E: codex-rs/code-mode-runtime/src/lib.rs:1]
 

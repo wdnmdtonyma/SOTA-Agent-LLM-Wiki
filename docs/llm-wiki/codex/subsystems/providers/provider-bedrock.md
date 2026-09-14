@@ -8,7 +8,7 @@ symbols: [AmazonBedrockModelProvider, create_amazon_bedrock_provider, create_ama
 related: [subsys.providers.overview, subsys.providers.auth-layer, subsys.providers.retry-errors, config.model-provider]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Amazon Bedrock provider 是专用 runtime provider：provider info 携带 AWS auth config，runtime 按 region 生成 Bedrock Mantle 或 Runtime OpenAI-compatible base URL，并在 `auth_source` 里按 command auth、configured AWS profile、Codex-managed Bedrock API key / access keys、`AWS_BEARER_TOKEN_BEDROCK`、env AWS credentials、AWS SDK/SigV4 的顺序选择认证方式。[E: codex-rs/model-provider-info/src/lib.rs:160][E: codex-rs/model-provider/src/provider.rs:324][E: codex-rs/model-provider/src/amazon_bedrock/mod.rs:166][E: codex-rs/model-provider/src/amazon_bedrock/auth.rs:53][E: codex-rs/model-provider/src/amazon_bedrock/auth.rs:93]

@@ -8,7 +8,7 @@ symbols: [Gauge, GaugeGuard, DiagnosticsSnapshot, snapshot, run_doctor, DoctorCh
 related: [cli.subcommands, rpc.overview, subsys.platform.telemetry-otel, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `codex_diagnostics` 提供进程内、无内容的 gauge/process snapshot；`codex doctor` 用只读检查拼出人读/JSON 报告；app-server 的 experimental `server/diagnostics` RPC 把同一 snapshot 映射成协议响应。三者都不修复环境。[E: codex-rs/diagnostics/src/lib.rs:90][E: codex-rs/cli/src/doctor.rs:317][E: codex-rs/cli/src/doctor.rs:337][E: codex-rs/app-server/src/request_processors/diagnostics.rs:5][E: codex-rs/app-server-protocol/src/protocol/common.rs:515]

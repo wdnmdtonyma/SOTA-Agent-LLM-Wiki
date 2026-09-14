@@ -8,7 +8,7 @@ symbols: [MultitoolCli, Subcommand, cli_main, AppServerCommand, AppServerSubcomm
 related: [spine.process-lifecycle, cli.global-flags, cli.exec-mode, surface.cli.external-agent-import, command.session-thread, config.skills-plugins-features, subsys.core.rollout-migration, subsys.platform.diagnostics]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > CLI 子命令 catalog 覆盖当前 `codex` 根命令的 `Subcommand` enum：没有 subcommand 时进入 interactive TUI，有 subcommand 时由 `cli_main()` 分派到 exec、auth、MCP **client** 管理、plugin、app-server、session 管理、sandbox、debug、cloud、features、doctor、migrate-rollouts、agents、queue 等入口。`codex mcp-server` 已删除。[E: codex-rs/cli/src/main.rs:131][E: codex-rs/cli/src/main.rs:148][E: codex-rs/cli/src/main.rs:1135]

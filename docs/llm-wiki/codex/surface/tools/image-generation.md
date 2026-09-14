@@ -8,7 +8,7 @@ symbols: [ImageGenerationExtension, ImageGenerationTool, ImagegenArgs, imagegen_
 related: [spine.extension-system, tool.view-image, tool.web-search, subsys.providers.responses-api, subsys.core.tool-system, subsys.config-auth.auth-flows]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `image_gen.imagegen` 是 image-generation extension 提供的 namespace function tool，既能按 prompt 生成新图，也能用本地路径或 recent conversation images 做编辑。[E: codex-rs/ext/image-generation/src/extension.rs:97][E: codex-rs/ext/image-generation/src/tool.rs:119][E: codex-rs/ext/image-generation/src/tool.rs:430][E: codex-rs/ext/image-generation/src/tool.rs:432]
@@ -49,15 +49,15 @@ core publication 还有更严格的 model-visible gate：
 
 | gate | 要求 | 证据 |
 |---|---|---|
-| feature | `Feature::ImageGeneration` 开启；key `image_generation`，Stable，默认开启 | [E: codex-rs/core/src/tools/spec_plan.rs:704][E: codex-rs/features/src/lib.rs:1473][E: codex-rs/features/src/lib.rs:1474][E: codex-rs/features/src/lib.rs:1475][E: codex-rs/features/src/lib.rs:1476] |
+| feature | `Feature::ImageGeneration` 开启；key `image_generation`，Stable，默认开启 | [E: codex-rs/core/src/tools/spec_plan.rs:704][E: codex-rs/features/src/lib.rs:1479][E: codex-rs/features/src/lib.rs:1480][E: codex-rs/features/src/lib.rs:1481][E: codex-rs/features/src/lib.rs:1482] |
 | account plan | 当前 auth 的 account plan 不是 `Free` | [E: codex-rs/core/src/tools/spec_plan.rs:714][E: codex-rs/core/src/tools/spec_plan.rs:716] |
 | provider | `capabilities().image_generation` 且 `namespace_tools` | [E: codex-rs/core/src/tools/spec_plan.rs:720] |
 | model | input modalities 含 `Image` | [E: codex-rs/core/src/tools/spec_plan.rs:724] |
 | auth | provider 使用 OpenAI actor authorization，或要求 OpenAI auth 且当前 auth 使用 Codex backend | [E: codex-rs/core/src/tools/spec_plan.rs:729][E: codex-rs/core/src/tools/spec_plan.rs:734] |
 
-`append_extension_tool_executors` 对 `image_gen.imagegen` 应用该 gate；未满足就跳过，通过后包装为 extension adapter 并作为 external runtime 注册。[E: codex-rs/core/src/tools/spec_plan.rs:1441][E: codex-rs/core/src/tools/spec_plan.rs:1442][E: codex-rs/core/src/tools/spec_plan.rs:1446]
+`append_extension_tool_executors` 对 `image_gen.imagegen` 应用该 gate；未满足就跳过，通过后包装为 extension adapter 并作为 external runtime 注册。[E: codex-rs/core/src/tools/spec_plan.rs:1442][E: codex-rs/core/src/tools/spec_plan.rs:1443][E: codex-rs/core/src/tools/spec_plan.rs:1447]
 
-`Feature::ImageResizeNotice` 与 `Feature::UnifiedImageBudget` 都不参与 imagegen 的注册或 schema。前者仍是 UnderDevelopment、默认关闭；后者同样默认关闭，并只在模型支持 original detail 或 Responses Lite 时生效。session 级 `prepare_response_items` 会在 FunctionCallOutput 图片被 resize 时注入 `<image_resize_notice>`，因此 imagegen 返回的 `input_image` 仍可能经过统一预算/resize notice，但这不是 imagegen handler 自己实现的。[E: codex-rs/features/src/lib.rs:1485][E: codex-rs/features/src/lib.rs:1488][E: codex-rs/features/src/lib.rs:1491][E: codex-rs/features/src/lib.rs:1494][E: codex-rs/core/src/image_preparation.rs:39][E: codex-rs/core/src/image_preparation.rs:43][E: codex-rs/core/src/image_preparation.rs:143][E: codex-rs/core/src/image_preparation.rs:148]
+`Feature::ImageResizeNotice` 与 `Feature::UnifiedImageBudget` 都不参与 imagegen 的注册或 schema。前者仍是 UnderDevelopment、默认关闭；后者同样默认关闭，并只在模型支持 original detail 或 Responses Lite 时生效。session 级 `prepare_response_items` 会在 FunctionCallOutput 图片被 resize 时注入 `<image_resize_notice>`，因此 imagegen 返回的 `input_image` 仍可能经过统一预算/resize notice，但这不是 imagegen handler 自己实现的。[E: codex-rs/features/src/lib.rs:1491][E: codex-rs/features/src/lib.rs:1494][E: codex-rs/features/src/lib.rs:1497][E: codex-rs/features/src/lib.rs:1500][E: codex-rs/core/src/image_preparation.rs:39][E: codex-rs/core/src/image_preparation.rs:43][E: codex-rs/core/src/image_preparation.rs:143][E: codex-rs/core/src/image_preparation.rs:148]
 
 ## 4 Handler 走读
 

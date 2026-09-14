@@ -8,7 +8,7 @@ symbols: [create_read_mcp_resource_tool, ReadMcpResourceHandler, ReadResourceArg
 related: [tool.list-mcp-resources, tool.list-mcp-resource-templates, subsys.mcp.server, subsys.mcp.client]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `read_mcp_resource` 是本地 Function 工具，用给定 server 名和 resource URI 读取单个 MCP resource。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:80][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:82][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:82][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:83]

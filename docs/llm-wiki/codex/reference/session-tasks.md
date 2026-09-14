@@ -8,10 +8,10 @@ symbols: [SessionTask, AnySessionTask, UserShellCommandTask, RunningTask, TaskKi
 related: [subsys.core.turn-engine, subsys.core.session-lifecycle, subsys.core.ghost-undo, subsys.core.review-mode]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> `SessionTask` is the async workflow trait for session turns; implementations now receive `Arc<Session>` and `Arc<TurnContext>` directly, active-turn state holds at most one `RunningTask`, and current `TaskKind` is limited to `Regular`, `Review`, and `Compact`.[E: codex-rs/core/src/tasks/mod.rs:178][E: codex-rs/core/src/tasks/mod.rs:196][E: codex-rs/core/src/state/turn.rs:34][E: codex-rs/core/src/state/turn.rs:70]
+> `SessionTask` is the async workflow trait for session turns; implementations now receive `Arc<Session>` and `Arc<TurnContext>` directly, active-turn state holds at most one `RunningTask`, and current `TaskKind` is limited to `Regular`, `Review`, and `Compact`.[E: codex-rs/core/src/tasks/mod.rs:178][E: codex-rs/core/src/tasks/mod.rs:196][E: codex-rs/core/src/state/turn.rs:32][E: codex-rs/core/src/state/turn.rs:68]
 
 ## 能回答的问题
 
@@ -19,7 +19,7 @@ updated: 02a8f038b8
 - `Session::spawn_task` / `start_task` 如何创建 active task?
 - `ActiveTurn` / `RunningTask` / `TurnState` 当前保存哪些状态?
 - 当前 concrete task 实现有哪些?
-- `/shell`、`compact`、`review`、`thread rollback` 分别如何接入 task/handler path?
+- `/shell`、`compact`、`review` 分别如何接入 task/handler path？磁盘撤销走 `thread/revert`，不是 live `Op::ThreadRollback`。
 
 ## Core task contracts
 
@@ -27,17 +27,17 @@ updated: 02a8f038b8
 
 `SessionTask` requires `kind()`, `span_name()` and an RPITIT `run()` future with `Send`; it also provides `abort()` with a no-op `Send` future default. The interface is owned by a `Session` and executed on background Tokio tasks.[E: codex-rs/core/src/tasks/mod.rs:178][E: codex-rs/core/src/tasks/mod.rs:181][E: codex-rs/core/src/tasks/mod.rs:184][E: codex-rs/core/src/tasks/mod.rs:196][E: codex-rs/core/src/tasks/mod.rs:209]
 
-`AnySessionTask` type-erases concrete `SessionTask` implementations into boxed futures for `run()` and `abort()` while preserving direct session/turn arguments；`RunningTask.task` stores `Arc<dyn AnySessionTask>`.[E: codex-rs/core/src/tasks/mod.rs:220][E: codex-rs/core/src/tasks/mod.rs:221][E: codex-rs/core/src/tasks/mod.rs:223][E: codex-rs/core/src/state/turn.rs:79]
+`AnySessionTask` type-erases concrete `SessionTask` implementations into boxed futures for `run()` and `abort()` while preserving direct session/turn arguments；`RunningTask.task` stores `Arc<dyn AnySessionTask>`.[E: codex-rs/core/src/tasks/mod.rs:220][E: codex-rs/core/src/tasks/mod.rs:221][E: codex-rs/core/src/tasks/mod.rs:223][E: codex-rs/core/src/state/turn.rs:77]
 
 ## Active turn state
 
-`ActiveTurn` has `task: Option<RunningTask>` and `turn_state: Arc<Mutex<TurnState>>`; this is a single active task slot, not the old map of multiple running session tasks.[E: codex-rs/core/src/state/turn.rs:34][E: codex-rs/core/src/state/turn.rs:35][E: codex-rs/core/src/state/turn.rs:36]
+`ActiveTurn` has `task: Option<RunningTask>` and `turn_state: Arc<Mutex<TurnState>>`; this is a single active task slot, not the old map of multiple running session tasks.[E: codex-rs/core/src/state/turn.rs:32][E: codex-rs/core/src/state/turn.rs:33][E: codex-rs/core/src/state/turn.rs:34]
 
-`RunningTask` stores completion notification, task kind, erased task, cancellation token, abort-on-drop handle, turn context, optional agent execution guard, diagnostics gauge, and E2E timer；extension data lives inside that `TurnContext`, not in a separate `RunningTask` field。[E: codex-rs/core/src/state/turn.rs:76][E: codex-rs/core/src/state/turn.rs:77][E: codex-rs/core/src/state/turn.rs:78][E: codex-rs/core/src/state/turn.rs:79][E: codex-rs/core/src/state/turn.rs:80][E: codex-rs/core/src/state/turn.rs:81][E: codex-rs/core/src/state/turn.rs:82][E: codex-rs/core/src/state/turn.rs:83][E: codex-rs/core/src/state/turn.rs:84][E: codex-rs/core/src/state/turn.rs:86][E: codex-rs/core/src/session/turn_context.rs:329]
+`RunningTask` stores completion notification, task kind, erased task, cancellation token, abort-on-drop handle, turn context, optional agent execution guard, diagnostics gauge, and E2E timer；extension data lives inside that `TurnContext`, not in a separate `RunningTask` field。[E: codex-rs/core/src/state/turn.rs:74][E: codex-rs/core/src/state/turn.rs:75][E: codex-rs/core/src/state/turn.rs:76][E: codex-rs/core/src/state/turn.rs:77][E: codex-rs/core/src/state/turn.rs:78][E: codex-rs/core/src/state/turn.rs:79][E: codex-rs/core/src/state/turn.rs:80][E: codex-rs/core/src/state/turn.rs:81][E: codex-rs/core/src/state/turn.rs:82][E: codex-rs/core/src/state/turn.rs:84][E: codex-rs/core/src/session/turn_context.rs:329]
 
-`TurnState` stores pending approval/request-permissions/user-input/elicitation/MCP-tool-approval/dynamic-tool responders, pending input, mailbox delivery phase, granted permissions, strict auto-review state, tool-call count, memory-citation flag, token usage at turn start, per-model token usage, and optional last-known `StepContext`.[E: codex-rs/core/src/state/turn.rs:91][E: codex-rs/core/src/state/turn.rs:92][E: codex-rs/core/src/state/turn.rs:93][E: codex-rs/core/src/state/turn.rs:94][E: codex-rs/core/src/state/turn.rs:95][E: codex-rs/core/src/state/turn.rs:96][E: codex-rs/core/src/state/turn.rs:97][E: codex-rs/core/src/state/turn.rs:98][E: codex-rs/core/src/state/turn.rs:99][E: codex-rs/core/src/state/turn.rs:100][E: codex-rs/core/src/state/turn.rs:101][E: codex-rs/core/src/state/turn.rs:102][E: codex-rs/core/src/state/turn.rs:103][E: codex-rs/core/src/state/turn.rs:104][E: codex-rs/core/src/state/turn.rs:105][E: codex-rs/core/src/state/turn.rs:108]
+`TurnState` stores pending approval (`pending_approvals`)/request-permissions/user-input/elicitation/dynamic-tool responders, pending input, mailbox delivery phase, granted permissions, strict auto-review state, tool-call count, memory-citation flag, token usage at turn start, per-model token usage, and optional last-known `StepContext`.[E: codex-rs/core/src/state/turn.rs:89][E: codex-rs/core/src/state/turn.rs:90][E: codex-rs/core/src/state/turn.rs:91][E: codex-rs/core/src/state/turn.rs:92][E: codex-rs/core/src/state/turn.rs:93][E: codex-rs/core/src/state/turn.rs:96][E: codex-rs/core/src/state/turn.rs:94][E: codex-rs/core/src/state/turn.rs:95][E: codex-rs/core/src/state/turn.rs:96][E: codex-rs/core/src/state/turn.rs:97][E: codex-rs/core/src/state/turn.rs:98][E: codex-rs/core/src/state/turn.rs:99][E: codex-rs/core/src/state/turn.rs:100][E: codex-rs/core/src/state/turn.rs:101][E: codex-rs/core/src/state/turn.rs:102][E: codex-rs/core/src/state/turn.rs:105]
 
-`MailboxDeliveryPhase` is a small state machine: current-turn mail can join the running turn, late mail after visible terminal output remains queued for a later turn, and explicit same-turn work can reopen current-turn delivery.[E: codex-rs/core/src/state/turn.rs:51][E: codex-rs/core/src/state/turn.rs:54][E: codex-rs/core/src/state/turn.rs:57]
+`MailboxDeliveryPhase` is a small state machine: current-turn mail can join the running turn, late mail after visible terminal output remains queued for a later turn, and explicit same-turn work can reopen current-turn delivery.[E: codex-rs/core/src/state/turn.rs:49][E: codex-rs/core/src/state/turn.rs:52][E: codex-rs/core/src/state/turn.rs:55]
 
 ## Scheduling flow
 
@@ -64,16 +64,16 @@ Turn lifecycle extension callbacks are emitted from `tasks/lifecycle.rs`: start 
 
 ## Handler entry points
 
-`compact()` creates a default turn context and spawns `CompactTask`; `review()` creates a default turn, resolves the review request, then calls `spawn_review_thread`.[E: codex-rs/core/src/session/handlers.rs:247][E: codex-rs/core/src/session/handlers.rs:252][E: codex-rs/core/src/session/handlers.rs:501][E: codex-rs/core/src/session/handlers.rs:515]
+`compact()` creates a default turn context and spawns `CompactTask`; `review()` creates a default turn, resolves the review request, then calls `spawn_review_thread`.[E: codex-rs/core/src/session/handlers.rs:243][E: codex-rs/core/src/session/handlers.rs:248][E: codex-rs/core/src/session/handlers.rs:374][E: codex-rs/core/src/session/handlers.rs:388]
 
-`run_user_shell_command()` executes as `ActiveTurnAuxiliary` when a turn is already active; otherwise it creates a default turn context and spawns `UserShellCommandTask` as a standalone task.[E: codex-rs/core/src/session/handlers.rs:99][E: codex-rs/core/src/session/handlers.rs:105][E: codex-rs/core/src/session/handlers.rs:116][E: codex-rs/core/src/session/handlers.rs:123]
+`run_user_shell_command()` executes as `ActiveTurnAuxiliary` when a turn is already active; otherwise it creates a default turn context and spawns `UserShellCommandTask` as a standalone task.[E: codex-rs/core/src/session/handlers.rs:95][E: codex-rs/core/src/session/handlers.rs:101][E: codex-rs/core/src/session/handlers.rs:112][E: codex-rs/core/src/session/handlers.rs:119]
 
-`thread_rollback()` is a handler path, not a `SessionTask`: it rejects `num_turns == 0`, rejects rollback while a turn is active, requires persisted thread history, flushes and reloads that history, and emits rollback errors or a `ThreadRolledBack` event.[E: codex-rs/core/src/session/handlers.rs:255][E: codex-rs/core/src/session/handlers.rs:256][E: codex-rs/core/src/session/handlers.rs:269][E: codex-rs/core/src/session/handlers.rs:286][E: codex-rs/core/src/session/handlers.rs:314][E: codex-rs/core/src/session/handlers.rs:330]
+`Op::ThreadRollback` 与 `thread_rollback()` handler 已删除。`handlers.rs` 在 compact 之后是 memory-mode persist / session shutdown / `review()`，没有 rollback 分派。[E: codex-rs/core/src/session/handlers.rs:243][E: codex-rs/core/src/session/handlers.rs:251][E: codex-rs/core/src/session/handlers.rs:327][E: codex-rs/core/src/session/handlers.rs:374] Paginated 磁盘撤销仍是 app-server `thread/revert`，不是 session task。[I]
 
 ## Gotchas
 
-- Do not carry forward legacy ghost/undo task structs as current concrete tasks; current `TaskKind` exposes only `Regular`, `Review`, and `Compact`.[E: codex-rs/core/src/state/turn.rs:70][E: codex-rs/core/src/state/turn.rs:71][E: codex-rs/core/src/state/turn.rs:72][E: codex-rs/core/src/state/turn.rs:73]
-- `ActiveTurn` now stores one optional task plus shared turn state; same-turn auxiliary work such as `/shell` uses handler/runtime paths rather than adding a second `RunningTask` entry.[E: codex-rs/core/src/state/turn.rs:34][E: codex-rs/core/src/session/handlers.rs:105][E: codex-rs/core/src/session/handlers.rs:116]
+- Do not carry forward legacy ghost/undo task structs as current concrete tasks; current `TaskKind` exposes only `Regular`, `Review`, and `Compact`.[E: codex-rs/core/src/state/turn.rs:68][E: codex-rs/core/src/state/turn.rs:69][E: codex-rs/core/src/state/turn.rs:70][E: codex-rs/core/src/state/turn.rs:71]
+- `ActiveTurn` now stores one optional task plus shared turn state; same-turn auxiliary work such as `/shell` uses handler/runtime paths rather than adding a second `RunningTask` entry.[E: codex-rs/core/src/state/turn.rs:32][E: codex-rs/core/src/session/handlers.rs:101][E: codex-rs/core/src/session/handlers.rs:112]
 - Regular turns emit `TurnStarted` inside `RegularTask::run`; user-shell standalone mode also emits `TurnStarted`, but auxiliary mode explicitly avoids duplicate lifecycle events.[E: codex-rs/core/src/tasks/regular.rs:49][E: codex-rs/core/src/tasks/user_shell.rs:54][E: codex-rs/core/src/tasks/user_shell.rs:57]
 
 ## Sources

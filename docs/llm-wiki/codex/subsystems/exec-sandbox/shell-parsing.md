@@ -8,7 +8,7 @@ symbols: [parse_command, extract_shell_command, try_parse_word_only_commands_seq
 related: [tool.exec-command, tool.shell-command, subsys.exec-sandbox.execpolicy-dsl, subsys.exec-sandbox.shell-escalation]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > shell parsing subsystem 是 Codex 对 model-produced argv 的 conservative metadata/safety parser：它能归类 read/search/list-files 的常见命令，也能在复杂或危险形态出现时退回 `Unknown` 或要求 approval。crate 已删除 `is_known_safe_command` / `windows_safe_commands`；公开 safety 入口只剩 `is_dangerous_command`。[E: codex-rs/shell-command/src/parse_command.rs:54][E: codex-rs/shell-command/src/lib.rs:11]

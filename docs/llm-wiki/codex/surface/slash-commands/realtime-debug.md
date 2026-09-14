@@ -8,10 +8,10 @@ symbols: [SlashCommand::Agents, SlashCommand::MultiAgents, SlashCommand::Side, S
 related: [subsys.core.realtime-conversation, spine.trace-subagent, tool.spawn-agent-v2, config.ui-tui, config.agents-memory]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> 实时、子代理与调试 slash commands 是 `SlashCommand` enum 中负责 voice、active agent thread switching、side conversation、approval testing 和 memory debug hooks 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:42][E: codex-rs/tui/src/slash_command.rs:44]
+> 实时、子代理与调试 slash commands 是 `SlashCommand` enum（当前 **59** 个变体）中负责 voice、active agent thread switching、side conversation、approval testing 和 memory debug hooks 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:42][E: codex-rs/tui/src/slash_command.rs:44][E: codex-rs/tui/src/slash_command.rs:82]
 
 ## 能回答的问题
 
@@ -23,24 +23,24 @@ updated: 02a8f038b8
 
 ## Catalog
 
-`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:157][E: codex-rs/tui/src/slash_command.rs:281][E: codex-rs/tui/src/slash_command.rs:283]
+`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:155][E: codex-rs/tui/src/slash_command.rs:278][E: codex-rs/tui/src/slash_command.rs:280]
 
-`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations.[E: codex-rs/tui/src/slash_command.rs:162][E: codex-rs/tui/src/slash_command.rs:189]
+`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations.[E: codex-rs/tui/src/slash_command.rs:160][E: codex-rs/tui/src/slash_command.rs:187]
 
-表格的 `is_visible gate` 只覆盖 `SlashCommand::is_visible()` 和 `built_in_slash_commands()`；composer input 与 command popup 还会通过 `builtins_for_input()`、`CommandPopup::new()` 和 empty-filter alias filtering 追加过滤，且 `/side` 与 `/btw` 在 review mode 下还会被 dispatch 层拒绝。[E: codex-rs/tui/src/bottom_pane/slash_commands.rs:72][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:83][E: codex-rs/tui/src/bottom_pane/command_popup.rs:23][E: codex-rs/tui/src/bottom_pane/command_popup.rs:76][E: codex-rs/tui/src/bottom_pane/command_popup.rs:81][E: codex-rs/tui/src/bottom_pane/command_popup.rs:155][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:1282]
+表格的 `is_visible gate` 只覆盖 `SlashCommand::is_visible()` 和 `built_in_slash_commands()`；composer input 与 command popup 还会通过 `builtins_for_input()`、`CommandPopup::new()` 和 empty-filter alias filtering 追加过滤，且 `/side` 与 `/btw` 在 review mode 下还会被 dispatch 层拒绝。[E: codex-rs/tui/src/bottom_pane/slash_commands.rs:71][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:81][E: codex-rs/tui/src/bottom_pane/command_popup.rs:23][E: codex-rs/tui/src/bottom_pane/command_popup.rs:74][E: codex-rs/tui/src/bottom_pane/command_popup.rs:79][E: codex-rs/tui/src/bottom_pane/command_popup.rs:153][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:1276]
 
-`SlashCommand::Voice` 的 `is_visible()` 恒为 true，但 popup/composer 在 `flags.voice_command_enabled` 为假时过滤掉 `Voice`。带参时 dispatch 接受 `settings`（选音色）、`mute`、`stop`。[E: codex-rs/tui/src/slash_command.rs:273][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:65][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:83][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:762]
+`SlashCommand::Voice` 的 `is_visible()` 恒为 true，但 popup/composer 在 `flags.voice_command_enabled` 为假时过滤掉 `Voice`。带参时 dispatch 接受 `settings`（选音色）、`mute`、`stop`。[E: codex-rs/tui/src/slash_command.rs:270][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:64][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:81][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:758]
 
 | 命令名 | enum variant | description | inline args | available_during_task | side conversation | is_visible gate | 定义证据 |
 |---|---|---|---|---|---|---|---|
-| `/voice` | `Voice` | start or stop voice; use /voice settings to choose a voice | 是 [E: codex-rs/tui/src/slash_command.rs:172] | 是 [E: codex-rs/tui/src/slash_command.rs:249] | 否 | `is_visible` true；popup 另需 `voice_command_enabled` [E: codex-rs/tui/src/slash_command.rs:273][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:83] | [E: codex-rs/tui/src/slash_command.rs:42][E: codex-rs/tui/src/slash_command.rs:132] |
-| `/agents` | `Agents` | view and switch between all active agent sessions | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:264] | 是 [E: codex-rs/tui/src/slash_command.rs:193] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:44][E: codex-rs/tui/src/slash_command.rs:134] |
-| `/subagents` | `MultiAgents` | switch between this session's subagents | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:264] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:77][E: codex-rs/tui/src/slash_command.rs:135] |
-| `/side` | `Side` | start a side conversation in an ephemeral fork | 是 [E: codex-rs/tui/src/slash_command.rs:182] | 是 [E: codex-rs/tui/src/slash_command.rs:260] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:45][E: codex-rs/tui/src/slash_command.rs:136] |
-| `/btw` | `Btw` | start a side conversation in an ephemeral fork | 是 [E: codex-rs/tui/src/slash_command.rs:183] | 是 [E: codex-rs/tui/src/slash_command.rs:261] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:46][E: codex-rs/tui/src/slash_command.rs:136] |
-| `/test-approval` | `TestApproval` | test approval request | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:263] | 否 | debug_assertions only [E: codex-rs/tui/src/slash_command.rs:274] | [E: codex-rs/tui/src/slash_command.rs:76][E: codex-rs/tui/src/slash_command.rs:151] |
-| `/debug-m-drop` | `MemoryDrop` | DO NOT USE | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:228] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:80][E: codex-rs/tui/src/slash_command.rs:124] |
-| `/debug-m-update` | `MemoryUpdate` | DO NOT USE | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:229] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:275] | [E: codex-rs/tui/src/slash_command.rs:82][E: codex-rs/tui/src/slash_command.rs:125] |
+| `/voice` | `Voice` | start or stop voice; use /voice settings to choose a voice | 是 [E: codex-rs/tui/src/slash_command.rs:170] | 是 [E: codex-rs/tui/src/slash_command.rs:246] | 否 | `is_visible` true；popup 另需 `voice_command_enabled` [E: codex-rs/tui/src/slash_command.rs:270][E: codex-rs/tui/src/bottom_pane/slash_commands.rs:81] | [E: codex-rs/tui/src/slash_command.rs:42][E: codex-rs/tui/src/slash_command.rs:130] |
+| `/agents` | `Agents` | view and switch between all active agent sessions | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:261] | 是 [E: codex-rs/tui/src/slash_command.rs:191] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:44][E: codex-rs/tui/src/slash_command.rs:132] |
+| `/subagents` | `MultiAgents` | switch between this session's subagents | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:261] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:76][E: codex-rs/tui/src/slash_command.rs:133] |
+| `/side` | `Side` | start a side conversation in an ephemeral fork | 是 [E: codex-rs/tui/src/slash_command.rs:180] | 是 [E: codex-rs/tui/src/slash_command.rs:257] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:45][E: codex-rs/tui/src/slash_command.rs:134] |
+| `/btw` | `Btw` | start a side conversation in an ephemeral fork | 是 [E: codex-rs/tui/src/slash_command.rs:181] | 是 [E: codex-rs/tui/src/slash_command.rs:258] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:46][E: codex-rs/tui/src/slash_command.rs:134] |
+| `/test-approval` | `TestApproval` | test approval request | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:260] | 否 | debug_assertions only [E: codex-rs/tui/src/slash_command.rs:271] | [E: codex-rs/tui/src/slash_command.rs:75][E: codex-rs/tui/src/slash_command.rs:149] |
+| `/debug-m-drop` | `MemoryDrop` | DO NOT USE | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:226] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:79][E: codex-rs/tui/src/slash_command.rs:123] |
+| `/debug-m-update` | `MemoryUpdate` | DO NOT USE | 否 | 否 [E: codex-rs/tui/src/slash_command.rs:227] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:81][E: codex-rs/tui/src/slash_command.rs:124] |
 
 ## Sources
 

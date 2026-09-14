@@ -8,10 +8,10 @@ symbols: [GitInfo, collect_git_info, ApplyGitRequest, apply_git_patch, SAFE_BARE
 related: [subsys.cloud.cloud-tasks, subsys.cloud.cloud-task-api, config.storage-telemetry-misc, spine.extension-system, subsys.platform.worktree]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> `codex_git_utils` 是 Codex 的本地 Git 支持 crate：`lib.rs` 导出 patch apply、baseline diff/reset、merge-base、metadata、fsmonitor policy、symlink helpers、`RepositoryIdentity`，以及拒绝隐式 bare repo 的 `SAFE_BARE_REPOSITORY_CONFIG`。`codex-utils-git-discovery` 在其上提供有界共享 `GitRootDiscovery`。managed worktree 的 Desktop 契约在独立 crate `codex-rs/worktree`，它只消费这条安全 Git config，不复用 apply/baseline API。[E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:55][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/worktree/src/git.rs:124]
+> `codex_git_utils` 是 Codex 的本地 Git 支持 crate：`lib.rs` 导出 patch apply、baseline diff/reset、merge-base、metadata、fsmonitor policy、symlink helpers、`RepositoryIdentity`，以及拒绝隐式 bare repo 的 `SAFE_BARE_REPOSITORY_CONFIG`。`codex-utils-git-discovery` 在其上提供有界共享 `GitRootDiscovery`。managed worktree 的 Desktop 契约在独立 crate `codex-rs/worktree`，它只消费这条安全 Git config，不复用 apply/baseline API。[E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:55][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/worktree/src/git.rs:169]
 
 ## 能回答的问题
 
@@ -24,7 +24,7 @@ updated: 02a8f038b8
 
 ## 职责边界
 
-git-utils 节点覆盖 `codex-rs/git-utils` crate 的 public API 与支撑性 crate-private helpers。`operations.rs` 的 helper 都是 `pub(crate)`，供 branch/baseline 等模块内部复用，不是 crate 外部 API。managed worktree 的 layout / `bind_thread` / keep-count 属于 `subsys.platform.worktree`。[E: codex-rs/git-utils/src/lib.rs:18][E: codex-rs/worktree/src/lib.rs:273]
+git-utils 节点覆盖 `codex-rs/git-utils` crate 的 public API 与支撑性 crate-private helpers。`operations.rs` 的 helper 都是 `pub(crate)`，供 branch/baseline 等模块内部复用，不是 crate 外部 API。managed worktree 的 layout / `bind_thread` / keep-count 属于 `subsys.platform.worktree`。[E: codex-rs/git-utils/src/lib.rs:18][E: codex-rs/worktree/src/lib.rs:274]
 
 ## Public exports
 
@@ -68,7 +68,7 @@ Unix symlink 直接调 `std::os::unix::fs::symlink`；Windows 按 metadata 选 `
 
 ## 与 managed worktree 的边界
 
-`WorktreeManager` 在执行 Git metadata 查询时注入 `SAFE_BARE_REPOSITORY_CONFIG`，并禁用 hooks/fsmonitor。它不调用 `apply_git_patch` 或 baseline reset；thread 绑定走 `codex-thread.json`。[E: codex-rs/worktree/src/git.rs:124][E: codex-rs/worktree/src/git.rs:126][E: codex-rs/worktree/src/git.rs:128][E: codex-rs/worktree/src/metadata.rs:19]
+`WorktreeManager` 在执行 Git metadata 查询时注入 `SAFE_BARE_REPOSITORY_CONFIG`，并禁用 hooks/fsmonitor。它不调用 `apply_git_patch` 或 baseline reset；thread 绑定走 `codex-thread.json`。[E: codex-rs/worktree/src/git.rs:169][E: codex-rs/worktree/src/git.rs:171][E: codex-rs/worktree/src/git.rs:173][E: codex-rs/worktree/src/metadata.rs:19]
 
 ## Gotchas
 

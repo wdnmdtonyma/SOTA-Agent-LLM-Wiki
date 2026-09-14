@@ -8,7 +8,7 @@ symbols: [StateRuntime, RuntimeDbSpec, ThreadMetadata, ThreadMetadataBuilder, Th
 related: [subsys.core.rollout-persistence, subsys.core.thread-store, subsys.core.session-lifecycle, subsys.core.thread-queue, subsys.core.rollout-migration]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Codex 现在有六个 SQLite path specs：metadata、logs、goals、memories、queue，以及 rebuildable paginated history (`thread_history_1.sqlite`)。`StateRuntime::init` 打开前五个；thread-history DB 仍由 thread store 按需打开。[E: codex-rs/state/src/sqlite.rs:99][E: codex-rs/state/src/runtime.rs:90][E: codex-rs/state/src/runtime.rs:98]

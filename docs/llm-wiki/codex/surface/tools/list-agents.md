@@ -8,7 +8,7 @@ symbols: [create_list_agents_tool, ListAgentsHandlerV2, multi_agents_v2::list_ag
 related: [tool.spawn-agent-v2, tool.wait-agent-v2, tool.interrupt-agent-v2]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `list_agents` 是 MultiAgentV2 的协作树查询工具：它列出当前 root thread tree 中的 live agents，并可按 task-path prefix 过滤。
@@ -18,12 +18,12 @@ updated: 02a8f038b8
 | 项 | 当前源码事实 |
 |---|---|
 | wire name | `list_agents`，由 handler 和 spec builder 定义。[E: codex-rs/core/src/tools/handlers/multi_agents_v2/list_agents.rs:11][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:302] |
-| handler | V2 module re-export `list_agents::Handler as ListAgentsHandler`；`spec_plan.rs` 用 `ListAgentsHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:34][E: codex-rs/core/src/tools/spec_plan.rs:49][E: codex-rs/core/src/tools/spec_plan.rs:1341] |
+| handler | V2 module re-export `list_agents::Handler as ListAgentsHandler`；`spec_plan.rs` 用 `ListAgentsHandlerV2` 注册。[E: codex-rs/core/src/tools/handlers/multi_agents_v2.rs:34][E: codex-rs/core/src/tools/spec_plan.rs:49][E: codex-rs/core/src/tools/spec_plan.rs:1342] |
 | spec | function tool，`strict: false`、`defer_loading: None`，有 `agents` output schema。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:301][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:306][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:309] |
 
 ## 注册与门控
 
-`list_agents` 注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支；V1 分支注册的是 `SpawnAgentHandler` / `SendInputHandler` / `ResumeAgentHandler` / `WaitAgentHandler` / `CloseAgentHandler`，没有 `list_agents`。[E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1288][E: codex-rs/core/src/tools/spec_plan.rs:1340][E: codex-rs/core/src/tools/spec_plan.rs:1352][E: codex-rs/core/src/tools/spec_plan.rs:1368]
+`list_agents` 注册在 `collab_tools_enabled && multi_agent_v2_enabled` 分支；V1 分支注册的是 `SpawnAgentHandler` / `SendInputHandler` / `ResumeAgentHandler` / `WaitAgentHandler` / `CloseAgentHandler`，没有 `list_agents`。[E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1289][E: codex-rs/core/src/tools/spec_plan.rs:1341][E: codex-rs/core/src/tools/spec_plan.rs:1353][E: codex-rs/core/src/tools/spec_plan.rs:1369]
 
 handler 没有覆写 `supports_parallel_tool_calls`，所以按默认 trait 返回 false。[E: codex-rs/tools/src/tool_executor.rs:122]
 

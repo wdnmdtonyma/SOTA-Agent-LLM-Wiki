@@ -8,7 +8,7 @@ symbols: [append_mcp_tools, McpHandler, McpHandlerCache, create_tool_spec, mcp_t
 related: [tool.tool-search, tool.list-mcp-resources, tool.dynamic-tools, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > MCP namespace tools 是 Codex 把 MCP server tools 适配为 Responses API namespace tools 的 runtime：`McpHandler` 根据 `ToolInfo` 构造 namespace `ToolSpec`，function call 再转发给 MCP tool call path。[E: codex-rs/core/src/tools/handlers/mcp.rs:51][E: codex-rs/core/src/tools/handlers/mcp.rs:469][E: codex-rs/core/src/tools/handlers/mcp.rs:495][E: codex-rs/core/src/tools/handlers/mcp.rs:230]
@@ -41,9 +41,9 @@ planner 调用 `session.services.mcp_handler_cache.append_mcp_tools(...)`：cach
 
 `namespace_tools_enabled` 同时参与 search gate，并在构建 model-visible specs 的最后过滤 `ToolSpec::Namespace`；registry 本身仍保留这些 runtime。[E: codex-rs/core/src/tools/spec_plan.rs:629][E: codex-rs/core/src/tools/spec_plan.rs:640][E: codex-rs/core/src/tools/spec_plan.rs:564][E: codex-rs/core/src/tools/spec_plan.rs:565]
 
-server 的初始 tool catalog 也受协议模式影响：legacy 只消费第一份 `tools/list` response（`next_cursor` 被强制丢掉）；`V20260728` 会跟随 `nextCursor`，并通过公共 collector 限制 100 页、2,048 项、64 KiB cursor、重复 cursor 与整体超时。`Feature::Mcp20260728`（key `mcp_2026_07_28`）仍是 UnderDevelopment、默认关闭，因此 `Config::mcp_protocol_mode()` 默认返回 `Legacy`。[E: codex-rs/codex-mcp/src/rmcp_client.rs:657][E: codex-rs/codex-mcp/src/rmcp_client.rs:658][E: codex-rs/codex-mcp/src/rmcp_client.rs:659][E: codex-rs/codex-mcp/src/pagination.rs:9][E: codex-rs/features/src/lib.rs:1311][E: codex-rs/features/src/lib.rs:1312][E: codex-rs/features/src/lib.rs:1313][E: codex-rs/features/src/lib.rs:1314][E: codex-rs/core/src/config/mod.rs:1824][E: codex-rs/core/src/config/mod.rs:1826][E: codex-rs/core/src/config/mod.rs:1828]
+server 的初始 tool catalog 也受协议模式影响：legacy 只消费第一份 `tools/list` response（`next_cursor` 被强制丢掉）；`V20260728` 会跟随 `nextCursor`，并通过公共 collector 限制 100 页、2,048 项、64 KiB cursor、重复 cursor 与整体超时。`Feature::Mcp20260728`（key `mcp_2026_07_28`）仍是 UnderDevelopment、默认关闭，因此 `Config::mcp_protocol_mode()` 默认返回 `Legacy`。[E: codex-rs/codex-mcp/src/rmcp_client.rs:671][E: codex-rs/codex-mcp/src/rmcp_client.rs:672][E: codex-rs/codex-mcp/src/rmcp_client.rs:673][E: codex-rs/codex-mcp/src/pagination.rs:9][E: codex-rs/features/src/lib.rs:1311][E: codex-rs/features/src/lib.rs:1312][E: codex-rs/features/src/lib.rs:1313][E: codex-rs/features/src/lib.rs:1314][E: codex-rs/core/src/config/mod.rs:1813][E: codex-rs/core/src/config/mod.rs:1815][E: codex-rs/core/src/config/mod.rs:1817]
 
-进程级 `McpToolCatalogCache` 会缓存最近 32 份、TTL 30 分钟的 reusable `ToolInfo` 快照。`ToolInfo.namespace_description` 随 snapshot 一起保留；server 可通过 experimental capability 显式 disable cache。[E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:32][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:33][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:69][E: codex-rs/codex-mcp/src/rmcp_client.rs:946][E: codex-rs/codex-mcp/src/rmcp_client.rs:957][E: codex-rs/codex-mcp/src/rmcp_client.rs:996]
+进程级 `McpToolCatalogCache` 会缓存最近 32 份、TTL 30 分钟的 reusable `ToolInfo` 快照。`ToolInfo.namespace_description` 随 snapshot 一起保留；server 可通过 experimental capability 显式 disable cache。[E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:32][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:33][E: codex-rs/codex-mcp/src/tool_catalog_cache.rs:69][E: codex-rs/codex-mcp/src/rmcp_client.rs:965][E: codex-rs/codex-mcp/src/rmcp_client.rs:976][E: codex-rs/codex-mcp/src/rmcp_client.rs:1015]
 
 ## 3 search metadata 与 namespace description
 
@@ -61,15 +61,15 @@ handler 只接受 Function payload；它调用 `handle_mcp_tool_call`，传入 s
 
 输出是 `McpToolOutput`，携带 MCP result、tool input、wall time、original-image-detail support 和 truncation policy。[E: codex-rs/core/src/tools/handlers/mcp.rs:244][E: codex-rs/core/src/tools/handlers/mcp.rs:246][E: codex-rs/core/src/tools/handlers/mcp.rs:252]
 
-call request 的 2026 session 只是 wire compatibility 分支，不改变 core 的 approval/preparation authority。`resources/read` 会在 modern session 下走 typed 2026 path；默认协议仍是 Legacy。[E: codex-rs/rmcp-client/src/rmcp_client.rs:767][E: codex-rs/rmcp-client/src/rmcp_client.rs:772][E: codex-rs/rmcp-client/src/rmcp_client.rs:776][E: codex-rs/core/src/config/mod.rs:1828]
+call request 的 2026 session 只是 wire compatibility 分支，不改变 core 的 approval/preparation authority。`resources/read` 会在 modern session 下走 typed 2026 path；默认协议仍是 Legacy。[E: codex-rs/rmcp-client/src/rmcp_client.rs:767][E: codex-rs/rmcp-client/src/rmcp_client.rs:772][E: codex-rs/rmcp-client/src/rmcp_client.rs:776][E: codex-rs/core/src/config/mod.rs:1817]
 
 ## 5 Approval 语义
 
 执行前的 current `PreparedMcpCall` 决定 approval authority：`codex_apps` server 从 app-tool policy 计算 effective mode，普通 MCP server 使用 prepared call 的 server/tool mode；selected-plugin server 使用禁止 persistent approval 的 policy，其他 server 才允许生成 persistent key。[E: codex-rs/core/src/mcp_tool_call.rs:206][E: codex-rs/core/src/mcp_tool_call.rs:219][E: codex-rs/core/src/mcp_tool_call.rs:222][E: codex-rs/core/src/mcp_tool_call.rs:267][E: codex-rs/core/src/mcp_tool_call.rs:1117][E: codex-rs/core/src/mcp_tool_call.rs:1120]
 
-四种 mode 的 prompt 判定是：`Auto` 按 annotations 决定；`Prompt` 总是 prompt；`Writes` 仅 read-only 跳过；`Approve` 从不 prompt。[E: codex-rs/core/src/mcp_tool_call.rs:2347][E: codex-rs/core/src/mcp_tool_call.rs:2348][E: codex-rs/core/src/mcp_tool_call.rs:2349][E: codex-rs/core/src/mcp_tool_call.rs:2350][E: codex-rs/core/src/mcp_tool_call.rs:2353]
+四种 mode 的 prompt 判定是：`Auto` 按 annotations 决定；`Prompt` 总是 prompt；`Writes` 仅 read-only 跳过；`Approve` 从不 prompt。[E: codex-rs/core/src/mcp_tool_call.rs:2345][E: codex-rs/core/src/mcp_tool_call.rs:2346][E: codex-rs/core/src/mcp_tool_call.rs:2347][E: codex-rs/core/src/mcp_tool_call.rs:2348][E: codex-rs/core/src/mcp_tool_call.rs:2351]
 
-仍需询问时，`ToolCallMcpElicitation` feature 选择 MCP elicitation，否则使用 blocking user prompt。[E: codex-rs/core/src/mcp_tool_call.rs:1541][E: codex-rs/core/src/mcp_tool_call.rs:1544][E: codex-rs/core/src/mcp_tool_call.rs:1572]
+仍需询问时，`ToolCallMcpElicitation` feature 选择 MCP elicitation，否则使用 blocking user prompt。[E: codex-rs/core/src/mcp_tool_call.rs:1540][E: codex-rs/core/src/mcp_tool_call.rs:1543][E: codex-rs/core/src/mcp_tool_call.rs:1571]
 
 ## 6 parallel support
 

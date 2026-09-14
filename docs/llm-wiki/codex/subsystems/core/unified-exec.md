@@ -8,10 +8,10 @@ symbols: [UnifiedExecProcess, UnifiedExecProcessManager, UnifiedExecRuntime, Uni
 related: [subsys.core.tool-system, subsys.core.tool-router, subsys.core.approval-guardian, subsys.core.session-lifecycle, tool.exec-command, tool.write-stdin]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> Unified Exec 是 Codex 当前唯一的命令执行面：`add_shell_tools` 只注册 `ExecCommandHandler`；`Feature::UnifiedExec` 开则加 `WriteStdinHandler`，关则 `ExecCommandHandler::one_shot`。`Feature::UnifiedExecTty`（key `unified_exec_tty`，默认 true）控制 schema 是否暴露 `tty` 以及 runtime 是否允许 PTY。handler 解析模型参数，`UnifiedExecProcessManager` 管进程生命周期，`UnifiedExecRuntime` 经 `ToolOrchestrator` 接入 approval/sandbox。已删除的 `ShellCommandHandler` / `ShellRuntime` 不再参与。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111][E: codex-rs/features/src/lib.rs:950][E: codex-rs/core/src/unified_exec/process_manager.rs:488]
+> Unified Exec 是 Codex 当前唯一的命令执行面：`add_shell_tools` 只注册 `ExecCommandHandler`；`Feature::UnifiedExec` 开则加 `WriteStdinHandler`，关则 `ExecCommandHandler::one_shot`。`Feature::UnifiedExecTty`（key `unified_exec_tty`，默认 true）控制 schema 是否暴露 `tty` 以及 runtime 是否允许 PTY。handler 解析模型参数，`UnifiedExecProcessManager` 管进程生命周期，`UnifiedExecRuntime` 经 `ToolOrchestrator` 接入 approval/sandbox。已删除的 `ShellCommandHandler` / `ShellRuntime` 不再参与。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111][E: codex-rs/features/src/lib.rs:954][E: codex-rs/core/src/unified_exec/process_manager.rs:488]
 
 ## 能回答的问题
 
@@ -28,7 +28,7 @@ updated: 02a8f038b8
 
 `add_shell_tools` 只有在 turn 有 environment、`Feature::ShellTool` 开启、且模型 shell type 不是 Disabled 时继续。[E: codex-rs/core/src/tools/spec_plan.rs:1083] `Feature::UnifiedExec` 开启时注册 `ExecCommandHandler::new` + `WriteStdinHandler`；关闭时只注册 `ExecCommandHandler::one_shot`，**不再**注册 `ShellCommandHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111]
 
-`Feature::UnifiedExec` 全平台默认 `true`（含 Windows）。[E: codex-rs/features/src/lib.rs:943][E: codex-rs/features/src/lib.rs:946] `Feature::UnifiedExecTty`（`unified_exec_tty`）同样默认 `true`，但可关掉：`allow_tty` 来自该 flag，handler 在 flag 关闭时从 spec 删除 `tty`。[E: codex-rs/features/src/lib.rs:949][E: codex-rs/core/src/tools/spec_plan.rs:1095][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:131] zsh-fork 不再改 shell type，而是 session 级 `UnifiedExecShellMode::for_session`：Unix + ShellTool + UnifiedExec + ShellZshFork + UnifiedExecZshFork + 用户 shell 是 Zsh + 两条 path 都能转成 `AbsolutePathBuf` 时才进 `ZshFork`，否则 `Direct`。[E: codex-rs/tools/src/tool_config.rs:41]
+`Feature::UnifiedExec` 全平台默认 `true`（含 Windows）。[E: codex-rs/features/src/lib.rs:947][E: codex-rs/features/src/lib.rs:950] `Feature::UnifiedExecTty`（`unified_exec_tty`）同样默认 `true`，但可关掉：`allow_tty` 来自该 flag，handler 在 flag 关闭时从 spec 删除 `tty`。[E: codex-rs/features/src/lib.rs:953][E: codex-rs/core/src/tools/spec_plan.rs:1095][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:131] zsh-fork 不再改 shell type，而是 session 级 `UnifiedExecShellMode::for_session`：Unix + ShellTool + UnifiedExec + ShellZshFork + UnifiedExecZshFork + 用户 shell 是 Zsh + 两条 path 都能转成 `AbsolutePathBuf` 时才进 `ZshFork`，否则 `Direct`。[E: codex-rs/tools/src/tool_config.rs:41]
 
 Guardian reviewer source 不会走 `add_shell_tools`。`add_core_tool_sources` 在 `is_basic_session_source` 时提前返回：非 Managed permission profile 不注册任何 core tool；Managed 且有 environment 时，还要求 ShellTool + UnifiedExec 且模型不是 Disabled，才注册 interactive `exec_command`、`write_stdin` 和可选 `view_image`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:994][E: codex-rs/core/src/tools/spec_plan.rs:1014]
 
@@ -93,7 +93,7 @@ ZshFork 路径：runtime 调 `maybe_prepare_unified_exec`，Unix 上再进 `prep
 
 `start_streaming_output` 后台读取 process output，写入 transcript，并在 UTF-8 边界发送 `ExecCommandOutputDelta`。[E: codex-rs/core/src/unified_exec/async_watcher.rs:60]
 
-`SessionServices` 初始化 `UnifiedExecProcessManager::new(config.background_terminal_max_timeout)`；session shutdown 调用 `terminate_all_processes()`。[E: codex-rs/core/src/session/session.rs:1512][E: codex-rs/core/src/session/handlers.rs:427]
+`SessionServices` 初始化 `UnifiedExecProcessManager::new(config.background_terminal_max_timeout)`；session shutdown 调用 `terminate_all_processes()`。[E: codex-rs/core/src/session/session.rs:1588][E: codex-rs/core/src/session/handlers.rs:300]
 
 ## Sources
 

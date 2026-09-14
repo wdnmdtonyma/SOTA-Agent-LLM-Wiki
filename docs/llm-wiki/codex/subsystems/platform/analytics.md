@@ -8,7 +8,7 @@ symbols: [AnalyticsEventsClient, AnalyticsEventsQueue, AnalyticsFact, CodeModeTo
 related: [subsys.platform.telemetry-otel, subsys.config-auth.auth-flows, subsys.core.code-mode-runtime, tool.code-mode-exec, tool.code-mode-wait, tool.image-generation, config.storage-telemetry-misc]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `codex_analytics` 是 Codex 的 product analytics 管道：runtime 记录 `AnalyticsFact`，`AnalyticsReducer` 把 facts 转成 `TrackEventRequest`，queue 在后台消费并发送 events；Codex-backend auth 可发送正常事件，API-key auth 只保留带 plugin identity 的 plugin/skill/MCP 子集，再用 auth provider headers POST 到 configured analytics URL。[E: codex-rs/analytics/src/facts.rs:479][E: codex-rs/analytics/src/reducer.rs:166][E: codex-rs/analytics/src/client.rs:151][E: codex-rs/analytics/src/client.rs:154][E: codex-rs/analytics/src/client.rs:703][E: codex-rs/analytics/src/client.rs:712][E: codex-rs/analytics/src/client.rs:712][E: codex-rs/analytics/src/client.rs:716][E: codex-rs/analytics/src/events.rs:106][E: codex-rs/analytics/src/events.rs:108][E: codex-rs/analytics/src/events.rs:110][E: codex-rs/analytics/src/client.rs:860][E: codex-rs/analytics/src/client.rs:864]
@@ -66,7 +66,7 @@ Reducer 维护 call→response、child call→cell 与 cell→parent/response st
 
 ## Image preparation 与 interrupt attribution
 
-每个成功 decode 的 image preparation 会记录 message role 或 tool item id、effective detail、source/prepared dimensions；session 在 durable history boundary 完成 copy-on-write preparation，逐项记 analytics，然后才 persist rollout 与发送 raw items。[E: codex-rs/analytics/src/facts.rs:142][E: codex-rs/analytics/src/facts.rs:143][E: codex-rs/analytics/src/facts.rs:145][E: codex-rs/analytics/src/facts.rs:153][E: codex-rs/core/src/session/mod.rs:3358][E: codex-rs/core/src/session/mod.rs:3362][E: codex-rs/core/src/session/mod.rs:3419][E: codex-rs/core/src/session/mod.rs:3430][E: codex-rs/core/src/session/mod.rs:3438]
+每个成功 decode 的 image preparation 会记录 message role 或 tool item id、effective detail、source/prepared dimensions；session 在 durable history boundary 完成 copy-on-write preparation，逐项记 analytics，然后才 persist rollout 与发送 raw items。[E: codex-rs/analytics/src/facts.rs:142][E: codex-rs/analytics/src/facts.rs:143][E: codex-rs/analytics/src/facts.rs:145][E: codex-rs/analytics/src/facts.rs:153][E: codex-rs/core/src/session/mod.rs:3368][E: codex-rs/core/src/session/mod.rs:3372][E: codex-rs/core/src/session/mod.rs:3429][E: codex-rs/core/src/session/mod.rs:3440][E: codex-rs/core/src/session/mod.rs:3448]
 
 Turn event 因此携带 `image_preparations` 和首个成功 explicit interrupt 请求时间；app-server 在 notification fan-out 前按引用交给 analytics，而 analytics client 只 clone 其关心的 notification variants。[E: codex-rs/analytics/src/events.rs:962][E: codex-rs/analytics/src/events.rs:970][E: codex-rs/analytics/src/client.rs:340][E: codex-rs/analytics/src/client.rs:346][E: codex-rs/app-server/src/outgoing_message.rs:187][E: codex-rs/app-server/src/outgoing_message.rs:190][E: codex-rs/analytics/src/client.rs:685]
 

@@ -8,7 +8,7 @@ symbols: [mcp-server-removed]
 related: [subsys.mcp.client, subsys.mcp.transports, subsys.core.session-lifecycle, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `codex-rs/mcp-server` 与 CLI 子命令 `codex mcp-server` 已从仓库移除。外部 MCP client 通过 stdio 把 Codex 当 MCP server 调用的路径已下线；Codex **作为 client 连接外部 MCP server** 的方向仍在，由 `codex-mcp` / `rmcp-client` 与 `Subcommand::Mcp` 承担。[E: codex-rs/cli/src/main.rs:148][E: codex-rs/cli/src/main.rs:166][E: codex-rs/Cargo.toml:82][E: codex-rs/Cargo.toml:97]

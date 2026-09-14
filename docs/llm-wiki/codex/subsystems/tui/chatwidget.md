@@ -8,10 +8,10 @@ symbols: [ChatWidget, ChatWidget::new_with_app_event, ChatWidget::handle_server_
 related: [subsys.tui.architecture, subsys.tui.bottom-pane, subsys.tui.keymap, subsys.tui.streaming-pipeline, subsys.tui.rendering-theming, subsys.tui.status-surfaces, subsys.app-server.session-management]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> `ChatWidget` 是聊天屏的 per-session UI 状态机：它反映 app-server protocol event stream、维护 transcript/streaming/bottom-pane/status 等状态，并把用户按键转换成 `Op` 或 `AppEvent`；它不运行 agent 本身。[E: codex-rs/tui/src/chatwidget.rs:573][E: codex-rs/tui/src/chatwidget/protocol.rs:4]
+> `ChatWidget` 是聊天屏的 per-session UI 状态机：它反映 app-server protocol event stream、维护 transcript/streaming/bottom-pane/status 等状态，并把用户按键转换成 `Op` 或 `AppEvent`；它不运行 agent 本身。[E: codex-rs/tui/src/chatwidget.rs:572][E: codex-rs/tui/src/chatwidget/protocol.rs:4]
 
 ## 能回答的问题
 
@@ -26,7 +26,7 @@ updated: 02a8f038b8
 
 ## 状态边界
 
-结构体字段覆盖 `AppEventSender`、`CodexOpTarget`、`BottomPane`、`TranscriptState`、config/session header/account/model/rate-limit 状态、stream controllers、running commands、turn lifecycle、hook cell、thread id、input queue、`chat_keymap`、`permission_popup_request_id` 和 `ThreadUsageState`。[E: codex-rs/tui/src/chatwidget.rs:575][E: codex-rs/tui/src/chatwidget.rs:572][E: codex-rs/tui/src/chatwidget.rs:573][E: codex-rs/tui/src/chatwidget.rs:574][E: codex-rs/tui/src/chatwidget.rs:591][E: codex-rs/tui/src/chatwidget.rs:727][E: codex-rs/tui/src/chatwidget.rs:731][E: codex-rs/tui/src/chatwidget.rs:811]
+结构体字段覆盖 `AppEventSender`、`CodexOpTarget`、`BottomPane`、`TranscriptState`、config/session header/account/model/rate-limit 状态、stream controllers、running commands、turn lifecycle、hook cell、thread id、input queue、`chat_keymap`、`permission_popup_request_id` 和 `ThreadUsageState`。[E: codex-rs/tui/src/chatwidget.rs:574][E: codex-rs/tui/src/chatwidget.rs:571][E: codex-rs/tui/src/chatwidget.rs:572][E: codex-rs/tui/src/chatwidget.rs:573][E: codex-rs/tui/src/chatwidget.rs:590][E: codex-rs/tui/src/chatwidget.rs:729][E: codex-rs/tui/src/chatwidget.rs:733][E: codex-rs/tui/src/chatwidget.rs:813]
 
 构造入口 `new_with_app_event` 委托到 `new_with_op_target`；constructor 解包 `ChatWidgetInit`，从 config/model catalog 计算 collaboration mask、header model、service tier 和 keymap，再创建 `BottomPane`、`TranscriptState`、stream/chunking/turn lifecycle 等初始状态。[E: codex-rs/tui/src/chatwidget/constructor.rs:6][E: codex-rs/tui/src/chatwidget/constructor.rs:10][E: codex-rs/tui/src/chatwidget/constructor.rs:14][E: codex-rs/tui/src/chatwidget/constructor.rs:47][E: codex-rs/tui/src/chatwidget/constructor.rs:59][E: codex-rs/tui/src/chatwidget/constructor.rs:67][E: codex-rs/tui/src/chatwidget/constructor.rs:74]
 
@@ -48,13 +48,13 @@ parent-owned subagent thread 会设置 `blocks_direct_input` 并让 bottom pane 
 
 `InputQueueState` 单独保存 queued user messages/history records、rejected steers/history records、pending steers、pending-start flag、interrupt 后重提 steers 的 flag、autosend suppress，以及 rate-limit recovery hold。[E: codex-rs/tui/src/chatwidget/input_queue.rs:23][E: codex-rs/tui/src/chatwidget/input_queue.rs:25][E: codex-rs/tui/src/chatwidget/input_queue.rs:32][E: codex-rs/tui/src/chatwidget/input_queue.rs:43][E: codex-rs/tui/src/chatwidget/input_queue.rs:46][E: codex-rs/tui/src/chatwidget/input_queue.rs:47][E: codex-rs/tui/src/chatwidget/input_queue.rs:49]
 
-startup 草稿由 `restore_startup_draft_when_ready` 接管：active view、expanded questions、pending approval、composer 尚未 enable，或 Windows elevated sandbox setup 未完成时都不移交。[E: codex-rs/tui/src/chatwidget/input_restore.rs:105][E: codex-rs/tui/src/chatwidget/input_restore.rs:109][E: codex-rs/tui/src/chatwidget/input_restore.rs:121]
+startup 草稿由 `restore_startup_draft_when_ready` 接管：active view、expanded questions、pending approval、composer 尚未 enable，或 Windows elevated sandbox setup 未完成时都不移交。[E: codex-rs/tui/src/chatwidget/input_restore.rs:105][E: codex-rs/tui/src/chatwidget/input_restore.rs:109][E: codex-rs/tui/src/chatwidget/input_restore.rs:122] composer 无 sparkle 动画；`chat_composer/sparkle.rs` 已删除。[I]
 
 ## Thread usage 与 Transcript export
 
-`ThreadUsageState` 缓存当前 thread 的 backend-estimated cost。status line / terminal title 选了 credits 或 estimated cost 时才会 request；`/status` 通过 `request_thread_usage_for_status` 把 `StatusHistoryHandle` 挂到同一条 refresh 上。turn 结束后按 15s/60s/120s 再结算，临时失败按 5s/15s/60s 重试。[E: codex-rs/tui/src/chatwidget.rs:811][E: codex-rs/tui/src/chatwidget/thread_usage.rs:20][E: codex-rs/tui/src/chatwidget/thread_usage.rs:25][E: codex-rs/tui/src/chatwidget/thread_usage.rs:38][E: codex-rs/tui/src/chatwidget/thread_usage.rs:80][E: codex-rs/tui/src/chatwidget/thread_usage.rs:145][E: codex-rs/tui/src/chatwidget/thread_usage.rs:371]
+`ThreadUsageState` 缓存当前 thread 的 backend-estimated cost。status line / terminal title 选了 credits 或 estimated cost 时才会 request；`/status` 通过 `request_thread_usage_for_status` 把 `StatusHistoryHandle` 挂到同一条 refresh 上。turn 结束后按 15s/60s/120s 再结算，临时失败按 5s/15s/60s 重试。[E: codex-rs/tui/src/chatwidget.rs:813][E: codex-rs/tui/src/chatwidget/thread_usage.rs:20][E: codex-rs/tui/src/chatwidget/thread_usage.rs:25][E: codex-rs/tui/src/chatwidget/thread_usage.rs:38][E: codex-rs/tui/src/chatwidget/thread_usage.rs:80][E: codex-rs/tui/src/chatwidget/thread_usage.rs:145][E: codex-rs/tui/src/chatwidget/thread_usage.rs:371]
 
-`/export` 无参数打开 clipboard/file picker；带路径则直接发 `AppEvent::ExportTranscript { File(...) }`。clipboard 路径在 Android 上禁用。[E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:739][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:742][E: codex-rs/tui/src/chatwidget/transcript_export.rs:23][E: codex-rs/tui/src/chatwidget/transcript_export.rs:32]
+`/export` 无参数打开 clipboard/file picker；带路径则直接发 `AppEvent::ExportTranscript { File(...) }`。clipboard 路径在 Android 上禁用。[E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:735][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:738][E: codex-rs/tui/src/chatwidget/transcript_export.rs:23][E: codex-rs/tui/src/chatwidget/transcript_export.rs:32]
 
 ## Safety buffering retry
 
@@ -78,7 +78,7 @@ agent message deltas 进入 `on_agent_message_delta`；plan deltas 进入 `on_pl
 
 ## Gotchas
 
-- Quit/interrupt 横跨 bottom pane 和 ChatWidget：bottom pane 决定 local Ctrl-C routing，ChatWidget 决定 interrupt、double-press quit shortcut 和 shutdown-first exit。[E: codex-rs/tui/src/bottom_pane/mod.rs:867][E: codex-rs/tui/src/chatwidget/interaction.rs:551]
+- Quit/interrupt 横跨 bottom pane 和 ChatWidget：bottom pane 决定 local Ctrl-C routing，ChatWidget 决定 interrupt、double-press quit shortcut 和 shutdown-first exit。[E: codex-rs/tui/src/bottom_pane/mod.rs:862][E: codex-rs/tui/src/chatwidget/interaction.rs:551]
 - `ChatWidget` 里的 fields 很多，但许多行为入口已经拆到 `chatwidget/*`；更新行号时不要只搜 `chatwidget.rs` 单文件。[E: codex-rs/tui/src/chatwidget/protocol.rs:4]
 - safety-buffered retry 不是在原 thread 原地重发：成功路径会 fork 并替换当前 widget thread，原 thread 保持可恢复。[E: codex-rs/tui/src/app/safety_buffering.rs:24]
 - thread usage 是 demand-driven；没选 credits/cost item 且没打开 `/status` 时不会发 refresh。[E: codex-rs/tui/src/chatwidget/thread_usage.rs:371][E: codex-rs/tui/src/chatwidget/thread_usage.rs:145]

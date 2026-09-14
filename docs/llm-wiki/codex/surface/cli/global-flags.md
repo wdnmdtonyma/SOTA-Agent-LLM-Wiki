@@ -8,7 +8,7 @@ symbols: [SharedCliOptions, CliConfigOverrides, ApprovalModeCliArg, SandboxModeC
 related: [cli.subcommands, cli.exec-mode, config.model-provider, config.approval-sandbox, config.skills-plugins-features]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > CLI 全局 flag 是 `codex` 根命令由 `MultitoolCli` 拼出的 option surface：root config override、feature toggle、remote app-server 连接、interactive TUI flags，以及 interactive/exec 共享的 model/sandbox/workdir flags。[E: codex-rs/cli/src/main.rs:130][E: codex-rs/cli/src/main.rs:144]

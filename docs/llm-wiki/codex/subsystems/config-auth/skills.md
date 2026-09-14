@@ -8,7 +8,7 @@ symbols: [SkillMetadata, HostSkillRoot, SkillLoadOutcome, SkillDiscovery, SkillN
 related: [spine.extension-system, subsys.config-auth.plugins, subsys.config-auth.config-loading, subsys.core.instruction-assembly, config.skills-plugins-features]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Codex skills 系统的 ownership 已拆开：`core-skills` crate 已删除。`codex-rs/skills` 持有 metadata model、explicit mention selection、implicit invocation 与 embedded system-skills 安装；`ext/skills` 持有 host root discovery、loader/namespace、provider catalog、model-visible rendering、WorldState/turn-input 投影、resource tools 与预算观测。[E: codex-rs/skills/src/model.rs:8][E: codex-rs/skills/src/selection.rs:42][E: codex-rs/ext/skills/src/host_roots.rs:28][E: codex-rs/ext/skills/src/extension.rs:79][E: codex-rs/ext/skills/src/render.rs:492][E: codex-rs/ext/skills/src/world_state.rs:10]
@@ -72,7 +72,7 @@ host 路径由 `HostSkillsSnapshot::load_skill_prompts` 读取 `SKILL.md` 并输
 
 `skill_metadata_budget` 优先使用 caller 提供的 `max_context_tokens`，并 cap 到 10,000 tokens；否则取 context window 的 2%；未知 context window 时回退到 8,000 characters。超预算时先保留每行的 name/locator，再 round-robin 分配 description 空间；连最小行都放不下才省略条目，并生成 truncation/omission report。[E: codex-rs/ext/skills/src/render.rs:17][E: codex-rs/ext/skills/src/render.rs:18][E: codex-rs/ext/skills/src/render.rs:20][E: codex-rs/ext/skills/src/render.rs:127][E: codex-rs/ext/skills/src/render.rs:131][E: codex-rs/ext/skills/src/render.rs:135][E: codex-rs/ext/skills/src/render.rs:150]
 
-当 host 与 executor catalog 同时可见时，`render_combined_available_skills` 用同一个 metadata budget 联合分配，而不是让两边各拿一份 2%；extension 再把 executor 与 host 结果分别放入两个 WorldState sections。`host_skills` section 被 core 特殊插到 permissions section 之前，避免权限说明先打断 skills context。[E: codex-rs/ext/skills/src/render.rs:540][E: codex-rs/ext/skills/src/world_state.rs:12][E: codex-rs/core/src/context/world_state/mod.rs:376][E: codex-rs/core/src/context/world_state/mod.rs:379]
+当 host 与 executor catalog 同时可见时，`render_combined_available_skills` 用同一个 metadata budget 联合分配，而不是让两边各拿一份 2%；extension 再把 executor 与 host 结果分别放入两个 WorldState sections。`host_skills` section 被 core 特殊插到 permissions section 之前，避免权限说明先打断 skills context。[E: codex-rs/ext/skills/src/render.rs:540][E: codex-rs/ext/skills/src/world_state.rs:12][E: codex-rs/core/src/context/world_state/mod.rs:374][E: codex-rs/core/src/context/world_state/mod.rs:377]
 
 每次 render 还按 `ThreadContext`、`ExecutorWorldState`、`OrchestratorWorldState`、`HostWorldState`、`TurnInput` 标记 catalog surface，向 host-provided `ExtensionMetrics` 记录 total/kept/omitted/description truncation；预算 warning 通过 extension event sink 去重后发出。[E: codex-rs/ext/skills/src/render_observability.rs:11][E: codex-rs/ext/skills/src/render_observability.rs:31][E: codex-rs/ext/skills/src/render_observability.rs:66][E: codex-rs/ext/skills/src/extension.rs:437]
 

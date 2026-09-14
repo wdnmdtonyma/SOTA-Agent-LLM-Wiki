@@ -8,7 +8,7 @@ symbols: [QueuedItemService, QueueStore, LocalQueueStore, SqliteQueueStore, Queu
 related: [rpc.thread-methods, rpc.notifications-thread, subsys.core.thread-store, subsys.core.state-db, subsys.core.session-lifecycle]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Thread queue 是 per-thread、有序、durable 的用户提交队列。app-server 用 6 个 experimental RPC 读写它；`QueuedItemService` 在 thread idle 时把队首 `TurnInput::UserInput` 交给 Core `start_turn_if_idle`，并用 `EventMsg::ThreadQueueChanged` 通知客户端。[E: codex-rs/ext/queue/src/lib.rs:3][E: codex-rs/ext/queue/src/service.rs:42][E: codex-rs/ext/queue/src/service.rs:368]
@@ -40,7 +40,7 @@ App-server 只有在 `ThreadStoreConfig::Local` 且有 state DB 时才构造 `Qu
 | `codex-rs/ext/queue/src/service.rs` | enqueue/list/update/delete/reorder/start，idle dispatch，`ThreadQueueChanged`。[E: codex-rs/ext/queue/src/service.rs:265][E: codex-rs/ext/queue/src/service.rs:485] |
 | `codex-rs/thread-store/src/queue_store.rs` | `QueueStore` trait 与 `LocalQueueStore`。[E: codex-rs/thread-store/src/queue_store.rs:14][E: codex-rs/thread-store/src/queue_store.rs:56] |
 | `codex-rs/state/src/runtime/queued_items.rs` | SQLite CRUD、容量门与 atomic reorder。[E: codex-rs/state/src/runtime/queued_items.rs:77][E: codex-rs/state/src/runtime/queued_items.rs:164] |
-| `codex-rs/app-server/src/request_processors/thread_queue_processor.rs` | 6 个 RPC 的校验、分页、start-if-idle。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:72][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:181] |
+| `codex-rs/app-server/src/request_processors/thread_queue_processor.rs` | 6 个 RPC 的校验、分页、start-if-idle。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:77][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:186] |
 
 ## 数据模型
 
@@ -48,7 +48,7 @@ App-server 只有在 `ThreadStoreConfig::Local` 且有 state DB 时才构造 `Qu
 |---|---|---|
 | `QueuedUserSubmissionRecord` | `id`, `thread_id`, `payload` | SQLite 行；payload 是 `TurnInput` JSON。[E: codex-rs/state/src/model/queued_item.rs:8][E: codex-rs/state/src/model/queued_item.rs:9][E: codex-rs/state/src/model/queued_item.rs:11] |
 | `QueuedItem` | `id`, `input` | service 层反序列化后的用户消息。[E: codex-rs/ext/queue/src/service.rs:42] |
-| `QueuedSubmission` | `id`, `input`, `client_user_message_id` | app-server wire 对象。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:872][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:874][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:875] |
+| `QueuedSubmission` | `id`, `input`, `client_user_message_id` | app-server wire 对象。[E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:888][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:890][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:891] |
 | `queued_items` | `id`, `thread_id`, `payload_json`, `queue_order`, timestamps | `queue_order` 在 `(thread_id, queue_order)` 上 unique。[E: codex-rs/state/queue_migrations/0001_queued_items.sql:1][E: codex-rs/state/queue_migrations/0001_queued_items.sql:10] |
 
 `MAX_QUEUE_ITEMS` 是 100。超过时 `INSERT ... WHERE COUNT(*) < 100` 不返回行，`LocalQueueStore` 把它映射成 `InvalidRequest`。[E: codex-rs/state/src/lib.rs:100][E: codex-rs/state/src/runtime/queued_items.rs:92][E: codex-rs/thread-store/src/queue_store.rs:106]
@@ -61,23 +61,23 @@ App-server 只有在 `ThreadStoreConfig::Local` 且有 state DB 时才构造 `Qu
 
 | Variant | Wire method | Params | Response | 行为 |
 |---|---|---|---|---|
-| `ThreadQueueAdd` | `thread/queue/add` | `thread_id`, `input`, `client_user_message_id` | `queued_submission` | enqueue 后若 thread 已加载且非 `Interrupted`，emit idle lifecycle 尝试 dispatch。[E: codex-rs/app-server-protocol/src/protocol/common.rs:632][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:80][E: codex-rs/ext/queue/src/service.rs:278] |
-| `ThreadQueueList` | `thread/queue/list` | `thread_id`, optional `cursor`/`limit` | `data`, `next_cursor` | cursor 是 offset 字符串；默认 limit 25，clamp 到 `[1, 100]`；多取 1 条判断下一页。[E: codex-rs/app-server-protocol/src/protocol/common.rs:638][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:100][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:108][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:111] |
-| `ThreadQueueUpdate` | `thread/queue/update` | `thread_id`, `queued_submission_id`, `input` | `queued_submission` | 保留原 `client_id`；找不到该 id 返回 invalid request。[E: codex-rs/app-server-protocol/src/protocol/common.rs:644][E: codex-rs/ext/queue/src/service.rs:308][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:146] |
-| `ThreadQueueDelete` | `thread/queue/delete` | `thread_id`, `queued_submission_id` | `deleted: bool` | 未找到也成功返回 `false`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:650][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:166] |
+| `ThreadQueueAdd` | `thread/queue/add` | `thread_id`, `input`, `client_user_message_id` | `queued_submission` | enqueue 后若 thread 已加载且非 `Interrupted`，emit idle lifecycle 尝试 dispatch。[E: codex-rs/app-server-protocol/src/protocol/common.rs:632][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:85][E: codex-rs/ext/queue/src/service.rs:278] |
+| `ThreadQueueList` | `thread/queue/list` | `thread_id`, optional `cursor`/`limit` | `data`, `next_cursor` | cursor 是 offset 字符串；默认 limit 25，clamp 到 `[1, 100]`；多取 1 条判断下一页。[E: codex-rs/app-server-protocol/src/protocol/common.rs:638][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:105][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:113][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:116] |
+| `ThreadQueueUpdate` | `thread/queue/update` | `thread_id`, `queued_submission_id`, `input` | `queued_submission` | 保留原 `client_id`；找不到该 id 返回 invalid request。[E: codex-rs/app-server-protocol/src/protocol/common.rs:644][E: codex-rs/ext/queue/src/service.rs:308][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:151] |
+| `ThreadQueueDelete` | `thread/queue/delete` | `thread_id`, `queued_submission_id` | `deleted: bool` | 未找到也成功返回 `false`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:650][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:171] |
 | `ThreadQueueReorder` | `thread/queue/reorder` | `thread_id`, `queued_submission_ids` | `{}` | `item_ids` 必须是当前队列的完整排列，否则 `InvalidRequest`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:656][E: codex-rs/state/src/runtime/queued_items.rs:177][E: codex-rs/thread-store/src/queue_store.rs:51] |
-| `ThreadQueueStart` | `thread/queue/start` | `thread_id`, optional `queued_submission_id` | `turn` | thread 必须已加载；省略 id 取队首；只有 `Started` 才从队列删除该项。[E: codex-rs/app-server-protocol/src/protocol/common.rs:662][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:189][E: codex-rs/ext/queue/src/service.rs:380][E: codex-rs/ext/queue/src/service.rs:399] |
+| `ThreadQueueStart` | `thread/queue/start` | `thread_id`, optional `queued_submission_id` | `turn` | thread 必须已加载；省略 id 取队首；只有 `Started` 才从队列删除该项。[E: codex-rs/app-server-protocol/src/protocol/common.rs:662][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:194][E: codex-rs/ext/queue/src/service.rs:380][E: codex-rs/ext/queue/src/service.rs:399] |
 
-`thread/queue/start` 在 `NotIdle` / `PendingTriggerTurn` 时返回 “thread already has an active or pending turn”。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:205][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:208]
+`thread/queue/start` 在 `NotIdle` / `PendingTriggerTurn` 时返回 “thread already has an active or pending turn”。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:214][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:217]
 
-没有 queue service 时六个 RPC 都返回 “user message queue is unavailable”。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:237]
+没有 queue service 时六个 RPC 都返回 “user message queue is unavailable”。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:246]
 
 ## 控制流
 
 1. `MessageProcessor` 用 `LocalQueueStore` 和 `Weak<ThreadManager>` 建 `QueuedItemService`，再 `codex_queue_extension::install` 成 lifecycle contributor。[E: codex-rs/app-server/src/message_processor.rs:325][E: codex-rs/app-server/src/extensions.rs:81]
-2. `add`/`update` 先校验 image URL，再要求 thread 存在：已加载则拒绝 ephemeral；未加载则 `read_thread(include_archived=true)`，archived 拒绝。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:76][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:250][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:271]
-3. loaded multi-agent v2 subagent、unloaded `SessionSource::SubAgent(ThreadSpawn)` 不能 add/update/start。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:287][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:291]
-4. 每个 mutating 操作持 per-thread `dispatch_lock`，写完后 `emit_changed`：`EventMsg::ThreadQueueChanged { thread_id }`。[E: codex-rs/ext/queue/src/service.rs:273][E: codex-rs/ext/queue/src/service.rs:485][E: codex-rs/protocol/src/protocol.rs:4082]
+2. `add`/`update` 先校验 image URL，再要求 thread 存在：已加载则拒绝 ephemeral；未加载则 `read_thread(include_archived=true)`，archived 拒绝。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:81][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:259][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:280]
+3. loaded multi-agent v2 subagent、unloaded `SessionSource::SubAgent(ThreadSpawn)` 不能 add/update/start。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:296][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:300]
+4. 每个 mutating 操作持 per-thread `dispatch_lock`，写完后 `emit_changed`：`EventMsg::ThreadQueueChanged { thread_id }`。[E: codex-rs/ext/queue/src/service.rs:273][E: codex-rs/ext/queue/src/service.rs:485][E: codex-rs/protocol/src/protocol.rs:4083]
 5. `on_thread_idle` 在 `Interrupted` 时直接返回；否则 `dispatch_if_idle` 读队首，非法/非 user payload 丢弃后继续，成功 `Started` 后删除该项并停止。[E: codex-rs/ext/queue/src/service.rs:551][E: codex-rs/ext/queue/src/service.rs:428][E: codex-rs/ext/queue/src/service.rs:446]
 6. 删除整个 thread 时 `StateRuntime` 调 `delete_thread_queue`。[E: codex-rs/state/src/runtime/threads.rs:1157][E: codex-rs/state/src/runtime/queued_items.rs:203]
 
@@ -91,10 +91,10 @@ Reorder 要求完整排列，避免只移动子集时留下空洞 `queue_order`�
 
 ## Gotcha
 
-- `thread/queue/start` 不能对未 resume 的 thread 调用；list/add 可以对未加载但未归档的 persisted thread 工作。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:189][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:256]
+- `thread/queue/start` 不能对未 resume 的 thread 调用；list/add 可以对未加载但未归档的 persisted thread 工作。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:194][E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:265]
 - Idle dispatch 不会因为 Core 拒绝而删除该项（除非 payload 非法）；`start` 也只有 `Started` 才 delete。[E: codex-rs/ext/queue/src/service.rs:450][E: codex-rs/ext/queue/src/service.rs:399]
-- `ThreadQueueChanged` 只带 `thread_id`，客户端必须再 `thread/queue/list`。[E: codex-rs/protocol/src/protocol.rs:4082][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:2014]
-- ephemeral thread 明确不支持 queued submissions。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:252]
+- `ThreadQueueChanged` 只带 `thread_id`，客户端必须再 `thread/queue/list`。[E: codex-rs/protocol/src/protocol.rs:4083][E: codex-rs/app-server-protocol/src/protocol/v2/thread.rs:2005]
+- ephemeral thread 明确不支持 queued submissions。[E: codex-rs/app-server/src/request_processors/thread_queue_processor.rs:261]
 
 ## Sources
 

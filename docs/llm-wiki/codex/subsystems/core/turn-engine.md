@@ -8,7 +8,7 @@ symbols: [run_turn, run_sampling_request, try_run_sampling_request, built_tools,
 related: [spine.turn-end-to-end, subsys.core.session-lifecycle, subsys.core.context-manager, subsys.core.tool-router, subsys.core.compaction]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Turn 引擎是 regular task 内部的 model-turn 状态机：`RegularTask::run` 先发 `TurnStarted`，再循环调用 `run_turn`；`run_turn` 做 pre-sampling compaction、captured step context、skill/plugin 注入、prompt history materialization、sampling request 和 follow-up 判断；真正的 stream/tool 处理在 `run_sampling_request`/`try_run_sampling_request` 中完成。[E: codex-rs/core/src/tasks/regular.rs:51][E: codex-rs/core/src/tasks/regular.rs:76][E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:183][E: codex-rs/core/src/session/turn.rs:308][E: codex-rs/core/src/session/turn.rs:522][E: codex-rs/core/src/session/turn.rs:1538][E: codex-rs/core/src/session/turn.rs:2409]
@@ -25,13 +25,13 @@ updated: 02a8f038b8
 
 `RegularTask::run` 是 turn engine 的外层 task：它把 startup prewarm 解析成可选 `ModelClientSession`，调用 `run_turn`，如果 active turn 没有 pending input 就返回 `last_agent_message`，否则清空下一轮显式 input 后继续循环。[E: codex-rs/core/src/tasks/regular.rs:56][E: codex-rs/core/src/tasks/regular.rs:70][E: codex-rs/core/src/tasks/regular.rs:76][E: codex-rs/core/src/tasks/regular.rs:77][E: codex-rs/core/src/tasks/regular.rs:92][E: codex-rs/core/src/tasks/regular.rs:95]
 
-`run_turn` 负责一次 regular turn 内部的 sampling/follow-up loop；`Session::spawn`、submission dispatch、task 启动/取消属于 `subsys.core.session-lifecycle`，具体 tool spec 和 handler 分派属于 `subsys.core.tool-router`。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:423][E: codex-rs/core/src/tasks/mod.rs:270][E: codex-rs/core/src/session/handlers.rs:538][I]
+`run_turn` 负责一次 regular turn 内部的 sampling/follow-up loop；`Session::spawn`、submission dispatch、task 启动/取消属于 `subsys.core.session-lifecycle`，具体 tool spec 和 handler 分派属于 `subsys.core.tool-router`。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:423][E: codex-rs/core/src/tasks/mod.rs:270][E: codex-rs/core/src/session/handlers.rs:411][I]
 
 ## 关键 crate/文件
 
 - `codex-rs/core/src/session/turn.rs`: `run_turn`、pre/mid compaction、prompt 构造、Responses stream loop 和 in-flight tool drain。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:1231][E: codex-rs/core/src/session/turn.rs:1509][E: codex-rs/core/src/session/turn.rs:2356][E: codex-rs/core/src/session/turn.rs:2409]
 - `codex-rs/core/src/tasks/regular.rs`: regular task 的 `TurnStarted` 发射和 `run_turn` 循环。[E: codex-rs/core/src/tasks/regular.rs:51][E: codex-rs/core/src/tasks/regular.rs:76]
-- `codex-rs/core/src/tools/parallel.rs`: `ToolCallRuntime` 从 `StepContext.tool_router` 读取本次 request 已 finalize 的 router，在 runtime readiness 后加 parallel policy 锁，再 dispatch。[E: codex-rs/core/src/tools/parallel.rs:43][E: codex-rs/core/src/tools/parallel.rs:106][E: codex-rs/core/src/tools/parallel.rs:151][E: codex-rs/core/src/tools/parallel.rs:165]
+- `codex-rs/core/src/tools/parallel.rs`: `ToolCallRuntime` 从 `StepContext.tool_router` 读取本次 request 已 finalize 的 router，在 runtime readiness 后加 parallel policy 锁，再 dispatch。[E: codex-rs/core/src/tools/parallel.rs:44][E: codex-rs/core/src/tools/parallel.rs:106][E: codex-rs/core/src/tools/parallel.rs:167][E: codex-rs/core/src/tools/parallel.rs:181]
 
 ## 数据模型
 
@@ -62,9 +62,9 @@ previous-model compact 有两条 pre-turn 路径：compaction compatibility hash
 
 turn engine 把 context update、tool construction、sampling retry、stream parsing、tool future drain 和 follow-up loop 收束在 `session/turn.rs`，便于沿一次 turn 追踪状态，但也让该文件成为多个子系统的 glue 层。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:2409][I]
 
-tool runtime 用一个 `RwLock<()>` 区分 parallel-supported 与 non-parallel-supported tool：支持并行的 tool 取 read lock，不支持并行的 tool 取 write lock，再调用 router dispatch。[E: codex-rs/core/src/tools/parallel.rs:48][E: codex-rs/core/src/tools/parallel.rs:103][E: codex-rs/core/src/tools/parallel.rs:154][E: codex-rs/core/src/tools/parallel.rs:160][E: codex-rs/core/src/tools/parallel.rs:165]
+tool runtime 用一个 `RwLock<()>` 区分 parallel-supported 与 non-parallel-supported tool：支持并行的 tool 取 read lock，不支持并行的 tool 取 write lock，再调用 router dispatch。[E: codex-rs/core/src/tools/parallel.rs:49][E: codex-rs/core/src/tools/parallel.rs:103][E: codex-rs/core/src/tools/parallel.rs:170][E: codex-rs/core/src/tools/parallel.rs:176][E: codex-rs/core/src/tools/parallel.rs:181]
 
-Direct tool call 的 timing 把等待 parallel gate 的 dispatch latency 与拿锁后的 handler latency 分开；code-mode nested call 被刻意排除，避免一次用户可见调用产生重叠计时事件。[E: codex-rs/core/src/tools/parallel.rs:314]
+Direct tool call 的 timing 把等待 parallel gate 的 dispatch latency 与拿锁后的 handler latency 分开；`ToolCallTimingGuard::capture` 只对 `ToolCallSource::Direct | DirectPlaintextMessage` 建 guard，code-mode nested call 被刻意排除，避免一次用户可见调用产生重叠计时事件。[E: codex-rs/core/src/tools/parallel.rs:134][E: codex-rs/core/src/tools/parallel.rs:146][E: codex-rs/core/src/tools/parallel.rs:149][E: codex-rs/core/src/tools/parallel.rs:319][E: codex-rs/core/src/tools/parallel.rs:321][E: codex-rs/core/src/tools/parallel.rs:322]
 
 ## gotcha
 

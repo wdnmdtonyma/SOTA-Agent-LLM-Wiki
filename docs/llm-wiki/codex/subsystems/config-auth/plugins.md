@@ -8,7 +8,7 @@ symbols: [PluginManifest, UriPluginManifest, parse_agent_plugin_manifest_uri, lo
 related: [subsys.config-auth.skills, subsys.config-auth.hooks, subsys.mcp.connectors, config.skills-plugins-features]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Codex plugins 系统用 discoverable plugin manifests 描述 plugin metadata、skills、MCP servers、apps、hooks 和 interface metadata；loader 把 active plugins 汇总为 capability summaries、effective skill roots、MCP servers、apps 与 hook sources。[E: codex-rs/utils/plugins/src/plugin_namespace.rs:42][E: codex-rs/core-plugins/src/manifest.rs:36][E: codex-rs/core-plugins/src/manifest.rs:48][E: codex-rs/core-plugins/src/manifest.rs:50][E: codex-rs/core-plugins/src/manifest.rs:52][E: codex-rs/core-plugins/src/manifest.rs:54][E: codex-rs/plugin/src/load_outcome.rs:19][E: codex-rs/plugin/src/load_outcome.rs:106][E: codex-rs/plugin/src/load_outcome.rs:117][E: codex-rs/plugin/src/load_outcome.rs:169][E: codex-rs/plugin/src/load_outcome.rs:180][E: codex-rs/plugin/src/load_outcome.rs:198]
@@ -79,7 +79,7 @@ Plugin description 会 whitespace-normalize 并截断到 1024 chars，以适合 
 
 ## Remote catalog 与 portable bundle
 
-`remote_plugin` 已是 stable、default-on feature；ChatGPT backend auth 可启用 PS-backed global catalog，而其它 auth/provider 继续使用 local curated repository。manager 用 auth mode 选择 `OpenAiWithRemote` 或 `OpenAiApi` target marketplace，并在 load cache key 中包含 remote-global-active 状态。[E: codex-rs/features/src/lib.rs:1455][E: codex-rs/features/src/lib.rs:1458][E: codex-rs/core-plugins/src/manager.rs:597][E: codex-rs/core-plugins/src/manager.rs:624][E: codex-rs/core-plugins/src/manager.rs:626]
+`remote_plugin` 已是 stable、default-on feature；ChatGPT backend auth 可启用 PS-backed global catalog，而其它 auth/provider 继续使用 local curated repository。manager 用 auth mode 选择 `OpenAiWithRemote` 或 `OpenAiApi` target marketplace，并在 load cache key 中包含 remote-global-active 状态。[E: codex-rs/features/src/lib.rs:1461][E: codex-rs/features/src/lib.rs:1464][E: codex-rs/core-plugins/src/manager.rs:597][E: codex-rs/core-plugins/src/manager.rs:624][E: codex-rs/core-plugins/src/manager.rs:626]
 
 `search_remote_plugins` 直接请求 `/ps/plugins/search`，支持 query/scope/limit/page token，并刻意不读写 remote catalog cache；错误/telemetry 使用不含 query 与 page token 的 URL，搜索结果因不 join installed endpoint而统一标为未安装。[E: codex-rs/core-plugins/src/remote/search.rs:37][E: codex-rs/core-plugins/src/remote/search.rs:44][E: codex-rs/core-plugins/src/remote/search.rs:48][E: codex-rs/core-plugins/src/remote/search.rs:52]
 

@@ -8,7 +8,7 @@ symbols: [ApiError, RetryConfig, Provider, map_api_error, HttpError, TransportEr
 related: [subsys.providers.overview, subsys.providers.http-client, subsys.providers.responses-api, subsys.providers.sse-streaming]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Retry/error handling spans three layers: provider config becomes `RetryPolicy`, `http-client` defines transport errors while `codex-client` retries those transport/HTTP failures, and `codex-api` defines `ApiError` plus maps it into core `CodexErr`。[E: codex-rs/codex-api/src/provider.rs:16][E: codex-rs/codex-api/src/provider.rs:25][E: codex-rs/http-client/src/error.rs:9][E: codex-rs/codex-client/src/retry.rs:1][E: codex-rs/codex-client/src/retry.rs:23][E: codex-rs/codex-client/src/retry.rs:47][E: codex-rs/codex-api/src/error.rs:9][E: codex-rs/codex-api/src/api_bridge.rs:19]
@@ -63,7 +63,7 @@ updated: 02a8f038b8
 - `TransportError::RetryLimit` maps to core retry-limit with status 500 and no request id; HTTP 429 fallback maps to core retry-limit with actual status/request id when usage-limit JSON is not parsed into a richer error。[E: codex-rs/codex-api/src/api_bridge.rs:141][E: codex-rs/codex-api/src/api_bridge.rs:136][E: codex-rs/codex-api/src/api_bridge.rs:143][E: codex-rs/codex-api/src/api_bridge.rs:180][E: codex-rs/codex-api/src/api_bridge.rs:161][E: codex-rs/codex-api/src/api_bridge.rs:157]
 - `ApiError::RateLimit` currently maps to `CodexErr::Stream`, not a distinct core rate-limit error variant。[E: codex-rs/codex-api/src/api_bridge.rs:180]
 - `RetryOn::should_retry` uses caller-provided attempt index; max attempts semantics depend on callers such as `run_with_retry` looping `0..=max_attempts`。[E: codex-rs/codex-client/src/retry.rs:22][E: codex-rs/codex-client/src/retry.rs:80]
-- `Feature::UnboundedConnectionRetries`（key `unbounded_connection_retries`，Stable，默认开）让 sampling 路径的 `ConnectionFailed` 走独立 connection-retry 循环：5s 起步、倍增到 60s 上限，不消耗普通 `max_retries`。该路径排除 internal session source 与 Amazon Bedrock；耗尽普通 retries 后仍可 `try_switch_fallback_transport` 永久切到 HTTPS。[E: codex-rs/features/src/lib.rs:1237][E: codex-rs/core/src/responses_retry.rs:68][E: codex-rs/core/src/responses_retry.rs:17][E: codex-rs/core/src/responses_retry.rs:92][E: codex-rs/core/src/client.rs:2020]
+- `Feature::UnboundedConnectionRetries`（key `unbounded_connection_retries`，Stable，默认开）让 sampling 路径的 `ConnectionFailed` 走独立 connection-retry 循环：5s 起步、倍增到 60s 上限，不消耗普通 `max_retries`。该路径排除 internal session source 与 Amazon Bedrock；耗尽普通 retries 后仍可 `try_switch_fallback_transport` 永久切到 HTTPS。[E: codex-rs/features/src/lib.rs:1241][E: codex-rs/core/src/responses_retry.rs:68][E: codex-rs/core/src/responses_retry.rs:17][E: codex-rs/core/src/responses_retry.rs:92][E: codex-rs/core/src/client.rs:2030]
 
 ## Sources
 

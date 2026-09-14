@@ -8,7 +8,7 @@ symbols: [ListAvailablePluginsToInstallHandler, create_list_available_plugins_to
 related: [tool.request-plugin-install, tool.tool-search, subsys.config-auth.plugins, subsys.mcp.connectors]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `list_available_plugins_to_install` 列出当前可安装的 plugin/connector 候选,供模型再用 `request_plugin_install` 发起安装请求。
@@ -50,11 +50,11 @@ handler 把 `ListAvailablePluginsToInstallResult { tools }` 序列化为 JSON �
 
 `tool_suggest_enabled` 要求 `Feature::ToolSuggest`、`Feature::Apps`、`Feature::Plugins` 全部开启。[E: codex-rs/core/src/tools/spec_plan.rs:633] [E: codex-rs/core/src/tools/spec_plan.rs:635] [E: codex-rs/core/src/tools/spec_plan.rs:636] [E: codex-rs/core/src/tools/spec_plan.rs:637]
 
-`add_core_utility_tools` 还要求存在非空 `tool_suggest_candidates`;当 presentation 是 `ToolSuggestPresentation::ListTool` 时才注册 `ListAvailablePluginsToInstallHandler`,随后总是注册 `RequestPluginInstallHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1239] [E: codex-rs/core/src/tools/spec_plan.rs:1244] [E: codex-rs/core/src/tools/spec_plan.rs:1245] [E: codex-rs/core/src/tools/spec_plan.rs:1249]
+`add_core_utility_tools` 还要求存在非空 `tool_suggest_candidates`;当 presentation 是 `ToolSuggestPresentation::ListTool` 时才注册 `ListAvailablePluginsToInstallHandler`,随后总是注册 `RequestPluginInstallHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1240] [E: codex-rs/core/src/tools/spec_plan.rs:1245] [E: codex-rs/core/src/tools/spec_plan.rs:1246] [E: codex-rs/core/src/tools/spec_plan.rs:1250]
 
-endpoint recommendation path 不走本工具：有 endpoint candidates 时 turn 直接选择 `RecommendationContext`，只保留 `request_plugin_install` 的简化 `plugin_id` schema；本节点描述的是没有 endpoint candidates 时的 legacy candidate enumeration。[E: codex-rs/core/src/session/turn.rs:1725][E: codex-rs/core/src/session/turn.rs:1729][E: codex-rs/core/src/tools/spec_plan.rs:1245]
+endpoint recommendation path 不走本工具：有 endpoint candidates 时 turn 直接选择 `RecommendationContext`，只保留 `request_plugin_install` 的简化 `plugin_id` schema；本节点描述的是没有 endpoint candidates 时的 legacy candidate enumeration。[E: codex-rs/core/src/session/turn.rs:1725][E: codex-rs/core/src/session/turn.rs:1729][E: codex-rs/core/src/tools/spec_plan.rs:1246]
 
-spec tests 覆盖任一 discovery feature 关闭、候选为空时两件套不可见,以及开启后两件套可见。[E: codex-rs/core/src/tools/spec_plan_tests.rs:2325] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2341] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2367] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2386]
+spec tests 覆盖任一 discovery feature 关闭、候选为空时两件套不可见,以及开启后两件套可见。[E: codex-rs/core/src/tools/spec_plan_tests.rs:2311] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2327] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2353] [E: codex-rs/core/src/tools/spec_plan_tests.rs:2372]
 
 ## 7 parallel-safe
 

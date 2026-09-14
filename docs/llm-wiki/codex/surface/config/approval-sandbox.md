@@ -8,7 +8,7 @@ symbols: [AutoReviewToml, ShellEnvironmentPolicyToml, SandboxWorkspaceWrite, Per
 related: [cli.global-flags, cli.exec-mode, command.config-system, subsys.core.approval-policy, subsys.exec-sandbox.overview]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > 审批与沙箱设置 catalog 覆盖 ConfigToml 中 command approval、approval reviewer、Guardian auto-review、browser/computer-use、shell environment、login shell、legacy sandbox 和 named permission profile 的顶层键。
@@ -22,30 +22,30 @@ updated: 02a8f038b8
 
 ## Catalog 边界
 
-当前 `ConfigToml` 有 101 个顶层 `pub` 字段；本节点覆盖其中 12 个字段。[E: codex-rs/config/src/config_toml.rs:155][E: codex-rs/config/src/config_toml.rs:534]
+当前 `ConfigToml` 有 101 个顶层 `pub` 字段；本节点覆盖其中 12 个字段。[E: codex-rs/config/src/config_toml.rs:156][E: codex-rs/config/src/config_toml.rs:539]
 
 `PermissionsToml` stores a flattened map of named permission profiles, and `PermissionProfileToml` has description, extends, workspace_roots, filesystem, and network sections.[E: codex-rs/config/src/permissions_toml.rs:24][E: codex-rs/config/src/permissions_toml.rs:25][E: codex-rs/config/src/permissions_toml.rs:113][E: codex-rs/config/src/permissions_toml.rs:114][E: codex-rs/config/src/permissions_toml.rs:115][E: codex-rs/config/src/permissions_toml.rs:116][E: codex-rs/config/src/permissions_toml.rs:117][E: codex-rs/config/src/permissions_toml.rs:118]
 
 CLI `--approve-for-me` 不新增 ConfigToml key，而是一次性注入现有 `approvals_reviewer="auto_review"`、`approval_policy="on-request"` 和 `sandbox_mode="workspace-write"`；它与显式 sandbox/dangerous bypass 冲突。Shared CLI 另有 `--worktree`，不新增 ConfigToml key。[E: codex-rs/utils/cli/src/shared_options.rs:45][E: codex-rs/utils/cli/src/shared_options.rs:48][E: codex-rs/utils/cli/src/shared_options.rs:71][E: codex-rs/utils/cli/src/shared_options.rs:84][E: codex-rs/utils/cli/src/shared_options.rs:84]
 
-runtime 以 canonical `PermissionProfile` 作为有效权限事实源，再从它投影 filesystem/network 与 legacy sandbox policy；因此 legacy sandbox fields 仍是兼容输入/投影面，不应被描述成独立于 permission profile 的第二套 runtime 权限。[E: codex-rs/core/src/config/mod.rs:461][E: codex-rs/core/src/config/mod.rs:474][E: codex-rs/core/src/config/mod.rs:479][E: codex-rs/core/src/config/mod.rs:485]
+runtime 以 canonical `PermissionProfile` 作为有效权限事实源，再从它投影 filesystem/network 与 legacy sandbox policy；因此 legacy sandbox fields 仍是兼容输入/投影面，不应被描述成独立于 permission profile 的第二套 runtime 权限。[E: codex-rs/core/src/config/mod.rs:472][E: codex-rs/core/src/config/mod.rs:485][E: codex-rs/core/src/config/mod.rs:490][E: codex-rs/core/src/config/mod.rs:496]
 
 ## 字段 catalog
 
 | key | Rust type | serde/schema attrs | 字段说明 | Evidence |
 |---|---|---|---|---|
-| `approval_policy` | `Option<AskForApproval>` | `#[schemars(with = "Option<crate::schema::ConfigAskForApproval>")]` | Command approval policy field. | [E: codex-rs/config/src/config_toml.rs:176] |
-| `approvals_reviewer` | `Option<ApprovalsReviewer>` | none | Escalated approval reviewer field. | [E: codex-rs/config/src/config_toml.rs:181] |
-| `auto_review` | `Option<AutoReviewToml>` | `#[serde(default)]` | Guardian auto-review configuration field. | [E: codex-rs/config/src/config_toml.rs:185] |
-| `browser_use` | `Option<BrowserUseConfigToml>` | none | Browser-use connector configuration. | [E: codex-rs/config/src/config_toml.rs:187] |
-| `computer_use` | `Option<ComputerUseConfigToml>` | none | Computer-use connector configuration. | [E: codex-rs/config/src/config_toml.rs:189] |
-| `shell_environment_policy` | `ShellEnvironmentPolicyToml` | `#[serde(default)]` | Shell environment policy field. | [E: codex-rs/config/src/config_toml.rs:192] |
-| `allow_login_shell` | `Option<bool>` | `#[serde(default = "default_allow_login_shell")]` | Login-shell permission toggle for shell-based tools. | [E: codex-rs/config/src/config_toml.rs:202] |
-| `sandbox_mode` | `Option<SandboxMode>` | none | Sandbox mode selector. | [E: codex-rs/config/src/config_toml.rs:205] |
-| `allow_symlinked_codex_home` | `Option<bool>` | none | Allow macOS sandbox writable roots at or beneath CODEX_HOME to traverse symlinks. Host user-config only; defaults false; no effect on Linux/Windows. | [E: codex-rs/config/src/config_toml.rs:212] |
-| `sandbox_workspace_write` | `Option<SandboxWorkspaceWrite>` | none | Workspace-write sandbox configuration. | [E: codex-rs/config/src/config_toml.rs:215] |
-| `default_permissions` | `Option<String>` | none | Default named permissions profile. | [E: codex-rs/config/src/config_toml.rs:220] |
-| `permissions` | `Option<PermissionsToml>` | `#[serde(default)]` | Named permissions profile map. | [E: codex-rs/config/src/config_toml.rs:224] |
+| `approval_policy` | `Option<AskForApproval>` | `#[schemars(with = "Option<crate::schema::ConfigAskForApproval>")]` | Command approval policy field. | [E: codex-rs/config/src/config_toml.rs:177] |
+| `approvals_reviewer` | `Option<ApprovalsReviewer>` | none | Escalated approval reviewer field. | [E: codex-rs/config/src/config_toml.rs:182] |
+| `auto_review` | `Option<AutoReviewToml>` | `#[serde(default)]` | Guardian auto-review configuration field. | [E: codex-rs/config/src/config_toml.rs:186] |
+| `browser_use` | `Option<BrowserUseConfigToml>` | none | Browser-use connector configuration. | [E: codex-rs/config/src/config_toml.rs:188] |
+| `computer_use` | `Option<ComputerUseConfigToml>` | none | Computer-use connector configuration. | [E: codex-rs/config/src/config_toml.rs:190] |
+| `shell_environment_policy` | `ShellEnvironmentPolicyToml` | `#[serde(default)]` | Shell environment policy field. | [E: codex-rs/config/src/config_toml.rs:193] |
+| `allow_login_shell` | `Option<bool>` | `#[serde(default = "default_allow_login_shell")]` | Login-shell permission toggle for shell-based tools. | [E: codex-rs/config/src/config_toml.rs:203] |
+| `sandbox_mode` | `Option<SandboxMode>` | none | Sandbox mode selector. | [E: codex-rs/config/src/config_toml.rs:206] |
+| `allow_symlinked_codex_home` | `Option<bool>` | none | Allow macOS sandbox writable roots at or beneath CODEX_HOME to traverse symlinks. Host user-config only; defaults false; no effect on Linux/Windows. | [E: codex-rs/config/src/config_toml.rs:213] |
+| `sandbox_workspace_write` | `Option<SandboxWorkspaceWrite>` | none | Workspace-write sandbox configuration. | [E: codex-rs/config/src/config_toml.rs:216] |
+| `default_permissions` | `Option<String>` | none | Default named permissions profile. | [E: codex-rs/config/src/config_toml.rs:221] |
+| `permissions` | `Option<PermissionsToml>` | `#[serde(default)]` | Named permissions profile map. | [E: codex-rs/config/src/config_toml.rs:225] |
 
 ## Sources
 

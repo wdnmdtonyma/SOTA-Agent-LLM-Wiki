@@ -8,7 +8,7 @@ symbols: [create_oss_provider, OLLAMA_OSS_PROVIDER_ID, LMSTUDIO_OSS_PROVIDER_ID,
 related: [subsys.providers.overview, subsys.providers.responses-api, subsys.providers.model-catalog, subsys.providers.http-client]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > OSS providers 是本地 OpenAI-compatible provider defaults：Ollama 默认 `http://localhost:11434/v1`，LM Studio 默认 `http://localhost:1234/v1`，auth 为空、wire API 为 Responses、websocket 不支持；Ollama model management 使用 native `/api/*` endpoints，LM Studio probe/fetch/load 使用 OpenAI-compatible paths，download 走 `lms get` CLI。[E: codex-rs/model-provider-info/src/lib.rs:583][E: codex-rs/model-provider-info/src/lib.rs:584][E: codex-rs/model-provider-info/src/lib.rs:586][E: codex-rs/model-provider-info/src/lib.rs:587][E: codex-rs/model-provider-info/src/lib.rs:666][E: codex-rs/model-provider-info/src/lib.rs:678][E: codex-rs/model-provider-info/src/lib.rs:685][E: codex-rs/model-provider-info/src/lib.rs:702][E: codex-rs/model-provider-info/src/lib.rs:703][E: codex-rs/ollama/src/client.rs:100][E: codex-rs/ollama/src/client.rs:133][E: codex-rs/ollama/src/client.rs:189][E: codex-rs/lmstudio/src/client.rs:52][E: codex-rs/lmstudio/src/client.rs:101][E: codex-rs/lmstudio/src/client.rs:71][E: codex-rs/lmstudio/src/client.rs:177]

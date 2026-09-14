@@ -8,7 +8,7 @@ symbols: [create_openai_provider, OPENAI_PROVIDER_ID]
 related: [subsys.providers.overview, subsys.providers.auth-layer, subsys.providers.responses-api, subsys.providers.model-catalog]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > OpenAI built-in provider 的 provider id/name 是 `openai`/`OpenAI`，wire API 是 Responses，默认 base URL 会按 ChatGPT-family auth mode 切到 ChatGPT backend，否则使用 public OpenAI API。[E: codex-rs/model-provider-info/src/lib.rs:40][E: codex-rs/model-provider-info/src/lib.rs:42][E: codex-rs/model-provider-info/src/lib.rs:463][E: codex-rs/model-provider-info/src/lib.rs:465][E: codex-rs/model-provider-info/src/lib.rs:472][E: codex-rs/model-provider-info/src/lib.rs:370][E: codex-rs/model-provider-info/src/lib.rs:374][E: codex-rs/model-provider-info/src/lib.rs:381][E: codex-rs/model-provider-info/src/lib.rs:383]

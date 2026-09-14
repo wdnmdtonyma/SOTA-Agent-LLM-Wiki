@@ -8,7 +8,7 @@ symbols: [add_shell_tools, ExecCommandHandler::one_shot, ConfigShellToolType]
 related: [tool.exec-command, tool.write-stdin, subsys.core.tool-system, spine.shell-exec-flow]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `shell_command` 已退役：`add_shell_tools` 不再注册任何 `ShellCommandHandler`。该名字仍是 reserved name，外部 runtime 不能占用。命令执行只走 `exec_command`；`Feature::UnifiedExec` 关闭时用 `ExecCommandHandler::one_shot`，不是复活 `shell_command`。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/registry.rs:364][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:104]
@@ -64,7 +64,7 @@ updated: 02a8f038b8
 
 `add_shell_tools` 的门控是 environment + `Feature::ShellTool` + 模型 `shell_type != Disabled`。[E: codex-rs/core/src/tools/spec_plan.rs:1083]
 
-`ConfigShellToolType` 只剩两个变体：`UnifiedExec`（serde alias 包含 `"default"` / `"local"` / `"shell_command"`）和 `Disabled`。模型 JSON 写 `"shell_type": "shell_command"` 会反序列化成 `UnifiedExec`，**不会**注册旧 handler。[E: codex-rs/protocol/src/openai_models.rs:310][E: codex-rs/protocol/src/openai_models.rs:311]
+`ConfigShellToolType` 只剩两个变体：`UnifiedExec`（serde alias 包含 `"default"` / `"local"` / `"shell_command"`）和 `Disabled`。模型 JSON 写 `"shell_type": "shell_command"` 会反序列化成 `UnifiedExec`，**不会**注册旧 handler。[E: codex-rs/protocol/src/openai_models.rs:314][E: codex-rs/protocol/src/openai_models.rs:315]
 
 Guardian reviewer 路径也不注册 `shell_command`；它只可能注册 `exec_command` / `write_stdin` / `view_image`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:998]
 

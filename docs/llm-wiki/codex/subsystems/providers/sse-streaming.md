@@ -8,7 +8,7 @@ symbols: [spawn_response_stream, process_sse, process_responses_event, Responses
 related: [subsys.providers.responses-api, subsys.providers.retry-errors, subsys.providers.http-client, subsys.core.rollout-budget]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > SSE streaming subsystem converts a `ByteStream` parsed as SSE via `eventsource()` into `ResponseEvent` values, pre-emits response headers such as model/rate limits/etag/reasoning flags, then parses each Responses stream event until `response.completed` or an error terminal condition。[E: codex-rs/codex-api/src/sse/responses.rs:36][E: codex-rs/codex-api/src/sse/responses.rs:42][E: codex-rs/codex-api/src/sse/responses.rs:48][E: codex-rs/codex-api/src/sse/responses.rs:53][E: codex-rs/codex-api/src/sse/responses.rs:72][E: codex-rs/codex-api/src/sse/responses.rs:74][E: codex-rs/codex-api/src/sse/responses.rs:77][E: codex-rs/codex-api/src/sse/responses.rs:80][E: codex-rs/codex-api/src/sse/responses.rs:83][E: codex-rs/codex-api/src/sse/responses.rs:335][E: codex-rs/codex-api/src/sse/responses.rs:451][E: codex-rs/codex-api/src/sse/responses.rs:520][E: codex-rs/codex-api/src/sse/responses.rs:615][E: codex-rs/codex-api/src/sse/responses.rs:621]
@@ -58,7 +58,7 @@ updated: 02a8f038b8
 
 ## gotcha
 
-- `codex_rollout_budget_units` 是 provider-to-core 私有 accounting 字段：`TokenUsage` 对它同时 `skip_serializing`、跳过 JSON schema 与 TypeScript export；它不是新增的 app-server token-usage notification 字段。[E: codex-rs/protocol/src/protocol.rs:2255][E: codex-rs/protocol/src/protocol.rs:2250][E: codex-rs/protocol/src/protocol.rs:2252][E: codex-rs/protocol/src/protocol.rs:2252]
+- `codex_rollout_budget_units` 是 provider-to-core 私有 accounting 字段：`TokenUsage` 对它同时 `skip_serializing`、跳过 JSON schema 与 TypeScript export；它不是新增的 app-server token-usage notification 字段。[E: codex-rs/protocol/src/protocol.rs:2250][E: codex-rs/protocol/src/protocol.rs:2245][E: codex-rs/protocol/src/protocol.rs:2247][E: codex-rs/protocol/src/protocol.rs:2247]
 - A `response.failed` event does not immediately send the error; `process_sse_with_treatment` stores it as `response_error` and emits it if the stream closes without completed。[E: codex-rs/codex-api/src/sse/responses.rs:530][E: codex-rs/codex-api/src/sse/responses.rs:543][E: codex-rs/codex-api/src/sse/responses.rs:627]
 - An SSE JSON parse failure for one event is skipped, not fatal; this can hide malformed intermediate events until missing completed triggers stream close error。[E: codex-rs/codex-api/src/sse/responses.rs:563][E: codex-rs/codex-api/src/sse/responses.rs:565][E: codex-rs/codex-api/src/sse/responses.rs:565]
 - `response.incomplete` always becomes stream error with incomplete reason text, not a retryable typed error。[E: codex-rs/codex-api/src/sse/responses.rs:435][E: codex-rs/codex-api/src/sse/responses.rs:436][E: codex-rs/codex-api/src/sse/responses.rs:448][E: codex-rs/codex-api/src/sse/responses.rs:449]

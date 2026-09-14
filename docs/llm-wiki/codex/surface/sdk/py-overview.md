@@ -8,7 +8,7 @@ symbols: [python::Codex, AsyncCodex, python::Thread, AsyncThread, TurnHandle, As
 related: [sdk.py-inputs-errors, sdk.sdk-architecture, rpc.overview, rpc.thread-methods, rpc.turn-methods]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Python SDK package is now `openai_codex`: the high-level `Codex` / `AsyncCodex` APIs wrap a typed app-server JSON-RPC client (`CodexClient` / `AsyncCodexClient`) that starts `codex app-server --listen stdio://`, initializes metadata, exposes account/thread/turn helpers, and collects turn notifications into `TurnResult`.[E: sdk/python/pyproject.toml:6][E: sdk/python/src/openai_codex/api.py:88][E: sdk/python/src/openai_codex/api.py:91][E: sdk/python/src/openai_codex/client.py:214][E: sdk/python/src/openai_codex/client.py:246][E: sdk/python/src/openai_codex/client.py:256][E: sdk/python/src/openai_codex/async_client.py:62][E: sdk/python/src/openai_codex/_run.py:22]
@@ -69,9 +69,9 @@ The sync and async collectors gather matching `ItemCompletedNotification`, `Thre
 
 ## Generated protocol compatibility
 
-Python generator 会把 generated `PlanType` 固定改写为 `str, Enum`，并通过 `_missing_` 为任意非空、尚未知的 runtime plan string 创建动态 enum member。这样使用较新 `codex_bin` 时，account payload 的新 plan value 仍保持 typed，而不是因 SDK catalog 滞后而 validation 失败。[E: sdk/python/scripts/update_sdk_artifacts.py:657][E: sdk/python/scripts/update_sdk_artifacts.py:670][E: sdk/python/scripts/update_sdk_artifacts.py:676][E: sdk/python/src/openai_codex/generated/v2_all.py:3039][E: sdk/python/src/openai_codex/generated/v2_all.py:3058]
+Python generator 会把 generated `PlanType` 固定改写为 `str, Enum`，并通过 `_missing_` 为任意非空、尚未知的 runtime plan string 创建动态 enum member。这样使用较新 `codex_bin` 时，account payload 的新 plan value 仍保持 typed，而不是因 SDK catalog 滞后而 validation 失败。[E: sdk/python/scripts/update_sdk_artifacts.py:657][E: sdk/python/scripts/update_sdk_artifacts.py:670][E: sdk/python/scripts/update_sdk_artifacts.py:676][E: sdk/python/src/openai_codex/generated/v2_all.py:3046][E: sdk/python/src/openai_codex/generated/v2_all.py:3065]
 
-这是 generated protocol 的前向兼容修复，不是高层 `Codex`/`Thread` API 新增。`self_serve_business_prolite` 现已是静态 enum member；回归仍用该值做 account payload round-trip，未知非空 string 继续走 `_missing_`。[E: sdk/python/src/openai_codex/generated/v2_all.py:3046][E: sdk/python/src/openai_codex/generated/v2_all.py:3059][E: sdk/python/tests/test_client_rpc_methods.py:235][E: sdk/python/tests/test_client_rpc_methods.py:237][E: sdk/python/tests/test_client_rpc_methods.py:257]
+这是 generated protocol 的前向兼容修复，不是高层 `Codex`/`Thread` API 新增。`self_serve_business_prolite` 现已是静态 enum member；回归仍用该值做 account payload round-trip，未知非空 string 继续走 `_missing_`。[E: sdk/python/src/openai_codex/generated/v2_all.py:3053][E: sdk/python/src/openai_codex/generated/v2_all.py:3066][E: sdk/python/tests/test_client_rpc_methods.py:235][E: sdk/python/tests/test_client_rpc_methods.py:237][E: sdk/python/tests/test_client_rpc_methods.py:257]
 
 ## 设计动机
 

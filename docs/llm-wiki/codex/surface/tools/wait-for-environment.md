@@ -8,14 +8,14 @@ symbols: [WaitForEnvironmentHandler, WaitForEnvironmentToolConfig, WaitForEnviro
 related: [subsys.core.tool-system, subsys.core.tool-router, tool.exec-command, tool.write-stdin]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `wait_for_environment` 让模型等待一个已经在 `<environment_context>` 中标记为 `starting` 的 execution environment。它不会启动新环境；ready 时立即成功，starting 时阻塞到启动完成，未知或失败时返回可供模型继续处理的错误。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:20][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:127][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:148][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:143]
 
 ## 注册与 exposure
 
-只有 `Feature::DeferredExecutor` 启用时，`add_core_utility_tools` 才注册 handler；该 feature 当前是 UnderDevelopment 且默认关闭。宿主可在 thread extension data 中提供 `WaitForEnvironmentToolConfig`，否则使用 core 默认描述。[E: codex-rs/core/src/tools/spec_plan.rs:1146][E: codex-rs/core/src/tools/spec_plan.rs:1152][E: codex-rs/core/src/tools/spec_plan.rs:1153][E: codex-rs/features/src/lib.rs:985][E: codex-rs/features/src/lib.rs:987][E: codex-rs/features/src/lib.rs:988]
+只有 `Feature::DeferredExecutor` 启用时，`add_core_utility_tools` 才注册 handler；该 feature 当前是 UnderDevelopment 且默认关闭。宿主可在 thread extension data 中提供 `WaitForEnvironmentToolConfig`，否则使用 core 默认描述。[E: codex-rs/core/src/tools/spec_plan.rs:1146][E: codex-rs/core/src/tools/spec_plan.rs:1152][E: codex-rs/core/src/tools/spec_plan.rs:1153][E: codex-rs/features/src/lib.rs:989][E: codex-rs/features/src/lib.rs:991][E: codex-rs/features/src/lib.rs:992]
 
 Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，不会注册 `wait_for_environment`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:1029]
 

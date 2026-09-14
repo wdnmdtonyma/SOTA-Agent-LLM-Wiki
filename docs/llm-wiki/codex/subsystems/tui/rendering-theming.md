@@ -8,7 +8,7 @@ symbols: [Renderable, RenderableItem, ColumnRenderable, set_theme_override, adap
 related: [subsys.tui.chatwidget, subsys.tui.streaming-pipeline, subsys.tui.overlays-dialogs]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > TUI rendering 以 small `Renderable` trait 为公共拼装接口，以 syntect/two_face 主题解析代码处理 syntax highlight，以 `ansi-escape` crate 把 ANSI output 转成 ratatui text；ChatWidget/pager/bottom pane 再组合这些 renderables。[E: codex-rs/tui/src/render/renderable.rs:16][E: codex-rs/tui/src/render/highlight.rs:57][E: codex-rs/ansi-escape/src/lib.rs:26][E: codex-rs/tui/src/chatwidget/rendering.rs:122][E: codex-rs/tui/src/pager_overlay.rs:154]
@@ -46,7 +46,7 @@ Ratatui/unicode-width 对 halfwidth Japanese voiced/semi-voiced marks `U+FF9E/U+
 
 line truncation 以 extended grapheme 为切分单位，不会把组合中的 sound mark 拆开。wrapping 则把含 halfwidth marks 的 source grapheme 投影成等 cell-width、textwrap-safe 的 placeholder，包装后再通过 boundary map 还原 source byte ranges，使 textarea cursor、Markdown table、popup 和 status row 使用同一 width 语义。[E: codex-rs/tui/src/line_truncation.rs:13][E: codex-rs/tui/src/line_truncation.rs:47][E: codex-rs/tui/src/line_truncation.rs:49][E: codex-rs/tui/src/line_truncation.rs:56][E: codex-rs/tui/src/wrapping.rs:43][E: codex-rs/tui/src/wrapping.rs:53][E: codex-rs/tui/src/wrapping.rs:74][E: codex-rs/tui/src/wrapping.rs:99][E: codex-rs/tui/src/wrapping.rs:168][E: codex-rs/tui/src/wrapping.rs:217][E: codex-rs/tui/src/wrapping.rs:231][E: codex-rs/tui/src/wrapping.rs:236]
 
-OSC 8 hyperlink 在 Ratatui 已经 layout 完 buffer 后才被注入 cell symbol。由于 escape sequence 会改变 symbol bytes 却不改变可见宽度，`mark_buffer_hyperlinks` 把原 `cell_width` 保存为 `CellDiffOption::ForcedWidth`；custom terminal diff 额外修复 forced-width wide cell 缩短时的 trailing-cell invalidation。[E: codex-rs/tui/src/terminal_hyperlinks.rs:571][E: codex-rs/tui/src/terminal_hyperlinks.rs:646][E: codex-rs/tui/src/terminal_hyperlinks.rs:648][E: codex-rs/tui/src/custom_terminal.rs:653][E: codex-rs/tui/src/custom_terminal.rs:658]
+OSC 8 hyperlink 在 Ratatui 已经 layout 完 buffer 后才被注入 cell symbol。由于 escape sequence 会改变 symbol bytes 却不改变可见宽度，`mark_buffer_hyperlinks` 把原 `cell_width` 保存为 `CellDiffOption::ForcedWidth`；custom terminal diff 额外修复 forced-width wide cell 缩短时的 trailing-cell invalidation。[E: codex-rs/tui/src/terminal_hyperlinks.rs:571][E: codex-rs/tui/src/terminal_hyperlinks.rs:646][E: codex-rs/tui/src/terminal_hyperlinks.rs:648][E: codex-rs/tui/src/custom_terminal.rs:671][E: codex-rs/tui/src/custom_terminal.rs:676]
 
 textarea 的 `delete_backward` 对 Thai 非间距标记（`U+0E31`、`U+0E34..=U+0E3A`、`U+0E47..=U+0E4E`）单独剥一层，而不是按整个 grapheme 删除；spacing vowel 仍走 atomic boundary。这与 halfwidth Japanese sound marks 的 width 修正是两条独立规则。[E: codex-rs/tui/src/bottom_pane/textarea.rs:1138][E: codex-rs/tui/src/bottom_pane/textarea.rs:1149][E: codex-rs/tui/src/bottom_pane/textarea.rs:1149][E: codex-rs/tui/src/bottom_pane/textarea.rs:1158][E: codex-rs/tui/src/width.rs:23]
 

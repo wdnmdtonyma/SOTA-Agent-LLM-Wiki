@@ -8,10 +8,10 @@ symbols: [ExecCommandHandler, ExecCommandHandlerOptions, ExecCommandArgs, ExecCo
 related: [tool.write-stdin, tool.shell-command, subsys.core.unified-exec, subsys.core.tool-system, subsys.core.tool-router]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
-> `exec_command` 是当前唯一注册的命令执行 handler：模型提交 `cmd`，handler 解析环境、工作目录、shell/login/TTY/权限字段，分配 process id 后交给 `UnifiedExecProcessManager`。UnifiedExec=on 时命令未结束可带 `session_id` 给 `write_stdin`；UnifiedExec=off 时走 `ExecCommandHandler::one_shot`，跑到 completion 且不可 resume。`tty` 还受 `Feature::UnifiedExecTty` 门控，不是始终暴露。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:96][E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:104][E: codex-rs/features/src/lib.rs:950]
+> `exec_command` 是当前唯一注册的命令执行 handler：模型提交 `cmd`，handler 解析环境、工作目录、shell/login/TTY/权限字段，分配 process id 后交给 `UnifiedExecProcessManager`。UnifiedExec=on 时命令未结束可带 `session_id` 给 `write_stdin`；UnifiedExec=off 时走 `ExecCommandHandler::one_shot`，跑到 completion 且不可 resume。`tty` 还受 `Feature::UnifiedExecTty` 门控，不是始终暴露。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:96][E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:104][E: codex-rs/features/src/lib.rs:954]
 
 ## 能回答的问题
 
@@ -28,7 +28,7 @@ updated: 02a8f038b8
 | 项 | 值 |
 |---|---|
 | wire name | `ExecCommandHandler::tool_name()` 返回 plain `"exec_command"`；schema constructor 也把 `ResponsesApiTool.name` 设为 `"exec_command"`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:113][E: codex-rs/core/src/tools/handlers/shell_spec.rs:96] |
-| concrete handler | `ExecCommandHandler` 保存 `ExecCommandHandlerOptions` 与 `ExecCommandLifetime`（`Interactive` 或 `OneShot`）。`new` 设 Interactive，`one_shot` 设 OneShot。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:70][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:104][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:104] |
+| concrete handler | `ExecCommandHandler` 保存 `ExecCommandHandlerOptions` 与 `ExecCommandLifetime`（`Interactive` 或 `OneShot`）。`new` 设 Interactive，`one_shot` 设 OneShot。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:70][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:97][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:104] |
 | ToolSpec | `create_exec_command_tool_with_environment_id` 返回 `ToolSpec::Function`；OneShot 再经 `one_shot_exec_command_spec` 改 description、删 `tty`/`yield_time_ms`、加 `timeout_ms`、删 output `session_id`。`allow_tty=false` 时 Interactive spec 也会删除 `tty`。[E: codex-rs/core/src/tools/handlers/shell_spec.rs:95][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:117][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:131][E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:486] |
 | handler contract | 实现 `ToolExecutor<ToolInvocation>`，`supports_parallel_tool_calls()` 返回 `true`。[E: codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs:142] |
 
@@ -72,9 +72,9 @@ code-mode nested result 是结构化 JSON，对齐 `chunk_id`、`wall_time_secon
 
 普通 turn 走 `add_shell_tools`。没有 environment / ShellTool 关 / 模型 Disabled 时不注册。[E: codex-rs/core/src/tools/spec_plan.rs:1079][E: codex-rs/core/src/tools/spec_plan.rs:1083]
 
-`Feature::UnifiedExec` 全平台默认 `true`。[E: codex-rs/features/src/lib.rs:943][E: codex-rs/features/src/lib.rs:946] 开启时注册 `ExecCommandHandler::new` + `WriteStdinHandler`；关闭时只注册 `ExecCommandHandler::one_shot`，**不再**注册 `ShellCommandHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111] `Feature::UnifiedExecTty` 默认 true，控制 `allow_tty`。[E: codex-rs/features/src/lib.rs:949][E: codex-rs/core/src/tools/spec_plan.rs:1095]
+`Feature::UnifiedExec` 全平台默认 `true`。[E: codex-rs/features/src/lib.rs:947][E: codex-rs/features/src/lib.rs:950] 开启时注册 `ExecCommandHandler::new` + `WriteStdinHandler`；关闭时只注册 `ExecCommandHandler::one_shot`，**不再**注册 `ShellCommandHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1104][E: codex-rs/core/src/tools/spec_plan.rs:1111] `Feature::UnifiedExecTty` 默认 true，控制 `allow_tty`。[E: codex-rs/features/src/lib.rs:953][E: codex-rs/core/src/tools/spec_plan.rs:1095]
 
-`ConfigShellToolType` 只剩 `UnifiedExec` 与 `Disabled`；legacy `"shell_command"` alias 反序列化为 `UnifiedExec`。[E: codex-rs/protocol/src/openai_models.rs:310][E: codex-rs/protocol/src/openai_models.rs:311]
+`ConfigShellToolType` 只剩 `UnifiedExec` 与 `Disabled`；legacy `"shell_command"` alias 反序列化为 `UnifiedExec`。[E: codex-rs/protocol/src/openai_models.rs:315][E: codex-rs/protocol/src/openai_models.rs:316]
 
 zsh-fork 不再改 shell type，而是 session 级 `UnifiedExecShellMode::for_session`：Unix + ShellTool + UnifiedExec + ShellZshFork + UnifiedExecZshFork + 用户 shell 是 Zsh + 两条 path 都可转成 `AbsolutePathBuf` 时才进 `ZshFork`，否则 `Direct`。[E: codex-rs/tools/src/tool_config.rs:41][E: codex-rs/tools/src/tool_config.rs:70]
 

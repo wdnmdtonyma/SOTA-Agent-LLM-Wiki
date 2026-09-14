@@ -8,7 +8,7 @@ symbols: [CodeModeSessionProvider, DisabledCodeModeSessionProvider, ProcessOwned
 related: [tool.code-mode-exec, tool.code-mode-wait, subsys.app-server.transport, subsys.platform.analytics, ref.feature-flags]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > 本地 V8 runtime 已从 `code-mode` 拆到独立 `code-mode-runtime` crate；`code-mode` 现在只公开 protocol 与 disabled/process-owned/gRPC session providers。旧的 `WebSocketCodeModeSessionProvider` 已删除。core 本身不会回退到同进程 V8：启用 host 路径时用 process-owned provider，否则使用 disabled provider。[E: codex-rs/code-mode/src/lib.rs:4][E: codex-rs/code-mode/src/lib.rs:5][E: codex-rs/code-mode/src/lib.rs:6][E: codex-rs/code-mode/src/lib.rs:8][E: codex-rs/core/src/thread_manager.rs:507][E: codex-rs/core/src/thread_manager.rs:508]
@@ -29,15 +29,15 @@ updated: 02a8f038b8
 
 app-server 按 `CodeModeHostTransport` 选择远程 provider：`Local` 不注入远程 provider（回落到 ThreadManager 的 process-owned/disabled 分支），`Grpc` 构造 `GrpcCodeModeSessionProvider` 并要求 `Feature::CodeModeHost`。WebSocket session provider 已删除。[E: codex-rs/app-server/src/lib.rs:588][E: codex-rs/app-server/src/lib.rs:590][E: codex-rs/app-server/src/lib.rs:591][E: codex-rs/app-server/src/lib.rs:592][E: codex-rs/app-server/src/lib.rs:599]
 
-process-owned provider 会定位/启动 `codex-code-mode-host`；host 内部才创建 `InProcessCodeModeSession`。因此“本地 code mode”仍是独立 host process，而不是 core 进程内 V8。[E: codex-rs/code-mode/src/remote_session.rs:58][E: codex-rs/code-mode/src/remote_session.rs:65][E: codex-rs/code-mode-host/src/lib.rs:533]
+process-owned provider 会定位/启动 `codex-code-mode-host`；host 内部才创建 `InProcessCodeModeSession`。因此“本地 code mode”仍是独立 host process，而不是 core 进程内 V8。[E: codex-rs/code-mode/src/remote_session.rs:57][E: codex-rs/code-mode/src/remote_session.rs:64][E: codex-rs/code-mode-host/src/lib.rs:533]
 
 ## Cell 生命周期
 
-`exec` handler 解析 JavaScript、收集 nested tool definitions，向 session provider 发送 `ExecuteRequest`。收到 cell id 后，它记录 `CellStarted` fact、注册 tool-call/cell 关系、开启 rollout trace，并在等待 initial response 前标记 cell ready for dispatch。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:44][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:74][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:89][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:104][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:112]
+`exec` handler 解析 JavaScript、收集 nested tool definitions，向 session provider 发送 `ExecuteRequest`。收到 cell id 后，它记录 `CellStarted` fact、注册 tool-call/cell 关系、开启 rollout trace，并在等待 initial response 前标记 cell ready for dispatch。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:44][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:74][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:92][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:107][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:115]
 
-首个 response 若不是 `Yielded`，handler 立即记录 terminal trace、finish dispatch 并发送 `CellClosed`；yielded cell 则由后续 `wait`/terminate 完成同一生命周期。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:127][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:132][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:136]
+首个 response 若不是 `Yielded`，handler 立即记录 terminal trace、finish dispatch 并发送 `CellClosed`；yielded cell 则由后续 `wait`/terminate 完成同一生命周期。[E: codex-rs/core/src/tools/code_mode/execute_handler.rs:130][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:135][E: codex-rs/core/src/tools/code_mode/execute_handler.rs:139]
 
-nested tool dispatch 会拒绝 `exec` 自调用。[E: codex-rs/core/src/tools/code_mode/mod.rs:361][E: codex-rs/core/src/tools/code_mode/mod.rs:363]
+nested tool dispatch 会拒绝 `exec` 自调用。[E: codex-rs/core/src/tools/code_mode/mod.rs:379][E: codex-rs/core/src/tools/code_mode/mod.rs:380]
 
 ## Host transport
 
@@ -51,9 +51,9 @@ proto `CodeModeHost` 用独立 HTTP/2 stream 拆开 session event、tool subscri
 
 ## Session / description 上限
 
-framed host 的 `open_session` 只拒绝重复 session id、shutdown 中的 host 和已复用过的 session id；它不再按并发 open-session 数或 tool-description 大小拒绝请求。[E: codex-rs/code-mode-host/src/lib.rs:498][E: codex-rs/code-mode-host/src/lib.rs:504][E: codex-rs/code-mode-host/src/lib.rs:509][E: codex-rs/code-mode-host/src/lib.rs:518]
+framed host 的 `open_session` 只拒绝重复 session id、shutdown 中的 host 和已复用过的 session id；它不再按并发 open-session 数或 tool-description 大小拒绝请求。[E: codex-rs/code-mode-host/src/lib.rs:502][E: codex-rs/code-mode-host/src/lib.rs:508][E: codex-rs/code-mode-host/src/lib.rs:513][E: codex-rs/code-mode-host/src/lib.rs:522]
 
-gRPC `open_session` 同样不设 open-session 数量上限：每次请求生成新 UUID 并插入 session map。仍保留的是 request/active-cell/control/delegate semaphore，而不是 session 或 description 配额。[E: codex-rs/code-mode-host/src/grpc/session.rs:106][E: codex-rs/code-mode-host/src/grpc/session.rs:110][E: codex-rs/code-mode-host/src/grpc/session.rs:129][E: codex-rs/code-mode-host/src/grpc/session.rs:101][E: codex-rs/code-mode-host/src/lib.rs:54][E: codex-rs/code-mode-host/src/lib.rs:55]
+gRPC `open_session` 同样不设 open-session 数量上限：每次请求生成新 UUID 并插入 session map。仍保留的是 request/active-cell/control/delegate semaphore，而不是 session 或 description 配额。[E: codex-rs/code-mode-host/src/grpc/session.rs:105][E: codex-rs/code-mode-host/src/grpc/session.rs:109][E: codex-rs/code-mode-host/src/grpc/session.rs:128][E: codex-rs/code-mode-host/src/grpc/session.rs:100][E: codex-rs/code-mode-host/src/lib.rs:54][E: codex-rs/code-mode-host/src/lib.rs:55]
 
 ## Analytics 归并
 

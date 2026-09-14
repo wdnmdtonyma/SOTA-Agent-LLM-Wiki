@@ -8,7 +8,7 @@ symbols: [create_wait_agent_tool_v1, WaitAgentHandler, multi_agents::wait::Handl
 related: [tool.spawn-agent-v1, tool.send-input-v1, tool.wait-agent-v2]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `wait_agent` V1 是 `multi_agent_v1` namespace 下的 target-list wait 工具；它等待指定 agent thread id 达到 final status，并返回 status map，runtime key 优先使用 agent path、缺失时回退 thread id。
@@ -23,7 +23,7 @@ updated: 02a8f038b8
 
 ## 注册与门控
 
-`wait_agent` V1 注册在 `collab_tools_enabled` true 且 `multi_agent_v2_enabled` false 的分支；V1 exposure 在 model search support 与 namespace capability 同时开启时是 deferred，否则 direct。V1 timeout 走 `DEFAULT_WAIT_TIMEOUT_MS` / `MIN_WAIT_TIMEOUT_MS` / `MAX_WAIT_TIMEOUT_MS`，不是 `multi_agent_v2.*` 配置。[E: codex-rs/core/src/tools/spec_plan.rs:629][E: codex-rs/core/src/tools/spec_plan.rs:746][E: codex-rs/core/src/tools/spec_plan.rs:1285][E: codex-rs/core/src/tools/spec_plan.rs:1344][E: codex-rs/core/src/tools/spec_plan.rs:1367]
+`wait_agent` V1 注册在 `collab_tools_enabled` true 且 `multi_agent_v2_enabled` false 的分支；V1 exposure 在 model search support 与 namespace capability 同时开启时是 deferred，否则 direct。V1 timeout 走 `DEFAULT_WAIT_TIMEOUT_MS` / `MIN_WAIT_TIMEOUT_MS` / `MAX_WAIT_TIMEOUT_MS`，不是 `multi_agent_v2.*` 配置。[E: codex-rs/core/src/tools/spec_plan.rs:629][E: codex-rs/core/src/tools/spec_plan.rs:746][E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1345][E: codex-rs/core/src/tools/spec_plan.rs:1368]
 
 handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:39][E: codex-rs/tools/src/tool_executor.rs:122]
 

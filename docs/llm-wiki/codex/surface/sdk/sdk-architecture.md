@@ -8,7 +8,7 @@ symbols: []
 related: [sdk.ts-overview, sdk.ts-events-items, sdk.ts-structured-output, sdk.py-overview, sdk.py-inputs-errors, rpc.overview]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > Codex SDK currently has two different runtime paths: TypeScript is a typed wrapper over `codex exec --experimental-json` JSONL events, while Python `openai_codex` is a typed JSON-RPC client over `codex app-server --listen stdio://` with a reader-thread message router.[E: sdk/typescript/src/exec.ts:92][E: sdk/typescript/src/exec.ts:196][E: sdk/typescript/src/exec.ts:237][E: sdk/python/src/openai_codex/client.py:242][E: sdk/python/src/openai_codex/client.py:256][E: sdk/python/src/openai_codex/_message_router.py:69]
@@ -42,7 +42,7 @@ Python typed helpers call app-server v2 methods directly: `thread_start` sends `
 
 `_start_turn` attaches the turn subscription at the `turn/start` request: `pending_turn` buffers events from that write, then `prepare_turn` binds the handle or default consumer. `Thread.turn()` / `AsyncThread.turn()` pass that subscription into the handle instead of subscribing after the fact.[E: sdk/python/src/openai_codex/client.py:677][E: sdk/python/src/openai_codex/client.py:679][E: sdk/python/src/openai_codex/_message_router.py:146][E: sdk/python/src/openai_codex/_message_router.py:159][E: sdk/python/src/openai_codex/api.py:652][E: sdk/python/src/openai_codex/api.py:759]
 
-Python 的 generated schema 还有一层手工 post-processing：`PlanType` 保留当前 known constants，同时以 `_missing_` 接受未来非空 string；这是 app-server runtime 与较旧 Python wheel 的版本偏斜防护。TypeScript SDK 本轮没有对应 source diff，因为它继续消费 exec JSONL schema而非该 generated account enum。[E: sdk/python/scripts/update_sdk_artifacts.py:657][E: sdk/python/scripts/update_sdk_artifacts.py:676][E: sdk/python/src/openai_codex/generated/v2_all.py:3039][E: sdk/python/src/openai_codex/generated/v2_all.py:3059]
+Python 的 generated schema 还有一层手工 post-processing：`PlanType` 保留当前 known constants，同时以 `_missing_` 接受未来非空 string；这是 app-server runtime 与较旧 Python wheel 的版本偏斜防护。TypeScript SDK 本轮没有对应 source diff，因为它继续消费 exec JSONL schema而非该 generated account enum。[E: sdk/python/scripts/update_sdk_artifacts.py:657][E: sdk/python/scripts/update_sdk_artifacts.py:676][E: sdk/python/src/openai_codex/generated/v2_all.py:3046][E: sdk/python/src/openai_codex/generated/v2_all.py:3066]
 
 `MessageRouter` is the split point for Python transport ordering: the reader thread classifies server requests, notifications, and responses; the router routes errors through `map_jsonrpc_error`, turn-scoped notifications to turn event cursors, login notifications to login queues, goal notifications to goal state, and everything else to the global queue.[E: sdk/python/src/openai_codex/client.py:863][E: sdk/python/src/openai_codex/client.py:868][E: sdk/python/src/openai_codex/client.py:875][E: sdk/python/src/openai_codex/client.py:879][E: sdk/python/src/openai_codex/_message_router.py:258][E: sdk/python/src/openai_codex/_message_router.py:270][E: sdk/python/src/openai_codex/_message_router.py:283][E: sdk/python/src/openai_codex/_message_router.py:314]
 

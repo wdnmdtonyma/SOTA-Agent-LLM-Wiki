@@ -8,7 +8,7 @@ symbols: [ApplyPatchHandler, create_apply_patch_freeform_tool, APPLY_PATCH_LARK_
 related: [tool.exec-command, tool.shell-command, subsys.core.tool-system, subsys.core.tool-router, subsys.exec-sandbox.apply-patch-engine]
 evidence: explicit
 status: verified
-updated: 02a8f038b8
+updated: 3abbf9fe2c
 ---
 
 > `apply_patch` 是当前 Codex 的 freeform custom tool 文件编辑 surface：模型提交完整 patch envelope，handler 只接受 `ToolPayload::Custom`，重新解析、按 turn environment 校验文件系统与 sandbox，再根据 safety/approval 决策直接拒绝或委托 `ApplyPatchRuntime` 写入。Lark grammar 现位于 `core/assets/tools/apply_patch.lark`。[E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:5][E: codex-rs/core/src/tools/handlers/apply_patch.rs:375][E: codex-rs/core/src/tools/runtimes/apply_patch.rs:179]
@@ -44,7 +44,7 @@ updated: 02a8f038b8
 
 基础 grammar 要求 `start: begin_patch hunk+ end_patch`；begin/end marker 分别是 `*** Begin Patch` 和 `*** End Patch`，end 允许可选 LF。[E: codex-rs/core/assets/tools/apply_patch.lark:1][E: codex-rs/core/assets/tools/apply_patch.lark:2][E: codex-rs/core/assets/tools/apply_patch.lark:3] hunk 可以是 add、delete 或 update；add 要求至少一行 `+` 内容，update 允许可选 `*** Move to:` 和 change block。[E: codex-rs/core/assets/tools/apply_patch.lark:5][E: codex-rs/core/assets/tools/apply_patch.lark:6][E: codex-rs/core/assets/tools/apply_patch.lark:8][E: codex-rs/core/assets/tools/apply_patch.lark:13]
 
-当 `ToolEnvironmentMode::Multiple` 生效时，spec constructor 会把 start rule 改写为允许 `*** Environment ID: ...` preamble；资产文件本身不含 `environment_id` 规则。parser/streaming parser 会保存该 environment id，并拒绝重复或空 id。[E: codex-rs/core/src/tools/spec_plan.rs:1256][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:11][E: codex-rs/apply-patch/src/parser.rs:204][E: codex-rs/apply-patch/src/streaming_parser.rs:88][E: codex-rs/apply-patch/src/streaming_parser.rs:94]
+当 `ToolEnvironmentMode::Multiple` 生效时，spec constructor 会把 start rule 改写为允许 `*** Environment ID: ...` preamble；资产文件本身不含 `environment_id` 规则。parser/streaming parser 会保存该 environment id，并拒绝重复或空 id。[E: codex-rs/core/src/tools/spec_plan.rs:1257][E: codex-rs/core/src/tools/handlers/apply_patch_spec.rs:11][E: codex-rs/apply-patch/src/parser.rs:204][E: codex-rs/apply-patch/src/streaming_parser.rs:88][E: codex-rs/apply-patch/src/streaming_parser.rs:94]
 
 ## 4 输出与错误
 
@@ -54,7 +54,7 @@ parse/verification 错误面向模型返回明确文本：初始 parse error 是
 
 ## 5 注册与门控
 
-`add_core_tool_sources` 调用 `add_core_utility_tools`；后者只在 environment 可用且 model info 指定 apply-patch tool type 时注册 `ApplyPatchHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1034][E: codex-rs/core/src/tools/spec_plan.rs:1255]
+`add_core_tool_sources` 调用 `add_core_utility_tools`；后者只在 environment 可用且 model info 指定 apply-patch tool type 时注册 `ApplyPatchHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1034][E: codex-rs/core/src/tools/spec_plan.rs:1256]
 
 Guardian reviewer turn 提前返回，不会注册 `apply_patch`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:1029]
 
