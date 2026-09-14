@@ -9,7 +9,7 @@ symbols: [RuntimeFlags.experimentalEventSystem, EventV2Bridge, SessionV2, Sessio
 related: [spine.v1-turn-loop, spine.v2-overview]
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > V1/V2 迁移边界是:默认 opencode CLI/server 仍保留 V1 session prompt loop,但 V1 durable events 与 V2 durable events 共享 EventV2/manifest/projector 基础设施;current V2 embedded API 通过 server routes 与 sdk-next 接入,不再通过已删除的 `packages/core/src/public/opencode.ts`。

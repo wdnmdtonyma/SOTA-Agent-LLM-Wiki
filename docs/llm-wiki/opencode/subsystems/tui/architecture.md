@@ -9,7 +9,7 @@ symbols: [run, TuiInput, App]
 related: [tui.routing, tui.sync-store, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > TUI 架构是 `@opencode-ai/tui` 里的 OpenTUI `CliRenderer` + SolidJS reactive tree；OpenCode domain 边界主要是 `@opencode-ai/sdk/v2` client/event stream，V1 legacy CLI 只是 host/transport/plugin adapter。

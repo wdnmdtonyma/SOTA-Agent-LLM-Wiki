@@ -16,7 +16,7 @@ related:
   - tui.theming
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > TUI theme catalog 由 `DEFAULT_THEMES`、插件 theme、用户 custom theme 和可选 `system` theme 合成；当前 HEAD 的 `DEFAULT_THEMES` 表包含 33 个 theme key [I]。

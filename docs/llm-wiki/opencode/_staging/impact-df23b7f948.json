@@ -1,0 +1,1972 @@
+{
+  "base": "b3f1a96c6dd7adeb28b36dd11add1998fc84d67b",
+  "head": "df23b7f9488a38e6f8064a0739d4f8cde86d7cfb",
+  "counts": {
+    "C-DRIFT": 9,
+    "D-CLEAN": 179,
+    "B-HEAVY": 1
+  },
+  "new_files": [
+    "packages/console/app/src/routes/api/support/actions/block-workspaces.ts",
+    "packages/console/app/src/routes/api/support/actions/unblock-workspaces.ts",
+    "packages/stats/core/src/r2-sql.test.ts"
+  ],
+  "deleted_files": [],
+  "renamed_files": [],
+  "nodes": [
+    {
+      "id": "spine.overview",
+      "path": "spine/overview.md",
+      "grade": "C-DRIFT",
+      "lines": 10,
+      "add": 5,
+      "del": 5,
+      "files": [
+        "packages/opencode/package.json",
+        "packages/core/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "spine.boot",
+      "path": "spine/boot.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.cli-to-session",
+      "path": "spine/cli-to-session.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.v1-turn-loop",
+      "path": "spine/v1-turn-loop.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.v1-v2-relationship",
+      "path": "spine/v1-v2-relationship.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-overview",
+      "path": "spine/v2-overview.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-admission",
+      "path": "spine/v2-admission.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-coordinator",
+      "path": "spine/v2-coordinator.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-provider-turn",
+      "path": "spine/v2-provider-turn.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-context-epoch",
+      "path": "spine/v2-context-epoch.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.v2-event-sourcing",
+      "path": "spine/v2-event-sourcing.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.trace-first-prompt",
+      "path": "spine/trace-first-prompt.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.trace-tool-call",
+      "path": "spine/trace-tool-call.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.trace-steer-mid-turn",
+      "path": "spine/trace-steer-mid-turn.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "spine.trace-compaction-overflow",
+      "path": "spine/trace-compaction-overflow.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.read",
+      "path": "surface/tools/read.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.edit",
+      "path": "surface/tools/edit.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.write",
+      "path": "surface/tools/write.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.bash",
+      "path": "surface/tools/bash.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.glob",
+      "path": "surface/tools/glob.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.grep",
+      "path": "surface/tools/grep.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.apply-patch",
+      "path": "surface/tools/apply-patch.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.task",
+      "path": "surface/tools/task.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.webfetch",
+      "path": "surface/tools/webfetch.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.websearch",
+      "path": "surface/tools/websearch.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.todowrite",
+      "path": "surface/tools/todowrite.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.skill",
+      "path": "surface/tools/skill.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.question",
+      "path": "surface/tools/question.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.lsp",
+      "path": "surface/tools/lsp.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.plan-exit",
+      "path": "surface/tools/plan-exit.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.invalid",
+      "path": "surface/tools/invalid.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.external-directory",
+      "path": "surface/tools/external-directory.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "agent.builtins",
+      "path": "surface/agents/builtins.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "agent.config",
+      "path": "surface/agents/config.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "prompt.system-prompts",
+      "path": "surface/prompts/system-prompts.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "cli.opencode-yargs",
+      "path": "surface/cli/opencode-yargs.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "cli.lildax-framework",
+      "path": "surface/cli/lildax-framework.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "cli.run",
+      "path": "surface/cli/run.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.v1-core",
+      "path": "surface/config/v1-core.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.v1-providers-mcp-lsp",
+      "path": "surface/config/v1-providers-mcp-lsp.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.v1-misc",
+      "path": "surface/config/v1-misc.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.v2-schema",
+      "path": "surface/config/v2-schema.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.migration",
+      "path": "surface/config/migration.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.tui",
+      "path": "surface/config/tui.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "provider.resolution",
+      "path": "surface/providers/resolution.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "provider.auth-accounts",
+      "path": "surface/providers/auth-accounts.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "provider.catalog",
+      "path": "surface/providers/catalog.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server-api.overview",
+      "path": "surface/server-api/overview.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server-api.v1-routes",
+      "path": "surface/server-api/v1-routes.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server-api.v2-routes",
+      "path": "surface/server-api/v2-routes.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "sdk.overview",
+      "path": "surface/sdk/overview.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "sdk.surface",
+      "path": "surface/sdk/surface.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "plugin-api.v1-hooks",
+      "path": "surface/plugin-api/v1-hooks.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "plugin-api.v2-hooks",
+      "path": "surface/plugin-api/v2-hooks.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "plugin-api.tui",
+      "path": "surface/plugin-api/tui.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "subsys.tools.v1",
+      "path": "subsystems/tools/v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "subsys.tools.v2",
+      "path": "subsystems/tools/v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "subsys.tools.output-bounding",
+      "path": "subsystems/tools/output-bounding.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.inbox",
+      "path": "subsystems/session-v2/inbox.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.system-context-algebra",
+      "path": "subsystems/session-v2/system-context-algebra.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.system-context-registry",
+      "path": "subsystems/session-v2/system-context-registry.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.history-selection",
+      "path": "subsystems/session-v2/history-selection.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.projector",
+      "path": "subsystems/session-v2/projector.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.llm-event-publisher",
+      "path": "subsystems/session-v2/llm-event-publisher.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.message-lowering",
+      "path": "subsystems/session-v2/message-lowering.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.model-resolution",
+      "path": "subsystems/session-v2/model-resolution.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.compaction",
+      "path": "subsystems/session-v2/compaction.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v2.location-wiring",
+      "path": "subsystems/session-v2/location-wiring.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v1.prompt",
+      "path": "subsystems/session-v1/prompt.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v1.processor",
+      "path": "subsystems/session-v1/processor.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v1.llm-runtime",
+      "path": "subsystems/session-v1/llm-runtime.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v1.compaction-overflow",
+      "path": "subsystems/session-v1/compaction-overflow.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v1.instructions",
+      "path": "subsystems/session-v1/instructions.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "session-v1.store",
+      "path": "subsystems/session-v1/store.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.llm-protocol-engine",
+      "path": "subsystems/model-layer/llm-protocol-engine.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.llm-schema",
+      "path": "subsystems/model-layer/llm-schema.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.llm-protocols",
+      "path": "subsystems/model-layer/llm-protocols.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.llm-tools",
+      "path": "subsystems/model-layer/llm-tools.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.provider-registry-v1",
+      "path": "subsystems/model-layer/provider-registry-v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.provider-transforms",
+      "path": "subsystems/model-layer/provider-transforms.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.auth",
+      "path": "subsystems/model-layer/auth.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.copilot",
+      "path": "subsystems/model-layer/copilot.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.model-catalog-v2",
+      "path": "subsystems/model-layer/model-catalog-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "model-layer.credential-v2",
+      "path": "subsystems/model-layer/credential-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.permissions-v1",
+      "path": "subsystems/execution/permissions-v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.permissions-v2",
+      "path": "subsystems/execution/permissions-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.shell-v1",
+      "path": "subsystems/execution/shell-v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.shell-v2",
+      "path": "subsystems/execution/shell-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.patch-v1",
+      "path": "subsystems/execution/patch-v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.patch-v2",
+      "path": "subsystems/execution/patch-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.snapshots",
+      "path": "subsystems/execution/snapshots.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.git",
+      "path": "subsystems/execution/git.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.worktree",
+      "path": "subsystems/execution/worktree.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.background",
+      "path": "subsystems/execution/background.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.pty",
+      "path": "subsystems/execution/pty.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.mcp-client",
+      "path": "subsystems/integrations/mcp-client.md",
+      "grade": "C-DRIFT",
+      "lines": 4,
+      "add": 2,
+      "del": 2,
+      "files": [
+        "packages/opencode/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "integrations.lsp",
+      "path": "subsystems/integrations/lsp.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.ide",
+      "path": "subsystems/integrations/ide.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.acp",
+      "path": "subsystems/integrations/acp.md",
+      "grade": "C-DRIFT",
+      "lines": 201,
+      "add": 161,
+      "del": 40,
+      "files": [
+        "packages/opencode/src/acp/service.ts",
+        "packages/opencode/src/acp/event.ts",
+        "packages/opencode/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "integrations.skills",
+      "path": "subsystems/integrations/skills.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.commands",
+      "path": "subsystems/integrations/commands.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.formatters",
+      "path": "subsystems/integrations/formatters.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.question",
+      "path": "subsystems/integrations/question.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.image",
+      "path": "subsystems/integrations/image.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.config-loading",
+      "path": "subsystems/persistence/config-loading.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.storage-v1",
+      "path": "subsystems/persistence/storage-v1.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.database",
+      "path": "subsystems/persistence/database.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.project-instance-location",
+      "path": "subsystems/persistence/project-instance-location.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.eventing",
+      "path": "subsystems/persistence/eventing.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.installation",
+      "path": "subsystems/persistence/installation.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.filesystem-search",
+      "path": "subsystems/persistence/filesystem-search.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.architecture",
+      "path": "subsystems/tui/architecture.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.routing",
+      "path": "subsystems/tui/routing.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.sync-store",
+      "path": "subsystems/tui/sync-store.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.session-screen",
+      "path": "subsystems/tui/session-screen.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.home-screen",
+      "path": "subsystems/tui/home-screen.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.theming",
+      "path": "subsystems/tui/theming.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.keybindings",
+      "path": "subsystems/tui/keybindings.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.feature-plugins",
+      "path": "subsystems/tui/feature-plugins.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.prompt",
+      "path": "subsystems/tui/prompt.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.dialog-kit",
+      "path": "subsystems/tui/dialog-kit.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.runtime-hosting",
+      "path": "subsystems/tui/runtime-hosting.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tui.run-scrollback",
+      "path": "subsystems/tui/run-scrollback.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.http-server",
+      "path": "subsystems/server/http-server.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.embedded-public-api",
+      "path": "subsystems/server/embedded-public-api.md",
+      "grade": "C-DRIFT",
+      "lines": 6,
+      "add": 3,
+      "del": 3,
+      "files": [
+        "packages/core/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "server.sharing",
+      "path": "subsystems/server/sharing.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.control-plane",
+      "path": "subsystems/server/control-plane.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.observability",
+      "path": "subsystems/server/observability.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "server.plugin-system",
+      "path": "subsystems/server/plugin-system.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "clients.desktop",
+      "path": "subsystems/clients/desktop.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "clients.app",
+      "path": "subsystems/clients/app.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "clients.web",
+      "path": "subsystems/clients/web.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "clients.console",
+      "path": "subsystems/clients/console.md",
+      "grade": "C-DRIFT",
+      "lines": 3,
+      "add": 3,
+      "del": 0,
+      "files": [
+        "packages/console/app/src/routes/zen/util/handler.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "clients.ui",
+      "path": "subsystems/clients/ui.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "clients.storybook",
+      "path": "subsystems/clients/storybook.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "infra.build-monorepo",
+      "path": "subsystems/infra/build-monorepo.md",
+      "grade": "C-DRIFT",
+      "lines": 4,
+      "add": 2,
+      "del": 2,
+      "files": [
+        "packages/opencode/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "infra.native-binary-release",
+      "path": "subsystems/infra/native-binary-release.md",
+      "grade": "C-DRIFT",
+      "lines": 4,
+      "add": 2,
+      "del": 2,
+      "files": [
+        "packages/opencode/package.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "infra.sst",
+      "path": "subsystems/infra/sst.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "infra.ci-workflows",
+      "path": "subsystems/infra/ci-workflows.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "infra.nix",
+      "path": "subsystems/infra/nix.md",
+      "grade": "C-DRIFT",
+      "lines": 8,
+      "add": 4,
+      "del": 4,
+      "files": [
+        "nix/hashes.json"
+      ],
+      "missing": []
+    },
+    {
+      "id": "peripheral.slack",
+      "path": "subsystems/peripheral/slack.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "peripheral.function",
+      "path": "subsystems/peripheral/function.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "peripheral.enterprise",
+      "path": "subsystems/peripheral/enterprise.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "peripheral.stats",
+      "path": "subsystems/peripheral/stats.md",
+      "grade": "C-DRIFT",
+      "lines": 188,
+      "add": 157,
+      "del": 31,
+      "files": [
+        "packages/stats/core/src/domain/inference.test.ts",
+        "packages/stats/core/src/domain/inference.ts",
+        "packages/stats/core/src/domain/model-normalization.ts",
+        "packages/stats/core/src/r2-sql.test.ts",
+        "packages/stats/core/src/r2-sql.ts",
+        "packages/stats/core/src/stat-sync.ts"
+      ],
+      "missing": []
+    },
+    {
+      "id": "peripheral.containers",
+      "path": "subsystems/peripheral/containers.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "peripheral.http-recorder",
+      "path": "subsystems/peripheral/http-recorder.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "peripheral.effect-sqlite",
+      "path": "subsystems/peripheral/effect-sqlite.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "peripheral.script-identity",
+      "path": "subsystems/peripheral/script-identity.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-interface",
+      "path": "reference/tool-interface.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-schema-conversion",
+      "path": "reference/tool-schema-conversion.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-wire-protocol",
+      "path": "reference/tool-wire-protocol.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-catalog",
+      "path": "reference/tool-catalog.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tool-prompts",
+      "path": "reference/tool-prompts.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.llm-protocol-catalog",
+      "path": "reference/llm-protocol-catalog.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.llm-provider-facade-catalog",
+      "path": "reference/llm-provider-facade-catalog.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.ai-sdk-provider-map",
+      "path": "reference/ai-sdk-provider-map.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.llm-event-catalog",
+      "path": "reference/llm-event-catalog.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.auth-combinators",
+      "path": "reference/auth-combinators.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.copilot-tool-catalog",
+      "path": "reference/copilot-tool-catalog.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.reasoning-variant-tables",
+      "path": "reference/reasoning-variant-tables.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.permission-actions",
+      "path": "reference/permission-actions.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.bash-arity",
+      "path": "reference/bash-arity.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.patch-format",
+      "path": "reference/patch-format.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.config-keys",
+      "path": "reference/config-keys.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.env-vars",
+      "path": "reference/env-vars.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.db-schema",
+      "path": "reference/db-schema.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.id-prefixes",
+      "path": "reference/id-prefixes.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.lsp-servers",
+      "path": "reference/lsp-servers.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.formatters",
+      "path": "reference/formatters.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.lsp-language-map",
+      "path": "reference/lsp-language-map.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.themes",
+      "path": "reference/themes.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.keybinds",
+      "path": "reference/keybinds.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tui-slots",
+      "path": "reference/tui-slots.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tui-dialogs",
+      "path": "reference/tui-dialogs.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.tui-api",
+      "path": "reference/tui-api.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.events",
+      "path": "reference/events.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.glossary",
+      "path": "reference/glossary.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.uncertainty",
+      "path": "reference/uncertainty.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "ref.package-index",
+      "path": "reference/package-index.md",
+      "grade": "B-HEAVY",
+      "lines": 3280,
+      "add": 1973,
+      "del": 1307,
+      "files": [
+        "packages/console/app/src/routes/api/support/actions/block-workspaces.ts",
+        "packages/console/app/src/routes/api/support/actions/unblock-workspaces.ts",
+        "packages/console/app/src/routes/zen/util/handler.ts",
+        "packages/console/core/src/workspace.ts",
+        "packages/core/package.json",
+        "packages/opencode/package.json",
+        "packages/opencode/src/acp/config-option.ts",
+        "packages/opencode/src/acp/event.ts",
+        "packages/opencode/src/acp/service.ts",
+        "packages/opencode/test/acp/config-option.test.ts",
+        "packages/opencode/test/acp/event.test.ts",
+        "packages/opencode/test/acp/service-session.test.ts",
+        "packages/opencode/test/cli/acp/config-options.test.ts",
+        "packages/stats/core/src/domain/inference.test.ts",
+        "packages/stats/core/src/domain/inference.ts",
+        "packages/stats/core/src/domain/model-normalization.ts",
+        "packages/stats/core/src/r2-sql.test.ts",
+        "packages/stats/core/src/r2-sql.ts",
+        "packages/stats/core/src/stat-sync.ts",
+        "packages/web/src/content/docs/ar/go.mdx",
+        "packages/web/src/content/docs/bs/go.mdx",
+        "packages/web/src/content/docs/da/go.mdx",
+        "packages/web/src/content/docs/de/go.mdx",
+        "packages/web/src/content/docs/es/go.mdx",
+        "packages/web/src/content/docs/fr/go.mdx",
+        "packages/web/src/content/docs/go.mdx",
+        "packages/web/src/content/docs/it/go.mdx",
+        "packages/web/src/content/docs/ja/go.mdx",
+        "packages/web/src/content/docs/ko/go.mdx",
+        "packages/web/src/content/docs/nb/go.mdx",
+        "packages/web/src/content/docs/pl/go.mdx",
+        "packages/web/src/content/docs/pt-br/go.mdx",
+        "packages/web/src/content/docs/ru/go.mdx",
+        "packages/web/src/content/docs/th/go.mdx",
+        "packages/web/src/content/docs/tr/go.mdx",
+        "packages/web/src/content/docs/zh-cn/go.mdx",
+        "packages/web/src/content/docs/zh-tw/go.mdx"
+      ],
+      "missing": []
+    },
+    {
+      "id": "ref.data-model",
+      "path": "reference/data-model.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "provider.snowflake-cortex",
+      "path": "surface/providers/snowflake-cortex.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "execution.core-shell-v2",
+      "path": "subsystems/execution/core-shell-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "integrations.integration-v2",
+      "path": "subsystems/integrations/integration-v2.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.project-directories",
+      "path": "subsystems/persistence/project-directories.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "tool.execute",
+      "path": "surface/tools/execute.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "subsys.tools.codemode",
+      "path": "subsystems/tools/codemode.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "clients.app-compatibility",
+      "path": "subsystems/clients/app-compatibility.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "persistence.repository-cache",
+      "path": "subsystems/persistence/repository-cache.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    },
+    {
+      "id": "config.v2-compat",
+      "path": "surface/config/v2-compat.md",
+      "grade": "D-CLEAN",
+      "lines": 0,
+      "add": 0,
+      "del": 0,
+      "files": [],
+      "missing": []
+    }
+  ]
+}

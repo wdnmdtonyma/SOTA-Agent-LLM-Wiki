@@ -2,7 +2,7 @@
 
 > SST **opencode**(`Best/opencode/`,36-workspace-package Bun/TypeScript Effect monorepo,AI 编码 agent)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 opencode git SHA。机读清单见 `index.json`,规范见 `conventions.md`。
 >
-> **状态:wiki 已增量更新到 `b3f1a96c6d`(189 节点 + grouped-catalog),护栏(lint/reconcile)就位。发布 `1.18.30`。**
+> **状态:wiki 已增量更新到 `df23b7f948`(189 节点 + grouped-catalog),护栏(lint/reconcile)就位。发布 `1.18.30`。**
 >
 > **核心组织主线 —— V1/V2 迁移**:opencode 一套进程跑两代。**V1**(活跑)= `packages/opencode/src`,Vercel-AI-SDK,`SessionPrompt→SessionProcessor→LLM.stream`。**V2**(新内核,多数已建未设默认)= `packages/core/src`,命名空间 `@opencode/v2`,Effect-native durable/event-sourced。`packages/llm` = 原生协议引擎。每节点标 `v: v1|v2|shared|na`;hybrid 组织 —— 一概念一节点、内分 V1/V2,只有真正分叉(session 内核/tools/permissions/shell/patch/compaction)才拆 `-v1`/`-v2`。
 

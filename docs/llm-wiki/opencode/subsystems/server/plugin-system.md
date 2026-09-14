@@ -46,7 +46,7 @@ related:
   - plugin-api.tui
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 `server.plugin-system` 分成三条线: V1 server callback plugins、V1 TUI plugin host、V2 Effect-native `PluginV2` plus `PluginInternal` boot. V1 server service tag 是 `@opencode/Plugin`，V2 service tag 是 `@opencode/v2/Plugin`。[E: packages/opencode/src/plugin/index.ts:60][E: packages/core/src/plugin.ts:29]

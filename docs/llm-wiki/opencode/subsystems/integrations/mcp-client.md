@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 source:
   - packages/opencode/src/mcp/index.ts
   - packages/opencode/src/mcp/browser.ts

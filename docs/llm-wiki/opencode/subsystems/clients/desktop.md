@@ -39,7 +39,7 @@ related:
   - server.http-server
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > Desktop 应用是 `@opencode-ai/desktop` Electron host: main process 启动本地 opencode server sidecar, renderer 复用 `@opencode-ai/app` 的 SolidJS shell, 再通过 preload IPC 提供文件选择、通知、更新、WSL server 与首次启动引导等桌面能力。

@@ -17,7 +17,7 @@ symbols:
   - deriveNewContentsFromChunks
   - ApplyPatch.execute
 evidence: explicit
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > 这份节点描述 opencode apply_patch 的 wire grammar、chunk 语义与四段 fuzzy match 顺序；V1/V2 parser 很像，但工具行为有关键差异。

@@ -25,7 +25,7 @@ related:
   - session-v2.system-context-registry
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > System Context 代数把 privileged runtime context 建模成可独立观测、可比较、可渲染的 typed `Source<A>` 集合; runner 在 safe provider-turn boundary 用 `initialize/reconcile/replace` 把它准入为 baseline 或 chronological system message。

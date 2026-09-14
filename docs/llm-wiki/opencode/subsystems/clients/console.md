@@ -18,6 +18,8 @@ source:
   - packages/console/app/src/routes/oauth/opencode/client.json.ts
   - packages/console/app/src/routes/go/index.tsx
   - packages/console/app/src/routes/api/support/actions/reset-quota.ts
+  - packages/console/app/src/routes/api/support/actions/block-workspaces.ts
+  - packages/console/app/src/routes/api/support/actions/unblock-workspaces.ts
   - packages/console/app/src/routes/stripe/webhook.ts
   - packages/console/app/src/routes/zen/util/handler.ts
   - packages/console/app/src/routes/zen/util/requestBody.ts
@@ -36,6 +38,7 @@ source:
   - packages/console/core/src/schema/referral.sql.ts
   - packages/console/core/src/schema/workspace.sql.ts
   - packages/console/core/src/quota.ts
+  - packages/console/core/src/workspace.ts
   - packages/console/core/src/model.ts
   - packages/console/core/src/referral.ts
   - packages/console/core/src/billing.ts
@@ -60,12 +63,14 @@ symbols:
   - inferenceUnavailable
   - Quota
   - requiresGoTrainingConsent
+  - Workspace.blockBatch
+  - Workspace.unblockBatch
 related:
   - server.sharing
   - infra.sst
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > Console 是 opencode 的 hosted 管理和计费 surface: `packages/console/app` 是 SolidStart/Nitro Cloudflare app, `packages/console/core` 封装 PlanetScale/Drizzle、Stripe billing、workspace/user/provider 等业务数据。
@@ -76,6 +81,8 @@ updated: b3f1a96c6d
 - Workspace `migrated_at` 如何把 Zen/Go inference 与 models/usage 转发到新 Console?
 - `GET /oauth/opencode/client.json` 返回什么?
 - Quota.reset 如何清零 lite/subscription 计数，support 路由用什么鉴权?
+- Support 如何批量 block / unblock workspace？缺 ID 会不会整批失败？
+- lite 新 inference 如何把 `x-zen-billing-source` 转发给上游？
 - Zen 如何流式转发 request body，还有没有 3-way failover / 429 retry?
 - DeepSeek 峰时定价、Go coupon 与 checkout 限流怎样工作?
 - Auth redirect allowlist 与 server-action referer sanitize 规则是什么?
@@ -108,7 +115,10 @@ V1/V2 关系: Console 节点标 `v: na`, 因为它不运行 V1 `SessionPrompt.ru
 | `packages/console/app/src/context/auth.ts` | OpenAuth client 和 SolidStart session。`AuthClient` 使用 `VITE_AUTH_URL`, `useAuthSession()` 使用 `Resource.ZEN_SESSION_SECRET`, `getActor()` 解析 public/account/user actor；workspace 已 `migratedAt` 时 302/303 到新 Console [E: packages/console/app/src/context/auth.ts:10] [E: packages/console/app/src/context/auth.ts:12] [E: packages/console/app/src/context/auth.ts:31] [E: packages/console/app/src/context/auth.ts:41] [E: packages/console/app/src/context/auth.ts:104]。 |
 | `packages/console/app/src/lib/inference-proxy.ts` | Zen/Go inference 与 models/usage 转发。导出 `proxyInference` 与共享 503 helper `inferenceUnavailable`。无 `migratedAt` 返回 `undefined`，让本地 handler 继续。 |
 | `packages/console/core/src/quota.ts` | `Quota.reset` 把 lite/subscription 用量计数清零，不动时间戳。 |
+| `packages/console/core/src/workspace.ts` | Workspace domain。有单条 `unblock`（找不到行抛错），以及 `blockBatch` / `unblockBatch`；内部 `setBlockedBatch` 按 500 个 ID 切块。没有单条 `block` 导出。 |
 | `packages/console/app/src/routes/api/support/actions/reset-quota.ts` | Support POST。`Bearer SUPPORT_API_KEY` 鉴权后调 `Quota.reset`。 |
+| `packages/console/app/src/routes/api/support/actions/block-workspaces.ts` | Support POST。同样 Bearer 鉴权后调 `Workspace.blockBatch`。 |
+| `packages/console/app/src/routes/api/support/actions/unblock-workspaces.ts` | Support POST。同样 Bearer 鉴权后调 `Workspace.unblockBatch`。 |
 | `packages/console/app/src/routes/zen/util/trainingConsent.ts` | `requiresGoTrainingConsent` 只认两个 contributor id。 |
 | `packages/console/app/src/routes/zen/util/requestBody.ts` | Zen 增量扫顶层 `"model"`，再把剩余 body 以 `ReadableStream` 上流。 |
 | `packages/console/app/src/routes/zen/util/pricing.ts` | DeepSeek CST 工作日峰时判定。 |
@@ -152,21 +162,29 @@ SST 只在 `production` / `dev` 填 migration domain：`consoleUrl` 是 `https:/
 
 Support 路由 `POST /api/support/actions/reset-quota` 用 `safeEqual` 比较 `Authorization` 与 `Bearer ${Resource.SUPPORT_API_KEY.value}`，失败 401。[E: packages/console/app/src/routes/api/support/actions/reset-quota.ts:12][E: packages/console/app/src/routes/api/support/actions/reset-quota.ts:13] body 是 `{ workspaceID: wrk_…, plan: lite|subscription }`；成功调 `Quota.reset` 并回 `{ success: true, message: "Usage counters reset to zero", result }`。[E: packages/console/app/src/routes/api/support/actions/reset-quota.ts:8][E: packages/console/app/src/routes/api/support/actions/reset-quota.ts:21]
 
+## Workspace 批量封禁
+
+`POST /api/support/actions/block-workspaces` 与 `POST /api/support/actions/unblock-workspaces` 用同一把 `SUPPORT_API_KEY`：`safeEqual` 比较 `Authorization` 与 `Bearer ${Resource.SUPPORT_API_KEY.value}`，失败 401。[E: packages/console/app/src/routes/api/support/actions/block-workspaces.ts:10][E: packages/console/app/src/routes/api/support/actions/unblock-workspaces.ts:10] body 是 `{ workspaceIDs: wrk_…[] }`，至少 1 个、须以 `wrk_` 开头；JSON 解析失败或 schema 失败回 400。[E: packages/console/app/src/routes/api/support/actions/block-workspaces.ts:7][E: packages/console/app/src/routes/api/support/actions/block-workspaces.ts:16][E: packages/console/app/src/routes/api/support/actions/unblock-workspaces.ts:7] 成功分别回 `{ success: true, message: "Workspaces blocked"|"Workspaces unblocked", result }`。[E: packages/console/app/src/routes/api/support/actions/block-workspaces.ts:20][E: packages/console/app/src/routes/api/support/actions/unblock-workspaces.ts:20]
+
+`Workspace.blockBatch` / `unblockBatch` 把 ID 列表交给内部 `setBlockedBatch`。先 `Set` 去重，再按 **500** 个 ID 切块，每块先 `UPDATE workspace SET is_blocked`，再 `SELECT id WHERE id IN (...)` 收集实际存在的行。[E: packages/console/core/src/workspace.ts:112][E: packages/console/core/src/workspace.ts:122][E: packages/console/core/src/workspace.ts:147][E: packages/console/core/src/workspace.ts:150][E: packages/console/core/src/workspace.ts:152] 存在性看 follow-up select 而不是 `rowsAffected`：已经处于目标 `is_blocked` 的行仍算 applied，不会被标成 not found。[E: packages/console/core/src/workspace.ts:153][E: packages/console/core/src/workspace.ts:160] 缺 ID **不失败整批**：`result` 分成 `blocked`/`unblocked`（applied）与 `notFound`。[E: packages/console/core/src/workspace.ts:118][E: packages/console/core/src/workspace.ts:128][E: packages/console/app/src/routes/api/support/actions/block-workspaces.ts:19] 切块是顺序的，共享 ambient transaction 的同一连接；大 `IN` 列表按固定 500 切块，不按输入长度无限放大。[E: packages/console/core/src/workspace.ts:150]
+
 ## Zen request body 与单次上游
 
 `prepareRequestBody()` 增量读 request `ReadableStream`，在 depth=1 扫顶层 JSON string key `"model"`，记录 UTF-8 字节区间；找到后停止缓冲，把已读 chunks 里的 model 换成 provider model，再 `passthrough` 剩余 bytes。[E: packages/console/app/src/routes/zen/util/requestBody.ts:4][E: packages/console/app/src/routes/zen/util/requestBody.ts:19][E: packages/console/app/src/routes/zen/util/requestBody.ts:30][E: packages/console/app/src/routes/zen/util/requestBody.ts:94][E: packages/console/app/src/routes/zen/util/requestBody.ts:99] Google format 不走这条路径，直接把原始 body 上流。[E: packages/console/app/src/routes/zen/util/handler.ts:97][E: packages/console/app/src/routes/zen/util/handler.ts:98]
 
-上流 `fetch` 使用 `duplex: "half"`，并把 caller `signal` 传给上游，避免 Console 断开后留下 orphaned inference。[E: packages/console/app/src/routes/zen/util/handler.ts:268][E: packages/console/app/src/routes/zen/util/handler.ts:271] 是否 stream 看上游响应 `content-type` 是否包含 `text/event-stream`。[E: packages/console/app/src/routes/zen/util/handler.ts:273]
+上流 `fetch` 使用 `duplex: "half"`，并把 caller `signal` 传给上游，避免 Console 断开后留下 orphaned inference。[E: packages/console/app/src/routes/zen/util/handler.ts:271][E: packages/console/app/src/routes/zen/util/handler.ts:274] 是否 stream 看上游响应 `content-type` 是否包含 `text/event-stream`。[E: packages/console/app/src/routes/zen/util/handler.ts:276]
 
-`providerRequest()` 只调用一次；没有最多 3 次 provider failover，也没有对 429/529 的自动 retry。429/529（以及 400/404）只是被当成非流式 JSON 读一次并记账。[E: packages/console/app/src/routes/zen/util/handler.ts:296][E: packages/console/app/src/routes/zen/util/handler.ts:315]
+新 inference（`isNewInference`）在 lite `modelList` 上额外写 `x-zen-billing-source`：`billingSource === "lite"` 时值为 `"go"`，否则 `"credit"`。非新 inference 会删掉该头，以及 `x-zen-model` 等 tracing 头。[E: packages/console/app/src/routes/zen/util/handler.ts:253][E: packages/console/app/src/routes/zen/util/handler.ts:255][E: packages/console/app/src/routes/zen/util/handler.ts:266] 这是发给上游的计费来源头，不是把 Go 营销模型表当成 live catalog。[I]
+
+`providerRequest()` 只调用一次；没有最多 3 次 provider failover，也没有对 429/529 的自动 retry。429/529（以及 400/404）只是被当成非流式 JSON 读一次并记账。[E: packages/console/app/src/routes/zen/util/handler.ts:299][E: packages/console/app/src/routes/zen/util/handler.ts:318]
 
 ## DeepSeek 峰时定价、coupon、checkout
 
-`isPeakPricing(date)` 把时间加 8 小时后用 `getUTCDay()`/`getUTCHours()` 当 CST：CST 周六/周日一律 false；CST 工作日只在 9–12 与 14–18（左闭右开）为 true。不是 UTC 周末判定——UTC 周日 16:00 已是 CST 周一，会按工作日算。[E: packages/console/app/src/routes/zen/util/pricing.ts:1][E: packages/console/app/src/routes/zen/util/pricing.ts:6][E: packages/console/app/src/routes/zen/util/pricing.ts:8][E: packages/console/app/src/routes/zen/util/pricing.ts:10] `calculateCost` 在 `modelInfo.costPeak` 且当前为峰时时改用 peak 价；否则若存在 `cost200K` 且 `inputTokens + cacheRead + cacheWrite5m + cacheWrite1h > cost200K.threshold`（schema 默认 `200_000`）则改用 long-context 档，再否则用 `modelInfo.cost`。[E: packages/console/app/src/routes/zen/util/handler.ts:1023][E: packages/console/app/src/routes/zen/util/handler.ts:1025][E: packages/console/app/src/routes/zen/util/handler.ts:1027][E: packages/console/core/src/model.ts:25]
+`isPeakPricing(date)` 把时间加 8 小时后用 `getUTCDay()`/`getUTCHours()` 当 CST：CST 周六/周日一律 false；CST 工作日只在 9–12 与 14–18（左闭右开）为 true。不是 UTC 周末判定——UTC 周日 16:00 已是 CST 周一，会按工作日算。[E: packages/console/app/src/routes/zen/util/pricing.ts:1][E: packages/console/app/src/routes/zen/util/pricing.ts:6][E: packages/console/app/src/routes/zen/util/pricing.ts:8][E: packages/console/app/src/routes/zen/util/pricing.ts:10] `calculateCost` 在 `modelInfo.costPeak` 且当前为峰时时改用 peak 价；否则若存在 `cost200K` 且 `inputTokens + cacheRead + cacheWrite5m + cacheWrite1h > cost200K.threshold`（schema 默认 `200_000`）则改用 long-context 档，再否则用 `modelInfo.cost`。[E: packages/console/app/src/routes/zen/util/handler.ts:1026][E: packages/console/app/src/routes/zen/util/handler.ts:1028][E: packages/console/app/src/routes/zen/util/handler.ts:1030][E: packages/console/core/src/model.ts:25]
 
 OpenAI `normalizeUsage` 把 `inputTokens` 写成 `max(0, input_tokens - cached_tokens - cache_write_tokens)`：上游 `input_tokens` 已含 cache 分量，cache 另按自己的费率计费，钳到 0 避免重叠 detail 把 input 成本打成负数。[E: packages/console/app/src/routes/zen/util/provider/openai.ts:57]
 
-非 anonymous 记账先拍一张 `trackedAt = new Date()`，再用它算 week/month bounds 并写回 `time*Updated`。subscription `fixedUsage`：`timeFixedUpdated >= week.end` 时不加（请求跨过窗口边界不累加）；已在本周则累加；否则重置为本次 cost。lite 的 monthly/weekly 同样用 `>= period.end` 冻结计数。[E: packages/console/app/src/routes/zen/util/handler.ts:1103][E: packages/console/app/src/routes/zen/util/handler.ts:1152][E: packages/console/app/src/routes/zen/util/handler.ts:1196]
+非 anonymous 记账先拍一张 `trackedAt = new Date()`，再用它算 week/month bounds 并写回 `time*Updated`。subscription `fixedUsage`：`timeFixedUpdated >= week.end` 时不加（请求跨过窗口边界不累加）；已在本周则累加；否则重置为本次 cost。lite 的 monthly/weekly 同样用 `>= period.end` 冻结计数。[E: packages/console/app/src/routes/zen/util/handler.ts:1106][E: packages/console/app/src/routes/zen/util/handler.ts:1155][E: packages/console/app/src/routes/zen/util/handler.ts:1199]
 
 Enterprise 询盘邮件的 `to` 是 `Resource.ENTERPRISE_SALES_INBOX_EMAIL.value`，不是硬编码 inbox 地址。[E: packages/console/app/src/routes/api/enterprise.ts:101]
 
@@ -190,7 +208,7 @@ Go checkout 选 coupon 时只认未兑换的 `GO12MONTHS100` / `GO6MONTHS100` / 
 
 `isModelCountryRestricted()` 对 `muse-spark-1.3-contributor`、`muse-spark-1.3-contributor-free`、`muse-spark-1.2-contributor`、`muse-spark-1.2-contributor-free` 生效；country 来自 CF `cf.country` 或 `cf-ipcountry`，命中 22 国集合则拒。[E: packages/console/app/src/lib/request-country.ts:32][E: packages/console/app/src/lib/request-country.ts:35][E: packages/console/app/src/lib/request-country.ts:41] handler 在 validate model 后立刻检查，抛 `RegionError`。[E: packages/console/app/src/routes/zen/util/handler.ts:137][E: packages/console/app/src/routes/zen/util/handler.ts:138]
 
-`requiresGoTrainingConsent(model)` **只**认 `muse-spark-1.3-contributor` 与 `muse-spark-1.2-contributor`；`-free` / preview 变体返回 false。[E: packages/console/app/src/routes/zen/util/trainingConsent.ts:2] lite catalog 上命中该函数且 workspace `allowTraining` 为假时抛 `DataPolicyError`。[E: packages/console/app/src/routes/zen/util/handler.ts:146][E: packages/console/app/src/routes/zen/util/handler.ts:147] `authenticate()` 把 `WorkspaceTable.allow_training` 投影成 `allowTraining`。[E: packages/console/app/src/routes/zen/util/handler.ts:703][E: packages/console/app/src/routes/zen/util/handler.ts:816]
+`requiresGoTrainingConsent(model)` **只**认 `muse-spark-1.3-contributor` 与 `muse-spark-1.2-contributor`；`-free` / preview 变体返回 false。[E: packages/console/app/src/routes/zen/util/trainingConsent.ts:2] lite catalog 上命中该函数且 workspace `allowTraining` 为假时抛 `DataPolicyError`。[E: packages/console/app/src/routes/zen/util/handler.ts:146][E: packages/console/app/src/routes/zen/util/handler.ts:147] `authenticate()` 把 `WorkspaceTable.allow_training` 投影成 `allowTraining`。[E: packages/console/app/src/routes/zen/util/handler.ts:706][E: packages/console/app/src/routes/zen/util/handler.ts:819]
 
 ## 控制流
 
@@ -198,7 +216,7 @@ Go checkout 选 coupon 时只认未兑换的 `GO12MONTHS100` / `GO6MONTHS100` / 
 2. 需要身份的 server function 调用 `getActor(workspace?)`。`getActor` 先从 request locals 复用 actor, 再读 `useAuthSession()` session [E: packages/console/app/src/context/auth.ts:41] [E: packages/console/app/src/context/auth.ts:45] [E: packages/console/app/src/context/auth.ts:47]。
 3. workspace actor 解析查询 `UserTable` 并 join `WorkspaceTable`。已 `migratedAt` 则 redirect 新 Console；否则更新 `timeSeen` 并回 user actor [E: packages/console/app/src/context/auth.ts:81] [E: packages/console/app/src/context/auth.ts:91] [E: packages/console/app/src/context/auth.ts:104] [E: packages/console/app/src/context/auth.ts:116]。
 4. Zen `handler`（full 与 lite）在解析到 `model` 后先 `proxyInference`；有响应就结束。无 `migratedAt` / 无 path / 无 key 时继续本地 validate → geo → auth。[E: packages/console/app/src/routes/zen/util/handler.ts:105][E: packages/console/app/src/routes/zen/util/handler.ts:111][E: packages/console/app/src/routes/zen/util/handler.ts:122]
-5. Zen `authenticate()` 查询 API key 时把 `allow_training` 与三个 moderation columns 投影成 workspace flags；`isBlocked` 拒绝所有 model，Anthropic flag 只拒绝 `claude-*`，OpenAI flag 只拒绝 `gpt-*`，命中后抛出 `requestBlockedByUpstreamProvider` 的 `AuthError`。[E: packages/console/app/src/routes/zen/util/handler.ts:703][E: packages/console/app/src/routes/zen/util/handler.ts:704][E: packages/console/app/src/routes/zen/util/handler.ts:705][E: packages/console/app/src/routes/zen/util/handler.ts:706][E: packages/console/app/src/routes/zen/util/handler.ts:783][E: packages/console/app/src/routes/zen/util/handler.ts:784][E: packages/console/app/src/routes/zen/util/handler.ts:785][E: packages/console/app/src/routes/zen/util/handler.ts:787]
+5. Zen `authenticate()` 查询 API key 时把 `allow_training` 与三个 moderation columns 投影成 workspace flags；`isBlocked` 拒绝所有 model，Anthropic flag 只拒绝 `claude-*`，OpenAI flag 只拒绝 `gpt-*`，命中后抛出 `requestBlockedByUpstreamProvider` 的 `AuthError`。[E: packages/console/app/src/routes/zen/util/handler.ts:706][E: packages/console/app/src/routes/zen/util/handler.ts:707][E: packages/console/app/src/routes/zen/util/handler.ts:708][E: packages/console/app/src/routes/zen/util/handler.ts:709][E: packages/console/app/src/routes/zen/util/handler.ts:786][E: packages/console/app/src/routes/zen/util/handler.ts:787][E: packages/console/app/src/routes/zen/util/handler.ts:788][E: packages/console/app/src/routes/zen/util/handler.ts:790]
 6. Stripe webhook POST 先用 Stripe secret 验证事件, 再按事件类型分支处理 [E: packages/console/app/src/routes/stripe/webhook.ts:14] [E: packages/console/app/src/routes/stripe/webhook.ts:15] [E: packages/console/app/src/routes/stripe/webhook.ts:17]。
 7. `Billing.reload()` 读取当前 workspace billing customer/payment method, 创建 invoice 和 invoice items, finalize 并 off-session pay [E: packages/console/core/src/billing.ts:75] [E: packages/console/core/src/billing.ts:76]。
 8. `Referral.summary()` 并行查询当前 workspace 的 `ReferralRewardTable` history、`ReferralTable` invites、当前 account 作为 invitee 的 referral，以及 invitee 侧 rewards。[E: packages/console/core/src/referral.ts:57][E: packages/console/core/src/referral.ts:62]
@@ -206,6 +224,7 @@ Go checkout 选 coupon 时只认未兑换的 `GO12MONTHS100` / `GO6MONTHS100` / 
 10. 成功响应只返回 `{ usage: { rolling, weekly, monthly } }`。每个 window 经 `Subscription.analyze*Usage` 后再 `formatUsage`，字段是 `status`、`percent`、`resetsAt` ISO timestamp，不再回传 raw token/limit。[E: packages/console/app/src/routes/zen/go/v1/usage.ts:118][E: packages/console/app/src/routes/zen/go/v1/usage.ts:120][E: packages/console/app/src/routes/zen/go/v1/usage.ts:155][E: packages/console/app/src/routes/zen/go/v1/usage.ts:157]
 11. Google provider usage normalization 把 `thoughtsTokenCount` 单列为 reasoning tokens，同时令 `outputTokens = candidatesTokenCount + reasoningTokens`。[E: packages/console/app/src/routes/zen/util/provider/google.ts:62][E: packages/console/app/src/routes/zen/util/provider/google.ts:64][E: packages/console/app/src/routes/zen/util/provider/google.ts:68][E: packages/console/app/src/routes/zen/util/provider/google.ts:69]
 12. Support `POST /api/support/actions/reset-quota` 校验 `SUPPORT_API_KEY` 后调用 `Quota.reset`，只清计数。[E: packages/console/app/src/routes/api/support/actions/reset-quota.ts:13][E: packages/console/app/src/routes/api/support/actions/reset-quota.ts:21]
+13. Support `POST /api/support/actions/block-workspaces` / `unblock-workspaces` 同样校验 `SUPPORT_API_KEY`，再调 `Workspace.blockBatch` / `unblockBatch`；缺 ID 写进 `notFound`，不回 404。[E: packages/console/app/src/routes/api/support/actions/block-workspaces.ts:10][E: packages/console/app/src/routes/api/support/actions/block-workspaces.ts:19][E: packages/console/app/src/routes/api/support/actions/unblock-workspaces.ts:19]
 
 ## 设计动机与权衡
 
@@ -235,6 +254,8 @@ Console 把 hosted billing/account/workspace 逻辑从 terminal agent runtime �
 - `packages/console/app/src/routes/oauth/opencode/client.json.ts`
 - `packages/console/app/src/routes/go/index.tsx`
 - `packages/console/app/src/routes/api/support/actions/reset-quota.ts`
+- `packages/console/app/src/routes/api/support/actions/block-workspaces.ts`
+- `packages/console/app/src/routes/api/support/actions/unblock-workspaces.ts`
 - `packages/console/app/src/routes/stripe/webhook.ts`
 - `packages/console/app/src/routes/zen/util/handler.ts`
 - `packages/console/app/src/routes/zen/util/requestBody.ts`
@@ -253,6 +274,7 @@ Console 把 hosted billing/account/workspace 逻辑从 terminal agent runtime �
 - `packages/console/core/src/schema/referral.sql.ts`
 - `packages/console/core/src/schema/workspace.sql.ts`
 - `packages/console/core/src/quota.ts`
+- `packages/console/core/src/workspace.ts`
 - `packages/console/core/src/model.ts`
 - `packages/console/core/src/referral.ts`
 - `packages/console/core/src/billing.ts`

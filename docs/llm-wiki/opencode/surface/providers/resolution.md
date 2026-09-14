@@ -9,7 +9,7 @@ symbols: [Provider.node, Provider.getModel, Provider.getLanguage, Provider.defau
 related: [model-layer.provider-registry-v1, provider.catalog]
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > V1 provider resolution 是当前活跑的模型入口：`packages/opencode/src/provider/provider.ts` 把 models.dev catalog、config、env、auth storage、plugin hooks、内建 custom loader 和 AI SDK package loader 合成可调用的 `LanguageModelV3`。

@@ -14,7 +14,7 @@ related:
   - subsys.tools.codemode
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > opencode monorepo 是 Bun workspace；当前 HEAD 的 workspace globs 展开为 36 个 package，而不是固定 27 个 package。
@@ -27,7 +27,7 @@ updated: b3f1a96c6d
 
 ## V1
 
-V1 当前活跑 CLI/package 是 `packages/opencode`，它的 package 名是 `opencode`，bin 也叫 `opencode` [E: packages/opencode/package.json:4] [E: packages/opencode/package.json:19]。这个 package 仍依赖 Vercel AI SDK family、`@opencode-ai/llm`、`@opencode-ai/server`、`@opencode-ai/tui`、OpenTUI、yargs 等依赖 [E: packages/opencode/package.json:54]，因此它是当前主 CLI、server glue、AI SDK runtime 和迁移 seam 的集中包 [I]。
+V1 当前活跑 CLI/package 是 `packages/opencode`，它的 package 名是 `opencode`，bin 也叫 `opencode` [E: packages/opencode/package.json:4] [E: packages/opencode/package.json:19]。这个 package 仍依赖 Vercel AI SDK family、`@opencode-ai/llm`、`@opencode-ai/server`、`@opencode-ai/tui`、OpenTUI、yargs 等依赖 [E: packages/opencode/package.json:54]，因此它是当前主 CLI、server glue、AI SDK runtime 和迁移 seam 的集中包 [I]。`@ai-sdk/gateway` 现为 `3.0.191`，`@ai-sdk/provider` 现为 `3.0.16`；`packages/core` 同步把 `@ai-sdk/gateway` 升到 `3.0.191`，并把 `@ai-sdk/provider` / `@ai-sdk/provider-utils` 升到 `3.0.16` / `4.0.51`。这是 dependency pin，不是新 provider family 或新 tool。[E: packages/opencode/package.json:65] [E: packages/opencode/package.json:73] [E: packages/core/package.json:71] [E: packages/core/package.json:79] [E: packages/core/package.json:80]
 
 ## V2
 

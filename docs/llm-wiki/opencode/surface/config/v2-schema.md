@@ -10,7 +10,7 @@ schema: grouped-catalog
 source:
   - packages/core/src/config.ts
   - packages/core/src/config/
-updated: b3f1a96c6d
+updated: df23b7f948
 evidence: explicit
 ---
 

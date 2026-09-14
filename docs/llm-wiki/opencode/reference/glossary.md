@@ -23,7 +23,7 @@ related:
   - integrations.integration-v2
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > opencode glossary 把 V1 当前活跑路径、V2 新内核、shared package 和容易误读的 codename 分开定义，避免把迁移期同名概念混讲。

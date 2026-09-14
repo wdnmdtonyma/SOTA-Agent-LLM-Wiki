@@ -22,7 +22,7 @@ related:
   - peripheral.effect-sqlite
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > V2 数据库是 `packages/core/src/database/` 中的 Effect-native Drizzle/SQLite service：`@opencode/v2/storage/Database` 提供 Effect Drizzle client，启动时设置 SQLite PRAGMAs 并应用 TypeScript migrations。

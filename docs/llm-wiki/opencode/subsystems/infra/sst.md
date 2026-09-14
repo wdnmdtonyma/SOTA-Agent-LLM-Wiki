@@ -26,7 +26,7 @@ related:
   - peripheral.function
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > SST 云基础设施节点描述 opencode 的 hosted surfaces: Cloudflare Workers/R2/KV/SolidStart/Astro, PlanetScale/Stripe/Honeycomb providers, 以及只在指定 stage 部署的 AWS data lake 与 stats services。

@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 source:
   - packages/opencode/src/acp/service.ts
   - packages/opencode/src/acp/agent.ts
@@ -15,6 +15,7 @@ source:
   - packages/opencode/src/acp/content.ts
   - packages/opencode/src/acp/permission.ts
   - packages/opencode/src/acp/directory.ts
+  - packages/opencode/src/acp/config-option.ts
   - packages/opencode/src/acp/usage.ts
   - packages/opencode/src/cli/cmd/acp.ts
   - packages/opencode/package.json
@@ -27,6 +28,9 @@ symbols:
   - ACPTool.toToolKind
   - UsageService.buildUsage
   - UsageService.contextTokens
+  - DEFAULT_VARIANT_VALUE
+  - restoreSession
+  - sendConfigOptionUpdate
 related:
   - cli.opencode-yargs
   - sdk.overview
@@ -42,6 +46,9 @@ evidence: explicit
 - ACP session 与 opencode SDK session 如何映射。
 - MCP server、slash command、permission、tool update 在 ACP bridge 中如何转换。
 - prompt 结束前如何 drain session updates，以及 ACP usage 如何计入 cache write。
+- load/resume/fork 如何从 durable session 与 message history 恢复 model / variant / mode。
+- effort 选项里的 `"default"` 哨兵如何处理；换模型时何时发 `config_option_update`。
+- reasoning chunk 的 ACP `messageId` 用 part id 还是 message id。
 - 为什么 ACP 节点不属于 V2 core 默认执行路径。
 
 ## 职责
@@ -66,6 +73,7 @@ ACP SDK 依赖来自 `@agentclientprotocol/sdk`，这是 package dependency，�
 | `packages/opencode/src/acp/content.ts` | ACP prompt content 与 opencode prompt part/chunk 互转。 |
 | `packages/opencode/src/acp/permission.ts` | ACP permission request/reply queue。 |
 | `packages/opencode/src/acp/directory.ts` | provider/model/agent/command snapshot builder。 |
+| `packages/opencode/src/acp/config-option.ts` | ACP `SessionConfigOption` builder：model / effort / mode select。`DEFAULT_VARIANT_VALUE = "default"` 是无显式 variant override 的哨兵。 |
 
 ## 数据模型
 
@@ -96,23 +104,24 @@ ACP service 的初始化响应声明 protocol version 1、loadSession/MCP/prompt
 1. `newSession` 先读取 directory snapshot，选择默认 model、variant、mode。[E: packages/opencode/src/acp/service.ts:164] [E: packages/opencode/src/acp/service.ts:165] [E: packages/opencode/src/acp/service.ts:167]
 2. service 通过 SDK `session.create` 创建 backing session，并把 MCP servers、model、variant、modeId 写入 ACP snapshot store。[E: packages/opencode/src/acp/service.ts:172] [E: packages/opencode/src/acp/service.ts:186] [E: packages/opencode/src/acp/service.ts:192]
 3. 创建或加载 session 后，service 调用 `registerMcpServers`，再调用 `sendAvailableCommands` 给 ACP client 推送 slash command list。[E: packages/opencode/src/acp/service.ts:196]
-4. `listSessions` 同时读取 SDK session list 和内存 live ACP session list，合并后按 `updatedAt` 倒序分页。[E: packages/opencode/src/acp/service.ts:246] [E: packages/opencode/src/acp/service.ts:268] [E: packages/opencode/src/acp/service.ts:277]
-5. `resumeSession` 使用传入的 existing `sessionId` load ACP session state，注册 MCP servers，发送 available commands；它不 replay messages。`loadSession` 与 `forkSession` 才会 `replayMessages`。[E: packages/opencode/src/acp/service.ts:292] [E: packages/opencode/src/acp/service.ts:308] [E: packages/opencode/src/acp/service.ts:318] [E: packages/opencode/src/acp/service.ts:319] [E: packages/opencode/src/acp/service.ts:235] [E: packages/opencode/src/acp/service.ts:388]
-6. `closeSession` 和 `cancel` 都会调用 `abortBackingSession`，后者使用 SDK session abort API 停止 backing session。[E: packages/opencode/src/acp/service.ts:330] [E: packages/opencode/src/acp/service.ts:341] [E: packages/opencode/src/acp/service.ts:351]
+4. `listSessions` 同时读取 SDK session list 和内存 live ACP session list，合并后按 `updatedAt` 倒序分页。[E: packages/opencode/src/acp/service.ts:249] [E: packages/opencode/src/acp/service.ts:271] [E: packages/opencode/src/acp/service.ts:280]
+5. `loadSession` / `resumeSession` / `forkSession` 都先 `sdk.session.get`（fork 用 fork 返回的 session）再 `sdk.session.messages`，然后用 `restoreSession(snapshot, backing, messages)` 填 model / variant / modeId，再 `session.load`。[E: packages/opencode/src/acp/service.ts:213] [E: packages/opencode/src/acp/service.ts:221] [E: packages/opencode/src/acp/service.ts:297] [E: packages/opencode/src/acp/service.ts:309] [E: packages/opencode/src/acp/service.ts:364] [E: packages/opencode/src/acp/service.ts:380] [E: packages/opencode/src/acp/service.ts:1089] `restoreSession` 优先 durable `Session.model` / `Session.agent`（须仍在当前 snapshot 里），否则回落到 message history，再否则默认 model / 第一个 variant / `defaultModeID`。[E: packages/opencode/src/acp/service.ts:1094] [E: packages/opencode/src/acp/service.ts:1120] [E: packages/opencode/src/acp/service.ts:1133] [E: packages/opencode/src/acp/service.ts:1141] `resumeSession` 不 `replayMessages`；`loadSession` 与 `forkSession` 才会 replay。[E: packages/opencode/src/acp/service.ts:238] [E: packages/opencode/src/acp/service.ts:325] [E: packages/opencode/src/acp/service.ts:397]
+6. `closeSession` 和 `cancel` 都会调用 `abortBackingSession`，后者使用 SDK session abort API 停止 backing session。[E: packages/opencode/src/acp/service.ts:336] [E: packages/opencode/src/acp/service.ts:347] [E: packages/opencode/src/acp/service.ts:357]
+7. `setSessionConfigOption` 的 `model` 路径与 `unstable_setSessionModel` 在写入 ACP snapshot 后调用 `sendConfigOptionUpdate`，向 client 推 `sessionUpdate: "config_option_update"`。`selectModelVariant` 先用 payload 的 `selected.variant`；仅当 `sameModel(selected.model, current.model)` 且 `hasVariant` 仍成立时才保留 `current.variant`；否则回落到该模型 `selectVariant`。换模型且未带 variant 时不会把旧 effort 带到新模型。[E: packages/opencode/src/acp/service.ts:418] [E: packages/opencode/src/acp/service.ts:429] [E: packages/opencode/src/acp/service.ts:485] [E: packages/opencode/src/acp/service.ts:917] [E: packages/opencode/src/acp/service.ts:924] [E: packages/opencode/src/acp/service.ts:925] [E: packages/opencode/src/acp/service.ts:945] [E: packages/opencode/src/acp/service.ts:956] effort 选项把 `"default"` 视为合法值：`hasVariant` 在 `variant === DEFAULT_VARIANT_VALUE` 时为真，即使 variants map 没有这个 key；`buildEffortSelectOption` 始终把 `"default"` 并进 options，且 currentValue 为 `"default"` 时不再 `selectVariant` 成别的档。[E: packages/opencode/src/acp/config-option.ts:3] [E: packages/opencode/src/acp/config-option.ts:64] [E: packages/opencode/src/acp/config-option.ts:68] [E: packages/opencode/src/acp/service.ts:438] [E: packages/opencode/src/acp/service.ts:930] effort / mode 路径只把新 `configOptions` 放进 RPC 返回值，不另发 `config_option_update`。[E: packages/opencode/src/acp/service.ts:441] [E: packages/opencode/src/acp/service.ts:455]
 
 ### Prompt 与 slash command
 
-1. `prompt` 读取 current ACP session、directory snapshot、model、variant、mode，并把 ACP content 转成 opencode prompt parts。[E: packages/opencode/src/acp/service.ts:495] [E: packages/opencode/src/acp/service.ts:503]
-2. 如果 prompt 文本被 `detectSlashCommand` 识别为 `/name args`，service 会进入 command path；否则调用 `sdk.session.prompt`。三条 SDK 调用都包在 `runUntilIdle` 里：先发 request，再等到该 session 的 `session.status` 变成 `idle`，避免 ACP `end_turn` 早于 in-flight session updates。[E: packages/opencode/src/acp/service.ts:91] [E: packages/opencode/src/acp/service.ts:504] [E: packages/opencode/src/acp/service.ts:509] [E: packages/opencode/src/acp/service.ts:535] [E: packages/opencode/src/acp/service.ts:558] [E: packages/opencode/src/acp/service.ts:811] [E: packages/opencode/src/acp/event.ts:74] [E: packages/opencode/src/acp/event.ts:95]
-3. command path 会在 snapshot.availableCommands 中查找命令，命中普通命令时调用 `sdk.session.command`。[E: packages/opencode/src/acp/service.ts:531] [E: packages/opencode/src/acp/service.ts:536]
-4. `/compact` 是 special case，会调用 `sdk.session.summarize`。[E: packages/opencode/src/acp/service.ts:555] [E: packages/opencode/src/acp/service.ts:559]
-5. 普通 prompt、已知 command 和 `/compact` 结束后都会 `sendUsageUpdate`，再构造 `promptResponse`。`UsageService.buildUsage` 把 cache write 算进 `totalTokens`，并在非零时暴露 `cachedWriteTokens`。[E: packages/opencode/src/acp/service.ts:527] [E: packages/opencode/src/acp/service.ts:551] [E: packages/opencode/src/acp/service.ts:573] [E: packages/opencode/src/acp/service.ts:831] [E: packages/opencode/src/acp/usage.ts:90] [E: packages/opencode/src/acp/usage.ts:98] [E: packages/opencode/src/acp/usage.ts:101]
+1. `prompt` 读取 current ACP session、directory snapshot、model、variant、mode，并把 ACP content 转成 opencode prompt parts。[E: packages/opencode/src/acp/service.ts:510] [E: packages/opencode/src/acp/service.ts:518]
+2. 如果 prompt 文本被 `detectSlashCommand` 识别为 `/name args`，service 会进入 command path；否则调用 `sdk.session.prompt`。三条 SDK 调用都包在 `runUntilIdle` 里：先发 request，再等到该 session 的 `session.status` 变成 `idle`，避免 ACP `end_turn` 早于 in-flight session updates。[E: packages/opencode/src/acp/service.ts:91] [E: packages/opencode/src/acp/service.ts:519] [E: packages/opencode/src/acp/service.ts:524] [E: packages/opencode/src/acp/service.ts:550] [E: packages/opencode/src/acp/service.ts:573] [E: packages/opencode/src/acp/service.ts:826] [E: packages/opencode/src/acp/event.ts:74] [E: packages/opencode/src/acp/event.ts:95]
+3. command path 会在 snapshot.availableCommands 中查找命令，命中普通命令时调用 `sdk.session.command`。[E: packages/opencode/src/acp/service.ts:546] [E: packages/opencode/src/acp/service.ts:551]
+4. `/compact` 是 special case，会调用 `sdk.session.summarize`。[E: packages/opencode/src/acp/service.ts:570] [E: packages/opencode/src/acp/service.ts:574]
+5. 普通 prompt、已知 command 和 `/compact` 结束后都会 `sendUsageUpdate`，再构造 `promptResponse`。`UsageService.buildUsage` 把 cache write 算进 `totalTokens`，并在非零时暴露 `cachedWriteTokens`。[E: packages/opencode/src/acp/service.ts:542] [E: packages/opencode/src/acp/service.ts:566] [E: packages/opencode/src/acp/service.ts:588] [E: packages/opencode/src/acp/service.ts:846] [E: packages/opencode/src/acp/usage.ts:90] [E: packages/opencode/src/acp/usage.ts:98] [E: packages/opencode/src/acp/usage.ts:101]
 
 ### MCP server 转换
 
-1. `registerMcpServers` 对 ACP session 的 MCP server list 去重，然后逐个调用 SDK MCP add API。[E: packages/opencode/src/acp/service.ts:958] [E: packages/opencode/src/acp/service.ts:974] [E: packages/opencode/src/acp/service.ts:982]
-2. ACP MCP config 被映射成 opencode remote/local MCP config；remote 保留 url、headers，local 保留 command、environment。[E: packages/opencode/src/acp/service.ts:1013] [E: packages/opencode/src/acp/service.ts:1017] [E: packages/opencode/src/acp/service.ts:1023]
-3. 去重 key 由稳定 JSON string 生成，`stableStringify` 对 object key 排序。[E: packages/opencode/src/acp/service.ts:1009] [E: packages/opencode/src/acp/service.ts:1032]
+1. `registerMcpServers` 对 ACP session 的 MCP server list 去重，然后逐个调用 SDK MCP add API。[E: packages/opencode/src/acp/service.ts:1010] [E: packages/opencode/src/acp/service.ts:1026] [E: packages/opencode/src/acp/service.ts:1034]
+2. ACP MCP config 被映射成 opencode remote/local MCP config；remote 保留 url、headers，local 保留 command、environment。[E: packages/opencode/src/acp/service.ts:1065] [E: packages/opencode/src/acp/service.ts:1069] [E: packages/opencode/src/acp/service.ts:1075]
+3. 去重 key 由稳定 JSON string 生成，`stableStringify` 对 object key 排序。[E: packages/opencode/src/acp/service.ts:1061] [E: packages/opencode/src/acp/service.ts:1084]
 
 ### Event 与 tool update
 
@@ -120,9 +129,10 @@ ACP service 的初始化响应声明 protocol version 1、loadSession/MCP/prompt
 2. subscription 读取 `sdk.global.event`，把 payload 交给 `handle` 转成 ACP session update。[E: packages/opencode/src/acp/event.ts:153] [E: packages/opencode/src/acp/event.ts:163]
 3. `runUntilIdle(sessionId, request)` 先 `waitUntilConnected`，再登记 idle waiter，执行 request，然后 await `session.status === "idle"`。`handle` 按序处理 events，idle 只在 `session.status` 到达时 resolve，所以 prompt RPC 会在 updates drain 完后才返回。[E: packages/opencode/src/acp/event.ts:74] [E: packages/opencode/src/acp/event.ts:85] [E: packages/opencode/src/acp/event.ts:93] [E: packages/opencode/src/acp/event.ts:96] [E: packages/opencode/src/acp/event.ts:184]
 4. `message.part.updated` 中 tool part 被交给 `ACPTool`；pending state 生成 `ToolCall`，running/completed/error state 生成 `ToolCallUpdate`。[E: packages/opencode/src/acp/event.ts:191] [E: packages/opencode/src/acp/tool.ts:124] [E: packages/opencode/src/acp/tool.ts:140]
-5. running 的 `bash` tool 才会取 `shellOutputSnapshot`；相同 output 用本地 map 去重后发 `tool_call_update`。`part.tool === "shell"` 不走这条 snapshot 路径。[E: packages/opencode/src/acp/event.ts:344] [E: packages/opencode/src/acp/event.ts:346] [E: packages/opencode/src/acp/event.ts:361]
-6. `UsageService.contextTokens` 把 `tokens.input + cache.read + cache.write` 当作 used context；`usage_update.used` 走这条路径，不再只计 cache read。[E: packages/opencode/src/acp/usage.ts:86] [E: packages/opencode/src/acp/usage.ts:87] [E: packages/opencode/src/acp/usage.ts:214]
-7. `ACPTool.toToolKind` 把 bash/shell 归为 execute，把 webfetch 归为 fetch，把 edit/apply_patch/patch/write 归为 edit，把 grep/glob/context 等归为 search。[E: packages/opencode/src/acp/tool.ts:38] [E: packages/opencode/src/acp/tool.ts:46] [E: packages/opencode/src/acp/tool.ts:49] [E: packages/opencode/src/acp/tool.ts:55]
+5. reasoning replay / live thought delta 的 ACP `messageId` 用 **part id**，不是 assistant message id：replay 里 `part.type === "reasoning"` 时写 `part.id`；live `agent_thought_chunk` 写 `props.partID`。普通 text chunk 仍用 `message.info.id` / `props.messageID`。[E: packages/opencode/src/acp/event.ts:137] [E: packages/opencode/src/acp/event.ts:236] [E: packages/opencode/src/acp/event.ts:251]
+6. running 的 `bash` tool 才会取 `shellOutputSnapshot`；相同 output 用本地 map 去重后发 `tool_call_update`。`part.tool === "shell"` 不走这条 snapshot 路径。[E: packages/opencode/src/acp/event.ts:344] [E: packages/opencode/src/acp/event.ts:346] [E: packages/opencode/src/acp/event.ts:361]
+7. `UsageService.contextTokens` 把 `tokens.input + cache.read + cache.write` 当作 used context；`usage_update.used` 走这条路径，不再只计 cache read。[E: packages/opencode/src/acp/usage.ts:86] [E: packages/opencode/src/acp/usage.ts:87] [E: packages/opencode/src/acp/usage.ts:214]
+8. `ACPTool.toToolKind` 把 bash/shell 归为 execute，把 webfetch 归为 fetch，把 edit/apply_patch/patch/write 归为 edit，把 grep/glob/context 等归为 search。[E: packages/opencode/src/acp/tool.ts:38] [E: packages/opencode/src/acp/tool.ts:46] [E: packages/opencode/src/acp/tool.ts:49] [E: packages/opencode/src/acp/tool.ts:55]
 
 ## 设计动机与权衡
 
@@ -137,7 +147,8 @@ permission bridge 把 opencode permission ask 变成 ACP `requestPermission`，�
 - `opencode acp` 是 V1 yargs CLI 命令；`packages/cli` 的新 host binary 名是 `lildax`。[E: packages/opencode/src/cli/cmd/acp.ts:9] [I]
 - ACP protocol transport 走 stdio + NDJSON stream；CLI 同时会启动本地 opencode HTTP server 供 SDK client 调用。[E: packages/opencode/src/cli/cmd/acp.ts:25] [E: packages/opencode/src/cli/cmd/acp.ts:55]
 - `cancel` 在 agent method table 中是 notification，不计入 12 个 request/response RPC。[E: packages/opencode/src/acp/agent.ts:83]
-- ACP session snapshot store 是内存 map；`loadSession`/`resumeSession` 使用 SDK `session.get` 和 `session.messages` 读取既有 session，但 ACP snapshot 本身不是 durable store。[E: packages/opencode/src/acp/session.ts:100] [E: packages/opencode/src/acp/service.ts:295] [E: packages/opencode/src/acp/service.ts:300]
+- ACP session snapshot store 是内存 map；`loadSession`/`resumeSession` 使用 SDK `session.get` 和 `session.messages` 读取既有 session，但 ACP snapshot 本身不是 durable store。恢复顺序是 durable session 字段先于 message history。[E: packages/opencode/src/acp/session.ts:100] [E: packages/opencode/src/acp/service.ts:297] [E: packages/opencode/src/acp/service.ts:301] [E: packages/opencode/src/acp/service.ts:1120]
+- effort 的 `"default"` 是持久化哨兵，不是 variants map 里必须存在的 key；把它当成非法 effort 会让 `setSessionConfigOption` 误报 `InvalidEffortError`。[E: packages/opencode/src/acp/service.ts:930] [E: packages/opencode/src/acp/service.ts:438]
 - prompt content 支持 text、image、resource_link、resource text/file 等块；Zed 的 `zed://` link 会被转换成 file path 资源。[E: packages/opencode/src/acp/content.ts:31] [E: packages/opencode/src/acp/content.ts:173]
 - `prompt` / `session.command` / `session.summarize` 都先 `runUntilIdle` 再返回 `end_turn`；没有 event subscription 时 `runUntilIdle` 退化成直接执行 request。[E: packages/opencode/src/acp/service.ts:91] [E: packages/opencode/src/acp/service.ts:92] [E: packages/opencode/src/acp/event.ts:74]
 
@@ -151,6 +162,7 @@ permission bridge 把 opencode permission ask 变成 ACP `requestPermission`，�
 - packages/opencode/src/acp/content.ts
 - packages/opencode/src/acp/permission.ts
 - packages/opencode/src/acp/directory.ts
+- packages/opencode/src/acp/config-option.ts
 - packages/opencode/src/acp/usage.ts
 - packages/opencode/src/cli/cmd/acp.ts
 - packages/opencode/package.json

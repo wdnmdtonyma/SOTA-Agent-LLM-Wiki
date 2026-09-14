@@ -9,7 +9,7 @@ symbols: [Session, UserMessage, AssistantMessage, ReasoningPart, ReasoningHeader
 related: [tui.sync-store, tui.prompt]
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > Session screen 是 `session` route 的聊天界面：它从 `SyncProvider` 读取 session/message/part/status/permission/question，渲染 scrollbox transcript、sidebar、permission/question prompts、subagent footer 和可被 plugin replace 的 prompt slot。

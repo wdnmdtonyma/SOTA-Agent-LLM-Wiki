@@ -14,7 +14,7 @@ related:
   - clients.ui
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > Storybook 是 `@opencode-ai/storybook` UI sandbox: Storybook 10 + SolidJS/Vite, 读取 `packages/ui`、`packages/session-ui` 和 `packages/app` 的 stories, 提供 theme decorator、a11y/docs addons 和一个本地 CSS playground endpoint。

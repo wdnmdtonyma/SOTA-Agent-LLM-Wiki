@@ -25,7 +25,7 @@ symbols:
   - SessionInputTable
   - Migrations
 evidence: explicit
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > 这份节点是 V2 core SQLite/Drizzle schema 的逐表逐迁移总账；V1 当前仍有自己的 legacy 存储路径，本节点只描述 `packages/core/src` 的 V2 durable storage。[I]

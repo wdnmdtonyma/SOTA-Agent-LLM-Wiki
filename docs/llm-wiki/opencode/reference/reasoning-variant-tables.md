@@ -10,7 +10,7 @@ source:
   - packages/core/src/models-dev.ts
   - packages/opencode/test/provider/transform.test.ts
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 evidence: explicit
 symbols:
   - ProviderTransform.variants

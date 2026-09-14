@@ -18,7 +18,7 @@ related:
   - plugin-api.tui
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > `TuiPluginApi` 是 TUI 插件作者看到的 host API surface，覆盖 app metadata、attention、keys/keymap/mode/route、dialogs、toast、KV、state、theme、client、event、renderer、slots、plugins 和 lifecycle。

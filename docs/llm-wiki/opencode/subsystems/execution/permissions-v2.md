@@ -30,7 +30,7 @@ related:
   - ref.permission-actions
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > V2 权限模型是 Location-scoped core service：工具自己构造 `PermissionV2.assert({ action, resources, save, source, agent })`，服务先查 agent ruleset，再叠加 SQLite saved approvals，并把用户 `always` 持久化为 project 级 allow rule。

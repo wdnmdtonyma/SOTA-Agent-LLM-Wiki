@@ -9,7 +9,7 @@ symbols: [createOpenaiCompatible, OpenAICompatibleChatLanguageModel, OpenAIRespo
 related: [ref.copilot-tool-catalog]
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > GitHub Copilot 在 opencode 里有双适配:core 目录提供 AI SDK `LanguageModelV3` compatible provider,同时 `packages/llm/src/providers/github-copilot.ts` 提供 native route configure helper。V1 registry、V2 plugin 与 native helper 的 route selection 都先尊重显式 `endpoint`,然后才用 GPT-5 class 默认 Responses、`gpt-5-mini` 默认 Chat 的 heuristic。

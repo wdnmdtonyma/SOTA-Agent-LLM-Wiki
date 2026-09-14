@@ -26,7 +26,7 @@ related:
   - spine.v2-admission
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > V2 Session inbox 是 `session_input` durable admission 表和 `PromptAdmitted` / `Prompted` event pair:`SessionV2.prompt(...)` 先 admit prompt,runner 只在 safe provider-turn boundary promote,projector 再把 promoted input 变成 `session_message` user row。

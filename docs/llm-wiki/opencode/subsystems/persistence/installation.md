@@ -17,7 +17,7 @@ related:
   - infra.native-binary-release
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > 安装与升级节点覆盖 shared version/channel constants 和 V1 host 的 `@opencode/Installation` service；当前源码中升级检测与执行主要在 `packages/opencode/src/installation/index.ts`。

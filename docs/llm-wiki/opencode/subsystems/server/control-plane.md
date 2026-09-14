@@ -32,7 +32,7 @@ related:
   - integrations.integration-v2
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > `server.control-plane` 描述 workspace adapter orchestration、remote workspace sync/session warp，以及 V2 core 的 `MoveSession`。

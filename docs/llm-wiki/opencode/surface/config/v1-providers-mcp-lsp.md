@@ -14,7 +14,7 @@ source:
   - packages/core/src/v1/config/lsp.ts
   - packages/core/src/v1/config/formatter.ts
   - packages/opencode/src/provider/provider.ts
-updated: b3f1a96c6d
+updated: df23b7f948
 evidence: explicit
 ---
 

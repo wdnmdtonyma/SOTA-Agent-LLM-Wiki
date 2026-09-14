@@ -25,7 +25,7 @@ symbols:
 related: [ref.reasoning-variant-tables]
 evidence: explicit
 status: verified
-updated: b3f1a96c6d
+updated: df23b7f948
 ---
 
 > V1 provider transforms 是 AI SDK request 的 provider-specific normalization 层：它修 message content、cache hints、providerOptions key、Responses item metadata、reasoning variants、default generation/provider options，以及 Claude 5.1+ 的 thinking `blockBinding`，让同一条 V1 session loop 能喂给不同 AI SDK provider。
