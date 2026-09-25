@@ -19,7 +19,7 @@ related:
   - ref.coding-agent.env-vars
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `subsys.ai.env-api-keys` 描述 `pi-ai` 的环境凭证探测层:它把 provider id 映射到可用的 API key 环境变量,按统一规则读取 provider-scoped env / `process.env` / Bun sandbox fallback,并为 Vertex ADC 与 Bedrock ambient credentials 返回“已认证”哨兵值。
@@ -34,26 +34,26 @@ updated: 71dca871bc
 
 ## 职责边界
 
-`env-api-keys.ts` 在本节点 source 内呈现为环境凭证 discovery 的小型集中表:它让 callers 用 provider id 查环境变量名、已设置的变量名,或环境/ambient credentials 对应的 auth marker。[E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:129][E: packages/ai/src/env-api-keys.ts:144][E: packages/ai/src/env-api-keys.ts:155][E: packages/ai/src/env-api-keys.ts:167] `provider-env.ts` 是取值 helper:同一个变量名会先读传入的 `ProviderEnv`,再读 `process.env`,最后在 Bun compiled binary 且 `process.env` 为空时尝试 `/proc/self/environ` fallback。[E: packages/ai/src/utils/provider-env.ts:45][E: packages/ai/src/utils/provider-env.ts:47][E: packages/ai/src/utils/provider-env.ts:48][E: packages/ai/src/utils/provider-env.ts:49]
+`env-api-keys.ts` 在本节点 source 内呈现为环境凭证 discovery 的小型集中表:它让 callers 用 provider id 查环境变量名、已设置的变量名,或环境/ambient credentials 对应的 auth marker。[E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:131][E: packages/ai/src/env-api-keys.ts:146][E: packages/ai/src/env-api-keys.ts:157][E: packages/ai/src/env-api-keys.ts:169] `provider-env.ts` 是取值 helper:同一个变量名会先读传入的 `ProviderEnv`,再读 `process.env`,最后在 Bun compiled binary 且 `process.env` 为空时尝试 `/proc/self/environ` fallback。[E: packages/ai/src/utils/provider-env.ts:45][E: packages/ai/src/utils/provider-env.ts:47][E: packages/ai/src/utils/provider-env.ts:48][E: packages/ai/src/utils/provider-env.ts:49]
 
-这个节点覆盖 `getApiKeyEnvVars` 与 `hasVertexAdcCredentials` 的行为,也解释公开的 `findEnvKeys` / `getEnvApiKey` 如何消费它们。[E: packages/ai/src/env-api-keys.ts:35][E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:131][E: packages/ai/src/env-api-keys.ts:146] Provider-specific request options 仍属于 wire modules 的边界;本节点 source 只显示 discovery/status 层如何把 Vertex credentials、project 和 location 判断为可用 auth。[E: packages/ai/src/env-api-keys.ts:156][E: packages/ai/src/env-api-keys.ts:158][E: packages/ai/src/env-api-keys.ts:160][I]
+这个节点覆盖 `getApiKeyEnvVars` 与 `hasVertexAdcCredentials` 的行为,也解释公开的 `findEnvKeys` / `getEnvApiKey` 如何消费它们。[E: packages/ai/src/env-api-keys.ts:35][E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:133][E: packages/ai/src/env-api-keys.ts:148] Provider-specific request options 仍属于 wire modules 的边界;本节点 source 只显示 discovery/status 层如何把 Vertex credentials、project 和 location 判断为可用 auth。[E: packages/ai/src/env-api-keys.ts:158][E: packages/ai/src/env-api-keys.ts:160][E: packages/ai/src/env-api-keys.ts:162][I]
 
 ## 关键文件
 
-- `packages/ai/src/env-api-keys.ts`:定义 Node builtin 的 lazy dynamic import cache、Vertex ADC 文件检测、provider→API key env mapping、`findEnvKeys()` 和 `getEnvApiKey()`。[E: packages/ai/src/env-api-keys.ts:2][E: packages/ai/src/env-api-keys.ts:8][E: packages/ai/src/env-api-keys.ts:33][E: packages/ai/src/env-api-keys.ts:35][E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:131][E: packages/ai/src/env-api-keys.ts:146]
+- `packages/ai/src/env-api-keys.ts`:定义 Node builtin 的 lazy dynamic import cache、Vertex ADC 文件检测、provider→API key env mapping、`findEnvKeys()` 和 `getEnvApiKey()`。[E: packages/ai/src/env-api-keys.ts:2][E: packages/ai/src/env-api-keys.ts:8][E: packages/ai/src/env-api-keys.ts:33][E: packages/ai/src/env-api-keys.ts:35][E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:133][E: packages/ai/src/env-api-keys.ts:148]
 - `packages/ai/src/utils/provider-env.ts`:定义 `getProviderEnvValue()` 与 Bun sandbox fallback cache;该 fallback 在 ai package 内部实现,因此可推断 direct `pi-ai` consumers 不依赖 coding-agent entrypoint 预先修补 `process.env`。[E: packages/ai/src/utils/provider-env.ts:3][E: packages/ai/src/utils/provider-env.ts:15][E: packages/ai/src/utils/provider-env.ts:20][E: packages/ai/src/utils/provider-env.ts:45][E: packages/ai/src/utils/provider-env.ts:49][I]
 
 ## 数据模型
 
-`ProviderEnv` 在这两个文件中作为可选 env bag 传入,`env-api-keys.ts` 与 `provider-env.ts` 都通过该参数允许 caller 注入 provider-scoped environment overrides。[E: packages/ai/src/env-api-keys.ts:26][E: packages/ai/src/env-api-keys.ts:35][E: packages/ai/src/env-api-keys.ts:129][E: packages/ai/src/env-api-keys.ts:135][E: packages/ai/src/env-api-keys.ts:150][E: packages/ai/src/utils/provider-env.ts:1][E: packages/ai/src/utils/provider-env.ts:45] `getProviderEnvValue(name, env)` 使用 truthy fallback 链,所以空字符串 override 不会遮蔽后续 `process.env` 或 Bun fallback;这和“空字符串表示 unset”的读取语义一致,但不是 nullish-override 语义。[E: packages/ai/src/utils/provider-env.ts:45][E: packages/ai/src/utils/provider-env.ts:47][E: packages/ai/src/utils/provider-env.ts:48][E: packages/ai/src/utils/provider-env.ts:49][I]
+`ProviderEnv` 在这两个文件中作为可选 env bag 传入,`env-api-keys.ts` 与 `provider-env.ts` 都通过该参数允许 caller 注入 provider-scoped environment overrides。[E: packages/ai/src/env-api-keys.ts:26][E: packages/ai/src/env-api-keys.ts:35][E: packages/ai/src/env-api-keys.ts:131][E: packages/ai/src/env-api-keys.ts:137][E: packages/ai/src/env-api-keys.ts:152][E: packages/ai/src/utils/provider-env.ts:1][E: packages/ai/src/utils/provider-env.ts:45] `getProviderEnvValue(name, env)` 使用 truthy fallback 链,所以空字符串 override 不会遮蔽后续 `process.env` 或 Bun fallback;这和“空字符串表示 unset”的读取语义一致,但不是 nullish-override 语义。[E: packages/ai/src/utils/provider-env.ts:45][E: packages/ai/src/utils/provider-env.ts:47][E: packages/ai/src/utils/provider-env.ts:48][E: packages/ai/src/utils/provider-env.ts:49][I]
 
-`getApiKeyEnvVars(provider)` 返回只读字符串数组或 `undefined`;`findEnvKeys(provider, env)` 只保留当前能通过 `getProviderEnvValue` 读到 truthy value 的变量名;`getEnvApiKey(provider, env)` 取第一个 found env key 的值作为 API key。[E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:119][E: packages/ai/src/env-api-keys.ts:131][E: packages/ai/src/env-api-keys.ts:132][E: packages/ai/src/env-api-keys.ts:135][E: packages/ai/src/env-api-keys.ts:136][E: packages/ai/src/env-api-keys.ts:146][E: packages/ai/src/env-api-keys.ts:147][E: packages/ai/src/env-api-keys.ts:150]
+`getApiKeyEnvVars(provider)` 返回只读字符串数组或 `undefined`;`findEnvKeys(provider, env)` 只保留当前能通过 `getProviderEnvValue` 读到 truthy value 的变量名;`getEnvApiKey(provider, env)` 取第一个 found env key 的值作为 API key。[E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:121][E: packages/ai/src/env-api-keys.ts:133][E: packages/ai/src/env-api-keys.ts:134][E: packages/ai/src/env-api-keys.ts:137][E: packages/ai/src/env-api-keys.ts:138][E: packages/ai/src/env-api-keys.ts:148][E: packages/ai/src/env-api-keys.ts:149][E: packages/ai/src/env-api-keys.ts:152]
 
-`getEnvApiKey()` 对 ambient credentials 使用字符串哨兵值 `"<authenticated>"`:Vertex ADC 满足 credentials/project/location 时返回该值,Amazon Bedrock 任一支持的 ambient credential source 存在时也返回该值。[E: packages/ai/src/env-api-keys.ts:162][E: packages/ai/src/env-api-keys.ts:163][E: packages/ai/src/env-api-keys.ts:167][E: packages/ai/src/env-api-keys.ts:175][E: packages/ai/src/env-api-keys.ts:176][E: packages/ai/src/env-api-keys.ts:177][E: packages/ai/src/env-api-keys.ts:178][E: packages/ai/src/env-api-keys.ts:179][E: packages/ai/src/env-api-keys.ts:180][E: packages/ai/src/env-api-keys.ts:181][E: packages/ai/src/env-api-keys.ts:183] 这个返回值表示“可认证”而不是实际 secret;直接把它当上游 API key 使用只适合兼容路径里把认证状态传给后续 provider-specific code 的场景。[I]
+`getEnvApiKey()` 对 ambient credentials 使用字符串哨兵值 `"<authenticated>"`:Vertex ADC 满足 credentials/project/location 时返回该值,Amazon Bedrock 任一支持的 ambient credential source 存在时也返回该值。[E: packages/ai/src/env-api-keys.ts:164][E: packages/ai/src/env-api-keys.ts:165][E: packages/ai/src/env-api-keys.ts:169][E: packages/ai/src/env-api-keys.ts:177][E: packages/ai/src/env-api-keys.ts:178][E: packages/ai/src/env-api-keys.ts:179][E: packages/ai/src/env-api-keys.ts:180][E: packages/ai/src/env-api-keys.ts:181][E: packages/ai/src/env-api-keys.ts:182][E: packages/ai/src/env-api-keys.ts:183][E: packages/ai/src/env-api-keys.ts:185] 这个返回值表示“可认证”而不是实际 secret;直接把它当上游 API key 使用只适合兼容路径里把认证状态传给后续 provider-specific code 的场景。[I]
 
 ## Provider API key 映射
 
-`github-copilot` 是特殊分支,只返回 `COPILOT_GITHUB_TOKEN`。[E: packages/ai/src/env-api-keys.ts:69][E: packages/ai/src/env-api-keys.ts:70] `anthropic` discovery/status 的候选顺序是 `ANTHROPIC_AUTH_TOKEN`、`ANTHROPIC_OAUTH_TOKEN`、`ANTHROPIC_API_KEY`;`getEnvApiKey()` 会专门跳过 AUTH_TOKEN，因为它必须成为 Bearer header。[E: packages/ai/src/env-api-keys.ts:29][E: packages/ai/src/env-api-keys.ts:30][E: packages/ai/src/env-api-keys.ts:31][E: packages/ai/src/env-api-keys.ts:75][E: packages/ai/src/env-api-keys.ts:76][E: packages/ai/src/env-api-keys.ts:147][E: packages/ai/src/env-api-keys.ts:149][E: packages/ai/src/env-api-keys.ts:150] 真正 provider auth 顺序是 stored credential，随后 AUTH_TOKEN→`Authorization: Bearer`，最后 OAUTH_TOKEN / API_KEY→`apiKey`。[E: packages/ai/src/providers/anthropic.ts:16][E: packages/ai/src/providers/anthropic.ts:20][E: packages/ai/src/providers/anthropic.ts:21][E: packages/ai/src/providers/anthropic.ts:24][E: packages/ai/src/providers/anthropic.ts:28][E: packages/ai/src/providers/anthropic.ts:33][E: packages/ai/src/providers/anthropic.ts:36]
+`github-copilot` 是特殊分支,只返回 `COPILOT_GITHUB_TOKEN`。[E: packages/ai/src/env-api-keys.ts:69][E: packages/ai/src/env-api-keys.ts:70] `anthropic` discovery/status 的候选顺序是 `ANTHROPIC_AUTH_TOKEN`、`ANTHROPIC_OAUTH_TOKEN`、`ANTHROPIC_API_KEY`;`getEnvApiKey()` 会专门跳过 AUTH_TOKEN，因为它必须成为 Bearer header。[E: packages/ai/src/env-api-keys.ts:29][E: packages/ai/src/env-api-keys.ts:30][E: packages/ai/src/env-api-keys.ts:31][E: packages/ai/src/env-api-keys.ts:75][E: packages/ai/src/env-api-keys.ts:76][E: packages/ai/src/env-api-keys.ts:149][E: packages/ai/src/env-api-keys.ts:151][E: packages/ai/src/env-api-keys.ts:152] 真正 provider auth 顺序是 stored credential，随后 AUTH_TOKEN→`Authorization: Bearer`，最后 OAUTH_TOKEN / API_KEY→`apiKey`。[E: packages/ai/src/providers/anthropic.ts:16][E: packages/ai/src/providers/anthropic.ts:20][E: packages/ai/src/providers/anthropic.ts:21][E: packages/ai/src/providers/anthropic.ts:24][E: packages/ai/src/providers/anthropic.ts:28][E: packages/ai/src/providers/anthropic.ts:33][E: packages/ai/src/providers/anthropic.ts:36]
 
 | provider id | env var(s) | evidence |
 |---|---|---|
@@ -70,44 +70,44 @@ updated: 71dca871bc
 | `groq` | `GROQ_API_KEY` | [E: packages/ai/src/env-api-keys.ts:90] |
 | `cerebras` | `CEREBRAS_API_KEY` | [E: packages/ai/src/env-api-keys.ts:91] |
 | `xai` | `XAI_API_KEY` | [E: packages/ai/src/env-api-keys.ts:92] |
-| `radius` | `RADIUS_API_KEY` | [E: packages/ai/src/env-api-keys.ts:93] |
-| `openrouter` | `OPENROUTER_API_KEY` | [E: packages/ai/src/env-api-keys.ts:94] |
-| `vercel-ai-gateway` | `AI_GATEWAY_API_KEY` | [E: packages/ai/src/env-api-keys.ts:95] |
-| `zai` | `ZAI_API_KEY` | [E: packages/ai/src/env-api-keys.ts:96] |
-| `zai-coding-cn` | `ZAI_CODING_CN_API_KEY` | [E: packages/ai/src/env-api-keys.ts:97] |
-| `mistral` | `MISTRAL_API_KEY` | [E: packages/ai/src/env-api-keys.ts:98] |
-| `minimax` | `MINIMAX_API_KEY` | [E: packages/ai/src/env-api-keys.ts:99] |
-| `minimax-cn` | `MINIMAX_CN_API_KEY` | [E: packages/ai/src/env-api-keys.ts:100] |
-| `moonshotai` | `MOONSHOT_API_KEY` | [E: packages/ai/src/env-api-keys.ts:101] |
-| `moonshotai-cn` | `MOONSHOT_API_KEY` | [E: packages/ai/src/env-api-keys.ts:102] |
-| `huggingface` | `HF_TOKEN` | [E: packages/ai/src/env-api-keys.ts:103] |
-| `fireworks` | `FIREWORKS_API_KEY` | [E: packages/ai/src/env-api-keys.ts:104] |
-| `together` | `TOGETHER_API_KEY` | [E: packages/ai/src/env-api-keys.ts:105] |
-| `baseten` | `BASETEN_API_KEY` | [E: packages/ai/src/env-api-keys.ts:106] |
-| `opencode` | `OPENCODE_API_KEY` | [E: packages/ai/src/env-api-keys.ts:107] |
-| `opencode-go` | `OPENCODE_API_KEY` | [E: packages/ai/src/env-api-keys.ts:108] |
-| `kimi-coding` | `KIMI_API_KEY` | [E: packages/ai/src/env-api-keys.ts:109] |
-| `cloudflare-workers-ai` | `CLOUDFLARE_API_KEY` | [E: packages/ai/src/env-api-keys.ts:110] |
-| `cloudflare-ai-gateway` | `CLOUDFLARE_API_KEY` | [E: packages/ai/src/env-api-keys.ts:111] |
-| `xiaomi` | `XIAOMI_API_KEY` | [E: packages/ai/src/env-api-keys.ts:112] |
-| `xiaomi-token-plan-cn` | `XIAOMI_TOKEN_PLAN_CN_API_KEY` | [E: packages/ai/src/env-api-keys.ts:113] |
-| `xiaomi-token-plan-ams` | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` | [E: packages/ai/src/env-api-keys.ts:114] |
-| `xiaomi-token-plan-sgp` | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` | [E: packages/ai/src/env-api-keys.ts:115] |
+| `radius` | `RADIUS_API_KEY` | [E: packages/ai/src/env-api-keys.ts:94] |
+| `openrouter` | `OPENROUTER_API_KEY` | [E: packages/ai/src/env-api-keys.ts:95] |
+| `vercel-ai-gateway` | `AI_GATEWAY_API_KEY` | [E: packages/ai/src/env-api-keys.ts:96] |
+| `zai` | `ZAI_API_KEY` | [E: packages/ai/src/env-api-keys.ts:97] |
+| `zai-coding-cn` | `ZAI_CODING_CN_API_KEY` | [E: packages/ai/src/env-api-keys.ts:98] |
+| `mistral` | `MISTRAL_API_KEY` | [E: packages/ai/src/env-api-keys.ts:99] |
+| `minimax` | `MINIMAX_API_KEY` | [E: packages/ai/src/env-api-keys.ts:100] |
+| `minimax-cn` | `MINIMAX_CN_API_KEY` | [E: packages/ai/src/env-api-keys.ts:101] |
+| `moonshotai` | `MOONSHOT_API_KEY` | [E: packages/ai/src/env-api-keys.ts:102] |
+| `moonshotai-cn` | `MOONSHOT_API_KEY` | [E: packages/ai/src/env-api-keys.ts:103] |
+| `huggingface` | `HF_TOKEN` | [E: packages/ai/src/env-api-keys.ts:104] |
+| `fireworks` | `FIREWORKS_API_KEY` | [E: packages/ai/src/env-api-keys.ts:105] |
+| `together` | `TOGETHER_API_KEY` | [E: packages/ai/src/env-api-keys.ts:106] |
+| `baseten` | `BASETEN_API_KEY` | [E: packages/ai/src/env-api-keys.ts:107] |
+| `opencode` | `OPENCODE_API_KEY` | [E: packages/ai/src/env-api-keys.ts:108] |
+| `opencode-go` | `OPENCODE_API_KEY` | [E: packages/ai/src/env-api-keys.ts:109] |
+| `kimi-coding` | `KIMI_API_KEY` | [E: packages/ai/src/env-api-keys.ts:110] |
+| `cloudflare-workers-ai` | `CLOUDFLARE_API_KEY` | [E: packages/ai/src/env-api-keys.ts:112] |
+| `cloudflare-ai-gateway` | `CLOUDFLARE_API_KEY` | [E: packages/ai/src/env-api-keys.ts:113] |
+| `xiaomi` | `XIAOMI_API_KEY` | [E: packages/ai/src/env-api-keys.ts:114] |
+| `xiaomi-token-plan-cn` | `XIAOMI_TOKEN_PLAN_CN_API_KEY` | [E: packages/ai/src/env-api-keys.ts:115] |
+| `xiaomi-token-plan-ams` | `XIAOMI_TOKEN_PLAN_AMS_API_KEY` | [E: packages/ai/src/env-api-keys.ts:116] |
+| `xiaomi-token-plan-sgp` | `XIAOMI_TOKEN_PLAN_SGP_API_KEY` | [E: packages/ai/src/env-api-keys.ts:117] |
 
-Provider ids absent from these branches or the `envMap` return `undefined`, which makes `findEnvKeys()` and normal API-key lookup return `undefined` before ambient provider-specific branches run；Radius 已在 map 中，因此可由该 discovery path 找到 `RADIUS_API_KEY`。[E: packages/ai/src/env-api-keys.ts:93][E: packages/ai/src/env-api-keys.ts:118][E: packages/ai/src/env-api-keys.ts:119][E: packages/ai/src/env-api-keys.ts:132][E: packages/ai/src/env-api-keys.ts:133]
+Provider ids absent from these branches or the `envMap` return `undefined`, which makes `findEnvKeys()` and normal API-key lookup return `undefined` before ambient provider-specific branches run；Radius 已在 map 中，因此可由该 discovery path 找到 `RADIUS_API_KEY`。[E: packages/ai/src/env-api-keys.ts:94][E: packages/ai/src/env-api-keys.ts:120][E: packages/ai/src/env-api-keys.ts:121][E: packages/ai/src/env-api-keys.ts:134][E: packages/ai/src/env-api-keys.ts:135]
 
 ## Vertex ADC detection
 
 `hasVertexAdcCredentials(env)` first checks `env?.GOOGLE_APPLICATION_CREDENTIALS` directly and, if present, only returns true when the lazy-loaded `_existsSync` can see that explicit path。[E: packages/ai/src/env-api-keys.ts:35][E: packages/ai/src/env-api-keys.ts:36][E: packages/ai/src/env-api-keys.ts:37][E: packages/ai/src/env-api-keys.ts:38] If no explicit path exists and the cached result is still null, the function checks whether the lazy Node imports have completed; in non-Node/non-Bun environments it caches false, while in Node/Bun import-race state it returns false without caching so a later call can retry。[E: packages/ai/src/env-api-keys.ts:41][E: packages/ai/src/env-api-keys.ts:45][E: packages/ai/src/env-api-keys.ts:46][E: packages/ai/src/env-api-keys.ts:47][E: packages/ai/src/env-api-keys.ts:49][E: packages/ai/src/env-api-keys.ts:51]
 
-When filesystem/path helpers are available, the ADC check reads `GOOGLE_APPLICATION_CREDENTIALS` through `getProviderEnvValue`; if present it caches `_existsSync(gacPath)`, otherwise it checks `~/.config/gcloud/application_default_credentials.json` under the current homedir。[E: packages/ai/src/env-api-keys.ts:55][E: packages/ai/src/env-api-keys.ts:56][E: packages/ai/src/env-api-keys.ts:57][E: packages/ai/src/env-api-keys.ts:60][E: packages/ai/src/env-api-keys.ts:61] `getEnvApiKey("google-vertex")` returns `"<authenticated>"` only when `hasVertexAdcCredentials(env)`, `GOOGLE_CLOUD_PROJECT` or `GCLOUD_PROJECT`, and `GOOGLE_CLOUD_LOCATION` are all truthy。[E: packages/ai/src/env-api-keys.ts:155][E: packages/ai/src/env-api-keys.ts:156][E: packages/ai/src/env-api-keys.ts:157][E: packages/ai/src/env-api-keys.ts:158][E: packages/ai/src/env-api-keys.ts:160][E: packages/ai/src/env-api-keys.ts:162][E: packages/ai/src/env-api-keys.ts:163]
+When filesystem/path helpers are available, the ADC check reads `GOOGLE_APPLICATION_CREDENTIALS` through `getProviderEnvValue`; if present it caches `_existsSync(gacPath)`, otherwise it checks `~/.config/gcloud/application_default_credentials.json` under the current homedir。[E: packages/ai/src/env-api-keys.ts:55][E: packages/ai/src/env-api-keys.ts:56][E: packages/ai/src/env-api-keys.ts:57][E: packages/ai/src/env-api-keys.ts:60][E: packages/ai/src/env-api-keys.ts:61] `getEnvApiKey("google-vertex")` returns `"<authenticated>"` only when `hasVertexAdcCredentials(env)`, `GOOGLE_CLOUD_PROJECT` or `GCLOUD_PROJECT`, and `GOOGLE_CLOUD_LOCATION` are all truthy。[E: packages/ai/src/env-api-keys.ts:157][E: packages/ai/src/env-api-keys.ts:158][E: packages/ai/src/env-api-keys.ts:159][E: packages/ai/src/env-api-keys.ts:160][E: packages/ai/src/env-api-keys.ts:162][E: packages/ai/src/env-api-keys.ts:164][E: packages/ai/src/env-api-keys.ts:165]
 
 ## 控制流
 
-1. `getApiKeyEnvVars@env-api-keys.ts:68` handles provider-specific special cases, then reads `envMap[provider]` and wraps the mapped env name in a one-element array。[E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:69][E: packages/ai/src/env-api-keys.ts:75][E: packages/ai/src/env-api-keys.ts:79][E: packages/ai/src/env-api-keys.ts:118][E: packages/ai/src/env-api-keys.ts:119]
-2. `findEnvKeys@env-api-keys.ts:129` asks `getApiKeyEnvVars(provider)` for candidates and filters by `getProviderEnvValue(envVar, env)`; empty result becomes `undefined` rather than an empty array。[E: packages/ai/src/env-api-keys.ts:131][E: packages/ai/src/env-api-keys.ts:132][E: packages/ai/src/env-api-keys.ts:133][E: packages/ai/src/env-api-keys.ts:135][E: packages/ai/src/env-api-keys.ts:136]
-3. `getEnvApiKey@env-api-keys.ts:144` normally uses the first `findEnvKeys()` hit；Anthropic alone filters out `ANTHROPIC_AUTH_TOKEN_ENV` before returning a value, then the function falls through to Vertex ADC and Amazon Bedrock ambient credential checks。[E: packages/ai/src/env-api-keys.ts:146][E: packages/ai/src/env-api-keys.ts:147][E: packages/ai/src/env-api-keys.ts:148][E: packages/ai/src/env-api-keys.ts:149][E: packages/ai/src/env-api-keys.ts:150][E: packages/ai/src/env-api-keys.ts:155][E: packages/ai/src/env-api-keys.ts:167]
-4. `getProviderEnvValue@provider-env.ts:45` resolves one variable name from scoped env, process env, Bun `/proc/self/environ`, then `undefined`; this source shows env API-key discovery consuming that helper, and other wire-module reuse is a boundary note rather than evidence from this node source。[E: packages/ai/src/utils/provider-env.ts:45][E: packages/ai/src/utils/provider-env.ts:47][E: packages/ai/src/utils/provider-env.ts:48][E: packages/ai/src/utils/provider-env.ts:49][E: packages/ai/src/env-api-keys.ts:135][E: packages/ai/src/env-api-keys.ts:150][I]
+1. `getApiKeyEnvVars@env-api-keys.ts:68` handles provider-specific special cases, then reads `envMap[provider]` and wraps the mapped env name in a one-element array。[E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:69][E: packages/ai/src/env-api-keys.ts:75][E: packages/ai/src/env-api-keys.ts:79][E: packages/ai/src/env-api-keys.ts:120][E: packages/ai/src/env-api-keys.ts:121]
+2. `findEnvKeys@env-api-keys.ts:129` asks `getApiKeyEnvVars(provider)` for candidates and filters by `getProviderEnvValue(envVar, env)`; empty result becomes `undefined` rather than an empty array。[E: packages/ai/src/env-api-keys.ts:133][E: packages/ai/src/env-api-keys.ts:134][E: packages/ai/src/env-api-keys.ts:135][E: packages/ai/src/env-api-keys.ts:137][E: packages/ai/src/env-api-keys.ts:138]
+3. `getEnvApiKey@env-api-keys.ts:144` normally uses the first `findEnvKeys()` hit；Anthropic alone filters out `ANTHROPIC_AUTH_TOKEN_ENV` before returning a value, then the function falls through to Vertex ADC and Amazon Bedrock ambient credential checks。[E: packages/ai/src/env-api-keys.ts:148][E: packages/ai/src/env-api-keys.ts:149][E: packages/ai/src/env-api-keys.ts:150][E: packages/ai/src/env-api-keys.ts:151][E: packages/ai/src/env-api-keys.ts:152][E: packages/ai/src/env-api-keys.ts:157][E: packages/ai/src/env-api-keys.ts:169]
+4. `getProviderEnvValue@provider-env.ts:45` resolves one variable name from scoped env, process env, Bun `/proc/self/environ`, then `undefined`; this source shows env API-key discovery consuming that helper, and other wire-module reuse is a boundary note rather than evidence from this node source。[E: packages/ai/src/utils/provider-env.ts:45][E: packages/ai/src/utils/provider-env.ts:47][E: packages/ai/src/utils/provider-env.ts:48][E: packages/ai/src/utils/provider-env.ts:49][E: packages/ai/src/env-api-keys.ts:137][E: packages/ai/src/env-api-keys.ts:152][I]
 
 ## 设计动机与权衡
 
@@ -117,15 +117,15 @@ The Bun fallback duplicates the coding-agent sandbox env restoration pattern so 
 
 ## gotcha
 
-- `findEnvKeys()` only reports API key variables that are actually configured; its code path does not include ambient credential sources such as AWS profiles, AWS IAM credentials or Google ADC, while `getEnvApiKey()` can still convert Vertex/Bedrock ambient readiness into `"<authenticated>"`。[E: packages/ai/src/env-api-keys.ts:129][E: packages/ai/src/env-api-keys.ts:135][E: packages/ai/src/env-api-keys.ts:155][E: packages/ai/src/env-api-keys.ts:167][E: packages/ai/src/env-api-keys.ts:183]
+- `findEnvKeys()` only reports API key variables that are actually configured; its code path does not include ambient credential sources such as AWS profiles, AWS IAM credentials or Google ADC, while `getEnvApiKey()` can still convert Vertex/Bedrock ambient readiness into `"<authenticated>"`。[E: packages/ai/src/env-api-keys.ts:131][E: packages/ai/src/env-api-keys.ts:137][E: packages/ai/src/env-api-keys.ts:157][E: packages/ai/src/env-api-keys.ts:169][E: packages/ai/src/env-api-keys.ts:185]
 - `hasVertexAdcCredentials()` uses `env?.GOOGLE_APPLICATION_CREDENTIALS` for the first explicit-path fast path, then `getProviderEnvValue("GOOGLE_APPLICATION_CREDENTIALS", env)` for the cached branch; a process-level path can therefore influence the default cached branch even when the direct `env` object has no value。[E: packages/ai/src/env-api-keys.ts:36][E: packages/ai/src/env-api-keys.ts:55][I]
 - `cachedVertexAdcCredentialsExists` is global to this module and not keyed by `ProviderEnv`, so a cached default ADC result can be reused across later calls that also omit an explicit credentials path。[E: packages/ai/src/env-api-keys.ts:33][E: packages/ai/src/env-api-keys.ts:41][E: packages/ai/src/env-api-keys.ts:57][E: packages/ai/src/env-api-keys.ts:60][E: packages/ai/src/env-api-keys.ts:65][I]
 
 ## 跨包边界
 
-[subsys.ai.auth-resolution](auth-resolution.md) owns the request-time credential resolution order: stored credentials and OAuth are handled there, while this node only documents legacy/compat/status environment discovery and shared env value lookup。[E: packages/ai/src/env-api-keys.ts:129][E: packages/ai/src/env-api-keys.ts:144][I] Newer provider auth definitions can use their own env var lists through auth helpers or custom `ApiKeyAuth`, so `getApiKeyEnvVars` is a discovery/catalog surface rather than the only source of provider auth truth。[I]
+[subsys.ai.auth-resolution](auth-resolution.md) owns the request-time credential resolution order: stored credentials and OAuth are handled there, while this node only documents legacy/compat/status environment discovery and shared env value lookup。[E: packages/ai/src/env-api-keys.ts:131][E: packages/ai/src/env-api-keys.ts:146][I] Newer provider auth definitions can use their own env var lists through auth helpers or custom `ApiKeyAuth`, so `getApiKeyEnvVars` is a discovery/catalog surface rather than the only source of provider auth truth。[I]
 
-[ref.coding-agent.env-vars](../../reference/env-vars.md) should enumerate environment variables across ai and coding-agent; this node is the authoritative subsystem explanation for the provider API key subset and the ambient auth probes that come from `env-api-keys.ts`。[E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:79][E: packages/ai/src/env-api-keys.ts:155][E: packages/ai/src/env-api-keys.ts:167][I]
+[ref.coding-agent.env-vars](../../reference/env-vars.md) should enumerate environment variables across ai and coding-agent; this node is the authoritative subsystem explanation for the provider API key subset and the ambient auth probes that come from `env-api-keys.ts`。[E: packages/ai/src/env-api-keys.ts:68][E: packages/ai/src/env-api-keys.ts:79][E: packages/ai/src/env-api-keys.ts:157][E: packages/ai/src/env-api-keys.ts:169][I]
 
 Provider config and wire protocol stay outside this node: `getProviderEnvValue()` is the shared primitive for reading request-scoped env overrides, but Azure endpoint settings, Bedrock region/profile options, Vertex project/location, proxy variables, and cache-retention flags are interpreted in their owning wire modules。[E: packages/ai/src/utils/provider-env.ts:45][I]
 

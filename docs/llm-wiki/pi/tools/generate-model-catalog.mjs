@@ -2,7 +2,7 @@
 // Rebuild reference/model-catalog.md from committed structural model shards.
 // Full model values live in generated, gitignored JSON; this catalog therefore
 // records bucket membership plus the few id/api facts that generate-models.ts
-// still hard-codes (Qwen Individual allowlist, DeepSeek V4 vision, CF prefix).
+// still hard-codes (Qwen Individual allowlist, DeepSeek Flash/Pro, CF prefix).
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -48,11 +48,11 @@ function parseQuotedSet(constName) {
 	return ids;
 }
 
-const flattenLine = lineOf(catalogLines, (line) => line.startsWith("export function flattenModelCatalog"), "flattenModelCatalog");
+const flattenLine = lineOf(catalogLines, (line) => line.startsWith("export function flattenChatModelCatalog"), "flattenChatModelCatalog");
 const typeLine = lineOf(aggregatorLines, (line) => line.includes('"qwen-token-plan-individual": typeof QWEN_TOKEN_PLAN_INDIVIDUAL_MODELS'), "MODELS type individual");
 const importLine = lineOf(aggregatorLines, (line) => line.includes("QWEN_TOKEN_PLAN_INDIVIDUAL_MODELS } from"), "individual import");
 const shardImportLine = lineOfText('import values from "./data/${providerId}.json"', "shard json import template");
-const shardFlattenLine = lineOfText("flattenModelCatalog(${JSON.stringify(providerId)}, values)", "shard flatten template");
+const shardFlattenLine = lineOfText("flattenChatModelCatalog(${JSON.stringify(providerId)}, values)", "shard flatten template");
 const shardWriteLine = lineOfText("writeFileSync(join(providersDir, filename), output)", "shard write");
 const aggregatorWriteLine = lineOfText("writeFileSync(aggregatorPath, output)", "aggregator write");
 const individualVariantLine = lineOfText('provider: "qwen-token-plan-individual"', "individual variant");
@@ -63,7 +63,8 @@ const workersAiApiLine = lineOfText('upstream === "workers-ai"', "cf workers-ai 
 const workersAiPrefixLine = lineOfText("id = prefixedId", "cf prefixed id", workersAiApiLine);
 const workersAiMirrorLine = lineOfText('data["cloudflare-workers-ai"]?.models', "cf workers-ai mirror", workersAiApiLine);
 const workersAiIdLine = lineOfText("`workers-ai/${modelId}`", "cf workers-ai id template", workersAiMirrorLine);
-const deepseekVisionLine = lineOfText('id: "deepseek-v4-flash-vision-exp"', "deepseek vision id");
+const deepseekFlashLine = lineOfText('id: "deepseek-flash"', "deepseek flash id");
+const deepseekProLine = lineOfText('id: "deepseek-v4-pro"', "deepseek pro id");
 
 const individualIds = parseQuotedSet("QWEN_TOKEN_PLAN_INDIVIDUAL_MODEL_IDS");
 const excludedIds = parseQuotedSet("QWEN_TOKEN_PLAN_EXCLUDED_MODEL_IDS");
@@ -78,8 +79,8 @@ for (const file of providerFiles) {
 	const sourcePath = `packages/ai/src/providers/${file}`;
 	const lines = fs.readFileSync(path.join(PROVIDERS, file), "utf8").split("\n");
 	const importValuesLine = lineOf(lines, (line) => line.includes('from "./data/') && line.includes('.json"'), `${sourcePath} json import`);
-	const flattenCallLine = lineOf(lines, (line) => line.includes("flattenModelCatalog("), `${sourcePath} flatten`);
-	const providerMatch = lines[flattenCallLine - 1].match(/flattenModelCatalog\("([^"]+)",\s*values\)/);
+	const flattenCallLine = lineOf(lines, (line) => line.includes("flattenChatModelCatalog("), `${sourcePath} flatten`);
+	const providerMatch = lines[flattenCallLine - 1].match(/flattenChatModelCatalog\("([^"]+)",\s*values\)/);
 	if (!providerMatch) throw new Error(`Unexpected flatten call in ${sourcePath}:${flattenCallLine}`);
 	const provider = providerMatch[1];
 	const valueLine = lineOf(
@@ -109,6 +110,8 @@ const lines = [
 	...sourcePaths.map((sourcePath) => `  - ${sourcePath}`),
 	"symbols:",
 	"  - MODELS",
+	"  - IMAGE_MODELS",
+	"  - CLASSIFIER_MODELS",
 	"  - Model",
 	"related:",
 	"  - subsys.ai.model-discovery",
@@ -131,7 +134,7 @@ const lines = [
 	"",
 	`目标 commit 提交了 **${providers.length}** 个 provider structural shard。每个 shard 只保留 \`import values from "./data/<provider>.json"\` 和 \`flattenModelCatalog(provider, values)\`；实际 id/api/cost 等值不在 git tree [E: ${individual.sourcePath}:${individual.importValuesLine}] [E: ${individual.sourcePath}:${individual.flattenCallLine}] [E: ${first.sourcePath}:${first.importValuesLine}] [E: ${first.sourcePath}:${first.flattenCallLine}] [E: ${catalogPath}:${flattenLine}]。`,
 	"",
-	`\`models.generated.ts\` 把这 ${providers.length} 个 shard 聚合为 \`MODELS\`；type 面与 value 面都包含 \`qwen-token-plan-individual\` [E: ${aggregatorPath}:${importLine}] [E: ${aggregatorPath}:${typeLine}] [E: ${aggregatorPath}:${individual.valueLine}]。Radius 不在此 object 中。`,
+	`\`models.generated.ts\` 把这 ${providers.length} 个 shard 聚合为并行的 \`MODELS\` / \`IMAGE_MODELS\` / \`CLASSIFIER_MODELS\`；type 面与 value 面都包含 \`qwen-token-plan-individual\` 与 \`radius\` [E: ${aggregatorPath}:${importLine}] [E: ${aggregatorPath}:${typeLine}] [E: ${aggregatorPath}:${individual.valueLine}]。同一 upstream id 可按 chat/image/classifier 分行。`,
 	"",
 	`\`generate-models.ts\` 先写 structural \`.models.ts\` 与 gitignored \`src/providers/data/*.json\`，再写 \`models.generated.ts\` [E: ${generatorPath}:${shardImportLine}] [E: ${generatorPath}:${shardFlattenLine}] [E: ${generatorPath}:${shardWriteLine}] [E: ${generatorPath}:${aggregatorWriteLine}]。因此 checkout 可复现的是 **${providers.length} 个 bucket 结构**，不是 flattened model 总数。`,
 	"",
@@ -172,7 +175,7 @@ lines.push(
 	"",
 	`${excludedList} 在 \`QWEN_TOKEN_PLAN_EXCLUDED_MODEL_IDS\` 中，国际 / CN / Individual 三条变体都会跳过 ${excludedEvidence} [E: ${generatorPath}:${excludedCheckLine}]。`,
 	"",
-	`DeepSeek 官方 bucket 另有一组 **generator 硬编码** 的 V4 行，不依赖 gitignored JSON。\`deepseek-v4-flash-vision-exp\` 的 id / \`openai-completions\` / \`input: ["text", "image"]\` 写在生成器里 [E: ${generatorPath}:${deepseekVisionLine}] [E: ${generatorPath}:${deepseekVisionLine + 2}] [E: ${generatorPath}:${deepseekVisionLine + 6}]。这不是 Individual allowlist 成员。`,
+	`DeepSeek 官方 bucket 另有一组 **generator 硬编码** 的 V4 行，不依赖 gitignored JSON。\`deepseek-flash\`（DeepSeek V4.1 Flash，\`openai-completions\`，\`input: ["text", "image"]\`）与 \`deepseek-v4-pro\` 写在生成器里 [E: ${generatorPath}:${deepseekFlashLine}] [E: ${generatorPath}:${deepseekFlashLine + 2}] [E: ${generatorPath}:${deepseekFlashLine + 6}] [E: ${generatorPath}:${deepseekProLine}]。不要再 cite 已删除的 \`deepseek-v4-flash-vision-exp\` 硬编码行。这不是 Individual allowlist 成员。`,
 	"",
 	`\`cloudflare-ai-gateway\` bucket 的 \`workers-ai\` upstream 固定 \`api: "openai-completions"\`、compat base URL，id 为 \`workers-ai/\${modelId}\`；models.dev 漏掉该前缀时，生成器从 \`cloudflare-workers-ai\` catalog 镜像补行。具体 id 仍在 gitignored JSON，本页只记录此前缀规则 [E: ${generatorPath}:${workersAiApiLine}] [E: ${generatorPath}:${workersAiPrefixLine}] [E: ${generatorPath}:${workersAiMirrorLine}] [E: ${generatorPath}:${workersAiIdLine}] [I]。`,
 	"",

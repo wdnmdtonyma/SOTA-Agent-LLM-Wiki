@@ -14,7 +14,7 @@ related:
   - subsys.agent-core.compaction
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `subsys.agent-core.message-conversion` 描述 `pi-agent-core` 如何把 harness 层的 `AgentMessage[]` 转成 `@earendil-works/pi-ai` 的 `Message[]`, 并把 bash execution、custom message、branch summary 与 compaction summary 包装成模型可读的 user message。
@@ -32,7 +32,7 @@ updated: 71dca871bc
 
 `convertToLlm(messages: AgentMessage[])` 是 harness message 到 ai package `Message[]` 的结构转换层: 输入来自 `../types.ts` 的 `AgentMessage`, 输出类型是 `@earendil-works/pi-ai` 的 `Message[]`。[E: packages/agent/src/harness/messages.ts:1] [E: packages/agent/src/harness/messages.ts:2] [E: packages/agent/src/harness/messages.ts:124]
 
-本文件通过 module augmentation 给 `AgentMessage` 增加四类 harness custom roles: `bashExecution`、`custom`、`branchSummary`、`compactionSummary`。[E: packages/agent/src/harness/messages.ts:54] [E: packages/agent/src/harness/messages.ts:56] [E: packages/agent/src/harness/messages.ts:57] [E: packages/agent/src/harness/messages.ts:58] [E: packages/agent/src/harness/messages.ts:59] `convertToLlm` 只识别这些 role 加上原生 `user`、`assistant`、`toolResult`; default 分支返回 `undefined`,最后用 type guard 过滤掉。[E: packages/agent/src/harness/messages.ts:127] [E: packages/agent/src/harness/messages.ts:159] [E: packages/agent/src/harness/messages.ts:161] [E: packages/agent/src/harness/messages.ts:163] [E: packages/agent/src/harness/messages.ts:167]
+本文件通过 module augmentation 给 `AgentMessage` 增加四类 harness custom roles: `bashExecution`、`custom`、`branchSummary`、`compactionSummary`。[E: packages/agent/src/harness/messages.ts:54] [E: packages/agent/src/harness/messages.ts:56] [E: packages/agent/src/harness/messages.ts:57] [E: packages/agent/src/harness/messages.ts:58] [E: packages/agent/src/harness/messages.ts:59] `convertToLlm` 只识别这些 role 加上原生 `user`、`assistant`、`toolResult`; default 分支返回 `undefined`,最后用 type guard 过滤掉。[E: packages/agent/src/harness/messages.ts:127] [E: packages/agent/src/harness/messages.ts:160] [E: packages/agent/src/harness/messages.ts:162] [E: packages/agent/src/harness/messages.ts:164] [E: packages/agent/src/harness/messages.ts:168]
 
 ## 关键文件
 
@@ -53,8 +53,8 @@ updated: 71dca871bc
 3. `custom` role 会把 string content 转成 `[{ type: "text", text: m.content }]`;如果 content 已经是 text/image content array,则原 array 直接作为 user message content。[E: packages/agent/src/harness/messages.ts:137] [E: packages/agent/src/harness/messages.ts:138] [E: packages/agent/src/harness/messages.ts:140] [E: packages/agent/src/harness/messages.ts:141] [E: packages/agent/src/harness/messages.ts:142]
 4. `branchSummary` role 被包装成 user text,文本是 `BRANCH_SUMMARY_PREFIX + m.summary + BRANCH_SUMMARY_SUFFIX`;prefix/suffix 把 summary 放进 `<summary>` 标签,并说明这是返回某个 branch 后带回来的 summary。[E: packages/agent/src/harness/messages.ts:12] [E: packages/agent/src/harness/messages.ts:14] [E: packages/agent/src/harness/messages.ts:17] [E: packages/agent/src/harness/messages.ts:145] [E: packages/agent/src/harness/messages.ts:147] [E: packages/agent/src/harness/messages.ts:148]
 5. `compactionSummary` role 被包装成 user text,文本是 `COMPACTION_SUMMARY_PREFIX + m.summary + COMPACTION_SUMMARY_SUFFIX`;prefix/suffix 把 summary 放进 `<summary>` 标签,并说明此点之前的 conversation history 已被 compacted。[E: packages/agent/src/harness/messages.ts:4] [E: packages/agent/src/harness/messages.ts:6] [E: packages/agent/src/harness/messages.ts:9] [E: packages/agent/src/harness/messages.ts:151] [E: packages/agent/src/harness/messages.ts:153] [E: packages/agent/src/harness/messages.ts:155]
-6. 原生 `user`、`assistant`、`toolResult` message 原样返回,不在 agent-core conversion 层重写 content、timestamp、tool call 或 tool result 字段。[E: packages/agent/src/harness/messages.ts:159] [E: packages/agent/src/harness/messages.ts:160] [E: packages/agent/src/harness/messages.ts:161] [E: packages/agent/src/harness/messages.ts:162]
-7. 所有返回 `undefined` 的 message,包括 excluded bash execution 和未知 role,都会在 `.filter((m): m is Message => m !== undefined)` 阶段被删除。[E: packages/agent/src/harness/messages.ts:163] [E: packages/agent/src/harness/messages.ts:164] [E: packages/agent/src/harness/messages.ts:167]
+6. 原生 `user`、`assistant`、`toolResult` message 原样返回,不在 agent-core conversion 层重写 content、timestamp、tool call 或 tool result 字段。[E: packages/agent/src/harness/messages.ts:160] [E: packages/agent/src/harness/messages.ts:161] [E: packages/agent/src/harness/messages.ts:162] [E: packages/agent/src/harness/messages.ts:163]
+7. 所有返回 `undefined` 的 message,包括 excluded bash execution 和未知 role,都会在 `.filter((m): m is Message => m !== undefined)` 阶段被删除。[E: packages/agent/src/harness/messages.ts:164] [E: packages/agent/src/harness/messages.ts:165] [E: packages/agent/src/harness/messages.ts:168]
 
 ## `bashExecutionToText`
 
@@ -66,7 +66,7 @@ updated: 71dca871bc
 
 ## 设计动机与权衡
 
-`bashExecution` 被转成 user message,而不是 toolResult message;这说明它代表 harness/session history 中一次已记录的 shell execution 观察值,不是当前 assistant tool call 正在等待的 provider-native tool result。[E: packages/agent/src/harness/messages.ts:128] [E: packages/agent/src/harness/messages.ts:133] [E: packages/agent/src/harness/messages.ts:159] [E: packages/agent/src/harness/messages.ts:161] [I]
+`bashExecution` 被转成 user message,而不是 toolResult message;这说明它代表 harness/session history 中一次已记录的 shell execution 观察值,不是当前 assistant tool call 正在等待的 provider-native tool result。[E: packages/agent/src/harness/messages.ts:128] [E: packages/agent/src/harness/messages.ts:133] [E: packages/agent/src/harness/messages.ts:160] [E: packages/agent/src/harness/messages.ts:162] [I]
 
 `custom` message 的 string-to-text-content 转换发生在 agent-core conversion 层,但 image content array 会直接传给 ai `Message`;因此图片是否能被某个 provider/model 接受,不在本函数内判断。[E: packages/agent/src/harness/messages.ts:1] [E: packages/agent/src/harness/messages.ts:34] [E: packages/agent/src/harness/messages.ts:138] [I]
 

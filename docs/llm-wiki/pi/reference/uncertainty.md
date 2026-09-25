@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 # 不确定项日志([U] 汇总)
@@ -411,7 +411,7 @@ Notes for later catalog work:
 
 # uncertainty-ai-image-models
 
-- [U] `openrouter/auto` 与 `openrouter/auto-beta` 在 generated catalog 中都声明 `cost.input=-1000000` 和 `cost.output=-1000000`，但本轮只从指定 source 核到数值本身，没有核到负数成本的产品语义或上游约定。证据：[E: packages/ai/src/image-models.generated.ts:347] [E: packages/ai/src/image-models.generated.ts:348] [E: packages/ai/src/image-models.generated.ts:362] [E: packages/ai/src/image-models.generated.ts:363]
+- [U] `openrouter/auto` 与 `openrouter/auto-beta` 在 generated catalog 中都声明 `cost.input=-1000000` 和 `cost.output=-1000000`，但本轮只从指定 source 核到数值本身，没有核到负数成本的产品语义或上游约定。证据：
 
 ## ai-lazy-loading
 
@@ -1957,7 +1957,7 @@ status: draft
 ## [U] 官方 sessions.md 的 `/share` / `/export` 漂移
 
 - 节点: `surface.sessions.management`
-- `packages/coding-agent/docs/sessions.md` 仍写 `/export [file]` = Export session to HTML、`/share` = Upload as private GitHub gist [E: packages/coding-agent/docs/sessions.md:34] [E: packages/coding-agent/docs/sessions.md:35]。
+- `packages/coding-agent/docs/sessions.md` 仍写 `/export [file]` = Export session to HTML、`/share` = Upload as private GitHub gist [E: packages/coding-agent/docs/sessions.md:34] 。
 - 代码:`exportSessionForShare()` 先写带 `customType: "pi.share"` 的 JSONL,`shareSession()` 先 Radius 再 gist;`tryShareViaRadius()` 一旦开始上传失败也不回退 gist;`/export` 以 `.jsonl` 后缀分流 JSONL/HTML。
 - `docs/usage.md` 对 `/thinking` Ctrl+S 更准,但对 `/share` 仍写 gist-only。本批以代码为 ground truth,官方页不当 `[E]` 行为源。
 
@@ -2064,4 +2064,257 @@ Catalog title and enumeration follow source (36). Did not drop events to match t
 
 - `[U]` 目标源码的 OAuth registry 与 Kimi provider 已提供 Kimi Coding OAuth，但 `packages/coding-agent/docs/providers.md` 的 subscription bullet 尚未列 Kimi Coding。运行时事实以源码为准；用户文档列表存在同步滞后。
 - `[I]` 官方 `@earendil-works/pi-ai@0.82.1` 模型制品与目标源码的关键 source-map `sourcesContent` 一致，但 npm metadata 缺少 `gitHead`，所以不能把“该 tarball 必然由 `cee5ff7520` 构建”标为 explicit。
+
+## update-ff72faba28-ai
+
+# uncertainty-update-ff72faba28-ai
+
+batch: ff72faba28 ai adapters / providers / catalog
+nodes: subsys.ai.anthropic-messages, subsys.ai.openai-responses, subsys.ai.openai-codex-responses, spine.provider-stream, subsys.ai.wire-protocol-dispatch, surface.providers.custom-provider, surface.providers.overview, surface.providers.auth, subsys.ai.model-catalog-publication, subsys.ai.openai-completions, subsys.ai.mistral-conversations
+updated: ff72faba28
+status: draft
+
+本轮只改自己批次的 11 个节点。下列点不能升成 `[E]`。
+
+## [U] Codex `samplingParams` 不写入 body
+
+- 节点: `subsys.ai.openai-codex-responses`
+- 本轮指令写「同上」(supportsToolSearch / TranscriptContext / samplingParams 在 direct stream/complete 生效)。
+- `OpenAICodexResponsesOptions` 继承 `StreamOptions.samplingParams`,`streamSimple` 也经 `buildBaseOptions` 拷贝该字段,但 `buildRequestBody()` 没有 `Object.assign(body, model.samplingParams, options?.samplingParams)`。
+- OpenAI Responses / Completions / Azure Responses 会 merge;Codex 不会。未宣称 Codex wire JSON 含 samplingParams。
+
+## [U] `all.ts` 注释仍说 Radius 无 static catalog
+
+- 节点: `surface.providers.overview`
+- `BuiltinProvider = keyof typeof MODELS` 上方注释仍写 KnownProvider additionally includes purely dynamic providers (e.g. `"radius"`) that have no static catalog entry。
+- 事实: `MODELS` 有 `"radius"` key,`radius.models.ts` 导出 `RADIUS_MODELS`。以 generated catalog 为准,注释当过时。
+
+## [U] checkout 无法给出 flattened model 总数
+
+- 节点: `subsys.ai.model-catalog-publication`
+- `src/providers/data/*.json` 仍 gitignored。可核 42 个 structural bucket 与 `models.all.json` array/`type` 合同,不能从本 SHA checkout 给出 flattened chat/image/classifier 行数。
+
+## [U] OpenAI Responses service-tier 乘数不是远端价表
+
+- 节点: `subsys.ai.openai-responses`
+- `flex` ×0.5、`priority` 对 `gpt-5.5` ×2.5、其它 priority ×2 是本地硬编码。价格表变化是否要同步更新,这两个源码文件不能证明。
+
+## [U] 扩展 register/unregister 后当前模型视图
+
+- 节点: `surface.providers.custom-provider`
+- `ExtensionRuntimeState` 能确认 bind 前排队、bind 后调 `ModelRegistry`。index source 不能确认 AgentSession 是否在注册/注销后刷新当前已选模型。
+
+## 本轮已核、不进 uncertainty
+
+- 删除 `packages/ai/src/utils/deferred-tools.ts`;Anthropic 走 native `defer_loading` + catalog `supportsMidConvoToolChanges`;Fireworks Messages 仍 `anthropic-messages`;OpenAI/Codex prefix deferral 走 `supportsToolSearch` → `tool_search_*` + `defer_loading`。
+- `Models.stream`/`streamSimple` 对 `Context` 做 `normalizeContext()`;provider/`api/*.ts` 只收 `TranscriptContext`;自定义 stream 必须 `getCurrentSystemPrompt`/`getCurrentTools`。
+- `onProviderStreamEvent` 在归一化之前观察 parsed provider events。
+- `samplingParams` 在 OpenAI Responses / Completions 的 `buildParams` 末尾 merge,因此 direct stream/complete 生效。
+- `builtinProviders()` 与 generated `MODELS` 都是 42(+meta +typesafe +radius shard)。
+- Meta Muse OAuth + `META_API_KEY`;TypeSafe 仅 `TYPESAFE_API_KEY`。
+- 本地 model-data schema **v6**(`hydrate:model-data`);published catalog protocol 仍 **v1**;`models.all.json` 是 array,`types` 为 chat/image/classifier。
+- Completions 空 text part 不发给 multimodal;unknown OpenAI-compat 默认 `supportsStrictMode: false`。
+- Mistral 忽略 empty content deltas;`zai-glm-5-2` 走 `reasoning_effort`。
+- 未改 `index.json` / `llms.txt` / `tools/` / `pi` 源码 / 别人批次节点。
+
+## update-ff72faba28-catalogs
+
+# uncertainty · update ff72faba28 · catalogs batch
+
+filler 批次：provider / model / wire / slash / rpc / config-keys / env-vars / cli-flags / tools / keybindings / components / component-types。
+
+## [U] 条目
+
+### slash 非 catalog runtime 分支
+- `interactive-mode.ts` 仍直接处理 `/debug`、`/arminsayshi`、`/dementedelves`，三者不在 `BUILTIN_SLASH_COMMANDS`。本批不把它们计入 24。
+
+### RPC 文档字段名
+- `docs/rpc.md` 的 `get_commands` 示例仍写 `location` / `path`；源码 `RpcSlashCommand` 与 dispatch 输出 `sourceInfo`。以源码为准。
+
+### env 范围
+- `packages/server` 的 `PI_SERVER_*` 与 evals 的 `PI_EVAL_RUNS_PER_VARIANT` 不计入本产品 env catalog（105）。
+- `AWS_ENDPOINT_URL_BEDROCK_RUNTIME` 仍主要靠用户文档 + AWS SDK 委托读取，不是 `getProviderEnvValue()` 直读。
+
+### TUI component protocol
+- `Component` / `Focusable` 定义在 `packages/tui/src/tui.ts`。本批 `component-types.md` 只核 public class 与目录文件，不把 protocol 语义当已核 `[E]`。
+
+### interactive components 边界
+- `ConfigSelectorComponent`、`EarendilAnnouncementComponent`、`index.ts` barrel 覆盖缺口、`ShowImagesSelectorComponent` / `ThemeSelectorComponent` 当前是否仍被 interactive-mode 直接调用：沿用既有 [U]。
+
+### config-keys 口径
+- 88 = Settings 52 top-level + 29 nested leaf + 6 `PackageSource` object keys + 1 models.json `compat.allowedFallbackModels`。`compat` 本身不是 settings.json 键。
+
+### TUI public vs 目录文件
+- public catalog 16；目录 18（+ `stack.ts` + `alt-screen-flash.ts`，未从 `index.ts` 导出）。instance_count 建议仍报 16。
+
+## update-ff72faba28-durable
+
+# uncertainty-update-ff72faba28-durable
+
+本批：`subsys.durable.runtime`、`subsys.durable.storage`、`spine.overview`、`spine.layered-architecture`、`ref.package-index`。
+
+未安装上游 `node_modules`，没有跑 `packages/durable` 的 vitest / `bench:storage`，不宣称 conformance 或 bench 在本机通过。[U]
+
+## [I]
+
+- `pi-agent-core` 与 `pi-coding-agent` 的 `dependencies` 不含 `@earendil-works/pi-durable`；源码也没有 import。durable 在根 `build` 里位于 `ai` 与 `agent` 之间，但是独立 shipped 包，尚未接到 CLI 默认路径。
+- `createSession()` 不自动 `commit` `ROOT_CONVERSATION_ID`（`1`）。`mintId()` 从 `2` 起；root conversation 由调用方 / conformance helper 显式写入。
+- JSONL / SQLite 源码没有跨进程 file lock（Node SQLite 只有 `busyTimeoutMs`）。“一个 owner 串行化 writes / 不支持跨进程 ID allocation”来自 README 与 `mintId()` 为实例字段这一实现，不是 flock 协议。
+- Node SQLite `synchronous = NORMAL` 的掉电窗口：代码只设置 PRAGMA；“acknowledged commits survive process crash, newest may be lost on power failure”是 README 对 WAL+NORMAL 的说明，标 [I]。
+- `subsys.ai.classifiers` / `subsys.coding-agent.cache-warming` 本批文件树中不存在，`spine.layered-architecture` related 未链这两 id。
+- `AgentHarness` 注释里的 “durable harness” 指 agent-core v4 `Session` 附着，不是 `@earendil-works/pi-durable`。
+- `packages/durable/docs/pico*` 与 `pi-agent-core` 的 `./experimental/pico3` 都不是本批 durable 节点的 shipped 证据；只在 gotcha 里排除。
+
+## [U]
+
+- 未跑 runtime tests：Memory / JSONL / SQLite conformance 是否在 target HEAD 全绿，本 filler 未核。
+- 两进程同时 `openNodeJsonlStorage` / `openNodeSqliteStorage` 同一路径的失败形态（ID 冲突、marker 交错、SQLite busy）未用测试钉死。
+
+## update-ff72faba28-l2-catalogs
+
+# L2 verifier — ff72faba28 catalogs / events / cache-warming / RPC
+
+Verifier HEAD: `ff72faba28`. Did not touch `index.json` / `llms.txt` / `tools/*` / `reference/uncertainty.md`.
+
+## Special checks
+
+- `ExtensionAPI.on()` from `project_trust` to `input` is **40**. New names exist: `context_with_system`, `cache_warming_decision`, `provider_stream_event`, `agent_before_settle`.
+- `turn_end` result is `TurnEndEventResult = BoundaryResult`. `context` handlers see `role !== "system"` only; Pi `restoreSystemMessages()` afterwards.
+- cache warming modes are `"off" | "streaming" | "idle"`; `emitCacheWarmingDecision()` last returned `action` wins.
+- `builtinProviders()` is **42** (includes `metaProvider()` and `typesafeProvider()`). Radius has static `radius.models.ts` / `RADIUS_MODELS`.
+- DeepSeek generator hardcodes `deepseek-flash` + `deepseek-v4-pro` only; no `deepseek-v4-flash-vision-exp` hardcoded row.
+- slash `BUILTIN_SLASH_COMMANDS` is **24** including `bug`. RPC `RpcCommand` is **33**. `prompt` has `streamingBehavior?: "steer" | "followUp"`. Disposition: `PromptDisposition = "handled" | "queued" | "started"`; queued input `"handled" | "queued"`.
+- `PI_EVAL_RUNS_PER_VARIANT` is **not** a product env-catalog row.
+
+## L2 corrections (false `[E:]` or false catalog membership)
+
+- `ref.coding-agent.extension-events`: `session_compact` `on()` cited `types.ts:1388` (previous overload close); retargeted to `:1389`.
+- `surface.extensions.events` / `subsys.coding-agent.extension-runner`: `canContinue` gate is `agent-session.ts:1548`, not `:1547`. `getCurrentSystemMessage()` rebuild is `runner.ts:288`, not `:287`.
+- `subsys.coding-agent.cache-warming`: `kind: "cache_warm"` is `cache-warmer.ts:343`, not `session-manager.appendUsage` signature `:1244`.
+- `ref.ai.model-catalog`: `input: ["text", "image"]` is `generate-models.ts:2964`, not thinkingLevelMap `:2963`. IMAGE/CLASSIFIER key cites retargeted off aggregator starts `:135`/`:223`.
+- `ref.coding-agent.slash-commands`: `/thinking` dispatch `:3089` was `/scoped-models`; `/compact` dispatch `:3175` was `/login`. Persist cites retargeted to `:5004`/`:5027`.
+- `ref.coding-agent.config-keys`: `markdown.codeBlockIndent` default is two spaces (`getCodeBlockIndent()` `"  "`), not one. Product `defaultTools` array is `agent-session.ts:3283`.
+- `ref.coding-agent.env-vars`: dropped ungrounded `AWS_ENDPOINT_URL_BEDROCK_RUNTIME` (absent from source and `docs/providers.md`). Added missing `PI_RADIUS_GATEWAY` (`core/radius.ts`). Catalog count remains **105**. Many 源/`[E:]` lines that pointed at the wrong env after `typesafe`/`meta` insertion were retargeted.
+
+## Remaining `[U]` (not upgraded)
+
+- `interactive-mode.ts` still handles `/debug`、`/arminsayshi`、`/dementedelves` outside `BUILTIN_SLASH_COMMANDS` (already `[U]` on slash catalog). Not counted in 24.
+- `docs/rpc.md` `get_commands` example still uses `location`/`path`; wire is `sourceInfo` (already `[U]` on rpc-methods).
+- `emitToolCall()` has no try/catch; whether fail-closed is intentional is still `[U]` on extension-runner.
+- TUI LaTeX is not a `Settings` key (already `[U]` on config-keys).
+- `packages/server` `PI_SERVER_*` and evals `PI_EVAL_RUNS_PER_VARIANT` stay out of the product env catalog.
+- `packages/ai/src/providers/all.ts` still has a stale comment that Radius has no static catalog; runtime `BuiltinProvider = keyof typeof MODELS` includes `radius`. Wiki follows the type, not the comment.
+
+## update-ff72faba28-l2-durable
+
+# uncertainty-update-ff72faba28-l2-durable
+
+L2 审查 `subsys.durable.runtime` / `subsys.durable.storage` / `spine.overview` / `spine.layered-architecture` / `ref.package-index`。HEAD `ff72faba28`。未安装 `node_modules`，未跑 `packages/durable` vitest / `bench:storage`。
+
+## [U]
+
+- Memory / JSONL / SQLite conformance 与 `bench:storage` 是否在本 HEAD 全绿，L2 未跑测试，只核了源码与行号。
+- 两进程同时 `openNodeJsonlStorage` / `openNodeSqliteStorage` 同一路径的失败形态（ID 冲突、marker 交错、SQLite busy）仍无测试钉死。
+
+## update-ff72faba28-l2-image-evals
+
+# uncertainty-update-ff72faba28-l2-image-evals
+
+L2 节点：`subsys.ai.classifiers`、`subsys.ai.image-generation`、`ref.ai.image-models`、`surface.misc.images`、`subsys.ai.model-discovery`、`subsys.evals.pi-harness`、`subsys.evals.comparative-harness`
+
+updated: ff72faba28
+status: no-new-U
+
+本轮七个节点正文没有新增 `[U]`。下列点保持节点内已有 `[I]`，不能升 `[E]`。
+
+## 已核、不进 uncertainty
+
+- `ImagesModels` / `packages/ai/src/images-models.ts` / `image-models.generated.ts` / `providers/openrouter-images.ts` 在 `ff72faba28` 树中不存在。现存 shipped 源是 `api/openrouter-images.ts`、`providers/images/register-builtins.ts`、`models.generated.ts` 的 `IMAGE_MODELS`，以及 deprecated 的 `image-models.ts` 静态读取。
+- `ImageModel.type` 必为 `"image"`；未限定 type 的 `getModel` / `getBuiltinModels` / `provider.getModels()` 仍 chat-only。
+- `KnownClassifierApi = "typesafe-system-one" | "cloudflare-workers-ai-system-one"`。公开 `bool` 在 `wireRequest` 写成 wire `noul`，`parseAnswers` 映回 `ClassifierBoolAnswer`。
+- `MODELS` / `IMAGE_MODELS` / `CLASSIFIER_MODELS` 三个 generated object，各 42 个 bucket（含 `meta` / `typesafe` / `radius`）。
+- evals：`evals/` 扁平用例 + `src/{cli,docker,plan,report,harness}.ts`；`eval:host` vs `eval:docs`。已删 `packages/evals/src/pi-harness.ts` 与 `src/vitest-evals/`。`excludePiDocumentation` 仍在 `harness.ts`，剥的是 `\n<docs>\n`…`\n</docs>` XML 段，不是旧纯文本切片。
+- OpenRouter 图像 / 分类器的逐 id 清单只在 gitignored `providers/data/*.json`。节点已标 `[I]`，本 checkout 不能枚举全量 id。
+
+## 历史 staging（非本七节点，reconcile 时勿当现行证据）
+
+`_staging/uncertainty-ai-image-models.md` 仍用已删除的 `image-models.generated.ts` 行号谈 `openrouter/auto` 负成本。那不是本轮节点 `[U]`，也不是 `ff72faba28` shipped 源。
+
+## update-ff72faba28-l2-loop
+
+# uncertainty-update-ff72faba28-l2-loop
+
+batch: ff72faba28 L2 agent-loop / session / compaction
+nodes: spine.agent-loop, subsys.agent-core.turn-control, subsys.agent-core.hooks, spine.session-state-model, ref.coding-agent.session-format, subsys.coding-agent.session-manager, spine.compaction-flow
+updated: ff72faba28
+status: draft
+
+本轮只改上述 7 个节点。下列点不能升成 `[E]`。
+
+## [U] agent-core JSONL 与产品 SessionManager 的字段差
+
+- 节点: `ref.coding-agent.session-format`
+- 本节点 index source 只有 `packages/coding-agent/src/core/session-manager.ts` 与 `packages/coding-agent/docs/session-format.md`。
+- agent-core `SessionTreeEntry` / `JsonlSessionStorage` 的具体字段差异不能在本节点保留为 `[E]`。待对应 agent-core 节点或 index source 扩展后复核。
+
+## [U] SessionTreeEntry / storage contract 不在本节点 source
+
+- 节点: `ref.coding-agent.session-format`
+- `subsys.agent-core.session-tree` 与 `ref.agent.session-entry-types` 是 harness session tree 相关节点。
+- 本节点 index source 不含 agent-core 源文件，不在本节点内复核它们的 `SessionTreeEntry` / storage contract。
+
+## 本轮已核、不进 uncertainty
+
+- `shouldStopAfterTurn` 已从 `packages/agent/src` 删除；现行 API 是 `finishTurn` / `prepareRequest`。
+- `finishTurn` 在 assistant+tools finalize 之后、`turn_end` 之前跑；决策在 `turn_end` 之后应用。error/aborted 仍 hard exit：hook 会跑，返回值忽略。
+- `prepareRequest` 在每次 conversational provider 请求前运行，含本 run 第一次。
+- `ContextEditEntry.replacement: null` 从未来模型 context 省略 target。`SessionManager` 是产品层 canonical provider context；赋值 `agent.state.messages` 不再替换未来 request history。
+- `_hasConversation()` 只在 user 或 assistant message 后创建文件。
+- retain-none compaction：`appendCompaction(summary, null, tokensBefore)` 把 `firstKeptEntryId` 写成 compaction 自己的 id。
+
+## update-ff72faba28-l2-protocol
+
+# uncertainty-update-ff72faba28-l2-protocol
+
+batch: ff72faba28 L2 protocol / stream / chord / html-export / read
+nodes: spine.provider-stream, subsys.ai.wire-protocol-dispatch, subsys.ai.anthropic-messages, subsys.ai.openai-responses, surface.providers.custom-provider, subsys.chord.delta, subsys.coding-agent.html-export, surface.tools.read, ref.glossary, ref.ai.wire-protocol-catalog
+updated: ff72faba28
+status: verified
+
+L2 独立证伪后仍不能升成 `[E]` 的点。节点本身保持 `status: verified`。
+
+## [U] 扩展 register/unregister 后当前模型视图
+
+- 节点: `surface.providers.custom-provider`
+- `ExtensionRuntimeState` 能确认 pending queue、bind 后的 `registerProvider` / `registerNativeProvider` / `unregisterProvider` 方法。
+- 本节点 source 不含 `agent-session.ts`，不能确认 AgentSession 是否在注册/注销后刷新当前已选模型。
+
+## [U] OpenAI Responses service-tier 乘数不是远端价表
+
+- 节点: `subsys.ai.openai-responses`
+- `flex` ×0.5、`priority` 对 `gpt-5.5` ×2.5、其它 priority ×2 是本地硬编码。价格表变化是否要同步更新，这两个源码文件不能证明。
+
+## update-ff72faba28-l3-catalogs
+
+# L3 fixer — ff72faba28 catalogs
+
+独立对照 wiki 正文与 `pi/` @ `ff72faba28`。未改节点、未改共享文件。
+
+`l2_fixes_hold=true`。env 最终 count **105**。又改了 0 条。PASS。本轮无新 `[U]`。
+
+## 已核、不进 uncertainty
+
+- 产品 env catalog：标题 `环境变量目录(105)`、正文 **105**、表内 105 行一致。含 `PI_RADIUS_GATEWAY`（`core/radius.ts:4` / `docs/environment-variables.md:89`）。不含 `AWS_ENDPOINT_URL_BEDROCK_RUNTIME`（`pi/` 与 `docs/providers.md` 均无）。不含任何 `PI_EVAL_*`。
+- slash：`BUILTIN_SLASH_COMMANDS` 24。`/thinking` dispatch `interactive-mode.ts:3100`（不是 `/scoped-models` `:3089`）；persist `:5004` / `:5027`。`/compact` dispatch `:3188`（不是 `/login` `:3172`）；handler `:6823`。
+- DeepSeek 硬编码：`generate-models.ts:2957` `deepseek-flash`，`input: ["text", "image"]` 在 `:2964`（不是 thinkingLevelMap `:2963`）。第二行 `deepseek-v4-pro` `:2977`。无 `deepseek-v4-flash-vision-exp` 硬编码行。
+- evals output 投影：`harness.ts:61` `PiCodingAgentHarnessWithOutput`；运行时 `"output" in options ? options.output({ response, session, systemPrompt, agentDir }) : response` 在 `:415`。
+- `kind: "cache_warm"` 在 `cache-warmer.ts:343`（不是 `session-manager.appendUsage` 签名 `:1244`）。`cache_warming_decision` `on()` `types.ts:1399`。`session_compact` `on()` `:1389`。`canContinue` 闸 `agent-session.ts:1548`。`getCurrentSystemMessage()` 重建 `runner.ts:288`。
+- `markdown.codeBlockIndent` 默认两空格 `getCodeBlockIndent()` `"  "`。产品 `defaultTools` 数组 `agent-session.ts:3283`。
+
+## 仍不升级的既有 `[U]`（节点内已标，不新开）
+
+- `packages/server` `PI_SERVER_*` 与 evals `PI_EVAL_*` 不进产品 env catalog。
+- `interactive-mode.ts` 仍处理 `/debug`、`/arminsayshi`、`/dementedelves`，不计入 slash 24。
+- TUI LaTeX 不是 `Settings` 键。
+- `emitToolCall()` 无 try/catch，是否 fail-closed 仍未在源码直接说明。
 

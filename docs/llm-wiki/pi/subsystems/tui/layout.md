@@ -24,7 +24,7 @@ related:
   - subsys.tui.diff-engine
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > 新 viewport layout engine 把 line-oriented components 组织为固定尺寸的 stack/scroll 几何树，并负责 clip、scrollbar、图片裁剪与 pointer hit testing。
@@ -55,7 +55,7 @@ scrollbar thumb 最少 2 行（track 不足时跟随 track），位置按 conten
 
 ## Gotchas
 
-- `LAYOUT_NODE`、`LayoutNode` 和 `renderLayoutFrame()` 没有从 package root 导出；公开 authoring surface 是 `HStack/VStack/ScrollView`，不是自定义 layout node。[E: packages/tui/src/index.ts:16] [E: packages/tui/src/index.ts:22] [E: packages/tui/src/index.ts:39]
+- `LAYOUT_NODE`、`LayoutNode` 和 `renderLayoutFrame()` 没有从 package root 导出；公开 authoring surface 是 `HStack/VStack/ScrollView`，不是自定义 layout node。[E: packages/tui/src/index.ts:40] [E: packages/tui/src/index.ts:46] [E: packages/tui/src/index.ts:63]
 - 多个 explicit `primary:true` 没有唯一性校验；遍历时后遇到的 primary 会覆盖前者。[E: packages/tui/src/layout.ts:153]
 - `align` 目前只在 HStack 的 cross-axis 分支消费；不要把它描述成 VStack 的水平对齐能力。[E: packages/tui/src/layout.ts:222]
 

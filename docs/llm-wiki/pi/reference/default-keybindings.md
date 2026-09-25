@@ -18,7 +18,7 @@ symbols:
   - useWindowsKeybindings
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 related:
   - surface.config.keybindings
   - subsys.coding-agent.keybindings
@@ -40,7 +40,7 @@ related:
 
 `useWindowsKeybindings()` 在 `win32` 或 `linux` 且存在 `WSL_DISTRO_NAME` / `WSL_INTEROP` 时为真;module 级 `windowsKeybindings` 用它决定 Windows/WSL 避让默认 [E: packages/coding-agent/src/core/keybindings.ts:62] [E: packages/coding-agent/src/core/keybindings.ts:66] [E: packages/coding-agent/src/core/keybindings.ts:73]。`app.suspend` 仍只看 `process.platform === "win32"`,WSL 保留 `ctrl+z` [E: packages/coding-agent/src/core/keybindings.ts:97]。
 
-`TUI_KEYBINDINGS` 当前包含 47 个 `tui.*` 实例，覆盖 editor(含 history)、generic input、selection 和 14 个 alternate-screen viewport/search actions [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:74] [E: packages/tui/src/keybindings.ts:168] [E: packages/tui/src/keybindings.ts:192] [E: packages/tui/src/keybindings.ts:209]。`AppKeybindings` 声明 43 个 `app.*` action id（含 `app.thinking.save`），并通过 module augmentation 合并进 pi-tui 的 `Keybindings` interface [E: packages/coding-agent/src/core/keybindings.ts:14] [E: packages/coding-agent/src/core/keybindings.ts:20] [E: packages/coding-agent/src/core/keybindings.ts:57] [E: packages/coding-agent/src/core/keybindings.ts:69]。因此默认键位实例总数为 90（47 tui + 43 app）[I]。
+`TUI_KEYBINDINGS` 当前包含 47 个 `tui.*` 实例，覆盖 editor(含 history)、generic input、selection 和 14 个 alternate-screen viewport/search actions [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:74] [E: packages/tui/src/keybindings.ts:168] [E: packages/tui/src/keybindings.ts:192] [E: packages/tui/src/keybindings.ts:209]。`AppKeybindings` 声明 43 个 `app.*` action id（含 `app.thinking.save`），并通过 module augmentation 合并进 pi-tui 的 `Keybindings` interface [E: packages/coding-agent/src/core/keybindings.ts:14] [E: packages/coding-agent/src/core/keybindings.ts:20] [E: packages/coding-agent/src/core/keybindings.ts:57] [E: packages/coding-agent/src/core/keybindings.ts:69]。因此默认键位实例总数本轮重数仍为 **90**（47 tui + 43 app）[I]。
 
 当前源码没有导出旧 catalog 名 `DEFAULT_APP_KEYBINDINGS` 或 `DEFAULT_EDITOR_KEYBINDINGS`;index 与节点已统一到可核默认目录符号 `KEYBINDINGS`、`TUI_KEYBINDINGS` 和 `AppKeybindings` [E: packages/coding-agent/src/core/keybindings.ts:75] [E: packages/tui/src/keybindings.ts:71] [E: packages/coding-agent/src/core/keybindings.ts:14]。
 
@@ -70,7 +70,7 @@ related:
 | `tui.editor.deleteToLineEnd` | `ctrl+k` | Delete to line end. | [E: packages/tui/src/keybindings.ts:136] [E: packages/tui/src/keybindings.ts:137] [E: packages/tui/src/keybindings.ts:138] |
 | `tui.editor.yank` | `ctrl+y` | Yank. | [E: packages/tui/src/keybindings.ts:140] |
 | `tui.editor.yankPop` | `alt+y` | Yank pop. | [E: packages/tui/src/keybindings.ts:141] |
-| `tui.editor.undo` | TUI 包默认 `ctrl+-`;coding-agent `KEYBINDINGS` 覆盖为 win32=`ctrl+z`、WSL=`alt+z`、其它=`ctrl+-` | Undo. | TUI [E: packages/tui/src/keybindings.ts:142]; override [E: packages/coding-agent/src/core/keybindings.ts:77] [E: packages/coding-agent/src/core/keybindings.ts:79]; docs [E: packages/coding-agent/docs/keybindings.md:73] |
+| `tui.editor.undo` | TUI 包默认 `ctrl+-`;coding-agent `KEYBINDINGS` 覆盖为 win32=`ctrl+z`、WSL=`alt+z`、其它=`ctrl+-` | Undo. | TUI [E: packages/tui/src/keybindings.ts:142]; override [E: packages/coding-agent/src/core/keybindings.ts:77] [E: packages/coding-agent/src/core/keybindings.ts:79]; docs [E: packages/coding-agent/docs/keybindings.md:81] |
 
 ## TUI input and selection defaults
 
@@ -97,9 +97,9 @@ related:
 | `tui.altScreen.halfPageDown` | none | Scroll viewport down half a page; default key array is empty。 | [E: packages/tui/src/keybindings.ts:172] [E: packages/tui/src/keybindings.ts:174] |
 | `tui.altScreen.lineUp` | none | Scroll viewport up one line; default key array is empty。 | [E: packages/tui/src/keybindings.ts:176] [E: packages/tui/src/keybindings.ts:178] |
 | `tui.altScreen.lineDown` | none | Scroll viewport down one line; default key array is empty。 | [E: packages/tui/src/keybindings.ts:180] [E: packages/tui/src/keybindings.ts:182] |
-| `tui.altScreen.previousPrompt` | TUI 包默认 `ctrl+shift+up`+`ctrl+up`;Windows/WSL 覆盖为仅 `ctrl+up` | Jump to previous semantic prompt. | TUI [E: packages/tui/src/keybindings.ts:184] [E: packages/tui/src/keybindings.ts:185]; override [E: packages/coding-agent/src/core/keybindings.ts:81] [E: packages/coding-agent/src/core/keybindings.ts:83]; docs [E: packages/coding-agent/docs/keybindings.md:112] |
-| `tui.altScreen.nextPrompt` | TUI 包默认 `ctrl+shift+down`+`ctrl+down`;Windows/WSL 覆盖为仅 `ctrl+down` | Jump to next semantic prompt. | TUI [E: packages/tui/src/keybindings.ts:188] [E: packages/tui/src/keybindings.ts:189]; override [E: packages/coding-agent/src/core/keybindings.ts:85] [E: packages/coding-agent/src/core/keybindings.ts:87]; docs [E: packages/coding-agent/docs/keybindings.md:113] |
-| `tui.altScreen.search` | TUI 包默认 `ctrl+shift+f`;Windows/WSL 覆盖为 `ctrl+f` | Search the primary scroll view. | TUI [E: packages/tui/src/keybindings.ts:192] [E: packages/tui/src/keybindings.ts:193]; override [E: packages/coding-agent/src/core/keybindings.ts:89] [E: packages/coding-agent/src/core/keybindings.ts:91]; docs [E: packages/coding-agent/docs/keybindings.md:114] |
+| `tui.altScreen.previousPrompt` | TUI 包默认 `ctrl+shift+up`+`ctrl+up`;Windows/WSL 覆盖为仅 `ctrl+up` | Jump to previous semantic prompt. | TUI [E: packages/tui/src/keybindings.ts:184] [E: packages/tui/src/keybindings.ts:185]; override [E: packages/coding-agent/src/core/keybindings.ts:81] [E: packages/coding-agent/src/core/keybindings.ts:83]; docs [E: packages/coding-agent/docs/keybindings.md:110] |
+| `tui.altScreen.nextPrompt` | TUI 包默认 `ctrl+shift+down`+`ctrl+down`;Windows/WSL 覆盖为仅 `ctrl+down` | Jump to next semantic prompt. | TUI [E: packages/tui/src/keybindings.ts:188] [E: packages/tui/src/keybindings.ts:189]; override [E: packages/coding-agent/src/core/keybindings.ts:85] [E: packages/coding-agent/src/core/keybindings.ts:87]; docs [E: packages/coding-agent/docs/keybindings.md:111] |
+| `tui.altScreen.search` | TUI 包默认 `ctrl+shift+f`;Windows/WSL 覆盖为 `ctrl+f` | Search the primary scroll view. | TUI [E: packages/tui/src/keybindings.ts:192] [E: packages/tui/src/keybindings.ts:193]; override [E: packages/coding-agent/src/core/keybindings.ts:89] [E: packages/coding-agent/src/core/keybindings.ts:91]; docs [E: packages/coding-agent/docs/keybindings.md:112] |
 | `tui.altScreen.searchNext` | `enter`, `ctrl+g` | Select the next search match. | [E: packages/tui/src/keybindings.ts:196] [E: packages/tui/src/keybindings.ts:198] |
 | `tui.altScreen.searchPrevious` | `shift+enter`, `ctrl+shift+g` | Select the previous search match. | [E: packages/tui/src/keybindings.ts:200] [E: packages/tui/src/keybindings.ts:202] |
 | `tui.altScreen.searchClose` | `escape` | Close transcript search. | [E: packages/tui/src/keybindings.ts:204] [E: packages/tui/src/keybindings.ts:206] |
@@ -125,10 +125,10 @@ related:
 | `app.thinking.toggle` | `ctrl+t` | Toggle thinking blocks. | [E: packages/coding-agent/src/core/keybindings.ts:118] [E: packages/coding-agent/src/core/keybindings.ts:119] [E: packages/coding-agent/src/core/keybindings.ts:120] |
 | `app.session.toggleNamedFilter` | `ctrl+n` | Toggle named session filter. | [E: packages/coding-agent/src/core/keybindings.ts:122] [E: packages/coding-agent/src/core/keybindings.ts:123] [E: packages/coding-agent/src/core/keybindings.ts:124] |
 | `app.editor.external` | `ctrl+g` | Open external editor. | [E: packages/coding-agent/src/core/keybindings.ts:126] [E: packages/coding-agent/src/core/keybindings.ts:127] [E: packages/coding-agent/src/core/keybindings.ts:128] |
-| `app.message.copy` | `ctrl+x` | `/tree` 复制选中 message;否则复制最后一条 assistant text。fullscreen 且 `fullscreenCopyOnSelect` 关闭时,`preferSelection` 先复制当前 selection。 | [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/core/keybindings.ts:131]; copy path [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:2895] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6166] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6171]; docs [E: packages/coding-agent/docs/keybindings.md:164] |
+| `app.message.copy` | `ctrl+x` | `/tree` 复制选中 message;否则复制最后一条 assistant text。fullscreen 且 `fullscreenCopyOnSelect` 关闭时,`preferSelection` 先复制当前 selection。 | [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/core/keybindings.ts:131]; copy path [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3009] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6382] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6387]; docs [E: packages/coding-agent/docs/keybindings.md:164] |
 | `app.message.followUp` | Windows/WSL: `ctrl+q`;其它: `alt+enter` | Queue follow-up message. | [E: packages/coding-agent/src/core/keybindings.ts:134] [E: packages/coding-agent/src/core/keybindings.ts:135] [E: packages/coding-agent/docs/keybindings.md:165] |
 | `app.message.dequeue` | Windows/WSL: `alt+q`;其它: `alt+up` | Restore queued messages. | [E: packages/coding-agent/src/core/keybindings.ts:138] [E: packages/coding-agent/src/core/keybindings.ts:139] [E: packages/coding-agent/docs/keybindings.md:166] |
-| `app.clipboard.pasteImage` | Windows/WSL: `alt+v`;其它: `ctrl+v` | Paste image from clipboard (text fallback);现用 `useWindowsKeybindings()`,不再只看 `win32`。 | [E: packages/coding-agent/src/core/keybindings.ts:142] [E: packages/coding-agent/src/core/keybindings.ts:143] [E: packages/coding-agent/docs/keybindings.md:130] |
+| `app.clipboard.pasteImage` | Windows/WSL: `alt+v`;其它: `ctrl+v` | Paste image from clipboard (text fallback);现用 `useWindowsKeybindings()`,不再只看 `win32`。 | [E: packages/coding-agent/src/core/keybindings.ts:142] [E: packages/coding-agent/src/core/keybindings.ts:143] [E: packages/coding-agent/docs/keybindings.md:128] |
 | `app.session.new` | none | Start a new session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:146] |
 | `app.session.tree` | none | Open session tree; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:147] |
 | `app.session.fork` | none | Fork current session; represented as an empty default key array. | [E: packages/coding-agent/src/core/keybindings.ts:148] |

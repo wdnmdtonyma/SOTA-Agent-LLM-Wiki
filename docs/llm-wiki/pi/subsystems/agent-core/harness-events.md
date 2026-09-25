@@ -23,7 +23,7 @@ related:
   - ref.agent.agent-events
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `subsys.agent-core.harness-events` 说明 `HarnessEventBus` 如何把 typed `HarnessEvent` 同时送给 `on(type)` listeners 与带 snapshot / resnapshot 的 buffered watches。事件 shape 定义在 `agent-harness.ts`；bus 实现在 `events.ts`。`Harness` 构造时创建真实 bus，不再是 `UnavailableRegistry`。
@@ -125,7 +125,7 @@ direct `on()` 是按 type 的旁路订阅。`watch()` 用“先订阅再拍 snap
 
 ## 跨包边界
 
-本模块属于 `pi-agent-core` harness 层。低层 `AgentEvent` 仍由 `Agent.subscribe()` 投递；coding-agent 的 `AgentSessionEvent` 是产品层另一套 union。字段目录在 [ref.agent.agent-events](../../reference/agent-events.md)。[E: packages/agent/src/agent.ts:250]
+本模块属于 `pi-agent-core` harness 层。低层 `AgentEvent` 仍由 `Agent.subscribe()` 投递；coding-agent 的 `AgentSessionEvent` 是产品层另一套 union。字段目录在 [ref.agent.agent-events](../../reference/agent-events.md)。[E: packages/agent/src/agent.ts:266]
 
 ## Sources
 

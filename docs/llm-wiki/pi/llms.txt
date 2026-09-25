@@ -1,17 +1,17 @@
 # pi 源码 LLM Wiki — 入口索引
 
-> **pi**(`pi/`,10 个源码 package workspace + 5 个 extension-example workspace 的 TypeScript monorepo,自扩展编码 agent harness)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 pi git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
+> **pi**(`pi/`,11 个源码 package workspace + 5 个 extension-example workspace 的 TypeScript monorepo,自扩展编码 agent harness)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 pi git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
 >
-> **状态:已完成 —— 全部 200 节点 verified 于 `71dca871bc`（v0.85.1 Unreleased）。**
+> **状态:已完成 —— 全部 204 节点 verified 于 `ff72faba28`（v0.87.1 + Unreleased）。**
 >
-> **核心组织主线 —— 分层栈 + 复用边界 + 自扩展**:pi 是一条独立 `@earendil-works/chord` → `pi-ai` → `pi-agent-core` → `pi-coding-agent` + `pi-tui`，并由 `pi-protocol` / Chord 风格 `pi-client` `Client` / `pi-server` 提供实验性 remote-session 链，旁接 `pi-session-backend-sqlite-node`、`pi-telemetry` 与 private `pi-evals`。每个节点 frontmatter 标 `pkg: chord|ai|agent|protocol|client|coding-agent|tui|server|session-backends|telemetry|evals|cross`。
+> **核心组织主线 —— 分层栈 + 复用边界 + 自扩展**:pi 是一条独立 `@earendil-works/chord` → `pi-ai` → `pi-durable` → `pi-agent-core` → `pi-coding-agent` + `pi-tui`，并由 `pi-protocol` / Chord 风格 `pi-client` `Client` / `pi-server` 提供实验性 remote-session 链，旁接 `pi-session-backend-sqlite-node`、`pi-telemetry` 与 private `pi-evals`。每个节点 frontmatter 标 `pkg: chord|ai|durable|agent|protocol|client|coding-agent|tui|server|session-backends|telemetry|evals|cross`。
 
 ## 怎么用
 - **agent**:grep id / title / 符号名 → 打开 path;每个节点自包含,不必跨页拼。
 - **人**:先读 `spine/overview` 与 `spine/layered-architecture`,再按需深入 T1/T2。
 
 ## T0 — Spine(端到端脊柱,mermaid 先行)
-- [pi 源码总览](spine/overview.md) `[cross]`: 是什么 + 10-package 分层栈全景（含独立 chord）— README.md · main.ts · agent-loop.ts · models.ts
+- [pi 源码总览](spine/overview.md) `[cross]`: 是什么 + 11-package 分层栈全景（含独立 chord 与 pi-durable）— README.md · main.ts · agent-loop.ts · models.ts
 - [分层架构与包边界](spine/layered-architecture.md) `[cross]`: chord → ai → agent(可复用) vs coding-agent(产品)边界 + 包依赖 — chord/index.ts · agent-session.ts
 - [进程生命周期](spine/process-lifecycle.md) `[coding-agent]`: argv → mode dispatch → services/session(Node vs Bun)— main.ts · cli/args.ts · bun/cli.ts
 - [agent 回合循环](spine/agent-loop.md) `[agent]`: runAgentLoop → provider stream → 工具调用 → state append → 续跑 — agent-loop.ts · agent.ts
@@ -53,7 +53,11 @@
 - [Chord facets / services / host](subsystems/chord/runtime.md) `[chord]`: 覆盖 `defineFacet`、`defineService`、`createFacetHost` 的实现边界；主源码：`packages/chord/src/api.ts`、`packages/chord/src/facets/host.ts`。
 - [Chord replicated state and delta](subsystems/chord/delta.md) `[chord]`: 覆盖 `replicatedState`、`track`/`apply`、`Op`/`WireOp` 的实现边界；主源码：`packages/chord/src/delta/`、`packages/chord/src/services/state.ts`。
 
-### pi-ai（28 节点）
+### pi-durable（2 节点）
+- [Durable Session / document tokens](subsystems/durable/runtime.md) `[durable]`: 覆盖 `createSession`、`defineDoc`、`ROOT_CONVERSATION_ID` 的实现边界；主源码：`packages/durable/src/session/session.ts`、`packages/durable/src/types.ts`。
+- [Durable Memory / JSONL / SQLite storage](subsystems/durable/storage.md) `[durable]`: 覆盖 `MemoryStorage`、`openNodeJsonlStorage`、`openNodeSqliteStorage` 的实现边界；主源码：`packages/durable/src/storage/`。
+
+### pi-ai（29 节点）
 - [provider 注册中心](subsystems/ai/provider-registry.md) `[ai]`: 覆盖 `builtinProviders`、`builtinModels`、`getBuiltinModel` 的实现边界；主源码：`packages/ai/src/providers/all.ts`、`packages/ai/src/models.ts`。
 - [wire 协议调度层](subsystems/ai/wire-protocol-dispatch.md) `[ai]`: 覆盖 `ProviderStreams`、`stream`、`streamSimple` 的实现边界；主源码：`packages/ai/src/models.ts`、`packages/ai/src/api/lazy.ts`。
 - [Anthropic Messages 协议](subsystems/ai/anthropic-messages.md) `[ai]`: 覆盖 `stream`、`AnthropicOptions` 的实现边界；主源码：`packages/ai/src/api/anthropic-messages.ts`、`packages/ai/src/api/openai-prompt-cache.ts`。
@@ -74,7 +78,8 @@
 - [模型目录与发现](subsystems/ai/model-discovery.md) `[ai]`: 覆盖 `MODELS`、`ModelCatalog`、`flattenModelCatalog` 的实现边界；主源码：`packages/ai/src/models.generated.ts`、`packages/ai/src/model-catalog.ts`。
 - [提示缓存策略](subsystems/ai/prompt-caching.md) `[ai]`: 覆盖 `clampOpenAIPromptCacheKey` 的实现边界；主源码：`packages/ai/src/api/openai-prompt-cache.ts`、`packages/ai/src/api/anthropic-messages.ts`。
 - [wire 客户端懒加载](subsystems/ai/lazy-loading.md) `[ai]`: 覆盖 `lazyApi`、`lazyStream` 的实现边界；主源码：`packages/ai/src/api/lazy.ts`。
-- [图像生成管线](subsystems/ai/image-generation.md) `[ai]`: 覆盖 `ImagesProvider`、`ImagesModel`、`generateImages` 的实现边界；主源码：`packages/ai/src/images-models.ts`、`packages/ai/src/images.ts`。
+- [图像生成管线](subsystems/ai/image-generation.md) `[ai]`: 覆盖 `Models.generateImages`、`ImageModel`、`openrouter-images` 的实现边界；主源码：`packages/ai/src/images.ts`、`packages/ai/src/models.ts`。
+- [结构化分类器](subsystems/ai/classifiers.md) `[ai]`: 覆盖 `Models.classify`、`KnownClassifierApi`、TypeSafe/Cloudflare Jev 的实现边界；主源码：`packages/ai/src/api/typesafe-system-one.ts`、`packages/ai/src/api/cloudflare-workers-ai-system-one.ts`。
 - [会话资源清理](subsystems/ai/session-resources.md) `[ai]`: 覆盖 `registerSessionResourceCleanup`、`cleanupSessionResources` 的实现边界；主源码：`packages/ai/src/session-resources.ts`。
 - [兼容/遗留别名层](subsystems/ai/compat-legacy.md) `[ai]`: 覆盖 `stream`、`complete`、`getModel` 的实现边界；主源码：`packages/ai/src/compat.ts`、`packages/ai/src/legacy-api-aliases.ts`。
 - [模型目录生成与发布管线](subsystems/ai/model-catalog-publication.md) `[ai]`: 覆盖 `validateBundle`、`buildIndex`、`CATALOG_SCHEMA_VERSION` 的实现边界；主源码：`packages/ai/scripts/generate-models.ts`、`packages/ai/scripts/model-data.ts`。
@@ -116,7 +121,7 @@
 - [Session lease](subsystems/client/session-leases.md) `[client]`: `SessionTarget` attachment 与 `subscribeService()`，不是 `PiSessionHandle`；主源码：`packages/client/src/client.ts`、`packages/client/src/types.ts`。
 - [Unix transport](subsystems/client/unix-transport.md) `[client]`: 覆盖显式 Node Unix-domain socket transport；主源码：`packages/client/src/unix.ts`。
 
-### pi-coding-agent（33 节点）
+### pi-coding-agent（34 节点）
 - [AgentSession 会话核心](subsystems/coding-agent/agent-session.md) `[coding-agent]`: 覆盖 `AgentSession`、`AgentSessionConfig`、`AgentSessionEvent` 的实现边界；主源码：`packages/coding-agent/src/core/agent-session.ts`。
 - [会话运行时与生命周期](subsystems/coding-agent/session-runtime.md) `[coding-agent]`: 覆盖 `AgentSessionRuntime`、`CreateAgentSessionRuntimeFactory` 的实现边界；主源码：`packages/coding-agent/src/core/agent-session-runtime.ts`。
 - [cwd 绑定运行服务](subsystems/coding-agent/session-services.md) `[coding-agent]`: 覆盖 `AgentSessionServices`、`createAgentSessionServices`、`createAgentSessionFromServices` 的实现边界；主源码：`packages/coding-agent/src/core/agent-session-services.ts`。
@@ -131,6 +136,7 @@
 - [ToolDefinition↔AgentTool 适配](subsystems/coding-agent/tool-wrapper.md) `[coding-agent]`: 覆盖 `wrapToolDefinition`、`createToolDefinitionFromAgentTool`、`createAllToolDefinitions` 的实现边界；主源码：`packages/coding-agent/src/core/tools/tool-definition-wrapper.ts`、`packages/coding-agent/src/core/tools/render-utils.ts`。
 - [扩展发现与加载](subsystems/coding-agent/extension-loader.md) `[coding-agent]`: 覆盖 `discoverAndLoadExtensions`、`loadExtension`、`createExtensionRuntime` 的实现边界；主源码：`packages/coding-agent/src/core/extensions/loader.ts`、`packages/coding-agent/src/core/extensions/index.ts`。
 - [扩展执行引擎与事件分发](subsystems/coding-agent/extension-runner.md) `[coding-agent]`: 覆盖 `bindCore`、`emitProjectTrustEvent`、`emitToolCall` 的实现边界；主源码：`packages/coding-agent/src/core/extensions/runner.ts`。
+- [提示缓存预热](subsystems/coding-agent/cache-warming.md) `[coding-agent]`: 覆盖 `CacheWarmer`、`cache_warming_decision` 的实现边界；主源码：`packages/coding-agent/src/core/cache-warmer.ts`。
 - [扩展贡献适配](subsystems/coding-agent/extension-wrapper.md) `[coding-agent]`: 覆盖 `wrapRegisteredTools`、`ExtensionRuntime` 的实现边界；主源码：`packages/coding-agent/src/core/extensions/wrapper.ts`、`packages/coding-agent/src/core/extensions/types.ts`。
 - [设置管理(读/合并/锁)](subsystems/coding-agent/settings-manager.md) `[coding-agent]`: 覆盖 `SettingsManager`、`SettingsStorage`、`FileSettingsStorage` 的实现边界；主源码：`packages/coding-agent/src/core/settings-manager.ts`。
 - [配置值解析($ENV/!cmd)](subsystems/coding-agent/config-resolution.md) `[coding-agent]`: 覆盖 `resolveConfigValue`、`executeCommand` 的实现边界；主源码：`packages/coding-agent/src/core/resolve-config-value.ts`、`packages/coding-agent/src/config.ts`。
@@ -188,8 +194,8 @@
 - [telemetry 契约与适配器](subsystems/telemetry/contracts.md) `[telemetry]`: vendor-neutral contracts、memory/noop adapters、testing conformance；主源码：`packages/telemetry/src/`。
 
 ### pi-evals（2 节点）
-- [Pi 行为评测 Harness](subsystems/evals/pi-harness.md) `[evals]`: 覆盖 `piCodingAgentHarness`、`runPiEval` 的实现边界；主源码：`packages/evals/package.json`、`packages/evals/README.md`。
-- [Comparative eval 与工件](subsystems/evals/comparative-harness.md) `[evals]`: 覆盖 baseline/candidate pairing、artifact persistence 与 comparison report；主源码：`packages/evals/src/vitest-evals/`。
+- [Pi 行为评测 Harness](subsystems/evals/pi-harness.md) `[evals]`: 覆盖 `createPiCodingAgentHarness`、`eval:host` / `eval:docs` 的实现边界；主源码：`packages/evals/src/harness.ts`、`packages/evals/src/cli.ts`。
+- [Comparative eval 与工件](subsystems/evals/comparative-harness.md) `[evals]`: 覆盖 Docker `without_docs`/`with_docs` lift、`plan.ts` / `report.ts`；主源码：`packages/evals/src/report.ts`、`packages/evals/evals/`。
 
 ## T3 — Reference / Catalogs(逐实例覆盖)
 - pi-ai:[provider 目录](reference/provider-catalog.md) · [模型目录](reference/model-catalog.md) · [wire 协议目录](reference/wire-protocol-catalog.md) · [认证类型](reference/auth-types.md) · [核心类型](reference/core-types.md) · [图像模型](reference/image-models.md)

@@ -5,87 +5,103 @@ kind: surface
 tier: T1
 pkg: ai
 source:
-  - packages/ai/src/providers/all.ts
-  - packages/ai/src/providers/baseten.ts
-  - packages/ai/src/providers/qwen-token-plan-individual.ts
-  - packages/ai/src/providers/xai.ts
-  - packages/ai/src/models.ts
-  - packages/ai/src/providers/radius.ts
-  - packages/coding-agent/docs/providers.md
-  - packages/coding-agent/src/core/model-resolver.ts
+ - packages/ai/src/providers/all.ts
+ - packages/ai/src/providers/baseten.ts
+ - packages/ai/src/providers/qwen-token-plan-individual.ts
+ - packages/ai/src/providers/xai.ts
+ - packages/ai/src/providers/meta.ts
+ - packages/ai/src/providers/typesafe.ts
+ - packages/ai/src/providers/radius.ts
+ - packages/ai/src/providers/radius.models.ts
+ - packages/ai/src/providers/openrouter.ts
+ - packages/ai/src/models.ts
+ - packages/ai/src/models.generated.ts
+ - packages/ai/src/env-api-keys.ts
+ - packages/coding-agent/docs/providers.md
+ - packages/coding-agent/src/core/model-resolver.ts
 symbols:
-  - builtinProviders
-  - createProvider
-  - Provider
+ - builtinProviders
+ - createProvider
+ - Provider
+ - metaProvider
+ - typesafeProvider
 related:
-  - subsys.ai.provider-registry
-  - surface.providers.auth
-  - surface.providers.custom-provider
-  - surface.providers.llama-cpp
-  - ref.ai.provider-catalog
+ - subsys.ai.provider-registry
+ - surface.providers.auth
+ - surface.providers.custom-provider
+ - surface.providers.llama-cpp
+ - ref.ai.provider-catalog
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `surface.providers.overview` 是用户可见的 provider 心智模型：选择 provider/model 后，Pi 从 runtime `Models` collection 检查配置、筛选可用模型、解析 credential，再把请求交给 provider-owned wire implementation。
 
 ## 能回答的问题
 
-- 内置 provider 集合与 generated model catalog 有什么区别?
+- 内置 provider 集合现在有多少个,generated model catalog 是否还缺 Radius?
+- Meta 与 TypeSafe 怎样进入 `builtinProviders()`?
 - `/login`、环境变量、`auth.json` 与 CLI request override 怎样进入 provider?
 - 动态 provider 的目录何时从 store 恢复、何时联网刷新?
 - custom provider 应使用 `models.json` 还是 extension?
-- llama.cpp 与 Radius 为什么不应按普通 structural provider 理解?
+- 图像模型为什么不再走独立 `builtinImagesProviders()`?
 
 ## 用户入口
 
-Provider docs 把配置分成 OAuth subscription 和 API key 两类：交互模式用 `/login`/`/logout` 管理 credential，API-key provider 也能直接从环境变量启动 [E: packages/coding-agent/docs/providers.md:3] [E: packages/coding-agent/docs/providers.md:17] [E: packages/coding-agent/docs/providers.md:26] [E: packages/coding-agent/docs/providers.md:62] [E: packages/coding-agent/docs/providers.md:66]。用户再通过 `/model`、CLI `--provider`/`--model` 或 embedding API 选择具体模型；完整登录与 credential precedence 由 [surface.providers.auth](auth.md) 解释。[I]
+Provider docs 把配置分成 OAuth subscription 和 API key 两类：交互模式用 `/login`/`/logout` 管理 credential，API-key provider 也能直接从环境变量启动。[E: packages/coding-agent/docs/providers.md:3] [E: packages/coding-agent/docs/providers.md:12] [E: packages/coding-agent/docs/providers.md:24] 用户再通过 `/model`、CLI `--provider`/`--model` 或 embedding API 选择具体模型；完整登录与 credential precedence 由 [surface.providers.auth](auth.md) 解释。[I]
+
+环境变量表含 `META_API_KEY`(Meta)以及其余 API-key provider;TypeSafe 走 `TYPESAFE_API_KEY`,不在这份用户表里,因为它是 classifier-only builtin。[E: packages/coding-agent/docs/providers.md:57] [E: packages/ai/src/env-api-keys.ts:93] [E: packages/ai/src/env-api-keys.ts:111] [E: packages/ai/src/providers/typesafe.ts:11]
 
 ## 内置集合与 static catalog
 
-runtime ground truth 是 `builtinProviders()`：当前有 40 个 provider objects，包含 Baseten、本轮新增的 Qwen Token Plan Individual，以及位于 Individual/Together 之间的动态 Radius [E: packages/ai/src/providers/all.ts:89] [E: packages/ai/src/providers/all.ts:95] [E: packages/ai/src/providers/all.ts:120] [E: packages/ai/src/providers/all.ts:121] [E: packages/ai/src/providers/all.ts:130]。`builtinModels()` 把这 40 个 objects 全部写入 `Models` collection [E: packages/ai/src/providers/all.ts:135] [E: packages/ai/src/providers/all.ts:137] [E: packages/ai/src/providers/all.ts:138]。
+runtime ground truth 是 `builtinProviders()`:当前返回 **42** 个 provider objects,按源码顺序含 Baseten、Fireworks、Kimi Coding、**Meta**、…、Radius、Together、**TypeSafe**、Vercel AI Gateway、xAI、Xiaomi 家族、ZAI。[E: packages/ai/src/providers/all.ts:136] [E: packages/ai/src/providers/all.ts:142] [E: packages/ai/src/providers/all.ts:154] [E: packages/ai/src/providers/all.ts:169] [E: packages/ai/src/providers/all.ts:171] [E: packages/ai/src/providers/all.ts:179] `builtinModels()` 把这 42 个 objects 全部写入 `Models` collection。[E: packages/ai/src/providers/all.ts:184] [E: packages/ai/src/providers/all.ts:186]
 
-generated `MODELS` 是另一套 39-bucket static catalog：`BuiltinProvider` 取 `keyof typeof MODELS`，`getBuiltinProviders()` 只返回 `Object.keys(MODELS)`，而 Radius 只出现在 runtime array [E: packages/ai/src/providers/all.ts:53] [E: packages/ai/src/providers/all.ts:69] [E: packages/ai/src/providers/all.ts:70] [E: packages/ai/src/providers/all.ts:121]。所以 provider catalog 按 runtime array 计 40，model catalog 按 committed structural shards 计 39。[I]
+generated `MODELS` 现在也是 **42** 个 structural bucket:`BuiltinProvider` 取 `keyof typeof MODELS`,`getBuiltinProviders()` 返回 `Object.keys(MODELS)`。Radius、Meta、TypeSafe 都在 generated aggregator 里;Radius 有 `radius.models.ts` 静态 shard,不再是「runtime-only、无 catalog entry」。[E: packages/ai/src/providers/all.ts:53] [E: packages/ai/src/providers/all.ts:94] [E: packages/ai/src/models.generated.ts:47] [E: packages/ai/src/models.generated.ts:64] [E: packages/ai/src/models.generated.ts:79] [E: packages/ai/src/models.generated.ts:81] [E: packages/ai/src/providers/radius.models.ts:7]
 
-Baseten 使用 `BASETEN_API_KEY`、固定 `https://inference.baseten.co/v1` 和 `openai-completions` adapter；默认模型解析表选择 `zai-org/GLM-5.2`。[E: packages/ai/src/providers/baseten.ts:6] [E: packages/ai/src/providers/baseten.ts:10] [E: packages/ai/src/providers/baseten.ts:11] [E: packages/ai/src/providers/baseten.ts:13] [E: packages/coding-agent/src/core/model-resolver.ts:48]
+`all.ts` 在 `BuiltinProvider = keyof typeof MODELS` 上方仍有一句过时注释,说 Radius 没有 static catalog entry。源码事实以 `MODELS` 的 `"radius"` key 和 `RADIUS_MODELS` 为准。[E: packages/ai/src/providers/all.ts:53] [E: packages/ai/src/models.generated.ts:79] [U]
 
-Qwen Token Plan Individual 是独立 runtime id `qwen-token-plan-individual`：与国际 Token Plan 共用新加坡 compatible-mode base URL 和 `QWEN_TOKEN_PLAN_API_KEY`，但使用更窄的 `QWEN_TOKEN_PLAN_INDIVIDUAL_MODELS`；coding-agent 默认模型是 `qwen3.8-max`。[E: packages/ai/src/providers/qwen-token-plan-individual.ts:8] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:10] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:11] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:12] [E: packages/coding-agent/src/core/model-resolver.ts:56]
+Baseten 使用 `BASETEN_API_KEY`、固定 `https://inference.baseten.co/v1` 和 `openai-completions` adapter；coding-agent 默认模型是 `zai-org/GLM-5.2`。[E: packages/ai/src/providers/baseten.ts:6] [E: packages/ai/src/providers/baseten.ts:10] [E: packages/ai/src/providers/baseten.ts:11] [E: packages/ai/src/providers/baseten.ts:13] [E: packages/coding-agent/src/core/model-resolver.ts:48]
 
-xAI 现在只暴露 `openai-responses`：`xaiProvider()` 的类型是 `Provider<"openai-responses">`，`api` 为 `openAIResponsesApi()`；coding-agent 默认模型是 `grok-4.6`。[E: packages/ai/src/providers/xai.ts:7] [E: packages/ai/src/providers/xai.ts:22] [E: packages/coding-agent/src/core/model-resolver.ts:35]
+Qwen Token Plan Individual 是独立 runtime id `qwen-token-plan-individual`:与国际 Token Plan 共用新加坡 compatible-mode base URL 和 `QWEN_TOKEN_PLAN_API_KEY`;coding-agent 默认模型是 `qwen3.8-max`。[E: packages/ai/src/providers/qwen-token-plan-individual.ts:8] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:10] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:11] [E: packages/coding-agent/src/core/model-resolver.ts:57]
 
-图片生成 provider 另走 `builtinImagesProviders()`/`builtinImagesModels()`，当前只注册 OpenRouter Images，不进入 chat/text `Models` [E: packages/ai/src/providers/all.ts:144] [E: packages/ai/src/providers/all.ts:145] [E: packages/ai/src/providers/all.ts:149] [E: packages/ai/src/providers/all.ts:154]。
+xAI 只暴露 `openai-responses`:`xaiProvider()` 的类型是 `Provider<"openai-responses">`,`api` 为 `openAIResponsesApi()`;coding-agent 默认模型是 `grok-4.7`。[E: packages/ai/src/providers/xai.ts:7] [E: packages/ai/src/providers/xai.ts:22] [E: packages/coding-agent/src/core/model-resolver.ts:35]
+
+Meta 是 `Provider<"openai-responses">`:`id: "meta"`,baseUrl `https://api.meta.ai/v1`,同时有 `META_API_KEY` 与 Muse subscription OAuth;coding-agent 默认模型是 `muse-spark-1.3`。[E: packages/ai/src/providers/meta.ts:7] [E: packages/ai/src/providers/meta.ts:9] [E: packages/ai/src/providers/meta.ts:11] [E: packages/ai/src/providers/meta.ts:13] [E: packages/ai/src/providers/meta.ts:15] [E: packages/coding-agent/src/core/model-resolver.ts:52]
+
+TypeSafe 是 classifier-only builtin:`typesafeProvider()` 不设 chat `api`,只设 `classifiers: { "typesafe-system-one": typesafeSystemOneApi() }` 与 `TYPESAFE_API_KEY`。`createProvider` 允许只给 `classifiers` / `images` 而不给 chat `api`。[E: packages/ai/src/providers/typesafe.ts:6] [E: packages/ai/src/providers/typesafe.ts:11] [E: packages/ai/src/providers/typesafe.ts:14] [E: packages/ai/src/models.ts:1013] [E: packages/ai/src/models.ts:1039]
+
+图像模型不再走独立 `builtinImagesProviders()` / `builtinImagesModels()`(已删除)。OpenRouter 把 image models 与 `images: { "openrouter-images": openrouterImagesApi() }` 挂在同一个 chat provider 上;`Models.generateImages()` 按 model.provider 解析 auth 后委派。[E: packages/ai/src/providers/openrouter.ts:32] [E: packages/ai/src/models.ts:340] [E: packages/ai/src/models.ts:942]
 
 ## Runtime provider contract
 
-provider 必须给 id/name、auth、同步 last-known `getModels()` 与 stream/streamSimple；动态 provider 可实现 `refreshModels(context)` [E: packages/ai/src/models.ts:97] [E: packages/ai/src/models.ts:111] [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:127] [E: packages/ai/src/models.ts:136] [E: packages/ai/src/models.ts:142]。
+provider 必须给 id/name、auth、同步 last-known `getModels()` 与 stream/streamSimple;动态 provider 可实现 `refreshModels(context)`。`stream` 接收 `TranscriptContext`。[E: packages/ai/src/models.ts:144] [E: packages/ai/src/models.ts:157] [E: packages/ai/src/models.ts:165] [E: packages/ai/src/models.ts:201] [E: packages/ai/src/models.ts:203]
 
-`Models` 提供 lookup、全体 refresh、auth check、available model filtering、login/logout 与 streaming [E: packages/ai/src/models.ts:156] [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [E: packages/ai/src/models.ts:194] [E: packages/ai/src/models.ts:198] [E: packages/ai/src/models.ts:170] [E: packages/ai/src/models.ts:203]。用户界面应把 `getAvailable()` 视为“已配置 provider 的可选模型”，而不是只看所有 provider 的 raw `getModels()` [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [I]。
+`Models` 提供 lookup、全体 refresh、auth check、available model filtering、login/logout 与 streaming。[E: packages/ai/src/models.ts:243] [E: packages/ai/src/models.ts:273] [E: packages/ai/src/models.ts:276] [E: packages/ai/src/models.ts:279] [E: packages/ai/src/models.ts:309] 用户界面应把 `getAvailable()` 视为「已配置 provider 的可选模型」,而不是只看所有 provider 的 raw `getModels()`。[E: packages/ai/src/models.ts:279] [I]
 
-`Models.refresh({ allowNetwork, force, signal, providers })` 并行处理动态 provider，把 per-provider errors 收集进 `ModelsRefreshResult`；它不是旧的 `refresh(providerId)` API [E: packages/ai/src/models.ts:64] [E: packages/ai/src/models.ts:67] [E: packages/ai/src/models.ts:73] [E: packages/ai/src/models.ts:177] [E: packages/ai/src/models.ts:391] [E: packages/ai/src/models.ts:450]。每个 refresh 先 restore stored catalog，再在允许联网时 fetch [E: packages/ai/src/models.ts:380] [E: packages/ai/src/models.ts:381] [E: packages/ai/src/models.ts:416] [E: packages/ai/src/models.ts:422]。
+`Models.refresh({ allowNetwork, force, signal, providers })` 并行处理动态 provider,把 per-provider errors 收集进 `ModelsRefreshResult`;它不是旧的 `refresh(providerId)` API。[E: packages/ai/src/models.ts:91] [E: packages/ai/src/models.ts:100] [E: packages/ai/src/models.ts:273] [E: packages/ai/src/models.ts:545] [E: packages/ai/src/models.ts:604] 每个 refresh 先 restore stored catalog,再在允许联网时 fetch。[E: packages/ai/src/models.ts:534] [E: packages/ai/src/models.ts:570] [E: packages/ai/src/models.ts:576]
 
 ## Request auth 与委派
 
-stream 先按 `model.provider` require provider，调用 `getAuth()`；request options 的 apiKey/headers/env 覆盖 resolved auth，`transformHeaders` 最后运行 [E: packages/ai/src/models.ts:633] [E: packages/ai/src/models.ts:648] [E: packages/ai/src/models.ts:649] [E: packages/ai/src/models.ts:660] [E: packages/ai/src/models.ts:662]。之后 `stream()`/`streamSimple()` 才委派给 provider object [E: packages/ai/src/models.ts:672] [E: packages/ai/src/models.ts:683] [E: packages/ai/src/models.ts:695] [E: packages/ai/src/models.ts:699]。
-
-Docs 给出的用户可见 credential precedence 是 CLI `--api-key`、`auth.json`、环境变量、`models.json` provider key [E: packages/coding-agent/docs/providers.md:310] [E: packages/coding-agent/docs/providers.md:317]。Provider-scoped credential env 能覆盖进程环境，并承载 Cloudflare、Azure、Vertex、Bedrock 等附加配置 [E: packages/coding-agent/docs/providers.md:139] [E: packages/coding-agent/docs/providers.md:157]。
+stream 先按 `model.provider` require provider,调用 `getAuth()`;request options 的 apiKey/headers/env 覆盖 resolved auth,`transformHeaders` 最后运行。[E: packages/ai/src/models.ts:831] [E: packages/ai/src/models.ts:842] [E: packages/ai/src/models.ts:853] [E: packages/ai/src/models.ts:854] 之后 `stream()`/`streamSimple()` 才委派给 provider object,并传入已 `normalizeContext()` 的 `TranscriptContext`。[E: packages/ai/src/models.ts:865] [E: packages/ai/src/models.ts:870] [E: packages/ai/src/models.ts:877]
 
 ## Custom provider 的两条路
 
-`models.json` 适合复用现有 wire protocol 的 base URL、headers、auth 与 model list；extension 适合新 stream implementation、OAuth 或自定义生命周期 [E: packages/coding-agent/docs/providers.md:304] [I]。`createProvider()` 支持 static baseline `models`、可选 `fetchModels()` dynamic overlay、credential filter，以及单一 API 或按 `model.api` 的 map [E: packages/ai/src/models.ts:752] [E: packages/ai/src/models.ts:761] [E: packages/ai/src/models.ts:763] [E: packages/ai/src/models.ts:764] [E: packages/ai/src/models.ts:766]。
+`models.json` 适合复用现有 wire protocol 的 base URL、headers、auth 与 model list;extension 适合新 stream implementation、OAuth 或自定义生命周期。[I] `createProvider()` 支持 static baseline `models`、可选 `fetchModels()` dynamic overlay、credential filter,以及单一 API 或按 `model.api` 的 map。[E: packages/ai/src/models.ts:983] [E: packages/ai/src/models.ts:995] [E: packages/ai/src/models.ts:1000] [E: packages/ai/src/models.ts:1013]
 
-dynamic overlay 会从 `ModelsStore` 恢复，联网 fetch 成功后再替换并持久化；相同 model id 覆盖 baseline [E: packages/ai/src/models.ts:779] [E: packages/ai/src/models.ts:783] [E: packages/ai/src/models.ts:605] [E: packages/ai/src/models.ts:831] [E: packages/ai/src/models.ts:615]。缺少对应 API implementation 时，stream path 返回 `ModelsError("stream", ...)` [E: packages/ai/src/models.ts:792] [E: packages/ai/src/models.ts:798] [E: packages/ai/src/models.ts:801]。
+缺少对应 API implementation 时,stream path 返回 `ModelsError("stream", ...)`。[E: packages/ai/src/models.ts:1057] [E: packages/ai/src/models.ts:1066]
 
 ## 两个动态特例
 
-- Radius 属于 `pi-ai` 的 40 个 runtime built-ins，但没有 static shard；它从 stored/gateway config 产生 `pi-messages` models [E: packages/ai/src/providers/radius.ts:20] [E: packages/ai/src/providers/radius.ts:34] [E: packages/ai/src/providers/radius.ts:69] [E: packages/ai/src/providers/radius.ts:56]。
-- llama.cpp 不是 `pi-ai` static builtin；coding-agent 的 hidden built-in extension 运行时注册它，只有 router 当前 loaded 模型进入 selector。详见 [surface.providers.llama-cpp](llama-cpp.md) [I]。
+- Radius 属于 `pi-ai` 的 42 个 runtime built-ins,**并且**有 static shard(`RADIUS_MODELS`)。默认 gateway 把 `Object.values(RADIUS_MODELS)` 当 baseline,再与 stored/gateway overlay merge;自定义 gateway 的 baseline 为空,模型来自 refresh。[E: packages/ai/src/providers/radius.ts:22] [E: packages/ai/src/providers/radius.ts:26] [E: packages/ai/src/providers/radius.ts:28] [E: packages/ai/src/providers/radius.ts:40] [E: packages/ai/src/providers/radius.models.ts:7]
+- llama.cpp 不是 `pi-ai` static builtin;coding-agent 的 hidden built-in extension 运行时注册它,只有 router 当前 loaded 模型进入 selector。详见 [surface.providers.llama-cpp](llama-cpp.md)。[I]
 
 ## Gotcha
 
-- `getBuiltinProviders()` 名字指 generated catalog keys，不是 `builtinProviders()` runtime objects [E: packages/ai/src/providers/all.ts:69] [E: packages/ai/src/providers/all.ts:89]。
-- `getModels()` 是 last-known sync catalog:动态 provider 返回上次 `refreshModels()` 的列表(首次前为空);实现不得抛错,`Models.getModels()` 在未知 provider 或实现抛错时返回 `[]`。空列表不等于 provider 未配置;配置与否由 `getAvailable()` / `checkAuth()` 判断 [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:119] [E: packages/ai/src/models.ts:180] [E: packages/ai/src/models.ts:183] [E: packages/ai/src/models.ts:299] [E: packages/ai/src/models.ts:306]。
-- custom provider id 是 collection 的 replace key；`setProvider()` 以 `provider.id` upsert [E: packages/ai/src/models.ts:230] [E: packages/ai/src/models.ts:274] [E: packages/ai/src/models.ts:276]。
+- `getBuiltinProviders()` 现在与 `builtinProviders()` 的成员集合对齐为 42(含 radius / meta / typesafe);它仍是 generated catalog keys,不是 runtime object 数组本身。[E: packages/ai/src/providers/all.ts:94] [E: packages/ai/src/providers/all.ts:136]
+- `getModels()` 是 last-known sync catalog:动态 provider 返回上次 `refreshModels()` 的列表(首次前为空);实现不得抛错,`Models.getModels()` 在未知 provider 或实现抛错时返回 `[]`。空列表不等于 provider 未配置;配置与否由 `getAvailable()` / `checkAuth()` 判断。[E: packages/ai/src/models.ts:165] [E: packages/ai/src/models.ts:276] [E: packages/ai/src/models.ts:279] [E: packages/ai/src/models.ts:423] [E: packages/ai/src/models.ts:430]
+- custom provider id 是 collection 的 replace key;`setProvider()` 以 `provider.id` upsert。[E: packages/ai/src/models.ts:356] [E: packages/ai/src/models.ts:398] [E: packages/ai/src/models.ts:400]
+- TypeSafe 没有 chat stream;对它做 `Models.stream` 会因没有 chat API implementation 变成 stream error。[E: packages/ai/src/providers/typesafe.ts:14] [E: packages/ai/src/models.ts:1066] [I]
 
 ## Sources
 
@@ -93,8 +109,14 @@ dynamic overlay 会从 `ModelsStore` 恢复，联网 fetch 成功后再替换并
 - packages/ai/src/providers/baseten.ts
 - packages/ai/src/providers/qwen-token-plan-individual.ts
 - packages/ai/src/providers/xai.ts
-- packages/ai/src/models.ts
+- packages/ai/src/providers/meta.ts
+- packages/ai/src/providers/typesafe.ts
 - packages/ai/src/providers/radius.ts
+- packages/ai/src/providers/radius.models.ts
+- packages/ai/src/providers/openrouter.ts
+- packages/ai/src/models.ts
+- packages/ai/src/models.generated.ts
+- packages/ai/src/env-api-keys.ts
 - packages/coding-agent/docs/providers.md
 - packages/coding-agent/src/core/model-resolver.ts
 
@@ -104,4 +126,4 @@ dynamic overlay 会从 `ModelsStore` 恢复，联网 fetch 成功后再替换并
 - [surface.providers.auth](auth.md): `/login`、OAuth/API key 与 request credential resolution。
 - [surface.providers.custom-provider](custom-provider.md): `models.json` 和 extension provider 的配置细节。
 - [surface.providers.llama-cpp](llama-cpp.md): llama.cpp router 与 Hugging Face GGUF 管理。
-- [ref.ai.provider-catalog](../../reference/provider-catalog.md): 40 个 runtime built-in provider 目录。
+- [ref.ai.provider-catalog](../../reference/provider-catalog.md): 42 个 runtime built-in provider 目录。

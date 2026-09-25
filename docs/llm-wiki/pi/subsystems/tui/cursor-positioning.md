@@ -19,16 +19,16 @@ related:
   - subsys.tui.alternate-screen
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > 两种 renderer 共用 `CURSOR_MARKER` 提取协议，但 main-screen 用 scrollback-relative movement，alternate-screen 在固定 viewport 中写绝对光标坐标。
 
 ## Marker 协议
 
-`Focusable` 只包含 `focused` flag；runtime 切换焦点时先清旧组件，再设置新组件，让组件决定是否在 render output 插入 `CURSOR_MARKER`。[E: packages/tui/src/tui.ts:152] [E: packages/tui/src/tui.ts:154] [E: packages/tui/src/tui.ts:554] [E: packages/tui/src/tui.ts:168]
+`Focusable` 只包含 `focused` flag；runtime 切换焦点时先清旧组件，再设置新组件，让组件决定是否在 render output 插入 `CURSOR_MARKER`。[E: packages/tui/src/tui.ts:152] [E: packages/tui/src/tui.ts:154] [E: packages/tui/src/tui.ts:556] [E: packages/tui/src/tui.ts:168]
 
-共享 `extractCursorPosition()` 只从当前可见的底部 `height` 行向上扫描，使用 marker 前文本的 `visibleWidth()` 计算 column，原地删除 marker 并返回 `{row,col}`。[E: packages/tui/src/tui.ts:1382] [E: packages/tui/src/tui.ts:1384] [E: packages/tui/src/tui.ts:1385] [E: packages/tui/src/tui.ts:1391] [E: packages/tui/src/tui.ts:1394] [E: packages/tui/src/tui.ts:1396]
+共享 `extractCursorPosition()` 只从当前可见的底部 `height` 行向上扫描，使用 marker 前文本的 `visibleWidth()` 计算 column，原地删除 marker 并返回 `{row,col}`。[E: packages/tui/src/tui.ts:1386] [E: packages/tui/src/tui.ts:1388] [E: packages/tui/src/tui.ts:1389] [E: packages/tui/src/tui.ts:1395] [E: packages/tui/src/tui.ts:1398] [E: packages/tui/src/tui.ts:1400]
 
 ## Main-screen 定位
 
@@ -42,13 +42,13 @@ main-screen 在 overlay 合成后、line reset 与 diff 前提取 marker。[E: p
 
 layout engine 在普通 component 高于分配高度时寻找 marker，并通过 `lineOffset` 把 marker 所在行移入 box 的可见区域。[E: packages/tui/src/layout.ts:121] [E: packages/tui/src/layout.ts:122] [E: packages/tui/src/layout.ts:123]
 
-alternate-screen 在 overlay/selection/flash 合成后提取 marker，并在同一个 synchronized frame buffer 中写绝对 `row;col H`；column 会 clamp 到 viewport width。[E: packages/tui/src/tui-alt-screen.ts:1664] [E: packages/tui/src/tui-alt-screen.ts:1669] [E: packages/tui/src/tui-alt-screen.ts:1707] [E: packages/tui/src/tui-alt-screen.ts:1708]
+alternate-screen 在 overlay/selection/flash 合成后提取 marker，并在同一个 synchronized frame buffer 中写绝对 `row;col H`；column 会 clamp 到 viewport width。[E: packages/tui/src/tui-alt-screen.ts:1673] [E: packages/tui/src/tui-alt-screen.ts:1678] [E: packages/tui/src/tui-alt-screen.ts:1731] [E: packages/tui/src/tui-alt-screen.ts:1732]
 
 ## Gotchas
 
-- 提取函数会原地删除 marker；进入 diff 的 lines 不再含 marker。[E: packages/tui/src/tui.ts:1394]
-- 多个 marker 同时存在时，扫描顺序选择可见区域中最靠下的行；同一行使用第一个 marker。[E: packages/tui/src/tui.ts:1385] [E: packages/tui/src/tui.ts:1387]
-- main-screen 的 target column 只做非负 clamp，fullscreen 额外 clamp 到 viewport width；两种 renderer 的边界行为不同。[E: packages/tui/src/tui-main-screen.ts:631] [E: packages/tui/src/tui-alt-screen.ts:1708]
+- 提取函数会原地删除 marker；进入 diff 的 lines 不再含 marker。[E: packages/tui/src/tui.ts:1398]
+- 多个 marker 同时存在时，扫描顺序选择可见区域中最靠下的行；同一行使用第一个 marker。[E: packages/tui/src/tui.ts:1389] [E: packages/tui/src/tui.ts:1391]
+- main-screen 的 target column 只做非负 clamp，fullscreen 额外 clamp 到 viewport width；两种 renderer 的边界行为不同。[E: packages/tui/src/tui-main-screen.ts:631] [E: packages/tui/src/tui-alt-screen.ts:1732]
 
 ## Sources
 

@@ -5,20 +5,20 @@ kind: surface
 tier: T1
 pkg: coding-agent
 source:
-  - packages/coding-agent/src/core/project-trust.ts
-  - packages/coding-agent/src/core/trust-manager.ts
-  - packages/coding-agent/docs/security.md
+ - packages/coding-agent/src/core/project-trust.ts
+ - packages/coding-agent/src/core/trust-manager.ts
+ - packages/coding-agent/docs/security.md
 symbols:
-  - resolveProjectTrusted
-  - ProjectTrustStore
-  - emitProjectTrustEvent
+ - resolveProjectTrusted
+ - ProjectTrustStore
+ - emitProjectTrustEvent
 related:
-  - subsys.coding-agent.trust-manager
-  - surface.extensions.api
-  - surface.misc.security
+ - subsys.coding-agent.trust-manager
+ - surface.extensions.api
+ - surface.misc.security
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > 项目信任模型是 pi-coding-agent 在启动或重载资源时使用的输入加载门禁: 它决定当前 cwd 的 project-local settings、resources、packages 和 extensions 是否能进入本次 runtime,但它不是 sandbox,也不限制会话开始后模型可以请求工具做什么。
@@ -34,7 +34,7 @@ updated: 71dca871bc
 
 ## 触发条件
 
-pi 只在当前 cwd 有需要 gate 的 project-local resources 时解析 project trust;没有这些资源时 `resolveProjectTrusted()` 直接返回 trusted [E: packages/coding-agent/src/core/project-trust.ts:50] [E: packages/coding-agent/src/core/project-trust.ts:51]。用户文档列出的触发项是 `.pi/settings.json`,`.pi/extensions`、`.pi/skills`、`.pi/prompts`、`.pi/themes`,`.pi/SYSTEM.md`、`.pi/APPEND_SYSTEM.md`,以及当前目录或 ancestor 目录里的 project `.agents/skills`;空的 `.pi` 目录不算触发项 [E: packages/coding-agent/docs/security.md:9] [E: packages/coding-agent/docs/security.md:11] [E: packages/coding-agent/docs/security.md:16]。
+pi 只在当前 cwd 有需要 gate 的 project-local resources 时解析 project trust;没有这些资源时 `resolveProjectTrusted()` 直接返回 trusted [E: packages/coding-agent/src/core/project-trust.ts:50] [E: packages/coding-agent/src/core/project-trust.ts:51]。用户文档列出的触发项是 `.pi/settings.json`,`.pi/extensions`、`.pi/skills`、`.pi/prompts`、`.pi/themes`,`.pi/SYSTEM.md`、`.pi/APPEND_SYSTEM.md`,以及当前目录或 ancestor 目录里的 project `.agents/skills`;空的 `.pi` 目录不算触发项 [E: packages/coding-agent/docs/security.md:9] [E: packages/coding-agent/docs/security.md:39] [E: packages/coding-agent/docs/security.md:16]。
 
 实现上,`.pi` 触发项来自 `TRUST_REQUIRING_PROJECT_CONFIG_RESOURCES`,包含 `settings.json`、`extensions`、`skills`、`prompts`、`themes`、`SYSTEM.md` 和 `APPEND_SYSTEM.md` [E: packages/coding-agent/src/core/trust-manager.ts:30] [E: packages/coding-agent/src/core/trust-manager.ts:37]。`.pi` 只检查当前 cwd 下的 `.pi`,而 `.agents/skills` 会沿 ancestor 上溯,并排除 user/global `~/.agents/skills` [E: packages/coding-agent/src/core/trust-manager.ts:190] [E: packages/coding-agent/src/core/trust-manager.ts:195] [E: packages/coding-agent/src/core/trust-manager.ts:197]。
 
@@ -44,11 +44,11 @@ pi 只在当前 cwd 有需要 gate 的 project-local resources 时解析 project
 
 没有 override 且存在需要 trust 的资源时,`resolveProjectTrusted()` 会向已加载的 extensions 发出 `{ type: "project_trust", cwd }` 事件;若 extension 返回结果,`trusted === "yes"` 映射为 true,`remember: true` 时会把该 decision 写入 trust store,随后直接返回 [E: packages/coding-agent/src/core/project-trust.ts:54] [E: packages/coding-agent/src/core/project-trust.ts:68]。用户文档把 pre-trust 阶段限定为 context files、user/global extensions 和 CLI `-e` extensions,这些 extensions 可以处理 `project_trust` event;第一个返回 yes/no decision 的 extension 拥有该 decision [E: packages/coding-agent/docs/security.md:27]。
 
-extension 没给 decision 时,`resolveProjectTrusted()` 查询 `ProjectTrustStore.get(cwd)`;只要返回值不是 `null`,就直接使用 saved decision [E: packages/coding-agent/src/core/project-trust.ts:72] [E: packages/coding-agent/src/core/project-trust.ts:74]。再没有 saved decision 时,`defaultProjectTrust ?? "ask"` 控制 fallback:`"always"` 返回 true,`"never"` 返回 false,`"ask"` 进入 UI prompt path [E: packages/coding-agent/src/core/project-trust.ts:77] [E: packages/coding-agent/src/core/project-trust.ts:82]。用户文档说明交互式启动会从 global settings 读取 `defaultProjectTrust`,默认值是 `"ask"` [E: packages/coding-agent/docs/security.md:18]。
+extension 没给 decision 时,`resolveProjectTrusted()` 查询 `ProjectTrustStore.get(cwd)`;只要返回值不是 `null`,就直接使用 saved decision [E: packages/coding-agent/src/core/project-trust.ts:72] [E: packages/coding-agent/src/core/project-trust.ts:74]。再没有 saved decision 时,`defaultProjectTrust ?? "ask"` 控制 fallback:`"always"` 返回 true,`"never"` 返回 false,`"ask"` 进入 UI prompt path [E: packages/coding-agent/src/core/project-trust.ts:77] [E: packages/coding-agent/src/core/project-trust.ts:82]。用户文档说明交互式启动会从 global settings 读取 `defaultProjectTrust`,默认值是 `"ask"` [E: packages/coding-agent/docs/security.md:19]。
 
 ## 交互与非交互行为
 
-交互式启动在没有 extension decision 或 saved decision 时会按 `defaultProjectTrust: "ask"` 弹出 project folder trust prompt;用户文档说明 saved decisions 存在 `~/.pi/agent/trust.json`,且当前目录或 parent path 上最近的 saved decision 会先于 global default 生效 [E: packages/coding-agent/docs/security.md:18]。非交互模式包括 `-p`、`--mode json` 和 `--mode rpc`,不会展示 trust prompt;没有可用 saved decision 时,`ask` 和 `never` 都忽略 project resources,`always` 信任这些 resources [E: packages/coding-agent/docs/security.md:29]。
+交互式启动在没有 extension decision 或 saved decision 时会按 `defaultProjectTrust: "ask"` 弹出 project folder trust prompt;用户文档说明 saved decisions 存在 `~/.pi/agent/trust.json`,且当前目录或 parent path 上最近的 saved decision 会先于 global default 生效 [E: packages/coding-agent/docs/security.md:19]。非交互模式包括 `-p`、`--mode json` 和 `--mode rpc`,不会展示 trust prompt;没有可用 saved decision 时,`ask` 和 `never` 都忽略 project resources,`always` 信任这些 resources [E: packages/coding-agent/docs/security.md:29]。
 
 源码里的 fail-closed 分支与文档一致: ask path 如果 `projectTrustContext.hasUI` 为 false,`resolveProjectTrusted()` 直接返回 false [E: packages/coding-agent/src/core/project-trust.ts:86] [E: packages/coding-agent/src/core/project-trust.ts:87]。
 
@@ -60,7 +60,7 @@ startup prompt 的选项来自 `getProjectTrustOptions(cwd, { includeSessionOnly
 
 ## 信任后的加载范围
 
-信任 project 后,pi 允许加载 `.pi/settings.json`、`.pi` resources、missing project packages、project-local extensions 和 project package-managed extensions [E: packages/coding-agent/docs/security.md:20] [E: packages/coding-agent/docs/security.md:25]。拒绝 trust 时,用户文档说这些 protected resources 会被跳过,但 `AGENTS.override.md`、`AGENTS.md` 和 `CLAUDE.md` context files 除非禁用 context loading,否则仍会加载 [E: packages/coding-agent/docs/security.md:27]。
+信任 project 后,pi 允许加载 `.pi/settings.json`、`.pi` resources、missing project packages、project-local extensions 和 project package-managed extensions [E: packages/coding-agent/docs/security.md:21] [E: packages/coding-agent/docs/security.md:25]。拒绝 trust 时,用户文档说这些 protected resources 会被跳过,但 `AGENTS.override.md`、`AGENTS.md` 和 `CLAUDE.md` context files 除非禁用 context loading,否则仍会加载 [E: packages/coding-agent/docs/security.md:27]。
 
 ## 不是安全边界
 

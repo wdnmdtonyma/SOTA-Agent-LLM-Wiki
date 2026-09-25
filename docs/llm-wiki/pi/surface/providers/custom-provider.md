@@ -5,98 +5,119 @@ kind: surface
 tier: T1
 pkg: ai
 source:
-  - packages/coding-agent/docs/custom-provider.md
-  - packages/coding-agent/docs/models.md
-  - packages/coding-agent/docs/settings.md
-  - packages/coding-agent/docs/extensions.md
-  - packages/coding-agent/src/core/extensions/types.ts
-  - packages/coding-agent/src/core/model-registry.ts
-  - packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts
+ - packages/coding-agent/docs/custom-provider.md
+ - packages/coding-agent/docs/models.md
+ - packages/coding-agent/docs/settings.md
+ - packages/coding-agent/docs/extensions.md
+ - packages/coding-agent/src/core/extensions/types.ts
+ - packages/coding-agent/src/core/model-registry.ts
+ - packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts
+ - packages/ai/src/types.ts
+ - packages/ai/src/utils/transcript.ts
+ - packages/ai/src/models.ts
 symbols:
-  - ProviderConfig
-  - registerProvider
-  - unregisterProvider
+ - ProviderConfig
+ - registerProvider
+ - unregisterProvider
+ - TranscriptContext
+ - getCurrentSystemPrompt
+ - getCurrentTools
 related:
-  - surface.extensions.contribution-points
-  - subsys.coding-agent.model-registry
-  - ref.ai.wire-protocol-catalog
+ - surface.extensions.contribution-points
+ - subsys.coding-agent.model-registry
+ - ref.ai.wire-protocol-catalog
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
-> `surface.providers.custom-provider` 说明 pi 暴露给使用者的两条自定义 provider 路径:简单兼容端点写 `~/.pi/agent/models.json`,需要扩展生命周期、OAuth/SSO 或自定义 streaming 时用扩展 API `pi.registerProvider()`。
+> `surface.providers.custom-provider` 说明 pi 暴露给使用者的两条自定义 provider 路径:简单兼容端点写 `~/.pi/agent/models.json`,需要扩展生命周期、OAuth/SSO 或自定义 streaming 时用扩展 API `pi.registerProvider()`。自定义 `stream` / `streamSimple` **必须**接收 `TranscriptContext`,用 `getCurrentSystemPrompt` / `getCurrentTools` 读 prompt 与 tools。
 
 ## 能回答的问题
 
 - 自定义 provider 应该写 `models.json`,还是写扩展并调用 `pi.registerProvider()`?
-- `models.json` 的 provider/model 配置支持哪些字段?
+- 自定义 streaming 为什么不能再读 `context.systemPrompt` / `context.tools`?
+- `getCurrentSystemPrompt` / `getCurrentTools` / `collapseSystemMessages` 分别解决什么?
+- `onProviderStreamEvent` 在自定义 stream 里必须怎么调?
 - `ProviderConfig` 和 `ProviderModelConfig` 对扩展作者暴露哪些字段?
 - 覆盖内置 provider、注册新 provider、注销 provider 的外部语义是什么?
-- `api`、`streamSimple`、`oauth`、`authHeader` 和 value resolution 的边界是什么?
-- index source 能确认哪些动态注册行为,哪些仍需要读实现节点?
 
 ## 1 两条自定义路径
 
-`models.json` 是配置型入口:docs 明确把 Ollama、vLLM、LM Studio、proxies 这类 custom providers/models 放在 `~/.pi/agent/models.json` [E: packages/coding-agent/docs/models.md:3]。这个入口面向已有 wire protocol 的 endpoint,并列出 `openai-completions`、`openai-responses`、`anthropic-messages`、`google-generative-ai` 作为 supported APIs [E: packages/coding-agent/docs/models.md:121] [E: packages/coding-agent/docs/models.md:125] [E: packages/coding-agent/docs/models.md:126] [E: packages/coding-agent/docs/models.md:127] [E: packages/coding-agent/docs/models.md:128]。
+`models.json` 是配置型入口:docs 把 Ollama、vLLM、LM Studio、proxies 这类 custom providers/models 放在 `~/.pi/agent/models.json`。这个入口面向已有 wire protocol 的 endpoint。[E: packages/coding-agent/docs/custom-provider.md:3] [E: packages/coding-agent/docs/custom-provider.md:11]
 
-扩展型入口是 `pi.registerProvider()`:custom-provider docs 明确说扩展可通过它注册 custom model providers,用于 proxies、custom endpoints、OAuth/SSO 和 custom APIs [E: packages/coding-agent/docs/custom-provider.md:3] [E: packages/coding-agent/docs/custom-provider.md:5] [E: packages/coding-agent/docs/custom-provider.md:6] [E: packages/coding-agent/docs/custom-provider.md:7] [E: packages/coding-agent/docs/custom-provider.md:8]。因此,只是 base URL、headers、模型列表和已支持 API 类型的组合时优先使用 `models.json`;需要 `/login` 集成、动态模型发现或新 streaming implementation 时使用扩展注册 [I]。
+扩展型入口是 `pi.registerProvider()`:可以注册完整 `Provider`(pi-ai native),也可以注册 name + `ProviderConfig`(legacy 配置面)。需要 `/login` 集成、动态模型发现或新 streaming implementation 时使用扩展注册。[E: packages/coding-agent/docs/custom-provider.md:21] [E: packages/coding-agent/src/core/extensions/types.ts:1621] [E: packages/coding-agent/src/core/extensions/types.ts:1622]
 
-`models.json` 会在每次打开 `/model` 时 reload,所以 session 中编辑无需重启 [E: packages/coding-agent/docs/models.md:92]。扩展注册在 initial extension load 之后调用会立即生效,无需 `/reload` [E: packages/coding-agent/docs/custom-provider.md:215] [E: packages/coding-agent/docs/custom-provider.md:217]。
+扩展 factory 可以是 async;动态模型发现应在 factory 中 fetch 后注册,因为 pi 会等待 factory,使 provider 在 interactive startup 与 `pi --list-models` 时已可见。[E: packages/coding-agent/docs/custom-provider.md:21]
 
-## 2 `models.json` 配置面
+## 2 自定义 stream 必须读 `TranscriptContext`
 
-provider config 的文档字段包括 `baseUrl`、`api`、`apiKey`、`oauth`、`headers`、`authHeader`、`models` 和 `modelOverrides`;`oauth` 是动态 OAuth provider 类型,当前支持 `"radius"`,并要求 gateway `baseUrl` [E: packages/coding-agent/docs/models.md:132] [E: packages/coding-agent/docs/models.md:134] [E: packages/coding-agent/docs/models.md:136] [E: packages/coding-agent/docs/models.md:137] [E: packages/coding-agent/docs/models.md:138] [E: packages/coding-agent/docs/models.md:139] [E: packages/coding-agent/docs/models.md:140] [E: packages/coding-agent/docs/models.md:141] [E: packages/coding-agent/docs/models.md:142] [E: packages/coding-agent/docs/models.md:143]。对带 `models` 的非内置 provider,docs 要求有 `baseUrl`,并要求 provider 或 model 层有 `api`;`apiKey` 不要求用于加载文件,模型可通过 `/login`/`auth.json`、CLI `--api-key` 或 provider `apiKey` 变为可用,否则会加载但不出现在 `/model` 与 `--list-models` 的可用列表中 [E: packages/coding-agent/docs/models.md:145]。
+公开 `Models.stream` / `streamSimple` 仍接受 `Context`(`systemPrompt` / `tools` 是 leading system message 的 shorthand)。`Models` 在 dispatch 前调用 `normalizeContext()`,因此 `Provider.stream`、`ProviderStreams` 和 `api/<name>.ts` 只看见 `TranscriptContext`:`messages` 里的 system 消息携带 prompt 与 `toolsAdded` / `toolsRemoved`。[E: packages/ai/src/types.ts:697] [E: packages/ai/src/types.ts:711] [E: packages/ai/src/models.ts:870] [E: packages/ai/src/utils/transcript.ts:30] [E: packages/ai/src/types.ts:287]
 
-model config 的文档字段包括必填 `id`,以及可选 `name`、`api`、`reasoning`、`thinkingLevelMap`、`input`、`contextWindow`、`maxTokens`、`samplingParams`、`cost` 和 `compat`;`samplingParams` 是 first-class 列,会 verbatim merge 进每次 request body [E: packages/coding-agent/docs/models.md:197] [E: packages/coding-agent/docs/models.md:199] [E: packages/coding-agent/docs/models.md:201] [E: packages/coding-agent/docs/models.md:202] [E: packages/coding-agent/docs/models.md:203] [E: packages/coding-agent/docs/models.md:204] [E: packages/coding-agent/docs/models.md:205] [E: packages/coding-agent/docs/models.md:206] [E: packages/coding-agent/docs/models.md:207] [E: packages/coding-agent/docs/models.md:208] [E: packages/coding-agent/docs/models.md:209] [E: packages/coding-agent/docs/models.md:210] [E: packages/coding-agent/docs/models.md:211] [E: packages/coding-agent/docs/models.md:235] [E: packages/coding-agent/docs/models.md:236] [E: packages/coding-agent/docs/models.md:237] [E: packages/coding-agent/docs/models.md:241]。
+`ProviderConfig.streamSimple` 的签名是 `(model, context: TranscriptContext, options?) => AssistantMessageEventStream`。调用方必须用 `getCurrentSystemPrompt(context.messages)` 和 `getCurrentTools(context.messages)` 读 prompt 与 tools,而不是 `context.systemPrompt` / `context.tools`(这两个字段在 `TranscriptContext` 上不存在)。[E: packages/coding-agent/src/core/extensions/types.ts:1667] [E: packages/coding-agent/src/core/extensions/types.ts:1669] [E: packages/coding-agent/docs/custom-provider.md:124]
 
-覆盖内置 provider 时,只写 `baseUrl` 可保留内置模型并改走 proxy;若提供 `models` 数组,custom models 会按 `id` merge/upsert 到内置 provider,同 id 替换,新 id 追加 [E: packages/coding-agent/docs/models.md:302] [E: packages/coding-agent/docs/models.md:304] [E: packages/coding-agent/docs/models.md:316] [E: packages/coding-agent/docs/models.md:318] [E: packages/coding-agent/docs/models.md:333] [E: packages/coding-agent/docs/models.md:334] [E: packages/coding-agent/docs/models.md:335] [E: packages/coding-agent/docs/models.md:336] [E: packages/coding-agent/docs/models.md:337]。
+`getCurrentTools` 按 transcript 顺序应用每个 system 的 `toolsRemoved` / `toolsAdded`。`getCurrentSystemPrompt` 把所有 system `content` 与 named `sections` replay 成当前 prompt 文本。模型若支持 mid-conversation system messages,later system 可以原样发送;否则调用 `collapseSystemMessages(context)` 折成一条 leading system message。[E: packages/ai/src/utils/transcript.ts:58] [E: packages/ai/src/utils/transcript.ts:63] [E: packages/ai/src/utils/transcript.ts:99] [E: packages/ai/src/utils/transcript.ts:108] [E: packages/coding-agent/docs/custom-provider.md:124]
 
-`modelOverrides` 是内置模型的 per-model override 入口,支持 `name`、`reasoning`、`thinkingLevelMap`、`input`、partial `cost`、`contextWindow`、`maxTokens`、`samplingParams`(按 key merge)、`headers` 和 `compat`;未知 model id 会被忽略,同一 provider 同时定义 `models` 时 custom models 在 built-in overrides 之后合并 [E: packages/coding-agent/docs/models.md:341] [E: packages/coding-agent/docs/models.md:343] [E: packages/coding-agent/docs/models.md:362] [E: packages/coding-agent/docs/models.md:382] [E: packages/coding-agent/docs/models.md:383] [E: packages/coding-agent/docs/models.md:384] [E: packages/coding-agent/docs/models.md:387]。这是 `models.json` provider 上的 model metadata overlay,键是该 provider 下的 model id;不要和 settings 的 `compaction.modelOverrides` 混淆——后者键是精确 `"provider/modelId"`,只覆盖 compaction 的 `reserveTokens` / `keepRecentTokens`,且 `enabled` 不能 per-model。[E: packages/coding-agent/docs/models.md:143] [E: packages/coding-agent/docs/settings.md:121] [I]
+自定义 stream 还必须兑现 `SimpleStreamOptions` 的 instrumentation:
 
-OpenAI-compatible custom models 现在可配置 `thinkingFormat: "baseten"` 与 `chatTemplateArgs`；该格式把 toggle values 放进 `chat_template_args`，并可同时发送 top-level `reasoning_effort`。[E: packages/coding-agent/docs/models.md:474] [E: packages/coding-agent/docs/models.md:476] [E: packages/coding-agent/docs/models.md:489] [E: packages/coding-agent/docs/custom-provider.md:754] [E: packages/coding-agent/docs/custom-provider.md:756] [E: packages/coding-agent/docs/custom-provider.md:775]
+- 发送前调用 `options.onPayload`,并用返回的 replacement payload。
+- 收到 HTTP response、消费 body 之前调用 `options.onResponse`。
+- 每个解析出的 provider event 在归一化之前 `await options.onProviderStreamEvent?.(providerEvent, model)`。
+- 透传 abort signal 与 provider-scoped env。
 
-## 3 扩展 API: `ProviderConfig`
+省略这些 hook 会使扩展 provider 与内置 adapter 行为不一致。[E: packages/coding-agent/docs/custom-provider.md:139] [E: packages/coding-agent/docs/custom-provider.md:141] [E: packages/coding-agent/docs/custom-provider.md:142] [E: packages/coding-agent/docs/custom-provider.md:143] [E: packages/ai/src/types.ts:198]
 
-`ExtensionAPI.registerProvider(name, config)` 是扩展侧注册入口,`ExtensionAPI.unregisterProvider(name)` 是对应注销入口 [E: packages/coding-agent/src/core/extensions/types.ts:1487] [E: packages/coding-agent/src/core/extensions/types.ts:1502]。`ProviderConfig` 的字段包括 display `name`、`baseUrl`、`apiKey`、provider-level `api`、`streamSimple`、`headers`、`authHeader`、`models`、可选 `refreshModels` 和 `oauth`;`refreshModels(context)` 返回的列表替换 extension-provided models [E: packages/coding-agent/src/core/extensions/types.ts:1513] [E: packages/coding-agent/src/core/extensions/types.ts:1515] [E: packages/coding-agent/src/core/extensions/types.ts:1517] [E: packages/coding-agent/src/core/extensions/types.ts:1519] [E: packages/coding-agent/src/core/extensions/types.ts:1521] [E: packages/coding-agent/src/core/extensions/types.ts:1528] [E: packages/coding-agent/src/core/extensions/types.ts:1530] [E: packages/coding-agent/src/core/extensions/types.ts:1532] [E: packages/coding-agent/src/core/extensions/types.ts:1534] [E: packages/coding-agent/src/core/extensions/types.ts:1539] [E: packages/coding-agent/src/core/extensions/types.ts:1541]。
+扩展自己发请求应走 `ctx.modelRegistry.stream()` / `streamSimple()`,二者委托 `ModelRuntime` 做 request-time auth,能看到 `pi.registerProvider()` 的自定义 provider;不要用 `pi-ai/compat` streaming helpers。`ModelRegistry.stream` 仍接受 `Context`(产品层入口),由 runtime/`Models` 再 normalize。[E: packages/coding-agent/src/core/model-registry.ts:106] [E: packages/coding-agent/src/core/model-registry.ts:108] [E: packages/coding-agent/src/core/model-registry.ts:115] [E: packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts:7]
 
-`ProviderModelConfig` 要求 `id`、`name`、`reasoning`、`input`、`cost`、`contextWindow` 和 `maxTokens`,并允许 model-level `api`、`baseUrl`、`thinkingLevelMap`、`headers` 和 `compat` [E: packages/coding-agent/src/core/extensions/types.ts:1560] [E: packages/coding-agent/src/core/extensions/types.ts:1562] [E: packages/coding-agent/src/core/extensions/types.ts:1564] [E: packages/coding-agent/src/core/extensions/types.ts:1566] [E: packages/coding-agent/src/core/extensions/types.ts:1568] [E: packages/coding-agent/src/core/extensions/types.ts:1570] [E: packages/coding-agent/src/core/extensions/types.ts:1572] [E: packages/coding-agent/src/core/extensions/types.ts:1574] [E: packages/coding-agent/src/core/extensions/types.ts:1530] [E: packages/coding-agent/src/core/extensions/types.ts:1578] [E: packages/coding-agent/src/core/extensions/types.ts:1580] [E: packages/coding-agent/src/core/extensions/types.ts:1582] [E: packages/coding-agent/src/core/extensions/types.ts:1584]。
+## 3 `models.json` 配置面
 
-扩展 factory 可以是 async;动态模型发现应在 factory 中 fetch 后注册,而不是延迟到 `session_start`,因为 pi 会等待 factory,使 provider 在 interactive startup 与 `pi --list-models` 时已可见 [E: packages/coding-agent/docs/custom-provider.md:91] [E: packages/coding-agent/docs/custom-provider.md:125] [E: packages/coding-agent/docs/custom-provider.md:158]。
+provider config 的文档字段包括 `baseUrl`、`api`、`apiKey`、`oauth`、`headers`、`authHeader`、`models` 和 `modelOverrides`。只是 base URL、headers、模型列表和已支持 API 类型的组合时优先使用 `models.json`。[E: packages/coding-agent/docs/custom-provider.md:11] [I]
 
-`apiKey` 与 custom header values 使用和 `models.json` 相同的 config value 语法:leading `!command` 执行命令,`$ENV_VAR` 或 `${ENV_VAR}` 插值环境变量,`$$` 与 `$!` 分别转义美元符和感叹号 [E: packages/coding-agent/docs/custom-provider.md:184] [E: packages/coding-agent/docs/custom-provider.md:186]。这让扩展 provider 与 `models.json` provider 在 secret/reference 表达上保持一致 [I]。
+覆盖内置 provider 时,只写 `baseUrl` 可保留内置模型并改走 proxy;若提供 `models` 数组,legacy form 会替换该 provider 的现有模型(含 chat/image/classifier)。省略 `type` 表示 `"chat"`。[E: packages/coding-agent/docs/custom-provider.md:30]
 
-## 4 注册、注销与替换语义
+`models.json` 的 `modelOverrides` 不要和 settings 的 `compaction.modelOverrides` 混淆——后者键是精确 `"provider/modelId"`,只覆盖 compaction 的 `reserveTokens` / `keepRecentTokens`。[E: packages/coding-agent/docs/settings.md:57] [I]
 
-扩展 API 的覆盖语义在 docs 中是外部行为:只提供 `baseUrl` 和/或 `headers` 且没有 `models` 时,现有模型会保留并使用新 endpoint [E: packages/coding-agent/docs/custom-provider.md:93] [E: packages/coding-agent/docs/custom-provider.md:119]。提供 `models` 时,会替换该 provider 的现有全部模型 [E: packages/coding-agent/docs/custom-provider.md:121] [E: packages/coding-agent/docs/custom-provider.md:123] [E: packages/coding-agent/docs/custom-provider.md:184]。
+## 4 扩展 API: `ProviderConfig`
 
-`pi.unregisterProvider(name)` 用于移除之前通过 `pi.registerProvider(name, ...)` 注册的 provider;注销会移除该 provider 的 dynamic models、API key fallback、OAuth provider registration 和 custom stream handler registrations,并恢复被覆盖的 built-in models 或 provider behavior [E: packages/coding-agent/docs/custom-provider.md:188] [E: packages/coding-agent/docs/custom-provider.md:190] [E: packages/coding-agent/docs/custom-provider.md:215]。
+`ExtensionAPI.registerProvider(name, config)` 是扩展侧注册入口,`ExtensionAPI.unregisterProvider(name)` 是对应注销入口;还有 `registerProvider(provider: Provider)` 的 native 重载。[E: packages/coding-agent/src/core/extensions/types.ts:1621] [E: packages/coding-agent/src/core/extensions/types.ts:1622] [E: packages/coding-agent/src/core/extensions/types.ts:1637]
 
-`ExtensionRuntimeState` 持有 `pendingProviderRegistrations`,并暴露 runtime-level `registerProvider`/`unregisterProvider` 函数 [E: packages/coding-agent/src/core/extensions/types.ts:1669] [E: packages/coding-agent/src/core/extensions/types.ts:1672] [E: packages/coding-agent/src/core/extensions/types.ts:1687] [E: packages/coding-agent/src/core/extensions/types.ts:1689]。类型注释描述了 bind 前排队、bind 后调用 `ModelRegistry` 的语义,但本轮不把注释行作为 `[E]` 锚点 [I]。index source 不能确认 AgentSession 是否在注册/注销后刷新当前已选模型视图 [U]。
+`ProviderConfig` 的字段包括 display `name`、`baseUrl`、`apiKey`、provider-level `api`、`streamSimple`、`images`、`classifiers`、`headers`、`authHeader`、`models`、可选 `refreshModels` 和 `oauth`。[E: packages/coding-agent/src/core/extensions/types.ts:1648] [E: packages/coding-agent/src/core/extensions/types.ts:1652] [E: packages/coding-agent/src/core/extensions/types.ts:1656] [E: packages/coding-agent/src/core/extensions/types.ts:1667] [E: packages/coding-agent/src/core/extensions/types.ts:1673] [E: packages/coding-agent/src/core/extensions/types.ts:1681] [E: packages/coding-agent/src/core/extensions/types.ts:1686]
 
-## 5 OAuth、auth header 与自定义 streaming
+chat `ProviderChatModelConfig` 要求 `id`、`name`、`reasoning`、`input`、`cost`、`contextWindow` 和 `maxTokens`,并允许 model-level `api`、`baseUrl`、`thinkingLevelMap`、`samplingParams`、`headers` 和 `compat`。[E: packages/coding-agent/src/core/extensions/types.ts:1708] [E: packages/coding-agent/src/core/extensions/types.ts:1710] [E: packages/coding-agent/src/core/extensions/types.ts:1716] [E: packages/coding-agent/src/core/extensions/types.ts:1720] [E: packages/coding-agent/src/core/extensions/types.ts:1730] [E: packages/coding-agent/src/core/extensions/types.ts:1736] [E: packages/coding-agent/src/core/extensions/types.ts:1738] [E: packages/coding-agent/src/core/extensions/types.ts:1739]
 
-`oauth` 用于把 provider 接入 `/login`;docs 的 OAuth 示例注册 `corporate-ai` 后明确用户可通过 `/login corporate-ai` 认证 [E: packages/coding-agent/docs/custom-provider.md:286] [E: packages/coding-agent/docs/custom-provider.md:288] [E: packages/coding-agent/docs/custom-provider.md:350]。`ProviderConfig.oauth` 的 type 要求 `name`、`login()`、`refreshToken()`、`getApiKey()`,并允许可选 `modifyModels()` [E: packages/coding-agent/src/core/extensions/types.ts:1541] [E: packages/coding-agent/src/core/extensions/types.ts:1543] [E: packages/coding-agent/src/core/extensions/types.ts:1549] [E: packages/coding-agent/src/core/extensions/types.ts:1539] [E: packages/coding-agent/src/core/extensions/types.ts:1553] [E: packages/coding-agent/src/core/extensions/types.ts:1555]。
+`apiKey` 与 custom header values 使用和 `models.json` 相同的 config value 语法:leading `!command` 执行命令,`$ENV_VAR` 或 `${ENV_VAR}` 插值环境变量。[E: packages/coding-agent/src/core/extensions/types.ts:1654]
 
-`authHeader: true` 面向需要 `Authorization: Bearer <key>` 但不使用 standard API 的 provider;示例显示它会添加 bearer header [E: packages/coding-agent/docs/custom-provider.md:270] [E: packages/coding-agent/docs/custom-provider.md:272] [E: packages/coding-agent/docs/custom-provider.md:278]。
+## 5 注册、注销与替换语义
 
-`api` 字段决定使用哪个 streaming implementation;custom-provider docs 的扩展 API 列出 `anthropic-messages`、`openai-completions`、`openai-responses`、`azure-openai-responses`、`openai-codex-responses`、`mistral-conversations`、`google-generative-ai`、`google-vertex` 和 `bedrock-converse-stream` [E: packages/coding-agent/docs/custom-provider.md:219] [E: packages/coding-agent/docs/custom-provider.md:221] [E: packages/coding-agent/docs/custom-provider.md:225] [E: packages/coding-agent/docs/custom-provider.md:226] [E: packages/coding-agent/docs/custom-provider.md:227] [E: packages/coding-agent/docs/custom-provider.md:228] [E: packages/coding-agent/docs/custom-provider.md:229] [E: packages/coding-agent/docs/custom-provider.md:230] [E: packages/coding-agent/docs/custom-provider.md:231] [E: packages/coding-agent/docs/custom-provider.md:232] [E: packages/coding-agent/docs/custom-provider.md:233]。
+扩展 API 的覆盖语义:只提供 `baseUrl` 和/或 `headers` 且没有 `models` 时,现有模型会保留并使用新 endpoint。提供 `models` 时,会替换该 provider 的现有全部模型。[E: packages/coding-agent/docs/custom-provider.md:30] [E: packages/coding-agent/src/core/extensions/types.ts:1681]
 
-非标准 API 可通过 `streamSimple` 实现;docs 要求先学习既有 provider implementations,并给出 `AssistantMessageEventStream` 的 start/content/done-or-error event pattern [E: packages/coding-agent/docs/custom-provider.md:395] [E: packages/coding-agent/docs/custom-provider.md:397] [E: packages/coding-agent/docs/custom-provider.md:407] [E: packages/coding-agent/docs/custom-provider.md:483] [E: packages/coding-agent/docs/custom-provider.md:485] [E: packages/coding-agent/docs/custom-provider.md:487] [E: packages/coding-agent/docs/custom-provider.md:498]。扩展自己发请求应走 `ctx.modelRegistry.stream()` / `streamSimple()`,二者委托 `ModelRuntime` 做 request-time auth,能看到 `pi.registerProvider()` 的自定义 provider;不要用 `pi-ai/compat` streaming helpers。[E: packages/coding-agent/docs/extensions.md:1021] [E: packages/coding-agent/src/core/model-registry.ts:106] [E: packages/coding-agent/src/core/model-registry.ts:111] [E: packages/coding-agent/src/core/model-registry.ts:115] [E: packages/coding-agent/src/core/model-registry.ts:116] [E: packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts:7] [E: packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts:36] custom streaming provider 如果要让 context overflow 自动恢复生效,需要把 overflow error 规范化为 pi 已知模式;docs 建议在 `message_end` handler 中重写本 provider 的 assistant error message [E: packages/coding-agent/docs/custom-provider.md:567] [E: packages/coding-agent/docs/custom-provider.md:569] [E: packages/coding-agent/docs/custom-provider.md:571] [E: packages/coding-agent/docs/custom-provider.md:576]。
+`pi.unregisterProvider(name)` 用于移除之前通过 `pi.registerProvider` 注册的 provider;注销会移除该 provider 的 dynamic models 并恢复被覆盖的 built-in models。[E: packages/coding-agent/src/core/extensions/types.ts:1637]
+
+`ExtensionRuntimeState` 持有 `pendingProviderRegistrations` 与 `pendingNativeProviderRegistrations`,并暴露 runtime-level `registerProvider` / `registerNativeProvider` / `unregisterProvider`。[E: packages/coding-agent/src/core/extensions/types.ts:1846] [E: packages/coding-agent/src/core/extensions/types.ts:1848] [E: packages/coding-agent/src/core/extensions/types.ts:1861] [E: packages/coding-agent/src/core/extensions/types.ts:1862] [E: packages/coding-agent/src/core/extensions/types.ts:1863] 类型注释写 bind 后这些方法直接打到 `ModelRegistry`,但 index source 不能确认 AgentSession 是否在注册/注销后刷新当前已选模型视图。[I] [U]
+
+## 6 OAuth、auth header 与自定义 streaming
+
+`oauth` 用于把 provider 接入 `/login`。`ProviderConfig.oauth` 的 type 要求 `name`、`login()`、`refreshToken()`、`getApiKey()`,并允许可选 `modifyModels()`。[E: packages/coding-agent/src/core/extensions/types.ts:1688] [E: packages/coding-agent/src/core/extensions/types.ts:1696] [E: packages/coding-agent/src/core/extensions/types.ts:1700]
+
+`authHeader: true` 面向需要 `Authorization: Bearer <key>` 但不使用 standard API 的 provider。[E: packages/coding-agent/src/core/extensions/types.ts:1679]
+
+`api` 字段决定使用哪个已有 streaming implementation。非标准 API 才实现 `streamSimple`;docs 要求先学习既有 provider implementations,并给出 `AssistantMessageEventStream` 的 start/content/done-or-error event pattern。[E: packages/coding-agent/docs/custom-provider.md:120] [E: packages/coding-agent/docs/custom-provider.md:122] [E: packages/coding-agent/docs/custom-provider.md:128]
+
+custom streaming provider 如果要让 context overflow 自动恢复生效,需要把 overflow error 规范化为 pi 已知模式。[E: packages/coding-agent/docs/custom-provider.md:152]
 
 ## Gotcha
 
-- `models.json` provider 的 `apiKey` 可以省略以便从 `/login`/`auth.json`、CLI `--api-key` 或 provider `apiKey` 取得可用状态;扩展 `ProviderConfig` 同时暴露 `apiKey` 和 `oauth` 字段,具体 validation 约束需到 model registry 实现节点核 [E: packages/coding-agent/docs/models.md:145] [E: packages/coding-agent/src/core/extensions/types.ts:1519] [E: packages/coding-agent/src/core/extensions/types.ts:1541] [I]。
-- `models.json` 的 shell command secret 在 request time 解析,pi 不提供内置 TTL、stale reuse 或恢复逻辑;慢命令或易失败命令应自行包装缓存策略 [E: packages/coding-agent/docs/models.md:172] [E: packages/coding-agent/docs/models.md:174]。
-- 逐 key 的源码目录和 lazy wrapper 属于 [ref.ai.wire-protocol-catalog](../../reference/wire-protocol-catalog.md);本节点只解释 custom provider 如何选择已有 `api` 或新增 `streamSimple` [I]。
+- `TranscriptContext` 没有 `systemPrompt` / `tools` 字段。从旧 `Context` 抄来的自定义 stream 会在运行时读到 `undefined` 工具列表。[E: packages/ai/src/types.ts:711] [E: packages/ai/src/utils/transcript.ts:30]
+- `models.json` provider 的 `apiKey` 可以省略以便从 `/login`/`auth.json`、CLI `--api-key` 或 provider `apiKey` 取得可用状态;扩展 `ProviderConfig` 同时暴露 `apiKey` 和 `oauth` 字段。[E: packages/coding-agent/src/core/extensions/types.ts:1654] [E: packages/coding-agent/src/core/extensions/types.ts:1688] [I]
+- 逐 key 的源码目录和 lazy wrapper 属于 [ref.ai.wire-protocol-catalog](../../reference/wire-protocol-catalog.md);本节点只解释 custom provider 如何选择已有 `api` 或新增 `streamSimple`。[I]
 
 ## 跨包关系
 
-[surface.extensions.contribution-points](../extensions/contribution-points.md) 应覆盖扩展能注册的工具、命令、provider、UI 与事件等贡献点;本节点只覆盖 provider 相关的 `registerProvider()`/`unregisterProvider()` [E: packages/coding-agent/src/core/extensions/types.ts:1487] [E: packages/coding-agent/src/core/extensions/types.ts:1502] [I]。
+[surface.extensions.contribution-points](../extensions/contribution-points.md) 应覆盖扩展能注册的工具、命令、provider、UI 与事件等贡献点;本节点只覆盖 provider 相关的 `registerProvider()`/`unregisterProvider()`。[E: packages/coding-agent/src/core/extensions/types.ts:1621] [I]
 
-[subsys.coding-agent.model-registry](../../subsystems/coding-agent/model-registry.md) 是 `models.json`、dynamic provider、auth/header resolution 和 model availability 的产品层装配节点;本节点只记录 index source 能确认的外部配置面和 Extension API 类型边界 [I]。
+[subsys.coding-agent.model-registry](../../subsystems/coding-agent/model-registry.md) 是 `models.json`、dynamic provider、auth/header resolution 和 model availability 的产品层装配节点。[I]
 
-[ref.ai.wire-protocol-catalog](../../reference/wire-protocol-catalog.md) 是 `api` key 与 wire module 的目录;自定义 provider 只在选择已有 `api` 或注册 `streamSimple` 时触碰它,不在本节点重复完整 catalog [E: packages/coding-agent/docs/custom-provider.md:221] [I]。
+[ref.ai.wire-protocol-catalog](../../reference/wire-protocol-catalog.md) 是 `api` key 与 wire module 的目录。[I]
 
 ## Sources
 
@@ -107,6 +128,9 @@ OpenAI-compatible custom models 现在可配置 `thinkingFormat: "baseten"` 与 
 - packages/coding-agent/src/core/extensions/types.ts
 - packages/coding-agent/src/core/model-registry.ts
 - packages/coding-agent/test/suite/regressions/8964-extension-provider-streaming.test.ts
+- packages/ai/src/types.ts
+- packages/ai/src/utils/transcript.ts
+- packages/ai/src/models.ts
 
 ## 相关
 

@@ -27,7 +27,7 @@ related:
   - spine.session-state-model
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `subsys.agent-core.tree-navigation` 说明 v4 `Session` 如何用命名 `Branch`（`pi.branch.tip`）选择 active path、做有界 `parentId` 回溯，以及 `context.ts` 如何把一条 path 投影成 `AgentMessage[]`。
@@ -53,7 +53,7 @@ context 构建在 `context.ts`。`buildSessionContext()` 返回 `AgentMessage[]`
 
 导航不再追加 `type: "leaf"` entry，也不再有 `moveLane`。改 tip 的公开原语是 `createBranch` 或 `setValue(branchTip(name), id)`。[E: packages/agent/src/harness/session/session.ts:365] [E: packages/agent/src/harness/session/values.ts:158]
 
-harness 的 `Session` / `Branch` / `scanBranch` **没有** `navigateTree` 方法，也没有 compaction 互斥；本轮这套树查询 API 本身未加锁。[E: packages/agent/src/harness/session/types.ts:521] [E: packages/agent/src/harness/session/session.ts:196] [I] 产品层 `pi-coding-agent` 的 `AgentSession.navigateTree()` 才在 `isCompacting`（auto/manual compaction **或** branch summarization）时 **throw** `"Wait for the current compaction or tree navigation to finish before navigating the session tree."`。[E: packages/coding-agent/src/core/agent-session.ts:984] [E: packages/coding-agent/src/core/agent-session.ts:3143] [E: packages/coding-agent/src/core/agent-session.ts:3145] [E: packages/coding-agent/test/suite/regressions/9178-tree-during-compaction.test.ts:53] [E: packages/coding-agent/test/suite/regressions/9178-tree-during-compaction.test.ts:96]
+harness 的 `Session` / `Branch` / `scanBranch` **没有** `navigateTree` 方法，也没有 compaction 互斥；本轮这套树查询 API 本身未加锁。[E: packages/agent/src/harness/session/types.ts:521] [E: packages/agent/src/harness/session/session.ts:196] [I] 产品层 `pi-coding-agent` 的 `AgentSession.navigateTree()` 才在 `isCompacting`（auto/manual compaction **或** branch summarization）时 **throw** `"Wait for the current compaction or tree navigation to finish before navigating the session tree."`。[E: packages/coding-agent/src/core/agent-session.ts:1297] [E: packages/coding-agent/src/core/agent-session.ts:3588] [E: packages/coding-agent/src/core/agent-session.ts:3590] [E: packages/coding-agent/test/suite/regressions/9178-tree-during-compaction.test.ts:53] [E: packages/coding-agent/test/suite/regressions/9178-tree-during-compaction.test.ts:96]
 
 ## 关键文件
 
@@ -61,7 +61,7 @@ harness 的 `Session` / `Branch` / `scanBranch` **没有** `navigateTree` 方法
 - `packages/agent/src/harness/session/types.ts`：`BranchScan`、`EntryQuery`、`Branch`。[E: packages/agent/src/harness/session/types.ts:421] [E: packages/agent/src/harness/session/types.ts:486]
 - `packages/agent/src/harness/session/in-memory-storage-state.ts`：`scanBranch` / `scanEntries`。[E: packages/agent/src/harness/session/in-memory-storage-state.ts:273] [E: packages/agent/src/harness/session/in-memory-storage-state.ts:314]
 - `packages/agent/src/harness/session/context.ts`：全部 builder。[E: packages/agent/src/harness/session/context.ts:10]
-- `packages/coding-agent/src/core/agent-session.ts`：产品层 `navigateTree` 的 compaction / in-flight navigation throw。[E: packages/coding-agent/src/core/agent-session.ts:3136]
+- `packages/coding-agent/src/core/agent-session.ts`：产品层 `navigateTree` 的 compaction / in-flight navigation throw。[E: packages/coding-agent/src/core/agent-session.ts:3581]
 
 ## 数据模型
 
@@ -126,12 +126,12 @@ thinking / model / active tools **不**从 path 派生。旧的 `deriveSessionCo
 - `oldestFirst` 时 stop 仍按（反转后的）walk 顺序 break，因此可能返回 root…该 bound（含），而不含 bound 之后、更靠近 start 的节点。[E: packages/agent/src/harness/session/in-memory-storage-state.ts:285] [E: packages/agent/src/harness/session/in-memory-storage-state.ts:290]
 - `branch("missing")` 在 tip 不存在时返回 `undefined`，不抛。已经拿到的 `Branch` 若 tip 后来被删，`getTipId` / `appendToBranch` 会 `SessionInvariantError`。[E: packages/agent/src/harness/session/session.ts:351] [E: packages/agent/src/harness/session/session.ts:418]
 - 不存在 `view(lane)` / `getBranch()` / `moveLane()` / `moveTo()` / `ArraySessionIndex`。[E: packages/agent/src/harness/session/types.ts:521] [E: packages/agent/src/harness/session/session.ts:349]
-- harness `Session` / `Branch` 没有 `navigateTree`；compaction 互斥只在 coding-agent `AgentSession.navigateTree`。另一次 navigation 进行中（`isCompacting` 因 branch summarization 为真）也会 throw 同一句。[E: packages/coding-agent/src/core/agent-session.ts:3143] [E: packages/coding-agent/test/suite/regressions/9178-tree-during-compaction.test.ts:96]
+- harness `Session` / `Branch` 没有 `navigateTree`；compaction 互斥只在 coding-agent `AgentSession.navigateTree`。另一次 navigation 进行中（`isCompacting` 因 branch summarization 为真）也会 throw 同一句。[E: packages/coding-agent/src/core/agent-session.ts:3588] [E: packages/coding-agent/test/suite/regressions/9178-tree-during-compaction.test.ts:96]
 - `createCompactionSummaryMessage` / `createBranchSummaryMessage` 定义在 `harness/messages.ts`，本节点只证明 `context.ts` 调用它们。[E: packages/agent/src/harness/session/context.ts:3] [E: packages/agent/src/harness/session/context.ts:15]
 
 ## 跨包边界
 
-本节点属于 `pi-agent-core` 可复用 harness。`Session` / `Branch` / `scanBranch` 本轮没有 `navigateTree`，也没有 compaction gate。[E: packages/agent/src/harness/session/types.ts:521] [I] `pi-coding-agent` 的 `SessionManager` 有独立的产品层导航/context（仍返回 `{ messages, thinkingLevel, model }`），不能把这里的 async `Branch` 直接套到那套同步 API 上。[E: packages/coding-agent/src/core/session-manager.ts:1298] [I] 产品层跳树走 `AgentSession.navigateTree`：streaming 时另一句 wait-for-response；`isCompacting` 时 throw `"Wait for the current compaction or tree navigation to finish before navigating the session tree."`。[E: packages/coding-agent/src/core/agent-session.ts:3140] [E: packages/coding-agent/src/core/agent-session.ts:3145] harness `Lane.navigateTree` 是另一套 admission convenience（`LaneBusy` / `InvalidNavigation`），不是这句 Error，也不改变本节点的 Session/Branch 查询契约。[E: packages/agent/src/harness/runtime/lane.ts:1232] [I]
+本节点属于 `pi-agent-core` 可复用 harness。`Session` / `Branch` / `scanBranch` 本轮没有 `navigateTree`，也没有 compaction gate。[E: packages/agent/src/harness/session/types.ts:521] [I] `pi-coding-agent` 的 `SessionManager` 有独立的产品层导航/context（仍返回 `{ messages, thinkingLevel, model }`），不能把这里的 async `Branch` 直接套到那套同步 API 上。[E: packages/coding-agent/src/core/session-manager.ts:1497] [I] 产品层跳树走 `AgentSession.navigateTree`：streaming 时另一句 wait-for-response；`isCompacting` 时 throw `"Wait for the current compaction or tree navigation to finish before navigating the session tree."`。[E: packages/coding-agent/src/core/agent-session.ts:3585] [E: packages/coding-agent/src/core/agent-session.ts:3590] harness `Lane.navigateTree` 是另一套 admission convenience（`LaneBusy` / `InvalidNavigation`），不是这句 Error，也不改变本节点的 Session/Branch 查询契约。[E: packages/agent/src/harness/runtime/lane.ts:1232] [I]
 
 跨层读时投影总览见 [spine.session-state-model](../../spine/session-state-model.md)。`Entry` 字段见 [subsys.agent-core.session-tree](session-tree.md) 与 [ref.agent.session-entry-types](../../reference/session-entry-types.md)。
 

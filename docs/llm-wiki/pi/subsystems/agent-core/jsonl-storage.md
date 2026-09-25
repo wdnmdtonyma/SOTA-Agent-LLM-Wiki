@@ -5,37 +5,37 @@ kind: subsystem
 tier: T2
 pkg: agent
 source:
-  - packages/agent/src/harness/session/jsonl/index.ts
-  - packages/agent/src/harness/session/jsonl/repo.ts
-  - packages/agent/src/harness/session/jsonl/storage.ts
-  - packages/agent/src/harness/session/jsonl/codec.ts
-  - packages/agent/src/harness/session/jsonl/types.ts
-  - packages/agent/src/harness/session/jsonl/legacy-v3.ts
-  - packages/agent/src/harness/session/jsonl/fork.ts
-  - packages/agent/src/harness/session/jsonl/io.ts
-  - packages/agent/src/harness/session/fork-policy.ts
-  - packages/agent/src/harness/types.ts
+ - packages/agent/src/harness/session/jsonl/index.ts
+ - packages/agent/src/harness/session/jsonl/repo.ts
+ - packages/agent/src/harness/session/jsonl/storage.ts
+ - packages/agent/src/harness/session/jsonl/codec.ts
+ - packages/agent/src/harness/session/jsonl/types.ts
+ - packages/agent/src/harness/session/jsonl/legacy-v3.ts
+ - packages/agent/src/harness/session/jsonl/fork.ts
+ - packages/agent/src/harness/session/jsonl/io.ts
+ - packages/agent/src/harness/session/fork-policy.ts
+ - packages/agent/src/harness/types.ts
 symbols:
-  - JsonlSessionRepo
-  - JsonlStorage
-  - JsonlStorageHeader
-  - JsonlSessionMetadata
-  - JsonlForkInput
-  - runJsonlFork
-  - parseJsonlSessionHeader
-  - parseJsonlTransaction
-  - publishJsonl
-  - publishFileAtomically
-  - LegacyV3Source
-  - JSONL_FORMAT_VERSION
-  - JSONL_STORAGE_VERSION
+ - JsonlSessionRepo
+ - JsonlStorage
+ - JsonlStorageHeader
+ - JsonlSessionMetadata
+ - JsonlForkInput
+ - runJsonlFork
+ - parseJsonlSessionHeader
+ - parseJsonlTransaction
+ - publishJsonl
+ - publishFileAtomically
+ - LegacyV3Source
+ - JSONL_FORMAT_VERSION
+ - JSONL_STORAGE_VERSION
 related:
-  - subsys.agent-core.session-storage
-  - subsys.agent-core.tree-navigation
-  - ref.coding-agent.session-format
+ - subsys.agent-core.session-storage
+ - subsys.agent-core.tree-navigation
+ - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `subsys.agent-core.jsonl-storage` 描述 `pi-agent-core` 的 durable JSONL 实现：公开 `JsonlSessionRepo` 返回 `StorageBackedSession`；每文件由 `JsonlStorage` 维护一份 `InMemoryStorageState`；首行是 `kind: "header", v: 4`，后续每行一条 commit 事务。fork 是两趟流式：`resolveForkInput` → `runJsonlFork` → `JsonlStorage.open`。解析与原子发布在 `jsonl/io.ts`。
@@ -66,12 +66,12 @@ updated: 71dca871bc
 - `packages/agent/src/harness/session/jsonl/types.ts`：`JsonlStorageHeader`、`JSONL_FORMAT_VERSION = 4`、`JSONL_STORAGE_VERSION = 1`、cwd-scoped create/list options。[E: packages/agent/src/harness/session/jsonl/types.ts:4] [E: packages/agent/src/harness/session/jsonl/types.ts:7]
 - `packages/agent/src/harness/session/jsonl/codec.ts`：`parseJsonlSessionHeader` / `isJsonlStorageHeader` / `isLegacyV3SessionHeader`。[E: packages/agent/src/harness/session/jsonl/codec.ts:34] [E: packages/agent/src/harness/session/jsonl/codec.ts:53]
 - `packages/agent/src/harness/session/jsonl/io.ts`：`fileValue`、`readJsonlHeader`、`parseJsonlTransaction`、`serializeJsonlTransaction`、`publishFileAtomically`、`publishJsonl`。[E: packages/agent/src/harness/session/jsonl/io.ts:66] [E: packages/agent/src/harness/session/jsonl/io.ts:107]
-- `packages/agent/src/harness/session/jsonl/storage.ts`：`JsonlStorage.create/open`、torn-tail 修复、v3 升级、日常 append。[E: packages/agent/src/harness/session/jsonl/storage.ts:59] [E: packages/agent/src/harness/session/jsonl/storage.ts:74] [E: packages/agent/src/harness/session/jsonl/storage.ts:154]
+- `packages/agent/src/harness/session/jsonl/storage.ts`：`JsonlStorage.create/open`、torn-tail 修复、v3 升级、日常 append。[E: packages/agent/src/harness/session/jsonl/storage.ts:59] [E: packages/agent/src/harness/session/jsonl/storage.ts:74] [E: packages/agent/src/harness/session/jsonl/storage.ts:128] [E: packages/agent/src/harness/session/jsonl/storage.ts:138]
 - `packages/agent/src/harness/session/jsonl/fork.ts`：`JsonlForkInput`、`runJsonlFork`（index + stream）。[E: packages/agent/src/harness/session/jsonl/fork.ts:208] [E: packages/agent/src/harness/session/jsonl/fork.ts:295]
 - `packages/agent/src/harness/session/fork-policy.ts`：JSONL 与 memory 共用的 `selectBranchFork` / `projectForkCurrentStateWrite`。[E: packages/agent/src/harness/session/fork-policy.ts:8] [E: packages/agent/src/harness/session/fork-policy.ts:40]
 - `packages/agent/src/harness/session/jsonl/repo.ts`：目录编码、list、create 预约、`openSessions` 互斥、`resolveForkInput`。[E: packages/agent/src/harness/session/jsonl/repo.ts:36] [E: packages/agent/src/harness/session/jsonl/repo.ts:299]
 - `packages/agent/src/harness/session/jsonl/legacy-v3.ts`：`LegacyV3Source.read` 把 `type: "session", version: 3` 投影成可重复的 v4 writes。[E: packages/agent/src/harness/session/jsonl/legacy-v3.ts:528] [E: packages/agent/src/harness/session/jsonl/legacy-v3.ts:563]
-- `packages/agent/src/harness/types.ts`：`TextLine` / `TextLineReader` / `FileSystem.openTextLineReader`，fork 与 open 用 `terminated` 丢掉 torn 末行。[E: packages/agent/src/harness/types.ts:260] [E: packages/agent/src/harness/types.ts:286]
+- `packages/agent/src/harness/types.ts`：`TextLine` / `TextLineReader` / `FileSystem.openTextLineReader`，fork 与 open 用 `terminated` 丢掉 torn 末行。[E: packages/agent/src/harness/types.ts:254] [E: packages/agent/src/harness/types.ts:260] [E: packages/agent/src/harness/types.ts:260] [E: packages/agent/src/harness/types.ts:286]
 
 ## 数据模型
 

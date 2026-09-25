@@ -5,27 +5,27 @@ kind: surface
 tier: T1
 pkg: coding-agent
 source:
-  - packages/coding-agent/docs/llama-cpp.md
-  - packages/coding-agent/src/extensions/index.ts
-  - packages/coding-agent/src/extensions/llama/index.ts
-  - packages/coding-agent/src/extensions/llama/client.ts
-  - packages/coding-agent/src/extensions/llama/huggingface.ts
-  - packages/coding-agent/src/extensions/llama/provider.ts
-  - packages/coding-agent/src/main.ts
+ - packages/coding-agent/docs/llama-cpp.md
+ - packages/coding-agent/src/extensions/index.ts
+ - packages/coding-agent/src/extensions/llama/index.ts
+ - packages/coding-agent/src/extensions/llama/client.ts
+ - packages/coding-agent/src/extensions/llama/huggingface.ts
+ - packages/coding-agent/src/extensions/llama/provider.ts
+ - packages/coding-agent/src/main.ts
 symbols:
-  - llamaExtension
-  - builtInExtensions
-  - LlamaClient
-  - HuggingFaceClient
-  - createLlamaProvider
+ - llamaExtension
+ - builtInExtensions
+ - LlamaClient
+ - HuggingFaceClient
+ - createLlamaProvider
 related:
-  - surface.providers.auth
-  - surface.slash-commands.overview
-  - surface.extensions.contribution-points
-  - subsys.coding-agent.model-registry
+ - surface.providers.auth
+ - surface.slash-commands.overview
+ - surface.extensions.contribution-points
+ - subsys.coding-agent.model-registry
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `surface.providers.llama-cpp` 描述 coding-agent 新增的内置、隐藏扩展：它注册动态 `llama.cpp` provider 和交互式 `/llama` 命令，把 llama.cpp router 的模型目录、装载状态与 Hugging Face GGUF 搜索/下载接入 Pi。
@@ -40,7 +40,7 @@ updated: 71dca871bc
 
 ## 装配与入口
 
-`extensions/index.ts` 把 `llamaExtension` 登记为名为 `llama.cpp` 的 hidden built-in extension [E: packages/coding-agent/src/extensions/index.ts:2] [E: packages/coding-agent/src/extensions/index.ts:4]。`main()` 在用户 extension factories 之前展开 `builtInExtensions`，所以它不需要用户写 extension 配置即可装载 [E: packages/coding-agent/src/main.ts:64] [E: packages/coding-agent/src/main.ts:564]。
+`extensions/index.ts` 把 `llamaExtension` 登记为名为 `llama.cpp` 的 hidden built-in extension [E: packages/coding-agent/src/extensions/index.ts:2] [E: packages/coding-agent/src/extensions/index.ts:4]。`main()` 在用户 extension factories 之前展开 `builtInExtensions`，所以它不需要用户写 extension 配置即可装载 [E: packages/coding-agent/src/main.ts:64] [E: packages/coding-agent/src/main.ts:568]。
 
 扩展启动时调用 `createLlamaProvider()` 并以 `pi.registerProvider()` 注册 provider，再注册 `/llama` 命令 [E: packages/coding-agent/src/extensions/llama/index.ts:42] [E: packages/coding-agent/src/extensions/llama/index.ts:44] [E: packages/coding-agent/src/extensions/llama/index.ts:183]。该命令只在 TUI 模式运行；其它模式会提示它仅在 interactive mode 可用 [E: packages/coding-agent/src/extensions/llama/index.ts:185] [E: packages/coding-agent/src/extensions/llama/index.ts:186] [E: packages/coding-agent/src/extensions/llama/index.ts:187]。
 
@@ -48,13 +48,13 @@ updated: 71dca871bc
 
 官方文档要求使用带 router mode 的 llama-server，并通过 `/login llama.cpp` 配置 server URL；也可以使用 `LLAMA_BASE_URL`，可选 API key 来自 `LLAMA_API_KEY` [E: packages/coding-agent/docs/llama-cpp.md:9] [E: packages/coding-agent/docs/llama-cpp.md:48] [E: packages/coding-agent/docs/llama-cpp.md:58] [E: packages/coding-agent/docs/llama-cpp.md:61] [E: packages/coding-agent/docs/llama-cpp.md:62]。
 
-provider id 是 `llama.cpp`，默认 server 是 `http://127.0.0.1:8080`；登录流程验证 `/models` 可访问，并把规范化 URL 存进 credential env [E: packages/coding-agent/src/extensions/llama/provider.ts:13] [E: packages/coding-agent/src/extensions/llama/provider.ts:14] [E: packages/coding-agent/src/extensions/llama/provider.ts:99] [E: packages/coding-agent/src/extensions/llama/provider.ts:114] [E: packages/coding-agent/src/extensions/llama/provider.ts:115] [E: packages/coding-agent/src/extensions/llama/provider.ts:118]。request auth 先解析 stored credential 或 `LLAMA_BASE_URL`，再取 credential key、`LLAMA_API_KEY` 或本地占位 key [E: packages/coding-agent/src/extensions/llama/provider.ts:121] [E: packages/coding-agent/src/extensions/llama/provider.ts:127] [E: packages/coding-agent/src/extensions/llama/provider.ts:130]。
+provider id 是 `llama.cpp`，默认 server 是 `http://127.0.0.1:8080`；登录流程验证 `/models` 可访问，并把规范化 URL 存进 credential env [E: packages/coding-agent/src/extensions/llama/provider.ts:19] [E: packages/coding-agent/src/extensions/llama/provider.ts:20] [E: packages/coding-agent/src/extensions/llama/provider.ts:110] [E: packages/coding-agent/src/extensions/llama/provider.ts:125] [E: packages/coding-agent/src/extensions/llama/provider.ts:126] [E: packages/coding-agent/src/extensions/llama/provider.ts:129]。request auth 先解析 stored credential 或 `LLAMA_BASE_URL`，再取 credential key、`LLAMA_API_KEY` 或本地占位 key [E: packages/coding-agent/src/extensions/llama/provider.ts:132] [E: packages/coding-agent/src/extensions/llama/provider.ts:138] [E: packages/coding-agent/src/extensions/llama/provider.ts:141]。
 
-这个 provider 的 catalog 是动态的：`modelIsSelectable()` 接受 `loaded`、idle-slept `sleeping`(请求会自动 wake)、以及 router autoload 打开时未失败的 unloaded `preset`。[E: packages/coding-agent/src/extensions/llama/provider.ts:28] [E: packages/coding-agent/src/extensions/llama/provider.ts:29] [E: packages/coding-agent/src/extensions/llama/provider.ts:31] [E: packages/coding-agent/src/extensions/llama/provider.ts:33] `setCatalog()` / `refreshModels()` 用同一过滤器把这些模型转成 Pi model；它们使用 `openai-completions`、router 的 `/v1` inference URL、零成本元数据和 llama.cpp 报告的 context window [E: packages/coding-agent/src/extensions/llama/provider.ts:82] [E: packages/coding-agent/src/extensions/llama/provider.ts:88] [E: packages/coding-agent/src/extensions/llama/provider.ts:55] [E: packages/coding-agent/src/extensions/llama/provider.ts:57] [E: packages/coding-agent/src/extensions/llama/provider.ts:165] [E: packages/coding-agent/src/extensions/llama/provider.ts:166]。`refreshModels()` 只在 catalog 里已有 unloaded preset 时才打 `/props` 读 `models_autoload`。[E: packages/coding-agent/src/extensions/llama/provider.ts:41] [E: packages/coding-agent/src/extensions/llama/provider.ts:43] [E: packages/coding-agent/src/extensions/llama/client.ts:196] [E: packages/coding-agent/src/extensions/llama/client.ts:200] 扩展每次同步目录后调用 model registry refresh, 并显式 `allowNetwork: true`, 避免 `PI_OFFLINE` 把刚从 `/llama` 读到的目录丢掉。[E: packages/coding-agent/src/extensions/llama/index.ts:46] [E: packages/coding-agent/src/extensions/llama/index.ts:54] [E: packages/coding-agent/src/extensions/llama/index.ts:57] 文档说明 router 以 `--no-models-autoload` 启动时, `/login llama.cpp` 只存连接, 必须先 `/llama` 加载模型再 `/model`。[E: packages/coding-agent/docs/llama-cpp.md:56]
+这个 provider 的 catalog 是动态的：`modelIsSelectable()` 接受 `loaded`、idle-slept `sleeping`(请求会自动 wake)、以及 router autoload 打开时未失败的 unloaded `preset`。[E: packages/coding-agent/src/extensions/llama/provider.ts:34] [E: packages/coding-agent/src/extensions/llama/provider.ts:35] [E: packages/coding-agent/src/extensions/llama/provider.ts:37] [E: packages/coding-agent/src/extensions/llama/provider.ts:39] `setCatalog()` / `refreshModels()` 用同一过滤器把这些模型转成 Pi model；它们使用 `openai-completions`、router 的 `/v1` inference URL、零成本元数据和 llama.cpp 报告的 context window [E: packages/coding-agent/src/extensions/llama/provider.ts:93] [E: packages/coding-agent/src/extensions/llama/provider.ts:99] [E: packages/coding-agent/src/extensions/llama/provider.ts:62] [E: packages/coding-agent/src/extensions/llama/provider.ts:64] [E: packages/coding-agent/src/extensions/llama/provider.ts:168] [E: packages/coding-agent/src/extensions/llama/provider.ts:178]。`refreshModels()` 只在 catalog 里已有 unloaded preset 时才打 `/props` 读 `models_autoload`。[E: packages/coding-agent/src/extensions/llama/provider.ts:47] [E: packages/coding-agent/src/extensions/llama/provider.ts:49] [E: packages/coding-agent/src/extensions/llama/client.ts:197] [E: packages/coding-agent/src/extensions/llama/client.ts:200] 扩展每次同步目录后调用 model registry refresh, 并显式 `allowNetwork: true`, 避免 `PI_OFFLINE` 把刚从 `/llama` 读到的目录丢掉。[E: packages/coding-agent/src/extensions/llama/index.ts:46] [E: packages/coding-agent/src/extensions/llama/index.ts:54] [E: packages/coding-agent/src/extensions/llama/index.ts:57] 文档说明 router 以 `--no-models-autoload` 启动时, `/login llama.cpp` 只存连接, 必须先 `/llama` 加载模型再 `/model`。[E: packages/coding-agent/docs/llama-cpp.md:56]
 
 ## `/llama` 模型管理
 
-`LlamaClient` 对 router 暴露 `/models`、`/models/load`、`/models/unload`、`/models/sse` 和下载用的 `POST /models` [E: packages/coding-agent/src/extensions/llama/client.ts:186] [E: packages/coding-agent/src/extensions/llama/client.ts:203] [E: packages/coding-agent/src/extensions/llama/client.ts:207] [E: packages/coding-agent/src/extensions/llama/client.ts:220] [E: packages/coding-agent/src/extensions/llama/client.ts:224]。load/download 等待路径同时消费 SSE progress 并轮询 catalog；abort 会停止等待和 watcher [E: packages/coding-agent/src/extensions/llama/client.ts:258] [E: packages/coding-agent/src/extensions/llama/client.ts:267] [E: packages/coding-agent/src/extensions/llama/client.ts:281] [E: packages/coding-agent/src/extensions/llama/client.ts:299] [E: packages/coding-agent/src/extensions/llama/client.ts:310] [E: packages/coding-agent/src/extensions/llama/client.ts:326]。
+`LlamaClient` 对 router 暴露 `/models`、`/models/load`、`/models/unload`、`/models/sse` 和下载用的 `POST /models` [E: packages/coding-agent/src/extensions/llama/client.ts:187] [E: packages/coding-agent/src/extensions/llama/client.ts:208] [E: packages/coding-agent/src/extensions/llama/client.ts:212] [E: packages/coding-agent/src/extensions/llama/client.ts:225] [E: packages/coding-agent/src/extensions/llama/client.ts:229]。load/download 等待路径同时消费 SSE progress 并轮询 catalog；abort 会停止等待和 watcher [E: packages/coding-agent/src/extensions/llama/client.ts:263] [E: packages/coding-agent/src/extensions/llama/client.ts:272] [E: packages/coding-agent/src/extensions/llama/client.ts:286] [E: packages/coding-agent/src/extensions/llama/client.ts:304] [E: packages/coding-agent/src/extensions/llama/client.ts:315] [E: packages/coding-agent/src/extensions/llama/client.ts:331]。
 
 当已有别的模型 loaded/sleeping 时，加载新模型前 UI 明确询问“全部卸载”“保留已加载模型”或取消；替换过程取消/失败时会尝试恢复先前模型 [E: packages/coding-agent/src/extensions/llama/index.ts:73] [E: packages/coding-agent/src/extensions/llama/index.ts:76] [E: packages/coding-agent/src/extensions/llama/index.ts:82] [E: packages/coding-agent/src/extensions/llama/index.ts:85] [E: packages/coding-agent/src/extensions/llama/index.ts:105] [E: packages/coding-agent/src/extensions/llama/index.ts:114]。卸载也需要显式确认 [E: packages/coding-agent/src/extensions/llama/index.ts:131]。
 
@@ -66,7 +66,7 @@ details 请求只从 `.gguf` siblings 汇总 quantization，排除 `mmproj`，�
 
 ## Gotcha
 
-- 这不是 `packages/ai/src/providers/all.ts` 的静态 built-in provider 之一；它由 coding-agent 内置 extension 在运行时注册。`/model` 现在含 `loaded`、`sleeping` 和(autoload 打开时) unloaded preset, 不只是 `loaded`。[E: packages/coding-agent/src/extensions/llama/provider.ts:28] [E: packages/coding-agent/src/extensions/llama/provider.ts:33]
+- 这不是 `packages/ai/src/providers/all.ts` 的静态 built-in provider 之一；它由 coding-agent 内置 extension 在运行时注册。`/model` 现在含 `loaded`、`sleeping` 和(autoload 打开时) unloaded preset, 不只是 `loaded`。[E: packages/coding-agent/src/extensions/llama/provider.ts:34] [E: packages/coding-agent/src/extensions/llama/provider.ts:39]
 - `/llama` 的“下载”把 repository/quantization 交给 router；Pi 不直接把 GGUF 写入本地 cache，也没有 silent delete 路径 [E: packages/coding-agent/src/extensions/llama/index.ts:168] [E: packages/coding-agent/src/extensions/llama/index.ts:175] [I]。
 - 普通 Hugging Face inference provider 与本节点不同：前者是 `pi-ai` 静态 provider，后者搜索 Hugging Face GGUF 并控制本地 llama.cpp router。[I]
 

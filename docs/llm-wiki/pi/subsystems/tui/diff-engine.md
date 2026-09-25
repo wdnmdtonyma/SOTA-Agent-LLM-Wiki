@@ -20,14 +20,14 @@ related:
   - subsys.tui.alternate-screen
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > Pi 现在有两套差分算法：main screen 面向可增长的 scrollback document，alternate screen 面向固定大小的 viewport frame。
 
 ## 共享前处理
 
-两个 renderer 都在 `TuiBase` 的调度下运行，并复用 overlay 合成、line normalization/reset 和 cursor marker 提取。[E: packages/tui/src/tui.ts:465] [E: packages/tui/src/tui.ts:1279] [E: packages/tui/src/tui.ts:1353] [E: packages/tui/src/tui.ts:1382] 但上一帧状态、full redraw 判定和 terminal write 已不在旧 `tui.ts` 的单一 `TUI.doRender()` 中。[I]
+两个 renderer 都在 `TuiBase` 的调度下运行，并复用 overlay 合成、line normalization/reset 和 cursor marker 提取。[E: packages/tui/src/tui.ts:466] [E: packages/tui/src/tui.ts:1283] [E: packages/tui/src/tui.ts:1357] [E: packages/tui/src/tui.ts:1386] 但上一帧状态、full redraw 判定和 terminal write 已不在旧 `tui.ts` 的单一 `TUI.doRender()` 中。[I]
 
 ## Main-screen diff
 
@@ -49,21 +49,21 @@ image-heavy full render 曾把整帧拼成一个 string,触发 V8 字符串长�
 
 `fullRender()` 与增量路径都 `new BoundedTerminalWriter((data) => this.terminal.write(data))`,不再 `buffer +=` 整帧 [E: packages/tui/src/tui-main-screen.ts:279] [E: packages/tui/src/tui-main-screen.ts:459] [E: packages/tui/src/tui-main-screen.ts:402]。debug dump 只记录 `[N chars written in bounded chunks]`,不再把整 buffer 序列化进日志 [E: packages/tui/src/tui-main-screen.ts:593]。
 
-`BoundedTerminalWriter` 是 `tui-main-screen.ts` 的 file-private class,不是 package export [E: packages/tui/src/tui-main-screen.ts:18]。alternate-screen 仍用单次 `this.terminal.write(buffer)`,viewport 高度有界,不走这套 chunking [E: packages/tui/src/tui-alt-screen.ts:1714]。
+`BoundedTerminalWriter` 是 `tui-main-screen.ts` 的 file-private class,不是 package export [E: packages/tui/src/tui-main-screen.ts:18]。alternate-screen 仍用单次 `this.terminal.write(buffer)`,viewport 高度有界,不走这套 chunking [E: packages/tui/src/tui-alt-screen.ts:1738]。
 
 ## Alternate-screen diff
 
-fullscreen 每帧先由 `renderLayoutFrame()` 生成固定高的 screen，随后合成 search highlight、jump-to-end、overlay、selection 与 flash，再抽取 cursor marker 并截断超宽普通行。[E: packages/tui/src/tui-alt-screen.ts:1657] [E: packages/tui/src/tui-alt-screen.ts:1662] [E: packages/tui/src/tui-alt-screen.ts:1664] [E: packages/tui/src/tui-alt-screen.ts:1669] [E: packages/tui/src/tui-alt-screen.ts:1671]
+fullscreen 每帧先由 `renderLayoutFrame()` 生成固定高的 screen，随后合成 search highlight、jump-to-end、overlay、selection 与 flash，再抽取 cursor marker 并截断超宽普通行。[E: packages/tui/src/tui-alt-screen.ts:1666] [E: packages/tui/src/tui-alt-screen.ts:1671] [E: packages/tui/src/tui-alt-screen.ts:1673] [E: packages/tui/src/tui-alt-screen.ts:1678] [E: packages/tui/src/tui-alt-screen.ts:1680]
 
-上一帧为空或 terminal 尺寸变化时 full redraw；若 changed row 涉及 image line，则按 image protocol 清 placement/屏幕并重建图片，否则只写内容不同的 screen rows。[E: packages/tui/src/tui-alt-screen.ts:1675] [E: packages/tui/src/tui-alt-screen.ts:1681] [E: packages/tui/src/tui-alt-screen.ts:1689] [E: packages/tui/src/tui-alt-screen.ts:1696] [E: packages/tui/src/tui-alt-screen.ts:1702] [E: packages/tui/src/tui-alt-screen.ts:1703]
+上一帧为空或 terminal 尺寸变化时 full redraw；若 changed row 涉及 image line，则按 image protocol 清 placement/屏幕并重建图片，否则只写内容不同的 screen rows。[E: packages/tui/src/tui-alt-screen.ts:1684] [E: packages/tui/src/tui-alt-screen.ts:1690] [E: packages/tui/src/tui-alt-screen.ts:1698] [E: packages/tui/src/tui-alt-screen.ts:1705] [E: packages/tui/src/tui-alt-screen.ts:1726] [E: packages/tui/src/tui-alt-screen.ts:1727]
 
-不同于 main-screen 的相对 cursor/scrollback 计算，alternate-screen 直接用绝对 `row;col H` 定位每个 changed row，并把整批更新包在 synchronized output 中。[E: packages/tui/src/tui-alt-screen.ts:1688] [E: packages/tui/src/tui-alt-screen.ts:1704] [E: packages/tui/src/tui-alt-screen.ts:1713]
+不同于 main-screen 的相对 cursor/scrollback 计算，alternate-screen 直接用绝对 `row;col H` 定位每个 changed row，并把整批更新包在 synchronized output 中。[E: packages/tui/src/tui-alt-screen.ts:1697] [E: packages/tui/src/tui-alt-screen.ts:1704] [E: packages/tui/src/tui-alt-screen.ts:1737]
 
 ## Gotchas
 
-- “差分引擎在 `tui.ts` 的 `TUI` class 中”已失效；`tui.ts` 只保留共享前处理与调度。[E: packages/tui/src/tui.ts:508]
-- main-screen 的超宽行是 hard failure；alternate-screen 会在 frame 边界做 column slice，两者不是同一错误策略。[E: packages/tui/src/tui-main-screen.ts:517] [E: packages/tui/src/tui-alt-screen.ts:1671]
-- fullscreen 图片变化可能扩大为 placement 级重画，所以“只改一行就只写一行”对 image frame 不成立。[E: packages/tui/src/tui-alt-screen.ts:1677] [E: packages/tui/src/tui-alt-screen.ts:1696]
+- “差分引擎在 `tui.ts` 的 `TUI` class 中”已失效；`tui.ts` 只保留共享前处理与调度。[E: packages/tui/src/tui.ts:510]
+- main-screen 的超宽行是 hard failure；alternate-screen 会在 frame 边界做 column slice，两者不是同一错误策略。[E: packages/tui/src/tui-main-screen.ts:517] [E: packages/tui/src/tui-alt-screen.ts:1680]
+- fullscreen 图片变化可能扩大为 placement 级重画，所以“只改一行就只写一行”对 image frame 不成立。[E: packages/tui/src/tui-alt-screen.ts:1686] [E: packages/tui/src/tui-alt-screen.ts:1705]
 - main-screen chunking 按 UTF-16 字符数而不是字节数切 1 MiB;Kitty payload 本身仍由 `encodeKitty()` 按 4096 字符分块,那是另一层。[E: packages/tui/src/tui-main-screen.ts:9] [I]
 - 旧名 `PI_DEBUG_REDRAW` 与 `pi-debug.log` / 无前缀 crash log 已失效；现行是 `PI_TUI_DEBUG_REDRAW` 与 `pi-tui-` 前缀。[E: packages/tui/src/tui-main-screen.ts:321] [E: packages/tui/src/tui-main-screen.ts:519]
 

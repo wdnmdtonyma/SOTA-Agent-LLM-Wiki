@@ -34,7 +34,7 @@ related:
   - subsys.ai.auth-resolution
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `subsys.ai.oauth-flow` 描述当前 `pi-ai` OAuth 实现入口：provider 按需加载 flow，standalone Bun 注入静态 flow，公共 `./oauth` subpath 仅保留 coding-agent extension 的类型兼容面。
@@ -50,11 +50,11 @@ updated: 71dca871bc
 
 ## 搬家后的入口边界
 
-旧 `packages/ai/src/utils/oauth/index.ts` 的全局 registry、`getOAuthProvider()` 与 deprecated token wrapper 已删除；当前 OAuth 实现没有新的同形 `index.ts`。内部实现入口是 `packages/ai/src/auth/oauth/load.ts`：它定义 Anthropic、OpenAI Codex、GitHub Copilot、OpenRouter、Kimi Coding、xAI 与 Radius 的 lazy loader，并统一返回 `OAuthAuth` contract [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:21] [E: packages/ai/src/auth/oauth/load.ts:33] [E: packages/ai/src/auth/oauth/load.ts:67]。
+旧 `packages/ai/src/utils/oauth/index.ts` 的全局 registry、`getOAuthProvider()` 与 deprecated token wrapper 已删除；当前 OAuth 实现没有新的同形 `index.ts`。内部实现入口是 `packages/ai/src/auth/oauth/load.ts`：它定义 Anthropic、OpenAI Codex、GitHub Copilot、OpenRouter、Kimi Coding、xAI 与 Radius 的 lazy loader，并统一返回 `OAuthAuth` contract [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:22] [E: packages/ai/src/auth/oauth/load.ts:34] [E: packages/ai/src/auth/oauth/load.ts:73]。
 
 公共 package subpath `./oauth` 仍存在于 exports map [E: packages/ai/package.json:34]，但对应 `src/oauth.ts` 只 `export type` coding-agent extension compatibility declarations；它不再重导出 OAuth flow 实现、registry 或 helpers [E: packages/ai/src/oauth.ts:2] [E: packages/ai/src/oauth.ts:10]。因此“被删 `index.ts` 的新入口”要分成两层理解：应用内部 flow 加载走 `auth/oauth/load.ts`，外部 `@earendil-works/pi-ai/oauth` 只是 type-only compatibility entry。
 
-provider factory 自己声明 OAuth 能力并绑定 loader。除 Anthropic/OpenAI Codex 外，Kimi 与 OpenRouter 现在也同时提供 API-key 与 lazy OAuth method。[E: packages/ai/src/providers/kimi-coding.ts:12] [E: packages/ai/src/providers/kimi-coding.ts:14] [E: packages/ai/src/providers/openrouter.ts:13] [E: packages/ai/src/providers/openrouter.ts:15]
+provider factory 自己声明 OAuth 能力并绑定 loader。除 Anthropic/OpenAI Codex 外，Kimi 与 OpenRouter 现在也同时提供 API-key 与 lazy OAuth method。[E: packages/ai/src/providers/kimi-coding.ts:12] [E: packages/ai/src/providers/kimi-coding.ts:14] [E: packages/ai/src/providers/openrouter.ts:15] [E: packages/ai/src/providers/openrouter.ts:17]
 
 ## 新增 Kimi 与 OpenRouter flow
 
@@ -76,9 +76,9 @@ GET `${baseUrl}/models` 的 429 走 `fetchWithRateLimitRetry`（login 传 `maxRe
 
 普通运行时通过 variable specifier 调用 dynamic `import()`；loader 在源 `.ts` 与构建后 `.js` 之间重写后缀，使 bundler 不必静态追入依赖 `node:http` / `node:crypto` 的 flow 实现 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/auth/oauth/load.ts:10] [E: packages/ai/src/auth/oauth/load.ts:11]。
 
-每个 `load*OAuth()` 先检查 module-local `bundledLoaders`：存在时调用已注册函数，否则动态 import 对应实现并取出 `OAuthAuth` object [E: packages/ai/src/auth/oauth/load.ts:24] [E: packages/ai/src/auth/oauth/load.ts:27] [E: packages/ai/src/auth/oauth/load.ts:32] [E: packages/ai/src/auth/oauth/load.ts:31] [E: packages/ai/src/auth/oauth/load.ts:37] [E: packages/ai/src/auth/oauth/load.ts:38]。
+每个 `load*OAuth()` 先检查 module-local `bundledLoaders`：存在时调用已注册函数，否则动态 import 对应实现并取出 `OAuthAuth` object [E: packages/ai/src/auth/oauth/load.ts:25] [E: packages/ai/src/auth/oauth/load.ts:28] [E: packages/ai/src/auth/oauth/load.ts:33] [E: packages/ai/src/auth/oauth/load.ts:32] [E: packages/ai/src/auth/oauth/load.ts:38] [E: packages/ai/src/auth/oauth/load.ts:39]。
 
-standalone Bun 不能依赖这些 flow 在运行时仍是可发现 chunk，所以 `registerBunOAuthFlows()` 静态导入七组实现并调用 `registerBundledOAuthFlowLoaders()`；Radius 以 factory 接受 `{name, gateway}`，其余 loader 返回固定 `OAuthAuth` object [E: packages/ai/src/bun-oauth.ts:1] [E: packages/ai/src/bun-oauth.ts:8] [E: packages/ai/src/bun-oauth.ts:11] [E: packages/ai/src/bun-oauth.ts:19]。package exports 为该 bundle bridge 提供独立 `./bun-oauth` subpath [E: packages/ai/package.json:42]。
+standalone Bun 不能依赖这些 flow 在运行时仍是可发现 chunk，所以 `registerBunOAuthFlows()` 静态导入七组实现并调用 `registerBundledOAuthFlowLoaders()`；Radius 以 factory 接受 `{name, gateway}`，其余 loader 返回固定 `OAuthAuth` object [E: packages/ai/src/bun-oauth.ts:1] [E: packages/ai/src/bun-oauth.ts:9] [E: packages/ai/src/bun-oauth.ts:12] [E: packages/ai/src/bun-oauth.ts:21]。package exports 为该 bundle bridge 提供独立 `./bun-oauth` subpath [E: packages/ai/package.json:42]。
 
 ## Device-code polling
 
@@ -97,7 +97,7 @@ deadline 由 `expiresInSeconds` 计算，未提供时为 infinity；初始 inter
 ## 设计动机与 gotcha
 
 - flow loader 隔离 Node-only implementation，provider factory 只持有 lazy `OAuthAuth`；这让 core/provider import 不必立刻加载 callback server 与 PKCE 依赖 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/providers/anthropic.ts:45] [I]。
-- `registerBundledOAuthFlowLoaders()` 是 process/module 级 override，不是 per-provider registry；loader shape 明确包含 Anthropic、OpenAI Codex、GitHub Copilot、OpenRouter、Kimi Coding、xAI 与 Radius 七类，注册后都优先使用 bundled functions [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:15] [E: packages/ai/src/auth/oauth/load.ts:16] [E: packages/ai/src/auth/oauth/load.ts:17] [E: packages/ai/src/auth/oauth/load.ts:18] [E: packages/ai/src/auth/oauth/load.ts:19] [E: packages/ai/src/auth/oauth/load.ts:20] [E: packages/ai/src/auth/oauth/load.ts:21] [E: packages/ai/src/auth/oauth/load.ts:27] [E: packages/ai/src/auth/oauth/load.ts:28]。
+- `registerBundledOAuthFlowLoaders()` 是 process/module 级 override，不是 per-provider registry；loader shape 明确包含 Anthropic、OpenAI Codex、GitHub Copilot、OpenRouter、Kimi Coding、xAI 与 Radius 七类，注册后都优先使用 bundled functions [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:15] [E: packages/ai/src/auth/oauth/load.ts:16] [E: packages/ai/src/auth/oauth/load.ts:17] [E: packages/ai/src/auth/oauth/load.ts:18] [E: packages/ai/src/auth/oauth/load.ts:19] [E: packages/ai/src/auth/oauth/load.ts:21] [E: packages/ai/src/auth/oauth/load.ts:22] [E: packages/ai/src/auth/oauth/load.ts:28] [E: packages/ai/src/auth/oauth/load.ts:29]。
 - `@earendil-works/pi-ai/oauth` 名称容易让人误以为仍包含实现；目标 commit 中它只保留 extension OAuth types [E: packages/ai/src/oauth.ts:2]。
 - `waitBeforeFirstPoll` 与 server-supplied `slow_down.intervalSeconds` 都是本轮新增的 cadence 控制，旧 wiki 的“总是先 poll、slow_down 固定 +5 秒”描述已不成立 [E: packages/ai/src/auth/oauth/device-code.ts:21] [E: packages/ai/src/auth/oauth/device-code.ts:85]。
 

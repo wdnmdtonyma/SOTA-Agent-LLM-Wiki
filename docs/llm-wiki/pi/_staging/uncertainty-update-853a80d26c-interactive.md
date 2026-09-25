@@ -10,7 +10,7 @@ status: draft
 ## [U] 官方 sessions.md 的 `/share` / `/export` 漂移
 
 - 节点: `surface.sessions.management`
-- `packages/coding-agent/docs/sessions.md` 仍写 `/export [file]` = Export session to HTML、`/share` = Upload as private GitHub gist [E: packages/coding-agent/docs/sessions.md:34] [E: packages/coding-agent/docs/sessions.md:35]。
+- `packages/coding-agent/docs/sessions.md` 仍写 `/export [file]` = Export session to HTML、`/share` = Upload as private GitHub gist [E: packages/coding-agent/docs/sessions.md:34] 。
 - 代码:`exportSessionForShare()` 先写带 `customType: "pi.share"` 的 JSONL,`shareSession()` 先 Radius 再 gist;`tryShareViaRadius()` 一旦开始上传失败也不回退 gist;`/export` 以 `.jsonl` 后缀分流 JSONL/HTML。
 - `docs/usage.md` 对 `/thinking` Ctrl+S 更准,但对 `/share` 仍写 gist-only。本批以代码为 ground truth,官方页不当 `[E]` 行为源。
 

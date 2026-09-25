@@ -5,44 +5,44 @@ kind: subsystem
 tier: T2
 pkg: agent
 source:
-  - packages/agent/src/harness/agent-harness.ts
-  - packages/agent/src/harness/runtime/harness.ts
-  - packages/agent/src/harness/runtime/lane.ts
-  - packages/agent/src/harness/runtime/drive.ts
-  - packages/agent/src/harness/runtime/restore.ts
-  - packages/agent/src/harness/runtime/reducer.ts
-  - packages/agent/src/harness/result.ts
-  - packages/agent/src/harness/types.ts
-  - packages/agent/src/index.ts
-  - packages/agent/package.json
-  - packages/agent/src/agent.ts
-  - packages/agent/src/types.ts
-  - packages/agent/src/agent-loop.ts
-  - packages/coding-agent/src/core/agent-session.ts
+ - packages/agent/src/harness/agent-harness.ts
+ - packages/agent/src/harness/runtime/harness.ts
+ - packages/agent/src/harness/runtime/lane.ts
+ - packages/agent/src/harness/runtime/drive.ts
+ - packages/agent/src/harness/runtime/restore.ts
+ - packages/agent/src/harness/runtime/reducer.ts
+ - packages/agent/src/harness/result.ts
+ - packages/agent/src/harness/types.ts
+ - packages/agent/src/index.ts
+ - packages/agent/package.json
+ - packages/agent/src/agent.ts
+ - packages/agent/src/types.ts
+ - packages/agent/src/agent-loop.ts
+ - packages/coding-agent/src/core/agent-session.ts
 symbols:
-  - AgentHarness
-  - AgentLane
-  - AgentHarness.create
-  - createAgentHarness
-  - Harness
-  - Lane
-  - reduceLaneSnapshot
-  - HarnessClosed
-  - HarnessFault
-  - SliceNotImplemented
-  - TaggedError
-  - Agent.reset
+ - AgentHarness
+ - AgentLane
+ - AgentHarness.create
+ - createAgentHarness
+ - Harness
+ - Lane
+ - reduceLaneSnapshot
+ - HarnessClosed
+ - HarnessFault
+ - SliceNotImplemented
+ - TaggedError
+ - Agent.reset
 related:
-  - spine.agent-loop
-  - subsys.agent-core.turn-control
-  - subsys.agent-core.hooks
-  - subsys.agent-core.harness-events
-  - subsys.agent-core.prompt-templates
-  - ref.agent.agent-events
-  - ref.agent.error-codes
+ - spine.agent-loop
+ - subsys.agent-core.turn-control
+ - subsys.agent-core.hooks
+ - subsys.agent-core.harness-events
+ - subsys.agent-core.prompt-templates
+ - ref.agent.agent-events
+ - ref.agent.error-codes
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `subsys.agent-core.agent-harness-lifecycle` 说明 `AgentHarness` 仍从 `harness/agent-harness.ts` 以 `{ create }` 导出；运行时实现是 `harness/runtime/harness.ts` 的 `Harness` 类，加上 `runtime/lane.ts` 的 `Lane` 与 `runtime/drive/*` 的 durable procedure。旧顶层 `harness/reducer.ts` 已迁到 `runtime/reducer.ts`（`reduceLaneSnapshot`）。
@@ -74,7 +74,7 @@ updated: 71dca871bc
 
 `packages/agent/src/index.ts` 对 `./harness/agent-harness.ts` 做 `export *`，因此 `AgentHarness`、`AgentLane` 与 TaggedError / Result 别名都从包根出来。[E: packages/agent/src/index.ts:43]
 
-`packages/agent/package.json` 的 `exports` 含 `"."`、`"./node"`、`"./harness/runtime/reducer"` 等，没有 experimental subpath。[E: packages/agent/package.json:8] [E: packages/agent/package.json:25]
+`packages/agent/package.json` 的 `exports` 含 `"."`、`"./node"`、`"./harness/runtime/reducer"` 等，没有 experimental subpath。[E: packages/agent/package.json:8] [E: packages/agent/package.json:29]
 
 这不是 `export default AgentHarness`。源码里 `AgentHarness` 是满足 `AgentHarnessConstructor` 的对象字面量：`{ create: createAgentHarness }`。[E: packages/agent/src/harness/agent-harness.ts:614] [E: packages/agent/src/harness/agent-harness.ts:622] 测试用 `created.harness instanceof Harness` 锁 runtime 类。[E: packages/agent/test/harness/runtime/harness.test.ts:36] [E: packages/agent/test/harness/runtime/harness.test.ts:37]
 
@@ -121,29 +121,29 @@ updated: 71dca871bc
 
 ## `Agent.reset()` 拒绝 active run
 
-`AgentHarness` 没有 `reset()`。拒绝 active run 的是低层 `Agent.reset()`。[E: packages/agent/src/agent.ts:333]
+`AgentHarness` 没有 `reset()`。拒绝 active run 的是低层 `Agent.reset()`。[E: packages/agent/src/agent.ts:355]
 
-若 `this.activeRun` 存在，`reset()` throw `"Agent is already processing. Wait for completion before resetting."`，不改 messages / streaming / queues。[E: packages/agent/src/agent.ts:334] [E: packages/agent/src/agent.ts:335] idle 时才清空 transcript、runtime flags 与两类 queue。[E: packages/agent/src/agent.ts:338] [E: packages/agent/src/agent.ts:343] 测试断言 streaming 期间 reset 抛错且 user message 仍在。[E: packages/agent/test/agent.test.ts:530] [E: packages/agent/test/agent.test.ts:532]
+若 `this.activeRun` 存在，`reset()` throw `"Agent is already processing. Wait for completion before resetting."`，不改 messages / streaming / queues。[E: packages/agent/src/agent.ts:356] [E: packages/agent/src/agent.ts:357] idle 时才清空 transcript、runtime flags 与两类 queue。[E: packages/agent/src/agent.ts:341] [E: packages/agent/src/agent.ts:366] 测试断言 streaming 期间 reset 抛错且 user message 仍在。[E: packages/agent/test/agent.test.ts:712] [E: packages/agent/test/agent.test.ts:714]
 
-`Agent.waitForIdle()` 等的是 `activeRun.promise`，该 promise 在 `agent_end` listeners settle 之后由 `finishRun()` resolve。[E: packages/agent/src/agent.ts:328] [E: packages/agent/src/agent.ts:529]
+`Agent.waitForIdle()` 等的是 `activeRun.promise`，该 promise 在 `agent_end` listeners settle 之后由 `finishRun()` resolve。[E: packages/agent/src/agent.ts:350] [E: packages/agent/src/agent.ts:550]
 
-`Agent.prepareNextTurn` / `prepareNextTurnWithContext` 只在 `shouldStopAfterTurn` 与 queued-message 检查决定还会再开一轮 assistant turn 之后运行；终局 turn 不再调用。`AgentLane.prompt` 走 harness drive，不再经过低层 `Agent.prompt`。[E: packages/agent/src/agent.ts:200] [E: packages/agent/src/agent.ts:463] [E: packages/agent/src/harness/runtime/lane.ts:1133]
+`Agent.prepareNextTurn` / `prepareNextTurnWithContext` 只在 `shouldStopAfterTurn` 与 queued-message 检查决定还会再开一轮 assistant turn 之后运行；终局 turn 不再调用。`AgentLane.prompt` 走 harness drive，不再经过低层 `Agent.prompt`。[E: packages/agent/src/agent.ts:214] [E: packages/agent/src/agent.ts:484] [E: packages/agent/src/harness/runtime/lane.ts:1133]
 
 ## Blocked tool terminate
 
-低层 `BeforeToolCallResult.terminate` 仍属于 `Agent` / `runLoop`：blocked call 把 hint 写进 error tool result 后，只有当前 batch 每个 finalized result 都为 true 才会 early-stop。[E: packages/agent/src/types.ts:61] [E: packages/agent/src/types.ts:68] [E: packages/agent/src/agent-loop.ts:589] [E: packages/agent/src/agent-loop.ts:643]
+低层 `BeforeToolCallResult.terminate` 仍属于 `Agent` / `runLoop`：blocked call 把 hint 写进 error tool result 后，只有当前 batch 每个 finalized result 都为 true 才会 early-stop。[E: packages/agent/src/types.ts:66] [E: packages/agent/src/types.ts:73] [E: packages/agent/src/agent-loop.ts:685] [E: packages/agent/src/agent-loop.ts:739]
 
 harness 路径用 `HookMap.before_tool`：result 是 `{ args?; block?: { reason; terminate? } }`。`HookRegistry.beforeTool` 聚合 handlers；`applyBeforeToolDecision` 在 `decision.block` 时用 `block.reason` 与 `block.terminate === true` 生成 immediate error。[E: packages/agent/src/harness/agent-harness.ts:464] [E: packages/agent/src/harness/hooks.ts:161] [E: packages/agent/src/harness/execution/tools.ts:105] [E: packages/agent/src/harness/runtime/drive/tools.ts:452]
 
-batch 完成后 `tool-placement` 用 `completedCalls.every(call => call.status === "completed" && call.terminate)` 决定 checkpoint 是 `may_finish` 还是 `need_assistant`。[E: packages/agent/src/harness/runtime/drive/tool-placement.ts:221]
+batch 完成后 `tool-placement` 用 `completedCalls.every(call => call.status === "completed" && call.terminate)` 决定 checkpoint 是 `may_finish` 还是 `need_assistant`。[E: packages/agent/src/harness/runtime/drive/tool-placement.ts:198]
 
 ## `expandPromptTemplates` 跨包边界
 
 `AgentLane.promptFromTemplate()` 已实现：它 `accept` 一条 `prompt_template` request，再 `drive`。没有 coding-agent 那种 expand 开关。[E: packages/agent/src/harness/runtime/lane.ts:1154] [E: packages/agent/src/harness/runtime/lane.ts:1155]
 
-`expandPromptTemplates` 是 `coding-agent` 的 `PromptOptions` 字段：`AgentSession.prompt()` 默认 `true`，为真时先拦截 `/` 扩展命令，再展开 skill command 与 prompt template。[E: packages/coding-agent/src/core/agent-session.ts:244] [E: packages/coding-agent/src/core/agent-session.ts:1176] [E: packages/coding-agent/src/core/agent-session.ts:1183] [E: packages/coding-agent/src/core/agent-session.ts:1213]
+`expandPromptTemplates` 是 `coding-agent` 的 `PromptOptions` 字段：`AgentSession.prompt()` 默认 `true`，为真时先拦截 `/` 扩展命令，再展开 skill command 与 prompt template。[E: packages/coding-agent/src/core/agent-session.ts:269] [E: packages/coding-agent/src/core/agent-session.ts:1614] [E: packages/coding-agent/src/core/agent-session.ts:1618] [E: packages/coding-agent/src/core/agent-session.ts:1648]
 
-`AgentSession.sendUserMessage()` 把同一字段默认成 `false`，再转调 `prompt()`。[E: packages/coding-agent/src/core/agent-session.ts:1573] [E: packages/coding-agent/src/core/agent-session.ts:1596] 这不是 `AgentHarness` API。
+`AgentSession.sendUserMessage()` 把同一字段默认成 `false`，再转调 `prompt()`。[E: packages/coding-agent/src/core/agent-session.ts:2008] [E: packages/coding-agent/src/core/agent-session.ts:2031] 这不是 `AgentHarness` API。
 
 ## 设计动机与权衡
 
@@ -163,7 +163,7 @@ batch 完成后 `tool-placement` 用 `completedCalls.every(call => call.status =
 
 ## 跨包边界
 
-`AgentHarness` 属于 `pi-agent-core`。`Agent.reset()` 与 `runLoop` 的 `BeforeToolCallResult.terminate` 属于同一包的低层 `Agent`。`expandPromptTemplates` 属于 `coding-agent` 的 `AgentSession`。[E: packages/agent/src/index.ts:43] [E: packages/agent/src/agent.ts:333] [E: packages/coding-agent/src/core/agent-session.ts:244]
+`AgentHarness` 属于 `pi-agent-core`。`Agent.reset()` 与 `runLoop` 的 `BeforeToolCallResult.terminate` 属于同一包的低层 `Agent`。`expandPromptTemplates` 属于 `coding-agent` 的 `AgentSession`。[E: packages/agent/src/index.ts:43] [E: packages/agent/src/agent.ts:355] [E: packages/coding-agent/src/core/agent-session.ts:269]
 
 ## Sources
 

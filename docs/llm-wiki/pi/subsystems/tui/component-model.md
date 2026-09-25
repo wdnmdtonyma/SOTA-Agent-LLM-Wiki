@@ -20,7 +20,7 @@ related:
   - ref.tui.component-types
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > Component 仍以 `render(width): string[]` 为最小契约；本轮新增的 stack/scroll layout 是 fullscreen renderer 可识别的增量协议，不取代 line-oriented component model。
@@ -29,7 +29,7 @@ updated: 71dca871bc
 
 `Component` 必须实现 `render(width)` 与 `invalidate()`，可以选择实现 `handleInput()` 和 `wantsKeyRelease`。[E: packages/tui/src/tui.ts:111] [E: packages/tui/src/tui.ts:117] [E: packages/tui/src/tui.ts:120] [E: packages/tui/src/tui.ts:129] [E: packages/tui/src/tui.ts:135]
 
-`Focusable` 是 structural interface；focus 切换时 runtime 写入组件的 `focused` flag，使 Input/Editor 决定是否输出 `CURSOR_MARKER`。[E: packages/tui/src/tui.ts:152] [E: packages/tui/src/tui.ts:158] [E: packages/tui/src/tui.ts:605] [E: packages/tui/src/tui.ts:611]
+`Focusable` 是 structural interface；focus 切换时 runtime 写入组件的 `focused` flag，使 Input/Editor 决定是否输出 `CURSOR_MARKER`。[E: packages/tui/src/tui.ts:152] [E: packages/tui/src/tui.ts:158] [E: packages/tui/src/tui.ts:607] [E: packages/tui/src/tui.ts:613]
 
 `Container` 维护 children，普通 `render(width)` 仍按 child 顺序纵向拼接所有 lines。[E: packages/tui/src/tui.ts:319] [E: packages/tui/src/tui.ts:323] [E: packages/tui/src/tui.ts:366] [E: packages/tui/src/tui.ts:370] [E: packages/tui/src/tui.ts:377] 因此 `Container` 本身不是 flex/grid layout engine。[I]
 
@@ -37,7 +37,7 @@ updated: 71dca871bc
 
 新内部协议以 `LAYOUT_NODE` symbol 让 component 暴露 `vstack`、`hstack` 或 `scroll` node；`getLayoutNode()` 在 viewport layout 时做运行时探测。[E: packages/tui/src/layout-node.ts:3] [E: packages/tui/src/layout-node.ts:20] [E: packages/tui/src/layout-node.ts:36] [E: packages/tui/src/layout-node.ts:42] [E: packages/tui/src/layout-node.ts:48]
 
-package root 新公开三个 concrete components：`HStack`、`ScrollView`、`VStack`，并导出相应 options/types。[E: packages/tui/src/index.ts:16] [E: packages/tui/src/index.ts:22] [E: packages/tui/src/index.ts:39] 抽象 `Stack` 与 `LAYOUT_NODE` 协议本身没有从 package root 导出，不能把它们写成稳定的用户 import surface。[E: packages/tui/src/components/stack.ts:32] [I]
+package root 新公开三个 concrete components：`HStack`、`ScrollView`、`VStack`，并导出相应 options/types。[E: packages/tui/src/index.ts:40] [E: packages/tui/src/index.ts:46] [E: packages/tui/src/index.ts:63] 抽象 `Stack` 与 `LAYOUT_NODE` 协议本身没有从 package root 导出，不能把它们写成稳定的用户 import surface。[E: packages/tui/src/components/stack.ts:32] [I]
 
 `StackEntryOptions` 支持 `basis/grow/shrink/minSize/maxSize/visible`，stack 自己同步维护 component children 与 layout entries。[E: packages/tui/src/components/stack.ts:4] [E: packages/tui/src/components/stack.ts:13] [E: packages/tui/src/components/stack.ts:48] [E: packages/tui/src/components/stack.ts:61]
 
@@ -49,7 +49,7 @@ fullscreen renderer 则读取 layout node，执行 basis/grow/shrink、clip、sc
 
 ## Gotchas
 
-- 依赖 viewport height 的 `visible()` predicate 在 direct render fallback 中拿到的不是实际 terminal height；需要固定 viewport 语义时应通过 `TuiAltScreen.setLayoutRoot()` 渲染。[E: packages/tui/src/components/v-stack.ts:11] [E: packages/tui/src/tui-alt-screen.ts:305]
+- 依赖 viewport height 的 `visible()` predicate 在 direct render fallback 中拿到的不是实际 terminal height；需要固定 viewport 语义时应通过 `TuiAltScreen.setLayoutRoot()` 渲染。[E: packages/tui/src/components/v-stack.ts:11] [E: packages/tui/src/tui-alt-screen.ts:307]
 - `ScrollView` 强制只有一个 child；构造后 `addChild/removeChild/clear` 都会抛错。[E: packages/tui/src/components/scroll-view.ts:203] [E: packages/tui/src/components/scroll-view.ts:207] [E: packages/tui/src/components/scroll-view.ts:211]
 - 公开 concrete component catalog 从 12 增至 15；内部 `Stack` 与 `AltScreenFlashContainer` 不应计入该口径。[I]
 

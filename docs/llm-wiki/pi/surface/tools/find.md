@@ -30,7 +30,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `find` 是 pi-coding-agent 暴露给模型的文件路径搜索工具:模型给 glob pattern 和可选搜索目录,工具返回相对搜索目录的匹配路径列表。
@@ -66,7 +66,7 @@ updated: 71dca871bc
 | `path` | `string` | no | `"."` | 运行时把 `path` 交给 `resolveToCwd(searchDir || ".", ctx?.cwd || cwd)` 解析,`resolveToCwd` 再调用 `resolvePath` 并开启 Unicode space normalization 和 `@` prefix stripping [E: packages/coding-agent/src/core/tools/find.ts:27] [E: packages/coding-agent/src/core/tools/find.ts:111] [E: packages/coding-agent/src/core/tools/path-utils.ts:48] [E: packages/coding-agent/src/core/tools/path-utils.ts:49] | 搜索目录,description 写的是默认当前目录;`ctx.cwd` 优先于工厂 `cwd` [E: packages/coding-agent/src/core/tools/find.ts:30]. |
 | `limit` | `number` | no | `1000` | TypeBox 只声明 number,未声明 minimum/maximum/integer [E: packages/coding-agent/src/core/tools/find.ts:28] | 最大结果数;运行时用 `limit ?? DEFAULT_LIMIT`,其中 `DEFAULT_LIMIT = 1000` [E: packages/coding-agent/src/core/tools/find.ts:41] [E: packages/coding-agent/src/core/tools/find.ts:112]. |
 
-`path` 会通过 `resolveToCwd(searchDir || ".", ctx?.cwd || cwd)` 变成搜索根;`resolveToCwd` 调用 `resolvePath` 并启用 Unicode space normalization 和 `@` prefix stripping [E: packages/coding-agent/src/core/tools/find.ts:111] [E: packages/coding-agent/src/core/tools/path-utils.ts:48] [E: packages/coding-agent/src/core/tools/path-utils.ts:49] [E: packages/coding-agent/test/tools.test.ts:978].
+`path` 会通过 `resolveToCwd(searchDir || ".", ctx?.cwd || cwd)` 变成搜索根;`resolveToCwd` 调用 `resolvePath` 并启用 Unicode space normalization 和 `@` prefix stripping [E: packages/coding-agent/src/core/tools/find.ts:111] [E: packages/coding-agent/src/core/tools/path-utils.ts:48] [E: packages/coding-agent/src/core/tools/path-utils.ts:49] [E: packages/coding-agent/test/tools.test.ts:1024].
 
 ## 4 输出 & 截断
 
@@ -80,9 +80,9 @@ TUI 渲染层默认只展示前 20 行;展开状态展示全部已返回文本�
 
 ## 5 执行模式
 
-`find` 的 returned `ToolDefinition` 没有显式 `executionMode` 属性,因此 `wrapToolDefinition` 复制到 `AgentTool.executionMode` 时得到的是省略值 [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:16] [E: packages/coding-agent/src/core/extensions/types.ts:479] [I].
+`find` 的 returned `ToolDefinition` 没有显式 `executionMode` 属性,因此 `wrapToolDefinition` 复制到 `AgentTool.executionMode` 时得到的是省略值 [E: packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:16] [E: packages/coding-agent/src/core/extensions/types.ts:489] [I].
 
-agent-core 的 `Agent` 构造器把缺省 `toolExecution` 设为 `"parallel"` [E: packages/agent/src/agent.ts:237],而 `executeToolCalls` 只有在全局配置为 sequential 或批次中任一目标工具 `executionMode === "sequential"` 时才走 sequential 分支 [E: packages/agent/src/agent-loop.ts:418] [E: packages/agent/src/agent-loop.ts:420] [E: packages/agent/src/agent-loop.ts:421]. 因此,在默认 agent 配置且同批次没有 sequential 工具时,`find` 可以和其他允许并行的工具并发执行 [I].
+agent-core 的 `Agent` 构造器把缺省 `toolExecution` 设为 `"parallel"` [E: packages/agent/src/agent.ts:253],而 `executeToolCalls` 只有在全局配置为 sequential 或批次中任一目标工具 `executionMode === "sequential"` 时才走 sequential 分支 [E: packages/agent/src/agent-loop.ts:514] [E: packages/agent/src/agent-loop.ts:516] [E: packages/agent/src/agent-loop.ts:517]. 因此,在默认 agent 配置且同批次没有 sequential 工具时,`find` 可以和其他允许并行的工具并发执行 [I].
 
 ## 6 注册与装配
 
@@ -92,9 +92,9 @@ agent-core 的 `Agent` 构造器把缺省 `toolExecution` 设为 `"parallel"` [E
 
 `find` 是 read-only preset 的一员:`createReadOnlyToolDefinitions` 返回 `read`、`grep`、`find`、`ls`,而 `createReadOnlyTools` 返回对应 runtime tools [E: packages/coding-agent/src/core/tools/index.ts:173] [E: packages/coding-agent/src/core/tools/index.ts:175] [E: packages/coding-agent/src/core/tools/index.ts:176] [E: packages/coding-agent/src/core/tools/index.ts:177] [E: packages/coding-agent/src/core/tools/index.ts:178] [E: packages/coding-agent/src/core/tools/index.ts:204] [E: packages/coding-agent/src/core/tools/index.ts:206] [E: packages/coding-agent/src/core/tools/index.ts:207] [E: packages/coding-agent/src/core/tools/index.ts:208] [E: packages/coding-agent/src/core/tools/index.ts:209]. `createAllToolDefinitions` 也把 `find` 放进八个内置 definition 的 record [E: packages/coding-agent/src/core/tools/index.ts:182] [E: packages/coding-agent/src/core/tools/index.ts:186] [E: packages/coding-agent/src/core/tools/index.ts:190].
 
-`AgentSession._buildRuntime` 在没有 `baseToolsOverride` 时调用 `createAllToolDefinitions(this._cwd, { read: ..., bash: ... })`;这会创建包含 `find` 的内置 definition map,但只给 `read` 和 `bash` 传入 session settings [E: packages/coding-agent/src/core/agent-session.ts:2802] [E: packages/coding-agent/src/core/agent-session.ts:2802] [E: packages/coding-agent/src/core/agent-session.ts:2803] [E: packages/coding-agent/src/core/agent-session.ts:2804]. `_refreshToolRegistry` 随后把 base definitions、extension tools、SDK custom tools 合并,应用 allow/deny 过滤,通过 `wrapRegisteredTools` 适配为 `AgentTool`,最后调用 `setActiveToolsByName` [E: packages/coding-agent/src/core/agent-session.ts:2694] [E: packages/coding-agent/src/core/agent-session.ts:2709] [E: packages/coding-agent/src/core/agent-session.ts:2746] [E: packages/coding-agent/src/core/agent-session.ts:2756] [E: packages/coding-agent/src/core/agent-session.ts:2784].
+`AgentSession._buildRuntime` 在没有 `baseToolsOverride` 时调用 `createAllToolDefinitions(this._cwd, { read: ..., bash: ... })`;这会创建包含 `find` 的内置 definition map,但只给 `read` 和 `bash` 传入 session settings [E: packages/coding-agent/src/core/agent-session.ts:3252] [E: packages/coding-agent/src/core/agent-session.ts:3252] [E: packages/coding-agent/src/core/agent-session.ts:3253] [E: packages/coding-agent/src/core/agent-session.ts:3254]. `_refreshToolRegistry` 随后把 base definitions、extension tools、SDK custom tools 合并,应用 allow/deny 过滤,通过 `wrapRegisteredTools` 适配为 `AgentTool`,最后调用 `setActiveToolsByName` [E: packages/coding-agent/src/core/agent-session.ts:3144] [E: packages/coding-agent/src/core/agent-session.ts:3159] [E: packages/coding-agent/src/core/agent-session.ts:3196] [E: packages/coding-agent/src/core/agent-session.ts:3206] [E: packages/coding-agent/src/core/agent-session.ts:3234].
 
-默认 active built-in tools 是 `read`、`bash`、`edit`、`write`,所以普通 startup 不一定主动暴露 `find`;但 `find` 已在 registry 中,可由模式/扩展/配置激活 [E: packages/coding-agent/src/core/agent-session.ts:2831] [E: packages/coding-agent/src/core/agent-session.ts:2833] [I]. plan-mode 示例测试显示进入 plan mode 时 active tools 包含 `grep`、`find`、`ls` 和 `questionnaire` [E: packages/coding-agent/test/plan-mode-extension.test.ts:111] [E: packages/coding-agent/test/plan-mode-extension.test.ts:113] [E: packages/coding-agent/test/plan-mode-extension.test.ts:119].
+默认 active built-in tools 是 `read`、`bash`、`edit`、`write`,所以普通 startup 不一定主动暴露 `find`;但 `find` 已在 registry 中,可由模式/扩展/配置激活 [E: packages/coding-agent/src/core/agent-session.ts:3281] [E: packages/coding-agent/src/core/agent-session.ts:3283] [I]. plan-mode 示例测试显示进入 plan mode 时 active tools 包含 `grep`、`find`、`ls` 和 `questionnaire` [E: packages/coding-agent/test/plan-mode-extension.test.ts:111] [E: packages/coding-agent/test/plan-mode-extension.test.ts:113] [E: packages/coding-agent/test/plan-mode-extension.test.ts:119].
 
 ## 7 execute() 走读
 
@@ -108,13 +108,13 @@ agent-core 的 `Agent` 构造器把缺省 `toolExecution` 设为 `"parallel"` [E
 
 ## 8 设计动机与 edge
 
-- Hidden files:默认 `fd` args 包含 `--hidden`,所以未被 ignore 的 dotfile/dotdir 可以出现在结果中 [E: packages/coding-agent/src/core/tools/find.ts:182]. 测试覆盖 `.secret/hidden.txt` 会被 `**/*.txt` 找到 [E: packages/coding-agent/test/tools.test.ts:836] [E: packages/coding-agent/test/tools.test.ts:843] [E: packages/coding-agent/test/tools.test.ts:853].
-- `.gitignore`:默认路径依赖 `fd` 的 ignore 语义;测试覆盖 root `.gitignore` 会排除 `ignored.txt` 且保留 `kept.txt` [E: packages/coding-agent/test/tools.test.ts:867] [E: packages/coding-agent/test/tools.test.ts:868] [E: packages/coding-agent/test/tools.test.ts:867] [E: packages/coding-agent/test/tools.test.ts:868].
+- Hidden files:默认 `fd` args 包含 `--hidden`,所以未被 ignore 的 dotfile/dotdir 可以出现在结果中 [E: packages/coding-agent/src/core/tools/find.ts:182]. 测试覆盖 `.secret/hidden.txt` 会被 `**/*.txt` 找到 [E: packages/coding-agent/test/tools.test.ts:882] [E: packages/coding-agent/test/tools.test.ts:889] [E: packages/coding-agent/test/tools.test.ts:899].
+- `.gitignore`:默认路径依赖 `fd` 的 ignore 语义;测试覆盖 root `.gitignore` 会排除 `ignored.txt` 且保留 `kept.txt` [E: packages/coding-agent/test/tools.test.ts:913] [E: packages/coding-agent/test/tools.test.ts:914] [E: packages/coding-agent/test/tools.test.ts:913] [E: packages/coding-agent/test/tools.test.ts:914].
 - 非 git repo 的 ignore:实现只在 search root 的父链上找不到 `.git` 时追加 `--no-require-git`,让 `fd` 在非 repo 目录也读取 `.gitignore` [E: packages/coding-agent/src/core/tools/find.ts:188] [E: packages/coding-agent/src/core/tools/find.ts:198] [I].
 - Nested ignore scope:默认路径显式做的是父链 `.git` 检测,并据此决定是否加 `--no-require-git`;回归测试要求 `a/.gitignore` 只影响 `a/` 而不影响 `b/` [E: packages/coding-agent/src/core/tools/find.ts:188] [E: packages/coding-agent/src/core/tools/find.ts:198] [E: packages/coding-agent/test/suite/regressions/3303-find-nested-gitignore.test.ts:52] [E: packages/coding-agent/test/suite/regressions/3303-find-nested-gitignore.test.ts:54].
 - Path-containing glob:包含 `/` 的 pattern 会触发 `--full-path` 和可能的 `**/` 前缀改写;回归测试覆盖 `src/**/*.spec.ts` 匹配 nested spec 文件 [E: packages/coding-agent/src/core/tools/find.ts:205] [E: packages/coding-agent/src/core/tools/find.ts:206] [E: packages/coding-agent/src/core/tools/find.ts:207] [E: packages/coding-agent/src/core/tools/find.ts:208] [E: packages/coding-agent/test/suite/regressions/3302-find-path-glob.test.ts:68] [E: packages/coding-agent/test/suite/regressions/3302-find-path-glob.test.ts:70].
-- Flag-like pattern:默认实现用 `args.push("--", effectivePattern, searchPath)`,所以像 `"--help"` 这样的 pattern 作为搜索 pattern 而不是 fd flag;测试覆盖 `"--help"` 返回无匹配文本 [E: packages/coding-agent/src/core/tools/find.ts:214] [E: packages/coding-agent/test/tools.test.ts:880] [E: packages/coding-agent/test/tools.test.ts:882] [E: packages/coding-agent/test/tools.test.ts:886].
-- glob parse error:如果 fd 对 pattern 报错且没有 stdout,工具 reject fd 的错误消息;测试覆盖非法 pattern `"["` 会 surface fd glob parse error [E: packages/coding-agent/src/core/tools/find.ts:198] [E: packages/coding-agent/src/core/tools/find.ts:252] [E: packages/coding-agent/src/core/tools/find.ts:254] [E: packages/coding-agent/test/tools.test.ts:882] [E: packages/coding-agent/test/tools.test.ts:874] [E: packages/coding-agent/test/tools.test.ts:877].
+- Flag-like pattern:默认实现用 `args.push("--", effectivePattern, searchPath)`,所以像 `"--help"` 这样的 pattern 作为搜索 pattern 而不是 fd flag;测试覆盖 `"--help"` 返回无匹配文本 [E: packages/coding-agent/src/core/tools/find.ts:214] [E: packages/coding-agent/test/tools.test.ts:926] [E: packages/coding-agent/test/tools.test.ts:928] [E: packages/coding-agent/test/tools.test.ts:932].
+- glob parse error:如果 fd 对 pattern 报错且没有 stdout,工具 reject fd 的错误消息;测试覆盖非法 pattern `"["` 会 surface fd glob parse error [E: packages/coding-agent/src/core/tools/find.ts:198] [E: packages/coding-agent/src/core/tools/find.ts:252] [E: packages/coding-agent/src/core/tools/find.ts:254] [E: packages/coding-agent/test/tools.test.ts:928] [E: packages/coding-agent/test/tools.test.ts:920] [E: packages/coding-agent/test/tools.test.ts:923].
 - Directory trailing slash:默认路径记录 raw line 是否以 `/` 或 `\` 结尾,相对化后若原本有 trailing slash 会补回 `/`,再统一转换为 POSIX path [E: packages/coding-agent/src/core/tools/find.ts:19] [E: packages/coding-agent/src/core/tools/find.ts:23].
 - Custom operations:custom `FindOperations` 提供 `exists` 和 `glob` 两个可插拔函数,因此可接入本地 `fd` 以外的文件查找后端 [E: packages/coding-agent/src/core/tools/find.ts:52] [E: packages/coding-agent/src/core/tools/find.ts:54] [E: packages/coding-agent/src/core/tools/find.ts:56] [I]. custom path 不调用 `fd`,也不会自动使用 `--hidden`/`.gitignore`;它只收到 ignore hint 和 limit,具体语义由实现者负责 [E: packages/coding-agent/src/core/tools/find.ts:116] [E: packages/coding-agent/src/core/tools/find.ts:125] [E: packages/coding-agent/src/core/tools/find.ts:126] [I].
 

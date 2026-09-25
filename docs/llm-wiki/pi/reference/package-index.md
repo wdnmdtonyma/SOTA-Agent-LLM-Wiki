@@ -13,6 +13,8 @@ source:
   - scripts/build-coding-agent-bundle.mjs
   - packages/chord/package.json
   - packages/chord/src/index.ts
+  - packages/durable/package.json
+  - packages/durable/src/index.ts
   - packages/ai/package.json
   - packages/agent/package.json
   - packages/protocol/package.json
@@ -21,6 +23,7 @@ source:
   - packages/client/src/index.ts
   - packages/coding-agent/package.json
   - packages/coding-agent/src/client/index.ts
+  - packages/coding-agent/CHANGELOG.md
   - packages/tui/package.json
   - packages/tui/src/index.ts
   - packages/server/package.json
@@ -38,6 +41,7 @@ source:
 symbols:
   - chord
   - pi-ai
+  - pi-durable
   - pi-agent-core
   - pi-protocol
   - Client
@@ -51,52 +55,57 @@ related:
   - spine.layered-architecture
   - spine.overview
   - subsys.chord.runtime
+  - subsys.durable.runtime
+  - subsys.durable.storage
+  - subsys.durable.runtime
+  - subsys.durable.storage
   - subsys.session-backends.sqlite-node
   - subsys.telemetry.contracts
   - subsys.server.session-server
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
-> `ref.package-index` 枚举 Pi monorepo 当前 workspace、公开 npm 包名、build / publish 边界。源码 workspace 仍是 `packages/*`（**10** 个一阶包，含 `@earendil-works/chord`）+ `packages/session-backends/*` + 五个 extension examples，公开包版本仍 **0.85.1**，本轮无新 workspace 包；`packages/storage/*` 已不存在。
+> `ref.package-index` 枚举 Pi monorepo 当前 workspace、公开 npm 包名、build / publish 边界。源码 workspace 是 `packages/*`（**11** 个一阶包，含 `@earendil-works/chord` 与 `@earendil-works/pi-durable`）+ `packages/session-backends/*` + 五个 extension examples。公开包版本 **0.87.1**。`packages/storage/*` 已不存在；durable 的 SQLite 不是 `pi-session-backend-sqlite-node`。
 
 ## 能回答的问题
 
 - Pi 当前有多少个源码 package workspace，哪些进入正式 publish pipeline？
-- 根 `build` 顺序为什么从 `chord` 开始，并包含 `telemetry` 与 `session-backends/sqlite-node`？
+- 根 `build` 顺序为什么从 `chord` 开始，并包含 `telemetry`、`durable` 与 `session-backends/sqlite-node`？
 - `pi-protocol`、`pi-client`、`pi-server` 与 `pi-coding-agent` 如何形成远程会话栈？公开 client 类名是什么？
 - 哪个 package 是 private eval consumer？`pi-server` 还剩什么 surface？
 - coding-agent 的 `./client` 与 `./experimental/plugin` 是不是 shipped npm API？
-- npm 包名 `@earendil-works/chord` 和 `@earendil-works/pi-session-backend-sqlite-node` 分别对应哪个目录？
+- npm 包名 `@earendil-works/chord`、`@earendil-works/pi-durable` 和 `@earendil-works/pi-session-backend-sqlite-node` 分别对应哪个目录？
 
 ## Workspace 与发布边界
 
 根 workspace 使用 `packages/*`、`packages/session-backends/*`，并显式纳入五个 coding-agent extension examples。[E: package.json:5] [E: package.json:6] [E: package.json:7] [E: package.json:8] [E: package.json:9] [E: package.json:10] [E: package.json:11] [E: package.json:12]
 
-`packages/*` 下一层是 **10** 个一阶源码目录：`ai`、`agent`、`chord`、`client`、`coding-agent`、`evals`、`protocol`、`server`、`telemetry`、`tui`。另有 `packages/session-backends/sqlite-node`。五个 example workspace 只出现在显式 workspace 列表里，不是 `packages/*` 的一阶子目录。
+`packages/*` 下一层是 **11** 个一阶源码目录：`ai`、`agent`、`chord`、`client`、`coding-agent`、`durable`、`evals`、`protocol`、`server`、`telemetry`、`tui`。另有 `packages/session-backends/sqlite-node`。五个 example workspace 只出现在显式 workspace 列表里，不是 `packages/*` 的一阶子目录。
 
-根 `build` / `build:offline` 顺序是 **chord → tui → telemetry → ai → agent → session-backends/sqlite-node → protocol → client → server → coding-agent**。`evals` 不在根 build 链中。[E: package.json:16]
+根 `build` / `build:offline` 顺序是 **chord → tui → telemetry → ai → durable → agent → session-backends/sqlite-node → protocol → client → server → coding-agent**。`evals` 不在根 build 链中。[E: package.json:16] [E: package.json:17]
 
 `scripts/publish.mjs` 不再硬编码包清单，而是调用 `getPublicWorkspacePackages()`：递归扫描 `packages/` 下所有含 `package.json` 的目录，过滤 `private !== true` 后按目录排序发布。[E: scripts/publish.mjs:6] [E: scripts/release-packages.mjs:5] [E: scripts/release-packages.mjs:11] [E: scripts/package-workspaces.mjs:6]
 
-因此当前会进入 publish 清单的公开包是：`chord`、`pi-ai`、`pi-agent-core`、`pi-client`、`pi-coding-agent`、`pi-protocol`、`pi-server`、`pi-session-backend-sqlite-node`、`pi-telemetry`、`pi-tui`。`pi-evals`、五个 extension examples 以及 `packages/coding-agent/install-lock` 都标了 `private: true`，被过滤掉。[E: packages/evals/package.json:4]
+因此当前会进入 publish 清单的公开包是：`chord`、`pi-ai`、`pi-agent-core`、`pi-client`、`pi-coding-agent`、`pi-durable`、`pi-protocol`、`pi-server`、`pi-session-backend-sqlite-node`、`pi-telemetry`、`pi-tui`。`pi-evals`、五个 extension examples 以及 `packages/coding-agent/install-lock` 都标了 `private: true`，被过滤掉。[E: packages/evals/package.json:4] [E: packages/durable/package.json:2]
 
 ## Package catalog
 
 | pkg | package / directory | 角色与公开面 | 关键依赖或发布事实 |
 |---|---|---|---|
-| `chord` | `@earendil-works/chord` / `packages/chord` | Standalone application-composition runtime：facets / services / replicated state / delta / remote service boundary。根入口导出 `defineFacet`、`defineService`、`createFacetHost`、`replicatedState` 等；另导出 `./context`、`./delta`、`./bundler`、`./node`。[E: packages/chord/package.json:2] [E: packages/chord/package.json:8] [E: packages/chord/package.json:14] [E: packages/chord/package.json:19] [E: packages/chord/package.json:24] [E: packages/chord/package.json:29] [E: packages/chord/src/index.ts:5] [E: packages/chord/src/index.ts:9] | **不依赖任何其它 Pi workspace 包**；运行依赖只有 `esbuild`。[E: packages/chord/package.json:65] |
-| `ai` | `@earendil-works/pi-ai` / `packages/ai` | 统一 LLM API；默认入口外还导出 `./compat`、`./providers/*`、`./api/*`、`./oauth`、`./bedrock-provider`、`./bun-oauth`，并提供 `pi-ai` binary。[E: packages/ai/package.json:2] [E: packages/ai/package.json:13] [E: packages/ai/package.json:48] | 依赖 `pi-telemetry`；`build` 会在线生成 model data，`build:offline` 先校验本地 model data 再编译。[E: packages/ai/package.json:61] [E: packages/ai/package.json:62] [E: packages/ai/package.json:69] |
-| `agent` | `@earendil-works/pi-agent-core` / `packages/agent` | 可复用 agent runtime、`AgentHarness`、v4 session 与 Node execution environment；公开 `.`、`./node`、`./harness/context`、`./harness/env/nodejs`、`./harness/runtime/reducer`、`./harness/session`、`./harness/session/testing`。[E: packages/agent/package.json:2] [E: packages/agent/package.json:9] [E: packages/agent/package.json:13] [E: packages/agent/package.json:33] [E: packages/agent/package.json:21] [E: packages/agent/package.json:25] [E: packages/agent/package.json:29] | 依赖 `pi-ai` 与 `pi-telemetry`，不依赖 coding-agent 产品层。[E: packages/agent/package.json:59] [E: packages/agent/package.json:60] |
-| `protocol` | `@earendil-works/pi-protocol` / `packages/protocol` | transport-neutral remote-session protocol；入口公开 CBOR codec、framing 与 TypeBox schemas。[E: packages/protocol/package.json:2] [E: packages/protocol/package.json:4] [E: packages/protocol/src/index.ts:1] [E: packages/protocol/src/index.ts:3] | 运行依赖 `chord` 与 `typebox`。[E: packages/protocol/package.json:43] [E: packages/protocol/package.json:43] |
+| `chord` | `@earendil-works/chord` / `packages/chord` | Standalone application-composition runtime：facets / services / replicated state / delta / remote service boundary。根入口导出 `defineFacet`、`defineService`、`createFacetHost`、`replicatedState` 等；另导出 `./context`、`./delta`、`./bundler`、`./node`。[E: packages/chord/package.json:2] [E: packages/chord/package.json:8] [E: packages/chord/package.json:14] [E: packages/chord/package.json:19] [E: packages/chord/package.json:24] [E: packages/chord/package.json:29] [E: packages/chord/src/index.ts:6] [E: packages/chord/src/index.ts:9] [E: packages/chord/src/index.ts:10] [E: packages/chord/src/index.ts:11] | **不依赖任何其它 Pi workspace 包**；运行依赖只有 `esbuild`。[E: packages/chord/package.json:65] |
+| `ai` | `@earendil-works/pi-ai` / `packages/ai` | 统一 LLM API；默认入口外还导出 `./compat`、`./providers/*`、`./api/*`、`./oauth`、`./bedrock-provider`、`./bun-oauth`，并提供 `pi-ai` binary。[E: packages/ai/package.json:2] [E: packages/ai/package.json:13] [E: packages/ai/package.json:48] | 依赖 `pi-telemetry`；`build` 会在线生成 model data，`build:offline` 先校验本地 model data 再编译。[E: packages/ai/package.json:60] [E: packages/ai/package.json:61] [E: packages/ai/package.json:68] |
+| `durable` | `@earendil-works/pi-durable` / `packages/durable` | Durable conversation / task / document runtime。根 `.` 导出 `createSession`、`MemoryStorage`、`ROOT_CONVERSATION_ID`、`defineDoc` / `defineDocFamily`。另导出 `./env`、`./env/node`、`./storage/memory`、`./storage/jsonl`、`./storage/jsonl/node`、`./storage/sqlite`、`./storage/sqlite/node`、`./testing`。[E: packages/durable/package.json:2] [E: packages/durable/package.json:8] [E: packages/durable/package.json:34] [E: packages/durable/package.json:44] [E: packages/durable/src/index.ts:3] | 依赖 `chord` 与 `pi-ai`。[E: packages/durable/package.json:87] [E: packages/durable/package.json:88] JSONL `fsync` 默认 false；Node SQLite 用 WAL + `synchronous = NORMAL`。不是 coding-agent session JSONL，也不是 `pi-session-backend-sqlite-node`。[I] |
+| `agent` | `@earendil-works/pi-agent-core` / `packages/agent` | 可复用 agent runtime、`AgentHarness`、v4 session 与 Node execution environment；公开 `.`、`./node`、`./harness/context`、`./harness/env/nodejs`、`./harness/runtime/reducer`、`./harness/session`、`./harness/session/testing`，以及 `./experimental/pico3`。[E: packages/agent/package.json:2] [E: packages/agent/package.json:9] [E: packages/agent/package.json:13] [E: packages/agent/package.json:21] [E: packages/agent/package.json:25] [E: packages/agent/package.json:29] [E: packages/agent/package.json:33] | 依赖 chord、`pi-ai` 与 `pi-telemetry`，**不**依赖 `pi-durable` 或 coding-agent 产品层。[E: packages/agent/package.json:62] [E: packages/agent/package.json:63] [E: packages/agent/package.json:64] |
+| `protocol` | `@earendil-works/pi-protocol` / `packages/protocol` | transport-neutral remote-session protocol；入口公开 CBOR codec、framing 与 TypeBox schemas。[E: packages/protocol/package.json:2] [E: packages/protocol/package.json:4] [E: packages/protocol/src/index.ts:1] [E: packages/protocol/src/index.ts:3] | 运行依赖 `chord` 与 `typebox`。[E: packages/protocol/package.json:42] [E: packages/protocol/package.json:43] |
 | `client` | `@earendil-works/pi-client` / `packages/client` | transport-neutral **`Client`** + `createClientServiceTransport`（Chord 风格 service transport）；另导出 `./unix`。公开面不是 `PiClient` / `PiSessionHandle`。[E: packages/client/package.json:2] [E: packages/client/package.json:8] [E: packages/client/package.json:13] [E: packages/client/src/index.ts:1] | 依赖 `chord` 与 `pi-protocol`，不反向依赖 coding-agent 或 server 实现。[E: packages/client/package.json:50] [E: packages/client/package.json:51] |
-| `coding-agent` | `@earendil-works/pi-coding-agent` / `packages/coding-agent` | `pi` CLI、SDK / extension surface、RPC entry。`bin.pi` 与 `./rpc-entry` 指向 bundled `dist/bundle/cli.js` / `dist/bundle/rpc-entry.js`；library `.` 走 unbundled `dist/`。[E: packages/coding-agent/package.json:2] [E: packages/coding-agent/package.json:10] [E: packages/coding-agent/package.json:15] [E: packages/coding-agent/package.json:19] | `./client` 与 `./experimental/plugin` 只有 `"source"` 条件，是 **source-only**（给 `pi-test.sh` / 本地源码消费），不是 shipped npm 公共 API。`files` 明确排除 `dist/client`、`dist/experimental`、`dist/cli/experimental`。[E: packages/coding-agent/package.json:22] [E: packages/coding-agent/package.json:25] [E: packages/coding-agent/package.json:31] [E: packages/coding-agent/package.json:32] [E: packages/coding-agent/package.json:33] [E: packages/coding-agent/src/client/index.ts:1] `build` = `build:unbundled` + `scripts/build-coding-agent-bundle.mjs`。产品装配依赖 chord、agent-core、AI 与 TUI；`pi-client` / `pi-protocol` / `pi-server` 是 devDependencies。[E: packages/coding-agent/package.json:42] [E: packages/coding-agent/package.json:52] [E: packages/coding-agent/package.json:76] |
-| `tui` | `@earendil-works/pi-tui` / `packages/tui` | 差分终端 UI；入口导出 type-only `TUI` interface 与 `TuiAltScreen`、`TuiMainScreen` 两种实现。[E: packages/tui/package.json:2] [E: packages/tui/src/index.ts:135] [E: packages/tui/src/index.ts:146] [E: packages/tui/src/index.ts:147] | 依赖 east-asian-width 与 Markdown 库。[E: packages/tui/package.json:55] [E: packages/tui/package.json:56] |
-| `server` | `@earendil-works/pi-server` / `packages/server` | experimental composable protocol server；exports 只有 `.`、`./testing`、`./unix`。根入口 re-export errors / listener / `PiServer` / types。[E: packages/server/package.json:2] [E: packages/server/package.json:8] [E: packages/server/package.json:13] [E: packages/server/package.json:17] [E: packages/server/src/index.ts:1] [E: packages/server/src/index.ts:3] | 无 `server` binary，无 `./legacy`。运行依赖 `chord`、`pi-agent-core`、`pi-protocol`。[E: packages/server/package.json:52] [E: packages/server/package.json:52] [E: packages/server/package.json:52] 因为包未标 `private`，会被 `getPublicWorkspacePackages()` 纳入 publish 清单。[E: scripts/release-packages.mjs:11] |
+| `coding-agent` | `@earendil-works/pi-coding-agent` / `packages/coding-agent` | `pi` CLI、SDK / extension surface、RPC entry。`bin.pi` 与 `./rpc-entry` 指向 bundled `dist/bundle/cli.js` / `dist/bundle/rpc-entry.js`；library `.` 走 unbundled `dist/`。[E: packages/coding-agent/package.json:2] [E: packages/coding-agent/package.json:10] [E: packages/coding-agent/package.json:15] [E: packages/coding-agent/package.json:19] | `./client` 与 `./experimental/plugin` 只有 `"source"` 条件，是 **source-only**（给 `pi-test.sh` / 本地源码消费），不是 shipped npm 公共 API。`files` 明确排除 `dist/client`、`dist/experimental`、`dist/cli/experimental`。[E: packages/coding-agent/package.json:22] [E: packages/coding-agent/package.json:25] [E: packages/coding-agent/package.json:31] [E: packages/coding-agent/package.json:32] [E: packages/coding-agent/package.json:33] [E: packages/coding-agent/src/client/index.ts:1] `build` = `build:unbundled` + `scripts/build-coding-agent-bundle.mjs`。产品装配依赖 chord、agent-core、AI 与 TUI；`pi-client` / `pi-protocol` / `pi-server` 是 devDependencies。不依赖 `pi-durable`。[E: packages/coding-agent/package.json:42] [E: packages/coding-agent/package.json:52] [E: packages/coding-agent/package.json:76] |
+| `tui` | `@earendil-works/pi-tui` / `packages/tui` | 差分终端 UI；入口导出 type-only `TUI` interface 与 `TuiAltScreen`、`TuiMainScreen` 两种实现。[E: packages/tui/package.json:2] [E: packages/tui/src/index.ts:160] [E: packages/tui/src/index.ts:171] [E: packages/tui/src/index.ts:172] | 依赖 east-asian-width 与 Markdown 库。[E: packages/tui/package.json:55] [E: packages/tui/package.json:56] |
+| `server` | `@earendil-works/pi-server` / `packages/server` | experimental composable protocol server；exports 只有 `.`、`./testing`、`./unix`。根入口 re-export errors / listener / `PiServer` / types。[E: packages/server/package.json:2] [E: packages/server/package.json:8] [E: packages/server/package.json:13] [E: packages/server/package.json:17] [E: packages/server/src/index.ts:1] [E: packages/server/src/index.ts:3] | 无 `server` binary，无 `./legacy`。运行依赖 `chord`、`pi-agent-core`、`pi-protocol`。[E: packages/server/package.json:50] [E: packages/server/package.json:51] [E: packages/server/package.json:52] 因为包未标 `private`，会被 `getPublicWorkspacePackages()` 纳入 publish 清单。[E: scripts/release-packages.mjs:11] |
 | `session-backends` | `@earendil-works/pi-session-backend-sqlite-node` / `packages/session-backends/sqlite-node` | Node `node:sqlite` session backend，实现 agent-core 的 `SessionRepo` seam。[E: packages/session-backends/sqlite-node/package.json:2] [E: packages/session-backends/sqlite-node/package.json:4] | 依赖 AI 与 agent-core；`build` 会复制 sqlite migrations。[E: packages/session-backends/sqlite-node/package.json:21] [E: packages/session-backends/sqlite-node/package.json:38] |
-| `telemetry` | `@earendil-works/pi-telemetry` / `packages/telemetry` | vendor-neutral telemetry contracts、typed schema helpers、`NOOP_TELEMETRY_CONTEXT` 与 `InMemoryTelemetryContext`；另导出 `./testing` conformance。[E: packages/telemetry/package.json:2] [E: packages/telemetry/package.json:4] [E: packages/telemetry/package.json:13] [E: packages/telemetry/src/index.ts:24] | 无运行时依赖；被 `pi-ai` 与 `pi-agent-core` 消费。[E: packages/ai/package.json:69] [E: packages/agent/package.json:60] |
-| `evals` | `@earendil-works/pi-evals` / `packages/evals` | private behavioral-eval consumer，用真实 `AgentSession` 适配 `vitest-evals`。[E: packages/evals/package.json:2] [E: packages/evals/package.json:4] | 通过 devDependencies 消费 AI、coding-agent 与 `vitest-evals`，不发布。[E: packages/evals/package.json:12] [E: packages/evals/package.json:17] |
+| `telemetry` | `@earendil-works/pi-telemetry` / `packages/telemetry` | vendor-neutral telemetry contracts、typed schema helpers、`NOOP_TELEMETRY_CONTEXT` 与 `InMemoryTelemetryContext`；另导出 `./testing` conformance。[E: packages/telemetry/package.json:2] [E: packages/telemetry/package.json:4] [E: packages/telemetry/package.json:13] [E: packages/telemetry/src/index.ts:24] [E: packages/telemetry/src/index.ts:357] | 无运行时依赖；被 `pi-ai` 与 `pi-agent-core` 消费。[E: packages/ai/package.json:68] [E: packages/agent/package.json:64] |
+| `evals` | `@earendil-works/pi-evals` / `packages/evals` | private behavioral-eval consumer。`eval:host` 跑本机 Vitest；`eval:docs` 用 Node type stripping 跑 `src/cli.ts` 的 Docker 文档对照。[E: packages/evals/package.json:2] [E: packages/evals/package.json:4] [E: packages/evals/package.json:9] [E: packages/evals/package.json:10] | 通过 devDependencies 消费 AI、coding-agent 与 `vitest-evals`，不发布。[E: packages/evals/package.json:14] [E: packages/evals/package.json:15] [E: packages/evals/package.json:21] |
 
 ## Extension-example workspaces
 
@@ -123,15 +132,15 @@ flowchart LR
   S --> B["application PiServerService"]
 ```
 
-`pi-protocol` 与 `pi-client` 是公开包；coding-agent 的 `./client` 只是 `export * from "@earendil-works/pi-client"` 的 source-only re-export，不要当成独立 shipped adapter 实现。[E: packages/coding-agent/src/client/index.ts:1] [E: packages/coding-agent/package.json:22] `pi-server` 依赖 chord、agent-core 与 protocol，由应用提供 `PiServerService`；它不再封装 coding-agent RPC 子进程，也不再提供 legacy JSONL IPC / supervisor。[E: packages/server/package.json:52] [E: packages/server/package.json:52] [E: packages/server/package.json:52] [E: packages/server/src/index.ts:3] 本地 RPC mode 仍在 `pi-coding-agent` 进程内，不等于这条 remote 栈。[I]
+`pi-protocol` 与 `pi-client` 是公开包；coding-agent 的 `./client` 只是 `export * from "@earendil-works/pi-client"` 的 source-only re-export，不要当成独立 shipped adapter 实现。[E: packages/coding-agent/src/client/index.ts:1] [E: packages/coding-agent/package.json:22] `pi-server` 依赖 chord、agent-core 与 protocol，由应用提供 `PiServerService`；它不再封装 coding-agent RPC 子进程，也不再提供 legacy JSONL IPC / supervisor。[E: packages/server/package.json:50] [E: packages/server/package.json:51] [E: packages/server/package.json:52] [E: packages/server/src/index.ts:3] 本地 RPC mode 仍在 `pi-coding-agent` 进程内，不等于这条 remote 栈。[I]
 
 ## 根工具链
 
-- 模型目录有 `generate:models`、`hydrate:model-data`、`check:model-data`、`generate:model-catalog` 与 catalog diff / check 命令。[E: package.json:30] [E: package.json:39]
+- 模型目录有 `generate:models`、`hydrate:model-data`、`check:model-data`、`generate:model-catalog` 与 catalog diff / check 命令。[E: package.json:30] [E: package.json:36]
 - 根 `test` 先跑 scripts tests，再对所有有 test script 的 workspace 执行测试。[E: package.json:39] [E: package.json:40]
-- check pipeline 覆盖 Biome、依赖固定、TypeScript import、shrinkwrap、install lock、`tsgo` 与 browser smoke。[E: package.json:21]
-- 根 monorepo 与各公开 package 的 `engines.node` 都是 `>=22.19.0`；`pi-evals` 与五个 extension examples 未写 `engines`。根工具链使用 TypeScript native preview (`tsgo`)。[E: package.json:69]
-- README 的公开产品表现在列出 chord、telemetry、ai、agent-core、coding-agent、tui；protocol / client / server / session-backends / evals 不在该短表里。[E: README.md:26] [E: README.md:31] [E: README.md:32] [E: README.md:33] [E: README.md:34] [E: README.md:35] [E: README.md:35]
+- check pipeline 覆盖 Biome、依赖固定、TypeScript import、shrinkwrap、install lock、`tsc --noEmit` 与 browser smoke。[E: package.json:21]
+- 根 monorepo 与各公开 package 的 `engines.node` 都是 `>=22.19.0`；`pi-evals` 与五个 extension examples 未写 `engines`。根 `devDependencies.typescript` 是 **7.0.2**。[E: package.json:64] [E: package.json:67] coding-agent `[Unreleased]` 把这次切换写成 TypeScript 7.0 + ES2024 target，并用 Node type stripping 替代 `tsx`。[E: packages/coding-agent/CHANGELOG.md:16] `pi-evals` 的 `eval:docs` 已经用 `node --experimental-strip-types src/cli.ts`。[E: packages/evals/package.json:10]
+- README 的公开产品表列出 chord、telemetry、ai、**durable**、agent-core、coding-agent、tui；protocol / client / server / session-backends / evals 不在该短表里。[E: README.md:26] [E: README.md:30] [E: README.md:31] [E: README.md:32] [E: README.md:33] [E: README.md:34] [E: README.md:35] [E: README.md:36]
 - coding-agent 发布面把 CLI/RPC 收成 bundled Node runtime(`dist/bundle/`);公开 library `.` 仍用 modular `dist/`。`./client` / `./experimental/plugin` 不进 `files` 的 dist 产物。[E: packages/coding-agent/package.json:10] [E: packages/coding-agent/package.json:19] [E: packages/coding-agent/package.json:31] [E: scripts/build-coding-agent-bundle.mjs:161]
 
 ## Sources
@@ -144,6 +153,8 @@ flowchart LR
 - scripts/build-coding-agent-bundle.mjs
 - packages/chord/package.json
 - packages/chord/src/index.ts
+- packages/durable/package.json
+- packages/durable/src/index.ts
 - packages/ai/package.json
 - packages/agent/package.json
 - packages/protocol/package.json
@@ -152,6 +163,7 @@ flowchart LR
 - packages/client/src/index.ts
 - packages/coding-agent/package.json
 - packages/coding-agent/src/client/index.ts
+- packages/coding-agent/CHANGELOG.md
 - packages/tui/package.json
 - packages/tui/src/index.ts
 - packages/server/package.json
@@ -170,8 +182,10 @@ flowchart LR
 ## 相关
 
 - [spine.layered-architecture](../spine/layered-architecture.md) - 远程会话层与本地 agent 主路径的边界。
-- [spine.overview](../spine/overview.md) - CLI、agent loop、provider、TUI 和 remote 栈总览。
+- [spine.overview](../spine/overview.md) - CLI、agent loop、provider、TUI、durable 和 remote 栈总览。
 - [subsys.chord.runtime](../subsystems/chord/runtime.md) - chord facets / services / host。
+- [subsys.durable.runtime](../subsystems/durable/runtime.md) - `createSession` / document tokens。
+- [subsys.durable.storage](../subsystems/durable/storage.md) - Memory / JSONL / SQLite backends。
 - [subsys.session-backends.sqlite-node](../subsystems/session-backends/sqlite-node.md) - SQLite `SessionRepo` backend。
 - [subsys.telemetry.contracts](../subsystems/telemetry/contracts.md) - vendor-neutral telemetry contracts。
 - [subsys.server.session-server](../subsystems/server/session-server.md) - composable `PiServer`。

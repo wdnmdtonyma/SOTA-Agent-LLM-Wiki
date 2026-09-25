@@ -27,7 +27,7 @@ related:
   - surface.sdk.remote-session
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `subsys.coding-agent.experimental-cli` 描述 source-only 的 experimental 命令面：parser 只组合 `server` / `client`，由 `pi-test.sh` → `src/experimental/cli.ts` 在 `PI_EXPERIMENTAL=1` 时 dispatch。`auth.ts` / `transport-address.ts` / `commands/pi.ts` 已删除；发布 CLI 不接线这些命令。
@@ -57,7 +57,7 @@ option scanner 支持 `--name=value` 或 `--name value`；`--` 自身和其后�
 
 ## Dispatch 与 source-only 边界
 
-发布 entry `src/cli.ts` 只 `main(process.argv.slice(2))`，即使 `PI_EXPERIMENTAL=1` 也不 dispatch `server`/`client` [E: packages/coding-agent/src/cli.ts:6] [E: packages/coding-agent/test/experimental-cli-entry.test.ts:47]。开发 entry `src/experimental/cli.ts` 先 `runExperimentalCommand(args)`，失败再回落 `main(args)` [E: packages/coding-agent/src/experimental/cli.ts:8] [E: packages/coding-agent/src/experimental/cli.ts:11]。
+发布 entry `src/cli.ts` 只 `main(process.argv.slice(2))`，即使 `PI_EXPERIMENTAL=1` 也不 dispatch `server`/`client` [E: packages/coding-agent/src/cli.ts:6] [E: packages/coding-agent/test/experimental-cli-entry.test.ts:49]。开发 entry `src/experimental/cli.ts` 先 `runExperimentalCommand(args)`，失败再回落 `main(args)` [E: packages/coding-agent/src/experimental/cli.ts:8] [E: packages/coding-agent/src/experimental/cli.ts:11]。
 
 `runExperimentalCommand` 要求 `areExperimentalFeaturesEnabled()`（`PI_EXPERIMENTAL === "1"`）且 `args[0]` 是 `server` 或 `client`，然后 `cli.execute` [E: packages/coding-agent/src/core/experimental.ts:2] [E: packages/coding-agent/src/experimental/commands.ts:94] [E: packages/coding-agent/src/experimental/commands.ts:96]。根目录 `pi-test.sh` 用 tsx 跑 `packages/coding-agent/src/experimental/cli.ts` [E: pi-test.sh:57]。
 

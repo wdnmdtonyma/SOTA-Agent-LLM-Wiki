@@ -5,15 +5,15 @@ kind: subsystem
 tier: T2
 pkg: ai
 source:
-  - packages/ai/src/api/transform-messages.ts
+ - packages/ai/src/api/transform-messages.ts
 symbols:
-  - transformMessages
+ - transformMessages
 related:
-  - subsys.ai.wire-protocol-dispatch
-  - ref.ai.core-types
+ - subsys.ai.wire-protocol-dispatch
+ - ref.ai.core-types
 evidence: explicit
 status: verified
-updated: 71dca871bc
+updated: ff72faba28
 ---
 
 > `subsys.ai.message-transform` 描述 `transformMessages` 如何在 provider-specific wire payload 构造前,把历史 `Message[]` 归一成更适合目标 `Model` replay 的 `Message[]`。
@@ -29,11 +29,11 @@ updated: 71dca871bc
 
 ## 职责边界
 
-`transformMessages` 的输入是统一 `Message[]`、目标 `Model<TApi>`、以及可选 `normalizeToolCallId(id, model, sourceAssistant)` 回调;输出仍是统一 `Message[]`,不是 OpenAI、Anthropic、Google、Bedrock 或 Mistral 的 wire payload。[E: packages/ai/src/api/transform-messages.ts:64][E: packages/ai/src/api/transform-messages.ts:65][E: packages/ai/src/api/transform-messages.ts:66][E: packages/ai/src/api/transform-messages.ts:67][E: packages/ai/src/api/transform-messages.ts:68][E: packages/ai/src/api/transform-messages.ts:222]
+`transformMessages` 的输入是统一 `Message[]`、目标 `Model<TApi>`、以及可选 `normalizeToolCallId(id, model, sourceAssistant)` 回调;输出仍是统一 `Message[]`,不是 OpenAI、Anthropic、Google、Bedrock 或 Mistral 的 wire payload。[E: packages/ai/src/api/transform-messages.ts:64][E: packages/ai/src/api/transform-messages.ts:65][E: packages/ai/src/api/transform-messages.ts:66][E: packages/ai/src/api/transform-messages.ts:67][E: packages/ai/src/api/transform-messages.ts:68][E: packages/ai/src/api/transform-messages.ts:234]
 
 这个 subsystem 覆盖 replay normalization,不覆盖 `Context.systemPrompt` 的 provider-specific role 选择;`transformMessages` 只接收 `messages: Message[]`,源码没有读取 system prompt 的参数或分支。[E: packages/ai/src/api/transform-messages.ts:64][E: packages/ai/src/api/transform-messages.ts:65][I]
 
-`transformMessages` 通常由 provider-specific `convertMessages` / `convertResponsesMessages` 在构造 wire payload 前调用;OpenAI Responses、OpenAI Completions、Anthropic Messages、Google shared、Bedrock Converse 和 Mistral Conversations 都在各自 serializer 内调用它。[E: packages/ai/src/api/openai-responses-shared.ts:172][E: packages/ai/src/api/openai-completions.ts:1212][E: packages/ai/src/api/anthropic-messages.ts:1029][E: packages/ai/src/api/google-shared.ts:138][E: packages/ai/src/api/bedrock-converse-stream.ts:935][E: packages/ai/src/api/mistral-conversations.ts:139]
+`transformMessages` 通常由 provider-specific `convertMessages` / `convertResponsesMessages` 在构造 wire payload 前调用;OpenAI Responses、OpenAI Completions、Anthropic Messages、Google shared、Bedrock Converse 和 Mistral Conversations 都在各自 serializer 内调用它。[E: packages/ai/src/api/openai-responses-shared.ts:173][E: packages/ai/src/api/openai-completions.ts:1212][E: packages/ai/src/api/anthropic-messages.ts:1053][E: packages/ai/src/api/google-shared.ts:141][E: packages/ai/src/api/bedrock-converse-stream.ts:936][E: packages/ai/src/api/mistral-conversations.ts:141]
 
 ## 关键文件
 
@@ -41,7 +41,7 @@ updated: 71dca871bc
 
 ## 数据模型
 
-`Message` 在本函数里按 `role` 分为 user、assistant、toolResult 三类处理:第一段 map 对 user 直接返回,对 toolResult 只可能重写 `toolCallId`,对 assistant 遍历 `content` blocks;第二段再按 role 处理 assistant/toolResult/user 的工具调用连续性。[E: packages/ai/src/api/transform-messages.ts:79][E: packages/ai/src/api/transform-messages.ts:80][E: packages/ai/src/api/transform-messages.ts:84][E: packages/ai/src/api/transform-messages.ts:85][E: packages/ai/src/api/transform-messages.ts:93][E: packages/ai/src/api/transform-messages.ts:100][E: packages/ai/src/api/transform-messages.ts:185][E: packages/ai/src/api/transform-messages.ts:207][E: packages/ai/src/api/transform-messages.ts:210]
+`Message` 在本函数里按 `role` 分为 user、assistant、toolResult 三类处理:第一段 map 对 user 直接返回,对 toolResult 只可能重写 `toolCallId`,对 assistant 遍历 `content` blocks;第二段再按 role 处理 assistant/toolResult/user 的工具调用连续性。[E: packages/ai/src/api/transform-messages.ts:79][E: packages/ai/src/api/transform-messages.ts:80][E: packages/ai/src/api/transform-messages.ts:84][E: packages/ai/src/api/transform-messages.ts:85][E: packages/ai/src/api/transform-messages.ts:93][E: packages/ai/src/api/transform-messages.ts:100][E: packages/ai/src/api/transform-messages.ts:191][E: packages/ai/src/api/transform-messages.ts:213][E: packages/ai/src/api/transform-messages.ts:222]
 
 user content 的字符串形态不被本函数改写;只有当 user `content` 是 content part array 时,`downgradeUnsupportedImages` 才会处理其中的 image blocks。[E: packages/ai/src/api/transform-messages.ts:40][E: packages/ai/src/api/transform-messages.ts:41][E: packages/ai/src/api/transform-messages.ts:44]
 
@@ -59,8 +59,8 @@ assistant content part 的显式处理分支是 `thinking`、`text`、`toolCall`
 6. text block 同模型 replay 原样保留;跨模型 replay 只保留 `type: "text"` 和 `text`,因此会丢掉 text block 上的额外 metadata。[E: packages/ai/src/api/transform-messages.ts:119][E: packages/ai/src/api/transform-messages.ts:120][E: packages/ai/src/api/transform-messages.ts:121][E: packages/ai/src/api/transform-messages.ts:123]
 7. toolCall block 跨模型 replay 时会删除 `thoughtSignature` metadata;如果提供了 `normalizeToolCallId`,还会把旧 id 映射到新 id 并写回 toolCall。[E: packages/ai/src/api/transform-messages.ts:127][E: packages/ai/src/api/transform-messages.ts:131][E: packages/ai/src/api/transform-messages.ts:133][E: packages/ai/src/api/transform-messages.ts:136][E: packages/ai/src/api/transform-messages.ts:137][E: packages/ai/src/api/transform-messages.ts:139][E: packages/ai/src/api/transform-messages.ts:140]
 8. 后续 toolResult 如果命中 `toolCallIdMap`,会用同一个 normalized id 替换 `toolCallId`,保持 assistant toolCall 与 toolResult 的引用一致。[E: packages/ai/src/api/transform-messages.ts:84][E: packages/ai/src/api/transform-messages.ts:85][E: packages/ai/src/api/transform-messages.ts:86][E: packages/ai/src/api/transform-messages.ts:87]
-9. 第二段遍历会跳过 `stopReason` 为 `"error"` 或 `"aborted"` 的 assistant 消息,因为这些 turn 被视为不应 replay 的不完整 assistant 输出。[E: packages/ai/src/api/transform-messages.ts:194][E: packages/ai/src/api/transform-messages.ts:195][E: packages/ai/src/api/transform-messages.ts:196]
-10. 第二段还会记录 assistant toolCall,收集后续 toolResult id;当下一个 assistant、user 或对话结尾到来时,缺失结果的 pending toolCall 会被补成 `isError: true`、文本为 `"No result provided"` 的 synthetic toolResult。[E: packages/ai/src/api/transform-messages.ts:160][E: packages/ai/src/api/transform-messages.ts:163][E: packages/ai/src/api/transform-messages.ts:166][E: packages/ai/src/api/transform-messages.ts:167][E: packages/ai/src/api/transform-messages.ts:171][E: packages/ai/src/api/transform-messages.ts:172][E: packages/ai/src/api/transform-messages.ts:173][E: packages/ai/src/api/transform-messages.ts:187][E: packages/ai/src/api/transform-messages.ts:200][E: packages/ai/src/api/transform-messages.ts:202][E: packages/ai/src/api/transform-messages.ts:208][E: packages/ai/src/api/transform-messages.ts:212][E: packages/ai/src/api/transform-messages.ts:220]
+9. 第二段遍历会跳过 `stopReason` 为 `"error"` 或 `"aborted"` 的 assistant 消息,因为这些 turn 被视为不应 replay 的不完整 assistant 输出。[E: packages/ai/src/api/transform-messages.ts:200][E: packages/ai/src/api/transform-messages.ts:201][E: packages/ai/src/api/transform-messages.ts:202]
+10. 第二段还会记录 assistant toolCall,收集后续 toolResult id;当下一个 assistant、user 或对话结尾到来时,缺失结果的 pending toolCall 会被补成 `isError: true`、文本为 `"No result provided"` 的 synthetic toolResult。[E: packages/ai/src/api/transform-messages.ts:160][E: packages/ai/src/api/transform-messages.ts:166][E: packages/ai/src/api/transform-messages.ts:170][E: packages/ai/src/api/transform-messages.ts:171][E: packages/ai/src/api/transform-messages.ts:175][E: packages/ai/src/api/transform-messages.ts:176][E: packages/ai/src/api/transform-messages.ts:177][E: packages/ai/src/api/transform-messages.ts:188][E: packages/ai/src/api/transform-messages.ts:206][E: packages/ai/src/api/transform-messages.ts:208][E: packages/ai/src/api/transform-messages.ts:214][E: packages/ai/src/api/transform-messages.ts:212][E: packages/ai/src/api/transform-messages.ts:220]
 
 ## 设计动机与权衡
 
@@ -70,19 +70,19 @@ thinking replay 的规则偏向同模型保留 provider-private continuity metad
 
 tool call id normalization 由 caller 注入,因为各 wire API 的 id 规则不同;本函数只保证 assistant toolCall 与 toolResult 使用同一映射。[E: packages/ai/src/api/transform-messages.ts:67][E: packages/ai/src/api/transform-messages.ts:136][E: packages/ai/src/api/transform-messages.ts:139][E: packages/ai/src/api/transform-messages.ts:140][E: packages/ai/src/api/transform-messages.ts:85][E: packages/ai/src/api/transform-messages.ts:87][I]
 
-合成 toolResult 的权衡是优先满足 provider replay 对 tool-use adjacency/completeness 的要求,即使真实工具结果缺失也用 error toolResult 显式闭合 pending toolCall。[E: packages/ai/src/api/transform-messages.ts:160][E: packages/ai/src/api/transform-messages.ts:163][E: packages/ai/src/api/transform-messages.ts:166][E: packages/ai/src/api/transform-messages.ts:167][E: packages/ai/src/api/transform-messages.ts:171][E: packages/ai/src/api/transform-messages.ts:172][I]
+合成 toolResult 的权衡是优先满足 provider replay 对 tool-use adjacency/completeness 的要求,即使真实工具结果缺失也用 error toolResult 显式闭合 pending toolCall。[E: packages/ai/src/api/transform-messages.ts:160][E: packages/ai/src/api/transform-messages.ts:166][E: packages/ai/src/api/transform-messages.ts:170][E: packages/ai/src/api/transform-messages.ts:171][E: packages/ai/src/api/transform-messages.ts:175][E: packages/ai/src/api/transform-messages.ts:176][I]
 
 ## gotcha
 
-`transformMessages` 不会把 user string content 转成 text content part array;这种 wire shape 转换留给 provider serializer,例如 OpenAI Responses 的 `convertResponsesMessages` 在遍历 transformed messages 后才把 user string 转成 `input_text`。[E: packages/ai/src/api/transform-messages.ts:79][E: packages/ai/src/api/transform-messages.ts:80][E: packages/ai/src/api/openai-responses-shared.ts:185][E: packages/ai/src/api/openai-responses-shared.ts:187][E: packages/ai/src/api/openai-responses-shared.ts:190]
+`transformMessages` 不会把 user string content 转成 text content part array;这种 wire shape 转换留给 provider serializer,例如 OpenAI Responses 的 `convertResponsesMessages` 在遍历 transformed messages 后才把 user string 转成 `input_text`。[E: packages/ai/src/api/transform-messages.ts:79][E: packages/ai/src/api/transform-messages.ts:80][E: packages/ai/src/api/openai-responses-shared.ts:219][E: packages/ai/src/api/openai-responses-shared.ts:230][E: packages/ai/src/api/openai-responses-shared.ts:233]
 
-合成 toolResult 的 `timestamp` 使用 `Date.now()`,所以 `transformMessages` 不是纯粹的结构性 map;如果输入有 orphaned toolCall,输出会包含调用时刻生成的新时间戳。[E: packages/ai/src/api/transform-messages.ts:173]
+合成 toolResult 的 `timestamp` 使用 `Date.now()`,所以 `transformMessages` 不是纯粹的结构性 map;如果输入有 orphaned toolCall,输出会包含调用时刻生成的新时间戳。[E: packages/ai/src/api/transform-messages.ts:177]
 
 同模型判定要求 provider、api、model 三者都相等;只换同 provider 的 model id 也会进入跨模型降级路径。[E: packages/ai/src/api/transform-messages.ts:95][E: packages/ai/src/api/transform-messages.ts:96][E: packages/ai/src/api/transform-messages.ts:97][E: packages/ai/src/api/transform-messages.ts:98]
 
 ## 跨包边界
 
-`subsys.ai.wire-protocol-dispatch` 覆盖 `Model.api` 如何选择 `ProviderStreams` implementation;本节点只覆盖已经进入 provider-specific serializer 后、wire payload 构造前的 message normalization。[E: packages/ai/src/api/openai-responses-shared.ts:172][E: packages/ai/src/api/openai-completions.ts:1212][I]
+`subsys.ai.wire-protocol-dispatch` 覆盖 `Model.api` 如何选择 `ProviderStreams` implementation;本节点只覆盖已经进入 provider-specific serializer 后、wire payload 构造前的 message normalization。[E: packages/ai/src/api/openai-responses-shared.ts:173][E: packages/ai/src/api/openai-completions.ts:1212][I]
 
 `ref.ai.core-types` 应覆盖 `Message`、`AssistantMessage`、`ToolResultMessage`、`TextContent`、`ImageContent`、`ThinkingContent`、`ToolCall` 和 `Model` 的字段级定义;本节点只描述这些类型在 `transformMessages` 中被读取或改写的行为。[E: packages/ai/src/api/transform-messages.ts:1][E: packages/ai/src/api/transform-messages.ts:10][I]
 
