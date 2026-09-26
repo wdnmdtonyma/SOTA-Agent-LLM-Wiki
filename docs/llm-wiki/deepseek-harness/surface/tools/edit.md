@@ -27,10 +27,13 @@ source:
   - packages/guard/timeout-policy/src/index.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/package.json
+  - packages/bundle/web-app/presets/minimal.patch.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
+  - packages/boot/app-boot/src/profile.ts
+  - apps/cli/tests/web-agent-presets.e2e.ts
 symbols:
   - applyEditTool
   - parseEditArgs
@@ -44,7 +47,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `edit` 是 `@deepseek-ai/dsh-tool-fs` 注册的 model-visible 工具：对**已有** UTF-8 文本文件做字面 `old_string` → `new_string` 替换，默认要求唯一匹配。DSH 没有 first-class `apply_patch`。
@@ -64,76 +67,76 @@ updated: c291e7961a
 
 实现包是 `@deepseek-ai/dsh-tool-fs`（Cordis 插件名 `tool-fs`）。[E: packages/fs/tool-fs/package.json:2][E: packages/fs/tool-fs/src/index.ts:19]
 
-`inject` 是 `['tools', 'fs', 'systemPrompt']`：没有 `ctx.fs` 时插件保持 pending，catalog 长度为 0，不会出现 `edit`。[E: packages/fs/tool-fs/src/index.ts:22][E: packages/fs/tool-fs/tests/tools.spec.ts:182]
+`inject` 是 `['tools', 'fs', 'systemPrompt']`：没有 `ctx.fs` 时插件保持 pending，catalog 长度为 0，不会出现 `edit`。[E: packages/fs/tool-fs/src/index.ts:22][E: packages/fs/tool-fs/tests/tools.spec.ts:190]
 
 `apply()` 构造一份共享的 `FsSandboxController`，再调用 `applyWriteTool` 与 `applyEditTool`。`read_image` 走另一条 `ctx.inject(['attachments'], …)`，与 `edit` 无关。[E: packages/fs/tool-fs/src/index.ts:76][E: packages/fs/tool-fs/src/index.ts:78]
 
-同一次 `applyEditTool` 还注册 system-prompt 段 `tool:edit`（`order` 取 `ctx.systemPrompt.getSectionOrder('TOOL_EDIT')`），告诉模型：字面替换、默认唯一匹配、默认 observation policy 要求先读（本 session 刚 `write`/`edit` 过的文件除外）。[E: packages/fs/tool-fs/src/edit.ts:77][E: packages/fs/tool-fs/src/edit.ts:78]
+同一次 `applyEditTool` 还注册 system-prompt 段 `tool:edit`（`order` 取 `ctx.systemPrompt.getSectionOrder('TOOL_EDIT')`），告诉模型：默认 observation policy 要求先读（本 session 刚 `write`/`edit` 过的文件除外）。[E: packages/fs/tool-fs/src/edit.ts:77][E: packages/fs/tool-fs/src/edit.ts:81]
 
-注册测试断言 catalog 名为 `['edit', 'read', 'write']`（无 attachments 时没有 `read_image`）。[E: packages/fs/tool-fs/tests/tools.spec.ts:156]
+注册测试断言 catalog 名为 `['edit', 'read', 'write']`（无 attachments 时没有 `read_image`）。[E: packages/fs/tool-fs/tests/tools.spec.ts:164]
 
-`edit` 未声明 `isConcurrencySafe`，调度为 `exclusive`。[E: packages/fs/tool-fs/tests/tools.spec.ts:168][E: packages/core/tools/src/index.ts:1268]
+`edit` 未声明 `isConcurrencySafe`，调度为 `exclusive`。[E: packages/fs/tool-fs/tests/tools.spec.ts:174][E: packages/core/tools/src/index.ts:1305]
 
 ## 用途定位
 
 `edit` 只改**已经存在**的 UTF-8 文本文件。它不是整文件覆盖（那是同包的 `write`），也不是 unified-diff / multi-file patch。description 写的是 “Edit an existing UTF-8 text file by replacing literal text.”[E: packages/fs/tool-fs/src/edit.ts:86]
 
-匹配是字面量，不是 regex，也不是 fuzzy replacer。默认 `replace_all === false` 时，`old_string` 必须在文件里恰好出现一次；多处匹配要嘛加长 `old_string`，要嘛显式 `replace_all: true`。[E: packages/fs/tool-fs/src/edit.ts:89]
+匹配是字面量，不是 regex，也不是 fuzzy replacer。默认 `replace_all === false` 时，`old_string` 必须在文件里恰好出现一次；多处匹配要嘛加长 `old_string`，要嘛显式 `replace_all: true`。[E: packages/fs/tool-fs/src/edit.ts:91]
 
-`new_string` 可以为空字符串，用来删除那一处匹配。[E: packages/fs/tool-fs/src/edit.ts:88]
+`new_string` 可以为空字符串，用来删除那一处匹配。[E: packages/fs/tool-fs/src/edit.ts:90]
 
-真正的读-匹配-写发生在 `ctx.fs.editText` 的临界区里，不在工具层拼 `readText` + `writeText`。[E: packages/fs/fs/src/index.ts:256]
+真正的读-匹配-写发生在 `ctx.fs.editText` 的临界区里，不在工具层拼 `readText` + `writeText`。[E: packages/fs/fs/src/index.ts:287]
 
 ## 输入 schema
 
 `@deepseek-ai/dsh-tool-fs` 的 `Config` 只有 `readLimit` / `readMaxLineLength` / `readMaxBytes` / `readStreamMinSize`，**不改** `edit` 的参数名或字段集。[E: packages/fs/tool-fs/src/index.ts:36]
 
-下列是 `defineTool` 默认 parameters（再叠加 `parseEditArgs` 的值约束）。escalation 两字段是否出现，取决于挂载的 `ctx.fs.sandboxMode`，不是 Config。[E: packages/fs/tool-fs/src/edit.ts:90][E: packages/fs/tool-fs/src/sandbox.ts:45]
+下列是 `defineTool` 默认 parameters（再叠加 `parseEditArgs` 的值约束）。escalation 两字段是否出现，取决于挂载的 `ctx.fs.sandboxMode`，不是 Config。[E: packages/fs/tool-fs/src/edit.ts:92][E: packages/fs/tool-fs/src/sandbox.ts:45]
 
 | 字段 | 类型 | 必填 | 默认 | 约束 | 说明 |
 |---|---|---|---|---|---|
-| `file_path` | `string` | 是 | 无 | trim 后非空 | 由 filesystem backend `resolve`；相对路径相对 session cwd（有 sandbox policy 时用其 `workspaceRoot`）。[E: packages/fs/tool-fs/src/edit.ts:86][E: packages/fs/tool-fs/src/edit.ts:47] |
-| `old_string` | `string` | 是 | 无 | 长度 > 0；必须 ≠ `new_string` | 字面查找文本。空串在 execute 被拒，不能当「创建文件」。[E: packages/fs/tool-fs/src/edit.ts:87][E: packages/fs/tool-fs/src/edit.ts:48] |
-| `new_string` | `string` | 是 | 无 | 必须 ≠ `old_string`；空串合法 | 字面替换文本。空串删除匹配。[E: packages/fs/tool-fs/src/edit.ts:88][E: packages/fs/tool-fs/src/edit.ts:49] |
-| `replace_all` | `boolean` | 否 | `false`（`parseEditArgs` 里 `?? false`） | schema 无 `required` | `false`：必须唯一匹配。`true`：替换全部出现。[E: packages/fs/tool-fs/src/edit.ts:89][E: packages/fs/tool-fs/src/edit.ts:54] |
+| `file_path` | `string` | 是 | 无 | trim 后非空 | 由 filesystem backend `resolve`；相对路径相对 session cwd（有 sandbox policy 时用其 `workspaceRoot`）。[E: packages/fs/tool-fs/src/edit.ts:88][E: packages/fs/tool-fs/src/edit.ts:47] |
+| `old_string` | `string` | 是 | 无 | 长度 > 0；必须 ≠ `new_string` | 字面查找文本。空串在 execute 被拒，不能当「创建文件」。[E: packages/fs/tool-fs/src/edit.ts:89][E: packages/fs/tool-fs/src/edit.ts:48] |
+| `new_string` | `string` | 是 | 无 | 必须 ≠ `old_string`；空串合法 | 字面替换文本。空串删除匹配。[E: packages/fs/tool-fs/src/edit.ts:90][E: packages/fs/tool-fs/src/edit.ts:49] |
+| `replace_all` | `boolean` | 否 | `false`（`parseEditArgs` 里 `?? false`） | schema 无 `required` | `false`：必须唯一匹配。`true`：替换全部出现。[E: packages/fs/tool-fs/src/edit.ts:91][E: packages/fs/tool-fs/src/edit.ts:54] |
 
-`parseEditArgs` 在 schema 通过之后再跑：空白 `file_path`、空 `old_string`、`old_string === new_string` 分别抛普通 `Error`（文案含 `must be a non-empty string` / `must differ`），变成 `isError` 工具结果。[E: packages/fs/tool-fs/src/edit.ts:47][E: packages/fs/tool-fs/tests/tools.spec.ts:448]
+`parseEditArgs` 在 schema 通过之后再跑：空白 `file_path`、空 `old_string`、`old_string === new_string` 分别抛普通 `Error`（文案含 `must be a non-empty string` / `must differ`），变成 `isError` 工具结果。[E: packages/fs/tool-fs/src/edit.ts:47][E: packages/fs/tool-fs/tests/tools.spec.ts:469]
 
 **Confined `ctx.fs`（`sandboxMode !== undefined`）才广告的字段。** `FsSandboxController` 在 apply 时读 `ctx.fs.sandboxMode`：有值则 `escalationModes = ESCALATION_TARGETS`，并把 `schemaFields()` spread 进 parameters；无值则 `escalationModes = []`，模型可见 schema 不含这两键。[E: packages/fs/tool-fs/src/sandbox.ts:44][E: packages/fs/tool-fs/src/sandbox.ts:45][E: packages/sandbox/sandbox/src/escalation.ts:41]
 
-参数根是 implicit open object：`parameterSchemaSpecToJsonSchema` 不写 `additionalProperties: false`。未广告的 escalation 字段仍能到达 `execute`；`resolvePolicy` 在 `escalationModes.length === 0` 时 throw `not available in this composition`。[E: packages/core/tools/src/schema.ts:451][E: packages/fs/tool-fs/src/sandbox.ts:94][E: packages/fs/tool-fs/tests/tools.spec.ts:933]
+参数根是 implicit open object：`parameterSchemaSpecToJsonSchema` 不写 `additionalProperties: false`。未广告的 escalation 字段仍能到达 `execute`；`resolvePolicy` 在 `escalationModes.length === 0` 时 throw `not available in this composition`。[E: packages/core/tools/src/schema.ts:449][E: packages/fs/tool-fs/src/sandbox.ts:94][E: packages/fs/tool-fs/tests/tools.spec.ts:989]
 
-shipped host 挂 `@deepseek-ai/dsh-fs-sandbox`，该 backend 覆盖 `sandboxMode` 为部署默认模式，因此 **standard / ptc / cordis 在默认产品组合里会看到 escalation 字段**。[E: packages/bundle/base/cordis.patch.yml:479][E: packages/fs/fs-sandbox/src/index.ts:66]
+shipped host 挂 `@deepseek-ai/dsh-fs-sandbox`，该 backend 覆盖 `sandboxMode` 为部署默认模式，因此 **standard / ptc / cordis 在默认产品组合里会看到 escalation 字段**。[E: packages/bundle/base/cordis.patch.yml:517][E: packages/fs/fs-sandbox/src/index.ts:65]
 
 | 字段 | 类型 | 必填 | 默认 | 约束 | 说明 |
 |---|---|---|---|---|---|
 | `sandbox_permissions` | `string` | 否 | 无 | enum：`workspace-write`、`danger-full-access` | 一次性更宽 sandbox mode。必须与 `justification` 成对；只作为刚被拒绝后的 retry。[E: packages/fs/tool-fs/src/sandbox.ts:61][E: packages/sandbox/sandbox/src/escalation.ts:41] |
-| `justification` | `string` | 否 | 无 | 与 `sandbox_permissions` 成对；trim 后非空 | 给用户看的一句理由。单独出现或空句都会在 `validateEscalationArgs` 被拒。[E: packages/fs/tool-fs/src/sandbox.ts:67][E: packages/sandbox/sandbox/src/escalation.ts:52] |
+| `justification` | `string` | 否 | 无 | 与 `sandbox_permissions` 成对；trim 后非空 | 给用户看的一句理由。单独出现或空句都会在 `validateEscalationArgs` 被拒。[E: packages/fs/tool-fs/src/sandbox.ts:66][E: packages/sandbox/sandbox/src/escalation.ts:51] |
 
-测试钉死：非 confined backend 的 schema 没有这两字段；confined 时 enum 正好是 `['workspace-write', 'danger-full-access']`。[E: packages/fs/tool-fs/tests/tools.spec.ts:838][E: packages/fs/tool-fs/tests/tools.spec.ts:846]
+测试钉死：非 confined backend 的 schema 没有这两字段；confined 时 enum 正好是 `['workspace-write', 'danger-full-access']`。[E: packages/fs/tool-fs/tests/tools.spec.ts:877][E: packages/fs/tool-fs/tests/tools.spec.ts:886]
 
 `read-only` 不是 escalation 目标（`ESCALATION_TARGETS` 只有 `workspace-write` 与 `danger-full-access`）。严格更宽检查发生在 execute，不写进 schema enum。[E: packages/sandbox/sandbox/src/escalation.ts:41]
 
 ## 输出 & 截断 / spill
 
-成功 body 的 canonical value 是 `{ path, before, after }`，三者都是 required string：`path` 用 backend 的 `displayPath`，`before`/`after` 是 LF-normalized 的整文件文本。[E: packages/fs/tool-fs/src/edit.ts:97][E: packages/fs/tool-fs/src/edit.ts:141]
+成功 body 的 canonical value 是 `{ path, before, after }`，三者都是 required string：`path` 用 backend 的 `displayPath`，`before`/`after` 是 LF-normalized 的整文件文本。[E: packages/fs/tool-fs/src/edit.ts:99][E: packages/fs/tool-fs/src/edit.ts:142]
 
-模型**不**吃这份全文。`ToolRuntime.createSuccessResult` 用 `output.render` 投影成 Native `content`；agent-loop 把 `result.content` 写进 `tool/result` 消息，不把 canonical `value` 回给模型。`edit` 的 render 只调用 `formatEditOutput`：[E: packages/core/tools/src/index.ts:1790][E: packages/core/agent-loop/src/tool-calls.ts:279]
+模型**不**吃这份全文。`ToolRuntime.createSuccessResult` 用 `output.render` 投影成 Native `content`；agent-loop 把 `result.content` 写进 `tool/result` 消息，不把 canonical `value` 回给模型。`edit` 的 render 只调用 `formatEditOutput`：[E: packages/core/tools/src/index.ts:1839][E: packages/core/agent-loop/src/tool-calls.ts:279]
 
 - 单次替换：`The file ${displayPath} has been updated successfully.`[E: packages/fs/tool-fs/src/edit.ts:67]
 - `replace_all`：`The file ${displayPath} has been updated. All occurrences were successfully replaced.`[E: packages/fs/tool-fs/src/edit.ts:66]
 
-`replace_all` 的渲染读的是**原始 args** 的 `args.replace_all ?? false`，不是 parse 后的 camelCase。[E: packages/fs/tool-fs/src/edit.ts:104]
+`replace_all` 的渲染读的是**原始 args** 的 `args.replace_all ?? false`，不是 parse 后的 camelCase。[E: packages/fs/tool-fs/src/edit.ts:106]
 
-`presentationMeta`（仅 top-level call）用 `computeHunkDiffs(file_path, before, after)` 生成 `meta.diffs`：每个 applied hunk 两侧各 `DIFF_CONTEXT = 3` 行，供 UI `presentResult` 画 diff card。这是 session 可 JSON 持久化的展示数据，不是模型正文。[E: packages/fs/tool-fs/src/diff.ts:11][E: packages/fs/tool-fs/src/edit.ts:108][E: packages/core/tools/src/index.ts:1796][E: packages/fs/tool-fs/tests/tools.spec.ts:613]
+`presentationMeta`（仅 top-level call）用 `computeHunkDiffs(file_path, before, after)` 生成 `meta.diffs`：每个 applied hunk 两侧各 `DIFF_CONTEXT = 3` 行，供 UI `presentResult` 画 diff card。这是 session 可 JSON 持久化的展示数据，不是模型正文。[E: packages/fs/tool-fs/src/diff.ts:11][E: packages/fs/tool-fs/src/edit.ts:108][E: packages/core/tools/src/index.ts:1845][E: packages/fs/tool-fs/tests/tools.spec.ts:624]
 
-`edit` 自己没有 spill、没有 maxOutputChars、没有行/字节截断。host `spill-policy`（`maxInlineBytes: 50000`）罩的是通用 inline 结果；本工具模型面是一句确认，不会走出 tool-owned overflow 路径。[E: packages/bundle/base/cordis.patch.yml:386]
+`edit` 自己没有 spill、没有 maxOutputChars、没有行/字节截断。host `spill-policy`（`maxInlineTokens: 12500`）罩的是通用 inline 结果；本工具模型面是一句确认，不会走出 tool-owned overflow 路径。[E: packages/bundle/base/cordis.patch.yml:409]
 
-失败时 registry 把 throw 收成 `isError`。`FS_NOT_OBSERVED` / `FS_STALE_VERSION` 会经 `remediateFsError` 在原文后追加 `read the file, then retry` / `re-read the file, then retry`，`FsError.code` 保留给 retry/UI。[E: packages/fs/tool-fs/src/error.ts:21][E: packages/fs/tool-fs/src/error.ts:21][E: packages/fs/tool-fs/tests/error.spec.ts:21]
+失败时 registry 把 throw 收成 `isError`。`FS_NOT_OBSERVED` / `FS_STALE_VERSION` 会经 `remediateFsError` 在原文后追加 `read the file, then retry` / `re-read the file, then retry`，`FsError.code` 保留给 retry/UI。[E: packages/fs/tool-fs/src/error.ts:23][E: packages/fs/tool-fs/src/error.ts:30][E: packages/fs/tool-fs/tests/error.spec.ts:20]
 
-`FS_EDIT_NOT_FOUND` / `FS_AMBIGUOUS_EDIT` 不追加 remedy。[E: packages/fs/tool-fs/tests/error.spec.ts:27]
+`FS_EDIT_NOT_FOUND` / `FS_AMBIGUOUS_EDIT` 不追加 remedy。[E: packages/fs/tool-fs/tests/error.spec.ts:34]
 
-调用期 UI：`presentCall` 用 args 画 `card: 'diff'`。replay 时若 logged `old_string` 为空，`oldText` 变成 `null`（execute 路径到不了这里，因为 `parseEditArgs` 已拒空串）。[E: packages/fs/tool-fs/src/edit.ts:153][E: packages/fs/tool-fs/tests/tools.spec.ts:596]
+调用期 UI：`presentCall` 用 args 画 `card: 'diff'`。replay 时若 logged `old_string` 为空，`oldText` 变成 `null`（execute 路径到不了这里，因为 `parseEditArgs` 已拒空串）。[E: packages/fs/tool-fs/src/edit.ts:151][E: packages/fs/tool-fs/tests/tools.spec.ts:599]
 
 ## 背后的 seam
 
@@ -159,35 +162,35 @@ shipped host 挂 `@deepseek-ai/dsh-fs-sandbox`，该 backend 覆盖 `sandboxMode
 
 `edit` 没有工具专属的 `tools/pre-execute` listener。一次调用走 `ToolRuntime` 的通用 `prepare → dispatch → finalize`：
 
-1. `tools/pre-execute` waterfall，默认 `allow`。`edit` 的 `defineTool` 不声明 per-call `ask`。日常编辑不弹审批。[E: packages/core/tools/src/index.ts:1467]
-2. 若某 listener 返回 `ask`，registry 经 `ctx.approval` 解析；grant 是 `allowed-once`。这是通用门，不是 `edit` 默认路径。[E: packages/core/tools/src/index.ts:1705]
+1. `tools/pre-execute` waterfall，默认 `allow`。`edit` 的 `defineTool` 不声明 per-call `ask`。日常编辑不弹审批。[E: packages/core/tools/src/index.ts:1507]
+2. 若某 listener 返回 `ask`，registry 经 `ctx.approval` 解析；grant 是 `allowed-once`。这是通用门，不是 `edit` 默认路径。[E: packages/core/tools/src/index.ts:1753]
 3. `tools/execute` around-dispatch。host 挂了 `@deepseek-ai/dsh-tool-call-timeout-policy`：它读 `ToolDefinition.timeoutMs`；`edit` **未**声明 `timeoutMs`，wrapper 直接 `next()`，没有 deadline。[E: packages/guard/timeout-policy/src/index.ts:57][E: packages/guard/timeout-policy/src/index.ts:59]
-4. `dispatchToolBody` 调 `definition.execute`。[E: packages/core/tools/src/index.ts:1540]
-5. `tools/post-execute` 默认 `accept`。`edit` 没有 tool-owned post 改写。[E: packages/core/tools/src/index.ts:1735]
+4. `dispatchToolBody` 调 `definition.execute`。[E: packages/core/tools/src/index.ts:1564]
+5. `tools/post-execute` 默认 `accept`。`edit` 没有 tool-owned post 改写。[E: packages/core/tools/src/index.ts:1784]
 
 **挂在 `execute()` 内部、在 `editText` 之前的门：**
 
-- `FsSandboxController.resolvePolicy('edit', args, exec)`：先 `validateEscalationArgs`；无 escalation 字段则盖 standing session mode（host `sandbox-policy` 默认 `DSH_PERMISSION_MODE ?? 'workspace-write'`）；有字段则 `approveEscalation`，成功只接受 `allowed-once`，把更宽 mode 盖到这一次 policy 上。拒绝/取消/无 approval 服务/无 agent 全部 throw，磁盘未动。[E: packages/fs/tool-fs/src/edit.ts:117][E: packages/fs/tool-fs/src/sandbox.ts:88][E: packages/sandbox/sandbox/src/escalation.ts:183][E: packages/bundle/base/cordis.patch.yml:217]
-- Sandbox 只围栏**文件副作用**。`SandboxedFileSystem.editText` 先 `checkedTarget`：`read-only` 拒一切 mutation；`workspace-write` 要求目标落在 writable roots；`danger-full-access` 不围栏。拒绝抛 `FS_SANDBOX_DENIED`，工具层映射成与 bash 相同的 `[sandbox: file access denied under … mode]` 再加 escalation hint。不可用的进程沙箱是 shell 家族的 `SANDBOX_UNAVAILABLE`；fs 围栏走结构化 `FS_SANDBOX_DENIED`，不静默裸跑。[E: packages/fs/fs-sandbox/src/index.ts:108][E: packages/fs/tool-fs/src/sandbox.ts:129]
+- `FsSandboxController.resolvePolicy('edit', args, exec)`：先 `validateEscalationArgs`；无 escalation 字段则盖 standing session mode（host `sandbox-policy` 默认 `DSH_PERMISSION_MODE ?? 'workspace-write'`）；有字段则 `approveEscalation`，成功只接受 `allowed-once`，把更宽 mode 盖到这一次 policy 上。拒绝/取消/无 approval 服务/无 agent 全部 throw，磁盘未动。[E: packages/fs/tool-fs/src/edit.ts:117][E: packages/fs/tool-fs/src/sandbox.ts:87][E: packages/sandbox/sandbox/src/escalation.ts:202][E: packages/bundle/base/cordis.patch.yml:231]
+- Sandbox 只围栏**文件副作用**。`SandboxedFileSystem.editText` 先 `checkedTarget`：`read-only` 拒一切 mutation；`workspace-write` 要求目标落在 writable roots；`danger-full-access` 不围栏。拒绝抛 `FS_SANDBOX_DENIED`，工具层映射成与 bash 相同的 `[sandbox: file access denied under … mode]` 再加 escalation hint。不可用的进程沙箱是 shell 家族的 `SANDBOX_UNAVAILABLE`；fs 围栏走结构化 `FS_SANDBOX_DENIED`，不静默裸跑。[E: packages/fs/fs-sandbox/src/index.ts:108][E: packages/fs/tool-fs/src/sandbox.ts:124]
 
-相对路径：`sessionResolveOptions` 优先 `sandboxPolicy.workspaceRoot`，否则 `exec.agent.session.header.cwd`。[E: packages/fs/tool-fs/src/session-cwd.ts:40]
+相对路径：`sessionResolveOptions` 优先 `sandboxPolicy.workspaceRoot`，否则 `exec.agent.session.header.cwd`。[E: packages/fs/tool-fs/src/session-cwd.ts:31]
 
 ## Preset 装配
 
-成员资格只认 `packages/preset/agent-presets/presets/*/agent.cordis.yml`。四个 shipped preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` 即 PTC；wiki id `surface.presets.code` 仍是该预设的稳定别名）。包存在 ≠ 该 preset 装了 `edit`。
+成员资格只认 `packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}.patch.yml`。四个 shipped preset **只叠在 `dsh-web-app`**（旧名 `code` 即 PTC；wiki id `surface.presets.code` 仍是该预设的稳定别名）。包存在 ≠ 该 preset 装了 `edit`。[E: packages/bundle/web-app/package.json:44]
 
 | Preset | 是否装 `@deepseek-ai/dsh-tool-fs`（从而有 `edit`） | `disabled` | isolate |
 |---|---|---|---|
-| `minimal` | 否。只装 persistent-shell（`dsh-tool-bash-persistent` / `dsh-tool-pwsh-persistent`） | 无 `tool-fs` 行 | 只有 `isolate.terminals`（无 fs / 无 str_replace）[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:25][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:37][E: apps/cli/tests/web-agent-presets.e2e.ts:299] |
-| `standard` | 是，`id: tool-fs` | 无 | 该行不在 isolate 组；`fs` 与 observation policy 留在 host [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:57] |
-| `ptc` | 是，工具行仍是 `id: tool-fs`；另挂 `tool-presentation` `mode: ptc` | 无 | 无 isolate [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:64][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] |
-| `cordis` | 是 | 无 | 同 standard [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:58] |
+| `minimal` | 否。只装 persistent-shell（`dsh-tool-bash-persistent` / `dsh-tool-pwsh-persistent`） | 无 `tool-fs` 行 | 只有 `isolate.terminals`（无 fs / 无 str_replace）[E: packages/bundle/web-app/presets/minimal.patch.yml:17][E: packages/bundle/web-app/presets/minimal.patch.yml:21][E: apps/cli/tests/web-agent-presets.e2e.ts:321] |
+| `standard` | 是，`id: tool-fs` | 无 | 该行不在 isolate 组；`fs` 与 observation policy 留在 host [E: packages/bundle/web-app/presets/standard.patch.yml:26] |
+| `ptc` | 是，工具行仍是 `id: tool-fs`；另挂 `tool-presentation` `mode: ptc` | 无 | 无 isolate [E: packages/bundle/web-app/presets/ptc.patch.yml:26][E: packages/bundle/web-app/presets/ptc.patch.yml:147] |
+| `cordis` | 是 | 无 | 同 standard [E: packages/bundle/web-app/presets/cordis.patch.yml:29] |
 
-`ptc` 的 catalog 仍含 `edit`，但 `mode: ptc` 会把模型顶层直呼塌缩成 `UNKNOWN_TOOL`（文案要求从 `run_code` 程序里调用）；SDK 子分发带 `parent`，`collapses` 对 `nested === true` 为 false，仍执行 `edit` 本体。[E: packages/core/tools/src/index.ts:1315][E: packages/core/tools/src/index.ts:1429]
+`ptc` 的 catalog 仍含 `edit`，但 `mode: ptc` 会把模型顶层直呼塌缩成 `UNKNOWN_TOOL`（文案要求从 `run_code` 程序里调用）；SDK 子分发带 `parent`，`collapses` 对 `nested === true` 为 false，仍执行 `edit` 本体。[E: packages/core/tools/src/index.ts:1351][E: packages/core/tools/src/index.ts:1453]
 
-Web host（`dsh --profile web`）把 base 里那份 `tool-fs` 设为 `disabled: true`，由 preset 再挂，所以 Web 会话看不看得到 `edit` 以 preset 表为准。其它 shipped profile（`headless` / `sdk` / `sdk-minimal` / `acp`）叠不同 bundle；`sdk-minimal` 不叠 `dsh-base`。[E: packages/bundle/web-app/cordis.patch.yml:387][E: packages/bundle/web-app/cordis.patch.yml:388]
+Web host（`dsh --profile web`）把 base 里那份 `tool-fs` 设为 `disabled: true`，由 preset 再挂，所以 Web 会话看不看得到 `edit` 以 preset 表为准。其它 shipped profile（`headless` / `sdk` / `sdk-minimal` / `acp`）叠不同 bundle；`sdk-minimal` 不叠 `dsh-base`。[E: packages/bundle/web-app/cordis.patch.yml:466][E: packages/boot/app-boot/src/profile.ts:192]
 
-host `dsh-base` 仍 insert `fs-observation-policy` + `tool-fs` + `fs-sandbox`：默认组合里 read-before-edit 与 mutation 围栏是开的，schema 不因此增减字段。[E: packages/bundle/base/cordis.patch.yml:257][E: packages/bundle/base/cordis.patch.yml:260]
+host `dsh-base` 仍 insert `fs-observation-policy` + `tool-fs` + `fs-sandbox`：默认组合里 read-before-edit 与 mutation 围栏是开的，schema 不因此增减字段。[E: packages/bundle/base/cordis.patch.yml:277][E: packages/bundle/base/cordis.patch.yml:280]
 
 `minimal` 没有模型可见编辑器，只靠 persistent `bash`/`pwsh`；`str_replace_editor` 包仍在、出厂不挂。
 
@@ -200,44 +203,44 @@ host `dsh-base` 仍 insert `fs-observation-policy` + `tool-fs` + `fs-sandbox`：
 3. **`ctx.fs.resolve` + `sessionResolveOptions@packages/fs/tool-fs/src/session-cwd.ts`** — 得到稳定 `FsTarget`。工具层**不** `stat`。[E: packages/fs/tool-fs/src/edit.ts:118]
 4. **`ctx.waterfall('fs/edit-intent', target, exec, () => undefined)`** — 默认 `undefined`（无条件编辑）。host 加载了 `@deepseek-ai/dsh-fs-observation-policy` 时，`editIntent` 要么给 `{ version }`，要么抛 `FS_NOT_OBSERVED` / `FS_NOT_FOUND`。这条 waterfall 放在 try 里，好让 policy 拒绝也走同一套 model-facing remedy。[E: packages/fs/tool-fs/src/edit.ts:127][E: packages/fs/fs-observation-policy/src/index.ts:82]
 5. **`ctx.fs.editText(target, { oldString, newString, replaceAll }, intent, exec.signal, sandboxPolicy)`** — 工具仍不 stat。CAS、字面匹配、原子写都在 provider 锁里。[E: packages/fs/tool-fs/src/edit.ts:128][E: packages/fs/tool-fs/tests/integration.spec.ts:271]
-6. **`SandboxedFileSystem.checkedTarget` 然后 `LocalFileSystem.editText`** — 先围栏。缺失目标（无论有没有 version guard）报 `FS_STALE_VERSION`，文案是 `file changed since it was read`，避免对「已被别人删掉」报 `FS_EDIT_NOT_FOUND`。[E: packages/fs/fs-sandbox/src/index.ts:108][E: packages/fs/fs-local/src/index.ts:236]
-7. **version 对不上 → `FS_STALE_VERSION`，发生在字面匹配之前**，所以过期的 `old_string` 不会变成 `FS_EDIT_NOT_FOUND` / `FS_AMBIGUOUS_EDIT`。[E: packages/fs/fs-local/src/index.ts:241]
-8. **`applyLiteralEdit@packages/fs/fs-local/src/fsio.ts`** — 先把 `old_string`/`new_string` LF-normalize 再在已归一化的文件内容上 `split`/`join`。0 次 → `FS_EDIT_NOT_FOUND`；`!replaceAll && replacements > 1` → `FS_AMBIGUOUS_EDIT`（文案点名 `replace_all`）。然后按原文件主换行风格写回。[E: packages/fs/fs-local/src/fsio.ts:767][E: packages/fs/fs-local/src/fsio.ts:773][E: packages/fs/fs-local/src/fsio.ts:777]
+6. **`SandboxedFileSystem.checkedTarget` 然后 `LocalFileSystem.editText`** — 先围栏。缺失目标（无论有没有 version guard）报 `FS_STALE_VERSION`，文案是 `file changed since it was read`，避免对「已被别人删掉」报 `FS_EDIT_NOT_FOUND`。[E: packages/fs/fs-sandbox/src/index.ts:108][E: packages/fs/fs-local/src/index.ts:268]
+7. **version 对不上 → `FS_STALE_VERSION`，发生在字面匹配之前**，所以过期的 `old_string` 不会变成 `FS_EDIT_NOT_FOUND` / `FS_AMBIGUOUS_EDIT`。[E: packages/fs/fs-local/src/index.ts:273]
+8. **`applyLiteralEdit@packages/fs/fs-local/src/fsio.ts`** — 先把 `old_string`/`new_string` LF-normalize 再在已归一化的文件内容上 `split`/`join`。0 次 → `FS_EDIT_NOT_FOUND`；`!replaceAll && replacements > 1` → `FS_AMBIGUOUS_EDIT`（文案点名 `replace_all`）。然后按原文件主换行风格写回。[E: packages/fs/fs-local/src/fsio.ts:821][E: packages/fs/fs-local/src/fsio.ts:827][E: packages/fs/fs-local/src/fsio.ts:830]
 9. **`catch`：`remediateFsError(sandbox.mapError(...))`** — `FS_SANDBOX_DENIED` 换成共享 `[sandbox: …]` marker；stale / not-observed 追加 remedy；其余原样抛出。[E: packages/fs/tool-fs/src/edit.ts:139]
 10. **`ctx.emit('fs/observed', … present, outcome.version)`** — 刷新观测，使同 session 下一次 `edit`/`write` 不必再 `read`。无 policy plugin 时这是空操作。listener 约定同步；它 throw 会变成这次 call 的 `isError`，但磁盘已经写下。[E: packages/fs/tool-fs/src/edit.ts:141]
 11. **return `{ path: displayPath, before, after }`** — registry 校验 output schema，`formatEditOutput` 生成模型句，`computeHunkDiffs` 写入 `meta`。[E: packages/fs/tool-fs/src/edit.ts:142]
 
 默认 policy 部署下的集成行为：
 
-- 未 `read` 的 `edit` → `FS_NOT_OBSERVED`，文件不动，文案含 `edit requires reading` 与 `read the file, then retry`。[E: packages/fs/tool-fs/tests/integration.spec.ts:153]
-- 窗口 `read`（只看第一行）也能授权编辑窗口外的行：观测的是 version，不是「模型看见的行」。[E: packages/fs/tool-fs/tests/integration.spec.ts:169]
-- 读后磁盘被改 → `FS_STALE_VERSION`；再 `read` 然后重试可通过。[E: packages/fs/tool-fs/tests/integration.spec.ts:180]
-- 无 `replace_all` 的多处匹配 → `FS_AMBIGUOUS_EDIT`；`replace_all: true` 把 `a a a` 写成 `b b b`。[E: packages/fs/tool-fs/tests/integration.spec.ts:205][E: packages/fs/tool-fs/tests/integration.spec.ts:214]
-- 同 session 刚 `write` 过的文件可以直接 `edit`，不必中间再 `read`（write 已 emit `fs/observed`）。[E: packages/fs/tool-fs/tests/integration.spec.ts:219]
-- 观测为缺失之后，`edit` 仍是 `FS_NOT_FOUND`；重建走 `write` 的 `createIfAbsent`。[E: packages/fs/tool-fs/tests/integration.spec.ts:260]
-- 卸掉 observation policy 的 bare 部署：未读文件也能 `edit`；缺文件仍是 `FS_STALE_VERSION`。[E: packages/fs/tool-fs/tests/integration.spec.ts:345][E: packages/fs/tool-fs/tests/integration.spec.ts:350]
+- 未 `read` 的 `edit` → `FS_NOT_OBSERVED`，文件不动，文案含 `edit requires reading` 与 `read the file, then retry`。[E: packages/fs/tool-fs/tests/integration.spec.ts:151]
+- 窗口 `read`（只看第一行）也能授权编辑窗口外的行：观测的是 version，不是「模型看见的行」。[E: packages/fs/tool-fs/tests/integration.spec.ts:160]
+- 读后磁盘被改 → `FS_STALE_VERSION`；再 `read` 然后重试可通过。[E: packages/fs/tool-fs/tests/integration.spec.ts:174]
+- 无 `replace_all` 的多处匹配 → `FS_AMBIGUOUS_EDIT`；`replace_all: true` 把 `a a a` 写成 `b b b`。[E: packages/fs/tool-fs/tests/integration.spec.ts:200][E: packages/fs/tool-fs/tests/integration.spec.ts:209]
+- 同 session 刚 `write` 过的文件可以直接 `edit`，不必中间再 `read`（write 已 emit `fs/observed`）。[E: packages/fs/tool-fs/tests/integration.spec.ts:217]
+- 观测为缺失之后，`edit` 仍是 `FS_NOT_FOUND`；重建走 `write` 的 `createIfAbsent`。[E: packages/fs/tool-fs/tests/integration.spec.ts:258]
+- 卸掉 observation policy 的 bare 部署：未读文件也能 `edit`；缺文件仍是 `FS_STALE_VERSION`。[E: packages/fs/tool-fs/tests/integration.spec.ts:343][E: packages/fs/tool-fs/tests/integration.spec.ts:350]
 
-escalation 测试：用户拒绝 `sandbox_permissions` 时 `edit` 为 `isError`，provider 未被 stamp / 未 mutation。[E: packages/fs/tool-fs/tests/tools.spec.ts:900]
+escalation 测试：用户拒绝 `sandbox_permissions` 时 `edit` 为 `isError`，provider 未被 stamp / 未 mutation。[E: packages/fs/tool-fs/tests/tools.spec.ts:962]
 
 ## 设计动机·edge
 
 DSH 没有 `apply_patch`。`edit` 是精确字面替换，不是 Codex 的 hunk 方言，也不是 Claude Code V1 那种 9 路 fuzzy replacer。空 `old_string` 不能创建文件（那是 `write`）。[E: packages/fs/tool-fs/src/edit.ts:48]
 
-相对 Anthropic 风格的 `str_replace_editor`：那是 **另一个包**，出厂 preset/bundle 都不挂（`minimal` 也不再装）；`edit`/`write`/`read` 是 `dsh-tool-fs` 的三件套。不要把退役 editor 读成 `edit` 的配置变体。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: apps/cli/tests/web-agent-presets.e2e.ts:299]
+相对 Anthropic 风格的 `str_replace_editor`：那是 **另一个包**，出厂 preset/bundle 都不挂（`minimal` 也不再装）；`edit`/`write`/`read` 是 `dsh-tool-fs` 的三件套。不要把退役 editor 读成 `edit` 的配置变体。[E: packages/bundle/web-app/presets/minimal.patch.yml:17][E: apps/cli/tests/web-agent-presets.e2e.ts:321]
 
 本工具独有 / 易踩的边：
 
 - **schema 不编码 read-before-edit。** 默认 policy 在 `fs/edit-intent` 上拒绝未见目标；卸掉 plugin 就变成无条件 `editText`。模型必须先走会 emit `fs/observed` 的 `read`/`write`/`edit`，直接 `ctx.fs.readText` 不算数。[E: packages/fs/fs-observation-policy/src/index.ts:82][E: packages/fs/tool-fs/tests/integration.spec.ts:226]
 - **`old_string === new_string` 在进磁盘前拒掉**，避免保证 no-op 的调用。[E: packages/fs/tool-fs/src/edit.ts:49]
-- **匹配在 LF 归一化后做**，再按原文件主换行写回。CRLF 文件可以按 LF 风格的 `old_string` 命中。[E: packages/fs/fs-local/src/fsio.ts:767]
-- **缺失目标与 stale 共用 `FS_STALE_VERSION`**，包括 bare 无 guard 路径。模型收到的是「re-read then retry」，不是「not found」。[E: packages/fs/fs-local/src/index.ts:236]
-- **ambiguous 必须模型改口**：加长 `old_string` 或设 `replace_all`。工具不会自行挑第一处。[E: packages/fs/fs-local/src/fsio.ts:777]
-- **escalation 字段只在 confined fs 广告**；未广告时字段仍可能到达 `execute`，由 `resolvePolicy` 以「not available in this composition」fail-closed（`edit.ts` 注释写「validator 先拒」与测试不一致，以测试与 schema 编译为准）。[E: packages/fs/tool-fs/src/sandbox.ts:94][E: packages/fs/tool-fs/tests/tools.spec.ts:928]
-- **grant 是 `allowed-once`**，只盖这一次 mutation，不是 session 永久升权。[E: packages/sandbox/sandbox/src/escalation.ts:183]
+- **匹配在 LF 归一化后做**，再按原文件主换行写回。CRLF 文件可以按 LF 风格的 `old_string` 命中。[E: packages/fs/fs-local/src/fsio.ts:821]
+- **缺失目标与 stale 共用 `FS_STALE_VERSION`**，包括 bare 无 guard 路径。模型收到的是「re-read then retry」，不是「not found」。[E: packages/fs/fs-local/src/index.ts:268]
+- **ambiguous 必须模型改口**：加长 `old_string` 或设 `replace_all`。工具不会自行挑第一处。[E: packages/fs/fs-local/src/fsio.ts:830]
+- **escalation 字段只在 confined fs 广告**；未广告时字段仍可能到达 `execute`，由 `resolvePolicy` 以「not available in this composition」fail-closed（`edit.ts` 注释写「validator 先拒」与测试不一致，以测试与 schema 编译为准）。[E: packages/fs/tool-fs/src/sandbox.ts:94][E: packages/fs/tool-fs/tests/tools.spec.ts:989]
+- **grant 是 `allowed-once`**，只盖这一次 mutation，不是 session 永久升权。[E: packages/sandbox/sandbox/src/escalation.ts:202]
 - **无 `timeoutMs`**，与 search/web 不同；取消只靠调用方 `exec.signal` 传到 `resolve` / `editText`。[E: packages/guard/timeout-policy/src/index.ts:59]
-- **`exclusive`**：并行组里的 `edit` 单独成障，避免同文件交叉写。[E: packages/fs/tool-fs/tests/tools.spec.ts:168]
-- **窗口 read 授权的是 version，不是可见行。** 只读了第 1 行也可以改第 12 行，只要文件没在中间被改。[E: packages/fs/tool-fs/tests/integration.spec.ts:169]
-- **PTC 顶层直呼被塌缩**：`collapses` 在 `modeFor(scope) === 'ptc'` 且非 nested 时对非 `run_code` 名返回 true；权威实现是 `packages/core/tools/src/ptc.ts` 的 `run_code` 子分发，不是已删除的 `code-mode.ts`。[E: packages/core/tools/src/index.ts:1315]
+- **`exclusive`**：并行组里的 `edit` 单独成障，避免同文件交叉写。[E: packages/fs/tool-fs/tests/tools.spec.ts:174]
+- **窗口 read 授权的是 version，不是可见行。** 只读了第 1 行也可以改第 12 行，只要文件没在中间被改。[E: packages/fs/tool-fs/tests/integration.spec.ts:160]
+- **PTC 顶层直呼被塌缩**：`collapses` 在 `modeFor(scope) === 'ptc'` 且非 nested 时对非 `run_code` 名返回 true；权威实现是 `packages/core/tools/src/ptc.ts` 的 `run_code` 子分发，不是已删除的 `code-mode.ts`。[E: packages/core/tools/src/index.ts:1351]
 
 ## Sources
 
@@ -263,10 +266,13 @@ DSH 没有 `apply_patch`。`edit` 是精确字面替换，不是 Codex 的 hunk 
 - packages/guard/timeout-policy/src/index.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/package.json
+- packages/bundle/web-app/presets/minimal.patch.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
+- packages/boot/app-boot/src/profile.ts
+- apps/cli/tests/web-agent-presets.e2e.ts
 
 ## 相关
 

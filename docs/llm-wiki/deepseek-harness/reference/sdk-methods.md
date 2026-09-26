@@ -30,7 +30,7 @@ related:
   - surface.sdk.python
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-sdk-protocol` 的 wire 合同是 **三请求 + 四通知**；TS `DeepSeekHarness` / `HarnessClient` 与 Python `DeepSeekHarness` / `HarnessClient` 是进程外 Consumer，同表不同签名。`serverInfo.name` 钉死 `deepseek-harness-sdk-runtime`。
@@ -62,7 +62,7 @@ updated: c291e7961a
 | 名 | 类型/签名 | 默认 | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|
 | `initialize` | params `InitializeParams` `{ cwd, provider, model, reasoningEffort?, maxTokens? }` → result `InitializeResult` `{ serverInfo: { name, version } }` | `reasoningEffort` / `maxTokens` 可缺；`name` 由 server 写成 `deepseek-harness-sdk-runtime`，`version` 现为 `'0.0.1'` | 进程级握手：记下此后 **SDK 新创建** session 的 cwd / provider / model / 可选 effort / 正整数 token 帽。server 在缺 adapter 且 provider 为 `deepseek-official` 时才挂 DeepSeek fallback。[E: packages/sdk/protocol/src/types.ts:116] [E: packages/sdk/server/src/server.ts:168] [E: packages/sdk/server/tests/server.spec.ts:132] | 路由一次，避免每 session 再协商；`name` 给异构客户端做身份探测，不是 npm 版本谈判。 | `packages/sdk/protocol/src/types.ts` |
-| `session/prompt` | params `SessionPromptParams` `{ sessionId, contentBlocks }` → result `SessionPromptResult` `{ messageId }` | 无字段默认。未知 `sessionId` 在 server 侧懒创建。未 `initialize` 则抛错 | 把 `contentBlocks`（可含 inline image）入队成 user 消息，立刻返回 durable `messageId`。不等 assistant、不等 `turn/end`。[E: packages/sdk/protocol/src/types.ts:117] [E: packages/sdk/server/src/server.ts:177] | 协议没有 `newSession`：调用方自带 id。完成态靠后续通知，所以同一 session 可连续入队 / steer。 | `packages/sdk/protocol/src/types.ts` |
+| `session/prompt` | params `SessionPromptParams` `{ sessionId, contentBlocks }` → result `SessionPromptResult` `{ messageId }` | 无字段默认。未知 `sessionId` 在 server 侧懒创建。未 `initialize` 则抛错 | 把 `contentBlocks`（可含 inline image）入队成 user 消息，立刻返回 durable `messageId`。不等 assistant、不等 `turn/end`。[E: packages/sdk/protocol/src/types.ts:117] [E: packages/sdk/server/src/server.ts:178] | 协议没有 `newSession`：调用方自带 id。完成态靠后续通知，所以同一 session 可连续入队 / steer。 | `packages/sdk/protocol/src/types.ts` |
 | `shutdown` | params `undefined` → result `Record<string, never>`（空对象 `{}`） | params 类型是 `undefined`；TS 客户端 `request()` 缺省仍发 `{}` | 协议停机。插件在 **写出结果之后** 才 `setImmediate` 去 `flush` + `rootFiber.dispose()` + `exit(0)`。[E: packages/sdk/protocol/src/types.ts:118] [E: packages/sdk/server/src/server.ts:252] [E: packages/sdk/server/src/index.ts:90] | 让客户端先拿到空回执，再拆整棵 runtime。未知第四方法走 `default` 抛错（transport 层成 `-32603`，不是 `-32601`）。[E: packages/sdk/server/src/server.ts:254] | `packages/sdk/protocol/src/types.ts` |
 
 ### Wire notification（`HarnessSdkNotificationMap`）
@@ -168,7 +168,7 @@ updated: c291e7961a
 
 **`serverInfo.name` 是 wire-stable `deepseek-harness-sdk-runtime`。** 字面量写在 server 返回值，不在 protocol 类型（类型只是 `string`）。单测钉死这个名字。[E: packages/sdk/server/src/server.ts:168] [E: packages/sdk/server/tests/server.spec.ts:132]
 
-**未 `initialize` 就 `session/prompt`。** `prompt()` 先检查 `this.initialized`。[E: packages/sdk/server/src/server.ts:177] 字段初值是 `provider='deepseek-official'`、`model='deepseek-official'`（不是客户端默认的 `deepseek-v4-flash`）。[E: packages/sdk/server/src/server.ts:77] [E: packages/sdk/server/src/server.ts:78]
+**未 `initialize` 就 `session/prompt`。** `prompt()` 先检查 `this.initialized`。[E: packages/sdk/server/src/server.ts:178] 字段初值是 `provider='deepseek-official'`、`model='deepseek-official'`（不是客户端默认的 `deepseek-v4-flash`）。[E: packages/sdk/server/src/server.ts:77] [E: packages/sdk/server/src/server.ts:78]
 
 **不是 ACP，不是 `dsh web`。** 没有 `newSession` / `cancel`。Web 工作台走 host HTTP（`session-controller` 等），不讲这套 stdio JSON-RPC。SDK 入口是 `dsh --profile sdk` 或 `dsh --profile sdk-minimal`（后者不叠 `dsh-base`）。本目录不进四个 shipped preset。
 

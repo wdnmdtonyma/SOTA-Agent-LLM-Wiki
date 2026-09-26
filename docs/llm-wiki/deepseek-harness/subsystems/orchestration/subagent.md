@@ -28,11 +28,12 @@ source:
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/base/tests/base.spec.ts
   - packages/bundle/web-app/cordis.patch.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/preset/agent-preset-registry/src/index.ts
   - packages/core/tools/src/index.ts
   - packages/terminal/terminal/src/index.ts
-  - packages/workflow/workflow-worker-thread/src/host.ts
+  - packages/workflow/workflow-ptc/src/host.ts
   - vendor/cordis/src/events.ts
 symbols:
   - ctx.subagents
@@ -55,7 +56,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `ctx.subagents`（`SubagentRuntime`）是 **host 面**委托缝的 Definition：`super(ctx, 'subagents')` 占进程单例服务键，原语是 **按名**登记多家 `SubagentProvider`（`registerProvider`，不是 terminals 的 `registerBackend`），再按名 `start`（one-shot `SubagentRun`）或 `startContinuable`（durable 孩子，要求 provider 有 `prepareContinuable`）。多家 provider 共存；模型可见 `subagent*` 工具、Codex/Claude 包、`ctx.jobs`、已删除的 `tool-subagent-report` 都不在本包。
@@ -71,13 +72,13 @@ updated: c291e7961a
 
 ## 职责边界
 
-`@deepseek-ai/dsh-subagent` 拥有：**host 面**服务 `ctx.subagents`（`SubagentRuntime`，`extends TypertRemoteService`）、按名 `Map<string, SubagentProvider>`、one-shot `start` 的 capability / descriptor 校验、continuable 的 `SubagentContinuationManager`（身份预留、materialize、inbox 投递、cold resume、settlement notice、child-first drain）、只读 `listChildren` / `listDescendants`、in-process 共用的 `applyChildComposition` / `resolveChildDepth` / `snapshotSubagentDescriptor`、以及进程外 backend 的词汇（`NO_START_CAPABILITIES` / `settleRunResult` / `subprocessRunHandle`）。包名写在 manifest。[E: packages/subagent/subagent/package.json:2] 构造占键 `subagents`。[E: packages/subagent/subagent/src/index.ts:199]
+`@deepseek-ai/dsh-subagent` 拥有：**host 面**服务 `ctx.subagents`（`SubagentRuntime`，`extends TypertRemoteService`）、按名 `Map<string, SubagentProvider>`、one-shot `start` 的 capability / descriptor 校验、continuable 的 `SubagentContinuationManager`（身份预留、materialize、inbox 投递、cold resume、settlement notice、child-first drain）、只读 `listChildren` / `listDescendants`、in-process 共用的 `applyChildComposition` / `resolveChildDepth` / `snapshotSubagentDescriptor`、以及进程外 backend 的词汇（`NO_START_CAPABILITIES` / `settleRunResult` / `subprocessRunHandle`）。包名写在 manifest。[E: packages/subagent/subagent/package.json:2] 构造占键 `subagents`。[E: packages/subagent/subagent/src/index.ts:200]
 
 本包**不**拥有：
 
 - 默认 in-process spawn 实现与 `startInProcessRun` 驱动 — [subsys.orchestration.subagent-in-process](subagent-in-process.md)（`subsys.orchestration.subagent-in-process`）。
 - fork 的 `completedTurnPrefix` seed — [subsys.orchestration.subagent-fork](subagent-fork.md)（`subsys.orchestration.subagent-fork`）。
-- 模型可见 `subagent` / `subagent_fork` 字段表与 `backgroundMode` 广告 — [surface.tools.subagent](../../surface/tools/subagent.md)（`surface.tools.subagent`）/ [surface.tools.subagent-fork](../../surface/tools/subagent-fork.md)（`surface.tools.subagent-fork`）。Consumer 包是 `@deepseek-ai/dsh-tool-subagent`。[E: packages/subagent/tool-subagent/src/index.ts:44]
+- 模型可见 `subagent` / `subagent_fork` 字段表与 `backgroundMode` 广告 — [surface.tools.subagent](../../surface/tools/subagent.md)（`surface.tools.subagent`）/ [surface.tools.subagent-fork](../../surface/tools/subagent-fork.md)（`surface.tools.subagent-fork`）。Consumer 包是 `@deepseek-ai/dsh-tool-subagent`。[E: packages/subagent/tool-subagent/src/index.ts:45]
 - `send_message` / `interrupt_agent` / `list_agents` — [surface.tools.subagent-control](../../surface/tools/subagent-control.md)（`surface.tools.subagent-control`）。
 - `ctx.jobs`、Job id、`job_output` — [subsys.orchestration.jobs](jobs.md)（`subsys.orchestration.jobs`）。本包只导出 one-shot 后台用的 `settleRun`。[E: packages/subagent/subagent/src/run-settlement.ts:61]
 - Codex / Claude / ACP / DSH-SDK 后端包。`dsh-base` **没有** `id: subagent-codex` / `id: subagent-claude-code`，也不是「装了但 dormant」：`base.spec.ts` 要求这两行长度为 0，且 `dependencies` 不含对应包。[E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:44] [E: packages/bundle/base/tests/base.spec.ts:48] [E: packages/bundle/base/tests/base.spec.ts:49]
@@ -106,16 +107,17 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 | `packages/bundle/base/cordis.patch.yml` | host 真树：`subagent` + spawn + fork |
 | `packages/bundle/base/tests/base.spec.ts` | 钉死 **不**装 Codex/Claude |
 | `packages/bundle/web-app/cordis.patch.yml` | 关掉 host 模型 tool 行；registry 留下 |
-| `packages/preset/agent-presets/presets/standard/agent.cordis.yml` | preset remount；`isolate` 只有 `workflowEngine` |
-| `packages/preset/agent-presets/presets/ptc/agent.cordis.yml` | PTC 预设同样 `delegation.isolate.workflowEngine` |
+| `packages/bundle/web-app/presets/standard.patch.yml` | preset remount；`isolate` 只有 `workflowEngine`；`subagent_fork` `continuable` |
+| `packages/bundle/web-app/presets/ptc.patch.yml` | PTC 同样 remount spawn/fork；workflow 三行 `disabled` |
+| `packages/preset/agent-preset-registry/src/index.ts` | 孩子 `composeFrom`：join 父 preset 的当前 revision |
 
 ## 数据模型
 
 | 符号 | 要点 |
 |---|---|
-| `SubagentRuntime` | `extends TypertRemoteService`；构造 `super(ctx, 'subagents')`。无 plugin `Config`。[E: packages/subagent/subagent/src/index.ts:188] [E: packages/subagent/subagent/src/index.ts:199] |
+| `SubagentRuntime` | `extends TypertRemoteService`；构造 `super(ctx, 'subagents')`。无 plugin `Config`。[E: packages/subagent/subagent/src/index.ts:188] [E: packages/subagent/subagent/src/index.ts:200] |
 | `SubagentProvider` | `name` + `capabilities` + `inheritsParentContext` + `start`；可选 `prepareContinuable?`（方法存在即 continuable 能力）。[E: packages/subagent/subagent/src/types.ts:344] [E: packages/subagent/subagent/src/types.ts:389] |
-| `SubagentCapabilities` | one-shot 开工前校验：`agentOptions` / `outputSchema` / `depthLimit` / `toolFilter` / `persona`。缺能力 → `UNSUPPORTED_CAPABILITY`，不静默忽略。[E: packages/subagent/subagent/src/index.ts:641] [E: packages/subagent/subagent/src/index.ts:652] |
+| `SubagentCapabilities` | one-shot 开工前校验：`agentOptions` / `outputSchema` / `depthLimit` / `toolFilter` / `persona`。缺能力 → `UNSUPPORTED_CAPABILITY`，不静默忽略。[E: packages/subagent/subagent/src/index.ts:644] [E: packages/subagent/subagent/src/index.ts:653] |
 | `SubagentStartRequest` | 调用方意图：`prompt` + `parent` + `signal`，可选 `label` / `agentOptions` / `outputSchema` / `maxDepth` / `toolFilter` / `persona`。 |
 | `ResolvedSubagentStartRequest` | `start` 补上 detached `descriptor` 后再交给 `provider.start`。[E: packages/subagent/subagent/src/index.ts:566] |
 | `SubagentRun` | one-shot 句柄：`id` / `localAgent?` / 永不因孩子失败而 reject 的 `result` / `dispose()`。continuable **没有** Run。 |
@@ -131,29 +133,29 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 
 ## 控制流
 
-1. **`dsh-base` 在 host 根插入 Definition + 两家 in-process Provider。** `id: subagent` / `name: '@deepseek-ai/dsh-subagent'`。[E: packages/bundle/base/cordis.patch.yml:328] [E: packages/bundle/base/cordis.patch.yml:329] 紧接着 `id: subagent-spawn-in-process`，`providerName: spawn`；`id: subagent-fork-in-process`，`providerName: fork`。[E: packages/bundle/base/cordis.patch.yml:331] [E: packages/bundle/base/cordis.patch.yml:334] [E: packages/bundle/base/cordis.patch.yml:336] [E: packages/bundle/base/cordis.patch.yml:339] **没有** `subagent-codex` / `subagent-claude-code` 行；测试把这两行长度钉成 0，并把对应依赖钉成不存在。[E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:49] 旧 Agent Note / README 写「base dormant 加载 Codex/Claude」**作废**。
+1. **`dsh-base` 在 host 根插入 Definition + 两家 in-process Provider。** `id: subagent` / `name: '@deepseek-ai/dsh-subagent'`。[E: packages/bundle/base/cordis.patch.yml:348] [E: packages/bundle/base/cordis.patch.yml:349] 紧接着 `id: subagent-spawn-in-process`，`providerName: spawn`；`id: subagent-fork-in-process`，`providerName: fork`。[E: packages/bundle/base/cordis.patch.yml:351] [E: packages/bundle/base/cordis.patch.yml:354] [E: packages/bundle/base/cordis.patch.yml:356] [E: packages/bundle/base/cordis.patch.yml:359] **没有** `subagent-codex` / `subagent-claude-code` 行；测试把这两行长度钉成 0，并把对应依赖钉成不存在。[E: packages/bundle/base/tests/base.spec.ts:42] [E: packages/bundle/base/tests/base.spec.ts:48] 旧 Agent Note / README 写「base dormant 加载 Codex/Claude」**作废**。
 
-2. **`SubagentRuntime`@packages/subagent/subagent/src/index.ts 占 host 键。** 构造 `super(ctx, 'subagents')`，把 `Context.subagents` 指到自己。[E: packages/subagent/subagent/src/index.ts:199] `ctx.inject(['agents'], …)` 才 `new SubagentContinuationManager`；卸掉 `agents` 就把 manager 槽清掉。[E: packages/subagent/subagent/src/index.ts:201] [E: packages/subagent/subagent/src/index.ts:206] 另 `inject(['sessionProjections'], …)` 登记 identity / timing projection。没有 `agents` 时 `start()` 仍可走 provider，但 `startContinuable` / `sendMessage` 抛 `CONTINUATION_UNAVAILABLE`。[E: packages/subagent/subagent/src/index.ts:620] 测试直接打这条。[E: packages/subagent/subagent/tests/service.spec.ts:177]
+2. **`SubagentRuntime`@packages/subagent/subagent/src/index.ts 占 host 键。** 构造 `super(ctx, 'subagents')`，把 `Context.subagents` 指到自己。[E: packages/subagent/subagent/src/index.ts:215] `ctx.inject(['agents'], …)` 才 `new SubagentContinuationManager`；卸掉 `agents` 就把 manager 槽清掉。[E: packages/subagent/subagent/src/index.ts:217] [E: packages/subagent/subagent/src/index.ts:223] 另 `inject(['sessionProjections'], …)` 登记 identity / timing projection。没有 `agents` 时 `start()` 仍可走 provider，但 `startContinuable` / `sendMessage` 抛 `CONTINUATION_UNAVAILABLE`。[E: packages/subagent/subagent/src/index.ts:621] 测试直接打这条。[E: packages/subagent/subagent/tests/service.spec.ts:177]
 
-3. **登记 API 是 `registerProvider`，不是 `registerBackend`。** `registerProvider@packages/subagent/subagent/src/index.ts` 用 `ctx.effect` 写入 `providers` Map；重名抛 `DUPLICATE_PROVIDER`。[E: packages/subagent/subagent/src/index.ts:509] [E: packages/subagent/subagent/src/index.ts:513] 卸掉只挡住新 `start`，已返回给 holder 的 run 不撤回。`subagent/provider-added` 监听抛错会 unwind 这次登记，表里不留半成品。[E: packages/subagent/subagent/tests/service.spec.ts:116] [E: packages/subagent/subagent/tests/service.spec.ts:119] terminals 缝的对称 API 叫 `registerBackend`，不要串名。[E: packages/terminal/terminal/src/index.ts:125]
+3. **登记 API 是 `registerProvider`，不是 `registerBackend`。** `registerProvider@packages/subagent/subagent/src/index.ts` 用 `ctx.effect` 写入 `providers` Map；重名抛 `DUPLICATE_PROVIDER`。[E: packages/subagent/subagent/src/index.ts:512] [E: packages/subagent/subagent/src/index.ts:517] 卸掉只挡住新 `start`，已返回给 holder 的 run 不撤回。`subagent/provider-added` 监听抛错会 unwind 这次登记，表里不留半成品。[E: packages/subagent/subagent/tests/service.spec.ts:116] [E: packages/subagent/subagent/tests/service.spec.ts:119] terminals 缝的对称 API 叫 `registerBackend`，不要串名。[E: packages/terminal/terminal/src/index.ts:126]
 
-4. **多家 provider 共存，调用方按名挑选。** 这与 bash 缝「同一 realm 只能一份 `ctx.shell`」相反，形状更接近 `LlmRuntime.registerAdapter`。`list()` 按插入顺序回名字。[E: packages/subagent/subagent/src/index.ts:540] spawn 的 `apply` 调 `ctx.subagents.registerProvider(new SpawnInProcessProvider(config.providerName))`。[E: packages/subagent/subagent-spawn-in-process/src/index.ts:69] fork 对称登记 `ForkInProcessProvider`。[E: packages/subagent/subagent-fork-in-process/src/index.ts:95]
+4. **多家 provider 共存，调用方按名挑选。** 这与 bash 缝「同一 realm 只能一份 `ctx.shell`」相反，形状更接近 `LlmRuntime.registerAdapter`。`list()` 按插入顺序回名字。[E: packages/subagent/subagent/src/index.ts:543] spawn 的 `apply` 调 `ctx.subagents.registerProvider(new SpawnInProcessProvider(config.providerName))`。[E: packages/subagent/subagent-spawn-in-process/src/index.ts:69] fork 对称登记 `ForkInProcessProvider`。[E: packages/subagent/subagent-fork-in-process/src/index.ts:95]
 
-5. **`start(name, request)` = one-shot。** `expectProvider` 查表，没有就 `NO_PROVIDER`。[E: packages/subagent/subagent/src/index.ts:556] [E: packages/subagent/subagent/src/index.ts:611] 再 `assertCapabilities`、`assertSubagentMaxDepth`、可选 `assertObjectJsonSchema`，然后 `snapshotSubagentDescriptor({ mode: 'one-shot', provider, label? })`。[E: packages/subagent/subagent/src/index.ts:557] [E: packages/subagent/subagent/src/index.ts:560] `await provider.start(resolved)` 兑现后才 `observeRun`：先挂 `result` 的 `subagent/end`，再同步发 `subagent/start`。[E: packages/subagent/subagent/src/index.ts:566] [E: packages/subagent/subagent/src/lifecycle.ts:148] [E: packages/subagent/subagent/src/lifecycle.ts:161] provider `start` 在兑现前 reject：没有 run 可 dispose，也**不**发 lifecycle。测试：`startCount === 0` 当 capability 不够。[E: packages/subagent/subagent/tests/service.spec.ts:198]
+5. **`start(name, request)` = one-shot。** `expectProvider` 查表，没有就 `NO_PROVIDER`。[E: packages/subagent/subagent/src/index.ts:559] [E: packages/subagent/subagent/src/index.ts:612] 再 `assertCapabilities`、`assertSubagentMaxDepth`、可选 `assertObjectJsonSchema`，然后 `snapshotSubagentDescriptor({ mode: 'one-shot', provider, label? })`。[E: packages/subagent/subagent/src/index.ts:561] [E: packages/subagent/subagent/src/index.ts:564] `await provider.start(resolved)` 兑现后才 `observeRun`：先挂 `result` 的 `subagent/end`，再同步发 `subagent/start`。[E: packages/subagent/subagent/src/index.ts:570] [E: packages/subagent/subagent/src/lifecycle.ts:148] [E: packages/subagent/subagent/src/lifecycle.ts:161] provider `start` 在兑现前 reject：没有 run 可 dispose，也**不**发 lifecycle。测试：`startCount === 0` 当 capability 不够。[E: packages/subagent/subagent/tests/service.spec.ts:198]
 
-6. **`startContinuable` 要求三件套：manager + persistence + `prepareContinuable`。** 公开方法把工作交给 `requireContinuations().startContinuable`。[E: packages/subagent/subagent/src/index.ts:229] manager 先 `requirePersistence()`，缺 backend 抛 `PERSISTENCE_UNAVAILABLE`。[E: packages/subagent/subagent/src/continuation.ts:106] [E: packages/subagent/subagent/src/continuation.ts:531] 再 `snapshot` continuable descriptor，**第一个 await 之前** `captureDelegatedPolicyOverrides`。[E: packages/subagent/subagent/src/continuation.ts:129] `host.prepareContinuable`：provider 没有该方法就 `UNSUPPORTED_CAPABILITY`，**不**调 `provider.start`、不建孩子。[E: packages/subagent/subagent/src/index.ts:598] [E: packages/subagent/subagent/src/index.ts:602] 测试：`start` spy 0 次，agent 列表仍只有 parent。[E: packages/subagent/subagent/tests/continuation.spec.ts:309] [E: packages/subagent/subagent/tests/continuation.spec.ts:310] inbox 接受初始 prompt 后返回 `{ childId, messageId }`；caller `signal` 只管到这一刻。
+6. **`startContinuable` 要求三件套：manager + persistence + `prepareContinuable`。** 公开方法把工作交给 `requireContinuations().startContinuable`。[E: packages/subagent/subagent/src/index.ts:261] manager 先 `requirePersistence()`，缺 backend 抛 `PERSISTENCE_UNAVAILABLE`。[E: packages/subagent/subagent/src/continuation.ts:108] [E: packages/subagent/subagent/src/continuation.ts:533] 再 `snapshot` continuable descriptor，**第一个 await 之前** `captureDelegatedPolicyOverrides`。[E: packages/subagent/subagent/src/continuation.ts:131] `host.prepareContinuable`：provider 没有该方法就 `UNSUPPORTED_CAPABILITY`，**不**调 `provider.start`、不建孩子。[E: packages/subagent/subagent/src/index.ts:596] [E: packages/subagent/subagent/src/index.ts:601] 测试：`start` spy 0 次，agent 列表仍只有 parent。[E: packages/subagent/subagent/tests/continuation.spec.ts:309] [E: packages/subagent/subagent/tests/continuation.spec.ts:310] inbox 接受初始 prompt 后返回 `{ childId, messageId }`；caller `signal` 只管到这一刻。
 
-7. **continuable 的孩子由 manager 自己 `agents.create` / `resume`，provider 只交 `seed?`。** `materializeTracked@packages/subagent/subagent/src/continuation-activation.ts` 在 unpublished setup 里 append `subagent/descriptor` + `appendDelegatedPolicyOverrides` + `applyChildComposition`。**没有** `setupRegistry` / `registerContinuableSetup`。[E: packages/subagent/subagent/src/continuation-activation.ts:583] [E: packages/subagent/subagent/src/continuation-activation.ts:584] [E: packages/subagent/subagent/src/continuation-activation.ts:586] spawn 的 `prepareContinuable` 是 `Promise.resolve({})`（无 seed）。[E: packages/subagent/subagent-spawn-in-process/src/index.ts:64] in-process composition：`composeFrom` 父 preset、挂 `subagent:delegation` context、可选 shadow `deployment:persona`、可选 `tools.restrict`。[E: packages/subagent/subagent/src/child-agent.ts:204] [E: packages/subagent/subagent/src/child-agent.ts:206] 审批只要组合了 `approval`，孩子一律钉 `approvalPolicy: 'never'`。[E: packages/subagent/subagent/src/child-agent.ts:245] `resolveChildDepth` = `delegationDepthOf(parent) + 1`，超 cap 抛 `SubagentDepthError`。[E: packages/subagent/subagent/src/child-agent.ts:50] header `delegationDepth` 是单调下限，resume 后的父不能装成 depth 0。[E: packages/subagent/subagent/src/depth.ts:35]
+7. **continuable 的孩子由 manager 自己 `agents.create` / `resume`，provider 只交 `seed?`。** `materializeTracked@packages/subagent/subagent/src/continuation-activation.ts` 在 unpublished setup 里 append `subagent/descriptor` + `appendDelegatedPolicyOverrides` + `applyChildComposition`。**没有** `setupRegistry` / `registerContinuableSetup`。[E: packages/subagent/subagent/src/continuation-activation.ts:627] [E: packages/subagent/subagent/src/continuation-activation.ts:628] [E: packages/subagent/subagent/src/continuation-activation.ts:630] spawn 的 `prepareContinuable` 是 `Promise.resolve({})`（无 seed）。[E: packages/subagent/subagent-spawn-in-process/src/index.ts:64] in-process composition：`childCtx.get('agentPresets')?.composeFrom(childCtx, parent.ctx)` join 父 preset 的当前 registry revision（`bindScopeParent`，不是再 `mount()`）、挂 `subagent:delegation` context、可选 shadow `deployment:persona`、可选 `tools.restrict`。[E: packages/subagent/subagent/src/child-agent.ts:205] [E: packages/preset/agent-preset-registry/src/index.ts:273] [E: packages/preset/agent-preset-registry/src/index.ts:242] 审批只要组合了 `approval`，孩子一律钉 `approvalPolicy: 'never'`。[E: packages/subagent/subagent/src/child-agent.ts:254] `resolveChildDepth` = `delegationDepthOf(parent) + 1`，超 cap 抛 `SubagentDepthError`。[E: packages/subagent/subagent/src/child-agent.ts:50] header `delegationDepth` 是单调下限，resume 后的父不能装成 depth 0。[E: packages/subagent/subagent/src/depth.ts:35]
 
-8. **本缝事件是 `emit`，没有 `subagent/*` waterfall。** `Events` 声明 `subagent/provider-added` / `provider-removed` / `start` / `end`。[E: packages/subagent/subagent/src/index.ts:150] lifecycle 走 `ctx.events.dispatch('emit', …)`，逐个 contain 监听：同步 throw 或返回的 rejected promise 只 `logger.warn`，不饿死同伴、不改 run。[E: packages/subagent/subagent/src/lifecycle.ts:112] [E: packages/subagent/subagent/src/lifecycle.ts:119] 模型走到本缝之前仍经过 **`ctx.tools` 的 waterfall**：`ToolRuntime` 调 `this.ctx.waterfall(carrier, 'tools/pre-execute', exec, () => Promise.resolve({ kind: 'allow' }))`。[E: packages/core/tools/src/index.ts:1466] Cordis `Events.waterfall` 把最后一个参数当 innermost `next`；监听者不调用传入的 `next()` 就不会 `cbs.shift()`，默认 `allow` 到不了，tool body（从而 `ctx.subagents.start*`）不跑。[E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:238]
+8. **本缝事件是 `emit`，没有 `subagent/*` waterfall。** `Events` 声明 `subagent/provider-added` / `provider-removed` / `start` / `end`。[E: packages/subagent/subagent/src/index.ts:148] lifecycle 走 `ctx.events.dispatch('emit', …)`，逐个 contain 监听：同步 throw 或返回的 rejected promise 只 `logger.warn`，不饿死同伴、不改 run。[E: packages/subagent/subagent/src/lifecycle.ts:148] [E: packages/subagent/subagent/src/lifecycle.ts:161] 模型走到本缝之前仍经过 **`ctx.tools` 的 waterfall**：`ToolRuntime` 调 `this.ctx.waterfall(carrier, 'tools/pre-execute', exec, () => Promise.resolve({ kind: 'allow' }))`。[E: packages/core/tools/src/index.ts:1505] Cordis `Events.waterfall` 把最后一个参数当 innermost `next`；监听者不调用传入的 `next()` 就不会 `cbs.shift()`，默认 `allow` 到不了，tool body（从而 `ctx.subagents.start*`）不跑。[E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:238]
 
-9. **isolate：registry 留在 host，preset 不复制 `subagents`。** `dsh-web-app` 把 host 面上的 `tool-subagent` / `tool-subagent-fork` / control / list-agents 行 `disabled: true`，registry 与 spawn/fork backend **留下**。[E: packages/bundle/web-app/cordis.patch.yml:443] [E: packages/bundle/web-app/cordis.patch.yml:449] `standard` 与 `ptc` 的 `delegation` 组 `isolate` **只有** `workflowEngine: true`，没有 `subagents`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:172] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:173] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:179] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:180] 工具用 `inject = ['tools', 'subagents', 'systemPrompt', 'sessionProjections']` 解析 host 单例。[E: packages/subagent/tool-subagent/src/index.ts:44] 把 `subagents` 放进 isolate realm 会让每会话复制一份空 registry，host 已登记的 `spawn`/`fork` 对 preset 工具不可见。
+9. **isolate：registry 留在 host，preset 不复制 `subagents`。** `dsh-web-app` 把 host 面上的 `tool-subagent` / `tool-subagent-fork` / control / list-agents 行 `disabled: true`，registry 与 spawn/fork backend **留下**。[E: packages/bundle/web-app/cordis.patch.yml:522] [E: packages/bundle/web-app/cordis.patch.yml:528] [E: packages/bundle/web-app/cordis.patch.yml:531] `standard` 与 `ptc` 的 `delegation` 组 `isolate` **只有** `workflowEngine: true`，没有 `subagents`。[E: packages/bundle/web-app/presets/standard.patch.yml:83] [E: packages/bundle/web-app/presets/standard.patch.yml:84] [E: packages/bundle/web-app/presets/ptc.patch.yml:83] [E: packages/bundle/web-app/presets/ptc.patch.yml:84] 工具用 `inject = ['tools', 'subagents', 'systemPrompt', 'sessionProjections']` 解析 host 单例。[E: packages/subagent/tool-subagent/src/index.ts:45] 把 `subagents` 放进 isolate realm 会让每会话复制一份空 registry，host 已登记的 `spawn`/`fork` 对 preset 工具不可见。shipped web preset 把 `tool-subagent` / `tool-subagent-fork` 都写成 `backgroundMode: continuable`。[E: packages/bundle/web-app/presets/standard.patch.yml:38] [E: packages/bundle/web-app/presets/standard.patch.yml:102] host-base 的 fork 工具行仍是 `one-shot`。[E: packages/bundle/base/cordis.patch.yml:387] `ptc` 预设同样 remount spawn/fork，但把 `workflow-ptc` / `tool-workflow` / `tool-ralph` 全 `disabled: true`。[E: packages/bundle/web-app/presets/ptc.patch.yml:121] [E: packages/bundle/web-app/presets/ptc.patch.yml:126] [E: packages/bundle/web-app/presets/ptc.patch.yml:129]
 
-10. **后续控制面走 manager，不走 `provider.start`。** `sendMessage` 按邻接投递；缺席孩子则 cold-resume（**不再**调 provider）。[E: packages/subagent/subagent/src/continuation.ts:202] `interrupt` 在 live Activation 上 `cancel(..., { keepInbox: true })`；缺席（含 one-shot id）是接受的 no-op。[E: packages/subagent/subagent/src/index.ts:295] [E: packages/subagent/subagent/src/continuation.ts:333] **没有** `reportFrom`。Consumer：`tool-subagent-control` 薄封装 `sendMessage` / `interrupt`。[E: packages/subagent/tool-subagent-control/src/index.ts:66] [E: packages/subagent/tool-subagent-control/src/index.ts:113]
+10. **后续控制面走 manager，不走 `provider.start`。** `sendMessage` 按邻接投递；缺席孩子则 cold-resume（**不再**调 provider）。[E: packages/subagent/subagent/src/continuation.ts:204] `interrupt` 在 live Activation 上 `cancel(..., { keepInbox: true })`；缺席（含 one-shot id）是接受的 no-op。[E: packages/subagent/subagent/src/index.ts:300] [E: packages/subagent/subagent/src/continuation.ts:334] **没有** `reportFrom`。Consumer：`tool-subagent-control` 薄封装 `sendMessage` / `interrupt`。[E: packages/subagent/tool-subagent-control/src/index.ts:66] [E: packages/subagent/tool-subagent-control/src/index.ts:109]
 
-11. **发现不依赖 Activation。** `listChildren@packages/subagent/subagent/src/list-children.ts` 合并 live `sessions` 与 `sessionQuery` 冷列表，用 `subagent` projection 取 mode/label。[E: packages/subagent/subagent/src/list-children.ts:83] 缺 `sessionProjections` / `sessions` / `sessionQuery` 是配置错误，不是空列表成功。[E: packages/subagent/subagent/src/list-children.ts:141] [E: packages/subagent/subagent/src/list-children.ts:151] [E: packages/subagent/subagent/src/list-children.ts:158] 没有 persistence 时仍可列 live query 结果；cold resume 另需 persistence。
+11. **发现不依赖 Activation。** `listChildren@packages/subagent/subagent/src/list-children.ts` 合并 live `sessions` 与 `sessionQuery` 冷列表，用 `subagent` projection 取 mode/label。[E: packages/subagent/subagent/src/list-children.ts:83] 缺 `sessionProjections` / `sessions` / `sessionQuery` 是配置错误，不是空列表成功。[E: packages/subagent/subagent/src/list-children.ts:131] [E: packages/subagent/subagent/src/list-children.ts:131] [E: packages/subagent/subagent/src/list-children.ts:131] 没有 persistence 时仍可列 live query 结果；cold resume 另需 persistence。
 
-12. **进程外 backend 复用本包 helper，不改登记表语义。** `NO_START_CAPABILITIES` 让 service 在 `start` 前拒掉 agentOptions/depth/persona/toolFilter/outputSchema。[E: packages/subagent/subagent/src/out-of-process.ts:57] ACP / SDK / Codex / Claude 各自是独立 Provider 页。workflow worker 的 `agent()` 也是本缝 Consumer：`this.subagents.start(this.provider, …)`。[E: packages/workflow/workflow-worker-thread/src/host.ts:355]
+12. **进程外 backend 复用本包 helper，不改登记表语义。** `NO_START_CAPABILITIES` 让 service 在 `start` 前拒掉 agentOptions/depth/persona/toolFilter/outputSchema。[E: packages/subagent/subagent/src/out-of-process.ts:57] ACP / SDK / Codex / Claude 各自是独立 Provider 页。workflow PTC 的 `agent()` 也是本缝 Consumer：`this.subagents.start(this.provider, …)`。[E: packages/workflow/workflow-ptc/src/host.ts:200]
 
 ## 设计动机
 
@@ -161,11 +163,11 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 - **`start` 与 `startContinuable` 拆开。** one-shot 把发表后的孩子所有权交给 `SubagentRun`（调用方必须 `dispose`）。continuable 把 residency 收进 manager：provider 只回答「要不要 seed」，看不到 handle / turn / teardown。否则每个 backend 都得重做 inbox、cold resume、父通知。
 - **能力不够就拒，不降级。** 进程外孩子执行不了父侧 `maxDepth` / `persona` / `toolFilter` / `outputSchema` / `agentOptions`。接受后再假装执行会让模型以为限制生效。
 - **descriptor 是分类权威。** 枚举与 resume 读 `subagent/descriptor`，不扫父 tool result、不把孩子 prompt 暴露给列表。版本号刻意挡「随手加字段」（当前 `SUBAGENT_DESCRIPTOR_VERSION = 3`）。
-- **组合真树认 base patch + spec，不认仓库里有包。** Codex / Claude 包存在 ≠ 装进 `dsh-base`。preset 里 `disabled: true` 的 tool 行只挡模型目录，**不会**把没 insert 的 backend 变成 dormant 加载。四个 shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`（wiki id `surface.presets.code` 仍是 PTC 的稳定别名）。
+- **组合真树认 base patch + spec，不认仓库里有包。** Codex / Claude 包存在 ≠ 装进 `dsh-base`。preset 里 `disabled: true` 的 tool 行只挡模型目录，**不会**把没 insert 的 backend 变成 dormant 加载。四个 shipped preset 声明在 `packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}.patch.yml`（wiki id `surface.presets.code` 仍是 PTC 的稳定别名）。
 
 ## Gotcha
 
-- API 名是 `ctx.subagents.registerProvider`。`registerBackend` 属于 `ctx.terminals`。[E: packages/subagent/subagent/src/index.ts:509] [E: packages/terminal/terminal/src/index.ts:125]
+- API 名是 `ctx.subagents.registerProvider`。`registerBackend` 属于 `ctx.terminals`。[E: packages/subagent/subagent/src/index.ts:512] [E: packages/terminal/terminal/src/index.ts:126]
 - `dsh-base` **不装** `subagent-codex` / `subagent-claude-code`。`base.spec.ts` 同时钉 patch 行与 manifest 依赖。把 shipped 组合写成「dormant 加载产品后端」是过期叙事。
 - preset 打开 `tool-subagent-codex` 但没 mount `@deepseek-ai/dsh-subagent-codex`：工具会等 `subagent/provider-added`，catalog 里仍没有可用 backend。`disabled: true` ≠ 后端已登记。
 - `startContinuable` 缺 `ctx.agents` → `CONTINUATION_UNAVAILABLE`；缺 persistence → `PERSISTENCE_UNAVAILABLE`；provider 无 `prepareContinuable` → `UNSUPPORTED_CAPABILITY` 且 `provider.start` 不被调用。[E: packages/subagent/subagent/tests/service.spec.ts:177] [E: packages/subagent/subagent/tests/continuation.spec.ts:309]
@@ -173,8 +175,8 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 - `listChildren` 不看 `ctx.agents` / Activation。创建窗口里 descriptor 尚未 append 的 live 孩子会被省略，不是 `diagnostic`。缺 `sessionQuery` 也会 fail-loud。
 - continuable **不是** Job。`settleRun` 只给 one-shot 后台的 `jobs.start({ kind: 'subagent' })`。默认 shipped `backgroundMode: continuable` 走 durable `childId` + `send_message`。
 - `tool-subagent-report` **已删除**。`dsh-base` 不再挂该行。见 [`surface.tools.report`](../../surface/tools/report.md)。
-- host-base 的 `tool-subagent-fork` 写 `backgroundMode: one-shot`，`standard`/`ptc`/`cordis` remount 成 `continuable`。那是 fork 工具行的不一致，不是本缝换了 `fork` provider。细节在 [subsys.orchestration.subagent-fork](subagent-fork.md)。
-- experimental Agent Teams 的 host profile 会 disable 全局 `tool-subagent-control` / `list-agents`（工具名重叠），并把 spawn/fork 改成 one-shot。
+- host-base 的 `tool-subagent-fork` 写 `backgroundMode: one-shot`，shipped web preset（`standard`/`ptc`/`cordis`）remount 成 `continuable`。出厂 Web 默认吃 preset 的 continuable。细节在 [subsys.orchestration.subagent-fork](subagent-fork.md)。
+- experimental Agent Teams 的 optional bundle 会 disable 全局 `tool-subagent-control` / `list-agents` / `tool-subagent` / `tool-subagent-fork`（工具名重叠），再 insert Team 工具。不把 spawn/fork 改成 one-shot——那两行直接关掉。
 
 ## Seam 三角
 
@@ -184,7 +186,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 | **Provider（shipped host）** | `@deepseek-ai/dsh-subagent-spawn-in-process`：base `id: subagent-spawn-in-process`，默认名 `spawn`，`inheritsParentContext = false`，`prepareContinuable() → {}`。`@deepseek-ai/dsh-subagent-fork-in-process`：base `id: subagent-fork-in-process`，默认名 `fork`，`inheritsParentContext = true`。[E: packages/subagent/subagent-fork-in-process/src/index.ts:72] 两行 `inject = ['subagents']`。实现细节在 sibling 页。 |
 | **Provider（仓库有、base 不装）** | Codex / Claude / ACP / DSH-SDK：各自 `registerProvider`。base patch **没有**对应 id；不是 dormant 行。 |
 | **Consumer（模型面 / preset）** | `@deepseek-ai/dsh-tool-subagent`（`inject` `tools`+`subagents`+`systemPrompt`+`sessionProjections`；web 下由 `standard`/`ptc`/`cordis` 的 `delegation` 组 remount）。`@deepseek-ai/dsh-tool-subagent-control`（`followup`/`interrupt`）。字段表在 `surface.tools.*`，本页不写。 |
-| **Consumer（host 进程内）** | `WorkerThreadWorkflowEngine`：`ctx.subagents.start`。one-shot 后台工具再消费 `ctx.jobs`（本缝只给 `settleRun`）。experimental Teams 另调 `startContinuable`。**不再**有 report setup。 |
+| **Consumer（host 进程内）** | `PtcWorkflowEngine`：`ctx.subagents.start`。one-shot 后台工具再消费 `ctx.jobs`（本缝只给 `settleRun`）。experimental Teams 另调 `startContinuable`。**不再**有 report setup。 |
 | **isolate / 组合行** | registry + spawn/fork = **host 面**。web overlay disable 模型 tool 行。preset `delegation.isolate` 只有 `workflowEngine: true`，**不** isolate `subagents`。 |
 
 换掉 `spawn` provider 会带走：孩子是否看见父对话、能否 continuable、depth/persona/toolFilter 是否可执行、one-shot 是同进程 `Agent` 还是远端进程。模型工具名可以不变。
@@ -214,11 +216,12 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/base/tests/base.spec.ts
 - packages/bundle/web-app/cordis.patch.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/preset/agent-preset-registry/src/index.ts
 - packages/core/tools/src/index.ts
 - packages/terminal/terminal/src/index.ts
-- packages/workflow/workflow-worker-thread/src/host.ts
+- packages/workflow/workflow-ptc/src/host.ts
 - vendor/cordis/src/events.ts
 
 ## 相关
@@ -233,5 +236,5 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 - [subsys.orchestration.subagent-in-process](subagent-in-process.md) — `SpawnInProcessProvider` / `startInProcessRun`。
 - [subsys.orchestration.subagent-fork](subagent-fork.md) — `ForkInProcessProvider` 与 host/preset `backgroundMode` 不一致。
 - [subsys.orchestration.jobs](jobs.md) — one-shot 后台才走的 `ctx.jobs`。
-- [subsys.orchestration.workflow](workflow.md) — worker `agent()` 调 `ctx.subagents.start`。
+- [subsys.orchestration.workflow](workflow.md) — PTC guest `agent()` 调 `ctx.subagents.start`。
 - [subsys.composition.bundle-base](../composition/bundle-base.md) — `dsh-base` 真树与「不装 Codex/Claude」。

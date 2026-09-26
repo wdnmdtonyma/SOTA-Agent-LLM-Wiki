@@ -20,10 +20,10 @@ source:
   - packages/util/home-paths/src/index.ts
   - apps/cli/src/args.ts
   - packages/boot/app-boot/src/profile.ts
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - apps/cli/tests/web-agent-presets.e2e.ts
 symbols:
   - ctx.skills
@@ -39,7 +39,7 @@ related:
   - spine.context-and-compaction
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `ctx.skills` 是 **host 面** skill 注册表（`SkillRegistry`，服务名 `skills`）：Provider 按调用方 scope 写入 global 或 preset standing 层；读路径把 global 与 viewing scope 链合并，**近层同名直接覆盖**，`rank` 只在同一层内决胜。默认产品路径 `dsh web`（`--profile web`）把本地根发现和模型可见 loader 交给每会话 preset；其它 shipped profile 是 `headless` / `sdk` / `sdk-minimal` / `acp`。磁盘扫描不是 Claude / Pi 的 `~/.agents` 单表。
@@ -64,7 +64,7 @@ DeepSeek Harness 是 Cordis **组合运行时**（`profile → bundle → agent 
 
 本页写 **扫描根与注册面**。模型可见 `skill` 工具的 schema、catalog `user/message`、`execute` 拒答形状以 [surface.tools.skill](../tools/skill.md) 为权威。层合并与 watch 的子系统走读在 [subsys.context.skills](../../subsystems/context/skills.md)。
 
-默认 GUI 安装路径：`dsh web` 是 `--profile web` 的 alias。[E: apps/cli/src/args.ts:175] 另有 shipped `--profile` 模板 `headless` / `sdk` / `sdk-minimal` / `acp`。[E: packages/boot/app-boot/src/profile.ts:106] 本仓没有 shipped TUI。
+默认 GUI 安装路径：`dsh web` 是 `--profile web` 的 alias。[E: apps/cli/src/args.ts:176] 另有 shipped `--profile` 模板 `headless` / `sdk` / `sdk-minimal` / `acp`。[E: packages/boot/app-boot/src/profile.ts:106] 本仓没有 shipped TUI。
 
 **产品主目录不是 `~/.agents`。** `$DSH_HOME`（非空、非纯空白）否则 `~/.dsh`。[E: packages/util/home-paths/src/index.ts:88] [E: packages/util/home-paths/src/index.ts:89] `~/.agents` 只是 filesystem Provider 的另一条兼容根，见 [surface.misc.home](../misc/home.md)。
 
@@ -72,7 +72,7 @@ DeepSeek Harness 是 Cordis **组合运行时**（`profile → bundle → agent 
 
 | 入口 | 行为 |
 |---|---|
-| host 行 `id: skill` | `dsh-base` 插入 `@deepseek-ai/dsh-skill`。`SkillRegistry` 构造 `super(ctx, 'skills')`，键是 `ctx.skills`。这是进程级服务，不是 preset isolate 里的私有实例。[E: packages/bundle/base/cordis.patch.yml:273] [E: packages/bundle/base/cordis.patch.yml:274] [E: packages/skill/skill/src/index.ts:374] |
+| host 行 `id: skill` | `dsh-base` 插入 `@deepseek-ai/dsh-skill`。`SkillRegistry` 构造 `super(ctx, 'skills')`，键是 `ctx.skills`。这是进程级服务，不是 preset isolate 里的私有实例。[E: packages/bundle/base/cordis.patch.yml:274] [E: packages/bundle/base/cordis.patch.yml:274] [E: packages/skill/skill/src/index.ts:374] |
 | `ctx.skills.registerProvider` / `register` | 写入调用方那一层：无 scope 标签进 global，agent-preset standing 进该 scope 层。[I] 本包只把写入交给 `this.layers.effect`。[E: packages/skill/skill/src/index.ts:411] [E: packages/skill/skill/src/index.ts:450] |
 | `skill-filesystem.apply` | `inject = ['skills']`，只 `registerProvider`，不 `provide` 新服务。[E: packages/skill/skill-filesystem/src/index.ts:46] [E: packages/skill/skill-filesystem/src/index.ts:136] |
 | 磁盘根 | 默认打开 `includeDefaultRoots` 时扫项目 `.dsh/skills` / `.agents/skills`、user `$DSH_HOME/skills` / `agentsHome/skills`，中间夹 `customSkillDirs`，最后可选 bundled。[E: packages/skill/skill-filesystem/src/index.ts:258] [E: packages/skill/skill-filesystem/src/index.ts:258] [E: packages/skill/skill-filesystem/src/index.ts:257] |
@@ -122,7 +122,7 @@ DeepSeek Harness 是 Cordis **组合运行时**（`profile → bundle → agent 
 | 5 | `$DSH_AGENTS_HOME/skills`（否则 `~/.agents/skills`） | `user-agents` | 500 | `agentsHome`，可被 Config `agentsHome` 覆盖。**不是** `~/.dsh` 的别名。[E: packages/skill/skill-filesystem/src/index.ts:168] [E: packages/skill/skill-filesystem/src/index.ts:258] |
 | 6 | `bundledSkillDir` 或 `$DSH_BUNDLED_SKILL_DIR` | `bundled` | 600 | `trustedHost: true`。`includeDefaultRoots: false` 时不读环境 bundled 根。[E: packages/skill/skill-filesystem/src/index.ts:176] [E: packages/skill/skill-filesystem/src/index.ts:262] |
 
-同层五个根都放同名 `same` 时，catalog 赢家 `source === 'project-dsh'`；`user-dsh` 的 `.system/` 不进表；无 `.git` 时 project 根回退到 `cwd`。[E: packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:202] [E: packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:203] [E: packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:209]
+同层五个根都放同名 `same` 时，catalog 赢家 `source === 'project-dsh'`；`user-dsh` 的 `.system/` 不进表；无 `.git` 时 project 根回退到 `cwd`。[E: packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:203] [E: packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:203] [E: packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:209]
 
 同一层内：project 压过 runtime，runtime 压过 custom / user（`RUNTIME_RANK = 250` 夹在 `200` 与 `300` 之间）。[E: packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:231] [E: packages/skill/skill-filesystem/tests/skill-filesystem.spec.ts:231]
 
@@ -134,7 +134,7 @@ filesystem `Config` 产品默认：`providerName` 默认 `'filesystem'`（构造
 
 ## 装配与门控
 
-成员资格只认 composition 行，不以 package 存在为准。默认产品树是 `dsh web`（`--profile web`），叠 `dsh-base` 再叠 `dsh-web-app`。[E: apps/cli/src/args.ts:175] [E: packages/boot/app-boot/src/profile.ts:111]
+成员资格只认 composition 行，不以 package 存在为准。默认产品树是 `dsh web`（`--profile web`），叠 `dsh-base` 再叠 `dsh-web-app`。[E: apps/cli/src/args.ts:176] [E: packages/boot/app-boot/src/profile.ts:110]
 
 ### host：`dsh-base` 四行
 
@@ -142,9 +142,9 @@ filesystem `Config` 产品默认：`providerName` 默认 `'filesystem'`（构造
 
 | `id` | 包 | 默认 |
 |---|---|---|
-| `skill` | `@deepseek-ai/dsh-skill` | 开 [E: packages/bundle/base/cordis.patch.yml:273] |
-| `skill-filesystem` | `@deepseek-ai/dsh-skill-filesystem` | 开 [E: packages/bundle/base/cordis.patch.yml:276] |
-| `skill-badge` | `@deepseek-ai/dsh-skill-badge` | **`disabled: true`** [E: packages/bundle/base/cordis.patch.yml:279] [E: packages/bundle/base/cordis.patch.yml:281] |
+| `skill` | `@deepseek-ai/dsh-skill` | 开 [E: packages/bundle/base/cordis.patch.yml:274] |
+| `skill-filesystem` | `@deepseek-ai/dsh-skill-filesystem` | 开 [E: packages/bundle/base/cordis.patch.yml:277] |
+| `skill-badge` | `@deepseek-ai/dsh-skill-badge` | **`disabled: true`** [E: packages/bundle/base/cordis.patch.yml:280] [E: packages/bundle/base/cordis.patch.yml:281] |
 | `tool-skill` | `@deepseek-ai/dsh-tool-skill` | 开 [E: packages/bundle/base/cordis.patch.yml:283] |
 
 `skill-badge` 是 bundled Provider：登记 `dsh-badge`，`source: 'bundled'`、`rank: BUNDLED_SKILL_RANK`。[E: packages/skill/skill-badge/src/index.ts:17] [E: packages/skill/skill-badge/src/index.ts:26] [E: packages/skill/skill-badge/src/index.ts:59] [E: packages/skill/skill-badge/src/index.ts:30] [E: packages/skill/skill-badge/src/index.ts:32] 产品树默认关掉。不要把它写成 Web 必开，也不要和 client `ui-skill` 混成一个包。e2e 为了测全局层才在测试 overlay 里写 `{ id: 'skill-badge', disabled: false }`。[E: apps/cli/tests/web-agent-presets.e2e.ts:84]
@@ -161,30 +161,30 @@ filesystem `Config` 产品默认：`providerName` 默认 `'filesystem'`（构造
   disabled: true
 ```
 
-[E: packages/bundle/web-app/cordis.patch.yml:393] [E: packages/bundle/web-app/cordis.patch.yml:393] [E: packages/bundle/web-app/cordis.patch.yml:395] [E: packages/bundle/web-app/cordis.patch.yml:396]
+[E: packages/bundle/web-app/cordis.patch.yml:393] [E: packages/bundle/web-app/cordis.patch.yml:393] [E: packages/bundle/web-app/cordis.patch.yml:396] [E: packages/bundle/web-app/cordis.patch.yml:396]
 
 同一文件**没有** `id: skill` 的 disable。[I] host 仍解析 `ctx.skills`；本地根发现和模型 loader 改由 preset 往 **该 standing scope 层** 投递。
 
 ### 四个 shipped preset
 
-成员资格只认 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml`。旧目录名 `code` 现为 **PTC**（`presets/ptc/`）；wiki 节点 id `surface.presets.code` 仍是该预设的稳定别名。
+成员资格只认 `packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}.patch.yml`。旧目录名 `code` 现为 **PTC**（`presets/ptc.patch.yml`）；wiki 节点 id `surface.presets.code` 仍是该预设的稳定别名。四个 shipped preset **只叠在 `dsh-web-app`**。
 
 | preset | 重挂 `skill-filesystem`？ | 重挂 `tool-skill`？ | `isolate` | 说明 |
 |---|---|---|---|---|
-| `minimal` | **否** | **否** | — | composition 没有这两行。[I] e2e：`list({ scope: agent })` 仍能看见 host 全局层（测试 overlay 打开的 `dsh-badge`），工具表只有 `bash`。[E: apps/cli/tests/web-agent-presets.e2e.ts:474] |
-| `standard` | 是 | 是 | **无** | 顶层 `- id: skill-filesystem` / `- id: tool-skill`，不在 `planning` / `compaction` / `delegation` 组里。无 `customSkillDirs`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:84] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:87] |
-| `ptc` | 是 | 是 | **无** | 与 `standard` 同一对行。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:91] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:94] |
-| `cordis` | 是 | 是 | **无** | filesystem 另配 `customSkillDirs`（`!!js` 解析本 preset 的 `skills/`），所以该 standing 层会多出 preset-local 名；无 scope 的 `list()` 看不到它们。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:263] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:263] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:263] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:263] |
+| `minimal` | **否** | **否** | — | composition 没有这两行。[I] e2e：`list({ scope: agent })` 仍能看见 host 全局层（测试 overlay 打开的 `dsh-badge`），工具表只有 `bash`。[E: apps/cli/tests/web-agent-presets.e2e.ts:475] |
+| `standard` | 是 | 是 | **无** | 顶层 `- id: skill-filesystem` / `- id: tool-skill`，不在 `planning` / `compaction` / `delegation` 组里。无 `customSkillDirs`。[E: packages/bundle/web-app/presets/standard.patch.yml:84] [E: packages/bundle/web-app/presets/standard.patch.yml:87] |
+| `ptc` | 是 | 是 | **无** | 与 `standard` 同一对行。[E: packages/bundle/web-app/presets/ptc.patch.yml:91] [E: packages/bundle/web-app/presets/ptc.patch.yml:94] |
+| `cordis` | 是 | 是 | **无** | filesystem 另配 `customSkillDirs`（`!!js` 解析本 preset 的 `skills/`），所以该 standing 层会多出 preset-local 名；无 scope 的 `list()` 看不到它们。[E: packages/bundle/web-app/presets/cordis.patch.yml:154] [E: packages/bundle/web-app/presets/cordis.patch.yml:154] [E: packages/bundle/web-app/presets/cordis.patch.yml:154] [E: packages/bundle/web-app/presets/cordis.patch.yml:154] |
 
 不必 `isolate`：`skill-filesystem.apply` 只往已有 `ctx.skills` 登记 Provider，不 `provide` 一份新的 process-global 服务。preset 需要**私有服务实例**时才写 `isolate`。[E: packages/skill/skill-filesystem/src/index.ts:136]
 
-web e2e 钉死分层：临时工程写 `<proj>/.dsh/skills/project-proof/SKILL.md`，mount `standard` 后，无 scope 的 `list({ cwd })` **只有**测试打开的全局 `dsh-badge`；带 `scope: agent` 才同时有 `dsh-badge` 与 `project-proof`。[E: apps/cli/tests/web-agent-presets.e2e.ts:435] [E: apps/cli/tests/web-agent-presets.e2e.ts:438] [E: apps/cli/tests/web-agent-presets.e2e.ts:441]
+web e2e 钉死分层：临时工程写 `<proj>/.dsh/skills/project-proof/SKILL.md`，mount `standard` 后，无 scope 的 `list({ cwd })` **只有**测试打开的全局 `dsh-badge`；带 `scope: agent` 才同时有 `dsh-badge` 与 `project-proof`。[E: apps/cli/tests/web-agent-presets.e2e.ts:435] [E: apps/cli/tests/web-agent-presets.e2e.ts:438] [E: apps/cli/tests/web-agent-presets.e2e.ts:442]
 
 `minimal` 把「看不看得见全局层」和「能不能调 `skill`」拆开：registry 可读，loader 不装。产品树上 `skill-badge` 默认关，出厂 `minimal` 的全局层经常是空的；「能 list」不等于「开箱就有 `dsh-badge`」。
 
 ### headless / 其它 profile 不是默认 GUI 树
 
-`dsh-headless` overlay insert `code-runtime` / `headless-startup` / `headless-runner`，**没有** disable `skill-filesystem` 或 `tool-skill`，也没有 `agent-presets`。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27] [I] headless / sdk / acp 路径上 filesystem 留在 host 全局层（base 行未被这些 overlay 关掉）。`sdk-minimal` 不叠 `dsh-base`。这不是 `dsh web`。入口还有 `dsh --profile sdk|sdk-minimal|acp|headless`。
+`dsh-headless` overlay insert `headless-startup` / `headless-runner`，**没有** disable `skill-filesystem` 或 `tool-skill`，也没有 `agent-preset-registry`。[E: packages/bundle/headless/cordis.patch.yml:21] [E: packages/bundle/headless/cordis.patch.yml:25] [I] headless / sdk / acp 路径上 filesystem 留在 host 全局层（base 行未被这些 overlay 关掉）。`sdk-minimal` 不叠 `dsh-base`。这不是 `dsh web`。入口还有 `dsh sdk|sdk-minimal|acp|headless`。
 
 ## 跨包关系
 
@@ -216,10 +216,10 @@ web e2e 钉死分层：临时工程写 `<proj>/.dsh/skills/project-proof/SKILL.m
 - packages/util/home-paths/src/index.ts
 - apps/cli/src/args.ts
 - packages/boot/app-boot/src/profile.ts
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - apps/cli/tests/web-agent-presets.e2e.ts
 
 ## 相关

@@ -35,7 +35,7 @@ symbols:
 related: []
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-mcp-client` 是 **host 面 opt-in** 的 MCP 工具桥：每个插件实例连一台外部 MCP server，只把 `tools/list` 登记进 `ctx.tools`。模型看见的名字是 `mcp__<serverName>__<rawName>`（`publicToolName`）。五个 shipped profile（`web` / `headless` / `sdk` / `sdk-minimal` / `acp`）与四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）默认都没有 MCP server 行；`apps/cli` 把包装进 `dependencies` 只为 overlay / example 能解析到包。ACP session 可通过 `mountAcpMcpServers` 在 Agent 作用域动态挂本包。
@@ -50,13 +50,13 @@ updated: c291e7961a
 
 ## 是什么
 
-DSH 是 Cordis **组合运行时**（`profile → bundle → agent preset`），不是「内置了一堆 MCP server 的 coding agent」。本包是 named 插件：`name = 'mcp-client'`，`inject = ['tools']`，入口 `export async function apply`。[E: packages/mcp/mcp-client/src/index.ts:29] [E: packages/mcp/mcp-client/src/index.ts:32] [E: packages/mcp/mcp-client/src/index.ts:146] 包名 `@deepseek-ai/dsh-mcp-client`。[E: packages/mcp/mcp-client/package.json:2] named export，没有 `default`——Loader 的 `unwrapExports` 先取 `.default`，写成 default 会丢掉 `inject`，`ctx.tools` 等不到。[E: packages/mcp/mcp-client/tests/load-path.spec.ts:18] [E: packages/mcp/mcp-client/tests/load-path.spec.ts:25]
+DSH 是 Cordis **组合运行时**（`profile → bundle → agent preset`），不是「内置了一堆 MCP server 的 coding agent」。本包是 named 插件：`name = 'mcp-client'`，`inject = ['tools']`，入口 `export async function apply`。[E: packages/mcp/mcp-client/src/index.ts:28] [E: packages/mcp/mcp-client/src/index.ts:31] [E: packages/mcp/mcp-client/src/index.ts:142] 包名 `@deepseek-ai/dsh-mcp-client`。[E: packages/mcp/mcp-client/package.json:2] named export，没有 `default`——Loader 的 `unwrapExports` 先取 `.default`，写成 default 会丢掉 `inject`，`ctx.tools` 等不到。[E: packages/mcp/mcp-client/tests/load-path.spec.ts:18] [E: packages/mcp/mcp-client/tests/load-path.spec.ts:25]
 
 **每个实例连一台 server。** 多 server = 多行 `insert`，各写自己的 `id` + `serverName`。它不 `provide` `ctx.mcp`，也不重挂 `dsh-tools`。
 
-**只暴露 tools。** 发现走未缓存的 `tools/list`，登记走 `ctx.tools.register`；调用走 `tools/call`。[E: packages/mcp/mcp-client/src/tools.ts:75] [E: packages/mcp/mcp-client/src/tools.ts:182] [E: packages/mcp/mcp-client/src/tools.ts:89] 源码没有 `resources/list` / `prompts/list` / `listResources` / `listPrompts`。连上时 `Client` 的 capabilities 是空对象，不广告 resources / prompts / sampling。[E: packages/mcp/mcp-client/src/connection.ts:240]
+**只暴露 tools。** 发现走未缓存的 `tools/list`，登记走 `ctx.tools.register`；调用走 `tools/call`。[E: packages/mcp/mcp-client/src/tools.ts:81] [E: packages/mcp/mcp-client/src/tools.ts:181] [E: packages/mcp/mcp-client/src/tools.ts:86] 源码没有 `resources/list` / `prompts/list` / `listResources` / `listPrompts`。连上时 `Client` 的 capabilities 是空对象，不广告 resources / prompts / sampling。[E: packages/mcp/mcp-client/src/connection.ts:240]
 
-模型白名单是 `ctx.tools.schemas(scope)`：只投影 `name` / `description` / `parameters`。[E: packages/core/tools/src/index.ts:1225] [E: packages/core/tools/src/index.ts:1254] Native 请求里看不到 MCP `outputSchema`。PTC 呈现下 **wire** 再收成只剩 `run_code`。[E: packages/core/tools/src/index.ts:988] PTC **SDK** 投影走 `sdkSchemas`：从 visible 里去掉 `run_code` 自己，其余（含 MCP public name）仍带 `output`。[E: packages/core/tools/src/index.ts:1231] [E: packages/core/tools/src/index.ts:1240]
+模型白名单是 `ctx.tools.schemas(scope)`：只投影 `name` / `description` / `parameters`。[E: packages/core/tools/src/index.ts:1230] [E: packages/core/tools/src/index.ts:1251] Native 请求里看不到 MCP `outputSchema`。PTC 呈现下 **wire** 再收成只剩 `run_code`。[E: packages/core/tools/src/index.ts:989] PTC **SDK** 投影走 `sdkSchemas`：从 visible 里去掉 `run_code` 自己，其余（含 MCP public name）仍带 `output`。[E: packages/core/tools/src/index.ts:1231] [E: packages/core/tools/src/index.ts:1247]
 
 三套不要混的名字：
 
@@ -76,11 +76,11 @@ DSH 是 Cordis **组合运行时**（`profile → bundle → agent preset`），
 | 入口 | 模型能不能看见 `mcp__*` |
 |---|---|
 | 默认 `dsh web` / `--profile web` 以及 `headless` / `sdk` / `sdk-minimal` / `acp` 的 bundle patch | 不能。`dsh-base` 只挂注册表 `id: tools` / `name: '@deepseek-ai/dsh-tools'`，没有 `id: mcp-client`。[E: packages/bundle/base/cordis.patch.yml:474] [E: packages/bundle/base/cordis.patch.yml:475] `packages/bundle/` 下没有任何 patch 引用本包。 |
-| shipped `minimal` / `standard` / `ptc` / `cordis` | 不能。四个 `packages/preset/agent-presets/presets/*/agent.cordis.yml` 都没有 `mcp-client` 行。 |
+| shipped `minimal` / `standard` / `ptc` / `cordis` | 不能。四份 `packages/bundle/web-app/presets/*.patch.yml` 都没有 `mcp-client` 行。 |
 | `apps/cli` 的 `dependencies` | 不能单独让模型看见。`@deepseek-ai/dsh-mcp-client` 在 CLI 依赖里，只为 overlay / example 解析。[E: apps/cli/package.json:58] 包在 dependencies ≠ 产品默认装。 |
 | `--patch` / `$DSH_HOME/profiles/<name>/cordis.patch.yml` insert | 能（连上且 `tools/list` 成功之后）。真实样例是 `apps/cli/config/examples/mcp-memory/*.cordis.yml`。 |
 | ACP `mountAcpMcpServers` | 能。在未发布的 Agent 作用域上对每个声明 `agentCtx.plugin(McpClient, config)`，stdio 的 `command` 必须是绝对路径，`failOnStartupError: true`。[E: packages/acp/acp/src/mcp.ts:32] [E: packages/acp/acp/src/mcp.ts:46] [E: packages/acp/acp/src/mcp.ts:56] |
-| 测试里直接 `apply(ctx, config)` | 能。e2e 在 `ctx.tools.schemas()` 里断言 `mcp__fixture__add` 等，raw `add` 不在表里。[E: packages/mcp/mcp-client/tests/mcp-client.e2e.ts:126] [E: packages/mcp/mcp-client/tests/mcp-client.e2e.ts:131] |
+| 测试里直接 `apply(ctx, config)` | 能。e2e 在 `ctx.tools.schemas()` 里断言 `mcp__fixture__add` 等，raw `add` 不在表里。[E: packages/mcp/mcp-client/tests/mcp-client.e2e.ts:126] [E: packages/mcp/mcp-client/tests/mcp-client.e2e.ts:130] |
 
 本包 `package.json` 没有 `dsh.bundle.patch`，所以 `dsh plugin add @deepseek-ai/dsh-mcp-client` 不会自动插一行 server。还要自己写 insert，并在本机装好 `command` 指向的可执行文件（DSH 不替用户跑包管理器）。[E: apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml:9]
 
@@ -96,67 +96,67 @@ CLI 测试把三份 example overlay 钉在 `apps/cli/config/examples/mcp-memory`
 
 | 字段 | 默认 | 模型侧含义 |
 |---|---|---|
-| `serverName` | 必填，`^[A-Za-z0-9_-]{1,32}$` | public name 的中间段。非法 / 超过 32 字符 schema 拒载。[E: packages/mcp/mcp-client/src/index.ts:38] [E: packages/mcp/mcp-client/src/index.ts:116] |
-| `toolCallTimeoutMs` | `60_000` | 单次 MCP `tools/call` 的 SDK `timeout`，不是 `ToolDefinition.timeoutMs`。[E: packages/mcp/mcp-client/src/index.ts:35] [E: packages/mcp/mcp-client/src/index.ts:121] [E: packages/mcp/mcp-client/src/tools.ts:93] |
-| `failOnStartupError` | `false` | `false`：首次连不上 / 同步失败仍激活，这一代零工具，supervisor 进 reconnect。`true`：`apply` 抛，fiber 回滚，模型看不到这台 server。[E: packages/mcp/mcp-client/src/index.ts:122] [E: packages/mcp/mcp-client/src/index.ts:185] |
-| `reconnect` | `enabled: true`，`initialDelayMs: 500`，`maxDelayMs: 30_000`，`maxAttempts: 10` | 管工具表会不会在断线后暂时留下或最终卸掉。省略走 schema 默认。[E: packages/mcp/mcp-client/src/connection.ts:40] [E: packages/mcp/mcp-client/tests/apply.spec.ts:135] |
+| `serverName` | 必填，`^[A-Za-z0-9_-]{1,32}$` | public name 的中间段。非法 / 超过 32 字符 schema 拒载。[E: packages/mcp/mcp-client/src/index.ts:37] [E: packages/mcp/mcp-client/src/index.ts:116] |
+| `toolCallTimeoutMs` | `60_000` | 单次 MCP `tools/call` 的 SDK `timeout`，不是 `ToolDefinition.timeoutMs`。[E: packages/mcp/mcp-client/src/index.ts:34] [E: packages/mcp/mcp-client/src/index.ts:121] [E: packages/mcp/mcp-client/src/tools.ts:86] |
+| `failOnStartupError` | `false` | `false`：首次连不上 / 同步失败仍激活，这一代零工具，supervisor 进 reconnect。`true`：`apply` 抛，fiber 回滚，模型看不到这台 server。[E: packages/mcp/mcp-client/src/index.ts:122] [E: packages/mcp/mcp-client/src/index.ts:184] |
+| `reconnect` | `enabled: true`，`initialDelayMs: 500`，`maxDelayMs: 30_000`，`maxAttempts: 10` | 管工具表会不会在断线后暂时留下或最终卸掉。省略走 schema 默认。[E: packages/mcp/mcp-client/src/connection.ts:41] [E: packages/mcp/mcp-client/tests/apply.spec.ts:135] |
 
 ### `transport: 'stdio'`
 
-必填 `command`。`args` 默认 `[]`（不经 shell 插值），`env` 默认 `{}`，`cwd` 默认 `''`。[E: packages/mcp/mcp-client/src/index.ts:117] [E: packages/mcp/mcp-client/src/index.ts:118]
+必填 `command`。`args` 默认 `[]`（不经 shell 插值），`env` 默认 `{}`，`cwd` 默认 `''`。[E: packages/mcp/mcp-client/src/index.ts:116] [E: packages/mcp/mcp-client/src/index.ts:119]
 
-孩子由 MCP SDK `StdioClientTransport` 拉起，**不**走 `ctx.subprocess.spawn`。`inject` 只有 `['tools']`。[E: packages/mcp/mcp-client/src/index.ts:32] [E: packages/mcp/mcp-client/src/transport.ts:34] 环境是 `{ ...scrubbedParentEnv(), ...config.env }`：先丢掉 credential 形名字和 `DSH_*`，再叠显式 `env`（可以把孩子自己的密钥写回来）。[E: packages/mcp/mcp-client/src/transport.ts:22] [E: packages/subprocess/subprocess/src/index.ts:64]
+孩子由 MCP SDK `StdioClientTransport` 拉起，**不**走 `ctx.subprocess.spawn`。`inject` 只有 `['tools']`。[E: packages/mcp/mcp-client/src/index.ts:31] [E: packages/mcp/mcp-client/src/transport.ts:34] 环境是 `{ ...scrubbedParentEnv(), ...config.env }`：先丢掉 credential 形名字和 `DSH_*`，再叠显式 `env`（可以把孩子自己的密钥写回来）。[E: packages/mcp/mcp-client/src/transport.ts:22] [E: packages/subprocess/subprocess/src/index.ts:66]
 
 example overlay：`command: mcp-server-memory` / `engram` / `memorix`，`cwd: !!js process.cwd()`。[E: apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml:9] [E: apps/cli/config/examples/mcp-memory/mcp-reference-memory.cordis.yml:10] [E: apps/cli/config/examples/mcp-memory/engram.cordis.yml:9]
 
 ### `transport: 'streamable-http'`
 
-必填 `url`。`headers` 默认 `{}`，进 `StreamableHTTPClientTransport` 的 `requestInit`。[E: packages/mcp/mcp-client/src/index.ts:128] [E: packages/mcp/mcp-client/src/index.ts:129] [E: packages/mcp/mcp-client/src/transport.ts:47] 测试用 `serverName: 'web'` 时登记成 `mcp__web__remote`。[E: packages/mcp/mcp-client/tests/apply.spec.ts:412]
+必填 `url`。`headers` 默认 `{}`，进 `StreamableHTTPClientTransport` 的 `requestInit`。[E: packages/mcp/mcp-client/src/index.ts:128] [E: packages/mcp/mcp-client/src/index.ts:129] [E: packages/mcp/mcp-client/src/transport.ts:43] 测试用 `serverName: 'web'` 时登记成 `mcp__web__remote`。[E: packages/mcp/mcp-client/tests/apply.spec.ts:413]
 
 ### 模型看见的名字：`publicToolName`
 
 干净情况（字符合法且总长 ≤ 64）就是 `mcp__<serverName>__<rawName>` 原文。[E: packages/mcp/mcp-client/src/tools.ts:113] [E: packages/mcp/mcp-client/src/tools.ts:115] 测试：`publicToolName('github', 'create_issue') === 'mcp__github__create_issue'`。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:157]
 
-否则：非法字符先换成 `_`；再把名字截到 64，并追加 `_` + 12 hex 的 SHA-256（输入 `${serverName}\0${rawName}`）。[E: packages/mcp/mcp-client/src/tools.ts:53] [E: packages/mcp/mcp-client/src/tools.ts:116] `admin.reset` 变成 `mcp__srv__admin_reset_<12hex>`；`admin.reset` 与 `admin_reset` 不会塌成同一个 public name。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:163] [E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:178]
+否则：非法字符先换成 `_`；再把名字截到 64，并追加 `_` + 12 hex 的 SHA-256（输入 `${serverName}\0${rawName}`）。[E: packages/mcp/mcp-client/src/tools.ts:54] [E: packages/mcp/mcp-client/src/tools.ts:116] `admin.reset` 变成 `mcp__srv__admin_reset_<12hex>`；`admin.reset` 与 `admin_reset` 不会塌成同一个 public name。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:162] [E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:178]
 
-raw name **不**进注册表。同一 raw `search` 可以同时是 native `search`、`mcp__github__search`、`mcp__web__search`。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:214] [E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:231]
+raw name **不**进注册表。同一 raw `search` 可以同时是 native `search`、`mcp__github__search`、`mcp__web__search`。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:214] [E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:232]
 
 ### 模型调用时线上发什么
 
-`createExecutor` 闭包持有 raw name。`tools/call` 的 params 是 `{ name: rawName, arguments }`，从不回解析 public name。[E: packages/mcp/mcp-client/src/tools.ts:89] 测试：模型侧 `name: 'mcp__srv__echo'`，mock 收到 `{ name: 'echo', arguments: { msg: 'hi' } }`；规范化后的 `admin.reset` 同样发 raw `admin.reset`。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:411] [E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:428]
+`createExecutor` 闭包持有 raw name。`tools/call` 的 params 是 `{ name: rawName, arguments }`，从不回解析 public name。[E: packages/mcp/mcp-client/src/tools.ts:86] 测试：模型侧 `name: 'mcp__srv__echo'`，mock 收到 `{ name: 'echo', arguments: { msg: 'hi' } }`；规范化后的 `admin.reset` 同样发 raw `admin.reset`。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:411] [E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:428]
 
-非 object 的 arguments（模型乱写 string / null）会被收成 `{}` 再发给 server。[E: packages/mcp/mcp-client/src/tools.ts:320]
+非 object 的 arguments（模型乱写 string / null）会被收成 `{}` 再发给 server。[E: packages/mcp/mcp-client/src/tools.ts:322]
 
-登记时的 `ToolDefinition`：`name` 是 public name，`description` 缺省变 `''`，`parameters` 是 MCP `inputSchema`，没有 `timeoutMs` / `isConcurrencySafe`。[E: packages/mcp/mcp-client/src/tools.ts:258] [E: packages/mcp/mcp-client/src/tools.ts:260] [E: packages/mcp/mcp-client/src/tools.ts:167] 因此：
+登记时的 `ToolDefinition`：`name` 是 public name，`description` 缺省变 `''`，`parameters` 是 MCP `inputSchema`，没有 `timeoutMs` / `isConcurrencySafe`。[E: packages/mcp/mcp-client/src/tools.ts:258] [E: packages/mcp/mcp-client/src/tools.ts:261] [E: packages/mcp/mcp-client/src/tools.ts:167] 因此：
 
-- `dsh-tool-call-timeout-policy` 读不到 `timeoutMs` 会直接 `next()`；真正的时限是 SDK `timeout: toolCallTimeoutMs`。[E: packages/guard/timeout-policy/src/index.ts:57] [E: packages/guard/timeout-policy/src/index.ts:59] [E: packages/mcp/mcp-client/src/tools.ts:93]
+- `dsh-tool-call-timeout-policy` 读不到 `timeoutMs` 会直接 `next()`；真正的时限是 SDK `timeout: toolCallTimeoutMs`。[E: packages/guard/timeout-policy/src/index.ts:57] [E: packages/guard/timeout-policy/src/index.ts:59] [E: packages/mcp/mcp-client/src/tools.ts:86]
 - 未声明 `isConcurrencySafe` → `executionMode` 是 `exclusive`。[E: packages/core/tools/src/index.ts:1269]
 - 本包不挂 `tools/pre-execute` listener；默认 gate 是 `allow`。[E: packages/core/tools/src/index.ts:1469]
 
-`taskSupport === 'required'` 的工具仍会登记，但一调用就抛，不发 RPC。[E: packages/mcp/mcp-client/src/tools.ts:170] [E: packages/mcp/mcp-client/src/tools.ts:313]
+`taskSupport === 'required'` 的工具仍会登记，但一调用就抛，不发 RPC。[E: packages/mcp/mcp-client/src/tools.ts:170] [E: packages/mcp/mcp-client/src/tools.ts:312]
 
 ### 模型下一轮看见的结果
 
-executor 返回 `{ content, structuredContent? }`（`McpResult`）。Native `render` 把 MCP content 折成一段 text：text 块用 `\n` 拼接；image 默认走诊断占位（未准入 durable context）；audio / resource 也变成占位。[E: packages/mcp/mcp-client/src/tools.ts:287] [E: packages/mcp/mcp-client/src/tools.ts:507] [E: packages/mcp/mcp-client/src/tools.ts:519] MCP `isError: true` 再抛，让 `ToolRuntime` 走出 isError 结果。[E: packages/mcp/mcp-client/src/tools.ts:343] 含图结果在准入成功时通过 `finalizeContent` 换成有序 image attachment，canonical `value` 仍保留原始 MCP JSON。[E: packages/mcp/mcp-client/src/tools.ts:263] [E: packages/mcp/mcp-client/src/tools.ts:355] e2e：`mcp__fixture__image` 在 vision 模型下产出 durable image 块。[E: packages/mcp/mcp-client/tests/mcp-client.e2e.ts:187]
+executor 返回 `{ content, structuredContent? }`（`McpResult`）。Native `render` 把 MCP content 折成一段 text：text 块用 `\n` 拼接；image 默认走诊断占位（未准入 durable context）；audio / resource 也变成占位。[E: packages/mcp/mcp-client/src/tools.ts:287] [E: packages/mcp/mcp-client/src/tools.ts:507] [E: packages/mcp/mcp-client/src/tools.ts:510] MCP `isError: true` 再抛，让 `ToolRuntime` 走出 isError 结果。[E: packages/mcp/mcp-client/src/tools.ts:343] 含图结果在准入成功时通过 `finalizeContent` 换成有序 image attachment，canonical `value` 仍保留原始 MCP JSON。[E: packages/mcp/mcp-client/src/tools.ts:263] [E: packages/mcp/mcp-client/src/tools.ts:355] e2e：`mcp__fixture__image` 在 vision 模型下产出 durable image 块。[E: packages/mcp/mcp-client/tests/mcp-client.e2e.ts:187]
 
 ## 装配与门控
 
-**默认产品树零 server。** 成员资格只认 shipped `cordis.patch.yml` / `agent.cordis.yml` 的行，不认「仓库里有这个 package」。`dsh-base` 的 dependencies 有 `@deepseek-ai/dsh-tools`，没有 `@deepseek-ai/dsh-mcp-client`。[E: packages/bundle/base/package.json:117]
+**默认产品树零 server。** 成员资格只认 shipped `cordis.patch.yml` / `presets/*.patch.yml` 的行，不认「仓库里有这个 package」。`dsh-base` 的 dependencies 有 `@deepseek-ai/dsh-tools`，没有 `@deepseek-ai/dsh-mcp-client`。[E: packages/bundle/base/package.json:117]
 
-**一实例一台 server。** 同一登记作用域（`scopeOf(ctx) ?? ctx.root`）上第二个相同 `serverName` 在 load 抛 `serverName "…" is already in use`，先挂上的实例和它的工具不动。[E: packages/mcp/mcp-client/src/index.ts:155] [E: packages/mcp/mcp-client/src/index.ts:163] [E: packages/mcp/mcp-client/tests/apply.spec.ts:208] 不同 Agent scope 或不同 app root 可以重名。[E: packages/mcp/mcp-client/tests/apply.spec.ts:216] [E: packages/mcp/mcp-client/tests/apply.spec.ts:245]
+**一实例一台 server。** 同一登记作用域（`scopeOf(ctx) ?? ctx.root`）上第二个相同 `serverName` 在 load 抛 `serverName "…" is already in use`，先挂上的实例和它的工具不动。[E: packages/mcp/mcp-client/src/index.ts:154] [E: packages/mcp/mcp-client/src/index.ts:163] [E: packages/mcp/mcp-client/tests/apply.spec.ts:208] 不同 Agent scope 或不同 app root 可以重名。[E: packages/mcp/mcp-client/tests/apply.spec.ts:217] [E: packages/mcp/mcp-client/tests/apply.spec.ts:245]
 
 **冲突不静默覆盖。**
 
 - 一份 `tools/list` 里同一个 raw name 出现两次 → fetch 阶段抛，上一世代仍注册。[E: packages/mcp/mcp-client/src/tools.ts:159]
-- 外源已经占了 `mcp__<serverName>__*`：本代已挂上的名字全部回滚，模型看到的是「这台 server 零工具」，不是残缺子集。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:277]
+- 外源已经占了 `mcp__<serverName>__*`：本代已挂上的名字全部回滚，模型看到的是「这台 server 零工具」，不是残缺子集。[E: packages/mcp/mcp-client/tests/mcp-client.spec.ts:278]
 - `failOnStartupError: true` 时，启动同步的登记冲突会传到 `apply` 拒绝激活。[E: packages/mcp/mcp-client/tests/apply.spec.ts:299]
 
-**fiber dispose 卸工具。** `mcp-client.connection` effect 的 disposer 调 `connection.dispose`：停 reconnect、关 client、再跑剩余 `ctx.tools` disposer。[E: packages/mcp/mcp-client/src/index.ts:176] [E: packages/mcp/mcp-client/src/connection.ts:327] 测试：插件 fiber dispose 后当前世代 `mcp__srv__updated` 从注册表消失；`serverName` 预留一并释放。[E: packages/mcp/mcp-client/tests/apply.spec.ts:380] [E: packages/mcp/mcp-client/src/index.ts:167]
+**fiber dispose 卸工具。** `mcp-client.connection` effect 的 disposer 调 `connection.dispose`：停 reconnect、关 client、再跑剩余 `ctx.tools` disposer。[E: packages/mcp/mcp-client/src/index.ts:176] [E: packages/mcp/mcp-client/src/connection.ts:328] 测试：插件 fiber dispose 后当前世代 `mcp__srv__updated` 从注册表消失；`serverName` 预留一并释放。[E: packages/mcp/mcp-client/tests/apply.spec.ts:380] [E: packages/mcp/mcp-client/src/index.ts:167]
 
 **断线时模型还看不看得到：**
 
 - `reconnect.enabled: false` 且曾经连上：工具留在表里，再调用会打到已死的 generation，直到卸插件 / 重载。[E: packages/mcp/mcp-client/tests/reconnect.spec.ts:334]
-- reconnect 耗尽 `maxAttempts`：supervisor 卸光这台 server 的工具。[E: packages/mcp/mcp-client/tests/reconnect.spec.ts:190]
+- reconnect 耗尽 `maxAttempts`：supervisor 卸光这台 server 的工具。[E: packages/mcp/mcp-client/tests/reconnect.spec.ts:191]
 - 默认 `failOnStartupError: false` 且首次 connect 失败：fiber 仍激活，零工具。[E: packages/mcp/mcp-client/tests/apply.spec.ts:258]
 
 **`tools/list` 变更。** 连上之前就挂 `ToolListChanged` handler。通知到来会整代 swap：旧 public name 消失，新名字出现。fetch 失败则保留上一世代。[E: packages/mcp/mcp-client/tests/apply.spec.ts:345] [E: packages/mcp/mcp-client/tests/apply.spec.ts:359]
@@ -169,7 +169,7 @@ executor 返回 `{ content, structuredContent? }`（`McpResult`）。Native `ren
 - `spine.tool-call-anatomy` — 模型写出 `mcp__*` 之后的 `pre-execute → execute → post-execute` 管线。MCP 工具走同一条 host 管线，没有单独的 MCP 审批开关。
 - `subsys.integration.mcp-client` — 连接 supervisor、reconnect 预算、generation swap 的 T2 控制流。本页是 T1 可见面，不复述 backoff 公式。
 - `subsys.execution.subprocess` — `scrubbedParentEnv` 的定义。stdio 孩子**不**进 `ctx.subprocess` 树；Host teardown 靠本 fiber 的 `connection.dispose` → SDK `client.close()`。
-- shipped preset / `dsh-base` — 都不插本包。要让 `dsh web` 或其它 profile 的模型看见 MCP 工具，写 host overlay，不要改四个 `agent.cordis.yml`。
+- shipped preset / `dsh-base` — 都不插本包。要让 `dsh web` 或其它 profile 的模型看见 MCP 工具，写 host overlay，不要改四份 `presets/*.patch.yml`。
 - ACP — `packages/acp/acp/src/mcp.ts` 把 session 的 `mcpServers` 译成本包 Config，作用域是 Agent，不是 host overlay。
 
 `surface.tools.skill` 与本包无登记关系：`skill` 是另一条 `ctx.tools` 行，不消费 MCP。

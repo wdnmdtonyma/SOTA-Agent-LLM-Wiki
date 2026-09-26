@@ -21,15 +21,15 @@ source:
   - packages/goal/tool-goal/src/index.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - vendor/cordis/src/events.ts
   - packages/core/agent-loop/src/agent.ts
   - packages/core/agent-loop/tests/interception.spec.ts
   - packages/core/session/src/index.ts
-  - packages/preset/agent-presets/src/mount.ts
-  - packages/preset/agent-presets/src/index.ts
+  - packages/preset/agent-preset-registry/src/mount.ts
+  - packages/preset/agent-preset-registry/src/index.ts
   - packages/api/remotes/src/client/index.ts
 symbols:
   - ctx.goals
@@ -48,7 +48,7 @@ related:
   - subsys.composition.agent-presets
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `ctx.goals`（`GoalService`）是 **host 面**同一 session 上最多一条 completion objective 的 event-sourced 生命周期：耐久事实是整份 `goal/change` 快照（经 `sessionProjections` 的 `goal` key 回放）；自动续跑资格是进程本地 `GoalActivation`，故意不落盘。`goal-round-driver` 只在 `phase === 'active'` 且 `activation === 'armed'` 时用 `source.kind === 'goal'` 的 `followup` 续跑。这是 Cordis 组合运行时里的一条 host 缝，不是跨 session 的 backlog，也不是又一个 coding-agent 主循环。
@@ -91,7 +91,7 @@ updated: c291e7961a
 | `packages/goal/tool-goal/src/index.ts` | Consumer 插件：`inject` + 三个 `defineTool`（字段表不在本页） |
 | `packages/bundle/base/cordis.patch.yml` | host insert：`goal` + `goal-round-driver` + `command-goal` + `tool-goal` |
 | `packages/bundle/web-app/cordis.patch.yml` | `disabled: true` 掉 `command-goal` 与 `tool-goal`；服务留在 host |
-| `packages/preset/agent-presets/presets/standard/agent.cordis.yml` | preset 顶层 remount `command-goal` + `tool-goal`，无 `isolate` |
+| `packages/bundle/web-app/presets/standard.patch.yml` | preset 顶层 remount `command-goal` + `tool-goal`，无 `isolate` |
 
 ## 数据模型
 
@@ -113,11 +113,11 @@ updated: c291e7961a
 
 ## 控制流
 
-1. **host 组合先落下 Definition。** `dsh-base` 根 `insert` 同时挂 `id: goal`（`@deepseek-ai/dsh-goal`）、`id: goal-round-driver`、`id: command-goal`，以及一层 host `id: tool-goal`。`GoalService@packages/goal/goal/src/index.ts` 是 class plugin：`static inject = ['agents', 'sessionProjections']`，构造里 `super(ctx, 'goals')` 发布 `ctx.goals`。叠 `dsh-base` 的 headless / sdk / acp **不** disable 这四行，工具留在 host 全局层；`sdk-minimal` 不叠 base，是否有 goal 行看它自己的完整 insert。 [E: packages/bundle/base/cordis.patch.yml:292] [E: packages/bundle/base/cordis.patch.yml:295] [E: packages/bundle/base/cordis.patch.yml:298] [E: packages/bundle/base/cordis.patch.yml:412] [E: packages/goal/goal/src/index.ts:236] [E: packages/goal/goal/src/index.ts:247]
+1. **host 组合先落下 Definition。** `dsh-base` 根 `insert` 同时挂 `id: goal`（`@deepseek-ai/dsh-goal`）、`id: goal-round-driver`、`id: command-goal`，以及一层 host `id: tool-goal`。`GoalService@packages/goal/goal/src/index.ts` 是 class plugin：`static inject = ['agents', 'sessionProjections']`，构造里 `super(ctx, 'goals')` 发布 `ctx.goals`。叠 `dsh-base` 的 headless / sdk / acp **不** disable 这四行，工具留在 host 全局层；`sdk-minimal` 不叠 base，是否有 goal 行看它自己的完整 insert。 [E: packages/bundle/base/cordis.patch.yml:312] [E: packages/bundle/base/cordis.patch.yml:315] [E: packages/bundle/base/cordis.patch.yml:318] [E: packages/bundle/base/cordis.patch.yml:436] [E: packages/goal/goal/src/index.ts:241] [E: packages/goal/goal/src/index.ts:251]
 
-2. **web 把命令与模型工具挪到 preset 面，服务留在 host。** `dsh-web-app` 把 `id: command-goal` 与 `id: tool-goal` 标 `disabled: true`；`goal` / `goal-round-driver` 没有对应 disable 行。shipped `standard` / `ptc` / `cordis` 在 preset 顶层 remount `command-goal` 与 `tool-goal`，**没有** `isolate` 块。`minimal` 不装这两行。preset 的 isolate 给的是 `planMode` / `compaction` / `workflowEngine`，不是 `goals`。 [E: packages/bundle/web-app/cordis.patch.yml:402] [E: packages/bundle/web-app/cordis.patch.yml:405] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:95] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:98] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:105] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:86] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108]
+2. **web 把命令与模型工具挪到 preset 面，服务留在 host。** `dsh-web-app` 把 `id: command-goal` 与 `id: tool-goal` 标 `disabled: true`；`goal` / `goal-round-driver` 没有对应 disable 行。shipped `standard` / `ptc` / `cordis` 在 preset 顶层 remount `command-goal` 与 `tool-goal`，**没有** `isolate` 块。`minimal` 不装这两行。preset 的 isolate 给的是 `planMode` / `compaction` / `workflowEngine`，不是 `goals`。 [E: packages/bundle/web-app/cordis.patch.yml:490] [E: packages/bundle/web-app/cordis.patch.yml:493] [E: packages/bundle/web-app/presets/standard.patch.yml:38] [E: packages/bundle/web-app/presets/standard.patch.yml:40] [E: packages/bundle/web-app/presets/ptc.patch.yml:40] [E: packages/bundle/web-app/presets/cordis.patch.yml:37] [E: packages/bundle/web-app/presets/standard.patch.yml:45]
 
-3. **无 isolate 是 Remote 解析约束，不是漏写。** `tool-goal` `inject = ['agents', 'goals', 'tools', 'systemPrompt', 'sessionProjections']`，自己不 `provide` `goals`。若 preset 把 `GoalService` 发进 root realm，`leakedServices@packages/preset/agent-presets/src/mount.ts` 会拒（`a preset service must sit behind an isolate realm or move to the host composition`）。若反过来把 `tool-goal` 放进 `isolate: { goals: true }`，host 那份 `ctx.goals` 会被挡住。`AgentPresets.serviceFor` 只查 preset 里的实例；shipped 树没有 preset `goals` realm，消费者走 host 单例 `ctx.goals`。客户端通过 `goalsRemote` 挂 Typert namespace `'goals'`。 [E: packages/goal/tool-goal/src/index.ts:22] [E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:411] [E: packages/preset/agent-presets/src/index.ts:645] [E: packages/api/remotes/src/client/index.ts:152]
+3. **无 isolate 是 Remote 解析约束，不是漏写。** `tool-goal` `inject = ['agents', 'goals', 'tools', 'systemPrompt', 'sessionProjections']`，自己不 `provide` `goals`。若 preset 把 `GoalService` 发进 root realm，`leakedServices@packages/preset/agent-preset-registry/src/mount.ts` 会拒（`Preset services require isolate realms: …`）。若反过来把 `tool-goal` 放进 `isolate: { goals: true }`，host 那份 `ctx.goals` 会被挡住。`AgentPresets.serviceFor` 只查 preset 里的实例；shipped 树没有 preset `goals` realm，消费者走 host 单例 `ctx.goals`。客户端通过 `goalsRemote` 挂 Typert namespace `'goals'`。 [E: packages/goal/tool-goal/src/index.ts:29] [E: packages/preset/agent-preset-registry/src/mount.ts:86] [E: packages/preset/agent-preset-registry/src/mount.ts:267] [E: packages/preset/agent-preset-registry/src/index.ts:297] [E: packages/api/remotes/src/client/index.ts:178]
 
 4. **服务启动：session-start 一律 disarmed；投影必注册。** 构造挂 `agent/session-start`：`this.runtimeState(agent.session).activation = 'disarmed'`。`sessionProjections` 是硬 inject：`register(goalProjectionDefinition)`（`key: 'goal'`，`stateVersion: 6`）。`applyGoalProjection` 从 `goal/change` 与 goal-source `user/message` 更新 `current`，**不**写 `activation`。`foldGoal` 的返回值同样没有该字段。headless e2e 对落盘 jsonl 断言 `JSON.stringify(context)` 不含 `'activation'`。 [E: packages/goal/goal/src/index.ts:252] [E: packages/goal/goal/src/index.ts:255] [E: packages/goal/goal/src/index.ts:162] [E: packages/goal/goal/src/fold.ts:339] [E: packages/goal/goal/src/types.ts:107] [E: packages/goal/goal/tests/goal.e2e.ts:69]
 
@@ -129,11 +129,11 @@ updated: c291e7961a
 
 8. **driver 热加载也不继承 armed。** `apply@goal-round-driver` 是 named-export function plugin（`name = 'goal-round-driver'`，`inject = ['agents', 'goals', 'sessions']`）。`ctx.effect` 装完监听后，对 `ctx.agents.list()` 逐个 `disarm`。测试：先 `create`（armed）再 `plugin(goalSession)`，立刻变成 `disarmed`、0 次模型请求，直到 `resume`。 [E: packages/goal/goal-round-driver/src/index.ts:18] [E: packages/goal/goal-round-driver/src/index.ts:19] [E: packages/goal/goal-round-driver/src/index.ts:419] [E: packages/goal/goal-round-driver/src/index.ts:420] [E: packages/goal/goal-round-driver/tests/goal-round-driver.spec.ts:222]
 
-9. **idle + active + armed 才 `followup`。** `goal/changed` 把 `needsCheckpoint = true` 并 `requestDrive`。`agent/status === 'idle'` 同样 `requestDrive`（若当时有 queued/claimed/cancelled 的 attempt，先 `pause`）。`drive` 要求 `readyToDrive`：fiber `ACTIVE`、非 stopping、exact live agent、`status === 'idle'`、没有 competing `next-turn`。待落盘时先 `await ctx.sessions.flush(agent.session)`；flush 失败则 `disarm` 并 return。然后仅当 `phase === 'active' && activation === 'armed'` 且 `roundsStarted < maxGoalRounds`，才 `renderGoalRoundPrompt` + `createUserMessage({ source: { kind: 'goal', goalId, revision, round } })` + `agent.followup(message)`。`followup@ReactLoopAgent` = `send(input, 'next-turn', true)`。用尽 cap 走 `block(..., { code: 'round-limit' })`，不是再排一条 prompt。 [E: packages/goal/goal-round-driver/src/index.ts:164] [E: packages/goal/goal-round-driver/src/index.ts:165] [E: packages/goal/goal-round-driver/src/index.ts:192] [E: packages/goal/goal-round-driver/src/index.ts:103] [E: packages/core/agent-loop/src/agent.ts:134] [E: packages/core/session/src/index.ts:1047]
+9. **idle + active + armed 才 `followup`。** `goal/changed` 把 `needsCheckpoint = true` 并 `requestDrive`。`agent/status === 'idle'` 同样 `requestDrive`（若当时有 queued/claimed/cancelled 的 attempt，先 `pause`）。`drive` 要求 `readyToDrive`：fiber `ACTIVE`、非 stopping、exact live agent、`status === 'idle'`、没有 competing `next-turn`。待落盘时先 `await ctx.sessions.flush(agent.session)`；flush 失败则 `disarm` 并 return。然后仅当 `phase === 'active' && activation === 'armed'` 且 `roundsStarted < maxGoalRounds`，才 `renderGoalRoundPrompt` + `createUserMessage({ source: { kind: 'goal', goalId, revision, round } })` + `agent.followup(message)`。`followup@ReactLoopAgent` = `send(input, 'next-turn', true)`。用尽 cap 走 `block(..., { code: 'round-limit' })`，不是再排一条 prompt。 [E: packages/goal/goal-round-driver/src/index.ts:164] [E: packages/goal/goal-round-driver/src/index.ts:165] [E: packages/goal/goal-round-driver/src/index.ts:192] [E: packages/goal/goal-round-driver/src/index.ts:103] [E: packages/core/agent-loop/src/agent.ts:163] [E: packages/core/session/src/index.ts:1047]
 
-10. **`agent/pre-step` 是 waterfall；本页有一条故意不 `next()` 的 reject。** Cordis `Events.waterfall` 把最后一个参数当 innermost `next`：监听器必须调用传入的 `next()` 才会 `shift` 到下一层；不调用就停在本层，内置行为也不跑。driver 监听：消息里没有 `kind === 'goal' && round > 0` 则 `return next()`。有则跑 `validReservation`（claimed、未 stale、id/revision 对得上、仍是 active+armed、`round === roundsStarted + 1`）。失败路径 **不** 调用 `next()`，直接 `return { kind: 'reject' }`，并把别人的 claimed 上下文 `prepend` 回 `next-step`。成功路径才 `await next()`；下游若 `reject` 且 goal 仍 active+armed，再 `block(..., { code: 'prompt-rejected' })`。下游 `enter` 后复检 reservation，失败同样改写成 `reject`（不消耗 round）。 [E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:238] [E: packages/goal/goal-round-driver/src/index.ts:349] [E: packages/goal/goal-round-driver/src/index.ts:352] [E: packages/goal/goal-round-driver/src/index.ts:370] [E: packages/goal/goal-round-driver/src/index.ts:374] [E: packages/goal/goal-round-driver/src/index.ts:388]
+10. **`agent/pre-step` 是 waterfall；本页有一条故意不 `next()` 的 reject。** Cordis `Events.waterfall` 把最后一个参数当 innermost `next`：监听器必须调用传入的 `next()` 才会 `shift` 到下一层；不调用就停在本层，内置行为也不跑。driver 监听：消息里没有 `kind === 'goal' && round > 0` 则 `return next()`。有则跑 `validReservation`（claimed、未 stale、id/revision 对得上、仍是 active+armed、`round === roundsStarted + 1`）。失败路径 **不** 调用 `next()`，直接 `return { kind: 'reject' }`，并把别人的 claimed 上下文 `prepend` 回 `next-step`。成功路径才 `await next()`；下游若 `reject` 且 goal 仍 active+armed，再 `block(..., { code: 'prompt-rejected' })`。下游 `enter` 后复检 reservation，失败同样改写成 `reject`（不消耗 round）。 [E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:238] [E: packages/goal/goal-round-driver/src/index.ts:349] [E: packages/goal/goal-round-driver/src/index.ts:352] [E: packages/goal/goal-round-driver/src/index.ts:370] [E: packages/goal/goal-round-driver/src/index.ts:374] [E: packages/goal/goal-round-driver/src/index.ts:387]
 
-11. **loop 把 `reject` 收成 0 step 的 `blocked` turn。** `ReactLoopAgent.preStep` 的默认 `next` 是 `{ kind: 'enter', messages }`。收到 `reject` → `turnEnds = { kind: 'blocked' }`，不写 `step/start`，也不把已 claim 的消息写成 `user/message`。拦截测试：模型 0 次调用。driver 自己的 `prompt-rejected` 测试：`roundsStarted === 0`。成功 `enter` 之后才 `session.append('user/message', …)`。 [E: packages/core/agent-loop/src/agent.ts:249] [E: packages/core/agent-loop/src/agent.ts:288] [E: packages/core/agent-loop/tests/interception.spec.ts:250] [E: packages/goal/goal-round-driver/tests/goal-round-driver.spec.ts:259] [E: packages/core/agent-loop/src/agent.ts:303]
+11. **loop 把 `reject` 收成 0 step 的 `blocked` turn。** `ReactLoopAgent.preStep` 的默认 `next` 是 `{ kind: 'enter', messages }`。收到 `reject` → `turnEnds = { kind: 'blocked' }`，不写 `step/start`，也不把已 claim 的消息写成 `user/message`。拦截测试：模型 0 次调用。driver 自己的 `prompt-rejected` 测试：`roundsStarted === 0`。成功 `enter` 之后才 `session.append('user/message', …)`。 [E: packages/core/agent-loop/src/agent.ts:276] [E: packages/core/agent-loop/src/agent.ts:289] [E: packages/core/agent-loop/tests/interception.spec.ts:250] [E: packages/goal/goal-round-driver/tests/goal-round-driver.spec.ts:259] [E: packages/core/agent-loop/src/agent.ts:303]
 
 12. **只有 admitted `user/message` 才增加 `roundsStarted`。** `applyGoalEvent` 在 `type === 'user/message'` 且 `source.kind === 'goal'` 时校验：current 必须 `active`、id/revision 对齐、`source.round === roundsStarted + 1` 且不超过 cap，然后 `state.roundsStarted = source.round`。这是 `model-visible ⟺ logged` 在本缝上的落点：续跑文本先经 `followup` 进 inbox，claim + `enter` 之后才变成 surface `user/message`，模型请求里的 `messages` 仍只来自 `deriveMessages()`。 [E: packages/goal/goal/src/fold.ts:321] [E: packages/goal/goal/src/fold.ts:330]
 
@@ -190,15 +190,15 @@ updated: c291e7961a
 - packages/goal/tool-goal/src/index.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - vendor/cordis/src/events.ts
 - packages/core/agent-loop/src/agent.ts
 - packages/core/agent-loop/tests/interception.spec.ts
 - packages/core/session/src/index.ts
-- packages/preset/agent-presets/src/mount.ts
-- packages/preset/agent-presets/src/index.ts
+- packages/preset/agent-preset-registry/src/mount.ts
+- packages/preset/agent-preset-registry/src/index.ts
 - packages/api/remotes/src/client/index.ts
 
 ## 相关

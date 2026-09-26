@@ -37,6 +37,7 @@ source:
   - packages/client/ui-workspace/src/client/WorkspacePicker.tsx
   - packages/client/ui-directory-picker-native/src/client/index.ts
   - packages/client/ui-directory-picker-browse/src/client/index.ts
+  - packages/util/launch-environment/src/index.ts
   - vendor/cordis/src/service.ts
   - vendor/cordis/src/reflect.ts
 symbols:
@@ -62,7 +63,7 @@ related:
   - subsys.composition.bundle-headless
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-host-directory-picker` 是 **host 面** workspace 目录选择缝的 **Definition**：抽象类 `DirectoryPicker` 在构造里 `super(ctx, 'directoryPicker')` 登记 `ctx.directoryPicker`，对外只暴露 discriminated `capability()`（`native.pick` vs `browse.list` / `browse.createDirectory`），不是一套共用方法。定义包**不是** shipped Loader 行；`dsh --profile web`（别名 `dsh web`）挂的是 `id: directory-picker` = `@deepseek-ai/dsh-host-directory-picker-auto`，boot 采样一次 bind / SSH / 平台 / Linux chooser，再 `loader.create` 成对挂上 backend + client surface。wire Consumer 是 `DirectoryPickerController`（`packages/api/workspace-controller`），Remote namespace `'directoryPicker'`，动词 `pick` / `list` / `createDirectory`。
@@ -71,7 +72,7 @@ updated: c291e7961a
 
 - `ctx.directoryPicker` 由哪个包声明、哪个插件 `provide`、哪个 Remote 当 Consumer？定义包自己是不是 `dsh-web-app` 的一行？
 - web 挂的为什么是 **auto** 而不是 native / browse？`resolveDirectoryPickerBackend` 五条规则各自把什么判成 `browse`？
-- `bindHost !== '127.0.0.1'`、SSH、非 darwin/win32、Linux 缺 chooser / 缺 display，分别落到哪一种 capability？
+- `bindHost !== '127.0.0.1'`、`launchedThroughSsh`、非 darwin/win32、Linux 缺 chooser / 缺 display，分别落到哪一种 capability？
 - browse 的 `fullyQualified` 篱笆拦什么？`maxEntries` / `truncated` / `hidden` / symlink 各是什么语义？
 - `directoryPicker/pick` / `list` / `createDirectory` 如何按 `kind` 分流？错 kind 的 Remote 码是什么？
 - `dsh-base` / `dsh-headless` / `sdk` / `sdk-minimal` / `acp` 为什么没有 directory-picker 行？`--host 0.0.0.0` 被拒之后这条缝还在不在？
@@ -106,7 +107,7 @@ DSH 是 **Cordis 组合运行时**：主线 `profile → bundle → agent preset
 | `packages/api/workspace-controller/src/index.ts` | `WorkspaceController` 构造里 `ctx.plugin(DirectoryPickerController)` |
 | `packages/bundle/web-app/cordis.patch.yml` | `id: directory-picker` = auto |
 | `packages/bundle/base/cordis.patch.yml` | 共享 core insert；无 directory-picker |
-| `packages/bundle/headless/cordis.patch.yml` | insert 只有 `code-runtime` / `headless-startup` / `headless-runner` |
+| `packages/bundle/headless/cordis.patch.yml` | insert 只有 `headless-startup` / `headless-runner`（`ptc-runtime` 在 base） |
 | `scripts/verify-cordis-config.ts` | 挂 auto 的 composition 必须声明四个 runtime 包 |
 
 ## 数据模型
@@ -117,7 +118,7 @@ DSH 是 **Cordis 组合运行时**：主线 `profile → bundle → agent preset
 | `DirectoryListing` | `path` + `home` + `crumbs`（根→当前，每粒可跳，`hidden` 恒 false）+ `entries`（子目录，按 name 排序）+ `truncated`。client **不**自己拼接路径段。 |
 | `DirectoryEntry` | `name` / `path`（host 绝对路径）/ `hidden`（POSIX 点前缀；Windows hidden 属性不读）。 |
 | `DirectoryPickerError` | 闭集 `directory-unreadable` \| `directory-exists` \| `directory-create-failed`，带 `path`。controller 映到 `directory-picker/unreadable` / `exists` / `create-failed`。 |
-| `DirectoryPickerHostFacts` | auto 一次采样：`bindHost`、`platform`、`env`（`SSH_*` / `DISPLAY` / `WAYLAND_DISPLAY`）、`linuxChooser`。 |
+| `DirectoryPickerHostFacts` | auto 一次采样：`bindHost`、`platform`、`ssh`（`launchedThroughSsh(launchEnvironmentOf(ctx))`）、`env`（只读 `DISPLAY` / `WAYLAND_DISPLAY`）、`linuxChooser`。 |
 | `BrowseDirectoryPicker.Config.maxEntries` | `z.natural().min(1)`，默认 `1000`。截断的是 name-sorted 尾；hidden 行计入 bound。 |
 | `BACKEND_PACKAGES` / `SURFACE_PACKAGES` | `native` ↔ host-native + client-ui-native；`browse` ↔ 一对 `-browse`。不是可调 config。 |
 
@@ -129,27 +130,27 @@ capability **对象**在服务生命周期内稳定：consumer 可以跨调用�
 
 2. **交互形状是 discriminated union，不是一套方法。** `native` 只有 `pick`（OS chooser，取消返回 `null`）。`browse` 只有 `list` / `createDirectory`。Consumer 必须 `switch` `capability().kind`。未知 `kind` 的**文档默认**是隐藏选择入口，不是 throw [I]（定义包模块说明）。运行时：没挂上匹配 surface 时 `directoryFlow` hole 为空，`WorkspacePicker` 不加「添加工作区」项。[E: packages/host/directory-picker/src/index.ts:20] [E: packages/host/directory-picker/src/index.ts:66] [E: packages/host/directory-picker/src/index.ts:92]
 
-3. **web 挂 auto，不挂定义包，也不直接挂某种 backend。** `dsh-web-app` insert 写 `id: directory-picker` / `name: '@deepseek-ai/dsh-host-directory-picker-auto'`。[E: packages/bundle/web-app/cordis.patch.yml:92] [E: packages/bundle/web-app/cordis.patch.yml:97] `dsh-base` 的 `insert` 从 `timer` / `hmr` / `llm` 起铺共享 core，字面量里没有 `id: directory-picker`。[E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/base/cordis.patch.yml:21] [E: packages/bundle/base/cordis.patch.yml:27] `dsh-headless` 的 `insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27] web-app 的 `package.json` 同时声明 auto、两个 host backend、两个 client surface。[E: packages/bundle/web-app/package.json:108] [E: packages/bundle/web-app/package.json:100] [E: packages/bundle/web-app/package.json:101] [E: packages/bundle/web-app/package.json:69] [E: packages/bundle/web-app/package.json:71] `verify-cordis-config` 把 auto 会 `loader.create` 的运行时字符串做成硬编码清单：yml 扫到 `CHOOSER_PACKAGE` 时，四个 `CHOOSER_BACKEND_PACKAGES` 必须出现在同一 bundle 的 `dependencies`。[E: scripts/verify-cordis-config.ts:42] [E: scripts/verify-cordis-config.ts:51] [E: scripts/verify-cordis-config.ts:455]
+3. **web 挂 auto，不挂定义包，也不直接挂某种 backend。** `dsh-web-app` insert 写 `id: directory-picker` / `name: '@deepseek-ai/dsh-host-directory-picker-auto'`。[E: packages/bundle/web-app/cordis.patch.yml:92] [E: packages/bundle/web-app/cordis.patch.yml:97] `dsh-base` 的 `insert` 从 `timer` / `hmr` / `llm` 起铺共享 core，字面量里没有 `id: directory-picker`。[E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/base/cordis.patch.yml:21] [E: packages/bundle/base/cordis.patch.yml:27] `dsh-headless` 的 `insert` 只有 `headless-startup` / `headless-runner`（`ptc-runtime` 在 base）。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:1] [E: packages/bundle/headless/cordis.patch.yml:27] web-app 的 `package.json` 同时声明 auto、两个 host backend、两个 client surface。[E: packages/bundle/web-app/package.json:108] [E: packages/bundle/web-app/package.json:100] [E: packages/bundle/web-app/package.json:101] [E: packages/bundle/web-app/package.json:69] [E: packages/bundle/web-app/package.json:71] `verify-cordis-config` 把 auto 会 `loader.create` 的运行时字符串做成硬编码清单：yml 扫到 `CHOOSER_PACKAGE` 时，四个 `CHOOSER_BACKEND_PACKAGES` 必须出现在同一 bundle 的 `dependencies`。[E: scripts/verify-cordis-config.ts:84] [E: scripts/verify-cordis-config.ts:438] [E: scripts/verify-cordis-config.ts:455]
 
-4. **auto 等 `webServer`，再采样一次。** `apply` 的 `inject = ['webServer', 'loader']`，`name = 'directory-picker-auto'`。它读 `ctx.webServer.host`（getter 返回 **config** 字面量，不是 OS 实际 bind）、`process.platform`、`process.env`，并用 `hasLinuxChooserBinary(process.env.PATH, canExecute)` 探 `zenity` / `kdialog`。`--host 0.0.0.0` 若在 `web-startup` 被拒，`webserver` 因 yml `inject: [webStartup]` pending，本行同样不跑。[E: packages/host/directory-picker-auto/src/index.ts:28] [E: packages/host/directory-picker-auto/src/index.ts:30] [E: packages/host/directory-picker-auto/src/index.ts:64] [E: packages/host/webserver/src/index.ts:155]
+4. **auto 等 `webServer`，再采样一次。** `apply` 的 `inject = ['webServer', 'loader']`，`name = 'directory-picker-auto'`。它读 `ctx.webServer.host`（getter 返回 **config** 字面量，不是 OS 实际 bind）、`process.platform`、`launchedThroughSsh(launchEnvironmentOf(ctx))`（只看 launcher 快照里的 process 层 `SSH_*`，不读项目 `.env`），并用 `hasLinuxChooserBinary(process.env.PATH, canExecute)` 探 `zenity` / `kdialog`。`--host 0.0.0.0` 若在 `web-startup` 被拒，`webserver` 因 yml `inject: [webStartup]` pending，本行同样不跑。[E: packages/host/directory-picker-auto/src/index.ts:30] [E: packages/host/directory-picker-auto/src/index.ts:66] [E: packages/util/launch-environment/src/index.ts:125] [E: packages/host/webserver/src/index.ts:156]
 
 5. **`resolveDirectoryPickerBackend` 按序短路（后条只在前条未命中时生效）。**
 
    | # | 条件 | 结果 | 证据 |
    |---|---|---|---|
    | 1 | `bindHost !== '127.0.0.1'`（schema 里即 `'0.0.0.0'`） | `browse` | [E: packages/host/directory-picker-auto/src/resolve.ts:50] |
-   | 2 | `SSH_CONNECTION` 或 `SSH_TTY` **非空**（空字符串当 unset） | `browse` | [E: packages/host/directory-picker-auto/src/resolve.ts:54] |
+   | 2 | `facts.ssh === true`（launcher 快照 process 层 `SSH_CONNECTION` / `SSH_TTY` 非空） | `browse` | [E: packages/host/directory-picker-auto/src/resolve.ts:51] |
    | 3 | `platform === 'darwin' \|\| 'win32'` | `native` | [E: packages/host/directory-picker-auto/src/resolve.ts:52] |
    | 4 | 非 `linux`，或 `linuxChooser === false` | `browse` | [E: packages/host/directory-picker-auto/src/resolve.ts:53] |
    | 5 | linux 且有 chooser：`DISPLAY` 或 `WAYLAND_DISPLAY` 非空 → `native`，否则 `browse` | 见右 | [E: packages/host/directory-picker-auto/src/resolve.ts:54] |
 
-   测试钉死：attended darwin/win32 → `native`；`bindHost: '0.0.0.0'` 不论其它信号 → `browse`；任一种 SSH 标记 → `browse`；linux 无 display 或无 chooser → `browse`；freebsd/openbsd 即使有 display+chooser → `browse`；空白 `SSH_*` / `DISPLAY` 当未设置。[E: packages/host/directory-picker-auto/tests/resolve.spec.ts:20] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:25] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:25] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:34] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:40] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:45]
+   测试钉死：attended darwin/win32 → `native`；`bindHost: '0.0.0.0'` 不论其它信号 → `browse`；`ssh: true` → `browse`；linux 无 display 或无 chooser → `browse`；freebsd/openbsd 即使有 display+chooser → `browse`；空白 `DISPLAY` / `WAYLAND_DISPLAY` 当未设置。[E: packages/host/directory-picker-auto/tests/resolve.spec.ts:20] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:25] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:29] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:34] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:40] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:45]
 
 6. **Linux chooser 探测是 PATH 扫描，不是试跑对话框。** `LINUX_CHOOSER_BINARIES = ['zenity', 'kdialog']`；`hasLinuxChooserBinary` 按 `path.delimiter` 拆 PATH，跳过空段，对每段 `join(dir, name)` 调 `canExecute`（`accessSync(..., X_OK)`）。缺 PATH / 空 PATH / 没有任何可执行文件 → `false`，规则 4 把 linux 打成 browse。[E: packages/host/directory-picker-auto/src/probe.ts:13] [E: packages/host/directory-picker-auto/src/probe.ts:36] [E: packages/host/directory-picker-auto/src/probe.ts:40]
 
 7. **决议结果写成一对 Loader 行，不写回 config。** `apply` 在 `ctx.effect` 里先 `loader.create({ name: BACKEND_PACKAGES[backend] })`，再 create 对应 `SURFACE_PACKAGES`。root-tree create：Loader 根是内存树，`write()` 对这次挂载是 no-op。真 Loader 测试：attended loopback 挂 native + native surface，配置文件不含 native 包名；`0.0.0.0` 或 SSH 挂 browse 一对。[E: packages/host/directory-picker-auto/src/index.ts:38] [E: packages/host/directory-picker-auto/src/index.ts:51] [E: packages/host/directory-picker-auto/src/index.ts:87] [E: packages/host/directory-picker-auto/tests/loader-composition.spec.ts:198] [E: packages/host/directory-picker-auto/tests/loader-composition.spec.ts:233]
 
-8. **surface 失败必须带走已挂的 backend。** create 循环 catch 里先 `unmount()` 再抛。留下半套会让重试撞 `directoryPicker` 重复登记。测试：surface import 失败后 store 里没有 native、`ctx.get('directoryPicker')` 为 `undefined`。[E: packages/host/directory-picker-auto/src/index.ts:94] [E: packages/host/directory-picker-auto/tests/loader-composition.spec.ts:254]
+8. **surface 失败必须带走已挂的 backend。** create 循环 catch 里先 `unmount()` 再抛。留下半套会让重试撞 `directoryPicker` 重复登记。测试：surface import 失败后 store 里没有 native、`ctx.get('directoryPicker')` 为 `undefined`。[E: packages/host/directory-picker-auto/src/index.ts:99] [E: packages/host/directory-picker-auto/tests/loader-composition.spec.ts:254]
 
 9. **重复 Provider 抛 Cordis 标准错。** `reflect.provide` 发现同 isolate key 已有 impl 时抛 `service "${name}" has been registered at <fiber>`。[E: vendor/cordis/src/reflect.ts:290]
 
@@ -157,11 +158,11 @@ capability **对象**在服务生命周期内稳定：consumer 可以跨调用�
 
 11. **browse backend：fully-qualified 篱笆 + 有界 listing + 单段 create。** `BrowseDirectoryPicker` 握一份稳定 `{ kind: 'browse', list, createDirectory }`。`list`：缺 path 列 `homedir()`；给出的 path 必须 `fullyQualified`（POSIX 绝对路径；Win32 只要盘符根 `C:\` / `C:/` 或完整 UNC），否则 `directory-unreadable` 且 **path 保持 wire 原值**。`opendir` 流式读入 `maxEntries+1` 的 name-sorted 窗口；只让 dirent 目录或 symlink 进窗口；symlink 再 `stat` 跟到目录。`hidden` 只是 `name.startsWith('.')`。`createDirectory`：父路径同一篱笆（失败码 `directory-create-failed`）；`name` 拒绝空白 / `.` / `..` / 含 `/` `\`；`mkdir` **非递归**；`EEXIST` → `directory-exists`。[E: packages/host/directory-picker-browse/src/index.ts:50] [E: packages/host/directory-picker-browse/src/index.ts:199] [E: packages/host/directory-picker-browse/src/index.ts:222] [E: packages/host/directory-picker-browse/src/index.ts:302] [E: packages/host/directory-picker-browse/src/index.ts:308] [E: packages/host/directory-picker-browse/src/index.ts:315] [E: packages/host/directory-picker-browse/tests/service.spec.ts:195]
 
-12. **workspace-controller 是 host 面 Consumer，按 kind 开门。** `WorkspaceController` 构造里 `ctx.plugin(DirectoryPickerController)`：directory-picker 缝本身不是 Loader 行，没有 backend 时 child 保持 pending，不注册 picking namespace。[E: packages/api/workspace-controller/src/index.ts:49] `DirectoryPickerController.static inject = ['directoryPicker']`，服务名 `'directoryPickerController'`，Remote namespace `'directoryPicker'`。[E: packages/api/workspace-controller/src/directory-picker.ts:42] [E: packages/api/workspace-controller/src/directory-picker.ts:46] `@Remote('pick')` 要求 `kind === 'native'`，否则 `directory-picker/unavailable`（details `{ capability }`）；abort → `gateway/cancelled`，其它 throw → `gateway/internal`。`list` / `createDirectory` 要求 `kind === 'browse'`；`DirectoryPickerError` 经 `BROWSE_FAILURE_CODES` 上 wire；无效 `name` 在 dispatch 前 `gateway/bad-request`。测试：browse composition 调 `pick`、native composition 调 list/create，都是 `directory-picker/unavailable`。[E: packages/api/workspace-controller/src/directory-picker.ts:54] [E: packages/api/workspace-controller/src/directory-picker.ts:71] [E: packages/api/workspace-controller/src/directory-picker.ts:87] [E: packages/api/workspace-controller/src/directory-picker.ts:112] [E: packages/api/workspace-controller/src/directory-picker.ts:127] [E: packages/api/workspace-controller/tests/directory-picker.host.spec.ts:100] [E: packages/api/workspace-controller/tests/directory-picker.host.spec.ts:164]
+12. **workspace-controller 是 host 面 Consumer，按 kind 开门。** `WorkspaceController` 构造里 `ctx.plugin(DirectoryPickerController)`：directory-picker 缝本身不是 Loader 行，没有 backend 时 child 保持 pending，不注册 picking namespace。[E: packages/api/workspace-controller/src/index.ts:77] `DirectoryPickerController.static inject = ['directoryPicker']`，服务名 `'directoryPickerController'`，Remote namespace `'directoryPicker'`。[E: packages/api/workspace-controller/src/directory-picker.ts:42] [E: packages/api/workspace-controller/src/directory-picker.ts:46] `@Remote('pick')` 要求 `kind === 'native'`，否则 `directory-picker/unavailable`（details `{ capability }`）；abort → `gateway/cancelled`，其它 throw → `gateway/internal`。`list` / `createDirectory` 要求 `kind === 'browse'`；`DirectoryPickerError` 经 `BROWSE_FAILURE_CODES` 上 wire；无效 `name` 在 dispatch 前 `gateway/bad-request`。测试：browse composition 调 `pick`、native composition 调 list/create，都是 `directory-picker/unavailable`。[E: packages/api/workspace-controller/src/directory-picker.ts:54] [E: packages/api/workspace-controller/src/directory-picker.ts:71] [E: packages/api/workspace-controller/src/directory-picker.ts:87] [E: packages/api/workspace-controller/src/directory-picker.ts:112] [E: packages/api/workspace-controller/src/directory-picker.ts:127] [E: packages/api/workspace-controller/tests/directory-picker.host.spec.ts:100] [E: packages/api/workspace-controller/tests/directory-picker.host.spec.ts:164]
 
 13. **client 经 `ctx.remote.directoryPicker`，不 switch kind。** `ui-workspace` `inject` 含 `'remote.directoryPicker'`；`UiWorkspaceService.pickDirectory` 调 `directoryPicker.pick()`，list/create 同名。[E: packages/client/ui-workspace/src/client/index.ts:64] [E: packages/client/ui-workspace/src/client/navigation.ts:180] native surface 把 renderless occupant 填进 `conversation.hero.workspace.directoryFlow` 与 `sidebar.workspaces.directoryFlow`，每次 `open` 调 `ctx.uiWorkspace.pickDirectory()`。browse surface 填同一对 hole，驱动 `listDirectory` / `createDirectory`。两种 surface **不会**同时被 auto 挂上。[E: packages/client/ui-directory-picker-native/src/client/index.ts:29] [E: packages/client/ui-directory-picker-browse/src/client/index.ts:79]
 
-14. **未知 kind / 没挂 surface → 隐藏入口，不是 Remote fail-loud。** `WorkspacePicker` 用 `useDirectoryFlow` 看 hole 是否被占：未被占则 `addEntries = []`；`menuIsEmpty` 时锚点手势不弹 Menu。硬调错 kind 的 Remote 仍回 `directory-picker/unavailable`。[E: packages/client/ui-workspace/src/client/WorkspacePicker.tsx:92] [E: packages/client/ui-workspace/src/client/WorkspacePicker.tsx:101] [E: packages/client/ui-workspace/src/client/WorkspacePicker.tsx:118] [E: packages/client/ui-workspace/src/client/WorkspacePicker.tsx:186]
+14. **未知 kind / 没挂 surface → 隐藏入口，不是 Remote fail-loud。** `WorkspacePicker` 用 `useDirectoryFlow` 看 hole 是否被占：未被占则 `addEntries = []`；`menuIsEmpty` 时锚点手势不弹 Menu。硬调错 kind 的 Remote 仍回 `directory-picker/unavailable`。[E: packages/client/ui-workspace/src/client/WorkspacePicker.tsx:202] [E: packages/client/ui-workspace/src/client/WorkspacePicker.tsx:202] [E: packages/client/ui-workspace/src/client/WorkspacePicker.tsx:250] [E: packages/client/ui-workspace/src/client/WorkspacePicker.tsx:18]
 
 15. **卸载：auto 的 disposer 按反序 `loader.remove`，并 join fiber teardown。** HMR / 卸插件后 `ctx.directoryPicker` 消失。树 teardown 已删掉的 entry 会 skip。本缝没有 Cordis `Events.waterfall`；门控是 Loader `inject` 与 kind 分支。
 
@@ -179,7 +180,7 @@ capability **对象**在服务生命周期内稳定：consumer 可以跨调用�
 - **定义包 ≠ shipped 行。** 在 yml 里写 `@deepseek-ai/dsh-host-directory-picker` 得不到 backend。web 的 id 是 `directory-picker`，name 是 **auto**。[E: packages/bundle/web-app/cordis.patch.yml:97]
 - **只有 web bundle 有此缝。** `dsh-base` / `dsh-headless` 无此行；`sdk` / `sdk-minimal` / `acp` 同样是 startup profile、不叠 web-app，没有 webserver+auto。选目录是 Web GUI 的 host 能力，不是 agent-preset 工具。宿主入口除 `dsh web` 外还有 `dsh --profile sdk|sdk-minimal|acp|headless`。
 - **`--host 0.0.0.0` 被拒 ≠ schema 禁止 all-interfaces。** 旗标失败时 `webStartup → webserver → directory-picker-auto` 都不激活。overlay 把 `webserver.config.host` 改成 `'0.0.0.0'` 时 webserver **会** listen，auto 选 browse。[E: packages/host/webserver/src/index.ts:61] [E: packages/host/directory-picker-auto/tests/resolve.spec.ts:25]
-- **空白 `SSH_CONNECTION` / `SSH_TTY` / `DISPLAY` 当未设置。** shell 里 `export SSH_CONNECTION=` 不会把 attended darwin 打成 browse。[E: packages/host/directory-picker-auto/tests/resolve.spec.ts:45]
+- **空白 `DISPLAY` / `WAYLAND_DISPLAY` 当未设置。** SSH 判定走 launcher 快照 process 层，不读项目 `.env`。[E: packages/host/directory-picker-auto/tests/resolve.spec.ts:45] [E: packages/util/launch-environment/src/index.ts:125]
 - **linux native 要 chooser 二进制和 display 同时在。** 有 `DISPLAY` 但 PATH 上没有 zenity/kdialog → browse。boot 之后才装 zenity 不会热切换。
 - **`hidden` 不是「过滤」。** 点目录仍出现在 `entries` 里并计入 `maxEntries`。Windows hidden 属性不读。
 - **symlink 跟到目录，不跟到文件。** 坏链静默跳过。窗口里被 skip 的 candidate **不**从窗口外回填。
@@ -232,6 +233,7 @@ capability **对象**在服务生命周期内稳定：consumer 可以跨调用�
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/headless/cordis.patch.yml
 - packages/host/webserver/src/index.ts
+- packages/util/launch-environment/src/index.ts
 - packages/client/ui-workspace/src/client/index.ts
 - packages/client/ui-workspace/src/client/navigation.ts
 - packages/client/ui-workspace/src/client/WorkspacePicker.tsx

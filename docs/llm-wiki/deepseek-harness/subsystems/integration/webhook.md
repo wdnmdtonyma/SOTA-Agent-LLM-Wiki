@@ -41,7 +41,7 @@ related:
   - subsys.persistence.title
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-webhook` 在 Host 上提供 `ctx.webhookRuntime`：可信规则 `register` / 已认证 delivery `dispatch`，唯一内建动作是在 Web Workspace 里创建普通根 Session。GitHub 是 shipped provider：`@deepseek-ai/dsh-webhook-github` 在 `ctx.webServer` 上挂精确 POST 路由，验签后 `dispatch` 并立刻 `202`。两个包都不进六个 shipped bundle 的 patch；`apps/cli` 的 dependency 只给 overlay 解析。
@@ -61,11 +61,11 @@ updated: c291e7961a
 它**不**拥有：
 
 - `ctx.webServer` 路由表与 HTTP listen — [`subsys.host.webserver`](../host/webserver.md)（`subsys.host.webserver`）。GitHub 只 `register` 一条 `kind: 'exact'` 路由。[E: packages/webhook/webhook-github/src/index.ts:50]
-- Workspace 登记 / attach — [`subsys.persistence.workspace`](../persistence/workspace.md)（`subsys.persistence.workspace`）。本包只 `create` + `attachSession`。[E: packages/webhook/webhook/src/session.ts:133]
-- Agent 生命周期 — [`subsys.core.agent`](../core/agent.md)（`subsys.core.agent`）。prompt 用 `handle.agent.followup`；失败路径才 `handle.dispose`。[E: packages/webhook/webhook/src/session.ts:155] [E: packages/webhook/webhook/src/session.ts:177]
+- Workspace 登记 / attach — [`subsys.persistence.workspace`](../persistence/workspace.md)（`subsys.persistence.workspace`）。本包只 `create` + `attachSession`。[E: packages/webhook/webhook/src/session.ts:134]
+- Agent 生命周期 — [`subsys.core.agent`](../core/agent.md)（`subsys.core.agent`）。prompt 用 `handle.agent.followup`；失败路径才 `handle.dispose`。[E: packages/webhook/webhook/src/session.ts:156] [E: packages/webhook/webhook/src/session.ts:178]
 - 默认模型 / preset / permission / title / credentials — 对应 [`subsys.core.agent-default-model`](../core/agent-default-model.md)、[`subsys.composition.agent-presets`](../composition/agent-presets.md)、[`subsys.interaction.permission-presets`](../interaction/permission-presets.md)、[`subsys.persistence.title`](../persistence/title.md)、[`subsys.persistence.credentials`](../persistence/credentials.md)。
 
-**默认产品树零 webhook。** `packages/bundle/**` 的 patch / manifest 没有 `dsh-webhook` 行。`apps/cli` 把两包装进 `dependencies`。[E: apps/cli/package.json:94] [E: apps/cli/package.json:95] 真实 overlay：`apps/cli/config/examples/github-review/cordis.yml` 插入 `id: webhook-runtime` 与隔离 `webServer` 的 `github-webhook-ingress` group。[E: apps/cli/config/examples/github-review/cordis.yml:5] [E: apps/cli/config/examples/github-review/cordis.yml:20] 四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）没有 webhook 行。五个 shipped profile（`web` / `headless` / `sdk` / `sdk-minimal` / `acp`）默认不挂本包。
+**默认产品树零 webhook。** `packages/bundle/**` 的 patch / manifest 没有 `dsh-webhook` 行。`apps/cli` 把两包装进 `dependencies`。[E: apps/cli/package.json:90] [E: apps/cli/package.json:91] 真实 overlay：`apps/cli/config/examples/github-review/cordis.yml` 插入 `id: webhook-runtime` 与隔离 `webServer` 的 `github-webhook-ingress` group。[E: apps/cli/config/examples/github-review/cordis.yml:5] [E: apps/cli/config/examples/github-review/cordis.yml:20] 四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）没有 webhook 行。五个 shipped profile（`web` / `headless` / `sdk` / `sdk-minimal` / `acp`）默认不挂本包。
 
 ## 关键文件
 
@@ -89,7 +89,7 @@ updated: c291e7961a
 | `VerifiedWebhookDelivery` | `kind` / `source` / `deliveryId` / `event` / `receivedAt`。`dispatch` 先 `snapshotJsonValue` + `deepFreeze`；缺字段或非无损 JSON 同步抛。[E: packages/webhook/webhook/src/types.ts:14] [E: packages/webhook/webhook/src/index.ts:52] |
 | `WebhookRule` | `id` + `kind` + `run(delivery, signal)`。`run` 返回 `WebhookSessionRequest` 或 `null`。[E: packages/webhook/webhook/src/types.ts:54] |
 | `WebhookSessionRequest` | 必填 `workspacePath`（绝对路径）、`title`、`prompt`、`agentPreset`、`permissionPreset`；可选 `model.{provider,model,maxTokens}`。省略 `model` 时用 `ctx.agentDefaultModel.currentSelection()`。[E: packages/webhook/webhook/src/types.ts:38] [E: packages/webhook/webhook/src/session.ts:64] |
-| `MessageSourceMap.webhook` | 入箱 `source.kind: 'webhook'`，带 `provider` / `source` / `deliveryId` / `ruleId` / `form: 'notice'`。[E: packages/webhook/webhook/src/types.ts:74] [E: packages/webhook/webhook/src/session.ts:157] |
+| `MessageSourceMap.webhook` | 入箱 `source.kind: 'webhook'`，带 `provider` / `source` / `deliveryId` / `ruleId` / `form: 'notice'`。[E: packages/webhook/webhook/src/types.ts:74] [E: packages/webhook/webhook/src/session.ts:158] |
 | GitHub `Config` | 必填 `source`、`path`（绝对非根、无尾斜杠 / query / fragment）、`secretEnv`（`credential-ref`）、`maxBodyBytes` ≥ 1。[E: packages/webhook/webhook-github/src/index.ts:28] [E: packages/webhook/webhook-github/src/index.ts:40] |
 | `GitHubWebhookEvent` | `{ name, payload }`：`name` 来自 `X-GitHub-Event`；`payload` 是验签后的 JSON object。[E: packages/webhook/webhook-github/src/types.ts:9] [E: packages/webhook/webhook-github/src/handler.ts:107] |
 
@@ -109,7 +109,7 @@ updated: c291e7961a
 
 6. `dispatch` 按 `rule.kind === snapshot.kind` 扇出；每条 `startInvocation`。`run` 返回非 `null` 才 `createWebhookSession`。失败只 `logger.warn`，不回写 HTTP。[E: packages/webhook/webhook/src/index.ts:130] [E: packages/webhook/webhook/src/index.ts:142] [E: packages/webhook/webhook/src/index.ts:156]
 
-7. `createWebhookSession`：校验 request → `permissionPresets.resolve` → `agentPresets.resolve` → `workspaceRegistry.create` → `agents.create`（`sessionId` 形如 `webhook-${uuid}`，`meta.cwd` = workspace.path）→ `attachSession` → `permissionPresets.set` → `sessionTitle.rename` → `followup` 一条 webhook-source 用户消息。attach 之后失败会 `detachSession` + `handle.dispose`。[E: packages/webhook/webhook/src/session.ts:127] [E: packages/webhook/webhook/src/session.ts:136] [E: packages/webhook/webhook/src/session.ts:150] [E: packages/webhook/webhook/src/session.ts:168]
+7. `createWebhookSession`：校验 request → `permissionPresets.resolve` → `agentPresets.resolve` → `agentPresets.acquireScope` → `workspaceRegistry.create` → `agents.create`（`sessionId` 形如 `webhook-${uuid}`，`meta.cwd` = workspace.path，`meta.agentPreset`，`setup` 里 `agentPresets.mount`）→ `attachSession` → `permissionPresets.set` → `sessionTitle.rename` → `followup` 一条 webhook-source 用户消息。attach 之后失败会 `detachSession` + `handle.dispose`。[E: packages/webhook/webhook/src/session.ts:125] [E: packages/webhook/webhook/src/session.ts:127] [E: packages/webhook/webhook/src/session.ts:134] [E: packages/webhook/webhook/src/session.ts:140] [E: packages/webhook/webhook/src/session.ts:148] [E: packages/webhook/webhook/src/session.ts:153]
 
 8. 规则 dispose：从 map 删除、abort controller、`allSettled` drain active invocations。[E: packages/webhook/webhook/src/index.ts:167]
 

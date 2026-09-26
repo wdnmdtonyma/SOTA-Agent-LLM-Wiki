@@ -32,7 +32,7 @@ related:
   - surface.sdk.python
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-sdk-protocol` 是进程外 SDK runtime 的 **wire 形状 + NDJSON JSON-RPC transport**：类型侧钉死三请求 / 四通知，运行时侧只提供 `JsonRpcLineTransport`。它不拥有子进程、不拥有 agent、不是 `dsh web` 的默认面，也不进 `dsh-base` 或四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）。协议由 `dsh --profile sdk` / `sdk-minimal` 上的 `sdk-jsonrpc-server` 真正说话。
@@ -57,7 +57,7 @@ updated: c291e7961a
 - Python `HarnessClient` 实现 — [`surface.sdk.python`](../../surface/sdk/python.md)（`surface.sdk.python`）。Python 与 TS 讲同一份方法表，本页不展开那一端。
 - ACP JSON-RPC 方法表（`authenticate` / `newSession` / `prompt` / `cancel`）— [`subsys.integration.acp`](acp.md) 不在本页 `related` 最低集里；不要把 ACP 方法抄进本协议。
 
-**host 面 vs agent-preset 面。** 本包不是 `ctx.*` Definition，也没有 preset `isolate` remount。`dsh-base` / `dsh-web-app` / `dsh-headless` 与四个 shipped preset 都没有本包行。五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`。[E: packages/boot/app-boot/src/profile.ts:105] [E: packages/boot/app-boot/src/profile.ts:118] [E: packages/boot/app-boot/src/profile.ts:122] 协议 server 挂在 `dsh-sdk-app` / `dsh-sdk-minimal` 的 patch 行 `sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:18] [E: packages/bundle/sdk-minimal/cordis.patch.yml:11] 默认 GUI 路径仍是 `dsh web`；stdio JSON-RPC 走 `dsh --profile sdk` 或 `sdk-minimal`。
+**host 面 vs agent-preset 面。** 本包不是 `ctx.*` Definition，也没有 preset `isolate` remount。`dsh-base` / `dsh-web-app` / `dsh-headless` 与四个 shipped preset 都没有本包行。五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`。[E: packages/boot/app-boot/src/profile.ts:179] [E: packages/boot/app-boot/src/profile.ts:189] [E: packages/boot/app-boot/src/profile.ts:192] 协议 server 挂在 `dsh-sdk-app` / `dsh-sdk-minimal` 的 patch 行 `sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:18] [E: packages/bundle/sdk-minimal/cordis.patch.yml:11] 默认 GUI 路径仍是 `dsh web`；stdio JSON-RPC 走 `dsh --profile sdk` 或 `sdk-minimal`。
 
 **没有 waterfall。** 本包不往 `Events.waterfall` 挂 listener。组合失败发生在对端：server 插件 `inject = ['agents']` 等不到服务、或 `handleRequest` 对未知方法抛错。[E: packages/sdk/server/src/index.ts:22] Cordis 全局规则仍是：waterfall 必须调用传入的 `next()` 才会 `cbs.shift()`；不调用就停在本层。[E: vendor/cordis/src/events.ts:238]
 
@@ -84,14 +84,14 @@ updated: c291e7961a
 | `HarnessSdkRequestMap` | 客户端→服务器恰好三键：`initialize` / `session/prompt` / `shutdown`。[E: packages/sdk/protocol/src/types.ts:115] [E: packages/sdk/protocol/src/types.ts:116] [E: packages/sdk/protocol/src/types.ts:117] [E: packages/sdk/protocol/src/types.ts:118] |
 | `HarnessSdkNotificationMap` | 服务器→客户端恰好四键：`session.event` / `session.status` / `subagent.started` / `subagent.finished`。[E: packages/sdk/protocol/src/types.ts:107] [E: packages/sdk/protocol/src/types.ts:108] [E: packages/sdk/protocol/src/types.ts:109] [E: packages/sdk/protocol/src/types.ts:110] [E: packages/sdk/protocol/src/types.ts:111] |
 | `InitializeParams` | 进程级握手：必填 `cwd` / `provider` / `model`，可选 `reasoningEffort` 与正整数 `maxTokens`。这些字段只约束 **此后 SDK 新创建** 的 agent，不是「改已有 session」。[E: packages/sdk/protocol/src/types.ts:16] [E: packages/sdk/protocol/src/types.ts:18] [E: packages/sdk/protocol/src/types.ts:20] [E: packages/sdk/protocol/src/types.ts:22] [E: packages/sdk/protocol/src/types.ts:24] [E: packages/sdk/protocol/src/types.ts:26] |
-| `InitializeResult` | `{ serverInfo: { name, version } }`。`name` 在 types 里只是 `string`；wire-stable 字面量 `deepseek-harness-sdk-runtime` 由 server 写入。[E: packages/sdk/protocol/src/types.ts:30] [E: packages/sdk/server/src/server.ts:168] |
+| `InitializeResult` | `{ serverInfo: { name, version } }`。`name` 在 types 里只是 `string`；wire-stable 字面量 `deepseek-harness-sdk-runtime` 由 server 写入。[E: packages/sdk/protocol/src/types.ts:30] [E: packages/sdk/server/src/server.ts:170] |
 | `SessionPromptParams` | `sessionId` + `contentBlocks`（`SdkPromptContentBlock[]`：普通 `ContentBlock` 或 inline `SdkEncodedImageBlock`）。[E: packages/sdk/protocol/src/types.ts:36] [E: packages/sdk/protocol/src/types.ts:38] [E: packages/sdk/protocol/src/types.ts:40] [E: packages/sdk/protocol/src/types.ts:53] |
 | `SdkEncodedImageBlock` | `{ type: 'image', data, mimeType }`，`mimeType` 限 png/jpeg/webp/gif；server 经 attachment store 准入。[E: packages/sdk/protocol/src/types.ts:44] [E: packages/sdk/server/src/server.ts:42] |
 | `SessionPromptResult` | `{ messageId }`：入队回执，不标识后续 assistant / `turn/end`。[E: packages/sdk/protocol/src/types.ts:56] [E: packages/sdk/protocol/src/types.ts:58] |
 | `SessionEventNotification` | `sessionId` + 完整 `SessionEvent`。server 对 **runtime 里每一条** `session/event` 都转发，不限 SDK 创建的 session。[E: packages/sdk/protocol/src/types.ts:65] [E: packages/sdk/server/src/server.ts:95] [E: packages/sdk/server/src/server.ts:97] |
 | `SessionStatusNotification` | `sessionId` + `'idle' \| 'running'`，来自 `agent/status`。[E: packages/sdk/protocol/src/types.ts:73] [E: packages/sdk/server/src/server.ts:99] |
 | `SubagentStartedNotification` | `parentSessionId` / `childSessionId`。仅当新 session 带 `header.parentSession`。[E: packages/sdk/protocol/src/types.ts:81] [E: packages/sdk/server/src/server.ts:103] [E: packages/sdk/server/src/server.ts:109] |
-| `SubagentFinishedNotification` | `provider` / `agentId` / 两端 session id / `status`（`ok` \| `error`）/ `stopReason` / 可选 `lastAssistantMessage`。server **只报 `info.local` 的进程内孩子**。[E: packages/sdk/protocol/src/types.ts:89] [E: packages/sdk/server/src/server.ts:116] [E: packages/sdk/server/src/server.ts:126] |
+| `SubagentFinishedNotification` | `provider` / `agentId` / 两端 session id / `status`（`ok` \| `error`）/ `stopReason` / 可选 `lastAssistantMessage`。server **只报 `info.local` 的进程内孩子**。[E: packages/sdk/protocol/src/types.ts:89] [E: packages/sdk/server/src/server.ts:116] [E: packages/sdk/server/src/server.ts:128] |
 | `JsonRpcLineTransport` | 一行一个 JSON-RPC 2.0 对象，写出时末尾 `\n`。[E: packages/sdk/protocol/src/transport.ts:261] |
 | `JsonRpcResponseError` | 对端 error 帧：`code`（缺则 `undefined`）/ `message` / 原样 `data`。[E: packages/sdk/protocol/src/transport.ts:24] |
 
@@ -107,15 +107,15 @@ updated: c291e7961a
 
 4. 入站 request 无 `onRequest` handler → `-32601` `method not found: ${method}`。[E: packages/sdk/protocol/src/transport.ts:229] [E: packages/sdk/protocol/tests/transport.spec.ts:124] handler throw → `-32603`，message 取 `Error.message` 或 `String(error)`。[E: packages/sdk/protocol/src/transport.ts:236] [E: packages/sdk/protocol/tests/transport.spec.ts:57] 无 notification handler 则 silently drop。[E: packages/sdk/protocol/src/transport.ts:222] 非 object 的 `params`（含数组）收成 `{}`。[E: packages/sdk/protocol/src/transport.ts:273] [E: packages/sdk/protocol/tests/transport.spec.ts:143]
 
-5. 客户端握手：`HarnessClient.initialize@packages/sdk/client/src/client.ts` 发 `initialize`。[E: packages/sdk/client/src/client.ts:277] Server `handleRequest@packages/sdk/server/src/server.ts` 的 `switch` **只认三支**：`initialize` / `session/prompt` / `shutdown`。[E: packages/sdk/server/src/server.ts:248] [E: packages/sdk/server/src/server.ts:250] [E: packages/sdk/server/src/server.ts:252] `initialize` 返回 `{ serverInfo: { name: 'deepseek-harness-sdk-runtime', version: '0.0.1' } }`。[E: packages/sdk/server/src/server.ts:168] 测试钉死这个 `name`。[E: packages/sdk/server/tests/server.spec.ts:132] 客户端只校验 `name`/`version` 是 string，不在协议包里再写死字面量。[E: packages/sdk/client/src/client.ts:279]
+5. 客户端握手：`HarnessClient.initialize@packages/sdk/client/src/client.ts` 发 `initialize`。[E: packages/sdk/client/src/client.ts:277] Server `handleRequest@packages/sdk/server/src/server.ts` 的 `switch` **只认三支**：`initialize` / `session/prompt` / `shutdown`。[E: packages/sdk/server/src/server.ts:250] [E: packages/sdk/server/src/server.ts:252] [E: packages/sdk/server/src/server.ts:254] `initialize` 返回 `{ serverInfo: { name: 'deepseek-harness-sdk-runtime', version: '0.0.1' } }`。[E: packages/sdk/server/src/server.ts:170] 测试钉死这个 `name`。[E: packages/sdk/server/tests/server.spec.ts:129] 客户端只校验 `name`/`version` 是 string，不在协议包里再写死字面量。[E: packages/sdk/client/src/client.ts:279]
 
-6. 一轮用户输入：`HarnessClient.prompt@packages/sdk/client/src/client.ts` 发 `session/prompt`。[E: packages/sdk/client/src/client.ts:293] Server `prompt` 先 `getOrCreateSession(params.sessionId)`：map 里有就复用，没有就 `ctx.agents.create({ sessionId, … })`——**未知 id 在 server 侧懒创建**，协议没有 `newSession`。[E: packages/sdk/server/src/server.ts:178] [E: packages/sdk/server/src/server.ts:261] [E: packages/sdk/server/src/server.ts:279] 创建细节（host 面读工具行、无 preset composition）交给 [`subsys.integration.sdk-server`](sdk-server.md)。入队后立刻 `{ messageId: message.id }`，不等 turn。[E: packages/sdk/server/src/server.ts:192]
+6. 一轮用户输入：`HarnessClient.prompt@packages/sdk/client/src/client.ts` 发 `session/prompt`。[E: packages/sdk/client/src/client.ts:293] Server `prompt` 先 `getOrCreateSession(params.sessionId)`：map 里有就复用，没有就 `ctx.agents.create({ sessionId, … })`——**未知 id 在 server 侧懒创建**，协议没有 `newSession`。[E: packages/sdk/server/src/server.ts:180] [E: packages/sdk/server/src/server.ts:263] [E: packages/sdk/server/src/server.ts:281] 创建细节（host 面读工具行、无 preset composition）交给 [`subsys.integration.sdk-server`](sdk-server.md)。入队后立刻 `{ messageId: message.id }`，不等 turn。[E: packages/sdk/server/src/server.ts:194]
 
-7. 活动观察走四条通知，不是请求回执。构造 `HarnessSdkJsonRpcServer` 时 `ctx.on('session/event')` → `notify('session.event')`，`agent/status` → `session.status`，带 parent 的 `session/created` → `subagent.started`，`subagent/end` 且 `info.local` → `subagent.finished`。[E: packages/sdk/server/src/server.ts:97] [E: packages/sdk/server/src/server.ts:99] [E: packages/sdk/server/src/server.ts:109] [E: packages/sdk/server/src/server.ts:126] 远程 / 非 local 子 run **不**发 `subagent.finished`。[E: packages/sdk/server/src/server.ts:116]
+7. 活动观察走四条通知，不是请求回执。构造 `HarnessSdkJsonRpcServer` 时 `ctx.on('session/event')` → `notify('session.event')`，`agent/status` → `session.status`，带 parent 的 `session/created` → `subagent.started`，`subagent/end` 且 `info.local` → `subagent.finished`。[E: packages/sdk/server/src/server.ts:97] [E: packages/sdk/server/src/server.ts:99] [E: packages/sdk/server/src/server.ts:109] [E: packages/sdk/server/src/server.ts:128] 远程 / 非 local 子 run **不**发 `subagent.finished`。[E: packages/sdk/server/src/server.ts:116]
 
-8. 未知方法：`handleRequest` `default` 抛 `unknown DeepSeek Harness SDK runtime method: …`，测试按这句话断言。[E: packages/sdk/server/src/server.ts:255] [E: packages/sdk/server/tests/server.spec.ts:1077] 插件已安装 `onRequest`，所以这条在 transport 层变成 **-32603**，不是 `-32601`。`-32601` 只在对端根本没挂 request handler 时出现。
+8. 未知方法：`handleRequest` `default` 抛 `unknown DeepSeek Harness SDK runtime method: …`，测试按这句话断言。[E: packages/sdk/server/src/server.ts:257] [E: packages/sdk/server/tests/server.spec.ts:1078] 插件已安装 `onRequest`，所以这条在 transport 层变成 **-32603**，不是 `-32601`。`-32601` 只在对端根本没挂 request handler 时出现。
 
-9. 拆卸：客户端 `close` 先发协议 `shutdown`。[E: packages/sdk/client/src/client.ts:398] Server `shutdown()` 收空对象 `{}`。[E: packages/sdk/server/src/server.ts:236] 插件在 **写出 shutdown 结果之后** 才 `flush` + dispose root（细节在 sdk-server）。[E: packages/sdk/server/src/index.ts:88] `JsonRpcLineTransport.flush` 写空字符串当 barrier，等先前帧的 write callback。[E: packages/sdk/protocol/src/transport.ts:168] `close()` 拒绝 pending，文案 `JSON-RPC transport closed`；input `end` 文案 `JSON-RPC input closed`。[E: packages/sdk/protocol/src/transport.ts:91] [E: packages/sdk/protocol/src/transport.ts:198] [E: packages/sdk/protocol/tests/transport.spec.ts:258]
+9. 拆卸：客户端 `close` 先发协议 `shutdown`。[E: packages/sdk/client/src/client.ts:398] Server `shutdown()` 收空对象 `{}`。[E: packages/sdk/server/src/server.ts:238] 插件在 **写出 shutdown 结果之后** 才 `flush` + dispose root（细节在 sdk-server）。[E: packages/sdk/server/src/index.ts:88] `JsonRpcLineTransport.flush` 写空字符串当 barrier，等先前帧的 write callback。[E: packages/sdk/protocol/src/transport.ts:168] `close()` 拒绝 pending，文案 `JSON-RPC transport closed`；input `end` 文案 `JSON-RPC input closed`。[E: packages/sdk/protocol/src/transport.ts:91] [E: packages/sdk/protocol/src/transport.ts:198] [E: packages/sdk/protocol/tests/transport.spec.ts:258]
 
 10. 可选 `AbortSignal`：已 abort 的 signal 让 `request` 立刻 reject，且 **不**登记 pending；中途 abort 则 `pending.delete(id)`，迟到的 response 会被当成无主帧丢掉。[E: packages/sdk/protocol/src/transport.ts:128] [E: packages/sdk/protocol/src/transport.ts:132] [E: packages/sdk/protocol/tests/transport.spec.ts:69] 协议 **没有** cancel / `session/cancel` 方法；超时只放弃等回执，server 侧工作仍跑到 close。
 
@@ -123,7 +123,7 @@ updated: c291e7961a
 
 方法表刻意极小：握手一次路由，之后只 `session/prompt` 入队，活动靠开放的 `session.event` + `session.status` 观察。协议不把 assistant 消息或 `turn/end` 归到某次 prompt——同一 session 上可以再入队，steering 与其它工作都会进同一条 event 流。客户端（TS `run()` / Python 孪生）自己划 activity 窗口；那是 Consumer 的事。
 
-`serverInfo.name` 钉死字符串，让异构客户端用身份探测而不是版本谈判。`version` 现写 `'0.0.1'`，与 npm `0.1.2-alpha.2` 不是同一个计数器。[E: packages/sdk/protocol/package.json:4]
+`serverInfo.name` 钉死字符串，让异构客户端用身份探测而不是版本谈判。`version` 现写 `'0.0.1'`，与 npm `0.1.7-rc.2` 不是同一个计数器。[E: packages/sdk/protocol/package.json:4]
 
 没有 `newSession`：调用方自带 `sessionId`，server 在第一次 `session/prompt` 懒创建。这样 Python / TS / 脚本都可以预先选定 id，不必先做一次分配往返。这与 ACP 的 `newSession` + fresh UUID 是两条缝。
 
@@ -133,7 +133,7 @@ Transport 做成无协议知识的 NDJSON 端点：SDK 方法名只活在 types 
 
 - **不是 ACP。** 本表没有 `authenticate` / `newSession` / `cancel` / `loadSession`。ACP 页的方法不要抄到这里。
 - **不是默认 `dsh web`。** 包在 monorepo 里 ≠ 进了 `dsh-base`。Web 工作台走 host HTTP / Typert；stdio JSON-RPC 走 `dsh --profile sdk` 或 `sdk-minimal`。
-- **`-32601` ≠ 未知 SDK 方法。** 未挂 handler 才 `-32601`；已挂的 `handleRequest` 对第四个方法抛错 → `-32603`。[E: packages/sdk/protocol/src/transport.ts:229] [E: packages/sdk/server/src/server.ts:255]
+- **`-32601` ≠ 未知 SDK 方法。** 未挂 handler 才 `-32601`；已挂的 `handleRequest` 对第四个方法抛错 → `-32603`。[E: packages/sdk/protocol/src/transport.ts:229] [E: packages/sdk/server/src/server.ts:257]
 - **`messageId` 不是 turn 结果。** `session/prompt` 在 `followup` 之后立即返回。完成态看后续 `session.status` 的 `idle`，内容看 `session.event`。
 - **`session.event` 不过滤来源。** runtime 里任何 session（含非 SDK map 的 orphan）都会广播。树范围过滤在客户端 `subscribeSessionTree`（sdk-client），不在协议帧里。
 - **`subagent.finished` 漏掉远程孩子。** `info.local === false` 直接 return。`subagent.started` 仍可能因 `parentSession` 发出——两端不对称。

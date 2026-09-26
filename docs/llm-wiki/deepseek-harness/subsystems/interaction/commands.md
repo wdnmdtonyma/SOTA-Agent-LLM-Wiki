@@ -17,7 +17,7 @@ source:
   - packages/typert/protocol/src/index.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
   - packages/compaction/command-compact/src/index.ts
   - packages/feedback/command-feedback/src/index.ts
   - packages/goal/command-goal/src/index.ts
@@ -44,10 +44,10 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
-> `ctx.commands` 是 **host 面**人命令注册表：`CommandRuntime`（`TypertRemoteService`）挂在进程级键 `commands` 上。人敲的 `/name …` 由 `execute()` 直接跑 handler，**不经模型 turn**，也不把命令行折进 `deriveMessages()`。DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；`dsh web` 只是硬编码的 web 别名，不是唯一宿主入口。本仓没有 shipped TUI。
+> `ctx.commands` 是 **host 面**人命令注册表：`CommandRuntime`（`TypertRemoteService`）挂在进程级键 `commands` 上。人敲的 `/name …` 由 `execute()` 直接跑 handler，**不经模型 turn**，也不把命令行折进 `deriveMessages()`。DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。五个 shipped CLI profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；`dsh <name>` 是通用 `--profile` 简写。本仓没有 shipped TUI。
 
 ## 能回答的问题
 
@@ -91,7 +91,7 @@ updated: c291e7961a
 | `packages/plan/plan-mode/src/index.ts` | Consumer：`/plan`（同样可选 `inject: ['commands']`） |
 | `packages/session-query/session-log-export/src/index.ts` | Consumer：Web `/export` |
 | `packages/bundle/web-app/cordis.patch.yml` | client `id: ui-commands`；host `command-compact` / `command-goal` / `plan-mode` `disabled`；**没有** disable `commands` |
-| `packages/preset/agent-presets/presets/standard/agent.cordis.yml` | preset compaction 组重挂 `command-compact` |
+| `packages/bundle/web-app/presets/standard.patch.yml` | preset compaction 组重挂 `command-compact` |
 
 ## 数据模型
 
@@ -116,7 +116,7 @@ updated: c291e7961a
 
 ## 控制流
 
-1. **host 面挂一份 `CommandRuntime`。** `dsh-base` 组合行 `id: commands` / `name: '@deepseek-ai/dsh-commands'`。`CommandRuntime` 继承 `TypertRemoteService`，构造 `super(ctx, 'commands')`，键是 `ctx.commands`。`export const name = 'commands'` 是 Loader 插件名。这是进程级服务，不是 preset isolate 里的私有实例。叠 `dsh-base` 的 profile（`web` / `headless` / `sdk` / `acp`）都带这份 registry；`sdk-minimal` 不叠 base，要自带 insert 才有 `ctx.commands`。 [E: packages/bundle/base/cordis.patch.yml:286] [E: packages/bundle/base/cordis.patch.yml:287] [E: packages/interaction/commands/src/index.ts:28] [E: packages/interaction/commands/src/index.ts:270] [E: packages/typert/protocol/src/index.ts:153] [E: packages/typert/protocol/src/index.ts:164]
+1. **host 面挂一份 `CommandRuntime`。** `dsh-base` 组合行 `id: commands` / `name: '@deepseek-ai/dsh-commands'`。`CommandRuntime` 继承 `TypertRemoteService`，构造 `super(ctx, 'commands')`，键是 `ctx.commands`。`export const name = 'commands'` 是 Loader 插件名。这是进程级服务，不是 preset isolate 里的私有实例。叠 `dsh-base` 的 profile（`web` / `headless` / `sdk` / `acp`）都带这份 registry；`sdk-minimal` 不叠 base，要自带 insert 才有 `ctx.commands`。 [E: packages/bundle/base/cordis.patch.yml:286] [E: packages/bundle/base/cordis.patch.yml:288] [E: packages/interaction/commands/src/index.ts:28] [E: packages/interaction/commands/src/index.ts:270] [E: packages/typert/protocol/src/index.ts:153] [E: packages/typert/protocol/src/index.ts:166]
 
 2. **`parseCommand@packages/interaction/commands/src/index.ts` 只做语法。** `/goal` → `{ name: 'goal', rawInput: '' }`；`/goal create the thing` 的 `rawInput` 以一个空格开头。缺 `/`、前导空格、`/Goal`、`/goal/path`、非法字符一律 `undefined`。名字字符集与 `COMMAND_NAME` 相同，但解析器额外要求行首斜杠和空白边界。 [E: packages/interaction/commands/src/index.ts:125] [E: packages/interaction/commands/tests/commands.spec.ts:43] [E: packages/interaction/commands/tests/commands.spec.ts:51]
 
@@ -140,9 +140,9 @@ updated: c291e7961a
 
 12. **`commands/change` 是非否决 emit。** `ScopedLayers` 在 insert 成功和 undo 时回调 `notifyChange`。实现手扫 `dispatch('emit', ['commands/change'])`，同步 throw 与 rejected Promise 都 `warn`，后续 listener 继续跑。同一 disposer 第二次调用是空操作，不会再通知。本包**没有** waterfall；Cordis 全局规则「waterfall 必须 `next()`」管的是邻缝（例如 compaction 挂的 `agent/pre-step`），不是 `commands/change`。 [E: packages/interaction/commands/src/index.ts:448] [E: packages/interaction/commands/src/index.ts:457] [E: packages/interaction/commands/tests/commands.spec.ts:140] [E: vendor/cordis/src/events.ts:238]
 
-13. **组合：base 挂 registry；web-app 不关它；preset 用 scope 加自己的命令。** host 同行还有 `id: command-feedback`、`id: command-goal`、`id: command-compact`。`dsh-web-app` 加 client `id: ui-commands`，并 `disabled: true` 掉 host 面 `command-compact`（与 `compaction-basic` 一起搬走）、`command-goal`、`plan-mode`，**没有** disable `id: commands` / `command-feedback`。四个 shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`（旧名 `code` 即 PTC）。`standard` / `ptc` / `cordis` 在 agent-preset 面 `cordis:group id: compaction` 里重挂 `command-compact`，并 `isolate.compaction` / `toolResultPruner`——isolate 的是 compaction 服务 realm，不是第二份 `ctx.commands`。登记发生在 `mountPreset` 的 standing scoped ctx 上，因此 `/compact` 跟着该 preset 的 overlay 走。`minimal` 不挂 compaction 组，也就没有 `/compact`。 [E: packages/bundle/base/cordis.patch.yml:289] [E: packages/bundle/base/cordis.patch.yml:298] [E: packages/bundle/web-app/cordis.patch.yml:280] [E: packages/bundle/web-app/cordis.patch.yml:283] [E: packages/bundle/web-app/cordis.patch.yml:402] [E: packages/bundle/web-app/cordis.patch.yml:427] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:141] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:148] [E: packages/compaction/command-compact/src/index.ts:12] [E: packages/compaction/command-compact/src/index.ts:101]
+13. **组合：base 挂 registry；web-app 不关它；preset 用 scope 加自己的命令。** host 同行还有 `id: command-feedback`、`id: command-goal`、`id: command-compact`。`dsh-web-app` 加 client `id: ui-commands`，并 `disabled: true` 掉 host 面 `command-compact`（与 `compaction-basic` 一起搬走）、`command-goal`、`plan-mode`，**没有** disable `id: commands` / `command-feedback`。四个 shipped preset 是 `minimal` / `standard` / `ptc` / `cordis`，只叠在 `dsh-web-app`。`standard` / `ptc` / `cordis` 在 agent-preset 面 compaction 组里重挂 `command-compact`，并 `isolate.compaction` / `toolResultPruner`——isolate 的是 compaction 服务 realm，不是第二份 `ctx.commands`。登记发生在 `mountPreset` 的 standing scoped ctx 上，因此 `/compact` 跟着该 preset 的 overlay 走。`minimal` 不挂 compaction 组，也就没有 `/compact`。[E: packages/bundle/base/cordis.patch.yml:306] [E: packages/bundle/web-app/cordis.patch.yml:350] [E: packages/bundle/web-app/cordis.patch.yml:490] [E: packages/bundle/web-app/cordis.patch.yml:509] [E: packages/bundle/web-app/presets/standard.patch.yml:72] [E: packages/compaction/command-compact/src/index.ts:12]
 
-14. **点名 Consumer，不当字段表。** 本仓 `packages/**/src` 里调用 `commands.register({` 的名字是：`compact`（[subsys.context.compaction](../context/compaction.md)）、`feedback`（[subsys.interaction.feedback](./feedback.md)）、`goal`（[subsys.orchestration.goal](../orchestration/goal.md)）、`permission`（[subsys.interaction.permission-presets](./permission-presets.md)）、`plan`（`subsys.orchestration.plan`）、`export`（`dsh-web-app` 的 `session-log-download`）。`/compact` 调 `ctx.compaction.compactNow`；`/feedback` 只追加 log-only `feedback/record`，不启动模型。`/plan` 与 `/goal` 声明 `input.images: true`。 [E: packages/compaction/command-compact/src/index.ts:67] [E: packages/feedback/command-feedback/src/index.ts:119] [E: packages/goal/command-goal/src/index.ts:191] [E: packages/interaction/permission-presets/src/index.ts:257] [E: packages/plan/plan-mode/src/index.ts:226] [E: packages/session-query/session-log-export/src/index.ts:78] [E: packages/plan/plan-mode/src/index.ts:230] [E: packages/goal/command-goal/src/index.ts:195]
+14. **点名 Consumer，不当字段表。** 本仓 `packages/**/src` 里调用 `commands.register({` 的名字是：`compact`（[subsys.context.compaction](../context/compaction.md)）、`feedback`（[subsys.interaction.feedback](./feedback.md)）、`goal`（[subsys.orchestration.goal](../orchestration/goal.md)）、`permission`（[subsys.interaction.permission-presets](./permission-presets.md)）、`plan`（`subsys.orchestration.plan`）、`export`（`dsh-web-app` 的 `session-log-download`）。`/compact` 调 `ctx.compaction.compactNow`；`/feedback` 只追加 log-only `feedback/record`，不启动模型。`/plan` 与 `/goal` 声明 `input.images: true`。 [E: packages/compaction/command-compact/src/index.ts:67] [E: packages/feedback/command-feedback/src/index.ts:119] [E: packages/goal/command-goal/src/index.ts:191] [E: packages/interaction/permission-presets/src/index.ts:257] [E: packages/plan/plan-mode/src/index.ts:227] [E: packages/session-query/session-log-export/src/index.ts:78] [E: packages/plan/plan-mode/src/index.ts:230] [E: packages/goal/command-goal/src/index.ts:195]
 
 15. **companion 配对，默认产品树不跑。** `commands-invariant` 的 `inject = ['invariants']`。同一 session 里 `command/run` 的 `commandId` 不得重复；`command/done` 必须已见过对应 `command/run`；`sourceEventSeq` 只允许 success，且必须指向更早、非 `command/*` 的事件。`dsh-base` **没有** `id: invariants` 行，默认 `dsh web` / 其它 shipped profile 不提供 `ctx.invariants`，这条检查只在显式挂 registry 的测试 / demo 拓扑里活。 [E: packages/interaction/commands/src/invariant.ts:16] [E: packages/interaction/commands/src/invariant.ts:27] [E: packages/interaction/commands/src/invariant.ts:35] [E: packages/interaction/commands/tests/invariant.spec.ts:57]
 
@@ -198,7 +198,7 @@ updated: c291e7961a
 - packages/typert/protocol/src/index.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
 - packages/compaction/command-compact/src/index.ts
 - packages/feedback/command-feedback/src/index.ts
 - packages/goal/command-goal/src/index.ts

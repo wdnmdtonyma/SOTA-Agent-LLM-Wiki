@@ -6,7 +6,10 @@ tier: T3
 pkg: cross
 source:
   - packages/boot/app-boot/src/index.ts
+  - packages/boot/app-boot/src/profile-context.ts
   - packages/boot/cmdline/src/index.ts
+  - packages/boot/plugin-manager/src/index.ts
+  - packages/boot/hmr/src/index.ts
   - packages/util/launch-environment/src/index.ts
   - apps/cli/src/profile-boot.ts
   - packages/bundle/base/cordis.patch.yml
@@ -15,8 +18,8 @@ source:
   - packages/bundle/web-app/src/index.ts
   - packages/bundle/headless/cordis.patch.yml
   - packages/bundle/headless/src/startup.ts
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
   - packages/fs/fs/src/index.ts
   - packages/shell/shell/src/index.ts
   - packages/shell/shell-env/src/index.ts
@@ -25,8 +28,8 @@ source:
   - packages/sandbox/sandbox-policy/src/index.ts
   - packages/terminal/terminal/src/index.ts
   - packages/lsp/lsp/src/index.ts
-  - packages/code-runtime/code-runtime/src/index.ts
-  - packages/e2b/e2b/src/index.ts
+  - packages/ptc-runtime/ptc-runtime/src/index.ts
+  - packages/ssh/ssh/src/index.ts
   - packages/llm/llm/src/index.ts
   - packages/llm/token-meter/src/index.ts
   - packages/llm/deepseek-llm-api-extensions/src/index.ts
@@ -36,12 +39,13 @@ source:
   - packages/core/agent/src/index.ts
   - packages/core/agent-loop/src/index.ts
   - packages/core/agent-default-model/src/index.ts
-  - packages/preset/agent-presets/src/index.ts
+  - packages/preset/agent-preset-registry/src/index.ts
   - packages/interaction/commands/src/index.ts
   - packages/interaction/user-approval/src/index.ts
   - packages/interaction/user-questions/src/index.ts
   - packages/interaction/permission-presets/src/index.ts
   - packages/plan/plan-mode/src/index.ts
+  - packages/schedule/schedule/src/index.ts
   - packages/skill/skill/src/index.ts
   - packages/goal/goal/src/index.ts
   - packages/jobs/jobs/src/index.ts
@@ -70,7 +74,7 @@ source:
   - packages/session/session-turn-outline/src/index.ts
   - packages/client/file-upload/src/index.ts
   - packages/client/file-upload/src/client/index.ts
-  - packages/experimental/code-runtime-python/src/index.ts
+  - packages/experimental/ptc-runtime-python/src/index.ts
   - packages/session/session-projection/src/index.ts
   - packages/session/session-projection-cache/src/index.ts
   - packages/session/session-telemetry/src/index.ts
@@ -107,8 +111,8 @@ source:
   - packages/client/ui-input-trigger/src/client/index.ts
   - packages/client/ui-layout/src/client/index.ts
   - packages/client/ui-model-selection/src/client/service.ts
-  - packages/client/ui-settings/src/client/settings-scope.ts
   - packages/client/ui-settings/src/client/schema.ts
+  - packages/client/ui-settings/src/client/config-form.ts
   - packages/client/ui-theme/src/client/index.ts
   - packages/client/ui-session/src/client/index.ts
   - packages/client/ui-workspace/src/client/navigation.ts
@@ -140,6 +144,9 @@ symbols:
   - dshHomePath
   - cmdlineArgs
   - appExit
+  - profileContext
+  - pluginManager
+  - schedule
   - sessionController
   - webhookRuntime
   - agentTeams
@@ -161,7 +168,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > Cordis `ctx` 上的**产品服务键**：Definition 包用 `interface Context { key: Service }` 占名，Provider 用 `super(ctx, 'key')` 或 `ctx.provide('key')` 填值。DSH 是 `profile → bundle → agent preset` 组合运行时；换 host 面 Provider 带走执行世界，agent-preset 面换的是 tools / persona / isolate。
@@ -171,20 +178,20 @@ updated: c291e7961a
 - 某个 `ctx.<key>` 的类型、Definition 包、默认 `dsh web` + `standard` 装的是谁？
 - 哪些键是 launcher 在 Loader 树挂上之前 `provide` 的（`dshHomePath` / `cmdlineArgs` / `appExit` / `appReady` / `launchEnvironment`）？
 - `sessions` / `connection` / `timer` / `dynamicCordisRunner` 在 host 进程和浏览器半边是不是同一张脸？
-- `terminals` / `lsp` / `invariants` / `e2b` / `webhookRuntime` / `agentTeams` 默认树到底装不装？
+- `terminals` / `lsp` / `invariants` / `ssh` / `webhookRuntime` / `agentTeams` 默认树到底装不装？
 - 换 `ctx.fs` + `ctx.subprocess` 会带走哪些 Consumer？preset 里为什么有的服务必须 `isolate`？
 
 ## 范围与 ground truth
 
 本页是 **T3 catalog**：每个产品服务键一行。ground truth = 源码 `declare module '@deepseek-ai/cordis' { interface Context { key } }` 与产品路径上的 `ctx.provide('key')` / `super(ctx, 'key')`。官方 `docs/**` **只当查漏，禁止 [E]**。
 
-**host 面**（进程级，会话出现前就要 settle）：launcher 快照、Loader、sandbox / fs / shell / subprocess Provider、persistence、webserver、Host HTTP controller、jobs / skills / tools **registry**、subagent backend。默认 GUI 安装路径是 `dsh web` / `dsh --profile web`（`dsh-base` + `dsh-web-app`）。web 再挂 `agent-presets` 且 `default: standard`。[E: packages/bundle/web-app/cordis.patch.yml:481][E: packages/bundle/web-app/cordis.patch.yml:484] 另有 shipped profile `headless` / `sdk` / `sdk-minimal` / `acp`（`dsh --profile …`）；`sdk-minimal` 不叠 `dsh-base`。`desktop` 不是 CLI profile。
+**host 面**（进程级，会话出现前就要 settle）：launcher 快照、Loader、sandbox / fs / shell / subprocess Provider、persistence、webserver、Host HTTP controller、jobs / skills / tools **registry**、subagent backend。默认 GUI 安装路径是 `dsh web` / `dsh --profile web`（`dsh-base` + `dsh-web-app`）。web 再挂 `agent-preset-registry` 且 `default: standard`。[E: packages/bundle/web-app/cordis.patch.yml:559][E: packages/bundle/web-app/cordis.patch.yml:562] 另有 shipped profile `headless` / `sdk` / `sdk-minimal` / `acp`（`dsh --profile …`）；`sdk-minimal` 不叠 `dsh-base`。`desktop` 不是 CLI profile。
 
-**agent-preset 面**（每会话 join）：tools / persona / isolate 服务。四个 shipped 目录是 `minimal` / `standard` / `ptc` / `cordis`。standard 把 `planMode` / `compaction`+`toolResultPruner` / `workflowEngine` 放进 `isolate` group；`tool-fs` / `tool-bash` 只 register 进 host `ctx.tools`，不 publish 同名服务。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:141][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:172]
+**agent-preset 面**（每会话 join）：tools / persona / isolate 服务。四个 shipped 目录是 `minimal` / `standard` / `ptc` / `cordis`。standard 把 `planMode` / `compaction`+`toolResultPruner` / `workflowEngine` 放进 `isolate` group；`tool-fs` / `tool-bash` 只 register 进 host `ctx.tools`，不 publish 同名服务。[E: packages/bundle/web-app/presets/standard.patch.yml:46][E: packages/bundle/web-app/presets/standard.patch.yml:67][E: packages/bundle/web-app/presets/standard.patch.yml:84]
 
 **client 面**（`packages/client/**`、`packages/api/*-controller/src/client/` 与 browser 半边）：另表。同名键（`sessions` / `connection` / `timer` / `dynamicCordisRunner` / `cordisInspect`）类型不同，禁止和 host 键混成一张无分层表。旧包 `dsh-client-runtime` / `dsh-host-apiproxy` 已删除。
 
-**不占实例行**：Cordis 内核 accessor `root` / `baseUrl` / `events` / `logger` / `reflect` / `registry` / `fiber`。没有 `ctx.scope`、`ctx.schedule`、`ctx.hooks`、`ctx.mcp`、`ctx.persona`：那些包走 isolate / tools / 人命令，不 merge 产品服务键。
+**不占实例行**：Cordis 内核 accessor `root` / `baseUrl` / `events` / `logger` / `reflect` / `registry` / `fiber`。没有 `ctx.scope`、`ctx.hooks`、`ctx.mcp`、`ctx.persona`：那些包走 isolate / tools / 人命令，不 merge 产品服务键。没有 `ctx.agent`、`ctx.e2b`、`ctx.codeRuntime`：`agents` 才是 Context 键；E2B 包与旧 PTC 键已删除。`ctx.schedule` **有** merge，但 web-app 行默认 `disabled: true`。
 
 **默认 provider** 认 `dsh web` = `dsh-base` + `dsh-web-app` + shipped `standard` preset。headless / sdk / acp / sdk-minimal 另注。仓库里有实现包 ≠ 默认树装了它。
 
@@ -200,23 +207,24 @@ updated: c291e7961a
 
 | 键 | 类型/Service 类 | 默认 provider | 含义 | 为什么可换 | Definition 源 path |
 |---|---|---|---|---|---|
-| `dshHomePath` | `typeof dshHomePath`（可选） | `boot()` `ctx.provide`；解析 `$DSH_HOME` 否则 `~/.dsh` | Loader `!!js` 用的 Harness-home 路径函数。[E: packages/boot/app-boot/src/index.ts:26][E: packages/boot/app-boot/src/index.ts:790] | 嵌入宿主可指向另一 home。 | `packages/boot/app-boot/src/index.ts` |
+| `dshHomePath` | `typeof dshHomePath`（可选） | `boot()` `ctx.provide`；解析 `$DSH_HOME` 否则 `~/.dsh` | Loader `!!js` 用的 Harness-home 路径函数。[E: packages/boot/app-boot/src/index.ts:43][E: packages/boot/app-boot/src/index.ts:995] | 嵌入宿主可指向另一 home。 | `packages/boot/app-boot/src/index.ts` |
 | `cmdlineArgs` | `CmdlineArgs`（可选；`get(): readonly string[]`） | `provideCmdline` | leftover argv 冻快照。launcher 只拥有 `--profile` / `--patch` / dump；web/headless 再 `parseCmdline`。[E: packages/boot/cmdline/src/index.ts:58][E: packages/boot/cmdline/src/index.ts:86] | 测试/嵌入可塞假 argv。 | `packages/boot/cmdline/src/index.ts` |
 | `appExit` | `AppExit`（可选；`(code: number) => void`） | `provideCmdline` 接到 shutdown | 树 dispose 后请求进程退出。[E: packages/boot/cmdline/src/index.ts:60][E: packages/boot/cmdline/src/index.ts:87] | 测试可捕获 exit 而不杀进程。 | `packages/boot/cmdline/src/index.ts` |
 | `appReady` | `AppReady`（可选） | `provideCmdline` 若 `host.ready` 存在 | 成功启动后才跑的 listener。[E: packages/boot/cmdline/src/index.ts:62][E: packages/boot/cmdline/src/index.ts:88] | stdio 面（sdk/acp）需要；纯 GUI 也可提供。 | `packages/boot/cmdline/src/index.ts` |
 | `launchEnvironment` | `LaunchEnvironmentSnapshot`（可选） | `profile-boot` `provide(DSH_LAUNCH_ENVIRONMENT_KEY)` | 本轮 env 分层快照。缺省时 `launchEnvironmentOf` 回退到 `process.env`。[E: packages/util/launch-environment/src/index.ts:125][E: apps/cli/src/profile-boot.ts:257] | 凭证/LLM 按层解析，不读活的 `process.env`。 | `packages/util/launch-environment/src/index.ts` |
-| `configuredAgentIdentities` | `ConfiguredAgentIdentities`（可选） | 产品 `dsh` **不** provide；测试/嵌入可 provide | 按 agent 配置 `id` 钉死 session 身份。[E: packages/core/agent-loop/src/index.ts:225] | 只有 launcher 知道会话是否已存在。 | `packages/core/agent-loop/src/index.ts` |
+| `configuredAgentIdentities` | `ConfiguredAgentIdentities`（可选） | 产品 `dsh` **不** provide；测试/嵌入可 provide | 按 agent 配置 `id` 钉死 session 身份。[E: packages/core/agent-loop/src/index.ts:226] | 只有 launcher 知道会话是否已存在。 | `packages/core/agent-loop/src/index.ts` |
 | `launcherSessionQueryPath` | `string`（可选） | 冻结树**无**产品 `provide` | 声明给 launcher 钉 SQLite query 索引绝对路径。[E: packages/session-query/session-query-sqlite/src/index.ts:66][E: packages/session-query/session-query-sqlite/src/index.ts:71] | 预留嵌入合同；默认 web 用 row `config.path`。 | `packages/session-query/session-query-sqlite/src/index.ts` |
 | `webStartup` | `WebStartupValues` | `dsh-web-app/startup` `provide('webStartup')` | `--host` / `--port` / `--trusted-host` / `--no-open` 解析结果。`--host 0.0.0.0` 在 provide 前 `program.error`。[E: packages/bundle/web-app/src/startup.ts:20][E: packages/bundle/web-app/src/startup.ts:80] | 无 `interface Context` merge；`!!js ctx.webStartup.port` 读这个键。 | `packages/bundle/web-app/src/startup.ts` |
-| `headlessStartup` | `HeadlessStartupValues` `{ task }` | `dsh-headless/startup` | headless positional `[task...]`。[E: packages/bundle/headless/src/startup.ts:19][E: packages/bundle/headless/src/startup.ts:54] | 只存在于 headless profile。 | `packages/bundle/headless/src/startup.ts` |
+| `headlessStartup` | `HeadlessStartupValues` `{ task }` | `dsh-headless/startup` | headless positional `[task...]`。[E: packages/bundle/headless/src/startup.ts:19][E: packages/bundle/headless/src/startup.ts:52] | 只存在于 headless profile。 | `packages/bundle/headless/src/startup.ts` |
 | `webRuntime` | bind 后 LAN trust 快照 | `dsh-web-app` `provide('webRuntime')` | listen 之后才确定的 host/trust。[E: packages/bundle/web-app/src/index.ts:38][E: packages/bundle/web-app/src/index.ts:239] | 无 Context merge；`shellEnv` 用它发 `DSH_WEB_URL`。 | `packages/bundle/web-app/src/index.ts` |
+| `profileContext` | `ProfileContext` | `dsh` launcher `provide('profileContext')` | 当前 profile 的 dir / patchPath / startedBundles。无此键则 `plugin-manager` / `config-editor` yml 行 `disabled`。[E: packages/boot/app-boot/src/profile-context.ts:35][E: apps/cli/src/profile-boot.ts:298] | 嵌入宿主可以不提供。 | `packages/boot/app-boot/src/profile-context.ts` |
 
 ### host / agent · vendor 组合
 
 | 键 | 类型/Service 类 | 默认 provider | 含义 | 为什么可换 | Definition 源 path |
 |---|---|---|---|---|---|
-| `loader` | `Loader` | `@deepseek-ai/cordis-plugin-loader`（`boot` 先 `ctx.plugin(Loader)`） | 配置树 / 插件条目 / isolate。[E: vendor/loader/src/index.ts:33] | 换 Loader 等于换组合运行时。 | `vendor/loader/src/index.ts` |
-| `hmr` | `Hmr` | base `id: hmr` `@deepseek-ai/cordis-plugin-hmr` | 监视源与 config 热更新。[E: vendor/hmr/src/index.ts:17] | 生产可卸；web 另挂 `client-hmr`。 | `vendor/hmr/src/index.ts` |
+| `loader` | `Loader` | `@deepseek-ai/cordis-plugin-loader`（`boot` 先 `ctx.plugin(Loader)`） | 配置树 / 插件条目 / isolate。[E: vendor/loader/src/index.ts:34] | 换 Loader 等于换组合运行时。 | `vendor/loader/src/index.ts` |
+| `hmr` | `Hmr` | base `id: hmr` `@deepseek-ai/dsh-hmr` | 监视源与 profile patch 热更新。Context 键在 `dsh-hmr` 声明；vendored `@deepseek-ai/cordis-plugin-hmr` 仍在 workspace，但 shipped 行不装它。[E: packages/boot/hmr/src/index.ts:22][E: packages/bundle/base/cordis.patch.yml:28][E: packages/bundle/base/cordis.patch.yml:29] | 生产可卸；web 另挂 `client-hmr`。 | `packages/boot/hmr/src/index.ts` |
 | `timer` | `TimerService` | base `id: timer` | host 生命周期安全的 timeout/interval；mixin 到 `ctx.timeout()`。[E: vendor/timer/src/index.ts:5] | 浏览器半边另有 `ClientTimerService`。 | `vendor/timer/src/index.ts` |
 
 ### host / agent · core spine
@@ -224,17 +232,17 @@ updated: c291e7961a
 | 键 | 类型/Service 类 | 默认 provider | 含义 | 为什么可换 | Definition 源 path |
 |---|---|---|---|---|---|
 | `sessions` | `SessionStore` | `@deepseek-ai/dsh-session` | 进程内 append-only Session 与 `session/flush`。[E: packages/core/session/src/index.ts:35] | 换实现会改日志合同。浏览器 `sessions` 是另一张脸。 | `packages/core/session/src/index.ts` |
-| `tools` | `ToolRuntime` | `@deepseek-ai/dsh-tools` | 模型可见 registry + pre/execute/post；PTC 运输 `run_code` 也在这里。[E: packages/core/tools/src/index.ts:131] | 换 loop/presentation 不换这个键。 | `packages/core/tools/src/index.ts` |
+| `tools` | `ToolRuntime` | `@deepseek-ai/dsh-tools` | 模型可见 registry + pre/execute/post；PTC 运输 `run_code` 也在这里。[E: packages/core/tools/src/index.ts:139] | 换 loop/presentation 不换这个键。 | `packages/core/tools/src/index.ts` |
 | `systemPrompt` | `SystemPrompt` | `@deepseek-ai/dsh-system-prompt` | 按 step 收集 section 与 tool schema。[E: packages/core/system-prompt/src/index.ts:15] | persona / plan-mode 往这里挂文案。 | `packages/core/system-prompt/src/index.ts` |
-| `agents` | `AgentRegistry` | `@deepseek-ai/dsh-agent` | create/resume 工厂、活 Agent 句柄。[E: packages/core/agent/src/index.ts:28] | ACP / loop / in-process subagent 都 inject 它。 | `packages/core/agent/src/index.ts` |
-| `agent` | `Agent`（可选；DX 字段） | `AgentRegistry` 根 accessor，默认 `undefined` | 装在 `Agent.ctx` 上的关联，**不是** scope 解析器。[E: packages/core/agent/src/index.ts:41] | 不可当 seam 换。 | `packages/core/agent/src/index.ts` |
-| `agentLoop` | `AgentLoop` | `@deepseek-ai/dsh-agent-loop` | 默认可替换驱动。[E: packages/core/agent-loop/src/index.ts:218] | 扩展应依赖 `dsh-agent` 事件。 | `packages/core/agent-loop/src/index.ts` |
-| `agentDefaultModel` | `AgentDefaultModelConfig` | `@deepseek-ai/dsh-agent-default-model` | Context 键在此声明；base 组合默认 `provider: deepseek-official` / `model: deepseek-flash`。acp-app 仍硬编码 `deepseek-v4-flash`。[E: packages/core/agent-default-model/src/index.ts:16][E: packages/bundle/base/cordis.patch.yml:79] | headless 与 Host Session RPC 共用一个选择。 | `packages/core/agent-default-model/src/index.ts` |
-| `agentPresets` | `AgentPresets` | web `id: agent-presets`；**headless / sdk / acp 不挂** | 发现/standing-mount preset 目录。web `default: standard`。[E: packages/preset/agent-presets/src/index.ts:92][E: packages/preset/agent-presets/src/index.ts:243] | 换 default / `modeSelectionEnabled` 只改每会话 tools。 | `packages/preset/agent-presets/src/index.ts` |
+| `agents` | `AgentRegistry` | `@deepseek-ai/dsh-agent` | create/resume 工厂、活 Agent 句柄。[E: packages/core/agent/src/index.ts:29] | ACP / loop / in-process subagent 都 inject 它。 | `packages/core/agent/src/index.ts` |
+| `agentLoop` | `AgentLoop` | `@deepseek-ai/dsh-agent-loop` | 默认可替换驱动。[E: packages/core/agent-loop/src/index.ts:217] | 扩展应依赖 `dsh-agent` 事件。 | `packages/core/agent-loop/src/index.ts` |
+| `agentDefaultModel` | `AgentDefaultModelConfig` | `@deepseek-ai/dsh-agent-default-model` | Context 键在此声明；base 组合默认 `provider: deepseek-official` / `model: deepseek-flash`。acp-app 仍硬编码 `deepseek-v4-flash`。[E: packages/core/agent-default-model/src/index.ts:19][E: packages/bundle/base/cordis.patch.yml:85] | headless 与 Host Session RPC 共用一个选择。 | `packages/core/agent-default-model/src/index.ts` |
+| `agentPresets` | `AgentPresetRegistry` | web `id: agent-preset-registry`；**headless / sdk / acp 不挂** | 发现/standing-mount preset 声明。web `default: standard`。[E: packages/preset/agent-preset-registry/src/index.ts:26][E: packages/preset/agent-preset-registry/src/index.ts:54][E: packages/bundle/web-app/cordis.patch.yml:559] | 换 default 只改每会话 tools。 | `packages/preset/agent-preset-registry/src/index.ts` |
+| `pluginManager` | `PluginManager` | base `id: plugin-manager`；无 `profileContext` 则 `disabled` | 当前 profile 的插件/bundle 管理。模型工具 `plugin_manager` 走这个键。[E: packages/boot/plugin-manager/src/index.ts:171][E: packages/boot/plugin-manager/src/index.ts:206][E: packages/bundle/base/cordis.patch.yml:20] | 嵌入无 profile 时不装。 | `packages/boot/plugin-manager/src/index.ts` |
 | `commands` | `CommandRuntime` | `@deepseek-ai/dsh-commands` | 人命令，不经模型 turn。[E: packages/interaction/commands/src/index.ts:108] | 与 `ctx.tools` 分家。 | `packages/interaction/commands/src/index.ts` |
 | `invariants` | `InvariantRegistry` | **默认 web 树无 yml 行** | `register(packageName, installer)`。[E: packages/runtime-diagnostics/invariants/src/index.ts:70] | 诊断缝；不装则 companion 等不到。 | `packages/runtime-diagnostics/invariants/src/index.ts` |
-| `typert` | `TypertRegistryContract` | `@deepseek-ai/dsh-typert-registry` | 运行时类型/Remote 描述。[E: packages/typert/protocol/src/types.ts:569] | client 半边也 inject 同名键。 | `packages/typert/protocol/src/types.ts` |
-| `typertGateway` | `TypertGateway` | `@deepseek-ai/dsh-api-gateway` | Host 上把 Remote 描述绑到活服务。[E: packages/api/gateway/src/types.ts:155] | 浏览器读的是 `ctx.remote`。 | `packages/api/gateway/src/types.ts` |
+| `typert` | `TypertRegistryContract` | `@deepseek-ai/dsh-typert-registry` | 运行时类型/Remote 描述。[E: packages/typert/protocol/src/types.ts:567] | client 半边也 inject 同名键。 | `packages/typert/protocol/src/types.ts` |
+| `typertGateway` | `TypertGateway` | `@deepseek-ai/dsh-api-gateway` | Host 上把 Remote 描述绑到活服务。[E: packages/api/gateway/src/types.ts:159] | 浏览器读的是 `ctx.remote`。 | `packages/api/gateway/src/types.ts` |
 | `deepseekLlmApiExtensions` | `DeepSeekLlmApiExtensionRegistry` | `@deepseek-ai/dsh-deepseek-llm-api-extensions` | 独立拥有的 DeepSeek 请求顶层字段注册表。[E: packages/llm/deepseek-llm-api-extensions/src/index.ts:20] | `session-log-deepseek` 等往这里 register 字段。 | `packages/llm/deepseek-llm-api-extensions/src/index.ts` |
 | `subagentModelSelection` | `SubagentModelSelectionConfig` | `dsh-tool-subagent` 设置段 | 新 Agent 拿到委托工具时抽样的用户偏好。[E: packages/subagent/tool-subagent/src/model-selection-settings.ts:15] | 设置可关，不换 `ctx.subagents`。 | `packages/subagent/tool-subagent/src/model-selection-settings.ts` |
 
@@ -244,29 +252,29 @@ updated: c291e7961a
 
 | 键 | 类型/Service 类 | 默认 provider | 含义 | 为什么可换 | Definition 源 path |
 |---|---|---|---|---|---|
-| `fs` | `FileSystem` | `@deepseek-ai/dsh-fs-sandbox` `SandboxedFileSystem`（base `id: fs-sandbox`） | 文本读写/edit 缝。minimal **不再** isolate 挂 `fs-local`；出厂 minimal 只有 persistent shell。[E: packages/fs/fs/src/index.ts:46][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] | 换 `fs-local` / `fs-e2b` 不改 `read`/`write`/`edit` wire 名。 | `packages/fs/fs/src/index.ts` |
-| `shell` | `ShellExecutor` | 非 win：`dsh-bash-sandbox`；win：`dsh-pwsh-sandbox` | one-shot bash/pwsh。Consumer：`tool-bash` / `tool-pwsh`。[E: packages/shell/shell/src/index.ts:41][E: packages/shell/shell/src/index.ts:66] | persistent 那包走 `terminals`，不占第二个 `shell` 键。 | `packages/shell/shell/src/index.ts` |
+| `fs` | `FileSystem` | `@deepseek-ai/dsh-fs-sandbox` `SandboxedFileSystem`（base `id: fs-sandbox`） | 文本读写/edit 缝。minimal **不再** isolate 挂 `fs-local`；出厂 minimal 只有 persistent shell。[E: packages/fs/fs/src/index.ts:47][E: packages/bundle/web-app/presets/minimal.patch.yml:21] | 换 `fs-local` / `fs-ssh` 不改 `read`/`write`/`edit` wire 名。E2B 包已删除。 | `packages/fs/fs/src/index.ts` |
+| `shell` | `ShellExecutor` | 非 win：`dsh-bash-sandbox`；win：`dsh-pwsh-sandbox` | one-shot bash/pwsh。Consumer：`tool-bash` / `tool-pwsh`。[E: packages/shell/shell/src/index.ts:32][E: packages/shell/shell/src/index.ts:66] | persistent 那包走 `terminals`，不占第二个 `shell` 键。 | `packages/shell/shell/src/index.ts` |
 | `shellEnv` | `ShellEnvRegistry` | `@deepseek-ai/dsh-shell-env`（**host**，preset 不得 isolate） | 效果作用域内的 `DSH_*` 事实。[E: packages/shell/shell-env/src/index.ts:20] | web-app 往这里发 `DSH_WEB_URL`。 | `packages/shell/shell-env/src/index.ts` |
-| `subprocess` | `SubprocessRuntime` | `@deepseek-ai/dsh-subprocess-local` | 进程树/stdio/PTY/kill。[E: packages/subprocess/subprocess/src/index.ts:73] | 与 `fs` 一起换成 E2B 即远程 Linux 世界。 | `packages/subprocess/subprocess/src/index.ts` |
+| `subprocess` | `SubprocessRuntime` | `@deepseek-ai/dsh-subprocess-local` | 进程树/stdio/PTY/kill。[E: packages/subprocess/subprocess/src/index.ts:75] | 与 `fs` 一起换成 SSH provider 即远程 POSIX 世界。 | `packages/subprocess/subprocess/src/index.ts` |
 | `sandbox` | `SandboxProvider` | `@deepseek-ai/dsh-sandbox-local` | 接住即将 spawn 的 argv。[E: packages/sandbox/sandbox/src/index.ts:148] | 换 runner 不改 tool 层。 | `packages/sandbox/sandbox/src/index.ts` |
 | `sandboxPolicy` | `SandboxPolicyService` | `@deepseek-ai/dsh-sandbox-policy` | 部署默认 mode + workspace root。[E: packages/sandbox/sandbox-policy/src/index.ts:59] | 不是 per-call 后端。 | `packages/sandbox/sandbox-policy/src/index.ts` |
-| `terminals` | `TerminalSessionService` | **默认 web+standard 未装**；minimal isolate 组：`dsh-terminal` + `dsh-terminal-bash` / `dsh-terminal-pwsh` | 持久 PTY registry。`tool-bash-persistent` / `tool-pwsh-persistent` 走这里。[E: packages/terminal/terminal/src/index.ts:50][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:25] | 必须 isolate：agent-owned。 | `packages/terminal/terminal/src/index.ts` |
+| `terminals` | `TerminalSessionService` | **默认 web+standard 未装**；minimal isolate 组：`dsh-terminal` + `dsh-terminal-bash`（POSIX）/ 同包 `shellDialect: pwsh`（win32） | 持久 PTY registry。`tool-bash-persistent` / `tool-pwsh-persistent` 走这里。没有 `dsh-terminal-pwsh` 包。[E: packages/terminal/terminal/src/index.ts:50][E: packages/bundle/web-app/presets/minimal.patch.yml:21][E: packages/bundle/web-app/presets/minimal.patch.yml:47] | 必须 isolate：agent-owned。 | `packages/terminal/terminal/src/index.ts` |
 | `lsp` | `LspService` | **四个 shipped preset 与 base/web 均未装** | 规范化 LSP 操作的注册/选择。[E: packages/lsp/lsp/src/index.ts:40] | 默认产品树没有这个键。 | `packages/lsp/lsp/src/index.ts` |
-| `codeRuntime` | `CodeRuntime` | web/headless `dsh-code-runtime-worker-thread` | PTC `run_code` 默认 TypeScript worker。实验 CPython Provider 是 `dsh-experimental-code-runtime-python`（`PythonCodeRuntime`，fd-3 JSON-lines），**默认未装**。[E: packages/code-runtime/code-runtime/src/index.ts:90][E: packages/bundle/web-app/cordis.patch.yml:50][E: packages/experimental/code-runtime-python/src/index.ts:805] | 换 worker / python 不改 `run_code` 名。 | `packages/code-runtime/code-runtime/src/index.ts` |
-| `e2b` | `E2BRuntime` | **默认未装** | 共享 E2B SDK handle。[E: packages/e2b/e2b/src/index.ts:65] | 只换世界，不换 tool wire 名。 | `packages/e2b/e2b/src/index.ts` |
+| `ptcRuntime` | `PtcRuntime` | base `dsh-ptc-runtime-node` | PTC `run_code` 默认 Node 实现。实验 CPython Provider 是 `dsh-experimental-ptc-runtime-python`，**默认未装**。[E: packages/ptc-runtime/ptc-runtime/src/index.ts:93][E: packages/bundle/base/cordis.patch.yml:389] | 换 Node / python 不改 `run_code` 名。 | `packages/ptc-runtime/ptc-runtime/src/index.ts` |
+| `ssh` | `SshConnection` | **默认未装** | OpenSSH 连接与 POSIX helper。[E: packages/ssh/ssh/src/index.ts:43][E: packages/ssh/ssh/src/index.ts:74] | 远程 fs/subprocess/sandbox 走 `packages/ssh/*`，E2B 包已删除。 | `packages/ssh/ssh/src/index.ts` |
 
 ### host / agent · persistence
 
 | 键 | 类型/Service 类 | 默认 provider | 含义 | 为什么可换 | Definition 源 path |
 |---|---|---|---|---|---|
-| `sessionPersistence` | `SessionPersistence` | `@deepseek-ai/dsh-session-persistence-jsonl` | SessionEvent 落盘。`create`/`open` 得 `SessionHandle`；jsonl 有跨进程 write lease。SQLite **session** persistence 包已删。[E: packages/session/session-persistence/src/index.ts:110][E: packages/session/session-persistence/src/index.ts:136][E: packages/session/session-persistence-jsonl/src/lease.ts:40] | 换介质不换事件词表；shipped 只有 JSONL。 | `packages/session/session-persistence/src/index.ts` |
+| `sessionPersistence` | `SessionPersistence` | `@deepseek-ai/dsh-session-persistence-jsonl` | SessionEvent 落盘。`create`/`open` 得 `SessionHandle`；jsonl 有跨进程 write lease。SQLite **session** persistence 包已删。[E: packages/session/session-persistence/src/index.ts:111][E: packages/session/session-persistence/src/index.ts:140][E: packages/session/session-persistence-jsonl/src/lease.ts:40] | 换介质不换事件词表；shipped 只有 JSONL。 | `packages/session/session-persistence/src/index.ts` |
 | `sessionQuery` | `SessionQueryEngine` | `@deepseek-ai/dsh-session-query-sqlite` | 精确读/trace/filter。[E: packages/session-query/session-query/src/index.ts:76] | 打开 `openAt` 才有全文。 | `packages/session-query/session-query/src/index.ts` |
-| `sessionProjections` | `SessionProjectionRegistry` | `@deepseek-ai/dsh-session-projection` | 域 fold 单元。web-app 另挂 `session-turn-outline` 注册 `turnOutline` 单元（不是独立 ctx 键）。[E: packages/session/session-projection/src/index.ts:26][E: packages/session/session-turn-outline/src/index.ts:18][E: packages/bundle/web-app/cordis.patch.yml:78] | 注册单元，不换存储。 | `packages/session/session-projection/src/index.ts` |
+| `sessionProjections` | `SessionProjectionRegistry` | `@deepseek-ai/dsh-session-projection` | 域 fold 单元。web-app 另挂 `session-turn-outline` 注册 `turnOutline` 单元（不是独立 ctx 键）。[E: packages/session/session-projection/src/index.ts:26][E: packages/session/session-turn-outline/src/index.ts:18][E: packages/bundle/web-app/cordis.patch.yml:88] | 注册单元，不换存储。 | `packages/session/session-projection/src/index.ts` |
 | `sessionProjectionCache` | `SessionProjectionCache` | web `dsh-session-projection-cache` | 冷读阶梯。[E: packages/session/session-projection-cache/src/index.ts:36] | 只 GUI 列表需要。 | `packages/session/session-projection-cache/src/index.ts` |
 | `sessionTelemetry` | `SessionTelemetryBackend` | `dsh-session-telemetry-otel` | 捕获/脱敏后离开进程。[E: packages/session/session-telemetry/src/index.ts:21] | 没有进程内 Consumer。 | `packages/session/session-telemetry/src/index.ts` |
 | `sessionTitle` | `SessionTitleService` | Definition + `dsh-session-title-first-prompt-llm` | 确定性 fallback + 可选异步 LLM 标题。[E: packages/session/session-title/src/index.ts:66] | 换 first-prompt provider。 | `packages/session/session-title/src/index.ts` |
 | `attachments` | `AttachmentStore` | `@deepseek-ai/dsh-attachment-local` | 日志外的内容寻址图片字节。[E: packages/attachment/attachment/src/index.ts:33] | 换存储根不改 message 引用形状。 | `packages/attachment/attachment/src/index.ts` |
-| `settings` | `SettingsProvider` | `@deepseek-ai/dsh-settings-file` | 分层用户文档。[E: packages/settings/settings/src/index.ts:145] | 插件只 register schema。 | `packages/settings/settings/src/index.ts` |
+| `settings` | `SettingsForms` | `@deepseek-ai/dsh-settings` | 配置表单；legacy `settings.yaml` 导入进 profile patch。[E: packages/settings/settings/src/index.ts:39][E: packages/settings/settings/src/index.ts:223] | 物理文档不再是独立 settings-file 包。 | `packages/settings/settings/src/index.ts` |
 | `credentials` | `CredentialProvider` | `@deepseek-ai/dsh-credentials-local` | 配置持引用，值在 provider。[E: packages/credentials/credentials/src/index.ts:150] | 换保管所不改 adapter。 | `packages/credentials/credentials/src/index.ts` |
 | `authorization` | `AuthorizationService` | `@deepseek-ai/dsh-authorization` | 浏览器/设备授权流。[E: packages/credentials/authorization/src/index.ts:45] | 与 `credentials` 分家。 | `packages/credentials/authorization/src/index.ts` |
 | `storage` | `Storage` | web `dsh-storage` 枢纽 | 具名 backend 注册表。[E: packages/storage/storage/src/index.ts:32] | 多 backend 并存。 | `packages/storage/storage/src/index.ts` |
@@ -281,14 +289,14 @@ updated: c291e7961a
 
 | 键 | 类型/Service 类 | 默认 provider | 含义 | 为什么可换 | Definition 源 path |
 |---|---|---|---|---|---|
-| `approval` | `ApprovalService` | `@deepseek-ai/dsh-user-approval` | `approval/request` waterfall；缺 listener fail-closed。[E: packages/interaction/user-approval/src/index.ts:18] | 换 UI/ACP 桥。 | `packages/interaction/user-approval/src/index.ts` |
+| `approval` | `ApprovalService` | `@deepseek-ai/dsh-user-approval` | `approval/request` waterfall；缺 listener fail-closed。[E: packages/interaction/user-approval/src/index.ts:19] | 换 UI/ACP 桥。 | `packages/interaction/user-approval/src/index.ts` |
 | `userQuestions` | `UserQuestionService` | `@deepseek-ai/dsh-user-questions` | `ask()` Promise。[E: packages/interaction/user-questions/src/index.ts:17] | `tool-ask-user` 不绑具体 GUI。 | `packages/interaction/user-questions/src/index.ts` |
 | `permissionPresets` | `PermissionPresetService` | `@deepseek-ai/dsh-permission-presets` | 捆 sandbox+approval。[E: packages/interaction/permission-presets/src/index.ts:34] | 一次切换写 `permission/preset`。 | `packages/interaction/permission-presets/src/index.ts` |
-| `planMode` | `PlanModeController` | Definition 自 provide；standard **isolate** | 折叠 `plan/mode`、`/plan`、`exit_plan_mode`。[E: packages/plan/plan-mode/src/index.ts:52] | isolate 让每 preset 一份状态。 | `packages/plan/plan-mode/src/index.ts` |
+| `planMode` | `PlanModeController` | Definition 自 provide；standard **isolate** | 折叠 `plan/mode`、`/plan`、`exit_plan_mode`。[E: packages/plan/plan-mode/src/index.ts:53] | isolate 让每 preset 一份状态。 | `packages/plan/plan-mode/src/index.ts` |
 | `skills` | `SkillRegistry` | `@deepseek-ai/dsh-skill` + `skill-filesystem` | 合并 provider 目录。[E: packages/skill/skill/src/index.ts:288] | 扫描根含 `<project>/.dsh/skills` 与 `.agents/skills`。 | `packages/skill/skill/src/index.ts` |
 | `sessionReferenceResolver` | `SessionReferenceResolver` | `@deepseek-ai/dsh-session-reference` | 跨会话快照打成不可信 message context。[E: packages/context/session-reference/src/index.ts:66] | host 管 mention 语法。 | `packages/context/session-reference/src/index.ts` |
 | `fileReferences` | `FileReferenceService` | 文件 mention 后端 | 可取消的文件/目录候选发现。[E: packages/context/file-reference/src/index.ts:21] | Host RPC 再包一层 `sessionFileReferences`。 | `packages/context/file-reference/src/index.ts` |
-| `compaction` | `CompactionEngine` | `dsh-compaction-basic`；standard isolate | 无模型可见 compact tool。[E: packages/compaction/compaction/src/index.ts:83] | isolate 避免两个 preset 抢一个引擎。 | `packages/compaction/compaction/src/index.ts` |
+| `compaction` | `CompactionEngine` | `dsh-compaction-basic`；standard isolate | 无模型可见 compact tool。[E: packages/compaction/compaction/src/index.ts:85] | isolate 避免两个 preset 抢一个引擎。 | `packages/compaction/compaction/src/index.ts` |
 | `toolResultPruner` | `ToolResultPruner` | `dsh-compaction-tool-result-pruner` | 摘要前裁当前 tool 结果。[E: packages/compaction/compaction-tool-result-pruner/src/index.ts:34] | 必须和 compaction 同 realm。 | `packages/compaction/compaction-tool-result-pruner/src/index.ts` |
 | `tokenMeter` | `TokenMeter` | `@deepseek-ai/dsh-token-meter`（**host**） | 每会话 replay 计量。[E: packages/llm/token-meter/src/index.ts:83] | isolate 会让投影随 preset 来去。 | `packages/llm/token-meter/src/index.ts` |
 
@@ -296,14 +304,15 @@ updated: c291e7961a
 
 | 键 | 类型/Service 类 | 默认 provider | 含义 | 为什么可换 | Definition 源 path |
 |---|---|---|---|---|---|
-| `subagents` | `SubagentRuntime` | Definition + host `spawn`/`fork` | 运输 registry + continuation。[E: packages/subagent/subagent/src/index.ts:144] | 加 Codex/Claude/ACP/SDK 后端不改控制工具。 | `packages/subagent/subagent/src/index.ts` |
-| `jobs` | `JobRegistry` | `@deepseek-ai/dsh-jobs-local` | 后台 bash / PTY / 委托登记。[E: packages/jobs/jobs/src/index.ts:31] | **host** singleton：preset isolate 会让 `run_in_background` 看不见。 | `packages/jobs/jobs/src/index.ts` |
-| `workflowEngine` | `WorkflowEngine` | `dsh-workflow-worker-thread`；standard isolate | `workflow` / `ralph` 引擎。[E: packages/workflow/workflow/src/index.ts:33] | 一上下文一个引擎。 | `packages/workflow/workflow/src/index.ts` |
+| `subagents` | `SubagentRuntime` | Definition + host `spawn`/`fork` | 运输 registry + continuation。[E: packages/subagent/subagent/src/index.ts:142] | 加 Codex/Claude/ACP/SDK 后端不改控制工具。 | `packages/subagent/subagent/src/index.ts` |
+| `jobs` | `JobRegistry` | `@deepseek-ai/dsh-jobs-local` | 后台 bash / PTY / 委托登记。[E: packages/jobs/jobs/src/index.ts:43] | **host** singleton：preset isolate 会让 `run_in_background` 看不见。 | `packages/jobs/jobs/src/index.ts` |
+| `schedule` | `ScheduleService` | web `id: schedule` **`disabled: true`** | Host 级提醒；四个 shipped preset **不**挂 `dsh-schedule` 工具。[E: packages/schedule/schedule/src/index.ts:68][E: packages/bundle/web-app/cordis.patch.yml:125][E: packages/bundle/web-app/cordis.patch.yml:127] | 出厂 GUI 行在但关掉。 | `packages/schedule/schedule/src/index.ts` |
+| `workflowEngine` | `WorkflowEngine` | `dsh-workflow-ptc`；standard isolate | `workflow` / `ralph` 引擎。[E: packages/workflow/workflow/src/index.ts:159] | 一上下文一个引擎。 | `packages/workflow/workflow/src/index.ts` |
 | `goals` | `GoalService` | `@deepseek-ai/dsh-goal` | 同会话目标域。[E: packages/goal/goal/src/index.ts:60] | 不要 isolate，否则 UI Remote 丢服务。 | `packages/goal/goal/src/index.ts` |
 | `web` | `WebRuntime` | `@deepseek-ai/dsh-web` + `dsh-web-search-deepseek` | search/fetch provider 注册表。[E: packages/web/web/src/index.ts:37] | search **不**走 `DEEPSEEK_BASE_URL`。 | `packages/web/web/src/index.ts` |
 | `llm` | `LlmRuntime` | Definition 自 provide；适配器 `dsh-llm-deepseek` + 休眠 `dsh-llm-pi-ai` | adapter 注册 + `llm/stream` waterfall。[E: packages/llm/llm/src/index.ts:51] | 加 provider 是 register route。 | `packages/llm/llm/src/index.ts` |
 | `webhookRuntime` | `WebhookRuntime` | `@deepseek-ai/dsh-webhook`；**默认 web 树未装** | fire-and-forget 规则注册表；GitHub adapter 另包。[E: packages/webhook/webhook/src/index.ts:15][E: packages/webhook/webhook/src/index.ts:73] | 规则 `register` 是 effect-scoped。 | `packages/webhook/webhook/src/index.ts` |
-| `agentTeams` | `TeamService` | experimental `@deepseek-ai/dsh-experimental-agent-team`；**默认未装** | implicit-root Teams（roster / mailbox / task board）。[E: packages/experimental/agent-team/src/index.ts:40][E: packages/experimental/agent-team/src/index.ts:81] | 叠在 continuable subagent 上；opt-in profile。 | `packages/experimental/agent-team/src/index.ts` |
+| `agentTeams` | `TeamService` | experimental `@deepseek-ai/dsh-experimental-agent-team`；**默认未装** | implicit-root Teams（roster / mailbox / task board）。[E: packages/experimental/agent-team/src/index.ts:41][E: packages/experimental/agent-team/src/index.ts:81] | 叠在 continuable subagent 上；opt-in profile。 | `packages/experimental/agent-team/src/index.ts` |
 
 ### host / agent · Web 宿主与 Host HTTP API
 
@@ -312,18 +321,18 @@ updated: c291e7961a
 | 键 | 类型/Service 类 | 默认 provider | 含义 | 为什么可换 | Definition 源 path |
 |---|---|---|---|---|---|
 | `webServer` | `WebServer` | `@deepseek-ai/dsh-host-webserver` | `node:http` 具名路由 + index transform + static fallback。[E: packages/host/webserver/src/index.ts:24] | connection / modules / hmr 都 inject 它。 | `packages/host/webserver/src/index.ts` |
-| `sessionController` | `SessionController` | `@deepseek-ai/dsh-api-session-controller` | Host Session 业务 API；Remote namespace `'session'`。[E: packages/api/session-controller/src/index.ts:63][E: packages/api/session-controller/src/index.ts:113] | 取代已删的 apiproxy session 分发。 | `packages/api/session-controller/src/index.ts` |
+| `sessionController` | `SessionController` | `@deepseek-ai/dsh-api-session-controller` | Host Session 业务 API；Remote namespace `'session'`。[E: packages/api/session-controller/src/index.ts:63][E: packages/api/session-controller/src/index.ts:114] | 取代已删的 apiproxy session 分发。 | `packages/api/session-controller/src/index.ts` |
 | `settingsController` | `SettingsController` | `@deepseek-ai/dsh-api-settings-controller` | Host Settings Remote namespace `'settings'`。[E: packages/api/settings-controller/src/index.ts:77] | 读路径 `redactSecrets: true`。 | `packages/api/settings-controller/src/index.ts` |
 | `credentialsController` | `CredentialsController` | settings-controller 挂载 | Host `'credentials'` Remote。[E: packages/api/settings-controller/src/credentials.ts:56] | 与 `ctx.credentials` 保管所分家。 | `packages/api/settings-controller/src/credentials.ts` |
-| `workspaceController` | `WorkspaceController` | `@deepseek-ai/dsh-api-workspace-controller` | Host Workspace Remote namespace `'workspace'`。[E: packages/api/workspace-controller/src/index.ts:29][E: packages/api/workspace-controller/src/index.ts:42] | 浏览器对象层在 `src/client/`。 | `packages/api/workspace-controller/src/index.ts` |
-| `workspaceFiles` | `WorkspaceFiles` | web `dsh-api-workspace-files` | Host `workspaceFiles` Remote（读/列目录）。[E: packages/api/workspace-files/src/index.ts:49] | `open-in-app` host **没有** Context 键。 | `packages/api/workspace-files/src/index.ts` |
+| `workspaceController` | `WorkspaceController` | `@deepseek-ai/dsh-api-workspace-controller` | Host Workspace Remote namespace `'workspace'`。[E: packages/api/workspace-controller/src/index.ts:29][E: packages/api/workspace-controller/src/index.ts:43] | 浏览器对象层在 `src/client/`。 | `packages/api/workspace-controller/src/index.ts` |
+| `workspaceFiles` | `WorkspaceFiles` | web `dsh-api-workspace-files` | Host `workspaceFiles` Remote（读/列目录）。[E: packages/api/workspace-files/src/index.ts:50] | `open-in-app` host **没有** Context 键。 | `packages/api/workspace-files/src/index.ts` |
 | `sessionFileReferences` | `SessionFileReferences` | session-controller 适配器 | Host `'fileReferences'` Remote，inject `fileReferences`。[E: packages/api/session-controller/src/file-references.ts:12] | 换发现后端不换 namespace。 | `packages/api/session-controller/src/file-references.ts` |
 | `clientModules` | `ClientModuleRegistry` | `@deepseek-ai/dsh-client-modules`（**host** 半边） | 扫描 `dsh.client`、组 `__DSH_BOOT__`。[E: packages/client/modules/src/index.ts:47] | 浏览器键是 `modules`。 | `packages/client/modules/src/index.ts` |
 | `connection` | `HostConnectionHandle` | `@deepseek-ai/dsh-client-connection` host 半边 | Host RPC 注册与升级。[E: packages/client/connection/src/rpc-host.ts:55] | 浏览器 `provide('connection', handle)` 是另一类型。 | `packages/client/connection/src/rpc-host.ts` |
 | `directoryPicker` | `DirectoryPicker` | `dsh-host-directory-picker-auto` | OS chooser vs in-app 浏览。[E: packages/host/directory-picker/src/index.ts:92] | overlay 可钉死 `-native` / `-browse`。 | `packages/host/directory-picker/src/index.ts` |
-| `pluginInventory` | `PluginInventoryGateway` | `@deepseek-ai/dsh-host-plugin-inventory` | Loader 非 group 条目只读投影。`super(ctx, 'pluginInventory')`，**无** `interface Context` merge。[E: packages/host/plugin-inventory/src/index.ts:50] | Settings 页经 `remote.pluginInventory` 读。 | `packages/host/plugin-inventory/src/index.ts` |
-| `fileUploads` | `FileUploads` | web `dsh-client-file-upload` host | 浏览器上传的 staged receipt；**不是**模型可见工具。[E: packages/client/file-upload/src/index.ts:21][E: packages/bundle/web-app/cordis.patch.yml:173] | 换存储不改 RPC 名。 | `packages/client/file-upload/src/index.ts` |
-| `dynamicCordisRunner` | `DynamicCordisRunnerService` | `@deepseek-ai/dsh-cordis-host-runner` | 内存定义表 + host vm sandbox。[E: packages/extensions/cordis-host-runner/src/index.ts:83] | `tool-cordis` Consumer；client 另有 Face。 | `packages/extensions/cordis-host-runner/src/index.ts` |
+| `pluginInventory` | `PluginInventoryGateway` | `@deepseek-ai/dsh-host-plugin-inventory` | Loader 非 group 条目只读投影。`super(ctx, 'pluginInventory')`，**无** `interface Context` merge。[E: packages/host/plugin-inventory/src/index.ts:51] | Settings 页经 `remote.pluginInventory` 读。 | `packages/host/plugin-inventory/src/index.ts` |
+| `fileUploads` | `FileUploads` | web `dsh-client-file-upload` host | 浏览器上传的 staged receipt；**不是**模型可见工具。[E: packages/client/file-upload/src/index.ts:21][E: packages/bundle/web-app/cordis.patch.yml:221] | 换存储不改 RPC 名。 | `packages/client/file-upload/src/index.ts` |
+| `dynamicCordisRunner` | `DynamicCordisRunnerService` | `@deepseek-ai/dsh-cordis-host-runner` | 内存定义表 + host vm sandbox。[E: packages/extensions/cordis-host-runner/src/index.ts:82] | `tool-cordis` Consumer；client 另有 Face。 | `packages/extensions/cordis-host-runner/src/index.ts` |
 | `cordisInspect` | `CordisInspectRegistryService` | 同 host-runner | host inspect provider 注册。[E: packages/extensions/cordis-host-runner/src/inspect-registry.ts:40] | client 表有同名不同类。 | `packages/extensions/cordis-host-runner/src/inspect-registry.ts` |
 
 ### client · 浏览器 ctx
@@ -333,29 +342,29 @@ updated: c291e7961a
 | 键 | 类型/Service 类 | 默认 provider | 含义 | 为什么可换 | Definition 源 path |
 |---|---|---|---|---|---|
 | `connection` | `ConnectionHandle` | `dsh-client-connection/client` `ctx.provide` | 浏览器 wire：fixture 或 HTTP。[E: packages/client/connection/src/client/index.ts:286] | `?fixture` 换运输。 | `packages/client/connection/src/client/index.ts` |
-| `modules` | `ClientModuleLoader` | `window.__DSH_MODULES__` 再 `reflect.provide` | 壳 kernel 先造模块系统。[E: packages/client/modules/src/client/manifest.ts:39] | 缺 slot 直接抛。 | `packages/client/modules/src/client/manifest.ts` |
+| `modules` | `ClientModuleLoader` | `window.__DSH_MODULES__` 再 `reflect.provide` | 壳 kernel 先造模块系统。[E: packages/client/modules/src/client/manifest.ts:40] | 缺 slot 直接抛。 | `packages/client/modules/src/client/manifest.ts` |
 | `locale` | `LocaleRuntime` | `@deepseek-ai/dsh-client-locale` | 字典与 `locale/change`。[E: packages/client/locale/src/client/index.ts:83] | 与 settings 同步。 | `packages/client/locale/src/client/index.ts` |
 | `theme` | `ThemeRuntime` | `@deepseek-ai/dsh-client-ui-theme` | 主题快照与 `theme/change`。[E: packages/client/ui-theme/src/client/index.ts:113] | 可跟 OS `system`。 | `packages/client/ui-theme/src/client/index.ts` |
-| `slots` | `SlotRegistry` | `@deepseek-ai/dsh-client-ui-renderer` client | UI 插槽。[E: packages/client/ui-renderer/src/client/index.ts:44] | ui-* 只往这里 inject。 | `packages/client/ui-renderer/src/client/index.ts` |
-| `uiRenderer` | `UiRendererService` | 同 renderer `reflect.provide` | boot kernel `mount(container)`。[E: packages/client/ui-renderer/src/client/index.ts:46][E: packages/client/web/src/boot.ts:97] | Host 半边 `apply()` 是空操作。 | `packages/client/ui-renderer/src/client/index.ts` |
+| `slots` | `SlotRegistry` | `@deepseek-ai/dsh-client-ui-renderer` client | UI 插槽。[E: packages/client/ui-renderer/src/client/index.ts:45] | ui-* 只往这里 inject。 | `packages/client/ui-renderer/src/client/index.ts` |
+| `uiRenderer` | `UiRendererService` | 同 renderer `reflect.provide` | boot kernel `mount(container)`。[E: packages/client/ui-renderer/src/client/index.ts:47][E: packages/client/web/src/boot.ts:97] | Host 半边 `apply()` 是空操作。 | `packages/client/ui-renderer/src/client/index.ts` |
 | `sessions` | `ISessions` | session-controller **client** | 浏览器会话脸（列表/当前/流）。[E: packages/api/session-controller/src/client/index.ts:71] | **不是** host `SessionStore`。 | `packages/api/session-controller/src/client/index.ts` |
 | `workspaces` | `IWorkspaces` | workspace-controller **client** | 浏览器 workspace 脸。[E: packages/api/workspace-controller/src/client/index.ts:33] | 目录选择 UI 走这里。 | `packages/api/workspace-controller/src/client/index.ts` |
 | `uiSession` | `UiSession` | `@deepseek-ai/dsh-client-ui-session` | Session Controller 适配 + session-scoped source。[E: packages/client/ui-session/src/client/index.ts:134] | 与 host `sessionController` 成对。 | `packages/client/ui-session/src/client/index.ts` |
-| `uiWorkspace` | `UiWorkspace` | `@deepseek-ai/dsh-client-ui-workspace` | 跨 controller 的 workspace 导航。[E: packages/client/ui-workspace/src/client/navigation.ts:55] | 目录 UI 能力。 | `packages/client/ui-workspace/src/client/navigation.ts` |
+| `uiWorkspace` | `UiWorkspace` | `@deepseek-ai/dsh-client-ui-workspace` | 跨 controller 的 workspace 导航。[E: packages/client/ui-workspace/src/client/navigation.ts:56] | 目录 UI 能力。 | `packages/client/ui-workspace/src/client/navigation.ts` |
 | `conversation` | `IConversation` | `@deepseek-ai/dsh-client-ui-conversation` | 当前会话视图/输入合同。[E: packages/client/ui-conversation/src/client/index.ts:70] | 具体 controller 包内。 | `packages/client/ui-conversation/src/client/index.ts` |
 | `uiConversation` | `UiConversation` | 同 conversation 包 | 目标中立的 Conversation registry / 装配。[E: packages/client/ui-conversation/src/client/index.ts:73] | 取代旧 runtime 的 events/views 顶层键。 | `packages/client/ui-conversation/src/client/index.ts` |
-| `chatFileMentions` | `ChatFileMentions` | `dsh-client-ui-deliverables` `provide` | 散文文件 mention；`ctx.get` 可选。[E: packages/client/ui-chat/src/client/contract/slots.ts:47][E: packages/client/ui-deliverables/src/client/index.ts:76] | 无 deliverables 则 mention 空。 | `packages/client/ui-chat/src/client/contract/slots.ts` |
+| `chatFileMentions` | `ChatFileMentions` | `dsh-client-ui-deliverables` `provide` | 散文文件 mention；`ctx.get` 可选。[E: packages/client/ui-chat/src/client/contract/slots.ts:45][E: packages/client/ui-deliverables/src/client/index.ts:76] | 无 deliverables 则 mention 空。 | `packages/client/ui-chat/src/client/contract/slots.ts` |
 | `commandUi` | `CommandUiRuntime` | `@deepseek-ai/dsh-client-ui-commands` | slash 弹出层。[E: packages/client/ui-commands/src/client/index.ts:36] | 人命令 UI，不是 `ctx.commands`。 | `packages/client/ui-commands/src/client/index.ts` |
 | `inputTriggers` | `InputTriggerServiceContract` | `@deepseek-ai/dsh-client-ui-input-trigger` | `@` / `/` 候选。[E: packages/client/ui-input-trigger/src/client/index.ts:37] | 与 conversation 解耦。 | `packages/client/ui-input-trigger/src/client/index.ts` |
 | `layout` | `ILayout` | `@deepseek-ai/dsh-client-ui-layout` | 开/关 details 等壳布局。[E: packages/client/ui-layout/src/client/index.ts:36] | 测试可假 layout。 | `packages/client/ui-layout/src/client/index.ts` |
 | `resources` | `Resources` | web `dsh-client-resources` | 协议 provider / pin / 按地址 live source。[E: packages/client/resources/src/client/contract.ts:31] | 右侧栏与预览 inject 它。 | `packages/client/resources/src/client/contract.ts` |
-| `sidebarRight` | `SidebarRightController` | web `dsh-client-ui-sidebar-right` | 右侧栏导航与呈现。[E: packages/client/ui-sidebar-right/src/client/index.ts:81] | 每会话一块停靠面。 | `packages/client/ui-sidebar-right/src/client/index.ts` |
-| `sidebarRightTabs` | `SidebarRightTabRegistry` | 同 sidebar-right | 右侧栏 tab 类型注册表。[E: packages/client/ui-sidebar-right/src/client/index.ts:83] | 与导航面分两个键。 | `packages/client/ui-sidebar-right/src/client/index.ts` |
+| `sidebarRight` | `SidebarRightController` | web `dsh-client-ui-sidebar-right` | 右侧栏导航与呈现。[E: packages/client/ui-sidebar-right/src/client/index.ts:82] | 每会话一块停靠面。 | `packages/client/ui-sidebar-right/src/client/index.ts` |
+| `sidebarRightTabs` | `SidebarRightTabRegistry` | 同 sidebar-right | 右侧栏 tab 类型注册表。[E: packages/client/ui-sidebar-right/src/client/index.ts:84] | 与导航面分两个键。 | `packages/client/ui-sidebar-right/src/client/index.ts` |
 | `documentPreviews` | `DocumentPreviewRegistry` | web `dsh-client-ui-sidebar-documentpreview` | 按扩展名的文档预览渲染器。[E: packages/client/ui-sidebar-documentpreview/src/client/index.ts:54] | 独立于 keyed document body。 | `packages/client/ui-sidebar-documentpreview/src/client/index.ts` |
 | `modelDirectories` | `ModelDirectoryResolver` | `@deepseek-ai/dsh-client-ui-model-selection` | 每会话模型目录。[E: packages/client/ui-model-selection/src/client/service.ts:24] | 随 scope dispose。 | `packages/client/ui-model-selection/src/client/service.ts` |
-| `settingsScope` | `SettingsScopeBinder` | `@deepseek-ai/dsh-client-ui-settings` | 偏好走这个 binder。[E: packages/client/ui-settings/src/client/settings-scope.ts:221] | 纯客户端 transport。 | `packages/client/ui-settings/src/client/settings-scope.ts` |
-| `settingsSchema` | `SettingsSchemaService` | 同 ui-settings | 同步 schema 与不可变 path 操作。[E: packages/client/ui-settings/src/client/schema.ts:156] | 禁止跨插件 value import。 | `packages/client/ui-settings/src/client/schema.ts` |
-| `remote` | `ClientRemote` / `TypertClientRemote` | `dsh-api-gateway` client + `dsh-api-remotes` 装配 | 生成的 Host Remote 命名空间。[E: packages/api/gateway/src/client/index.ts:128][E: packages/api/remotes/src/client/index.ts:131] | 换装配只改挂上的 namespace。 | `packages/api/gateway/src/client/index.ts` |
+| `settingsSchema` | `SettingsSchemaService` | `@deepseek-ai/dsh-client-ui-settings` | 同步 schema 与不可变 path 操作。[E: packages/client/ui-settings/src/client/schema.ts:156] | 禁止跨插件 value import。 | `packages/client/ui-settings/src/client/schema.ts` |
+| `configForms` | `ConfigForms` | 同 ui-settings | 配置表单服务。[E: packages/client/ui-settings/src/client/config-form.ts:230] | 偏好走这个服务，不是已删除的 `settingsScope`。 | `packages/client/ui-settings/src/client/config-form.ts` |
+| `remote` | `ClientRemote` / `TypertClientRemote` | `dsh-api-gateway` client + `dsh-api-remotes` 装配 | 生成的 Host Remote 命名空间。[E: packages/api/gateway/src/client/index.ts:129][E: packages/api/remotes/src/client/index.ts:131] | 换装配只改挂上的 namespace。 | `packages/api/gateway/src/client/index.ts` |
 | `sessionLogDownload` | `SessionLogDownloadController` | `@deepseek-ai/dsh-session-log-export` | 导出下载状态 + modal。[E: packages/session-query/session-log-export/src/client/index.ts:17] | 听 `command/executed` `export`。 | `packages/session-query/session-log-export/src/client/index.ts` |
 | `dynamicCordisRunner` | `CordisRunnerFace` | `@deepseek-ai/dsh-cordis-client-runner` | 页内 load 状态 + 调 host 半边。[E: packages/extensions/cordis-client-runner/src/client/index.ts:129][E: packages/extensions/cordis-client-runner/src/client/index.ts:291] | 不是 host `DynamicCordisRunnerService`。 | `packages/extensions/cordis-client-runner/src/client/index.ts` |
 | `cordisInspect` | `ClientCordisInspectRegistry` | client-runner inspect | 浏览器 inspect provider。[E: packages/extensions/cordis-client-runner/src/client/inspect-registry.ts:139] | 与 host 注册表镜像。 | `packages/extensions/cordis-client-runner/src/client/inspect-registry.ts` |
@@ -365,7 +374,7 @@ updated: c291e7961a
 
 ## 对照 / 分家 / 装配
 
-源码多出来的产品键相对官方 capability-seams 主表：launcher 快照、`storage.backend.*`、`agent` DX 字段、host `connection`、vendor `loader`·`hmr`·`timer`、三个 Host controller、`webhookRuntime` / `agentTeams`、以及整张 client 表。官方有而默认树未装的（`terminals` / `lsp` / `e2b` / `invariants` / `webhookRuntime` / `agentTeams`）仍占行，provider 写成未装。
+源码多出来的产品键相对官方 capability-seams 主表：launcher 快照（`dshHomePath` / `cmdlineArgs` / `appExit` / `appReady` / `launchEnvironment` / `webStartup` 等）、`storage.backend.*`、vendor `loader`·`timer`、`pluginInventory`（无 Context merge）、以及整张 client 表。官方现已收 `pluginManager` / `profileContext` / `schedule` / `hmr` / `connection` / Host controller / `webhookRuntime` / `agentTeams` / `ssh` / `ptcRuntime`。官方有而默认树未装的（`terminals` / `lsp` / `invariants` / `webhookRuntime` / `agentTeams` / `ssh`）仍占行，provider 写成未装。没有 `ctx.e2b` 行：E2B 包已删除；官方生成表也不再画该键。
 
 **同名两包不占两个 ctx 键。** `dsh-tool-bash` 与 `dsh-tool-bash-persistent` 都叫模型可见 `bash`，但一个 inject `shell`，一个 inject `terminals`。`pwsh` 同样拆 one-shot 与 persistent。
 
@@ -376,7 +385,10 @@ updated: c291e7961a
 ## Sources
 
 - `packages/boot/app-boot/src/index.ts`
+- `packages/boot/app-boot/src/profile-context.ts`
 - `packages/boot/cmdline/src/index.ts`
+- `packages/boot/plugin-manager/src/index.ts`
+- `packages/boot/hmr/src/index.ts`
 - `packages/util/launch-environment/src/index.ts`
 - `apps/cli/src/profile-boot.ts`
 - `packages/bundle/base/cordis.patch.yml`
@@ -385,8 +397,8 @@ updated: c291e7961a
 - `packages/bundle/web-app/src/index.ts`
 - `packages/bundle/headless/cordis.patch.yml`
 - `packages/bundle/headless/src/startup.ts`
-- `packages/preset/agent-presets/presets/standard/agent.cordis.yml`
-- `packages/preset/agent-presets/presets/minimal/agent.cordis.yml`
+- `packages/bundle/web-app/presets/standard.patch.yml`
+- `packages/bundle/web-app/presets/minimal.patch.yml`
 - `packages/fs/fs/src/index.ts`
 - `packages/shell/shell/src/index.ts`
 - `packages/shell/shell-env/src/index.ts`
@@ -395,8 +407,8 @@ updated: c291e7961a
 - `packages/sandbox/sandbox-policy/src/index.ts`
 - `packages/terminal/terminal/src/index.ts`
 - `packages/lsp/lsp/src/index.ts`
-- `packages/code-runtime/code-runtime/src/index.ts`
-- `packages/e2b/e2b/src/index.ts`
+- `packages/ptc-runtime/ptc-runtime/src/index.ts`
+- `packages/ssh/ssh/src/index.ts`
 - `packages/llm/llm/src/index.ts`
 - `packages/llm/token-meter/src/index.ts`
 - `packages/llm/deepseek-llm-api-extensions/src/index.ts`
@@ -406,12 +418,13 @@ updated: c291e7961a
 - `packages/core/agent/src/index.ts`
 - `packages/core/agent-loop/src/index.ts`
 - `packages/core/agent-default-model/src/index.ts`
-- `packages/preset/agent-presets/src/index.ts`
+- `packages/preset/agent-preset-registry/src/index.ts`
 - `packages/interaction/commands/src/index.ts`
 - `packages/interaction/user-approval/src/index.ts`
 - `packages/interaction/user-questions/src/index.ts`
 - `packages/interaction/permission-presets/src/index.ts`
 - `packages/plan/plan-mode/src/index.ts`
+- `packages/schedule/schedule/src/index.ts`
 - `packages/skill/skill/src/index.ts`
 - `packages/goal/goal/src/index.ts`
 - `packages/jobs/jobs/src/index.ts`
@@ -440,7 +453,7 @@ updated: c291e7961a
 - `packages/session/session-turn-outline/src/index.ts`
 - `packages/client/file-upload/src/index.ts`
 - `packages/client/file-upload/src/client/index.ts`
-- `packages/experimental/code-runtime-python/src/index.ts`
+- `packages/experimental/ptc-runtime-python/src/index.ts`
 - `packages/session/session-projection/src/index.ts`
 - `packages/session/session-projection-cache/src/index.ts`
 - `packages/session/session-telemetry/src/index.ts`
@@ -477,8 +490,8 @@ updated: c291e7961a
 - `packages/client/ui-input-trigger/src/client/index.ts`
 - `packages/client/ui-layout/src/client/index.ts`
 - `packages/client/ui-model-selection/src/client/service.ts`
-- `packages/client/ui-settings/src/client/settings-scope.ts`
 - `packages/client/ui-settings/src/client/schema.ts`
+- `packages/client/ui-settings/src/client/config-form.ts`
 - `packages/client/ui-theme/src/client/index.ts`
 - `packages/client/ui-session/src/client/index.ts`
 - `packages/client/ui-workspace/src/client/navigation.ts`
@@ -513,4 +526,4 @@ updated: c291e7961a
 - [subsys.llm.service](../subsystems/llm/service.md) — `ctx.llm`。
 - [subsys.client.runtime](../subsystems/client/runtime.md) — 浏览器 store / session-controller client / `uiRenderer`（稳定 id）。
 - [subsys.host.apiproxy](../subsystems/host/apiproxy.md) — Host HTTP API（三个 controller + webserver；稳定 id）。
-- [subsys.core.code-mode](../subsystems/core/code-mode.md) — PTC `run_code` / `ctx.codeRuntime`（稳定 id）。
+- [subsys.core.code-mode](../subsystems/core/code-mode.md) — PTC `run_code` / `ctx.ptcRuntime`（稳定 id）。

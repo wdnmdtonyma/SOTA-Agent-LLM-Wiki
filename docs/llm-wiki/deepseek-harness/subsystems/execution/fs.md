@@ -27,13 +27,13 @@ source:
   - packages/context/agent-instructions/src/index.ts
   - packages/context/agent-instructions/tests/agent-instructions.spec.ts
   - packages/skill/skill-filesystem/src/index.ts
-  - packages/e2b/fs-e2b/src/index.ts
+  - packages/ssh/fs-ssh/src/index.ts
   - packages/shell/bash-local/src/index.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/base/package.json
   - packages/bundle/web-app/cordis.patch.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
   - vendor/cordis/src/service.ts
   - vendor/cordis/src/events.ts
 symbols:
@@ -50,6 +50,7 @@ related:
   - spine.tool-call-anatomy
   - subsys.execution.subprocess
   - subsys.execution.sandbox
+  - subsys.execution.ssh
   - subsys.execution.e2b
   - subsys.composition.bundle-base
   - subsys.composition.bundle-web-app
@@ -64,7 +65,7 @@ related:
   - surface.misc.security
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-fs` 的 `FileSystem` 是 **host 面** filesystem capability 的 **Definition**：抽象类构造里 `super(ctx, 'fs')` 把自身登记为 Cordis service `ctx.fs`，augmentation 声明 `Context.fs` 与三个事件 `fs/write-intent` / `fs/edit-intent`（waterfall）/ `fs/observed`（emit）。本包是 TypeScript 库，不是 shipped Loader 行；默认 Provider 是 `dsh-base` 的 `id: fs-sandbox`。模型面主 Consumer 是 `dsh-tool-fs`（`inject = ['tools', 'fs', 'systemPrompt']`）。
@@ -90,14 +91,14 @@ updated: c291e7961a
 - `read` / `write` / `edit` / `read_image` 的 schema、行窗口、升权广告：[`surface.tools.read`](../../surface/tools/read.md) / [`surface.tools.write`](../../surface/tools/write.md) / [`surface.tools.edit`](../../surface/tools/edit.md)。本页不写字段表。
 - `glob` / `grep`：它们 `inject` `subprocess`，**不**走 `ctx.fs`。[`surface.tools.glob`](../../surface/tools/glob.md) / [`surface.tools.grep`](../../surface/tools/grep.md) / [`subsys.execution.subprocess`](subprocess.md)。
 - `SandboxMode` 词汇、`approveEscalation`、`writableRoots`：[`subsys.execution.sandbox`](sandbox.md)。沙箱只罩**文件副作用**；网络与进程可见性不在这个词汇里。
-- 远程 one-world 的 `E2BFileSystem`：[`subsys.execution.e2b`](e2b.md)。
+- 远程 one-world 的 `SshFileSystem`：[`subsys.execution.ssh`](ssh.md)（`subsys.execution.ssh`）。旧 E2B 包已删，见退役页 [`subsys.execution.e2b`](e2b.md)。
 - `tools/pre-execute` 管线：[`subsys.core.tools`](../core/tools.md) / [`spine.tool-call-anatomy`](../../spine/tool-call-anatomy.md)。`FileSystem` **不**挂 pre-execute。
 
 DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不是「又一个内置了一堆文件工具的 coding agent」。`ctx.fs` 坐在 **host 面**（进程级，与 `ctx.sandbox` / `ctx.sandboxPolicy` / `ctx.subprocess` 同级）。**agent-preset 面**挂的是 `tool-fs` 这类 Consumer（只 `register` 进 host 的 `ctx.tools`）。`minimal` **不再** isolate / provide 一份 `ctx.fs`。
 
 五个 shipped profile：`web`（live）、`headless` / `sdk` / `sdk-minimal` / `acp`（startup）。CLI 入口是 `dsh web` **或** `dsh --profile web|headless|sdk|sdk-minimal|acp`。本仓没有 shipped TUI。浏览器 client 不实现 `FileSystem`。Web 才把 agent-plane 工具行 disable 再由 preset 挂回；headless / sdk / acp 仍跑 `dsh-base` 上的 host-plane `tool-fs` 行。
 
-`ctx.fs` 与 `ctx.subprocess` **没有运行时耦合**。`LocalBashExecutor` 的 `inject` 只有 `subprocess`，不读 `ctx.fs`。[E: packages/shell/bash-local/src/index.ts:103] `glob` / `grep` 同样只 `inject` `subprocess`。[E: packages/fs/tool-fs-search/src/index.ts:70] 只换 `ctx.fs` 不会把 `bash -c` 或 ripgrep 搬到远程。
+`ctx.fs` 与 `ctx.subprocess` **没有运行时耦合**。`LocalBashExecutor` 的 `inject` 只有 `subprocess`，不读 `ctx.fs`。[E: packages/shell/bash-local/src/index.ts:98] `glob` / `grep` 同样只 `inject` `subprocess`。[E: packages/fs/tool-fs-search/src/index.ts:70] 只换 `ctx.fs` 不会把 `bash -c` 或 ripgrep 搬到远程。
 
 ## 关键文件
 
@@ -116,8 +117,8 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 | `packages/fs/tool-fs-search/src/index.ts` | `glob`/`grep`：`inject` 含 `subprocess`，不含 `fs` |
 | `packages/bundle/base/cordis.patch.yml` | host 真树：`id: fs-sandbox`、`id: fs-observation-policy`、`id: tool-fs` |
 | `packages/bundle/web-app/cordis.patch.yml` | 把 `tool-fs` / `tool-fs-search` `disabled: true`；Provider 留在 host |
-| `packages/preset/agent-presets/presets/standard/agent.cordis.yml` | Web 默认 preset 按会话挂回 `tool-fs` |
-| `packages/preset/agent-presets/presets/minimal/agent.cordis.yml` | 只有 persistent shell；**没有** `tool-fs` / `fs-local` / `str-replace-editor` |
+| `packages/bundle/web-app/presets/standard.patch.yml` | Web 默认 preset 按会话挂回 `tool-fs` |
+| `packages/bundle/web-app/presets/minimal.patch.yml` | 只有 persistent shell；**没有** `tool-fs` / `fs-local` / `str-replace-editor` |
 | `vendor/cordis/src/service.ts` | `Service` 构造 `ctx.reflect.provide(name, self)` |
 | `vendor/cordis/src/events.ts` | waterfall 必须 `next()` 才会 `shift`；`emit` 不等待 promise |
 
@@ -125,33 +126,33 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 
 | 符号 | 落点 | 含义 |
 |---|---|---|
-| `FileSystem` | `packages/fs/fs/src/index.ts` | 抽象 `Service` 子类。构造只做 `super(ctx, 'fs')`，把 `this` 提供为 `ctx.fs`。[E: packages/fs/fs/src/index.ts:86] [E: packages/fs/fs/src/index.ts:88] |
+| `FileSystem` | `packages/fs/fs/src/index.ts` | 抽象 `Service` 子类。构造只做 `super(ctx, 'fs')`，把 `this` 提供为 `ctx.fs`。[E: packages/fs/fs/src/index.ts:87] [E: packages/fs/fs/src/index.ts:89] |
 | `Context.fs` | Cordis augmentation | 类型面的 `ctx.fs: FileSystem`。[E: packages/fs/fs/src/index.ts:46] |
 | `FsTarget` | `types.ts` | `{ targetKey, displayPath }`。`resolve()` 产出；其余原语吃它。[E: packages/fs/fs/src/types.ts:60] |
 | `FsTargetKey` / `FsVersion` | branded string | 工厂是恒等函数。`targetKey` 给 stale guard 与查找；`FsVersion` 给 freshness。[E: packages/fs/fs/src/types.ts:16] [E: packages/fs/fs/src/types.ts:24] [E: packages/fs/fs/src/types.ts:43] |
 | `FsWriteIntent` | 两臂联合 | `createIfAbsent` 或 `replaceIfVersion`。从 `writeText` **省略** intent 是无条件 create-or-overwrite，不是第三臂。[E: packages/fs/fs/src/types.ts:123] |
 | `FsObservation` | 两臂联合 | `{ kind: 'present', version }` 或 `{ kind: 'absent' }`。[E: packages/fs/fs/src/types.ts:52] |
-| `sandboxMode` | 实例 getter | 基类返回 `undefined`（不围栏）。sandboxing backend 覆盖为部署默认 `SandboxMode`。[E: packages/fs/fs/src/index.ts:104] [E: packages/fs/fs/tests/service.spec.ts:93] [E: packages/fs/fs-sandbox/src/index.ts:65] |
+| `sandboxMode` | 实例 getter | 基类返回 `undefined`（不围栏）。sandboxing backend 覆盖为部署默认 `SandboxMode`。[E: packages/fs/fs/src/index.ts:119] [E: packages/fs/fs/tests/service.spec.ts:93] [E: packages/fs/fs-sandbox/src/index.ts:65] |
 | `FsError` / `FsErrorCode` | `HarnessError` 子类 | 稳定 `code`（含 `FS_NOT_FOUND` / `FS_STALE_VERSION` / `FS_NOT_OBSERVED` / `FS_SANDBOX_DENIED` / `FS_TOO_LARGE` 等）。[E: packages/fs/fs/src/types.ts:196] |
-| `fs/write-intent` | waterfall | `(target, actor, next) → Promise<FsWriteIntent \| undefined>`。[E: packages/fs/fs/src/index.ts:58] |
-| `fs/edit-intent` | waterfall | `(target, actor, next) → Promise<{ version: FsVersion } \| undefined>`。[E: packages/fs/fs/src/index.ts:66] |
-| `fs/observed` | emit | `(target, observation, actor) => void`。同步记录；返回的 promise 不被等待。[E: packages/fs/fs/src/index.ts:76] [E: vendor/cordis/src/events.ts:194] |
+| `fs/write-intent` | waterfall | `(target, actor, next) → Promise<FsWriteIntent \| undefined>`。[E: packages/fs/fs/src/index.ts:59] |
+| `fs/edit-intent` | waterfall | `(target, actor, next) → Promise<{ version: FsVersion } \| undefined>`。[E: packages/fs/fs/src/index.ts:67] |
+| `fs/observed` | emit | `(target, observation, actor) => void`。同步记录；返回的 promise 不被等待。[E: packages/fs/fs/src/index.ts:77] [E: vendor/cordis/src/events.ts:194] |
 
 原语（全部是 `FileSystem` 上的 abstract / getter，实现在 Provider）：
 
 | 成员 | 合同要点 |
 |---|---|
-| `resolve(path, opts?)` | 模型/插件路径 → 稳定 `FsTarget`。可做 I/O，故 async。[E: packages/fs/fs/src/index.ts:116] |
-| `processPath(target)` | 该执行世界里 subprocess 能 `open` 的绝对路径。与 `targetKey` **分开**。[E: packages/fs/fs/src/index.ts:126] |
-| `processPathFromHostPath(hostPath)` | 基类返回 `undefined`；host-backed backend 可把宿主绝对路径映射到本世界。[E: packages/fs/fs/src/index.ts:136] |
+| `resolve(path, opts?)` | 模型/插件路径 → 稳定 `FsTarget`。可做 I/O，故 async。[E: packages/fs/fs/src/index.ts:132] |
+| `processPath(target)` | 该执行世界里 subprocess 能 `open` 的绝对路径。与 `targetKey` **分开**。[E: packages/fs/fs/src/index.ts:142] |
+| `processPathFromHostPath(hostPath)` | 基类返回 `undefined`；host-backed backend 可把宿主绝对路径映射到本世界。[E: packages/fs/fs/src/index.ts:152] |
 | `fileUrl(target)` | 该执行世界的 `file:` URI。 |
 | `contains(parent, child)` | 规范包含测试；两边必须来自**同一个** Provider。 |
 | `stat` / `lstat` | `stat` 吃 `FsTarget`，缺席返回 `undefined`。`lstat` 是**路径形**：不跟随最后一段 symlink，让 Consumer 在 `resolve` 跟随之前拒绝链接。 |
 | `readText` / `streamText` | 整份 UTF-8 文本；backend 负责跨 chunk 解码与拒二进制。 |
 | `readBytes(target, signal, maxBytes)` | 原始字节、不解码。超过 `maxBytes` 必须 `FS_TOO_LARGE`，禁止截断返回。 |
 | `listDir` | 直接子项 + 廉价元数据 + 已 resolve 的 child `FsTarget`；不读文件内容。 |
-| `writeText(..., expected?, signal?, sandboxPolicy?)` | 原子整文件写。省略 `expected` = 无条件覆盖。[E: packages/fs/fs/src/index.ts:250] |
-| `editText(..., expected?, signal?, sandboxPolicy?)` | 原子字面替换。省略 `expected` = 无条件按当前内容匹配。version 检查必须在 match 之前，以免 stale 内容报成 `FS_EDIT_NOT_FOUND`。[E: packages/fs/fs/src/index.ts:271] |
+| `writeText(..., expected?, signal?, sandboxPolicy?)` | 原子整文件写。省略 `expected` = 无条件覆盖。[E: packages/fs/fs/src/index.ts:266] |
+| `editText(..., expected?, signal?, sandboxPolicy?)` | 原子字面替换。省略 `expected` = 无条件按当前内容匹配。version 检查必须在 match 之前，以免 stale 内容报成 `FS_EDIT_NOT_FOUND`。[E: packages/fs/fs/src/index.ts:287] |
 
 `targetKey` 在类型上是 `Branded<'FsTargetKey'>`，runtime 仍是普通 string（工厂不做校验）。[E: packages/fs/fs/src/types.ts:24] 消费者要把路径交给另一条 OS capability 时走 `processPath`，不要把 `targetKey` 当本地路径再 `path.resolve`。[I] 本地 backend 的 `processPath` 恰好是 `String(target.targetKey)`，那是 realpath 实现的巧合，不是 Definition 合同。[E: packages/fs/fs-local/src/index.ts:114]
 
@@ -159,21 +160,21 @@ companion `@deepseek-ai/dsh-fs/invariant` 在 `internal/dispatch` 上检查三�
 
 ## 控制流
 
-1. `FileSystem`@packages/fs/fs/src/index.ts 是 Definition，不是 shipped 插件行。子类（测试里的 `FakeFileSystem`、产品里的 `LocalFileSystem` / `SandboxedFileSystem`）被 `ctx.plugin` 时，`Service` 构造调用 `ctx.reflect.provide('fs', self)`，于是 `ctx.fs` 指向该实例。[E: packages/fs/fs/src/index.ts:88] [E: vendor/cordis/src/service.ts:57]
+1. `FileSystem`@packages/fs/fs/src/index.ts 是 Definition，不是 shipped 插件行。子类（测试里的 `FakeFileSystem`、产品里的 `LocalFileSystem` / `SandboxedFileSystem`）被 `ctx.plugin` 时，`Service` 构造调用 `ctx.reflect.provide('fs', self)`，于是 `ctx.fs` 指向该实例。[E: packages/fs/fs/src/index.ts:89] [E: vendor/cordis/src/service.ts:57]
 
 2. 同一 realm 再挂第二个 `FileSystem` 子类会抛（duplicate service）。提供 fiber `dispose` 之后 `ctx.fs` 变为 `undefined`。[E: packages/fs/fs/tests/service.spec.ts:104] [E: packages/fs/fs/tests/service.spec.ts:112]
 
-3. **host 面默认 Provider。** `dsh-base` 挂的是 `id: fs-sandbox` / `name: '@deepseek-ai/dsh-fs-sandbox'`，不是 `@deepseek-ai/dsh-fs`，也不是 `id: fs-local`。[E: packages/bundle/base/cordis.patch.yml:479] [E: packages/bundle/base/cordis.patch.yml:480] `SandboxedFileSystem extends LocalFileSystem`，`static inject = ['sandboxPolicy']`，仍独占 `ctx.fs`。[E: packages/fs/fs-sandbox/src/index.ts:56] [E: packages/fs/fs-sandbox/src/index.ts:58] `dsh-base` 的 `package.json` 把 `@deepseek-ai/dsh-fs-local` 列为依赖，因为 sandbox 包装 **import** 它；那不是第二份 Provider 行。[E: packages/bundle/base/package.json:54] 同文件也列 `@deepseek-ai/dsh-fs-sandbox`。[E: packages/bundle/base/package.json:56]
+3. **host 面默认 Provider。** `dsh-base` 挂的是 `id: fs-sandbox` / `name: '@deepseek-ai/dsh-fs-sandbox'`，不是 `@deepseek-ai/dsh-fs`，也不是 `id: fs-local`。[E: packages/bundle/base/cordis.patch.yml:517] [E: packages/bundle/base/cordis.patch.yml:518] `SandboxedFileSystem extends LocalFileSystem`，`static inject = ['sandboxPolicy']`，仍独占 `ctx.fs`。[E: packages/fs/fs-sandbox/src/index.ts:56] [E: packages/fs/fs-sandbox/src/index.ts:58] `dsh-base` 的 `package.json` 把 `@deepseek-ai/dsh-fs-local` 列为依赖，因为 sandbox 包装 **import** 它；那不是第二份 Provider 行。[E: packages/bundle/base/package.json:55] 同文件也列 `@deepseek-ai/dsh-fs-sandbox`。[E: packages/bundle/base/package.json:57]
 
-4. 同一份 host insert 还挂 `id: fs-observation-policy`（政策，不是 Provider）和 `id: tool-fs`（模型面 Consumer）。[E: packages/bundle/base/cordis.patch.yml:257] [E: packages/bundle/base/cordis.patch.yml:260]
+4. 同一份 host insert 还挂 `id: fs-observation-policy`（政策，不是 Provider）和 `id: tool-fs`（模型面 Consumer）。[E: packages/bundle/base/cordis.patch.yml:277] [E: packages/bundle/base/cordis.patch.yml:280]
 
-5. **agent-preset 面。** Web 组合把 `tool-fs` / `tool-fs-search` 设 `disabled: true`。[E: packages/bundle/web-app/cordis.patch.yml:387] [E: packages/bundle/web-app/cordis.patch.yml:388] [E: packages/bundle/web-app/cordis.patch.yml:390] 该 patch **没有** `id: fs-sandbox` / `id: fs-observation-policy` 的 disable 行，这两条仍留在 host。[I] `standard`（以及 `ptc` / `cordis`）preset 再按会话挂回 `id: tool-fs` / `name: '@deepseek-ai/dsh-tool-fs'`（该行不 `provide`，不必 `isolate`）。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:57] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:58] shipped 四个 preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`；旧名 `code` 就是 PTC。
+5. **agent-preset 面。** Web 组合把 `tool-fs` / `tool-fs-search` 设 `disabled: true`。[E: packages/bundle/web-app/cordis.patch.yml:466] [E: packages/bundle/web-app/cordis.patch.yml:467] [E: packages/bundle/web-app/cordis.patch.yml:469] 该 patch **没有** `id: fs-sandbox` / `id: fs-observation-policy` 的 disable 行，这两条仍留在 host。[I] `standard`（以及 `ptc` / `cordis`）preset 再按会话挂回 `id: tool-fs` / `name: '@deepseek-ai/dsh-tool-fs'`（该行不 `provide`，不必 `isolate`）。[E: packages/bundle/web-app/presets/standard.patch.yml:26] [E: packages/bundle/web-app/presets/standard.patch.yml:27] 四份 shipped preset 写在 `packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}.patch.yml`（声明式 `@deepseek-ai/dsh-agent-preset`，不是扫目录）；旧名 `code` 就是 PTC。
 
-6. `minimal` preset **不再**挂 `fs-local` / `tool-fs` / `str-replace-editor`：只有 complete persona（`prefix`）+ `isolate.terminals` 的 persistent shell。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:12] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:25] 包 `@deepseek-ai/dsh-tool-str-replace-editor` 仍在仓库（`inject = ['tools', 'fs']`），出厂 yml 不挂。[E: packages/fs/tool-str-replace-editor/src/index.ts:502]
+6. `minimal` preset **不再**挂 `fs-local` / `tool-fs` / `str-replace-editor`：只有 complete persona（`prefix`）+ `isolate.terminals` 的 persistent shell。[E: packages/bundle/web-app/presets/minimal.patch.yml:14] [E: packages/bundle/web-app/presets/minimal.patch.yml:20] [E: packages/bundle/web-app/presets/minimal.patch.yml:21] 包 `@deepseek-ai/dsh-tool-str-replace-editor` 仍在仓库（`inject = ['tools', 'fs']`），出厂 yml 不挂。[E: packages/fs/tool-str-replace-editor/src/index.ts:502]
 
 7. 主 Consumer `apply`@packages/fs/tool-fs/src/index.ts 声明 `inject = ['tools', 'fs', 'systemPrompt']`。没有 `ctx.fs` 时插件 pending，`ctx.tools.schemas()` 为空。[E: packages/fs/tool-fs/src/index.ts:22] [E: packages/fs/tool-fs/tests/tools.spec.ts:189] `apply()` 用 `ctx.fs.sandboxMode` 构造一份 `FsSandboxController`：基类 `undefined` → 不广告升权字段；sandboxing backend 有默认 mode → 才去 `ctx.get('sandboxPolicy')`。[E: packages/fs/tool-fs/src/sandbox.ts:44] [E: packages/fs/tool-fs/src/sandbox.ts:46]
 
-8. **一次 `write`（`edit` 对称）。** `applyWriteTool` 的 `execute`：先 `sandbox.resolvePolicy`（内部在已有 `sandbox_permissions` 时调 `approveEscalation`；`allowed-once` 才返回加宽 mode）→ `ctx.fs.resolve` → `ctx.waterfall('fs/write-intent', target, exec, () => undefined)` → `ctx.fs.writeText(target, content, intent, exec.signal, sandboxPolicy)` → `ctx.emit('fs/observed', target, { kind: 'present', version }, exec)`。升权发生在 tool body，**不**挂 `tools/pre-execute`。[E: packages/fs/tool-fs/src/write.ts:110] [E: packages/fs/tool-fs/src/sandbox.ts:97] [E: packages/sandbox/sandbox/src/escalation.ts:183] [E: packages/fs/tool-fs/src/write.ts:111] [E: packages/fs/tool-fs/src/write.ts:114] [E: packages/fs/tool-fs/src/write.ts:117] [E: packages/fs/tool-fs/src/write.ts:124] `edit` 把 waterfall 换成 `fs/edit-intent`，mutation 换成 `editText`。[E: packages/fs/tool-fs/src/edit.ts:127] [E: packages/fs/tool-fs/src/edit.ts:128]
+8. **一次 `write`（`edit` 对称）。** `applyWriteTool` 的 `execute`：先 `sandbox.resolvePolicy`（内部在已有 `sandbox_permissions` 时调 `approveEscalation`；`allowed-once` 才返回加宽 mode）→ `ctx.fs.resolve` → `ctx.waterfall('fs/write-intent', target, exec, () => undefined)` → `ctx.fs.writeText(target, content, intent, exec.signal, sandboxPolicy)` → `ctx.emit('fs/observed', target, { kind: 'present', version }, exec)`。升权发生在 tool body，**不**挂 `tools/pre-execute`。[E: packages/fs/tool-fs/src/write.ts:111] [E: packages/fs/tool-fs/src/sandbox.ts:97] [E: packages/sandbox/sandbox/src/escalation.ts:183] [E: packages/fs/tool-fs/src/write.ts:111] [E: packages/fs/tool-fs/src/write.ts:115] [E: packages/fs/tool-fs/src/write.ts:117] [E: packages/fs/tool-fs/src/write.ts:123] `edit` 把 waterfall 换成 `fs/edit-intent`，mutation 换成 `editText`。[E: packages/fs/tool-fs/src/edit.ts:127] [E: packages/fs/tool-fs/src/edit.ts:128]
 
 9. **waterfall 必须 `next()` 才会 `shift`。** `Events.waterfall` 把最后一个参数收成 `inner`，每次 `next()` 才 `cbs.shift() ?? inner`。[E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:238] tool 传入的 `inner` 是 `() => undefined`（无条件写/编）。没有 listener 时直接落到 `undefined`。第一个 listener 若不调用 `next()`，后续 listener 与 `inner` 都不会跑——这就是「单槽」的运行机制。Cordis **不**禁止注册第二个 listener；先注册且不 `next()` 的那个拥有决定。
 
@@ -181,15 +182,15 @@ companion `@deepseek-ai/dsh-fs/invariant` 在 `internal/dispatch` 上检查三�
 
 11. **读路径发观察，直调 `ctx.fs` 不发。** `resolveRegularReadTarget` 在 `stat === undefined` 时 `emit('fs/observed', …, { kind: 'absent' })` 再抛 `FS_NOT_FOUND`。[E: packages/fs/tool-fs/src/read-target.ts:27] 读成功后 `read` 再 `emit` present。[E: packages/fs/tool-fs/src/read.ts:163] `emit` 同步调用 listener，不等待返回的 promise。[E: vendor/cordis/src/events.ts:194] 插件外直接 `ctx.fs.readText` **不会**发出 `fs/observed`，后续受政策保护的 edit 会因未见而拒绝。[I]
 
-12. **`sandboxPolicy` 最后一参。** Definition 把它标成可选；sandboxing backend 在 `writeText` / `editText` 里先 `checkedTarget`：`danger-full-access` 原样放行（不围栏），`read-only` 抛 `FS_SANDBOX_DENIED`，`workspace-write` 再 `resolve` 做 containment。[E: packages/fs/fs-sandbox/src/index.ts:122] [E: packages/fs/fs-sandbox/src/index.ts:125] [E: packages/fs/fs-sandbox/src/index.ts:126] **读全部放过**（`stat` / `readText` / `listDir` 不 override）。裸 `LocalFileSystem.writeText` 签名止于 `signal`，运行时忽略多传的第五参。[E: packages/fs/fs-local/src/index.ts:175] 围栏是可信代码里对模型控制路径的 policy check，不是 kernel 边界；进程围栏在 `ctx.shell` 调 `ctx.sandbox.confine`（[`subsys.execution.sandbox`](sandbox.md) / [`subsys.execution.bash-local`](bash-local.md)）。
+12. **`sandboxPolicy` 最后一参。** Definition 把它标成可选；sandboxing backend 在 `writeText` / `editText` 里先 `checkedTarget`：`danger-full-access` 原样放行（不围栏），`read-only` 抛 `FS_SANDBOX_DENIED`，`workspace-write` 再 `resolve` 做 containment。[E: packages/fs/fs-sandbox/src/index.ts:122] [E: packages/fs/fs-sandbox/src/index.ts:125] [E: packages/fs/fs-sandbox/src/index.ts:126] **读全部放过**（`stat` / `readText` / `listDir` 不 override）。裸 `LocalFileSystem.writeText` 签名止于 `signal`，运行时忽略多传的第五参。[E: packages/fs/fs-local/src/index.ts:202] 围栏是可信代码里对模型控制路径的 policy check，不是 kernel 边界；进程围栏在 `ctx.shell` 调 `ctx.sandbox.confine`（[`subsys.execution.sandbox`](sandbox.md) / [`subsys.execution.bash-local`](bash-local.md)）。
 
 13. **`glob` / `grep` 不走本缝。** `tool-fs-search` 的 `inject = ['tools', 'systemPrompt', 'subprocess']`，注释与代码都故意不含 `fs`。[E: packages/fs/tool-fs-search/src/index.ts:70] 换 `ctx.fs` 带不走它们。
 
-14. 其它 Consumer（点到为止）：`lsp-stdio` `inject = ['fs', 'lsp', 'subprocess']`，每个 provider 持有 `ctx.fs`。[E: packages/lsp/lsp-stdio/src/index.ts:47] [E: packages/lsp/lsp-stdio/src/index.ts:154] `agent-instructions` **没有** static `inject` 指向 `fs`（`inject = ['sessionProjections']`），用 `ctx.get('fs')`，缺 Provider 时该次 compose 直接 `return undefined`。[E: packages/context/agent-instructions/src/index.ts:34] [E: packages/context/agent-instructions/src/index.ts:119] [E: packages/context/agent-instructions/src/index.ts:120] [E: packages/context/agent-instructions/tests/agent-instructions.spec.ts:1038] `skill-filesystem` 同样 `ctx.get('fs')`；`fs !== undefined && !trustedHost` 才走缝，否则退回 host `readFile`。[E: packages/skill/skill-filesystem/src/index.ts:843] [E: packages/skill/skill-filesystem/src/index.ts:849] [E: packages/skill/skill-filesystem/src/index.ts:854] 远程替换是 `E2BFileSystem extends FileSystem` 且 `static inject = ['e2b']`，必须与 `subprocess-e2b` 成对换，细节在 [`subsys.execution.e2b`](e2b.md)。[E: packages/e2b/fs-e2b/src/index.ts:171] [E: packages/e2b/fs-e2b/src/index.ts:172]
+14. 其它 Consumer（点到为止）：`lsp-stdio` `inject = ['fs', 'lsp', 'subprocess']`，每个 provider 持有 `ctx.fs`。[E: packages/lsp/lsp-stdio/src/index.ts:47] [E: packages/lsp/lsp-stdio/src/index.ts:154] `agent-instructions` **没有** static `inject` 指向 `fs`（`inject = ['sessionProjections']`），用 `ctx.get('fs')`，缺 Provider 时该次 compose 直接 `return undefined`。[E: packages/context/agent-instructions/src/index.ts:34] [E: packages/context/agent-instructions/src/index.ts:119] [E: packages/context/agent-instructions/src/index.ts:120] [E: packages/context/agent-instructions/tests/agent-instructions.spec.ts:1039] `skill-filesystem` 同样 `ctx.get('fs')`；`fs !== undefined && !trustedHost` 才走缝，否则退回 host `readFile`。[E: packages/skill/skill-filesystem/src/index.ts:843] [E: packages/skill/skill-filesystem/src/index.ts:849] [E: packages/skill/skill-filesystem/src/index.ts:854] 远程替换是 `SshFileSystem extends FileSystem` 且 `static inject = ['ssh', 'sandboxPolicy']`，必须与 `SshSubprocessRuntime`（以及 SSH 路径上的 `SshSandboxProvider`）成对换，细节在 [`subsys.execution.ssh`](ssh.md)。[E: packages/ssh/fs-ssh/src/index.ts:20] [E: packages/ssh/fs-ssh/src/index.ts:21]
 
 ## 设计动机
 
-- **Definition / Provider / Consumer 拆开**，是为了换执行世界时不改模型工具。`tool-fs` 只认识 `ctx.fs` 与三个 `fs/*` 事件；把 `fs-sandbox` 换成 `fs-e2b`（或测试里的 `FakeFileSystem`）不必改 `write` 的 schema。
+- **Definition / Provider / Consumer 拆开**，是为了换执行世界时不改模型工具。`tool-fs` 只认识 `ctx.fs` 与三个 `fs/*` 事件；把 `fs-sandbox` 换成 `fs-ssh`（或测试里的 `FakeFileSystem`）不必改 `write` 的 schema。
 - **`FsTarget` 不透明**，是为了让 local realpath 与远程 file id 共用同一套 Consumer。执行世界里的绝对路径单独走 `processPath`，URI 走 `fileUrl`，包含关系走 `contains`，避免 Consumer 解析 `targetKey`。
 - **`editText` 留在本缝**（而不是让 tool 先 `readText` 再 `writeText`），是为了让 version 检查、字面 match、rewrite 落在 Provider 的同一临界区。本地实现用 per-`targetKey` 锁串行化；Definition 只规定这组语义必须在一次 `editText` 里完成。
 - **`sandboxPolicy` 做成 mutation 的最后一参**，是为了让同一个 Consumer 在裸 backend（忽略）与 sandboxing backend（围栏）上都能编译、都能跑。`sandboxMode` getter 则是 tool 层决定「要不要广告升权字段」的 capability fact。
@@ -217,7 +218,7 @@ companion `@deepseek-ai/dsh-fs/invariant` 在 `internal/dispatch` 上检查三�
 | **Definition** | `@deepseek-ai/dsh-fs` · `FileSystem` | `ctx.fs`；声明 `fs/write-intent` · `fs/edit-intent` · `fs/observed` | **不是** Loader 行。库被 Provider import |
 | **Provider（默认 host）** | `@deepseek-ai/dsh-fs-sandbox` · `SandboxedFileSystem` | 独占 `ctx.fs`；`inject = ['sandboxPolicy']` | `dsh-base` `id: fs-sandbox`。`dsh-web-app` **不** disable |
 | **Provider（裸 local）** | `@deepseek-ai/dsh-fs-local` · `LocalFileSystem` | 同一 `ctx.fs` 键（与 sandbox 互斥） | **不**出现在 shipped `dsh-base` / 四份 preset / `dsh-sdk-minimal` insert。测试与 overlay 才直接挂 |
-| **Provider（远程，非默认）** | `@deepseek-ai/dsh-fs-e2b` · `E2BFileSystem` | `ctx.fs`；`inject = ['e2b']` | 例子 patch 关掉本地 fs 行再插入；必须与 `subprocess-e2b` 成对。见 [`subsys.execution.e2b`](e2b.md) |
+| **Provider（远程，非默认）** | `@deepseek-ai/dsh-fs-ssh` · `SshFileSystem` | `ctx.fs`；`inject = ['ssh', 'sandboxPolicy']` | **不**在 shipped overlay。必须与 `subprocess-ssh` / `sandbox-ssh` 成对。见 [`subsys.execution.ssh`](ssh.md) |
 | **Companion（不是 Provider）** | `@deepseek-ai/dsh-fs-observation-policy` · `apply(ctx)` | 占 `fs/write-intent` / `fs/edit-intent`（不 `next()`）；听 `fs/observed` | `dsh-base` `id: fs-observation-policy`。不 `inject`、不 `provide` |
 | **Consumer（模型，Web 默认）** | `@deepseek-ai/dsh-tool-fs` | `inject = ['tools', 'fs', 'systemPrompt']` | `dsh-base` `id: tool-fs` → `dsh-web-app` `disabled: true` → `standard` / `ptc` / `cordis` preset 挂回 |
 | **Consumer（模型，`minimal`）** | 无。`str_replace_editor` 包在、出厂不挂 | — | `minimal` 只挂 persistent shell |
@@ -251,13 +252,13 @@ host 面 = 进程级 Provider + sandbox/policy + observation。agent-preset 面 
 - packages/context/agent-instructions/src/index.ts
 - packages/context/agent-instructions/tests/agent-instructions.spec.ts
 - packages/skill/skill-filesystem/src/index.ts
-- packages/e2b/fs-e2b/src/index.ts
+- packages/ssh/fs-ssh/src/index.ts
 - packages/shell/bash-local/src/index.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/base/package.json
 - packages/bundle/web-app/cordis.patch.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
 - vendor/cordis/src/service.ts
 - vendor/cordis/src/events.ts
 
@@ -271,7 +272,8 @@ host 面 = 进程级 Provider + sandbox/policy + observation。agent-preset 面 
 - [`subsys.execution.fs-observation`](fs-observation.md) — 占 intent 槽、不 `next()` 的观察政策。
 - [`subsys.execution.subprocess`](subprocess.md) — `glob`/`grep` / Bash / PTY 真正吃的缝。
 - [`subsys.execution.sandbox`](sandbox.md) — `SandboxMode`、`approveEscalation`、`writableRoots`。
-- [`subsys.execution.e2b`](e2b.md) — 成对替换 `ctx.fs` + `ctx.subprocess` 的远程世界。
+- [`subsys.execution.ssh`](ssh.md) — 活的远程 one-world：`ctx.ssh` + 成对 `fs` / `subprocess` / `sandbox`。
+- [`subsys.execution.e2b`](e2b.md) — 退役映射；旧 E2B 包已删。
 - [`subsys.composition.bundle-base`](../composition/bundle-base.md) — `id: fs-sandbox` 所在的 host insert。
 - [`subsys.composition.bundle-web-app`](../composition/bundle-web-app.md) — disable 模型可见 `tool-fs` 行。
 - [`subsys.core.tools`](../core/tools.md) — `ctx.tools` 注册表；`tool-fs` 把 `read`/`write`/`edit` `register` 进这里。

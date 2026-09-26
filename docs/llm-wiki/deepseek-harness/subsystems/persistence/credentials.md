@@ -1,6 +1,6 @@
 ---
 id: subsys.persistence.credentials
-title: credentials 缝
+title: credentials 缝与 DeepSeek 账号
 kind: subsystem
 tier: T2
 pkg: persistence
@@ -11,39 +11,32 @@ source:
   - packages/credentials/credentials/tests/credentials.spec.ts
   - packages/credentials/credentials-local/src/index.ts
   - packages/credentials/credentials-local/tests/local.spec.ts
-  - packages/credentials/credentials-local/tests/review-fixes.spec.ts
+  - packages/credentials/deepseek-account/src/index.ts
+  - packages/credentials/deepseek-account/src/types.ts
+  - packages/credentials/deepseek-account-platform/src/index.ts
+  - packages/credentials/authorization/src/index.ts
+  - packages/llm/llm-deepseek-api-key/src/index.ts
+  - packages/llm/llm-deepseek-api-key/src/config.ts
+  - packages/llm/llm-deepseek-account/src/index.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
   - packages/bundle/headless/cordis.patch.yml
   - packages/bundle/sdk-minimal/cordis.patch.yml
-  - packages/util/launch-environment/src/index.ts
-  - packages/core/session/src/index.ts
-  - packages/llm/llm-deepseek/src/index.ts
-  - packages/llm/llm-deepseek/src/adapter.ts
-  - packages/llm/llm-deepseek/tests/loader-composition.spec.ts
-  - packages/llm/llm-pi-ai/src/index.ts
-  - packages/llm/llm-pi-ai/src/auth.ts
-  - packages/api/settings-controller/src/index.ts
   - packages/api/settings-controller/src/credentials.ts
-  - packages/settings/settings/src/index.ts
-  - packages/settings/settings/src/redact.ts
-  - packages/settings/settings/tests/redact.spec.ts
-  - packages/web/web-search-deepseek/src/index.ts
-  - packages/webhook/webhook-github/src/index.ts
-  - packages/webhook/webhook-github/src/handler.ts
+  - packages/api/account-controller/src/index.ts
+  - packages/preset/agent-preset-registry/src/mount.ts
   - packages/core/session/src/types.ts
   - packages/session/session-format-catalog/src/generated.ts
   - packages/session/session-persistence/src/storage-contract.ts
-  - packages/session/session-checkpoint-policy/src/index.ts
-  - packages/preset/agent-presets/src/mount.ts
 symbols:
   - CredentialProvider
   - CredentialRef
   - CredentialKey
-  - credentialRef
-  - credentialKey
   - LocalCredentialProvider
+  - DeepSeekAccount
+  - PlatformAccount
   - CredentialsController
+  - AccountController
 related:
   - subsys.persistence.settings
   - subsys.llm.deepseek
@@ -55,148 +48,112 @@ related:
   - subsys.host.apiproxy
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
-> `ctx.credentials` 是 **host 面** credential 缝：组合 / settings 只携带 `CredentialRef`（POSIX 环境变量名）或 `CredentialKey`（`<scope>/<id>` 记录地址），secret **值** 由 Provider 拥有。shipped 唯一实现是 `LocalCredentialProvider`（`$DSH_HOME/.credentials.yaml`，`DOCUMENT_VERSION = 1`），不是 keyring。这是 Cordis 组合运行时（`profile → bundle → agent preset`）把密钥从配置面拆出去的能力缝，不是又一个 coding agent 往 `process.env` 里灌明文。
+> `ctx.credentials` 仍是 **host 面** secret 缝：组合 / settings 只带 `CredentialRef`（POSIX 环境变量名）或 `CredentialKey`（`<scope>/<id>`），值由 `LocalCredentialProvider`（`$DSH_HOME/.credentials.yaml`）拥有。DeepSeek **账号登录**是另一条缝：`ctx.deepseekAccount`（Definition `@deepseek-ai/dsh-deepseek-account`）由 `@deepseek-ai/dsh-deepseek-account-platform` 实现，grant 写进同一份 credentials 文档的 record 半边，**不**灌 `process.env`。`deepseek-official` 走 API key；`deepseek-account` 走 `x-dsh-auth-token`。
 
 ## 能回答的问题
 
-- `ctx.credentials` 的 Definition / Provider / Consumer 各是哪个包？五个 shipped profile 里谁挂这一行？`sdk-minimal` 呢？
-- `CredentialRef` 与 `CredentialKey` 两套键空间如何分工？`.credentials.yaml` 的 `version` / `refs` / `records` 各放什么？
-- `resolve` 的梯子是哪四层？哪一层只读且挡住 `set` / `unset`？空串算不算已配置？
-- `credentials/reference-updated` 与 `credentials/record-updated` 是 emit、waterfall 还是 parallel？谁必须 `next()`？
-- Models 页写入会不会把 secret 灌进 `process.env`？没有挂 credentials 缝时 adapter 怎么取密钥？Remote 入口现在在哪？
+- `ctx.credentials` 与 `ctx.deepseekAccount` 各是哪条缝？五个 shipped profile 谁挂？`sdk-minimal` 呢？
+- `CredentialRef` / `CredentialKey` 怎么分工？账号 grant 存在哪条 key？
+- `resolve` 梯子仍是哪四层？账号 token 走不走这四层？
+- Platform 登录如何 PKCE？`resolveToken` 为什么要核对 `inferenceOrigin`？
+- Models 页写 API key 与账号登录各打哪条 Remote？会不会把 secret 灌进 `process.env`？
 
 ## 职责边界
 
-本包拥有：`CredentialProvider` 抽象缝（`ctx.credentials`）、`credentialRef()` / `credentialKey()` 品牌化、`credentials/reference-updated` 与 `credentials/record-updated` **emit** 的 contained fan-out、以及 shipped `LocalCredentialProvider` 对四层来源的解析 / 写盘 / 热更新 / 记录 RMW。
+本页拥有两条 **host 面** 缝，共享同一份 local YAML，但 **不是** 同一 `ctx` 键：
 
-本包**不**拥有：settings 分层与 `settings.yaml` 文档（[subsys.persistence.settings](settings.md)、[surface.config.settings](../../surface/config/settings.md)）；DeepSeek / pi-ai 何时 `resolve`、如何把 bearer 送进 adapter（[subsys.llm.deepseek](../llm/deepseek.md)、[subsys.llm.pi-ai](../llm/pi-ai.md)）；浏览器 Remote 形状与 Models 页表单（[subsys.host.apiproxy](../host/apiproxy.md) 现为 Host HTTP API：`packages/api/settings-controller` 挂 `CredentialsController`）；session log / JSONL / SQLite / checkpoint。本仓**没有** shipped keyring Provider。
+- **`ctx.credentials`**：`CredentialProvider` + shipped `LocalCredentialProvider`。ref 半边四层梯子；record 半边 RMW。
+- **`ctx.deepseekAccount`**：抽象类 `DeepSeekAccount`；shipped `PlatformAccount`（`inject = ['credentials', 'authorization']`）。浏览器 PKCE、grant 存储、`resolveToken` / `rejectToken`。
+- **`ctx.authorization`**：通用「跟人对话拿 credential」缝。账号 Provider inject 它；pi-ai OAuth 也注册 flow。
 
-`dsh-credentials` 是 **host 面**服务。agent-preset 面只在自己的 Config / settings section 里写 `apiKeyEnv` 这种 **ref**，不得再 `provide` 一份 `credentials`：preset 往 root realm publish 服务会被 `leakedServices` 拒。 [E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:411] 五个 shipped profile 是 `web`(live) 与 `headless` / `sdk` / `sdk-minimal` / `acp`(startup)。没有 shipped TUI 包。`dsh web` 不是唯一宿主入口；`dsh --profile sdk|sdk-minimal|acp|headless` 同样是产品路径。
+本页**不**拥有：settings 表单（现为 profile patch 上的 `SettingsForms`，[subsys.persistence.settings](settings.md)）；DeepSeek Messages 传输（[subsys.llm.deepseek](../llm/deepseek.md)）；session log / JSONL。没有 shipped keyring。`packages/preset/agent-presets` 已删除；preset 泄漏检查在 `dsh-agent-preset-registry` 的 `leakedServices`。 [E: packages/preset/agent-preset-registry/src/mount.ts:86]
 
-正交、写错会污染邻页的事实（本页只点名）：
+正交事实：
 
-- 新 header 的 `version` 必须等于 `SESSION_FORMAT_VERSION`（现为 `3`）。JSONL catalog `currentVersion: 3`，adjacent 链 v0→v1→v2→v3；比 3 新仍拒。 [E: packages/core/session/src/types.ts:88] [E: packages/session/session-format-catalog/src/generated.ts:15] [E: packages/session/session-format-catalog/src/generated.ts:18] [E: packages/session/session-persistence/src/storage-contract.ts:50]
-- `dsh-session-persistence-sqlite` 已删除。shipped session 盘只有 JSONL。 [E: packages/bundle/base/cordis.patch.yml:110]
-- shipped JSONL 后端挂在 base：`id: session-persistence-jsonl`，`root: dshHomePath('sessions')`。叠 `dsh-base` 的 profile 继承这一行。 [E: packages/bundle/base/cordis.patch.yml:110] [E: packages/bundle/base/cordis.patch.yml:111] [E: packages/bundle/base/cordis.patch.yml:113]
-- shipped `session-query-sqlite` 写出 `openAt: never`（base 挂载；web-app 用同一键重述仍是 `never`）。search 默认关，不 import/open sqlite。 [E: packages/bundle/base/cordis.patch.yml:129] [E: packages/bundle/base/cordis.patch.yml:133] [E: packages/bundle/web-app/cordis.patch.yml:30]
-- `storage` + `storage-json` + `storage-domain` 与 `session-projection-cache` **挂在 base**（不是只 web-app）。 [E: packages/bundle/base/cordis.patch.yml:145] [E: packages/bundle/base/cordis.patch.yml:148] [E: packages/bundle/base/cordis.patch.yml:153] [E: packages/bundle/base/cordis.patch.yml:162] `workspace` 仍在 web-app insert。 [E: packages/bundle/web-app/cordis.patch.yml:75]
-- headless insert 只有 `code-runtime` / `headless-startup` / `headless-runner`，不重挂 `credentials`。 [E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27]
-- `session/flush` 是 **parallel**（`Promise.allSettled`，没有 `next`），不是 waterfall。 [E: packages/core/session/src/index.ts:1051]
-- checkpoint 在 `llm/stream` 进 adapter **之前**、以及 top-level `tools/execute` 进 tool body **之前** `sessions.flush`。嵌套 `exec.parent` 不再刷。`agent/pre-step` 另有一条耐久刷盘，不是副作用门。那些 waterfall **必须** `next()`。 [E: packages/session/session-checkpoint-policy/src/index.ts:35] [E: packages/session/session-checkpoint-policy/src/index.ts:36] [E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:72] [E: packages/session/session-checkpoint-policy/src/index.ts:80] [E: packages/session/session-checkpoint-policy/src/index.ts:81]
-- compaction 用 `surfaceOp: { op: 'replace', startSeq, endSeq }`；`SurfaceOp` 另有 `'append'`，没有 delete。 [E: packages/core/session/src/types.ts:434] [E: packages/core/session/src/types.ts:436]
-- settings 分层：schema defaults → composition `base` → 用户文档 section。`SettingsScope.get` 读已 resolve 的快照；私有 `resolve` 先 `mergeLayers(base, section)` 再走 schema。 [E: packages/settings/settings/src/index.ts:447] [E: packages/settings/settings/src/index.ts:748]
-- 组合 / adapter Config 里放 `CredentialRef`（`role('credential-ref')` / `apiKeyEnv`）。secret **值**在 `$DSH_HOME/.credentials.yaml`。 [E: packages/llm/llm-deepseek/src/index.ts:188] [E: packages/credentials/credentials-local/src/index.ts:61]
+- `SESSION_FORMAT_VERSION = 4`。JSONL catalog `currentVersion: 4`，adjacent v0→v1→v2→v3→v4。 [E: packages/core/session/src/types.ts:89] [E: packages/session/session-format-catalog/src/generated.ts:17]
+- shipped session 盘只有 JSONL。`id: session-persistence-jsonl`，`root: dshHomePath('sessions')`。 [E: packages/bundle/base/cordis.patch.yml:130]
+- `session-query-sqlite` `openAt: never`。 [E: packages/bundle/base/cordis.patch.yml:153]
+- headless insert 只有 `headless-startup` / `headless-runner`，不重挂 credentials / account。 [E: packages/bundle/headless/cordis.patch.yml:21] [E: packages/bundle/headless/cordis.patch.yml:25]
 
 ## 关键文件
 
 | 路径 | 角色 |
 |---|---|
-| `packages/credentials/credentials/src/index.ts` | Definition：`CredentialProvider`、`credentialRef` / `credentialKey`、`notifyUpdated` / `notifyRecordUpdated` |
-| `packages/credentials/credentials/src/types.ts` | 浏览器可进的 `CredentialRef` / `CredentialKey` / 记录 union + 两个 emit 事件 |
-| `packages/credentials/credentials/src/invariant.ts` | 无 live 服务时 emit `credentials/reference-updated` 即 fail |
-| `packages/credentials/credentials/tests/credentials.spec.ts` | POSIX 名、空串=缺席、`set`/`unset` 才 emit |
-| `packages/credentials/credentials-local/src/index.ts` | shipped Provider：梯子、version-1 YAML、watch、原子写、record RMW |
-| `packages/credentials/credentials-local/tests/local.spec.ts` | 四层次序、shadow 拒写、0600、热更新、文档校验 |
-| `packages/credentials/credentials-local/tests/review-fixes.spec.ts` | observer 失败不回滚已提交写；`INVARIANT` 仍 rethrow |
-| `packages/bundle/base/cordis.patch.yml` | host 组合行 `id: credentials`；同层 JSONL / query-sqlite / storage* |
-| `packages/bundle/web-app/cordis.patch.yml` | 不重挂 `credentials`；insert `workspace` 等 web 行 |
-| `packages/bundle/headless/cordis.patch.yml` | 不重挂 `credentials` |
-| `packages/bundle/sdk-minimal/cordis.patch.yml` | **不叠 base**、**不挂** `credentials` |
-| `packages/util/launch-environment/src/index.ts` | 冻结的 `process` / `project-env` / `user-env` 快照 |
-| `packages/llm/llm-deepseek/src/index.ts` | `apiKeyEnv` + 每请求 `resolveApiKey` |
-| `packages/llm/llm-pi-ai/src/index.ts` | 点了 `apiKeyEnv` 就必须解析到值，否则 `MISSING_CREDENTIAL` |
-| `packages/llm/llm-pi-ai/src/auth.ts` | record 半边：`RECORD_SCOPE = 'llm-pi-ai'` + `modifyRecord` |
-| `packages/api/settings-controller/src/credentials.ts` | Remote namespace `credentials`：`describe` / `set` / `unset` |
-| `packages/preset/agent-presets/src/mount.ts` | `leakedServices`：preset 不得往 root 再 publish `credentials` |
-| `packages/webhook/webhook-github/src/index.ts` | inject `credentials`；ingress secret 走 `secretEnv` |
+| `packages/credentials/credentials/src/index.ts` | `CredentialProvider`、`credentialRef` / `credentialKey` |
+| `packages/credentials/credentials-local/src/index.ts` | shipped YAML Provider：梯子、version-1 文档、watch |
+| `packages/credentials/deepseek-account/src/index.ts` | `DeepSeekAccount` Definition（`ctx.deepseekAccount`） |
+| `packages/credentials/deepseek-account-platform/src/index.ts` | `PlatformAccount`：PKCE、grant record、`resolveToken` |
+| `packages/credentials/authorization/src/index.ts` | `ctx.authorization` |
+| `packages/llm/llm-deepseek-api-key/src/index.ts` | `deepseek-official`：每请求 `credentials.resolve` |
+| `packages/llm/llm-deepseek-account/src/index.ts` | `deepseek-account`：每请求 `resolveToken` |
+| `packages/bundle/base/cordis.patch.yml` | `authorization` + `deepseek-account` + `credentials` + 两个 llm 行 |
+| `packages/api/account-controller/src/index.ts` | Remote `account`；不导出 token |
+| `packages/api/settings-controller/src/credentials.ts` | Remote `credentials`：describe/set/unset refs |
 
 ## 数据模型
 
 | 符号 | 要点 |
 |---|---|
-| `CredentialRef` | `Branded<'CredentialRef'>`。语义是 **POSIX 风格环境变量名**，不是 secret 本身。 [E: packages/credentials/credentials/src/types.ts:14] |
-| `credentialRef(value)` | `/^[A-Za-z_][A-Za-z0-9_]*$/` 才品牌化；`9LEADING` / `WITH-DASH` / `ns:key` 抛 `TypeError`。 [E: packages/credentials/credentials/src/index.ts:19] [E: packages/credentials/credentials/src/index.ts:30] [E: packages/credentials/credentials/tests/credentials.spec.ts:23] |
-| `CredentialKey` | `Branded<'CredentialKey'>`：`<scope>/<id>`，`/` 使其与 ref 文法不相交。scope 是拥有插件的注册名。 [E: packages/credentials/credentials/src/types.ts:29] [E: packages/credentials/credentials/src/index.ts:69] |
-| `credentialKey(scope, id)` | 两段都必须 `/^[a-z][a-z0-9-]*$/`。 [E: packages/credentials/credentials/src/index.ts:22] [E: packages/credentials/credentials/src/index.ts:70] |
-| `ResolvedCredential` | `{ value, source }`。`value` 非空。local 的 `source` 是 `env` / `file` / `project-env` / `user-env`。 [E: packages/credentials/credentials/src/index.ts:118] |
-| `CredentialInfo` | `{ configured, source?, writable }`。给配置 UI；**永不带 value**。 [E: packages/credentials/credentials/src/types.ts:67] |
-| `CredentialRecord` | `ApiKeyRecord`（`kind: 'api-key'`，可选 `key` / `env`）或 `GrantRecord`（`kind: 'grant'`，opaque JSON `payload`）。空 api-key 记录表示「owner 确认走 ambient discovery」，不是未配置。 [E: packages/credentials/credentials/src/types.ts:37] [E: packages/credentials/credentials/src/types.ts:52] |
-| `credentials/reference-updated` | Cordis **emit**。参数只有 `ref`。process-env 变化不可观察、不发事件。 [E: packages/credentials/credentials/src/types.ts:90] [E: packages/credentials/credentials/src/index.ts:269] |
-| `credentials/record-updated` | 另一套 emit，参数 `key`；两套文法不相交所以事件拆开。 [E: packages/credentials/credentials/src/types.ts:102] [E: packages/credentials/credentials/src/index.ts:278] |
-| `CREDENTIALS_FILENAME` | `'.credentials.yaml'`。默认路径 `join(resolveDshHome(dshHome), CREDENTIALS_FILENAME)`。 [E: packages/credentials/credentials-local/src/index.ts:61] [E: packages/credentials/credentials-local/src/index.ts:90] |
-| `DOCUMENT_VERSION` | `1`。非空文档必须声明该 version；未知顶层键、坏类型一律拒。 [E: packages/credentials/credentials-local/src/index.ts:167] [E: packages/credentials/credentials-local/src/index.ts:215] |
-| 文档形状 | `version` + `refs`（POSIX 名 → 非空 string）+ `records`（`<scope>/<id>` → tagged mapping）。空文档是空 store，不需要 version。pre-release 扁平 mapping 在 boot 时 `renderFlatLayoutMigration` 就地升到 `refs:`。 [E: packages/credentials/credentials-local/src/index.ts:207] [E: packages/credentials/credentials-local/src/index.ts:226] [E: packages/credentials/credentials-local/src/index.ts:242] |
-| settings 里的 ref | `z.string().role('credential-ref')`。`redactSecrets` **只剥** `role('secret')`，`apiKeyEnv` 原样过线。 [E: packages/settings/settings/src/redact.ts:52] [E: packages/settings/settings/tests/redact.spec.ts:35] |
+| `CredentialRef` | POSIX 环境变量名，不是 secret。 [E: packages/credentials/credentials/src/types.ts:14] |
+| `credentialRef` | `/^[A-Za-z_][A-Za-z0-9_]*$/`。 [E: packages/credentials/credentials/src/index.ts:19] [E: packages/credentials/credentials/src/index.ts:29] |
+| `CredentialKey` | `<scope>/<id>`，与 ref 文法不相交。 [E: packages/credentials/credentials/src/types.ts:29] |
+| `credentialKey` | 两段 `/^[a-z][a-z0-9-]*$/`。 [E: packages/credentials/credentials/src/index.ts:22] [E: packages/credentials/credentials/src/index.ts:69] |
+| 账号 KEY / DEVICE | `credentialKey('deepseek-account-platform', 'default' \| 'device')`。grant payload `{ version: 1, token, issuer }`。 [E: packages/credentials/deepseek-account-platform/src/index.ts:17] [E: packages/credentials/deepseek-account-platform/src/index.ts:19] |
+| `CREDENTIALS_FILENAME` | `'.credentials.yaml'`。 [E: packages/credentials/credentials-local/src/index.ts:61] |
+| `DOCUMENT_VERSION` | `1`：`version` + `refs` + `records`。 [E: packages/credentials/credentials-local/src/index.ts:167] |
+| `credentials/reference-updated` / `record-updated` | **emit**，无 `next()`。 [E: packages/credentials/credentials/src/types.ts:90] [E: packages/credentials/credentials/src/types.ts:102] |
+| `DeepSeekAccount` | `getState` / `startSignIn` / `signOut` / `resolveToken` / `rejectToken` / `getPlatformSession`。 [E: packages/credentials/deepseek-account/src/index.ts:32] [E: packages/credentials/deepseek-account/src/index.ts:99] |
 
-空串在 **ref** 半边上的统一规则：任何层的空值都是缺席——`resolve` 跳过，`describe` 报 unconfigured。空白不能冒充已配置密钥。 [E: packages/credentials/credentials/src/index.ts:150] [E: packages/credentials/credentials/tests/credentials.spec.ts:49] [E: packages/credentials/credentials/tests/credentials.spec.ts:51] record 半边没有环境层：presence 就是全部事实。 [E: packages/credentials/credentials-local/src/index.ts:662]
+空串在 **ref** 半边 = 缺席。record 半边没有环境层。
 
 ## 控制流
 
-1. **host 面挂 shipped Provider。** `dsh-base` 用组合行 `id: credentials` / `name: '@deepseek-ai/dsh-credentials-local'` 把 `LocalCredentialProvider` 插进叠 base 的 profile。`CredentialProvider` 构造时 `super(ctx, 'credentials')`，键是 `ctx.credentials`。这是进程级服务，不是 preset isolate 里的私有实例。`dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-acp-app` 的 overlay **没有**再插同名行，所以 `dsh web` 与 `dsh --profile headless|sdk|acp` 继承 base 这一份。`sdk-minimal` **不叠** `dsh-base`，其 `cordis.patch.yml` 也没有 `credentials` 行：该 profile 上 `ctx.get('credentials')` 缺席，adapter 退回 `launchEnvironmentOf`。同层 base 还挂 `id: session-persistence-jsonl`（`root: dshHomePath('sessions')`）、`session-query-sqlite`（`path: ':memory:'`、`openAt: never`）、`storage*` 与 `session-projection-cache`。web-app 另 insert `workspace`。headless insert 只有 `code-runtime` / `headless-startup` / `headless-runner`。 [E: packages/bundle/base/cordis.patch.yml:97] [E: packages/bundle/base/cordis.patch.yml:98] [E: packages/credentials/credentials/src/index.ts:172] [E: packages/bundle/sdk-minimal/tests/sdk-minimal.spec.ts:28] [E: packages/bundle/sdk-minimal/cordis.patch.yml:26]
+1. **host 面挂三条相关行。** `dsh-base`：`id: authorization` → `dsh-authorization`；`id: deepseek-account` → `dsh-deepseek-account-platform`（desktop 才填 `desktopPlatform`）；`id: credentials` → `dsh-credentials-local`。再挂 `id: llm-deepseek`（`dsh-llm-deepseek-api-key`）与 `id: llm-deepseek-account`。叠 base 的 profile 继承；`sdk-minimal` **不叠** base，只挂 api-key 行，**没有** credentials / account。 [E: packages/bundle/base/cordis.patch.yml:109] [E: packages/bundle/base/cordis.patch.yml:112] [E: packages/bundle/base/cordis.patch.yml:117] [E: packages/bundle/base/cordis.patch.yml:524] [E: packages/bundle/base/cordis.patch.yml:527] [E: packages/bundle/sdk-minimal/cordis.patch.yml:26]
 
-2. **boot 读盘：缺文件是空 store，坏文件起不来。** `Service.init` 先 `loadInitial`：`assertOwnerOnly`（POSIX 上 group/other 位非 0 则拒，**先于**读内容）；`ENOENT` 直接返回空 `values`/`records`；读到的文本若是可识别的扁平 pre-release 文档则就地 migration，再走 `parseCredentialsDocument`。存在但不可信的文档不得被当成「没存密钥」。默认 `watch: true`、`debounceMs: 100`。 [E: packages/credentials/credentials-local/src/index.ts:811] [E: packages/credentials/credentials-local/src/index.ts:812] [E: packages/credentials/credentials-local/src/index.ts:818] [E: packages/credentials/credentials-local/src/index.ts:91] [E: packages/credentials/credentials-local/src/index.ts:92] [E: packages/credentials/credentials-local/tests/local.spec.ts:62]
+2. **`CredentialProvider` 占 `ctx.credentials`。** 构造 `super(ctx, 'credentials')`。 [E: packages/credentials/credentials/src/index.ts:170] [E: packages/credentials/credentials/src/index.ts:172]
 
-3. **`resolve` 梯子（每调用重走，禁止跨操作缓存）。** `LocalCredentialProvider.resolve` 顺序是：`launchEnvironmentOf(ctx).getFrom(ref, ['process'])` 且非空 → `{ source: 'env' }`；否则内存快照 `this.values` → `{ source: 'file' }`；否则 `getFrom(ref, ['project-env', 'user-env'])` 且非空 → `{ source: fallback.source }`；全无则 `undefined`。没有 launcher 快照时，`launchEnvironmentOf` 把当前 `process.env` 收成唯一的 `process` 层。 [E: packages/credentials/credentials-local/src/index.ts:619] [E: packages/credentials/credentials-local/src/index.ts:621] [E: packages/credentials/credentials-local/src/index.ts:623] [E: packages/util/launch-environment/src/index.ts:114] [E: packages/credentials/credentials-local/tests/local.spec.ts:79]
+3. **`resolve` 梯子（每调用重走）。** process-env 非空 → `{ source: 'env' }`；否则 YAML `refs` → `{ source: 'file' }`；否则 project/user `.env`；全无 `undefined`。 [E: packages/credentials/credentials-local/src/index.ts:610] [E: packages/credentials/credentials-local/src/index.ts:612] [E: packages/credentials/credentials-local/src/index.ts:614]
 
-4. **`describe` 只报层与可写性。** 继承环境挡住时 `{ configured: true, source: 'env', writable: false }`。`file` / `project-env` / `user-env` 都报 `writable: true`（往 managed 文件写一条就能盖过 `.env`）。全缺 `{ configured: false, writable: true }`。 [E: packages/credentials/credentials-local/src/index.ts:632] [E: packages/credentials/credentials-local/src/index.ts:635] [E: packages/credentials/credentials-local/src/index.ts:637] [E: packages/credentials/credentials-local/src/index.ts:638] [E: packages/credentials/credentials-local/tests/local.spec.ts:86]
+4. **`set` / `unset` 只改 managed 文件。** 空串拒。process-env 挡住则抛 shadowed，不写盘。不写 `process.env`。 [E: packages/credentials/credentials-local/src/index.ts:633] [E: packages/credentials/credentials-local/src/index.ts:634]
 
-5. **`set` / `unset` 只改 managed 文件。** `set` 拒空串（叫人 `unset`）。入口与出队时各跑一次 `assertUnshadowed`：`process` 层非空则抛「launching environment … shadowed」，**不**写盘。过门之后 `mkdir(..., 0o700)` + `withFileLock`（`DOCUMENT_LOCK_WAIT_MS = 30_000`）：先 `reconcileFromDisk` 折入未观察的外部编辑，再 `writeFileAtomic(..., { mode: 0o600 })`，改内存快照，最后 `notifyUpdated`。`unset` 对已缺席的 key 是 no-op（不发事件）。这条路径**不**写 `process.env`。 [E: packages/credentials/credentials-local/src/index.ts:642] [E: packages/credentials/credentials-local/src/index.ts:112] [E: packages/credentials/credentials-local/src/index.ts:767] [E: packages/credentials/credentials-local/src/index.ts:794] [E: packages/credentials/credentials-local/src/index.ts:778] [E: packages/credentials/credentials-local/src/index.ts:784] [E: packages/credentials/credentials-local/tests/local.spec.ts:367] [I]
+5. **账号 Provider 占 `ctx.deepseekAccount`。** `PlatformAccount.inject = ['credentials', 'authorization']`。grant 走 `modifyRecord(KEY, …)`，device UUID 走 `DEVICE`。 [E: packages/credentials/deepseek-account-platform/src/index.ts:85] [E: packages/credentials/deepseek-account-platform/src/index.ts:566]
 
-6. **记录半边：`modifyRecord` 是唯一写路径。** 同一文件、同一把跨进程锁；`mutate` 看到的是锁内刚 reconcile 过的当前值，返回 `undefined` 则不动。`listRecords` 枚举地址与 `kind`、永不带 value。`deleteRecord` 对缺席 key 是 no-op。commit 后 `notifyRecordUpdated`。pi-ai 把 store 接到这条路上，`RECORD_SCOPE = 'llm-pi-ai'`。 [E: packages/credentials/credentials/src/index.ts:247] [E: packages/credentials/credentials-local/src/index.ts:674] [E: packages/llm/llm-pi-ai/src/auth.ts:29] [E: packages/llm/llm-pi-ai/src/auth.ts:172]
+6. **`resolveToken` 不走 ref 梯子。** 核对请求 origin == 配置的 `inferenceOrigin`（默认 `https://api.deepseek.com`），读 grant record，拒 mock token / loopback issuer 打生产 API。登出进行中返回 `undefined`。 [E: packages/credentials/deepseek-account-platform/src/index.ts:372] [E: packages/credentials/deepseek-account-platform/src/index.ts:374] [E: packages/credentials/deepseek-account-platform/src/index.ts:56]
 
-7. **两个 commit 事件都是 emit，没有 `next()`。** `fanOut` 用 `this.ctx.events.dispatch('emit', args)` 扇出。每个 listener 都跑；sync throw / async reject 被 log 吞掉，**不**把已提交的写改成失败。唯一例外：`error.code === 'INVARIANT'` 等全部 listener 跑完再 rethrow（只有同步 listener 的抛出会回到 emitter）。这不是 waterfall，也不是 `session/flush` 那种 `Promise.allSettled` parallel。Provider **只在写或 reload 已经 commit 之后**才调用。 [E: packages/credentials/credentials/src/index.ts:286] [E: packages/credentials/credentials/src/index.ts:305] [E: packages/credentials/credentials-local/tests/review-fixes.spec.ts:112] [E: packages/credentials/credentials-local/tests/review-fixes.spec.ts:136]
+7. **两个 LLM Provider。** `llm-deepseek-api-key`：`PROVIDER = 'deepseek-official'`，`apiKeyEnv` 默认 `DEEPSEEK_API_KEY`，`credentials.resolve` 或 launch env，miss → `MISSING_CREDENTIAL`。`llm-deepseek-account`：`PROVIDER = 'deepseek-account'`，`resolveToken`，miss → `ACCOUNT_SIGN_IN_REQUIRED`；HTTP 401 调 `rejectToken`。 [E: packages/llm/llm-deepseek-api-key/src/index.ts:15] [E: packages/llm/llm-deepseek-api-key/src/index.ts:20] [E: packages/llm/llm-deepseek-api-key/src/config.ts:16] [E: packages/llm/llm-deepseek-account/src/index.ts:15] [E: packages/llm/llm-deepseek-account/src/index.ts:22] [E: packages/llm/llm-deepseek-account/src/index.ts:23]
 
-8. **热更新替换整份快照。** chokidar `all` / `ready` 都 `queueRefresh`。内容等于 `this.text`（含自己刚写的）是 no-op。磁盘上删掉的 key 不得留在内存。live reload 解析失败 → warn + 保留 last good；**写路径**上同一份坏文档则大声失败，避免覆盖读不懂的文件。 [E: packages/credentials/credentials-local/src/index.ts:592] [E: packages/credentials/credentials-local/src/index.ts:868] [E: packages/credentials/credentials-local/src/index.ts:874] [E: packages/credentials/credentials-local/tests/local.spec.ts:437]
+8. **Web Remote 拆开。** `CredentialsController` namespace `'credentials'`：最多 64 个 ref 的 `describe`，永不回 value。`AccountController` namespace `'account'`：`getState` / 登录 / 登出；**不**导出 `resolveToken`。 [E: packages/api/settings-controller/src/credentials.ts:20] [E: packages/api/account-controller/src/index.ts:10] [E: packages/api/account-controller/src/index.ts:13]
 
-9. **Consumer 每次操作向缝要一次值。** `dsh-llm-deepseek` 的 `Config.apiKeyEnv` 默认 `DEEPSEEK_API_KEY`，schema 标 `role('credential-ref')`；`resolveAdapterOptions` 把它收成 `credentialRef(...)`。`DeepSeekAdapter.stream` / `streamWithConnection` 每个请求用冻结的 connection 快照再 `resolveApiKey`：有 `ctx.credentials` 就 `credentials.resolve(ref)`，否则读 `launchEnvironmentOf(ctx).get(ref)`。两边都空 → `LlmError('MISSING_CREDENTIAL')`，路由仍注册。密钥与 endpoint 来自**同一份** connection 快照。 [E: packages/llm/llm-deepseek/src/index.ts:90] [E: packages/llm/llm-deepseek/src/index.ts:188] [E: packages/llm/llm-deepseek/src/index.ts:393] [E: packages/llm/llm-deepseek/src/index.ts:446] [E: packages/llm/llm-deepseek/src/adapter.ts:448] [E: packages/llm/llm-deepseek/src/adapter.ts:479] [E: packages/llm/llm-deepseek/src/index.ts:462]
-
-10. **pi-ai：点了 ref 就不能退回环境发现。** `profile.apiKeyEnv === undefined` 才把 `undefined` 交给 pi-ai 自己的 ambient discovery。一旦写了 `apiKeyEnv`，miss 必须 `MISSING_CREDENTIAL`。把 `undefined` 交下去会让 pi-ai 捡到无关的 `OPENAI_API_KEY`。 [E: packages/llm/llm-pi-ai/src/index.ts:178] [E: packages/llm/llm-pi-ai/src/index.ts:184]
-
-11. **Web Models 页只打 managed 文件。** `SettingsController` 在构造里 `ctx.plugin(CredentialsController)`，Remote namespace `'credentials'`、服务键 `credentialsController`。`credentials.set` = `credentials.set(credentialRef(ref), value)`；`describe` 批量最多 `MAX_DESCRIBE_REFS = 64`，每条只回 `{ configured, source?, writable }`。没有 list-all refs：客户端从 settings schema 的 `apiKeyEnv` 字段学习有哪些 ref。组合测试钉死：UI `set` 之后重启，同一把钥匙仍是 `source: 'file'` 且 `writable: true`——没有被 hoist 成只读 `env`。缺缝时报 `gateway/internal`。写失败映射 `credential/rejected`。 [E: packages/api/settings-controller/src/index.ts:107] [E: packages/api/settings-controller/src/credentials.ts:20] [E: packages/api/settings-controller/src/credentials.ts:70] [E: packages/api/settings-controller/src/credentials.ts:83] [E: packages/api/settings-controller/src/credentials.ts:100] [E: packages/api/settings-controller/src/credentials.ts:125] [E: packages/api/settings-controller/src/credentials.ts:146] [E: packages/llm/llm-deepseek/tests/loader-composition.spec.ts:230] [E: packages/llm/llm-deepseek/tests/loader-composition.spec.ts:241]
-
-`web-search-deepseek` 同样按请求 `credentials.resolve(apiKeyEnv)`；它的 schema **额外**有一个 `role('secret')` 的字面 `apiKey` 槽，那是 settings 文档里的明文，不是 `.credentials.yaml`。 [E: packages/web/web-search-deepseek/src/index.ts:64] [E: packages/web/web-search-deepseek/src/index.ts:104]
-
-GitHub webhook adapter inject `credentials`，用 `secretEnv` 做 `resolve`；缺 secret 503。 [E: packages/webhook/webhook-github/src/index.ts:14] [E: packages/webhook/webhook-github/src/handler.ts:95] [E: packages/webhook/webhook-github/src/handler.ts:97]
+9. **事件是 emit。** observer 失败不回滚已提交写。`INVARIANT` 等全部 listener 跑完再 rethrow。
 
 ## 设计动机
 
-DSH 把密钥从组合 / settings 里拆出去，是为了让 `profile → bundle → preset` 的配置面可以描述、dump、过线、写进 `settings.yaml`，而不把 bearer token 变成另一份会进 git / 进 `describe()` 的文档。`CredentialRef` 是环境变量名，因为启动器、CI `-e`、容器 env 与人类 `.env` 已经共用这套名字。`CredentialKey` 给没有环境层的授权产物（OAuth grant、adapter 自有 api-key 记录）一个可枚举、可 RMW 的地址。
-
-继承环境赢且只读：`DEEPSEEK_API_KEY=… dsh` 是这一次启动的显式意图，内部 `set` 如果「成功」而 `resolve` 仍返回 shell 里的旧值，配置 UI 会以为写进去了。managed 文件压过 project / user `.env`：Models 页刚存的钥匙必须立刻生效，不能被 checkout 里一份旧 `.env` 顶掉。
-
-每次操作重 `resolve`，是为了让改钥匙到达**下一次** `llm/stream`，而不重启插件、不重挂 adapter。进行中的那次 stream 冻结自己那份 connection+key 快照。
-
-本地 YAML 是唯一 shipped Provider：仓库里没有 keyring 包。文档不用 dotenv 语法，避免「既当密钥店又当环境层」——那样会把非密钥条目按优先级藏起来。version-1 把 refs 与 records 分节，是为了让两套文法永不碰撞。
+API key 继续用环境变量名，因为 CI / 容器 / `.env` 已经共用这套名字。账号登录是浏览器 PKCE 产物，没有 POSIX 名可指，所以进 record 半边（`deepseek-account-platform/default`）。两条 LLM 路由分开：官方 key 继续 `x-api-key`；账号 token 只允许配置的 inference origin，避免把 Platform grant 发到任意 URL。
 
 ## Gotcha
 
-- **配置里放的是 ref，盘上仍可能有明文。** `apiKeyEnv: DEEPSEEK_API_KEY` 出现在 composition / `settings.yaml` 里完全合法。`.credentials.yaml` **就是**非空 secret 字符串（加 tagged records）。`role('secret')` 还可以活在 settings schema 里（search 的字面 `apiKey`）。不要把「约定用 CredentialRef」读成「任何 yaml 都没有密钥」。 [E: packages/llm/llm-deepseek/src/index.ts:188] [E: packages/credentials/credentials-local/src/index.ts:281]
-- **`source: 'env'` ≠ launch-environment 的 `'process'`。** 缝对外把继承环境报成 `'env'`；快照层 id 仍是 `'process'`。 [E: packages/credentials/credentials-local/src/index.ts:619] [E: packages/util/launch-environment/src/index.ts:16]
-- **空串 = 缺席。** `vi.stubEnv('DSH_CRED_TEST', '')` 会掉到下一层，不会挡住 file。 [E: packages/credentials/credentials-local/tests/local.spec.ts:89]
-- **被 process-env 挡住的 ref 不能 `set`/`unset`。** 错误文案指向「在启动 dsh 的那个 shell 里 unset」，不是改 `.credentials.yaml`。 [E: packages/credentials/credentials-local/src/index.ts:797]
-- **Models 页写入不进 `process.env`。** 否则重启后同一把钥匙会变成只读 `env`，再也转不动。 [E: packages/llm/llm-deepseek/tests/loader-composition.spec.ts:241]
-- **boot 失败 ≠ live reload 失败。** 启动时坏文档让插件起不来；watch 路径 warn + last good；写路径 RMW 读不懂就拒写。 [E: packages/credentials/credentials-local/src/index.ts:874]
-- **POSIX 0600 / 目录 0700；Windows 跳过 mode 检查。** 手写 `0644` 的 `.credentials.yaml` 在 POSIX 上直接拒启动。 [E: packages/credentials/credentials-local/src/index.ts:139] [E: packages/credentials/credentials-local/tests/local.spec.ts:170]
-- **诊断不准引用 value。** YAML 解析错误只带 `code` + 行列，避免 parser 把含密钥的源行打进 stderr。 [E: packages/credentials/credentials-local/src/index.ts:159]
-- **没有枚举 refs 的 API。** `describe` 只回答调用方点名的 ref。records **有** `listRecords`，因为 orphan grant 没有 schema 可发现。 [E: packages/credentials/credentials/src/index.ts:224]
-- **Consumer 禁止跨请求缓存 `ResolvedCredential`。** 缓存会让 `set` / 外部编辑到不了下一次 stream。
-- **`credentials/reference-updated` 漏听不等于写失败。** observer 抛错仍已落盘。`INVARIANT` 会在 commit **之后**炸回调用方。 [E: packages/credentials/credentials-local/tests/review-fixes.spec.ts:145]
-- **仓库没有 keyring。** 换 Provider 可以，但 shipped bundle 只有 `credentials-local`。
-- **`sdk-minimal` 没有这条缝。** 该 profile 的 `llm-deepseek` 只能从 launch environment 取 `DEEPSEEK_API_KEY`。 [E: packages/bundle/sdk-minimal/cordis.patch.yml:26]
-- **旧扁平 YAML 必须升到 `version: 1` + `refs:`。** 不可识别的扁平文档 boot 即失败，不会静默当空 store。 [E: packages/credentials/credentials-local/src/index.ts:209]
+- **账号 token ≠ `DEEPSEEK_API_KEY`。** `resolveToken` 读 grant record，不走 ref 梯子。
+- **`source: 'env'` 挡住 `set`。** Models 页写不进被 shell 导出的 key。
+- **Models 页写入不进 `process.env`。** 否则重启后变成只读 `env`。
+- **`sdk-minimal` 没有 credentials / account。** 只能从 launch env 取 `DEEPSEEK_API_KEY`。 [E: packages/bundle/sdk-minimal/cordis.patch.yml:26]
+- **preset 不得往 root 再 `provide` `credentials` / `deepseekAccount`。** `leakedServices` 会拒。 [E: packages/preset/agent-preset-registry/src/mount.ts:86]
+- **没有 keyring。** shipped 只有 YAML。
+- **旧扁平 YAML 必须升到 `version: 1` + `refs:`。**
 
 ## Seam 三角
 
-| 角色 | 包 | ctx 键 / 合同 | bundle 行 |
+| 角色 | 包 | ctx 键 | bundle |
 |---|---|---|---|
-| Definition | `@deepseek-ai/dsh-credentials`（`index.ts` + `/types`） | `ctx.credentials`：ref 半边 `resolve` / `describe` / `set` / `unset`；record 半边 `readRecord` / `describeRecord` / `listRecords` / `modifyRecord` / `deleteRecord`；事件 `credentials/reference-updated`、`credentials/record-updated`（emit，无 `next()`） | 无独立 shipped 行。`/types` 可进浏览器编译面 |
-| Provider | `LocalCredentialProvider`（`@deepseek-ai/dsh-credentials-local`） | 实现四层梯子 + version-1 YAML；可写源只有 `$DSH_HOME/.credentials.yaml` | **base** `id: credentials`。**web / headless / sdk / acp 不重挂**。**sdk-minimal 不挂** |
-| Consumer | `dsh-llm-deepseek`、`dsh-llm-pi-ai`（含 record store）、`dsh-web-search-deepseek`、`CredentialsController`、`dsh-webhook-github` | `ctx.get('credentials')` 可选；缺缝则退回 `launchEnvironmentOf`。settings 只持 `apiKeyEnv` | adapter / search 是 host 行。preset **不** remount `credentials`；需要私有服务必须 `isolate` |
+| Definition（secret） | `dsh-credentials` | `ctx.credentials` | 无独立行 |
+| Provider（secret） | `dsh-credentials-local` | 同一键；`.credentials.yaml` | **base** `id: credentials`。sdk-minimal **无** |
+| Definition（账号） | `dsh-deepseek-account` | `ctx.deepseekAccount` | 无独立行 |
+| Provider（账号） | `dsh-deepseek-account-platform` | 同一键；grant 进 credentials records | **base** `id: deepseek-account`。sdk-minimal **无** |
+| Consumer | `llm-deepseek-api-key` / `llm-deepseek-account` / `CredentialsController` / `AccountController` / pi-ai | 每请求 resolve；缺缝 api-key 退回 launch env | api-key 在 base 与 sdk-minimal；account 只叠 base |
 
-换 Provider 只换值从哪来、哪一层可写；`CredentialRef` / `CredentialKey` 与 per-request `resolve` 合同不变。换 loop / preset 不能绕开这条缝去读一份私藏 env，否则 Models 页写的钥匙到不了下一次请求。shipped session 盘是 base 行 `session-persistence-jsonl`（`root: dshHomePath('sessions')`）。同层 `session-query-sqlite` 写 `openAt: never`。`storage*` / `session-projection-cache` 在 base；`workspace` 在 web-app insert。 [E: packages/bundle/base/cordis.patch.yml:110] [E: packages/bundle/base/cordis.patch.yml:133] [E: packages/bundle/base/cordis.patch.yml:162] [E: packages/bundle/web-app/cordis.patch.yml:75]
+换 YAML Provider 只换值从哪来。换账号 Provider 必须仍把 grant 写成 `CredentialKey` 记录。preset 需要私有服务必须 `isolate`。
 
 ## Sources
 
@@ -206,39 +163,30 @@ DSH 把密钥从组合 / settings 里拆出去，是为了让 `profile → bundl
 - packages/credentials/credentials/tests/credentials.spec.ts
 - packages/credentials/credentials-local/src/index.ts
 - packages/credentials/credentials-local/tests/local.spec.ts
-- packages/credentials/credentials-local/tests/review-fixes.spec.ts
+- packages/credentials/deepseek-account/src/index.ts
+- packages/credentials/deepseek-account/src/types.ts
+- packages/credentials/deepseek-account-platform/src/index.ts
+- packages/credentials/authorization/src/index.ts
+- packages/llm/llm-deepseek-api-key/src/index.ts
+- packages/llm/llm-deepseek-api-key/src/config.ts
+- packages/llm/llm-deepseek-account/src/index.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
 - packages/bundle/headless/cordis.patch.yml
 - packages/bundle/sdk-minimal/cordis.patch.yml
-- packages/util/launch-environment/src/index.ts
-- packages/core/session/src/index.ts
-- packages/llm/llm-deepseek/src/index.ts
-- packages/llm/llm-deepseek/src/adapter.ts
-- packages/llm/llm-deepseek/tests/loader-composition.spec.ts
-- packages/llm/llm-pi-ai/src/index.ts
-- packages/llm/llm-pi-ai/src/auth.ts
-- packages/api/settings-controller/src/index.ts
 - packages/api/settings-controller/src/credentials.ts
-- packages/settings/settings/src/index.ts
-- packages/settings/settings/src/redact.ts
-- packages/settings/settings/tests/redact.spec.ts
-- packages/web/web-search-deepseek/src/index.ts
-- packages/webhook/webhook-github/src/index.ts
-- packages/webhook/webhook-github/src/handler.ts
+- packages/api/account-controller/src/index.ts
+- packages/preset/agent-preset-registry/src/mount.ts
 - packages/core/session/src/types.ts
 - packages/session/session-format-catalog/src/generated.ts
 - packages/session/session-persistence/src/storage-contract.ts
-- packages/session/session-checkpoint-policy/src/index.ts
-- packages/preset/agent-presets/src/mount.ts
 
 ## 相关
 
-- [subsys.persistence.settings](settings.md)：`ctx.settings`；resolve = schema defaults → composition `base` → 用户文档；wire `describe({ redactSecrets: true })`。
-- [subsys.llm.deepseek](../llm/deepseek.md)：默认路由 `deepseek-official`；每请求用 `apiKeyEnv` 向本缝要 key。
-- [subsys.llm.pi-ai](../llm/pi-ai.md)：dormant 直到 settings 给出 provider profile；点名的 `apiKeyEnv` miss 即 `MISSING_CREDENTIAL`；grant/api-key 记录走 `modifyRecord`。
-- [surface.config.settings](../../surface/config/settings.md)：用户设置面与 Config 键；Models 页从表单走到 `credentials.set`。
-- [spine.capability-seams](../../spine/capability-seams.md)：Definition / Provider / Consumer 通例；host 面 vs agent-preset 面。
-- [spine.composition-boot](../../spine/composition-boot.md)：`profile → bundle → preset`；base 行如何进每个 profile。
-- [spine.overview](../../spine/overview.md)：host 面 persistence 与 preset 工具面的切分。
-- [subsys.host.apiproxy](../host/apiproxy.md)：Host HTTP API；`CredentialsController` 的 `credentials.describe` / `set` / `unset` Remote；describe 永不回 value。
+- [subsys.persistence.settings](settings.md)：`SettingsForms` 投影 `.volatile()`；不再是 `settings.yaml`。
+- [subsys.llm.deepseek](../llm/deepseek.md)：`deepseek-official` 与 `deepseek-account` 两条路由。
+- [subsys.llm.pi-ai](../llm/pi-ai.md)：点名的 `apiKeyEnv` miss 即 `MISSING_CREDENTIAL`；OAuth grant 走 `modifyRecord`。
+- [surface.config.settings](../../surface/config/settings.md)：Models 页与账号 UI。
+- [spine.capability-seams](../../spine/capability-seams.md)：host 面 vs agent-preset 面。
+- [spine.composition-boot](../../spine/composition-boot.md)：base 行如何进每个 profile。
+- [subsys.host.apiproxy](../host/apiproxy.md)：`credentials.*` 与 `account.*` Remote。

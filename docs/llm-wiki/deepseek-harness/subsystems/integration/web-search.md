@@ -20,9 +20,9 @@ source:
   - packages/bundle/base/package.json
   - packages/boot/app-boot/src/index.ts
   - packages/boot/app-boot/src/profile.ts
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - packages/web/web/package.json
   - packages/web/web-search-deepseek/package.json
   - packages/web/web-search-exa/package.json
@@ -48,7 +48,7 @@ related:
   - subsys.llm.deepseek
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-web` 的 `ctx.web` 是 search / fetch 共用的 capability seam；本页写 **search 半边** 的 Definition（`WebRuntime.registerSearchProvider` / `search` / `capSources`）与三家 Provider。Consumer 是 `dsh-tool-web` 的 `web_search`。shipped 树只挂 `web-search-deepseek`（`searchProvider: deepseek-official`）。
@@ -69,7 +69,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 本页拥有 **host 面** 的 search 选路与三家适配器：
 
 - Definition：`@deepseek-ai/dsh-web` 的 `WebRuntime`，`super(ctx, 'web')` 把实例提供成 `ctx.web`。default export Service，不是 named-export 插件。[E: packages/web/web/package.json:2] [E: packages/web/web/src/index.ts:91] [E: packages/web/web/src/index.ts:202] [E: vendor/cordis/src/service.ts:58]
-- Provider（shipped）：`@deepseek-ai/dsh-web-search-deepseek`，插件名 `web-search-deepseek`，`inject = ['web']`，`apply` 里 `registerSearchProvider(new DeepSeekSearchProvider(…))`，稳定 id `deepseek-official`。[E: packages/web/web-search-deepseek/package.json:2] [E: packages/web/web-search-deepseek/src/index.ts:38] [E: packages/web/web-search-deepseek/src/index.ts:41] [E: packages/web/web-search-deepseek/src/index.ts:139] [E: packages/web/web-search-deepseek/src/provider.ts:27]
+- Provider（shipped）：`@deepseek-ai/dsh-web-search-deepseek`，插件名 `web-search-deepseek`，`inject = ['web']`，`apply` 里 `registerSearchProvider(new DeepSeekSearchProvider(…))`，稳定 id `deepseek-official`。[E: packages/web/web-search-deepseek/package.json:2] [E: packages/web/web-search-deepseek/src/index.ts:38] [E: packages/web/web-search-deepseek/src/index.ts:41] [E: packages/web/web-search-deepseek/src/index.ts:128] [E: packages/web/web-search-deepseek/src/provider.ts:27]
 - Provider（仓库有、**不进** shipped 树）：`@deepseek-ai/dsh-web-search-exa`（id `exa`）、`@deepseek-ai/dsh-web-search-perplexity`（id `perplexity`）。同样 `inject = ['web']`，named export。[E: packages/web/web-search-exa/package.json:2] [E: packages/web/web-search-exa/src/index.ts:29] [E: packages/web/web-search-exa/src/index.ts:32] [E: packages/web/web-search-exa/src/provider.ts:19] [E: packages/web/web-search-perplexity/package.json:2] [E: packages/web/web-search-perplexity/src/index.ts:24] [E: packages/web/web-search-perplexity/src/index.ts:27] [E: packages/web/web-search-perplexity/src/provider.ts:19]
 
 它**不**拥有：
@@ -79,11 +79,11 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 - DeepSeek **对话**路由 `deepseek-official`（`ctx.llm` + `DEEPSEEK_BASE_URL`）— [`subsys.llm.deepseek`](../llm/deepseek.md)（`subsys.llm.deepseek`）。同名字符串是另一条 seam 的 adapter id，不是本页的 search Provider。
 - `dsh-base` 整棵 host 树 — [`subsys.composition.bundle-base`](../composition/bundle-base.md)（`subsys.composition.bundle-base`）。
 
-**host 面 vs agent-preset 面。** `id: web` 与 `id: web-search-deepseek` 只出现在 `dsh-base` 的 insert 里：`searchProvider: deepseek-official`，`apiKeyEnv: DEEPSEEK_API_KEY`。[E: packages/bundle/base/cordis.patch.yml:439] [E: packages/bundle/base/cordis.patch.yml:442] [E: packages/bundle/base/cordis.patch.yml:445] [E: packages/bundle/base/cordis.patch.yml:448] 同文件还钉 `fetchProvider: http` 并 insert `web-fetch-http`，那是 fetch 半边，不在本页展开。[E: packages/bundle/base/cordis.patch.yml:443] [E: packages/bundle/base/cordis.patch.yml:450] manifest 依赖只有 `@deepseek-ai/dsh-web`、`@deepseek-ai/dsh-web-fetch-http` 与 `@deepseek-ai/dsh-web-search-deepseek`，没有 Exa / Perplexity。[E: packages/bundle/base/package.json:122] [E: packages/bundle/base/package.json:125]
+**host 面 vs agent-preset 面。** `id: web` 与 `id: web-search-deepseek` 只出现在 `dsh-base` 的 insert 里：`searchProvider: deepseek-official`，`apiKeyEnv: DEEPSEEK_API_KEY`。[E: packages/bundle/base/cordis.patch.yml:474] [E: packages/bundle/base/cordis.patch.yml:477] [E: packages/bundle/base/cordis.patch.yml:480] [E: packages/bundle/base/cordis.patch.yml:483] 同文件还钉 `fetchProvider: http` 并 insert `web-fetch-http`，那是 fetch 半边，不在本页展开。[E: packages/bundle/base/cordis.patch.yml:478] [E: packages/bundle/base/cordis.patch.yml:485] manifest 依赖只有 `@deepseek-ai/dsh-web`、`@deepseek-ai/dsh-web-fetch-http` 与 `@deepseek-ai/dsh-web-search-deepseek`，没有 Exa / Perplexity。[E: packages/bundle/base/package.json:118] [E: packages/bundle/base/package.json:119] [E: packages/bundle/base/package.json:120]
 
-`web` profile 的 bundle 序是 `dsh-base` 再叠 `dsh-web-app`；`headless` 是 `dsh-base` 再叠 `dsh-headless`；`sdk` / `acp` 同样叠 `dsh-base` 再叠对应 app；`sdk-minimal` **只**叠 `dsh-sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:111] [E: packages/boot/app-boot/src/profile.ts:115] [E: packages/boot/app-boot/src/profile.ts:119] [E: packages/boot/app-boot/src/profile.ts:123] [E: packages/boot/app-boot/src/profile.ts:106] `dsh-web-app` 把 host 面 `tool-web` 写成 `disabled: true`，不改 `web` / `web-search-deepseek`。[E: packages/bundle/web-app/cordis.patch.yml:467] [E: packages/bundle/web-app/cordis.patch.yml:467] `dsh-headless` 的 patch 没有 `id: web` / `id: web-search-*` 行，沿用 `dsh-base`。[I]
+`web` profile 的 bundle 序是 `dsh-base` 再叠 `dsh-web-app`；`headless` 是 `dsh-base` 再叠 `dsh-headless`；`sdk` / `acp` 同样叠 `dsh-base` 再叠对应 app；`sdk-minimal` **只**叠 `dsh-sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:184] [E: packages/boot/app-boot/src/profile.ts:187] [E: packages/boot/app-boot/src/profile.ts:190] [E: packages/boot/app-boot/src/profile.ts:193] [E: packages/boot/app-boot/src/profile.ts:180] `dsh-web-app` 把 host 面 `tool-web` 写成 `disabled: true`，不改 `web` / `web-search-deepseek`。[E: packages/bundle/web-app/cordis.patch.yml:552] [E: packages/bundle/web-app/cordis.patch.yml:553] `dsh-headless` 的 patch 没有 `id: web` / `id: web-search-*` 行，沿用 `dsh-base`。[I]
 
-四个 shipped preset 都不挂 search Provider。`standard` / `ptc` / `cordis` 只 remount Consumer：`id: tool-web`，`fetch: true`，`searchTimeoutMs: 60000`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:252] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:252] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:258] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:258] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246] `minimal` 没有 `tool-web` 行。[I] 旧目录名 `code` 现为 `presets/ptc/`；wiki 节点 id `surface.presets.code` 仍是稳定别名。
+四个 shipped preset 都不挂 search Provider。声明只在 `dsh-web-app` 的 `presets/{standard,ptc,minimal,cordis}.patch.yml`：`standard` / `ptc` / `cordis` remount Consumer `id: tool-web`，`fetch: true`，`searchTimeoutMs: 60000`。[E: packages/bundle/web-app/presets/standard.patch.yml:137] [E: packages/bundle/web-app/presets/standard.patch.yml:140] [E: packages/bundle/web-app/presets/standard.patch.yml:141] [E: packages/bundle/web-app/presets/ptc.patch.yml:139] [E: packages/bundle/web-app/presets/ptc.patch.yml:142] [E: packages/bundle/web-app/presets/cordis.patch.yml:136] [E: packages/bundle/web-app/presets/cordis.patch.yml:139] `minimal` 没有 `tool-web` 行。[I] 旧目录名 `code` 现为 `ptc`；wiki 节点 id `surface.presets.code` 仍是稳定别名。
 
 **没有 waterfall，没有 isolate。** 本缝不往 `Events.waterfall` 挂 listener。组合失败是 `inject` 等到 `web`、重复 id `WEB_DUPLICATE_PROVIDER`、执行期选不中 Provider。Cordis 全局规则仍是：waterfall 必须调用传入的 `next()` 才会 `cbs.shift()`；不调用就停在本层。[E: vendor/cordis/src/events.ts:239] 父工具管线的 `tools/pre-execute` 属于 Consumer / loop，不在本页。
 
@@ -93,7 +93,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 |---|---|
 | `packages/web/web/src/index.ts` | `WebRuntime`：`ctx.web`、两张 Provider 表、`resolveProvider`、`capSources` |
 | `packages/web/web/src/types.ts` | `WebSearchRequest` / `WebSearchResult` / `WebSearchProvider` / `WebError` |
-| `packages/web/web-search-deepseek/src/index.ts` | named 插件：`resolveOptions`、`SEARCH_BASE_URL_ENV`、settings 段、`apply` |
+| `packages/web/web-search-deepseek/src/index.ts` | named 插件：`resolveOptions`、`SEARCH_BASE_URL_ENV`、`apply` |
 | `packages/web/web-search-deepseek/src/provider.ts` | `DeepSeekSearchProvider`：Anthropic Messages + `web_search_20250305` |
 | `packages/web/web-search-exa/src/index.ts` | Exa 插件；**不进** shipped bundle |
 | `packages/web/web-search-exa/src/provider.ts` | `ExaSearchProvider`：`POST /search`，请求层可带 `numResults` |
@@ -101,8 +101,8 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 | `packages/web/web-search-perplexity/src/provider.ts` | `PerplexitySearchProvider`：chat-completions，可回 `content` |
 | `packages/bundle/base/cordis.patch.yml` | host 真树：`web` + `web-search-deepseek` + host `tool-web` |
 | `packages/bundle/web-app/cordis.patch.yml` | 关掉 host `tool-web`，不改 search Provider |
-| `packages/preset/agent-presets/presets/standard/agent.cordis.yml` | preset 只 remount Consumer |
-| `packages/preset/agent-presets/presets/ptc/agent.cordis.yml` | PTC preset remount Consumer（旧名 `code`） |
+| `packages/bundle/web-app/presets/standard.patch.yml` | preset 只 remount Consumer |
+| `packages/bundle/web-app/presets/ptc.patch.yml` | PTC preset remount Consumer（旧名 `code`） |
 | `packages/web/web/tests/web.spec.ts` | 选路码、`capSources`、fiber dispose、search/fetch 分表 |
 | `packages/web/web-search-deepseek/tests/deepseek.spec.ts` | 默认端点、凭据、无 result block、named export |
 
@@ -112,37 +112,37 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不�
 |---|---|
 | `WebRuntimeConfig` | 可选 `searchProvider` / `fetchProvider`。省略则「恰好一个 usable」才自动选。`$DSH_WEB_SEARCH_PROVIDER` 填**同一个** `searchProviderId` 字段，不是第二条隐式链。[E: packages/web/web/src/index.ts:80] [E: packages/web/web/src/index.ts:92] |
 | `WebSearchRequest` | `query` + 可选 `maxResults`。模型参数表不在本页；`dsh-tool-web` 总会带上 `maxResults`。[E: packages/web/web/src/types.ts:16] [E: packages/web/web/src/types.ts:25] |
-| `WebSearchResult` | 可选 `content`、`sources[]`、`truncated`。`content` 是 Provider 摘要；DeepSeek / Exa 不设，Perplexity 可设。[E: packages/web/web/src/types.ts:35] [E: packages/web/web-search-deepseek/src/provider.ts:173] [E: packages/web/web-search-exa/src/provider.ts:80] [E: packages/web/web-search-perplexity/src/provider.ts:79] |
+| `WebSearchResult` | 可选 `content`、`sources[]`、`truncated`。`content` 是 Provider 摘要；DeepSeek / Exa 不设，Perplexity 可设。[E: packages/web/web/src/types.ts:35] [E: packages/web/web-search-deepseek/src/provider.ts:172] [E: packages/web/web-search-exa/src/provider.ts:80] [E: packages/web/web-search-perplexity/src/provider.ts:79] |
 | `WebSearchSource` | 必有 `url`；`title` / `snippet` / `publishedAt` 可选。[E: packages/web/web/src/types.ts:50] |
 | `WebSearchProvider` | `id` + `available()` + `search(request, signal?)`。`available()` 是同步谓词。[E: packages/web/web/src/types.ts:102] [E: packages/web/web/src/types.ts:105] |
 | `DeepSeekSearchProviderOptions` | `apiKey?` / `resolveApiKey?` / `apiKeyEnv?` / `baseURL` / `model` / `apiVersion` / `maxTokens` / `maxUses` / `recordRequest?`。插件路径每次 search 现投影。 |
-| `DEEPSEEK_PROVIDER_ID` | `'deepseek-official'`。默认 `baseURL` 是 `https://api.deepseek.com/anthropic/v1`（再拼 `/messages`），**不是** chat-completions 的 `https://api.deepseek.com`。[E: packages/web/web-search-deepseek/src/provider.ts:27] [E: packages/web/web-search-deepseek/src/provider.ts:35] |
-| `SEARCH_BASE_URL_ENV` | 字面 `'DEEPSEEK_SEARCH_BASE_URL'`。解析链：`config.baseURL` ?? 启动环境该变量 ?? `DEEPSEEK_DEFAULT_BASE_URL`。链上没有 `DEEPSEEK_BASE_URL`。[E: packages/web/web-search-deepseek/src/index.ts:82] [E: packages/web/web-search-deepseek/src/index.ts:110] [E: packages/web/web-search-deepseek/src/index.ts:111] [E: packages/web/web-search-deepseek/src/index.ts:112] |
-| `WebError` code | 选路：`WEB_PROVIDER_CONFIGURED_MISSING` / `WEB_PROVIDER_CONFIGURED_UNAVAILABLE` / `WEB_PROVIDER_UNAVAILABLE` / `WEB_PROVIDER_AMBIGUOUS` / `WEB_DUPLICATE_PROVIDER`。DeepSeek 另抛 `WEB_PROVIDER_CREDENTIAL_MISSING` / `WEB_PROVIDER_ERROR` / `WEB_ABORTED`。[E: packages/web/web/src/index.ts:177] [E: packages/web/web/src/index.ts:180] [E: packages/web/web/src/index.ts:187] [E: packages/web/web/src/index.ts:191] [E: packages/web/web/src/index.ts:120] [E: packages/web/web-search-deepseek/src/provider.ts:307] |
+| `DEEPSEEK_PROVIDER_ID` | `'deepseek-official'`。默认 `baseURL` 是 `https://api.deepseek.com/anthropic/v1`（再拼 `/messages`），**不是** chat-completions 的 `https://api.deepseek.com`。[E: packages/web/web-search-deepseek/src/provider.ts:27] [E: packages/web/web-search-deepseek/src/provider.ts:34] |
+| `SEARCH_BASE_URL_ENV` | 字面 `'DEEPSEEK_SEARCH_BASE_URL'`。解析链：`config.baseURL` ?? 启动环境该变量 ?? `DEEPSEEK_DEFAULT_BASE_URL`。链上没有 `DEEPSEEK_BASE_URL`。[E: packages/web/web-search-deepseek/src/index.ts:80] [E: packages/web/web-search-deepseek/src/index.ts:110] [E: packages/web/web-search-deepseek/src/index.ts:111] [E: packages/web/web-search-deepseek/src/index.ts:112] |
+| `WebError` code | 选路：`WEB_PROVIDER_CONFIGURED_MISSING` / `WEB_PROVIDER_CONFIGURED_UNAVAILABLE` / `WEB_PROVIDER_UNAVAILABLE` / `WEB_PROVIDER_AMBIGUOUS` / `WEB_DUPLICATE_PROVIDER`。DeepSeek 另抛 `WEB_PROVIDER_CREDENTIAL_MISSING` / `WEB_PROVIDER_ERROR` / `WEB_ABORTED`。[E: packages/web/web/src/index.ts:177] [E: packages/web/web/src/index.ts:180] [E: packages/web/web/src/index.ts:187] [E: packages/web/web/src/index.ts:191] [E: packages/web/web/src/index.ts:120] [E: packages/web/web-search-deepseek/src/provider.ts:306] |
 
-`available()` ≠ 有密钥。插件 `resolveOptions` **总是**装上 `resolveApiKey` 函数，所以 DeepSeek 在缺 key 时仍 `available() === true`（只要 `baseURL` 能 `URL.canParse`，且 `maxTokens` / `maxUses` 是正整数）；缺 key 发生在 `search()` 里的 `WEB_PROVIDER_CREDENTIAL_MISSING`。[E: packages/web/web-search-deepseek/src/index.ts:102] [E: packages/web/web-search-deepseek/src/provider.ts:194] [E: packages/web/web-search-deepseek/src/provider.ts:307] 直接 `new DeepSeekSearchProvider({ apiKey: '', … })` 且不给 `resolveApiKey` 时，`available()` 才是 false。[E: packages/web/web-search-deepseek/tests/deepseek.spec.ts:162]
+`available()` ≠ 有密钥。插件 `resolveOptions` **总是**装上 `resolveApiKey` 函数，所以 DeepSeek 在缺 key 时仍 `available() === true`（只要 `baseURL` 能 `URL.canParse`，且 `maxTokens` / `maxUses` 是正整数）；缺 key 发生在 `search()` 里的 `WEB_PROVIDER_CREDENTIAL_MISSING`。[E: packages/web/web-search-deepseek/src/index.ts:102] [E: packages/web/web-search-deepseek/src/provider.ts:193] [E: packages/web/web-search-deepseek/src/provider.ts:306] 直接 `new DeepSeekSearchProvider({ apiKey: '', … })` 且不给 `resolveApiKey` 时，`available()` 才是 false。[E: packages/web/web-search-deepseek/tests/deepseek.spec.ts:162]
 
 ## 控制流
 
-1. `web` profile 先叠 `dsh-base`，再叠 `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:111] `dsh-base` insert `id: web` / `name: '@deepseek-ai/dsh-web'`，钉 `searchProvider: deepseek-official`；再 insert `id: web-search-deepseek`，`apiKeyEnv: DEEPSEEK_API_KEY`；再 insert host `id: tool-web`（`fetch: false`，`searchTimeoutMs: 60000`）。[E: packages/bundle/base/cordis.patch.yml:439] [E: packages/bundle/base/cordis.patch.yml:442] [E: packages/bundle/base/cordis.patch.yml:445] [E: packages/bundle/base/cordis.patch.yml:448] [E: packages/bundle/base/cordis.patch.yml:453] [E: packages/bundle/base/cordis.patch.yml:460] `dsh-web-app` 把那行 host `tool-web` 改成 `disabled: true`。[E: packages/bundle/web-app/cordis.patch.yml:467] `standard` / `ptc` / `cordis` 在 **preset 面** 再挂回同一 Consumer 行且 `fetch: true`；`minimal` 不挂。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:252] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:252]
+1. `web` profile 先叠 `dsh-base`，再叠 `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:184] `dsh-base` insert `id: web` / `name: '@deepseek-ai/dsh-web'`，钉 `searchProvider: deepseek-official`；再 insert `id: web-search-deepseek`，`apiKeyEnv: DEEPSEEK_API_KEY`；再 insert host `id: tool-web`（`fetch: true`，`searchTimeoutMs: 60000`）。[E: packages/bundle/base/cordis.patch.yml:474] [E: packages/bundle/base/cordis.patch.yml:477] [E: packages/bundle/base/cordis.patch.yml:480] [E: packages/bundle/base/cordis.patch.yml:483] [E: packages/bundle/base/cordis.patch.yml:488] [E: packages/bundle/base/cordis.patch.yml:498] `dsh-web-app` 把那行 host `tool-web` 改成 `disabled: true`。[E: packages/bundle/web-app/cordis.patch.yml:552] `standard` / `ptc` / `cordis` 在 **preset 面** 再挂回同一 Consumer 行且 `fetch: true`；`minimal` 不挂。[E: packages/bundle/web-app/presets/standard.patch.yml:141] [E: packages/bundle/web-app/presets/standard.patch.yml:141]
 
-2. `WebRuntime` 构造：`super(ctx, 'web')` 立刻 `provide`，`searchProviderId = config.searchProvider ?? process.env.DSH_WEB_SEARCH_PROVIDER`。[E: packages/web/web/src/index.ts:91] [E: packages/web/web/src/index.ts:92] shipped yml 已经写了 `searchProvider`，因此 `$DSH_WEB_SEARCH_PROVIDER` **赢不了** 那一行。本包 **不** 读 `DEEPSEEK_BASE_URL`。`app-boot` 把 `DEEPSEEK_BASE_URL` 与 `DEEPSEEK_SEARCH_BASE_URL` 并列入 bootstrap-only 名单，正是两条变量。[E: packages/boot/app-boot/src/index.ts:109]
+2. `WebRuntime` 构造：`super(ctx, 'web')` 立刻 `provide`，`searchProviderId = config.searchProvider ?? process.env.DSH_WEB_SEARCH_PROVIDER`。[E: packages/web/web/src/index.ts:91] [E: packages/web/web/src/index.ts:92] shipped yml 已经写了 `searchProvider`，因此 `$DSH_WEB_SEARCH_PROVIDER` **赢不了** 那一行。本包 **不** 读 `DEEPSEEK_BASE_URL`。`app-boot` 把 `DEEPSEEK_BASE_URL` 与 `DEEPSEEK_SEARCH_BASE_URL` 并列入 bootstrap-only 名单，正是两条变量。[E: packages/boot/app-boot/src/index.ts:148]
 
-3. `apply@packages/web/web-search-deepseek/src/index.ts` 是 named export。`installSettingsSection` 把 `current` 换成 live settings 源，`onChange` 为空——改 endpoint / key **不** 重注册 Provider。[E: packages/web/web-search-deepseek/src/index.ts:130] [E: packages/web/web-search-deepseek/src/index.ts:132] [E: packages/web/web-search-deepseek/src/index.ts:136] 然后 `ctx.web.registerSearchProvider(new DeepSeekSearchProvider(() => resolveOptions(ctx, current())))`。[E: packages/web/web-search-deepseek/src/index.ts:139] 测试用 `unwrapExports` 钉死这条路能 `inject: ['web']`。[E: packages/web/web-search-deepseek/tests/deepseek.spec.ts:468]
+3. `apply@packages/web/web-search-deepseek/src/index.ts` 是 named export。它直接 `registerSearchProvider(new DeepSeekSearchProvider(() => resolveOptions(ctx, { …config.*.get() })))`：每次 search 现读 Config，**不再** `installSection` / 空 `onChange` thunk。[E: packages/web/web-search-deepseek/src/index.ts:127] [E: packages/web/web-search-deepseek/src/index.ts:128] 测试用 `unwrapExports` 钉死这条路能 `inject: ['web']`。[E: packages/web/web-search-deepseek/tests/deepseek.spec.ts:468]
 
 4. `registerSearchProvider@packages/web/web/src/index.ts` 走私有 `registerProvider`：同表同 id 立刻 `WEB_DUPLICATE_PROVIDER`；否则 `ctx.effect` 写入 Map，yield 时 `delete`。[E: packages/web/web/src/index.ts:103] [E: packages/web/web/src/index.ts:120] [E: packages/web/web/src/index.ts:122] 返回的 disposer 与 contributing fiber dispose 都会摘掉。[E: packages/web/web/tests/web.spec.ts:50] [E: packages/web/web/tests/web.spec.ts:73] fiber 卸掉且 `searchProvider` 仍钉着 `deepseek-official` 时，下一次 `search` 是 `WEB_PROVIDER_CONFIGURED_MISSING`，不会改去自动选别人。[E: packages/web/web-search-deepseek/tests/deepseek.spec.ts:433]
 
-5. Exa / Perplexity **只有 overlay 才会进树**。各自 `apply` 在 load 时把 Config + 环境密钥冻进 Provider 实例（`EXA_API_KEY` / `PERPLEXITY_API_KEY`），没有 DeepSeek 那套 settings thunk。[E: packages/web/web-search-exa/src/index.ts:61] [E: packages/web/web-search-perplexity/src/index.ts:56] `dsh-base` 的 `dependencies` 与 bundle patch 都没有这两包。包存在 ≠ 产品默认装。
+5. Exa / Perplexity **只有 overlay 才会进树**。各自 `apply` 在 load 时把 Config + 环境密钥冻进 Provider 实例（`EXA_API_KEY` / `PERPLEXITY_API_KEY`）。DeepSeek 则每次 search 现读 Config `get()`。[E: packages/web/web-search-exa/src/index.ts:61] [E: packages/web/web-search-perplexity/src/index.ts:56] [E: packages/web/web-search-deepseek/src/index.ts:128] `dsh-base` 的 `dependencies` 与 bundle patch 都没有这两包。包存在 ≠ 产品默认装。
 
 6. Consumer `runSearchQueries@packages/web/tool-web/src/search.ts` 在 `execute` 路径里调用 `ctx.web.search({ query, maxResults }, signal)`。单 query 走一次；多 query 并发，每次仍带同一 `maxResults`。[E: packages/web/tool-web/src/search.ts:238] [E: packages/web/tool-web/src/search.ts:246] `maxResults` 来自 `tool-web` Config，不是模型参数。插件 `search: true` 时，即使当时零个 usable Provider，schema 里仍有 `web_search`；失败码是执行期的 `WEB_PROVIDER_UNAVAILABLE`（或钉死 id 时的 `WEB_PROVIDER_CONFIGURED_*`）。enablement ≠ availability。[E: packages/web/tool-web/src/index.ts:91] [E: packages/web/tool-web/tests/tool-web.spec.ts:480] [E: packages/web/tool-web/tests/tool-web.spec.ts:486]
 
 7. `WebRuntime.search@packages/web/web/src/index.ts` 在**调用时** `resolveProvider`，再 `provider.search`，再 `capSources`。[E: packages/web/web/src/index.ts:141] [E: packages/web/web/src/index.ts:145] [E: packages/web/web/src/index.ts:146] `resolveProvider`：有 `configuredId` 则必须已登记且 `available()`，否则 `WEB_PROVIDER_CONFIGURED_MISSING` / `WEB_PROVIDER_CONFIGURED_UNAVAILABLE`；无 id 时过滤 `available()` 为真的条目——零个 `WEB_PROVIDER_UNAVAILABLE`，多于一个 `WEB_PROVIDER_AMBIGUOUS`（文案带上那些 id），恰好一个才用。[E: packages/web/web/src/index.ts:174] [E: packages/web/web/src/index.ts:177] [E: packages/web/web/src/index.ts:180] [E: packages/web/web/src/index.ts:184] [E: packages/web/web/src/index.ts:187] [E: packages/web/web/src/index.ts:191] 测试钉死「多个 usable 不按注册顺序挑」。[E: packages/web/web/tests/web.spec.ts:102] [E: packages/web/web/tests/web.spec.ts:106]
 
-8. `DeepSeekSearchProvider.search@packages/web/web-search-deepseek/src/provider.ts` 入口立刻 `resolveOptions()` 冻一份，整次调用共用 endpoint / key / model。[E: packages/web/web-search-deepseek/src/provider.ts:204] `apiKey()`：字面 `apiKey` 非空直接用；否则 await `resolveApiKey`（有 `ctx.credentials` 走 `credentials.resolve`，否则 `launchEnvironmentOf(ctx).get(apiKeyEnv)`）。空结果抛 `WEB_PROVIDER_CREDENTIAL_MISSING`。[E: packages/web/web-search-deepseek/src/index.ts:102] [E: packages/web/web-search-deepseek/src/provider.ts:289] [E: packages/web/web-search-deepseek/src/provider.ts:307] 配置全省略时，测试打到 `https://api.deepseek.com/anthropic/v1/messages`，`x-api-key` 来自环境 `DEEPSEEK_API_KEY`。[E: packages/web/web-search-deepseek/tests/deepseek.spec.ts:495]
+8. `DeepSeekSearchProvider.search@packages/web/web-search-deepseek/src/provider.ts` 入口立刻 `resolveOptions()` 冻一份，整次调用共用 endpoint / key / model。[E: packages/web/web-search-deepseek/src/provider.ts:203] `apiKey()`：字面 `apiKey` 非空直接用；否则 await `resolveApiKey`（有 `ctx.credentials` 走 `credentials.resolve`，否则 `launchEnvironmentOf(ctx).get(apiKeyEnv)`）。空结果抛 `WEB_PROVIDER_CREDENTIAL_MISSING`。[E: packages/web/web-search-deepseek/src/index.ts:102] [E: packages/web/web-search-deepseek/src/provider.ts:288] [E: packages/web/web-search-deepseek/src/provider.ts:306] 配置全省略时，测试打到 `https://api.deepseek.com/anthropic/v1/messages`，`x-api-key` 来自环境 `DEEPSEEK_API_KEY`。[E: packages/web/web-search-deepseek/tests/deepseek.spec.ts:495]
 
-9. 辅助 Messages 请求。`endpoint = ${baseURL}/messages`。body **只有** `model` / `max_tokens` / 一条 user text `Perform a web search for the query: ${request.query}` / `tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses }]`。没有 `maxResults`，不走 `ctx.llm`。[E: packages/web/web-search-deepseek/src/provider.ts:207] [E: packages/web/web-search-deepseek/src/provider.ts:213] [E: packages/web/web-search-deepseek/src/provider.ts:215] `recordRequest` 先 `session.append('web/deepseek-search-llm-request', …)` 再 `fetch`；抛错会挡住发出（model-visible ⟺ logged）。[E: packages/web/web-search-deepseek/src/index.ts:118] [E: packages/web/web-search-deepseek/src/provider.ts:217] headers 同时带 `x-api-key` 与 `Authorization: Bearer`；`redirect: 'error'`。[E: packages/web/web-search-deepseek/src/provider.ts:227] [E: packages/web/web-search-deepseek/src/provider.ts:231]
+9. 辅助 Messages 请求。`endpoint = ${baseURL}/messages`。body **只有** `model` / `max_tokens` / 一条 user text `Perform a web search for the query: ${request.query}` / `tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses }]`。没有 `maxResults`，不走 `ctx.llm`。[E: packages/web/web-search-deepseek/src/provider.ts:206] [E: packages/web/web-search-deepseek/src/provider.ts:212] [E: packages/web/web-search-deepseek/src/provider.ts:214] `recordRequest` 先 `session.append('web/deepseek-search-llm-request', …)` 再 `fetch`；抛错会挡住发出（model-visible ⟺ logged）。[E: packages/web/web-search-deepseek/src/index.ts:118] [E: packages/web/web-search-deepseek/src/provider.ts:216] headers 同时带 `x-api-key` 与 `Authorization: Bearer`；`redirect: 'error'`。[E: packages/web/web-search-deepseek/src/provider.ts:226] [E: packages/web/web-search-deepseek/src/provider.ts:230]
 
-10. `mapAnthropicResponse`：没有 `web_search_tool_result` 块就 `WEB_PROVIDER_ERROR`，不刮 prose。[E: packages/web/web-search-deepseek/src/provider.ts:150] [E: packages/web/web-search-deepseek/src/provider.ts:153] 从 result 块收 `web_search_result`，按 `url` 去重；snippet 来自 text 块 `citations[].cited_text`；`page_age` → `publishedAt`。返回 `{ sources, truncated: false }`，**不设** `content`。[E: packages/web/web-search-deepseek/src/provider.ts:162] [E: packages/web/web-search-deepseek/src/provider.ts:173]
+10. `mapAnthropicResponse`：没有 `web_search_tool_result` 块就 `WEB_PROVIDER_ERROR`，不刮 prose。[E: packages/web/web-search-deepseek/src/provider.ts:149] [E: packages/web/web-search-deepseek/src/provider.ts:152] 从 result 块收 `web_search_result`，按 `url` 去重；snippet 来自 text 块 `citations[].cited_text`；`page_age` → `publishedAt`。返回 `{ sources, truncated: false }`，**不设** `content`。[E: packages/web/web-search-deepseek/src/provider.ts:161] [E: packages/web/web-search-deepseek/src/provider.ts:172]
 
 11. `capSources@packages/web/web/src/index.ts` 在 seam 回程截断：`maxResults` 省略或条数未超则原样返回；超出则 `sources.slice(0, maxResults)` 且 `truncated: true`。[E: packages/web/web/src/index.ts:198] [E: packages/web/web/src/index.ts:199] 测试：Provider 回 3 条、请求 `maxResults: 2` 时长度为 2 且 `truncated === true`。[E: packages/web/web/tests/web.spec.ts:166] [E: packages/web/web/tests/web.spec.ts:167] DeepSeek 自己总报 `truncated: false`；条数帽是这一层的事。
 
@@ -176,8 +176,8 @@ DeepSeek 不走 `ctx.llm`、不刮散文：辅助 Messages 是 Provider 私有 `
 - **无 result block 就是错。** 散文-only 的 2xx 变成 `WEB_PROVIDER_ERROR`，不是空 `sources`。
 - **同 id 再注册 fail-loud。** `WEB_DUPLICATE_PROVIDER`。search 与 fetch 可以各有一个 `id: 'shared'`。
 - **卸掉 DeepSeek fiber 不会自动改选。** shipped 钉着 `deepseek-official` 时变成 `WEB_PROVIDER_CONFIGURED_MISSING`。
-- **DeepSeek 有 settings thunk；Exa / Perplexity 在 `apply` 冻死。** 改 Exa key 要重载插件。
-- **插件 Config `fetch: true` 是包默认。** `dsh-tool-web` 的 schema 默认 `fetch: true`。[E: packages/web/tool-web/src/index.ts:56] `dsh-base` 的 host 行写 `fetch: false`；`standard` / `ptc` / `cordis` remount 写成 `fetch: true`。fetch Provider 页是 [`subsys.integration.web-fetch`](web-fetch.md)。
+- **DeepSeek 每次 search 现读 Config；Exa / Perplexity 在 `apply` 冻死。** 改 Exa key 要重载插件。
+- **插件 Config `fetch: true` 是包默认。** `dsh-tool-web` 的 schema 默认 `fetch: true`。[E: packages/web/tool-web/src/index.ts:56] `dsh-base` 的 host 行也写 `fetch: true`；`dsh-web-app` 把 host 行 `disabled: true`，`standard` / `ptc` / `cordis` remount 再写成 `fetch: true`。fetch Provider 页是 [`subsys.integration.web-fetch`](web-fetch.md)。
 - **`sdk-minimal` 没有本缝。** 它不叠 `dsh-base`，bundle 依赖也不含 `dsh-web`。叠 `dsh-base` 的 `web` / `headless` / `sdk` / `acp` 才有 host 面 search。
 
 ## Seam 三角
@@ -187,7 +187,7 @@ DeepSeek 不走 `ctx.llm`、不刮散文：辅助 Messages 是 Provider 私有 `
 | **Definition** | `@deepseek-ai/dsh-web` 的 `WebRuntime` | `ctx.web`。**host**：`dsh-base` `id: web`，`searchProvider: deepseek-official`。也认 `$DSH_WEB_SEARCH_PROVIDER` 填同一字段 |
 | **Provider（本页，shipped）** | `@deepseek-ai/dsh-web-search-deepseek` 的 `DeepSeekSearchProvider` | `registerSearchProvider`，id `deepseek-official`。`inject = ['web']`。host 行 `id: web-search-deepseek`，`apiKeyEnv: DEEPSEEK_API_KEY`。**不在** shipped preset |
 | **Provider（本页，仓库 only）** | `dsh-web-search-exa` / `dsh-web-search-perplexity` | id `exa` / `perplexity`。**不在** `dsh-base` / `dsh-web-app` / `dsh-headless` / 四个 shipped preset |
-| **Consumer** | `@deepseek-ai/dsh-tool-web` 的 `web_search` | `inject = ['tools', 'web', 'systemPrompt']`。host `dsh-base` 有一行且 `fetch: false`；`dsh-web-app` `disabled: true`；`standard` / `ptc` / `cordis` remount 且 `fetch: true`，`minimal` 不装。字段表在 [`surface.tools.web-search`](../../surface/tools/web-search.md) |
+| **Consumer** | `@deepseek-ai/dsh-tool-web` 的 `web_search` | `inject = ['tools', 'web', 'systemPrompt']`。host `dsh-base` 有一行且 `fetch: true`；`dsh-web-app` `disabled: true`；`standard` / `ptc` / `cordis` remount 且 `fetch: true`，`minimal` 不装。字段表在 [`surface.tools.web-search`](../../surface/tools/web-search.md) |
 | **对照（另一条 seam）** | `@deepseek-ai/dsh-llm-deepseek` | 也叫 `deepseek-official`，但是 `ctx.llm` + `DEEPSEEK_BASE_URL`。不要和 search Provider 混 |
 
 换 search 后端 = overlay 另一家 Provider **并** 改 `id: web` 的 `searchProvider`（或在未 pin 时保证恰好一个 usable）。同 id 再注册会 `WEB_DUPLICATE_PROVIDER`。
@@ -209,9 +209,9 @@ DeepSeek 不走 `ctx.llm`、不刮散文：辅助 Messages 是 Provider 私有 `
 - packages/bundle/base/package.json
 - packages/boot/app-boot/src/index.ts
 - packages/boot/app-boot/src/profile.ts
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - packages/web/web/package.json
 - packages/web/web-search-deepseek/package.json
 - packages/web/web-search-exa/package.json

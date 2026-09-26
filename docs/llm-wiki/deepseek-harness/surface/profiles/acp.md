@@ -30,10 +30,10 @@ related:
   - surface.presets.overview
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
-> `acp` 是 shipped **stdio 宿主 profile**：`PROFILE_TEMPLATES.acp` 把 `@deepseek-ai/dsh-base` 叠上 `@deepseek-ai/dsh-acp-app`，`patchReload: 'startup'`。overlay 只改 host 面 persona、关掉 `session-title-llm`，再 insert 零 extra-flag 的 `acp-app-startup` 与 `inject: [acpAppStartup]` 的 `dsh-acp` 桥。stdout 归 ACP JSON-RPC；`--help` 不 provide 服务、不占 stdio。没有 `dsh acp` 子命令 alias，没有 `agent-presets` roster。
+> `acp` 是 shipped **stdio 宿主 profile**：`PROFILE_TEMPLATES.acp` 把 `@deepseek-ai/dsh-base` 叠上 `@deepseek-ai/dsh-acp-app`。overlay 只改 host 面 persona、关掉 `session-title-llm` 与 `hmr`，再 insert 零 extra-flag 的 `acp-app-startup` 与 `inject: [acpAppStartup]` 的 `dsh-acp` 桥。stdout 归 ACP JSON-RPC；`--help` 不 provide 服务、不占 stdio。入口是 `dsh acp` 或 `dsh --profile acp`。**不**挂 `agent-preset-registry`，**不**叠四份 shipped preset 文件。
 
 ## 能回答的问题
 
@@ -45,33 +45,32 @@ updated: c291e7961a
 
 ## 是什么
 
-DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。**profile** 是 `$DSH_HOME/profiles/<name>`：`dsh.profile.bundles` 定 bundle 顺序，`dsh.profile.patchReload` 定用户 patch 是 boot 一次还是 live watch。五个 shipped 模板键在 `PROFILE_TEMPLATES`：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:105] `acp` 是：
+DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。**profile** 是 `$DSH_HOME/profiles/<name>`：`dsh.profile.bundles` 定 bundle 顺序。五个 shipped 模板键在 `PROFILE_TEMPLATES`：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:179] `acp` 是：
 
 ```ts
 acp: {
   bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-acp-app'],
-  patchReload: 'startup',
 }
 ```
 
-[E: packages/boot/app-boot/src/profile.ts:106] [E: packages/boot/app-boot/src/profile.ts:107] [E: packages/boot/app-boot/src/profile.ts:108] 测试按对象相等锁死这张表。[E: packages/boot/app-boot/tests/profile.spec.ts:206]
+[E: packages/boot/app-boot/src/profile.ts:180] [E: packages/boot/app-boot/src/profile.ts:181]
 
 `@deepseek-ai/dsh-acp-app` 的 manifest 把 bundle patch 指到本包 `./cordis.patch.yml`。[E: packages/bundle/acp-app/package.json:2] [E: packages/bundle/acp-app/package.json:33] 描述是 automation-only JSON-RPC stdio + 进程生命周期，叠在 `dsh-base` 上。[E: packages/bundle/acp-app/package.json:3]
 
-本 overlay **不** insert `agent-presets`，**不** disable base 的 `tool-*`。模型可见工具留在 **host 面**（与 headless 同类）；协议桥 `agents.create` 的权威走读在 [`surface.acp.server`](../acp/server.md)，本页不复述 ACP 方法表。`sdk-minimal` 是唯一不叠 `dsh-base` 的 shipped bundle；`acp` 叠 base。
+本 overlay **不** insert `agent-preset-registry`，**不** disable base 的 `tool-*`。模型可见工具留在 **host 面**（与 headless 同类）；协议桥 `agents.create` 的权威走读在 [`surface.acp.server`](../acp/server.md)，本页不复述 ACP 方法表。`sdk-minimal` 是唯一不叠 `dsh-base` 的 shipped bundle；`acp` 叠 base。
 
 ## 入口
 
 | 入口 | 行为 |
 |---|---|
-| `dsh --profile acp` | launcher `parseDshArgs` → `resolveBoot` 得到 `mode: 'profile'` 与传入的 profile 名。[E: apps/cli/src/args.ts:101] [E: apps/cli/src/args.ts:126] `dsh web` 是唯一硬编码 profile 子命令；acp 没有 `dsh acp`。[E: apps/cli/src/args.ts:175] |
-| `dsh --profile acp --help` / `-h` | inner args 交给 app commander；stdout 含 `Usage: dsh --profile acp`，exit 0。[E: apps/cli/tests/built-bin.e2e.ts:390] 不 provide `acpAppStartup`。[E: packages/bundle/acp-app/tests/startup.spec.ts:60] |
-| `dsh --profile acp --dump-config` / `--dump-default-config` | dump 树后退出，不跑 startup。[E: apps/cli/src/dump-config.ts:31] |
+| `dsh acp` 或 `dsh --profile acp` | launcher `parseDshArgs` → `resolveBoot` 得到 `mode: 'profile'`。[E: apps/cli/src/args.ts:117] [E: apps/cli/src/args.ts:201] |
+| `dsh --profile acp --help` / `-h` | inner args 交给 app commander；stdout 含 `Usage: dsh --profile acp`，exit 0。不 provide `acpAppStartup`。[E: packages/bundle/acp-app/tests/startup.spec.ts:60] |
+| `dsh --profile acp --dump-config` / `--dump-default-config` | dump 树后退出，不跑 startup。[E: apps/cli/src/dump-config.ts:32] |
 | `$DSH_HOME/profiles/acp/cordis.patch.yml`、`$DSH_HOME/cordis.patch.yml`、`--patch` | 用户层，叠在两个 bundle 之后。 |
 
-`bin.ts` 在 `mode: 'profile'` 动态 `import('./profile-boot.ts')` 并 `runProfile`。[E: apps/cli/src/bin.ts:32] [E: apps/cli/src/bin.ts:34] 目录尚无 `package.json` 且名字命中模板时，`initProfile(dir, template.bundles, template.patchReload)` 写出 `$DSH_HOME/profiles/acp/`。[E: packages/boot/app-boot/src/profile.ts:827] 未知名字第一次 **不会** 自动 init。[E: packages/boot/app-boot/src/profile.ts:824]
+`bin.ts` 在 `mode: 'profile'` 动态 `import('./profile-boot.ts')` 并 `runProfile`。[E: apps/cli/src/bin.ts:24] [E: apps/cli/src/bin.ts:26] 目录尚无 `package.json` 且名字命中模板时，`initProfile(dir, template.bundles)` 写出 `$DSH_HOME/profiles/acp/`。[E: packages/boot/app-boot/src/profile.ts:715] 未知名字第一次 **不会** 自动 init。[E: packages/boot/app-boot/src/profile.ts:712]
 
-`provideCmdline` 冻 `ctx.cmdlineArgs` 与 `ctx.appExit`。[E: apps/cli/src/profile-boot.ts:330] `acp-app-startup` 的 commander 程序名是 `dsh --profile acp`，零 extra-flag。[E: packages/bundle/acp-app/src/index.ts:27]
+`provideCmdline` 冻 `ctx.cmdlineArgs` 与 `ctx.appExit`。[E: packages/boot/cmdline/src/index.ts:84] `acp-app-startup` 的 commander 程序名是 `dsh --profile acp`，零 extra-flag。[E: packages/bundle/acp-app/src/index.ts:27]
 
 ## 关键字段
 
@@ -90,7 +89,7 @@ ACP 桥插件本身的 `name` / `inject` / `Config` 权威在 [`surface.acp.serv
 
 ### Overlay 每一行
 
-`packages/bundle/acp-app/cordis.patch.yml` 叠在 `dsh-base` 之后。测试断言 **不** 改写 `hmr`（继承 base 的 disable + `patchReload: startup`）。[E: packages/bundle/acp-app/tests/acp-app.spec.ts:27]
+`packages/bundle/acp-app/cordis.patch.yml` 叠在 `dsh-base` 之后。测试断言 overlay 把 `hmr` 写成 `disabled: true`。[E: packages/bundle/acp-app/tests/acp-app.spec.ts:27] [E: packages/bundle/acp-app/cordis.patch.yml:23]
 
 | id | 操作 | 含义 |
 |---|---|---|
@@ -99,25 +98,25 @@ ACP 桥插件本身的 `name` / `inject` / `Config` 权威在 [`surface.acp.serv
 | `acp-app-startup` | insert `name: '@deepseek-ai/dsh-acp-app'` | 零 extra-flag commander + startup latch。[E: packages/bundle/acp-app/cordis.patch.yml:13] [E: packages/bundle/acp-app/cordis.patch.yml:14] |
 | `acp` | insert `name: '@deepseek-ai/dsh-acp'`，`inject: [acpAppStartup]` | 等 latch 后再占 stdio；`config.provider: deepseek-official`，`config.model: deepseek-v4-flash`。[E: packages/bundle/acp-app/cordis.patch.yml:16] [E: packages/bundle/acp-app/cordis.patch.yml:18] [E: packages/bundle/acp-app/cordis.patch.yml:20] [E: packages/bundle/acp-app/cordis.patch.yml:21] |
 
-没有 `webserver` / `dsh-client-*` / `agent-presets` 行。这条 `acp` 行仍硬编码 `deepseek-official` / `deepseek-v4-flash`，**不是** base `agent-default-model` 的 `deepseek-flash`。**ACP 会话创建**读的是这条 overlay 上的 `provider` / `model`（细节见 ACP server 节点）。
+没有 `webserver` / `dsh-client-*` / `agent-preset-registry` 行。这条 `acp` 行仍硬编码 `deepseek-official` / `deepseek-v4-flash`，**不是** base `agent-default-model` 的 `deepseek-flash`。**ACP 会话创建**读的是这条 overlay 上的 `provider` / `model`（细节见 ACP server 节点）。
 
 ## 装配与门控
 
-叠层（CLI 文件内 `composeProfile`）：bundle（先 `dsh-base` 再 `dsh-acp-app`）→ profile `cordis.patch.yml` → home → `--patch`。[E: apps/cli/src/profile-boot.ts:236] `DSH_TELEMETRY_DISABLED` 非空且树里有 `session-telemetry-otel` 时再 disable 该行。[E: apps/cli/src/profile-boot.ts:240]
+叠层：bundle（先 `dsh-base` 再 `dsh-acp-app`）→ profile `cordis.patch.yml` → home → `--patch`。[E: packages/boot/app-boot/src/profile-context.ts:65] `DSH_TELEMETRY_DISABLED` 非空且树里有 `session-telemetry-otel` 时再 disable 该行。[E: packages/boot/app-boot/src/profile-context.ts:53]
 
-`runProfile` **只在** `composed.profile.patchReload === 'live'` 时装用户层 watcher。[E: apps/cli/src/profile-boot.ts:343] 模板是 `startup`，默认 **不** 装 live HMR。用户手改 manifest 写成 `live` 才会走 watcher。
+overlay 把 `hmr` 写成 `disabled: true`。[E: packages/bundle/acp-app/cordis.patch.yml:23] launcher **不再**按 `patchReload` 另装 watcher。
 
 **help 不挂桥**：`acp` 行 `inject: [acpAppStartup]`；help 不 provide 服务，桥不激活，stdout 只打 usage。
 
-**isolate / preset**：默认不 mount preset，没有 `leakedServices` 检查。host 面上的 `tool-*` / registry 与桥同树。五个 shipped profile 里只有 web overlay insert `agent-presets`。
+**isolate / preset**：默认不 mount preset，没有 `leakedServices` 检查。host 面上的 `tool-*` / registry 与桥同树。五个 shipped profile 里只有 web overlay insert `agent-preset-registry` 并叠四份 preset 文件。
 
 失败怎么响：未知 profile 名且无目录 → `loadProfile` 指向 `dsh plugin --profile <name> add`；`--help` → exit 0、无服务；缺 `appExit`/`appReady` 时 `exitOnStdinEnd` 同步抛错。
 
 ## 跨包关系
 
-- [`surface.cli.overview`](../cli/overview.md)：launcher 三种 mode；`dsh --profile acp` 与 `dsh web` / `--profile headless|sdk|sdk-minimal` 并列。acp 无 extra app 旗标。
-- [`surface.profiles.web`](web.md)：唯一 `live` + 唯一硬编码 alias；disable base `tool-*` 再 insert roster。acp 反向：工具留 host，`startup` 冻结 patch。
-- [`surface.profiles.headless`](headless.md)：同样 `dsh-base` + overlay、`startup`、无 roster。headless 是 one-shot task + stdout 文本；acp 是长驻 stdio JSON-RPC。
+- [`surface.cli.overview`](../cli/overview.md)：launcher 四种 mode 与 `dsh <name>` 简写。`dsh acp` 与 `dsh web` 并列。acp 无 extra app 旗标。
+- [`surface.profiles.web`](web.md)：disable base `tool-*` 再 insert roster 并叠四份 preset。acp 反向：工具留 host。
+- [`surface.profiles.headless`](headless.md)：同样 `dsh-base` + overlay、无 roster。headless 是 one-shot task + stdout 文本；acp 是长驻 stdio JSON-RPC。
 - [`surface.acp.server`](../acp/server.md)：`@deepseek-ai/dsh-acp` 方法表、session/new、stdio codec。本页只覆盖 profile 模板与 overlay latch。
 - [`spine.composition-boot`](../../spine/composition-boot.md)：`loadProfile` / `composeEntries` / `!!js`。
 - [`surface.presets.overview`](../presets/overview.md)：四个 shipped preset 目录存在 **不等于** acp 默认会 mount。

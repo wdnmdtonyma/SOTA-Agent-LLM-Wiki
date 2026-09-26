@@ -20,14 +20,14 @@ source:
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/base/package.json
   - packages/bundle/web-app/cordis.patch.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - apps/cli/tests/web-agent-presets.e2e.ts
   - packages/compaction/compaction-basic/src/index.ts
   - packages/compaction/compaction-tool-result-pruner/src/index.ts
   - packages/core/session/src/index.ts
-  - packages/preset/agent-presets/src/mount.ts
+  - packages/preset/agent-preset-registry/src/mount.ts
   - vendor/cordis/src/events.ts
   - vendor/cordis/src/service.ts
 symbols:
@@ -46,7 +46,7 @@ related:
   - subsys.context.compaction-basic
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-token-meter` 是 **host 面**单例压力计量：`ctx.tokenMeter.measure(session, requestHeader?)` 从 append-only session log 重放当前 surface 与可选 provider `usage`，给出请求压力快照。它不挂 `llm/stream` / `agent/request`，不实现 tokenizer，不计费，也不拥有 compaction 策略。
@@ -70,7 +70,7 @@ updated: c291e7961a
 - compaction 何时压、压哪一段、`thresholdRatio` / `retainRatio` —— [`subsys.context.compaction`](../context/compaction.md) / [`subsys.context.compaction-basic`](../context/compaction-basic.md)。那条 Consumer 在 pressure / overflow / 选段时反复拉 `measure`。
 - append-only `SessionEvent` 日志与 `deriveMessages()` —— [`subsys.core.session`](../core/session.md) / [`spine.session-log`](../../spine/session-log.md)。
 - 默认产品组合树里「这一行插在哪」—— [`subsys.composition.bundle-base`](../composition/bundle-base.md)；Web 叠层谁 `disabled` —— [`subsys.composition.bundle-web-app`](../composition/bundle-web-app.md)。
-- tokenizer 实现、账单 / 价格表、`contextWindow` 容量。容量属于各 adapter 的 model info；compaction 用它算阈值。图像视觉 token 属于 routed adapter 的 `imageRequestPricing`，meter 只在 `measure` 时查 `ctx.get('llm')`。[E: packages/llm/token-meter/src/index.ts:184]
+- tokenizer 实现、账单 / 价格表、`contextWindow` 容量。容量属于各 adapter 的 model info；compaction 用它算阈值。图像视觉 token 属于 routed adapter 的 `imageRequestPricing`，meter 只在 `measure` 时查 `ctx.get('llm')`。[E: packages/llm/token-meter/src/index.ts:194]
 
 DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。`ctx.tokenMeter` 是 **host 面**进程级单例，按 `Session` 分 fold，不是每会话一份服务。五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；四个 shipped preset 是 `minimal` / `standard` / `ptc` / `cordis`。本仓没有 shipped TUI。
 
@@ -93,11 +93,11 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。`ctx
 | `packages/bundle/base/cordis.patch.yml` | host 组合行 `id: token-meter` |
 | `packages/bundle/base/package.json` | `dependencies` 含 `@deepseek-ai/dsh-token-meter` |
 | `packages/bundle/web-app/cordis.patch.yml` | 只 disable compaction 后端，留下 meter |
-| `packages/preset/agent-presets/presets/standard/agent.cordis.yml` | compaction `isolate` 只有 `compaction` / `toolResultPruner` |
-| `packages/preset/agent-presets/presets/ptc/agent.cordis.yml` | 同组 `isolate`，同样不含 `tokenMeter` |
-| `packages/preset/agent-presets/presets/cordis/agent.cordis.yml` | 同组 `isolate`，同样不含 `tokenMeter` |
+| `packages/bundle/web-app/presets/standard.patch.yml` | compaction `isolate` 只有 `compaction` / `toolResultPruner` |
+| `packages/bundle/web-app/presets/ptc.patch.yml` | 同组 `isolate`，同样不含 `tokenMeter` |
+| `packages/bundle/web-app/presets/cordis.patch.yml` | 同组 `isolate`，同样不含 `tokenMeter` |
 | `apps/cli/tests/web-agent-presets.e2e.ts` | 挂 preset 之前 `ctx.get('tokenMeter')` 已在 |
-| `packages/preset/agent-presets/src/mount.ts` | `leakedServices`：preset 不得把 process-global 服务泄漏进 root |
+| `packages/preset/agent-preset-registry/src/mount.ts` | `leakedServices`：preset 不得把 process-global 服务泄漏进 root |
 | `packages/compaction/compaction-basic/src/index.ts` | Consumer：`inject = ['tokenMeter']`，压力路径调 `measure` |
 | `packages/compaction/compaction-tool-result-pruner/src/index.ts` | Consumer：`estimateMessage` 写 shadow price |
 | `packages/core/session/src/index.ts` | `session/event` 签名无 `next`，append 后 fire-and-forget |
@@ -109,40 +109,40 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。`ctx
 | 符号 | 要点 |
 |---|---|
 | `TokenMeterConfig` | `Record<string, never>`。公共类型排除一切设置。[E: packages/llm/token-meter/src/types.ts:13] |
-| `TokenMeter.Config` | Schemastery `z.object({})`。未知键在构造里抛 `TokenMeterConfig: unknown key "…"`。[E: packages/llm/token-meter/src/index.ts:93] [E: packages/llm/token-meter/src/index.ts:78] |
-| `TokenMeasurement` | 深冻快照：`logRevision`、`baseline`、`surfaceDeltaTokens`、`totalTokens`、`surfaceTokens`、`nodes`。`totalTokens = max(0, baseline.tokens + surfaceDeltaTokens)`。[E: packages/llm/token-meter/src/index.ts:174] |
+| `TokenMeter.Config` | Schemastery `z.object({})`。未知键在构造里抛 `TokenMeterConfig: unknown key "…"`。[E: packages/llm/token-meter/src/index.ts:104] [E: packages/llm/token-meter/src/index.ts:88] |
+| `TokenMeasurement` | 深冻快照：`logRevision`、`baseline`、`surfaceDeltaTokens`、`totalTokens`、`surfaceTokens`、`nodes`。`totalTokens = max(0, baseline.tokens + surfaceDeltaTokens)`。[E: packages/llm/token-meter/src/index.ts:183] |
 | `TokenMeasurementBaseline` | `none`（空会话）/ `estimated`（整信封启发式）/ `usage`（provider 桶总和 + 原始 `TokenUsage`）。[E: packages/llm/token-meter/src/types.ts:16] |
 | `TokenSurfaceNode` | `{ seq, tokens, heuristicTokens }`。`tokens` 是路由计价后的请求价；`heuristicTokens` 是固定启发式，给 shadow-price 协议用。[E: packages/llm/token-meter/src/types.ts:38] |
 | `CHARS_PER_TOKEN` | 固定 `4`。另加每块 `BLOCK_OVERHEAD = 4`、每条消息 `ROLE_OVERHEAD = 4`。[E: packages/llm/token-meter/src/estimate.ts:13] [E: packages/llm/token-meter/src/estimate.ts:16] [E: packages/llm/token-meter/src/estimate.ts:19] |
-| `tokenUsage` | 四只互斥桶：`uncachedInputTokens` / `outputTokens` / `cacheReadTokens` / `cacheWriteTokens`。`bucketsFrom` 不读 `reasoningTokens`；跨 step 累加测试钉死 reasoning 不双计。[E: packages/llm/token-meter/src/usage-projection.ts:21] [E: packages/llm/token-meter/tests/token-usage-projection.spec.ts:210] |
-| `contextPressure` | last-wins：`pressureTokens`（prompt 侧，不含 output）、`projectedTokens`、`contextWindow`。不是一次原子请求观察。[E: packages/llm/token-meter/src/usage-projection.ts:150] [E: packages/llm/token-meter/src/usage-projection.ts:78] |
-| `contextBreakdown` | 启发式组成：`systemTokens` + `toolsTokens` + `messageTokens`。三列与 provider 锚的 `projectedTokens` **不可相加当总量**。[E: packages/llm/token-meter/src/breakdown-projection.ts:51] |
+| `tokenUsage` | 四只互斥桶：`uncachedInputTokens` / `outputTokens` / `cacheReadTokens` / `cacheWriteTokens`。`bucketsFrom` 不读 `reasoningTokens`。[E: packages/llm/token-meter/src/usage-projection.ts:21] |
+| `contextPressure` | last-wins：`pressureTokens`（prompt 侧，不含 output）、`projectedTokens`、`contextWindow`。不是一次原子请求观察。[E: packages/llm/token-meter/src/usage-projection.ts:210] |
+| `contextBreakdown` | 启发式组成：`systemTokens` + `toolsTokens` + `messageTokens`。三列与 provider 锚的 `projectedTokens` **不可相加当总量**。[E: packages/llm/token-meter/src/breakdown-projection.ts:54] |
 
-`usageTokens@index.ts` 把一次 provider 报告加成 `inputTokens + cacheRead + cacheWrite + outputTokens`，不加 `reasoningTokens`。[E: packages/llm/token-meter/src/index.ts:58]
+`usageTokens@index.ts` 把一次 provider 报告加成 `inputTokens + cacheRead + cacheWrite + outputTokens`，不加 `reasoningTokens`。[E: packages/llm/token-meter/src/index.ts:71]
 
 ## 控制流
 
-1. **host 面插单例。** `dsh-base` 的根 `insert` 有 `id: token-meter` / `name: '@deepseek-ai/dsh-token-meter'`，依赖写在 base manifest。叠 `dsh-base` 的 profile（`web` / `headless` / `sdk` / `acp`）都带这一行；`sdk-minimal` 不叠 base，其 bundle 也不再插 `token-meter`。[E: packages/bundle/base/cordis.patch.yml:317] [E: packages/bundle/base/cordis.patch.yml:318] [E: packages/bundle/base/package.json:102]
+1. **host 面插单例。** `dsh-base` 的根 `insert` 有 `id: token-meter` / `name: '@deepseek-ai/dsh-token-meter'`，依赖写在 base manifest。叠 `dsh-base` 的 profile（`web` / `headless` / `sdk` / `acp`）都带这一行；`sdk-minimal` 不叠 base，其 bundle 也不再插 `token-meter`。[E: packages/bundle/base/cordis.patch.yml:337] [E: packages/bundle/base/cordis.patch.yml:338] [E: packages/bundle/base/package.json:98]
 
-2. **`TokenMeter` 立刻 `provide`。** 构造函数 `super(ctx, 'tokenMeter')` 走 Cordis `Service`：`ctx.reflect.provide(name, self, …)`，fiber 卸载即撤。随后 `validateConfigKeys`：`Object.keys(config)` 任一键立刻抛错。`static inject = ['sessionProjections']`：投影登记是硬依赖，不是可选 inject。[E: packages/llm/token-meter/src/index.ts:100] [E: vendor/cordis/src/service.ts:57] [E: packages/llm/token-meter/src/index.ts:94] [E: packages/llm/token-meter/tests/token-meter.spec.ts:145]
+2. **`TokenMeter` 立刻 `provide`。** 构造函数 `super(ctx, 'tokenMeter')` 走 Cordis `Service`：`ctx.reflect.provide(name, self, …)`，fiber 卸载即撤。随后 `validateConfigKeys`：`Object.keys(config)` 任一键立刻抛错。`static inject = ['sessionProjections']`：投影登记是硬依赖，不是可选 inject。[E: packages/llm/token-meter/src/index.ts:111] [E: vendor/cordis/src/service.ts:57] [E: packages/llm/token-meter/src/index.ts:106] [E: packages/llm/token-meter/tests/token-meter.spec.ts:139]
 
-3. **不在请求路径上。** `TokenMeter` 构造登记三套投影，以及 `ctx.on('session/event', …)` 对**已经**建过 fold 的 session 做 eager `_sync`。没有 `llm/stream`、没有 `agent/request`、没有 `agent/pre-step`。`ReactLoopAgent` 发包走 [`subsys.llm.service`](./service.md) 的 `prepareCall` / `stream`，不调用 `measure`。[E: packages/llm/token-meter/src/index.ts:103] [E: packages/llm/token-meter/src/index.ts:109] [I]
+3. **不在请求路径上。** `TokenMeter` 构造登记三套投影，以及 `ctx.on('session/event', …)` 对**已经**建过 fold 的 session 做 eager `_sync`。没有 `llm/stream`、没有 `agent/request`、没有 `agent/pre-step`。`ReactLoopAgent` 发包走 [`subsys.llm.service`](./service.md) 的 `prepareCall` / `stream`，不调用 `measure`。[E: packages/llm/token-meter/src/index.ts:114] [E: packages/llm/token-meter/src/index.ts:120] [I]
 
-4. **`session/event` 不是 waterfall。** 事件签名是 `(session, event) => void`，没有 `next` 参数。append 先 `this.log.push` 再 `invokeContainedSessionObservers`；listener 失败不能回滚已提交事件。`TokenMeter` 只在 `this.states.has(session)` 时追赶，避免给从未被读过的 session 建 fold。[E: packages/core/session/src/index.ts:72] [E: packages/core/session/src/index.ts:645] [E: packages/core/session/src/index.ts:654] [E: packages/llm/token-meter/src/index.ts:109]
+4. **`session/event` 不是 waterfall。** 事件签名是 `(session, event) => void`，没有 `next` 参数。append 先 `this.log.push` 再 `invokeContainedSessionObservers`；listener 失败不能回滚已提交事件。`TokenMeter` 只在 `this.states.has(session)` 时追赶，避免给从未被读过的 session 建 fold。[E: packages/core/session/src/index.ts:77] [E: packages/core/session/src/index.ts:761] [E: packages/core/session/src/index.ts:764] [E: packages/llm/token-meter/src/index.ts:120]
 
-5. **拉式计量：`measure@index.ts`。** 调用方传入 `Session` 与可选的有效信封 `requestHeader`。`_sync` 把私有 `ReplayState` 追到 `session.events` 尾；`logRevision` 等于已消费条数。`requestHeader` 只改请求压力（选哪条 baseline / 路由计价）；返回的 `nodes` 永远描述当前 surface。生产 Consumer 只传 `session`。[E: packages/llm/token-meter/src/index.ts:145] [E: packages/llm/token-meter/src/index.ts:145]
+5. **拉式计量：`measure@index.ts`。** 调用方传入 `Session` 与可选的有效信封 `requestHeader`。`_sync` 把私有 `ReplayState` 追到 `session.events` 尾；`logRevision` 等于已消费条数。`requestHeader` 只改请求压力（选哪条 baseline / 路由计价）；返回的 `nodes` 永远描述当前 surface。生产 Consumer 只传 `session`。[E: packages/llm/token-meter/src/index.ts:146]
 
-6. **按事件 fold。** `_foldEvent@index.ts` 先算出下一份 header / step 边界 / usage 锚，再 `commitSurfaceTokens`。`request/header` 更新 canonical 信封；`step/start` 记下当时的 surface 节点；`step/end` 必须配对。surface 事件走 `planSurfaceTokens@surface-fold.ts`：`append` 追加节点，`replace` 按当前 `nodes` 闭区间 splice。非法 range / 缺 `step/start` 在写入前抛错，同一畸形事件每次 `measure` 都同样失败。[E: packages/llm/token-meter/src/index.ts:225] [E: packages/llm/token-meter/src/surface-fold.ts:84] [E: packages/llm/token-meter/src/surface-fold.ts:97]
+6. **按事件 fold。** `_foldEvent@index.ts` 先算出下一份 header / step 边界 / usage 锚，再 `commitSurfaceTokens`。`request/header` 更新 canonical 信封；`step/start` 记下当时的 surface 节点；`step/end` 必须配对。surface 事件走 `planSurfaceTokens@surface-fold.ts`：`append` 追加节点，`replace` 按当前 `nodes` 闭区间 splice。非法 range / 缺 `step/start` 在写入前抛错，同一畸形事件每次 `measure` 都同样失败。[E: packages/llm/token-meter/src/index.ts:247] [E: packages/llm/token-meter/src/surface-fold.ts:94]
 
-7. **启发式定价。** `estimateContent@estimate.ts` 对 `text` / `reasoning` 做 `ceil(length / 4) + 4`；`tool-call` 价 name+arguments；`tool-result` 递归；未知块与 image 引用走 `estimateStructuralBlock`（`JSON.stringify`）。`estimateMessage` 再加 `ROLE_OVERHEAD`。测试钉死 `'abcd'` 文本消息 = 9。信封价是 `estimateSystemTokens + estimateToolsTokens`。[E: packages/llm/token-meter/src/estimate.ts:43] [E: packages/llm/token-meter/src/estimate.ts:86] [E: packages/llm/token-meter/tests/token-meter.spec.ts:173]
+7. **启发式定价。** `estimateContent@estimate.ts` 对 `text` / `reasoning` 做 `ceil(length / 4) + 4`；`tool-call` 价 name+arguments；`tool-result` 递归；未知块与 image 引用走 `estimateStructuralBlock`（`JSON.stringify`）。`estimateMessage` 再加 `ROLE_OVERHEAD`。测试钉死 `'abcd'` 文本消息 = 9。信封价是 `estimateToolsTokens`（system prompt 现为 surface 节点）。[E: packages/llm/token-meter/src/estimate.ts:42] [E: packages/llm/token-meter/src/estimate.ts:88] [E: packages/llm/token-meter/tests/token-meter.spec.ts:160]
 
-8. **usage 锚只在「不比全量启发式更小」且信封匹配时采用。** `assistant/message` 若带 `usage` 且已有 header：记下 `MeasurementAnchor`（header、stepStart 节点、provider assistant 启发式、usage）。`measure` 时若当前信封与锚 header 相等，用同一路由 `priceSurface` 重算锚 surface，再算 `estimatedAnchorTokens = estimateHeader + anchorSurfaceTokens`。仅当 `usageTokens(usage) >= estimatedAnchorTokens` 才把 baseline 写成 `{ kind: 'usage', … }`；否则写 `estimated`。之后 surface 的 signed delta 加在这条锚上；`totalTokens` 下限为 0。[E: packages/llm/token-meter/src/index.ts:155] [E: packages/llm/token-meter/src/index.ts:151] [E: packages/llm/token-meter/tests/token-meter.spec.ts:339]
+8. **usage 锚只在「不比全量启发式更小」且信封匹配时采用。** `assistant/message` 若带 `usage` 且已有 header：记下 `MeasurementAnchor`（header、当时 surface 节点、provider assistant 启发式、usage）。provider 输出价来自 `assembleAssistantStream(event.data.stream)`，不是 durable 改写后的文本。`measure` 时若当前信封与锚 header 相等，用同一路由 `priceSurface` 重算锚 surface，再算 `estimatedAnchorTokens = estimateToolsTokens(header) + anchorSurfaceTokens`。仅当 `usageTokens(usage) >= estimatedAnchorTokens` 才把 baseline 写成 `{ kind: 'usage', … }`；否则写 `estimated`。之后 surface 的 signed delta 加在这条锚上；`totalTokens` 下限为 0。[E: packages/llm/token-meter/src/index.ts:168] [E: packages/llm/token-meter/src/index.ts:337] [E: packages/llm/token-meter/tests/token-meter.spec.ts:325]
 
-9. **web 留下；preset 不把 `tokenMeter` 放进 isolate。** `dsh-web-app` 把 host 上的 `compaction-basic` / `command-compact` / `tool-result-pruner` 标 `disabled: true`，**没有** disable `token-meter`。`standard` / `ptc` / `cordis` 的 compaction 组 `isolate` 都只有 `compaction: true` 与 `toolResultPruner: true`。Web e2e 在任何 preset mount 之前断言 `ctx.get('tokenMeter')` 已定义，并且 `minimal` 会话的投影表仍含三套 meter 单元。[E: packages/bundle/web-app/cordis.patch.yml:412] [E: packages/bundle/web-app/cordis.patch.yml:427] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:142] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:143] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:149] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:150] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:130] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:131] [E: apps/cli/tests/web-agent-presets.e2e.ts:197] [E: apps/cli/tests/web-agent-presets.e2e.ts:210]
+9. **web 留下；preset 不把 `tokenMeter` 放进 isolate。** `dsh-web-app` 把 host 上的 `compaction-basic` / `command-compact` / `tool-result-pruner` 标 `disabled: true`，**没有** disable `token-meter`。`standard` / `ptc` / `cordis` 的 compaction 组 `isolate` 都只有 `compaction: true` 与 `toolResultPruner: true`。Web e2e 在任何 preset mount 之前断言 `ctx.get('tokenMeter')` 已定义。[E: packages/bundle/web-app/cordis.patch.yml:506] [E: packages/bundle/web-app/cordis.patch.yml:509] [E: packages/bundle/web-app/cordis.patch.yml:512] [E: packages/bundle/web-app/presets/standard.patch.yml:66] [E: packages/bundle/web-app/presets/standard.patch.yml:67] [E: packages/bundle/web-app/presets/ptc.patch.yml:66] [E: packages/bundle/web-app/presets/ptc.patch.yml:67] [E: packages/bundle/web-app/presets/cordis.patch.yml:65] [E: packages/bundle/web-app/presets/cordis.patch.yml:66] [E: apps/cli/tests/web-agent-presets.e2e.ts:228]
 
-10. **Consumer 在自己的 waterfall 里拉 meter。** `BasicCompactionEngine` `static inject = ['llm', 'tokenMeter', 'sessions']`；`compactIfNeeded` 调用 `meter.measure(agent.session)`。它挂在 `agent/pre-step` waterfall：先尝试 pressure compaction，**然后** `return next()`。不调用 `next()` 时 `Events.waterfall` 的 `next` 不会 `cbs.shift()`，turn 停在 pre-step，到不了 `prepareCall` / `stream`。`ToolResultPruner` 同样 `inject = ['tokenMeter']`，在 `compaction/prune` 里用 `estimateMessage` 写下 `shadowedTokenCount`。[E: packages/compaction/compaction-basic/src/index.ts:105] [E: packages/compaction/compaction-basic/src/index.ts:268] [E: packages/compaction/compaction-basic/src/index.ts:165] [E: vendor/cordis/src/events.ts:238] [E: packages/compaction/compaction-tool-result-pruner/src/index.ts:47] [E: packages/compaction/compaction-tool-result-pruner/src/index.ts:166]
+10. **Consumer 在自己的 waterfall 里拉 meter。** `BasicCompactionEngine` `static inject = ['llm', 'tokenMeter', 'sessions']`；`compactIfNeeded` 调用 `meter.measure(agent.session)`。它挂在 `agent/pre-step` waterfall：先尝试 pressure compaction，**然后** `return next()`。不调用 `next()` 时 `Events.waterfall` 的 `next` 不会 `cbs.shift()`，turn 停在 pre-step，到不了 `prepareCall` / `stream`。`ToolResultPruner` 同样 `inject = ['tokenMeter']`，在 `compaction/prune` 里用 `estimateMessage` 写下 `shadowedTokenCount`。[E: packages/compaction/compaction-basic/src/index.ts:113] [E: packages/compaction/compaction-basic/src/index.ts:278] [E: packages/compaction/compaction-basic/src/index.ts:175] [E: vendor/cordis/src/events.ts:237] [E: packages/compaction/compaction-tool-result-pruner/src/index.ts:47] [E: packages/compaction/compaction-tool-result-pruner/src/index.ts:163]
 
-11. **投影走另一条 O(1) fold。** `foldSurfaceProjection@surface-projection.ts` 不保留 per-node 价：`compaction/summary` 或 `compaction/prune` 武装一条 `ShadowPriceClaim`，紧邻的 `replace` 用 claim 做 signed delta。缺 claim 的旧 log 以 0 delta 折叠（可能漂移）。`contextBreakdown` 的 `messageTokens` 加上同一份 `fold.deltaTokens`；无图像 repricing 时测试要求它与 `measure().surfaceTokens` 逐事件相等。有路由图像价时，`measure().surfaceTokens` 会刻意偏离 `nodes[].heuristicTokens` 之和。[E: packages/llm/token-meter/src/surface-projection.ts:68] [E: packages/llm/token-meter/src/breakdown-projection.ts:26] [E: packages/llm/token-meter/tests/context-breakdown-projection.spec.ts:249]
+11. **投影走另一条 O(1) fold。** `foldSurfaceProjection@surface-projection.ts` 不保留 per-node 价：`compaction/summary` 或 `compaction/prune` 武装一条 `ShadowPriceClaim`，紧邻的 `replace` 用 claim 做 signed delta。缺 claim 的旧 log 以 0 delta 折叠（可能漂移）。`contextBreakdown` 的 `messageTokens` 加上同一份 `fold.deltaTokens`；无图像 repricing 时测试要求它与 `measure().surfaceTokens` 逐事件相等。有路由图像价时，`measure().surfaceTokens` 会刻意偏离 `nodes[].heuristicTokens` 之和。[E: packages/llm/token-meter/src/surface-projection.ts:65] [E: packages/llm/token-meter/src/breakdown-projection.ts:56] [E: packages/llm/token-meter/tests/context-breakdown-projection.spec.ts:257]
 
 ## 设计动机
 
@@ -155,16 +155,16 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。`ctx
 
 ## Gotcha
 
-- **`tokenMeter` 不得进 isolate。** shipped preset 的 compaction 组只 isolate `compaction` 与 `toolResultPruner`。若在 preset 再挂一行 `token-meter` 且不加 isolate，`leakedServices` 会收集进 root 符号的服务名并抛错；若加上 `isolate: { tokenMeter: true }`，host `ctx.get('tokenMeter')` 看不见那份实例，投影也会跟 mount 绑定。正确做法是根本不挂第二行，让 `inject: ['tokenMeter']` 解析 host 那一个。[E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:410]
-- **任何 Config 键都抛。** 测试覆盖 `models`、`contextWindow`、`contextWidow`。Schemastery 空对象会保留未知键，所以必须手写 `validateConfigKeys`。[E: packages/llm/token-meter/tests/token-meter.spec.ts:134]
+- **`tokenMeter` 不得进 isolate。** shipped preset 的 compaction 组只 isolate `compaction` 与 `toolResultPruner`。若在 preset 再挂一行 `token-meter` 且不加 isolate，`leakedServices` 会收集进 root 符号的服务名并抛错；若加上 `isolate: { tokenMeter: true }`，host `ctx.get('tokenMeter')` 看不见那份实例，投影也会跟 mount 绑定。正确做法是根本不挂第二行，让 `inject: ['tokenMeter']` 解析 host 那一个。[E: packages/preset/agent-preset-registry/src/mount.ts:86]
+- **任何 Config 键都抛。** 测试覆盖 `models`、`contextWindow`、`contextWidow`。Schemastery 空对象会保留未知键，所以必须手写 `validateConfigKeys`。[E: packages/llm/token-meter/tests/token-meter.spec.ts:127]
 - **4 chars/token 不是 tokenizer。** `'abcd'` = 9 只钉启发式算术。CJK / JSON schema 会被低估；`contextBreakdown` 三列不能加总去对 `projectedTokens`。[I]
-- **usage 偏小会被丢掉。** provider 报 27、启发式锚更大时，baseline 是 `estimated`，不是 `usage`。测试里随后 shrink surface，若误用偏小 usage 当锚，`27 + surfaceDelta` 会小于 0。[E: packages/llm/token-meter/tests/token-meter.spec.ts:339]
-- **`sourceEventSeqs` 空列表 ≠ 缺省。** `[]` 表示已知空流，provider 侧 assistant 价为 0，durable 改写会拉大 `surfaceDeltaTokens`。缺省列表把 durable 文本当成当时的 provider 输出，delta 为 0。[E: packages/llm/token-meter/src/index.ts:310]
+- **usage 偏小会被丢掉。** provider 报偏小、启发式锚更大时，baseline 是 `estimated`，不是 `usage`。测试里随后 shrink surface，若误用偏小 usage 当锚，`usage + surfaceDelta` 会小于 0。[E: packages/llm/token-meter/tests/token-meter.spec.ts:336]
+- **provider assistant 价来自嵌入 stream，不是 durable 改写。** `_estimateProviderAssistant` 用 `assembleAssistantStream(event.data.stream)`；空 stream 价为 0。[E: packages/llm/token-meter/src/index.ts:337]
 - **`reasoningTokens` 不另加。** `usageTokens` 与 `tokenUsage` 投影都只走四只互斥桶。
 - **`requestHeader` 覆盖不改 surface 节点集合。** 换一份更大的 system 只抬压力；`nodes` 仍是当前 surface。若信封与锚 header 不再相等，usage 锚作废，整信封启发式重算。
 - **畸形事件不推进 cursor。** `_foldEvent` 先算后写；`measure` 两次抛同一句。replace 指到不在当前 `nodes` 里的 seq 是 log 损坏，fail-loud。
 - **投影 replace 缺 claim 静默 0 delta。** 影子价协议出现之前的旧 session 重放不会炸，但 `messageTokens` / `projectedTokens` 可能漂。新 producer 必须把 `compaction/summary` 或 `compaction/prune` 与 `replace` 同步相邻追加。
-- **`sessionProjections` 是硬依赖。** 测试插件顺序必须先 `SessionProjectionRegistry` 再 `TokenMeter`。[E: packages/llm/token-meter/tests/token-meter.spec.ts:145]
+- **`sessionProjections` 是硬依赖。** 测试插件顺序必须先 `SessionProjectionRegistry` 再 `TokenMeter`。[E: packages/llm/token-meter/tests/token-meter.spec.ts:137]
 
 ## Seam 三角
 
@@ -187,21 +187,20 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）。`ctx
 - packages/llm/token-meter/src/surface-fold.ts
 - packages/llm/token-meter/src/surface-projection.ts
 - packages/llm/token-meter/src/route-pricing.ts
-
 - packages/llm/token-meter/tests/token-meter.spec.ts
 - packages/llm/token-meter/tests/token-usage-projection.spec.ts
 - packages/llm/token-meter/tests/context-breakdown-projection.spec.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/base/package.json
 - packages/bundle/web-app/cordis.patch.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - apps/cli/tests/web-agent-presets.e2e.ts
 - packages/compaction/compaction-basic/src/index.ts
 - packages/compaction/compaction-tool-result-pruner/src/index.ts
 - packages/core/session/src/index.ts
-- packages/preset/agent-presets/src/mount.ts
+- packages/preset/agent-preset-registry/src/mount.ts
 - vendor/cordis/src/events.ts
 - vendor/cordis/src/service.ts
 

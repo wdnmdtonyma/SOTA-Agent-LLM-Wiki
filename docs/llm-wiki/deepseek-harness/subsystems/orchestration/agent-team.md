@@ -24,6 +24,7 @@ source:
   - packages/experimental/agent-team-profile/package.json
   - packages/experimental/agent-team-profile/src/index.ts
   - packages/experimental/agent-team-profile/tests/profile.spec.ts
+  - packages/boot/app-boot/src/profile.ts
 symbols:
   - ctx.agentTeams
   - TeamService
@@ -45,7 +46,7 @@ related:
   - ref.session-events
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `ctx.agentTeams`（`TeamService`）是 **opt-in experimental** 的 implicit-root 协作缝：每个 live 顶层 Session 即一个 Team（`TeamId` = Lead Session id），durable roster / mailbox / shared task DAG 全部写在 **Lead Session log**，成员孩子通过 [subsys.orchestration.subagent](subagent.md)（`subsys.orchestration.subagent`）的 `startContinuable` 拉起。不在 `dsh-base`；要叠 `@deepseek-ai/dsh-experimental-agent-team-profile` 的 patch。
@@ -57,11 +58,11 @@ updated: c291e7961a
 - spawn teammate 怎么落到 `ctx.subagents.startContinuable`？`fresh` / `fork` 分别选哪个 provider 名？
 - mailbox 先落盘再投递；`send_message` quiet 与 `followup_task` wakeup 差在哪？
 - 共享任务 CAS / 依赖环 / write-scope 是不是锁？
-- experimental profile 为什么 disable `tool-subagent-control` / `list-agents` / `report`？
+- experimental profile 为什么 disable `tool-subagent-control` / `list-agents` / `tool-subagent` / `tool-subagent-fork`？
 
 ## 职责边界
 
-`@deepseek-ai/dsh-experimental-agent-team` 拥有：host 键 `ctx.agentTeams`、`TeamService` façade、Lead-log journal、`agentTeam` projection、roster 生命周期、durable mailbox、task board、`TeamError`、Remote 读/写（`view` / `createTask` / `updateTask`）。包名在 manifest。[E: packages/experimental/agent-team/package.json:2] 构造占键 `agentTeams`。[E: packages/experimental/agent-team/src/index.ts:81]
+`@deepseek-ai/dsh-experimental-agent-team` 拥有：host 键 `ctx.agentTeams`、`TeamService` façade、Lead-log journal、`agentTeam` projection、roster 生命周期、durable mailbox、task board、`TeamError`、Remote 读/写（`view` / `createTask` / `updateTask`）。包名在 manifest。[E: packages/experimental/agent-team/package.json:2] 构造占键 `agentTeams`。[E: packages/experimental/agent-team/src/index.ts:78]
 
 本包**不**拥有：
 
@@ -92,7 +93,7 @@ DSH 宿主入口仍是 `dsh web` 以及 `dsh --profile headless|sdk|sdk-minimal|
 | 符号 | 要点 |
 |---|---|
 | `TeamService` | `extends TypertRemoteService`；`static inject = ['agents','sessions','sessionPersistence','sessionProjections','subagents']`。[E: packages/experimental/agent-team/src/index.ts:60] |
-| `Config` | `maxMembers` 默认 8、`maxTasks` 256、`maxPendingMessagesPerMember` 64、`maxMessageBytes` 65536、`disposalTimeoutMs` 5000。[E: packages/experimental/agent-team/src/index.ts:44] [E: packages/experimental/agent-team/src/index.ts:62] |
+| `Config` | `maxMembers` 默认 8、`maxTasks` 256、`maxPendingMessagesPerMember` 64、`maxMessageBytes` 65536、`disposalTimeoutMs` 5000。[E: packages/experimental/agent-team/src/index.ts:59] [E: packages/experimental/agent-team/src/index.ts:60] |
 | `TeamId` | 根 Session id 的 brand；没有单独的 Team 资源表。[E: packages/experimental/agent-team/src/types.ts:15] |
 | `TeamMembership` | `{ root, id, role: lead\|teammate, name }`。Lead 伪行 `name: 'lead'`。[E: packages/experimental/agent-team/src/roster.ts:29] |
 | `TeamMemberPhase` | durable：`provisioning` / `active` / `failed`。[E: packages/experimental/agent-team/src/types.ts:44] |
@@ -100,32 +101,32 @@ DSH 宿主入口仍是 `dsh web` 以及 `dsh --profile headless|sdk|sdk-minimal|
 | `TeamTaskSnapshot` | 整值；每次 mutation `revision++`。[E: packages/experimental/agent-team/src/types.ts:74] |
 | `TeamTaskAction` | `claim` / `release` / `edit` / `set_dependencies` / `complete` / `reopen` / `reassign` / `delete`。[E: packages/experimental/agent-team/src/types.ts:182] |
 | `writeScopes` | 顾问前缀重叠检测，**不是** FS lock。[E: packages/experimental/agent-team/src/task-board.ts:21] |
-| Session events | 只落 Lead：`team/member`、`team/task`、`team/message/queued`、`team/message/delivered`。[E: packages/experimental/agent-team/src/types.ts:223] |
+| Session events | 只落 Lead：`team/member`、`team/task`、`team/message/queued`、`team/message/delivered`。[E: packages/experimental/agent-team/src/types.ts:225] |
 | `TeamMessageSource` | 目标 Session 上 `user/message` 的 `source.kind: 'team-message'`，用于去重。[E: packages/experimental/agent-team/src/types.ts:117] |
-| `teamProjectionDefinition` | `key: 'agentTeam'`，`stateVersion: 2`。[E: packages/experimental/agent-team/src/projection.ts:309] |
+| `teamProjectionDefinition` | `key: 'agentTeam'`，`stateVersion: 2`。[E: packages/experimental/agent-team/src/projection.ts:308] |
 | `TeamError` | `HarnessError` 子类。[E: packages/experimental/agent-team/src/error.ts:7] |
 
 ## 控制流
 
-1. **默认树没有本缝。** `dsh-base` / shipped preset **不** insert `id: agent-team`。要开 Teams，叠 private bundle `@deepseek-ai/dsh-experimental-agent-team-profile`（`dsh.bundle.patch` → `./cordis.patch.yml`）。[E: packages/experimental/agent-team-profile/package.json:36] 测试钉 `private: true` 且无 `publishConfig`。[E: packages/experimental/agent-team-profile/tests/profile.spec.ts:19]
+1. **默认树没有本缝。** `dsh-base` / shipped preset **不** insert `id: agent-team`。要开 Teams，叠 private bundle `@deepseek-ai/dsh-experimental-agent-team-profile`（`dsh.bundle.patch` → `./cordis.patch.yml`）。[E: packages/experimental/agent-team-profile/package.json:37] 测试钉 `private: true` 且无 `publishConfig`。[E: packages/experimental/agent-team-profile/tests/profile.spec.ts:19]
 
-2. **profile patch 先腾出同名工具。** disable `tool-subagent-control` / `tool-subagent-list-agents`。[E: packages/experimental/agent-team-profile/cordis.patch.yml:5] [E: packages/experimental/agent-team-profile/cordis.patch.yml:8] 不再 disable 已删除的 `tool-subagent-report`。把 host 上 `tool-subagent` / `tool-subagent-fork` 钉成 `backgroundMode: one-shot`（保留模型 `subagent` / `subagent_fork`，避免与 Teams 的 durable 孩子抢 continuable 控制面）。[E: packages/experimental/agent-team-profile/cordis.patch.yml:15] [E: packages/experimental/agent-team-profile/cordis.patch.yml:21] 然后 insert `id: agent-team`（服务）与 `id: tool-agent-team`（`freshProvider: spawn`，`forkProvider: fork`）。[E: packages/experimental/agent-team-profile/cordis.patch.yml:25] [E: packages/experimental/agent-team-profile/cordis.patch.yml:33]
+2. **profile patch 先腾出同名工具。** disable `tool-subagent-control` / `tool-subagent-list-agents` / `tool-subagent` / `tool-subagent-fork`。[E: packages/experimental/agent-team-profile/cordis.patch.yml:4] [E: packages/experimental/agent-team-profile/cordis.patch.yml:7] [E: packages/experimental/agent-team-profile/cordis.patch.yml:10] [E: packages/experimental/agent-team-profile/cordis.patch.yml:13] 不再 disable 已删除的 `tool-subagent-report`。host 上的 `subagent` / `subagent_fork` 工具行直接关掉，避免与 Teams 的 durable 孩子抢同名控制面。然后 insert `id: agent-team`（服务）与 `id: tool-agent-team`（`freshProvider: spawn`，`forkProvider: fork`）。[E: packages/experimental/agent-team-profile/cordis.patch.yml:17] [E: packages/experimental/agent-team-profile/cordis.patch.yml:26] [E: packages/experimental/agent-team-profile/cordis.patch.yml:29]
 
-3. **`TeamService` 占键并挂副作用。** `super(ctx, 'agentTeams')`。[E: packages/experimental/agent-team/src/index.ts:81] 组装 `TeamActivity` / `TeamRuntimeLifecycle` / `TeamJournal` / `TeamRoster` / `TeamMailbox` / `TeamTaskBoard`。[E: packages/experimental/agent-team/src/index.ts:96] 监听 `session/event`（mailbox ack）、`agent/session-start`（recovery）、`agent/status`（waiter 唤醒）。[E: packages/experimental/agent-team/src/index.ts:110] `ctx.effect` 在 root 登记 `teamProjectionDefinition`，卸载时 `disposeRuntime`。[E: packages/experimental/agent-team/src/index.ts:117]
+3. **`TeamService` 占键并挂副作用。** `super(ctx, 'agentTeams')`。[E: packages/experimental/agent-team/src/index.ts:78] 组装 `TeamActivity` / `TeamRuntimeLifecycle` / `TeamJournal` / `TeamRoster` / `TeamMailbox` / `TeamTaskBoard`。[E: packages/experimental/agent-team/src/index.ts:96] 监听 `session/event`（mailbox ack）、`agent/session-start`（recovery）、`agent/status`（waiter 唤醒）。[E: packages/experimental/agent-team/src/index.ts:110] `ctx.effect` 在 root 登记 `teamProjectionDefinition`，卸载时 `disposeRuntime`。[E: packages/experimental/agent-team/src/index.ts:117]
 
 4. **implicit root：任意 live Agent 默认是自己的 Lead，除非它是 roster 里的 continuable 孩子。** `tryMembership`：有 `parentSession` 且父 live，则在父 journal 里找 `agent.id`；`active`/`provisioning` → teammate。[E: packages/experimental/agent-team/src/roster.ts:99] 带 subagent descriptor 的非 roster 直系孩子 **不是** teammate，也 **不是** 新 Team（避免普通 `subagent`/`fork` 被当成 Lead）。[E: packages/experimental/agent-team/src/roster.ts:106] 无 parent 但带 descriptor 同样拒绝当根。[E: packages/experimental/agent-team/src/roster.ts:114] 否则 `{ role: 'lead', name: 'lead' }`。[E: packages/experimental/agent-team/src/roster.ts:114]
 
-5. **`spawnTeammate` 只允许 Lead。** `TEAM_LEAD_REQUIRED`。[E: packages/experimental/agent-team/src/roster.ts:251] 名字 `^[a-z0-9]+(?:-[a-z0-9]+)*$`。先 `transact` 写 `team/member` `phase: provisioning`（重名 `TEAM_MEMBER_NAME_TAKEN`，超额 `TEAM_MEMBER_LIMIT`）。[E: packages/experimental/agent-team/src/roster.ts:277] 再 `ctx.subagents.startContinuable({ childId, provider, label, request: { prompt, parent: root } })`。[E: packages/experimental/agent-team/src/roster.ts:281] **不**把 `context: fresh|fork` 传给 subagent 缝：fresh/fork 只决定工具选 `freshProvider` 还是 `forkProvider`。[E: packages/experimental/tool-agent-team/src/index.ts:195] inbox 接受初始 prompt 并 flush 后才把 durable phase 改 `active`；失败记 `failed` 并 `drainContinuableChildren`。[E: packages/experimental/agent-team/src/roster.ts:292] [E: packages/experimental/agent-team/src/roster.ts:300]
+5. **`spawnTeammate` 只允许 Lead。** `TEAM_LEAD_REQUIRED`。[E: packages/experimental/agent-team/src/roster.ts:251] 名字 `^[a-z0-9]+(?:-[a-z0-9]+)*$`。先 `transact` 写 `team/member` `phase: provisioning`（重名 `TEAM_MEMBER_NAME_TAKEN`，超额 `TEAM_MEMBER_LIMIT`）。[E: packages/experimental/agent-team/src/roster.ts:277] 再 `ctx.subagents.startContinuable({ childId, provider, label, request: { prompt, parent: root } })`。[E: packages/experimental/agent-team/src/roster.ts:281] **不**把 `context: fresh|fork` 传给 subagent 缝：fresh/fork 只决定工具选 `freshProvider` 还是 `forkProvider`。[E: packages/experimental/tool-agent-team/src/index.ts:183] inbox 接受初始 prompt 并 flush 后才把 durable phase 改 `active`；失败记 `failed` 并 `drainContinuableChildren`。[E: packages/experimental/agent-team/src/roster.ts:292] [E: packages/experimental/agent-team/src/roster.ts:300]
 
-6. **mailbox：先 Lead-log enqueue，再尝试投到目标 Session。** `send` 走 `TeamMailbox.send`。[E: packages/experimental/agent-team/src/index.ts:163] 禁止自发 (`TEAM_SELF_MESSAGE`)，pending 超额 `TEAM_MAILBOX_FULL`，字节超额 `TEAM_MESSAGE_TOO_LARGE`。[E: packages/experimental/agent-team/src/mailbox.ts:121] 先 `appendAndFlush` `team/message/queued`。[E: packages/experimental/agent-team/src/mailbox.ts:141] 立即 dispatch 成功 → `accepted`，否则 `queued`（已经 durable，工具文案禁止重发）。[E: packages/experimental/agent-team/src/mailbox.ts:150] 目标 `user/message` 带 `source.kind === 'team-message'` 时观察者写 `team/message/delivered`。[E: packages/experimental/agent-team/src/mailbox.ts:69] `delivery: 'quiet'` 不唤醒 idle 成员；`'wakeup'` 才跟 turn。工具层：`send_message` → quiet，`followup_task` → wakeup。[E: packages/experimental/tool-agent-team/src/index.ts:222]
+6. **mailbox：先 Lead-log enqueue，再尝试投到目标 Session。** `send` 走 `TeamMailbox.send`。[E: packages/experimental/agent-team/src/index.ts:161] 禁止自发 (`TEAM_SELF_MESSAGE`)，pending 超额 `TEAM_MAILBOX_FULL`，字节超额 `TEAM_MESSAGE_TOO_LARGE`。[E: packages/experimental/agent-team/src/mailbox.ts:121] 先 `appendAndFlush` `team/message/queued`。[E: packages/experimental/agent-team/src/mailbox.ts:141] 立即 dispatch 成功 → `accepted`，否则 `queued`（已经 durable，工具文案禁止重发）。[E: packages/experimental/agent-team/src/mailbox.ts:150] 目标 `user/message` 带 `source.kind === 'team-message'` 时观察者写 `team/message/delivered`。[E: packages/experimental/agent-team/src/mailbox.ts:69] `delivery: 'quiet'` 不唤醒 idle 成员；`'wakeup'` 才跟 turn。工具层：`send_message` → quiet，`followup_task` → wakeup。[E: packages/experimental/tool-agent-team/src/index.ts:222]
 
-7. **task board 是 Lead-log 上的 CAS DAG。** `create` 生成 `task-${nextTaskNumber}`，`status: pending`，无 owner。[E: packages/experimental/agent-team/src/task-board.ts:56] 图违规：缺 blocker `TEAM_TASK_NOT_FOUND`、重复 `TEAM_INVALID_ARGUMENT`、环 `TEAM_TASK_DEPENDENCY_CYCLE`。[E: packages/experimental/agent-team/src/task-board.ts:25] `update` 要求 `expectedRevision`；不匹配 `TEAM_TASK_STALE_REVISION`（Remote 映射 `team-task-conflict`）。[E: packages/experimental/agent-team/src/index.ts:281] `claim` 需要 ready；`reassign` 仅 Lead。[E: packages/experimental/agent-team/src/task-board.ts:137] [E: packages/experimental/agent-team/src/task-board.ts:177] `writeScopes` 只产生 `writeScopeWarnings`，不挡 FS。
+7. **task board 是 Lead-log 上的 CAS DAG。** `create` 生成 `task-${nextTaskNumber}`，`status: pending`，无 owner。[E: packages/experimental/agent-team/src/task-board.ts:56] 图违规：缺 blocker `TEAM_TASK_NOT_FOUND`、重复 `TEAM_INVALID_ARGUMENT`、环 `TEAM_TASK_DEPENDENCY_CYCLE`。[E: packages/experimental/agent-team/src/task-board.ts:24] `update` 要求 `expectedRevision`；不匹配 `TEAM_TASK_STALE_REVISION`（Remote 映射 `team-task-conflict`）。[E: packages/experimental/agent-team/src/index.ts:270] `claim` 需要 ready；`reassign` 仅 Lead。[E: packages/experimental/agent-team/src/task-board.ts:137] [E: packages/experimental/agent-team/src/task-board.ts:177] `writeScopes` 只产生 `writeScopeWarnings`，不挡 FS。
 
-8. **`waitForChange` 不唤醒任何人。** 服务层 timeout 必须 ∈ [10000, 3600000]。[E: packages/experimental/agent-team/src/index.ts:213] [E: packages/experimental/agent-team/src/activity.ts:23] 工具 `wait_agent` 在合法 timeout 下若没有其他 `running`/`provisioning` 成员，**同步**返回 `noProgress.reason: 'no-active-peer'`，不进 waiter。[E: packages/experimental/tool-agent-team/src/index.ts:259] 唤醒源：journal commit、`agent/status`。
+8. **`waitForChange` 不唤醒任何人。** 服务层 timeout 必须 ∈ [10000, 3600000]。[E: packages/experimental/agent-team/src/index.ts:212] [E: packages/experimental/agent-team/src/activity.ts:23] 工具 `wait_agent` 在合法 timeout 下若没有其他 `running`/`provisioning` 成员，**同步**返回 `noProgress.reason: 'no-active-peer'`，不进 waiter。[E: packages/experimental/tool-agent-team/src/index.ts:258] 唤醒源：journal commit、`agent/status`。
 
 9. **模型工具只装在 **确切** Team member 的 Agent scope。** `tool-agent-team.apply` 对 `ctx.agents.list()` + 后续 `agent/created` 调 `tryMembership`；非成员不装。[E: packages/experimental/tool-agent-team/src/index.ts:405] `systemPrompt.section` 名 `team:policy`。[E: packages/experimental/tool-agent-team/src/index.ts:165] `agent/disposed` 卸工具。[E: packages/experimental/tool-agent-team/src/index.ts:410]
 
-10. **recovery / 卸载。** `agent/session-start` microtask：`roster.recoverFor` 再 `mailbox.recoverFor`。[E: packages/experimental/agent-team/src/index.ts:301] dispose：关 lifecycle + waiters，settle in-flight spawn/dispatch，再 `stopTeammates` drain 所有 live 孩子。[E: packages/experimental/agent-team/src/index.ts:306]
+10. **recovery / 卸载。** `agent/session-start` microtask：`roster.recoverFor` 再 `mailbox.recoverFor`。[E: packages/experimental/agent-team/src/index.ts:270] dispose：关 lifecycle + waiters，settle in-flight spawn/dispatch，再 `stopTeammates` drain 所有 live 孩子。[E: packages/experimental/agent-team/src/index.ts:270]
 
 ## 模型可见工具名（Consumer 包；字段权威在 `surface.tools.agent-team`）
 
@@ -142,7 +143,7 @@ DSH 宿主入口仍是 `dsh web` 以及 `dsh --profile headless|sdk|sdk-minimal|
 | `team_task_get` | 成员 | `getTask` |
 | `team_task_update` | 成员（部分 action 需 owner/Lead） | `updateTask` |
 
-注册点：`packages/experimental/tool-agent-team/src/index.ts` 的 `defineTool({ name: ... })`（`spawn_teammate` [E: packages/experimental/tool-agent-team/src/index.ts:174] 到 `team_task_update` [E: packages/experimental/tool-agent-team/src/index.ts:357]）。同名 `list_agents` / `send_message` / `interrupt_agent` 与 subagent-control **互斥**，靠 profile disable 全局行。
+注册点：`packages/experimental/tool-agent-team/src/index.ts` 的 `defineTool({ name: ... })`（`spawn_teammate` [E: packages/experimental/tool-agent-team/src/index.ts:175] 到 `team_task_update` [E: packages/experimental/tool-agent-team/src/index.ts:355]）。同名 `list_agents` / `send_message` / `interrupt_agent` 与 subagent-control **互斥**，靠 profile disable 全局行。
 
 ## 设计动机
 
@@ -159,9 +160,9 @@ DSH 宿主入口仍是 `dsh web` 以及 `dsh --profile headless|sdk|sdk-minimal|
 - 带 subagent descriptor 的普通孩子不会变成 teammate，也不会变成新 Lead。[E: packages/experimental/agent-team/src/roster.ts:106]
 - `wait_agent` 永不唤醒；没有 running/provisioning peer 时工具层直接 `noProgress`。[E: packages/experimental/tool-agent-team/src/index.ts:237]
 - `writeScopes` 警告 ≠ 锁。POLICY 要求模型自己拆写范围并用 `FS_STALE_VERSION` 重试。[E: packages/experimental/tool-agent-team/src/index.ts:31]
-- Remote `createTask`/`updateTask` 把 `TeamError` 收成 `{ ok: false }`；`TEAM_TASK_STALE_REVISION` 单独码 `team-task-conflict`。[E: packages/experimental/agent-team/src/index.ts:273]
+- Remote `createTask`/`updateTask` 把 `TeamError` 收成 `{ ok: false }`；`TEAM_TASK_STALE_REVISION` 单独码 `team-task-conflict`。[E: packages/experimental/agent-team/src/index.ts:270]
 - profile 包 `src/index.ts` **没有运行时 API**（`export {}`）。[E: packages/experimental/agent-team-profile/src/index.ts:8]
-- 四个 shipped preset 目录仍是 `minimal` / `standard` / `ptc` / `cordis`；Teams 不是其中之一。
+- 四个 shipped preset 声明仍是 `minimal` / `standard` / `ptc` / `cordis`（`packages/bundle/web-app/presets/*.patch.yml`）；Teams 不是其中之一。要开 Teams，叠 `OPTIONAL_BUNDLES` 里的 `@deepseek-ai/dsh-experimental-agent-team-profile`。[E: packages/boot/app-boot/src/profile.ts:213] [E: packages/boot/app-boot/src/profile.ts:214]
 
 ## Seam 三角
 
@@ -196,6 +197,7 @@ DSH 宿主入口仍是 `dsh web` 以及 `dsh --profile headless|sdk|sdk-minimal|
 - packages/experimental/agent-team-profile/package.json
 - packages/experimental/agent-team-profile/src/index.ts
 - packages/experimental/agent-team-profile/tests/profile.spec.ts
+- packages/boot/app-boot/src/profile.ts
 
 ## 相关
 
@@ -204,5 +206,5 @@ DSH 宿主入口仍是 `dsh web` 以及 `dsh --profile headless|sdk|sdk-minimal|
 - [subsys.orchestration.subagent](subagent.md)（`subsys.orchestration.subagent`）— `startContinuable` 权威。
 - [surface.tools.agent-team](../../surface/tools/agent-team.md)（`surface.tools.agent-team`）— 模型工具字段。
 - [surface.tools.subagent-control](../../surface/tools/subagent-control.md)（`surface.tools.subagent-control`）— 被 profile disable 的同名全局工具。
-- [surface.tools.subagent](../../surface/tools/subagent.md) / [surface.tools.subagent-fork](../../surface/tools/subagent-fork.md) — Teams profile 把它们钉 one-shot。
+- [surface.tools.subagent](../../surface/tools/subagent.md) / [surface.tools.subagent-fork](../../surface/tools/subagent-fork.md) — Teams profile 关掉这两行，改走 Team 工具。
 - [ref.ctx-keys](../../reference/ctx-keys.md)（`ref.ctx-keys`）/ [ref.session-events](../../reference/session-events.md)（`ref.session-events`）— 键与 `team/*` 事件。

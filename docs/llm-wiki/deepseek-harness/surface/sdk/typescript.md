@@ -27,8 +27,7 @@ source:
   - packages/bundle/sdk-minimal/package.json
   - packages/boot/app-boot/src/profile.ts
   - packages/bundle/base/package.json
-  - packages/preset/agent-presets/src/discovery.ts
-  - packages/preset/agent-presets/tests/shipped-root.spec.ts
+  - packages/bundle/web-app/presets/standard.patch.yml
   - python/sdk/src/deepseek_harness/client.py
   - packages/acp/acp/src/index.ts
   - apps/cli/src/args.ts
@@ -45,7 +44,7 @@ related:
   - subsys.integration.sdk-server
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-sdk-client` 是 **进程外** TypeScript JSON-RPC 客户端：`HarnessClient` 用 `node:child_process.spawn` 拉一份同版本 `dsh --profile sdk`（或调用方指定的 profile），在孩子 stdio 上讲 `@deepseek-ai/dsh-sdk-protocol`。它不是 `dsh web` 的 GUI 面，也不进 `dsh-base` / shipped agent preset。
@@ -60,7 +59,7 @@ updated: c291e7961a
 
 ## 是什么
 
-DSH 主线是 `profile → bundle → agent preset`。`PROFILE_TEMPLATES` 有五个 shipped 名：`acp`、`web`（唯一 `live`）、`headless`、`sdk`（`dsh-base` + `dsh-sdk-app`）、`sdk-minimal`（只叠 `@deepseek-ai/dsh-sdk-minimal`）。没有 shipped TUI 模板。[E: packages/boot/app-boot/src/profile.ts:105] [E: packages/boot/app-boot/src/profile.ts:118] [E: packages/boot/app-boot/src/profile.ts:122] 启动器只有 `dsh web` 这一个硬编码 profile 别名；`sdk` / `sdk-minimal` / `acp` / `headless` 走 `dsh --profile <name>`。[E: apps/cli/src/args.ts:159] [E: apps/cli/src/args.ts:175]
+DSH 主线是 `profile → bundle → agent preset`。`PROFILE_TEMPLATES` 有五个 shipped 名：`acp`、`web`（唯一 `live`）、`headless`、`sdk`（`dsh-base` + `dsh-sdk-app`）、`sdk-minimal`（只叠 `@deepseek-ai/dsh-sdk-minimal`）。没有 shipped TUI 模板。[E: packages/boot/app-boot/src/profile.ts:179] [E: packages/boot/app-boot/src/profile.ts:189] [E: packages/boot/app-boot/src/profile.ts:192] 启动器只有 `dsh web` 这一个硬编码 profile 别名；`sdk` / `sdk-minimal` / `acp` / `headless` 走 `dsh --profile <name>`。[E: apps/cli/src/args.ts:182] [E: apps/cli/src/args.ts:202]
 
 本面是 **automation stdio** 缝。调用方 import `@deepseek-ai/dsh-sdk-client`，默认 spawn 同版本 `@deepseek-ai/dsh` 的 CLI，孩子 boot 后挂 `@deepseek-ai/dsh-sdk-jsonrpc-server`，两边用 NDJSON JSON-RPC 说话。[E: packages/sdk/client/package.json:2] [E: packages/sdk/server/package.json:2] [E: packages/sdk/protocol/package.json:2] [E: packages/sdk/client/src/launch.ts:132]
 
@@ -94,9 +93,9 @@ DSH 主线是 `profile → bundle → agent preset`。`PROFILE_TEMPLATES` 有五
 | `harness.run(input)` / `harness.session(id?).run(input)` | 发 `session/prompt`，丢掉 inbox 回执之前的通知，收到本 session `session.status === 'idle'` 后返回 `RunResult`。[E: packages/sdk/client/src/api.ts:199] [E: packages/sdk/client/src/api.ts:207] [E: packages/sdk/client/src/api.ts:212] |
 | `new HarnessClient(options?)` | 低层。构造只收 options 并 `resolveDshLaunch`；`start()` 才 `spawn`。[E: packages/sdk/client/src/client.ts:201] [E: packages/sdk/client/src/client.ts:204] [E: packages/sdk/client/src/client.ts:211] |
 | 孩子可执行文件 | 默认 `command = process.execPath`，argv 是同版本 `dsh` bin（或源码 `src/bin.ts` + tsx）+ `--profile` + 可选 `--patch`。[E: packages/sdk/client/src/launch.ts:142] [E: packages/sdk/client/src/launch.ts:143] `dshBin` 省略则 `installedDshNodeLaunch()`，并核对 `@deepseek-ai/dsh` 与本包 **version 相同**。[E: packages/sdk/client/src/launch.ts:133] [E: packages/sdk/client/src/launch.ts:58] |
-| 孩子组合 | 默认 profile 名 `'sdk'`。[E: packages/sdk/client/src/launch.ts:132] shipped `sdk` 叠 `dsh-base` + `dsh-sdk-app`；`sdk-minimal` 只叠 `dsh-sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:119] [E: packages/boot/app-boot/src/profile.ts:123] 两份 bundle 都 `insert` `id: sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:18] [E: packages/bundle/sdk-minimal/cordis.patch.yml:11] `dsh-sdk-app` 的 CLI 帮助名是 `dsh --profile ${profile}`，零额外旗标，解析成功后 `ctx.provide(SDK_APP_STARTUP_SERVICE, …)`（常量 `'sdkAppStartup'`）。[E: packages/bundle/sdk-app/src/index.ts:20] [E: packages/bundle/sdk-app/src/index.ts:40] [E: packages/bundle/sdk-app/src/index.ts:59] |
+| 孩子组合 | 默认 profile 名 `'sdk'`。[E: packages/sdk/client/src/launch.ts:132] shipped `sdk` 叠 `dsh-base` + `dsh-sdk-app`；`sdk-minimal` 只叠 `dsh-sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:190] [E: packages/boot/app-boot/src/profile.ts:193] 两份 bundle 都 `insert` `id: sdk-jsonrpc-server`。[E: packages/bundle/sdk-app/cordis.patch.yml:18] [E: packages/bundle/sdk-minimal/cordis.patch.yml:11] `dsh-sdk-app` 的 CLI 帮助名是 `dsh --profile ${profile}`，零额外旗标，解析成功后 `ctx.provide(SDK_APP_STARTUP_SERVICE, …)`（常量 `'sdkAppStartup'`）。[E: packages/bundle/sdk-app/src/index.ts:20] [E: packages/bundle/sdk-app/src/index.ts:40] [E: packages/bundle/sdk-app/src/index.ts:59] |
 
-`dsh web` / `dsh --profile web` / `dsh --profile headless` / `dsh --profile acp` **不会**作为本客户端的默认孩子。`@deepseek-ai/dsh-base` 包名是 `@deepseek-ai/dsh-base`，其 `package.json` **没有** `@deepseek-ai/dsh-sdk-client` / `@deepseek-ai/dsh-sdk-jsonrpc-server` 依赖。[E: packages/bundle/base/package.json:2] 四个 shipped preset 目录名是 `minimal` / `standard` / `ptc` / `cordis`：`SHIPPED_PRESET_ROOT` 指向包内 `presets/`；测试枚举 tool-bearing 三件为 `cordis` / `ptc` / `standard`（另加 `minimal` 目录）。preset 树里没有 `sdk-jsonrpc-server` 行。[E: packages/preset/agent-presets/src/discovery.ts:60] [E: packages/preset/agent-presets/tests/shipped-root.spec.ts:100]
+`dsh web` / `dsh --profile web` / `dsh --profile headless` / `dsh --profile acp` **不会**作为本客户端的默认孩子。`@deepseek-ai/dsh-base` 包名是 `@deepseek-ai/dsh-base`，其 `package.json` **没有** `@deepseek-ai/dsh-sdk-client` / `@deepseek-ai/dsh-sdk-jsonrpc-server` 依赖。[E: packages/bundle/base/package.json:2] 四个 shipped preset 声明在 `packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}.patch.yml`。preset 树里没有 `sdk-jsonrpc-server` 行。[E: packages/bundle/web-app/presets/standard.patch.yml:5] [E: packages/bundle/web-app/presets/standard.patch.yml:8]
 
 孩子 stdout 专给协议帧。`JsonRpcLineTransport` 写出时末尾 `\n`。[E: packages/sdk/protocol/src/transport.ts:261] 同树再挂 stdout logger 会把日志和 NDJSON 搅在一起。
 
@@ -122,12 +121,12 @@ DSH 主线是 `profile → bundle → agent preset`。`PROFILE_TEMPLATES` 有五
 
 wire 合同在 `HarnessSdkRequestMap` / `HarnessSdkNotificationMap`。客户端→服务器恰好三个请求：`initialize` / `session/prompt` / `shutdown`。[E: packages/sdk/protocol/src/types.ts:116] [E: packages/sdk/protocol/src/types.ts:117] [E: packages/sdk/protocol/src/types.ts:118] 服务器→客户端恰好四个通知：`session.event` / `session.status` / `subagent.started` / `subagent.finished`。[E: packages/sdk/protocol/src/types.ts:108] [E: packages/sdk/protocol/src/types.ts:109] [E: packages/sdk/protocol/src/types.ts:110] [E: packages/sdk/protocol/src/types.ts:111]
 
-`handleRequest` 的 `switch` 只认这三支；未知方法抛 `unknown DeepSeek Harness SDK runtime method: …`。[E: packages/sdk/server/src/server.ts:247] [E: packages/sdk/server/src/server.ts:255] 源里没有 `session/new` / `session/resume` / `authenticate` / `session/cancel`。
+`handleRequest` 的 `switch` 只认这三支；未知方法抛 `unknown DeepSeek Harness SDK runtime method: …`。[E: packages/sdk/server/src/server.ts:249] [E: packages/sdk/server/src/server.ts:257] 源里没有 `session/new` / `session/resume` / `authenticate` / `session/cancel`。
 
 门控级语义（完整字段表在 [`ref.sdk-methods`](../../reference/sdk-methods.md) / [`subsys.integration.sdk-protocol`](../../subsystems/integration/sdk-protocol.md)）：
 
-- `initialize`：记下此后 **新创建** session 的 `cwd` / `provider` / `model` / 可选 `maxTokens`。server 回 `{ serverInfo: { name: 'deepseek-harness-sdk-runtime', version: '0.0.1' } }`。[E: packages/sdk/server/src/server.ts:168] 本客户端只检查 `name` / `version` 是 string，不钉死字面量。[E: packages/sdk/client/src/client.ts:279]
-- `session/prompt`：调用方自带 `sessionId`；未知 id 由 server `agents.create` 懒创建，立刻回 `{ messageId }`，不等 turn。[E: packages/sdk/server/src/server.ts:178] [E: packages/sdk/server/src/server.ts:192] [E: packages/sdk/server/src/server.ts:279]
+- `initialize`：记下此后 **新创建** session 的 `cwd` / `provider` / `model` / 可选 `maxTokens`。server 回 `{ serverInfo: { name: 'deepseek-harness-sdk-runtime', version: '0.0.1' } }`。[E: packages/sdk/server/src/server.ts:170] 本客户端只检查 `name` / `version` 是 string，不钉死字面量。[E: packages/sdk/client/src/client.ts:279]
+- `session/prompt`：调用方自带 `sessionId`；未知 id 由 server `agents.create` 懒创建，立刻回 `{ messageId }`，不等 turn。[E: packages/sdk/server/src/server.ts:180] [E: packages/sdk/server/src/server.ts:194] [E: packages/sdk/server/src/server.ts:281]
 - `shutdown`：协议停机。handler 回包之后 `setImmediate` 跑 `disposeAndExit`：`transport.flush` → `rootFiber.dispose()` → `exit(0)`。[E: packages/sdk/server/src/index.ts:69] [E: packages/sdk/server/src/index.ts:70] [E: packages/sdk/server/src/index.ts:71] [E: packages/sdk/server/src/index.ts:90]
 - 完成态看后续 `session.status === 'idle'`，内容看 `session.event`。`messageId` 只是入队回执。
 
@@ -142,7 +141,7 @@ wire 合同在 `HarnessSdkRequestMap` / `HarnessSdkNotificationMap`。客户端�
 
 ## 装配与门控
 
-**不进 `dsh-base` / shipped agent preset。** 换这条 automation 面 = 外部脚本 `new DeepSeekHarness()`（或显式 `profile: 'sdk-minimal'`），孩子由 shipped SDK bundle 挂 `id: sdk-jsonrpc-server`。不要在 `minimal` / `standard` / `ptc` / `cordis` 的 `agent.cordis.yml` 里找这行。
+**不进 `dsh-base` / shipped agent preset。** 换这条 automation 面 = 外部脚本 `new DeepSeekHarness()`（或显式 `profile: 'sdk-minimal'`），孩子由 shipped SDK bundle 挂 `id: sdk-jsonrpc-server`。不要在 `minimal` / `standard` / `ptc` / `cordis` 的 `*.patch.yml` 里找这行。
 
 调用方会直接撞上的门：
 
@@ -187,8 +186,7 @@ wire 合同在 `HarnessSdkRequestMap` / `HarnessSdkNotificationMap`。客户端�
 - packages/bundle/sdk-minimal/package.json
 - packages/boot/app-boot/src/profile.ts
 - packages/bundle/base/package.json
-- packages/preset/agent-presets/src/discovery.ts
-- packages/preset/agent-presets/tests/shipped-root.spec.ts
+- packages/bundle/web-app/presets/standard.patch.yml
 - python/sdk/src/deepseek_harness/client.py
 - packages/acp/acp/src/index.ts
 - apps/cli/src/args.ts

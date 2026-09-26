@@ -13,10 +13,12 @@ source:
   - packages/bundle/headless/tests/startup.spec.ts
   - packages/boot/app-boot/src/profile.ts
   - apps/cli/src/profile-boot.ts
+  - packages/boot/app-boot/src/profile-context.ts
   - packages/boot/cmdline/src/index.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/base/tests/base.spec.ts
   - packages/bundle/web-app/cordis.patch.yml
+  - packages/bundle/web-app/package.json
   - packages/core/agent-loop/src/agent.ts
   - packages/core/agent-loop/src/index.ts
   - packages/core/agent/src/index.ts
@@ -25,7 +27,7 @@ source:
   - packages/core/tools/src/index.ts
   - packages/core/system-prompt/src/index.ts
   - packages/core/agent-default-model/src/index.ts
-  - packages/preset/agent-presets/src/mount.ts
+  - packages/preset/agent-preset-registry/src/mount.ts
   - packages/llm/llm/src/message.ts
   - packages/interaction/user-approval/src/index.ts
   - vendor/cordis/src/events.ts
@@ -52,67 +54,67 @@ related:
   - surface.cli.overview
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
-> `@deepseek-ai/dsh-headless` 是叠在 `dsh-base` 上的 **one-shot host 面 overlay**：`insert` 只有 `code-runtime` / `headless-startup` / `headless-runner`，**没有** `agent-presets`、**没有** `webserver`。`headless-startup` 把 argv task 做成 `ctx.headlessStartup`，`headless-runner` 在 root realm `agents.create` → `followup` → `whenIdle`，reasoning 写 stderr、最后一条 assistant text 写 stdout，再按 `turn/end` reason 经 `ctx.appExit` 退出。模型可见 `tool-*` 留在 host 全局层。
+> `@deepseek-ai/dsh-headless` 是叠在 `dsh-base` 上的 **one-shot host 面 overlay**：`insert` 只有 `headless-startup` / `headless-runner`，**没有** `agent-preset-registry`、**没有** `webserver`、**没有** web-app 那四份 `presets/*.patch.yml`。`headless-startup` 把 argv task / stdin / `--session-id` / `--json` 做成 `ctx.headlessStartup`，`headless-runner` 在 root realm `agents.create`（或 resume）→ `followup` → `whenIdle`，reasoning 写 stderr、最后一条 assistant text（或 JSON 事件流）写 stdout，再按 `turn/end` reason 经 `ctx.appExit` 退出。模型可见 `tool-*` 留在 host 全局层。
 
-DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`），不是「又一个 coding agent」。capability seam = Definition / Provider / Consumer；进入模型请求的内容必须能从 append-only session log 重建（`model-visible ⟺ logged`）。shipped profile 五个：`web`（`patchReload: live`）、`headless` / `sdk` / `sdk-minimal` / `acp`（`startup`）。宿主入口是 `dsh web` 以及 `dsh --profile headless|sdk|sdk-minimal|acp`；本仓没有 shipped TUI。`headless` 是 **无 HTTP、无 browser client、无 shipped preset roster** 的一次性任务进程。
+DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。capability seam = Definition / Provider / Consumer；进入模型请求的内容必须能从 append-only session log 重建（`model-visible ⟺ logged`）。`PROFILE_TEMPLATES` 五个名字：`web` / `headless` / `sdk` / `sdk-minimal` / `acp`。宿主入口是 `dsh <name>`（展开为 `--profile`）以及 `dsh --profile web|headless|sdk|sdk-minimal|acp`；本仓没有 shipped TUI。`headless` 是 **无 HTTP、无 browser client、无 shipped preset roster** 的一次性任务进程。
 
 ## 能回答的问题
 
-- `dsh --profile headless "<task>"` 相对 `dsh-base` 多了哪三行 insert？有没有 `agent-presets` / `webserver`？
+- `dsh --profile headless "<task>"` 相对 `dsh-base` 多了哪两行 insert？有没有 `agent-preset-registry` / `webserver` / web-app preset patch？
 - 为什么 web 要把 base 的 `tool-*` `disabled: true`，而 headless **不** disable，工具留在哪一面？
-- `headless-startup` 怎样 `provide('headlessStartup')`？空 task / `--help` 为什么让 runner 一直 pending？
+- `headless-startup` 怎样 `provide('headlessStartup')`？空 task / `--help` / `--json` / `--session-id` 各走哪？
 - `headless-runner` 的 `agents.create` → `followup` → `whenIdle` → `sessions.flush` → `appExit` 编号路径是什么？stdout / stderr / 退出码读哪条 log？
 - 这条路径上 waterfall 必须 `next()` 的点在哪？默认树为什么进不了 `mountPreset` / `leakedServices`？
 - host 面 persona 写在哪一行？`DSH_TOOLS_MODE` 本 overlay 怎么改？hmr 由谁关掉？
 
 ## 职责边界
 
-本包 `@deepseek-ai/dsh-headless` 拥有：**mode overlay** `cordis.patch.yml`、cmdline Provider `headless-startup`（`HEADLESS_STARTUP_SERVICE = 'headlessStartup'`）、one-shot Consumer `headless-runner`。manifest 把 bundle patch 钉在 `./cordis.patch.yml`。[E: packages/bundle/headless/package.json:2] [E: packages/bundle/headless/package.json:43] [E: packages/bundle/headless/src/startup.ts:19]
+本包 `@deepseek-ai/dsh-headless` 拥有：**mode overlay** `cordis.patch.yml`、cmdline Provider `headless-startup`（`HEADLESS_STARTUP_SERVICE = 'headlessStartup'`）、one-shot Consumer `headless-runner`。manifest 把 bundle patch 钉在 **单一** `./cordis.patch.yml`。 [E: packages/bundle/headless/package.json:2] [E: packages/bundle/headless/package.json:39] [E: packages/bundle/headless/src/startup.ts:22]
 
 明确**不**拥有：
 
-- 共享核心 insert（`llm` / `session` / `agent` / `agent-loop` `agents: []` / `tools` / `system-prompt` / sandbox / approval / 模型可见 `tool-*` / subagent **backends**）：[`subsys.composition.bundle-base`](bundle-base.md)（`subsys.composition.bundle-base`）。`dsh-base` **没有** `subagent-codex` / `subagent-claude-code` 行，也不是「装了但 dormant」。[E: packages/bundle/base/tests/base.spec.ts:43] [E: packages/bundle/base/tests/base.spec.ts:44]
-- profile 发现、空根 `composeEntries`、`boot`：[`subsys.composition.app-boot`](app-boot.md)（`subsys.composition.app-boot`）。`PROFILE_TEMPLATES.headless` = `{ bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-headless'], patchReload: 'startup' }`。[E: packages/boot/app-boot/src/profile.ts:114] [E: packages/boot/app-boot/src/profile.ts:115] [E: packages/boot/app-boot/src/profile.ts:116]
-- launcher 旗标与 `provideCmdline` / `ctx.appExit`：[`subsys.composition.cmdline`](cmdline.md)（`subsys.composition.cmdline`）/ [`surface.cli.overview`](../../surface/cli/overview.md)（`surface.cli.overview`）。没有 `dsh headless` 子命令。
-- 默认 loop 工厂与 turn/step：[`subsys.core.agent-loop`](../core/agent-loop.md)（`subsys.core.agent-loop`）/ [`spine.turn-and-step`](../../spine/turn-and-step.md)（`spine.turn-and-step`）。
-- `Session` append-only log 与 `deriveMessages()`：[`subsys.core.session`](../core/session.md)（`subsys.core.session`）/ [`spine.session-log`](../../spine/session-log.md)（`spine.session-log`）。
-- preset 发现、`mountPreset`、`leakedServices`：[`subsys.composition.agent-presets`](agent-presets.md)（`subsys.composition.agent-presets`）。**默认 headless 树没有这行。** shipped 目录是 `minimal` / `standard` / `ptc` / `cordis`，不是 CLI 注入 overlay。
-- Host HTTP / `webserver` / client roster：[`subsys.composition.bundle-web-app`](bundle-web-app.md)（`subsys.composition.bundle-web-app`）。本 overlay 不 insert 它们。
+- 共享核心 insert（`llm` / `session` / `agent` / `agent-loop` `agents: []` / `tools` / `system-prompt` / sandbox / approval / 模型可见 `tool-*` / `ptc-runtime` / subagent **backends**）：[`subsys.composition.bundle-base`](bundle-base.md)。`dsh-base` **没有** `subagent-codex` / `subagent-claude-code` 行。 [E: packages/bundle/base/tests/base.spec.ts:42] [E: packages/bundle/base/tests/base.spec.ts:43]
+- profile 发现、空根 `composeEntries`、`boot`：[`subsys.composition.app-boot`](app-boot.md)。`PROFILE_TEMPLATES.headless` = `{ bundles: ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-headless'] }`。 [E: packages/boot/app-boot/src/profile.ts:186] [E: packages/boot/app-boot/src/profile.ts:187]
+- launcher 旗标与 `provideCmdline` / `ctx.appExit`：[`subsys.composition.cmdline`](cmdline.md) / [`surface.cli.overview`](../../surface/cli/overview.md)。没有独立 `dsh headless` Commander 子命令；位置参数缩写让 `dsh headless` 与 `--profile` 等价。
+- 默认 loop 工厂与 turn/step：[`subsys.core.agent-loop`](../core/agent-loop.md) / [`spine.turn-and-step`](../../spine/turn-and-step.md)。
+- `Session` append-only log 与 `deriveMessages()`：[`subsys.core.session`](../core/session.md) / [`spine.session-log`](../../spine/session-log.md)。
+- preset 发现、`mountPreset`、`leakedServices`：[`subsys.composition.agent-presets`](agent-presets.md)。**默认 headless 树没有这行。** shipped 声明只叠在 `dsh-web-app` 的 `presets/*.patch.yml`。
+- Host HTTP / `webserver` / client roster：[`subsys.composition.bundle-web-app`](bundle-web-app.md)。本 overlay 不 insert 它们。
 
-**host 面 vs agent-preset 面。** 本 bundle 只加进程级 host 入口。`headless-runner` 的 `setup` 只 `installModelSelection`，不 `bindScopeParent`、不 `mountPreset`。agent-preset 面（每会话 tools / persona / isolate）默认不存在；模型可见工具读 host 全局 `ctx.tools`。[E: packages/bundle/headless/src/index.ts:185]
+**host 面 vs agent-preset 面。** 本 bundle 只加进程级 host 入口。`headless-runner` 的 `setup` 只 `installModelSelection`，不 `bindScopeParent`、不 `mountPreset`。agent-preset 面（每会话 tools / persona / isolate）默认不存在；模型可见工具读 host 全局 `ctx.tools`。 [E: packages/bundle/headless/src/index.ts:338]
 
-argv 到进程退出的端到端走读在 [`spine.trace-headless-turn`](../../spine/trace-headless-turn.md)（`spine.trace-headless-turn`）；profile 旗标与 dump 验收在 [`surface.profiles.headless`](../../surface/profiles/headless.md)（`surface.profiles.headless`）。本页写 overlay 行、inject 门、runner 合同、waterfall / isolate 在这条路径上停在哪。
+argv 到进程退出的端到端走读在 [`spine.trace-headless-turn`](../../spine/trace-headless-turn.md)；profile 旗标与 dump 验收在 [`surface.profiles.headless`](../../surface/profiles/headless.md)。本页写 overlay 行、inject 门、runner 合同、waterfall / isolate 在这条路径上停在哪。
 
 ## 关键文件
 
 | 路径 | 角色 |
 |---|---|
 | `packages/bundle/headless/package.json` | 包名 `@deepseek-ai/dsh-headless`；`dsh.bundle.patch = ./cordis.patch.yml`；exports `.` / `./startup` / `./cordis.patch.yml`。 |
-| `packages/bundle/headless/cordis.patch.yml` | 叠在 base 之后：覆盖 `system-prompt.persona`、`tools.mode` 读 `DSH_TOOLS_MODE`；`insert` 三行。**不**改 `hmr`。 |
-| `packages/bundle/headless/src/startup.ts` | Provider：`inject: ['cmdlineArgs']`，解析 `[task...]`，`provide('headlessStartup', { task })`。 |
-| `packages/bundle/headless/src/index.ts` | Consumer：`inject: ['agentDefaultModel', 'agents', 'sessions']`；`Config.task` 必填；stderr 流 reasoning；`apply` 里 `void run(...)`。 |
-| `packages/bundle/headless/tests/startup.spec.ts` | Loader 真树：多词 join、空 task / `--help` 不 provide、runner 保持 pending。 |
+| `packages/bundle/headless/cordis.patch.yml` | 叠在 base 之后：覆盖 `system-prompt` 的 `personaPrefix` / `personaSuffix`、`tools.mode` 读 `DSH_TOOLS_MODE`；`insert` 两行；`hmr` `disabled: true`。 |
+| `packages/bundle/headless/src/startup.ts` | Provider：`inject: ['cmdlineArgs']`，解析 `[task...]` / `--json` / `--session-id`，`provide('headlessStartup', { task, sessionId, json })`。 |
+| `packages/bundle/headless/src/index.ts` | Consumer：`inject: ['agentDefaultModel', 'agents', 'sessions']`；`Config.task` / `sessionId` / `json` 均可选；stderr 流 reasoning；`apply` 里 `void run(...)`。 |
+| `packages/bundle/headless/tests/startup.spec.ts` | Loader 真树：多词 join、空 task / `--help` 不 provide、`--json` / `--session-id`。 |
 | `packages/bundle/headless/tests/headless.spec.ts` | scripted factory：`firstSeq` 窗口、flush 先于 exit、reasoning stderr、非 `completed` / create 失败的退出码。 |
 
 ## 数据模型
 
 | 符号 | 落点 | 含义 |
 |---|---|---|
-| `HEADLESS_STARTUP_SERVICE` | `startup.ts` | 字符串 `'headlessStartup'`。Loader 行 `inject: [headlessStartup]` 等这个键。[E: packages/bundle/headless/src/startup.ts:19] |
-| `HeadlessStartupValues` | `startup.ts` | `{ task: string }`。非空任务正文。 |
-| `name`（startup） | `startup.ts` | `'headless-startup'`。[E: packages/bundle/headless/src/startup.ts:13] |
-| `inject`（startup） | `startup.ts` | `['cmdlineArgs']`。[E: packages/bundle/headless/src/startup.ts:16] |
-| `name`（runner） | `index.ts` | `'headless-runner'`。[E: packages/bundle/headless/src/index.ts:28] |
-| `inject`（runner 插件） | `index.ts` | `['agentDefaultModel', 'agents', 'sessions']`。行级另有 `inject: [headlessStartup]`。[E: packages/bundle/headless/src/index.ts:31] |
-| `Config.task` | `index.ts` | `z.string().required()`。缺键构造即抛。[E: packages/bundle/headless/src/index.ts:39] [E: packages/bundle/headless/tests/headless.spec.ts:406] |
+| `HEADLESS_STARTUP_SERVICE` | `startup.ts` | 字符串 `'headlessStartup'`。Loader 行 `inject: [headlessStartup]` 等这个键。 [E: packages/bundle/headless/src/startup.ts:22] |
+| `HeadlessStartupValues` | `startup.ts` | `{ task?: string; sessionId?: string; json: boolean }`。task 可缺（交给 runner 读 stdin）。 [E: packages/bundle/headless/src/startup.ts:27] |
+| `name`（startup） | `startup.ts` | `'headless-startup'`。 [E: packages/bundle/headless/src/startup.ts:16] |
+| `inject`（startup） | `startup.ts` | `['cmdlineArgs']`。 [E: packages/bundle/headless/src/startup.ts:19] |
+| `name`（runner） | `index.ts` | `'headless-runner'`。 [E: packages/bundle/headless/src/index.ts:36] |
+| `inject`（runner 插件） | `index.ts` | `['agentDefaultModel', 'agents', 'sessions']`。行级另有 `inject: [headlessStartup]`。 [E: packages/bundle/headless/src/index.ts:39] |
+| `Config.task` / `sessionId` / `json` | `index.ts` | 三者都可选。schema 测试钉 `new Config({})` 得到 `{}`。 [E: packages/bundle/headless/src/index.ts:51] [E: packages/bundle/headless/tests/headless.spec.ts:1047] |
 | `RunOutcome` | `index.ts`（未导出） | `{ text, reason }`。`text` = `firstSeq` 之后最后一条非空 `assistant/message` 文本；`reason` = 最后一条 `turn/end`。 |
 | `internals.stdout` / `stderr` | `index.ts` | 默认真 `process` 流；测试替换。 |
-| `ctx.appExit` | launcher `provideCmdline` | 可选 host 值，**不是** runner 的 `inject`。缺了 `apply` 同步抛。[E: packages/bundle/headless/src/index.ts:220] |
+| `ctx.appExit` | launcher `provideCmdline` | 可选 host 值，**不是** runner 的 `inject`。缺了 `apply` 同步抛。 [E: packages/bundle/headless/src/index.ts:394] |
 
-`composeEntries` 从空数组一次 `applyEntryPatches`：同 id 的 `config` **整键覆盖**（`target[key] = value`，不是 deep-merge）。本 overlay 重写 `system-prompt` / `tools` 时只带自己那几个键，schema 默认补其余项。[E: packages/boot/app-boot/src/profile.ts:845] [E: vendor/include/src/index.ts:123]
+`composeEntries` 从空数组一次 `applyEntryPatches`：同 id 的 `config` **整键覆盖**（`target[key] = value`，不是 deep-merge）。本 overlay 重写 `system-prompt` / `tools` 时只带自己那几个键，schema 默认补其余项。 [E: packages/boot/app-boot/src/profile.ts:730] [E: vendor/include/src/index.ts:120]
 
 ## 控制流
 
@@ -121,86 +123,88 @@ flowchart TD
   tmpl["PROFILE_TEMPLATES.headless"] --> compose["composeEntries empty root"]
   compose --> base["dsh-base insert"]
   compose --> overlay["dsh-headless patch"]
-  overlay --> persona["system-prompt.persona"]
+  overlay --> persona["system-prompt.personaPrefix/Suffix"]
   overlay --> toolsMode["tools.mode DSH_TOOLS_MODE"]
-  overlay --> insert3["insert code-runtime / startup / runner"]
-  insert3 --> noRoster["无 agent-presets 行"]
+  overlay --> insert2["insert startup / runner"]
+  overlay --> hmrOff["hmr disabled"]
+  insert2 --> noRoster["无 agent-preset-registry 行"]
   noRoster --> boot["boot + provideCmdline"]
   boot --> startup["headless-startup.parseCmdline"]
-  startup -->|empty or help| early["appExit 1 or 0; runner pending"]
-  startup -->|task| provide["provide headlessStartup"]
+  startup -->|empty tty or help| early["appExit 1 or 0; runner pending"]
+  startup -->|task or stdin| provide["provide headlessStartup"]
   provide --> runner["headless-runner.apply void run"]
-  runner --> create["agents.create + installModelSelection"]
+  runner --> create["agents.create or resume + installModelSelection"]
   create --> followup["followup next-turn wake"]
   followup --> waterfalls["assemble / pre-step / pre-execute 必须 next"]
   waterfalls --> idle["whenIdle + sessions.flush"]
   idle --> exit["stdout last assistant; appExit by turn/end"]
 ```
 
-1. `PROFILE_TEMPLATES@packages/boot/app-boot/src/profile.ts` 把 shipped `headless` 写成两元组：先 `@deepseek-ai/dsh-base`，再 `@deepseek-ai/dsh-headless`，`patchReload: 'startup'`（不装 user-patch watcher）。launcher `composeProfile` 按 bundles → profile patch → home patch → `--patch` 叠层。[E: packages/boot/app-boot/src/profile.ts:114] [E: apps/cli/src/profile-boot.ts:206] 现存目录若仍是旧三元组 `dsh-base` + `dsh-web-app` + `dsh-headless`，`normalizeShippedProfile` 会改回当前两元组；当前模板**不含** `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:130] [E: packages/boot/app-boot/src/profile.ts:694] [E: packages/boot/app-boot/src/profile.ts:704]
+1. `PROFILE_TEMPLATES@packages/boot/app-boot/src/profile.ts` 把 shipped `headless` 写成两元组：先 `@deepseek-ai/dsh-base`，再 `@deepseek-ai/dsh-headless`。模板对象**只有** `bundles`。launcher `readProfilePatches` 按 bundles → profile patch → home patch → `--patch` 叠层。 [E: packages/boot/app-boot/src/profile.ts:186] [E: packages/boot/app-boot/src/profile-context.ts:66] 现存目录若仍是旧三元组 `dsh-base` + `dsh-web-app` + `dsh-headless`，`normalizeShippedProfile` 会改回当前两元组；当前模板**不含** `dsh-web-app`，因此也**不含** `presets/*.patch.yml`。 [E: packages/boot/app-boot/src/profile.ts:198] [E: packages/boot/app-boot/src/profile.ts:578] [E: packages/bundle/headless/package.json:39]
 
-2. `dsh-headless` overlay 按 id 改两行已有 host 配置：`system-prompt` 的 `persona` 写成 `You are a coding agent powered by the {{model}} model. Your working directory is {{cwd}}.`；`tools.mode` 为 `!!js process.env.DSH_TOOLS_MODE`。unset 时表达式是 `undefined`，`ToolRuntime` schema 默认 `'native'`（`'native' | 'ptc' | 'both'`）。[E: packages/bundle/headless/cordis.patch.yml:10] [E: packages/bundle/headless/cordis.patch.yml:16] [E: packages/core/tools/src/index.ts:784] **本 overlay 不再写 `hmr`。** base 自己已经 `hmr` `disabled: true`。[E: packages/bundle/base/tests/base.spec.ts:39] [E: packages/bundle/base/tests/base.spec.ts:40]
+2. `dsh-headless` overlay 按 id 改三行已有 host 配置：`system-prompt` 的 `personaPrefix` / `personaSuffix`（cwd 在 suffix，模型句在 prefix）；`tools.mode` 为 `!!js process.env.DSH_TOOLS_MODE`；`hmr` `disabled: true`。unset `DSH_TOOLS_MODE` 时表达式是 `undefined`，`ToolRuntime` schema 默认 `'native'`（`'native' | 'ptc' | 'both'`）。 [E: packages/bundle/headless/cordis.patch.yml:11] [E: packages/bundle/headless/cordis.patch.yml:12] [E: packages/bundle/headless/cordis.patch.yml:18] [E: packages/bundle/headless/cordis.patch.yml:34] [E: packages/core/tools/src/index.ts:811]
 
-3. 同一文件的 `insert` **只有**三行：`code-runtime`（`@deepseek-ai/dsh-code-runtime-worker-thread`）、`headless-startup`（`@deepseek-ai/dsh-headless/startup`）、`headless-runner`（`@deepseek-ai/dsh-headless`，`inject: [headlessStartup]`，`config.task: !!js ctx.headlessStartup.task`）。没有 `id: agent-presets`，没有 `webserver` / `web-runtime` / `ui-*`。本文件**没有** `disabled: true`，**没有**把 base 的 `tool-*` 关掉。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27] [E: packages/bundle/headless/cordis.patch.yml:29] [E: packages/bundle/headless/cordis.patch.yml:31]
+3. 同一文件的 `insert` **只有**两行：`headless-startup`（`@deepseek-ai/dsh-headless/startup`）、`headless-runner`（`@deepseek-ai/dsh-headless`，`inject: [headlessStartup]`，`config.task/sessionId/json` 从 `ctx.headlessStartup` 读）。没有 `id: agent-preset-registry`，没有 `webserver` / `web-runtime` / `ui-*`。本文件**没有** `disabled: true` 去关 base 的 `tool-*`。PTC 执行后端在 **base** 的 `ptc-runtime` 行，不是 headless 再 insert 一份。 [E: packages/bundle/headless/cordis.patch.yml:21] [E: packages/bundle/headless/cordis.patch.yml:25] [E: packages/bundle/headless/cordis.patch.yml:29] [E: packages/bundle/base/cordis.patch.yml:389]
 
-4. 对照 `dsh-web-app`：web 把 base 上模型可见行（如 `tool-bash`）标 `disabled: true`，再 `insert` `agent-presets` `default: standard`，把工具挪到 **agent-preset 面**。headless 不做这两刀，工具留在 **host 全局层**。[E: packages/bundle/web-app/cordis.patch.yml:368] [E: packages/bundle/web-app/cordis.patch.yml:368] [E: packages/bundle/web-app/cordis.patch.yml:480] [E: packages/bundle/web-app/cordis.patch.yml:480] 五个 shipped profile 里，只有 `web` 挂 roster。`sdk` / `acp` 同样叠 base 且不 disable 那些 `tool-*`。
+4. 对照 `dsh-web-app`：web 把 base 上模型可见行（如 `tool-bash`）标 `disabled: true`，再 `insert` `agent-preset-registry` `default: standard`，并把四份 preset 文件列进 `dsh.bundle.patch` 数组。headless 不做这两刀，工具留在 **host 全局层**。 [E: packages/bundle/web-app/cordis.patch.yml:447] [E: packages/bundle/web-app/cordis.patch.yml:559] [E: packages/bundle/web-app/package.json:43] 五个 shipped profile 里，只有 `web` 挂 roster。`sdk` / `acp` 同样叠 base 且不 disable 那些 `tool-*`。
 
-5. CLI `composeProfile` **不再**按 `rows.has('agent-presets')` 注入 shipped root：它只 `prepareProfile`、叠 home / `--patch` overlay、再拼 `profile.layers` 的 bundle patches。roster 根目录由 `dsh-agent-presets` 包内 `presets/{minimal,standard,ptc,cordis}/` 在 **web 行 mount 时**发现。默认 headless 没有该行，因此不要把四个 shipped preset 说成 headless 的默认装配。[E: apps/cli/src/profile-boot.ts:230] [E: apps/cli/src/profile-boot.ts:234]
+5. CLI `readProfilePatches` **不再**按 `rows.has('agent-presets')` 注入 shipped root：它只 `prepareProfile`、叠 home / `--patch` overlay。roster 声明由 `dsh-web-app` 的 `presets/*.patch.yml` 在 **web 行 mount 时**登记。默认 headless 没有该行，因此不要把四个 shipped preset 说成 headless 的默认装配。 [E: packages/boot/app-boot/src/profile-context.ts:66] [E: packages/bundle/web-app/package.json:43]
 
-6. `runProfile` 在任何 config-tree 行 mount 之前 `provideCmdline`：冻 `ctx.cmdlineArgs`，并把 `shutdown.shutdown` 做成 `ctx.appExit`。[E: apps/cli/src/profile-boot.ts:330] [E: packages/boot/cmdline/src/index.ts:86] [E: packages/boot/cmdline/src/index.ts:87] `headless` 的 `patchReload === 'startup'`，不进 live watcher 分支。[E: apps/cli/src/profile-boot.ts:343]
+6. `runProfile` 在任何 config-tree 行 mount 之前 `provideCmdline`：冻 `ctx.cmdlineArgs`，并把 `shutdown.shutdown` 做成 `ctx.appExit`。 [E: apps/cli/src/profile-boot.ts:307] [E: packages/boot/cmdline/src/index.ts:86] [E: packages/boot/cmdline/src/index.ts:87] 本 overlay 把 `hmr` 关掉，boot 后不 watch 用户 patch。 [E: packages/bundle/headless/cordis.patch.yml:34]
 
-7. `headless-startup.apply@packages/bundle/headless/src/startup.ts` 建 commander，程序名 `dsh --profile headless`，位置参数 `[task...]`。action 里 `program.args.join(' ')`；`task.trim() === ''` 走 `program.error(...)`，**不** `provide`。[E: packages/bundle/headless/src/startup.ts:33] [E: packages/bundle/headless/src/startup.ts:52] [E: packages/bundle/headless/src/startup.ts:53] 然后 `parseCmdline`：help / 用法错误收成 `ctx.appExit`。[E: packages/bundle/headless/src/startup.ts:56] [E: packages/boot/cmdline/src/index.ts:184] 测试：`['run','the','tests']` 得到 `{ task: 'run the tests' }` 且 runner config 同步；空 / 空白退出 `1` 且 runner 未配置；`--help` 退出 `0` 且不 provide。[E: packages/bundle/headless/tests/startup.spec.ts:88] [E: packages/bundle/headless/tests/startup.spec.ts:96] [E: packages/bundle/headless/tests/startup.spec.ts:105]
+7. `headless-startup.apply@packages/bundle/headless/src/startup.ts` 建 commander，程序名 `dsh --profile headless`，位置参数 `[task...]`，另有 `--json` 与 `--session-id`。 [E: packages/bundle/headless/src/startup.ts:40] [E: packages/bundle/headless/src/startup.ts:43] [E: packages/bundle/headless/src/startup.ts:45] action 里 `program.args.join(' ')`；`-` 必须是唯一 task 参数（从 stdin 读）。交互式 tty 且没有 task 走 `program.error(...)`，**不** `provide`。非 tty 且没有 positional 时 `task` 为 `undefined`，交给 runner 读 stdin。 [E: packages/bundle/headless/src/startup.ts:99] [E: packages/bundle/headless/src/startup.ts:104] [E: packages/bundle/headless/src/startup.ts:114] 然后 `parseCmdline`：help / 用法错误收成 `ctx.appExit`。 [E: packages/bundle/headless/src/startup.ts:120] [E: packages/boot/cmdline/src/index.ts:184] 测试：`['run','the','tests']` 得到 `{ task: 'run the tests', sessionId: undefined, json: false }` 且 runner config 同步；`--help` 退出 `0` 且不 provide。 [E: packages/bundle/headless/tests/startup.spec.ts:119] [E: packages/bundle/headless/tests/startup.spec.ts:234]
 
-8. 非空 task 才 `ctx.provide('headlessStartup', { task })`。Loader 这时才满足 runner 行的 `inject: [headlessStartup]`，`!!js` 把 `ctx.headlessStartup.task` 写进 `Config.task`。[E: packages/bundle/headless/src/startup.ts:54] 空 task / `--help` 不 provide，runner 行保持 pending，进程只靠 `parseCmdline` 的 `appExit` 退。
+8. 成功 parse 才 `ctx.provide('headlessStartup', { task, sessionId, json })`。Loader 这时才满足 runner 行的 `inject: [headlessStartup]`，`!!js` 把服务字段写进 `Config`。 [E: packages/bundle/headless/src/startup.ts:114] 空 tty task / `--help` 不 provide，runner 行保持 pending，进程只靠 `parseCmdline` 的 `appExit` 退。
 
-9. `headless-runner.apply@packages/bundle/headless/src/index.ts` 用 `ctx.get('appExit')` 读 launcher 出口；缺了同步抛 `the launcher must provide ctx.appExit before the tree mounts`。然后 `void run(...)`：**不**阻塞 `apply`，也不阻塞随后 `runProfile` 返回。进程靠仍挂着的 Cordis 树与 in-flight `run` 活着。[E: packages/bundle/headless/src/index.ts:220] [E: packages/bundle/headless/src/index.ts:220] [E: packages/bundle/headless/src/index.ts:223] [E: packages/bundle/headless/tests/headless.spec.ts:403]
+9. `headless-runner.apply@packages/bundle/headless/src/index.ts` 用 `ctx.get('appExit')` 读 launcher 出口；缺了同步抛 `the launcher must provide ctx.appExit before the tree mounts`。然后 `void run(...)`：**不**阻塞 `apply`，也不阻塞随后 `runProfile` 返回。进程靠仍挂着的 Cordis 树与 in-flight `run` 活着。 [E: packages/bundle/headless/src/index.ts:394] [E: packages/bundle/headless/src/index.ts:396] [E: packages/bundle/headless/src/index.ts:399] [E: packages/bundle/headless/tests/headless.spec.ts:1044]
 
-10. `run` 先 `await ctx.get('loader')?.await()`，避免并发 mount 时工具 / adapter 半组成。settlement 期间树被 dispose、三个核心服务缺失则直接 `return`，不再 `appExit`。[E: packages/bundle/headless/src/index.ts:170] [E: packages/bundle/headless/src/index.ts:173] 否则 `agentDefaultModel.currentSelection()`；base 组合默认 `provider: deepseek-official` / `model: deepseek-v4-flash`（Settings 可覆盖）。[E: packages/bundle/headless/src/index.ts:174] [E: packages/core/agent-default-model/src/index.ts:90] [E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:79]
+10. `run` 先 `await ctx.get('loader')?.await()`，避免并发 mount 时工具 / adapter 半组成。settlement 期间树被 dispose、三个核心服务缺失则直接 `return`，不再 `appExit`。 [E: packages/bundle/headless/src/index.ts:312] [E: packages/bundle/headless/src/index.ts:317] `task === undefined` 或 `'-'` 时读 stdin；trim 后仍空则抛 `a task is required`。 [E: packages/bundle/headless/src/index.ts:325] [E: packages/bundle/headless/src/index.ts:329] 否则 `agentDefaultModel.currentSelection()`；base 组合默认 `provider: deepseek-official` / `model: deepseek-flash`（Settings 可覆盖；acp-app 另硬编码 `deepseek-v4-flash`）。 [E: packages/bundle/headless/src/index.ts:332] [E: packages/core/agent-default-model/src/index.ts:67] [E: packages/bundle/base/cordis.patch.yml:85] [E: packages/bundle/base/cordis.patch.yml:86]
 
-11. `ctx.agents.create` 转到已登记 factory。`AgentLoop` 构造时 `setFactory(this)`；base 行 `agents: []`，boot **不**在进程级造 Agent，由 runner 运行时创建。[E: packages/core/agent/src/index.ts:388] [E: packages/core/agent-loop/src/index.ts:413] [E: packages/bundle/base/cordis.patch.yml:479] runner 传入 `sessionId: SessionId("session-" + randomUUID())`、`meta.cwd = process.cwd()`、`agentOptions: { provider, model }`。`setup` **只** `installModelSelection`：没有 preset child realm 可 join，也就没有 `isolate` 组。[E: packages/bundle/headless/src/index.ts:180] [E: packages/bundle/headless/src/index.ts:185]
+11. `ctx.agents.create` 转到已登记 factory。`AgentLoop` 构造时 `setFactory(this)`；base 行 `agents: []`，boot **不**在进程级造 Agent，由 runner 运行时创建。 [E: packages/core/agent/src/index.ts:391] [E: packages/core/agent-loop/src/index.ts:369] [E: packages/bundle/base/cordis.patch.yml:513] 无 `--session-id` 时 runner 传入 `sessionId: brandString<SessionId>("session-" + randomUUID())`、`meta.cwd` 来自 `ctx.fs.resolve('.')`（没有 `fs` 则 `process.cwd()`）、`agentOptions: { provider, model }`。`setup` **只** `installModelSelection`：没有 preset child realm 可 join，也就没有 `isolate` 组。 [E: packages/bundle/headless/src/index.ts:338] [E: packages/bundle/headless/src/index.ts:342] `--session-id` 走 `agents.resume`，但若 header / `agent-preset/selected` 记录了 preset，领养失败——本 bundle 不组成 roster。 [E: packages/bundle/headless/src/index.ts:217]
 
-12. 新 Agent 先 `whenIdle`（create 后的 idle），记下 `firstSeq = agent.session.seq`（下一条事件序号 = 当前 log 长度），装 `streamReasoning`（`assistant/chunk` 的 `reasoning-delta` 写 stderr，前缀 `dsh: reasoning:\n`），再 **一次** `followup(createUserMessage({ content: [{ type: 'text', text: task }], source: { kind: 'user' } }))`。[E: packages/bundle/headless/src/index.ts:188] [E: packages/bundle/headless/src/index.ts:189] [E: packages/bundle/headless/src/index.ts:190] [E: packages/bundle/headless/src/index.ts:191] [E: packages/core/session/src/index.ts:566] [E: packages/llm/llm/src/message.ts:204] `ReactLoopAgent.followup` = `send(input, 'next-turn', true)`：进 inbox 并 `wakeDriver`。[E: packages/core/agent-loop/src/agent.ts:134] [E: packages/core/agent-loop/src/agent.ts:134] `firstSeq` 把 create 前已经在 log 里的噪声 turn 排除在打印窗口外。[E: packages/bundle/headless/tests/headless.spec.ts:122]
+12. 新 Agent 先 `whenIdle`（create 后的 idle），记下 `firstSeq = agent.session.seq`（下一条事件序号 = 当前 log 长度），装 `streamReasoning`（`--json` 时改走 `projectJsonRun`），再 **一次** `followup(createUserMessage({ content: [{ type: 'text', text: task }], source: { kind: 'user' } }))`。 [E: packages/bundle/headless/src/index.ts:353] [E: packages/bundle/headless/src/index.ts:360] [E: packages/bundle/headless/src/index.ts:365] [E: packages/llm/llm/src/message.ts:246] `ReactLoopAgent.followup` = `send(input, 'next-turn', true)`：进 inbox 并 `wakeDriver`。 [E: packages/core/agent-loop/src/agent.ts:163] `firstSeq` 把 create 前已经在 log 里的噪声 turn 排除在打印窗口外。 [E: packages/bundle/headless/tests/headless.spec.ts:262]
 
-13. **Waterfall 必须 `next()`。** Cordis `Events.waterfall` 把最后一个参数 `pop` 成 innermost `next`：监听器必须调用传入的 `next()` 才会 `cbs.shift()` 到下一层；不调用就停在本层，内置行为也不跑。[E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] [E: vendor/cordis/src/events.ts:239] 本 bundle 自己不是 waterfall 插件，但 runner 打开的那一次 turn 会穿过三条必须 `next()` 的链：
-    - `installModelSelection` 挂在 `system-prompt/assemble` 上：先 `await next()` 再把 `provider` / `model` 写进 `variables`。不调用 `next()`，assemble 停在这一层，`{{model}}` / `{{cwd}}` 插值拿不到完整 assembly。[E: packages/core/agent/src/model-selection.ts:77] [E: packages/core/agent/src/model-selection.ts:79] `SystemPrompt.assemble` 自己也是 waterfall，返回值权威。[E: packages/core/system-prompt/src/index.ts:552]
-    - `ReactLoopAgent.preStep` 的 `agent/pre-step`：innermost `next` 默认 `{ kind: 'enter', messages }`。listener 不 `next()` 就不会走到这个 enter；`reject` 把 turn 收成 `blocked`，第一步空 claim 则以 `completed`、0 个 step 结束。[E: packages/core/agent-loop/src/agent.ts:256] [E: packages/core/agent-loop/src/agent.ts:249] [E: packages/core/agent-loop/src/agent.ts:287] [E: packages/core/agent-loop/src/agent.ts:294]
-    - 模型若带 `tool-call`，`tools/pre-execute` 的 innermost 默认 `{ kind: 'allow' }`。不 `next()` 等于否决 allow，body 进不去。[E: packages/core/tools/src/index.ts:1466] [E: packages/core/tools/src/index.ts:1467]
+13. **Waterfall 必须 `next()`。** Cordis `Events.waterfall` 把最后一个参数 `pop` 成 innermost `next`：监听器必须调用传入的 `next()` 才会 `cbs.shift()` 到下一层；不调用就停在本层，内置行为也不跑。 [E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] 本 bundle 自己不是 waterfall 插件，但 runner 打开的那一次 turn 会穿过三条必须 `next()` 的链：
+    - `installModelSelection` 挂在 `system-prompt/assemble` 上：先 `await next()` 再把 `provider` / `model` 写进 `variables`。不调用 `next()`，assemble 停在这一层，`{{model}}` / `{{cwd}}` 插值拿不到完整 assembly。 [E: packages/core/agent/src/model-selection.ts:82] [E: packages/core/agent/src/model-selection.ts:84] `SystemPrompt.assemble` 自己也是 waterfall，返回值权威。 [E: packages/core/system-prompt/src/index.ts:625]
+    - `ReactLoopAgent.preStep` 的 `agent/pre-step`：innermost `next` 默认 `{ kind: 'enter', messages }`。listener 不 `next()` 就不会走到这个 enter。 [E: packages/core/agent-loop/src/agent.ts:276] [E: packages/core/agent-loop/src/agent.ts:278]
+    - 模型若带 `tool-call`，`tools/pre-execute` 的 innermost 默认 `{ kind: 'allow' }`。不 `next()` 等于否决 allow，body 进不去。 [E: packages/core/tools/src/index.ts:1505] [E: packages/core/tools/src/index.ts:1507]
 
-14. `whenIdle` 等到 `activityDone` 不再被替换（driver 收敛）。runner 再 `sessions.flush(agent.session)`，然后 `summarize`：从 `firstSeq` 起，见到 `turn/start` 才开始；每个非空 `assistant/message` 文本覆盖 `text`；最后一条 `turn/end.reason` 留下。[E: packages/core/agent-loop/src/agent.ts:207] [E: packages/bundle/headless/src/index.ts:200] [E: packages/core/session/src/index.ts:1047] [E: packages/bundle/headless/src/index.ts:69] [E: packages/bundle/headless/src/index.ts:80] [E: packages/bundle/headless/src/index.ts:82] stdout 写 `text + '\n'`；`reason.kind === 'error'` 时 stderr 再写 `dsh: ${code}: ${message}`；`appExit(reason?.kind === 'completed' ? 0 : 1)`——无 turn、`aborted`、error 都是 `1`。[E: packages/bundle/headless/src/index.ts:202] [E: packages/bundle/headless/src/index.ts:206] 测试钉死 flush 在 exit 之前、跨两个 scripted turn 只打印 `final answer`、error reason 退出 `1`、无完成 turn 退出 `1`、`agents.create` reject 走 `fail`。[E: packages/bundle/headless/tests/headless.spec.ts:132] [E: packages/bundle/headless/tests/headless.spec.ts:133] [E: packages/bundle/headless/tests/headless.spec.ts:277] [E: packages/bundle/headless/tests/headless.spec.ts:296] [E: packages/bundle/headless/tests/headless.spec.ts:372]
+14. `whenIdle` 等到 `activityDone` 不再被替换（driver 收敛）。runner 再 `sessions.flush(agent.session)`，然后 `summarize`：从 `firstSeq` 起，见到 `turn/start` 才开始；每个非空 `assistant/message` 文本覆盖 `text`；最后一条 `turn/end.reason` 留下。 [E: packages/core/agent-loop/src/agent.ts:237] [E: packages/bundle/headless/src/index.ts:373] [E: packages/core/session/src/index.ts:1194] [E: packages/bundle/headless/src/index.ts:83] stdout 写 `text + '\n'`；`reason.kind === 'error'` 时 stderr 再写 `dsh: ${code}: ${message}`；`appExit(reason?.kind === 'completed' ? 0 : 1)`——无 turn、`aborted`、error 都是 `1`。 [E: packages/bundle/headless/src/index.ts:375] [E: packages/bundle/headless/src/index.ts:380] 测试钉死 flush 在 exit 之前、跨两个 scripted turn 只打印 `final answer`。 [E: packages/bundle/headless/tests/headless.spec.ts:277] [E: packages/bundle/headless/tests/headless.spec.ts:281]
 
-15. **isolate / `leakedServices` 不在默认路径上。** `mountPreset` 若发现子树把 service publish 进 **root realm**，抛 `published process-global service(s)`，要求 `isolate: { …: true }` 或把该行搬到 host。[E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:410] 默认 headless 没有 `agent-presets` 行，runner `setup` 也不 join standing mount，所以 **不会**走到 `leakedServices`。host 全局 `tool-*` publish 进 root realm 是本 mode 的设计，不是泄漏。若部署后来用 `--patch` 自己 `insert` 了 roster，必须在 **这个** `setup` 里先 join 那一代 standing mount；本仓库的 runner **没有**写这一步。
+15. **isolate / `leakedServices` 不在默认路径上。** `mountPreset` 若发现子树把 service publish 进 **root realm**，抛 `Preset services require isolate realms`。 [E: packages/preset/agent-preset-registry/src/mount.ts:265] [E: packages/preset/agent-preset-registry/src/mount.ts:267] 默认 headless 没有 `agent-preset-registry` 行，runner `setup` 也不 join standing mount，所以 **不会**走到 `leakedServices`。host 全局 `tool-*` publish 进 root realm 是本 mode 的设计，不是泄漏。若部署后来用 `--patch` 自己 `insert` 了 roster，必须在 **这个** `setup` 里先 join 那一代 standing mount；本仓库的 runner **没有**写这一步。
 
 ## 设计动机
 
 - **one-shot 进程，不是长期 Host。** Web 把 Agent 面从进程挪到 preset，好让多个会话共享 webserver / persistence，又各自 isolate。headless 是「一个 argv 任务、一个进程、一次 `followup`」：少 roster 就少一层 `mountPreset` 失败面，模型可见集直接等于 `dsh-base` 仍启用的那些行。
-- **inject 门把空 task 挡在 runner 之外。** `headless-runner` 的 `Config.task` 是 `required`；空调用若仍 mount runner，会用空字符串开 turn。startup 在 `provide` 之前 `program.error`，Loader 让依赖行 pending，进程只走 `appExit`。
-- **打印窗口是 session log，不是「第一个 chunk」。** `summarize` 只读已经 append 的 `assistant/message`，再 `flush`。reasoning 另走 stderr 的 `assistant/chunk`。这是 `model-visible ⟺ logged` 在无 UI 路径上的落点：stdout 不能比 log 多出一个未入账的句子。
-- **persona 写在 host `system-prompt` 行，不是 `dsh-persona`。** 没有 preset 就不能用 scoped 同名 section shadow。`PERSONA_SECTION = 'deployment:persona'`、order 键 `DEPLOYMENT_PERSONA = 0`；本 overlay 填的是 registry 自己那一段 `config.persona`。[E: packages/core/system-prompt/src/index.ts:174] [E: packages/core/system-prompt/src/index.ts:123] [E: packages/core/system-prompt/src/index.ts:427]
-- **`code-runtime` 跟着 one-shot 走。** PTC（旧名 Code Mode，权威 `packages/core/tools/src/ptc.ts`，节点 id 仍是 `subsys.core.code-mode`）是执行能力，不是 Web 组件。`DSH_TOOLS_MODE` 与 web overlay 同一临时开关；unset 保持 `native`，不把 `run_code` 强加给每个 headless 调用。
+- **inject 门把空 tty task 挡在 runner 之外。** 交互式缺 task 时 startup 在 `provide` 之前 `program.error`，Loader 让依赖行 pending，进程只走 `appExit`。非 tty 缺 positional 则 provide `task: undefined`，由 runner 读 stdin。
+- **打印窗口是 session log，不是「第一个 chunk」。** `summarize` 只读已经 append 的 `assistant/message`，再 `flush`。reasoning 另走 stderr 的 `agent/assistant-stream`。这是 `model-visible ⟺ logged` 在无 UI 路径上的落点：stdout 不能比 log 多出一个未入账的句子。
+- **persona 写在 host `system-prompt` 行，不是 `dsh-persona`。** 没有 preset 就不能用 scoped 同名 section shadow。槽名是 `deployment:persona-prefix` / `deployment:persona-suffix`；本 overlay 填的是 `personaPrefix` / `personaSuffix`。 [E: packages/core/system-prompt/src/index.ts:179] [E: packages/core/system-prompt/src/index.ts:182] [E: packages/bundle/headless/cordis.patch.yml:11]
+- **PTC runtime 跟着 base 走。** PTC（旧名 Code Mode，权威 `packages/core/tools/src/ptc.ts`，节点 id 仍是 `subsys.core.code-mode`）是执行能力，不是 Web 组件。`DSH_TOOLS_MODE` 与 web overlay 同一临时开关；unset 保持 `native`，不把 `run_code` 强加给每个 headless 调用。
 
 ## Gotcha
 
-- **没有 `dsh headless` alias。** launcher 唯一硬编码子命令是 `web`。task 是 inner args，由 `headless-startup` 拼句。其他宿主入口是 `dsh --profile sdk|sdk-minimal|acp`。
-- **审批默认仍是 `ask`。** base 的 `approval.policy` 只在 `DSH_PERMISSION_MODE === 'danger-full-access'` 时为 `never`，否则 `ask`。本 overlay 不改这一行。`ask` 且没有 answerer 时，`approval/request` waterfall 的 innermost 是 `'unavailable'`。[E: packages/bundle/base/cordis.patch.yml:227] [E: packages/interaction/user-approval/src/index.ts:287] 纯文本成功路径不经工具；无人值守放行工具必须自己改 policy / env。
+- **没有独立 `dsh headless` Commander 子命令。** launcher 位置参数缩写让 `dsh headless` 与 `dsh --profile headless` 等价。task 是 inner args，由 `headless-startup` 拼句。其他宿主入口是 `dsh --profile sdk|sdk-minimal|acp`。
+- **审批默认仍是 `ask`。** base 的 `approval.policy` 只在 `DSH_PERMISSION_MODE === 'danger-full-access'` 时为 `never`，否则 `ask`。本 overlay 不改这一行。`ask` 且没有 answerer 时，`approval/request` waterfall 的 innermost 是 `'unavailable'`。 [E: packages/bundle/base/cordis.patch.yml:247] [E: packages/interaction/user-approval/src/index.ts:283] 纯文本成功路径不经工具；无人值守放行工具必须自己改 policy / env。
 - **`apply` 不 await `run`。** 测试和嵌入方不能假设 `apply` 返回时已经 `appExit`。缺 `appExit` 是同步抛；create 失败是异步 `fail` → `exit(1)`。
-- **dispose 中途的 settlement 不 `appExit`。** loader `await` 回来后三个服务缺一则静默 return，避免 shutdown 已经开始时再抢一次退出码。[E: packages/bundle/headless/tests/headless.spec.ts:396]
+- **dispose 中途的 settlement 不 `appExit`。** loader `await` 回来后三个服务缺一则静默 return，避免 shutdown 已经开始时再抢一次退出码。 [E: packages/bundle/headless/tests/headless.spec.ts:1038]
 - **`firstSeq` 是下一条序号。** create 阶段若已有 `turn/*`（测试里的 setup noise），不会进 stdout。
 - **`dsh-base` 没有 Codex / Claude 子代理后端。** headless 继承那份 insert，不会因为「仓库里有 `dsh-subagent-codex` 包」就 dormant 加载。preset 里对应 tool 行是 web roster 的事，默认 headless 根本不挂 roster。
-- **后加 `agent-presets` 不会自动 join。** 需要私有实例的 preset 行必须 `isolate`，否则 `leakedServices` 拒绝；本包默认路径不触发该门。
-- **headless 不叠 `dsh-web-app`。** 旧安装若仍是三元组会被 heal 掉。
+- **后加 `agent-preset-registry` 不会自动 join。** 需要私有实例的 preset 行必须 `isolate`，否则 `leakedServices` 拒绝；本包默认路径不触发该门。
+- **headless 不叠 `dsh-web-app`。** 旧安装若仍是三元组会被 heal 掉。不要把 `standard` / `minimal` / `ptc` / `cordis` 说成 headless 的默认装配。
+- **带 preset 记录的 Session 不能用 `--session-id` 领养。** 本 bundle 会把那次 resume 当成「会静默跑成另一套 tools / prompt」而拒绝。
 
 ## Seam 三角
 
 | Seam | Definition | Provider | Consumer |
 |---|---|---|---|
-| 组合层 `dsh-headless` | 包 `@deepseek-ai/dsh-headless` + `dsh.bundle.patch` | `PROFILE_TEMPLATES.headless` 第二层；`composeEntries` 叠在 base 之后 | `dsh --profile headless`；用户 profile / home / `--patch` 仍可改这三行 insert |
-| `headlessStartup` | `HeadlessStartupValues.task`；键 `'headlessStartup'` | `headless-startup` 行：`inject: [cmdlineArgs]`，action 里 `provide` | `headless-runner` 行：`inject: [headlessStartup]` + `!!js ctx.headlessStartup.task` |
-| 一次性 Agent 入口 | `ctx.agents` / `AgentFactory`（`dsh-agent`） | `dsh-base` 行 `agent-loop`，`agents: []`，`setFactory` | `headless-runner.run`：`agents.create` + 一次 `followup`。Web 的 Consumer 是 `packages/api/session-controller`，本树不挂 |
+| 组合层 `dsh-headless` | 包 `@deepseek-ai/dsh-headless` + `dsh.bundle.patch` | `PROFILE_TEMPLATES.headless` 第二层；`composeEntries` 叠在 base 之后 | `dsh --profile headless`；用户 profile / home / `--patch` 仍可改这两行 insert |
+| `headlessStartup` | `{ task?, sessionId?, json }`；键 `'headlessStartup'` | `headless-startup` 行：`inject: [cmdlineArgs]`，action 里 `provide` | `headless-runner` 行：`inject: [headlessStartup]` + `!!js ctx.headlessStartup.*` |
+| 一次性 Agent 入口 | `ctx.agents` / `AgentFactory`（`dsh-agent`） | `dsh-base` 行 `agent-loop`，`agents: []`，`setFactory` | `headless-runner.run`：`agents.create` 或 resume + 一次 `followup`。Web 的 Consumer 是 `packages/api/session-controller`，本树不挂 |
 | 模型可见工具 | `ctx.tools` / `ToolRuntime` | `dsh-base` 的 `tool-*` 行（本 overlay **不** `disabled`） | 全局层 `schemas` / `execute`。web 的 Consumer 是 preset 行；headless 没有 roster |
-| PTC runtime | `ctx.codeRuntime`；模型名 `run_code` | insert `code-runtime` = `@deepseek-ai/dsh-code-runtime-worker-thread` | `tools.mode` 吃 `DSH_TOOLS_MODE`；`native` 时 runtime 在树里但直调仍走 native 名 |
-| 部署 persona | `PERSONA_SECTION = 'deployment:persona'` | 本 overlay 的 `id: system-prompt` `config.persona`（host 面） | `systemPrompt.assemble` + `installModelSelection` 写 `{{model}}`。**不是** preset 里的 `dsh-persona` |
-| 进程退出 | `ctx.appExit` | launcher `provideCmdline` | runner `io.exit`；startup 的 `parseCmdline` 在空 task / help 时直接 `exit` |
-| isolate / 泄漏门 | `leakedServices`：publish 进 `ctx.root[Context.isolate]` 的实现算泄漏 | `mountPreset`（`dsh-agent-presets`） | **默认 Consumer 不存在**。后加 roster 时，需要私有实例的行必须 `isolate: { …: true }`，并在 runner `setup` 里 join |
+| PTC runtime | `ctx.ptcRuntime`；模型名 `run_code` | **base** insert `ptc-runtime` = `@deepseek-ai/dsh-ptc-runtime-node` | `tools.mode` 吃 `DSH_TOOLS_MODE`；`native` 时 runtime 在树里但直调仍走 native 名 |
+| 部署 persona | `deployment:persona-prefix` / `deployment:persona-suffix` | 本 overlay 的 `id: system-prompt` `personaPrefix` / `personaSuffix`（host 面） | `systemPrompt.assemble` + `installModelSelection` 写 `{{model}}`。**不是** preset 里的 `dsh-persona` |
+| 进程退出 | `ctx.appExit` | launcher `provideCmdline` | runner `io.exit`；startup 的 `parseCmdline` 在空 tty task / help 时直接 `exit` |
+| isolate / 泄漏门 | `leakedServices`：publish 进 `ctx.root[Context.isolate]` 的实现算泄漏 | `mountPreset`（`dsh-agent-preset-registry`） | **默认 Consumer 不存在**。后加 roster 时，需要私有实例的行必须 `isolate: { …: true }`，并在 runner `setup` 里 join |
 
 换 Provider = 换 overlay 行或换 `headless-runner` 插件，不必改 `dsh-agent` 合同。换 Definition（例如把 task 从 positional 改成别的服务名）必须同时改 insert 的 `inject` 与 `!!js`。
 
@@ -209,16 +213,17 @@ flowchart TD
 - packages/bundle/headless/cordis.patch.yml
 - packages/bundle/headless/src/startup.ts
 - packages/bundle/headless/src/index.ts
-
 - packages/bundle/headless/package.json
 - packages/bundle/headless/tests/headless.spec.ts
 - packages/bundle/headless/tests/startup.spec.ts
 - packages/boot/app-boot/src/profile.ts
 - apps/cli/src/profile-boot.ts
+- packages/boot/app-boot/src/profile-context.ts
 - packages/boot/cmdline/src/index.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/base/tests/base.spec.ts
 - packages/bundle/web-app/cordis.patch.yml
+- packages/bundle/web-app/package.json
 - packages/core/agent-loop/src/agent.ts
 - packages/core/agent-loop/src/index.ts
 - packages/core/agent/src/index.ts
@@ -227,7 +232,7 @@ flowchart TD
 - packages/core/tools/src/index.ts
 - packages/core/system-prompt/src/index.ts
 - packages/core/agent-default-model/src/index.ts
-- packages/preset/agent-presets/src/mount.ts
+- packages/preset/agent-preset-registry/src/mount.ts
 - packages/llm/llm/src/message.ts
 - packages/interaction/user-approval/src/index.ts
 - vendor/cordis/src/events.ts
@@ -243,10 +248,10 @@ flowchart TD
 - [`spine.session-log`](../../spine/session-log.md) — append-only log、`deriveMessages()`、`sessions.flush`。
 - [`subsys.composition.app-boot`](app-boot.md) — `loadProfile` / `composeEntries` / `boot`。
 - [`subsys.composition.cmdline`](cmdline.md) — `provideCmdline` / `parseCmdline` / `ctx.appExit`。
-- [`subsys.composition.bundle-web-app`](bundle-web-app.md) — 对照：disable 模型可见行 + `agent-presets` `default: standard`。
+- [`subsys.composition.bundle-web-app`](bundle-web-app.md) — 对照：disable 模型可见行 + `agent-preset-registry` `default: standard`。
 - [`subsys.composition.agent-presets`](agent-presets.md) — `mountPreset` / `leakedServices` / isolate；默认 headless 不挂。
 - [`subsys.core.agent-loop`](../core/agent-loop.md) — `setFactory`、`agents: []`、`ReactLoopAgent.followup`。
-- [`subsys.core.system-prompt`](../core/system-prompt.md) — `PERSONA_SECTION` 与 `assemble` waterfall。
+- [`subsys.core.system-prompt`](../core/system-prompt.md) — `personaPrefix` / `personaSuffix` 与 `assemble` waterfall。
 - [`subsys.core.tools`](../core/tools.md) — host 面注册表；`tools/pre-execute` 必须 `next()`。
 - [`subsys.core.code-mode`](../core/code-mode.md) — PTC / `run_code`（稳定别名；权威 `ptc.ts`）。
-- [`surface.cli.overview`](../../surface/cli/overview.md) — launcher `--profile` / `--patch` / dump，没有 `dsh headless` alias。
+- [`surface.cli.overview`](../../surface/cli/overview.md) — launcher `--profile` / `--patch` / dump。

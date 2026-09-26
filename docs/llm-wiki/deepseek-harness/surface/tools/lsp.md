@@ -27,10 +27,10 @@ source:
   - packages/guard/timeout-policy/src/index.ts
   - packages/session/session-checkpoint-policy/src/index.ts
   - packages/util/timeout/src/index.ts
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - snapshots/session/lsp-definition/cordis.yml
 symbols:
   - apply
@@ -54,7 +54,7 @@ related:
   - subsys.execution.lsp
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `lsp` 是 `@deepseek-ai/dsh-tool-lsp` 向模型注册的**只读**导航工具：单一 wire 名 `lsp`，四个 `operation`（`goToDefinition` / `findReferences` / `goToImplementation` / `hover`），经 `ctx.lsp` 查 language server。坐标是模型侧 **one-based UTF-16**，工具在 execute 里减 1 交给缝的 zero-based 位置。四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）**都不装**；包存在不等于产品默认 catalog 里有它。
@@ -78,7 +78,7 @@ updated: c291e7961a
 
 `apply(ctx, config)` 先把 `maxLocations` / `maxResultChars` / `timeoutMs` 当成正整数校验（`timeoutMs` 还不得大于 `MAX_TIMER_DELAY_MS`），再挂 prompt 段并注册工具。工具插件**不 import 任何 LSP provider**；它只消费 `ctx.lsp`。[E: packages/lsp/tool-lsp/src/index.ts:99][E: packages/lsp/tool-lsp/src/index.ts:101]
 
-同一次 `apply` 写 `systemPrompt` section `name: 'tool:lsp'`，`order: ctx.systemPrompt.getSectionOrder('TOOL_LSP')`（集中表里 `TOOL_LSP: 2200`），正文是 `LSP_PROMPT_TEXT`：日常导航用 search/read；只有文本匹配含糊、或改动前需要精确定义 / 实现 / 引用时才用 `lsp`。位置是 cursor 处的 one-based UTF-16；点在符号外可能空结果；`findReferences` 总是带上 declaration。[E: packages/lsp/tool-lsp/src/index.ts:104][E: packages/lsp/tool-lsp/src/index.ts:105][E: packages/core/system-prompt/src/index.ts:141][E: packages/lsp/tool-lsp/src/index.ts:53][E: packages/lsp/tool-lsp/tests/tool-lsp.spec.ts:72]
+同一次 `apply` 写 `systemPrompt` section `name: 'tool:lsp'`，`order: ctx.systemPrompt.getSectionOrder('TOOL_LSP')`（集中表里 `TOOL_LSP: 2200`），正文是 `LSP_PROMPT_TEXT`：日常导航用 search/read；只有文本匹配含糊、或改动前需要精确定义 / 实现 / 引用时才用 `lsp`。位置是 cursor 处的 one-based UTF-16；点在符号外可能空结果；`findReferences` 总是带上 declaration。[E: packages/lsp/tool-lsp/src/index.ts:104][E: packages/lsp/tool-lsp/src/index.ts:105][E: packages/core/system-prompt/src/index.ts:145][E: packages/lsp/tool-lsp/src/index.ts:53][E: packages/lsp/tool-lsp/tests/tool-lsp.spec.ts:72]
 
 `defineTool` **没有** `isConcurrencySafe`。registry `executionMode` 对未声明或非精确 `true` 的分类器一律 `exclusive`，所以两个 `lsp` 调用不会并行重叠。[E: packages/core/tools/src/index.ts:1269]
 
@@ -121,7 +121,7 @@ updated: c291e7961a
 
 ## 输出 & 截断 / spill
 
-`execute` 返回封闭 union，registry 用 `output.schema` 校验后再 `render`。[E: packages/lsp/tool-lsp/src/index.ts:124][E: packages/core/tools/src/index.ts:1786]
+`execute` 返回封闭 union，registry 用 `output.schema` 校验后再 `render`。[E: packages/lsp/tool-lsp/src/index.ts:124][E: packages/core/tools/src/index.ts:1835]
 
 | `kind` | 何时 | 规范值 | 模型看见的文本 |
 |---|---|---|---|
@@ -137,7 +137,7 @@ updated: c291e7961a
 
 规范值保留 provider 交来的**全部** location。`maxLocations: 1` 时模型文本只剩第一条加 omission 行，但 `result.value.locations` 仍是完整数组。[E: packages/lsp/tool-lsp/tests/tool-lsp.spec.ts:151]
 
-`lsp` **没有** spill 路径：不读 `ctx.spillStore`，不把正文卸到磁盘。也没有 `output.presentationMeta`。失败走 registry `toolErrorResult`：`content` 为 `Error: <message>`；`LspError` / `ToolArgsError` 这类 `HarnessError` 的 `{ name, code }` 进 `error.info`（例如 `LSP_WORKSPACE_REQUIRED` / `LSP_UNAVAILABLE` / `INVALID_ARGS` / `TOOL_TIMEOUT`）。[E: packages/core/tools/src/index.ts:1861][E: packages/core/tools/src/index.ts:637][E: packages/lsp/tool-lsp/tests/tool-lsp.spec.ts:194]
+`lsp` **没有** spill 路径：不读 `ctx.spillStore`，不把正文卸到磁盘。也没有 `output.presentationMeta`。失败走 registry `toolErrorResult`：`content` 为 `Error: <message>`；`LspError` / `ToolArgsError` 这类 `HarnessError` 的 `{ name, code }` 进 `error.info`（例如 `LSP_WORKSPACE_REQUIRED` / `LSP_UNAVAILABLE` / `INVALID_ARGS` / `TOOL_TIMEOUT`）。[E: packages/core/tools/src/index.ts:1910][E: packages/core/tools/src/index.ts:664][E: packages/lsp/tool-lsp/tests/tool-lsp.spec.ts:194]
 
 UI 待定卡片是 `presentLspCall`：`card: 'generic'`、`kind: 'search'`，title 形如 `LSP hover a.ts:2:3`，`locations[0].line` 只有行、没有列（列留在 title 里）。[E: packages/lsp/tool-lsp/src/render.ts:184][E: packages/lsp/tool-lsp/tests/tool-lsp.spec.ts:232]
 
@@ -159,31 +159,31 @@ stdio provider 收到查询后：`canonicalizeWorkspace` 要求 `workspaceRoot` 
 
 ## 执行管线
 
-模型发出 `lsp` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1467][E: packages/core/tools/src/index.ts:1565][E: packages/core/tools/src/index.ts:1734]
+模型发出 `lsp` 后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `tools/post-execute` → `output.render`。[E: packages/core/tools/src/index.ts:1507][E: packages/core/tools/src/index.ts:1607][E: packages/core/tools/src/index.ts:1783]
 
 对本工具的挂点：
 
-- **`tools/pre-execute`**：`lsp` 自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1466]
+- **`tools/pre-execute`**：`lsp` 自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1506]
 - **并发**：未声明 `isConcurrencySafe` → `exclusive`。stdio 侧每个 workspace 还有自己的查询队列，那是 provider 内部串行，不是 registry 调度。[E: packages/core/tools/src/index.ts:1269][E: packages/lsp/lsp-stdio/src/instance.ts:97]
 - **`tools/execute` 包装**：
   - `session-checkpoint-policy` 仅在「有 `exec.agent` 且 `exec.parent === undefined`」时 `flush` session，再 `next()`。[E: packages/session/session-checkpoint-policy/src/index.ts:71]
   - `timeout-policy` 读 `definition.timeoutMs`（默认 60s）。到期把结果换成 `TOOL_TIMEOUT`（`tool call timed out after Nms`），集成测试用挂起的 definition server + `timeoutMs: 300` 钉死这条。[E: packages/guard/timeout-policy/src/index.ts:59][E: packages/guard/timeout-policy/src/index.ts:25][E: packages/guard/timeout-policy/src/index.ts:42][E: packages/lsp/tool-lsp/tests/integration.spec.ts:97]
-- **body**：`defineTool` 先 `validate`（enum / required），再进 `apply` 里的 `execute`。`exec.signal` 原样传给 `ctx.lsp.query`。[E: packages/core/tools/src/schema.ts:587][E: packages/lsp/tool-lsp/src/index.ts:194]
-- **`tools/post-execute`**：本工具不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1734]
+- **body**：`defineTool` 先 `validate`（enum / required），再进 `apply` 里的 `execute`。`exec.signal` 原样传给 `ctx.lsp.query`。[E: packages/core/tools/src/schema.ts:599][E: packages/lsp/tool-lsp/src/index.ts:194]
+- **`tools/post-execute`**：本工具不注册 listener，默认 `accept`。[E: packages/core/tools/src/index.ts:1783]
 - **sandbox / approval**：不挂。
 
-若某个 composition 同时挂了 `lsp` 和 PTC preset 的 `tool-presentation` `mode: ptc`：模型能直接调的唯一 wire 名仍是 `run_code`。非嵌套且 `modeFor(scope) === 'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse，在 **policy 之前**变成 `UNKNOWN_TOOL`，不进 `tools/pre-execute`。SDK 子分发带 `parent`（`nested === true`），不 collapse，仍走完整管线。[E: packages/core/tools/src/index.ts:1315][E: packages/core/tools/src/index.ts:1372][E: packages/core/tools/src/index.ts:1430]
+若某个 composition 同时挂了 `lsp` 和 PTC preset 的 `tool-presentation` `mode: ptc`：模型能直接调的唯一 wire 名仍是 `run_code`。非嵌套且 `modeFor(scope) === 'ptc'` 时，除 `run_code` 外的名字在 `createExecution` 里 collapse，在 **policy 之前**变成 `UNKNOWN_TOOL`，不进 `tools/pre-execute`。SDK 子分发带 `parent`（`nested === true`），不 collapse，仍走完整管线。[E: packages/core/tools/src/index.ts:1352][E: packages/core/tools/src/index.ts:1409][E: packages/core/tools/src/index.ts:1470]
 
 ## Preset 装配
 
-成员资格只认 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml`。仓库里有 `@deepseek-ai/dsh-tool-lsp` **不等于**产品默认装。四个 shipped 文件的全部 top-level `id:` 如下，其中**没有** `tool-lsp`，也没有 `@deepseek-ai/dsh-lsp` / `@deepseek-ai/dsh-lsp-stdio`。
+成员资格只认 `packages/bundle/web-app/presets/{standard,ptc,minimal,cordis}.patch.yml`。仓库里有 `@deepseek-ai/dsh-tool-lsp` **不等于**产品默认装。四个 shipped 文件的全部 top-level `id:` 如下，其中**没有** `tool-lsp`，也没有 `@deepseek-ai/dsh-lsp` / `@deepseek-ai/dsh-lsp-stdio`。
 
 | preset | 装 `@deepseek-ai/dsh-tool-lsp`？ | `disabled` | isolate | 说明 |
 |---|---|---|---|---|
-| `minimal` | **否** | — | — | top-level 只有 `persona` / `persistent-shell` / `filesystem`。文本读写是 `str_replace_editor`，不是 `lsp`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:63] |
-| `standard` | **否** | — | — | 以 `tool-web` 收束（`fetch: true`，`searchTimeoutMs: 60000`）。top-level `id` 无 `tool-lsp`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] |
-| `ptc`（wiki id `surface.presets.code`） | **否** | — | — | 相对 `standard` 的增量是末尾 `tool-presentation` `mode: ptc`，模型直调只剩 `run_code`。没有 `tool-lsp` 行。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269][E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] |
-| `cordis` | **否** | — | — | 增量是 `tool-cordis` + 带 `customSkillDirs` 的 skill 两行。收束 `id` 是 `tool-skill`，不是 `tool-lsp`。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246][E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:262] |
+| `minimal` | **否** | — | — | top-level 只有 `persona` / `persistent-shell`。没有 `tool-lsp`，也没有 fs 工具。[E: packages/bundle/web-app/presets/minimal.patch.yml:11][E: packages/bundle/web-app/presets/minimal.patch.yml:17] |
+| `standard` | **否** | — | — | 以 `present` + 出厂 `disabled: true` 的 `plugin_manager` 收束。top-level `id` 无 `tool-lsp`。[E: packages/bundle/web-app/presets/standard.patch.yml:142][E: packages/bundle/web-app/presets/standard.patch.yml:146] |
+| `ptc`（wiki id `surface.presets.code`） | **否** | — | — | 相对 `standard` 的增量是末尾 `tool-presentation` `mode: ptc`，模型直调只剩 `run_code`。没有 `tool-lsp` 行。[E: packages/bundle/web-app/presets/ptc.patch.yml:144][E: packages/bundle/web-app/presets/ptc.patch.yml:147] |
+| `cordis` | **否** | — | — | 增量是 `tool-cordis` + 带 `customSkillDirs` 的 skill 两行。收束是 `present` / `plugin_manager`，不是 `tool-lsp`。[E: packages/bundle/web-app/presets/cordis.patch.yml:141][E: packages/bundle/web-app/presets/cordis.patch.yml:150] |
 
 opt-in 出现在 **snapshot / 测试 composition**，以及用户自己的 preset / `--patch`，不是 shipped roster：
 
@@ -195,7 +195,7 @@ opt-in 出现在 **snapshot / 测试 composition**，以及用户自己的 prese
 
 符号：`apply` @ `packages/lsp/tool-lsp/src/index.ts`，`parseLspArgs` / `formatLocations` / `formatHover` @ `render.ts`，`sessionCwd` @ `session-cwd.ts`，`Lsp.query` @ `packages/lsp/lsp/src/index.ts`。
 
-1. **schema 校验。** `defineTool` 包装器 `validate`：缺字段或 `operation` 不在四元 enum，抛 `ToolArgsError`（`INVALID_ARGS`）。[E: packages/core/tools/src/schema.ts:466][E: packages/core/tools/src/schema.ts:587][E: packages/lsp/tool-lsp/tests/tool-lsp.spec.ts:208]
+1. **schema 校验。** `defineTool` 包装器 `validate`：缺字段或 `operation` 不在四元 enum，抛 `ToolArgsError`（`INVALID_ARGS`）。[E: packages/core/tools/src/schema.ts:466][E: packages/core/tools/src/schema.ts:599][E: packages/lsp/tool-lsp/tests/tool-lsp.spec.ts:208]
 
 2. **参数与坐标。** `parseLspArgs(args)`：确认 `operation` ∈ `LSP_OPERATIONS`、非空 `file_path`、正整数 `line`/`character`，再减 1 得到缝的 `LspPosition`。[E: packages/lsp/tool-lsp/src/index.ts:184][E: packages/lsp/tool-lsp/src/render.ts:57][E: packages/lsp/tool-lsp/tests/render.spec.ts:28]
 
@@ -252,10 +252,10 @@ DSH 把 LSP 收成 **四个只读语义**，而不是把 language server 暴露�
 - packages/guard/timeout-policy/src/index.ts
 - packages/session/session-checkpoint-policy/src/index.ts
 - packages/util/timeout/src/index.ts
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - snapshots/session/lsp-definition/cordis.yml
 
 ## 相关

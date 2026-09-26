@@ -23,7 +23,7 @@ source:
   - packages/sdk/client/src/api.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/base/package.json
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
   - vendor/cordis/src/events.ts
 symbols:
   - SdkSubagentProvider
@@ -40,7 +40,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-subagent-dsh-sdk` 是 **host 面、overlay-only** 的进程外 `SubagentProvider`：每个孩子是一份独立的 DeepSeek Harness runtime（命名 profile + patch + 隔离 `$DSH_HOME`），由 `@deepseek-ai/dsh-sdk-client` 在 stdio JSON-RPC 上拉起并驱动。它**不在** shipped `dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` 或任一 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）；`inject` 只有 `subagents`，**不**走 `ctx.subprocess.spawn`。
@@ -58,7 +58,7 @@ updated: c291e7961a
 
 本包拥有：名为 `SdkSubagentProvider` 的 **Provider** 实现、load-time `Config`（`dshHome` 必填且必须绝对路径）、以及 `startSdkRun` 这一次 one-shot 子 runtime 的握手 / 取消 / 结算 / `harness.close()` 回收。插件名是 `subagent-dsh-sdk`，`inject` **只有** `['subagents']`。[E: packages/subagent/subagent-dsh-sdk/src/index.ts:30] [E: packages/subagent/subagent-dsh-sdk/src/index.ts:31] 包清单是 `@deepseek-ai/dsh-subagent-dsh-sdk`。[E: packages/subagent/subagent-dsh-sdk/package.json:2]
 
-**不在 shipped 组合。** `dsh-base` 的 subagent 组只 insert `id: subagent` + `subagent-spawn-in-process`（`providerName: spawn`）+ `subagent-fork-in-process`（`providerName: fork`）。[E: packages/bundle/base/cordis.patch.yml:328] [E: packages/bundle/base/cordis.patch.yml:331] [E: packages/bundle/base/cordis.patch.yml:334] [E: packages/bundle/base/cordis.patch.yml:336] [E: packages/bundle/base/cordis.patch.yml:339] 对应 `dependencies` 是 `@deepseek-ai/dsh-subagent` / `dsh-subagent-fork-in-process` / `dsh-subagent-spawn-in-process`，没有 `@deepseek-ai/dsh-subagent-dsh-sdk`。[E: packages/bundle/base/package.json:94] [E: packages/bundle/base/package.json:95] [E: packages/bundle/base/package.json:96] in-repo 的真 Loader 组合写在本包测试夹具：`id: subagent-dsh-sdk` → `@deepseek-ai/dsh-subagent-dsh-sdk`。[E: packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/dsh-sdk.patch.yml:47] [E: packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/dsh-sdk.patch.yml:48] SDK snapshot 场景（`snapshots/sdk/subagent-dsh-sdk-*`）同样 overlay 本包，仍不是 shipped profile 模板。
+**不在 shipped 组合。** `dsh-base` 的 subagent 组只 insert `id: subagent` + `subagent-spawn-in-process`（`providerName: spawn`）+ `subagent-fork-in-process`（`providerName: fork`）。[E: packages/bundle/base/cordis.patch.yml:348] [E: packages/bundle/base/cordis.patch.yml:351] [E: packages/bundle/base/cordis.patch.yml:354] [E: packages/bundle/base/cordis.patch.yml:356] [E: packages/bundle/base/cordis.patch.yml:359] 对应 `dependencies` 是 `@deepseek-ai/dsh-subagent` / `dsh-subagent-fork-in-process` / `dsh-subagent-spawn-in-process`，没有 `@deepseek-ai/dsh-subagent-dsh-sdk`。[E: packages/bundle/base/package.json:91] [E: packages/bundle/base/package.json:92] [E: packages/bundle/base/package.json:93] in-repo 的真 Loader 组合写在本包测试夹具：`id: subagent-dsh-sdk` → `@deepseek-ai/dsh-subagent-dsh-sdk`。[E: packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/dsh-sdk.patch.yml:47] [E: packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/dsh-sdk.patch.yml:48] SDK snapshot 场景（`snapshots/sdk/subagent-dsh-sdk-*`）同样 overlay 本包，仍不是 shipped profile 模板。
 
 本包**不**拥有：
 
@@ -68,7 +68,7 @@ updated: c291e7961a
 - 孩子进程内部的 composition（孩子自己的 profile / patch、`ctx.llm`、tools）。夹具孩子 patch 挂本地 `child-mock-llm.ts`。[E: packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/child.patch.yml:28] [E: packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/child.patch.yml:29]
 - jobs、fork seed、in-process `applyChildComposition`。本 provider `inheritsParentContext = false`，不读父对话。[E: packages/subagent/subagent-dsh-sdk/src/index.ts:138]
 
-**host 面 vs agent-preset 面。** Provider 登记在加载它的 Context 上（overlay 通常是 host / root realm）。默认产品路径 `dsh web` 以及 `dsh --profile sdk|sdk-minimal|acp|headless` 的 shipped 树都不带 `dsh-sdk` 行；`standard` preset 的 `tool-subagent` 指向 `provider: spawn`，不会凭空看见本后端。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:184] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:187] 要把本后端接到模型，必须另挂一条 `dsh-tool-subagent`（或夹具里的 scoped 副本）且 `config.provider` 等于本包的 `providerName`（默认 `dsh-sdk`）。[E: packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/dsh-sdk.patch.yml:40] 浏览器 client 不执行 `start()`。
+**host 面 vs agent-preset 面。** Provider 登记在加载它的 Context 上（overlay 通常是 host / root realm）。默认产品路径 `dsh web` 以及 `dsh --profile sdk|sdk-minimal|acp|headless` 的 shipped 树都不带 `dsh-sdk` 行；`standard` preset 的 `tool-subagent` 指向 `provider: spawn`，不会凭空看见本后端。[E: packages/bundle/web-app/presets/standard.patch.yml:90] [E: packages/bundle/web-app/presets/standard.patch.yml:95] 要把本后端接到模型，必须另挂一条 `dsh-tool-subagent`（或夹具里的 scoped 副本）且 `config.provider` 等于本包的 `providerName`（默认 `dsh-sdk`）。[E: packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/dsh-sdk.patch.yml:40] 浏览器 client 不执行 `start()`。
 
 **没有 isolate。** 本包不声明 isolate 服务，shipped preset 也不把本行 remount 进会话 realm。测试夹具同样没有 `isolate:` 块。
 
@@ -108,19 +108,19 @@ updated: c291e7961a
 
 1. Overlay 加载 `apply@packages/subagent/subagent-dsh-sdk/src/index.ts`。schemastery 填完默认后，校验三个时限、可选 `maxTokens`、`dshHome` 必须绝对路径；`patches` / 可选 `dshBin` 在 load 时 `resolve` 成现存普通文件。再 `validateConfiguredCwd`（相对路径按 harness 启动目录解析一次；空字符串抛错）。最后 `ctx.subagents.registerProvider(new SdkSubagentProvider(...))`。[E: packages/subagent/subagent-dsh-sdk/src/index.ts:187] [E: packages/subagent/subagent-dsh-sdk/src/index.ts:199]
 
-2. `registerProvider@packages/subagent/subagent/src/index.ts` 是 Cordis `ctx.effect()`：重名抛 `DUPLICATE_PROVIDER`；yield 的 disposer 只 `providers.delete` 并 `subagent/provider-removed`，已经返回给 holder 的 run 不撤回。登记成功后 `ctx.emit('subagent/provider-added', provider)`（普通 emit，不是 waterfall）。[E: packages/subagent/subagent/src/index.ts:512] [E: packages/subagent/subagent/src/index.ts:513] [E: packages/subagent/subagent/src/index.ts:523]
+2. `registerProvider@packages/subagent/subagent/src/index.ts` 是 Cordis `ctx.effect()`：重名抛 `DUPLICATE_PROVIDER`；yield 的 disposer 只 `providers.delete` 并 `subagent/provider-removed`，已经返回给 holder 的 run 不撤回。登记成功后 `ctx.emit('subagent/provider-added', provider)`（普通 emit，不是 waterfall）。[E: packages/subagent/subagent/src/index.ts:512] [E: packages/subagent/subagent/src/index.ts:517] [E: packages/subagent/subagent/src/index.ts:522]
 
 3. Consumer 若挂了 `dsh-tool-subagent` 且 `config.provider` 对上 `providerName`，会在 `provider-added` 时校验能力并 `ctx.tools.register`。夹具把 `maxDepth` 设成 `'provider-managed'`：本 provider `depthLimit === false`，数值 cap 会在 mount 期就抛。[E: packages/subagent/subagent-dsh-sdk/tests/fixtures/loader/dsh-sdk.patch.yml:44] [E: packages/subagent/tool-subagent/src/index.ts:330] `backgroundMode: continuable` 且 `prepareContinuable === undefined` 同样在 mount 失败，不会拖到第一次调用。[E: packages/subagent/tool-subagent/src/index.ts:346]
 
 4. 父 Agent 的模型 tool-call 仍走 `tools/pre-execute` **waterfall**。`Events.waterfall@vendor/cordis/src/events.ts` 把最后一个参数当 innermost `next`：监听器必须调用传入的 `next()` 才会 `cbs.shift()` 到下一层；不调用就停在本层，`tool-subagent.execute` 到不了。[E: vendor/cordis/src/events.ts:238] [E: vendor/cordis/src/events.ts:239] 本后端自己不注册这条 waterfall。
 
-5. 前台 / one-shot Job 进入 `SubagentRuntime.start@packages/subagent/subagent/src/index.ts`：`expectProvider` → `assertCapabilities` → one-shot `snapshotSubagentDescriptor` → `provider.start` → `observeRun`。请求带了 `outputSchema` / `maxDepth` / `toolFilter` / `persona` 任一字段，本 provider 对应 cap 为 false，立刻 `UNSUPPORTED_CAPABILITY`，**不会**进 `startSdkRun`。`agentOptions` **允许**：服务按 cap 放行。[E: packages/subagent/subagent/src/index.ts:556] [E: packages/subagent/subagent/src/index.ts:642]
+5. 前台 / one-shot Job 进入 `SubagentRuntime.start@packages/subagent/subagent/src/index.ts`：`expectProvider` → `assertCapabilities` → one-shot `snapshotSubagentDescriptor` → `provider.start` → `observeRun`。请求带了 `outputSchema` / `maxDepth` / `toolFilter` / `persona` 任一字段，本 provider 对应 cap 为 false，立刻 `UNSUPPORTED_CAPABILITY`，**不会**进 `startSdkRun`。`agentOptions` **允许**：服务按 cap 放行。[E: packages/subagent/subagent/src/index.ts:559] [E: packages/subagent/subagent/src/index.ts:644]
 
 6. `SdkSubagentProvider.start`：信号已 abort 则在解析 cwd **之前**抛（单测：不走 cwd 解析）。[E: packages/subagent/subagent-dsh-sdk/src/index.ts:145] `cwd` 用 `resolveChildCwd('subagent-dsh-sdk', config.cwd, request.parent.session.header.cwd)`——配置覆盖优先，否则父 session workspace；两边都没有就抛 `no working directory for the child`，再包成 `sdkConfigurationFailure`。父 Cordis 上下文只读这一项。[E: packages/subagent/subagent-dsh-sdk/src/index.ts:150] [E: packages/subagent/subagent/src/out-of-process.ts:147] 然后 `resolveSdkRoute` 把请求的 `agentOptions` 叠在实例默认上，`return startSdkRun(request, spec)`。[E: packages/subagent/subagent-dsh-sdk/src/index.ts:156] [E: packages/subagent/subagent-dsh-sdk/src/index.ts:174]
 
 7. `startSdkRun@packages/subagent/subagent-dsh-sdk/src/run.ts`：信号已经 abort 则**立刻抛**，连 `DeepSeekHarness` 都不建（单测用 sentinel 路径证明进程没起来）。[E: packages/subagent/subagent-dsh-sdk/src/run.ts:234] [E: packages/subagent/subagent-dsh-sdk/tests/subagent-dsh-sdk.spec.ts:660] 否则先铸父 namespace `id = SessionId(randomUUID())`，再 `internals.createHarness({ profile, patches, dshHome, processCwd, cwd, provider, model, env, …timeouts })`。[E: packages/subagent/subagent-dsh-sdk/src/run.ts:237] [E: packages/subagent/subagent-dsh-sdk/src/run.ts:239]
 
-8. 子环境是 `{ ...scrubbedParentEnv(), ...spec.env }`：先剥 credential 形名字与全部 `DSH_*`，再合并显式 `config.env`（例如孩子自己的 `DEEPSEEK_API_KEY`）。[E: packages/subagent/subagent-dsh-sdk/src/run.ts:245] [E: packages/subprocess/subprocess/src/index.ts:64] 单测：ambient `DSH_TEST_AMBIENT_SECRET_KEY` 到不了孩子，显式 `DEEPSEEK_API_KEY` 能到。[E: packages/subagent/subagent-dsh-sdk/tests/subagent-dsh-sdk.spec.ts:301] [E: packages/subagent/subagent-dsh-sdk/tests/subagent-dsh-sdk.spec.ts:302]
+8. 子环境是 `{ ...scrubbedParentEnv(), ...spec.env }`：先剥 credential 形名字与全部 `DSH_*`，再合并显式 `config.env`（例如孩子自己的 `DEEPSEEK_API_KEY`）。[E: packages/subagent/subagent-dsh-sdk/src/run.ts:245] [E: packages/subprocess/subprocess/src/index.ts:66] 单测：ambient `DSH_TEST_AMBIENT_SECRET_KEY` 到不了孩子，显式 `DEEPSEEK_API_KEY` 能到。[E: packages/subagent/subagent-dsh-sdk/tests/subagent-dsh-sdk.spec.ts:301] [E: packages/subagent/subagent-dsh-sdk/tests/subagent-dsh-sdk.spec.ts:302]
 
 9. **文档化的 subprocess 例外。** `await harness.start()` 触发 SDK client 自己的进程生命周期，不是 `ctx.subprocess.spawn`。[E: packages/subagent/subagent-dsh-sdk/src/run.ts:273] `HarnessClient.start@packages/sdk/client/src/client.ts` 调 `node:child_process` 的 `spawn(command, args, { cwd, env, stdio: ['pipe','pipe','pipe'] })`。[E: packages/sdk/client/src/client.ts:214] `DeepSeekHarness.start` 先 `clientInstance.start()` 再 `initialize`，把 `cwd` / `provider` / `model` / 可选 `reasoningEffort` / `maxTokens` 交给孩子 runtime。[E: packages/sdk/client/src/api.ts:72] [E: packages/sdk/client/src/api.ts:73] 握手失败：摘 abort 监听、走 `sdkStartupFailure`（可能 `AggregateError`：initialize + shutdown），再把错误抛给 `start()` 的调用方——此时没有 `SubagentRun` 可 `dispose`，也没有 `subagent/start`。
 
@@ -128,7 +128,7 @@ updated: c291e7961a
 
 11. 孩子默认路由来自本包 `Config`：`provider: 'deepseek-official'`、`model: 'deepseek-v4-flash'`。`startSdkRun` 把解析后的 route 放进 `DeepSeekHarness`；SDK 构造器在调用方省略时用同一对回落，但本路径总会传入已解析的值。[E: packages/subagent/subagent-dsh-sdk/src/run.ts:250] [E: packages/subagent/subagent-dsh-sdk/src/run.ts:251] [E: packages/sdk/client/src/api.ts:42] [E: packages/sdk/client/src/api.ts:43] 孩子进程有自己的 composition 与 adapter 表，**不**复用父 `ctx.llm` 的 `adapters` map。请求级 `agentOptions` 可覆盖 provider/model/reasoningEffort/maxTokens。[E: packages/subagent/subagent-dsh-sdk/src/index.ts:122]
 
-12. **无 continuable。** `SubagentProvider.prepareContinuable?` 是可选方法，方法在不在就是能力。[E: packages/subagent/subagent/src/types.ts:373] `SdkSubagentProvider` 只实现 `start`。`SubagentRuntime.prepareContinuable` 发现 `undefined` 就抛 `UNSUPPORTED_CAPABILITY`（文案含 `no prepareContinuable capability`），在 continuation manager 预留任何孩子资源之前拒绝。[E: packages/subagent/subagent/src/index.ts:597] [E: packages/subagent/subagent/src/index.ts:600] `startContinuable` 只转给 manager，不会改走 `provider.start`。[E: packages/subagent/subagent/src/index.ts:229]
+12. **无 continuable。** `SubagentProvider.prepareContinuable?` 是可选方法，方法在不在就是能力。[E: packages/subagent/subagent/src/types.ts:373] `SdkSubagentProvider` 只实现 `start`。`SubagentRuntime.prepareContinuable` 发现 `undefined` 就抛 `UNSUPPORTED_CAPABILITY`（文案含 `no prepareContinuable capability`），在 continuation manager 预留任何孩子资源之前拒绝。[E: packages/subagent/subagent/src/index.ts:596] [E: packages/subagent/subagent/src/index.ts:601] `startContinuable` 只转给 manager，不会改走 `provider.start`。[E: packages/subagent/subagent/src/index.ts:229]
 
 13. 两次 `start` 得到两个父 namespace `run.id`。单测：`nextRun.id !== run.id`，且 `run.localAgent` 为 `undefined`。[E: packages/subagent/subagent-dsh-sdk/tests/subagent-dsh-sdk.spec.ts:176] [E: packages/subagent/subagent-dsh-sdk/tests/subagent-dsh-sdk.spec.ts:165]
 
@@ -191,7 +191,7 @@ updated: c291e7961a
 - packages/sdk/client/src/api.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/base/package.json
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
 - vendor/cordis/src/events.ts
 
 ## 相关

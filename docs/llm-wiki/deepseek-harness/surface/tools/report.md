@@ -7,9 +7,9 @@ pkg: orchestration
 source:
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - packages/experimental/agent-team-profile/cordis.patch.yml
   - packages/subagent/subagent/src/continuation-messages.ts
   - packages/subagent/subagent/src/continuation-activation.ts
@@ -30,7 +30,7 @@ related:
   - subsys.core.code-mode
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > 模型可见名 `report` 曾经由 `@deepseek-ai/dsh-tool-subagent-report`（Cordis 插件 `tool-subagent-report`）挂在 **continuable in-process child** 的 `childCtx.tools` 上。该包在 `0.1.3-alpha.1` **已删除**。本页保留 wiki id `surface.tools.report` 作为退役映射，不是活工具 catalog 行。
@@ -44,19 +44,19 @@ updated: c291e7961a
 
 ## 退役事实
 
-`packages/subagent/tool-subagent-report/**` 不在 git 跟踪源里。`dsh-base` 的 host 插入在 `id: tool-subagent-fork` 之后直接是 `workflow-worker-thread`，**没有** `id: tool-subagent-report`。[E: packages/bundle/base/cordis.patch.yml:362] [E: packages/bundle/base/cordis.patch.yml:369]
+`packages/subagent/tool-subagent-report/**` 不在 git 跟踪源里。`dsh-base` 的 host 插入在 `id: tool-subagent-fork` 之后直接是 `ptc-runtime`，**没有** `id: tool-subagent-report`。[E: packages/bundle/base/cordis.patch.yml:382] [E: packages/bundle/base/cordis.patch.yml:389]
 
-`dsh-web-app` overlay disable 的是 control / spawn / fork 工具行，同样没有 report 行。[E: packages/bundle/web-app/cordis.patch.yml:443] [E: packages/bundle/web-app/cordis.patch.yml:449] [E: packages/bundle/web-app/cordis.patch.yml:452]
+`dsh-web-app` overlay disable 的是 control / spawn / fork 工具行，同样没有 report 行。[E: packages/bundle/web-app/cordis.patch.yml:523] [E: packages/bundle/web-app/cordis.patch.yml:529] [E: packages/bundle/web-app/cordis.patch.yml:532]
 
-`standard` / `ptc` / `cordis` 的 `delegation` 组挂 control、`subagent`、`subagent_fork`、可选 disabled Codex/Claude、workflow / ralph；**不含** report 包。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:175] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:181] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:182]
+`standard` / `ptc` / `cordis` 的 `delegation` 组挂 control、`subagent`、`subagent_fork`、可选 disabled Codex/Claude、workflow / ralph；**不含** report 包。[E: packages/bundle/web-app/presets/standard.patch.yml:86] [E: packages/bundle/web-app/presets/standard.patch.yml:90] [E: packages/bundle/web-app/presets/ptc.patch.yml:86]
 
-`ctx.subagents` 上已无 `reportFrom` / `registerContinuableSetup`。continuable 孩子的结果靠 continuation manager 的 **settlement notice**（`source.kind: 'subagent-settled'`）进父 inbox，不是孩子调 `report`。[E: packages/subagent/subagent/src/continuation-messages.ts:31] [E: packages/subagent/subagent/src/continuation-messages.ts:148] 无 closing 时文案是 `It left no closing message.`。[E: packages/subagent/subagent/src/continuation-messages.ts:144] 投递在 `notifySettlement`。[E: packages/subagent/subagent/src/continuation-activation.ts:823]
+`ctx.subagents` 上已无 `reportFrom` / `registerContinuableSetup`。continuable 孩子的结果靠 continuation manager 的 **settlement notice**（`source.kind: 'subagent-settled'`）进父 inbox，不是孩子调 `report`。[E: packages/subagent/subagent/src/continuation-messages.ts:31] [E: packages/subagent/subagent/src/continuation-messages.ts:154] 无 closing 时文案是 `It left no closing message.`。[E: packages/subagent/subagent/src/continuation-messages.ts:150] 投递在 `notifySettlement`。[E: packages/subagent/subagent/src/continuation-activation.ts:871]
 
-父 → 子 / 子 → 父邻接投递走 [`surface.tools.subagent-control`](subagent-control.md) 的 `send_message`（`ctx.subagents.sendMessage`）。[E: packages/subagent/tool-subagent-control/src/index.ts:66]
+孩子在结束前把自包含结果交给父，走 [`surface.tools.subagent-control`](subagent-control.md) 的 `send_message`（`ctx.subagents.sendMessage`）。continuable 初始 prompt 会附上这段回父指引。[E: packages/subagent/tool-subagent-control/src/index.ts:64] [E: packages/subagent/subagent/src/continuation-messages.ts:81]
 
-`activation-setup-registry.ts` 与 `descriptor-seed.ts` 已删除；descriptor 在 continuable 物化里 `session.append('subagent/descriptor', …)`，one-shot 在 in-process driver 的 `agent/pre-step`。[E: packages/subagent/subagent/src/continuation-activation.ts:583] [E: packages/subagent/subagent-in-process-driver/src/index.ts:87] 权威类型在 `packages/subagent/subagent/src/descriptor.ts`（`SUBAGENT_DESCRIPTOR_VERSION = 3`，无 `surfaceOp`）。[E: packages/subagent/subagent/src/descriptor.ts:48]
+`activation-setup-registry.ts` 与 `descriptor-seed.ts` 已删除；descriptor 在 continuable 物化里 `session.append('subagent/descriptor', …)`，one-shot 在 in-process driver 的 `agent/pre-step`。[E: packages/subagent/subagent/src/continuation-activation.ts:627] [E: packages/subagent/subagent-in-process-driver/src/index.ts:87] 权威类型在 `packages/subagent/subagent/src/descriptor.ts`（`SUBAGENT_DESCRIPTOR_VERSION = 3`，无 `surfaceOp`）。[E: packages/subagent/subagent/src/descriptor.ts:48]
 
-experimental Agent Teams profile 只 disable `tool-subagent-control` / `list-agents`，并把 spawn/fork 工具改成 `backgroundMode: one-shot`；**没有** `tool-subagent-report` 行。[E: packages/experimental/agent-team-profile/cordis.patch.yml:5] [E: packages/experimental/agent-team-profile/cordis.patch.yml:11]
+experimental Agent Teams profile `disabled: true` 全局 `tool-subagent-control` / `list-agents` / `tool-subagent` / `tool-subagent-fork`，再插入 Team 工具；**没有** `tool-subagent-report` 行。[E: packages/experimental/agent-team-profile/cordis.patch.yml:5] [E: packages/experimental/agent-team-profile/cordis.patch.yml:11]
 
 仓库里若还出现 `id: tool-subagent-report`，那是测试 overlay / 历史 snapshot（例如 headless team snapshot），不是 shipped bundle 行。
 
@@ -66,14 +66,15 @@ experimental Agent Teams profile 只 disable `tool-subagent-control` / `list-age
 - continuable child catalog 里默认有 `report`
 - `registerContinuableSetup` 把 `installReportTool` 挂进 unpublished child
 - `reportDelivery: next-step | quiet`
+- shipped preset 仍在 `packages/preset/agent-presets/presets/*/agent.cordis.yml`
 
 ## Sources
 
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - packages/experimental/agent-team-profile/cordis.patch.yml
 - packages/subagent/subagent/src/continuation-messages.ts
 - packages/subagent/subagent/src/continuation-activation.ts

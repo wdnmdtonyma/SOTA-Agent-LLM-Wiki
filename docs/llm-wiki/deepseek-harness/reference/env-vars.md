@@ -7,13 +7,15 @@ pkg: cross
 source:
   - packages/util/home-paths/src/index.ts
   - packages/llm/llm-deepseek/src/index.ts
+  - packages/llm/llm-deepseek/src/config.ts
+  - packages/credentials/credentials-local/src/index.ts
   - packages/web/web-search-deepseek/src/index.ts
   - packages/web/web-search-deepseek/src/provider.ts
   - packages/llm/llm-pi-ai/src/index.ts
   - packages/boot/app-boot/src/index.ts
   - apps/cli/src/bin.ts
   - apps/cli/src/profile-boot.ts
-  - packages/e2b/e2b/src/index.ts
+  - packages/bundle/sdk-app/cordis.patch.yml
   - packages/web/web/src/index.ts
   - packages/web/web-search-exa/src/index.ts
   - packages/web/web-search-perplexity/src/index.ts
@@ -30,7 +32,7 @@ source:
   - packages/bundle/sdk-app/cordis.patch.yml
   - packages/bundle/web-app/src/index.ts
   - packages/client/store/src/index.ts
-  - packages/workflow/workflow-worker-thread/src/host.ts
+  - packages/workflow/workflow-ptc/src/index.ts
   - vendor/loader/src/index.ts
   - packages/llm/llm-deepseek/tests/adapter.spec.ts
   - packages/web/web-search-deepseek/tests/deepseek.spec.ts
@@ -51,7 +53,7 @@ related:
   - subsys.persistence.telemetry
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > 本页枚举 DSH **进程级**环境变量：产品运行时每个被读取或由 shipped 组合插值的名字一行，测试 / CI / fixture 另表。这是 Cordis 组合运行时（`profile → bundle → agent preset`）的 host 面输入，不是 agent-preset 的 tools / persona / isolate 配置。宿主入口是 `dsh web` 以及 `dsh --profile web|headless|sdk|sdk-minimal|acp`（无 shipped TUI 模板）。
@@ -62,22 +64,22 @@ updated: c291e7961a
 - `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL` / `DEEPSEEK_SEARCH_BASE_URL` 各喂哪条 seam？search 会不会回退到 chat 的 BASE_URL？
 - `dsh` 启动怎样分层冻结环境？哪些名字只允许 launching process 提供？
 - `DSH_TELEMETRY_*`、`DSH_PERMISSION_MODE`、`DSH_TOOLS_MODE` 是谁在 yml 里插值的？PTC 模式值是什么？
-- Exa / Perplexity / E2B / GitHub webhook 各读哪把钥匙？`llm-pi-ai` 有没有写死的 env 名？
+- Exa / Perplexity / GitHub webhook 各读哪把钥匙？`llm-pi-ai` 有没有写死的 env 名？`DSH_PRIMARY_RUNTIME` 给谁用？
 - `DSH_TEST_*` / `MOCK_*` / `LSP_FAKE_*` / `DSH_SNAPSHOT*` 是不是产品合同？
 
 ## 范围与 ground truth
 
 Ground truth 是 `packages/**/src`、`apps/**/src`、`vendor/**/src` 以及 shipped 组合里对 `process.env` / `launchEnvironmentOf(ctx).get` 的读取。官方 md / README 只当查漏，不当 `[E]`。
 
-`apps/cli/src/bin.ts` 自己不点名读 env；`profile` 模式调用 `loadLayeredEnv('dsh')`，把 inherited `process.env` 与发现到的 `.env` 冻成 `LaunchEnvironmentSnapshot`。 [E: apps/cli/src/bin.ts:35] [E: packages/boot/app-boot/src/index.ts:177]
+`apps/cli/src/bin.ts` 自己不点名读 env；`profile` 模式调用 `loadLayeredEnv('dsh')`，把 inherited `process.env` 与发现到的 `.env` 冻成 `LaunchEnvironmentSnapshot`。 [E: apps/cli/src/bin.ts:35] [E: packages/boot/app-boot/src/index.ts:176]
 
-分层：inherited process 层最可信，再叠 invoking-directory `.env`，再叠 `$DSH_HOME/.env`；文件层不能覆盖已继承的名字。 [E: packages/boot/app-boot/src/index.ts:195] `DEEPSEEK_BASE_URL` 与 `DEEPSEEK_SEARCH_BASE_URL` 都在 bootstrap-only 名单里，项目 / home `.env` 写它们会抛错。 [E: packages/boot/app-boot/src/index.ts:109] 前缀 `DSH_` 同样 bootstrap-only，所以 `$DSH_HOME` 只能从 launching process 进来，不能靠 `.env` 改。 [E: packages/boot/app-boot/src/index.ts:117]
+分层：inherited process 层最可信，再叠 invoking-directory `.env`，再叠 `$DSH_HOME/.env`；文件层不能覆盖已继承的名字。 [E: packages/boot/app-boot/src/index.ts:195] `DEEPSEEK_BASE_URL` 与 `DEEPSEEK_SEARCH_BASE_URL` 都在 bootstrap-only 名单里，项目 / home `.env` 写它们会抛错。 [E: packages/boot/app-boot/src/index.ts:107] 前缀 `DSH_` 同样 bootstrap-only，所以 `$DSH_HOME` 只能从 launching process 进来，不能靠 `.env` 改。 [E: packages/boot/app-boot/src/index.ts:117]
 
-`@deepseek-ai/dsh-session-telemetry-otel` 的 `src` 不读 `process.env`：`mode` / `exporter.url` 由 `dsh-base` 的 `!!js` 插值写进 Config。 [E: packages/bundle/base/cordis.patch.yml:187] [E: packages/bundle/base/cordis.patch.yml:190]
+`@deepseek-ai/dsh-session-telemetry-otel` 的 `src` 不读 `process.env`：`mode` / `exporter.url` 由 `dsh-base` 的 `!!js` 插值写进 Config。 [E: packages/bundle/base/cordis.patch.yml:188] [E: packages/bundle/base/cordis.patch.yml:190]
 
 `@deepseek-ai/dsh-llm-pi-ai` 的 `src` 没有写死的 env 名：`resolveApiKey` 读的是 profile 上的 `apiKeyEnv` credential-ref。 [E: packages/llm/llm-pi-ai/src/index.ts:183]
 
-`packages/sandbox/**/src` 不读 landlock 专用 env。子进程默认环境走 `scrubbedParentEnv()`：剥掉形似凭据的名字和所有 ambient `DSH_*`，不是再读一张名单。 [E: packages/subprocess/subprocess/src/index.ts:64]
+`packages/sandbox/**/src` 不读 landlock 专用 env。子进程默认环境走 `scrubbedParentEnv()`：剥掉形似凭据的名字和所有 ambient `DSH_*`，不是再读一张名单。 [E: packages/subprocess/subprocess/src/index.ts:66]
 
 T1 [`surface.misc.home`](../surface/misc/home.md) 写产品路径文案；T2 [`subsys.util.home-paths`](../subsystems/util/home-paths.md) / [`subsys.llm.deepseek`](../subsystems/llm/deepseek.md) / [`subsys.integration.web-search`](../subsystems/integration/web-search.md) 写控制流。本页只做名字目录与 BASE_URL 分家。
 
@@ -96,16 +98,16 @@ T1 [`surface.misc.home`](../surface/misc/home.md) 写产品路径文案；T2 [`s
 
 | 名 | 类型/签名 | 默认 | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|
-| `DEEPSEEK_API_KEY` | credential-ref；`Config.apiKeyEnv` 默认 | 无字面 key；缺 key 是请求期 `MISSING_CREDENTIAL`，不是 load 失败 | `llm-deepseek` 默认名 `DEFAULT_API_KEY_ENV = 'DEEPSEEK_API_KEY'`，`web-search-deepseek` 同样声明该默认名。`resolveAdapterOptions` 把 `config.apiKeyEnv ?? DEFAULT_API_KEY_ENV` 收成 credential-ref。请求期：有 `ctx.credentials` 走 `credentials.resolve(ref)`；否则 `launchEnvironmentOf(ctx).get(ref)`。 [E: packages/llm/llm-deepseek/src/index.ts:88] [E: packages/web/web-search-deepseek/src/index.ts:43] [E: packages/llm/llm-deepseek/src/index.ts:393] [E: packages/llm/llm-deepseek/src/index.ts:452] [E: packages/llm/llm-deepseek/src/index.ts:457] | 配置只带引用，不带密钥。search 复用这把钥匙，不复用 chat 的 BASE_URL。 | `packages/llm/llm-deepseek/src/index.ts` |
-| `DEEPSEEK_BASE_URL` | `string`；`environment.get('DEEPSEEK_BASE_URL')` | `https://api.deepseek.com`（`PUBLIC_BASE_URL`） | **只**给 chat-completions adapter。链：`config.baseURL` ?? 启动环境该名 ?? 公共 API。 [E: packages/llm/llm-deepseek/src/index.ts:213] [E: packages/llm/llm-deepseek/src/index.ts:395] | 内部 / 代理网关改 chat 端点。bootstrap-only：不能写进 `.env`。 | `packages/llm/llm-deepseek/src/index.ts` |
+| `DEEPSEEK_API_KEY` | credential-ref | 无字面 key | `web-search-deepseek` 默认 `DEFAULT_API_KEY_ENV = 'DEEPSEEK_API_KEY'`。chat adapter 走 `ctx.credentials` / inherited env（`credentials-local` 分层）。[E: packages/web/web-search-deepseek/src/index.ts:43][E: packages/credentials/credentials-local/src/index.ts:554][E: packages/credentials/credentials-local/src/index.ts:611] | 配置只带引用，不带密钥。search 复用这把钥匙，不复用 chat 的 BASE_URL。 | `packages/web/web-search-deepseek/src/index.ts` |
+| `DEEPSEEK_BASE_URL` | `string`；`environment.get(BASE_URL_ENV)` | `https://api.deepseek.com/anthropic`（`PUBLIC_BASE_URL`） | **只**给 Messages adapter。链：`config.baseURL` ?? 启动环境该名 ?? 公共 API。[E: packages/llm/llm-deepseek/src/config.ts:109][E: packages/llm/llm-deepseek/src/config.ts:290] | 内部 / 代理网关改 chat 端点。bootstrap-only：不能写进 `.env`。 | `packages/llm/llm-deepseek/src/config.ts` |
 
-单测钉死：省略 `baseURL` 时 LLM 走 `DEEPSEEK_BASE_URL`。 [E: packages/llm/llm-deepseek/tests/adapter.spec.ts:2213]
+单测钉死：省略 `baseURL` 时 LLM 走 `DEEPSEEK_BASE_URL`。 [E: packages/llm/llm-deepseek/tests/adapter.spec.ts:606]
 
 ### DeepSeek search 与其它 web provider
 
 | 名 | 类型/签名 | 默认 | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|
-| `DEEPSEEK_SEARCH_BASE_URL` | `string`；`launchEnvironmentOf(ctx).get('DEEPSEEK_SEARCH_BASE_URL')` | `https://api.deepseek.com/anthropic/v1` | **只**给 search provider。链：`config.baseURL` ?? 该名 ?? `DEEPSEEK_DEFAULT_BASE_URL`。链上没有 `DEEPSEEK_BASE_URL`。 [E: packages/web/web-search-deepseek/src/index.ts:82] [E: packages/web/web-search-deepseek/src/index.ts:111] | Anthropic Messages + `web_search_20250305`，与 chat-completions 不是同一个 base。 | `packages/web/web-search-deepseek/src/index.ts` |
+| `DEEPSEEK_SEARCH_BASE_URL` | `string`；`launchEnvironmentOf(ctx).get('DEEPSEEK_SEARCH_BASE_URL')` | `https://api.deepseek.com/anthropic/v1` | **只**给 search provider。链：`config.baseURL` ?? 该名 ?? `DEEPSEEK_DEFAULT_BASE_URL`。链上没有 `DEEPSEEK_BASE_URL`。 [E: packages/web/web-search-deepseek/src/index.ts:83] [E: packages/web/web-search-deepseek/src/index.ts:111] | Anthropic Messages + `web_search_20250305`，与 chat-completions 不是同一个 base。 | `packages/web/web-search-deepseek/src/index.ts` |
 | `DSH_WEB_SEARCH_PROVIDER` | `string` | 无；shipped yml 已写 `searchProvider: deepseek-official` | 填 `WebRuntime.searchProviderId`，仅当 Config 省略该字段。 [E: packages/web/web/src/index.ts:92] | overlay 第二家 search 时的进程级钉死；赢不了 `dsh-base` 已写的 pin。 | `packages/web/web/src/index.ts` |
 | `DSH_WEB_FETCH_PROVIDER` | `string` | 无 | 对称地填 `fetchProviderId`。 [E: packages/web/web/src/index.ts:93] | fetch 半边独立选路。 | `packages/web/web/src/index.ts` |
 | `EXA_API_KEY` | `string` | `''`（空则 Exa unavailable） | `web-search-exa`：`config.apiKey` ?? `launchEnvironmentOf(ctx).get('EXA_API_KEY')`。 [E: packages/web/web-search-exa/src/index.ts:61] | 仓库有、**不进** shipped `dsh-base`。 | `packages/web/web-search-exa/src/index.ts` |
@@ -115,10 +117,10 @@ T1 [`surface.misc.home`](../surface/misc/home.md) 写产品路径文案；T2 [`s
 
 | 名 | 类型/签名 | 默认 | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|
-| `DSH_TELEMETRY_DISABLED` | `string`；launcher 读 | 未设或空串 = 不打补丁 | 非空（含 `'0'` / `'false'`）且树上有 `session-telemetry-otel` 行时，打 `{ id, disabled: true }`。 [E: apps/cli/src/profile-boot.ts:240] [E: apps/cli/src/profile-boot.ts:167] | 隐私开关偏 off-by-mistake。这是 launcher 补丁，不是 otel 包读 env。dump-config 不应用此补丁。 | `apps/cli/src/profile-boot.ts` |
-| `DSH_TELEMETRY_MODE` | `FULL` / `FEEDBACK_ONLY` / `DISABLED`；yml `!!js` | `'FEEDBACK_ONLY'` | 写进 otel Config.`mode`。 [E: packages/bundle/base/cordis.patch.yml:187] | host 面默认反馈档，不是完全不上报。 | `packages/bundle/base/cordis.patch.yml` |
+| `DSH_TELEMETRY_DISABLED` | `string`；launcher 读 | 未设或空串 = 不打补丁 | 非空（含 `'0'` / `'false'`）且树上有 `session-telemetry-otel` 行时，打 `{ id, disabled: true }`。 [E: apps/cli/src/profile-boot.ts:244] [E: apps/cli/src/profile-boot.ts:167] | 隐私开关偏 off-by-mistake。这是 launcher 补丁，不是 otel 包读 env。dump-config 不应用此补丁。 | `apps/cli/src/profile-boot.ts` |
+| `DSH_TELEMETRY_MODE` | `FULL` / `FEEDBACK_ONLY` / `DISABLED`；yml `!!js` | `'FEEDBACK_ONLY'` | 写进 otel Config.`mode`。 [E: packages/bundle/base/cordis.patch.yml:188] | host 面默认反馈档，不是完全不上报。 | `packages/bundle/base/cordis.patch.yml` |
 | `DSH_TELEMETRY_OTLP_URL` | URL 字符串；yml `!!js` | `https://harness-telemetry.deepseeksvc.com/v1/logs` | 写进 `exporter.url`。 [E: packages/bundle/base/cordis.patch.yml:190] | 换 collector 不必改包。 | `packages/bundle/base/cordis.patch.yml` |
-| `DSH_PERMISSION_MODE` | sandbox mode 字符串；yml `!!js` | `'workspace-write'` | `sandbox-policy.mode`；`'danger-full-access'` 时 approval `policy` 变成 `'never'`。 [E: packages/bundle/base/cordis.patch.yml:211] [E: packages/bundle/base/cordis.patch.yml:227] | 部署级沙箱档位，不是 preset 成员资格。 | `packages/bundle/base/cordis.patch.yml` |
+| `DSH_PERMISSION_MODE` | sandbox mode 字符串；yml `!!js` | `'workspace-write'` | `sandbox-policy.mode`；`'danger-full-access'` 时 approval `policy` 变成 `'never'`。 [E: packages/bundle/base/cordis.patch.yml:211] [E: packages/bundle/base/cordis.patch.yml:228] | 部署级沙箱档位，不是 preset 成员资格。 | `packages/bundle/base/cordis.patch.yml` |
 | `DSH_TOOLS_MODE` | `native` / `ptc` / `both`；yml `!!js` | 未设则交给 `tools` schema 默认（native） | `dsh-web-app` 与 `dsh-headless` 的 `id: tools` Config.`mode`。sdk / acp / sdk-minimal 的 overlay **没有**这一行。 [E: packages/bundle/web-app/cordis.patch.yml:38] [E: packages/bundle/headless/cordis.patch.yml:16] | 进程级 PTC 临时候选；不是 per-session 选择。旧值名 `code` 已不在注释里。 | `packages/bundle/web-app/cordis.patch.yml` |
 | `DSH_MAX_TOKENS_AS_SUCCESS` | JSON 布尔；yml `!!js` | 未设 = `true` | `dsh-sdk-app` 的 `sdk-jsonrpc-server`：`undefined` 则 true，否则 `JSON.parse`。 [E: packages/bundle/sdk-app/cordis.patch.yml:22] | SDK 部署把 token 达限报成成功或错误。 | `packages/bundle/sdk-app/cordis.patch.yml` |
 | `DSH_WEB_URL` | 由 web-runtime **注入** shell-env，不是读 process.env | 运行时本机 GUI URL | `shellEnv.register` 把规范本地 URL 交给 bash 子进程。 [E: packages/bundle/web-app/src/index.ts:246] | 模型侧 shell 知道当前 Web GUI；ambient `DSH_*` 仍会被 `scrubbedParentEnv` 剥掉，除非走 shell-env 显式转发。 | `packages/bundle/web-app/src/index.ts` |
@@ -127,7 +129,8 @@ T1 [`surface.misc.home`](../surface/misc/home.md) 写产品路径文案；T2 [`s
 
 | 名 | 类型/签名 | 默认 | 含义 | 为什么 | 源 path |
 |---|---|---|---|---|---|
-| `E2B_API_KEY` | `string` | `''` | E2B sandbox owner：`config.apiKey ?? process.env.E2B_API_KEY`。 [E: packages/e2b/e2b/src/index.ts:94] | overlay 远程执行世界；不进 shipped `dsh-base`。 | `packages/e2b/e2b/src/index.ts` |
+| `DSH_PRIMARY_RUNTIME` | 绝对路径 | 未设则看 `DSH_BUNDLED_PRIMARY_RUNTIME` | `dsh-sdk-app` 给 `load_workspace_dependencies` / `skill-office` 的 payload 根。两者都缺则这两行 `disabled`。[E: packages/bundle/sdk-app/cordis.patch.yml:32] | 打包 carrier 的 bundled runtime 覆盖。 | `packages/bundle/sdk-app/cordis.patch.yml` |
+| `DSH_BUNDLED_PRIMARY_RUNTIME` | 绝对路径 | 未设 | `DSH_PRIMARY_RUNTIME` 缺省时的 bundled 回退。[E: packages/bundle/sdk-app/cordis.patch.yml:34] | 安装包自带 runtime。 | `packages/bundle/sdk-app/cordis.patch.yml` |
 | `DSH_GITHUB_WEBHOOK_SECRET` | credential-ref（**插件不写死**，例子 / e2e 用这个名字） | 无；`secretEnv` schema required | `webhook-github` Config.`secretEnv` 是任意 credential-ref；shipped 例子写 `DSH_GITHUB_WEBHOOK_SECRET`。 [E: packages/webhook/webhook-github/src/index.ts:31] [E: apps/cli/config/examples/github-review/cordis.yml:34] | 密钥走 credentials，不是硬编码 env 常量。 | `packages/webhook/webhook-github/src/index.ts` |
 | `DSH_DIALOG_TITLE` | `string` | `''`（空则 worker 抛错） | Win32 目录选择 worker 的窗口标题。 [E: packages/host/directory-picker-native/src/win32-dialog-worker.ts:27] | 父进程用同名键把 title 传进子进程。 | `packages/host/directory-picker-native/src/win32-dialog-worker.ts` |
 | `PATH` | `string` | 空则 Linux chooser / pwsh PATH 扫描为空 | directory-picker 探 zenity/kdialog；Windows `pwsh` 还按 `;` 拆 PATH 找 `pwsh.exe`。 [E: packages/host/directory-picker-auto/src/index.ts:68] [E: packages/shell/pwsh-local/src/resolve.ts:29] | 宿主能力探测，不是产品配置键。 | `packages/host/directory-picker-auto/src/index.ts` |
@@ -136,13 +139,13 @@ T1 [`surface.misc.home`](../surface/misc/home.md) 写产品路径文案；T2 [`s
 | `DISPLAY` | `string` | 未设 / 空 | Linux 上 directory-picker 要 display 才选 `native`；path opener 用来判断有没有桌面。 [E: packages/host/directory-picker-auto/src/resolve.ts:54] [E: packages/util/native-command/src/path-opener.ts:173] | 无显示会话就不要弹 OS chooser / `xdg-open`。 | `packages/host/directory-picker-auto/src/resolve.ts` |
 | `WAYLAND_DISPLAY` | `string` | 未设 / 空 | 与 `DISPLAY` 并列：任一非空才允许 Linux native chooser / 桌面 opener。 [E: packages/host/directory-picker-auto/src/resolve.ts:54] | Wayland 会话往往没有 `DISPLAY`。 | `packages/host/directory-picker-auto/src/resolve.ts` |
 | `BROWSER` | `string` | 未设 / 空则 Linux 不走浏览器分支 | Linux 上用它打开 html/svg 文档。 [E: packages/util/native-command/src/path-opener.ts:72] | 可移植约定，本包不解析 desktop-entry。 | `packages/util/native-command/src/path-opener.ts` |
-| `WSL_DISTRO_NAME` | `string` | 未设 / 空 | 与 `WSL_INTEROP` 任一非空则按 WSL 处理路径（交给 Windows 桌面）。 [E: packages/util/native-command/src/path-opener.ts:98] | WSL 没有 Linux GUI 也能开路径。 | `packages/util/native-command/src/path-opener.ts` |
-| `WSL_INTEROP` | `string` | 未设 / 空 | 与 `WSL_DISTRO_NAME` 任一非空则按 WSL 处理路径。 [E: packages/util/native-command/src/path-opener.ts:98] | WSL 没有 Linux GUI 也能开路径。 | `packages/util/native-command/src/path-opener.ts` |
+| `WSL_DISTRO_NAME` | `string` | 未设 / 空 | 与 `WSL_INTEROP` 任一非空则按 WSL 处理路径（交给 Windows 桌面）。 [E: packages/util/native-command/src/path-opener.ts:97] | WSL 没有 Linux GUI 也能开路径。 | `packages/util/native-command/src/path-opener.ts` |
+| `WSL_INTEROP` | `string` | 未设 / 空 | 与 `WSL_DISTRO_NAME` 任一非空则按 WSL 处理路径。 [E: packages/util/native-command/src/path-opener.ts:97] | WSL 没有 Linux GUI 也能开路径。 | `packages/util/native-command/src/path-opener.ts` |
 | `ProgramFiles` | `string` | `'C:\\Program Files'` | Windows 上 `pwsh` 候选路径的 Program Files 根。 [E: packages/shell/pwsh-local/src/resolve.ts:22] | 纯函数解析，可注入假 env。 | `packages/shell/pwsh-local/src/resolve.ts` |
 | `SystemRoot` | `string` | `'C:\\Windows'` | Windows PowerShell 5.1 回落路径。 [E: packages/shell/pwsh-local/src/resolve.ts:23] | 老主机没有 pwsh 7 时仍能 spawn。 | `packages/shell/pwsh-local/src/resolve.ts` |
 | `CORDIS_SHARED` | JSON 字符串 | 未设则 `{ startTime: Date.now() }` | vendored Loader 的跨进程共享袋。 [E: vendor/loader/src/index.ts:68] | Cordis 多进程 loader 合同，不是 DSH 产品旋钮。 | `vendor/loader/src/index.ts` |
 | `NODE_ENV` | `string` | 非 `'production'` 则 dev-freeze store | 浏览器 store 在 production 跳过 `devFreeze`。 [E: packages/client/store/src/index.ts:170] | 打包后的 client 面（`dsh-client-store`），不是 CLI 配置。 | `packages/client/store/src/index.ts` |
-| `TSX_TSCONFIG_PATH` | `string` | 未设则 worker 环境不带该键 | 未构建的 workflow worker 把宿主的 tsx pin 转给子线程。 [E: packages/workflow/workflow-worker-thread/src/host.ts:86] | 构建后的 worker 不看宿主 pin。 | `packages/workflow/workflow-worker-thread/src/host.ts` |
+| `TSX_TSCONFIG_PATH` | `string` | 未设则 worker 环境不带该键 | 未构建的 workflow worker 把宿主的 tsx pin 转给子线程。 [E: packages/workflow/workflow-ptc/src/index.ts:87] | 构建后的 worker 不看宿主 pin。 | `packages/workflow/workflow-ptc/src/index.ts` |
 
 `credentials-local` 按 credential-ref 查 snapshot，默认 DeepSeek 引用仍是 `DEEPSEEK_API_KEY`。已删除的 `packages/examples/jsonrpc-demo` 不再提供 `DSH_CORDIS_CONFIG`。
 
@@ -150,13 +153,13 @@ T1 [`surface.misc.home`](../surface/misc/home.md) 写产品路径文案；T2 [`s
 
 这两条变量是 **两条独立的网络根**，不是别名，也没有回退链。
 
-**LLM chat（`@deepseek-ai/dsh-llm-deepseek`）** 拥有 `BASE_URL_ENV = 'DEEPSEEK_BASE_URL'`。 [E: packages/llm/llm-deepseek/src/index.ts:213] `resolveAdapterOptions` 的 endpoint 是 `config.baseURL ?? environment?.get(BASE_URL_ENV)?.value ?? PUBLIC_BASE_URL`，公共默认 `https://api.deepseek.com`。 [E: packages/llm/llm-deepseek/src/index.ts:394] [E: packages/llm/llm-deepseek/src/index.ts:395] [E: packages/llm/llm-deepseek/src/index.ts:396] [E: packages/llm/llm-deepseek/src/index.ts:210] 请求走 chat-completions。
+**LLM chat（`@deepseek-ai/dsh-llm-deepseek`）** 拥有 `BASE_URL_ENV = 'DEEPSEEK_BASE_URL'`。[E: packages/llm/llm-deepseek/src/config.ts:109] `resolveAdapterOptions` 的 endpoint 是 `config.baseURL ?? environment?.get(BASE_URL_ENV)?.value ?? PUBLIC_BASE_URL`，公共默认 `https://api.deepseek.com/anthropic`。[E: packages/llm/llm-deepseek/src/config.ts:106][E: packages/llm/llm-deepseek/src/config.ts:290] 请求走 Anthropic Messages。
 
-**Search（`@deepseek-ai/dsh-web-search-deepseek`）** 拥有 `SEARCH_BASE_URL_ENV = 'DEEPSEEK_SEARCH_BASE_URL'`。 [E: packages/web/web-search-deepseek/src/index.ts:82] `resolveOptions` 的 endpoint 是 `config.baseURL ?? launchEnvironmentOf(ctx).get(SEARCH_BASE_URL_ENV)?.value ?? DEEPSEEK_DEFAULT_BASE_URL`。 [E: packages/web/web-search-deepseek/src/index.ts:110] [E: packages/web/web-search-deepseek/src/index.ts:111] [E: packages/web/web-search-deepseek/src/index.ts:112] 默认常量是 `https://api.deepseek.com/anthropic/v1`。 [E: packages/web/web-search-deepseek/src/provider.ts:35] 实际请求拼 `${options.baseURL}/messages`。 [E: packages/web/web-search-deepseek/src/provider.ts:207]
+**Search（`@deepseek-ai/dsh-web-search-deepseek`）** 拥有 `SEARCH_BASE_URL_ENV = 'DEEPSEEK_SEARCH_BASE_URL'`。 [E: packages/web/web-search-deepseek/src/index.ts:83] `resolveOptions` 的 endpoint 是 `config.baseURL ?? launchEnvironmentOf(ctx).get(SEARCH_BASE_URL_ENV)?.value ?? DEEPSEEK_DEFAULT_BASE_URL`。 [E: packages/web/web-search-deepseek/src/index.ts:110] [E: packages/web/web-search-deepseek/src/index.ts:111] [E: packages/web/web-search-deepseek/src/index.ts:112] 默认常量是 `https://api.deepseek.com/anthropic/v1`。 [E: packages/web/web-search-deepseek/src/provider.ts:34] 实际请求拼 `${options.baseURL}/messages`。 [E: packages/web/web-search-deepseek/src/provider.ts:207]
 
 Search 的三元链 **没有** `DEEPSEEK_BASE_URL`。只设 `DEEPSEEK_BASE_URL`、不设 `DEEPSEEK_SEARCH_BASE_URL`、不设 search Config.`baseURL` 时，search 落到 Anthropic 默认基址。省略 search config 的单测打到 `https://api.deepseek.com/anthropic/v1/messages`。 [E: packages/web/web-search-deepseek/tests/deepseek.spec.ts:495]
 
-两名都在 `loadLayeredEnv` 的 bootstrap-only 集合里，彼此分开列出。 [E: packages/boot/app-boot/src/index.ts:109] 密钥可以共用 `DEEPSEEK_API_KEY`；改 chat 网关 **带不走** search。
+两名都在 `loadLayeredEnv` 的 bootstrap-only 集合里，彼此分开列出。 [E: packages/boot/app-boot/src/index.ts:107] 密钥可以共用 `DEEPSEEK_API_KEY`；改 chat 网关 **带不走** search。
 
 ## 实例表 · 测试 / CI / fixture
 
@@ -278,13 +281,15 @@ Search 的三元链 **没有** `DEEPSEEK_BASE_URL`。只设 `DEEPSEEK_BASE_URL`�
 
 - packages/util/home-paths/src/index.ts
 - packages/llm/llm-deepseek/src/index.ts
+- packages/llm/llm-deepseek/src/config.ts
+- packages/credentials/credentials-local/src/index.ts
 - packages/web/web-search-deepseek/src/index.ts
 - packages/web/web-search-deepseek/src/provider.ts
 - packages/llm/llm-pi-ai/src/index.ts
 - packages/boot/app-boot/src/index.ts
 - apps/cli/src/bin.ts
 - apps/cli/src/profile-boot.ts
-- packages/e2b/e2b/src/index.ts
+- packages/bundle/sdk-app/cordis.patch.yml
 - packages/web/web/src/index.ts
 - packages/web/web-search-exa/src/index.ts
 - packages/web/web-search-perplexity/src/index.ts
@@ -301,7 +306,7 @@ Search 的三元链 **没有** `DEEPSEEK_BASE_URL`。只设 `DEEPSEEK_BASE_URL`�
 - packages/bundle/sdk-app/cordis.patch.yml
 - packages/bundle/web-app/src/index.ts
 - packages/client/store/src/index.ts
-- packages/workflow/workflow-worker-thread/src/host.ts
+- packages/workflow/workflow-ptc/src/index.ts
 - vendor/loader/src/index.ts
 - packages/llm/llm-deepseek/tests/adapter.spec.ts
 - packages/web/web-search-deepseek/tests/deepseek.spec.ts

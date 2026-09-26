@@ -16,7 +16,7 @@ source:
   - snapshots/session/subagent-acp-diagnostic/cordis.yml
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/base/package.json
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
   - vendor/loader/src/index.ts
   - vendor/cordis/src/events.ts
   - packages/subagent/subagent-dsh-sdk/src/index.ts
@@ -36,7 +36,7 @@ related:
   - subsys.execution.subprocess
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-subagent-acp` 是 **非 shipped** 的进程外 subagent Provider：`AcpProvider` 经 `ctx.subprocess.spawn` 拉起讲 Agent Client Protocol（ACP）stdio 的子进程，默认 registry 名 `acp`。它不进 `dsh-base` / `dsh-web-app` / `dsh-headless` / `dsh-sdk-app` / `dsh-sdk-minimal` / `dsh-acp-app` / 任一 shipped preset（`minimal` / `standard` / `ptc` / `cordis`），也不是 `dsh web` 或 `dsh --profile sdk|sdk-minimal|acp|headless` 的默认委托后端。
@@ -60,7 +60,7 @@ updated: c291e7961a
 - 模型可见 `subagent` 工具 schema 与 `backgroundMode` — [`surface.tools.subagent`](../../surface/tools/subagent.md)（`surface.tools.subagent`）。本页只写 Provider 名与 capability 广告。
 - `ctx.subprocess` 的 scrub / 树级 teardown — [`subsys.execution.subprocess`](../execution/subprocess.md)（`subsys.execution.subprocess`）。本包是 Consumer：把 `spawn` 函数塞进 `AcpRunSpec`。
 - 另一条进程外 DSH 子 runtime（SDK client 自己拉起进程，`inject` 只有 `subagents`）— [`subsys.orchestration.subagent-dsh-sdk`](subagent-dsh-sdk.md)（`subsys.orchestration.subagent-dsh-sdk`）。[E: packages/subagent/subagent-dsh-sdk/src/index.ts:31]
-- shipped 默认委托后端。`dsh-base` 只 insert `subagent` + `subagent-spawn-in-process` + `subagent-fork-in-process`，`dependencies` 也只有这三家，没有 `@deepseek-ai/dsh-subagent-acp`。[E: packages/bundle/base/cordis.patch.yml:328] [E: packages/bundle/base/cordis.patch.yml:331] [E: packages/bundle/base/cordis.patch.yml:336] [E: packages/bundle/base/package.json:94] [E: packages/bundle/base/package.json:95] [E: packages/bundle/base/package.json:96] 六个 shipped bundle 的 patch 均不 insert 本包。`standard` preset 的委托工具钉 `provider: spawn`，不是 `acp`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:193] 真实测试挂载行：`id: subagent-acp` / `name: '@deepseek-ai/dsh-subagent-acp'`。[E: packages/subagent/subagent-acp/tests/fixtures/loader/acp.patch.yml:32] [E: packages/subagent/subagent-acp/tests/fixtures/loader/acp.patch.yml:33] snapshot 同样挂 `@deepseek-ai/dsh-subagent-acp`（`id: subagent-acp-diagnostic`）。[E: snapshots/session/subagent-acp-diagnostic/cordis.yml:8]
+- shipped 默认委托后端。`dsh-base` 只 insert `subagent` + `subagent-spawn-in-process` + `subagent-fork-in-process`，`dependencies` 也只有这三家，没有 `@deepseek-ai/dsh-subagent-acp`。[E: packages/bundle/base/cordis.patch.yml:348] [E: packages/bundle/base/cordis.patch.yml:351] [E: packages/bundle/base/cordis.patch.yml:356] [E: packages/bundle/base/package.json:91] [E: packages/bundle/base/package.json:92] [E: packages/bundle/base/package.json:93] 六个 shipped bundle 的 patch 均不 insert 本包。`standard` preset 的委托工具钉 `provider: spawn`，不是 `acp`。[E: packages/bundle/web-app/presets/standard.patch.yml:93] 真实测试挂载行：`id: subagent-acp` / `name: '@deepseek-ai/dsh-subagent-acp'`。[E: packages/subagent/subagent-acp/tests/fixtures/loader/acp.patch.yml:32] [E: packages/subagent/subagent-acp/tests/fixtures/loader/acp.patch.yml:33] snapshot 同样挂 `@deepseek-ai/dsh-subagent-acp`（`id: subagent-acp-diagnostic`）。[E: snapshots/session/subagent-acp-diagnostic/cordis.yml:8]
 
 **host 面 vs agent-preset 面。** `AcpProvider` 一旦加载就写进程级 `ctx.subagents` 表，和 spawn / fork 一样是 host 单例。它目前只出现在测试 / snapshot composition，不进 shipped host 树，也没有 preset `isolate` remount。产品入口是 `dsh web` 以及 `dsh --profile sdk|sdk-minimal|acp|headless`；本仓没有 shipped TUI。`dsh-acp-app` 是宿主自己当 ACP **服务器** 的 bundle，不是父进程挂 `AcpProvider` 的那份树。
 
@@ -96,17 +96,17 @@ updated: c291e7961a
 
 ## 控制流
 
-1. Loader 用 named export 加载本包。`unwrapExports` 取 `exports.default ?? exports`；若写成 `export default { apply }`，`name` / `inject` 会丢，`subagents` / `subprocess` 等不到。[E: vendor/loader/src/index.ts:194] 测试钉死 `'default' in acp` 为 false，且 `inject` 等于 `['subagents', 'subprocess']`。[E: packages/subagent/subagent-acp/tests/subagent-acp.spec.ts:1707] [E: packages/subagent/subagent-acp/tests/subagent-acp.spec.ts:1709]
+1. Loader 用 named export 加载本包。`unwrapExports` 取 `exports.default ?? exports`；若写成 `export default { apply }`，`name` / `inject` 会丢，`subagents` / `subprocess` 等不到。[E: vendor/loader/src/index.ts:192] 测试钉死 `'default' in acp` 为 false，且 `inject` 等于 `['subagents', 'subprocess']`。[E: packages/subagent/subagent-acp/tests/subagent-acp.spec.ts:1707] [E: packages/subagent/subagent-acp/tests/subagent-acp.spec.ts:1709]
 
-2. `apply@packages/subagent/subagent-acp/src/index.ts` 校验两档 dispose grace，拒绝空 `cwd`，把相对 `cwd` 收成绝对可进入目录，然后 `registerProvider`。[E: packages/subagent/subagent-acp/src/index.ts:193] [E: packages/subagent/subagent-acp/src/index.ts:205] `SubagentRuntime.registerProvider@packages/subagent/subagent/src/index.ts` 是 `ctx.effect()`：重名 `DUPLICATE_PROVIDER`；fiber dispose 只 `providers.delete` 挡住新 `start`，已交给 holder 的 run 不撤回。[E: packages/subagent/subagent/src/index.ts:512] [E: packages/subagent/subagent/src/index.ts:513] [E: packages/subagent/subagent/src/index.ts:517]
+2. `apply@packages/subagent/subagent-acp/src/index.ts` 校验两档 dispose grace，拒绝空 `cwd`，把相对 `cwd` 收成绝对可进入目录，然后 `registerProvider`。[E: packages/subagent/subagent-acp/src/index.ts:193] [E: packages/subagent/subagent-acp/src/index.ts:205] `SubagentRuntime.registerProvider@packages/subagent/subagent/src/index.ts` 是 `ctx.effect()`：重名 `DUPLICATE_PROVIDER`；fiber dispose 只 `providers.delete` 挡住新 `start`，已交给 holder 的 run 不撤回。[E: packages/subagent/subagent/src/index.ts:512] [E: packages/subagent/subagent/src/index.ts:517] [E: packages/subagent/subagent/src/index.ts:517]
 
 3. 模型侧 Consumer（同一 fixture 里的 `dsh-tool-subagent`，`provider: acp`）在 `subagent/provider-added` 后才 `ctx.tools.register`。那是 emit，不是 waterfall。字段表不在本页。[E: packages/subagent/subagent-acp/tests/fixtures/loader/acp.patch.yml:22]
 
-4. 前台 / one-shot 走 `SubagentRuntime.start@packages/subagent/subagent/src/index.ts`：`expectProvider` → `assertCapabilities` → one-shot descriptor → `await provider.start(resolved)` → `observeRun`。[E: packages/subagent/subagent/src/index.ts:556] [E: packages/subagent/subagent/src/index.ts:557] [E: packages/subagent/subagent/src/index.ts:566] 请求里只要出现 `agentOptions` / `outputSchema` / `maxDepth` / `toolFilter` / `persona`，ACP 的全 false 广告就抛 `UNSUPPORTED_CAPABILITY`，不会进 `startAcpRun`。[E: packages/subagent/subagent/src/index.ts:650]
+4. 前台 / one-shot 走 `SubagentRuntime.start@packages/subagent/subagent/src/index.ts`：`expectProvider` → `assertCapabilities` → one-shot descriptor → `await provider.start(resolved)` → `observeRun`。[E: packages/subagent/subagent/src/index.ts:559] [E: packages/subagent/subagent/src/index.ts:561] [E: packages/subagent/subagent/src/index.ts:570] 请求里只要出现 `agentOptions` / `outputSchema` / `maxDepth` / `toolFilter` / `persona`，ACP 的全 false 广告就抛 `UNSUPPORTED_CAPABILITY`，不会进 `startAcpRun`。[E: packages/subagent/subagent/src/index.ts:653]
 
 5. `AcpProvider.start` 先看 `request.signal.aborted`，再组 `AcpRunSpec`：`spawn: spec => this.ctx.subprocess.spawn(spec)`，`onError` 打到 `ctx.logger.warn`，再 `return startAcpRun(request, spec)`。[E: packages/subagent/subagent-acp/src/index.ts:160] [E: packages/subagent/subagent-acp/src/index.ts:179] [E: packages/subagent/subagent-acp/src/index.ts:186]
 
-6. `startAcpRun@packages/subagent/subagent-acp/src/run.ts`：信号已 abort 则立刻抛，**不 spawn**。[E: packages/subagent/subagent-acp/src/run.ts:338] 生命周期 id 在父进程 `brandString<SessionId>(randomUUID())` 铸造——ACP 子服务器里的 `sessionId` 只在那个进程内唯一，不能当 `SubagentRun.id`。[E: packages/subagent/subagent-acp/src/run.ts:342] 测试用 `MOCK_SESSION_ID: 'acp-child-session'` 时 `run.id` 不等于该字符串。[E: packages/subagent/subagent-acp/tests/subagent-acp.spec.ts:646]
+6. `startAcpRun@packages/subagent/subagent-acp/src/run.ts`：信号已 abort 则立刻抛，**不 spawn**。[E: packages/subagent/subagent-acp/src/run.ts:338] 生命周期 id 在父进程 `brandString<SessionId>(randomUUID())` 铸造——ACP 子服务器里的 `sessionId` 只在那个进程内唯一，不能当 `SubagentRun.id`。[E: packages/subagent/subagent-acp/src/run.ts:342] 测试用 `MOCK_SESSION_ID: 'acp-child-session'` 时 `run.id` 不等于该字符串。[E: packages/subagent/subagent-acp/tests/subagent-acp.spec.ts:645]
 
 7. `spec.spawn` 拉起孩子：`argv = [command, ...args]`，`stdio = { stdin: 'pipe', stdout: 'pipe', stderr: 'inherit' }`，`graceMs = disposeGraceMs`，`env` 叠在 scrub 之后。[E: packages/subagent/subagent-acp/src/run.ts:350] [E: packages/subagent/subagent-acp/src/run.ts:352] 协议是 `@agentclientprotocol/sdk` 的 client app + `ndJsonStream` 绑在这两根 pipe 上。[E: packages/subagent/subagent-acp/src/run.ts:421] [E: packages/subagent/subagent-acp/src/run.ts:454]
 
@@ -122,7 +122,7 @@ updated: c291e7961a
 
 13. `dispose` 幂等（`subprocessRunHandle` 记住第一次 teardown）：摘 abort listener、`requestCancel`（best-effort `session/cancel`）、再 `disposeAcpChild`——先 `stdin.end()` 等整棵树在 `eofGraceMs` 内退出，否则 `terminate()`（POSIX SIGTERM→grace→SIGKILL）并 `waitForExit`。[E: packages/subagent/subagent/src/out-of-process.ts:252] [E: packages/subagent/subagent-acp/src/run.ts:195] [E: packages/subagent/subagent-acp/src/run.ts:205]
 
-14. **Continuable 进不来。** `prepareContinuable` 在 `SubagentProvider` 上是可选方法，方法在场才是能力。[E: packages/subagent/subagent/src/types.ts:389] `AcpProvider` 没有这个方法。`SubagentRuntime.prepareContinuable` 见到 `undefined` 就抛 `UNSUPPORTED_CAPABILITY`（文案含 `no prepareContinuable capability`），manager 不会给 ACP 建 Activation。[E: packages/subagent/subagent/src/index.ts:557] [E: packages/subagent/subagent/src/index.ts:601] shipped `standard` 把 `subagent` 配成 `backgroundMode: continuable`，那条路默认打 `spawn` 的 `prepareContinuable`，不会落到本后端。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:193]
+14. **Continuable 进不来。** `prepareContinuable` 在 `SubagentProvider` 上是可选方法，方法在场才是能力。[E: packages/subagent/subagent/src/types.ts:389] `AcpProvider` 没有这个方法。`SubagentRuntime.prepareContinuable` 见到 `undefined` 就抛 `UNSUPPORTED_CAPABILITY`（文案含 `no prepareContinuable capability`），manager 不会给 ACP 建 Activation。[E: packages/subagent/subagent/src/index.ts:596] [E: packages/subagent/subagent/src/index.ts:601] shipped `standard` 把 `subagent` 配成 `backgroundMode: continuable`，那条路默认打 `spawn` 的 `prepareContinuable`，不会落到本后端。[E: packages/bundle/web-app/presets/standard.patch.yml:93]
 
 ## 设计动机
 
@@ -141,7 +141,7 @@ named export only：Loader 的 default-interop 会剥掉模块顶上的 `inject`
 ## Gotcha
 
 - **不是 shipped 默认后端。** 包在 monorepo 里 ≠ 进了 `dsh-base`。`dsh web` 的 `standard` 委托仍是 in-process `spawn`。只 overlay 本包、不改 `tool-subagent` 的 `provider`，模型还是打到 `spawn`。
-- **default export 会丢掉 `inject`。** `unwrapExports` 先取 `.default`。[E: vendor/loader/src/index.ts:194] 必须 `export const name` / `export const inject` / `export function apply`。
+- **default export 会丢掉 `inject`。** `unwrapExports` 先取 `.default`。[E: vendor/loader/src/index.ts:192] 必须 `export const name` / `export const inject` / `export function apply`。
 - **没有 `prepareContinuable`。** `startContinuable` / preset 默认 continuable 路径不能打到 `acp`。要委托 ACP 必须走 `ctx.subagents.start`（one-shot 前台或 one-shot Job），并把 Consumer 的 `maxDepth` 设成 `'provider-managed'`，否则数字 cap 先被 `assertCapabilities` 拒。
 - **缺 `command` 不能 load。** 没有「先挂上再等 Settings」。空 `cwd` 也在 load 失败——`path.resolve('')` 等于进程启动目录，会悄悄绑到 server launch dir。父 session 也没有 cwd 时，`start` 在 spawn 之前抛 `no working directory`。[E: packages/subagent/subagent-acp/src/index.ts:136]
 - **发布前 reject，发布后不 reject。** handshake / 预 abort / 坏 `sessionId` 让 `start()` 失败且已 reap。发布后的子崩溃变成 `result.stopReason === 'error'`，日志走 `onError`。
@@ -174,7 +174,7 @@ named export only：Loader 的 default-interop 会剥掉模块顶上的 `inject`
 - snapshots/session/subagent-acp-diagnostic/cordis.yml
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/base/package.json
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
 - vendor/loader/src/index.ts
 - vendor/cordis/src/events.ts
 - packages/subagent/subagent-dsh-sdk/src/index.ts

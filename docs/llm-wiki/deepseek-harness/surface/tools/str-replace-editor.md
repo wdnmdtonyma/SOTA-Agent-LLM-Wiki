@@ -19,11 +19,10 @@ source:
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
   - packages/bundle/sdk-minimal/cordis.patch.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-  - packages/preset/agent-presets/presets/minimal/preset.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - apps/cli/tests/web-agent-presets.e2e.ts
   - apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts
   - vendor/cordis/src/events.ts
@@ -40,7 +39,7 @@ related:
   - subsys.execution.fs-observation
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `str_replace_editor` 是 `@deepseek-ai/dsh-tool-str-replace-editor` 面向模型的 **一条** 编辑器工具：用 `command` 分发 `view` / `create` / `str_replace` / `insert`，全部经 `ctx.fs` 读写。包仍在仓库里；**base / web-app / 四个 shipped preset / sdk-minimal 出厂都不挂**。`minimal` 现在只提供持久 shell。
@@ -56,9 +55,9 @@ updated: c291e7961a
 
 ## Identity
 
-实现包 `@deepseek-ai/dsh-tool-str-replace-editor`。[E: packages/fs/tool-str-replace-editor/package.json:2] Cordis 插件导出 `name = 'tool-str-replace-editor'`，`inject = ['tools', 'fs']`，入口是 `apply(ctx, config)`。[E: packages/fs/tool-str-replace-editor/src/index.ts:501] [E: packages/fs/tool-str-replace-editor/src/index.ts:502] [E: packages/fs/tool-str-replace-editor/src/index.ts:519]
+实现包 `@deepseek-ai/dsh-tool-str-replace-editor`。[E: packages/fs/tool-str-replace-editor/package.json:2] Cordis 插件导出 `name = 'tool-str-replace-editor'`，`inject = ['tools', 'fs']`，入口是 `apply(ctx, config)`。[E: packages/fs/tool-str-replace-editor/src/index.ts:502] [E: packages/fs/tool-str-replace-editor/src/index.ts:503] [E: packages/fs/tool-str-replace-editor/src/index.ts:520]
 
-`apply` 校验完 `Config` 后调用 `registerStrReplaceEditor`，用 `ctx.tools.register(defineTool({ ... }))` 挂上 **模型可见名** `str_replace_editor`。[E: packages/fs/tool-str-replace-editor/src/index.ts:428] [E: packages/fs/tool-str-replace-editor/src/index.ts:429] [E: packages/fs/tool-str-replace-editor/src/index.ts:530] 测试里 `ctx.tools.schemas()` 只出现这一条名字；`fiber.dispose()` 后 schema 清空。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:98] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:195]
+`apply` 校验完 `Config` 后调用 `registerStrReplaceEditor`，用 `ctx.tools.register(defineTool({ ... }))` 挂上 **模型可见名** `str_replace_editor`。[E: packages/fs/tool-str-replace-editor/src/index.ts:429] [E: packages/fs/tool-str-replace-editor/src/index.ts:430] [E: packages/fs/tool-str-replace-editor/src/index.ts:531] 测试里 `ctx.tools.schemas()` 只出现这一条名字；`fiber.dispose()` 后 schema 清空。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:98] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:193]
 
 这不是 CLI 命令。模型 turn 里点名 `str_replace_editor`，由 `dsh-tools` 注册表执行。包在 workspace 里存在 **不等于** 某个 preset 或 profile 默认装了它。
 
@@ -66,117 +65,117 @@ updated: c291e7961a
 
 一套 Anthropic computer-use 风格的 **单工具四命令** 编辑器，覆盖「看文件 / 列目录 / 创建新文件 / 唯一字面量替换 / 按行插入」。包描述写成 view、create、literal replace、line insert。[E: packages/fs/tool-str-replace-editor/package.json:3]
 
-默认 `description`（`DEFAULT_DESCRIPTION`）告诉模型：状态跨调用持久（指磁盘上的文件，不是工具内存）、`view` 文件像 `cat -n`、目录只列两层、`create` 不能覆盖已存在文件、长输出带 `<response clipped>`、`str_replace` 的 `old_str` 必须精确且唯一；未选中命令的参数用 **null placeholder 视为省略**，删除匹配时要 **省略** `new_str` 而不是设成 null。[E: packages/fs/tool-str-replace-editor/src/index.ts:19] [E: packages/fs/tool-str-replace-editor/src/index.ts:27] [E: packages/fs/tool-str-replace-editor/src/index.ts:515]
+默认 `description`（`DEFAULT_DESCRIPTION`）告诉模型：状态跨调用持久（指磁盘上的文件，不是工具内存）、`view` 文件像 `cat -n`、目录只列两层、`create` 不能覆盖已存在文件、长输出带 `<response clipped>`、`str_replace` 的 `old_str` 必须精确且唯一；未选中命令的参数用 **null placeholder 视为省略**，删除匹配时要 **省略** `new_str` 而不是设成 null。[E: packages/fs/tool-str-replace-editor/src/index.ts:20] [E: packages/fs/tool-str-replace-editor/src/index.ts:21] [E: packages/fs/tool-str-replace-editor/src/index.ts:516]
 
-`apply` **不**往 `ctx.systemPrompt` 注册 section，模型只靠这条 tool description 和参数 schema。`Config.description` 可整段替换；空字符串会在 boot 时抛错。[E: packages/fs/tool-str-replace-editor/src/index.ts:527] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:96]
+`apply` **不**往 `ctx.systemPrompt` 注册 section，模型只靠这条 tool description 和参数 schema。`Config.description` 可整段替换；空字符串会在 boot 时抛错。[E: packages/fs/tool-str-replace-editor/src/index.ts:528] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:96]
 
-**出厂产品面不再用它。** `minimal` 的 `preset.yml` 写成「仅提供持久 shell 的单工具编码 Agent。」[E: packages/preset/agent-presets/presets/minimal/preset.yml:2] 其 `agent.cordis.yml` 只有 complete persona + 持久 `bash` / `pwsh`，**没有** fs 组、**没有** `str-replace-editor` 行。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] e2e：`minimal` assemble 出的 tool 名恰好 `['bash']`（POSIX）。[E: apps/cli/tests/web-agent-presets.e2e.ts:299]
+**出厂产品面不再用它。** `minimal` 的 patch 只有 complete persona + 持久 `bash` / `pwsh`，**没有** fs 组、**没有** `str-replace-editor` 行。[E: packages/bundle/web-app/presets/minimal.patch.yml:11] [E: packages/bundle/web-app/presets/minimal.patch.yml:17] e2e：`minimal` assemble 出的 tool 名恰好 `['bash']`（POSIX）。[E: apps/cli/tests/web-agent-presets.e2e.ts:321]
 
-`standard` / `ptc` / `cordis` 走 `dsh-tool-fs` 的 `read` / `write` / `edit`。`dsh-base`、`dsh-web-app`、`dsh-sdk-minimal` 的 yml **都没有** `tool-str-replace-editor` 挂载行。仍可通过 overlay 显式 insert；sdk keyless-smoke 用 `--patch` 把该行加回去。[E: apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts:58] [E: apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts:59] snapshots 里若仍期望 `str_replace_editor`，那是 fixture，不是 shipped preset。
+`standard` / `ptc` / `cordis` 走 `dsh-tool-fs` 的 `read` / `write` / `edit`。`dsh-base`、`dsh-web-app`、`dsh-sdk-minimal` 的 yml **都没有** `tool-str-replace-editor` 挂载行。仍可通过 overlay 显式 insert；sdk keyless-smoke 用 `--patch` 把该行加回去。[E: apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts:74] [E: apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts:75] snapshots 里若仍期望 `str_replace_editor`，那是 fixture，不是 shipped preset。
 
 ## 输入 schema
 
-以插件 **默认 `Config`** boot 后的 `defineTool({ parameters })` 为准。字段集合是静态的：`ctx.fs.sandboxMode` **不会**给本工具加 `sandbox_permissions` / `justification`，也不会改名。[E: packages/fs/tool-str-replace-editor/src/index.ts:431] schema 编译是 implicit open object：只有标了 `required: true` 的键进入 JSON Schema `required`。[E: packages/core/tools/src/schema.ts:103] [E: packages/core/tools/src/schema.ts:454]
+以插件 **默认 `Config`** boot 后的 `defineTool({ parameters })` 为准。字段集合是静态的：`ctx.fs.sandboxMode` **不会**给本工具加 `sandbox_permissions` / `justification`，也不会改名。[E: packages/fs/tool-str-replace-editor/src/index.ts:432] schema 编译是 implicit open object：只有标了 `required: true` 的键进入 JSON Schema `required`。[E: packages/core/tools/src/schema.ts:97] [E: packages/core/tools/src/schema.ts:103]
 
-多数可选字段声明为 `oneOf: [string|integer|array, null]`：模型可以把未用参数填 `null` 当省略。`create` / `insert` / `view` 在 execute 里把 `?? undefined` 掉；`str_replace` 的 `new_str` **单独**拒绝 `null`（必须省略或给字符串）。[E: packages/fs/tool-str-replace-editor/src/index.ts:443] [E: packages/fs/tool-str-replace-editor/src/index.ts:283] [E: packages/fs/tool-str-replace-editor/src/index.ts:478]
+多数可选字段声明为 `oneOf: [string|integer|array, null]`：模型可以把未用参数填 `null` 当省略。`create` / `insert` / `view` 在 execute 里把 `?? undefined` 掉；`str_replace` 的 `new_str` **单独**拒绝 `null`（必须省略或给字符串）。[E: packages/fs/tool-str-replace-editor/src/index.ts:444] [E: packages/fs/tool-str-replace-editor/src/index.ts:284] [E: packages/fs/tool-str-replace-editor/src/index.ts:477]
 
 | 字段 | 类型 | schema 必填 | 默认 | 约束 | 说明 |
 |---|---|---:|---|---|---|
-| `command` | `string` | 是 | 无 | enum 仅 `view` \| `create` \| `str_replace` \| `insert` | 四选一；**没有** `undo_edit` / `grep`。[E: packages/fs/tool-str-replace-editor/src/index.ts:432] [E: packages/fs/tool-str-replace-editor/src/index.ts:435] |
-| `path` | `string` | 是 | 无 | schema 文案写绝对路径；execute 用 `isAbsolute` 再拒相对路径 | 文件或目录。[E: packages/fs/tool-str-replace-editor/src/index.ts:438] [E: packages/fs/tool-str-replace-editor/src/index.ts:441] |
-| `file_text` | `string \| null` | 否 | 无 | `create` 时 execute 必填；允许空串；`null` 当省略 | 新文件全文。[E: packages/fs/tool-str-replace-editor/src/index.ts:443] [E: packages/fs/tool-str-replace-editor/src/index.ts:247] |
-| `insert_line` | `integer \| null` | 否 | 无 | `insert` 时 execute 必填；整数，范围 `[0, 当前行数]` | `new_str` 插在该行 **之后**（`0` = 文件头）。[E: packages/fs/tool-str-replace-editor/src/index.ts:447] [E: packages/fs/tool-str-replace-editor/src/index.ts:337] |
-| `new_str` | `string \| null` | 否 | `str_replace` 缺省当 `''` | `insert` 时 execute 必填（允许空串）；`str_replace` 可省略（等于删除 `old_str`）；**禁止** `null` | 替换文本或插入文本。[E: packages/fs/tool-str-replace-editor/src/index.ts:451] [E: packages/fs/tool-str-replace-editor/src/index.ts:283] [E: packages/fs/tool-str-replace-editor/src/index.ts:290] |
-| `old_str` | `string \| null` | 否 | 无 | `str_replace` 时 execute 必填且 **禁止空串**；`null` 当省略 | 必须在文件里字面量恰好出现一次。[E: packages/fs/tool-str-replace-editor/src/index.ts:455] [E: packages/fs/tool-str-replace-editor/src/index.ts:289] |
-| `view_range` | `integer[] \| null` | 否 | 全文 | 仅文件 `view`；必须两个整数；1-based；第二元 `-1` = 到末尾 | 目录 `view` 带此字段直接失败。[E: packages/fs/tool-str-replace-editor/src/index.ts:459] [E: packages/fs/tool-str-replace-editor/src/index.ts:228] |
+| `command` | `string` | 是 | 无 | enum 仅 `view` \| `create` \| `str_replace` \| `insert` | 四选一；**没有** `undo_edit` / `grep`。[E: packages/fs/tool-str-replace-editor/src/index.ts:433] [E: packages/fs/tool-str-replace-editor/src/index.ts:436] |
+| `path` | `string` | 是 | 无 | schema 文案写绝对路径；execute 用 `isAbsolute` 再拒相对路径 | 文件或目录。[E: packages/fs/tool-str-replace-editor/src/index.ts:439] [E: packages/fs/tool-str-replace-editor/src/index.ts:442] |
+| `file_text` | `string \| null` | 否 | 无 | `create` 时 execute 必填；允许空串；`null` 当省略 | 新文件全文。[E: packages/fs/tool-str-replace-editor/src/index.ts:444] [E: packages/fs/tool-str-replace-editor/src/index.ts:248] |
+| `insert_line` | `integer \| null` | 否 | 无 | `insert` 时 execute 必填；整数，范围 `[0, 当前行数]` | `new_str` 插在该行 **之后**（`0` = 文件头）。[E: packages/fs/tool-str-replace-editor/src/index.ts:448] [E: packages/fs/tool-str-replace-editor/src/index.ts:338] |
+| `new_str` | `string \| null` | 否 | `str_replace` 缺省当 `''` | `insert` 时 execute 必填（允许空串）；`str_replace` 可省略（等于删除 `old_str`）；**禁止** `null` | 替换文本或插入文本。[E: packages/fs/tool-str-replace-editor/src/index.ts:452] [E: packages/fs/tool-str-replace-editor/src/index.ts:284] [E: packages/fs/tool-str-replace-editor/src/index.ts:291] |
+| `old_str` | `string \| null` | 否 | 无 | `str_replace` 时 execute 必填且 **禁止空串**；`null` 当省略 | 必须在文件里字面量恰好出现一次。[E: packages/fs/tool-str-replace-editor/src/index.ts:456] [E: packages/fs/tool-str-replace-editor/src/index.ts:290] |
+| `view_range` | `integer[] \| null` | 否 | 全文 | 仅文件 `view`；必须两个整数；1-based；第二元 `-1` = 到末尾 | 目录 `view` 带此字段直接失败。[E: packages/fs/tool-str-replace-editor/src/index.ts:460] [E: packages/fs/tool-str-replace-editor/src/index.ts:229] |
 
-`parameters` 只声明 `command` / `path` / `file_text` / `insert_line` / `new_str` / `old_str` / `view_range`，没有 `old_string` / `new_string` / `file_path` / `offset` / `limit` / `sandbox_permissions`。[E: packages/fs/tool-str-replace-editor/src/index.ts:431] 测试钉死 schema **没有** `replace_all`；`insert_line` 的 JSON 类型是 `integer`（在 oneOf 的非 null 支）。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:107] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:109]
+`parameters` 只声明 `command` / `path` / `file_text` / `insert_line` / `new_str` / `old_str` / `view_range`，没有 `old_string` / `new_string` / `file_path` / `offset` / `limit` / `sandbox_permissions`。[E: packages/fs/tool-str-replace-editor/src/index.ts:432] 测试钉死 schema **没有** `replace_all`；`insert_line` 的 JSON 类型是 `integer`（在 oneOf 的非 null 支）。[E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:107] [E: packages/fs/tool-str-replace-editor/tests/tools.spec.ts:109]
 
 `Config`（插件配置，不是模型参数）：
 
 | 键 | 类型 | 默认 | 作用 |
 |---|---|---|---|
-| `maxOutputChars` | `number` | `16000` | `view` 返回文本在拼好之后的字符上限；必须是正 `safe integer`。[E: packages/fs/tool-str-replace-editor/src/index.ts:514] [E: packages/fs/tool-str-replace-editor/src/index.ts:524] |
-| `description` | `string` | `DEFAULT_DESCRIPTION` | 覆盖模型看见的 tool description；trim 后不能空。[E: packages/fs/tool-str-replace-editor/src/index.ts:515] |
+| `maxOutputChars` | `number` | `16000` | `view` 返回文本在拼好之后的字符上限；必须是正 `safe integer`。[E: packages/fs/tool-str-replace-editor/src/index.ts:515] [E: packages/fs/tool-str-replace-editor/src/index.ts:525] |
+| `description` | `string` | `DEFAULT_DESCRIPTION` | 覆盖模型看见的 tool description；trim 后不能空。[E: packages/fs/tool-str-replace-editor/src/index.ts:516] |
 
 ## 输出 & 截断 / spill
 
-`output.schema` 是 `{ type: 'string' }`，`render` 把返回值收成一块 `text`。[E: packages/fs/tool-str-replace-editor/src/index.ts:468] [E: packages/fs/tool-str-replace-editor/src/index.ts:469] 本工具 **没有** spill / attachment；长输出就地 clip。
+`output.schema` 是 `{ type: 'string' }`，`render` 把返回值收成一块 `text`。[E: packages/fs/tool-str-replace-editor/src/index.ts:469] [E: packages/fs/tool-str-replace-editor/src/index.ts:470] 本工具 **没有** spill / attachment；长输出就地 clip。
 
-`maybeTruncate`：`content.length <= maxOutputChars` 原样返回，否则 `slice(0, maxOutputChars)` 再拼 `TRUNCATED_MESSAGE`（以 `<response clipped>` 开头，并提示用 `grep -n` 找行号）。[E: packages/fs/tool-str-replace-editor/src/index.ts:17] [E: packages/fs/tool-str-replace-editor/src/index.ts:33]
+`maybeTruncate`：`content.length <= maxOutputChars` 原样返回，否则切到上限再拼 `TRUNCATED_MESSAGE`（以 `<response clipped>` 开头，并提示用 `grep -n` 找行号）。[E: packages/fs/tool-str-replace-editor/src/index.ts:18] [E: packages/fs/tool-str-replace-editor/src/index.ts:34]
 
-文件 `view` 把提示头和编号正文一起送进 `maybeTruncate`。[E: packages/fs/tool-str-replace-editor/src/index.ts:183] 目录 `view` 只 clip 列表行，外面再包一层 “Here're the files and directories up to 2 levels deep …” 头，所以目录结果总长可以略大于 `maxOutputChars`。[E: packages/fs/tool-str-replace-editor/src/index.ts:213] [E: packages/fs/tool-str-replace-editor/src/index.ts:214]
+文件 `view` 把提示头和编号正文一起送进 `maybeTruncate`。[E: packages/fs/tool-str-replace-editor/src/index.ts:184] 目录 `view` 只 clip 列表行，外面再包一层 “Here're the files and directories up to 2 levels deep …” 头，所以目录结果总长可以略大于 `maxOutputChars`。[E: packages/fs/tool-str-replace-editor/src/index.ts:214] [E: packages/fs/tool-str-replace-editor/src/index.ts:215]
 
 成功短句（不截断）：
 
-- `create` → `New file created successfully at: ${displayPath}` [E: packages/fs/tool-str-replace-editor/src/index.ts:272]
-- `str_replace` / `insert` → `The file ${displayPath} has been edited successfully.` [E: packages/fs/tool-str-replace-editor/src/index.ts:326] [E: packages/fs/tool-str-replace-editor/src/index.ts:368]
+- `create` → `New file created successfully at: ${displayPath}` [E: packages/fs/tool-str-replace-editor/src/index.ts:273]
+- `str_replace` / `insert` → `The file ${displayPath} has been edited successfully.` [E: packages/fs/tool-str-replace-editor/src/index.ts:327] [E: packages/fs/tool-str-replace-editor/src/index.ts:369]
 
-失败走 `dsh-tools` 的 `toolErrorResult`：`isError: true`，模型看见 `Error` 文本。[E: packages/core/tools/src/index.ts:1861] 本工具会抛的 `FsError.code` 包括 `FS_NOT_FOUND`、`FS_NOT_REGULAR_FILE`、`FS_EDIT_NOT_FOUND`、`FS_AMBIGUOUS_EDIT`、`FS_SANDBOX_DENIED`；observation 插件还可再抛 `FS_NOT_OBSERVED`。[E: packages/fs/tool-str-replace-editor/src/index.ts:112] [E: packages/fs/tool-str-replace-editor/src/index.ts:308] [E: packages/fs/fs-observation-policy/src/index.ts:82]
+失败走 `dsh-tools` 的 `toolErrorResult`：`isError: true`，模型看见 `Error` 文本。[E: packages/core/tools/src/index.ts:1909] 本工具会抛的 `FsError.code` 包括 `FS_NOT_FOUND`、`FS_NOT_REGULAR_FILE`、`FS_EDIT_NOT_FOUND`、`FS_AMBIGUOUS_EDIT`、`FS_SANDBOX_DENIED`；observation 插件还可再抛 `FS_NOT_OBSERVED`。[E: packages/fs/tool-str-replace-editor/src/index.ts:113] [E: packages/fs/tool-str-replace-editor/src/index.ts:309] [E: packages/fs/fs-observation-policy/src/index.ts:82]
 
 `presentCall`（UI，不进模型 schema）：`view` → `card: 'generic'` + `kind: 'read'`；`create` / `str_replace` → `card: 'diff'`；`insert` → `card: 'generic'` + `kind: 'edit'`。[E: packages/fs/tool-str-replace-editor/src/index.ts:385]
 
 ## 背后的 seam
 
-**Definition**：`@deepseek-ai/dsh-fs` 的 `FileSystem`（`ctx.fs`）以及 `fs/write-intent` / `fs/edit-intent` / `fs/observed`。[E: packages/fs/fs/src/index.ts:58] [E: packages/fs/fs/src/index.ts:66] [E: packages/fs/fs/src/index.ts:76]
+**Definition**：`@deepseek-ai/dsh-fs` 的 `FileSystem`（`ctx.fs`）以及 `fs/write-intent` / `fs/edit-intent` / `fs/observed`。[E: packages/fs/fs/src/index.ts:59] [E: packages/fs/fs/src/index.ts:67] [E: packages/fs/fs/src/index.ts:77]
 
-**Provider**：谁 `provide` 了 `ctx.fs`。出厂 `minimal` **不再** isolate 一份裸 `fs-local`；host `dsh-base` 的 `fs-sandbox` 仍在进程里。[E: packages/bundle/base/cordis.patch.yml:479] 测试也可以改挂 `SandboxedFileSystem`。
+**Provider**：谁 `provide` 了 `ctx.fs`。出厂 `minimal` **不再** isolate 一份裸 `fs-local`；host `dsh-base` 的 `fs-sandbox` 仍在进程里。[E: packages/bundle/base/cordis.patch.yml:517] 测试也可以改挂 `SandboxedFileSystem`。
 
-**Consumer**：本插件。`inject` 只要 `tools` 和 `fs`。[E: packages/fs/tool-str-replace-editor/src/index.ts:502] execute 里调用 `ctx.fs.resolve` / `stat` / `readText` / `writeText` / `listDir`，经 `ctx.waterfall('fs/write-intent' | 'fs/edit-intent', …)` 取 guard，经 `ctx.emit('fs/observed', …)` 记账。换掉 `ctx.fs` 会带走路径解析、原子写和 sandbox fence；本工具不自己碰 Node `fs`。
+**Consumer**：本插件。`inject` 只要 `tools` 和 `fs`。[E: packages/fs/tool-str-replace-editor/src/index.ts:503] execute 里调用 `ctx.fs.resolve` / `stat` / `readText` / `writeText` / `listDir`，经 `ctx.waterfall('fs/write-intent' | 'fs/edit-intent', …)` 取 guard，经 `ctx.emit('fs/observed', …)` 记账。换掉 `ctx.fs` 会带走路径解析、原子写和 sandbox fence；本工具不自己碰 Node `fs`。
 
-`MutationPolicy`：仅当 `ctx.fs.sandboxMode !== undefined` 才 `ctx.get('sandboxPolicy')`；confined 却没有 `sandboxPolicy` 会在 **插件启动** 时抛 `the mounted filesystem confines but ctx.sandboxPolicy is missing`。[E: packages/fs/tool-str-replace-editor/src/index.ts:70] [E: packages/fs/tool-str-replace-editor/src/index.ts:72] 每次 mutation 把 `policy.resolve(exec)` 得到的 `SandboxExecutionPolicy` 传给 `writeText`；`FS_SANDBOX_DENIED` 被改写成 `sandboxDenialMarker(mode)`。[E: packages/fs/tool-str-replace-editor/src/index.ts:85] 本工具 **不用** `escalationHintMarker`，schema 也没有升级字段。
+`MutationPolicy`：仅当 `ctx.fs.sandboxMode !== undefined` 才 `ctx.get('sandboxPolicy')`；confined 却没有 `sandboxPolicy` 会在 **插件启动** 时抛 `the mounted filesystem confines but ctx.sandboxPolicy is missing`。[E: packages/fs/tool-str-replace-editor/src/index.ts:71] [E: packages/fs/tool-str-replace-editor/src/index.ts:73] 每次 mutation 把 `policy.resolve(exec)` 得到的 `SandboxExecutionPolicy` 传给 `writeText`；`FS_SANDBOX_DENIED` 被改写成 `sandboxDenialMarker(mode)`。[E: packages/fs/tool-str-replace-editor/src/index.ts:86] 本工具 **不用** `escalationHintMarker`，schema 也没有升级字段。
 
-`dsh-fs-observation-policy`（host `dsh-base` 默认挂上）占用 `fs/write-intent` / `fs/edit-intent` 单槽，并监听 `fs/observed`。[E: packages/bundle/base/cordis.patch.yml:257] [E: packages/fs/fs-observation-policy/src/index.ts:119] [E: packages/fs/fs-observation-policy/src/index.ts:122] [E: packages/fs/fs-observation-policy/src/index.ts:127] 未见过的 target 上 `editIntent` 抛 `FS_NOT_OBSERVED`。[E: packages/fs/fs-observation-policy/src/index.ts:82] 本工具在 `view` 命中文件后、以及成功 mutation 后 `emit` `present`；`stat` 未命中则先 `emit` `absent` 再抛 `FS_NOT_FOUND`。[E: packages/fs/tool-str-replace-editor/src/index.ts:109] [E: packages/fs/tool-str-replace-editor/src/index.ts:236] 目录 `view` **不** emit。
+`dsh-fs-observation-policy`（host `dsh-base` 默认挂上）占用 `fs/write-intent` / `fs/edit-intent` 单槽，并监听 `fs/observed`。[E: packages/bundle/base/cordis.patch.yml:277] [E: packages/fs/fs-observation-policy/src/index.ts:119] [E: packages/fs/fs-observation-policy/src/index.ts:122] 未见过的 target 上 `editIntent` 抛 `FS_NOT_OBSERVED`。[E: packages/fs/fs-observation-policy/src/index.ts:82] 本工具在 `view` 命中文件后、以及成功 mutation 后 `emit` `present`；`stat` 未命中则先 `emit` `absent` 再抛 `FS_NOT_FOUND`。[E: packages/fs/tool-str-replace-editor/src/index.ts:110] [E: packages/fs/tool-str-replace-editor/src/index.ts:237] 目录 `view` **不** emit。
 
 Cordis `EventsService.dispatch` 把 listener 放在 **一份** `_hooks` 表里；本工具的 `ctx.waterfall('fs/…')` 第一个实参是事件名字符串，不会带 scope `thisArg`，因此 isolate 只隔离 `fs` **服务**，不隔离这些事件。[I]
 
 ## 执行管线
 
-模型 step 若含 `tool-call`，调度器用 `ctx.tools[TOOL_RUNTIME_SCHEDULER].prepare` →（允许的话）`dispatch`。[E: packages/core/agent-loop/src/tool-calls.ts:170] [E: packages/core/agent-loop/src/tool-calls.ts:174] 单测 / 直接调用走 `ctx.tools.execute`，内部是同一条 `prepareExecution` → `completeScheduledExecution`。[E: packages/core/tools/src/index.ts:1333]
+模型 step 若含 `tool-call`，调度器用 `ctx.tools[TOOL_RUNTIME_SCHEDULER].prepare` →（允许的话）`dispatch`。[E: packages/core/agent-loop/src/tool-calls.ts:170] [E: packages/core/agent-loop/src/tool-calls.ts:174] 单测 / 直接调用走 `ctx.tools.execute`，内部是同一条 `prepareExecution` → `completeScheduledExecution`。[E: packages/core/tools/src/index.ts:1369]
 
 对本工具：
 
-1. **`tools/pre-execute`**：registry 默认 `next()` 是 `{ kind: 'allow' }`。[E: packages/core/tools/src/index.ts:1467] 本插件 **不**注册 pre-execute listener，也 **不**返回 `ask`。只有别的插件对这次 call 投 `ask` 时，才会进 `ctx.approval.request`；grant 语义是 `allowed-once`。[E: packages/core/tools/src/index.ts:1704]
+1. **`tools/pre-execute`**：registry 默认 `next()` 是 `{ kind: 'allow' }`。[E: packages/core/tools/src/index.ts:1507] 本插件 **不**注册 pre-execute listener，也 **不**返回 `ask`。只有别的插件对这次 call 投 `ask` 时，才会进 `ctx.approval.request`；grant 语义是 `allowed-once`。[E: packages/core/tools/src/index.ts:1753]
 2. **timeout**：`defineTool({ … })` 未传 `timeoutMs`。`dsh-tool-call-timeout-policy` 读到 `undefined` 就原样 `next()`，不加 deadline。[E: packages/guard/timeout-policy/src/index.ts:57] [E: packages/guard/timeout-policy/src/index.ts:59]
-3. **checkpoint**：host `session-checkpoint-policy` 在 top-level `tools/execute` 里、tool body 之前 `sessions.flush`；嵌套 dispatch（`exec.parent`）跳过。[E: packages/session/session-checkpoint-policy/src/index.ts:70] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
-4. **`tools/execute` / body**：waterfall 包住 `dispatchToolBody` → `tool.execute(args, exec)`。[E: packages/core/tools/src/index.ts:1564] [E: packages/core/tools/src/index.ts:1539] `defineTool` 先 `validate`，违规抛 `ToolArgsError`。[E: packages/core/tools/src/schema.ts:586] [E: packages/core/tools/src/schema.ts:587]
+3. **checkpoint**：host `session-checkpoint-policy` 在 top-level `tools/execute` 里、tool body 之前 `sessions.flush`；嵌套 dispatch（`exec.parent`）跳过。[E: packages/session/session-checkpoint-policy/src/index.ts:71] [E: packages/session/session-checkpoint-policy/src/index.ts:72]
+4. **`tools/execute` / body**：waterfall 包住 `dispatchToolBody` → `tool.execute(args, exec)`。[E: packages/core/tools/src/index.ts:1565] [E: packages/core/tools/src/index.ts:1581] `defineTool` 先 `validate`，违规抛 `ToolArgsError`。[E: packages/core/tools/src/schema.ts:598] [E: packages/core/tools/src/schema.ts:599]
 5. **sandbox**：不在 registry 层。body 里 `writeText(..., sandboxPolicy)`。
-6. **并发**：未实现 `isConcurrencySafe`，`executionMode` 一律 `exclusive`，同 step 里和其他 tool-call 串行。[E: packages/core/tools/src/index.ts:1268]
+6. **并发**：未实现 `isConcurrencySafe`，`executionMode` 一律 `exclusive`，同 step 里和其他 tool-call 串行。[E: packages/core/tools/src/index.ts:1305]
 7. **`tools/post-execute`**：本插件不注册 listener；成功字符串经 `output.render` 变成 text block。
 
 ## Preset 装配
 
-成员资格只认 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml`。包在 workspace 里存在、或 snapshot / overlay 曾列出过该行，都不算「某个 preset 默认装了」。旧路径 `apps/cli/config/agent-presets/` 与旧目录名 `code` 已不存在；PTC 对应 `presets/ptc/`（wiki 节点 id `surface.presets.code` 仍是稳定别名）。
+成员资格只认 `packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}.patch.yml`。包在 workspace 里存在、或 snapshot / overlay 曾列出过该行，都不算「某个 preset 默认装了」。旧路径 `packages/preset/agent-presets/presets/*/agent.cordis.yml` 已删除。PTC 对应 `presets/ptc.patch.yml`（wiki 节点 id `surface.presets.code` 仍是稳定别名）。
 
 | preset / 面 | 是否装 `@deepseek-ai/dsh-tool-str-replace-editor` | `disabled` | isolate | 配置 |
 |---|---|---|---|---|
-| `minimal` | **否**。yml 只有 persona + persistent-shell。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] | — | 无本包行 | e2e 工具名恰好 `['bash']`。[E: apps/cli/tests/web-agent-presets.e2e.ts:299] |
-| `standard` | 否。filesystem 段只挂 `dsh-tool-fs` / `dsh-tool-fs-search`。 | — | — | — |
-| `ptc` | 否。同样只挂 `dsh-tool-fs` / `dsh-tool-fs-search`。 | — | — | `tool-presentation` `mode: ptc`；assemble 给模型的 wire 工具是 `['run_code']`；SDK 段不含 `str_replace_editor`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] [E: apps/cli/tests/web-agent-presets.e2e.ts:378] |
-| `cordis` | 否。filesystem 段同 `standard`。 | — | — | e2e 断言 catalog **没有** `str_replace_editor`。[E: apps/cli/tests/web-agent-presets.e2e.ts:350] |
+| `minimal` | **否**。yml 只有 persona + persistent-shell。[E: packages/bundle/web-app/presets/minimal.patch.yml:11] [E: packages/bundle/web-app/presets/minimal.patch.yml:17] | — | 无本包行 | e2e 工具名恰好 `['bash']`。[E: apps/cli/tests/web-agent-presets.e2e.ts:321] |
+| `standard` | 否。filesystem 段只挂 `dsh-tool-fs` / `dsh-tool-fs-search`。[E: packages/bundle/web-app/presets/standard.patch.yml:26] [E: packages/bundle/web-app/presets/standard.patch.yml:28] | — | — | — |
+| `ptc` | 否。同样只挂 `dsh-tool-fs` / `dsh-tool-fs-search`。[E: packages/bundle/web-app/presets/ptc.patch.yml:26] [E: packages/bundle/web-app/presets/ptc.patch.yml:28] | — | — | `tool-presentation` `mode: ptc`；assemble 给模型的 wire 工具是 `['run_code']`；SDK 段不含 `str_replace_editor`。[E: packages/bundle/web-app/presets/ptc.patch.yml:147] [E: apps/cli/tests/web-agent-presets.e2e.ts:416] [E: apps/cli/tests/web-agent-presets.e2e.ts:420] |
+| `cordis` | 否。filesystem 段同 `standard`。[E: packages/bundle/web-app/presets/cordis.patch.yml:29] [E: packages/bundle/web-app/presets/cordis.patch.yml:31] | — | — | e2e 断言 catalog **没有** `str_replace_editor`。[E: apps/cli/tests/web-agent-presets.e2e.ts:372] |
 
 组合旁注（**不是** preset 成员资格）：
 
-- `dsh-base` **不再** insert `tool-str-replace-editor`。host 工具面在 `tool-fs` / `tool-fs-search` 之后是 `agent-instructions`，没有本行。[E: packages/bundle/base/cordis.patch.yml:260] [E: packages/bundle/base/cordis.patch.yml:268]
-- `dsh-web-app` overlay 的 disable 表从 `tool-bash` 起，**没有** `tool-str-replace-editor` 行（base 已不挂，无需再 disable）。[E: packages/bundle/web-app/cordis.patch.yml:368]
-- `sdk-minimal` **不再**自己 insert 本包。
-- 要再看见 `str_replace_editor`，必须在 profile / home / `--patch` overlay 里显式 insert `id: tool-str-replace-editor`。[E: apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts:58]
+- `dsh-base` **不再** insert `tool-str-replace-editor`。host 工具面在 `tool-fs` / `tool-fs-search` 之后是 `agent-instructions`，没有本行。[E: packages/bundle/base/cordis.patch.yml:283] [E: packages/bundle/base/cordis.patch.yml:288]
+- `dsh-web-app` overlay 的 disable 表从 `tool-bash` 起，**没有** `tool-str-replace-editor` 行（base 已不挂，无需再 disable）。[E: packages/bundle/web-app/cordis.patch.yml:447]
+- `sdk-minimal` **不再**自己 insert 本包；它挂 persistent bash/pwsh。[E: packages/bundle/sdk-minimal/cordis.patch.yml:126]
+- 要再看见 `str_replace_editor`，必须在 profile / home / `--patch` overlay 里显式 insert `id: tool-str-replace-editor`。[E: apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts:74]
 
 五个 shipped CLI profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`。`desktop` 不是第六个 CLI profile。
 
 ## execute() 走读
 
-`execute(args, exec)` 按 `args.command` 分四支。[E: packages/fs/tool-str-replace-editor/src/index.ts:471]
+`execute(args, exec)` 按 `args.command` 分四支。[E: packages/fs/tool-str-replace-editor/src/index.ts:473]
 
-1. **共同：解析 `path`。** `resolveTarget` 拒空串；`!isAbsolute(path)` 抛 `The path ${path} is not an absolute path, it should start with \`/\`. Maybe you meant /${path}?`，然后才 `ctx.fs.resolve`。[E: packages/fs/tool-str-replace-editor/src/index.ts:94] [E: packages/fs/tool-str-replace-editor/src/index.ts:95] `isAbsolute` 来自 `node:path`（平台相关）；报错文案按 POSIX 写。
+1. **共同：解析 `path`。** `resolveTarget` 拒空串；`!isAbsolute(path)` 抛 `The path ${path} is not an absolute path, it should start with \`/\`. Maybe you meant /${path}?`，然后才 `ctx.fs.resolve`。[E: packages/fs/tool-str-replace-editor/src/index.ts:95] [E: packages/fs/tool-str-replace-editor/src/index.ts:96] `isAbsolute` 来自 `node:path`（平台相关）；报错文案按 POSIX 写。
 
-2. **`view` → `viewPath`。** `statExisting(..., 'view')`：不存在则 `emit` `absent` 并 `FS_NOT_FOUND`。[E: packages/fs/tool-str-replace-editor/src/index.ts:109] [E: packages/fs/tool-str-replace-editor/src/index.ts:112] 目录禁止 `view_range`，否则抛 “not allowed when path points to a directory”。[E: packages/fs/tool-str-replace-editor/src/index.ts:228] 目录走 `listDirectory`：跳过 `.` 前缀、`node_modules`、`__pycache__`，递归 `depth < 2`，类型标 `d`/`f`/`?`，按 displayPath codepoint 排序。[E: packages/fs/tool-str-replace-editor/src/index.ts:196] [E: packages/fs/tool-str-replace-editor/src/index.ts:201] 文件则 `readText`，`emit` `present`，`formatFileView` 做成 6 宽行号 + 两空格 + 原文（`cat -n` 风格）。[E: packages/fs/tool-str-replace-editor/src/index.ts:181] `view_range` 必须两整数；首元在 `[1, 行数]`；次元 `> 行数` 非法；次元不是 `-1` 且 `<` 首元非法；`-1` 表示切到末尾。[E: packages/fs/tool-str-replace-editor/src/index.ts:175]
+2. **`view` → `viewPath`。** `statExisting(..., 'view')`：不存在则 `emit` `absent` 并 `FS_NOT_FOUND`。[E: packages/fs/tool-str-replace-editor/src/index.ts:110] [E: packages/fs/tool-str-replace-editor/src/index.ts:113] 目录禁止 `view_range`，否则抛 “not allowed when path points to a directory”。[E: packages/fs/tool-str-replace-editor/src/index.ts:229] 目录走 `listDirectory`：跳过 `.` 前缀、`node_modules`、`__pycache__`，递归 `depth < 2`，类型标 `d`/`f`/`?`，按 displayPath codepoint 排序。[E: packages/fs/tool-str-replace-editor/src/index.ts:197] [E: packages/fs/tool-str-replace-editor/src/index.ts:202] 文件则 `readText`，`emit` `present`，`formatFileView` 做成 6 宽行号 + 两空格 + 原文（`cat -n` 风格）。[E: packages/fs/tool-str-replace-editor/src/index.ts:182] `view_range` 必须两整数；首元在 `[1, 行数]`；次元 `> 行数` 非法；次元不是 `-1` 且 `<` 首元非法；`-1` 表示切到末尾。[E: packages/fs/tool-str-replace-editor/src/index.ts:176]
 
-3. **`create` → `createFile`。** `file_text` 缺失抛 `Parameter \`file_text\` is required for command: create`（空串合法）。[E: packages/fs/tool-str-replace-editor/src/index.ts:130] [E: packages/fs/tool-str-replace-editor/src/index.ts:247] `stat !== undefined` 则 **拒绝覆盖**：`Cannot overwrite files using command \`create\``。[E: packages/fs/tool-str-replace-editor/src/index.ts:250] [E: packages/fs/tool-str-replace-editor/src/index.ts:251] 然后 `waterfall('fs/write-intent', …, () => ({ kind: 'createIfAbsent' }))`，`writeText`，成功 `emit` `present`。[E: packages/fs/tool-str-replace-editor/src/index.ts:253] [E: packages/fs/tool-str-replace-editor/src/index.ts:261]
+3. **`create` → `createFile`。** `file_text` 缺失抛 `Parameter \`file_text\` is required for command: create`（空串合法）。[E: packages/fs/tool-str-replace-editor/src/index.ts:131] [E: packages/fs/tool-str-replace-editor/src/index.ts:248] `stat !== undefined` 则 **拒绝覆盖**：`Cannot overwrite files using command \`create\``。[E: packages/fs/tool-str-replace-editor/src/index.ts:251] [E: packages/fs/tool-str-replace-editor/src/index.ts:252] 然后 `waterfall('fs/write-intent', …, () => ({ kind: 'createIfAbsent' }))`，`writeText`，成功 `emit` `present`。[E: packages/fs/tool-str-replace-editor/src/index.ts:254] [E: packages/fs/tool-str-replace-editor/src/index.ts:258]
 
-4. **`str_replace` → `replaceInFile`。** `new_str === null` 立刻失败；`waterfall('fs/edit-intent', …, () => undefined)`；`old_str` 必填且非空；`new_str ?? ''`。[E: packages/fs/tool-str-replace-editor/src/index.ts:283] [E: packages/fs/tool-str-replace-editor/src/index.ts:288] [E: packages/fs/tool-str-replace-editor/src/index.ts:289] [E: packages/fs/tool-str-replace-editor/src/index.ts:290] 目录或非 regular file → `FS_NOT_REGULAR_FILE`。[E: packages/fs/tool-str-replace-editor/src/index.ts:118] `readText` 后找 **所有** 不重叠出现：0 次 → `FS_EDIT_NOT_FOUND`；≥2 次 → `FS_AMBIGUOUS_EDIT`，并列出行号。[E: packages/fs/tool-str-replace-editor/src/index.ts:300] [E: packages/fs/tool-str-replace-editor/src/index.ts:308] 恰好一次则 `before.slice(0, offset) + newValue + before.slice(offset + oldValue.length)`，**不是** `String.replace`，所以 `$&` / `$$` 按字面写入。[E: packages/fs/tool-str-replace-editor/src/index.ts:315] CAS：`intent === undefined` 用刚 `stat` 的 `info.version`，否则用 intent 的 version。[E: packages/fs/tool-str-replace-editor/src/index.ts:316] **没有** `old_str === new_str` 检查。
+4. **`str_replace` → `replaceInFile`。** `new_str === null` 立刻失败；`waterfall('fs/edit-intent', …, () => undefined)`；`old_str` 必填且非空；`new_str ?? ''`。[E: packages/fs/tool-str-replace-editor/src/index.ts:284] [E: packages/fs/tool-str-replace-editor/src/index.ts:289] [E: packages/fs/tool-str-replace-editor/src/index.ts:290] [E: packages/fs/tool-str-replace-editor/src/index.ts:291] 目录或非 regular file → `FS_NOT_REGULAR_FILE`。[E: packages/fs/tool-str-replace-editor/src/index.ts:118] `readText` 后找 **所有** 不重叠出现：0 次 → `FS_EDIT_NOT_FOUND`；≥2 次 → `FS_AMBIGUOUS_EDIT`，并列出行号。[E: packages/fs/tool-str-replace-editor/src/index.ts:302] [E: packages/fs/tool-str-replace-editor/src/index.ts:309] 恰好一次则 `before.slice(0, offset) + newValue + before.slice(offset + oldValue.length)`，**不是** `String.replace`，所以 `$&` / `$$` 按字面写入。[E: packages/fs/tool-str-replace-editor/src/index.ts:316] CAS：`intent === undefined` 用刚 `stat` 的 `info.version`，否则用 intent 的 version。[E: packages/fs/tool-str-replace-editor/src/index.ts:317] **没有** `old_str === new_str` 检查。
 
-5. **`insert` → `insertInFile`。** 缺 `insert_line` 立刻失败；`new_str` 必填（可空）。[E: packages/fs/tool-str-replace-editor/src/index.ts:337] [E: packages/fs/tool-str-replace-editor/src/index.ts:338] 同样走 `fs/edit-intent` + `statExisting(..., 'insert')`。`insert_line` 必须是整数且落在 `[0, lines.length]`。[E: packages/fs/tool-str-replace-editor/src/index.ts:348] 实现是 `lines.slice(0, insertLine) + new_str.split('\n') + lines.slice(insertLine)` 再 `join('\n')`。[E: packages/fs/tool-str-replace-editor/src/index.ts:353]
+5. **`insert` → `insertInFile`。** 缺 `insert_line` 立刻失败；`new_str` 必填（可空）。[E: packages/fs/tool-str-replace-editor/src/index.ts:338] [E: packages/fs/tool-str-replace-editor/src/index.ts:339] 同样走 `fs/edit-intent` + `statExisting(..., 'insert')`。`insert_line` 必须是整数且落在 `[0, lines.length]`。[E: packages/fs/tool-str-replace-editor/src/index.ts:349] 实现是 `lines.slice(0, insertLine) + new_str.split('\n') + lines.slice(insertLine)` 再 `join('\n')`。[E: packages/fs/tool-str-replace-editor/src/index.ts:354]
 
 6. **无 owner 的 execute。** `view` / `create` 在 `agent` 缺失时仍可跑；observation 的 owner 来自 `exec.agent.session`，没有 agent 就记不进 WeakMap，也就满足不了 read-before-edit。[E: packages/fs/fs-observation-policy/src/index.ts:82]
 
@@ -188,7 +187,7 @@ DSH **没有** first-class `apply_patch`。产品默认编码面是 `dsh-tool-fs
 
 - 一个 wire 名、四个 `command`，而不是 `read`+`write`+`edit` 三工具。
 - 字段是 `path` / `old_str` / `new_str` / `file_text` / `insert_line` / `view_range`，不是 `file_path` / `old_string` / `new_string` / `content`。
-- **禁止相对路径**；`edit`/`write` 可由 session cwd resolve。本工具在 `resolve` 之前就用 `isAbsolute` 挡掉。[E: packages/fs/tool-str-replace-editor/src/index.ts:95]
+- **禁止相对路径**；`edit`/`write` 可由 session cwd resolve。本工具在 `resolve` 之前就用 `isAbsolute` 挡掉。[E: packages/fs/tool-str-replace-editor/src/index.ts:96]
 - **没有** `replace_all`：重复 `old_str` 一律 `FS_AMBIGUOUS_EDIT`。
 - **没有** `undo_edit`（Anthropic `text_editor` 常见第五命令不在 enum 里）。
 - `create` 不能覆盖；`write` 可以 overwrite。
@@ -223,11 +222,10 @@ DSH **没有** first-class `apply_patch`。产品默认编码面是 `dsh-tool-fs
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
 - packages/bundle/sdk-minimal/cordis.patch.yml
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-- packages/preset/agent-presets/presets/minimal/preset.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - apps/cli/tests/web-agent-presets.e2e.ts
 - apps/cli/tests/profiles/sdk/keyless-smoke.e2e.ts
 - vendor/cordis/src/events.ts
@@ -240,6 +238,6 @@ DSH **没有** first-class `apply_patch`。产品默认编码面是 `dsh-tool-fs
 - [`surface.tools.write`](write.md) — 整文件 create-or-overwrite
 - [`surface.tools.bash-persistent`](bash-persistent.md) — `minimal` 在 POSIX 上唯一模型可见工具（wire 名 `bash`）
 - [`surface.presets.minimal`](../presets/minimal.md) — 极简 preset：complete persona + 持久 shell
-- [`surface.presets.code`](../presets/code.md) — PTC preset（稳定 id；目录 `presets/ptc/`）
+- [`surface.presets.code`](../presets/code.md) — PTC preset（稳定 id；声明在 `presets/ptc.patch.yml`）
 - [`subsys.execution.fs`](../../subsystems/execution/fs.md) — `ctx.fs` 缝
 - [`subsys.execution.fs-observation`](../../subsystems/execution/fs-observation.md) — read-before-edit 观察策略

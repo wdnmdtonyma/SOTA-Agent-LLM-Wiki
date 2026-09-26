@@ -19,9 +19,9 @@ source:
   - packages/bundle/base/package.json
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/base/tests/base.spec.ts
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - vendor/cordis/src/events.ts
 symbols:
   - ClaudeCodeProvider
@@ -35,7 +35,7 @@ related:
   - subsys.execution.subprocess
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-subagent-claude-code` 是 **host 面**、进程外、one-shot 的 `SubagentProvider`：默认 registry 名 `'claude-code'`（可用 `config.providerName` 改名），`start` 走官方 Claude Agent SDK，把 SDK 自定义 spawn 出的真实 CLI 进程树交给 `ctx.subprocess`。包在 monorepo 里并自带可选 `cordis.patch.yml`；`dsh-base` **不装**；shipped preset（`standard` / `ptc` / `cordis`）只有 `disabled: true` 的 tool 行。
@@ -73,7 +73,7 @@ updated: c291e7961a
 | `packages/subagent/subagent-claude-code/src/run.ts` | `startClaudeCodeRun`：官方 `query`、`collectOutput: () => []`、`persistSession: false` |
 | `packages/subagent/subagent-claude-code/src/process.ts` | `claudeSpawnSpec` / `ManagedClaudeCodeProcess`：SDK spawn → 共享进程树 |
 | `packages/bundle/base/tests/base.spec.ts` | 钉死 base **没有**本包行、manifest **没有**本包依赖 |
-| `packages/preset/agent-presets/presets/standard/agent.cordis.yml` | preset 面 `tool-subagent-claude-code` 且 `disabled: true` |
+| `packages/bundle/web-app/presets/standard.patch.yml` | preset 面 `tool-subagent-claude-code` 且 `disabled: true` |
 | `packages/subagent/subagent-claude-code/tests/fixtures/loader/claude-code.patch.yml` | 测试专用 opt-in 组合（含可改名实例），不是 shipped bundle |
 
 ## 数据模型
@@ -93,19 +93,19 @@ updated: c291e7961a
 
 本包 **不** 挂 `tools/pre-execute` / `llm/stream` / `agent/pre-step` 任一 waterfall。`Events.waterfall@vendor/cordis/src/events.ts` 必须调用传入的 `next()` 才会 `shift` 到下一层；不调用就停在本 listener。[E: vendor/cordis/src/events.ts:238] [E: vendor/cordis/src/events.ts:239] `ClaudeCodeProvider` 没有这层钩子，因此也没有「故意不 `next()` 的 reject」。父 tool 管线的 waterfall 属于 `ctx.tools`，在 `tool-subagent.execute` 之前已经跑完。
 
-isolate：本包必须和 `ctx.subagents` 同在 **host 面**。`standard` 的 `delegation` 组只 `isolate: { workflowEngine: true }`，不 isolate `subagents`，也不 insert 本包。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:172] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:173]
+isolate：本包必须和 `ctx.subagents` 同在 **host 面**。`standard` 的 `delegation` 组只 `isolate: { workflowEngine: true }`，不 isolate `subagents`，也不 insert 本包。[E: packages/bundle/web-app/presets/standard.patch.yml:83] [E: packages/bundle/web-app/presets/standard.patch.yml:84]
 
-1. **包存在，默认组合不装。** `package.json@packages/subagent/subagent-claude-code/package.json` 发布 `@deepseek-ai/dsh-subagent-claude-code`，并依赖 `@anthropic-ai/claude-agent-sdk`。[E: packages/subagent/subagent-claude-code/package.json:2] [E: packages/subagent/subagent-claude-code/package.json:51] 同一 manifest 声明 `dsh.bundle.patch: ./cordis.patch.yml`，该 patch 只 insert `id: subagent-claude-code`。[E: packages/subagent/subagent-claude-code/package.json:37] [E: packages/subagent/subagent-claude-code/cordis.patch.yml:5] `dsh-base` 只 insert `subagent` + `subagent-spawn-in-process` + `subagent-fork-in-process`。[E: packages/bundle/base/cordis.patch.yml:328] [E: packages/bundle/base/cordis.patch.yml:331] [E: packages/bundle/base/cordis.patch.yml:336] `base.spec.ts` 钉死 `id: subagent-claude-code` 行数为 0，且 `dependencies` 不含 `@deepseek-ai/dsh-subagent-claude-code`。[E: packages/bundle/base/tests/base.spec.ts:44] [E: packages/bundle/base/tests/base.spec.ts:49] 没有行 = 没装，不是休眠加载。要挂本后端，在 **host profile** 叠本包的 bundle patch（`dsh --profile web|headless|sdk|sdk-minimal|acp` 等用户层），而不是改 `dsh-base`。
+1. **包存在，默认组合不装。** `package.json@packages/subagent/subagent-claude-code/package.json` 发布 `@deepseek-ai/dsh-subagent-claude-code`，并依赖 `@anthropic-ai/claude-agent-sdk`。[E: packages/subagent/subagent-claude-code/package.json:2] [E: packages/subagent/subagent-claude-code/package.json:51] 同一 manifest 声明 `dsh.bundle.patch: ./cordis.patch.yml`，该 patch 只 insert `id: subagent-claude-code`。[E: packages/subagent/subagent-claude-code/package.json:37] [E: packages/subagent/subagent-claude-code/cordis.patch.yml:5] `dsh-base` 只 insert `subagent` + `subagent-spawn-in-process` + `subagent-fork-in-process`。[E: packages/bundle/base/cordis.patch.yml:348] [E: packages/bundle/base/cordis.patch.yml:351] [E: packages/bundle/base/cordis.patch.yml:356] `base.spec.ts` 钉死 `id: subagent-claude-code` 行数为 0，且 `dependencies` 不含 `@deepseek-ai/dsh-subagent-claude-code`。[E: packages/bundle/base/tests/base.spec.ts:44] [E: packages/bundle/base/tests/base.spec.ts:49] 没有行 = 没装，不是休眠加载。要挂本后端，在 **host profile** 叠本包的 bundle patch（`dsh --profile web|headless|sdk|sdk-minimal|acp` 等用户层），而不是改 `dsh-base`。
 
-2. **Preset 只留关掉的 Consumer 行。** `standard` / `ptc` / `cordis` 在 `delegation` 里写 `id: tool-subagent-claude-code`，`name: '@deepseek-ai/dsh-tool-subagent'`，`disabled: true`，`config.provider: claude-code`，`toolName: subagent_claude_code`，`backgroundMode: one-shot`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:213] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:215] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:219] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:220] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:201] `disabled: true` **不等于** host 已经挂上本后端。`minimal` 没有这一行。要真正跑起来，必须：(a) 在 host 组合 insert 本包；(b) 复制 preset 后去掉 `disabled`。只做 (b) 时 `ctx.subagents.getProvider('claude-code')` 仍是 `undefined`。
+2. **Preset 只留关掉的 Consumer 行。** `standard` / `ptc` / `cordis` 在 `delegation` 里写 `id: tool-subagent-claude-code`，`name: '@deepseek-ai/dsh-tool-subagent'`，`disabled: true`，`config.provider: claude-code`，`toolName: subagent_claude_code`，`backgroundMode: one-shot`。[E: packages/bundle/web-app/presets/standard.patch.yml:111] [E: packages/bundle/web-app/presets/standard.patch.yml:113] [E: packages/bundle/web-app/presets/standard.patch.yml:117] [E: packages/bundle/web-app/presets/ptc.patch.yml:111] [E: packages/bundle/web-app/presets/cordis.patch.yml:110] `disabled: true` **不等于** host 已经挂上本后端。`minimal` 没有这一行。要真正跑起来，必须：(a) 在 host 组合 insert 本包；(b) 复制 preset 后去掉 `disabled`。只做 (b) 时 `ctx.subagents.getProvider('claude-code')` 仍是 `undefined`。
 
 3. **opt-in 组合出现在包内 loader fixture。** `tests/fixtures/loader/claude-code.patch.yml` 挂两个 `providerName` 改名实例（`claude-primary` / `claude-secondary`）以及未 disabled 的 tool 行。[E: packages/subagent/subagent-claude-code/tests/fixtures/loader/claude-code.patch.yml:19] [E: packages/subagent/subagent-claude-code/tests/fixtures/loader/claude-code.patch.yml:39] loader e2e 另外把本包 `cordis.patch.yml` 叠进去，因此注册名含默认 `'claude-code'` 以及 `'claude-primary'`、`'claude-secondary'`；load 时 `PATH: ''`、`starts: 0`——装包不会去探二进制。[E: packages/subagent/subagent-claude-code/tests/loader-composition.e2e.ts:33] [E: packages/subagent/subagent-claude-code/tests/loader-composition.e2e.ts:38] [E: packages/subagent/subagent-claude-code/tests/loader-composition.e2e.ts:43] [E: packages/subagent/subagent-claude-code/tests/loader-composition.e2e.ts:113]
 
-4. **`apply@index.ts` 校验 Config 后注册。** `disposeGraceMs` 必须是正有限数且 `<= MAX_TIMER_DELAY_MS`，然后 `ctx.subagents.registerProvider(new ClaudeCodeProvider(resolved.providerName, ctx, resolved))`。[E: packages/subagent/subagent-claude-code/src/index.ts:141] [E: packages/subagent/subagent-claude-code/src/index.ts:146] [E: packages/subagent/subagent-claude-code/src/index.ts:151] 插件是 named export：`export const name = 'subagent-claude-code'`，**没有** `default` export（丢掉 `inject` 的那种 default 包装会让 Loader 看不到 `['subagents', 'subprocess']`）。[E: packages/subagent/subagent-claude-code/src/index.ts:30] [E: packages/subagent/subagent-claude-code/tests/subagent-claude-code.spec.ts:721] `registerProvider@packages/subagent/subagent/src/index.ts` 走 `ctx.effect()`：重名抛 `DUPLICATE_PROVIDER`；卸掉只挡住新 `start`，已返回的 run 不撤回。[E: packages/subagent/subagent/src/index.ts:512] [E: packages/subagent/subagent/src/index.ts:513]
+4. **`apply@index.ts` 校验 Config 后注册。** `disposeGraceMs` 必须是正有限数且 `<= MAX_TIMER_DELAY_MS`，然后 `ctx.subagents.registerProvider(new ClaudeCodeProvider(resolved.providerName, ctx, resolved))`。[E: packages/subagent/subagent-claude-code/src/index.ts:141] [E: packages/subagent/subagent-claude-code/src/index.ts:146] [E: packages/subagent/subagent-claude-code/src/index.ts:151] 插件是 named export：`export const name = 'subagent-claude-code'`，**没有** `default` export（丢掉 `inject` 的那种 default 包装会让 Loader 看不到 `['subagents', 'subprocess']`）。[E: packages/subagent/subagent-claude-code/src/index.ts:30] [E: packages/subagent/subagent-claude-code/tests/subagent-claude-code.spec.ts:721] `registerProvider@packages/subagent/subagent/src/index.ts` 走 `ctx.effect()`：重名抛 `DUPLICATE_PROVIDER`；卸掉只挡住新 `start`，已返回的 run 不撤回。[E: packages/subagent/subagent/src/index.ts:512] [E: packages/subagent/subagent/src/index.ts:517]
 
 5. **Consumer 等 `subagent/provider-added`。** `dsh-tool-subagent` 在 `provider.name === config.provider` 时才 `mount` / `ctx.tools.register`；本包未挂上时打 info「not registered yet」，工具不进 catalog。[E: packages/subagent/tool-subagent/src/index.ts:580] [E: packages/subagent/tool-subagent/src/index.ts:582] [E: packages/subagent/tool-subagent/src/index.ts:594] 这是普通 `ctx.on` emit，不是 waterfall，没有 `next()`。
 
-6. **`SubagentRuntime.start@packages/subagent/subagent/src/index.ts` 按名分发。** `expectProvider('claude-code')` 找不到就 `NO_PROVIDER`。[E: packages/subagent/subagent/src/index.ts:556] [E: packages/subagent/subagent/src/index.ts:611] `assertCapabilities` 看到 `agentOptions` / `outputSchema` / `maxDepth` / `toolFilter` / `persona` 任一请求而 provider 旗为 false 就 `UNSUPPORTED_CAPABILITY`。[E: packages/subagent/subagent/src/index.ts:641] [E: packages/subagent/subagent/src/index.ts:649] `ClaudeCodeProvider.capabilities` 是 `NO_START_CAPABILITIES`（全 false），`inheritsParentContext = false`。[E: packages/subagent/subagent-claude-code/src/index.ts:74] [E: packages/subagent/subagent-claude-code/src/index.ts:75] [E: packages/subagent/subagent/src/out-of-process.ts:57] descriptor 钉 `mode: 'one-shot'` 后才 `provider.start`。[E: packages/subagent/subagent/src/index.ts:561] [E: packages/subagent/subagent/src/index.ts:566] 没有 `prepareContinuable` 时 `startContinuable` 路径在 `prepareContinuable` 私有方法里抛 `UNSUPPORTED_CAPABILITY`。[E: packages/subagent/subagent/src/index.ts:597]
+6. **`SubagentRuntime.start@packages/subagent/subagent/src/index.ts` 按名分发。** `expectProvider('claude-code')` 找不到就 `NO_PROVIDER`。[E: packages/subagent/subagent/src/index.ts:559] [E: packages/subagent/subagent/src/index.ts:612] `assertCapabilities` 看到 `agentOptions` / `outputSchema` / `maxDepth` / `toolFilter` / `persona` 任一请求而 provider 旗为 false 就 `UNSUPPORTED_CAPABILITY`。[E: packages/subagent/subagent/src/index.ts:644] [E: packages/subagent/subagent/src/index.ts:653] `ClaudeCodeProvider.capabilities` 是 `NO_START_CAPABILITIES`（全 false），`inheritsParentContext = false`。[E: packages/subagent/subagent-claude-code/src/index.ts:74] [E: packages/subagent/subagent-claude-code/src/index.ts:75] [E: packages/subagent/subagent/src/out-of-process.ts:57] descriptor 钉 `mode: 'one-shot'` 后才 `provider.start`。[E: packages/subagent/subagent/src/index.ts:561] [E: packages/subagent/subagent/src/index.ts:566] 没有 `prepareContinuable` 时 `startContinuable` 路径在 `prepareContinuable` 私有方法里抛 `UNSUPPORTED_CAPABILITY`。[E: packages/subagent/subagent/src/index.ts:596]
 
 7. **`ClaudeCodeProvider.start@index.ts` 解析父 cwd，不再 `resolveExecutable('claude')`。** 父 `session.header.cwd` 缺失则立刻 throw，不进 SDK。[E: packages/subagent/subagent-claude-code/src/index.ts:84] [E: packages/subagent/subagent-claude-code/src/index.ts:86] `resolveChildCwd` 的配置覆盖传 `undefined`：孩子 cwd 就是父 Session workspace。[E: packages/subagent/subagent-claude-code/src/index.ts:92] [E: packages/subagent/subagent-claude-code/src/index.ts:94] 可执行文件由官方 SDK 的 `spawnClaudeCodeProcess` 在 query 启动时提供；本包只把那次 spawn 转给 `ctx.subprocess.spawn`。[E: packages/subagent/subagent-claude-code/src/index.ts:116] [E: packages/subagent/subagent-claude-code/src/run.ts:370]
 
@@ -131,7 +131,7 @@ DSH 的产品单元是 `profile → bundle → agent preset`，不是「再做�
 
 ## Gotcha
 
-- **仓库里有包 ≠ 产品装了后端。** `dsh-base` 的 `package.json` 依赖 `dsh-subagent` / spawn / fork，没有 `@deepseek-ai/dsh-subagent-claude-code`。[E: packages/bundle/base/package.json:94] [E: packages/bundle/base/package.json:95] [E: packages/bundle/base/package.json:96] 测试把「零行 + 无依赖」钉死。不要把 preset 里的 `disabled: true` 读成 base dormant 加载。本包自己的 `cordis.patch.yml` 是 **opt-in Profile 层**，不会自动进五个 shipped CLI profile（`desktop` 不是第六个）。
+- **仓库里有包 ≠ 产品装了后端。** `dsh-base` 的 `package.json` 依赖 `dsh-subagent` / spawn / fork，没有 `@deepseek-ai/dsh-subagent-claude-code`。[E: packages/bundle/base/package.json:91] [E: packages/bundle/base/package.json:92] [E: packages/bundle/base/package.json:93] 测试把「零行 + 无依赖」钉死。不要把 preset 里的 `disabled: true` 读成 base dormant 加载。本包自己的 `cordis.patch.yml` 是 **opt-in Profile 层**，不会自动进五个 shipped CLI profile（`desktop` 不是第六个）。
 - **只打开 tool、不 insert 本包 → provider 未注册。** `start('claude-code')` 走 `NO_PROVIDER`。工具行会一直等 `subagent/provider-added`。
 - **只 insert 本包、不打开 tool → 模型看不见 `subagent_claude_code`。** registry 里有 `'claude-code'`，catalog 没有对应 wire 名。
 - **`start` 不再解析 PATH 名 `'claude'`。** 二进制由官方 SDK 在 `spawnClaudeCodeProcess` 里决定；部署机缺 CLI 时失败发生在 query 启动，而不是本包先 `resolveExecutable`。
@@ -170,9 +170,9 @@ DSH 的产品单元是 `profile → bundle → agent preset`，不是「再做�
 - packages/bundle/base/package.json
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/base/tests/base.spec.ts
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - vendor/cordis/src/events.ts
 
 ## 相关

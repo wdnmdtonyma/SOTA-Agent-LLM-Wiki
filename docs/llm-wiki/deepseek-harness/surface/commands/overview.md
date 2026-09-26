@@ -18,12 +18,12 @@ source:
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
   - packages/boot/app-boot/src/profile.ts
-  - packages/preset/agent-presets/src/index.ts
-  - packages/preset/agent-presets/src/mount.ts
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
+  - packages/preset/agent-preset-registry/src/index.ts
+  - packages/preset/agent-preset-registry/src/mount.ts
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
   - packages/compaction/command-compact/src/index.ts
   - packages/compaction/command-compact/package.json
   - packages/compaction/command-compact/tests/command-compact.spec.ts
@@ -55,10 +55,10 @@ related:
   - surface.web.workbench
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
-> `ctx.commands` 是 **host 面**人命令注册表：人在 Web 工作台敲 `/name …`，`CommandRuntime.execute()` 直接跑 handler，**不经模型 turn**，也不把命令行折进 `deriveMessages()`。DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）；shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`，默认 GUI 路径是 `dsh web`（`PROFILE_TEMPLATES.web`），另有 `dsh --profile sdk|sdk-minimal|acp|headless`。本仓没有 shipped TUI。四个 shipped preset 是 `minimal` / `standard` / `ptc` / `cordis`。
+> `ctx.commands` 是 **host 面**人命令注册表：人在 Web 工作台敲 `/name …`，`CommandRuntime.execute()` 直接跑 handler，**不经模型 turn**，也不把命令行折进 `deriveMessages()`。DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`）；shipped CLI profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`，默认 GUI 路径是 `dsh web`（通用 `dsh <name>` 简写）。本仓没有 shipped TUI。四个 shipped preset 是 `minimal` / `standard` / `ptc` / `cordis`，只叠在 `dsh-web-app`。
 
 ## 能回答的问题
 
@@ -77,9 +77,9 @@ updated: c291e7961a
 
 `execute` 命中后先 `appendLifecycle(..., 'command/run', …)`，再调 handler，再 `appendLifecycle(..., 'command/done', …)`。`appendLifecycle` 是两参 `session.append`、无 `surfaceOp`。 [E: packages/interaction/commands/src/index.ts:373] [E: packages/interaction/commands/src/index.ts:424] [E: packages/interaction/commands/src/index.ts:380] [E: packages/interaction/commands/src/index.ts:457] 空闲 log 上事件序就是 `command/run`、`command/done`。 [E: packages/interaction/commands/tests/commands.spec.ts:323]
 
-`SurfaceEventType` 是 `system/message` / `user/message` / `assistant/message` / `tool/result`。 [E: packages/core/session/src/types.ts:412] `deriveEventMessage` 对其它类型走 `default` 返回 `null`。 [E: packages/core/session/src/surface.ts:121] `/compact` 单测钉死：生命周期成对之后 `surface.nodes` 仍是 `[]`，`deriveMessages()` 仍是 `[]`。 [E: packages/compaction/command-compact/tests/command-compact.spec.ts:151] [E: packages/compaction/command-compact/tests/command-compact.spec.ts:152]
+`SurfaceEventType` 是 `system/message` / `user/message` / `assistant/message` / `tool/result`。 [E: packages/core/session/src/types.ts:402] `deriveEventMessage` 对其它类型走 `default` 返回 `null`。 [E: packages/core/session/src/surface.ts:121] `/compact` 单测钉死：生命周期成对之后 `surface.nodes` 仍是 `[]`，`deriveMessages()` 仍是 `[]`。 [E: packages/compaction/command-compact/tests/command-compact.spec.ts:151] [E: packages/compaction/command-compact/tests/command-compact.spec.ts:152]
 
-DSH shipped `PROFILE_TEMPLATES` 五个名字：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。默认 GUI 是 `web = ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app']`，`patchReload: 'live'`。 [E: packages/boot/app-boot/src/profile.ts:105] [E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:111] [E: packages/boot/app-boot/src/profile.ts:112] `sdk-minimal` 的 bundles 只有 `@deepseek-ai/dsh-sdk-minimal`，不叠 `dsh-base`。 [E: packages/boot/app-boot/src/profile.ts:122] 没有 TUI 模板。
+DSH shipped `PROFILE_TEMPLATES` 五个名字：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。默认 GUI 是 `web = ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app']`。[E: packages/boot/app-boot/src/profile.ts:179] [E: packages/boot/app-boot/src/profile.ts:183] `sdk-minimal` 的 bundles 只有 `@deepseek-ai/dsh-sdk-minimal`，不叠 `dsh-base`。[E: packages/boot/app-boot/src/profile.ts:192] 没有 TUI 模板。`dsh <name>` 是通用 `--profile` 简写。
 
 ## 入口
 
@@ -88,10 +88,10 @@ DSH shipped `PROFILE_TEMPLATES` 五个名字：`acp` / `web` / `headless` / `sdk
 1. 工作台输入框敲 `/`。client 包 `@deepseek-ai/dsh-client-ui-commands` 向 `inputTriggers` 登记 `trigger: '/'` 的 source `name: 'command'`。 [E: packages/client/ui-commands/package.json:2] [E: packages/client/ui-commands/src/client/service.ts:92]
 2. Enter / 菜单选中之后，`CommandUiRuntime.execute` 调 `ctx.remote.commands.execute(session.sessionId, line, attachments)`（会话身份 + 整行 + 可选附件）。 [E: packages/client/ui-commands/src/client/service.ts:380] `ClientSession.command(line)` 是同一条 Remote。 [E: packages/api/session-controller/src/client/sessions/session.ts:372]
 3. host 上 `@Remote` 的 `CommandRuntime.execute(agent, line, submittedAttachments, signal)` 吃 live `Agent`、整行、编码附件、以及请求 `AbortSignal`。 [E: packages/interaction/commands/src/index.ts:360] `CommandRuntime` 继承 `TypertRemoteService`。 [E: packages/typert/protocol/src/index.ts:153] session 身份如何折成 `Agent`、request abort 如何补成 `signal`，属于 Typert / api-remotes，不是本页。
-4. host `execute`：`parseCommand(line)` 失败或有效视图里没有该名 → 返回 `undefined`（admission miss），**不** mint id、**不**写 log。 [E: packages/interaction/commands/src/index.ts:367] [E: packages/interaction/commands/src/index.ts:370] [E: packages/interaction/commands/tests/commands.spec.ts:434] composer 侧 `matchEnter` 对非 `/` 行或目录里没有的名字先返回 `undefined`，整行走默认 prompt sink，**还没**打到 host RPC。 [E: packages/client/ui-commands/src/client/service.ts:276] 若 RPC 已经发出且回 `undefined`，`CommandUiRuntime.execute` 报 `{ kind: 'error', text: 'unknown or malformed command: …' }`，不是默认 sink。 [E: packages/client/ui-commands/src/client/service.ts:382]
-5. 命中则同步写下 `command/run`，再跑 handler。结算文案活在 session 流上的 `command/done`；composer 对已准入且 handler 成功的命令只回报 `{ kind: 'success' }`，不 echo 一遍。 [E: packages/client/ui-commands/src/client/service.ts:389]
+4. host `execute`：`parseCommand(line)` 失败或有效视图里没有该名 → 返回 `undefined`（admission miss），**不** mint id、**不**写 log。 [E: packages/interaction/commands/src/index.ts:367] [E: packages/interaction/commands/src/index.ts:370] [E: packages/interaction/commands/tests/commands.spec.ts:434] composer 侧 `matchEnter` 对非 `/` 行或目录里没有的名字先返回 `undefined`，整行走默认 prompt sink，**还没**打到 host RPC。 [E: packages/client/ui-commands/src/client/service.ts:278] 若 RPC 已经发出且回 `undefined`，`CommandUiRuntime.execute` 报 `{ kind: 'error', text: 'unknown or malformed command: …' }`，不是默认 sink。 [E: packages/client/ui-commands/src/client/service.ts:382]
+5. 命中则同步写下 `command/run`，再跑 handler。结算文案活在 session 流上的 `command/done`；composer 对已准入且 handler 成功的命令只回报 `{ kind: 'success' }`，不 echo 一遍。 [E: packages/client/ui-commands/src/client/service.ts:386]
 
-**composer 对「有没有 `input`」分叉。** 没有 `input` 的 host 命令（shipped 里是 `/compact`、`/export`）只在**光秃** `/name` 上 execute；带尾巴的行 `matchEnter` 返回 `undefined`，整行掉进默认 sink。 [E: packages/client/ui-commands/src/client/service.ts:395] 单测：`/compact` + Enter 会 execute；`/compact 现在` 变成 `queue` 出去的普通消息，`executed` 仍为空。 [E: packages/client/ui-conversation/tests/input-scenarios.client.spec.tsx:275] [E: packages/client/ui-conversation/tests/input-scenarios.client.spec.tsx:275]
+**composer 对「有没有 `input`」分叉。** 没有 `input` 的 host 命令（shipped 里是 `/compact`、`/export`）只在**光秃** `/name` 上 execute；带尾巴的行 `matchEnter` 返回 `undefined`，整行掉进默认 sink。 [E: packages/client/ui-commands/src/client/service.ts:401] 单测：`/compact` + Enter 会 execute；`/compact 现在` 变成 `queue` 出去的普通消息，`executed` 仍为空。 [E: packages/client/ui-conversation/tests/input-scenarios.client.spec.tsx:276] [E: packages/client/ui-conversation/tests/input-scenarios.client.spec.tsx:276]
 
 有 `input` 的命令（`/feedback` `/goal` `/permission` `/plan`）走 leadingInput claim，尾巴交给 `execute`。`/permission` 另外被 client `decorate`：光秃 Enter 弹 preset 选择器，选中后再 `live.command(\`/permission ${option.id}\`)`。 [E: packages/client/ui-permission-presets/src/client/index.ts:161]
 
@@ -120,11 +120,11 @@ slash 菜单渲染、`/` 输入状态机属于 `ui-commands` / 工作台（[surf
 
 ## 装配与门控
 
-**host 面挂一份注册表。** `dsh-base` 组合行 `id: commands` / `name: '@deepseek-ai/dsh-commands'`。这是进程级服务，preset **不** remount、**不** `isolate` `commands`。 [E: packages/bundle/base/cordis.patch.yml:286] [E: packages/bundle/base/cordis.patch.yml:287]
+**host 面挂一份注册表。** `dsh-base` 组合行 `id: commands` / `name: '@deepseek-ai/dsh-commands'`。这是进程级服务，preset **不** remount、**不** `isolate` `commands`。 [E: packages/bundle/base/cordis.patch.yml:286] [E: packages/bundle/base/cordis.patch.yml:288]
 
-**`dsh-web-app` 不关注册表本身。** overlay 把 `id: command-goal` / `id: plan-mode` / `id: command-compact` 标 `disabled: true`，并加 client `id: ui-commands`；`id: commands` / `command-feedback` / `permission` 不在这条 overlay 的 disable 名单里。 [E: packages/bundle/web-app/cordis.patch.yml:411] [E: packages/bundle/web-app/cordis.patch.yml:417] [E: packages/bundle/web-app/cordis.patch.yml:430] [E: packages/bundle/web-app/cordis.patch.yml:291] web 默认 `agent-presets.default: standard`。 [E: packages/bundle/web-app/cordis.patch.yml:484] shipped 五个 profile 里，**只有** `PROFILE_TEMPLATES.web` 的 bundle 含 `@deepseek-ai/dsh-web-app`，因此只有 `web` 插入 `id: agent-presets`；`headless` / `sdk` / `sdk-minimal` / `acp` 模板不挂 roster，跑各自 bundle 的宿主面工具行。 [E: packages/boot/app-boot/src/profile.ts:110] [E: packages/bundle/web-app/cordis.patch.yml:481]
+**`dsh-web-app` 不关注册表本身。** overlay 把 `id: command-goal` / `id: plan-mode` / `id: command-compact` 标 `disabled: true`，并加 client `id: ui-commands`；`id: commands` / `command-feedback` / `permission` 不在这条 overlay 的 disable 名单里。 [E: packages/bundle/web-app/cordis.patch.yml:411] [E: packages/bundle/web-app/cordis.patch.yml:417] [E: packages/bundle/web-app/cordis.patch.yml:430] [E: packages/bundle/web-app/cordis.patch.yml:291] web 默认 `agent-preset-registry.config.default: standard`。[E: packages/bundle/web-app/cordis.patch.yml:562] shipped 五个 profile 里，**只有** `PROFILE_TEMPLATES.web` 的 bundle 含 `@deepseek-ai/dsh-web-app`，因此只有 `web` 插入 `id: agent-preset-registry` 并叠四份 preset 文件；`headless` / `sdk` / `sdk-minimal` / `acp` 模板不挂 roster，跑各自 bundle 的宿主面工具行。[E: packages/boot/app-boot/src/profile.ts:183] [E: packages/bundle/web-app/cordis.patch.yml:559]
 
-**agent-preset 面用 scope 加/减命令，不是第二份 `ctx.commands`。** `mountPreset` 拒绝 unscoped ctx。 [E: packages/preset/agent-presets/src/mount.ts:380] roster `mount` 把每个 Agent `bindScopeParent(agentKey, standing.key)`，standing 上登记的名字对该会话可见。 [E: packages/preset/agent-presets/src/index.ts:447]
+**agent-preset 面用 scope 加/减命令，不是第二份 `ctx.commands`。** `mountPreset` 拒绝 unscoped ctx。 [E: packages/preset/agent-preset-registry/src/mount.ts:271] roster `mount` 把每个 Agent `bindScopeParent(agentKey, standing.key)`，standing 上登记的名字对该会话可见。 [E: packages/preset/agent-preset-registry/src/index.ts:366]
 
 本仓 `packages/**/src` 里调用 `commands.register({` 的 shipped 登记者（不是 T3 全量 catalog）：
 
@@ -137,13 +137,13 @@ slash 菜单渲染、`/` 输入状态机属于 `ui-commands` / 工作台（[surf
 | `/compact` | `compact` | `@deepseek-ai/dsh-command-compact`（`inject: ['commands', 'compaction']`） | base 挂 → web-app `disabled: true` → `standard` / `ptc` / `cordis` 在 `isolate.compaction` 组重挂 | **进**这三个 preset；**不进** `minimal` |
 | `/plan` | `plan` | `@deepseek-ai/dsh-plan-mode` 的 `inject(['commands'])` 子 fiber | base 挂 → web-app `disabled: true` → `standard` / `ptc` / `cordis` 在 `isolate.planMode` 组重挂 | **进**这三个 preset；**不进** `minimal` |
 
-登记点： [E: packages/feedback/command-feedback/src/index.ts:119] [E: packages/goal/command-goal/src/index.ts:193] [E: packages/interaction/permission-presets/src/index.ts:257] [E: packages/session-query/session-log-export/src/index.ts:78] [E: packages/compaction/command-compact/src/index.ts:101] [E: packages/plan/plan-mode/src/index.ts:226]
+登记点： [E: packages/feedback/command-feedback/src/index.ts:119] [E: packages/goal/command-goal/src/index.ts:193] [E: packages/interaction/permission-presets/src/index.ts:257] [E: packages/session-query/session-log-export/src/index.ts:78] [E: packages/compaction/command-compact/src/index.ts:101] [E: packages/plan/plan-mode/src/index.ts:227]
 
-preset 重挂： [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:95] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:111] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:148] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:102] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:118] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:155] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:83] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:99] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:136]
+preset 重挂： [E: packages/bundle/web-app/presets/standard.patch.yml:95] [E: packages/bundle/web-app/presets/standard.patch.yml:111] [E: packages/bundle/web-app/presets/standard.patch.yml:146] [E: packages/bundle/web-app/presets/ptc.patch.yml:102] [E: packages/bundle/web-app/presets/ptc.patch.yml:118] [E: packages/bundle/web-app/presets/ptc.patch.yml:152] [E: packages/bundle/web-app/presets/cordis.patch.yml:83] [E: packages/bundle/web-app/presets/cordis.patch.yml:99] [E: packages/bundle/web-app/presets/cordis.patch.yml:136]
 
-`isolate.compaction` / `isolate.planMode` 隔离的是 **compaction / planMode 服务 realm**（`leakedServices` 用 `ctx.root[Context.isolate]` 判断有没有漏到 root 符号），不是再 publish 一份 `ctx.commands`。 [E: packages/preset/agent-presets/src/mount.ts:212] [E: packages/preset/agent-presets/src/mount.ts:221] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:141]
+`isolate.compaction` / `isolate.planMode` 隔离的是 **compaction / planMode 服务 realm**（`leakedServices` 用 `ctx.root[Context.isolate]` 判断有没有漏到 root 符号），不是再 publish 一份 `ctx.commands`。 [E: packages/preset/agent-preset-registry/src/mount.ts:211] [E: packages/preset/agent-preset-registry/src/mount.ts:222] [E: packages/bundle/web-app/presets/standard.patch.yml:141]
 
-换 `minimal`：该 preset 的 `agent.cordis.yml` 没有 `command-compact` / `plan-mode` / `command-goal` 行，web 有效视图里就没有这三个名字；host 上的 `/feedback` `/permission` 以及 web 的 `/export` 仍在。 [I]
+换 `minimal`：该 preset 的 patch 没有 `command-compact` / `plan-mode` / `command-goal` 行，web 有效视图里就没有这三个名字；host 上的 `/feedback` `/permission` 以及 web 的 `/export` 仍在。[I]
 
 **handler 自己的门。** `/compact` 拒绝任何非空 `rawInput.trim()`（`Usage: /compact (no arguments)`）。 [E: packages/compaction/command-compact/src/index.ts:63] [E: packages/compaction/command-compact/src/index.ts:14] 在 Web composer 里带尾巴的 `/compact …` 根本不会进 `execute`（掉进 prompt）；直接打 RPC 才会撞到这条 usage。`/export` 同样拒绝 path。 [E: packages/session-query/session-log-export/src/index.ts:78]
 
@@ -171,12 +171,12 @@ preset 重挂： [E: packages/preset/agent-presets/presets/standard/agent.cordis
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
 - packages/boot/app-boot/src/profile.ts
-- packages/preset/agent-presets/src/index.ts
-- packages/preset/agent-presets/src/mount.ts
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
+- packages/preset/agent-preset-registry/src/index.ts
+- packages/preset/agent-preset-registry/src/mount.ts
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
 - packages/compaction/command-compact/src/index.ts
 - packages/compaction/command-compact/package.json
 - packages/compaction/command-compact/tests/command-compact.spec.ts

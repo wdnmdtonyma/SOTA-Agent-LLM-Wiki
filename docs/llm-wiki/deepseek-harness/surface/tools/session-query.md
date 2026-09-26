@@ -30,10 +30,10 @@ source:
   - packages/util/timeout/src/index.ts
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - apps/cli/tests/web-agent-presets.e2e.ts
   - snapshots/session/session-query-spill/cordis.yml
 symbols:
@@ -59,7 +59,7 @@ related:
   - subsys.persistence.session-query
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `session_search` / `session_trace` / `session_event_search` / `session_event_trace` / `session_event_read` 是 `@deepseek-ai/dsh-tool-session-query` 向模型登记的 **workspace-authorized** 会话历史查询五件套：跨会话全文检索、会话谱系、单会话事件检索、事件替换关系、以及无删节事件读。
@@ -79,7 +79,7 @@ updated: c291e7961a
 
 `apply(ctx, config)` 先解析 `maxSearchResults` / `searchTimeoutMs`，再挂一条 `systemPrompt` section（名 `tool:session-query`，order 取 `getSectionOrder('TOOL_SESSION_QUERY')`，内核表定为 `2300`），然后连续五次 `ctx.tools.register(defineTool({ … }))`。[E: packages/session-query/tool-session-query/src/index.ts:57][E: packages/session-query/tool-session-query/src/index.ts:61][E: packages/core/system-prompt/src/index.ts:142][E: packages/session-query/tool-session-query/src/index.ts:65]
 
-五个 wire 名必须同时出现。注册顺序与 `ctx.tools.schemas()` 默认顺序如下；测试按这个数组做精确相等，而不是子集包含。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:248]
+五个 wire 名必须同时出现。注册顺序与 `ctx.tools.schemas()` 默认顺序如下；测试按这个数组做精确相等，而不是子集包含。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:255]
 
 | wire `name` | 工厂 / 注册点 | 调度 | `timeoutMs` |
 |---|---|---|---|
@@ -89,9 +89,9 @@ updated: c291e7961a
 | `session_event_trace` | `defineTool({ name: 'session_event_trace' })` → `operations.executeEventTrace` | parallel | 未声明 [E: packages/session-query/tool-session-query/src/index.ts:95][E: packages/session-query/tool-session-query/src/index.ts:103] |
 | `session_event_read` | `defineTool({ name: 'session_event_read' })` → `operations.executeEventRead` | parallel | 未声明 [E: packages/session-query/tool-session-query/src/index.ts:108][E: packages/session-query/tool-session-query/src/index.ts:118] |
 
-`presentCall` 全部走 `presentation` 的 generic 卡片：两个 search 是 `card: 'generic' / kind: 'search'`；三条精确观察是 `kind: 'read'`。`output` 共用 `TEXT_OUTPUT`：规范值是 `string`，`render` 包成单段 `{ type: 'text', text }`。[E: packages/session-query/tool-session-query/src/index.ts:47][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:270][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:272]
+`presentCall` 全部走 `presentation` 的 generic 卡片：两个 search 是 `card: 'generic' / kind: 'search'`；三条精确观察是 `kind: 'read'`。`output` 共用 `TEXT_OUTPUT`：规范值是 `string`，`render` 包成单段 `{ type: 'text', text }`。[E: packages/session-query/tool-session-query/src/index.ts:47][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:277][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:279]
 
-插件 dispose 会撤掉五个 schema 和 `tool:session-query` prompt section。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:292]
+插件 dispose 会撤掉五个 schema 和 `tool:session-query` prompt section。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:299]
 
 ## 用途定位
 
@@ -100,12 +100,12 @@ updated: c291e7961a
 - `session_search`：跨会话全文检索，每个命中会话只交回**最强一条** event 摘要；永远排除 caller 自己。[E: packages/session-query/tool-session-query/src/index.ts:67][E: packages/session-query/tool-session-query/src/operations.ts:100]
 - `session_event_search`：在一个已授权 session 里搜 event；目标是当前 session 时，结果被截到 `turnBoundary.lastStepStartSeq - 1`，避免把本步正在写的 log 搜回来。[E: packages/session-query/tool-session-query/src/index.ts:77][E: packages/session-query/tool-session-query/src/operations.ts:128][E: packages/session-query/tool-session-query/src/operations.ts:138]
 - `session_trace`：读一条会话的祖先链与子孙树，越出 workspace 的节点打成 `[outside workspace boundary]` / `[outside workspace subtree]`，不泄漏外站 id。[E: packages/session-query/tool-session-query/src/presentation.ts:126][E: packages/session-query/tool-session-query/src/presentation.ts:141]
-- `session_event_trace`：读一条 event 的 positional replacement 链、它替换掉的 seq、它引用的 source seq、以及直接派生它的后续 seq。[E: packages/session-query/session-query/src/tracing.ts:101]
+- `session_event_trace`：读一条 event 的 positional replacement 链、它替换掉的 seq、它引用的 source seq、以及直接派生它的后续 seq。[E: packages/session-query/session-query/src/tracing.ts:102]
 - `session_event_read`：读一条**完整** event 的 JSON，外加可选邻居的语义摘要（不是第二份完整 JSON）。[E: packages/session-query/tool-session-query/src/presentation.ts:176]
 
 授权单位是 **cwd 字符串相等**，不是文件系统 realpath，也不是「同一用户」。caller 没有 cwd 时，跨会话搜索直接失败；精确观察的 `authorizeTarget` 对 self 直接放行，对其它 id 在缺 cwd 时立刻 `unauthorizedTarget`。[E: packages/session-query/tool-session-query/src/operations.ts:62][E: packages/session-query/tool-session-query/src/workspace-access.ts:84][E: packages/session-query/tool-session-query/src/workspace-access.ts:86]
 
-模型 schema **不**广告 `cursor` / `limit` / `cwd`。内部 `collectPages` 自己把 provider 的分页抽干，再按部署 cap 截断。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:256][E: packages/session-query/tool-session-query/src/operations.ts:241]
+模型 schema **不**广告 `cursor` / `limit` / `cwd`。内部 `collectPages` 自己把 provider 的分页抽干，再按部署 cap 截断。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:263][E: packages/session-query/tool-session-query/src/operations.ts:241]
 
 ## 输入 schema
 
@@ -118,9 +118,9 @@ updated: c291e7961a
 | `maxSearchResults` | `DEFAULT_MAX_SEARCH_RESULTS` = `100` | `session_search` / `session_event_search` 一次调用最多留下的**已授权** hit 数；不是 provider 页大小。[E: packages/session-query/tool-session-query/src/index.ts:22][E: packages/session-query/tool-session-query/src/index.ts:37] |
 | `searchTimeoutMs` | `DEFAULT_SEARCH_TIMEOUT_MS` = `30_000` | 只写进两个 search 工具的 `timeoutMs`。上限是 `MAX_TIMER_DELAY_MS`（`2147483647`）。[E: packages/session-query/tool-session-query/src/index.ts:25][E: packages/session-query/tool-session-query/src/index.ts:38][E: packages/util/timeout/src/index.ts:25] |
 
-非正 / 非整数 Config 在 `resolveConfig` 里抛 `TypeError`，五个名字都不会登记。[E: packages/session-query/tool-session-query/src/index.ts:128][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:318]
+非正 / 非整数 Config 在 `resolveConfig` 里抛 `TypeError`，五个名字都不会登记。[E: packages/session-query/tool-session-query/src/index.ts:128][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:325]
 
-ISO 时间字段必须带 `Z` 或数字 offset（`2026-07-24T10:00:00` 这种 naive 本地串会被拒）。空数组过滤、空白 query、NUL query、颠倒区间都是 execute 期 `SESSION_QUERY_INVALID_QUERY` / `SESSION_QUERY_INVALID_FILTER`；enum 写错则 registry 先报 `INVALID_ARGS`。[E: packages/session-query/tool-session-query/src/input.ts:180][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:354]
+ISO 时间字段必须带 `Z` 或数字 offset（`2026-07-24T10:00:00` 这种 naive 本地串会被拒）。空数组过滤、空白 query、NUL query、颠倒区间都是 execute 期 `SESSION_QUERY_INVALID_QUERY` / `SESSION_QUERY_INVALID_FILTER`；enum 写错则 registry 先报 `INVALID_ARGS`。[E: packages/session-query/tool-session-query/src/input.ts:180][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:361]
 
 ### `session_search`
 
@@ -182,11 +182,11 @@ execute 还会**无条件**追加 `{ kind: 'cwd', values: [caller.header.cwd] }`
 | `before` | `integer` | 否 | 省略 = 不摘要前邻（service 侧当 `0`） | 非负安全整数；service 再限制 `<= readWindowMax`（默认 `50`） | 前面多少条 raw event 做摘要。[E: packages/session-query/tool-session-query/src/index.ts:114][E: packages/session-query/session-query/src/config.ts:6] |
 | `after` | `integer` | 否 | 省略 = 不摘要后邻 | 同 `before` | 后面多少条 raw event 做摘要。[E: packages/session-query/tool-session-query/src/index.ts:115][E: packages/session-query/session-query/src/index.ts:369] |
 
-schema **不**写出 `50` 这个窗帽。`before: 51` 会在 `SessionQueryEngine._readWindow` 里变成 `SESSION_QUERY_INVALID_WINDOW`，再被翻译成「session event window is invalid」。[E: packages/session-query/session-query/src/index.ts:371][E: packages/session-query/tool-session-query/src/service-boundary.ts:66]
+schema **不**写出 `50` 这个窗帽。`before: 51` 会在 `SessionQueryEngine._readWindow` 里变成 `SESSION_QUERY_INVALID_WINDOW`，再被翻译成「session event window is invalid」。[E: packages/session-query/session-query/src/index.ts:373][E: packages/session-query/tool-session-query/src/service-boundary.ts:66]
 
 ## 输出 & 截断 / spill
 
-五个工具的规范值都是 **纯字符串**。registry 用 `output.schema = { type: 'string' }` 校验后调用 `render`，模型看见的就是那段文本；没有 `presentationMeta`，UI 走 generic 卡片。[E: packages/session-query/tool-session-query/src/index.ts:47][E: packages/core/tools/src/index.ts:1790]
+五个工具的规范值都是 **纯字符串**。registry 用 `output.schema = { type: 'string' }` 校验后调用 `render`，模型看见的就是那段文本；没有 `presentationMeta`，UI 走 generic 卡片。[E: packages/session-query/tool-session-query/src/index.ts:47][E: packages/core/tools/src/index.ts:1839]
 
 `@deepseek-ai/dsh-tool-session-query` **自己不做**字节 / 字符截断，也不读 `ctx.spillStore`。搜索侧的唯一数量帽是 `maxSearchResults`：`collectPages` 在放入第 `maxResults + 1` 个已授权 item 之前返回 `{ capped: true }`，文案追加 `Result cap reached. Narrow the query or add filters to find additional matches.`。[E: packages/session-query/tool-session-query/src/operations.ts:260][E: packages/session-query/tool-session-query/src/presentation.ts:76]
 
@@ -195,27 +195,27 @@ schema **不**写出 `50` 这个窗帽。`before: 51` 会在 `SessionQueryEngine
 - `session_search` → `No prior session matches found.`[E: packages/session-query/tool-session-query/src/presentation.ts:82]
 - `session_event_search` → 先打 session 标题行，再 `No prior event matches found.`[E: packages/session-query/tool-session-query/src/presentation.ts:92]
 
-`session_search` 命中行含 session id、title、Created、Parent、Availability（`live` / `persisted` / 二者 / `unavailable`）、以及 best-match 的 seq / type / surface / 时间和 snippet。未授权的 parent id 显示为 `[outside workspace]`，不回显外站 id。[E: packages/session-query/tool-session-query/src/presentation.ts:60][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1280]
+`session_search` 命中行含 session id、title、Created、Parent、Availability（`live` / `persisted` / 二者 / `unavailable`）、以及 best-match 的 seq / type / surface / 时间和 snippet。未授权的 parent id 显示为 `[outside workspace]`，不回显外站 id。[E: packages/session-query/tool-session-query/src/presentation.ts:60][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1287]
 
-`session_event_read` 把 target 放进 ` ```json ` 围栏（`JSON.stringify(window.target, null, 2)`），邻居只写 `seq | type | time` 加 `extractSessionEventText`；没有语义文本就标 `(no semantic text)`。测试断言这段输出不含 `truncated`。[E: packages/session-query/tool-session-query/src/presentation.ts:176][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:2060]
+`session_event_read` 把 target 放进 ` ```json ` 围栏（`JSON.stringify(window.target, null, 2)`），邻居只写 `seq | type | time` 加 `extractSessionEventText`；没有语义文本就标 `(no semantic text)`。测试断言这段输出不含 `truncated`。[E: packages/session-query/tool-session-query/src/presentation.ts:176][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:2067]
 
 `session_event_trace` 是固定七行：Session 标题、Target、Replaced by、Replacement chain、Events replaced by target、Events cited directly as sources、Direct derived events；空列表写成 `none`。[E: packages/session-query/tool-session-query/src/presentation.ts:154]
 
-部署若另外挂了 `@deepseek-ai/dsh-spill-policy` 且给了 `maxInlineBytes`，过长的纯文本 `tool/result` 会在 `tools/post-execute` 被换成 head/tail + locator。快照 overlay `snapshots/session/session-query-spill/cordis.yml` 插入 `spill-local` + `spill-policy`，并 opt-in `tool-session-query`。省略 `maxInlineBytes` 时 spill-policy **不注册** listener。[E: snapshots/session/session-query-spill/cordis.yml:13][E: packages/spill/spill-policy/src/index.ts:113][E: packages/spill/spill-policy/src/index.ts:191]
+部署若另外挂了 `@deepseek-ai/dsh-spill-policy` 且给了 `maxInlineBytes`，过长的纯文本 `tool/result` 会在 `tools/post-execute` 被换成 head/tail + locator。快照 overlay `snapshots/session/session-query-spill/cordis.yml` 插入 `spill-local` + `spill-policy`，并 opt-in `tool-session-query`。省略 `maxInlineBytes` 时 spill-policy **不注册** listener。[E: snapshots/session/session-query-spill/cordis.yml:13][E: packages/spill/spill-policy/src/index.ts:113][E: packages/spill/spill-policy/src/index.ts:135]
 
-失败结果走 registry 的 `Error: <message>`。服务端诊断经 `serviceBoundary.sanitizeError`：大多数 `SessionQueryError` 换成固定短句（例如 `SESSION_QUERY_EVENT_NOT_FOUND` → `session event was not found`）；`SESSION_QUERY_SOURCE_CONFLICT` / `SESSION_QUERY_INVALID_CONFIG` 以及非 taxonomy 错误变成 `SESSION_QUERY_TOOL_FAILED` / `session query operation failed`。完整 stack 只进 `ctx.logger.warn`，不进模型可见 content。[E: packages/session-query/tool-session-query/src/service-boundary.ts:30][E: packages/session-query/tool-session-query/src/service-boundary.ts:124][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1344]
+失败结果走 registry 的 `Error: <message>`。服务端诊断经 `serviceBoundary.sanitizeError`：大多数 `SessionQueryError` 换成固定短句（例如 `SESSION_QUERY_EVENT_NOT_FOUND` → `session event was not found`）；`SESSION_QUERY_SOURCE_CONFLICT` / `SESSION_QUERY_INVALID_CONFIG` 以及非 taxonomy 错误变成 `SESSION_QUERY_TOOL_FAILED` / `session query operation failed`。完整 stack 只进 `ctx.logger.warn`，不进模型可见 content。[E: packages/session-query/tool-session-query/src/service-boundary.ts:30][E: packages/session-query/tool-session-query/src/service-boundary.ts:124][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1351]
 
 ## 背后的 seam
 
 | 角色 | 落点 |
 |---|---|
-| Definition | `@deepseek-ai/dsh-session-query` 把 `ctx.sessionQuery` 钉成 `SessionQueryEngine`：`searchSessions` / `searchEvents` 是 abstract；`filterSessions` / `traceSession` / `traceEvent` / `readEvent` / `readTitleSnapshots` 是基类具体实现。[E: packages/session-query/session-query/src/index.ts:76][E: packages/session-query/session-query/src/index.ts:130][E: packages/session-query/session-query/src/index.ts:86][E: packages/session-query/session-query/package.json:2] |
-| Provider | 产品默认后端是 `@deepseek-ai/dsh-session-query-sqlite`（`dsh-base` 行 `id: session-query-sqlite`）。`searchSessions` / `searchEvents` 在 SQLite FTS5 上实现；精确读、filter、trace 走基类 corpus。[E: packages/session-query/session-query-sqlite/package.json:2][E: packages/bundle/base/cordis.patch.yml:129][E: packages/session-query/session-query-sqlite/src/index.ts:257] |
+| Definition | `@deepseek-ai/dsh-session-query` 把 `ctx.sessionQuery` 钉成 `SessionQueryEngine`：`searchSessions` / `searchEvents` 是 abstract；`filterSessions` / `traceSession` / `traceEvent` / `readEvent` / `readTitleSnapshots` 是基类具体实现。[E: packages/session-query/session-query/src/index.ts:76][E: packages/session-query/session-query/src/index.ts:131][E: packages/session-query/session-query/src/index.ts:87][E: packages/session-query/session-query/package.json:2] |
+| Provider | 产品默认后端是 `@deepseek-ai/dsh-session-query-sqlite`（`dsh-base` 行 `id: session-query-sqlite`）。`searchSessions` / `searchEvents` 在 SQLite FTS5 上实现；精确读、filter、trace 走基类 corpus。[E: packages/session-query/session-query-sqlite/package.json:2][E: packages/bundle/base/cordis.patch.yml:149][E: packages/session-query/session-query-sqlite/src/index.ts:257] |
 | Consumer | `@deepseek-ai/dsh-tool-session-query` 的五个 `defineTool`。另有 session export / sidebar 等 host 面消费者读同一 `ctx.sessionQuery`，但不登记这五个 wire 名。 |
 
-`SessionQueryEngine.static inject = ['sessions']`。换 provider 会带走：FTS 分词与 snippet、页大小（SQLite 默认 `limit` 20、最大 100）、`openAt` 是否真的打开索引。不会带走：cwd 授权、五个 wire 名、模型看不到 cursor、search cap 100、current-step 截断、谱系打码文案。[E: packages/session-query/session-query/src/index.ts:86][E: packages/session-query/session-query-sqlite/src/index.ts:74][E: packages/session-query/session-query-sqlite/src/index.ts:79]
+`SessionQueryEngine.static inject = ['sessions']`。换 provider 会带走：FTS 分词与 snippet、页大小（SQLite 默认 `limit` 20、最大 100）、`openAt` 是否真的打开索引。不会带走：cwd 授权、五个 wire 名、模型看不到 cursor、search cap 100、current-step 截断、谱系打码文案。[E: packages/session-query/session-query/src/index.ts:87][E: packages/session-query/session-query-sqlite/src/index.ts:74][E: packages/session-query/session-query-sqlite/src/index.ts:79]
 
-shipped `dsh-base` 把 SQLite 配成 `path: ':memory:'`、`openAt: never`。此时 `searchSessions` / `searchEvents` 在进 FTS 之前就抛 `SESSION_QUERY_SEARCH_DISABLED`；`traceSession` / `readEvent` 仍然可用。`web-app` 再 restatement 同一组值。[E: packages/bundle/base/cordis.patch.yml:133][E: packages/session-query/session-query-sqlite/src/index.ts:328][E: packages/bundle/web-app/cordis.patch.yml:28]
+shipped `dsh-base` 把 SQLite 配成 `path: ':memory:'`、`openAt: never`。此时 `searchSessions` / `searchEvents` 在进 FTS 之前就抛 `SESSION_QUERY_SEARCH_DISABLED`；`traceSession` / `readEvent` 仍然可用。`web-app` 再 restatement 同一组值。[E: packages/bundle/base/cordis.patch.yml:153][E: packages/session-query/session-query-sqlite/src/index.ts:328][E: packages/bundle/web-app/cordis.patch.yml:30]
 
 工具还读 `exec.agent.session`（id / header / events）以及 `ctx.sessionProjections.stateOf(..., 'turnBoundary')` 做 caller 身份。没有 agent 的直接 `ctx.tools.execute` 会 `SESSION_QUERY_TOOL_MISSING_AGENT`。[E: packages/session-query/tool-session-query/src/workspace-access.ts:60][E: packages/session-query/tool-session-query/src/workspace-access.ts:71]
 
@@ -223,33 +223,33 @@ shipped `dsh-base` 把 SQLite 配成 `path: ':memory:'`、`openAt: never`。此�
 
 ## 执行管线
 
-模型发出五个名字之一后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `output.render` → `tools/post-execute` → `tools/result`。默认路径是 body 先 `createSuccessResult`/`render`，`finalizeScheduledExecution` 之后才 `postExecute`。[E: packages/core/tools/src/index.ts:1541][E: packages/core/tools/src/index.ts:1564][E: packages/core/tools/src/index.ts:1602][E: packages/core/tools/src/index.ts:1790]
+模型发出五个名字之一后，loop 经 `ctx.tools.execute` 进入 registry：`tools/pre-execute` → monotonic `guard` → `tools/execute`（around-dispatch）→ 工具 body → `output.render` → `tools/post-execute` → `tools/result`。默认路径是 body 先 `createSuccessResult`/`render`，`finalizeScheduledExecution` 之后才 `postExecute`。[E: packages/core/tools/src/index.ts:1583][E: packages/core/tools/src/index.ts:1606][E: packages/core/tools/src/index.ts:1650][E: packages/core/tools/src/index.ts:1839]
 
 对本组工具的挂点：
 
-- **`tools/pre-execute`**：插件自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1467]
-- **调度**：`executionMode` 只有 `isConcurrencySafe === true` 才标 `parallel`。两个 search 未声明分类器，是 `exclusive`（generation-bound FTS 不能和另一次搜索交错抽页）；三条精确观察声明恒 `true`，可并行。[E: packages/core/tools/src/index.ts:1268][E: packages/core/tools/src/index.ts:1272][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:301]
+- **`tools/pre-execute`**：插件自己不注册 listener，也不 `ask`。waterfall 默认 `{ kind: 'allow' }`。没有 escalation 字段，不会走到 `ctx.approval`。[E: packages/core/tools/src/index.ts:1507]
+- **调度**：`executionMode` 只有 `isConcurrencySafe === true` 才标 `parallel`。两个 search 未声明分类器，是 `exclusive`（generation-bound FTS 不能和另一次搜索交错抽页）；三条精确观察声明恒 `true`，可并行。[E: packages/core/tools/src/index.ts:1305][E: packages/core/tools/src/index.ts:1309][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:308]
 - **`tools/execute` 包装**：
   - `session-checkpoint-policy` 仅在「有 `exec.agent` 且 `exec.parent === undefined`」时 `flush` session，再 `next()`。[E: packages/session/session-checkpoint-policy/src/index.ts:72]
-  - `timeout-policy` 读 `definition.timeoutMs`。两个 search 带 `searchTimeoutMs`（默认 30s），包装器会换 `exec.signal` 并在到期后改写成 `TOOL_TIMEOUT`。三条精确观察未声明该字段，包装器直接 `next()`。[E: packages/guard/timeout-policy/src/index.ts:59][E: packages/guard/timeout-policy/src/index.ts:59][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:259]
-- **body**：`defineTool` 先 `validate` args，再进 `operations.execute*`。取消信号经 `exec.signal` 传给 `filterSessions` / `search*` / `trace*` / `readEvent` / `readTitleSnapshots`。[E: packages/core/tools/src/schema.ts:568]
-- **`tools/post-execute`**：本插件不注册 listener，默认 `accept`。可选的 `spill-policy` 只整形已 accept 的顶层纯文本，且跳过 wire 名 `read` 与带 `parent` 的嵌套调用。[E: packages/core/tools/src/index.ts:1735][E: packages/spill/spill-policy/src/index.ts:197]
+  - `timeout-policy` 读 `definition.timeoutMs`。两个 search 带 `searchTimeoutMs`（默认 30s），包装器会换 `exec.signal` 并在到期后改写成 `TOOL_TIMEOUT`。三条精确观察未声明该字段，包装器直接 `next()`。[E: packages/guard/timeout-policy/src/index.ts:59][E: packages/guard/timeout-policy/src/index.ts:59][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:266]
+- **body**：`defineTool` 先 `validate` args，再进 `operations.execute*`。取消信号经 `exec.signal` 传给 `filterSessions` / `search*` / `trace*` / `readEvent` / `readTitleSnapshots`。[E: packages/core/tools/src/schema.ts:579]
+- **`tools/post-execute`**：本插件不注册 listener，默认 `accept`。可选的 `spill-policy` 只整形已 accept 的顶层纯文本，且跳过 wire 名 `read` 与带 `parent` 的嵌套调用。[E: packages/core/tools/src/index.ts:1784][E: packages/spill/spill-policy/src/index.ts:139]
 - **sandbox / approval**：不挂。
 
-PTC 下，非嵌套且 `modeFor(scope) === 'ptc'` 时，除保留名 `run_code` 外的名字在 `createExecution` 里 collapse，不进 `tools/pre-execute`。SDK 子分发带 `parent`，不 collapse，仍走完整管线。shipped `ptc` preset **并不**登记本五件套，所以产品 PTC 会话的 SDK 里默认也没有这些 binding；只有自定义 composition 同时挂了 `tool-session-query` 与 `tool-presentation mode: ptc` 时才会出现「模型写 `await tools.session_search(...)`」这条路径。[E: packages/core/tools/src/index.ts:1315][E: packages/core/tools/src/index.ts:1429][E: apps/cli/tests/web-agent-presets.e2e.ts:377]
+PTC 下，非嵌套且 `modeFor(scope) === 'ptc'` 时，除保留名 `run_code` 外的名字在 `createExecution` 里 collapse，不进 `tools/pre-execute`。SDK 子分发带 `parent`，不 collapse，仍走完整管线。shipped `ptc` preset **并不**登记本五件套，所以产品 PTC 会话的 SDK 里默认也没有这些 binding；只有自定义 composition 同时挂了 `tool-session-query` 与 `tool-presentation mode: ptc` 时才会出现「模型写 `await tools.session_search(...)`」这条路径。[E: packages/core/tools/src/index.ts:1352][E: packages/core/tools/src/index.ts:1469][E: apps/cli/tests/web-agent-presets.e2e.ts:416]
 
 ## Preset 装配
 
-成员资格只认 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml`。仓库里存在 `@deepseek-ai/dsh-tool-session-query`、host 上存在 `ctx.sessionQuery`，都不等于产品默认给模型这五个名字。
+成员资格只认 `packages/bundle/web-app/presets/{standard,ptc,minimal,cordis}.patch.yml`。仓库里存在 `@deepseek-ai/dsh-tool-session-query`、host 上存在 `ctx.sessionQuery`，都不等于产品默认给模型这五个名字。
 
 四个 shipped 文件都**没有** `id: tool-session-query` / `name: '@deepseek-ai/dsh-tool-session-query'`。web e2e 用精确 catalog 锁死了这件事：
 
 | preset | 装 `@deepseek-ai/dsh-tool-session-query`？ | `disabled` | isolate | 说明 |
 |---|---|---|---|---|
-| `minimal` | **否** | — | — | 模型可见只有 `bash`（POSIX）。yml 只剩 persistent-shell。[E: apps/cli/tests/web-agent-presets.e2e.ts:299][E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] |
-| `standard` | **否** | — | — | 精确 catalog（去掉依赖本机 ripgrep 的 `glob`/`grep`）含 `present` / `web_search` / `workflow` / `write`，没有 `session_*`。yml 在 `tool-web` 之后还有 `present`。[E: apps/cli/tests/web-agent-presets.e2e.ts:243][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:248][E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:254] |
-| `ptc` | **否** | — | — | 相对 `standard` 的可加载增量是末尾 `tool-presentation` `mode: ptc`。模型 assembly 只剩 `run_code`；native 行里同样没有 `tool-session-query`。[E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:272][E: apps/cli/tests/web-agent-presets.e2e.ts:377] |
-| `cordis` | **否** | — | — | 相对 `standard` 的增量是 `tool-cordis` + `customSkillDirs`，yml 没有 `tool-session-query` 行。[E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246] |
+| `minimal` | **否** | — | — | 模型可见只有 `bash`（POSIX）。yml 只剩 persistent-shell。[E: apps/cli/tests/web-agent-presets.e2e.ts:321][E: packages/bundle/web-app/presets/minimal.patch.yml:17] |
+| `standard` | **否** | — | — | 精确 catalog（去掉依赖本机 ripgrep 的 `glob`/`grep`）含 `present` / `web_search` / `workflow` / `write`，没有 `session_*`。yml 在 `tool-web` 之后是 `present`，再跟 `tool-plugin-manager` `disabled: true`。[E: apps/cli/tests/web-agent-presets.e2e.ts:264][E: packages/bundle/web-app/presets/standard.patch.yml:142][E: packages/bundle/web-app/presets/standard.patch.yml:146] |
+| `ptc` | **否** | — | — | 相对 `standard` 的可加载增量是末尾 `tool-presentation` `mode: ptc`。模型 assembly 只剩 `run_code`；native 行里同样没有 `tool-session-query`。[E: packages/bundle/web-app/presets/ptc.patch.yml:147][E: apps/cli/tests/web-agent-presets.e2e.ts:416] |
+| `cordis` | **否** | — | — | 相对 `standard` 的增量是 `tool-cordis` + `customSkillDirs`，yml 没有 `tool-session-query` 行。[E: packages/bundle/web-app/presets/cordis.patch.yml:141] |
 
 opt-in 出现在 snapshot / 用户 composition，不是 shipped preset。`snapshots/session/session-query-spill/cordis.yml` 插入：
 
@@ -260,40 +260,40 @@ opt-in 出现在 snapshot / 用户 composition，不是 shipped preset。`snapsh
 
 并同时插入 `timeout-policy`，让两个 search 的 `timeoutMs` 真的被 armed。[E: snapshots/session/session-query-spill/cordis.yml:18][E: snapshots/session/session-query-spill/cordis.yml:21]
 
-即便插入了工具行，shipped host 的 `session-query-sqlite` 仍是 `openAt: never`。要让 `session_search` / `session_event_search` 真正跑 FTS，还得在更后的 patch 层把 `openAt` 改成 `first-search` 或 `startup`（通常再给一个耐久 `path`）。只挂工具、不改 host 索引时，搜索会结构化失败 `SESSION_QUERY_SEARCH_DISABLED`；`session_trace` / `session_event_trace` / `session_event_read` 不受这道门影响。[E: packages/bundle/base/cordis.patch.yml:133][E: packages/session-query/session-query-sqlite/src/index.ts:330]
+即便插入了工具行，shipped host 的 `session-query-sqlite` 仍是 `openAt: never`。要让 `session_search` / `session_event_search` 真正跑 FTS，还得在更后的 patch 层把 `openAt` 改成 `first-search` 或 `startup`（通常再给一个耐久 `path`）。只挂工具、不改 host 索引时，搜索会结构化失败 `SESSION_QUERY_SEARCH_DISABLED`；`session_trace` / `session_event_trace` / `session_event_read` 不受这道门影响。[E: packages/bundle/base/cordis.patch.yml:153][E: packages/session-query/session-query-sqlite/src/index.ts:330]
 
 ## execute() 走读
 
 符号：`apply` @ `packages/session-query/tool-session-query/src/index.ts`，`operations.*` @ `operations.ts`，`toolInput.*` @ `input.ts`，`workspaceAccess.*` @ `workspace-access.ts`，`serviceBoundary.call` @ `service-boundary.ts`，`presentation.*` @ `presentation.ts`。
 
-1. **取 caller。** `executeSessionSearch` / `executeEventSearch` / `executeSessionTrace` 第一件事是 `workspaceAccess.callerOf(exec, ctx)`。`executeEventTrace` / `executeEventRead` 先 `assertNonNegativeSafeInteger('seq')`，再 `callerOf`。没有 `exec.agent` 就抛 `SESSION_QUERY_TOOL_MISSING_AGENT`。身份四件套是 `agent.session.id` / `header` / `events` / `turnBoundary` 投影。[E: packages/session-query/tool-session-query/src/workspace-access.ts:58][E: packages/session-query/tool-session-query/src/workspace-access.ts:64][E: packages/session-query/tool-session-query/src/operations.ts:60][E: packages/session-query/tool-session-query/src/operations.ts:207][E: packages/session-query/tool-session-query/src/operations.ts:223][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:593]
+1. **取 caller。** `executeSessionSearch` / `executeEventSearch` / `executeSessionTrace` 第一件事是 `workspaceAccess.callerOf(exec, ctx)`。`executeEventTrace` / `executeEventRead` 先 `assertNonNegativeSafeInteger('seq')`，再 `callerOf`。没有 `exec.agent` 就抛 `SESSION_QUERY_TOOL_MISSING_AGENT`。身份四件套是 `agent.session.id` / `header` / `events` / `turnBoundary` 投影。[E: packages/session-query/tool-session-query/src/workspace-access.ts:58][E: packages/session-query/tool-session-query/src/workspace-access.ts:64][E: packages/session-query/tool-session-query/src/operations.ts:60][E: packages/session-query/tool-session-query/src/operations.ts:207][E: packages/session-query/tool-session-query/src/operations.ts:223][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:600]
 
-2. **`session_search`：workspace 门 + 强制 cwd。** `caller.header.cwd === undefined` 立刻 `SESSION_QUERY_TOOL_UNAUTHORIZED`（文案 `cross-session search is unavailable because the caller session has no workspace`）。然后 `normalizeQuery`、`buildSessionFilters`、`buildEventFilters`。若给了 `parent_session_ids` 或 `include_root_sessions === true`，先 `authorizeSessionIds`；一个授权 parent 都没有且没开 root 时，直接返回空搜索，**不**调用 `searchSessions`（隐藏 parent 与不存在 parent 对模型不可区分）。最后无条件 `sessionFilters.push({ kind: 'cwd', values: [cwd] })`。[E: packages/session-query/tool-session-query/src/operations.ts:62][E: packages/session-query/tool-session-query/src/operations.ts:86][E: packages/session-query/tool-session-query/src/operations.ts:90][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:634]
+2. **`session_search`：workspace 门 + 强制 cwd。** `caller.header.cwd === undefined` 立刻 `SESSION_QUERY_TOOL_UNAUTHORIZED`（文案 `cross-session search is unavailable because the caller session has no workspace`）。然后 `normalizeQuery`、`buildSessionFilters`、`buildEventFilters`。若给了 `parent_session_ids` 或 `include_root_sessions === true`，先 `authorizeSessionIds`；一个授权 parent 都没有且没开 root 时，直接返回空搜索，**不**调用 `searchSessions`（隐藏 parent 与不存在 parent 对模型不可区分）。最后无条件 `sessionFilters.push({ kind: 'cwd', values: [cwd] })`。[E: packages/session-query/tool-session-query/src/operations.ts:62][E: packages/session-query/tool-session-query/src/operations.ts:86][E: packages/session-query/tool-session-query/src/operations.ts:90][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:641]
 
 3. **抽干 provider 分页，按授权 cap 截。** `collectPages` 循环 `ctx.sessionQuery.searchSessions`，**不**把 `limit` 传给 provider。`accept` 谓词是 `hit.header.id !== caller.id && workspaceAccess.recordAuthorized(hit, caller)`：丢掉自己、丢掉 cwd 不符的泄露行。同一 `nextCursor` 再出现就 `SESSION_QUERY_INVALID_CURSOR`。满 cap 后若下一页还有已授权 hit，才标 `capped`；尾页只剩被拒 hit 则不报 cap。[E: packages/session-query/tool-session-query/src/operations.ts:100][E: packages/session-query/tool-session-query/src/operations.ts:268][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1276][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1303]
 
-4. **补 title，打码 parent。** 命中的 `parentSession` 再走一遍 `authorizeSessionIds`；未授权的在 `formatSessionSearch` 里写成 `[outside workspace]`。title 走 `readTitleSnapshots`：单条 rejected 变成 `untitled (title unavailable: CODE)`，整批抛错才让这次 search 失败。[E: packages/session-query/tool-session-query/src/operations.ts:107][E: packages/session-query/tool-session-query/src/workspace-access.ts:244][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1674]
+4. **补 title，打码 parent。** 命中的 `parentSession` 再走一遍 `authorizeSessionIds`；未授权的在 `formatSessionSearch` 里写成 `[outside workspace]`。title 走 `readTitleSnapshots`：单条 rejected 变成 `untitled (title unavailable: CODE)`，整批抛错才让这次 search 失败。[E: packages/session-query/tool-session-query/src/operations.ts:107][E: packages/session-query/tool-session-query/src/workspace-access.ts:244][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:718]
 
-5. **`session_event_search`：先授权目标，再截当前 step。** `targetId` 省略则用 caller。非 self 目标用 `filterSessions([{ kind: 'id' }, { kind: 'cwd' }])`，结果不是恰好 1 条就 `SESSION_QUERY_TOOL_UNAUTHORIZED`。self 搜索要求 `turnBoundary.lastStepStartSeq` 已有，否则 `SESSION_QUERY_TOOL_NO_CURRENT_STEP`；有则 `range.to = min(用户 to, stepStartSeq - 1)`。若截完后 `from > to`，返回空列表且**不**打 FTS（用户从「当前 step 内部」起搜的情况）。其它 session 的 `seq_to` 原样保留。[E: packages/session-query/tool-session-query/src/workspace-access.ts:92][E: packages/session-query/tool-session-query/src/operations.ts:132][E: packages/session-query/tool-session-query/src/operations.ts:138][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1592][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1601]
+5. **`session_event_search`：先授权目标，再截当前 step。** `targetId` 省略则用 caller。非 self 目标用 `filterSessions([{ kind: 'id' }, { kind: 'cwd' }])`，结果不是恰好 1 条就 `SESSION_QUERY_TOOL_UNAUTHORIZED`。self 搜索要求 `turnBoundary.lastStepStartSeq` 已有，否则 `SESSION_QUERY_TOOL_NO_CURRENT_STEP`；有则 `range.to = min(用户 to, stepStartSeq - 1)`。若截完后 `from > to`，返回空列表且**不**打 FTS（用户从「当前 step 内部」起搜的情况）。其它 session 的 `seq_to` 原样保留。[E: packages/session-query/tool-session-query/src/workspace-access.ts:92][E: packages/session-query/tool-session-query/src/operations.ts:132][E: packages/session-query/tool-session-query/src/operations.ts:138][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1592][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1602]
 
 6. **`session_trace`：谱系投影。** `authorizeTarget` 之后 `ctx.sessionQuery.traceSession`。返回的 `trace.target.header` 必须仍对 caller 授权（防 TOCTOU 把 session 挪出 workspace）。祖先按近到远扫，碰到第一个未授权 record 就停并设 `ancestorBoundary`；`!trace.complete` 且祖先全可见时也设 boundary（未解析的 parent id 不回传）。子孙树用 `authorizeDescendants`：未授权节点变成 `null`，其子树不再展开。[E: packages/session-query/tool-session-query/src/operations.ts:180][E: packages/session-query/tool-session-query/src/operations.ts:186][E: packages/session-query/tool-session-query/src/operations.ts:192][E: packages/session-query/tool-session-query/src/workspace-access.ts:191][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:810]
 
-7. **`session_event_trace` / `session_event_read`。** 先 `assertNonNegativeSafeInteger('seq', …)`（以及 read 的 `before`/`after`）。授权后分别 `traceEvent({ sessionId, seq })` 与 `readEvent({ sessionId, seq, before?, after? })`，再 `assertObservedTargetAuthorized`。`readEvent` 用 raw-log 下标取 event：缺 seq 或 `events[seq].seq !== seq` → `SESSION_QUERY_EVENT_NOT_FOUND`。窗两侧默认 0，超过 `readWindowMax`（默认 50）→ `SESSION_QUERY_INVALID_WINDOW`。[E: packages/session-query/tool-session-query/src/operations.ts:212][E: packages/session-query/tool-session-query/src/operations.ts:230][E: packages/session-query/session-query/src/index.ts:343][E: packages/session-query/session-query/src/index.ts:369]
+7. **`session_event_trace` / `session_event_read`。** 先 `assertNonNegativeSafeInteger('seq', …)`（以及 read 的 `before`/`after`）。授权后分别 `traceEvent({ sessionId, seq })` 与 `readEvent({ sessionId, seq, before?, after? })`，再 `assertObservedTargetAuthorized`。`readEvent` 用 raw-log 下标取 event：缺 seq 或 `events[seq].seq !== seq` → `SESSION_QUERY_EVENT_NOT_FOUND`。窗两侧默认 0，超过 `readWindowMax`（默认 50）→ `SESSION_QUERY_INVALID_WINDOW`。[E: packages/session-query/tool-session-query/src/operations.ts:212][E: packages/session-query/tool-session-query/src/operations.ts:230][E: packages/session-query/session-query/src/index.ts:345][E: packages/session-query/session-query/src/index.ts:369]
 
-8. **所有 `ctx.sessionQuery.*` 都包在 `serviceBoundary.call`。** 取消优先于业务错误：`signal` 已 abort 时原样再抛，不写 warn。否则把 provider 诊断记进 logger，再换成模型安全的 `SessionQueryError` / `HarnessError`。`SESSION_QUERY_STALE_CURSOR` 保留「retry the complete search call」——工具**不会**自动从头再搜。[E: packages/session-query/tool-session-query/src/service-boundary.ts:105][E: packages/session-query/tool-session-query/src/service-boundary.ts:82][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1546]
+8. **所有 `ctx.sessionQuery.*` 都包在 `serviceBoundary.call`。** 取消优先于业务错误：`signal` 已 abort 时原样再抛，不写 warn。否则把 provider 诊断记进 logger，再换成模型安全的 `SessionQueryError` / `HarnessError`。`SESSION_QUERY_STALE_CURSOR` 保留「retry the complete search call」——工具**不会**自动从头再搜。[E: packages/session-query/tool-session-query/src/service-boundary.ts:105][E: packages/session-query/tool-session-query/src/service-boundary.ts:82][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1553]
 
 9. **真实 SQLite 路径。** integration 测试同时挂 `JsonlSessionPersistence` 与 `SqliteSessionQueryEngine`，证明 `session_search` 能命中同 cwd 的 persisted log，`session_event_search` 能搜 live 当前 step 之前的 user 文本。那是 Provider 合同，不是另一套 schema。[E: packages/session-query/tool-session-query/tests/sqlite-integration.spec.ts:94][E: packages/session-query/tool-session-query/tests/sqlite-integration.spec.ts:98]
 
 ## 设计动机·edge
 
-- **一页五名，不是一个 `session_query` 多 operation。** 搜索与精确观察的并发、超时、失败面不同：FTS 必须 exclusive 且带 deadline；trace/read 是纯观察，可并行、无 `timeoutMs`。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:298]
-- **cursor 对模型不可见。** provider 合同有 `cursor` / `limit`（SQLite 默认页 20），工具层自己 drain。模型既不能续页，也不会拿到内部 cursor 去探测 generation。[E: packages/session-query/session-query/src/types.ts:253][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:256]
-- **workspace = cwd 字符串，fail-closed。** 猜一个外站 parent id 与猜一个不存在 id，对模型都是同一句 `No prior session matches found.`。payload 观察在 pre-authorization 之后若 header.cwd 变了，整次调用改 `UNAUTHORIZED`，snippet / title 不外泄。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:634][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1162]
+- **一页五名，不是一个 `session_query` 多 operation。** 搜索与精确观察的并发、超时、失败面不同：FTS 必须 exclusive 且带 deadline；trace/read 是纯观察，可并行、无 `timeoutMs`。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:305]
+- **cursor 对模型不可见。** provider 合同有 `cursor` / `limit`（SQLite 默认页 20），工具层自己 drain。模型既不能续页，也不会拿到内部 cursor 去探测 generation。[E: packages/session-query/session-query/src/types.ts:253][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:263]
+- **workspace = cwd 字符串，fail-closed。** 猜一个外站 parent id 与猜一个不存在 id，对模型都是同一句 `No prior session matches found.`。payload 观察在 pre-authorization 之后若 header.cwd 变了，整次调用改 `UNAUTHORIZED`，snippet / title 不外泄。[E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:641][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1162]
 - **当前 step 对 self-search 不可见。** 这是为了 `model-visible ⟺ logged`：正在执行的 tool call 还没 settle，不能让模型用 `session_event_search` 读到半截自己。其它 session 没有这道夹具。边界来自 `turnBoundary` 投影，不是现场扫 `step/start` 事件。[E: packages/session-query/tool-session-query/src/operations.ts:128][E: packages/session-query/tool-session-query/src/workspace-access.ts:71]
-- **host 有 query 服务 ≠ 模型有这五个工具。** `dsh-base` 挂 SQLite 是给 export / 派生会话 / 标题折叠用的，并且默认 `openAt: never` 关掉 FTS。四个 shipped preset 都不装 `tool-session-query`。要产品面出现 `session_*`，必须同时：用户 composition 插入工具行，以及（若需要搜索）改 host `openAt`。[E: packages/bundle/base/cordis.patch.yml:129][E: apps/cli/tests/web-agent-presets.e2e.ts:243]
+- **host 有 query 服务 ≠ 模型有这五个工具。** `dsh-base` 挂 SQLite 是给 export / 派生会话 / 标题折叠用的，并且默认 `openAt: never` 关掉 FTS。四个 shipped preset 都不装 `tool-session-query`。要产品面出现 `session_*`，必须同时：用户 composition 插入工具行，以及（若需要搜索）改 host `openAt`。[E: packages/bundle/base/cordis.patch.yml:149][E: apps/cli/tests/web-agent-presets.e2e.ts:264]
 - **没有 `session_mount` 之类写接口。** 这组工具只读。落盘、compaction、`surfaceOp: replace` 仍由 session 子系统自己做。
-- **和 `run_code` 正交。** shipped `ptc` preset 的唯一 wire 工具仍是 `run_code`；本五件套既不替代它，也不出现在 PTC assembly 里。[E: apps/cli/tests/web-agent-presets.e2e.ts:377]
-- **诊断消毒是硬合同。** 测试用 hostile Proxy / 循环 `cause` / 抛 stack getter 证明模型侧永远看不到 provider 原文。模型可见失败是 `Error: session query operation failed` / `SESSION_QUERY_TOOL_FAILED`。[E: packages/session-query/tool-session-query/src/service-boundary.ts:144][E: packages/session-query/tool-session-query/src/service-boundary.ts:146] `UNPRINTABLE_SERVICE_ERROR` 只进 `fullError` 的 catch，再写入 `ctx.logger.warn`，不是模型正文。[E: packages/session-query/tool-session-query/src/service-boundary.ts:19][E: packages/session-query/tool-session-query/src/service-boundary.ts:154] 循环 `cause` 在 logger 诊断里标 `[circular error cause]`。[E: packages/session-query/tool-session-query/src/service-boundary.ts:169][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1514]
+- **和 `run_code` 正交。** shipped `ptc` preset 的唯一 wire 工具仍是 `run_code`；本五件套既不替代它，也不出现在 PTC assembly 里。[E: apps/cli/tests/web-agent-presets.e2e.ts:416]
+- **诊断消毒是硬合同。** 测试用 hostile Proxy / 循环 `cause` / 抛 stack getter 证明模型侧永远看不到 provider 原文。模型可见失败是 `Error: session query operation failed` / `SESSION_QUERY_TOOL_FAILED`。[E: packages/session-query/tool-session-query/src/service-boundary.ts:144][E: packages/session-query/tool-session-query/src/service-boundary.ts:146] `UNPRINTABLE_SERVICE_ERROR` 只进 `fullError` 的 catch，再写入 `ctx.logger.warn`，不是模型正文。[E: packages/session-query/tool-session-query/src/service-boundary.ts:19][E: packages/session-query/tool-session-query/src/service-boundary.ts:154] 循环 `cause` 在 logger 诊断里标 `[circular error cause]`。[E: packages/session-query/tool-session-query/src/service-boundary.ts:169][E: packages/session-query/tool-session-query/tests/tool-session-query.spec.ts:1521]
 
 ## Sources
 
@@ -322,10 +322,10 @@ opt-in 出现在 snapshot / 用户 composition，不是 shipped preset。`snapsh
 - packages/util/timeout/src/index.ts
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - apps/cli/tests/web-agent-presets.e2e.ts
 - snapshots/session/session-query-spill/cordis.yml
 

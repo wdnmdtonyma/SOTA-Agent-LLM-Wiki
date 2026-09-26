@@ -27,7 +27,7 @@ source:
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/web-app/cordis.patch.yml
   - packages/bundle/sdk-minimal/cordis.patch.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
   - vendor/cordis/src/events.ts
 symbols:
   - SandboxedFileSystem
@@ -51,7 +51,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-fs-sandbox` 的 `SandboxedFileSystem` 是叠 `dsh-base` 的 shipped profile 上默认 `ctx.fs` Provider：它 `extends LocalFileSystem`，`static inject = ['sandboxPolicy']`，只在 `writeText` / `editText` 上做 per-call 文件副作用围栏。读路径全部走继承实现。这是可信代码里对模型控制路径的 policy check，**不是** kernel 边界，也不调用 `ctx.sandbox.confine`。`sdk-minimal` 不叠 `dsh-base`，insert **也没有** fs 行。
@@ -94,33 +94,33 @@ updated: c291e7961a
 | `packages/bundle/base/cordis.patch.yml` | 真树：`id: fs-sandbox` 独占叠 base 的 host `ctx.fs` |
 | `packages/bundle/sdk-minimal/cordis.patch.yml` | 不叠 base；insert **没有** fs 行 |
 | `packages/fs/tool-fs/src/sandbox.ts` | 工具层 `resolvePolicy` / `approveEscalation` / `mapError` |
-| `packages/preset/agent-presets/presets/minimal/agent.cordis.yml` | 只有 persistent shell；**不**换 host `ctx.fs` |
+| `packages/bundle/web-app/presets/minimal.patch.yml` | 只有 persistent shell；**不**换 host `ctx.fs` |
 
 ## 数据模型
 
 | 符号 / 键 | 落点 | 含义 |
 |---|---|---|
-| `SandboxedFileSystem` | 本包 class，`export default` | Cordis 插件；`extends LocalFileSystem`，基类 `FileSystem` 构造 `super(ctx, 'fs')` 后仍是唯一的 `ctx.fs`。[E: packages/fs/fs-sandbox/src/index.ts:55] [E: packages/fs/fs/src/index.ts:88] |
+| `SandboxedFileSystem` | 本包 class，`export default` | Cordis 插件；`extends LocalFileSystem`，基类 `FileSystem` 构造 `super(ctx, 'fs')` 后仍是唯一的 `ctx.fs`。[E: packages/fs/fs-sandbox/src/index.ts:55] [E: packages/fs/fs/src/index.ts:89] |
 | `static inject` | `['sandboxPolicy']` | 等 host 的 `ctx.sandboxPolicy`。不 `inject` `sandbox` / `subprocess`。[E: packages/fs/fs-sandbox/src/index.ts:56] |
 | `Config` | `export type Config = LocalConfig` | 只有 `cwd` 与 `diffBasisMaxBytes`。mode / workspace root **不**在本包 Config。[E: packages/fs/fs-sandbox/src/index.ts:45] |
 | `sandboxMode` | override getter | 构造时抄下的 `ctx.sandboxPolicy.defaultMode`。这是部署默认，不是 session override，也不是这一次 call 的 mode。[E: packages/fs/fs-sandbox/src/index.ts:61] [E: packages/fs/fs-sandbox/src/index.ts:66] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:63] |
-| `SandboxMode` | `@deepseek-ai/dsh-sandbox` | `'read-only' \| 'workspace-write' \| 'danger-full-access'`。网络与进程可见性在词汇外。[E: packages/sandbox/sandbox/src/index.ts:29] |
-| `SandboxExecutionPolicy` | `mode` + `workspaceRoot` + 可选 `sessionId` | `writeText` / `editText` 最后一参。省略则 `checkedTarget` 调无 session 的 `resolve()`，落到部署 default。[E: packages/fs/fs-sandbox/src/index.ts:87] [E: packages/fs/fs-sandbox/src/index.ts:123] [E: packages/sandbox/sandbox-policy/src/index.ts:163] |
+| `SandboxMode` | `@deepseek-ai/dsh-sandbox` | `'read-only' \| 'workspace-write' \| 'danger-full-access'`。网络与进程可见性在词汇外。[E: packages/sandbox/sandbox/src/index.ts:30] |
+| `SandboxExecutionPolicy` | `mode` + `workspaceRoot` + 可选 `sessionId` | `writeText` / `editText` 最后一参。省略则 `checkedTarget` 调无 session 的 `resolve()`，落到部署 default。[E: packages/fs/fs-sandbox/src/index.ts:87] [E: packages/fs/fs-sandbox/src/index.ts:123] [E: packages/sandbox/sandbox-policy/src/index.ts:164] |
 | `checkedTarget` | 私有方法 | 按 mode 放行或抛 `FS_SANDBOX_DENIED`；`workspace-write` 返回**新** `resolve(displayPath)` 的 target。[E: packages/fs/fs-sandbox/src/index.ts:122] |
 | `FS_SANDBOX_DENIED` | `FsErrorCode` | 围栏拒绝。与 host `FS_PERMISSION_DENIED`、进程缝 `SANDBOX_UNAVAILABLE` 不是同一个码。[E: packages/fs/fs/src/types.ts:182] [E: packages/fs/fs-sandbox/src/index.ts:127] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:236] |
 | `writableRoots(policy)` | `dsh-sandbox` | 仅 `workspace-write` 给出 canonical `[workspaceRoot, '/tmp', os.tmpdir()]`（去重）；其它 mode 返回 `[]`。[E: packages/sandbox/sandbox/src/roots.ts:53] [E: packages/sandbox/sandbox/src/roots.ts:54] [E: packages/sandbox/sandbox/tests/roots.spec.ts:27] |
 
-基类 `FileSystem.sandboxMode` 返回 `undefined`；裸 `LocalFileSystem` 不 override，所以不 confine。[E: packages/fs/fs/src/index.ts:103] [E: packages/fs/fs/src/index.ts:104]
+基类 `FileSystem.sandboxMode` 返回 `undefined`；裸 `LocalFileSystem` 不 override，所以不 confine。[E: packages/fs/fs/src/index.ts:119] [E: packages/fs/fs/src/index.ts:119]
 
 ## 控制流
 
-1. **host 真树挂上这份 Provider（叠 `dsh-base` 时）。** `dsh-base`@packages/bundle/base/cordis.patch.yml 在 root realm 插入 `id: sandbox-policy`（`name: '@deepseek-ai/dsh-sandbox-policy'`，默认 `mode` 来自 `DSH_PERMISSION_MODE` 否则 `'workspace-write'`），再插入 `id: fs-sandbox`（`name: '@deepseek-ai/dsh-fs-sandbox'`）。[E: packages/bundle/base/cordis.patch.yml:208] [E: packages/bundle/base/cordis.patch.yml:209] [E: packages/bundle/base/cordis.patch.yml:211] [E: packages/bundle/base/cordis.patch.yml:479] [E: packages/bundle/base/cordis.patch.yml:480] 叠 base 的真树**没有**并行的 `id: fs-local` 行：sandbox 包装继承 local 并独占同一 `ctx.fs` 键。同名 service 同一 realm 再挂第二个会抛。[E: packages/fs/fs/tests/service.spec.ts:103] `sdk-minimal` **不**叠 `dsh-base`，完整 insert 有 `subprocess` / `pty`，**没有** fs 行。[E: packages/bundle/sdk-minimal/cordis.patch.yml:47] [E: packages/bundle/sdk-minimal/cordis.patch.yml:50]
+1. **host 真树挂上这份 Provider（叠 `dsh-base` 时）。** `dsh-base`@packages/bundle/base/cordis.patch.yml 在 root realm 插入 `id: sandbox-policy`（`name: '@deepseek-ai/dsh-sandbox-policy'`，默认 `mode` 来自 `DSH_PERMISSION_MODE` 否则 `'workspace-write'`），再插入 `id: fs-sandbox`（`name: '@deepseek-ai/dsh-fs-sandbox'`）。[E: packages/bundle/base/cordis.patch.yml:228] [E: packages/bundle/base/cordis.patch.yml:229] [E: packages/bundle/base/cordis.patch.yml:231] [E: packages/bundle/base/cordis.patch.yml:517] [E: packages/bundle/base/cordis.patch.yml:518] 叠 base 的真树**没有**并行的 `id: fs-local` 行：sandbox 包装继承 local 并独占同一 `ctx.fs` 键。同名 service 同一 realm 再挂第二个会抛。[E: packages/fs/fs/tests/service.spec.ts:103] `sdk-minimal` **不**叠 `dsh-base`，完整 insert 有 `subprocess` / `pty`，**没有** fs 行。[E: packages/bundle/sdk-minimal/cordis.patch.yml:47] [E: packages/bundle/sdk-minimal/cordis.patch.yml:50]
 
-2. **构造：继承 local，登记 `ctx.fs`，记下部署默认 mode。** `SandboxedFileSystem`@packages/fs/fs-sandbox/src/index.ts `extends LocalFileSystem`，`static inject = ['sandboxPolicy']`。[E: packages/fs/fs-sandbox/src/index.ts:55] [E: packages/fs/fs-sandbox/src/index.ts:56] `FileSystem` 构造 `super(ctx, 'fs')` 占键；子类再 `this.defaultMode = ctx.sandboxPolicy.defaultMode`，`sandboxMode` getter 只返回这份快照。[E: packages/fs/fs/src/index.ts:88] [E: packages/fs/fs-sandbox/src/index.ts:61] [E: packages/fs/fs-sandbox/src/index.ts:66] 测试：boot `workspace-write` 后 `fs.sandboxMode === 'workspace-write'`；`dispose` 后 `ctx.get('fs')` 为 `undefined`，可再挂。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:63] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:224] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:224]
+2. **构造：继承 local，登记 `ctx.fs`，记下部署默认 mode。** `SandboxedFileSystem`@packages/fs/fs-sandbox/src/index.ts `extends LocalFileSystem`，`static inject = ['sandboxPolicy']`。[E: packages/fs/fs-sandbox/src/index.ts:55] [E: packages/fs/fs-sandbox/src/index.ts:56] `FileSystem` 构造 `super(ctx, 'fs')` 占键；子类再 `this.defaultMode = ctx.sandboxPolicy.defaultMode`，`sandboxMode` getter 只返回这份快照。[E: packages/fs/fs/src/index.ts:89] [E: packages/fs/fs-sandbox/src/index.ts:61] [E: packages/fs/fs-sandbox/src/index.ts:66] 测试：boot `workspace-write` 后 `fs.sandboxMode === 'workspace-write'`；`dispose` 后 `ctx.get('fs')` 为 `undefined`，可再挂。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:63] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:224] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:224]
 
-3. **模型 Consumer 在 tool body 里带上 per-call policy，不经 `tools/pre-execute`。** `dsh-tool-fs`@packages/fs/tool-fs/src/index.ts 的 `inject = ['tools', 'fs', 'systemPrompt']`。[E: packages/fs/tool-fs/src/index.ts:22] `applyWriteTool` 的 `execute`：先 `sandbox.resolvePolicy('write', args, exec)`（无升权参数则 session standing policy；有则 `approveEscalation`），再 `ctx.fs.resolve`，再 `ctx.waterfall('fs/write-intent', …)`，最后 `ctx.fs.writeText(..., sandboxPolicy)`。[E: packages/fs/tool-fs/src/write.ts:110] [E: packages/fs/tool-fs/src/write.ts:114] [E: packages/fs/tool-fs/src/write.ts:117] `FsSandboxController` 在 apply 时读一次 `ctx.fs.sandboxMode`：`undefined` 则不要求 `sandboxPolicy`、不广告升权字段；已定义却拿不到 `ctx.sandboxPolicy` 则构造期抛。[E: packages/fs/tool-fs/src/sandbox.ts:44] [E: packages/fs/tool-fs/src/sandbox.ts:48] 升权 grant 只有 `'allowed-once'`，通过后把更宽 `mode` 盖到**这一次** policy 上，不是改 `sandboxMode` getter。[E: packages/fs/tool-fs/src/sandbox.ts:97] [E: packages/fs/tool-fs/src/sandbox.ts:107] [E: packages/sandbox/sandbox/src/escalation.ts:183]
+3. **模型 Consumer 在 tool body 里带上 per-call policy，不经 `tools/pre-execute`。** `dsh-tool-fs`@packages/fs/tool-fs/src/index.ts 的 `inject = ['tools', 'fs', 'systemPrompt']`。[E: packages/fs/tool-fs/src/index.ts:22] `applyWriteTool` 的 `execute`：先 `sandbox.resolvePolicy('write', args, exec)`（无升权参数则 session standing policy；有则 `approveEscalation`），再 `ctx.fs.resolve`，再 `ctx.waterfall('fs/write-intent', …)`，最后 `ctx.fs.writeText(..., sandboxPolicy)`。[E: packages/fs/tool-fs/src/write.ts:111] [E: packages/fs/tool-fs/src/write.ts:115] [E: packages/fs/tool-fs/src/write.ts:117] `FsSandboxController` 在 apply 时读一次 `ctx.fs.sandboxMode`：`undefined` 则不要求 `sandboxPolicy`、不广告升权字段；已定义却拿不到 `ctx.sandboxPolicy` 则构造期抛。[E: packages/fs/tool-fs/src/sandbox.ts:44] [E: packages/fs/tool-fs/src/sandbox.ts:48] 升权 grant 只有 `'allowed-once'`，通过后把更宽 `mode` 盖到**这一次** policy 上，不是改 `sandboxMode` getter。[E: packages/fs/tool-fs/src/sandbox.ts:97] [E: packages/fs/tool-fs/src/sandbox.ts:107] [E: packages/sandbox/sandbox/src/escalation.ts:183]
 
-4. **`fs/write-intent` waterfall 与围栏正交，必须有人 `next()` 才会 `shift`。** `Events.waterfall`@vendor/cordis/src/events.ts 把最后一个参数当 innermost：每次 `next()` 才 `cbs.shift()`；不调用则剩余 listener 与内建行为都到不了。[E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] tool-fs 传入的 innermost 是 `() => undefined`（无条件 write）。[E: packages/fs/tool-fs/src/write.ts:114] `fs-observation-policy` 的 `apply(ctx)` 对 `fs/write-intent` / `fs/edit-intent` `ctx.on` 且**不**把 `next` 传进 gate——占单槽，卸掉插件后 provider 回到无条件 write/edit。[E: packages/fs/fs-observation-policy/src/index.ts:119] [E: packages/fs/fs-observation-policy/src/index.ts:122] `SandboxedFileSystem` 不订阅这些事件。围栏发生在 waterfall **之后**的 `writeText` / `editText`。
+4. **`fs/write-intent` waterfall 与围栏正交，必须有人 `next()` 才会 `shift`。** `Events.waterfall`@vendor/cordis/src/events.ts 把最后一个参数当 innermost：每次 `next()` 才 `cbs.shift()`；不调用则剩余 listener 与内建行为都到不了。[E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] tool-fs 传入的 innermost 是 `() => undefined`（无条件 write）。[E: packages/fs/tool-fs/src/write.ts:115] `fs-observation-policy` 的 `apply(ctx)` 对 `fs/write-intent` / `fs/edit-intent` `ctx.on` 且**不**把 `next` 传进 gate——占单槽，卸掉插件后 provider 回到无条件 write/edit。[E: packages/fs/fs-observation-policy/src/index.ts:119] [E: packages/fs/fs-observation-policy/src/index.ts:122] `SandboxedFileSystem` 不订阅这些事件。围栏发生在 waterfall **之后**的 `writeText` / `editText`。
 
 5. **只有两条 mutation 进围栏；读全部继承。** `writeText` / `editText` 先 `await this.checkedTarget(target, sandboxPolicy)`，再 `super.*`——最后一参 **不**传给 `LocalFileSystem`（local 的 `writeText` 最后一参是 `signal`，没有 `sandboxPolicy`）。[E: packages/fs/fs-sandbox/src/index.ts:87] [E: packages/fs/fs-sandbox/src/index.ts:108] [E: packages/fs/fs-local/src/index.ts:179] 本类不再 override `readText` / `stat` / `listDir`。`read-only` 测例：`writeText` / `editText` 抛 `FS_SANDBOX_DENIED` 且盘上无新文件 / 原文不变；同文件 `readText` 返回 `'hello'`。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:72] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:80] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:81] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:87]
 
@@ -129,7 +129,7 @@ updated: c291e7961a
    - `read-only`：立刻 `throw new FsError(..., 'FS_SANDBOX_DENIED')`。[E: packages/fs/fs-sandbox/src/index.ts:127]
    - 其余（类型上即 `workspace-write`）：`const fresh = await this.resolve(target.displayPath)`，对 `writableRoots(policy)` 逐个 `isPathUnder(fresh.targetKey, root)`；无一命中则同样抛 `FS_SANDBOX_DENIED`；命中则 `return fresh`。[E: packages/fs/fs-sandbox/src/index.ts:132] [E: packages/fs/fs-sandbox/src/index.ts:134] [E: packages/fs/fs-sandbox/src/index.ts:135] [E: packages/fs/fs-sandbox/src/index.ts:141] [E: packages/fs/fs-sandbox/src/index.ts:143]
 
-7. **`workspace-write` 用新鲜 identity 做 containment，并拿这份 identity 去写。** `LocalFileSystem.resolve` 调 `resolveLocalTarget`：已存在则 `realpath` 目标；缺失则 realpath 最近祖先再拼回后缀——所以 workspace 内 symlink 指到外面时，`targetKey` 已经在外面。[E: packages/fs/fs-local/src/index.ts:108] [E: packages/fs/fs-local/src/fsio.ts:151] 测例：`workspace/link → outside` 上写 `link/f.txt` 或 `link/newdir/deep.txt` 都被拒，outside 不出现文件。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:124] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:129] 另一测例把 `displayPath` 放在 workspace 内、把 `targetKey` 伪造成 outside：围栏按 `displayPath` 重 resolve，字节落在 inside，outside 无文件。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:155] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:161] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:161] `..` 逃出与 workspace 外绝对路径同样 `FS_SANDBOX_DENIED`。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:108] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:115]
+7. **`workspace-write` 用新鲜 identity 做 containment，并拿这份 identity 去写。** `LocalFileSystem.resolve` 调 `resolveLocalTarget`：已存在则 `realpath` 目标；缺失则 realpath 最近祖先再拼回后缀——所以 workspace 内 symlink 指到外面时，`targetKey` 已经在外面。[E: packages/fs/fs-local/src/index.ts:108] [E: packages/fs/fs-local/src/fsio.ts:150] 测例：`workspace/link → outside` 上写 `link/f.txt` 或 `link/newdir/deep.txt` 都被拒，outside 不出现文件。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:124] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:129] 另一测例把 `displayPath` 放在 workspace 内、把 `targetKey` 伪造成 outside：围栏按 `displayPath` 重 resolve，字节落在 inside，outside 无文件。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:155] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:161] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:161] `..` 逃出与 workspace 外绝对路径同样 `FS_SANDBOX_DENIED`。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:108] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:115]
 
 8. **allow-list 是 `writableRoots`，不是本包 Config。** `workspace-write` 授予 canonical 的 workspace 根、`/tmp`、`os.tmpdir()`。[E: packages/sandbox/sandbox/src/roots.ts:54] [E: packages/sandbox/sandbox/tests/roots.spec.ts:32] 因此测「外面」目录时把 fixture 放在 `$HOME` 下：放进 `tmpdir()` 会被合法放行。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:42] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:102] Seatbelt profile 也 `const roots = writableRoots(policy)`，两家不会各写一份根。[E: packages/sandbox/sandbox-local/src/profiles.ts:53] `isPathUnder` 先做（可关大小写的）词法前缀；对不上再 `stat` 根与目标祖先的 `dev`/`ino`。[E: packages/fs/fs-sandbox/src/containment.ts:63] [E: packages/fs/fs-sandbox/src/containment.ts:71] 测例：路径相等 / 子孙为真；symlink 别名根下的缺失文件为真；无关目录与缺失根为假。[E: packages/fs/fs-sandbox/tests/containment.spec.ts:23] [E: packages/fs/fs-sandbox/tests/containment.spec.ts:24] [E: packages/fs/fs-sandbox/tests/containment.spec.ts:38] [E: packages/fs/fs-sandbox/tests/containment.spec.ts:46] [E: packages/fs/fs-sandbox/tests/containment.spec.ts:47]
 
@@ -137,7 +137,7 @@ updated: c291e7961a
 
 10. **per-call 盖章只活在这一次 mutation。** 部署 `read-only` 时传入 `{ mode: 'workspace-write', workspaceRoot }` 可让 contained 路径落地；紧接着不带最后一参的邻居 `writeText` 仍按 default 拒绝。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:204] [E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:209] `danger-full-access` 盖章则连 workspace 外也写成功。[E: packages/fs/fs-sandbox/tests/fs-sandbox.spec.ts:213]
 
-11. **preset 面只换 Consumer，不换 host `ctx.fs`。** `dsh-web-app` 写 `id: tool-fs` / `disabled: true`，不碰 `fs-sandbox`。[E: packages/bundle/web-app/cordis.patch.yml:387] [E: packages/bundle/web-app/cordis.patch.yml:388] shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`。`standard` / `ptc` / `cordis` 按会话挂回 `tool-fs`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:57] `minimal` 只 isolate `terminals`，**不**再挂 `fs-local`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:25]
+11. **preset 面只换 Consumer，不换 host `ctx.fs`。** `dsh-web-app` 写 `id: tool-fs` / `disabled: true`，不碰 `fs-sandbox`。[E: packages/bundle/web-app/cordis.patch.yml:466] [E: packages/bundle/web-app/cordis.patch.yml:467] 四份 shipped preset 是 `minimal` / `standard` / `ptc` / `cordis`（`packages/bundle/web-app/presets/*.patch.yml`）。`standard` / `ptc` / `cordis` 按会话挂回 `tool-fs`。[E: packages/bundle/web-app/presets/standard.patch.yml:26] `minimal` 只 isolate `terminals`，**不**再挂 `fs-local`。[E: packages/bundle/web-app/presets/minimal.patch.yml:20] [E: packages/bundle/web-app/presets/minimal.patch.yml:21]
 
 ## 设计动机
 
@@ -198,7 +198,7 @@ updated: c291e7961a
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/web-app/cordis.patch.yml
 - packages/bundle/sdk-minimal/cordis.patch.yml
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
 - vendor/cordis/src/events.ts
 
 ## 相关

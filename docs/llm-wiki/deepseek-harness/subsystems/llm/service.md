@@ -17,9 +17,12 @@ source:
   - packages/llm/llm/tests/topology.spec.ts
   - packages/llm/llm/package.json
   - packages/core/agent-loop/src/agent.ts
+  - packages/core/agent-loop/src/assistant-stream.ts
   - packages/core/agent-loop/src/invariant.ts
   - packages/bundle/base/cordis.patch.yml
-  - packages/llm/llm-deepseek/src/index.ts
+  - packages/llm/llm-deepseek/src/host.ts
+  - packages/llm/llm-deepseek-api-key/src/index.ts
+  - packages/llm/llm-deepseek-account/src/index.ts
   - packages/llm/llm-retry/src/index.ts
   - packages/session/session-checkpoint-policy/src/index.ts
   - packages/test-support/llm-replay/src/index.ts
@@ -43,14 +46,14 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-llm` 是 **host 面** LLM 缝的 Definition：`ctx.llm` 的实现是 `LlmRuntime`，负责 adapter 注册表、把 `LlmCallConfig` 冻成一次性 `PreparedLlmCall`、以及可拦截的 `llm/stream` waterfall。它没有 plugin `Config`，也不发 HTTP。
 
-DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不是「又一个 coding agent」。capability seam 是 Definition / Provider / Consumer。本服务坐在 **host 面**（进程级，和 `sessions` / `agents` / `settings` 同一层），不进 agent-preset 的 tools / persona / isolate 树。shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`（`dsh web` 只是 `web` 的别名；也可用 `dsh --profile sdk|sdk-minimal|acp|headless`）。本仓没有 shipped TUI 包。进入模型请求的 `provider` / `model` / `messages` 必须能从 session log 重建（`model-visible ⟺ logged`）。
+DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），不是「又一个 coding agent」。capability seam 是 Definition / Provider / Consumer。本服务坐在 **host 面**（进程级，和 `sessions` / `agents` / `settings` 同一层），不进 agent-preset 的 tools / persona / isolate 树。五个 shipped CLI profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`（`dsh web` 把第一个非 flag 参数展开成 `--profile web`）。本仓没有 shipped TUI 包。进入模型请求的 `provider` / `model` / `messages` 必须能从 session log 重建（`model-visible ⟺ logged`）。
 
-route 不是服务字段。仓库里**没有** `ctx.llm.route`。route = `registerAdapter(providers, adapter)` 写进私有 `adapters` map 的 **provider 字符串键**；调用方用 `GenerateOptions.provider` 选中它。叠 `dsh-base` 的默认对话路由是 `deepseek-official`（`agent-default-model` 的 composition `provider` + `llm-deepseek` 始终 `registerAdapter(['deepseek-official'], …)`）。`llm-pi-ai` 是兄弟页：base 始终加载，但零 adapter route，直到 Settings 写出 profile。
+route 不是服务字段。仓库里**没有** `ctx.llm.route`。route = `registerAdapter(providers, adapter)` 写进私有 `adapters` map 的 **provider 字符串键**；调用方用 `GenerateOptions.provider` 选中它。叠 `dsh-base` 的默认对话路由是 `deepseek-official`（`agent-default-model` 的 composition `provider` + `llm-deepseek-api-key` 始终 `registerAdapter(['deepseek-official'], …)`）。同一 host 另挂 `llm-deepseek-account` 的 `deepseek-account`。`llm-pi-ai` 是兄弟页：base 始终加载，但零 adapter route，直到 Settings 写出 profile。
 
 ## 能回答的问题
 
@@ -65,27 +68,27 @@ route 不是服务字段。仓库里**没有** `ctx.llm.route`。route = `regist
 
 本包 `@deepseek-ai/dsh-llm` 拥有： [E: packages/llm/llm/package.json:2]
 
-- 服务键 `ctx.llm`（类 `LlmRuntime`，`super(ctx, 'llm')`）。 [E: packages/llm/llm/src/index.ts:52] [E: packages/llm/llm/src/index.ts:338]
-- 抽象 `LlmAdapter` 与 `registerAdapter` / `AdapterRegistrationHandle.replace`。 [E: packages/llm/llm/src/index.ts:200] [E: packages/llm/llm/src/index.ts:387]
-- 私有 `adapters` map（route = provider 字符串）以及并列的 configurable-provider `directory`、按 settings ns 的 `discoveries`。 [E: packages/llm/llm/src/index.ts:333]
-- `prepareCall` / `stream` / 事件 `llm/stream`（waterfall）与 `llm/adapters-updated`（emit）。 [E: packages/llm/llm/src/index.ts:72] [E: packages/llm/llm/src/types.ts:23] [E: packages/llm/llm/src/index.ts:902]
-- `LlmCallConfig`、`deepFreeze` 的消费方、`markAgentLoopRequest`。 [E: packages/llm/llm/src/call-config.ts:23]
+- 服务键 `ctx.llm`（类 `LlmRuntime`，`super(ctx, 'llm')`）。 [E: packages/llm/llm/src/index.ts:59] [E: packages/llm/llm/src/index.ts:351]
+- 抽象 `LlmAdapter` 与 `registerAdapter` / `AdapterRegistrationHandle.replace`。 [E: packages/llm/llm/src/index.ts:208] [E: packages/llm/llm/src/index.ts:396]
+- 私有 `adapters` map（route = provider 字符串）以及并列的 configurable-provider `directory`、按 settings ns 的 `discoveries`。 [E: packages/llm/llm/src/index.ts:343]
+- `prepareCall` / `stream` / 事件 `llm/stream`（waterfall）与 `llm/adapters-updated`（emit）。 [E: packages/llm/llm/src/index.ts:75] [E: packages/llm/llm/src/types.ts:23] [E: packages/llm/llm/src/index.ts:936]
+- `LlmCallConfig`、`deepFreeze` 的消费方、`markAgentLoopRequest`。 [E: packages/llm/llm/src/call-config.ts:23] [E: packages/llm/llm/src/call-config.ts:66]
 - 增量装配器 `BlockAssembler`。 [E: packages/llm/llm/src/assembler.ts:38]
 - provider-neutral 失败类型 `LlmError` / `LlmFailure`，以及 adapter 抛错到终端 `finish` chunk 的 `normalizeLlmFailure`。 [E: packages/llm/llm/src/adapter-failure.ts:16]
-- retry **policy 的 schema 与默认值**（`resolveRetryPolicy(undefined, path)` → `normal` / `maxRetries: 5`）。 [E: packages/llm/llm/src/retry-policy.ts:14] [E: packages/llm/llm/src/retry-policy.ts:156]
+- retry **policy 的 schema 与默认值**（`resolveRetryPolicy(undefined, path)` → `normal` / `maxRetries: 5`）。 [E: packages/llm/llm/src/retry-policy.ts:14] [E: packages/llm/llm/src/retry-policy.ts:155]
 
 本包 **不** 拥有：
 
-- HTTP、endpoint、API key、`MISSING_CREDENTIAL` 的请求时解析 — [`subsys.llm.deepseek`](./deepseek.md) / [`subsys.llm.pi-ai`](./pi-ai.md)。
-- settings 文档（`$DSH_HOME/settings.yaml`）与 credentials 落盘。
+- HTTP、endpoint、API key、账号 token、`MISSING_CREDENTIAL` / `ACCOUNT_SIGN_IN_REQUIRED` 的请求时解析 — [`subsys.llm.deepseek`](./deepseek.md) / [`subsys.llm.pi-ai`](./pi-ai.md)。
+- settings 文档与 credentials 落盘。
 - retry **执行**。shipped `dsh-llm-retry` 的 `inject = ['agents', 'sessionProjections']`，挂 `agent/request-error`，不是 `llm/stream`。 [E: packages/llm/llm-retry/src/index.ts:22] [E: packages/llm/llm-retry/src/index.ts:243]
 - token 计量 — [`subsys.llm.token-meter`](./token-meter.md)。
 - 默认模型选择（新 Agent 的 `provider` / `model` 种子）— [`subsys.core.agent-default-model`](../core/agent-default-model.md)。
 - turn / step / `deriveMessages()` — [`subsys.core.agent-loop`](../core/agent-loop.md) / [`spine.turn-and-step`](../../spine/turn-and-step.md)。
 - `llm-pi-ai` 的 dormant catalog 与 Settings 激活（兄弟页 [`subsys.llm.pi-ai`](./pi-ai.md)）。不要把它写成默认路由。
-- DeepSeek 官方请求扩展字段注册表 — `@deepseek-ai/dsh-deepseek-llm-api-extensions`（base 另有 `id: deepseek-llm-api-extensions` 行）。 [E: packages/bundle/base/cordis.patch.yml:30]
+- DeepSeek 官方请求扩展字段注册表 — `@deepseek-ai/dsh-deepseek-llm-api-extensions`（base 另有 `id: deepseek-llm-api-extensions` 行）。 [E: packages/bundle/base/cordis.patch.yml:37]
 
-本包没有 plugin `Config`：`LlmRuntime` 构造函数只收 `Context`，base 行也没有 `config:` 键。 [E: packages/llm/llm/src/index.ts:337] [E: packages/bundle/base/cordis.patch.yml:27] [E: packages/bundle/base/cordis.patch.yml:28]
+本包没有 plugin `Config`：`LlmRuntime` 构造函数只收 `Context`，base 行也没有 `config:` 键。 [E: packages/llm/llm/src/index.ts:350] [E: packages/bundle/base/cordis.patch.yml:34] [E: packages/bundle/base/cordis.patch.yml:35]
 
 ## 关键文件
 
@@ -97,11 +100,12 @@ route 不是服务字段。仓库里**没有** `ctx.llm.route`。route = `regist
 | `packages/llm/llm/src/retry-policy.ts` | `resolveRetryPolicy` 与 adapter 省略时的默认 `normal` 策略 |
 | `packages/llm/llm/src/assembler.ts` | `BlockAssembler`：chunk → assistant `Message` |
 | `packages/llm/llm/src/adapter-failure.ts` | adapter 抛错 → 终端 `LlmFailure` |
-| `packages/llm/llm/src/error.ts` | `HarnessError`、`EMPTY_RESPONSE` / `INVALID_CREDENTIAL` 等稳定 code |
+| `packages/llm/llm/src/error.ts` | `HarnessError`、`EMPTY_RESPONSE` / `INVALID_CREDENTIAL` / `ACCOUNT_QUOTA` 等稳定 code |
 | `packages/llm/llm/src/message.ts` | 不可变 `Message` / `freezeMessage`；`replayState` 归属 |
 | `packages/llm/llm/tests/service.spec.ts` | 路由、waterfall、`prepareCall` 一次性、`replace([])` |
 | `packages/llm/llm/tests/topology.spec.ts` | `llm/adapters-updated`、directory、`replace([])` |
 | `packages/core/agent-loop/src/agent.ts` | 谁 `prepareCall`、谁 `stream`、谁吞 `NO_ADAPTER` |
+| `packages/core/agent-loop/src/assistant-stream.ts` | loop 用 `AssistantStreamAttempt` 包一层 `BlockAssembler` |
 | `packages/bundle/base/cordis.patch.yml` | host 行 `id: llm`；默认对话 `provider: deepseek-official` |
 | `vendor/cordis/src/events.ts` | waterfall 必须 `next()` 才会 `shift` |
 
@@ -115,14 +119,15 @@ route 不是服务字段。仓库里**没有** `ctx.llm.route`。route = `regist
 | `directory` | `provider` / `displayName` / `settingsNs` / `settingsPath` | 可配置 provider 目录；dormant 时仍可非空。不是路由白名单。 |
 | `discoveries` | key = settings ns | Models 页草稿探测；不读不写 settings / credentials。 |
 | `LlmCallConfig` | `provider`, `model`, `reasoningEffort?`, `temperature?`, `maxTokens?`, `stop?` | 与 `GenerateOptions` 同名字段 1:1；loop 记进 `request/header`。 |
-| `GenerateOptions.provider` | 字符串 | 选中 `adapters` 的键。 [E: packages/llm/llm/src/types.ts:411] |
-| `PreparedLlmCall` | `config`, `retryPolicy`, `adapterDefaults`, `context?`, `stream()` | 冻住的一次性句柄，绑 **prepare 当时** 的 `AdapterRegistration`。 |
+| `GenerateOptions.provider` | 字符串 | 选中 `adapters` 的键。 [E: packages/llm/llm/src/types.ts:513] |
+| `PreparedLlmCall` | `config`, `retryPolicy`, `adapterDefaults`, `context?`, `stream()` | 冻住的一次性句柄，绑 **prepare 当时** 的 `AdapterRegistration` 与 adapter `prepareCall` 那一代。 |
+| `PreparedAdapterCall` | `model`, `stream()` | adapter 自己把能力查询和 dispatch 钉在同一代连接事实。 [E: packages/llm/llm/src/index.ts:195] |
 | `AdapterRegistrationHandle` | `()` dispose；`replace(providers)` | `replace([])` 合法（零 route 的活 registration）。 |
 | `ResolvedRetryPolicy` | `mode: 'normal' \| 'always'` | 注册时捕获；执行权在 [`subsys.llm.retry`](./retry.md)。 |
 | `StreamChunk` | `block-*` / `*-delta` / `usage` / `finish` | adapter 线协议。adapter 抛错被收成 `finish.reason.kind === 'error' \| 'aborted'`。 |
-| `BlockAssembler` | `push` / `blocks` / `message` / `usage` / `finish` | loop 边记 `assistant/chunk` 边装配。 |
+| `BlockAssembler` | `push` / `blocks` / `message` / `usage` / `finish` | loop 经 `AssistantStreamAttempt` 边记 stream 边装配。 |
 
-`resolveRetryPolicy(undefined, path)` 给出默认：`mode: 'normal'`、`maxRetries: 5`、可重试 code `EMPTY_RESPONSE` / `RATE_LIMIT` / `SERVER` / `TIMEOUT` / `TRANSPORT`。 [E: packages/llm/llm/src/retry-policy.ts:18] [E: packages/llm/llm/src/retry-policy.ts:156]
+`resolveRetryPolicy(undefined, path)` 给出默认：`mode: 'normal'`、`maxRetries: 5`、可重试 code `EMPTY_RESPONSE` / `RATE_LIMIT` / `SERVER` / `TIMEOUT` / `TRANSPORT`。 [E: packages/llm/llm/src/retry-policy.ts:18] [E: packages/llm/llm/src/retry-policy.ts:155]
 
 catalog（`listModels`）是 advisory：未列出的 model id 仍可 `resolveModel` / 发请求。消费方不得把「不在 catalog」当成拒绝条件。
 
@@ -132,53 +137,54 @@ catalog（`listModels`）是 advisory：未列出的 model id 仍可 `resolveMod
 flowchart TD
   Base["dsh-base id: llm"] --> Ctor["LlmRuntime super ctx llm"]
   Ctor --> Map["private adapters Map"]
-  DS["llm-deepseek registerAdapter deepseek-official"] --> Map
+  DS["llm-deepseek-api-key registerAdapter deepseek-official"] --> Map
+  Acc["llm-deepseek-account registerAdapter deepseek-account"] --> Map
   PI["llm-pi-ai sibling: 0 routes until Settings"] --> Map
-  Loop["ReactLoopAgent.buildRequest"] --> WaterReq["agent/request waterfall"]
+  Loop["ReactLoopAgent.prepareRequest"] --> WaterReq["agent/request waterfall"]
   WaterReq --> Prep["ctx.llm.prepareCall"]
   Prep -->|NO_ADAPTER| Swallow["loop 只吞 NO_ADAPTER"]
-  Prep -->|ok| Frozen["PreparedLlmCall + deepFreeze request"]
+  Prep -->|ok| Frozen["PreparedLlmCall + adapter prepareCall"]
   Swallow --> Dispatch["preparedCall.stream or llm.stream"]
   Frozen --> Dispatch
   Dispatch --> Water["llm/stream waterfall"]
   Water -->|listener 不 next| Short["自定义 yield / replay 短路"]
   Water -->|next| Adapter["adapterStream 绑 registration"]
   Adapter --> Chunks["StreamChunk / 终端 finish"]
-  Chunks --> Asm["BlockAssembler"]
+  Chunks --> Asm["AssistantStreamAttempt / BlockAssembler"]
 ```
 
-1. `dsh-base` 在 host 根 insert 挂 `id: llm`，`name: '@deepseek-ai/dsh-llm'`。该行只有 `id` / `name`，没有 `config:`，也没有 `isolate:`。web-app / headless / sdk / acp overlay **不**再 patch 这行（它们叠 base）。`sdk-minimal` 不叠 `dsh-base`，自带完整 insert。shipped `{minimal,standard,ptc,cordis}` 的 `agent.cordis.yml` **不**挂本包 — host 留下一份进程级注册表，preset 只决定工具 / persona / isolate。 [E: packages/bundle/base/cordis.patch.yml:27] [E: packages/bundle/base/cordis.patch.yml:28] [I]
+1. `dsh-base` 在 host 根 insert 挂 `id: llm`，`name: '@deepseek-ai/dsh-llm'`。该行只有 `id` / `name`，没有 `config:`，也没有 `isolate:`。web-app / headless / sdk / acp overlay **不**再 patch 这行（它们叠 base）。`sdk-minimal` 不叠 `dsh-base`，自带完整 insert。四个 shipped preset（`packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}.patch.yml`）**不**挂本包 — host 留下一份进程级注册表，preset 只决定工具 / persona / isolate。 [E: packages/bundle/base/cordis.patch.yml:34] [E: packages/bundle/base/cordis.patch.yml:35] [I]
 
-2. Loader 实例化 `LlmRuntime@packages/llm/llm/src/index.ts`（`export default LlmRuntime`）。`constructor` 调 `super(ctx, 'llm')`，把实现 publish 到当前 isolate 表；host 根上这就是 root realm 的 `ctx.llm`。构造函数不读 plugin config。 [E: packages/llm/llm/src/index.ts:1106] [E: packages/llm/llm/src/index.ts:337] [E: packages/llm/llm/src/index.ts:338]
+2. Loader 实例化 `LlmRuntime@packages/llm/llm/src/index.ts`（`export default LlmRuntime`）。`constructor` 调 `super(ctx, 'llm')`（基类是 `TypertRemoteService`），把实现 publish 到当前 isolate 表；host 根上这就是 root realm 的 `ctx.llm`。构造函数不读 plugin config。 [E: packages/llm/llm/src/index.ts:1176] [E: packages/llm/llm/src/index.ts:342] [E: packages/llm/llm/src/index.ts:351]
 
-3. `registerAdapter@packages/llm/llm/src/index.ts` 把每个 provider 字符串写进私有 `adapters`。初始 `providers.length === 0` 抛 `LlmError` code `INVALID_ADAPTER`（「an adapter must register at least one provider」）。空名、与另一 adapter 冲突、`providerInfo` 不保 id，分别是 `INVALID_ADAPTER` / `DUPLICATE_ADAPTER`；校验失败时 map 不动。 [E: packages/llm/llm/src/index.ts:387] [E: packages/llm/llm/src/index.ts:390] [E: packages/llm/llm/src/index.ts:423] [E: packages/llm/llm/src/index.ts:425] [E: packages/llm/llm/tests/service.spec.ts:1319]
+3. `registerAdapter@packages/llm/llm/src/index.ts` 把每个 provider 字符串写进私有 `adapters`。初始 `providers.length === 0` 抛 `LlmError` code `INVALID_ADAPTER`（「an adapter must register at least one provider」）。空名、与另一 adapter 冲突、`providerInfo` 不保 id，分别是 `INVALID_ADAPTER` / `DUPLICATE_ADAPTER`；校验失败时 map 不动。 [E: packages/llm/llm/src/index.ts:396] [E: packages/llm/llm/src/index.ts:404] [E: packages/llm/llm/src/index.ts:436] [E: packages/llm/llm/src/index.ts:438] [E: packages/llm/llm/tests/service.spec.ts:1485]
 
-4. 返回的 `AdapterRegistrationHandle.replace(providers)` 先 `prepareRoutes` 再一次同步 `commitRoutes`。`replace([])` 合法：`owned` 被清空，registration 仍活着（`released === false`），settings 清空时可以零 route 而不 dispose。测试随后还能 `replace(['m2'])` 把同一 handle 唤醒。dispose 之后再 `replace` 抛 `REGISTRATION_DISPOSED`。 [E: packages/llm/llm/src/index.ts:403] [E: packages/llm/llm/tests/service.spec.ts:1361] [E: packages/llm/llm/src/index.ts:407]
+4. 返回的 `AdapterRegistrationHandle.replace(providers)` 先 `prepareRoutes` 再一次同步 `commitRoutes`。`replace([])` 合法：`owned` 被清空，registration 仍活着（`released === false`），settings 清空时可以零 route 而不 dispose。测试随后还能 `replace(['m2'])` 把同一 handle 唤醒。dispose 之后再 `replace` 抛 `REGISTRATION_DISPOSED`。 [E: packages/llm/llm/src/index.ts:416] [E: packages/llm/llm/tests/service.spec.ts:1527] [E: packages/llm/llm/src/index.ts:420]
 
-5. shipped 默认对话路由：`agent-default-model` 的 composition `provider: deepseek-official` / `model: deepseek-flash`，`llm-deepseek` 的 `PROVIDER = 'deepseek-official'`，并 `ctx.llm.registerAdapter([PROVIDER], adapter)`。 [E: packages/bundle/base/cordis.patch.yml:78] [E: packages/bundle/base/cordis.patch.yml:79] [E: packages/llm/llm-deepseek/src/index.ts:90] [E: packages/llm/llm-deepseek/src/index.ts:492] `llm-pi-ai` 零 adapter route 直到 Settings 加 profile，细节在 [`subsys.llm.pi-ai`](./pi-ai.md)。
+5. shipped 默认对话路由：`agent-default-model` 的 composition `provider: deepseek-official` / `model: deepseek-flash`；`@deepseek-ai/dsh-llm-deepseek-api-key` 的 `PROVIDER = 'deepseek-official'`，经 `registerDeepSeekProvider` 调 `ctx.llm.registerAdapter([provider], adapter)`。 [E: packages/bundle/base/cordis.patch.yml:85] [E: packages/bundle/base/cordis.patch.yml:86] [E: packages/llm/llm-deepseek-api-key/src/index.ts:15] [E: packages/llm/llm-deepseek/src/host.ts:39] 同 host 的 `@deepseek-ai/dsh-llm-deepseek-account` 另登记 `deepseek-account`。 [E: packages/llm/llm-deepseek-account/src/index.ts:15] [E: packages/bundle/base/cordis.patch.yml:527] `llm-pi-ai` 零 adapter route 直到 Settings 加 profile，细节在 [`subsys.llm.pi-ai`](./pi-ai.md)。
 
-6. `ReactLoopAgent.buildRequest@packages/core/agent-loop/src/agent.ts` 先用 `this.options.provider/model` 组成**局部变量** `route`（这不是 `ctx.llm.route`），跑 `agent/request` waterfall 得到 `proposedConfig`，再 `await this.loopCtx.llm.prepareCall(proposedConfig, signal)`。`prepareCall` 按 `config.provider` 查 `adapters`，缺键立刻抛 `NO_ADAPTER`；命中则 `resolveCallWithInfo` 物化 adapter 默认（`maxTokens` / `reasoningEffort`），`deepFreeze(structuredClone(…))` 冻住 `config` / `context` / `adapterDefaults`，并把 **当时那条** `AdapterRegistration` 关进一次性 `stream()`。 [E: packages/core/agent-loop/src/agent.ts:476] [E: packages/core/agent-loop/src/agent.ts:502] [E: packages/llm/llm/src/index.ts:902] [E: packages/llm/llm/src/index.ts:953] [E: packages/llm/llm/src/index.ts:904]
+6. `ReactLoopAgent.prepareRequest@packages/core/agent-loop/src/agent.ts` 先用 `this.options.provider/model` 组成**局部变量** `route`（这不是 `ctx.llm.route`），跑 `agent/request` waterfall 得到 `proposedConfig`，再 `await this.loopCtx.llm.prepareCall(proposedConfig, signal)`。`prepareCall` 按 `config.provider` 查 `adapters`，缺键立刻抛 `NO_ADAPTER`；命中则先调 `registration.adapter.prepareCall` 绑这一代连接事实，再 `resolveCallWithInfo` 物化 adapter 默认（`maxTokens` / `reasoningEffort`），`deepFreeze(structuredClone(…))` 冻住 `config` / `context` / `adapterDefaults`，并把 **当时那条** `AdapterRegistration` 关进一次性 `stream()`。 [E: packages/core/agent-loop/src/agent.ts:541] [E: packages/core/agent-loop/src/agent.ts:570] [E: packages/llm/llm/src/index.ts:936] [E: packages/llm/llm/src/index.ts:938] [E: packages/llm/llm/src/index.ts:987]
 
-7. loop **只吞** `LlmError` 且 `code === 'NO_ADAPTER'`：注释写明 middleware 可能替未注册 route 短路；`preparedCall` 留空，header 仍按 `proposedConfig` 落盘。其它 prepare 失败原样抛出。未 prepare 的 dispatch 走 `this.loopCtx.llm.stream(request)`，`adapterStream` 里会再查一次 map，仍然变成终端 `finish` `NO_ADAPTER`，不会偷偷打到别的 adapter。 [E: packages/core/agent-loop/src/agent.ts:493] [E: packages/core/agent-loop/src/agent.ts:380] [E: packages/llm/llm/tests/service.spec.ts:281]
+7. loop **只吞** `LlmError` 且 `code === 'NO_ADAPTER'`：注释写明 middleware 可能替未注册 route 短路；`preparedCall` 留空，header 仍按 `proposedConfig` 落盘。其它 prepare 失败原样抛出。未 prepare 的 dispatch 走 `this.loopCtx.llm.stream(request)`，`adapterStream` 里会再查一次 map，仍然变成终端 `finish` `NO_ADAPTER`，不会偷偷打到别的 adapter。 [E: packages/core/agent-loop/src/agent.ts:574] [E: packages/core/agent-loop/src/agent.ts:419] [E: packages/llm/llm/src/index.ts:987]
 
-8. header / context 记完之后，loop `markAgentLoopRequest(deepFreeze({ …header.config, messages: boundaryMessages, … }))`。`messages` 来自 `session.deriveMessages()`，`agent/request` 改不了对话内容。 [E: packages/core/agent-loop/src/agent.ts:543] [E: packages/llm/llm/src/call-config.ts:66]
+8. header / context 记完之后，loop `markAgentLoopRequest(Object.freeze({ …header.config, messages: boundaryMessages, … }))`。`messages` 来自 `session.deriveMessages()`，`agent/request` 改不了对话内容。 [E: packages/core/agent-loop/src/agent.ts:661] [E: packages/llm/llm/src/call-config.ts:66]
 
-9. `ReactLoopAgent.step` 调 `preparedCall?.stream(request) ?? this.loopCtx.llm.stream(request)`。两条入口都进 `streamWithRegistration` → `ctx.waterfall(this, 'llm/stream', options, () => this.adapterStream(…))`。`PreparedLlmCall.stream` 校验 `callConfigEquals(options, resolvedConfig)`，第二次调用或字段漂移抛 `INVALID_PREPARED_CALL`。 [E: packages/core/agent-loop/src/agent.ts:380] [E: packages/llm/llm/src/index.ts:1072] [E: packages/llm/llm/src/index.ts:933]
+9. `ReactLoopAgent.step` 调 `preparedCall?.stream(request) ?? this.loopCtx.llm.stream(request)`。两条入口都进 `streamWithRegistration` → `ctx.waterfall(this, 'llm/stream', options, () => this.adapterStream(…))`。`PreparedLlmCall.stream` 校验 `callConfigEquals(options, resolvedConfig)`，第二次调用或字段漂移抛 `INVALID_PREPARED_CALL`。 [E: packages/core/agent-loop/src/agent.ts:419] [E: packages/llm/llm/src/index.ts:1139] [E: packages/llm/llm/src/index.ts:966]
 
-10. **waterfall 必须 `next()`。** `Events.waterfall@vendor/cordis/src/events.ts` 把最后一个参数当 innermost `next`：listener 不调用传入的 `next()` 就不会 `cbs.shift()`，内层 listener 和 `adapterStream` 全部停住。checkpoint 挂 `llm/stream`：有活 session 时 `flush` 再 `yield* next()`；replay 在未声明 fake adapter 时 `ctx.on('llm/stream', (options, _next) => replay(options))`，故意不 `next()`，用自己的 chunk 短路。手写（未 freeze）的 `options` 允许 listener 改 `provider` 再 `next()`；loop 造的请求是 frozen，mutation 会抛，路由必须发生在 `agent/request` / `prepareCall`。 [E: vendor/cordis/src/events.ts:238] [E: vendor/cordis/src/events.ts:239] [E: packages/session/session-checkpoint-policy/src/index.ts:64] [E: packages/session/session-checkpoint-policy/src/index.ts:35] [E: packages/test-support/llm-replay/src/index.ts:720] [E: packages/core/agent-loop/src/invariant.ts:23]
+10. **waterfall 必须 `next()`。** `Events.waterfall@vendor/cordis/src/events.ts` 把最后一个参数当 innermost `next`：listener 不调用传入的 `next()` 就不会 `cbs.shift()`，内层 listener 和 `adapterStream` 全部停住。checkpoint 挂 `llm/stream`：有活 session 时 `flush` 再 `yield* next()`；replay 在未声明 fake adapter 时 `ctx.on('llm/stream', (options, _next) => replay(options))`，故意不 `next()`，用自己的 chunk 短路。手写（未 freeze）的 `options` 允许 listener 改 `provider` 再 `next()`；loop 造的请求是 frozen，mutation 会抛，路由必须发生在 `agent/request` / `prepareCall`。 [E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] [E: packages/session/session-checkpoint-policy/src/index.ts:64] [E: packages/session/session-checkpoint-policy/src/index.ts:35] [E: packages/test-support/llm-replay/src/index.ts:1104] [E: packages/core/agent-loop/src/invariant.ts:23]
 
-11. `adapterStream@packages/llm/llm/src/index.ts` 若带 `prepared`，用那份 registration + 已冻 config，不再按「此刻 map 里是谁」重绑 — HMR / `replace` 换掉同名 route 之后，已经 prepare 的那一枪仍打旧 adapter。无 `prepared` 时才 `this.registration(options.provider)`。`forAdapter` 只在「历史 `source.provider` 与目标 route 属于同一 adapter **实例**」时保留 `replayState`。 [E: packages/llm/llm/src/index.ts:983] [E: packages/llm/llm/src/index.ts:964]
+11. `adapterStream@packages/llm/llm/src/index.ts` 若带 `prepared`，用那份 registration + 已冻 config + adapter `prepareCall` 给出的 `dispatch`，不再按「此刻 map 里是谁」重绑 — HMR / `replace` 换掉同名 route 之后，已经 prepare 的那一枪仍打旧 adapter。无 `prepared` 时才 `this.registration(options.provider)` 并再 `adapter.prepareCall`。`forAdapter` 只在「历史 `source.provider` 与目标 route 属于同一 adapter **实例**」时保留 `replayState`。发往 adapter 之前，runtime 还会把 file 块投影成 handle 文本；对未声明 `image` 的模型把 image 块投影成文本；再按 `toolUpdate` 投影工具变更。 [E: packages/llm/llm/src/index.ts:1039] [E: packages/llm/llm/src/index.ts:1045] [E: packages/llm/llm/src/index.ts:992] [E: packages/llm/llm/src/index.ts:1066]
 
-12. adapter 选择、iterator 构造、iteration 失败都变成终端 `finish` chunk（`normalizeLlmFailure`）；`signal.aborted` 或 code `ABORTED` 标 `kind: 'aborted'`，否则 `kind: 'error'`。middleware / consumer / cleanup（`iterator.return`）失败保持抛出，不改写成 chunk。 [E: packages/llm/llm/src/adapter-failure.ts:16] [E: packages/llm/llm/src/index.ts:1087]
+12. adapter 选择、iterator 构造、iteration 失败都变成终端 `finish` chunk（`normalizeLlmFailure`）；`signal.aborted` 或 code `ABORTED` 标 `kind: 'aborted'`，否则 `kind: 'error'`。middleware / consumer / cleanup（`iterator.return`）失败保持抛出，不改写成 chunk。 [E: packages/llm/llm/src/adapter-failure.ts:16] [E: packages/llm/llm/src/index.ts:1153]
 
-13. loop `new BlockAssembler()`，每个 chunk `session.append('assistant/chunk', …)` 再 `assembler.push`；流结束后 `createAssistantMessage` 用 `assembler.blocks()`。`finish.kind === 'max-tokens'` 时 loop **不执行**工具。 [E: packages/core/agent-loop/src/agent.ts:455] [E: packages/llm/llm/src/assembler.ts:49] [E: packages/core/agent-loop/src/agent.ts:444]
+13. loop `new AssistantStreamAttempt(...)`，内部持有 `BlockAssembler`；每个 chunk `live.push` 再在成功路径 `createAssistantMessage({ content: live.blocks(), … })`。`finish.kind === 'max-tokens'` 时 loop **不执行**工具。 [E: packages/core/agent-loop/src/agent.ts:409] [E: packages/core/agent-loop/src/assistant-stream.ts:20] [E: packages/core/agent-loop/src/agent.ts:513]
 
-14. **isolate。** 本行不进 isolate realm，yml 无 `isolate:`。需要进程级一份注册表，就留在 host；不要为了「每会话一份 llm」去 preset remount。`directory` 的 `replace([])` 与 adapter 的 `replace([])` 对称：初始空注册抛错，活 handle 允许空集。 [E: packages/llm/llm/src/index.ts:510] [E: packages/llm/llm/src/index.ts:527] [E: packages/llm/llm/tests/topology.spec.ts:192]
+14. **isolate。** 本行不进 isolate realm，yml 无 `isolate:`。需要进程级一份注册表，就留在 host；不要为了「每会话一份 llm」去 preset remount。`directory` 的 `replace([])` 与 adapter 的 `replace([])` 对称：初始空注册抛错，活 handle 允许空集。 [E: packages/llm/llm/src/index.ts:404] [E: packages/llm/llm/tests/topology.spec.ts:192]
 
 ## 设计动机
 
-- **route 是 map 键，不是服务属性。** 多家 adapter 共存靠互斥的 provider 字符串（`deepseek-official` 与 pi-ai catalog 名 `deepseek` 刻意不同名）。给 `ctx.llm` 再加一个 `.route` 字段会让「当前路由」看起来像单例，和 `registerAdapter` 的多键模型冲突。
-- **`prepareCall` 把 capability 查询和 dispatch 钉在同一次 registration。** settings / HMR 可以 `replace` 同名 route；如果 resolve 用 A、stream 用 B，就会把一家的 `defaultMaxTokens` / `reasoningEffort` 送给另一家。一次性 handle 切断这条缝。
+- **route 是 map 键，不是服务属性。** 多家 adapter 共存靠互斥的 provider 字符串（`deepseek-official`、`deepseek-account` 与 pi-ai catalog 名 `deepseek` 刻意不同名）。给 `ctx.llm` 再加一个 `.route` 字段会让「当前路由」看起来像单例，和 `registerAdapter` 的多键模型冲突。
+- **`prepareCall` 把 capability 查询和 dispatch 钉在同一次 registration。** settings / HMR 可以 `replace` 同名 route；如果 resolve 用 A、stream 用 B，就会把一家的 `defaultMaxTokens` / `reasoningEffort` 送给另一家。runtime 再调 `adapter.prepareCall`，让动态连接事实（endpoint / key 引用）也钉在同一代。
 - **`llm/stream` 是拦截缝，不是 retry 引擎。** JSDoc 把 retry / replay / routing 都写在这条 waterfall 上；自定义 yield 与 replay 确实挂在这里。shipped retry 却走 `agent/request-error`，因为次数、backoff、`llm/retry` 事件属于 **session 可重建** 的 loop 恢复，不是 adapter I/O 包装。
 - **`replace([])` ≠ dispose。** Settings 清空某一段时，插件必须保持活 registration（否则没有 owner 再 `replace` 回来）。`released` 旗标专门区分「零 route 的活 handle」和「effect 已卸」。
 - **adapter 失败收成 chunk，plugin 失败继续抛。** 消费方（loop）把终端 `error`/`aborted` 送进 `agent/request-error`；监听者自己炸了不该被假装成模型失败。
@@ -186,17 +192,18 @@ flowchart TD
 
 ## Gotcha
 
-- **没有 `ctx.llm.route`。** grep 整仓为零。loop 里的 `const route = { provider, model }` 是 `buildRequest` 局部对象。 [E: packages/core/agent-loop/src/agent.ts:476]
-- **初始 `registerAdapter([])` 抛 `INVALID_ADAPTER`；`replace([])` 合法。** 把「空」写成 dispose 会让 Settings 清空再也注册不回来。 [E: packages/llm/llm/tests/service.spec.ts:1319] [E: packages/llm/llm/tests/service.spec.ts:1361]
-- **loop 吞掉 `NO_ADAPTER` 只为让 `llm/stream` middleware 短路。** header 仍会按未注册的 `proposedConfig` 落盘；若没有人 yield 自己的 chunk，后续 `llm.stream` 仍以 `NO_ADAPTER` finish 失败。 [E: packages/core/agent-loop/src/agent.ts:493]
-- **`PreparedLlmCall.stream` 只能派一次。** 复用或改 `model` / `provider` / sampling 字段 → `INVALID_PREPARED_CALL`。 [E: packages/llm/llm/src/index.ts:930]
-- **loop 请求 frozen。** `llm/stream` listener 改 `options.provider` 只对未冻的手写调用有效；loop 路径要改路由，走 `agent/request`，并且必须 `next()`。 [E: packages/core/agent-loop/src/invariant.ts:23] [E: vendor/cordis/src/events.ts:239]
+- **没有 `ctx.llm.route`。** grep 整仓为零。loop 里的 `const route = { provider, model }` 是 `prepareRequest` 局部对象。 [E: packages/core/agent-loop/src/agent.ts:541]
+- **初始 `registerAdapter([])` 抛 `INVALID_ADAPTER`；`replace([])` 合法。** 把「空」写成 dispose 会让 Settings 清空再也注册不回来。 [E: packages/llm/llm/tests/service.spec.ts:1485] [E: packages/llm/llm/tests/service.spec.ts:1527]
+- **loop 吞掉 `NO_ADAPTER` 只为让 `llm/stream` middleware 短路。** header 仍会按未注册的 `proposedConfig` 落盘；若没有人 yield 自己的 chunk，后续 `llm.stream` 仍以 `NO_ADAPTER` finish 失败。 [E: packages/core/agent-loop/src/agent.ts:574]
+- **`PreparedLlmCall.stream` 只能派一次。** 复用或改 `model` / `provider` / sampling 字段 → `INVALID_PREPARED_CALL`。 [E: packages/llm/llm/src/index.ts:966]
+- **loop 请求 frozen。** `llm/stream` listener 改 `options.provider` 只对未冻的手写调用有效；loop 路径要改路由，走 `agent/request`，并且必须 `next()`。 [E: packages/core/agent-loop/src/invariant.ts:23] [E: vendor/cordis/src/events.ts:238]
 - **shipped retry 不在 `llm/stream` 上。** 在 `agent/request-error` 上读 `preparedCall.retryPolicy`。本页只提供 policy 默认值（`maxRetries` 默认 **5**，不是 2）。 [E: packages/llm/llm-retry/src/index.ts:243] [E: packages/llm/llm/src/retry-policy.ts:14]
-- **`llm-pi-ai` 不是默认路由。** 默认对话是 `deepseek-official` / `deepseek-flash`。pi-ai 的 dormant / directory 非空写在 [`subsys.llm.pi-ai`](./pi-ai.md)。
+- **`llm-pi-ai` 不是默认路由。** 默认对话是 `deepseek-official` / `deepseek-flash`。pi-ai 的 dormant / directory 非空写在 [`subsys.llm.pi-ai`](./pi-ai.md)。账号路由 `deepseek-account` 始终登记，但是否能发请求看登录态，见 [`subsys.llm.deepseek`](./deepseek.md)。
 - **directory 非空 ≠ 有 route。** `listConfigurableProviders()` 可以列出尚未 `registerAdapter` 的项；`prepareCall` 仍然 `NO_ADAPTER`。
-- **`replayState` 跨 adapter 实例会被剥掉。** 同一实例兼有历史 provider 与目标 provider 才交给 `adapter.stream`。 [E: packages/llm/llm/src/index.ts:964]
+- **`replayState` 跨 adapter 实例会被剥掉。** 同一实例兼有历史 provider 与目标 provider 才交给 `adapter.stream`。 [E: packages/llm/llm/src/index.ts:997]
 - **preset 再挂 `@deepseek-ai/dsh-llm` 且不 isolate** 会撞 host 已 publish 的 `ctx.llm`。本行必须留在 host。
 - **不要把 `id: llm` 写成带 Config 的可调插件。** 调 key / endpoint / retry 次数分别在 adapter 行、credentials、`retryPolicy`（各 provider）和 `dsh-llm-retry`。
+- **yml `id: llm-deepseek` 的包名是 `@deepseek-ai/dsh-llm-deepseek-api-key`，不是 `@deepseek-ai/dsh-llm-deepseek`。** 后者是 Messages 协议库，不自己 `apply`。 [E: packages/bundle/base/cordis.patch.yml:524] [E: packages/bundle/base/cordis.patch.yml:525]
 
 ## Seam 三角
 
@@ -204,10 +211,10 @@ flowchart TD
 |---|---|---|---|
 | Definition | `@deepseek-ai/dsh-llm` 的 `LlmRuntime`、`LlmAdapter`、`Context.llm`、`Events['llm/stream']` | `llm` | 无（类型与服务名在包内 `declare module`）；**无** plugin `Config` |
 | Provider（缝本身） | 同包 `export default LlmRuntime` | `llm` | **host** `dsh-base`：`id: llm`（无 `config`、无 `isolate`）。**无** preset 行 |
-| Provider（route） | `dsh-llm-deepseek` 始终 `registerAdapter(['deepseek-official'], …)`；`dsh-llm-pi-ai` 见兄弟页（零 route 直到 Settings） | `llm.registerAdapter` 写入的 provider 键 | host `id: llm-deepseek`、`id: llm-pi-ai`。默认对话键 `deepseek-official` |
-| Consumer | `ReactLoopAgent.buildRequest` / `step`（`prepareCall` + `stream`）；`session-checkpoint-policy` 的 `llm/stream`；`dsh-llm-retry` 读 `retryPolicy`（挂在 `agent/request-error`）；replay 可短路 `llm/stream` | `llm`；loop 另用 `agents` | host `id: agent-loop`、`id: session-checkpoint-policy`、`id: llm-retry`。preset **不**消费此服务 |
+| Provider（route） | `dsh-llm-deepseek-api-key` 始终登记 `deepseek-official`；`dsh-llm-deepseek-account` 始终登记 `deepseek-account`；`dsh-llm-pi-ai` 见兄弟页（零 route 直到 Settings） | `llm.registerAdapter` 写入的 provider 键 | host `id: llm-deepseek`、`id: llm-deepseek-account`、`id: llm-pi-ai`。默认对话键 `deepseek-official` |
+| Consumer | `ReactLoopAgent.prepareRequest` / `step`（`prepareCall` + `stream`）；`session-checkpoint-policy` 的 `llm/stream`；`dsh-llm-retry` 读 `retryPolicy`（挂在 `agent/request-error`）；replay 可短路 `llm/stream` | `llm`；loop 另用 `agents` | host `id: agent-loop`、`id: session-checkpoint-policy`、`id: llm-retry`。preset **不**消费此服务 |
 
-换掉 `id: llm` 的插件等于换整张注册表与 waterfall。换掉 `id: llm-deepseek` 只换默认 route 的 HTTP / catalog，不换 `ctx.llm` 本身。
+换掉 `id: llm` 的插件等于换整张注册表与 waterfall。换掉 `id: llm-deepseek` 只换官方 API-key route 的 HTTP / catalog，不换 `ctx.llm` 本身，也不卸 `deepseek-account`。
 
 ## Sources
 
@@ -223,9 +230,12 @@ flowchart TD
 - packages/llm/llm/tests/topology.spec.ts
 - packages/llm/llm/package.json
 - packages/core/agent-loop/src/agent.ts
+- packages/core/agent-loop/src/assistant-stream.ts
 - packages/core/agent-loop/src/invariant.ts
 - packages/bundle/base/cordis.patch.yml
-- packages/llm/llm-deepseek/src/index.ts
+- packages/llm/llm-deepseek/src/host.ts
+- packages/llm/llm-deepseek-api-key/src/index.ts
+- packages/llm/llm-deepseek-account/src/index.ts
 - packages/llm/llm-retry/src/index.ts
 - packages/session/session-checkpoint-policy/src/index.ts
 - packages/test-support/llm-replay/src/index.ts
@@ -234,12 +244,12 @@ flowchart TD
 ## 相关
 
 - [`spine.overview`](../../spine/overview.md) — Cordis 组合主线、host 面 vs agent-preset 面、`model-visible ⟺ logged`。
-- [`spine.turn-and-step`](../../spine/turn-and-step.md) — `agent/request` → `prepareCall` → `llm.stream` → `BlockAssembler`。
-- [`subsys.llm.deepseek`](./deepseek.md) — 默认对话路由 `deepseek-official` 的 adapter。
+- [`spine.turn-and-step`](../../spine/turn-and-step.md) — `agent/request` → `prepareCall` → `llm.stream` → `AssistantStreamAttempt`。
+- [`subsys.llm.deepseek`](./deepseek.md) — 官方 `deepseek-official` 与账号 `deepseek-account` 两条 Messages 路由。
 - [`subsys.llm.pi-ai`](./pi-ai.md) — 始终加载、零 adapter route 直到 Settings；directory 在 dormant 时仍可非空。
 - [`subsys.llm.retry`](./retry.md) — `agent/request-error` 上执行 `retryPolicy`，不是 adapter。
 - [`subsys.core.agent-loop`](../core/agent-loop.md) — 谁 `prepareCall` / `stream`，谁吞 `NO_ADAPTER`。
-- [`surface.providers.deepseek`](../../surface/providers/deepseek.md) — 模型可见路由名 `deepseek-official`。
+- [`surface.providers.deepseek`](../../surface/providers/deepseek.md) — 模型可见路由名 `deepseek-official` / `deepseek-account`。
 - [`subsys.llm.token-meter`](./token-meter.md) — host 面计量，不在请求路径上。
 - [`subsys.core.agent-default-model`](../core/agent-default-model.md) — 新 Agent 的默认 `provider: deepseek-official` / `model: deepseek-flash`。
 - [`subsys.composition.bundle-base`](../composition/bundle-base.md) — host insert 含 `id: llm`；preset 不挂本包。

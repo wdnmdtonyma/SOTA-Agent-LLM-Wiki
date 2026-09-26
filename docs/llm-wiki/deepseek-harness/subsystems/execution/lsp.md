@@ -20,13 +20,12 @@ source:
   - packages/lsp/tool-lsp/src/index.ts
   - packages/lsp/tool-lsp/src/session-cwd.ts
   - packages/lsp/tool-lsp/package.json
-  - packages/e2b/e2b/tests/fixtures/composition/cordis.yml
-  - packages/e2b/e2b/tests/composition.e2e.ts
   - snapshots/session/lsp-definition/cordis.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/ssh/ssh/tests/live.e2e.ts
+  - packages/bundle/web-app/presets/minimal.patch.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - vendor/cordis/src/service.ts
   - vendor/cordis/src/events.ts
 symbols:
@@ -42,15 +41,16 @@ related:
   - subsys.execution.fs
   - subsys.execution.subprocess
   - surface.tools.lsp
+  - subsys.execution.ssh
   - subsys.execution.e2b
   - spine.tool-call-anatomy
   - subsys.core.tools
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
-> `ctx.lsp`（`Lsp`）是 **provider 注册表 + 按文件最终扩展名选路** 的 capability 缝：恰好四个操作 `goToDefinition` / `findReferences` / `goToImplementation` / `hover`，没有 JSON-RPC 逃生舱。本仓唯一 shipped 后端是 namespace 插件 `lsp-stdio`（`inject = ['fs', 'lsp', 'subprocess']`），同时吃 `ctx.fs` 与 `ctx.subprocess`。四个 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）与 `dsh-base` **不挂** `dsh-lsp` / `dsh-lsp-stdio` / `dsh-tool-lsp`；E2B 测试夹具与 session snapshot 才插入 LSP 行。
+> `ctx.lsp`（`Lsp`）是 **provider 注册表 + 按文件最终扩展名选路** 的 capability 缝：恰好四个操作 `goToDefinition` / `findReferences` / `goToImplementation` / `hover`，没有 JSON-RPC 逃生舱。本仓唯一 shipped 后端是 namespace 插件 `lsp-stdio`（`inject = ['fs', 'lsp', 'subprocess']`），同时吃 `ctx.fs` 与 `ctx.subprocess`。四份 shipped preset（`minimal` / `standard` / `ptc` / `cordis`）与 `dsh-base` **不挂** `dsh-lsp` / `dsh-lsp-stdio` / `dsh-tool-lsp`；session snapshot 与 SSH live e2e 才插入 LSP 行。
 
 ## 能回答的问题
 
@@ -58,7 +58,7 @@ updated: c291e7961a
 - 四个操作是哪四个？模型能不能发任意 JSON-RPC / rename / symbols？
 - 选路看路径的哪一段扩展名？`foo.d.ts`、`Makefile`、`.bashrc` 各走哪条？
 - `lsp-stdio` 怎样同时消费 `ctx.fs` 与 `ctx.subprocess`？只换 `ctx.fs` 会不会把 language server 搬到远程？
-- `minimal` / `standard` / `ptc` / `cordis` 挂不挂本缝？E2B 夹具与 snapshot 插入哪几行？
+- `minimal` / `standard` / `ptc` / `cordis` 挂不挂本缝？snapshot 与 SSH live e2e 插入哪几行？
 - 注册失败会不会留下半份路由？disposer / fiber dispose 释放什么？
 
 ## 职责边界
@@ -73,10 +73,10 @@ updated: c291e7961a
 - `ctx.fs` 原语与 sandbox 围栏：[subsys.execution.fs](fs.md)（`subsys.execution.fs`）。stdio 读源走 `fs.resolve` / `fs.streamText` / `fs.contains`。
 - `ctx.subprocess` 的 spawn 力学与 env scrub：[subsys.execution.subprocess](subprocess.md)（`subsys.execution.subprocess`）。stdio 把已解析的 argv 交给 `spawn`。
 - `ctx.sandbox.confine` / `SandboxMode`。`lsp-stdio` **不** `inject` `sandbox` 或 `sandboxPolicy`；语言服务器进程不受 confine。[E: packages/lsp/lsp-stdio/src/index.ts:47]
-- E2B 远程 one-world 怎么成对替换 fs+subprocess：[subsys.execution.e2b](e2b.md)（`subsys.execution.e2b`）。本页只写：stdio 同时挂在那两条缝上，所以只换一边会分裂世界。
+- 远程 one-world 怎么成对替换 fs+subprocess：[subsys.execution.ssh](ssh.md)（`subsys.execution.ssh`）。本页只写：stdio 同时挂在那两条缝上，所以只换一边会分裂世界。
 - `ctx.tools` 注册表与 `tools/pre-execute` 管线：[subsys.core.tools](../core/tools.md)、[spine.tool-call-anatomy](../../spine/tool-call-anatomy.md)。
 
-**host 面 vs agent-preset 面。** 五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；`dsh web` 仍是硬编码 profile 别名，其它宿主走 `dsh --profile sdk|sdk-minimal|acp|headless`。`dsh-base` / `dsh-web-app` / 四个 shipped preset **都不**加载本缝。E2B 测试夹具在同一 composition 里挂 `id: lsp` 与 `id: lsp-stdio`（fixture `node` server，`.ts`），**没有** `isolate.lsp`。[E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:46] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:49] 模型面 `tool-lsp` 出现在 session snapshot `lsp-definition` 的 insert 列表，不是 shipped preset。[E: snapshots/session/lsp-definition/cordis.yml:15] 浏览器 client 不实现 `Lsp`。
+**host 面 vs agent-preset 面。** 五个 shipped profile 是 `web` / `headless` / `sdk` / `sdk-minimal` / `acp`；`dsh web` 仍是硬编码 profile 别名，其它宿主走 `dsh --profile sdk|sdk-minimal|acp|headless`。`dsh-base` / `dsh-web-app` / 四份 shipped preset **都不**加载本缝。session snapshot `lsp-definition` 在同一 composition 里挂 `id: lsp` 与 `id: lsp-stdio`（fixture `node` server，`.ts`），**没有** `isolate.lsp`。[E: snapshots/session/lsp-definition/cordis.yml:4] [E: snapshots/session/lsp-definition/cordis.yml:6] 模型面 `tool-lsp` 出现在同一 snapshot 的 insert 列表，不是 shipped preset。[E: snapshots/session/lsp-definition/cordis.yml:15] 浏览器 client 不实现 `Lsp`。
 
 **没有 `lsp/*` 事件。** `Lsp` 的 module augmentation 只声明 `Context.lsp`，不声明 waterfall / emit。[E: packages/lsp/lsp/src/index.ts:40] Cordis 全局规则仍是：若将来有人挂 waterfall，listener 必须调用 `next()` 才会 `cbs.shift()`。[E: vendor/cordis/src/events.ts:238] 本缝的组合失败是「同 realm 第二份 `Lsp` 抛」和「Consumer `inject` 等到 `lsp`」，不是占槽不 `next()`。
 
@@ -93,7 +93,7 @@ updated: c291e7961a
 | `packages/lsp/lsp-stdio/src/connection.ts` | JSON-RPC framing；`spawner({ argv, cwd, stdio, graceMs, env })` |
 | `packages/lsp/lsp-stdio/src/translate.ts` | `requestMethod` / capability 检查 / `normalizeLocations` / `normalizeHover` |
 | `packages/lsp/tool-lsp/src/index.ts` | 模型面 Consumer：`ctx.lsp.query` |
-| `packages/e2b/e2b/tests/fixtures/composition/cordis.yml` | E2B one-world 夹具挂 `lsp` + `lsp-stdio` |
+| `snapshots/session/lsp-definition/cordis.yml` | session snapshot 挂 `lsp` + `lsp-stdio` + `tool-lsp` |
 | `snapshots/session/lsp-definition/cordis.yml` | 模型面 `tool-lsp` 与 stdio fixture 的 snapshot insert |
 
 ## 数据模型
@@ -118,7 +118,7 @@ updated: c291e7961a
 ## 控制流
 
 1. `Lsp`@packages/lsp/lsp/src/index.ts 在 augmentation 里声明 `Context.lsp`，构造调用 `Service` → `ctx.reflect.provide('lsp', self)`。[E: packages/lsp/lsp/src/index.ts:40] [E: packages/lsp/lsp/src/index.ts:87] [E: vendor/cordis/src/service.ts:57]
-2. 使用本缝的 composition 必须加载 `@deepseek-ai/dsh-lsp`（E2B 夹具的 `id: lsp`）。`lsp-stdio` 是 namespace 插件（`export const name = 'lsp-stdio'`），`inject = ['fs', 'lsp', 'subprocess']`：三者缺一，这一行 pending，不会 `registerProvider`。[E: packages/lsp/lsp-stdio/src/index.ts:44] [E: packages/lsp/lsp-stdio/src/index.ts:47] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:46]
+2. 使用本缝的 composition 必须加载 `@deepseek-ai/dsh-lsp`（snapshot 的 `id: lsp`）。`lsp-stdio` 是 namespace 插件（`export const name = 'lsp-stdio'`），`inject = ['fs', 'lsp', 'subprocess']`：三者缺一，这一行 pending，不会 `registerProvider`。[E: packages/lsp/lsp-stdio/src/index.ts:44] [E: packages/lsp/lsp-stdio/src/index.ts:47] [E: snapshots/session/lsp-definition/cordis.yml:4]
 3. `apply`@packages/lsp/lsp-stdio/src/index.ts 先对 `config.servers` 每一项 `validateServerConfig`，再 `ctx.subprocess.resolveExecutable(command, env, setupAbort.signal)`。任一 lookup 失败会 abort 兄弟 lookup，**在调用 `registerProvider` 之前**退出；单测钉死「valid + missing」之后 `.ts` 仍 `LSP_UNAVAILABLE`。[E: packages/lsp/lsp-stdio/src/index.ts:146] [E: packages/lsp/lsp-stdio/tests/provider.spec.ts:183] [E: packages/lsp/lsp-stdio/tests/provider.spec.ts:194]
 4. 每个条目构造 `LocalLspProvider`：持有 `ctx.fs`，并把 `spec => ctx.subprocess.spawn(spec)` 当作 spawner。进程按 query 懒启动，不在 load 时 spawn。[E: packages/lsp/lsp-stdio/src/index.ts:154] [E: packages/lsp/lsp-stdio/src/index.ts:157]
 5. `ctx.effect` 里按表 `registerProvider`。中途 `LSP_CONFLICT` 会 `disposers.reverse()` 全部卸掉再抛；单测两个 server 都映射 `.ts` 时，查询仍 `LSP_UNAVAILABLE`。[E: packages/lsp/lsp-stdio/src/index.ts:174] [E: packages/lsp/lsp-stdio/src/index.ts:176] [E: packages/lsp/lsp-stdio/tests/provider.spec.ts:277] [E: packages/lsp/lsp-stdio/tests/provider.spec.ts:288]
@@ -130,7 +130,7 @@ updated: c291e7961a
 11. 每个 `workspace.target.targetKey` 最多一个 `LspInstance`：`instanceFor` 命中 `instances` 则复用，否则 `createInstance`。[E: packages/lsp/lsp-stdio/src/index.ts:323] [E: packages/lsp/lsp-stdio/src/index.ts:323] `LspConnection` 调用 spawner：`argv = [已 resolve 的 command, ...args]`，`cwd = canonicalPath`，`stdio` 为 stdin/stdout `pipe`、stderr 有界 collect，`graceMs = killGraceMs`，`env` 交给 subprocess 缝在 scrub 之后 merge。[E: packages/lsp/lsp-stdio/src/connection.ts:92] [E: packages/lsp/lsp-stdio/src/connection.ts:93] [E: packages/lsp/lsp-stdio/src/connection.ts:94] [E: packages/lsp/lsp-stdio/src/connection.ts:100] [E: packages/lsp/lsp-stdio/src/connection.ts:103]
 12. `initialize` 发 `processId: null`（子进程可能在另一 PID 命名空间 / 机器上，不能让 server 监视 host PID）、`rootUri` 用 `workspaceUri`。`CLIENT_CAPABILITIES.general.positionEncodings` 只列 `utf-16`。server 回非 `utf-16` 的 `positionEncoding` 是普通 `Error`，不是 `LSP_UNSUPPORTED_OPERATION`。[E: packages/lsp/lsp-stdio/src/instance.ts:115] [E: packages/lsp/lsp-stdio/src/instance.ts:116] [E: packages/lsp/lsp-stdio/src/instance.ts:340] [E: packages/lsp/lsp-stdio/src/translate.ts:99]
 13. 一次查询：缺对应 capability 或 `textDocumentSync` 不允许 transient open/close → `LSP_UNSUPPORTED_OPERATION`。否则 `didOpen`（`languageId` + 刚读的完整文本）→ `requestMethod(operation)` → `didClose`。`findReferences` 硬写 `context.includeDeclaration: true`。导航结果收成 `locations` + `resolvedWorkspaceUri`；`hover` 收成 contents 或 `null`。`workspace/applyEdit` 被拒；其它未识别的 server→client request 同样拒。[E: packages/lsp/lsp-stdio/src/instance.ts:147] [E: packages/lsp/lsp-stdio/src/instance.ts:150] [E: packages/lsp/lsp-stdio/src/translate.ts:34] [E: packages/lsp/lsp-stdio/src/instance.ts:203] [E: packages/lsp/lsp-stdio/src/instance.ts:263]
-14. **换世界。** 读源走 `ctx.fs`，可执行查找与进程走 `ctx.subprocess`。只换 `ctx.fs` 不会把 language server 搬到远程；只换 `ctx.subprocess` 会让 canonicalize 的路径与 spawn 世界分裂。E2B 测试夹具挂 `e2b` + `subprocess-e2b` + `fs-e2b` 后再挂本缝；live e2e 在同一沙箱里断言 `hover` 与 `definition`。[E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:4] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:10] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:18] [E: packages/e2b/e2b/tests/composition.e2e.ts:153] [E: packages/e2b/e2b/tests/composition.e2e.ts:157]
+14. **换世界。** 读源走 `ctx.fs`，可执行查找与进程走 `ctx.subprocess`。只换 `ctx.fs` 不会把 language server 搬到远程；只换 `ctx.subprocess` 会让 canonicalize 的路径与 spawn 世界分裂。SSH live e2e 挂 `SshConnection` + `SshFileSystem` + `SshSubprocessRuntime` 后再挂本缝；缺 `DSH_SSH_TEST_LSP` 则 skip，命中时在同一远程世界断言 `goToDefinition` 与 `hover`。[E: packages/ssh/ssh/tests/live.e2e.ts:33] [E: packages/ssh/ssh/tests/live.e2e.ts:275] [E: packages/ssh/ssh/tests/live.e2e.ts:288] [E: packages/ssh/ssh/tests/live.e2e.ts:291]
 15. **卸掉。** effect teardown 先 `registerProvider` disposer（路由立即 `LSP_UNAVAILABLE`），再 `disposeAll` 拆进程。插件 fiber dispose 后查询不到已卸的 backend。[E: packages/lsp/lsp-stdio/src/index.ts:181] [E: packages/lsp/lsp-stdio/tests/provider.spec.ts:87]
 
 ## 设计动机
@@ -150,8 +150,8 @@ updated: c291e7961a
 - `foo.d.ts` → `.ts`，不是 `.d.ts`。把 `.d.ts` 写进 `extensionToLanguage` 会因 `EXTENSION_PATTERN` 在注册期 `LSP_INVALID_PROVIDER`。[E: packages/lsp/lsp/src/index.ts:66] [E: packages/lsp/lsp/src/index.ts:111] [E: packages/lsp/lsp/tests/lsp.spec.ts:48]
 - `Makefile`、`.bashrc`、`dir.d/file` 的 `finalExtension` 是 `''`，查询直接 `LSP_UNAVAILABLE`，不会「猜语言」。[E: packages/lsp/lsp/tests/lsp.spec.ts:54] [E: packages/lsp/lsp/tests/lsp.spec.ts:55] [E: packages/lsp/lsp/tests/lsp.spec.ts:56]
 - `lsp-stdio` **不是**第二份 `ctx.lsp`。漏挂 `dsh-lsp` 时它卡在 `inject: lsp`；挂了缝但没有任何 `registerProvider` 时，工具看得到，查询 `LSP_UNAVAILABLE`。
-- 四个 shipped preset 的 top-level 行里没有 `lsp` / `lsp-stdio` / `tool-lsp`。`minimal` 是 `persona` / `persistent-shell`（无 filesystem）；`standard` 收束 `tool-web` / `present`；`ptc` 增量是 `tool-presentation`（`mode: ptc`）；`cordis` 收束 `tool-cordis` / `skill-filesystem`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:9] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:248] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:269] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:246]
-- E2B 夹具 `packages/e2b/e2b/tests/fixtures/composition/cordis.yml` 不是 shipped preset。它挂 `lsp` + `lsp-stdio`（`node` + `fixture-lsp.mjs`，`.ts`）。[E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:46] [E: packages/e2b/e2b/tests/fixtures/composition/cordis.yml:49] 模型工具行在 snapshot：`id: tool-lsp`。[E: snapshots/session/lsp-definition/cordis.yml:15]
+- 四个 shipped preset 的 top-level 行里没有 `lsp` / `lsp-stdio` / `tool-lsp`。`minimal` 是 `persona` / `persistent-shell`（无 filesystem）；`standard` 收束 `tool-web` / `present`；`ptc` 增量是 `tool-presentation`（`mode: ptc`）；`cordis` 收束 `tool-cordis` / `skill-filesystem`。[E: packages/bundle/web-app/presets/minimal.patch.yml:11] [E: packages/bundle/web-app/presets/minimal.patch.yml:20] [E: packages/bundle/web-app/presets/standard.patch.yml:137] [E: packages/bundle/web-app/presets/ptc.patch.yml:144] [E: packages/bundle/web-app/presets/cordis.patch.yml:141]
+- snapshot `snapshots/session/lsp-definition/cordis.yml` 不是 shipped preset。它挂 `lsp` + `lsp-stdio`（`node` + `./lsp-server.mjs`，`.ts`）。[E: snapshots/session/lsp-definition/cordis.yml:4] [E: snapshots/session/lsp-definition/cordis.yml:6] 模型工具行：`id: tool-lsp`。[E: snapshots/session/lsp-definition/cordis.yml:15]
 - 语言服务器进程 **不受** `ctx.sandbox.confine`。文件围栏是 `ctx.fs.contains` 拒绝 workspace 外的**查询源**；返回的 location URI 可以指向 workspace 外。
 - `findReferences` 没有 include-declaration 开关。想排除定义处，换工具或自己滤文本。[E: packages/lsp/lsp-stdio/src/instance.ts:203]
 - 非 `utf-16` 的 `positionEncoding` 抛的是普通 `Error`（文案带 `unsupported position encoding`），`code` 不是 `LSP_UNSUPPORTED_OPERATION`。[E: packages/lsp/lsp-stdio/src/translate.ts:99]
@@ -164,12 +164,12 @@ updated: c291e7961a
 | 角色 | 落点 | ctx 键 / bundle / preset 行 |
 |---|---|---|
 | **Definition** | `@deepseek-ai/dsh-lsp` 的 `Lsp`（也是唯一占键的 Service 实现） | `ctx.lsp`。使用时是 Loader 行 `id: lsp`。`dsh-base` / shipped preset **没有**这行 |
-| **Provider（语言服务器后端）** | `@deepseek-ai/dsh-lsp-stdio` 的 `LocalLspProvider`，经 `ctx.lsp.registerProvider` 挂上 | **不** `provide('lsp')`。`inject = ['fs', 'lsp', 'subprocess']`。E2B 夹具 `id: lsp-stdio` |
+| **Provider（语言服务器后端）** | `@deepseek-ai/dsh-lsp-stdio` 的 `LocalLspProvider`，经 `ctx.lsp.registerProvider` 挂上 | **不** `provide('lsp')`。`inject = ['fs', 'lsp', 'subprocess']`。snapshot `id: lsp-stdio` |
 | **Consumer（fs + subprocess）** | 同一个 `lsp-stdio`：load 时 `resolveExecutable`，读源 `ctx.fs`，进程 `ctx.subprocess.spawn` | 少数同时吃两条执行缝的插件。换世界必须成对替换 |
 | **Consumer（模型）** | `@deepseek-ai/dsh-tool-lsp` | `inject = ['tools', 'lsp', 'systemPrompt']`。snapshot `id: tool-lsp`。四个 shipped preset 不挂 |
 | **Consumer（测试 / 夹具）** | 脚本化 `LspProvider` 直接 `registerProvider` | 不经过 stdio。证明选路与原子性不依赖某个 command |
 
-换 language-server 实现 = 换 `servers` 表或另写一个 `LspProvider` 插件，不改 `dsh-tool-lsp`。换执行世界 = 换 `ctx.fs` **和** `ctx.subprocess`（E2B 用共享 `ctx.e2b` 绑成一对）。把第二个 `Lsp` Service 挂进同一 realm 会抛，不会静默覆盖。
+换 language-server 实现 = 换 `servers` 表或另写一个 `LspProvider` 插件，不改 `dsh-tool-lsp`。换执行世界 = 换 `ctx.fs` **和** `ctx.subprocess`（SSH 用共享 `ctx.ssh` 绑成一对）。把第二个 `Lsp` Service 挂进同一 realm 会抛，不会静默覆盖。
 
 ## Sources
 
@@ -188,13 +188,13 @@ updated: c291e7961a
 - packages/lsp/tool-lsp/src/index.ts
 - packages/lsp/tool-lsp/src/session-cwd.ts
 - packages/lsp/tool-lsp/package.json
-- packages/e2b/e2b/tests/fixtures/composition/cordis.yml
-- packages/e2b/e2b/tests/composition.e2e.ts
 - snapshots/session/lsp-definition/cordis.yml
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/ssh/ssh/tests/live.e2e.ts
+- snapshots/session/lsp-definition/cordis.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - vendor/cordis/src/service.ts
 - vendor/cordis/src/events.ts
 
@@ -205,6 +205,7 @@ updated: c291e7961a
 - [subsys.execution.fs](fs.md)（`subsys.execution.fs`）：stdio 读源与 workspace canonicalize 走 `ctx.fs`。
 - [subsys.execution.subprocess](subprocess.md)（`subsys.execution.subprocess`）：`resolveExecutable` / `spawn` / scrub；stdio 是本缝的 Consumer。
 - [surface.tools.lsp](../../surface/tools/lsp.md)（`surface.tools.lsp`）：模型可见 `lsp` 的 schema、one-based 坐标、渲染帽。
-- [subsys.execution.e2b](e2b.md)（`subsys.execution.e2b`）：测试夹具成对替换 fs+subprocess，并挂上本缝。
+- [subsys.execution.ssh](ssh.md)（`subsys.execution.ssh`）：live e2e 成对替换 fs+subprocess，并挂上本缝。
+- [subsys.execution.e2b](e2b.md)（`subsys.execution.e2b`）：退役映射。
 - [spine.tool-call-anatomy](../../spine/tool-call-anatomy.md)（`spine.tool-call-anatomy`）：`tools/pre-execute → execute → post-execute`；本工具的 timeout 挂在 execute wrapper。
 - [subsys.core.tools](../core/tools.md)（`subsys.core.tools`）：`ctx.tools.register`；缺 `ctx.lsp` 时 `tool-lsp` pending。

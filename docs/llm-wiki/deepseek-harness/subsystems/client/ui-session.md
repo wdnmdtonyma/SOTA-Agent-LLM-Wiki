@@ -40,7 +40,7 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-client-ui-session` 是浏览器里的 **Session 根源适配器**：host `apply` 为空；client 把 `ctx.sessions.list` 接到全局 `useSessions`，把 `session` / `session-maybe` 槽接到 `UiSession.adapter`，并把 `ctx.uiSession` 交给会话面装配。它不画侧栏列表、不发 list RPC、不执行模型 turn。列表行与 `current` 的权威在 Session Controller 客户端（[`subsys.client.runtime`](runtime.md)）；host 冷列表投影在 `ApiSessionList`（[`subsys.host.apiproxy`](../host/apiproxy.md)）。
@@ -56,7 +56,7 @@ updated: c291e7961a
 
 ## 职责边界
 
-本包装的是 **Slot 标准源 + Session 作用域适配**，不是第二个 `ISessions`，也不是 sidebar 组件树。五个 shipped profile 是 `web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）；本仓没有 shipped TUI。`dsh web` 是唯一硬编码的 profile 子命令；其余用 `dsh --profile sdk|sdk-minimal|acp|headless`。
+本包装的是 **Slot 标准源 + Session 作用域适配**，不是第二个 `ISessions`，也不是 sidebar 组件树。五个 shipped profile 是 `web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）；本仓没有 shipped TUI。`dsh <name>` 扩成 `--profile <name>`（`dsh web` / `dsh headless` 都合法）；`desktop` 仍被拒。
 
 **拥有**
 
@@ -71,7 +71,7 @@ updated: c291e7961a
 - 三栏壳与 `sidebar` 座位：[`subsys.client.ui-layout`](ui-layout.md)。**侧栏会话列表像素**在 `@deepseek-ai/dsh-client-ui-sidebar`（web-app 下一行 `id: ui-sidebar`），本 wiki **不另开 ui-* 页**；侧栏是 `useSessions` 的 Consumer。 [E: packages/bundle/web-app/cordis.patch.yml:188]
 - composer / `sendSession`：[`subsys.client.ui-conversation`](ui-conversation.md)（client `inject` 含 `uiSession`）。
 
-`package.json` 的 `dsh.client` 把本包标成 `platform: "web"`，inject `@deepseek-ai/dsh-api-session-controller` 与 `@deepseek-ai/dsh-client-ui-renderer`。 [E: packages/client/ui-session/package.json:34] [E: packages/client/ui-session/package.json:38]
+`package.json` 的 `dsh.client` 把本包标成 `platform: "web"`，inject `@deepseek-ai/dsh-api-session-controller` 与 `@deepseek-ai/dsh-client-ui-renderer`。 [E: packages/client/ui-session/package.json:33] [E: packages/client/ui-session/package.json:38]
 
 ## 关键文件
 
@@ -91,18 +91,18 @@ updated: c291e7961a
 
 | 符号 | 要点 |
 |---|---|
-| `UseSessions` | `SnapshotSelectorHook<SessionListState>`；根 hook 名 `useSessions`。 [E: packages/client/ui-session/src/client/index.ts:28] |
-| `UseSession` | `SnapshotSelectorHook<SessionSnapshot>`；session-scope hook 名 `useSession`。 [E: packages/client/ui-session/src/client/index.ts:32] |
-| `SessionListState` | `ids` / `byId` / `current` / `phase` / `subagentsByParent` / `jobsBySession` / `currentAddress`。`current` 与列表同行，sidebar 高亮与中栏共享一源。权威类型在 session-controller。 [E: packages/api/session-controller/src/client/sessions/service.ts:69] |
+| `UseSessions` | `SnapshotSelectorHook<SessionListState>`；根 hook 名 `useSessions`。 [E: packages/client/ui-session/src/client/index.ts:33] |
+| `UseSession` | `SnapshotSelectorHook<SessionSnapshot>`；session-scope hook 名 `useSession`。 [E: packages/client/ui-session/src/client/index.ts:35] |
+| `SessionListState` | `ids` / `byId` / `current` / `phase` / `subagentsByParent` / `jobsBySession` / `currentAddress`。`current` 与列表同行，sidebar 高亮与中栏共享一源。权威类型在 session-controller。 [E: packages/api/session-controller/src/client/sessions/service.ts:278] |
 | `SessionSummary` | 行：`id`、`displayTitle`、`running`、`blank`、`updatedAt`，可选 `title` / `cwd` / `parentId` / `origin` / `completed`。 [E: packages/api/session-controller/src/client/sessions/service.ts:39] |
-| `SessionBinding` | `sessionId` + `session`（`SessionFace`）+ `eventSource` + Agent-scoped `ctx`。`adapter.resolve` 走 `sessions.binding`。 [E: packages/api/session-controller/src/client/sessions/service.ts:128] |
-| `ISessions` | `list` 是只读 feed；`create` / `open` / `clear` / `fork` / `search` / `binding` 在对象层。 [E: packages/api/session-controller/src/client/contract/sessions.ts:21] |
-| `BUILTIN_SOURCE` | hooks `session`、keyed `projection`、prop `sessionId`。 [E: packages/client/ui-session/src/client/index.ts:197] |
+| `SessionBinding` | `sessionId` + `session`（`SessionFace`）+ `eventSource` + Agent-scoped `ctx`。`adapter.resolve` 走 `sessions.binding`。 [E: packages/api/session-controller/src/client/sessions/service.ts:592] |
+| `ISessions` | `list` 是只读 feed；`create` / `open` / `clear` / `fork` / `search` / `binding` 在对象层。 [E: packages/api/session-controller/src/client/contract/sessions.ts:14] |
+| `BUILTIN_SOURCE` | hooks `session`、keyed `projection`、prop `sessionId`。 [E: packages/client/ui-session/src/client/index.ts:350] |
 | `SessionPendingInteractionBase` | `key` + `kind` + `sessionId`；同 key 二次 `publish` 抛错。 [E: packages/client/ui-session/src/client/index.ts:35] |
 
 ## 控制流
 
-1. **只有 web-app 把本包插进 Loader 表。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` 再叠 `dsh-web-app`。web patch insert 含 `id: ui-session` / `name: '@deepseek-ai/dsh-client-ui-session'`。`dsh-base` insert 从 `timer` / `hmr` / `llm` 起，没有浏览器 roster。`dsh-headless` insert 是 `code-runtime` + `headless-startup` + `headless-runner`。sdk / sdk-minimal / acp overlay 也不插入本包。 [E: packages/bundle/web-app/cordis.patch.yml:185] [E: packages/bundle/web-app/cordis.patch.yml:185] [E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/headless/cordis.patch.yml:19]
+1. **只有 web-app 把本包插进 Loader 表。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` 再叠 `dsh-web-app`。web patch insert 含 `id: ui-session` / `name: '@deepseek-ai/dsh-client-ui-session'`。`dsh-base` insert 从 `timer` / `hmr` / `llm` 起，没有浏览器 roster。`dsh-headless` insert 是 `headless-startup` + `headless-runner`（`ptc-runtime` 在 base）。sdk / sdk-minimal / acp overlay 也不插入本包。 [E: packages/bundle/web-app/cordis.patch.yml:185] [E: packages/bundle/web-app/cordis.patch.yml:185] [E: packages/bundle/base/cordis.patch.yml:16] [E: packages/bundle/headless/cordis.patch.yml:1]
 
 2. **host `apply` 是空函数。** Loader 仍加载 `packages/client/ui-session/src/index.ts`，但 node 半边不登记 settings、不碰 `ctx.sessions`。测试钉死 `nodeApply()` 不抛。 [E: packages/client/ui-session/src/index.ts:4] [E: packages/client/ui-session/tests/ui-session.client.spec.ts:550]
 
@@ -110,15 +110,15 @@ updated: c291e7961a
 
 4. **`apply` 提供 `ctx.uiSession`，再把根源与 scope adapter 交给 slots。** `new UiSession(ctx, ctx.sessions)`（服务名 `'uiSession'`）。`slots.provideRoot({ hooks: { sessions: ctx.sessions.list, sessionPendingInteraction: service.pendingInteractions } })`。`slots.installScope('session', service.adapter)`。测试断言这两次调用与 `ctx.uiSession` 类型。 [E: packages/client/ui-session/src/client/index.ts:506] [E: packages/client/ui-session/src/client/index.ts:507] [E: packages/client/ui-session/src/client/index.ts:513] [E: packages/client/ui-session/tests/ui-session.client.spec.ts:541]
 
-5. **current 绑定跟着 `sessions.list`。** `UiSession` 构造里 `sessions.list.subscribe` → `publishCurrent()`。`resolveCurrent` 读 `list.getSnapshot().current`；无 current 或 `binding` 缺失则用 absent 绑定（hooks/props 全 `undefined`）。缓存命中条件是同一 `SessionBinding` 对象。fiber dispose 时清掉所有 materialized binding。 [E: packages/client/ui-session/src/client/index.ts:259] [E: packages/client/ui-session/src/client/index.ts:355]
+5. **current 绑定跟着 `sessions.list`。** `UiSession` 构造里 `sessions.list.subscribe` → `publishCurrent()`。`resolveCurrent` 读 `list.getSnapshot().current`；无 current 或 `binding` 缺失则用 absent 绑定（hooks/props 全 `undefined`）。缓存命中条件是同一 `SessionBinding` 对象。fiber dispose 时清掉所有 materialized binding。 [E: packages/client/ui-session/src/client/index.ts:259] [E: packages/client/ui-session/src/client/index.ts:445]
 
 6. **`materialize` 把 descriptor 合成 `ScopedStandardSourceBinding` 并 `slots.bindStoreScope`。** 内建：`hooks.session = binding.session`，`keyedHooks.projection(key) = binding.session.projections.faceOf(key)`，`props.sessionId`。`provide()` 在 fiber 上 push descriptor 并 `rebuildBindings()`；undeclared / missing / duplicate（含 hook 名撞到 `useX`）抛 `uiSession.provide: …`，失败时回滚 descriptors。 [E: packages/client/ui-session/src/client/index.ts:424] [E: packages/client/ui-session/src/client/index.ts:458] [E: packages/client/ui-session/src/client/index.ts:493]
 
-7. **`renderSessionArea` 是 scope 的 React 座位语义。** `binding.key === undefined` → `empty?.() ?? null`；否则 `<Fragment key={sessionId}>{children}</Fragment>`。测试钉死 empty 只在无会话时调用。 [E: packages/client/ui-session/src/client/session-provider.tsx:18] [E: packages/client/ui-session/src/client/session-provider.tsx:19]
+7. **`renderSessionArea` 是 scope 的 React 座位语义。** `binding.key === undefined` → `empty?.() ?? null`；否则 `<Fragment key={sessionId}>{children}</Fragment>`。测试钉死 empty 只在无会话时调用。 [E: packages/client/ui-session/src/client/session-provider.tsx:18] [E: packages/client/ui-session/src/client/session-provider.tsx:15]
 
-8. **pending interaction 独立于 Controller snapshot。** `registerPendingInteraction(precedence)` 返回 publisher；同 session 取 precedence 最大（相等则后写覆盖）。domain fiber dispose：**先** `release()` 清空可见 map、**再** `Promise.allSettled` 等 owner delegate。duplicate key 抛 `ui-session: duplicate pending interaction key`。 [E: packages/client/ui-session/src/client/index.ts:304] [E: packages/client/ui-session/src/client/index.ts:314] [E: packages/client/ui-session/src/client/index.ts:83]
+8. **pending interaction 独立于 Controller snapshot。** `registerPendingInteraction(precedence)` 返回 publisher；同 session 取 precedence 最大（相等则后写覆盖）。domain fiber dispose：**先** `release()` 清空可见 map、**再** `Promise.allSettled` 等 owner delegate。duplicate key 抛 `ui-session: duplicate pending interaction key`。 [E: packages/client/ui-session/src/client/index.ts:406] [E: packages/client/ui-session/src/client/index.ts:314] [E: packages/client/ui-session/src/client/index.ts:130]
 
-9. **对象层刷新列表，适配器只订阅。** `ClientSessions` 持有 `list` store；`open` / `clear` 写 selection。host 半边 `ApiSessionList` 登记 `sessionListMetadata`（`blank` + `lastPromptAt`）。ui-session 不调用 `refresh()` / `search()`。 [E: packages/api/session-controller/src/client/sessions/service.ts:191] [E: packages/api/session-controller/src/list.ts:81] [E: packages/api/session-controller/src/list.ts:90]
+9. **对象层刷新列表，适配器只订阅。** `ClientSessions` 持有 `list` store；`open` / `clear` 写 selection。host 半边 `ApiSessionList` 登记 `sessionListMetadata`（`blank` + `lastPromptAt`）。ui-session 不调用 `refresh()` / `search()`。 [E: packages/api/session-controller/src/client/sessions/service.ts:231] [E: packages/api/session-controller/src/list.ts:81] [E: packages/api/session-controller/src/list.ts:90]
 
 10. **session-controller client `apply` 先于 ui-session。** 它 `new ClientSessions`、订 `api-session/*`、开 control stream。模块 `inject` 是 typert / remote 族，不是 React。 [E: packages/api/session-controller/src/client/index.ts:88] [E: packages/api/session-controller/src/client/index.ts:90]
 

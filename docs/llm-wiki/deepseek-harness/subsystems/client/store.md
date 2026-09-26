@@ -40,7 +40,7 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-client-store` 是浏览器半边的 **React-free snapshot 引擎**：zustand vanilla + immer + `subscribeWithSelector` + 可选 `raf` 批刷 + 手写 `localStorage` JSON persist。`defineStore` 把 `init` / `persist` / `actions` 烤成 `StoreHandle`；live 产物只有 `getSnapshot` / `subscribe` / baked `actions`（外加测试用的 `store.update`/`set`）。`useStore` 选择器 hook **不**在本包合成，由 [`subsys.client.runtime`](runtime.md) 指向的 ui-renderer 在装配时绑。本包**不是** Loader 行：没有 `dsh.client`、没有 `ctx.store`。已删除的 `packages/client/runtime` 的状态家现在就是这里。client 不执行模型 turn。
@@ -56,7 +56,7 @@ updated: c291e7961a
 
 ## 职责边界
 
-DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset`）。五个 shipped profile：`web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）。[E: packages/boot/app-boot/src/profile.ts:105] `web` 叠 `dsh-base` + `dsh-web-app` 且 `patchReload: 'live'`；其余 startup。[E: packages/boot/app-boot/src/profile.ts:112] 默认 GUI 是 `dsh web`；stdio 面还有 `dsh --profile sdk|sdk-minimal|acp`。本仓没有 shipped TUI。client 不实现 `ctx.fs` / agent-loop。
+DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset`）。五个 shipped profile：`web`（live）与 `headless` / `sdk` / `sdk-minimal` / `acp`（startup）。[E: packages/boot/app-boot/src/profile.ts:193] `web` 叠 `dsh-base` + `dsh-web-app` ；其余不叠 `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:311] 默认 GUI 是 `dsh web`；stdio 面还有 `dsh --profile sdk|sdk-minimal|acp`。本仓没有 shipped TUI。client 不实现 `ctx.fs` / agent-loop。
 
 本包拥有：
 
@@ -90,9 +90,9 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 | `StoreHandle` | spec + `create(scopeKey?)`。handle 身份是实例共享键。禁止模块级 export handle（reload 会伪装成单例）。[E: packages/client/store/src/contract.ts:94] |
 | `StoreInstance` | `actions` + `getSnapshot` + `subscribe` + `clearPersisted`。**没有** `useStore`。[E: packages/client/store/src/contract.ts:70] |
 | `EngineStoreInstance` | 合同 instance 加上 `readonly store: SnapshotStore<T>`（框架/测试 API）。[E: packages/client/store/src/index.ts:177] |
-| `StoreDecl` | 共享 handle **或** exclusive `StoreFactory`（每 entry × scope 调一次工厂）。[E: packages/client/store/src/contract.ts:118] |
+| `StoreDecl` | 共享 handle **或** exclusive `StoreFactory`（每 entry × scope 调一次工厂）。[E: packages/client/store/src/contract.ts:117] |
 | `PropsStore<H>` | 组件看见的份额：`{ useStore, actions }`。组件永远不拿 instance。[E: packages/client/store/src/contract.ts:135] |
-| `DefineStore` | 合同类型；实现是旁边的 `defineStore` 函数。[E: packages/client/store/src/contract.ts:144] |
+| `DefineStore` | 合同类型；实现是旁边的 `defineStore` 函数。[E: packages/client/store/src/contract.ts:134] |
 
 依赖：`zustand ~4.4.7`、`immer ^10.1.1`；`cordis` 是 peer。[E: packages/client/store/package.json:26] [E: packages/client/store/package.json:28] [E: packages/client/store/package.json:30]
 
@@ -116,7 +116,7 @@ DSH 是 **Cordis 组合运行时**（主线 `profile → bundle → agent preset
 
 9. **直接引擎消费者。** 部分 `ui-*` 与 session-log-export 跳过座位 store 座，直接 `createSnapshotStore` / `defineStore`（例如 `ui-user-questions` 的 draft handle、`ui-settings-models`、`ui-deliverables`）。它们仍是本引擎的 Consumer，不经过 `ctx.slots`。
 
-10. **组合。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` + `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:143] store **没有** patch `id:`。headless / sdk / sdk-minimal / acp 不跑浏览器座位树，因此生产路径不物化这些 instance（测试仍可在 node 里 new 引擎）。
+10. **组合。** `PROFILE_TEMPLATES.web` 叠 `dsh-base` + `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:184] store **没有** patch `id:`。headless / sdk / sdk-minimal / acp 不跑浏览器座位树，因此生产路径不物化这些 instance（测试仍可在 node 里 new 引擎）。
 
 ## 设计动机
 

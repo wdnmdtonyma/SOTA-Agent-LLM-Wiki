@@ -6,10 +6,10 @@ tier: T3
 pkg: persistence
 source:
   - packages/settings/settings/src/index.ts
-  - packages/settings/settings-file/src/index.ts
   - packages/llm/llm/src/retry-policy.ts
-  - packages/preset/agent-presets/src/index.ts
-  - packages/preset/agent-presets/src/discovery.ts
+  - packages/preset/agent-preset-registry/src/index.ts
+  - packages/preset/agent-preset/src/index.ts
+  - packages/bundle/web-app/package.json
   - packages/boot/app-boot/src/profile.ts
   - packages/core/agent-loop/src/index.ts
   - packages/core/agent-default-model/src/index.ts
@@ -39,10 +39,11 @@ source:
   - packages/host/directory-picker-browse/src/index.ts
   - packages/host/open-in-app/src/index.ts
   - packages/api/workspace-files/src/index.ts
-  - packages/fs/tool-present/src/index.ts
+  - packages/deliverables/tool-present/src/index.ts
   - packages/preset/persona/src/index.ts
   - packages/interaction/permission-presets/src/index.ts
   - packages/llm/llm-deepseek/src/index.ts
+  - packages/llm/llm-deepseek/src/config.ts
   - packages/llm/llm-pi-ai/src/config.ts
   - packages/llm/llm-retry/src/index.ts
   - packages/llm/token-meter/src/index.ts
@@ -67,7 +68,7 @@ related:
   - ref.env-vars
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > 每个可 load 的 harness 插件把 **部署轴** 写成 `export const Config` 或 `static Config`（`@deepseek-ai/schemastery` 的 `z.object` / `z.union` / `z.intersect`）。本页按包列出 **schema 接受的键**（嵌套写成 `parent.child` / `parent[]`）。这是 Cordis 组合运行时的 `cordis.yml` `config:` 词表，不是 session log，也不是用户 `settings.yaml` 文档键表。
@@ -89,19 +90,19 @@ updated: c291e7961a
 
 **不要**把已删除包当 source：`packages/host/apiproxy`、`packages/client/runtime`、`packages/client/web-react`、`packages/examples/acp-demo`、`packages/session/session-persistence-sqlite`、`packages/subagent/tool-subagent-report`、`packages/examples/agent-spine-demo`、`packages/code-runtime/code-runtime-python`。旧 `apps/cli/config/agent-presets/` 与 `code-mode.ts` 亦不存在。
 
-DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。五个 shipped profile 在 `PROFILE_TEMPLATES`：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:105] `web` 是唯一 `patchReload: 'live'` 模板。[E: packages/boot/app-boot/src/profile.ts:112] `sdk-minimal` 的 bundles 只有 `@deepseek-ai/dsh-sdk-minimal`，不叠 `dsh-base`。[E: packages/boot/app-boot/src/profile.ts:123] `desktop` 不是该表成员；`dsh --profile desktop` 被拒。[E: apps/cli/src/args.ts:68] 入口除 `dsh web` 外还有 `dsh --profile <name>`（required）。[E: apps/cli/src/args.ts:145] `web` 是 `--profile web` 的别名。[E: apps/cli/src/args.ts:175]
+DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。五个 shipped profile 在 `PROFILE_TEMPLATES`：`acp` / `web` / `headless` / `sdk` / `sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:179] `sdk-minimal` 的 bundles 只有 `@deepseek-ai/dsh-sdk-minimal`，不叠 `dsh-base`。[E: packages/boot/app-boot/src/profile.ts:192] `desktop` 不是该表成员；`dsh --profile desktop` 被拒。[E: apps/cli/src/args.ts:84] 入口除 `dsh web` 外还有 `dsh --profile <name>`（required）。[E: apps/cli/src/args.ts:178] `dsh <name>` 是 `--profile <name>` 的缩写。[E: apps/cli/src/args.ts:201]
 
-四个 shipped preset 目录名：`minimal` / `standard` / `ptc` / `cordis`（`SHIPPED_PRESET_ROOT` 指向包内 `presets/`）。[E: packages/preset/agent-presets/src/discovery.ts:60] 旧名 `code` 就是 PTC。wiki 节点 id `surface.presets.code` 保持稳定别名。Code Mode 权威文件是 `packages/core/tools/src/ptc.ts`。
+四个 shipped preset 声明 id：`minimal` / `standard` / `ptc` / `cordis`（web-app `presets/*.patch.yml`）。[E: packages/bundle/web-app/package.json:43] 旧名 `code` 就是 PTC。wiki 节点 id `surface.presets.code` 保持稳定别名。Code Mode 权威文件是 `packages/core/tools/src/ptc.ts`。
 
 默认模型（base 组合）是 `deepseek-official` / `deepseek-flash`（见 [`ref.presets`](presets.md) 与 `dsh-agent-default-model`）。schema 本身 required、无 default；acp-app 仍硬编码 `deepseek-v4-flash`。
 
 ### settings 分层（不要和插件 Config 混表）
 
-`SettingsService.get` 返回该 namespace 的 `registration.resolved`。[E: packages/settings/settings/src/index.ts:547] `resolve` 是 `schema(mergeLayers(base, section))`：先深合并 composition `base` 与 user section，再跑 schema 填 default。[E: packages/settings/settings/src/index.ts:748]
+`SettingsService.get` 返回该 namespace 的 `registration.resolved`。[E: packages/settings/settings/src/index.ts:431] `resolve` 是 `schema(mergeLayers(base, section))`：先深合并 composition `base` 与 user section，再跑 schema 填 default。[E: packages/settings/settings/src/index.ts:431]
 
-`installSection` 把 entry Config 登记成 `base`，并把运行时 source 指到 `scope.get()`。[E: packages/settings/settings/src/index.ts:480][E: packages/settings/settings/src/index.ts:483]
+`installSection` 把 entry Config 登记成 `base`，并把运行时 source 指到 `scope.get()`。[E: packages/settings/settings/src/index.ts:431][E: packages/settings/settings/src/index.ts:431]
 
-物理文档在 `@deepseek-ai/dsh-settings-file`：省略 `path` 时是 `<$DSH_HOME 或 ~/.dsh>/settings.yaml`；`watch` 默认 `true`，`debounceMs` 默认 `100`。[E: packages/settings/settings-file/src/index.ts:57][E: packages/settings/settings-file/src/index.ts:65][E: packages/settings/settings-file/src/index.ts:66] schema 声明在 `static Config`。[E: packages/settings/settings-file/src/index.ts:107]
+物理文档不再由独立 `settings-file` 包拥有：`SettingsForms` 把 live Config 投影成表单，legacy `$DSH_HOME/settings.yaml` 导入进 profile patch 后改名 `.imported`。[E: packages/settings/settings/src/index.ts:223][E: packages/settings/settings/src/index.ts:235]
 
 **不要**把下列东西写进本页插件 Config 表（它们是用户文档 section，不是插件 `Config`）：
 
@@ -111,21 +112,21 @@ DSH 是 **Cordis 组合运行时**（`profile → bundle → agent preset`）。
 | `locale` | `LocaleSettingsSchema` | `preference`；无插件 Config | [E: packages/client/locale/src/locale-settings.ts:30] |
 | `ui-conversation` | `ConversationSettingsSchema` | `busyEnter`；无插件 Config | [E: packages/client/ui-conversation/src/submission-settings.ts:27] |
 | `ui-onboarding` | `OnboardingSettingsSchema` | `welcomeNoticeVersion`；`apply` 不收 Config | [E: packages/client/ui-settings-general/src/index.ts:15] |
-| `agent-presets` | `AgentPresetSettingsSchema` | 用户可改 `default` 与 `modeSelectionEnabled` | [E: packages/preset/agent-presets/src/index.ts:73] |
+| `agent-preset-registry` | `AgentPresetRegistry.Config` | 用户层走 `selectedDefault` volatile | [E: packages/preset/agent-preset-registry/src/index.ts:53] |
 | `agent-loop` | `AGENT_LOOP_SETTINGS_SCHEMA` | 用户只能改 `maxParallelToolCalls`；`agents` 是 boot 一次的 composition 数组 | [E: packages/core/agent-loop/src/index.ts:307] |
 | `agent-default-model` | `AGENT_DEFAULT_MODEL_SETTINGS_SCHEMA` | 比插件 Config **多** 可选 `reasoningEffort` | [E: packages/core/agent-default-model/src/index.ts:34] |
 
 若干插件把 **同一份** `Config` schema 交给 `installSection`（`llm-deepseek`、`llm-pi-ai`、`web-search-deepseek`、`bash-local`、`pwsh-local`、`permission-presets`）。那些键在本页插件表里出现一次。控制流与 redact 在 [`subsys.persistence.settings`](../subsystems/persistence/settings.md)。
 
-`replace({})` 清掉用户层，resolved 回到 schema default ⊕ composition `base`。实现是 `SettingsService.replace` → `write(..., 'replace')`。[E: packages/settings/settings/src/index.ts:581][E: packages/settings/settings/src/index.ts:586]
+`replace({})` 清掉用户层，resolved 回到 schema default ⊕ composition `base`。实现是 `SettingsService.replace` → `write(..., 'replace')`。[E: packages/settings/settings/src/index.ts:431][E: packages/settings/settings/src/index.ts:431]
 
 ### host 面 vs agent-preset 面
 
-- **host 面** Config：webserver / persistence / sandbox / credentials / settings-file / LLM adapter / search / webhook。随 profile / bundle 加载，所有会话共享。
-- **agent-preset 面** Config：被 `packages/preset/agent-presets/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml` 装上的工具与 persona。对照表在 [`ref.presets`](presets.md)。
+- **host 面** Config：webserver / persistence / sandbox / credentials / settings / LLM adapter / search / webhook。随 profile / bundle 加载，所有会话共享。
+- **agent-preset 面** Config：被 `packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}/agent.cordis.yml` 装上的工具与 persona。对照表在 [`ref.presets`](presets.md)。
 - `dsh --dump-config` 看到的是叠层后的 **组合树**，不是 `settings.yaml`。
 
-search 的 `baseURL` **不**回退到 `DEEPSEEK_BASE_URL`。`web-search-deepseek` 读的是 `DEEPSEEK_SEARCH_BASE_URL`。[E: packages/web/web-search-deepseek/src/index.ts:82][E: packages/web/web-search-deepseek/src/index.ts:111]
+search 的 `baseURL` **不**回退到 `DEEPSEEK_BASE_URL`。`web-search-deepseek` 读的是 `DEEPSEEK_SEARCH_BASE_URL`。[E: packages/web/web-search-deepseek/src/index.ts:83][E: packages/web/web-search-deepseek/src/index.ts:111]
 
 `retryPolicy` 嵌套键的权威 schema 在 `@deepseek-ai/dsh-llm` 的 `RetryPolicySchema`（library，自己不是插件 Config）。[E: packages/llm/llm/src/retry-policy.ts:100]
 
@@ -138,11 +139,11 @@ search 的 `baseURL` **不**回退到 `DEEPSEEK_BASE_URL`。`web-search-deepseek
 | `@deepseek-ai/dsh-headless` | `packages/bundle/headless` | object | [E: packages/bundle/headless/src/index.ts:39] |
 | `@deepseek-ai/dsh-web-app` | `packages/bundle/web-app` | object | [E: packages/bundle/web-app/src/index.ts:60] |
 | `@deepseek-ai/dsh-sdk-app` | `packages/bundle/sdk-app` | object | [E: packages/bundle/sdk-app/src/index.ts:29] |
-| `@deepseek-ai/dsh-client-connection` | `packages/client/connection` | object | [E: packages/client/connection/src/index.ts:87] |
-| `@deepseek-ai/dsh-compaction-basic` | `packages/compaction/compaction-basic` | object | [E: packages/compaction/compaction-basic/src/index.ts:107] |
+| `@deepseek-ai/dsh-client-connection` | `packages/client/connection` | object | [E: packages/client/connection/src/index.ts:89] |
+| `@deepseek-ai/dsh-compaction-basic` | `packages/compaction/compaction-basic` | object | [E: packages/compaction/compaction-basic/src/index.ts:102] |
 | `@deepseek-ai/dsh-agent-instructions` | `packages/context/agent-instructions` | object | [E: packages/context/agent-instructions/src/config.ts:39] |
 | `@deepseek-ai/dsh-file-reference-local` | `packages/context/file-reference-local` | object | [E: packages/context/file-reference-local/src/index.ts:46] |
-| `@deepseek-ai/dsh-agent-default-model` | `packages/core/agent-default-model` | object | [E: packages/core/agent-default-model/src/index.ts:65] |
+| `@deepseek-ai/dsh-agent-default-model` | `packages/core/agent-default-model` | object | [E: packages/core/agent-default-model/src/index.ts:67] |
 | `@deepseek-ai/dsh-agent-loop` | `packages/core/agent-loop` | object | [E: packages/core/agent-loop/src/index.ts:354] |
 | `@deepseek-ai/dsh-agent-tool-presentation` | `packages/core/agent-tool-presentation` | object | [E: packages/core/agent-tool-presentation/src/index.ts:50] |
 | `@deepseek-ai/dsh-system-prompt` | `packages/core/system-prompt` | object | [E: packages/core/system-prompt/src/index.ts:400] |
@@ -153,23 +154,23 @@ search 的 `baseURL` **不**回退到 `DEEPSEEK_BASE_URL`。`web-search-deepseek
 | `@deepseek-ai/dsh-host-frontend-static` | `packages/host/frontend-static` | object | [E: packages/host/frontend-static/src/index.ts:35] |
 | `@deepseek-ai/dsh-host-directory-picker-browse` | `packages/host/directory-picker-browse` | object | [E: packages/host/directory-picker-browse/src/index.ts:196] |
 | `@deepseek-ai/dsh-host-webserver` | `packages/host/webserver` | object | [E: packages/host/webserver/src/index.ts:125] |
-| `@deepseek-ai/dsh-permission-presets` | `packages/interaction/permission-presets` | object | [E: packages/interaction/permission-presets/src/index.ts:165] |
-| `@deepseek-ai/dsh-llm-deepseek` | `packages/llm/llm-deepseek` | object | [E: packages/llm/llm-deepseek/src/index.ts:177] |
+| `@deepseek-ai/dsh-permission-presets` | `packages/interaction/permission-presets` | object | [E: packages/interaction/permission-presets/src/index.ts:166] |
+| `@deepseek-ai/dsh-llm-deepseek` | `packages/llm/llm-deepseek` | object | [E: packages/llm/llm-deepseek/src/config.ts:103] |
 | `@deepseek-ai/dsh-llm-pi-ai` | `packages/llm/llm-pi-ai` | object | [E: packages/llm/llm-pi-ai/src/config.ts:340] |
 | `@deepseek-ai/dsh-llm-retry` | `packages/llm/llm-retry` | empty object | [E: packages/llm/llm-retry/src/index.ts:28] |
-| `@deepseek-ai/dsh-token-meter` | `packages/llm/token-meter` | empty object | [E: packages/llm/token-meter/src/index.ts:103] |
-| `@deepseek-ai/dsh-plugin-package-inventory-deepseek` | `packages/llm/plugin-package-inventory-deepseek` | object | [E: packages/llm/plugin-package-inventory-deepseek/src/index.ts:37] |
+| `@deepseek-ai/dsh-token-meter` | `packages/llm/token-meter` | empty object | [E: packages/llm/token-meter/src/index.ts:104] |
+| `@deepseek-ai/dsh-plugin-package-inventory-deepseek` | `packages/llm/plugin-package-inventory-deepseek` | object | [E: packages/llm/plugin-package-inventory-deepseek/src/index.ts:38] |
 | `@deepseek-ai/dsh-mcp-client` | `packages/mcp/mcp-client` | union | [E: packages/mcp/mcp-client/src/index.ts:113] |
-| `@deepseek-ai/dsh-agent-presets` | `packages/preset/agent-presets` | object | [E: packages/preset/agent-presets/src/index.ts:107] |
+| `@deepseek-ai/dsh-agent-preset-registry` | `packages/preset/agent-preset-registry` | object | [E: packages/preset/agent-preset-registry/src/index.ts:53] |
 | `@deepseek-ai/dsh-persona` | `packages/preset/persona` | object | [E: packages/preset/persona/src/index.ts:49] |
-| `@deepseek-ai/dsh-tool-present` | `packages/fs/tool-present` | object | [E: packages/fs/tool-present/src/index.ts:21] |
-| `@deepseek-ai/dsh-api-workspace-files` | `packages/api/workspace-files` | object | [E: packages/api/workspace-files/src/index.ts:185] |
+| `@deepseek-ai/dsh-tool-present` | `packages/deliverables/tool-present` | object | [E: packages/deliverables/tool-present/src/index.ts:21] |
+| `@deepseek-ai/dsh-api-workspace-files` | `packages/api/workspace-files` | object | [E: packages/api/workspace-files/src/index.ts:186] |
 | `@deepseek-ai/dsh-host-open-in-app` | `packages/host/open-in-app` | object | [E: packages/host/open-in-app/src/index.ts:72] |
-| `@deepseek-ai/dsh-sandbox-policy` | `packages/sandbox/sandbox-policy` | object | [E: packages/sandbox/sandbox-policy/src/index.ts:111] |
+| `@deepseek-ai/dsh-sandbox-policy` | `packages/sandbox/sandbox-policy` | object | [E: packages/sandbox/sandbox-policy/src/index.ts:112] |
 | `@deepseek-ai/dsh-sdk-jsonrpc-server` | `packages/sdk/server` | object | [E: packages/sdk/server/src/index.ts:36] |
 | `@deepseek-ai/dsh-session-log-deepseek` | `packages/session/session-log-deepseek` | object | [E: packages/session/session-log-deepseek/src/index.ts:28] |
 | `@deepseek-ai/dsh-session-log-export` | `packages/session-query/session-log-export` | object | [E: packages/session-query/session-log-export/src/index.ts:48] |
-| `@deepseek-ai/dsh-settings-file` | `packages/settings/settings-file` | object | [E: packages/settings/settings-file/src/index.ts:107] |
+| `@deepseek-ai/dsh-settings` | `packages/settings/settings` | （无独立 schema 用户键；表单投影） | [E: packages/settings/settings/src/index.ts:223] |
 | `@deepseek-ai/dsh-tool-pwsh-persistent` | `packages/shell/tool-pwsh-persistent` | object | [E: packages/shell/tool-pwsh-persistent/src/index.ts:484] |
 | `@deepseek-ai/dsh-web-search-deepseek` | `packages/web/web-search-deepseek` | object | [E: packages/web/web-search-deepseek/src/index.ts:63] |
 | `@deepseek-ai/dsh-webhook-github` | `packages/webhook/webhook-github` | object | [E: packages/webhook/webhook-github/src/index.ts:28] |
@@ -238,15 +239,15 @@ search 的 `baseURL` **不**回退到 `DEEPSEEK_BASE_URL`。`web-search-deepseek
 
 | 键 | 默认 | 含义 | 源 |
 |---|---|---|---|
-| `trustedHosts` | `[]` | 非 loopback Host 白名单 | [E: packages/client/connection/src/index.ts:87] |
-| `cookieMaxAgeDays` | `30` | 浏览器 cookie 寿命 | [E: packages/client/connection/src/index.ts:87] |
-| `maxRequestBodyBytes` | `DEFAULT_MAX_REQUEST_BODY_BYTES` | `/api` JSON body 上限 | [E: packages/client/connection/src/index.ts:90] |
+| `trustedHosts` | `[]` | 非 loopback Host 白名单 | [E: packages/client/connection/src/index.ts:89] |
+| `cookieMaxAgeDays` | `30` | 浏览器 cookie 寿命 | [E: packages/client/connection/src/index.ts:89] |
+| `maxRequestBodyBytes` | `DEFAULT_MAX_REQUEST_BODY_BYTES` | `/api` JSON body 上限 | [E: packages/client/connection/src/index.ts:89] |
 
 ### `compaction` / `context` / `core`
 
 #### `@deepseek-ai/dsh-compaction-basic`
 
-顶层：`thresholdRatio` / `retainRatio` / `retainTokens` / `summarizationProvider` / `summarizationModel` / `maxTokens` / `compactionRetries` / `maxOverflowRetries` / `modelPolicies` / `auto`。[E: packages/compaction/compaction-basic/src/index.ts:108]–[E: packages/compaction/compaction-basic/src/index.ts:117]
+顶层：`thresholdRatio` / `retainRatio` / `retainTokens` / `summarizationProvider` / `summarizationModel` / `maxTokens` / `compactionRetries` / `maxOverflowRetries` / `modelPolicies` / `auto`。[E: packages/compaction/compaction-basic/src/index.ts:113]–[E: packages/compaction/compaction-basic/src/index.ts:117]
 
 #### `@deepseek-ai/dsh-agent-instructions`
 
@@ -264,7 +265,7 @@ search 的 `baseURL` **不**回退到 `DEEPSEEK_BASE_URL`。`web-search-deepseek
 
 | 键 | 约束 | 源 |
 |---|---|---|
-| `provider` | `z.string().required()` | [E: packages/core/agent-default-model/src/index.ts:66] |
+| `provider` | `z.string().required()` | [E: packages/core/agent-default-model/src/index.ts:67] |
 | `model` | `z.string().required()` | [E: packages/core/agent-default-model/src/index.ts:67] |
 
 Settings 切片额外允许 `reasoningEffort`。[E: packages/core/agent-default-model/src/index.ts:37] base 组合写入 `deepseek-official` / `deepseek-flash`。[E: packages/bundle/base/cordis.patch.yml:78]
@@ -276,9 +277,9 @@ Settings 切片额外允许 `reasoningEffort`。[E: packages/core/agent-default-
 | `maxParallelToolCalls` | `DEFAULT_MAX_PARALLEL_TOOL_CALLS` | 每 step 并行安全调用上限；用户 settings 可改 | [E: packages/core/agent-loop/src/index.ts:359] |
 | `agents` | `[]` | boot 一次的声明式 agent 数组；**不进**用户 settings | [E: packages/core/agent-loop/src/index.ts:359] |
 | `agents[].id` | required | 配置标签 | [E: packages/core/agent-loop/src/index.ts:359] |
-| `agents[].sessionId` | 可选 | 新鲜会话精确 id | [E: packages/core/agent-loop/src/index.ts:360] |
-| `agents[].provider` | 可选 | 路由 | [E: packages/core/agent-loop/src/index.ts:360] |
-| `agents[].model` / `reasoningEffort` / `maxTokens` / `cwd` / `resumeSessionId` | 可选 | 模型、effort、token、cwd、resume | [E: packages/core/agent-loop/src/index.ts:363][E: packages/core/agent-loop/src/index.ts:366] |
+| `agents[].sessionId` | 可选 | 新鲜会话精确 id | [E: packages/core/agent-loop/src/index.ts:361] |
+| `agents[].provider` | 可选 | 路由 | [E: packages/core/agent-loop/src/index.ts:361] |
+| `agents[].model` / `reasoningEffort` / `maxTokens` / `cwd` / `resumeSessionId` | 可选 | 模型、effort、token、cwd、resume | [E: packages/core/agent-loop/src/index.ts:364][E: packages/core/agent-loop/src/index.ts:366] |
 
 #### `@deepseek-ai/dsh-agent-tool-presentation`
 
@@ -299,10 +300,10 @@ PTC 模型可见工具名仍是 `run_code`；权威实现 `packages/core/tools/s
 
 | 键 | 默认 | 源 |
 |---|---|---|
-| `includeHarnessIdentity` | `true` | [E: packages/core/system-prompt/src/index.ts:401] |
-| `includeRuntimeContext` | `true` | [E: packages/core/system-prompt/src/index.ts:402] |
-| `personaPrefix` | `''` | [E: packages/core/system-prompt/src/index.ts:403] |
-| `personaSuffix` | `''` | [E: packages/core/system-prompt/src/index.ts:404] |
+| `includeHarnessIdentity` | `true` | [E: packages/core/system-prompt/src/index.ts:400] |
+| `includeRuntimeContext` | `true` | [E: packages/core/system-prompt/src/index.ts:400] |
+| `personaPrefix` | `''` | [E: packages/core/system-prompt/src/index.ts:400] |
+| `personaSuffix` | `''` | [E: packages/core/system-prompt/src/index.ts:405] |
 | `toolOrder` | 省略保留 | [E: packages/core/system-prompt/src/index.ts:406] |
 
 #### `@deepseek-ai/dsh-persona`
@@ -324,9 +325,9 @@ preset 行 schema，不是 host `system-prompt` 那两个键。
 |---|---|---|
 | `maxMembers` | `8` | [E: packages/experimental/agent-team/src/index.ts:63] |
 | `maxTasks` | `256` | [E: packages/experimental/agent-team/src/index.ts:64] |
-| `maxPendingMessagesPerMember` | `64` | [E: packages/experimental/agent-team/src/index.ts:65] |
-| `maxMessageBytes` | `65536` | [E: packages/experimental/agent-team/src/index.ts:66] |
-| `disposalTimeoutMs` | `5000` | [E: packages/experimental/agent-team/src/index.ts:67] |
+| `maxPendingMessagesPerMember` | `64` | [E: packages/experimental/agent-team/src/index.ts:64] |
+| `maxMessageBytes` | `65536` | [E: packages/experimental/agent-team/src/index.ts:64] |
+| `disposalTimeoutMs` | `5000` | [E: packages/experimental/agent-team/src/index.ts:68] |
 
 opt-in，不在 `dsh-base` 除非 experimental profile。
 
@@ -390,21 +391,19 @@ Host HTTP API 在三个 `packages/api/*-controller`，**没有**已删除的 `ds
 
 #### `@deepseek-ai/dsh-permission-presets`
 
-`presets` 是 `z.dict`：每条 `sandbox` / `approval` required，可选 `name` / `description`；默认含 `workspace-write` 等。[E: packages/interaction/permission-presets/src/index.ts:165] 另有可选 `defaultPreset`。[E: packages/interaction/permission-presets/src/index.ts:181]
+`presets` 是 `z.dict`：每条 `sandbox` / `approval` required，可选 `name` / `description`；默认含 `workspace-write` 等。[E: packages/interaction/permission-presets/src/index.ts:166] 另有可选 `defaultPreset`。[E: packages/interaction/permission-presets/src/index.ts:182]
 
 #### `@deepseek-ai/dsh-llm-deepseek`
 
 | 键 | 要点 | 源 |
 |---|---|---|
-| `apiKeyEnv` | credential-ref，默认 `DEFAULT_API_KEY_ENV` | [E: packages/llm/llm-deepseek/src/index.ts:178] |
-| `baseURL` | 可选；运行时另读 `DEEPSEEK_BASE_URL` | [E: packages/llm/llm-deepseek/src/index.ts:179] |
-| `thinking` | `'enabled' \| 'disabled'` | [E: packages/llm/llm-deepseek/src/index.ts:180] |
-| `reasoningEffort` | `'off' \| 'low' \| 'high' \| 'max'` | [E: packages/llm/llm-deepseek/src/index.ts:181] |
-| `maxTokens` | default `DEFAULT_MAX_TOKENS` | [E: packages/llm/llm-deepseek/src/index.ts:182] |
-| `defaultContextWindow` | `DEFAULT_CONTEXT_WINDOW` | [E: packages/llm/llm-deepseek/src/index.ts:183] |
-| `models` | catalog 数组，`DEFAULT_MODELS` | [E: packages/llm/llm-deepseek/src/index.ts:184] |
-| `streamIdleTimeoutMs` / Files API / image offload 一串 | 均有 schema default | [E: packages/llm/llm-deepseek/src/index.ts:184] |
-| `retryPolicy` | `RetryPolicySchema` | [E: packages/llm/llm-deepseek/src/index.ts:196] |
+| `baseURL` | volatile string；运行时另读 `DEEPSEEK_BASE_URL` | [E: packages/llm/llm-deepseek/src/config.ts:83] |
+| `thinking` | `'enabled' \| 'disabled'` volatile | [E: packages/llm/llm-deepseek/src/config.ts:84] |
+| `reasoningEffort` | `'off' \| 'low' \| 'high' \| 'max'` volatile | [E: packages/llm/llm-deepseek/src/config.ts:85] |
+| `maxTokens` | default `DEFAULT_MAX_TOKENS` | [E: packages/llm/llm-deepseek/src/config.ts:86] |
+| `defaultContextWindow` | `DEFAULT_CONTEXT_WINDOW` | [E: packages/llm/llm-deepseek/src/config.ts:87] |
+| `models` | catalog 数组，`DEFAULT_MODELS` | [E: packages/llm/llm-deepseek/src/config.ts:88] |
+| `retryPolicy` | `RetryPolicySchema` | [E: packages/llm/llm-deepseek/src/config.ts:100] |
 
 #### `@deepseek-ai/dsh-llm-pi-ai`
 
@@ -412,7 +411,7 @@ Host HTTP API 在三个 `packages/api/*-controller`，**没有**已删除的 `ds
 
 #### `@deepseek-ai/dsh-llm-retry` / `@deepseek-ai/dsh-token-meter`
 
-空 object：retry 由各 provider 的 `retryPolicy` 拥有；token-meter 拒绝任何键。[E: packages/llm/llm-retry/src/index.ts:28][E: packages/llm/token-meter/src/index.ts:103]
+空 object：retry 由各 provider 的 `retryPolicy` 拥有；token-meter 拒绝任何键。[E: packages/llm/llm-retry/src/index.ts:28][E: packages/llm/token-meter/src/index.ts:104]
 
 #### `@deepseek-ai/dsh-plugin-package-inventory-deepseek`
 
@@ -426,23 +425,29 @@ union：`transport: 'stdio'` 需要 `command`；`transport: 'streamable-http'` �
 
 ### `preset` / `sandbox` / `sdk`
 
-#### `@deepseek-ai/dsh-agent-presets`
+#### `@deepseek-ai/dsh-agent-preset-registry`
 
 | 键 | 默认 | 含义 | 源 |
 |---|---|---|---|
-| `default` | required | 未点名 preset 时挂哪一个（web 组合写 `standard`） | [E: packages/preset/agent-presets/src/index.ts:108] |
-| `roots[]` | `[]` | 额外扫描根；`path` required，`trust` 默认 `'user'` | [E: packages/preset/agent-presets/src/index.ts:109] |
-| `includeShippedRoot` | `true` | 是否扫 `SHIPPED_PRESET_ROOT` | [E: packages/preset/agent-presets/src/index.ts:113] |
-| `includeUserRoot` | `true` | 是否扫 `$DSH_HOME/.agent-presets` | [E: packages/preset/agent-presets/src/index.ts:114] |
+| `default` | required | 未点名 preset 时挂哪一个（web 组合写 `standard`） | [E: packages/preset/agent-preset-registry/src/index.ts:54] |
+| `selectedDefault` | volatile | 用户选的 default；Settings 可改 | [E: packages/preset/agent-preset-registry/src/index.ts:55] |
 
-用户 settings 可改 `default` 与 `modeSelectionEnabled`。[E: packages/preset/agent-presets/src/index.ts:73][E: packages/preset/agent-presets/src/index.ts:75]
+不再扫 `SHIPPED_PRESET_ROOT` / `$DSH_HOME/.agent-presets`：preset 是声明行，不是目录扫描。
+
+#### `@deepseek-ai/dsh-agent-preset`
+
+| 键 | 默认 | 含义 | 源 |
+|---|---|---|---|
+| `id` | required | preset id | [E: packages/preset/agent-preset/src/index.ts:17] |
+| `plugins` | required | 子插件列表 | [E: packages/preset/agent-preset/src/index.ts:22] |
+| `name` / `description` / `order` | 可选 | 用户自写才带 `name`；shipped 四份不写 name，文案走 locale | [E: packages/preset/agent-preset/src/index.ts:18] |
 
 #### `@deepseek-ai/dsh-sandbox-policy`
 
 | 键 | 默认 | 源 |
 |---|---|---|
 | `mode` | `'read-only'` | [E: packages/sandbox/sandbox-policy/src/index.ts:112] |
-| `workspaceRoot` | 无 schema default；构造器落到 `process.cwd()` | [E: packages/sandbox/sandbox-policy/src/index.ts:115] |
+| `workspaceRoot` | 无 schema default；构造器落到 `process.cwd()` | [E: packages/sandbox/sandbox-policy/src/index.ts:116] |
 
 #### `@deepseek-ai/dsh-sdk-jsonrpc-server`
 
@@ -456,13 +461,13 @@ union：`transport: 'stdio'` 需要 `command`；`transport: 'streamable-http'` �
 
 | 键 | 默认 | 含义 | 源 |
 |---|---|---|---|
-| `maxFiles` | `8` | 一次 `present` 最多几个文件 | [E: packages/fs/tool-present/src/index.ts:22] |
+| `maxFiles` | `8` | 一次 `present` 最多几个文件 | [E: packages/deliverables/tool-present/src/index.ts:22] |
 
 #### `@deepseek-ai/dsh-session-log-deepseek`
 
 | 键 | 默认 | 含义 | 源 |
 |---|---|---|---|
-| `enabled` | `false` | 是否向官方请求贡献 `dsh_session_log` | [E: packages/session/session-log-deepseek/src/index.ts:30] |
+| `enabled` | `false` | 是否向官方请求贡献 `dsh_session_log` | [E: packages/session/session-log-deepseek/src/index.ts:31] |
 
 #### `@deepseek-ai/dsh-session-log-export`
 
@@ -470,14 +475,10 @@ union：`transport: 'stdio'` 需要 `command`；`transport: 'streamable-http'` �
 |---|---|---|
 | `compressionLevel` | `DEFAULT_SESSION_LOG_COMPRESSION_LEVEL`（0–9） | [E: packages/session-query/session-log-export/src/index.ts:52] |
 
-#### `@deepseek-ai/dsh-settings-file`
+#### `@deepseek-ai/dsh-settings`
 
-| 键 | 默认 | 源 |
-|---|---|---|
-| `path` | 省略 | [E: packages/settings/settings-file/src/index.ts:108] |
-| `dshHome` | 省略 | [E: packages/settings/settings-file/src/index.ts:109] |
-| `watch` | `true` | [E: packages/settings/settings-file/src/index.ts:110] |
-| `debounceMs` | `100` | [E: packages/settings/settings-file/src/index.ts:111] |
+`SettingsForms` **没有**独立用户 `Config` 键：表单投影 live plugin Config，legacy `settings.yaml` 导入进 profile。[E: packages/settings/settings/src/index.ts:223]
+| `debounceMs` | `100` | [E: packages/settings/settings/src/index.ts:109] |
 
 #### `@deepseek-ai/dsh-tool-pwsh-persistent`
 
@@ -485,10 +486,10 @@ union：`transport: 'stdio'` 需要 `command`；`transport: 'streamable-http'` �
 
 | 键 | 默认 | 源 |
 |---|---|---|
-| `backendType` | `'shell'` | [E: packages/shell/tool-pwsh-persistent/src/index.ts:485] |
+| `backendType` | `'shell'` | [E: packages/shell/tool-pwsh-persistent/src/index.ts:486] |
 | `timeoutMs` | `300_000` | [E: packages/shell/tool-pwsh-persistent/src/index.ts:486] |
 | `maxOutputChars` | `16_000` | [E: packages/shell/tool-pwsh-persistent/src/index.ts:487] |
-| `description` | `DEFAULT_DESCRIPTION` | [E: packages/shell/tool-pwsh-persistent/src/index.ts:488] |
+| `description` | `DEFAULT_DESCRIPTION` | [E: packages/shell/tool-pwsh-persistent/src/index.ts:489] |
 
 #### `@deepseek-ai/dsh-web-search-deepseek`
 
@@ -519,10 +520,11 @@ union：`transport: 'stdio'` 需要 `command`；`transport: 'streamable-http'` �
 ## Sources
 
 - `packages/settings/settings/src/index.ts`
-- `packages/settings/settings-file/src/index.ts`
+- `packages/settings/settings/src/index.ts`
 - `packages/llm/llm/src/retry-policy.ts`
-- `packages/preset/agent-presets/src/index.ts`
-- `packages/preset/agent-presets/src/discovery.ts`
+- `packages/preset/agent-preset-registry/src/index.ts`
+- `packages/preset/agent-preset/src/index.ts`
+- `packages/bundle/web-app/package.json`
 - `packages/boot/app-boot/src/profile.ts`
 - `packages/core/agent-loop/src/index.ts`
 - `packages/core/agent-default-model/src/index.ts`
@@ -550,11 +552,12 @@ union：`transport: 'stdio'` 需要 `command`；`transport: 'streamable-http'` �
 - `packages/host/directory-picker-browse/src/index.ts`
 - `packages/host/open-in-app/src/index.ts`
 - `packages/api/workspace-files/src/index.ts`
-- `packages/fs/tool-present/src/index.ts`
+- `packages/deliverables/tool-present/src/index.ts`
 - `packages/preset/persona/src/index.ts`
 - `packages/bundle/base/cordis.patch.yml`
 - `packages/interaction/permission-presets/src/index.ts`
 - `packages/llm/llm-deepseek/src/index.ts`
+- `packages/llm/llm-deepseek/src/config.ts`
 - `packages/llm/llm-pi-ai/src/config.ts`
 - `packages/llm/llm-retry/src/index.ts`
 - `packages/llm/token-meter/src/index.ts`

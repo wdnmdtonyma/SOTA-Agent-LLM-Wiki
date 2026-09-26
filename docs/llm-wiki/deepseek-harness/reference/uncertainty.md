@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 # 不确定项日志([U] 汇总)
@@ -202,6 +202,14 @@ updated: c291e7961a
 - 官方 tool-web 节按包默认 Config（`fetch: true`）列出 `web_fetch`。`standard` / `code` / `cordis` 三份 yml 都写 `config.fetch: false`，`apply` 因此不调用 `applyWebFetchTool`。wiki 把 shipped 列标成「包装·fetch关」，不把出厂 Web 产品写成模型看得到 `web_fetch`。
 - 官方 `list_agents` 行写 Requires `ctx.sessionProjections`。源码 `packages/subagent/tool-subagent-control/src/list-agents.ts` 的 `inject` 是 `['tools', 'subagents', 'agents']`，文件内无 `sessionProjections`。wiki 跟 `inject`。
 
+## l2-catalogs
+
+# uncertainty · L2 catalogs @ 477b4f4205
+
+- **ctx-keys 未穷尽全部 `interface Context` merge。** 抽核对照源码约 125 个声明键。本轮就地补了 shipped 漏键 `pluginManager` / `profileContext` / `schedule`，删了不存在的 `ctx.agent`。仍未占行的包括：`configEditor`、`browserUse` / `computerUse`、`jobController` / `terminalController` / `directoryPickerController`、`mcpResources`、`officeToPdf`、`productTelemetry`、`sessionFeedback` / `sessionSkillCatalog` / `workspaceChanges`、`deepseekAccount`、`pluginPackages`、`speechToText` / `speechController`，以及若干 client 键（`shortcuts` / `feedbackUi` / `pluginNavigation` / `webTerminals` 等）。本页范围仍是产品默认树 + 已点名的 opt-in；完整枚举标 [U]。
+- **capability-seams 同样不是全键表。** `pluginManager` 已补进 core spine；`schedule` / experimental 缝仍以 ctx-keys 为准。
+- **官方 `docs/capability-seams.md` 仍画 `ctx.e2b`。** 冻结树无 `packages/e2b`、无 `dsh-fs-e2b` / `dsh-subprocess-e2b`、无 Context 键。wiki 跟代码；官方漂移不改源码。
+
 ## t1-preset-overview
 
 # uncertainty · surface.presets.overview
@@ -253,7 +261,14 @@ updated: 47f943859b
 
 # uncertainty-update-code-mode
 
-- `inactiveRows` only inspects static `fiber.inject` (`['tools']` on `tool-presentation`). YAML/JSDoc still claim a missing `codeRuntime` fails the preset at mount and names that row. Tests: `row.await()` succeeds; assemble stays native (`echo`) until `StubRuntime` is plugged. Marked `[U]` on `subsys.core.code-mode`.
+- `dsh-agent-tool-presentation` 模块 JSDoc 与 `agent-tool-presentation.spec.ts` 注释写：缺 `ptcRuntime` 时 PTC 行在 **mount 失败**，且 `dsh-agent-preset-registry` 激活审计会点名该 `id`。可执行断言：`row.ctx.get('ptcRuntime') === undefined`，`assemble` 保持 native `echo`，直到之后 `ctx.plugin(StubRuntime)` 才切到 `[run_code]`。静态 `inject = ['tools']`；等 `ptcRuntime` 的是 `apply` 里另开的子 fiber。wiki 跟测试；「mount 一定失败」标 `[U]`。
+
+## update-code-runtime
+
+# uncertainty-update-code-runtime
+
+- 与 `uncertainty-update-code-mode.md` 同一条：`apply` JSDoc 写缺 host `ptcRuntime` 则 preset mount 失败并点名 `tool-presentation`。静态 `inject = ['tools']`。单测钉死 pending + native `echo`。wiki 跟测试。
+- 「`sdk-minimal` 无 `ptc-runtime`」来自对 `packages/bundle/sdk-minimal/cordis.patch.yml` 的全文检索（无该字符串），标 `[I]`。若以后 `sdk-minimal` spec 补一行 `rows.filter(id === 'ptc-runtime').toHaveLength(0)`，可升为 `[E]`。
 
 ## update-config-keys
 
@@ -263,12 +278,56 @@ updated: 47f943859b
 - 仍有大量 `packages/*/src/index.ts` 的 `Config` 顶层键未在实例表里逐字段展开（文末名单）。完整机械枚举以各文件 `export const Config` / `static Config` 为准；filler 未把官方 `docs/config-catalog.md` 当 [E]。
 - `dsh-webhook` 运行时无插件 Config；`dsh-acp-app` `apply` 无 config 参数。
 
+## update-deepseek-extensions
+
+# uncertainty-update-deepseek-extensions
+
+- **`dsh_session_log` 默认开。** `packages/session/session-log-deepseek/src/index.ts` schema `enabled` 默认 `true`；`apply` 仍 `if (config.enabled !== true) return`。注释写 Schemastery 在 `apply` 前填默认。shipped `dsh-base` / `sdk-minimal` 行无 `config:`，因此会登记字段。旧 wiki 写「默认关、必须显式 true」已过时。
+- inventory 对 standing preset 根 bare 行用 host `baseUrl` 解析。测试 `inventory.spec.ts`「resolves a declared preset plugin from its owning composition」钉的是能解析到 preset 包，不是「preset 自己的 node_modules 版本会被忽略」那句旧断言；若产品仍依赖「忽略 preset 目录 node_modules」，需要补测。
+
+## update-deepseek
+
+# uncertainty-update-deepseek
+
+- **默认 catalog 与 ACP/SDK/搜索默认模型不一致。** `DEFAULT_MODELS` 只有 `deepseek-flash` + `deepseek-v4-pro`。ACP 插件行、TS SDK 构造、Python SDK dataclass、`dsh-web-search-deepseek` 的 `DEEPSEEK_DEFAULT_MODEL` 仍硬编码 `deepseek-v4-flash`。未列出的 id 仍可请求（按文本）。wiki 两边都写；是否会把客户端默认改成 `deepseek-flash` 待产品决策。
+- **账号 `resolveToken` 认 origin。** 默认 `inferenceOrigin` 是 `https://api.deepseek.com`，Messages `PUBLIC_BASE_URL` 是 `https://api.deepseek.com/anthropic`，同源所以 shipped 能交出 token。自定义 `DEEPSEEK_BASE_URL` 换 origin 时账号路由会一直 `ACCOUNT_SIGN_IN_REQUIRED`，直到 Platform `inferenceOrigin` 对齐。本仓没有「换 origin 仍能用账号」的产品测试。
+- **无 Loader entry 时 directory `settingsNs`。** 单元测试直接 `ctx.plugin(ApiKey)` 时 `settingsNs` 是 plugin `name` `llm-deepseek-api-key`，shipped yml `id` 是 `llm-deepseek`。wiki 两边都写。
+
+## update-e2b
+
+# uncertainty-update-e2b
+
+- 「任何 shipped bundle / preset 都没有 e2b 行」来自对 `packages/bundle/**/cordis.patch.yml` 与 `packages/bundle/web-app/presets/*.patch.yml` 的全文检索（无 `e2b` 字符串），标 `[I]`。包目录 `packages/e2b/` 已不存在。
+
+## update-execution-refresh
+
+# uncertainty-update · execution refresh (fs/shell/sandbox/lsp)
+
+- **SSH 不在 shipped overlay**：`packages/bundle/**/cordis.patch.yml` 与 `packages/bundle/web-app/presets/*.patch.yml` 无 `dsh-ssh` / `fs-ssh` / `subprocess-ssh` / `sandbox-ssh` 字符串，标 `[I]`（与 `subsys.execution.ssh` 一致）。live e2e 缺 `DSH_SSH_TEST_CONFIG` 则 skip。
+- **`SHELL_SETTINGS_NAMESPACE` 已从 TS 删除。** `packages/shell/shell/src/index.ts` 不再导出该常量；预算走各 executor `Config` 的 volatile `.get()` + Loader 热更新（`bash-local/tests/settings.spec.ts` 的 `liveConfig`）。README 仍提旧名，不当 `[E]`。
+- **bash-sandbox helpers 重导出 vs pwsh-sandbox 本地副本。** `dsh-bash-sandbox/src/helpers.ts` 把 `isRunnerSpawnFailure` 从 `@deepseek-ai/dsh-sandbox` 重导出；`dsh-pwsh-sandbox/src/helpers.ts` 仍有一份本地实现。分类方言声称镜像，未做逐行 diff。
+- **后台 `danger-full-access` 的 `proc.sandbox`。** 统一 `execute` 之后，满权路径 decorate 的是 `result()`，`onProcessDone` 在无 `processFacts` 时仍不盖 `proc.sandbox`。gotcha 保留；未把「前台/后台字段同形」写成合同。
+
+## update-hmr
+
+# uncertainty · update · client-hmr @ 477b4f4205
+
+- **伴随 invariant 仍数 `StatWatcher`。** `packages/client/hmr/src/invariant.ts` 注释与计数仍按 `fs.watchFile`。现行 node 半边是 `setInterval` + `statSync`，不会产生 `StatWatcher`。行为测试（dispose 后再写文件不再 `rebuilt`）仍成立。页内标 `[U]`。与既有 `_staging/uncertainty-i-hmr.md` 同一笔。
+
+- **浏览器现消费 `graph` 帧。** 旧页写「忽略 graph 帧」。现行 `packages/client/hmr/src/client/index.ts` 把 `graph` 交给 `entries.sync`、`rebuilt` 交给 `entries.reload`。已改正，不进 uncertainty。
+
 ## update-package-index
 
 # uncertainty-update-package-index
 
 - `UPDATE-INSTRUCTIONS.md` 写「叶 `packages/**/package.json` = 275（无 `@fixture/*`）」。源码 `find packages -name package.json` 在 `c291e7961a` 确实是 **275**，但其中 **7** 个是 `packages/typert/generator/tests/fixtures/**` 的 `@fixture/*`。产品叶 `packages/<group>/<pkg>/package.json` 是 **268**。本页按源码写清两层计数，不以指令转述为准。
 - `pnpm-workspace.yaml` 另含 `benchmarks`（不是根 `package.json` `workspaces` 成员）。未把 benchmarks 收进实例表。
+
+## update-plugin-manager
+
+# uncertainty-update-plugin-manager
+
+- 「`minimal` preset 无 `tool-plugin-manager` 行」来自对 `packages/bundle/web-app/presets/minimal.patch.yml` 的全文检索，标 `[I]`。
 
 ## update-presets-composition
 
@@ -281,19 +340,51 @@ updated: 47f943859b
 
 # uncertainty-update-retry
 
-- Package README prose claiming retry “closes the failed turn / fresh numbered turn” is not present under `packages/llm/llm-retry/` at `0a53fb55be`. Loop code still `continue`s the same `while` (`agent.ts` 407) and tests see one `step/start`. Left `[U]` on that gotcha so a later README regression is not treated as verified text.
+- Package README 若写 retry “closes the failed turn / fresh numbered turn” 与代码冲突：`ReactLoopAgent.step` 对 `{ kind: 'retry' }` 在同一 `while` 里 `continue`（`packages/core/agent-loop/src/agent.ts:492`）；`retry.spec.ts` 只看到一条 `step/start { turn: 1, step: 1 }`（约 219）。页内 gotcha 标 `[U]`，不把 README 当 `[E]`。
+- `./invariant` companion 仍不在 `dsh-base`。是否被 invariants 自动发现未核；正文不写这条 companion 为 shipped 默认树的一部分。
 
 ## update-run-code
 
 # uncertainty-update-run-code
 
-- `inactiveRows` 只扫 `fiber.inject`（静态 inject）。`tool-presentation` 静态 `inject = ['tools']`，`codeRuntime` 是 `apply` 里动态 `ctx.inject`。因此缺 runtime 时这条行不会出现在 `inactiveRows` 的 waiting 列表里；装配仍保持 native。JSDoc 写「fails at mount」是设计意图，执行路径未用静态 inject 卡住整棵 fiber。见 `packages/preset/agent-presets/src/mount.ts:316` 与 `packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:111`。
+- `auditRows` 只扫 `fiber.inject`（静态 inject）。`tool-presentation` 静态 `inject = ['tools']`，`ptcRuntime` 是 `apply` 里动态 `ctx.inject(['ptcRuntime'])`。因此缺 runtime 时这条行不会出现在 `auditRows.pending` 的 waiting 列表里；装配仍保持 native。JSDoc / 测试注释写「fails at mount / 审计点名该行」是设计意图，执行路径未用静态 inject 卡住整棵 fiber。见 `packages/preset/agent-preset-registry/src/mount.ts:206` 与 `packages/core/agent-tool-presentation/tests/agent-tool-presentation.spec.ts:111`。
+
+## update-session-format
+
+# uncertainty-update-session-format
+
+- 无新增 `[U]`。`SESSION_FORMAT_VERSION = 4`、`liftToolResult`、`createSessionFormatV3ToV4(children)` 均有源码行。
+
+## update-session
+
+# uncertainty-update-session
+
+- 无新增 `[U]`。fork 不再抛 `OPEN_TURN` 已用 `buildForkSeed` + `fork.spec.ts` 钉死。`leakedServices` 文案已按 `agent-preset-registry` 源码改写。
+
+## update-ssh
+
+# uncertainty-update-ssh
+
+- 「任何 shipped bundle / preset 都没有 ssh 行」来自对 `packages/bundle/**/cordis.patch.yml` 与 `packages/bundle/web-app/presets/*.patch.yml` 的全文检索（无 `dsh-ssh` / `fs-ssh` / `subprocess-ssh` / `sandbox-ssh` 字符串），标 `[I]`。live e2e 缺 `DSH_SSH_TEST_CONFIG` 时 skip，CI 绿不代表打过真远端。
 
 ## update-trace-code-mode
 
 # uncertainty-update-trace-code-mode
 
 - node: `spine.trace-code-mode`
-- SHA: `c291e7961a`
-- `dsh-agent-tool-presentation` JSDoc still says a PTC row against a deployment with no `codeRuntime` “fails at mount, named in the preset's own activation audit”. `inactiveRows` only inspects static `fiber.inject` (the row lists `['tools']`, not `codeRuntime`), so the dynamic `ctx.inject(['codeRuntime'], …)` wait is invisible to that audit. The presentation spec asserts assemble stays native (`echo`) until a runtime plugin arrives. Keep as `[U]` until the JSDoc, mount audit, or wait inject list are aligned.
+- SHA: `477b4f4205`
+- `dsh-agent-tool-presentation` JSDoc still says a PTC row against a deployment with no `ptcRuntime` “fails at mount, named in the preset's own activation audit”. `auditRows` only inspects static `fiber.inject` (the row lists `['tools']`, not `ptcRuntime`), so the dynamic `ctx.inject(['ptcRuntime'], …)` wait is invisible to that audit. The presentation spec asserts assemble stays native (`echo`) until a runtime plugin arrives. Keep as `[U]` until the JSDoc, mount audit, or wait inject list are aligned.
+
+## update-workflow
+
+# uncertainty-update-workflow
+
+- 工具 description 写脚本「has no filesystem, network, timer, or Node.js APIs」。shipped `PtcWorkflowEngine` 在 confined Node 进程里跑 guest `vm`；测试仍用 `globalThis.constructor.constructor('return process')()` 摸到 `process`，只钉死 guest `process.env` 为空对象。正文按 containment + session file policy 写，不把「无 Node API」当成可执行安全边界。见 `packages/workflow/tool-workflow/src/index.ts:166` 与 `packages/workflow/workflow-ptc/tests/egress.spec.ts:35`。
+
+## update-workspace-dependencies
+
+# uncertainty-update-workspace-dependencies
+
+- 「四个 shipped web preset 不挂本包」来自对 `packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}.patch.yml` 的全文检索（无 `tool-workspace-dependencies` / `load_workspace_dependencies`），标 `[I]`。
+- 本工具不走 `ctx.approval` / `ctx.sandbox`：`defineTool` 无 `ask`、execute 不读这两条 seam。标 `[I]`。
 

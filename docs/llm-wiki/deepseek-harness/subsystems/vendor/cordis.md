@@ -29,7 +29,7 @@ related:
   - subsys.composition.bundle-base
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/cordis` 是 **vendored** 组合运行时（`vendor/cordis/`），npm 名写在该包 `package.json`，不是 `packages/` 里的 DSH 包。`Context` 是 `Proxy`：`provide` / `inject` / `plugin` / `on` / `emit` / `waterfall` 都是 mixin 到 `ctx` 上的方法。`Service` 构造调用 `ctx.reflect.provide`；注册是可逆 effect，fiber unload 后该键变 `undefined`。`waterfall` 必须调用传入的 `next()`，否则链停在本层（含内置 `inner`）。
@@ -45,7 +45,7 @@ updated: c291e7961a
 
 ## 职责边界
 
-本包 `@deepseek-ai/cordis`（`vendor/cordis/`，`version` `4.0.2`）拥有组合运行时内核：`Context` proxy、`Fiber` 生命周期、`Service` 基类、`ReflectService`（`provide` / `get` / `set` / accessor / mixin）、`RegistryService`（`plugin` / `inject`）、`EventsService`（`on` / `emit` / `waterfall` 等五种 dispatch）。[E: vendor/cordis/package.json:2] [E: vendor/cordis/package.json:4] 入口 `vendor/cordis/src/index.ts` 再导出 context / events / fiber / logger / registry / service / utils。[E: vendor/cordis/src/index.ts:2] [E: vendor/cordis/src/index.ts:6] [E: vendor/cordis/src/index.ts:10] [E: vendor/cordis/src/index.ts:12]
+本包 `@deepseek-ai/cordis`（`vendor/cordis/`，`version` `4.0.4`）拥有组合运行时内核：`Context` proxy、`Fiber` 生命周期、`Service` 基类、`ReflectService`（`provide` / `get` / `set` / accessor / mixin）、`RegistryService`（`plugin` / `inject`）、`EventsService`（`on` / `emit` / `waterfall` 等五种 dispatch）。[E: vendor/cordis/package.json:2] [E: vendor/cordis/package.json:4] 入口 `vendor/cordis/src/index.ts` 再导出 context / events / fiber / logger / registry / service / utils。[E: vendor/cordis/src/index.ts:2] [E: vendor/cordis/src/index.ts:6] [E: vendor/cordis/src/index.ts:10] [E: vendor/cordis/src/index.ts:12]
 
 它**不**拥有：
 
@@ -100,7 +100,7 @@ updated: c291e7961a
 
 5. `_refresh@vendor/cordis/src/fiber.ts`：任一 required service 在 `_store` 里缺席，就把 epoch 设成 `INACTIVE`，fiber 停在 `PENDING`，**不**跑插件体。[E: vendor/cordis/src/fiber.ts:616] [E: vendor/cordis/src/fiber.ts:617] 齐了才 `_reload`：`_resolveConfig`（先 `waterfall('internal/config')`）再执行 callback。class 插件 `new callback(ctx, config)`；函数 / `apply` 则直接调用。[E: vendor/cordis/src/fiber.ts:642] [E: vendor/cordis/src/fiber.ts:253] [E: vendor/cordis/src/fiber.ts:259]
 
-6. `Service` 构造@vendor/cordis/src/service.ts 在 class 插件的 `new` 里跑：`self.ctx.reflect.provide(name, self, this[symbols.check])`。[E: vendor/cordis/src/service.ts:57] DSH 的 `FileSystem` 只做 `super(ctx, 'fs')`，于是 `ctx.fs` 指向该实例。[E: packages/fs/fs/src/index.ts:86] [E: packages/fs/fs/src/index.ts:88]
+6. `Service` 构造@vendor/cordis/src/service.ts 在 class 插件的 `new` 里跑：`self.ctx.reflect.provide(name, self, this[symbols.check])`。[E: vendor/cordis/src/service.ts:57] DSH 的 `FileSystem` 只做 `super(ctx, 'fs')`，于是 `ctx.fs` 指向该实例。[E: packages/fs/fs/src/index.ts:87] [E: packages/fs/fs/src/index.ts:89]
 
 7. `ReflectService.provide@vendor/cordis/src/reflect.ts` **整段包在 `ctx.fiber.effect` 里**。[E: vendor/cordis/src/reflect.ts:278] 同 isolation key 已有 `Impl` 则抛 `service "<name>" has been registered at <fiber.name>`。[E: vendor/cordis/src/reflect.ts:290] 否则写入 `store[key]`。effect 的 disposer 先 `delete this.store[key]`，再 `notify([name])` 让 inject 了该名的 fiber 重算。[E: vendor/cordis/src/reflect.ts:298] [E: vendor/cordis/src/reflect.ts:299] fs 测试：同一 root 再 `ctx.plugin(FakeFileSystem)` reject；`fiber.dispose()` 之后 `ctx.fs` 是 `undefined`。[E: packages/fs/fs/tests/service.spec.ts:101] [E: packages/fs/fs/tests/service.spec.ts:107] [E: packages/fs/fs/tests/service.spec.ts:109]
 

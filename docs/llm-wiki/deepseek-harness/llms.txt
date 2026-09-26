@@ -2,7 +2,7 @@
 
 > **deepseek-harness**(`deepseek-harness/`,Cordis 插件树 TypeScript monorepo,组装运行时)的 agent 可检索知识库。用法:grep 本文件或 `index.json` 里的 id/title/source → 打开节点路径读对应自包含 `.md`。证据分级 `[E]/[I]/[U]`,staleness 用 deepseek-harness git SHA。机读清单见 `index.json`,规范见 `conventions.md`,填充令见 `RUN.md`。
 >
-> **状态:已完成 —— 全部 206 节点 verified 于 `c291e7961a`(`0.1.5-rc.2`)。**
+> **状态:已完成 —— 全部 209 节点 verified 于 `477b4f4205`(`0.1.7-rc.2`)。**
 >
 > **核心组织主线 —— 组合运行时**:profile → bundle → agent preset;capability seam = Service Definition / Provider / Consumer;model-visible ⟺ logged。每个节点 frontmatter 标 `pkg: composition|core|llm|execution|orchestration|context|persistence|interaction|host|client|integration|vendor|util|cross`。官方 `docs/` 不是 `[E]`。
 
@@ -44,7 +44,7 @@
 - [todo_write](surface/tools/todo-write.md) `[orchestration]`: `会话所有;allowParallelInProgress 无默认`
 - [create_goal / get_goal / update_goal](surface/tools/goal.md) `[orchestration]`: `同会话续跑;activation 不落盘`
 - [subagent](surface/tools/subagent.md) `[orchestration]`: `wire 名是 load-time toolName;continuable`
-- [subagent_fork](surface/tools/subagent-fork.md) `[orchestration]`: `one-shot fork;与 subagent schema 不同`
+- [subagent_fork](surface/tools/subagent-fork.md) `[orchestration]`: `web shipped continuable;与 subagent schema 不同`
 - [send_message / interrupt_agent / list_agents](surface/tools/subagent-control.md) `[orchestration]`: `全局控制件,不是第二个 spawn`
 - [report](surface/tools/report.md) `[orchestration]`: `工具包已删;退役映射`
 - [workflow](surface/tools/workflow.md) `[orchestration]`: `JS 编排器,子调用走完整管线`
@@ -55,6 +55,8 @@
 - [ask_user_question](surface/tools/ask-user-question.md) `[interaction]`: `停在 tool/call 直到 UI 答`
 - [run_code (PTC)](surface/tools/run-code.md) `[core]`: `ptc preset 的 wire 工具;TS/Python flavor`
 - [present 交付物声明](surface/tools/present.md) `[execution]`: `standard/ptc/cordis;append deliverables/presented`
+- [load_workspace_dependencies](surface/tools/workspace-dependencies.md) `[context]`: `sdk-app 挂;web preset 默认不挂`
+- [plugin_manager](surface/tools/plugin-manager.md) `[composition]`: `出厂 disabled;要 danger-full-access / approval`
 - [lsp](surface/tools/lsp.md) `[execution]`: `四 ops;无 provider 则 LSP_UNAVAILABLE`
 - [session_* 查询五件套](surface/tools/session-query.md) `[persistence]`: `opt-in;五个名字必须入表`
 - [schedule_create / list / delete](surface/tools/schedule.md) `[orchestration]`: `opt-in;只在 live root Agent scope`
@@ -102,7 +104,7 @@
 - [dsh-sdk-app bundle](subsystems/composition/bundle-sdk-app.md) `[composition]`: `叠在 base 上的 SDK JSON-RPC 服务器`
 - [dsh-sdk-minimal bundle](subsystems/composition/bundle-sdk-minimal.md) `[composition]`: `不叠 base 的独立 SDK 树`
 - [dsh-acp-app bundle](subsystems/composition/bundle-acp-app.md) `[composition]`: `自动化 ACP 服务器装配`
-- [preset 发现与挂载](subsystems/composition/agent-presets.md) `[composition]`: `per-session cordis.yml + isolate`
+- [preset 发现与挂载](subsystems/composition/agent-presets.md) `[composition]`: `声明式 agent-preset 行 + registry revision`
 - [persona 段](subsystems/composition/persona.md) `[composition]`: `preset 的人设 / 完整 persona`
 
 ### core
@@ -139,9 +141,10 @@
 - [sandbox 缝](subsystems/execution/sandbox.md) `[execution]`: `只罩文件副作用;不可用则 SANDBOX_UNAVAILABLE`
 - [sandbox-local 后端](subsystems/execution/sandbox-local.md) `[execution]`: `bwrap→Landlock;macOS Seatbelt;Windows ACL`
 - [sandboxPolicy](subsystems/execution/sandbox-policy.md) `[execution]`: `read-only / workspace-write / danger-full-access`
-- [code-runtime 缝](subsystems/execution/code-runtime.md) `[execution]`: `worker-thread provider + PTC consumer`
-- [Python code-runtime](subsystems/execution/code-runtime-python.md) `[execution]`: `PTC Python flavor 的 runtime provider`
-- [E2B 远程世界](subsystems/execution/e2b.md) `[execution]`: `POC:一次换 fs+subprocess`
+- [code-runtime 缝](subsystems/execution/code-runtime.md) `[execution]`: `ctx.ptcRuntime;Node process isolation`
+- [Python code-runtime](subsystems/execution/code-runtime-python.md) `[execution]`: `experimental Python PtcRuntime`
+- [E2B 远程世界](subsystems/execution/e2b.md) `[execution]`: `包已删;退役映射到 ssh`
+- [SSH 远程世界](subsystems/execution/ssh.md) `[execution]`: `ctx.ssh + fs/subprocess/sandbox providers`
 - [lsp 缝](subsystems/execution/lsp.md) `[execution]`: `四 ops;stdio provider`
 
 ### orchestration

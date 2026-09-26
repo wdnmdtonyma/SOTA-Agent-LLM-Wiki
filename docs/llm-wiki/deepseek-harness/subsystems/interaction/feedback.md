@@ -43,7 +43,7 @@ related:
   - spine.session-log
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > DSH 的反馈是**两套互不共享的 host 面合同**，不是同一个服务，也不共用 `ctx` 键。`@deepseek-ai/dsh-command-feedback` 挂在 `dsh-base`：注册人命令 `/feedback`，导出 `recordFeedback`，并 publish `ctx.sessionFeedback`（`SessionFeedbackService`，Remote `record`）。三者都向 Session log 追加 log-only `feedback/record`。`@deepseek-ai/dsh-message-feedback` 只挂在 `dsh-web-app`：publish `ctx.messageFeedback`，对 finalized append-origin assistant message 的 rating / note / category 写成 Session log 事件 `feedback/message-put` / `feedback/message-delete`。**不再**有 `src/spec.ts`，也**不再**走 `storage-domain` sidecar。`command-feedback` 随 base 出现在叠 `dsh-base` 的 profile（`web` / `headless` / `sdk` / `acp`）；`sdk-minimal` 不叠 base，因此不自动带 `/feedback`。逐条评分只出现在 web overlay。
@@ -72,7 +72,7 @@ updated: c291e7961a
 - telemetry backend、`FEEDBACK_ONLY` 回放、脱敏、exporter（[subsys.persistence.telemetry](../persistence/telemetry.md)）。`/feedback` ack **不再**读 `sharing` 拼句子；`message-feedback` **不**写 `feedback/record`。
 - storage hub / `storage-domain`（[subsys.persistence.storage](../persistence/storage.md)）。message-feedback **不再** `open` 任何 domain；它只 `inject` `sessionPersistence` + `sessions`。
 - `Session.append` / `deriveMessages()` / `session/flush` 实现（[subsys.core.session](../core/session.md)、[spine.session-log](../../spine/session-log.md)）。
-- client 星标 UI。`dsh-web-app` 另有组合行 `id: ui-message-feedback`（`@deepseek-ai/dsh-client-ui-message-feedback`），本页不展开组件。 [E: packages/bundle/web-app/cordis.patch.yml:321] [E: packages/bundle/web-app/cordis.patch.yml:322]
+- client 星标 UI。`dsh-web-app` 另有组合行 `id: ui-message-feedback`（`@deepseek-ai/dsh-client-ui-message-feedback`），本页不展开组件。 [E: packages/bundle/web-app/cordis.patch.yml:322] [E: packages/bundle/web-app/cordis.patch.yml:322]
 
 两条都是 **host 面**。agent-preset 面（`minimal` / `standard` / `ptc` / `cordis`）不重挂。`command-feedback` 跟 `commands` 坐在 `dsh-base` 根 realm；`message-feedback` 只出现在 web overlay。
 
@@ -129,7 +129,7 @@ updated: c291e7961a
 
 ## 控制流
 
-1. **两包两行，不要合成一个服务。** `dsh-base` insert `id: command-feedback` / `name: '@deepseek-ai/dsh-command-feedback'`，dependencies 也声明该包。`dsh-web-app` 另 insert `id: message-feedback` / `name: '@deepseek-ai/dsh-message-feedback'`，`maxNoteBytes: 8192`；web-app dependencies 声明 message-feedback，base **没有**。headless / sdk / acp overlay 不声明 message-feedback；它们叠 base 因而继承 `/feedback` 与 `ctx.sessionFeedback`，**不**挂 `ctx.messageFeedback`。`sdk-minimal` 不叠 `dsh-base`，不带 command-feedback 行。 [E: packages/bundle/base/cordis.patch.yml:289] [E: packages/bundle/base/cordis.patch.yml:290] [E: packages/bundle/base/package.json:46] [E: packages/bundle/web-app/cordis.patch.yml:53] [E: packages/bundle/web-app/cordis.patch.yml:54] [E: packages/bundle/web-app/package.json:110]
+1. **两包两行，不要合成一个服务。** `dsh-base` insert `id: command-feedback` / `name: '@deepseek-ai/dsh-command-feedback'`，dependencies 也声明该包。`dsh-web-app` 另 insert `id: message-feedback` / `name: '@deepseek-ai/dsh-message-feedback'`，`maxNoteBytes: 8192`；web-app dependencies 声明 message-feedback，base **没有**。headless / sdk / acp overlay 不声明 message-feedback；它们叠 base 因而继承 `/feedback` 与 `ctx.sessionFeedback`，**不**挂 `ctx.messageFeedback`。`sdk-minimal` 不叠 `dsh-base`，不带 command-feedback 行。 [E: packages/bundle/base/cordis.patch.yml:289] [E: packages/bundle/base/cordis.patch.yml:290] [E: packages/bundle/base/package.json:46] [E: packages/bundle/web-app/cordis.patch.yml:53] [E: packages/bundle/web-app/cordis.patch.yml:55] [E: packages/bundle/web-app/package.json:110]
 
 2. **`command-feedback` 注册命令并挂 Remote。** `apply`：`ctx.plugin(SessionFeedbackService)`，再 `ctx.commands.register`：全局名 `feedback`，`description: 'Record feedback about this session'`，`recordInput: false`。卸 fiber 即从注册表与 `ctx.sessionFeedback` 消失。 [E: packages/feedback/command-feedback/src/index.ts:117] [E: packages/feedback/command-feedback/src/index.ts:121] [E: packages/feedback/command-feedback/tests/command-feedback.spec.ts:106] [E: packages/feedback/command-feedback/tests/command-feedback.spec.ts:147]
 
@@ -145,7 +145,7 @@ updated: c291e7961a
 
 8. **`list`：确认 Session 存在，再 fold 当前 items。** live 与盘上都没有该 id → `{ ok: false, error: { code: 'session-not-found' } }`。有则 `currentItems(sessionId, events)`。 [E: packages/feedback/message-feedback/src/index.ts:226] [E: packages/feedback/message-feedback/src/index.ts:229] [E: packages/feedback/message-feedback/src/index.ts:157]
 
-9. **`put`：note 先本地校验，再串行化、对 target、CAS、再 append。** `resolveNote`：`undefined` 合法；`trim().length === 0` → `note-blank`；`Buffer.byteLength(note, 'utf8') > maxNoteBytes` → `note-too-large`。这两种在碰 persistence **之前**返回。过了才按 `sessionId` 串行。target 要求 log 里存在 `type === 'assistant/message'` **且** `isAppendSurfaceEvent` **且** `deriveEventMessage(event)?.id === request.messageId`。因此 user 消息、空 content assistant，一律 `target-not-found`。 [E: packages/feedback/message-feedback/src/index.ts:168] [E: packages/feedback/message-feedback/src/index.ts:172] [E: packages/feedback/message-feedback/src/index.ts:286] [E: packages/core/session/src/surface.ts:60] [E: packages/feedback/message-feedback/tests/message-feedback.spec.ts:292]
+9. **`put`：note 先本地校验，再串行化、对 target、CAS、再 append。** `resolveNote`：`undefined` 合法；`trim().length === 0` → `note-blank`；`Buffer.byteLength(note, 'utf8') > maxNoteBytes` → `note-too-large`。这两种在碰 persistence **之前**返回。过了才按 `sessionId` 串行。target 要求 log 里存在 `type === 'assistant/message'` **且** `isAppendSurfaceEvent` **且** `deriveEventMessage(event)?.id === request.messageId`。因此 user 消息、空 content assistant，一律 `target-not-found`。 [E: packages/feedback/message-feedback/src/index.ts:168] [E: packages/feedback/message-feedback/src/index.ts:172] [E: packages/feedback/message-feedback/src/index.ts:286] [E: packages/core/session/src/surface.ts:63] [E: packages/feedback/message-feedback/tests/message-feedback.spec.ts:292]
 
 10. **live target 必须先 append 再 `flush`，再核对盘前缀。** live 路径：`live.append` 后 `sessions.flush(live)`；返回 `false` 抛 `message-feedback: no durability listener participated for live session '…'`；成功后再 `sessionPersistence.open(..., 'read')` 核对 header 身份与最后一条事件。冷会话走 write handle `append` + `flush`，并 `parallel('feedback/committed', …)`。 [E: packages/feedback/message-feedback/src/index.ts:236] [E: packages/feedback/message-feedback/src/index.ts:240] [E: packages/feedback/message-feedback/src/index.ts:267] [E: packages/feedback/message-feedback/src/index.ts:271]
 
@@ -168,7 +168,7 @@ DSH 把「人对**整段会话**说的一句话」和「人对**某一条已经�
 ## Gotcha
 
 - **不是同一个服务。** `/feedback` 与 `sessionFeedback.record` 写 `feedback/record`。`put` / `delete` 写 `feedback/message-put` / `feedback/message-delete`，不触发 `FEEDBACK_ONLY` 游标。不要在 headless / sdk / acp 上找 `ctx.messageFeedback`。
-- **不要把 `id: ui-message-feedback` 当成这个子系统。** 那是 client 组件行，消费 Remote；本页合同停在两个 Host 服务。 [E: packages/bundle/web-app/cordis.patch.yml:321]
+- **不要把 `id: ui-message-feedback` 当成这个子系统。** 那是 client 组件行，消费 Remote；本页合同停在两个 Host 服务。 [E: packages/bundle/web-app/cordis.patch.yml:322]
 - **`/feedback` 空输入仍有 command 信封。** 失败是 `command/done.kind === 'error'`。已 abort 的 `execute` 连信封都没有。`recordFeedback({})` 与 `sessionFeedback.record({ sessionId })` 相反：会留下一条空 `feedback/record`。 [E: packages/feedback/command-feedback/tests/command-feedback.spec.ts:235] [E: packages/feedback/command-feedback/tests/command-feedback.spec.ts:128]
 - **trim 策略两边不一样。** `recordFeedback` 存的是 trim 后文本（全空白则省略 `text`）。message `note` 只要含非空白就**原样**保存，只在「全空白」时 `note-blank`。
 - **ack ≠ 落盘。** `recordFeedback` 与 `/feedback` handler 都不 `flush`。message-feedback 的 live `put` **会** `flush`。

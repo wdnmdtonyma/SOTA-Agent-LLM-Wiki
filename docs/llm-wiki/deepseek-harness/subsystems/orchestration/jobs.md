@@ -7,6 +7,7 @@ pkg: orchestration
 source:
   - packages/jobs/jobs/src/index.ts
   - packages/jobs/jobs/src/types.ts
+  - packages/jobs/jobs/src/view.ts
   - packages/jobs/jobs/src/brand.ts
   - packages/jobs/jobs/package.json
   - packages/jobs/jobs/tests/service.spec.ts
@@ -20,15 +21,15 @@ source:
   - packages/bundle/base/cordis.patch.yml
   - packages/bundle/base/package.json
   - packages/bundle/web-app/cordis.patch.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
   - packages/shell/tool-bash/src/index.ts
   - packages/shell/tool-pwsh/src/index.ts
   - packages/subagent/tool-subagent/src/index.ts
   - packages/core/tools/src/index.ts
-  - packages/preset/agent-presets/src/mount.ts
+  - packages/preset/agent-preset-registry/src/mount.ts
   - packages/api/session-controller/src/control.ts
   - vendor/cordis/src/events.ts
   - vendor/cordis/src/service.ts
@@ -54,7 +55,7 @@ related:
   - subsys.host.apiproxy
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `ctx.jobs`（`JobRegistry`）是 **host 面**后台任务注册表缝：进程内一份 RAM registry，发 `<kind>-N` id、按 owner session 隔离、等结算、取消、completion listener。`@deepseek-ai/dsh-jobs` 只是合同，**不能当 plugin 加载**；shipped Provider 是 `dsh-jobs-local`（base 行 `id: jobs`）。模型面 Consumer 是 `dsh-tool-jobs`（`attachController` + `job_*`），不是又一套 coding-agent 任务队列。
@@ -89,7 +90,8 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），`cap
 | 路径 | 角色 |
 |---|---|
 | `packages/jobs/jobs/src/index.ts` | Definition：`JobRegistry`、`Context.jobs`；`new.target === JobRegistry` 时抛 |
-| `packages/jobs/jobs/src/types.ts` | `JobKindMap`（shipped：`bash` / `subagent`）、`JobStart` / `JobHooks` / `JobSnapshot` |
+| `packages/jobs/jobs/src/view.ts` | `JobKindMap`（shipped：`bash` / `subagent`） |
+| `packages/jobs/jobs/src/types.ts` | `JobStart` / `JobHooks` / `JobOutcome` |
 | `packages/jobs/jobs/src/brand.ts` | `JobId` branded id；客户端可单独 import，不拉 `dsh-agent` |
 | `packages/jobs/jobs/tests/service.spec.ts` | 抽象类当 plugin 失败；同 realm 第二份 `jobs` 失败 |
 | `packages/jobs/jobs-local/src/index.ts` | Provider：`LocalJobRegistry`，RAM `Map`、controller 层、结算 |
@@ -98,18 +100,18 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），`cap
 | `packages/jobs/tool-jobs/src/index.ts` | 模型面 Consumer：`attachController('tool-jobs')` + `job_*` + `onJobDone` |
 | `packages/bundle/base/cordis.patch.yml` | host 真树：`id: jobs` → `dsh-jobs-local`；`id: tool-jobs` |
 | `packages/bundle/web-app/cordis.patch.yml` | 留下 registry；`id: tool-jobs` `disabled: true` |
-| `packages/preset/agent-presets/presets/standard/agent.cordis.yml` | Web 默认 preset 把 `tool-jobs` 挂回会话，**不** `isolate` |
+| `packages/bundle/web-app/presets/standard.patch.yml` | Web 默认 preset 把 `tool-jobs` 挂回会话，**不** `isolate` |
 | `packages/api/session-controller/src/control.ts` | host 控制流：`onJobsChanged` 推 `type: 'jobs'` 帧 |
 
 ## 数据模型
 
 | 符号 | 要点 |
 |---|---|
-| `JobRegistry` | `extends Service`；子类构造 `super(ctx, 'jobs')` 占唯一 service 名 `jobs`。抽象方法：`start` / `list` / `get` / `read` / `kill` / `wait` / `onJobDone` / `onJobsChanged` / `attachController`。[E: packages/jobs/jobs/src/index.ts:70] |
-| `LocalJobRegistry` | shipped Provider。`store: Map<JobId, TrackedTask>`，对外只发 fresh `JobSnapshot`，从不交出可变记录。[E: packages/jobs/jobs-local/src/index.ts:102] [E: packages/jobs/jobs-local/src/index.ts:363] |
-| `JobId` | branded 字符串。registry 发 `<kind>-N`（每 kind 一份计数器）。id 可预测，边界是授权不是保密。[E: packages/jobs/jobs/src/brand.ts:26] [E: packages/jobs/jobs-local/src/index.ts:153] |
-| `JobKindMap` | shipped 两格：`bash`、`subagent`。其它包用 declaration merge 加格（`pwsh`、`pty-send`）。运行时 `start` 只拒空字符串。[E: packages/jobs/jobs/src/types.ts:24] [E: packages/jobs/jobs/src/types.ts:25] [E: packages/jobs/jobs-local/src/index.ts:135] |
-| `JobStatus` | `running` → 可选 `stopping` → 恰好一个终态 `completed` / `killed` / `failed`。[E: packages/jobs/jobs/src/types.ts:17] |
+| `JobRegistry` | `extends Service`；子类构造 `super(ctx, 'jobs')` 占唯一 service 名 `jobs`。抽象方法：`start` / `list` / `get` / `read` / `kill` / `wait` / `onJobDone` / `onJobsChanged` / `attachController`。[E: packages/jobs/jobs/src/index.ts:93] |
+| `LocalJobRegistry` | shipped Provider。`store: Map<JobId, TrackedJob>`，对外只发 fresh snapshot，从不交出可变记录。[E: packages/jobs/jobs-local/src/index.ts:160] |
+| `JobId` | branded 字符串。registry 发 `<kind>-N`（每 kind 一份计数器）。id 可预测，边界是授权不是保密。[E: packages/jobs/jobs/src/brand.ts:27] [E: packages/jobs/jobs-local/src/index.ts:153] |
+| `JobKindMap` | shipped 两格：`bash`、`subagent`。其它包用 declaration merge 加格（`pwsh`、`pty-send`）。运行时 `start` 只拒空字符串。[E: packages/jobs/jobs/src/view.ts:32] [E: packages/jobs/jobs/src/view.ts:33] [E: packages/jobs/jobs-local/src/index.ts:135] |
+| `JobStatus` | `running` → 可选 `stopping` → 恰好一个终态 `completed` / `killed` / `failed`。[E: packages/jobs/jobs/src/view.ts:19] |
 | `JobStart` | `kind` + `label` + 可选 `owner` / `outputLimitBytes` + 同步 `run(): JobHooks`。preflight 失败不调 `run`、不占 id。 |
 | `JobHooks` | `cancel(reason?)` 同步；`done: Promise<JobOutcome>` 不得 reject（reject 被收成 `failed`）；可选 `readOutput()` 表示 stream cursor。缺 `readOutput` = 终态才吐 `JobOutcome.output`。 |
 | `JobSnapshot` | 只读投影：`id` / `kind` / `label` / `status` / `startedAt` / 可选 `finishedAt` / `detail` / `ownerSession` / `outputLimitBytes` / `reported`。 |
@@ -121,35 +123,35 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），`cap
 
 ## 控制流
 
-1. **Definition 不能当 plugin。** `JobRegistry`@packages/jobs/jobs/src/index.ts 是抽象 `Service`。`abstract` 在运行时会被擦掉，组合行若写 `name: '@deepseek-ai/dsh-jobs'` 会 `new` 出一个没有方法体的 `ctx.jobs`。构造因此 fail-loud：`new.target === JobRegistry` 就抛，要求改加载 `dsh-jobs-local`。[E: packages/jobs/jobs/src/index.ts:67] [E: packages/jobs/jobs/src/index.ts:68] 测试用 `ctx.plugin(JobRegistry)` 钉死这句。[E: packages/jobs/jobs/tests/service.spec.ts:93] [E: packages/jobs/jobs/tests/service.spec.ts:94] 子类才走到 `super(ctx, 'jobs')`，Cordis `Service` 随即 `ctx.reflect.provide(name, self, …)`。[E: packages/jobs/jobs/src/index.ts:70] [E: vendor/cordis/src/service.ts:57]
+1. **Definition 不能当 plugin。** `JobRegistry`@packages/jobs/jobs/src/index.ts 是抽象 `Service`。`abstract` 在运行时会被擦掉，组合行若写 `name: '@deepseek-ai/dsh-jobs'` 会 `new` 出一个没有方法体的 `ctx.jobs`。构造因此 fail-loud：`new.target === JobRegistry` 就抛，要求改加载 `dsh-jobs-local`。[E: packages/jobs/jobs/src/index.ts:90] [E: packages/jobs/jobs/src/index.ts:91] 测试用 `ctx.plugin(JobRegistry)` 钉死这句。[E: packages/jobs/jobs/tests/service.spec.ts:93] [E: packages/jobs/jobs/tests/service.spec.ts:94] 子类才走到 `super(ctx, 'jobs')`，Cordis `Service` 随即 `ctx.reflect.provide(name, self, …)`。[E: packages/jobs/jobs/src/index.ts:93] [E: vendor/cordis/src/service.ts:57]
 
-2. **shipped 真树的行是 `id: jobs` → `dsh-jobs-local`。** `dsh-base` 在 host 根 `insert` 里挂 `id: jobs` / `name: '@deepseek-ai/dsh-jobs-local'`，没有 config 块（走默认 10）。[E: packages/bundle/base/cordis.patch.yml:81] [E: packages/bundle/base/cordis.patch.yml:82] manifest 依赖的是 `dsh-jobs-local`，不是 Definition 包本身。[E: packages/bundle/base/package.json:100] Loader 真树测试：yml 里写 `maxConcurrentJobsPerOwner: 1` 后，第二份 `start` 在 `run()` 之前就被拒。[E: packages/jobs/jobs-local/tests/loader-composition.spec.ts:28] [E: packages/jobs/jobs-local/tests/loader-composition.spec.ts:64] 同一 realm 再挂第二个 `JobRegistry` 子类，Cordis 抛 `service "jobs" has been registered`。[E: packages/jobs/jobs/tests/service.spec.ts:88]
+2. **shipped 真树的行是 `id: jobs` → `dsh-jobs-local`。** `dsh-base` 在 host 根 `insert` 里挂 `id: jobs` / `name: '@deepseek-ai/dsh-jobs-local'`，没有 config 块（走默认 10）。[E: packages/bundle/base/cordis.patch.yml:88] [E: packages/bundle/base/cordis.patch.yml:89] manifest 依赖的是 `dsh-jobs-local`，不是 Definition 包本身。[E: packages/bundle/base/package.json:96] Loader 真树测试：yml 里写 `maxConcurrentJobsPerOwner: 1` 后，第二份 `start` 在 `run()` 之前就被拒。[E: packages/jobs/jobs-local/tests/loader-composition.spec.ts:28] [E: packages/jobs/jobs-local/tests/loader-composition.spec.ts:64] 同一 realm 再挂第二个 `JobRegistry` 子类，Cordis 抛 `service "jobs" has been registered`。[E: packages/jobs/jobs/tests/service.spec.ts:88]
 
 3. **记录只在 RAM。** `LocalJobRegistry` 构造把 `store` 建成 `Map`，再 `ctx.effect(() => () => this.disposeAll(), 'jobs teardown')`。[E: packages/jobs/jobs-local/src/index.ts:102] [E: packages/jobs/jobs-local/src/index.ts:128] `disposeAll` 关 listener、cancel 活任务、await 结算，然后 `this.store.clear()`。[E: packages/jobs/jobs-local/src/index.ts:494] 没有 jsonl / sqlite / flush 路径。reload 进程 = 空表。
 
-4. **无 controller，`start` 拒绝，且不调 `run()`。** `start` 第一件事是 `servesOwner(spec.owner)`：全局层（无 scope 的 host 注册）非空 → 服务**每一个** owner；否则只沿 owner 的 `scopeOf(owner.ctx)` 链找 scoped 层。[E: packages/jobs/jobs-local/src/index.ts:132] [E: packages/jobs/jobs-local/src/index.ts:316] [E: packages/jobs/jobs-local/src/index.ts:317] 找不到就抛 `background jobs unavailable: no job controller serves this agent (load @deepseek-ai/dsh-tool-jobs in its composition)`。[E: packages/jobs/jobs-local/src/index.ts:133] 测试：裸 `LocalJobRegistry`、以及「preset A 挂了 controller、preset B 没挂」的 B 侧 / unowned，全部命中这句。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:123] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:143] `spec.run()` 在限额检查之后才调用，controller 拒绝时不会启动 producer。[E: packages/jobs/jobs-local/src/index.ts:150] host 无 scope 的 `attachController` 才服务所有人。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:159]
+4. **无 controller，`start` 拒绝，且不调 `run()`。** `start` 第一件事是 `servesOwner(spec.owner)`：全局层（无 scope 的 host 注册）非空 → 服务**每一个** owner；否则只沿 owner 的 `scopeOf(owner.ctx)` 链找 scoped 层。[E: packages/jobs/jobs-local/src/index.ts:206] [E: packages/jobs/jobs-local/src/index.ts:316] [E: packages/jobs/jobs-local/src/index.ts:317] 找不到就抛 `background jobs unavailable: no job controller serves this agent (load @deepseek-ai/dsh-tool-jobs in its composition)`。[E: packages/jobs/jobs-local/src/index.ts:209] 测试：裸 `LocalJobRegistry`、以及「preset A 挂了 controller、preset B 没挂」的 B 侧 / unowned，全部命中这句。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:121] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:143] `spec.run()` 在限额检查之后才调用，controller 拒绝时不会启动 producer。[E: packages/jobs/jobs-local/src/index.ts:149] host 无 scope 的 `attachController` 才服务所有人。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:161]
 
-5. **Consumer 用 `attachController` 开闸，不是 isolate 一份新 registry。** `dsh-tool-jobs` `export const inject = ['tools', 'jobs', 'systemPrompt']`，`apply` 里 `ctx.jobs.attachController('tool-jobs')`。[E: packages/jobs/tool-jobs/src/index.ts:21] [E: packages/jobs/tool-jobs/src/index.ts:259] `attachController` 把一个 `Symbol(name)` 推进**注册方 context 的** `ScopedLayers` 层，fiber dispose 带走。[E: packages/jobs/jobs-local/src/index.ts:299] [E: packages/jobs/jobs-local/src/index.ts:302] 测试：卸掉 `tool-jobs` fiber 后 `start` 再次抛 no controller；同名两次 `attachController` 独立计数，最后一个 disposer / fiber 走光才重新上锁。[E: packages/jobs/tool-jobs/tests/tool-jobs.spec.ts:117] [E: packages/jobs/tool-jobs/tests/tool-jobs.spec.ts:119] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:989]
+5. **Consumer 用 `attachController` 开闸，不是 isolate 一份新 registry。** `dsh-tool-jobs` `export const inject = ['tools', 'jobs', 'systemPrompt']`，`apply` 里 `ctx.jobs.attachController('tool-jobs')`。[E: packages/jobs/tool-jobs/src/index.ts:31] [E: packages/jobs/tool-jobs/src/index.ts:247] `attachController` 把一个 `Symbol(name)` 推进**注册方 context 的** `ScopedLayers` 层，fiber dispose 带走。[E: packages/jobs/jobs-local/src/index.ts:342] [E: packages/jobs/jobs-local/src/index.ts:345] 测试：卸掉 `tool-jobs` fiber 后 `start` 再次抛 no controller；同名两次 `attachController` 独立计数，最后一个 disposer / fiber 走光才重新上锁。[E: packages/jobs/tool-jobs/tests/tool-jobs.spec.ts:117] [E: packages/jobs/tool-jobs/tests/tool-jobs.spec.ts:118] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:989]
 
-6. **host / preset 切开：registry 留下，控件搬走。** `dsh-base` 同时插 `id: tool-jobs` / `name: '@deepseek-ai/dsh-tool-jobs'`（headless / sdk / acp 叠 base，不 disable 这一行，controller 进 global layer）。[E: packages/bundle/base/cordis.patch.yml:254] [E: packages/bundle/base/cordis.patch.yml:255] `dsh-web-app` **不** disable `id: jobs`，只写 `id: tool-jobs` / `disabled: true`，把 `job_*` 从进程根挪到 preset 面。[E: packages/bundle/web-app/cordis.patch.yml:384] [E: packages/bundle/web-app/cordis.patch.yml:384] `standard` / `ptc` / `cordis` 再挂回同一行，**没有** `isolate:`——producer（`tool-bash` 等）用 `ctx.get('jobs')` 读 host 那一份，entry-local realm 对兄弟行不可见，会把 `run_in_background` 卡在「catalog 里有 `job_*`、start 却说 unavailable」。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:74] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:75] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:81] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:75] `minimal` 只挂 isolated `dsh-tool-bash-persistent` 等，没有 `id: tool-jobs`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:24] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:37]
+6. **host / preset 切开：registry 留下，控件搬走。** `dsh-base` 同时插 `id: tool-jobs` / `name: '@deepseek-ai/dsh-tool-jobs'`（headless / sdk / acp 叠 base，不 disable 这一行，controller 进 global layer）。[E: packages/bundle/base/cordis.patch.yml:274] [E: packages/bundle/base/cordis.patch.yml:275] `dsh-web-app` **不** disable `id: jobs`，只写 `id: tool-jobs` / `disabled: true`，把 `job_*` 从进程根挪到 preset 面。[E: packages/bundle/web-app/cordis.patch.yml:463] [E: packages/bundle/web-app/cordis.patch.yml:463] `standard` / `ptc` / `cordis` 再挂回同一行，**没有** `isolate:`——producer（`tool-bash` 等）用 `ctx.get('jobs')` 读 host 那一份，entry-local realm 对兄弟行不可见，会把 `run_in_background` 卡在「catalog 里有 `job_*`、start 却说 unavailable」。[E: packages/bundle/web-app/presets/standard.patch.yml:32] [E: packages/bundle/web-app/presets/standard.patch.yml:33] [E: packages/bundle/web-app/presets/ptc.patch.yml:32] [E: packages/bundle/web-app/presets/cordis.patch.yml:35] `minimal` 只挂 isolated `dsh-tool-bash-persistent` 等，没有 `id: tool-jobs`。[E: packages/bundle/web-app/presets/minimal.patch.yml:24] [E: packages/bundle/web-app/presets/minimal.patch.yml:36]
 
-7. **`isolate` / `leakedServices`：本缝的服务必须留在 host。** `LocalJobRegistry` `provide('jobs')`。若把 Provider 行塞进 preset 且漏 `isolate: { jobs: true }`，`leakedServices` 会把它判进 root realm，`mountPreset` 抛 `row(s) published process-global service(s) [jobs]; a preset service must sit behind an isolate realm or move to the host composition`。[E: packages/preset/agent-presets/src/mount.ts:221] [E: packages/preset/agent-presets/src/mount.ts:410] 即便包进 realm，兄弟 producer 行也 `ctx.get` 不到那份私有 `jobs`。正确切法是 host 一份 registry + preset 只挂不 `provide` 的 `tool-jobs`。`ScopedLayers` 不是 Cordis isolate：它只让 controller / listener 按 owner 的 scope 链可见，registry 实例仍是进程单例。
+7. **`isolate` / `leakedServices`：本缝的服务必须留在 host。** `LocalJobRegistry` `provide('jobs')`。若把 Provider 行塞进 preset 且漏 `isolate: { jobs: true }`，`leakedServices` 会把它判进 root realm，`mountPreset` 抛 `Preset services require isolate realms: jobs`。[E: packages/preset/agent-preset-registry/src/mount.ts:86] [E: packages/preset/agent-preset-registry/src/mount.ts:267] 即便包进 realm，兄弟 producer 行也 `ctx.get` 不到那份私有 `jobs`。正确切法是 host 一份 registry + preset 只挂不 `provide` 的 `tool-jobs`。`ScopedLayers` 不是 Cordis isolate：它只让 controller / listener 按 owner 的 scope 链可见，registry 实例仍是进程单例。
 
-8. **`start` 的其余 preflight 仍是同步、失败零残留。** 过了 controller：空 `kind` / 空 `label` / 非法 `outputLimitBytes` 抛；有 `owner` 则要求 `ctx.agents` 在场且 `agents.get(ownerId) === owner`（换实例复用同一 session id 不能顶替注册）。[E: packages/jobs/jobs-local/src/index.ts:135] [E: packages/jobs/jobs-local/src/index.ts:452] [E: packages/jobs/jobs-local/src/index.ts:455] 当前 owner（或 unowned 桶）的 `running`+`stopping` ≥ 限额则抛，**此时尚未**调用 `spec.run()`。[E: packages/jobs/jobs-local/src/index.ts:144] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:193] 限额默认 10。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:192] 然后才 `const hooks = spec.run()`；`run` 抛则 `store.set` 还没发生，计数器也不动。[E: packages/jobs/jobs-local/src/index.ts:150] 成功则发 id、`store.set`、挂 `hooks.done.then(settle)`，再 `notifyChanged`。[E: packages/jobs/jobs-local/src/index.ts:176] [E: packages/jobs/jobs-local/src/index.ts:188]
+8. **`start` 的其余 preflight 仍是同步、失败零残留。** 过了 controller：空 `kind` / 空 `label` / 非法 `outputLimitBytes` 抛；有 `owner` 则要求 `ctx.agents` 在场且 `agents.get(ownerId) === owner`（换实例复用同一 session id 不能顶替注册）。[E: packages/jobs/jobs-local/src/index.ts:135] [E: packages/jobs/jobs-local/src/index.ts:452] [E: packages/jobs/jobs-local/src/index.ts:454] 当前 owner（或 unowned 桶）的 `running`+`stopping` ≥ 限额则抛，**此时尚未**调用 `spec.run()`。[E: packages/jobs/jobs-local/src/index.ts:144] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:194] 限额默认 10。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:191] 然后才 `const hooks = spec.run()`；`run` 抛则 `store.set` 还没发生，计数器也不动。[E: packages/jobs/jobs-local/src/index.ts:149] 成功则发 id、`store.set`、挂 `hooks.done.then(settle)`，再 `notifyChanged`。[E: packages/jobs/jobs-local/src/index.ts:176] [E: packages/jobs/jobs-local/src/index.ts:188]
 
-9. **两种 shipped kind：`bash` 是 stream，`subagent` 是终态输出。** `dsh-tool-bash` 在 `run_in_background === true` 时 `ctx.get('jobs')`，缺服务就抛；`jobs.start({ kind: 'bash', label: args.command, owner?, run })` 的 `run` 里才 `ctx.shell.start`，并提供 `readOutput`。[E: packages/shell/tool-bash/src/index.ts:364] [E: packages/shell/tool-bash/src/index.ts:365] [E: packages/shell/tool-bash/src/index.ts:373] `dsh-tool-subagent` 仅 one-shot 后台走 jobs：`kind: 'subagent'`，`run` 调 `ctx.subagents.start`，**没有** `readOutput`（中间细节在子 session）。[E: packages/subagent/tool-subagent/src/index.ts:545] [E: packages/subagent/tool-subagent/src/index.ts:546] continuable 走 `startContinuable`，返回 `subagentId`，不进 registry。[E: packages/subagent/tool-subagent/src/index.ts:531] 测试钉死 id 分配：`bash-1` / `bash-2` / `subagent-1` 分计数器。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:267] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:269] `pwsh` 是 producer 自己 merge 进 `JobKindMap` 的扩展格：`kind: 'pwsh'`。[E: packages/shell/tool-pwsh/src/index.ts:381]
+9. **两种 shipped kind：`bash` 是 stream，`subagent` 是终态输出。** `dsh-tool-bash` 在 `run_in_background === true` 时 `ctx.get('jobs')`，缺服务就抛；`jobs.start({ kind: 'bash', label: args.command, owner?, run })` 的 `run` 里才 `ctx.shell.start`，并提供 `readOutput`。[E: packages/shell/tool-bash/src/index.ts:366] [E: packages/shell/tool-bash/src/index.ts:366] [E: packages/shell/tool-bash/src/index.ts:373] `dsh-tool-subagent` 仅 one-shot 后台走 jobs：`kind: 'subagent'`，`run` 调 `ctx.subagents.start`，**没有** `readOutput`（中间细节在子 session）。[E: packages/subagent/tool-subagent/src/index.ts:544] [E: packages/subagent/tool-subagent/src/index.ts:545] continuable 走 `startContinuable`，返回 `subagentId`，不进 registry。[E: packages/subagent/tool-subagent/src/index.ts:530] 测试钉死 id 分配：`bash-1` / `bash-2` / `subagent-1` 分计数器。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:268] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:269] `pwsh` 是 producer 自己 merge 进 `JobKindMap` 的扩展格：`kind: 'pwsh'`。[E: packages/shell/tool-pwsh/src/index.ts:381]
 
-10. **模型路径上的 waterfall 在 `ctx.tools`，本缝没有 `jobs/*`。** `job_*` 进 body 之前，`ToolRuntime` 调 `this.ctx.waterfall(carrier, 'tools/pre-execute', exec, () => Promise.resolve({ kind: 'allow' }))`。[E: packages/core/tools/src/index.ts:1465] [E: packages/core/tools/src/index.ts:1467] Cordis `Events.waterfall` 把最后一个参数当 innermost `next`；listener 不调用传入的 `next()` 就不会 `cbs.shift()`，默认 `allow` 到不了，body 不跑。[E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] [E: vendor/cordis/src/events.ts:239] `dsh-tool-jobs` 自己 `prepend` 挂在这条 waterfall 上：记下 `outputLimitBytes` 后 **必须** `return next()`。[E: packages/jobs/tool-jobs/src/index.ts:232] [E: packages/jobs/tool-jobs/src/index.ts:235] 这不是 reject 路径；故意不 `next()` 会让整次 `job_output` / `job_kill` 卡死在本层。`tools/execute` / `tools/post-execute` 同一规则，细节在 [`subsys.core.tools`](../core/tools.md)。
+10. **模型路径上的 waterfall 在 `ctx.tools`，本缝没有 `jobs/*`。** `job_*` 进 body 之前，`ToolRuntime` 调 `this.ctx.waterfall(carrier, 'tools/pre-execute', exec, () => Promise.resolve({ kind: 'allow' }))`。[E: packages/core/tools/src/index.ts:1505] [E: packages/core/tools/src/index.ts:1506] Cordis `Events.waterfall` 把最后一个参数当 innermost `next`；listener 不调用传入的 `next()` 就不会 `cbs.shift()`，默认 `allow` 到不了，body 不跑。[E: vendor/cordis/src/events.ts:237] [E: vendor/cordis/src/events.ts:238] [E: vendor/cordis/src/events.ts:239] `dsh-tool-jobs` 自己 `prepend` 挂在这条 waterfall 上：记下 `outputLimitBytes` 后 **必须** `return next()`。[E: packages/jobs/tool-jobs/src/index.ts:232] [E: packages/jobs/tool-jobs/src/index.ts:235] 这不是 reject 路径；故意不 `next()` 会让整次 `job_output` / `job_kill` 卡死在本层。`tools/execute` / `tools/post-execute` 同一规则，细节在 [`subsys.core.tools`](../core/tools.md)。
 
-11. **访问篱笆是 session id，不是 id 保密。** `assertAccess`：有 owner 的 job，caller 必须 `caller.id === job.owner.id`；unowned 对任何 caller 开放；无 agent 的 caller 读不到 owned job。[E: packages/jobs/jobs-local/src/index.ts:357] [E: packages/jobs/jobs-local/src/index.ts:358] `list(caller)` 只返回 caller-owned ∪ unowned。[E: packages/jobs/jobs-local/src/index.ts:195] 测试：alice 看不见 bob 的 id，却看得见 unowned；跨 session `read` / `kill` / `wait` 抛 `belongs to another session`。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:575] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:592]
+11. **访问篱笆是 session id，不是 id 保密。** `assertAccess`：有 owner 的 job，caller 必须 `caller.id === job.owner.id`；unowned 对任何 caller 开放；无 agent 的 caller 读不到 owned job。[E: packages/jobs/jobs-local/src/index.ts:357] [E: packages/jobs/jobs-local/src/index.ts:358] `list(caller)` 只返回 caller-owned ∪ unowned。[E: packages/jobs/jobs-local/src/index.ts:192] 测试：alice 看不见 bob 的 id，却看得见 unowned；跨 session `read` / `kill` / `wait` 抛 `belongs to another session`。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:575] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:591]
 
-12. **结算 first-wins，先改可见集，最后才 `onJobDone`。** `settle` 若已终态直接 return；否则写入 status / detail / output / `finishedAt`。当时还有 waiter 就把 `reported = true`（wait 已经把终态交给模型，notice 不再重复叫）。[E: packages/jobs/jobs-local/src/index.ts:417] [E: packages/jobs/jobs-local/src/index.ts:422] 然后释放 waiter、`notifyChanged`，**最后**才沿 global → owner scope 链跑 `onJobDone`；listener 抛错被 contain，返回的 Promise 只观察不等待。[E: packages/jobs/jobs-local/src/index.ts:428] [E: packages/jobs/jobs-local/src/index.ts:430] 顺序测试钉死 `['changed', 'done']`，因为 reporter 可能同步 `followup` 开 turn，客户端必须已经读到终态行。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:710] `kill` 先 `cancel` 再标 `stopping`+`reported`：`cancel` 抛则状态一字不动。[E: packages/jobs/jobs-local/src/index.ts:223] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:436] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:439]
+12. **结算 first-wins，先改可见集，最后才 `onJobDone`。** `settle` 若已终态直接 return；否则写入 status / detail / output / `finishedAt`。当时还有 waiter 就把 `reported = true`（wait 已经把终态交给模型，notice 不再重复叫）。[E: packages/jobs/jobs-local/src/index.ts:417] [E: packages/jobs/jobs-local/src/index.ts:422] 然后释放 waiter、`notifyChanged`，**最后**才沿 global → owner scope 链跑 `onJobDone`；listener 抛错被 contain，返回的 Promise 只观察不等待。[E: packages/jobs/jobs-local/src/index.ts:428] [E: packages/jobs/jobs-local/src/index.ts:430] 顺序测试钉死 `['changed', 'done']`，因为 reporter 可能同步 `followup` 开 turn，客户端必须已经读到终态行。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:710] `kill` 先 `cancel` 再标 `stopping`+`reported`：`cancel` 抛则状态一字不动。[E: packages/jobs/jobs-local/src/index.ts:222] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:436] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:439]
 
-13. **`onJobDone` 的模型投递在 Consumer，不在 registry。** `dsh-tool-jobs` 注册 listener：`snapshot.reported` 或 `owner === undefined` 直接 return；否则组一条 `source.kind === 'plugin'` / `plugin: 'tool-jobs'` / `form: 'notice'` 的 user message。idle + `wakeup` + 未耗尽 `maxConsecutiveWakes` → `owner.followup`；否则 `owner.inject`（busy 一律 inject，让同批结算只占下一步）。[E: packages/jobs/tool-jobs/src/index.ts:279] [E: packages/jobs/tool-jobs/src/index.ts:295] [E: packages/jobs/tool-jobs/src/index.ts:298] `wakeup` 时还听 `agent/inbox/claimed`：只有 `message.source.kind === 'user'` 才清 wake 预算；plugin notice 自己 claim 不会给自己回血。[E: packages/jobs/tool-jobs/src/index.ts:224] [E: packages/jobs/tool-jobs/src/index.ts:227] 这是普通 `ctx.on`，不是 waterfall，没有 `next()`。
+13. **`onJobDone` 的模型投递在 Consumer，不在 registry。** `dsh-tool-jobs` 注册 listener：`snapshot.reported` 或 `owner === undefined` 直接 return；否则组一条 `source.kind === 'plugin'` / `plugin: 'tool-jobs'` / `form: 'notice'` 的 user message。idle + `wakeup` + 未耗尽 `maxConsecutiveWakes` → `owner.followup`；否则 `owner.inject`（busy 一律 inject，让同批结算只占下一步）。[E: packages/jobs/tool-jobs/src/index.ts:278] [E: packages/jobs/tool-jobs/src/index.ts:295] [E: packages/jobs/tool-jobs/src/index.ts:298] `wakeup` 时还听 `agent/inbox/claimed`：只有 `message.source.kind === 'user'` 才清 wake 预算；plugin notice 自己 claim 不会给自己回血。[E: packages/jobs/tool-jobs/src/index.ts:224] [E: packages/jobs/tool-jobs/src/index.ts:227] 这是普通 `ctx.on`，不是 waterfall，没有 `next()`。
 
-14. **owner dispose / service dispose 都是 teardown cancel。** 第一次为某 live `Agent` `start` 时，`ensureOwnerCleanup` 在 **owner 的** fiber 上挂 `jobs.ownerCleanup()`：scope 卸掉就 `cancelForTeardown(..., 'owner disposed')`、await `settled`、从 `store` 删除并 `notifyChanged`。[E: packages/jobs/jobs-local/src/index.ts:462] [E: packages/jobs/jobs-local/src/index.ts:469] teardown 先把 `reported = true` 再 `cancel`，避免 disposing owner 被 wakeup 花一次模型请求；`cancel` 抛则 force-fail 该记录并 warn orphan，不等 `done`。[E: packages/jobs/jobs-local/src/index.ts:517] [E: packages/jobs/jobs-local/src/index.ts:528] service `disposeAll` 先 `listenersClosed = true`（后到的 settlement 不再通知），reason 是 `jobs service disposed`。[E: packages/jobs/jobs-local/src/index.ts:484] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:881]
+14. **owner dispose / service dispose 都是 teardown cancel。** 第一次为某 live `Agent` `start` 时，`ensureOwnerCleanup` 在 **owner 的** fiber 上挂 `jobs.ownerCleanup()`：scope 卸掉就 `cancelForTeardown(..., 'owner disposed')`、await `settled`、从 `store` 删除并 `notifyChanged`。[E: packages/jobs/jobs-local/src/index.ts:462] [E: packages/jobs/jobs-local/src/index.ts:470] teardown 先把 `reported = true` 再 `cancel`，避免 disposing owner 被 wakeup 花一次模型请求；`cancel` 抛则 force-fail 该记录并 warn orphan，不等 `done`。[E: packages/jobs/jobs-local/src/index.ts:517] [E: packages/jobs/jobs-local/src/index.ts:532] service `disposeAll` 先 `listenersClosed = true`（后到的 settlement 不再通知），reason 是 `jobs service disposed`。[E: packages/jobs/jobs-local/src/index.ts:485] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:881]
 
-15. **host UI 也是 Consumer，读同一份 RAM 表。** `dsh-web-app` 插 `id: ui-jobs`。[E: packages/bundle/web-app/cordis.patch.yml:301] Session Controller `ctx.inject(['jobs'])` 后 `jobs.onJobsChanged`，按 owner（或 unowned 时每个 session）推 `type: 'jobs'` 帧。[E: packages/api/session-controller/src/control.ts:44] [E: packages/api/session-controller/src/control.ts:107] `jobView` 故意丢掉 `ownerSession` / `reported` / `outputLimitBytes`。[E: packages/api/session-controller/src/control.ts:200] 本页不写客户端字段。
+15. **host UI 也是 Consumer，读同一份 RAM 表。** `dsh-web-app` 插 `id: ui-jobs`。[E: packages/bundle/web-app/cordis.patch.yml:365] Session Controller `ctx.inject(['jobs'])` 后 `jobs.onJobsChanged`，按 owner（或 unowned 时每个 session）推 `type: 'jobs'` 帧。[E: packages/api/session-controller/src/control.ts:44] [E: packages/api/session-controller/src/control.ts:107] `jobView` 故意丢掉 `ownerSession` / `reported` / `outputLimitBytes`。[E: packages/api/session-controller/src/control.ts:118] 本页不写客户端字段。
 
 ## 设计动机
 
@@ -163,13 +165,13 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），`cap
 ## Gotcha
 
 - 组合里写 `name: '@deepseek-ai/dsh-jobs'`：load 期抛 abstract-seam，不会默默落到 `jobs-local`。[E: packages/jobs/jobs/tests/service.spec.ts:94]
-- 只装 registry、不装 `tool-jobs`：`start` 永远拒绝。producer 报错文案会点名 `dsh-tool-jobs`。[E: packages/jobs/jobs-local/src/index.ts:133]
+- 只装 registry、不装 `tool-jobs`：`start` 永远拒绝。producer 报错文案会点名 `dsh-tool-jobs`。[E: packages/jobs/jobs-local/src/index.ts:209]
 - 只在 preset 里 `isolate: { jobs: true }` 包 registry：兄弟 `tool-bash` 的 `ctx.get('jobs')` 是 `undefined`，`run_in_background` 变成「工具在、jobs 不在」。不 isolate 又会撞 `leakedServices`。正解是别搬 Provider。
 - `minimal` 在 web 下没有 `tool-jobs`。它的模型 `bash` 是 `dsh-tool-bash-persistent`（`ctx.terminals`），不经本缝。
-- `stopping` 仍占 concurrency 桶。`kill` 之后立刻 `start` 替换件会撞限额，要等 producer `done`。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:220]
+- `stopping` 仍占 concurrency 桶。`kill` 之后立刻 `start` 替换件会撞限额，要等 producer `done`。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:219]
 - `wait` 超时返回 `running` 且 **不** 标 `reported`；等到结算则标 `reported`，`onJobDone` 仍火但 notice 被压。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:467] [E: packages/jobs/jobs-local/tests/jobs.spec.ts:459]
-- owner 必须是 `ctx.agents` 里**当前**那一个实例。同 session id 的旧对象再 `start` 会抛，但按 id 做 `list` 仍能看见新 owner 的活 job。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:650]
-- `JobKind` 是类型并集。测试里 merge 一个 `workflow` 也能拿到 `workflow-1`；runtime 不查表，只查非空。不要把「类型里有两格」读成「registry 白名单只有两格」。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:270]
+- owner 必须是 `ctx.agents` 里**当前**那一个实例。同 session id 的旧对象再 `start` 会抛，但按 id 做 `list` 仍能看见新 owner 的活 job。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:649]
+- `JobKind` 是类型并集。测试里 merge 一个 `workflow` 也能拿到 `workflow-1`；runtime 不查表，只查非空。不要把「类型里有两格」读成「registry 白名单只有两格」。[E: packages/jobs/jobs-local/tests/jobs.spec.ts:271]
 - continuable `subagent` 不进 jobs。在 `job_list` 里找 `subagent_fork` / `startContinuable` 的孩子会落空。
 - 本缝没有 `jobs/*` waterfall。拦截后台启动只能拦在 producer 的 `tools/pre-execute`（必须 `next()`），或干脆不 `attachController`。
 - `sdk-minimal` 不叠 `dsh-base`，没有 host `jobs` 行。`dsh --profile sdk-minimal` 默认没有 `ctx.jobs`。
@@ -190,6 +192,7 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），`cap
 
 - packages/jobs/jobs/src/index.ts
 - packages/jobs/jobs/src/types.ts
+- packages/jobs/jobs/src/view.ts
 - packages/jobs/jobs/src/brand.ts
 - packages/jobs/jobs/package.json
 - packages/jobs/jobs/tests/service.spec.ts
@@ -203,15 +206,15 @@ DSH 是 Cordis 组合运行时（`profile → bundle → agent preset`），`cap
 - packages/bundle/base/cordis.patch.yml
 - packages/bundle/base/package.json
 - packages/bundle/web-app/cordis.patch.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
 - packages/shell/tool-bash/src/index.ts
 - packages/shell/tool-pwsh/src/index.ts
 - packages/subagent/tool-subagent/src/index.ts
 - packages/core/tools/src/index.ts
-- packages/preset/agent-presets/src/mount.ts
+- packages/preset/agent-preset-registry/src/mount.ts
 - packages/api/session-controller/src/control.ts
 - vendor/cordis/src/events.ts
 - vendor/cordis/src/service.ts

@@ -7,6 +7,8 @@ pkg: client
 source:
   - packages/client/web/src/index.ts
   - packages/client/web/src/boot.ts
+  - packages/client/web/src/boot-client.ts
+  - packages/client/web/src/mount.ts
   - packages/client/web/src/boot-page.ts
   - packages/client/web/src/seed.ts
   - packages/client/web/src/platform.ts
@@ -53,7 +55,7 @@ related:
   - subsys.host.frontend-static
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-client-web` 的产品是无框架 boot 内核 `AppWebEntry`：等待可选的 `__DSH_BOOT_READY__`，用 host 注入的 `window.__ModuleLoader__` 建 `ClientModuleSystem`，先画 `BootPage`（HARNESS），prefetch `immediately` 行，把 vendored Cordis `Loader.internal` 接到模块表，等全部 plugin fiber `ACTIVE` 后 `ctx.inject(['uiRenderer'])` 把 mount 点交给 `@deepseek-ai/dsh-client-ui-renderer`。`apps/web` 只找 `#root`。client **不**执行模型 turn。Web 是默认 GUI 安装路径；本仓没有 shipped TUI。其它宿主入口是 `dsh --profile headless|sdk|sdk-minimal|acp`。
@@ -69,7 +71,7 @@ updated: c291e7961a
 
 ## 职责边界
 
-DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent preset`，capability seam 是 Definition / Provider / Consumer。**model-visible ⟺ logged**。浏览器壳只属于 **client 面**：不实现 `ctx.fs`、不跑 agent loop、不 `provide('webStartup')`。Web 是默认 GUI（`dsh web` ≡ `--profile web`，`patchReload: 'live'`）；另外四个 shipped profile 是 `headless` / `sdk` / `sdk-minimal` / `acp`（均为 `startup`），它们不叠这套 SPA 壳。launcher 在 `provide('webStartup')` **之前**拒绝 `--host 0.0.0.0`，进程不 bind。 [E: packages/boot/app-boot/src/profile.ts:110] [E: packages/bundle/web-app/src/startup.ts:75]
+DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent preset`，capability seam 是 Definition / Provider / Consumer。**model-visible ⟺ logged**。浏览器壳只属于 **client 面**：不实现 `ctx.fs`、不跑 agent loop、不 `provide('webStartup')`。Web 是默认 GUI（`dsh web` ≡ `--profile web`；launcher 把 `dsh <name>` 扩成 `--profile <name>`）；另外四个 shipped profile 是 `headless` / `sdk` / `sdk-minimal` / `acp`（均为 `startup`），它们不叠这套 SPA 壳。launcher 在 `provide('webStartup')` **之前**拒绝 `--host 0.0.0.0`，进程不 bind。[E: packages/boot/app-boot/src/profile.ts:183] [E: packages/bundle/web-app/src/startup.ts:75]
 
 本包拥有：
 
@@ -82,8 +84,8 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 - host 图里有哪些 `dsh.client` 行、`immediately` 谁为真 —— composition / 各包 `package.json` 的 `dsh.client`；壳只消费 `__DSH_BOOT__` 与 `__ModuleLoader__`。扫描与 index 注入在 [`subsys.client.modules`](modules.md)。
 - HTTP `/api`、信任篱笆 —— [`subsys.client.connection`](connection.md)。
 - snapshot store / `SlotMap` / session 客户端对象层 —— [`subsys.client.runtime`](runtime.md)（`dsh-client-store` + `packages/api/session-controller/src/client/`）。
-- `'root'` 上的 `AppFrame` 与四子槽 —— [`subsys.client.ui-layout`](ui-layout.md)。
-- 槽 renderer 与 `ctx.uiRenderer.mount` —— `@deepseek-ai/dsh-client-ui-renderer` 的 **client** `apply`；host 半边 `apply()` 是空函数。 [E: packages/client/ui-renderer/src/index.ts:4] [E: packages/client/ui-renderer/src/client/index.ts:88]
+- `'root'` 上的 `AppFrame` 与五子槽 —— [`subsys.client.ui-layout`](ui-layout.md)。
+- 槽 renderer 与 `ctx.uiRenderer.mount` —— `@deepseek-ai/dsh-client-ui-renderer` 的 **client** `apply`；host 半边 `apply()` 是空函数。 [E: packages/client/ui-renderer/src/index.ts:4] [E: packages/client/ui-renderer/src/client/index.ts:21]
 - 静态 dist 与 SPA fallback —— [`subsys.host.frontend-static`](../host/frontend-static.md)。
 - 模型 turn —— [`spine.trace-web-first-prompt`](../../spine/trace-web-first-prompt.md)。
 
@@ -114,36 +116,36 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 |---|---|
 | `AppWebEntry` | 持有 mount 点、可选 `BootSeams.loadBundle`、`BootPage`。`run()` **不 reject**：缺 facade / 畸形 manifest / plugin 失败都 `page.fail`。 |
 | `BootManifest` | `parseBootManifest` 要求对象 + 字符串 `rev` + 数组 `entries` **和** `batches`。 |
-| `PLATFORM_MODULES` | `react` / `react/jsx-runtime` / `react-dom` / `react-dom/client` / `@deepseek-ai/cordis` / `@deepseek-ai/dsh-client-store` / `@deepseek-ai/dsh-client-ui-slots` / `@deepseek-ai/dsh-client-ui-primitives`。`PRELOADED_CLIENT_EXTERNALS` 现为空数组。 |
+| `PLATFORM_MODULES` | `react` / `react/jsx-runtime` / `react-dom` / `react-dom/client` / `@deepseek-ai/cordis` / `@deepseek-ai/dsh-client-store` / `@deepseek-ai/dsh-client-ui-slots` / `@deepseek-ai/dsh-client-ui-primitives` / `@deepseek-ai/dsh-client-ui-dockkit`。`PRELOADED_CLIENT_EXTERNALS` 现为空数组。[E: packages/client/web/src/platform.ts:8] |
 | `UiRendererService` | `{ mount(container): disposer }`。壳在 Loader 静止后 `inject(['uiRenderer'])` 才调用。 |
 | `BootSeams` | `Pick<ClientModuleCreateOptions, 'loadBundle'>`。显式 seams 覆盖 `__DSH_TRANSPORT__.loadBundle`。 |
 | `immediately` | `dsh.client.immediately === true` 才进 stage-one prefetch。shipped 例：`modules` / `connection` / `hmr` / `locale` / `ui-theme` / `ui-renderer`。`ui-layout` 默认不标。 |
 
 ## 控制流
 
-1. **只有 `web` profile 叠 browser roster。** `PROFILE_TEMPLATES.web` 是 `dsh-base` 然后 `dsh-web-app`，`patchReload: 'live'`。`headless` / `sdk` / `acp` 叠对应 app bundle 且 `startup`；`sdk-minimal` **只**叠 `dsh-sdk-minimal`。`PROFILE_TEMPLATES.headless` 的 bundle 是 `dsh-base` + `dsh-headless`。headless **patch** 才挂 `headless-startup` / `headless-runner`，**没有** `webserver`、**没有** browser roster。本仓没有 shipped TUI。 [E: packages/boot/app-boot/src/profile.ts:110] [E: packages/boot/app-boot/src/profile.ts:122] [E: packages/bundle/web-app/cordis.patch.yml:176] [E: packages/bundle/headless/cordis.patch.yml:23]
+1. **只有 `web` profile 叠 browser roster。** `PROFILE_TEMPLATES.web` 是 `dsh-base` 然后 `dsh-web-app`。[E: packages/boot/app-boot/src/profile.ts:183] `headless` / `sdk` / `acp` 叠对应 app bundle；`sdk-minimal` **只**叠 `dsh-sdk-minimal`。[E: packages/boot/app-boot/src/profile.ts:186] [E: packages/boot/app-boot/src/profile.ts:192] headless **patch** 才挂 `headless-startup` / `headless-runner`，**没有** `webserver`、**没有** browser roster。[E: packages/bundle/headless/cordis.patch.yml:21] [E: packages/bundle/web-app/cordis.patch.yml:205]
 
 2. **`--host 0.0.0.0` 在 `provide('webStartup')` 之前被拒。** 字面量等于 `'0.0.0.0'` 则 `program.error`；`webserver` `inject: [webStartup]` 保持 pending。缺省 bind 是 `127.0.0.1:3080`。 [E: packages/bundle/web-app/src/startup.ts:75] [E: packages/bundle/web-app/cordis.patch.yml:135]
 
 3. **host 把图插进 SPA HTML。** `frontend-static` 占 fallback：GET/HEAD 发 dist；index 先 `webServer.renderIndex`（注入表 + taps），miss 是 **404**（不再回 `index.html` 200）。`ClientModuleRegistry` 把 `__DSH_BOOT__` 作为 `kind: 'global'` 注入行。裸 Vite 拒听是 `rejectStandaloneServe`。 [E: packages/host/frontend-static/src/index.ts:100] [E: packages/host/frontend-static/src/index.ts:124] [E: packages/client/modules/src/index.ts:474]
 
-4. **`apps/web` 只找 `#root`。** `getElementById('root')` 为 `null` 则抛 `web app: missing #root`；否则 `void new AppWebEntry(el).run()`。 [E: apps/web/src/main.ts:4] [E: apps/web/src/main.ts:6]
+4. **`apps/web` 只找 `#root`。** `getElementById('root')` 为 `null` 则抛 `web app: missing #root`；否则 `void new AppWebEntry(el).run()`。 [E: apps/web/src/main.ts:18] [E: apps/web/src/main.ts:6]
 
-5. **`run()` 先等 `__DSH_BOOT_READY__`（若有），再要求 `__ModuleLoader__`。** 缺 facade 抛 `web boot: window.__ModuleLoader__ bootstrap facade is missing`，被外层 catch 画 fail 页。`moduleLoader.create({ boot: win.__DSH_BOOT__, staticModules, loadBundle? })` 内部 `parseBootManifest`。测试钉死缺 `__DSH_BOOT__` 时页面含 `window.__DSH_BOOT__ is missing or not an object`。 [E: packages/client/web/src/boot.ts:54] [E: packages/client/web/src/boot.ts:58] [E: packages/client/web/src/boot.ts:68] [E: packages/client/modules/src/client/manifest.ts:215] [E: packages/client/web/tests/boot.client.spec.ts:76]
+5. **`run()` 先等 `__DSH_BOOT_READY__`（若有），再要求 `__ModuleLoader__`。** 缺 facade 抛 `web boot: window.__ModuleLoader__ bootstrap facade is missing`，被外层 catch 画 fail 页。`moduleLoader.create({ boot: win.__DSH_BOOT__, staticModules, loadBundle? })` 内部 `parseBootManifest`。测试钉死缺 `__DSH_BOOT__` 时页面含 `window.__DSH_BOOT__ is missing or not an object`。 [E: packages/client/web/src/boot.ts:71] [E: packages/client/web/src/boot.ts:58] [E: packages/client/web/src/boot.ts:68] [E: packages/client/modules/src/client/manifest.ts:219] [E: packages/client/web/tests/boot.client.spec.ts:76]
 
-6. **prefetch 与 Loader 挂载并行；entry `create` 等整层 prefetch。** `prefetchImmediateTier` 对 `plugins.filter(row => row.immediately)` 调 `modules.prefetch(id)`；单包 `.catch(() => {})`。已在 `loadCache` 的 id（含 bootstrap `modules`）prefetch 直接 return。 [E: packages/client/web/src/boot.ts:104] [E: packages/client/web/src/boot.ts:106] [E: packages/client/modules/src/client/system.ts:234]
+6. **prefetch 与 Loader 挂载并行；entry `create` 等整层 prefetch。** `prefetchImmediateTier` 对 `plugins.filter(row => row.immediately)` 调 `modules.prefetch(id)`；单包 `.catch(() => {})`。已在 `loadCache` 的 id（含 bootstrap `modules`）prefetch 直接 return。 [E: packages/client/web/src/boot.ts:79] [E: packages/client/web/src/boot.ts:106] [E: packages/client/modules/src/client/system.ts:125]
 
-7. **`internal` 必须在任何 entry 存在之前注入。** `runPluginBoot`：`await ctx.plugin(Loader)`，立刻 `loader.internal = this.modules`。vendored `EntryTree.import`：有 `internal` 走 `internal.import`；否则相对路径或裸 `import(name)`。 [E: packages/client/web/src/boot-client.ts:37] [E: packages/client/web/src/boot-client.ts:39] [E: vendor/loader/src/config/tree.ts:154]
+7. **`internal` 必须在任何 entry 存在之前注入。** `runPluginBoot`：`await ctx.plugin(Loader)`，立刻 `loader.internal = this.modules`。vendored `EntryTree.import`：有 `internal` 走 `internal.import`；否则相对路径或裸 `import(name)`。 [E: packages/client/web/src/boot-client.ts:37] [E: packages/client/web/src/boot-client.ts:39] [E: vendor/loader/src/config/tree.ts:122]
 
-8. **按 manifest 全量 `loader.create`，不再追加伪包 `APP_SHELL_ID`。** `rows = this.manifest.plugins.map(row => row.id)`。`Promise.all` 并发 create；无 fiber 则 `page.setState(..., 'failed')`。`modules` 的 `apply` 读闭包里的 `moduleSystem`，未 `createClientModuleSystem` 则抛 `client-modules: createClientModuleSystem must run before plugin boot`。 [E: packages/client/web/src/boot-client.ts:47] [E: packages/client/web/src/boot-client.ts:51] [E: packages/client/modules/src/client/index.ts:59]
+8. **按 manifest 全量 `entries.start`，不再追加伪包 `APP_SHELL_ID`。** `bootClient` 调 `options.modules.entries.start(loader, manifest)`，由 `ClientEntries` 为每个 plugin id `loader.create`。无 fiber 则 `page.setState(..., 'failed')`。`modules` 的 `apply` 读 `loader.internal`，没有 client module system 则抛错。[E: packages/client/web/src/boot-client.ts:50] [E: packages/client/modules/src/client/entries.ts:69] [E: packages/client/modules/src/client/index.ts:63]
 
-9. **`loader.await()` + 全 fiber `ACTIVE`，否则 fail 列出谁。** `assertEntriesActive`：无 fiber → `import failed`；`pending` → 列出缺失 inject 服务。有失败则抛 `web boot: N entr(y|ies) did not activate\n…`。catch 调 `page.fail`，**不**把 mount 交给 React。 [E: packages/client/web/src/boot-client.ts:54] [E: packages/client/web/src/boot-client.ts:81] [E: packages/client/web/src/boot.ts:90]
+9. **`loader.await()` + 全 fiber `ACTIVE`，否则 fail 列出谁。** `assertEntriesActive`：无 fiber → `import failed`；`pending` → 列出缺失 inject 服务。有失败则抛 `web boot: N entr(y|ies) did not activate\n…`。catch 调 `page.fail`，**不**把 mount 交给 React。 [E: packages/client/web/src/boot-client.ts:66] [E: packages/client/web/src/boot-client.ts:81] [E: packages/client/web/src/boot.ts:11]
 
 10. **成功后依赖 fiber 调 `uiRenderer.mount`。** `ctx.inject(['uiRenderer'], (scope) => scope.effect(() => scope.uiRenderer.mount(this.container)))`。替换 `uiRenderer` 会重挂应用。 [E: packages/client/web/src/mount.ts:20] [E: packages/client/web/src/mount.ts:21]
 
 11. **ui-renderer client `apply` 安装槽渲染并提供 mount 面。** 新建 `SlotRegistry`，`slots.install(createSlotRenderer())`，`provide('uiRenderer', { mount })`。`mountApp` 若容器里有 `[data-dsh-boot]` 则 `hydrateRoot` + `BootHandoff`，否则 `createRoot` + `flushSync`。host 半边 `apply()` 空。 [E: packages/client/ui-renderer/src/client/index.ts:89] [E: packages/client/ui-renderer/src/client/index.ts:91] [E: packages/client/ui-renderer/src/client/index.ts:74] [E: packages/client/ui-renderer/src/index.ts:4]
 
-12. **`buildRenderApp` 只渲染 `'root'`。** `() => ctx.slots.renderSlot('root', {})`。`ui-layout` 一次 `register` 把 `AppFrame` 放进 `'root'`，声明 `sidebar` / `conversation` / `details` / `shell.overlay`。壳不点名任何一个 `ui-*`。 [E: packages/client/ui-renderer/src/client/app.tsx:21] [E: packages/client/ui-layout/src/client/index.ts:158]
+12. **`buildRenderApp` 只渲染 `'root'`。** `() => ctx.slots.renderSlot('root', {})`。`ui-layout` 一次 `register` 把 `AppFrame` 放进 `'root'`，声明 `sidebar` / `main` / `rightbar` / `shell.overlay` / `shell.leading`。壳不点名任何一个 `ui-*`。[E: packages/client/ui-renderer/src/client/app.tsx:21] [E: packages/client/ui-layout/src/client/index.ts:171]
 
 13. **裸 Vite `serve` 在 listen 之前被拒。** `env.command === 'serve'` 抛含 `window.__DSH_BOOT__` 的 `STANDALONE_ERROR`。e2e 钉死 `Server.listen` 未调用。正确路径是 `dsh web`（可另开 `pnpm run dev:web` 给 client-hmr）。`webSurfacePrompt` 另有 model-visible 取向句，不是 Vite 拒听实现。 [E: apps/web/vite.config.ts:35] [E: apps/web/tests/vite-entry.e2e.ts:59] [E: packages/bundle/web-app/src/index.ts:144]
 
@@ -160,15 +162,15 @@ DSH 是 **Cordis 组合运行时**，主线是 `profile → bundle → agent pre
 
 ## Gotcha
 
-- **缺 `__ModuleLoader__` / 畸形 `__DSH_BOOT__` 仍有 BootPage。** 构造器立刻 `new BootPage(container)`；`run()` catch 写 fail 文案，不再让 Promise reject 成白屏。 [E: packages/client/web/src/boot.ts:38] [E: packages/client/web/src/boot.ts:90]
+- **缺 `__ModuleLoader__` / 畸形 `__DSH_BOOT__` 仍有 BootPage。** 构造器立刻 `new BootPage(container)`；`run()` catch 写 fail 文案，不再让 Promise reject 成白屏。 [E: packages/client/web/src/boot.ts:38] [E: packages/client/web/src/boot.ts:40]
 - **没有 `settled` KernelSignal 一门。** 真 UI 是否出现只取决于 `uiRenderer.mount` 是否跑到；失败停在 `BootPage`。
 - **pending 没有超时。** `assertEntriesActive` 是 fail-loud 补偿。
-- **`PLATFORM_MODULES` 与 `getStaticModules()` `satisfies` 互锁。** tsdown `clientExternals` 基线就是 `PLATFORM_MODULES` 加空的 `PRELOADED_CLIENT_EXTERNALS`。 [E: packages/client/web/src/seed.ts:38] [E: packages/client/tsdown.client.ts:410]
-- **Vite 不再 alias 到 `boot.tsx`。** 只 stub `node:module`；`process.versions.node` `"0.0.0"` 让 vendored loader `fromInternal()` 走空槽。 [E: apps/web/vite.config.ts:222] [E: apps/web/vite.config.ts:230]
-- **同页第二次 live `create` 会炸。** `registrationTarget.mode !== 'queue'` 抛 `client-modules: window.__ModuleLoader__.create called after module-system boot`。 [E: packages/client/modules/src/client/system.ts:103]
+- **`PLATFORM_MODULES` 与 `getStaticModules()` `satisfies` 互锁。** tsdown `clientExternals` 基线就是 `PLATFORM_MODULES` 加空的 `PRELOADED_CLIENT_EXTERNALS`。 [E: packages/client/web/src/seed.ts:38] [E: packages/client/tsdown.client.ts:21]
+- **Vite 不再 alias 到 `boot.tsx`。** 只 stub `node:module`；`process.versions.node` `"0.0.0"` 让 vendored loader `fromInternal()` 走空槽。 [E: apps/web/vite.config.ts:222] [E: apps/web/vite.config.ts:255]
+- **同页第二次 live `create` 会炸。** `registrationTarget.mode !== 'queue'` 抛 `client-modules: window.__ModuleLoader__.create called after module-system boot`。 [E: packages/client/modules/src/client/system.ts:148]
 - **在 `'root'` 上再 `register` 会阴影整框。** 加法面是 `shell.overlay`（list）。
 - **`WebServer.Config.host` 仍承认 `'0.0.0.0'`。** 旗标路径被拒 ≠ overlay 不能改 bind。 [E: packages/host/webserver/src/index.ts:61]
-- **jsdom 装配图从 workspace `dsh.client` 扫出来。** `assembled-boot.ts` 用 `loadBundle` 喂 `lib/client.js`；bootstrap id 固定 `@deepseek-ai/dsh-client-modules`。 [E: apps/web/tests/assembled-boot.ts:126]
+- **jsdom 装配图从 workspace `dsh.client` 扫出来。** `assembled-boot.ts` 用 `loadBundle` 喂 `lib/client.js`；bootstrap id 固定 `@deepseek-ai/dsh-client-modules`。 [E: apps/web/tests/assembled-boot.ts:16]
 - **SPA miss 是 404。** 不要再写 frontend-static 把未知路径回 `index.html`。 [E: packages/host/frontend-static/src/index.ts:100]
 
 ## Seam 三角
@@ -191,6 +193,8 @@ capability seam = Definition / Provider / Consumer。下表对照 `dsh-base`、�
 
 - packages/client/web/src/index.ts
 - packages/client/web/src/boot.ts
+- packages/client/web/src/boot-client.ts
+- packages/client/web/src/mount.ts
 - packages/client/web/src/boot-page.ts
 - packages/client/web/src/seed.ts
 - packages/client/web/src/platform.ts
@@ -228,6 +232,6 @@ capability seam = Definition / Provider / Consumer。下表对照 `dsh-base`、�
 - [`surface.web.workbench`](../../surface/web/workbench.md) — 工作台槽位与 chrome 可见面。
 - [`subsys.client.modules`](modules.md) — node 半边扫 `dsh.client`、combo、`__DSH_BOOT__`；浏览器半边模块表。
 - [`subsys.client.runtime`](runtime.md) — `dsh-client-store` + session-controller 客户端 + ui-renderer 对象层。
-- [`subsys.client.ui-layout`](ui-layout.md) — `AppFrame` 占 `'root'`，声明四子槽。
+- [`subsys.client.ui-layout`](ui-layout.md) — `AppFrame` 占 `'root'`，声明五子槽（含 `shell.leading`）。
 - [`subsys.composition.bundle-web-app`](../composition/bundle-web-app.md) — 把这套 roster 插进 host 树。
 - [`subsys.host.frontend-static`](../host/frontend-static.md) — dist fallback 与 index render。

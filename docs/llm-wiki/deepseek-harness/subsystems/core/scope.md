@@ -13,10 +13,11 @@ source:
   - packages/core/scope/tests/scope.spec.ts
   - packages/core/scope/tests/store.spec.ts
   - packages/core/scope/tests/invariant.spec.ts
-  - packages/preset/agent-presets/src/mount.ts
-  - packages/preset/agent-presets/src/index.ts
-  - packages/preset/agent-presets/tests/mount.spec.ts
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
+  - packages/preset/agent-preset-registry/src/mount.ts
+  - packages/preset/agent-preset-registry/src/index.ts
+  - packages/preset/agent-preset-registry/tests/registry.spec.ts
+  - packages/preset/agent-preset/src/index.ts
+  - packages/bundle/web-app/presets/standard.patch.yml
   - packages/core/agent-loop/src/agent.ts
   - packages/core/agent/src/dispatch.ts
   - packages/core/tools/src/index.ts
@@ -48,7 +49,7 @@ related:
   - surface.presets.overview
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-scope` 是 Cordis 组合运行时里的 **scope 作用域原语**：用 no-op plugin fiber 铸带 `kScope` 标签的 context，同一条 `scopeParents` 链同时管 **注册视图向下继承**（`ScopedLayers`）和 **事件准入向上扩展**（`scopeTarget`）。它不是 `ctx.scope` 服务，也不是 coding-agent 沙箱。
@@ -60,7 +61,7 @@ updated: c291e7961a
 - `bindScopeParent` 为什么只能绑一次？`rebind` 给谁、空白会话 recompose 合同是什么？
 - scope 过滤后的 waterfall 为什么必须 `next()`？不调用会停在哪一层？
 - `isolate` 和 scope 是不是同一件事？`leakedServices` 何时拒绝、preset 行要怎样写 `isolate: { …: true }`？
-- 没有 `agent-presets` 行时（headless / sdk / sdk-minimal / acp），工具为什么还能从全局层看见？
+- 没有 `agent-preset-registry` 行时（headless / sdk / sdk-minimal / acp），工具为什么还能从全局层看见？
 
 ## 职责边界
 
@@ -70,7 +71,7 @@ updated: c291e7961a
 
 - 工具注册表、`tools/pre-execute` 管线、`presentAs` / PTC `run_code` —— [subsys.core.tools](./tools.md)、[subsys.core.code-mode](./code-mode.md)
 - `system-prompt/assemble` 的 section 语义与 `complete` 恢复 —— [subsys.core.system-prompt](./system-prompt.md)
-- Agent 工厂、turn / step、inbox —— [subsys.core.agent-loop](./agent-loop.md)
+- Agent 工厂、turn / step、inbox —— [subsys.core.agent-loop](./agent-loop.md)（`ReactLoopInbox` 在 `packages/core/agent-loop/src/inbox.ts`）
 - preset 发现、standing mount、`leakedServices` 审计、会话 header 的 `agentPreset` —— [subsys.composition.agent-presets](../composition/agent-presets.md)
 - host 面 webserver / persistence / sandbox / subagent backends；这些留在 `profile → bundle`，不进 scope 链
 - Cordis `Context.isolate` 服务 realm（vendor）；本包只提供身份与过滤，isolate 门由 `mountPreset` 读
@@ -88,8 +89,9 @@ updated: c291e7961a
 | `packages/core/scope/src/scoped-events.generated.ts` | 生成表：哪些事件要 carrier、subject 从哪读 |
 | `packages/core/scope/tests/scope.spec.ts` | 标签、向上准入、一次绑定、成环 |
 | `packages/core/scope/tests/store.spec.ts` | 层叠 merge、peek 不创建、effect 回滚 |
-| `packages/preset/agent-presets/src/index.ts` | standing `createScope` + `bindScopeParent` 消费者 |
-| `packages/preset/agent-presets/src/mount.ts` | `mountPreset` / `leakedServices` isolate 门 |
+| `packages/preset/agent-preset-registry/src/index.ts` | 声明式 roster：`register` 时 `activate` 铸 standing，`mount` 再 `bindScopeParent` |
+| `packages/preset/agent-preset-registry/src/mount.ts` | `mountPreset` / `leakedServices` / `auditRows` |
+| `packages/preset/agent-preset/src/index.ts` | `@deepseek-ai/dsh-agent-preset`：普通 Cordis YAML 里声明 `id` + `plugins[]` |
 | `packages/core/agent-loop/src/agent.ts` | 用 live `Agent` 当 `ScopeKey` 铸会话 scope |
 | `packages/api/session-controller/src/client/scope.ts` | 浏览器 `createScope`：`SessionId` tag，无 parent 链 |
 | `vendor/cordis/src/events.ts` | `waterfall` 必须 `next()` 才会 `shift` |
@@ -110,33 +112,35 @@ updated: c291e7961a
 
 `NamedEntries` / `AnonymousEntries` 是 tools / system-prompt / skills 往 `ScopedLayers` 里塞表的积木。本页不展开工具 schema。
 
+四个 shipped preset **只叠在 `dsh-web-app`**：`package.json` `dsh.bundle.patch` = `cordis.patch.yml` + `presets/{standard,ptc,minimal,cordis}.patch.yml`。每份 patch 插入一条 `@deepseek-ai/dsh-agent-preset` 声明（`config.id` + `config.plugins[]`）。`PROFILE_TEMPLATES.headless/sdk/acp` **不含**这些 preset 文件。
+
 ## 控制流
 
-1. `createScope@packages/core/scope/src/index.ts` 不是 Loader 行，也不占 `ctx` 服务槽。可选 `options.parent` 先走一次 `bindScopeParent`；然后 `ctx.plugin(scope)` 挂 **no-op** 函数 `scope()` 当 backing fiber，再 `fiber.ctx.extend({ [kScope]: key })` 打标签。`scopeOf` 读最近一层 `kScope`。`rawDispose` 是这条 fiber 的精确 disposer；公开 `dispose()` 对 racing 调用共享同一次 quiescence。[E: packages/core/scope/src/index.ts:121] [E: packages/core/scope/src/index.ts:138] [E: packages/core/scope/src/index.ts:139] [E: packages/core/scope/src/index.ts:140] [E: vendor/cordis/src/registry.ts:318]
+1. `createScope@packages/core/scope/src/index.ts` 不是 Loader 行，也不占 `ctx` 服务槽。可选 `options.parent` 先走一次 `bindScopeParent`；然后 `ctx.plugin(scope)` 挂 **no-op** 函数 `scope()` 当 backing fiber，再 `fiber.ctx.extend({ [kScope]: key })` 打标签。`scopeOf` 读最近一层 `kScope`。`rawDispose` 是这条 fiber 的精确 disposer；公开 `dispose()` 对 racing 调用共享同一次 quiescence。[E: packages/core/scope/src/index.ts:137] [E: packages/core/scope/src/index.ts:138] [E: packages/core/scope/src/index.ts:139] [E: packages/core/scope/src/index.ts:140]
 
-2. **agent-preset 面**的 standing scope 由 `AgentPresets.ensureStanding` 铸：`key = { agentPreset: preset.id }`，`createScope(this.selfCtx, key)`，再 `mountPreset(scope.ctx, preset)`。同一 preset id single-flight 一份；多个 Web 会话 join 同一代插件实例。[E: packages/preset/agent-presets/src/index.ts:770] [E: packages/preset/agent-presets/src/index.ts:771] [E: packages/preset/agent-presets/src/index.ts:788] shipped 五个 profile 里只有 **web** 插入 `agent-presets` 行（`default: standard`）。[E: packages/bundle/web-app/cordis.patch.yml:481] [E: packages/bundle/web-app/cordis.patch.yml:484] `dsh-headless` 的 insert 只有 `code-runtime` / `headless-startup` / `headless-runner`，没有 `agent-presets` 行；sdk / sdk-minimal / acp overlay 同样不挂 roster。这一步不发生时，模型可见工具留在 host 全局层。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27]
+2. **agent-preset 面**的 standing scope 由 `AgentPresetRegistry.activate` 铸：`key = {}`，`createScope(this.owner, key)`，再 `mountPreset(context, record.config.id, record.config.plugins)`。声明在 `register` 时就 eager 激活；同一 preset id 一份 generation，多个 Web 会话 join 同一代插件实例。[E: packages/preset/agent-preset-registry/src/index.ts:102] [E: packages/preset/agent-preset-registry/src/index.ts:104] [E: packages/preset/agent-preset-registry/src/index.ts:109] shipped 五个 profile 里只有 **web** 插入 `agent-preset-registry` 行（`default: standard`）。[E: packages/bundle/web-app/cordis.patch.yml:559] [E: packages/bundle/web-app/cordis.patch.yml:562] `dsh-headless` 的 insert 只有 `headless-startup` / `headless-runner`，没有 roster 行；sdk / sdk-minimal / acp overlay 同样不挂 registry。这一步不发生时，模型可见工具留在 host 全局层。[E: packages/bundle/headless/cordis.patch.yml:21] [E: packages/bundle/headless/cordis.patch.yml:25]
 
-3. `mountPreset@packages/preset/agent-presets/src/mount.ts` 拒绝 unscoped context（否则注册会落到进程里每个 Agent）。树 settle 后跑两道 fail-closed：`inactiveRows`（enabled 行还在等永远不会来的 inject）和 `leakedServices`。后者扫 `ctx.reflect.store`：实现的 fiber 落在这次 mount 子树里，且 `ctx.root[Context.isolate][impl.name] ===` 该 store 槽，就算泄漏进 **root realm**。有泄漏就抛，要求 preset 服务坐 `isolate` 或搬到 host。[E: packages/preset/agent-presets/src/mount.ts:378] [E: packages/preset/agent-presets/src/mount.ts:382] [E: packages/preset/agent-presets/src/mount.ts:210] [E: packages/preset/agent-presets/src/mount.ts:407] [E: packages/preset/agent-presets/src/mount.ts:411] [E: packages/preset/agent-presets/tests/mount.spec.ts:271]
+3. `mountPreset@packages/preset/agent-preset-registry/src/mount.ts` 拒绝 unscoped context（否则注册会落到进程里每个 Agent）。树 settle 后跑 `auditRows` 与 `leakedServices`。后者扫 `ctx.reflect.store`：实现的 fiber 落在这次 mount 子树里，且 `ctx.root[Context.isolate][impl.name] ===` 该 store 槽，就算泄漏进 **root realm**。有泄漏就抛 `Preset services require isolate realms: …`。`audit.failed` 也会拒 mount；**pending**（等 host 服务）留下挂着，由 roster `diagnostic` 再审，不在 `mountPreset` 当场炸。[E: packages/preset/agent-preset-registry/src/mount.ts:259] [E: packages/preset/agent-preset-registry/src/mount.ts:86] [E: packages/preset/agent-preset-registry/src/mount.ts:264] [E: packages/preset/agent-preset-registry/src/mount.ts:266] [E: packages/preset/agent-preset-registry/src/mount.ts:267] [E: packages/preset/agent-preset-registry/tests/registry.spec.ts:157] [E: packages/preset/agent-preset-registry/tests/registry.spec.ts:166]
 
-4. `isolate` 是 vendor Cordis 的服务 realm，不是 `dsh-scope` 的 parent 链。`Context.isolate(name)` 给该服务名换一个 realm-private symbol；yml 组上写 `isolate: { planMode: true }` 就是这条缝。测试钉死：同一 provider 不带 isolate 被 `leakedServices` 拒绝；带 realm 则 root 解析不到，但 `serviceFor(agent, name)` 能按 standing fiber 读到（同一 preset 的两个 Agent 读到**同一**实例）。[E: vendor/cordis/src/context.ts:121] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:107] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:108] [E: packages/preset/agent-presets/tests/mount.spec.ts:281] [E: packages/preset/agent-presets/tests/mount.spec.ts:298] shipped `minimal` / `standard` / `ptc` / `cordis` 的 isolate 图写在 [subsys.composition.agent-presets](../composition/agent-presets.md)；旧目录名 `code` 现为 PTC（`presets/ptc/`），wiki id `surface.presets.code` 仍是稳定别名。
+4. `isolate` 是 vendor Cordis 的服务 realm，不是 `dsh-scope` 的 parent 链。yml 组上写 `isolate: { planMode: true }` 就是这条缝。测试钉死：同一 provider 不带 isolate 被当成 `require isolate realms` 的激活失败；带 realm 则 root 解析不到，但 `serviceFor(agent, name)` 能按 standing fiber 读到。[E: packages/bundle/web-app/presets/standard.patch.yml:45] [E: packages/bundle/web-app/presets/standard.patch.yml:46] [E: packages/preset/agent-preset-registry/src/index.ts:297] shipped `minimal` / `standard` / `ptc` / `cordis` 的 isolate 图写在 [subsys.composition.agent-presets](../composition/agent-presets.md)；旧目录名 `code` 现为 PTC（`presets/ptc.patch.yml`），wiki id `surface.presets.code` 仍是稳定别名。
 
-5. **会话 Agent scope** 由默认 loop 铸：`ReactLoopAgent` 构造里 `this.scope = createScope(loopCtx, this)`，live `Agent` 对象自己当 `ScopeKey`，再 `this.ctx = this.scope.ctx.extend({ agent: this })`。[E: packages/core/agent-loop/src/agent.ts:104] [E: packages/core/agent-loop/src/agent.ts:104]
+5. **会话 Agent scope** 由默认 loop 铸：`ReactLoopAgent` 构造里 `this.scope = createScope(loopCtx, this)`，live `Agent` 对象自己当 `ScopeKey`，`this.ctx = this.scope.ctx`（不再 `extend({ agent: this })`）。[E: packages/core/agent-loop/src/agent.ts:130] [E: packages/core/agent-loop/src/agent.ts:131]
 
-6. `AgentPresets.mount@packages/preset/agent-presets/src/index.ts` 在 `setup` 里做**唯一一次** `bindScopeParent(agentKey, standing.key)`，binding 放进 roster 私有 `WeakMap`。再调 `bindScopeParent` 抛 `scope key is already bound to a parent`。成环（含自指）抛 `scope parent link would form a cycle`。`scopeChainOf(agent)` 近到远是 `[agent, standingKey]`。[E: packages/preset/agent-presets/src/index.ts:421] [E: packages/core/scope/src/index.ts:73] [E: packages/core/scope/src/index.ts:56] [E: packages/core/scope/tests/scope.spec.ts:184]
+6. `AgentPresetRegistry.mount` 在 `setup` 里 `retain` 一代，再 `bind`：无 binding 则 `join` 做**唯一一次** `bindScopeParent(key, generation.key)`。再调 `bindScopeParent` 抛 `scope key is already bound to a parent`。成环（含自指）抛 `scope parent link would form a cycle`。[E: packages/preset/agent-preset-registry/src/index.ts:257] [E: packages/preset/agent-preset-registry/src/index.ts:241] [E: packages/preset/agent-preset-registry/src/index.ts:242] [E: packages/core/scope/src/index.ts:72] [E: packages/core/scope/src/index.ts:74] [E: packages/core/scope/src/index.ts:56] [E: packages/core/scope/tests/scope.spec.ts:184]
 
-7. 子代理不重新发现 preset：`applyChildComposition` 调 `composeFrom(childCtx, parent.ctx)`，再 `bindScopeParent` 到**父已经 standing 的那一代**。roster 不在（headless 等）时 `?.` 成 no-op，孩子继续看 host 全局层。[E: packages/subagent/subagent/src/child-agent.ts:204] [E: packages/preset/agent-presets/src/index.ts:448]
+7. 子代理不重新发现 preset：`applyChildComposition` 调 `childCtx.get('agentPresets')?.composeFrom(childCtx, parent.ctx)`，绑到**父已经 standing 的那一代**。roster 不在（headless 等）时 `?.` 成 no-op，孩子继续看 host 全局层。[E: packages/subagent/subagent/src/child-agent.ts:205] [E: packages/preset/agent-preset-registry/src/index.ts:273]
 
-8. 空白会话换 preset 走 `recompose`：先 `ensureStanding` 新一代，再用原 binding 的 `rebind`。方法**不读** session log；调用方必须保证旧父下没有已产生、仍被保留的产物（logged tool 名换组成后对不上）。没有 binding 的 Agent 第一次 `recompose` 等于一次 `mount`。committed re-link 会 `emit('tools/change')`。[E: packages/preset/agent-presets/src/index.ts:646] [E: packages/preset/agent-presets/src/index.ts:672] [E: packages/core/scope/src/index.ts:78]
+8. 空白会话换 preset 走 `recompose`：再 `mount`（已有 binding 则 `rebind`），再 `emit('tools/change')`。方法**不读** session log；调用方必须保证旧父下没有已产生、仍被保留的产物。`select` 另卡 turnBoundary：已开 turn 就 `agent-preset/locked`。[E: packages/preset/agent-preset-registry/src/index.ts:306] [E: packages/preset/agent-preset-registry/src/index.ts:308] [E: packages/preset/agent-preset-registry/src/index.ts:232] [E: packages/core/scope/src/index.ts:78]
 
-9. **注册视图向下。** `ScopedLayers.effect` 用 `scopeOf(ctx)` 选层：无标签写 `global`；有标签才懒创建 overlay。`chainLayers` 沿 `scopeChainOf` **远祖在前、本 scope 在后**，近处同名覆盖远处。`peek` 故意 chain-blind，只看本 key 自己的层。`ctx.tools.register` / `ctx.systemPrompt.section` 都把插入挂在 `ctx.effect` 上，fiber dispose 时倒序卸掉。preset standing 上注册的 tool / persona section，join 上去的每个 Agent 都能在 `schemas(agent)` / `assemble({ scope: agent })` 里看见。[E: packages/core/scope/src/store.ts:231] [E: packages/core/scope/src/store.ts:192] [E: packages/core/tools/src/index.ts:1028] [E: packages/core/system-prompt/src/index.ts:432] [E: vendor/cordis/src/fiber.ts:431]
+9. **注册视图向下。** `ScopedLayers.effect` 用 `scopeOf(ctx)` 选层：无标签写 `global`；有标签才懒创建 overlay。`chainLayers` 沿 `scopeChainOf` **远祖在前、本 scope 在后**，近处同名覆盖远处。`peek` 故意 chain-blind，只看本 key 自己的层。`ctx.tools.register` / `ctx.systemPrompt.section` 都把插入挂在 `ctx.effect` 上，fiber dispose 时倒序卸掉。preset standing 上注册的 tool / persona section，join 上去的每个 Agent 都能在 `schemas(agent)` / `assemble({ scope: agent })` 里看见。[E: packages/core/scope/src/store.ts:226] [E: packages/core/scope/src/store.ts:192] [E: packages/core/tools/src/index.ts:1063] [E: packages/core/system-prompt/src/index.ts:454] [E: vendor/cordis/src/fiber.ts:419]
 
-10. **事件准入向上。** `scopeTarget(base, key)` 造不带 subject 属性的 carrier：先跑 base 已有的 `Context.filter`，然后无标签 listener **一律放行**；有标签则从 **dispatch key 往祖先走**，命中 listener 的 tag 才准入。descendant 听得到 ancestor 的 listener；反过来不行。测试：对 agent key emit，`preset` + `agent` + untagged 都听到；对 preset key emit，agent-tagged 被排除。[E: packages/core/scope/src/index.ts:170] [E: packages/core/scope/src/index.ts:177] [E: packages/core/scope/tests/scope.spec.ts:213] [E: packages/core/scope/tests/scope.spec.ts:220]
+10. **事件准入向上。** `scopeTarget(base, key)` 造不带 subject 属性的 carrier：先跑 base 已有的 `Context.filter`，然后无标签 listener **一律放行**；有标签则从 **dispatch key 往祖先走**，命中 listener 的 tag 才准入。descendant 听得到 ancestor 的 listener；反过来不行。测试：对 agent key emit，`preset` + `agent` + untagged 都听到；对 preset key emit，agent-tagged 被排除。[E: packages/core/scope/src/index.ts:170] [E: packages/core/scope/src/index.ts:177] [E: packages/core/scope/tests/scope.spec.ts:214] [E: packages/core/scope/tests/scope.spec.ts:220]
 
-11. **Waterfall 必须 `next()`。** `Events.dispatch` 先用 carrier 的 filter 筛 hook（`{ global: true }` 跳过 filter）。`Events.waterfall` 把最后一个参数当 innermost `next`；每次 `next()` 才 `cbs.shift()` 到下一层，没人叫就停在本 listener，**内置行为也不跑**。`tools/pre-execute` 的 inner 是 `{ kind: 'allow' }`；`tools/execute` 的 inner 是 `dispatchToolBody`；`system-prompt/assemble` 的 inner 是原样返回 `assembly`。Agent 事件走 `agentEvents`：`scopeTarget(agent, agent)`，payload 里的 `agent` 由 dispatcher 注入，避免 subject 与 key 分叉。[E: vendor/cordis/src/events.ts:173] [E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:238] [E: packages/core/tools/src/index.ts:1466] [E: packages/core/tools/src/index.ts:1466] [E: packages/core/tools/src/index.ts:1564] [E: packages/core/tools/src/index.ts:1567] [E: packages/core/system-prompt/src/index.ts:601] [E: packages/core/system-prompt/src/index.ts:604] [E: packages/core/agent/src/dispatch.ts:94]
+11. **Waterfall 必须 `next()`。** `Events.dispatch` 先用 carrier 的 filter 筛 hook（`{ global: true }` 跳过 filter）。`Events.waterfall` 把最后一个参数当 innermost `next`；每次 `next()` 才 `cbs.shift()` 到下一层，没人叫就停在本 listener，**内置行为也不跑**。`tools/pre-execute` 的 inner 是 `{ kind: 'allow' }`；`tools/execute` 的 inner 是 `dispatchToolBody`；`system-prompt/assemble` 的 inner 是原样返回 `assembly`。Agent 事件走 `agentEvents`：`scopeTarget(agent, agent)`，payload 里的 `agent` 由 dispatcher 注入，避免 subject 与 key 分叉。[E: vendor/cordis/src/events.ts:234] [E: vendor/cordis/src/events.ts:238] [E: packages/core/tools/src/index.ts:1505] [E: packages/core/tools/src/index.ts:1564] [E: packages/core/system-prompt/src/index.ts:625] [E: packages/core/agent/src/dispatch.ts:95]
 
-12. `tools/change` / `system-prompt/change` 是 **unfiltered** `emit`：层一变就广播，scoped listener 也会看到别人的变更。这和带 `scopeTarget` 的执行 / assemble 事件相反。[E: packages/core/tools/src/index.ts:806] [E: packages/core/system-prompt/src/index.ts:400]
+12. `tools/change` / `system-prompt/change` 是 **unfiltered** `emit`：层一变就广播，scoped listener 也会看到别人的变更。这和带 `scopeTarget` 的执行 / assemble 事件相反。[E: packages/core/tools/src/index.ts:835] [E: packages/core/system-prompt/src/index.ts:417]
 
-13. 可选 companion `scope-invariant` 听 `internal/dispatch`：生成表里的事件必须带 `isScopeCarrier` 的 thisArg；带 subject 的事件还要求 `carrierKeyOf(thisArg)` 等于 payload 里的 subject。`tools/pre-execute` / `agent/pre-step` / `system-prompt/assemble` 都在这张表上（另有 `tools/ptc-dispatch-log`）。[E: packages/core/scope/src/invariant.ts:17] [E: packages/core/scope/src/scoped-events.generated.ts:17] [E: packages/core/scope/src/scoped-events.generated.ts:31] [E: packages/core/scope/src/scoped-events.generated.ts:34] [E: packages/core/scope/src/scoped-events.generated.ts:35] [E: packages/core/scope/tests/invariant.spec.ts:32]
+13. 可选 companion `scope-invariant` 听 `internal/dispatch`：生成表里的事件必须带 `isScopeCarrier` 的 thisArg；带 subject 的事件还要求 `carrierKeyOf(thisArg)` 等于 payload 里的 subject。`tools/pre-execute` / `agent/pre-step` / `system-prompt/assemble` 都在这张表上（另有 `tools/ptc-dispatch-log`）。[E: packages/core/scope/src/invariant.ts:17] [E: packages/core/scope/src/scoped-events.generated.ts:18] [E: packages/core/scope/src/scoped-events.generated.ts:31] [E: packages/core/scope/src/scoped-events.generated.ts:34] [E: packages/core/scope/src/scoped-events.generated.ts:35]
 
 ## 设计动机
 
@@ -151,22 +155,23 @@ DSH 主线是 `profile → bundle → agent preset`，capability seam 是 Defini
 ## Gotcha
 
 - **没有 `ctx.scope`。** 到处 `import { createScope } from '@deepseek-ai/dsh-scope'`。bundle 里也没有 `dsh-scope` 插件行。
-- **浏览器半边另有一个 `createScope`。** `packages/api/session-controller/src/client/scope.ts` 用 branded `SessionId` 当 tag，filter 只认 exact key 或 untagged，**没有** `bindScopeParent` / 祖先链；filter 写在 actx 自身而不是 carrier。不要和本包混用。[E: packages/api/session-controller/src/client/scope.ts:56] [E: packages/api/session-controller/src/client/scope.ts:60]
+- **浏览器半边另有一个 `createScope`。** `packages/api/session-controller/src/client/scope.ts` 用 branded `SessionId` 当 tag，filter 只认 exact key 或 untagged，**没有** `bindScopeParent` / 祖先链；filter 写在 actx 自身而不是 carrier。不要和本包混用。[E: packages/api/session-controller/src/client/scope.ts:44] [E: packages/api/session-controller/src/client/scope.ts:49]
 - **事件向上、注册向下。** ancestor listener 收 descendant emit；descendant listener 不收 ancestor emit。`peek` 看不到祖先层。
 - **waterfall 不调 `next()` = 否决整条链**，包括 inner 默认（pre-execute 的 allow、execute 的 tool body、assemble 的原 assembly）。
 - **`{ global: true }` 监听跳过 scope filter**，会听到外键 dispatch。
-- **`tools.presentAs` / `tools.restrict` 必须在 scoped context。** 全局呈现是 host `tools` 行的 `mode` config，不是 `presentAs`。[E: packages/core/tools/src/index.ts:939] [E: packages/core/tools/src/index.ts:1064]
+- **`tools.presentAs` / `tools.restrict` 必须在 scoped context。** 全局呈现是 host `tools` 行的 `mode` config，不是 `presentAs`。[E: packages/core/tools/src/index.ts:976] [E: packages/core/tools/src/index.ts:1099]
 - **`rebind` 不读 log。** 半会话换 preset 会留下新组成无法兑现的已记录 tool call。
 - **isolate ≠ scope。** isolate 换的是 `provide` 的 symbol；scope 换的是注册层与事件 filter。两者在 `mountPreset` 相遇。
 - **untagged 注册进 global 层**，每个 viewing scope 都看得到。headless / sdk / sdk-minimal / acp 正靠这一层，不靠 parent 链。入口除 `dsh web` 外还有 `dsh --profile sdk|sdk-minimal|acp|headless`。
+- **不要再写 `packages/preset/agent-presets/presets/*/agent.cordis.yml`。** 四个 shipped preset 只在 `packages/bundle/web-app/presets/*.patch.yml`。
 
 ## Seam 三角
 
 | 角色 | 包 / 符号 | ctx 键 | bundle / preset 行 |
 |---|---|---|---|
 | Definition | `@deepseek-ai/dsh-scope`：`Scope`、`ScopeKey`、`Scoped<T>`、`ScopedLayers` | 无。不是服务 | 无独立 `cordis.patch.yml` 行 |
-| Provider（mint） | `createScope` 调用方：`ReactLoopAgent`（key = live `Agent`）；`AgentPresets.ensureStanding`（key = `{ agentPreset }`） | 无 | host `agent-loop`（`agents: []`，Web 不在进程级造 Agent）；web 另挂 `agent-presets` |
-| Provider（parent） | `bindScopeParent`；binding 只由 `AgentPresets` 持有 | `ctx.agentPresets` | web 的 `agent-presets` 行；headless / sdk / sdk-minimal / acp 不挂，无 join |
+| Provider（mint） | `createScope` 调用方：`ReactLoopAgent`（key = live `Agent`）；`AgentPresetRegistry.activate`（key = 不透明 `{}`） | 无 | host `agent-loop`（`agents: []`，Web 不在进程级造 Agent）；web 另挂 `agent-preset-registry` |
+| Provider（parent） | `bindScopeParent`；binding 只由 `AgentPresetRegistry` 持有 | `ctx.agentPresets` | web 的 `agent-preset-registry` 行；headless / sdk / sdk-minimal / acp 不挂，无 join |
 | Consumer（注册视图） | `ToolRuntime` / `SystemPrompt` 的 `ScopedLayers` | `ctx.tools` / `ctx.systemPrompt` | host `tools` / `system-prompt`；preset 行往 standing / agent scoped ctx `register` |
 | Consumer（事件 / waterfall） | `scopeTarget` + `agentEvents` | 无 | `tools/pre-execute`、`tools/execute`、`system-prompt/assemble`、`agent/pre-step` 等必须 `next()` |
 | Consumer（isolate 门） | `leakedServices` @ `mountPreset` | 读 `Context.isolate`，不是 `ctx.scope` | preset 组：`isolate: { planMode: true }` / `compaction` / `workflowEngine`；host 服务不要写进 preset |
@@ -183,10 +188,11 @@ DSH 主线是 `profile → bundle → agent preset`，capability seam 是 Defini
 - `packages/core/scope/tests/scope.spec.ts`
 - `packages/core/scope/tests/store.spec.ts`
 - `packages/core/scope/tests/invariant.spec.ts`
-- `packages/preset/agent-presets/src/mount.ts`
-- `packages/preset/agent-presets/src/index.ts`
-- `packages/preset/agent-presets/tests/mount.spec.ts`
-- `packages/preset/agent-presets/presets/standard/agent.cordis.yml`
+- `packages/preset/agent-preset-registry/src/mount.ts`
+- `packages/preset/agent-preset-registry/src/index.ts`
+- `packages/preset/agent-preset-registry/tests/registry.spec.ts`
+- `packages/preset/agent-preset/src/index.ts`
+- `packages/bundle/web-app/presets/standard.patch.yml`
 - `packages/core/agent-loop/src/agent.ts`
 - `packages/core/agent/src/dispatch.ts`
 - `packages/core/tools/src/index.ts`
@@ -208,7 +214,7 @@ DSH 主线是 `profile → bundle → agent preset`，capability seam 是 Defini
 - [spine.turn-and-step](../../spine/turn-and-step.md) — turn / step 里 `assemble` 与 tool waterfall 的位置
 - [subsys.core.tools](./tools.md) — host 面 `ctx.tools` 注册表与执行管线
 - [subsys.core.system-prompt](./system-prompt.md) — `system-prompt/assemble` waterfall
-- [subsys.core.agent-loop](./agent-loop.md) — 默认 loop：铸 Agent scope、驱动 turn
-- [subsys.core.code-mode](./code-mode.md) — PTC / `run_code` 呈现（稳定别名）
+- [subsys.core.agent-loop](./agent-loop.md) — 默认 loop：铸 Agent scope、驱动 turn；Inbox 实现也在这个包
+- [subsys.core.code-mode](./code-mode.md) — PTC / `run_code` 呈现（稳定别名）；执行缝是 `ctx.ptcRuntime`
 - [subsys.composition.agent-presets](../composition/agent-presets.md) — standing mount、`bindScopeParent`、`leakedServices`；shipped `minimal` / `standard` / `ptc` / `cordis`
 - [surface.presets.overview](../../surface/presets/overview.md) — shipped preset 成员资格与 picker

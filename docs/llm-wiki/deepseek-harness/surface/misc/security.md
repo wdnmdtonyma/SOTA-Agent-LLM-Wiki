@@ -48,7 +48,7 @@ related:
   - surface.tools.bash
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > DSH 是 **Cordis 组合运行时**。审批与沙箱是 **host 面**两颗独立旋钮：`SandboxMode` 只罩**文件副作用**（`read-only` / `workspace-write` / `danger-full-access`），`ApprovalPolicy` 只有 `ask | never`；人点一次只给 `'allowed-once'`，没有 `allow-always`。围栏不可用则 `SANDBOX_UNAVAILABLE`（fail-closed，不静默裸跑）；无答者则 `'unavailable'`（同样 fail-closed）。这三颗服务在 `dsh-base` 上，因此 `dsh web` / `dsh --profile headless|sdk|acp` 都会装；`sdk-minimal` 不叠 `dsh-base`。本仓没有 shipped TUI。
@@ -67,11 +67,11 @@ updated: c291e7961a
 
 | 旋钮 | ctx 键 | 人能选的闭合词 |
 |---|---|---|
-| 文件副作用档 | `ctx.sandboxPolicy` 解析、`ctx.sandbox` 执行 | `read-only` / `workspace-write` / `danger-full-access` [E: packages/sandbox/sandbox/src/index.ts:29] |
-| 提问政策 | `ctx.approval` | `ask` / `never` [E: packages/interaction/user-approval/src/index.ts:60] |
-| 一次提问的结局 | `ApprovalOutcome` | `'allowed-once'` / `'rejected'` / `'cancelled'` / `'unavailable'` [E: packages/interaction/user-approval/src/types.ts:32]；升权路径 **唯一 grant** 是 `'allowed-once'` [E: packages/sandbox/sandbox/src/escalation.ts:183] |
+| 文件副作用档 | `ctx.sandboxPolicy` 解析、`ctx.sandbox` 执行 | `read-only` / `workspace-write` / `danger-full-access` [E: packages/sandbox/sandbox/src/index.ts:30] |
+| 提问政策 | `ctx.approval` | `ask` / `never` [E: packages/interaction/user-approval/src/index.ts:67] |
+| 一次提问的结局 | `ApprovalOutcome` | `'allowed-once'` / `'rejected'` / `'cancelled'` / `'unavailable'` [E: packages/interaction/user-approval/src/types.ts:32]；升权路径 **唯一 grant** 是 `'allowed-once'` [E: packages/sandbox/sandbox/src/escalation.ts:202] |
 
-`SandboxMode` 闭合类型只有这三档，**没有** network / process-visibility 取值。[E: packages/sandbox/sandbox/src/index.ts:29] `read-only` / `workspace-write` 走 `confine`；`danger-full-access` 不调用 `confine`。[E: packages/shell/bash-sandbox/src/index.ts:91]
+`SandboxMode` 闭合类型只有这三档，**没有** network / process-visibility 取值。[E: packages/sandbox/sandbox/src/index.ts:30] `read-only` / `workspace-write` 走 `confine`；`danger-full-access` 不调用 `confine`。[E: packages/shell/bash-sandbox/src/index.ts:91]
 
 这三颗服务（`ctx.sandbox` / `ctx.sandboxPolicy` / `ctx.approval`）是 **host 面**（进程级，session 出现之前就要 `inject`）。agent-preset 只登记模型可见工具；**不是** preset isolate 域。换 shipped preset `minimal` / `standard` / `ptc` / `cordis` 卸不掉审批服务。
 
@@ -83,11 +83,11 @@ updated: c291e7961a
 
 | 入口 | 谁用 | 改什么 |
 |---|---|---|
-| `/permission`（`ctx.commands` 名 `permission`） | 人命令，不经模型 turn | 登记名是 `permission`。[E: packages/interaction/permission-presets/src/index.ts:256] 切 preset 后，服务经 `setSandboxMode` / `setApproval` 写 `sandbox/mode` + `approval/policy`。[E: packages/interaction/permission-presets/src/index.ts:391] [E: packages/interaction/permission-presets/src/index.ts:395] |
+| `/permission`（`ctx.commands` 名 `permission`） | 人命令，不经模型 turn | 登记名是 `permission`。[E: packages/interaction/permission-presets/src/index.ts:255] 切 preset 后，服务经 `setSandboxMode` / `setApproval` 写 `sandbox/mode` + `approval/policy`。[E: packages/interaction/permission-presets/src/index.ts:407] [E: packages/interaction/permission-presets/src/index.ts:412] |
 | `permissions` session projection | Web 选择器（提交同一条 `/permission` 行） | 读当前 preset；写路径仍是那条人命令 |
-| `DSH_PERMISSION_MODE` | 部署环境变量 | shipped `dsh-base` 把 `sandbox-policy.mode` 写成 `DSH_PERMISSION_MODE ?? 'workspace-write'`；approval 仅当该值等于 `'danger-full-access'` 时配 `'never'`，否则 `'ask'`。[E: packages/bundle/base/cordis.patch.yml:217] [E: packages/bundle/base/cordis.patch.yml:233] |
+| `DSH_PERMISSION_MODE` | 部署环境变量 | shipped `dsh-base` 把 `sandbox-policy.mode` 写成 `DSH_PERMISSION_MODE ?? 'workspace-write'`；approval 仅当该值等于 `'danger-full-access'` 时配 `'never'`，否则 `'ask'`。[E: packages/bundle/base/cordis.patch.yml:206] [E: packages/bundle/base/cordis.patch.yml:253] |
 | 模型参数 `sandbox_permissions` + `justification` | `write` / `edit` / `bash` 的一次性重试 | 必须成对且理由非空；目标只能是升权枚举，不能升到 `read-only`。[E: packages/sandbox/sandbox/src/escalation.ts:41] [E: packages/sandbox/sandbox/src/escalation.ts:52] |
-| Web 审批面板 | 人点 Allow once / Reject | Client 可写 outcome 只有 `'allowed-once' \| 'rejected'`；`'cancelled'` / `'unavailable'` 是 host 侧词。[E: packages/client/ui-approval/src/client/ApprovalPanel.tsx:26] [E: packages/client/ui-approval/src/client/contract/slots.ts:64] |
+| Web 审批面板 | 人点 Allow once / Reject | Client 可写 outcome 只有 `'allowed-once' \| 'rejected'`；`'cancelled'` / `'unavailable'` 是 host 侧词。[E: packages/client/ui-approval/src/client/ApprovalPanel.tsx:36] [E: packages/client/ui-approval/src/client/contract/slots.ts:66] |
 
 `/permission` 与 `permission-presets` 是人命令面：点名即可。本页不抄 shipped 三档 preset 表（哪档捆哪对旋钮见 `subsys.interaction.permission-presets`）。执行与 replay **只读**两颗旋钮的 fold，不读 preset 名。
 
@@ -96,10 +96,10 @@ updated: c291e7961a
 | 情况 | 谁看见 | 文案 / 码 |
 |---|---|---|
 | 围栏拦住写 | 模型 `tool/result` | `[sandbox: file access denied under ${mode} mode]`，并附「用 `sandbox_permissions` + `justification` 再试一次」的 hint。[E: packages/sandbox/sandbox/src/escalation.ts:72] [E: packages/sandbox/sandbox/src/escalation.ts:85] 结构化码仍是 `FS_SANDBOX_DENIED`。[E: packages/fs/tool-fs/src/sandbox.ts:129] |
-| 请求了 confined 档但没有 usable runner | 模型 / 操作者 | `SandboxUnavailableError`，`code: SANDBOX_UNAVAILABLE`；正文点名 refused mode，并写「refusing to run the command unconfined」。[E: packages/sandbox/sandbox/src/index.ts:124] [E: packages/sandbox/sandbox/src/index.ts:134] [E: packages/sandbox/sandbox/tests/vocabulary.spec.ts:16] |
-| 人点拒绝 / 政策 `never` | 升权路径 throw | `the user rejected escalating this ${subject} to "${mode}"`（`never` 的 outcome 是 `'rejected'`，**不**弹窗）。[E: packages/sandbox/sandbox/src/escalation.ts:184] [E: packages/interaction/user-approval/src/index.ts:276] |
-| 无答者 / 答者抛错 / 非法返回 | 升权路径 throw | `sandbox escalation to "${mode}" requires approval, but no approval channel is available`（outcome `'unavailable'`）。[E: packages/sandbox/sandbox/src/escalation.ts:186] [E: packages/interaction/user-approval/src/index.ts:286] |
-| 人撤走提问 / abort | throw | `approval for escalating to "${mode}" was cancelled`。[E: packages/sandbox/sandbox/src/escalation.ts:185] |
+| 请求了 confined 档但没有 usable runner | 模型 / 操作者 | `SandboxUnavailableError`，`code: SANDBOX_UNAVAILABLE`；正文点名 refused mode，并写「refusing to run the command unconfined」。[E: packages/sandbox/sandbox/src/index.ts:125] [E: packages/sandbox/sandbox/src/index.ts:135] [E: packages/sandbox/sandbox/tests/vocabulary.spec.ts:16] |
+| 人点拒绝 / 政策 `never` | 升权路径 throw | `the user rejected escalating this ${subject} to "${mode}"`（`never` 的 outcome 是 `'rejected'`，**不**弹窗）。[E: packages/sandbox/sandbox/src/escalation.ts:203] [E: packages/interaction/user-approval/src/index.ts:283] |
+| 无答者 / 答者抛错 / 非法返回 | 升权路径 throw | `sandbox escalation to "${mode}" requires approval, but no approval channel is available`（outcome `'unavailable'`）。[E: packages/sandbox/sandbox/src/escalation.ts:205] [E: packages/interaction/user-approval/src/index.ts:293] |
+| 人撤走提问 / abort | throw | `approval for escalating to "${mode}" was cancelled`。[E: packages/sandbox/sandbox/src/escalation.ts:204] |
 
 `'never'` ≠ 无答者：前者是政策短路，outcome `'rejected'`，答者计数为零；后者是 waterfall 叶子 `'unavailable'`。两者文案不同，不要混成一句「自动拒绝」。[E: packages/interaction/user-approval/tests/approval.spec.ts:409] [E: packages/interaction/user-approval/tests/approval.spec.ts:65]
 
@@ -113,25 +113,25 @@ updated: c291e7961a
 | `workspace-write` | 可写 session workspace + 平台临时区 | `writableRoots` = canonical 去重的 `workspaceRoot` + `/tmp` + `os.tmpdir()`。[E: packages/sandbox/sandbox/src/roots.ts:54] 工作区外写被拒。bash / pwsh 走 `ctx.sandbox.confine`。 |
 | `danger-full-access` | 显式满权 | **不**调用 `confine`；fs 原样放行。[E: packages/shell/bash-sandbox/src/index.ts:91] [E: packages/fs/fs-sandbox/src/index.ts:125] `writableRoots` 同样返回 `[]`（满权不靠这份 allow-list）。[E: packages/sandbox/sandbox/src/roots.ts:53] |
 
-闭合三元，没有第四档。类型里没有 network / process 位。[E: packages/sandbox/sandbox/src/index.ts:29]
+闭合三元，没有第四档。类型里没有 network / process 位。[E: packages/sandbox/sandbox/src/index.ts:30]
 
 ### `ApprovalPolicy`（两档）
 
 | 值 | 进 waterfall 之前 | 人看见什么 |
 |---|---|---|
-| `ask` | 交给组合答者；没人 claim → `'unavailable'` [E: packages/interaction/user-approval/src/index.ts:286] | Web GUI（`dsh web`）弹出审批；卸掉答者则 fail-closed，不偷偷放行 |
-| `never` | 直接 `'rejected'`，连 `prepend: true` 的答者也看不到 [E: packages/interaction/user-approval/src/index.ts:276] [E: packages/interaction/user-approval/tests/approval.spec.ts:430] | **不弹窗**。模型 runtime-context 写明不要设 `sandbox_permissions`。[E: packages/interaction/user-approval/src/index.ts:66] |
+| `ask` | 交给组合答者；没人 claim → `'unavailable'` [E: packages/interaction/user-approval/src/index.ts:293] | Web GUI（`dsh web`）弹出审批；卸掉答者则 fail-closed，不偷偷放行 |
+| `never` | 直接 `'rejected'`，连 `prepend: true` 的答者也看不到 [E: packages/interaction/user-approval/src/index.ts:283] [E: packages/interaction/user-approval/tests/approval.spec.ts:430] | **不弹窗**。模型 runtime-context 写明不要设 `sandbox_permissions`。[E: packages/interaction/user-approval/src/index.ts:73] |
 
-没有 `always` / `auto`。[E: packages/interaction/user-approval/src/index.ts:60]
+没有 `always` / `auto`。[E: packages/interaction/user-approval/src/index.ts:67]
 
 ### `ApprovalOutcome` / 升权目标
 
 | 符号 | 取值 | 产品含义 |
 |---|---|---|
-| `ApprovalOutcome` / `EscalationOutcome` | `'allowed-once' \| 'rejected' \| 'cancelled' \| 'unavailable'` | 词表里**没有** `allow-always`。[E: packages/interaction/user-approval/src/types.ts:32] [E: packages/sandbox/sandbox/src/escalation.ts:93] |
-| 唯一 grant | `'allowed-once'` | 只盖**这一次** call 的 `policy.mode`，不 `append` `sandbox/mode`。[E: packages/sandbox/sandbox/src/escalation.ts:183] [E: packages/fs/tool-fs/src/sandbox.ts:107] |
+| `ApprovalOutcome` / `EscalationOutcome` | `'allowed-once' \| 'rejected' \| 'cancelled' \| 'unavailable'` | 词表里**没有** `allow-always`。[E: packages/interaction/user-approval/src/types.ts:32] [E: packages/sandbox/sandbox/src/escalation.ts:104] |
+| 唯一 grant | `'allowed-once'` | 只盖**这一次** call 的 `policy.mode`，不 `append` `sandbox/mode`。[E: packages/sandbox/sandbox/src/escalation.ts:202] [E: packages/fs/tool-fs/src/sandbox.ts:107] |
 | `ESCALATION_TARGETS` | `workspace-write`、`danger-full-access` | 模型 schema 枚举。`read-only` 是地板，没有人升到它。[E: packages/sandbox/sandbox/src/escalation.ts:41] |
-| `WIDER_MODES` | `read-only` → 两档更宽；`workspace-write` → 只到满权；满权无出口 | 非严格更宽**从不弹人**。[E: packages/sandbox/sandbox/src/escalation.ts:29] [E: packages/sandbox/sandbox/tests/escalation.spec.ts:24] [E: packages/sandbox/sandbox/tests/escalation.spec.ts:91] |
+| `WIDER_MODES` | `read-only` → 两档更宽；`workspace-write` → 只到满权；满权无出口 | 非严格更宽**从不弹人**。[E: packages/sandbox/sandbox/src/escalation.ts:29] [E: packages/sandbox/sandbox/tests/escalation.spec.ts:25] [E: packages/sandbox/sandbox/tests/escalation.spec.ts:101] |
 
 `writableRoots` 在 `read-only` 时为空：测试按字面钉死 `[]`。[E: packages/sandbox/sandbox/tests/roots.spec.ts:27] 实现是 `mode !== 'workspace-write'` 一律 `[]`，所以满权也空——满权靠跳过围栏，不靠空名单「拒绝一切」。[E: packages/sandbox/sandbox/src/roots.ts:53]
 
@@ -139,25 +139,25 @@ updated: c291e7961a
 
 DSH 组合主线是 `profile → bundle → agent preset`。沙箱 / 审批的 Provider 在 **host** `dsh-base`（`web` / `headless` / `sdk` / `acp` 叠它；`sdk-minimal` 不叠）：
 
-- `id: sandbox` = `@deepseek-ai/dsh-sandbox-local`（`ctx.sandbox`）[E: packages/bundle/base/cordis.patch.yml:211] [E: packages/bundle/base/cordis.patch.yml:212]
-- `id: sandbox-policy` = `@deepseek-ai/dsh-sandbox-policy`（`ctx.sandboxPolicy`）[E: packages/bundle/base/cordis.patch.yml:214]
-- `id: approval` = `@deepseek-ai/dsh-user-approval`（`ctx.approval`）[E: packages/bundle/base/cordis.patch.yml:230]
-- `id: permission` = `@deepseek-ai/dsh-permission-presets`（人命令面，点名即可）[E: packages/bundle/base/cordis.patch.yml:235]
+- `id: sandbox` = `@deepseek-ai/dsh-sandbox-local`（`ctx.sandbox`）[E: packages/bundle/base/cordis.patch.yml:231] [E: packages/bundle/base/cordis.patch.yml:232]
+- `id: sandbox-policy` = `@deepseek-ai/dsh-sandbox-policy`（`ctx.sandboxPolicy`）[E: packages/bundle/base/cordis.patch.yml:234]
+- `id: approval` = `@deepseek-ai/dsh-user-approval`（`ctx.approval`）[E: packages/bundle/base/cordis.patch.yml:250]
+- `id: permission` = `@deepseek-ai/dsh-permission-presets`（人命令面，点名即可）[E: packages/bundle/base/cordis.patch.yml:255]
 
 两套默认必须分开写：
 
-1. **裸 plugin / schema**：sandbox-policy `mode` 默认 `'read-only'`；approval `policy` 默认 `'ask'`。[E: packages/sandbox/sandbox-policy/src/index.ts:112] [E: packages/sandbox/sandbox-policy/tests/policy.spec.ts:47] [E: packages/interaction/user-approval/src/index.ts:159]
-2. **shipped `dsh-base` 真树**（`dsh web` 以及其它叠 base 的 profile）：未设 `DSH_PERMISSION_MODE` 时站桩是 `workspace-write` + `ask`。[E: packages/bundle/base/cordis.patch.yml:217] [E: packages/bundle/base/cordis.patch.yml:233]
+1. **裸 plugin / schema**：sandbox-policy `mode` 默认 `'read-only'`；approval `policy` 默认 `'ask'`。[E: packages/sandbox/sandbox-policy/src/index.ts:113] [E: packages/sandbox/sandbox-policy/tests/policy.spec.ts:47] [E: packages/interaction/user-approval/src/index.ts:166]
+2. **shipped `dsh-base` 真树**（`dsh web` 以及其它叠 base 的 profile）：未设 `DSH_PERMISSION_MODE` 时站桩是 `workspace-write` + `ask`。[E: packages/bundle/base/cordis.patch.yml:206] [E: packages/bundle/base/cordis.patch.yml:253]
 
 门控位置（产品要记住的三句）：
 
-1. **沙箱不挂在 `tools/pre-execute`。** 围栏在 fs / shell **provider**：`SandboxedFileSystem` `inject = ['sandboxPolicy']`，只挡 `writeText` / `editText`；`SandboxBashExecutor` 对 `['bash', '-c', command]` 调 `ctx.sandbox.confine`。[E: packages/fs/fs-sandbox/src/index.ts:56] [E: packages/fs/fs-sandbox/src/index.ts:80] [E: packages/fs/fs-sandbox/src/index.ts:101] [E: packages/shell/bash-sandbox/src/index.ts:179] `dsh-tool-fs` / `dsh-tool-bash` 的 `inject` 没有 `sandbox`。[E: packages/fs/tool-fs/src/index.ts:22] [E: packages/shell/tool-bash/src/index.ts:30]
-2. **升权在 tool body 开头，副作用之前。** `write.execute` 先 `resolvePolicy`；`bash.execute` 先 `approveBashEscalation`（内部 `approveEscalation` → `ctx.get('approval').request`）。[E: packages/fs/tool-fs/src/write.ts:106] [E: packages/shell/tool-bash/src/index.ts:222] [E: packages/shell/tool-bash/src/index.ts:334] 另一条提问入口是 `tools/pre-execute` 返回 `{ kind: 'ask' }` 才进 `serviceAsk`——同样只放行 `'allowed-once'`。[E: packages/core/tools/src/index.ts:584] [E: packages/core/tools/src/index.ts:1705] shipped `dsh-base` 没有把 hook 答成 `ask` 的插件；默认产品路径是 body 里的升权。
-3. **审批走 `approval/request` waterfall。** `'never'` 在进 waterfall **之前**就 `'rejected'`。[E: packages/interaction/user-approval/src/index.ts:276] 叶子是 `'unavailable'`：无答者 fail-closed，不偷偷 `'allowed-once'`。[E: packages/interaction/user-approval/src/index.ts:286] [E: packages/interaction/user-approval/tests/approval.spec.ts:65]
+1. **沙箱不挂在 `tools/pre-execute`。** 围栏在 fs / shell **provider**：`SandboxedFileSystem` `inject = ['sandboxPolicy']`，只挡 `writeText` / `editText`；`SandboxBashExecutor` 对 `['bash', '-c', command]` 调 `ctx.sandbox.confine`。[E: packages/fs/fs-sandbox/src/index.ts:56] [E: packages/fs/fs-sandbox/src/index.ts:80] [E: packages/fs/fs-sandbox/src/index.ts:101] [E: packages/shell/bash-sandbox/src/index.ts:187] `dsh-tool-fs` / `dsh-tool-bash` 的 `inject` 没有 `sandbox`。[E: packages/fs/tool-fs/src/index.ts:22] [E: packages/shell/tool-bash/src/index.ts:34]
+2. **升权在 tool body 开头，副作用之前。** `write.execute` 先 `resolvePolicy`；`bash.execute` 先 `approveBashEscalation`（内部 `approveEscalation` → `ctx.get('approval').request`）。[E: packages/fs/tool-fs/src/write.ts:107] [E: packages/shell/tool-bash/src/index.ts:244] [E: packages/shell/tool-bash/src/index.ts:483] 另一条提问入口是 `tools/pre-execute` 返回 `{ kind: 'ask' }` 才进 `serviceAsk`——同样只放行 `'allowed-once'`。[E: packages/core/tools/src/index.ts:611] [E: packages/core/tools/src/index.ts:1754] shipped `dsh-base` 没有把 hook 答成 `ask` 的插件；默认产品路径是 body 里的升权。
+3. **审批走 `approval/request` waterfall。** `'never'` 在进 waterfall **之前**就 `'rejected'`。[E: packages/interaction/user-approval/src/index.ts:283] 叶子是 `'unavailable'`：无答者 fail-closed，不偷偷 `'allowed-once'`。[E: packages/interaction/user-approval/src/index.ts:293] [E: packages/interaction/user-approval/tests/approval.spec.ts:65]
 
-围栏不可用必须 fail-loud。`LocalSandboxProvider.selectRunner` 在平台链判 `'unavailable'` 时 `throw new SandboxUnavailableError(mode)`，命令从未跑。[E: packages/sandbox/sandbox-local/src/index.ts:494] 执行期 runner 没把命令拉起来，bash-sandbox 再抛同一 `code`。[E: packages/shell/bash-sandbox/src/index.ts:103] **禁止**把「没有 runner」写成静默退回 host 裸跑。
+围栏不可用必须 fail-loud。`LocalSandboxProvider.selectRunner` 在平台链判 `'unavailable'` 时 `throw new SandboxUnavailableError(mode)`，命令从未跑。[E: packages/sandbox/sandbox-local/src/index.ts:499] 执行期 runner 没把命令拉起来，bash-sandbox 再抛同一 `code`。[E: packages/shell/bash-sandbox/src/index.ts:128] **禁止**把「没有 runner」写成静默退回 host 裸跑。
 
-`danger-full-access` 是显式档位，不是 runner 缺失时的降级：类型把这一档剔出 `confine` 入参。[E: packages/sandbox/sandbox/src/index.ts:32]
+`danger-full-access` 是显式档位，不是 runner 缺失时的降级：类型把这一档剔出 `confine` 入参。[E: packages/sandbox/sandbox/src/index.ts:33]
 
 ## 跨包关系
 

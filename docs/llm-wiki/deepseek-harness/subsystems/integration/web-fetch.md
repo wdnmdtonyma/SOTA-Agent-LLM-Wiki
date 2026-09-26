@@ -21,10 +21,10 @@ source:
   - packages/bundle/base/tests/base.spec.ts
   - packages/bundle/web-app/cordis.patch.yml
   - packages/bundle/headless/cordis.patch.yml
-  - packages/preset/agent-presets/presets/standard/agent.cordis.yml
-  - packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-  - packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-  - packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+  - packages/bundle/web-app/presets/standard.patch.yml
+  - packages/bundle/web-app/presets/minimal.patch.yml
+  - packages/bundle/web-app/presets/ptc.patch.yml
+  - packages/bundle/web-app/presets/cordis.patch.yml
   - snapshots/session/web-fetch/cordis.yml
   - vendor/cordis/src/events.ts
   - vendor/loader/src/index.ts
@@ -44,7 +44,7 @@ related:
   - subsys.composition.bundle-web-app
 evidence: explicit
 status: verified
-updated: c291e7961a
+updated: 477b4f4205
 ---
 
 > `@deepseek-ai/dsh-web-fetch-http` 是 `ctx.web` **fetch 半边**的匿名公共 HTTP(S) Provider：插件名 `web-fetch-http`，`inject = ['web']`，`apply` 调用 `ctx.web.registerFetchProvider(new HttpFetchProvider(limits))`，稳定 id `LOCAL_FETCH_PROVIDER_ID = 'http'`。它不是 default-export Service。`dsh-base` 已挂 `id: web-fetch-http` 并把 `fetchProvider: http` 钉在 `id: web` 上；模型是否看见 `web_fetch` 仍由 Consumer `@deepseek-ai/dsh-tool-web` 的 `fetch` 开关决定。
@@ -68,9 +68,9 @@ updated: c291e7961a
 - 模型可见 `web_fetch` schema、turndown、输出帽、spill、卡片 meta — [`surface.tools.web-fetch`](../../surface/tools/web-fetch.md)（`surface.tools.web-fetch`）。Consumer 是 `@deepseek-ai/dsh-tool-web` 的 `applyWebFetchTool`；本页不复述 `url` 字段表。
 - `id: web` 不是 Web GUI。HTTP 宿主是 `dsh-web-app` 的 `id: webserver`，见 [`subsys.composition.bundle-web-app`](../composition/bundle-web-app.md)（`subsys.composition.bundle-web-app`）。其它 shipped profile 是 `headless` / `sdk` / `sdk-minimal` / `acp`（`dsh --profile sdk|sdk-minimal|acp`）。
 
-**host 面 vs agent-preset 面。** `ctx.web` 是 host 单例。`dsh-base` 的 web 段同时挂 `id: web`（`searchProvider: deepseek-official`、`fetchProvider: http`）+ `id: web-search-deepseek` + `id: web-fetch-http` + `id: tool-web`（`fetch: false`）。[E: packages/bundle/base/cordis.patch.yml:450] [E: packages/bundle/base/cordis.patch.yml:453] [E: packages/bundle/base/cordis.patch.yml:454] [E: packages/bundle/base/cordis.patch.yml:461] [E: packages/bundle/base/cordis.patch.yml:467] `dsh-base` 的 `dependencies` 含 `@deepseek-ai/dsh-tool-web`、`@deepseek-ai/dsh-web`、`@deepseek-ai/dsh-web-fetch-http`、`@deepseek-ai/dsh-web-search-deepseek`。[E: packages/bundle/base/package.json:115] [E: packages/bundle/base/package.json:122] [E: packages/bundle/base/package.json:123] [E: packages/bundle/base/package.json:125] 测试钉死 `web-fetch-http` 行与 `fetchProvider: 'http'`，同时 host `tool-web` 仍 `fetch: false`。[E: packages/bundle/base/tests/base.spec.ts:44] [E: packages/bundle/base/tests/base.spec.ts:45] [E: packages/bundle/base/tests/base.spec.ts:46]
+**host 面 vs agent-preset 面。** `ctx.web` 是 host 单例。`dsh-base` 的 web 段同时挂 `id: web`（`searchProvider: deepseek-official`、`fetchProvider: http`）+ `id: web-search-deepseek` + `id: web-fetch-http` + `id: tool-web`（`fetch: true`）。[E: packages/bundle/base/cordis.patch.yml:471] [E: packages/bundle/base/cordis.patch.yml:474] [E: packages/bundle/base/cordis.patch.yml:475] [E: packages/bundle/base/cordis.patch.yml:477] [E: packages/bundle/base/cordis.patch.yml:482] [E: packages/bundle/base/cordis.patch.yml:485] [E: packages/bundle/base/cordis.patch.yml:488] `dsh-base` 的 `dependencies` 含 `@deepseek-ai/dsh-tool-web`、`@deepseek-ai/dsh-web`、`@deepseek-ai/dsh-web-fetch-http`、`@deepseek-ai/dsh-web-search-deepseek`。[E: packages/bundle/base/package.json:111] [E: packages/bundle/base/package.json:118] [E: packages/bundle/base/package.json:119] [E: packages/bundle/base/package.json:120] 测试钉死 `web-fetch-http` 行、`fetchProvider: 'http'`，以及 host `tool-web` `fetch: true`。[E: packages/bundle/base/tests/base.spec.ts:44] [E: packages/bundle/base/tests/base.spec.ts:45] [E: packages/bundle/base/tests/base.spec.ts:46]
 
-`dsh-web-app` 把 host 上那行 `tool-web` 标 `disabled: true`，改由每会话 preset 再挂。[E: packages/bundle/web-app/cordis.patch.yml:470] [E: packages/bundle/web-app/cordis.patch.yml:470] 四个 shipped preset 目录是 `minimal` / `standard` / `ptc` / `cordis`。`standard` / `ptc` / `cordis` 写 `fetch: true`。[E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] [E: packages/preset/agent-presets/presets/ptc/agent.cordis.yml:261] [E: packages/preset/agent-presets/presets/cordis/agent.cordis.yml:239] `minimal` 连 `tool-web` 都没有，成员停在 `persistent-shell` + `filesystem`。[E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:21] [E: packages/preset/agent-presets/presets/minimal/agent.cordis.yml:63] `dsh-headless` 的 insert 只有 `code-runtime` / `headless-startup` / `headless-runner`，不重写 `tool-web`，因此沿用 base 的 `fetch: false`，但 **仍继承** base 已挂的 `web-fetch-http`。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:23] [E: packages/bundle/headless/cordis.patch.yml:27]
+`dsh-web-app` 把 host 上那行 `tool-web` 标 `disabled: true`，改由每会话 preset 再挂。[E: packages/bundle/web-app/cordis.patch.yml:552] [E: packages/bundle/web-app/cordis.patch.yml:553] 四个 shipped preset 声明在 `packages/bundle/web-app/presets/{minimal,standard,ptc,cordis}.patch.yml`。`standard` / `ptc` / `cordis` 写 `fetch: true`。[E: packages/bundle/web-app/presets/standard.patch.yml:140] [E: packages/bundle/web-app/presets/ptc.patch.yml:142] [E: packages/bundle/web-app/presets/cordis.patch.yml:139] `minimal` 连 `tool-web` 都没有，成员停在 complete persona + persistent bash/pwsh。[E: packages/bundle/web-app/presets/minimal.patch.yml:11] [E: packages/bundle/web-app/presets/minimal.patch.yml:17] `dsh-headless` 的 insert 只有 `headless-startup` / `headless-runner`，不重写 `tool-web`，因此沿用 base 的 `fetch: true`，并 **仍继承** base 已挂的 `web-fetch-http`。[E: packages/bundle/headless/cordis.patch.yml:20] [E: packages/bundle/headless/cordis.patch.yml:25]
 
 仓内 snapshot 夹具 `snapshots/session/web-fetch/cordis.yml` 把 shipped `web-fetch-http` 标 `disabled: true`，改插确定性 fixture，并给 `tool-web` 设 `search: false`。[E: snapshots/session/web-fetch/cordis.yml:11] [E: snapshots/session/web-fetch/cordis.yml:13] [E: snapshots/session/web-fetch/cordis.yml:18]
 
@@ -87,8 +87,8 @@ updated: c291e7961a
 | `packages/web/web/src/index.ts` | Definition：`registerFetchProvider`、`WebRuntime.fetch`、`resolveProvider` |
 | `packages/web/web/src/types.ts` | `WebFetchRequest` / `WebFetchResult` / `WebFetchBody` / `WebFetchProvider` / `WebError` |
 | `packages/web/tool-web/src/index.ts` | Consumer 插件：`fetch` 默认 `true`；`if (resolved.fetch) applyWebFetchTool` |
-| `packages/bundle/base/cordis.patch.yml` | shipped host：`web` + `web-search-deepseek` + `web-fetch-http` + `tool-web` `fetch: false` |
-| `packages/preset/agent-presets/presets/{standard,ptc,cordis}/agent.cordis.yml` | 会话面打开 `web_fetch` |
+| `packages/bundle/base/cordis.patch.yml` | shipped host：`web` + `web-search-deepseek` + `web-fetch-http` + `tool-web` `fetch: true` |
+| `packages/bundle/web-app/presets/{standard,ptc,cordis}.patch.yml` | 会话面打开 `web_fetch` |
 | `packages/web/web-fetch-http/tests/fetch-http.spec.ts` | 政策、公网、redirect、帽、abort、named export、fiber dispose |
 
 ## 数据模型
@@ -102,17 +102,17 @@ updated: c291e7961a
 | `WebFetchRequest` | 只有 `url`。timeout / format / 抽取不进 seam 请求；取消走独立的 `signal` 参数。[E: packages/web/web/src/types.ts:64] [E: packages/web/web/src/types.ts:65] |
 | `WebFetchResult` | 最终 URL、`statusCode`、封闭 union `WebFetchBody`（`html` \| `text`）、provider 是否裁过解码正文。非 2xx 仍是 result。[E: packages/web/web/src/types.ts:74] [E: packages/web/web/src/types.ts:94] |
 | `WebError` code（本 Provider） | 卫生：`WEB_INVALID_URL` / `WEB_BLOCKED_URL`（含凭据与非公网 IP）。跳转：`WEB_REDIRECT_BLOCKED`。体积：`WEB_FETCH_TOO_LARGE`。类型：`WEB_UNSUPPORTED_CONTENT_TYPE`。时间：`WEB_FETCH_TIMEOUT`。取消：`WEB_ABORTED`。传输 / 无 Location / 空 DNS：`WEB_PROVIDER_ERROR`。 |
-| Consumer `Config.fetch` | **不是本包的键。** `@deepseek-ai/dsh-tool-web` 的 schemastery 把 `fetch` 默认成 `true`；`dsh-base` 覆盖成 `false`，`standard` / `ptc` / `cordis` 再写成 `true`。[E: packages/web/tool-web/src/index.ts:56] [E: packages/web/tool-web/src/index.ts:94] |
+| Consumer `Config.fetch` | **不是本包的键。** `@deepseek-ai/dsh-tool-web` 的 schemastery 把 `fetch` 默认成 `true`；`dsh-base` 也写 `true`，`dsh-web-app` 关掉 host 行后由 `standard` / `ptc` / `cordis` remount 再写成 `true`。[E: packages/web/tool-web/src/index.ts:56] [E: packages/web/tool-web/src/index.ts:94] [E: packages/bundle/base/cordis.patch.yml:488] |
 
 ## 控制流
 
-1. Loader 用 named export 加载本包。`unwrapExports` 取 `exports.default ?? exports`；若写成 `export default { apply }`，`name` / `inject` 会丢，`web` 等不到。[E: vendor/loader/src/index.ts:194] 测试钉死 `'default' in fetchPlugin` 为 false。[E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:582]
+1. Loader 用 named export 加载本包。`unwrapExports` 取 `exports.default ?? exports`；若写成 `export default { apply }`，`name` / `inject` 会丢，`web` 等不到。[E: vendor/loader/src/index.ts:203] 测试钉死 `'default' in fetchPlugin` 为 false。[E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:582]
 
 2. `apply@packages/web/web-fetch-http/src/index.ts` 把 schemastery 填完的 limits 再断言一遍，然后 `ctx.web.registerFetchProvider(new HttpFetchProvider(limits))`。[E: packages/web/web-fetch-http/src/index.ts:79] [E: packages/web/web-fetch-http/src/index.ts:93] 非法 limits（非正、超时超出 Node timer、小数 / 负 `maxRedirects`）在 load 时抛，不会留下半登记的 provider。[E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:588]
 
 3. `WebRuntime.registerFetchProvider@packages/web/web/src/index.ts` 走 `ctx.effect`：重名抛 `WEB_DUPLICATE_PROVIDER`；yield 的 disposer 从 `fetchProviders` map 删掉该 id。[E: packages/web/web/src/index.ts:114] [E: packages/web/web/src/index.ts:120] [E: packages/web/web/src/index.ts:124] 测试：挂上 `fetchProvider: 'http'` 后 `fiber.dispose()`，下一次 `ctx.web.fetch` 变成 `WEB_PROVIDER_CONFIGURED_MISSING`。[E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:578] search 与 fetch 的 id 命名空间独立，两边可以各有一个相同 id。[E: packages/web/web/tests/web.spec.ts:61]
 
-4. Consumer `@deepseek-ai/dsh-tool-web` 的 `apply` **只在** `resolved.fetch` 为真时调用 `applyWebFetchTool`。[E: packages/web/tool-web/src/index.ts:94] 插件 Config 默认 `fetch: true`。[E: packages/web/tool-web/src/index.ts:56] `dsh-base` 覆盖成 `false`；`standard` / `ptc` / `cordis` 再打开。[E: packages/bundle/base/cordis.patch.yml:467] [E: packages/preset/agent-presets/presets/standard/agent.cordis.yml:251] 字段表、turndown、spill 不在本页。
+4. Consumer `@deepseek-ai/dsh-tool-web` 的 `apply` **只在** `resolved.fetch` 为真时调用 `applyWebFetchTool`。[E: packages/web/tool-web/src/index.ts:94] 插件 Config 默认 `fetch: true`。[E: packages/web/tool-web/src/index.ts:56] `dsh-base` 同样写 `true`；web profile 关掉 host 行后由 `standard` / `ptc` / `cordis` remount。[E: packages/bundle/base/cordis.patch.yml:488] [E: packages/bundle/web-app/presets/standard.patch.yml:140] 字段表、turndown、spill 不在本页。
 
 5. 已登记的 Consumer 调 `ctx.web.fetch(request, signal)`。`WebFetchRequest` 只有 `url`；`WebRuntime.fetch@packages/web/web/src/index.ts` **在调用时** `resolveProvider`，不按注册顺序。[E: packages/web/web/src/types.ts:65] [E: packages/web/web/src/index.ts:157] [E: packages/web/web/src/index.ts:158]
 
@@ -141,7 +141,7 @@ updated: c291e7961a
 
 模型自选 URL 的 GET 会打到调用方给出的任意 http(s) 主机。卫生检查覆盖 scheme / 凭据 / 长度，再加 **一次 DNS + 拒绝非公网 + 连接钉死**，避免解析到 RFC1918 / metadata / loopback 后再被 Undici 二次解析绕过。[I] Search 走服务端检索，不让模型指定任意 origin。
 
-`dsh-base` 因此可以挂本 Provider 并钉 `fetchProvider: http`，同时把 **host** `tool-web.fetch` 留在 `false`：headless / sdk-minimal 等不经 Web preset 的路径默认 catalog 仍没有 `web_fetch`。`standard` / `ptc` / `cordis` 在会话面打开工具。
+`dsh-base` 因此可以挂本 Provider 并钉 `fetchProvider: http`，host `tool-web.fetch` 现为 `true`：不经 Web overlay 的叠 base 路径（headless / sdk / acp）catalog 默认可有 `web_fetch`。`dsh-web-app` 关掉 host 行后，由 `standard` / `ptc` / `cordis` 在会话面再打开。
 
 `redirect: 'manual'` + 同 origin 上限，是为了让每一次新 origin 都变成一次新的 tool-call（也是一次新的权限 / 公网校验）。跳数预算先于跨源诊断，避免超长链路上的 Location 把错误码搅成「跨源」。
 
@@ -153,7 +153,7 @@ named export only：Loader 的 default-interop 会剥掉模块顶上的 `inject`
 
 ## Gotcha
 
-- **包在 shipped 树里 ≠ catalog 一定有 `web_fetch`。** `dsh-base` 依赖并挂载本 Provider，但 host `tool-web.fetch: false`。`dsh --profile web` 走 `standard`/`ptc`/`cordis` 时会话面 `fetch: true`；`headless` / 未覆盖的 host 行仍看不见工具。`minimal` 根本没有 `tool-web`。
+- **包在 shipped 树里 ≠ catalog 一定有 `web_fetch`。** `dsh-base` 依赖并挂载本 Provider，host `tool-web.fetch: true`。`dsh --profile web` 关掉 host 行后靠 `standard`/`ptc`/`cordis` 会话面 `fetch: true`；`minimal` 根本没有 `tool-web`。`sdk-minimal` 不叠 `dsh-base`，没有本缝。
 - **两道开关。** 只改 `tool-web.fetch: true`、把 `web-fetch-http` 卸掉（snapshot 夹具就是这么干的）→ catalog 有名字，execute 报 `WEB_PROVIDER_UNAVAILABLE` 或 `WEB_PROVIDER_CONFIGURED_MISSING`（base 钉了 `fetchProvider: http`）。只挂本包、Consumer 仍 `fetch: false` → provider 闲置，模型看不见工具。
 - **有 SSRF 门，但只认「全局 unicast」。** `file:` / `ftp:` 会被拒；`http://169.254.169.254/`、`10.0.0.1`、loopback 在 `resolvePublicAddresses` 阶段 `WEB_BLOCKED_URL`。测试里本地 HTTP server 必须注入已校验的 `127.0.0.1` resolver，否则真实解析会被挡。[E: packages/web/web-fetch-http/tests/fetch-http.spec.ts:466]
 - **跨源 redirect 不会自动跟。** 模型必须对 `WEB_REDIRECT_BLOCKED` 消息里的 origin 再调一次 Consumer。
@@ -161,7 +161,7 @@ named export only：Loader 的 default-interop 会剥掉模块顶上的 `inject`
 - **`id: web` ≠ 本包 ≠ Web GUI。** `id: web` 是 `@deepseek-ai/dsh-web` 缝；本包是 `id: web-fetch-http`；浏览器宿主是 `dsh-web-app` 的 `webserver`。`dsh web` 不是唯一入口：还有 `dsh --profile headless|sdk|sdk-minimal|acp`。
 - **provider 超时码 ≠ 工具超时码。** 直接打 `HttpFetchProvider.fetch` 得到 `WEB_FETCH_TIMEOUT`；经 timeout-policy 的 `web_fetch` 通常先看到 `TOOL_TIMEOUT`。
 - **`maxUrlLength` 不再是插件 Config 键。** 长度帽是 `WEB_FETCH_MAX_URL_LENGTH` 常量。
-- **default export 会丢掉 `inject`。** `unwrapExports` 先取 `.default`。[E: vendor/loader/src/index.ts:194]
+- **default export 会丢掉 `inject`。** `unwrapExports` 先取 `.default`。[E: vendor/loader/src/index.ts:203]
 
 ## Seam 三角
 
@@ -170,7 +170,7 @@ named export only：Loader 的 default-interop 会剥掉模块顶上的 `inject`
 | **Definition** | `@deepseek-ai/dsh-web` 的 `WebRuntime` | `ctx.web`。**host**：`dsh-base` `id: web`（`searchProvider: deepseek-official`、`fetchProvider: http`）。本包不占这个键 |
 | **Provider（本页）** | `@deepseek-ai/dsh-web-fetch-http` 的 `HttpFetchProvider` | `registerFetchProvider`，id `http`。`inject = ['web']`。**在** `dsh-base`（`id: web-fetch-http`） |
 | **Provider（对照，search 半边）** | `dsh-web-search-deepseek` 等 | 同一把 `ctx.web` 的 `registerSearchProvider`。shipped 只挂 DeepSeek。细节见 [`subsys.integration.web-search`](web-search.md) |
-| **Consumer** | `@deepseek-ai/dsh-tool-web` 的 `applyWebFetchTool` | 模型名 `web_fetch`。包默认 `fetch: true`；`dsh-base` 写 `fetch: false`；`standard` / `ptc` / `cordis` 写 `fetch: true`；`minimal` 无此行。`dsh-web-app` 把 host 行 `disabled: true`，改由 preset 再挂。字段表见 [`surface.tools.web-fetch`](../../surface/tools/web-fetch.md) |
+| **Consumer** | `@deepseek-ai/dsh-tool-web` 的 `applyWebFetchTool` | 模型名 `web_fetch`。包默认 `fetch: true`；`dsh-base` 写 `fetch: true`；`standard` / `ptc` / `cordis` remount 写 `fetch: true`；`minimal` 无此行。`dsh-web-app` 把 host 行 `disabled: true`，改由 preset 再挂。字段表见 [`surface.tools.web-fetch`](../../surface/tools/web-fetch.md) |
 
 换 fetch 后端 = overlay 一个 `WebFetchProvider`（并改 `fetchProvider` 或卸掉 `http`），不是改 `dsh-base` 的 search 行。同 id 再登记会 `WEB_DUPLICATE_PROVIDER`。
 
@@ -192,10 +192,10 @@ named export only：Loader 的 default-interop 会剥掉模块顶上的 `inject`
 - packages/bundle/base/tests/base.spec.ts
 - packages/bundle/web-app/cordis.patch.yml
 - packages/bundle/headless/cordis.patch.yml
-- packages/preset/agent-presets/presets/standard/agent.cordis.yml
-- packages/preset/agent-presets/presets/minimal/agent.cordis.yml
-- packages/preset/agent-presets/presets/ptc/agent.cordis.yml
-- packages/preset/agent-presets/presets/cordis/agent.cordis.yml
+- packages/bundle/web-app/presets/standard.patch.yml
+- packages/bundle/web-app/presets/minimal.patch.yml
+- packages/bundle/web-app/presets/ptc.patch.yml
+- packages/bundle/web-app/presets/cordis.patch.yml
 - snapshots/session/web-fetch/cordis.yml
 - vendor/cordis/src/events.ts
 - vendor/loader/src/index.ts
@@ -206,5 +206,5 @@ named export only：Loader 的 default-interop 会剥掉模块顶上的 `inject`
 - [spine.capability-seams](../../spine/capability-seams.md)（`spine.capability-seams`）：Definition / Provider / Consumer 三角；本缝的 `ctx` 键是 `web`。
 - [surface.tools.web-fetch](../../surface/tools/web-fetch.md)（`surface.tools.web-fetch`）：模型可见 `web_fetch`；schema / turndown / spill / `TOOL_TIMEOUT`。
 - [subsys.integration.web-search](web-search.md)（`subsys.integration.web-search`）：同一 `ctx.web` 的 search 半边与 search Provider。
-- [subsys.composition.bundle-base](../composition/bundle-base.md)（`subsys.composition.bundle-base`）：`dsh-base` 挂 `web` + `web-search-deepseek` + `web-fetch-http` + `tool-web` `fetch: false`。
+- [subsys.composition.bundle-base](../composition/bundle-base.md)（`subsys.composition.bundle-base`）：`dsh-base` 挂 `web` + `web-search-deepseek` + `web-fetch-http` + `tool-web` `fetch: true`。
 - [subsys.composition.bundle-web-app](../composition/bundle-web-app.md)（`subsys.composition.bundle-web-app`）：host `tool-web` `disabled: true`，preset 再挂。
