@@ -24,7 +24,7 @@ related:
  - subsys.ai.prompt-caching
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.ai.anthropic-messages` 描述 `pi-ai` 的 Anthropic Messages wire adapter:它把统一 `TranscriptContext` / `Message` / `Tool` 输入构造成 Anthropic `messages.create(...stream: true)` payload,再把 Anthropic SSE events 归一为 `AssistantMessageEventStream`。已删除的 `packages/ai/src/utils/deferred-tools.ts` 不再参与本 adapter。

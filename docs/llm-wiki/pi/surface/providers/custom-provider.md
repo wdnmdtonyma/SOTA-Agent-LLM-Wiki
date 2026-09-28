@@ -28,7 +28,7 @@ related:
  - ref.ai.wire-protocol-catalog
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `surface.providers.custom-provider` 说明 pi 暴露给使用者的两条自定义 provider 路径:简单兼容端点写 `~/.pi/agent/models.json`,需要扩展生命周期、OAuth/SSO 或自定义 streaming 时用扩展 API `pi.registerProvider()`。自定义 `stream` / `streamSimple` **必须**接收 `TranscriptContext`,用 `getCurrentSystemPrompt` / `getCurrentTools` 读 prompt 与 tools。

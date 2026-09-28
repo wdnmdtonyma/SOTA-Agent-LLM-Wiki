@@ -22,7 +22,7 @@ related:
   - subsys.agent-core.tree-navigation
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.agent-core.memory-storage` 描述进程内 v4 session backend：`MemorySessionRepo` 用 `Map<id, MemorySessionRecord>` 保存会话；每个 `MemoryStorage` 持有一份 `InMemoryStorageState`，经 `commitQueue` 串行 `commit(Write[])`。fork 是 `MemoryStorage.fork` → `InMemoryStorageState.createFork`（直接迭代 maps）。旧名 `InMemorySessionRepo` / `InMemorySessionStorage` 已删除。

@@ -15,7 +15,7 @@ related:
   - subsys.agent-core.system-prompt
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.agent-core.skills-loading` 描述 `pi-agent-core` harness 如何从目录发现 skill 文件、解析 frontmatter/body、生成 `Skill` 对象、保留 source provenance,以及它与系统提示组装的边界。

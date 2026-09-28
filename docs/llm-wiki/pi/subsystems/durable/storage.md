@@ -7,6 +7,7 @@ pkg: durable
 source:
   - packages/durable/package.json
   - packages/durable/README.md
+  - packages/durable/src/ids.ts
   - packages/durable/src/storage/memory.ts
   - packages/durable/src/storage/jsonl/index.ts
   - packages/durable/src/storage/jsonl/storage.ts
@@ -39,6 +40,8 @@ symbols:
   - openNodeSqliteStorage
   - openNodeSqliteDatabase
   - NodeSqliteDatabase
+  - idFromNumber
+  - seqFromNumber
   - registerStorageConformance
   - createStorageConformance
   - seedStorageBenchmark
@@ -54,10 +57,10 @@ related:
   - subsys.chord.runtime
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
-> `@earendil-works/pi-durable` 的 `Storage` 有三份 shipped 实现：detached `MemoryStorage`、portable `JsonlStorage`（`fsync` 默认 `false`）、portable `SqliteStorage`（Node 适配 WAL + `synchronous = NORMAL`）。JSONL / SQLite 的 Node 绑定走子路径 `storage/jsonl/node` 与 `storage/sqlite/node`。这套 backend **不是** coding-agent `SessionManager` JSONL，也不是 `pi-session-backend-sqlite-node` 的 `SessionRepo`。
+> `@earendil-works/pi-durable` 的 `Storage` 有三份 shipped 实现：detached `MemoryStorage`、portable `JsonlStorage`（`fsync` 默认 `false`）、portable `SqliteStorage`（Node 适配 WAL + `synchronous = NORMAL`）。JSONL / SQLite 的 Node 绑定走子路径 `storage/jsonl/node` 与 `storage/sqlite/node`。mint / commit 用 `idFromNumber` / `seqFromNumber` 铸造 erased `Id` / `Seq`。这套 backend **不是** coding-agent `SessionManager` JSONL，也不是 `pi-session-backend-sqlite-node` 的 `SessionRepo`。
 
 ## 能回答的问题
 
@@ -65,11 +68,12 @@ updated: ff72faba28
 - Node 应用该 import 哪个 subpath？portable 核心为什么不含 `node:`？
 - JSONL `fsync` 默认是什么，打开后怎样落盘？
 - Node SQLite 为什么设 WAL 与 `synchronous = NORMAL`，close 时做什么？
+- `mintId` / commit seq 怎样带上 `Id` / `Seq` brand？
 - conformance 与 bench 从哪个 export / npm script 进？
 
 ## 职责边界
 
-`Storage` 契约在 `types.ts`（权威节点 [subsys.durable.runtime](runtime.md)）。本节点只覆盖三份实现、Node adapters、测试入口。
+`Storage` 契约在 `types.ts`（权威节点 [subsys.durable.runtime](runtime.md)）。本节点只覆盖三份实现、Node adapters、ID 铸造边界、测试入口。`packages/durable/docs/pico*` 不是 shipped 存储实现。
 
 package exports 把存储拆成显式 subpath：
 
@@ -91,39 +95,44 @@ package exports 把存储拆成显式 subpath：
 
 ## 关键文件
 
-- `packages/durable/src/storage/memory.ts`：`MemoryStorage`、`prepareCommit()`。[E: packages/durable/src/storage/memory.ts:211] [E: packages/durable/src/storage/memory.ts:239]
-- `packages/durable/src/storage/jsonl/storage.ts`：`JsonlStorage`、`JsonlStorageOptions.fsync`。[E: packages/durable/src/storage/jsonl/storage.ts:71] [E: packages/durable/src/storage/jsonl/storage.ts:234]
+- `packages/durable/src/ids.ts`：`idFromNumber` / `seqFromNumber`。[E: packages/durable/src/ids.ts:4] [E: packages/durable/src/ids.ts:9]
+- `packages/durable/src/storage/memory.ts`：`MemoryStorage`、`prepareCommit()`。[E: packages/durable/src/storage/memory.ts:215] [E: packages/durable/src/storage/memory.ts:244]
+- `packages/durable/src/storage/jsonl/storage.ts`：`JsonlStorage`、`JsonlStorageOptions.fsync`。[E: packages/durable/src/storage/jsonl/storage.ts:75] [E: packages/durable/src/storage/jsonl/storage.ts:240]
 - `packages/durable/src/storage/jsonl/node.ts`：`openNodeJsonlStorage()`。[E: packages/durable/src/storage/jsonl/node.ts:6]
 - `packages/durable/src/storage/sqlite/database.ts`：同步 `SqliteDatabase` facade。[E: packages/durable/src/storage/sqlite/database.ts:26]
-- `packages/durable/src/storage/sqlite/storage.ts`：`SqliteStorage.open()` / `commit()`。[E: packages/durable/src/storage/sqlite/storage.ts:166] [E: packages/durable/src/storage/sqlite/storage.ts:184]
+- `packages/durable/src/storage/sqlite/storage.ts`：`SqliteStorage.open()` / `commit()`。[E: packages/durable/src/storage/sqlite/storage.ts:177] [E: packages/durable/src/storage/sqlite/storage.ts:195]
 - `packages/durable/src/storage/sqlite/node.ts`：WAL / `synchronous = NORMAL` / checkpoint。[E: packages/durable/src/storage/sqlite/node.ts:101] [E: packages/durable/src/storage/sqlite/node.ts:102] [E: packages/durable/src/storage/sqlite/node.ts:83]
-- `packages/durable/src/testing/index.ts`：`registerStorageConformance`、`createStorageConformance`、benchmark exports。[E: packages/durable/src/testing/index.ts:2] [E: packages/durable/src/testing/index.ts:15]
+- `packages/durable/src/testing/index.ts`：`registerStorageConformance`、`createStorageConformance`、benchmark exports。[E: packages/durable/src/testing/index.ts:2] [E: packages/durable/src/testing/index.ts:16]
 
 ## 数据模型
 
+### branded ID 铸造
+
+三份 backend 的 `mintId<I extends Id<string>>()` 都返回 `idFromNumber<I>(…)`，不直接把裸 `number` 交给 Session。[E: packages/durable/src/storage/memory.ts:397] [E: packages/durable/src/storage/memory.ts:400] [E: packages/durable/src/storage/sqlite/storage.ts:218] [E: packages/durable/src/storage/sqlite/storage.ts:221] JSONL 转调内部 `MemoryStorage.mintId`。[E: packages/durable/src/storage/jsonl/storage.ts:307] `prepareCommit` / SQLite `commit` 用 `seqFromNumber` 给 commit 序号打 `Seq` brand。[E: packages/durable/src/storage/memory.ts:244] [E: packages/durable/src/storage/sqlite/storage.ts:204] JSONL recover 也会对 sidecar 文件名里的数字 `idFromNumber<TaskId>` / `DocumentId`。[E: packages/durable/src/storage/jsonl/storage.ts:734] [E: packages/durable/src/storage/jsonl/storage.ts:737]
+
 ### `MemoryStorage`
 
-完全在进程内实现 `Storage`。读写都 `clone()`，以匹配序列化 backend 的所有权边界，而不是做额外 validation。[E: packages/durable/src/storage/memory.ts:211] `nextId` 从 `2` 起（ID `1` 留给 `ROOT_CONVERSATION_ID`），`nextSeq` 从 `1` 起。[E: packages/durable/src/storage/memory.ts:230] [E: packages/durable/src/storage/memory.ts:231]
+完全在进程内实现 `Storage`。读写都 `clone()`，以匹配序列化 backend 的所有权边界，而不是做额外 validation。[E: packages/durable/src/storage/memory.ts:215] `nextId` 从 `2` 起（ID `1` 留给 `ROOT_CONVERSATION_ID`），`nextSeq` 从 `1` 起。[E: packages/durable/src/storage/memory.ts:235] [E: packages/durable/src/storage/memory.ts:236]
 
-`prepareCommit(writes)` 先 clone/freeze、校验 global ID 与 document actions，再返回 `{ seq, writes, apply() }`；`apply()` 才改 observable state。[E: packages/durable/src/storage/memory.ts:239] [E: packages/durable/src/storage/memory.ts:249] 普通 `commit()` 就是 `prepareCommit(writes).apply()`。[E: packages/durable/src/storage/memory.ts:234] JSONL 复用这条 prepare 路径，先把 marker 写到磁盘再 `apply()`。
+`prepareCommit(writes)` 先 clone/freeze、校验 global ID 与 document actions，再返回 `{ seq, writes, apply() }`；`apply()` 才改 observable state。[E: packages/durable/src/storage/memory.ts:244] `commit()` 就是 `prepareCommit(writes).apply()`。[E: packages/durable/src/storage/memory.ts:239] JSONL 复用这条 prepare 路径，先把 marker 写到磁盘再 `apply()`。
 
 ### `JsonlStorage`
 
-portable JSONL：持有一份内部 `MemoryStorage`，目录里写 `main.jsonl` 与 `doc-<id>.jsonl` / `task-<id>.jsonl` sidecar。[E: packages/durable/src/storage/jsonl/storage.ts:22] [E: packages/durable/src/storage/jsonl/storage.ts:93] [E: packages/durable/src/storage/jsonl/storage.ts:239] 打开时需要 `FileSystem` capability（`@earendil-works/pi-durable/env`），`open()` 递归建目录、recover 已有 marker。[E: packages/durable/src/env/index.ts:95] [E: packages/durable/src/storage/jsonl/storage.ts:253]
+portable JSONL：持有一份内部 `MemoryStorage`，目录里写 `main.jsonl` 与 `doc-<id>.jsonl` / `task-<id>.jsonl` sidecar。[E: packages/durable/src/storage/jsonl/storage.ts:240] [E: packages/durable/src/storage/jsonl/storage.ts:245] 打开时需要 `FileSystem` capability（`@earendil-works/pi-durable/env`），`open()` 递归建目录、recover 已有 marker。[E: packages/durable/src/env/index.ts:95] [E: packages/durable/src/storage/jsonl/storage.ts:259]
 
-`JsonlStorageOptions.fsync` 默认 `false`：constructor 写 `this.fsync = options.fsync ?? false`。[E: packages/durable/src/storage/jsonl/storage.ts:71] [E: packages/durable/src/storage/jsonl/storage.ts:249] `fsync: true` 时，先 `flushFile` 每个受影响 sidecar，再 append `main.jsonl` 的 commit marker。[E: packages/durable/src/storage/jsonl/storage.ts:287] [E: packages/durable/src/storage/jsonl/storage.ts:293]
+`JsonlStorageOptions.fsync` 默认 `false`：constructor 写 `this.fsync = options.fsync ?? false`。[E: packages/durable/src/storage/jsonl/storage.ts:75] [E: packages/durable/src/storage/jsonl/storage.ts:255] `fsync: true` 时，先 `flushFile` 每个受影响 sidecar，再 append `main.jsonl` 的 commit marker。[E: packages/durable/src/storage/jsonl/storage.ts:293] [E: packages/durable/src/storage/jsonl/storage.ts:299]
 
 `openNodeJsonlStorage(directory, context, options?)` 用 `NodeExecutionEnv` 调 `JsonlStorage.open`。[E: packages/durable/src/storage/jsonl/node.ts:6] [E: packages/durable/src/storage/jsonl/node.ts:11] **第二个**参数是 Chord `Context`（典型调用传 `BACKGROUND_CONTEXT`）；第三个才是 `JsonlStorageOptions`。[E: packages/durable/src/storage/jsonl/node.ts:8] [E: packages/durable/src/storage/jsonl/node.ts:9]
 
-源码不实现跨进程 file lock。JSONL 与 SQLite 都要求 **一个** owner 串行化对该目录 / 文件的 writes；`mintId()` 是实例内存计数器，跨进程 ID allocation 不支持。[I] SQLite Node adapter 只对 competing file lock 设了 `busyTimeoutMs`（默认 5_000 ms），那不是 ID 分配协议。[E: packages/durable/src/storage/sqlite/node.ts:13] [E: packages/durable/src/storage/sqlite/node.ts:17] [E: packages/durable/src/storage/memory.ts:388]
+源码不实现跨进程 file lock。JSONL 与 SQLite 都要求 **一个** owner 串行化对该目录 / 文件的 writes；`mintId()` 是实例内存计数器，跨进程 ID allocation 不支持。[I] SQLite Node adapter 只对 competing file lock 设了 `busyTimeoutMs`（默认 5_000 ms），那不是 ID 分配协议。[E: packages/durable/src/storage/sqlite/node.ts:13] [E: packages/durable/src/storage/sqlite/node.ts:17] [E: packages/durable/src/storage/memory.ts:397]
 
 ### `SqliteStorage`
 
 portable 核心吃同步 `SqliteDatabase` facade：`exec` / `prepare` / `transaction` / `close`。callback 必须同步；adapter 的 `transaction` 可以返回 Promise 等待结算。设计目标是 Node、Bun、Cloudflare Durable Object SQLite；远程异步 API（如 D1）不能实现这层 facade，需要另写 `Storage`。[E: packages/durable/src/storage/sqlite/database.ts:26] [E: packages/durable/src/storage/sqlite/database.ts:29] [E: packages/durable/README.md:30]
 
-`SqliteStorage.open(db)` 先 `applySqliteMigrations(db)`，再读 `durable_metadata`。[E: packages/durable/src/storage/sqlite/storage.ts:166] [E: packages/durable/src/storage/sqlite/storage.ts:168] 初始 schema 插入 `next_id = '2'`、`next_seq = 1`；`CURRENT_SQLITE_SCHEMA_VERSION` 来自 `SQLITE_MIGRATIONS` 最后一项（现在是 version 1）。[E: packages/durable/src/storage/sqlite/migrations.ts:15] [E: packages/durable/src/storage/sqlite/migrations.ts:85] [E: packages/durable/src/storage/sqlite/migrations.ts:87]
+`SqliteStorage.open(db)` 先 `applySqliteMigrations(db)`，再读 `durable_metadata`。[E: packages/durable/src/storage/sqlite/storage.ts:177] [E: packages/durable/src/storage/sqlite/storage.ts:179] 初始 schema 插入 `next_id = '2'`、`next_seq = 1`；`CURRENT_SQLITE_SCHEMA_VERSION` 来自 `SQLITE_MIGRATIONS` 最后一项（现在是 version 1）。[E: packages/durable/src/storage/sqlite/migrations.ts:15] [E: packages/durable/src/storage/sqlite/migrations.ts:85] [E: packages/durable/src/storage/sqlite/migrations.ts:87]
 
-`commit()` 在 `db.transaction()` 里校验 ID、apply table writes 与 document actions，再更新 metadata 的 `next_id` / `next_seq`。[E: packages/durable/src/storage/sqlite/storage.ts:184] [E: packages/durable/src/storage/sqlite/storage.ts:188]
+`commit()` 在 `db.transaction()` 里校验 ID、apply table writes 与 document actions，再更新 metadata 的 `next_id` / `next_seq`。[E: packages/durable/src/storage/sqlite/storage.ts:195] [E: packages/durable/src/storage/sqlite/storage.ts:199]
 
 ### Node SQLite：WAL + `NORMAL`
 
@@ -139,25 +148,25 @@ portable 核心吃同步 `SqliteDatabase` facade：`exec` / `prepare` / `transac
 
 ## 控制流
 
-1. 调用方选 backend：测试用 `new MemoryStorage()`；Node 文件用 `openNodeJsonlStorage(dir, context)` 或 `openNodeSqliteStorage(path)`。[E: packages/durable/src/storage/memory.ts:211] [E: packages/durable/src/storage/jsonl/node.ts:6] [E: packages/durable/src/storage/sqlite/node.ts:116]
+1. 调用方选 backend：测试用 `new MemoryStorage()`；Node 文件用 `openNodeJsonlStorage(dir, context)` 或 `openNodeSqliteStorage(path)`。[E: packages/durable/src/storage/memory.ts:215] [E: packages/durable/src/storage/jsonl/node.ts:6] [E: packages/durable/src/storage/sqlite/node.ts:116]
 2. `createSession(storage)` 把该 `Storage` 交给 Session kernel（见 [subsys.durable.runtime](runtime.md)）。
-3. JSONL `commit`：`memory.prepareCommit` → encode sidecar + marker → append sidecars → 可选 `flushFile` → append `main.jsonl` → `prepared.apply()` → 尽力 reclaim sidecar。[E: packages/durable/src/storage/jsonl/storage.ts:270] [E: packages/durable/src/storage/jsonl/storage.ts:272] [E: packages/durable/src/storage/jsonl/storage.ts:295]
-4. SQLite `commit`：prepare document actions → `BEGIN IMMEDIATE` 事务（Node adapter）→ 校验 / apply → bump `next_seq`。[E: packages/durable/src/storage/sqlite/storage.ts:186] [E: packages/durable/src/storage/sqlite/node.ts:57]
-5. 打开已有 JSONL 目录时 `recover()` 重放完整 marker、截掉 torn line / 未确认 sidecar tail。[E: packages/durable/src/storage/jsonl/storage.ts:266] [E: packages/durable/src/storage/jsonl/storage.ts:514] [E: packages/durable/src/storage/jsonl/storage.ts:710] [E: packages/durable/src/storage/jsonl/storage.ts:778]
-6. `close()` 后后续操作拒绝：Memory 抛 `MemoryStorage is closed`，JSONL 抛 `JsonlStorage is closed`，SQLite 抛 `SqliteStorage is closed`。[E: packages/durable/src/storage/memory.ts:755] [E: packages/durable/src/storage/jsonl/storage.ts:819] [E: packages/durable/src/storage/sqlite/storage.ts:787]
+3. JSONL `commit`：`memory.prepareCommit` → encode sidecar + marker → append sidecars → 可选 `flushFile` → append `main.jsonl` → `prepared.apply()` → 尽力 reclaim sidecar。[E: packages/durable/src/storage/jsonl/storage.ts:276] [E: packages/durable/src/storage/jsonl/storage.ts:278] [E: packages/durable/src/storage/jsonl/storage.ts:301]
+4. SQLite `commit`：prepare document actions → `BEGIN IMMEDIATE` 事务（Node adapter）→ 校验 / apply → bump `next_seq`。[E: packages/durable/src/storage/sqlite/storage.ts:197] [E: packages/durable/src/storage/sqlite/node.ts:57]
+5. 打开已有 JSONL 目录时 `recover()` 重放完整 marker、截掉 torn line / 未确认 sidecar tail。[E: packages/durable/src/storage/jsonl/storage.ts:272] [E: packages/durable/src/storage/jsonl/storage.ts:529] [E: packages/durable/src/storage/jsonl/storage.ts:725] [E: packages/durable/src/storage/jsonl/storage.ts:776]
+6. `close()` 后后续操作拒绝：Memory 抛 `MemoryStorage is closed`，JSONL 抛 `JsonlStorage is closed`，SQLite 抛 `SqliteStorage is closed`。[E: packages/durable/src/storage/memory.ts:770] [E: packages/durable/src/storage/jsonl/storage.ts:837] [E: packages/durable/src/storage/sqlite/storage.ts:807]
 
 ## 设计动机与权衡
 
-JSONL 把大 payload（live task、document content）放到 sidecar，`main.jsonl` 只留 commit marker 与 ordinal，recover 时以 marker 为准确认 sidecar 记录。[E: packages/durable/src/storage/jsonl/storage.ts:35] [E: packages/durable/src/storage/jsonl/storage.ts:743] `fsync` 默认关闭，避免每个 commit 都 flush；需要 marker 前 sidecar 持久化时再打开。
+JSONL 把大 payload（live task、document content）放到 sidecar，`main.jsonl` 只留 commit marker 与 ordinal，recover 时以 marker 为准确认 sidecar 记录。[E: packages/durable/src/storage/jsonl/storage.ts:41] [E: packages/durable/src/storage/jsonl/storage.ts:761] `fsync` 默认关闭，避免每个 commit 都 flush；需要 marker 前 sidecar 持久化时再打开。
 
 SQLite 核心保持同步 facade，这样 Bun / DO 可以不引入 Node `node:sqlite`。Node 适配显式选 WAL + `NORMAL`：承认掉电窗口，换取默认吞吐。[E: packages/durable/src/storage/sqlite/node.ts:101] [E: packages/durable/src/storage/sqlite/node.ts:102]
 
-`MemoryStorage.prepareCommit` 让 JSONL 能在磁盘 append 失败时不污染内存态：先 prepare，append 成功才 `apply()`。[E: packages/durable/src/storage/jsonl/storage.ts:272] [E: packages/durable/src/storage/jsonl/storage.ts:295]
+`MemoryStorage.prepareCommit` 让 JSONL 能在磁盘 append 失败时不污染内存态：先 prepare，append 成功才 `apply()`。[E: packages/durable/src/storage/jsonl/storage.ts:278] [E: packages/durable/src/storage/jsonl/storage.ts:301]
 
 ## gotcha
 
-- JSONL append sidecar 或 main marker 失败会 `poison`：之后必须 reopen，错误类型 `JsonlStoragePoisonedError`。[E: packages/durable/src/storage/jsonl/storage.ts:81] [E: packages/durable/src/storage/jsonl/storage.ts:813]
-- `mintId()` 在 Memory / SQLite 上都是实例字段 `nextId++`，commit 时才把看到的最大 ID 写回。两个进程打开同一文件会分配冲突。[E: packages/durable/src/storage/memory.ts:388] [E: packages/durable/src/storage/sqlite/storage.ts:207]
+- JSONL append sidecar 或 main marker 失败会 `poison`：之后必须 reopen，错误类型 `JsonlStoragePoisonedError`。[E: packages/durable/src/storage/jsonl/storage.ts:87] [E: packages/durable/src/storage/jsonl/storage.ts:831]
+- `mintId()` 在 Memory / SQLite 上都是实例字段 `nextId++` 再 `idFromNumber`，commit 时才把看到的最大 ID 写回。两个进程打开同一文件会分配冲突。[E: packages/durable/src/storage/memory.ts:400] [E: packages/durable/src/storage/sqlite/storage.ts:221]
 - Node SQLite `transaction()` 若 callback 返回 thenable 会抛 `TypeError("SQLite transaction callbacks must be synchronous")`。[E: packages/durable/src/storage/sqlite/node.ts:65]
 - 不要把本包的 `openNodeJsonlStorage("./session")` 目录当成 `~/.pi/agent/sessions/*.jsonl`。产品会话文件仍由 coding-agent `SessionManager` 管理。
 - 不要把 `openNodeSqliteStorage` 当成 `@earendil-works/pi-session-backend-sqlite-node`。后者的表是 agent-core v4 entries / values，不是 `durable_metadata`。[E: packages/session-backends/sqlite-node/package.json:4]
@@ -167,14 +176,14 @@ SQLite 核心保持同步 facade，这样 Bun / DO 可以不引入 Node `node:sq
 `@earendil-works/pi-durable/testing` 导出：
 
 - `registerStorageConformance(runner, name, withStorage)`：接受 Vitest/Jest 风格 `{ describe, expect, it }`，内部 `createExpectAssertions` + `createStorageConformance`。[E: packages/durable/src/testing/runner.ts:12] [E: packages/durable/src/testing/index.ts:2]
-- `createStorageConformance({ assertions, withStorage })`：runner-independent cases。`withStorage` 必须恰好 `await use(storage)` 一次。[E: packages/durable/src/testing/storage-conformance.ts:80] [E: packages/durable/src/testing/types.ts:14]
-- `seedStorageBenchmark` / `seedStorageWriteBenchmark` / `STORAGE_READ_BENCHMARKS` / `STORAGE_WRITE_BENCHMARKS` / `STORAGE_MEMORY_SCALES`。[E: packages/durable/src/testing/index.ts:11] [E: packages/durable/src/testing/storage-benchmark.ts:13]
+- `createStorageConformance({ assertions, withStorage })`：runner-independent cases。`withStorage` 必须恰好 `await use(storage)` 一次。[E: packages/durable/src/testing/storage-conformance.ts:90] [E: packages/durable/src/testing/types.ts:14]
+- `seedStorageBenchmark` / `seedStorageWriteBenchmark` / `STORAGE_READ_BENCHMARKS` / `STORAGE_WRITE_BENCHMARKS` / `STORAGE_MEMORY_SCALES`。[E: packages/durable/src/testing/index.ts:11] [E: packages/durable/src/testing/storage-benchmark.ts:24]
 
 内置适配器用同一套 cases 注册：
 
-- Memory：`registerStorageConformance(..., "MemoryStorage", (use) => use(new MemoryStorage()))`[E: packages/durable/test/memory-storage.test.ts:7]
-- JSONL：`registerStorageConformance(..., "JsonlStorage", ...)`[E: packages/durable/test/jsonl-storage.test.ts:101]
-- SQLite：`registerStorageConformance(..., "SqliteStorage", ...)`[E: packages/durable/test/sqlite-storage.test.ts:90]
+- Memory：`registerStorageConformance(..., "MemoryStorage", (use) => use(new MemoryStorage()))`[E: packages/durable/test/memory-storage.test.ts:8]
+- JSONL：`registerStorageConformance(..., "JsonlStorage", ...)`[E: packages/durable/test/jsonl-storage.test.ts:121]
+- SQLite：`registerStorageConformance(..., "SqliteStorage", ...)`[E: packages/durable/test/sqlite-storage.test.ts:111]
 
 npm scripts：`bench:storage` = `vitest bench --config vitest.benchmark.config.ts`（include `test/**/*.bench.ts`）；`bench:storage:memory` 跑 `test/storage-memory.ts` 足迹套件。[E: packages/durable/package.json:66] [E: packages/durable/package.json:67] [E: packages/durable/vitest.benchmark.config.ts:7] timing suite 在 `test/storage.bench.ts` 对 memory / sqlite / jsonl 跑同一组 read/write benchmarks。[E: packages/durable/test/storage.bench.ts:18] [E: packages/durable/test/storage.bench.ts:7] [E: packages/durable/test/storage.bench.ts:8]
 
@@ -192,6 +201,7 @@ npm scripts：`bench:storage` = `vitest bench --config vitest.benchmark.config.t
 
 - packages/durable/package.json
 - packages/durable/README.md
+- packages/durable/src/ids.ts
 - packages/durable/src/storage/memory.ts
 - packages/durable/src/storage/jsonl/index.ts
 - packages/durable/src/storage/jsonl/storage.ts

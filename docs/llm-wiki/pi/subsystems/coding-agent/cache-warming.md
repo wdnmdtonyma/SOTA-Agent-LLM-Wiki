@@ -33,7 +33,7 @@ related:
   - subsys.coding-agent.agent-session
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `CacheWarmer` 用成本阈值决定是否在 TTL 到期前重放上一轮 provider 请求（`maxTokens: 1`），以保住 prompt cache；模式分 `off` / `streaming` / `idle`，extension 可通过 `cache_warming_decision` 覆盖单次决策。
@@ -86,9 +86,9 @@ provider 如何给请求打 cache 标记属于 [subsys.ai.prompt-caching](../ai/
 
 ## `/session` 诊断
 
-`/session` 固定打出 `Cache Warming` 块：`Mode` 来自 `getCacheWarmingMode()`，`Status` 来自 `formatCacheWarmingStatus(session.cacheWarmingStatus)`；没有 warmer 时显示 `Inactive (cache warming unavailable)`。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6473] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6475] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6476] 若 `decision.economicsAvailable`，再打印 cache miss penalty 和 refresh cost。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6478] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6479] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6480]
+`/session` 固定打出 `Cache Warming` 块：`Mode` 来自 `getCacheWarmingMode()`，`Status` 来自 `formatCacheWarmingStatus(session.cacheWarmingStatus)`；没有 warmer 时显示 `Inactive (cache warming unavailable)`。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6452] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6475] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6486] 若 `decision.economicsAvailable`，再打印 cache miss penalty 和 refresh cost。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6488] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6489] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6481]
 
-`formatCacheWarmingStatus` 把 scheduled 状态写成 `Decision in …` 或 `Decision now`，refreshing 写成 `Warming cache (…)`，停下来写成 `Stopped (…)`；extension override 会标在 details 里。[E: packages/coding-agent/src/core/cache-warmer.ts:433] [E: packages/coding-agent/src/core/cache-warmer.ts:440] [E: packages/coding-agent/src/core/cache-warmer.ts:444] [E: packages/coding-agent/test/cache-warmer.test.ts:320] 成功的 usage 行是 `Cache warmed…: $…`，不进入 model context。[E: packages/coding-agent/src/core/cache-warmer.ts:449] [E: packages/coding-agent/src/core/cache-warmer.ts:452] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3327]
+`formatCacheWarmingStatus` 把 scheduled 状态写成 `Decision in …` 或 `Decision now`，refreshing 写成 `Warming cache (…)`，停下来写成 `Stopped (…)`；extension override 会标在 details 里。[E: packages/coding-agent/src/core/cache-warmer.ts:433] [E: packages/coding-agent/src/core/cache-warmer.ts:440] [E: packages/coding-agent/src/core/cache-warmer.ts:444] [E: packages/coding-agent/test/cache-warmer.test.ts:320] 成功的 usage 行是 `Cache warmed…: $…`，不进入 model context。[E: packages/coding-agent/src/core/cache-warmer.ts:449] [E: packages/coding-agent/src/core/cache-warmer.ts:452] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3320]
 
 ## 设计动机与权衡
 

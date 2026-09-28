@@ -33,7 +33,7 @@ related:
  - ref.ai.provider-catalog
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `surface.providers.overview` 是用户可见的 provider 心智模型：选择 provider/model 后，Pi 从 runtime `Models` collection 检查配置、筛选可用模型、解析 credential，再把请求交给 provider-owned wire implementation。
@@ -61,7 +61,7 @@ generated `MODELS` 现在也是 **42** 个 structural bucket:`BuiltinProvider` �
 
 `all.ts` 在 `BuiltinProvider = keyof typeof MODELS` 上方仍有一句过时注释,说 Radius 没有 static catalog entry。源码事实以 `MODELS` 的 `"radius"` key 和 `RADIUS_MODELS` 为准。[E: packages/ai/src/providers/all.ts:53] [E: packages/ai/src/models.generated.ts:79] [U]
 
-Baseten 使用 `BASETEN_API_KEY`、固定 `https://inference.baseten.co/v1` 和 `openai-completions` adapter；coding-agent 默认模型是 `zai-org/GLM-5.2`。[E: packages/ai/src/providers/baseten.ts:6] [E: packages/ai/src/providers/baseten.ts:10] [E: packages/ai/src/providers/baseten.ts:11] [E: packages/ai/src/providers/baseten.ts:13] [E: packages/coding-agent/src/core/model-resolver.ts:48]
+Baseten 使用 `BASETEN_API_KEY`、固定 `https://inference.baseten.co/v1` 和 `openai-completions` adapter；coding-agent 默认模型是 `zai-org/GLM-5.2`。[E: packages/ai/src/providers/baseten.ts:6] [E: packages/ai/src/providers/baseten.ts:10] [E: packages/ai/src/providers/baseten.ts:11] [E: packages/ai/src/providers/baseten.ts:13] [E: packages/coding-agent/src/core/model-resolver.ts:48] Fireworks 的 coding-agent 默认是 `accounts/fireworks/models/kimi-k3`。[E: packages/coding-agent/src/core/model-resolver.ts:46]
 
 Qwen Token Plan Individual 是独立 runtime id `qwen-token-plan-individual`:与国际 Token Plan 共用新加坡 compatible-mode base URL 和 `QWEN_TOKEN_PLAN_API_KEY`;coding-agent 默认模型是 `qwen3.8-max`。[E: packages/ai/src/providers/qwen-token-plan-individual.ts:8] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:10] [E: packages/ai/src/providers/qwen-token-plan-individual.ts:11] [E: packages/coding-agent/src/core/model-resolver.ts:57]
 

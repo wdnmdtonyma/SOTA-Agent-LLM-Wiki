@@ -25,7 +25,7 @@ related:
  - subsys.ai.model-discovery
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.ai.model-catalog-publication` 是独立于 npm package release 的 artifact pipeline：生成完整 JSON model bundle(含 typed `.all.json`)，验证 bundle 内部一致性，以内容 hash 建不可变 revision，并在受控窗口发布到 S3-compatible R2。本地 ignored model JSON 走 schema **v6** 的 `hydrate:model-data`。

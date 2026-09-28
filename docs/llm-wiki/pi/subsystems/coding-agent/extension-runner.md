@@ -26,7 +26,7 @@ related:
   - ref.coding-agent.extension-events
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `ExtensionRunner` 是 pi-coding-agent 的扩展执行引擎: 它把 loader 产出的 extensions 和 shared runtime 绑定到当前会话, 构造 `ExtensionContext`, 并按事件类型顺序调用 extension handlers。可行动边界走 `emitBoundary()`;`pi.on()` 返回的 unsubscribe 只影响之后的 dispatch。
@@ -123,7 +123,7 @@ snapshot + unsubscribe 让 handler 可以在自己的回调里退订,而不改�
 - `emitToolCall()` 没有 try/catch;handler 抛错会直接 reject 该 emitter,与 `emit()`、`emitToolResult()`、`emitInput()` 等捕获并 `emitError()` 的模式不同。[E: packages/coding-agent/src/core/extensions/runner.ts:1139] [E: packages/coding-agent/src/core/extensions/runner.ts:1140] [E: packages/coding-agent/src/core/extensions/runner.ts:1003] 这是否是刻意让 blocking hook fail-closed,当前源码未直接说明 [U]。
 - `getFlags()` 与 `getAllRegisteredTools()` 都是 first registration wins,但 `getShortcuts()` 对 extension-extension shortcut conflict 是 later registration wins。[E: packages/coding-agent/src/core/extensions/runner.ts:610] [E: packages/coding-agent/src/core/extensions/runner.ts:591] [E: packages/coding-agent/src/core/extensions/runner.ts:662]
 - `emitSessionShutdownEvent()` 没有 handler 时返回 `false`。[E: packages/coding-agent/src/core/extensions/runner.ts:254] [E: packages/coding-agent/src/core/extensions/runner.ts:258]
-- TUI wrapper 不再无限递归的修复不在 `runner.ts`;见 [subsys.coding-agent.interactive-orchestration](interactive-orchestration.md)。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:191]
+- TUI wrapper 不再无限递归的修复不在 `runner.ts`;见 [subsys.coding-agent.interactive-orchestration](interactive-orchestration.md)。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:194]
 
 ## 跨包边界
 

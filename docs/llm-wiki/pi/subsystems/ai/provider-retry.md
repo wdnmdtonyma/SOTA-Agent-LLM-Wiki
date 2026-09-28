@@ -30,7 +30,7 @@ related:
   - ref.coding-agent.config-keys
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > Pi 有两层重试：provider request 层重建 SDK 请求，assistant 层在一次完整 assistant message 失败后重启生成。两者的错误输入、预算和延迟上限不同。

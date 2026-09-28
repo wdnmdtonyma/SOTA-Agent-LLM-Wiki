@@ -24,7 +24,7 @@ related:
  - subsys.coding-agent.theme-controller
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > 会话 HTML 导出是 pi-coding-agent 把 `SessionManager` 的 JSONL 会话、可选 `AgentState` 元数据、主题色和扩展工具渲染结果打包成单个 standalone HTML 文件的子系统。
@@ -105,7 +105,7 @@ header help 文案是 `T toggle thinking · O toggle tools · H toggle hidden me
 
 HTML export 不是 `/share` 的主路径。`exportSessionToJsonl()` 写 current branch 的线性 JSONL,不要求 session 文件已存在,也不嵌入 theme / renderedTools [E: packages/coding-agent/src/core/session-export.ts:32] [E: packages/coding-agent/src/core/session-export.ts:23] [E: packages/coding-agent/src/core/session-export.ts:41]。`exportSessionForShare()` 在该 JSONL 末尾追加 `customType: "pi.share"`(`systemPrompt` + tools schema),供 Radius artifact 使用 [E: packages/coding-agent/src/modes/interactive/session-share.ts:50] [E: packages/coding-agent/src/modes/interactive/session-share.ts:33] [E: packages/coding-agent/src/modes/interactive/session-share.ts:38]。
 
-`exportSessionToHtml()` 仍走另一套 payload:`SessionData` 带 header/entries/leafId,以及可选 `state.systemPrompt`、`state.tools` 摘要和 `renderedTools`;它要求 `getSessionFile()` 存在且文件已落盘 [E: packages/coding-agent/src/core/export-html/index.ts:236] [E: packages/coding-agent/src/core/export-html/index.ts:243] [E: packages/coding-agent/src/core/export-html/index.ts:263] [E: packages/coding-agent/src/core/export-html/index.ts:267]。interactive `/export` 以输出路径是否以 `.jsonl` 结尾分流:`.jsonl` → `exportToJsonl()`,否则 `exportToHtml()` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6265] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6266] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6269]。`/share` 的 gist **回退**才调用 `exportToHtml()`;Radius 成功或失败都不走这份 HTML [E: packages/coding-agent/src/modes/interactive/session-share.ts:69] [E: packages/coding-agent/src/modes/interactive/session-share.ts:83]。
+`exportSessionToHtml()` 仍走另一套 payload:`SessionData` 带 header/entries/leafId,以及可选 `state.systemPrompt`、`state.tools` 摘要和 `renderedTools`;它要求 `getSessionFile()` 存在且文件已落盘 [E: packages/coding-agent/src/core/export-html/index.ts:236] [E: packages/coding-agent/src/core/export-html/index.ts:243] [E: packages/coding-agent/src/core/export-html/index.ts:263] [E: packages/coding-agent/src/core/export-html/index.ts:267]。interactive `/export` 以输出路径是否以 `.jsonl` 结尾分流:`.jsonl` → `exportToJsonl()`,否则 `exportToHtml()` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6267] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6267] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6270]。`/share` 的 gist **回退**才调用 `exportToHtml()`;Radius 成功或失败都不走这份 HTML [E: packages/coding-agent/src/modes/interactive/session-share.ts:69] [E: packages/coding-agent/src/modes/interactive/session-share.ts:83]。
 
 ## 入口与跨包关系
 

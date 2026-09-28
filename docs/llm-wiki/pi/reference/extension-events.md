@@ -16,7 +16,7 @@ related:
   - subsys.coding-agent.extension-runner
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `ref.coding-agent.extension-events` 是 pi-coding-agent extension hook 的逐实例 catalog:以 `ExtensionEvent` union 和 `ExtensionAPI.on(...)` overload 为准,列出每个事件名、payload 字段、handler 返回值语义和触发场景。ground truth 是 `on()` 从 `project_trust` 到 `input` 的 **40** 个 overload。

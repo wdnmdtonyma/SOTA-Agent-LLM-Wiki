@@ -20,14 +20,14 @@ related:
   - subsys.tui.alternate-screen
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > Pi 现在有两套差分算法：main screen 面向可增长的 scrollback document，alternate screen 面向固定大小的 viewport frame。
 
 ## 共享前处理
 
-两个 renderer 都在 `TuiBase` 的调度下运行，并复用 overlay 合成、line normalization/reset 和 cursor marker 提取。[E: packages/tui/src/tui.ts:466] [E: packages/tui/src/tui.ts:1283] [E: packages/tui/src/tui.ts:1357] [E: packages/tui/src/tui.ts:1386] 但上一帧状态、full redraw 判定和 terminal write 已不在旧 `tui.ts` 的单一 `TUI.doRender()` 中。[I]
+两个 renderer 都在 `TuiBase` 的调度下运行，并复用 overlay 合成、line normalization/reset 和 cursor marker 提取。[E: packages/tui/src/tui.ts:495] [E: packages/tui/src/tui.ts:1339] [E: packages/tui/src/tui.ts:1359] [E: packages/tui/src/tui.ts:1387] 但上一帧状态、full redraw 判定和 terminal write 已不在旧 `tui.ts` 的单一 `TUI.doRender()` 中。[I]
 
 ## Main-screen diff
 
@@ -61,7 +61,7 @@ fullscreen 每帧先由 `renderLayoutFrame()` 生成固定高的 screen，随后
 
 ## Gotchas
 
-- “差分引擎在 `tui.ts` 的 `TUI` class 中”已失效；`tui.ts` 只保留共享前处理与调度。[E: packages/tui/src/tui.ts:510]
+- “差分引擎在 `tui.ts` 的 `TUI` class 中”已失效；`tui.ts` 只保留共享前处理与调度。[E: packages/tui/src/tui.ts:541]
 - main-screen 的超宽行是 hard failure；alternate-screen 会在 frame 边界做 column slice，两者不是同一错误策略。[E: packages/tui/src/tui-main-screen.ts:517] [E: packages/tui/src/tui-alt-screen.ts:1680]
 - fullscreen 图片变化可能扩大为 placement 级重画，所以“只改一行就只写一行”对 image frame 不成立。[E: packages/tui/src/tui-alt-screen.ts:1686] [E: packages/tui/src/tui-alt-screen.ts:1705]
 - main-screen chunking 按 UTF-16 字符数而不是字节数切 1 MiB;Kitty payload 本身仍由 `encodeKitty()` 按 4096 字符分块,那是另一层。[E: packages/tui/src/tui-main-screen.ts:9] [I]

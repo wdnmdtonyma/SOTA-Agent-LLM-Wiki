@@ -18,7 +18,7 @@ symbols:
 related: [subsys.tui.key-pipeline]
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `native-modifiers.ts` 是 TUI 的 modifier query 薄封装：它调用 `native-platform.ts` 的 `getNativePlatformHelper()`，失败或 helper 无 `isModifierPressed` 时返回 `false`。路径解析仍集中在 `getNativeModuleCandidates()`。
@@ -48,7 +48,7 @@ updated: ff72faba28
 - `packages/tui/src/native-platform.ts`: `ModifierKey`、`NativeClipboard`、`loadNativePlatformHelper()`、`getNativePlatformHelper()`、`getNativeClipboard()`。[E: packages/tui/src/native-platform.ts:7] [E: packages/tui/src/native-platform.ts:9] [E: packages/tui/src/native-platform.ts:26] [E: packages/tui/src/native-platform.ts:53] [E: packages/tui/src/native-platform.ts:59]
 - `packages/tui/src/native-module-path.ts`: 按 installed `@earendil-works/pi-tui`、module 相对路径、`process.execPath` 拼候选 [E: packages/tui/src/native-module-path.ts:5] [E: packages/tui/src/native-module-path.ts:14]。
 - `packages/tui/test/native-module-path.test.ts`: bundled chunk 优先命中 installed package;`resolvePackage` 失败时保留 standalone fallback。
-- `packages/tui/src/index.ts`: 公开导出 `getNativeClipboard` / `NativeClipboard`，不单独导出 modifier loader。[E: packages/tui/src/index.ts:103]
+- `packages/tui/src/index.ts`: 公开导出 `getNativeClipboard` / `NativeClipboard`，不单独导出 modifier loader。[E: packages/tui/src/index.ts:104]
 
 ## 数据模型
 
@@ -90,7 +90,7 @@ optional native dependency:非支持平台、架构、addon 缺失、shape 不�
 
 优先 resolve installed `@earendil-works/pi-tui`,是为了 coding-agent bundle 把 TUI 打进别的 chunk 目录后,仍能找到 package 自带的 prebuild [E: packages/tui/src/native-module-path.ts:19] [E: packages/tui/test/native-module-path.test.ts:8] [I]。
 
-`isNativeModifierPressed()` 仍是 modifier 的稳定入口。clipboard 走 `getNativeClipboard()`，由 package root 导出；`getNativeModuleCandidates` 供 platform helper 复用 [E: packages/tui/src/native-modifiers.ts:5] [E: packages/tui/src/index.ts:103] [E: packages/tui/src/native-module-path.ts:14]。
+`isNativeModifierPressed()` 仍是 modifier 的稳定入口。clipboard 走 `getNativeClipboard()`，由 package root 导出；`getNativeModuleCandidates` 供 platform helper 复用 [E: packages/tui/src/native-modifiers.ts:5] [E: packages/tui/src/index.ts:104] [E: packages/tui/src/native-module-path.ts:14]。
 
 ## Gotcha
 

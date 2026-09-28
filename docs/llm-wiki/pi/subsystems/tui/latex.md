@@ -17,7 +17,7 @@ related:
  - ref.tui.component-types
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `renderLatex()` 把一段基础 LaTeX math 编成终端可用的 Unicode 文本；不支持或畸形的输入返回 `undefined`，Markdown 渲染器再回退到原文。

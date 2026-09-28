@@ -43,7 +43,7 @@ symbols:
   - VStack
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 related:
   - subsys.tui.component-model
 ---
@@ -62,7 +62,7 @@ related:
 
 本轮 L2 只采信 `packages/tui/src/components/` 和 `packages/tui/src/index.ts`;`Component` / `Focusable` 的 runtime protocol 定义位于 `packages/tui/src/tui.ts`,不在本轮允许证据范围内,因此本节点不把 protocol 语义作为已核 `[E]` 结论 [U]。
 
-`packages/tui/src/index.ts` 是 component public export surface：公开 concrete class **16** 个（`Box` … `VStack`，含 `MouseRegion`）[E: packages/tui/src/index.ts:37] [E: packages/tui/src/index.ts:45] [E: packages/tui/src/index.ts:63] [E: packages/tui/src/index.ts:69]。`packages/tui/src/components/` 目录现有 **18** 个 `.ts` 文件；内部 `stack.ts`（`Stack` 基类，HStack/VStack 共用）与 `alt-screen-flash.ts`（`AltScreenFlashContainer`）不从 package root 导出，不计入这 16 个 public 实例 [E: packages/tui/src/components/stack.ts:32] [E: packages/tui/src/components/alt-screen-flash.ts:13] [I]。
+`packages/tui/src/index.ts` 是 component public export surface：公开 concrete class **16** 个（`Box` … `VStack`，含 `MouseRegion`）[E: packages/tui/src/index.ts:40] [E: packages/tui/src/index.ts:48] [E: packages/tui/src/index.ts:66] [E: packages/tui/src/index.ts:72]。`packages/tui/src/components/` 目录现有 **18** 个 `.ts` 文件；内部 `stack.ts`（`Stack` 基类，HStack/VStack 共用）与 `alt-screen-flash.ts`（`AltScreenFlashContainer`）不从 package root 导出，不计入这 16 个 public 实例 [E: packages/tui/src/components/stack.ts:32] [E: packages/tui/src/components/alt-screen-flash.ts:13] [I]。
 
 ## 组件实例目录
 
@@ -89,7 +89,7 @@ related:
 
 | 文件 | 符号 | 为何不计入 public catalog | 源码证据 |
 | --- | --- | --- | --- |
-| `packages/tui/src/components/stack.ts` | `Stack` / `StackChild` / `StackOptions` | HStack/VStack 共用 layout 基类；`index.ts` 只 re-export 类型与 VStack/HStack，不导出 `Stack` class。 | [E: packages/tui/src/components/stack.ts:32] [E: packages/tui/src/index.ts:64] [E: packages/tui/src/index.ts:69] |
+| `packages/tui/src/components/stack.ts` | `Stack` / `StackChild` / `StackOptions` | HStack/VStack 共用 layout 基类；`index.ts` 只 re-export 类型与 VStack/HStack，不导出 `Stack` class。 | [E: packages/tui/src/components/stack.ts:32] [E: packages/tui/src/index.ts:67] [E: packages/tui/src/index.ts:72] |
 | `packages/tui/src/components/alt-screen-flash.ts` | `AltScreenFlashContainer` | Alternate-screen 短暂 flash 容器；不在 `index.ts` 导出。 | [E: packages/tui/src/components/alt-screen-flash.ts:13] |
 
 ## 形态分组

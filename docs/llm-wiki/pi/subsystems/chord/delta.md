@@ -58,7 +58,7 @@ related:
   - subsys.client.remote-session-client
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `@earendil-works/chord/delta` 的权威路径是 **immutable revision tracker**：`track(initial)` 拿走 alias-free strict-JSON root；`beginChange()` 打开 overlay draft；`prepare()` 物化候选值和精确 `Op[]`；`adopt()` 交换根指针。`applyImmutable()` / `applyImmutableBatches()` 是 in-process 首选 replay。`replicatedState()` 用同一套 tracker，生产者走 `change(context, callback)` / `replace(context, value)`，消费者拿不可变完整值。跨越边界的值必须是 strict JSON；`apply()` / `decoder()` 把 op 当 untrusted 输入校验路径与动词。[E: packages/chord/src/delta/tracker.ts:321][E: packages/chord/src/delta/tracker.ts:235][E: packages/chord/src/delta/index.ts:409][E: packages/chord/src/delta/index.ts:419][E: packages/chord/src/services/state.ts:123][E: packages/chord/src/delta/index.ts:152]

@@ -35,7 +35,7 @@ related:
   - spine.provider-stream
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.telemetry.contracts` 是 `@earendil-works/pi-telemetry` 的 vendor-neutral 契约层:显式 callback `TelemetryContext` / `TelemetrySpan`、共享 `NOOP_TELEMETRY_CONTEXT`、进程内 `InMemoryTelemetryContext`、typed schema 工具,以及 runner-independent adapter conformance。本包不包含 exporter、全局 current-span 或 backend SDK。
@@ -67,7 +67,7 @@ updated: ff72faba28
 - `packages/telemetry/src/testing/types.ts`:`TelemetryAdapterFixture`、`TelemetryAdapterFixtureFactory`、`TelemetryAdapterConformanceCase`。[E: packages/telemetry/src/testing/types.ts:5][E: packages/telemetry/src/testing/types.ts:11][E: packages/telemetry/src/testing/types.ts:14]
 - `packages/telemetry/src/testing/conformance.ts`:`createTelemetryAdapterConformance()`。[E: packages/telemetry/src/testing/conformance.ts:61]
 - `packages/agent/src/harness/telemetry.ts`:agent 拥有的 `AI_TELEMETRY_SCHEMA`、`HARNESS_TELEMETRY_SCHEMA`、`AGENT_TELEMETRY_SCHEMAS`、`startAiSpan()`、`startHarnessSpan()`。[E: packages/agent/src/harness/telemetry.ts:42][E: packages/agent/src/harness/telemetry.ts:138][E: packages/agent/src/harness/telemetry.ts:233][E: packages/agent/src/harness/telemetry.ts:595][E: packages/agent/src/harness/telemetry.ts:622]
-- `packages/agent/docs/telemetry-schema.md`:由 `generate-telemetry-docs.ts` 生成的 schema 对照文档;测试要求它与 schema 渲染结果逐字相等。[E: packages/agent/docs/telemetry-schema.md:3][E: packages/agent/test/harness/telemetry.test.ts:37][E: packages/agent/test/harness/telemetry.test.ts:38]
+- `packages/agent/docs/telemetry-schema.md`:由 `generate-telemetry-docs.ts` 生成的 schema 对照文档;测试要求它与 schema 渲染结果逐字相等。[E: packages/agent/docs/telemetry-schema.md:5][E: packages/agent/test/harness/telemetry.test.ts:37][E: packages/agent/test/harness/telemetry.test.ts:38]
 
 ## 数据模型
 

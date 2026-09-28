@@ -12,7 +12,7 @@ related:
  - subsys.agent-core.message-queue
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `ref.agent.queue-modes` 是 `QueueMode` 的逐实例目录:覆盖 `"all"` 与 `"one-at-a-time"` 两个队列排空模式、它们在 steering/follow-up queue 上的默认绑定,以及 `PendingMessageQueue.drain()` 的实现语义边界。

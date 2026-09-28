@@ -20,7 +20,7 @@ related:
  - subsys.ai.session-resources
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `openai-codex-responses.ts` 是 `pi-ai` 调 ChatGPT Codex Responses backend 的 wire 协议入口: 它把统一 `TranscriptContext`/`StreamOptions` 转成 Codex request, 优先走 WebSocket streaming, 必要时降级 SSE, 再复用 OpenAI Responses shared normalizer 输出 `AssistantMessageEventStream`。已删除的 `deferred-tools.ts` 不再参与本 adapter。
@@ -64,7 +64,7 @@ immediate tools 仍进入 request `tools`。[E: packages/ai/src/api/openai-codex
 
 ## `samplingParams` 不写入 Codex body
 
-`OpenAICodexResponsesOptions` 继承 `StreamOptions.samplingParams`,`streamSimple` 也经 `buildBaseOptions` 把该字段拷进 options。但 `buildRequestBody()` **没有** `Object.assign(body, model.samplingParams, options?.samplingParams)`。因此 Codex 的 direct `stream` / `complete` 与 `streamSimple` 都不会把 samplingParams merge 进 ChatGPT Codex JSON body;这与 OpenAI Responses / Completions / Azure Responses 不同。[E: packages/ai/src/api/openai-codex-responses.ts:79] [E: packages/ai/src/api/openai-codex-responses.ts:511] [E: packages/ai/src/api/simple-options.ts:29] [E: packages/ai/src/api/openai-responses.ts:364] [U]
+`OpenAICodexResponsesOptions` 继承 `StreamOptions.samplingParams`,`streamSimple` 也经 `buildBaseOptions` 把该字段拷进 options。但 `buildRequestBody()` **没有** `Object.assign(body, model.samplingParams, options?.samplingParams)`。因此 Codex 的 direct `stream` / `complete` 与 `streamSimple` 都不会把 samplingParams merge 进 ChatGPT Codex JSON body;这与 OpenAI Responses / Completions / Azure Responses 不同。[E: packages/ai/src/api/openai-codex-responses.ts:79] [E: packages/ai/src/api/openai-codex-responses.ts:511] [E: packages/ai/src/api/simple-options.ts:29] [E: packages/ai/src/api/openai-responses.ts:362] [U]
 
 ## Off reasoning
 
@@ -96,7 +96,7 @@ WebSocket cached continuation 保持 `store: false` 的 base body, 并通过 con
 
 普通 OpenAI Responses 的 request builder 调用默认 `convertResponsesMessages()` 时可把 system prompt 放进 Responses `input` 的 developer/system role; Codex request builder 调 `convertResponsesMessages(..., { includeSystemPrompt: false })`, 再把 system prompt 放到 top-level `instructions`。[E: packages/ai/src/api/openai-codex-responses.ts:542] [E: packages/ai/src/api/openai-codex-responses.ts:543] [E: packages/ai/src/api/openai-codex-responses.ts:553]
 
-普通 OpenAI Responses 的 `buildParams` 末尾 merge `samplingParams`; Codex `buildRequestBody` 不 merge。[E: packages/ai/src/api/openai-responses.ts:364] [I]
+普通 OpenAI Responses 的 `buildParams` 末尾 merge `samplingParams`; Codex `buildRequestBody` 不 merge。[E: packages/ai/src/api/openai-responses.ts:362] [I]
 
 Codex headers are ChatGPT-specific: base headers extract account id from JWT, set `chatgpt-account-id`, `originator: pi`, and user agent; SSE adds `OpenAI-Beta: responses=experimental`, while WebSocket uses `responses_websockets` beta 和 per-request `session-id`/`x-client-request-id`。[E: packages/ai/src/api/openai-codex-responses.ts:1654] [E: packages/ai/src/api/openai-codex-responses.ts:1655] [E: packages/ai/src/api/openai-codex-responses.ts:1656] [E: packages/ai/src/api/openai-codex-responses.ts:1669] [E: packages/ai/src/api/openai-codex-responses.ts:1694] [E: packages/ai/src/api/openai-codex-responses.ts:1695]
 

@@ -23,7 +23,7 @@ related:
  - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `ref.ai.wire-protocol-catalog` 逐实例列出 `pi-ai` **chat/text** streaming wire protocol key（`KnownApi`，**10** 个）、图像 API（`KnownImageApi`，1 个）和 classifier API（`KnownClassifierApi`，2 个）。chat 的 10 不把 image/classifier 算进去。

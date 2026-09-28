@@ -21,7 +21,7 @@ related:
   - ref.ai.wire-protocol-catalog
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.ai.pi-messages` 描述 Pi 自有的 HTTP/SSE wire protocol：client 向 `<baseUrl>/messages` POST 统一的 model/context/options，再把服务端序列化事件还原为标准 `AssistantMessageEventStream`。Radius gateway 和 `models.json` custom provider 都能使用它。

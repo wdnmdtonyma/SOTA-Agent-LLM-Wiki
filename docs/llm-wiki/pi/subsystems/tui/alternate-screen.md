@@ -33,7 +33,7 @@ related:
  - ref.tui.keybinding-actions
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `TuiAltScreen` 是固定 viewport 的 fullscreen renderer，整合 alternate-screen lifecycle、layout、滚动导航、鼠标选择、`copyOnSelect`、链接、flash、jump-to-end 与 Kitty placement cache。
@@ -64,7 +64,7 @@ SGR 按下用 button `0`，松开同时认具体 release（button `0` + `m`）�
 
 FOCUS_OUT（`\x1b[O`）只取消正在进行的 press。idle 或零宽选区不 `requestRender()`，因此不会为清选区重绘；只有拖出可见选区的 active press 才清选并重绘。已经松开的可见选区跨 focus 变化保留。[E: packages/tui/src/tui-alt-screen.ts:659] [E: packages/tui/src/tui-alt-screen.ts:671]
 
-`PI_TUI_ESC_TIMEOUT` 只作用于 lone ESC。`ProcessTerminal` 把它传给 `StdinBuffer.escapeTimeout`；incomplete CSI/mouse 仍用独立的 sequence timeout（默认 50ms）。正数覆盖默认 10ms（SSH 下 100ms）；`0`/非法值忽略。[E: packages/tui/src/terminal.ts:123] [E: packages/tui/src/terminal.ts:124] [E: packages/tui/src/terminal.ts:214] [E: packages/tui/src/stdin-buffer.ts:23] [E: packages/tui/src/stdin-buffer.ts:388]
+`PI_TUI_ESC_TIMEOUT` 只作用于 lone ESC。`ProcessTerminal` 把它传给 `StdinBuffer.escapeTimeout`；incomplete CSI/mouse 仍用独立的 sequence timeout（默认 50ms）。正数覆盖默认 10ms（SSH 下 100ms）；`0`/非法值忽略。[E: packages/tui/src/terminal.ts:123] [E: packages/tui/src/terminal.ts:124] [E: packages/tui/src/terminal.ts:215] [E: packages/tui/src/stdin-buffer.ts:23] [E: packages/tui/src/stdin-buffer.ts:388]
 
 双击 word selection 把 `/` 与 `-` 当 joiner，不再把 path / kebab-case 切开；权威细节在 `subsys.tui.alt-screen-search`。[E: packages/tui/src/tui-alt-screen.ts:83] [E: packages/tui/src/tui-alt-screen.ts:1158]
 
@@ -74,7 +74,7 @@ FOCUS_OUT（`\x1b[O`）只取消正在进行的 press。idle 或零宽选区不 
 
 `hasActiveSelection()` 看当前是否有非空选区文本；`copyActiveSelectionToClipboard()` 用同一条 `copyTextToClipboard()` 路径复制，无选区返回 `false`。[E: packages/tui/src/tui-alt-screen.ts:296] [E: packages/tui/src/tui-alt-screen.ts:301]
 
-coding-agent 把 settings `fullscreenCopyOnSelect`（默认 `true`）传给 `copyOnSelect`，并注入 `copySelection`（`copyToClipboard`）。[E: packages/coding-agent/src/core/settings-manager.ts:162] [E: packages/coding-agent/src/core/settings-manager.ts:1297] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:584] `fullscreenCopyOnSelect=false` 时禁用自动 copy。`app.message.copy` 带 `preferSelection: true` 时，只有 UI 是 `TuiAltScreen`、`getCopyOnSelect()` 为 false 且 `hasActiveSelection()` 为 true 才 `copyActiveSelectionToClipboard()`；默认 `fullscreenCopyOnSelect`/`copyOnSelect` 为 true 时走 last assistant message。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3010] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6382] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6383] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6384] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6385] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6387]
+coding-agent 把 settings `fullscreenCopyOnSelect`（默认 `true`）传给 `copyOnSelect`，并注入 `copySelection`（`copyToClipboard`）。[E: packages/coding-agent/src/core/settings-manager.ts:162] [E: packages/coding-agent/src/core/settings-manager.ts:1297] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:588] `fullscreenCopyOnSelect=false` 时禁用自动 copy。`app.message.copy` 带 `preferSelection: true` 时，只有 UI 是 `TuiAltScreen`、`getCopyOnSelect()` 为 false 且 `hasActiveSelection()` 为 true 才 `copyActiveSelectionToClipboard()`；默认 `fullscreenCopyOnSelect`/`copyOnSelect` 为 true 时走 last assistant message。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3003] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6390] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6384] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6384] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6391] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6393]
 
 coding-agent fullscreen 还会注入 `scrollToEndIndicator`（`tui-renderer.ts`），文案带 `tui.altScreen.bottom` shortcut。[I]
 
@@ -90,7 +90,7 @@ Kitty image cache 以 transmission generation 判断是否可复用 placement，
 - `copyOnSelect: false` 只停自动 copy，不取消选区高亮；调用方必须自己触发 `copyActiveSelectionToClipboard()`。[E: packages/tui/src/tui-alt-screen.ts:1345] [E: packages/tui/test/tui-alt-screen.test.ts:1315]
 - cache budgets 是 renderer 常量，不是 settings/API。[E: packages/tui/src/tui-alt-screen.ts:76]
 - overlay 存在时 scrollbar pointer target 被禁用，避免背景滚动条拦截 modal interaction。[E: packages/tui/src/tui-alt-screen.ts:1027]
-- `flash()`、scroll methods 与 selection APIs 属于具体 renderer，不在通用 `TUI` interface 中。[E: packages/tui/src/tui.ts:425]
+- `flash()`、scroll methods 与 selection APIs 属于具体 renderer，不在通用 `TUI` interface 中。[E: packages/tui/src/tui.ts:453]
 - `PI_TUI_ESC_TIMEOUT` 不会拉长残缺 SGR/CSI 的等待；只延长单独一个 ESC 被当成 Escape 之前的窗口。[E: packages/tui/src/stdin-buffer.ts:388]
 - overlay 内 `SelectList` / `SettingsList` 的 hover 不改 selection；见 `subsys.tui.overlay`。[I]
 

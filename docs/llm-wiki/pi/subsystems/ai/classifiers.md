@@ -41,7 +41,7 @@ related:
   - subsys.coding-agent.model-registry
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.ai.classifiers` 描述 `pi-ai` 的结构化分类器 runtime：`ClassifierModel` 必有 `type: "classifier"`，经 `Models.classify()` 解析 provider auth 后按 `model.api` 分派到 System One 实现。公开问题类型是 Jev 风格的 `choice` / `score` / `bool`；TypeSafe 把 public `bool` 译成 wire `noul`。

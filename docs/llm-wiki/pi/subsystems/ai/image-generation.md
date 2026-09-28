@@ -32,7 +32,7 @@ related:
   - subsys.ai.wire-protocol-dispatch
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.ai.image-generation` 描述 `pi-ai` 把图像生成并入统一 `Models` 之后的管线：`ImageModel` 必有 `type: "image"`，`Models.generateImages()` 解析 provider auth 再按 `model.api` 分派。独立 `ImagesModels` / `images-models.ts` / `providers/openrouter-images.ts` 已删除。

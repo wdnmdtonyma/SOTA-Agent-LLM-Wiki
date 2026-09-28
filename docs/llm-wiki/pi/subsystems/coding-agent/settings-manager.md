@@ -24,7 +24,7 @@ related:
   - ref.coding-agent.config-keys
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.coding-agent.settings-manager` 描述 pi-coding-agent 的 settings manager: 它把 global `settings.json` 与 project `.pi/settings.json` 读入内存, 做 project-over-global merge, 通过 lockfile 和 write queue 保存局部修改, 并用 project trust 门控 project scope。
@@ -115,7 +115,7 @@ global setter 修改 `globalSettings`, 调 `markModified()` 标记字段或 nest
 
 `flush()` 等待 write queue 完成; `reload()` 也先等待 write queue, 然后重新读取 global/project 并清空 modified sets; `drainErrors()` 返回已收集错误并把 manager 内部 error list 清空 [E: packages/coding-agent/src/core/settings-manager.ts:539] [E: packages/coding-agent/src/core/settings-manager.ts:540] [E: packages/coding-agent/src/core/settings-manager.ts:550] [E: packages/coding-agent/src/core/settings-manager.ts:555] [E: packages/coding-agent/src/core/settings-manager.ts:564] [E: packages/coding-agent/src/core/settings-manager.ts:709] [E: packages/coding-agent/src/core/settings-manager.ts:710] [E: packages/coding-agent/src/core/settings-manager.ts:713] [E: packages/coding-agent/src/core/settings-manager.ts:714] [E: packages/coding-agent/src/core/settings-manager.ts:715]。
 
-`collectSettingsDiagnostics` 把 `drainErrors()` 映射成 `type: "warning"` 的 runtime diagnostic,有 path 时 message 为 `Invalid settings file ${path}: ...` [E: packages/coding-agent/src/core/settings-diagnostics.ts:4] [E: packages/coding-agent/src/core/settings-diagnostics.ts:7]。`deduplicateDiagnostics` 按 `type\0message` 去重 [E: packages/coding-agent/src/core/settings-diagnostics.ts:15] [E: packages/coding-agent/src/core/settings-diagnostics.ts:20]。`main()` 在 startup 与 runtime 各收集一次,interactive 路径 `deduplicateDiagnostics` 后把结果交给 TUI `startupDiagnostics`;TUI 对 warning 调 `showWarning`,因此 invalid settings 会在启动界面显示带 path 的提示 [E: packages/coding-agent/src/main.ts:657] [E: packages/coding-agent/src/main.ts:785] [E: packages/coding-agent/src/main.ts:900] [E: packages/coding-agent/src/main.ts:940] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1130] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1134]。
+`collectSettingsDiagnostics` 把 `drainErrors()` 映射成 `type: "warning"` 的 runtime diagnostic,有 path 时 message 为 `Invalid settings file ${path}: ...` [E: packages/coding-agent/src/core/settings-diagnostics.ts:4] [E: packages/coding-agent/src/core/settings-diagnostics.ts:7]。`deduplicateDiagnostics` 按 `type\0message` 去重 [E: packages/coding-agent/src/core/settings-diagnostics.ts:15] [E: packages/coding-agent/src/core/settings-diagnostics.ts:20]。`main()` 在 startup 与 runtime 各收集一次,interactive 路径 `deduplicateDiagnostics` 后把结果交给 TUI `startupDiagnostics`;TUI 对 warning 调 `showWarning`,因此 invalid settings 会在启动界面显示带 path 的提示 [E: packages/coding-agent/src/main.ts:657] [E: packages/coding-agent/src/main.ts:785] [E: packages/coding-agent/src/main.ts:900] [E: packages/coding-agent/src/main.ts:940] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1129] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1147]。
 
 ## Public API 分组
 

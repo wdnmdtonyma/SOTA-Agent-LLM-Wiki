@@ -9,7 +9,7 @@ symbols: [AutocompleteProvider, CombinedAutocompleteProvider]
 related: [subsys.tui.fuzzy-match, subsys.tui.editor-component]
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > 自动完成 subsystem 是 `pi-tui` 的 provider contract 与默认 `CombinedAutocompleteProvider`: 它把 slash commands、slash command arguments、普通 file path completion、`@file` fuzzy attachment completion 统一成 editor 可消费的 suggestions 和 applyCompletion 结果。

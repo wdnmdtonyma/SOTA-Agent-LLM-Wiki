@@ -67,7 +67,7 @@ related:
   - ref.package-index
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > Pi **0.87.1**（wiki target `ff72faba28`；`[Unreleased]` 另有 TS7 等）的主线分层从独立 `@earendil-works/chord` 开始：`pi-ai` 提供 provider / model API，`pi-durable` 提供 conversation/task/document runtime，`pi-agent-core` 提供可复用 agent runtime，`pi-coding-agent` 把 runtime 装配成 coding-agent CLI 产品；`AgentSession` 是产品层和 core runtime 的主要边界对象。`pi-durable` **不是** coding-agent `SessionManager` JSONL 的替代，也 **不是** `pi-session-backend-sqlite-node`。远程 `pi-protocol` / Chord 风格 `pi-client` `Client` / `pi-server` 是 composable remote-session 栈，不等于本地 RPC mode。
@@ -147,7 +147,7 @@ flowchart TD
 
 ## pi-durable 与两套 Session 的边界
 
-`pi-durable` 的 `Session` 是 `createSession(storage)` 返回的 kernel：`commit(change, context)`、document tokens、`ROOT_CONVERSATION_ID`。[E: packages/durable/src/index.ts:3] [E: packages/durable/src/index.ts:57] 它的 JSONL/SQLite 实现 durable `Storage` 契约。
+`pi-durable` 的 `Session` 是 `createSession(storage)` 返回的 kernel：`commit(change, context)`、document tokens、`ROOT_CONVERSATION_ID`。[E: packages/durable/src/index.ts:3] [E: packages/durable/src/index.ts:62] 它的 JSONL/SQLite 实现 durable `Storage` 契约。
 
 `pi-agent-core` 的 v4 `Session` / `SessionRepo` 是 `AgentHarness.create` 的输入；可选 backend 是 `@earendil-works/pi-session-backend-sqlite-node`。[E: packages/agent/src/harness/agent-harness.ts:519] [E: packages/session-backends/sqlite-node/package.json:4]
 

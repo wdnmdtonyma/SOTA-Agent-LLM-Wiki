@@ -42,7 +42,7 @@ related:
  - ref.agent.error-codes
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.agent-core.agent-harness-lifecycle` 说明 `AgentHarness` 仍从 `harness/agent-harness.ts` 以 `{ create }` 导出；运行时实现是 `harness/runtime/harness.ts` 的 `Harness` 类，加上 `runtime/lane.ts` 的 `Lane` 与 `runtime/drive/*` 的 durable procedure。旧顶层 `harness/reducer.ts` 已迁到 `runtime/reducer.ts`（`reduceLaneSnapshot`）。

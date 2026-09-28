@@ -24,7 +24,7 @@ related:
   - surface.providers.auth
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.ai.cloudflare-gateway-binding` 覆盖 `createAiBindingFetch(binding)`:一个把请求原样交给 Workers AI binding `env.AI.fetch()` 的 `FetchFunction`。它不再把 HTTPS gateway URL 翻译成 `gateway().run()`。节点 id 保留旧名,实现文件是 `cloudflare-ai-binding.ts`。
@@ -105,7 +105,7 @@ Binding 路径复用同一 header 形状,但 Bearer 换成 sentinel。shim 不�
 
 ## 设计动机与权衡
 
-不再翻译 URL:旧 `createGatewayBindingFetch` 只支持 POST + JSON,并把 HTTPS prefix 拆成 `gateway().run({ provider, endpoint, query })`。现行 binding `fetch` 已能吃与 HTTPS 同形的 workers-binding URL,所以 shim 只做类型与构造期检查。[E: packages/ai/src/api/cloudflare-ai-binding.ts:80][E: packages/ai/CHANGELOG.md:119]
+不再翻译 URL:旧 `createGatewayBindingFetch` 只支持 POST + JSON,并把 HTTPS prefix 拆成 `gateway().run({ provider, endpoint, query })`。现行 binding `fetch` 已能吃与 HTTPS 同形的 workers-binding URL,所以 shim 只做类型与构造期检查。[E: packages/ai/src/api/cloudflare-ai-binding.ts:80][E: packages/ai/CHANGELOG.md:120]
 
 不引入 `@cloudflare/workers-types`,让 Node 测试与非 Workers bundler 都能编译这个模块;本文件只用 structural interface。[E: packages/ai/src/api/cloudflare-ai-binding.ts:42][I]
 
@@ -113,7 +113,7 @@ Binding 路径复用同一 header 形状,但 Bearer 换成 sentinel。shim 不�
 
 - 调用方必须把 model `baseUrl` 写成 binding 能服务的路由(文档示例:`https://workers-binding.ai/ai-gateway/gateways/${gateway}/anthropic`)。shim 不会把 `gateway.ai.cloudflare.com/...` 改写成 binding URL。[E: packages/ai/src/api/cloudflare-ai-binding.ts:80]
 - 缺 `fetch()` 的对象在构造时 throw,不会在第一次请求才爆。[E: packages/ai/test/cloudflare-ai-binding.test.ts:67]
-- `pi-coding-agent` 源码没有引用 `createAiBindingFetch`。CHANGELOG 仍写旧名 `createGatewayBindingFetch` “inherited”,本仓库看不到 coding-agent 再导出或自动装配。[E: packages/coding-agent/CHANGELOG.md:410][U]
+- `pi-coding-agent` 源码没有引用 `createAiBindingFetch`。CHANGELOG 仍写旧名 `createGatewayBindingFetch` “inherited”,本仓库看不到 coding-agent 再导出或自动装配。[E: packages/coding-agent/CHANGELOG.md:412][U]
 - “无需 API token” 仅适用于 **调用方已经在 Worker 里持有 `env.AI` binding** 且自行注入这个 fetch。默认 `cloudflare-ai-gateway` provider 仍走 HTTPS + `CLOUDFLARE_API_KEY`。[E: packages/ai/src/providers/cloudflare-auth.ts:42][E: packages/ai/src/providers/cloudflare-ai-gateway.ts:19]
 
 ## 跨包边界

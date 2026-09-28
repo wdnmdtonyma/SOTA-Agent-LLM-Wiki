@@ -49,7 +49,7 @@ related:
  - ref.ai.model-catalog
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `surface.misc.images` 描述 pi-coding-agent 的图像可见面：CLI `@file`、剪贴板与 tool result 把本地图片变成 user/tool `ImageContent`；`inputLimits.images.resize` 决定写入 history 前怎么压图；TUI 在终端能力允许时渲染 Kitty/iTerm2。输入图像与生成图像都走统一 `Models`，但生成调用本身属于 [subsys.ai.image-generation](../../subsystems/ai/image-generation.md)。
@@ -78,7 +78,7 @@ updated: ff72faba28
 
 `processFileArguments()` 对每个 file arg 用 `resolveReadPath` + `resolve()` 得绝对路径，不存在则 `process.exit(1)`，空文件跳过 [E: packages/coding-agent/src/cli/file-processor.ts:32] [E: packages/coding-agent/src/cli/file-processor.ts:38] [E: packages/coding-agent/src/cli/file-processor.ts:39] [E: packages/coding-agent/src/cli/file-processor.ts:44]。`detectSupportedImageMimeTypeFromFile()` 命中则 `processImage()` 生成 `{ type: "image", mimeType, data }`；否则按 UTF-8 读进 `<file>` block [E: packages/coding-agent/src/cli/file-processor.ts:49] [E: packages/coding-agent/src/cli/file-processor.ts:54] [E: packages/coding-agent/src/cli/file-processor.ts:61] [E: packages/coding-agent/src/cli/file-processor.ts:77]。图片仍写一个 text reference：有 processing hints 就放进 `<file>`，否则空 tag [E: packages/coding-agent/src/cli/file-processor.ts:69] [E: packages/coding-agent/src/cli/file-processor.ts:72]。
 
-interactive startup 调 `session.prompt(initialMessage, { images: initialImages })`，print 模式同样 [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1166] [E: packages/coding-agent/src/modes/print-mode.ts:132]。`AgentSession` 在构造 user message 前走 `_normalizePromptImages()`，再把 text part 与 images 放进同一个 user content array [E: packages/coding-agent/src/core/agent-session.ts:1717] [E: packages/coding-agent/src/core/agent-session.ts:1721] [E: packages/coding-agent/src/core/agent-session.ts:1722]。
+interactive startup 调 `session.prompt(initialMessage, { images: initialImages })`，print 模式同样 [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1179] [E: packages/coding-agent/src/modes/print-mode.ts:132]。`AgentSession` 在构造 user message 前走 `_normalizePromptImages()`，再把 text part 与 images 放进同一个 user content array [E: packages/coding-agent/src/core/agent-session.ts:1717] [E: packages/coding-agent/src/core/agent-session.ts:1721] [E: packages/coding-agent/src/core/agent-session.ts:1722]。
 
 ## 3 支持格式、转换与 `inputLimits.images.resize`
 
@@ -98,13 +98,13 @@ MIME sniff 读文件前 4100 bytes，识别 JPEG、非 animated PNG、GIF、WEBP
 
 `afterToolCall` 先跑 extension `tool_result` hook，再用 hook 产出（或原始）content 调用 `normalizeToolResultImages()`，因此 hook 注入的图也会被压 [E: packages/coding-agent/src/core/agent-session.ts:556] [E: packages/coding-agent/src/core/agent-session.ts:569] [E: packages/coding-agent/src/core/agent-session.ts:572]。decode/转换失败时 **保留原 image block**（与 `read` 省略不同），成功时把 hints 追加为 text block；没有任何变化则返回原数组 identity [E: packages/coding-agent/src/utils/tool-result-images.ts:28] [E: packages/coding-agent/src/utils/tool-result-images.ts:50] [E: packages/coding-agent/src/utils/tool-result-images.ts:66]。
 
-`images.autoResize`（settings，默认 true）是总开关；为 false 时 `processImage` 不调用 `resizeImage`，catalog resize profile 也不会应用 [E: packages/coding-agent/src/core/settings-manager.ts:62] [E: packages/coding-agent/src/core/settings-manager.ts:63] [E: packages/coding-agent/src/core/settings-manager.ts:1306] [E: packages/coding-agent/src/utils/image-process.ts:77] [E: packages/coding-agent/src/utils/image-process.ts:86]。settings selector 把 auto-resize 描述为把大图压到 2000×2000，把 block images 描述为阻止送给 LLM providers [E: packages/coding-agent/src/modes/interactive/components/settings-selector.ts:750] [E: packages/coding-agent/src/modes/interactive/components/settings-selector.ts:760]。
+`images.autoResize`（settings，默认 true）是总开关；为 false 时 `processImage` 不调用 `resizeImage`，catalog resize profile 也不会应用 [E: packages/coding-agent/src/core/settings-manager.ts:62] [E: packages/coding-agent/src/core/settings-manager.ts:63] [E: packages/coding-agent/src/core/settings-manager.ts:1306] [E: packages/coding-agent/src/utils/image-process.ts:77] [E: packages/coding-agent/src/utils/image-process.ts:86]。settings selector 把 auto-resize 描述为把大图压到 2000×2000，把 block images 描述为阻止送给 LLM providers [E: packages/coding-agent/src/modes/interactive/components/settings-selector.ts:762] [E: packages/coding-agent/src/modes/interactive/components/settings-selector.ts:772]。
 
 ## 4 blockImages 与显示开关
 
 `images.blockImages` 默认 false。SDK wrapper `convertToLlm` 之后若 `getBlockImages()` 为 true，就把 user/toolResult content 里的 image part 替换成 `"Image reading is disabled."` [E: packages/coding-agent/src/core/settings-manager.ts:64] [E: packages/coding-agent/src/core/settings-manager.ts:1319] [E: packages/coding-agent/src/core/sdk.ts:271] [E: packages/coding-agent/src/core/sdk.ts:283]。它不阻止 CLI/TUI 先构造 `ImageContent`，只在 LLM conversion 边界过滤 [I]。
 
-`TerminalSettings.showImages` 默认 true，只在终端支持图片时有意义；`imageWidthCells` 默认 60 [E: packages/coding-agent/src/core/settings-manager.ts:53] [E: packages/coding-agent/src/core/settings-manager.ts:54]。settings selector 仅当 `getCapabilities().images` 为真才展示这两个开关 [E: packages/coding-agent/src/modes/interactive/components/settings-selector.ts:728] [E: packages/coding-agent/src/modes/interactive/components/settings-selector.ts:731]。
+`TerminalSettings.showImages` 默认 true，只在终端支持图片时有意义；`imageWidthCells` 默认 60 [E: packages/coding-agent/src/core/settings-manager.ts:53] [E: packages/coding-agent/src/core/settings-manager.ts:54]。settings selector 仅当 `getCapabilities().images` 为真才展示这两个开关 [E: packages/coding-agent/src/modes/interactive/components/settings-selector.ts:727] [E: packages/coding-agent/src/modes/interactive/components/settings-selector.ts:743]。
 
 ## 5 X11 clipboard 广告目标
 

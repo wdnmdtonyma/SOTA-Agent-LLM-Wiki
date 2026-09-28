@@ -29,7 +29,7 @@ related:
   - ref.ai.model-catalog
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `ref.ai.image-models` 是 `IMAGE_MODELS` 的**结构** catalog：记录 generated 三分对象里图像那一份的 bucket、`ImageModel` 字段、OpenRouter 生成规则，以及当前 checkout 能证明的实例。不要再 cite 已删除的 `image-models.generated.ts` / `providers/openrouter-images.ts`。

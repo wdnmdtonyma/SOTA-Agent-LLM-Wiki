@@ -9,7 +9,7 @@ symbols: [renderImage, encodeKitty, encodeITerm2, setCapabilityOverrides, detect
 related: [surface.misc.images, subsys.tui.terminal-capabilities]
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `terminal-image` 是 `pi-tui` 的 terminal inline image layer:它检测当前 terminal 是否支持 Kitty graphics protocol 或 iTerm2 inline image,把 base64 image payload 编码成 escape sequence,计算图片占用的 cell rows,并在不支持图片时提供 text fallback。环境变量与 `setCapabilityOverrides()` 可覆盖已检测到的 `hyperlinks` / `images` / `trueColor`。
@@ -77,7 +77,7 @@ precedence:环境检测 → env overlay → programmatic `setCapabilityOverrides
 
 coding-agent 产品层另有 JSON `terminal.hyperlinks` / `terminal.images` / `terminal.trueColor`(`true`/`false`/`"auto"`)。`SettingsManager.getTerminalCapabilityOverrides()` 只把非 `"auto"` 的布尔/`kitty`/`iterm2`/`false` 编进 `Partial<TerminalCapabilities>`,再交给 `setCapabilityOverrides()` [E: packages/coding-agent/src/core/settings-manager.ts:57] [E: packages/coding-agent/src/core/settings-manager.ts:1195] [E: packages/coding-agent/src/main.ts:857]。官方 docs 写 settings 优先于 env,是产品接线,不是 TUI `detectCapabilities()` 自己读 settings [I]。
 
-package root 导出 `setCapabilityOverrides` [E: packages/tui/src/index.ts:141]。
+package root 导出 `setCapabilityOverrides` [E: packages/tui/src/index.ts:145]。
 
 ## Kitty encoder
 

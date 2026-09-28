@@ -9,7 +9,7 @@ symbols: [runLoop, prepareNextTurn, prepareNextTurnWithContext, finishTurn, prep
 related: [spine.agent-loop, subsys.agent-core.message-queue, subsys.agent-core.hooks, subsys.coding-agent.agent-session]
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.agent-core.turn-control` 聚焦 `runLoop` 如何在一次 agent run 中决定何时开始下一轮 provider request、何时注入 queued messages、何时停止，以及 `prepareRequest` / `finishTurn` / `prepareNextTurn` 的组合顺序。

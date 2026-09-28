@@ -29,7 +29,7 @@ related:
  - subsys.tui.keybinding-matching
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `keybindings.json` 是 pi-coding-agent 的用户可见键位配置面:用户用 namespaced action id 覆盖默认快捷键,interactive mode 启动和 `/reload` 时把它读入同一个 app keybinding manager。
@@ -63,7 +63,7 @@ updated: ff72faba28
 
 `useWindowsKeybindings()` 把 native Windows 与 WSL(`WSL_DISTRO_NAME` 或 `WSL_INTEROP`)算作同一避让面:undo、alt-screen prompt/search、`app.model.cycleBackward`、`app.message.followUp` / `dequeue`、`app.clipboard.pasteImage` 走 Windows/WSL 默认;`app.suspend` 仍只在 native `win32` 取消默认 `ctrl+z` [E: packages/coding-agent/src/core/keybindings.ts:62] [E: packages/coding-agent/src/core/keybindings.ts:66] [E: packages/coding-agent/src/core/keybindings.ts:73] [E: packages/coding-agent/src/core/keybindings.ts:97] 。
 
-`app.models.save` 默认 `ctrl+s`,供 `/model` picker 和 scoped models selector 把当前选择写入启动默认;`app.thinking.save` 同样默认 `ctrl+s`,供 `/thinking` picker persist [E: packages/coding-agent/src/core/keybindings.ts:186] [E: packages/coding-agent/src/core/keybindings.ts:104] [E: packages/coding-agent/src/modes/interactive/components/scoped-models-selector.ts:369] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:399] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:131] [E: packages/coding-agent/docs/keybindings.md:154] [E: packages/coding-agent/docs/keybindings.md:156]。`app.message.copy` 默认 `ctrl+x`;fullscreen 且 `fullscreenCopyOnSelect` 关闭时,handler 的 `preferSelection` 先复制当前 selection [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3009] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6382] [E: packages/coding-agent/docs/keybindings.md:164] [E: packages/coding-agent/docs/settings.md:72]。
+`app.models.save` 默认 `ctrl+s`,供 `/model` picker 和 scoped models selector 把当前选择写入启动默认;`app.thinking.save` 同样默认 `ctrl+s`,供 `/thinking` picker persist [E: packages/coding-agent/src/core/keybindings.ts:186] [E: packages/coding-agent/src/core/keybindings.ts:104] [E: packages/coding-agent/src/modes/interactive/components/scoped-models-selector.ts:369] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:399] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:131] [E: packages/coding-agent/docs/keybindings.md:154] [E: packages/coding-agent/docs/keybindings.md:156]。`app.message.copy` 默认 `ctrl+x`;fullscreen 且 `fullscreenCopyOnSelect` 关闭时,handler 的 `preferSelection` 先复制当前 selection [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3002] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6384] [E: packages/coding-agent/docs/keybindings.md:164] [E: packages/coding-agent/docs/settings.md:72]。
 
 本节点不逐项列出所有默认键位;逐项 catalog 应由 [ref.coding-agent.default-keybindings](../../reference/default-keybindings.md) 覆盖 [I]。当前 `index.json` 与源码已统一到 `KEYBINDINGS`、`migrateKeybindingsConfig`、`KeybindingsManager` 和 `AppKeybindings`;旧名 `DEFAULT_APP_KEYBINDINGS` / `DEFAULT_EDITOR_KEYBINDINGS` 不再作为权威符号 [E: packages/coding-agent/src/core/keybindings.ts:14] [E: packages/coding-agent/src/core/keybindings.ts:75] [E: packages/coding-agent/src/core/keybindings.ts:320] [E: packages/coding-agent/src/core/keybindings.ts:371]。
 
@@ -75,7 +75,7 @@ pi-tui 的 `KeyId` 类型与用户文档一致,`ModifierName` 含 `super` [E: pa
 
 ## 读取、覆盖与冲突
 
-interactive mode 构造时调用 `KeybindingsManager.create()` 并把返回值注入全局 TUI keybindings,随后默认 editor 和其它组件复用同一个 manager [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:590] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:595] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:598]。`KeybindingsManager.create(agentDir = getAgentDir())` 把配置路径拼成 `<agentDir>/keybindings.json`,读取 user bindings 后构造 coding-agent manager [E: packages/coding-agent/src/core/keybindings.ts:379] [E: packages/coding-agent/src/core/keybindings.ts:385] [E: packages/coding-agent/src/core/keybindings.ts:381] [E: packages/coding-agent/src/core/keybindings.ts:387]。
+interactive mode 构造时调用 `KeybindingsManager.create()` 并把返回值注入全局 TUI keybindings,随后默认 editor 和其它组件复用同一个 manager [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:594] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:599] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:602]。`KeybindingsManager.create(agentDir = getAgentDir())` 把配置路径拼成 `<agentDir>/keybindings.json`,读取 user bindings 后构造 coding-agent manager [E: packages/coding-agent/src/core/keybindings.ts:379] [E: packages/coding-agent/src/core/keybindings.ts:385] [E: packages/coding-agent/src/core/keybindings.ts:381] [E: packages/coding-agent/src/core/keybindings.ts:387]。
 
 文件读取失败、文件不存在、JSON parse 失败或 parse 后不是 object 时,`loadRawConfig()` 返回 `undefined`,最终 user bindings 变成空 object;这意味着坏的 `keybindings.json` 不会阻止启动,但当前读取函数本身不产生诊断 [E: packages/coding-agent/src/core/keybindings.ts:365] [E: packages/coding-agent/src/core/keybindings.ts:361] [E: packages/coding-agent/src/core/keybindings.ts:363] [E: packages/coding-agent/src/core/keybindings.ts:365] [E: packages/coding-agent/src/core/keybindings.ts:367] [E: packages/coding-agent/src/core/keybindings.ts:396] [I]。
 
@@ -83,7 +83,7 @@ pi-tui manager 的覆盖语义是:每个 definition 若没有 user value 就使�
 
 ## Reload 与迁移
 
-用户文档说编辑 `keybindings.json` 后运行 `/reload` 可在不重启 session 的情况下应用变更 [E: packages/coding-agent/docs/keybindings.md:9]。内置 slash command 列表包含 `reload`,说明是 Reload keybindings、extensions、skills、prompts、themes 和 context files [E: packages/coding-agent/src/core/slash-commands.ts:42]。interactive mode 收到文本 `/reload` 时调用 `handleReloadCommand()`,该流程在 session reload 后执行 `this.keybindings.reload()` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3194] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3196] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6226]。
+用户文档说编辑 `keybindings.json` 后运行 `/reload` 可在不重启 session 的情况下应用变更 [E: packages/coding-agent/docs/keybindings.md:9]。内置 slash command 列表包含 `reload`,说明是 Reload keybindings、extensions、skills、prompts、themes 和 context files [E: packages/coding-agent/src/core/slash-commands.ts:42]。interactive mode 收到文本 `/reload` 时调用 `handleReloadCommand()`,该流程在 session reload 后执行 `this.keybindings.reload()` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3187] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3197] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6232]。
 
 `KeybindingsManager.reload()` 在有 `configPath` 时重新读取配置文件并调用 `setUserBindings(...)`;`getEffectiveConfig()` 返回 pi-tui manager 的 resolved bindings,extension shortcut 和 UI hint 可以基于这个 effective config 渲染用户实际按键 [E: packages/coding-agent/src/core/keybindings.ts:390] [E: packages/coding-agent/src/core/keybindings.ts:387] [E: packages/coding-agent/src/core/keybindings.ts:390] [E: packages/coding-agent/src/core/keybindings.ts:396] [I]。
 

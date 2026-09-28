@@ -32,7 +32,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `read` 是 pi-coding-agent 暴露给模型的文件读取工具:给定 path,读取文本或图片内容,文本支持 offset/limit 分段读取,图片作为 `ImageContent` attachment 返回。

@@ -18,7 +18,7 @@ symbols:
  - QueuedInputDisposition
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 related:
  - surface.modes.rpc
  - surface.modes.rpc-protocol

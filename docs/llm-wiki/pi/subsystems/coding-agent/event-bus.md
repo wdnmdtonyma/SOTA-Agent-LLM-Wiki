@@ -18,7 +18,7 @@ related:
   - subsys.coding-agent.extension-runner
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `EventBus` 是 pi-coding-agent 给 extensions 共享的轻量 pub/sub: publisher 用 string channel 和 `unknown` payload 发事件, subscriber 注册 handler 并拿到 unsubscribe function。

@@ -19,16 +19,16 @@ related:
   - subsys.tui.alternate-screen
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > 两种 renderer 共用 `CURSOR_MARKER` 提取协议，但 main-screen 用 scrollback-relative movement，alternate-screen 在固定 viewport 中写绝对光标坐标。
 
 ## Marker 协议
 
-`Focusable` 只包含 `focused` flag；runtime 切换焦点时先清旧组件，再设置新组件，让组件决定是否在 render output 插入 `CURSOR_MARKER`。[E: packages/tui/src/tui.ts:152] [E: packages/tui/src/tui.ts:154] [E: packages/tui/src/tui.ts:556] [E: packages/tui/src/tui.ts:168]
+`Focusable` 只包含 `focused` flag；runtime 切换焦点时先清旧组件，再设置新组件，让组件决定是否在 render output 插入 `CURSOR_MARKER`。[E: packages/tui/src/tui.ts:151] [E: packages/tui/src/tui.ts:156] [E: packages/tui/src/tui.ts:557] [E: packages/tui/src/tui.ts:196]
 
-共享 `extractCursorPosition()` 只从当前可见的底部 `height` 行向上扫描，使用 marker 前文本的 `visibleWidth()` 计算 column，原地删除 marker 并返回 `{row,col}`。[E: packages/tui/src/tui.ts:1386] [E: packages/tui/src/tui.ts:1388] [E: packages/tui/src/tui.ts:1389] [E: packages/tui/src/tui.ts:1395] [E: packages/tui/src/tui.ts:1398] [E: packages/tui/src/tui.ts:1400]
+共享 `extractCursorPosition()` 只从当前可见的底部 `height` 行向上扫描，使用 marker 前文本的 `visibleWidth()` 计算 column，原地删除 marker 并返回 `{row,col}`。[E: packages/tui/src/tui.ts:1387] [E: packages/tui/src/tui.ts:1387] [E: packages/tui/src/tui.ts:1390] [E: packages/tui/src/tui.ts:1394] [E: packages/tui/src/tui.ts:1454] [E: packages/tui/src/tui.ts:1456]
 
 ## Main-screen 定位
 
@@ -46,8 +46,8 @@ alternate-screen 在 overlay/selection/flash 合成后提取 marker，并在同�
 
 ## Gotchas
 
-- 提取函数会原地删除 marker；进入 diff 的 lines 不再含 marker。[E: packages/tui/src/tui.ts:1398]
-- 多个 marker 同时存在时，扫描顺序选择可见区域中最靠下的行；同一行使用第一个 marker。[E: packages/tui/src/tui.ts:1389] [E: packages/tui/src/tui.ts:1391]
+- 提取函数会原地删除 marker；进入 diff 的 lines 不再含 marker。[E: packages/tui/src/tui.ts:1454]
+- 多个 marker 同时存在时，扫描顺序选择可见区域中最靠下的行；同一行使用第一个 marker。[E: packages/tui/src/tui.ts:1390] [E: packages/tui/src/tui.ts:1447]
 - main-screen 的 target column 只做非负 clamp，fullscreen 额外 clamp 到 viewport width；两种 renderer 的边界行为不同。[E: packages/tui/src/tui-main-screen.ts:631] [E: packages/tui/src/tui-alt-screen.ts:1732]
 
 ## Sources

@@ -28,7 +28,7 @@ related:
  - subsys.ai.openai-completions
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `subsys.ai.openai-responses` 描述 `pi-ai` 的 OpenAI Responses API wire 入口:把统一 `Model + TranscriptContext + StreamOptions` 转成 `client.responses.create(...stream: true)`,再把 Responses stream events 归一成 `AssistantMessageEventStream`。已删除的 `deferred-tools.ts` 不再参与本 adapter。
@@ -55,16 +55,16 @@ updated: ff72faba28
 
 ## 关键文件
 
-- `packages/ai/src/api/openai-responses.ts`: OpenAI SDK client、headers/session id/cache retention、Responses request fields、`samplingParams` merge、service tier pricing multiplier、`streamSimple` reasoning clamp。[E: packages/ai/src/api/openai-responses.ts:68] [E: packages/ai/src/api/openai-responses.ts:240] [E: packages/ai/src/api/openai-responses.ts:284] [E: packages/ai/src/api/openai-responses.ts:364] [E: packages/ai/src/api/openai-responses.ts:220]
+- `packages/ai/src/api/openai-responses.ts`: OpenAI SDK client、headers/session id/cache retention、Responses request fields、`samplingParams` merge、service tier pricing multiplier、`streamSimple` reasoning clamp。[E: packages/ai/src/api/openai-responses.ts:68] [E: packages/ai/src/api/openai-responses.ts:240] [E: packages/ai/src/api/openai-responses.ts:284] [E: packages/ai/src/api/openai-responses.ts:362] [E: packages/ai/src/api/openai-responses.ts:220]
 - `packages/ai/src/api/openai-responses-shared.ts`: unified messages/tools 到 Responses shape 的转换,含 `supportsToolSearch` 的 `tool_search_*` items;Responses stream event 到 `thinking_*` / `text_*` / `toolcall_*` / usage / stop reason 的转换。[E: packages/ai/src/api/openai-responses-shared.ts:145] [E: packages/ai/src/api/openai-responses-shared.ts:195] [E: packages/ai/src/api/openai-responses-shared.ts:361] [E: packages/ai/src/api/openai-responses-shared.ts:434]
 
 ## 数据模型
 
-`OpenAIResponsesOptions` 扩展统一 `StreamOptions`,新增 `reasoningEffort`、`reasoningSummary`、`serviceTier` 与 `toolChoice`;`reasoningEffort` 允许 `minimal | low | medium | high | xhigh | max`,`reasoningSummary` 允许 `auto | detailed | concise | null`,`serviceTier` 与 `toolChoice` 直接沿用 OpenAI SDK request 类型。`samplingParams` 继承自 `StreamOptions`。[E: packages/ai/src/api/openai-responses.ts:103] [E: packages/ai/src/api/openai-responses.ts:104] [E: packages/ai/src/api/openai-responses.ts:105] [E: packages/ai/src/api/openai-responses.ts:106] [E: packages/ai/src/types.ts:207]
+`OpenAIResponsesOptions` 扩展统一 `StreamOptions`,新增 `reasoningEffort`、`reasoningSummary`、`serviceTier` 与 `toolChoice`;`reasoningEffort` 允许 `minimal | low | medium | high | xhigh | max`,`reasoningSummary` 允许 `auto | detailed | concise | null`,`serviceTier` 与 `toolChoice` 直接沿用 OpenAI SDK request 类型。`samplingParams` 继承自 `StreamOptions`。[E: packages/ai/src/api/openai-responses.ts:103] [E: packages/ai/src/api/openai-responses.ts:104] [E: packages/ai/src/api/openai-responses.ts:105] [E: packages/ai/src/api/openai-responses.ts:106] [E: packages/ai/src/types.ts:208]
 
 `stream` 初始化的 `AssistantMessage` 会记录 assistant role、空 content、`api`、provider、model、零值 usage/cost、`stopReason: "pending"` 和 timestamp。[E: packages/ai/src/api/openai-responses.ts:123] [E: packages/ai/src/api/openai-responses.ts:137]
 
-`getCompat` 默认 `supportsAdditionalTools: false`、`supportsToolSearch: false`、`supportsStrictMode: false`;catalog 对验证过的 OpenAI / Codex 模型打开 `supportsToolSearch`。[E: packages/ai/src/api/openai-responses.ts:74] [E: packages/ai/src/api/openai-responses.ts:76] [E: packages/ai/src/api/openai-responses.ts:77] [E: packages/ai/src/types.ts:850] [E: packages/ai/scripts/generate-models.ts:877] [E: packages/ai/scripts/generate-models.ts:887]
+`getCompat` 默认 `supportsStrictMode: false`、`supportsAdditionalTools: false`、`supportsToolSearch: false`;catalog 对验证过的 OpenAI / Codex 模型打开 `supportsToolSearch`。[E: packages/ai/src/api/openai-responses.ts:74] [E: packages/ai/src/api/openai-responses.ts:76] [E: packages/ai/src/api/openai-responses.ts:77] [E: packages/ai/src/types.ts:850] [E: packages/ai/scripts/generate-models.ts:877] [E: packages/ai/scripts/generate-models.ts:887]
 
 ## Tool search 与 prefix deferral
 
@@ -72,22 +72,22 @@ updated: ff72faba28
 
 `convertResponsesMessages` 对 later system message 的 additions:`supportsAdditionalTools` 优先发 Responses `additional_tools` developer item;`supportsToolSearch` 才发 completed `tool_search_call` + `tool_search_output`。`tool_search_output.tools` 经 `convertResponsesTools(..., { toolSearchResult: true })` 带上 `defer_loading: true`,这是 **prefix deferral** 路径:later tools 不进 top-level `tools`,而是作为 search result 挂在 transcript 上,保留 cached prefix。[E: packages/ai/src/api/openai-responses-shared.ts:184] [E: packages/ai/src/api/openai-responses-shared.ts:187] [E: packages/ai/src/api/openai-responses-shared.ts:195] [E: packages/ai/src/api/openai-responses-shared.ts:199] [E: packages/ai/src/api/openai-responses-shared.ts:206] [E: packages/ai/src/api/openai-responses-shared.ts:210] [E: packages/ai/src/api/openai-responses-shared.ts:378] [E: packages/ai/src/api/openai-responses-shared.ts:391] [E: packages/ai/test/transcript-tool-changes.test.ts:237]
 
-immediate `requestTools` 仍写入 request 顶层 `tools`。[E: packages/ai/src/api/openai-responses.ts:334] [E: packages/ai/src/api/openai-responses.ts:335]
+immediate `requestTools` 仍写入 request 顶层 `tools`。[E: packages/ai/src/api/openai-responses.ts:332] [E: packages/ai/src/api/openai-responses.ts:333]
 
 ## `samplingParams` 在 direct stream/complete 生效
 
-`buildParams` 在 named fields 之后 `Object.assign(params, model.samplingParams, options?.samplingParams)`,因此 per-request keys 覆盖 model defaults,二者都覆盖前面的 `temperature` / `max_output_tokens` 等 named fields。`buildParams` 由 `stream()` 直接调用,`Models.complete()` 只是 `stream().result()`,所以 **direct stream/complete 都会 merge**,不依赖 `streamSimple`。[E: packages/ai/src/api/openai-responses.ts:159] [E: packages/ai/src/api/openai-responses.ts:364] [E: packages/ai/src/models.ts:886] [E: packages/ai/src/types.ts:207]
+`buildParams` 在 named fields 之后 `Object.assign(params, model.samplingParams, options?.samplingParams)`,因此 per-request keys 覆盖 model defaults,二者都覆盖前面的 `temperature` / `max_output_tokens` 等 named fields。`buildParams` 由 `stream()` 直接调用,`Models.complete()` 只是 `stream().result()`,所以 **direct stream/complete 都会 merge**,不依赖 `streamSimple`。[E: packages/ai/src/api/openai-responses.ts:159] [E: packages/ai/src/api/openai-responses.ts:362] [E: packages/ai/src/models.ts:886] [E: packages/ai/src/types.ts:208]
 
 `streamSimple` 经 `buildBaseOptions` 把 `SimpleStreamOptions.samplingParams` 拷进 `StreamOptions`,再交给 `stream` → `buildParams`,路径相同。[E: packages/ai/src/api/openai-responses.ts:227] [E: packages/ai/src/api/simple-options.ts:29]
 
-`StreamOptions.samplingParams` 是任意 record;本 adapter 在 `buildParams` 末尾 merge,Azure Responses 与 Completions 同样 `Object.assign`。Codex Responses 的 `buildRequestBody` 不 merge 该字段。[E: packages/ai/src/types.ts:207] [E: packages/ai/src/api/openai-responses.ts:364] [I]
+`StreamOptions.samplingParams` 是任意 record;本 adapter 在 `buildParams` 末尾 merge,Azure Responses 与 Completions 同样 `Object.assign`。Codex Responses 的 `buildRequestBody` 不 merge 该字段。[E: packages/ai/src/types.ts:208] [E: packages/ai/src/api/openai-responses.ts:362] [I]
 
 ## 控制流
 
 1. `stream@openai-responses.ts` 同步返回 `AssistantMessageEventStream`,并在内部 async IIFE 里创建 output 聚合对象。[E: packages/ai/src/api/openai-responses.ts:113] [E: packages/ai/src/api/openai-responses.ts:118] [E: packages/ai/src/api/openai-responses.ts:122]
 2. `getClientApiKey@openai-responses.ts` 接受显式 `apiKey`;如果没有 apiKey 但 headers 里已有 `authorization` 或 `cf-aig-authorization`,返回 `"unused"` 作为 SDK apiKey placeholder;否则抛出 provider-specific missing key error。[E: packages/ai/src/api/openai-responses.ts:44] [E: packages/ai/src/api/openai-responses.ts:45] [E: packages/ai/src/api/openai-responses.ts:46] [E: packages/ai/src/api/openai-responses.ts:47]
 3. `createClient@openai-responses.ts` 以 `model.baseUrl`、resolved apiKey 和 merged headers 创建 OpenAI SDK client；默认先写 `User-Agent: getPiUserAgent()`，再 overlay `model.headers`。session id 按 `sessionAffinityFormat` 分支。`xai` provider 只挂这条 Responses API。[E: packages/ai/src/api/openai-responses.ts:248] [E: packages/ai/src/utils/pi-user-agent.ts:17] [E: packages/ai/src/providers/xai.ts:7] [E: packages/ai/src/providers/xai.ts:22]
-4. `buildParams@openai-responses.ts` 先用 `convertResponsesMessages` 构造 Responses `input`,再创建基础 payload:`model`、`input`、`stream: true`、`prompt_cache_key`、`prompt_cache_retention`、`store: false`;随后按 options/context/model 条件追加 `max_output_tokens`、`temperature`、`service_tier`、`tools`、`reasoning` 和 `include`;最后 merge `samplingParams`。[E: packages/ai/src/api/openai-responses.ts:284] [E: packages/ai/src/api/openai-responses.ts:298] [E: packages/ai/src/api/openai-responses.ts:313] [E: packages/ai/src/api/openai-responses.ts:364]
+4. `buildParams@openai-responses.ts` 先用 `convertResponsesMessages` 构造 Responses `input`,再创建基础 payload:`model`、`input`、`stream: true`、`prompt_cache_key`、`prompt_cache_retention`、`store: false`;随后按 options/context/model 条件追加 `max_output_tokens`、`temperature`、`service_tier`、`tools`、`reasoning` 和 `include`;最后 merge `samplingParams`。[E: packages/ai/src/api/openai-responses.ts:284] [E: packages/ai/src/api/openai-responses.ts:298] [E: packages/ai/src/api/openai-responses.ts:311] [E: packages/ai/src/api/openai-responses.ts:362]
 5. `stream@openai-responses.ts` 在发送前允许 `options.onPayload` 替换整个 payload;HTTP response 返回后调用 `options.onResponse`,然后才 push normalized `start` event。`processResponsesStream` 对每个 Responses event 先 `await onProviderStreamEvent?.(event, model)`。[E: packages/ai/src/api/openai-responses.ts:160] [E: packages/ai/src/api/openai-responses.ts:177] [E: packages/ai/src/api/openai-responses.ts:178] [E: packages/ai/src/api/openai-responses.ts:181] [E: packages/ai/src/api/openai-responses-shared.ts:601]
 6. `processResponsesStream` 消费 OpenAI `AsyncIterable<ResponseStreamEvent>`;缺少 `response.completed` 或 `response.incomplete` 终端事件时会抛错。[E: packages/ai/src/api/openai-responses-shared.ts:434] [E: packages/ai/src/api/openai-responses-shared.ts:761] [E: packages/ai/src/api/openai-responses-shared.ts:762]
 
@@ -113,11 +113,11 @@ tool definition 转换保持每个 tool 的 `name`、`description` 与 JSON sche
 
 `streamSimple` 先经 `buildBaseOptions` 生成统一基础 options,再用 `clampThinkingLevel` 把 caller 的 `reasoning` 收窄到目标 model 能力;当 clamp 结果是 `off` 时不传 `reasoningEffort`,否则把 clamped level 传给 `stream`。[E: packages/ai/src/api/openai-responses.ts:220] [E: packages/ai/src/api/openai-responses.ts:231] [E: packages/ai/src/api/openai-responses.ts:232]
 
-`buildParams` 只在 `model.reasoning` 为真时写 Responses `reasoning`;truthy 的 `reasoningEffort` 或 `reasoningSummary` 会设置 effort、summary,并请求 `include: ["reasoning.encrypted_content"]`。[E: packages/ai/src/api/openai-responses.ts:345] [E: packages/ai/src/api/openai-responses.ts:346] [E: packages/ai/src/api/openai-responses.ts:354]
+`buildParams` 只在 `model.reasoning` 为真时写 Responses `reasoning`;truthy 的 `reasoningEffort` 或 `reasoningSummary` 会设置 effort、summary,并请求 `include: ["reasoning.encrypted_content"]`。[E: packages/ai/src/api/openai-responses.ts:343] [E: packages/ai/src/api/openai-responses.ts:344] [E: packages/ai/src/api/openai-responses.ts:352]
 
-cache retention 默认值由 `resolveCacheRetention` 决定:显式 `cacheRetention` 优先,否则 `PI_CACHE_RETENTION=long` 时为 `long`,其余为 `short`;`cacheRetention === "none"` 会同时禁用 request 的 `prompt_cache_key` 与 client session id forwarding。[E: packages/ai/src/api/openai-responses.ts:58] [E: packages/ai/src/api/openai-responses.ts:65] [E: packages/ai/src/api/openai-responses.ts:145] [E: packages/ai/src/api/openai-responses.ts:316]
+cache retention 默认值由 `resolveCacheRetention` 决定:显式 `cacheRetention` 优先,否则 `PI_CACHE_RETENTION=long` 时为 `long`,其余为 `short`;`cacheRetention === "none"` 会同时禁用 request 的 `prompt_cache_key` 与 client session id forwarding。[E: packages/ai/src/api/openai-responses.ts:58] [E: packages/ai/src/api/openai-responses.ts:65] [E: packages/ai/src/api/openai-responses.ts:145] [E: packages/ai/src/api/openai-responses.ts:314]
 
-service tier 既进入 request payload 的 `service_tier`,也进入 post-usage pricing adjustment;本地实现把 `flex` cost 乘 `0.5`,`priority` 对 `gpt-5.5` 乘 `2.5`,其它 priority 乘 `2`,默认乘 `1`。[E: packages/ai/src/api/openai-responses.ts:330] [E: packages/ai/src/api/openai-responses.ts:373] [E: packages/ai/src/api/openai-responses.ts:376] [E: packages/ai/src/api/openai-responses.ts:377]
+service tier 既进入 request payload 的 `service_tier`,也进入 post-usage pricing adjustment。`getServiceTierCostMultiplier` 把 `flex` cost 乘 `0.5`；`priority` 与 `fast` 同一档（`gpt-5.5` 乘 `2.5`，其它乘 `2`）；其余乘 `1`。[E: packages/ai/src/api/openai-responses.ts:329] [E: packages/ai/src/api/openai-responses.ts:367] [E: packages/ai/src/api/openai-responses.ts:372] [E: packages/ai/src/api/openai-responses.ts:374] [E: packages/ai/src/api/openai-responses.ts:375] [E: packages/ai/src/api/openai-responses.ts:376]
 
 ## 设计动机与 gotcha
 
@@ -125,7 +125,7 @@ service tier 既进入 request payload 的 `service_tier`,也进入 post-usage p
 - `ToolCall.namespace` 是 Responses dynamically loaded / namespaced tool 的可选字段。stream 在 `added` 与 `done` 都会复制它；replay 只在 `isSameModel` 时写回。[E: packages/ai/src/types.ts:417] [E: packages/ai/src/api/openai-responses-shared.ts:259] [E: packages/ai/src/api/openai-responses-shared.ts:317] [E: packages/ai/src/api/openai-responses-shared.ts:493] [E: packages/ai/src/api/openai-responses-shared.ts:718]
 - `AssistantMessage.endTurn` 保存 provider 是否显式结束 turn。标准 `processResponsesStream` 不写该字段；Codex adapter 在 terminal events 上若看到 boolean `end_turn` 才赋给 `output.endTurn`。agent 控制流当前不读它。[E: packages/ai/src/types.ts:559] [I]
 - `partialJson` 是 streaming scratch buffer,正常 function-call finalization 和 error cleanup 都会删除它;持久化 assistant content 时不应依赖该字段。[E: packages/ai/src/api/openai-responses-shared.ts:494] [E: packages/ai/src/api/openai-responses-shared.ts:721]
-- service tier cost multiplier 是本地硬编码策略,不是从 OpenAI response 动态读取价格表。[E: packages/ai/src/api/openai-responses.ts:369] [U]
+- service tier cost multiplier 是本地硬编码策略,不是从 OpenAI response 动态读取价格表。[E: packages/ai/src/api/openai-responses.ts:367] [U]
 - OpenAI client factory 接受 `options.fetch` 并传给 SDK。[E: packages/ai/src/api/openai-responses.ts:156] [E: packages/ai/src/api/openai-responses.ts:279]
 
 ## 跨包边界

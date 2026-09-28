@@ -35,10 +35,10 @@ related:
   - subsys.coding-agent.agent-session
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
-> 会话统计现在归集 assistant、tool result、compaction 和 branch summary 的 usage；交互式 `/session` UI 可按模型与“Tools/summaries”分桶展示成本。开启 cache miss notices 时，compaction / branch-summary 还会在 transcript 里显示 billed tokens 通知。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6433] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6442] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3973] [E: packages/coding-agent/CHANGELOG.md:282]
+> 会话统计现在归集 assistant、tool result、compaction 和 branch summary 的 usage；交互式 `/session` UI 可按模型与“Tools/summaries”分桶展示成本。开启 cache miss notices 时，compaction / branch-summary 还会在 transcript 里显示 billed tokens 通知。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6434] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6449] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3970] [E: packages/coding-agent/CHANGELOG.md:284]
 
 ## 归集模型
 
@@ -52,17 +52,17 @@ branch summarization 的 provider usage 或 extension-supplied usage 会进入�
 
 JSONL fork 复制 session writes 时，`kind: "usage"` 一律丢弃：index 阶段不记录 usage seq，project 阶段直接 `return undefined`。因此 fork 出来的会话不会带走源会话的 usage writes。[E: packages/agent/src/harness/session/jsonl/fork.ts:106] [E: packages/agent/src/harness/session/jsonl/fork.ts:202]
 
-coding-agent 的 branch summary 输出 cap 现为 `Math.min(4096, model.maxTokens > 0 ? model.maxTokens : Infinity)`，不再是 2048；CHANGELOG `#8845` 记的是 reasoning 吃掉旧 2048 cap 导致 summary 失败。[E: packages/coding-agent/src/core/compaction/branch-summarization.ts:345] [E: packages/coding-agent/test/branch-summarization.test.ts:64] [E: packages/coding-agent/CHANGELOG.md:260]
+coding-agent 的 branch summary 输出 cap 现为 `Math.min(4096, model.maxTokens > 0 ? model.maxTokens : Infinity)`，不再是 2048；CHANGELOG `#8845` 记的是 reasoning 吃掉旧 2048 cap 导致 summary 失败。[E: packages/coding-agent/src/core/compaction/branch-summarization.ts:345] [E: packages/coding-agent/test/branch-summarization.test.ts:64] [E: packages/coding-agent/CHANGELOG.md:262]
 
 `getSessionStats()` 遍历 `sessionManager.getEntries()` 的完整集合，把 `usage` entries、summary entries、tool-result messages 与 assistant messages 的 usage 累加；因此 totals 反映整个会话实际记账，包括已从 active context 压缩掉或被 `context_edit` 省略的历史，而不是只统计当前 branch 投影。[E: packages/coding-agent/src/core/agent-session.ts:3810] [E: packages/coding-agent/src/core/agent-session.ts:3812] [E: packages/coding-agent/src/core/agent-session.ts:3813] [E: packages/coding-agent/src/core/agent-session.ts:3815] [E: packages/coding-agent/src/core/agent-session.ts:3825] [E: packages/coding-agent/src/core/agent-session.ts:3834] cache warming 成功后 `appendUsage("cache_warm", ...)` 写入的 `type:"usage"` entry 也走这条累加,不进入 LLM context。[E: packages/coding-agent/src/core/session-manager.ts:1244] [E: packages/coding-agent/src/core/cache-warmer.ts:342] [E: packages/coding-agent/src/core/usage-totals.ts:46]
 
 ## Transcript usage notices
 
-`showCacheMissNotices` 默认 false；为 true 时 interactive transcript 除 cache-miss 外还会渲染 compaction / branch-summary 的 billed usage。[E: packages/coding-agent/src/core/settings-manager.ts:124] [E: packages/coding-agent/src/core/settings-manager.ts:982] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3974]
+`showCacheMissNotices` 默认 false；为 true 时 interactive transcript 除 cache-miss 外还会渲染 compaction / branch-summary 的 billed usage。[E: packages/coding-agent/src/core/settings-manager.ts:124] [E: packages/coding-agent/src/core/settings-manager.ts:982] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3971]
 
-`CompactionCostNotice` 不是独立 session entry：replay 时若 `compaction` / `branch_summary` entry 带 `usage`，会在对应 summary message 后插入一条 notice；`compaction_end` 若 `event.result.usage` 存在也会当场追加。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:244] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3973] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3590] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3973]
+`CompactionCostNotice` 不是独立 session entry：replay 时若 `compaction` / `branch_summary` entry 带 `usage`，会在对应 summary message 后插入一条 notice；`compaction_end` 若 `event.result.usage` 存在也会当场追加。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:247] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3970] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3583] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3970]
 
-`addCompactionCostNotice` 用 `usage.input + output + cacheRead + cacheWrite` 显示 tokens，成本 ≥ $0.01 时附加美元；label 为 `Compaction` 或 `Branch summary`。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3977] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3979]
+`addCompactionCostNotice` 用 `usage.input + output + cacheRead + cacheWrite` 显示 tokens，成本 ≥ $0.01 时附加美元；label 为 `Compaction` 或 `Branch summary`。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3974] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3976]
 
 截断 summary 不会落盘，因此也不会带 usage notice；`getSummarizationFailure` 在 `stopReason === "length"` 时拒绝 persist。细节见 `subsys.coding-agent.agent-session`。[I]
 

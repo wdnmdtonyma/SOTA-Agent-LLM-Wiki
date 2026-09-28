@@ -29,7 +29,7 @@ related:
  - ref.coding-agent.json-events
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > RPC protocol 是 pi-coding-agent 的无头 JSONL wire surface: client 在 stdin 逐行写 `RpcCommand`, runtime 在 stdout 逐行写 `RpcResponse`、agent events 和 extension UI requests。

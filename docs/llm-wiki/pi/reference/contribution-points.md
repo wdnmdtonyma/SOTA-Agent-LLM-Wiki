@@ -14,7 +14,7 @@ symbols:
  - registerProvider
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 related:
  - surface.extensions.contribution-points
 ---

@@ -27,7 +27,7 @@ symbols: [discoverAndLoadExtensions, loadExtension, createExtensionRuntime]
 related: [spine.extension-lifecycle, subsys.coding-agent.extension-runner, subsys.coding-agent.resource-loader]
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `extension-loader` 是 pi-coding-agent 的 TypeScript extension discovery and loading 子系统: 它把 `.pi/extensions`、`~/.pi/agent/extensions`、settings/CLI paths 或 inline factories 变成 `LoadExtensionsResult`, 其中包含 loaded `Extension[]`、load errors 和尚未绑定到会话动作的 shared `ExtensionRuntime`。

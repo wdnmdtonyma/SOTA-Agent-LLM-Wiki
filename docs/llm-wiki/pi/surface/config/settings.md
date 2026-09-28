@@ -6,6 +6,8 @@ tier: T1
 pkg: coding-agent
 source:
  - packages/coding-agent/src/core/settings-manager.ts
+ - packages/coding-agent/src/modes/interactive/theme/theme.ts
+ - packages/coding-agent/src/modes/interactive/theme/theme-controller.ts
  - packages/coding-agent/src/core/settings-diagnostics.ts
  - packages/coding-agent/src/core/defaults.ts
  - packages/coding-agent/src/main.ts
@@ -30,7 +32,7 @@ related:
  - ref.coding-agent.config-keys
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `surface.config.settings` 描述 pi-coding-agent 用户可见的 settings 配置面:JSON 文件位置、global/project scope、project trust 门控、schema key families、project-over-global 合并和常见默认值边界。
@@ -70,13 +72,13 @@ TUI family 使用 `tuiMode: "regular" | "fullscreen"`(旧名 `uiMode` 已删除)
 
 `retry.maxAgentDelayMs` 默认 `60000`,封顶 agent-level 指数退避;它与 `retry.provider.maxRetryDelayMs`(默认同样 60000,封顶服务端 `retry-after`)是两套 cap [E: packages/coding-agent/src/core/settings-manager.ts:45] [E: packages/coding-agent/src/core/settings-manager.ts:932] [E: packages/coding-agent/src/core/settings-manager.ts:970] 。
 
-`/model` 与 `/thinking` 选择器默认只改当前 session:Enter 走 `persist: false`;只有 `app.models.save` / `app.thinking.save`(默认都是 `ctrl+s`)才 `persist: true` 写回 global startup default。用户文档同一句写的是 `/model`/`/thinking` + Ctrl+S [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5022] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5027] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5207] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5213] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:142] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:399] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:97] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:131] [E: packages/coding-agent/src/core/keybindings.ts:104] [E: packages/coding-agent/src/core/keybindings.ts:186] [E: packages/coding-agent/docs/settings.md:10]。带搜索词的 `/model <id>` 精确匹配也是 `persist: false` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5043]。
+`/model` 与 `/thinking` 选择器默认只改当前 session:Enter 走 `persist: false`;只有 `app.models.save` / `app.thinking.save`(默认都是 `ctrl+s`)才 `persist: true` 写回 global startup default。用户文档同一句写的是 `/model`/`/thinking` + Ctrl+S [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5028] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5033] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5213] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5219] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:142] [E: packages/coding-agent/src/modes/interactive/components/model-selector.ts:399] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:97] [E: packages/coding-agent/src/modes/interactive/components/thinking-selector.ts:131] [E: packages/coding-agent/src/core/keybindings.ts:104] [E: packages/coding-agent/src/core/keybindings.ts:186] [E: packages/coding-agent/docs/settings.md:10]。带搜索词的 `/model <id>` 精确匹配也是 `persist: false` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:5049]。
 
 `terminal.hyperlinks` / `terminal.images` / `terminal.trueColor` 是 advanced JSON-only capability overrides,默认 `"auto"`。`getTerminalCapabilityOverrides()` 只在值为 concrete boolean、`kitty`/`iterm2` 或 `images: false`(写成 `null`)时覆盖检测;`auto` 不覆盖 [E: packages/coding-agent/src/core/settings-manager.ts:57] [E: packages/coding-agent/src/core/settings-manager.ts:58] [E: packages/coding-agent/src/core/settings-manager.ts:59] [E: packages/coding-agent/src/core/settings-manager.ts:1195] [E: packages/coding-agent/src/core/settings-manager.ts:1199] 。
 
 `defaultTools` 选择启动时启用的 built-in tools。省略时产品默认 `read/bash/edit/write`;可用 built-in 含 `powershell`,Windows 可用 `["read", "powershell", "edit", "write"]`。空数组关闭全部 built-in,但 extension 与 SDK custom tools 仍启用。`--tools` 会改成对全部工具(含 extension/custom)的严格 allowlist,`--no-tools` 关闭全部工具,`--no-builtin-tools` 只关 built-in defaults,`--exclude-tools` 再过滤结果。项目 `defaultTools` array 整段替换全局 array [E: packages/coding-agent/src/core/settings-manager.ts:144] [E: packages/coding-agent/src/core/settings-manager.ts:1336] 。
 
-`theme` 仍是 TUI theme 名;含 `/` 的 automatic theme setting 不会作为固定 theme 返回。`themes` 是本地 theme 路径列表。CLI `--use-theme` 只覆盖本次 interactive 运行,不写回 settings 文件 [E: packages/coding-agent/src/core/settings-manager.ts:119] [E: packages/coding-agent/src/core/settings-manager.ts:800] [E: packages/coding-agent/src/core/settings-manager.ts:790] [E: packages/coding-agent/src/core/settings-manager.ts:139] [E: packages/coding-agent/docs/settings.md:55]。
+`theme` 是 TUI theme 名;用户文档默认 `"system"`(从终端配色生成)。含 `/` 的 automatic `light/dark` 配对仍由 `parseAutoThemeSetting` 解析, `getTheme()` 对含 `/` 的 setting 返回 `undefined`(不当固定名)。无 setting 时 runtime fallback 是 `SYSTEM_THEME_NAME`, 不再只在 JSON `dark`/`light` 间二选一。`themes` 是本地 theme 路径列表。CLI `--use-theme` 只覆盖本次 interactive 运行,不写回 settings 文件 [E: packages/coding-agent/src/core/settings-manager.ts:119] [E: packages/coding-agent/docs/settings.md:76] [E: packages/coding-agent/src/core/settings-manager.ts:782] [E: packages/coding-agent/src/core/settings-manager.ts:790] [E: packages/coding-agent/src/modes/interactive/theme/theme.ts:652] [E: packages/coding-agent/src/modes/interactive/theme/theme-controller.ts:175] [E: packages/coding-agent/src/core/settings-manager.ts:139]。
 
 `markdown.mermaid` 控制 Mermaid 渲染:`"off"` / `"final"` / `"streaming"`,默认 `"streaming"`。LaTeX 由 TUI markdown 的 `renderLatex` option 渲染,不是 `Settings` 键 [E: packages/coding-agent/src/core/settings-manager.ts:74] [E: packages/coding-agent/src/core/settings-manager.ts:82] [E: packages/coding-agent/src/core/settings-manager.ts:1413] [U]。
 
@@ -112,7 +114,7 @@ TUI family 使用 `tuiMode: "regular" | "fullscreen"`(旧名 `uiMode` 已删除)
 
 `collectSettingsDiagnostics(settingsManager)` 调用 `drainErrors()`,把每条 settings error 转成 `type: "warning"` diagnostic;有 path 时 message 为 `Invalid settings file ${path}: ...`,否则 `Invalid ${scope} settings: ...` [E: packages/coding-agent/src/core/settings-diagnostics.ts:4] [E: packages/coding-agent/src/core/settings-diagnostics.ts:7]。`deduplicateDiagnostics()` 按 `type\0message` 去重,保留首次出现 [E: packages/coding-agent/src/core/settings-diagnostics.ts:15] [E: packages/coding-agent/src/core/settings-diagnostics.ts:20]。
 
-`main()` 启动时对 startup settings manager 收集一次,runtime 再收集一次,interactive 路径用 `deduplicateDiagnostics` 合并后交给 `InteractiveMode` 的 `startupDiagnostics`;TUI 对 warning 走 `showWarning`,因此 invalid settings 会在 TUI 内显示带 path 的提示,而不是只打到 stderr [E: packages/coding-agent/src/main.ts:60] [E: packages/coding-agent/src/main.ts:657] [E: packages/coding-agent/src/main.ts:785] [E: packages/coding-agent/src/main.ts:903] [E: packages/coding-agent/src/main.ts:940] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1130] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1134]。非 interactive 或存在 runtime error 时仍 `reportDiagnostics` 打到控制台 [E: packages/coding-agent/src/main.ts:902] [E: packages/coding-agent/src/main.ts:903]。
+`main()` 启动时对 startup settings manager 收集一次,runtime 再收集一次,interactive 路径用 `deduplicateDiagnostics` 合并后交给 `InteractiveMode` 的 `startupDiagnostics`;TUI 对 warning 走 `showWarning`,因此 invalid settings 会在 TUI 内显示带 path 的提示,而不是只打到 stderr [E: packages/coding-agent/src/main.ts:60] [E: packages/coding-agent/src/main.ts:657] [E: packages/coding-agent/src/main.ts:785] [E: packages/coding-agent/src/main.ts:903] [E: packages/coding-agent/src/main.ts:940] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1129] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1147]。非 interactive 或存在 runtime error 时仍 `reportDiagnostics` 打到控制台 [E: packages/coding-agent/src/main.ts:902] [E: packages/coding-agent/src/main.ts:903]。
 
 ## 写回与修改语义
 
@@ -134,6 +136,8 @@ TUI family 使用 `tuiMode: "regular" | "fullscreen"`(旧名 `uiMode` 已删除)
 ## Sources
 
 - packages/coding-agent/src/core/settings-manager.ts
+- packages/coding-agent/src/modes/interactive/theme/theme.ts
+- packages/coding-agent/src/modes/interactive/theme/theme-controller.ts
 - packages/coding-agent/src/core/settings-diagnostics.ts
 - packages/coding-agent/src/core/defaults.ts
 - packages/coding-agent/src/main.ts

@@ -40,7 +40,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `eval:docs` 把 `evals/*.docs.eval.ts` 发现的用例扩成 `(case, variant, model, runNumber)` 任务，在隔离的 `without_docs`（control）与 `with_docs`（treatment）容器里各跑一次，再把恰好一对 `scored` observation 编成 pass-rate lift。产物写在 `.eval/<timestamp>_<id>/`（`protocol.json`、`observations.jsonl`、`report.json`/`report.txt`）。[E: packages/evals/README.md:9] [E: packages/evals/src/plan.ts:1] [E: packages/evals/src/report.ts:77] [E: packages/evals/src/report.ts:78] [E: packages/evals/README.md:94]

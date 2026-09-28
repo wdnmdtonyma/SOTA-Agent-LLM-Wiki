@@ -65,7 +65,7 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **204 个节点全部 verified 于 pi `ff72faba28`**。本轮从 `71dca871bc` 覆盖上游 **v0.86.0–v0.87.1 + Unreleased**（`pi-durable`、image/classifier 统一 catalog、`TranscriptContext`、`finishTurn`、`ContextEditEntry`、evals Docker 文档对照、extension 40 事件）。审计见 `_UPDATE-SCOPE.md`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **204 个节点全部 verified 于 pi `6f7551516b`**。本轮从 `ff72faba28` 覆盖上游 **0.87.1 Unreleased**（System theme、Fireworks 默认 `kimi-k3`、OpenAI Fast 与 priority 同价、durable typed IDs / ownership）。审计见 `_UPDATE-SCOPE.md`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

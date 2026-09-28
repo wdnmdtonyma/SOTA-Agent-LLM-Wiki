@@ -52,7 +52,7 @@ related:
   - ref.coding-agent.session-format
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `@earendil-works/pi-session-backend-sqlite-node` 是 `pi-agent-core` v4 `SessionRepo` / `Storage` 的可选 Node `node:sqlite` 实现：默认每个 session 一个 `.sqlite` 文件，也可经 `databasePath` 共用一个容器；权威状态是 `entries` + `scalar_values` + `list_values` + `usage_ledger`。没有 writer lease，也没有 FTS search。

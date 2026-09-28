@@ -25,7 +25,7 @@ related:
  - surface.slash-commands.overview
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > `surface.skills.system` 描述 pi-coding-agent 暴露给用户的 skills 系统: 从哪些位置加载 skill、如何把 skill 摘要写入 system prompt、何时把 skill 变成 `/skill:name` 命令,以及它和 pi-agent-core harness loader 的边界。
@@ -87,7 +87,7 @@ Name validation 在 product loader 里检查 64 字符上限、小写字母数�
 
 `enableSkillCommands` 是 `Settings` 字段,默认 getter 返回 `true`;旧版 `skills` object format 的 `enableSkillCommands` 会迁移到顶层字段。[E: packages/coding-agent/src/core/settings-manager.ts:140] [E: packages/coding-agent/src/core/settings-manager.ts:461] [E: packages/coding-agent/src/core/settings-manager.ts:462] [E: packages/coding-agent/src/core/settings-manager.ts:465] [E: packages/coding-agent/src/core/settings-manager.ts:466] [E: packages/coding-agent/src/core/settings-manager.ts:1181] [E: packages/coding-agent/src/core/settings-manager.ts:1182]
 
-Interactive mode 的 autocomplete 只在 `settingsManager.getEnableSkillCommands()` 为 true 时把 loaded skills 转成 `skill:<name>` commands;设置选择器也读取同一个 getter 来显示该开关。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:759] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:761] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:762] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:763] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:766] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:767] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4761]
+Interactive mode 的 autocomplete 只在 `settingsManager.getEnableSkillCommands()` 为 true 时把 loaded skills 转成 `skill:<name>` commands;设置选择器也读取同一个 getter 来显示该开关。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:763] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:767] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:763] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:763] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:770] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:771] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4767]
 
 `AgentSession.prompt()` 在 extension input handlers 之后、prompt template 展开之前调用 `_expandSkillCommand()`;该 method 只处理以 `/skill:` 开头的 text,按 name 找到 loaded skill 后读取 `skill.filePath`、去掉 frontmatter,生成 `<skill name="..." location="...">` block,并把命令参数作为额外文本追加。[E: packages/coding-agent/src/core/agent-session.ts:1620] [E: packages/coding-agent/src/core/agent-session.ts:1649] [E: packages/coding-agent/src/core/agent-session.ts:1649] [E: packages/coding-agent/src/core/agent-session.ts:1788] [E: packages/coding-agent/src/core/agent-session.ts:1788] [E: packages/coding-agent/src/core/agent-session.ts:1792] [E: packages/coding-agent/src/core/agent-session.ts:1792] [E: packages/coding-agent/src/core/agent-session.ts:1795] [E: packages/coding-agent/src/core/agent-session.ts:1799] [E: packages/coding-agent/src/core/agent-session.ts:1799] [E: packages/coding-agent/src/core/agent-session.ts:1800] [E: packages/coding-agent/src/core/agent-session.ts:1801]
 
@@ -99,11 +99,11 @@ Interactive mode 的 autocomplete 只在 `settingsManager.getEnableSkillCommands
 
 `subsys.agent-core.system-prompt` 是 related 节点;本节点的 index source 能直接核到的是 coding-agent 的 `formatSkillsForPrompt()` 被 `buildSystemPrompt()` 调用。harness-level prompt formatter 不在本节点 source 清单内,因此不在此处作 `[E]` 断言。[E: packages/coding-agent/src/core/system-prompt.ts:7] [E: packages/coding-agent/src/core/system-prompt.ts:67] [E: packages/coding-agent/src/core/system-prompt.ts:163] [U]
 
-`surface.slash-commands.overview` 是 slash command 总览节点;本节点只说明 skill commands 这一路如何由 settings、interactive autocomplete 和 `AgentSession._expandSkillCommand()` 连接到 loaded skills。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:761] [E: packages/coding-agent/src/core/agent-session.ts:1788] [I]
+`surface.slash-commands.overview` 是 slash command 总览节点;本节点只说明 skill commands 这一路如何由 settings、interactive autocomplete 和 `AgentSession._expandSkillCommand()` 连接到 loaded skills。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:763] [E: packages/coding-agent/src/core/agent-session.ts:1788] [I]
 
 ## Gotcha
 
-- `enableSkillCommands=false` 只影响 interactive autocomplete 中 skill commands 的注册;`AgentSession._expandSkillCommand()` 本身不检查该 setting,因此其它调用路径若直接提交 `/skill:name` 且启用 prompt expansion,仍可能展开 skill。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:761] [E: packages/coding-agent/src/core/agent-session.ts:1788] [I]
+- `enableSkillCommands=false` 只影响 interactive autocomplete 中 skill commands 的注册;`AgentSession._expandSkillCommand()` 本身不检查该 setting,因此其它调用路径若直接提交 `/skill:name` 且启用 prompt expansion,仍可能展开 skill。[E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:763] [E: packages/coding-agent/src/core/agent-session.ts:1788] [I]
 - `disable-model-invocation` 不阻止 skill command 展开;它只从 `formatSkillsForPrompt()` 的 always-on list 中过滤 skill。[E: packages/coding-agent/src/core/skills.ts:356] [E: packages/coding-agent/src/core/agent-session.ts:1795] [I]
 - 产品文档说 `/skill:name` 的 arguments 会作为 `User: <args>` 追加,但当前 `_expandSkillCommand()` 直接把 trim 后的 `args` 追加到 skill block 后,没有加 `User:` 前缀;用户承诺与实现需要后续 reconcile。[E: packages/coding-agent/docs/skills.md:83] [E: packages/coding-agent/src/core/agent-session.ts:1802] [U]
 - Product loader 的 name validation 不检查 parent directory equality;harness loader 的 `validateName(name, parentDirName)` 会检查 name 和父目录名相等,所以跨 harness 共享 skills 时要区分这两个 loader 的规则。[E: packages/coding-agent/src/core/skills.ts:92] [E: packages/agent/src/harness/skills.ts:310] [E: packages/agent/src/harness/skills.ts:312] [I]

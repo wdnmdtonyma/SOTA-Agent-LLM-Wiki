@@ -37,7 +37,7 @@ related:
   - subsys.coding-agent.usage-accounting
 evidence: explicit
 status: verified
-updated: ff72faba28
+updated: 6f7551516b
 ---
 
 > 私有 `@earendil-works/pi-evals`（版本 `0.87.1`）把真实 `AgentSession` 适配成 `vitest-evals` harness。`evals/` 扁平用例：`*.docs.eval.ts` 是文档 lift，由 `eval:docs` 在 Docker `without_docs` / `with_docs` 镜像里成对跑；其它 `*.eval.ts` 是 host，由 `eval:host` 在本机 Vitest 直接跑。runner 在 `src/`（`cli.ts` / `docker.ts` / `plan.ts` / `report.ts` / `harness.ts`）。[E: packages/evals/package.json:2] [E: packages/evals/package.json:3] [E: packages/evals/package.json:4] [E: packages/evals/README.md:7] [E: packages/evals/README.md:9] [E: packages/evals/README.md:10] [E: packages/evals/README.md:12]
