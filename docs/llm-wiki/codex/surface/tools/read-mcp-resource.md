@@ -8,10 +8,10 @@ symbols: [create_read_mcp_resource_tool, ReadMcpResourceHandler, ReadResourceArg
 related: [tool.list-mcp-resources, tool.list-mcp-resource-templates, subsys.mcp.server, subsys.mcp.client]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> `read_mcp_resource` 是本地 Function 工具，用给定 server 名和 resource URI 读取单个 MCP resource。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:80][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:82][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:82][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:83]
+> `read_mcp_resource` 是本地 Function 工具，用给定 server 名和 resource URI 读取单个 MCP resource。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:83][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:85][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:91][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:92]
 
 ## 能回答的问题
 
@@ -24,40 +24,40 @@ updated: 3abbf9fe2c
 
 | 项 | 值 |
 |---|---|
-| wire name | handler 返回 plain `read_mcp_resource`；spec name 也是 `read_mcp_resource`。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:25][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:80] |
-| handler | `ReadMcpResourceHandler` 的 `spec()` 调用 `create_read_mcp_resource_tool()`。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:29] |
-| ToolSpec | `ToolSpec::Function(ResponsesApiTool)`；`strict: false`，`defer_loading: None`，`output_schema: None`。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:79][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:85][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:91] |
+| wire name | handler 返回 plain `read_mcp_resource`；spec name 也是 `read_mcp_resource`。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:28][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:83] |
+| handler | `ReadMcpResourceHandler::new` 调用 `create_read_mcp_resource_tool`；`spec()` 返回缓存的 spec。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:50][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:32] |
+| ToolSpec | `ToolSpec::Function(ResponsesApiTool)`；`strict: false`，`defer_loading: None`，`output_schema: None`。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:82][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:88][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:94] |
 
 ## 2 输入 schema 表
 
 | 字段 | 类型 | 必填 | 默认 | 说明 |
 |---|---|---:|---|---|
-| `server` | string | 是 | 无 | MCP server name，必须与 `list_mcp_resources` 返回的 server 字段匹配。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:66][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:88] |
-| `uri` | string | 是 | 无 | 要读取的 resource URI。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:73][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:88] |
+| `server` | string | 是 | 无 | MCP server name，必须与 `list_mcp_resources` 返回的 server 字段匹配。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:69][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:91] |
+| `uri` | string | 是 | 无 | 要读取的 resource URI。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:76][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:91] |
 
-schema required 是 `server` 和 `uri`，并关闭 additional properties。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:86][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:88][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:89]
+schema required 是 `server` 和 `uri`，并关闭 additional properties。[E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:89][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:91][E: codex-rs/core/src/tools/handlers/mcp_resource_spec.rs:92]
 
 ## 3 注册与执行
 
-`add_mcp_resource_tools` 在当前 step binding 报告 `has_servers()` 时注册三件套，其中包括 `ReadMcpResourceHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1128][E: codex-rs/core/src/tools/spec_plan.rs:1129][E: codex-rs/core/src/tools/spec_plan.rs:1132]
+`add_mcp_resource_tools` 在当前 step binding 报告 `has_servers()` 时注册三件套，其中包括 `ReadMcpResourceHandler`。[E: codex-rs/core/src/tools/spec_plan.rs:1133][E: codex-rs/core/src/tools/spec_plan.rs:1141]
 
-handler 只接受 Function payload；它把 arguments 反序列化成 `ReadResourceArgs`，再对 `server` 和 `uri` 使用 `normalize_required_string`，该 helper 先 trim，空字符串会返回 `{field} must be provided`。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:59][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:69][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:71][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:343][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:346]
+handler 只接受 Function payload；它把 arguments 反序列化成 `ReadResourceArgs`，再对 `server` 和 `uri` 使用 `normalize_required_string`，该 helper 先 trim，空字符串会返回 `{field} must be provided`。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:68][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:80][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:345][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:349]
 
-执行阶段会按 turn config 过滤 `codex_apps` server：`orchestrator_mcp_enabled` 为 false 时，`ensure_model_can_access_mcp_server` 会把该 server 读请求拒绝为模型可见错误。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:45][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:49][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:56][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:81]
+执行阶段会按 turn config 过滤 `codex_apps` server：`orchestrator_mcp_enabled` 为 false 时，`ensure_model_can_access_mcp_server` 会把该 server 读请求拒绝为模型可见错误。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:45][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:49][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:56][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:90]
 
-read 从本 sampling step 捕获的 `McpBinding` 进入。有 step-ready client 时使用它，server 不在该集合中时回退 binding 持有的 live connection set。注册门控检查 connection set 的 `has_servers()`，因此本步 ready-client map 为空时 read handler 仍可能注册。供 extension 使用的 thread-owned `McpResourceClient` 则每次直接跟随 runtime 最新 publication，两者生命周期不同。[E: codex-rs/core/src/session/step_context.rs:32][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:57][E: codex-rs/codex-mcp/src/binding.rs:99][E: codex-rs/codex-mcp/src/binding.rs:150][E: codex-rs/codex-mcp/src/binding.rs:153][E: codex-rs/core/src/tools/spec_plan.rs:1129][I]
+read 从本 sampling step 捕获的 `McpBinding` 进入。有 step-ready client 时使用它，server 不在该集合中时回退 binding 持有的 live connection set。注册门控检查 connection set 的 `has_servers()`，因此本步 ready-client map 为空时 read handler 仍可能注册。供 extension 使用的 thread-owned `McpResourceClient` 则每次直接跟随 runtime 最新 publication，两者生命周期不同。[E: codex-rs/core/src/session/step_context.rs:39][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:66][E: codex-rs/codex-mcp/src/binding.rs:100][E: codex-rs/codex-mcp/src/binding.rs:151][E: codex-rs/codex-mcp/src/binding.rs:154][E: codex-rs/core/src/tools/spec_plan.rs:1133][I]
 
-read 与两种 list handler 共用 `run_resource_operation`：统一发 begin/end turn item、序列化输出并应用模型 truncation policy，而各 handler 只负责参数校验和具体 binding 调用。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:282][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:293][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:315]
+read 与两种 list handler 共用 `run_resource_operation`：统一发 begin/end turn item、序列化输出并应用模型 truncation policy，而各 handler 只负责参数校验和具体 binding 调用。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:284][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:295][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:317]
 
 ## 4 输出与事件
 
-读取成功后，payload 包含 `server`、`uri`，并 flatten MCP `ReadResourceResult`。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:191][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:194][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:195][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:89]
+读取成功后，payload 包含 `server`、`uri`，并 flatten MCP `ReadResourceResult`。[E: codex-rs/core/src/tools/handlers/mcp_resource.rs:191][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:194][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:195][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:98]
 
-执行由共享 `run_resource_operation` 包装：开始与完成各发 MCP tool-call turn item，payload 经 JSON 序列化和 truncation 后作为 successful function output 返回。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:80][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:218][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:235][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:315]
+执行由共享 `run_resource_operation` 包装：开始与完成各发 MCP tool-call turn item，payload 经 JSON 序列化和 truncation 后作为 successful function output 返回。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:89][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:218][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:236][E: codex-rs/core/src/tools/handlers/mcp_resource.rs:317]
 
 ## 5 parallel support
 
-`ReadMcpResourceHandler::supports_parallel_tool_calls()` 返回 true。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:32][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:33]
+`ReadMcpResourceHandler::supports_parallel_tool_calls()` 返回 true。[E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:35][E: codex-rs/core/src/tools/handlers/mcp_resource/read_mcp_resource.rs:36]
 
 ## Sources
 

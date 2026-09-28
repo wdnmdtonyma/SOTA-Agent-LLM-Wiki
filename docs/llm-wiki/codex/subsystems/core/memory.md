@@ -8,10 +8,10 @@ symbols: [start_memories_startup_task, MemoriesExtension, build_memory_tool_deve
 related: [spine.extension-system, subsys.core.instruction-assembly, subsys.core.session-lifecycle, subsys.core.turn-engine, subsys.core.unified-exec, subsys.core.history-notes, rpc.mcp-skills-plugin-methods]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> 长期 Memory 拆成三层：`codex-rs/memories/write` 负责 startup extraction/consolidation 写路径，`codex-rs/memories/read` 负责 citation/usage/read helper，`codex-rs/ext/memories` 通过 extension API 把 `memory_summary.md` 注入 developer prompt 并可选暴露 dedicated memory tools。core 侧 `MemoryContextFragment` 是 bounded v2 memory context。它不是 History notes 扩展：后者是 backend 私有 `history`/`notes` 回读面，private model-only。[E: codex-rs/memories/write/src/lib.rs:29][E: codex-rs/ext/memories/src/extension.rs:70][E: codex-rs/core/src/context/memory.rs:9][E: codex-rs/ext/history-notes/src/tools.rs:26]
+> 长期 Memory 拆成三层：`codex-rs/memories/write` 负责 startup extraction/consolidation 写路径，`codex-rs/memories/read` 负责 citation/usage/read helper，`codex-rs/ext/memories` 通过 extension API 把 `memory_summary.md` 注入 developer prompt 并可选暴露 dedicated memory tools。core 侧 `MemoryContextFragment` 是 bounded v2 memory context。它不是 History notes 扩展：后者是 backend 私有 `history`/`notes` 回读面，private model-only。[E: codex-rs/memories/write/src/lib.rs:29][E: codex-rs/ext/memories/src/extension.rs:70][E: codex-rs/core/src/context/memory.rs:9][E: codex-rs/ext/history-notes/src/tools.rs:27]
 
 ## 能回答的问题
 
@@ -26,9 +26,9 @@ updated: 3abbf9fe2c
 
 ## 职责边界
 
-写路径由 `codex_memories_write` crate 拥有：它导出 startup task、Phase 1/Phase 2 prompt/storage helpers、memory root layout 和清理函数。[E: codex-rs/memories/write/src/lib.rs:25] 读/注入路径不在 `core/src/session/mod.rs` 硬编码 memory 分支里，而是 app-server 安装 `codex_memories_extension`，再由 extension prompt contributor 返回 `PromptFragment::developer_policy`。[E: codex-rs/app-server/src/extensions.rs:110][E: codex-rs/ext/memories/src/extension.rs:95]
+写路径由 `codex_memories_write` crate 拥有：它导出 startup task、Phase 1/Phase 2 prompt/storage helpers、memory root layout 和清理函数。[E: codex-rs/memories/write/src/lib.rs:25] 读/注入路径不在 `core/src/session/mod.rs` 硬编码 memory 分支里，而是 app-server 安装 `codex_memories_extension`，再由 extension prompt contributor 返回 `PromptFragment::developer_policy`。[E: codex-rs/app-server/src/extensions.rs:97][E: codex-rs/ext/memories/src/extension.rs:95]
 
-experimental client RPC `memory/status` 存在；方法表权威在 `rpc.mcp-skills-plugin-methods`，本页不列 params/response。[E: codex-rs/app-server-protocol/src/protocol/common.rs:706][E: codex-rs/app-server-protocol/src/protocol/common.rs:707]
+experimental client RPC `memory/status` 存在；方法表权威在 `rpc.mcp-skills-plugin-methods`，本页不列 params/response。[E: codex-rs/app-server-protocol/src/protocol/common.rs:699]
 
 ## 关键 crate/文件
 
@@ -41,9 +41,9 @@ experimental client RPC `memory/status` 存在；方法表权威在 `rpc.mcp-ski
 
 ## 数据模型
 
-`MemoriesConfig::default` 默认生成和使用 memories，但 dedicated tools 默认关闭。[E: codex-rs/config/src/types.rs:350][E: codex-rs/config/src/types.rs:356][E: codex-rs/config/src/types.rs:357][E: codex-rs/config/src/types.rs:358]
+`MemoriesConfig::default` 默认生成和使用 memories，但 dedicated tools 默认关闭。[E: codex-rs/config/src/types.rs:352][E: codex-rs/config/src/types.rs:358][E: codex-rs/config/src/types.rs:359][E: codex-rs/config/src/types.rs:360]
 
-`generate_memories` 决定 thread persistence metadata 的 initial `memory_mode`: 新建时为 true 则 `Enabled`，否则 `Disabled`。[E: codex-rs/core/src/session/session.rs:996]
+`generate_memories` 决定 thread persistence metadata 的 initial `memory_mode`: 新建时为 true 则 `Enabled`，否则 `Disabled`。[E: codex-rs/core/src/session/session.rs:1050]
 
 `MemoryVersion` 把 artifact namespace 分成 V1 `memories` 与 V2 `memories_v2`。[E: codex-rs/protocol/src/memory_version.rs:9][E: codex-rs/protocol/src/memory_version.rs:17][E: codex-rs/protocol/src/memory_version.rs:19][E: codex-rs/protocol/src/memory_version.rs:20]
 
@@ -53,7 +53,7 @@ experimental client RPC `memory/status` 存在；方法表权威在 `rpc.mcp-ski
 
 ## Startup/write path
 
-1. App-server turn path 在成功提交有 input 的 turn 后调用 `codex_memories_write::start_memories_startup_task`。[E: codex-rs/app-server/src/request_processors/turn_processor.rs:686][E: codex-rs/memories/write/src/start.rs:24]
+1. App-server turn path 在成功提交有 input 的 turn 后调用 `codex_memories_write::start_memories_startup_task`。[E: codex-rs/app-server/src/request_processors/turn_processor.rs:689][E: codex-rs/memories/write/src/start.rs:24]
 2. Startup gate 跳过 ephemeral session、未开启 `Feature::MemoryTool` 的 session、以及 non-root agent；缺少 state DB 时直接跳过。[E: codex-rs/memories/write/src/start.rs:33][E: codex-rs/memories/write/src/start.rs:60]
 3. `dual_write` 为真时同一 startup 会按 V1 再 V2 各跑一遍 pipeline；否则只跑 `config.memories.version`。[E: codex-rs/memories/write/src/start.rs:40][E: codex-rs/memories/write/src/start.rs:43]
 4. Background task 创建 versioned memory root，seed extension instructions，prune stale stage-one outputs，检查 Codex rate limits，之后依次运行 Phase 1 和 Phase 2。[E: codex-rs/memories/write/src/start.rs:64][E: codex-rs/memories/write/src/start.rs:71][E: codex-rs/memories/write/src/start.rs:77][E: codex-rs/memories/write/src/start.rs:89]
@@ -70,7 +70,7 @@ Phase 2 先 claim global phase2 job，再确保 memory workspace git baseline，
 
 ## Read path 与 tools
 
-App-server 的 `thread_extensions` 安装 `codex_memories_extension`；extension 在 thread start/config changed 时把 `MemoriesExtensionConfig` 存入 thread store，`enabled` 条件是 `Feature::MemoryTool && config.memories.use_memories`，`dedicated_tools` 独立跟随 config。[E: codex-rs/app-server/src/extensions.rs:110][E: codex-rs/ext/memories/src/extension.rs:48][E: codex-rs/ext/memories/src/extension.rs:49]
+App-server 的 `thread_extensions` 安装 `codex_memories_extension`；extension 在 thread start/config changed 时把 `MemoriesExtensionConfig` 存入 thread store，`enabled` 条件是 `Feature::MemoryTool && config.memories.use_memories`，`dedicated_tools` 独立跟随 config。[E: codex-rs/app-server/src/extensions.rs:97][E: codex-rs/ext/memories/src/extension.rs:48][E: codex-rs/ext/memories/src/extension.rs:49]
 
 Prompt contributor 只在 extension config enabled 时读取 `{codex_home}/{version.directory_name()}/memory_summary.md`，非空才渲染 embedded template。V1 直接作为 `PromptFragment::developer_policy`；V2 先切成 `MemoryContextFragment::ReadInstructions` 再包成 developer policy。[E: codex-rs/ext/memories/src/prompts.rs:39][E: codex-rs/ext/memories/src/prompts.rs:40][E: codex-rs/ext/memories/src/extension.rs:66][E: codex-rs/ext/memories/src/extension.rs:84][E: codex-rs/ext/memories/src/extension.rs:95]
 
@@ -78,7 +78,7 @@ Dedicated memory tools 只在 extension config enabled 且 `dedicated_tools` 为
 
 ## Thread memory mode 与清理
 
-`set_thread_memory_mode` 只持久化 active session 的 thread-level memory mode metadata。[E: codex-rs/core/src/session/handlers.rs:269]
+`set_thread_memory_mode` 只持久化 active session 的 thread-level memory mode metadata。[E: codex-rs/core/src/session/handlers.rs:272]
 
 `clear_memory_roots_contents` 会清空 `codex_home/memories`、`codex_home/memories_v2` 和 legacy `codex_home/memories_extensions`。[E: codex-rs/memories/write/src/control.rs:3][E: codex-rs/memories/write/src/control.rs:5][E: codex-rs/memories/write/src/control.rs:6][E: codex-rs/memories/write/src/control.rs:7]
 
@@ -94,8 +94,8 @@ V1/V2 分目录是为了让 v1 cleanup/rollback 不碰到 v2 artifacts。[E: cod
 
 - Prompt injection 读取的是 versioned `memory_summary.md`，不是 `raw_memories.md` 或 rollout summaries。[E: codex-rs/ext/memories/src/prompts.rs:40]
 - 不要把所有 memory 都写成 `codex_home/memories`：V2 根是 `memories_v2`。[E: codex-rs/protocol/src/memory_version.rs:20]
-- `memory/status` 方法表不要在本页展开；去 `rpc.mcp-skills-plugin-methods`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:706][E: codex-rs/app-server-protocol/src/protocol/common.rs:707]
-- 这不是 `ext/history-notes`：History notes 是 Codex backend 上的 private model-only `history`/`notes` namespace，禁止向用户披露；长期 Memory 走 developer policy，面向可感知的跨会话记忆。[E: codex-rs/ext/history-notes/src/tools.rs:26][E: codex-rs/ext/memories/src/extension.rs:95]
+- `memory/status` 方法表不要在本页展开；去 `rpc.mcp-skills-plugin-methods`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:699]
+- 这不是 `ext/history-notes`：History notes 是 Codex backend 上的 private model-only `history`/`notes` namespace，禁止向用户披露；长期 Memory 走 developer policy，面向可感知的跨会话记忆。[E: codex-rs/ext/history-notes/src/tools.rs:27][E: codex-rs/ext/memories/src/extension.rs:95]
 
 ## Sources
 

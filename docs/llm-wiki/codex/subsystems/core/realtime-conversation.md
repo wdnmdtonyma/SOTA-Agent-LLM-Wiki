@@ -8,10 +8,10 @@ symbols: [RealtimeConversationManager, RealtimeModeInstructions, ConversationSta
 related: [ref.protocol-op, ref.protocol-event-lifecycle, subsys.platform.realtime, subsys.core.session-lifecycle, rpc.turn-methods]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> Realtime conversation is a side-channel beside normal turns: protocol `Op` variants start, feed, close and list voices; `session/handlers.rs` dispatches those variants without spawning a regular task; `RealtimeConversationManager` owns the active realtime state. Native WebRTC media lives in `codex-realtime-webrtc` plus the `codex-voice-host` helper, not in the protocol manager.[E: codex-rs/protocol/src/protocol.rs:610][E: codex-rs/protocol/src/protocol.rs:613][E: codex-rs/protocol/src/protocol.rs:616][E: codex-rs/protocol/src/protocol.rs:619][E: codex-rs/protocol/src/protocol.rs:622][E: codex-rs/protocol/src/protocol.rs:625][E: codex-rs/core/src/session/handlers.rs:435][E: codex-rs/core/src/session/handlers.rs:449][E: codex-rs/core/src/realtime_conversation.rs:165][E: codex-rs/realtime-webrtc/src/lib.rs:10][E: codex-rs/voice-host/src/main.rs:48]
+> Realtime conversation is a side-channel beside normal turns: protocol `Op` variants start, feed, close and list voices; `session/handlers.rs` dispatches those variants without spawning a regular task; `RealtimeConversationManager` owns the active realtime state. Native WebRTC media lives in `codex-realtime-webrtc` plus the `codex-voice-host` helper, not in the protocol manager.[E: codex-rs/protocol/src/protocol.rs:607][E: codex-rs/protocol/src/protocol.rs:610][E: codex-rs/protocol/src/protocol.rs:613][E: codex-rs/protocol/src/protocol.rs:616][E: codex-rs/protocol/src/protocol.rs:619][E: codex-rs/protocol/src/protocol.rs:622][E: codex-rs/core/src/session/handlers.rs:449][E: codex-rs/core/src/session/handlers.rs:463][E: codex-rs/core/src/realtime_conversation.rs:167][E: codex-rs/realtime-webrtc/src/lib.rs:10][E: codex-rs/voice-host/src/main.rs:48]
 
 ## 能回答的问题
 
@@ -23,23 +23,23 @@ updated: 3abbf9fe2c
 
 ## Protocol surface
 
-`ConversationStartParams` carries realtime handoff behavior、optional Frameless delegation ack filler、model/output modality/startup context、initial items、request-level start/end developer instructions、prompt/session id/transport/version/voice overrides。[E: codex-rs/protocol/src/protocol.rs:220][E: codex-rs/protocol/src/protocol.rs:223][E: codex-rs/protocol/src/protocol.rs:233][E: codex-rs/protocol/src/protocol.rs:245][E: codex-rs/protocol/src/protocol.rs:250]
+`ConversationStartParams` carries realtime handoff behavior、optional Frameless delegation ack filler、model/output modality/startup context、initial items、request-level start/end developer instructions、prompt/session id/transport/version/voice overrides。[E: codex-rs/protocol/src/protocol.rs:204][E: codex-rs/protocol/src/protocol.rs:207][E: codex-rs/protocol/src/protocol.rs:217][E: codex-rs/protocol/src/protocol.rs:231][E: codex-rs/protocol/src/protocol.rs:236]
 
-`ConversationStartTransport` is `Websocket`、`Webrtc { sdp }` or `ExistingCall { call_id, ... }`。[E: codex-rs/protocol/src/protocol.rs:257][E: codex-rs/protocol/src/protocol.rs:258][E: codex-rs/protocol/src/protocol.rs:262]
+`ConversationStartTransport` is `Websocket`、`Webrtc { sdp }` or `ExistingCall { call_id, ... }`。[E: codex-rs/protocol/src/protocol.rs:243][E: codex-rs/protocol/src/protocol.rs:244][E: codex-rs/protocol/src/protocol.rs:248]
 
-Realtime outputs use dedicated `EventMsg` variants for lifecycle start, streaming payload, close, SDP and list-voices。[E: codex-rs/protocol/src/protocol.rs:1375][E: codex-rs/protocol/src/protocol.rs:1378][E: codex-rs/protocol/src/protocol.rs:1381][E: codex-rs/protocol/src/protocol.rs:1384][E: codex-rs/protocol/src/protocol.rs:1523]
+Realtime outputs use dedicated `EventMsg` variants for lifecycle start, streaming payload, close, SDP and list-voices。[E: codex-rs/protocol/src/protocol.rs:1376][E: codex-rs/protocol/src/protocol.rs:1379][E: codex-rs/protocol/src/protocol.rs:1382][E: codex-rs/protocol/src/protocol.rs:1385][E: codex-rs/protocol/src/protocol.rs:1524]
 
 ## Start path
 
-The dispatch loop routes realtime start/audio/text/speech/close/list-voices ops to realtime handlers and each branch returns `false`, so these ops do not start a normal `RegularTask`.[E: codex-rs/core/src/session/handlers.rs:435][E: codex-rs/core/src/session/handlers.rs:449][E: codex-rs/core/src/session/handlers.rs:451][E: codex-rs/core/src/session/handlers.rs:455][E: codex-rs/core/src/session/handlers.rs:459][E: codex-rs/core/src/session/handlers.rs:463][E: codex-rs/core/src/session/handlers.rs:467]
+The dispatch loop routes realtime start/audio/text/speech/close/list-voices ops to realtime handlers and each branch returns `false`, so these ops do not start a normal `RegularTask`.[E: codex-rs/core/src/session/handlers.rs:449][E: codex-rs/core/src/session/handlers.rs:463][E: codex-rs/core/src/session/handlers.rs:465][E: codex-rs/core/src/session/handlers.rs:469][E: codex-rs/core/src/session/handlers.rs:473][E: codex-rs/core/src/session/handlers.rs:477][E: codex-rs/core/src/session/handlers.rs:481]
 
-`prepare_realtime_start()` defaults absent transport to websocket and applies experimental realtime WS / WebRTC call base URL overrides。[E: codex-rs/core/src/realtime_conversation.rs:1242][E: codex-rs/core/src/realtime_conversation.rs:1247][E: codex-rs/core/src/realtime_conversation.rs:1260]
+`prepare_realtime_start()` defaults absent transport to websocket and applies experimental realtime WS / WebRTC call base URL overrides。[E: codex-rs/core/src/realtime_conversation.rs:1315][E: codex-rs/core/src/realtime_conversation.rs:1339][E: codex-rs/core/src/realtime_conversation.rs:1341]
 
-request-level `realtime_start_instructions` 与 `realtime_end_instructions` 分别有 8,192 estimated-token 上限。[E: codex-rs/core/src/realtime_conversation.rs:104][E: codex-rs/core/src/realtime_conversation.rs:1389][E: codex-rs/core/src/realtime_conversation.rs:1403] Manager 在 start 成功后保存 `RealtimeModeInstructions`。[E: codex-rs/core/src/realtime_conversation.rs:167][E: codex-rs/core/src/realtime_conversation.rs:597]
+request-level `realtime_start_instructions` 与 `realtime_end_instructions` 分别有 8,192 estimated-token 上限。[E: codex-rs/core/src/realtime_conversation.rs:106][E: codex-rs/core/src/realtime_conversation.rs:1485][E: codex-rs/core/src/realtime_conversation.rs:1499] Manager 在 start 成功后保存 `RealtimeModeInstructions`。[E: codex-rs/core/src/realtime_conversation.rs:167][E: codex-rs/core/src/realtime_conversation.rs:599]
 
-`RealtimeConversationManager::start()` aborts previous state before `start_inner()`; `start_inner()` maps parser to V1/V2 session kind, creates bounded channels, then either creates a WebRTC realtime call plus sideband task or opens a websocket。[E: codex-rs/core/src/realtime_conversation.rs:582][E: codex-rs/core/src/realtime_conversation.rs:600][E: codex-rs/core/src/realtime_conversation.rs:618][E: codex-rs/core/src/realtime_conversation.rs:665]
+`RealtimeConversationManager::start()` aborts previous state before `start_inner()`; `start_inner()` maps parser to V1/V2 session kind, creates bounded channels, then either creates a WebRTC realtime call plus sideband task or opens a websocket。[E: codex-rs/core/src/realtime_conversation.rs:612][E: codex-rs/core/src/realtime_conversation.rs:625][E: codex-rs/core/src/realtime_conversation.rs:628][E: codex-rs/core/src/realtime_conversation.rs:652][E: codex-rs/core/src/realtime_conversation.rs:700]
 
-After start, `handle_start_inner()` sends `RealtimeConversationStarted` then fans out events。[E: codex-rs/core/src/realtime_conversation.rs:1616]
+After start, `handle_start_inner()` sends `RealtimeConversationStarted` then fans out events。[E: codex-rs/core/src/realtime_conversation.rs:1717][E: codex-rs/core/src/realtime_conversation.rs:1719]
 
 ## Native WebRTC crates
 
@@ -49,9 +49,9 @@ After start, `handle_start_inner()` sends `RealtimeConversationStarted` then fan
 
 ## Input and handoff path
 
-`audio_in()` writes audio frames and drops full-queue frames; `text_in()` requires a running conversation and prefixes user text.[E: codex-rs/core/src/realtime_conversation.rs:791][E: codex-rs/core/src/realtime_conversation.rs:803][E: codex-rs/core/src/realtime_conversation.rs:815][E: codex-rs/core/src/realtime_conversation.rs:829]
+`audio_in()` writes audio frames and drops full-queue frames; `text_in()` requires a running conversation and prefixes user text.[E: codex-rs/core/src/realtime_conversation.rs:829][E: codex-rs/core/src/realtime_conversation.rs:844][E: codex-rs/core/src/realtime_conversation.rs:856][E: codex-rs/core/src/realtime_conversation.rs:871]
 
-`handoff_out()` no-ops for client-managed handoffs.[E: codex-rs/core/src/realtime_conversation.rs:840][E: codex-rs/core/src/realtime_conversation.rs:855] BemTags 模式由 `bem.rs` 按 channel prefix 判定 commentary/final。[E: codex-rs/core/src/realtime_conversation/bem.rs:5]
+`handoff_out()` no-ops for client-managed handoffs.[E: codex-rs/core/src/realtime_conversation.rs:911][E: codex-rs/core/src/realtime_conversation.rs:926] BemTags 模式由 `bem.rs` 按 channel prefix 判定 commentary/final。[E: codex-rs/core/src/realtime_conversation/bem.rs:5]
 
 `RealtimeDelegation` wraps handoff input (and optional transcript delta) in XML; `TranscriptTailFlush` writes a source tag。[E: codex-rs/core/src/context/realtime_delegation.rs:8][E: codex-rs/core/src/context/realtime_delegation.rs:47][E: codex-rs/core/src/context/realtime_delegation.rs:55]
 
@@ -65,9 +65,9 @@ inactive→active 渲染 custom start fragment；active→inactive 渲染 custom
 
 ## Gotchas
 
-- Text output modality requires realtime V2.[E: codex-rs/core/src/realtime_conversation.rs:1471]
-- AVAS WebRTC starts require v1 or v3 (not V2) and conversational mode.[E: codex-rs/core/src/realtime_conversation.rs:1375][E: codex-rs/core/src/realtime_conversation.rs:1375]
-- `delegation_ack_filler` 只有 Frameless session JSON 写到 wire。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/protocol.rs:41]
+- Text output modality requires realtime V2.[E: codex-rs/core/src/realtime_conversation.rs:1567]
+- AVAS WebRTC starts require v1 or v3 (not V2) and conversational mode.[E: codex-rs/core/src/realtime_conversation.rs:1466][E: codex-rs/core/src/realtime_conversation.rs:1471]
+- `delegation_ack_filler` 只有 Frameless session JSON 写到 wire。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods_common.rs:128][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods_common.rs:159][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods_frameless_bidi.rs:73]
 - 不要把 `realtime-webrtc` / `voice-host` 写成独立 wiki 节点。[I]
 
 ## Sources

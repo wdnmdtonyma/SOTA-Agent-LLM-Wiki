@@ -8,10 +8,10 @@ symbols: [RealtimeCallClient, RealtimeCallResponse, RealtimeWebsocketClient, Rea
 related: [subsys.core.realtime-conversation, rpc.turn-methods, rpc.notifications-system]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> Codex 的 realtime platform control plane 集中在 `codex-api`：`RealtimeCallClient` 以 HTTP POST 交换 WebRTC SDP 并从响应取得 `call_id`，[E: codex-rs/codex-api/src/endpoint/realtime_call.rs:29][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:90][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:123] `RealtimeWebsocketClient` 则负责独立 realtime WebSocket 或加入既有 WebRTC call 的 sideband。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:769][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:794][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:818] 本地媒体由 `codex-realtime-webrtc` + `codex-voice-host` 提供，不替代 HTTP/WS control plane。[E: codex-rs/realtime-webrtc/src/lib.rs:10][E: codex-rs/voice-host/src/main.rs:48]
+> Codex 的 realtime platform control plane 集中在 `codex-api`：`RealtimeCallClient` 以 HTTP POST 交换 WebRTC SDP 并从响应取得 `call_id`，[E: codex-rs/codex-api/src/endpoint/realtime_call.rs:29][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:90][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:123] `RealtimeWebsocketClient` 则负责独立 realtime WebSocket 或加入既有 WebRTC call 的 sideband。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:832][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:859][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:883] 本地媒体由 `codex-realtime-webrtc` + `codex-voice-host` 提供，不替代 HTTP/WS control plane。[E: codex-rs/realtime-webrtc/src/lib.rs:10][E: codex-rs/voice-host/src/main.rs:48]
 
 ## 能回答的问题
 
@@ -25,7 +25,7 @@ updated: 3abbf9fe2c
 
 `RealtimeCallClient` 处理 signaling/control-plane HTTP：请求用 `application/sdp` body，`RealtimeCallResponse` 返回远端 SDP 和从 `Location` header 解出的 `call_id`。[E: codex-rs/codex-api/src/endpoint/realtime_call.rs:38][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:117][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:123] peer connection、麦克风采集和音频播放由 `codex-realtime-webrtc`/`codex-voice-host` 实现，不由这些 HTTP 类型实现。[E: codex-rs/realtime-webrtc/src/client.rs:155][E: codex-rs/voice-host/src/main.rs:5]
 
-`RealtimeWebsocketConnection` 组合 `RealtimeWebsocketWriter` 和 `RealtimeWebsocketEvents`，提供 audio frame、conversation item、function output、close 与 `next_event` surface；writer 还持有 wire adapter 与可选 `RealtimeContextAppendChannel`。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:211][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:216][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:221][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:246]
+`RealtimeWebsocketConnection` 组合 `RealtimeWebsocketWriter` 和 `RealtimeWebsocketEvents`，提供 audio frame、conversation item、function output、close 与 `next_event` surface；writer 还持有 wire adapter 与可选 `RealtimeContextAppendChannel`。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:240][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:245][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:250][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:275]
 
 ## 数据模型与 wire adapter
 
@@ -38,10 +38,10 @@ updated: 3abbf9fe2c
 ## 建联控制流
 
 1. `RealtimeCallClient::create_with_session_and_headers` 校验 config，根据 adapter 选择 `realtime/calls` 或 `live`，并把 SDP 与 session 作为 backend JSON 或 API multipart request 发出。[E: codex-rs/codex-api/src/endpoint/realtime_call.rs:66][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:71][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:129][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:139][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:147][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:168][E: codex-rs/codex-api/src/endpoint/realtime_call.rs:184]
-2. standalone `RealtimeWebsocketClient::connect` 从 provider URL 建 realtime URL，并以 `NewSession` 进入统一连接函数。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:794][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:812]
-3. `connect_webrtc_sideband` 用 `call_id` 生成 join URL。sideband base URL 默认固定为 direct OpenAI Realtime API `https://api.openai.com/v1`，不继承 provider base URL；只有显式 `with_webrtc_sideband_base_url` 才覆盖。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:60][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:784][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:789][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:818]
-4. sideband URL shaping 随 adapter 不同：Frameless Bidi 把 `call_id` 追加到 path，V1/RealtimeV2 则追加 `call_id` query parameter。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1140][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1155][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1171]
-5. 统一连接函数合并 provider/extra/default headers、注入可选 `x-session-id`、应用 custom CA TLS；`NewSession` 总会发送初始 session update，legacy sideband 只有非 Frameless adapter 会发送，standalone Frameless 还等待 `session.started`。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:955][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1001][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1012][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1027][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1075]
+2. standalone `RealtimeWebsocketClient::connect` 从 provider URL 建 realtime URL，并以 `NewSession` 进入统一连接函数。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:859][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:877]
+3. `connect_webrtc_sideband` 用 `call_id` 生成 join URL。sideband base URL 默认固定为 direct OpenAI Realtime API `https://api.openai.com/v1`，不继承 provider base URL；只有显式 `with_webrtc_sideband_base_url` 才覆盖。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:62][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:849][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:854][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:883]
+4. sideband URL shaping 随 adapter 不同：Frameless Bidi 把 `call_id` 追加到 path，V1/RealtimeV2 则追加 `call_id` query parameter。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1212][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1227][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1243]
+5. 统一连接函数合并 provider/extra/default headers、注入可选 `x-session-id`、应用 custom CA TLS；`NewSession` 总会发送初始 session update，legacy sideband 只有非 Frameless adapter 会发送，standalone Frameless 还等待 `session.started`。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1023][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1070][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1081][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1096][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:1147]
 
 ## Frameless Bidi
 
@@ -57,9 +57,9 @@ Realtime V2 conversational mode 配置 near-field noise reduction、input transc
 
 ## Gotcha
 
-- audio wire name 随 adapter 改变：V1/V2 发送 `input_audio_buffer.append`，Frameless 发送 `input_audio.append`。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:318][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:322]
+- audio wire name 随 adapter 改变：V1/V2 发送 `input_audio_buffer.append`，Frameless 发送 `input_audio.append`。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:347][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods.rs:351]
 - `normalized_session_mode` 强制 V1 与 Frameless 使用 conversational；只有 Realtime V2 保留调用方的 transcription mode。[E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods_common.rs:29][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods_common.rs:33][E: codex-rs/codex-api/src/endpoint/realtime_websocket/methods_common.rs:37]
-- `experimental_realtime_ws_base_url` 会由 core 覆盖 standalone websocket provider URL 和 ExistingCall/WebRTC sideband base URL；WebRTC call creation 仍由独立 `experimental_realtime_webrtc_call_base_url` 控制。[E: codex-rs/core/src/realtime_conversation.rs:1247][E: codex-rs/core/src/realtime_conversation.rs:1257][E: codex-rs/core/src/realtime_conversation.rs:1261]
+- `experimental_realtime_ws_base_url` 会由 core 覆盖 standalone websocket provider URL 和 ExistingCall/WebRTC sideband base URL；WebRTC call creation 仍由独立 `experimental_realtime_webrtc_call_base_url` 控制。[E: codex-rs/core/src/realtime_conversation.rs:1341][E: codex-rs/core/src/realtime_conversation.rs:1351][E: codex-rs/core/src/realtime_conversation.rs:1355]
 - 不要把 `realtime-webrtc` / `voice-host` 写成独立 wiki 节点。[I]
 
 ## Sources

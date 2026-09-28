@@ -8,10 +8,10 @@ symbols: [run_turn, run_sampling_request, try_run_sampling_request, built_tools,
 related: [spine.turn-end-to-end, subsys.core.session-lifecycle, subsys.core.context-manager, subsys.core.tool-router, subsys.core.compaction]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> Turn 引擎是 regular task 内部的 model-turn 状态机：`RegularTask::run` 先发 `TurnStarted`，再循环调用 `run_turn`；`run_turn` 做 pre-sampling compaction、captured step context、skill/plugin 注入、prompt history materialization、sampling request 和 follow-up 判断；真正的 stream/tool 处理在 `run_sampling_request`/`try_run_sampling_request` 中完成。[E: codex-rs/core/src/tasks/regular.rs:51][E: codex-rs/core/src/tasks/regular.rs:76][E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:183][E: codex-rs/core/src/session/turn.rs:308][E: codex-rs/core/src/session/turn.rs:522][E: codex-rs/core/src/session/turn.rs:1538][E: codex-rs/core/src/session/turn.rs:2409]
+> Turn 引擎是 regular task 内部的 model-turn 状态机：`RegularTask::run` 解析 startup prewarm 后循环 `run_turn`。`run_turn` 做 pre-sampling compaction、step context、skill/plugin 注入、sampling 与 follow-up；turn 结束还可按 `model_post_turn_compact_threshold_percent` 跑 `CompactionPhase::PostTurn`。[E: codex-rs/core/src/tasks/regular.rs:105][E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:183][E: codex-rs/core/src/session/turn.rs:710][E: codex-rs/core/src/session/turn.rs:727]
 
 ## 能回答的问题
 
@@ -23,54 +23,54 @@ updated: 3abbf9fe2c
 
 ## 职责边界
 
-`RegularTask::run` 是 turn engine 的外层 task：它把 startup prewarm 解析成可选 `ModelClientSession`，调用 `run_turn`，如果 active turn 没有 pending input 就返回 `last_agent_message`，否则清空下一轮显式 input 后继续循环。[E: codex-rs/core/src/tasks/regular.rs:56][E: codex-rs/core/src/tasks/regular.rs:70][E: codex-rs/core/src/tasks/regular.rs:76][E: codex-rs/core/src/tasks/regular.rs:77][E: codex-rs/core/src/tasks/regular.rs:92][E: codex-rs/core/src/tasks/regular.rs:95]
+`RegularTask::run` 把 startup prewarm 解析成可选 `ModelClientSession`，循环调用 `run_turn`。[E: codex-rs/core/src/tasks/regular.rs:84][E: codex-rs/core/src/tasks/regular.rs:105]
 
-`run_turn` 负责一次 regular turn 内部的 sampling/follow-up loop；`Session::spawn`、submission dispatch、task 启动/取消属于 `subsys.core.session-lifecycle`，具体 tool spec 和 handler 分派属于 `subsys.core.tool-router`。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:423][E: codex-rs/core/src/tasks/mod.rs:270][E: codex-rs/core/src/session/handlers.rs:411][I]
+`run_turn` 负责一次 regular turn 内部的 sampling/follow-up loop；`Session::spawn`、submission dispatch、task 启动/取消属于 `subsys.core.session-lifecycle`，具体 tool spec 和 handler 分派属于 `subsys.core.tool-router`。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:424][E: codex-rs/core/src/tasks/mod.rs:271][E: codex-rs/core/src/session/handlers.rs:420][I]
 
 ## 关键 crate/文件
 
-- `codex-rs/core/src/session/turn.rs`: `run_turn`、pre/mid compaction、prompt 构造、Responses stream loop 和 in-flight tool drain。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:1231][E: codex-rs/core/src/session/turn.rs:1509][E: codex-rs/core/src/session/turn.rs:2356][E: codex-rs/core/src/session/turn.rs:2409]
-- `codex-rs/core/src/tasks/regular.rs`: regular task 的 `TurnStarted` 发射和 `run_turn` 循环。[E: codex-rs/core/src/tasks/regular.rs:51][E: codex-rs/core/src/tasks/regular.rs:76]
-- `codex-rs/core/src/tools/parallel.rs`: `ToolCallRuntime` 从 `StepContext.tool_router` 读取本次 request 已 finalize 的 router，在 runtime readiness 后加 parallel policy 锁，再 dispatch。[E: codex-rs/core/src/tools/parallel.rs:44][E: codex-rs/core/src/tools/parallel.rs:106][E: codex-rs/core/src/tools/parallel.rs:167][E: codex-rs/core/src/tools/parallel.rs:181]
+- `codex-rs/core/src/session/turn.rs`: `run_turn`、pre/mid compaction、prompt 构造、Responses stream loop 和 in-flight tool drain。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:1278][E: codex-rs/core/src/session/turn.rs:1563][E: codex-rs/core/src/session/turn.rs:2446][E: codex-rs/core/src/session/turn.rs:2499]
+- `codex-rs/core/src/tasks/regular.rs`: regular task 的 `run_turn` 循环。[E: codex-rs/core/src/tasks/regular.rs:105]
+- `codex-rs/core/src/tools/parallel.rs`: `ToolCallRuntime` 从 `StepContext.tool_router` 读取本次 request 已 finalize 的 router，在 runtime readiness 后加 parallel policy 锁，再 dispatch。[E: codex-rs/core/src/tools/parallel.rs:45][E: codex-rs/core/src/tools/parallel.rs:119][E: codex-rs/core/src/tools/parallel.rs:199][E: codex-rs/core/src/tools/parallel.rs:213]
 
 ## 数据模型
 
-`build_prompt` 只把 `step_context.tool_router.model_visible_specs()` 放进 `Prompt.tools`，并把 `parallel_tool_calls` 硬编码为 `true`；输出 schema 来自 `TurnContext`，strict flag 对 guardian reviewer source 关闭。[E: codex-rs/core/src/session/turn.rs:1509][E: codex-rs/core/src/session/turn.rs:1517][E: codex-rs/core/src/session/turn.rs:1518][E: codex-rs/core/src/session/turn.rs:1520][E: codex-rs/core/src/session/turn.rs:1521]
+`build_prompt` 只把 `step_context.tool_router.model_visible_specs()` 放进 `Prompt.tools`，并把 `parallel_tool_calls` 硬编码为 `true`；输出 schema 来自 `TurnContext`，strict flag 对 guardian reviewer source 关闭。[E: codex-rs/core/src/session/turn.rs:1563][E: codex-rs/core/src/session/turn.rs:1571][E: codex-rs/core/src/session/turn.rs:1572][E: codex-rs/core/src/session/turn.rs:1574][E: codex-rs/core/src/session/turn.rs:1575]
 
-`try_run_sampling_request` 的 stream-local state 包括 `in_flight`、`needs_follow_up`、`last_agent_message`、active turn item、tool argument diff consumer、turn diff/token emit flags 和 plan-mode parsers。[E: codex-rs/core/src/session/turn.rs:2458][E: codex-rs/core/src/session/turn.rs:2459][E: codex-rs/core/src/session/turn.rs:2460][E: codex-rs/core/src/session/turn.rs:2461][E: codex-rs/core/src/session/turn.rs:2480]
+`try_run_sampling_request` 的 stream-local state 包括 `in_flight`、`needs_follow_up`、`last_agent_message`、active turn item、tool argument diff consumer、turn diff/token emit flags 和 plan-mode parsers。[E: codex-rs/core/src/session/turn.rs:2556][E: codex-rs/core/src/session/turn.rs:2557][E: codex-rs/core/src/session/turn.rs:2558][E: codex-rs/core/src/session/turn.rs:2559][E: codex-rs/core/src/session/turn.rs:2578]
 
 ## 控制流
 
 1. `run_turn` 创建或复用 `ModelClientSession`，先跑 `run_pre_sampling_compact`；失败时发 turn error lifecycle 并返回 `None`。[E: codex-rs/core/src/session/turn.rs:177][E: codex-rs/core/src/session/turn.rs:183][E: codex-rs/core/src/session/turn.rs:207]
-2. pre-sampling 后，`run_turn` 捕获第一份 `StepContext`，记录 context update/reference context baseline，构建 skill/plugin 注入，运行 session-start hooks 和 user-prompt hooks，然后把 injection items 写入 conversation history。[E: codex-rs/core/src/session/turn.rs:258][E: codex-rs/core/src/session/turn.rs:283][E: codex-rs/core/src/session/turn.rs:308][E: codex-rs/core/src/session/turn.rs:320][E: codex-rs/core/src/session/turn.rs:291][E: codex-rs/core/src/session/turn.rs:395]
-3. 主 loop 在允许时 drain pending input，确保 context、advertised tools 和 tool calls 共享同一个 request view，然后调用 `run_sampling_request`。[E: codex-rs/core/src/session/turn.rs:423][E: codex-rs/core/src/session/turn.rs:427][E: codex-rs/core/src/session/turn.rs:457][E: codex-rs/core/src/session/turn.rs:522]
-4. `run_sampling_request` 读取 `get_prompt_base_instructions`、创建不另存 router 的 `ToolCallRuntime`，并启动 code-mode turn worker。router 已在捕获该 request 的 `StepContext` 时完成 finalize。[E: codex-rs/core/src/session/turn.rs:1538][E: codex-rs/core/src/session/turn.rs:1549][E: codex-rs/core/src/session/turn.rs:1551][E: codex-rs/core/src/session/turn.rs:1556][E: codex-rs/core/src/session/step_context.rs:34]
-5. `run_sampling_request` retry loop 优先使用传入 input，重试时重新 clone history for prompt（按 `step_context.settings.model_info.input_modalities`），再调用 `try_run_sampling_request`。[E: codex-rs/core/src/session/turn.rs:1566][E: codex-rs/core/src/session/turn.rs:1571][E: codex-rs/core/src/session/turn.rs:1576][E: codex-rs/core/src/session/turn.rs:1582][E: codex-rs/core/src/session/turn.rs:1596]
-6. `try_run_sampling_request` 打开 model stream；`OutputItemDone` 完成当前 diff consumer，调用 `handle_output_item_done`，把产生的 `tool_future` 推入 `in_flight`，并 OR 合并 `needs_follow_up`。[E: codex-rs/core/src/session/turn.rs:2440][E: codex-rs/core/src/session/turn.rs:2538][E: codex-rs/core/src/session/turn.rs:2556][E: codex-rs/core/src/session/turn.rs:2628][E: codex-rs/core/src/session/turn.rs:2636][E: codex-rs/core/src/session/turn.rs:2641]
-7. `Completed` 事件 flush assistant text，并把 response id/token usage 发成 `RawResponseCompleted`。若 `end_turn == Some(false)`，仍把 `needs_follow_up` 置 true。[E: codex-rs/core/src/session/turn.rs:2783][E: codex-rs/core/src/session/turn.rs:2799][E: codex-rs/core/src/session/turn.rs:2755][E: codex-rs/core/src/session/turn.rs:2825]
-8. tool futures 由 `drain_in_flight` 逐个写入 conversation history，并在外部上下文污染 memory mode 时标记污染。[E: codex-rs/core/src/session/turn.rs:2356][E: codex-rs/core/src/session/turn.rs:2365][E: codex-rs/core/src/session/turn.rs:2230]
-9. `run_turn` 收到 sampling result 后把 model follow-up 与 pending input 合并；若 token limit reached 且需要 follow-up，就用 `BeforeLastUserMessage` 触发 mid-turn auto compact 并继续 loop。[E: codex-rs/core/src/session/turn.rs:565][E: codex-rs/core/src/session/turn.rs:600][E: codex-rs/core/src/session/turn.rs:612][E: codex-rs/core/src/session/turn.rs:618]
-10. 如果不需要 follow-up，`run_turn` 记录 `last_agent_message` 并执行 stop hooks；stop hook 若 block，可把 hook continuation 写回 history，再继续 turn。[E: codex-rs/core/src/session/turn.rs:642][E: codex-rs/core/src/session/turn.rs:644]
+2. pre-sampling 后，`run_turn` 捕获第一份 `StepContext`，记录 context update/reference context baseline，构建 skill/plugin 注入，运行 session-start hooks 和 user-prompt hooks，然后把 injection items 写入 conversation history。[E: codex-rs/core/src/session/turn.rs:258][E: codex-rs/core/src/session/turn.rs:283][E: codex-rs/core/src/session/turn.rs:308][E: codex-rs/core/src/session/turn.rs:320][E: codex-rs/core/src/session/turn.rs:291][E: codex-rs/core/src/session/turn.rs:396]
+3. 主 loop 在允许时 drain pending input，确保 context、advertised tools 和 tool calls 共享同一个 request view，然后调用 `run_sampling_request`。[E: codex-rs/core/src/session/turn.rs:424][E: codex-rs/core/src/session/turn.rs:428][E: codex-rs/core/src/session/turn.rs:460][E: codex-rs/core/src/session/turn.rs:522]
+4. `run_sampling_request` 读取 `get_prompt_base_instructions`、创建不另存 router 的 `ToolCallRuntime`，并启动 code-mode turn worker。router 已在捕获该 request 的 `StepContext` 时完成 finalize。[E: codex-rs/core/src/session/turn.rs:1592][E: codex-rs/core/src/session/turn.rs:1610][E: codex-rs/core/src/session/turn.rs:1612][E: codex-rs/core/src/session/turn.rs:1617][E: codex-rs/core/src/session/step_context.rs:41]
+5. `run_sampling_request` retry loop 优先使用传入 input，重试时重新 clone history for prompt（按 `step_context.settings.model_info.input_modalities`），再调用 `try_run_sampling_request`。[E: codex-rs/core/src/session/turn.rs:1627][E: codex-rs/core/src/session/turn.rs:1630][E: codex-rs/core/src/session/turn.rs:1635][E: codex-rs/core/src/session/turn.rs:1582][E: codex-rs/core/src/session/turn.rs:1658]
+6. `try_run_sampling_request` 打开 model stream；`OutputItemDone` 完成当前 diff consumer，调用 `handle_output_item_done`，把产生的 `tool_future` 推入 `in_flight`，并 OR 合并 `needs_follow_up`。[E: codex-rs/core/src/session/turn.rs:2539][E: codex-rs/core/src/session/turn.rs:2655][E: codex-rs/core/src/session/turn.rs:2675][E: codex-rs/core/src/session/turn.rs:2747][E: codex-rs/core/src/session/turn.rs:2755][E: codex-rs/core/src/session/turn.rs:2760]
+7. `Completed` 事件 flush assistant text，并把 response id/token usage 发成 `RawResponseCompleted`。若 `end_turn == Some(false)`，仍把 `needs_follow_up` 置 true。[E: codex-rs/core/src/session/turn.rs:2911][E: codex-rs/core/src/session/turn.rs:2927][E: codex-rs/core/src/session/turn.rs:2883][E: codex-rs/core/src/session/turn.rs:2953]
+8. tool futures 由 `drain_in_flight` 逐个写入 conversation history，并在外部上下文污染 memory mode 时标记污染。[E: codex-rs/core/src/session/turn.rs:2446][E: codex-rs/core/src/session/turn.rs:2455][E: codex-rs/core/src/session/turn.rs:2320]
+9. `run_turn` 收到 sampling result 后把 model follow-up 与 pending input 合并；若 token limit reached 且需要 follow-up，就用 `BeforeLastUserMessage` 触发 mid-turn auto compact 并继续 loop。[E: codex-rs/core/src/session/turn.rs:564][E: codex-rs/core/src/session/turn.rs:599][E: codex-rs/core/src/session/turn.rs:611][E: codex-rs/core/src/session/turn.rs:617]
+10. 如果不需要 follow-up，`run_turn` 记录 `last_agent_message` 并执行 stop hooks；stop hook 若 block，可把 hook continuation 写回 history，再继续 turn。[E: codex-rs/core/src/session/turn.rs:647][E: codex-rs/core/src/session/turn.rs:649]
 
 ## 自动 compaction
 
-`run_pre_sampling_compact` 先尝试 previous-model inline compact，再根据 `context_window_token_status` 判断 token limit；触发时捕获 pre-turn `StepContext`，并用 `InitialContextInjection::DoNotInject`、`CompactionReason::ContextLimit` 和 `CompactionPhase::PreTurn`。[E: codex-rs/core/src/session/turn.rs:1231][E: codex-rs/core/src/session/turn.rs:1237][E: codex-rs/core/src/session/turn.rs:1243][E: codex-rs/core/src/session/turn.rs:1253][E: codex-rs/core/src/session/turn.rs:1254][E: codex-rs/core/src/session/turn.rs:1255]
+`run_pre_sampling_compact` 先尝试 previous-model inline compact，再根据 `context_window_token_status` 判断 token limit；触发时捕获 pre-turn `StepContext`，并用 `InitialContextInjection::DoNotInject`、`CompactionReason::ContextLimit` 和 `CompactionPhase::PreTurn`。[E: codex-rs/core/src/session/turn.rs:1278][E: codex-rs/core/src/session/turn.rs:1284][E: codex-rs/core/src/session/turn.rs:1290][E: codex-rs/core/src/session/turn.rs:1300][E: codex-rs/core/src/session/turn.rs:1301][E: codex-rs/core/src/session/turn.rs:1302]
 
-previous-model compact 有两条 pre-turn 路径：compaction compatibility hash 改变时用 `CompHashChanged`；切到不同且更小 context-window 的新模型时，如果 active tokens 已越过新模型 auto-compact/window threshold，就用 `ModelDownshift`。[E: codex-rs/core/src/session/turn.rs:1299][E: codex-rs/core/src/session/turn.rs:1336][E: codex-rs/core/src/session/turn.rs:1384]
+previous-model compact 有两条 pre-turn 路径：compaction compatibility hash 改变时用 `CompHashChanged`；切到不同且更小 context-window 的新模型时，如果 active tokens 已越过新模型 auto-compact/window threshold，就用 `ModelDownshift`。[E: codex-rs/core/src/session/turn.rs:1346][E: codex-rs/core/src/session/turn.rs:1390][E: codex-rs/core/src/session/turn.rs:1438]
 
 ## 设计动机与权衡
 
-turn engine 把 context update、tool construction、sampling retry、stream parsing、tool future drain 和 follow-up loop 收束在 `session/turn.rs`，便于沿一次 turn 追踪状态，但也让该文件成为多个子系统的 glue 层。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:2409][I]
+turn engine 把 context update、tool construction、sampling retry、stream parsing、tool future drain 和 follow-up loop 收束在 `session/turn.rs`，便于沿一次 turn 追踪状态，但也让该文件成为多个子系统的 glue 层。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/session/turn.rs:2499][I]
 
-tool runtime 用一个 `RwLock<()>` 区分 parallel-supported 与 non-parallel-supported tool：支持并行的 tool 取 read lock，不支持并行的 tool 取 write lock，再调用 router dispatch。[E: codex-rs/core/src/tools/parallel.rs:49][E: codex-rs/core/src/tools/parallel.rs:103][E: codex-rs/core/src/tools/parallel.rs:170][E: codex-rs/core/src/tools/parallel.rs:176][E: codex-rs/core/src/tools/parallel.rs:181]
+tool runtime 用一个 `RwLock<()>` 区分 parallel-supported 与 non-parallel-supported tool：支持并行的 tool 取 read lock，不支持并行的 tool 取 write lock，再调用 router dispatch。[E: codex-rs/core/src/tools/parallel.rs:50][E: codex-rs/core/src/tools/parallel.rs:110][E: codex-rs/core/src/tools/parallel.rs:202][E: codex-rs/core/src/tools/parallel.rs:208][E: codex-rs/core/src/tools/parallel.rs:213]
 
-Direct tool call 的 timing 把等待 parallel gate 的 dispatch latency 与拿锁后的 handler latency 分开；`ToolCallTimingGuard::capture` 只对 `ToolCallSource::Direct | DirectPlaintextMessage` 建 guard，code-mode nested call 被刻意排除，避免一次用户可见调用产生重叠计时事件。[E: codex-rs/core/src/tools/parallel.rs:134][E: codex-rs/core/src/tools/parallel.rs:146][E: codex-rs/core/src/tools/parallel.rs:149][E: codex-rs/core/src/tools/parallel.rs:319][E: codex-rs/core/src/tools/parallel.rs:321][E: codex-rs/core/src/tools/parallel.rs:322]
+Direct tool call 的 timing 把等待 parallel gate 的 dispatch latency 与拿锁后的 handler latency 分开；`ToolCallTimingGuard::capture` 只对 `ToolCallSource::Direct | DirectPlaintextMessage` 建 guard，code-mode nested call 被刻意排除，避免一次用户可见调用产生重叠计时事件。[E: codex-rs/core/src/tools/parallel.rs:134][E: codex-rs/core/src/tools/parallel.rs:177][E: codex-rs/core/src/tools/parallel.rs:180][E: codex-rs/core/src/tools/parallel.rs:362][E: codex-rs/core/src/tools/parallel.rs:364][E: codex-rs/core/src/tools/parallel.rs:322]
 
 ## gotcha
 
-- `run_turn` 返回 `Option<String>`，不是完整 response item；regular task 把它当作完成时可上报的 final agent message。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/tasks/regular.rs:86]
-- `Prompt.tools` 是模型可见 tools，不等于 router 内部可 dispatch 的完整工具集合。[E: codex-rs/core/src/session/turn.rs:1517][I]
-- follow-up 不只由 tool call 决定；model result 和 pending input 都参与判断，token limit 只在需要 follow-up 时触发 mid-turn compaction。[E: codex-rs/core/src/session/turn.rs:565][E: codex-rs/core/src/session/turn.rs:600]
+- `run_turn` 返回 `Option<String>`，不是完整 response item；regular task 把它当作完成时可上报的 final agent message。[E: codex-rs/core/src/session/turn.rs:163][E: codex-rs/core/src/tasks/regular.rs:114]
+- `Prompt.tools` 是模型可见 tools，不等于 router 内部可 dispatch 的完整工具集合。[E: codex-rs/core/src/session/turn.rs:1571][I]
+- follow-up 不只由 tool call 决定；model result 和 pending input 都参与判断，token limit 只在需要 follow-up 时触发 mid-turn compaction。[E: codex-rs/core/src/session/turn.rs:564][E: codex-rs/core/src/session/turn.rs:599]
 
 ## Sources
 

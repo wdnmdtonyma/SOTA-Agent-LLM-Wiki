@@ -8,7 +8,7 @@ symbols: [create_wait_agent_tool_v1, WaitAgentHandler, multi_agents::wait::Handl
 related: [tool.spawn-agent-v1, tool.send-input-v1, tool.wait-agent-v2]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
 > `wait_agent` V1 是 `multi_agent_v1` namespace 下的 target-list wait 工具；它等待指定 agent thread id 达到 final status，并返回 status map，runtime key 优先使用 agent path、缺失时回退 thread id。
@@ -17,36 +17,36 @@ updated: 3abbf9fe2c
 
 | 项 | 当前源码事实 |
 |---|---|
-| namespace / wire name | handler 返回 `ToolName::namespaced(MULTI_AGENT_V1_NAMESPACE, "wait_agent")`；namespace 常量是 `multi_agent_v1`。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:32][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:14] |
-| spec builder | `create_wait_agent_tool_v1` 返回 namespace spec，内部 function name 是 `wait_agent`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:265][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:269] |
-| handler | `multi_agents.rs` re-export `wait::Handler as WaitAgentHandler`；handler 只匹配 function payload。[E: codex-rs/core/src/tools/handlers/multi_agents.rs:78][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:271] |
+| namespace / wire name | handler 返回 `ToolName::namespaced(MULTI_AGENT_V1_NAMESPACE, "wait_agent")`；namespace 常量是 `multi_agent_v1`。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:33][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:14] |
+| spec builder | `create_wait_agent_tool_v1` 返回 namespace spec，内部 function name 是 `wait_agent`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:269][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:273] |
+| handler | `multi_agents.rs` re-export `wait::Handler as WaitAgentHandler`；handler 只匹配 function payload。[E: codex-rs/core/src/tools/handlers/multi_agents.rs:78][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:286] |
 
 ## 注册与门控
 
-`wait_agent` V1 注册在 `collab_tools_enabled` true 且 `multi_agent_v2_enabled` false 的分支；V1 exposure 在 model search support 与 namespace capability 同时开启时是 deferred，否则 direct。V1 timeout 走 `DEFAULT_WAIT_TIMEOUT_MS` / `MIN_WAIT_TIMEOUT_MS` / `MAX_WAIT_TIMEOUT_MS`，不是 `multi_agent_v2.*` 配置。[E: codex-rs/core/src/tools/spec_plan.rs:629][E: codex-rs/core/src/tools/spec_plan.rs:746][E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1345][E: codex-rs/core/src/tools/spec_plan.rs:1368]
+`wait_agent` V1 注册在 `collab_tools_enabled` true 且 `multi_agent_v2_enabled` false 的分支；V1 exposure 在 model search support 与 namespace capability 同时开启时是 deferred，否则 direct。V1 timeout 走 `DEFAULT_WAIT_TIMEOUT_MS` / `MIN_WAIT_TIMEOUT_MS` / `MAX_WAIT_TIMEOUT_MS`，不是 `multi_agent_v2.*` 配置。[E: codex-rs/core/src/tools/spec_plan.rs:653][E: codex-rs/core/src/tools/spec_plan.rs:774][E: codex-rs/core/src/tools/spec_plan.rs:1299][E: codex-rs/core/src/tools/spec_plan.rs:1396][E: codex-rs/core/src/tools/spec_plan.rs:1418]
 
-handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:39][E: codex-rs/tools/src/tool_executor.rs:122]
+handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:40][E: codex-rs/tools/src/tool_executor.rs:122]
 
 ## 输入与 timeout
 
 | 字段 | 必填 | 说明 |
 |---|---:|---|
-| `targets` | 是 | agent id array；schema required 包含 `targets`，runtime 也要求非空并逐项解析成 `ThreadId`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:853][E: codex-rs/core/src/tools/handlers/multi_agents.rs:48][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:68] |
-| `timeout_ms` | 否 | 缺省使用 `DEFAULT_WAIT_TIMEOUT_MS`；runtime 要求大于 0，并 clamp 到 min/max。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:843][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:92][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:99] |
+| `targets` | 是 | agent id array；schema required 包含 `targets`，runtime 也要求非空并逐项解析成 `ThreadId`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:872][E: codex-rs/core/src/tools/handlers/multi_agents.rs:48][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:69] |
+| `timeout_ms` | 否 | 缺省使用 `DEFAULT_WAIT_TIMEOUT_MS`；runtime 要求大于 0，并 clamp 到 min/max。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:862][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:95][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:102] |
 
 ## Handler 流程
 
-handler 解析 targets 后，为每个目标收集 metadata、建立 target display key，并发出 `CollabAgentToolCall` started item。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:68][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:77][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:102]
+handler 解析 targets 后，为每个目标收集 metadata、建立 target display key，并发出 `CollabAgentToolCall` started item。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:69][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:80][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:105]
 
-对每个目标，handler 订阅 status watch；如果初始状态已 final 或 thread not found，会直接纳入结果。否则并发等待任一目标达到 final status，超时则返回空 status map。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:123][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:126][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:132][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:191]
+对每个目标，handler 订阅 status watch；如果初始状态已 final 或 thread not found，会直接纳入结果。否则并发等待任一目标达到 final status，超时则返回空 status map。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:123][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:139][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:145][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:206]
 
-结果 status key 优先用 agent path，缺失时回退 thread id；completed item 则用 thread id keyed 的 `agents_states`，并只保留返回状态所对应的 receiver entries。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:80][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:197][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:219]
+结果 status key 优先用 agent path，缺失时回退 thread id；completed item 则用 thread id keyed 的 `agents_states`，并只保留返回状态所对应的 receiver entries。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:83][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:212][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:234]
 
 ## 输出
 
-V1 output schema 是 `{ status, timed_out }`；schema description 仍写着 final statuses keyed by agent id，但 runtime 构造结果时使用上文的 target display key。`timed_out` 等于 `statuses.is_empty()`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:496][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:191][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:203]
+V1 output schema 是 `{ status, timed_out }`；schema description 仍写着 final statuses keyed by agent id，但 runtime 构造结果时使用 target display key。`timed_out` 等于 `statuses.is_empty()`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:506][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:206][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:218]
 
-`wait_for_final_status` 在 watch 关闭时会重新读取 latest status；只有 latest 是 final 时才返回结果。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:318][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:320]
+`wait_for_final_status` 在 watch 关闭后会重新读取 latest status；只有 latest 是 final 时才返回结果。[E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:334][E: codex-rs/core/src/tools/handlers/multi_agents/wait.rs:340]
 
 ## Sources
 

@@ -8,10 +8,10 @@ symbols: [HooksFile, HookEventsToml, HookHandlerConfig, ClaudeHooksEngine, disco
 related: [subsys.config-auth.config-loading, subsys.core.tool-system, subsys.core.tool-router, subsys.platform.analytics]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> Codex hooks 系统现在把 hook schema 放在 `codex_config::hook_config`，由 `codex_hooks::engine` 从 config layers、managed requirements 和 plugin hook sources 发现 command 与 MCP tool handlers，再由 core session/tool runtime 发起 preview/start/completed flow。plugin 生效后 app-server 会 `refresh_hook_runtimes()`。[E: codex-rs/config/src/hook_config.rs:16][E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/hooks/src/engine/discovery.rs:94][E: codex-rs/hooks/src/engine/mod.rs:229][E: codex-rs/hooks/src/engine/mcp_runner.rs:28][E: codex-rs/core/src/hook_runtime.rs:186][E: codex-rs/core/src/tools/registry.rs:567][E: codex-rs/core/src/thread_manager.rs:762]
+> Codex hooks 系统现在把 hook schema 放在 `codex_config::hook_config`，由 `codex_hooks::engine` 从 config layers、managed requirements 和 plugin hook sources 发现 command 与 MCP tool handlers，再由 core session/tool runtime 发起 preview/start/completed flow。plugin 生效后 app-server 会 `refresh_hook_runtimes()`。[E: codex-rs/config/src/hook_config.rs:16][E: codex-rs/config/src/hook_config.rs:36][E: codex-rs/hooks/src/engine/discovery.rs:94][E: codex-rs/hooks/src/engine/mod.rs:229][E: codex-rs/hooks/src/engine/mcp_runner.rs:28][E: codex-rs/core/src/hook_runtime.rs:188][E: codex-rs/core/src/tools/registry.rs:603][E: codex-rs/core/src/thread_manager.rs:839]
 
 ## 能回答的问题
 
@@ -25,7 +25,7 @@ updated: 3abbf9fe2c
 
 本节点覆盖 hooks config/discovery/dispatch/runtime integration。`codex-rs/hooks/src/types.rs` 中的 `Hook`/`HookPayload`/`HookEvent::AfterAgent` 是 legacy after-agent hook contract；Claude-style lifecycle hooks 的 schema 来自 `codex-rs/config/src/hook_config.rs`。[E: codex-rs/hooks/src/types.rs:39][E: codex-rs/hooks/src/types.rs:64][E: codex-rs/hooks/src/types.rs:92][E: codex-rs/config/src/hook_config.rs:36]
 
-工具 plan/spec 门控不在本节点展开；当前工具 ground truth 是 `codex-rs/core/src/tools/spec_plan.rs`，handler dispatch 在 `codex-rs/core/src/tools/registry.rs`。[E: codex-rs/core/src/tools/registry.rs:495]
+工具 plan/spec 门控不在本节点展开；当前工具 ground truth 是 `codex-rs/core/src/tools/spec_plan.rs`，handler dispatch 在 `codex-rs/core/src/tools/registry.rs`。[E: codex-rs/core/src/tools/registry.rs:494]
 
 ## 数据模型
 
@@ -43,7 +43,7 @@ updated: 3abbf9fe2c
 4. `allow_managed_hooks_only` 来自 requirements；policy 不允许的 source 会被跳过，managed hooks 仍可运行。[E: codex-rs/hooks/src/engine/discovery.rs:84][E: codex-rs/hooks/src/engine/discovery.rs:89][E: codex-rs/hooks/src/engine/discovery.rs:108][E: codex-rs/hooks/src/engine/discovery.rs:143]
 5. Plugin hook sources 会注入 `PLUGIN_ROOT`/`PLUGIN_DATA` 以及 Claude 兼容 env，然后以 plugin source append。[E: codex-rs/hooks/src/engine/discovery.rs:244][E: codex-rs/hooks/src/engine/discovery.rs:265][E: codex-rs/hooks/src/engine/discovery.rs:267]
 
-Plugin hook discovery 在进入 hooks engine 前还经过 auth-aware marketplace 路由：`PluginsManager::plugin_hooks_for_layer_stack` 根据 auth mode 选择 curated target，再以 hooks-only scope 载入并过滤 plugin。`uses_codex_backend` 选 `OpenAiWithRemote`（排除 API curated）；否则选 `OpenAiApi`（排除 OpenAI curated 与 remote global）。`OpenAi` 变体仍排除 API curated 与 remote global。[E: codex-rs/core-plugins/src/manager.rs:624][E: codex-rs/core-plugins/src/manager.rs:964][E: codex-rs/core-plugins/src/loader.rs:84][E: codex-rs/core-plugins/src/loader.rs:208][E: codex-rs/core-plugins/src/loader.rs:295][E: codex-rs/core-plugins/src/loader.rs:303]
+Plugin hook discovery 在进入 hooks engine 前还经过 auth-aware marketplace 路由：`PluginsManager::plugin_hooks_for_layer_stack` 调用 `target_curated_marketplace` 按 auth mode 选择 curated target，再以 hooks-only scope 载入并过滤 plugin。`uses_codex_backend` 选 `OpenAiWithRemote`（排除 API curated）；否则选 `OpenAiApi`（排除 OpenAI curated 与 remote global）。`OpenAi` 变体仍排除 API curated 与 remote global。[E: codex-rs/core-plugins/src/manager.rs:974][E: codex-rs/core-plugins/src/manager.rs:982][E: codex-rs/core-plugins/src/manager.rs:643][E: codex-rs/core-plugins/src/loader.rs:83][E: codex-rs/core-plugins/src/loader.rs:201][E: codex-rs/core-plugins/src/loader.rs:291][E: codex-rs/core-plugins/src/loader.rs:299]
 
 ## Handler 校验与 trust
 
@@ -55,36 +55,36 @@ Discovery 会按 event 计算 matcher pattern、validate matcher 并拒绝空 co
 
 ## Core runtime 触发点
 
-`run_pending_session_start_hooks` 将 root session startup 映射为 `SessionStart`，将 thread-spawn child startup 映射为 `SubagentStart`；其他 synthetic/internal subagents 不运行 start hooks。[E: codex-rs/core/src/hook_runtime.rs:126][E: codex-rs/core/src/hook_runtime.rs:134][E: codex-rs/core/src/hook_runtime.rs:148][E: codex-rs/core/src/hook_runtime.rs:149]
+`run_pending_session_start_hooks` 将 root session startup 映射为 `SessionStart`，将 thread-spawn child startup 映射为 `SubagentStart`；其他 synthetic/internal subagents 不运行 start hooks。[E: codex-rs/core/src/hook_runtime.rs:128][E: codex-rs/core/src/hook_runtime.rs:136][E: codex-rs/core/src/hook_runtime.rs:150][E: codex-rs/core/src/hook_runtime.rs:151]
 
-`run_pre_tool_use_hooks` 构造 stable `PreToolUseRequest`，发出 started/completed events，记录 additional contexts；如果 outcome 要 block，则返回面向模型的 blocked message。[E: codex-rs/core/src/hook_runtime.rs:186][E: codex-rs/core/src/hook_runtime.rs:194][E: codex-rs/core/src/hook_runtime.rs:209][E: codex-rs/core/src/hook_runtime.rs:212]
+`run_pre_tool_use_hooks` 构造 stable `PreToolUseRequest`，发出 started/completed events，记录 additional contexts；如果 outcome 要 block，则返回面向模型的 blocked message。[E: codex-rs/core/src/hook_runtime.rs:188][E: codex-rs/core/src/hook_runtime.rs:196][E: codex-rs/core/src/hook_runtime.rs:210][E: codex-rs/core/src/hook_runtime.rs:213]
 
-`inspect_pending_input` 只对 `TurnInput::UserInput` 构造 `UserPromptSubmitRequest`，先 preview 再运行 `run_user_prompt_submit`，并复用 context-injecting outcome；非用户输入不会触发该 hook。[E: codex-rs/core/src/hook_runtime.rs:670][E: codex-rs/core/src/hook_runtime.rs:676][E: codex-rs/core/src/hook_runtime.rs:689][E: codex-rs/core/src/hook_runtime.rs:694]
+`inspect_pending_input` 只对 `TurnInput::UserInput` 构造 `UserPromptSubmitRequest`，先 preview 再运行 `run_user_prompt_submit`，并复用 context-injecting outcome；非用户输入不会触发该 hook。[E: codex-rs/core/src/hook_runtime.rs:677][E: codex-rs/core/src/hook_runtime.rs:683][E: codex-rs/core/src/hook_runtime.rs:696][E: codex-rs/core/src/hook_runtime.rs:701]
 
-`ToolRegistry::dispatch_any_with_terminal_outcome` 在 handler 提供 pre payload 时调用 pre hook；如果被 block，会终止该 tool call 并通知 lifecycle outcome 为 blocked。[E: codex-rs/core/src/tools/registry.rs:495][E: codex-rs/core/src/tools/registry.rs:567][E: codex-rs/core/src/tools/registry.rs:577]
+`ToolRegistry::dispatch_any_with_terminal_outcome` 在 handler 提供 pre payload 时调用 pre hook；如果被 block，会终止该 tool call 并通知 lifecycle outcome 为 blocked。[E: codex-rs/core/src/tools/registry.rs:494][E: codex-rs/core/src/tools/registry.rs:603][E: codex-rs/core/src/tools/registry.rs:613]
 
-`PostToolUse` 只在 tool handler 成功且产生 post payload 时运行；它拿到 handler 已适配过的 stable tool input/response，而不是内部 raw payload。[E: codex-rs/core/src/tools/registry.rs:682][E: codex-rs/core/src/hook_runtime.rs:289]
+`PostToolUse` 只在 tool handler 成功且产生 post payload 时运行；它拿到 handler 已适配过的 stable tool input/response，而不是内部 raw payload。[E: codex-rs/core/src/tools/registry.rs:718][E: codex-rs/core/src/hook_runtime.rs:297]
 
-Permission request、Stop/SubagentStop、PreCompact/PostCompact hooks 分别有独立 request builders；PermissionRequest 返回 optional decision，compact hooks 可返回 stopped/continue，Stop 会按 root/subagent source 选择 target。[E: codex-rs/core/src/hook_runtime.rs:249][E: codex-rs/core/src/hook_runtime.rs:385][E: codex-rs/core/src/hook_runtime.rs:394][E: codex-rs/core/src/hook_runtime.rs:537][E: codex-rs/core/src/hook_runtime.rs:574]
+Permission request、Stop/SubagentStop、PreCompact/PostCompact hooks 分别有独立 request builders；PermissionRequest 返回 optional decision，compact hooks 可返回 stopped/continue，Stop 会按 root/subagent source 选择 target。[E: codex-rs/core/src/hook_runtime.rs:258][E: codex-rs/core/src/hook_runtime.rs:392][E: codex-rs/core/src/hook_runtime.rs:401][E: codex-rs/core/src/hook_runtime.rs:544][E: codex-rs/core/src/hook_runtime.rs:581]
 
-`run_session_end_hooks` 只运行 root session 的 `SessionEnd`。Thread-spawn 子会话仍由 SubagentStart/SubagentStop 覆盖。[E: codex-rs/core/src/hook_runtime.rs:464][E: codex-rs/core/src/hook_runtime.rs:475]
+`run_session_end_hooks` 只运行 root session 的 `SessionEnd`。Thread-spawn 子会话仍由 SubagentStart/SubagentStop 覆盖。[E: codex-rs/core/src/hook_runtime.rs:471][E: codex-rs/core/src/hook_runtime.rs:482]
 
-`run_turn_interrupt_hooks` 同样是 root-only：subagent 直接 return。它在 active turn 已 detach 后复用 last executing step 的 executor hook sources，flush rollout，再跑 `Interrupt`。[E: codex-rs/core/src/hook_runtime.rs:495][E: codex-rs/core/src/hook_runtime.rs:500][E: codex-rs/core/src/hook_runtime.rs:512][E: codex-rs/core/src/hook_runtime.rs:533]
+`run_turn_interrupt_hooks` 同样是 root-only：subagent 直接 return。它在 active turn 已 detach 后复用 last executing step 的 executor hook sources，flush rollout，再跑 `Interrupt`。[E: codex-rs/core/src/hook_runtime.rs:502][E: codex-rs/core/src/hook_runtime.rs:507][E: codex-rs/core/src/hook_runtime.rs:519][E: codex-rs/core/src/hook_runtime.rs:540]
 
-plugin / marketplace / user-config 变更后，app-server 会 `clear_cache` 并 `refresh_hook_runtimes()`；session 用当前 config 重建 `ClaudeHooksEngine`，若 refresh 期间 config 已被更新则丢弃过期结果。[E: codex-rs/app-server/src/effective_plugin_change.rs:31][E: codex-rs/app-server/src/effective_plugin_change.rs:37][E: codex-rs/core/src/thread_manager.rs:762][E: codex-rs/core/src/session/mod.rs:2027][E: codex-rs/core/src/session/mod.rs:2041]
+plugin / marketplace / user-config 变更后，app-server 会 `clear_cache` 并 `refresh_hook_runtimes()`；session 用当前 config 重建 `ClaudeHooksEngine`，若 refresh 期间 config 已被更新则丢弃过期结果。[E: codex-rs/app-server/src/effective_plugin_change.rs:31][E: codex-rs/app-server/src/effective_plugin_change.rs:37][E: codex-rs/core/src/thread_manager.rs:839][E: codex-rs/core/src/session/mod.rs:2113][E: codex-rs/core/src/session/mod.rs:2127]
 
 ## Command 执行
 
 Dispatcher 按 event name 和 matcher input 筛选 handlers；同一个 configured handler 只检查一次，避免 compatibility aliases 对同一 tool call 重复运行同一 hook。command handler 走 `run_command`，MCP tool handler 走 `run_mcp_tool` 并把 `${field.path}` 模板展开成 hook event JSON。[E: codex-rs/hooks/src/engine/dispatcher.rs:32][E: codex-rs/hooks/src/engine/dispatcher.rs:49][E: codex-rs/hooks/src/engine/dispatcher.rs:199][E: codex-rs/hooks/src/engine/dispatcher.rs:214][E: codex-rs/hooks/src/engine/mcp_runner.rs:28][E: codex-rs/hooks/src/engine/mcp_runner.rs:41]
 
-Command runner 使用 configured shell 或默认 shell，设置 cwd、stdin、stdout/stderr pipe、kill_on_drop，并将 hook request JSON 写入 stdin；timeout 会被映射成 `"hook timed out after ..."` error。[E: codex-rs/hooks/src/engine/command_runner.rs:218][E: codex-rs/hooks/src/engine/command_runner.rs:223][E: codex-rs/hooks/src/engine/command_runner.rs:331]
+Command runner 使用 configured shell 或默认 shell，设置 cwd、stdin、stdout/stderr pipe、kill_on_drop，并将 hook request JSON 写入 stdin；timeout 会被映射成 `"hook timed out after ..."` error。[E: codex-rs/hooks/src/engine/command_runner.rs:418][E: codex-rs/hooks/src/engine/command_runner.rs:423][E: codex-rs/hooks/src/engine/command_runner.rs:321]
 
 ## Gotchas
 
 - `allow_managed_hooks_only` 意味着非 managed source 不会贡献 layer-local hooks；managed requirements 和 plugin sources 走单独路径。[E: codex-rs/hooks/src/engine/discovery.rs:89][E: codex-rs/hooks/src/engine/discovery.rs:119][E: codex-rs/hooks/src/engine/discovery.rs:244]
 - `HookHandlerConfig::Prompt` 和 `HookHandlerConfig::Agent` 是 schema 可读类型，但当前 discovery 会跳过并 warning；不能把它们当作 runnable handlers。[E: codex-rs/config/src/hook_config.rs:198][E: codex-rs/config/src/hook_config.rs:200][E: codex-rs/hooks/src/engine/discovery.rs:635][E: codex-rs/hooks/src/engine/discovery.rs:645]
 - `HookHandlerConfig::McpTool` 是 runnable，但 `SessionEnd` 以及缺少非空 `server`/`tool` 时会被跳过。managed-required source 上的这些失败会记入 `required_load_errors`，足以拒绝 startup。[E: codex-rs/hooks/src/engine/discovery.rs:589][E: codex-rs/hooks/src/engine/discovery.rs:600][E: codex-rs/hooks/src/engine/discovery.rs:67]
-- legacy `AfterAgent` hook contract 仍在 `types.rs` 和 `run_legacy_after_agent_hook` 中存在，和 Claude-style lifecycle hook engine 是两条不同路径。[E: codex-rs/hooks/src/types.rs:92][E: codex-rs/hooks/src/types.rs:93][E: codex-rs/core/src/hook_runtime.rs:602]
+- legacy `AfterAgent` hook contract 仍在 `types.rs` 和 `run_legacy_after_agent_hook` 中存在，和 Claude-style lifecycle hook engine 是两条不同路径。[E: codex-rs/hooks/src/types.rs:92][E: codex-rs/hooks/src/types.rs:93][E: codex-rs/core/src/hook_runtime.rs:609]
 - 配置里把 `SessionEnd` 标成 async 不会让进程 fire-and-forget；当前实现会 warning 后同步等待。`Interrupt` 不走这条强制同步。[E: codex-rs/hooks/src/engine/discovery.rs:531][E: codex-rs/hooks/src/engine/discovery.rs:749]
 
 ## Sources

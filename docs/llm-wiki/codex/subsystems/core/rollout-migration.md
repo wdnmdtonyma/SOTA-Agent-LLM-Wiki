@@ -3,15 +3,15 @@ id: subsys.core.rollout-migration
 title: Rollout migration
 kind: subsystem
 tier: T2
-source: [codex-rs/thread-store/src/local/rollout_migration.rs, codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs, codex-rs/thread-store/src/local/rollout_migration/legacy_event.rs, codex-rs/thread-store/src/local/rollout_migration/line_parser.rs, codex-rs/thread-store/src/local/rollout_migration/publish.rs, codex-rs/thread-store/src/local/rollout_migration/rollback.rs, codex-rs/thread-store/src/local/rollout_migration/rollback_plan.rs, codex-rs/thread-store/src/local/rollout_migration/rollback_replay.rs, codex-rs/thread-store/src/local/rollout_migration/startup.rs, codex-rs/thread-store/src/local/rollout_migration/subagent.rs, codex-rs/thread-store/src/local/rollout_migration/telemetry.rs, codex-rs/cli/src/migrate_rollouts.rs, codex-rs/features/src/lib.rs, codex-rs/core/src/thread_manager.rs, codex-rs/history/src/lib.rs, codex-rs/rollout/src/lib.rs]
+source: [codex-rs/thread-store/src/local/rollout_migration.rs, codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs, codex-rs/thread-store/src/local/rollout_migration/legacy_event.rs, codex-rs/thread-store/src/local/rollout_migration/line_parser.rs, codex-rs/thread-store/src/local/rollout_migration/publish.rs, codex-rs/thread-store/src/local/rollout_migration/rollback.rs, codex-rs/thread-store/src/local/rollout_migration/rollback_plan.rs, codex-rs/thread-store/src/local/rollout_migration/rollback_replay.rs, codex-rs/thread-store/src/local/rollout_migration/startup.rs, codex-rs/thread-store/src/local/rollout_migration/subagent.rs, codex-rs/thread-store/src/local/rollout_migration/telemetry.rs, codex-rs/cli/src/migrate_rollouts.rs, codex-rs/features/src/lib.rs, codex-rs/core/src/thread_manager.rs, codex-rs/history/src/lib.rs, codex-rs/rollout/src/lib.rs, codex-rs/app-server/src/message_processor.rs]
 symbols: [RolloutMigrationMode, RolloutMigrationOptions, RolloutMigrationStatus, RolloutMigrationReport, LocalThreadStore::migrate_rollouts, LocalThreadStore::migrate_rollouts_on_startup, LegacyRolloutCanonicalizer, Feature::BackgroundPaginatedRolloutMigration]
 related: [subsys.core.thread-store, subsys.core.rollout-persistence, subsys.core.state-db, cli.subcommands]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> Rollout migration 把本地 Legacy JSONL rollout 改写成 Paginated history：先 canonicalize 到 staged 文件，投影进 SQLite，再原子发布。它不是一次性完成的后台任务；`Feature::BackgroundPaginatedRolloutMigration` 默认关闭，CLI 默认 dry-run。[E: codex-rs/thread-store/src/local/rollout_migration.rs:100][E: codex-rs/thread-store/src/local/rollout_migration.rs:103][E: codex-rs/features/src/lib.rs:1132][E: codex-rs/features/src/lib.rs:1136][E: codex-rs/cli/src/migrate_rollouts.rs:25]
+> Rollout migration 把本地 Legacy JSONL rollout 改写成 Paginated history：先 canonicalize 到 staged 文件，投影进 SQLite，再原子发布。它不是一次性完成的后台任务；`Feature::BackgroundPaginatedRolloutMigration` 默认关闭，CLI 默认 dry-run。[E: codex-rs/thread-store/src/local/rollout_migration.rs:101][E: codex-rs/thread-store/src/local/rollout_migration.rs:104][E: codex-rs/features/src/lib.rs:1179][E: codex-rs/features/src/lib.rs:1182][E: codex-rs/cli/src/migrate_rollouts.rs:25]
 
 ## 能回答的问题
 
@@ -23,26 +23,26 @@ updated: 3abbf9fe2c
 
 ## 职责边界
 
-`LocalThreadStore` 拥有 migration 状态机：扫 sessions/archived、拿 maintenance + writer lock、canonicalize、project、publish。[E: codex-rs/thread-store/src/local/rollout_migration.rs:260][E: codex-rs/thread-store/src/local/rollout_migration.rs:318]
+`LocalThreadStore` 拥有 migration 状态机：扫 sessions/archived、拿 maintenance + writer lock、canonicalize、project、publish。[E: codex-rs/thread-store/src/local/rollout_migration.rs:261][E: codex-rs/thread-store/src/local/rollout_migration.rs:319]
 
-`codex_history` 提供 `RolloutItem` / `RolloutLine` payload 模型；migration 经 `codex_rollout` re-export 读写这些类型，不另建 payload crate。[E: codex-rs/history/src/lib.rs:122][E: codex-rs/rollout/src/lib.rs:36]
+`codex_history` 提供 `RolloutItem` / `RolloutLine` payload 模型；migration 经 `codex_rollout` re-export 读写这些类型，不另建 payload crate。[E: codex-rs/history/src/lib.rs:201][E: codex-rs/rollout/src/lib.rs:37]
 
-Feature `background_paginated_rollout_migration` 是 UnderDevelopment、default-off。`thread_store_from_config` 只在 Local store + 有 state DB + feature 开启时 `tokio::spawn(migrate_rollouts_on_startup)`。[E: codex-rs/features/src/lib.rs:1132][E: codex-rs/features/src/lib.rs:1134][E: codex-rs/features/src/lib.rs:1136][E: codex-rs/core/src/thread_manager.rs:426][E: codex-rs/core/src/thread_manager.rs:432]
+Feature `background_paginated_rollout_migration` 是 UnderDevelopment、default-off。`thread_store_from_config` 只在 Local store + 有 state DB + feature 开启时 `tokio::spawn(migrate_rollouts_on_startup)`。[E: codex-rs/features/src/lib.rs:1179][E: codex-rs/features/src/lib.rs:1180][E: codex-rs/features/src/lib.rs:1182][E: codex-rs/core/src/thread_manager.rs:458][E: codex-rs/core/src/thread_manager.rs:477]
 
 没有 state DB 时 startup helper 直接返回，不迁移。[E: codex-rs/thread-store/src/local/rollout_migration/startup.rs:62]
 
-源码没有“migration 已完成 / 全部本地 session 已是 Paginated”的断言。状态机按文件产出 `Eligible` / `Migrated` / `AlreadyPaginated` / `SkippedEmpty` / `SkippedBusy` / `Failed`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:131]
+源码没有“migration 已完成 / 全部本地 session 已是 Paginated”的断言。状态机按文件产出 `Eligible` / `Migrated` / `AlreadyPaginated` / `SkippedEmpty` / `SkippedBusy` / `Failed`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:132]
 
 ## 关键 crate/文件
 
 | 文件 | 角色 |
 |---|---|
-| `rollout_migration.rs` | dry-run/apply 编排、rate limit、per-path migrate/recover。[E: codex-rs/thread-store/src/local/rollout_migration.rs:100][E: codex-rs/thread-store/src/local/rollout_migration.rs:105] |
+| `rollout_migration.rs` | dry-run/apply 编排、rate limit、per-path migrate/recover。[E: codex-rs/thread-store/src/local/rollout_migration.rs:101][E: codex-rs/thread-store/src/local/rollout_migration.rs:106] |
 | `canonicalizer.rs` | SessionMeta 置 ordinal 0 并改成 Paginated；把 legacy 记录写成 canonical JSONL。[E: codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs:81][E: codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs:93] |
 | `legacy_event.rs` / `line_parser.rs` | 旧 completion event 与旧 JSON 形状的解析适配。 |
 | `rollback.rs` / `rollback_plan.rs` / `rollback_replay.rs` | `ThreadRolledBack { num_turns }` 按 user-turn 边界裁剪，不是丢最后 N 行。[E: codex-rs/thread-store/src/local/rollout_migration/rollback.rs:11] |
 | `startup.rs` | SQLite cursor `legacy_to_paginated_v1` + skip fingerprint。[E: codex-rs/thread-store/src/local/rollout_migration/startup.rs:39] |
-| `subagent.rs` | reverse-scan 选 bounded model context；证不了安全则回退全量 replay。[E: codex-rs/thread-store/src/local/rollout_migration/subagent.rs:29] |
+| `subagent.rs` | reverse-scan 选 bounded model context；证不了安全则回退全量 replay。[E: codex-rs/thread-store/src/local/rollout_migration/subagent.rs:26] |
 | `publish.rs` | staged 路径、`.pending` journal、压缩/解压、目录 sync。[E: codex-rs/thread-store/src/local/rollout_migration/publish.rs:37] |
 | `cli/src/migrate_rollouts.rs` | 手动 CLI。[E: codex-rs/cli/src/migrate_rollouts.rs:22][E: codex-rs/cli/src/migrate_rollouts.rs:25] |
 
@@ -50,9 +50,9 @@ Feature `background_paginated_rollout_migration` 是 UnderDevelopment、default-
 
 | 实体 | 含义 |
 |---|---|
-| `RolloutMigrationMode::DryRun` / `Apply` | DryRun 只报告 Eligible；Apply 才改文件与 SQLite。[E: codex-rs/thread-store/src/local/rollout_migration.rs:100][E: codex-rs/thread-store/src/local/rollout_migration.rs:105] |
-| `RolloutMigrationOptions` | `mode`, `thread_ids`（空=全部）, `max_mib_per_second`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:110] |
-| `RolloutMigrationStatus` | `Eligible` / `Migrated` / `AlreadyPaginated` / `SkippedEmpty` / `SkippedBusy` / `Failed`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:131] |
+| `RolloutMigrationMode::DryRun` / `Apply` | DryRun 只报告 Eligible；Apply 才改文件与 SQLite。[E: codex-rs/thread-store/src/local/rollout_migration.rs:101][E: codex-rs/thread-store/src/local/rollout_migration.rs:106] |
+| `RolloutMigrationOptions` | `mode`, `thread_ids`（空=全部）, `max_mib_per_second`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:111] |
+| `RolloutMigrationStatus` | `Eligible` / `Migrated` / `AlreadyPaginated` / `SkippedEmpty` / `SkippedBusy` / `Failed`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:132] |
 | journal `{codex_home}/rollout-migrations/{thread_id}.pending` | 发布 JSONL 与完成 SQLite 之间的 crash 恢复标记。[E: codex-rs/thread-store/src/local/rollout_migration/publish.rs:35][E: codex-rs/thread-store/src/local/rollout_migration/publish.rs:37] |
 
 CLI 无 `--apply` 时是 DryRun；`--thread` 可重复；`--max-mib-per-second` 必须 ≥1；`--json` 打印完整 report；任一 `Failed` 以非零退出。[E: codex-rs/cli/src/migrate_rollouts.rs:25][E: codex-rs/cli/src/migrate_rollouts.rs:29][E: codex-rs/cli/src/migrate_rollouts.rs:37][E: codex-rs/cli/src/migrate_rollouts.rs:132]
@@ -66,16 +66,16 @@ CLI 无 `--apply` 时是 DryRun；`--thread` 可重复；`--max-mib-per-second` 
 
 ## 控制流：Apply 一个 rollout
 
-1. Apply 先 `try_acquire_rollout_maintenance_lock`；已有 compression/migration 则 `Conflict`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:321]
-2. 扫描 `SESSIONS_SUBDIR` 与 `ARCHIVED_SESSIONS_SUBDIR`；Apply 时带 journal 的 thread 优先。[E: codex-rs/thread-store/src/local/rollout_migration.rs:282][E: codex-rs/thread-store/src/local/rollout_migration.rs:336]
-3. 已是 Paginated：若存在 journal 则 `recover_published_migration`，否则 `AlreadyPaginated`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:481]
-4. Legacy Apply：拿 live-writer + 跨进程 writer lock；busy 记 `SkippedBusy`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:484]
-5. `migrate_one_rollout` 要求 SQLite metadata 行存在；先 `delete_thread` 旧 projection，再写 journal。[E: codex-rs/thread-store/src/local/rollout_migration.rs:476][E: codex-rs/thread-store/src/local/rollout_migration.rs:1035]
-6. 压缩源先解压。找到第一条 `SessionMeta` 后，普通 thread `write_rollout_with_rollback_plan`；subagent 先试 `select_bounded_context`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:697][E: codex-rs/thread-store/src/local/rollout_migration.rs:714]
-7. 见到 `ThreadRolledBack` 且尚无 plan：丢掉 staged 文件，扫描源建 `RollbackPlan`，再 replay；plan 后再遇到 rollback marker 是错误。[E: codex-rs/thread-store/src/local/rollout_migration.rs:957][E: codex-rs/thread-store/src/local/rollout_migration.rs:863][E: codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs:138]
-8. staged 文件 `sync_all` 后才分批投影；`next_byte_offset` / `next_ordinal` 必须等于 staged 长度。[E: codex-rs/thread-store/src/local/rollout_migration.rs:751][E: codex-rs/thread-store/src/local/rollout_migration.rs:772]
-9. 源文件在 staging 期间 length/mtime 变了则 `Conflict`，不替换 live path。[E: codex-rs/thread-store/src/local/rollout_migration.rs:804]
-10. rename staged→live，sync parent dir，再 `finish_published_migration` 清 journal。[E: codex-rs/thread-store/src/local/rollout_migration.rs:821][E: codex-rs/thread-store/src/local/rollout_migration.rs:630]
+1. Apply 先 `try_acquire_rollout_maintenance_lock`；已有 compression/migration 则 `Conflict`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:322]
+2. 扫描 `SESSIONS_SUBDIR` 与 `ARCHIVED_SESSIONS_SUBDIR`；Apply 时带 journal 的 thread 优先。[E: codex-rs/thread-store/src/local/rollout_migration.rs:283][E: codex-rs/thread-store/src/local/rollout_migration.rs:337]
+3. 已是 Paginated：若存在 journal 则 `recover_published_migration`，否则 `AlreadyPaginated`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:482]
+4. Legacy Apply：拿 live-writer + 跨进程 writer lock；busy 记 `SkippedBusy`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:485]
+5. `migrate_one_rollout` 要求 SQLite metadata 行存在；先 `delete_thread` 旧 projection，再写 journal。[E: codex-rs/thread-store/src/local/rollout_migration.rs:477][E: codex-rs/thread-store/src/local/rollout_migration.rs:1029]
+6. 压缩源先解压。找到第一条 `SessionMeta` 后，普通 thread `write_rollout_with_rollback_plan`；subagent 先试 `select_bounded_context`。[E: codex-rs/thread-store/src/local/rollout_migration.rs:698][E: codex-rs/thread-store/src/local/rollout_migration.rs:715]
+7. 见到 `ThreadRolledBack` 且尚无 plan：丢掉 staged 文件，扫描源建 `RollbackPlan`，再 replay；plan 后再遇到 rollback marker 是错误。[E: codex-rs/thread-store/src/local/rollout_migration.rs:951][E: codex-rs/thread-store/src/local/rollout_migration.rs:857][E: codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs:138]
+8. staged 文件 `sync_all` 后才分批投影；`next_byte_offset` / `next_ordinal` 必须等于 staged 长度。[E: codex-rs/thread-store/src/local/rollout_migration.rs:745][E: codex-rs/thread-store/src/local/rollout_migration.rs:766]
+9. 源文件在 staging 期间 length/mtime 变了则 `Conflict`，不替换 live path。[E: codex-rs/thread-store/src/local/rollout_migration.rs:798]
+10. rename staged→live，sync parent dir，再 `finish_published_migration` 清 journal。[E: codex-rs/thread-store/src/local/rollout_migration.rs:815][E: codex-rs/thread-store/src/local/rollout_migration.rs:631]
 
 Canonicalizer 把 `history_mode` 写成 `Paginated`，并清空 `history_base` 与 `subagent_history_start_ordinal`。[E: codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs:93][E: codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs:94][E: codex-rs/thread-store/src/local/rollout_migration/canonicalizer.rs:95]
 
@@ -89,14 +89,15 @@ Canonicalizer 把 `history_mode` 写成 `Paginated`，并清空 `history_base` �
 
 目标是留下“原 legacy 文件或可恢复 paginated 文件”之一。`.pending` journal 必须足够让后续 run 完成 SQLite recovery。[E: codex-rs/thread-store/src/local/rollout_migration.rs:13]
 
-Legacy subagent 曾复制父 rollout；verbatim migrate 会留下巨量重复 history，所以先 reverse-scan bounded context，证不了再全量容忍 replay。[E: codex-rs/thread-store/src/local/rollout_migration/subagent.rs:12]
+Legacy subagent 曾复制父 rollout；verbatim migrate 会留下巨量重复 history，所以先 reverse-scan bounded context，证不了再全量容忍 replay。[E: codex-rs/thread-store/src/local/rollout_migration/subagent.rs:11]
 
 ## Gotcha
 
-- 不要把 feature 默认关闭写成“仓库里已经没有 Legacy rollout”。CLI dry-run 与 `Eligible` 状态仍是正式路径。[E: codex-rs/features/src/lib.rs:1136][E: codex-rs/thread-store/src/local/rollout_migration.rs:132]
-- Apply 与 rollout compression 互斥：同一 `codex_home` 上只能有一个 maintenance lock。[E: codex-rs/thread-store/src/local/rollout_migration.rs:324]
-- 缺 SQLite metadata 的 thread 会 `Failed`，不会只改 JSONL。[E: codex-rs/thread-store/src/local/rollout_migration.rs:1114]
-- Memory-consolidation session 按 Ordinary 而不是 Subagent 迁移。[E: codex-rs/thread-store/src/local/rollout_migration.rs:457]
+- 不要把 feature 默认关闭写成“仓库里已经没有 Legacy rollout”。CLI dry-run 与 `Eligible` 状态仍是正式路径。[E: codex-rs/features/src/lib.rs:1182][E: codex-rs/thread-store/src/local/rollout_migration.rs:133]
+- app-server experimental `rollout/compress` 是 cold local rollout 的压缩 RPC，与本节点的 Legacy→Paginated migration 不是同一条路径；分派见 `subsys.app-server.message-processor`。[E: codex-rs/app-server/src/message_processor.rs:1431]
+- Apply 与 rollout compression 互斥：同一 `codex_home` 上只能有一个 maintenance lock。[E: codex-rs/thread-store/src/local/rollout_migration.rs:325]
+- 缺 SQLite metadata 的 thread 会 `Failed`，不会只改 JSONL。[E: codex-rs/thread-store/src/local/rollout_migration.rs:1113]
+- Memory-consolidation session 按 Ordinary 而不是 Subagent 迁移。[E: codex-rs/thread-store/src/local/rollout_migration.rs:458]
 
 ## Sources
 
@@ -116,6 +117,7 @@ Legacy subagent 曾复制父 rollout；verbatim migrate 会留下巨量重复 hi
 - `codex-rs/core/src/thread_manager.rs`
 - `codex-rs/history/src/lib.rs`
 - `codex-rs/rollout/src/lib.rs`
+- `codex-rs/app-server/src/message_processor.rs`
 
 ## 相关
 

@@ -8,10 +8,10 @@ symbols: [GitInfo, collect_git_info, ApplyGitRequest, apply_git_patch, SAFE_BARE
 related: [subsys.cloud.cloud-tasks, subsys.cloud.cloud-task-api, config.storage-telemetry-misc, spine.extension-system, subsys.platform.worktree]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> `codex_git_utils` 是 Codex 的本地 Git 支持 crate：`lib.rs` 导出 patch apply、baseline diff/reset、merge-base、metadata、fsmonitor policy、symlink helpers、`RepositoryIdentity`，以及拒绝隐式 bare repo 的 `SAFE_BARE_REPOSITORY_CONFIG`。`codex-utils-git-discovery` 在其上提供有界共享 `GitRootDiscovery`。managed worktree 的 Desktop 契约在独立 crate `codex-rs/worktree`，它只消费这条安全 Git config，不复用 apply/baseline API。[E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:55][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/worktree/src/git.rs:169]
+> `codex_git_utils` 是 Codex 的本地 Git 支持 crate：`lib.rs` 导出 patch apply、baseline diff/reset、merge-base、metadata、fsmonitor policy、symlink helpers、`RepositoryIdentity`，以及拒绝隐式 bare repo 的 `SAFE_BARE_REPOSITORY_CONFIG`。`codex-utils-git-discovery` 在其上提供有界共享 `GitRootDiscovery`。managed worktree 的 Desktop 契约在独立 crate `codex-rs/worktree`，它只消费这条安全 Git config，不复用 apply/baseline API。[E: codex-rs/git-utils/src/lib.rs:16][E: codex-rs/git-utils/src/lib.rs:56][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/worktree/src/git.rs:169]
 
 ## 能回答的问题
 
@@ -30,7 +30,7 @@ git-utils 节点覆盖 `codex-rs/git-utils` crate 的 public API 与支撑性 cr
 
 `lib.rs` 先声明 `SAFE_BARE_REPOSITORY_CONFIG = "safe.bareRepository=explicit"`：拒绝隐式发现的 bare repository，但保留经 `GIT_DIR` / `--git-dir` 显式选中的仓库。[E: codex-rs/git-utils/src/lib.rs:16]
 
-随后 re-export apply、baseline、`merge_base_with_head`、fsmonitor、info、`create_symlink`、`get_has_changes_in_repo`、`resolve_root_git_project_for_trust`、以及 `worktree::RepositoryIdentity`。[E: codex-rs/git-utils/src/lib.rs:18][E: codex-rs/git-utils/src/lib.rs:53][E: codex-rs/git-utils/src/lib.rs:55]
+随后 re-export apply、baseline、`merge_base_with_head`、fsmonitor、info、`create_symlink`、`get_has_changes_in_repo`、`resolve_root_git_project_for_trust`、以及 `worktree::RepositoryIdentity`。[E: codex-rs/git-utils/src/lib.rs:18][E: codex-rs/git-utils/src/lib.rs:53][E: codex-rs/git-utils/src/lib.rs:56]
 
 内部模块含 `git_process`、`status`、`trust`、`worktree`。[E: codex-rs/git-utils/src/lib.rs:6][E: codex-rs/git-utils/src/lib.rs:12]
 
@@ -62,7 +62,7 @@ Unix symlink 直接调 `std::os::unix::fs::symlink`；Windows 按 metadata 选 `
 
 ## Git-root discovery crate
 
-`codex-utils-git-discovery` 的 `GitRootDiscovery` 按 cwd 共享 in-flight probe，最多 8 个并发，完成后不缓存结果；finder 默认调用 `get_git_repo_root`。[E: codex-rs/utils/git-discovery/src/lib.rs:24][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/utils/git-discovery/src/lib.rs:43][E: codex-rs/utils/git-discovery/src/lib.rs:52] `ThreadManagerState` 持有一份 `Arc<GitRootDiscovery>`。[E: codex-rs/core/src/thread_manager.rs:91][E: codex-rs/core/src/thread_manager.rs:379]
+`codex-utils-git-discovery` 的 `GitRootDiscovery` 按 cwd 共享 in-flight probe，最多 8 个并发，完成后不缓存结果；finder 默认调用 `get_git_repo_root`。[E: codex-rs/utils/git-discovery/src/lib.rs:24][E: codex-rs/utils/git-discovery/src/lib.rs:31][E: codex-rs/utils/git-discovery/src/lib.rs:43][E: codex-rs/utils/git-discovery/src/lib.rs:52] `ThreadManagerState` 持有一份 `Arc<GitRootDiscovery>`。[E: codex-rs/core/src/thread_manager.rs:99][E: codex-rs/core/src/thread_manager.rs:411]
 
 `RepositoryIdentity` 用 canonical common dir / relative cwd / primary root 描述同一仓库的主 checkout 与 linked worktrees，不执行 Git。[E: codex-rs/git-utils/src/worktree.rs:16][E: codex-rs/git-utils/src/worktree.rs:34]
 

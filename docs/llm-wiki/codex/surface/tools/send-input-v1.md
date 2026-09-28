@@ -8,7 +8,7 @@ symbols: [create_send_input_tool_v1, SendInputHandler, multi_agents::send_input:
 related: [tool.spawn-agent-v1, tool.wait-agent-v1, tool.close-agent-v1]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
 > `send_input` V1 是 `multi_agent_v1` namespace 下的消息投递工具；它按 thread id 寻址，支持 plain `message` 或 structured `items`，并可用 `interrupt` 先打断目标 agent。
@@ -17,31 +17,31 @@ updated: 3abbf9fe2c
 
 | 项 | 当前源码事实 |
 |---|---|
-| namespace / wire name | handler 返回 `ToolName::namespaced(MULTI_AGENT_V1_NAMESPACE, "send_input")`；namespace 常量是 `multi_agent_v1`。[E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:10][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:14] |
-| spec builder | `create_send_input_tool_v1` 返回 namespace spec，内部 function name 是 `send_input`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:166][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:170] |
-| handler | `multi_agents.rs` re-export `send_input::Handler as SendInputHandler`；handler 只匹配 function payload。[E: codex-rs/core/src/tools/handlers/multi_agents.rs:76][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:136] |
+| namespace / wire name | handler 返回 `ToolName::namespaced(MULTI_AGENT_V1_NAMESPACE, "send_input")`；namespace 常量是 `multi_agent_v1`。[E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:13][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:14] |
+| spec builder | `create_send_input_tool_v1` 返回 namespace spec，内部 function name 是 `send_input`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:170][E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:174] |
+| handler | `multi_agents.rs` re-export `send_input::Handler as SendInputHandler`；handler 只匹配 function payload。[E: codex-rs/core/src/tools/handlers/multi_agents.rs:76][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:138] |
 
 ## 注册与门控
 
-`send_input` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false。V1 exposure 在 `search_tool_enabled` true 时为 `Deferred`，否则为 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:1286][E: codex-rs/core/src/tools/spec_plan.rs:1345][E: codex-rs/core/src/tools/spec_plan.rs:1348][E: codex-rs/core/src/tools/spec_plan.rs:1365]
+`send_input` 注册在 V1 collaboration 分支：`collab_tools_enabled` true 且 `multi_agent_v2_enabled` false。V1 exposure 在 `search_tool_enabled` true 时为 `Deferred`，否则为 `Direct`。[E: codex-rs/core/src/tools/spec_plan.rs:1299][E: codex-rs/core/src/tools/spec_plan.rs:1396][E: codex-rs/core/src/tools/spec_plan.rs:1399][E: codex-rs/core/src/tools/spec_plan.rs:1416]
 
-handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:17][E: codex-rs/tools/src/tool_executor.rs:122]
+handler 提供 search metadata；未覆写 `supports_parallel_tool_calls`，所以默认不是 parallel-safe。[E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:20][E: codex-rs/tools/src/tool_executor.rs:122]
 
 ## 输入与运行流
 
 | 字段 | 必填 | 说明 |
 |---|---:|---|
-| `target` | 是 | V1 只按 agent thread id 解析；`parse_agent_id_target` 调用 `ThreadId::from_string`，不是 V2 task path resolver。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:147][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:46][E: codex-rs/core/src/tools/handlers/multi_agents.rs:39] |
-| `message` / `items` | 否，但二选一 | schema 同时允许 legacy text 和 structured items；runtime `parse_collab_input` 要求二选一且拒绝空文本/空 items。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:151][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:142][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:149] |
-| `interrupt` | 否 | default false；true 时 handler 先调用 `agent_control.interrupt_agent(receiver_thread_id)`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:158][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:147][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:63] |
+| `target` | 是 | V1 只按 agent thread id 解析；`parse_agent_id_target` 调用 `ThreadId::from_string`，不是 V2 task path resolver。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:151][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:49][E: codex-rs/core/src/tools/handlers/multi_agents.rs:39] |
+| `message` / `items` | 否，但二选一 | schema 同时允许 legacy text 和 structured items；runtime `parse_collab_input` 要求二选一且拒绝空文本/空 items。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:155][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:164][E: codex-rs/core/src/tools/handlers/multi_agents_common.rs:171] |
+| `interrupt` | 否 | default false；true 时 handler 先调用 `agent_control.interrupt(..., MultiAgentVersion::V1)`。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:162][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:149][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:70] |
 
-如果目标 agent 在 metadata registry 中存在，handler 会先用 resume config 调 `ensure_v2_agent_loaded`；随后发出 `CollabAgentToolCall` started item、调用 `agent_control.send_input`、读取目标 status，再发出 completed item，其中带 receiver metadata 与状态映射。[E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:53][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:58][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:90]
+如果目标 agent 在 metadata registry 中存在，handler 会先用 resume config 调 `ensure_v2_agent_loaded`；随后发出 `CollabAgentToolCall` started item、调用 local `send_input`、读取目标 status，再发出 completed item。[E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:57][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:61][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:96]
 
-handler 把当前 `turn.sub_id` 作为 `parent_turn_id` 传给 `AgentControl::send_input`。control 走 `start_or_steer_turn`：新 turn 返回 turn id，steer 则生成一个新的 opaque `submission_id`，不再在这条路径上做 V2 式 execution-capacity 检查。[E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:94][E: codex-rs/core/src/agent/control.rs:194][E: codex-rs/core/src/agent/control.rs:206][E: codex-rs/core/src/agent/control.rs:212]
+handler 把当前 `turn.sub_id` 作为 `parent_turn_id` 传给 `LocalAgentControl::send_input`。control 走 `start_or_steer_turn`：新 turn 返回 turn id，steer 则生成一个新的 opaque `submission_id`，不再在这条路径上做 V2 式 execution-capacity 检查。[E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:100][E: codex-rs/core/src/agent/control.rs:129][E: codex-rs/core/src/agent/control.rs:138][E: codex-rs/core/src/agent/control.rs:147]
 
 ## 输出
 
-输出 schema 是 `{ submission_id }`；handler 成功时返回 `SendInputResult { submission_id }`，并以 success true 写回 function output。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:440][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:131][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:165]
+输出 schema 是 `{ submission_id }`；handler 成功时返回 `SendInputResult { submission_id }`，并以 success true 写回 function output。[E: codex-rs/core/src/tools/handlers/multi_agents_spec.rs:450][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:133][E: codex-rs/core/src/tools/handlers/multi_agents/send_input.rs:167]
 
 ## Sources
 

@@ -8,18 +8,18 @@ symbols: [WaitForEnvironmentHandler, WaitForEnvironmentToolConfig, WaitForEnviro
 related: [subsys.core.tool-system, subsys.core.tool-router, tool.exec-command, tool.write-stdin]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> `wait_for_environment` 让模型等待一个已经在 `<environment_context>` 中标记为 `starting` 的 execution environment。它不会启动新环境；ready 时立即成功，starting 时阻塞到启动完成，未知或失败时返回可供模型继续处理的错误。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:20][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:127][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:148][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:143]
+> `wait_for_environment` 让模型等待一个已经在 `<environment_context>` 中标记为 `starting` 的 execution environment。它不会启动新环境；ready 时立即成功，starting 时阻塞到启动完成，未知或失败时返回可供模型继续处理的错误。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:20][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:127][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:148][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:160]
 
 ## 注册与 exposure
 
-只有 `Feature::DeferredExecutor` 启用时，`add_core_utility_tools` 才注册 handler；该 feature 当前是 UnderDevelopment 且默认关闭。宿主可在 thread extension data 中提供 `WaitForEnvironmentToolConfig`，否则使用 core 默认描述。[E: codex-rs/core/src/tools/spec_plan.rs:1146][E: codex-rs/core/src/tools/spec_plan.rs:1152][E: codex-rs/core/src/tools/spec_plan.rs:1153][E: codex-rs/features/src/lib.rs:989][E: codex-rs/features/src/lib.rs:991][E: codex-rs/features/src/lib.rs:992]
+只有 `Feature::DeferredExecutor` 启用时，`add_core_utility_tools` 才注册 handler；该 feature 当前是 UnderDevelopment 且默认关闭。宿主可在 thread extension data 中提供 `WaitForEnvironmentToolConfig`，否则使用 core 默认描述。[E: codex-rs/core/src/tools/spec_plan.rs:1157][E: codex-rs/core/src/tools/spec_plan.rs:1163][E: codex-rs/core/src/tools/spec_plan.rs:1164][E: codex-rs/features/src/lib.rs:1029][E: codex-rs/features/src/lib.rs:1031][E: codex-rs/features/src/lib.rs:1032]
 
-Guardian reviewer turn 在 `add_core_tool_sources` 提前返回，不会注册 `wait_for_environment`。[E: codex-rs/core/src/tools/spec_plan.rs:978][E: codex-rs/core/src/tools/spec_plan.rs:1029]
+`add_core_tool_sources` 在 `require_managed_sandbox` 且（thread profile 不是 Managed，或任一 turn environment 不是 Managed）时 early return，跳过 `add_shell_tools` / `add_mcp_resource_tools` / `add_core_utility_tools` / `add_collaboration_tools`；`WaitForEnvironmentHandler` 在 `add_core_utility_tools` 里注册。[E: codex-rs/core/src/tools/spec_plan.rs:1018][E: codex-rs/core/src/tools/spec_plan.rs:1022][E: codex-rs/core/src/tools/spec_plan.rs:1028][E: codex-rs/core/src/tools/spec_plan.rs:1032][E: codex-rs/core/src/tools/spec_plan.rs:1034][E: codex-rs/core/src/tools/spec_plan.rs:1035][E: codex-rs/core/src/tools/spec_plan.rs:1157][E: codex-rs/core/src/tools/spec_plan.rs:1163]
 
-handler 没有覆写 exposure 或 parallel contract，因此继承 `Direct` exposure 与 `supports_parallel_tool_calls = false`：模型可直接看到它，等待期间该调用按非并行工具占用 tool gate。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:84][E: codex-rs/tools/src/tool_executor.rs:113][E: codex-rs/tools/src/tool_executor.rs:122]
+handler 没有覆写 exposure 或 parallel contract（`CoreToolRuntime` 空 impl），因此继承 `Direct` exposure 与 `supports_parallel_tool_calls = false`：模型可直接看到它，等待期间该调用按非并行工具占用 tool gate。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:173][E: codex-rs/tools/src/tool_executor.rs:113][E: codex-rs/tools/src/tool_executor.rs:122]
 
 ## Schema
 
@@ -41,8 +41,8 @@ host 可定制 tool description 和 `environment_id` description。两段描述�
 
 1. handler 只接受 Function payload，解析并拒绝未知参数。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:117][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:125]
 2. id 已在 ready `turn_environments()` 中时不等待，直接返回成功。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:127][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:131]
-3. 否则在 starting list 中精确匹配 id 并等待 `StartingTurnEnvironment::wait_until_ready()`。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:148][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:143][E: codex-rs/core/src/environment_selection.rs:166][E: codex-rs/core/src/environment_selection.rs:230]
-4. id 既非 ready 也非 starting 时返回 `environment ... is neither ready nor starting`；启动失败时返回 unavailable，并明确让模型继续而不依赖该环境。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:154][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:155][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:143][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:143]
+3. 否则先查 `TurnEnvironmentState::Failed`；命中则返回 truncated startup failure。再在 starting list 中精确匹配 id 并调用 `StartingTurnEnvironment::wait_until_ready()`。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:138][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:146][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:150][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:159][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:160][E: codex-rs/core/src/environment_selection.rs:252]
+4. id 既非 ready 也非 starting 时返回 `environment ... is neither ready nor starting`。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:154][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:155]
 5. 成功输出固定为 `{"environment_id":"<id>","status":"ready"}`。[E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:165][E: codex-rs/core/src/tools/handlers/wait_for_environment.rs:167]
 
 ## Sources

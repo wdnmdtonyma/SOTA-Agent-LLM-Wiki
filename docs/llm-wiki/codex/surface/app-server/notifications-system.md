@@ -4,11 +4,11 @@ title: server notifications: system
 kind: rpc
 tier: T1
 source: [codex-rs/app-server-protocol/src/protocol/common.rs, codex-rs/app-server-protocol/src/protocol/v2/notification.rs, codex-rs/app-server-protocol/src/protocol/v2/account.rs, codex-rs/app-server-protocol/src/protocol/v2/mcp.rs, codex-rs/app-server-protocol/src/protocol/v2/fs.rs, codex-rs/app-server-protocol/src/protocol/v2/process.rs, codex-rs/app-server-protocol/src/protocol/v2/model.rs, codex-rs/app-server-protocol/src/protocol/v2/config.rs, codex-rs/app-server-protocol/src/protocol/v2/environment.rs, codex-rs/app-server-protocol/src/protocol/v2/windows_sandbox.rs, codex-rs/app-server-protocol/src/protocol/v2/plugin.rs, codex-rs/app-server-protocol/src/protocol/v2/command_exec.rs, codex-rs/app-server-protocol/src/protocol/v2/apps.rs, codex-rs/app-server-protocol/src/protocol/v2/remote_control.rs, codex-rs/login/src/callback_params.rs, codex-rs/app-server/src/request_processors/account_processor.rs]
-symbols: [ErrorNotification, ServerRequestResolvedNotification, AccountUpdatedNotification, McpServerStatusUpdatedNotification, EnvironmentConnectionNotification, FsChangedNotification, ProcessOutputDeltaNotification, ModelSafetyBufferingUpdatedNotification, ConfigWarningNotification]
+symbols: [ErrorNotification, ServerRequestResolvedNotification, AccountUpdatedNotification, GatewayOAuthChangedNotification, McpServerStatusUpdatedNotification, EnvironmentConnectionNotification, FsChangedNotification, ProcessOutputDeltaNotification, ModelSafetyBufferingUpdatedNotification, ConfigWarningNotification]
 related: [surface.cli.external-agent-import, rpc.overview, rpc.fs-command-methods, rpc.config-account-methods, rpc.mcp-skills-plugin-methods, rpc.notifications-thread, rpc.server-requests]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
 > system server notifications 是 app-server 推给客户端的 error/warning、server-request resolution、account、MCP、app list、remote control、fs/process/model/config/Windows/fuzzy-search 等非 thread-item 事件 catalog。
@@ -22,51 +22,54 @@ updated: 3abbf9fe2c
 
 ## 共性机制
 
-本节点列出不属于 thread/turn/item/hook/raw-response streaming 面的 33 个 `ServerNotification`；它们与 thread catalog 的 51 条合计覆盖源码宏里的 **84** 个 server notification（83 个 `=> "wire"` + `AccountLoginCompleted`）。thread catalog 本轮新增 `thread/attachment/updated`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1902][E: codex-rs/app-server-protocol/src/protocol/common.rs:1914][E: codex-rs/app-server-protocol/src/protocol/common.rs:2023]
+本节点列出不属于 thread/turn/item/hook/raw-response streaming 面的 **34** 个 `ServerNotification`；它们与 thread catalog 的 51 条合计覆盖源码宏里的 **85** 个 server notification（84 个 `=> "wire"` + `AccountLoginCompleted`）。本轮新增 `account/gatewayOAuth/changed`。[E: codex-rs/app-server-protocol/src/protocol/common.rs:1916][E: codex-rs/app-server-protocol/src/protocol/common.rs:1983][E: codex-rs/app-server-protocol/src/protocol/common.rs:2038]
 
-`AccountLoginCompleted` 在宏调用中通过 serde/TS/strum rename 固定为 `account/login/completed`，不是默认 camelCase wire name。[E: codex-rs/app-server-protocol/src/protocol/common.rs:2020][E: codex-rs/app-server-protocol/src/protocol/common.rs:2021][E: codex-rs/app-server-protocol/src/protocol/common.rs:2022][E: codex-rs/app-server-protocol/src/protocol/common.rs:2023]
+`AccountLoginCompleted` 在宏调用中通过 serde/TS/strum rename 固定为 `account/login/completed`，不是默认 camelCase wire name。[E: codex-rs/app-server-protocol/src/protocol/common.rs:2035][E: codex-rs/app-server-protocol/src/protocol/common.rs:2036][E: codex-rs/app-server-protocol/src/protocol/common.rs:2037][E: codex-rs/app-server-protocol/src/protocol/common.rs:2038]
 
-该 notification 的 payload 含 nullable `onboardingEntrypoint`，当前唯一值是 `life_sciences`。browser OAuth callback 只接受原 state 或精确追加 `.onboarding_entrypoint=life_sciences` 的 state，并把解析结果传入完成通知；任意其他 suffix 不应被解释为 onboarding entrypoint。[E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:741][E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:748][E: codex-rs/login/src/callback_params.rs:1][E: codex-rs/login/src/callback_params.rs:13][E: codex-rs/login/src/callback_params.rs:21][E: codex-rs/app-server/src/request_processors/account_processor.rs:658][E: codex-rs/app-server/src/request_processors/account_processor.rs:679]
+该 notification 的 payload 含 nullable `onboardingEntrypoint`，当前唯一值是 `life_sciences`。browser OAuth callback 只接受原 state 或精确追加 `.onboarding_entrypoint=life_sciences` 的 state，并把解析结果传入完成通知；任意其他 suffix 不应被解释为 onboarding entrypoint。[E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:820][E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:827][E: codex-rs/login/src/callback_params.rs:1][E: codex-rs/login/src/callback_params.rs:10][E: codex-rs/login/src/callback_params.rs:10][E: codex-rs/app-server/src/request_processors/account_processor.rs:677][E: codex-rs/app-server/src/request_processors/account_processor.rs:694]
 
 ## Notification catalog
 
 | Variant | Wire method | Payload type | Gate | Evidence |
 |---|---|---|---|---|
-| `Error` | `error` | `v2::ErrorNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1904] |
-| `SkillsChanged` | `skills/changed` | `v2::SkillsChangedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1912] |
-| `ProjectChanged` | `project/changed` | `v2::ProjectChangedNotification` | experimental: project/changed | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1920] |
-| `EnvironmentConnected` | `thread/environment/connected` | `v2::EnvironmentConnectionNotification` | experimental: thread/environment/connected | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1924] |
-| `EnvironmentDisconnected` | `thread/environment/disconnected` | `v2::EnvironmentConnectionNotification` | experimental: thread/environment/disconnected | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1926] |
-| `CommandExecOutputDelta` | `command/exec/outputDelta` | `v2::CommandExecOutputDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1950] |
-| `ProcessOutputDelta` | `process/outputDelta` | `v2::ProcessOutputDeltaNotification` | experimental: process/outputDelta | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1953] |
-| `ProcessExited` | `process/exited` | `v2::ProcessExitedNotification` | experimental: process/exited | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1956] |
-| `ServerRequestResolved` | `serverRequest/resolved` | `v2::ServerRequestResolvedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1962] |
-| `McpServerOauthLoginCompleted` | `mcpServer/oauthLogin/completed` | `v2::McpServerOauthLoginCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1964] |
-| `McpServerStatusUpdated` | `mcpServer/startupStatus/updated` | `v2::McpServerStatusUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1965] |
-| `McpServerEventStream` | `mcpServer/event/stream/notification` | `v2::McpServerEventStreamNotification` | experimental: mcpServer/event/stream/notification | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1967] |
-| `AccountUpdated` | `account/updated` | `v2::AccountUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1968] |
-| `AccountRateLimitsUpdated` | `account/rateLimits/updated` | `v2::AccountRateLimitsUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1969] |
-| `AppListUpdated` | `app/list/updated` | `v2::AppListUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1970] |
-| `RemoteControlStatusChanged` | `remoteControl/status/changed` | `v2::RemoteControlStatusChangedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1971] |
-| `ExternalAgentConfigImportProgress` | `externalAgentConfig/import/progress` | `v2::ExternalAgentConfigImportProgressNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1972] |
-| `ExternalAgentConfigImportCompleted` | `externalAgentConfig/import/completed` | `v2::ExternalAgentConfigImportCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1973] |
-| `FsChanged` | `fs/changed` | `v2::FsChangedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1974] |
-| `ModelRerouted` | `model/rerouted` | `v2::ModelReroutedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1980] |
-| `ModelVerification` | `model/verification` | `v2::ModelVerificationNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1981] |
-| `AuthRecoveryStarted` | `modelProvider/authRecoveryStarted` | `v2::AuthRecoveryNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1982] |
-| `AuthRecoveryCompleted` | `modelProvider/authRecoveryCompleted` | `v2::AuthRecoveryNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1983] |
-| `ModelSafetyBufferingUpdated` | `model/safetyBuffering/updated` | `v2::ModelSafetyBufferingUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1986] |
-| `Warning` | `warning` | `v2::WarningNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1987] |
-| `GuardianWarning` | `guardianWarning` | `v2::GuardianWarningNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1988] |
-| `DeprecationNotice` | `deprecationNotice` | `v2::DeprecationNoticeNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1989] |
-| `ConfigWarning` | `configWarning` | `v2::ConfigWarningNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1990] |
-| `FuzzyFileSearchSessionUpdated` | `fuzzyFileSearch/sessionUpdated` | `FuzzyFileSearchSessionUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1991] |
-| `FuzzyFileSearchSessionCompleted` | `fuzzyFileSearch/sessionCompleted` | `FuzzyFileSearchSessionCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1992] |
-| `WindowsWorldWritableWarning` | `windows/worldWritableWarning` | `v2::WindowsWorldWritableWarningNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2017] |
-| `WindowsSandboxSetupCompleted` | `windowsSandbox/setupCompleted` | `v2::WindowsSandboxSetupCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2018] |
-| `AccountLoginCompleted` | `account/login/completed` | `v2::AccountLoginCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2023] |
+| `Error` | `error` | `v2::ErrorNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1918] |
+| `SkillsChanged` | `skills/changed` | `v2::SkillsChangedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1926] |
+| `ProjectChanged` | `project/changed` | `v2::ProjectChangedNotification` | experimental: project/changed | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1934] |
+| `EnvironmentConnected` | `thread/environment/connected` | `v2::EnvironmentConnectionNotification` | experimental: thread/environment/connected | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1938] |
+| `EnvironmentDisconnected` | `thread/environment/disconnected` | `v2::EnvironmentConnectionNotification` | experimental: thread/environment/disconnected | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1940] |
+| `CommandExecOutputDelta` | `command/exec/outputDelta` | `v2::CommandExecOutputDeltaNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1964] |
+| `ProcessOutputDelta` | `process/outputDelta` | `v2::ProcessOutputDeltaNotification` | experimental: process/outputDelta | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1967] |
+| `ProcessExited` | `process/exited` | `v2::ProcessExitedNotification` | experimental: process/exited | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1970] |
+| `ServerRequestResolved` | `serverRequest/resolved` | `v2::ServerRequestResolvedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1976] |
+| `McpServerOauthLoginCompleted` | `mcpServer/oauthLogin/completed` | `v2::McpServerOauthLoginCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1978] |
+| `McpServerStatusUpdated` | `mcpServer/startupStatus/updated` | `v2::McpServerStatusUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1979] |
+| `McpServerEventStream` | `mcpServer/event/stream/notification` | `v2::McpServerEventStreamNotification` | experimental: mcpServer/event/stream/notification | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1981] |
+| `AccountUpdated` | `account/updated` | `v2::AccountUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1982] |
+| `GatewayOAuthChanged` | `account/gatewayOAuth/changed` | `v2::GatewayOAuthChangedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1983] |
+| `AccountRateLimitsUpdated` | `account/rateLimits/updated` | `v2::AccountRateLimitsUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1984] |
+| `AppListUpdated` | `app/list/updated` | `v2::AppListUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1985] |
+| `RemoteControlStatusChanged` | `remoteControl/status/changed` | `v2::RemoteControlStatusChangedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1986] |
+| `ExternalAgentConfigImportProgress` | `externalAgentConfig/import/progress` | `v2::ExternalAgentConfigImportProgressNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1987] |
+| `ExternalAgentConfigImportCompleted` | `externalAgentConfig/import/completed` | `v2::ExternalAgentConfigImportCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1988] |
+| `FsChanged` | `fs/changed` | `v2::FsChangedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1989] |
+| `ModelRerouted` | `model/rerouted` | `v2::ModelReroutedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1995] |
+| `ModelVerification` | `model/verification` | `v2::ModelVerificationNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1996] |
+| `AuthRecoveryStarted` | `modelProvider/authRecoveryStarted` | `v2::AuthRecoveryNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1997] |
+| `AuthRecoveryCompleted` | `modelProvider/authRecoveryCompleted` | `v2::AuthRecoveryNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:1998] |
+| `ModelSafetyBufferingUpdated` | `model/safetyBuffering/updated` | `v2::ModelSafetyBufferingUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2001] |
+| `Warning` | `warning` | `v2::WarningNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2002] |
+| `GuardianWarning` | `guardianWarning` | `v2::GuardianWarningNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2003] |
+| `DeprecationNotice` | `deprecationNotice` | `v2::DeprecationNoticeNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2004] |
+| `ConfigWarning` | `configWarning` | `v2::ConfigWarningNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2005] |
+| `FuzzyFileSearchSessionUpdated` | `fuzzyFileSearch/sessionUpdated` | `FuzzyFileSearchSessionUpdatedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2006] |
+| `FuzzyFileSearchSessionCompleted` | `fuzzyFileSearch/sessionCompleted` | `FuzzyFileSearchSessionCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2007] |
+| `WindowsWorldWritableWarning` | `windows/worldWritableWarning` | `v2::WindowsWorldWritableWarningNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2032] |
+| `WindowsSandboxSetupCompleted` | `windowsSandbox/setupCompleted` | `v2::WindowsSandboxSetupCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2033] |
+| `AccountLoginCompleted` | `account/login/completed` | `v2::AccountLoginCompletedNotification` | stable | [E: codex-rs/app-server-protocol/src/protocol/common.rs:2038] |
 
-两个 environment connection notifications 共用只含 `thread_id` 与 `environment_id` 的 payload；虽然 wire name 以 `thread/` 开头，它们描述 execution-environment connectivity，因此归 system catalog。[E: codex-rs/app-server-protocol/src/protocol/v2/environment.rs:54][E: codex-rs/app-server-protocol/src/protocol/v2/environment.rs:55][E: codex-rs/app-server-protocol/src/protocol/v2/environment.rs:56]
+两个 environment connection notifications 共用只含 `thread_id` 与 `environment_id` 的 payload；虽然 wire name 以 `thread/` 开头，它们描述 execution-environment connectivity，因此归 system catalog。[E: codex-rs/app-server-protocol/src/protocol/v2/environment.rs:60][E: codex-rs/app-server-protocol/src/protocol/v2/environment.rs:61][E: codex-rs/app-server-protocol/src/protocol/v2/environment.rs:62]
+
+`account/gatewayOAuth/changed` payload 含 optional `auth_url`（仅发给发起 login 的连接）、`provider_id`、`status` 与 optional `error`。[E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:606][E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:608][E: codex-rs/app-server-protocol/src/protocol/v2/account.rs:609]
 
 ## Sources
 

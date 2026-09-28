@@ -8,10 +8,10 @@ symbols: [SlashCommand::Review, SlashCommand::Diff, SlashCommand::Copy, SlashCom
 related: [subsys.core.review-mode, cli.exec-mode, cli.subcommands, subsys.config-auth.config-loading, subsys.tui.chatwidget]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> 代码与评审 slash commands 是 `SlashCommand` enum 中负责 review、diff、copy、export 和 raw scrollback 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:29][E: codex-rs/tui/src/slash_command.rs:47][E: codex-rs/tui/src/slash_command.rs:48][E: codex-rs/tui/src/slash_command.rs:49][E: codex-rs/tui/src/slash_command.rs:50]
+> 代码与评审 slash commands 是 `SlashCommand` enum（当前 **62** 个变体）中负责 review、diff、copy、export 和 raw scrollback 的 TUI built-in command 子集。[E: codex-rs/tui/src/slash_command.rs:12][E: codex-rs/tui/src/slash_command.rs:29][E: codex-rs/tui/src/slash_command.rs:47][E: codex-rs/tui/src/slash_command.rs:48][E: codex-rs/tui/src/slash_command.rs:49][E: codex-rs/tui/src/slash_command.rs:51]
 
 ## 能回答的问题
 
@@ -23,19 +23,19 @@ updated: 3abbf9fe2c
 
 ## Catalog
 
-`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:155][E: codex-rs/tui/src/slash_command.rs:266][E: codex-rs/tui/src/slash_command.rs:278]
+`SlashCommand` uses `#[strum(serialize_all = "kebab-case")]`; `command()` returns the strum conversion, and `built_in_slash_commands()` iterates all variants, filters with `is_visible()`, and returns command-string/variant pairs.[E: codex-rs/tui/src/slash_command.rs:11][E: codex-rs/tui/src/slash_command.rs:161][E: codex-rs/tui/src/slash_command.rs:316][E: codex-rs/tui/src/slash_command.rs:318]
 
-`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations.[E: codex-rs/tui/src/slash_command.rs:160][E: codex-rs/tui/src/slash_command.rs:187]
+`supports_inline_args()` is a positive whitelist, so only listed variants support inline args; `available_in_side_conversation()` is also a positive whitelist for active side conversations。[E: codex-rs/tui/src/slash_command.rs:166][E: codex-rs/tui/src/slash_command.rs:193]
 
-`/export` 无参数打开 clipboard/file picker；带路径则直接导出到该文件。clipboard 选项在 Android 上禁用。[E: codex-rs/tui/src/slash_command.rs:174][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:735][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:736][E: codex-rs/tui/src/chatwidget/transcript_export.rs:23][E: codex-rs/tui/src/chatwidget/transcript_export.rs:32]
+`/export` 无参数打开 clipboard/file picker；带路径则直接导出到该文件。clipboard 选项在 Android 上禁用。[E: codex-rs/tui/src/slash_command.rs:180][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:766][E: codex-rs/tui/src/chatwidget/slash_dispatch.rs:767][E: codex-rs/tui/src/chatwidget/transcript_export.rs:8][E: codex-rs/tui/src/chatwidget/transcript_export.rs:22]
 
 | 命令名 | enum variant | description | inline args | available_during_task | side conversation | is_visible gate | 定义证据 |
 |---|---|---|---|---|---|---|---|
-| `/review` | `Review` | review my current changes and find issues | 是 [E: codex-rs/tui/src/slash_command.rs:163] | 否 [E: codex-rs/tui/src/slash_command.rs:221] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:29][E: codex-rs/tui/src/slash_command.rs:94] |
-| `/diff` | `Diff` | show git diff (including untracked files) | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:228] | 是 [E: codex-rs/tui/src/slash_command.rs:194] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:50][E: codex-rs/tui/src/slash_command.rs:107] |
-| `/copy` | `Copy` | copy the last response, code block, or quote | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:232] | 是 [E: codex-rs/tui/src/slash_command.rs:190] | hidden on Android [E: codex-rs/tui/src/slash_command.rs:268] | [E: codex-rs/tui/src/slash_command.rs:47][E: codex-rs/tui/src/slash_command.rs:102] |
-| `/export` | `Export` | export the conversation as markdown | 是 [E: codex-rs/tui/src/slash_command.rs:174] | 否 [E: codex-rs/tui/src/slash_command.rs:214] | 是 [E: codex-rs/tui/src/slash_command.rs:192] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:48][E: codex-rs/tui/src/slash_command.rs:105] |
-| `/raw` | `Raw` | toggle raw scrollback mode for copy-friendly terminal selection | 是 [E: codex-rs/tui/src/slash_command.rs:175] | 是 [E: codex-rs/tui/src/slash_command.rs:233] | 是 [E: codex-rs/tui/src/slash_command.rs:193] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:272] | [E: codex-rs/tui/src/slash_command.rs:49][E: codex-rs/tui/src/slash_command.rs:106] |
+| `/review` | `Review` | review my current changes and find issues | 是 [E: codex-rs/tui/src/slash_command.rs:169] | 否 [E: codex-rs/tui/src/slash_command.rs:257] | 否 | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:310] | [E: codex-rs/tui/src/slash_command.rs:29][E: codex-rs/tui/src/slash_command.rs:97] |
+| `/diff` | `Diff` | show git diff (including untracked files) | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:264] | 是 [E: codex-rs/tui/src/slash_command.rs:200] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:310] | [E: codex-rs/tui/src/slash_command.rs:51][E: codex-rs/tui/src/slash_command.rs:111] |
+| `/copy` | `Copy` | copy the last response or part of it | 否 | 是 [E: codex-rs/tui/src/slash_command.rs:268] | 是 [E: codex-rs/tui/src/slash_command.rs:196] | hidden on Android [E: codex-rs/tui/src/slash_command.rs:306] | [E: codex-rs/tui/src/slash_command.rs:47][E: codex-rs/tui/src/slash_command.rs:107] |
+| `/export` | `Export` | export the conversation as markdown | 是 [E: codex-rs/tui/src/slash_command.rs:180] | 否 [E: codex-rs/tui/src/slash_command.rs:249] | 是 [E: codex-rs/tui/src/slash_command.rs:198] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:310] | [E: codex-rs/tui/src/slash_command.rs:48][E: codex-rs/tui/src/slash_command.rs:108] |
+| `/raw` | `Raw` | toggle raw scrollback mode for copy-friendly terminal selection | 是 [E: codex-rs/tui/src/slash_command.rs:181] | 是 [E: codex-rs/tui/src/slash_command.rs:269] | 是 [E: codex-rs/tui/src/slash_command.rs:199] | `is_visible` 默认 true [E: codex-rs/tui/src/slash_command.rs:310] | [E: codex-rs/tui/src/slash_command.rs:49][E: codex-rs/tui/src/slash_command.rs:109] |
 
 ## Sources
 

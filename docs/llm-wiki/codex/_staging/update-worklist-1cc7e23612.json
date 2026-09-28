@@ -1,0 +1,499 @@
+{
+  "target": "1cc7e23612",
+  "batches": {
+    "catalogs-ref": {
+      "depth": "rewrite",
+      "files": [
+        "reference/crate-index.md",
+        "reference/feature-flags.md",
+        "reference/protocol-op.md",
+        "reference/protocol-event-lifecycle.md",
+        "reference/protocol-event-streaming.md",
+        "reference/protocol-items.md",
+        "reference/data-model.md",
+        "reference/key-types.md",
+        "reference/glossary.md",
+        "reference/env-vars.md",
+        "reference/session-tasks.md"
+      ]
+    },
+    "slash-cli": {
+      "depth": "rewrite",
+      "files": [
+        "surface/slash-commands/session-thread.md",
+        "surface/slash-commands/model-mode.md",
+        "surface/slash-commands/config-system.md",
+        "surface/slash-commands/realtime-debug.md",
+        "surface/slash-commands/tools-integrations.md",
+        "surface/slash-commands/code-review.md",
+        "surface/cli/subcommands.md",
+        "surface/cli/global-flags.md",
+        "surface/cli/exec-mode.md",
+        "surface/cli/external-agent-import.md"
+      ]
+    },
+    "config-rpc": {
+      "depth": "rewrite",
+      "files": [
+        "surface/config/model-provider.md",
+        "surface/config/approval-sandbox.md",
+        "surface/config/mcp-tools.md",
+        "surface/config/skills-plugins-features.md",
+        "surface/config/ui-tui.md",
+        "surface/config/agents-memory.md",
+        "surface/config/auth-account.md",
+        "surface/config/storage-telemetry-misc.md",
+        "surface/app-server/overview.md",
+        "surface/app-server/thread-methods.md",
+        "surface/app-server/turn-methods.md",
+        "surface/app-server/config-account-methods.md",
+        "surface/app-server/mcp-skills-plugin-methods.md",
+        "surface/app-server/fs-command-methods.md",
+        "surface/app-server/server-requests.md",
+        "surface/app-server/notifications-system.md",
+        "surface/app-server/notifications-thread.md"
+      ]
+    },
+    "spine": {
+      "depth": "rewrite",
+      "files": [
+        "spine/overview.md",
+        "spine/sq-eq-architecture.md",
+        "spine/process-lifecycle.md",
+        "spine/turn-end-to-end.md",
+        "spine/tool-call-anatomy.md",
+        "spine/extension-system.md",
+        "spine/context-and-compaction.md",
+        "spine/shell-exec-flow.md",
+        "spine/trace-apply-patch.md",
+        "spine/trace-mcp-call.md",
+        "spine/trace-subagent.md"
+      ]
+    },
+    "tui": {
+      "depth": "refresh",
+      "files": [
+        "subsystems/tui/overlays-dialogs.md",
+        "subsystems/tui/architecture.md",
+        "subsystems/tui/keymap.md",
+        "subsystems/tui/event-system.md",
+        "subsystems/tui/rendering-theming.md",
+        "subsystems/tui/bottom-pane.md",
+        "subsystems/tui/chatwidget.md",
+        "subsystems/tui/onboarding.md",
+        "subsystems/tui/status-surfaces.md",
+        "subsystems/tui/streaming-pipeline.md"
+      ]
+    },
+    "core-guardian": {
+      "depth": "rewrite",
+      "files": [
+        "subsystems/core/approval-guardian.md",
+        "subsystems/core/approval-guardian-v2.md",
+        "subsystems/core/approval-policy.md",
+        "subsystems/core/session-lifecycle.md",
+        "subsystems/core/collaboration-modes.md",
+        "subsystems/core/token-budget.md",
+        "subsystems/core/rollout-budget.md",
+        "subsystems/core/instruction-assembly.md",
+        "subsystems/core/context-manager.md",
+        "subsystems/core/compaction.md",
+        "subsystems/core/thread-store.md",
+        "subsystems/core/turn-engine.md"
+      ]
+    },
+    "core-tools-exec": {
+      "depth": "refresh",
+      "files": [
+        "subsystems/core/tool-system.md",
+        "subsystems/core/tool-router.md",
+        "subsystems/core/turn-metadata.md",
+        "subsystems/core/memory.md",
+        "subsystems/core/ghost-undo.md",
+        "subsystems/core/unified-exec.md",
+        "subsystems/core/code-mode-runtime.md",
+        "subsystems/exec-sandbox/exec-server.md",
+        "subsystems/exec-sandbox/sandbox-linux.md",
+        "subsystems/exec-sandbox/sandbox-windows.md",
+        "subsystems/exec-sandbox/overview.md",
+        "subsystems/exec-sandbox/apply-patch-engine.md"
+      ]
+    },
+    "tools-high": {
+      "depth": "refresh",
+      "files": [
+        "surface/tools/request-permissions.md",
+        "surface/tools/mcp-namespace-tools.md",
+        "surface/tools/request-user-input.md",
+        "surface/tools/web-search.md",
+        "surface/tools/spawn-agent-v2.md",
+        "surface/tools/tool-search.md",
+        "surface/tools/image-generation.md",
+        "surface/tools/code-mode-exec.md",
+        "surface/tools/code-mode-wait.md",
+        "surface/tools/view-image.md",
+        "surface/tools/exec-command.md",
+        "surface/tools/write-stdin.md",
+        "surface/tools/apply-patch.md",
+        "surface/tools/send-message.md"
+      ]
+    },
+    "mcp-auth-platform": {
+      "depth": "refresh",
+      "files": [
+        "subsystems/mcp/client.md",
+        "subsystems/mcp/server.md",
+        "subsystems/mcp/transports.md",
+        "subsystems/mcp/oauth.md",
+        "subsystems/mcp/connectors.md",
+        "subsystems/config-auth/hooks.md",
+        "subsystems/config-auth/auth-flows.md",
+        "subsystems/config-auth/plugins.md",
+        "subsystems/config-auth/skills.md",
+        "subsystems/config-auth/features-system.md",
+        "subsystems/app-server/transport.md",
+        "subsystems/providers/model-catalog.md",
+        "subsystems/providers/http-client.md",
+        "subsystems/platform/analytics.md",
+        "subsystems/platform/network-proxy.md"
+      ]
+    },
+    "leftover-surface-a": {
+      "depth": "refresh",
+      "files": [
+        "surface/tools/shell-command.md",
+        "surface/tools/update-plan.md",
+        "surface/tools/followup-task.md",
+        "surface/tools/wait-agent-v2.md",
+        "surface/tools/list-agents.md",
+        "surface/tools/spawn-agent-v1.md",
+        "surface/tools/send-input-v1.md",
+        "surface/tools/wait-agent-v1.md",
+        "surface/tools/close-agent-v1.md",
+        "surface/tools/resume-agent-v1.md",
+        "surface/tools/list-mcp-resources.md",
+        "surface/tools/list-mcp-resource-templates.md",
+        "surface/tools/read-mcp-resource.md",
+        "surface/tools/test-sync-tool.md"
+      ]
+    },
+    "leftover-surface-b": {
+      "depth": "refresh",
+      "files": [
+        "surface/tools/dynamic-tools.md",
+        "surface/sdk/ts-structured-output.md",
+        "surface/sdk/py-overview.md",
+        "surface/sdk/sdk-architecture.md",
+        "surface/tools/sleep.md",
+        "surface/tools/new-context.md",
+        "surface/tools/get-context-remaining.md",
+        "surface/tools/interrupt-agent-v2.md",
+        "surface/tools/list-available-plugins-to-install.md",
+        "surface/tools/request-plugin-install.md",
+        "surface/tools/current-time.md",
+        "surface/tools/wait-for-environment.md",
+        "surface/tools/send-user-message-async.md",
+        "surface/tools/request-user-input-async.md"
+      ]
+    },
+    "leftover-subs-a": {
+      "depth": "refresh",
+      "files": [
+        "subsystems/core/review-mode.md",
+        "subsystems/core/realtime-conversation.md",
+        "subsystems/core/rollout-persistence.md",
+        "subsystems/core/state-db.md",
+        "subsystems/exec-sandbox/file-system.md",
+        "subsystems/exec-sandbox/sandbox-seatbelt.md",
+        "subsystems/exec-sandbox/shell-parsing.md",
+        "subsystems/exec-sandbox/shell-escalation.md",
+        "subsystems/exec-sandbox/process-hardening.md",
+        "subsystems/exec-sandbox/arg0-dispatch.md",
+        "subsystems/mcp/name-qualification.md",
+        "subsystems/providers/overview.md",
+        "subsystems/providers/provider-openai.md",
+        "subsystems/providers/provider-bedrock.md",
+        "subsystems/providers/provider-oss.md",
+        "subsystems/providers/responses-api.md",
+        "subsystems/providers/sse-streaming.md"
+      ]
+    },
+    "leftover-subs-b": {
+      "depth": "refresh",
+      "files": [
+        "subsystems/providers/retry-errors.md",
+        "subsystems/providers/auth-layer.md",
+        "subsystems/app-server/message-processor.md",
+        "subsystems/app-server/session-management.md",
+        "subsystems/app-server/client-libs.md",
+        "subsystems/config-auth/config-loading.md",
+        "subsystems/config-auth/profiles.md",
+        "subsystems/config-auth/credential-storage.md",
+        "subsystems/cloud/cloud-config.md",
+        "subsystems/platform/git-utils.md",
+        "subsystems/platform/telemetry-otel.md",
+        "subsystems/platform/realtime.md",
+        "subsystems/core/rollout-migration.md",
+        "subsystems/core/thread-queue.md",
+        "subsystems/platform/diagnostics.md",
+        "subsystems/core/history-notes.md",
+        "subsystems/platform/worktree.md"
+      ]
+    }
+  },
+  "unassigned_drift": [],
+  "batch_list": [
+    {
+      "name": "catalogs-ref",
+      "depth": "rewrite",
+      "files": [
+        "reference/crate-index.md",
+        "reference/feature-flags.md",
+        "reference/protocol-op.md",
+        "reference/protocol-event-lifecycle.md",
+        "reference/protocol-event-streaming.md",
+        "reference/protocol-items.md",
+        "reference/data-model.md",
+        "reference/key-types.md",
+        "reference/glossary.md",
+        "reference/env-vars.md",
+        "reference/session-tasks.md"
+      ]
+    },
+    {
+      "name": "slash-cli",
+      "depth": "rewrite",
+      "files": [
+        "surface/slash-commands/session-thread.md",
+        "surface/slash-commands/model-mode.md",
+        "surface/slash-commands/config-system.md",
+        "surface/slash-commands/realtime-debug.md",
+        "surface/slash-commands/tools-integrations.md",
+        "surface/slash-commands/code-review.md",
+        "surface/cli/subcommands.md",
+        "surface/cli/global-flags.md",
+        "surface/cli/exec-mode.md",
+        "surface/cli/external-agent-import.md"
+      ]
+    },
+    {
+      "name": "config-rpc",
+      "depth": "rewrite",
+      "files": [
+        "surface/config/model-provider.md",
+        "surface/config/approval-sandbox.md",
+        "surface/config/mcp-tools.md",
+        "surface/config/skills-plugins-features.md",
+        "surface/config/ui-tui.md",
+        "surface/config/agents-memory.md",
+        "surface/config/auth-account.md",
+        "surface/config/storage-telemetry-misc.md",
+        "surface/app-server/overview.md",
+        "surface/app-server/thread-methods.md",
+        "surface/app-server/turn-methods.md",
+        "surface/app-server/config-account-methods.md",
+        "surface/app-server/mcp-skills-plugin-methods.md",
+        "surface/app-server/fs-command-methods.md",
+        "surface/app-server/server-requests.md",
+        "surface/app-server/notifications-system.md",
+        "surface/app-server/notifications-thread.md"
+      ]
+    },
+    {
+      "name": "spine",
+      "depth": "rewrite",
+      "files": [
+        "spine/overview.md",
+        "spine/sq-eq-architecture.md",
+        "spine/process-lifecycle.md",
+        "spine/turn-end-to-end.md",
+        "spine/tool-call-anatomy.md",
+        "spine/extension-system.md",
+        "spine/context-and-compaction.md",
+        "spine/shell-exec-flow.md",
+        "spine/trace-apply-patch.md",
+        "spine/trace-mcp-call.md",
+        "spine/trace-subagent.md"
+      ]
+    },
+    {
+      "name": "tui",
+      "depth": "refresh",
+      "files": [
+        "subsystems/tui/overlays-dialogs.md",
+        "subsystems/tui/architecture.md",
+        "subsystems/tui/keymap.md",
+        "subsystems/tui/event-system.md",
+        "subsystems/tui/rendering-theming.md",
+        "subsystems/tui/bottom-pane.md",
+        "subsystems/tui/chatwidget.md",
+        "subsystems/tui/onboarding.md",
+        "subsystems/tui/status-surfaces.md",
+        "subsystems/tui/streaming-pipeline.md"
+      ]
+    },
+    {
+      "name": "core-guardian",
+      "depth": "rewrite",
+      "files": [
+        "subsystems/core/approval-guardian.md",
+        "subsystems/core/approval-guardian-v2.md",
+        "subsystems/core/approval-policy.md",
+        "subsystems/core/session-lifecycle.md",
+        "subsystems/core/collaboration-modes.md",
+        "subsystems/core/token-budget.md",
+        "subsystems/core/rollout-budget.md",
+        "subsystems/core/instruction-assembly.md",
+        "subsystems/core/context-manager.md",
+        "subsystems/core/compaction.md",
+        "subsystems/core/thread-store.md",
+        "subsystems/core/turn-engine.md"
+      ]
+    },
+    {
+      "name": "core-tools-exec",
+      "depth": "refresh",
+      "files": [
+        "subsystems/core/tool-system.md",
+        "subsystems/core/tool-router.md",
+        "subsystems/core/turn-metadata.md",
+        "subsystems/core/memory.md",
+        "subsystems/core/ghost-undo.md",
+        "subsystems/core/unified-exec.md",
+        "subsystems/core/code-mode-runtime.md",
+        "subsystems/exec-sandbox/exec-server.md",
+        "subsystems/exec-sandbox/sandbox-linux.md",
+        "subsystems/exec-sandbox/sandbox-windows.md",
+        "subsystems/exec-sandbox/overview.md",
+        "subsystems/exec-sandbox/apply-patch-engine.md"
+      ]
+    },
+    {
+      "name": "tools-high",
+      "depth": "refresh",
+      "files": [
+        "surface/tools/request-permissions.md",
+        "surface/tools/mcp-namespace-tools.md",
+        "surface/tools/request-user-input.md",
+        "surface/tools/web-search.md",
+        "surface/tools/spawn-agent-v2.md",
+        "surface/tools/tool-search.md",
+        "surface/tools/image-generation.md",
+        "surface/tools/code-mode-exec.md",
+        "surface/tools/code-mode-wait.md",
+        "surface/tools/view-image.md",
+        "surface/tools/exec-command.md",
+        "surface/tools/write-stdin.md",
+        "surface/tools/apply-patch.md",
+        "surface/tools/send-message.md"
+      ]
+    },
+    {
+      "name": "mcp-auth-platform",
+      "depth": "refresh",
+      "files": [
+        "subsystems/mcp/client.md",
+        "subsystems/mcp/server.md",
+        "subsystems/mcp/transports.md",
+        "subsystems/mcp/oauth.md",
+        "subsystems/mcp/connectors.md",
+        "subsystems/config-auth/hooks.md",
+        "subsystems/config-auth/auth-flows.md",
+        "subsystems/config-auth/plugins.md",
+        "subsystems/config-auth/skills.md",
+        "subsystems/config-auth/features-system.md",
+        "subsystems/app-server/transport.md",
+        "subsystems/providers/model-catalog.md",
+        "subsystems/providers/http-client.md",
+        "subsystems/platform/analytics.md",
+        "subsystems/platform/network-proxy.md"
+      ]
+    },
+    {
+      "name": "leftover-surface-a",
+      "depth": "refresh",
+      "files": [
+        "surface/tools/shell-command.md",
+        "surface/tools/update-plan.md",
+        "surface/tools/followup-task.md",
+        "surface/tools/wait-agent-v2.md",
+        "surface/tools/list-agents.md",
+        "surface/tools/spawn-agent-v1.md",
+        "surface/tools/send-input-v1.md",
+        "surface/tools/wait-agent-v1.md",
+        "surface/tools/close-agent-v1.md",
+        "surface/tools/resume-agent-v1.md",
+        "surface/tools/list-mcp-resources.md",
+        "surface/tools/list-mcp-resource-templates.md",
+        "surface/tools/read-mcp-resource.md",
+        "surface/tools/test-sync-tool.md"
+      ]
+    },
+    {
+      "name": "leftover-surface-b",
+      "depth": "refresh",
+      "files": [
+        "surface/tools/dynamic-tools.md",
+        "surface/sdk/ts-structured-output.md",
+        "surface/sdk/py-overview.md",
+        "surface/sdk/sdk-architecture.md",
+        "surface/tools/sleep.md",
+        "surface/tools/new-context.md",
+        "surface/tools/get-context-remaining.md",
+        "surface/tools/interrupt-agent-v2.md",
+        "surface/tools/list-available-plugins-to-install.md",
+        "surface/tools/request-plugin-install.md",
+        "surface/tools/current-time.md",
+        "surface/tools/wait-for-environment.md",
+        "surface/tools/send-user-message-async.md",
+        "surface/tools/request-user-input-async.md"
+      ]
+    },
+    {
+      "name": "leftover-subs-a",
+      "depth": "refresh",
+      "files": [
+        "subsystems/core/review-mode.md",
+        "subsystems/core/realtime-conversation.md",
+        "subsystems/core/rollout-persistence.md",
+        "subsystems/core/state-db.md",
+        "subsystems/exec-sandbox/file-system.md",
+        "subsystems/exec-sandbox/sandbox-seatbelt.md",
+        "subsystems/exec-sandbox/shell-parsing.md",
+        "subsystems/exec-sandbox/shell-escalation.md",
+        "subsystems/exec-sandbox/process-hardening.md",
+        "subsystems/exec-sandbox/arg0-dispatch.md",
+        "subsystems/mcp/name-qualification.md",
+        "subsystems/providers/overview.md",
+        "subsystems/providers/provider-openai.md",
+        "subsystems/providers/provider-bedrock.md",
+        "subsystems/providers/provider-oss.md",
+        "subsystems/providers/responses-api.md",
+        "subsystems/providers/sse-streaming.md"
+      ]
+    },
+    {
+      "name": "leftover-subs-b",
+      "depth": "refresh",
+      "files": [
+        "subsystems/providers/retry-errors.md",
+        "subsystems/providers/auth-layer.md",
+        "subsystems/app-server/message-processor.md",
+        "subsystems/app-server/session-management.md",
+        "subsystems/app-server/client-libs.md",
+        "subsystems/config-auth/config-loading.md",
+        "subsystems/config-auth/profiles.md",
+        "subsystems/config-auth/credential-storage.md",
+        "subsystems/cloud/cloud-config.md",
+        "subsystems/platform/git-utils.md",
+        "subsystems/platform/telemetry-otel.md",
+        "subsystems/platform/realtime.md",
+        "subsystems/core/rollout-migration.md",
+        "subsystems/core/thread-queue.md",
+        "subsystems/platform/diagnostics.md",
+        "subsystems/core/history-notes.md",
+        "subsystems/platform/worktree.md"
+      ]
+    }
+  ]
+}

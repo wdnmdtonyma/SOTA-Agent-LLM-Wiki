@@ -6,7 +6,7 @@ kind: reference
 tier: T3
 source: []
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 evidence: unknown
 ---
 
@@ -202,6 +202,12 @@ Filler 对照源码重数后，与 UPDATE-INSTRUCTIONS / research 备忘录的�
 合计 **84**。旧 wiki 的 83 = 82 `=>` + AccountLoginCompleted；本轮 +1 attachment notification。
 
 client RPC 167、server requests 11（9 v2 `=> "path"` + legacy `ApplyPatchApproval` / `ExecCommandApproval`）与备忘录一致。
+
+## uncertainty-update-core-tools-exec
+
+# [U] leftovers — core-tools-exec @ 1cc7e23612
+
+- `subsys.exec-sandbox.exec-server`: `network/policyRequest` 的 `Ask` 是否一定弹出 UI，仅凭 exec-server 层无法断言；由上层 controller decider 决定。
 
 ## uncertainty-update-guardian
 

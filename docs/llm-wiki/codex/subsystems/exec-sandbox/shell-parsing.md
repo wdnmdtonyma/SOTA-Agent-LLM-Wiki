@@ -8,10 +8,10 @@ symbols: [parse_command, extract_shell_command, try_parse_word_only_commands_seq
 related: [tool.exec-command, tool.shell-command, subsys.exec-sandbox.execpolicy-dsl, subsys.exec-sandbox.shell-escalation]
 evidence: explicit
 status: verified
-updated: 3abbf9fe2c
+updated: 1cc7e23612
 ---
 
-> shell parsing subsystem 是 Codex 对 model-produced argv 的 conservative metadata/safety parser：它能归类 read/search/list-files 的常见命令，也能在复杂或危险形态出现时退回 `Unknown` 或要求 approval。crate 已删除 `is_known_safe_command` / `windows_safe_commands`；公开 safety 入口只剩 `is_dangerous_command`。[E: codex-rs/shell-command/src/parse_command.rs:54][E: codex-rs/shell-command/src/lib.rs:11]
+> shell parsing subsystem 是 Codex 对 model-produced argv 的 conservative metadata/safety parser：它能归类 read/search/list-files 的常见命令，也能在复杂或危险形态出现时退回 `Unknown` 或要求 approval。crate 已删除 `is_known_safe_command` / `windows_safe_commands`；公开 safety 入口只剩 `is_dangerous_command`。[E: codex-rs/shell-command/src/parse_command.rs:54][E: codex-rs/shell-command/src/lib.rs:14]
 
 ## 能回答的问题
 
@@ -25,7 +25,7 @@ updated: 3abbf9fe2c
 
 shell parsing 节点覆盖 `codex_shell_command` crate 的 metadata parsing 与 danger heuristics。它不执行命令、不做 OS sandbox，也不直接请求用户 approval；调用方会把 parse/danger/evaluation 结果接入 tool runtime 或 execpolicy。[I]
 
-`lib.rs` 公开 `shell_detect`、`bash`、`parse_command`、`powershell` 四个 command parser 模块，另有 `shell_snapshot`（workspace snapshot，不是 argv classifier），并把 `is_dangerous_command` 模块重导出到 crate root。危险检测的主入口是 `dangerous_command_match`。[E: codex-rs/shell-command/src/lib.rs:3][E: codex-rs/shell-command/src/lib.rs:4][E: codex-rs/shell-command/src/lib.rs:11][E: codex-rs/shell-command/src/command_safety/is_dangerous_command.rs:37]
+`lib.rs` 公开 `shell_detect`、`bash`、`parse_command`、`powershell` 四个 command parser 模块，另有 `shell_snapshot`（workspace snapshot，不是 argv classifier），并把 `is_dangerous_command` 模块重导出到 crate root。危险检测的主入口是 `dangerous_command_match`。[E: codex-rs/shell-command/src/lib.rs:3][E: codex-rs/shell-command/src/lib.rs:4][E: codex-rs/shell-command/src/lib.rs:14][E: codex-rs/shell-command/src/command_safety/is_dangerous_command.rs:37]
 
 PowerShell **subprocess** AST parser（`powershell_parser`）只在 test cfg 下编译，不当作 production classification。生产路径另有 in-process `powershell_tree_sitter`：它只做 literal lowering，fail-closed，不判定 safe/dangerous；`parse_powershell_command_into_plain_commands` 把它接到 execpolicy 的 Windows-platform command split，不进入 `parse_command` metadata 分类。[E: codex-rs/shell-command/src/command_safety/mod.rs:3][E: codex-rs/shell-command/src/command_safety/mod.rs:5][E: codex-rs/shell-command/src/command_safety/mod.rs:6][E: codex-rs/shell-command/src/command_safety/powershell_tree_sitter.rs:13][E: codex-rs/shell-command/src/powershell.rs:77][E: codex-rs/core/src/exec_policy.rs:889]
 
@@ -61,7 +61,7 @@ PowerShell **subprocess** AST parser（`powershell_parser`）只在 test cfg 下
 
 ## safety 控制流
 
-- crate **不再**提供 `is_known_safe_command` 或 Windows safe allowlist。`lib.rs` 只重导出 `is_dangerous_command`。[E: codex-rs/shell-command/src/lib.rs:11]
+- crate **不再**提供 `is_known_safe_command` 或 Windows safe allowlist。`lib.rs` 只重导出 `is_dangerous_command`。[E: codex-rs/shell-command/src/lib.rs:14]
 - execpolicy unmatched fallback 也不再因 known-safe 放行；它只看 dangerous heuristic、Windows legacy managed-fs、以及 sandbox kind。[E: codex-rs/core/src/exec_policy.rs:759][E: codex-rs/core/src/exec_policy.rs:799]
 - `dangerous_command_match` 先检查 direct exec，再对 complex shell 脚本中收集到的 literal command 递归检查，最后在 Windows 调用 Windows-specific danger parser；wrapper recursion 最深 8 层。[E: codex-rs/shell-command/src/command_safety/is_dangerous_command.rs:34][E: codex-rs/shell-command/src/command_safety/is_dangerous_command.rs:37][E: codex-rs/shell-command/src/command_safety/is_dangerous_command.rs:54]
 - 这是非对称的保守策略：可以从复杂 AST 提取静态 literal 来找危险证据，但不能用未解析的 dynamic 部分证明安全。[E: codex-rs/shell-command/src/bash.rs:136]
