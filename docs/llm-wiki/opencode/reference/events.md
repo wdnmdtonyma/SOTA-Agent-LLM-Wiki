@@ -16,6 +16,7 @@ source:
   - packages/opencode/src/bus/global.ts
   - packages/opencode/src/event-v2-bridge.ts
   - packages/opencode/src/server/routes/instance/httpapi/
+  - packages/opencode/src/server/routes/instance/httpapi/middleware/error.ts
 status: verified
 symbols:
   - SessionEvent
@@ -24,7 +25,7 @@ symbols:
   - GlobalBus
   - EventV2Bridge
 evidence: explicit
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > 这份节点是事件系统总账：V2 durable session events 是存储与 replay 语义，GlobalBus/API event envelope 是传输语义，两者不能混讲。
@@ -102,7 +103,9 @@ Durable event commit validates the durable aggregate field, rejects aggregate mi
 
 ## API Event envelope
 
-Instance event stream maps EventV2 payloads to `{ id, type, properties }`, where `properties` is `event.data`.[E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:34][E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:40] The same stream starts with `server.connected`, emits heartbeat events every 10 seconds, and uses `text/event-stream` content type.[E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:63][E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:70][E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:78]
+Instance event stream maps EventV2 payloads to `{ id, type, properties }`, where `properties` is `event.data`。[E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:34][E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:40] The same stream starts with `server.connected`, emits heartbeat events every 10 seconds, and uses `text/event-stream` content type。[E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:63][E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:70][E: packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts:78]
+
+V1 instance HttpApi `errorLayer` 把 defect 中的 `ConfigErrorV1.RemoteAuthError`（以及 Json/Invalid/Frontmatter/DirectoryTypo）映射成 `error.toObject()` JSON，HTTP **400**；其它 defect 才 500。[E: packages/opencode/src/server/routes/instance/httpapi/middleware/error.ts:19][E: packages/opencode/src/server/routes/instance/httpapi/middleware/error.ts:24][E: packages/opencode/src/server/routes/instance/httpapi/middleware/error.ts:26]
 
 Global event schema wraps routing metadata `{ directory, project?, workspace?, payload }`; `payload` can be a regular `{ id,type,properties }` event, `InstanceDisposed`, or a sync envelope.[E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:37][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:38][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:39][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:42][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:45][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:46] The sync envelope has `type: "sync"`, top-level `id`, and nested `syncEvent` with versioned type, id, seq, aggregateID, and data.[E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:22][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:23][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:24][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:25][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:26][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:27][E: packages/opencode/src/server/routes/instance/httpapi/groups/global.ts:28]
 
@@ -130,6 +133,7 @@ V1 no longer has a Bus service in the source areas for this node; the remaining 
 - `packages/opencode/src/server/routes/instance/httpapi/groups/global.ts`
 - `packages/opencode/src/server/routes/instance/httpapi/handlers/global.ts`
 - `packages/opencode/src/server/routes/instance/httpapi/handlers/event.ts`
+- `packages/opencode/src/server/routes/instance/httpapi/middleware/error.ts`
 
 ## 相关
 

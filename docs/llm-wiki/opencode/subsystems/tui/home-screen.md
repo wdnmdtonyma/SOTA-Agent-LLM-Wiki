@@ -9,7 +9,7 @@ symbols: [Home, HomeSessionDestinationProvider]
 related: [tui.prompt, tui.routing, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > Home screen 是 TUI 的起始 route：它只负责 logo、首页 prompt、toast 和 home slots；真正创建 session、发送 prompt、切 session 的行为在 `Prompt` 与 route/sync contexts 中完成。

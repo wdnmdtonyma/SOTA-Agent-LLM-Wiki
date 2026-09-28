@@ -9,7 +9,7 @@ symbols: [SessionPrompt.prompt, SessionPrompt.loop, runLoop, SessionProcessor.cr
 related: [session-v1.prompt, session-v1.processor, session-v1.llm-runtime]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > V1 turn loop 是 `packages/opencode/src/session/prompt.ts` 内部的 assistant loop:它从 V1 user message 组装模型输入,调用 `SessionProcessor`,再由 `LLM.stream` 把 AI SDK/native seam event 转成 V1 message part。
@@ -56,7 +56,7 @@ flowchart TD
 
 9. `runLoop@packages/opencode/src/session/prompt.ts:1186` 创建新的 assistant message 并写入 session,随后 `processor.create` 捕获本轮 assistant context,`SessionTools.resolve` 生成可用 tool 列表。[E: packages/opencode/src/session/prompt.ts:1186][E: packages/opencode/src/session/prompt.ts:1201][E: packages/opencode/src/session/prompt.ts:1213][E: packages/opencode/src/session/prompt.ts:1214][E: packages/opencode/src/session/prompt.ts:1226]
 
-10. `MessageV2.toModelMessagesEffect@packages/opencode/src/session/prompt.ts:1262` 把 V1 messages 转成 AI SDK model messages;`message-v2.ts` 之所以是命名陷阱,是因为该文件导入 `SessionV1` 与 AI SDK `ModelMessage`,并在 `toModelMessagesEffect` 中调用 AI SDK `convertToModelMessages`。[E: packages/opencode/src/session/prompt.ts:1262][E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:131][E: packages/opencode/src/session/message-v2.ts:407]
+10. `MessageV2.toModelMessagesEffect@packages/opencode/src/session/prompt.ts:1262` 把 V1 messages 转成 AI SDK model messages;`message-v2.ts` 之所以是命名陷阱,是因为该文件导入 `SessionV1` 与 AI SDK `ModelMessage`,并在 `toModelMessagesEffect` 中调用 AI SDK `convertToModelMessages`。`@ai-sdk/amazon-bedrock` 只对 anthropic/nova/llama4/llama-4 的 `image/` tool-result 附件留在 tool output,其余 media hoist 成 user file message。[E: packages/opencode/src/session/prompt.ts:1262][E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:131][E: packages/opencode/src/session/message-v2.ts:151][E: packages/opencode/src/session/message-v2.ts:154][E: packages/opencode/src/session/message-v2.ts:408]
 
 11. `handle.process@packages/opencode/src/session/prompt.ts:1272` 把 `system`、`messages`、`tools`、`model`、`toolChoice` 交给 `SessionProcessor`。[E: packages/opencode/src/session/prompt.ts:1272]
 

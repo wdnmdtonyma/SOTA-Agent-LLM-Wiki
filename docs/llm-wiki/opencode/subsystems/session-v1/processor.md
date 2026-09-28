@@ -9,7 +9,7 @@ symbols: [SessionProcessor, SessionProcessor.create, SessionProcessor.Handle, DO
 related: [spine.v1-turn-loop, session-v1.llm-runtime]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > `SessionProcessor` 消费 `LLM.stream(...)` 产出的 `LLMEvent`,把 text/reasoning/tool/step/tool-error 等事件落成或更新 V1 message parts;provider/error paths 则更新 assistant/session error state,当前文件已不再包含旧的 V2 mirror dual-write 分支。
@@ -54,7 +54,7 @@ updated: df23b7f948
 
 6. doom-loop guard 使用常量 `DOOM_LOOP_THRESHOLD = 3`;`tool-call` 后读取当前 assistant message 最近 3 个 parts,只有它们都为同一 tool、非 pending、且 input JSON 相同时,才触发 `permission.ask({ permission: "doom_loop" })`。[E: packages/opencode/src/session/processor.ts:29][E: packages/opencode/src/session/processor.ts:353][E: packages/opencode/src/session/processor.ts:356][E: packages/opencode/src/session/processor.ts:358][E: packages/opencode/src/session/processor.ts:362][E: packages/opencode/src/session/processor.ts:364][E: packages/opencode/src/session/processor.ts:365][E: packages/opencode/src/session/processor.ts:372][E: packages/opencode/src/session/processor.ts:373]
 
-7. `tool-result` error branch 在有 matching tool call 时调用 `failToolCall`;success branch把 result 归一化为 `title/metadata/output/attachments`,normalize image attachment,并通过 `completeToolCall` 对 matching running V1 tool part 写 completed state。[E: packages/opencode/src/session/processor.ts:383][E: packages/opencode/src/session/processor.ts:384][E: packages/opencode/src/session/processor.ts:386][E: packages/opencode/src/session/processor.ts:387][E: packages/opencode/src/session/processor.ts:390][E: packages/opencode/src/session/processor.ts:391][E: packages/opencode/src/session/processor.ts:403][E: packages/opencode/src/session/processor.ts:412][E: packages/opencode/src/session/processor.ts:160][E: packages/opencode/src/session/processor.ts:171][E: packages/opencode/src/session/processor.ts:174]
+7. `tool-result` error branch 在有 matching tool call 时调用 `failToolCall`;success branch把 result 归一化为 `title/metadata/output/attachments`,normalize image attachment,并通过 `completeToolCall` 对 matching running V1 tool part 写 completed state。是否把 image 留在后续 model tool result 由 `toModelMessagesEffect` 的 `supportsMediaInToolResult` 决定,Bedrock 普通 SDK 只 hoist anthropic/nova/llama4/llama-4 的 `image/`。[E: packages/opencode/src/session/processor.ts:383][E: packages/opencode/src/session/processor.ts:384][E: packages/opencode/src/session/processor.ts:386][E: packages/opencode/src/session/processor.ts:387][E: packages/opencode/src/session/processor.ts:390][E: packages/opencode/src/session/processor.ts:391][E: packages/opencode/src/session/processor.ts:403][E: packages/opencode/src/session/processor.ts:412][E: packages/opencode/src/session/processor.ts:160][E: packages/opencode/src/session/processor.ts:171][E: packages/opencode/src/session/processor.ts:174][E: packages/opencode/src/session/message-v2.ts:151][E: packages/opencode/src/session/message-v2.ts:154]
 
 8. `tool-error` 调用 `failToolCall` 将 matching running V1 tool part 标成 error;`failToolCall` 还会在 Permission/Question rejected 时按 `ctx.shouldBreak` 设置 blocked。[E: packages/opencode/src/session/processor.ts:416][E: packages/opencode/src/session/processor.ts:417][E: packages/opencode/src/session/processor.ts:186][E: packages/opencode/src/session/processor.ts:189][E: packages/opencode/src/session/processor.ts:192][E: packages/opencode/src/session/processor.ts:200][E: packages/opencode/src/session/processor.ts:201]
 
@@ -82,7 +82,7 @@ updated: df23b7f948
 
 `FreeUsageLimitError` 的 upsell 文案是 `$10/month`,不再写 `$5/month`。[E: packages/opencode/src/session/retry.ts:106]
 
-AI SDK `finish-step` 若 `rawFinishReason === "network_error"`,adapter 抛 `ProviderError.ResponseStreamError`;`MessageV2.fromError` 把它映射成 `isRetryable: true` 的 `APIError`,因此走 retry 而不是当普通 step-finish。[E: packages/opencode/src/session/llm/ai-sdk.ts:89][E: packages/opencode/src/session/message-v2.ts:668][E: packages/opencode/src/session/message-v2.ts:672]
+AI SDK `finish-step` 若 `rawFinishReason === "network_error"`,adapter 抛 `ProviderError.ResponseStreamError`;`MessageV2.fromError` 把它映射成 `isRetryable: true` 的 `APIError`,因此走 retry 而不是当普通 step-finish。[E: packages/opencode/src/session/llm/ai-sdk.ts:89][E: packages/opencode/src/session/message-v2.ts:667][E: packages/opencode/src/session/message-v2.ts:672]
 
 `parseStreamError` 对未识别的 `error.code` 默认返回 `{ type: "api_error", isRetryable: true }`。[E: packages/opencode/src/provider/error.ts:148][E: packages/opencode/src/provider/error.ts:151]
 

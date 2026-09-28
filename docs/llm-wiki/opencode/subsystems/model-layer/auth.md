@@ -4,12 +4,12 @@ title: Model Auth
 kind: subsystem
 tier: T2
 v: shared
-source: [packages/opencode/src/auth/index.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/provider/provider.ts, packages/opencode/src/account/account.ts, packages/opencode/src/cli/cmd/account.ts, packages/opencode/src/plugin/azure.ts, packages/opencode/src/plugin/openai/codex.ts, packages/core/src/plugin/provider/opencode.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts, packages/schema/src/credential.ts, packages/schema/src/integration.ts]
+source: [packages/opencode/src/auth/index.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/provider/provider.ts, packages/opencode/src/account/account.ts, packages/opencode/src/cli/cmd/account.ts, packages/core/src/open.ts, packages/opencode/src/plugin/azure.ts, packages/opencode/src/plugin/openai/codex.ts, packages/core/src/plugin/provider/opencode.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts, packages/schema/src/credential.ts, packages/schema/src/integration.ts]
 symbols: [Auth.Service, ProviderAuth.Service, Account.Service, Credential.Service, Integration.Service, AzureAuthPlugin, CodexAuthPlugin, extractResidency]
 related: [provider.auth-accounts, model-layer.credential-v2, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > Model auth 横跨两代:V1 用 `auth.json` + provider auth hooks + account device flow 给 AI SDK provider registry 提供 key/OAuth token;V2 把 credentials 放进 SQLite `Credential` 表,并用 `Integration` 管 key/OAuth/env connection 与 OAuth attempt。
@@ -48,13 +48,13 @@ layer 初始化时从 V1 plugin list 收集 `x.auth.provider` hooks,并把 provi
 
 `CodexAuthPlugin` 是 ChatGPT Pro/Plus OAuth（browser + headless device），不是 Azure/opencode account login。[E: packages/opencode/src/plugin/openai/codex.ts:273][E: packages/opencode/src/plugin/openai/codex.ts:441][E: packages/opencode/src/plugin/openai/codex.ts:471] oauth loader 在把 `/v1/responses` 或 `/chat/completions` rewrite 到 Codex endpoint 时，从 access JWT 抽 `chatgpt_compute_residency`（含 `https://api.openai.com/auth` 嵌套），忽略 `no_constraint`，写成 header `x-openai-internal-codex-residency`。它不读 `chatgpt_data_residency`。[E: packages/opencode/src/plugin/openai/codex.ts:80][E: packages/opencode/src/plugin/openai/codex.ts:83][E: packages/opencode/src/plugin/openai/codex.ts:84][E: packages/opencode/src/plugin/openai/codex.ts:422][E: packages/opencode/src/plugin/openai/codex.ts:425][E: packages/opencode/src/plugin/openai/codex.ts:426]
 
-ChatGPT 订阅模型过滤：`reasoningMode === "pro"` 先排除；`ALLOWED_MODELS`（`gpt-5.5`、`gpt-5.3-codex-spark`、`gpt-5.4`、`gpt-5.4-mini`）直接放行；`DISALLOWED_MODELS`（`gpt-5.5-pro`）与 `api.id === "gpt-5.6"` 单独挡掉；其余用 `/^gpt-(\d+)(?:\.(\d+))?/` 解析，整数版本合法（缺省 minor=0，如 `gpt-6`），通过条件是 `major > 5 || (major === 5 && minor > 4)`。[E: packages/opencode/src/plugin/openai/codex.ts:15][E: packages/opencode/src/plugin/openai/codex.ts:16][E: packages/opencode/src/plugin/openai/codex.ts:296][E: packages/opencode/src/plugin/openai/codex.ts:299][E: packages/opencode/src/plugin/openai/codex.ts:300][E: packages/opencode/src/plugin/openai/codex.ts:303][E: packages/opencode/src/plugin/openai/codex.ts:304] 通过过滤后，`id` 含 `gpt-5.5` 或 `gpt-5.6` 的限额同为 context 400k / input 272k / output 128k。[E: packages/opencode/src/plugin/openai/codex.ts:316][E: packages/opencode/src/plugin/openai/codex.ts:318]
+ChatGPT 订阅模型过滤：`reasoningMode === "pro"` 先排除；`ALLOWED_MODELS`（`gpt-5.5`、`gpt-5.3-codex-spark`、`gpt-5.4`、`gpt-5.4-mini`、`gpt-6-sol`、`gpt-6-luna`）直接放行；`DISALLOWED_MODELS`（`gpt-5.5-pro`）与 `api.id === "gpt-5.6"` 单独挡掉；其余用 `/^gpt-(\d+)(?:\.(\d+))?/` 解析，整数版本合法（缺省 minor=0，如 `gpt-6`），通过条件是 `major > 5 || (major === 5 && minor > 4)`。[E: packages/opencode/src/plugin/openai/codex.ts:15][E: packages/opencode/src/plugin/openai/codex.ts:16][E: packages/opencode/src/plugin/openai/codex.ts:296][E: packages/opencode/src/plugin/openai/codex.ts:299][E: packages/opencode/src/plugin/openai/codex.ts:300][E: packages/opencode/src/plugin/openai/codex.ts:303][E: packages/opencode/src/plugin/openai/codex.ts:304] 通过过滤后，`id` 含 `gpt-5.5` 或 `gpt-5.6` 的限额同为 context 400k / input 272k / output 128k。[E: packages/opencode/src/plugin/openai/codex.ts:316][E: packages/opencode/src/plugin/openai/codex.ts:318]
 
 ### Account Device Flow
 
 `Account.Service` 是 opencode account/login 层,接口包含 active/list/orgs/config/token/login/poll 等方法。[E: packages/opencode/src/account/account.ts:168][E: packages/opencode/src/account/account.ts:182] 它不等于 generic provider auth。[I]
 
-V1 CLI 默认 Console URL 与 V2 `defaultServer` 都是 `https://opencode.ai/console`。[E: packages/opencode/src/cli/cmd/account.ts:18][E: packages/core/src/plugin/provider/opencode.ts:16] device login 用 `/auth/device/code` 拿 device/user code 与 verification URL,poll 用 device grant 调 `/auth/device/token`,成功后并发 fetch user/orgs,再把 account、accessToken、refreshToken、expiry、orgID 持久化。[E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:400][E: packages/opencode/src/account/account.ts:405][E: packages/opencode/src/account/account.ts:411][E: packages/opencode/src/account/account.ts:419][E: packages/opencode/src/account/account.ts:423][E: packages/opencode/src/account/account.ts:441][E: packages/opencode/src/account/account.ts:450]
+V1 CLI 默认 Console URL 与 V2 `defaultServer` 都是 `https://opencode.ai/console`。[E: packages/opencode/src/cli/cmd/account.ts:18][E: packages/core/src/plugin/provider/opencode.ts:16] CLI 打开 verification URL 用 `openUrl`，不是裸 `open`。[E: packages/opencode/src/cli/cmd/account.ts:8][E: packages/opencode/src/cli/cmd/account.ts:10][E: packages/core/src/open.ts:3] device login 用 `/auth/device/code` 拿 device/user code 与 verification URL,poll 用 device grant 调 `/auth/device/token`,成功后并发 fetch user/orgs,再把 account、accessToken、refreshToken、expiry、orgID 持久化。[E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:400][E: packages/opencode/src/account/account.ts:405][E: packages/opencode/src/account/account.ts:411][E: packages/opencode/src/account/account.ts:419][E: packages/opencode/src/account/account.ts:423][E: packages/opencode/src/account/account.ts:441][E: packages/opencode/src/account/account.ts:450]
 
 refresh token flow 调 `/auth/device/token` 的 refresh_token grant,解析 token 后持久化新的 access/refresh/expiry。[E: packages/opencode/src/account/account.ts:220][E: packages/opencode/src/account/account.ts:224][E: packages/opencode/src/account/account.ts:232][E: packages/opencode/src/account/account.ts:238][E: packages/opencode/src/account/account.ts:242]
 
@@ -85,6 +85,7 @@ V1 auth 是文件与 plugin hook 的组合;V2 credential/integration 把 provide
 - packages/opencode/src/provider/provider.ts
 - packages/opencode/src/account/account.ts
 - packages/opencode/src/cli/cmd/account.ts
+- packages/core/src/open.ts
 - packages/opencode/src/plugin/azure.ts
 - packages/opencode/src/plugin/openai/codex.ts
 - packages/core/src/plugin/provider/opencode.ts

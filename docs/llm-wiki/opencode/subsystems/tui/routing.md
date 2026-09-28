@@ -4,12 +4,12 @@ title: TUI 路由(store 判别联合)
 kind: subsystem
 tier: T2
 v: na
-source: [packages/tui/src/context/route.tsx, packages/tui/src/app.tsx]
+source: [packages/tui/src/context/route.tsx, packages/tui/src/app.tsx, packages/tui/src/plugin/adapters.tsx, packages/tui/src/plugin/api.ts]
 symbols: [RouteProvider, useRoute, Route, HomeRoute, SessionRoute, PluginRoute]
 related: [tui.session-screen, tui.home-screen]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > TUI routing 是一个 Solid store 里的 discriminated union：`home | session | plugin`；它没有 URL、history stack 或 router library，导航就是 `setStore(reconcile(route))`。
@@ -40,11 +40,11 @@ updated: df23b7f948
 1. `RouteProvider` 初始化时优先使用 `props.initialRoute`，否则解析 `useTuiStartup().initialRoute`，再 fallback 到 `{ type: "home" }`。[E: packages/tui/src/context/route.tsx:27] [E: packages/tui/src/context/route.tsx:30]
 2. `initialRoute(value)` 只接受 object 且必须含 `type`；`home` 被归一成 `{ type: "home" }`，`session` 必须含 string `sessionID`，`plugin` 必须含 string `id`。[E: packages/tui/src/context/route.tsx:45] [E: packages/tui/src/context/route.tsx:46] [E: packages/tui/src/context/route.tsx:47] [E: packages/tui/src/context/route.tsx:50]
 3. `app.tsx` 把 host env `OPENCODE_ROUTE` JSON parse 成 `TuiStartupProvider.initialRoute`，并把 `OPENCODE_FAST_BOOT` 映射成 `skipInitialLoading`。[E: packages/tui/src/app.tsx:277] [E: packages/tui/src/app.tsx:278]
-4. `app.tsx` 在 `RouteProvider` 处为 `args.continue` 注入临时 `{ type: "session", sessionID: "dummy" }` initialRoute；真实继续逻辑随后在 sync session list 加载后导航到最近 session或 fork 后的新 session。[E: packages/tui/src/app.tsx:288] [E: packages/tui/src/app.tsx:291] [E: packages/tui/src/app.tsx:505] [E: packages/tui/src/app.tsx:511] [E: packages/tui/src/app.tsx:519]
-5. `onMount` 处理 `args.sessionID`：没有 `fork` 时直接 `route.navigate({ type: "session", sessionID })`。[E: packages/tui/src/app.tsx:479] [E: packages/tui/src/app.tsx:492] [E: packages/tui/src/app.tsx:493]
+4. `app.tsx` 在 `RouteProvider` 处为 `args.continue` 注入临时 `{ type: "session", sessionID: "dummy" }` initialRoute；真实继续逻辑随后在 sync session list 加载后导航到最近 session或 fork 后的新 session。[E: packages/tui/src/app.tsx:288] [E: packages/tui/src/app.tsx:291] [E: packages/tui/src/app.tsx:506] [E: packages/tui/src/app.tsx:511] [E: packages/tui/src/app.tsx:520]
+5. `onMount` 处理 `args.sessionID`：没有 `fork` 时直接 `route.navigate({ type: "session", sessionID })`。[E: packages/tui/src/app.tsx:480] [E: packages/tui/src/app.tsx:492] [E: packages/tui/src/app.tsx:494]
 6. `--session --fork` 必须等 `sync.status === "complete"` 才 fork；等待 complete 的竞争规避动机来自相邻实现语境而非独立 runtime contract。[E: packages/tui/src/app.tsx:529] [E: packages/tui/src/app.tsx:531] [I]
 7. Root render 用 `Switch` 分支渲染 `Home` 或 keyed `Session`；plugin route 不在 `Switch` 内，而是额外渲染 `plugin()` 的结果，root slots 仍在同一 root tree 中渲染。[E: packages/tui/src/app.tsx:1112] [E: packages/tui/src/app.tsx:1116] [E: packages/tui/src/app.tsx:1122] [E: packages/tui/src/app.tsx:1124]
-8. `tui.session.select` event 会把当前 route 设成对应 session；`session.deleted` 如果删除的是当前 session，则导航回 home 并 toast。[E: packages/tui/src/app.tsx:1002] [E: packages/tui/src/app.tsx:1004] [E: packages/tui/src/app.tsx:1009] [E: packages/tui/src/app.tsx:1010] [E: packages/tui/src/app.tsx:1013]
+8. `tui.session.select` event 会把当前 route 设成对应 session；`session.deleted` 如果删除的是当前 session，则导航回 home 并 toast。[E: packages/tui/src/app.tsx:1002] [E: packages/tui/src/app.tsx:1004] [E: packages/tui/src/app.tsx:1010] [E: packages/tui/src/app.tsx:1010] [E: packages/tui/src/app.tsx:1013]
 
 ## Plugin Route
 
@@ -58,7 +58,7 @@ Plugin route registry 使用 `Map<string, RouteEntry[]>`，每次 register 为 r
 
 ## Gotcha
 
-- `sessionID: "dummy"` 只是 `--continue` 初始 UI route sentinel，真实 session ID 由 `sync.data.session` 查最近 root session 后替换。[E: packages/tui/src/app.tsx:291] [E: packages/tui/src/app.tsx:505] [E: packages/tui/src/app.tsx:519]
+- `sessionID: "dummy"` 只是 `--continue` 初始 UI route sentinel，真实 session ID 由 `sync.data.session` 查最近 root session 后替换。[E: packages/tui/src/app.tsx:291] [E: packages/tui/src/app.tsx:506] [E: packages/tui/src/app.tsx:520]
 - Plugin route `data` 没有 Schema validation；plugin-facing adapter 只把 `params` 作为 plugin route data 传入。[E: packages/tui/src/context/route.tsx:20] [E: packages/tui/src/plugin/adapters.tsx:41] [E: packages/tui/src/plugin/adapters.tsx:54] [I]
 
 ## Sources

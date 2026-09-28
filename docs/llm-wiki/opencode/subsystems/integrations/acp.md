@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 source:
   - packages/opencode/src/acp/service.ts
   - packages/opencode/src/acp/agent.ts

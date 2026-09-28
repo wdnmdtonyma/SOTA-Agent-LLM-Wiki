@@ -4,12 +4,12 @@ title: Provider 认证与账号账户面
 kind: surface
 tier: T1
 v: shared
-source: [packages/opencode/src/auth/index.ts, packages/opencode/src/account/account.ts, packages/opencode/src/cli/cmd/account.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/provider/provider.ts, packages/opencode/src/plugin/azure.ts, packages/opencode/src/plugin/openai/codex.ts, packages/opencode/src/plugin/openai/ws.ts, packages/opencode/src/plugin/openai/ws-pool.ts, packages/plugin/src/index.ts, packages/core/src/plugin/provider/opencode.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts, packages/schema/src/credential.ts, packages/schema/src/integration.ts, packages/schema/src/connection.ts]
+source: [packages/opencode/src/auth/index.ts, packages/opencode/src/account/account.ts, packages/opencode/src/cli/cmd/account.ts, packages/core/src/open.ts, packages/opencode/src/provider/auth.ts, packages/opencode/src/provider/provider.ts, packages/opencode/src/plugin/azure.ts, packages/opencode/src/plugin/openai/codex.ts, packages/opencode/src/plugin/openai/ws.ts, packages/opencode/src/plugin/openai/ws-pool.ts, packages/opencode/src/plugin/digitalocean.ts, packages/plugin/src/index.ts, packages/core/src/plugin/provider/opencode.ts, packages/core/src/credential.ts, packages/core/src/credential/sql.ts, packages/core/src/integration.ts, packages/core/src/integration/connection.ts, packages/schema/src/credential.ts, packages/schema/src/integration.ts, packages/schema/src/connection.ts]
 symbols: [Auth, Account, ProviderAuth, Credential, Integration, IntegrationConnection, AzureAuthPlugin, CodexAuthPlugin]
 related: [model-layer.auth, model-layer.credential-v2, integrations.integration-v2, ref.auth-combinators]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > Provider auth/accounts 横跨两代：V1 用 `auth.json`、Console device-code account login 和 plugin `auth` hook；V2 用 `Credential` durable table 与 `Integration` 本地 authentication registry。旧 connector module 已被 `packages/core/src/integration.ts` 取代。
@@ -32,7 +32,7 @@ V1 provider credential 文件是 `Global.Path.data/auth.json`；`Auth.all()` 优
 
 ### Console account device-code flow
 
-`Account` service 管理 opencode Console account，而不是第三方 provider API key。它的 interface 包含 `active`、`activeOrg`、`list`、`orgsByAccount`、`remove`、`use`、`orgs`、`config`、`token`、`login`、`poll`。[E: packages/opencode/src/account/account.ts:169][E: packages/opencode/src/account/account.ts:170][E: packages/opencode/src/account/account.ts:171][E: packages/opencode/src/account/account.ts:172][E: packages/opencode/src/account/account.ts:173][E: packages/opencode/src/account/account.ts:174][E: packages/opencode/src/account/account.ts:175][E: packages/opencode/src/account/account.ts:176][E: packages/opencode/src/account/account.ts:180][E: packages/opencode/src/account/account.ts:181][E: packages/opencode/src/account/account.ts:182] V1 CLI 默认 Console URL 是 `https://opencode.ai/console`；V2 `OpencodePlugin` 的 `defaultServer` 也是这个 path，不再用 `https://console.opencode.ai`。[E: packages/opencode/src/cli/cmd/account.ts:18][E: packages/core/src/plugin/provider/opencode.ts:16] device code 登录使用 client id `opencode-cli`，`login()` POST `${url}/auth/device/code` 并只提交 `client_id`。[E: packages/opencode/src/account/account.ts:123][E: packages/opencode/src/account/account.ts:137][E: packages/opencode/src/account/account.ts:387][E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:392]
+`Account` service 管理 opencode Console account，而不是第三方 provider API key。它的 interface 包含 `active`、`activeOrg`、`list`、`orgsByAccount`、`remove`、`use`、`orgs`、`config`、`token`、`login`、`poll`。[E: packages/opencode/src/account/account.ts:169][E: packages/opencode/src/account/account.ts:170][E: packages/opencode/src/account/account.ts:171][E: packages/opencode/src/account/account.ts:172][E: packages/opencode/src/account/account.ts:173][E: packages/opencode/src/account/account.ts:174][E: packages/opencode/src/account/account.ts:175][E: packages/opencode/src/account/account.ts:176][E: packages/opencode/src/account/account.ts:180][E: packages/opencode/src/account/account.ts:181][E: packages/opencode/src/account/account.ts:182] V1 CLI 默认 Console URL 是 `https://opencode.ai/console`；V2 `OpencodePlugin` 的 `defaultServer` 也是这个 path，不再用 `https://console.opencode.ai`。[E: packages/opencode/src/cli/cmd/account.ts:18][E: packages/core/src/plugin/provider/opencode.ts:16] CLI `openBrowser` 包装 `openUrl`，只打开 http/https。[E: packages/opencode/src/cli/cmd/account.ts:8][E: packages/opencode/src/cli/cmd/account.ts:10][E: packages/core/src/open.ts:5] device code 登录使用 client id `opencode-cli`，`login()` POST `${url}/auth/device/code` 并只提交 `client_id`。[E: packages/opencode/src/account/account.ts:123][E: packages/opencode/src/account/account.ts:137][E: packages/opencode/src/account/account.ts:387][E: packages/opencode/src/account/account.ts:390][E: packages/opencode/src/account/account.ts:392]
 
 `poll()` POST `${url}/auth/device/token`，grant type 是 `urn:ietf:params:oauth:grant-type:device_code`；成功后并发读取 `/api/user` 和 `/api/orgs`，再把 account id、email、server url、access/refresh token、expiry 与选中的 org id 持久化。[E: packages/opencode/src/account/account.ts:419][E: packages/opencode/src/account/account.ts:423][E: packages/opencode/src/account/account.ts:300][E: packages/opencode/src/account/account.ts:287][E: packages/opencode/src/account/account.ts:438][E: packages/opencode/src/account/account.ts:441][E: packages/opencode/src/account/account.ts:444][E: packages/opencode/src/account/account.ts:450][E: packages/opencode/src/account/account.ts:457] `token()` 在 token 过期前 5 分钟就认为需要刷新，并通过 refresh token 再 POST `/auth/device/token` 更新 stored token。[E: packages/opencode/src/account/account.ts:138][E: packages/opencode/src/account/account.ts:141][E: packages/opencode/src/account/account.ts:220][E: packages/opencode/src/account/account.ts:224][E: packages/opencode/src/account/account.ts:238][E: packages/opencode/src/account/account.ts:248][E: packages/opencode/src/account/account.ts:257][E: packages/opencode/src/account/account.ts:259][E: packages/opencode/src/account/account.ts:311][E: packages/opencode/src/account/account.ts:312][E: packages/opencode/src/account/account.ts:269][E: packages/opencode/src/account/account.ts:273]
 
@@ -54,9 +54,11 @@ authorize 不打开 browser：instructions 是先 `az login`，callback 用 Cogn
 
 `CodexAuthPlugin` 的 oauth loader 在 rewrite 到 Codex endpoint 时，从 access JWT 抽 `chatgpt_compute_residency`（含 `https://api.openai.com/auth` 嵌套），忽略 `no_constraint`，写成 header `x-openai-internal-codex-residency`。不读 `chatgpt_data_residency`。[E: packages/opencode/src/plugin/openai/codex.ts:80][E: packages/opencode/src/plugin/openai/codex.ts:83][E: packages/opencode/src/plugin/openai/codex.ts:84][E: packages/opencode/src/plugin/openai/codex.ts:422][E: packages/opencode/src/plugin/openai/codex.ts:426]
 
-ChatGPT 订阅模型过滤用 `/^gpt-(\d+)(?:\.(\d+))?/`，整数版本合法（缺省 minor=0）；比较 `major > 5 || (major === 5 && minor > 4)`。`gpt-5.6` 在 regex 前单独 DISALLOW。`ALLOWED_MODELS` 仍放行 `gpt-5.4` / `gpt-5.3-codex-spark`。[E: packages/opencode/src/plugin/openai/codex.ts:15][E: packages/opencode/src/plugin/openai/codex.ts:299][E: packages/opencode/src/plugin/openai/codex.ts:300][E: packages/opencode/src/plugin/openai/codex.ts:304] 通过过滤后，id 含 `gpt-5.5` 或 `gpt-5.6` 的限额同为 context 400k / input 272k / output 128k。[E: packages/opencode/src/plugin/openai/codex.ts:316][E: packages/opencode/src/plugin/openai/codex.ts:318]
+ChatGPT 订阅模型过滤用 `/^gpt-(\d+)(?:\.(\d+))?/`，整数版本合法（缺省 minor=0）；比较 `major > 5 || (major === 5 && minor > 4)`。`gpt-5.6` 在 regex 前单独 DISALLOW。`ALLOWED_MODELS` 含 `gpt-5.4`、`gpt-5.3-codex-spark`、`gpt-6-sol`、`gpt-6-luna`。[E: packages/opencode/src/plugin/openai/codex.ts:15][E: packages/opencode/src/plugin/openai/codex.ts:299][E: packages/opencode/src/plugin/openai/codex.ts:300][E: packages/opencode/src/plugin/openai/codex.ts:304] 通过过滤后，id 含 `gpt-5.5` 或 `gpt-5.6` 的限额同为 context 400k / input 272k / output 128k。[E: packages/opencode/src/plugin/openai/codex.ts:316][E: packages/opencode/src/plugin/openai/codex.ts:318]
 
 oversized websocket close 1009（`MESSAGE_TOO_BIG_CLOSE_CODE`）会立刻把该 session 标 `fallback`，不走 `recordStreamFailure` 计数。[E: packages/opencode/src/plugin/openai/ws.ts:12][E: packages/opencode/src/plugin/openai/ws-pool.ts:116][E: packages/opencode/src/plugin/openai/ws-pool.ts:117]
+
+DigitalOcean OAuth `authorize` 同样 `openUrl(url)`，不直接 import `open`。[E: packages/opencode/src/plugin/digitalocean.ts:6][E: packages/opencode/src/plugin/digitalocean.ts:282][E: packages/core/src/open.ts:5]
 
 ## V2
 
@@ -88,12 +90,14 @@ V2 `Integration` 是 local authentication/integration registry：method union �
 - packages/opencode/src/auth/index.ts
 - packages/opencode/src/account/account.ts
 - packages/opencode/src/cli/cmd/account.ts
+- packages/core/src/open.ts
 - packages/opencode/src/provider/auth.ts
 - packages/opencode/src/provider/provider.ts
 - packages/opencode/src/plugin/azure.ts
 - packages/opencode/src/plugin/openai/codex.ts
 - packages/opencode/src/plugin/openai/ws.ts
 - packages/opencode/src/plugin/openai/ws-pool.ts
+- packages/opencode/src/plugin/digitalocean.ts
 - packages/plugin/src/index.ts
 - packages/core/src/plugin/provider/opencode.ts
 - packages/core/src/credential.ts

@@ -9,7 +9,7 @@ symbols: [WebSearchTool, selectWebSearchProvider, webSearchEnabled, McpWebSearch
 related: [ref.tool-catalog]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > WebSearch 工具是 opencode 的本地 web search provider 工具；V1 通过 registry gate 按 provider/flags 暴露，V2 core 内建保留 Exa/Parallel MCP-JSON 调用以实现 launch parity。

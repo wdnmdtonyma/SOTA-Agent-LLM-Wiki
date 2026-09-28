@@ -27,7 +27,7 @@ related:
   - subsys.tools.v2
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > `server.embedded-public-api` 记录 current V2 same-process embedding surface：monorepo-private 的 `@opencode-ai/sdk-next` 用 `OpenCode.create()` 把 embedded Effect HttpApi、generated Effect client、application-tool registration 和 permission state 组装成 consumer-facing scoped facade。[E: packages/sdk-next/package.json:3][E: packages/sdk-next/package.json:4][E: packages/sdk-next/src/opencode.ts:10][E: packages/sdk-next/src/opencode.ts:39][E: packages/sdk-next/src/opencode.ts:41]

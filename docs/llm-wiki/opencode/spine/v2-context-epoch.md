@@ -9,7 +9,7 @@ symbols: [SessionContextEpoch.initialize, SessionContextEpoch.prepare, SessionCo
 related: [session-v2.system-context-algebra, session-v2.compaction]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > V2 Context Epoch 是一代已准入的 privileged System Context:它保存 baseline 文本、结构化 snapshot 与 baseline seq;首次 baseline admission 在 prompt promotion 前完成,后续 reconcile/replace 在 safe provider-turn boundary 完成。

@@ -4,12 +4,12 @@ title: V1 TUI Runtime Hosting
 kind: subsystem
 tier: T2
 v: v1
-source: [packages/opencode/src/cli/cmd/tui.ts, packages/opencode/src/cli/tui/worker.ts, packages/opencode/src/plugin/tui/runtime.ts, packages/cli/package.json]
+source: [packages/opencode/src/cli/cmd/tui.ts, packages/opencode/src/cli/tui/worker.ts, packages/opencode/src/plugin/tui/runtime.ts, packages/cli/package.json, packages/tui/src/app.tsx]
 symbols: [TuiThreadCommand, createWorkerFetch, createEventSource, rpc, createLegacyTuiPluginHost]
 related: [tui.architecture, tui.feature-plugins, tui.sync-store]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > V1 runtime hosting 是 `packages/opencode/src/cli/cmd/tui.ts` 的 `$0 [project]` command：它 spawn worker 托管 in-process V1 server，通过 RPC fetch/event bridge 给 `@opencode-ai/tui`，并注入 legacy plugin host。
@@ -52,7 +52,7 @@ worker `server(input)` 会停止已有 server 后调用 `Server.listen(input)` �
 
 如果传入 `--session`，host 会在启动 TUI 前调用 `validateSession({ url, sessionID, directory, fetch })`；validateSession 先用 V1 `SessionID` schema decode，再用 generated SDK `session.get(..., { throwOnError: true })` 验证存在性。[E: packages/opencode/src/cli/cmd/tui.ts:252] [E: packages/opencode/src/cli/cmd/tui.ts:253] [E: packages/opencode/src/cli/cmd/tui.ts:254] [E: packages/opencode/src/cli/cmd/tui.ts:255] [E: packages/opencode/src/cli/cmd/tui.ts:257] [E: packages/opencode/src/cli/tui/validate-session.ts:1] [E: packages/opencode/src/cli/tui/validate-session.ts:2] [E: packages/opencode/src/cli/tui/validate-session.ts:5] [E: packages/opencode/src/cli/tui/validate-session.ts:14] [E: packages/opencode/src/cli/tui/validate-session.ts:18] [E: packages/opencode/src/cli/tui/validate-session.ts:23] [E: packages/opencode/src/cli/tui/validate-session.ts:28]
 
-最终 host 调 `run({ url, onSnapshot, config, pluginHost, directory, fetch, events, args })`；args 把 continue/sessionID/agent/model/prompt/fork 以及 `auto`（`args.auto || args.yolo || args["dangerously-skip-permissions"]`）透传给 TUI package。[E: packages/opencode/src/cli/cmd/tui.ts:273] [E: packages/opencode/src/cli/cmd/tui.ts:274] [E: packages/opencode/src/cli/cmd/tui.ts:275] [E: packages/opencode/src/cli/cmd/tui.ts:281] [E: packages/opencode/src/cli/cmd/tui.ts:282] [E: packages/opencode/src/cli/cmd/tui.ts:283] [E: packages/opencode/src/cli/cmd/tui.ts:285] [E: packages/opencode/src/cli/cmd/tui.ts:286] [E: packages/opencode/src/cli/cmd/tui.ts:287] [E: packages/opencode/src/cli/cmd/tui.ts:288] [E: packages/opencode/src/cli/cmd/tui.ts:289] [E: packages/opencode/src/cli/cmd/tui.ts:290] [E: packages/opencode/src/cli/cmd/tui.ts:291] [E: packages/opencode/src/cli/cmd/tui.ts:292] [E: packages/opencode/src/cli/cmd/tui.ts:294] `run()` 所在 try 的 finally 会 `stop()` worker；`validateSession` 失败会提前 `return`，不经过这段 `stop()`，但仍会 unguard Windows ctrl-c guard，随后 `process.exit(0)`。[E: packages/opencode/src/cli/cmd/tui.ts:259] [E: packages/opencode/src/cli/cmd/tui.ts:262] [E: packages/opencode/src/cli/cmd/tui.ts:298] [E: packages/opencode/src/cli/cmd/tui.ts:303] [E: packages/opencode/src/cli/cmd/tui.ts:306]
+最终 host 调 `run({ url, onSnapshot, config, pluginHost, directory, fetch, events, args })`；args 把 continue/sessionID/agent/model/prompt/fork 以及 `auto`（`args.auto || args.yolo || args["dangerously-skip-permissions"]`）透传给 TUI package。[E: packages/opencode/src/cli/cmd/tui.ts:273] [E: packages/opencode/src/cli/cmd/tui.ts:274] [E: packages/opencode/src/cli/cmd/tui.ts:275] [E: packages/opencode/src/cli/cmd/tui.ts:281] [E: packages/opencode/src/cli/cmd/tui.ts:282] [E: packages/opencode/src/cli/cmd/tui.ts:283] [E: packages/opencode/src/cli/cmd/tui.ts:285] [E: packages/opencode/src/cli/cmd/tui.ts:286] [E: packages/opencode/src/cli/cmd/tui.ts:287] [E: packages/opencode/src/cli/cmd/tui.ts:288] [E: packages/opencode/src/cli/cmd/tui.ts:289] [E: packages/opencode/src/cli/cmd/tui.ts:290] [E: packages/opencode/src/cli/cmd/tui.ts:291] [E: packages/opencode/src/cli/cmd/tui.ts:292] [E: packages/opencode/src/cli/cmd/tui.ts:294] TUI `run` 在 `result.reason` 时写 stderr 并设 `process.exitCode = 1`，host 随后仍会 `stop()` worker。[E: packages/tui/src/app.tsx:359] [E: packages/tui/src/app.tsx:361] [E: packages/opencode/src/cli/cmd/tui.ts:298] `validateSession` 失败会提前 `return`，不经过这段 `stop()`，但仍会 unguard Windows ctrl-c guard，随后 `process.exit(0)`。[E: packages/opencode/src/cli/cmd/tui.ts:259] [E: packages/opencode/src/cli/cmd/tui.ts:262] [E: packages/opencode/src/cli/cmd/tui.ts:303] [E: packages/opencode/src/cli/cmd/tui.ts:306]
 
 ## Legacy plugin host
 
@@ -75,6 +75,7 @@ Plugin loading 顺序是 internal plugins、external plugins、apply enabled sta
 ## Sources
 
 - `packages/opencode/src/cli/cmd/tui.ts`
+- `packages/tui/src/app.tsx`
 - `packages/opencode/src/cli/tui/worker.ts`
 - `packages/opencode/src/cli/tui/layer.ts`
 - `packages/opencode/src/cli/tui/validate-session.ts`

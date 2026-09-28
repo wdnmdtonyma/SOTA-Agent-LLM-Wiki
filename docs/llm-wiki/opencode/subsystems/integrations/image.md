@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 source:
   - packages/opencode/src/image/image.ts
   - packages/opencode/src/session/prompt.ts

@@ -11,7 +11,7 @@ source:
   - packages/opencode/src/config/tui.ts
   - packages/opencode/src/config/tui-migrate.ts
   - packages/tui/src/config/
-updated: df23b7f948
+updated: 03e67171ab
 evidence: explicit
 ---
 

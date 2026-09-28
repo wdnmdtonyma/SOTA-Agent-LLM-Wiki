@@ -32,7 +32,7 @@ related:
   - session-v2.compaction
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > V1 compaction 是 `SessionPrompt.runLoop` 内的历史缩短机制: overflow 或 queued compaction 会写一个 V1 compaction user part，下一轮用 compaction agent 生成 summary assistant。summary prompt 现在把 head history `serialize` 成 orphaned transcript，再复用 V2 `buildPrompt`；随后由 `MessageV2.filterCompacted` 选择 provider request 的 active history。
@@ -111,21 +111,21 @@ V1 `serialize(message)` 把 user/assistant parts 收成 plain-text transcript: u
 
 ## active history 过滤
 
-`MessageV2.filterCompacted` 从数据库 stream 中找 completed summary assistant 和 compaction user part；如果 compaction part 有 `tail_start_id`，它把 active model history 重排成 compaction user、summary assistant、retained tail、后续消息。[E: packages/opencode/src/session/message-v2.ts:521][E: packages/opencode/src/session/message-v2.ts:531][E: packages/opencode/src/session/message-v2.ts:541][E: packages/opencode/src/session/message-v2.ts:563][E: packages/opencode/src/session/message-v2.ts:565]
+`MessageV2.filterCompacted` 从数据库 stream 中找 completed summary assistant 和 compaction user part；如果 compaction part 有 `tail_start_id`，它把 active model history 重排成 compaction user、summary assistant、retained tail、后续消息。[E: packages/opencode/src/session/message-v2.ts:521][E: packages/opencode/src/session/message-v2.ts:531][E: packages/opencode/src/session/message-v2.ts:541][E: packages/opencode/src/session/message-v2.ts:563][E: packages/opencode/src/session/message-v2.ts:566]
 
-`MessageV2.latest` 不再用 max message id。`filterCompacted` 会重排数组，imported messages 也不保证单调 ID，所以 `latest` 用 `time.created` 比较，`id` 只做 tie-breaker；queued tasks 只来自 latest finished assistant **之后**（同样按 `isAfter`）的 compaction/subtask parts。[E: packages/opencode/src/session/message-v2.ts:582][E: packages/opencode/src/session/message-v2.ts:588][E: packages/opencode/src/session/message-v2.ts:590][E: packages/opencode/src/session/message-v2.ts:593][E: packages/opencode/src/session/message-v2.ts:600][E: packages/opencode/src/session/message-v2.ts:602]
+`MessageV2.latest` 不再用 max message id。`filterCompacted` 会重排数组，imported messages 也不保证单调 ID，所以 `latest` 用 `time.created` 比较，`id` 只做 tie-breaker；queued tasks 只来自 latest finished assistant **之后**（同样按 `isAfter`）的 compaction/subtask parts。[E: packages/opencode/src/session/message-v2.ts:579][E: packages/opencode/src/session/message-v2.ts:588][E: packages/opencode/src/session/message-v2.ts:590][E: packages/opencode/src/session/message-v2.ts:593][E: packages/opencode/src/session/message-v2.ts:601][E: packages/opencode/src/session/message-v2.ts:601]
 
 ## prune 与 diff summary
 
 `SessionCompaction.prune` 只有 config `compaction.prune` 打开才运行；它从最新消息向前扫描，跳过最近两个 user turns，遇到 summary assistant、已 compacted tool output 或 protected `skill` tool 时停止或跳过。[E: packages/opencode/src/session/compaction.ts:273][E: packages/opencode/src/session/compaction.ts:275][E: packages/opencode/src/session/compaction.ts:288][E: packages/opencode/src/session/compaction.ts:291][E: packages/opencode/src/session/compaction.ts:292][E: packages/opencode/src/session/compaction.ts:297][E: packages/opencode/src/session/compaction.ts:298]
 
-实际 prune 不是删除 part，而是在 completed tool part 的 `state.time.compacted` 上写时间戳；`MessageV2.toModelMessagesEffect` 看到该字段会把旧 output 替换成 `[Old tool result content cleared]`。[E: packages/opencode/src/session/compaction.ts:310][E: packages/opencode/src/session/compaction.ts:311][E: packages/opencode/src/session/message-v2.ts:293][E: packages/opencode/src/session/message-v2.ts:294]
+实际 prune 不是删除 part，而是在 completed tool part 的 `state.time.compacted` 上写时间戳；`MessageV2.toModelMessagesEffect` 看到该字段会把旧 output 替换成 `[Old tool result content cleared]`。未 compacted 的 image attachment 是否留在 tool result 仍走 `supportsMediaInToolResult`：普通 `@ai-sdk/amazon-bedrock` 只对 anthropic/nova/llama4/llama-4 的 `image/` 为 true。[E: packages/opencode/src/session/compaction.ts:310][E: packages/opencode/src/session/compaction.ts:311][E: packages/opencode/src/session/message-v2.ts:151][E: packages/opencode/src/session/message-v2.ts:154][E: packages/opencode/src/session/message-v2.ts:294]
 
 `SessionSummary.computeDiff` 与 compaction summary 不是同一个 summary: `computeDiff` 根据 step-start/step-finish snapshot 计算文件 diff；`summarize` 调用它后把 diff 写回 user message summary。[E: packages/opencode/src/session/summary.ts:82][E: packages/opencode/src/session/summary.ts:88][E: packages/opencode/src/session/summary.ts:95][E: packages/opencode/src/session/summary.ts:98][E: packages/opencode/src/session/summary.ts:124][E: packages/opencode/src/session/summary.ts:125][E: packages/opencode/src/session/summary.ts:126]
 
 ## V1 与 V2 对照
 
-V1 compaction 的 durable model representation 仍是 V1 message/part history: queued compaction 是 user part，summary 是 assistant message，active history 由 `MessageV2.filterCompacted` 在读模型时重排。[E: packages/opencode/src/session/compaction.ts:566][E: packages/opencode/src/session/compaction.ts:578][E: packages/opencode/src/session/compaction.ts:393][E: packages/opencode/src/session/message-v2.ts:565]
+V1 compaction 的 durable model representation 仍是 V1 message/part history: queued compaction 是 user part，summary 是 assistant message，active history 由 `MessageV2.filterCompacted` 在读模型时重排。[E: packages/opencode/src/session/compaction.ts:566][E: packages/opencode/src/session/compaction.ts:578][E: packages/opencode/src/session/compaction.ts:393][E: packages/opencode/src/session/message-v2.ts:566]
 
 V1 现在复用 V2 的 `buildPrompt` / `SUMMARY_TEMPLATE`，并且用本地 `serialize` 把 head history 收成 transcript；这只共享 summary 文本结构，不改变 V1 的 message/part 存储，也不等于 SessionV2 已是默认路径。[E: packages/opencode/src/session/compaction.ts:23][E: packages/opencode/src/session/compaction.ts:380][E: packages/core/src/session/compaction.ts:16][E: packages/core/src/session/compaction.ts:160]
 

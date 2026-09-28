@@ -9,7 +9,7 @@ symbols: [RunCommand, SessionPrompt, SessionProcessor, LLM, CodeModeTool, Sessio
 related: [spine.v1-v2-relationship, ref.package-index, integrations.integration-v2, tool.execute, subsys.tools.codemode]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > opencode 是一个 Bun/TypeScript/Effect 多包 monorepo,当前默认用户路径仍由 `packages/opencode` 的 V1 CLI 与 V1 session loop 承担,V2 `packages/core` 是 Effect-native durable/event-sourced 新内核。
@@ -45,7 +45,7 @@ flowchart TD
 
 ## V1
 
-当前发布版本是 `1.18.30`（`packages/opencode`、`packages/core`、`packages/cli` 的 `version` 一致），根 workspace 使用 `bun@1.3.14`，workspace globs 展开为 36 个 package。[E: packages/opencode/package.json:3][E: packages/core/package.json:3][E: packages/cli/package.json:4][E: package.json:7][E: package.json:26][E: package.json:30]
+当前发布版本是 `1.18.33`（`packages/opencode`、`packages/core`、`packages/cli` 的 `version` 一致），根 workspace 使用 `bun@1.3.14`，workspace globs 展开为 36 个 package（`packages/slack` 不因双重 glob 双计）。[E: packages/opencode/package.json:3][E: packages/core/package.json:3][E: packages/cli/package.json:4][E: package.json:7][E: package.json:26][E: package.json:30]
 
 `packages/opencode` 的 package 名称是 `opencode`,当前 package manifest 标记为 `private: true`,其 `bin` 字段声明 `opencode` 指向 `./bin/opencode`。[E: packages/opencode/package.json:4][E: packages/opencode/package.json:7][E: packages/opencode/package.json:19] 这个包依赖 `@opencode-ai/codemode`、`@opencode-ai/llm`、`@opencode-ai/sdk`、`@opencode-ai/server`、`@opencode-ai/tui`,并且仍直接依赖 Vercel AI SDK 的 `ai` 包。[E: packages/opencode/package.json:87][E: packages/opencode/package.json:88][E: packages/opencode/package.json:93][E: packages/opencode/package.json:94][E: packages/opencode/package.json:95][E: packages/opencode/package.json:113]
 
@@ -71,7 +71,7 @@ V2 的设计约束来自根 `AGENTS.md`:prompt admission 必须 durable 且与 e
 
 两个 HTTP server 都是 Effect HttpApi/HttpRouter,不是 Hono:V1 server 通过 `HttpApiApp.webHandler` 与 `HttpRouter.serve(HttpApiApp.createRoutes(opts), ...)` 建路由,V2 protocol 通过 `HttpApi.make("server")` 定义 API,V2 server 通过 `HttpApiBuilder.layer(Api, ...)` 建路由。[E: packages/opencode/src/server/server.ts:57][E: packages/opencode/src/server/server.ts:101][E: packages/protocol/src/api.ts:37][E: packages/server/src/routes.ts:54]
 
-`packages/opencode/src/session/message-v2.ts` 的名字容易误导:该文件导入 V1 session 类型,同时导入 AI SDK 的 `convertToModelMessages` 和 `ModelMessage`,实际职责是 V1 message 与 AI SDK model message 的转换层,不是 `packages/core` 的 V2 session implementation。[E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:407]
+`packages/opencode/src/session/message-v2.ts` 的名字容易误导:该文件导入 V1 session 类型,同时导入 AI SDK 的 `convertToModelMessages` 和 `ModelMessage`,实际职责是 V1 message 与 AI SDK model message 的转换层,不是 `packages/core` 的 V2 session implementation。[E: packages/opencode/src/session/message-v2.ts:2][E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:408]
 
 `packages/core/src/integration.ts` 是本地 provider authentication registry:它定义 `Integration.Info`、OAuth/key/env methods、connection/attempt surface，并通过 `Credential` service 写入持久 credential，不是 workspace/cloud connector 控制面。[E: packages/core/src/integration.ts:58][E: packages/core/src/integration.ts:67][E: packages/core/src/integration.ts:73][E: packages/core/src/integration.ts:82][E: packages/core/src/integration.ts:196][E: packages/core/src/integration.ts:224][E: packages/core/src/credential.ts:49]
 

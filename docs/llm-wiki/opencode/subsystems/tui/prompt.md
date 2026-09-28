@@ -9,7 +9,7 @@ symbols: [Prompt, PromptRef, Autocomplete, PromptHistoryProvider, PromptStashPro
 related: [tui.session-screen, tui.home-screen, tui.keybindings]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > Prompt 是 TUI 的高密度输入 surface：它把 OpenTUI textarea、prompt parts/extmarks、autocomplete、history/stash、shell mode、editor context、session create 和 SDK prompt/command/shell calls 绑在一起。

@@ -16,7 +16,7 @@ related:
   - integrations.lsp
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > V1 LSP server catalog 是 `packages/opencode/src/lsp/server.ts` 中导出的 `Info` 集合；当前 HEAD 有 38 个内建 server [I]。
@@ -33,7 +33,9 @@ LSP `Info` 由 `id`、`extensions`、可选 `global`、`root(file, ctx)` 和 `sp
 
 V1 LSP service 在 `cfg.lsp` 为 false 时直接禁用全部 LSP；否则把 `Object.values(LSPServer)` 装入 server map [E: packages/opencode/src/lsp/lsp.ts:151] [E: packages/opencode/src/lsp/lsp.ts:154] [E: packages/opencode/src/lsp/lsp.ts:155]。`experimentalLspTy` 打开时会移除 `pyright`，关闭时会移除 `ty`，所以 Python 默认路径和 experimental 路径互斥 [E: packages/opencode/src/lsp/lsp.ts:99] [E: packages/opencode/src/lsp/lsp.ts:104]。
 
-`Npm.which(pkg, bin?)` 不是普通 PATH lookup：它把 package cache 放在 `global.cache/packages/<pkg>`，先查该 cache 的 `node_modules/.bin`，找不到时会调用 `Npm.add(pkg)` 安装 package，再重新 pick bin [E: packages/core/src/npm.ts:79] [E: packages/core/src/npm.ts:192] [E: packages/core/src/npm.ts:194] [E: packages/core/src/npm.ts:231] [E: packages/core/src/npm.ts:233]。因此表里的 “Npm.which fallback” 表示 opencode 可在 cache 中安装 npm package，但仍受各 server 自己的 `flags.disableLspDownload` gating 影响 [I]。
+`Npm.which(pkg, bin?)` 不是普通 PATH lookup：它把 package cache 放在 `global.cache/packages/<pkg>`，先查该 cache 的 `node_modules/.bin`，找不到时会调用 `Npm.add(pkg)` 安装 package，再重新 pick bin。[E: packages/core/src/npm.ts:87][E: packages/core/src/npm.ts:200][E: packages/core/src/npm.ts:202][E: packages/core/src/npm.ts:233][E: packages/core/src/npm.ts:239] 因此表里的 “Npm.which fallback” 表示 opencode 可在 cache 中安装 npm package，但仍受各 server 自己的 `flags.disableLspDownload` gating 影响 [I]。
+
+`Npm.resolveEntryPoint(name, dir)` 在 Bun 下仍 `import.meta.resolve(name, dir)`；在 Node 下用 `createRequire(path.join(dir, "package.json")).resolve(name)` 再 `pathToFileURL(...).href`，不再对目录做 `import.meta.resolve(dir)`。[E: packages/core/src/npm.ts:52][E: packages/core/src/npm.ts:59][E: packages/core/src/npm.ts:60][E: packages/core/src/npm.ts:61]
 
 ## Servers
 

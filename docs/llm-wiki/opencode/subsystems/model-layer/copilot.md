@@ -9,7 +9,7 @@ symbols: [createOpenaiCompatible, OpenAICompatibleChatLanguageModel, OpenAIRespo
 related: [ref.copilot-tool-catalog]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > GitHub Copilot 在 opencode 里有双适配:core 目录提供 AI SDK `LanguageModelV3` compatible provider,同时 `packages/llm/src/providers/github-copilot.ts` 提供 native route configure helper。V1 registry、V2 plugin 与 native helper 的 route selection 都先尊重显式 `endpoint`,然后才用 GPT-5 class 默认 Responses、`gpt-5-mini` 默认 Chat 的 heuristic。
@@ -24,11 +24,11 @@ updated: df23b7f948
 
 ## V1
 
-V1 provider registry 把 `@ai-sdk/github-copilot` 映射到 core 的 `@opencode-ai/core/github-copilot/copilot-provider`,创建 AI SDK compatible provider。[E: packages/opencode/src/provider/provider.ts:137][E: packages/opencode/src/provider/provider.ts:138]
+V1 provider registry 把 `@ai-sdk/github-copilot` 映射到 core 的 `@opencode-ai/core/github-copilot/copilot-provider`,创建 AI SDK compatible provider。[E: packages/opencode/src/provider/provider.ts:172][E: packages/opencode/src/provider/provider.ts:173]
 
-V1 custom loader 对 Copilot model 选择路由:SDK 如果没有 `responses/chat` 就退回 `languageModel`;否则 model API 显式 `endpoint:responses|chat` 优先,GPT major >= 5 且不是 `gpt-5-mini` 的默认路由才走 `sdk.responses(modelID)`,其他走 `sdk.chat(modelID)`。[E: packages/opencode/src/provider/provider.ts:235][E: packages/opencode/src/provider/provider.ts:236][E: packages/opencode/src/provider/provider.ts:237][E: packages/opencode/src/provider/provider.ts:238][E: packages/opencode/src/provider/provider.ts:241][E: packages/opencode/src/provider/provider.ts:242] `endpoint: "messages"` 不在这两条显式分支里;这类 model 由 `CopilotModels.build()` 改成 `@ai-sdk/anthropic`,SDK 通常没有 chat/responses,因此落到 `languageModel`。[E: packages/opencode/src/plugin/github-copilot/models.ts:95][E: packages/opencode/src/plugin/github-copilot/models.ts:113][E: packages/opencode/src/provider/provider.ts:235]
+V1 custom loader 对 Copilot model 选择路由:SDK 如果没有 `responses/chat` 就退回 `languageModel`;否则 model API 显式 `endpoint:responses|chat` 优先,GPT major >= 5 且不是 `gpt-5-mini` 的默认路由才走 `sdk.responses(modelID)`,其他走 `sdk.chat(modelID)`。[E: packages/opencode/src/provider/provider.ts:270][E: packages/opencode/src/provider/provider.ts:272][E: packages/opencode/src/provider/provider.ts:276] `endpoint: "messages"` 不在这两条显式分支里;这类 model 由 `CopilotModels.build()` 改成 `@ai-sdk/anthropic`,SDK 通常没有 chat/responses,因此落到 `languageModel`。[E: packages/opencode/src/plugin/github-copilot/models.ts:95][E: packages/opencode/src/plugin/github-copilot/models.ts:113][E: packages/opencode/src/provider/provider.ts:270]
 
-V1 provider transform 对 `@ai-sdk/github-copilot` 默认设置 `store=false`,GPT-5 class 还会默认设置 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1225][E: packages/opencode/src/provider/transform.ts:1229][E: packages/opencode/src/provider/transform.ts:1340][E: packages/opencode/src/provider/transform.ts:1346][E: packages/opencode/src/provider/transform.ts:1349] Copilot **不**注入 `textVerbosity: "low"`:那条默认只给 `@ai-sdk/openai` 与 `@ai-sdk/amazon-bedrock/mantle`。[E: packages/opencode/src/provider/transform.ts:1362][E: packages/opencode/src/provider/transform.ts:1364] `store !== true` 时,Copilot 与 OpenAI/Azure/Mantle 一样会从 provider options 里剥掉 Responses `itemId`。[E: packages/opencode/src/provider/transform.ts:503][E: packages/opencode/src/provider/transform.ts:505][E: packages/opencode/src/provider/transform.ts:512]
+V1 provider transform 对 `@ai-sdk/github-copilot` 默认设置 `store=false`,GPT-5 class 还会默认设置 `reasoningSummary=auto`。[E: packages/opencode/src/provider/transform.ts:1238][E: packages/opencode/src/provider/transform.ts:1242][E: packages/opencode/src/provider/transform.ts:1353][E: packages/opencode/src/provider/transform.ts:1359][E: packages/opencode/src/provider/transform.ts:1362] Copilot **不**注入 `textVerbosity: "low"`:那条默认只给 `@ai-sdk/openai` 与 `@ai-sdk/amazon-bedrock/mantle`。[E: packages/opencode/src/provider/transform.ts:1371] `store !== true` 时,Copilot 与 OpenAI/Azure/Mantle 一样会从 provider options 里剥掉 Responses `itemId`。[E: packages/opencode/src/provider/transform.ts:503][E: packages/opencode/src/provider/transform.ts:505][E: packages/opencode/src/provider/transform.ts:512]
 
 V1 `CopilotAuthPlugin` 在 OAuth auth 下调用 `CopilotModels.get()` 拉 `/models`,`build()` 把 remote capabilities 写成 V1 model。[E: packages/opencode/src/plugin/github-copilot/copilot.ts:70][E: packages/opencode/src/plugin/github-copilot/models.ts:216][E: packages/opencode/src/plugin/github-copilot/models.ts:82] `capabilities.input.pdf` 不再写死 false:只有 `supports.vision` 为真且 `limits.vision.supported_media_types` 含 `application/pdf` 时才为 true。image 则是 `supports.vision` 或任一 `image/` media type,判定比 PDF 宽。[E: packages/opencode/src/plugin/github-copilot/models.ts:88][E: packages/opencode/src/plugin/github-copilot/models.ts:91][E: packages/opencode/src/plugin/github-copilot/models.ts:92][E: packages/opencode/src/plugin/github-copilot/models.ts:93][E: packages/opencode/src/plugin/github-copilot/models.ts:131][E: packages/opencode/src/plugin/github-copilot/models.ts:133]
 
@@ -70,10 +70,10 @@ native helper 的 `ModelOptions` 要求 `baseURL: string`,可选 `endpoint: "cha
 
 ## 易错点
 
-- `@ai-sdk/github-copilot` 在 V1/V2 AI SDK path 里由 core provider 实现;`packages/llm/src/providers/github-copilot.ts` 是 native engine helper。[E: packages/opencode/src/provider/provider.ts:137][E: packages/core/src/plugin/provider/github-copilot.ts:22][E: packages/llm/src/providers/github-copilot.ts:59] 二者同名但接口不同。[I]
+- `@ai-sdk/github-copilot` 在 V1/V2 AI SDK path 里由 core provider 实现;`packages/llm/src/providers/github-copilot.ts` 是 native engine helper。[E: packages/opencode/src/provider/provider.ts:172][E: packages/core/src/plugin/provider/github-copilot.ts:22][E: packages/llm/src/providers/github-copilot.ts:59] 二者同名但接口不同。[I]
 - GPT-5 mini 是 heuristic 的显式排除项,不能简单写成所有 GPT-5 都走 Responses;更不能忽略比 heuristic 更高优先级的 endpoint override。[E: packages/core/src/plugin/provider/github-copilot.ts:34][E: packages/core/src/plugin/provider/github-copilot.ts:38][E: packages/core/src/plugin/provider/github-copilot.ts:42][E: packages/core/src/plugin/provider/github-copilot.ts:46]
 - local_shell 是 provider-hosted OpenAI Responses tool id。[E: packages/core/src/github-copilot/responses/openai-responses-prepare-tools.ts:73][E: packages/core/src/github-copilot/responses/openai-responses-prepare-tools.ts:75] 它不等同于 opencode 本地 shell tool registry。[I]
-- Copilot GPT-5 默认有 `store=false` 与 `reasoningSummary=auto`,但没有 `textVerbosity: "low"`。[E: packages/opencode/src/provider/transform.ts:1229][E: packages/opencode/src/provider/transform.ts:1349][E: packages/opencode/src/provider/transform.ts:1362]
+- Copilot GPT-5 默认有 `store=false` 与 `reasoningSummary=auto`,但没有 `textVerbosity: "low"`。[E: packages/opencode/src/provider/transform.ts:1242][E: packages/opencode/src/provider/transform.ts:1362][E: packages/opencode/src/provider/transform.ts:1371]
 - Copilot adaptive thinking 的 `display: "summarized"` 来自 `CopilotModels.build()` 的 remote variant 表，对所有 adaptive effort variants 一律写入；不要把它写成 `transform.ts` 对所有 Anthropic provider 的新默认，也不要再写成只对 `opus-4.7`。[E: packages/opencode/src/plugin/github-copilot/models.ts:174][E: packages/opencode/src/plugin/github-copilot/models.ts:179]
 
 ## Sources

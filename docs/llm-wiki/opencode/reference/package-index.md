@@ -14,7 +14,7 @@ related:
   - subsys.tools.codemode
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > opencode monorepo 是 Bun workspace；当前 HEAD 的 workspace globs 展开为 36 个 package，而不是固定 27 个 package。
@@ -27,7 +27,7 @@ updated: df23b7f948
 
 ## V1
 
-V1 当前活跑 CLI/package 是 `packages/opencode`，它的 package 名是 `opencode`，bin 也叫 `opencode` [E: packages/opencode/package.json:4] [E: packages/opencode/package.json:19]。这个 package 仍依赖 Vercel AI SDK family、`@opencode-ai/llm`、`@opencode-ai/server`、`@opencode-ai/tui`、OpenTUI、yargs 等依赖 [E: packages/opencode/package.json:54]，因此它是当前主 CLI、server glue、AI SDK runtime 和迁移 seam 的集中包 [I]。`@ai-sdk/gateway` 现为 `3.0.191`，`@ai-sdk/provider` 现为 `3.0.16`；`packages/core` 同步把 `@ai-sdk/gateway` 升到 `3.0.191`，并把 `@ai-sdk/provider` / `@ai-sdk/provider-utils` 升到 `3.0.16` / `4.0.51`。这是 dependency pin，不是新 provider family 或新 tool。[E: packages/opencode/package.json:65] [E: packages/opencode/package.json:73] [E: packages/core/package.json:71] [E: packages/core/package.json:79] [E: packages/core/package.json:80]
+V1 当前活跑 CLI/package 是 `packages/opencode`，它的 package 名是 `opencode`，bin 也叫 `opencode` [E: packages/opencode/package.json:4] [E: packages/opencode/package.json:19]。这个 package 仍依赖 Vercel AI SDK family、`@opencode-ai/llm`、`@opencode-ai/server`、`@opencode-ai/tui`、OpenTUI、yargs 等依赖 [E: packages/opencode/package.json:54]，因此它是当前主 CLI、server glue、AI SDK runtime 和迁移 seam 的集中包 [I]。`@ai-sdk/gateway` 仍为 `3.0.191`，`@ai-sdk/provider` 仍为 `3.0.16`；`@ai-sdk/togetherai` 为 `2.0.68`，`gitlab-ai-provider` 为 `6.18.0`。`packages/core` 同步 pin 同一组：`@ai-sdk/gateway` `3.0.191`、`@ai-sdk/provider` `3.0.16`、`@ai-sdk/provider-utils` `4.0.51`、`@ai-sdk/togetherai` `2.0.68`、`gitlab-ai-provider` `6.18.0`。这是 dependency pin，不是新 provider family 或新 tool。[E: packages/opencode/package.json:65] [E: packages/opencode/package.json:73] [E: packages/opencode/package.json:74] [E: packages/opencode/package.json:123] [E: packages/core/package.json:71] [E: packages/core/package.json:79] [E: packages/core/package.json:80] [E: packages/core/package.json:81] [E: packages/core/package.json:111]
 
 ## V2
 
@@ -37,7 +37,7 @@ V2 新内核 package 是 `packages/core`，package 名为 `@opencode-ai/core`，
 
 ## Workspace 入口
 
-根 package 名为 `opencode`，描述为 “AI-powered development tool”，并使用 `bun@1.3.14` 作为 package manager [E: package.json:3] [E: package.json:7]。`packages/opencode`、`packages/core`、`packages/cli` 的发布 `version` 都是 `1.18.30` [E: packages/opencode/package.json:3] [E: packages/core/package.json:3] [E: packages/cli/package.json:4]。根 scripts 明确禁止从 root 跑测试：`test` 脚本输出 “do not run tests from root” 并 exit 1 [E: package.json:23]。workspace globs 是 `packages/*`、`packages/console/*`、`packages/stats/*`、`packages/sdk/js`、`packages/slack`，展开仍是 36 个 package [E: package.json:25] [E: package.json:27] [E: package.json:28] [E: package.json:29] [E: package.json:30] [E: package.json:31]。
+根 package 名为 `opencode`，描述为 “AI-powered development tool”，并使用 `bun@1.3.14` 作为 package manager [E: package.json:3] [E: package.json:7]。`packages/opencode`、`packages/core`、`packages/cli` 的发布 `version` 都是 `1.18.33` [E: packages/opencode/package.json:3] [E: packages/core/package.json:3] [E: packages/cli/package.json:4]。根 scripts 明确禁止从 root 跑测试：`test` 脚本输出 “do not run tests from root” 并 exit 1 [E: package.json:23]。workspace globs 是 `packages/*`、`packages/console/*`、`packages/stats/*`、`packages/sdk/js`、`packages/slack`；`packages/slack` 同时被 `packages/*` 命中，展开时只计一次，合计仍是 36 个带 `package.json` 的 workspace package（`packages/containers`、`packages/docs`、`packages/identity` 没有 package manifest，不进 workspace）[E: package.json:25] [E: package.json:27] [E: package.json:28] [E: package.json:29] [E: package.json:30] [E: package.json:31]。
 
 ## Packages
 

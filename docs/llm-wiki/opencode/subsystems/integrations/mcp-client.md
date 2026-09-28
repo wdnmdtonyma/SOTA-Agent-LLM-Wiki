@@ -5,9 +5,10 @@ kind: subsystem
 tier: T2
 v: v1
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 source:
   - packages/opencode/src/mcp/index.ts
+  - packages/core/src/open.ts
   - packages/opencode/src/mcp/browser.ts
   - packages/opencode/src/mcp/catalog.ts
   - packages/opencode/src/mcp/oauth-provider.ts
@@ -56,7 +57,7 @@ evidence: explicit
 
 `packages/opencode/src/mcp/index.ts` 定义 `MCP.Service`，接口暴露 status、tools、prompts、resources、prompt/resource lookup、OAuth auth/removeAuth、动态 add/remove 等方法。[E: packages/opencode/src/mcp/index.ts:164] `MCP.tools()` 现在返回保留 native definition/client/timeout 的 `McpTool`，并明确由 consumer 复制、适配成自己的 tool format [E: packages/opencode/src/mcp/index.ts:157] [E: packages/opencode/src/mcp/index.ts:159] [E: packages/opencode/src/mcp/index.ts:160] [E: packages/opencode/src/mcp/index.ts:161] [E: packages/opencode/src/mcp/index.ts:168]。service state 从 `cfg.mcp ?? {}` 初始化并连接 server；tool-list-change notification 会重新拉取 defs 并发布 `mcp.tools.changed`。[E: packages/opencode/src/mcp/index.ts:494] [E: packages/opencode/src/mcp/index.ts:496] [E: packages/opencode/src/mcp/index.ts:505] [E: packages/opencode/src/mcp/index.ts:462] [E: packages/opencode/src/mcp/index.ts:465] [E: packages/opencode/src/mcp/index.ts:470] 服务状态枚举区分 `connected`、`disabled`、`failed`、`needs_auth`、`needs_client_registration`，因此调用方可以把连接失败、显式禁用、OAuth 待处理分开呈现。[E: packages/opencode/src/mcp/index.ts:83]
 
-`packages/opencode/src/mcp/catalog.ts` 是 MCP catalog adapter：`defs` 读取 tools，`prompts/resources` 读取对应 capability，`fetch` 会把 server name 和 item name sanitize/qualify。[E: packages/opencode/src/mcp/catalog.ts:38] [E: packages/opencode/src/mcp/catalog.ts:121] [E: packages/opencode/src/mcp/catalog.ts:129] [E: packages/opencode/src/mcp/catalog.ts:102] `packages/opencode/src/mcp/oauth-provider.ts` 是 MCP SDK `OAuthClientProvider` 的本地实现，负责 redirect URI、client metadata、动态注册信息、token、PKCE code verifier、CSRF state。[E: packages/opencode/src/mcp/oauth-provider.ts:35] [E: packages/opencode/src/mcp/oauth-provider.ts:43] [E: packages/opencode/src/mcp/oauth-provider.ts:81] [E: packages/opencode/src/mcp/oauth-provider.ts:112] [E: packages/opencode/src/mcp/oauth-provider.ts:131] [E: packages/opencode/src/mcp/oauth-provider.ts:143]
+`packages/opencode/src/mcp/catalog.ts` 是 MCP catalog adapter：`defs` 读取 tools，`prompts/resources` 读取对应 capability，`fetch` 会把 server name 和 item name sanitize/qualify。[E: packages/opencode/src/mcp/catalog.ts:38] [E: packages/opencode/src/mcp/catalog.ts:121] [E: packages/opencode/src/mcp/catalog.ts:129] [E: packages/opencode/src/mcp/catalog.ts:102] `packages/opencode/src/mcp/oauth-provider.ts` 是 MCP SDK `OAuthClientProvider` 的本地实现，负责 redirect URI、client metadata、动态注册信息、token、PKCE code verifier、CSRF state。[E: packages/opencode/src/mcp/oauth-provider.ts:35] [E: packages/opencode/src/mcp/oauth-provider.ts:43] [E: packages/opencode/src/mcp/oauth-provider.ts:81] [E: packages/opencode/src/mcp/oauth-provider.ts:112] [E: packages/opencode/src/mcp/oauth-provider.ts:127] [E: packages/opencode/src/mcp/oauth-provider.ts:144] `redirectToAuthorization` 在调用 `onRedirect` 前要求 `authorizationUrl.protocol` 只能是 `http:` 或 `https:`，其它协议直接 throw。[E: packages/opencode/src/mcp/oauth-provider.ts:128] [E: packages/opencode/src/mcp/oauth-provider.ts:132]
 
 MCP 管理 API 是 Effect `HttpApi`，不是 Hono：route group 文件直接 `import { HttpApi }` 并用 `HttpApi.make("mcp")` 构造 group。[E: packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts:4] [E: packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts:41]
 
@@ -65,7 +66,8 @@ MCP 管理 API 是 Effect `HttpApi`，不是 Hono：route group 文件直接 `im
 | 文件 | 角色 |
 | --- | --- |
 | `packages/opencode/src/mcp/index.ts` | V1 MCP service、transport lifecycle、status、auth flow、HTTP handler 后端依赖。 |
-| `packages/opencode/src/mcp/browser.ts` | OAuth browser side-effect adapter。`McpBrowser.Service.open` 调用 `open(url)`，在 500ms 后认为启动成功，非零 exit/error 作为 Effect error [E: packages/opencode/src/mcp/browser.ts:9] [E: packages/opencode/src/mcp/browser.ts:14] [E: packages/opencode/src/mcp/browser.ts:16] [E: packages/opencode/src/mcp/browser.ts:20] [E: packages/opencode/src/mcp/browser.ts:21] [E: packages/opencode/src/mcp/browser.ts:25] [E: packages/opencode/src/mcp/browser.ts:28]。 |
+| `packages/core/src/open.ts` | 共享 `openUrl(input)`：只接受可 parse 且 protocol 为 `http:`/`https:` 的 URL，否则 `Promise.reject`；通过后再 `open(url.href)`。[E: packages/core/src/open.ts:3] [E: packages/core/src/open.ts:5] [E: packages/core/src/open.ts:7] |
+| `packages/opencode/src/mcp/browser.ts` | OAuth browser adapter。`McpBrowser.Service.open` 调用 `openUrl(url)` 而不是直接 `import open from "open"`。[E: packages/opencode/src/mcp/browser.ts:2] [E: packages/opencode/src/mcp/browser.ts:16] 500ms 后认为启动成功；`error` 与非零 `exit` 作为 Effect error。[E: packages/opencode/src/mcp/browser.ts:20] [E: packages/opencode/src/mcp/browser.ts:25] [E: packages/opencode/src/mcp/browser.ts:28] `openUrl` 返回后立刻 `onExit(subprocess.exitCode)`，覆盖 Windows/WSL 上 launcher 已退出、`exit` 事件可能不再触发的情况。[E: packages/opencode/src/mcp/browser.ts:32] |
 | `packages/opencode/src/mcp/catalog.ts` | MCP tool/prompt/resource listing 和 AI SDK dynamic tool conversion。 |
 | `packages/opencode/src/mcp/oauth-provider.ts` | MCP SDK OAuth provider，本地 token/client info/state/verifier 接口。 |
 | `packages/opencode/src/mcp/auth.ts` | `mcp-auth.json` 读写、文件锁、token expiry 判断。 |
@@ -123,7 +125,7 @@ V1 config schema 中 local MCP server 有 `type: "local"`、`command`、`environ
 5. `startAuth` 只对 remote MCP server 有效；local server 或显式 `oauth: false` 的 remote server 会报错；未提供 object OAuth config 时，`oauthConfig` 为 undefined 且流程继续构造 auth provider。[E: packages/opencode/src/mcp/index.ts:806] [E: packages/opencode/src/mcp/index.ts:808] [E: packages/opencode/src/mcp/index.ts:809] [E: packages/opencode/src/mcp/index.ts:814] [E: packages/opencode/src/mcp/index.ts:829]
 6. `startAuth` 启动 callback server、生成 state，并仅用 `StreamableHTTPClientTransport` 发起 auth discovery。[E: packages/opencode/src/mcp/index.ts:822] [E: packages/opencode/src/mcp/index.ts:824] [E: packages/opencode/src/mcp/index.ts:846]
 7. 如果 unauthorized error 携带 captured authorization URL，service 保存 pending transport 并返回 auth URL 给调用端。[E: packages/opencode/src/mcp/index.ts:863] [E: packages/opencode/src/mcp/index.ts:864] [E: packages/opencode/src/mcp/index.ts:865]
-8. `authenticate` 在无 auth URL 时会直接尝试保存 client；有 auth URL 时先调用 `McpBrowser.Service.open`，打开失败只发布 `BrowserOpenFailed` 而不取消 callback 等待，然后校验 state 并进入 `finishAuth`。[E: packages/opencode/src/mcp/index.ts:898] [E: packages/opencode/src/mcp/index.ts:901] [E: packages/opencode/src/mcp/index.ts:903] [E: packages/opencode/src/mcp/index.ts:907] [E: packages/opencode/src/mcp/index.ts:909] [E: packages/opencode/src/mcp/index.ts:915]
+8. `authenticate` 在无 auth URL 时会直接尝试保存 client；有 auth URL 时先调用 `McpBrowser.Service.open`（内部 `openUrl`），打开失败只发布 `BrowserOpenFailed` 而不取消 callback 等待，然后校验 state 并进入 `finishAuth`。[E: packages/opencode/src/mcp/index.ts:898] [E: packages/opencode/src/mcp/index.ts:901] [E: packages/opencode/src/mcp/index.ts:903] [E: packages/opencode/src/mcp/index.ts:907] [E: packages/opencode/src/mcp/index.ts:909] [E: packages/opencode/src/mcp/index.ts:915] [E: packages/opencode/src/mcp/browser.ts:16]
 9. `finishAuth` 从 pending transport 取回 transport，调用 MCP SDK `finishAuth(code)`，随后清理 verifier 和 pending transport，再重建 server client。[E: packages/opencode/src/mcp/index.ts:920] [E: packages/opencode/src/mcp/index.ts:924] [E: packages/opencode/src/mcp/index.ts:936] [E: packages/opencode/src/mcp/index.ts:937] [E: packages/opencode/src/mcp/index.ts:941]
 
 ### Pinned SDK compatibility patch
@@ -140,7 +142,7 @@ runtime compatibility 有五组。第一，client connect 把 initialize 抽成�
 
 第四，JSON-RPC error response 也标记本次 SSE request 已收到 response，不再被误判成断流而自动重连。transport test 构造 error event 和 aggressive reconnect options，执行 request 后断言总 request 数仍为 1。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:145][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:149][E: packages/opencode/test/mcp/transport.test.ts:12][E: packages/opencode/test/mcp/transport.test.ts:15][E: packages/opencode/test/mcp/transport.test.ts:24][E: packages/opencode/test/mcp/transport.test.ts:28][E: packages/opencode/test/mcp/transport.test.ts:32][E: packages/opencode/test/mcp/transport.test.ts:37]
 
-第五，OAuth scope selection 依次取 requested/resource/client scope；authorization server 支持 `offline_access` 且 client grant types 支持 refresh token 时追加该 scope，authorization URL 的 consent 判定改成精确 token match。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:297][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:302][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:320][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:325][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:333][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:334][E: packages/opencode/test/mcp/oauth-provider.test.ts:64][E: packages/opencode/test/mcp/oauth-provider.test.ts:65][E: packages/opencode/test/mcp/oauth-provider.test.ts:77][E: packages/opencode/test/mcp/oauth-provider.test.ts:81][E: packages/opencode/test/mcp/oauth-provider.test.ts:84][E: packages/opencode/test/mcp/oauth-provider.test.ts:100]
+第五，OAuth scope selection 依次取 requested/resource/client scope；authorization server 支持 `offline_access` 且 client grant types 支持 refresh token 时追加该 scope，authorization URL 的 consent 判定改成精确 token match。[E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:297][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:302][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:320][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:325][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:333][E: patches/@modelcontextprotocol%2Fsdk@1.29.0.patch:334][E: packages/opencode/test/mcp/oauth-provider.test.ts:64][E: packages/opencode/test/mcp/oauth-provider.test.ts:64][E: packages/opencode/test/mcp/oauth-provider.test.ts:76][E: packages/opencode/test/mcp/oauth-provider.test.ts:81][E: packages/opencode/test/mcp/oauth-provider.test.ts:84][E: packages/opencode/test/mcp/oauth-provider.test.ts:100]
 
 ## 设计动机与权衡
 
@@ -154,6 +156,7 @@ MCP 工具名同时携带 client name 和 tool name，是为了避免多个 serv
 
 ## 易踩坑
 
+- MCP OAuth 不会打开任意 protocol 的 authorization URL：`redirectToAuthorization` 拒绝非 `http:`/`https:`。[E: packages/opencode/src/mcp/oauth-provider.ts:128]
 - timeout 实现默认值是 `30_000` 毫秒。[E: packages/opencode/src/mcp/index.ts:39] V1 config schema 对 local/remote timeout 的描述仍写 default `5000`。[E: packages/core/src/v1/config/mcp.ts:21] [E: packages/core/src/v1/config/mcp.ts:57] 以当前源码运行行为为准，schema 文案是陈旧说明。[I]
 - remote 连接顺序是 StreamableHTTP 然后 SSE fallback，不是只支持 SSE。[E: packages/opencode/src/mcp/index.ts:269] [E: packages/opencode/src/mcp/index.ts:278]
 - `packages/opencode/src/mcp/index.ts` 的 HTTP 管理接口通过 Effect HttpApi route group 暴露，不是 Hono。[E: packages/opencode/src/server/routes/instance/httpapi/groups/mcp.ts:4]
@@ -167,6 +170,7 @@ MCP 工具名同时携带 client name 和 tool name，是为了避免多个 serv
 ## Sources
 
 - packages/opencode/src/mcp/index.ts
+- packages/core/src/open.ts
 - packages/opencode/src/mcp/browser.ts
 - packages/opencode/src/mcp/catalog.ts
 - packages/opencode/src/mcp/oauth-provider.ts

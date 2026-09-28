@@ -9,7 +9,7 @@ symbols: [ShellTool, ShellPrompt, BashTool]
 related: [execution.shell-v1, execution.shell-v2, ref.bash-arity]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > Bash/Shell 工具执行 shell command；V1 文件名是 `shell.ts` 但对外 wire id 与 permission key 都保持 `"bash"`，V2 文件名和 tool name 都是 `bash`。

@@ -4,12 +4,12 @@ title: TUI 架构(OpenTUI + SolidJS)
 kind: subsystem
 tier: T2
 v: na
-source: [packages/tui/src/app.tsx, packages/tui/src/index.tsx, packages/tui/package.json, packages/tui/src/config/index.tsx, specs/tui-package.md]
+source: [packages/tui/src/app.tsx, packages/tui/src/index.tsx, packages/tui/package.json, packages/tui/src/config/index.tsx, packages/tui/src/util/error.ts, packages/tui/src/ui/link.tsx, packages/core/src/open.ts, specs/tui-package.md]
 symbols: [run, TuiInput, App]
 related: [tui.routing, tui.sync-store, tui.feature-plugins]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > TUI 架构是 `@opencode-ai/tui` 里的 OpenTUI `CliRenderer` + SolidJS reactive tree；OpenCode domain 边界主要是 `@opencode-ai/sdk/v2` client/event stream，V1 legacy CLI 只是 host/transport/plugin adapter。
@@ -46,7 +46,7 @@ updated: df23b7f948
 
 `TuiInput` 把 TUI 的 host dependence 显式化：transport (`url`/`fetch`/`headers`/`events`)、launch args (`args`)、resolved TUI config (`config`，含 optional `cursor`)、heap snapshot hook (`onSnapshot`) 和 host-owned plugin bridge (`pluginHost`) 都从外部传入。[E: packages/tui/src/app.tsx:143] [E: packages/tui/src/app.tsx:151] [E: packages/tui/src/config/index.tsx:73] `SDKProvider` 接收同一批 transport 字段并传给 `createOpencodeClient({ baseUrl, signal, directory, fetch, headers })`。[E: packages/tui/src/context/sdk.tsx:24] [E: packages/tui/src/context/sdk.tsx:29]
 
-`App` 内部同时消费 `useRoute`、`useSync`、`useProject`、`usePluginRuntime`、`useTheme`、`useKV`、`useSDK`、`useDialog`、`usePromptRef` 等 contexts，说明根组件是 orchestration layer，而不是纯展示组件。[E: packages/tui/src/app.tsx:365] [E: packages/tui/src/app.tsx:384]
+`App` 内部同时消费 `useRoute`、`useSync`、`useProject`、`usePluginRuntime`、`useTheme`、`useKV`、`useSDK`、`useDialog`、`usePromptRef` 等 contexts，说明根组件是 orchestration layer，而不是纯展示组件。[E: packages/tui/src/app.tsx:367] [E: packages/tui/src/app.tsx:384]
 
 ## 控制流
 
@@ -54,9 +54,9 @@ updated: df23b7f948
 2. renderer release path 调 `destroyRenderer(renderer)`；Windows input guard、OpenTUI default keymap、OpenCode keymap 注册、pluginHost dispose、audio dispose、SIGHUP destroy 都在 scoped finalizer 范围内。[E: packages/tui/src/app.tsx:211] [E: packages/tui/src/app.tsx:214] [E: packages/tui/src/app.tsx:215] [E: packages/tui/src/app.tsx:217] [E: packages/tui/src/app.tsx:223] [E: packages/tui/src/app.tsx:229] [E: packages/tui/src/app.tsx:231]
 3. 首次 render 前预热 terminal palette，等待 theme mode，避免 `system` theme 第一帧 fallback flash。[E: packages/tui/src/app.tsx:241] [E: packages/tui/src/app.tsx:242]
 4. Solid `render()` 把 provider stack 挂到 renderer：`ExitProvider`、`EpilogueProvider`、`ErrorBoundary`、runtime paths/env/startup providers、clipboard、keymap、args、KV、toast、route、config、plugin runtime、SDK、`PermissionProvider`、project、sync、data、theme、local、prompt stash/dialog/frecency/history/ref/editor、`LocationProvider` 都在 root 组合。[E: packages/tui/src/app.tsx:245] [E: packages/tui/src/app.tsx:256] [E: packages/tui/src/app.tsx:281] [E: packages/tui/src/app.tsx:296] [E: packages/tui/src/app.tsx:297] [E: packages/tui/src/app.tsx:298] [E: packages/tui/src/app.tsx:305] [E: packages/tui/src/app.tsx:307] [E: packages/tui/src/app.tsx:309] [E: packages/tui/src/app.tsx:317] [E: packages/tui/src/app.tsx:318]
-5. `App` 创建 plugin API adapters，把 version/config/dialog/keymap/route/event/sdk/sync/theme/toast/renderer/attention/Slot 注入 `createTuiApi`，再调用 `pluginHost.start({ api, config, runtime, dispose })`；失败只写 console，不阻断 ready。[E: packages/tui/src/app.tsx:388] [E: packages/tui/src/app.tsx:409] [E: packages/tui/src/app.tsx:415] [E: packages/tui/src/app.tsx:419]
+5. `App` 创建 plugin API adapters，把 version/config/dialog/keymap/route/event/sdk/sync/theme/toast/renderer/attention/Slot 注入 `createTuiApi`，再调用 `pluginHost.start({ api, config, runtime, dispose })`；失败只写 console，不阻断 ready。[E: packages/tui/src/app.tsx:388] [E: packages/tui/src/app.tsx:409] [E: packages/tui/src/app.tsx:415] [E: packages/tui/src/app.tsx:420]
 6. `App` 根据 `route.data.type` 切换 `Home` 或 `Session`，plugin route 则通过 `pluginRuntime.routes.get(route.data.id)` 渲染；缺失 plugin route 渲染 `PluginRouteMissing`。[E: packages/tui/src/app.tsx:1082] [E: packages/tui/src/app.tsx:1083] [E: packages/tui/src/app.tsx:1113] [E: packages/tui/src/app.tsx:1116] [E: packages/tui/src/app.tsx:1122]
-7. `run` 等待 renderer destroy 对应的 `shutdown` deferred，收尾时 flush Windows input buffer，并把 exit reason/epilogue 写到 stderr/stdout。[E: packages/tui/src/app.tsx:236] [E: packages/tui/src/app.tsx:353] [E: packages/tui/src/app.tsx:358] [E: packages/tui/src/app.tsx:360]
+7. `run` 等待 renderer destroy 对应的 `shutdown` deferred，收尾时 flush Windows input buffer。若 `result.reason` 存在，用 `cliErrorMessage` 写 stderr 并把 `process.exitCode = 1`；有 epilogue 则写 stdout。[E: packages/tui/src/app.tsx:236] [E: packages/tui/src/app.tsx:353] [E: packages/tui/src/app.tsx:358] [E: packages/tui/src/app.tsx:359] [E: packages/tui/src/app.tsx:360] [E: packages/tui/src/app.tsx:361] `cliErrorMessage` 识别 `ConfigRemoteAuthError`：远端返回 login page 而不是 JSON，提示 SSO/IAP，并给出 `opencode auth login <url>`。[E: packages/tui/src/util/error.ts:50] [E: packages/tui/src/util/error.ts:55] [E: packages/tui/src/util/error.ts:57] TUI 打开文档链接与 `Link` 组件都走 `openUrl`（只允许 http/https），不是直接 `import open from "open"`。[E: packages/tui/src/app.tsx:66] [E: packages/tui/src/app.tsx:824] [E: packages/tui/src/ui/link.tsx:3] [E: packages/tui/src/ui/link.tsx:28] [E: packages/core/src/open.ts:3] [E: packages/core/src/open.ts:5]
 
 ## 设计动机与权衡
 
@@ -73,6 +73,9 @@ updated: df23b7f948
 ## Sources
 
 - `packages/tui/src/app.tsx`
+- `packages/tui/src/util/error.ts`
+- `packages/core/src/open.ts`
+- `packages/tui/src/ui/link.tsx`
 - `packages/tui/src/index.tsx`
 - `packages/tui/package.json`
 - `packages/tui/src/config/index.tsx`

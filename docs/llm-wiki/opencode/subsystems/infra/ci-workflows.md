@@ -1,6 +1,6 @@
 ---
 id: infra.ci-workflows
-title: CI/CD workflows(~26 GH Actions)
+title: CI/CD workflows(~27 GH Actions)
 kind: subsystem
 tier: T2
 v: na
@@ -15,6 +15,7 @@ source:
   - .github/workflows/unlock.yml
   - .github/workflows/nix-eval.yml
   - .github/workflows/nix-hashes.yml
+  - .github/workflows/models-snapshot.yml
 symbols:
   - test
   - typecheck
@@ -23,14 +24,15 @@ symbols:
   - unlock
   - nix-eval
   - nix-hashes
+  - models-snapshot
 related:
   - infra.native-binary-release
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
-> CI/CD workflows 节点描述 `.github/workflows` 中约 26 个 GitHub Actions workflow 的主要交付路径: tests/typecheck, SST deploy, CLI/Desktop publish, Storybook build, container image build, SST unlock, Nix evaluation and hash refresh。hourly `beta.yml` 已从源树删除。
+> CI/CD workflows 节点描述 `.github/workflows` 中 27 个 GitHub Actions workflow 的主要交付路径: tests/typecheck, SST deploy, CLI/Desktop publish, Storybook build, container image build, SST unlock, Nix evaluation and hash refresh, 以及每日 models.dev snapshot。hourly `beta.yml` 已从源树删除。
 
 ## 能回答的问题
 
@@ -42,7 +44,7 @@ updated: df23b7f948
 
 ## 职责边界
 
-CI/CD 层只编排 GitHub-hosted 或 Blacksmith runners 上的构建、验证和发布, 不实现 opencode runtime。`.github/workflows/` 当前包含 26 个 `.yml` workflow 文件 [E: .github/workflows/]。本节点覆盖影响构建和发布的主路径; issue/PR triage、docs locale sync、review bots 等 workflow 属于仓库运营自动化 [I]。
+CI/CD 层只编排 GitHub-hosted 或 Blacksmith runners 上的构建、验证和发布, 不实现 opencode runtime。`.github/workflows/` 当前包含 27 个 `.yml` workflow 文件 [E: .github/workflows/]。本节点覆盖影响构建和发布的主路径; issue/PR triage、docs locale sync、review bots 等 workflow 属于仓库运营自动化 [I]。
 
 V1/V2 关系: CI 跑的是整个 monorepo 的 tests/typecheck/build/publish。它会覆盖 V1 `packages/opencode`、V2 `packages/core`、clients 和 infra 的 package-level commands, 但 CI workflow 自身不决定 V1/V2 默认执行路径 [I]。
 
@@ -63,6 +65,7 @@ V1/V2 关系: CI 跑的是整个 monorepo 的 tests/typecheck/build/publish。�
 | `.github/workflows/containers.yml` | container image build。dev branch 上 containers 相关 paths 触发, 登录 GHCR, 运行 `packages/containers/script/build.ts --push` [E: .github/workflows/containers.yml:4] [E: .github/workflows/containers.yml:8] [E: .github/workflows/containers.yml:34] [E: .github/workflows/containers.yml:42]。 |
 | `.github/workflows/unlock.yml` | SST lock 人工解锁。`workflow_dispatch` 选 `dev` 或 `production` stage，concurrency 与 deploy 共用 `deploy-${{ inputs.stage }}`，AWS OIDC 后跑 `bun sst unlock --stage=...`。[E: .github/workflows/unlock.yml:3] [E: .github/workflows/unlock.yml:6] [E: .github/workflows/unlock.yml:14] [E: .github/workflows/unlock.yml:33] [E: .github/workflows/unlock.yml:39] `.github/workflows/beta.yml` 已不在源树。 |
 | `.github/workflows/nix-eval.yml` / `.github/workflows/nix-hashes.yml` | Nix validation and hash refresh。nix-eval 评估 packages/devShells; nix-hashes 用四个 native runner 计算 node_modules fixed-output hash 并提交 `nix/hashes.json` [E: .github/workflows/nix-eval.yml:28] [E: .github/workflows/nix-eval.yml:40] [E: .github/workflows/nix-eval.yml:81] [E: .github/workflows/nix-hashes.yml:32] [E: .github/workflows/nix-hashes.yml:34] [E: .github/workflows/nix-hashes.yml:120]。 |
+| `.github/workflows/models-snapshot.yml` | 每天 12:00 UTC（及 `workflow_dispatch`）在 `v2` ref 上跑 `packages/core/script/update-models-snapshot.ts` 刷新 models.dev snapshot。这是 catalog 数据刷新，不是用户默认 SessionV2 执行路径。[E: .github/workflows/models-snapshot.yml:1] [E: .github/workflows/models-snapshot.yml:8] [E: .github/workflows/models-snapshot.yml:9] [E: .github/workflows/models-snapshot.yml:25] [E: .github/workflows/models-snapshot.yml:40] |
 
 ## 数据模型
 
@@ -102,6 +105,7 @@ test workflow 的 concurrency 对 dev branch 使用 run id, 对 PR/其它 branch
 - `.github/workflows/unlock.yml`
 - `.github/workflows/nix-eval.yml`
 - `.github/workflows/nix-hashes.yml`
+- `.github/workflows/models-snapshot.yml`
 
 ## 相关
 

@@ -58,7 +58,7 @@ _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
 
 ## 方法 & 状态
 
-逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `df23b7f948`（官方 `dev`，发布 `1.18.30`），共 189 个 verified 节点 + 14 个 grouped-catalog 组。本轮主要增量是 ACP `restoreSession`（durable session 先于 message history）与 reasoning `messageId` 用 part id、Console support 批量 block/unblock 与 lite `x-zen-billing-source`、Stats 按周拆 retention query 与 R2 SQL 15 分钟超时，以及 `@ai-sdk/gateway` `3.0.191`。
+逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `03e67171ab`（官方 `dev`，发布 `1.18.33`），共 189 个 verified 节点 + 14 个 grouped-catalog 组。本轮主要增量是 `openUrl` 只开 http(s)、Cloudflare AI Gateway 把 `timeoutFetch` 接到 gateway loader、Gemini thinking 用 2.5/legacy 正则、Codex 允许 GPT-6 Sol/Luna、Bedrock 只对 anthropic/nova/llama4 提升 image、debug config 脱敏、Console systemone 与 `oc_sk_` 新 key 路由、Stats R2 SQL 分页/retry 与 1D ranking，以及发布 `1.18.33`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

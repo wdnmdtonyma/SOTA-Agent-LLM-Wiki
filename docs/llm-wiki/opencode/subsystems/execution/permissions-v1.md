@@ -22,7 +22,7 @@ related:
   - ref.permission-actions
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > V1 权限模型是 `packages/opencode/src` 活跑路径里的进程内 approval gate：工具通过 `ctx.ask`/`Permission.Service.ask` 提交 `permission + patterns + always`，规则用 `ask|allow|deny` 三态和 wildcard last-match-wins 解析。

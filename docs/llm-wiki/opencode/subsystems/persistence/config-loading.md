@@ -12,6 +12,7 @@ source:
   - packages/core/src/v1/config/config.ts
   - packages/opencode/src/config/managed.ts
   - packages/opencode/src/session/message-v2.ts
+  - packages/opencode/src/server/routes/instance/httpapi/middleware/error.ts
 symbols:
   - Config.Service
   - Config.layer
@@ -25,7 +26,7 @@ related:
   - config.migration
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > 配置加载节点覆盖两套并存 loader：V1 `@opencode/Config` 把多来源配置 deep-merge 成一个 `Info`，V2 `@opencode/v2/Config` 暴露从低优先级到高优先级的 ordered `Entry[]`。V1 读路径现在是 `decodeConfig = ConfigV2Compat.lower + ConfigParse.schema`，映射表权威在 `config.v2-compat`。
@@ -76,7 +77,7 @@ updated: df23b7f948
 5. `loadGlobal()` 在没有 `OPENCODE_CONFIG`、`OPENCODE_CONFIG_DIR`、`OPENCODE_CONFIG_CONTENT` 时，默认创建带 `$schema` 的 global config 文件。[E: packages/opencode/src/config/config.ts:264][E: packages/opencode/src/config/config.ts:266][E: packages/opencode/src/config/config.ts:268]
 6. global merge 顺序固定为 `config.json`、`opencode.json`、`opencode.jsonc`；后合并来源覆盖前合并来源是由顺序赋值和 `mergeDeep(target, source)` 推断出的结果。[E: packages/opencode/src/config/config.ts:42][E: packages/opencode/src/config/config.ts:272][E: packages/opencode/src/config/config.ts:273][E: packages/opencode/src/config/config.ts:274][I]
 7. 如果存在 legacy `Global.Path.config/config` TOML 文件，loader 用 TOML import 读取，解构 `provider/model` 转成 `result.model`，写出 `config.json` 后删除 legacy 文件。[E: packages/opencode/src/config/config.ts:276][E: packages/opencode/src/config/config.ts:279][E: packages/opencode/src/config/config.ts:282][E: packages/opencode/src/config/config.ts:283][E: packages/opencode/src/config/config.ts:285][E: packages/opencode/src/config/config.ts:286]
-8. instance load 先遍历 well-known auth entries，取 `/.well-known/opencode`，用 `wellknown.remote_config` 解析可选 remote config URL，再 fetch `remote.url`；最后将 well-known inline config 和 fetched config merge 成 remote config。[E: packages/opencode/src/config/config.ts:370][E: packages/opencode/src/config/config.ts:371][E: packages/opencode/src/config/config.ts:374][E: packages/opencode/src/config/config.ts:376][E: packages/opencode/src/config/config.ts:378][E: packages/opencode/src/config/config.ts:385][E: packages/opencode/src/config/config.ts:388][E: packages/opencode/src/config/config.ts:389][E: packages/opencode/src/config/config.ts:396]
+8. instance load 先遍历 well-known auth entries，取 `/.well-known/opencode`，用 `wellknown.remote_config` 解析可选 remote config URL，再 fetch `remote.url`；最后将 well-known inline config 和 fetched config merge 成 remote config。[E: packages/opencode/src/config/config.ts:370][E: packages/opencode/src/config/config.ts:371][E: packages/opencode/src/config/config.ts:374][E: packages/opencode/src/config/config.ts:376][E: packages/opencode/src/config/config.ts:378][E: packages/opencode/src/config/config.ts:385][E: packages/opencode/src/config/config.ts:388][E: packages/opencode/src/config/config.ts:389][E: packages/opencode/src/config/config.ts:396] 远程 fetch 若 HTTP 200 但 `content-type` 含 `html` 或 body 像 `<!doctype`/`<html`，`Effect.die(new RemoteAuthError({ url: loginOrigin, remote: url }))`；V1 HttpApi middleware 把该 defect 映射成 400 JSON。[E: packages/opencode/src/config/config.ts:219][E: packages/opencode/src/config/config.ts:220][E: packages/opencode/src/server/routes/instance/httpapi/middleware/error.ts:24][E: packages/opencode/src/server/routes/instance/httpapi/middleware/error.ts:26]
 9. remote config 用 virtual source 加载，virtual source 带 `dir` 和 `source`；`pluginScopeForSource` 对 HTTP(S) source 返回 `global`。[E: packages/opencode/src/config/config.ts:337][E: packages/opencode/src/config/config.ts:338][E: packages/opencode/src/config/config.ts:399][E: packages/opencode/src/config/config.ts:402][E: packages/opencode/src/config/config.ts:403][E: packages/opencode/src/config/config.ts:407]
 10. authEnv 存在时重新 `loadGlobal(authEnv)`，否则使用 cached global；全局配置以 `global` plugin scope 合并进 result。[E: packages/opencode/src/config/config.ts:412][E: packages/opencode/src/config/config.ts:413]
 11. `OPENCODE_CONFIG` 指向的 custom config 直接 loadFile 后 merge。[E: packages/opencode/src/config/config.ts:415][E: packages/opencode/src/config/config.ts:416]
@@ -188,6 +189,7 @@ V2 config spec 明确 `$schema` 在 V2 loader 中应保持 read-only metadata，
 - `packages/opencode/src/config/variable.ts`
 - `packages/opencode/src/config/managed.ts`
 - `packages/opencode/src/session/message-v2.ts`
+- `packages/opencode/src/server/routes/instance/httpapi/middleware/error.ts`
 - `packages/core/src/config.ts`
 - `packages/core/src/v1/config/config.ts`
 - `packages/core/src/v1/config/migrate.ts`

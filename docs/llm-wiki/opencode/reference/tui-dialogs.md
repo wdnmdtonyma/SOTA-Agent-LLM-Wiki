@@ -7,6 +7,7 @@ v: na
 source:
   - packages/tui/src/component/
   - packages/tui/src/ui/
+  - packages/core/src/open.ts
 symbols:
   - Dialog
   - DialogSelect
@@ -15,7 +16,7 @@ related:
   - tui.dialog-kit
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > TUI dialog system 由 `ui/dialog.tsx` 的 modal stack、`ui/dialog-*.tsx` helper 和 `component/dialog-*.tsx` domain dialogs 组成；当前源码还把 command palette 实现为一个 `DialogSelect` wrapper。
@@ -53,7 +54,7 @@ updated: df23b7f948
 | `DialogModel` | `component/dialog-model.tsx` | Model selector，提供 connect/view all providers 和 favorite action，调用 `sortModelOptions` 排序 [E: packages/tui/src/component/dialog-model.tsx:12] [E: packages/tui/src/component/dialog-model.tsx:103] [E: packages/tui/src/component/dialog-model.tsx:162] [E: packages/tui/src/component/dialog-model.tsx:163] [E: packages/tui/src/component/dialog-model.tsx:169] [E: packages/tui/src/component/dialog-model.tsx:173] [E: packages/tui/src/component/dialog-model.tsx:186]。 |
 | `DialogMoveSession` | `component/dialog-move-session.tsx` | Move session flow，支持 reload、delete、new project copy、file changes confirm 和 refresh action [E: packages/tui/src/component/dialog-move-session.tsx:22] [E: packages/tui/src/component/dialog-move-session.tsx:77] [E: packages/tui/src/component/dialog-move-session.tsx:224] [E: packages/tui/src/component/dialog-move-session.tsx:237] [E: packages/tui/src/component/dialog-move-session.tsx:323] [E: packages/tui/src/component/dialog-move-session.tsx:338]。 |
 | `DialogProvider` | `component/dialog-provider.tsx` | Provider connect flow，提供 provider options、custom provider prompt、auth method selection、API key/code/auto flows [E: packages/tui/src/component/dialog-provider.tsx:47] [E: packages/tui/src/component/dialog-provider.tsx:160] [E: packages/tui/src/component/dialog-provider.tsx:198] [E: packages/tui/src/component/dialog-provider.tsx:203] [E: packages/tui/src/component/dialog-provider.tsx:324] [E: packages/tui/src/component/dialog-provider.tsx:368] [E: packages/tui/src/component/dialog-provider.tsx:400] [E: packages/tui/src/component/dialog-provider.tsx:460]。 |
-| `DialogRetryAction` | `component/dialog-retry-action.tsx` | Retry/action error dialog，支持 link action、dismiss 和 `dontShowAgain` return [E: packages/tui/src/component/dialog-retry-action.tsx:15] [E: packages/tui/src/component/dialog-retry-action.tsx:156] [E: packages/tui/src/component/dialog-retry-action.tsx:157]。 |
+| `DialogRetryAction` | `component/dialog-retry-action.tsx` | Retry/action error dialog，link action 走 `openUrl(props.link)`（http/https only），另有 dismiss 和 `dontShowAgain` return [E: packages/tui/src/component/dialog-retry-action.tsx:2] [E: packages/tui/src/component/dialog-retry-action.tsx:24] [E: packages/tui/src/component/dialog-retry-action.tsx:15] [E: packages/core/src/open.ts:5] [E: packages/tui/src/component/dialog-retry-action.tsx:156] [E: packages/tui/src/component/dialog-retry-action.tsx:157]。 |
 | `DialogSessionDeleteFailed` | `component/dialog-session-delete-failed.tsx` | Session delete failure recovery，提供 delete workspace 或 restore to new workspace 选项 [E: packages/tui/src/component/dialog-session-delete-failed.tsx:8] [E: packages/tui/src/component/dialog-session-delete-failed.tsx:24] [E: packages/tui/src/component/dialog-session-delete-failed.tsx:30]。 |
 | `DialogSessionList` | `component/dialog-session-list.tsx` | Session list dialog，支持 workspace recovery、quick switch footer、delete/pin/rename actions [E: packages/tui/src/component/dialog-session-list.tsx:45] [E: packages/tui/src/component/dialog-session-list.tsx:101] [E: packages/tui/src/component/dialog-session-list.tsx:292] [E: packages/tui/src/component/dialog-session-list.tsx:299] [E: packages/tui/src/component/dialog-session-list.tsx:348] [E: packages/tui/src/component/dialog-session-list.tsx:355]。 |
 | `DialogSessionRename` | `component/dialog-session-rename.tsx` | 使用 `DialogPrompt` 重命名 session，title 为 `Rename Session` [E: packages/tui/src/component/dialog-session-rename.tsx:11] [E: packages/tui/src/component/dialog-session-rename.tsx:19]。 |
@@ -79,6 +80,7 @@ updated: df23b7f948
 - `packages/tui/src/ui/dialog-help.tsx`
 - `packages/tui/src/component/dialog-*.tsx`
 - `packages/tui/src/component/command-palette.tsx`
+- `packages/core/src/open.ts`
 
 ## 相关
 

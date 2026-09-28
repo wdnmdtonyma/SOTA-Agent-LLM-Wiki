@@ -10,12 +10,14 @@ source:
   - packages/web/src/content.config.ts
   - packages/web/config.mjs
   - packages/web/src/components/Share.tsx
+  - packages/web/src/components/V2Banner.astro
+  - packages/web/src/components/PageFrame.astro
   - infra/app.ts
 related:
   - infra.sst
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > Web/文档站是 `@opencode-ai/web` Astro 5 + Starlight 站点, 由 Cloudflare adapter 以 server output 部署, 主要承载 docs、多语言内容、品牌页面和分享页的 Web surface。
@@ -33,7 +35,7 @@ updated: df23b7f948
 
 `@opencode-ai/web` 是 docs/web surface, 不是 App UI shell。package scripts 全部是 Astro dev/build/preview 命令 [E: packages/web/package.json:7] [E: packages/web/package.json:10] [E: packages/web/package.json:11], 依赖包含 `astro`, `@astrojs/starlight`, `@astrojs/cloudflare`, `@astrojs/solid-js` 和 `toolbeam-docs-theme` [E: packages/web/package.json:15] [E: packages/web/package.json:17] [E: packages/web/package.json:18] [E: packages/web/package.json:24] [E: packages/web/package.json:35]。
 
-V1/V2 关系: Web docs 站点是 `v: na`。它会发布面向用户的文档和分享页面, 但不承载 V1/V2 session 执行路径 [I]。分享页 `Share` 把 `store.messages` 按 `time.created` 升序排列，并列再比 `id`；这是 client-side render order，不是 App timeline 的 durable-seq 合同。[E: packages/web/src/components/Share.tsx:78] [E: packages/web/src/components/Share.tsx:79]
+V1/V2 关系: Web docs 站点是 `v: na`。它会发布面向用户的文档和分享页面, 但不承载 V1/V2 session 执行路径；`SessionV2` 仍不是默认执行内核 [I]。营销横幅 `V2Banner` 只是链到 `https://opencode.ai/v2` 的 docs chrome，不是把 SessionV2 设为默认。[E: packages/web/src/components/V2Banner.astro:1] [E: packages/web/src/components/PageFrame.astro:3] [E: packages/web/src/components/PageFrame.astro:10] 分享页 `Share` 把 `store.messages` 按 `time.created` 升序排列，并列再比 `id`；这是 client-side render order，不是 App timeline 的 durable-seq 合同。[E: packages/web/src/components/Share.tsx:78] [E: packages/web/src/components/Share.tsx:79]
 
 ## 技术栈
 
@@ -49,8 +51,9 @@ V1/V2 关系: Web docs 站点是 `v: na`。它会发布面向用户的文档和�
 | `packages/web/package.json` | 声明 Astro/Starlight/Cloudflare/Solid 依赖和 `astro build` scripts [E: packages/web/package.json:7] [E: packages/web/package.json:10] [E: packages/web/package.json:15] [E: packages/web/package.json:17] [E: packages/web/package.json:18] [E: packages/web/package.json:24]。 |
 | `packages/web/astro.config.mjs` | Astro runtime config。设置 `site`, `base: "/docs"`, server output, Cloudflare adapter, Starlight integration [E: packages/web/astro.config.mjs:14] [E: packages/web/astro.config.mjs:15] [E: packages/web/astro.config.mjs:16] [E: packages/web/astro.config.mjs:17] [E: packages/web/astro.config.mjs:33]。 |
 | `packages/web/src/content.config.ts` | Content collection schema。`docs` 用 `docsLoader/docsSchema`, `i18n` 用 `i18nLoader/i18nSchema` 并基于 English keys 扩展 string schema [E: packages/web/src/content.config.ts:2] [E: packages/web/src/content.config.ts:3] [E: packages/web/src/content.config.ts:6] [E: packages/web/src/content.config.ts:9] [E: packages/web/src/content.config.ts:11] [E: packages/web/src/content.config.ts:12] [E: packages/web/src/content.config.ts:13]。 |
-| `packages/web/config.mjs` | Stage-aware public URLs。production 用 `https://opencode.ai`, 非 production 用 `${stage}.opencode.ai`, console auth URL 也按 stage 生成 [E: packages/web/config.mjs:1] [E: packages/web/config.mjs:4] [E: packages/web/config.mjs:5]。 |
+| `packages/web/config.mjs` | Stage-aware public URLs。production 用 `https://opencode.ai`, 非 production 用 `${stage}.opencode.ai`, console auth URL 也按 stage 生成；header docs 链到 `/v2/docs` [E: packages/web/config.mjs:1] [E: packages/web/config.mjs:4] [E: packages/web/config.mjs:5] [E: packages/web/config.mjs:12]。 |
 | `packages/web/src/components/Share.tsx` | Shared session page。messages 按 creation time（并列 id）排序后渲染。[E: packages/web/src/components/Share.tsx:78] [E: packages/web/src/components/Share.tsx:79] |
+| `packages/web/src/components/V2Banner.astro` | 营销条：固定 `href="https://opencode.ai/v2"`，由 `PageFrame` 插入 Starlight 页框。不改 CLI/server 默认路径。[E: packages/web/src/components/V2Banner.astro:1] [E: packages/web/src/components/PageFrame.astro:10] |
 
 ## 数据模型
 
@@ -62,7 +65,7 @@ Sidebar 是内容组织主数据。配置里先放 docs root、config、provider
 
 1. Astro config import `config.mjs`, 用 stage-aware `config.url` 设置 `site`, 文档 base 固定为 `/docs` [E: packages/web/config.mjs:1] [E: packages/web/config.mjs:4] [E: packages/web/astro.config.mjs:7] [E: packages/web/astro.config.mjs:14] [E: packages/web/astro.config.mjs:15]。
 2. Build output 选择 server mode, adapter 是 Cloudflare, image service 设为 passthrough [E: packages/web/astro.config.mjs:16] [E: packages/web/astro.config.mjs:17] [E: packages/web/astro.config.mjs:18]。
-3. Integrations 顺序包括 `configSchema()`, `solidJs()`, `starlight(...)`, Starlight 内部再安装 `toolbeam-docs-theme` plugin [E: packages/web/astro.config.mjs:30] [E: packages/web/astro.config.mjs:31] [E: packages/web/astro.config.mjs:32] [E: packages/web/astro.config.mjs:33] [E: packages/web/astro.config.mjs:305] [E: packages/web/astro.config.mjs:306]。
+3. Integrations 顺序包括 `configSchema()`, `solidJs()`, `starlight(...)`, Starlight 内部再安装 `toolbeam-docs-theme` plugin [E: packages/web/astro.config.mjs:30] [E: packages/web/astro.config.mjs:31] [E: packages/web/astro.config.mjs:32] [E: packages/web/astro.config.mjs:33] [E: packages/web/astro.config.mjs:306] [E: packages/web/astro.config.mjs:306]。
 4. Starlight config 设置 favicon/head assets、lastUpdated、expressiveCode themes、social links、edit link、custom CSS、logo、sidebar [E: packages/web/astro.config.mjs:128] [E: packages/web/astro.config.mjs:129] [E: packages/web/astro.config.mjs:156] [E: packages/web/astro.config.mjs:157] [E: packages/web/astro.config.mjs:158] [E: packages/web/astro.config.mjs:162] [E: packages/web/astro.config.mjs:168] [E: packages/web/astro.config.mjs:169] [E: packages/web/astro.config.mjs:174]。
 5. SST 在 `infra/app.ts` 里把 `packages/web` 部署成 Cloudflare Astro resource, domain 是 `docs.${domain}`, 并传入 `SST_STAGE` 与 `VITE_API_URL` [E: infra/app.ts:52] [E: infra/app.ts:53] [E: infra/app.ts:54] [E: infra/app.ts:57] [E: infra/app.ts:58]。
 
@@ -82,6 +85,8 @@ Web 站点把 docs 放在 Astro/Starlight, 把 App shell 放在 `packages/app`�
 - `packages/web/src/content.config.ts`
 - `packages/web/config.mjs`
 - `packages/web/src/components/Share.tsx`
+- `packages/web/src/components/V2Banner.astro`
+- `packages/web/src/components/PageFrame.astro`
 - `infra/app.ts`
 
 ## 相关

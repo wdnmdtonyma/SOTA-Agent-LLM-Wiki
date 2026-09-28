@@ -26,7 +26,7 @@ related:
   - peripheral.function
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > SST 云基础设施节点描述 opencode 的 hosted surfaces: Cloudflare Workers/R2/KV/SolidStart/Astro, PlanetScale/Stripe/Honeycomb providers, 以及只在指定 stage 部署的 AWS data lake 与 stats services。
@@ -50,7 +50,7 @@ V1/V2 关系: SST 资源为 Web docs、Web app、Console、share/backend functio
 ## 技术栈
 
 - SST v4 config: root catalog pin `sst` 版本, `sst.config.ts` 使用 `$config({ app, run })` [E: package.json:82] [E: sst.config.ts:3]。
-- Cloudflare-first surfaces: `Api` Worker、R2 Bucket、Astro docs、StaticSite app、AuthApi Worker、Console SolidStart、Stat Worker、Enterprise SolidStart 都是 `sst.cloudflare.*` 资源 [E: infra/app.ts:11] [E: infra/app.ts:13] [E: infra/app.ts:52] [E: infra/app.ts:62] [E: infra/console.ts:63] [E: infra/console.ts:259] [E: infra/console.ts:320] [E: infra/enterprise.ts:6]。
+- Cloudflare-first surfaces: `Api` Worker、R2 Bucket、Astro docs、StaticSite app、AuthApi Worker、Console SolidStart、Stat Worker、Enterprise SolidStart 都是 `sst.cloudflare.*` 资源 [E: infra/app.ts:11] [E: infra/app.ts:13] [E: infra/app.ts:52] [E: infra/app.ts:62] [E: infra/console.ts:63] [E: infra/console.ts:259] [E: infra/console.ts:321] [E: infra/enterprise.ts:6]。
 - AWS data lake: lake module 使用 S3 Tables, Glue catalog, S3 buckets, Athena workgroup, IAM, Firehose, SST AWS VPC/Cluster/Service [E: infra/lake.ts:16] [E: infra/lake.ts:21] [E: infra/lake.ts:54] [E: infra/lake.ts:64] [E: infra/lake.ts:80] [E: infra/lake.ts:160] [E: infra/lake.ts:198] [E: infra/lake.ts:218]。
 
 ## 关键文件
@@ -60,7 +60,7 @@ V1/V2 关系: SST 资源为 Web docs、Web app、Console、share/backend functio
 | `sst.config.ts` | SST app entry。按 stage 决定 AWS module 是否加载, 导入 app/console/enterprise/monitoring, 输出 StatWorkerUrl/LakeUrl/AwsStage 等 [E: sst.config.ts:30] [E: sst.config.ts:33] [E: sst.config.ts:35] [E: sst.config.ts:36] [E: sst.config.ts:37] [E: sst.config.ts:41]。 |
 | `infra/stage.ts` | stage-derived domain。production 用 `opencode.ai`, dev 用 `dev.opencode.ai`, 其它 stage 用 `<stage>.dev.opencode.ai`; `deployAws` 只在 `$app.stage === awsStage` 时为 true [E: infra/stage.ts:1] [E: infra/stage.ts:2] [E: infra/stage.ts:3] [E: infra/stage.ts:4] [E: infra/stage.ts:8] [E: infra/stage.ts:9]。 |
 | `infra/app.ts` | public Cloudflare app front door。创建 API Worker、Durable Object namespace binding、docs Astro、WebApp StaticSite [E: infra/app.ts:13] [E: infra/app.ts:37] [E: infra/app.ts:42] [E: infra/app.ts:52] [E: infra/app.ts:62]。 |
-| `infra/console.ts` | Console infra。创建 PlanetScale branch/password Linkable, Auth Worker, Stripe webhook/products/prices（`ZEN_LITE_PRICE` 在 `dev` 复用已有 Go Stripe ids）, `ConsoleMigration` Linkable, LogProcessor Worker, Console SolidStart, Stat Worker [E: infra/console.ts:11] [E: infra/console.ts:29] [E: infra/console.ts:36] [E: infra/console.ts:63] [E: infra/console.ts:74] [E: infra/console.ts:154] [E: infra/console.ts:228] [E: infra/console.ts:254] [E: infra/console.ts:259] [E: infra/console.ts:320]。 |
+| `infra/console.ts` | Console infra。创建 PlanetScale branch/password Linkable, Auth Worker, Stripe webhook/products/prices（`ZEN_LITE_PRICE` 在 `dev` 复用已有 Go Stripe ids）, `ConsoleMigration` Linkable, LogProcessor Worker, Console SolidStart, Stat Worker [E: infra/console.ts:11] [E: infra/console.ts:29] [E: infra/console.ts:36] [E: infra/console.ts:63] [E: infra/console.ts:74] [E: infra/console.ts:154] [E: infra/console.ts:228] [E: infra/console.ts:254] [E: infra/console.ts:259] [E: infra/console.ts:321]。 |
 | `infra/lake.ts` | AWS lake foundation。创建 S3 Tables bucket, Glue federated catalog, Athena results bucket/workgroup, Firehose Iceberg delivery, ingest ECS service, lake Linkables and query permissions [E: infra/lake.ts:16] [E: infra/lake.ts:21] [E: infra/lake.ts:64] [E: infra/lake.ts:160] [E: infra/lake.ts:218] [E: infra/lake.ts:274] [E: infra/lake.ts:281]。 |
 | `infra/stats.ts` | stats app and sync. 定义 `inference.event` Iceberg table, Stats PlanetScale database, Stats SolidStart app, `R2Sql` Linkable/`R2SqlAuthToken`, `StatsSyncService` ECS service [E: infra/stats.ts:9] [E: infra/stats.ts:14] [E: infra/stats.ts:107] [E: infra/stats.ts:164] [E: infra/stats.ts:184] [E: infra/stats.ts:185] [E: infra/stats.ts:194]。 |
 | `infra/monitoring.ts` | Honeycomb alerts. 只由 config 在 production 或 `vimtor` stage 导入, 内部用 Discord webhook recipient 和 triggers 监控 model/provider HTTP errors、TPS、free tier request spike [E: sst.config.ts:37] [E: infra/monitoring.ts:7] [E: infra/monitoring.ts:160] [E: infra/monitoring.ts:200] [E: infra/monitoring.ts:240] [E: infra/monitoring.ts:260]。 |

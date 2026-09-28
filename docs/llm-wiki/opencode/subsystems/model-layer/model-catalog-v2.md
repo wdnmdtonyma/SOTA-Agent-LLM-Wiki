@@ -9,7 +9,7 @@ symbols: [Catalog.Service, ProviderV2.Info, ModelV2.Info, ProviderPlugins, Model
 related: [plugin-api.v2-hooks, provider.catalog, integrations.integration-v2]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > V2 model catalog 是 plugin-ordered provider/model registry：provider plugins、models.dev、config provider plugin、integration connection availability 和 provider policy 一起构造 `ProviderV2.Info` / `ModelV2.Info`，再由 catalog API 提供 provider/model get/all/available/default/small 查询。`packages/core/src/provider.ts` 与 `packages/core/src/model.ts` 现在 re-export `@opencode-ai/schema` 的 provider/model schema。
@@ -69,9 +69,9 @@ model resolve 会让 native model 在没有 url/settings 时继承 provider api�
 
 V2 `CloudflareAIGatewayPlugin` 在 `aisdk.sdk` hook 里用官方 `ai-gateway-provider` 包一层 `createAiGateway` + `createUnified`。Workers AI 是唯一把 Cloudflare token 当上游 Authorization 的分支：`workers-ai/` 或 `@cf/` 时 `createUnified({ apiKey: config.apiKey })`，其它模型 `createUnified({})`，依赖 gateway 已存/BYOK key。[E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:17][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:18][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:27][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:34][E: packages/core/src/plugin/provider/cloudflare-ai-gateway.ts:35]
 
-该 plugin **没有** mirror V1 `cloudflare-ai-gateway` custom loader 的三分路由（openai native passthrough / anthropic native + dash slug / REST `cf-aig-gateway-id`）。V1 三分路由与 `cloudflareGatewayNpm()` 写在 `packages/opencode/src/provider/provider.ts`，不属于 V2 catalog plugin。[E: packages/opencode/src/provider/provider.ts:852][E: packages/opencode/src/provider/provider.ts:1258][I]
+该 plugin **没有** mirror V1 `cloudflare-ai-gateway` custom loader 的三分路由（openai native passthrough / anthropic native + dash slug / REST `cf-aig-gateway-id`）。V1 三分路由与 `cloudflareGatewayNpm()` 写在 `packages/opencode/src/provider/provider.ts`，不属于 V2 catalog plugin。[E: packages/opencode/src/provider/provider.ts:852][E: packages/opencode/src/provider/provider.ts:1259][I]
 
-V2 `GoogleVertexPlugin.vertexEndpoint(location)` 也比 V1 窄：只区分 `global` → `aiplatform.googleapis.com` 与其它 `{location}-aiplatform.googleapis.com`，**没有** V1 `googleVertexEndpoint` 的 `eu`/`us` REP 分支。[E: packages/core/src/plugin/provider/google-vertex.ts:27][E: packages/core/src/plugin/provider/google-vertex.ts:28][E: packages/core/src/plugin/provider/google-vertex.ts:29] V1 的 `eu`/`us` → `aiplatform.{location}.rep.googleapis.com` 仍只在 V1 `googleVertexEndpoint`。[E: packages/opencode/src/provider/provider.ts:101][E: packages/opencode/src/provider/provider.ts:103] V2 Anthropic Vertex 才单独为 `eu`/`us` 补 REP publisher baseURL。[E: packages/core/src/plugin/provider/google-vertex.ts:158][E: packages/core/src/plugin/provider/google-vertex.ts:160]
+V2 `GoogleVertexPlugin.vertexEndpoint(location)` 也比 V1 窄：只区分 `global` → `aiplatform.googleapis.com` 与其它 `{location}-aiplatform.googleapis.com`，**没有** V1 `googleVertexEndpoint` 的 `eu`/`us` REP 分支。[E: packages/core/src/plugin/provider/google-vertex.ts:27][E: packages/core/src/plugin/provider/google-vertex.ts:28][E: packages/core/src/plugin/provider/google-vertex.ts:29] V1 的 `eu`/`us` → `aiplatform.{location}.rep.googleapis.com` 仍只在 V1 `googleVertexEndpoint`。[E: packages/opencode/src/provider/provider.ts:102][E: packages/opencode/src/provider/provider.ts:103] V2 Anthropic Vertex 才单独为 `eu`/`us` 补 REP publisher baseURL。[E: packages/core/src/plugin/provider/google-vertex.ts:158][E: packages/core/src/plugin/provider/google-vertex.ts:160]
 
 ## Query API
 

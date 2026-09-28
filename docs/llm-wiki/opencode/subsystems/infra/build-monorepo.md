@@ -19,7 +19,7 @@ related:
   - infra.native-binary-release
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > 构建与 monorepo 节点描述 opencode 仓库的 root-level 包管理、脚本入口、Turbo task graph 和 Bun install 策略；它是终端 AI agent、Web/Desktop/Console 客户端与发布脚本共用的工程地基。
@@ -34,7 +34,7 @@ updated: df23b7f948
 
 ## 职责边界
 
-monorepo 构建层只规定包集合、脚本入口、依赖版本与任务图, 不实现 V1 `SessionPrompt.runLoop` 或 V2 `SessionRunner` [I]。root package 是 private ESM 包, package manager 固定为 `bun@1.3.14` [E: package.json:5] [E: package.json:6] [E: package.json:7]。root workspaces 包含 `packages/*`, `packages/console/*`, `packages/stats/*`, `packages/sdk/js`, `packages/slack` 五类 glob [E: package.json:25] [E: package.json:27] [E: package.json:28] [E: package.json:29] [E: package.json:30] [E: package.json:31]。
+monorepo 构建层只规定包集合、脚本入口、依赖版本与任务图, 不实现 V1 `SessionPrompt.runLoop` 或 V2 `SessionRunner` [I]。root package 是 private ESM 包, package manager 固定为 `bun@1.3.14` [E: package.json:5] [E: package.json:6] [E: package.json:7]。root workspaces 包含 `packages/*`, `packages/console/*`, `packages/stats/*`, `packages/sdk/js`, `packages/slack` 五类 glob；`packages/slack` 被 `packages/*` 与显式 glob 同时列出，展开后仍计 36 个 package，不双计 [E: package.json:25] [E: package.json:27] [E: package.json:28] [E: package.json:29] [E: package.json:30] [E: package.json:31]。
 
 V1/V2 关系: monorepo build 是 `v: na`。V1 当前活跑代码在 `packages/opencode`, V2 新内核在 `packages/core`, 但 root catalog 和 Turbo task graph 对两代代码都是共享的工程基础 [I]。
 
@@ -48,15 +48,15 @@ V1/V2 关系: monorepo build 是 `v: na`。V1 当前活跑代码在 `packages/op
 
 | 文件 | 角色 |
 | --- | --- |
-| `package.json` | root workspace manifest。定义 dev/typecheck/test 脚本、workspace globs、catalog、trusted dependencies、overrides、patched dependencies [E: package.json:8] [E: package.json:25] [E: package.json:33] [E: package.json:129] [E: package.json:139] [E: package.json:147]。 |
+| `package.json` | root workspace manifest。定义 dev/typecheck/test 脚本、workspace globs、catalog、trusted dependencies、overrides、patched dependencies [E: package.json:8] [E: package.json:25] [E: package.json:33] [E: package.json:129] [E: package.json:139] [E: package.json:148]。 |
 | `turbo.json` | task graph。`build` 输出 `dist/**`, `opencode#test` 依赖上游 build, core/app/ui/session-ui test 也依赖上游 build；`@opencode-ai/function#test` 只有 `outputs: []`，不声明 `dependsOn` [E: turbo.json:7] [E: turbo.json:9] [E: turbo.json:11] [E: turbo.json:12] [E: turbo.json:16] [E: turbo.json:20] [E: turbo.json:21] [E: turbo.json:23] [E: turbo.json:27] [E: turbo.json:31]。 |
 | `bunfig.toml` | Bun install/test guard。开启 exact install, 新解析版本默认要求发布至少 259200 秒, root test 指向 `./do-not-run-tests-from-root` [E: bunfig.toml:2] [E: bunfig.toml:4] [E: bunfig.toml:8]。 |
-| `packages/opencode/package.json` | V1 CLI package manifest。`build` 调 `script/build.ts`, `bin.opencode` 指向 `./bin/opencode`, dependency 列表同时包含 Vercel AI SDK provider 和 `@opencode-ai/llm` native provider 引擎 [E: packages/opencode/package.json:14] [E: packages/opencode/package.json:19] [E: packages/opencode/package.json:75] [E: packages/opencode/package.json:88]。 |
+| `packages/opencode/package.json` | V1 CLI package manifest。发布 `version` 为 `1.18.33`，`build` 调 `script/build.ts`, `bin.opencode` 指向 `./bin/opencode`, dependency 列表同时包含 Vercel AI SDK provider（含 `@ai-sdk/togetherai` `2.0.68`、`gitlab-ai-provider` `6.18.0`、`@ai-sdk/gateway` `3.0.191`）和 `@opencode-ai/llm` native provider 引擎 [E: packages/opencode/package.json:3] [E: packages/opencode/package.json:14] [E: packages/opencode/package.json:19] [E: packages/opencode/package.json:65] [E: packages/opencode/package.json:74] [E: packages/opencode/package.json:88] [E: packages/opencode/package.json:123]。 |
 | `AGENTS.md` | repo-local agent 操作约束。默认分支是 `dev`, root tests 明确禁止, typecheck 必须从 package directory 跑 `bun typecheck` [E: AGENTS.md:4] [E: AGENTS.md:145] [E: AGENTS.md:149]。 |
 
 ## 数据模型
 
-`workspaces.catalog` 是 monorepo 的版本 catalog。包内使用 `catalog:` 指向 root 版本, 例如 `packages/opencode/package.json` 的 `typescript`, `@effect/opentelemetry`, `@effect/platform-node`, `ai`, `effect`, `zod` 都从 catalog 取版本 [E: package.json:33] [E: packages/opencode/package.json:50] [E: packages/opencode/package.json:79] [E: packages/opencode/package.json:80] [E: packages/opencode/package.json:113] [E: packages/opencode/package.json:121] [E: packages/opencode/package.json:153]。这种设计把高频共享依赖的版本决策收拢到 root manifest, 减少 36-workspace-package 级别的 provider/runtime/UI 版本漂移 [I]。
+`workspaces.catalog` 是 monorepo 的版本 catalog。包内使用 `catalog:` 指向 root 版本, 例如 `packages/opencode/package.json` 的 `typescript`, `@effect/opentelemetry`, `@effect/platform-node`, `ai`, `effect`, `zod` 都从 catalog 取版本 [E: package.json:33] [E: packages/opencode/package.json:50] [E: packages/opencode/package.json:79] [E: packages/opencode/package.json:80] [E: packages/opencode/package.json:113] [E: packages/opencode/package.json:121] [E: packages/opencode/package.json:154]。这种设计把高频共享依赖的版本决策收拢到 root manifest, 减少 36-workspace-package 级别的 provider/runtime/UI 版本漂移 [I]。
 
 `turbo.tasks` 是任务图数据。`build.outputs` 只有 `dist/**`, test 任务 `outputs: []`, 因此测试不会把结果当作构建产物复用 [E: turbo.json:7] [E: turbo.json:9] [E: turbo.json:13] [E: turbo.json:18] [E: turbo.json:21]。`globalEnv` 与 `globalPassThroughEnv` 都包含 `CI` 和 `OPENCODE_DISABLE_SHARE`, 表明这两个变量参与 Turbo cache 或透传边界 [E: turbo.json:3] [E: turbo.json:4]。
 

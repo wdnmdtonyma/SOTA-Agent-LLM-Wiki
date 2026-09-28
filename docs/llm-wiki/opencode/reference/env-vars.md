@@ -25,7 +25,7 @@ symbols:
 evidence: explicit
 related:
   - persistence.repository-cache
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。
@@ -159,11 +159,11 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | Env | Provider/integration | Evidence |
 |---|---|---|
 | `AWS_PROFILE` | V2 Bedrock profile；V1 amazon-bedrock loader 也读同名 env。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:93][E: packages/opencode/src/provider/provider.ts:313] |
-| `AWS_REGION` | V2 Bedrock region fallback；V1 amazon-bedrock loader 也读同名 env。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:94][E: packages/opencode/src/provider/provider.ts:308] |
+| `AWS_REGION` | V2 Bedrock region fallback；V1 amazon-bedrock loader 也读同名 env。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:94][E: packages/opencode/src/provider/provider.ts:309] |
 | `AWS_BEARER_TOKEN_BEDROCK` | V2 Bedrock bearer token；V1 也读 `process.env.AWS_BEARER_TOKEN_BEDROCK`。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:96][E: packages/opencode/src/provider/provider.ts:322] |
-| `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` | AWS container credentials；V1/V2 都读。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:100][E: packages/opencode/src/provider/provider.ts:334] |
-| `AWS_CONTAINER_CREDENTIALS_FULL_URI` | AWS container credentials；V1/V2 都读。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:100][E: packages/opencode/src/provider/provider.ts:334] |
-| `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path。 | [E: packages/opencode/src/provider/provider.ts:316] |
+| `AWS_CONTAINER_CREDENTIALS_RELATIVE_URI` | AWS container credentials；V1/V2 都读。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:100][E: packages/opencode/src/provider/provider.ts:336] |
+| `AWS_CONTAINER_CREDENTIALS_FULL_URI` | AWS container credentials；V1/V2 都读。 | [E: packages/core/src/plugin/provider/amazon-bedrock.ts:100][E: packages/opencode/src/provider/provider.ts:336] |
+| `AWS_ACCESS_KEY_ID` | V1 provider AWS credential path。 | [E: packages/opencode/src/provider/provider.ts:315] |
 | `AWS_WEB_IDENTITY_TOKEN_FILE` | V1 provider AWS OIDC credential path。 | [E: packages/opencode/src/provider/provider.ts:331] |
 | `AZURE_RESOURCE_NAME` | V1 Azure OAuth/loader 与 V2 Core Azure plugin 都读的 resource name。V1 OAuth 缺此 env 时才弹出 `resourceName` text prompt；成功后写入 stored auth `accountId`。Azure plugin **不再**用它做 Cognitive Services account / deployment discovery。 | [E: packages/core/src/plugin/provider/azure.ts:23][E: packages/opencode/src/plugin/azure.ts:46][E: packages/opencode/src/plugin/azure.ts:89][E: packages/opencode/src/provider/provider.ts:254] |
 | `AZURE_COGNITIVE_SERVICES_RESOURCE_NAME` | Azure Cognitive Services resource. | [E: packages/core/src/plugin/provider/azure.ts:63] |
@@ -187,9 +187,9 @@ Provider env rows likewise mark V1/V2 when a variable is consumed by both the V2
 | `AICORE_SERVICE_KEY` | SAP AI Core service key. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:15] |
 | `AICORE_DEPLOYMENT_ID` | SAP AI Core deployment id. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
 | `AICORE_RESOURCE_GROUP` | SAP AI Core resource group. | [E: packages/core/src/plugin/provider/sap-ai-core.ts:34] |
-| `SNOWFLAKE_CORTEX_TOKEN` | Snowflake Cortex token. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/opencode/src/provider/provider.ts:914] |
-| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT alias. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/opencode/src/provider/provider.ts:914] |
-| `SNOWFLAKE_ACCOUNT` | V1 Snowflake account. | [E: packages/opencode/src/provider/provider.ts:909] |
+| `SNOWFLAKE_CORTEX_TOKEN` | Snowflake Cortex token. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:74][E: packages/opencode/src/provider/provider.ts:916] |
+| `SNOWFLAKE_CORTEX_PAT` | Snowflake Cortex PAT alias. | [E: packages/core/src/plugin/provider/snowflake-cortex.ts:75][E: packages/opencode/src/provider/provider.ts:916] |
+| `SNOWFLAKE_ACCOUNT` | V1 Snowflake account. | [E: packages/opencode/src/provider/provider.ts:908] |
 
 ## GitHub automation env
 

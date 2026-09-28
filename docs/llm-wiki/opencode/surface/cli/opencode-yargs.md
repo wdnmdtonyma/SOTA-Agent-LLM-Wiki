@@ -14,10 +14,13 @@ source:
   - packages/opencode/src/cli/cmd/account.ts
   - packages/opencode/src/cli/cmd/github.handler.ts
   - packages/opencode/src/cli/cmd/run.ts
+  - packages/opencode/src/cli/cmd/debug/redact.ts
+  - packages/core/src/open.ts
+  - packages/opencode/src/cli/cmd/web.ts
 symbols:
   - ImportCommand
   - formatImportFileError
-updated: df23b7f948
+updated: 03e67171ab
 evidence: explicit
 ---
 
@@ -54,7 +57,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `upgrade [target]` | `packages/opencode/src/cli/cmd/upgrade.ts` | upgrade opencode。[E: packages/opencode/src/cli/cmd/upgrade.ts:8] | none |
 | `uninstall` | `packages/opencode/src/cli/cmd/uninstall.ts` | uninstall opencode。[E: packages/opencode/src/cli/cmd/uninstall.ts:26] | none |
 | `serve` | `packages/opencode/src/cli/cmd/serve.ts` | start HTTP server。[E: packages/opencode/src/cli/cmd/serve.ts:7] | none |
-| `web` | `packages/opencode/src/cli/cmd/web.ts` | launch web UI/server flow。[E: packages/opencode/src/cli/cmd/web.ts:32] | none |
+| `web` | `packages/opencode/src/cli/cmd/web.ts` | launch web UI/server flow；打开 localhost/display URL 用 `openUrl`（http/https only）。[E: packages/opencode/src/cli/cmd/web.ts:6] [E: packages/opencode/src/cli/cmd/web.ts:32] [E: packages/opencode/src/cli/cmd/web.ts:75] [E: packages/core/src/open.ts:5] | none |
 | `models [provider]` | `packages/opencode/src/cli/cmd/models.ts` | list models。[E: packages/opencode/src/cli/cmd/models.ts:9] | none |
 | `stats` | `packages/opencode/src/cli/cmd/stats.ts` | display usage stats。[E: packages/opencode/src/cli/cmd/stats.ts:50] | none |
 | `export [sessionID]` | `packages/opencode/src/cli/cmd/export.ts` | export session data。[E: packages/opencode/src/cli/cmd/export.ts:223] | none |
@@ -75,7 +78,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `mcp` | `logout [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:337] | remove MCP auth. |
 | `mcp` | `add [name]` | [E: packages/opencode/src/cli/cmd/mcp.ts:430] | add MCP config. |
 | `mcp` | `debug <name>` | [E: packages/opencode/src/cli/cmd/mcp.ts:660] | debug one MCP server. |
-| `debug` | `config` | [E: packages/opencode/src/cli/cmd/debug/config.ts:6] | print resolved config/debug data. |
+| `debug` | `config` | [E: packages/opencode/src/cli/cmd/debug/config.ts:6] [E: packages/opencode/src/cli/cmd/debug/config.ts:4] [E: packages/opencode/src/cli/cmd/debug/config.ts:11] | print `redactConfig(config)` to stdout；按 key 名（api key/secret/password/token/authorization/cookie/credential/private key）以及 headers 对象、URL userinfo/query secret 写成 `"***"`，resolved config 本身仍给 provider 用。[E: packages/opencode/src/cli/cmd/debug/redact.ts:4] |
 | `debug` | `lsp` | [E: packages/opencode/src/cli/cmd/debug/lsp.ts:8] | LSP root. |
 | `debug lsp` | `diagnostics <file>` | [E: packages/opencode/src/cli/cmd/debug/lsp.ts:16] | diagnostics for file. |
 | `debug lsp` | `symbols <query>` | [E: packages/opencode/src/cli/cmd/debug/lsp.ts:31] | workspace symbols. |
@@ -103,7 +106,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 | `console` | `logout [email]` | [E: packages/opencode/src/cli/cmd/account.ts:193] | Console logout. |
 | `console` | `switch` | [E: packages/opencode/src/cli/cmd/account.ts:208] | switch Console account. |
 | `console` | `orgs` | [E: packages/opencode/src/cli/cmd/account.ts:218] | list orgs. |
-| `console` | `open` | [E: packages/opencode/src/cli/cmd/account.ts:228] | open Console. |
+| `console` | `open` | [E: packages/opencode/src/cli/cmd/account.ts:228] [E: packages/opencode/src/cli/cmd/account.ts:8] [E: packages/opencode/src/cli/cmd/account.ts:10] | open Console via `openUrl`，不是直接 `import open from "open"`。 |
 | `providers` | `list` | [E: packages/opencode/src/cli/cmd/providers.ts:249] | list provider auth/config. |
 | `providers` | `login [url]` | [E: packages/opencode/src/cli/cmd/providers.ts:300] | provider login. |
 | `providers` | `logout [provider]` | [E: packages/opencode/src/cli/cmd/providers.ts:492] | provider logout. |
@@ -120,7 +123,7 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 
 `import` 的本地文件分支不再把所有 `readJson` failure 吞成 “File not found”。它把 filesystem error 交给 `formatImportFileError()`，再作为带不同 message 的 `CliError` 传播；顶层 `FormatError()` 提取 `CliError.message` 并交给 `UI.error()`，所以 permission 与 JSON syntax failure 会给出不同用户可见信息。[E: packages/opencode/src/cli/cmd/import.ts:41][E: packages/opencode/src/cli/cmd/import.ts:48][E: packages/opencode/src/cli/cmd/import.ts:168][E: packages/opencode/src/cli/cmd/import.ts:170][E: packages/opencode/src/cli/error.ts:42][E: packages/opencode/src/cli/error.ts:44][E: packages/opencode/src/index.ts:129][E: packages/opencode/src/index.ts:130]
 
-`console` 的默认 URL 现为 `https://opencode.ai/console`。[E: packages/opencode/src/cli/cmd/account.ts:18] `github run` handler 用 `githubClientReady` 守卫失败评论，避免 token 尚未换到就调 GitHub API；token exchange 失败时读 `response.text()` 而不是假定 JSON `error` 字段。[E: packages/opencode/src/cli/cmd/github.handler.ts:440][E: packages/opencode/src/cli/cmd/github.handler.ts:644][E: packages/opencode/src/cli/cmd/github.handler.ts:1013] `run` 的 event loop 用 `sessions` Set 跟踪 child session 并应答它们的 `permission.asked`。[E: packages/opencode/src/cli/cmd/run.ts:699][E: packages/opencode/src/cli/cmd/run.ts:803]
+`console` 的默认 URL 现为 `https://opencode.ai/console`。[E: packages/opencode/src/cli/cmd/account.ts:18] `account`/`web` 打开浏览器都走 `openUrl`。[E: packages/opencode/src/cli/cmd/account.ts:8] [E: packages/opencode/src/cli/cmd/web.ts:6] `debug config` 打印脱敏后的 JSON，不是完整 secret。[E: packages/opencode/src/cli/cmd/debug/config.ts:11] `github run` handler 用 `githubClientReady` 守卫失败评论，避免 token 尚未换到就调 GitHub API；token exchange 失败时读 `response.text()` 而不是假定 JSON `error` 字段。[E: packages/opencode/src/cli/cmd/github.handler.ts:440][E: packages/opencode/src/cli/cmd/github.handler.ts:644][E: packages/opencode/src/cli/cmd/github.handler.ts:1013] `run` 的 event loop 用 `sessions` Set 跟踪 child session 并应答它们的 `permission.asked`。[E: packages/opencode/src/cli/cmd/run.ts:699][E: packages/opencode/src/cli/cmd/run.ts:803]
 
 这个节点是 `v: v1`。V2 preview CLI host 在 `packages/cli/src` 使用 Effect CLI framework 和 daemon service；它不是 `packages/opencode/src/index.ts` 这条 yargs command tree。[I]
 
@@ -135,6 +138,8 @@ root yargs 链在注册 commands 后安装 `.fail(...)` handler 并启用 `.stri
 - `packages/opencode/src/cli/cmd/db.ts`
 - `packages/opencode/src/cli/cmd/debug/agent.ts`
 - `packages/opencode/src/cli/cmd/debug/config.ts`
+- `packages/opencode/src/cli/cmd/debug/redact.ts`
+- `packages/core/src/open.ts`
 - `packages/opencode/src/cli/cmd/debug/file.ts`
 - `packages/opencode/src/cli/cmd/debug/index.ts`
 - `packages/opencode/src/cli/cmd/debug/lsp.ts`

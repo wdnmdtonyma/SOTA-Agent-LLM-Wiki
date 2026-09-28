@@ -5,7 +5,7 @@ kind: tool
 tier: T1
 v: shared
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 evidence: explicit
 source:
   - packages/opencode/src/tool/apply_patch.ts

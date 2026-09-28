@@ -9,7 +9,7 @@ symbols: [TuiPluginApi, TuiPlugin, TuiPluginModule, createTuiApiAdapters]
 related: [tui.feature-plugins, ref.tui-api]
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > TUI plugin API 是 terminal UI 插件拿到的 host facade：`packages/plugin/src/tui.ts` 定义 public type，`packages/tui/src/plugin/adapters.tsx` 把真实 TUI contexts 适配成 `TuiPluginApi`。

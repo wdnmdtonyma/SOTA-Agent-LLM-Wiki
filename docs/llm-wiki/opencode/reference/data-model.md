@@ -20,7 +20,7 @@ symbols:
   - SessionSchema.Info
   - MessageV2.toModelMessagesEffect
 evidence: explicit
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > 这份节点记录 session/message 的核心共享数据模型；V2 是 `packages/core/src/session/*` 的 typed schema，V1 是 `packages/opencode/src/session/message-v2.ts` 的 AI SDK 转换层。
@@ -101,22 +101,22 @@ V1 message-v2 exports legacy message events by aliasing `SessionV1.Event.Message
 
 | Function/object | Role | Evidence |
 |---|---|---|
-| `toModelMessagesEffect` | Converts `WithParts[]` into AI SDK model messages and tracks model-specific media/tool-result handling. | [E: packages/opencode/src/session/message-v2.ts:131][E: packages/opencode/src/session/message-v2.ts:132][E: packages/opencode/src/session/message-v2.ts:147][E: packages/opencode/src/session/message-v2.ts:406][E: packages/opencode/src/session/message-v2.ts:407] |
-| `supportsMediaInToolResult` | Encodes provider-specific media support checks for tool results. | [E: packages/opencode/src/session/message-v2.ts:147][E: packages/opencode/src/session/message-v2.ts:148][E: packages/opencode/src/session/message-v2.ts:158] |
-| user branch | Builds AI SDK user messages from text/file/compaction/subtask parts. | [E: packages/opencode/src/session/message-v2.ts:198][E: packages/opencode/src/session/message-v2.ts:207][E: packages/opencode/src/session/message-v2.ts:212][E: packages/opencode/src/session/message-v2.ts:228][E: packages/opencode/src/session/message-v2.ts:234] |
+| `toModelMessagesEffect` | Converts `WithParts[]` into AI SDK model messages and tracks model-specific media/tool-result handling. | [E: packages/opencode/src/session/message-v2.ts:131][E: packages/opencode/src/session/message-v2.ts:132][E: packages/opencode/src/session/message-v2.ts:147][E: packages/opencode/src/session/message-v2.ts:408][E: packages/opencode/src/session/message-v2.ts:408] |
+| `supportsMediaInToolResult` | Provider 是否允许 tool result 内嵌 media。`@ai-sdk/amazon-bedrock` 仅 `image/` 且 API id 含 `anthropic.` / `nova` / `llama4` / `llama-4` 为 true;Mantle 路径 `@ai-sdk/amazon-bedrock/mantle` 为 true。不支持的 image/PDF 从 tool result 抽出后作为 user file parts。 | [E: packages/opencode/src/session/message-v2.ts:147][E: packages/opencode/src/session/message-v2.ts:150][E: packages/opencode/src/session/message-v2.ts:151][E: packages/opencode/src/session/message-v2.ts:154] |
+| user branch | Builds AI SDK user messages from text/file/compaction/subtask parts. | [E: packages/opencode/src/session/message-v2.ts:199][E: packages/opencode/src/session/message-v2.ts:208][E: packages/opencode/src/session/message-v2.ts:212][E: packages/opencode/src/session/message-v2.ts:227][E: packages/opencode/src/session/message-v2.ts:234] |
 | `page` | Reads legacy `MessageTable` rows for a session with cursor pagination. | [E: packages/opencode/src/session/message-v2.ts:425][E: packages/opencode/src/session/message-v2.ts:435][E: packages/opencode/src/session/message-v2.ts:439][E: packages/opencode/src/session/message-v2.ts:465] |
-| `stream` | Pages through all legacy messages for a session. | [E: packages/opencode/src/session/message-v2.ts:469][E: packages/opencode/src/session/message-v2.ts:475][E: packages/opencode/src/session/message-v2.ts:485][E: packages/opencode/src/session/message-v2.ts:488] |
+| `stream` | Pages through all legacy messages for a session. | [E: packages/opencode/src/session/message-v2.ts:469][E: packages/opencode/src/session/message-v2.ts:475][E: packages/opencode/src/session/message-v2.ts:485][E: packages/opencode/src/session/message-v2.ts:489] |
 | `parts` | Reads `PartTable` rows for one message. | [E: packages/opencode/src/session/message-v2.ts:492][E: packages/opencode/src/session/message-v2.ts:497][E: packages/opencode/src/session/message-v2.ts:498][E: packages/opencode/src/session/message-v2.ts:502] |
-| `filterCompacted` | Reorders retained compaction tail for model consumption. | [E: packages/opencode/src/session/message-v2.ts:521][E: packages/opencode/src/session/message-v2.ts:563][E: packages/opencode/src/session/message-v2.ts:565][E: packages/opencode/src/session/message-v2.ts:568] |
-| `latest` | Derives latest user/assistant/finished/task bindings by `time.created`, then `id` as tie-breaker. `filterCompacted` reorders arrays and imported IDs are not necessarily monotonic. | [E: packages/opencode/src/session/message-v2.ts:582][E: packages/opencode/src/session/message-v2.ts:588][E: packages/opencode/src/session/message-v2.ts:590][E: packages/opencode/src/session/message-v2.ts:600][E: packages/opencode/src/session/message-v2.ts:602] |
-| `fromError` | Maps thrown provider/runtime errors to assistant error shape. | [E: packages/opencode/src/session/message-v2.ts:606][E: packages/opencode/src/session/message-v2.ts:618][E: packages/opencode/src/session/message-v2.ts:620] |
+| `filterCompacted` | Reorders retained compaction tail for model consumption. | [E: packages/opencode/src/session/message-v2.ts:521][E: packages/opencode/src/session/message-v2.ts:563][E: packages/opencode/src/session/message-v2.ts:566][E: packages/opencode/src/session/message-v2.ts:568] |
+| `latest` | Derives latest user/assistant/finished/task bindings by `time.created`, then `id` as tie-breaker. `filterCompacted` reorders arrays and imported IDs are not necessarily monotonic. | [E: packages/opencode/src/session/message-v2.ts:579][E: packages/opencode/src/session/message-v2.ts:588][E: packages/opencode/src/session/message-v2.ts:590][E: packages/opencode/src/session/message-v2.ts:601][E: packages/opencode/src/session/message-v2.ts:601] |
+| `fromError` | Maps thrown provider/runtime errors to assistant error shape. | [E: packages/opencode/src/session/message-v2.ts:606][E: packages/opencode/src/session/message-v2.ts:619][E: packages/opencode/src/session/message-v2.ts:621] |
 
 ## V1/V2 差异速查
 
 | 维度 | V1 | V2 |
 |---|---|---|
 | Message storage | Legacy `MessageTable` + `PartTable` read path in `message-v2.ts`。[E: packages/opencode/src/session/message-v2.ts:30][E: packages/opencode/src/session/message-v2.ts:435][E: packages/opencode/src/session/message-v2.ts:497] | `SessionMessage.Message` typed union in schema package and re-exported by core。[E: packages/schema/src/session-message.ts:200][E: packages/schema/src/session-message.ts:212][E: packages/core/src/session/message.ts:2] |
-| Model boundary | Converts to AI SDK `UIMessage`/`ModelMessage`。[E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:406][E: packages/opencode/src/session/message-v2.ts:417] | Message schema is Effect/Schema data model and uses shared `ProviderMetadata`/`ToolContent` content types。[E: packages/schema/src/session-message.ts:3][E: packages/schema/src/session-message.ts:5][E: packages/schema/src/session-message.ts:126][E: packages/schema/src/session-message.ts:131] |
+| Model boundary | Converts to AI SDK `UIMessage`/`ModelMessage`。[E: packages/opencode/src/session/message-v2.ts:20][E: packages/opencode/src/session/message-v2.ts:408][E: packages/opencode/src/session/message-v2.ts:415] | Message schema is Effect/Schema data model and uses shared `ProviderMetadata`/`ToolContent` content types。[E: packages/schema/src/session-message.ts:3][E: packages/schema/src/session-message.ts:5][E: packages/schema/src/session-message.ts:126][E: packages/schema/src/session-message.ts:131] |
 | Event relation | Defines V1 event aliases on `Event`。[E: packages/opencode/src/session/message-v2.ts:55][E: packages/opencode/src/session/message-v2.ts:60] | V2 message schemas are standalone session-message definitions; event projection is outside this reference catalog。[E: packages/schema/src/session-message.ts:1][E: packages/schema/src/session-message.ts:200][I] |
 | Naming trap | File name contains `message-v2`, but imports V1 session types。 | Namespace path is `packages/core/src/session/*` and used by V2 core。 |
 

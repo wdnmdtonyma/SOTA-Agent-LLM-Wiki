@@ -18,7 +18,7 @@ related:
   - tui.feature-plugins
 evidence: explicit
 status: verified
-updated: df23b7f948
+updated: 03e67171ab
 ---
 
 > TUI slot 是插件把 Solid/OpenTUI UI 挂进 host 界面的 named extension point；host 暴露 slot 名、props 和渲染模式，插件 runtime 负责注册、渲染、清理。
@@ -31,7 +31,7 @@ updated: df23b7f948
 
 ## Slot 类型和运行时
 
-`TuiHostSlotMap` 定义 host 提供的 slot 名和每个 slot 的 props shape，例如 `session_prompt` 需要 `session_id`，并可带 `visible`、`disabled`、`on_submit` 和 `ref` [E: packages/plugin/src/tui.ts:455] [E: packages/plugin/src/tui.ts:468]。`TuiSlotMap` 把 host slots 和插件自定义 `Slots` 泛型合并，因此插件 API 可以同时表达内建 slot 和插件扩展 slot [E: packages/plugin/src/tui.ts:488]。
+当前 `TuiHostSlotMap` 共 12 个 host slot：`app`、`app_bottom`、`home_logo`、`home_prompt`、`home_prompt_right`、`session_prompt`、`session_prompt_right`、`home_bottom`、`home_footer`、`sidebar_title`、`sidebar_content`、`sidebar_footer`。[E: packages/plugin/src/tui.ts:455] `TuiHostSlotMap` 定义 host 提供的 slot 名和每个 slot 的 props shape，例如 `session_prompt` 需要 `session_id`，并可带 `visible`、`disabled`、`on_submit` 和 `ref` [E: packages/plugin/src/tui.ts:455] [E: packages/plugin/src/tui.ts:468]。`TuiSlotMap` 把 host slots 和插件自定义 `Slots` 泛型合并，因此插件 API 可以同时表达内建 slot 和插件扩展 slot [E: packages/plugin/src/tui.ts:488]。
 
 `createSlots()` 初始化空 `Slot` component 和 signal，`setup()` 创建真正的 Solid slot registry，并把 renderer、theme context 和 plugin error callback 注入 slot renderer [E: packages/tui/src/plugin/slots.tsx:26] [E: packages/tui/src/plugin/slots.tsx:33] [E: packages/tui/src/plugin/slots.tsx:34] [E: packages/tui/src/plugin/slots.tsx:35] [E: packages/tui/src/plugin/slots.tsx:37]。`register()` 只接受 `id` 为 string 且 `slots` 为 object 的 host slot plugin，验证失败会跳过注册 [E: packages/tui/src/plugin/slots.tsx:20] [E: packages/tui/src/plugin/slots.tsx:54]。`dispose()` 和 `clear()` 都会把 `Slot` 恢复成空 component，避免旧插件 UI 残留 [E: packages/tui/src/plugin/slots.tsx:57] [E: packages/tui/src/plugin/slots.tsx:62]。
 
