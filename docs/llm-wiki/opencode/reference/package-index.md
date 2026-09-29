@@ -14,7 +14,7 @@ related:
   - subsys.tools.codemode
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > opencode monorepo 是 Bun workspace；当前 HEAD 的 workspace globs 展开为 36 个 package，而不是固定 27 个 package。
@@ -69,10 +69,10 @@ V2 新内核 package 是 `packages/core`，package 名为 `@opencode-ai/core`，
 | `packages/script` | `@opencode-ai/script` [E: packages/script/package.json:3] | shared tooling | Shared script helper package，导出 `src/index.ts` 并依赖 semver [E: packages/script/package.json:12] [E: packages/script/package.json:5]。 |
 | `packages/sdk-next` | `@opencode-ai/sdk-next` [E: packages/sdk-next/package.json:3] | shared SDK | Next-generation SDK package，导出 typed client/server surfaces，依赖 `@opencode-ai/client`、`@opencode-ai/core`、`@opencode-ai/server` 和 `effect` [E: packages/sdk-next/package.json:7] [E: packages/sdk-next/package.json:15] [E: packages/sdk-next/package.json:16] [E: packages/sdk-next/package.json:17] [E: packages/sdk-next/package.json:18]。 |
 | `packages/sdk/js` | `@opencode-ai/sdk` [E: packages/sdk/js/package.json:3] | shared SDK | JS SDK package，导出 v1/v2 client/server/generated client surfaces [E: packages/sdk/js/package.json:12]。 |
-| `packages/server` | `@opencode-ai/server` [E: packages/server/package.json:3] | V2 server | Server package，依赖 core、Effect 和 Drizzle，并导出 `src/*.ts` [E: packages/server/package.json:14] [E: packages/server/package.json:8]。 |
+| `packages/server` | `@opencode-ai/server` [E: packages/server/package.json:3] | V2 server | Server package，依赖 core、Effect 和 Drizzle，并导出 `src/*.ts` [E: packages/server/package.json:14] [E: packages/server/package.json:17] [E: packages/server/package.json:18] [E: packages/server/package.json:8]。 |
 | `packages/session-ui` | `@opencode-ai/session-ui` [E: packages/session-ui/package.json:2] | shared UI | Session UI package，导出 v2/session UI components and state surfaces，依赖 `@opencode-ai/core`、`@opencode-ai/sdk`、`@opencode-ai/ui` [E: packages/session-ui/package.json:7] [E: packages/session-ui/package.json:42] [E: packages/session-ui/package.json:43] [E: packages/session-ui/package.json:44]。 |
 | `packages/slack` | `@opencode-ai/slack` [E: packages/slack/package.json:2] | shared integration | Slack integration package，依赖 SDK 和 `@slack/bolt` [E: packages/slack/package.json:10]。 |
-| `packages/stats/app` | `@opencode-ai/stats-app` [E: packages/stats/app/package.json:3] | shared stats | Stats web app，依赖 stats-core、ui、Solid Start、`d3-scale` 和 SST；本轮已去掉 `d3-geo` / topojson 世界地图依赖 [E: packages/stats/app/package.json:22]。 |
+| `packages/stats/app` | `@opencode-ai/stats-app` [E: packages/stats/app/package.json:3] | shared stats | Stats web app，依赖 stats-core、ui、Solid Start、`d3-scale` 和 SST；无 `d3-geo` / topojson 世界地图依赖 [E: packages/stats/app/package.json:22] [E: packages/stats/app/package.json:27]。 |
 | `packages/stats/core` | `@opencode-ai/stats-core` [E: packages/stats/core/package.json:3] | shared stats | Stats domain/database package，导出 athena/config/database/domain/runtime/stat-sync APIs [E: packages/stats/core/package.json:8]。 |
 | `packages/stats/server` | `@opencode-ai/stats-server` [E: packages/stats/server/package.json:3] | shared stats | Stats server package，main/export 为 `src/server.ts`，依赖 Firehose、Effect platform 和 stats-core [E: packages/stats/server/package.json:8] [E: packages/stats/server/package.json:16]。 |
 | `packages/storybook` | `@opencode-ai/storybook` [E: packages/storybook/package.json:3] | shared UI docs | Storybook package for UI components, with `storybook` and `build` scripts [E: packages/storybook/package.json:6]。 |

@@ -9,7 +9,7 @@ symbols: [createBuiltinPlugins, createPluginRuntime, createSlots, createTuiApiAd
 related: [ref.tui-slots, ref.tui-api, tui.runtime-hosting]
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > TUI feature plugin 层只负责 presentation extensibility：内建 feature plugin 数组、slots、plugin routes、TUI-facing API adapters；插件发现、安装、启停和外部模块执行由 V1 host runtime 注入。

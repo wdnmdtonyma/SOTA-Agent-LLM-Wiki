@@ -6,7 +6,7 @@ tier: T2
 v: shared
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 source:
   - packages/opencode/src/tool/truncate.ts
   - packages/core/src/tool-output-store.ts

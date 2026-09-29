@@ -10,7 +10,7 @@ source:
   - packages/core/src/plugin/provider/cloudflare-ai-gateway.ts
   - packages/core/src/plugin/provider/amazon-bedrock.ts
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 evidence: explicit
 symbols:
   - BUNDLED_PROVIDERS

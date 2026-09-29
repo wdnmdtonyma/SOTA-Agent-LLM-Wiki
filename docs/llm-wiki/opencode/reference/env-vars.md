@@ -25,7 +25,7 @@ symbols:
 evidence: explicit
 related:
   - persistence.repository-cache
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > 这份节点是 env var 与 feature flag 的 catalog；它覆盖 core `Flag.*`、V1 runtime flags、loader/database env、provider env 与 GitHub automation env。

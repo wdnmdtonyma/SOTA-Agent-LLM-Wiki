@@ -26,7 +26,7 @@ related:
   - server-api.v2-routes
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > V2 project directories 子系统把 project identity resolution 与 project copy/worktree 目录列表拆开：`Project` 负责 resolve/commit project id，`ProjectDirectories` 负责持久化目录记录，`ProjectCopy` 负责创建、删除、刷新 copy/worktree 目录。

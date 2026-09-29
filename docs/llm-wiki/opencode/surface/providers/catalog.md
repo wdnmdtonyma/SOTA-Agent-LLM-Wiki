@@ -9,7 +9,7 @@ symbols: [LLMProvider, OpenAI, Anthropic, OpenAICompatible, AmazonBedrock, Googl
 related: [model-layer.llm-protocols, ref.llm-provider-facade-catalog]
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > Provider catalog 有两层：V1 当前活跑用 models.dev + Vercel AI SDK package loader；`packages/llm` 是原生 provider protocol/facade 引擎，在 V1 里是可选 seam，在 V2 里是设计方向。

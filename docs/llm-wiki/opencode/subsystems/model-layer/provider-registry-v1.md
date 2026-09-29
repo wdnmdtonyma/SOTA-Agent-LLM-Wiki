@@ -9,7 +9,7 @@ symbols: [Provider.Service, BUNDLED_PROVIDERS, fromModelsDevProvider, resolveSDK
 related: [provider.resolution, ref.ai-sdk-provider-map]
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > V1 provider registry 是 `packages/opencode/src/provider/provider.ts` 里的 AI SDK provider/model resolver：它从 models.dev catalog、config、env、auth、plugin hooks 和 provider-specific custom loader 合成 `Provider.Info` / `Provider.Model`，再按 model 的 npm package 创建或缓存 `LanguageModelV3`。

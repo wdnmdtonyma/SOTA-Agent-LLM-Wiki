@@ -58,7 +58,7 @@ _staging/         并发填充时各批次的 uncertainty-<batch>.md 暂存
 
 ## 方法 & 状态
 
-逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `03e67171ab`（官方 `dev`，发布 `1.18.33`），共 189 个 verified 节点 + 14 个 grouped-catalog 组。本轮主要增量是 `openUrl` 只开 http(s)、Cloudflare AI Gateway 把 `timeoutFetch` 接到 gateway loader、Gemini thinking 用 2.5/legacy 正则、Codex 允许 GPT-6 Sol/Luna、Bedrock 只对 anthropic/nova/llama4 提升 image、debug config 脱敏、Console systemone 与 `oc_sk_` 新 key 路由、Stats R2 SQL 分页/retry 与 1D ranking，以及发布 `1.18.33`。
+逐节点循环:**读源 → 独立证伪 → 修复 → reconcile/lint**。当前 wiki 已增量核到 opencode `7945de2089`（官方 `dev`，发布仍 `1.18.33`），共 189 个 verified 节点 + 14 个 grouped-catalog 组。本轮主要增量是 Console Go $10 / Go Plus $40 与 `GoPlanChart`、Black 停续订、referral 结束提示，以及 Stats 从 `models.opencode.ai/catalog.json` 做 lab 归因。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|

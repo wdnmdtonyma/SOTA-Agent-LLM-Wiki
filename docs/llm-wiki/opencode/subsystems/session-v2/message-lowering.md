@@ -15,7 +15,7 @@ symbols: [toLLMMessages, toLLMMessage, assistant, toolCall, toolResult]
 related: [spine.v2-provider-turn, model-layer.llm-schema]
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > Message lowering 把 projected V2 `SessionMessage.Message[]` 转成 canonical `@opencode-ai/llm Message[]`,并在同 provider/model continuation 且 assistant step 未失败时保留 provider-native reasoning 与 hosted tool metadata。

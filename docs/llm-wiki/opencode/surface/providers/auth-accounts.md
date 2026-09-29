@@ -9,7 +9,7 @@ symbols: [Auth, Account, ProviderAuth, Credential, Integration, IntegrationConne
 related: [model-layer.auth, model-layer.credential-v2, integrations.integration-v2, ref.auth-combinators]
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > Provider auth/accounts 横跨两代：V1 用 `auth.json`、Console device-code account login 和 plugin `auth` hook；V2 用 `Credential` durable table 与 `Integration` 本地 authentication registry。旧 connector module 已被 `packages/core/src/integration.ts` 取代。

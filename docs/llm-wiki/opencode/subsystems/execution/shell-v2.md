@@ -21,7 +21,7 @@ related:
   - tool.bash
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > V2 bash 工具是 `packages/core/src/tool/bash.ts` 中的精简 core built-in：它用 V2 `Tools.register` 注册 `"bash"`，按 `LocationMutation` 解析 workdir，按 `PermissionV2.assert` 审批 command，但把 V1 tree-sitter、BashArity、streaming spill、background 等能力显式列为 TODO。

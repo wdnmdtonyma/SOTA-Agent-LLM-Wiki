@@ -5,7 +5,7 @@ kind: subsystem
 tier: T2
 v: shared
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 source:
   - packages/opencode/src/command/index.ts
   - packages/opencode/src/config/command.ts

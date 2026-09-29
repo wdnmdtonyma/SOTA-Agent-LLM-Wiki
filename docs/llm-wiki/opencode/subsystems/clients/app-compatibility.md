@@ -47,7 +47,7 @@ related:
   - execution.pty
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > App 兼容层让同一套 UI 连接 legacy unprefixed API 或 current `/api/*` server。这里的 “V1” 特指 legacy server API，即使它由名为 `@opencode-ai/sdk/v2` 的生成客户端承载；“V2” 指 current API。[E: packages/app/V1_API_MIGRATION.md:3]

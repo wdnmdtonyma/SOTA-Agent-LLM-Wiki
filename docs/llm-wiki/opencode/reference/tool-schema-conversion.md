@@ -9,7 +9,7 @@ source:
   - packages/opencode/src/tool/json-schema.ts
   - packages/opencode/src/tool/registry.ts
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 evidence: explicit
 symbols:
   - fromSchema

@@ -55,7 +55,7 @@ related:
   - clients.storybook
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > 共享 UI 层由 `@opencode-ai/ui` 的 design-system primitives 与 `@opencode-ai/session-ui` 的 session-facing components 组成；前者提供 theme/i18n/icons 和 v1/v2 primitives，后者组装 prompt input、attachments、message timeline 与 review surfaces。

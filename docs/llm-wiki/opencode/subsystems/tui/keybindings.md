@@ -9,7 +9,7 @@ symbols: [registerOpencodeKeymap, createOpencodeModeStack, TuiKeybind.Definition
 related: [ref.keybinds, tui.dialog-kit, tui.prompt]
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > TUI keybinding 层把 opencode command ids 映射到 `@opentui/keymap`：默认 leader 是 `ctrl+x`，mode stack 用 keymap data field 控制 layer 可见性，完整绑定细表在 `ref.keybinds`。

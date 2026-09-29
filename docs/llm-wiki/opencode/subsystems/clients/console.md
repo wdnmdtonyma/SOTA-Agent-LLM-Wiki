@@ -15,6 +15,8 @@ source:
   - packages/console/app/src/lib/request-country.ts
   - packages/console/app/src/lib/inference-proxy.ts
   - packages/console/app/src/component/go-models.ts
+  - packages/console/app/src/component/go-plan-chart.tsx
+  - packages/console/app/src/i18n/en.ts
   - packages/console/app/src/routes/oauth/opencode/client.json.ts
   - packages/console/app/src/routes/go/index.tsx
   - packages/console/app/src/routes/api/support/actions/reset-quota.ts
@@ -72,12 +74,14 @@ symbols:
   - Workspace.blockBatch
   - Workspace.unblockBatch
   - requireBlackAccount
+  - GoPlanChart
+  - goPlanModels
 related:
   - server.sharing
   - infra.sst
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > Console 是 opencode 的 hosted 管理和计费 surface: `packages/console/app` 是 SolidStart/Nitro Cloudflare app, `packages/console/core` 封装 PlanetScale/Drizzle、Stripe billing、workspace/user/provider 等业务数据。
@@ -100,17 +104,21 @@ updated: 03e67171ab
 - Auth redirect allowlist 与 server-action referer sanitize 规则是什么?
 - Muse Spark 的 geo / training policy 如何拒绝请求?
 - `cost200K.threshold` 与 OpenAI usage 归一化如何影响计费？
-- Billing/Stripe webhook 写入哪些 Drizzle table?
+- Billing/Stripe webhook 写入哪些 Drizzle table？
+- Go 营销页是单档 $10 还是 Go $10 / Go Plus $40 并排？`subscribeUrl` 是绝对 URL 还是相对路径？
+- `plusLimits` 是 Go 的固定倍数吗？比较图还是 `LimitsGraph` 吗？
+- `?ref=` 还会发 referral credit 吗？
+- Stripe `customer.subscription.updated` 如何强制 Black `cancel_at_period_end`？Black UI 还有 Manage / `generateSessionUrl` 吗？
 
 ## 职责边界
 
-Console 是 hosted product/control-plane surface, 不是 V1/V2 terminal agent loop。`@opencode-ai/console-app` 依赖 SolidStart、Nitro、OpenAuth、Stripe JS、Upstash Redis 和 `@opencode-ai/console-core` [E: packages/console/app/package.json:18] [E: packages/console/app/package.json:19] [E: packages/console/app/package.json:27] [E: packages/console/app/package.json:28] [E: packages/console/app/package.json:29] [E: packages/console/app/package.json:31]。`@opencode-ai/console-core` 依赖 PlanetScale、Drizzle ORM、Stripe、postgres 和 Zod, 表明计费/数据逻辑在 core 包内 [E: packages/console/core/package.json:13] [E: packages/console/core/package.json:15] [E: packages/console/core/package.json:16] [E: packages/console/core/package.json:17] [E: packages/console/core/package.json:19]。
+Console 是 hosted product/control-plane surface, 不是 V1/V2 terminal agent loop。`@opencode-ai/console-app` 依赖 SolidStart、Nitro、OpenAuth、Stripe JS、Upstash Redis 和 `@opencode-ai/console-core` [E: packages/console/app/package.json:18] [E: packages/console/app/package.json:19] [E: packages/console/app/package.json:27] [E: packages/console/app/package.json:28] [E: packages/console/app/package.json:29] [E: packages/console/app/package.json:31]。`@opencode-ai/console-core` 依赖 PlanetScale、Drizzle ORM、Stripe、postgres 和 Zod, 表明计费/数据逻辑在 core 包内 [E: packages/console/core/package.json:13] [E: packages/console/core/package.json:15] [E: packages/console/core/package.json:17] [E: packages/console/core/package.json:16] [E: packages/console/core/package.json:19]。
 
 V1/V2 关系: Console 节点标 `v: na`, 因为它不运行 V1 `SessionPrompt.runLoop` 或 V2 `SessionRunner`; 它通过 hosted APIs、billing、workspace 管理影响产品面 [I]。
 
 `packages/console/app/src/routes/black/subscribe/[plan].tsx` 已从源树删除；Black subscribe 页不再作为 Console 路由存在。
 
-这不是 zen/go live 模型菜单。模型 id 来自外部 catalog；wiki 只记录源码里写死的 contributor id、政策门控与 proxy 路径，不把营销文档里的模型名写成硬编码 live catalog。[I] `go-models.ts` 是 Console 营销/UI allowance 表（5 小时请求数 + 月额度），不是 live zen catalog。UI 写入 `id: "deepseek-flash"`（展示名 DeepSeek V4.1 Flash）。[E: packages/console/app/src/component/go-models.ts:28][E: packages/console/app/src/component/go-models.ts:29] Go FAQ 同样列出该展示名。[E: packages/console/app/src/routes/go/index.tsx:55] workspace lite-section 路径含 `[id]`，lint 无法核这类括号路径，故不挂 `[E:]`。[I]
+这不是 zen/go live 模型菜单。模型 id 来自外部 catalog；wiki 只记录源码里写死的 contributor id、政策门控与 proxy 路径，不把营销文档里的模型名写成硬编码 live catalog。[I] `goModels` 是 Console 营销/UI 表（每条有 `requests` 与 `allowance`），不是 live zen catalog。[E: packages/console/app/src/component/go-models.ts:2] UI 写入 `id: "deepseek-flash"`（展示名 DeepSeek V4.1 Flash）。[E: packages/console/app/src/component/go-models.ts:24][E: packages/console/app/src/component/go-models.ts:25] Go FAQ 的 `models` 表同样列出该展示名。[E: packages/console/app/src/routes/go/index.tsx:58] `plusLimits` 类型是 `Record<string, [number, number]>`，按 model id 写 Go Plus 请求数与额度，不是对 Go 字段做固定倍数；`goPlanModels` 把 `plusRequests` / `plusAllowance` merge 进每条。[E: packages/console/app/src/component/go-models.ts:78][E: packages/console/app/src/component/go-models.ts:110] workspace lite-section / black-section 路径含 `[id]`，lint 无法核这类括号路径，故不挂 `[E:]`。[I]
 
 ## 技术栈
 
@@ -124,7 +132,7 @@ V1/V2 关系: Console 节点标 `v: na`, 因为它不运行 V1 `SessionPrompt.ru
 | 文件 | 角色 |
 | --- | --- |
 | `packages/console/app/src/app.tsx` | App shell。安装 `LanguageProvider`, `I18nProvider`, `MetaProvider`, Suspense 和 `FileRoutes` [E: packages/console/app/src/app.tsx:31] [E: packages/console/app/src/app.tsx:32] [E: packages/console/app/src/app.tsx:33] [E: packages/console/app/src/app.tsx:35] [E: packages/console/app/src/app.tsx:41]。 |
-| `packages/console/app/src/context/auth.ts` | OpenAuth client 和 SolidStart session。`AuthClient` 使用 `VITE_AUTH_URL`, `useAuthSession()` 使用 `Resource.ZEN_SESSION_SECRET`。无 workspace 的登录走 `requireBlackAccount`（`BillingTable.subscriptionID` 非空）；workspace 已 `migratedAt` 时 302/303 到新 Console [E: packages/console/app/src/context/auth.ts:11] [E: packages/console/app/src/context/auth.ts:12] [E: packages/console/app/src/context/auth.ts:31] [E: packages/console/app/src/context/auth.ts:52] [E: packages/console/app/src/context/auth.ts:138]。 |
+| `packages/console/app/src/context/auth.ts` | OpenAuth client 和 SolidStart session。`AuthClient` 使用 `VITE_AUTH_URL`, `useAuthSession()` 使用 `Resource.ZEN_SESSION_SECRET`。无 workspace 的登录走 `requireBlackAccount`（`BillingTable.subscriptionID` 非空）；workspace 已 `migratedAt` 时 302/303 到新 Console [E: packages/console/app/src/context/auth.ts:11] [E: packages/console/app/src/context/auth.ts:13] [E: packages/console/app/src/context/auth.ts:31] [E: packages/console/app/src/context/auth.ts:52] [E: packages/console/app/src/context/auth.ts:138]。 |
 | `packages/console/app/src/lib/inference-proxy.ts` | Zen/Go inference 与 models/usage 转发。导出 `proxyInference` 与共享 503 helper `inferenceUnavailable`。`oc_sk_` 新 key 不查 legacy 表。 |
 | `packages/console/app/src/routes/zen/util/provider/systemone.ts` | `systemoneHelper`：URL 追加 `/systemone`，header `authorization` + `x-session-affinity`。 |
 | `packages/console/app/src/routes/zen/v1/systemone.ts` | `POST /zen/v1/systemone`，`format: "systemone"`、`modelList: "full"`。 |
@@ -140,7 +148,9 @@ V1/V2 关系: Console 节点标 `v: na`, 因为它不运行 V1 `SessionPrompt.ru
 | `packages/console/app/src/routes/zen/util/pricing.ts` | DeepSeek CST 工作日峰时判定。 |
 | `packages/console/function/src/auth-redirect.ts` | OAuth `redirect_uri` allowlist。 |
 | `packages/console/app/src/lib/server-action.ts` | `/_server` referer sanitize。 |
-| `packages/console/app/src/routes/stripe/webhook.ts` | Stripe webhook endpoint。验证 `stripe-signature`, 处理 checkout、customer、subscription、invoice 等事件 [E: packages/console/app/src/routes/stripe/webhook.ts:14] [E: packages/console/app/src/routes/stripe/webhook.ts:15] [E: packages/console/app/src/routes/stripe/webhook.ts:17]。 |
+| `packages/console/app/src/routes/go/index.tsx` | Go 营销页。hero 并排 Go $10 / 月与 Go Plus $40 / 月；`subscribeUrl` 硬编码 `https://opencode.ai/console/go`；比较图 `GoPlanChart`。[E: packages/console/app/src/routes/go/index.tsx:68][E: packages/console/app/src/routes/go/index.tsx:134][E: packages/console/app/src/routes/go/index.tsx:141][E: packages/console/app/src/routes/go/index.tsx:11] |
+| `packages/console/app/src/component/go-plan-chart.tsx` | `GoPlanChart`。数据源 `goPlanModels`，按 featured 默认折叠。[E: packages/console/app/src/component/go-plan-chart.tsx:5][E: packages/console/app/src/component/go-plan-chart.tsx:10] |
+| `packages/console/app/src/routes/stripe/webhook.ts` | Stripe webhook endpoint。验证 `stripe-signature`, 处理 checkout、customer、subscription、invoice 等事件；Black 仍 active 且未 cancel 时强制 `cancel_at_period_end` [E: packages/console/app/src/routes/stripe/webhook.ts:14] [E: packages/console/app/src/routes/stripe/webhook.ts:15] [E: packages/console/app/src/routes/stripe/webhook.ts:17] [E: packages/console/app/src/routes/stripe/webhook.ts:198]。 |
 | `packages/console/core/src/schema/billing.sql.ts` | Billing schema。定义 `billing`, `subscription`, `lite`, `payment`, `usage`, `coupon` tables [E: packages/console/core/src/schema/billing.sql.ts:17] [E: packages/console/core/src/schema/billing.sql.ts:60] [E: packages/console/core/src/schema/billing.sql.ts:74] [E: packages/console/core/src/schema/billing.sql.ts:90] [E: packages/console/core/src/schema/billing.sql.ts:114] [E: packages/console/core/src/schema/billing.sql.ts:146]。 |
 | `packages/console/app/src/routes/oauth/opencode/client.json.ts` | `GET /oauth/opencode/client.json` OAuth Client ID Metadata Document。 |
 | `packages/console/app/src/routes/zen/go/v1/models.ts` | Go models HTTP GET。先 `proxyInference`，无 Response 才本地列 lite catalog。 |
@@ -165,6 +175,22 @@ OAuth function 登录成功后同样要求 Black：`isNotNull(BillingTable.subsc
 `Billing.generateLiteCheckoutUrl` 在 `Actor.assert("user")` 之后立刻 `throw new Error("Go subscriptions have moved to the new Console")`，coupon/session 代码不可达。[E: packages/console/core/src/billing.ts:306][E: packages/console/core/src/billing.ts:307]
 
 workspace last-seen `getLastSeenWorkspaceID` 的 where 含 `isNull(WorkspaceTable.migrated_at)`，已迁移 workspace 不会作为 last-seen 候选。[E: packages/console/app/src/routes/workspace/common.tsx:56] 下拉列表 `getWorkspaces` 只滤 `timeDeleted`，不含 `migrated_at`，已迁移 workspace 仍可能出现在 picker。[E: packages/console/app/src/routes/workspace-picker.tsx:26][E: packages/console/app/src/routes/workspace-picker.tsx:29][E: packages/console/app/src/routes/workspace-picker.tsx:30]
+
+## Go 营销面（$10 / $40）与 referral 结束
+
+Go 页 hero 的 `plans` 数组并排两档：`name: "Go"`、`price: "$10"` 与 `name: "Go Plus"`、`price: "$40"`，价格旁再拼 i18n `go.plans.month`。[E: packages/console/app/src/routes/go/index.tsx:134][E: packages/console/app/src/routes/go/index.tsx:141] `subscribeUrl` 是字符串字面量 `https://opencode.ai/console/go`，CTA `<a href={subscribeUrl}>` 用它，不是相对路径 `/console/go`。[E: packages/console/app/src/routes/go/index.tsx:68][E: packages/console/app/src/routes/go/index.tsx:174]
+
+比较图从 `LimitsGraph` 换成 `GoPlanChart`：`go/index.tsx` import `GoPlanChart`，comparison section 渲染 `<GoPlanChart href={goUsageLimits(language.locale())} />`。[E: packages/console/app/src/routes/go/index.tsx:11][E: packages/console/app/src/routes/go/index.tsx:182] 组件从 `./go-models` 读 `goPlanModels`（含 `plusRequests`）。[E: packages/console/app/src/component/go-plan-chart.tsx:5][E: packages/console/app/src/component/go-plan-chart.tsx:10] `packages/console/app/src/component/limits-graph.tsx` 文件仍在树里，Go 页不再引用它。
+
+`?ref=` 只打开 referral 已结束 notice：`searchParams.ref` 为真时展示 `go.referral.ended.label` / `go.referral.ended`，文案写明不再为分享者或被分享者发 credit。[E: packages/console/app/src/routes/go/index.tsx:100][E: packages/console/app/src/i18n/en.ts:4] 这不是发 credit 的 referral 入口。
+
+`go-ornate-dark.svg` / `go-ornate-light.svg` 已从源树删除。web `docs/go.mdx` / `docs/zen.mdx` 同样是营销面，不要当 live catalog。[I]
+
+## Black 停续订
+
+Stripe `customer.subscription.updated`（与 `incomplete_expired` 分支分开）读取 `body.data.object`：product 不是 Black 则 `return "ignored"`；status 不在 `active` / `trialing` / `past_due` 则 ignored；已有 `cancel_at_period_end` 或 `cancel_at` 则 ignored；否则 `subscriptions.update(..., cancel_at_period_end: true)`，`cancellation_details.comment` 为 `Legacy Black retirement: renewal is not allowed`。[E: packages/console/app/src/routes/stripe/webhook.ts:198][E: packages/console/app/src/routes/stripe/webhook.ts:201][E: packages/console/app/src/routes/stripe/webhook.ts:205][E: packages/console/app/src/routes/stripe/webhook.ts:206] 该 `return "ignored"` 只结束当前 handler 对这次 event 的后续 Black 逻辑；其它 event type 是另一次 webhook POST，不受这次 early return 影响。[E: packages/console/app/src/routes/stripe/webhook.ts:201]
+
+Black billing UI（`packages/console/app/src/routes/workspace/[id]/billing/black-section.tsx`）不再调用 `Billing.generateSessionUrl`，也没有 Manage 按钮；已订阅区块展示 `workspace.black.subscription.ending`。[I] `generateSessionUrl` 仍在 `billing.ts` 与 credit billing / Go lite-section 使用，但 Black 区块不用它。`Billing.subscribeBlack` 仍由 waitlist `enroll` action 调用，与「不允许续订」的 webhook 强制 cancel 并存。[I]
 
 ## systemone format
 
@@ -259,7 +285,7 @@ Go checkout 选 coupon 的代码仍只认未兑换的 `GO12MONTHS100` / `GO6MONT
 3. 无 workspace 时登录必须 `requireBlackAccount`。有 workspace 时先筛 Black accounts，再查 `UserTable` join `WorkspaceTable`。已 `migratedAt` 则 redirect 新 Console；否则更新 `timeSeen` 并回 user actor [E: packages/console/app/src/context/auth.ts:52] [E: packages/console/app/src/context/auth.ts:82] [E: packages/console/app/src/context/auth.ts:107] [E: packages/console/app/src/context/auth.ts:116]。
 4. Zen `handler`（full 与 lite）在解析到 `model` 后先 `proxyInference`；有响应就结束。legacy 无 `migratedAt` / 无 path / 无 key 时继续本地 validate → geo → auth。[E: packages/console/app/src/routes/zen/util/handler.ts:106][E: packages/console/app/src/routes/zen/util/handler.ts:112][E: packages/console/app/src/routes/zen/util/handler.ts:123]
 5. Zen `authenticate()` 查询 API key 时把 `allow_training` 与三个 moderation columns 投影成 workspace flags；`isBlocked` 拒绝所有 model，Anthropic flag 只拒绝 `claude-*`，OpenAI flag 只拒绝 `gpt-*`，命中后抛出 `requestBlockedByUpstreamProvider` 的 `AuthError`。[E: packages/console/app/src/routes/zen/util/handler.ts:708][E: packages/console/app/src/routes/zen/util/handler.ts:709][E: packages/console/app/src/routes/zen/util/handler.ts:710][E: packages/console/app/src/routes/zen/util/handler.ts:711][E: packages/console/app/src/routes/zen/util/handler.ts:788][E: packages/console/app/src/routes/zen/util/handler.ts:789][E: packages/console/app/src/routes/zen/util/handler.ts:790][E: packages/console/app/src/routes/zen/util/handler.ts:792]
-6. Stripe webhook POST 先用 Stripe secret 验证事件, 再按事件类型分支处理 [E: packages/console/app/src/routes/stripe/webhook.ts:14] [E: packages/console/app/src/routes/stripe/webhook.ts:15] [E: packages/console/app/src/routes/stripe/webhook.ts:17]。
+6. Stripe webhook POST 先用 Stripe secret 验证事件, 再按事件类型分支处理。`customer.subscription.updated` 对仍可续订的 Black 调 `subscriptions.update({ cancel_at_period_end: true })` [E: packages/console/app/src/routes/stripe/webhook.ts:14] [E: packages/console/app/src/routes/stripe/webhook.ts:15] [E: packages/console/app/src/routes/stripe/webhook.ts:17] [E: packages/console/app/src/routes/stripe/webhook.ts:205] [E: packages/console/app/src/routes/stripe/webhook.ts:206]。
 7. `Billing.reload()` 读取当前 workspace billing customer/payment method, 创建 invoice 和 invoice items, finalize 并 off-session pay [E: packages/console/core/src/billing.ts:91] [E: packages/console/core/src/billing.ts:102] [E: packages/console/core/src/billing.ts:116] [E: packages/console/core/src/billing.ts:117]。
 8. `Referral.summary()` 并行查询当前 workspace 的 `ReferralRewardTable` history、`ReferralTable` invites、当前 account 作为 invitee 的 referral，以及 invitee 侧 rewards。[E: packages/console/core/src/referral.ts:57][E: packages/console/core/src/referral.ts:62]
 9. Go usage endpoint 是 SolidStart `GET` `packages/console/app/src/routes/zen/go/v1/usage.ts`。先 `proxyInference(request).catch(inferenceUnavailable)`；有 Response 直接返回。否则从 `Authorization: Bearer` 取 API key；缺 key 返回 401 `AuthError`。找到 key 后再读该 user 的 `LiteTable` row，没有 Go/lite row 返回 403 `EntitlementError`。[E: packages/console/app/src/routes/zen/go/v1/usage.ts:12][E: packages/console/app/src/routes/zen/go/v1/usage.ts:16][E: packages/console/app/src/routes/zen/go/v1/usage.ts:99][E: packages/console/app/src/routes/zen/go/v1/usage.ts:104]
@@ -281,6 +307,9 @@ Console 把 hosted billing/account/workspace 逻辑从 terminal agent runtime �
 - `proxyInference` 覆盖 zen 与 go 的 POST completions/responses/messages/**systemone**，以及 `GET /zen/v1/models`、`GET /zen/go/v1/models`、`GET /zen/go/v1/usage`。`oc_sk_` 新 key 跳过 legacy 表仍会转发。[E: packages/console/app/src/lib/inference-proxy.ts:11][E: packages/console/app/src/lib/inference-proxy.ts:47][E: packages/console/app/src/routes/zen/util/handler.ts:106]
 - `requiresGoTrainingConsent` 不含 `-free` 变体；geo block 则包含 1.2/1.3 的 contributor 与 contributor-free。[E: packages/console/app/src/routes/zen/util/trainingConsent.ts:2][E: packages/console/app/src/lib/request-country.ts:35]
 - `generateLiteCheckoutUrl` 的 throw 留在可达代码之后仍有 coupon 选择逻辑，那是死代码，不能当成旧 Console 仍能开 Go。[E: packages/console/core/src/billing.ts:307]
+- Go Plus 额度来自 `plusLimits` 逐 model 表，不是 Go `requests`/`allowance` 的固定倍数。[E: packages/console/app/src/component/go-models.ts:78]
+- `?ref=` 只展示 ended copy，不发 credit。[E: packages/console/app/src/routes/go/index.tsx:100]
+- Black 页路径含 `[id]`，Manage / `generateSessionUrl` 已从该文件去掉；续订由 webhook 强制 `cancel_at_period_end`。[I][E: packages/console/app/src/routes/stripe/webhook.ts:206]
 
 ## Sources
 
@@ -294,6 +323,8 @@ Console 把 hosted billing/account/workspace 逻辑从 terminal agent runtime �
 - `packages/console/app/src/lib/request-country.ts`
 - `packages/console/app/src/lib/inference-proxy.ts`
 - `packages/console/app/src/component/go-models.ts`
+- `packages/console/app/src/component/go-plan-chart.tsx`
+- `packages/console/app/src/i18n/en.ts`
 - `packages/console/app/src/routes/oauth/opencode/client.json.ts`
 - `packages/console/app/src/routes/go/index.tsx`
 - `packages/console/app/src/routes/api/support/actions/reset-quota.ts`
@@ -312,6 +343,7 @@ Console 把 hosted billing/account/workspace 逻辑从 terminal agent runtime �
 - `packages/console/app/src/routes/zen/v1/systemone.ts`
 - `packages/console/app/src/routes/zen/util/provider/systemone.ts`
 - `packages/console/app/src/routes/workspace/common.tsx`
+- `packages/console/app/src/routes/workspace-picker.tsx`
 - `packages/console/app/src/routes/download/index.tsx`
 - `packages/console/function/src/auth-redirect.ts`
 - `packages/console/function/src/auth.ts`

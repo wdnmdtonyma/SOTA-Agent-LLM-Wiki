@@ -25,7 +25,7 @@ symbols:
   - GlobalBus
   - EventV2Bridge
 evidence: explicit
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > 这份节点是事件系统总账：V2 durable session events 是存储与 replay 语义，GlobalBus/API event envelope 是传输语义，两者不能混讲。

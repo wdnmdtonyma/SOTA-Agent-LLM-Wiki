@@ -9,7 +9,7 @@ symbols: [RunCommand, SessionPrompt, SessionProcessor, LLM, CodeModeTool, Sessio
 related: [spine.v1-v2-relationship, ref.package-index, integrations.integration-v2, tool.execute, subsys.tools.codemode]
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > opencode 是一个 Bun/TypeScript/Effect 多包 monorepo,当前默认用户路径仍由 `packages/opencode` 的 V1 CLI 与 V1 session loop 承担,V2 `packages/core` 是 Effect-native durable/event-sourced 新内核。

@@ -14,7 +14,7 @@ symbols: [App, createOpencode, handleToolUpdate]
 related: [server.http-server]
 evidence: explicit
 status: verified
-updated: 03e67171ab
+updated: 7945de2089
 ---
 
 > `@opencode-ai/slack` 是一个 Slack Bolt Socket Mode bot：它为 Slack thread 维护一个 opencode session，并把工具完成事件、分享链接和 assistant response 回贴到同一个 thread。
