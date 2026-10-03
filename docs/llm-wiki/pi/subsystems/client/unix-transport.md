@@ -21,7 +21,7 @@ related:
   - subsys.server.unix-transport
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `@earendil-works/pi-client/unix` 是显式 opt-in 的 Node-compatible Unix-domain socket `ByteTransportFactory`，并提供按 `<serverId>.sock` 探测的 `discoverUnixServers()`。root `Client` 保持 runtime-neutral，Unix subpath 才 import `node:net` [E: packages/client/package.json:13] [E: packages/client/src/unix.ts:2] [E: packages/client/src/unix.ts:88]。
@@ -60,7 +60,7 @@ local `close()` 幂等：先标 closed，再 `#markLocalClose()`（阻止把这�
 
 ## Gotcha
 
-- queue limit 统计已经 enqueue 但尚未 settle 的 copied bytes，不包含 kernel/socket 内部不可见 buffer [E: packages/client/src/unix.ts:152] [E: packages/client/src/unix.ts:166] [I]。
+- queue limit 统计已经 enqueue 但尚未 settle 的 copied bytes，不包含 kernel/socket 内部不可见 buffer [E: packages/client/src/unix.ts:155] [E: packages/client/src/unix.ts:166] [I]。
 - 自定义 `Client.maxFrameLength` 时，Unix factory 不会自动读取该 option；caller 应显式匹配 `maxPendingBytes` [E: packages/client/src/unix.ts:95] [E: packages/client/README.md:72] [I]。
 - transport 支持 Bun 的依据是 Node-compatible `node:net` surface 与 package documentation；实现没有 Bun-specific branch [E: packages/client/src/unix.ts:2] [E: packages/client/README.md:48] [I]。
 - `createUnixTransportFactory()` 不认证 peer。需要其它认证机制时应提供 custom `ByteTransportFactory` [E: packages/client/src/unix.ts:88] [E: packages/client/README.md:54]。

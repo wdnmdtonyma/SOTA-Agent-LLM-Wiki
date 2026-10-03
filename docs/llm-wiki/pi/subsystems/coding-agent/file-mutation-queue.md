@@ -21,7 +21,7 @@ related:
  - surface.tools.write
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > 文件变更串行化子系统是 `withFileMutationQueue(filePath, fn)`: 它把同一目标文件的 mutation callback 排成 FIFO 链, 让内置 `edit`、`write` 和扩展工具在默认并行 tool call 环境里避免 read-modify-write 互相覆盖。
@@ -50,7 +50,7 @@ updated: 6f7551516b
 
 ## 数据模型与函数
 
-`fileMutationQueues` 是 `Map<string, Promise<void>>`, key 是 canonicalized target path, value 是该 key 最新的 promise chain tail [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:4] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:35] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:42]. `registrationQueue` 是 module-level `Promise.resolve()` 起步的注册串行器,用来让多个调用按到达顺序注册自己的 queue slot [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:5] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:33] [E: packages/coding-agent/CHANGELOG.md:2577].
+`fileMutationQueues` 是 `Map<string, Promise<void>>`, key 是 canonicalized target path, value 是该 key 最新的 promise chain tail [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:4] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:35] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:42]. `registrationQueue` 是 module-level `Promise.resolve()` 起步的注册串行器,用来让多个调用按到达顺序注册自己的 queue slot [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:5] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:33] [E: packages/coding-agent/CHANGELOG.md:2780].
 
 `getMutationQueueKey(filePath)` 先 `resolve(filePath)` 得到 absolute-ish resolved path,再尝试 `realpath(resolvedPath)` [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:17] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:19]. 如果 `realpath()` 失败且错误 code 是 `ENOENT` 或 `ENOTDIR`, key 退回 `resolvedPath`;其他错误继续抛出 [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:7] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:12] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:21] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:24]. 这个设计让已有文件的 symlink alias 通过 realpath 归并到同一队列,但新文件只能以 resolved path 排队,因为目标还不存在 .
 
@@ -69,7 +69,7 @@ updated: 6f7551516b
 
 tool calls 默认可能并行,如果两个 mutating tools 同时读同一个旧文件、各自计算更新,最后落盘的 write 会覆盖另一个更新;扩展文档把这作为 custom tool 必须加入 queue 的主要原因 . 因此 queue 的关键权衡是 per-file serialization:同一目标文件牺牲并行度换一致性,不同目标文件保留并行度 [E: packages/coding-agent/test/file-mutation-queue.test.ts:56] [E: packages/coding-agent/test/file-mutation-queue.test.ts:74] [I].
 
-`registrationQueue` 的存在是为了保持 request order,避免 concurrent `edit`/`write` 在 queue-key resolution 期间重排;CHANGELOG 明确记录曾修复同文件并发操作在 key resolution 期间被重排的问题 [E: packages/coding-agent/CHANGELOG.md:2577]. 现实现把 key resolution 和 map update 放进同一个 registration chain,因此每次注册按上一轮 registration settle 后才进入 [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:33] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:42] [I].
+`registrationQueue` 的存在是为了保持 request order,避免 concurrent `edit`/`write` 在 queue-key resolution 期间重排;CHANGELOG 明确记录曾修复同文件并发操作在 key resolution 期间被重排的问题 [E: packages/coding-agent/CHANGELOG.md:2780]. 现实现把 key resolution 和 map update 放进同一个 registration chain,因此每次注册按上一轮 registration settle 后才进入 [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:33] [E: packages/coding-agent/src/core/tools/file-mutation-queue.ts:42] [I].
 
 `edit` 和 `write` 的 queue callback 内定义 `throwIfAborted()`,并在 filesystem await 后检查 `signal.aborted` [E: packages/coding-agent/src/core/tools/edit.ts:168] [E: packages/coding-agent/src/core/tools/edit.ts:169] [E: packages/coding-agent/src/core/tools/edit.ts:178] [E: packages/coding-agent/src/core/tools/edit.ts:188] [E: packages/coding-agent/src/core/tools/edit.ts:195] [E: packages/coding-agent/src/core/tools/edit.ts:199] [E: packages/coding-agent/src/core/tools/write.ts:72] [E: packages/coding-agent/src/core/tools/write.ts:73] [E: packages/coding-agent/src/core/tools/write.ts:79] [E: packages/coding-agent/src/core/tools/write.ts:83]. abort 回归测试证明 first write/edit 被 abort 后,second mutation 不会在 first filesystem write settle 前开始 [E: packages/coding-agent/test/file-mutation-queue.test.ts:211] [E: packages/coding-agent/test/file-mutation-queue.test.ts:213] [E: packages/coding-agent/test/file-mutation-queue.test.ts:265] [E: packages/coding-agent/test/file-mutation-queue.test.ts:267].
 
@@ -83,7 +83,7 @@ tool calls 默认可能并行,如果两个 mutating tools 同时读同一个旧�
 
 ## 跨包边界
 
-`withFileMutationQueue` 属于 `pi-coding-agent` 产品层 built-in tools 子系统,并从 `packages/coding-agent/src/core/tools/index.ts`、`core/sdk.ts` 和包入口 `src/index.ts` re-export,让扩展和 SDK 用户可以导入同一个 helper [E: packages/coding-agent/src/core/tools/index.ts:20] [E: packages/coding-agent/src/core/sdk.ts:33] [E: packages/coding-agent/src/core/sdk.ts:120] [E: packages/coding-agent/src/index.ts:376]. 它不在 `pi-agent-core` 中,因此 agent-core 只负责并行执行 tool calls;文件 mutation 的 per-path coordination 是 coding-agent 层的约定和导出 [I].
+`withFileMutationQueue` 属于 `pi-coding-agent` 产品层 built-in tools 子系统,并从 `packages/coding-agent/src/core/tools/index.ts`、`core/sdk.ts` 和包入口 `src/index.ts` re-export,让扩展和 SDK 用户可以导入同一个 helper [E: packages/coding-agent/src/core/tools/index.ts:20] [E: packages/coding-agent/src/core/sdk.ts:32] [E: packages/coding-agent/src/core/sdk.ts:120] [E: packages/coding-agent/src/index.ts:389]. 它不在 `pi-agent-core` 中,因此 agent-core 只负责并行执行 tool calls;文件 mutation 的 per-path coordination 是 coding-agent 层的约定和导出 [I].
 
 [surface.tools.edit](../../surface/tools/edit.md) 是 `edit` 工具节点;它说明 exact replacement、diff details 和 `EditOperations`,本节点只覆盖 `edit` 与 queue 的并发边界 [E: packages/coding-agent/src/core/tools/edit.ts:83] [E: packages/coding-agent/src/core/tools/edit.ts:151] [E: packages/coding-agent/src/core/tools/edit.ts:163]. [surface.tools.write](../../surface/tools/write.md) 是 `write` 工具节点;它说明完整覆盖写入和 `WriteOperations`,本节点只覆盖 `write` 与 queue 的 mkdir/write serialization [E: packages/coding-agent/src/core/tools/write.ts:27] [E: packages/coding-agent/src/core/tools/write.ts:44] [E: packages/coding-agent/src/core/tools/write.ts:67].
 

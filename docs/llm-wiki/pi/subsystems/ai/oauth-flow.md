@@ -11,10 +11,13 @@ source:
   - packages/ai/src/auth/oauth/pkce.ts
   - packages/ai/src/auth/oauth/kimi-coding.ts
   - packages/ai/src/auth/oauth/openrouter.ts
+  - packages/ai/src/auth/oauth/anthropic.ts
+  - packages/ai/src/auth/oauth/openai-chatgpt.ts
   - packages/ai/src/auth/oauth/github-copilot.ts
   - packages/ai/test/github-copilot-oauth.test.ts
   - packages/ai/src/bun-oauth.ts
   - packages/ai/src/providers/anthropic.ts
+  - packages/ai/src/providers/openai.ts
   - packages/ai/src/providers/openai-codex.ts
   - packages/ai/src/providers/kimi-coding.ts
   - packages/ai/src/providers/openrouter.ts
@@ -22,10 +25,15 @@ source:
 symbols:
   - loadAnthropicOAuth
   - loadOpenAICodexOAuth
+  - loadOpenAIChatGPTOAuth
   - loadKimiCodingOAuth
   - loadOpenRouterOAuth
   - loadGitHubCopilotOAuth
+  - loadMetaOAuth
+  - loadRadiusOAuth
   - githubCopilotOAuth
+  - anthropicOAuth
+  - openaiChatGPTOAuth
   - registerBundledOAuthFlowLoaders
   - pollOAuthDeviceCodeFlow
   - generatePKCE
@@ -34,7 +42,7 @@ related:
   - subsys.ai.auth-resolution
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `subsys.ai.oauth-flow` 描述当前 `pi-ai` OAuth 实现入口：provider 按需加载 flow，standalone Bun 注入静态 flow，公共 `./oauth` subpath 仅保留 coding-agent extension 的类型兼容面。
@@ -46,13 +54,15 @@ updated: 6f7551516b
 - device-code polling 如何处理首次等待、`slow_down`、取消和超时?
 - PKCE verifier/challenge 如何生成?
 - GitHub Copilot login 怎样串行 enable policy，并对 GET `/models` 429 重试一次?
+- Anthropic copy-code login 与 browser login 的 redirect_uri 有何不同?
+- OpenAI “Sign in with ChatGPT” 怎样用 device id 和端口 1455?
 - `@earendil-works/pi-ai/oauth` 现在导出实现还是只导出类型?
 
 ## 搬家后的入口边界
 
-旧 `packages/ai/src/utils/oauth/index.ts` 的全局 registry、`getOAuthProvider()` 与 deprecated token wrapper 已删除；当前 OAuth 实现没有新的同形 `index.ts`。内部实现入口是 `packages/ai/src/auth/oauth/load.ts`：它定义 Anthropic、OpenAI Codex、GitHub Copilot、OpenRouter、Kimi Coding、xAI 与 Radius 的 lazy loader，并统一返回 `OAuthAuth` contract [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:22] [E: packages/ai/src/auth/oauth/load.ts:34] [E: packages/ai/src/auth/oauth/load.ts:73]。
+旧 `packages/ai/src/utils/oauth/index.ts` 的全局 registry、`getOAuthProvider()` 与 deprecated token wrapper 已删除；当前 OAuth 实现没有新的同形 `index.ts`。内部实现入口是 `packages/ai/src/auth/oauth/load.ts`：`OAuthFlowLoaders` 现在有 **9** 个入口——Anthropic、OpenAI Codex、**OpenAI ChatGPT**、GitHub Copilot、OpenRouter、Kimi Coding、**Meta**、xAI 与 Radius——并统一返回 `OAuthAuth` contract [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:15] [E: packages/ai/src/auth/oauth/load.ts:17] [E: packages/ai/src/auth/oauth/load.ts:21] [E: packages/ai/src/auth/oauth/load.ts:23] [E: packages/ai/src/auth/oauth/load.ts:43] [E: packages/ai/src/auth/oauth/load.ts:73]。
 
-公共 package subpath `./oauth` 仍存在于 exports map [E: packages/ai/package.json:34]，但对应 `src/oauth.ts` 只 `export type` coding-agent extension compatibility declarations；它不再重导出 OAuth flow 实现、registry 或 helpers [E: packages/ai/src/oauth.ts:2] [E: packages/ai/src/oauth.ts:10]。因此“被删 `index.ts` 的新入口”要分成两层理解：应用内部 flow 加载走 `auth/oauth/load.ts`，外部 `@earendil-works/pi-ai/oauth` 只是 type-only compatibility entry。
+公共 package subpath `./oauth` 仍存在于 exports map [E: packages/ai/package.json:38]，但对应 `src/oauth.ts` 只 `export type` coding-agent extension compatibility declarations；它不再重导出 OAuth flow 实现、registry 或 helpers [E: packages/ai/src/oauth.ts:2] [E: packages/ai/src/oauth.ts:10]。因此“被删 `index.ts` 的新入口”要分成两层理解：应用内部 flow 加载走 `auth/oauth/load.ts`，外部 `@earendil-works/pi-ai/oauth` 只是 type-only compatibility entry。
 
 provider factory 自己声明 OAuth 能力并绑定 loader。除 Anthropic/OpenAI Codex 外，Kimi 与 OpenRouter 现在也同时提供 API-key 与 lazy OAuth method。[E: packages/ai/src/providers/kimi-coding.ts:12] [E: packages/ai/src/providers/kimi-coding.ts:14] [E: packages/ai/src/providers/openrouter.ts:15] [E: packages/ai/src/providers/openrouter.ts:17]
 
@@ -60,9 +70,21 @@ provider factory 自己声明 OAuth 能力并绑定 loader。除 Anthropic/OpenA
 
 Kimi Code 使用 RFC 8628 device authorization：默认 host 为 `https://auth.kimi.com`，可由 provider env 覆盖；授权与 token polling 都使用 JSON/form 请求，成功 credential 携带 access/refresh/expiry。[E: packages/ai/src/auth/oauth/kimi-coding.ts:9] [E: packages/ai/src/auth/oauth/kimi-coding.ts:14] [E: packages/ai/src/auth/oauth/kimi-coding.ts:36] [E: packages/ai/src/auth/oauth/kimi-coding.ts:70] [E: packages/ai/src/auth/oauth/kimi-coding.ts:120] [E: packages/ai/src/auth/oauth/kimi-coding.ts:142]
 
-OpenRouter 使用 PKCE 与单次 loopback HTTP callback；它把 authorization code 换成长期 API key，并保存为 `type: "oauth"`、空 refresh、`Number.MAX_SAFE_INTEGER` expiry。callback host 默认 `127.0.0.1`，可由 `PI_OAUTH_CALLBACK_HOST` 覆盖。[E: packages/ai/src/auth/oauth/openrouter.ts:14] [E: packages/ai/src/auth/oauth/openrouter.ts:20] [E: packages/ai/src/auth/oauth/openrouter.ts:25] [E: packages/ai/src/auth/oauth/openrouter.ts:80] [E: packages/ai/src/auth/oauth/openrouter.ts:123] [E: packages/ai/src/auth/oauth/openrouter.ts:127] [E: packages/ai/src/auth/oauth/openrouter.ts:242]
+OpenRouter 使用 PKCE 与单次 loopback HTTP callback；它把 authorization code 换成长期 API key，并保存为 `type: "oauth"`、空 refresh、`Number.MAX_SAFE_INTEGER` expiry。callback host 默认 `127.0.0.1`，可由 `PI_OAUTH_CALLBACK_HOST` 覆盖。[E: packages/ai/src/auth/oauth/openrouter.ts:14] [E: packages/ai/src/auth/oauth/openrouter.ts:19] [E: packages/ai/src/auth/oauth/openrouter.ts:24] [E: packages/ai/src/auth/oauth/openrouter.ts:58] [E: packages/ai/src/auth/oauth/openrouter.ts:101] [E: packages/ai/src/auth/oauth/openrouter.ts:105] [E: packages/ai/src/auth/oauth/openrouter.ts:113]
 
-OpenRouter 登录同时启动 loopback callback 等待与 `manual_code` prompt；用户可粘贴裸 authorization code 或最终 redirect URL。两条路径竞争同一个登录结果：manual input 会取消未 claimed 的 callback wait，成功 callback 则返回 credential；`finally` 同时 abort manual prompt 并关闭 callback server，因此 remote/headless browser 不必能回连运行 pi 的机器。[E: packages/ai/src/auth/oauth/openrouter.ts:242] [E: packages/ai/src/auth/oauth/openrouter.ts:245] [E: packages/ai/src/auth/oauth/openrouter.ts:262] [E: packages/ai/src/auth/oauth/openrouter.ts:269] [E: packages/ai/src/auth/oauth/openrouter.ts:278] [E: packages/ai/src/auth/oauth/openrouter.ts:285] [E: packages/ai/src/auth/oauth/openrouter.ts:291] [E: packages/ai/src/auth/oauth/openrouter.ts:294] [E: packages/ai/src/auth/oauth/openrouter.ts:295]
+OpenRouter 登录同时启动 loopback callback 等待与 `manual_code` prompt；用户可粘贴裸 authorization code 或最终 redirect URL。两条路径竞争同一个登录结果：manual input 会取消未 claimed 的 callback wait，成功 callback 则返回 credential；`finally` 同时 abort manual prompt 并关闭 callback server，因此 remote/headless browser 不必能回连运行 pi 的机器。[E: packages/ai/src/auth/oauth/openrouter.ts:113] [E: packages/ai/src/auth/oauth/openrouter.ts:169] [E: packages/ai/src/auth/oauth/openrouter.ts:138] [E: packages/ai/src/auth/oauth/openrouter.ts:169] [E: packages/ai/src/auth/oauth/openrouter.ts:169] [E: packages/ai/src/auth/oauth/openrouter.ts:169] [E: packages/ai/src/auth/oauth/openrouter.ts:169] [E: packages/ai/src/auth/oauth/openrouter.ts:153] [E: packages/ai/src/auth/oauth/openrouter.ts:154]
+
+## Anthropic copy-code login
+
+`anthropicOAuth.login` 先弹出 `select`：`browser`（`ANTHROPIC_BROWSER_LOGIN_METHOD`）与 `copy_code`（`ANTHROPIC_COPY_CODE_LOGIN_METHOD`，label “Copy code login (headless)”）[E: packages/ai/src/auth/oauth/anthropic.ts:269] [E: packages/ai/src/auth/oauth/anthropic.ts:273] [E: packages/ai/src/auth/oauth/anthropic.ts:277] [E: packages/ai/src/auth/oauth/anthropic.ts:278] [E: packages/ai/src/auth/oauth/anthropic.ts:279] [E: packages/ai/src/auth/oauth/anthropic.ts:283]。
+
+browser 路径启动 `127.0.0.1:53692` callback（host 可由 `PI_OAUTH_CALLBACK_HOST` 覆盖），`redirect_uri` 是 `http://localhost:53692/callback`，并 `waitForCallbackOrManualInput` 接受粘贴的 code / redirect URL [E: packages/ai/src/auth/oauth/anthropic.ts:17] [E: packages/ai/src/auth/oauth/anthropic.ts:18] [E: packages/ai/src/auth/oauth/anthropic.ts:20] [E: packages/ai/src/auth/oauth/anthropic.ts:138] [E: packages/ai/src/auth/oauth/anthropic.ts:155] [E: packages/ai/src/auth/oauth/anthropic.ts:168]。copy-code 路径**不**开 callback server：`redirect_uri` 换成 `https://platform.claude.com/oauth/code/callback`，然后 `prompt({ type: "manual_code" })` 解析 `code#state` / URL / 裸 code，用同一 `exchangeAuthorizationCode()` 换 token [E: packages/ai/src/auth/oauth/anthropic.ts:21] [E: packages/ai/src/auth/oauth/anthropic.ts:191] [E: packages/ai/src/auth/oauth/anthropic.ts:197] [E: packages/ai/src/auth/oauth/anthropic.ts:209] [E: packages/ai/src/auth/oauth/anthropic.ts:215] [E: packages/ai/src/auth/oauth/anthropic.ts:219]。`parseAuthorizationInput()` 接受 URL query、`code#state`、`code=` form，或整段当 code [E: packages/ai/src/auth/oauth/anthropic.ts:27] [E: packages/ai/src/auth/oauth/anthropic.ts:41] [E: packages/ai/src/auth/oauth/anthropic.ts:54]。
+
+## Sign in with ChatGPT
+
+`openaiProvider()` 的 OAuth 是 `lazyOAuth({ name: "OpenAI (ChatGPT subscription)", isSubscription: true, loginLabel: "Sign in with ChatGPT", load: loadOpenAIChatGPTOAuth })` [E: packages/ai/src/providers/openai.ts:14] [E: packages/ai/src/providers/openai.ts:17] [E: packages/ai/src/providers/openai.ts:18]。实现 `openaiChatGPTOAuth` 把 ChatGPT 用户 access token 直接打到 `api.openai.com`（`RESOURCE = "https://api.openai.com/v1"`；`toAuth` 返回 `{ apiKey: credential.access }`）[E: packages/ai/src/auth/oauth/openai-chatgpt.ts:21] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:300] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:306] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:307]。
+
+`loginOpenAIChatGPT` 要求 `LoginOptions.getDeviceId()` 返回 UUID，再编成 `urn:uuid:...` 的 `ext_agent_host_id`。callback 固定 `127.0.0.1:1455/auth/callback`；`EADDRINUSE` 时抛端口占用错误（另一 pi 登录或 Codex CLI），避免浏览器把 callback 交给错误 state [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:226] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:233] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:23] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:24] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:243] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:246] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:254]。登录同样 race callback 与 `manual_code`；`finally` abort manual prompt、`close()` 再 `closeAllConnections()`，防止浏览器预连把下一轮 callback 送到旧 server [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:271] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:282] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:289] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:296] [E: packages/ai/src/auth/oauth/openai-chatgpt.ts:296]。这不是 `openai-codex` 的 ChatGPT Plus/Pro Codex 流。
 
 ## GitHub Copilot login
 
@@ -76,9 +98,9 @@ GET `${baseUrl}/models` 的 429 走 `fetchWithRateLimitRetry`（login 传 `maxRe
 
 普通运行时通过 variable specifier 调用 dynamic `import()`；loader 在源 `.ts` 与构建后 `.js` 之间重写后缀，使 bundler 不必静态追入依赖 `node:http` / `node:crypto` 的 flow 实现 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/auth/oauth/load.ts:10] [E: packages/ai/src/auth/oauth/load.ts:11]。
 
-每个 `load*OAuth()` 先检查 module-local `bundledLoaders`：存在时调用已注册函数，否则动态 import 对应实现并取出 `OAuthAuth` object [E: packages/ai/src/auth/oauth/load.ts:25] [E: packages/ai/src/auth/oauth/load.ts:28] [E: packages/ai/src/auth/oauth/load.ts:33] [E: packages/ai/src/auth/oauth/load.ts:32] [E: packages/ai/src/auth/oauth/load.ts:38] [E: packages/ai/src/auth/oauth/load.ts:39]。
+每个 `load*OAuth()` 先检查 module-local `bundledLoaders`：存在时调用已注册函数，否则动态 import 对应实现并取出 `OAuthAuth` object [E: packages/ai/src/auth/oauth/load.ts:26] [E: packages/ai/src/auth/oauth/load.ts:29] [E: packages/ai/src/auth/oauth/load.ts:34] [E: packages/ai/src/auth/oauth/load.ts:33] [E: packages/ai/src/auth/oauth/load.ts:39] [E: packages/ai/src/auth/oauth/load.ts:40]。
 
-standalone Bun 不能依赖这些 flow 在运行时仍是可发现 chunk，所以 `registerBunOAuthFlows()` 静态导入七组实现并调用 `registerBundledOAuthFlowLoaders()`；Radius 以 factory 接受 `{name, gateway}`，其余 loader 返回固定 `OAuthAuth` object [E: packages/ai/src/bun-oauth.ts:1] [E: packages/ai/src/bun-oauth.ts:9] [E: packages/ai/src/bun-oauth.ts:12] [E: packages/ai/src/bun-oauth.ts:21]。package exports 为该 bundle bridge 提供独立 `./bun-oauth` subpath [E: packages/ai/package.json:42]。
+standalone Bun 不能依赖这些 flow 在运行时仍是可发现 chunk，所以 `registerBunOAuthFlows()` 静态导入 **9** 组实现并调用 `registerBundledOAuthFlowLoaders()`：Anthropic、OpenAI Codex、OpenAI ChatGPT、GitHub Copilot、OpenRouter、Kimi Coding、Meta、xAI，以及 factory 形态的 Radius `{name, gateway}` [E: packages/ai/src/bun-oauth.ts:1] [E: packages/ai/src/bun-oauth.ts:6] [E: packages/ai/src/bun-oauth.ts:13] [E: packages/ai/src/bun-oauth.ts:17] [E: packages/ai/src/bun-oauth.ts:21] [E: packages/ai/src/bun-oauth.ts:23]。package exports 为该 bundle bridge 提供独立 `./bun-oauth` subpath [E: packages/ai/package.json:46]。
 
 ## Device-code polling
 
@@ -96,10 +118,11 @@ deadline 由 `expiresInSeconds` 计算，未提供时为 infinity；初始 inter
 
 ## 设计动机与 gotcha
 
-- flow loader 隔离 Node-only implementation，provider factory 只持有 lazy `OAuthAuth`；这让 core/provider import 不必立刻加载 callback server 与 PKCE 依赖 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/providers/anthropic.ts:45] [I]。
-- `registerBundledOAuthFlowLoaders()` 是 process/module 级 override，不是 per-provider registry；loader shape 明确包含 Anthropic、OpenAI Codex、GitHub Copilot、OpenRouter、Kimi Coding、xAI 与 Radius 七类，注册后都优先使用 bundled functions [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:15] [E: packages/ai/src/auth/oauth/load.ts:16] [E: packages/ai/src/auth/oauth/load.ts:17] [E: packages/ai/src/auth/oauth/load.ts:18] [E: packages/ai/src/auth/oauth/load.ts:19] [E: packages/ai/src/auth/oauth/load.ts:21] [E: packages/ai/src/auth/oauth/load.ts:22] [E: packages/ai/src/auth/oauth/load.ts:28] [E: packages/ai/src/auth/oauth/load.ts:29]。
+- flow loader 隔离 Node-only implementation，provider factory 只持有 lazy `OAuthAuth`；这让 core/provider import 不必立刻加载 callback server 与 PKCE 依赖 [E: packages/ai/src/auth/oauth/load.ts:9] [E: packages/ai/src/providers/anthropic.ts:76] [I]。
+- `registerBundledOAuthFlowLoaders()` 是 process/module 级 override，不是 per-provider registry；loader shape 明确包含 Anthropic、OpenAI Codex、OpenAI ChatGPT、GitHub Copilot、OpenRouter、Kimi Coding、Meta、xAI 与 Radius 九类，注册后都优先使用 bundled functions [E: packages/ai/src/auth/oauth/load.ts:14] [E: packages/ai/src/auth/oauth/load.ts:15] [E: packages/ai/src/auth/oauth/load.ts:16] [E: packages/ai/src/auth/oauth/load.ts:17] [E: packages/ai/src/auth/oauth/load.ts:21] [E: packages/ai/src/auth/oauth/load.ts:22] [E: packages/ai/src/auth/oauth/load.ts:23] [E: packages/ai/src/auth/oauth/load.ts:29]。
 - `@earendil-works/pi-ai/oauth` 名称容易让人误以为仍包含实现；目标 commit 中它只保留 extension OAuth types [E: packages/ai/src/oauth.ts:2]。
-- `waitBeforeFirstPoll` 与 server-supplied `slow_down.intervalSeconds` 都是本轮新增的 cadence 控制，旧 wiki 的“总是先 poll、slow_down 固定 +5 秒”描述已不成立 [E: packages/ai/src/auth/oauth/device-code.ts:21] [E: packages/ai/src/auth/oauth/device-code.ts:85]。
+- Anthropic workload identity federation **不是** OAuth flow：它是 `anthropicProvider()` API-key `resolve` 的最后一档 ambient env（`ANTHROPIC_FEDERATION_RULE_ID` 等），见 [surface.providers.auth](../../surface/providers/auth.md)。[E: packages/ai/src/providers/anthropic.ts:53] [E: packages/ai/src/providers/anthropic.ts:69]
+- `waitBeforeFirstPoll` 与 server-supplied `slow_down.intervalSeconds` 都是 cadence 控制，旧 wiki 的“总是先 poll、slow_down 固定 +5 秒”描述已不成立 [E: packages/ai/src/auth/oauth/device-code.ts:21] [E: packages/ai/src/auth/oauth/device-code.ts:85]。
 
 ## 跨包边界
 
@@ -115,10 +138,13 @@ deadline 由 `expiresInSeconds` 计算，未提供时为 infinity；初始 inter
 - packages/ai/src/auth/oauth/pkce.ts
 - packages/ai/src/auth/oauth/kimi-coding.ts
 - packages/ai/src/auth/oauth/openrouter.ts
+- packages/ai/src/auth/oauth/anthropic.ts
+- packages/ai/src/auth/oauth/openai-chatgpt.ts
 - packages/ai/src/auth/oauth/github-copilot.ts
 - packages/ai/test/github-copilot-oauth.test.ts
 - packages/ai/src/bun-oauth.ts
 - packages/ai/src/providers/anthropic.ts
+- packages/ai/src/providers/openai.ts
 - packages/ai/src/providers/openai-codex.ts
 - packages/ai/src/providers/kimi-coding.ts
 - packages/ai/src/providers/openrouter.ts

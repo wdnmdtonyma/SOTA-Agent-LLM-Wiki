@@ -17,7 +17,7 @@ related:
  - ref.tui.component-types
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `renderLatex()` 把一段基础 LaTeX math 编成终端可用的 Unicode 文本；不支持或畸形的输入返回 `undefined`，Markdown 渲染器再回退到原文。
@@ -48,7 +48,7 @@ updated: 6f7551516b
 
 内部 `LayoutNode` 三种：`fraction`（分子/分母）、`operator`（符号 + 可选上下限）、`matrix`（已对齐的行）。[E: packages/tui/src/latex.ts:667] [E: packages/tui/src/latex.ts:673] [E: packages/tui/src/latex.ts:686] parser 在线性文本里插入 private-use marker，最后由 `renderLayout()` 把 marker 展开成多行。[E: packages/tui/src/latex.ts:700] [E: packages/tui/src/latex.ts:737]
 
-Markdown 侧 `LatexToken` 有 `type: "latex" | "latexBlock"`、`text`、可选 `pending`。[E: packages/tui/src/components/markdown.ts:26] [E: packages/tui/src/components/markdown.ts:27] [E: packages/tui/src/components/markdown.ts:29] `MarkdownOptions.renderLatex` 默认视为开启，显式 `false` 时只输出原文。[E: packages/tui/src/components/markdown.ts:228] [E: packages/tui/src/components/markdown.ts:508]
+Markdown 侧 `LatexToken` 有 `type: "latex" | "latexBlock"`、`text`、可选 `pending`。[E: packages/tui/src/components/markdown.ts:26] [E: packages/tui/src/components/markdown.ts:27] [E: packages/tui/src/components/markdown.ts:29] `MarkdownOptions.renderLatex` 默认视为开启，显式 `false` 时只输出原文。[E: packages/tui/src/components/markdown.ts:228] [E: packages/tui/src/components/markdown.ts:518]
 
 ## 支持的命令
 
@@ -97,7 +97,7 @@ display 极限：`\sum_{i=0}^n` 变成三行 `n / ∑ / i=0`；`\int\nolimits` �
 
 `LatexParser.render()` 在 `supported === false` 或输入没吃完时返回 `undefined`。[E: packages/tui/src/latex.ts:853] [E: packages/tui/src/latex.ts:855] 触发包括：未知命令、多余 `}`、未闭合 group、`\begin` 没有匹配 `\end`、悬挂的 `\`。[E: packages/tui/src/latex.ts:870] [E: packages/tui/src/latex.ts:943] [E: packages/tui/src/latex.ts:1190] [E: packages/tui/src/latex.ts:1338] [E: packages/tui/src/latex.ts:1016] 测试：`\\unknown{y}`、`\\frac{1}{x`、`x}`、未闭合 `matrix`、以及 JS `"x\\\\"`（一个反斜杠的悬挂 `\\`）返回 `undefined`。两个反斜杠的 `x\\\\` 是 `\\\\` newline command，不是这条 malformed 路径。[E: packages/tui/test/latex.test.ts:505] [E: packages/tui/test/latex.test.ts:510] [E: packages/tui/src/latex.ts:1016]
 
-Markdown 只在 token 非 `pending` 且 `renderLatex !== false` 时调用 `renderLatex()`。失败用 `??` 回到原文：inline 用 `latexToken.raw`（含 `$`/`\(` 定界符），block 用 `raw.trim()`。[E: packages/tui/src/components/markdown.ts:508] [E: packages/tui/src/components/markdown.ts:509] [E: packages/tui/src/components/markdown.ts:648] [E: packages/tui/src/components/markdown.ts:649] streaming 未闭合的 math 标 `pending: true`，直接输出 raw，避免半截公式闪烁。[E: packages/tui/src/components/markdown.ts:84] [E: packages/tui/src/components/markdown.ts:114] [E: packages/tui/src/components/markdown.ts:508]
+Markdown 只在 token 非 `pending` 且 `renderLatex !== false` 时调用 `renderLatex()`。失败用 `??` 回到原文：inline 用 `latexToken.raw`（含 `$`/`\(` 定界符），block 用 `raw.trim()`。[E: packages/tui/src/components/markdown.ts:518] [E: packages/tui/src/components/markdown.ts:519] [E: packages/tui/src/components/markdown.ts:658] [E: packages/tui/src/components/markdown.ts:659] streaming 未闭合的 math 标 `pending: true`，直接输出 raw，避免半截公式闪烁。[E: packages/tui/src/components/markdown.ts:84] [E: packages/tui/src/components/markdown.ts:114] [E: packages/tui/src/components/markdown.ts:518]
 
 inline `$` 会拒绝尾随空白、后接数字、全大写标识符后接标识符、以及内部 backtick，以免把货币或代码切成 math。[E: packages/tui/src/components/markdown.ts:72]
 
@@ -107,7 +107,7 @@ inline `$` 会拒绝尾随空白、后接数字、全大写标识符后接标识
 2. `parseSequence@packages/tui/src/latex.ts:819` 从左到右吃 `{…}`、`\command`、`^`/`_`、空白、关系符。
 3. 分数/极限/多行矩阵往 `layoutNodes` 推 node，并在输出里写 `\u{f0000}index\u{f0001}`。[E: packages/tui/src/latex.ts:1114] [E: packages/tui/src/latex.ts:1238] [E: packages/tui/src/latex.ts:1465]
 4. 解析失败返回 `undefined`；无 layout node 时只做空白归一化；否则 `renderLayout()` 按 baseline 拼接多行。[E: packages/tui/src/latex.ts:1491] [E: packages/tui/src/latex.ts:1494] [E: packages/tui/src/latex.ts:1497]
-5. Markdown `latex` / `latexBlock` case 调用 `renderLatex`，失败或 pending 则输出原文。[E: packages/tui/src/components/markdown.ts:505] [E: packages/tui/src/components/markdown.ts:645]
+5. Markdown `latex` / `latexBlock` case 调用 `renderLatex`，失败或 pending 则输出原文。[E: packages/tui/src/components/markdown.ts:515] [E: packages/tui/src/components/markdown.ts:655]
 
 ## 设计动机与权衡
 

@@ -22,7 +22,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > 旧的 `packages/server/src/protocol.ts` pi-ai DTO adapter（`toProtocolJsonValue` / `toProtocolAssistantMessage` 等）已删除。现行 anti-corruption 层是：`pi-protocol` 只校验 routed envelope + strict JSON；server 用 Chord 解析 `$chord.service` 控制词汇并编码 subscription snapshot/update；应用 payload 保持 opaque [E: packages/protocol/src/codec.ts:21] [E: packages/server/src/server.ts:318] [E: packages/server/src/server.ts:332]。
@@ -49,7 +49,7 @@ transcript / models / session directory 作为普通 Chord service 观察值传�
 
 `decodeServiceControlCall(call)` 识别 subscribe/unsubscribe。subscribe 用 `createServiceStateEncoder()` 把 host 返回的 snapshot 编成 wire JSON，并按 `subscriptionId` 缓存 encoder；后续 `publish` 走 `encodeUpdate` 再发 `service_update` [E: packages/server/src/server.ts:332] [E: packages/server/src/server.ts:361] [E: packages/server/src/server.ts:363] [E: packages/server/src/server.ts:445]。unsubscribe 删除 encoder [E: packages/server/src/server.ts:365]。subscribe 若没返回 snapshot，抛 `ProtocolValidationError` [E: packages/server/src/server.ts:360]。
 
-Session 路由只校验 `RpcTarget` attachment，不 decode 业务 args [E: packages/server/README.md:11]。opaque result 原样回到 `response.result`；host 抛普通 `Error("private adapter detail")` 时 client 只看到 sanitized `internal_error` / `Internal server error` [E: packages/server/test/conformance.test.ts:264] [E: packages/server/test/conformance.test.ts:277] [E: packages/server/src/errors.ts:11]。
+Session 路由只校验 `RpcTarget` attachment，不 decode 业务 args [E: packages/server/README.md:11]。opaque result 原样回到 `response.result`；host 抛普通 `Error("private adapter detail")` 时 client 只看到 sanitized `internal_error` / `Internal server error` [E: packages/server/test/conformance.test.ts:261] [E: packages/server/test/conformance.test.ts:274] [E: packages/server/src/errors.ts:11]。
 
 ## Error 边界
 

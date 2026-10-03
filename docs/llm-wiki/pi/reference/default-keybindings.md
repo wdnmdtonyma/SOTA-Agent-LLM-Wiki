@@ -11,6 +11,9 @@ source:
   - packages/coding-agent/src/modes/interactive/interactive-mode.ts
   - packages/coding-agent/src/modes/interactive/components/scoped-models-selector.ts
   - packages/coding-agent/src/modes/interactive/components/thinking-selector.ts
+  - packages/coding-agent/src/modes/interactive/components/login-dialog.ts
+  - packages/coding-agent/src/modes/interactive/components/auth-url.ts
+  - packages/coding-agent/src/extensions/mcp/ui.ts
 symbols:
   - KEYBINDINGS
   - TUI_KEYBINDINGS
@@ -18,7 +21,7 @@ symbols:
   - useWindowsKeybindings
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 related:
   - surface.config.keybindings
   - subsys.coding-agent.keybindings
@@ -33,6 +36,7 @@ related:
 - 哪些默认键位来自 pi-tui,哪些由 pi-coding-agent 追加?
 - 哪些默认键位按平台变化或默认不绑定任何 key?
 - 旧 catalog 名 `DEFAULT_APP_KEYBINDINGS` / `DEFAULT_EDITOR_KEYBINDINGS` 在当前源码中由什么取代?
+- `app.message.copy` 在 OAuth 登录屏上做什么?
 
 ## Catalog 口径
 
@@ -40,7 +44,7 @@ related:
 
 `useWindowsKeybindings()` 在 `win32` 或 `linux` 且存在 `WSL_DISTRO_NAME` / `WSL_INTEROP` 时为真;module 级 `windowsKeybindings` 用它决定 Windows/WSL 避让默认 [E: packages/coding-agent/src/core/keybindings.ts:62] [E: packages/coding-agent/src/core/keybindings.ts:66] [E: packages/coding-agent/src/core/keybindings.ts:73]。`app.suspend` 仍只看 `process.platform === "win32"`,WSL 保留 `ctrl+z` [E: packages/coding-agent/src/core/keybindings.ts:97]。
 
-`TUI_KEYBINDINGS` 当前包含 47 个 `tui.*` 实例，覆盖 editor(含 history)、generic input、selection 和 14 个 alternate-screen viewport/search actions [E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:74] [E: packages/tui/src/keybindings.ts:168] [E: packages/tui/src/keybindings.ts:192] [E: packages/tui/src/keybindings.ts:209]。`AppKeybindings` 声明 43 个 `app.*` action id（含 `app.thinking.save`），并通过 module augmentation 合并进 pi-tui 的 `Keybindings` interface [E: packages/coding-agent/src/core/keybindings.ts:14] [E: packages/coding-agent/src/core/keybindings.ts:20] [E: packages/coding-agent/src/core/keybindings.ts:57] [E: packages/coding-agent/src/core/keybindings.ts:69]。因此默认键位实例总数本轮重数仍为 **90**（47 tui + 43 app）[I]。
+对本轮 `KEYBINDINGS` 重数：`TUI_KEYBINDINGS` 对象有 **47** 个 `tui.*` 实例（editor 含 history、generic input、selection，以及 14 个 alternate-screen viewport/search actions）[E: packages/tui/src/keybindings.ts:71] [E: packages/tui/src/keybindings.ts:74] [E: packages/tui/src/keybindings.ts:160] [E: packages/tui/src/keybindings.ts:168] [E: packages/tui/src/keybindings.ts:209]。`AppKeybindings` 声明 **43** 个 `app.*` action id（`app.interrupt` … `app.tree.filter.cycleBackward`，含 `app.thinking.save` 与 `app.message.copy`），并通过 module augmentation 合并进 pi-tui 的 `Keybindings` interface [E: packages/coding-agent/src/core/keybindings.ts:14] [E: packages/coding-agent/src/core/keybindings.ts:20] [E: packages/coding-agent/src/core/keybindings.ts:28] [E: packages/coding-agent/src/core/keybindings.ts:57] [E: packages/coding-agent/src/core/keybindings.ts:69]。`KEYBINDINGS` 先 spread 这 47 个 TUI 默认，再覆盖 4 个 TUI 键（undo / alt-screen prompt+search），然后追加 43 个 `app.*`；覆盖不增加 id。因此默认键位实例总数是 **90**（47 tui + 43 app）[E: packages/coding-agent/src/core/keybindings.ts:75] [E: packages/coding-agent/src/core/keybindings.ts:76] [E: packages/coding-agent/src/core/keybindings.ts:77] [E: packages/coding-agent/src/core/keybindings.ts:93] [E: packages/coding-agent/src/core/keybindings.ts:238]。
 
 当前源码没有导出旧 catalog 名 `DEFAULT_APP_KEYBINDINGS` 或 `DEFAULT_EDITOR_KEYBINDINGS`;index 与节点已统一到可核默认目录符号 `KEYBINDINGS`、`TUI_KEYBINDINGS` 和 `AppKeybindings` [E: packages/coding-agent/src/core/keybindings.ts:75] [E: packages/tui/src/keybindings.ts:71] [E: packages/coding-agent/src/core/keybindings.ts:14]。
 
@@ -125,7 +129,7 @@ related:
 | `app.thinking.toggle` | `ctrl+t` | Toggle thinking blocks. | [E: packages/coding-agent/src/core/keybindings.ts:118] [E: packages/coding-agent/src/core/keybindings.ts:119] [E: packages/coding-agent/src/core/keybindings.ts:120] |
 | `app.session.toggleNamedFilter` | `ctrl+n` | Toggle named session filter. | [E: packages/coding-agent/src/core/keybindings.ts:122] [E: packages/coding-agent/src/core/keybindings.ts:123] [E: packages/coding-agent/src/core/keybindings.ts:124] |
 | `app.editor.external` | `ctrl+g` | Open external editor. | [E: packages/coding-agent/src/core/keybindings.ts:126] [E: packages/coding-agent/src/core/keybindings.ts:127] [E: packages/coding-agent/src/core/keybindings.ts:128] |
-| `app.message.copy` | `ctrl+x` | `/tree` 复制选中 message;否则复制最后一条 assistant text。fullscreen 且 `fullscreenCopyOnSelect` 关闭时,`preferSelection` 先复制当前 selection。 | [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/core/keybindings.ts:131]; copy path [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3002] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6384] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6393]; docs [E: packages/coding-agent/docs/keybindings.md:164] |
+| `app.message.copy` | `ctrl+x` | `/tree` 复制选中 message；OAuth 登录屏（`/login`、`/mcp`、`/mcp login`）复制当前 sign-in URL；fullscreen 且 `fullscreenCopyOnSelect` 关闭时 `preferSelection` 先复制当前 selection；否则复制最后一条 assistant text。 | [E: packages/coding-agent/src/core/keybindings.ts:130] [E: packages/coding-agent/src/core/keybindings.ts:132]; OAuth [E: packages/coding-agent/src/modes/interactive/components/login-dialog.ts:17] [E: packages/coding-agent/src/modes/interactive/components/login-dialog.ts:230] [E: packages/coding-agent/src/modes/interactive/components/auth-url.ts:22] [E: packages/coding-agent/src/modes/interactive/components/auth-url.ts:31] [E: packages/coding-agent/src/extensions/mcp/ui.ts:209]; editor [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:3066] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6569] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6574]; docs [E: packages/coding-agent/docs/keybindings.md:164] |
 | `app.message.followUp` | Windows/WSL: `ctrl+q`;其它: `alt+enter` | Queue follow-up message. | [E: packages/coding-agent/src/core/keybindings.ts:134] [E: packages/coding-agent/src/core/keybindings.ts:135] [E: packages/coding-agent/docs/keybindings.md:165] |
 | `app.message.dequeue` | Windows/WSL: `alt+q`;其它: `alt+up` | Restore queued messages. | [E: packages/coding-agent/src/core/keybindings.ts:138] [E: packages/coding-agent/src/core/keybindings.ts:139] [E: packages/coding-agent/docs/keybindings.md:166] |
 | `app.clipboard.pasteImage` | Windows/WSL: `alt+v`;其它: `ctrl+v` | Paste image from clipboard (text fallback);现用 `useWindowsKeybindings()`,不再只看 `win32`。 | [E: packages/coding-agent/src/core/keybindings.ts:142] [E: packages/coding-agent/src/core/keybindings.ts:143] [E: packages/coding-agent/docs/keybindings.md:128] |
@@ -158,7 +162,7 @@ related:
 
 ## 配置与覆盖边界
 
-`keybindings.json` 使用同一批 namespaced action ids;用户文档说明每个 action 可绑定一个或多个 keys,旧的 pre-namespaced ids 会在启动时迁移,编辑配置后运行 `/reload` 可应用变更 [E: packages/coding-agent/docs/keybindings.md:3] [E: packages/coding-agent/docs/keybindings.md:5] [E: packages/coding-agent/docs/keybindings.md:7] [E: packages/coding-agent/docs/keybindings.md:9]。本节点只列默认 catalog;用户配置语法、迁移和 reload 路径由 [surface.config.keybindings](../surface/config/keybindings.md) 与 [subsys.coding-agent.keybindings](../subsystems/coding-agent/keybindings.md) 详述 [I]。
+`keybindings.json` 使用同一批 namespaced action ids;用户文档说明每个 action 可绑定一个或多个 keys,编辑配置后运行 `/reload` 可应用变更。legacy 短名迁移由 `KEYBINDING_NAME_MIGRATIONS` 在读取时完成,不写回磁盘 [E: packages/coding-agent/docs/keybindings.md:3] [E: packages/coding-agent/docs/keybindings.md:11] [E: packages/coding-agent/docs/keybindings.md:28] [E: packages/coding-agent/src/core/keybindings.ts:240] [E: packages/coding-agent/src/core/keybindings.ts:397]。本节点只列默认 catalog;用户配置语法、迁移和 reload 路径由 [surface.config.keybindings](../surface/config/keybindings.md) 与 [subsys.coding-agent.keybindings](../subsystems/coding-agent/keybindings.md) 详述 [I]。
 
 多个 action 可以共享同一个默认 key chord,例如 `ctrl+p` 同时出现在 model cycling、session path display 和 scoped models provider toggling;是否冲突取决于当前 UI context 和 TUI manager 的匹配/dispatch 语义,不是本默认目录直接判定 [E: packages/coding-agent/src/core/keybindings.ts:108] [E: packages/coding-agent/src/core/keybindings.ts:109] [E: packages/coding-agent/src/core/keybindings.ts:166] [E: packages/coding-agent/src/core/keybindings.ts:167] [E: packages/coding-agent/src/core/keybindings.ts:198] [E: packages/coding-agent/src/core/keybindings.ts:199] [I]。
 
@@ -170,6 +174,9 @@ related:
 - `packages/coding-agent/src/modes/interactive/interactive-mode.ts`
 - `packages/coding-agent/src/modes/interactive/components/scoped-models-selector.ts`
 - `packages/coding-agent/src/modes/interactive/components/thinking-selector.ts`
+- `packages/coding-agent/src/modes/interactive/components/login-dialog.ts`
+- `packages/coding-agent/src/modes/interactive/components/auth-url.ts`
+- `packages/coding-agent/src/extensions/mcp/ui.ts`
 
 ## 相关
 

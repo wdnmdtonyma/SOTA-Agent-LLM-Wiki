@@ -20,7 +20,7 @@ related:
  - subsys.ai.session-resources
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `openai-codex-responses.ts` 是 `pi-ai` 调 ChatGPT Codex Responses backend 的 wire 协议入口: 它把统一 `TranscriptContext`/`StreamOptions` 转成 Codex request, 优先走 WebSocket streaming, 必要时降级 SSE, 再复用 OpenAI Responses shared normalizer 输出 `AssistantMessageEventStream`。已删除的 `deferred-tools.ts` 不再参与本 adapter。
@@ -58,13 +58,13 @@ updated: 6f7551516b
 
 ## Tool search 与 prefix deferral
 
-与 OpenAI Responses 相同,Codex **不再**调用 `splitDeferredTools()`。`buildRequestBody` 读 `supportsAdditionalTools` 与 `supportsToolSearch`,再用 `resolveTranscriptTools(context.messages, supportsAdditionalTools || supportsToolSearch)` 决定顶层 `tools`。shared converter 在 `supportsToolSearch` 时把 later `toolsAdded` 编成 completed `tool_search_call` + `tool_search_output`,output tools 带 `defer_loading: true`(prefix deferral);`supportsAdditionalTools` 则发 `additional_tools`。[E: packages/ai/src/api/openai-codex-responses.ts:539] [E: packages/ai/src/api/openai-codex-responses.ts:540] [E: packages/ai/src/api/openai-codex-responses.ts:541] [E: packages/ai/src/api/openai-codex-responses.ts:546] [E: packages/ai/src/api/openai-codex-responses.ts:547] [E: packages/ai/src/api/openai-responses-shared.ts:187] [E: packages/ai/src/api/openai-responses-shared.ts:195] [E: packages/ai/src/api/openai-responses-shared.ts:206] [E: packages/ai/src/api/openai-responses-shared.ts:378]
+与 OpenAI Responses 相同,Codex **不再**调用 `splitDeferredTools()`。`buildRequestBody` 读 `supportsAdditionalTools` 与 `supportsToolSearch`,再用 `resolveTranscriptTools(context.messages, supportsAdditionalTools || supportsToolSearch)` 决定顶层 `tools`。shared converter 在 `supportsToolSearch` 时把 later `toolsAdded` 编成 completed `tool_search_call` + `tool_search_output`,output tools 带 `defer_loading: true`(prefix deferral);`supportsAdditionalTools` 则发 `additional_tools`。[E: packages/ai/src/api/openai-codex-responses.ts:539] [E: packages/ai/src/api/openai-codex-responses.ts:540] [E: packages/ai/src/api/openai-codex-responses.ts:541] [E: packages/ai/src/api/openai-codex-responses.ts:546] [E: packages/ai/src/api/openai-codex-responses.ts:547] [E: packages/ai/src/api/openai-responses-shared.ts:187] [E: packages/ai/src/api/openai-responses-shared.ts:195] [E: packages/ai/src/api/openai-responses-shared.ts:206] [E: packages/ai/src/api/openai-responses-shared.ts:377]
 
 immediate tools 仍进入 request `tools`。[E: packages/ai/src/api/openai-codex-responses.ts:574] [E: packages/ai/src/api/openai-codex-responses.ts:575]
 
 ## `samplingParams` 不写入 Codex body
 
-`OpenAICodexResponsesOptions` 继承 `StreamOptions.samplingParams`,`streamSimple` 也经 `buildBaseOptions` 把该字段拷进 options。但 `buildRequestBody()` **没有** `Object.assign(body, model.samplingParams, options?.samplingParams)`。因此 Codex 的 direct `stream` / `complete` 与 `streamSimple` 都不会把 samplingParams merge 进 ChatGPT Codex JSON body;这与 OpenAI Responses / Completions / Azure Responses 不同。[E: packages/ai/src/api/openai-codex-responses.ts:79] [E: packages/ai/src/api/openai-codex-responses.ts:511] [E: packages/ai/src/api/simple-options.ts:29] [E: packages/ai/src/api/openai-responses.ts:362] [U]
+`OpenAICodexResponsesOptions` 继承 `StreamOptions.samplingParams`,`streamSimple` 也经 `buildBaseOptions` 把该字段拷进 options。但 `buildRequestBody()` **没有** `Object.assign(body, model.samplingParams, options?.samplingParams)`。因此 Codex 的 direct `stream` / `complete` 与 `streamSimple` 都不会把 samplingParams merge 进 ChatGPT Codex JSON body;这与 OpenAI Responses / Completions / Azure Responses 不同。[E: packages/ai/src/api/openai-codex-responses.ts:79] [E: packages/ai/src/api/openai-codex-responses.ts:511] [E: packages/ai/src/api/simple-options.ts:29] [E: packages/ai/src/api/openai-responses.ts:382] [U]
 
 ## Off reasoning
 
@@ -92,18 +92,18 @@ WebSocket cached continuation 保持 `store: false` 的 base body, 并通过 con
 
 ## 与普通 OpenAI Responses 的差异
 
-普通 OpenAI Responses 使用 `openai` SDK client 的 `client.responses.create(...)`; Codex Responses 不创建 SDK client, 而是直接拼 ChatGPT backend URL、headers、fetch/SSE 和 WebSocket transport。[E: packages/ai/src/api/openai-responses.ts:170] [E: packages/ai/src/api/openai-codex-responses.ts:1542]
+普通 OpenAI Responses 使用 `openai` SDK client 的 `client.responses.create(...)`; Codex Responses 不创建 SDK client, 而是直接拼 ChatGPT backend URL、headers、fetch/SSE 和 WebSocket transport。[E: packages/ai/src/api/openai-responses.ts:184] [E: packages/ai/src/api/openai-codex-responses.ts:1542]
 
 普通 OpenAI Responses 的 request builder 调用默认 `convertResponsesMessages()` 时可把 system prompt 放进 Responses `input` 的 developer/system role; Codex request builder 调 `convertResponsesMessages(..., { includeSystemPrompt: false })`, 再把 system prompt 放到 top-level `instructions`。[E: packages/ai/src/api/openai-codex-responses.ts:542] [E: packages/ai/src/api/openai-codex-responses.ts:543] [E: packages/ai/src/api/openai-codex-responses.ts:553]
 
-普通 OpenAI Responses 的 `buildParams` 末尾 merge `samplingParams`; Codex `buildRequestBody` 不 merge。[E: packages/ai/src/api/openai-responses.ts:362] [I]
+普通 OpenAI Responses 的 `buildParams` 末尾 merge `samplingParams`; Codex `buildRequestBody` 不 merge。[E: packages/ai/src/api/openai-responses.ts:382] [I]
 
 Codex headers are ChatGPT-specific: base headers extract account id from JWT, set `chatgpt-account-id`, `originator: pi`, and user agent; SSE adds `OpenAI-Beta: responses=experimental`, while WebSocket uses `responses_websockets` beta 和 per-request `session-id`/`x-client-request-id`。[E: packages/ai/src/api/openai-codex-responses.ts:1654] [E: packages/ai/src/api/openai-codex-responses.ts:1655] [E: packages/ai/src/api/openai-codex-responses.ts:1656] [E: packages/ai/src/api/openai-codex-responses.ts:1669] [E: packages/ai/src/api/openai-codex-responses.ts:1694] [E: packages/ai/src/api/openai-codex-responses.ts:1695]
 
 ## Gotcha
 
 - Explicit `transport: "auto"` and `transport: "websocket-cached"` both set `useCachedContext`; actual `previous_response_id` delta rewriting still requires a cached entry with compatible continuation state。[E: packages/ai/src/api/openai-codex-responses.ts:1518] [I]
-- `processResponsesStream()` requires a terminal Responses event; `mapCodexEvents()` converts Codex terminal variants into `response.completed`, so malformed streams that end without that terminal event become errors。[E: packages/ai/src/api/openai-responses-shared.ts:761] [E: packages/ai/src/api/openai-responses-shared.ts:762]
+- `processResponsesStream()` requires a terminal Responses event; `mapCodexEvents()` converts Codex terminal variants into `response.completed`, so malformed streams that end without that terminal event become errors。[E: packages/ai/src/api/openai-responses-shared.ts:760] [E: packages/ai/src/api/openai-responses-shared.ts:761]
 - Codex Responses accumulator 从 `pending` 开始。[E: packages/ai/src/api/openai-codex-responses.ts:260]
 - `partialJson` is scratch state for streaming tool arguments; Codex error cleanup deletes it before emitting the final error assistant message。
 

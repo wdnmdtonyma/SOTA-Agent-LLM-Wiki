@@ -27,7 +27,7 @@ related:
   - ref.tools-catalog
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `ls` 是 pi-coding-agent 暴露给模型的 directory listing tool: 给定目录路径,按字母序返回条目名,目录追加 `/`,包含 dotfiles,并用 entry limit 与 byte truncation 控制输出体积。
@@ -51,7 +51,7 @@ updated: 6f7551516b
 
 `ls` 用于列出目录内容,不是读取文件内容或执行 shell;工具 description 明确说它返回 alphabetically sorted entries,目录追加 `/`,包含 dotfiles,并在 500 entries 或 `DEFAULT_MAX_BYTES / 1024` KB 先到者处截断 [E: packages/coding-agent/src/core/tools/ls.ts:62]。默认 entry limit 是 `DEFAULT_LIMIT = 500`,默认 byte limit 来自 shared truncation 常量 `DEFAULT_MAX_BYTES = 50 * 1024` [E: packages/coding-agent/src/core/tools/ls.ts:23] [E: packages/coding-agent/src/core/tools/truncate.ts:12]。
 
-路径解析用 `resolveToCwd(path || ".", ctx?.cwd || cwd)`:缺省或空 `path` 会列当前 cwd,相对路径按 `ctx.cwd` 或工厂 `cwd` 解析,同时复用 `resolvePath(..., { normalizeUnicodeSpaces: true, stripAtPrefix: true })`;`resolvePath()` 会先 `normalizePath()` 再按 absolute/relative 解析,`normalizePath()` 负责 `~` expansion、Unicode space normalize 与 `@` 前缀剥离 [E: packages/coding-agent/src/core/tools/ls.ts:83] [E: packages/coding-agent/src/core/tools/path-utils.ts:49] [E: packages/coding-agent/src/utils/paths.ts:75] [E: packages/coding-agent/src/utils/paths.ts:78] [E: packages/coding-agent/src/utils/paths.ts:80] [E: packages/coding-agent/src/utils/paths.ts:87] [E: packages/coding-agent/src/utils/paths.ts:102] [E: packages/coding-agent/src/utils/paths.ts:105] [E: packages/coding-agent/test/tools.test.ts:1038]。`ls` 没有调用 `resolveReadPathAsync`,所以 `read` 专用的 macOS screenshot AM/PM、NFD、curly quote fallback 不属于 `ls` 的解析路径 [E: packages/coding-agent/src/core/tools/ls.ts:6] [E: packages/coding-agent/src/core/tools/ls.ts:83] [E: packages/coding-agent/src/core/tools/path-utils.ts:86] [I]。
+路径解析用 `resolveToCwd(path || ".", ctx?.cwd || cwd)`:缺省或空 `path` 会列当前 cwd,相对路径按 `ctx.cwd` 或工厂 `cwd` 解析,同时复用 `resolvePath(..., { normalizeUnicodeSpaces: true, stripAtPrefix: true })`;`resolvePath()` 会先 `normalizePath()` 再按 absolute/relative 解析,`normalizePath()` 负责 `~` expansion、Unicode space normalize 与 `@` 前缀剥离 [E: packages/coding-agent/src/core/tools/ls.ts:83] [E: packages/coding-agent/src/core/tools/path-utils.ts:49] [E: packages/coding-agent/src/utils/paths.ts:76] [E: packages/coding-agent/src/utils/paths.ts:79] [E: packages/coding-agent/src/utils/paths.ts:81] [E: packages/coding-agent/src/utils/paths.ts:88] [E: packages/coding-agent/src/utils/paths.ts:103] [E: packages/coding-agent/src/utils/paths.ts:106] [E: packages/coding-agent/test/tools.test.ts:1078]。`ls` 没有调用 `resolveReadPathAsync`,所以 `read` 专用的 macOS screenshot AM/PM、NFD、curly quote fallback 不属于 `ls` 的解析路径 [E: packages/coding-agent/src/core/tools/ls.ts:6] [E: packages/coding-agent/src/core/tools/ls.ts:83] [E: packages/coding-agent/src/core/tools/path-utils.ts:86] [I]。
 
 ## 3 输入 schema 表
 
@@ -74,9 +74,9 @@ TUI render 层还有显示折叠:未 expanded 时最多展示 20 行,剩余行�
 
 ## 5 执行模式
 
-`createLsToolDefinition()` 返回对象没有显式 `executionMode` 字段:它设置 `name`、`label`、`description`、`promptSnippet`、`parameters`、`execute` 和 spread 进来的 renderers,但没有 per-tool execution override [E: packages/coding-agent/src/core/tools/ls.ts:59] [E: packages/coding-agent/src/core/tools/ls.ts:64] [E: packages/coding-agent/src/core/tools/ls.ts:123] [I]。`ToolDefinition.executionMode` 是 optional,省略时使用 default execution mode [E: packages/coding-agent/src/core/extensions/types.ts:489]。
+`createLsToolDefinition()` 返回对象没有显式 `executionMode` 字段:它设置 `name`、`label`、`description`、`promptSnippet`、`parameters`、`execute` 和 spread 进来的 renderers,但没有 per-tool execution override [E: packages/coding-agent/src/core/tools/ls.ts:59] [E: packages/coding-agent/src/core/tools/ls.ts:64] [E: packages/coding-agent/src/core/tools/ls.ts:123] [I]。`ToolDefinition.executionMode` 是 optional,省略时使用 default execution mode [E: packages/coding-agent/src/core/extensions/types.ts:624]。
 
-agent-core 的全局默认 `toolExecution` 是 `"parallel"`,并在 agent loop 中只有当全局配置为 sequential 或某个 tool 显式 `executionMode === "sequential"` 时才整批顺序执行;否则走 parallel 执行路径 [E: packages/agent/src/agent.ts:253] [E: packages/agent/src/agent-loop.ts:514] [E: packages/agent/src/agent-loop.ts:516] [E: packages/agent/src/agent-loop.ts:517]。因此 `ls` 自身没有强制 sequential;在默认 Agent 配置下,多个 `ls` 或其它未声明 sequential 的 tool calls 可并行执行 [I]。
+agent-core 的全局默认 `toolExecution` 是 `"parallel"`,并在 agent loop 中只有当全局配置为 sequential 或某个 tool 显式 `executionMode === "sequential"` 时才整批顺序执行;否则走 parallel 执行路径 [E: packages/agent/src/agent.ts:253] [E: packages/agent/src/agent-loop.ts:517] [E: packages/agent/src/agent-loop.ts:519] [E: packages/agent/src/agent-loop.ts:520]。因此 `ls` 自身没有强制 sequential;在默认 Agent 配置下,多个 `ls` 或其它未声明 sequential 的 tool calls 可并行执行 [I]。
 
 ## 6 注册与装配
 
@@ -84,7 +84,7 @@ agent-core 的全局默认 `toolExecution` 是 `"parallel"`,并在 agent loop �
 
 `ls` 不在 coding preset 里: `createCodingToolDefinitions()` 只返回 read/bash/edit/write [E: packages/coding-agent/src/core/tools/index.ts:166] [E: packages/coding-agent/src/core/tools/index.ts:167] [E: packages/coding-agent/src/core/tools/index.ts:168] [E: packages/coding-agent/src/core/tools/index.ts:169]。`ls` 在 read-only preset 里: `createReadOnlyToolDefinitions()` 返回 read/grep/find/ls [E: packages/coding-agent/src/core/tools/index.ts:175] [E: packages/coding-agent/src/core/tools/index.ts:176] [E: packages/coding-agent/src/core/tools/index.ts:177] [E: packages/coding-agent/src/core/tools/index.ts:178]。完整 registry 里也有 `ls`: `createAllToolDefinitions()` 的 `ls` key 绑定到 `createLsToolDefinition(cwd, options?.ls)` [E: packages/coding-agent/src/core/tools/index.ts:182] [E: packages/coding-agent/src/core/tools/index.ts:191]。
 
-`AgentSession._buildRuntime()` 默认调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix, shellPath } })`,所以 `ls` 会进入 base tool definitions,但没有专属 options 传入 [E: packages/coding-agent/src/core/agent-session.ts:3252] [E: packages/coding-agent/src/core/agent-session.ts:3252] [E: packages/coding-agent/src/core/agent-session.ts:3253] [E: packages/coding-agent/src/core/agent-session.ts:3254]。随后 `_refreshToolRegistry()` 把 base definitions 标成 builtin source,用 `wrapRegisteredTools()` 包成 `AgentTool`,并写入 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:3167] [E: packages/coding-agent/src/core/agent-session.ts:3196] [E: packages/coding-agent/src/core/agent-session.ts:3206] [E: packages/coding-agent/src/core/agent-session.ts:3210]。`AgentSession` 默认 active built-ins 是 `["read", "bash", "edit", "write"]`,所以 `ls` 是内置可用 registry tool,但不是默认 active tool,除非 active tool names、allowlist、plan/read-only mode 或 extension/runtime 流程启用它 [E: packages/coding-agent/src/core/agent-session.ts:3281] [E: packages/coding-agent/src/core/agent-session.ts:3283] [I]。
+`AgentSession._buildRuntime()` 默认调用 `createAllToolDefinitions(this._cwd, { read: { autoResizeImages }, bash: { commandPrefix, shellPath } })`,所以 `ls` 会进入 base tool definitions,但没有专属 options 传入 [E: packages/coding-agent/src/core/agent-session.ts:3573] [E: packages/coding-agent/src/core/agent-session.ts:3573] [E: packages/coding-agent/src/core/agent-session.ts:3574] [E: packages/coding-agent/src/core/agent-session.ts:3575]。随后 `_refreshToolRegistry()` 把 base definitions 标成 builtin source,用 `wrapRegisteredTools()` 包成 `AgentTool`,并写入 `_toolRegistry` [E: packages/coding-agent/src/core/agent-session.ts:3167] [E: packages/coding-agent/src/core/agent-session.ts:3501] [E: packages/coding-agent/src/core/agent-session.ts:3513] [E: packages/coding-agent/src/core/agent-session.ts:3517]。`AgentSession` 默认 active built-ins 是 `["read", "bash", "edit", "write"]`,所以 `ls` 是内置可用 registry tool,但不是默认 active tool,除非 active tool names、allowlist、plan/read-only mode 或 extension/runtime 流程启用它 [E: packages/coding-agent/src/core/agent-session.ts:3602] [E: packages/coding-agent/src/core/agent-session.ts:3604] [I]。
 
 ## 7 execute() 走读
 
@@ -98,7 +98,7 @@ agent-core 的全局默认 `toolExecution` 是 `"parallel"`,并在 agent loop �
 
 ## 8 设计动机与 edge
 
-`ls` 包含 dotfiles 是明确的工具契约,不是测试偶然:description 写着 `Includes dotfiles`,测试也创建 `.hidden-file` 与 `.hidden-dir` 并断言输出包含 `.hidden-file` 和 `.hidden-dir/` [E: packages/coding-agent/src/core/tools/ls.ts:62] [E: packages/coding-agent/test/tools.test.ts:937] [E: packages/coding-agent/test/tools.test.ts:938] [E: packages/coding-agent/test/tools.test.ts:939] [E: packages/coding-agent/test/tools.test.ts:944] [E: packages/coding-agent/test/tools.test.ts:945]。
+`ls` 包含 dotfiles 是明确的工具契约,不是测试偶然:description 写着 `Includes dotfiles`,测试也创建 `.hidden-file` 与 `.hidden-dir` 并断言输出包含 `.hidden-file` 和 `.hidden-dir/` [E: packages/coding-agent/src/core/tools/ls.ts:62] [E: packages/coding-agent/test/tools.test.ts:977] [E: packages/coding-agent/test/tools.test.ts:978] [E: packages/coding-agent/test/tools.test.ts:979] [E: packages/coding-agent/test/tools.test.ts:984] [E: packages/coding-agent/test/tools.test.ts:985]。
 
 目录 suffix 是逐 entry `stat` 得出的,因此 dangling symlink、权限变化或 race condition 导致 `stat` 失败时,该 entry 会被静默跳过而不是以 unknown type 输出 [E: packages/coding-agent/src/core/tools/ls.ts:122] [E: packages/coding-agent/src/core/tools/ls.ts:127] [I]。排序发生在 suffix 判定之前,所以目录不会被优先分组到文件前面;输出顺序仍跟原始 entry name 的 case-insensitive sort 一致 [E: packages/coding-agent/src/core/tools/ls.ts:109] [E: packages/coding-agent/src/core/tools/ls.ts:83] [I]。
 

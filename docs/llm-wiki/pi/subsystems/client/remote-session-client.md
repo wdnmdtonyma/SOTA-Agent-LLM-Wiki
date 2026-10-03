@@ -29,7 +29,7 @@ related:
   - subsys.server.session-server
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `@earendil-works/pi-client` 的 package root 是 Chord 风格的 `Client`：它只依赖已经连接并完成 transport-specific authentication 的 ordered byte transport，完成 protocol version handshake、`serverId` 校验、routed request correlation、service catalogue/subscribe 与 out-of-band attachment。它不再导出 `PiClient` / `PiSessionHandle` [E: packages/client/package.json:2] [E: packages/client/src/index.ts:1] [E: packages/client/src/transport.ts:18]。
@@ -77,7 +77,7 @@ response 可以 out of order，lookup 只依赖 response id；不存在 matching
 
 ## Attachment 与 disconnect
 
-server 的 `{ type: "attachment" }` 更新 `#attachment`；attachment 的 `serverId` 必须等于 options，否则 fail connection [E: packages/client/src/client.ts:305] [E: packages/client/src/client.ts:306] [E: packages/client/src/client.ts:339]。`onAttachmentChange` 在 route 变化时回调；listener 抛错交给 `onListenerError`，diagnostics 自己抛错也被吞掉 [E: packages/client/src/client.ts:408] [E: packages/client/src/client.ts:437] [E: packages/client/src/client.ts:441]。
+server 的 `{ type: "attachment" }` 更新 `#attachment`；attachment 的 `serverId` 必须等于 options，否则 fail connection [E: packages/client/src/client.ts:305] [E: packages/client/src/client.ts:306] [E: packages/client/src/client.ts:339]。`onAttachmentChange` 在 route 变化时回调；listener 抛错交给 `onListenerError`，diagnostics 自己抛错也被吞掉 [E: packages/client/src/client.ts:408] [E: packages/client/src/client.ts:438] [E: packages/client/src/client.ts:441]。
 
 `Client` 不自动 reconnect；`reconnect()` 只是再调 `connect()`，factory 必须返回 fresh transport [E: packages/client/src/client.ts:134] [E: packages/client/src/client.ts:135] [E: packages/client/test/client.test.ts:314]。disconnect 清空 hello/attachment、reject 全部 pending、clear service listeners；不 replay 请求 [E: packages/client/src/client.ts:346] [E: packages/client/src/client.ts:385] [E: packages/client/src/client.ts:387] [E: packages/client/README.md:34]。`dispose()` 幂等：标 disposed、reject pending、disconnect、清 listeners [E: packages/client/src/client.ts:379] [E: packages/client/src/client.ts:381] [E: packages/client/src/client.ts:384]。
 

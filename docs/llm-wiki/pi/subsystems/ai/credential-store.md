@@ -15,7 +15,7 @@ related:
   - ref.ai.auth-types
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `subsys.ai.credential-store` 描述 `pi-ai` 的 provider credential storage contract: `CredentialStore` 规定按 `providerId` 读、串行改、删除一个 `Credential`, `InMemoryCredentialStore` 提供基于 `Map` 和 per-provider promise chain 的默认内存实现。[E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:86][E: packages/ai/src/auth/types.ts:88][E: packages/ai/src/auth/types.ts:87][E: packages/ai/src/auth/credential-store.ts:9][E: packages/ai/src/auth/credential-store.ts:10][E: packages/ai/src/auth/credential-store.ts:11][E: packages/ai/src/auth/credential-store.ts:14][E: packages/ai/src/auth/credential-store.ts:16]
@@ -38,7 +38,7 @@ updated: 6f7551516b
 
 ## 关键文件
 
-- `packages/ai/src/auth/types.ts`: 定义 `ModelAuth`、`Credential` union、`CredentialStore` contract、`AuthContext`、`AuthResult`、`ApiKeyAuth`、`OAuthAuth` 和 `ProviderAuth`。[E: packages/ai/src/auth/types.ts:7][E: packages/ai/src/auth/types.ts:37][E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:97][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:170][E: packages/ai/src/auth/types.ts:206][E: packages/ai/src/auth/types.ts:237]
+- `packages/ai/src/auth/types.ts`: 定义 `ModelAuth`、`Credential` union、`CredentialStore` contract、`AuthContext`、`AuthResult`、`ApiKeyAuth`、`OAuthAuth` 和 `ProviderAuth`。[E: packages/ai/src/auth/types.ts:7][E: packages/ai/src/auth/types.ts:37][E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:97][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:170][E: packages/ai/src/auth/types.ts:216][E: packages/ai/src/auth/types.ts:247]
 - `packages/ai/src/auth/credential-store.ts`: 定义 `InMemoryCredentialStore`, 从 `types.ts` 导入 `AuthOperationOptions`、`Credential`、`CredentialInfo` 和 `CredentialStore`, 并从 `../utils/abort.ts` 导入 `operationSignal` 与 `raceWithAbortSignal`; 该实现本身不依赖 provider auth handlers。[E: packages/ai/src/auth/credential-store.ts:1][E: packages/ai/src/auth/credential-store.ts:2][E: packages/ai/src/auth/credential-store.ts:9][I]
 
 ## 数据模型
@@ -53,9 +53,9 @@ updated: 6f7551516b
 
 `AuthContext` 抽象 ambient context, 只暴露 `env(name)` 与 `fileExists(path)`; `AuthResult` 把解析后的 `ModelAuth` 放在 `auth`, 并可附带 provider-scoped `env` 与人类可读 `source`。[E: packages/ai/src/auth/types.ts:97][E: packages/ai/src/auth/types.ts:98][E: packages/ai/src/auth/types.ts:100][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:105][E: packages/ai/src/auth/types.ts:107][E: packages/ai/src/auth/types.ts:109]
 
-`ApiKeyAuth.resolve()` 接收 `{ ctx, credential?, signal }`, 没有 `model` 字段, 返回 `AuthResult | undefined`; `OAuthAuth` 把交互登录、刷新 credential、从 credential 派生 `ModelAuth` 拆成 `login()`、`refresh()`、`toAuth()`。[E: packages/ai/src/auth/types.ts:194][E: packages/ai/src/auth/types.ts:195][E: packages/ai/src/auth/types.ts:196][E: packages/ai/src/auth/types.ts:197][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:170][E: packages/ai/src/auth/types.ts:216][E: packages/ai/src/auth/types.ts:222]
+`ApiKeyAuth.resolve()` 接收 `{ ctx, credential?, signal }`, 没有 `model` 字段, 返回 `AuthResult | undefined`; `OAuthAuth` 把交互登录、刷新 credential、从 credential 派生 `ModelAuth` 拆成 `login()`、`refresh()`、`toAuth()`。[E: packages/ai/src/auth/types.ts:194][E: packages/ai/src/auth/types.ts:195][E: packages/ai/src/auth/types.ts:196][E: packages/ai/src/auth/types.ts:197][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:170][E: packages/ai/src/auth/types.ts:216][E: packages/ai/src/auth/types.ts:232]
 
-`ProviderAuth` 只包含可选 `apiKey?: ApiKeyAuth` 与 `oauth?: OAuthAuth`; credential storage 不选择 provider auth handler, handler choice belongs to auth resolution code that consumes both provider auth metadata and `CredentialStore` [I]。[E: packages/ai/src/auth/types.ts:237][E: packages/ai/src/auth/types.ts:238][E: packages/ai/src/auth/types.ts:239]
+`ProviderAuth` 只包含可选 `apiKey?: ApiKeyAuth` 与 `oauth?: OAuthAuth`; credential storage 不选择 provider auth handler, handler choice belongs to auth resolution code that consumes both provider auth metadata and `CredentialStore` [I]。[E: packages/ai/src/auth/types.ts:247][E: packages/ai/src/auth/types.ts:248][E: packages/ai/src/auth/types.ts:249]
 
 ## 控制流
 
@@ -82,9 +82,9 @@ updated: 6f7551516b
 
 ## 跨包边界
 
-[subsys.ai.auth-resolution](auth-resolution.md) 应覆盖 provider auth metadata、ambient context、stored credential 与 override 如何被解析成 `AuthResult`; 本节点只覆盖 `CredentialStore` 的 storage contract 与 `InMemoryCredentialStore` 的 queue/read/write behavior。[E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:147][E: packages/ai/src/auth/types.ts:229][I]
+[subsys.ai.auth-resolution](auth-resolution.md) 应覆盖 provider auth metadata、ambient context、stored credential 与 override 如何被解析成 `AuthResult`; 本节点只覆盖 `CredentialStore` 的 storage contract 与 `InMemoryCredentialStore` 的 queue/read/write behavior。[E: packages/ai/src/auth/types.ts:65][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:147][E: packages/ai/src/auth/types.ts:239][I]
 
-[ref.ai.auth-types](../../reference/auth-types.md) 应作为 auth type catalog 逐项列出 `ModelAuth`、`ApiKeyCredential`、`OAuthCredential`、`Credential`、`AuthContext`、`AuthResult`、`ApiKeyAuth`、`OAuthAuth`、`ProviderAuth`; 本节点只在解释 store 边界时摘录这些类型。[E: packages/ai/src/auth/types.ts:7][E: packages/ai/src/auth/types.ts:17][E: packages/ai/src/auth/types.ts:32][E: packages/ai/src/auth/types.ts:37][E: packages/ai/src/auth/types.ts:97][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:170][E: packages/ai/src/auth/types.ts:206][E: packages/ai/src/auth/types.ts:237][I]
+[ref.ai.auth-types](../../reference/auth-types.md) 应作为 auth type catalog 逐项列出 `ModelAuth`、`ApiKeyCredential`、`OAuthCredential`、`Credential`、`AuthContext`、`AuthResult`、`ApiKeyAuth`、`OAuthAuth`、`ProviderAuth`; 本节点只在解释 store 边界时摘录这些类型。[E: packages/ai/src/auth/types.ts:7][E: packages/ai/src/auth/types.ts:17][E: packages/ai/src/auth/types.ts:32][E: packages/ai/src/auth/types.ts:37][E: packages/ai/src/auth/types.ts:97][E: packages/ai/src/auth/types.ts:104][E: packages/ai/src/auth/types.ts:170][E: packages/ai/src/auth/types.ts:216][E: packages/ai/src/auth/types.ts:247][I]
 
 ## Sources
 

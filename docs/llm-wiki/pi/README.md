@@ -1,6 +1,6 @@
 # pi 源码 LLM Wiki
 
-一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 **pi**(`pi/`)的真实源码——一个含 **11 个源码 package workspace + 5 个 extension-example workspace** 的 TypeScript monorepo,一个**自扩展的编码 agent harness**:独立 application-composition runtime（chord）+ 多 provider LLM 引擎 + durable conversation/document runtime + 可复用 agent 运行时 + 交互式编码 agent CLI + 差分渲染 TUI + 远程 session protocol/client/server + 可选 SQLite backend + private eval harness。细到每个工具的字段与设计动机。
+一份给 **agent 检索/消费**(其次:可问答 → onboarding)的知识库,覆盖 **pi**(`pi/`)的真实源码——一个含 **13 个源码 package workspace + 5 个 extension-example workspace** 的 TypeScript monorepo,一个**自扩展的编码 agent harness**:独立 application-composition runtime（chord）+ QuickJS WASM codemode sandbox + 独立 MCP client + 多 provider LLM 引擎 + durable conversation/document/Harness runtime + 可复用 Agent loop + 交互式编码 agent CLI + 差分渲染 TUI + 远程 session protocol/client/server + private eval harness。细到每个工具的字段与设计动机。
 
 ## 这是 LLM wiki,不是书
 
@@ -19,16 +19,17 @@
 - **TypeScript monorepo**:Node ≥22 / Bun 双运行时,Biome + TypeScript native(tsgo)。源路径一律相对 `pi/`(如 `packages/coding-agent/src/...`)。
 - **★ 分层栈 = 全 wiki 的组织主线**:pi 把"可复用运行时"与"产品"分层:
   - **`@earendil-works/chord`** = 独立 application-composition runtime（facets / services / replicated state / delta）。**不依赖**其它 Pi workspace 包。
-  - **`pi-ai`** = 多 provider 统一 LLM API(42 built-in runtime provider，42 个静态模型结构目录；10 chat wire 协议 + `openrouter-images` + 2 classifier API；auth/oauth)。chat/image/classifier 三分 catalog。完整模型值在 generated/gitignored JSON。
-  - **`pi-durable`** = durable conversation / task / document runtime（Memory / JSONL / SQLite）。**不是** coding-agent `SessionManager` JSONL 的替代，也不是 `pi-session-backend-sqlite-node`。
-  - **`pi-agent-core`** = **可复用** agent 运行时 harness:agent-loop(turn → provider stream → 工具调用 → state)、`finishTurn`/`prepareRequest`、v4 lane-based `Session`/`SessionRepo`、压缩/分支总结、skills、system-prompt、harness events。任何 app 都能拿它建 agent。会话搜索只剩 `SessionSearchService` 接口，scanning / FTS 实现已删除。
-  - **`pi-coding-agent`** = **产品**:8 个内置工具(bash/read/edit/write/grep/find/ls + 可选 Windows `powershell`)、**扩展系统(自扩展招牌)**、skills、slash 命令、三种模式(interactive TUI / RPC / print)、配置/信任/会话管理。内置 `read`/`bash`/`powershell`/`edit`/`write` 默认 `constrainedSampling: { type: "json_schema", strict: "prefer" }`。
+  - **`pi-codemode`** = QuickJS WASM sandbox，跑模型写的工具脚本；**`pi-mcp`** = 独立 MCP client（stdio / Streamable HTTP / OAuth）。二者都不依赖其它 Pi 包。
+  - **`pi-ai`** = 多 provider 统一 LLM API(42 built-in runtime provider，42 个静态模型结构目录；10 chat wire 协议 + `openrouter-images` + 3 classifier API；auth/oauth)。chat/image/classifier 三分 catalog。完整模型值在 generated/gitignored JSON。
+  - **`pi-durable`** = durable conversation / task / document runtime + **1.0 可复用 `Harness`**（Memory / JSONL / async SQLite + `./tools`）。**不是** coding-agent `SessionManager` JSONL 的替代。
+  - **`pi-agent-core`** = **可复用** Agent loop：`Agent`、turn → provider stream → 工具调用 → state、`finishTurn`/`prepareRequest`。1.0 起不再包含 session/harness/compaction/skills。任何 app 都能拿它建 agent。
+  - **`pi-coding-agent`** = **产品**:8 个内置工具(bash/read/edit/write/grep/find/ls + 可选 Windows `powershell`)、**扩展系统(自扩展招牌)**（含 replaceable `codemode` / `tool-search` / `mcp`）、skills、slash 命令、三种模式(interactive TUI / RPC / print)、配置/信任/会话管理。内置 `read`/`bash`/`powershell`/`edit`/`write` 默认 `constrainedSampling: { type: "json_schema", strict: "prefer" }`。TUI 默认 fullscreen。
   - **`pi-tui`** = 独立可复用的差分渲染终端 UI 库(渲染循环、编辑器、键盘协议、LaTeX、fullscreen search)。
   - **`pi-protocol`** = 远程 session 的 TypeBox wire schema + CBOR/framing（`PROTOCOL_VERSION=8`）；**`pi-client`** = Chord 风格 `Client` + `createClientServiceTransport`，不是已删除的 `PiClient` / `PiSessionHandle`。
   - **`pi-server`** = **实验性** composable remote-session server（`SessionRouter` + Chord 服务载荷）。legacy 多实例 JSONL IPC/supervisor/Radius 已删除。
-  - **`pi-session-backend-sqlite-node`** = 可选的 Node SQLite v4 session backend；**`pi-telemetry`** = vendor-neutral telemetry contracts；**`pi-evals`** = private 行为评测 consumer。
-  - 根 build 顺序为 **chord → tui → telemetry → ai → durable → agent → sqlite-node → protocol → client → server → coding-agent**。
-  - 每个节点 frontmatter 带 `pkg: chord | ai | durable | agent | protocol | client | coding-agent | tui | server | session-backends | telemetry | evals | cross`,使分层可 grep。**`agent`(可复用)↔ `coding-agent`(产品)的边界、扩展系统与远程 session 链是 pi 的画像主线**。
+  - **`pi-telemetry`** = vendor-neutral telemetry contracts；**`pi-evals`** = private 行为评测 consumer。原 `pi-session-backend-sqlite-node` 已删除，SQLite 在 `pi-durable`。
+  - 根 build 顺序为 **chord → tui → telemetry → codemode → mcp → ai → durable → agent → protocol → client → server → coding-agent**。
+  - 每个节点 frontmatter 带 `pkg: chord | codemode | mcp | ai | durable | agent | protocol | client | coding-agent | tui | server | telemetry | evals | cross`,使分层可 grep。**`durable` Harness ↔ `agent` loop ↔ `coding-agent` 产品的边界、扩展系统与远程 session 链是 pi 的画像主线**。
 - **范围**:**全 monorepo 同深度**——含 TUI 渲染细节、实验性 server,均逐子系统覆盖。
 
 ## 结构
@@ -65,13 +66,13 @@ _fill-prompts.md  并发填充的批次清单(给 codex 的分批令)
 
 ## 方法 & 状态
 
-逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **204 个节点全部 verified 于 pi `6f7551516b`**。本轮从 `ff72faba28` 覆盖上游 **0.87.1 Unreleased**（System theme、Fireworks 默认 `kimi-k3`、OpenAI Fast 与 priority 同价、durable typed IDs / ownership）。审计见 `_UPDATE-SCOPE.md`。
+逐节点循环:**影响重算 → 读源码更新 → 独立 L2 证伪 → 修复 → reconcile/lint**。当前 **195 个节点全部 verified 于 pi `4c6fb7cfe8`**。本轮从 `ff72faba28` 覆盖上游 **v0.99.0–v1.0.1 + Unreleased**（agent-core 瘦身为 loop、`pi-durable` Harness、新包 `pi-codemode`/`pi-mcp`、MCP/codemode 产品面、virtual models、TUI 默认 fullscreen）。审计见 `_UPDATE-SCOPE.md`。
 
 | Tier | 范围 | 节点数 | 状态 |
 |---|---|---|---|
 | T0 spine | 端到端脊柱(9)+ worked traces(3) | 12 | ✅ 完成 |
-| T1 surface | tools、CLI、modes、config、providers、extensions 与其它用户可见面 | 35 | ✅ 完成 |
-| T2 subsystems | chord(2)+ ai(29)+ durable(2)+ agent-core(22)+ protocol(2)+ client(3)+ coding-agent(34)+ tui(22)+ server(4)+ session-backends(1)+ telemetry(1)+ evals(2) | 124 | ✅ 完成 |
-| T3 reference | ai(6)+ agent-core(8)+ coding-agent(13)+ tui(3)+ cross(3) | 33 | ✅ 完成 |
+| T1 surface | tools、CLI、modes、config、providers、extensions、MCP、codemode 与其它用户可见面 | 37 | ✅ 完成 |
+| T2 subsystems | chord(2)+ codemode(1)+ mcp(1)+ ai(29)+ durable(3)+ agent-core(8)+ protocol(2)+ client(3)+ coding-agent(37)+ tui(22)+ server(4)+ telemetry(1)+ evals(2) | 115 | ✅ 完成 |
+| T3 reference | ai(6)+ agent-core(6)+ coding-agent(13)+ tui(3)+ cross(3) | 31 | ✅ 完成 |
 
 后续更新以 `RUN.md` 的 L1→L2→L3 流程、`index.json.updated` 与节点 `updated` 为 staleness 门槛。

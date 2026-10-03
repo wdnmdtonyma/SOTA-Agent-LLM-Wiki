@@ -24,7 +24,7 @@ related:
  - subsys.coding-agent.theme-controller
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > 会话 HTML 导出是 pi-coding-agent 把 `SessionManager` 的 JSONL 会话、可选 `AgentState` 元数据、主题色和扩展工具渲染结果打包成单个 standalone HTML 文件的子系统。
@@ -97,15 +97,15 @@ result 预渲染会分别用 `{ expanded: false, isPartial: false }` 和 `{ expa
 
 ## `display: false` 与 H 键 toggle
 
-`custom_message` 的 `display === false` 会给 HTML 节点加上 `hook-message-hidden`。CSS 在 `body` 没有 `show-hidden-messages` class 时把这类消息 `display: none`;默认 `showHiddenMessages = false`,所以它们与 TUI 一样默认隐藏,但仍在 payload 里。[E: packages/coding-agent/src/core/export-html/template.js:1314] [E: packages/coding-agent/src/core/export-html/template.js:1315] [E: packages/coding-agent/src/core/export-html/template.js:1316] [E: packages/coding-agent/src/core/export-html/template.css:795] [E: packages/coding-agent/src/core/export-html/template.js:1806]
+`custom_message` 的 `display === false` 会给 HTML 节点加上 `hook-message-hidden`。CSS 在 `body` 没有 `show-hidden-messages` class 时把这类消息 `display: none`;默认 `showHiddenMessages = false`,所以它们与 TUI 一样默认隐藏,但仍在 payload 里。[E: packages/coding-agent/src/core/export-html/template.js:1330] [E: packages/coding-agent/src/core/export-html/template.js:1331] [E: packages/coding-agent/src/core/export-html/template.js:1332] [E: packages/coding-agent/src/core/export-html/template.css:795] [E: packages/coding-agent/src/core/export-html/template.js:1822]
 
-header help 文案是 `T toggle thinking · O toggle tools · H toggle hidden messages`。键盘 `h`(无 modifier、焦点不在可编辑控件)和 header 按钮 `data-action="toggle-hidden-messages"` 都调 `setHiddenMessagesVisible()`,给 `document.body` toggle `show-hidden-messages`。[E: packages/coding-agent/src/core/export-html/template.js:1393] [E: packages/coding-agent/src/core/export-html/template.js:1397] [E: packages/coding-agent/src/core/export-html/template.js:1808] [E: packages/coding-agent/src/core/export-html/template.js:1810] [E: packages/coding-agent/src/core/export-html/template.js:1850] [E: packages/coding-agent/src/core/export-html/template.js:1883] [E: packages/coding-agent/src/core/export-html/template.js:1885]
+header help 文案是 `T toggle thinking · O toggle tools · H toggle hidden messages`。键盘 `h`(无 modifier、焦点不在可编辑控件)和 header 按钮 `data-action="toggle-hidden-messages"` 都调 `setHiddenMessagesVisible()`,给 `document.body` toggle `show-hidden-messages`。[E: packages/coding-agent/src/core/export-html/template.js:1409] [E: packages/coding-agent/src/core/export-html/template.js:1413] [E: packages/coding-agent/src/core/export-html/template.js:1824] [E: packages/coding-agent/src/core/export-html/template.js:1826] [E: packages/coding-agent/src/core/export-html/template.js:1866] [E: packages/coding-agent/src/core/export-html/template.js:1899] [E: packages/coding-agent/src/core/export-html/template.js:1901]
 
 ## JSONL share 与 HTML export 分流
 
 HTML export 不是 `/share` 的主路径。`exportSessionToJsonl()` 写 current branch 的线性 JSONL,不要求 session 文件已存在,也不嵌入 theme / renderedTools [E: packages/coding-agent/src/core/session-export.ts:32] [E: packages/coding-agent/src/core/session-export.ts:23] [E: packages/coding-agent/src/core/session-export.ts:41]。`exportSessionForShare()` 在该 JSONL 末尾追加 `customType: "pi.share"`(`systemPrompt` + tools schema),供 Radius artifact 使用 [E: packages/coding-agent/src/modes/interactive/session-share.ts:50] [E: packages/coding-agent/src/modes/interactive/session-share.ts:33] [E: packages/coding-agent/src/modes/interactive/session-share.ts:38]。
 
-`exportSessionToHtml()` 仍走另一套 payload:`SessionData` 带 header/entries/leafId,以及可选 `state.systemPrompt`、`state.tools` 摘要和 `renderedTools`;它要求 `getSessionFile()` 存在且文件已落盘 [E: packages/coding-agent/src/core/export-html/index.ts:236] [E: packages/coding-agent/src/core/export-html/index.ts:243] [E: packages/coding-agent/src/core/export-html/index.ts:263] [E: packages/coding-agent/src/core/export-html/index.ts:267]。interactive `/export` 以输出路径是否以 `.jsonl` 结尾分流:`.jsonl` → `exportToJsonl()`,否则 `exportToHtml()` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6267] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6267] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6270]。`/share` 的 gist **回退**才调用 `exportToHtml()`;Radius 成功或失败都不走这份 HTML [E: packages/coding-agent/src/modes/interactive/session-share.ts:69] [E: packages/coding-agent/src/modes/interactive/session-share.ts:83]。
+`exportSessionToHtml()` 仍走另一套 payload:`SessionData` 带 header/entries/leafId,以及可选 `state.systemPrompt`、`state.tools` 摘要和 `renderedTools`;它要求 `getSessionFile()` 存在且文件已落盘 [E: packages/coding-agent/src/core/export-html/index.ts:236] [E: packages/coding-agent/src/core/export-html/index.ts:243] [E: packages/coding-agent/src/core/export-html/index.ts:263] [E: packages/coding-agent/src/core/export-html/index.ts:267]。interactive `/export` 以输出路径是否以 `.jsonl` 结尾分流:`.jsonl` → `exportToJsonl()`,否则 `exportToHtml()` [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6452] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6453] [E: packages/coding-agent/src/modes/interactive/interactive-mode.ts:6456]。`/share` 的 gist **回退**才调用 `exportToHtml()`;Radius 成功或失败都不走这份 HTML [E: packages/coding-agent/src/modes/interactive/session-share.ts:69] [E: packages/coding-agent/src/modes/interactive/session-share.ts:83]。
 
 ## 入口与跨包关系
 

@@ -14,7 +14,7 @@ related:
   - subsys.coding-agent.session-services
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `AgentSessionRuntime` 是 pi-coding-agent 在一个 host 中持有“当前 `AgentSession` + 当前 cwd-bound services”的 lifecycle owner: `/new`、resume、fork、import 和 quit 都通过它先通知 extension、再 teardown 旧 session、再用同一个 factory 创建 replacement runtime。
@@ -37,7 +37,7 @@ updated: 6f7551516b
 ## 关键文件
 
 - `packages/coding-agent/src/core/agent-session-runtime.ts`: `AgentSessionRuntime`、`CreateAgentSessionRuntimeFactory`、`SessionImportFileNotFoundError`、`createAgentSessionRuntime()` 和 replacement methods 的权威实现 [E: packages/coding-agent/src/core/agent-session-runtime.ts:35] [E: packages/coding-agent/src/core/agent-session-runtime.ts:46] [E: packages/coding-agent/src/core/agent-session-runtime.ts:74] [E: packages/coding-agent/src/core/agent-session-runtime.ts:420]。
-- `packages/coding-agent/src/core/agent-session-services.ts`: `AgentSessionServices` 定义 cwd、agentDir、modelRuntime、settingsManager、resourceLoader 和 diagnostics, 并把 service creation 与 `AgentSession` creation 拆成两个函数 [E: packages/coding-agent/src/core/agent-session-services.ts:73] [E: packages/coding-agent/src/core/agent-session-services.ts:76] [E: packages/coding-agent/src/core/agent-session-services.ts:135] [E: packages/coding-agent/src/core/agent-session-services.ts:202]。
+- `packages/coding-agent/src/core/agent-session-services.ts`: `AgentSessionServices` 定义 cwd、agentDir、modelRuntime、settingsManager、resourceLoader 和 diagnostics, 并把 service creation 与 `AgentSession` creation 拆成两个函数 [E: packages/coding-agent/src/core/agent-session-services.ts:73] [E: packages/coding-agent/src/core/agent-session-services.ts:76] [E: packages/coding-agent/src/core/agent-session-services.ts:135] [E: packages/coding-agent/src/core/agent-session-services.ts:214]。
 - `packages/coding-agent/src/core/session-cwd.ts`: `assertSessionCwdExists()` 在 session file 记录的 cwd 不存在时抛 `MissingSessionCwdError`, runtime 在 initial creation、resume 和 import 路径调用它 [I: packages/coding-agent/src/core/session-cwd.ts:54] [I: packages/coding-agent/src/core/session-cwd.ts:57] [E: packages/coding-agent/src/core/agent-session-runtime.ts:429] [E: packages/coding-agent/src/core/agent-session-runtime.ts:211] [E: packages/coding-agent/src/core/agent-session-runtime.ts:390]。
 - `packages/coding-agent/src/modes/interactive/interactive-mode.ts`、`packages/coding-agent/src/modes/print-mode.ts`、`packages/coding-agent/src/modes/rpc/rpc-mode.ts`: run modes 把 extension command context 的 `newSession` / `fork` / `switchSession` 接到同一个 `runtimeHost` 上 [I: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1557] [I: packages/coding-agent/src/modes/interactive/interactive-mode.ts:1564] [I: packages/coding-agent/src/modes/interactive/interactive-mode.ts:4610] [I: packages/coding-agent/src/modes/print-mode.ts:77] [I: packages/coding-agent/src/modes/print-mode.ts:79] [I: packages/coding-agent/src/modes/print-mode.ts:92] [I: packages/coding-agent/src/modes/rpc/rpc-mode.ts:323] [I: packages/coding-agent/src/modes/rpc/rpc-mode.ts:337]。
 

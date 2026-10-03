@@ -25,7 +25,7 @@ related:
  - subsys.ai.model-discovery
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `subsys.ai.model-catalog-publication` 是独立于 npm package release 的 artifact pipeline：生成完整 JSON model bundle(含 typed `.all.json`)，验证 bundle 内部一致性，以内容 hash 建不可变 revision，并在受控窗口发布到 S3-compatible R2。本地 ignored model JSON 走 schema **v6** 的 `hydrate:model-data`。
@@ -47,15 +47,15 @@ updated: 6f7551516b
 
 本地 generated model data(gitignored `src/providers/data/*.json` + `.manifest.json`)的 schema 是 `MODEL_DATA_SCHEMA_VERSION = 6`。manifest 的 `schemaVersion` 必须等于 6,否则 `validateModelDataDirectory` 报 stale,并提示从仓库根运行 `npm run hydrate:model-data`。[E: packages/ai/scripts/model-data.ts:5] [E: packages/ai/scripts/model-data.ts:232] [E: packages/ai/scripts/model-data.ts:234] [E: packages/ai/scripts/check-model-data.ts:14]
 
-根 scripts 把 hydrate 暴露为 `hydrate:model-data` → `packages/ai` 的 `hydrate-model-data`:`node scripts/generate-models.ts --strict --data-only`。`--data-only` 不能和 JSON catalog output 组合。[E: package.json:31] [E: packages/ai/package.json:57] [E: packages/ai/scripts/generate-models.ts:68] [E: packages/ai/scripts/generate-models.ts:90]
+根 scripts 把 hydrate 暴露为 `hydrate:model-data` → `packages/ai` 的 `hydrate-model-data`:`node scripts/generate-models.ts --strict --data-only`。`--data-only` 不能和 JSON catalog output 组合。[E: package.json:29] [E: packages/ai/package.json:61] [E: packages/ai/scripts/generate-models.ts:69] [E: packages/ai/scripts/generate-models.ts:91]
 
 published catalog 的 wire protocol schema 仍是 `MODEL_CATALOG_SCHEMA_VERSION = 1`,存储前缀 `models/v1`。这不是 v6。artifact 名含 `models.json` 与 `models.all.json`;representation 分 `"legacy"` 与 `"typed"`。[E: scripts/model-catalog-protocol.ts:28] [E: scripts/model-catalog-protocol.ts:29] [E: scripts/model-catalog-protocol.ts:39] [E: scripts/model-catalog-protocol.ts:41] [E: scripts/publish-model-catalog.mjs:21]
 
 ## 生成物 contract
 
-root scripts 把 `generate:model-catalog`、`diff:model-catalog` 和 `check:model-catalog` 分成三个命令；check 以 `--dry-run` 调用 publisher 的同一 validator。[E: package.json:33] [E: package.json:34] [E: package.json:36] AI package 的生成命令固定使用 `--strict --json-only --json-output ../../.artifacts/model-catalog`。[E: packages/ai/package.json:58]
+root scripts 把 `generate:model-catalog`、`diff:model-catalog` 和 `check:model-catalog` 分成三个命令；check 以 `--dry-run` 调用 publisher 的同一 validator。[E: package.json:31] [E: package.json:32] [E: package.json:35] AI package 的生成命令固定使用 `--strict --json-only --json-output ../../.artifacts/model-catalog`。[E: packages/ai/package.json:62]
 
-`generate-models.ts` 的 CLI 明确区分 `strict`、`dataOnly`、`jsonOnly`、`jsonOutputDir` 与 `pretty`,并拒绝没有 output directory 的 `--json-only`。[E: packages/ai/scripts/generate-models.ts:49] [E: packages/ai/scripts/generate-models.ts:51] [E: packages/ai/scripts/generate-models.ts:72] [E: packages/ai/scripts/generate-models.ts:89]
+`generate-models.ts` 的 CLI 明确区分 `strict`、`dataOnly`、`jsonOnly`、`jsonOutputDir` 与 `pretty`,并拒绝没有 output directory 的 `--json-only`。[E: packages/ai/scripts/generate-models.ts:50] [E: packages/ai/scripts/generate-models.ts:52] [E: packages/ai/scripts/generate-models.ts:73] [E: packages/ai/scripts/generate-models.ts:90]
 
 JSON output directory 被重建后包含:
 
@@ -64,13 +64,13 @@ JSON output directory 被重建后包含:
 - 排序的 `providers.json`
 - `providers/<id>.json`(chat projection)与 `providers/<id>.all.json`(typed array)
 
-`.all` 用 array,好让同一 upstream id 按 type 各出现一次。[E: packages/ai/scripts/generate-models.ts:3516] [E: packages/ai/scripts/generate-models.ts:3517] [E: packages/ai/scripts/generate-models.ts:3518] [E: packages/ai/scripts/generate-models.ts:3520] [E: packages/ai/scripts/generate-models.ts:3521]
+`.all` 用 array,好让同一 upstream id 按 type 各出现一次。[E: packages/ai/scripts/generate-models.ts:3664] [E: packages/ai/scripts/generate-models.ts:3665] [E: packages/ai/scripts/generate-models.ts:3666] [E: packages/ai/scripts/generate-models.ts:3668] [E: packages/ai/scripts/generate-models.ts:3669]
 
-generator 在内存里把模型分成 `chat` / `image` / `classifier` 三个 bucket,chat entry 写入 `{ ...model, type: "chat" }`。`jsonAllProviders[providerId]` 是 chat + image + classifier values 拼成的 array。[E: packages/ai/scripts/generate-models.ts:3301] [E: packages/ai/scripts/generate-models.ts:3310] [E: packages/ai/scripts/generate-models.ts:3331] [E: packages/ai/scripts/generate-models.ts:3342]
+generator 在内存里把模型分成 `chat` / `image` / `classifier` 三个 bucket,chat entry 写入 `{ ...model, type: "chat" }`。`jsonAllProviders[providerId]` 是 chat + image + classifier values 拼成的 array。[E: packages/ai/scripts/generate-models.ts:3460] [E: packages/ai/scripts/generate-models.ts:3469] [E: packages/ai/scripts/generate-models.ts:3492] [E: packages/ai/scripts/generate-models.ts:3503]
 
 validator 把允许的 type 钉死成 `["chat", "image", "classifier"]`。[E: scripts/publish-model-catalog.mjs:34] [E: scripts/publish-model-catalog.mjs:129]
 
-普通 package build 还生成只保留类型结构的 `.models.ts` 与 gitignored adjacent JSON values；两者来自同一 provider data,但输出位置和消费方不同。`--data-only` 成功时打印 `Hydrated JSON model values under src/providers/data/`。[E: packages/ai/scripts/generate-models.ts:3498]
+普通 package build 还生成只保留类型结构的 `.models.ts` 与 gitignored adjacent JSON values；两者来自同一 provider data,但输出位置和消费方不同。`--data-only` 成功时打印 `Hydrated JSON model values under src/providers/data/`。[E: packages/ai/scripts/generate-models.ts:3646]
 
 当前 generated aggregator 有 **42** 个 provider bucket(含 `meta`、`typesafe`、`radius`)。[E: packages/ai/src/models.generated.ts:47] [E: packages/ai/src/models.generated.ts:64] [E: packages/ai/src/models.generated.ts:79] [E: packages/ai/src/models.generated.ts:81]
 

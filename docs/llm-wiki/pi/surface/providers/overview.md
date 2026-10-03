@@ -33,7 +33,7 @@ related:
  - ref.ai.provider-catalog
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `surface.providers.overview` 是用户可见的 provider 心智模型：选择 provider/model 后，Pi 从 runtime `Models` collection 检查配置、筛选可用模型、解析 credential，再把请求交给 provider-owned wire implementation。
@@ -49,9 +49,9 @@ updated: 6f7551516b
 
 ## 用户入口
 
-Provider docs 把配置分成 OAuth subscription 和 API key 两类：交互模式用 `/login`/`/logout` 管理 credential，API-key provider 也能直接从环境变量启动。[E: packages/coding-agent/docs/providers.md:3] [E: packages/coding-agent/docs/providers.md:12] [E: packages/coding-agent/docs/providers.md:24] 用户再通过 `/model`、CLI `--provider`/`--model` 或 embedding API 选择具体模型；完整登录与 credential precedence 由 [surface.providers.auth](auth.md) 解释。[I]
+Provider docs 把配置分成 OAuth subscription 和 API key 两类：交互模式用 `/login`/`/logout` 管理 credential，API-key provider 也能直接从环境变量启动。[E: packages/coding-agent/docs/providers.md:3] [E: packages/coding-agent/docs/providers.md:12] [E: packages/coding-agent/docs/providers.md:22] 用户再通过 `/model`、CLI `--provider`/`--model` 或 embedding API 选择具体模型；完整登录与 credential precedence 由 [surface.providers.auth](auth.md) 解释。[I]
 
-环境变量表含 `META_API_KEY`(Meta)以及其余 API-key provider;TypeSafe 走 `TYPESAFE_API_KEY`,不在这份用户表里,因为它是 classifier-only builtin。[E: packages/coding-agent/docs/providers.md:57] [E: packages/ai/src/env-api-keys.ts:93] [E: packages/ai/src/env-api-keys.ts:111] [E: packages/ai/src/providers/typesafe.ts:11]
+环境变量表含 `META_API_KEY`(Meta)以及其余 API-key provider;TypeSafe 走 `TYPESAFE_API_KEY`,不在这份用户表里,因为它是 classifier-only builtin。[E: packages/coding-agent/docs/providers.md:56] [E: packages/ai/src/env-api-keys.ts:98] [E: packages/ai/src/env-api-keys.ts:116] [E: packages/ai/src/providers/typesafe.ts:11]
 
 ## 内置集合与 static catalog
 
@@ -69,27 +69,27 @@ xAI 只暴露 `openai-responses`:`xaiProvider()` 的类型是 `Provider<"openai-
 
 Meta 是 `Provider<"openai-responses">`:`id: "meta"`,baseUrl `https://api.meta.ai/v1`,同时有 `META_API_KEY` 与 Muse subscription OAuth;coding-agent 默认模型是 `muse-spark-1.3`。[E: packages/ai/src/providers/meta.ts:7] [E: packages/ai/src/providers/meta.ts:9] [E: packages/ai/src/providers/meta.ts:11] [E: packages/ai/src/providers/meta.ts:13] [E: packages/ai/src/providers/meta.ts:15] [E: packages/coding-agent/src/core/model-resolver.ts:52]
 
-TypeSafe 是 classifier-only builtin:`typesafeProvider()` 不设 chat `api`,只设 `classifiers: { "typesafe-system-one": typesafeSystemOneApi() }` 与 `TYPESAFE_API_KEY`。`createProvider` 允许只给 `classifiers` / `images` 而不给 chat `api`。[E: packages/ai/src/providers/typesafe.ts:6] [E: packages/ai/src/providers/typesafe.ts:11] [E: packages/ai/src/providers/typesafe.ts:14] [E: packages/ai/src/models.ts:1013] [E: packages/ai/src/models.ts:1039]
+TypeSafe 是 classifier-only builtin:`typesafeProvider()` 不设 chat `api`,只设 `classifiers: { "typesafe-system-one": typesafeSystemOneApi() }` 与 `TYPESAFE_API_KEY`。`createProvider` 允许只给 `classifiers` / `images` 而不给 chat `api`。[E: packages/ai/src/providers/typesafe.ts:6] [E: packages/ai/src/providers/typesafe.ts:11] [E: packages/ai/src/providers/typesafe.ts:14] [E: packages/ai/src/models.ts:1019] [E: packages/ai/src/models.ts:1045]
 
-图像模型不再走独立 `builtinImagesProviders()` / `builtinImagesModels()`(已删除)。OpenRouter 把 image models 与 `images: { "openrouter-images": openrouterImagesApi() }` 挂在同一个 chat provider 上;`Models.generateImages()` 按 model.provider 解析 auth 后委派。[E: packages/ai/src/providers/openrouter.ts:32] [E: packages/ai/src/models.ts:340] [E: packages/ai/src/models.ts:942]
+图像模型不再走独立 `builtinImagesProviders()` / `builtinImagesModels()`(已删除)。OpenRouter 把 image models 与 `images: { "openrouter-images": openrouterImagesApi() }` 挂在同一个 chat provider 上;`Models.generateImages()` 按 model.provider 解析 auth 后委派。[E: packages/ai/src/providers/openrouter.ts:32] [E: packages/ai/src/models.ts:341] [E: packages/ai/src/models.ts:948]
 
 ## Runtime provider contract
 
-provider 必须给 id/name、auth、同步 last-known `getModels()` 与 stream/streamSimple;动态 provider 可实现 `refreshModels(context)`。`stream` 接收 `TranscriptContext`。[E: packages/ai/src/models.ts:144] [E: packages/ai/src/models.ts:157] [E: packages/ai/src/models.ts:165] [E: packages/ai/src/models.ts:201] [E: packages/ai/src/models.ts:203]
+provider 必须给 id/name、auth、同步 last-known `getModels()` 与 stream/streamSimple;动态 provider 可实现 `refreshModels(context)`。`stream` 接收 `TranscriptContext`。[E: packages/ai/src/models.ts:145] [E: packages/ai/src/models.ts:158] [E: packages/ai/src/models.ts:166] [E: packages/ai/src/models.ts:202] [E: packages/ai/src/models.ts:204]
 
-`Models` 提供 lookup、全体 refresh、auth check、available model filtering、login/logout 与 streaming。[E: packages/ai/src/models.ts:243] [E: packages/ai/src/models.ts:273] [E: packages/ai/src/models.ts:276] [E: packages/ai/src/models.ts:279] [E: packages/ai/src/models.ts:309] 用户界面应把 `getAvailable()` 视为「已配置 provider 的可选模型」,而不是只看所有 provider 的 raw `getModels()`。[E: packages/ai/src/models.ts:279] [I]
+`Models` 提供 lookup、全体 refresh、auth check、available model filtering、login/logout 与 streaming。[E: packages/ai/src/models.ts:244] [E: packages/ai/src/models.ts:274] [E: packages/ai/src/models.ts:277] [E: packages/ai/src/models.ts:280] [E: packages/ai/src/models.ts:310] 用户界面应把 `getAvailable()` 视为「已配置 provider 的可选模型」,而不是只看所有 provider 的 raw `getModels()`。[E: packages/ai/src/models.ts:280] [I]
 
-`Models.refresh({ allowNetwork, force, signal, providers })` 并行处理动态 provider,把 per-provider errors 收集进 `ModelsRefreshResult`;它不是旧的 `refresh(providerId)` API。[E: packages/ai/src/models.ts:91] [E: packages/ai/src/models.ts:100] [E: packages/ai/src/models.ts:273] [E: packages/ai/src/models.ts:545] [E: packages/ai/src/models.ts:604] 每个 refresh 先 restore stored catalog,再在允许联网时 fetch。[E: packages/ai/src/models.ts:534] [E: packages/ai/src/models.ts:570] [E: packages/ai/src/models.ts:576]
+`Models.refresh({ allowNetwork, force, signal, providers })` 并行处理动态 provider,把 per-provider errors 收集进 `ModelsRefreshResult`;它不是旧的 `refresh(providerId)` API。[E: packages/ai/src/models.ts:92] [E: packages/ai/src/models.ts:101] [E: packages/ai/src/models.ts:274] [E: packages/ai/src/models.ts:546] [E: packages/ai/src/models.ts:605] 每个 refresh 先 restore stored catalog,再在允许联网时 fetch。[E: packages/ai/src/models.ts:535] [E: packages/ai/src/models.ts:571] [E: packages/ai/src/models.ts:577]
 
 ## Request auth 与委派
 
-stream 先按 `model.provider` require provider,调用 `getAuth()`;request options 的 apiKey/headers/env 覆盖 resolved auth,`transformHeaders` 最后运行。[E: packages/ai/src/models.ts:831] [E: packages/ai/src/models.ts:842] [E: packages/ai/src/models.ts:853] [E: packages/ai/src/models.ts:854] 之后 `stream()`/`streamSimple()` 才委派给 provider object,并传入已 `normalizeContext()` 的 `TranscriptContext`。[E: packages/ai/src/models.ts:865] [E: packages/ai/src/models.ts:870] [E: packages/ai/src/models.ts:877]
+stream 先按 `model.provider` require provider,调用 `getAuth()`;request options 的 apiKey/headers/env 覆盖 resolved auth,`transformHeaders` 最后运行。[E: packages/ai/src/models.ts:837] [E: packages/ai/src/models.ts:848] [E: packages/ai/src/models.ts:859] [E: packages/ai/src/models.ts:860] 之后 `stream()`/`streamSimple()` 才委派给 provider object,并传入已 `normalizeContext()` 的 `TranscriptContext`。[E: packages/ai/src/models.ts:871] [E: packages/ai/src/models.ts:876] [E: packages/ai/src/models.ts:883]
 
 ## Custom provider 的两条路
 
-`models.json` 适合复用现有 wire protocol 的 base URL、headers、auth 与 model list;extension 适合新 stream implementation、OAuth 或自定义生命周期。[I] `createProvider()` 支持 static baseline `models`、可选 `fetchModels()` dynamic overlay、credential filter,以及单一 API 或按 `model.api` 的 map。[E: packages/ai/src/models.ts:983] [E: packages/ai/src/models.ts:995] [E: packages/ai/src/models.ts:1000] [E: packages/ai/src/models.ts:1013]
+`models.json` 适合复用现有 wire protocol 的 base URL、headers、auth 与 model list;extension 适合新 stream implementation、OAuth 或自定义生命周期。[I] `createProvider()` 支持 static baseline `models`、可选 `fetchModels()` dynamic overlay、credential filter,以及单一 API 或按 `model.api` 的 map。[E: packages/ai/src/models.ts:989] [E: packages/ai/src/models.ts:1001] [E: packages/ai/src/models.ts:1006] [E: packages/ai/src/models.ts:1019]
 
-缺少对应 API implementation 时,stream path 返回 `ModelsError("stream", ...)`。[E: packages/ai/src/models.ts:1057] [E: packages/ai/src/models.ts:1066]
+缺少对应 API implementation 时,stream path 返回 `ModelsError("stream", ...)`。[E: packages/ai/src/models.ts:1063] [E: packages/ai/src/models.ts:1072]
 
 ## 两个动态特例
 
@@ -99,9 +99,9 @@ stream 先按 `model.provider` require provider,调用 `getAuth()`;request optio
 ## Gotcha
 
 - `getBuiltinProviders()` 现在与 `builtinProviders()` 的成员集合对齐为 42(含 radius / meta / typesafe);它仍是 generated catalog keys,不是 runtime object 数组本身。[E: packages/ai/src/providers/all.ts:94] [E: packages/ai/src/providers/all.ts:136]
-- `getModels()` 是 last-known sync catalog:动态 provider 返回上次 `refreshModels()` 的列表(首次前为空);实现不得抛错,`Models.getModels()` 在未知 provider 或实现抛错时返回 `[]`。空列表不等于 provider 未配置;配置与否由 `getAvailable()` / `checkAuth()` 判断。[E: packages/ai/src/models.ts:165] [E: packages/ai/src/models.ts:276] [E: packages/ai/src/models.ts:279] [E: packages/ai/src/models.ts:423] [E: packages/ai/src/models.ts:430]
-- custom provider id 是 collection 的 replace key;`setProvider()` 以 `provider.id` upsert。[E: packages/ai/src/models.ts:356] [E: packages/ai/src/models.ts:398] [E: packages/ai/src/models.ts:400]
-- TypeSafe 没有 chat stream;对它做 `Models.stream` 会因没有 chat API implementation 变成 stream error。[E: packages/ai/src/providers/typesafe.ts:14] [E: packages/ai/src/models.ts:1066] [I]
+- `getModels()` 是 last-known sync catalog:动态 provider 返回上次 `refreshModels()` 的列表(首次前为空);实现不得抛错,`Models.getModels()` 在未知 provider 或实现抛错时返回 `[]`。空列表不等于 provider 未配置;配置与否由 `getAvailable()` / `checkAuth()` 判断。[E: packages/ai/src/models.ts:166] [E: packages/ai/src/models.ts:277] [E: packages/ai/src/models.ts:280] [E: packages/ai/src/models.ts:424] [E: packages/ai/src/models.ts:431]
+- custom provider id 是 collection 的 replace key;`setProvider()` 以 `provider.id` upsert。[E: packages/ai/src/models.ts:357] [E: packages/ai/src/models.ts:399] [E: packages/ai/src/models.ts:401]
+- TypeSafe 没有 chat stream;对它做 `Models.stream` 会因没有 chat API implementation 变成 stream error。[E: packages/ai/src/providers/typesafe.ts:14] [E: packages/ai/src/models.ts:1072] [I]
 
 ## Sources
 

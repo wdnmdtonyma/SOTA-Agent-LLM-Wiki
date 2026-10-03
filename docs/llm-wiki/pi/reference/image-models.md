@@ -29,7 +29,7 @@ related:
   - ref.ai.model-catalog
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `ref.ai.image-models` 是 `IMAGE_MODELS` 的**结构** catalog：记录 generated 三分对象里图像那一份的 bucket、`ImageModel` 字段、OpenRouter 生成规则，以及当前 checkout 能证明的实例。不要再 cite 已删除的 `image-models.generated.ts` / `providers/openrouter-images.ts`。
@@ -48,11 +48,11 @@ updated: 6f7551516b
 
 每个 structural shard 三个 export。`openrouter.models.ts` 用同一份 `./data/openrouter.json` 分别 `flattenChatModelCatalog` / `flattenImageModelCatalog` / `flattenClassifierModelCatalog` [E: packages/ai/src/providers/openrouter.models.ts:4] [E: packages/ai/src/providers/openrouter.models.ts:7] [E: packages/ai/src/providers/openrouter.models.ts:10] [E: packages/ai/src/providers/openrouter.models.ts:13]。`flattenImageModelCatalog` 只保留 `type === "image"` 的条目，再按 `model.id` 建成 map [E: packages/ai/src/model-catalog.ts:53] [E: packages/ai/src/model-catalog.ts:57] [E: packages/ai/src/model-catalog.ts:69] [E: packages/ai/src/model-catalog.ts:73]。
 
-生成器把 JSON identity 写成 `` `${model.type}:${model.id}` ``，因此同一 upstream id 可以同时有 `chat:google/gemini-3-pro-image` 与 `image:google/gemini-3-pro-image` [E: packages/ai/scripts/generate-models.ts:3371] [E: packages/ai/scripts/generate-models.ts:3312] [E: packages/ai/scripts/generate-models.ts:3315] [E: packages/ai/test/images-models.test.ts:400] [E: packages/ai/test/images-models.test.ts:403]。manifest `schemaVersion` 必须等于 `MODEL_DATA_SCHEMA_VERSION = 6` [E: packages/ai/scripts/model-data.ts:5] [E: packages/ai/scripts/model-data.ts:232]。flattened 值在 gitignored `src/providers/data/*.json`；本页不冒充能枚举当前 JSON 里的全部 id [I]。
+生成器把 JSON identity 写成 `` `${model.type}:${model.id}` ``，因此同一 upstream id 可以同时有 `chat:google/gemini-3-pro-image` 与 `image:google/gemini-3-pro-image` [E: packages/ai/scripts/generate-models.ts:3371] [E: packages/ai/scripts/generate-models.ts:3471] [E: packages/ai/scripts/generate-models.ts:3474] [E: packages/ai/test/images-models.test.ts:400] [E: packages/ai/test/images-models.test.ts:403]。manifest `schemaVersion` 必须等于 `MODEL_DATA_SCHEMA_VERSION = 6` [E: packages/ai/scripts/model-data.ts:5] [E: packages/ai/scripts/model-data.ts:232]。flattened 值在 gitignored `src/providers/data/*.json`；本页不冒充能枚举当前 JSON 里的全部 id [I]。
 
 ## ImageModel 字段
 
-`ImageModel` 共享 `BaseModel`：`id` / `name` / `api` / `provider` / `baseUrl` / `input` / 可选 `inputLimits` / `cost` / 可选 `headers` [E: packages/ai/src/types.ts:1062] [E: packages/ai/src/types.ts:1063] [E: packages/ai/src/types.ts:1064] [E: packages/ai/src/types.ts:1065] [E: packages/ai/src/types.ts:1066] [E: packages/ai/src/types.ts:1068] [E: packages/ai/src/types.ts:1071]。图像专用：`type` 必须是 `"image"`；`output` 是 `("text" | "image")[]` 且始终包含 `"image"` [E: packages/ai/src/types.ts:1110] [E: packages/ai/src/types.ts:1111] [E: packages/ai/src/types.ts:1113]。`KnownImageApi` 只有 `"openrouter-images"` [E: packages/ai/src/types.ts:31]。
+`ImageModel` 共享 `BaseModel`：`id` / `name` / `api` / `provider` / `baseUrl` / `input` / 可选 `inputLimits` / `cost` / 可选 `headers` [E: packages/ai/src/types.ts:1097] [E: packages/ai/src/types.ts:1098] [E: packages/ai/src/types.ts:1099] [E: packages/ai/src/types.ts:1100] [E: packages/ai/src/types.ts:1101] [E: packages/ai/src/types.ts:1103] [E: packages/ai/src/types.ts:1106]。图像专用：`type` 必须是 `"image"`；`output` 是 `("text" | "image")[]` 且始终包含 `"image"` [E: packages/ai/src/types.ts:1145] [E: packages/ai/src/types.ts:1146] [E: packages/ai/src/types.ts:1148]。`KnownImageApi` 只有 `"openrouter-images"` [E: packages/ai/src/types.ts:31]。
 
 校验器对 `type === "image"` 要求 `output` 是含 `"image"` 的 modality list；chat/classifier 行不允许带 `output` [E: packages/ai/scripts/model-data.ts:166] [E: packages/ai/scripts/model-data.ts:167] [E: packages/ai/scripts/model-data.ts:170]。
 
@@ -60,11 +60,11 @@ updated: 6f7551516b
 
 ## OpenRouter 生成与装配
 
-生成器并行拉 OpenRouter 默认列表、`?output_modalities=image`、`?output_modalities=decisions` [E: packages/ai/scripts/generate-models.ts:1288] [E: packages/ai/scripts/generate-models.ts:1289] [E: packages/ai/scripts/generate-models.ts:1290] [E: packages/ai/scripts/generate-models.ts:1291]。strict 模式下图像列表为空会 throw [E: packages/ai/scripts/generate-models.ts:1297] [E: packages/ai/scripts/generate-models.ts:1298]。
+生成器并行拉 OpenRouter 默认列表、`?output_modalities=image`、`?output_modalities=decisions` [E: packages/ai/scripts/generate-models.ts:1310] [E: packages/ai/scripts/generate-models.ts:1311] [E: packages/ai/scripts/generate-models.ts:1312] [E: packages/ai/scripts/generate-models.ts:1313]。strict 模式下图像列表为空会 throw [E: packages/ai/scripts/generate-models.ts:1319] [E: packages/ai/scripts/generate-models.ts:1320]。
 
 `buildOpenRouterCatalog` 对 image listing：跳过重复 id；`output_modalities` 必须含 `"image"`；`api: "openrouter-images"`、`provider: "openrouter"`、`baseUrl: "https://openrouter.ai/api/v1"`、`type: "image"`；`input` 来自 `input_modalities`，缺省 `["text"]` [E: packages/ai/scripts/openrouter-catalog.ts:91] [E: packages/ai/scripts/openrouter-catalog.ts:93] [E: packages/ai/scripts/openrouter-catalog.ts:94] [E: packages/ai/scripts/openrouter-catalog.ts:97] [E: packages/ai/scripts/openrouter-catalog.ts:100] [E: packages/ai/scripts/openrouter-catalog.ts:101] [E: packages/ai/scripts/openrouter-catalog.ts:102] [E: packages/ai/scripts/openrouter-catalog.ts:103]。cost 从 OpenRouter `$/token` 乘 1_000_000 再 `toFixed(6)` [E: packages/ai/scripts/openrouter-catalog.ts:29] [E: packages/ai/scripts/openrouter-catalog.ts:39] [E: packages/ai/scripts/openrouter-catalog.ts:41] [E: packages/ai/scripts/openrouter-catalog.ts:42]。
 
-这些 image 行在 `generateModels()` 里单独写入 `providers[id].image`，与 chat 分表，所以同一 upstream ID 可以有不同 API implementation [E: packages/ai/scripts/generate-models.ts:3312] [E: packages/ai/scripts/generate-models.ts:3315]。含 image 输入的行还会套 `applyImageInputMetadata()`（默认 resize 2000×2000 / 4.5 MiB / jpeg 80）[E: packages/ai/scripts/generate-models.ts:3313] [E: packages/ai/scripts/generate-models.ts:406] [E: packages/ai/scripts/generate-models.ts:994]。
+这些 image 行在 `generateModels()` 里单独写入 `providers[id].image`，与 chat 分表，所以同一 upstream ID 可以有不同 API implementation [E: packages/ai/scripts/generate-models.ts:3471] [E: packages/ai/scripts/generate-models.ts:3474]。含 image 输入的行还会套 `applyImageInputMetadata()`（默认 resize 2000×2000 / 4.5 MiB / jpeg 80）[E: packages/ai/scripts/generate-models.ts:3472] [E: packages/ai/scripts/generate-models.ts:415] [E: packages/ai/scripts/generate-models.ts:1008]。
 
 `openrouterProvider()` 用 `Object.values(OPENROUTER_IMAGE_MODELS)` 作为 runtime 模型清单的一部分，并挂 `images: { "openrouter-images": openrouterImagesApi() }` [E: packages/ai/src/providers/openrouter.ts:25] [E: packages/ai/src/providers/openrouter.ts:32]。wire 实现是 `api/openrouter-images.ts` 的 `generateImages`，`modalities` 随 `model.output.includes("text")` 在 `["image","text"]` 与 `["image"]` 之间切换 [E: packages/ai/src/api/openrouter-images.ts:42] [E: packages/ai/src/api/openrouter-images.ts:163]。
 
@@ -85,7 +85,7 @@ updated: 6f7551516b
 
 ## Generated Gotcha
 
-`models.generated.ts` 与每个 `providers/<id>.models.ts` 由 `scripts/generate-models.ts` 写出；更新入口是 `npm run generate-models`，不要手改 aggregator [E: packages/ai/scripts/generate-models.ts:3424] [E: packages/ai/scripts/generate-models.ts:3482] [E: packages/ai/package.json:56]。旧入口 `npm run generate-image-models` / `scripts/generate-image-models.ts` 已删除 [I]。
+`models.generated.ts` 与每个 `providers/<id>.models.ts` 由 `scripts/generate-models.ts` 写出；更新入口是 `npm run generate-models`，不要手改 aggregator [E: packages/ai/scripts/generate-models.ts:3572] [E: packages/ai/scripts/generate-models.ts:3630] [E: packages/ai/package.json:60]。旧入口 `npm run generate-image-models` / `scripts/generate-image-models.ts` 已删除 [I]。
 
 `getBuiltinImageModel` 的 TypeScript 签名不包含 `undefined`，实现却是 `IMAGE_MODELS[provider]?.[id] as ImageModel<...>`；缺 key 时 runtime 得到 `undefined` [E: packages/ai/src/providers/all.ts:75] [E: packages/ai/src/providers/all.ts:76] [I]。
 

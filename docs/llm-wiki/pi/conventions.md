@@ -14,7 +14,7 @@ id: surface.tools.bash         # 全局唯一;点分命名空间,且与路径对
 title: bash 执行工具
 kind: tool                     # flow | tool | surface | subsystem | reference | catalog
 tier: T1                       # T0 | T1 | T2 | T3
-pkg: coding-agent              # chord | ai | durable | agent | protocol | client | coding-agent | tui | server | session-backends | telemetry | evals | cross
+pkg: coding-agent              # chord | ai | durable | agent | protocol | client | coding-agent | tui | server | session-backends | telemetry | evals | codemode | mcp | cross
 source: [packages/coding-agent/src/core/tools/bash.ts, packages/coding-agent/src/core/bash-executor.ts]  # 相对 pi/;纯导览可空
 symbols: [createBashTool, BashToolInput, BashOperations]   # 本节点权威覆盖的导出符号(T3 覆盖率据此计)
 related: [spine.tool-call-anatomy, subsys.coding-agent.bash-executor, ref.tools-catalog]  # 其它节点 id,构成图
@@ -28,7 +28,7 @@ updated: <pi HEAD 10 位短 SHA> # fill 时跑 git -C ../../../pi rev-parse --sh
 
 ### 1.2 `pkg` 字段(pi 分层主线)
 
-pi 是分层栈:`chord`(独立 application-composition runtime,不依赖其它 Pi 包)→ `ai`(provider 引擎)→ `durable`(durable conversation/task/document runtime)→ `agent`(可复用 runtime harness)→ `coding-agent`(产品)+ `tui`(渲染)，远程栈为 `protocol`(wire schema/codec)→ `client`(Chord 风格 transport-neutral client) 与 `server`(实验性 composable remote-session 服务端)，另有 `session-backends`(SQLite session backend)、`telemetry`(vendor-neutral telemetry contracts)和 `evals`(私有评测 harness)。每节点标 `pkg`,使"这条逻辑属哪一层"可 grep。**跨层节点**(如脊柱总览)标 `pkg: cross`。`pkg` 取值含 `chord` 与 `durable`。脊柱页须写清 `agent` 与 `coding-agent` 的复用边界，以及 remote protocol/client/server 不等同于本地 RPC mode。legacy 多实例 JSONL IPC server 已从 `packages/server` 删除，wiki 不再保留对应节点。
+pi 是分层栈:`chord`(独立 application-composition runtime,不依赖其它 Pi 包)→ `codemode`(QuickJS WASM sandbox)与 `mcp`(独立 MCP client)→ `ai`(provider 引擎)→ `durable`(durable conversation/task/document runtime，含 1.0 可复用 Harness)→ `agent`(可复用 Agent loop)→ `coding-agent`(产品)+ `tui`(渲染)，远程栈为 `protocol`(wire schema/codec)→ `client`(Chord 风格 transport-neutral client) 与 `server`(实验性 composable remote-session 服务端)，另有 `telemetry`(vendor-neutral telemetry contracts)和 `evals`(私有评测 harness)。每节点标 `pkg`,使"这条逻辑属哪一层"可 grep。**跨层节点**(如脊柱总览)标 `pkg: cross`。`pkg` 取值含 `chord`、`durable`、`codemode`、`mcp`。脊柱页须写清 `agent` 与 `coding-agent` 的复用边界，以及 `pi-durable` 才是 1.0 可复用 session/harness；remote protocol/client/server 不等同于本地 RPC mode。`packages/session-backends` 与 agent-core experimental harness 已删除，wiki 不再保留对应节点。
 
 ### 1.3 正文骨架(H2/H3 可预测)
 
@@ -117,6 +117,6 @@ frontmatter + 符号/变体/键 表(每行一个实例:名 · 类型/签名 · �
 - **slash 命令** = `packages/coding-agent/src/core/slash-commands.ts`;**键位** = `packages/coding-agent/src/core/keybindings.ts`(导出 `KEYBINDINGS` = `{ ...TUI_KEYBINDINGS, app.* }`,加 `migrateKeybindingsConfig`/`KeybindingsManager`;**注意:不存在旧名 `DEFAULT_APP_KEYBINDINGS`/`DEFAULT_EDITOR_KEYBINDINGS`,index.json 已同步为当前 symbols**)+ `packages/tui/src/keybindings.ts`(`TUI_KEYBINDINGS`)。
 - **RPC 方法** = `packages/coding-agent/src/modes/rpc/rpc-types.ts`(`RpcCommand`)+ `rpc-mode.ts` 的 dispatch。
 - **配置键** = `packages/coding-agent/src/core/settings-manager.ts` + `core/defaults.ts`(对照 `docs/settings.md`)。
-- **会话格式** = `packages/coding-agent/src/core/session-manager.ts` 与 `packages/agent/src/harness/types.ts`(`SessionTreeEntry`),对照 `docs/session-format.md`。
+- **会话格式** = `packages/coding-agent/src/core/session-manager.ts`（产品 JSONL），对照 `docs/session-format.md`。可复用 durable session 在 `packages/durable/src/session/` 与 `packages/durable/src/storage/`，不要再 cite 已删除的 `packages/agent/src/harness/**` 或 `packages/session-backends/**`。
 - **设计动机权威来源**:`packages/coding-agent/docs/*.md`(30 篇,见 `index.md`)、根 `AGENTS.md`、`README.md`;dogfood 实例在 `.pi/`(extensions/prompts/skills)。
 - **`.pi/` vs `.claude/`**:pi 自身配置目录是 `.pi/`(项目级)与 `~/.pi/agent/`(全局);`.claude/` 仅作跨 harness 共享 context 文件的 fallback,别混。

@@ -23,7 +23,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `Client` 不再持有 `PiSessionHandle` / shared-exclusive lease。现行 attachment 是 server 发布的 `SessionTarget`（`{ serverId, sessionId, attachmentId }`）；服务观察走 `subscribeService()` 返回的 `ServiceSubscription`。`session-handle.ts` 与 `state.ts` 已删除 [E: packages/client/src/client.ts:113] [E: packages/protocol/src/protocol.ts:40] [E: packages/client/src/types.ts:16]。
@@ -38,7 +38,7 @@ updated: 6f7551516b
 
 ## 数据模型
 
-`SessionTarget` 是 session 调用的完整路由：logical `serverId` + durable `sessionId` + live `attachmentId` [E: packages/protocol/src/protocol.ts:40] [E: packages/protocol/src/protocol.ts:42] [E: packages/protocol/src/protocol.ts:43]。server-wide 调用只用 `{ serverId }` [E: packages/protocol/src/protocol.ts:36]。`Client` 只缓存当前一条 `#attachment`，没有 per-session handle map [E: packages/client/src/client.ts:73] [E: packages/client/src/client.ts:113]。
+`SessionTarget` 是 session 调用的完整路由：logical `serverId` + durable `sessionId` + live `attachmentId` [E: packages/protocol/src/protocol.ts:40] [E: packages/protocol/src/protocol.ts:42] [E: packages/protocol/src/protocol.ts:43]。server-wide 调用只用 `{ serverId }` [E: packages/protocol/src/protocol.ts:36]。`Client` 只缓存当前一条 `#attachment`，没有 per-session handle map [E: packages/client/src/client.ts:76] [E: packages/client/src/client.ts:113]。
 
 `ServiceSubscription` 暴露 `id`、`target`、hydrate 完成的 `snapshot`、`start()` 与 `dispose()`。`start()` 在调用方装好 snapshot 之后才释放 hydration 期间缓冲的 update [E: packages/client/src/types.ts:16] [E: packages/client/src/types.ts:21] [E: packages/client/src/types.ts:22]。
 
@@ -58,7 +58,7 @@ protocol 没有 `attach` / `detach` / `create` command。测试与 README 约定
 
 `subscribeService()` 分配 `service-N` subscription id，登记 `ActiveServiceListener`（Chord `createServiceStateDecoder()` + wire/update 队列），再发 `createServiceSubscribeCall` [E: packages/client/src/client.ts:243] [E: packages/client/src/client.ts:183] [E: packages/client/src/client.ts:195]。snapshot 尚未 decode 完时到达的 `service_update` 进 `queuedWireUpdates`；hydrate 后、`start()` 前的 decoded update 进 `queued` [E: packages/client/src/client.ts:313] [E: packages/client/src/client.ts:317] [E: packages/client/src/client.ts:330]。
 
-`start()` 幂等：标 `ready` 并按序 `#deliverServiceUpdate`。`dispose()` 从 map 删除 listener；若仍 `connected` 且 `#targetIsCurrent(target)`，再发 unsubscribe；最后等待 `deliveryTail` [E: packages/client/src/client.ts:315] [E: packages/client/src/client.ts:221] [E: packages/client/src/client.ts:314]。session target 的 “current” 要求 attachment 三元组全等；server target 只比 `hello.serverId` [E: packages/client/src/client.ts:423] [E: packages/client/src/client.ts:427]。
+`start()` 幂等：标 `ready` 并按序 `#deliverServiceUpdate`。`dispose()` 从 map 删除 listener；若仍 `connected` 且 `#targetIsCurrent(target)`，再发 unsubscribe；最后等待 `deliveryTail` [E: packages/client/src/client.ts:315] [E: packages/client/src/client.ts:221] [E: packages/client/src/client.ts:314]。session target 的 “current” 要求 attachment 三元组全等；server target 只比 `hello.serverId` [E: packages/client/src/client.ts:424] [E: packages/client/src/client.ts:427]。
 
 `createClientServiceTransport()` 把 `subscribeService` 映射为 Chord transport 的 `activate` / `close` [E: packages/client/src/client.ts:459] [E: packages/client/src/client.ts:469]。测试锁住：snapshot 到达前的 update 不投递；`activate()` 之后才释放 buffer [E: packages/client/test/client.test.ts:81] [E: packages/client/test/client.test.ts:112]。
 
@@ -72,7 +72,7 @@ server disconnect 会等该 connection 已 admitted 的 invoke settle，再 `rel
 
 - 不存在 `PiSessionHandle`、`SessionLeaseMode`、`acquireSession()`。不要在 wiki 或调用代码里发明这些符号 [E: packages/client/src/index.ts:1]。
 - `Client.attachment` 是当前 presentation route，不是 durable session 列表，也不是 authoritative transcript snapshot [E: packages/client/src/client.ts:113]。
-- 一个 `Client` 同时只跟踪一条 attachment。要观察另一 session，需经应用 `attach` 让 server 发布新 route [E: packages/client/src/client.ts:73] [I]。
+- 一个 `Client` 同时只跟踪一条 attachment。要观察另一 session，需经应用 `attach` 让 server 发布新 route [E: packages/client/src/client.ts:76] [I]。
 - subscription id 是 client 生成的 `service-N`；server 用它关联 `service_update`。未知 `subscriptionId` 的 update 被忽略，不 fail connection [E: packages/client/src/client.ts:314] [E: packages/client/src/client.ts:315]。
 
 ## Sources

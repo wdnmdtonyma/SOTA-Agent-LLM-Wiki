@@ -25,10 +25,10 @@ related:
   - subsys.protocol.cbor-framing
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
-> `@earendil-works/pi-server/unix` 同时提供 composable `createUnixListener()`、one-listener `createUnixServer()` 与 `getUnixSocketPath()`。它服务 framed-CBOR version-8 session protocol，不是 legacy JSONL IPC [E: packages/server/package.json:17] [E: packages/server/src/transports/unix/index.ts:2] [E: packages/server/src/transports/unix/preset.ts:12]。
+> `@earendil-works/pi-server/unix` 同时提供 composable `createUnixListener()`、one-listener `createUnixServer()` 与 `getUnixSocketPath()`。它服务 framed-CBOR version-8 session protocol，不是 legacy JSONL IPC [E: packages/server/package.json:17] [E: packages/server/src/transports/unix/index.ts:2] [E: packages/server/src/transports/unix/preset.ts:11]。
 
 ## 能回答的问题
 
@@ -43,9 +43,9 @@ updated: 6f7551516b
 
 `UnixListenerOptions` 要求 path，可选 mode、max pending bytes、graceful close timeout、matching max frame length 与 error observer；默认 socket mode 是 owner-only `0o600` [E: packages/server/src/transports/unix/types.ts:3] [E: packages/server/src/transports/unix/listener.ts:11] [E: packages/server/src/transports/unix/listener.ts:394]。
 
-`UnixServerOptions` 由 `ServerOptions` 去掉 `listeners` 后与 listener options 合并，两侧都没有 token field。Unix preset 的 access-control 边界是 socket path/mode [E: packages/server/src/transports/unix/types.ts:15] [E: packages/server/src/types.ts:5] [E: packages/server/README.md:77]。accepted socket 直接构造 `UnixByteConnection` 并交给 core acceptor，没有 bearer token 或 OS peer-credential 检查；parent directory `mkdir(..., 0o700)`，public socket 再按配置 mode chmod [E: packages/server/src/transports/unix/listener.ts:53] [E: packages/server/src/transports/unix/listener.ts:100] [E: packages/server/src/transports/unix/listener.ts:111]。
+`UnixServerOptions` 由 `ServerOptions` 去掉 `listeners` 后与 listener options 合并，两侧都没有 token field。Unix preset 的 access-control 边界是 socket path/mode [E: packages/server/src/transports/unix/types.ts:15] [E: packages/server/src/types.ts:4] [E: packages/server/README.md:61]。accepted socket 直接构造 `UnixByteConnection` 并交给 core acceptor，没有 bearer token 或 OS peer-credential 检查；parent directory `mkdir(..., 0o700)`，public socket 再按配置 mode chmod [E: packages/server/src/transports/unix/listener.ts:53] [E: packages/server/src/transports/unix/listener.ts:100] [E: packages/server/src/transports/unix/listener.ts:111]。
 
-`createUnixServer(host, options)` 拆开 listener options 与 core options，再 `new Server(host, { listeners: [listener], serverId, ... })`。custom max frame 必须同时传给 listener queue 与 server codec [E: packages/server/src/transports/unix/preset.ts:8] [E: packages/server/src/transports/unix/preset.ts:25] [E: packages/server/src/transports/unix/preset.ts:22]。
+`createUnixServer(host, options)` 拆开 listener options 与 core options，再 `new Server(host, { listeners: [listener], serverId, ... })`。custom max frame 必须同时传给 listener queue 与 server codec [E: packages/server/src/transports/unix/preset.ts:7] [E: packages/server/src/transports/unix/preset.ts:24] [E: packages/server/src/transports/unix/preset.ts:21]。
 
 `getUnixSocketPath(serverId, serverDirectory)` 要求 canonical lowercase UUIDv4，返回 `join(directory, `${serverId}.sock`)`，与 client `discoverUnixServers()` 的文件名约定对齐 [E: packages/server/src/transports/unix/address.ts:4] [E: packages/server/src/transports/unix/address.ts:8]。
 
@@ -72,7 +72,7 @@ send queue 复制 bytes、按 Promise tail 保序并限制 pending bytes [E: pac
 - `mode` 只接受 `0..0o777`；Windows 上 chmod 被跳过，但 listener 没有像 client Unix factory 一样显式拒绝 Windows [E: packages/server/src/transports/unix/listener.ts:395] [E: packages/server/src/transports/unix/listener.ts:366] [I]。
 - live probe timeout 被保守视为 socket live，优先避免误删可能仍在服务的 endpoint [E: packages/server/src/transports/unix/listener.ts:360] [I]。
 - Unix listener 的 path/mode 是 filesystem access-control 边界；源码没有跨进程 socket arbitration，也没有从已删除的 legacy JSONL IPC 做自动 migration [I]。
-- 这里的 “authorized” 依赖 filesystem path/mode，而不是 protocol bearer token。若部署允许不受信任进程访问 socket，应用必须在 transport/listener 层增加更强认证 [E: packages/server/README.md:77] [E: packages/server/src/transports/unix/listener.ts:394] [I]。
+- 这里的 “authorized” 依赖 filesystem path/mode，而不是 protocol bearer token。若部署允许不受信任进程访问 socket，应用必须在 transport/listener 层增加更强认证 [E: packages/server/README.md:61] [E: packages/server/src/transports/unix/listener.ts:394] [I]。
 
 ## Sources
 

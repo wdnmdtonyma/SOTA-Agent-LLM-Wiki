@@ -19,7 +19,7 @@ related:
   - subsys.ai.credential-store
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `AuthStorage` 是 coding-agent 对 `pi-ai` `CredentialStore` 的持久化实现；临时 `--api-key` 已拆到 `RuntimeCredentials`，provider auth 解析、OAuth 刷新与登录编排则属于 `ModelRuntime`/`pi-ai Models`。

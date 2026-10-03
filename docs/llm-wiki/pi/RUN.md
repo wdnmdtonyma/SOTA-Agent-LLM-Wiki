@@ -53,7 +53,7 @@
 `tools/lint.mjs`(L1 机械校验,落地 `conventions.md` 第 5 节规则 + git-SHA 校验)与 `tools/reconcile.mjs`(把各 node `.md` frontmatter 同步回 `index.json`、登记新节点、合并 `_staging/uncertainty-*.md` → `reference/uncertainty.md`)已就位,自测 0 error。每波填完由 lead 跑 reconcile + lint(见 §8);整体收尾前再 reconcile + lint 全绿。
 
 ## 8. 编排:单会话 + 多 subagent 并行填充
-本 wiki 由**一个 lead codex 会话**编排,用 **subagent 并行**填节点。节点级并行是安全的:每个节点是独立 `.md` 文件、源码只读,填充期不动 `index.json`/`llms.txt`,跨节点 `related`/正文链接靠 `index.json` 解析。当前清单为 186 个 verified 节点；后续增量更新只处理影响节点和新增候选,节点之间仍**无写依赖、无先后约束**。历史 seed-fill 批次与提示词见 `_fill-prompts.md`。
+本 wiki 由**一个 lead codex 会话**编排,用 **subagent 并行**填节点。节点级并行是安全的:每个节点是独立 `.md` 文件、源码只读,填充期不动 `index.json`/`llms.txt`,跨节点 `related`/正文链接靠 `index.json` 解析。当前清单为 195 个 verified 节点；后续增量更新只处理影响节点和新增候选,节点之间仍**无写依赖、无先后约束**。历史 seed-fill 批次与提示词见 `_fill-prompts.md`。
 
 **lead 会话(串行,唯一改共享文件者):**
 - 按批次推进:**批 A(脊柱)必须先整批跑完**(后续节点要读完成的脊柱 prose 才写得准);之后 B–H 逐波,可合并,只要把单波并发量框住。

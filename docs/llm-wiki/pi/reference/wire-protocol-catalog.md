@@ -1,6 +1,6 @@
 ---
 id: ref.ai.wire-protocol-catalog
-title: wire 协议与客户端目录(10 chat + image + classifier)
+title: wire 协议与客户端目录(10 chat + 1 image + 3 classifier)
 kind: catalog
 tier: T3
 pkg: ai
@@ -11,6 +11,7 @@ source:
  - packages/ai/src/api/openrouter-images.lazy.ts
  - packages/ai/src/api/typesafe-system-one.lazy.ts
  - packages/ai/src/api/cloudflare-workers-ai-system-one.lazy.ts
+ - packages/ai/src/api/llama-cpp-classify.lazy.ts
  - packages/ai/src/types.ts
 symbols:
  - KnownApi
@@ -21,12 +22,14 @@ symbols:
  - ProviderClassifier
 related:
  - subsys.ai.wire-protocol-dispatch
+ - subsys.ai.classifiers
+ - subsys.ai.image-generation
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
-> `ref.ai.wire-protocol-catalog` 逐实例列出 `pi-ai` **chat/text** streaming wire protocol key（`KnownApi`，**10** 个）、图像 API（`KnownImageApi`，1 个）和 classifier API（`KnownClassifierApi`，2 个）。chat 的 10 不把 image/classifier 算进去。
+> `ref.ai.wire-protocol-catalog` 逐实例列出 `pi-ai` **chat/text** streaming wire protocol key（`KnownApi`，**10** 个）、图像 API（`KnownImageApi`，**1** 个）和 classifier API（`KnownClassifierApi`，**3** 个）。chat 的 10 不把 image/classifier 算进去。合计 **10 + 1 + 3**。
 
 ## 能回答的问题
 
@@ -44,7 +47,7 @@ updated: 6f7551516b
 
 `KnownImageApi` 只有 `"openrouter-images"`。对应 lazy wrapper 返回 `ProviderImages`，contract 是 `generateImages(...)`，**不**进入 10 个 chat `ProviderStreams`。[E: packages/ai/src/types.ts:31][E: packages/ai/src/api/openrouter-images.lazy.ts:3][E: packages/ai/src/types.ts:307][E: packages/ai/src/types.ts:308] 类型名是 `KnownImageApi`，不是旧的 `KnownImagesApi`。
 
-`KnownClassifierApi` 是 `"typesafe-system-one" | "cloudflare-workers-ai-system-one"` 两个 key。对应 `ProviderClassifier.classify(...)`，同样**不**计入 10 个 chat API。[E: packages/ai/src/types.ts:35][E: packages/ai/src/types.ts:316][E: packages/ai/src/types.ts:317][E: packages/ai/src/api/typesafe-system-one.lazy.ts:3][E: packages/ai/src/api/cloudflare-workers-ai-system-one.lazy.ts:3]
+`KnownClassifierApi` 是 `"typesafe-system-one" | "cloudflare-workers-ai-system-one" | "llama-cpp-classify"` **三个** key。对应 `ProviderClassifier.classify(...)`，同样**不**计入 10 个 chat API。[E: packages/ai/src/types.ts:35][E: packages/ai/src/types.ts:316][E: packages/ai/src/types.ts:317][E: packages/ai/src/api/typesafe-system-one.lazy.ts:3][E: packages/ai/src/api/cloudflare-workers-ai-system-one.lazy.ts:3][E: packages/ai/src/api/llama-cpp-classify.lazy.ts:3]
 
 `StreamOptions.fetch` 是 shared type surface，不代表 10 个 wire 都支持 custom fetch。当前 test/source matrix 证明 Anthropic、OpenAI Completions/Responses/Azure Responses、Mistral、Codex Responses 的 SSE path 与 `pi-messages` 会注入 custom fetch；Google Generative AI/Vertex 对非 `globalThis.fetch` 显式抛错；Bedrock 本轮既未注入也未显式拒绝；WebSocket transport 不受该选项影响。[E: packages/ai/src/types.ts:142] [E: packages/ai/test/fetch-option.test.ts:63] [E: packages/ai/test/fetch-option.test.ts:73] [E: packages/ai/test/fetch-option.test.ts:103] [E: packages/ai/test/fetch-option.test.ts:109] [E: packages/ai/test/fetch-option.test.ts:124] [E: packages/ai/test/fetch-option.test.ts:142]
 
@@ -71,12 +74,15 @@ updated: 6f7551516b
 |---|---|---|---|---|
 | `openrouter-images` | `packages/ai/src/api/openrouter-images.lazy.ts` -> `openrouterImagesApi()` -> `import("./openrouter-images.ts").generateImages` | `ProviderImages.generateImages(model, context, options?)` | [subsys.ai.image-generation](../subsystems/ai/image-generation.md) [I] | key [E: packages/ai/src/types.ts:31]; lazy [E: packages/ai/src/api/openrouter-images.lazy.ts:3]; contract [E: packages/ai/src/types.ts:307] [E: packages/ai/src/types.ts:308] |
 
-## Classifier API keys (`KnownClassifierApi`，2)
+## Classifier API keys (`KnownClassifierApi`，3)
 
 | api key | lazy module | contract | 对应节点 | 源码证据 |
 |---|---|---|---|---|
 | `typesafe-system-one` | `packages/ai/src/api/typesafe-system-one.lazy.ts` -> `typesafeSystemOneApi()` -> `import("./typesafe-system-one.ts").classify` | `ProviderClassifier.classify(model, context, options?)` | [subsys.ai.classifiers](../subsystems/ai/classifiers.md) [I] | key [E: packages/ai/src/types.ts:35]; lazy [E: packages/ai/src/api/typesafe-system-one.lazy.ts:3]; contract [E: packages/ai/src/types.ts:317] |
 | `cloudflare-workers-ai-system-one` | `packages/ai/src/api/cloudflare-workers-ai-system-one.lazy.ts` -> `cloudflareWorkersAISystemOneApi()` -> `import("./cloudflare-workers-ai-system-one.ts").classify` | `ProviderClassifier.classify(model, context, options?)` | [subsys.ai.classifiers](../subsystems/ai/classifiers.md) [I] | key [E: packages/ai/src/types.ts:35]; lazy [E: packages/ai/src/api/cloudflare-workers-ai-system-one.lazy.ts:3]; contract [E: packages/ai/src/types.ts:317] |
+| `llama-cpp-classify` | `packages/ai/src/api/llama-cpp-classify.lazy.ts` -> `llamaCppClassifyApi()` -> `import("./llama-cpp-classify.ts").classify` | `ProviderClassifier.classify(model, context, options?)` | [subsys.ai.classifiers](../subsystems/ai/classifiers.md) [I] | key [E: packages/ai/src/types.ts:35]; lazy [E: packages/ai/src/api/llama-cpp-classify.lazy.ts:3]; contract [E: packages/ai/src/types.ts:317] |
+
+三个 classifier key 都不走 `ProviderStreams` / `lazyApi()`：lazy 文件直接返回 `{ classify }`。`llama-cpp-classify` 没有对应 generated `*.models.ts` bucket；运行时由 coding-agent llama.cpp 扩展合成模型行，协议细节在 [subsys.ai.classifiers](../subsystems/ai/classifiers.md)。[E: packages/ai/src/api/llama-cpp-classify.lazy.ts:3] [I]
 
 ## Sources
 
@@ -87,7 +93,10 @@ updated: 6f7551516b
 - `packages/ai/src/api/openrouter-images.lazy.ts`
 - `packages/ai/src/api/typesafe-system-one.lazy.ts`
 - `packages/ai/src/api/cloudflare-workers-ai-system-one.lazy.ts`
+- `packages/ai/src/api/llama-cpp-classify.lazy.ts`
 
 ## 相关
 
 - [subsys.ai.wire-protocol-dispatch](../subsystems/ai/wire-protocol-dispatch.md):解释 `Model.api` 如何选择 `ProviderStreams`,以及缺失 implementation 时如何转成 stream error。
+- [subsys.ai.classifiers](../subsystems/ai/classifiers.md):三个 `KnownClassifierApi` 的 payload（System One `noul`、Cloudflare Clef 信封、llama.cpp 标签读出）。
+- [subsys.ai.image-generation](../subsystems/ai/image-generation.md):唯一的 `KnownImageApi` `openrouter-images`。

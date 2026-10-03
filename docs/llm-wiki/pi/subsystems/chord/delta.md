@@ -58,10 +58,10 @@ related:
   - subsys.client.remote-session-client
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
-> `@earendil-works/chord/delta` 的权威路径是 **immutable revision tracker**：`track(initial)` 拿走 alias-free strict-JSON root；`beginChange()` 打开 overlay draft；`prepare()` 物化候选值和精确 `Op[]`；`adopt()` 交换根指针。`applyImmutable()` / `applyImmutableBatches()` 是 in-process 首选 replay。`replicatedState()` 用同一套 tracker，生产者走 `change(context, callback)` / `replace(context, value)`，消费者拿不可变完整值。跨越边界的值必须是 strict JSON；`apply()` / `decoder()` 把 op 当 untrusted 输入校验路径与动词。[E: packages/chord/src/delta/tracker.ts:321][E: packages/chord/src/delta/tracker.ts:235][E: packages/chord/src/delta/index.ts:409][E: packages/chord/src/delta/index.ts:419][E: packages/chord/src/services/state.ts:123][E: packages/chord/src/delta/index.ts:152]
+> `@earendil-works/chord/delta` 的权威路径是 **immutable revision tracker**：`track(initial)` 拿走 alias-free strict-JSON root；`beginChange()` 打开 overlay draft；`prepare()` 物化候选值和精确 `Op[]`；`adopt()` 交换根指针。`applyImmutable()` / `applyImmutableBatches()` 是 in-process 首选 replay。`replicatedState()` 用同一套 tracker，生产者走 `change(context, callback)` / `replace(context, value)`，消费者拿不可变完整值。跨越边界的值必须是 strict JSON；`apply()` / `decoder()` 把 op 当 untrusted 输入校验路径与动词。[E: packages/chord/src/delta/tracker.ts:321][E: packages/chord/src/delta/tracker.ts:235][E: packages/chord/src/delta/index.ts:409][E: packages/chord/src/delta/index.ts:419][E: packages/chord/src/services/state.ts:202][E: packages/chord/src/delta/index.ts:152]
 
 ## 能回答的问题
 
@@ -77,7 +77,7 @@ updated: 6f7551516b
 
 Delta 是独立子路径 `@earendil-works/chord/delta`，只依赖 `JsonValue`，不依赖 facet host。[E: packages/chord/package.json:19][E: packages/chord/src/delta/index.ts:1] 实现拆在 `index.ts`（op 词汇 / untrusted apply / codec）、`tracker.ts`（canonical immutable tracker）、`apply-immutable-trusted.ts`（self-produced 物化）、`diff.ts`（overlay emit）、`draft.ts`（`Draft<T>`）、`revision-validator.ts`（replica 校验）。README 把 replicated state 与 delta tracking 分成两块：host 暴露权威 state；delta 在 prepare 时推导 exact ops，并在 apply 时校验 untrusted 操作。[E: packages/chord/README.md:34][E: packages/chord/README.md:42]
 
-`replicatedState()` 从根入口导出。入参是普通 JSON root 时实现是 `MutableReplicatedStateImpl`：内部 `track(initial)`，对外没有可变 `state` 代理，也没有 `publish()`；写入必须走 `change()` 或 `replace()`。[E: packages/chord/src/api.ts:99][E: packages/chord/src/services/state.ts:105][E: packages/chord/src/types.ts:53] Facet 侧 `env.replicatedState()` 同样 `new MutableReplicatedStateImpl(initial)`。[E: packages/chord/src/facets/host.ts:586] 入参实现 `attach()` 时走 `AttachedReplicatedState`，把外部 source frame 接到同一套 publisher。[E: packages/chord/src/api.ts:91][E: packages/chord/src/api.ts:104]
+`replicatedState()` 从根入口导出。入参是普通 JSON root 时实现是 `MutableReplicatedStateImpl`：内部 `track(initial)`，对外没有可变 `state` 代理，也没有 `publish()`；写入必须走 `change()` 或 `replace()`。[E: packages/chord/src/api.ts:99][E: packages/chord/src/services/state.ts:184][E: packages/chord/src/types.ts:59] Facet 侧 `env.replicatedState()` 同样 `new MutableReplicatedStateImpl(initial)`。[E: packages/chord/src/facets/host.ts:586] 入参实现 `attach()` 时走 `AttachedReplicatedState`，把外部 source frame 接到同一套 publisher。[E: packages/chord/src/api.ts:91][E: packages/chord/src/api.ts:104]
 
 本节点不覆盖 `defineFacet` / `createFacetHost` / remote transport；那些在 [subsys.chord.runtime](runtime.md)。本节点覆盖 tracker、op 词汇、replicated publish、replica hydrate/update、以及远程订阅上的 per-stream path codec。`packages/durable/docs/pico*` 与 `packages/agent/docs/pico*` 不是 shipped 运行时证据，本节点不引用。
 
@@ -87,9 +87,9 @@ Delta 是独立子路径 `@earendil-works/chord/delta`，只依赖 `JsonValue`�
 - `packages/chord/src/delta/tracker.ts`：canonical `track()` / `Tracker` / `Change` / `Prepared`。[E: packages/chord/src/delta/tracker.ts:135][E: packages/chord/src/delta/tracker.ts:321]
 - `packages/chord/src/delta/apply-immutable-trusted.ts`：self-produced batch 的 copy-on-write 物化，跳过 untrusted 校验。[E: packages/chord/src/delta/apply-immutable-trusted.ts:15]
 - `packages/chord/src/delta/diff.ts`：overlay dirty tree 发出 `Op[]`，含 `MAX_DELTA_OPERATIONS = 4096`。[E: packages/chord/src/delta/diff.ts:5]
-- `packages/chord/src/delta/README.md`：ownership、lifecycle、op 表、replica 合同。[E: packages/chord/src/delta/README.md:28][E: packages/chord/src/delta/README.md:124]
-- `packages/chord/src/services/state.ts`：`MutableReplicatedStateImpl` 与 `ReplicatedStateReplica`。[E: packages/chord/src/services/state.ts:105][E: packages/chord/src/services/state.ts:265]
-- `packages/chord/src/services/state-codec.ts`：每个订阅里每个 state member 一份 encoder/decoder。[E: packages/chord/src/services/state-codec.ts:60][E: packages/chord/src/services/state-codec.ts:90]
+- `packages/chord/src/delta/README.md`：ownership、lifecycle、op 表、replica 合同。[E: packages/chord/src/delta/README.md:30][E: packages/chord/src/delta/README.md:126]
+- `packages/chord/src/services/state.ts`：`MutableReplicatedStateImpl` 与 `ReplicatedStateReplica`。[E: packages/chord/src/services/state.ts:184][E: packages/chord/src/services/state.ts:344]
+- `packages/chord/src/services/state-codec.ts`：每个订阅里每个 state member 一份 encoder/decoder。[E: packages/chord/src/services/state-codec.ts:60][E: packages/chord/src/services/state-codec.ts:99]
 - `packages/chord/src/delta/revision-validator.ts`：replica 对每个 resulting revision 做 JSON 校验，已见过的 container 跳过。[E: packages/chord/src/delta/revision-validator.ts:8]
 - `packages/chord/src/json.ts`：`isJsonValue()` 给 adapter 边界用。[E: packages/chord/src/json.ts:74]
 
@@ -99,7 +99,7 @@ Delta 是独立子路径 `@earendil-works/chord/delta`，只依赖 `JsonValue`�
 
 `ReplicatedState<T>`：`value` 是不可变快照或 hydration 前的 `undefined`；`subscribe(listener)` 收到 `(value, context, delivery)`，`delivery.kind` 是 `"hydrate" | "update"`。[E: packages/chord/src/types.ts:43][E: packages/chord/src/types.ts:38][E: packages/chord/src/types.ts:48] 后续 update 不 mutate 先前返回的对象：`applyImmutable` 只 copy 变化路径上的 container。[E: packages/chord/src/delta/index.ts:409][E: packages/chord/src/types.ts:48]
 
-`MutableReplicatedState<T extends object>` 加上：`value` 必有（构造即 hydrate）、`change(context, mutate)`、`replace(context, value)`。没有可变 `state` getter，也没有 `publish()`。[E: packages/chord/src/types.ts:53][E: packages/chord/src/types.ts:59][E: packages/chord/src/types.ts:64] `change` 回调必须同步；draft handle 在回调返回后不可用；赋 `undefined` 给 object 属性等于 delete。[E: packages/chord/src/types.ts:59][E: packages/chord/src/services/state.ts:131]
+`MutableReplicatedState<T extends object>` 加上：`value` 必有（构造即 hydrate）、`change(context, mutate)`、`replace(context, value)`。没有可变 `state` getter，也没有 `publish()`。[E: packages/chord/src/types.ts:59][E: packages/chord/src/types.ts:65][E: packages/chord/src/types.ts:70] `change` 回调必须同步；draft handle 在回调返回后不可用；赋 `undefined` 给 object 属性等于 delete。[E: packages/chord/src/types.ts:65][E: packages/chord/src/services/state.ts:210]
 
 ### Tracker / Change / Prepared
 
@@ -141,13 +141,13 @@ Delta 是独立子路径 `@earendil-works/chord/delta`，只依赖 `JsonValue`�
 
 ### track / prepare / adopt
 
-1. `track@packages/chord/src/delta/tracker.ts:321` 构造 `TrackerImpl`，把 root 存成 `#value`，`#revision = 0`。[E: packages/chord/src/delta/tracker.ts:219][E: packages/chord/src/delta/tracker.ts:222][E: packages/chord/src/delta/tracker.ts:321]
+1. `track@packages/chord/src/delta/tracker.ts:321` 构造 `TrackerImpl`，把 root 存成 `#value`，`#revision = 0`。[E: packages/chord/src/delta/tracker.ts:222][E: packages/chord/src/delta/tracker.ts:222][E: packages/chord/src/delta/tracker.ts:321]
 2. `beginChange()` 为当前 revision 建 overlay context，draft 不修改 `#value`。[E: packages/chord/src/delta/tracker.ts:235][E: packages/chord/src/delta/README.md:126]
 3. `prepare()` 在 dirty 为空时 `ops = []`；否则 `emitOperations`。物化：空 ops 复用 base；简单 object 走 `cloneNode`；含 `p`/`m` 的 batch 走 `applyImmutable`；其余走 `applyImmutableTrusted`。[E: packages/chord/src/delta/tracker.ts:187][E: packages/chord/src/delta/tracker.ts:331][E: packages/chord/src/delta/tracker.ts:343]
 4. `adopt()` 是 infallible pointer swap：authority 在 adopt 前不变，storage 失败可以丢掉 candidate。[E: packages/chord/src/delta/tracker.ts:273] 采纳一个 change 会 stale 所有竞争 draft。[E: packages/chord/src/delta/tracker.ts:305][E: packages/chord/src/delta/README.md:131]
 5. `prepareReplace(value)` 是整根操作不是 diff。deep-equal 则 `ops` 为空并保留当前 root；否则 `ops` 是 `[["r", value]]` 且 `prepared.value === value`。[E: packages/chord/src/delta/README.md:145][E: packages/chord/src/delta/tracker.ts:241]
 
-空 `ops` 表示 `prepared.value === prepared.base`。采纳 no-op 仍推进 `tracker.revision` 并 stale 竞争者；replicated state **不** publish no-op。[E: packages/chord/src/delta/README.md:138][E: packages/chord/src/services/state.ts:145]
+空 `ops` 表示 `prepared.value === prepared.base`。采纳 no-op 仍推进 `tracker.revision` 并 stale 竞争者；replicated state **不** publish no-op。[E: packages/chord/src/delta/README.md:138][E: packages/chord/src/services/state.ts:224]
 
 Placement（属性写、`push`/`splice`/`fill`/`copyWithin` 等）会 clone 并校验 strict JSON；非法值在 draft 改变前 throw。[E: packages/chord/src/delta/README.md:105] `undefined` 赋给 object 属性等于 delete；赋给 array 元素 throw。[E: packages/chord/src/delta/README.md:117] 数组保持 dense：越过下一 index 或删元素 throw；增大 `length` 插入 `null`。[E: packages/chord/src/delta/README.md:121]
 
@@ -161,28 +161,28 @@ Placement（属性写、`push`/`splice`/`fill`/`copyWithin` 等）会 clone 并�
 
 ### replicatedState.change / replace
 
-1. `replicatedState@packages/chord/src/api.ts:99` → `MutableReplicatedStateImpl`。构造：`track(initial)`，publisher 的初始 value 是 `tracker.value`，并把 internals 登记进 WeakMap 供远程 provider 订阅 op 流。[E: packages/chord/src/services/state.ts:110][E: packages/chord/src/services/state.ts:113]
-2. `value` getter 返回 `tracker.value`（已 adopted 的不可变值）。[E: packages/chord/src/services/state.ts:119]
-3. `change(context, mutate)@packages/chord/src/services/state.ts:123` 禁止 reentrant；`beginChange()` 后同步跑 callback，promise-like 返回值 throw `must be synchronous`；失败 `abort()`。[E: packages/chord/src/services/state.ts:124][E: packages/chord/src/services/state.ts:131][E: packages/chord/src/services/state.ts:137]
-4. `adopt(prepared)` 之后若 `ops.length === 0` 直接 return，不 bump sequence。[E: packages/chord/src/services/state.ts:144][E: packages/chord/src/services/state.ts:145] 否则 publisher `publish(value, ops, context)`：`#sequence += 1`，先 source listeners 再 value listeners，`delivery.kind = "update"`。[E: packages/chord/src/services/state.ts:67][E: packages/chord/src/services/state.ts:88]
-5. `replace(context, value)` 走 `prepareReplace` + `adopt`，同样跳过空 ops。[E: packages/chord/src/services/state.ts:152]
-6. `subscribe` 立刻用 `{ kind: "hydrate", sequence }` 送当前 value；listener throw 在 subscribe 路径会删掉该 listener 再抛出，publish 路径则收集后 `AggregateError`。[E: packages/chord/src/services/state.ts:49][E: packages/chord/src/services/state.ts:54][E: packages/chord/src/services/state.ts:146]
+1. `replicatedState@packages/chord/src/api.ts:99` → `MutableReplicatedStateImpl`。构造：`track(initial)`，publisher 的初始 value 是 `tracker.value`，并把 internals 登记进 WeakMap 供远程 provider 订阅 op 流。[E: packages/chord/src/services/state.ts:189][E: packages/chord/src/services/state.ts:192]
+2. `value` getter 返回 `tracker.value`（已 adopted 的不可变值）。[E: packages/chord/src/services/state.ts:198]
+3. `change(context, mutate)@packages/chord/src/services/state.ts:123` 禁止 reentrant；`beginChange()` 后同步跑 callback，promise-like 返回值 throw `must be synchronous`；失败 `abort()`。[E: packages/chord/src/services/state.ts:203][E: packages/chord/src/services/state.ts:210][E: packages/chord/src/services/state.ts:216]
+4. `adopt(prepared)` 之后若 `ops.length === 0` 直接 return，不 bump sequence。[E: packages/chord/src/services/state.ts:223][E: packages/chord/src/services/state.ts:224] 否则 publisher `publish(value, ops, context)`：`#sequence += 1`，先 source listeners 再 value listeners，`delivery.kind = "update"`。[E: packages/chord/src/services/state.ts:149][E: packages/chord/src/services/state.ts:170]
+5. `replace(context, value)` 走 `prepareReplace` + `adopt`，同样跳过空 ops。[E: packages/chord/src/services/state.ts:231]
+6. `subscribe` 立刻用 `{ kind: "hydrate", sequence }` 送当前 value；listener throw 在 subscribe 路径会删掉该 listener 再抛出，publish 路径则收集后 `AggregateError`。[E: packages/chord/src/services/state.ts:131][E: packages/chord/src/services/state.ts:401][E: packages/chord/src/services/state.ts:225]
 
-Chord 每次成功 `change()` 只 publish **一个** decoded batch；每个远程 client/state pairing 自己编码，互不共享 path 字典。[E: packages/chord/README.md:39][E: packages/chord/src/services/state-codec.ts:60][E: packages/chord/src/services/state-codec.ts:90]
+Chord 每次成功 `change()` 只 publish **一个** decoded batch；每个远程 client/state pairing 自己编码，互不共享 path 字典。[E: packages/chord/README.md:39][E: packages/chord/src/services/state-codec.ts:60][E: packages/chord/src/services/state-codec.ts:99]
 
 ### Replica hydrate / update
 
-`ReplicatedStateReplica` 冷启动 `value === undefined`。[E: packages/chord/src/services/state.ts:265][E: packages/chord/src/services/state.ts:276]
+`ReplicatedStateReplica` 冷启动 `value === undefined`。[E: packages/chord/src/services/state.ts:344][E: packages/chord/src/services/state.ts:355]
 
-1. `hydrate(sequence, ops, context)` 要求 `isBase(ops)`，否则 throw `snapshot is not a base operation batch`；然后 `JsonRevisionValidator.validate(applyImmutable(undefined, ops))`。[E: packages/chord/src/services/state.ts:294][E: packages/chord/src/services/state.ts:295]
-2. `update` 在未 hydrate 时 throw；`sequence !== #sequence + 1` 则 `clear()` 再 throw `update sequence has a gap`。[E: packages/chord/src/services/state.ts:306][E: packages/chord/src/services/state.ts:309]
-3. apply 失败同样 `clear()` 再 throw。[E: packages/chord/src/services/state.ts:316] `clear()` 把 value/sequence 置回 undefined（unready），直到下一次 base hydrate。[E: packages/chord/src/services/state.ts:325] disconnect / replacement 走这条路径，与 README “Replicas become unready on disconnect or replacement until they are rehydrated” 一致。[E: packages/chord/README.md:40]
+1. `hydrate(sequence, ops, context)` 要求 `isBase(ops)`，否则 throw `snapshot is not a base operation batch`；然后 `JsonRevisionValidator.validate(applyImmutable(undefined, ops))`。[E: packages/chord/src/services/state.ts:379][E: packages/chord/src/services/state.ts:380]
+2. `update` 在未 hydrate 时 throw；`sequence !== #sequence + 1` 则 `clear()` 再 throw `update sequence has a gap`。[E: packages/chord/src/services/state.ts:391][E: packages/chord/src/services/state.ts:394]
+3. apply 失败同样 `clear()` 再 throw。[E: packages/chord/src/services/state.ts:401] `clear()` 把 value/sequence 置回 undefined（unready），直到下一次 base hydrate。[E: packages/chord/src/services/state.ts:410] disconnect / replacement 走这条路径，与 README “Replicas become unready on disconnect or replacement until they are rehydrated” 一致。[E: packages/chord/README.md:40]
 
-Listener throw 被吞掉并 `reportError`，不阻断其它 listener。[E: packages/chord/src/services/state.ts:339]
+Listener throw 被吞掉并 `reportError`，不阻断其它 listener。[E: packages/chord/src/services/state.ts:316]
 
 ### 远程订阅上的 path codec
 
-`createServiceStateEncoder()` / `createServiceStateDecoder()` 各持一个 `StateCodecRegistry`：key 是 `[instance.key, generation, member]`。[E: packages/chord/src/services/state-codec.ts:60][E: packages/chord/src/services/state-codec.ts:90]
+`createServiceStateEncoder()` / `createServiceStateDecoder()` 各持一个 `StateCodecRegistry`：key 是 `[instance.key, generation, member]`。[E: packages/chord/src/services/state-codec.ts:60][E: packages/chord/src/services/state-codec.ts:99]
 
 | 事件 | codec 行为 |
 |---|---|
@@ -192,7 +192,7 @@ Listener throw 被吞掉并 `reportError`，不阻断其它 listener。[E: packa
 | `spawned` | 为新 instance 的 state members `add()` |
 | `closed` | `removeInstance` |
 
-[E: packages/chord/src/services/state-codec.ts:64][E: packages/chord/src/services/state-codec.ts:73][E: packages/chord/src/services/state-codec.ts:75][E: packages/chord/src/services/state-codec.ts:80][E: packages/chord/src/services/state-codec.ts:83]
+[E: packages/chord/src/services/state-codec.ts:64][E: packages/chord/src/services/state-codec.ts:82][E: packages/chord/src/services/state-codec.ts:84][E: packages/chord/src/services/state-codec.ts:89][E: packages/chord/src/services/state-codec.ts:92]
 
 Encoder 遇到 `r` 会清空 path id 字典，因为 base 是 recovery point。[E: packages/chord/src/delta/index.ts:544]
 
@@ -214,13 +214,13 @@ Ops 可来自 facet、plugin compartment、或回显了模型输出的 tool deta
 
 `apply()` 每条 op 先 `assertValidOp`。[E: packages/chord/src/delta/index.ts:334] 写用 `Object.defineProperty`，避免 inherited setter 执行。[E: packages/chord/src/delta/index.ts:378] 走 path 只用 own property。[E: packages/chord/src/delta/index.ts:491] 数组下标只允许现有元素或**恰好** `length`（append one）；再大会 `UnsafePathError`，堵住 `["s", ["xs", 4294967290], 1]` 这种分配式 DoS。[E: packages/chord/src/delta/index.ts:304][E: packages/chord/src/delta/index.ts:305] `p` 的 insert 按 10000 项分块 splice，避免 spread 上限。[E: packages/chord/src/delta/index.ts:354]
 
-Appliers 检查 op 形状和 path 安全，不检查 payload strictness。Chord 的 replicated-state replica 用 `JsonRevisionValidator` 校验每个 resulting revision。[E: packages/chord/src/delta/README.md:175][E: packages/chord/src/services/state.ts:295]
+Appliers 检查 op 形状和 path 安全，不检查 payload strictness。Chord 的 replicated-state replica 用 `JsonRevisionValidator` 校验每个 resulting revision。[E: packages/chord/src/delta/README.md:175][E: packages/chord/src/services/state.ts:380]
 
-Wire parsers 在 adapter 交出 JSON 之后再跑：`parseServiceSubscriptionSnapshot` 用 `assertValidOp`，`parseWireServiceSubscriptionSnapshot` 用 `assertValidWireOp`。[E: packages/chord/src/services/wire.ts:113]
+Wire parsers 在 adapter 交出 JSON 之后再跑：`parseServiceSubscriptionSnapshot` 用 `assertValidOp`，`parseWireServiceSubscriptionSnapshot` 用 `assertValidWireOp`。[E: packages/chord/src/services/wire.ts:114]
 
 ## JSON-only wire 值
 
-远程方法参数/结果与 replicated state value 的 JSON 约束首先是类型层 `RemoteServiceContract`。[E: packages/chord/src/types.ts:167] 运行时 `defineService` 不扫这个约束。[E: packages/chord/test/services.test.ts:69]
+远程方法参数/结果与 replicated state value 的 JSON 约束首先是类型层 `RemoteServiceContract`。[E: packages/chord/src/types.ts:182] 运行时 `defineService` 不扫这个约束。[E: packages/chord/test/services.test.ts:69]
 
 跨越 `RemoteServiceTransport` 的 arguments / results / snapshots / updates / catalogues 必须是 finite strict JSON。[E: packages/chord/README.md:50] `isJsonValue()` 拒绝 `undefined`、非 finite number、typed array、循环、非 `Object.prototype`/`null` prototype。[E: packages/chord/src/json.ts:74]
 
@@ -240,12 +240,12 @@ Reserved path 与 `defineProperty` 写入把 prototype pollution 和 inherited a
 
 ## Gotcha
 
-- 传给 `track()` / `prepareReplace()` / `replicatedState()` / `replace()` 的 root 所有权已转移。调用方再 mutate 是合同违规，进程内 loopback consumer 可能和 provider 共享 container。[E: packages/chord/src/delta/README.md:32][E: packages/chord/README.md:117]
+- 传给 `track()` / `prepareReplace()` / `replicatedState()` / `replace()` 的 root 所有权已转移。调用方再 mutate 是合同违规，进程内 loopback consumer 可能和 provider 共享 container。[E: packages/chord/src/delta/README.md:32][E: packages/chord/README.md:134]
 - 不要保留 draft handle 过期。`prepare()` / `abort()` / 竞争 `adopt()` 之后每次使用 throw。写入已从 draft 删除的元素会被忽略。[E: packages/chord/src/delta/README.md:33]
 - 不要从 op 形状推断语义。只有 resulting value 是合同。[E: packages/chord/src/delta/README.md:94]
 - `apply` adopt `r` 的 value。进程内把同一 `ops` 数组分给多个 mutable replica 会共享可变对象；fan-out 点要 copy batch，或让每个 consumer 自己 decode。[E: packages/chord/src/delta/index.ts:343]
-- replica sequence gap 会 `clear()` 再 throw：之后 `value` 是 `undefined`，必须等新的 base snapshot。[E: packages/chord/src/services/state.ts:309][E: packages/chord/src/services/state.ts:325]
-- `change()` 空 ops 是 no-op，sequence 不变；不要用“调用了 change”推断一定有 update delivery。[E: packages/chord/src/services/state.ts:145]
+- replica sequence gap 会 `clear()` 再 throw：之后 `value` 是 `undefined`，必须等新的 base snapshot。[E: packages/chord/src/services/state.ts:394][E: packages/chord/src/services/state.ts:410]
+- `change()` 空 ops 是 no-op，sequence 不变；不要用“调用了 change”推断一定有 update delivery。[E: packages/chord/src/services/state.ts:224]
 - overlay emit 超过 4096 条 op 会 overflow，后续 emit 被丢弃（批次不再精确）。[E: packages/chord/src/delta/diff.ts:5][E: packages/chord/src/delta/diff.ts:10]
 
 ## 跨包边界

@@ -10,7 +10,7 @@ status: draft
 ## [U] SessionRepo.open 的 writer claim
 
 - 节点: `subsys.agent-core.session-storage`
-- `SessionRepo.open` 的 JSDoc 写 “acquires any backend writer claim”。[E: packages/agent/src/harness/session/types.ts:368]
+- `SessionRepo.open` 的 JSDoc 写 “acquires any backend writer claim”。
 - `JsonlSessionRepo.open` 与 `InMemorySessionRepo.open` 都只是 `new Session(storage)`，没有文件锁、lease 或跨进程互斥。
 - 不知道是否另有 backend（例如 session-backends SQLite）实现了 claim，还是注释超前于实现。
 
@@ -24,20 +24,20 @@ status: draft
 ## [U] `sourceFormat` 已删除
 
 - 节点: `subsys.agent-core.jsonl-storage`
-- `JsonlSessionMetadata` 已不再有 `sourceFormat`；现行字段是 `cwd` / `path` / `modifiedAt`。[E: packages/agent/src/harness/session/jsonl/types.ts:26]
-- `metadataFromHeader()` 现位于 `jsonl/repo.ts`，复制 header 的 id / createdAt / storageVersion / cwd 与可选 parent 字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:25]
+- `JsonlSessionMetadata` 已不再有 `sourceFormat`；现行字段是 `cwd` / `path` / `modifiedAt`。
+- `metadataFromHeader()` 现位于 `jsonl/repo.ts`，复制 header 的 id / createdAt / storageVersion / cwd 与可选 parent 字段。
 - 本条不再把已删除的 `sourceFormat: 3 | 4` 当未决项。
 
 ## [U] `legacyParentSessionPath` 的写入者
 
 - 节点: `subsys.agent-core.jsonl-storage`
-- header 允许可选 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/types.ts:15] [E: packages/agent/src/harness/session/jsonl/codec.ts:45]
-- `metadataFromHeader` 原样拷贝该字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:32]
-- `JsonlSessionRepo.create` 只写 `parentSessionId`，不写 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/repo.ts:78]
+- header 允许可选 `legacyParentSessionPath`。 
+- `metadataFromHeader` 原样拷贝该字段。
+- `JsonlSessionRepo.create` 只写 `parentSessionId`，不写 `legacyParentSessionPath`。
 - 谁在什么时候把无法解析的 v3 parent path 写进该字段，本批 source 看不到。
 
 ## [U] InMemorySessionStorage 并发
 
 - 节点: `subsys.agent-core.memory-storage`
-- 内存 backend 没有 JSONL 的 `enqueue` tail。`appendEntry` / `appendRecord` 直接读 `nextSequence` 再 `applyMutation`。[E: packages/agent/src/harness/session/memory.ts:59]
+- 内存 backend 没有 JSONL 的 `enqueue` tail。`appendEntry` / `appendRecord` 直接读 `nextSequence` 再 `applyMutation`。
 - 同一 storage 上未串行化的并发 await 是否允许交错、是否算契约违规，conformance 测试没有覆盖。

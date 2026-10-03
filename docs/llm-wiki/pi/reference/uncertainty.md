@@ -9,7 +9,7 @@ symbols: []
 related: []
 evidence: unknown
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 # 不确定项日志([U] 汇总)
@@ -147,11 +147,9 @@ L2 verifier 已逐条对照 `packages/agent/src/types.ts` 与 `packages/agent/sr
 
 # uncertainty: ref.agent.message-types
 
-本轮填充 `ref.agent.message-types` 未新增 `[U]`。
+本轮 rewrite `ref.agent.message-types` 未新增 `[U]`。
 
-保留的范围边界: `user`、`assistant`、`toolResult` 三个标准 message variant 的字段级定义来自 `@earendil-works/pi-ai` 的 `Message` union,不在本节点指定 source 范围内展开;本节点只记录 `packages/agent/src/types.ts` 和 `packages/agent/src/harness/messages.ts` 中可核到的 `AgentMessage` union、custom message augmentation、harness 默认 variant 与 default `convertToLlm` 行为。
-
-L2 verifier 结论:已逐条核对 `[E]` 的路径/行号和可支撑语义,并将外部 `Message` union 的完整角色/字段集合收窄为本 source 可核到的 pass-through 边界。`AgentMessage` custom variants 覆盖 `bashExecution`、`custom`、`branchSummary`、`compactionSummary`;helper exports 覆盖 4 个 summary boundary constants、`bashExecutionToText`、3 个 `create*Message` constructor、`convertToLlm`。未发现需要保留的新增 `[U]`。
+范围边界:标准 `user` / `assistant` / `toolResult` / `system` 字段级定义来自 `@earendil-works/pi-ai` 的 `Message` union。agent-core `CustomAgentMessages` 默认为空;`bashExecution` / `custom` / `branchSummary` / `compactionSummary` 由 coding-agent `messages.ts` declaration merging 注入;产品持久化形态在 coding-agent `session-manager.ts`。不再 cite `packages/agent/src/harness/messages.ts`。
 
 ## agent-core-prompt-templates
 
@@ -802,17 +800,14 @@ No unresolved [U] items found while reading the listed source files.
 
 # uncertainty: subsys.coding-agent.system-prompt
 
-本轮 L2 复核 `subsys.coding-agent.system-prompt` 未新增 `[U]`。
+本轮 rewrite `subsys.coding-agent.system-prompt` 未新增 `[U]`。已删除 `packages/agent/src/harness/system-prompt.ts` 与 `AgentHarness.systemPrompt` 对照。
 
-降级为 `[I]` 的点:
+保留 `[I]`:
 
-- `BuildSystemPromptOptions` 只消费已准备好的资源、不负责磁盘加载:由 options 字段与 `AgentSession._rebuildSystemPrompt`/`DefaultResourceLoader` 调用关系推出。
-- bash-only file operation guideline 是能力替代 guideline、不是 tool registry 注册逻辑:由 `buildSystemPrompt` 中 guideline 条件推出。
-- CLI prompt 参数“具体内容仍由 resource loader 解析后交给 builder”:由 `parseArgs`、`DefaultResourceLoader` 和 `AgentSession._rebuildSystemPrompt` 串联推出。
-- `pi-agent-core` 消费 prompt、`pi-coding-agent` 负责产品 prompt 内容:由 `AgentHarness` systemPrompt 输入与 coding-agent builder 的跨包关系推出。
-- prompt templates 展开 user prompt text,不等同于 system prompt append source:由 `expandPromptTemplate` 调用位置推出。
-
-L2 复核中修正了一批落在注释行或承载不足行的 `[E]` 引用,并补强 `DefaultResourceLoader` prompt source / append source 解析的代码行。没有需要上卷到 `reference/uncertainty.md` 的 unknown。节点已置 `status: verified`。
+- `BuildSystemPromptOptions` 只消费已准备好的资源,不负责磁盘加载。
+- bash-only file operation guideline 是能力替代,不是 tool registry 注册逻辑。
+- `forceSystemPrompt` 只投影到本次 request,structured sections 仍会 diff 持久化。
+- prompt templates 展开 user prompt text,不等同于 system prompt append source。
 
 ## coding-agent-telemetry
 
@@ -1142,9 +1137,9 @@ L1 填充后 `surface.cli.overview` 未新增 `[U]`。
 
 # uncertainty: surface.prompt-templates.system
 
-- 本轮按 `docs/llm-wiki/pi/index.json` 的 source 收回主节点范围:只保留 `packages/coding-agent/src/core/prompt-templates.ts`、`packages/agent/src/harness/prompt-templates.ts`、`packages/coding-agent/docs/prompt-templates.md` 和 `.pi/prompts/wr.md` 作为可标 `[E]` 的来源。原节点中来自 `resource-loader.ts`、`package-manager.ts`、`agent-session.ts`、interactive/RPC、CLI parser、settings/usage/system prompt 文件的断言已移出 `[E]` 范围或降级为 `[I]` 边界。
-- `packages/coding-agent/docs/prompt-templates.md` 只写 `--no-prompt-templates` disable discovery;本轮 index source 不含 `args.ts` / `resource-loader.ts`,不能核定该 flag 对显式 CLI `--prompt-template <path>` 的 runtime 精确语义。需要后续用更宽 source 判定文档措辞、实现行为或 CLI override 是否一致。
-- `packages/coding-agent/src/core/prompt-templates.ts` 与 `packages/agent/src/harness/prompt-templates.ts` 都导出同名 prompt-template primitives,且源码可见能力差异包括 product `PromptTemplate` 的 `argumentHint/sourceInfo/filePath` 与 `${N:-default}` 支持。当前 index source 不能单独证明 product runtime 的最终装配路径是否只使用 coding-agent 版本;该长期边界需要维护者或 wider-source 节点确认。
+本轮 rewrite `surface.prompt-templates.system` 未新增 `[U]`。source 只保留 coding-agent `prompt-templates.ts`、产品 docs 与 `.pi/prompts/wr.md`。已删除 harness prompt-template 对照与 `formatPromptTemplateInvocation`。
+
+CLI `--prompt-template` / `--no-prompt-templates` 不在本节点 source 内,正文降为 `[I]` 边界,不再登记为 `[U]`。
 
 ## surface-providers-auth
 
@@ -1434,17 +1429,14 @@ updated: cee5ff7520
 
 # uncertainty: surface.skills.system
 
-## [U]
+本轮 rewrite `surface.skills.system` 未新增 `[U]`。已删除 harness loader 对照;不再登记把 `packages/agent/src/harness/system-prompt.ts` 加入 source 的 unknown。
 
-- [U] `subsys.agent-core.system-prompt` 的 harness-level prompt formatter 不在 `surface.skills.system` 当前 source 清单内;本节点只能用 `packages/coding-agent/src/core/system-prompt.ts` 明确证明 coding-agent 的 `formatSkillsForPrompt()` 装配路径。是否要把 `packages/agent/src/harness/system-prompt.ts` 加入该 related 节点或本节点 source,留给后续 reconcile。
-- [U] `/skill:name` 参数追加语义存在文档/实现不一致:`packages/coding-agent/docs/skills.md` 说 arguments are appended as `User: <args>`,但 `packages/coding-agent/src/core/agent-session.ts` 的 `_expandSkillCommand()` 当前直接追加 trim 后的 `args`,没有加 `User:` 前缀。
+文档 `/skill:name` 现写 arguments are appended to the loaded instructions as a user request,`_expandSkillCommand()` 把 trim 后的 args 追加到 skill block 后,本轮不再保留旧的 `User: <args>` 前缀不一致 `[U]`。
 
-## [I]
+保留 `[I]`:
 
-- [I] `loadSkills()` 被描述为 product-facing loader: 源码能证明它使用 Node fs、`SourceInfo`、默认 global/project 路径和显式 paths;“product-facing”是基于它位于 `packages/coding-agent` 且被 `DefaultResourceLoader` 调用的职责归纳。
-- [I] `disable-model-invocation` 被描述为不禁用 `/skill:name`: 源码能证明 system prompt formatter 会过滤该字段,而 `_expandSkillCommand()` 按 loaded skill name 展开时没有检查该字段;没有单独测试直接断言这个 UX 语义。
-- [I] `enableSkillCommands=false` 被描述为只影响 interactive autocomplete 注册: 源码能证明 interactive autocomplete 检查该 setting,而 `_expandSkillCommand()` 没有检查;其它入口是否应额外门控属于产品语义推断。
-- [I] `AgentSession` command metadata 解释 RPC/外部 UI command list 来源: 源码能证明 loaded skills 被映射成 `SlashCommandInfo`,但不同外部 surface 的消费路径应由对应 surface 节点继续细化。
+- `disable-model-invocation` 不禁用 `/skill:name`:formatter 过滤该字段,`_expandSkillCommand()` 不检查。
+- `enableSkillCommands=false` 只影响 interactive autocomplete 注册。
 
 ## surface-trust-model
 
@@ -1536,13 +1528,14 @@ Node: `subsys.coding-agent.bash-executor`
 
 # uncertainty-tools-output-truncation
 
-本轮未写入 `[U]` 断言。
+本轮 rewrite `subsys.coding-agent.output-truncation` 未写入 `[U]`。已删除 harness `messages.ts` / `shell-output.ts` 对照;截断权威源是 coding-agent `truncate.ts`。
 
 已核清的易混点:
 
-- `OutputAccumulator` 的 temp file 写入 raw `Buffer` chunks; direct `executeBashWithOperations()` 的 full-output temp file 写入 sanitized text, 两条路径语义不同。
+- `OutputAccumulator` 的 temp file 写入 raw `Buffer` chunks; direct `executeBashWithOperations()` 的 full-output temp file 写入 sanitized text,两条路径语义不同。
 - `fullOutputPath` 是 bash/direct shell capture 路径的字段; grep/read/find/ls 的 tool details 只声明 `truncation` 和各自 limit flag。
-- `takeOverStdout()` 解决 stdout 协议污染, 不参与 `TruncationResult` 计算。
+- `takeOverStdout()` 解决 stdout 协议污染,不参与 `TruncationResult` 计算。
+- `truncateMiddle()` 供 MCP 工具输出使用,不走 bash/grep 的 `TruncationResult`。
 
 ## tools-path-resolution
 
@@ -1854,7 +1847,7 @@ status: draft
 ## [U] SessionRepo.open 的 writer claim
 
 - 节点: `subsys.agent-core.session-storage`
-- `SessionRepo.open` 的 JSDoc 写 “acquires any backend writer claim”。[E: packages/agent/src/harness/session/types.ts:368]
+- `SessionRepo.open` 的 JSDoc 写 “acquires any backend writer claim”。
 - `JsonlSessionRepo.open` 与 `InMemorySessionRepo.open` 都只是 `new Session(storage)`，没有文件锁、lease 或跨进程互斥。
 - 不知道是否另有 backend（例如 session-backends SQLite）实现了 claim，还是注释超前于实现。
 
@@ -1868,22 +1861,22 @@ status: draft
 ## [U] `sourceFormat` 已删除
 
 - 节点: `subsys.agent-core.jsonl-storage`
-- `JsonlSessionMetadata` 已不再有 `sourceFormat`；现行字段是 `cwd` / `path` / `modifiedAt`。[E: packages/agent/src/harness/session/jsonl/types.ts:26]
-- `metadataFromHeader()` 现位于 `jsonl/repo.ts`，复制 header 的 id / createdAt / storageVersion / cwd 与可选 parent 字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:25]
+- `JsonlSessionMetadata` 已不再有 `sourceFormat`；现行字段是 `cwd` / `path` / `modifiedAt`。
+- `metadataFromHeader()` 现位于 `jsonl/repo.ts`，复制 header 的 id / createdAt / storageVersion / cwd 与可选 parent 字段。
 - 本条不再把已删除的 `sourceFormat: 3 | 4` 当未决项。
 
 ## [U] `legacyParentSessionPath` 的写入者
 
 - 节点: `subsys.agent-core.jsonl-storage`
-- header 允许可选 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/types.ts:15] [E: packages/agent/src/harness/session/jsonl/codec.ts:45]
-- `metadataFromHeader` 原样拷贝该字段。[E: packages/agent/src/harness/session/jsonl/repo.ts:32]
-- `JsonlSessionRepo.create` 只写 `parentSessionId`，不写 `legacyParentSessionPath`。[E: packages/agent/src/harness/session/jsonl/repo.ts:78]
+- header 允许可选 `legacyParentSessionPath`。 
+- `metadataFromHeader` 原样拷贝该字段。
+- `JsonlSessionRepo.create` 只写 `parentSessionId`，不写 `legacyParentSessionPath`。
 - 谁在什么时候把无法解析的 v3 parent path 写进该字段，本批 source 看不到。
 
 ## [U] InMemorySessionStorage 并发
 
 - 节点: `subsys.agent-core.memory-storage`
-- 内存 backend 没有 JSONL 的 `enqueue` tail。`appendEntry` / `appendRecord` 直接读 `nextSequence` 再 `applyMutation`。[E: packages/agent/src/harness/session/memory.ts:59]
+- 内存 backend 没有 JSONL 的 `enqueue` tail。`appendEntry` / `appendRecord` 直接读 `nextSequence` 再 `applyMutation`。
 - 同一 storage 上未串行化的并发 await 是否允许交错、是否算契约违规，conformance 测试没有覆盖。
 
 ## update-086c32e745-sqlite-node
@@ -1911,6 +1904,194 @@ updated: 086c32e745
 - `tui.editor.yank` / `yankPop` 的 kill-ring 语义仍按 description 归纳，未在本 catalog 展开 editor 实现。
 
 未写入 index.json / llms.txt（按 filler 任务约束）。新节点 `subsys.tui.latex`、`subsys.tui.alt-screen-search` 需后续 reconcile 才能被 lint 认进图。
+
+## update-4c6fb7cfe8-codemode-runtime
+
+# uncertainty-update-4c6fb7cfe8-codemode-runtime
+
+本批：`subsys.codemode.runtime`。
+
+未安装上游 `node_modules`，没有跑 `packages/codemode` 的 vitest，不宣称 sandbox / source / declarations 测试在本机通过。[U]
+
+## [I]
+
+- `memoryLimitBytes` 省略时 host 传 `undefined` 给 `QuickJS.create({ memoryLimit })`。types 注释写默认不超过 wasm32 的 4 GiB；源码没有把 4 GiB 写成常量。
+- README 写每轮 worker+VM 大约 20 ms，源码没有该数字。
+- 嵌套 tool 不进 LLM context 是本包结果形状（`output` / `value` / 无 payload 的 `calls`）加上 README 约定。coding-agent 如何把 `CodemodeResult` 投影进 session / provider 消息由 `subsys.coding-agent.codemode` 覆盖，本节点未读 `packages/coding-agent/src/extensions/codemode/**`。
+- Prelude 缺 tool 提示语里的 `searchTools(query)` 只是字符串；本包不实现该函数。是否由 coding-agent 注入为 tool/global，本节点不核。
+
+## [U]
+
+- 未跑 runtime tests：output/store 上限、Bun interrupt、`timeoutMs: Infinity`、identifier 碰撞在 target HEAD 是否全绿，本 filler 未核。
+- 动态 `import("node:fs")` 测试只断言不会成功，没有钉死错误类型。
+
+## update-4c6fb7cfe8-codemode
+
+# uncertainty: subsys.coding-agent.codemode @ 4c6fb7cfe8
+
+节点: `subsys.coding-agent.codemode`
+
+## [U]
+
+- Windows worker 相对路径回归 (`#10204`) 只覆盖 `bun-binary` + `file:///B:/~BUN/root/config.js` → `./src/extensions/codemode/worker.ts`。`bundled-node` 仍构造 `new URL("./codemode-worker.js", moduleUrl)`，`unbundled` 回落 `pi-codemode` 的 `defaultWorkerUrl()`（`file:` URL）。这两条路径在 Windows 上是否也会撞 Bun 1.3 的绝对 `B:\~BUN` 映射失败，本树没有对应测试。
+
+## [I]
+
+- `Bm25Ranker.rank()` 对同分文档依赖 `Array.sort` 稳定性；源码注释写 “Ties keep document order”，实现没有显式 tie-break 字段。
+- `omitReplacedExtensions` 的 `taken` 只收 `!replaceable` 扩展：两个 replaceable 扩展注册同名 tool 时两边都会留下。产品意图是「第三方非 replaceable 顶替 builtin」，不是 replaceable 互斥。
+
+## update-4c6fb7cfe8-components
+
+# Uncertainty · ref.interactive.components (4c6fb7cfe8)
+
+Source node: `ref.interactive.components` (`docs/llm-wiki/pi/reference/components.md`)
+
+## [U] directory instance count vs public barrel
+
+`index.json` group ground truth is `packages/coding-agent/src/modes/interactive/components/`. This freeze has **48** `.ts` files (daxnuts.ts deleted; added auth-url, easter-egg-3d, easter-egg-3d.lazy, pi-logo, radius-login-selector, themed-text). `index.ts` is a barrel, not a runtime component class; the node still counts it as a directory instance.
+
+Evidence: `packages/coding-agent/src/modes/interactive/components/index.ts:2`, `packages/coding-agent/src/modes/interactive/components/index.ts:37`
+
+## [U] internal-only files not exported by components/index.ts
+
+These files have real call sites but are not in `components/index.ts`: `ConfigSelectorComponent`, `CountdownTimer`, `EarendilAnnouncementComponent`, `AuthUrlComponent`, `easter-egg-3d*.ts`, `pi-logo.ts`, `radius-login-selector.ts`, `themed-text.ts`, `session-selector-search.ts`, `settings-submenu.ts`, `markdown-transform.ts`, `mermaid.ts`, `custom-entry.ts`, `status-indicator.ts`. This looks like an internal-only boundary, but the public/private split is not documented in source.
+
+Evidence: `packages/coding-agent/src/modes/interactive/components/index.ts:2`, `packages/coding-agent/src/cli/config-selector.ts:7`, `packages/coding-agent/src/modes/interactive/interactive-mode.ts:147`
+
+## [U] public exports without current InteractiveMode call sites
+
+`ShowImagesSelectorComponent` and `ThemeSelectorComponent` are still exported from the package root, but `interactive-mode.ts` does not import them. They may be extension compatibility surface or leftover UI. `ThinkingSelectorComponent` is used by `/thinking` and is not in this set.
+
+Evidence: `packages/coding-agent/src/modes/interactive/components/index.ts:28`, `packages/coding-agent/src/modes/interactive/components/index.ts:30`, `packages/coding-agent/src/index.ts:460`, `packages/coding-agent/src/index.ts:462`
+
+## update-4c6fb7cfe8-durable-harness
+
+# uncertainty-update-4c6fb7cfe8-durable-harness
+
+来源节点：`subsys.durable.harness`（`subsystems/durable/harness.md`）
+
+## [U] 默认 `pi` CLI 会不会切到 durable Harness
+
+当前产品会话仍是 coding-agent `SessionManager` JSONL（`CURRENT_SESSION_VERSION = 3`）。`Harness.open()` 只出现在 `packages/coding-agent/src/experimental/**`（session worker / vacation planner），published `files` 排除 `dist/experimental`，`pi` bin 仍是 `dist/bundle/cli.js`。是否会把默认 CLI 会话运行时换成 `pi-durable` Harness 未知。
+
+## [U] coding-agent 会不会声明 `@earendil-works/pi-durable` 依赖
+
+experimental session-worker 已 `import { Harness } from "@earendil-works/pi-durable"`，但 `packages/coding-agent/package.json` `dependencies` 未列出 `pi-durable`（有 `pi-agent-core` / `pi-ai`）。这与 experimental 被排除出 npm `files` 一致；若 experimental 进入 shipped 包，依赖是否补上未知。
+
+## update-4c6fb7cfe8-mcp-client
+
+# uncertainty-update-4c6fb7cfe8-mcp-client
+
+本批：`subsys.mcp.client`。
+
+未安装上游 `node_modules`，没有跑 `packages/mcp` 的 vitest，不宣称 client / stdio / HTTP / OAuth 测试在本机通过。[U]
+
+## [I]
+
+- `StreamableHttpTransport.send` 对 `application/json` 响应若 body 是 array，会逐项 `parseJsonRpcMessage` 再 `emitMessage`。这是收包拆条，不是 client 发送 JSON-RPC batch 的 API。README 仍把 “Batch JSON-RPC messages” 标为 initial core 之外。
+- `ClientCapabilities` 类型含可选 `sampling` / `elicitation` 字段，但 `McpClient` 没有 sampling / tasks helper；与 README “sampling, and tasks are outside the initial core” 一致，不要写成已实现的协议面。
+- `toLlmContent` 的 `LlmContent` 形状与 `@earendil-works/pi-ai` 的 text/image 对齐写在 README / JSDoc；`pi-mcp` 不 import `pi-ai`，类型层没有 `import type` 约束。
+- OAuth “改编自 typescript-sdk v1.29.0” 以 README 与 `LICENSES/` 为据，未逐行 diff 上游 SDK。
+
+## [U]
+
+- 未跑 runtime tests：`packages/mcp/test/*.test.ts` 在 target HEAD 是否全绿，本 filler 未核。
+- stdio process-group shutdown 在 Windows 上的 `taskkill` 路径仅读源码；`stdio.test.ts` 的 grandchild kill case `skipIf(win32)`，本机也未执行。
+
+## update-4c6fb7cfe8-sessions-management
+
+# uncertainty-update-4c6fb7cfe8-sessions-management
+
+batch: 4c6fb7cfe8 refresh session-manager / session-format / sessions.management
+nodes: surface.sessions.management
+updated: 4c6fb7cfe8
+status: verified-with-u
+
+本轮 `subsys.coding-agent.session-manager` 与 `ref.coding-agent.session-format` 未新增 `[U]`。`surface.sessions.management` 下列点不能升成 `[E]`，因为不在该节点 index source 内。
+
+## [U] CLI path/id 解析与参数互斥
+
+- 节点: `surface.sessions.management`
+- `--session <path|id>` 的 path/id 解析、全局匹配后是否 fork 到当前 cwd、以及参数互斥校验在 `packages/coding-agent/src/main.ts` / `cli/args.ts`，不在本节点 source。
+
+## [U] `/fork` `/clone` dispatch
+
+- 节点: `surface.sessions.management`
+- interactive/RPC 如何把 `/fork`、`/clone` 映射到 `SessionManager.createBranchedSession()` 在 `agent-session-runtime.ts` 等文件，不在本节点 source。本页只保留用户文档语义和 `createBranchedSession()` / `forkFrom()` 的文件级能力。
+
+## [U] `/export` HTML vs JSONL dispatch
+
+- 节点: `surface.sessions.management`
+- 用户文档写 `/export` 可写 HTML 或 JSONL。路径是否以 `.jsonl` 结尾的分流在 `interactive-mode.ts`，不在本节点 source。`exportSessionToJsonl()` helper 本身可核。
+
+## [U] SessionSelectorComponent 内部
+
+- 节点: `surface.sessions.management`
+- picker 的 threaded/recent/fuzzy 排序、active-session 删除拦截、rename UI 和 `trash` CLI 细节在 `session-selector.ts`，不在本节点 source。`selectSession()` 只证明 startup TUI 封装。
+
+## update-4c6fb7cfe8-slash-commands
+
+# uncertainty · slash-commands (4c6fb7cfe8)
+
+- [U] `packages/coding-agent/src/modes/interactive/interactive-mode.ts` 的 submit handler 仍直接处理 `/debug`、`/arminsayshi`、`/dementedelves`，但这三个名字不在 `BUILTIN_SLASH_COMMANDS` 也不在 `docs/slash-commands.md`。本轮 catalog 按 `BUILTIN_SLASH_COMMANDS` 计 24，不把它们算作公开内置命令。
+
+## update-4c6fb7cfe8-spine-overview
+
+# uncertainty-update-4c6fb7cfe8-spine-overview
+
+本批：`spine.overview` rewrite（target `4c6fb7cfe8`）。未安装 `node_modules`，未跑 runtime tests。
+
+## [I] `spine.layered-architecture` 的详细职责
+
+`spine.overview` 只保留跨包入口、13 包 inventory、build 链、CLI→Agent loop→provider 主路径，以及 MCP/codemode/durable harness 的边界一句。package dependency direction 与 reusable/product 细表由 `spine.layered-architecture` / `ref.package-index` 展开。
+
+## [I] TUI 交互渲染细节
+
+本节点只核到 `pi-tui` package description 与 `main()` 在 interactive mode 创建 `InteractiveMode(runtime)` 并 `run()`。fullscreen 默认、`quietStartup: "header"`、组件层不在本节点展开。
+
+## [I] StreamFn contract 与 coding-agent wrapper 的边界张力
+
+`packages/agent/src/types.ts` 的 `StreamFn` 注释要求 request/model/runtime 失败不得 throw/reject，须编码进 stream 的 `stopReason "error" | "aborted"`。本节点把该注释标为 `[I]`：未再逐行核 `ModelRuntime.streamSimple()` / `Agent.runWithLifecycle()` 是否仍把 auth 失败转成 throw 再折成 assistant error。
+
+## leftover [U]
+
+无。README All Packages 表只列 7 个用户可见库、workspace 有 13 个一阶包，按源码 inventory 写 13，不把 README 表当成完整包清单。
+
+## update-4c6fb7cfe8-surface-mcp
+
+# uncertainty-update-4c6fb7cfe8-surface-mcp
+
+节点: `surface.mcp.overview`
+
+- [I] `pi mcp add` 的 known options 没有 `clientRegistration` / `authServerMetadataUrl` / `auth.provider`。断言“只能写进 JSON”来自 CLI parser 的选项白名单,不是反面测试。
+- [I] 关掉内置 MCP 的用户面写法 `"extensions": ["-builtin:mcp"]` / `pi config` Built-in 未在本节点 source 的 settings-manager 里逐行核到;resource-loader 只证明 command 名冲突会 omit replaceable builtin。
+- 未安装上游 `node_modules`,未跑 `mcp-command.test.ts` / `mcp-extension.test.ts`。
+
+## update-4c6fb7cfe8-telemetry-contracts
+
+# uncertainty: subsys.telemetry.contracts
+
+本轮 rewrite 未新增 `[U]`。source 只含 `packages/telemetry`。已删除 agent harness telemetry schema / `startAiSpan` / `startHarnessSpan`。
+
+README “Pi Package Integration” 仍把 AI/harness schema 写在 `pi-agent-core` 名下;本节点把它标为 README 文本,不把那些符号当本包导出。
+
+## update-4c6fb7cfe8-tools-catalog
+
+# Uncertainty · ref.tools-catalog (4c6fb7cfe8)
+
+Source node: `ref.tools-catalog` (`docs/llm-wiki/pi/reference/tools-catalog.md`)
+
+本轮没有新的 `[U]`。八个 `createXToolDefinition` 都未声明 `executionMode`;结论 `unset -> default parallel` 来自 wrapper 原样复制该字段,以及 `Agent` 默认 `toolExecution: "parallel"`,正文标 `[I]`。
+
+Evidence: `packages/coding-agent/src/core/tools/tool-definition-wrapper.ts:20`, `packages/agent/src/agent.ts:253`, `packages/coding-agent/src/core/extensions/types.ts:624`
+
+## update-4c6fb7cfe8-usage-accounting
+
+# uncertainty: subsys.coding-agent.usage-accounting
+
+本轮 rewrite 未新增 `[U]`。已删除 harness session types / jsonl fork 对照。
+
+产品 `SessionManager.forkFrom()` 复制全部 non-header entries,包括 `type: "usage"`。truncated summary 拒绝落盘由 coding-agent `getSummarizationFailure(stopReason === "length")` 证明,正文标 `[I]` 指向 compaction 节点。
 
 ## update-853a80d26c-ai
 

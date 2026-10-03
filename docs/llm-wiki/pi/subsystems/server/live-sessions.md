@@ -22,10 +22,10 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
-> `SessionRouter` 把应用 `ServerHost` 与 protocol connection 组合成 hosted Session：`resolveSession` / `openSession` 拿到 process-local `RoutedSessionHandle`，每个 connection 再 `attachClient()` 得到 presentation-scoped `RoutedSessionAttachment`。旧 `LiveSessionManager` / `sessions.ts` / `snapshots.ts` 已删除 [E: packages/server/src/types.ts:51] [E: packages/server/src/types.ts:62] [E: packages/server/src/session-router.ts:34]。
+> `SessionRouter` 把应用 `ServerHost` 与 protocol connection 组合成 hosted Session：`resolveSession` / `openSession` 拿到 process-local `RoutedSessionHandle`，每个 connection 再 `attachClient()` 得到 presentation-scoped `RoutedSessionAttachment`。旧 `LiveSessionManager` / `sessions.ts` / `snapshots.ts` 已删除 [E: packages/server/src/types.ts:55] [E: packages/server/src/types.ts:66] [E: packages/server/src/session-router.ts:34]。
 
 ## 能回答的问题
 
@@ -38,11 +38,11 @@ updated: 6f7551516b
 
 ## Service / runtime contract
 
-`ServerHost.serverServices` 是 host 级 `RoutedServerServiceHost`，不是 per-connection endpoint；每条 connection 的 server endpoint 来自 `serverServices.attachClient(presentation)` [E: packages/server/src/types.ts:46] [E: packages/server/src/types.ts:47] [E: packages/server/src/types.ts:60]。`resolveSession(sessionId)` 返回 durable metadata 或抛 bounded routing error，`openSession(metadata)` 返回 `RoutedSessionHandle` [E: packages/server/src/types.ts:62] [E: packages/server/src/types.ts:63]。host 不在 router 里 list sessions；目录投影是应用 Chord service [E: packages/server/README.md:8]。
+`ServerHost.serverServices` 是 host 级 `RoutedServerServiceHost`，不是 per-connection endpoint；每条 connection 的 server endpoint 来自 `serverServices.attachClient(presentation)` [E: packages/server/src/types.ts:50] [E: packages/server/src/types.ts:51] [E: packages/server/src/types.ts:64]。`resolveSession(sessionId)` 返回 durable metadata 或抛 bounded routing error，`openSession(metadata)` 返回 `RoutedSessionHandle` [E: packages/server/src/types.ts:66] [E: packages/server/src/types.ts:67]。host 不在 router 里 list sessions；目录投影是应用 Chord service [E: packages/server/README.md:8]。
 
-`RoutedSessionHandle.attachClient()` 返回 `RoutedSessionAttachment`：`invokeService(call, publish, context)` 把 opaque Chord call 转到 Session endpoint，`release()` 释放该 presentation。optional `terminated` Promise 报告意外终止 [E: packages/server/src/types.ts:18] [E: packages/server/src/types.ts:52] [E: packages/server/src/types.ts:54]。`RoutedServerPresentation` 把 `attachSession` / `detachSession` / `prepareSessionRemoval` 交给 router [E: packages/server/src/types.ts:29]。
+`RoutedSessionHandle.attachClient()` 返回 `RoutedSessionAttachment`：`invokeService(call, publish, context)` 把 opaque Chord call 转到 Session endpoint，`release()` 释放该 presentation。optional `terminated` Promise 报告意外终止 [E: packages/server/src/types.ts:22] [E: packages/server/src/types.ts:56] [E: packages/server/src/types.ts:58]。`RoutedServerPresentation` 把 `attachSession` / `detachSession` / `prepareSessionRemoval` 交给 router [E: packages/server/src/types.ts:33]。
 
-测试 host `TestServerHost` 用 `MemorySessionRepo` 实现 resolve/open；`createTestServerServices()` 把 `pi.session-management.attach/detach` 转成 presentation 调用 [E: packages/server/src/testing/host.ts:151] [E: packages/server/src/testing/host.ts:119] [E: packages/server/src/testing/host.ts:126]。
+测试 host `TestServerHost` 用 `MemorySessionRepo` 实现 resolve/open；`createTestServerServices()` 把 `pi.session-management.attach/detach` 转成 presentation 调用 [E: packages/server/src/testing/host.ts:147] [E: packages/server/src/testing/host.ts:115] [E: packages/server/src/testing/host.ts:122]。
 
 ## Attachment 生命周期
 
@@ -50,13 +50,13 @@ updated: 6f7551516b
 
 `acquire()` 对同 id 的 concurrent open 用 `openingSessions` deduplicate；已有 `HostedSession` 被所有 attachments 共享，而不是每 connection 重新 `openSession` [E: packages/server/src/session-router.ts:262] [E: packages/server/src/session-router.ts:265] [E: packages/server/src/session-router.ts:276]。`open()` 先 `resolveSession` 再 `openSession`；drain 中途若 `handle.close()` 成功则抛 `ServerDrainingError`，`close()` 自己失败才抛 `SessionCleanupError` [E: packages/server/src/session-router.ts:277] [E: packages/server/src/session-router.ts:278] [E: packages/server/src/session-router.ts:279] [E: packages/server/src/session-router.ts:281] [E: packages/server/src/session-router.ts:284] [E: packages/server/src/session-router.ts:289]。若 handle 暴露 `terminated`，resolve 后 `invalidate()` 删 hosted 并 release 剩余 attachments [E: packages/server/src/session-router.ts:293] [E: packages/server/src/session-router.ts:302]。
 
-conformance：同一 connection 重复 attach 同一 session 不增加 `attachedClients`；两个 connection 共享一个 harness 实例且 `attachedClients === 2` [E: packages/server/test/conformance.test.ts:182] [E: packages/server/test/conformance.test.ts:191]。
+conformance：同一 connection 重复 attach 同一 session 不增加 `attachedClients`；两个 connection 共享一个 harness 实例且 `attachedClients === 2` [E: packages/server/test/conformance.test.ts:179] [E: packages/server/test/conformance.test.ts:188]。
 
 ## Service call 与 stale route
 
-`executeServiceCall` 先 `runForClient` 做 admission，再返回尚未完成的 `invokeService` Promise，因此 attach/detach 与 admission 串行，实际 call 可并发 [E: packages/server/src/session-router.ts:47] [E: packages/server/src/session-router.ts:207] [E: packages/server/test/conformance.test.ts:284]。`requireAttachment()` 在 closing/disconnected 时抛 `ServerDrainingError`；target 必须是 SessionTarget，且 `sessionId`/`attachmentId` 等于该 connection 当前 attachment [E: packages/server/src/session-router.ts:225] [E: packages/server/src/session-router.ts:226] [E: packages/server/src/session-router.ts:228]。
+`executeServiceCall` 先 `runForClient` 做 admission，再返回尚未完成的 `invokeService` Promise，因此 attach/detach 与 admission 串行，实际 call 可并发 [E: packages/server/src/session-router.ts:47] [E: packages/server/src/session-router.ts:207] [E: packages/server/test/conformance.test.ts:281]。`requireAttachment()` 在 closing/disconnected 时抛 `ServerDrainingError`；target 必须是 SessionTarget，且 `sessionId`/`attachmentId` 等于该 connection 当前 attachment [E: packages/server/src/session-router.ts:225] [E: packages/server/src/session-router.ts:226] [E: packages/server/src/session-router.ts:228]。
 
-未 attach、attach 了另一 session、或切换后仍用旧 `attachmentId`，wire 上都是 `session_not_attached` [E: packages/server/test/conformance.test.ts:223] [E: packages/server/test/conformance.test.ts:246] [E: packages/server/src/errors.ts:45]。
+未 attach、attach 了另一 session、或切换后仍用旧 `attachmentId`，wire 上都是 `session_not_attached` [E: packages/server/test/conformance.test.ts:220] [E: packages/server/test/conformance.test.ts:243] [E: packages/server/src/errors.ts:45]。
 
 ## Release 与 shutdown
 
@@ -66,9 +66,9 @@ server `close()` 等 client operations 与 opening 结束后，release 全部 at
 
 ## Gotcha
 
-- client-side `Client.attachment` 不是 server-wide mutex；源码和 tests 都允许每个 attached presentation 调用同一 hosted handle [E: packages/server/test/conformance.test.ts:182] [I]。
-- `runForClient` 只串行化每个 connection 的 attach/detach/admission，不把 Session invoke 排成单队列 [E: packages/server/src/session-router.ts:146] [E: packages/server/test/conformance.test.ts:284]。
-- attachment release 失败仍会 `clearAttachment`（`finally`），connection 不再拥有该 route；错误上报给 `reportError` [E: packages/server/src/session-router.ts:248] [E: packages/server/test/conformance.test.ts:202]。
+- client-side `Client.attachment` 不是 server-wide mutex；源码和 tests 都允许每个 attached presentation 调用同一 hosted handle [E: packages/server/test/conformance.test.ts:179] [I]。
+- `runForClient` 只串行化每个 connection 的 attach/detach/admission，不把 Session invoke 排成单队列 [E: packages/server/src/session-router.ts:146] [E: packages/server/test/conformance.test.ts:281]。
+- attachment release 失败仍会 `clearAttachment`（`finally`），connection 不再拥有该 route；错误上报给 `reportError` [E: packages/server/src/session-router.ts:248] [E: packages/server/test/conformance.test.ts:199]。
 - 不要在本节点寻找 `PiServerService.listSessions` 或 live snapshot merge；那些 API 已随 `sessions.ts` 删除 [I]。
 
 ## Sources

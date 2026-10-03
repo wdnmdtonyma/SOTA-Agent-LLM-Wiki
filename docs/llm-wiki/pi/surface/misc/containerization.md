@@ -13,7 +13,7 @@ related:
  - surface.extensions.api
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `surface.misc.containerization` 描述 pi-coding-agent 文档中公开的隔离运行形态:Pi 默认以 full permissions 运行;需要更强边界时,要把整个 `pi` 进程放进隔离环境,或让宿主机上的 `pi` 把工具执行路由到隔离环境。
@@ -29,9 +29,9 @@ updated: 6f7551516b
 
 ## 默认权限与两类隔离
 
-containerization 文档开头说明 Pi 默认以 all permissions 运行;如果用户想控制 Pi 能写哪些目录、拥有哪些访问权,需要额外隔离或控制 [E: packages/coding-agent/docs/containerization.md:3]。该文档把隔离形态分成两类:一类是把整个 `pi` process 放进 isolated environment,另一类是在 host 上运行 `pi`,但把 tool execution 路由进 isolated environment [E: packages/coding-agent/docs/containerization.md:5] [E: packages/coding-agent/docs/containerization.md:7] [E: packages/coding-agent/docs/containerization.md:7]。
+containerization 文档开头说明 Pi 默认以 all permissions 运行;如果用户想控制 Pi 能写哪些目录、拥有哪些访问权,需要额外隔离或控制 [E: packages/coding-agent/docs/containerization.md:3]。该文档把隔离形态分成两类:一类是把整个 `pi` process 放进 isolated environment,另一类是在 host 上运行 `pi`,但把 tool execution 路由进 isolated environment [E: packages/coding-agent/docs/containerization.md:5] [E: packages/coding-agent/docs/containerization.md:9] [E: packages/coding-agent/docs/containerization.md:9]。
 
-这两类决定了扩展的运行边界:文档明确说 extensions run wherever the `pi` process runs;如果 host `pi` 只使用 tool-routing extension,其它 custom extension tools 仍在 host 上运行,除非它们也主动 delegate operations [E: packages/coding-agent/docs/containerization.md:18]。因此,“工具路由进 sandbox”不能自动推出“所有 extension code 都在 sandbox 内” [I]。
+这两类决定了扩展的运行边界:文档明确说 extensions run wherever the `pi` process runs;如果 host `pi` 只使用 tool-routing extension,其它 custom extension tools 仍在 host 上运行,除非它们也主动 delegate operations [E: packages/coding-agent/docs/containerization.md:20]。因此,“工具路由进 sandbox”不能自动推出“所有 extension code 都在 sandbox 内” [I]。
 
 ## 三种官方模式
 
@@ -57,7 +57,7 @@ Plain Docker 段建议在需要最简单 local container boundary 时,把 whole 
 
 ## OpenShell:整个 pi 进程在 policy-controlled sandbox 中
 
-OpenShell 段建议在需要 filesystem、process、network、credential 和 inference controls 的 policy-controlled sandbox 时使用 NVIDIA OpenShell [E: packages/coding-agent/docs/containerization.md:82]。OpenShell 可以通过 Docker、Podman、VM runtime backed local gateway 运行 sandbox,也可以通过 remote Kubernetes gateway 运行;每个 sandbox 都要求 active gateway [E: packages/coding-agent/docs/containerization.md:84] [E: packages/coding-agent/docs/containerization.md:86]。
+OpenShell 段建议在需要 filesystem、process、network、credential 和 inference controls 的 policy-controlled sandbox 时使用 NVIDIA OpenShell [E: packages/coding-agent/docs/containerization.md:84]。OpenShell 可以通过 Docker、Podman、VM runtime backed local gateway 运行 sandbox,也可以通过 remote Kubernetes gateway 运行;每个 sandbox 都要求 active gateway [E: packages/coding-agent/docs/containerization.md:84] [E: packages/coding-agent/docs/containerization.md:86]。
 
 示例先注册并选择 gateway,再用 `openshell sandbox create --name pi-sandbox --from pi -- pi` 在 OpenShell sandbox 内启动 `pi` [E: packages/coding-agent/docs/containerization.md:130] [E: packages/coding-agent/docs/containerization.md:131] [E: packages/coding-agent/docs/containerization.md:137]。在这种模式中,文档明确说 whole `pi` process runs inside the sandbox,built-in tools、`!` commands 和 extension tools 都在 OpenShell boundary 内执行 [E: packages/coding-agent/docs/containerization.md:99] [E: packages/coding-agent/docs/containerization.md:101]。
 

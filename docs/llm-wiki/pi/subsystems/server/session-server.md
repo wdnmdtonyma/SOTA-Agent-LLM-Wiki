@@ -30,7 +30,7 @@ related:
   - subsys.protocol.wire-protocol
 evidence: explicit
 status: verified
-updated: 6f7551516b
+updated: 4c6fb7cfe8
 ---
 
 > `Server` 是 `@earendil-works/pi-server` 的 transport-composable remote session core：listener 完成 transport-specific authentication 后提供 ordered byte connections，server core 负责 protocol version handshake、Chord service dispatch、out-of-band attachment 与 lifecycle cleanup。公开类名不再是 `PiServer` [E: packages/server/src/server.ts:46] [E: packages/server/src/listener.ts:4] [E: packages/server/README.md:3]。
@@ -48,11 +48,11 @@ updated: 6f7551516b
 
 package root re-export errors、`ServerListener`、`Server`、`ServerHost` 等 types；export subpath 是 `.`、`./testing`、`./unix`。没有 CLI bin 或 supervisor [E: packages/server/src/index.ts:1] [E: packages/server/package.json:8] [E: packages/server/package.json:13] [E: packages/server/package.json:17]。
 
-README 把该包定位为 composable `Server`：应用提供 `ServerHost`，Unix preset 是 `createUnixServer(host, { serverId, path })`。本包不提供 standalone CLI 或 coding-agent service [E: packages/server/README.md:34] [E: packages/server/README.md:64]。构造函数第一个参数是 `ServerHost`，内部创建 `SessionRouter`，用 `publishAttachment` 发 `{ type: "attachment" }` [E: packages/server/src/server.ts:67] [E: packages/server/src/server.ts:76] [E: packages/server/src/server.ts:80]。`ServerOptions` 要求 `listeners` 与 canonical `serverId`，可选 `maxFrameLength` / `handshakeTimeoutMs` / `onConnectionCountChanged` / `onError` [E: packages/server/src/types.ts:5] [E: packages/server/src/server.ts:559]。
+README 把该包定位为 composable `Server`：应用提供 `ServerHost`，Unix preset 是 `createUnixServer(host, { serverId, path })`。本包不提供 standalone CLI 或 coding-agent service [E: packages/server/README.md:34] [E: packages/server/README.md:48]。构造函数第一个参数是 `ServerHost`，内部创建 `SessionRouter`，用 `publishAttachment` 发 `{ type: "attachment" }` [E: packages/server/src/server.ts:67] [E: packages/server/src/server.ts:76] [E: packages/server/src/server.ts:80]。`ServerOptions` 要求 `listeners` 与 canonical `serverId`，可选 `maxFrameLength` / `handshakeTimeoutMs` / `onConnectionCountChanged` / `onError` [E: packages/server/src/types.ts:4] [E: packages/server/src/server.ts:559]。
 
 ## Listener 与 connection contract
 
-`ServerListener.start(accept)` 只向 server 交付已经建立并授权的 `ByteConnection`；connection 必须公开 `closed`、ordered async `send()` 与可携 final frame 的 `close()` [E: packages/server/src/listener.ts:4] [E: packages/server/src/connection.ts:8]。WebSocket listener 可在 HTTP upgrade 校验凭据，Unix listener 依赖 socket filesystem permissions [E: packages/server/README.md:77]。
+`ServerListener.start(accept)` 只向 server 交付已经建立并授权的 `ByteConnection`；connection 必须公开 `closed`、ordered async `send()` 与可携 final frame 的 `close()` [E: packages/server/src/listener.ts:4] [E: packages/server/src/connection.ts:8]。WebSocket listener 可在 HTTP upgrade 校验凭据，Unix listener 依赖 socket filesystem permissions [E: packages/server/README.md:61]。
 
 connection stage 是 `awaitingHello | handshaking | ready | closing | closed`。state 同时追踪 decoder、per-subscription `ServiceStateEncoder`、handshake timeout、`serverServices` 与 `activeRequests`（id → AbortController + target）[E: packages/server/src/connection.ts:21] [E: packages/server/src/connection.ts:26]。
 
@@ -82,10 +82,10 @@ disconnect 会 abort 该 connection 的 active requests、clear encoders、`sess
 
 ## Gotcha
 
-- listeners 允许为空；`Server` 不会自己选择 transport。常见 Unix preset 由 `subsys.server.unix-transport` 提供 [E: packages/server/src/types.ts:6] [E: packages/server/src/server.ts:559]。
-- transport authorization 是进入 `accept()` 前的前置条件。`accept()` 是 public method，收到任何 `ByteConnection` 都会建 decoder/handshake；旧 custom listener 若不再认证 peer，core 不会补 token check [E: packages/server/src/server.ts:136] [E: packages/server/README.md:77] [I]。
+- listeners 允许为空；`Server` 不会自己选择 transport。常见 Unix preset 由 `subsys.server.unix-transport` 提供 [E: packages/server/src/types.ts:5] [E: packages/server/src/server.ts:559]。
+- transport authorization 是进入 `accept()` 前的前置条件。`accept()` 是 public method，收到任何 `ByteConnection` 都会建 decoder/handshake；旧 custom listener 若不再认证 peer，core 不会补 token check [E: packages/server/src/server.ts:136] [E: packages/server/README.md:61] [I]。
 - 没有 `ServerSnapshotPublisher`。session 目录与模型列表是应用服务，不是 hello payload [E: packages/server/test/conformance.test.ts:81] [I]。
-- runtime/host 抛出的普通 Error 不映射成 per-session protocol event；server 记录并返回 sanitized `internal_error`，严重时断开连接 [E: packages/server/src/server.ts:387] [E: packages/server/test/conformance.test.ts:277]。
+- runtime/host 抛出的普通 Error 不映射成 per-session protocol event；server 记录并返回 sanitized `internal_error`，严重时断开连接 [E: packages/server/src/server.ts:387] [E: packages/server/test/conformance.test.ts:274]。
 
 ## Sources
 
